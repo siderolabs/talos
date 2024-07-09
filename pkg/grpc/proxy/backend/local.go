@@ -62,8 +62,8 @@ func (l *Local) GetConnection(ctx context.Context, fullMethodName string) (conte
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 		grpc.WithDefaultCallOptions(
 			grpc.MaxCallRecvMsgSize(constants.GRPCMaxMessageSize),
+			grpc.ForceCodec(proxy.Codec()),
 		),
-		grpc.WithCodec(proxy.Codec()), //nolint:staticcheck
 		grpc.WithSharedWriteBuffer(true),
 	)
 

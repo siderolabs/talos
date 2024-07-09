@@ -670,8 +670,8 @@ github.com/siderolabs/go-tail v0.1.1 h1:3XeJgd97OHyFAIE7nQEMcRhOfnv7DvXbu0BRKbtT
 github.com/siderolabs/go-tail v0.1.1/go.mod h1:IihAL39acadXHfb5fEAOKK2DaDFIrG2+VD3b2H/ziZ0=
 github.com/siderolabs/go-talos-support v0.1.1-0.20240521144823-69891cf04662 h1:TnpJ279GAgW8LLJGwjyB/ups0iJSAOGJtKXd3Kl9yP8=
 github.com/siderolabs/go-talos-support v0.1.1-0.20240521144823-69891cf04662/go.mod h1:YRs6CWqvFmRnxTE3cuOPM23ZasuzaNGNEeyFajsI+tw=
-github.com/siderolabs/grpc-proxy v0.4.0 h1:zYrhqLYs8JlYoLHYeel7/XwXDZ4OJ5XyP9wX7JlbPew=
-github.com/siderolabs/grpc-proxy v0.4.0/go.mod h1:QDurYOwQD4H8BKyvCuUxMiuG/etYnb/++xaQB644NdU=
+github.com/siderolabs/grpc-proxy v0.4.1 h1:UTYviMqb65oKjnH7dy5D+U4zMJ6iCTjAN6x6K/Ss120=
+github.com/siderolabs/grpc-proxy v0.4.1/go.mod h1:QwQuLUpJrlN08kpP0m63oO/SEeoz0dEhU9ndlBafc0Y=
 github.com/siderolabs/kms-client v0.1.0 h1:rCDWzcDDsNlp6zdyLngOuuhchVILn+vwUQy3tk6rQps=
 github.com/siderolabs/kms-client v0.1.0/go.mod h1:4UQkRhuEh3kaK7VhJxez4YyJLv6lPEff7g3Pa6Y9okg=
 github.com/siderolabs/net v0.4.0 h1:1bOgVay/ijPkJz4qct98nHsiB/ysLQU0KLoBC4qLm7I=

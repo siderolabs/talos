@@ -12,6 +12,7 @@ import (
 	"fmt"
 	"net"
 	"net/url"
+	"slices"
 	"strings"
 
 	"github.com/siderolabs/gen/xslices"
@@ -40,16 +41,18 @@ func (c *Client) getConn(opts ...grpc.DialOption) (*grpcConnectionWrapper, error
 			constants.ApidPort),
 	)
 
-	dialOpts := []grpc.DialOption{
-		grpc.WithDefaultCallOptions( // enable compression by default
-			// TODO: enable compression for Talos 1.7+
-			// grpc.UseCompressor(gzip.Name),
-			grpc.MaxCallRecvMsgSize(constants.GRPCMaxMessageSize),
-		),
-		grpc.WithSharedWriteBuffer(true),
-	}
-	dialOpts = append(dialOpts, c.options.grpcDialOptions...)
-	dialOpts = append(dialOpts, opts...)
+	dialOpts := slices.Concat(
+		[]grpc.DialOption{
+			grpc.WithDefaultCallOptions( // enable compression by default
+				// TODO: enable compression for Talos 1.7+
+				// grpc.UseCompressor(gzip.Name),
+				grpc.MaxCallRecvMsgSize(constants.GRPCMaxMessageSize),
+			),
+			grpc.WithSharedWriteBuffer(true),
+		},
+		c.options.grpcDialOptions,
+		opts,
+	)
 
 	if c.options.unixSocketPath != "" {
 		conn, err := grpc.NewClient(target, dialOpts...)

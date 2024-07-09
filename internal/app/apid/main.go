@@ -178,7 +178,7 @@ func apidMain() error {
 				grpc.Creds(
 					credentials.NewTLS(serverTLSConfig),
 				),
-				grpc.CustomCodec(proxy.Codec()), //nolint:staticcheck
+				grpc.ForceServerCodec(proxy.Codec()),
 				grpc.UnknownServiceHandler(
 					proxy.TransparentHandler(
 						router.Director,
@@ -205,7 +205,7 @@ func apidMain() error {
 			router,
 			factory.WithDefaultLog(),
 			factory.ServerOptions(
-				grpc.CustomCodec(proxy.Codec()), //nolint:staticcheck
+				grpc.ForceServerCodec(proxy.Codec()),
 				grpc.UnknownServiceHandler(
 					proxy.TransparentHandler(
 						router.Director,

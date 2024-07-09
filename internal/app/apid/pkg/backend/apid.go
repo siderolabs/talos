@@ -117,8 +117,8 @@ func (a *APID) GetConnection(ctx context.Context, fullMethodName string) (contex
 		}),
 		grpc.WithDefaultCallOptions(
 			grpc.MaxCallRecvMsgSize(constants.GRPCMaxMessageSize),
+			grpc.ForceCodec(proxy.Codec()),
 		),
-		grpc.WithCodec(proxy.Codec()), //nolint:staticcheck
 		grpc.WithSharedWriteBuffer(true),
 	)
 
