@@ -135,18 +135,18 @@ We are now ready to create our GCP nodes.
 
 ```bash
 # Create the control plane nodes.
-for i in $( seq 1 3 ); do
+for i in $( seq 0 2 ); do
   gcloud compute instances create talos-controlplane-$i \
     --image talos \
     --zone $REGION-b \
     --tags talos-controlplane \
     --boot-disk-size 20GB \
-    --metadata-from-file=user-data=./controlplane.yaml
+    --metadata-from-file=user-data=./controlplane.yaml \
     --tags talos-controlplane-$i
 done
 
 # Add control plane nodes to instance group
-for i in $( seq 1 3 ); do
+for i in $( seq 0 2 ); do
   gcloud compute instance-groups unmanaged add-instances talos-ig \
       --zone $REGION-b \
       --instances talos-controlplane-$i
@@ -157,7 +157,7 @@ gcloud compute instances create talos-worker-0 \
   --image talos \
   --zone $REGION-b \
   --boot-disk-size 20GB \
-  --metadata-from-file=user-data=./worker.yaml
+  --metadata-from-file=user-data=./worker.yaml \
   --tags talos-worker-$i
 ```
 
