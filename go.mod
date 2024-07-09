@@ -1,6 +1,6 @@
 module github.com/siderolabs/talos
 
-go 1.22.4
+go 1.22.5
 
 replace (
 	// forked coredns so we don't carry caddy and other stuff into the Talos
@@ -25,16 +25,16 @@ replace (
 
 // Kubernetes dependencies sharing the same version.
 require (
-	k8s.io/api v0.30.2
-	k8s.io/apimachinery v0.30.2
-	k8s.io/apiserver v0.30.2
-	k8s.io/client-go v0.30.2
-	k8s.io/component-base v0.30.2
-	k8s.io/cri-api v0.31.0-alpha.0.0.20240529224029-3a66d9d86654
-	k8s.io/kube-scheduler v0.30.2
-	k8s.io/kubectl v0.30.2
-	k8s.io/kubelet v0.30.2
-	k8s.io/pod-security-admission v0.30.2
+	k8s.io/api v0.31.0-alpha.3
+	k8s.io/apimachinery v0.31.0-alpha.3
+	k8s.io/apiserver v0.31.0-alpha.3
+	k8s.io/client-go v0.31.0-alpha.3
+	k8s.io/component-base v0.31.0-alpha.3
+	k8s.io/cri-api v0.31.0-alpha.3
+	k8s.io/kube-scheduler v0.31.0-alpha.3
+	k8s.io/kubectl v0.31.0-alpha.3
+	k8s.io/kubelet v0.31.0-alpha.3
+	k8s.io/pod-security-admission v0.31.0-alpha.3
 )
 
 require (
@@ -62,7 +62,7 @@ require (
 	github.com/containernetworking/plugins v1.5.1
 	github.com/coredns/coredns v1.11.2
 	github.com/coreos/go-iptables v0.7.0
-	github.com/cosi-project/runtime v0.5.1
+	github.com/cosi-project/runtime v0.5.2
 	github.com/distribution/reference v0.6.0
 	github.com/docker/docker v27.0.3+incompatible
 	github.com/docker/go-connections v0.5.0
@@ -134,7 +134,7 @@ require (
 	github.com/siderolabs/go-debug v0.3.0
 	github.com/siderolabs/go-kmsg v0.1.4
 	github.com/siderolabs/go-kubeconfig v0.1.0
-	github.com/siderolabs/go-kubernetes v0.2.9
+	github.com/siderolabs/go-kubernetes v0.2.10
 	github.com/siderolabs/go-loadbalancer v0.3.4
 	github.com/siderolabs/go-pcidb v0.3.0
 	github.com/siderolabs/go-pointer v1.0.0
@@ -165,7 +165,7 @@ require (
 	golang.org/x/net v0.26.0
 	golang.org/x/oauth2 v0.21.0
 	golang.org/x/sync v0.7.0
-	golang.org/x/sys v0.21.0
+	golang.org/x/sys v0.22.0
 	golang.org/x/term v0.21.0
 	golang.org/x/text v0.16.0
 	golang.org/x/time v0.5.0
@@ -232,6 +232,7 @@ require (
 	github.com/evanphx/json-patch v5.9.0+incompatible // indirect
 	github.com/exponent-io/jsonpath v0.0.0-20151013193312-d6023ce2651d // indirect
 	github.com/felixge/httpsnoop v1.0.4 // indirect
+	github.com/fxamacker/cbor/v2 v2.7.0 // indirect
 	github.com/gdamore/encoding v1.0.0 // indirect
 	github.com/ghodss/yaml v1.0.0 // indirect
 	github.com/go-errors/errors v1.4.2 // indirect
@@ -281,12 +282,12 @@ require (
 	github.com/mitchellh/go-wordwrap v1.0.1 // indirect
 	github.com/moby/docker-image-spec v1.3.1 // indirect
 	github.com/moby/locker v1.0.1 // indirect
-	github.com/moby/spdystream v0.2.0 // indirect
+	github.com/moby/spdystream v0.4.0 // indirect
 	github.com/moby/sys/mountinfo v0.7.1 // indirect
 	github.com/moby/sys/sequential v0.5.0 // indirect
 	github.com/moby/sys/signal v0.7.0 // indirect
 	github.com/moby/sys/user v0.1.0 // indirect
-	github.com/moby/term v0.0.0-20221205130635-1aeaba878587 // indirect
+	github.com/moby/term v0.5.0 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.2 // indirect
 	github.com/monochromegane/go-gitignore v0.0.0-20200626010858-205db1a8cc00 // indirect
@@ -304,7 +305,7 @@ require (
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/prometheus/client_golang v1.19.1 // indirect
 	github.com/prometheus/client_model v0.6.1 // indirect
-	github.com/prometheus/common v0.54.0 // indirect
+	github.com/prometheus/common v0.55.0 // indirect
 	github.com/rivo/uniseg v0.4.7 // indirect
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
 	github.com/siderolabs/protoenc v0.2.1 // indirect
@@ -315,6 +316,7 @@ require (
 	github.com/u-root/uio v0.0.0-20240209044354-b3d14b93376a // indirect
 	github.com/vbatts/tar-split v0.11.3 // indirect
 	github.com/vishvananda/netns v0.0.4 // indirect
+	github.com/x448/float16 v0.8.4 // indirect
 	github.com/xiang90/probing v0.0.0-20190116061207-43a291ad63a2 // indirect
 	github.com/xlab/treeprint v1.2.0 // indirect
 	go.etcd.io/bbolt v1.3.10 // indirect
@@ -338,16 +340,17 @@ require (
 	golang.zx2c4.com/wireguard v0.0.0-20231211153847-12269c276173 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20240617180043-68d350f18fd4 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20240701130421-f6361c86f094 // indirect
+	gopkg.in/evanphx/json-patch.v4 v4.12.0 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
-	k8s.io/cli-runtime v0.30.2 // indirect
+	k8s.io/cli-runtime v0.31.0-alpha.3 // indirect
 	k8s.io/kube-openapi v0.0.0-20240703190633-0aa61b46e8c2 // indirect
 	k8s.io/utils v0.0.0-20240502163921-fe8a2dddb1d0 // indirect
 	kernel.org/pub/linux/libs/security/libcap/psx v1.2.70 // indirect
 	rsc.io/qr v0.2.0 // indirect
 	sigs.k8s.io/json v0.0.0-20221116044647-bc3834ca7abd // indirect
-	sigs.k8s.io/kustomize/api v0.13.5-0.20230601165947-6ce0bf390ce3 // indirect
-	sigs.k8s.io/kustomize/kyaml v0.14.3-0.20230601165947-6ce0bf390ce3 // indirect
+	sigs.k8s.io/kustomize/api v0.17.2 // indirect
+	sigs.k8s.io/kustomize/kyaml v0.17.1 // indirect
 	sigs.k8s.io/structured-merge-diff/v4 v4.4.1 // indirect
 	tags.cncf.io/container-device-interface v0.7.2 // indirect
 	tags.cncf.io/container-device-interface/specs-go v0.7.0 // indirect

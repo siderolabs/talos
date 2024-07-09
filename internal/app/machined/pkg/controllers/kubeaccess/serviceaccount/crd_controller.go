@@ -93,7 +93,7 @@ type CRDController struct {
 	allowedNamespaces []string
 	allowedRoles      map[string]struct{}
 
-	queue workqueue.RateLimitingInterface
+	queue workqueue.TypedRateLimitingInterface[string]
 
 	kubeInformerFactory    kubeinformers.SharedInformerFactory
 	dynamicInformerFactory dynamicinformer.DynamicSharedInformerFactory
@@ -162,9 +162,8 @@ func NewCRDController(
 		dynamicClient:          dynCli,
 		dialer:                 dialer,
 		dynamicLister:          lister,
-		queue: workqueue.NewNamedRateLimitingQueue(
-			workqueue.DefaultControllerRateLimiter(),
-			constants.ServiceAccountResourceKind,
+		queue: workqueue.NewTypedRateLimitingQueue(
+			workqueue.DefaultTypedControllerRateLimiter[string](),
 		),
 		logger:         logger,
 		secretsSynced:  secrets.Informer().HasSynced,
@@ -259,28 +258,17 @@ func (t *CRDController) processNextWorkItem(ctx context.Context) bool {
 		return false
 	}
 
-	err := func(obj any) error {
+	err := func(obj string) error {
 		defer t.queue.Done(obj)
 
-		var key string
+		if err := t.syncHandler(ctx, obj); err != nil {
+			t.queue.AddRateLimited(obj)
 
-		var ok bool
-
-		if key, ok = obj.(string); !ok {
-			t.queue.Forget(obj)
-			utilruntime.HandleError(fmt.Errorf("expected string in workqueue but got %#v", obj))
-
-			return nil
-		}
-
-		if err := t.syncHandler(ctx, key); err != nil {
-			t.queue.AddRateLimited(key)
-
-			return fmt.Errorf("error syncing '%s': %s, requeuing", key, err.Error())
+			return fmt.Errorf("error syncing '%s': %s, requeuing", obj, err.Error())
 		}
 
 		t.queue.Forget(obj)
-		t.logger.Sugar().Debugf("successfully synced '%s'", key)
+		t.logger.Sugar().Debugf("successfully synced '%s'", obj)
 
 		return nil
 	}(obj)
@@ -492,16 +480,8 @@ func (t *CRDController) updateTalosSAStatus(
 
 	talosSACopy := talosSA.DeepCopy()
 
-	if err != nil {
-		return err
-	}
-
 	if failureReason == "" {
 		unstructured.RemoveNestedField(talosSACopy.UnstructuredContent(), "status", "failureReason")
-
-		if err != nil {
-			return err
-		}
 	} else {
 		err = unstructured.SetNestedField(talosSACopy.UnstructuredContent(), failureReason, "status", "failureReason")
 		if err != nil {

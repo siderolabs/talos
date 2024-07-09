@@ -10,6 +10,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/blang/semver/v4"
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/controller/generic"
 	"github.com/cosi-project/runtime/pkg/controller/generic/transform"
@@ -23,6 +24,7 @@ import (
 
 	"github.com/siderolabs/talos/pkg/argsbuilder"
 	"github.com/siderolabs/talos/pkg/images"
+	"github.com/siderolabs/talos/pkg/kubernetes"
 	talosconfig "github.com/siderolabs/talos/pkg/machinery/config/config"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
@@ -412,11 +414,22 @@ func convertResources(resources talosconfig.Resources) k8s.Resources {
 func getProxyArgs(cfgProvider talosconfig.Config) ([]string, error) {
 	clusterCidr := strings.Join(cfgProvider.Cluster().Network().PodCIDRs(), ",")
 
+	proxyMode := cfgProvider.Cluster().Proxy().Mode()
+
+	if proxyMode == "" {
+		// determine proxy mode based on kube-proxy version via the image, use 'nftables' for Kubernetes >= 1.31
+		if kubernetes.VersionGTE(cfgProvider.Cluster().Proxy().Image(), semver.MustParse("1.31.0")) {
+			proxyMode = "nftables"
+		} else {
+			proxyMode = "iptables"
+		}
+	}
+
 	builder := argsbuilder.Args{
 		"cluster-cidr":           clusterCidr,
 		"hostname-override":      "$(NODE_NAME)",
 		"kubeconfig":             "/etc/kubernetes/kubeconfig",
-		"proxy-mode":             cfgProvider.Cluster().Proxy().Mode(),
+		"proxy-mode":             proxyMode,
 		"conntrack-max-per-core": "0",
 	}
 

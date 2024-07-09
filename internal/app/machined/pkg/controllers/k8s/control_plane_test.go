@@ -549,6 +549,77 @@ metadata:
 	)
 }
 
+func (suite *K8sControlPlaneSuite) TestReconcileKubeProxyMode() {
+	u, err := url.Parse("https://foo:6443")
+	suite.Require().NoError(err)
+
+	cfg := config.NewMachineConfig(
+		container.NewV1Alpha1(
+			&v1alpha1.Config{
+				ConfigVersion: "v1alpha1",
+				MachineConfig: &v1alpha1.MachineConfig{
+					MachineType: "controlplane",
+				},
+				ClusterConfig: &v1alpha1.ClusterConfig{
+					ControlPlane: &v1alpha1.ControlPlaneConfig{
+						Endpoint: &v1alpha1.Endpoint{
+							URL: u,
+						},
+					},
+				},
+			},
+		),
+	)
+
+	suite.setupMachine(cfg)
+
+	rtestutils.AssertResources(suite.Ctx(), suite.T(), suite.State(), []resource.ID{k8s.BootstrapManifestsConfigID},
+		func(cfg *k8s.BootstrapManifestsConfig, assert *assert.Assertions) {
+			assert.Contains(
+				cfg.TypedSpec().ProxyArgs,
+				"--proxy-mode=nftables",
+			)
+		},
+	)
+}
+
+func (suite *K8sControlPlaneSuite) TestReconcileKubeProxyModeLegacy() {
+	u, err := url.Parse("https://foo:6443")
+	suite.Require().NoError(err)
+
+	cfg := config.NewMachineConfig(
+		container.NewV1Alpha1(
+			&v1alpha1.Config{
+				ConfigVersion: "v1alpha1",
+				MachineConfig: &v1alpha1.MachineConfig{
+					MachineType: "controlplane",
+				},
+				ClusterConfig: &v1alpha1.ClusterConfig{
+					ControlPlane: &v1alpha1.ControlPlaneConfig{
+						Endpoint: &v1alpha1.Endpoint{
+							URL: u,
+						},
+					},
+					ProxyConfig: &v1alpha1.ProxyConfig{
+						ContainerImage: constants.KubeProxyImage + ":v1.30.0",
+					},
+				},
+			},
+		),
+	)
+
+	suite.setupMachine(cfg)
+
+	rtestutils.AssertResources(suite.Ctx(), suite.T(), suite.State(), []resource.ID{k8s.BootstrapManifestsConfigID},
+		func(cfg *k8s.BootstrapManifestsConfig, assert *assert.Assertions) {
+			assert.Contains(
+				cfg.TypedSpec().ProxyArgs,
+				"--proxy-mode=iptables",
+			)
+		},
+	)
+}
+
 func TestK8sControlPlaneSuite(t *testing.T) {
 	t.Parallel()
 

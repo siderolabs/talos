@@ -30,10 +30,6 @@ func (p *ProxyConfig) Image() string {
 
 // Mode implements the config.Proxy interface.
 func (p *ProxyConfig) Mode() string {
-	if p.ModeConfig == "" {
-		return "iptables"
-	}
-
 	return p.ModeConfig
 }
 
