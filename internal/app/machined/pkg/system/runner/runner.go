@@ -67,6 +67,8 @@ type Options struct {
 	OverrideSeccompProfile func(*specs.LinuxSeccomp)
 	// DroppedCapabilities is the list of capabilities to drop.
 	DroppedCapabilities []string
+	// SelinuxLabel is the SELinux label to be assigned
+	SelinuxLabel string
 	// StdinFile is the path to the file to use as stdin.
 	StdinFile string
 	// StdoutFile is the path to the file to use as stdout.

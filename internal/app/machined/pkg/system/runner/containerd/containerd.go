@@ -341,6 +341,18 @@ func (c *containerdRunner) newOCISpecOpts(image oci.Image) []oci.SpecOpts {
 		)
 	}
 
+	if c.opts.SelinuxLabel != "" {
+		specOpts = append(
+			specOpts,
+			oci.WithSelinuxLabel(c.opts.SelinuxLabel),
+		)
+	} else {
+		specOpts = append(
+			specOpts,
+			oci.WithSelinuxLabel("system_u:system_r:unconfined_t"),
+		)
+	}
+
 	return specOpts
 }
 
