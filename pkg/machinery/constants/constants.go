@@ -931,8 +931,11 @@ const (
 	// ServiceAccountMountPath is the path of the directory in which the Talos service account secrets are mounted.
 	ServiceAccountMountPath = "/var/run/secrets/talos.dev"
 
+	// DefaultTrustedRelativeCAFile is the default path to the trusted CA file relative to the /etc.
+	DefaultTrustedRelativeCAFile = "ssl/certs/ca-certificates.crt"
+
 	// DefaultTrustedCAFile is the default path to the trusted CA file.
-	DefaultTrustedCAFile = "/etc/ssl/certs/ca-certificates"
+	DefaultTrustedCAFile = "/etc/" + DefaultTrustedRelativeCAFile
 
 	// MachinedMaxProcs is the maximum number of GOMAXPROCS for machined.
 	MachinedMaxProcs = 4

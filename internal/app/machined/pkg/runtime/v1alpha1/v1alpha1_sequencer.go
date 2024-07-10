@@ -227,6 +227,7 @@ func (*Sequencer) Boot(r runtime.Runtime) []runtime.Phase {
 	).Append(
 		"env",
 		SetUserEnvVars,
+		WaitForCARoots,
 	).Append(
 		"dbus",
 		StartDBus,

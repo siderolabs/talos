@@ -2293,6 +2293,54 @@ func SendResetSignal(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) 
 	}, "sendResetSignal"
 }
 
+// WaitForCARoots represents the WaitForCARoots task.
+//
+//nolint:gocyclo
+func WaitForCARoots(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
+	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
+		// watch EtcFileSpec & Status for CA roots and ensure they match
+		ctx, cancel := context.WithTimeout(ctx, 5*time.Minute)
+		defer cancel()
+
+		ch := make(chan state.Event)
+
+		if err = r.State().V1Alpha2().Resources().Watch(ctx, resourcefiles.NewEtcFileSpec(resourcefiles.NamespaceName, constants.DefaultTrustedRelativeCAFile).Metadata(), ch); err != nil {
+			return err
+		}
+
+		if err = r.State().V1Alpha2().Resources().Watch(ctx, resourcefiles.NewEtcFileStatus(resourcefiles.NamespaceName, constants.DefaultTrustedRelativeCAFile).Metadata(), ch); err != nil {
+			return err
+		}
+
+		var specVersion, statusVersion string
+
+		for {
+			select {
+			case <-ctx.Done():
+				return ctx.Err()
+			case e := <-ch:
+				switch e.Type {
+				case state.Errored:
+					return e.Error
+				case state.Bootstrapped, state.Destroyed: // ignore
+				case state.Created, state.Updated:
+					switch res := e.Resource.(type) {
+					case *resourcefiles.EtcFileSpec:
+						specVersion = res.Metadata().Version().String()
+					case *resourcefiles.EtcFileStatus:
+						statusVersion = res.TypedSpec().SpecVersion
+					}
+				}
+			}
+
+			if specVersion != "" && statusVersion != "" && specVersion == statusVersion {
+				// success
+				return nil
+			}
+		}
+	}, "waitForCARoots"
+}
+
 func pauseOnFailure(callback func(runtime.Sequence, any) (runtime.TaskExecutionFunc, string),
 	timeout time.Duration,
 ) func(seq runtime.Sequence, data any) (runtime.TaskExecutionFunc, string) {

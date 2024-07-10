@@ -7,17 +7,19 @@ aliases:
 
 ## Appending the Certificate Authority
 
-Put into each machine the PEM encoded certificate:
+Append additional certificate authorities to the system's trusted certificate store by [patching]({{< relref "./patching" >}}) the machine configuration with the following
+[document]({{< relref "../../reference/configuration/security/trustedrootsconfig" >}}):
 
 ```yaml
-machine:
-  ...
-  files:
-    - content: |
-        -----BEGIN CERTIFICATE-----
-        ...
-        -----END CERTIFICATE-----
-      permissions: 0644
-      path: /etc/ssl/certs/ca-certificates
-      op: append
+apiVersion: v1alpha1
+kind: TrustedRootsConfig
+name: custom-ca
+certificates: |-
+    -----BEGIN CERTIFICATE-----
+    ...
+    -----END CERTIFICATE-----
 ```
+
+Multiple documents can be appended, and multiple CA certificates might be present in each configuration document.
+
+This configuration can be also applied in maintenance mode.

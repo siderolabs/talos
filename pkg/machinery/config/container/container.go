@@ -189,6 +189,11 @@ func (container *Container) NetworkRules() config.NetworkRuleConfig {
 	return config.WrapNetworkRuleConfigList(findMatchingDocs[config.NetworkRuleConfigSignal](container.documents)...)
 }
 
+// TrustedRoots implements config.Config interface.
+func (container *Container) TrustedRoots() config.TrustedRootsConfig {
+	return config.WrapTrustedRootsConfig(findMatchingDocs[config.TrustedRootsConfig](container.documents)...)
+}
+
 // Bytes returns source YAML representation (if available) or does default encoding.
 func (container *Container) Bytes() ([]byte, error) {
 	if !container.readonly {

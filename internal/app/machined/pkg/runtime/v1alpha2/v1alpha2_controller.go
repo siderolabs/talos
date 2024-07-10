@@ -330,6 +330,7 @@ func (ctrl *Controller) Run(ctx context.Context, drainer *runtime.Drainer) error
 		secrets.NewRootEtcdController(),
 		secrets.NewRootKubernetesController(),
 		secrets.NewRootOSController(),
+		&secrets.TrustedRootsController{},
 		&secrets.TrustdController{},
 		&siderolink.ConfigController{
 			Cmdline:      procfs.ProcCmdline(),

@@ -332,6 +332,7 @@ COPY --from=go-generate /src/pkg/machinery/nethelpers/ /pkg/machinery/nethelpers
 COPY --from=go-generate /src/pkg/machinery/extensions/ /pkg/machinery/extensions/
 COPY --from=ipxe-generate / /pkg/provision/providers/vm/internal/ipxe/data/ipxe/
 COPY --from=embed-abbrev / /
+COPY --from=pkg-ca-certificates /etc/ssl/certs/ca-certificates /internal/app/machined/pkg/controllers/secrets/data/
 
 # The base target provides a container that can be used to build all Talos
 # assets.
@@ -343,6 +344,7 @@ COPY ./internal ./internal
 COPY --from=generate /pkg/flannel/ ./pkg/flannel/
 COPY --from=generate /pkg/imager/ ./pkg/imager/
 COPY --from=generate /pkg/machinery/ ./pkg/machinery/
+COPY --from=generate /internal/app/machined/pkg/controllers/secrets/data/ ./internal/app/machined/pkg/controllers/secrets/data/
 COPY --from=embed / ./
 RUN --mount=type=cache,target=/.cache go list all >/dev/null
 WORKDIR /src/pkg/machinery
@@ -561,7 +563,6 @@ COPY --from=depmod-arm64 /build/lib/modules /lib/modules
 # The rootfs target provides the Talos rootfs.
 FROM build AS rootfs-base-amd64
 COPY --link --from=pkg-fhs / /rootfs
-COPY --link --from=pkg-ca-certificates / /rootfs
 COPY --link --from=pkg-apparmor-amd64 / /rootfs
 COPY --link --from=pkg-cryptsetup-amd64 / /rootfs
 COPY --link --from=pkg-containerd-amd64 / /rootfs
@@ -604,7 +605,7 @@ COPY ./hack/cleanup.sh /toolchain/bin/cleanup.sh
 RUN <<END
     cleanup.sh /rootfs
     mkdir -pv /rootfs/{boot/EFI,etc/cri/conf.d/hosts,lib/firmware,usr/local/share,usr/share/zoneinfo/Etc,mnt,system,opt,.extra}
-    mkdir -pv /rootfs/{etc/kubernetes/manifests,etc/cni/net.d,usr/libexec/kubernetes,/usr/local/lib/kubelet/credentialproviders}
+    mkdir -pv /rootfs/{etc/kubernetes/manifests,etc/cni/net.d,etc/ssl/certs,usr/libexec/kubernetes,/usr/local/lib/kubelet/credentialproviders}
     mkdir -pv /rootfs/opt/{containerd/bin,containerd/lib}
 END
 COPY --chmod=0644 hack/zoneinfo/Etc/UTC /rootfs/usr/share/zoneinfo/Etc/UTC
@@ -616,7 +617,7 @@ COPY --chmod=0644 hack/udevd/80-net-name-slot.rules /rootfs/usr/lib/udev/rules.d
 COPY --chmod=0644 hack/lvm.conf /rootfs/etc/lvm/lvm.conf
 RUN <<END
     ln -s /usr/share/zoneinfo/Etc/UTC /rootfs/etc/localtime
-    touch /rootfs/etc/{extensions.yaml,resolv.conf,hosts,os-release,machine-id,cri/conf.d/cri.toml,cri/conf.d/01-registries.part,cri/conf.d/20-customization.part}
+    touch /rootfs/etc/{extensions.yaml,resolv.conf,hosts,os-release,machine-id,cri/conf.d/cri.toml,cri/conf.d/01-registries.part,cri/conf.d/20-customization.part,ssl/certs/ca-certificates}
     ln -s ca-certificates /rootfs/etc/ssl/certs/ca-certificates.crt
     ln -s /etc/ssl /rootfs/etc/pki
     ln -s /etc/ssl /rootfs/usr/share/ca-certificates
@@ -626,7 +627,6 @@ END
 
 FROM build AS rootfs-base-arm64
 COPY --link --from=pkg-fhs / /rootfs
-COPY --link --from=pkg-ca-certificates / /rootfs
 COPY --link --from=pkg-apparmor-arm64 / /rootfs
 COPY --link --from=pkg-cryptsetup-arm64 / /rootfs
 COPY --link --from=pkg-containerd-arm64 / /rootfs
@@ -669,7 +669,7 @@ COPY ./hack/cleanup.sh /toolchain/bin/cleanup.sh
 RUN <<END
     cleanup.sh /rootfs
     mkdir -pv /rootfs/{boot/EFI,etc/cri/conf.d/hosts,lib/firmware,usr/local/share,usr/share/zoneinfo/Etc,mnt,system,opt,.extra}
-    mkdir -pv /rootfs/{etc/kubernetes/manifests,etc/cni/net.d,usr/libexec/kubernetes,/usr/local/lib/kubelet/credentialproviders}
+    mkdir -pv /rootfs/{etc/kubernetes/manifests,etc/cni/net.d,etc/ssl/certs,usr/libexec/kubernetes,/usr/local/lib/kubelet/credentialproviders}
     mkdir -pv /rootfs/opt/{containerd/bin,containerd/lib}
 END
 COPY --chmod=0644 hack/zoneinfo/Etc/UTC /rootfs/usr/share/zoneinfo/Etc/UTC
@@ -681,7 +681,7 @@ COPY --chmod=0644 hack/udevd/80-net-name-slot.rules /rootfs/usr/lib/udev/rules.d
 COPY --chmod=0644 hack/lvm.conf /rootfs/etc/lvm/lvm.conf
 RUN <<END
     ln -s /usr/share/zoneinfo/Etc/UTC /rootfs/etc/localtime
-    touch /rootfs/etc/{extensions.yaml,resolv.conf,hosts,os-release,machine-id,cri/conf.d/cri.toml,cri/conf.d/01-registries.part,cri/conf.d/20-customization.part}
+    touch /rootfs/etc/{extensions.yaml,resolv.conf,hosts,os-release,machine-id,cri/conf.d/cri.toml,cri/conf.d/01-registries.part,cri/conf.d/20-customization.part,ssl/certs/ca-certificates}
     ln -s /etc/ssl /rootfs/etc/pki
     ln -s ca-certificates /rootfs/etc/ssl/certs/ca-certificates.crt
     ln -s /etc/ssl /rootfs/usr/share/ca-certificates
@@ -867,6 +867,7 @@ FROM --platform=${BUILDPLATFORM} iso-${TARGETARCH} AS iso
 FROM base AS unit-tests-runner
 RUN unlink /etc/ssl
 COPY --from=rootfs / /
+COPY --from=pkg-ca-certificates / /
 ARG TESTPKGS
 ENV PLATFORM=container
 ARG GO_LDFLAGS
@@ -881,6 +882,7 @@ COPY --from=unit-tests-runner /src/coverage.txt /coverage.txt
 FROM base AS unit-tests-race
 RUN unlink /etc/ssl
 COPY --from=rootfs / /
+COPY --from=pkg-ca-certificates / /
 ARG TESTPKGS
 ENV PLATFORM=container
 ENV CGO_ENABLED=1

@@ -142,7 +142,7 @@ func init() {
 	}
 
 	flag.BoolVar(&failFast, "talos.failfast", false, "fail the test run on the first failed test")
-	flag.BoolVar(&crashdumpEnabled, "talos.crashdump", true, "print crashdump on test failure (only if provisioner is enabled)")
+	flag.BoolVar(&crashdumpEnabled, "talos.crashdump", false, "print crashdump on test failure (only if provisioner is enabled)")
 	flag.BoolVar(&trustedBoot, "talos.trustedboot", false, "enable tests for trusted boot mode")
 	flag.BoolVar(&extensionsQEMU, "talos.extensions.qemu", false, "enable tests for qemu extensions")
 	flag.BoolVar(&extensionsNvidia, "talos.extensions.nvidia", false, "enable tests for nvidia extensions")

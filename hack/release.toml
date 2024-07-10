@@ -91,6 +91,12 @@ Talos Linux now support configuring 'vlan_filtering' for bridge interfaces.
 Talos Linux configures kube-proxy >= v1.31.0 to use 'nftables' backend by default.
 """
 
+    [notes.trusted-roots]
+        title = "Custom Trusted Roots"
+        description = """\
+Talos Linux now supports adding [custom trusted roots](https://www.talos.dev/v1.8/talos-guides/configuration/certificate-authorities/) (CA certificates) via `TrustedRootsConfig` configuration documents.
+"""
+
 [make_deps]
 
     [make_deps.tools]

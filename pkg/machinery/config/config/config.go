@@ -14,4 +14,5 @@ type Config interface {
 	ExtensionServiceConfigs() []ExtensionServiceConfig
 	Runtime() RuntimeConfig
 	NetworkRules() NetworkRuleConfig
+	TrustedRoots() TrustedRootsConfig
 }
