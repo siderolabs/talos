@@ -28,6 +28,11 @@ type Args struct {
 	Endpoints   []string
 }
 
+// NodeList returns the list of nodes to run the command against.
+func (c *Args) NodeList() []string {
+	return c.Nodes
+}
+
 // WithClientNoNodes wraps common code to initialize Talos client and provide cancellable context.
 //
 // WithClientNoNodes doesn't set any node information on the request context.
