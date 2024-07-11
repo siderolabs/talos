@@ -8,8 +8,10 @@ import (
 	"context"
 	"crypto/rand"
 	"encoding/base64"
+	"fmt"
 	"io"
 
+	"github.com/foxboron/go-uefi/efi"
 	"github.com/siderolabs/go-blockdevice/blockdevice/encryption"
 	"github.com/siderolabs/go-blockdevice/blockdevice/encryption/luks"
 	"github.com/siderolabs/go-blockdevice/blockdevice/encryption/token"
@@ -32,17 +34,30 @@ type TPMToken struct {
 // TPMKeyHandler seals token using TPM.
 type TPMKeyHandler struct {
 	KeyHandler
+
+	checkSecurebootOnEnroll bool
 }
 
 // NewTPMKeyHandler creates new TPMKeyHandler.
-func NewTPMKeyHandler(key KeyHandler) (*TPMKeyHandler, error) {
+func NewTPMKeyHandler(key KeyHandler, checkSecurebootOnEnroll bool) (*TPMKeyHandler, error) {
 	return &TPMKeyHandler{
-		KeyHandler: key,
+		KeyHandler:              key,
+		checkSecurebootOnEnroll: checkSecurebootOnEnroll,
 	}, nil
 }
 
 // NewKey implements Handler interface.
 func (h *TPMKeyHandler) NewKey(ctx context.Context) (*encryption.Key, token.Token, error) {
+	if h.checkSecurebootOnEnroll {
+		if !efi.GetSecureBoot() {
+			return nil, nil, fmt.Errorf("failed to enroll the TPM2 key, as SecureBoot is disabled (and checkSecurebootOnEnroll is enabled)")
+		}
+
+		if efi.GetSetupMode() {
+			return nil, nil, fmt.Errorf("failed to enroll the TPM2 key, as the system is in SecureBoot setup mode (and checkSecurebootOnEnroll is enabled)")
+		}
+	}
+
 	key := make([]byte, 32)
 	if _, err := io.ReadFull(rand.Reader, key); err != nil {
 		return nil, nil, err

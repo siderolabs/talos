@@ -1649,7 +1649,15 @@
       "type": "object"
     },
     "v1alpha1.EncryptionKeyTPM": {
-      "properties": {},
+      "properties": {
+        "checkSecurebootStatusOnEnroll": {
+          "type": "boolean",
+          "title": "checkSecurebootStatusOnEnroll",
+          "description": "Check that Secureboot is enabled in the EFI firmware.\nIf Secureboot is not enabled, the enrollment of the key will fail. As the TPM key is anyways bound to the value of PCR 7, changing Secureboot status or configuration after the initial enrollment will make the key unusable.\n",
+          "markdownDescription": "Check that Secureboot is enabled in the EFI firmware.\nIf Secureboot is not enabled, the enrollment of the key will fail. As the TPM key is anyways bound to the value of PCR 7, changing Secureboot status or configuration after the initial enrollment will make the key unusable.",
+          "x-intellij-html-description": "\u003cp\u003eCheck that Secureboot is enabled in the EFI firmware.\nIf Secureboot is not enabled, the enrollment of the key will fail. As the TPM key is anyways bound to the value of PCR 7, changing Secureboot status or configuration after the initial enrollment will make the key unusable.\u003c/p\u003e\n"
+        }
+      },
       "additionalProperties": false,
       "type": "object"
     },
