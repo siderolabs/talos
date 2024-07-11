@@ -551,7 +551,9 @@ func create(ctx context.Context, flags *pflag.FlagSet) error {
 					provisionOptions = append(provisionOptions, provision.WithKMS(nethelpers.JoinHostPort("0.0.0.0", port)))
 				case "tpm":
 					keys = append(keys, &v1alpha1.EncryptionKey{
-						KeyTPM:  &v1alpha1.EncryptionKeyTPM{},
+						KeyTPM: &v1alpha1.EncryptionKeyTPM{
+							TPMCheckSecurebootStatusOnEnroll: pointer.To(true),
+						},
 						KeySlot: i,
 					})
 				default:

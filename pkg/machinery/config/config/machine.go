@@ -390,6 +390,7 @@ type EncryptionKeyNodeID interface {
 
 // EncryptionKeyTPM encryption key sealed by TPM.
 type EncryptionKeyTPM interface {
+	CheckSecurebootOnEnroll() bool
 	String() string
 }
 

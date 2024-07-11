@@ -1438,6 +1438,15 @@ func (e *EncryptionKeyTPM) String() string {
 	return "tpm"
 }
 
+// CheckSecurebootOnEnroll implements the config.Provider interface.
+func (e *EncryptionKeyTPM) CheckSecurebootOnEnroll() bool {
+	if e == nil {
+		return false
+	}
+
+	return pointer.SafeDeref(e.TPMCheckSecurebootStatusOnEnroll)
+}
+
 // Slot implements the config.Provider interface.
 func (e *EncryptionKey) Slot() int {
 	return e.KeySlot

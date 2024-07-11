@@ -48,7 +48,7 @@ func NewHandler(cfg config.EncryptionKey, options ...KeyOption) (Handler, error)
 
 		return NewKMSKeyHandler(key, cfg.KMS().Endpoint(), opts.GetSystemInformation)
 	case cfg.TPM() != nil:
-		return NewTPMKeyHandler(key)
+		return NewTPMKeyHandler(key, cfg.TPM().CheckSecurebootOnEnroll())
 	}
 
 	return nil, errors.New("malformed config: no key handler can be created")
