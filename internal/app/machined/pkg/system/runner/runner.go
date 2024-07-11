@@ -174,6 +174,13 @@ func WithCgroupPath(path string) Option {
 	}
 }
 
+// WithSelinuxLabel sets the SELinux label.
+func WithSelinuxLabel(label string) Option {
+	return func(args *Options) {
+		args.SelinuxLabel = label
+	}
+}
+
 // WithCustomSeccompProfile sets the function to override seccomp profile.
 func WithCustomSeccompProfile(override func(*specs.LinuxSeccomp)) Option {
 	return func(args *Options) {
