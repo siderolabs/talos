@@ -155,6 +155,7 @@ func (t *Trustd) Runner(r runtime.Runtime) (runner.Runner, error) {
 		runner.WithContainerdAddress(constants.SystemContainerdAddress),
 		runner.WithEnv(env),
 		runner.WithCgroupPath(constants.CgroupTrustd),
+		runner.WithSelinuxLabel(constants.SelinuxLabelTrustd),
 		runner.WithOCISpecOpts(
 			containerd.WithMemoryLimit(int64(1000000*512)),
 			oci.WithDroppedCapabilities(cap.Known()),

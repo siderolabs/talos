@@ -672,8 +672,14 @@ const (
 	// CgroupApid is the cgroup name for apid runtime processes.
 	CgroupApid = CgroupSystem + "/apid"
 
+	// SelinuxLabelApid is the SELinux label for apid runtime processes.
+	SelinuxLabelApid = "system_u:system_r:talos_apid_t"
+
 	// CgroupTrustd is the cgroup name for trustd runtime processes.
 	CgroupTrustd = CgroupSystem + "/trustd"
+
+	// SelinuxLabelTrustd is the SELinux label for trustd runtime processes.
+	SelinuxLabelTrustd = "system_u:system_r:talos_trustd_t"
 
 	// CgroupUdevd is the cgroup name for udevd runtime processes.
 	CgroupUdevd = CgroupSystem + "/udevd"
@@ -695,6 +701,9 @@ const (
 
 	// CgroupKubelet is the cgroup name for kubelet process.
 	CgroupKubelet = "/podruntime/kubelet"
+
+	// SelinuxLabelKubelet is the SELinux label for kubelet process.
+	SelinuxLabelKubelet = "system_u:system_r:kubelet_t"
 
 	// CgroupKubeletReservedMemory is the hard memory protection for the kubelet processes.
 	CgroupKubeletReservedMemory = 64 * 1024 * 1024
