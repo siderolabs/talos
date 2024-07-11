@@ -39,3 +39,6 @@ node_modules
 website/resources
 website/public
 website/.hugo_build.lock
+
+policy.33
+file_contexts

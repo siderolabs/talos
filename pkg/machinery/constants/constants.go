@@ -673,13 +673,13 @@ const (
 	CgroupApid = CgroupSystem + "/apid"
 
 	// SelinuxLabelApid is the SELinux label for apid runtime processes.
-	SelinuxLabelApid = "system_u:system_r:talos_apid_t"
+	SelinuxLabelApid = "system_u:system_r:apid_t"
 
 	// CgroupTrustd is the cgroup name for trustd runtime processes.
 	CgroupTrustd = CgroupSystem + "/trustd"
 
 	// SelinuxLabelTrustd is the SELinux label for trustd runtime processes.
-	SelinuxLabelTrustd = "system_u:system_r:talos_trustd_t"
+	SelinuxLabelTrustd = "system_u:system_r:trustd_t"
 
 	// CgroupUdevd is the cgroup name for udevd runtime processes.
 	CgroupUdevd = CgroupSystem + "/udevd"
