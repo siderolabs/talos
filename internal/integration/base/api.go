@@ -448,7 +448,9 @@ func (apiSuite *APISuite) HashKubeletCert(ctx context.Context, node string) (str
 
 	_, err = io.Copy(hash, reader)
 	if err != nil {
-		return "", err
+		if client.StatusCode(err) != codes.NotFound { // not found, swallow it
+			return "", err
+		}
 	}
 
 	return hex.EncodeToString(hash.Sum(nil)), reader.Close()

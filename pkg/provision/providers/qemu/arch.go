@@ -124,8 +124,6 @@ func (arch Arch) PFlash(uefiEnabled bool, extraUEFISearchPaths []string) []PFlas
 			"ovmf-x86_64-4m-vars.bin",
 		}
 
-		uefiSourceFiles = append(uefiSourceFiles, uefiSourceFilesInsecure...)
-
 		// Append extra search paths
 		uefiSourcePathPrefixes = append(uefiSourcePathPrefixes, extraUEFISearchPaths...)
 
@@ -140,6 +138,12 @@ func (arch Arch) PFlash(uefiEnabled bool, extraUEFISearchPaths []string) []PFlas
 
 			for _, f := range uefiVarsFiles {
 				uefiVarsPaths = append(uefiVarsPaths, filepath.Join(p, f))
+			}
+		}
+
+		for _, p := range uefiSourcePathPrefixes {
+			for _, f := range uefiSourceFilesInsecure {
+				uefiSourcePaths = append(uefiSourcePaths, filepath.Join(p, f))
 			}
 		}
 

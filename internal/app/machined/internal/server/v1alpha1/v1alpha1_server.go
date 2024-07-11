@@ -1285,6 +1285,10 @@ func getContainerInspector(ctx context.Context, namespace string, driver common.
 func (s *Server) Read(in *machine.ReadRequest, srv machine.MachineService_ReadServer) (err error) {
 	stat, err := os.Stat(in.Path)
 	if err != nil {
+		if os.IsNotExist(err) {
+			return status.Error(codes.NotFound, err.Error())
+		}
+
 		return err
 	}
 
