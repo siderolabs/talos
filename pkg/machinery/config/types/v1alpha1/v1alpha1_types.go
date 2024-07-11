@@ -1596,7 +1596,16 @@ type EncryptionKeyKMS struct {
 }
 
 // EncryptionKeyTPM represents a key that is generated and then sealed/unsealed by the TPM.
-type EncryptionKeyTPM struct{}
+type EncryptionKeyTPM struct {
+	//   description: >
+	//     Check that Secureboot is enabled in the EFI firmware.
+	//
+	//     If Secureboot is not enabled, the enrollment of the key will fail.
+	//     As the TPM key is anyways bound to the value of PCR 7,
+	//     changing Secureboot status or configuration
+	//     after the initial enrollment will make the key unusable.
+	TPMCheckSecurebootStatusOnEnroll *bool `yaml:"checkSecurebootStatusOnEnroll,omitempty"`
+}
 
 // EncryptionKeyNodeID represents deterministically generated key from the node UUID and PartitionLabel.
 type EncryptionKeyNodeID struct{}

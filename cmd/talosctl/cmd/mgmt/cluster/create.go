@@ -20,6 +20,7 @@ import (
 	"github.com/dustin/go-humanize"
 	"github.com/siderolabs/go-blockdevice/blockdevice/encryption"
 	"github.com/siderolabs/go-kubeconfig"
+	"github.com/siderolabs/go-pointer"
 	"github.com/siderolabs/go-procfs/procfs"
 	sideronet "github.com/siderolabs/net"
 	"github.com/spf13/cobra"
@@ -465,7 +466,9 @@ func create(ctx context.Context, flags *pflag.FlagSet) (err error) {
 					provisionOptions = append(provisionOptions, provision.WithKMS(nethelpers.JoinHostPort("0.0.0.0", port)))
 				case "tpm":
 					keys = append(keys, &v1alpha1.EncryptionKey{
-						KeyTPM:  &v1alpha1.EncryptionKeyTPM{},
+						KeyTPM: &v1alpha1.EncryptionKeyTPM{
+							TPMCheckSecurebootStatusOnEnroll: pointer.To(true),
+						},
 						KeySlot: i,
 					})
 				default:

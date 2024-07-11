@@ -2377,6 +2377,10 @@ EncryptionKeyTPM represents a key that is generated and then sealed/unsealed by 
 
 
 
+| Field | Type | Description | Value(s) |
+|-------|------|-------------|----------|
+|`checkSecurebootStatusOnEnroll` |bool |<details><summary>Check that Secureboot is enabled in the EFI firmware.</summary>If Secureboot is not enabled, the enrollment of the key will fail. As the TPM key is anyways bound to the value of PCR 7, changing Secureboot status or configuration after the initial enrollment will make the key unusable.</details>  | |
+
 
 
 
@@ -2495,6 +2499,10 @@ EncryptionKeyTPM represents a key that is generated and then sealed/unsealed by 
 
 
 
+
+| Field | Type | Description | Value(s) |
+|-------|------|-------------|----------|
+|`checkSecurebootStatusOnEnroll` |bool |<details><summary>Check that Secureboot is enabled in the EFI firmware.</summary>If Secureboot is not enabled, the enrollment of the key will fail. As the TPM key is anyways bound to the value of PCR 7, changing Secureboot status or configuration after the initial enrollment will make the key unusable.</details>  | |
 
 
 
