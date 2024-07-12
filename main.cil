@@ -171,9 +171,6 @@
 (type init_t)
 (roletype system_r init_t)
 
-; HACK: placeholder
-(allow init_t object_r (file (read)))
-
 ;;;;;;;
 ; udev
 ;;;;;;;
