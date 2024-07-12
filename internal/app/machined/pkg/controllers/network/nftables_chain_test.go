@@ -442,8 +442,60 @@ func (s *NfTablesChainSuite) TestL4Match2() {
 	s.checkNftOutput(`table inet talos-test {
 	chain test-tcp {
 		type filter hook input priority filter; policy accept;
-		ip saddr != { 10.0.0.0/8 } tcp dport { 1023, 1024 } drop
-		meta nfproto ipv6 tcp dport { 1023, 1024 } drop
+		ip saddr != { 10.0.0.0/8 } tcp dport { 1023-1024 } drop
+		meta nfproto ipv6 tcp dport { 1023-1024 } drop
+	}
+}`)
+}
+
+func (s *NfTablesChainSuite) TestL4MatchAdjacentPorts() {
+	chain := network.NewNfTablesChain(network.NamespaceName, "test-tcp")
+	chain.TypedSpec().Type = nethelpers.ChainTypeFilter
+	chain.TypedSpec().Hook = nethelpers.ChainHookInput
+	chain.TypedSpec().Priority = nethelpers.ChainPriorityFilter
+	chain.TypedSpec().Policy = nethelpers.VerdictAccept
+	chain.TypedSpec().Rules = []network.NfTablesRule{
+		{
+			MatchSourceAddress: &network.NfTablesAddressMatch{
+				IncludeSubnets: []netip.Prefix{
+					netip.MustParsePrefix("10.0.0.0/8"),
+				},
+				Invert: true,
+			},
+			MatchLayer4: &network.NfTablesLayer4Match{
+				Protocol: nethelpers.ProtocolTCP,
+				MatchDestinationPort: &network.NfTablesPortMatch{
+					Ranges: []network.PortRange{
+						{
+							Lo: 5000,
+							Hi: 5000,
+						},
+						{
+							Lo: 5001,
+							Hi: 5001,
+						},
+						{
+							Lo: 10250,
+							Hi: 10250,
+						},
+						{
+							Lo: 4240,
+							Hi: 4240,
+						},
+					},
+				},
+			},
+			Verdict: pointer.To(nethelpers.VerdictDrop),
+		},
+	}
+
+	s.Require().NoError(s.State().Create(s.Ctx(), chain))
+
+	s.checkNftOutput(`table inet talos-test {
+	chain test-tcp {
+		type filter hook input priority filter; policy accept;
+		ip saddr != { 10.0.0.0/8 } tcp dport { 4240, 5000-5001, 10250 } drop
+		meta nfproto ipv6 tcp dport { 4240, 5000-5001, 10250 } drop
 	}
 }`)
 }

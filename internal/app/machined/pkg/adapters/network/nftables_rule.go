@@ -5,6 +5,7 @@
 package network
 
 import (
+	"cmp"
 	"fmt"
 	"net/netip"
 	"os"
@@ -109,9 +110,11 @@ func (set NfTablesSet) SetElements() []nftables.SetElement {
 
 		return elements
 	case SetKindPort:
-		elements := make([]nftables.SetElement, 0, len(set.Ports))
+		ports := mergeAdjacentPorts(set.Ports)
 
-		for _, p := range set.Ports {
+		elements := make([]nftables.SetElement, 0, len(ports))
+
+		for _, p := range ports {
 			from := binaryutil.BigEndian.PutUint16(p[0])
 			to := binaryutil.BigEndian.PutUint16(p[1] + 1)
 
@@ -155,6 +158,26 @@ func (set NfTablesSet) SetElements() []nftables.SetElement {
 	default:
 		panic(fmt.Sprintf("unknown set kind: %d", set.Kind))
 	}
+}
+
+func mergeAdjacentPorts(in [][2]uint16) [][2]uint16 {
+	ports := slices.Clone(in)
+
+	slices.SortFunc(ports, func(a, b [2]uint16) int {
+		// sort by the lower bound of the range, assume no overlap
+		return cmp.Compare(a[0], b[0])
+	})
+
+	for i := 0; i < len(ports)-1; {
+		if ports[i][1]+1 >= ports[i+1][0] {
+			ports[i][1] = ports[i+1][1]
+			ports = append(ports[:i+1], ports[i+2:]...)
+		} else {
+			i++
+		}
+	}
+
+	return ports
 }
 
 // NfTablesCompiled is a compiled representation of the rule.
