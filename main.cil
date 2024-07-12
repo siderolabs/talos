@@ -185,6 +185,7 @@
 (roletype system_r udev_t)
 
 (typetransition init_t udev_exec_t process udev_t)
+(allow init_t udev_t (process (transition)))
 
 ;;;;;;;
 ; dashboard
@@ -198,6 +199,7 @@
 (roletype system_r dashboard_t)
 
 (typetransition init_t dashboard_exec_t process dashboard_t)
+(allow init_t dashboard_t (process (transition)))
 
 ;;;;;;;
 ; misc
