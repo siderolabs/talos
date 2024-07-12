@@ -89,6 +89,7 @@ func (p *processRunner) build() (commandWrapper, error) {
 		fmt.Sprintf("-name=%s", p.args.ID),
 		fmt.Sprintf("-dropped-caps=%s", strings.Join(p.opts.DroppedCapabilities, ",")),
 		fmt.Sprintf("-cgroup-path=%s", cgroup.Path(p.opts.CgroupPath)),
+		fmt.Sprintf("-selinux-label=%s", p.opts.SelinuxLabel),
 		fmt.Sprintf("-oom-score=%d", p.opts.OOMScoreAdj),
 		fmt.Sprintf("-uid=%d", p.opts.UID),
 	}
