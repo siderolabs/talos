@@ -205,23 +205,30 @@
 ;;;;;;;
 ; misc
 ;;;;;;;
-(type unconfined_t)
-(roletype system_r unconfined_t)
-
-(type etcd_t)
-(roletype system_r etcd_t)
-
-(type kubelet_t)
-(roletype system_r kubelet_t)
-
-(type apid_t)
-(roletype system_r apid_t)
-
-(type trustd_t)
-(roletype system_r trustd_t)
-
 (type sys_containerd_t)
 (roletype system_r sys_containerd_t)
+(allow init_t sys_containerd_t (process (transition)))
 
 (type pod_containerd_t)
 (roletype client_r pod_containerd_t)
+(allow init_t pod_containerd_t (process (transition)))
+
+(type unconfined_t)
+(roletype system_r unconfined_t)
+(allow sys_containerd_t unconfined_t (process (transition)))
+
+(type etcd_t)
+(roletype system_r etcd_t)
+(allow sys_containerd_t etcd_t (process (transition)))
+
+(type kubelet_t)
+(roletype system_r kubelet_t)
+(allow sys_containerd_t kubelet_t (process (transition)))
+
+(type apid_t)
+(roletype system_r apid_t)
+(allow sys_containerd_t apid_t (process (transition)))
+
+(type trustd_t)
+(roletype system_r trustd_t)
+(allow sys_containerd_t trustd_t (process (transition)))
