@@ -208,6 +208,9 @@
 (type unconfined_t)
 (roletype system_r unconfined_t)
 
+(type etcd_t)
+(roletype system_r etcd_t)
+
 (type kubelet_t)
 (roletype system_r kubelet_t)
 
