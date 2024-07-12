@@ -527,12 +527,12 @@ func TestNfTablesRuleCompile(t *testing.T) { //nolint:tparallel
 					MatchSourcePort: &networkres.NfTablesPortMatch{
 						Ranges: []networkres.PortRange{
 							{
-								Lo: 1000,
-								Hi: 1025,
-							},
-							{
 								Lo: 2000,
 								Hi: 2000,
+							},
+							{
+								Lo: 1000,
+								Hi: 1025,
 							},
 						},
 					},
@@ -562,8 +562,8 @@ func TestNfTablesRuleCompile(t *testing.T) { //nolint:tparallel
 				{
 					Kind: network.SetKindPort,
 					Ports: [][2]uint16{
-						{1000, 1025},
 						{2000, 2000},
+						{1000, 1025},
 					},
 				},
 			},
@@ -710,6 +710,51 @@ func TestNfTablesRuleCompile(t *testing.T) { //nolint:tparallel
 
 			assert.Equal(t, test.expectedRules, result.Rules)
 			assert.Equal(t, test.expectedSets, result.Sets)
+		})
+	}
+}
+
+func TestNftablesSet(t *testing.T) { //nolint:tparallel
+	t.Parallel()
+
+	for _, test := range []struct {
+		name string
+
+		set network.NfTablesSet
+
+		expectedKeyType  nftables.SetDatatype
+		expectedInterval bool
+		expectedData     []nftables.SetElement
+	}{
+		{
+			name: "ports",
+
+			set: network.NfTablesSet{
+				Kind: network.SetKindPort,
+				Ports: [][2]uint16{
+					{443, 443},
+					{80, 81},
+					{5000, 5000},
+					{5001, 5001},
+				},
+			},
+
+			expectedKeyType:  nftables.TypeInetService,
+			expectedInterval: true,
+			expectedData: []nftables.SetElement{ // network byte order
+				{Key: []uint8{0x0, 80}, IntervalEnd: false}, // 80 - 81
+				{Key: []uint8{0x0, 82}, IntervalEnd: true},
+				{Key: []uint8{0x1, 0xbb}, IntervalEnd: false}, // 443-443
+				{Key: []uint8{0x1, 0xbc}, IntervalEnd: true},
+				{Key: []uint8{0x13, 0x88}, IntervalEnd: false}, // 5000-5001
+				{Key: []uint8{0x13, 0x8a}, IntervalEnd: true},
+			},
+		},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			assert.Equal(t, test.expectedKeyType, test.set.KeyType())
+			assert.Equal(t, test.expectedInterval, test.set.IsInterval())
+			assert.Equal(t, test.expectedData, test.set.SetElements())
 		})
 	}
 }
