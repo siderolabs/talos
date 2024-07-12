@@ -100,6 +100,57 @@
 (classorder (security process system filesystem file dir fd node context))
 
 ;;;;;;;
+; FS support
+;;;;;;;
+
+(type devpts_t)
+(roletype object_r devpts_t)
+(fsuse trans devpts (system_u object_r devpts_t (systemLow systemLow)))
+
+(type tmpfs_t)
+(roletype object_r tmpfs_t)
+(fsuse trans tmpfs (system_u object_r tmpfs_t (systemLow systemLow)))
+(fsuse trans shm (system_u object_r tmpfs_t (systemLow systemLow)))
+(fsuse trans mqueue (system_u object_r tmpfs_t (systemLow systemLow)))
+
+(type ramfs_t)
+(roletype object_r ramfs_t)
+(fsuse trans ramfs (system_u object_r ramfs_t (systemLow systemLow)))
+
+(type hugetlbfs_t)
+(roletype object_r hugetlbfs_t)
+(fsuse trans hugetlbfs (system_u object_r hugetlbfs_t (systemLow systemLow)))
+
+(fsuse task sockfs (system_u object_r fs_t (systemLow systemLow)))
+(fsuse task pipefs (system_u object_r fs_t (systemLow systemLow)))
+(fsuse task eventpollfs (system_u object_r fs_t (systemLow systemLow)))
+
+(fsuse xattr zfs (system_u object_r fs_t (systemLow systemLow)))
+(fsuse xattr xfs (system_u object_r fs_t (systemLow systemLow)))
+(fsuse xattr virtiofs (system_u object_r fs_t (systemLow systemLow)))
+(fsuse xattr ubifs (system_u object_r fs_t (systemLow systemLow)))
+(fsuse xattr squashfs (system_u object_r fs_t (systemLow systemLow)))
+(fsuse xattr overlay (system_u object_r fs_t (systemLow systemLow)))
+(fsuse xattr lustre (system_u object_r fs_t (systemLow systemLow)))
+(fsuse xattr jfs (system_u object_r fs_t (systemLow systemLow)))
+(fsuse xattr jffs2 (system_u object_r fs_t (systemLow systemLow)))
+(fsuse xattr gpfs (system_u object_r fs_t (systemLow systemLow)))
+(fsuse xattr gfs2 (system_u object_r fs_t (systemLow systemLow)))
+(fsuse xattr gfs (system_u object_r fs_t (systemLow systemLow)))
+(fsuse xattr f2fs (system_u object_r fs_t (systemLow systemLow)))
+(fsuse xattr ext4dev (system_u object_r fs_t (systemLow systemLow)))
+(fsuse xattr ext4 (system_u object_r fs_t (systemLow systemLow)))
+(fsuse xattr ext3 (system_u object_r fs_t (systemLow systemLow)))
+(fsuse xattr ext2 (system_u object_r fs_t (systemLow systemLow)))
+(fsuse xattr erofs (system_u object_r fs_t (systemLow systemLow)))
+(fsuse xattr encfs (system_u object_r fs_t (systemLow systemLow)))
+(fsuse xattr btrfs (system_u object_r fs_t (systemLow systemLow)))
+
+(type device_t)
+(roletype object_r device_t)
+(fsuse trans devtmpfs (system_u object_r device_t (systemLow systemLow)))
+
+;;;;;;;
 ; init
 ;;;;;;;
 (type init_exec_t)
