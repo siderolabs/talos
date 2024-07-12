@@ -25,6 +25,10 @@
 (type system_r)
 (roletype system_r system_r)
 
+(role client_r)
+(type client_r)
+(roletype client_r client_r)
+
 ;;;;;;;
 ; Base SIDs
 ;;;;;;;
@@ -87,6 +91,12 @@
 (userlevel system_u systemLow)
 (userrole system_u object_r)
 (userrole system_u system_r)
+
+(user client_u)
+(userrange client_u (systemLow systemLow))
+(userlevel client_u systemLow)
+(userrole client_u object_r)
+(userrole client_u client_r)
 
 (class security (compute_av compute_create compute_member check_context load_policy compute_relabel compute_user setenforce setbool setsecparam setcheckreqprot read_policy validate_trans ))
 (class filesystem (mount remount unmount getattr relabelfrom relabelto associate quotamod quotaget watch ))
@@ -206,3 +216,9 @@
 
 (type trustd_t)
 (roletype system_r trustd_t)
+
+(type sys_containerd_t)
+(roletype system_r sys_containerd_t)
+
+(type pod_containerd_t)
+(roletype client_r pod_containerd_t)

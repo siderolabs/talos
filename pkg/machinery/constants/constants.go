@@ -669,6 +669,9 @@ const (
 	// CgroupSystemRuntime is the cgroup name for containerd runtime processes.
 	CgroupSystemRuntime = CgroupSystem + "/runtime"
 
+	// SelinuxLabelSystemRuntime is the SELinux label for containerd runtime processes.
+	SelinuxLabelSystemRuntime = "system_u:system_r:sys_containerd_t"
+
 	// CgroupApid is the cgroup name for apid runtime processes.
 	CgroupApid = CgroupSystem + "/apid"
 
@@ -692,6 +695,9 @@ const (
 
 	// CgroupPodRuntime is the cgroup name for kubernetes containerd runtime processes.
 	CgroupPodRuntime = "/podruntime/runtime"
+
+	// SelinuxLabelPodRuntime is the SELinux label for kubernetes containerd runtime processes.
+	SelinuxLabelPodRuntime = "client_u:client_r:pod_containerd_t"
 
 	// CgroupPodRuntimeReservedMemory is the hard memory protection for the cri runtime processes.
 	CgroupPodRuntimeReservedMemory = 128 * 1024 * 1024
