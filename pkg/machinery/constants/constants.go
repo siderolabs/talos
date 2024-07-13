@@ -706,7 +706,7 @@ const (
 	CgroupEtcd = "/podruntime/etcd"
 
 	// SELinuxLabelEtcd is the SELinux label for etcd process.
-	SELinuxLabelEtcd = "system_u:system_r:etcd_t"
+	SELinuxLabelEtcd = "client_u:client_r:etcd_t"
 
 	// CgroupKubelet is the cgroup name for kubelet process.
 	CgroupKubelet = "/podruntime/kubelet"

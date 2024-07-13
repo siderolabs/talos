@@ -249,8 +249,8 @@
 (allow sys_containerd_t unconfined_t (process (transition)))
 
 (type etcd_t)
-(roletype system_r etcd_t)
-(allow sys_containerd_t etcd_t (process (transition)))
+(roletype client_r etcd_t)
+(allow pod_containerd_t etcd_t (process (transition)))
 
 (type kubelet_t)
 (roletype system_r kubelet_t)
