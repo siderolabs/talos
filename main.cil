@@ -84,7 +84,7 @@
 (sid kernel)
 (sidcontext kernel (system_u system_r kernel_t (systemLow systemLow)))
 
-(sidorder (kernel security unlabeled file init any_socket port netif netmsg node devnull ))
+(sidorder (kernel security unlabeled file init any_socket port netif netmsg node devnull))
 
 (user system_u)
 (userrange system_u (systemLow systemLow))
