@@ -165,7 +165,7 @@
 
 (type rootfs_t)
 (roletype object_r rootfs_t)
-(genfscon rootfs "/" (system_u object_r rootfs_t (systemLow systemLow)))
+(genfscon rootfs / (system_u object_r rootfs_t (systemLow systemLow)))
 
 (type sysfs_t)
 (roletype object_r sysfs_t)
