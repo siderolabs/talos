@@ -712,7 +712,7 @@ const (
 	CgroupKubelet = "/podruntime/kubelet"
 
 	// SelinuxLabelKubelet is the SELinux label for kubelet process.
-	SelinuxLabelKubelet = "system_u:system_r:kubelet_t"
+	SelinuxLabelKubelet = "client_u:client_r:kubelet_t"
 
 	// CgroupKubeletReservedMemory is the hard memory protection for the kubelet processes.
 	CgroupKubeletReservedMemory = 64 * 1024 * 1024
