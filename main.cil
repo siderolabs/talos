@@ -241,7 +241,7 @@
 (context udev_exec_t (system_u object_r udev_exec_t (systemLow systemLow)))
 (filecon "/sbin/udevd" file udev_exec_t)
 (filecon "/usr/bin/udevadm" file udev_exec_t)
-(filecon "/sbin/udevadm" file udev_exec_t)
+(filecon "/sbin/udevadm" symlink udev_exec_t)
 
 (type udev_t)
 (roletype system_r udev_t)
