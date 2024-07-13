@@ -226,6 +226,54 @@
 (fsuse trans devtmpfs (system_u object_r device_t (systemLow systemLow)))
 
 ;;;;;;;
+; basic FS
+;;;;;;;
+(type lib_t)
+(roletype object_r lib_t)
+(context lib_t (system_u object_r lib_t (systemLow systemLow)))
+(filecon "/lib(/.*)?" any lib_t)
+(filecon "/usr/lib(/.*)?" any lib_t)
+
+(type bin_t)
+(roletype object_r bin_t)
+(context bin_t (system_u object_r bin_t (systemLow systemLow)))
+(filecon "/bin(/.*)?" any bin_t)
+(filecon "/usr/bin(/.*)?" any bin_t)
+(filecon "/sbin(/.*)?" any bin_t)
+(filecon "/usr/sbin(/.*)?" any bin_t)
+(filecon "/usr/libexec(/.*)?" any bin_t)
+
+(type ssl_certificates_t)
+(roletype object_r ssl_certificates_t)
+(context ssl_certificates_t (system_u object_r ssl_certificates_t (systemLow systemLow)))
+(filecon "/etc/ssl(/.*)?" any ssl_certificates_t)
+(filecon "/etc/ca-certificates(/.*)?" any ssl_certificates_t)
+(filecon "/usr/share/ca-certificates(/.*)?" any ssl_certificates_t)
+
+(type timezone_t)
+(roletype object_r timezone_t)
+(filecon "/usr/share/zoneinfo(/.*)?" any (system_u object_r timezone_t (systemLow systemLow)))
+
+(type selinux_conf_t)
+(roletype object_r selinux_conf_t)
+(filecon "/etc/selinux(/.*)?" any (system_u object_r selinux_conf_t (systemLow systemLow)))
+
+(type k8s_conf_t)
+(roletype object_r k8s_conf_t)
+(context k8s_conf_t (system_u object_r k8s_conf_t (systemLow systemLow)))
+(filecon "/etc/cni(/.*)?" any k8s_conf_t)
+(filecon "/etc/containerd(/.*)?" any k8s_conf_t)
+(filecon "/etc/cri(/.*)?" any k8s_conf_t)
+
+(type boot_t)
+(roletype object_r boot_t)
+(filecon "/boot/(/.*)?" any (system_u object_r boot_t (systemLow systemLow)))
+
+(type firmware_t)
+(roletype object_r firmware_t)
+(filecon "/lib/firmware/(/.*)?" any (system_u object_r firmware_t (systemLow systemLow)))
+
+;;;;;;;
 ; init
 ;;;;;;;
 (type init_exec_t)
@@ -245,6 +293,16 @@
 (filecon "/sbin/udevd" file udev_exec_t)
 (filecon "/usr/bin/udevadm" file udev_exec_t)
 (filecon "/sbin/udevadm" symlink udev_exec_t)
+
+(filecon "/usr/lib/udev(/.*)?" any bin_t)
+
+(type udev_rules_t)
+(roletype object_r udev_rules_t)
+(filecon "/usr/lib/udev/rules.d(/.*)?" any (system_u object_r udev_rules_t (systemLow systemLow)))
+
+(type udev_conf_t)
+(roletype object_r udev_conf_t)
+(filecon "/usr/etc(/.*)?" any (system_u object_r udev_conf_t (systemLow systemLow)))
 
 (type udev_t)
 (roletype system_r udev_t)
