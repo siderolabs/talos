@@ -640,6 +640,7 @@ RUN <<END
     ln -s /etc/ssl /rootfs/usr/local/share/ca-certificates
     ln -s /etc/ssl /rootfs/etc/ca-certificates
 END
+COPY ./*.cil /rootfs/etc/selinux/talos/
 COPY ./policy.33 /rootfs/etc/selinux/talos/
 
 FROM build AS rootfs-base-arm64
