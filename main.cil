@@ -163,6 +163,36 @@
 (roletype object_r hugetlbfs_t)
 (fsuse trans hugetlbfs (system_u object_r hugetlbfs_t (systemLow systemLow)))
 
+(type rootfs_t)
+(roletype object_r rootfs_t)
+(genfscon rootfs "/" (system_u object_r rootfs_t (systemLow systemLow)))
+
+(type sysfs_t)
+(roletype object_r sysfs_t)
+(genfscon sysfs / (system_u object_r sysfs_t (systemLow systemLow)))
+
+(type bpf_t)
+(roletype object_r bpf_t)
+(genfscon bpf / (system_u object_r bpf_t (systemLow systemLow)))
+
+(type debugfs_t)
+(roletype object_r debugfs_t)
+(genfscon debugfs / (system_u object_r debugfs_t (systemLow systemLow)))
+
+(type cgroup_t)
+(roletype object_r cgroup_t)
+(genfscon cgroup / (system_u object_r cgroup_t (systemLow systemLow)))
+(genfscon cgroup2 / (system_u object_r cgroup_t (systemLow systemLow)))
+
+(type selinuxfs_t)
+(roletype object_r selinuxfs_t)
+(genfscon selinuxfs / (system_u object_r selinuxfs_t (systemLow systemLow)))
+
+(type procfs_t)
+(roletype object_r procfs_t)
+(genfscon proc / (system_u object_r procfs_t (systemLow systemLow)))
+; Can be extended
+
 (fsuse task sockfs (system_u object_r fs_t (systemLow systemLow)))
 (fsuse task pipefs (system_u object_r fs_t (systemLow systemLow)))
 (fsuse task eventpollfs (system_u object_r fs_t (systemLow systemLow)))
