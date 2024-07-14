@@ -206,6 +206,138 @@
 
 (class key (view read write search link setattr create))
 
+(common ipc_common (
+    create
+    destroy
+    getattr
+    setattr
+    read
+    write
+    associate
+    unix_read
+    unix_write
+))
+(class sem ())
+(classcommon sem ipc_common)
+(class msg (send receive))
+(class msgq (enqueue))
+(classcommon msgq ipc_common)
+(class shm (lock))
+(classcommon shm ipc_common)
+(class ipc ())
+(classcommon ipc ipc_common)
+
+(class obsolete_netlink_firewall_socket (nlmsg_read nlmsg_write))
+(classcommon obsolete_netlink_firewall_socket socket_common)
+(class netlink_tcpdiag_socket (nlmsg_read nlmsg_write))
+(classcommon netlink_tcpdiag_socket socket_common)
+(class netlink_nflog_socket ())
+(classcommon netlink_nflog_socket socket_common)
+(class netlink_xfrm_socket (nlmsg_read nlmsg_write))
+(classcommon netlink_xfrm_socket socket_common)
+(class netlink_selinux_socket ())
+(classcommon netlink_selinux_socket socket_common)
+(class netlink_audit_socket (
+    nlmsg_read
+    nlmsg_write
+    nlmsg_relay
+    nlmsg_readpriv
+    nlmsg_tty_audit
+))
+(classcommon netlink_audit_socket socket_common)
+(class obsolete_netlink_ip6fw_socket (nlmsg_read nlmsg_write))
+(classcommon obsolete_netlink_ip6fw_socket socket_common)
+(class netlink_dnrt_socket ())
+(classcommon netlink_dnrt_socket socket_common)
+(class appletalk_socket ())
+(classcommon appletalk_socket socket_common)
+
+(class packet (send recv relabelto forward_in forward_out))
+(class association (sendto recvfrom setcontext polmatch))
+
+(class dccp_socket (node_bind name_connect))
+(classcommon dccp_socket socket_common)
+(class memprotect (mmap_zero))
+(class peer (recv))
+
+(class kernel_service (use_as_override create_files_as))
+(class tun_socket (attach_queue))
+(classcommon tun_socket socket_common)
+(class binder (impersonate call set_context_mgr transfer))
+
+(class infiniband_pkey (access))
+(class infiniband_endport (manage_subnet))
+
+(class sctp_socket (node_bind name_connect association))
+(classcommon sctp_socket socket_common)
+(class icmp_socket (node_bind))
+(classcommon icmp_socket socket_common)
+(class ax25_socket ())
+(classcommon ax25_socket socket_common)
+(class ipx_socket ())
+(classcommon ipx_socket socket_common)
+(class netrom_socket ())
+(classcommon netrom_socket socket_common)
+(class atmpvc_socket ())
+(classcommon atmpvc_socket socket_common)
+(class x25_socket ())
+(classcommon x25_socket socket_common)
+(class rose_socket ())
+(classcommon rose_socket socket_common)
+(class decnet_socket ())
+(classcommon decnet_socket socket_common)
+(class atmsvc_socket ())
+(classcommon atmsvc_socket socket_common)
+(class rds_socket ())
+(classcommon rds_socket socket_common)
+(class irda_socket ())
+(classcommon irda_socket socket_common)
+(class pppox_socket ())
+(classcommon pppox_socket socket_common)
+(class llc_socket ())
+(classcommon llc_socket socket_common)
+(class can_socket ())
+(classcommon can_socket socket_common)
+(class tipc_socket ())
+(classcommon tipc_socket socket_common)
+(class bluetooth_socket ())
+(classcommon bluetooth_socket socket_common)
+(class iucv_socket ())
+(classcommon iucv_socket socket_common)
+(class rxrpc_socket ())
+(classcommon rxrpc_socket socket_common)
+(class isdn_socket ())
+(classcommon isdn_socket socket_common)
+(class phonet_socket ())
+(classcommon phonet_socket socket_common)
+(class ieee802154_socket ())
+(classcommon ieee802154_socket socket_common)
+(class caif_socket ())
+(classcommon caif_socket socket_common)
+(class alg_socket ())
+(classcommon alg_socket socket_common)
+(class nfc_socket ())
+(classcommon nfc_socket socket_common)
+(class vsock_socket ())
+(classcommon vsock_socket socket_common)
+(class kcm_socket ())
+(classcommon kcm_socket socket_common)
+(class qipcrtr_socket ())
+(classcommon qipcrtr_socket socket_common)
+(class smc_socket ())
+(classcommon smc_socket socket_common)
+
+(class xdp_socket ())
+(classcommon xdp_socket socket_common)
+(class mctp_socket ())
+(classcommon mctp_socket socket_common)
+(class perf_event (open cpu kernel tracepoint read write))
+(class lockdown (integrity confidentiality))
+(class anon_inode ())
+(classcommon anon_inode file_common)
+(class io_uring (override_creds sqpoll cmd))
+(class user_namespace (create))
+
 (classorder (
     security
     process
@@ -231,11 +363,33 @@
     key_socket
     unix_stream_socket
     unix_dgram_socket
+    sem
+    msg
+    msgq
+    shm
+    ipc
+    netlink_route_socket
+    obsolete_netlink_firewall_socket
+    netlink_tcpdiag_socket
+    netlink_nflog_socket
+    netlink_xfrm_socket
+    netlink_selinux_socket
+    netlink_audit_socket
+    obsolete_netlink_ip6fw_socket
+    netlink_dnrt_socket
+    association
     netlink_kobject_uevent_socket
+    appletalk_socket
+    packet
     key
     context
+    dccp_socket
+    memprotect
+    peer
     capability2
-    netlink_route_socket
+    kernel_service
+    tun_socket
+    binder
     netlink_iscsi_socket
     netlink_fib_lookup_socket
     netlink_connector_socket
@@ -244,8 +398,46 @@
     netlink_scsitransport_socket
     netlink_rdma_socket
     netlink_crypto_socket
+    infiniband_pkey
+    infiniband_endport
     cap_userns
     cap2_userns
+    sctp_socket
+    icmp_socket
+    ax25_socket
+    ipx_socket
+    netrom_socket
+    atmpvc_socket
+    x25_socket
+    rose_socket
+    decnet_socket
+    atmsvc_socket
+    rds_socket
+    irda_socket
+    pppox_socket
+    llc_socket
+    can_socket
+    tipc_socket
+    bluetooth_socket
+    iucv_socket
+    rxrpc_socket
+    isdn_socket
+    phonet_socket
+    ieee802154_socket
+    caif_socket
+    alg_socket
+    nfc_socket
+    vsock_socket
+    kcm_socket
+    qipcrtr_socket
+    smc_socket
     process2
     bpf
+    xdp_socket
+    mctp_socket
+    perf_event
+    lockdown
+    anon_inode
+    io_uring
+    user_namespace
 ))
