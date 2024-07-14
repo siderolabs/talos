@@ -379,10 +379,14 @@
 
 (type etcd_t)
 (roletype client_r etcd_t)
+; FIXME: insecure as anyone with access to the pod containerd may obtain this domain
+(allow etcd_t unlabeled_t (file (entrypoint)))
 (allow pod_containerd_t etcd_t (process2 (nnp_transition)))
 (allow pod_containerd_t etcd_t (process (transition)))
 
 (type kubelet_t)
 (roletype client_r kubelet_t)
+; FIXME: insecure as anyone with access to the pod containerd may obtain this domain
+(allow kubelet_t unlabeled_t (file (entrypoint)))
 (allow pod_containerd_t kubelet_t (process2 (nnp_transition)))
 (allow pod_containerd_t kubelet_t (process (transition)))
