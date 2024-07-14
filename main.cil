@@ -130,6 +130,8 @@
 (userrole client_u object_r)
 (userrole client_u client_r)
 
+(roleallow system_r client_r)
+
 (class security (compute_av compute_create compute_member check_context load_policy compute_relabel compute_user setenforce setbool setsecparam setcheckreqprot read_policy validate_trans ))
 (class filesystem (mount remount unmount getattr relabelfrom relabelto associate quotamod quotaget watch ))
 (class file (read write open getattr setattr entrypoint))
