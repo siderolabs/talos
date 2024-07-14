@@ -284,6 +284,7 @@
 
 (type init_t)
 (roletype system_r init_t)
+(allow kernel_t init_t (process (transition)))
 (allow init_t init_exec_t (file (entrypoint)))
 
 ;;;;;;;
