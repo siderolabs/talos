@@ -132,7 +132,7 @@
 
 (class security (compute_av compute_create compute_member check_context load_policy compute_relabel compute_user setenforce setbool setsecparam setcheckreqprot read_policy validate_trans ))
 (class filesystem (mount remount unmount getattr relabelfrom relabelto associate quotamod quotaget watch ))
-(class file (read write open getattr setattr))
+(class file (read write open getattr setattr entrypoint))
 (class process (fork transition sigchld sigkill sigstop signull signal ptrace getsched setsched getsession getpgid setpgid getcap setcap share getattr setexec setfscreate noatsecure siginh setrlimit rlimitinh dyntransition setcurrent execmem execstack execheap setkeycreate setsockcreate getrlimit ))
 (class system (ipc_info syslog_read syslog_mod syslog_console module_request module_load halt reboot status start stop enable disable reload ))
 (class dir (add_name remove_name reparent search rmdir ))
@@ -283,6 +283,7 @@
 
 (type init_t)
 (roletype system_r init_t)
+(allow init_t init_exec_t (file (entrypoint)))
 
 ;;;;;;;
 ; udev
@@ -307,7 +308,7 @@
 (type udev_t)
 (roletype system_r udev_t)
 
-(typetransition init_t udev_exec_t process udev_t)
+(allow udev_t udev_exec_t (file (entrypoint)))
 (allow init_t udev_t (process (transition)))
 
 ;;;;;;;
@@ -321,7 +322,7 @@
 (type dashboard_t)
 (roletype system_r dashboard_t)
 
-(typetransition init_t dashboard_exec_t process dashboard_t)
+(allow dashboard_t dashboard_exec_t (file (entrypoint)))
 (allow init_t dashboard_t (process (transition)))
 
 ;;;;;;;
