@@ -1,0 +1,14 @@
+; FIXME: integrate into build system: secilc -c 33 selinux/**/*.cil
+
+(sensitivity s0)
+(sensitivityorder (s0))
+(level systemLow (s0))
+(handleunknown deny)
+(mls true)
+(typeattribute cil_gen_require)
+(roleattribute cil_gen_require)
+(policycap network_peer_controls)
+(policycap open_perms)
+(policycap extended_socket_class)
+(policycap cgroup_seclabel)
+(policycap nnp_nosuid_transition)
