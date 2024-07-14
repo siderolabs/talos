@@ -1,0 +1,22 @@
+(type udev_exec_t)
+(roletype object_r udev_exec_t)
+(context udev_exec_t (system_u object_r udev_exec_t (systemLow systemLow)))
+(filecon "/sbin/udevd" file udev_exec_t)
+(filecon "/usr/bin/udevadm" file udev_exec_t)
+(filecon "/sbin/udevadm" symlink udev_exec_t)
+
+(filecon "/usr/lib/udev(/.*)?" any bin_t)
+
+(type udev_rules_t)
+(roletype object_r udev_rules_t)
+(filecon "/usr/lib/udev/rules.d(/.*)?" any (system_u object_r udev_rules_t (systemLow systemLow)))
+
+(type udev_conf_t)
+(roletype object_r udev_conf_t)
+(filecon "/usr/etc(/.*)?" any (system_u object_r udev_conf_t (systemLow systemLow)))
+
+(type udev_t)
+(roletype system_r udev_t)
+
+(allow udev_t udev_exec_t (file (entrypoint)))
+(allow init_t udev_t (process (transition)))

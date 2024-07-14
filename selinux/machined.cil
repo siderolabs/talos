@@ -1,0 +1,9 @@
+(type init_exec_t)
+(roletype object_r init_exec_t)
+(context init_exec_t (system_u object_r init_exec_t (systemLow systemLow)))
+(filecon "/sbin/init" file init_exec_t)
+
+(type init_t)
+(roletype system_r init_t)
+(allow kernel_t init_t (process (transition)))
+(allow init_t init_exec_t (file (entrypoint)))

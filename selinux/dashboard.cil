@@ -1,0 +1,10 @@
+(type dashboard_exec_t)
+(roletype object_r dashboard_exec_t)
+(context dashboard_exec_t (system_u object_r dashboard_exec_t (systemLow systemLow)))
+(filecon "/sbin/dashboard" file dashboard_exec_t)
+
+(type dashboard_t)
+(roletype system_r dashboard_t)
+
+(allow dashboard_t dashboard_exec_t (file (entrypoint)))
+(allow init_t dashboard_t (process (transition)))
