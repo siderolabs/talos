@@ -134,12 +134,13 @@
 (class filesystem (mount remount unmount getattr relabelfrom relabelto associate quotamod quotaget watch ))
 (class file (read write open getattr setattr entrypoint))
 (class process (fork transition sigchld sigkill sigstop signull signal ptrace getsched setsched getsession getpgid setpgid getcap setcap share getattr setexec setfscreate noatsecure siginh setrlimit rlimitinh dyntransition setcurrent execmem execstack execheap setkeycreate setsockcreate getrlimit ))
+(class process2 (nnp_transition))
 (class system (ipc_info syslog_read syslog_mod syslog_console module_request module_load halt reboot status start stop enable disable reload ))
 (class dir (add_name remove_name reparent search rmdir ))
 (class fd (use ))
 (class node (recvfrom sendto ))
 (class context (unused_perm contains ))
-(classorder (security process system filesystem file dir fd node context))
+(classorder (security process process2 system filesystem file dir fd node context))
 
 ;;;;;;;
 ; FS support
@@ -351,22 +352,27 @@
 ; Possibly a service misconfigured by machined
 (type unconfined_container_t)
 (roletype system_r unconfined_container_t)
+(allow sys_containerd_t unconfined_container_t (process2 (nnp_transition)))
 (allow sys_containerd_t unconfined_container_t (process (transition)))
 
 (type apid_t)
 (roletype system_r apid_t)
 (allow apid_t init_exec_t (file (entrypoint)))
+(allow sys_containerd_t apid_t (process2 (nnp_transition)))
 (allow sys_containerd_t apid_t (process (transition)))
 
 (type trustd_t)
 (roletype system_r trustd_t)
 (allow trustd_t init_exec_t (file (entrypoint)))
+(allow sys_containerd_t trustd_t (process2 (nnp_transition)))
 (allow sys_containerd_t trustd_t (process (transition)))
 
 (type etcd_t)
 (roletype client_r etcd_t)
+(allow pod_containerd_t etcd_t (process2 (nnp_transition)))
 (allow pod_containerd_t etcd_t (process (transition)))
 
 (type kubelet_t)
 (roletype client_r kubelet_t)
+(allow pod_containerd_t kubelet_t (process2 (nnp_transition)))
 (allow pod_containerd_t kubelet_t (process (transition)))
