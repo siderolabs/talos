@@ -346,6 +346,13 @@
 (allow pod_containerd_t containerd_exec_t (file (entrypoint)))
 (allow init_t pod_containerd_t (process (transition)))
 
+(type pod_t)
+(roletype client_r pod_t)
+(typetransition pod_containerd_t unlabeled_t process pod_t)
+(allow pod_containerd_t pod_t (process (transition)))
+(allow pod_containerd_t pod_t (process2 (nnp_transition)))
+(allow pod_t unlabeled_t (file (entrypoint)))
+
 ; Should not occur unless misconfigured by machined
 (type unconfined_service_t)
 (roletype system_r unconfined_service_t)
