@@ -88,7 +88,7 @@ func Switch(prefix string, mountpoints *mount.Points) (err error) {
 	}
 
 	// TODO: enforce (https://github.com/SELinuxProject/selinux/blob/e81a05a5050354261049cc7b5987372e763fc5f4/libselinux/src/setenforce.c#L12)
-	err = os.WriteFile("/proc/self/attr/exec", []byte("system_u:system_r:init_t"), 0777)
+	err = os.WriteFile("/proc/self/attr/exec", []byte("system_u:system_r:init_t:s0"), 0777)
 	if err != nil {
 		return err
 	}

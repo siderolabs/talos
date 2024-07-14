@@ -670,25 +670,25 @@ const (
 	CgroupSystemRuntime = CgroupSystem + "/runtime"
 
 	// SelinuxLabelSystemRuntime is the SELinux label for containerd runtime processes.
-	SelinuxLabelSystemRuntime = "system_u:system_r:sys_containerd_t"
+	SelinuxLabelSystemRuntime = "system_u:system_r:sys_containerd_t:s0"
 
 	// CgroupApid is the cgroup name for apid runtime processes.
 	CgroupApid = CgroupSystem + "/apid"
 
 	// SelinuxLabelApid is the SELinux label for apid runtime processes.
-	SelinuxLabelApid = "system_u:system_r:apid_t"
+	SelinuxLabelApid = "system_u:system_r:apid_t:s0"
 
 	// CgroupTrustd is the cgroup name for trustd runtime processes.
 	CgroupTrustd = CgroupSystem + "/trustd"
 
 	// SelinuxLabelTrustd is the SELinux label for trustd runtime processes.
-	SelinuxLabelTrustd = "system_u:system_r:trustd_t"
+	SelinuxLabelTrustd = "system_u:system_r:trustd_t:s0"
 
 	// CgroupUdevd is the cgroup name for udevd runtime processes.
 	CgroupUdevd = CgroupSystem + "/udevd"
 
 	// SelinuxLabelUdevd is the SELinux label for udevd runtime processes.
-	SelinuxLabelUdevd = "system_u:system_r:udev_t"
+	SelinuxLabelUdevd = "system_u:system_r:udev_t:s0"
 
 	// CgroupExtensions is the cgroup name for system extension processes.
 	CgroupExtensions = CgroupSystem + "/extensions"
@@ -697,13 +697,13 @@ const (
 	CgroupDashboard = CgroupSystem + "/dashboard"
 
 	// SelinuxLabelDashboard is the SELinux label for dashboard process.
-	SelinuxLabelDashboard = "system_u:system_r:dashboard_t"
+	SelinuxLabelDashboard = "system_u:system_r:dashboard_t:s0"
 
 	// CgroupPodRuntime is the cgroup name for kubernetes containerd runtime processes.
 	CgroupPodRuntime = "/podruntime/runtime"
 
 	// SelinuxLabelPodRuntime is the SELinux label for kubernetes containerd runtime processes.
-	SelinuxLabelPodRuntime = "client_u:client_r:pod_containerd_t"
+	SelinuxLabelPodRuntime = "client_u:client_r:pod_containerd_t:s0"
 
 	// CgroupPodRuntimeReservedMemory is the hard memory protection for the cri runtime processes.
 	CgroupPodRuntimeReservedMemory = 128 * 1024 * 1024
@@ -712,13 +712,13 @@ const (
 	CgroupEtcd = "/podruntime/etcd"
 
 	// SELinuxLabelEtcd is the SELinux label for etcd process.
-	SELinuxLabelEtcd = "client_u:client_r:etcd_t"
+	SELinuxLabelEtcd = "client_u:client_r:etcd_t:s0"
 
 	// CgroupKubelet is the cgroup name for kubelet process.
 	CgroupKubelet = "/podruntime/kubelet"
 
 	// SelinuxLabelKubelet is the SELinux label for kubelet process.
-	SelinuxLabelKubelet = "client_u:client_r:kubelet_t"
+	SelinuxLabelKubelet = "client_u:client_r:kubelet_t:s0"
 
 	// CgroupKubeletReservedMemory is the hard memory protection for the kubelet processes.
 	CgroupKubeletReservedMemory = 64 * 1024 * 1024

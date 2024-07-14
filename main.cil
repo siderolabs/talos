@@ -4,7 +4,7 @@
 (sensitivityorder (s0))
 (level systemLow (s0))
 (handleunknown deny)
-(mls false)
+(mls true)
 (typeattribute cil_gen_require)
 (roleattribute cil_gen_require)
 (policycap network_peer_controls)

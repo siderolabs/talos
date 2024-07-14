@@ -57,7 +57,7 @@ func Main() {
 			log.Fatalf("%s", err)
 		}
 	} else {
-		err := os.WriteFile("/proc/thread-self/attr/exec", []byte("system_u:system_r:unconfined_service_t"), 0777)
+		err := os.WriteFile("/proc/thread-self/attr/exec", []byte("system_u:system_r:unconfined_service_t:s0"), 0777)
 		if err != nil {
 			log.Fatalf("%s", err)
 		}

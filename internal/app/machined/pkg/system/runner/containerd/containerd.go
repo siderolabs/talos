@@ -349,7 +349,7 @@ func (c *containerdRunner) newOCISpecOpts(image oci.Image) []oci.SpecOpts {
 	} else {
 		specOpts = append(
 			specOpts,
-			oci.WithSelinuxLabel("system_u:system_r:unconfined_container_t"),
+			oci.WithSelinuxLabel("system_u:system_r:unconfined_container_t:s0"),
 		)
 	}
 
