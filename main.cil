@@ -336,9 +336,16 @@
 (roletype client_r pod_containerd_t)
 (allow init_t pod_containerd_t (process (transition)))
 
-(type unconfined_t)
-(roletype system_r unconfined_t)
-(allow sys_containerd_t unconfined_t (process (transition)))
+; Should not occur unless misconfigured by machined
+(type unconfined_service_t)
+(roletype system_r unconfined_service_t)
+(allow init_t unconfined_service_t (process (transition)))
+
+; Typically a system extension
+; Possibly a service misconfigured by machined
+(type unconfined_container_t)
+(roletype system_r unconfined_container_t)
+(allow sys_containerd_t unconfined_container_t (process (transition)))
 
 (type apid_t)
 (roletype system_r apid_t)

@@ -51,6 +51,11 @@ func Main() {
 		if err != nil {
 			log.Fatalf("%s", err)
 		}
+	} else {
+		err := os.WriteFile("/proc/self/attr/exec", []byte("system_u:system_r:unconfined_service_t"), 0777)
+		if err != nil {
+			log.Fatalf("%s", err)
+		}
 	}
 
 	if oomScore != 0 {

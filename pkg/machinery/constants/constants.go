@@ -687,11 +687,17 @@ const (
 	// CgroupUdevd is the cgroup name for udevd runtime processes.
 	CgroupUdevd = CgroupSystem + "/udevd"
 
+	// SelinuxLabelUdevd is the SELinux label for udevd runtime processes.
+	SelinuxLabelUdevd = "system_u:system_r:udev_t"
+
 	// CgroupExtensions is the cgroup name for system extension processes.
 	CgroupExtensions = CgroupSystem + "/extensions"
 
 	// CgroupDashboard is the cgroup name for dashboard process.
 	CgroupDashboard = CgroupSystem + "/dashboard"
+
+	// SelinuxLabelDashboard is the SELinux label for dashboard process.
+	SelinuxLabelDashboard = "system_u:system_r:dashboard_t"
 
 	// CgroupPodRuntime is the cgroup name for kubernetes containerd runtime processes.
 	CgroupPodRuntime = "/podruntime/runtime"
