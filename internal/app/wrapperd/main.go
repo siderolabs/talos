@@ -9,6 +9,7 @@ import (
 	"flag"
 	"log"
 	"os"
+	"runtime"
 	"strings"
 
 	"github.com/containerd/cgroups/v3"
@@ -46,13 +47,17 @@ func Main() {
 
 	currentPid := os.Getpid()
 
+	runtime.LockOSThread()
+
+	// Use /proc/thread-self (Linux 3.17+) to avoid races between current
+	// process threads leading to loss of the domain transition
 	if selinuxLabel != "" {
-		err := os.WriteFile("/proc/self/attr/exec", []byte(selinuxLabel), 0777)
+		err := os.WriteFile("/proc/thread-self/attr/exec", []byte(selinuxLabel), 0777)
 		if err != nil {
 			log.Fatalf("%s", err)
 		}
 	} else {
-		err := os.WriteFile("/proc/self/attr/exec", []byte("system_u:system_r:unconfined_service_t"), 0777)
+		err := os.WriteFile("/proc/thread-self/attr/exec", []byte("system_u:system_r:unconfined_service_t"), 0777)
 		if err != nil {
 			log.Fatalf("%s", err)
 		}
