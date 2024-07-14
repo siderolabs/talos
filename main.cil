@@ -88,9 +88,16 @@
 (userrole system_u object_r)
 (userrole system_u system_r)
 
-(class file (read write open getattr))
+(class security (compute_av compute_create compute_member check_context load_policy compute_relabel compute_user setenforce setbool setsecparam setcheckreqprot read_policy validate_trans ))
+(class filesystem (mount remount unmount getattr relabelfrom relabelto associate quotamod quotaget watch ))
+(class file (read write open getattr setattr))
 (class process (fork transition sigchld sigkill sigstop signull signal ptrace getsched setsched getsession getpgid setpgid getcap setcap share getattr setexec setfscreate noatsecure siginh setrlimit rlimitinh dyntransition setcurrent execmem execstack execheap setkeycreate setsockcreate getrlimit ))
-(classorder (process file))
+(class system (ipc_info syslog_read syslog_mod syslog_console module_request module_load halt reboot status start stop enable disable reload ))
+(class dir (add_name remove_name reparent search rmdir ))
+(class fd (use ))
+(class node (recvfrom sendto ))
+(class context (unused_perm contains ))
+(classorder (security process system filesystem file dir fd node context))
 
 ;;;;;;;
 ; init
