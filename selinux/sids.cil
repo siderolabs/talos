@@ -81,4 +81,32 @@
 (sid kernel)
 (sidcontext kernel (system_u system_r kernel_t (systemLow systemLow)))
 
-(sidorder (kernel security unlabeled fs file file_labels init any_socket port netif netmsg node igmp_packet icmp_socket tcp_socket sysctl_modprobe sysctl sysctl_fs sysctl_kernel sysctl_net sysctl_net_unix sysctl_vm sysctl_dev kmod policy scmp_packet devnull))
+(sidorder (
+    kernel
+    security
+    unlabeled
+    fs
+    file
+    file_labels
+    init
+    any_socket
+    port
+    netif
+    netmsg
+    node
+    igmp_packet
+    icmp_socket
+    tcp_socket
+    sysctl_modprobe
+    sysctl
+    sysctl_fs
+    sysctl_kernel
+    sysctl_net
+    sysctl_net_unix
+    sysctl_vm
+    sysctl_dev
+    kmod
+    policy
+    scmp_packet
+    devnull
+))
