@@ -6,15 +6,15 @@
 (type system_r)
 (roletype system_r system_r)
 
-(role client_r)
-(type client_r)
-(roletype client_r client_r)
-
 (user system_u)
 (userrange system_u (systemLow systemLow))
 (userlevel system_u systemLow)
 (userrole system_u object_r)
 (userrole system_u system_r)
+
+(role client_r)
+(type client_r)
+(roletype client_r client_r)
 
 (user client_u)
 (userrange client_u (systemLow systemLow))
