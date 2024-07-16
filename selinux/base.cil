@@ -41,4 +41,4 @@
 
 (type firmware_t)
 (roletype object_r firmware_t)
-(filecon "/lib/firmware/(/.*)?" any (system_u object_r firmware_t (systemLow systemLow)))
+(filecon "/lib/firmware(/.*)?" any (system_u object_r firmware_t (systemLow systemLow)))
