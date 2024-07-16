@@ -15,10 +15,10 @@ import (
 
 // Memory returns the minimal/recommended amount of memory required to run the node.
 func Memory(typ machine.Type) (minimum, recommended uint64, err error) {
-	// We remove 100 MiB from the recommended memory to account for the kernel
+	// We remove 150 MiB from the recommended memory to account for the kernel
 	switch typ { //nolint:exhaustive
 	case machine.TypeControlPlane, machine.TypeInit:
-		minimum = 2*humanize.GiByte - 150*humanize.MiByte
+		minimum = 1848*humanize.MiByte - 150*humanize.MiByte
 		recommended = 4*humanize.GiByte - 150*humanize.MiByte
 
 	case machine.TypeWorker:
