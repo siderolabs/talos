@@ -157,3 +157,9 @@ func (contract *VersionContract) ClusterNameForWorkers() bool {
 func (contract *VersionContract) HostDNSForwardKubeDNSToHost() bool {
 	return contract.Greater(TalosVersion1_7)
 }
+
+// AddExcludeFromExternalLoadBalancer returns true if the label 'node.kubernetes.io/exclude-from-external-load-balancers' is automatically added
+// for controlplane nodes.
+func (contract *VersionContract) AddExcludeFromExternalLoadBalancer() bool {
+	return contract.Greater(TalosVersion1_7)
+}

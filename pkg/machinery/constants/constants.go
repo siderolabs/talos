@@ -375,6 +375,9 @@ const (
 	// LabelNodeRoleControlPlane is the node label required by a control plane node.
 	LabelNodeRoleControlPlane = "node-role.kubernetes.io/control-plane"
 
+	// LabelExcludeFromExternalLB can be set on a node to exclude it from external load balancers.
+	LabelExcludeFromExternalLB = "node.kubernetes.io/exclude-from-external-load-balancers"
+
 	// ManifestsDirectory is the directory that contains all static manifests.
 	ManifestsDirectory = KubernetesConfigBaseDir + "/" + "manifests"
 

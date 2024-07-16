@@ -97,6 +97,12 @@ Talos Linux configures kube-proxy >= v1.31.0 to use 'nftables' backend by defaul
 Talos Linux now supports adding [custom trusted roots](https://www.talos.dev/v1.8/talos-guides/configuration/certificate-authorities/) (CA certificates) via `TrustedRootsConfig` configuration documents.
 """
 
+    [notes.labels]
+        title = "Default Node Labels"
+        description = """\
+Talos Linux on config generation now adds a label `node.kubernetes.io/exclude-from-external-load-balancers` by default for the control plane nodes.
+"""
+
 [make_deps]
 
     [make_deps.tools]

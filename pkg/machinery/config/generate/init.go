@@ -100,6 +100,14 @@ func (in *Input) init() ([]config.Document, error) {
 		}
 	}
 
+	if in.Options.VersionContract.AddExcludeFromExternalLoadBalancer() {
+		if machine.MachineNodeLabels == nil {
+			machine.MachineNodeLabels = map[string]string{}
+		}
+
+		machine.MachineNodeLabels[constants.LabelExcludeFromExternalLB] = ""
+	}
+
 	certSANs := in.GetAPIServerSANs()
 
 	controlPlaneURL, err := url.Parse(in.ControlPlaneEndpoint)
