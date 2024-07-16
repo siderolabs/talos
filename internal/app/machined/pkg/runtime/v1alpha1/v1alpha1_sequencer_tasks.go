@@ -1106,6 +1106,7 @@ func injectCRIConfigPatch(ctx context.Context, st state.State, content []byte) e
 	etcFileSpec := resourcefiles.NewEtcFileSpec(resourcefiles.NamespaceName, constants.CRICustomizationConfigPart)
 	etcFileSpec.TypedSpec().Mode = 0o600
 	etcFileSpec.TypedSpec().Contents = content
+	etcFileSpec.TypedSpec().SelinuxLabel = "system_u:object_r:k8s_conf_t:s0"
 
 	if err := st.Create(ctx, etcFileSpec); err != nil {
 		return err
