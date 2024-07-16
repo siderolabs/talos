@@ -124,7 +124,7 @@ func (check *preflightCheckContext) cniDirectories(ctx context.Context) error {
 				return fmt.Errorf("error checking CNI directory %q: %w", cniDir, err)
 			}
 
-			fmt.Fprintf(os.Stderr, "creating %q\n", cniDir)
+			fmt.Fprintf(check.options.LogWriter, "creating %q\n", cniDir)
 
 			err = os.MkdirAll(cniDir, 0o777)
 			if err != nil {
@@ -181,7 +181,7 @@ func (check *preflightCheckContext) cniBundle(ctx context.Context) error {
 	src := strings.ReplaceAll(check.request.Network.CNI.BundleURL, constants.ArchVariable, runtime.GOARCH)
 	dst := check.request.Network.CNI.BinPath[0]
 
-	fmt.Fprintf(os.Stderr, "downloading CNI bundle from %q to %q\n", src, dst)
+	fmt.Fprintf(check.options.LogWriter, "downloading CNI bundle from %q to %q\n", src, dst)
 
 	_, err = client.Get(ctx, &getter.Request{
 		Src:     src,
