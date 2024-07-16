@@ -1,6 +1,6 @@
 **
 !api
-!*.cil
+!selinux
 !policy.33
 !file_contexts
 !cmd
