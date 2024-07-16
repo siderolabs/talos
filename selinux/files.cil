@@ -1,7 +1,6 @@
 (type usr_t)
 (roletype object_r usr_t)
-(context usr_t (system_u object_r usr_t (systemLow systemLow)))
-(filecon "/usr(/.*)?" any usr_t)
+(filecon "/usr(/.*)?" any (system_u object_r usr_t (systemLow systemLow)))
 
 (type lib_t)
 (roletype object_r lib_t)
@@ -32,13 +31,11 @@
 
 (type etc_t)
 (roletype object_r etc_t)
-(context etc_t (system_u object_r etc_t (systemLow systemLow)))
-(filecon "/etc(/.*)?" any etc_t)
+(filecon "/etc(/.*)?" any (system_u object_r etc_t (systemLow systemLow)))
 
 (type lvm_conf_t)
 (roletype object_r lvm_conf_t)
-(context lvm_conf_t (system_u object_r lvm_conf_t (systemLow systemLow)))
-(filecon "/etc/lvm(/.*)?" any lvm_conf_t)
+(filecon "/etc/lvm(/.*)?" any (system_u object_r lvm_conf_t (systemLow systemLow)))
 
 (type selinux_conf_t)
 (roletype object_r selinux_conf_t)
@@ -55,13 +52,11 @@
 
 (type extra_t)
 (roletype object_r extra_t)
-(context extra_t (system_u object_r extra_t (systemLow systemLow)))
-(filecon "/.extra(/.*)?" any extra_t)
+(filecon "/.extra(/.*)?" any (system_u object_r extra_t (systemLow systemLow)))
 
 (type opt_containerd_t)
 (roletype object_r opt_containerd_t)
-(context opt_containerd_t (system_u object_r opt_containerd_t (systemLow systemLow)))
-(filecon "/opt/containerd(/.*)?" any opt_containerd_t)
+(filecon "/opt/containerd(/.*)?" any (system_u object_r opt_containerd_t (systemLow systemLow)))
 
 (type firmware_t)
 (roletype object_r firmware_t)
@@ -69,28 +64,15 @@
 
 (type block_device_t)
 (roletype object_r block_device_t)
-(context block_device_t (system_u object_r block_device_t (systemLow systemLow)))
-
 (type tty_device_t)
 (roletype object_r tty_device_t)
-(context tty_device_t (system_u object_r tty_device_t (systemLow systemLow)))
-
 (type clock_device_t)
 (roletype object_r clock_device_t)
-(context clock_device_t (system_u object_r clock_device_t (systemLow systemLow)))
-
 (type tpm_device_t)
 (roletype object_r tpm_device_t)
-(context tpm_device_t (system_u object_r tpm_device_t (systemLow systemLow)))
-
 (type drm_device_t)
 (roletype object_r drm_device_t)
-(context drm_device_t (system_u object_r drm_device_t (systemLow systemLow)))
-
 (type net_device_t)
 (roletype object_r net_device_t)
-(context net_device_t (system_u object_r net_device_t (systemLow systemLow)))
-
 (type fuse_device_t)
 (roletype object_r fuse_device_t)
-(context fuse_device_t (system_u object_r fuse_device_t (systemLow systemLow)))
