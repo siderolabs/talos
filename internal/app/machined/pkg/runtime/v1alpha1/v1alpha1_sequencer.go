@@ -377,11 +377,13 @@ func (*Sequencer) Reset(r runtime.Runtime, in runtime.ResetOptions) []runtime.Ph
 
 // Shutdown is the shutdown sequence.
 func (*Sequencer) Shutdown(r runtime.Runtime, in *machineapi.ShutdownRequest) []runtime.Phase {
+	skipNodeRegistration := r.Config() != nil && r.Config().Machine() != nil && r.Config().Machine().Kubelet().SkipNodeRegistration()
+
 	phases := PhaseList{}.Append(
 		"storeShudown",
 		StoreShutdownEmergency,
 	).AppendWhen(
-		!in.GetForce() && !r.Config().Machine().Kubelet().SkipNodeRegistration(),
+		!in.GetForce() && !skipNodeRegistration,
 		"drain",
 		CordonAndDrainNode,
 	).Append(
