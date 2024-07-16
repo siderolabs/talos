@@ -24,6 +24,7 @@
 (filecon "/etc/ssl(/.*)?" any ssl_certificates_t)
 (filecon "/etc/ca-certificates(/.*)?" any ssl_certificates_t)
 (filecon "/usr/share/ca-certificates(/.*)?" any ssl_certificates_t)
+(filecon "/etc/pki(/.*)?" any ssl_certificates_t)
 
 (type timezone_t)
 (roletype object_r timezone_t)
@@ -39,11 +40,6 @@
 (context lvm_conf_t (system_u object_r lvm_conf_t (systemLow systemLow)))
 (filecon "/etc/lvm(/.*)?" any lvm_conf_t)
 
-(type pki_conf_t)
-(roletype object_r pki_conf_t)
-(context pki_conf_t (system_u object_r pki_conf_t (systemLow systemLow)))
-(filecon "/etc/pki(/.*)?" any pki_conf_t)
-
 (type selinux_conf_t)
 (roletype object_r selinux_conf_t)
 (filecon "/etc/selinux(/.*)?" any (system_u object_r selinux_conf_t (systemLow systemLow)))
@@ -51,10 +47,8 @@
 (type k8s_conf_t)
 (roletype object_r k8s_conf_t)
 (context k8s_conf_t (system_u object_r k8s_conf_t (systemLow systemLow)))
-(filecon "/etc/cni(/.*)?" any k8s_conf_t)
 (filecon "/etc/containerd(/.*)?" any k8s_conf_t)
 (filecon "/etc/cri(/.*)?" any k8s_conf_t)
-(filecon "/etc/kubernetes(/.*)?" any k8s_conf_t)
 
 (type boot_t)
 (roletype object_r boot_t)
@@ -63,11 +57,6 @@
 (roletype object_r extra_t)
 (context extra_t (system_u object_r extra_t (systemLow systemLow)))
 (filecon "/.extra(/.*)?" any extra_t)
-
-(type opt_t)
-(roletype object_r opt_t)
-(context opt_t (system_u object_r opt_t (systemLow systemLow)))
-(filecon "/opt(/.*)?" any opt_t)
 
 (type opt_containerd_t)
 (roletype object_r opt_containerd_t)
