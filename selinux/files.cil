@@ -28,6 +28,7 @@
 (type timezone_t)
 (roletype object_r timezone_t)
 (filecon "/usr/share/zoneinfo(/.*)?" any (system_u object_r timezone_t (systemLow systemLow)))
+(filecon "/etc/localtime" any (system_u object_r timezone_t (systemLow systemLow)))
 
 (type etc_t)
 (roletype object_r etc_t)
