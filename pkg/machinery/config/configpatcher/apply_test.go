@@ -30,6 +30,12 @@ var expectedMultidoc string
 //go:embed testdata/apply/expected_manifests.yaml
 var expectedManifests string
 
+//go:embed testdata/delete/config.yaml
+var configDelete []byte
+
+//go:embed testdata/delete/expected.yaml
+var expectedDelete string
+
 func TestApply(t *testing.T) {
 	patches, err := configpatcher.LoadPatches([]string{
 		"@testdata/apply/strategic1.yaml",
@@ -129,6 +135,40 @@ func TestApplyMultiDoc(t *testing.T) {
 			require.NoError(t, err)
 
 			assert.Equal(t, expectedMultidoc, string(bytes))
+		})
+	}
+}
+
+func TestApplyDelete(t *testing.T) {
+	patches, err := configpatcher.LoadPatches([]string{
+		"@testdata/delete/patch.yaml",
+	})
+	require.NoError(t, err)
+
+	cfg, err := configloader.NewFromBytes(configDelete)
+	require.NoError(t, err)
+
+	for _, tt := range []struct {
+		name  string
+		input configpatcher.Input
+	}{
+		{
+			name:  "WithConfig",
+			input: configpatcher.WithConfig(cfg),
+		},
+		{
+			name:  "WithBytes",
+			input: configpatcher.WithBytes(configDelete),
+		},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			out, err := configpatcher.Apply(tt.input, patches)
+			require.NoError(t, err)
+
+			bytes, err := out.Bytes()
+			require.NoError(t, err)
+
+			assert.Equal(t, expectedDelete, string(bytes))
 		})
 	}
 }

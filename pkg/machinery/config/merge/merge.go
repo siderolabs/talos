@@ -36,8 +36,9 @@ type merger interface {
 }
 
 var (
-	zeroValue  reflect.Value
-	mergerType = reflect.TypeOf((*merger)(nil)).Elem()
+	zeroValue    reflect.Value
+	mergerType   = reflect.TypeOf((*merger)(nil)).Elem()
+	deleteMarker = reflect.ValueOf("$delete")
 )
 
 //nolint:gocyclo,cyclop
@@ -110,6 +111,12 @@ func merge(vl, vr reflect.Value, replace bool) error {
 
 				var v, rightV reflect.Value
 
+				if vr.MapIndex(k).Equal(deleteMarker) {
+					vl.SetMapIndex(k, zeroValue)
+
+					continue
+				}
+
 				if valueType.Kind() == reflect.Interface { // special case for map[string]interface{}
 					// here we have to instantiate the actual type behind in the `interface{}`, otherwise it's not settable
 					valueType = vl.MapIndex(k).Elem().Type()
@@ -136,7 +143,11 @@ func merge(vl, vr reflect.Value, replace bool) error {
 
 				vl.SetMapIndex(k, v)
 			} else {
-				vl.SetMapIndex(k, vr.MapIndex(k))
+				rightV := vr.MapIndex(k)
+
+				if !rightV.Equal(deleteMarker) {
+					vl.SetMapIndex(k, rightV)
+				}
 			}
 		}
 	case reflect.Struct:
