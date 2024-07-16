@@ -22,6 +22,28 @@ import (
 	"golang.org/x/sync/errgroup"
 )
 
+var denyInsecurePolicyTemplate = `{
+  "Id": "ExamplePolicy",
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "AllowSSLRequestsOnly",
+      "Action": "s3:*",
+      "Effect": "Deny",
+      "Resource": [
+        "arn:aws:s3:::%s",
+        "arn:aws:s3:::%s/*"
+      ],
+      "Condition": {
+        "Bool": {
+          "aws:SecureTransport": "false"
+        }
+      },
+      "Principal": "*"
+    }
+  ]
+}`
+
 // GetAWSDefaultRegions returns a list of regions which are enabled for this account.
 func GetAWSDefaultRegions() ([]string, error) {
 	sess, err := session.NewSession(&aws.Config{
@@ -138,6 +160,16 @@ func (au *AWSUploader) registerAMI(ctx context.Context, region string, svc *ec2.
 			log.Printf("failed deleting bucket: %s", err)
 		}
 	}()
+
+	_, err = s3Svc.PutBucketPolicyWithContext(ctx, &s3.PutBucketPolicyInput{
+		Bucket: aws.String(bucketName),
+		Policy: aws.String(fmt.Sprintf(denyInsecurePolicyTemplate, bucketName, bucketName)),
+	})
+	if err != nil {
+		return fmt.Errorf("failed applying S3 bucket policy: %w", err)
+	}
+
+	log.Printf("aws: applied policy to bucket %q", bucketName)
 
 	uploader := s3manager.NewUploaderWithClient(s3Svc)
 
