@@ -3,16 +3,18 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 // Package network provides controllers which manage network resources.
-//
-//nolint:dupl
 package network
 
 import (
+	"cmp"
 	"context"
 	"fmt"
+	"net/netip"
+	"slices"
 
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
+	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
 	"go.uber.org/zap"
 
@@ -65,28 +67,29 @@ func (ctrl *ResolverMergeController) Run(ctx context.Context, r controller.Runti
 		}
 
 		// list source network configuration resources
-		list, err := r.List(ctx, resource.NewMetadata(network.ConfigNamespaceName, network.ResolverSpecType, "", resource.VersionUndefined))
+		list, err := safe.ReaderList[*network.ResolverSpec](ctx, r, resource.NewMetadata(network.ConfigNamespaceName, network.ResolverSpecType, "", resource.VersionUndefined))
 		if err != nil {
 			return fmt.Errorf("error listing source network addresses: %w", err)
 		}
 
+		// sort by config layer
+		list.SortFunc(func(l, r *network.ResolverSpec) int {
+			return cmp.Compare(l.TypedSpec().ConfigLayer, r.TypedSpec().ConfigLayer)
+		})
+
 		// simply merge by layers, overriding with the next configuration layer
 		var final network.ResolverSpecSpec
 
-		for _, res := range list.Items {
-			spec := res.(*network.ResolverSpec) //nolint:errcheck,forcetypeassert
+		for iter := list.Iterator(); iter.Next(); {
+			spec := iter.Value().TypedSpec()
 
-			if final.DNSServers != nil && spec.TypedSpec().ConfigLayer < final.ConfigLayer {
-				// skip this spec, as existing one is higher layer
-				continue
-			}
-
-			if spec.TypedSpec().ConfigLayer == final.ConfigLayer {
-				// merge server lists on the same level
-				final.DNSServers = append(final.DNSServers, spec.TypedSpec().DNSServers...)
+			if spec.ConfigLayer == final.ConfigLayer {
+				// simply append server lists on the same layer
+				final.DNSServers = append(final.DNSServers, spec.DNSServers...)
 			} else {
-				// otherwise, replace the lists
-				final = *spec.TypedSpec()
+				// otherwise, do a smart merge across IPv4/IPv6
+				final.ConfigLayer = spec.ConfigLayer
+				mergeDNSServers(&final.DNSServers, spec.DNSServers)
 			}
 		}
 
@@ -129,4 +132,40 @@ func (ctrl *ResolverMergeController) Run(ctx context.Context, r controller.Runti
 
 		r.ResetRestartBackoff()
 	}
+}
+
+func mergeDNSServers(dst *[]netip.Addr, src []netip.Addr) {
+	if *dst == nil {
+		*dst = src
+
+		return
+	}
+
+	srcHasV4 := len(filterIPFamily(src, true)) > 0
+	srcHasV6 := len(filterIPFamily(src, false)) > 0
+	dstHasV4 := len(filterIPFamily(*dst, true)) > 0
+	dstHasV6 := len(filterIPFamily(*dst, false)) > 0
+
+	// if old set has IPv4, and new one doesn't, preserve IPv4
+	// and same vice versa for IPv6
+	switch {
+	case dstHasV4 && !srcHasV4:
+		*dst = append(slices.Clone(src), filterIPFamily(*dst, true)...)
+	case dstHasV6 && !srcHasV6:
+		*dst = append(slices.Clone(src), filterIPFamily(*dst, false)...)
+	default:
+		*dst = src
+	}
+}
+
+func filterIPFamily(src []netip.Addr, isIPv4 bool) []netip.Addr {
+	var dst []netip.Addr
+
+	for _, addr := range src {
+		if addr.Is4() == isIPv4 {
+			dst = append(dst, addr)
+		}
+	}
+
+	return dst
 }

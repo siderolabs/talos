@@ -3,8 +3,6 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 // Package network provides controllers which manage network resources.
-//
-//nolint:dupl
 package network
 
 import (

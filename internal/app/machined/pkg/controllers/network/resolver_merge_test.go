@@ -7,6 +7,7 @@ package network_test
 
 import (
 	"context"
+	"fmt"
 	"net/netip"
 	"sync"
 	"testing"
@@ -114,6 +115,42 @@ func (suite *ResolverMergeSuite) TestMerge() {
 			"resolvers",
 		}, func(r *network.ResolverSpec, asrt *assert.Assertions) {
 			asrt.Equal(r.TypedSpec().DNSServers, []netip.Addr{netip.MustParseAddr("1.1.2.0"), netip.MustParseAddr("1.1.2.1")})
+		},
+	)
+}
+
+func (suite *ResolverMergeSuite) TestMergeIPv46() {
+	def := network.NewResolverSpec(network.ConfigNamespaceName, "default/resolvers")
+	*def.TypedSpec() = network.ResolverSpecSpec{
+		DNSServers: []netip.Addr{
+			netip.MustParseAddr(constants.DefaultPrimaryResolver),
+			netip.MustParseAddr(constants.DefaultSecondaryResolver),
+		},
+		ConfigLayer: network.ConfigDefault,
+	}
+
+	platform := network.NewResolverSpec(network.ConfigNamespaceName, "platform/resolvers")
+	*platform.TypedSpec() = network.ResolverSpecSpec{
+		DNSServers:  []netip.Addr{netip.MustParseAddr("1.1.2.0"), netip.MustParseAddr("fe80::1")},
+		ConfigLayer: network.ConfigPlatform,
+	}
+
+	dhcp := network.NewResolverSpec(network.ConfigNamespaceName, "dhcp/eth1")
+	*dhcp.TypedSpec() = network.ResolverSpecSpec{
+		DNSServers:  []netip.Addr{netip.MustParseAddr("1.1.2.1")},
+		ConfigLayer: network.ConfigOperator,
+	}
+
+	for _, res := range []resource.Resource{def, platform, dhcp} {
+		suite.Require().NoError(suite.state.Create(suite.ctx, res), "%v", res.Spec())
+	}
+
+	suite.assertResolvers(
+		[]string{
+			"resolvers",
+		}, func(r *network.ResolverSpec, asrt *assert.Assertions) {
+			asrt.Equal(network.ConfigOperator, r.TypedSpec().ConfigLayer)
+			asrt.Equal(`["1.1.2.1" "fe80::1"]`, fmt.Sprintf("%q", r.TypedSpec().DNSServers))
 		},
 	)
 }

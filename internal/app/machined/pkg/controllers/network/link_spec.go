@@ -8,7 +8,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"sort"
 
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
@@ -145,37 +144,23 @@ func (ctrl *LinkSpecController) Run(ctx context.Context, r controller.Runtime, l
 
 // SortBonds sort resources in increasing order, except it places slave interfaces right after the bond
 // in proper order.
-func SortBonds(items LinkSpecs) {
-	sort.Sort(&struct {
-		LinkSpecs
-		lessLinkSpecs
-	}{items, lessLinkSpecs{items}})
-}
+func SortBonds(items *safe.List[*network.LinkSpec]) {
+	items.SortFunc(func(ll, rr *network.LinkSpec) int {
+		left := ll.TypedSpec()
+		right := rr.TypedSpec()
 
-type lessLinkSpecs struct{ LinkSpecs }
+		l := ordered.MakeTriple(left.Name, 0, "")
+		if left.BondSlave.MasterName != "" {
+			l = ordered.MakeTriple(left.BondSlave.MasterName, left.BondSlave.SlaveIndex, left.Name)
+		}
 
-func (ls lessLinkSpecs) Less(i, j int) bool {
-	left := ls.Get(i).TypedSpec()
-	right := ls.Get(j).TypedSpec()
+		r := ordered.MakeTriple(right.Name, 0, "")
+		if right.BondSlave.MasterName != "" {
+			r = ordered.MakeTriple(right.BondSlave.MasterName, right.BondSlave.SlaveIndex, right.Name)
+		}
 
-	l := ordered.MakeTriple(left.Name, 0, "")
-	if left.BondSlave.MasterName != "" {
-		l = ordered.MakeTriple(left.BondSlave.MasterName, left.BondSlave.SlaveIndex, left.Name)
-	}
-
-	r := ordered.MakeTriple(right.Name, 0, "")
-	if right.BondSlave.MasterName != "" {
-		r = ordered.MakeTriple(right.BondSlave.MasterName, right.BondSlave.SlaveIndex, right.Name)
-	}
-
-	return l.LessThan(r)
-}
-
-// LinkSpecs is a sortable collection of network.LinkSpec.
-type LinkSpecs interface {
-	Len() int
-	Swap(i, j int)
-	Get(i int) *network.LinkSpec
+		return l.Compare(r)
+	})
 }
 
 func findLink(links []rtnetlink.LinkMessage, name string) *rtnetlink.LinkMessage {
