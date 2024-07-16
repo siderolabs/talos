@@ -84,7 +84,7 @@ talosctl -n IP apply machineconfig --mode=interactive
 
 > Note: when a Talos node is running in the maintenance mode it's necessary to provide `--insecure (-i)` flag to connect to the API and apply the config.
 
-### `taloctl edit machineconfig`
+### `talosctl edit machineconfig`
 
 Command `talosctl edit` loads current machine configuration from the node and launches configured editor to modify the config.
 If config hasn't been changed in the editor (or if updated config is empty), update is not applied.
