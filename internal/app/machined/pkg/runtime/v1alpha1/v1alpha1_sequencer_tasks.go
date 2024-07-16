@@ -45,6 +45,7 @@ import (
 	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1"
 
 	installer "github.com/siderolabs/talos/cmd/installer/pkg/install"
+	efiles "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/files"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/disk"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/emergency"
@@ -396,7 +397,7 @@ func OSRelease() (err error) {
 		return err
 	}
 
-	return os.WriteFile(filepath.Join(constants.SystemEtcPath, "os-release"), contents, 0o644)
+	return efiles.UpdateFile(filepath.Join(constants.SystemEtcPath, "os-release"), contents, 0o644, "system_u:object_r:etc_os_release_t:s0")
 }
 
 // createBindMount creates a common way to create a writable source file with a

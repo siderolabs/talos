@@ -11,6 +11,9 @@
 (type etc_machine_id_t)
 (roletype object_r etc_machine_id_t)
 
+(type etc_os_release_t)
+(roletype object_r etc_os_release_t)
+
 (type dns_conf_t)
 (roletype object_r dns_conf_t)
 
