@@ -49,6 +49,18 @@
 (roletype object_r proc_sysctl_t)
 (genfscon proc /sys (system_u object_r proc_sysctl_t (systemLow systemLow)))
 
+(type securityfs_t)
+(roletype object_r securityfs_t)
+(genfscon securityfs / (system_u object_r securityfs_t (systemLow systemLow)))
+
+(type tracefs_t)
+(roletype object_r tracefs_t)
+(genfscon tracefs / (system_u object_r tracefs_t (systemLow systemLow)))
+
+(type efivarfs_t)
+(roletype object_r efivarfs_t)
+(genfscon efivarfs / (system_u object_r efivarfs_t (systemLow systemLow)))
+
 (fsuse task sockfs (system_u object_r fs_t (systemLow systemLow)))
 (fsuse task pipefs (system_u object_r fs_t (systemLow systemLow)))
 (fsuse task eventpollfs (system_u object_r fs_t (systemLow systemLow)))
