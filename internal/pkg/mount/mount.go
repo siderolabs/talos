@@ -414,10 +414,21 @@ func (p *Point) ResizePartition() (resized bool, err error) {
 }
 
 // GrowFilesystem grows a partition's filesystem to the maximum size allowed.
-// NB: An XFS partition MUST be mounted, or this will fail.
+// NB: The partition MUST be mounted, or this will fail.
 func (p *Point) GrowFilesystem() (err error) {
-	if err = makefs.XFSGrow(p.Target()); err != nil {
-		return fmt.Errorf("xfs_growfs: %w", err)
+	switch p.Fstype() {
+	case "xfs":
+		err = makefs.XFSGrow(p.Target())
+	case "btrfs":
+		err = makefs.BtrfsGrow(p.Target())
+	case "ext4":
+		err = makefs.ExtGrow(p.Target())
+	default:
+		err = fmt.Errorf("unsupported filesystem type: %s", p.Fstype())
+	}
+
+	if err != nil {
+		return fmt.Errorf("%s_growfs: %w", p.Fstype(), err)
 	}
 
 	return nil
@@ -429,8 +440,21 @@ func (p *Point) Repair() error {
 		p.Logger.Printf("filesystem on %s needs cleaning, running repair", p.Source())
 	}
 
-	if err := makefs.XFSRepair(p.Source(), p.Fstype()); err != nil {
-		return fmt.Errorf("xfs_repair: %w", err)
+	var err error
+
+	switch p.Fstype() {
+	case "xfs":
+		err = makefs.XFSRepair(p.Source(), p.Fstype())
+	case "ext4":
+		err = makefs.ExtRepair(p.Source())
+	case "btrfs":
+		err = makefs.BtrfsRepair(p.Source())
+	default:
+		err = fmt.Errorf("unsupported filesystem type: %s", p.Fstype())
+	}
+
+	if err != nil {
+		return fmt.Errorf("repair failed for %s filesystem: %w", p.Fstype(), err)
 	}
 
 	if p.Logger != nil {
