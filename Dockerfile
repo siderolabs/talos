@@ -309,6 +309,16 @@ FROM scratch AS ipxe-generate
 COPY --from=pkg-ipxe-amd64 /usr/libexec/snp.efi /amd64/snp.efi
 COPY --from=pkg-ipxe-arm64 /usr/libexec/snp.efi /arm64/snp.efi
 
+FROM scratch AS microsoft-secureboot-database
+ADD https://github.com/microsoft/secureboot_objects.git /
+
+FROM scratch AS microsoft-key-keys
+COPY --from=microsoft-secureboot-database /PreSignedObjects/KEK/Certificates/*.der /kek/
+
+FROM scratch AS microsoft-db-keys
+COPY --from=microsoft-secureboot-database /PreSignedObjects/DB/Certificates/MicCor*.der /db/
+COPY --from=microsoft-secureboot-database /PreSignedObjects/DB/Certificates/microsoft*.der /db/
+
 FROM --platform=${BUILDPLATFORM} scratch AS generate
 COPY --from=proto-format-build /src/api /api/
 COPY --from=generate-build /api/common/*.pb.go /pkg/machinery/api/common/
@@ -333,6 +343,8 @@ COPY --from=go-generate /src/pkg/machinery/extensions/ /pkg/machinery/extensions
 COPY --from=ipxe-generate / /pkg/provision/providers/vm/internal/ipxe/data/ipxe/
 COPY --from=embed-abbrev / /
 COPY --from=pkg-ca-certificates /etc/ssl/certs/ca-certificates /internal/app/machined/pkg/controllers/secrets/data/
+COPY --from=microsoft-key-keys / /internal/pkg/secureboot/database/certs/
+COPY --from=microsoft-db-keys / /internal/pkg/secureboot/database/certs/
 
 # The base target provides a container that can be used to build all Talos
 # assets.
@@ -345,6 +357,7 @@ COPY --from=generate /pkg/flannel/ ./pkg/flannel/
 COPY --from=generate /pkg/imager/ ./pkg/imager/
 COPY --from=generate /pkg/machinery/ ./pkg/machinery/
 COPY --from=generate /internal/app/machined/pkg/controllers/secrets/data/ ./internal/app/machined/pkg/controllers/secrets/data/
+COPY --from=generate /internal/pkg/secureboot/database/certs/ ./internal/pkg/secureboot/database/certs/
 COPY --from=embed / ./
 RUN --mount=type=cache,target=/.cache go list all >/dev/null
 WORKDIR /src/pkg/machinery

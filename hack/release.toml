@@ -103,6 +103,12 @@ Talos Linux now supports adding [custom trusted roots](https://www.talos.dev/v1.
 Talos Linux on config generation now adds a label `node.kubernetes.io/exclude-from-external-load-balancers` by default for the control plane nodes.
 """
 
+    [notes.secureboot]
+        title = "Secure Boot"
+        description = """\
+Talos Linux now can optionally include well-known UEFI (Microsoft) SecureBoot keys into the auto-enrollment UEFI database.
+"""
+
 [make_deps]
 
     [make_deps.tools]

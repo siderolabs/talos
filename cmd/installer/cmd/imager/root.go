@@ -45,6 +45,8 @@ var cmdFlags struct {
 	OverlayName           string
 	OverlayImage          string
 	OverlayOptions        []string
+	// Only used when generating a secure boot iso without also providing a secure boot database.
+	SecurebootIncludeWellKnownCerts bool
 }
 
 // rootCmd represents the base command when called without any subcommands.
@@ -173,6 +175,13 @@ var rootCmd = &cobra.Command{
 
 					prof.Output.ImageOptions.DiskSize = int64(size)
 				}
+
+				if cmdFlags.SecurebootIncludeWellKnownCerts {
+					if prof.Input.SecureBoot == nil {
+						prof.Input.SecureBoot = &profile.SecureBootAssets{}
+					}
+					prof.Input.SecureBoot.IncludeWellKnownCerts = true
+				}
 			}
 
 			if err := os.MkdirAll(cmdFlags.OutputPath, 0o755); err != nil {
@@ -229,4 +238,6 @@ func init() {
 	rootCmd.MarkFlagsMutuallyExclusive("board", "overlay-name")
 	rootCmd.MarkFlagsMutuallyExclusive("board", "overlay-image")
 	rootCmd.MarkFlagsMutuallyExclusive("board", "overlay-option")
+	rootCmd.PersistentFlags().BoolVar(
+		&cmdFlags.SecurebootIncludeWellKnownCerts, "secureboot-include-well-known-certs", false, "Include well-known (Microsoft) UEFI certificates when generating a secure boot database")
 }
