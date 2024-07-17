@@ -646,7 +646,18 @@ func (ctrl *ControlPlaneStaticPodController) manageControllerManager(ctx context
 						Name:    k8s.ControllerManagerID,
 						Image:   cfg.Image,
 						Command: args,
-						Env:     env,
+						Env: append(
+							[]v1.EnvVar{
+								{
+									Name: "POD_IP",
+									ValueFrom: &v1.EnvVarSource{
+										FieldRef: &v1.ObjectFieldSelector{
+											FieldPath: "status.podIP",
+										},
+									},
+								},
+							},
+							env...),
 						VolumeMounts: append([]v1.VolumeMount{
 							{
 								Name:      "secrets",
@@ -785,7 +796,18 @@ func (ctrl *ControlPlaneStaticPodController) manageScheduler(ctx context.Context
 						Name:    k8s.SchedulerID,
 						Image:   cfg.Image,
 						Command: args,
-						Env:     env,
+						Env: append(
+							[]v1.EnvVar{
+								{
+									Name: "POD_IP",
+									ValueFrom: &v1.EnvVarSource{
+										FieldRef: &v1.ObjectFieldSelector{
+											FieldPath: "status.podIP",
+										},
+									},
+								},
+							},
+							env...),
 						VolumeMounts: append([]v1.VolumeMount{
 							{
 								Name:      "secrets",
