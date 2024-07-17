@@ -1487,8 +1487,15 @@ type AdminKubeconfigConfig struct {
 type MachineDisk struct {
 	//   description: The name of the disk to use.
 	DeviceName string `yaml:"device,omitempty"`
+	//   description: The partition format, eg ext4
+	DeviceFileSystemField string `yaml:"deviceFileSystem,omitempty"`
 	//   description: A list of partitions to create on the disk.
 	DiskPartitions []*DiskPartition `yaml:"partitions,omitempty"`
+}
+
+// FileSystemType represents the filesystem that already exists on the disk.
+func (d *MachineDisk) FileSystemType() string {
+	return d.DeviceFileSystemField
 }
 
 // DiskSize partition size in bytes.

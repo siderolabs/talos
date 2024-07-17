@@ -1802,6 +1802,7 @@ machine:
 | Field | Type | Description | Value(s) |
 |-------|------|-------------|----------|
 |`device` |string |The name of the disk to use.  | |
+|`deviceFileSystem` |string |The partition format, eg ext4  | |
 |`partitions` |<a href="#Config.machine.disks..partitions.">[]DiskPartition</a> |A list of partitions to create on the disk.  | |
 
 

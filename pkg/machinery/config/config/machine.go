@@ -62,6 +62,7 @@ type NodeTaints map[string]string
 // mounting extra disks.
 type Disk interface {
 	Device() string
+	FileSystemType() string
 	Partitions() []Partition
 }
 

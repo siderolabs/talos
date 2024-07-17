@@ -952,8 +952,13 @@ func mountDisks(logger *log.Logger, r runtime.Runtime) (err error) {
 				}
 			}
 
+			filesystemType := disk.FileSystemType()
+			if filesystemType == "" {
+				filesystemType = "xfs"
+			}
+
 			mountpoints.Set(partname,
-				mount.NewMountPoint(partname, part.MountPoint(), "xfs", unix.MS_NOATIME, "",
+				mount.NewMountPoint(partname, part.MountPoint(), filesystemType, unix.MS_NOATIME, "",
 					mount.WithProjectQuota(r.Config().Machine().Features().DiskQuotaSupportEnabled()),
 				),
 			)
