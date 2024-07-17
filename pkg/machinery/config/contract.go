@@ -163,3 +163,8 @@ func (contract *VersionContract) HostDNSForwardKubeDNSToHost() bool {
 func (contract *VersionContract) AddExcludeFromExternalLoadBalancer() bool {
 	return contract.Greater(TalosVersion1_7)
 }
+
+// SecureBootEnrollEnforcementSupported returns true if version of Talos supports SecureBoot enforcement on enroll.
+func (contract *VersionContract) SecureBootEnrollEnforcementSupported() bool {
+	return contract.Greater(TalosVersion1_7)
+}

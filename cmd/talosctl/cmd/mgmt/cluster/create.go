@@ -519,9 +519,9 @@ func create(ctx context.Context) error {
 			}
 		}
 
-		if talosVersion != "latest" {
-			var versionContract *config.VersionContract
+		var versionContract *config.VersionContract
 
+		if talosVersion != "latest" {
 			versionContract, err = config.ParseContractFromVersion(talosVersion)
 			if err != nil {
 				return fmt.Errorf("error parsing Talos version %q: %w", talosVersion, err)
@@ -562,10 +562,14 @@ func create(ctx context.Context) error {
 
 					provisionOptions = append(provisionOptions, provision.WithKMS(nethelpers.JoinHostPort("0.0.0.0", port)))
 				case "tpm":
+					keyTPM := &v1alpha1.EncryptionKeyTPM{}
+
+					if versionContract.SecureBootEnrollEnforcementSupported() {
+						keyTPM.TPMCheckSecurebootStatusOnEnroll = pointer.To(true)
+					}
+
 					keys = append(keys, &v1alpha1.EncryptionKey{
-						KeyTPM: &v1alpha1.EncryptionKeyTPM{
-							TPMCheckSecurebootStatusOnEnroll: pointer.To(true),
-						},
+						KeyTPM:  keyTPM,
 						KeySlot: i,
 					})
 				default:
