@@ -140,6 +140,22 @@ func SetupSystemDirectory(runtime.Sequence, any) (runtime.TaskExecutionFunc, str
 			if err = os.MkdirAll(p, 0o700); err != nil {
 				return err
 			}
+
+			var label string
+			switch p {
+			case constants.SystemEtcPath:
+				label = "system_u:object_r:system_etc_t:s0"
+			case constants.SystemVarPath:
+				label = "system_u:object_r:system_var_t:s0"
+			default: // /system/state is another mount
+				label = ""
+			}
+			if label != "" {
+				err = unix.Setxattr(p, "security.selinux", []byte(label), 0)
+			}
+			if err != nil {
+				return err
+			}
 		}
 
 		for _, p := range []string{constants.SystemRunPath} {
