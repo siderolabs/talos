@@ -347,7 +347,7 @@ We can leverage this to our advantage to install Cilium by using an inline manif
               hostNetwork: true
               containers:
               - name: cilium-install
-                image: quay.io/cilium/cilium-cli-ci:latest
+                image: alpine/helm:latest
                 env:
                 - name: KUBERNETES_SERVICE_HOST
                   valueFrom:
@@ -357,8 +357,11 @@ We can leverage this to our advantage to install Cilium by using an inline manif
                 - name: KUBERNETES_SERVICE_PORT
                   value: "6443"
                 command:
-                  - cilium
+                  - helm
                   - install
+                  - cilium
+                  - cilium
+                  - --repo=https://helm.cilium.io/
                   - --set ipam.mode=kubernetes
                   - --set kubeProxyReplacement=true
                   - --set securityContext.capabilities.ciliumAgent="{CHOWN,KILL,NET_ADMIN,NET_RAW,IPC_LOCK,SYS_ADMIN,SYS_RESOURCE,DAC_OVERRIDE,FOWNER,SETGID,SETUID}"
