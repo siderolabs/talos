@@ -64,16 +64,21 @@ func SystemMountPointsForDevice(ctx context.Context, devpath string, opts ...Opt
 //nolint:gocyclo
 func SystemMountPointForLabel(ctx context.Context, device *blockdevice.BlockDevice, label string, opts ...Option) (mountpoint *Point, err error) {
 	var target string
+	var context string
 
 	switch label {
 	case constants.EphemeralPartitionLabel:
 		target = constants.EphemeralMountPoint
+		context = "system_u:object_r:ephemeral_t:s0"
 	case constants.BootPartitionLabel:
 		target = constants.BootMountPoint
+		context = "system_u:object_r:boot_t:s0"
 	case constants.EFIPartitionLabel:
 		target = constants.EFIMountPoint
+		context = "system_u:object_r:boot_efi_t:s0"
 	case constants.StatePartitionLabel:
 		target = constants.StateMountPoint
+		context = "system_u:object_r:system_state_t:s0"
 	default:
 		return nil, fmt.Errorf("unknown label: %q", label)
 	}
@@ -174,7 +179,7 @@ func SystemMountPointForLabel(ctx context.Context, device *blockdevice.BlockDevi
 		return nil
 	})
 
-	opts = append(opts, WithPreMountHooks(preMountHooks...))
+	opts = append(opts, WithPreMountHooks(preMountHooks...), WithSelinuxLabel(context))
 
 	mountpoint = NewMountPoint(partPath, target, fsType, unix.MS_NOATIME, "", opts...)
 

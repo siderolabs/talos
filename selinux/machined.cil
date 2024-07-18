@@ -16,6 +16,15 @@
 (type system_var_t)
 (roletype object_r system_var_t)
 
+(type ephemeral_t)
+(roletype object_r ephemeral_t)
+(type boot_t)
+(roletype object_r boot_t)
+(type boot_efi_t)
+(roletype object_r boot_efi_t)
+(type system_state_t)
+(roletype object_r system_state_t)
+
 (type run_t)
 (roletype object_r run_t)
 

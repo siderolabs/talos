@@ -48,9 +48,6 @@
 (filecon "/etc/containerd(/.*)?" any k8s_conf_t)
 (filecon "/etc/cri(/.*)?" any k8s_conf_t)
 
-(type boot_t)
-(roletype object_r boot_t)
-
 (type extra_t)
 (roletype object_r extra_t)
 (filecon "/.extra(/.*)?" any (system_u object_r extra_t (systemLow systemLow)))
