@@ -37,11 +37,19 @@
 (allow sys_containerd_t apid_t (process2 (nnp_transition)))
 (allow sys_containerd_t apid_t (process (transition)))
 
+(type apid_socket_t)
+(roletype object_r apid_socket_t)
+(type apid_runtime_socket_t)
+(roletype object_r apid_runtime_socket_t)
+
 (type trustd_t)
 (roletype system_r trustd_t)
 (allow trustd_t init_exec_t (file (entrypoint)))
 (allow sys_containerd_t trustd_t (process2 (nnp_transition)))
 (allow sys_containerd_t trustd_t (process (transition)))
+
+(type trustd_runtime_socket_t)
+(roletype object_r trustd_runtime_socket_t)
 
 (type etcd_t)
 (roletype client_r etcd_t)

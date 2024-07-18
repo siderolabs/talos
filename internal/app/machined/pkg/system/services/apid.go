@@ -21,6 +21,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/state/protobuf/server"
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/siderolabs/go-debug"
+	"golang.org/x/sys/unix"
 	"google.golang.org/grpc"
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
@@ -92,6 +93,10 @@ func (o *APID) PreFunc(ctx context.Context, r runtime.Runtime) error {
 
 	listener, err := net.Listen("unix", constants.APIRuntimeSocketPath)
 	if err != nil {
+		return err
+	}
+
+	if err := unix.Setxattr(constants.APIRuntimeSocketPath, "security.selinux", []byte("system_u:object_r:apid_runtime_socket_t:s0"), 0); err != nil {
 		return err
 	}
 

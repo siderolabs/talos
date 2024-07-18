@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/siderolabs/go-debug"
+	"golang.org/x/sys/unix"
 	"google.golang.org/grpc"
 
 	v1alpha1server "github.com/siderolabs/talos/internal/app/machined/internal/server/v1alpha1"
@@ -157,6 +158,10 @@ func (s *machinedService) Main(ctx context.Context, r runtime.Runtime, logWriter
 
 	listener, err := factory.NewListener(factory.Network("unix"), factory.SocketPath(constants.MachineSocketPath)) //nolint:contextcheck
 	if err != nil {
+		return err
+	}
+
+	if err := unix.Setxattr(constants.MachineSocketPath, "security.selinux", []byte("system_u:object_r:machine_socket_t:s0"), 0); err != nil {
 		return err
 	}
 
