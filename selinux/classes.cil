@@ -143,6 +143,14 @@
     sigstop
     transition
 ))
+(class system (
+    ipc_info
+    module_load
+    module_request
+    syslog_console
+    syslog_mod
+    syslog_read
+))
 (class process2 (nnp_transition nosuid_transition))
 (class fd (use))
 (class node (recvfrom sendto))
@@ -364,6 +372,7 @@
 (classorder (
     security
     process
+    system
     capability
     filesystem
     file
