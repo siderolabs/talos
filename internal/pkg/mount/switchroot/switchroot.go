@@ -87,6 +87,16 @@ func Switch(prefix string, mountpoints *mount.Points) (err error) {
 		return err
 	}
 
+	// TODO: move to special relabeling task?
+	err = unix.Setxattr("/system", "security.selinux", []byte("system_u:object_r:system_t:s0"), 0)
+	if err != nil {
+		return err
+	}
+	err = unix.Setxattr("/run", "security.selinux", []byte("system_u:object_r:run_t:s0"), 0)
+	if err != nil {
+		return err
+	}
+
 	// TODO: enforce (https://github.com/SELinuxProject/selinux/blob/e81a05a5050354261049cc7b5987372e763fc5f4/libselinux/src/setenforce.c#L12)
 	err = os.WriteFile("/proc/self/attr/exec", []byte("system_u:system_r:init_t:s0"), 0777)
 	if err != nil {
