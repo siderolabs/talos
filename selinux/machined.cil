@@ -8,6 +8,14 @@
 (allow kernel_t init_t (process (transition)))
 (allow init_t init_exec_t (file (entrypoint)))
 
+(type system_t)
+(roletype object_r system_t)
+(filecon "/system(/.*)?" any (system_u object_r system_t (systemLow systemLow)))
+
+(type run_t)
+(roletype object_r run_t)
+(filecon "/run(/.*)?" any (system_u object_r run_t (systemLow systemLow)))
+
 (type etc_machine_id_t)
 (roletype object_r etc_machine_id_t)
 
