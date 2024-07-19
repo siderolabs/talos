@@ -1,15 +1,15 @@
 (type usr_t)
-(roletype object_r usr_t)
+(call system_files (usr_t))
 (filecon "/usr(/.*)?" any (system_u object_r usr_t (systemLow systemLow)))
 
 (type lib_t)
-(roletype object_r lib_t)
+(call system_files (lib_t))
 (context lib_t (system_u object_r lib_t (systemLow systemLow)))
 (filecon "/lib(/.*)?" any lib_t)
 (filecon "/usr/lib(/.*)?" any lib_t)
 
 (type bin_t)
-(roletype object_r bin_t)
+(call system_files (bin_t))
 (context bin_t (system_u object_r bin_t (systemLow systemLow)))
 (filecon "/bin(/.*)?" any bin_t)
 (filecon "/usr/bin(/.*)?" any bin_t)
@@ -18,7 +18,7 @@
 (filecon "/usr/libexec(/.*)?" any bin_t)
 
 (type ssl_certificates_t)
-(roletype object_r ssl_certificates_t)
+(call common_file (ssl_certificates_t))
 (context ssl_certificates_t (system_u object_r ssl_certificates_t (systemLow systemLow)))
 (filecon "/etc/ssl(/.*)?" any ssl_certificates_t)
 (filecon "/etc/ca-certificates(/.*)?" any ssl_certificates_t)
@@ -26,36 +26,36 @@
 (filecon "/etc/pki(/.*)?" any ssl_certificates_t)
 
 (type timezone_t)
-(roletype object_r timezone_t)
+(call common_file (timezone_t))
 (filecon "/usr/share/zoneinfo(/.*)?" any (system_u object_r timezone_t (systemLow systemLow)))
 (filecon "/etc/localtime" any (system_u object_r timezone_t (systemLow systemLow)))
 
 (type etc_t)
-(roletype object_r etc_t)
+(call system_files (etc_t))
 (filecon "/etc(/.*)?" any (system_u object_r etc_t (systemLow systemLow)))
 
 (type lvm_conf_t)
-(roletype object_r lvm_conf_t)
+(call system_files (lvm_conf_t))
 (filecon "/etc/lvm(/.*)?" any (system_u object_r lvm_conf_t (systemLow systemLow)))
 
 (type selinux_conf_t)
-(roletype object_r selinux_conf_t)
+(call system_files (selinux_conf_t))
 (filecon "/etc/selinux(/.*)?" any (system_u object_r selinux_conf_t (systemLow systemLow)))
 
 (type k8s_conf_t)
-(roletype object_r k8s_conf_t)
+(call system_files (k8s_conf_t))
 (context k8s_conf_t (system_u object_r k8s_conf_t (systemLow systemLow)))
 (filecon "/etc/containerd(/.*)?" any k8s_conf_t)
 (filecon "/etc/cri(/.*)?" any k8s_conf_t)
 
 (type extra_t)
-(roletype object_r extra_t)
+(call system_files (extra_t))
 (filecon "/.extra(/.*)?" any (system_u object_r extra_t (systemLow systemLow)))
 
 (type opt_containerd_t)
-(roletype object_r opt_containerd_t)
+(call system_files (opt_containerd_t))
 (filecon "/opt/containerd(/.*)?" any (system_u object_r opt_containerd_t (systemLow systemLow)))
 
 (type firmware_t)
-(roletype object_r firmware_t)
+(call system_files (firmware_t))
 (filecon "/lib/firmware(/.*)?" any (system_u object_r firmware_t (systemLow systemLow)))
