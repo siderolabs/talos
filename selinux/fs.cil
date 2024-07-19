@@ -3,13 +3,13 @@
 (fsuse trans devpts (system_u object_r devpts_t (systemLow systemLow)))
 
 (type tmpfs_t)
-(roletype object_r tmpfs_t)
+(call filesystem (tmpfs_t))
 (fsuse trans tmpfs (system_u object_r tmpfs_t (systemLow systemLow)))
 (fsuse trans shm (system_u object_r tmpfs_t (systemLow systemLow)))
 (fsuse trans mqueue (system_u object_r tmpfs_t (systemLow systemLow)))
 
 (type ramfs_t)
-(roletype object_r ramfs_t)
+(call filesystem (ramfs_t))
 (fsuse trans ramfs (system_u object_r ramfs_t (systemLow systemLow)))
 
 (type hugetlbfs_t)
@@ -17,7 +17,7 @@
 (fsuse trans hugetlbfs (system_u object_r hugetlbfs_t (systemLow systemLow)))
 
 (type rootfs_t)
-(roletype object_r rootfs_t)
+(call filesystem (rootfs_t))
 (genfscon rootfs / (system_u object_r rootfs_t (systemLow systemLow)))
 (filecon "/" any (system_u object_r rootfs_t (systemLow systemLow)))
 

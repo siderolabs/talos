@@ -35,7 +35,7 @@
 (type unlabeled_t)
 (roletype object_r unlabeled_t)
 (type fs_t)
-(roletype object_r fs_t)
+(call filesystem (fs_t))
 
 (type node_t)
 (roletype object_r node_t)

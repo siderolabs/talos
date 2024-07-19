@@ -1,66 +1,52 @@
 (type containerd_exec_t)
-(roletype object_r containerd_exec_t)
+(call system_file (containerd_exec_t))
 (filecon "/bin/containerd" any (system_u object_r containerd_exec_t (systemLow systemLow)))
 
 (type sys_containerd_t)
-(roletype system_r sys_containerd_t)
+(call system_service (sys_containerd_t))
 (allow sys_containerd_t containerd_exec_t (file (entrypoint)))
-(allow init_t sys_containerd_t (process (transition)))
 
 (type pod_containerd_t)
-(roletype client_r pod_containerd_t)
+(call client_process (pod_containerd_t))
 (allow pod_containerd_t containerd_exec_t (file (entrypoint)))
 (allow init_t pod_containerd_t (process (transition)))
 
 (type pod_t)
-(roletype client_r pod_t)
+(call pod_process (pod_t))
 (typetransition pod_containerd_t unlabeled_t process pod_t)
-(allow pod_containerd_t pod_t (process (transition)))
-(allow pod_containerd_t pod_t (process2 (nnp_transition)))
 (allow pod_t unlabeled_t (file (entrypoint)))
 
 ; Should not occur unless misconfigured by machined
 (type unconfined_service_t)
-(roletype system_r unconfined_service_t)
-(allow init_t unconfined_service_t (process (transition)))
+(call system_service (unconfined_service_t))
 
 ; Typically a system extension
 ; Possibly a service misconfigured by machined
 (type unconfined_container_t)
-(roletype system_r unconfined_container_t)
-(allow sys_containerd_t unconfined_container_t (process2 (nnp_transition)))
-(allow sys_containerd_t unconfined_container_t (process (transition)))
+(call system_container_process (unconfined_container_t))
 
 (type apid_t)
-(roletype system_r apid_t)
+(call system_container_process (apid_t))
 (allow apid_t init_exec_t (file (entrypoint)))
-(allow sys_containerd_t apid_t (process2 (nnp_transition)))
-(allow sys_containerd_t apid_t (process (transition)))
 
 (type apid_socket_t)
-(roletype object_r apid_socket_t)
+(call system_socket (apid_socket_t))
 (type apid_runtime_socket_t)
-(roletype object_r apid_runtime_socket_t)
+(call system_socket (apid_runtime_socket_t))
 
 (type trustd_t)
-(roletype system_r trustd_t)
+(call system_container_process (trustd_t))
 (allow trustd_t init_exec_t (file (entrypoint)))
-(allow sys_containerd_t trustd_t (process2 (nnp_transition)))
-(allow sys_containerd_t trustd_t (process (transition)))
 
 (type trustd_runtime_socket_t)
-(roletype object_r trustd_runtime_socket_t)
+(call system_socket (trustd_runtime_socket_t))
 
 (type etcd_t)
-(roletype client_r etcd_t)
+(call pod_process (etcd_t))
 ; FIXME: insecure as anyone with access to the pod containerd may obtain this domain
 (allow etcd_t unlabeled_t (file (entrypoint)))
-(allow pod_containerd_t etcd_t (process2 (nnp_transition)))
-(allow pod_containerd_t etcd_t (process (transition)))
 
 (type kubelet_t)
-(roletype client_r kubelet_t)
+(call pod_process (kubelet_t))
 ; FIXME: insecure as anyone with access to the pod containerd may obtain this domain
 (allow kubelet_t unlabeled_t (file (entrypoint)))
-(allow pod_containerd_t kubelet_t (process2 (nnp_transition)))
-(allow pod_containerd_t kubelet_t (process (transition)))
