@@ -13,7 +13,8 @@
 
 (type pod_t)
 (call pod_process (pod_t))
-(typetransition pod_containerd_t unlabeled_t process pod_t)
+; TODO: What if container is started not from ephemeral_t?
+(typetransition pod_containerd_t ephemeral_t process pod_t)
 (allow pod_t unlabeled_t (file (entrypoint)))
 
 ; Should not occur unless misconfigured by machined
