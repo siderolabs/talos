@@ -27,7 +27,7 @@
 (call protected_file (system_state_t))
 
 (type run_t)
-(call system_file run_t)
+(call system_file (run_t))
 (type etc_machine_id_t)
 (call common_file (etc_machine_id_t))
 (type etc_os_release_t)
