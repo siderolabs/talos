@@ -8,6 +8,11 @@
 (allow kernel_t init_t (process (transition)))
 (allow init_t init_exec_t (file (entrypoint)))
 
+(allow init_t system_services (process (transition)))
+; Should not occur unless misconfigured by machined
+(type unconfined_service_t)
+(call system_service (unconfined_service_t))
+
 (type system_t)
 (call system_file (system_t))
 

@@ -28,10 +28,6 @@
     (typeattributeset device_files ARG1)
 )
 
-(allow udev_t device_files (blk_file (relabelto)))
-(allow udev_t device_files (chr_file (relabelto)))
-(allow device_files device_t (filesystem (associate)))
-
 (typeattribute any_files)
 (typeattributeset any_files common_files)
 (typeattributeset any_files protected_files)
@@ -46,21 +42,17 @@
 )
 
 (allow filesystems self (filesystem (associate)))
-(allow any_files filesystems (filesystem (associate)))
 
 (typeattribute system_services)
 (macro system_service ((type ARG1))
     (roletype system_r ARG1)
     (typeattributeset system_services ARG1)
-    (allow init_t ARG1 (process (transition)))
 )
 
 (typeattribute system_container_processes)
 (macro system_container_process ((type ARG1))
     (roletype system_r ARG1)
     (typeattributeset system_container_processes ARG1)
-    (allow sys_containerd_t ARG1 (process2 (nnp_transition)))
-    (allow sys_containerd_t ARG1 (process (transition)))
 )
 
 (typeattribute client_processes)
@@ -73,6 +65,4 @@
 (macro pod_process ((type ARG1))
     (roletype client_r ARG1)
     (typeattributeset pod_processes ARG1)
-    (allow pod_containerd_t ARG1 (process2 (nnp_transition)))
-    (allow pod_containerd_t ARG1 (process (transition)))
 )

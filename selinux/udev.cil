@@ -19,6 +19,9 @@
 (call system_service (udev_t))
 (allow udev_t udev_exec_t (file (entrypoint)))
 
+(allow udev_t device_files (blk_file (relabelto)))
+(allow udev_t device_files (chr_file (relabelto)))
+
 ; Device subsystems
 (type block_device_t)
 (call device (block_device_t))

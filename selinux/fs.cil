@@ -201,3 +201,4 @@
 (type device_t)
 (call filesystem (device_t))
 (fsuse trans devtmpfs (system_u object_r device_t (systemLow systemLow)))
+(allow device_files device_t (filesystem (associate)))

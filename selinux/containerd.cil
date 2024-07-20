@@ -2,24 +2,13 @@
 (call system_file (containerd_exec_t))
 (filecon "/bin/containerd" any (system_u object_r containerd_exec_t (systemLow systemLow)))
 
+; System containerd
 (type sys_containerd_t)
 (call system_service (sys_containerd_t))
 (allow sys_containerd_t containerd_exec_t (file (entrypoint)))
 
-(type pod_containerd_t)
-(call client_process (pod_containerd_t))
-(allow pod_containerd_t containerd_exec_t (file (entrypoint)))
-(allow init_t pod_containerd_t (process (transition)))
-
-(type pod_t)
-(call pod_process (pod_t))
-; TODO: What if container is started not from ephemeral_t?
-(typetransition pod_containerd_t ephemeral_t process pod_t)
-(allow pod_t unlabeled_t (file (entrypoint)))
-
-; Should not occur unless misconfigured by machined
-(type unconfined_service_t)
-(call system_service (unconfined_service_t))
+(allow sys_containerd_t system_container_processes (process2 (nnp_transition)))
+(allow sys_containerd_t system_container_processes (process (transition)))
 
 ; Typically a system extension
 ; Possibly a service misconfigured by machined
@@ -41,6 +30,21 @@
 
 (type trustd_runtime_socket_t)
 (call system_socket (trustd_runtime_socket_t))
+
+; Pod (CRI) containerd
+(type pod_containerd_t)
+(call client_process (pod_containerd_t))
+(allow pod_containerd_t containerd_exec_t (file (entrypoint)))
+(allow init_t pod_containerd_t (process (transition)))
+
+(allow pod_containerd_t pod_processes (process2 (nnp_transition)))
+(allow pod_containerd_t pod_processes (process (transition)))
+
+(type pod_t)
+(call pod_process (pod_t))
+; TODO: What if container is started not from ephemeral_t?
+(typetransition pod_containerd_t ephemeral_t process pod_t)
+(allow pod_t unlabeled_t (file (entrypoint)))
 
 (type etcd_t)
 (call pod_process (etcd_t))
