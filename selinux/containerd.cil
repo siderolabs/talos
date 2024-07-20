@@ -44,14 +44,14 @@
 (call pod_process (pod_t))
 ; TODO: What if container is started not from ephemeral_t?
 (typetransition pod_containerd_t ephemeral_t process pod_t)
-(allow pod_t unlabeled_t (file (entrypoint)))
+(allow pod_t ephemeral_t (file (entrypoint)))
 
 (type etcd_t)
 (call pod_process (etcd_t))
 ; FIXME: insecure as anyone with access to the pod containerd may obtain this domain
-(allow etcd_t unlabeled_t (file (entrypoint)))
+(allow etcd_t ephemeral_t (file (entrypoint)))
 
 (type kubelet_t)
 (call pod_process (kubelet_t))
 ; FIXME: insecure as anyone with access to the pod containerd may obtain this domain
-(allow kubelet_t unlabeled_t (file (entrypoint)))
+(allow kubelet_t ephemeral_t (file (entrypoint)))
