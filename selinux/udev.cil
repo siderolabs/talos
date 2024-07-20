@@ -49,3 +49,5 @@
 (call device (kmsg_device_t))
 (type kvm_device_t)
 (call device (kvm_device_t))
+(type random_device_t)
+(call device (random_device_t))
