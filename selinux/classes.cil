@@ -200,6 +200,7 @@
     audit_read
     block_suspend
     bpf
+    checkpoint_restore
     mac_admin
     mac_override
     perfmon
