@@ -25,6 +25,9 @@
 (typeattribute device_files)
 (macro device ((type ARG1))
     (roletype object_r ARG1)
+    (allow udev_t ARG1 (blk_file (relabelto)))
+    (allow udev_t ARG1 (chr_file (relabelto)))
+    (allow ARG1 device_t (filesystem (associate)))
     (typeattributeset device_files ARG1)
 )
 
