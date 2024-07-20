@@ -22,10 +22,10 @@
     (typeattributeset system_socket_files ARG1)
 )
 
-(typeattribute filesystems)
-(macro filesystem ((type ARG1))
+(typeattribute device_files)
+(macro device ((type ARG1))
     (roletype object_r ARG1)
-    (typeattributeset filesystems ARG1)
+    (typeattributeset device_files ARG1)
 )
 
 (typeattribute any_files)
@@ -33,6 +33,13 @@
 (typeattributeset any_files protected_files)
 (typeattributeset any_files system_files)
 (typeattributeset any_files system_socket_files)
+(typeattributeset any_files device_files)
+
+(typeattribute filesystems)
+(macro filesystem ((type ARG1))
+    (roletype object_r ARG1)
+    (typeattributeset filesystems ARG1)
+)
 
 (allow any_files filesystems (filesystem (associate)))
 
