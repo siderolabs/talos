@@ -45,6 +45,7 @@
     (typeattributeset filesystems ARG1)
 )
 
+(allow filesystems self (filesystem (associate)))
 (allow any_files filesystems (filesystem (associate)))
 
 (typeattribute system_services)
