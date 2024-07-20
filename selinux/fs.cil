@@ -44,7 +44,9 @@
 
 (type procfs_t)
 (call filesystem (procfs_t))
-(genfscon proc / (system_u object_r procfs_t (systemLow systemLow)))
+(context procfs_t (system_u object_r procfs_t (systemLow systemLow)))
+(genfscon proc / procfs_t)
+(genfscon proc /sysvipc procfs_t)
 
 (type proc_sysctl_t)
 (call filesystem (proc_sysctl_t))
