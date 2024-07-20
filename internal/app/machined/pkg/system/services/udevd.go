@@ -70,10 +70,11 @@ func (c *Udevd) Runner(r runtime.Runtime) (runner.Runner, error) {
 		ProcessArgs: []string{
 			"/sbin/udevd",
 			"--resolve-names=never",
+			"-D",
 		},
 	}
 
-	debug := false
+	debug := true
 
 	if r.Config() != nil {
 		debug = r.Config().Debug()
