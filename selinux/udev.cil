@@ -22,6 +22,10 @@
 (allow udev_t device_files (blk_file (relabelto)))
 (allow udev_t device_files (chr_file (relabelto)))
 
+(type udev_socket_t)
+(call system_socket (udev_socket_t))
+(typetransition udev_t run_t sock_file udev_socket_t)
+
 ; Device subsystems
 (type block_device_t)
 (call device (block_device_t))

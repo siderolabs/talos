@@ -7,6 +7,10 @@
 (call system_service (sys_containerd_t))
 (allow sys_containerd_t containerd_exec_t (file (entrypoint)))
 
+(type sys_containerd_socket_t)
+(call system_socket (sys_containerd_socket_t))
+(typetransition sys_containerd_t system_t sock_file sys_containerd_socket_t)
+
 (allow sys_containerd_t system_container_processes (process2 (nnp_transition)))
 (allow sys_containerd_t system_container_processes (process (transition)))
 
@@ -36,6 +40,10 @@
 (call client_process (pod_containerd_t))
 (allow pod_containerd_t containerd_exec_t (file (entrypoint)))
 (allow init_t pod_containerd_t (process (transition)))
+
+(type pod_containerd_socket_t)
+(call system_socket (pod_containerd_socket_t))
+(typetransition pod_containerd_t run_t sock_file pod_containerd_socket_t)
 
 (allow pod_containerd_t pod_processes (process2 (nnp_transition)))
 (allow pod_containerd_t pod_processes (process (transition)))
