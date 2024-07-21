@@ -21,9 +21,10 @@
 (call common_file (ssl_certificates_t))
 (context ssl_certificates_t (system_u object_r ssl_certificates_t (systemLow systemLow)))
 (filecon "/etc/ssl(/.*)?" any ssl_certificates_t)
-(filecon "/etc/ca-certificates(/.*)?" any ssl_certificates_t)
-(filecon "/usr/share/ca-certificates(/.*)?" any ssl_certificates_t)
 (filecon "/etc/pki(/.*)?" any ssl_certificates_t)
+(filecon "/usr/share/ca-certificates(/.*)?" any ssl_certificates_t)
+(filecon "/usr/local/share/ca-certificates(/.*)?" any ssl_certificates_t)
+(filecon "/etc/ca-certificates(/.*)?" any ssl_certificates_t)
 
 (type timezone_t)
 (call common_file (timezone_t))
