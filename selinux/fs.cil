@@ -1,5 +1,5 @@
 (type devpts_t)
-(roletype object_r devpts_t)
+(call filesystem (devpts_t))
 (fsuse trans devpts (system_u object_r devpts_t (systemLow systemLow)))
 
 (type tmpfs_t)
