@@ -18,25 +18,28 @@
 (call system_service (unconfined_service_t))
 
 (type system_t)
-(call system_file (system_t))
+(call filesystem (system_t))
+(allow system_t tmpfs_t (filesystem (associate)))
 
 (type system_etc_t)
 (call system_file (system_etc_t))
+(allow system_etc_t tmpfs_t (filesystem (associate)))
 (type system_var_t)
 (call system_file (system_var_t))
+(allow system_var_t tmpfs_t (filesystem (associate)))
 
 (type ephemeral_t)
 ; TODO: Protected?
-(call system_file (ephemeral_t))
+(call filesystem (ephemeral_t))
 (type boot_t)
 (call protected_file (boot_t))
 (type boot_efi_t)
 (call protected_file (boot_efi_t))
 (type system_state_t)
-(call protected_file (system_state_t))
+(call filesystem (system_state_t))
 
 (type run_t)
-(call system_file (run_t))
+(call filesystem (run_t))
 (type etc_machine_id_t)
 (call common_file (etc_machine_id_t))
 (type etc_os_release_t)
@@ -51,3 +54,9 @@
 (call system_socket (dbus_service_socket_t))
 (type dbus_client_socket_t)
 (call system_socket (dbus_client_socket_t))
+
+(allow run_t tmpfs_t (filesystem (associate)))
+(allow etc_machine_id_t tmpfs_t (filesystem (associate)))
+(allow etc_os_release_t tmpfs_t (filesystem (associate)))
+(allow dns_conf_t tmpfs_t (filesystem (associate)))
+(allow hosts_conf_t tmpfs_t (filesystem (associate)))

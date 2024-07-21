@@ -14,6 +14,7 @@
 (type udev_conf_t)
 (call system_file (udev_conf_t))
 (filecon "/usr/etc(/.*)?" any (system_u object_r udev_conf_t (systemLow systemLow)))
+(allow udev_conf_t filesystems (filesystem (associate)))
 
 (type udev_t)
 (call system_service (udev_t))

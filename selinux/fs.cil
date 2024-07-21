@@ -48,6 +48,9 @@
 (genfscon proc / procfs_t)
 (genfscon proc /sysvipc procfs_t)
 
+(allow init_t procfs_t (filesystem (associate)))
+(allow kernel_t procfs_t (filesystem (associate)))
+
 (type proc_sysctl_t)
 (call filesystem (proc_sysctl_t))
 (genfscon proc /sys (system_u object_r proc_sysctl_t (systemLow systemLow)))

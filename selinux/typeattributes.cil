@@ -22,6 +22,8 @@
     (typeattributeset system_socket_files ARG1)
 )
 
+(allow system_socket_files tmpfs_t (filesystem (associate)))
+
 (typeattribute device_files)
 (macro device ((type ARG1))
     (roletype object_r ARG1)
@@ -42,6 +44,7 @@
 )
 
 (allow filesystems self (filesystem (associate)))
+(allow filesystems fs_t (filesystem (associate)))
 
 (typeattribute system_services)
 (macro system_service ((type ARG1))
