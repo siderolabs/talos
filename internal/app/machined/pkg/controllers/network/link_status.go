@@ -207,6 +207,20 @@ func (ctrl *LinkStatusController) reconcile(
 			if err == nil && permAddr != "" {
 				permanentAddr, _ = net.ParseMAC(permAddr) //nolint:errcheck
 			}
+
+			if ethState == nil {
+				state, err := ethtoolIoctlClient.LinkState(link.Attributes.Name)
+				if err != nil {
+					logger.Warn("error querying ethtool ioctl link state", zap.String("link", link.Attributes.Name), zap.Error(err))
+				} else {
+					ethState = &ethtool.LinkState{
+						Interface: ethtool.Interface{
+							Index: int(link.Index),
+						},
+						Link: state > 0,
+					}
+				}
+			}
 		}
 
 		if err = r.Modify(ctx, network.NewLinkStatus(network.NamespaceName, link.Attributes.Name), func(r resource.Resource) error {
