@@ -16,7 +16,7 @@ import (
 
 const (
 	// DefaultKernelVersion is the default Linux kernel version.
-	DefaultKernelVersion = "6.1.82-talos"
+	DefaultKernelVersion = "6.1.100-talos"
 
 	// KernelModulesPath is the default path to the kernel modules without the kernel version.
 	KernelModulesPath = "/lib/modules"
@@ -344,7 +344,7 @@ const (
 
 	// DefaultKubernetesVersion is the default target version of the control plane.
 	// renovate: datasource=github-releases depName=kubernetes/kubernetes
-	DefaultKubernetesVersion = "1.29.3"
+	DefaultKubernetesVersion = "1.29.7"
 
 	// SupportedKubernetesVersions is the number of Kubernetes versions supported by Talos starting from DefaultKubernesVersion going backwards.
 	SupportedKubernetesVersions = 6
@@ -479,7 +479,7 @@ const (
 	TrustdUserID = 51
 
 	// DefaultContainerdVersion is the default container runtime version.
-	DefaultContainerdVersion = "1.7.13"
+	DefaultContainerdVersion = "1.7.20"
 
 	// SystemContainerdNamespace is the Containerd namespace for Talos services.
 	SystemContainerdNamespace = "system"
@@ -868,7 +868,7 @@ const (
 	DBusClientSocketPath = "/run/dbus/system_bus_socket"
 
 	// GoVersion is the version of Go compiler this release was built with.
-	GoVersion = "go1.21.8 X:loopvar"
+	GoVersion = "go1.21.12 X:loopvar"
 
 	// KubernetesTalosAPIServiceName is the name of the Kubernetes service to access Talos API.
 	KubernetesTalosAPIServiceName = "talos"
