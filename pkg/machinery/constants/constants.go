@@ -401,7 +401,7 @@ const (
 
 	// DefaultEtcdVersion is the default target version of etcd.
 	// renovate: datasource=github-releases depName=etcd-io/etcd
-	DefaultEtcdVersion = "v3.5.14"
+	DefaultEtcdVersion = "v3.5.15"
 
 	// EtcdRootTalosKey is the root etcd key for Talos-specific storage.
 	EtcdRootTalosKey = "talos:v1"
@@ -962,7 +962,7 @@ const (
 	DashboardTTY = 2
 
 	// FlannelVersion is the version of flannel to use.
-	FlannelVersion = "v0.25.3"
+	FlannelVersion = "v0.25.5"
 
 	// PlatformMetal is the name of the metal platform.
 	PlatformMetal = "metal"
