@@ -1,3 +1,89 @@
+## [Talos 1.6.8](https://github.com/siderolabs/talos/releases/tag/v1.6.8) (2024-07-24)
+
+Welcome to the v1.6.8 release of Talos!
+
+
+
+Please try out the release binaries and report any issues at
+https://github.com/siderolabs/talos/issues.
+
+### Component Updates
+
+* Linux: 6.1.100
+* Kubernetes: 1.29.7
+* runc: 1.1.13
+* containerd: 1.7.20
+
+Talos is built with Go 1.21.12.
+
+
+### Contributors
+
+* Andrey Smirnov
+* Artem Chernyshev
+* Dmitriy Matrenichev
+* Utku Ozdemir
+
+### Changes
+<details><summary>10 commits</summary>
+<p>
+
+* [`ddc690d73`](https://github.com/siderolabs/talos/commit/ddc690d7398503bab1d2200e7a4cb6a3332b2db0) feat: provide an option to enforce SecureBoot for TPM enrollment
+* [`390b29d1a`](https://github.com/siderolabs/talos/commit/390b29d1afabac7820c143ee97fc7fed584108da) fix: check for `nil` machine config during installation
+* [`3ec9b8d6f`](https://github.com/siderolabs/talos/commit/3ec9b8d6feca30807e897fb8a5fe63dfb8d22f75) fix: do not fail cli action tracker when boot id cannot be read
+* [`f686e7102`](https://github.com/siderolabs/talos/commit/f686e7102ed7defc45de7f931f365a9887c418e7) fix: bump priority of OpenStack routes if IPv6 and default gateway
+* [`745257f1e`](https://github.com/siderolabs/talos/commit/745257f1e969c9fdc0f9112cfcc342c9bc6cd243) fix: return proper value from Bridge.STP instead of plain nil
+* [`968eb5ac8`](https://github.com/siderolabs/talos/commit/968eb5ac8590ff8918d36a7c0e13d2a1417f31f8) fix: assign different priority to IPv6 default gateway on OpenStack
+* [`b222d5062`](https://github.com/siderolabs/talos/commit/b222d5062210559f3b2c3a0c6c28e0451d63eaf5) fix: make static pods check output consistent
+* [`dd241d705`](https://github.com/siderolabs/talos/commit/dd241d70595c2dc464edbbb0ac357a6655db40b8) fix: don't announce the VIP on acquire failure
+* [`67c76e816`](https://github.com/siderolabs/talos/commit/67c76e8163e2c19d8cec3e317c2b83d4444e6a3c) fix: always update firewall rules (kubespan)
+* [`65a927559`](https://github.com/siderolabs/talos/commit/65a927559b16e4283eb126425f31d22f5a61a71e) feat: update major components
+</p>
+</details>
+
+### Changes from siderolabs/pkgs
+<details><summary>1 commit</summary>
+<p>
+
+* [`2472b6d`](https://github.com/siderolabs/pkgs/commit/2472b6d09587e9455328ef2dbb7b690589f2eba0) feat: updates for Talos 1.6.8
+</p>
+</details>
+
+### Changes from siderolabs/tools
+<details><summary>1 commit</summary>
+<p>
+
+* [`8ebe1dc`](https://github.com/siderolabs/tools/commit/8ebe1dc689006e03d7195e9fa55174b170a3b86c) feat: update Go to 1.21.12
+</p>
+</details>
+
+### Dependency Changes
+
+* **github.com/Azure/azure-sdk-for-go/sdk/azcore**      v1.9.0 -> v1.11.1
+* **github.com/Azure/azure-sdk-for-go/sdk/azidentity**  v1.4.0 -> v1.6.0
+* **github.com/google/nftables**                        v0.1.0 -> v0.2.0
+* **github.com/google/uuid**                            v1.4.0 -> v1.6.0
+* **github.com/siderolabs/pkgs**                        v1.6.0-27-gdf44f94 -> v1.6.0-28-g2472b6d
+* **github.com/siderolabs/tools**                       v1.6.0-3-gae30965 -> v1.6.0-4-g8ebe1dc
+* **github.com/stretchr/testify**                       v1.8.4 -> v1.9.0
+* **golang.org/x/net**                                  v0.19.0 -> v0.26.0
+* **golang.org/x/sync**                                 v0.5.0 -> v0.7.0
+* **golang.org/x/sys**                                  v0.16.0 -> v0.21.0
+* **golang.org/x/term**                                 v0.15.0 -> v0.21.0
+* **golang.org/x/text**                                 v0.14.0 -> v0.16.0
+* **k8s.io/api**                                        v0.29.3 -> v0.29.7
+* **k8s.io/apimachinery**                               v0.29.3 -> v0.29.7
+* **k8s.io/apiserver**                                  v0.29.3 -> v0.29.7
+* **k8s.io/client-go**                                  v0.29.3 -> v0.29.7
+* **k8s.io/component-base**                             v0.29.3 -> v0.29.7
+* **k8s.io/cri-api**                                    v0.29.3 -> v0.29.7
+* **k8s.io/kube-scheduler**                             v0.29.3 -> v0.29.7
+* **k8s.io/kubectl**                                    v0.29.3 -> v0.29.7
+* **k8s.io/kubelet**                                    v0.29.3 -> v0.29.7
+* **k8s.io/pod-security-admission**                     v0.29.3 -> v0.29.7
+
+Previous release can be found at [v1.6.7](https://github.com/siderolabs/talos/releases/tag/v1.6.7)
+
 ## [Talos 1.6.7](https://github.com/siderolabs/talos/releases/tag/v1.6.7) (2024-03-20)
 
 Welcome to the v1.6.7 release of Talos!
