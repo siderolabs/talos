@@ -33,7 +33,7 @@
 (sidcontext scmp_packet (system_u object_r unlabeled_t (systemLow systemLow)))
 
 (type unlabeled_t)
-(roletype object_r unlabeled_t)
+(call system_file (unlabeled_t))
 (type fs_t)
 (call filesystem (fs_t))
 
