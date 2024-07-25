@@ -1,11 +1,14 @@
 (type containerd_exec_t)
 (call system_file (containerd_exec_t))
-(filecon "/bin/containerd" any (system_u object_r containerd_exec_t (systemLow systemLow)))
+(context containerd_exec_t (system_u object_r containerd_exec_t (systemLow systemLow)))
+(filecon "/bin/containerd" any containerd_exec_t)
+(filecon "/bin/containerd-shim-runc-v2" any containerd_exec_t)
+(filecon "/bin/runc" any containerd_exec_t)
 
 ; System containerd
 (type sys_containerd_t)
 (call system_service (sys_containerd_t))
-(allow sys_containerd_t containerd_exec_t (file (entrypoint)))
+(allow sys_containerd_t containerd_exec_t (file (entrypoint execute_no_trans)))
 
 (type sys_containerd_socket_t)
 (call system_socket (sys_containerd_socket_t))
@@ -38,7 +41,7 @@
 ; Pod (CRI) containerd
 (type pod_containerd_t)
 (call client_process (pod_containerd_t))
-(allow pod_containerd_t containerd_exec_t (file (entrypoint)))
+(allow pod_containerd_t containerd_exec_t (file (entrypoint execute_no_trans)))
 (allow init_t pod_containerd_t (process (transition)))
 
 (type pod_containerd_socket_t)
