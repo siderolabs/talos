@@ -60,7 +60,7 @@ create () {
              echo "GOVC_NETWORK is unset, assuming default VM Network";
         else
             echo "GOVC_NETWORK set to ${GOVC_NETWORK}";
-            govc vm.network.change -vm ${CLUSTER_NAME}-control-plane-${i} -net ${GOVC_NETWORK} ethernet-0
+            govc vm.network.change -vm ${CLUSTER_NAME}-control-plane-${i} -net "${GOVC_NETWORK}" ethernet-0
         fi
 
         govc vm.power -on ${CLUSTER_NAME}-control-plane-${i}
@@ -87,7 +87,7 @@ create () {
              echo "GOVC_NETWORK is unset, assuming default VM Network";
         else
             echo "GOVC_NETWORK set to ${GOVC_NETWORK}";
-            govc vm.network.change -vm ${CLUSTER_NAME}-worker-${i} -net ${GOVC_NETWORK} ethernet-0
+            govc vm.network.change -vm ${CLUSTER_NAME}-worker-${i} -net "${GOVC_NETWORK}" ethernet-0
         fi
 
 
