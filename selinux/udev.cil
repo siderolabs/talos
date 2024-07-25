@@ -2,10 +2,14 @@
 (call system_file (udev_exec_t))
 (context udev_exec_t (system_u object_r udev_exec_t (systemLow systemLow)))
 (filecon "/sbin/udevd" file udev_exec_t)
-(filecon "/usr/bin/udevadm" file udev_exec_t)
-(filecon "/sbin/udevadm" symlink udev_exec_t)
+(filecon "/usr/lib/udev(/.*)?" any udev_exec_t)
 
-(filecon "/usr/lib/udev(/.*)?" any bin_t)
+(type udevadm_exec_t)
+(call system_file (udevadm_exec_t))
+(context udevadm_exec_t (system_u object_r udevadm_exec_t (systemLow systemLow)))
+(filecon "/usr/bin/udevadm" file udevadm_exec_t)
+(filecon "/sbin/udevadm" symlink udevadm_exec_t)
+(allow init_t udevadm_exec_t (file (execute_no_trans)))
 
 (type udev_rules_t)
 (call system_file (udev_rules_t))
@@ -18,7 +22,7 @@
 
 (type udev_t)
 (call system_service (udev_t))
-(allow udev_t udev_exec_t (file (entrypoint)))
+(allow udev_t udev_exec_t (file (entrypoint execute_no_trans)))
 
 (allow udev_t device_files (blk_file (relabelto)))
 (allow udev_t device_files (chr_file (relabelto)))
