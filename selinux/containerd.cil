@@ -61,8 +61,3 @@
 (call pod_process (etcd_t))
 ; FIXME: insecure as anyone with access to the pod containerd may obtain this domain
 (allow etcd_t ephemeral_t (file (entrypoint)))
-
-(type kubelet_t)
-(call pod_process (kubelet_t))
-; FIXME: insecure as anyone with access to the pod containerd may obtain this domain
-(allow kubelet_t ephemeral_t (file (entrypoint)))

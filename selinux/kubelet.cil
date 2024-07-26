@@ -1,0 +1,30 @@
+(type kubelet_t)
+(call pod_process (kubelet_t))
+; FIXME: insecure as anyone with access to the pod containerd may obtain this domain
+(allow kubelet_t ephemeral_t (file (entrypoint)))
+
+; procfs access
+(allow kubelet_t any_processes (dir (open search read search watch getattr)))
+(allow kubelet_t any_processes (file (read)))
+(allow kubelet_t any_processes (lnk_file (read)))
+
+; Manage cgroups
+(allow kubelet_t cgroup_t (dir (
+    append audit_access create execmod execute getattr ioctl link lock map mounton open quotaon read relabelfrom relabelto rename setattr unlink watch watch_mount watch_reads watch_sb watch_with_perm write
+    add_name remove_name reparent rmdir search
+)))
+(allow kubelet_t cgroup_t (file (
+    append audit_access create execmod execute getattr ioctl link lock map mounton open quotaon read relabelfrom relabelto rename setattr unlink watch watch_mount watch_reads watch_sb watch_with_perm write
+)))
+
+; D-Bus socket used for shutdown notification, owned by machined
+(allow kubelet_t dbus_client_socket_t (sock_file (append getattr open write)))
+(allow kubelet_t init_t (unix_stream_socket (connectto getattr)))
+
+; D-Bus socket used for shutdown notification, owned by machined
+(allow kubelet_t pod_containerd_socket_t (sock_file (append getattr open write)))
+(allow kubelet_t pod_containerd_t (unix_stream_socket (connectto getattr)))
+
+; Read misc kernel properties
+(allow kubelet_t proc_sysctl_t (dir (getattr open read search)))
+(allow kubelet_t proc_sysctl_t (file (getattr read open)))
