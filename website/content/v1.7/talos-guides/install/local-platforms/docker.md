@@ -17,11 +17,17 @@ The follow are requirements for running Talos in Docker:
 - Docker 18.03 or greater
 - a recent version of [`talosctl`](https://github.com/siderolabs/talos/releases)
 
+{{% alert title="Note" color="info" %}}
+If you are using Docker Desktop on a macOS computer, and you encounter the error: *Cannot connect to the Docker daemon at unix:///var/run/docker.sock. Is the docker daemon running?* you may need to manually create the link for the Docker socket:
+```sudo ln -s "$HOME/.docker/run/docker.sock" /var/run/docker.sock```
+
+{{% /alert %}}
+
 ## Caveats
 
 Due to the fact that Talos will be running in a container, certain APIs are not available.
 For example `upgrade`, `reset`, and similar APIs don't apply in container mode.
-Further, when running on a Mac in docker,  due to networking limitations, VIPs are not supported.
+Further, when running on a Mac in docker, due to networking limitations, VIPs are not supported.
 
 ## Create the Cluster
 
@@ -44,7 +50,7 @@ Talos and Kubernetes API are mapped to a random port on the host machine, the re
 Talos API endpoint can be found using `talosctl config info`:
 
 ```bash
-$ talosctcl config info
+$ talosctl config info
 ...
 Endpoints:           127.0.0.1:38423
 ```

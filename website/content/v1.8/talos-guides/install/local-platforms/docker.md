@@ -6,12 +6,13 @@ aliases:
 ---
 
 In this guide we will create a Kubernetes cluster in Docker, using a containerized version of Talos.
+
 Running Talos in Docker is intended to be used in CI pipelines, and local testing when you need a quick and easy cluster.
-It also provides an excellent way for developers to develop against the same version of Talos as is used in production.
+Furthermore, if you are running Talos in production, it provides an excellent way for developers to develop against the same version of Talos.
 
 ## Requirements
 
-The follow are the requirements for running Talos in Docker:
+The follow are requirements for running Talos in Docker:
 
 - Docker 18.03 or greater
 - a recent version of [`talosctl`](https://github.com/siderolabs/talos/releases)
@@ -26,7 +27,7 @@ If you are using Docker Desktop on a macOS computer, and you encounter the error
 
 Due to the fact that Talos will be running in a container, certain APIs are not available.
 For example `upgrade`, `reset`, and similar APIs don't apply in container mode.
-Further, when running on a Mac in docker,  due to networking limitations, VIPs are not supported.
+Further, when running on a Mac in docker, due to networking limitations, VIPs are not supported.
 
 ## Create the Cluster
 
@@ -36,7 +37,7 @@ Creating a local cluster is as simple as:
 talosctl cluster create
 ```
 
-Once the above finishes, your `talosconfig` (`~/.talos/config`)  and `kubeconfig` (`~/.kube/config`) will be configured to point to the new cluster.
+Once the above finishes successfully, your `talosconfig` (`~/.talos/config`)  and `kubeconfig` (`~/.kube/config`) will be configured to point to the new cluster.
 
 > Note: Startup times can take up to a minute or more before the cluster is available.
 
