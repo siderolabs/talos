@@ -105,193 +105,67 @@
     watch
 )))
 (allow any_processes unconfined_files (file (
-    append
-    create
-    execmod
-    execute
-    getattr
-    ioctl
-    link
-    lock
-    map
-    mounton
-    open
-    quotaon
-    read
-    relabelfrom
-    relabelto
-    rename
-    setattr
-    unlink
-    watch
-    watch_mount
-    watch_reads
-    watch_sb
-    watch_with_perm
-    write
-
-    execute_no_trans
-    entrypoint
+    append create execmod execute getattr ioctl link lock map mounton open quotaon read relabelfrom relabelto rename setattr unlink watch watch_mount watch_reads watch_sb watch_with_perm write
+    execute_no_trans entrypoint
 )))
 (allow any_processes unconfined_files (lnk_file (
-    append
-    create
-    execmod
-    execute
-    getattr
-    ioctl
-    link
-    lock
-    map
-    mounton
-    open
-    quotaon
-    read
-    relabelfrom
-    relabelto
-    rename
-    setattr
-    unlink
-    watch
-    watch_mount
-    watch_reads
-    watch_sb
-    watch_with_perm
-    write
+    append create execmod execute getattr ioctl link lock map mounton open quotaon read relabelfrom relabelto rename setattr unlink watch watch_mount watch_reads watch_sb watch_with_perm write
 )))
 (allow any_processes unconfined_files (sock_file (
-    append
-    create
-    execmod
-    execute
-    getattr
-    ioctl
-    link
-    lock
-    map
-    mounton
-    open
-    quotaon
-    read
-    relabelfrom
-    relabelto
-    rename
-    setattr
-    unlink
-    watch
-    watch_mount
-    watch_reads
-    watch_sb
-    watch_with_perm
-    write
+    append create execmod execute getattr ioctl link lock map mounton open quotaon read relabelfrom relabelto rename setattr unlink watch watch_mount watch_reads watch_sb watch_with_perm write
 )))
 (allow any_processes unconfined_files (fifo_file (
-    append
-    create
-    execmod
-    execute
-    getattr
-    ioctl
-    link
-    lock
-    map
-    mounton
-    open
-    quotaon
-    read
-    relabelfrom
-    relabelto
-    rename
-    setattr
-    unlink
-    watch
-    watch_mount
-    watch_reads
-    watch_sb
-    watch_with_perm
-    write
+    append create execmod execute getattr ioctl link lock map mounton open quotaon read relabelfrom relabelto rename setattr unlink watch watch_mount watch_reads watch_sb watch_with_perm write
 )))
 ; (allow any_processes unconfined_files (blk_file (
-;     append
-;     create
-;     execmod
-;     execute
-;     getattr
-;     ioctl
-;     link
-;     lock
-;     map
-;     mounton
-;     open
-;     quotaon
-;     read
-;     relabelfrom
-;     relabelto
-;     rename
-;     setattr
-;     unlink
-;     watch
-;     watch_mount
-;     watch_reads
-;     watch_sb
-;     watch_with_perm
-;     write
+;     append create execmod execute getattr ioctl link lock map mounton open quotaon read relabelfrom relabelto rename setattr unlink watch watch_mount watch_reads watch_sb watch_with_perm write
 ; )))
 (allow any_processes unconfined_files (chr_file (
-    append
-    create
-    execmod
-    execute
-    getattr
-    ioctl
-    link
-    lock
-    map
-    mounton
-    open
-    quotaon
-    read
-    relabelfrom
-    relabelto
-    rename
-    setattr
-    unlink
-    watch
-    watch_mount
-    watch_reads
-    watch_sb
-    watch_with_perm
-    write
+    append create execmod execute getattr ioctl link lock map mounton open quotaon read relabelfrom relabelto rename setattr unlink watch watch_mount watch_reads watch_sb watch_with_perm write
 )))
 (allow any_processes unconfined_files (dir (
-    append
-    create
-    execmod
-    execute
+    append create execmod execute getattr ioctl link lock map mounton open quotaon read relabelfrom relabelto rename setattr unlink watch watch_mount watch_reads watch_sb watch_with_perm write
+    add_name remove_name reparent search rmdir
+)))
+
+(typeattribute system_processes)
+(typeattributeset system_processes kernel_t)
+(typeattributeset system_processes init_t)
+(typeattributeset system_processes system_services)
+
+; TODO: constrain more
+(allow system_processes any_files (filesystem (
+    mount
+    remount
+    unmount
     getattr
-    ioctl
-    link
-    lock
-    map
-    mounton
-    open
-    quotaon
-    read
     relabelfrom
     relabelto
-    rename
-    setattr
-    unlink
+    associate
+    quotamod
+    quotaget
     watch
-    watch_mount
-    watch_reads
-    watch_sb
-    watch_with_perm
-    write
-    
-    add_name
-    remove_name
-    reparent
-    search
-    rmdir
+)))
+(allow system_processes any_files (file (
+    append create execmod execute getattr ioctl link lock map mounton open quotaon read relabelfrom relabelto rename setattr unlink watch watch_mount watch_reads watch_sb watch_with_perm write
+    execute_no_trans entrypoint
+)))
+(allow system_processes any_files (lnk_file (
+    append create execmod execute getattr ioctl link lock map mounton open quotaon read relabelfrom relabelto rename setattr unlink watch watch_mount watch_reads watch_sb watch_with_perm write
+)))
+(allow system_processes any_files (sock_file (
+    append create execmod execute getattr ioctl link lock map mounton open quotaon read relabelfrom relabelto rename setattr unlink watch watch_mount watch_reads watch_sb watch_with_perm write
+)))
+(allow system_processes any_files (fifo_file (
+    append create execmod execute getattr ioctl link lock map mounton open quotaon read relabelfrom relabelto rename setattr unlink watch watch_mount watch_reads watch_sb watch_with_perm write
+)))
+(allow system_processes any_files (blk_file (
+    append create execmod execute getattr ioctl link lock map mounton open quotaon read relabelfrom relabelto rename setattr unlink watch watch_mount watch_reads watch_sb watch_with_perm write
+)))
+(allow system_processes any_files (chr_file (
+    append create execmod execute getattr ioctl link lock map mounton open quotaon read relabelfrom relabelto rename setattr unlink watch watch_mount watch_reads watch_sb watch_with_perm write
+)))
+(allow system_processes any_files (dir (
+    append create execmod execute getattr ioctl link lock map mounton open quotaon read relabelfrom relabelto rename setattr unlink watch watch_mount watch_reads watch_sb watch_with_perm write
+    add_name remove_name reparent search rmdir
 )))
