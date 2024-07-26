@@ -37,6 +37,7 @@
 )
 
 (typeattribute any_files)
+(typeattributeset any_files filesystems)
 (typeattributeset any_files common_files)
 (typeattributeset any_files protected_files)
 (typeattributeset any_files system_files)
@@ -45,6 +46,8 @@
 (typeattributeset any_files protected_device_files)
 
 (allow any_files self (filesystem (associate)))
+(allow device_files device_t (filesystem (associate)))
+(allow protected_device_files device_t (filesystem (associate)))
 
 (typeattribute unconfined_files)
 (typeattributeset unconfined_files ephemeral_t)
