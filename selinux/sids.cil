@@ -1,5 +1,5 @@
 (type null_device_t)
-(roletype object_r null_device_t)
+(call device (null_device_t))
 (sid devnull)
 (sidcontext devnull (system_u object_r null_device_t (systemLow systemLow)))
 

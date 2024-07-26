@@ -53,7 +53,6 @@
 (call device (v4l_device_t))
 (type mem_device_t)
 (call device (mem_device_t))
-(call device (null_device_t))
 (type kmsg_device_t)
 (call device (kmsg_device_t))
 (type kvm_device_t)
