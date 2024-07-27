@@ -1,15 +1,15 @@
 ; Access to all file classes
 (classmap fs_classes (full))
 (classmapping fs_classes full (filesystem (
-    mount
-    remount
-    unmount
+    associate
     getattr
+    mount
+    quotaget
+    quotamod
     relabelfrom
     relabelto
-    associate
-    quotamod
-    quotaget
+    remount
+    unmount
     watch
 )))
 (classmapping fs_classes full (file (
