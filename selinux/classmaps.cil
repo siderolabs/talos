@@ -17,7 +17,7 @@
 )))
 (classmapping fs_classes full (dir (
     append audit_access create execmod execute getattr ioctl link lock map mounton open quotaon read relabelfrom relabelto rename setattr unlink watch watch_mount watch_reads watch_sb watch_with_perm write
-    add_name remove_name reparent search rmdir
+    add_name remove_name reparent rmdir search
 )))
 (classmapping fs_classes full (lnk_file (
     append audit_access create execmod execute getattr ioctl link lock map mounton open quotaon read relabelfrom relabelto rename setattr unlink watch watch_mount watch_reads watch_sb watch_with_perm write
