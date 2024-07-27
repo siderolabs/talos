@@ -136,8 +136,12 @@
 (typeattributeset system_processes init_t)
 (typeattributeset system_processes system_services)
 
+(typeattribute any_files_and_processes)
+(typeattributeset any_files_and_processes any_files)
+(typeattributeset any_files_and_processes any_processes)
+
 ; TODO: constrain more
-(allow system_processes any_files (filesystem (
+(allow system_processes any_files_and_processes (filesystem (
     mount
     remount
     unmount
@@ -149,26 +153,26 @@
     quotaget
     watch
 )))
-(allow system_processes any_files (file (
+(allow system_processes any_files_and_processes (file (
     append create execmod execute getattr ioctl link lock map mounton open quotaon read relabelfrom relabelto rename setattr unlink watch watch_mount watch_reads watch_sb watch_with_perm write
     execute_no_trans entrypoint
 )))
-(allow system_processes any_files (lnk_file (
+(allow system_processes any_files_and_processes (lnk_file (
     append create execmod execute getattr ioctl link lock map mounton open quotaon read relabelfrom relabelto rename setattr unlink watch watch_mount watch_reads watch_sb watch_with_perm write
 )))
-(allow system_processes any_files (sock_file (
+(allow system_processes any_files_and_processes (sock_file (
     append create execmod execute getattr ioctl link lock map mounton open quotaon read relabelfrom relabelto rename setattr unlink watch watch_mount watch_reads watch_sb watch_with_perm write
 )))
-(allow system_processes any_files (fifo_file (
+(allow system_processes any_files_and_processes (fifo_file (
     append create execmod execute getattr ioctl link lock map mounton open quotaon read relabelfrom relabelto rename setattr unlink watch watch_mount watch_reads watch_sb watch_with_perm write
 )))
-(allow system_processes any_files (blk_file (
+(allow system_processes any_files_and_processes (blk_file (
     append create execmod execute getattr ioctl link lock map mounton open quotaon read relabelfrom relabelto rename setattr unlink watch watch_mount watch_reads watch_sb watch_with_perm write
 )))
-(allow system_processes any_files (chr_file (
+(allow system_processes any_files_and_processes (chr_file (
     append create execmod execute getattr ioctl link lock map mounton open quotaon read relabelfrom relabelto rename setattr unlink watch watch_mount watch_reads watch_sb watch_with_perm write
 )))
-(allow system_processes any_files (dir (
+(allow system_processes any_files_and_processes (dir (
     append create execmod execute getattr ioctl link lock map mounton open quotaon read relabelfrom relabelto rename setattr unlink watch watch_mount watch_reads watch_sb watch_with_perm write
     add_name remove_name reparent search rmdir
 )))
