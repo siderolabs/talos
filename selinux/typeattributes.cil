@@ -138,9 +138,6 @@
     watch
 )))
 (call file_common_rw (any_processes unconfined_files file))
-(allow any_processes unconfined_files (file (
-    execute_no_trans entrypoint
-)))
 (call file_common_rw (any_processes unconfined_files lnk_file))
 (call file_common_rw (any_processes unconfined_files sock_file))
 (call file_common_rw (any_processes unconfined_files fifo_file))
