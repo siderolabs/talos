@@ -95,58 +95,7 @@
 (typeattributeset any_processes client_processes)
 (typeattributeset any_processes pod_processes)
 
-(macro file_common_rw ((type ARG1) (type ARG2) (class ARG3))
-    (allow ARG1 ARG2 (ARG3 (
-        append
-        audit_access
-        create
-        execmod
-        execute
-        getattr
-        ioctl
-        link
-        lock
-        map
-        mounton
-        open
-        quotaon
-        read
-        relabelfrom
-        relabelto
-        rename
-        setattr
-        unlink
-        watch
-        watch_mount
-        watch_reads
-        watch_sb
-        watch_with_perm
-        write
-    )))
-)
-
-(allow any_processes unconfined_files (filesystem (
-    mount
-    remount
-    unmount
-    getattr
-    relabelfrom
-    relabelto
-    associate
-    quotamod
-    quotaget
-    watch
-)))
-(call file_common_rw (any_processes unconfined_files file))
-(call file_common_rw (any_processes unconfined_files lnk_file))
-(call file_common_rw (any_processes unconfined_files sock_file))
-(call file_common_rw (any_processes unconfined_files fifo_file))
-; (call file_common_rw (any_processes unconfined_files blk_file))
-(call file_common_rw (any_processes unconfined_files chr_file))
-(call file_common_rw (any_processes unconfined_files dir))
-(allow any_processes unconfined_files (dir (
-    add_name remove_name reparent search rmdir
-)))
+(allow any_processes unconfined_files (fs_classes (full)))
 
 (typeattribute system_processes)
 (typeattributeset system_processes kernel_t)
@@ -158,25 +107,4 @@
 (typeattributeset any_files_and_processes any_processes)
 
 ; TODO: constrain more
-(allow system_processes any_files_and_processes (filesystem (
-    mount
-    remount
-    unmount
-    getattr
-    relabelfrom
-    relabelto
-    associate
-    quotamod
-    quotaget
-    watch
-)))
-(call file_common_rw (system_processes any_files_and_processes file))
-(call file_common_rw (system_processes any_files_and_processes lnk_file))
-(call file_common_rw (system_processes any_files_and_processes sock_file))
-(call file_common_rw (system_processes any_files_and_processes fifo_file))
-(call file_common_rw (system_processes any_files_and_processes blk_file))
-(call file_common_rw (system_processes any_files_and_processes chr_file))
-(call file_common_rw (system_processes any_files_and_processes dir))
-(allow system_processes any_files_and_processes (dir (
-    add_name remove_name reparent search rmdir
-)))
+(allow system_processes any_files_and_processes (fs_classes (full)))
