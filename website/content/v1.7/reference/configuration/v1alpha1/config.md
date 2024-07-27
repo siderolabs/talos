@@ -1558,32 +1558,38 @@ DeviceWireguardConfig contains settings for configuring Wireguard network interf
 machine:
     network:
         interfaces:
-            - wireguard:
-                privateKey: ABCDEF... # Specifies a private key configuration (base64 encoded).
-                listenPort: 51111 # Specifies a device's listening port.
-                # Specifies a list of peer configurations to apply to a device.
-                peers:
-                    - publicKey: ABCDEF... # Specifies the public key of this peer.
-                      endpoint: 192.168.1.3 # Specifies the endpoint of this peer entry.
-                      # AllowedIPs specifies a list of allowed IP addresses in CIDR notation for this peer.
-                      allowedIPs:
-                        - 192.168.1.0/24
+          - interface: wg0 # Name of the wireguard interface
+            addresses:
+              - 192.168.2.1/24 # Address to assign to the interface
+            wireguard:
+              privateKey: ABCDEF... # Specifies a private key configuration (base64 encoded).
+              listenPort: 51111 # Specifies a device's listening port.
+              # Specifies a list of peer configurations to apply to a device.
+              peers:
+              - publicKey: ABCDEF... # Specifies the public key of this peer.
+                endpoint: 192.168.1.3 # Specifies the endpoint of this peer entry.
+                # AllowedIPs specifies a list of allowed IP addresses in CIDR notation for this peer.
+                allowedIPs:
+                  - 192.168.1.0/24
 {{< /highlight >}}
 
 {{< highlight yaml >}}
 machine:
     network:
         interfaces:
-            - wireguard:
-                privateKey: ABCDEF... # Specifies a private key configuration (base64 encoded).
-                # Specifies a list of peer configurations to apply to a device.
-                peers:
-                    - publicKey: ABCDEF... # Specifies the public key of this peer.
-                      endpoint: 192.168.1.2:51822 # Specifies the endpoint of this peer entry.
-                      persistentKeepaliveInterval: 10s # Specifies the persistent keepalive interval for this peer.
-                      # AllowedIPs specifies a list of allowed IP addresses in CIDR notation for this peer.
-                      allowedIPs:
-                        - 192.168.1.0/24
+        - interface: wg0 # Name of the wireguard interface
+          addresses:
+            - 192.168.2.1/24 # Address to assign to the interface
+          wireguard:
+            privateKey: ABCDEF... # Specifies a private key configuration (base64 encoded).
+            # Specifies a list of peer configurations to apply to a device.
+            peers:
+              - publicKey: ABCDEF... # Specifies the public key of this peer.
+                endpoint: 192.168.1.2:51822 # Specifies the endpoint of this peer entry.
+                persistentKeepaliveInterval: 10s # Specifies the persistent keepalive interval for this peer.
+                # AllowedIPs specifies a list of allowed IP addresses in CIDR notation for this peer.
+                allowedIPs:
+                  - 192.168.1.0/24
 {{< /highlight >}}
 
 
