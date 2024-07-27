@@ -155,7 +155,6 @@
 )))
 (allow system_processes any_files_and_processes (file (
     append create execmod execute getattr ioctl link lock map mounton open quotaon read relabelfrom relabelto rename setattr unlink watch watch_mount watch_reads watch_sb watch_with_perm write
-    execute_no_trans entrypoint
 )))
 (allow system_processes any_files_and_processes (lnk_file (
     append create execmod execute getattr ioctl link lock map mounton open quotaon read relabelfrom relabelto rename setattr unlink watch watch_mount watch_reads watch_sb watch_with_perm write
