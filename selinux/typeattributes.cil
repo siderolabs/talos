@@ -101,6 +101,7 @@
 (typeattributeset system_processes kernel_t)
 (typeattributeset system_processes init_t)
 (typeattributeset system_processes system_services)
+(typeattributeset system_processes client_processes)
 
 (typeattribute any_files_and_processes)
 (typeattributeset any_files_and_processes any_files)
