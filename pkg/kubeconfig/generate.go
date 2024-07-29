@@ -7,39 +7,18 @@ package kubeconfig
 import (
 	"bytes"
 	stdlibx509 "crypto/x509"
-	"encoding/base64"
 	"fmt"
 	"io"
 	"net/url"
-	"text/template"
 	"time"
 
 	"github.com/siderolabs/crypto/x509"
 	"github.com/siderolabs/gen/xslices"
+	"k8s.io/client-go/tools/clientcmd"
+	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
 
 	"github.com/siderolabs/talos/pkg/machinery/config/config"
 )
-
-const kubeConfigTemplate = `apiVersion: v1
-kind: Config
-clusters:
-- name: {{ .ClusterName }}
-  cluster:
-    server: {{ .Endpoint }}
-    certificate-authority-data: {{ .CACert | base64Encode }}
-users:
-- name: {{ .Username }}@{{ .ClusterName }}
-  user:
-    client-certificate-data: {{ .ClientCert | base64Encode }}
-    client-key-data: {{ .ClientKey | base64Encode }}
-contexts:
-- context:
-    cluster: {{ .ClusterName }}
-    namespace: default
-    user: {{ .Username }}@{{ .ClusterName }}
-  name: {{ .ContextName }}@{{ .ClusterName }}
-current-context: {{ .ContextName }}@{{ .ClusterName }}
-`
 
 // GenerateAdminInput is the interface for the GenerateAdmin function.
 //
@@ -98,13 +77,6 @@ const allowedTimeSkew = 10 * time.Second
 
 // Generate a kubeconfig for the cluster from the given Input.
 func Generate(in *GenerateInput, out io.Writer) error {
-	tpl, err := template.New("kubeconfig").Funcs(template.FuncMap{
-		"base64Encode": base64Encode,
-	}).Parse(kubeConfigTemplate)
-	if err != nil {
-		return fmt.Errorf("error parsing kubeconfig template: %w", err)
-	}
-
 	k8sCA, err := x509.NewCertificateAuthorityFromCertificateAndKey(in.IssuingCA)
 	if err != nil {
 		return fmt.Errorf("error getting Kubernetes CA: %w", err)
@@ -128,25 +100,37 @@ func Generate(in *GenerateInput, out io.Writer) error {
 
 	serverCAs := bytes.Join(xslices.Map(in.AcceptedCAs, func(ca *x509.PEMEncodedCertificate) []byte { return ca.Crt }), nil)
 
-	return tpl.Execute(out, struct {
-		GenerateInput
-
-		CACert     string
-		ClientCert string
-		ClientKey  string
-	}{
-		GenerateInput: *in,
-		CACert:        string(serverCAs),
-		ClientCert:    string(clientCertPEM.Crt),
-		ClientKey:     string(clientCertPEM.Key),
-	})
-}
-
-func base64Encode(content any) (string, error) {
-	str, ok := content.(string)
-	if !ok {
-		return "", fmt.Errorf("argument to base64 encode is not a string: %v", content)
+	cfg := clientcmdapi.Config{
+		APIVersion: "v1",
+		Kind:       "Config",
+		Clusters: map[string]*clientcmdapi.Cluster{
+			in.ClusterName: {
+				Server:                   in.Endpoint,
+				CertificateAuthorityData: serverCAs,
+			},
+		},
+		AuthInfos: map[string]*clientcmdapi.AuthInfo{
+			in.Username + "@" + in.ClusterName: {
+				ClientCertificateData: clientCertPEM.Crt,
+				ClientKeyData:         clientCertPEM.Key,
+			},
+		},
+		Contexts: map[string]*clientcmdapi.Context{
+			in.ContextName + "@" + in.ClusterName: {
+				Cluster:   in.ClusterName,
+				Namespace: "default",
+				AuthInfo:  in.Username + "@" + in.ClusterName,
+			},
+		},
+		CurrentContext: in.ContextName + "@" + in.ClusterName,
 	}
 
-	return base64.StdEncoding.EncodeToString([]byte(str)), nil
+	marshaled, err := clientcmd.Write(cfg)
+	if err != nil {
+		return err
+	}
+
+	_, err = out.Write(marshaled)
+
+	return err
 }

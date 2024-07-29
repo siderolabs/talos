@@ -3,6 +3,9 @@ module github.com/siderolabs/talos
 go 1.22.5
 
 replace (
+	// see e.g. https://github.com/grpc/grpc-go/issues/6696
+	cloud.google.com/go => cloud.google.com/go v0.100.2
+
 	// forked coredns so we don't carry caddy and other stuff into the Talos
 	github.com/coredns/coredns => github.com/siderolabs/coredns v1.11.53
 

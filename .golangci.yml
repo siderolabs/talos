@@ -104,6 +104,7 @@ linters-settings:
       - github.com/mdlayher/kobject
       - golang.zx2c4.com/wireguard
       - golang.zx2c4.com/wireguard/wgctrl
+      - cloud.google.com/go
     retract-allow-no-explanation: false
     exclude-forbidden: false
 
