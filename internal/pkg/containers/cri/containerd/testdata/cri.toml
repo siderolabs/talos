@@ -1,11 +1,11 @@
 [plugins]
-  [plugins.'io.containerd.grpc.v1.cri']
-    [plugins.'io.containerd.grpc.v1.cri'.registry]
+  [plugins.'io.containerd.cri.v1.images']
+    [plugins.'io.containerd.cri.v1.images'.registry]
       config_path = '/etc/cri/conf.d/hosts'
 
-      [plugins.'io.containerd.grpc.v1.cri'.registry.configs]
-        [plugins.'io.containerd.grpc.v1.cri'.registry.configs.'some.host:123']
-          [plugins.'io.containerd.grpc.v1.cri'.registry.configs.'some.host:123'.auth]
+      [plugins.'io.containerd.cri.v1.images'.registry.configs]
+        [plugins.'io.containerd.cri.v1.images'.registry.configs.'some.host:123']
+          [plugins.'io.containerd.cri.v1.images'.registry.configs.'some.host:123'.auth]
             username = 'root'
             password = 'secret'
             auth = 'auth'

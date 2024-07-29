@@ -30,7 +30,7 @@ type CRIConfig struct {
 
 // PluginsConfig represents the CRI plugins config.
 type PluginsConfig struct {
-	CRI CRIConfig `toml:"io.containerd.grpc.v1.cri"`
+	CRI CRIConfig `toml:"io.containerd.cri.v1.images"`
 }
 
 // Config represnts the containerd config.
