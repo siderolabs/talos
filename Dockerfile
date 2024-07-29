@@ -310,14 +310,15 @@ COPY --from=pkg-ipxe-amd64 /usr/libexec/snp.efi /amd64/snp.efi
 COPY --from=pkg-ipxe-arm64 /usr/libexec/snp.efi /arm64/snp.efi
 
 FROM scratch AS microsoft-secureboot-database
-ADD https://github.com/microsoft/secureboot_objects.git /
+ARG MICROSOFT_SECUREBOOT_RELEASE
+ADD https://github.com/microsoft/secureboot_objects.git#${MICROSOFT_SECUREBOOT_RELEASE}:PreSignedObjects /
 
 FROM scratch AS microsoft-key-keys
-COPY --from=microsoft-secureboot-database /PreSignedObjects/KEK/Certificates/*.der /kek/
+COPY --from=microsoft-secureboot-database /KEK/Certificates/*.der /kek/
 
 FROM scratch AS microsoft-db-keys
-COPY --from=microsoft-secureboot-database /PreSignedObjects/DB/Certificates/MicCor*.der /db/
-COPY --from=microsoft-secureboot-database /PreSignedObjects/DB/Certificates/microsoft*.der /db/
+COPY --from=microsoft-secureboot-database /DB/Certificates/MicCor*.der /db/
+COPY --from=microsoft-secureboot-database /DB/Certificates/microsoft*.der /db/
 
 FROM --platform=${BUILDPLATFORM} scratch AS generate
 COPY --from=proto-format-build /src/api /api/
