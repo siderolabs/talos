@@ -197,4 +197,4 @@ suited to the task, especially when coupled with a read-only host operating
 system.
 
 iSCSI support in Talos is now supported via the [iscsi-tools](https://github.com/siderolabs/extensions/pkgs/container/iscsi-tools) [system extension]({{< relref "../../talos-guides/configuration/system-extensions" >}}) installed.
-The extension enables compatibility with OpenEBS Jiva - refer to the [local storage]({{< relref "replicated-local-storage-with-openebs-jiva.md" >}}) installation guide for more information.
+The extension enables compatibility with OpenEBS Jiva - refer to the [local storage]({{< relref "replicated-local-storage-with-openebs" >}}) installation guide for more information.
