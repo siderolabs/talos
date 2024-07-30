@@ -378,7 +378,7 @@ image-%: ## Builds the specified image. Valid options are aws, azure, digital-oc
 	@docker pull $(REGISTRY_AND_USERNAME)/imager:$(IMAGE_TAG)
 	@for platform in $(subst $(,),$(space),$(PLATFORM)); do \
 		arch=$$(basename "$${platform}") && \
-		docker run --rm -t -v /dev:/dev -v $(PWD)/$(ARTIFACTS):/secureboot:ro -v $(PWD)/$(ARTIFACTS):/out --network=host --privileged $(REGISTRY_AND_USERNAME)/imager:$(IMAGE_TAG) $* --arch $$arch $(IMAGER_ARGS) ; \
+		docker run --rm -t -v /dev:/dev -v $(PWD)/$(ARTIFACTS):/secureboot:ro -v $(PWD)/$(ARTIFACTS):/out -e SOURCE_DATE_EPOCH=$(SOURCE_DATE_EPOCH) --network=host --privileged $(REGISTRY_AND_USERNAME)/imager:$(IMAGE_TAG) $* --arch $$arch $(IMAGER_ARGS) ; \
 	done
 
 images-essential: image-aws image-azure image-gcp image-metal secureboot-installer ## Builds only essential images used in the CI (AWS, GCP, and Metal).

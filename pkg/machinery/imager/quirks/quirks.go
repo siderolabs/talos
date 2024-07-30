@@ -75,6 +75,18 @@ func (q Quirks) UseZSTDCompression() bool {
 	return q.v.GTE(minVersionZstd)
 }
 
+var minVersionISOLabel = semver.MustParse("1.8.0")
+
+// SupportsISOLabel returns true if the Talos version supports setting the ISO label.
+func (q Quirks) SupportsISOLabel() bool {
+	// if the version doesn't parse, we assume it's latest Talos
+	if q.v == nil {
+		return true
+	}
+
+	return q.v.GTE(minVersionISOLabel)
+}
+
 var minVersionMultidoc = semver.MustParse("1.5.0")
 
 // SupportsMultidoc returns true if the Talos version supports multidoc machine configs.

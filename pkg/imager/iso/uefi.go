@@ -12,11 +12,13 @@ import (
 	"os"
 	"path/filepath"
 	"text/template"
+	"time"
 
 	"github.com/siderolabs/go-cmd/pkg/cmd"
 
 	"github.com/siderolabs/talos/pkg/imager/utils"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
+	"github.com/siderolabs/talos/pkg/machinery/imager/quirks"
 	"github.com/siderolabs/talos/pkg/makefs"
 )
 
@@ -185,19 +187,34 @@ func CreateUEFI(printf func(string, ...any), options UEFIOptions) error {
 
 	printf("creating ISO image")
 
-	if _, err := cmd.Run(
-		"xorriso",
-		"-as",
-		"mkisofs",
-		"-V",
-		"Talos Secure Boot ISO",
-		"-e",
-		"efiboot.img",
+	args := []string{
+		"-as", "mkisofs",
+		"-e", "efiboot.img",
 		"-no-emul-boot",
-		"-o",
-		options.OutPath,
+		"-o", options.OutPath,
 		options.ScratchDir,
-	); err != nil {
+		"--",
+	}
+
+	if epoch, ok, err := utils.SourceDateEpoch(); err != nil {
+		return err
+	} else if ok {
+		args = append(args,
+			"-volume_date", "all_file_dates", fmt.Sprintf("=%d", epoch),
+			"-volume_date", "uuid", time.Unix(epoch, 0).Format("2006010215040500"),
+		)
+	}
+
+	if quirks.New(options.Version).SupportsISOLabel() {
+		label := Label(options.Version, true)
+
+		args = append(args,
+			"-volid", VolumeID(label),
+			"-volset-id", label,
+		)
+	}
+
+	if _, err := cmd.Run("xorriso", args...); err != nil {
 		return err
 	}
 
