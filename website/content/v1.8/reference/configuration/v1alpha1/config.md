@@ -2998,7 +2998,7 @@ etcd:
 {{< /highlight >}}</details> | |
 |`coreDNS` |<a href="#Config.cluster.coreDNS">CoreDNS</a> |Core DNS specific configuration options. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 coreDNS:
-    image: registry.k8s.io/coredns/coredns:v1.11.1 # The `image` field is an override to the default coredns image.
+    image: registry.k8s.io/coredns/coredns:v1.11.3 # The `image` field is an override to the default coredns image.
 {{< /highlight >}}</details> | |
 |`externalCloudProvider` |<a href="#Config.cluster.externalCloudProvider">ExternalCloudProviderConfig</a> |External cloud provider configuration. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 externalCloudProvider:
@@ -3715,7 +3715,7 @@ CoreDNS represents the CoreDNS config values.
 {{< highlight yaml >}}
 cluster:
     coreDNS:
-        image: registry.k8s.io/coredns/coredns:v1.11.1 # The `image` field is an override to the default coredns image.
+        image: registry.k8s.io/coredns/coredns:v1.11.3 # The `image` field is an override to the default coredns image.
 {{< /highlight >}}
 
 
