@@ -161,6 +161,21 @@ case "${WITH_SIDEROLINK_AGENT:-false}" in
     ;;
 esac
 
+case "${WITH_APPARMOR_LSM_ENABLED:-false}" in
+  false)
+    ;;
+  *)
+    cat <<EOF > "${TMP}/kernel-security.patch"
+machine:
+  install:
+    extraKernelArgs:
+      - security=apparmor
+EOF
+
+    QEMU_FLAGS+=("--config-patch=@${TMP}/kernel-security.patch")
+    ;;
+esac
+
 function create_cluster {
   build_registry_mirrors
 
