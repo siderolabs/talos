@@ -361,6 +361,7 @@ We can leverage this to our advantage to install Cilium by using an inline manif
                   - install
                   - cilium
                   - cilium
+                  - --namespace=kube-system
                   - --repo=https://helm.cilium.io/
                   - --set ipam.mode=kubernetes
                   - --set kubeProxyReplacement=true
