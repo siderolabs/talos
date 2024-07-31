@@ -133,6 +133,7 @@ func NewState() (*State, error) {
 		&k8s.Manifest{},
 		&k8s.ManifestStatus{},
 		&k8s.BootstrapManifestsConfig{},
+		&k8s.NodeAnnotationSpec{},
 		&k8s.NodeCordonedSpec{},
 		&k8s.NodeIP{},
 		&k8s.NodeIPConfig{},

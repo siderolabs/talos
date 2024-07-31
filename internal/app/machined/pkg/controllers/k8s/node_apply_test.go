@@ -19,7 +19,7 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/resources/k8s"
 )
 
-func TestApplyLabels(t *testing.T) {
+func TestApplyLabels(t *testing.T) { //nolint:dupl
 	t.Parallel()
 
 	ctrl := &k8sctrl.NodeApplyController{}
@@ -134,6 +134,125 @@ func TestApplyLabels(t *testing.T) {
 
 			assert.Equal(t, tt.expectedLabels, node.Labels)
 			assert.Equal(t, tt.expectedOwnedLabels, newOwnedLabels)
+		})
+	}
+}
+
+func TestApplyAnnotations(t *testing.T) { //nolint:dupl
+	t.Parallel()
+
+	ctrl := &k8sctrl.NodeApplyController{}
+	logger := zaptest.NewLogger(t)
+
+	for _, tt := range []struct {
+		name             string
+		inputAnnotations map[string]string
+		ownedAnnotations []string
+		annotationSpec   map[string]string
+
+		expectedAnnotations      map[string]string
+		expectedOwnedAnnotations []string
+	}{
+		{
+			name:             "empty",
+			inputAnnotations: map[string]string{},
+			ownedAnnotations: []string{},
+			annotationSpec:   map[string]string{},
+
+			expectedAnnotations:      map[string]string{},
+			expectedOwnedAnnotations: []string{},
+		},
+		{
+			name: "initial annotations",
+			inputAnnotations: map[string]string{
+				"hostname": "foo",
+			},
+			ownedAnnotations: []string{},
+			annotationSpec: map[string]string{
+				"talos/foo": "value1",
+				"talos/bar": "value2",
+			},
+
+			expectedAnnotations: map[string]string{
+				"hostname":  "foo",
+				"talos/foo": "value1",
+				"talos/bar": "value2",
+			},
+			expectedOwnedAnnotations: []string{
+				"talos/bar",
+				"talos/foo",
+			},
+		},
+		{
+			name: "update owned annotations",
+			inputAnnotations: map[string]string{
+				"hostname": "foo",
+				"label1":   "value1",
+				"label2":   "value2",
+			},
+			ownedAnnotations: []string{
+				"label1",
+				"label2",
+			},
+			annotationSpec: map[string]string{
+				"label1": "value3",
+			},
+
+			expectedAnnotations: map[string]string{
+				"hostname": "foo",
+				"label1":   "value3",
+			},
+			expectedOwnedAnnotations: []string{
+				"label1",
+			},
+		},
+		{
+			name: "ignore not owned annotations",
+			inputAnnotations: map[string]string{
+				"hostname": "foo",
+				"ann1":     "value1",
+				"ann2":     "value2",
+				"ann3":     "value3",
+			},
+			ownedAnnotations: []string{},
+			annotationSpec: map[string]string{
+				"ann1": "value3",
+				"ann2": "value2",
+			},
+
+			expectedAnnotations: map[string]string{
+				"hostname": "foo",
+				"ann1":     "value1",
+				"ann2":     "value2",
+				"ann3":     "value3",
+			},
+			expectedOwnedAnnotations: []string{
+				"ann2",
+			},
+		},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			node := &v1.Node{}
+			node.Annotations = tt.inputAnnotations
+
+			ownedAnnotations := xslices.ToSet(tt.ownedAnnotations)
+			if ownedAnnotations == nil {
+				ownedAnnotations = map[string]struct{}{}
+			}
+
+			ctrl.ApplyAnnotations(logger, node, ownedAnnotations, tt.annotationSpec)
+
+			newOwnedAnnotations := maps.Keys(ownedAnnotations)
+			if newOwnedAnnotations == nil {
+				newOwnedAnnotations = []string{}
+			}
+
+			slices.Sort(newOwnedAnnotations)
+
+			assert.Equal(t, tt.expectedAnnotations, node.Annotations)
+			assert.Equal(t, tt.expectedOwnedAnnotations, newOwnedAnnotations)
 		})
 	}
 }

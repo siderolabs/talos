@@ -257,6 +257,13 @@ func (MachineConfig) Doc() *encoder.Doc {
 				Comments:    [3]string{"" /* encoder.HeadComment */, "Configures the node labels for the machine." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
 			{
+				Name:        "nodeAnnotations",
+				Type:        "map[string]string",
+				Note:        "",
+				Description: "Configures the node annotations for the machine.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Configures the node annotations for the machine." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
 				Name:        "nodeTaints",
 				Type:        "map[string]string",
 				Note:        "",
@@ -292,7 +299,8 @@ func (MachineConfig) Doc() *encoder.Doc {
 	doc.Fields[21].AddExample("", machineKernelExample())
 	doc.Fields[22].AddExample("", machineSeccompExample())
 	doc.Fields[23].AddExample("node labels example.", map[string]string{"exampleLabel": "exampleLabelValue"})
-	doc.Fields[24].AddExample("node taints example.", map[string]string{"exampleTaint": "exampleTaintValue:NoSchedule"})
+	doc.Fields[24].AddExample("node annotations example.", map[string]string{"customer.io/rack": "r13a25"})
+	doc.Fields[25].AddExample("node taints example.", map[string]string{"exampleTaint": "exampleTaintValue:NoSchedule"})
 
 	return doc
 }

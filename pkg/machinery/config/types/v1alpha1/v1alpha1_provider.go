@@ -91,6 +91,11 @@ func (m *MachineConfig) NodeLabels() config.NodeLabels {
 	return m.MachineNodeLabels
 }
 
+// NodeAnnotations implements the config.Provider interface.
+func (m *MachineConfig) NodeAnnotations() config.NodeAnnotations {
+	return m.MachineNodeAnnotations
+}
+
 // NodeTaints implements the config.Provider interface.
 func (m *MachineConfig) NodeTaints() config.NodeTaints {
 	return m.MachineNodeTaints

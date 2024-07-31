@@ -20,8 +20,10 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/config/machine"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
+	"github.com/siderolabs/talos/pkg/machinery/extensions"
 	"github.com/siderolabs/talos/pkg/machinery/resources/config"
 	"github.com/siderolabs/talos/pkg/machinery/resources/k8s"
+	"github.com/siderolabs/talos/pkg/machinery/resources/runtime"
 )
 
 type NodeLabelsSuite struct {
@@ -132,4 +134,39 @@ func (suite *NodeLabelsSuite) TestDeleteLabel() {
 	// then
 	rtestutils.AssertNoResource[*k8s.NodeLabelSpec](suite.Ctx(), suite.T(), suite.State(), expectedLabel)
 	rtestutils.AssertNoResource[*k8s.NodeLabelSpec](suite.Ctx(), suite.T(), suite.State(), constants.LabelNodeRoleControlPlane)
+}
+
+func (suite *NodeLabelsSuite) TestExtensionLabels() {
+	ext1 := runtime.NewExtensionStatus(runtime.NamespaceName, "0")
+	ext1.TypedSpec().Metadata = extensions.Metadata{
+		Name:    "zfs",
+		Version: "2.2.4",
+	}
+
+	ext2 := runtime.NewExtensionStatus(runtime.NamespaceName, "1")
+	ext2.TypedSpec().Metadata = extensions.Metadata{
+		Name:    "drbd",
+		Version: "9.2.8-v1.7.5",
+	}
+
+	ext3 := runtime.NewExtensionStatus(runtime.NamespaceName, "2")
+	ext3.TypedSpec().Metadata = extensions.Metadata{
+		Name:    "schematic",
+		Version: "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+	}
+
+	suite.Require().NoError(suite.State().Create(suite.Ctx(), ext1))
+	suite.Require().NoError(suite.State().Create(suite.Ctx(), ext2))
+	suite.Require().NoError(suite.State().Create(suite.Ctx(), ext3))
+
+	rtestutils.AssertResources(suite.Ctx(), suite.T(), suite.State(), []string{"extensions.talos.dev/zfs"},
+		func(labelSpec *k8s.NodeLabelSpec, asrt *assert.Assertions) {
+			asrt.Equal("2.2.4", labelSpec.TypedSpec().Value)
+		})
+	rtestutils.AssertResources(suite.Ctx(), suite.T(), suite.State(), []string{"extensions.talos.dev/drbd"},
+		func(labelSpec *k8s.NodeLabelSpec, asrt *assert.Assertions) {
+			asrt.Equal("9.2.8-v1.7.5", labelSpec.TypedSpec().Value)
+		})
+
+	rtestutils.AssertNoResource[*k8s.NodeLabelSpec](suite.Ctx(), suite.T(), suite.State(), "extensions.talos.dev/schematic")
 }

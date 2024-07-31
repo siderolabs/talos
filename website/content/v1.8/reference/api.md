@@ -127,6 +127,7 @@ description: Talos gRPC API reference.
     - [KubeletSpecSpec](#talos.resource.definitions.k8s.KubeletSpecSpec)
     - [ManifestSpec](#talos.resource.definitions.k8s.ManifestSpec)
     - [ManifestStatusSpec](#talos.resource.definitions.k8s.ManifestStatusSpec)
+    - [NodeAnnotationSpecSpec](#talos.resource.definitions.k8s.NodeAnnotationSpecSpec)
     - [NodeIPConfigSpec](#talos.resource.definitions.k8s.NodeIPConfigSpec)
     - [NodeIPSpec](#talos.resource.definitions.k8s.NodeIPSpec)
     - [NodeLabelSpecSpec](#talos.resource.definitions.k8s.NodeLabelSpecSpec)
@@ -2429,6 +2430,22 @@ ManifestStatusSpec describes manifest application status.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | manifests_applied | [string](#string) | repeated |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.k8s.NodeAnnotationSpecSpec"></a>
+
+### NodeAnnotationSpecSpec
+NodeAnnotationSpecSpec represents an annoation that's attached to a Talos node.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| key | [string](#string) |  |  |
+| value | [string](#string) |  |  |
 
 
 

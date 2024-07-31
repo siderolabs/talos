@@ -44,6 +44,7 @@ func TestRegisterResource(t *testing.T) {
 		&k8s.ManifestStatus{},
 		&k8s.Manifest{},
 		&k8s.BootstrapManifestsConfig{},
+		&k8s.NodeAnnotationSpec{},
 		&k8s.NodeCordonedSpec{},
 		&k8s.NodeLabelSpec{},
 		&k8s.NodeTaintSpec{},

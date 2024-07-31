@@ -110,6 +110,25 @@ Talos Linux on config generation now adds a label `node.kubernetes.io/exclude-fr
 Talos Linux now can optionally include well-known UEFI (Microsoft) SecureBoot keys into the auto-enrollment UEFI database.
 """
 
+    [notes.annotations]
+        title = "Node Annotations"
+        description = """\
+Talos Linux now supports configuring Kubernetes node annotations via machine configuration (`.machine.nodeAnnotations`) in a way similar to node labels.
+"""
+
+    [notes.kubelet]
+        title = "Extensions in Kubernetes Nodes"
+        description = """\
+Talos Linux now publishes list of installed extensions as Kubernetes node labels/annotations.
+
+The key format is `extensions.talos.dev/<name>` and the value is the extension version.
+If the extension name is not valid as a label key, it will be skipped.
+If the extension version is a valid label value, it will be put to the label; otherwise it will be put to the annotation.
+
+For Talos machines booted of the Image Factory artifacts, this means that the schematic ID will be published as the annotation
+`extensions.talos.dev/schematic` (as it is longer than 63 characters).
+"""
+
 [make_deps]
 
     [make_deps.tools]

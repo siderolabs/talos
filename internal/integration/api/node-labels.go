@@ -208,7 +208,7 @@ outer:
 	}
 }
 
-func (suite *NodeLabelsSuite) setNodeLabels(nodeIP string, nodeLabels map[string]string) {
+func (suite *NodeLabelsSuite) setNodeLabels(nodeIP string, nodeLabels map[string]string) { //nolint:dupl
 	nodeCtx := client.WithNode(suite.ctx, nodeIP)
 
 	nodeConfig, err := suite.ReadConfigFromNode(nodeCtx)

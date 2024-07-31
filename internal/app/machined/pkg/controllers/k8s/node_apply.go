@@ -45,6 +45,11 @@ func (ctrl *NodeApplyController) Inputs() []controller.Input {
 	return []controller.Input{
 		{
 			Namespace: k8s.NamespaceName,
+			Type:      k8s.NodeAnnotationSpecType,
+			Kind:      controller.InputWeak,
+		},
+		{
+			Namespace: k8s.NamespaceName,
 			Type:      k8s.NodeLabelSpecType,
 			Kind:      controller.InputWeak,
 		},
@@ -107,10 +112,27 @@ func (ctrl *NodeApplyController) Run(ctx context.Context, r controller.Runtime, 
 	}
 }
 
+//nolint:dupl
 func (ctrl *NodeApplyController) getNodeLabelSpecs(ctx context.Context, r controller.Runtime) (map[string]string, error) {
 	items, err := safe.ReaderListAll[*k8s.NodeLabelSpec](ctx, r)
 	if err != nil {
 		return nil, fmt.Errorf("error listing node label spec resources: %w", err)
+	}
+
+	result := make(map[string]string, items.Len())
+
+	for iter := items.Iterator(); iter.Next(); {
+		result[iter.Value().TypedSpec().Key] = iter.Value().TypedSpec().Value
+	}
+
+	return result, nil
+}
+
+//nolint:dupl
+func (ctrl *NodeApplyController) getNodeAnnotationSpecs(ctx context.Context, r controller.Runtime) (map[string]string, error) {
+	items, err := safe.ReaderListAll[*k8s.NodeAnnotationSpec](ctx, r)
+	if err != nil {
+		return nil, fmt.Errorf("error listing node annotation spec resources: %w", err)
 	}
 
 	result := make(map[string]string, items.Len())
@@ -203,6 +225,11 @@ func (ctrl *NodeApplyController) reconcileWithK8s(
 		return err
 	}
 
+	nodeAnnotationSpecs, err := ctrl.getNodeAnnotationSpecs(ctx, r)
+	if err != nil {
+		return err
+	}
+
 	nodeTaintSpecs, err := ctrl.getNodeTaintSpecs(ctx, r)
 	if err != nil {
 		return err
@@ -213,7 +240,7 @@ func (ctrl *NodeApplyController) reconcileWithK8s(
 		return err
 	}
 
-	return ctrl.sync(ctx, logger, k8sClient, nodename, nodeLabelSpecs, nodeTaintSpecs, nodeShouldCordon)
+	return ctrl.sync(ctx, logger, k8sClient, nodename, nodeLabelSpecs, nodeAnnotationSpecs, nodeTaintSpecs, nodeShouldCordon)
 }
 
 func (ctrl *NodeApplyController) sync(
@@ -221,13 +248,13 @@ func (ctrl *NodeApplyController) sync(
 	logger *zap.Logger,
 	k8sClient *kubernetes.Client,
 	nodeName string,
-	nodeLabelSpecs map[string]string,
+	nodeLabelSpecs, nodeAnnotationSpecs map[string]string,
 	nodeTaintSpecs []k8s.NodeTaintSpecSpec,
 	nodeShouldCordon bool,
 ) error {
 	// run several attempts retrying conflict errors
 	return retry.Constant(10*time.Second, retry.WithUnits(100*time.Millisecond)).RetryWithContext(ctx, func(ctx context.Context) error {
-		err := ctrl.syncOnce(ctx, logger, k8sClient, nodeName, nodeLabelSpecs, nodeTaintSpecs, nodeShouldCordon)
+		err := ctrl.syncOnce(ctx, logger, k8sClient, nodeName, nodeLabelSpecs, nodeAnnotationSpecs, nodeTaintSpecs, nodeShouldCordon)
 
 		if err != nil && (apierrors.IsConflict(err) || apierrors.IsForbidden(err)) {
 			return retry.ExpectedError(err)
@@ -279,7 +306,7 @@ func (ctrl *NodeApplyController) syncOnce(
 	logger *zap.Logger,
 	k8sClient *kubernetes.Client,
 	nodeName string,
-	nodeLabelSpecs map[string]string,
+	nodeLabelSpecs, nodeAnnotationSpecs map[string]string,
 	nodeTaintSpecs []k8s.NodeTaintSpecSpec,
 	nodeShouldCordon bool,
 ) error {
@@ -297,17 +324,27 @@ func (ctrl *NodeApplyController) syncOnce(
 		return fmt.Errorf("error unmarshaling owned labels: %w", err)
 	}
 
+	ownedAnnotationsMap, err := umarshalOwnedAnnotation(node, constants.AnnotationOwnedAnnotations)
+	if err != nil {
+		return fmt.Errorf("error unmarshaling owned annotations: %w", err)
+	}
+
 	ownedTaintsMap, err := umarshalOwnedAnnotation(node, constants.AnnotationOwnedTaints)
 	if err != nil {
 		return fmt.Errorf("error unmarshaling owned taints: %w", err)
 	}
 
 	ctrl.ApplyLabels(logger, node, ownedLabelsMap, nodeLabelSpecs)
+	ctrl.ApplyAnnotations(logger, node, ownedAnnotationsMap, nodeAnnotationSpecs)
 	ctrl.ApplyTaints(logger, node, ownedTaintsMap, nodeTaintSpecs)
 	ctrl.ApplyCordoned(logger, node, nodeShouldCordon)
 
 	if err = marshalOwnedAnnotation(node, constants.AnnotationOwnedLabels, ownedLabelsMap); err != nil {
 		return fmt.Errorf("error marshaling owned labels: %w", err)
+	}
+
+	if err = marshalOwnedAnnotation(node, constants.AnnotationOwnedAnnotations, ownedAnnotationsMap); err != nil {
+		return fmt.Errorf("error marshaling owned annotations: %w", err)
 	}
 
 	if err = marshalOwnedAnnotation(node, constants.AnnotationOwnedTaints, ownedTaintsMap); err != nil {
@@ -319,45 +356,56 @@ func (ctrl *NodeApplyController) syncOnce(
 	return err
 }
 
-// ApplyLabels performs the inner loop of the node label reconciliation.
-//
-// This method is exported for testing purposes.
-func (ctrl *NodeApplyController) ApplyLabels(logger *zap.Logger, node *v1.Node, ownedLabels map[string]struct{}, nodeLabelSpecs map[string]string) {
+func (ctrl *NodeApplyController) applyNodeKV(logger *zap.Logger, nodeKV map[string]string, owned map[string]struct{}, spec map[string]string) {
 	// set labels from the spec
-	for key, value := range nodeLabelSpecs {
-		currentValue, exists := node.Labels[key]
+	for key, value := range spec {
+		currentValue, exists := nodeKV[key]
 
 		// label is not set on the node yet, so take it over
 		if !exists {
-			node.Labels[key] = value
-			ownedLabels[key] = struct{}{}
+			nodeKV[key] = value
+			owned[key] = struct{}{}
 
 			continue
 		}
 
 		// no change to the label, skip it
 		if currentValue == value {
-			ownedLabels[key] = struct{}{}
+			owned[key] = struct{}{}
 
 			continue
 		}
 
-		if _, owned := ownedLabels[key]; !owned {
+		if _, owned := owned[key]; !owned {
 			logger.Debug("skipping label update, label is not owned", zap.String("key", key), zap.String("value", value))
 
 			continue
 		}
 
-		node.Labels[key] = value
+		nodeKV[key] = value
 	}
 
 	// remove labels which are owned but are not in the spec
-	for key := range ownedLabels {
-		if _, exists := nodeLabelSpecs[key]; !exists {
-			delete(node.Labels, key)
-			delete(ownedLabels, key)
+	for key := range owned {
+		if _, exists := spec[key]; !exists {
+			delete(nodeKV, key)
+			delete(owned, key)
 		}
 	}
+}
+
+// ApplyLabels performs the inner loop of the node label reconciliation.
+//
+// This method is exported for testing purposes.
+func (ctrl *NodeApplyController) ApplyLabels(logger *zap.Logger, node *v1.Node, ownedLabels map[string]struct{}, nodeLabelSpecs map[string]string) {
+	ctrl.applyNodeKV(logger, node.Labels, ownedLabels, nodeLabelSpecs)
+}
+
+// ApplyAnnotations performs the inner loop of the node annotation reconciliation.
+//
+// This method is exported for testing purposes.
+func (ctrl *NodeApplyController) ApplyAnnotations(logger *zap.Logger, node *v1.Node, ownedAnnotations map[string]struct{}, nodeAnnotationSpecs map[string]string) {
+	ctrl.applyNodeKV(logger, node.Annotations, ownedAnnotations, nodeAnnotationSpecs)
 }
 
 // ApplyTaints performs the inner loop of the node taints reconciliation.

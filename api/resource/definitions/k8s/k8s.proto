@@ -170,6 +170,12 @@ message ManifestStatusSpec {
   repeated string manifests_applied = 1;
 }
 
+// NodeAnnotationSpecSpec represents an annoation that's attached to a Talos node.
+message NodeAnnotationSpecSpec {
+  string key = 1;
+  string value = 2;
+}
+
 // NodeIPConfigSpec holds the Node IP specification.
 message NodeIPConfigSpec {
   repeated string valid_subnets = 1;

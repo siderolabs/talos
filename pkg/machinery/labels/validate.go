@@ -39,6 +39,38 @@ func Validate(labels map[string]string) error {
 	return multiErr.ErrorOrNil()
 }
 
+// TotalAnnotationSizeLimitB is the maximum size of all annotations in bytes.
+const TotalAnnotationSizeLimitB int64 = 256 * (1 << 10) // 256 kB
+
+// ValidateAnnotations validates that a set of annotations are correctly defined.
+func ValidateAnnotations(annotations map[string]string) error {
+	var multiErr *multierror.Error
+
+	keys := maps.Keys(annotations)
+	slices.Sort(keys)
+
+	var size int64
+
+	for _, k := range keys {
+		if err := ValidateQualifiedName(k); err != nil {
+			multiErr = multierror.Append(multiErr, err)
+		}
+
+		switch k {
+		case constants.AnnotationOwnedAnnotations, constants.AnnotationOwnedLabels, constants.AnnotationOwnedTaints:
+			multiErr = multierror.Append(multiErr, fmt.Errorf("annotation %q is reserved", k))
+		}
+
+		size += int64(len(k)) + int64(len(annotations[k]))
+	}
+
+	if size > TotalAnnotationSizeLimitB {
+		multiErr = multierror.Append(multiErr, fmt.Errorf("total annotation size exceeds limit of %d bytes", TotalAnnotationSizeLimitB))
+	}
+
+	return multiErr.ErrorOrNil()
+}
+
 const (
 	dns1123LabelFmt           string = "[a-z0-9]([-a-z0-9]*[a-z0-9])?"
 	dns1123SubdomainFmt       string = dns1123LabelFmt + "(\\." + dns1123LabelFmt + ")*"

@@ -39,7 +39,9 @@ The list of config changes allowed to be applied immediately in Talos {{< releas
 * `.machine.certCANs`
 * `.machine.install` (configuration is only applied during install/upgrade)
 * `.machine.network`
+* `.machine.nodeAnnotations`
 * `.machine.nodeLabels`
+* `.machine.nodeTaints`
 * `.machine.sysfs`
 * `.machine.sysctls`
 * `.machine.logging`

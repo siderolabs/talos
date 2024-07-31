@@ -171,6 +171,7 @@ func (ctrl *Controller) Run(ctx context.Context, drainer *runtime.Drainer) error
 		&k8s.ManifestController{},
 		k8s.NewNodeIPConfigController(),
 		&k8s.NodeIPController{},
+		&k8s.NodeAnnotationSpecController{},
 		&k8s.NodeApplyController{},
 		&k8s.NodeCordonedSpecController{},
 		&k8s.NodeLabelSpecController{},

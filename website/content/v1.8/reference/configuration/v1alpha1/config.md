@@ -422,6 +422,10 @@ seccompProfiles:
 nodeLabels:
     exampleLabel: exampleLabelValue
 {{< /highlight >}}</details> | |
+|`nodeAnnotations` |map[string]string |Configures the node annotations for the machine. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
+nodeAnnotations:
+    customer.io/rack: r13a25
+{{< /highlight >}}</details> | |
 |`nodeTaints` |map[string]string |<details><summary>Configures the node taints for the machine. Effect is optional.</summary><br />Note: In the default Kubernetes configuration, worker nodes are not allowed to<br />modify the taints (see [NodeRestriction](https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/#noderestriction) admission plugin).</details> <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 nodeTaints:
     exampleTaint: exampleTaintValue:NoSchedule

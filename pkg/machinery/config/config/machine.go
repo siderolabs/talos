@@ -42,6 +42,7 @@ type MachineConfig interface {
 	Kernel() Kernel
 	SeccompProfiles() []SeccompProfile
 	NodeLabels() NodeLabels
+	NodeAnnotations() NodeAnnotations
 	NodeTaints() NodeTaints
 }
 
@@ -54,6 +55,9 @@ type SeccompProfile interface {
 
 // NodeLabels defines the labels that should be set on a node.
 type NodeLabels map[string]string
+
+// NodeAnnotations defines the annotations that should be set on a node.
+type NodeAnnotations map[string]string
 
 // NodeTaints defines the taints that should be set on a node.
 type NodeTaints map[string]string

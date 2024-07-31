@@ -300,6 +300,12 @@ type MachineConfig struct {
 	//      value: 'map[string]string{"exampleLabel": "exampleLabelValue"}'
 	MachineNodeLabels map[string]string `yaml:"nodeLabels,omitempty"`
 	//  description: |
+	//    Configures the node annotations for the machine.
+	//  examples:
+	//    - name: node annotations example.
+	//      value: 'map[string]string{"customer.io/rack": "r13a25"}'
+	MachineNodeAnnotations map[string]string `yaml:"nodeAnnotations,omitempty"`
+	//  description: |
 	//    Configures the node taints for the machine. Effect is optional.
 	//
 	//    Note: In the default Kubernetes configuration, worker nodes are not allowed to

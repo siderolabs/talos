@@ -10,6 +10,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
+	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/labels"
 )
 
@@ -47,6 +48,47 @@ func TestValidate(t *testing.T) {
 	} {
 		t.Run(tt.name, func(t *testing.T) {
 			err := labels.Validate(tt.labels)
+			if tt.expectedError != "" {
+				assert.EqualError(t, err, tt.expectedError)
+			} else {
+				assert.NoError(t, err)
+			}
+		})
+	}
+}
+
+func TestValidateAnnotations(t *testing.T) {
+	for _, tt := range []struct {
+		name        string
+		annotations map[string]string
+
+		expectedError string
+	}{
+		{
+			name: "empty",
+		},
+		{
+			name: "valid",
+			annotations: map[string]string{
+				"talos.dev/ann1":     "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+				"foo":                "bar",
+				"kubernetes.io/rack": "rack2",
+			},
+		},
+		{
+			name: "invalid",
+			annotations: map[string]string{
+				"foo_":                               "bar",
+				"/foo":                               "bar",
+				"a/b/c":                              "bar",
+				"kubernetes.io/hostname":             "hostname1_",
+				constants.AnnotationOwnedAnnotations: "a",
+			},
+			expectedError: "4 errors occurred:\n\t* prefix cannot be empty: \"/foo\"\n\t* invalid format: too many slashes: \"a/b/c\"\n\t* name \"foo_\" is invalid\n\t* annotation \"talos.dev/owned-annotations\" is reserved\n\n", //nolint:lll
+		},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			err := labels.ValidateAnnotations(tt.annotations)
 			if tt.expectedError != "" {
 				assert.EqualError(t, err, tt.expectedError)
 			} else {

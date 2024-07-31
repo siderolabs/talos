@@ -768,8 +768,14 @@ const (
 	// AnnotationOwnedLabels is the annotation key for the list of node labels owned by Talos.
 	AnnotationOwnedLabels = "talos.dev/owned-labels"
 
+	// AnnotationOwnedAnnotations is the annotation key for the list of node annotations owned by Talos.
+	AnnotationOwnedAnnotations = "talos.dev/owned-annotations"
+
 	// AnnotationOwnedTaints is the annotation key for the list of node taints owned by Talos.
 	AnnotationOwnedTaints = "talos.dev/owned-taints"
+
+	// K8sExtensionPrefix is the prefix for node labels/annotations listing extensions.
+	K8sExtensionPrefix = "extensions.talos.dev/"
 
 	// DefaultNTPServer is the NTP server to use if not configured explicitly.
 	DefaultNTPServer = "time.cloudflare.com"

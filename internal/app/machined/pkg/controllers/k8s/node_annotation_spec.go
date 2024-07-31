@@ -14,23 +14,22 @@ import (
 	"github.com/siderolabs/gen/optional"
 	"go.uber.org/zap"
 
-	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/labels"
 	"github.com/siderolabs/talos/pkg/machinery/resources/config"
 	"github.com/siderolabs/talos/pkg/machinery/resources/k8s"
 	"github.com/siderolabs/talos/pkg/machinery/resources/runtime"
 )
 
-// NodeLabelSpecController manages k8s.NodeLabelsConfig based on configuration.
-type NodeLabelSpecController struct{}
+// NodeAnnotationSpecController manages k8s.NodeAnnotationsConfig based on configuration.
+type NodeAnnotationSpecController struct{}
 
 // Name implements controller.Controller interface.
-func (ctrl *NodeLabelSpecController) Name() string {
-	return "k8s.NodeLabelSpecController"
+func (ctrl *NodeAnnotationSpecController) Name() string {
+	return "k8s.NodeAnnotationSpecController"
 }
 
 // Inputs implements controller.Controller interface.
-func (ctrl *NodeLabelSpecController) Inputs() []controller.Input {
+func (ctrl *NodeAnnotationSpecController) Inputs() []controller.Input {
 	return []controller.Input{
 		{
 			Namespace: config.NamespaceName,
@@ -47,10 +46,10 @@ func (ctrl *NodeLabelSpecController) Inputs() []controller.Input {
 }
 
 // Outputs implements controller.Controller interface.
-func (ctrl *NodeLabelSpecController) Outputs() []controller.Output {
+func (ctrl *NodeAnnotationSpecController) Outputs() []controller.Output {
 	return []controller.Output{
 		{
-			Type: k8s.NodeLabelSpecType,
+			Type: k8s.NodeAnnotationSpecType,
 			Kind: controller.OutputExclusive,
 		},
 	}
@@ -59,7 +58,7 @@ func (ctrl *NodeLabelSpecController) Outputs() []controller.Output {
 // Run implements controller.Controller interface.
 //
 //nolint:gocyclo
-func (ctrl *NodeLabelSpecController) Run(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
+func (ctrl *NodeAnnotationSpecController) Run(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
 	for {
 		select {
 		case <-ctx.Done():
@@ -74,29 +73,25 @@ func (ctrl *NodeLabelSpecController) Run(ctx context.Context, r controller.Runti
 
 		r.StartTrackingOutputs()
 
-		nodeLabels := map[string]string{}
+		nodeAnnotations := map[string]string{}
 
 		if cfg != nil && cfg.Config().Machine() != nil {
-			for k, v := range cfg.Config().Machine().NodeLabels() {
-				nodeLabels[k] = v
-			}
-
-			if cfg.Config().Machine().Type().IsControlPlane() {
-				nodeLabels[constants.LabelNodeRoleControlPlane] = ""
+			for k, v := range cfg.Config().Machine().NodeAnnotations() {
+				nodeAnnotations[k] = v
 			}
 		}
 
 		if err = extensionsToNodeKV(
-			ctx, r, nodeLabels,
-			func(labelValue string) bool {
-				return labels.ValidateLabelValue(labelValue) == nil
+			ctx, r, nodeAnnotations,
+			func(annotationValue string) bool {
+				return labels.ValidateLabelValue(annotationValue) != nil
 			},
 		); err != nil {
-			return fmt.Errorf("error converting extensions to node labels: %w", err)
+			return fmt.Errorf("error converting extensions to node annotations: %w", err)
 		}
 
-		for key, value := range nodeLabels {
-			if err = safe.WriterModify(ctx, r, k8s.NewNodeLabelSpec(key), func(k *k8s.NodeLabelSpec) error {
+		for key, value := range nodeAnnotations {
+			if err = safe.WriterModify(ctx, r, k8s.NewNodeAnnotationSpec(key), func(k *k8s.NodeAnnotationSpec) error {
 				k.TypedSpec().Key = key
 				k.TypedSpec().Value = value
 
@@ -106,32 +101,8 @@ func (ctrl *NodeLabelSpecController) Run(ctx context.Context, r controller.Runti
 			}
 		}
 
-		if err = safe.CleanupOutputs[*k8s.NodeLabelSpec](ctx, r); err != nil {
+		if err = safe.CleanupOutputs[*k8s.NodeAnnotationSpec](ctx, r); err != nil {
 			return err
 		}
 	}
-}
-
-func extensionsToNodeKV(ctx context.Context, r controller.Reader, spec map[string]string, valueFilter func(string) bool) error {
-	extensionStatuses, err := safe.ReaderListAll[*runtime.ExtensionStatus](ctx, r)
-	if err != nil {
-		return fmt.Errorf("error listing extension statuses: %w", err)
-	}
-
-	for iter := extensionStatuses.Iterator(); iter.Next(); {
-		extensionStatus := iter.Value()
-
-		if extensionStatus.TypedSpec().Metadata.Name == "" {
-			continue
-		}
-
-		name := constants.K8sExtensionPrefix + extensionStatus.TypedSpec().Metadata.Name
-		value := extensionStatus.TypedSpec().Metadata.Version
-
-		if labels.ValidateQualifiedName(name) == nil && valueFilter(value) {
-			spec[name] = value
-		}
-	}
-
-	return nil
 }
