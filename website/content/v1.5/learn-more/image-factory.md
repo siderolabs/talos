@@ -91,7 +91,7 @@ In this guide we will provide a list of examples:
 
 * amd64 ISO (for Talos {{< release >}}, "vanilla" schematic) [https://factory.talos.dev/image/376567988ad370138ad8b2698212367b8edcb69b5fd68c80be1f2ec7d603b4ba/{{< release >}}/metal-amd64.iso](https://factory.talos.dev/image/376567988ad370138ad8b2698212367b8edcb69b5fd68c80be1f2ec7d603b4ba/{{< release >}}/metal-amd64.iso)
 * arm64 AWS image (for Talos {{< release >}}, "vanilla" schematic) [https://factory.talos.dev/image/376567988ad370138ad8b2698212367b8edcb69b5fd68c80be1f2ec7d603b4ba/{{< release >}}/aws-arm64.raw.xz](https://factory.talos.dev/image/376567988ad370138ad8b2698212367b8edcb69b5fd68c80be1f2ec7d603b4ba/{{< release >}}/aws-arm64.raw.xz)
-* amd64 PXE boot script (for Talos {{< release >}}, "vanilla" schematic) [https://factory.talos.dev/pxe/376567988ad370138ad8b2698212367b8edcb69b5fd68c80be1f2ec7d603b4ba/{{< release >}}/metal-amd64](https://factory.talos.dev/image/376567988ad370138ad8b2698212367b8edcb69b5fd68c80be1f2ec7d603b4ba/{{< release >}}/metal-amd64)
+* amd64 PXE boot script (for Talos {{< release >}}, "vanilla" schematic) [https://factory.talos.dev/pxe/376567988ad370138ad8b2698212367b8edcb69b5fd68c80be1f2ec7d603b4ba/{{< release >}}/metal-amd64](https://factory.talos.dev/pxe/376567988ad370138ad8b2698212367b8edcb69b5fd68c80be1f2ec7d603b4ba/{{< release >}}/metal-amd64)
 * Talos `installer` image (for Talos {{< release >}}, "vanilla" schematic, architecture is detected automatically): `factory.talos.dev/installer/376567988ad370138ad8b2698212367b8edcb69b5fd68c80be1f2ec7d603b4ba:{{< release >}}`
 
 The `installer` image can be used to install Talos Linux on a bare-metal machine, or to upgrade an existing Talos Linux installation.
