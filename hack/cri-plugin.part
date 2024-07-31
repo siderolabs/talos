@@ -1,5 +1,4 @@
-version = 2
+version = 3
 
-[plugins."io.containerd.grpc.v1.cri".containerd.runtimes.runc]
-    runtime_type = "io.containerd.runc.v2"
-    discard_unpacked_layers = true
+[plugins."io.containerd.cri.v1.images"]
+  discard_unpacked_layers = true

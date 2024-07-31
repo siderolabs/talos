@@ -117,8 +117,8 @@ Create a patch yaml `nvidia-default-runtimeclass.yaml` to update the machine con
   value:
     - content: |
         [plugins]
-          [plugins."io.containerd.grpc.v1.cri"]
-            [plugins."io.containerd.grpc.v1.cri".containerd]
+          [plugins."io.containerd.cri.v1.runtime"]
+            [plugins."io.containerd.cri.v1.runtime".containerd]
               default_runtime_name = "nvidia"
       path: /etc/cri/conf.d/20-customization.part
       op: create

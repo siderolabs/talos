@@ -32,6 +32,7 @@ kernel/drivers/net/ethernet/mellanox/mlxsw/mlxsw_spectrum.ko
 kernel/drivers/net/ethernet/sfc/sfc.ko
 kernel/drivers/net/ethernet/sfc/siena/sfc-siena.ko
 kernel/drivers/net/vrf.ko
+kernel/drivers/scsi/mpi3mr/mpi3mr.ko
 kernel/drivers/vfio/pci/vfio-pci-core.ko
 kernel/drivers/vfio/pci/vfio-pci.ko
 kernel/drivers/vfio/vfio_iommu_type1.ko

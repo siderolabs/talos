@@ -1,6 +1,6 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
 #
-# Generated on 2024-05-27T16:20:10Z by kres bcb280a.
+# Generated on 2024-07-30T14:54:22Z by kres faf91e3.
 
 name: integration-misc-4-cron
 concurrency:
@@ -88,6 +88,13 @@ jobs:
           SHORT_INTEGRATION_TEST: "yes"
           VIA_MAINTENANCE_MODE: "true"
           WITH_SIDEROLINK_AGENT: tunnel
+        run: |
+          sudo -E make e2e-qemu
+      - name: e2e-apparmor
+        env:
+          IMAGE_REGISTRY: registry.dev.siderolabs.io
+          SHORT_INTEGRATION_TEST: "yes"
+          WITH_APPARMOR_LSM_ENABLED: "yes"
         run: |
           sudo -E make e2e-qemu
       - name: save artifacts

@@ -1535,10 +1535,11 @@ talosctl gen secureboot database [flags]
 ### Options
 
 ```
-      --enrolled-certificate string   path to the certificate to enroll (default "_out/uki-signing-cert.pem")
-  -h, --help                          help for database
-      --signing-certificate string    path to the certificate used to sign the database (default "_out/uki-signing-cert.pem")
-      --signing-key string            path to the key used to sign the database (default "_out/uki-signing-key.pem")
+      --enrolled-certificate string     path to the certificate to enroll (default "_out/uki-signing-cert.pem")
+  -h, --help                            help for database
+      --include-well-known-uefi-certs   include well-known UEFI (Microsoft) certificates in the database
+      --signing-certificate string      path to the certificate used to sign the database (default "_out/uki-signing-cert.pem")
+      --signing-key string              path to the key used to sign the database (default "_out/uki-signing-key.pem")
 ```
 
 ### Options inherited from parent commands

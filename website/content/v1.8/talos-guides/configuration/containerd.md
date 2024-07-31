@@ -45,8 +45,8 @@ machine:
   files:
     - content: |
         [plugins]
-          [plugins."io.containerd.grpc.v1.cri"]
-            sandbox_image = "registry.k8s.io/pause:3.8"
+          [plugins."io.containerd.cri.v1.images".pinned_images]
+            sandbox = "registry.k8s.io/pause:3.8"
       path: /etc/cri/conf.d/20-customization.part
       op: create
 ```

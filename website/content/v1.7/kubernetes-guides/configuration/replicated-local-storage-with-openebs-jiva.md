@@ -80,7 +80,7 @@ NODE            SERVICE      STATE     HEALTH   LAST CHANGE     LAST EVENT
 ## Install OpenEBS Jiva
 
 ```bash
-helm repo add openebs-jiva https://openebs.github.io/jiva-operator
+helm repo add openebs-jiva https://openebs-archive.github.io/jiva-operator
 helm repo update
 helm upgrade --install --create-namespace --namespace openebs --version 3.2.0 openebs-jiva openebs-jiva/jiva
 ```
@@ -93,9 +93,9 @@ The storage class named `openebs-hostpath` is used by jiva to create persistent 
 when using the default Pod Security Admissions created by Talos you need the following labels on your namespace:
 
 ```yaml
-    pod-security.kubernetes.io/audit: privileged
-    pod-security.kubernetes.io/enforce: privileged
-    pod-security.kubernetes.io/warn: privileged
+pod-security.kubernetes.io/audit: privileged
+pod-security.kubernetes.io/enforce: privileged
+pod-security.kubernetes.io/warn: privileged
 ```
 
 or via kubectl:
@@ -182,17 +182,17 @@ spec:
         name: fio
     spec:
       containers:
-      - name: perfrunner
-        image: openebs/tests-fio
-        command: ["/bin/bash"]
-        args: ["-c", "while true ;do sleep 50; done"]
-        volumeMounts:
-        - mountPath: /datadir
-          name: fio-vol
+        - name: perfrunner
+          image: openebs/tests-fio
+          command: ["/bin/bash"]
+          args: ["-c", "while true ;do sleep 50; done"]
+          volumeMounts:
+            - mountPath: /datadir
+              name: fio-vol
       volumes:
-      - name: fio-vol
-        persistentVolumeClaim:
-          claimName: example-jiva-csi-pvc
+        - name: fio-vol
+          persistentVolumeClaim:
+            claimName: example-jiva-csi-pvc
 ```
 
 You can clean up the test resources by running the following command:

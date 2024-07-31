@@ -18,12 +18,13 @@ preface = """\
         title = "Component Updates"
         description = """\
 Kubernetes: 1.31.0-beta0
-Linux: 6.6.36
+Linux: 6.6.43
 containerd: 2.0.0-rc.3
 runc: 1.2.0-rc.2
-etcd: 3.5.14
-Flannel: 0.25.3
+etcd: 3.5.15
+Flannel: 0.25.5
 Flannel CNI plugin: 1.5.1
+CoreDNS: 1.1.13
 
 Talos is built with Go 1.22.5.
 """
@@ -101,6 +102,12 @@ Talos Linux now supports adding [custom trusted roots](https://www.talos.dev/v1.
         title = "Default Node Labels"
         description = """\
 Talos Linux on config generation now adds a label `node.kubernetes.io/exclude-from-external-load-balancers` by default for the control plane nodes.
+"""
+
+    [notes.secureboot]
+        title = "Secure Boot"
+        description = """\
+Talos Linux now can optionally include well-known UEFI (Microsoft) SecureBoot keys into the auto-enrollment UEFI database.
 """
 
 [make_deps]

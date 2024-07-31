@@ -86,6 +86,8 @@ func (suite *GenerateSuite) TestGenerate() {
 
 	suite.Require().NoError(kubeconfig.Generate(&input, &buf))
 
+	suite.T().Logf("Generated kubeconfig:\n%s", buf.String())
+
 	// verify config via k8s client
 	config, err := clientcmd.Load(buf.Bytes())
 	suite.Require().NoError(err)

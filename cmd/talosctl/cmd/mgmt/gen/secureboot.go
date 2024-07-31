@@ -64,6 +64,7 @@ var genSecurebootPCRCmd = &cobra.Command{
 var genSecurebootDatabaseCmdFlags struct {
 	enrolledCertificatePath                string
 	signingCertificatePath, signingKeyPath string
+	includeWellKnownCerts                  bool
 }
 
 // genSecurebootDatabaseCmd represents the `gen secureboot database` command.
@@ -78,6 +79,7 @@ var genSecurebootDatabaseCmd = &cobra.Command{
 			genSecurebootDatabaseCmdFlags.enrolledCertificatePath,
 			genSecurebootDatabaseCmdFlags.signingKeyPath,
 			genSecurebootDatabaseCmdFlags.signingCertificatePath,
+			genSecurebootDatabaseCmdFlags.includeWellKnownCerts,
 		)
 	},
 }
@@ -140,7 +142,7 @@ func saveAsDER(file string, pem []byte) error {
 // generateSecureBootDatabase generates a UEFI database to enroll the signing certificate.
 //
 // ref: https://blog.hansenpartnership.com/the-meaning-of-all-the-uefi-keys/
-func generateSecureBootDatabase(path, enrolledCertificatePath, signingKeyPath, signingCertificatePath string) error {
+func generateSecureBootDatabase(path, enrolledCertificatePath, signingKeyPath, signingCertificatePath string, includeWellKnownCerts bool) error {
 	in := profile.SigningKeyAndCertificate{
 		KeyPath:  signingKeyPath,
 		CertPath: signingCertificatePath,
@@ -156,7 +158,7 @@ func generateSecureBootDatabase(path, enrolledCertificatePath, signingKeyPath, s
 		return err
 	}
 
-	db, err := database.Generate(enrolledPEM, signer)
+	db, err := database.Generate(enrolledPEM, signer, database.IncludeWellKnownCertificates(includeWellKnownCerts))
 	if err != nil {
 		return fmt.Errorf("failed to generate database: %w", err)
 	}
@@ -186,6 +188,8 @@ func init() {
 		&genSecurebootDatabaseCmdFlags.signingCertificatePath, "signing-certificate", helpers.ArtifactPath(constants.SecureBootSigningCertAsset), "path to the certificate used to sign the database")
 	genSecurebootDatabaseCmd.Flags().StringVar(
 		&genSecurebootDatabaseCmdFlags.signingKeyPath, "signing-key", helpers.ArtifactPath(constants.SecureBootSigningKeyAsset), "path to the key used to sign the database")
+	genSecurebootDatabaseCmd.Flags().BoolVar(
+		&genSecurebootDatabaseCmdFlags.includeWellKnownCerts, "include-well-known-uefi-certs", false, "include well-known UEFI (Microsoft) certificates in the database")
 	genSecurebootCmd.AddCommand(genSecurebootDatabaseCmd)
 }
 

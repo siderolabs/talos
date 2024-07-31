@@ -93,11 +93,11 @@ This guide assumes the user has a working API token,and the [Equinix Metal CLI](
 ```bash
 metal device create \
   --project-id $PROJECT_ID \
-  --facility $FACILITY \
+  --metro $METRO \
   --operating-system "custom_ipxe" \
   --ipxe-script-url "https://pxe.factory.talos.dev/pxe/376567988ad370138ad8b2698212367b8edcb69b5fd68c80be1f2ec7d603b4ba/{{< release >}}/equinixMetal-amd64" \
-  --plan $PLAN\
-  --hostname $HOSTNAME\
+  --plan $PLAN \
+  --hostname $HOSTNAME \
   --userdata-file controlplane.yaml
 ```
 

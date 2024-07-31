@@ -119,6 +119,9 @@ func (ctrl *Controller) Run(ctx context.Context, drainer *runtime.Drainer) error
 			ValidationMode: ctrl.v1alpha1Runtime.State().Platform().Mode(),
 		},
 		&config.MachineTypeController{},
+		&cri.RuncMemFDBindController{
+			V1Alpha1Mode: ctrl.v1alpha1Runtime.State().Platform().Mode(),
+		},
 		&cri.SeccompProfileController{},
 		&cri.SeccompProfileFileController{
 			V1Alpha1Mode:             ctrl.v1alpha1Runtime.State().Platform().Mode(),

@@ -1,4 +1,4 @@
-version = 2
+version = 3
 
 disabled_plugins = [
     "io.containerd.nri.v1.nri",

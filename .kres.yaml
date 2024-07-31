@@ -742,22 +742,6 @@ spec:
             VIA_MAINTENANCE_MODE: true
             DISABLE_DHCP_HOSTNAME: true
             IMAGE_REGISTRY: registry.dev.siderolabs.io
-        - name: e2e-siderolink
-          command: e2e-qemu
-          withSudo: true
-          environment:
-            SHORT_INTEGRATION_TEST: yes
-            WITH_SIDEROLINK_AGENT: true
-            VIA_MAINTENANCE_MODE: true
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
-        - name: e2e-siderolink-tunnel
-          command: e2e-qemu
-          withSudo: true
-          environment:
-            SHORT_INTEGRATION_TEST: yes
-            WITH_SIDEROLINK_AGENT: tunnel
-            VIA_MAINTENANCE_MODE: true
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
         - name: save-talos-logs
           conditions:
             - always
@@ -934,6 +918,13 @@ spec:
             SHORT_INTEGRATION_TEST: yes
             WITH_SIDEROLINK_AGENT: tunnel
             VIA_MAINTENANCE_MODE: true
+            IMAGE_REGISTRY: registry.dev.siderolabs.io
+        - name: e2e-apparmor
+          command: e2e-qemu
+          withSudo: true
+          environment:
+            SHORT_INTEGRATION_TEST: yes
+            WITH_APPARMOR_LSM_ENABLED: yes
             IMAGE_REGISTRY: registry.dev.siderolabs.io
         - name: save-talos-logs
           conditions:

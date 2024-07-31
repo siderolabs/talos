@@ -20,7 +20,7 @@ ARTIFACTS := _out
 TOOLS ?= ghcr.io/siderolabs/tools:v1.8.0-alpha.0-6-g31ad71b
 
 PKGS_PREFIX ?= ghcr.io/siderolabs
-PKGS ?= v1.8.0-alpha.0-36-g25f3a99
+PKGS ?= v1.8.0-alpha.0-40-g4e940f8
 EXTRAS ?= v1.8.0-alpha.0-3-gcab51d8
 
 KRES_IMAGE ?= ghcr.io/siderolabs/kres:latest
@@ -100,6 +100,9 @@ HELM_VERSION ?= v3.15.2
 CLUSTERCTL_VERSION ?= 1.7.3
 # renovate: datasource=github-releases depName=cilium/cilium-cli
 CILIUM_CLI_VERSION ?= v0.16.11
+# renovate: datasource=github-releases depName=microsoft/secureboot_objects
+MICROSOFT_SECUREBOOT_RELEASE ?= v1.1.3
+
 KUBECTL_URL ?= https://dl.k8s.io/release/$(KUBECTL_VERSION)/bin/$(OPERATING_SYSTEM)/amd64/kubectl
 KUBESTR_URL ?= https://github.com/kastenhq/kubestr/releases/download/$(KUBESTR_VERSION)/kubestr_$(subst v,,$(KUBESTR_VERSION))_Linux_amd64.tar.gz
 HELM_URL ?= https://get.helm.sh/helm-$(HELM_VERSION)-linux-amd64.tar.gz
@@ -209,6 +212,7 @@ COMMON_ARGS += --build-arg=PKG_KERNEL=$(PKG_KERNEL)
 COMMON_ARGS += --build-arg=PKG_TALOSCTL_CNI_BUNDLE_INSTALL=$(PKG_TALOSCTL_CNI_BUNDLE_INSTALL)
 COMMON_ARGS += --build-arg=ABBREV_TAG=$(ABBREV_TAG)
 COMMON_ARGS += --build-arg=ZSTD_COMPRESSION_LEVEL=$(ZSTD_COMPRESSION_LEVEL)
+COMMON_ARGS += --build-arg=MICROSOFT_SECUREBOOT_RELEASE=$(MICROSOFT_SECUREBOOT_RELEASE)
 
 CI_ARGS ?=
 

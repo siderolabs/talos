@@ -134,6 +134,7 @@ kernel/drivers/scsi/aacraid/aacraid.ko
 kernel/drivers/scsi/hpsa.ko
 kernel/drivers/scsi/isci/isci.ko
 kernel/drivers/scsi/megaraid/megaraid_sas.ko
+kernel/drivers/scsi/mpi3mr/mpi3mr.ko
 kernel/drivers/scsi/mpt3sas/mpt3sas.ko
 kernel/drivers/scsi/smartpqi/smartpqi.ko
 kernel/drivers/scsi/vmw_pvscsi.ko

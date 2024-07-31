@@ -1,6 +1,6 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
 #
-# Generated on 2024-07-08T12:58:12Z by kres 8c8b007.
+# Generated on 2024-07-30T14:54:22Z by kres faf91e3.
 
 name: default
 concurrency:
@@ -1890,22 +1890,6 @@ jobs:
           VIA_MAINTENANCE_MODE: "true"
         run: |
           sudo -E make e2e-qemu
-      - name: e2e-siderolink
-        env:
-          IMAGE_REGISTRY: registry.dev.siderolabs.io
-          SHORT_INTEGRATION_TEST: "yes"
-          VIA_MAINTENANCE_MODE: "true"
-          WITH_SIDEROLINK_AGENT: "true"
-        run: |
-          sudo -E make e2e-qemu
-      - name: e2e-siderolink-tunnel
-        env:
-          IMAGE_REGISTRY: registry.dev.siderolabs.io
-          SHORT_INTEGRATION_TEST: "yes"
-          VIA_MAINTENANCE_MODE: "true"
-          WITH_SIDEROLINK_AGENT: tunnel
-        run: |
-          sudo -E make e2e-qemu
       - name: save artifacts
         if: always()
         uses: actions/upload-artifact@v4
@@ -2203,6 +2187,13 @@ jobs:
           SHORT_INTEGRATION_TEST: "yes"
           VIA_MAINTENANCE_MODE: "true"
           WITH_SIDEROLINK_AGENT: tunnel
+        run: |
+          sudo -E make e2e-qemu
+      - name: e2e-apparmor
+        env:
+          IMAGE_REGISTRY: registry.dev.siderolabs.io
+          SHORT_INTEGRATION_TEST: "yes"
+          WITH_APPARMOR_LSM_ENABLED: "yes"
         run: |
           sudo -E make e2e-qemu
       - name: save artifacts
@@ -3188,8 +3179,9 @@ jobs:
           make cloud-images
       - name: Generate Checksums
         run: |
-          sha256sum _out/akamai-amd64.raw.gz _out/akamai-arm64.raw.gz _out/aws-amd64.raw.zst _out/aws-arm64.raw.zst _out/azure-amd64.vhd.zst _out/azure-arm64.vhd.zst _out/cloud-images.json _out/digital-ocean-amd64.raw.gz _out/digital-ocean-arm64.raw.gz _out/exoscale-amd64.qcow2.zst _out/exoscale-arm64.qcow2.zst _out/gcp-amd64.raw.tar.gz _out/gcp-arm64.raw.tar.gz _out/hcloud-amd64.raw.zst _out/hcloud-arm64.raw.zst _out/initramfs-amd64.xz _out/initramfs-arm64.xz _out/metal-amd64.iso _out/metal-arm64.iso _out/metal-amd64.raw.zst _out/metal-arm64.raw.zst _out/nocloud-amd64.raw.zst _out/nocloud-arm64.raw.zst _out/opennebula-amd64.raw.zst _out/opennebula-arm64.raw.zst _out/openstack-amd64.raw.zst _out/openstack-arm64.raw.zst _out/oracle-amd64.qcow2.zst _out/oracle-arm64.qcow2.zst _out/scaleway-amd64.raw.zst _out/scaleway-arm64.raw.zst _out/sd-boot-amd64.efi _out/sd-boot-arm64.efi _out/sd-stub-amd64.efi _out/sd-stub-arm64.efi _out/talosctl-cni-bundle-amd64.tar.gz _out/talosctl-cni-bundle-arm64.tar.gz _out/talosctl-darwin-amd64 _out/talosctl-darwin-arm64 _out/talosctl-freebsd-amd64 _out/talosctl-freebsd-arm64 _out/talosctl-linux-amd64 _out/talosctl-linux-arm64 _out/talosctl-linux-armv7 _out/talosctl-windows-amd64.exe _out/upcloud-amd64.raw.zst _out/upcloud-arm64.raw.zst _out/vmware-amd64.ova _out/vmware-arm64.ova _out/vmlinuz-amd64 _out/vmlinuz-arm64 _out/vultr-amd64.raw.zst _out/vultr-arm64.raw.zst > _out/sha256sum.txt
-          sha512sum _out/akamai-amd64.raw.gz _out/akamai-arm64.raw.gz _out/aws-amd64.raw.zst _out/aws-arm64.raw.zst _out/azure-amd64.vhd.zst _out/azure-arm64.vhd.zst _out/cloud-images.json _out/digital-ocean-amd64.raw.gz _out/digital-ocean-arm64.raw.gz _out/exoscale-amd64.qcow2.zst _out/exoscale-arm64.qcow2.zst _out/gcp-amd64.raw.tar.gz _out/gcp-arm64.raw.tar.gz _out/hcloud-amd64.raw.zst _out/hcloud-arm64.raw.zst _out/initramfs-amd64.xz _out/initramfs-arm64.xz _out/metal-amd64.iso _out/metal-arm64.iso _out/metal-amd64.raw.zst _out/metal-arm64.raw.zst _out/nocloud-amd64.raw.zst _out/nocloud-arm64.raw.zst _out/opennebula-amd64.raw.zst _out/opennebula-arm64.raw.zst _out/openstack-amd64.raw.zst _out/openstack-arm64.raw.zst _out/oracle-amd64.qcow2.zst _out/oracle-arm64.qcow2.zst _out/scaleway-amd64.raw.zst _out/scaleway-arm64.raw.zst _out/sd-boot-amd64.efi _out/sd-boot-arm64.efi _out/sd-stub-amd64.efi _out/sd-stub-arm64.efi _out/talosctl-cni-bundle-amd64.tar.gz _out/talosctl-cni-bundle-arm64.tar.gz _out/talosctl-darwin-amd64 _out/talosctl-darwin-arm64 _out/talosctl-freebsd-amd64 _out/talosctl-freebsd-arm64 _out/talosctl-linux-amd64 _out/talosctl-linux-arm64 _out/talosctl-linux-armv7 _out/talosctl-windows-amd64.exe _out/upcloud-amd64.raw.zst _out/upcloud-arm64.raw.zst _out/vmware-amd64.ova _out/vmware-arm64.ova _out/vmlinuz-amd64 _out/vmlinuz-arm64 _out/vultr-amd64.raw.zst _out/vultr-arm64.raw.zst > _out/sha512sum.txt
+          cd _out
+          sha256sum akamai-amd64.raw.gz akamai-arm64.raw.gz aws-amd64.raw.zst aws-arm64.raw.zst azure-amd64.vhd.zst azure-arm64.vhd.zst cloud-images.json digital-ocean-amd64.raw.gz digital-ocean-arm64.raw.gz exoscale-amd64.qcow2.zst exoscale-arm64.qcow2.zst gcp-amd64.raw.tar.gz gcp-arm64.raw.tar.gz hcloud-amd64.raw.zst hcloud-arm64.raw.zst initramfs-amd64.xz initramfs-arm64.xz metal-amd64.iso metal-arm64.iso metal-amd64.raw.zst metal-arm64.raw.zst nocloud-amd64.raw.zst nocloud-arm64.raw.zst opennebula-amd64.raw.zst opennebula-arm64.raw.zst openstack-amd64.raw.zst openstack-arm64.raw.zst oracle-amd64.qcow2.zst oracle-arm64.qcow2.zst scaleway-amd64.raw.zst scaleway-arm64.raw.zst sd-boot-amd64.efi sd-boot-arm64.efi sd-stub-amd64.efi sd-stub-arm64.efi talosctl-cni-bundle-amd64.tar.gz talosctl-cni-bundle-arm64.tar.gz talosctl-darwin-amd64 talosctl-darwin-arm64 talosctl-freebsd-amd64 talosctl-freebsd-arm64 talosctl-linux-amd64 talosctl-linux-arm64 talosctl-linux-armv7 talosctl-windows-amd64.exe upcloud-amd64.raw.zst upcloud-arm64.raw.zst vmware-amd64.ova vmware-arm64.ova vmlinuz-amd64 vmlinuz-arm64 vultr-amd64.raw.zst vultr-arm64.raw.zst > sha256sum.txt
+          sha512sum akamai-amd64.raw.gz akamai-arm64.raw.gz aws-amd64.raw.zst aws-arm64.raw.zst azure-amd64.vhd.zst azure-arm64.vhd.zst cloud-images.json digital-ocean-amd64.raw.gz digital-ocean-arm64.raw.gz exoscale-amd64.qcow2.zst exoscale-arm64.qcow2.zst gcp-amd64.raw.tar.gz gcp-arm64.raw.tar.gz hcloud-amd64.raw.zst hcloud-arm64.raw.zst initramfs-amd64.xz initramfs-arm64.xz metal-amd64.iso metal-arm64.iso metal-amd64.raw.zst metal-arm64.raw.zst nocloud-amd64.raw.zst nocloud-arm64.raw.zst opennebula-amd64.raw.zst opennebula-arm64.raw.zst openstack-amd64.raw.zst openstack-arm64.raw.zst oracle-amd64.qcow2.zst oracle-arm64.qcow2.zst scaleway-amd64.raw.zst scaleway-arm64.raw.zst sd-boot-amd64.efi sd-boot-arm64.efi sd-stub-amd64.efi sd-stub-arm64.efi talosctl-cni-bundle-amd64.tar.gz talosctl-cni-bundle-arm64.tar.gz talosctl-darwin-amd64 talosctl-darwin-arm64 talosctl-freebsd-amd64 talosctl-freebsd-arm64 talosctl-linux-amd64 talosctl-linux-arm64 talosctl-linux-armv7 talosctl-windows-amd64.exe upcloud-amd64.raw.zst upcloud-arm64.raw.zst vmware-amd64.ova vmware-arm64.ova vmlinuz-amd64 vmlinuz-arm64 vultr-amd64.raw.zst vultr-arm64.raw.zst > sha512sum.txt
       - name: release
         uses: crazy-max/ghaction-github-release@v2
         with:

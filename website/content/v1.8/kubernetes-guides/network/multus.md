@@ -141,3 +141,35 @@ If you would like to use KubeVirt and expose your virtual machine to the outside
 >
 > The reason is similar: the bridge interface type moves the pod interface MAC address to the VM, leaving the pod interface with a different address.
 > The aforementioned CNIs require the pod interface to have the original MAC address.
+
+## Notes on using Cilium in combination with Multus
+
+Cilium does not ship the CNI reference plugins, which most multus seutps are expecting (e.g. macvlan).
+This can be addressed by extending the daemonset with an additional init-container, setting them up, e.g. using the following kustomize strategic-merge patch:
+
+```yaml
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: kube-multus-ds
+  namespace: kube-system
+spec:
+  template:
+    spec:
+      initContainers:
+      - command:
+        - /install-cni.sh
+        image: ghcr.io/siderolabs/install-cni:v1.7.0  # adapt to your talos version
+        name: install-cni
+        securityContext:
+          privileged: true
+        volumeMounts:
+        - mountPath: /host/opt/cni/bin
+          mountPropagation: Bidirectional
+          name: cnibin
+```
+
+## Notes on ARM64 nodes
+
+The official images (as of 29.07.24) are built incorrectly for ARM64 ([ref](https://github.com/k8snetworkplumbingwg/multus-cni/issues/1251)).
+Self-building them is an adequate workaround for now.

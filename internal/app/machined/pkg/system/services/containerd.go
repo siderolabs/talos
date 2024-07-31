@@ -104,7 +104,12 @@ func (c *Containerd) Runner(r runtime.Runtime) (runner.Runner, error) {
 		debug,
 		args,
 		runner.WithLoggingManager(r.Logging()),
-		runner.WithEnv(environment.Get(r.Config())),
+		runner.WithEnv(append(
+			environment.Get(r.Config()),
+			// append a default value for XDG_RUNTIME_DIR for the services running on the host
+			// see https://specifications.freedesktop.org/basedir-spec/basedir-spec-latest.html
+			"XDG_RUNTIME_DIR=/run",
+		)),
 		runner.WithOOMScoreAdj(-999),
 		runner.WithCgroupPath(constants.CgroupSystemRuntime),
 		runner.WithDroppedCapabilities(constants.DefaultDroppedCapabilities),

@@ -391,6 +391,10 @@ func (k8sSuite *K8sSuite) ApplyManifests(ctx context.Context, manifests []unstru
 			k8sSuite.Require().NoError(err, "error creating mapping for object %s", obj.GetName())
 		}
 
+		if obj.GetNamespace() == "" {
+			k8sSuite.T().Fatalf("namespace not set for object %s, kind %s", obj.GetName(), obj.GetObjectKind().GroupVersionKind())
+		}
+
 		dr := k8sSuite.DynamicClient.Resource(mapping.Resource).Namespace(obj.GetNamespace())
 
 		_, err = dr.Create(ctx, &obj, metav1.CreateOptions{})
