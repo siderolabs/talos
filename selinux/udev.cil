@@ -24,6 +24,30 @@
 (call system_service (udev_t))
 (allow udev_t udev_exec_t (file (entrypoint execute_no_trans)))
 
+; TODO: other module locations? Special label?
+(allow udev_t lib_t (system (module_load)))
+
+(allow udev_t self (capability (
+    audit_write
+    chown
+    dac_override
+    dac_read_search
+    fowner
+    fsetid
+    mknod
+    net_admin
+    net_raw
+    setgid
+    setuid
+    sys_admin
+    sys_module
+    sys_nice
+    sys_ptrace
+    sys_rawio
+    sys_resource
+    sys_tty_config
+)))
+
 (type udev_socket_t)
 (call system_socket (udev_socket_t))
 (typetransition udev_t run_t sock_file udev_socket_t)
