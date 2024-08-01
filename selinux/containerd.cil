@@ -61,3 +61,17 @@
 (call pod_process (etcd_t))
 ; FIXME: insecure as anyone with access to the pod containerd may obtain this domain
 (allow etcd_t ephemeral_t (file (entrypoint)))
+
+; access procfs
+(allow pod_processes any_processes (fs_classes (ro)))
+(allow pod_processes any_processes (process (
+    getattr
+    getcap
+    getpgid
+    getrlimit
+    getsched
+    getsession
+)))
+(allow pod_processes sysfs_t (fs_classes (ro)))
+(allow pod_processes device_t (fs_classes (ro)))
+(allow pod_processes tun_device_t (fs_classes (rw)))
