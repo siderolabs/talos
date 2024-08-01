@@ -50,6 +50,7 @@
 (allow protected_device_files device_t (filesystem (associate)))
 
 (typeattribute unconfined_files)
+(typeattributeset unconfined_files tmpfs_t)
 (typeattributeset unconfined_files ephemeral_t)
 (typeattributeset unconfined_files common_files)
 (typeattributeset unconfined_files device_files)
