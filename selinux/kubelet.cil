@@ -28,3 +28,7 @@
 ; Read misc kernel properties
 (allow kubelet_t proc_sysctl_t (dir (getattr open read search)))
 (allow kubelet_t proc_sysctl_t (file (getattr read open)))
+
+; Just a permission to have the capability
+; Using ptrace(2) requires process(ptrace)
+(allow kubelet_t self (capability (sys_ptrace)))
