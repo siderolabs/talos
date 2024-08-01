@@ -14,6 +14,9 @@
 (call system_socket (sys_containerd_socket_t))
 (typetransition sys_containerd_t system_t sock_file sys_containerd_socket_t)
 
+(allow sys_containerd_t self (unix_stream_socket (connectto)))
+(allow init_t sys_containerd_t (unix_stream_socket (connectto)))
+
 (allow sys_containerd_t system_container_processes (process2 (nnp_transition)))
 (allow sys_containerd_t system_container_processes (process (transition)))
 
@@ -24,7 +27,7 @@
 
 (type apid_t)
 (call system_container_process (apid_t))
-(allow apid_t init_exec_t (file (entrypoint)))
+(allow apid_t init_exec_t (file (entrypoint execute read open map getattr)))
 
 (type apid_socket_t)
 (call system_socket (apid_socket_t))
@@ -39,13 +42,16 @@
 (allow apid_t apid_runtime_socket_t (sock_file (
     create getattr ioctl link lock open read relabelto rename setattr write
 )))
+(allow apid_t init_t (unix_stream_socket (connectto)))
 
 (type trustd_t)
 (call system_container_process (trustd_t))
-(allow trustd_t init_exec_t (file (entrypoint)))
+(allow trustd_t init_exec_t (file (entrypoint execute read open map getattr)))
+(allow trustd_t init_t (unix_stream_socket (connectto)))
 
 (type trustd_runtime_socket_t)
 (call system_socket (trustd_runtime_socket_t))
+(allow trustd_t trustd_runtime_socket_t (sock_file (write)))
 
 ; Pod (CRI) containerd
 (type pod_containerd_t)
@@ -57,6 +63,9 @@
 (call system_socket (pod_containerd_socket_t))
 (typetransition pod_containerd_t run_t sock_file pod_containerd_socket_t)
 
+(allow pod_containerd_t self (unix_stream_socket (connectto)))
+(allow init_t pod_containerd_t (unix_stream_socket (connectto)))
+
 (allow pod_containerd_t pod_processes (process2 (nnp_transition)))
 (allow pod_containerd_t pod_processes (process (transition)))
 
@@ -65,6 +74,7 @@
 ; TODO: What if container is started not from ephemeral_t?
 (typetransition pod_containerd_t ephemeral_t process pod_t)
 (allow pod_t ephemeral_t (file (entrypoint)))
+(allow pod_t self (unix_stream_socket (connectto)))
 
 (type etcd_t)
 (call pod_process (etcd_t))

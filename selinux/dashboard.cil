@@ -1,3 +1,4 @@
 (type dashboard_t)
 (call system_service (dashboard_t))
 (allow dashboard_t init_exec_t (file (entrypoint)))
+(allow dashboard_t init_t (unix_stream_socket (connectto)))
