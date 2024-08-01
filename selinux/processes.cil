@@ -18,3 +18,37 @@
 (allow any_processes device_t (lnk_file (read getattr)))
 (allow any_processes rootfs_t (dir (ioctl read getattr lock open search)))
 (allow any_processes rootfs_t (lnk_file (ioctl read getattr lock)))
+
+(allow system_processes any_processes (process (
+    dyntransition
+    execheap
+    execmem
+    execstack
+    fork
+    getattr
+    getcap
+    getpgid
+    getrlimit
+    getsched
+    getsession
+    noatsecure
+    ptrace
+    rlimitinh
+    setcap
+    setcurrent
+    setexec
+    setfscreate
+    setkeycreate
+    setpgid
+    setrlimit
+    setsched
+    setsockcreate
+    share
+    sigchld
+    siginh
+    sigkill
+    signal
+    signull
+    sigstop
+    transition
+)))
