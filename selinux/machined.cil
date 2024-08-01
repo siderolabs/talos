@@ -12,7 +12,18 @@
 (allow kernel_t init_t (process (transition)))
 (allow init_t init_exec_t (file (entrypoint execute_no_trans)))
 
-(allow init_t self (capability (sys_ptrace)))
+(allow init_t kernel_t (fd (use)))
+(allow init_t kernel_t (system (
+    ipc_info
+    module_load
+    module_request
+    syslog_console
+    syslog_mod
+    syslog_read
+)))
+(allow init_t self (capability (dac_read_search chown dac_override sys_resource sys_ptrace)))
+(allow init_t self (capability2 (syslog)))
+
 (allow init_t system_services (process (transition)))
 ; Should not occur unless misconfigured by machined
 (type unconfined_service_t)
@@ -61,3 +72,9 @@
 (allow etc_os_release_t tmpfs_t (filesystem (associate)))
 (allow dns_conf_t tmpfs_t (filesystem (associate)))
 (allow hosts_conf_t tmpfs_t (filesystem (associate)))
+
+(type modprobe_exec_t)
+(call system_file (modprobe_exec_t))
+(filecon "/sbin/modprobe" file (system_u object_r modprobe_exec_t (systemLow systemLow)))
+(allow kernel_t modprobe_exec_t (file (execute_no_trans)))
+(allow kernel_t self (capability (dac_override)))
