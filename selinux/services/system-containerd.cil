@@ -20,6 +20,7 @@
 (typetransition sys_containerd_t tmpfs_t dir sys_containerd_tmpfs_t)
 (typetransition sys_containerd_t tmpfs_t file sys_containerd_tmpfs_t)
 (allow sys_containerd_tmpfs_t tmpfs_t (filesystem (associate)))
+(allow system_container_processes sys_containerd_tmpfs_t (fs_classes (all)))
 
 ; runc_cloned
 (allow sys_containerd_t sys_containerd_tmpfs_t (file (execute_no_trans)))

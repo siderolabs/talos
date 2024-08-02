@@ -16,6 +16,7 @@
     create getattr ioctl link lock open read relabelto rename setattr write
 )))
 (allow apid_t init_t (unix_stream_socket (connectto)))
+(allow apid_t sys_containerd_t (fifo_file (ioctl read write getattr lock append)))
 
 (allow apid_t machine_socket_t (fs_classes (rw)))
 
@@ -23,6 +24,7 @@
 (call system_container_process (trustd_t))
 (allow trustd_t init_exec_t (file (entrypoint execute read open map getattr)))
 (allow trustd_t init_t (unix_stream_socket (connectto)))
+(allow trustd_t sys_containerd_t (fifo_file (ioctl read write getattr lock append)))
 
 (type trustd_runtime_socket_t)
 (call system_socket (trustd_runtime_socket_t))
