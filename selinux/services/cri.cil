@@ -13,6 +13,7 @@
 (context pod_containerd_tmpfs_t (system_u object_r pod_containerd_tmpfs_t (systemLow systemLow)))
 (typetransition pod_containerd_t tmpfs_t dir pod_containerd_tmpfs_t)
 (typetransition pod_containerd_t tmpfs_t file pod_containerd_tmpfs_t)
+(allow pod_containerd_tmpfs_t tmpfs_t (filesystem (associate)))
 
 ; runc_cloned
 (allow pod_containerd_t pod_containerd_tmpfs_t (file (execute_no_trans)))
