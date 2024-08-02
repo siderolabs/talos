@@ -240,8 +240,7 @@ worker.yaml is valid for cloud mode
 #### Create the Control Plane Nodes
 
 ```bash
-CP_COUNT=1
-while [[ "$CP_COUNT" -lt 4 ]]; do
+for CP_COUNT in {1..3}; do
   aws ec2 run-instances \
     --region $REGION \
     --image-id $AMI \
@@ -252,7 +251,6 @@ while [[ "$CP_COUNT" -lt 4 ]]; do
     --security-group-ids $SECURITY_GROUP \
     --associate-public-ip-address \
     --tag-specifications "ResourceType=instance,Tags=[{Key=Name,Value=talos-aws-tutorial-cp-$CP_COUNT}]"
-  ((CP_COUNT++))
 done
 ```
 
