@@ -75,24 +75,24 @@
     watch
 )))
 (classmapping fs_classes ro (file (
-    append create execmod execute getattr ioctl link lock map mounton open quotaon read rename setattr unlink watch watch_mount watch_reads watch_sb watch_with_perm write
+    append create execmod execute getattr ioctl lock map mounton open quotaon read rename unlink watch watch_mount watch_reads watch_sb watch_with_perm
 )))
 (classmapping fs_classes ro (dir (
-    execmod execute getattr ioctl link lock map open read watch watch_mount watch_reads watch_sb watch_with_perm write
+    execmod execute getattr ioctl lock map open read watch watch_mount watch_reads watch_sb watch_with_perm
     search
 )))
 (classmapping fs_classes ro (lnk_file (
-    execmod execute getattr ioctl link lock map open read watch watch_mount watch_reads watch_sb watch_with_perm write
+    execmod execute getattr ioctl lock map open read watch watch_mount watch_reads watch_sb watch_with_perm
 )))
 (classmapping fs_classes ro (chr_file (
-    execmod execute getattr ioctl link lock map open read watch watch_mount watch_reads watch_sb watch_with_perm write
+    execmod execute getattr ioctl lock map open read watch watch_mount watch_reads watch_sb watch_with_perm
 )))
 (classmapping fs_classes ro (blk_file (
-    execmod execute getattr ioctl link lock map open read watch watch_mount watch_reads watch_sb watch_with_perm write
+    execmod execute getattr ioctl lock map open read watch watch_mount watch_reads watch_sb watch_with_perm
 )))
 (classmapping fs_classes ro (sock_file (
-    execmod execute getattr ioctl link lock map open read watch watch_mount watch_reads watch_sb watch_with_perm write
+    execmod execute getattr ioctl lock map open read watch watch_mount watch_reads watch_sb watch_with_perm
 )))
 (classmapping fs_classes ro (fifo_file (
-    execmod execute getattr ioctl link lock map open read watch watch_mount watch_reads watch_sb watch_with_perm write
+    execmod execute getattr ioctl lock map open read watch watch_mount watch_reads watch_sb watch_with_perm
 )))
