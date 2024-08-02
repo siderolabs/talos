@@ -14,7 +14,7 @@
 (typetransition pod_containerd_t tmpfs_t dir pod_containerd_tmpfs_t)
 (typetransition pod_containerd_t tmpfs_t file pod_containerd_tmpfs_t)
 (allow pod_containerd_tmpfs_t tmpfs_t (filesystem (associate)))
-(allow system_container_processes pod_containerd_tmpfs_t (fs_classes (all)))
+(allow pod_processes pod_containerd_tmpfs_t (fs_classes (all)))
 
 ; runc_cloned
 (allow pod_containerd_t pod_containerd_tmpfs_t (file (execute_no_trans)))
@@ -52,7 +52,6 @@
 ; TODO: What if container is started not from ephemeral_t?
 (typetransition pod_containerd_t ephemeral_t process pod_t)
 (allow pod_t ephemeral_t (file (entrypoint execute_no_trans)))
-(allow pod_t self (unix_stream_socket (connectto)))
 
 (type etcd_t)
 (call pod_process (etcd_t))
@@ -75,3 +74,5 @@
 
 (allow pod_processes pod_containerd_t (fd (use)))
 (allow pod_processes pod_containerd_t (fifo_file (write)))
+
+(allow pod_processes self (unix_stream_socket (connectto)))
