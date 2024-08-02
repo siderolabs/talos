@@ -375,6 +375,11 @@ func (suite *ExtensionsSuiteQEMU) TestExtensionsGvisorKVM() {
 	suite.testRuntimeClass("gvisor-kvm", "runsc-kvm")
 }
 
+// TestExtensionsCrun verifies crun runtime class is working.
+func (suite *ExtensionsSuiteQEMU) TestExtensionsCrun() {
+	suite.testRuntimeClass("crun", "crun")
+}
+
 // TestExtensionsKataContainers verifies gvisor runtime class is working.
 func (suite *ExtensionsSuiteQEMU) TestExtensionsKataContainers() {
 	suite.testRuntimeClass("kata", "kata")
