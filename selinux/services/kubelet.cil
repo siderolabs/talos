@@ -45,6 +45,7 @@
 
 ; pipe to machined
 (allow kubelet_t init_t (fd (use)))
+(allow kubelet_t init_t (fifo_file (write)))
 
 ; syslog
 (allow kubelet_t kernel_t (system (syslog_read)))

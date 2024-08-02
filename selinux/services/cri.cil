@@ -74,3 +74,4 @@
 (allow pod_processes tun_device_t (fs_classes (rw)))
 
 (allow pod_processes pod_containerd_t (fd (use)))
+(allow pod_processes pod_containerd_t (fifo_file (write)))
