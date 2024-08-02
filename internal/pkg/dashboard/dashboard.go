@@ -27,6 +27,7 @@ import (
 	"github.com/siderolabs/talos/internal/pkg/dashboard/apidata"
 	"github.com/siderolabs/talos/internal/pkg/dashboard/components"
 	"github.com/siderolabs/talos/internal/pkg/dashboard/logdata"
+	"github.com/siderolabs/talos/internal/pkg/dashboard/resolver"
 	"github.com/siderolabs/talos/internal/pkg/dashboard/resourcedata"
 	"github.com/siderolabs/talos/pkg/machinery/client"
 )
@@ -247,16 +248,19 @@ func buildDashboard(ctx context.Context, cli *client.Client, opts ...Option) (*D
 		}
 	}
 
+	nodeResolver := resolver.New(ipsToNodeAliases)
+
 	dashboard.apiDataSource = &apidata.Source{
 		Client:   cli,
 		Interval: defOptions.interval,
+		Resolver: nodeResolver,
 	}
 
 	dashboard.resourceDataSource = &resourcedata.Source{
 		COSI: cli.COSI,
 	}
 
-	dashboard.logDataSource = logdata.NewSource(cli)
+	dashboard.logDataSource = logdata.NewSource(cli, nodeResolver)
 
 	return dashboard, nil
 }
@@ -386,24 +390,18 @@ func (d *Dashboard) startDataHandler(ctx context.Context) func() error {
 			case <-ctx.Done():
 				return ctx.Err()
 			case nodeLog := <-d.logDataSource.LogCh:
-				nodeAlias := d.attemptResolveIPToAlias(nodeLog.Node)
-
 				if time.Since(lastLogTime) < 50*time.Millisecond {
 					d.app.QueueUpdate(func() {
-						d.processLog(nodeAlias, nodeLog.Log, nodeLog.Error)
+						d.processLog(nodeLog.Node, nodeLog.Log, nodeLog.Error)
 					})
 				} else {
 					d.app.QueueUpdateDraw(func() {
-						d.processLog(nodeAlias, nodeLog.Log, nodeLog.Error)
+						d.processLog(nodeLog.Node, nodeLog.Log, nodeLog.Error)
 					})
 				}
 
 				lastLogTime = time.Now()
 			case d.data = <-dataCh:
-				d.data.Nodes = maps.Map(d.data.Nodes, func(key string, v *apidata.Node) (string, *apidata.Node) {
-					return d.attemptResolveIPToAlias(key), v
-				})
-
 				d.app.QueueUpdateDraw(func() {
 					d.processAPIData()
 				})
@@ -481,16 +479,6 @@ func (d *Dashboard) selectScreen(screen Screen) {
 	}
 
 	d.footer.SelectScreen(string(screen))
-}
-
-// attemptResolveIPToAlias attempts to resolve the given node IP to its alias as it appears in "nodes" in the context.
-// If the IP is not found in the context, the IP is returned as-is.
-func (d *Dashboard) attemptResolveIPToAlias(node string) string {
-	if resolved, ok := d.ipsToNodeAliases[node]; ok {
-		return resolved
-	}
-
-	return node
 }
 
 // collectNodeIPsToNodeAliases probes all nodes in the context for their IP addresses by calling their .Version endpoint and maps them to the node aliases in the context.

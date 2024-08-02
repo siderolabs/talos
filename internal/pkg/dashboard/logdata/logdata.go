@@ -18,6 +18,7 @@ import (
 	"google.golang.org/grpc/status"
 
 	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/helpers"
+	"github.com/siderolabs/talos/internal/pkg/dashboard/resolver"
 	"github.com/siderolabs/talos/internal/pkg/dashboard/util"
 	"github.com/siderolabs/talos/pkg/machinery/api/common"
 	"github.com/siderolabs/talos/pkg/machinery/client"
@@ -34,6 +35,8 @@ type Data struct {
 type Source struct {
 	client *client.Client
 
+	resolver resolver.Resolver
+
 	logCtxCancel context.CancelFunc
 
 	eg   errgroup.Group
@@ -43,10 +46,11 @@ type Source struct {
 }
 
 // NewSource initializes and returns Source data source.
-func NewSource(client *client.Client) *Source {
+func NewSource(client *client.Client, resolver resolver.Resolver) *Source {
 	return &Source{
-		client: client,
-		LogCh:  make(chan Data),
+		client:   client,
+		resolver: resolver,
+		LogCh:    make(chan Data),
 	}
 }
 
@@ -82,7 +86,9 @@ func (source *Source) tailNodeWithRetries(ctx context.Context, node string) erro
 		}
 
 		if readErr != nil {
-			source.LogCh <- Data{Node: node, Error: readErr.Error()}
+			resolved := source.resolver.Resolve(node)
+
+			source.LogCh <- Data{Node: resolved, Error: readErr.Error()}
 		}
 
 		// back off a bit before retrying
