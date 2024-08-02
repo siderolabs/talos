@@ -1,5 +1,37 @@
 (allow any_processes self (fs_classes (ro)))
-(allow any_processes self (process (fork getsched sigchld signal)))
+(allow any_processes self (process (
+    dyntransition
+    execheap
+    execmem
+    execstack
+    fork
+    getattr
+    getcap
+    getpgid
+    getrlimit
+    getsched
+    getsession
+    noatsecure
+    ptrace
+    rlimitinh
+    setcap
+    setcurrent
+    setexec
+    setfscreate
+    setkeycreate
+    setpgid
+    setrlimit
+    setsched
+    setsockcreate
+    share
+    sigchld
+    siginh
+    sigkill
+    signal
+    signull
+    sigstop
+    transition
+)))
 (allow any_processes null_device_t (chr_file (ioctl read write getattr lock append open)))
 (allow any_processes sysfs_t (fs_classes (ro)))
 (allow any_processes proc_sysctl_t (fs_classes (ro)))
