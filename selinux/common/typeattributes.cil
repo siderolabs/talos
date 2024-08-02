@@ -96,7 +96,9 @@
 (typeattributeset any_processes client_processes)
 (typeattributeset any_processes pod_processes)
 
-(allow any_processes unconfined_files (fs_classes (full)))
+(allow any_processes unconfined_files (fs_classes (rw)))
+(allow any_processes self (fs_classes (rw)))
+(allow pod_t pod_t (fs_classes (rw)))
 
 (typeattribute system_processes)
 (typeattributeset system_processes kernel_t)
