@@ -14,6 +14,16 @@
 (call system_socket (sys_containerd_socket_t))
 (typetransition sys_containerd_t system_t sock_file sys_containerd_socket_t)
 
+(type sys_containerd_tmpfs_t)
+(call filesystem (sys_containerd_tmpfs_t))
+(context sys_containerd_tmpfs_t (system_u object_r sys_containerd_tmpfs_t (systemLow systemLow)))
+(typetransition sys_containerd_t tmpfs_t dir sys_containerd_tmpfs_t)
+(typetransition sys_containerd_t tmpfs_t file sys_containerd_tmpfs_t)
+
+; runc_cloned
+(allow sys_containerd_t sys_containerd_tmpfs_t (file (execute_no_trans)))
+
+(allow sys_containerd_t self (capability2 (perfmon bpf)))
 (allow sys_containerd_t self (unix_stream_socket (connectto)))
 (allow init_t sys_containerd_t (unix_stream_socket (connectto)))
 
