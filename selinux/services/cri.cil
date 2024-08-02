@@ -1,0 +1,62 @@
+; Pod (CRI) containerd
+(type pod_containerd_t)
+(call client_process (pod_containerd_t))
+(allow pod_containerd_t containerd_exec_t (file (entrypoint execute_no_trans)))
+(allow init_t pod_containerd_t (process (transition)))
+
+(type pod_containerd_socket_t)
+(call system_socket (pod_containerd_socket_t))
+(typetransition pod_containerd_t run_t sock_file pod_containerd_socket_t)
+
+(allow pod_containerd_t self (unix_stream_socket (connectto)))
+(allow init_t pod_containerd_t (unix_stream_socket (connectto)))
+
+(allow pod_containerd_t pod_processes (process2 (nnp_transition)))
+(allow pod_containerd_t pod_processes (process (transition)))
+(allow pod_containerd_t pod_processes (key (view search setattr create)))
+(allow pod_containerd_t self (capability (
+    chown
+    dac_override
+    dac_read_search
+    fowner
+    fsetid
+    kill
+    mknod
+    net_admin
+    net_bind_service
+    net_raw
+    setfcap
+    setgid
+    setpcap
+    setuid
+    sys_admin
+    sys_chroot
+    sys_ptrace
+    sys_resource
+)))
+
+(type pod_t)
+(call pod_process (pod_t))
+; TODO: What if container is started not from ephemeral_t?
+(typetransition pod_containerd_t ephemeral_t process pod_t)
+(allow pod_t ephemeral_t (file (entrypoint)))
+(allow pod_t self (unix_stream_socket (connectto)))
+
+(type etcd_t)
+(call pod_process (etcd_t))
+; FIXME: insecure as anyone with access to the pod containerd may obtain this domain
+(allow etcd_t ephemeral_t (file (entrypoint)))
+
+; access procfs
+(allow pod_processes any_processes (fs_classes (ro)))
+(allow pod_processes any_processes (process (
+    getattr
+    getcap
+    getpgid
+    getrlimit
+    getsched
+    getsession
+)))
+(allow pod_processes sysfs_t (fs_classes (ro)))
+(allow pod_processes device_t (fs_classes (ro)))
+(allow pod_processes tun_device_t (fs_classes (rw)))

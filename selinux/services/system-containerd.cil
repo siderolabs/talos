@@ -1,0 +1,47 @@
+(type containerd_exec_t)
+(call system_file (containerd_exec_t))
+(context containerd_exec_t (system_u object_r containerd_exec_t (systemLow systemLow)))
+(filecon "/bin/containerd" any containerd_exec_t)
+(filecon "/bin/containerd-shim-runc-v2" any containerd_exec_t)
+(filecon "/bin/runc" any containerd_exec_t)
+
+; System containerd
+(type sys_containerd_t)
+(call system_service (sys_containerd_t))
+(allow sys_containerd_t containerd_exec_t (file (entrypoint execute_no_trans)))
+
+(type sys_containerd_socket_t)
+(call system_socket (sys_containerd_socket_t))
+(typetransition sys_containerd_t system_t sock_file sys_containerd_socket_t)
+
+(allow sys_containerd_t self (unix_stream_socket (connectto)))
+(allow init_t sys_containerd_t (unix_stream_socket (connectto)))
+
+(allow sys_containerd_t system_container_processes (process2 (nnp_transition)))
+(allow sys_containerd_t system_container_processes (process (transition)))
+(allow sys_containerd_t system_container_processes (key (view search setattr create)))
+(allow sys_containerd_t self (capability (
+    chown
+    dac_override
+    dac_read_search
+    fowner
+    fsetid
+    kill
+    mknod
+    net_admin
+    net_bind_service
+    net_raw
+    setfcap
+    setgid
+    setpcap
+    setuid
+    sys_admin
+    sys_chroot
+    sys_ptrace
+    sys_resource
+)))
+
+; Typically a system extension
+; Possibly a service misconfigured by machined
+(type unconfined_container_t)
+(call system_container_process (unconfined_container_t))

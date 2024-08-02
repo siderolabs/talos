@@ -29,10 +29,10 @@
 (allow kubelet_t proc_sysctl_t (dir (getattr open read search)))
 (allow kubelet_t proc_sysctl_t (file (getattr read open)))
 
-; Just a permission to have the capability
-; Using ptrace(2) requires process(ptrace)
 (allow kubelet_t self (capability (
     chown dac_override dac_read_search fowner fsetid kill net_admin net_raw sys_ptrace sys_resource
 )))
+; Just a permission to have the capability
+; Using ptrace(2) requires process(ptrace)
 (allow kubelet_t self (cap_userns (sys_ptrace)))
 (allow kubelet_t self (capability2 (syslog)))

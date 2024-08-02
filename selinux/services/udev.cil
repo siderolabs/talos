@@ -54,7 +54,7 @@
 ; udevadm called by machined in its context
 (allow init_t udev_t (unix_stream_socket (connectto)))
 
-; Device subsystems
+; Device subsystems, labeled by udev rules
 (type block_device_t)
 (call protected_device (block_device_t))
 (type hidraw_device_t)
@@ -87,3 +87,11 @@
 (call device (random_device_t))
 (type ptp_device_t)
 (call device (ptp_device_t))
+
+; modprobe called by kernel or udev
+(type modprobe_exec_t)
+(call system_file (modprobe_exec_t))
+(filecon "/sbin/modprobe" file (system_u object_r modprobe_exec_t (systemLow systemLow)))
+(allow kernel_t self (capability (dac_override mknod)))
+(allow kernel_t modprobe_exec_t (file (execute_no_trans)))
+(allow udev_t modprobe_exec_t (file (execute_no_trans)))
