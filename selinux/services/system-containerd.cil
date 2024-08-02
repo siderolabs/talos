@@ -45,3 +45,5 @@
 ; Possibly a service misconfigured by machined
 (type unconfined_container_t)
 (call system_container_process (unconfined_container_t))
+
+(allow system_container_processes sys_containerd_t (fd (use)))

@@ -112,3 +112,6 @@
 
 ; TODO: constrain more
 (allow system_processes any_files_and_processes (fs_classes (full)))
+; All spawned by init need to use fd of parent
+(allow system_services init_t (fd (use)))
+(allow client_processes init_t (fd (use)))

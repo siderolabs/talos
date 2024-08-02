@@ -95,3 +95,5 @@
 (allow kernel_t self (capability (dac_override mknod)))
 (allow kernel_t modprobe_exec_t (file (execute_no_trans)))
 (allow udev_t modprobe_exec_t (file (execute_no_trans)))
+
+(allow udev_t kernel_t (key (search)))
