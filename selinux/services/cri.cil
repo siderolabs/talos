@@ -25,7 +25,8 @@
 
 (allow pod_containerd_t pod_processes (process2 (nnp_transition)))
 (allow pod_containerd_t pod_processes (process (transition)))
-(allow pod_containerd_t pod_processes (key (view search setattr create)))
+(allow pod_containerd_t self (key (view read write search link setattr create)))
+(allow pod_containerd_t pod_processes (key (view read write search link setattr create)))
 (allow pod_containerd_t self (capability (
     chown
     dac_override
