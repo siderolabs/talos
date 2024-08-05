@@ -10,6 +10,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"runtime"
 
 	"github.com/siderolabs/go-debug"
 	"golang.org/x/sys/unix"
@@ -97,8 +98,9 @@ func Switch(prefix string, mountpoints *mount.Points) (err error) {
 		return err
 	}
 
+	runtime.LockOSThread()
 	// TODO: enforce (https://github.com/SELinuxProject/selinux/blob/e81a05a5050354261049cc7b5987372e763fc5f4/libselinux/src/setenforce.c#L12)
-	err = os.WriteFile("/proc/self/attr/exec", []byte("system_u:system_r:init_t:s0"), 0777)
+	err = os.WriteFile("/proc/thread-self/attr/exec", []byte("system_u:system_r:init_t:s0"), 0777)
 	if err != nil {
 		return err
 	}
@@ -125,6 +127,7 @@ func Switch(prefix string, mountpoints *mount.Points) (err error) {
 	if err = unix.Exec("/sbin/init", []string{"/sbin/init"}, envv); err != nil {
 		return fmt.Errorf("error executing /sbin/init: %w", err)
 	}
+	runtime.UnlockOSThread()
 
 	return nil
 }
