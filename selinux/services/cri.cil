@@ -74,6 +74,62 @@
 (allow pod_processes tun_device_t (fs_classes (rw)))
 
 (allow pod_processes pod_containerd_t (fd (use)))
-(allow pod_processes pod_containerd_t (fifo_file (write)))
+(allow pod_processes pod_containerd_t (fifo_file (open ioctl read write append)))
 
 (allow pod_processes self (unix_stream_socket (connectto)))
+; TODO: restrict?
+; FIXME: classmap
+(allow pod_processes self (capability (
+    audit_write
+    chown
+    dac_override
+    dac_read_search
+    fowner
+    fsetid
+    ipc_lock
+    mknod
+    net_admin
+    net_bind_service
+    net_raw
+    setgid
+    setpcap
+    setuid
+    sys_nice
+    sys_ptrace
+    sys_rawio
+    sys_resource
+)))
+(allow pod_processes self (cap_userns (
+    audit_write
+    chown
+    dac_override
+    dac_read_search
+    fowner
+    fsetid
+    ipc_lock
+    mknod
+    net_admin
+    net_bind_service
+    net_raw
+    setgid
+    setpcap
+    setuid
+    sys_nice
+    sys_ptrace
+    sys_rawio
+    sys_resource
+)))
+
+; kube-proxy demands
+; TODO: specifically /proc/sys/net
+(allow pod_processes proc_sysctl_t (fs_classes (rw)))
+; comm="loopback"
+(allow pod_processes nsfs_t (fs_classes (ro)))
+; flannel
+; FIXME: specifics, protect kubelet config with staic pods and other importants
+(allow pod_processes etc_t (fs_classes (rw)))
+; flannel
+(allow pod_processes init_t (fd (use)))
+; flannel
+; FIXME: specifics
+(allow pod_processes run_t (fs_classes (rw)))
