@@ -93,9 +93,7 @@ func (s *Server) SystemStat(ctx context.Context, in *emptypb.Empty) (*machine.Sy
 		maxCore := int64(-1)
 
 		for core := range in {
-			if core > maxCore {
-				maxCore = core
-			}
+			maxCore = max(maxCore, core)
 		}
 
 		slc := make([]*machine.CPUStat, maxCore+1)

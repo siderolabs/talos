@@ -44,9 +44,7 @@ func (a cpu) Update(stat *procfs.Stat) {
 		maxCore := int64(-1)
 
 		for core := range in {
-			if core > maxCore {
-				maxCore = core
-			}
+			maxCore = max(maxCore, core)
 		}
 
 		slc := make([]perf.CPUStat, maxCore+1)

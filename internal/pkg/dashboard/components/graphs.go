@@ -49,9 +49,7 @@ func (widget *BaseGraph) OnAPIDataChange(node string, data *apidata.Data) {
 	for i, name := range widget.DataLabels {
 		series := nodeData.Series[name]
 
-		if len(series) < width {
-			width = len(series)
-		}
+		width = min(width, len(series))
 
 		widget.Data[i] = widget.leftPadSeries(series[len(series)-width:], 2)
 	}

@@ -182,9 +182,7 @@ func (d *DHCP4) Run(ctx context.Context, notifyCh chan<- struct{}) {
 			renewInterval /= 2
 		}
 
-		if renewInterval < minRenewDuration {
-			renewInterval = minRenewDuration
-		}
+		renewInterval = max(renewInterval, minRenewDuration)
 
 		for {
 			select {
