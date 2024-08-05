@@ -20,7 +20,7 @@ ARTIFACTS := _out
 TOOLS ?= ghcr.io/siderolabs/tools:v1.8.0-alpha.0-6-g31ad71b
 
 PKGS_PREFIX ?= ghcr.io/siderolabs
-PKGS ?= v1.8.0-alpha.0-41-ga97d58f
+PKGS ?= v1.8.0-alpha.0-43-g99650c8
 EXTRAS ?= v1.8.0-alpha.0-3-gcab51d8
 
 KRES_IMAGE ?= ghcr.io/siderolabs/kres:latest
@@ -91,7 +91,7 @@ TALOSCTL_EXECUTABLE := $(PWD)/$(ARTIFACTS)/$(TALOSCTL_DEFAULT_TARGET)-$(ARCH)
 INTEGRATION_TEST_DEFAULT_TARGET := integration-test-$(OPERATING_SYSTEM)
 INTEGRATION_TEST_PROVISION_DEFAULT_TARGET := integration-test-provision-$(OPERATING_SYSTEM)
 # renovate: datasource=github-releases depName=kubernetes/kubernetes
-KUBECTL_VERSION ?= v1.31.0-beta.0
+KUBECTL_VERSION ?= v1.31.0-rc.0
 # renovate: datasource=github-releases depName=kastenhq/kubestr
 KUBESTR_VERSION ?= v0.4.44
 # renovate: datasource=github-releases depName=helm/helm
