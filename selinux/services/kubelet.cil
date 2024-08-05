@@ -50,6 +50,13 @@
 ; syslog
 (allow kubelet_t kernel_t (system (syslog_read)))
 
+; TODO: constrain
+(allow kubelet_t any_device_files (fs_classes (rw)))
+(allow kubelet_t sysfs_t (fs_classes (ro)))
+(allow kubelet_t securityfs_t (fs_classes (ro)))
+; TODO: modules as a separate class
+(allow kubelet_t lib_t (fs_classes (ro)))
+
 ; TODO: ensure all these
 ; mounts := []specs.Mount{
 ; 	{Type: "bind", Destination: "/dev", Source: "/dev", Options: []string{"rbind", "rshared", "rw"}},
