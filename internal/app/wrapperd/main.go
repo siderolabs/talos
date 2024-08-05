@@ -129,4 +129,5 @@ func Main() {
 	if err := unix.Exec(flag.Args()[0], flag.Args()[0:], os.Environ()); err != nil {
 		log.Fatalf("failed to exec: %v", err)
 	}
+	runtime.UnlockOSThread()
 }
