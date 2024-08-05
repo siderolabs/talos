@@ -23,6 +23,7 @@
 (allow system_container_processes sys_containerd_tmpfs_t (fs_classes (all)))
 
 ; runc_cloned
+; TODO: maybe transition to the container domain here?
 (allow sys_containerd_t sys_containerd_tmpfs_t (file (execute_no_trans)))
 
 (allow sys_containerd_t self (capability2 (perfmon bpf)))
