@@ -36,14 +36,18 @@
     (typeattributeset protected_device_files ARG1)
 )
 
+(typeattribute any_device_files)
+(typeattributeset any_device_files device_t)
+(typeattributeset any_device_files device_files)
+(typeattributeset any_device_files protected_device_files)
+
 (typeattribute any_files)
 (typeattributeset any_files filesystems)
 (typeattributeset any_files common_files)
 (typeattributeset any_files protected_files)
 (typeattributeset any_files system_files)
 (typeattributeset any_files system_socket_files)
-(typeattributeset any_files device_files)
-(typeattributeset any_files protected_device_files)
+(typeattributeset any_files any_device_files)
 
 (allow any_files self (filesystem (associate)))
 (allow device_files device_t (filesystem (associate)))
