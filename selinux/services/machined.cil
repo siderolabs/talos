@@ -44,3 +44,7 @@
 ; Should not occur unless misconfigured by machined
 (type unconfined_service_t)
 (call system_service (unconfined_service_t))
+
+; xfs_growfs
+; FIXME: add a label to files executable by init
+(allow init_t bin_t (file (execute_no_trans)))
