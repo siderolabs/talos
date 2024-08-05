@@ -383,7 +383,7 @@ local ExtensionsStep(with_e2e=true) =
   );
 
   local e2e_extensions = Step('e2e-extensions', target='e2e-qemu', privileged=true, depends_on=[extensions_patch_manifest], environment={
-    QEMU_MEMORY_WORKERS: '4096',
+    QEMU_MEMORY_WORKERS: '8192',
     WITH_CONFIG_PATCH_WORKER: '@_out/extensions-patch.yaml',
     IMAGE_REGISTRY: local_registry,
     QEMU_EXTRA_DISKS: '3',

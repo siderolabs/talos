@@ -96,7 +96,7 @@ talosctl cluster create [flags]
       --bad-rtc                                  launch VM with bad RTC state (QEMU only)
       --cidr string                              CIDR of the cluster network (IPv4, ULA network for IPv6 is derived in automated way) (default "10.5.0.0/24")
       --cni-bin-path strings                     search path for CNI binaries (VM only) (default [/home/user/.talos/cni/bin])
-      --cni-bundle-url string                    URL to download CNI bundle from (VM only) (default "https://github.com/siderolabs/talos/releases/download/v1.7.5/talosctl-cni-bundle-${ARCH}.tar.gz")
+      --cni-bundle-url string                    URL to download CNI bundle from (VM only) (default "https://github.com/siderolabs/talos/releases/download/v1.7.5-dirty/talosctl-cni-bundle-${ARCH}.tar.gz")
       --cni-cache-dir string                     CNI cache directory path (VM only) (default "/home/user/.talos/cni/cache")
       --cni-conf-dir string                      CNI config directory path (VM only) (default "/home/user/.talos/cni/conf.d")
       --config-patch stringArray                 patch generated machineconfigs (applied to all node types), use @file to read a patch from file
@@ -135,7 +135,7 @@ talosctl cluster create [flags]
       --ipxe-boot-script string                  iPXE boot script (URL) to use
       --iso-path string                          the ISO path to use for the initial boot (VM only)
       --kubeprism-port int                       KubePrism port (set to 0 to disable) (default 7445)
-      --kubernetes-version string                desired kubernetes version to run (default "1.30.1")
+      --kubernetes-version string                desired kubernetes version to run (default "1.30.3")
       --memory int                               the limit on memory usage in MB (each control plane/VM) (default 2048)
       --memory-workers int                       the limit on memory usage in MB (each worker/VM) (default 2048)
       --mtu int                                  MTU of the cluster network (default 1500)
@@ -1333,7 +1333,7 @@ talosctl gen config <cluster name> <cluster endpoint> [flags]
   -h, --help                                     help for config
       --install-disk string                      the disk to install to (default "/dev/sda")
       --install-image string                     the image used to perform an installation (default "ghcr.io/siderolabs/installer:latest")
-      --kubernetes-version string                desired kubernetes version to run (default "1.30.1")
+      --kubernetes-version string                desired kubernetes version to run (default "1.30.3")
   -o, --output string                            destination to output generated files. when multiple output types are specified, it must be a directory. for a single output type, it must either be a file path, or "-" for stdout
   -t, --output-types strings                     types of outputs to be generated. valid types are: ["controlplane" "worker" "talosconfig"] (default [controlplane,worker,talosconfig])
   -p, --persist                                  the desired persist value for configs (default true)
@@ -2898,7 +2898,7 @@ talosctl upgrade [flags]
       --debug                debug operation from kernel logs. --wait is set to true when this flag is set
   -f, --force                force the upgrade (skip checks on etcd health and members, might lead to data loss)
   -h, --help                 help for upgrade
-  -i, --image string         the container image to use for performing the install (default "ghcr.io/siderolabs/installer:v1.7.5")
+  -i, --image string         the container image to use for performing the install (default "ghcr.io/siderolabs/installer:v1.7.5-dirty")
       --insecure             upgrade using the insecure (encrypted with no auth) maintenance service
   -p, --preserve             preserve data
   -m, --reboot-mode string   select the reboot mode during upgrade. Mode "powercycle" bypasses kexec. Valid values are: ["default" "powercycle"]. (default "default")
@@ -2946,7 +2946,7 @@ talosctl upgrade-k8s [flags]
       --pre-pull-images                   pre-pull images before upgrade (default true)
       --proxy-image string                kube-proxy image to use (default "registry.k8s.io/kube-proxy")
       --scheduler-image string            kube-scheduler image to use (default "registry.k8s.io/kube-scheduler")
-      --to string                         the Kubernetes control plane version to upgrade to (default "1.30.1")
+      --to string                         the Kubernetes control plane version to upgrade to (default "1.30.3")
       --upgrade-kubelet                   upgrade kubelet service (default true)
       --with-docs                         patch all machine configs adding the documentation for each field (default true)
       --with-examples                     patch all machine configs with the commented examples (default true)

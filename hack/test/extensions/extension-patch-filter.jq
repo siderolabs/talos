@@ -4,7 +4,7 @@
             "install": {
                 "extensions": [
                     {
-                        "image": map(select(. | contains("nvidia") or contains("tailscale") or contains("xen-guest-agent") | not)) | .[]
+                        "image": map(select(. | contains("nvidia") or contains("tailscale") or contains("xen-guest-agent") or contains("vmtoolsd") | not)) | .[]
                     }
                 ],
             },
