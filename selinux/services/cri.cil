@@ -58,6 +58,8 @@
 (call pod_process (etcd_t))
 ; FIXME: insecure as anyone with access to the pod containerd may obtain this domain
 (allow etcd_t ephemeral_t (file (entrypoint)))
+; FIXME: constrain to only stuff for etcd
+(allow etcd_t system_t (fs_classes (ro)))
 
 ; access procfs
 (allow pod_processes any_processes (fs_classes (ro)))
@@ -133,3 +135,9 @@
 ; flannel
 ; FIXME: specifics
 (allow pod_processes run_t (fs_classes (rw)))
+; used in networking
+(allow pod_processes kernel_t (fd (use)))
+; kube-controller
+(allow pod_processes cgroup_t (fs_classes (ro)))
+; !!!! FIXME: used by kube-apiserver
+(allow pod_processes system_t (fs_classes (rw)))

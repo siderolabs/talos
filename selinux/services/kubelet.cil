@@ -57,6 +57,9 @@
 ; TODO: modules as a separate class
 (allow kubelet_t lib_t (fs_classes (ro)))
 
+(allow kubelet_t kernel_t (fifo_file (write)))
+(allow kubelet_t kernel_t (unix_stream_socket (connectto)))
+
 ; TODO: ensure all these
 ; mounts := []specs.Mount{
 ; 	{Type: "bind", Destination: "/dev", Source: "/dev", Options: []string{"rbind", "rshared", "rw"}},

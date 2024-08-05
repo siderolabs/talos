@@ -29,3 +29,5 @@
 (type trustd_runtime_socket_t)
 (call system_socket (trustd_runtime_socket_t))
 (allow trustd_t trustd_runtime_socket_t (sock_file (write)))
+
+(allow trustd_t system_t (dir (search)))
