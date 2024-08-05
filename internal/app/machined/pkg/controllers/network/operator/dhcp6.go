@@ -95,9 +95,7 @@ func (d *DHCP6) Run(ctx context.Context, notifyCh chan<- struct{}) {
 			renewInterval /= 2
 		}
 
-		if renewInterval < minRenewDuration {
-			renewInterval = minRenewDuration
-		}
+		renewInterval = max(renewInterval, minRenewDuration)
 
 		select {
 		case <-ctx.Done():
