@@ -93,10 +93,14 @@
     mknod
     net_admin
     net_bind_service
+    net_broadcast
     net_raw
+    setfcap
     setgid
     setpcap
     setuid
+    sys_admin
+    sys_chroot
     sys_nice
     sys_ptrace
     sys_rawio
@@ -113,15 +117,21 @@
     mknod
     net_admin
     net_bind_service
+    net_broadcast
     net_raw
+    setfcap
     setgid
     setpcap
     setuid
+    sys_admin
+    sys_chroot
     sys_nice
     sys_ptrace
     sys_rawio
     sys_resource
 )))
+(allow pod_processes self (capability2 (audit_read bpf block_suspend perfmon wake_alarm)))
+(allow pod_processes self (cap2_userns (audit_read bpf block_suspend perfmon wake_alarm)))
 
 ; kube-proxy demands
 ; TODO: specifically /proc/sys/net
@@ -142,3 +152,6 @@
 (allow pod_processes cgroup_t (fs_classes (ro)))
 ; !!!! FIXME: used by kube-apiserver
 (allow pod_processes system_t (fs_classes (rw)))
+(allow pod_processes self (fd (use)))
+; Cilium and other tools use BPF
+(allow pod_processes self (bpf (map_create map_read map_write prog_load prog_run)))
