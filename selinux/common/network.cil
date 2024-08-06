@@ -1,3 +1,6 @@
+; Might not be useful without a cap we don't use
+(allow any_processes node_t (node (recvfrom sendto)))
+
 (allow any_processes port_t (dccp_socket (name_connect)))
 (allow any_processes port_t (sctp_socket (name_bind name_connect)))
 (allow any_processes port_t (tcp_socket (name_bind name_connect)))
