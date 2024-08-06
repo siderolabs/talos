@@ -6,7 +6,6 @@ package v1alpha1
 
 import (
 	"fmt"
-	goruntime "runtime"
 
 	"github.com/siderolabs/crypto/x509"
 
@@ -16,14 +15,9 @@ import (
 // Image implements the config.Etcd interface.
 func (e *EtcdConfig) Image() string {
 	image := e.ContainerImage
-	suffix := ""
-
-	if goruntime.GOARCH == "arm64" {
-		suffix = "-arm64"
-	}
 
 	if image == "" {
-		image = fmt.Sprintf("%s:%s%s", constants.EtcdImage, constants.DefaultEtcdVersion, suffix)
+		image = fmt.Sprintf("%s:%s", constants.EtcdImage, constants.DefaultEtcdVersion)
 	}
 
 	return image
