@@ -1,3 +1,80 @@
+## [Talos 1.7.6](https://github.com/siderolabs/talos/releases/tag/v1.7.6) (2024-08-06)
+
+Welcome to the v1.7.6 release of Talos!
+
+
+
+Please try out the release binaries and report any issues at
+https://github.com/siderolabs/talos/issues.
+
+### Component Updates
+
+Linux: 6.6.43
+Kubernetes: 1.30.3
+
+Talos is built with Go 1.22.5.
+
+
+### Contributors
+
+* Andrey Smirnov
+* Jean-Francois Roy
+
+### Changes
+<details><summary>4 commits</summary>
+<p>
+
+* [`08fbf0896`](https://github.com/siderolabs/talos/commit/08fbf08968f4b89a703c898053eb604a1c12aaaf) fix: panic on shutdown
+* [`44827e43b`](https://github.com/siderolabs/talos/commit/44827e43bd0c5e5841c220594ee37be1ca28bdb1) fix: sort ports and merge adjacent ones in the nft rule
+* [`d692ab106`](https://github.com/siderolabs/talos/commit/d692ab106cd23a8a9bc9a7d65a58cadc1adb6afc) feat: provide an option to enforce SecureBoot for TPM enrollment
+* [`7287a112c`](https://github.com/siderolabs/talos/commit/7287a112c7099524ebeb9e96e4513e9b83c3d51c) feat: update Linux 6.6.43, Kubernetes 1.30.3, go 1.22.5
+</p>
+</details>
+
+### Changes from siderolabs/pkgs
+<details><summary>8 commits</summary>
+<p>
+
+* [`f0c088f`](https://github.com/siderolabs/pkgs/commit/f0c088fa4d9ac2d96a80002ab936442c3d5a0b7b) feat: update Linux to 6.6.43
+* [`fb24a28`](https://github.com/siderolabs/pkgs/commit/fb24a28ad6ee9138a64f9a6a143f4e1fd15397a2) fix: enable TPROXY for nftables
+* [`4d7d88b`](https://github.com/siderolabs/pkgs/commit/4d7d88be9389fb42ceb35084f81081b1865baacd) feat: update Linux to 6.6.39
+* [`a302e94`](https://github.com/siderolabs/pkgs/commit/a302e94d54d071e29f0230d7e0c6787329dcab57) fix: enable CONFIG_PROC_CHILDREN for amd64 kernel
+* [`034804e`](https://github.com/siderolabs/pkgs/commit/034804ecb9a13329aca2d4ec6f889fb09376631b) feat: update Linux to 6.6.36
+* [`44d273d`](https://github.com/siderolabs/pkgs/commit/44d273db98747f01a7ba077750befb94d07be902) feat: enable CONFIG_X86_AMD_PSTATE
+* [`3d1bd33`](https://github.com/siderolabs/pkgs/commit/3d1bd3331ea366ed62d620e0024cd51f308ddf14) feat: update Go to 1.22.5
+* [`6637717`](https://github.com/siderolabs/pkgs/commit/66377176bd84704fe2769fe52bff129c95539fff) feat: update runc to 1.1.13
+</p>
+</details>
+
+### Changes from siderolabs/tools
+<details><summary>1 commit</summary>
+<p>
+
+* [`c844dc3`](https://github.com/siderolabs/tools/commit/c844dc36adcbfe4647f422e2832fb6db904113ca) feat: update Go to 1.22.5
+</p>
+</details>
+
+### Dependency Changes
+
+* **github.com/Azure/azure-sdk-for-go/sdk/azidentity**  v1.5.1 -> v1.6.0
+* **github.com/siderolabs/pkgs**                        v1.7.0-21-gc58ed7f -> v1.7.0-29-gf0c088f
+* **github.com/siderolabs/tools**                       v1.7.0-3-g6c94771 -> v1.7.0-4-gc844dc3
+* **golang.org/x/net**                                  v0.25.0 -> v0.26.0
+* **golang.org/x/sync**                                 v0.6.0 -> v0.7.0
+* **golang.org/x/sys**                                  v0.20.0 -> v0.21.0
+* **golang.org/x/term**                                 v0.20.0 -> v0.21.0
+* **golang.org/x/text**                                 v0.15.0 -> v0.16.0
+* **k8s.io/api**                                        v0.30.1 -> v0.30.3
+* **k8s.io/apiserver**                                  v0.30.1 -> v0.30.3
+* **k8s.io/client-go**                                  v0.30.1 -> v0.30.3
+* **k8s.io/component-base**                             v0.30.1 -> v0.30.3
+* **k8s.io/kube-scheduler**                             v0.30.1 -> v0.30.3
+* **k8s.io/kubectl**                                    v0.30.1 -> v0.30.3
+* **k8s.io/kubelet**                                    v0.30.1 -> v0.30.3
+* **k8s.io/pod-security-admission**                     v0.30.1 -> v0.30.3
+
+Previous release can be found at [v1.7.5](https://github.com/siderolabs/talos/releases/tag/v1.7.5)
+
 ## [Talos 1.7.5](https://github.com/siderolabs/talos/releases/tag/v1.7.5) (2024-06-21)
 
 Welcome to the v1.7.5 release of Talos!
