@@ -16,6 +16,7 @@ import (
 	"github.com/siderolabs/crypto/x509"
 	"github.com/siderolabs/gen/optional"
 	"go.uber.org/zap"
+	"golang.org/x/sys/unix"
 
 	"github.com/siderolabs/talos/pkg/filetree"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
@@ -90,6 +91,10 @@ func (ctrl *PKIController) Run(ctx context.Context, r controller.Runtime, logger
 
 		if err = os.MkdirAll(constants.EtcdPKIPath, 0o700); err != nil {
 			return err
+		}
+
+		if err = unix.Lsetxattr(constants.EtcdPKIPath, "security.selinux", []byte(constants.EtcdPKISELinuxLabel), 0); err != nil {
+			return fmt.Errorf("error labeling etcd pki dir: %w", err)
 		}
 
 		if err = os.WriteFile(constants.EtcdCACert, rootScrts.TypedSpec().EtcdCA.Crt, 0o400); err != nil {

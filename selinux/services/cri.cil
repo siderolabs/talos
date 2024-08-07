@@ -60,8 +60,12 @@
 (call pod_process (etcd_t))
 ; FIXME: insecure as anyone with access to the pod containerd may obtain this domain
 (allow etcd_t ephemeral_t (file (entrypoint)))
+
+(type etcd_pki_t)
+(call protected_file (etcd_pki_t))
+(allow etcd_pki_t tmpfs_t (filesystem (associate)))
 ; FIXME: constrain to only stuff for etcd
-(allow etcd_t system_t (fs_classes (ro)))
+(allow etcd_t etcd_pki_t (fs_classes (ro)))
 
 ; access procfs
 (allow pod_processes any_processes (fs_classes (ro)))
@@ -151,5 +155,21 @@
 (allow pod_processes kernel_t (fd (use)))
 ; kube-controller
 (allow pod_processes cgroup_t (fs_classes (ro)))
-; !!!! FIXME: used by kube-apiserver
-(allow pod_processes system_t (fs_classes (rw)))
+
+(type kube_apiserver_secret_t)
+(call protected_file (kube_apiserver_secret_t))
+(allow kube_apiserver_secret_t tmpfs_t (filesystem (associate)))
+(type kube_controller_manager_secret_t)
+(call protected_file (kube_controller_manager_secret_t))
+(allow kube_controller_manager_secret_t tmpfs_t (filesystem (associate)))
+(type kube_scheduler_secret_t)
+(call protected_file (kube_scheduler_secret_t))
+(allow kube_scheduler_secret_t tmpfs_t (filesystem (associate)))
+
+(typeattribute kube_secret_files)
+(typeattributeset kube_secret_files kube_apiserver_secret_t)
+(typeattributeset kube_secret_files kube_controller_manager_secret_t)
+(typeattributeset kube_secret_files kube_scheduler_secret_t)
+
+; FIXME: add context for kube services
+(allow pod_processes kube_secret_files (fs_classes (rw)))
