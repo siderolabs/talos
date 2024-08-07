@@ -83,7 +83,7 @@ func Switch(prefix string, mountpoints *mount.Points) (err error) {
 	}
 
 	// TODO: read selinux config from cmdline
-	err = os.WriteFile("/selinux/load", binpol, 0777)
+	err = os.WriteFile("/selinux/load", binpol, 0o777)
 	if err != nil {
 		return err
 	}
@@ -100,7 +100,7 @@ func Switch(prefix string, mountpoints *mount.Points) (err error) {
 
 	runtime.LockOSThread()
 	// TODO: enforce (https://github.com/SELinuxProject/selinux/blob/e81a05a5050354261049cc7b5987372e763fc5f4/libselinux/src/setenforce.c#L12)
-	err = os.WriteFile("/proc/thread-self/attr/exec", []byte("system_u:system_r:init_t:s0"), 0777)
+	err = os.WriteFile("/proc/thread-self/attr/exec", []byte("system_u:system_r:init_t:s0"), 0o777)
 	if err != nil {
 		return err
 	}

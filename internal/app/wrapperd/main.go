@@ -52,12 +52,12 @@ func Main() {
 	// Use /proc/thread-self (Linux 3.17+) to avoid races between current
 	// process threads leading to loss of the domain transition
 	if selinuxLabel != "" {
-		err := os.WriteFile("/proc/thread-self/attr/exec", []byte(selinuxLabel), 0777)
+		err := os.WriteFile("/proc/thread-self/attr/exec", []byte(selinuxLabel), 0o777)
 		if err != nil {
 			log.Fatalf("%s", err)
 		}
 	} else {
-		err := os.WriteFile("/proc/thread-self/attr/exec", []byte("system_u:system_r:unconfined_service_t:s0"), 0777)
+		err := os.WriteFile("/proc/thread-self/attr/exec", []byte("system_u:system_r:unconfined_service_t:s0"), 0o777)
 		if err != nil {
 			log.Fatalf("%s", err)
 		}
