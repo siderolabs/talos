@@ -17,7 +17,7 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/overlay"
 )
 
-//go:generate deep-copy -type Profile -header-file ../../../hack/boilerplate.txt -o deep_copy.generated.go .
+//go:generate deep-copy -type Profile -type SecureBootAssets -header-file ../../../hack/boilerplate.txt -o deep_copy.generated.go .
 
 //go:generate enumer -type OutputKind,OutFormat,DiskFormat,SDBootEnrollKeys -linecomment -text
 
