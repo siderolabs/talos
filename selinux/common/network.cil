@@ -94,6 +94,7 @@
 (allow any_processes self (netlink_crypto_socket (ioctl read write create getattr setattr lock relabelfrom relabelto append map bind connect listen accept getopt setopt shutdown recvfrom sendto name_bind)))
 
 (allow any_processes self (association (sendto recvfrom setcontext polmatch)))
+(allow any_processes unlabeled_t (association (sendto recvfrom setcontext polmatch)))
 
 ; InfiniBand
 (allow kernel_t unlabeled_t (infiniband_pkey (access)))
