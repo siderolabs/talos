@@ -101,3 +101,6 @@
 ; xfs_growfs
 ; FIXME: add a label to files executable by init
 (allow init_t bin_t (file (execute_no_trans)))
+
+; Used during reboot probably
+(allow init_t apid_t (unix_stream_socket (connectto)))
