@@ -578,6 +578,7 @@ COPY --from=depmod-arm64 /build/lib/modules /lib/modules
 FROM build AS rootfs-base-amd64
 COPY --link --from=pkg-fhs / /rootfs
 RUN mkdir /rootfs/selinux
+RUN mkdir -p /rootfs/etc/selinux/talos
 COPY --link --from=pkg-ca-certificates / /rootfs
 COPY --link --from=pkg-apparmor-amd64 / /rootfs
 COPY --link --from=pkg-cryptsetup-amd64 / /rootfs
