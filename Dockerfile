@@ -713,12 +713,20 @@ FROM rootfs-base-${TARGETARCH} AS rootfs-base
 RUN find /rootfs -print0 \
     | xargs -0r touch --no-dereference --date="@${SOURCE_DATE_EPOCH}"
 
-# TODO: include SELinux on aarch64
-FROM rootfs-base-arm64 AS rootfs-squashfs-arm64
+FROM rootfs-base-arm64 AS rootfs-reproducibility-arm64
 ARG ZSTD_COMPRESSION_LEVEL
 RUN find /rootfs -print0 \
     | xargs -0r touch --no-dereference --date="@${SOURCE_DATE_EPOCH}"
-RUN mksquashfs /rootfs /rootfs.sqsh -all-root -noappend -comp zstd -Xcompression-level ${ZSTD_COMPRESSION_LEVEL} -no-progress
+# FIXME: install fakeroot via tools
+FROM fedora AS fedora-squashfs-arm64
+RUN dnf install -y fakeroot policycoreutils squashfs-tools
+
+FROM fedora-squashfs-arm64 AS rootfs-squashfs-arm64
+ARG ZSTD_COMPRESSION_LEVEL
+COPY ./file_contexts /file_contexts
+COPY ./hack/labeled-squashfs.sh /
+COPY --from=rootfs-reproducibility-arm64 /rootfs /rootfs
+RUN fakeroot /labeled-squashfs.sh /rootfs /rootfs.sqsh ${ZSTD_COMPRESSION_LEVEL}
 
 FROM rootfs-base-amd64 AS rootfs-reproducibility-amd64
 ARG ZSTD_COMPRESSION_LEVEL
