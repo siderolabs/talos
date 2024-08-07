@@ -129,6 +129,15 @@ For Talos machines booted of the Image Factory artifacts, this means that the sc
 `extensions.talos.dev/schematic` (as it is longer than 63 characters).
 """
 
+    [notes.nvidia]
+        title = "NVIDIA GPU Support"
+        description = """\
+Starting with Talos 1.8.0, SideroLabs would ships extensions for both LTS and Production versions of NVIDIA extensions.
+For more details see the CHANGELOG of [extensions](https://github.com/siderolabs/extensions/releases).
+
+Upgrades with an exisiting schematic id from Image Factory would keep the existing LTS version of the NVIDIA extension.
+"""
+
 [make_deps]
 
     [make_deps.tools]
