@@ -22,16 +22,69 @@
     syslog_read
 )))
 (allow init_t self (capability (
+    audit_control
+    audit_write
     chown
     dac_override
     dac_read_search
+    fowner
     fsetid
+    ipc_lock
+    ipc_owner
+    kill
+    lease
+    linux_immutable
+    mknod
     net_admin
     net_bind_service
+    net_broadcast
     net_raw
+    setfcap
+    setgid
     setpcap
+    setuid
     sys_admin
+    sys_boot
+    sys_chroot
+    sys_module
+    sys_nice
+    sys_pacct
     sys_ptrace
+    sys_rawio
+    sys_resource
+    sys_time
+    sys_tty_config
+)))
+(allow init_t self (cap_userns (
+    audit_control
+    audit_write
+    chown
+    dac_override
+    dac_read_search
+    fowner
+    fsetid
+    ipc_lock
+    ipc_owner
+    kill
+    lease
+    linux_immutable
+    mknod
+    net_admin
+    net_bind_service
+    net_broadcast
+    net_raw
+    setfcap
+    setgid
+    setpcap
+    setuid
+    sys_admin
+    sys_boot
+    sys_chroot
+    sys_module
+    sys_nice
+    sys_pacct
+    sys_ptrace
+    sys_rawio
     sys_resource
     sys_time
     sys_tty_config
