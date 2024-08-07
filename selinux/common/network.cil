@@ -61,7 +61,7 @@
 (allow any_processes self (unix_stream_socket (ioctl read write create getattr setattr lock relabelfrom relabelto append map bind connect listen accept getopt setopt shutdown recvfrom sendto name_bind)))
 (allow any_processes self (unix_dgram_socket (ioctl read write create getattr setattr lock relabelfrom relabelto append map bind connect listen accept getopt setopt shutdown recvfrom sendto name_bind)))
 
-; Netlink
+; Netlink, TODO: restrict, booleans?
 (allow any_processes self (netlink_socket (ioctl read write create getattr setattr lock relabelfrom relabelto append map bind connect listen accept getopt setopt shutdown recvfrom sendto name_bind)))
 (allow any_processes self (netlink_route_socket (
     ioctl read write create getattr setattr lock relabelfrom relabelto append map bind connect listen accept getopt setopt shutdown recvfrom sendto name_bind
@@ -82,6 +82,7 @@
     nlmsg_read nlmsg_write nlmsg_relay nlmsg_readpriv nlmsg_tty_audit
 )))
 (allow any_processes self (netlink_dnrt_socket (ioctl read write create getattr setattr lock relabelfrom relabelto append map bind connect listen accept getopt setopt shutdown recvfrom sendto name_bind)))
+; Used by eBPF performance utilities
 (allow any_processes self (netlink_kobject_uevent_socket (ioctl read write create getattr setattr lock relabelfrom relabelto append map bind connect listen accept getopt setopt shutdown recvfrom sendto name_bind)))
 (allow any_processes self (netlink_iscsi_socket (ioctl read write create getattr setattr lock relabelfrom relabelto append map bind connect listen accept getopt setopt shutdown recvfrom sendto name_bind)))
 (allow any_processes self (netlink_fib_lookup_socket (ioctl read write create getattr setattr lock relabelfrom relabelto append map bind connect listen accept getopt setopt shutdown recvfrom sendto name_bind)))
