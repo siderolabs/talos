@@ -72,3 +72,24 @@
     sigstop
     transition
 )))
+
+(allow any_processes self (fd (use)))
+; Cilium and other tools use BPF
+(allow any_processes self (bpf (map_create map_read map_write prog_load prog_run)))
+(allow any_processes self (key (view read write search link setattr create)))
+; TODO: abstract out with classmapping
+(allow any_processes self (sem (associate create destroy getattr read setattr unix_read unix_write write)))
+(allow any_processes self (msgq (
+    associate create destroy getattr read setattr unix_read unix_write write
+    enqueue
+)))
+(allow any_processes self (msg (
+    associate create destroy getattr read setattr unix_read unix_write write
+    send receive
+)))
+(allow any_processes self (shm (
+    associate create destroy getattr read setattr unix_read unix_write write
+    lock
+)))
+; TODO: restrict?
+(allow any_processes self (perf_event (open cpu kernel tracepoint read write)))
