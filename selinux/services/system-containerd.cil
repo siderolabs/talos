@@ -62,3 +62,6 @@
 (call system_container_process (unconfined_container_t))
 
 (allow system_container_processes sys_containerd_t (fd (use)))
+
+; Installer. TODO: more detailed
+(allow sys_containerd_t system_var_t (file (execute_no_trans)))
