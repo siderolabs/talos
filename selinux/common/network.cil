@@ -13,7 +13,7 @@
 (allow any_processes node_t (sctp_socket (node_bind)))
 (allow any_processes node_t (icmp_socket (node_bind)))
 
-; TODO: classmapping
+; Network sockets
 (allow any_processes any_processes (socket (ioctl read write create getattr setattr lock relabelfrom relabelto append map bind connect listen accept getopt setopt shutdown recvfrom sendto name_bind)))
 (allow any_processes any_processes (dccp_socket (ioctl read write create getattr setattr lock relabelfrom relabelto append map bind connect listen accept getopt setopt shutdown recvfrom sendto name_bind)))
 (allow any_processes any_processes (tcp_socket (ioctl read write create getattr setattr lock relabelfrom relabelto append map bind connect listen accept getopt setopt shutdown recvfrom sendto name_bind)))
@@ -21,10 +21,11 @@
 (allow any_processes any_processes (rawip_socket (ioctl read write create getattr setattr lock relabelfrom relabelto append map bind connect listen accept getopt setopt shutdown recvfrom sendto name_bind)))
 (allow any_processes any_processes (packet_socket (ioctl read write create getattr setattr lock relabelfrom relabelto append map bind connect listen accept getopt setopt shutdown recvfrom sendto name_bind)))
 (allow any_processes any_processes (key_socket (ioctl read write create getattr setattr lock relabelfrom relabelto append map bind connect listen accept getopt setopt shutdown recvfrom sendto name_bind)))
-(allow any_processes self (unix_stream_socket (ioctl read write create getattr setattr lock relabelfrom relabelto append map bind connect listen accept getopt setopt shutdown recvfrom sendto name_bind)))
-(allow any_processes self (unix_dgram_socket (ioctl read write create getattr setattr lock relabelfrom relabelto append map bind connect listen accept getopt setopt shutdown recvfrom sendto name_bind)))
 (allow any_processes any_processes (appletalk_socket (ioctl read write create getattr setattr lock relabelfrom relabelto append map bind connect listen accept getopt setopt shutdown recvfrom sendto name_bind)))
-(allow any_processes any_processes (tun_socket (ioctl read write create getattr setattr lock relabelfrom relabelto append map bind connect listen accept getopt setopt shutdown recvfrom sendto name_bind)))
+(allow any_processes any_processes (tun_socket (
+    ioctl read write create getattr setattr lock relabelfrom relabelto append map bind connect listen accept getopt setopt shutdown recvfrom sendto name_bind
+    attach_queue
+)))
 (allow any_processes any_processes (sctp_socket (ioctl read write create getattr setattr lock relabelfrom relabelto append map bind connect listen accept getopt setopt shutdown recvfrom sendto name_bind)))
 (allow any_processes any_processes (icmp_socket (ioctl read write create getattr setattr lock relabelfrom relabelto append map bind connect listen accept getopt setopt shutdown recvfrom sendto name_bind)))
 (allow any_processes any_processes (ax25_socket (ioctl read write create getattr setattr lock relabelfrom relabelto append map bind connect listen accept getopt setopt shutdown recvfrom sendto name_bind)))
@@ -55,16 +56,31 @@
 (allow any_processes any_processes (qipcrtr_socket (ioctl read write create getattr setattr lock relabelfrom relabelto append map bind connect listen accept getopt setopt shutdown recvfrom sendto name_bind)))
 (allow any_processes any_processes (smc_socket (ioctl read write create getattr setattr lock relabelfrom relabelto append map bind connect listen accept getopt setopt shutdown recvfrom sendto name_bind)))
 (allow any_processes any_processes (xdp_socket (ioctl read write create getattr setattr lock relabelfrom relabelto append map bind connect listen accept getopt setopt shutdown recvfrom sendto name_bind)))
-(allow any_processes any_processes (tun_socket (attach_queue)))
 
-; Netlink, TODO: validate, classmapping
+; UDS to self always allowed
+(allow any_processes self (unix_stream_socket (ioctl read write create getattr setattr lock relabelfrom relabelto append map bind connect listen accept getopt setopt shutdown recvfrom sendto name_bind)))
+(allow any_processes self (unix_dgram_socket (ioctl read write create getattr setattr lock relabelfrom relabelto append map bind connect listen accept getopt setopt shutdown recvfrom sendto name_bind)))
+
+; Netlink
 (allow any_processes self (netlink_socket (ioctl read write create getattr setattr lock relabelfrom relabelto append map bind connect listen accept getopt setopt shutdown recvfrom sendto name_bind)))
-(allow any_processes self (netlink_route_socket (ioctl read write create getattr setattr lock relabelfrom relabelto append map bind connect listen accept getopt setopt shutdown recvfrom sendto name_bind)))
-(allow any_processes self (netlink_tcpdiag_socket (ioctl read write create getattr setattr lock relabelfrom relabelto append map bind connect listen accept getopt setopt shutdown recvfrom sendto name_bind)))
+(allow any_processes self (netlink_route_socket (
+    ioctl read write create getattr setattr lock relabelfrom relabelto append map bind connect listen accept getopt setopt shutdown recvfrom sendto name_bind
+    nlmsg_read nlmsg_write
+)))
+(allow any_processes self (netlink_tcpdiag_socket (
+    ioctl read write create getattr setattr lock relabelfrom relabelto append map bind connect listen accept getopt setopt shutdown recvfrom sendto name_bind
+    nlmsg_read nlmsg_write
+)))
 (allow any_processes self (netlink_nflog_socket (ioctl read write create getattr setattr lock relabelfrom relabelto append map bind connect listen accept getopt setopt shutdown recvfrom sendto name_bind)))
-(allow any_processes self (netlink_xfrm_socket (ioctl read write create getattr setattr lock relabelfrom relabelto append map bind connect listen accept getopt setopt shutdown recvfrom sendto name_bind)))
+(allow any_processes self (netlink_xfrm_socket (
+    ioctl read write create getattr setattr lock relabelfrom relabelto append map bind connect listen accept getopt setopt shutdown recvfrom sendto name_bind
+    nlmsg_read nlmsg_write
+)))
 (allow any_processes self (netlink_selinux_socket (ioctl read write create getattr setattr lock relabelfrom relabelto append map bind connect listen accept getopt setopt shutdown recvfrom sendto name_bind)))
-(allow any_processes self (netlink_audit_socket (ioctl read write create getattr setattr lock relabelfrom relabelto append map bind connect listen accept getopt setopt shutdown recvfrom sendto name_bind)))
+(allow any_processes self (netlink_audit_socket (
+    ioctl read write create getattr setattr lock relabelfrom relabelto append map bind connect listen accept getopt setopt shutdown recvfrom sendto name_bind
+    nlmsg_read nlmsg_write nlmsg_relay nlmsg_readpriv nlmsg_tty_audit
+)))
 (allow any_processes self (netlink_dnrt_socket (ioctl read write create getattr setattr lock relabelfrom relabelto append map bind connect listen accept getopt setopt shutdown recvfrom sendto name_bind)))
 (allow any_processes self (netlink_kobject_uevent_socket (ioctl read write create getattr setattr lock relabelfrom relabelto append map bind connect listen accept getopt setopt shutdown recvfrom sendto name_bind)))
 (allow any_processes self (netlink_iscsi_socket (ioctl read write create getattr setattr lock relabelfrom relabelto append map bind connect listen accept getopt setopt shutdown recvfrom sendto name_bind)))
@@ -75,10 +91,6 @@
 (allow any_processes self (netlink_scsitransport_socket (ioctl read write create getattr setattr lock relabelfrom relabelto append map bind connect listen accept getopt setopt shutdown recvfrom sendto name_bind)))
 (allow any_processes self (netlink_rdma_socket (ioctl read write create getattr setattr lock relabelfrom relabelto append map bind connect listen accept getopt setopt shutdown recvfrom sendto name_bind)))
 (allow any_processes self (netlink_crypto_socket (ioctl read write create getattr setattr lock relabelfrom relabelto append map bind connect listen accept getopt setopt shutdown recvfrom sendto name_bind)))
-(allow any_processes self (netlink_audit_socket (nlmsg_read nlmsg_write nlmsg_relay nlmsg_readpriv nlmsg_tty_audit)))
-(allow any_processes self (netlink_route_socket (nlmsg_read nlmsg_write)))
-(allow any_processes self (netlink_tcpdiag_socket (nlmsg_read nlmsg_write)))
-(allow any_processes self (netlink_xfrm_socket (nlmsg_read nlmsg_write)))
 
 (allow any_processes self (association (sendto recvfrom setcontext polmatch)))
 
