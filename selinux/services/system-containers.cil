@@ -7,14 +7,9 @@
 (type apid_runtime_socket_t)
 (call system_socket (apid_runtime_socket_t))
 
-(allow apid_t system_t (dir (add_name write search getattr)))
-(allow apid_t system_t (sock_file (create relabelfrom)))
-(allow apid_t apid_socket_t (sock_file (
-    create getattr ioctl link lock open read relabelto rename setattr write
-)))
-(allow apid_t apid_runtime_socket_t (sock_file (
-    create getattr ioctl link lock open read relabelto rename setattr write
-)))
+(allow apid_t system_t (fs_classes (rw)))
+(allow apid_t apid_socket_t (fs_classes (rw)))
+(allow apid_t apid_runtime_socket_t (fs_classes (rw)))
 (allow apid_t init_t (unix_stream_socket (connectto)))
 (allow apid_t sys_containerd_t (fifo_file (ioctl read write getattr lock append)))
 
