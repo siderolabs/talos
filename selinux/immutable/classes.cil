@@ -271,6 +271,7 @@
     unix_write
     write
 ))
+; Deprecated
 (class ipc ())
 (classcommon ipc ipc_common)
 (class sem ())
@@ -363,10 +364,14 @@
 (classcommon xdp_socket socket_common)
 (class mctp_socket ())
 (classcommon mctp_socket socket_common)
+
 (class perf_event (open cpu kernel tracepoint read write))
+; Deprecated in 5.16
 (class lockdown (integrity confidentiality))
+; TODO: https://github.com/SELinuxProject/selinux-notebook/blob/e47a8d1cd4903286a3d92f852ec6be5e62a40f0f/src/object_classes_permissions.md#anon_inode
 (class anon_inode ())
 (classcommon anon_inode file_common)
+; TODO: https://github.com/SELinuxProject/selinux-notebook/blob/e47a8d1cd4903286a3d92f852ec6be5e62a40f0f/src/object_classes_permissions.md#io_uring
 (class io_uring (override_creds sqpoll cmd))
 (class user_namespace (create))
 
