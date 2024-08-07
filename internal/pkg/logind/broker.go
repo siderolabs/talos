@@ -48,13 +48,19 @@ func NewBroker(serviceSocketPath, clientSocketPath string) (*DBusBroker, error) 
 	if err != nil {
 		return nil, err
 	}
-	unix.Setxattr(serviceSocketPath, "security.selinux", []byte("system_u:object_r:dbus_service_socket_t:s0"), 0)
+
+	if err = unix.Setxattr(serviceSocketPath, "security.selinux", []byte("system_u:object_r:dbus_service_socket_t:s0"), 0); err != nil {
+		return nil, err
+	}
 
 	broker.listenClient, err = net.Listen("unix", clientSocketPath)
 	if err != nil {
 		return nil, err
 	}
-	unix.Setxattr(clientSocketPath, "security.selinux", []byte("system_u:object_r:dbus_client_socket_t:s0"), 0)
+
+	if err = unix.Setxattr(clientSocketPath, "security.selinux", []byte("system_u:object_r:dbus_client_socket_t:s0"), 0); err != nil {
+		return nil, err
+	}
 
 	return broker, nil
 }

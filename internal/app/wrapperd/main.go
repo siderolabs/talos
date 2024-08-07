@@ -35,7 +35,7 @@ var (
 
 // Main is the entrypoint into /sbin/wrapperd.
 //
-//nolint:gocyclo
+//nolint:gocyclo,cyclop
 func Main() {
 	flag.StringVar(&name, "name", "", "process name")
 	flag.StringVar(&droppedCaps, "dropped-caps", "", "comma-separated list of capabilities to drop")
@@ -129,5 +129,6 @@ func Main() {
 	if err := unix.Exec(flag.Args()[0], flag.Args()[0:], os.Environ()); err != nil {
 		log.Fatalf("failed to exec: %v", err)
 	}
+
 	runtime.UnlockOSThread()
 }

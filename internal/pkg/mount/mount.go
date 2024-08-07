@@ -503,8 +503,8 @@ func overlay(p *Point) error {
 
 	if p.Options.SelinuxLabel != "" {
 		fmt.Printf("relabeling overlay %s to %s\n", p.target, p.Options.SelinuxLabel)
-		err := unix.Setxattr(p.target, "security.selinux", []byte(p.Options.SelinuxLabel), 0)
-		if err != nil {
+
+		if err := unix.Setxattr(p.target, "security.selinux", []byte(p.Options.SelinuxLabel), 0); err != nil {
 			return err
 		}
 	}
@@ -520,8 +520,8 @@ func readonlyOverlay(p *Point) error {
 
 	if p.Options.SelinuxLabel != "" {
 		fmt.Printf("relabeling ro overlay %s to %s\n", p.target, p.Options.SelinuxLabel)
-		err := unix.Setxattr(p.target, "security.selinux", []byte(p.Options.SelinuxLabel), 0)
-		if err != nil {
+
+		if err := unix.Setxattr(p.target, "security.selinux", []byte(p.Options.SelinuxLabel), 0); err != nil {
 			return err
 		}
 	}

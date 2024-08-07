@@ -63,8 +63,10 @@ func SystemMountPointsForDevice(ctx context.Context, devpath string, opts ...Opt
 //
 //nolint:gocyclo
 func SystemMountPointForLabel(ctx context.Context, device *blockdevice.BlockDevice, label string, opts ...Option) (mountpoint *Point, err error) {
-	var target string
-	var context string
+	var (
+		target  string
+		context string
+	)
 
 	switch label {
 	case constants.EphemeralPartitionLabel:

@@ -203,6 +203,7 @@ func UpdateFile(filename string, contents []byte, mode os.FileMode, selinuxLabel
 				return err
 			}
 		}
+
 		return nil
 	}
 
@@ -214,5 +215,6 @@ func UpdateFile(filename string, contents []byte, mode os.FileMode, selinuxLabel
 	if selinuxLabel != "" {
 		return unix.Lsetxattr(filename, "security.selinux", []byte(selinuxLabel), 0)
 	}
+
 	return nil
 }

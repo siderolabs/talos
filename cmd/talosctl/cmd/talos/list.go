@@ -154,6 +154,7 @@ var lsCmd = &cobra.Command{
 					for _, l := range info.Xattrs {
 						if l.Name == "security.selinux" {
 							label = string(l.Data)
+
 							break
 						}
 					}

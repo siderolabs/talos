@@ -30,6 +30,8 @@ var preservedPaths = map[string]struct{}{
 
 // Switch moves the rootfs to a specified directory. See
 // https://github.com/karelzak/util-linux/blob/master/sys-utils/switch_root.c.
+//
+//nolint:gocyclo
 func Switch(prefix string, mountpoints *mount.Points) (err error) {
 	log.Println("moving mounts to the new rootfs")
 
@@ -71,11 +73,12 @@ func Switch(prefix string, mountpoints *mount.Points) (err error) {
 	}
 
 	log.Println("loading SELinux policy")
+
 	f, err := os.Open("/etc/selinux/talos/policy.33")
 	if err != nil {
 		return err
 	}
-	defer f.Close()
+	defer f.Close() //nolint:errcheck
 
 	binpol, err := io.ReadAll(f)
 	if err != nil {
@@ -89,12 +92,11 @@ func Switch(prefix string, mountpoints *mount.Points) (err error) {
 	}
 
 	// TODO: move to special relabeling task?
-	err = unix.Setxattr("/system", "security.selinux", []byte("system_u:object_r:system_t:s0"), 0)
-	if err != nil {
+	if err = unix.Setxattr("/system", "security.selinux", []byte("system_u:object_r:system_t:s0"), 0); err != nil {
 		return err
 	}
-	err = unix.Setxattr("/run", "security.selinux", []byte("system_u:object_r:run_t:s0"), 0)
-	if err != nil {
+
+	if err = unix.Setxattr("/run", "security.selinux", []byte("system_u:object_r:run_t:s0"), 0); err != nil {
 		return err
 	}
 
@@ -127,6 +129,7 @@ func Switch(prefix string, mountpoints *mount.Points) (err error) {
 	if err = unix.Exec("/sbin/init", []string{"/sbin/init"}, envv); err != nil {
 		return fmt.Errorf("error executing /sbin/init: %w", err)
 	}
+
 	runtime.UnlockOSThread()
 
 	return nil
