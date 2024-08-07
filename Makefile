@@ -63,11 +63,11 @@ GOFUMPT_VERSION ?= v0.6.0
 # renovate: datasource=go depName=github.com/golangci/golangci-lint
 GOLANGCILINT_VERSION ?= v1.59.1
 # renovate: datasource=go depName=golang.org/x/tools
-STRINGER_VERSION ?= v0.21.0
+STRINGER_VERSION ?= v0.24.0
 # renovate: datasource=go depName=github.com/dmarkham/enumer
-ENUMER_VERSION ?= v1.5.9
+ENUMER_VERSION ?= v1.5.10
 # renovate: datasource=go depName=k8s.io/code-generator
-DEEPCOPY_GEN_VERSION ?= v0.30.1
+DEEPCOPY_GEN_VERSION ?= v0.30.3
 # renovate: datasource=go depName=github.com/planetscale/vtprotobuf
 VTPROTOBUF_VERSION ?= v0.6.0
 # renovate: datasource=go depName=github.com/siderolabs/deep-copy
@@ -95,11 +95,11 @@ KUBECTL_VERSION ?= v1.31.0-rc.1
 # renovate: datasource=github-releases depName=kastenhq/kubestr
 KUBESTR_VERSION ?= v0.4.44
 # renovate: datasource=github-releases depName=helm/helm
-HELM_VERSION ?= v3.15.2
+HELM_VERSION ?= v3.15.3
 # renovate: datasource=github-releases depName=kubernetes-sigs/cluster-api
-CLUSTERCTL_VERSION ?= 1.7.3
+CLUSTERCTL_VERSION ?= 1.7.4
 # renovate: datasource=github-releases depName=cilium/cilium-cli
-CILIUM_CLI_VERSION ?= v0.16.11
+CILIUM_CLI_VERSION ?= v0.16.15
 # renovate: datasource=github-releases depName=microsoft/secureboot_objects
 MICROSOFT_SECUREBOOT_RELEASE ?= v1.1.3
 
