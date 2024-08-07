@@ -156,6 +156,12 @@
 ; kube-controller
 (allow pod_processes cgroup_t (fs_classes (ro)))
 
+(type kube_apiserver_config_t)
+(call protected_file (kube_apiserver_config_t))
+(allow kube_apiserver_config_t tmpfs_t (filesystem (associate)))
+(type kube_scheduler_config_t)
+(call protected_file (kube_scheduler_config_t))
+(allow kube_scheduler_config_t tmpfs_t (filesystem (associate)))
 (type kube_apiserver_secret_t)
 (call protected_file (kube_apiserver_secret_t))
 (allow kube_apiserver_secret_t tmpfs_t (filesystem (associate)))
@@ -167,6 +173,8 @@
 (allow kube_scheduler_secret_t tmpfs_t (filesystem (associate)))
 
 (typeattribute kube_secret_files)
+(typeattributeset kube_secret_files kube_apiserver_config_t)
+(typeattributeset kube_secret_files kube_scheduler_config_t)
 (typeattributeset kube_secret_files kube_apiserver_secret_t)
 (typeattributeset kube_secret_files kube_controller_manager_secret_t)
 (typeattributeset kube_secret_files kube_scheduler_secret_t)

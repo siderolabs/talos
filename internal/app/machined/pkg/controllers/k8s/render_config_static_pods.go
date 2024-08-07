@@ -16,6 +16,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
 	"go.uber.org/zap"
+	"golang.org/x/sys/unix"
 	"k8s.io/apimachinery/pkg/runtime"
 	k8sjson "k8s.io/apimachinery/pkg/runtime/serializer/json"
 	apiserverv1 "k8s.io/apiserver/pkg/apis/apiserver/v1"
@@ -124,17 +125,19 @@ func (ctrl *RenderConfigsStaticPodController) Run(ctx context.Context, r control
 		)
 
 		for _, pod := range []struct {
-			name      string
-			directory string
-			uid       int
-			gid       int
-			configs   []configFile
+			name         string
+			directory    string
+			selinuxLabel string
+			uid          int
+			gid          int
+			configs      []configFile
 		}{
 			{
-				name:      "kube-apiserver",
-				directory: constants.KubernetesAPIServerConfigDir,
-				uid:       constants.KubernetesAPIServerRunUser,
-				gid:       constants.KubernetesAPIServerRunGroup,
+				name:         "kube-apiserver",
+				directory:    constants.KubernetesAPIServerConfigDir,
+				selinuxLabel: constants.KubernetesAPIServerConfigDirSELinuxLabel,
+				uid:          constants.KubernetesAPIServerRunUser,
+				gid:          constants.KubernetesAPIServerRunGroup,
 				configs: []configFile{
 					{
 						filename: "admission-control-config.yaml",
@@ -147,10 +150,11 @@ func (ctrl *RenderConfigsStaticPodController) Run(ctx context.Context, r control
 				},
 			},
 			{
-				name:      "kube-scheduler",
-				directory: constants.KubernetesSchedulerConfigDir,
-				uid:       constants.KubernetesSchedulerRunUser,
-				gid:       constants.KubernetesSchedulerRunGroup,
+				name:         "kube-scheduler",
+				directory:    constants.KubernetesSchedulerConfigDir,
+				selinuxLabel: constants.KubernetesSchedulerConfigDirSELinuxLabel,
+				uid:          constants.KubernetesSchedulerRunUser,
+				gid:          constants.KubernetesSchedulerRunGroup,
 				configs: []configFile{
 					{
 						filename: "scheduler-config.yaml",
@@ -161,6 +165,10 @@ func (ctrl *RenderConfigsStaticPodController) Run(ctx context.Context, r control
 		} {
 			if err = os.MkdirAll(pod.directory, 0o755); err != nil {
 				return fmt.Errorf("error creating config directory for %q: %w", pod.name, err)
+			}
+
+			if err = unix.Lsetxattr(pod.directory, "security.selinux", []byte(pod.selinuxLabel), 0); err != nil {
+				return fmt.Errorf("error labeling k8s config: %w", err)
 			}
 
 			for _, configFile := range pod.configs {

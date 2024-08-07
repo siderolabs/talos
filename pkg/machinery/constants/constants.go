@@ -283,6 +283,9 @@ const (
 	// KubernetesAPIServerConfigDir defines directory with kube-apiserver configs.
 	KubernetesAPIServerConfigDir = KubebernetesStaticConfigDir + "/" + "kube-apiserver"
 
+	// KubernetesAPIServerConfigDirSELinuxLabel defines SELinux label for the directory with kube-apiserver configs.
+	KubernetesAPIServerConfigDirSELinuxLabel = "system_u:object_r:kube_apiserver_config_t:s0"
+
 	// KubernetesControllerManagerSecretsDir defines ephemeral directory with kube-controller-manager secrets.
 	KubernetesControllerManagerSecretsDir = KubebernetesStaticSecretsDir + "/" + "kube-controller-manager"
 
@@ -297,6 +300,9 @@ const (
 
 	// KubernetesSchedulerConfigDir defines ephemeral directory with kube-scheduler configs.
 	KubernetesSchedulerConfigDir = KubebernetesStaticConfigDir + "/" + "kube-scheduler"
+
+	// KubernetesSchedulerConfigDirSELinuxLabel defines SELinux label for the ephemeral directory with kube-scheduler configs.
+	KubernetesSchedulerConfigDirSELinuxLabel = "system_u:object_r:kube_scheduler_config_t:s0"
 
 	// KubernetesAPIServerRunUser defines UID to the API Server.
 	KubernetesAPIServerRunUser = 65534
