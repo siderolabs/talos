@@ -648,6 +648,8 @@ COPY ./policy.33 /rootfs/etc/selinux/talos/
 
 FROM build AS rootfs-base-arm64
 COPY --link --from=pkg-fhs / /rootfs
+RUN mkdir /rootfs/selinux
+RUN mkdir -p /rootfs/etc/selinux/talos
 COPY --link --from=pkg-apparmor-arm64 / /rootfs
 COPY --link --from=pkg-cryptsetup-arm64 / /rootfs
 COPY --link --from=pkg-containerd-arm64 / /rootfs
