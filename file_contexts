@@ -1,0 +1,39 @@
+/.extra(/.*)?	system_u:object_r:extra_t:s0
+/bin(/.*)?	system_u:object_r:bin_t:s0
+/etc(/.*)?	system_u:object_r:etc_t:s0
+/lib(/.*)?	system_u:object_r:lib_t:s0
+/usr(/.*)?	system_u:object_r:usr_t:s0
+/sbin(/.*)?	system_u:object_r:bin_t:s0
+/etc/cri(/.*)?	system_u:object_r:k8s_conf_t:s0
+/etc/lvm(/.*)?	system_u:object_r:lvm_conf_t:s0
+/etc/pki(/.*)?	system_u:object_r:ssl_certificates_t:s0
+/etc/ssl(/.*)?	system_u:object_r:ssl_certificates_t:s0
+/usr/bin(/.*)?	system_u:object_r:bin_t:s0
+/usr/etc(/.*)?	system_u:object_r:udev_conf_t:s0
+/usr/lib(/.*)?	system_u:object_r:lib_t:s0
+/usr/sbin(/.*)?	system_u:object_r:bin_t:s0
+/etc/selinux(/.*)?	system_u:object_r:selinux_conf_t:s0
+/usr/libexec(/.*)?	system_u:object_r:bin_t:s0
+/lib/firmware(/.*)?	system_u:object_r:firmware_t:s0
+/usr/lib/udev(/.*)?	system_u:object_r:udev_exec_t:s0
+/etc/containerd(/.*)?	system_u:object_r:k8s_conf_t:s0
+/opt/containerd(/.*)?	system_u:object_r:opt_containerd_t:s0
+/usr/share/zoneinfo(/.*)?	system_u:object_r:timezone_t:s0
+/usr/lib/udev/rules.d(/.*)?	system_u:object_r:udev_rules_t:s0
+/etc/ca-certificates(/.*)?	system_u:object_r:ssl_certificates_t:s0
+/usr/share/ca-certificates(/.*)?	system_u:object_r:ssl_certificates_t:s0
+/usr/local/share/ca-certificates(/.*)?	system_u:object_r:ssl_certificates_t:s0
+/	system_u:object_r:rootfs_t:s0
+/bin/runc	system_u:object_r:containerd_exec_t:s0
+/sbin/init	--	system_u:object_r:init_exec_t:s0
+/sbin/udevd	--	system_u:object_r:udev_exec_t:s0
+/sbin/udevadm	-l	system_u:object_r:udevadm_exec_t:s0
+/etc/localtime	system_u:object_r:timezone_t:s0
+/sbin/poweroff	system_u:object_r:init_exec_t:s0
+/sbin/shutdown	system_u:object_r:init_exec_t:s0
+/sbin/wrapperd	system_u:object_r:init_exec_t:s0
+/sbin/modprobe	--	system_u:object_r:modprobe_exec_t:s0
+/bin/containerd	system_u:object_r:containerd_exec_t:s0
+/sbin/dashboard	system_u:object_r:init_exec_t:s0
+/usr/bin/udevadm	--	system_u:object_r:udevadm_exec_t:s0
+/bin/containerd-shim-runc-v2	system_u:object_r:containerd_exec_t:s0
