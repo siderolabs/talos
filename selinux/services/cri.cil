@@ -20,6 +20,7 @@
 ; TODO: maybe transition to the container domain here?
 (allow pod_containerd_t pod_containerd_tmpfs_t (file (execute_no_trans)))
 
+(allow pod_containerd_t self (user_namespace (create)))
 (allow pod_containerd_t self (capability2 (perfmon bpf)))
 (allow pod_containerd_t self (unix_stream_socket (connectto)))
 (allow init_t pod_containerd_t (unix_stream_socket (connectto)))
@@ -152,6 +153,3 @@
 (allow pod_processes cgroup_t (fs_classes (ro)))
 ; !!!! FIXME: used by kube-apiserver
 (allow pod_processes system_t (fs_classes (rw)))
-(allow pod_processes self (fd (use)))
-; Cilium and other tools use BPF
-(allow pod_processes self (bpf (map_create map_read map_write prog_load prog_run)))
