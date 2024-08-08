@@ -5,8 +5,8 @@ linkTitle: "Documentation"
 images: ["images/talos-dev-banner.png"]
 cascade:
   type: docs
-lastRelease: v1.7.0
-kubernetesRelease: "1.30.0"
+lastRelease: v1.7.6
+kubernetesRelease: "1.30.3"
 prevKubernetesRelease: "1.29.3"
 nvidiaContainerToolkitRelease: "v1.14.5"
 nvidiaDriverRelease: "535.129.03"

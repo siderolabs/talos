@@ -36,10 +36,6 @@ It's contents should look like the following:
       dhcp: true
       vip:
         ip: <VIP>
-- op: replace
-  path: /cluster/extraManifests
-  value:
-    - "https://raw.githubusercontent.com/siderolabs/talos-vmtoolsd/master/deploy/latest.yaml"
 ```
 
 With the patch in hand, generate machine configs with:
@@ -93,8 +89,10 @@ If you wish to carry out the manual approach, simply skip ahead to the "Manual A
 ### Scripted Install
 
 Download the `vmware.sh` script to your local machine.
-You can do this by issuing `curl -fsSLO "https://raw.githubusercontent.com/siderolabs/talos/master/website/content/{{< version >}}/talos-guides/install/virtualized-platforms/vmware/vmware.sh"`.
+You can do this by issuing `curl -fsSLO "https://raw.githubusercontent.com/siderolabs/talos/master/website/content/{{< version >}}/talos-guides/install/virtualized-platforms/vmware/vmware.sh" | sed s/latest/{{< release >}}/`.
 This script has default variables for things like Talos version and cluster name that may be interesting to tweak before deploying.
+
+The script downloads VMWare OVA with `talos-vmtoolsd` from [Image Factory](https://factory.talos.dev/?arch=amd64&cmdline-set=true&extensions=-&extensions=siderolabs%2Fvmtoolsd-guest-agent&platform=vmware&target=cloud&version={{< release >}}) extension pre-installed.
 
 #### Import OVA
 

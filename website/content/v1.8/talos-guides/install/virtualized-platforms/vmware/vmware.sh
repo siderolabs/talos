@@ -13,8 +13,8 @@ set -e
 # export GOVC_NETWORK='PortGroup Name'
 
 CLUSTER_NAME=${CLUSTER_NAME:=vmware-test}
-TALOS_VERSION=v1.1.0
-OVA_PATH=${OVA_PATH:="https://github.com/siderolabs/talos/releases/download/${TALOS_VERSION}/vmware-amd64.ova"}
+TALOS_VERSION=${TALOS_VERSION:=latest}
+OVA_PATH=${OVA_PATH:="https://factory.talos.dev/image/903b2da78f99adef03cbbd4df6714563823f63218508800751560d3bc3557e40/${TALOS_VERSION}/vmware-amd64.ova"}
 
 CONTROL_PLANE_COUNT=${CONTROL_PLANE_COUNT:=3}
 CONTROL_PLANE_CPU=${CONTROL_PLANE_CPU:=2}

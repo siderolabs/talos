@@ -6,7 +6,3 @@
       dhcp: true
       vip:
         ip: <VIP>
-- op: replace
-  path: /cluster/extraManifests
-  value:
-    - "https://raw.githubusercontent.com/siderolabs/talos-vmtoolsd/master/deploy/latest.yaml"
