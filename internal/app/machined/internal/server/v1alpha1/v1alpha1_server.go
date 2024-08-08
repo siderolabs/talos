@@ -973,10 +973,7 @@ func (s *Server) DiskUsage(req *machine.DiskUsageRequest, obj machine.MachineSer
 			} else {
 				currentDepth := int32(strings.Count(fi.FullPath, archiver.OSPathSeparator)) - rootDepth
 
-				size := fi.FileInfo.Size()
-				if size < 0 {
-					size = 0
-				}
+				size := max(fi.FileInfo.Size(), 0)
 
 				// kcore file size gives wrong value, this code should be smarter when it reads it
 				// TODO: figure out better way to skip such file
