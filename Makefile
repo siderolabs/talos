@@ -17,11 +17,11 @@ ZSTD_COMPRESSION_LEVEL ?= 18
 CI_RELEASE_TAG := $(shell git log --oneline --format=%B -n 1 -- HEAD^2 | head -n 1 | sed -r "/^release\(.*\)/ s/^release\((.*)\):.*$$/\\1/; t; Q")
 
 ARTIFACTS := _out
-TOOLS ?= ghcr.io/siderolabs/tools:v1.8.0-alpha.0-6-g31ad71b
+TOOLS ?= ghcr.io/siderolabs/tools:v1.8.0-alpha.0-8-ga764e8d
 
 PKGS_PREFIX ?= ghcr.io/siderolabs
-PKGS ?= v1.8.0-alpha.0-43-g99650c8
-EXTRAS ?= v1.8.0-alpha.0-3-gcab51d8
+PKGS ?= v1.8.0-alpha.0-46-g124d35b
+EXTRAS ?= v1.8.0-alpha.0-5-g6f4a373
 
 KRES_IMAGE ?= ghcr.io/siderolabs/kres:latest
 CONFORMANCE_IMAGE ?= ghcr.io/siderolabs/conform:latest

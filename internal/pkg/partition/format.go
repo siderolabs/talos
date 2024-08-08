@@ -16,9 +16,10 @@ import (
 
 // FormatOptions contains format parameters.
 type FormatOptions struct {
-	Label          string
-	FileSystemType FileSystemType
-	Force          bool
+	Label               string
+	FileSystemType      FileSystemType
+	Force               bool
+	UnsupportedFSOption bool
 }
 
 // NewFormatOptions creates a new format options.
@@ -33,6 +34,11 @@ func Format(devname string, t *FormatOptions, printf func(string, ...any)) error
 	}
 
 	opts := []makefs.Option{makefs.WithForce(t.Force), makefs.WithLabel(t.Label)}
+
+	if t.UnsupportedFSOption {
+		opts = append(opts, makefs.WithUnsupportedFSOption(t.UnsupportedFSOption))
+	}
+
 	printf("formatting the partition %q as %q with label %q\n", devname, t.FileSystemType, t.Label)
 
 	switch t.FileSystemType {
@@ -87,9 +93,10 @@ func systemPartitionsFormatOptions(label string) *FormatOptions {
 		}
 	case constants.StatePartitionLabel:
 		return &FormatOptions{
-			Label:          constants.StatePartitionLabel,
-			FileSystemType: FilesystemTypeXFS,
-			Force:          true,
+			Label:               constants.StatePartitionLabel,
+			FileSystemType:      FilesystemTypeXFS,
+			Force:               true,
+			UnsupportedFSOption: true,
 		}
 	case constants.EphemeralPartitionLabel:
 		return &FormatOptions{

@@ -194,8 +194,8 @@ function create_cluster {
     --cpus="${QEMU_CPUS:-2}" \
     --cpus-workers="${QEMU_CPUS_WORKERS:-2}" \
     --cidr=172.20.1.0/24 \
-    --user-disk=/var/lib/extra:100MB \
-    --user-disk=/var/lib/p1:100MB:/var/lib/p2:100MB \
+    --user-disk=/var/lib/extra:350MB \
+    --user-disk=/var/lib/p1:350MB:/var/lib/p2:350MB \
     --install-image="${INSTALLER_IMAGE}" \
     --with-init-node=false \
     --cni-bundle-url="${ARTIFACTS}/talosctl-cni-bundle-\${ARCH}.tar.gz" \

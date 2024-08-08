@@ -55,6 +55,10 @@ func XFS(partname string, setters ...Option) error {
 		args = append(args, "-L", opts.Label)
 	}
 
+	if opts.UnsupportedFSOption {
+		args = append(args, "--unsupported")
+	}
+
 	args = append(args, partname)
 
 	_, err := cmd.Run("mkfs.xfs", args...)

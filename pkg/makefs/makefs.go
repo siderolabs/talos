@@ -10,9 +10,10 @@ type Option func(*Options)
 
 // Options for makefs.
 type Options struct {
-	Label        string
-	Force        bool
-	Reproducible bool
+	Label               string
+	Force               bool
+	Reproducible        bool
+	UnsupportedFSOption bool
 }
 
 // WithLabel sets the label for the filesystem to be created.
@@ -34,6 +35,13 @@ func WithForce(force bool) Option {
 func WithReproducible(reproducible bool) Option {
 	return func(o *Options) {
 		o.Reproducible = reproducible
+	}
+}
+
+// WithUnsupportedFSOption sets the unsupported filesystem option.
+func WithUnsupportedFSOption(unsupported bool) Option {
+	return func(o *Options) {
+		o.UnsupportedFSOption = unsupported
 	}
 }
 
