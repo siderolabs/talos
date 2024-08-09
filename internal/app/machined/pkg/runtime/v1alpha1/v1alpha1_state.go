@@ -10,7 +10,10 @@ import (
 	"log"
 	"os"
 	"sync"
+	"time"
 
+	"github.com/cosi-project/runtime/pkg/resource"
+	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
 	multierror "github.com/hashicorp/go-multierror"
 	"github.com/siderolabs/go-blockdevice/blockdevice/probe"
@@ -21,6 +24,7 @@ import (
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha2"
 	"github.com/siderolabs/talos/internal/pkg/meta"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
+	"github.com/siderolabs/talos/pkg/machinery/resources/block"
 )
 
 // State implements the state interface.
@@ -296,9 +300,43 @@ func (s *MachineState) Close() error {
 
 // Installed implements the machine state interface.
 func (s *MachineState) Installed() bool {
-	return s.Disk(
-		disk.WithPartitionLabel(constants.EphemeralPartitionLabel),
-	) != nil
+	// undefined in container mode
+	if s.platform.Mode() == runtime.ModeContainer {
+		return true
+	}
+
+	// legacy flow, no context available
+	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Minute)
+	defer cancel()
+
+	metaStatus, err := safe.StateWatchFor[*block.VolumeStatus](
+		ctx,
+		s.resources,
+		block.NewVolumeStatus(block.NamespaceName, constants.MetaPartitionLabel).Metadata(),
+		state.WithEventTypes(state.Created, state.Updated),
+		state.WithCondition(func(r resource.Resource) (bool, error) {
+			vs, ok := r.(*block.VolumeStatus)
+			if !ok {
+				return false, nil
+			}
+
+			switch vs.TypedSpec().Phase { //nolint:exhaustive
+			case block.VolumePhaseMissing:
+				// no META, talos is not installed
+				return true, nil
+			case block.VolumePhaseReady:
+				// META found
+				return true, nil
+			default:
+				return false, nil
+			}
+		}),
+	)
+	if err != nil {
+		return false
+	}
+
+	return metaStatus.TypedSpec().Phase == block.VolumePhaseReady
 }
 
 // IsInstallStaged implements the machine state interface.

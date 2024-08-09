@@ -9,7 +9,6 @@ import (
 	"log"
 	"os"
 
-	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader"
 	"github.com/siderolabs/talos/internal/pkg/meta"
 )
 
@@ -45,6 +44,7 @@ func revertBootloadInternal(ctx context.Context) error {
 
 	log.Printf("reverting failed upgrade, switching to %q", label)
 
+	/* [TODO] restore me
 	if err = func() error {
 		config, probeErr := bootloader.Probe(ctx, "")
 		if probeErr != nil {
@@ -60,6 +60,7 @@ func revertBootloadInternal(ctx context.Context) error {
 	}(); err != nil {
 		return err
 	}
+	*/
 
 	if _, err = metaState.DeleteTag(ctx, meta.Upgrade); err != nil {
 		return err

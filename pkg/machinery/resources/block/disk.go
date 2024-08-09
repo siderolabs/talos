@@ -23,6 +23,8 @@ type Disk = typed.Resource[DiskSpec, DiskExtension]
 //
 //gotagsrewrite:gen
 type DiskSpec struct {
+	DevPath string `yaml:"devPath" protobuf:"14"`
+
 	Size       uint64 `yaml:"size" protobuf:"1"`
 	IOSize     uint   `yaml:"ioSize" protobuf:"2"`
 	SectorSize uint   `yaml:"sectorSize" protobuf:"3"`

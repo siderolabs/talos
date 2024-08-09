@@ -26,9 +26,13 @@ func TestRegisterResource(t *testing.T) {
 
 	for _, resource := range []meta.ResourceWithRD{
 		&block.Device{},
+		&block.DiscoveryRefreshRequest{},
+		&block.DiscoveryRefreshStatus{},
 		&block.DiscoveredVolume{},
 		&block.Disk{},
 		&block.SystemDisk{},
+		&block.VolumeConfig{},
+		&block.VolumeStatus{},
 	} {
 		assert.NoError(t, resourceRegistry.Register(ctx, resource))
 	}

@@ -156,6 +156,7 @@ func (ctrl *DisksController) analyzeBlockDevice(ctx context.Context, r controlle
 	touchedDisks[device.Metadata().ID()] = struct{}{}
 
 	return safe.WriterModify(ctx, r, block.NewDisk(block.NamespaceName, device.Metadata().ID()), func(d *block.Disk) error {
+		d.TypedSpec().DevPath = filepath.Join("/dev", device.Metadata().ID())
 		d.TypedSpec().Size = size
 		d.TypedSpec().IOSize = ioSize
 		d.TypedSpec().SectorSize = sectorSize
