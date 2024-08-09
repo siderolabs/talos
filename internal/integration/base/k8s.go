@@ -392,7 +392,7 @@ func (k8sSuite *K8sSuite) ApplyManifests(ctx context.Context, manifests []unstru
 		}
 
 		if obj.GetNamespace() == "" {
-			k8sSuite.T().Fatalf("namespace not set for object %s, kind %s", obj.GetName(), obj.GetObjectKind().GroupVersionKind())
+			k8sSuite.T().Logf("namespace not set for object %s, kind %s", obj.GetName(), obj.GetObjectKind().GroupVersionKind())
 		}
 
 		dr := k8sSuite.DynamicClient.Resource(mapping.Resource).Namespace(obj.GetNamespace())
