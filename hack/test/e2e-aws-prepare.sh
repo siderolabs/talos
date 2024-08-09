@@ -19,16 +19,16 @@ function get_ami_id() {
 function cloud_image_upload_with_extensions() {
   case "${1}" in
     nvidia-oss)
-      EXTENSIONS=$(jq -R < "${EXTENSIONS_METADATA_FILE}" | jq -rs 'map(select(. | (contains("nvidia") or contains("zfs")) and (contains("nvidia-fabricmanager") or contains("nonfree-kmod-nvidia") | not))) | .[] |= "--system-extension-image=" + . | join(" ")')
+      EXTENSIONS=$(jq -R < "${EXTENSIONS_METADATA_FILE}" | jq -rs 'map(select(. | (contains("nvidia-open-gpu-kernel-modules-production") or contains("nvidia-container-toolkit-production") or contains("zfs")) and (contains("nvidia-fabricmanager") or contains("nonfree-kmod-nvidia") | not))) | .[] |= "--system-extension-image=" + . | join(" ")')
       ;;
     nvidia-oss-fabricmanager)
-      EXTENSIONS=$(jq -R < "${EXTENSIONS_METADATA_FILE}" | jq -rs 'map(select(. | contains("nvidia") and (contains("nonfree-kmod-nvidia") | not))) | .[] |= "--system-extension-image=" + . | join(" ")')
+      EXTENSIONS=$(jq -R < "${EXTENSIONS_METADATA_FILE}" | jq -rs 'map(select(. | (contains("nvidia-open-gpu-kernel-modules-production") or contains("nvidia-container-toolkit-production")) and (contains("nonfree-kmod-nvidia") | not))) | .[] |= "--system-extension-image=" + . | join(" ")')
       ;;
     nvidia-nonfree)
-      EXTENSIONS=$(jq -R < "${EXTENSIONS_METADATA_FILE}" | jq -rs 'map(select(. | contains("nvidia") and (contains("nvidia-fabricmanager") or contains("nvidia-open-gpu-kernel-modules") | not))) | .[] |= "--system-extension-image=" + . | join(" ")')
+      EXTENSIONS=$(jq -R < "${EXTENSIONS_METADATA_FILE}" | jq -rs 'map(select(. | (contains("nonfree-kmod-nvidia-lts") or contains("nvidia-container-toolkit-lts")) and (contains("nvidia-fabricmanager") or contains("nvidia-open-gpu-kernel-modules") | not))) | .[] |= "--system-extension-image=" + . | join(" ")')
       ;;
     nvidia-nonfree-fabricmanager)
-      EXTENSIONS=$(jq -R < "${EXTENSIONS_METADATA_FILE}" | jq -rs 'map(select(. | contains("nvidia") and (contains("nvidia-open-gpu-kernel-modules") | not))) | .[] |= "--system-extension-image=" + . | join(" ")')
+      EXTENSIONS=$(jq -R < "${EXTENSIONS_METADATA_FILE}" | jq -rs 'map(select(. | (contains("nonfree-kmod-nvidia-lts") or contains("nvidia-container-toolkit-lts")) and (contains("nvidia-open-gpu-kernel-modules") | not))) | .[] |= "--system-extension-image=" + . | join(" ")')
       ;;
     *)
       ;;

@@ -1592,7 +1592,7 @@ spec:
           nonMakeStep: true
           command: cat _out/talos-metadata >> "$GITHUB_ENV"
         - name: build extensions
-          command: nvidia-container-toolkit nvidia-open-gpu-kernel-modules zfs extensions-metadata
+          command: nvidia-container-toolkit-production nvidia-open-gpu-kernel-modules-production zfs extensions-metadata
           arguments:
             - -C
             - _out/extensions
@@ -1686,7 +1686,7 @@ spec:
           nonMakeStep: true
           command: cat _out/talos-metadata >> "$GITHUB_ENV"
         - name: build extensions
-          command: nvidia-container-toolkit nonfree-kmod-nvidia extensions-metadata
+          command: nvidia-container-toolkit-lts nonfree-kmod-nvidia-lts extensions-metadata
           arguments:
             - -C
             - _out/extensions

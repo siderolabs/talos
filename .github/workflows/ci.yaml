@@ -1,6 +1,6 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
 #
-# Generated on 2024-07-30T14:54:22Z by kres faf91e3.
+# Generated on 2024-08-09T09:42:44Z by kres dbf015a.
 
 name: default
 concurrency:
@@ -594,7 +594,7 @@ jobs:
           PUSH: "true"
           REGISTRY: registry.dev.siderolabs.io
         run: |
-          make nvidia-container-toolkit nonfree-kmod-nvidia extensions-metadata -C _out/extensions
+          make nvidia-container-toolkit-lts nonfree-kmod-nvidia-lts extensions-metadata -C _out/extensions
       - name: e2e-aws-prepare
         env:
           E2E_AWS_TARGET: nvidia-nonfree
@@ -744,7 +744,7 @@ jobs:
           PUSH: "true"
           REGISTRY: registry.dev.siderolabs.io
         run: |
-          make nvidia-container-toolkit nvidia-open-gpu-kernel-modules zfs extensions-metadata -C _out/extensions
+          make nvidia-container-toolkit-production nvidia-open-gpu-kernel-modules-production zfs extensions-metadata -C _out/extensions
       - name: e2e-aws-prepare
         env:
           E2E_AWS_TARGET: nvidia-oss
