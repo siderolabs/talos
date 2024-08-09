@@ -127,10 +127,7 @@ func (e *Events) Watch(f runtime.WatchFunc, opt ...runtime.WatchOptionFunc) erro
 	// event to be published
 	pos := e.writePos
 	minPos := e.writePos - int64(e.cap-e.gap)
-
-	if minPos < 0 {
-		minPos = 0
-	}
+	minPos = max(minPos, 0)
 
 	// calculate initial position based on options
 	switch {
@@ -140,9 +137,7 @@ func (e *Events) Watch(f runtime.WatchFunc, opt ...runtime.WatchOptionFunc) erro
 		} else {
 			pos -= int64(opts.TailEvents)
 
-			if pos < minPos {
-				pos = minPos
-			}
+			pos = max(pos, minPos)
 		}
 	case !opts.TailID.IsNil():
 		pos = minPos + int64(sort.Search(int(pos-minPos), func(i int) bool {

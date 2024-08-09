@@ -46,15 +46,13 @@ func (fg *fieldGroup) String() string {
 }
 
 func (fg *fieldGroup) maxFieldNameLength() int {
-	max := 0
+	result := 0
 
 	for _, f := range fg.fields {
-		if len(f.Name) > max {
-			max = len(f.Name)
-		}
+		result = max(result, len(f.Name))
 	}
 
-	return max
+	return result
 }
 
 // padRight pads a string to the specified width by appending spaces to the end.

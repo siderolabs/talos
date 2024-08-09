@@ -194,9 +194,7 @@ func findHighestProtoNum(structNode *ast.StructType) (int, error) {
 			return nil, err
 		}
 
-		if num > highestNum {
-			highestNum = num
-		}
+		highestNum = max(highestNum, num)
 
 		return nil, nil
 	})
