@@ -116,7 +116,7 @@ Talos Linux now can optionally include well-known UEFI (Microsoft) SecureBoot ke
 Talos Linux now supports configuring Kubernetes node annotations via machine configuration (`.machine.nodeAnnotations`) in a way similar to node labels.
 """
 
-    [notes.kubelet]
+    [notes.extensions]
         title = "Extensions in Kubernetes Nodes"
         description = """\
 Talos Linux now publishes list of installed extensions as Kubernetes node labels/annotations.
@@ -136,6 +136,26 @@ Starting with Talos 1.8.0, SideroLabs would ships extensions for both LTS and Pr
 For more details see the CHANGELOG of [extensions](https://github.com/siderolabs/extensions/releases).
 
 Upgrades with an exisiting schematic id from Image Factory would keep the existing LTS version of the NVIDIA extension.
+"""
+
+    [notes.kubelet]
+        title = "Slim Kubelet Image"
+        description = """\
+Kubelet container image includes various utilities that kubelet might use to perform various tasks.
+
+Starting with Kubernetes 1.31.0, `kubelet` image now includes less utilities, as the in-tree CSI plugins were
+removed in Kubernetes 1.31.0. This reduces `kubelet` image size and potential attack surface.
+
+ For Kubernetes < 1.31.0, there will be two images built:
+
+* `v1.x.y` (default, fat)
+* `v1.x.y-slim` (slim)
+
+For Kubernetes >= 1.31.0, there will be same two images built, but the
+default tag would point to slim image:
+
+* `v1.x.y` (default, slim)
+* `v1.x.y-fat` (fat)
 """
 
 [make_deps]
