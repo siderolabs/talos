@@ -6,9 +6,11 @@ package switchroot
 
 import (
 	"fmt"
+	"io"
 	"log"
 	"os"
 	"path/filepath"
+	"runtime"
 
 	"github.com/siderolabs/go-debug"
 	"golang.org/x/sys/unix"
@@ -28,6 +30,8 @@ var preservedPaths = map[string]struct{}{
 
 // Switch moves the rootfs to a specified directory. See
 // https://github.com/karelzak/util-linux/blob/master/sys-utils/switch_root.c.
+//
+//nolint:gocyclo
 func Switch(prefix string, mountpoints *mount.Points) (err error) {
 	log.Println("moving mounts to the new rootfs")
 
@@ -68,6 +72,41 @@ func Switch(prefix string, mountpoints *mount.Points) (err error) {
 		return fmt.Errorf("error deleting initramfs: %w", err)
 	}
 
+	log.Println("loading SELinux policy")
+
+	f, err := os.Open("/etc/selinux/talos/policy.33")
+	if err != nil {
+		return err
+	}
+	defer f.Close() //nolint:errcheck
+
+	binpol, err := io.ReadAll(f)
+	if err != nil {
+		return err
+	}
+
+	// TODO: read selinux config from cmdline
+	err = os.WriteFile("/selinux/load", binpol, 0o777)
+	if err != nil {
+		return err
+	}
+
+	// TODO: move to special relabeling task?
+	if err = unix.Setxattr("/system", "security.selinux", []byte("system_u:object_r:system_t:s0"), 0); err != nil {
+		return err
+	}
+
+	if err = unix.Setxattr("/run", "security.selinux", []byte("system_u:object_r:run_t:s0"), 0); err != nil {
+		return err
+	}
+
+	runtime.LockOSThread()
+	// TODO: enforce (https://github.com/SELinuxProject/selinux/blob/e81a05a5050354261049cc7b5987372e763fc5f4/libselinux/src/setenforce.c#L12)
+	err = os.WriteFile("/proc/thread-self/attr/exec", []byte("system_u:system_r:init_t:s0"), 0o777)
+	if err != nil {
+		return err
+	}
+
 	// extend PCR 11 with leave-initrd
 	if err = tpm2.PCRExtent(secureboot.UKIPCR, []byte(secureboot.LeaveInitrd)); err != nil {
 		return fmt.Errorf("failed to extend PCR %d with leave-initrd: %v", secureboot.UKIPCR, err)
@@ -90,6 +129,8 @@ func Switch(prefix string, mountpoints *mount.Points) (err error) {
 	if err = unix.Exec("/sbin/init", []string{"/sbin/init"}, envv); err != nil {
 		return fmt.Errorf("error executing /sbin/init: %w", err)
 	}
+
+	runtime.UnlockOSThread()
 
 	return nil
 }

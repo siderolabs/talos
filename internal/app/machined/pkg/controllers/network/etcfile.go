@@ -147,6 +147,7 @@ func (ctrl *EtcFileController) Run(ctx context.Context, r controller.Runtime, lo
 				func(r *files.EtcFileSpec) error {
 					r.TypedSpec().Contents = renderResolvConf(pickNameservers(hostDNSCfg, resolverStatus), hostnameStatusSpec, cfgProvider)
 					r.TypedSpec().Mode = 0o644
+					r.TypedSpec().SelinuxLabel = "system_u:object_r:dns_conf_t:s0"
 
 					return nil
 				}); err != nil {
@@ -167,7 +168,7 @@ func (ctrl *EtcFileController) Run(ctx context.Context, r controller.Runtime, lo
 				return fmt.Errorf("error creating pod resolv.conf dir: %w", err)
 			}
 
-			err = efiles.UpdateFile(ctrl.PodResolvConfPath, conf, 0o644)
+			err = efiles.UpdateFile(ctrl.PodResolvConfPath, conf, 0o644, "system_u:object_r:dns_conf_t:s0")
 			if err != nil {
 				return fmt.Errorf("error writing pod resolv.conf: %w", err)
 			}
@@ -178,6 +179,7 @@ func (ctrl *EtcFileController) Run(ctx context.Context, r controller.Runtime, lo
 				func(r *files.EtcFileSpec) error {
 					r.TypedSpec().Contents, err = ctrl.renderHosts(hostnameStatus.TypedSpec(), nodeAddressStatus.TypedSpec(), cfgProvider)
 					r.TypedSpec().Mode = 0o644
+					r.TypedSpec().SelinuxLabel = "system_u:object_r:hosts_conf_t:s0"
 
 					return err
 				}); err != nil {

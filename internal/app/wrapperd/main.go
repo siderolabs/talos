@@ -9,6 +9,7 @@ import (
 	"flag"
 	"log"
 	"os"
+	"runtime"
 	"strings"
 
 	"github.com/containerd/cgroups/v3"
@@ -24,25 +25,43 @@ import (
 )
 
 var (
-	name        string
-	droppedCaps string
-	cgroupPath  string
-	oomScore    int
-	uid         int
+	name         string
+	droppedCaps  string
+	cgroupPath   string
+	selinuxLabel string
+	oomScore     int
+	uid          int
 )
 
 // Main is the entrypoint into /sbin/wrapperd.
 //
-//nolint:gocyclo
+//nolint:gocyclo,cyclop
 func Main() {
 	flag.StringVar(&name, "name", "", "process name")
 	flag.StringVar(&droppedCaps, "dropped-caps", "", "comma-separated list of capabilities to drop")
 	flag.StringVar(&cgroupPath, "cgroup-path", "", "cgroup path to use")
+	flag.StringVar(&selinuxLabel, "selinux-label", "", "SELinux context to use")
 	flag.IntVar(&oomScore, "oom-score", 0, "oom score to set")
 	flag.IntVar(&uid, "uid", 0, "uid to set for the process")
 	flag.Parse()
 
 	currentPid := os.Getpid()
+
+	runtime.LockOSThread()
+
+	// Use /proc/thread-self (Linux 3.17+) to avoid races between current
+	// process threads leading to loss of the domain transition
+	if selinuxLabel != "" {
+		err := os.WriteFile("/proc/thread-self/attr/exec", []byte(selinuxLabel), 0o777)
+		if err != nil {
+			log.Fatalf("%s", err)
+		}
+	} else {
+		err := os.WriteFile("/proc/thread-self/attr/exec", []byte("system_u:system_r:unconfined_service_t:s0"), 0o777)
+		if err != nil {
+			log.Fatalf("%s", err)
+		}
+	}
 
 	if oomScore != 0 {
 		if err := sys.AdjustOOMScore(currentPid, oomScore); err != nil {
@@ -110,4 +129,6 @@ func Main() {
 	if err := unix.Exec(flag.Args()[0], flag.Args()[0:], os.Environ()); err != nil {
 		log.Fatalf("failed to exec: %v", err)
 	}
+
+	runtime.UnlockOSThread()
 }

@@ -1,0 +1,99 @@
+(type udev_exec_t)
+(call system_file (udev_exec_t))
+(context udev_exec_t (system_u object_r udev_exec_t (systemLow systemLow)))
+(filecon "/sbin/udevd" file udev_exec_t)
+(filecon "/usr/lib/udev(/.*)?" any udev_exec_t)
+
+(type udevadm_exec_t)
+(call system_file (udevadm_exec_t))
+(context udevadm_exec_t (system_u object_r udevadm_exec_t (systemLow systemLow)))
+(filecon "/usr/bin/udevadm" file udevadm_exec_t)
+(filecon "/sbin/udevadm" symlink udevadm_exec_t)
+(allow init_t udevadm_exec_t (file (execute_no_trans)))
+
+(type udev_rules_t)
+(call system_file (udev_rules_t))
+(filecon "/usr/lib/udev/rules.d(/.*)?" any (system_u object_r udev_rules_t (systemLow systemLow)))
+
+(type udev_conf_t)
+(call system_file (udev_conf_t))
+(filecon "/usr/etc(/.*)?" any (system_u object_r udev_conf_t (systemLow systemLow)))
+(allow udev_conf_t filesystems (filesystem (associate)))
+
+(type udev_t)
+(call system_service (udev_t))
+(allow udev_t udev_exec_t (file (entrypoint execute_no_trans)))
+
+; TODO: other module locations? Special label?
+(allow udev_t lib_t (system (module_load)))
+
+(allow udev_t self (capability (
+    audit_write
+    chown
+    dac_override
+    dac_read_search
+    fowner
+    fsetid
+    mknod
+    net_admin
+    net_raw
+    setgid
+    setuid
+    sys_admin
+    sys_module
+    sys_nice
+    sys_ptrace
+    sys_rawio
+    sys_resource
+    sys_tty_config
+)))
+
+(type udev_socket_t)
+(call system_socket (udev_socket_t))
+(typetransition udev_t run_t sock_file udev_socket_t)
+; udevadm called by machined in its context
+(allow init_t udev_t (unix_stream_socket (connectto)))
+
+; Device subsystems, labeled by udev rules
+(type block_device_t)
+(call protected_device (block_device_t))
+(type hidraw_device_t)
+(call device (hidraw_device_t))
+(type tty_device_t)
+(call protected_device (tty_device_t))
+(type rtc_device_t)
+(call device (rtc_device_t))
+(type mtd_device_t)
+(call protected_device (mtd_device_t))
+(type wdt_device_t)
+(call protected_device (wdt_device_t))
+(type misc_device_t)
+(call device (misc_device_t))
+(type tpm_device_t)
+(call device (tpm_device_t))
+(type drm_device_t)
+(call device (drm_device_t))
+(type tun_device_t)
+(call device (tun_device_t))
+(type v4l_device_t)
+(call device (v4l_device_t))
+(type mem_device_t)
+(call device (mem_device_t))
+(type kmsg_device_t)
+(call device (kmsg_device_t))
+(type kvm_device_t)
+(call device (kvm_device_t))
+(type random_device_t)
+(call device (random_device_t))
+(type ptp_device_t)
+(call device (ptp_device_t))
+
+; modprobe called by kernel or udev
+(type modprobe_exec_t)
+(call system_file (modprobe_exec_t))
+(filecon "/sbin/modprobe" file (system_u object_r modprobe_exec_t (systemLow systemLow)))
+(allow kernel_t self (capability (dac_override mknod)))
+(allow kernel_t modprobe_exec_t (file (execute_no_trans)))
+(allow udev_t modprobe_exec_t (file (execute_no_trans)))
+
+(allow udev_t kernel_t (key (search)))

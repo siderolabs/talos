@@ -1,0 +1,183 @@
+; Pod (CRI) containerd
+(type pod_containerd_t)
+(call client_process (pod_containerd_t))
+(allow pod_containerd_t containerd_exec_t (file (entrypoint execute_no_trans)))
+(allow init_t pod_containerd_t (process (transition)))
+
+(type pod_containerd_socket_t)
+(call system_socket (pod_containerd_socket_t))
+(typetransition pod_containerd_t run_t sock_file pod_containerd_socket_t)
+
+(type pod_containerd_tmpfs_t)
+(call filesystem (pod_containerd_tmpfs_t))
+(context pod_containerd_tmpfs_t (system_u object_r pod_containerd_tmpfs_t (systemLow systemLow)))
+(typetransition pod_containerd_t tmpfs_t dir pod_containerd_tmpfs_t)
+(typetransition pod_containerd_t tmpfs_t file pod_containerd_tmpfs_t)
+(allow pod_containerd_tmpfs_t tmpfs_t (filesystem (associate)))
+(allow pod_processes pod_containerd_tmpfs_t (fs_classes (all)))
+
+; runc_cloned
+; TODO: maybe transition to the container domain here?
+(allow pod_containerd_t pod_containerd_tmpfs_t (file (execute_no_trans)))
+
+(allow pod_containerd_t self (user_namespace (create)))
+(allow pod_containerd_t self (capability2 (perfmon bpf)))
+(allow pod_containerd_t self (unix_stream_socket (connectto)))
+(allow init_t pod_containerd_t (unix_stream_socket (connectto)))
+
+(allow pod_containerd_t pod_processes (process2 (nnp_transition)))
+(allow pod_containerd_t pod_processes (process (transition)))
+(allow pod_containerd_t self (key (view read write search link setattr create)))
+(allow pod_containerd_t pod_processes (key (view read write search link setattr create)))
+(allow pod_containerd_t self (capability (
+    chown
+    dac_override
+    dac_read_search
+    fowner
+    fsetid
+    kill
+    mknod
+    net_admin
+    net_bind_service
+    net_raw
+    setfcap
+    setgid
+    setpcap
+    setuid
+    sys_admin
+    sys_chroot
+    sys_ptrace
+    sys_resource
+)))
+
+(type pod_t)
+(call pod_process (pod_t))
+; TODO: What if container is started not from ephemeral_t?
+(typetransition pod_containerd_t ephemeral_t process pod_t)
+(allow pod_t ephemeral_t (file (entrypoint execute_no_trans)))
+
+(type etcd_t)
+(call pod_process (etcd_t))
+; FIXME: insecure as anyone with access to the pod containerd may obtain this domain
+(allow etcd_t ephemeral_t (file (entrypoint)))
+
+(type etcd_pki_t)
+(call protected_file (etcd_pki_t))
+(allow etcd_pki_t tmpfs_t (filesystem (associate)))
+; FIXME: constrain to only stuff for etcd
+(allow etcd_t etcd_pki_t (fs_classes (ro)))
+
+; access procfs
+(allow pod_processes any_processes (fs_classes (ro)))
+(allow pod_processes any_processes (process (
+    getattr
+    getcap
+    getpgid
+    getrlimit
+    getsched
+    getsession
+)))
+(allow pod_processes sysfs_t (fs_classes (ro)))
+(allow pod_processes device_t (fs_classes (ro)))
+(allow pod_processes tun_device_t (fs_classes (rw)))
+
+(allow pod_processes pod_containerd_t (fd (use)))
+(allow pod_processes pod_containerd_t (fifo_file (open ioctl read write append)))
+
+(allow pod_processes self (unix_stream_socket (connectto)))
+; TODO: restrict?
+; FIXME: classmap
+(allow pod_processes self (capability (
+    audit_write
+    chown
+    dac_override
+    dac_read_search
+    fowner
+    fsetid
+    ipc_lock
+    mknod
+    net_admin
+    net_bind_service
+    net_broadcast
+    net_raw
+    setfcap
+    setgid
+    setpcap
+    setuid
+    sys_admin
+    sys_chroot
+    sys_nice
+    sys_ptrace
+    sys_rawio
+    sys_resource
+)))
+(allow pod_processes self (cap_userns (
+    audit_write
+    chown
+    dac_override
+    dac_read_search
+    fowner
+    fsetid
+    ipc_lock
+    mknod
+    net_admin
+    net_bind_service
+    net_broadcast
+    net_raw
+    setfcap
+    setgid
+    setpcap
+    setuid
+    sys_admin
+    sys_chroot
+    sys_nice
+    sys_ptrace
+    sys_rawio
+    sys_resource
+)))
+(allow pod_processes self (capability2 (audit_read bpf block_suspend perfmon wake_alarm)))
+(allow pod_processes self (cap2_userns (audit_read bpf block_suspend perfmon wake_alarm)))
+
+; kube-proxy demands
+; TODO: specifically /proc/sys/net
+(allow pod_processes proc_sysctl_t (fs_classes (rw)))
+; comm="loopback"
+(allow pod_processes nsfs_t (fs_classes (ro)))
+; flannel
+; FIXME: specifics, protect kubelet config with staic pods and other importants
+(allow pod_processes etc_t (fs_classes (rw)))
+; flannel
+(allow pod_processes init_t (fd (use)))
+; flannel
+; FIXME: specifics
+(allow pod_processes run_t (fs_classes (rw)))
+; used in networking
+(allow pod_processes kernel_t (fd (use)))
+; kube-controller
+(allow pod_processes cgroup_t (fs_classes (ro)))
+
+(type kube_apiserver_config_t)
+(call protected_file (kube_apiserver_config_t))
+(allow kube_apiserver_config_t tmpfs_t (filesystem (associate)))
+(type kube_scheduler_config_t)
+(call protected_file (kube_scheduler_config_t))
+(allow kube_scheduler_config_t tmpfs_t (filesystem (associate)))
+(type kube_apiserver_secret_t)
+(call protected_file (kube_apiserver_secret_t))
+(allow kube_apiserver_secret_t tmpfs_t (filesystem (associate)))
+(type kube_controller_manager_secret_t)
+(call protected_file (kube_controller_manager_secret_t))
+(allow kube_controller_manager_secret_t tmpfs_t (filesystem (associate)))
+(type kube_scheduler_secret_t)
+(call protected_file (kube_scheduler_secret_t))
+(allow kube_scheduler_secret_t tmpfs_t (filesystem (associate)))
+
+(typeattribute kube_secret_files)
+(typeattributeset kube_secret_files kube_apiserver_config_t)
+(typeattributeset kube_secret_files kube_scheduler_config_t)
+(typeattributeset kube_secret_files kube_apiserver_secret_t)
+(typeattributeset kube_secret_files kube_controller_manager_secret_t)
+(typeattributeset kube_secret_files kube_scheduler_secret_t)
+
+; FIXME: add context for kube services
+(allow pod_processes kube_secret_files (fs_classes (rw)))

@@ -577,6 +577,9 @@ COPY --from=depmod-arm64 /build/lib/modules /lib/modules
 # The rootfs target provides the Talos rootfs.
 FROM build AS rootfs-base-amd64
 COPY --link --from=pkg-fhs / /rootfs
+RUN mkdir /rootfs/selinux
+RUN mkdir -p /rootfs/etc/selinux/talos
+COPY --link --from=pkg-ca-certificates / /rootfs
 COPY --link --from=pkg-apparmor-amd64 / /rootfs
 COPY --link --from=pkg-cryptsetup-amd64 / /rootfs
 COPY --link --from=pkg-containerd-amd64 / /rootfs
@@ -628,6 +631,7 @@ COPY --chmod=0644 hack/containerd.toml /rootfs/etc/containerd/config.toml
 COPY --chmod=0644 hack/cri-containerd.toml /rootfs/etc/cri/containerd.toml
 COPY --chmod=0644 hack/cri-plugin.part /rootfs/etc/cri/conf.d/00-base.part
 COPY --chmod=0644 hack/udevd/80-net-name-slot.rules /rootfs/usr/lib/udev/rules.d/
+COPY --chmod=0644 hack/udevd/xx-selinux.rules /rootfs/usr/lib/udev/rules.d/
 COPY --chmod=0644 hack/lvm.conf /rootfs/etc/lvm/lvm.conf
 RUN <<END
     ln -s /usr/share/zoneinfo/Etc/UTC /rootfs/etc/localtime
@@ -638,9 +642,14 @@ RUN <<END
     ln -s /etc/ssl /rootfs/usr/local/share/ca-certificates
     ln -s /etc/ssl /rootfs/etc/ca-certificates
 END
+COPY ./selinux /rootfs/etc/selinux/talos/cil
+COPY ./file_contexts /rootfs/etc/selinux/talos/
+COPY ./policy.33 /rootfs/etc/selinux/talos/
 
 FROM build AS rootfs-base-arm64
 COPY --link --from=pkg-fhs / /rootfs
+RUN mkdir /rootfs/selinux
+RUN mkdir -p /rootfs/etc/selinux/talos
 COPY --link --from=pkg-apparmor-arm64 / /rootfs
 COPY --link --from=pkg-cryptsetup-arm64 / /rootfs
 COPY --link --from=pkg-containerd-arm64 / /rootfs
@@ -707,17 +716,35 @@ FROM rootfs-base-${TARGETARCH} AS rootfs-base
 RUN find /rootfs -print0 \
     | xargs -0r touch --no-dereference --date="@${SOURCE_DATE_EPOCH}"
 
-FROM rootfs-base-arm64 AS rootfs-squashfs-arm64
+FROM rootfs-base-arm64 AS rootfs-reproducibility-arm64
 ARG ZSTD_COMPRESSION_LEVEL
 RUN find /rootfs -print0 \
     | xargs -0r touch --no-dereference --date="@${SOURCE_DATE_EPOCH}"
-RUN mksquashfs /rootfs /rootfs.sqsh -all-root -noappend -comp zstd -Xcompression-level ${ZSTD_COMPRESSION_LEVEL} -no-progress
+# FIXME: install fakeroot via tools
+FROM fedora AS fedora-squashfs-arm64
+RUN dnf install -y fakeroot policycoreutils squashfs-tools
 
-FROM rootfs-base-amd64 AS rootfs-squashfs-amd64
+FROM fedora-squashfs-arm64 AS rootfs-squashfs-arm64
+ARG ZSTD_COMPRESSION_LEVEL
+COPY ./file_contexts /file_contexts
+COPY ./hack/labeled-squashfs.sh /
+COPY --from=rootfs-reproducibility-arm64 /rootfs /rootfs
+RUN fakeroot /labeled-squashfs.sh /rootfs /rootfs.sqsh ${ZSTD_COMPRESSION_LEVEL}
+
+FROM rootfs-base-amd64 AS rootfs-reproducibility-amd64
 ARG ZSTD_COMPRESSION_LEVEL
 RUN find /rootfs -print0 \
     | xargs -0r touch --no-dereference --date="@${SOURCE_DATE_EPOCH}"
-RUN mksquashfs /rootfs /rootfs.sqsh -all-root -noappend -comp zstd -Xcompression-level ${ZSTD_COMPRESSION_LEVEL} -no-progress
+# FIXME: install fakeroot via tools
+FROM fedora AS fedora-squashfs-amd64
+RUN dnf install -y fakeroot policycoreutils squashfs-tools
+
+FROM fedora-squashfs-amd64 AS rootfs-squashfs-amd64
+ARG ZSTD_COMPRESSION_LEVEL
+COPY ./file_contexts /file_contexts
+COPY ./hack/labeled-squashfs.sh /
+COPY --from=rootfs-reproducibility-amd64 /rootfs /rootfs
+RUN fakeroot /labeled-squashfs.sh /rootfs /rootfs.sqsh ${ZSTD_COMPRESSION_LEVEL}
 
 FROM scratch AS squashfs-arm64
 COPY --from=rootfs-squashfs-arm64 /rootfs.sqsh /

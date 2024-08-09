@@ -8,6 +8,7 @@ option go_package = "github.com/siderolabs/talos/pkg/machinery/api/resource/defi
 message EtcFileSpecSpec {
   bytes contents = 1;
   uint32 mode = 2;
+  string selinux_label = 3;
 }
 
 // EtcFileStatusSpec describes status of rendered secrets.

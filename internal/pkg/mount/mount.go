@@ -441,15 +441,35 @@ func (p *Point) Repair() error {
 }
 
 func mount(p *Point) (err error) {
-	return unix.Mount(p.source, p.target, p.fstype, p.flags, p.data)
+	err = unix.Mount(p.source, p.target, p.fstype, p.flags, p.data)
+	if err != nil {
+		return
+	}
+
+	if p.Options.SelinuxLabel != "" {
+		fmt.Printf("relabeling %s to %s\n", p.target, p.Options.SelinuxLabel)
+		err = unix.Setxattr(p.target, "security.selinux", []byte(p.Options.SelinuxLabel), 0)
+	}
+
+	return
 }
 
 func unmount(p *Point) error {
 	return SafeUnmount(context.Background(), p.Logger, p.target)
 }
 
-func share(p *Point) error {
-	return unix.Mount("", p.target, "", unix.MS_SHARED|unix.MS_REC, "")
+func share(p *Point) (err error) {
+	err = unix.Mount("", p.target, "", unix.MS_SHARED|unix.MS_REC, "")
+	if err != nil {
+		return
+	}
+
+	if p.Options.SelinuxLabel != "" {
+		fmt.Printf("relabeling share %s to %s\n", p.target, p.Options.SelinuxLabel)
+		err = unix.Setxattr(p.target, "security.selinux", []byte(p.Options.SelinuxLabel), 0)
+	}
+
+	return
 }
 
 func overlay(p *Point) error {
@@ -481,6 +501,14 @@ func overlay(p *Point) error {
 		return fmt.Errorf("error creating overlay mount to %s: %w", p.target, err)
 	}
 
+	if p.Options.SelinuxLabel != "" {
+		fmt.Printf("relabeling overlay %s to %s\n", p.target, p.Options.SelinuxLabel)
+
+		if err := unix.Setxattr(p.target, "security.selinux", []byte(p.Options.SelinuxLabel), 0); err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
 
@@ -488,6 +516,14 @@ func readonlyOverlay(p *Point) error {
 	opts := fmt.Sprintf("lowerdir=%s", p.source)
 	if err := unix.Mount("overlay", p.target, "overlay", p.flags, opts); err != nil {
 		return fmt.Errorf("error creating overlay mount to %s: %w", p.target, err)
+	}
+
+	if p.Options.SelinuxLabel != "" {
+		fmt.Printf("relabeling ro overlay %s to %s\n", p.target, p.Options.SelinuxLabel)
+
+		if err := unix.Setxattr(p.target, "security.selinux", []byte(p.Options.SelinuxLabel), 0); err != nil {
+			return err
+		}
 	}
 
 	return nil

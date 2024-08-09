@@ -31,6 +31,7 @@ import (
 	"github.com/gopacket/gopacket/afpacket"
 	multierror "github.com/hashicorp/go-multierror"
 	"github.com/nberlee/go-netstat/netstat"
+	"github.com/pkg/xattr"
 	"github.com/prometheus/procfs"
 	"github.com/rs/xid"
 	"github.com/siderolabs/gen/xslices"
@@ -831,11 +832,24 @@ func (s *Server) List(req *machine.ListRequest, obj machine.MachineService_ListS
 	}
 
 	for fi := range files {
+		xattrs := []*machine.Xattr{}
+
+		if req.ReportXattrs {
+			if list, err := xattr.List(fi.FullPath); err == nil {
+				for _, attr := range list {
+					if data, err := xattr.Get(fi.FullPath, attr); err == nil {
+						xattrs = append(xattrs, &machine.Xattr{Name: attr, Data: data})
+					}
+				}
+			}
+		}
+
 		if fi.Error != nil {
 			err = obj.Send(&machine.FileInfo{
 				Name:         fi.FullPath,
 				RelativeName: fi.RelPath,
 				Error:        fi.Error.Error(),
+				Xattrs:       xattrs,
 			})
 		} else {
 			err = obj.Send(&machine.FileInfo{
@@ -848,6 +862,7 @@ func (s *Server) List(req *machine.ListRequest, obj machine.MachineService_ListS
 				Link:         fi.Link,
 				Uid:          fi.FileInfo.Sys().(*syscall.Stat_t).Uid,
 				Gid:          fi.FileInfo.Sys().(*syscall.Stat_t).Gid,
+				Xattrs:       xattrs,
 			})
 		}
 

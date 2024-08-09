@@ -24,6 +24,7 @@ import (
 	debug "github.com/siderolabs/go-debug"
 	"github.com/siderolabs/grpc-proxy/proxy"
 	"golang.org/x/sync/errgroup"
+	"golang.org/x/sys/unix"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
@@ -155,6 +156,10 @@ func apidMain() error {
 	)
 	if err != nil {
 		return fmt.Errorf("error creating listner: %w", err)
+	}
+
+	if err := unix.Setxattr(constants.APISocketPath, "security.selinux", []byte("system_u:object_r:apid_socket_t:s0"), 0); err != nil {
+		return err
 	}
 
 	networkServer := func() *grpc.Server {

@@ -1,0 +1,121 @@
+(typeattribute common_files)
+(macro common_file ((type ARG1))
+    (roletype object_r ARG1)
+    (typeattributeset common_files ARG1)
+)
+
+(typeattribute protected_files)
+(macro protected_file ((type ARG1))
+    (roletype object_r ARG1)
+    (typeattributeset protected_files ARG1)
+)
+
+(typeattribute system_files)
+(macro system_file ((type ARG1))
+    (roletype object_r ARG1)
+    (typeattributeset system_files ARG1)
+)
+
+(typeattribute system_socket_files)
+(macro system_socket ((type ARG1))
+    (roletype object_r ARG1)
+    (typeattributeset system_socket_files ARG1)
+)
+
+(allow system_socket_files tmpfs_t (filesystem (associate)))
+
+(typeattribute device_files)
+(macro device ((type ARG1))
+    (roletype object_r ARG1)
+    (typeattributeset device_files ARG1)
+)
+
+(typeattribute protected_device_files)
+(macro protected_device ((type ARG1))
+    (roletype object_r ARG1)
+    (typeattributeset protected_device_files ARG1)
+)
+
+(typeattribute any_device_files)
+(typeattributeset any_device_files device_t)
+(typeattributeset any_device_files device_files)
+(typeattributeset any_device_files protected_device_files)
+
+(typeattribute any_files)
+(typeattributeset any_files filesystems)
+(typeattributeset any_files common_files)
+(typeattributeset any_files protected_files)
+(typeattributeset any_files system_files)
+(typeattributeset any_files system_socket_files)
+(typeattributeset any_files any_device_files)
+
+(allow any_files self (filesystem (associate)))
+(allow device_files device_t (filesystem (associate)))
+(allow protected_device_files device_t (filesystem (associate)))
+
+(typeattribute unconfined_files)
+(typeattributeset unconfined_files tmpfs_t)
+(typeattributeset unconfined_files ephemeral_t)
+(typeattributeset unconfined_files common_files)
+(typeattributeset unconfined_files device_files)
+
+(typeattribute filesystems)
+(macro filesystem ((type ARG1))
+    (roletype object_r ARG1)
+    (typeattributeset filesystems ARG1)
+)
+
+(allow filesystems self (filesystem (associate)))
+(allow filesystems fs_t (filesystem (associate)))
+
+(typeattribute system_services)
+(macro system_service ((type ARG1))
+    (roletype system_r ARG1)
+    (typeattributeset system_services ARG1)
+)
+
+(typeattribute system_container_processes)
+(macro system_container_process ((type ARG1))
+    (roletype system_r ARG1)
+    (typeattributeset system_container_processes ARG1)
+)
+
+(typeattribute client_processes)
+(macro client_process ((type ARG1))
+    (roletype client_r ARG1)
+    (typeattributeset client_processes ARG1)
+)
+
+(typeattribute pod_processes)
+(macro pod_process ((type ARG1))
+    (roletype client_r ARG1)
+    (typeattributeset pod_processes ARG1)
+)
+
+(typeattribute any_processes)
+(typeattributeset any_processes kernel_t)
+(typeattributeset any_processes init_t)
+(typeattributeset any_processes system_services)
+(typeattributeset any_processes system_container_processes)
+(typeattributeset any_processes client_processes)
+(typeattributeset any_processes pod_processes)
+
+(allow any_processes unconfined_files (fs_classes (rw)))
+(allow any_processes self (fs_classes (rw)))
+(allow pod_t pod_t (fs_classes (rw)))
+
+(typeattribute system_processes)
+(typeattributeset system_processes kernel_t)
+(typeattributeset system_processes init_t)
+(typeattributeset system_processes system_services)
+(typeattributeset system_processes client_processes)
+
+(typeattribute any_files_and_processes)
+(typeattributeset any_files_and_processes any_files)
+(typeattributeset any_files_and_processes any_processes)
+
+; TODO: constrain more
+(allow system_processes any_files_and_processes (fs_classes (full)))
+; All spawned by init need to use fd of parent
+(allow system_services init_t (fd (use)))
+(allow client_processes init_t (fd (use)))

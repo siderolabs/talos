@@ -85,6 +85,7 @@ var lsCmd = &cobra.Command{
 				Recurse:        recursionDepth > 1 || recurse,
 				RecursionDepth: recursionDepth,
 				Types:          reqTypes,
+				ReportXattrs:   long,
 			})
 			if err != nil {
 				return fmt.Errorf("error fetching logs: %s", err)
@@ -117,7 +118,7 @@ var lsCmd = &cobra.Command{
 			w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
 			defer w.Flush() //nolint:errcheck
 
-			fmt.Fprintln(w, "NODE\tMODE\tUID\tGID\tSIZE(B)\tLASTMOD\tNAME")
+			fmt.Fprintln(w, "NODE\tMODE\tUID\tGID\tSIZE(B)\tLASTMOD\tLABEL\tNAME")
 
 			return helpers.ReadGRPCStream(stream, func(info *machineapi.FileInfo, node string, multipleNodes bool) error {
 				if info.Error != "" {
@@ -148,13 +149,25 @@ var lsCmd = &cobra.Command{
 					}
 				}
 
-				fmt.Fprintf(w, "%s\t%s\t%d\t%d\t%s\t%s\t%s\n",
+				label := ""
+				if info.Xattrs != nil {
+					for _, l := range info.Xattrs {
+						if l.Name == "security.selinux" {
+							label = string(l.Data)
+
+							break
+						}
+					}
+				}
+
+				fmt.Fprintf(w, "%s\t%s\t%d\t%d\t%s\t%s\t%s\t%s\n",
 					node,
 					os.FileMode(info.Mode).String(),
 					info.Uid,
 					info.Gid,
 					size,
 					timestampFormatted,
+					label,
 					display,
 				)
 

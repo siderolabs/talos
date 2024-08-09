@@ -1,0 +1,106 @@
+(type init_exec_t)
+(call system_file (init_exec_t))
+(context init_exec_t (system_u object_r init_exec_t (systemLow systemLow)))
+(filecon "/sbin/init" file init_exec_t)
+(filecon "/sbin/poweroff" any init_exec_t)
+(filecon "/sbin/shutdown" any init_exec_t)
+(filecon "/sbin/wrapperd" any init_exec_t)
+(filecon "/sbin/dashboard" any init_exec_t)
+
+(type init_t)
+(roletype system_r init_t)
+(allow kernel_t init_t (process (transition)))
+(allow init_t init_exec_t (file (entrypoint execute_no_trans)))
+
+(allow init_t kernel_t (fd (use)))
+(allow init_t kernel_t (system (
+    ipc_info
+    module_load
+    module_request
+    syslog_console
+    syslog_mod
+    syslog_read
+)))
+(allow init_t self (capability (
+    audit_control
+    audit_write
+    chown
+    dac_override
+    dac_read_search
+    fowner
+    fsetid
+    ipc_lock
+    ipc_owner
+    kill
+    lease
+    linux_immutable
+    mknod
+    net_admin
+    net_bind_service
+    net_broadcast
+    net_raw
+    setfcap
+    setgid
+    setpcap
+    setuid
+    sys_admin
+    sys_boot
+    sys_chroot
+    sys_module
+    sys_nice
+    sys_pacct
+    sys_ptrace
+    sys_rawio
+    sys_resource
+    sys_time
+    sys_tty_config
+)))
+(allow init_t self (cap_userns (
+    audit_control
+    audit_write
+    chown
+    dac_override
+    dac_read_search
+    fowner
+    fsetid
+    ipc_lock
+    ipc_owner
+    kill
+    lease
+    linux_immutable
+    mknod
+    net_admin
+    net_bind_service
+    net_broadcast
+    net_raw
+    setfcap
+    setgid
+    setpcap
+    setuid
+    sys_admin
+    sys_boot
+    sys_chroot
+    sys_module
+    sys_nice
+    sys_pacct
+    sys_ptrace
+    sys_rawio
+    sys_resource
+    sys_time
+    sys_tty_config
+)))
+(allow init_t self (capability2 (syslog)))
+
+(allow init_t self (unix_stream_socket (connectto)))
+
+(allow init_t system_services (process (transition)))
+; Should not occur unless misconfigured by machined
+(type unconfined_service_t)
+(call system_service (unconfined_service_t))
+
+; xfs_growfs
+; FIXME: add a label to files executable by init
+(allow init_t bin_t (file (execute_no_trans)))
+
+; Used during reboot probably
+(allow init_t apid_t (unix_stream_socket (connectto)))

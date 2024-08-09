@@ -19,6 +19,7 @@ import (
 	"time"
 
 	"golang.org/x/sync/errgroup"
+	"golang.org/x/sys/unix"
 )
 
 // DBusBroker implements simplified D-Bus broker which allows to connect
@@ -48,8 +49,16 @@ func NewBroker(serviceSocketPath, clientSocketPath string) (*DBusBroker, error) 
 		return nil, err
 	}
 
+	if err = unix.Setxattr(serviceSocketPath, "security.selinux", []byte("system_u:object_r:dbus_service_socket_t:s0"), 0); err != nil {
+		return nil, err
+	}
+
 	broker.listenClient, err = net.Listen("unix", clientSocketPath)
 	if err != nil {
+		return nil, err
+	}
+
+	if err = unix.Setxattr(clientSocketPath, "security.selinux", []byte("system_u:object_r:dbus_client_socket_t:s0"), 0); err != nil {
 		return nil, err
 	}
 

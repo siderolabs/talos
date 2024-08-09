@@ -15,12 +15,13 @@ import (
 // PseudoMountPoints returns the mountpoints required to boot the system.
 func PseudoMountPoints() (mountpoints *Points, err error) {
 	pseudo := NewMountPoints()
-	pseudo.Set("dev", NewMountPoint("devtmpfs", "/dev", "devtmpfs", unix.MS_NOSUID, "mode=0755"))
+	pseudo.Set("dev", NewMountPoint("devtmpfs", "/dev", "devtmpfs", unix.MS_NOSUID, "mode=0755,seclabel"))
 	pseudo.Set("proc", NewMountPoint("proc", "/proc", "proc", unix.MS_NOSUID|unix.MS_NOEXEC|unix.MS_NODEV, ""))
-	pseudo.Set("sys", NewMountPoint("sysfs", "/sys", "sysfs", 0, ""))
-	pseudo.Set("run", NewMountPoint("tmpfs", "/run", "tmpfs", unix.MS_NOSUID|unix.MS_NOEXEC|unix.MS_RELATIME, "mode=755"))
-	pseudo.Set("system", NewMountPoint("tmpfs", "/system", "tmpfs", 0, "mode=755"))
-	pseudo.Set("tmp", NewMountPoint("tmpfs", "/tmp", "tmpfs", unix.MS_NOSUID|unix.MS_NOEXEC|unix.MS_NODEV, "size=64M,mode=755"))
+	pseudo.Set("sys", NewMountPoint("sysfs", "/sys", "sysfs", 0, "seclabel"))
+	pseudo.Set("run", NewMountPoint("tmpfs", "/run", "tmpfs", unix.MS_NOSUID|unix.MS_NOEXEC|unix.MS_RELATIME, "mode=755,seclabel"))
+	pseudo.Set("system", NewMountPoint("tmpfs", "/system", "tmpfs", 0, "mode=755,seclabel"))
+	pseudo.Set("tmp", NewMountPoint("tmpfs", "/tmp", "tmpfs", unix.MS_NOSUID|unix.MS_NOEXEC|unix.MS_NODEV, "size=64M,mode=755,seclabel"))
+	pseudo.Set("selinuxfs", NewMountPoint("selinuxfs", "/selinux", "selinuxfs", unix.MS_NOSUID|unix.MS_NOEXEC|unix.MS_RELATIME, ""))
 
 	return pseudo, nil
 }
@@ -28,9 +29,9 @@ func PseudoMountPoints() (mountpoints *Points, err error) {
 // PseudoSubMountPoints returns the mountpoints required to boot the system.
 func PseudoSubMountPoints() (mountpoints *Points, err error) {
 	pseudo := NewMountPoints()
-	pseudo.Set("devshm", NewMountPoint("tmpfs", "/dev/shm", "tmpfs", unix.MS_NOSUID|unix.MS_NOEXEC|unix.MS_NODEV|unix.MS_RELATIME, ""))
-	pseudo.Set("devpts", NewMountPoint("devpts", "/dev/pts", "devpts", unix.MS_NOSUID|unix.MS_NOEXEC, "ptmxmode=000,mode=620,gid=5"))
-	pseudo.Set("hugetlb", NewMountPoint("hugetlbfs", "/dev/hugepages", "hugetlbfs", unix.MS_NOSUID|unix.MS_NODEV, ""))
+	pseudo.Set("devshm", NewMountPoint("tmpfs", "/dev/shm", "tmpfs", unix.MS_NOSUID|unix.MS_NOEXEC|unix.MS_NODEV|unix.MS_RELATIME, "seclabel"))
+	pseudo.Set("devpts", NewMountPoint("devpts", "/dev/pts", "devpts", unix.MS_NOSUID|unix.MS_NOEXEC, "ptmxmode=000,mode=620,gid=5,seclabel"))
+	pseudo.Set("hugetlb", NewMountPoint("hugetlbfs", "/dev/hugepages", "hugetlbfs", unix.MS_NOSUID|unix.MS_NODEV, "seclabel"))
 	pseudo.Set("securityfs", NewMountPoint("securityfs", "/sys/kernel/security", "securityfs", unix.MS_NOSUID|unix.MS_NOEXEC|unix.MS_NODEV|unix.MS_RELATIME, ""))
 	pseudo.Set("tracefs", NewMountPoint("securityfs", "/sys/kernel/tracing", "tracefs", unix.MS_NOSUID|unix.MS_NOEXEC|unix.MS_NODEV, ""))
 

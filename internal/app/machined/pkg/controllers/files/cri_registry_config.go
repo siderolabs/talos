@@ -119,6 +119,7 @@ func (ctrl *CRIRegistryConfigController) Run(ctx context.Context, r controller.R
 
 				spec.Contents = criRegistryContents
 				spec.Mode = 0o600
+				spec.SelinuxLabel = "system_u:object_r:k8s_conf_t:s0"
 
 				return nil
 			}); err != nil {

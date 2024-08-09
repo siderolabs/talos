@@ -1,0 +1,83 @@
+(type kubelet_t)
+(call pod_process (kubelet_t))
+; FIXME: insecure as anyone with access to the pod containerd may obtain this domain
+(allow kubelet_t ephemeral_t (file (entrypoint execute_no_trans)))
+
+; procfs access
+(allow kubelet_t any_processes (fs_classes (ro)))
+
+; Manage cgroups
+(allow kubelet_t cgroup_t (fs_classes (rw)))
+
+; D-Bus socket used for shutdown notification, owned by machined
+(allow kubelet_t dbus_client_socket_t (sock_file (append getattr open write)))
+(allow kubelet_t init_t (unix_stream_socket (connectto getattr)))
+
+; D-Bus socket used for shutdown notification, owned by machined
+(allow kubelet_t pod_containerd_socket_t (sock_file (append getattr open write)))
+(allow kubelet_t pod_containerd_t (unix_stream_socket (connectto getattr)))
+
+; Read misc kernel properties
+(allow kubelet_t proc_sysctl_t (fs_classes (ro)))
+
+(allow kubelet_t self (capability (
+    chown dac_override dac_read_search fowner fsetid kill net_admin net_raw sys_ptrace sys_resource
+)))
+; Just a permission to have the capability
+; Using ptrace(2) requires process(ptrace)
+(allow kubelet_t self (cap_userns (sys_ptrace)))
+(allow kubelet_t self (capability2 (syslog)))
+
+; Manage filesystem quotas and mounts
+(allow kubelet_t filesystems (filesystem (
+    associate
+    getattr
+    mount
+    quotaget
+    quotamod
+    relabelfrom
+    relabelto
+    remount
+    unmount
+    watch
+)))
+(allow kubelet_t run_t (fs_classes (full)))
+
+; pipe to machined
+(allow kubelet_t init_t (fd (use)))
+(allow kubelet_t init_t (fifo_file (write)))
+
+; syslog
+(allow kubelet_t kernel_t (system (syslog_read)))
+
+; TODO: constrain
+(allow kubelet_t any_device_files (fs_classes (rw)))
+(allow kubelet_t sysfs_t (fs_classes (ro)))
+(allow kubelet_t securityfs_t (fs_classes (ro)))
+; TODO: modules as a separate class
+(allow kubelet_t lib_t (fs_classes (ro)))
+
+(allow kubelet_t kernel_t (fifo_file (write)))
+(allow kubelet_t kernel_t (unix_stream_socket (connectto)))
+
+; TODO: ensure all these
+; mounts := []specs.Mount{
+; 	{Type: "bind", Destination: "/dev", Source: "/dev", Options: []string{"rbind", "rshared", "rw"}},
+; 	{Type: "sysfs", Destination: "/sys", Source: "/sys", Options: []string{"bind", "ro"}},
+; 	{Type: "securityfs", Destination: "/sys/kernel/security", Source: "/sys/kernel/security", Options: []string{"bind", "ro"}},
+; 	{Type: "bind", Destination: constants.CgroupMountPath, Source: constants.CgroupMountPath, Options: []string{"rbind", "rshared", "rw"}},
+; 	{Type: "bind", Destination: "/lib/modules", Source: "/lib/modules", Options: []string{"bind", "ro"}},
+; 	{Type: "bind", Destination: "/etc/kubernetes", Source: "/etc/kubernetes", Options: []string{"bind", "rshared", "rw"}},
+; 	{Type: "bind", Destination: constants.KubeletCredentialProviderBinDir, Source: constants.KubeletCredentialProviderBinDir, Options: []string{"bind", "ro"}},
+; 	{Type: "bind", Destination: "/etc/nfsmount.conf", Source: "/etc/nfsmount.conf", Options: []string{"bind", "ro"}},
+; 	{Type: "bind", Destination: "/etc/machine-id", Source: "/etc/machine-id", Options: []string{"bind", "ro"}},
+; 	{Type: "bind", Destination: "/etc/os-release", Source: "/etc/os-release", Options: []string{"bind", "ro"}},
+; 	{Type: "bind", Destination: constants.PodResolvConfPath, Source: constants.PodResolvConfPath, Options: []string{"bind", "ro"}},
+; 	{Type: "bind", Destination: "/etc/cni", Source: "/etc/cni", Options: []string{"rbind", "rshared", "rw"}},
+; 	{Type: "bind", Destination: "/usr/libexec/kubernetes", Source: "/usr/libexec/kubernetes", Options: []string{"rbind", "rshared", "rw"}},
+; 	{Type: "bind", Destination: "/var/run", Source: "/run", Options: []string{"rbind", "rshared", "rw"}},
+; 	{Type: "bind", Destination: "/var/lib/containerd", Source: "/var/lib/containerd", Options: []string{"rbind", "rshared", "rw"}},
+; 	{Type: "bind", Destination: "/var/lib/kubelet", Source: "/var/lib/kubelet", Options: []string{"rbind", "rshared", "rw"}},
+; 	{Type: "bind", Destination: "/var/log/containers", Source: "/var/log/containers", Options: []string{"rbind", "rshared", "rw"}},
+; 	{Type: "bind", Destination: "/var/log/pods", Source: "/var/log/pods", Options: []string{"rbind", "rshared", "rw"}},
+; }

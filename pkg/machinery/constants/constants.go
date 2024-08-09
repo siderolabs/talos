@@ -277,17 +277,32 @@ const (
 	// KubernetesAPIServerSecretsDir defines directory with kube-apiserver secrets.
 	KubernetesAPIServerSecretsDir = KubebernetesStaticSecretsDir + "/" + "kube-apiserver"
 
+	// KubernetesAPIServerSecretsDirSELinuxLabel defines SELinux label for the directory with kube-apiserver secrets.
+	KubernetesAPIServerSecretsDirSELinuxLabel = "system_u:object_r:kube_apiserver_secret_t:s0"
+
 	// KubernetesAPIServerConfigDir defines directory with kube-apiserver configs.
 	KubernetesAPIServerConfigDir = KubebernetesStaticConfigDir + "/" + "kube-apiserver"
+
+	// KubernetesAPIServerConfigDirSELinuxLabel defines SELinux label for the directory with kube-apiserver configs.
+	KubernetesAPIServerConfigDirSELinuxLabel = "system_u:object_r:kube_apiserver_config_t:s0"
 
 	// KubernetesControllerManagerSecretsDir defines ephemeral directory with kube-controller-manager secrets.
 	KubernetesControllerManagerSecretsDir = KubebernetesStaticSecretsDir + "/" + "kube-controller-manager"
 
+	// KubernetesControllerManagerSecretsDirSELinuxLabel defines SELinux label for the ephemeral directory with kube-controller-manager secrets.
+	KubernetesControllerManagerSecretsDirSELinuxLabel = "system_u:object_r:kube_controller_manager_secret_t:s0"
+
 	// KubernetesSchedulerSecretsDir defines ephemeral directory with kube-scheduler secrets.
 	KubernetesSchedulerSecretsDir = KubebernetesStaticSecretsDir + "/" + "kube-scheduler"
 
+	// KubernetesSchedulerSecretsDirSELinuxLabel defines SELinux label for the ephemeral directory with kube-scheduler secrets.
+	KubernetesSchedulerSecretsDirSELinuxLabel = "system_u:object_r:kube_scheduler_secret_t:s0"
+
 	// KubernetesSchedulerConfigDir defines ephemeral directory with kube-scheduler configs.
 	KubernetesSchedulerConfigDir = KubebernetesStaticConfigDir + "/" + "kube-scheduler"
+
+	// KubernetesSchedulerConfigDirSELinuxLabel defines SELinux label for the ephemeral directory with kube-scheduler configs.
+	KubernetesSchedulerConfigDirSELinuxLabel = "system_u:object_r:kube_scheduler_config_t:s0"
 
 	// KubernetesAPIServerRunUser defines UID to the API Server.
 	KubernetesAPIServerRunUser = 65534
@@ -420,6 +435,9 @@ const (
 
 	// EtcdPKIPath is the path to the etcd PKI directory.
 	EtcdPKIPath = "/system/secrets/etcd"
+
+	// EtcdPKISELinuxLabel is the SELinux label for the etcd PKI directory.
+	EtcdPKISELinuxLabel = "system_u:object_r:etcd_pki_t:s0"
 
 	// EtcdDataPath is the path where etcd stores its' data.
 	EtcdDataPath = "/var/lib/etcd"
@@ -669,14 +687,26 @@ const (
 	// CgroupSystemRuntime is the cgroup name for containerd runtime processes.
 	CgroupSystemRuntime = CgroupSystem + "/runtime"
 
+	// SelinuxLabelSystemRuntime is the SELinux label for containerd runtime processes.
+	SelinuxLabelSystemRuntime = "system_u:system_r:sys_containerd_t:s0"
+
 	// CgroupApid is the cgroup name for apid runtime processes.
 	CgroupApid = CgroupSystem + "/apid"
+
+	// SelinuxLabelApid is the SELinux label for apid runtime processes.
+	SelinuxLabelApid = "system_u:system_r:apid_t:s0"
 
 	// CgroupTrustd is the cgroup name for trustd runtime processes.
 	CgroupTrustd = CgroupSystem + "/trustd"
 
+	// SelinuxLabelTrustd is the SELinux label for trustd runtime processes.
+	SelinuxLabelTrustd = "system_u:system_r:trustd_t:s0"
+
 	// CgroupUdevd is the cgroup name for udevd runtime processes.
 	CgroupUdevd = CgroupSystem + "/udevd"
+
+	// SelinuxLabelUdevd is the SELinux label for udevd runtime processes.
+	SelinuxLabelUdevd = "system_u:system_r:udev_t:s0"
 
 	// CgroupExtensions is the cgroup name for system extension processes.
 	CgroupExtensions = CgroupSystem + "/extensions"
@@ -684,8 +714,14 @@ const (
 	// CgroupDashboard is the cgroup name for dashboard process.
 	CgroupDashboard = CgroupSystem + "/dashboard"
 
+	// SelinuxLabelDashboard is the SELinux label for dashboard process.
+	SelinuxLabelDashboard = "system_u:system_r:dashboard_t:s0"
+
 	// CgroupPodRuntime is the cgroup name for kubernetes containerd runtime processes.
 	CgroupPodRuntime = "/podruntime/runtime"
+
+	// SelinuxLabelPodRuntime is the SELinux label for kubernetes containerd runtime processes.
+	SelinuxLabelPodRuntime = "client_u:client_r:pod_containerd_t:s0"
 
 	// CgroupPodRuntimeReservedMemory is the hard memory protection for the cri runtime processes.
 	CgroupPodRuntimeReservedMemory = 128 * 1024 * 1024
@@ -693,8 +729,14 @@ const (
 	// CgroupEtcd is the cgroup name for etcd process.
 	CgroupEtcd = "/podruntime/etcd"
 
+	// SELinuxLabelEtcd is the SELinux label for etcd process.
+	SELinuxLabelEtcd = "client_u:client_r:etcd_t:s0"
+
 	// CgroupKubelet is the cgroup name for kubelet process.
 	CgroupKubelet = "/podruntime/kubelet"
+
+	// SelinuxLabelKubelet is the SELinux label for kubelet process.
+	SelinuxLabelKubelet = "client_u:client_r:kubelet_t:s0"
 
 	// CgroupKubeletReservedMemory is the hard memory protection for the kubelet processes.
 	CgroupKubeletReservedMemory = 64 * 1024 * 1024
