@@ -282,7 +282,8 @@ We can utilize a job pattern run arbitrary logic during bootstrap time.
 We can leverage this to our advantage to install Cilium by using an inline manifest as shown in the example below:
 
 ``` yaml
- inlineManifests:
+cluster:
+  inlineManifests:
     - name: cilium-install
       contents: |
         ---
@@ -356,17 +357,43 @@ We can leverage this to our advantage to install Cilium by using an inline manif
                       fieldPath: status.podIP
                 - name: KUBERNETES_SERVICE_PORT
                   value: "6443"
+                volumeMounts:
+                - name: cilium-install
+                  mountPath: /tmp/values.yaml
+                  subPath: values.yaml
+                  readOnly: true
                 command:
                   - cilium
                   - install
-                  - --set ipam.mode=kubernetes
-                  - --set kubeProxyReplacement=true
-                  - --set securityContext.capabilities.ciliumAgent="{CHOWN,KILL,NET_ADMIN,NET_RAW,IPC_LOCK,SYS_ADMIN,SYS_RESOURCE,DAC_OVERRIDE,FOWNER,SETGID,SETUID}"
-                  - --set securityContext.capabilities.cleanCiliumState="{NET_ADMIN,SYS_ADMIN,SYS_RESOURCE}"
-                  - --set cgroup.autoMount.enabled=false
-                  - --set cgroup.hostRoot=/sys/fs/cgroup
-                  - --set k8sServiceHost=localhost
-                  - --set k8sServicePort=7445
+                  - --values=/tmp/values.yaml
+              volumes:
+              - name: cilium-install
+                configMap:
+                  name: cilium-install
+                  items:
+                  - key: values.yaml
+                    path: values.yaml
+        ---
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          namespace: kube-system
+          name: cilium-install
+        data:
+          values.yaml: |
+            ipam:
+              mode: kubernetes
+            kubeProxyReplacement: true
+            securityContext:
+              capabilities:
+                ciliumAgent: [CHOWN, KILL, NET_ADMIN, NET_RAW, IPC_LOCK, SYS_ADMIN, SYS_RESOURCE, DAC_OVERRIDE, FOWNER, SETGID, SETUID]
+                cleanCiliumState: [NET_ADMIN, SYS_ADMIN, SYS_RESOURCE]
+            cgroup:
+              autoMount:
+                enabled: false
+              hostRoot: /sys/fs/cgroup
+            k8sServiceHost: localhost
+            k8sServicePort: 7445
 ```
 
 Because there is no CNI present at installation time the kubernetes.default.svc cannot be used to install Cilium, to overcome this limitation we'll utilize the host network connection to connect back to itself with 'hostNetwork: true' in tandem with the environment variables KUBERNETES_SERVICE_PORT and KUBERNETES_SERVICE_HOST.
