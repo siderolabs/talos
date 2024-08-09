@@ -308,6 +308,25 @@ func TestMerge(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "unstructed with delete marker",
+			left: Unstructured{
+				"a": "v",
+				"b": []any{
+					"c",
+					"d",
+				},
+				"c": "x",
+			},
+			right: Unstructured{
+				"a": "$delete",
+				"b": "$delete",
+				"d": "$delete",
+			},
+			expected: Unstructured{
+				"c": "x",
+			},
+		},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
 			err := merge.Merge(tt.left, tt.right)

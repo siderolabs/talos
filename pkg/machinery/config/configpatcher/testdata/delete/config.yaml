@@ -1,0 +1,5 @@
+version: v1alpha1
+machine:
+  nodeLabels:
+    foo: bar
+    bogus: something

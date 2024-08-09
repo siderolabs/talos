@@ -1,0 +1,8 @@
+version: v1alpha1
+machine:
+    type: ""
+    token: ""
+    certSANs: []
+    nodeLabels:
+        foo: bar
+cluster: null
