@@ -75,9 +75,9 @@ DEEPCOPY_VERSION ?= v0.5.6
 # renovate: datasource=go depName=github.com/siderolabs/importvet
 IMPORTVET_VERSION ?= v0.2.0
 # renovate: datasource=npm depName=markdownlint-cli
-MARKDOWNLINTCLI_VERSION ?= 0.40.0
+MARKDOWNLINTCLI_VERSION ?= 0.41.0
 # renovate: datasource=npm depName=textlint
-TEXTLINT_VERSION ?= 14.0.4
+TEXTLINT_VERSION ?= 14.0.5
 # renovate: datasource=npm depName=textlint-filter-rule-comments
 TEXTLINT_FILTER_RULE_COMMENTS_VERSION ?= 1.2.2
 # renovate: datasource=npm depName=textlint-rule-one-sentence-per-line
