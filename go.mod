@@ -23,7 +23,7 @@ replace (
 
 	// forked go-yaml that introduces RawYAML interface, which can be used to populate YAML fields using bytes
 	// which are then encoded as a valid YAML blocks with proper indentiation
-	gopkg.in/yaml.v3 => github.com/unix4ever/yaml v0.0.0-20220527175918-f17b0f05cf2c
+	gopkg.in/yaml.v3 => github.com/unix4ever/yaml/v2 v2.4.0
 )
 
 // Kubernetes dependencies sharing the same version.
@@ -31,7 +31,7 @@ require (
 	k8s.io/api v0.31.0-rc.1
 	k8s.io/apimachinery v0.31.0-rc.1
 	k8s.io/apiserver v0.31.0-rc.1
-	k8s.io/client-go v0.31.0-rc.1
+	k8s.io/client-go v11.0.0+incompatible
 	k8s.io/component-base v0.31.0-rc.1
 	k8s.io/cri-api v0.31.0-rc.1
 	k8s.io/kube-scheduler v0.31.0-rc.1
