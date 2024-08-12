@@ -8,7 +8,7 @@ description: ""
 The simplest way to deploy Talos is by ensuring that all the remote components of the system (`talosctl`, the control plane nodes, and worker nodes) all have layer 2 connectivity.
 This is not always possible, however, so this page lays out the minimal network access that is required to configure and operate a talos cluster.
 
- > Note: These are the ports required for Talos specifically, and should be configured _in addition_ to the ports required by kuberenetes.
+ > Note: These are the ports required for Talos specifically, and should be configured _in addition_ to the ports required by kubernetes.
  See the [kubernetes docs](https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/install-kubeadm/#check-required-ports) for information on the ports used by kubernetes itself.
 
 ### Control plane node(s)
