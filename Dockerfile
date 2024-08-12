@@ -34,6 +34,8 @@ ARG PKG_APPARMOR
 ARG PKG_UTIL_LINUX
 ARG PKG_KMOD
 ARG PKG_KERNEL
+ARG PKG_CNI
+ARG PKG_FLANNEL_CNI
 ARG PKG_TALOSCTL_CNI_BUNDLE_INSTALL
 
 # Resolve package images using ${PKGS} to be used later in COPY --from=.
@@ -112,9 +114,31 @@ FROM --platform=arm64 ${PKG_UTIL_LINUX} AS pkg-util-linux-arm64
 FROM --platform=amd64 ${PKG_KMOD} AS pkg-kmod-amd64
 FROM --platform=arm64 ${PKG_KMOD} AS pkg-kmod-arm64
 
+FROM --platform=amd64 ${PKG_CNI} AS pkg-cni-amd64
+FROM --platform=arm64 ${PKG_CNI} AS pkg-cni-arm64
+
+FROM --platform=amd64 ${PKG_FLANNEL_CNI} AS pkg-flannel-cni-amd64
+FROM --platform=arm64 ${PKG_FLANNEL_CNI} AS pkg-flannel-cni-arm64
+
 FROM ${PKG_KERNEL} AS pkg-kernel
 FROM --platform=amd64 ${PKG_KERNEL} AS pkg-kernel-amd64
 FROM --platform=arm64 ${PKG_KERNEL} AS pkg-kernel-arm64
+
+# Strip CNI package.
+
+FROM scratch AS pkg-cni-stripped-amd64
+COPY --from=pkg-cni-amd64 /opt/cni/bin/bridge /opt/cni/bin/bridge
+COPY --from=pkg-cni-amd64 /opt/cni/bin/firewall /opt/cni/bin/firewall
+COPY --from=pkg-cni-amd64 /opt/cni/bin/host-local /opt/cni/bin/host-local
+COPY --from=pkg-cni-amd64 /opt/cni/bin/loopback /opt/cni/bin/loopback
+COPY --from=pkg-cni-amd64 /opt/cni/bin/portmap /opt/cni/bin/portmap
+
+FROM scratch AS pkg-cni-stripped-arm64
+COPY --from=pkg-cni-arm64 /opt/cni/bin/bridge /opt/cni/bin/bridge
+COPY --from=pkg-cni-arm64 /opt/cni/bin/firewall /opt/cni/bin/firewall
+COPY --from=pkg-cni-arm64 /opt/cni/bin/host-local /opt/cni/bin/host-local
+COPY --from=pkg-cni-arm64 /opt/cni/bin/loopback /opt/cni/bin/loopback
+COPY --from=pkg-cni-arm64 /opt/cni/bin/portmap /opt/cni/bin/portmap
 
 # Resolve package images using ${EXTRAS} to be used later in COPY --from=.
 
@@ -578,6 +602,8 @@ COPY --from=depmod-arm64 /build/lib/modules /lib/modules
 FROM build AS rootfs-base-amd64
 COPY --link --from=pkg-fhs / /rootfs
 COPY --link --from=pkg-apparmor-amd64 / /rootfs
+COPY --link --from=pkg-cni-stripped-amd64 / /rootfs
+COPY --link --from=pkg-flannel-cni-amd64 / /rootfs
 COPY --link --from=pkg-cryptsetup-amd64 / /rootfs
 COPY --link --from=pkg-containerd-amd64 / /rootfs
 COPY --link --from=pkg-dosfstools-amd64 / /rootfs
@@ -642,6 +668,8 @@ END
 FROM build AS rootfs-base-arm64
 COPY --link --from=pkg-fhs / /rootfs
 COPY --link --from=pkg-apparmor-arm64 / /rootfs
+COPY --link --from=pkg-cni-stripped-arm64 / /rootfs
+COPY --link --from=pkg-flannel-cni-arm64 / /rootfs
 COPY --link --from=pkg-cryptsetup-arm64 / /rootfs
 COPY --link --from=pkg-containerd-arm64 / /rootfs
 COPY --link --from=pkg-dosfstools-arm64 / /rootfs

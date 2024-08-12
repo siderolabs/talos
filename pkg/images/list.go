@@ -9,15 +9,13 @@ import (
 
 	"github.com/siderolabs/talos/pkg/machinery/config"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
-	"github.com/siderolabs/talos/pkg/machinery/version"
 )
 
 // Versions holds all the images (and their versions) that are used in Talos.
 type Versions struct {
-	Etcd       string
-	Flannel    string
-	FlannelCNI string
-	CoreDNS    string
+	Etcd    string
+	Flannel string
+	CoreDNS string
 
 	Kubelet               string
 	KubeAPIServer         string
@@ -42,7 +40,6 @@ func List(config config.Config) Versions {
 	images.Etcd = config.Cluster().Etcd().Image()
 	images.CoreDNS = config.Cluster().CoreDNS().Image()
 	images.Flannel = fmt.Sprintf("ghcr.io/siderolabs/flannel:%s", constants.FlannelVersion) // mirrored from docker.io/flannelcni/flannel
-	images.FlannelCNI = fmt.Sprintf("ghcr.io/siderolabs/install-cni:%s", version.ExtrasVersion)
 	images.Kubelet = config.Machine().Kubelet().Image()
 	images.KubeAPIServer = config.Cluster().APIServer().Image()
 	images.KubeControllerManager = config.Cluster().ControllerManager().Image()

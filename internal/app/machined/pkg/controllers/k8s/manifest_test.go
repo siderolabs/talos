@@ -108,9 +108,8 @@ var defaultManifestSpec = k8s.BootstrapManifestsConfigSpec{
 
 	DNSServiceIP: "192.168.0.1",
 
-	FlannelEnabled:  true,
-	FlannelImage:    "foo/bar",
-	FlannelCNIImage: "foo/bar",
+	FlannelEnabled: true,
+	FlannelImage:   "foo/bar",
 
 	PodSecurityPolicyEnabled: true,
 }

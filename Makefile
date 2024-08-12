@@ -20,7 +20,7 @@ ARTIFACTS := _out
 TOOLS ?= ghcr.io/siderolabs/tools:v1.8.0-alpha.0-8-ga764e8d
 
 PKGS_PREFIX ?= ghcr.io/siderolabs
-PKGS ?= v1.8.0-alpha.0-46-g124d35b
+PKGS ?= v1.8.0-alpha.0-49-g5f919c5
 EXTRAS ?= v1.8.0-alpha.0-5-g6f4a373
 
 KRES_IMAGE ?= ghcr.io/siderolabs/kres:latest
@@ -51,6 +51,8 @@ PKG_RUNC ?= $(PKGS_PREFIX)/runc:$(PKGS)
 PKG_XFSPROGS ?= $(PKGS_PREFIX)/xfsprogs:$(PKGS)
 PKG_UTIL_LINUX ?= $(PKGS_PREFIX)/util-linux:$(PKGS)
 PKG_KMOD ?= $(PKGS_PREFIX)/kmod:$(PKGS)
+PKG_CNI ?= $(PKGS_PREFIX)/cni:$(PKGS)
+PKG_FLANNEL_CNI ?= $(PKGS_PREFIX)/flannel-cni:$(PKGS)
 PKG_KERNEL ?= $(PKGS_PREFIX)/kernel:$(PKGS)
 PKG_TALOSCTL_CNI_BUNDLE_INSTALL ?= $(PKGS_PREFIX)/talosctl-cni-bundle-install:$(EXTRAS)
 
@@ -208,6 +210,8 @@ COMMON_ARGS += --build-arg=PKG_UTIL_LINUX=$(PKG_UTIL_LINUX)
 COMMON_ARGS += --build-arg=PKG_KMOD=$(PKG_KMOD)
 COMMON_ARGS += --build-arg=PKG_U_BOOT=$(PKG_U_BOOT)
 COMMON_ARGS += --build-arg=PKG_RASPBERYPI_FIRMWARE=$(PKG_RASPBERYPI_FIRMWARE)
+COMMON_ARGS += --build-arg=PKG_CNI=$(PKG_CNI)
+COMMON_ARGS += --build-arg=PKG_FLANNEL_CNI=$(PKG_FLANNEL_CNI)
 COMMON_ARGS += --build-arg=PKG_KERNEL=$(PKG_KERNEL)
 COMMON_ARGS += --build-arg=PKG_TALOSCTL_CNI_BUNDLE_INSTALL=$(PKG_TALOSCTL_CNI_BUNDLE_INSTALL)
 COMMON_ARGS += --build-arg=ABBREV_TAG=$(ABBREV_TAG)

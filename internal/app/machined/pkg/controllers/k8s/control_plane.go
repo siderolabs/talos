@@ -292,7 +292,6 @@ func NewControlPlaneBootstrapManifestsController() *ControlPlaneBootstrapManifes
 
 					FlannelEnabled:         cfgProvider.Cluster().Network().CNI().Name() == constants.FlannelCNI,
 					FlannelImage:           images.Flannel,
-					FlannelCNIImage:        images.FlannelCNI,
 					FlannelExtraArgs:       cfgProvider.Cluster().Network().CNI().Flannel().ExtraArgs(),
 					FlannelKubeServiceHost: flannelKubeServiceHost,
 					FlannelKubeServicePort: flannelKubeServicePort,

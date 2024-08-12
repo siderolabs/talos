@@ -197,14 +197,6 @@ spec:
           name: cni
         - mountPath: /etc/kube-flannel/
           name: flannel-cfg
-      - command:
-        - /install-cni.sh
-        image: '{{ .FlannelCNIImage }}'
-        name: install-cni
-        resources: {}
-        volumeMounts:
-        - mountPath: /host/opt/cni/bin/
-          name: cni-plugin
       priorityClassName: system-node-critical
       serviceAccountName: flannel
       tolerations:

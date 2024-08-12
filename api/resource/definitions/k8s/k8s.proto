@@ -54,7 +54,6 @@ message BootstrapManifestsConfigSpec {
   string dns_service_i_pv6 = 10;
   bool flannel_enabled = 11;
   string flannel_image = 12;
-  string flannel_cni_image = 13;
   bool pod_security_policy_enabled = 14;
   bool talos_api_service_enabled = 15;
   repeated string flannel_extra_args = 16;

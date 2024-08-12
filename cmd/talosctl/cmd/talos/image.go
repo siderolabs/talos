@@ -135,7 +135,6 @@ var imageDefaultCmd = &cobra.Command{
 		}))
 
 		fmt.Printf("%s\n", images.Flannel)
-		fmt.Printf("%s\n", images.FlannelCNI)
 		fmt.Printf("%s\n", images.CoreDNS)
 		fmt.Printf("%s\n", images.Etcd)
 		fmt.Printf("%s\n", images.KubeAPIServer)

@@ -2112,7 +2112,6 @@ BootstrapManifestsConfigSpec is configuration for bootstrap manifests.
 | dns_service_i_pv6 | [string](#string) |  |  |
 | flannel_enabled | [bool](#bool) |  |  |
 | flannel_image | [string](#string) |  |  |
-| flannel_cni_image | [string](#string) |  |  |
 | pod_security_policy_enabled | [bool](#bool) |  |  |
 | talos_api_service_enabled | [bool](#bool) |  |  |
 | flannel_extra_args | [string](#string) | repeated |  |

@@ -19,7 +19,7 @@ preface = """\
         title = "Component Updates"
         description = """\
 Kubernetes: 1.31.0-rc.1
-Linux: 6.6.44
+Linux: 6.6.45
 containerd: 2.0.0-rc.3
 runc: 1.2.0-rc.2
 etcd: 3.5.15
@@ -157,6 +157,21 @@ default tag would point to slim image:
 
 * `v1.x.y` (default, slim)
 * `v1.x.y-fat` (fat)
+"""
+
+    [notes.cni]
+        title = "CNI Plugins"
+        description = """\
+Talos Linux now bundles by default the following standard CNI plugins:
+
+* `bridge`
+* `firewall`
+* `flannel`
+* `host-local`
+* `loopback`
+* `portmap`
+
+The Talos bundled Flannel manifest was simplified to remove the `install-cni` step.
 """
 
 [make_deps]

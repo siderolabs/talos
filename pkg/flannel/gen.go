@@ -221,17 +221,6 @@ var Template = []byte(`+"`", url)
 						},
 					},
 				},
-				{
-					Name:    "install-cni",
-					Image:   "{{ .FlannelCNIImage }}",
-					Command: []string{"/install-cni.sh"},
-					VolumeMounts: []corev1.VolumeMount{
-						{
-							Name:      "cni-plugin",
-							MountPath: "/host/opt/cni/bin/",
-						},
-					},
-				},
 			}
 
 			marshal(out, obj)
