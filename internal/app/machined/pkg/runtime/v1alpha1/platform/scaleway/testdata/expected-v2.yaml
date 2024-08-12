@@ -1,0 +1,64 @@
+addresses:
+    - address: 2001:111:222:3333::1/64
+      linkName: eth0
+      family: inet6
+      scope: global
+      flags: permanent
+      layer: platform
+links:
+    - name: eth0
+      logical: false
+      up: true
+      mtu: 0
+      kind: ""
+      type: netrom
+      layer: platform
+routes:
+    - family: inet4
+      dst: 169.254.42.42/32
+      src: ""
+      gateway: ""
+      outLinkName: eth0
+      table: main
+      priority: 1024
+      scope: link
+      type: unicast
+      flags: ""
+      protocol: static
+      layer: platform
+    - family: inet6
+      dst: ""
+      src: ""
+      gateway: fe80::dc00:ff:fe12:3456
+      outLinkName: eth0
+      table: main
+      priority: 2048
+      scope: global
+      type: unicast
+      flags: ""
+      protocol: static
+      layer: platform
+hostnames:
+    - hostname: scw-talos
+      domainname: ""
+      layer: platform
+resolvers: []
+timeServers: []
+operators:
+    - operator: dhcp4
+      linkName: eth0
+      requireUp: true
+      dhcp4:
+        routeMetric: 1024
+      layer: platform
+externalIPs:
+    - 11.22.222.222
+    - 2001:111:222:3333::1
+metadata:
+    platform: scaleway
+    hostname: scw-talos
+    region: zone-name
+    zone: zone-name-1
+    instanceType: DEV1-S
+    instanceId: 11111111-1111-1111-1111-111111111111
+    providerId: scaleway://instance/zone-name-1/11111111-1111-1111-1111-111111111111

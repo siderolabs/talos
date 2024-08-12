@@ -90,20 +90,30 @@ func (s *Scaleway) ParseMetadata(metadata *instance.Metadata) (*runtime.Platform
 		ConfigLayer: network.ConfigPlatform,
 	})
 
-	if metadata.IPv6.Address != "" {
-		bits, err := strconv.Atoi(metadata.IPv6.Netmask)
+	if metadata.IPv6.Address != "" || len(metadata.PublicIpsV6) > 0 {
+		address := metadata.IPv6.Address
+		netmask := metadata.IPv6.Netmask
+		gateway := metadata.IPv6.Gateway
+
+		if address == "" || netmask == "" || gateway == "" {
+			address = metadata.PublicIpsV6[0].Address
+			netmask = metadata.PublicIpsV6[0].Netmask
+			gateway = metadata.PublicIpsV6[0].Gateway
+		}
+
+		bits, err := strconv.Atoi(netmask)
 		if err != nil {
 			return nil, err
 		}
 
-		ip, err := netip.ParseAddr(metadata.IPv6.Address)
+		ip, err := netip.ParseAddr(address)
 		if err != nil {
 			return nil, err
 		}
 
 		addr := netip.PrefixFrom(ip, bits)
 
-		publicIPs = append(publicIPs, metadata.IPv6.Address)
+		publicIPs = append(publicIPs, address)
 		networkConfig.Addresses = append(networkConfig.Addresses,
 			network.AddressSpecSpec{
 				ConfigLayer: network.ConfigPlatform,
@@ -115,7 +125,7 @@ func (s *Scaleway) ParseMetadata(metadata *instance.Metadata) (*runtime.Platform
 			},
 		)
 
-		gw, err := netip.ParseAddr(metadata.IPv6.Gateway)
+		gw, err := netip.ParseAddr(gateway)
 		if err != nil {
 			return nil, err
 		}

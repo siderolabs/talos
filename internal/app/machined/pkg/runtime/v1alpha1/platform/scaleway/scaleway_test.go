@@ -17,24 +17,49 @@ import (
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/scaleway"
 )
 
-//go:embed testdata/metadata.json
-var rawMetadata []byte
+//go:embed testdata/metadata-v1.json
+var rawMetadataV1 []byte
 
-//go:embed testdata/expected.yaml
-var expectedNetworkConfig string
+//go:embed testdata/metadata-v2.json
+var rawMetadataV2 []byte
+
+//go:embed testdata/expected-v1.yaml
+var expectedNetworkConfigV1 string
+
+//go:embed testdata/expected-v2.yaml
+var expectedNetworkConfigV2 string
 
 func TestParseMetadata(t *testing.T) {
 	p := &scaleway.Scaleway{}
 
-	var metadata instance.Metadata
+	for _, tt := range []struct {
+		name     string
+		raw      []byte
+		expected string
+	}{
+		{
+			name:     "V1",
+			raw:      rawMetadataV1,
+			expected: expectedNetworkConfigV1,
+		},
+		{
+			name:     "V2",
+			raw:      rawMetadataV2,
+			expected: expectedNetworkConfigV2,
+		},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			var metadata instance.Metadata
 
-	require.NoError(t, json.Unmarshal(rawMetadata, &metadata))
+			require.NoError(t, json.Unmarshal(tt.raw, &metadata))
 
-	networkConfig, err := p.ParseMetadata(&metadata)
-	require.NoError(t, err)
+			networkConfig, err := p.ParseMetadata(&metadata)
+			require.NoError(t, err)
 
-	marshaled, err := yaml.Marshal(networkConfig)
-	require.NoError(t, err)
+			marshaled, err := yaml.Marshal(networkConfig)
+			require.NoError(t, err)
 
-	assert.Equal(t, expectedNetworkConfig, string(marshaled))
+			assert.Equal(t, tt.expected, string(marshaled))
+		})
+	}
 }
