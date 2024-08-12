@@ -243,11 +243,11 @@ function install_and_run_cilium_cni_tests {
 
   case "${WITH_KUBESPAN:-false}" in
     true)
-      CILIUM_NODE_ENCRYPTION=no
+      CILIUM_NODE_ENCRYPTION=false
       CILIUM_TEST_EXTRA_ARGS=("--test="!node-to-node-encryption"")
       ;;
     *)
-      CILIUM_NODE_ENCRYPTION=yes
+      CILIUM_NODE_ENCRYPTION=true
       CILIUM_TEST_EXTRA_ARGS=()
       ;;
   esac
@@ -281,11 +281,12 @@ function install_and_run_cilium_cni_tests {
 
   ${CILIUM_CLI} status --wait --wait-duration=10m
 
-  ${KUBECTL} delete ns --ignore-not-found cilium-test
+  # ref: https://github.com/cilium/cilium-cli/releases/tag/v0.16.14
+  ${KUBECTL} delete ns --ignore-not-found cilium-test-1
 
-  ${KUBECTL} create ns cilium-test
-  ${KUBECTL} label ns cilium-test pod-security.kubernetes.io/enforce=privileged
+  ${KUBECTL} create ns cilium-test-1
+  ${KUBECTL} label ns cilium-test-1 pod-security.kubernetes.io/enforce=privileged
 
   # --external-target added, as default 'one.one.one.one' is buggy, and CloudFlare status is of course "all healthy"
-  ${CILIUM_CLI} connectivity test --test-namespace cilium-test --external-target google.com "${CILIUM_TEST_EXTRA_ARGS[@]}"; ${KUBECTL} delete ns cilium-test
+  ${CILIUM_CLI} connectivity test --test-namespace cilium-test --external-target google.com --timeout=20m "${CILIUM_TEST_EXTRA_ARGS[@]}"; ${KUBECTL} delete ns cilium-test-1
 }
