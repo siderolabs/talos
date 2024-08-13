@@ -4,6 +4,7 @@ commit = "HEAD"
 project_name = "Talos"
 github_repo = "siderolabs/talos"
 match_deps = "^github.com/((talos-systems|siderolabs)/[a-zA-Z0-9-]+)$"
+ignore_deps = ["github.com/coredns/coredns"]
 
 # previous release
 previous = "v1.7.0"
