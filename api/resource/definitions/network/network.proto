@@ -183,6 +183,8 @@ message LinkStatusSpec {
   BondMasterSpec bond_master = 28;
   WireguardSpec wireguard = 29;
   bytes permanent_addr = 30;
+  map<string, string> features = 31;
+  map<string, bool> private_flags = 32;
 }
 
 // NfTablesAddressMatch describes the match on the IP address.

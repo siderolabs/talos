@@ -176,6 +176,8 @@ description: Talos gRPC API reference.
     - [LinkRefreshSpec](#talos.resource.definitions.network.LinkRefreshSpec)
     - [LinkSpecSpec](#talos.resource.definitions.network.LinkSpecSpec)
     - [LinkStatusSpec](#talos.resource.definitions.network.LinkStatusSpec)
+    - [LinkStatusSpec.FeaturesEntry](#talos.resource.definitions.network.LinkStatusSpec.FeaturesEntry)
+    - [LinkStatusSpec.PrivateFlagsEntry](#talos.resource.definitions.network.LinkStatusSpec.PrivateFlagsEntry)
     - [NfTablesAddressMatch](#talos.resource.definitions.network.NfTablesAddressMatch)
     - [NfTablesChainSpec](#talos.resource.definitions.network.NfTablesChainSpec)
     - [NfTablesClampMSS](#talos.resource.definitions.network.NfTablesClampMSS)
@@ -3266,6 +3268,40 @@ LinkStatusSpec describes status of rendered secrets.
 | bond_master | [BondMasterSpec](#talos.resource.definitions.network.BondMasterSpec) |  |  |
 | wireguard | [WireguardSpec](#talos.resource.definitions.network.WireguardSpec) |  |  |
 | permanent_addr | [bytes](#bytes) |  |  |
+| features | [LinkStatusSpec.FeaturesEntry](#talos.resource.definitions.network.LinkStatusSpec.FeaturesEntry) | repeated |  |
+| private_flags | [LinkStatusSpec.PrivateFlagsEntry](#talos.resource.definitions.network.LinkStatusSpec.PrivateFlagsEntry) | repeated |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.network.LinkStatusSpec.FeaturesEntry"></a>
+
+### LinkStatusSpec.FeaturesEntry
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| key | [string](#string) |  |  |
+| value | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.network.LinkStatusSpec.PrivateFlagsEntry"></a>
+
+### LinkStatusSpec.PrivateFlagsEntry
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| key | [string](#string) |  |  |
+| value | [bool](#bool) |  |  |
 
 
 

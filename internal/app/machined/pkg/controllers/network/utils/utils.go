@@ -7,10 +7,13 @@ package networkutils
 
 import (
 	"context"
+	"slices"
 
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
+	"github.com/safchain/ethtool"
+	"github.com/siderolabs/gen/maps"
 	"github.com/siderolabs/gen/optional"
 
 	"github.com/siderolabs/talos/pkg/machinery/resources/network"
@@ -63,4 +66,42 @@ func WaitForNetworkReady(ctx context.Context, r controller.Runtime, condition fu
 	r.QueueReconcile()
 
 	return nil
+}
+
+// FormatFeatures formats ethtool features.
+func FormatFeatures(features map[string]ethtool.FeatureState) map[string]string {
+	if features == nil {
+		return nil
+	}
+
+	keys := maps.Keys(features)
+	slices.Sort(keys)
+
+	out := make(map[string]string, len(keys))
+
+	for _, feature := range keys {
+		state := features[feature]
+
+		var value string
+
+		if state.Active {
+			value = "on"
+		} else {
+			value = "off"
+		}
+
+		if !state.Available || state.NeverChanged {
+			value += " [fixed]"
+		} else if state.Requested != state.Active {
+			if state.Requested {
+				value += " [requested on]"
+			} else {
+				value += " [requested off]"
+			}
+		}
+
+		out[feature] = value
+	}
+
+	return out
 }

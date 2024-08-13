@@ -99,6 +99,18 @@ func (o LinkStatusSpec) DeepCopy() LinkStatusSpec {
 		cp.BroadcastAddr = make([]byte, len(o.BroadcastAddr))
 		copy(cp.BroadcastAddr, o.BroadcastAddr)
 	}
+	if o.Features != nil {
+		cp.Features = make(map[string]string, len(o.Features))
+		for k2, v2 := range o.Features {
+			cp.Features[k2] = v2
+		}
+	}
+	if o.PrivateFlags != nil {
+		cp.PrivateFlags = make(map[string]bool, len(o.PrivateFlags))
+		for k2, v2 := range o.PrivateFlags {
+			cp.PrivateFlags[k2] = v2
+		}
+	}
 	if o.Wireguard.Peers != nil {
 		cp.Wireguard.Peers = make([]WireguardPeer, len(o.Wireguard.Peers))
 		copy(cp.Wireguard.Peers, o.Wireguard.Peers)
