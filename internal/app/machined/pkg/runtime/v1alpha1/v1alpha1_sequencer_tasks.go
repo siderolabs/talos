@@ -15,6 +15,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	goruntime "runtime"
 	"slices"
 	"strconv"
 	"strings"
@@ -64,6 +65,7 @@ import (
 	"github.com/siderolabs/talos/internal/pkg/partition"
 	"github.com/siderolabs/talos/internal/pkg/secureboot"
 	"github.com/siderolabs/talos/internal/pkg/secureboot/tpm2"
+	"github.com/siderolabs/talos/internal/zboot"
 	"github.com/siderolabs/talos/pkg/conditions"
 	"github.com/siderolabs/talos/pkg/images"
 	"github.com/siderolabs/talos/pkg/kernel/kspp"
@@ -2141,6 +2143,24 @@ func KexecPrepare(_ runtime.Sequence, data any) (runtime.TaskExecutionFunc, stri
 
 		defer kernel.Close() //nolint:errcheck
 
+		fd := int(kernel.Fd())
+
+		// on arm64 we need to extract the kernel from the zboot image if it's compressed
+		if goruntime.GOARCH == "arm64" {
+			var fileCloser io.Closer
+
+			fd, fileCloser, err = zboot.Extract(kernel)
+			if err != nil {
+				return err
+			}
+
+			defer func() {
+				if fileCloser != nil {
+					fileCloser.Close() //nolint:errcheck
+				}
+			}()
+		}
+
 		initrd, err := os.Open(initrdPath)
 		if err != nil {
 			return err
@@ -2150,7 +2170,7 @@ func KexecPrepare(_ runtime.Sequence, data any) (runtime.TaskExecutionFunc, stri
 
 		cmdline := strings.TrimSpace(defaultEntry.Cmdline)
 
-		if err = unix.KexecFileLoad(int(kernel.Fd()), int(initrd.Fd()), cmdline, 0); err != nil {
+		if err = unix.KexecFileLoad(fd, int(initrd.Fd()), cmdline, 0); err != nil {
 			switch {
 			case errors.Is(err, unix.ENOSYS):
 				log.Printf("kexec support is disabled in the kernel")
