@@ -245,3 +245,17 @@ Example:
 ```text
 talos.environment=http_proxy=http://proxy.example.com:8080 talos.environment=https_proxy=http://proxy.example.com:8080
 ```
+
+#### `talos.device.settle_time`
+
+The time in Go duration format to wait for devices to settle before starting the boot process.
+By default, Talos waits for `udevd` to scan and settle, but with some RAID controllers `udevd` might
+report settled devices before they are actually ready.
+Adding this kernel argument provides extra settle time on top of `udevd` settle time.
+The maximum value is `10m` (10 minutes).
+
+Example:
+
+```text
+talos.device.settle_time=3m
+```

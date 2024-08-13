@@ -662,11 +662,25 @@ func StartUdevd(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
 			return err
 		}
 
-		svc := &services.Udevd{}
+		var extraSettleTime time.Duration
+
+		settleTimeStr := procfs.ProcCmdline().Get(constants.KernelParamDeviceSettleTime).First()
+		if settleTimeStr != nil {
+			extraSettleTime, err = time.ParseDuration(*settleTimeStr)
+			if err != nil {
+				return fmt.Errorf("failed to parse %s: %w", constants.KernelParamDeviceSettleTime, err)
+			}
+
+			logger.Printf("extra settle time: %s", extraSettleTime)
+		}
+
+		svc := &services.Udevd{
+			ExtraSettleTime: extraSettleTime,
+		}
 
 		system.Services(r).LoadAndStart(svc)
 
-		ctx, cancel := context.WithTimeout(ctx, 5*time.Minute)
+		ctx, cancel := context.WithTimeout(ctx, 10*time.Minute)
 		defer cancel()
 
 		return system.WaitForService(system.StateEventUp, svc.ID(r)).Wait(ctx)

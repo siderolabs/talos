@@ -6,6 +6,7 @@ package services
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/siderolabs/go-cmd/pkg/cmd"
@@ -26,7 +27,10 @@ var _ system.HealthcheckedService = (*Udevd)(nil)
 // Udevd implements the Service interface. It serves as the concrete type with
 // the required methods.
 type Udevd struct {
-	triggered bool
+	ExtraSettleTime time.Duration
+
+	triggered        bool
+	extraSettleStart time.Time
 }
 
 // ID implements the Service interface.
@@ -96,6 +100,8 @@ func (c *Udevd) Runner(r runtime.Runtime) (runner.Runner, error) {
 }
 
 // HealthFunc implements the HealthcheckedService interface.
+//
+//nolint:gocyclo
 func (c *Udevd) HealthFunc(runtime.Runtime) health.Check {
 	return func(ctx context.Context) error {
 		// checking for the existence of the udev control socket is a faster way to check
@@ -107,7 +113,7 @@ func (c *Udevd) HealthFunc(runtime.Runtime) health.Check {
 
 		// udevadm trigger returns with an exit code of 0 even if udevd is not fully running,
 		// so running `udevadm control --reload` to ensure that udevd is fully initialized
-		// which returns an exit code of 2 if udevd is not running. This complementes the previous check
+		// which returns an exit code of 2 if udevd is not running. This complements the previous check
 		if _, err := cmd.RunContext(ctx, "/sbin/udevadm", "control", "--reload"); err != nil {
 			return err
 		}
@@ -128,8 +134,38 @@ func (c *Udevd) HealthFunc(runtime.Runtime) health.Check {
 		// `udevd trigger`, to prevent a race condition when a user specifies a path
 		// under `/dev/disk/*` in any disk definitions.
 		_, err := cmd.RunContext(ctx, "/sbin/udevadm", "settle", "--timeout=50") // timeout here should be less than health.Settings.Timeout
+		if err != nil {
+			return err
+		}
 
-		return err
+		// If we got to the point where everything is settled, and the healthcheck would report
+		// success, we start the extra settle timer.
+		if c.extraSettleStart.IsZero() {
+			c.extraSettleStart = time.Now()
+		}
+
+		// Wait for c.ExtraSettleTime before returning success (if configured).
+		if c.ExtraSettleTime <= 0 {
+			return nil
+		}
+
+		settleEnd := c.extraSettleStart.Add(c.ExtraSettleTime)
+
+		if time.Now().After(settleEnd) {
+			return nil
+		}
+
+		// Can we wait until the health check deadline?
+		if deadline, ok := ctx.Deadline(); ok {
+			// if the deadline is before the settleEnd, we should wait until the deadline
+			if settleEnd.Before(deadline) {
+				time.Sleep(time.Until(settleEnd))
+
+				return nil
+			}
+		}
+
+		return fmt.Errorf("waiting for udevd for extra settle timeout")
 	}
 }
 
