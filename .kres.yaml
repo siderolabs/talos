@@ -185,41 +185,13 @@ spec:
           releaseStep:
             baseDirectory: _out
             artifacts:
-              - akamai-amd64.raw.gz
-              - akamai-arm64.raw.gz
-              - aws-amd64.raw.zst
-              - aws-arm64.raw.zst
-              - azure-amd64.vhd.zst
-              - azure-arm64.vhd.zst
               - cloud-images.json
-              - digital-ocean-amd64.raw.gz
-              - digital-ocean-arm64.raw.gz
-              - exoscale-amd64.qcow2.zst
-              - exoscale-arm64.qcow2.zst
-              - gcp-amd64.raw.tar.gz
-              - gcp-arm64.raw.tar.gz
-              - hcloud-amd64.raw.zst
-              - hcloud-arm64.raw.zst
               - initramfs-amd64.xz
               - initramfs-arm64.xz
               - metal-amd64.iso
               - metal-arm64.iso
               - metal-amd64.raw.zst
               - metal-arm64.raw.zst
-              - nocloud-amd64.raw.zst
-              - nocloud-arm64.raw.zst
-              - opennebula-amd64.raw.zst
-              - opennebula-arm64.raw.zst
-              - openstack-amd64.raw.zst
-              - openstack-arm64.raw.zst
-              - oracle-amd64.qcow2.zst
-              - oracle-arm64.qcow2.zst
-              - scaleway-amd64.raw.zst
-              - scaleway-arm64.raw.zst
-              - sd-boot-amd64.efi
-              - sd-boot-arm64.efi
-              - sd-stub-amd64.efi
-              - sd-stub-arm64.efi
               - talosctl-cni-bundle-amd64.tar.gz
               - talosctl-cni-bundle-arm64.tar.gz
               - talosctl-darwin-amd64
@@ -230,14 +202,8 @@ spec:
               - talosctl-linux-arm64
               - talosctl-linux-armv7
               - talosctl-windows-amd64.exe
-              - upcloud-amd64.raw.zst
-              - upcloud-arm64.raw.zst
-              - vmware-amd64.ova
-              - vmware-arm64.ova
               - vmlinuz-amd64
               - vmlinuz-arm64
-              - vultr-amd64.raw.zst
-              - vultr-arm64.raw.zst
             generateChecksums: true
             releaseNotes: RELEASE_NOTES.md
     - name: e2e-iso

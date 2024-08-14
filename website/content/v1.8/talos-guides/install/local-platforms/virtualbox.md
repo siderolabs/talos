@@ -36,20 +36,18 @@ For manually installation and other platform please see the [talosctl installati
 
 ### Download ISO Image
 
-Download the ISO image from the Talos release page.
-You can download `metal-amd64.iso` via
-[github.com/siderolabs/talos/releases](https://github.com/siderolabs/talos/releases)
+Download the ISO image from [Image Factory](https://www.talos.dev/latest/talos-guides/install/boot-assets/#image-factory).
 
 ```bash
 mkdir -p _out/
-curl https://github.com/siderolabs/talos/releases/download/<version>/metal-<arch>.iso -L -o _out/metal-<arch>.iso
+curl https://factory.talos.dev/image/376567988ad370138ad8b2698212367b8edcb69b5fd68c80be1f2ec7d603b4ba/<version>/metal-<arch>.iso -L -o _out/metal-<arch>.iso
 ```
 
 For example version `{{< release >}}` for `linux` platform:
 
 ```bash
 mkdir -p _out/
-curl https://github.com/siderolabs/talos/releases/download/{{< release >}}/metal-amd64.iso -L -o _out/metal-amd64.iso
+curl https://factory.talos.dev/image/376567988ad370138ad8b2698212367b8edcb69b5fd68c80be1f2ec7d603b4ba/{{< release >}}/metal-amd64.iso -L -o _out/metal-amd64.iso
 ```
 
 ## Create VMs

@@ -129,10 +129,10 @@ Note that the role should be associated with the S3 bucket we created above.
 
 #### Create the Image Snapshot
 
-First, download the AWS image from a Talos release:
+First, download the AWS image from Image Factory:
 
 ```bash
-curl -L https://github.com/siderolabs/talos/releases/download/{{< release >}}/aws-amd64.raw.xz | xz -d > disk.raw
+curl -L https://factory.talos.dev/image/376567988ad370138ad8b2698212367b8edcb69b5fd68c80be1f2ec7d603b4ba/{{< release >}}/aws-amd64.raw.xz | xz -d > disk.raw
 ```
 
 Copy the RAW disk to S3 and import it as a snapshot:

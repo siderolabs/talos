@@ -4,7 +4,7 @@ description: "Booting Talos over the network on bare-metal with PXE."
 ---
 
 Talos can be installed on bare-metal using PXE service.
-There are two more detailed guides for PXE booting using [Matchbox]({{< relref "matchbox">}}) and [Digital Rebar]({{< relref "digital-rebar">}}).
+There are more detailed guides for PXE booting using [Matchbox]({{< relref "matchbox">}}).
 
 This guide describes generic steps for PXE booting Talos on bare-metal.
 

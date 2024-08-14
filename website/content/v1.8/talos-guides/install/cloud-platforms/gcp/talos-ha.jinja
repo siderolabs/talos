@@ -11,7 +11,7 @@ resources:
     - name: gcr.io/cloud-builders/curl
       args:
         - -fSLO
-        - https://github.com/siderolabs/talos/releases/download/{{ properties["talosVersion"] }}/gcp-amd64.tar.gz
+        - https://factory.talos.dev/image/376567988ad370138ad8b2698212367b8edcb69b5fd68c80be1f2ec7d603b4ba/{{ properties["talosVersion"] }}/gcp-amd64.raw.tar.gz
     - name: gcr.io/cloud-builders/gsutil
       args:
         - -m

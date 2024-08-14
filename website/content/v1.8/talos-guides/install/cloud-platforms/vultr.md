@@ -19,15 +19,17 @@ Make sure to follow installation and authentication instructions for the `vultr-
 First step is to make the Talos ISO available to Vultr by uploading the latest release of the ISO to the Vultr ISO server.
 
 ```bash
-vultr-cli iso create --url https://github.com/siderolabs/talos/releases/download/{{< release >}}/metal-amd64.iso
+vultr-cli iso create --url https://factory.talos.dev/image/376567988ad370138ad8b2698212367b8edcb69b5fd68c80be1f2ec7d603b4ba/{{< release >}}vultr-amd64.iso
 ```
 
-Make a note of the `ID` in the output, it will be needed later when creating the instances.
+Make a note of the `ID` in the output, it will be needed later when creating the instances.met
 
 #### PXE Booting via Image Factory
 
 Talos Linux can be PXE-booted on Vultr using [Image Factory]({{< relref "../../../learn-more/image-factory" >}}), using the `vultr` platform: e.g.
 `https://pxe.factory.talos.dev/pxe/376567988ad370138ad8b2698212367b8edcb69b5fd68c80be1f2ec7d603b4ba/{{< release >}}/vultr-amd64` (this URL references the default schematic and `amd64` architecture).
+
+Make a note of the `ID` in the output, it will be needed later when creating the instances.
 
 ### Create a Load Balancer
 

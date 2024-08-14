@@ -1,7 +1,7 @@
 ---
 title: "DigitalOcean"
 description: "Creating a cluster via the CLI on DigitalOcean."
-aliases: 
+aliases:
   - ../../../cloud-platforms/digitalocean
 ---
 
@@ -13,7 +13,7 @@ If you need more information on DigitalOcean specifics, please see the [official
 
 ### Create the Image
 
-Download the DigitalOcean image `digital-ocean-amd64.raw.gz` from the [latest Talos release](https://github.com/siderolabs/talos/releases/latest/).
+Download the DigitalOcean image `digital-ocean-amd64.raw.gz` from the [Image Factory](https://factory.talos.dev/image/376567988ad370138ad8b2698212367b8edcb69b5fd68c80be1f2ec7d603b4ba/{{< release >}}/digital-ocean-amd64.raw.gz).
 
 >Note: the minimum version of Talos required to support Digital Ocean is v1.3.3.
 

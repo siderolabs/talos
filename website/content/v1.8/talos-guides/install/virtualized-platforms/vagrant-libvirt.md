@@ -26,7 +26,7 @@ We will also configure a virtual IP address on Talos to achieve high-availabilit
 First, we download the latest `metal-amd64.iso` ISO from GitHub releases into the `/tmp` directory.
 
 ```bash
-wget --timestamping https://github.com/siderolabs/talos/releases/download/{{< release >}}/metal-amd64.iso -O /tmp/metal-amd64.iso
+wget --timestamping curl https://factory.talos.dev/image/376567988ad370138ad8b2698212367b8edcb69b5fd68c80be1f2ec7d603b4ba/{{< release >}}/metal-amd64.iso -O /tmp/metal-amd64.iso
 ```
 
 Create a `Vagrantfile` with the following contents:

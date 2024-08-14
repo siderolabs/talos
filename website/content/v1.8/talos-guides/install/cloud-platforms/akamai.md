@@ -16,7 +16,7 @@ Make sure to follow [installation](https://www.linode.com/docs/products/tools/cl
 
 ### Upload image
 
-Download the Akamai image `akamai-amd64.raw.gz` from the [latest Talos release](https://github.com/siderolabs/talos/releases/latest/).
+Download the Akamai image `akamai-amd64.raw.gz` from [Image Factory](https://factory.talos.dev/image/376567988ad370138ad8b2698212367b8edcb69b5fd68c80be1f2ec7d603b4ba/{{< release >}}/akamai-amd64.raw.gz).
 
 Upload the image
 

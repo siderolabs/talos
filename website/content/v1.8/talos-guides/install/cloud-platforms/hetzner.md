@@ -37,7 +37,7 @@ df
 
 # Download the Talos image
 cd /tmp
-wget -O /tmp/talos.raw.xz https://github.com/siderolabs/talos/releases/download/{{< release >}}/hcloud-amd64.raw.xz
+wget -O /tmp/talos.raw.xz https://factory.talos.dev/image/376567988ad370138ad8b2698212367b8edcb69b5fd68c80be1f2ec7d603b4ba/{{< release >}}/hcloud-amd64.raw.xz
 # Replace system
 xz -d -c /tmp/talos.raw.xz | dd of=/dev/sda && sync
 # shutdown the instance
@@ -87,7 +87,7 @@ variable "server_location" {
 }
 
 locals {
-  image = "https://github.com/siderolabs/talos/releases/download/${var.talos_version}/hcloud-${var.arch}.raw.xz"
+  image = "https://factory.talos.dev/image/376567988ad370138ad8b2698212367b8edcb69b5fd68c80be1f2ec7d603b4ba/${var.talos_version}/hcloud-${var.arch}.raw.xz"
 }
 
 source "hcloud" "talos" {

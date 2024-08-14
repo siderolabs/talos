@@ -64,7 +64,7 @@ variable "talos_version" {
 }
 
 locals {
-  image = "https://github.com/siderolabs/talos/releases/download/${var.talos_version}/upcloud-amd64.raw.xz"
+  image = "https://factory.talos.dev/image/376567988ad370138ad8b2698212367b8edcb69b5fd68c80be1f2ec7d603b4ba/${var.talos_version}/upcloud-amd64.raw.xz"
 }
 
 variable "username" {

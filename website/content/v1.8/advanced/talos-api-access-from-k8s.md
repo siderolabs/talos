@@ -55,7 +55,7 @@ spec:
             - sh
             - -c
             - |
-              wget -O /usr/local/bin/talosctl https://github.com/siderolabs/talos/releases/download/<talos version>/talosctl-linux-amd64
+              wget -O /usr/local/bin/talosctl https://github.com/siderolabs/talos/releases/download/{{< release >}}/talosctl-linux-amd64
               chmod +x /usr/local/bin/talosctl
               while true; talosctl -n 172.20.0.2 version; do sleep 1; done
 ```
@@ -92,7 +92,7 @@ spec:
         - sh
         - -c
         - |
-          wget -O /usr/local/bin/talosctl https://github.com/siderolabs/talos/releases/download/<talos version>/talosctl-linux-amd64
+          wget -O /usr/local/bin/talosctl https://github.com/siderolabs/talos/releases/download/{{< release >}}/talosctl-linux-amd64
           chmod +x /usr/local/bin/talosctl
           while true; talosctl -n 172.20.0.2 version; do sleep 1; done
         image: alpine:3

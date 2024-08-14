@@ -3,7 +3,7 @@ title: "Boot Assets"
 description: "Creating customized Talos boot assets, disk images, ISO and installer images."
 ---
 
-Talos Linux provides a set of pre-built images on the [release page](https://github.com/siderolabs/talos/releases/{{< release >}}), but these images
+Talos Linux provides boot images via [Image Factory](#image-factory), but these images
 can be customized further for a specific use case:
 
 * adding [system extensions]({{< relref "../configuration/system-extensions" >}})
