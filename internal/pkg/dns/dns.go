@@ -144,6 +144,10 @@ func (h *Handler) ServeDNS(ctx context.Context, wrt dns.ResponseWriter, msg *dns
 			break
 		}
 
+		if resp != nil && (resp.Rcode == dns.RcodeServerFailure || resp.Rcode == dns.RcodeRefused) {
+			continue
+		}
+
 		if ctx.Err() != nil || err == nil {
 			break
 		}
