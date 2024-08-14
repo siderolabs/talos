@@ -64,12 +64,20 @@ func TestDNS(t *testing.T) {
 			expectedCode: dnssrv.RcodeNameError,
 			errCheck:     check.NoError(),
 		},
+		{
+			// The first one will return SERVFAIL and the second will return REFUSED. We should try both.
+			name:         `should return "refused"`,
+			hostname:     "dnssec-failed.org",
+			nameservers:  []string{"1.1.1.1", "ns-1098.awsdns-09.org."},
+			expectedCode: dnssrv.RcodeRefused,
+			errCheck:     check.NoError(),
+		},
 	}
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			stop := newServer(t, test.nameservers...)
-			defer stop()
+			t.Cleanup(stop)
 
 			time.Sleep(10 * time.Millisecond)
 
@@ -81,8 +89,6 @@ func TestDNS(t *testing.T) {
 			}
 
 			t.Logf("r: %s", r)
-
-			stop()
 		})
 	}
 }
