@@ -10,7 +10,73 @@ aliases:
 Oracle Cloud at the moment does not have a Talos official image.
 So you can use [Bring Your Own Image (BYOI)](https://docs.oracle.com/en-us/iaas/Content/Compute/References/bringyourownimage.htm) approach.
 
-Once the image is uploaded, set the ```Boot volume type``` to ``Paravirtualized`` mode.
+Prepare an image for upload:
+
+1. Generate an image using [Image Factory](https://factory.talos.dev).
+
+2. Download the disk image artifact (e.g: https://factory.talos.dev/image/376567988ad370138ad8b2698212367b8edcb69b5fd68c80be1f2ec7d603b4ba/{{< release >}}/oracle-arm64.raw.xz)
+
+3. Define the image metadata file called `image_metadata.json`.
+   Example for an `arm64` deployment:
+
+   ```json
+   {
+       "version": 2,
+       "externalLaunchOptions": {
+           "firmware": "UEFI_64",
+           "networkType": "PARAVIRTUALIZED",
+           "bootVolumeType": "PARAVIRTUALIZED",
+           "remoteDataVolumeType": "PARAVIRTUALIZED",
+           "localDataVolumeType": "PARAVIRTUALIZED",
+           "launchOptionsSource": "PARAVIRTUALIZED",
+           "pvAttachmentVersion": 2,
+           "pvEncryptionInTransitEnabled": true,
+           "consistentVolumeNamingEnabled": true
+       },
+       "imageCapabilityData": null,
+       "imageCapsFormatVersion": null,
+       "operatingSystem": "Talos",
+       "operatingSystemVersion": "1.7.6",
+       "additionalMetadata": {
+           "shapeCompatibilities": [
+               {
+                   "internalShapeName": "VM.Standard.A1.Flex",
+                   "ocpuConstraints": null,
+                   "memoryConstraints": null
+               }
+           ]
+       }
+   }
+   ```
+
+4. Extract the xz or zst archive:
+
+   ```shell
+   xz --decompress ./oracle-arm64.raw.xz
+
+   # or
+
+   zstd --decompress ./oracle-arm64.raw.zst
+   ```
+
+5. Convert the image to a `qcow2` format (using [qemu](https://formulae.brew.sh/formula/qemu#default)):
+
+   ```shell
+   qemu-img convert -f raw -O qcow2 oracle-arm64.raw oracle-arm64.qcow2
+   ```
+
+6. Create an archive containing the image and metadata called `talos-oracle-arm64.oci`:
+
+   ```shell
+   tar zcf oracle-arm64.oci oracle-arm64.qcow2 image_metadata.json
+   ```
+
+7. Upload the image to a storage bucket.
+8. Create an image, using the *new* URL format for the storage bucket object.
+
+> Note: file names depends on configuration of deployment such as architecture, adjust accordingly.
+
+## Talos config
 
 OracleCloud has highly available NTP service, it can be enabled in Talos machine config with:
 
