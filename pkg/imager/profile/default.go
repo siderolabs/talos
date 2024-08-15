@@ -121,6 +121,18 @@ var Default = map[string]Profile{
 			},
 		},
 	},
+	"cloudstack": {
+		Platform:   "cloudstack",
+		SecureBoot: pointer.To(false),
+		Output: Output{
+			Kind:      OutKindImage,
+			OutFormat: OutFormatZSTD,
+			ImageOptions: &ImageOptions{
+				DiskSize:   DefaultRAWDiskSize,
+				DiskFormat: DiskFormatRaw,
+			},
+		},
+	},
 	"digital-ocean": {
 		Platform:   "digital-ocean",
 		SecureBoot: pointer.To(false),

@@ -194,6 +194,12 @@ The Talos bundled Flannel manifest was simplified to remove the `install-cni` st
 Talos Linux now supports a kernel command line argument `talos.device.settle_time=3m` to set the device extra settle timeout to workaround issues with broken drivers.
 """
 
+    [notes.platform]
+        title = "Platform Support"
+        description = """\
+Talos Linux now supports Apache CloudStack platform.
+"""
+
 [make_deps]
 
     [make_deps.tools]

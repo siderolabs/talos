@@ -18,6 +18,7 @@ import (
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/akamai"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/aws"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/azure"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/cloudstack"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/container"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/digitalocean"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/equinixmetal"
@@ -88,7 +89,7 @@ func NewPlatform(platform string) (p runtime.Platform, err error) {
 	return newPlatform(platform)
 }
 
-//nolint:gocyclo
+//nolint:gocyclo,cyclop
 func newPlatform(platform string) (p runtime.Platform, err error) {
 	switch platform {
 	case "akamai":
@@ -97,6 +98,8 @@ func newPlatform(platform string) (p runtime.Platform, err error) {
 		return aws.NewAWS()
 	case "azure":
 		p = &azure.Azure{}
+	case "cloudstack":
+		p = &cloudstack.Cloudstack{}
 	case "container":
 		p = &container.Container{}
 	case "digital-ocean":
