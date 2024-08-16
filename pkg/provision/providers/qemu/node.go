@@ -130,6 +130,7 @@ func (p *provisioner) createNode(state *vm.State, clusterReq provision.ClusterRe
 
 	launchConfig := LaunchConfig{
 		QemuExecutable: arch.QemuExecutable(),
+		Architecture:   arch.Architecture(),
 		DiskPaths:      diskPaths,
 		DiskDrivers: xslices.Map(nodeReq.Disks, func(disk *provision.Disk) string {
 			return disk.Driver

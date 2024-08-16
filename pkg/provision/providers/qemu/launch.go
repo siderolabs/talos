@@ -44,6 +44,7 @@ type LaunchConfig struct {
 	VCPUCount         int64
 	MemSize           int64
 	QemuExecutable    string
+	Architecture      string
 	KernelImagePath   string
 	InitrdPath        string
 	ISOPath           string
@@ -392,7 +393,12 @@ func launchVM(config *LaunchConfig) error {
 	machineArg := config.MachineType
 
 	if config.EnableKVM {
-		machineArg += ",accel=kvm,smm=on"
+		machineArg += ",accel=kvm"
+
+		// smm is not supported on aarch64
+		if Arch(config.QemuExecutable) == ArchAmd64 {
+			machineArg += ",smm=on"
+		}
 	}
 
 	args = append(args, "-machine", machineArg)

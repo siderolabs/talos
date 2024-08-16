@@ -74,7 +74,7 @@ type PFlash struct {
 func (arch Arch) PFlash(uefiEnabled bool, extraUEFISearchPaths []string) []PFlash {
 	switch arch {
 	case ArchArm64:
-		uefiSourcePaths := []string{"/usr/share/qemu-efi-aarch64/QEMU_EFI.fd", "/usr/share/OVMF/QEMU_EFI.fd"}
+		uefiSourcePaths := []string{"/usr/share/qemu-efi-aarch64/QEMU_EFI.fd", "/usr/share/OVMF/QEMU_EFI.fd", "/usr/share/edk2/aarch64/QEMU_EFI.fd"}
 		for _, p := range extraUEFISearchPaths {
 			uefiSourcePaths = append(uefiSourcePaths, filepath.Join(p, "QEMU_EFI.fd"))
 		}
@@ -177,4 +177,9 @@ func (arch Arch) QemuExecutable() string {
 	}
 
 	return ""
+}
+
+// Architecture returns the architecture.
+func (arch Arch) Architecture() string {
+	return string(arch)
 }
