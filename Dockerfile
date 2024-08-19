@@ -6,6 +6,7 @@ ARG TOOLS
 ARG PKGS
 ARG EXTRAS
 ARG INSTALLER_ARCH
+ARG DEBUG_TOOLS_SOURCE
 
 ARG PKGS_PREFIX
 ARG PKG_FHS
@@ -41,6 +42,8 @@ ARG PKG_KERNEL
 ARG PKG_CNI
 ARG PKG_FLANNEL_CNI
 ARG PKG_TALOSCTL_CNI_BUNDLE_INSTALL
+
+ARG DEBUG_TOOLS_SOURCE
 
 # Resolve package images using ${PKGS} to be used later in COPY --from=.
 
@@ -139,6 +142,29 @@ FROM --platform=arm64 ${PKG_FLANNEL_CNI} AS pkg-flannel-cni-arm64
 FROM ${PKG_KERNEL} AS pkg-kernel
 FROM --platform=amd64 ${PKG_KERNEL} AS pkg-kernel-amd64
 FROM --platform=arm64 ${PKG_KERNEL} AS pkg-kernel-arm64
+
+FROM --platform=amd64 ${TOOLS} as tools-amd64
+FROM --platform=arm64 ${TOOLS} as tools-arm64
+
+FROM scratch as pkg-debug-tools-scratch-amd64
+FROM scratch as pkg-debug-tools-scratch-arm64
+
+FROM scratch as pkg-debug-tools-bash-minimal-amd64
+COPY --from=tools-amd64 /toolchain/bin/bash /toolchain/bin/bash
+COPY --from=tools-amd64 /toolchain/lib/ld-musl-x86_64.so.1 /toolchain/toolchain/lib/ld-musl-x86_64.so.1
+COPY --from=tools-amd64 /toolchain/bin/cat /toolchain/bin/cat
+COPY --from=tools-amd64 /toolchain/bin/ls /toolchain/bin/ls
+COPY --from=tools-amd64 /toolchain/bin/tee /toolchain/bin/tee
+
+FROM scratch as pkg-debug-tools-bash-minimal-arm64
+COPY --from=tools-arm64 /toolchain/bin/bash /toolchain/bin/bash
+COPY --from=tools-arm64 /toolchain/lib/ld-musl-aarch64.so.1 /toolchain/toolchain/lib/ld-musl-aarch64.so.1
+COPY --from=tools-arm64 /toolchain/bin/cat /toolchain/bin/cat
+COPY --from=tools-arm64 /toolchain/bin/ls /toolchain/bin/ls
+COPY --from=tools-arm64 /toolchain/bin/tee /toolchain/bin/tee
+
+FROM pkg-debug-tools-${DEBUG_TOOLS_SOURCE}-amd64 as pkg-debug-tools-amd64
+FROM pkg-debug-tools-${DEBUG_TOOLS_SOURCE}-arm64 as pkg-debug-tools-arm64
 
 # Strip CNI package.
 
@@ -651,6 +677,10 @@ COPY --link --from=pkg-kmod-amd64 /usr/lib/libkmod.* /rootfs/lib/
 COPY --link --from=pkg-kmod-amd64 /usr/bin/kmod /rootfs/sbin/modprobe
 COPY --link --from=modules-amd64 /lib/modules /rootfs/lib/modules
 COPY --link --from=machined-build-amd64 /machined /rootfs/sbin/init
+
+# this is a no-op as it copies from a scratch image when WITH_DEBUG_SHELL is not set
+COPY --link --from=pkg-debug-tools-amd64 * /rootfs/
+
 RUN <<END
     # the orderly_poweroff call by the kernel will call '/sbin/poweroff'
     ln /rootfs/sbin/init /rootfs/sbin/poweroff
@@ -721,6 +751,10 @@ COPY --link --from=pkg-kmod-arm64 /usr/lib/libkmod.* /rootfs/lib/
 COPY --link --from=pkg-kmod-arm64 /usr/bin/kmod /rootfs/sbin/modprobe
 COPY --link --from=modules-arm64 /lib/modules /rootfs/lib/modules
 COPY --link --from=machined-build-arm64 /machined /rootfs/sbin/init
+
+# this is a no-op as it copies from a scratch image when WITH_DEBUG_SHELL is not set
+COPY --link --from=pkg-debug-tools-arm64 * /rootfs/
+
 RUN <<END
     # the orderly_poweroff call by the kernel will call '/sbin/poweroff'
     ln /rootfs/sbin/init /rootfs/sbin/poweroff

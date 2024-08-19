@@ -19,6 +19,8 @@ CI_RELEASE_TAG := $(shell git log --oneline --format=%B -n 1 HEAD^2 -- 2>/dev/nu
 ARTIFACTS := _out
 TOOLS ?= ghcr.io/siderolabs/tools:v1.9.0-alpha.0-4-g2058296
 
+DEBUG_TOOLS_SOURCE := scratch
+
 PKGS_PREFIX ?= ghcr.io/siderolabs
 PKGS ?= v1.9.0-alpha.0-24-gbe92da0
 EXTRAS ?= v1.9.0-alpha.0-1-geab6e58
@@ -147,6 +149,11 @@ else
 GO_LDFLAGS += -s -w
 endif
 
+ifneq (, $(filter $(WITH_DEBUG_SHELL), t true TRUE y yes 1))
+# bash-minimal is a Dockerfile target that copies over the bash from siderolabs tools
+DEBUG_TOOLS_SOURCE := bash-minimal
+endif
+
 GO_BUILDFLAGS_TALOSCTL := $(GO_BUILDFLAGS) -tags "$(GO_BUILDTAGS_TALOSCTL)"
 GO_BUILDFLAGS += -tags "$(GO_BUILDTAGS)"
 
@@ -161,6 +168,7 @@ COMMON_ARGS += --progress=$(PROGRESS)
 COMMON_ARGS += --platform=$(PLATFORM)
 COMMON_ARGS += --push=$(PUSH)
 COMMON_ARGS += --build-arg=TOOLS=$(TOOLS)
+COMMON_ARGS += --build-arg=DEBUG_TOOLS_SOURCE=$(DEBUG_TOOLS_SOURCE)
 COMMON_ARGS += --build-arg=PKGS=$(PKGS)
 COMMON_ARGS += --build-arg=EXTRAS=$(EXTRAS)
 COMMON_ARGS += --build-arg=GOFUMPT_VERSION=$(GOFUMPT_VERSION)
