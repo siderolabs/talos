@@ -99,84 +99,47 @@ func (source *Source) runResourceWatchWithRetries(ctx context.Context, node stri
 	}
 }
 
-//nolint:gocyclo,cyclop
+//nolint:gocyclo
 func (source *Source) runResourceWatch(ctx context.Context, node string) error {
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
 	eventCh := make(chan state.Event)
 
-	if err := source.COSI.Watch(ctx, runtime.NewMachineStatus().Metadata(), eventCh); err != nil {
-		return err
+	watchResources := []resource.Pointer{
+		runtime.NewMachineStatus().Metadata(),
+		runtime.NewSecurityStateSpec(v1alpha1.NamespaceName).Metadata(),
+		config.NewMachineType().Metadata(),
+		k8s.NewKubeletSpec(k8s.NamespaceName, k8s.KubeletID).Metadata(),
+		network.NewResolverStatus(network.NamespaceName, network.ResolverID).Metadata(),
+		network.NewTimeServerStatus(network.NamespaceName, network.TimeServerID).Metadata(),
+		hardware.NewSystemInformation(hardware.SystemInformationID).Metadata(),
+		cluster.NewInfo().Metadata(),
+		network.NewStatus(network.NamespaceName, network.StatusID).Metadata(),
+		network.NewHostnameStatus(network.NamespaceName, network.HostnameID).Metadata(),
 	}
 
-	if err := source.COSI.Watch(ctx, runtime.NewSecurityStateSpec(v1alpha1.NamespaceName).Metadata(), eventCh); err != nil {
-		return err
+	for _, ptr := range watchResources {
+		err := source.COSI.Watch(ctx, ptr, eventCh)
+		if err != nil && client.StatusCode(err) != codes.PermissionDenied {
+			return err
+		}
 	}
 
-	if err := source.COSI.Watch(ctx, config.NewMachineType().Metadata(), eventCh); err != nil {
-		return err
+	watchKindResources := []resource.Pointer{
+		runtime.NewMetaKey(runtime.NamespaceName, "").Metadata(),
+		k8s.NewStaticPodStatus(k8s.NamespaceName, "").Metadata(),
+		network.NewRouteStatus(network.NamespaceName, "").Metadata(),
+		network.NewLinkStatus(network.NamespaceName, "").Metadata(),
+		cluster.NewMember(cluster.NamespaceName, "").Metadata(),
+		network.NewNodeAddress(network.NamespaceName, "").Metadata(),
+		siderolink.NewStatus().Metadata(),
+		runtime.NewDiagnostic(runtime.NamespaceName, "").Metadata(),
 	}
 
-	if err := source.COSI.Watch(ctx, k8s.NewKubeletSpec(k8s.NamespaceName, k8s.KubeletID).Metadata(), eventCh); err != nil {
-		return err
-	}
-
-	if err := source.COSI.Watch(ctx, network.NewResolverStatus(network.NamespaceName, network.ResolverID).Metadata(), eventCh); err != nil {
-		return err
-	}
-
-	if err := source.COSI.Watch(ctx, network.NewTimeServerStatus(network.NamespaceName, network.TimeServerID).Metadata(), eventCh); err != nil {
-		return err
-	}
-
-	if err := source.COSI.Watch(ctx, hardware.NewSystemInformation(hardware.SystemInformationID).Metadata(), eventCh); err != nil {
-		return err
-	}
-
-	if err := source.COSI.Watch(ctx, cluster.NewInfo().Metadata(), eventCh); err != nil {
-		return err
-	}
-
-	if err := source.COSI.Watch(ctx, network.NewStatus(network.NamespaceName, network.StatusID).Metadata(), eventCh); err != nil {
-		return err
-	}
-
-	if err := source.COSI.Watch(ctx, network.NewHostnameStatus(network.NamespaceName, network.HostnameID).Metadata(), eventCh); err != nil {
-		return err
-	}
-
-	if err := source.COSI.WatchKind(ctx, runtime.NewMetaKey(runtime.NamespaceName, "").Metadata(), eventCh, state.WithBootstrapContents(true)); err != nil {
-		return err
-	}
-
-	if err := source.COSI.WatchKind(ctx, k8s.NewStaticPodStatus(k8s.NamespaceName, "").Metadata(), eventCh, state.WithBootstrapContents(true)); err != nil {
-		return err
-	}
-
-	if err := source.COSI.WatchKind(ctx, network.NewRouteStatus(network.NamespaceName, "").Metadata(), eventCh, state.WithBootstrapContents(true)); err != nil {
-		return err
-	}
-
-	if err := source.COSI.WatchKind(ctx, network.NewLinkStatus(network.NamespaceName, "").Metadata(), eventCh, state.WithBootstrapContents(true)); err != nil {
-		return err
-	}
-
-	if err := source.COSI.WatchKind(ctx, cluster.NewMember(cluster.NamespaceName, "").Metadata(), eventCh, state.WithBootstrapContents(true)); err != nil {
-		return err
-	}
-
-	if err := source.COSI.WatchKind(ctx, network.NewNodeAddress(network.NamespaceName, "").Metadata(), eventCh, state.WithBootstrapContents(true)); err != nil {
-		return err
-	}
-
-	if err := source.COSI.WatchKind(ctx, siderolink.NewStatus().Metadata(), eventCh, state.WithBootstrapContents(true)); err != nil {
-		return err
-	}
-
-	if err := source.COSI.WatchKind(ctx, runtime.NewDiagnostic(runtime.NamespaceName, "").Metadata(), eventCh, state.WithBootstrapContents(true)); err != nil {
-		if client.StatusCode(err) != codes.PermissionDenied {
-			// ignore permission denied, means resource is not supported yet
+	for _, ptr := range watchKindResources {
+		err := source.COSI.WatchKind(ctx, ptr, eventCh, state.WithBootstrapContents(true))
+		if err != nil && client.StatusCode(err) != codes.PermissionDenied {
 			return err
 		}
 	}
