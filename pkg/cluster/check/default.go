@@ -6,6 +6,7 @@ package check
 
 import (
 	"context"
+	"slices"
 	"time"
 
 	"github.com/siderolabs/talos/pkg/conditions"
@@ -14,19 +15,69 @@ import (
 
 // DefaultClusterChecks returns a set of default Talos cluster readiness checks.
 func DefaultClusterChecks() []ClusterCheck {
-	return append(PreBootSequenceChecks(), []ClusterCheck{
+	return slices.Concat(
+		PreBootSequenceChecks(),
+		K8sComponentsReadinessChecks(),
+		[]ClusterCheck{
+			// wait for all the nodes to report ready at k8s level
+			func(cluster ClusterInfo) conditions.Condition {
+				return conditions.PollingCondition("all k8s nodes to report ready", func(ctx context.Context) error {
+					return K8sAllNodesReadyAssertion(ctx, cluster)
+				}, 10*time.Minute, 5*time.Second)
+			},
+
+			// wait for kube-proxy to report ready
+			func(cluster ClusterInfo) conditions.Condition {
+				return conditions.PollingCondition("kube-proxy to report ready", func(ctx context.Context) error {
+					present, err := DaemonSetPresent(ctx, cluster, "kube-system", "k8s-app=kube-proxy")
+					if err != nil {
+						return err
+					}
+
+					if !present {
+						return conditions.ErrSkipAssertion
+					}
+
+					return K8sPodReadyAssertion(ctx, cluster, "kube-system", "k8s-app=kube-proxy")
+				}, 3*time.Minute, 5*time.Second)
+			},
+
+			// wait for coredns to report ready
+			func(cluster ClusterInfo) conditions.Condition {
+				return conditions.PollingCondition("coredns to report ready", func(ctx context.Context) error {
+					present, err := ReplicaSetPresent(ctx, cluster, "kube-system", "k8s-app=kube-dns")
+					if err != nil {
+						return err
+					}
+
+					if !present {
+						return conditions.ErrSkipAssertion
+					}
+
+					return K8sPodReadyAssertion(ctx, cluster, "kube-system", "k8s-app=kube-dns")
+				}, 3*time.Minute, 5*time.Second)
+			},
+
+			// wait for all the nodes to be schedulable
+			func(cluster ClusterInfo) conditions.Condition {
+				return conditions.PollingCondition("all k8s nodes to report schedulable", func(ctx context.Context) error {
+					return K8sAllNodesSchedulableAssertion(ctx, cluster)
+				}, 5*time.Minute, 5*time.Second)
+			},
+		},
+	)
+}
+
+// K8sComponentsReadinessChecks returns a set of K8s cluster readiness checks which are specific to the k8s components
+// being up and running. This test can be skipped if the cluster is set to use a custom CNI, as the checks won't be healthy
+// until the CNI is up and running.
+func K8sComponentsReadinessChecks() []ClusterCheck {
+	return []ClusterCheck{
 		// wait for all the nodes to report in at k8s level
 		func(cluster ClusterInfo) conditions.Condition {
 			return conditions.PollingCondition("all k8s nodes to report", func(ctx context.Context) error {
 				return K8sAllNodesReportedAssertion(ctx, cluster)
 			}, 5*time.Minute, 30*time.Second) // give more time per each attempt, as this check is going to build and cache kubeconfig
-		},
-
-		// wait for all the nodes to report ready at k8s level
-		func(cluster ClusterInfo) conditions.Condition {
-			return conditions.PollingCondition("all k8s nodes to report ready", func(ctx context.Context) error {
-				return K8sAllNodesReadyAssertion(ctx, cluster)
-			}, 10*time.Minute, 5*time.Second)
 		},
 
 		// wait for k8s control plane static pods
@@ -42,46 +93,7 @@ func DefaultClusterChecks() []ClusterCheck {
 				return K8sFullControlPlaneAssertion(ctx, cluster)
 			}, 5*time.Minute, 5*time.Second)
 		},
-
-		// wait for kube-proxy to report ready
-		func(cluster ClusterInfo) conditions.Condition {
-			return conditions.PollingCondition("kube-proxy to report ready", func(ctx context.Context) error {
-				present, err := DaemonSetPresent(ctx, cluster, "kube-system", "k8s-app=kube-proxy")
-				if err != nil {
-					return err
-				}
-
-				if !present {
-					return conditions.ErrSkipAssertion
-				}
-
-				return K8sPodReadyAssertion(ctx, cluster, "kube-system", "k8s-app=kube-proxy")
-			}, 3*time.Minute, 5*time.Second)
-		},
-
-		// wait for coredns to report ready
-		func(cluster ClusterInfo) conditions.Condition {
-			return conditions.PollingCondition("coredns to report ready", func(ctx context.Context) error {
-				present, err := ReplicaSetPresent(ctx, cluster, "kube-system", "k8s-app=kube-dns")
-				if err != nil {
-					return err
-				}
-
-				if !present {
-					return conditions.ErrSkipAssertion
-				}
-
-				return K8sPodReadyAssertion(ctx, cluster, "kube-system", "k8s-app=kube-dns")
-			}, 3*time.Minute, 5*time.Second)
-		},
-
-		// wait for all the nodes to be schedulable
-		func(cluster ClusterInfo) conditions.Condition {
-			return conditions.PollingCondition("all k8s nodes to report schedulable", func(ctx context.Context) error {
-				return K8sAllNodesSchedulableAssertion(ctx, cluster)
-			}, 5*time.Minute, 5*time.Second)
-		},
-	}...)
+	}
 }
 
 // ExtraClusterChecks returns a set of additional Talos cluster readiness checks which work only for newer versions of Talos.
