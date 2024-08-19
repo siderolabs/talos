@@ -86,6 +86,7 @@ const (
 	controlPlanePortFlag         = "control-plane-port"
 	firewallFlag                 = "with-firewall"
 	tpm2EnabledFlag              = "with-tpm2"
+	withDebugShellFlag           = "with-debug-shell"
 
 	// The following flags are the gen options - the options that are only used in machine configuration (i.e., not during the qemu/docker provisioning).
 	// They are not applicable when no machine configuration is generated, hence mutually exclusive with the --input-dir flag.
@@ -107,87 +108,89 @@ const (
 )
 
 var (
-	talosconfig               string
-	nodeImage                 string
-	nodeInstallImage          string
-	registryMirrors           []string
-	registryInsecure          []string
-	kubernetesVersion         string
-	nodeVmlinuzPath           string
-	nodeInitramfsPath         string
-	nodeISOPath               string
-	nodeDiskImagePath         string
-	nodeIPXEBootScript        string
-	applyConfigEnabled        bool
-	bootloaderEnabled         bool
-	uefiEnabled               bool
-	tpm2Enabled               bool
-	extraUEFISearchPaths      []string
-	configDebug               bool
-	networkCIDR               string
-	networkNoMasqueradeCIDRs  []string
-	networkMTU                int
-	networkIPv4               bool
-	networkIPv6               bool
-	wireguardCIDR             string
-	nameservers               []string
-	dnsDomain                 string
-	workers                   int
-	controlplanes             int
-	controlPlaneCpus          string
-	workersCpus               string
-	controlPlaneMemory        int
-	workersMemory             int
-	clusterDiskSize           int
-	clusterDiskPreallocate    bool
-	clusterDisks              []string
-	extraDisks                int
-	extraDiskSize             int
-	extraDisksDrivers         []string
-	targetArch                string
-	clusterWait               bool
-	clusterWaitTimeout        time.Duration
-	forceInitNodeAsEndpoint   bool
-	forceEndpoint             string
-	inputDir                  string
-	cniBinPath                []string
-	cniConfDir                string
-	cniCacheDir               string
-	cniBundleURL              string
-	ports                     string
-	dockerHostIP              string
-	withInitNode              bool
-	customCNIUrl              string
-	crashdumpOnFailure        bool
-	skipKubeconfig            bool
-	skipInjectingConfig       bool
-	talosVersion              string
-	encryptStatePartition     bool
-	encryptEphemeralPartition bool
-	useVIP                    bool
-	enableKubeSpan            bool
-	enableClusterDiscovery    bool
-	configPatch               []string
-	configPatchControlPlane   []string
-	configPatchWorker         []string
-	badRTC                    bool
-	extraBootKernelArgs       string
-	dockerDisableIPv6         bool
-	controlPlanePort          int
-	kubePrismPort             int
-	dhcpSkipHostname          bool
-	skipK8sNodeReadinessCheck bool
-	networkChaos              bool
-	jitter                    time.Duration
-	latency                   time.Duration
-	packetLoss                float64
-	packetReorder             float64
-	packetCorrupt             float64
-	bandwidth                 int
-	diskEncryptionKeyTypes    []string
-	withFirewall              string
-	withUUIDHostnames         bool
-	withSiderolinkAgent       agentFlag
+	talosconfig                string
+	nodeImage                  string
+	nodeInstallImage           string
+	registryMirrors            []string
+	registryInsecure           []string
+	kubernetesVersion          string
+	nodeVmlinuzPath            string
+	nodeInitramfsPath          string
+	nodeISOPath                string
+	nodeDiskImagePath          string
+	nodeIPXEBootScript         string
+	applyConfigEnabled         bool
+	bootloaderEnabled          bool
+	uefiEnabled                bool
+	tpm2Enabled                bool
+	extraUEFISearchPaths       []string
+	configDebug                bool
+	networkCIDR                string
+	networkNoMasqueradeCIDRs   []string
+	networkMTU                 int
+	networkIPv4                bool
+	networkIPv6                bool
+	wireguardCIDR              string
+	nameservers                []string
+	dnsDomain                  string
+	workers                    int
+	controlplanes              int
+	controlPlaneCpus           string
+	workersCpus                string
+	controlPlaneMemory         int
+	workersMemory              int
+	clusterDiskSize            int
+	clusterDiskPreallocate     bool
+	clusterDisks               []string
+	extraDisks                 int
+	extraDiskSize              int
+	extraDisksDrivers          []string
+	targetArch                 string
+	clusterWait                bool
+	clusterWaitTimeout         time.Duration
+	forceInitNodeAsEndpoint    bool
+	forceEndpoint              string
+	inputDir                   string
+	cniBinPath                 []string
+	cniConfDir                 string
+	cniCacheDir                string
+	cniBundleURL               string
+	ports                      string
+	dockerHostIP               string
+	withInitNode               bool
+	customCNIUrl               string
+	crashdumpOnFailure         bool
+	skipKubeconfig             bool
+	skipInjectingConfig        bool
+	talosVersion               string
+	encryptStatePartition      bool
+	encryptEphemeralPartition  bool
+	useVIP                     bool
+	enableKubeSpan             bool
+	enableClusterDiscovery     bool
+	configPatch                []string
+	configPatchControlPlane    []string
+	configPatchWorker          []string
+	badRTC                     bool
+	extraBootKernelArgs        string
+	dockerDisableIPv6          bool
+	controlPlanePort           int
+	kubePrismPort              int
+	dhcpSkipHostname           bool
+	skipK8sNodeReadinessCheck  bool
+	networkChaos               bool
+	jitter                     time.Duration
+	latency                    time.Duration
+	packetLoss                 float64
+	packetReorder              float64
+	packetCorrupt              float64
+	bandwidth                  int
+	diskEncryptionKeyTypes     []string
+	withFirewall               string
+	withUUIDHostnames          bool
+	withSiderolinkAgent        agentFlag
+	debugShellEnabled          bool
+	skipBootPhaseFinishedCheck bool
 )
 
 // createCmd represents the cluster up command.
@@ -468,6 +471,7 @@ func create(ctx context.Context) error {
 		provision.WithBootlader(bootloaderEnabled),
 		provision.WithUEFI(uefiEnabled),
 		provision.WithTPM2(tpm2Enabled),
+		provision.WithDebugShell(debugShellEnabled),
 		provision.WithExtraUEFISearchPaths(extraUEFISearchPaths),
 		provision.WithTargetArch(targetArch),
 		provision.WithSiderolinkAgent(withSiderolinkAgent.IsEnabled()),
@@ -1172,6 +1176,8 @@ func init() {
 	createCmd.Flags().BoolVar(&bootloaderEnabled, bootloaderEnabledFlag, true, "enable bootloader to load kernel and initramfs from disk image after install")
 	createCmd.Flags().BoolVar(&uefiEnabled, "with-uefi", true, "enable UEFI on x86_64 architecture")
 	createCmd.Flags().BoolVar(&tpm2Enabled, tpm2EnabledFlag, false, "enable TPM2 emulation support using swtpm")
+	createCmd.Flags().BoolVar(&debugShellEnabled, withDebugShellFlag, false, "drop talos into a maintenance shell on boot, this is for advanced debugging for developers only")
+	createCmd.Flags().MarkHidden("with-debug-shell") //nolint:errcheck
 	createCmd.Flags().StringSliceVar(&extraUEFISearchPaths, "extra-uefi-search-paths", []string{}, "additional search paths for UEFI firmware (only applies when UEFI is enabled)")
 	createCmd.Flags().StringSliceVar(&registryMirrors, registryMirrorFlag, []string{}, "list of registry mirrors to use in format: <registry host>=<mirror URL>")
 	createCmd.Flags().StringSliceVar(&registryInsecure, registryInsecureFlag, []string{}, "list of registry hostnames to skip TLS verification for")

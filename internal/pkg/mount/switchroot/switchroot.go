@@ -11,6 +11,7 @@ import (
 	"path/filepath"
 
 	"github.com/siderolabs/go-debug"
+	"github.com/siderolabs/go-procfs/procfs"
 	"golang.org/x/sys/unix"
 
 	"github.com/siderolabs/talos/internal/pkg/mount"
@@ -85,6 +86,14 @@ func Switch(prefix string, mountpoints *mount.Points) (err error) {
 		envv = append(envv, "GORACE=halt_on_error=1")
 
 		log.Printf("race detection enabled with halt_on_error=1")
+	}
+
+	if val := procfs.ProcCmdline().Get("talos.debugshell"); val != nil {
+		if err = unix.Exec("/bin/bash", []string{"/bin/bash"}, envv); err != nil {
+			return fmt.Errorf("error executing /bin/bash: %w", err)
+		}
+
+		return nil
 	}
 
 	if err = unix.Exec("/sbin/init", []string{"/sbin/init"}, envv); err != nil {

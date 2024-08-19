@@ -79,6 +79,15 @@ func WithTPM2(enabled bool) Option {
 	}
 }
 
+// WithDebugShell drops into debug shell in the bootloader.
+func WithDebugShell(enabled bool) Option {
+	return func(o *Options) error {
+		o.WithDebugShell = enabled
+
+		return nil
+	}
+}
+
 // WithExtraUEFISearchPaths configures additional search paths to look for UEFI firmware.
 func WithExtraUEFISearchPaths(extraUEFISearchPaths []string) Option {
 	return func(o *Options) error {
@@ -157,6 +166,8 @@ type Options struct {
 	UEFIEnabled bool
 	// Enable TPM2 emulation using swtpm.
 	TPM2Enabled bool
+	// Enable debug shell in the bootloader.
+	WithDebugShell bool
 	// Configure additional search paths to look for UEFI firmware.
 	ExtraUEFISearchPaths []string
 

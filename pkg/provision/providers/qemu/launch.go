@@ -56,6 +56,7 @@ type LaunchConfig struct {
 	NodeUUID          uuid.UUID
 	BadRTC            bool
 	ArchitectureData  Arch
+	WithDebugShell    bool
 
 	// Talos config
 	Config string
@@ -318,6 +319,14 @@ func launchVM(config *LaunchConfig) error {
 		"-device", "i6300esb,id=watchdog0",
 		"-watchdog-action",
 		"pause",
+	}
+
+	if config.WithDebugShell {
+		args = append(
+			args,
+			"-serial",
+			fmt.Sprintf("unix:%s/%s.serial,server,nowait", config.StatePath, config.Hostname),
+		)
 	}
 
 	var (
