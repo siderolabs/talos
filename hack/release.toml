@@ -77,6 +77,10 @@ machine:
 ```
 
 Please note that on running cluster you will have to kill CoreDNS pods for this change to apply.
+
+The IP address used to forward DNS queries has changed to the fixed `169.254.116.108` address.
+For those upgrading from Talos 1.7 with `forwardKubeDNSToHost` enabled, the old Kubernetes service
+can be cleaned up with `kubectl delete -n kube-system service host-dns`.
 """
 
     [notes.lspci]

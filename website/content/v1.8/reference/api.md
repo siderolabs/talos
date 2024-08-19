@@ -2117,7 +2117,6 @@ BootstrapManifestsConfigSpec is configuration for bootstrap manifests.
 | flannel_extra_args | [string](#string) | repeated |  |
 | flannel_kube_service_host | [string](#string) |  |  |
 | flannel_kube_service_port | [string](#string) |  |  |
-| service_host_dns_address | [string](#string) |  |  |
 
 
 

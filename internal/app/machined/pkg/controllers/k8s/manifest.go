@@ -169,8 +169,6 @@ func (ctrl *ManifestController) render(cfg k8s.BootstrapManifestsConfigSpec, scr
 		ApidPort int
 
 		TalosServiceAccount TalosServiceAccount
-
-		HostDNSAddr string
 	}{
 		BootstrapManifestsConfigSpec: cfg,
 		Secrets:                      scrt,
@@ -234,12 +232,6 @@ func (ctrl *ManifestController) render(cfg k8s.BootstrapManifestsConfigSpec, scr
 				{"12-talos-api-service", talosAPIService},
 				{"13-talos-service-account-crd", talosServiceAccountCRDTemplate},
 			},
-		)
-	}
-
-	if cfg.ServiceHostDNSAddress != "" {
-		defaultManifests = append(defaultManifests,
-			manifestDesc{"15-host-dns-service", talosHostDNSSvcTemplate},
 		)
 	}
 

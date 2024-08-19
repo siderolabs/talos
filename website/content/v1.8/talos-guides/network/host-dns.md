@@ -57,30 +57,25 @@ NODE         NAMESPACE   TYPE          ID        VERSION   HEALTHY   ADDRESS
 
 ## Forwarding `kube-dns` to Host DNS
 
-When host DNS is enabled, by default, `kube-dns` service (`CoreDNS` in Kubernetes) uses upstream DNS servers to resolve external names.
-But Talos allows forwarding `kube-dns` to the host DNS resolver, so that the cache is shared between the host and `kube-dns`:
+> Note: This feature is enabled by default for new clusters created with Talos 1.8.0 and later.
+
+When host DNS is enabled, by default, `kube-dns` service (`CoreDNS` in Kubernetes) uses host DNS server to resolve external names.
+This way the cache is shared between the host DNS and `kube-dns`.
+
+Talos allows forwarding `kube-dns` to the host DNS resolver to be disabled with:
 
 ```yaml
 machine:
   features:
     hostDNS:
       enabled: true
-      forwardKubeDNSToHost: true
+      forwardKubeDNSToHost: false
 ```
 
-This configuration should be applied to all nodes in the cluster, if enabled after cluster creation, restart `coredns` pods in Kubernetes to pick up changes.
+This configuration should be applied to all nodes in the cluster, if applied after cluster creation, restart `coredns` pods in Kubernetes to pick up changes.
 
-When `forwardKubeDNSToHost` is enabled, Talos Linux allocates 9th IP address in the `serviceSubnet` range for host DNS server, and `kube-dns` service is configured to use this IP address as the upstream DNS server:
-
-```shell
-$ kubectl get services -n kube-system host-dns
-NAME       TYPE        CLUSTER-IP   EXTERNAL-IP   PORT(S)         AGE
-host-dns   ClusterIP   10.96.0.9    <none>        53/UDP,53/TCP   27s
-$ talosctl read /system/resolved/resolv.conf
-nameserver 10.96.0.9
-```
-
-With this configuration, `kube-dns` service forwards all DNS requests to the host DNS server, and the cache is shared between the host and `kube-dns`.
+When `forwardKubeDNSToHost` is enabled, Talos Linux allocates IP address `169.254.116.108` for the host DNS server, and `kube-dns` service is configured to use this IP address as the upstream DNS server:
+This way `kube-dns` service forwards all DNS requests to the host DNS server, and the cache is shared between the host and `kube-dns`.
 
 ## Resolving Talos Cluster Member Names
 

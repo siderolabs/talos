@@ -84,6 +84,3 @@ var flannelTemplate = string(flannel.Template)
 //
 //go:embed templates/talos-service-account-crd-template.yaml
 var talosServiceAccountCRDTemplate string
-
-//go:embed templates/talos-host-dns-svc-template.yaml
-var talosHostDNSSvcTemplate string

@@ -1024,6 +1024,11 @@ const (
 
 	// ConsoleLogErrorSuppressThreshold is the threshold for suppressing console log errors.
 	ConsoleLogErrorSuppressThreshold = 4
+
+	// HostDNSAddress is the address of the host DNS server.
+	//
+	// Note: 116 = 't' and 108 = 'l' in ASCII.
+	HostDNSAddress = "169.254.116.108"
 )
 
 // See https://linux.die.net/man/3/klogctl

@@ -19,6 +19,7 @@ import (
 	"go.uber.org/zap"
 
 	talosconfig "github.com/siderolabs/talos/pkg/machinery/config"
+	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
 	"github.com/siderolabs/talos/pkg/machinery/resources/config"
 	"github.com/siderolabs/talos/pkg/machinery/resources/network"
@@ -101,17 +102,7 @@ func (ctrl *HostDNSConfigController) Run(ctx context.Context, r controller.Runti
 			res.TypedSpec().ResolveMemberNames = cfgProvider.Machine().Features().HostDNS().ResolveMemberNames()
 
 			if cfgProvider.Machine().Features().HostDNS().ForwardKubeDNSToHost() {
-				serviceCIDRStr := cfgProvider.Cluster().Network().ServiceCIDRs()[0]
-
-				serviceCIDR, err := netip.ParsePrefix(serviceCIDRStr)
-				if err != nil {
-					return fmt.Errorf("error parsing service CIDR: %w", err)
-				}
-
-				newServiceAddr = serviceCIDR.Addr()
-				for range 9 {
-					newServiceAddr = newServiceAddr.Next()
-				}
+				newServiceAddr = netip.MustParseAddr(constants.HostDNSAddress)
 
 				res.TypedSpec().ListenAddresses = append(res.TypedSpec().ListenAddresses, netip.AddrPortFrom(newServiceAddr, 53))
 				res.TypedSpec().ServiceHostDNSAddress = newServiceAddr
@@ -131,7 +122,7 @@ func (ctrl *HostDNSConfigController) Run(ctx context.Context, r controller.Runti
 			}
 		}
 
-		if err = ctrl.cleanupLinkSpecs(
+		if err = ctrl.cleanupAddressSpecs(
 			ctx,
 			r,
 			func(id resource.ID) bool {
@@ -150,28 +141,28 @@ func (ctrl *HostDNSConfigController) Run(ctx context.Context, r controller.Runti
 	}
 }
 
-func (ctrl *HostDNSConfigController) cleanupLinkSpecs(ctx context.Context, r controller.Runtime, checkResource func(id resource.ID) bool, logger *zap.Logger) error {
+func (ctrl *HostDNSConfigController) cleanupAddressSpecs(ctx context.Context, r controller.Runtime, checkResource func(id resource.ID) bool, logger *zap.Logger) error {
 	list, err := safe.ReaderList[*network.AddressSpec](ctx, r, network.NewAddressSpec(network.ConfigNamespaceName, "").Metadata())
 	if err != nil {
 		return err
 	}
 
 	for iter := list.Iterator(); iter.Next(); {
-		link := iter.Value()
+		address := iter.Value()
 
-		if link.Metadata().Owner() != ctrl.Name() {
+		if address.Metadata().Owner() != ctrl.Name() {
 			continue
 		}
 
-		if checkResource(link.Metadata().ID()) {
+		if checkResource(address.Metadata().ID()) {
 			continue
 		}
 
-		if err = r.Destroy(ctx, link.Metadata()); err != nil && !state.IsNotFoundError(err) {
+		if err = r.Destroy(ctx, address.Metadata()); err != nil && !state.IsNotFoundError(err) {
 			return err
 		}
 
-		logger.Info("destroyed link spec", zap.String("link_id", link.Metadata().ID()))
+		logger.Info("destroyed address spec", zap.String("address_id", address.Metadata().ID()))
 	}
 
 	return nil
