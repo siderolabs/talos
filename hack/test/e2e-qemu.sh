@@ -128,11 +128,11 @@ case "${WITH_CONFIG_PATCH_WORKER:-false}" in
     ;;
 esac
 
-case "${WITH_SKIP_BOOT_PHASE_FINISHED_CHECK:-false}" in
+case "${WITH_SKIP_K8S_NODE_READINESS_CHECK:-false}" in
   false)
     ;;
   *)
-    QEMU_FLAGS+=("--skip-boot-phase-finished-check")
+    QEMU_FLAGS+=("--skip-k8s-node-readiness-check")
     ;;
 esac
 

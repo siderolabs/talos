@@ -144,8 +144,8 @@ talosctl cluster create [flags]
       --no-masquerade-cidrs strings              list of CIDRs to exclude from NAT (QEMU provisioner only)
       --registry-insecure-skip-verify strings    list of registry hostnames to skip TLS verification for
       --registry-mirror strings                  list of registry mirrors to use in format: <registry host>=<mirror URL>
-      --skip-boot-phase-finished-check           skip waiting for node to finish boot phase
       --skip-injecting-config                    skip injecting config from embedded metadata server, write config files to current directory
+      --skip-k8s-node-readiness-check            skip k8s node readiness checks
       --skip-kubeconfig                          skip merging kubeconfig from the created cluster
       --talos-version string                     the desired Talos version to generate config for (if not set, defaults to image version)
       --talosconfig string                       The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.

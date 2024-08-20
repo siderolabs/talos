@@ -997,7 +997,7 @@ jobs:
           WITH_CONFIG_PATCH: '[{"op": "add", "path": "/cluster/network", "value": {"cni": {"name": "none"}}}]'
           WITH_CUSTOM_CNI: cilium
           WITH_FIREWALL: accept
-          WITH_SKIP_BOOT_PHASE_FINISHED_CHECK: "yes"
+          WITH_SKIP_K8S_NODE_READINESS_CHECK: "yes"
         run: |
           sudo -E make e2e-qemu
       - name: e2e-cilium-strict
@@ -1009,7 +1009,7 @@ jobs:
           WITH_CONFIG_PATCH: '[{"op": "add", "path": "/cluster/network", "value": {"cni": {"name": "none"}}}, {"op": "add", "path": "/cluster/proxy", "value": {"disabled": true}}]'
           WITH_CUSTOM_CNI: cilium
           WITH_FIREWALL: accept
-          WITH_SKIP_BOOT_PHASE_FINISHED_CHECK: "yes"
+          WITH_SKIP_K8S_NODE_READINESS_CHECK: "yes"
         run: |
           sudo -E make e2e-qemu
       - name: e2e-cilium-strict-kubespan
@@ -1022,7 +1022,7 @@ jobs:
           WITH_CUSTOM_CNI: cilium
           WITH_FIREWALL: accept
           WITH_KUBESPAN: "true"
-          WITH_SKIP_BOOT_PHASE_FINISHED_CHECK: "yes"
+          WITH_SKIP_K8S_NODE_READINESS_CHECK: "yes"
         run: |
           sudo -E make e2e-qemu
       - name: save artifacts

@@ -1016,7 +1016,7 @@ spec:
           withSudo: true
           environment:
             SHORT_INTEGRATION_TEST: yes
-            WITH_SKIP_BOOT_PHASE_FINISHED_CHECK: yes
+            WITH_SKIP_K8S_NODE_READINESS_CHECK: yes
             WITH_CUSTOM_CNI: cilium
             WITH_FIREWALL: accept
             QEMU_WORKERS: 2
@@ -1027,7 +1027,7 @@ spec:
           withSudo: true
           environment:
             SHORT_INTEGRATION_TEST: yes
-            WITH_SKIP_BOOT_PHASE_FINISHED_CHECK: yes
+            WITH_SKIP_K8S_NODE_READINESS_CHECK: yes
             WITH_CUSTOM_CNI: cilium
             WITH_FIREWALL: accept
             QEMU_WORKERS: 2
@@ -1039,7 +1039,7 @@ spec:
           withSudo: true
           environment:
             SHORT_INTEGRATION_TEST: yes
-            WITH_SKIP_BOOT_PHASE_FINISHED_CHECK: yes
+            WITH_SKIP_K8S_NODE_READINESS_CHECK: yes
             WITH_CUSTOM_CNI: cilium
             WITH_FIREWALL: accept
             WITH_KUBESPAN: true
