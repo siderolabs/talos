@@ -182,8 +182,12 @@ RUN --mount=type=cache,target=/.cache go install github.com/siderolabs/importvet
     && mv /go/bin/importvet /toolchain/go/bin/importvet
 RUN --mount=type=cache,target=/.cache go install golang.org/x/vuln/cmd/govulncheck@latest \
     && mv /go/bin/govulncheck /toolchain/go/bin/govulncheck
-RUN --mount=type=cache,target=/.cache go install github.com/uber/prototool/cmd/prototool@v1.10.0 \
+ARG PROTOTOOL_VERSION
+RUN --mount=type=cache,target=/.cache go install github.com/uber/prototool/cmd/prototool@${PROTOTOOL_VERSION} \
     && mv /go/bin/prototool /toolchain/go/bin/prototool
+ARG PROTOC_GEN_DOC_VERSION
+RUN --mount=type=cache,target=/.cache go install github.com/pseudomuto/protoc-gen-doc/cmd/protoc-gen-doc@${PROTOC_GEN_DOC_VERSION} \
+    && mv /go/bin/protoc-gen-doc /toolchain/go/bin/protoc-gen-doc
 COPY ./hack/docgen /go/src/github.com/siderolabs/talos-hack-docgen
 RUN --mount=type=cache,target=/.cache cd /go/src/github.com/siderolabs/talos-hack-docgen \
     && go build -o docgen . \
@@ -1054,7 +1058,7 @@ RUN env HOME=/home/user TAG=latest /bin/talosctl docs --config /tmp/configuratio
     && env HOME=/home/user TAG=latest /bin/talosctl docs --cli /tmp
 COPY ./pkg/machinery/config/schemas/*.schema.json /tmp/schemas/
 
-FROM pseudomuto/protoc-gen-doc AS proto-docs-build
+FROM tools AS proto-docs-build
 COPY --from=generate-build /api /protos
 COPY ./hack/protoc-gen-doc/markdown.tmpl /tmp/markdown.tmpl
 RUN protoc \

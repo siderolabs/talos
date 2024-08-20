@@ -76,6 +76,10 @@ VTPROTOBUF_VERSION ?= v0.6.0
 DEEPCOPY_VERSION ?= v0.5.6
 # renovate: datasource=go depName=github.com/siderolabs/importvet
 IMPORTVET_VERSION ?= v0.2.0
+# not setting renovate config since the repo is archived
+PROTOTOOL_VERSION ?= v1.10.0
+# renovate: datasource=go depName=github.com/pseudomuto/protoc-gen-doc
+PROTOC_GEN_DOC_VERSION ?= v1.5.1
 # renovate: datasource=npm depName=markdownlint-cli
 MARKDOWNLINTCLI_VERSION ?= 0.40.0
 # renovate: datasource=npm depName=textlint
@@ -161,6 +165,8 @@ COMMON_ARGS += --build-arg=ENUMER_VERSION=$(ENUMER_VERSION)
 COMMON_ARGS += --build-arg=DEEPCOPY_GEN_VERSION=$(DEEPCOPY_GEN_VERSION)
 COMMON_ARGS += --build-arg=VTPROTOBUF_VERSION=$(VTPROTOBUF_VERSION)
 COMMON_ARGS += --build-arg=IMPORTVET_VERSION=$(IMPORTVET_VERSION)
+COMMON_ARGS += --build-arg=PROTOTOOL_VERSION=$(PROTOTOOL_VERSION)
+COMMON_ARGS += --build-arg=PROTOC_GEN_DOC_VERSION=$(PROTOC_GEN_DOC_VERSION)
 COMMON_ARGS += --build-arg=GOLANGCILINT_VERSION=$(GOLANGCILINT_VERSION)
 COMMON_ARGS += --build-arg=DEEPCOPY_VERSION=$(DEEPCOPY_VERSION)
 COMMON_ARGS += --build-arg=MARKDOWNLINTCLI_VERSION=$(MARKDOWNLINTCLI_VERSION)
