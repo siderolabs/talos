@@ -100,7 +100,7 @@ cluster:
 
 ## Configuration
 
-KubeSpan will automatically discovery all cluster members, exchange Wireguard public keys and establish a full mesh network.
+KubeSpan will automatically discover all cluster members, exchange Wireguard public keys and establish a full mesh network.
 
 There are configuration options available which are not usually required:
 
