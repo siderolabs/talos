@@ -2,13 +2,13 @@
 #
 # Generated on 2024-08-24T17:38:15Z by kres 8e4bbb4.
 
-name: integration-extensions-cron
+name: integration-qemu-csi-rook-ceph-cron
 concurrency:
   group: ${{ github.head_ref || github.run_id }}
   cancel-in-progress: true
 "on":
   schedule:
-    - cron: 30 6 * * *
+    - cron: 30 3 * * *
 jobs:
   default:
     runs-on:
@@ -62,10 +62,6 @@ jobs:
         if: github.event_name != 'schedule'
         run: |
           xargs -a _out/executable-artifacts -I {} chmod +x {}
-      - name: generate
-        if: github.event_name == 'schedule'
-        run: |
-          make generate
       - name: build
         if: github.event_name == 'schedule'
         env:
@@ -78,45 +74,24 @@ jobs:
         if: github.event_name == 'schedule'
         run: |
           make talosctl-cni-bundle
-      - name: checkout extensions
-        uses: actions/checkout@v4
-        with:
-          path: _out/extensions
-          ref: main
-          repository: siderolabs/extensions
-      - name: unshallow-extensions
-        run: |
-          git -C _out/extensions fetch --prune --unshallow
-      - name: set variables
-        run: |
-          cat _out/talos-metadata >> "$GITHUB_ENV"
-      - name: build extensions
+      - name: e2e-qemu-csi-rook-ceph
         env:
-          PLATFORM: linux/amd64
-          PUSH: "true"
-          REGISTRY: registry.dev.siderolabs.io
-        run: |
-          make all extensions-metadata -C _out/extensions
-      - name: installer extensions
-        env:
+          EXTRA_TEST_ARGS: -talos.csi=rook-ceph
           IMAGE_REGISTRY: registry.dev.siderolabs.io
-        run: |
-          make installer-with-extensions
-      - name: e2e-extensions
-        env:
-          EXTRA_TEST_ARGS: -talos.extensions.qemu
-          IMAGE_REGISTRY: registry.dev.siderolabs.io
-          QEMU_EXTRA_DISKS: "3"
-          QEMU_MEMORY_WORKERS: "4096"
+          QEMU_CPUS_WORKERS: "4"
+          QEMU_EXTRA_DISKS: "1"
+          QEMU_EXTRA_DISKS_SIZE: "12288"
+          QEMU_MEMORY_WORKERS: "5120"
+          QEMU_WORKERS: "3"
           SHORT_INTEGRATION_TEST: "yes"
-          WITH_CONFIG_PATCH_WORKER: '@_out/installer-extensions-patch.yaml:@hack/test/patches/extensions.yaml'
+          WITH_CONFIG_PATCH: '@hack/test/patches/rook-ceph.yaml'
         run: |
           sudo -E make e2e-qemu
       - name: save artifacts
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: talos-logs-integration-extensions
+          name: talos-logs-integration-qemu-csi-rook-ceph
           path: |-
             ~/.talos/clusters/**/*.log
             !~/.talos/clusters/**/swtpm.log

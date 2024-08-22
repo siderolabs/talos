@@ -1,0 +1,18 @@
+machine:
+  kubelet:
+    extraMounts:
+      - destination: /var/lib/longhorn
+        type: bind
+        source: /var/lib/longhorn
+        options:
+          - bind
+          - rshared
+          - rw
+cluster:
+  apiServer:
+    admissionControl:
+      - name: PodSecurity
+        configuration:
+          exemptions:
+            namespaces:
+              - longhorn-system

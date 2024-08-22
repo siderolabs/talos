@@ -13,6 +13,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"os"
+	"os/exec"
+	"path/filepath"
 	"slices"
 	"strings"
 	"time"
@@ -40,6 +43,7 @@ import (
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
 	"k8s.io/client-go/tools/remotecommand"
 	watchtools "k8s.io/client-go/tools/watch"
+	"k8s.io/client-go/util/jsonpath"
 	"k8s.io/kubectl/pkg/scheme"
 
 	taloskubernetes "github.com/siderolabs/talos/pkg/kubernetes"
@@ -276,6 +280,163 @@ func (k8sSuite *K8sSuite) WaitForPodToBeDeleted(ctx context.Context, timeout tim
 			}
 		}
 	}
+}
+
+// HelmInstall installs the Helm chart with the given namespace, repository, version, release name, chart name and values.
+func (k8sSuite *K8sSuite) HelmInstall(ctx context.Context, namespace, repository, version, releaseName, chartName string, valuesBytes []byte) error {
+	tempFile := filepath.Join(k8sSuite.T().TempDir(), "values.yaml")
+
+	if err := os.WriteFile(tempFile, valuesBytes, 0o644); err != nil {
+		return err
+	}
+
+	defer os.Remove(tempFile) //nolint:errcheck
+
+	args := []string{
+		"upgrade",
+		"--install",
+		"--cleanup-on-fail",
+		"--create-namespace",
+		"--namespace",
+		namespace,
+		"--wait",
+		"--timeout",
+		k8sSuite.CSITestTimeout,
+		"--repo",
+		repository,
+		"--version",
+		version,
+		"--values",
+		tempFile,
+		releaseName,
+		chartName,
+	}
+
+	cmd := exec.Command(k8sSuite.HelmPath, args...)
+
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+
+	k8sSuite.T().Logf("running helm command: %s", strings.Join(cmd.Args, " "))
+
+	return cmd.Run()
+}
+
+// WaitForResource waits for the resource with the given group, kind, version, namespace and jsonpath field selector to have the given expected value.
+// mostly a restructuring of `kubectl wait` from https://github.com/kubernetes/kubectl/blob/master/pkg/cmd/wait/wait.go
+//
+//nolint:gocyclo
+func (k8sSuite *K8sSuite) WaitForResource(ctx context.Context, namespace, group, kind, version, resourceName, jsonPathSelector, expectedValue string) error {
+	j := jsonpath.New("wait").AllowMissingKeys(true)
+
+	if jsonPathSelector == "" {
+		return fmt.Errorf("jsonpath condition is empty")
+	}
+
+	if err := j.Parse(jsonPathSelector); err != nil {
+		return fmt.Errorf("error parsing jsonpath condition: %v", err)
+	}
+
+	mapping, err := k8sSuite.Mapper.RESTMapping(schema.GroupKind{
+		Group: group,
+		Kind:  kind,
+	}, version)
+	if err != nil {
+		return fmt.Errorf("error creating mapping for resource %s/%s/%s", group, kind, version)
+	}
+
+	dr := k8sSuite.DynamicClient.Resource(mapping.Resource).Namespace(namespace)
+
+	fieldSelector := fields.OneTermEqualSelector("metadata.name", resourceName).String()
+
+	lw := &cache.ListWatch{
+		ListFunc: func(options metav1.ListOptions) (runtime.Object, error) {
+			options.FieldSelector = fieldSelector
+
+			return dr.List(ctx, options)
+		},
+		WatchFunc: func(options metav1.ListOptions) (watch.Interface, error) {
+			options.FieldSelector = fieldSelector
+
+			return dr.Watch(ctx, options)
+		},
+	}
+
+	preconditionFunc := func(store cache.Store) (bool, error) {
+		var exists bool
+
+		_, exists, err = store.Get(&metav1.ObjectMeta{Namespace: namespace, Name: resourceName})
+		if err != nil {
+			return true, err
+		}
+
+		if !exists {
+			return true, fmt.Errorf("resource %s/%s/%s/%s not found", group, version, kind, resourceName)
+		}
+
+		return false, nil
+	}
+
+	if _, err = watchtools.UntilWithSync(ctx, lw, &unstructured.Unstructured{}, preconditionFunc, func(event watch.Event) (bool, error) {
+		obj, ok := event.Object.(*unstructured.Unstructured)
+		if !ok {
+			return false, fmt.Errorf("error converting object to unstructured")
+		}
+
+		queryObj := obj.UnstructuredContent()
+
+		k8sSuite.T().Logf("waiting for resource %s/%s/%s/%s to have field %s with value %s", group, version, kind, resourceName, jsonPathSelector, expectedValue)
+
+		parseResults, err := j.FindResults(queryObj)
+		if err != nil {
+			return false, fmt.Errorf("error finding results: %v", err)
+		}
+
+		if len(parseResults) == 0 || len(parseResults[0]) == 0 {
+			return false, nil
+		}
+
+		if len(parseResults) > 1 {
+			return false, fmt.Errorf("given jsonpath expression matches more than one list")
+		}
+
+		if len(parseResults[0]) > 1 {
+			return false, fmt.Errorf("given jsonpath expression matches more than one value")
+		}
+
+		switch parseResults[0][0].Interface().(type) {
+		case map[string]interface{}, []interface{}:
+			return false, fmt.Errorf("jsonpath leads to a nested object or list which is not supported")
+		}
+
+		s := fmt.Sprintf("%v", parseResults[0][0].Interface())
+
+		return strings.TrimSpace(s) == strings.TrimSpace(expectedValue), nil
+	}); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// RunFIOTest runs the FIO test with the given storage class and size using kubestr.
+func (k8sSuite *K8sSuite) RunFIOTest(ctx context.Context, storageClasss, size string) error {
+	args := []string{
+		"fio",
+		"--storageclass",
+		storageClasss,
+		"--size",
+		size,
+	}
+
+	cmd := exec.Command(k8sSuite.KubeStrPath, args...)
+
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+
+	k8sSuite.T().Logf("running kubestr command: %s", strings.Join(cmd.Args, " "))
+
+	return cmd.Run()
 }
 
 // ExecuteCommandInPod executes the given command in the pod with the given namespace and name.

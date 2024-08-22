@@ -149,7 +149,19 @@ function run_talos_integration_test {
       ;;
   esac
 
-  "${INTEGRATION_TEST}" -test.v -talos.failfast -talos.talosctlpath "${TALOSCTL}" -talos.kubectlpath "${KUBECTL}" -talos.provisioner "${PROVISIONER}" -talos.name "${CLUSTER_NAME}" -talos.image "${REGISTRY}/siderolabs/talos" "${EXTRA_TEST_ARGS[@]}" "${TEST_RUN[@]}" "${TEST_SHORT[@]}"
+  "${INTEGRATION_TEST}" \
+    -test.v \
+    -talos.failfast \
+    -talos.talosctlpath "${TALOSCTL}" \
+    -talos.kubectlpath "${KUBECTL}" \
+    -talos.helmpath "${HELM}" \
+    -talos.kubestrpath "${KUBESTR}" \
+    -talos.provisioner "${PROVISIONER}" \
+    -talos.name "${CLUSTER_NAME}" \
+    -talos.image "${REGISTRY}/siderolabs/talos" \
+    "${EXTRA_TEST_ARGS[@]}" \
+    "${TEST_RUN[@]}" \
+    "${TEST_SHORT[@]}"
 }
 
 function run_talos_integration_test_docker {
@@ -169,7 +181,18 @@ function run_talos_integration_test_docker {
       ;;
   esac
 
-  "${INTEGRATION_TEST}" -test.v -talos.talosctlpath "${TALOSCTL}" -talos.kubectlpath "${KUBECTL}" -talos.provisioner "${PROVISIONER}" -talos.name "${CLUSTER_NAME}" -talos.image "${REGISTRY}/siderolabs/talos" "${EXTRA_TEST_ARGS[@]}" "${TEST_RUN[@]}" "${TEST_SHORT[@]}"
+  "${INTEGRATION_TEST}" \
+    -test.v \
+    -talos.talosctlpath "${TALOSCTL}" \
+    -talos.kubectlpath "${KUBECTL}" \
+     -talos.helmpath "${HELM}" \
+    -talos.kubestrpath "${KUBESTR}" \
+    -talos.provisioner "${PROVISIONER}" \
+    -talos.name "${CLUSTER_NAME}" \
+    -talos.image "${REGISTRY}/siderolabs/talos" \
+    "${EXTRA_TEST_ARGS[@]}" \
+    "${TEST_RUN[@]}" \
+    "${TEST_SHORT[@]}"
 }
 
 function run_kubernetes_conformance_test {
@@ -218,24 +241,6 @@ function build_registry_mirrors {
     # use the value from the environment, if present
     REGISTRY_MIRROR_FLAGS=("${REGISTRY_MIRROR_FLAGS:-}")
   fi
-}
-
-function run_csi_tests {
-  ${HELM} repo add rook-release https://charts.rook.io/release
-  ${HELM} repo update
-  ${HELM} upgrade --install --version=v1.8.2 --set=pspEnable=false --create-namespace --namespace rook-ceph rook-ceph rook-release/rook-ceph
-  ${HELM} upgrade --install --version=v1.8.2 --set=pspEnable=false --create-namespace --namespace rook-ceph rook-ceph-cluster rook-release/rook-ceph-cluster
-
-  ${KUBECTL} label ns rook-ceph pod-security.kubernetes.io/enforce=privileged
-  # wait for the controller to populate the status field
-  sleep 30
-  ${KUBECTL} --namespace rook-ceph wait --timeout=900s --for=jsonpath='{.status.phase}=Ready' cephclusters.ceph.rook.io/rook-ceph
-  ${KUBECTL} --namespace rook-ceph wait --timeout=900s --for=jsonpath='{.status.state}=Created' cephclusters.ceph.rook.io/rook-ceph
-  # .status.ceph is populated later only
-  sleep 60
-  ${KUBECTL} --namespace rook-ceph wait --timeout=900s --for=jsonpath='{.status.ceph.health}=HEALTH_OK' cephclusters.ceph.rook.io/rook-ceph
-  # hack until https://github.com/kastenhq/kubestr/issues/101 is addressed
-  KUBERNETES_SERVICE_HOST="" KUBECONFIG="${TMP}/kubeconfig" "${KUBESTR}" fio --storageclass ceph-block --size 10G
 }
 
 function install_and_run_cilium_cni_tests {

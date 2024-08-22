@@ -28,6 +28,15 @@
         },
         {
             "fileMatch": [
+                "internal/integration/k8s/constants.go"
+            ],
+            "matchStrings": [
+                "\\/\\/\\s+renovate: datasource=(?<datasource>.*?)(?:\\s+extractVersion=(?<extractVersion>.+?))?(?:\\s+versioning=(?<versioning>.+?))?\\s+depName=(?<depName>.+?)?(?:\\s+registryUrl=(?<registryUrl>.+?))?\\s.*Version\\s+=\\s+\\\"(?<currentValue>.+?)\\\""
+            ],
+            "versioningTemplate": "{{#if versioning}}{{versioning}}{{else}}semver{{/if}}"
+        },
+        {
+            "fileMatch": [
                 "Dockerfile"
             ],
             "matchStrings": [

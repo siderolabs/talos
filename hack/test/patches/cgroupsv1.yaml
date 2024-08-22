@@ -1,0 +1,4 @@
+machine:
+  install:
+    extraKernelArgs:
+      - talos.unified_cgroup_hierarchy=0

@@ -1,6 +1,6 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
 #
-# Generated on 2024-05-27T16:20:10Z by kres bcb280a.
+# Generated on 2024-08-24T17:38:15Z by kres 8e4bbb4.
 
 name: integration-cilium-cron
 concurrency:
@@ -79,7 +79,7 @@ jobs:
           IMAGE_REGISTRY: registry.dev.siderolabs.io
           QEMU_WORKERS: "2"
           SHORT_INTEGRATION_TEST: "yes"
-          WITH_CONFIG_PATCH: '[{"op": "add", "path": "/cluster/network", "value": {"cni": {"name": "none"}}}]'
+          WITH_CONFIG_PATCH: '@hack/test/patches/cilium-no-kubeproxy.yaml'
           WITH_CUSTOM_CNI: cilium
           WITH_FIREWALL: accept
           WITH_SKIP_K8S_NODE_READINESS_CHECK: "yes"
@@ -91,7 +91,7 @@ jobs:
           IMAGE_REGISTRY: registry.dev.siderolabs.io
           QEMU_WORKERS: "2"
           SHORT_INTEGRATION_TEST: "yes"
-          WITH_CONFIG_PATCH: '[{"op": "add", "path": "/cluster/network", "value": {"cni": {"name": "none"}}}, {"op": "add", "path": "/cluster/proxy", "value": {"disabled": true}}]'
+          WITH_CONFIG_PATCH: '@hack/test/patches/cilium-kubeproxy.yaml'
           WITH_CUSTOM_CNI: cilium
           WITH_FIREWALL: accept
           WITH_SKIP_K8S_NODE_READINESS_CHECK: "yes"
@@ -103,7 +103,7 @@ jobs:
           IMAGE_REGISTRY: registry.dev.siderolabs.io
           QEMU_WORKERS: "2"
           SHORT_INTEGRATION_TEST: "yes"
-          WITH_CONFIG_PATCH: '[{"op": "add", "path": "/cluster/network", "value": {"cni": {"name": "none"}}}, {"op": "add", "path": "/cluster/proxy", "value": {"disabled": true}}]'
+          WITH_CONFIG_PATCH: '@hack/test/patches/cilium-kubeproxy.yaml'
           WITH_CUSTOM_CNI: cilium
           WITH_FIREWALL: accept
           WITH_KUBESPAN: "true"

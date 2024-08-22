@@ -33,6 +33,10 @@ type TalosSuite struct {
 	TalosctlPath string
 	// KubectlPath is a path to kubectl binary
 	KubectlPath string
+	// HelmPath is a path to helm binary
+	HelmPath string
+	// KubeStrPath is a path to kubestr binary
+	KubeStrPath string
 	// ExtensionsQEMU runs tests with qemu and extensions enabled
 	ExtensionsQEMU bool
 	// ExtensionsNvidia runs tests with nvidia extensions enabled
@@ -41,6 +45,10 @@ type TalosSuite struct {
 	TrustedBoot bool
 	// TalosImage is the image name for 'talos' container.
 	TalosImage string
+	// CSITestName is the name of the CSI test to run
+	CSITestName string
+	// CSITestTimeout is the timeout for the CSI test
+	CSITestTimeout string
 
 	discoveredNodes cluster.Info
 }

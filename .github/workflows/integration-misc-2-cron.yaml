@@ -1,6 +1,6 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
 #
-# Generated on 2024-05-27T16:20:10Z by kres bcb280a.
+# Generated on 2024-08-24T17:38:15Z by kres 8e4bbb4.
 
 name: integration-misc-2-cron
 concurrency:
@@ -91,7 +91,7 @@ jobs:
         env:
           IMAGE_REGISTRY: registry.dev.siderolabs.io
           SHORT_INTEGRATION_TEST: "yes"
-          WITH_CONFIG_PATCH: '[{"op": "add", "path": "/machine/install/extraKernelArgs/-", "value": "talos.unified_cgroup_hierarchy=0"}]'
+          WITH_CONFIG_PATCH: '@hack/test/patches/cgroupsv1.yaml'
           WITH_UEFI: "false"
         run: |
           sudo -E make e2e-qemu

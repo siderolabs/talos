@@ -1,0 +1,17 @@
+operatorNamespace: rook-ceph
+cephFileSystems: []
+cephObjectStores: []
+cephClusterSpec:
+  crashCollector:
+    disable: true
+  logCollector:
+    enabled: false
+  dashboard:
+    enabled: false
+  resources:
+    osd:
+      limits:
+        memory: "2Gi"
+      requests:
+        cpu: "500m"
+        memory: "1Gi"

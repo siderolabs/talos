@@ -36,11 +36,12 @@ var allSuites []suite.TestingSuite
 
 // Flag values.
 var (
-	failFast          bool
-	crashdumpEnabled  bool
-	trustedBoot       bool
-	extensionsQEMU    bool
-	extensionsNvidia  bool
+	failFast         bool
+	crashdumpEnabled bool
+	trustedBoot      bool
+	extensionsQEMU   bool
+	extensionsNvidia bool
+
 	talosConfig       string
 	endpoint          string
 	k8sEndpoint       string
@@ -48,10 +49,14 @@ var (
 	expectedGoVersion string
 	talosctlPath      string
 	kubectlPath       string
+	helmPath          string
+	kubeStrPath       string
 	provisionerName   string
 	clusterName       string
 	stateDir          string
 	talosImage        string
+	csiTestName       string
+	csiTestTimeout    string
 )
 
 // TestIntegration ...
@@ -103,10 +108,14 @@ func TestIntegration(t *testing.T) {
 				GoVersion:        expectedGoVersion,
 				TalosctlPath:     talosctlPath,
 				KubectlPath:      kubectlPath,
+				HelmPath:         helmPath,
+				KubeStrPath:      kubeStrPath,
 				ExtensionsQEMU:   extensionsQEMU,
 				ExtensionsNvidia: extensionsNvidia,
 				TrustedBoot:      trustedBoot,
 				TalosImage:       talosImage,
+				CSITestName:      csiTestName,
+				CSITestTimeout:   csiTestTimeout,
 			})
 		}
 
@@ -166,7 +175,11 @@ func init() {
 	flag.StringVar(&expectedGoVersion, "talos.go.version", constants.GoVersion, "expected Talos version")
 	flag.StringVar(&talosctlPath, "talos.talosctlpath", "talosctl", "The path to 'talosctl' binary")
 	flag.StringVar(&kubectlPath, "talos.kubectlpath", "kubectl", "The path to 'kubectl' binary")
+	flag.StringVar(&helmPath, "talos.helmpath", "helm", "The path to 'helm' binary")
+	flag.StringVar(&kubeStrPath, "talos.kubestrpath", "kubestr", "The path to 'kubestr' binary")
 	flag.StringVar(&talosImage, "talos.image", images.DefaultTalosImageRepository, "The default 'talos' container image")
+	flag.StringVar(&csiTestName, "talos.csi", "", "CSI test to run")
+	flag.StringVar(&csiTestTimeout, "talos.csi.timeout", "15m", "CSI test timeout")
 
 	flag.StringVar(&provision_test.DefaultSettings.CIDR, "talos.provision.cidr", provision_test.DefaultSettings.CIDR, "CIDR to use to provision clusters (provision tests only)")
 	flag.Var(&provision_test.DefaultSettings.RegistryMirrors, "talos.provision.registry-mirror", "registry mirrors to use (provision tests only)")
