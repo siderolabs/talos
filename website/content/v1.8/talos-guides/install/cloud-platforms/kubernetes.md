@@ -100,6 +100,4 @@ volumeMounts:
     name: etc-kubernetes
   - mountPath: /usr/libexec/kubernetes
     name: usr-libexec-kubernetes
-  - mountPath: /opt
-    name: opt
 ```

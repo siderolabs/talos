@@ -420,7 +420,7 @@ func (suite *TinkSuite) getTinkManifests(namespace, serviceName, ssName, talosIm
 			},
 		},
 		xslices.Map(
-			constants.Overlays,
+			xslices.Filter(constants.Overlays, func(overlay string) bool { return overlay != "/opt" }), // /opt/cni/bin contains CNI binaries
 			func(mountPath string) overlayMountSpec {
 				return overlayMountSpec{
 					MountPoint: mountPath,
