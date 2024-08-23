@@ -702,8 +702,8 @@ github.com/siderolabs/go-procfs v0.1.2 h1:bDs9hHyYGE2HO1frpmUsD60yg80VIEDrx31fkb
 github.com/siderolabs/go-procfs v0.1.2/go.mod h1:dBzQXobsM7+TWRRI3DS9X7vAuj8Nkfgu3Z/U9iY3ZTY=
 github.com/siderolabs/go-retry v0.3.3 h1:zKV+S1vumtO72E6sYsLlmIdV/G/GcYSBLiEx/c9oCEg=
 github.com/siderolabs/go-retry v0.3.3/go.mod h1:Ff/VGc7v7un4uQg3DybgrmOWHEmJ8BzZds/XNn/BqMI=
-github.com/siderolabs/go-smbios v0.3.2 h1:/9MCz1h3HYFcNdFG9rIL9EKwtQJsHRPuGuM2ESdao3A=
-github.com/siderolabs/go-smbios v0.3.2/go.mod h1:AKzwL3QdFOgA81h65Hay2bs3BUnH+FBnXqNfgeChpEc=
+github.com/siderolabs/go-smbios v0.3.3 h1:rM3UKHQ8in1mqNRkpV75Ls3Wnk6rAhQJVYKUsKkQS20=
+github.com/siderolabs/go-smbios v0.3.3/go.mod h1:kScnr0XSyzLfkRo/ChjITgI0rPRQnIi6PdgbxVCwA9U=
 github.com/siderolabs/go-tail v0.1.1 h1:3XeJgd97OHyFAIE7nQEMcRhOfnv7DvXbu0BRKbtT6u8=
 github.com/siderolabs/go-tail v0.1.1/go.mod h1:IihAL39acadXHfb5fEAOKK2DaDFIrG2+VD3b2H/ziZ0=
 github.com/siderolabs/go-talos-support v0.1.0 h1:ulf+RI0Wo6UGzKQJZog1uvdQE/zstogs1R46jZpAmvU=
