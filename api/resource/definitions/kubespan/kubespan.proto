@@ -3,6 +3,7 @@ syntax = "proto3";
 package talos.resource.definitions.kubespan;
 
 option go_package = "github.com/siderolabs/talos/pkg/machinery/api/resource/definitions/kubespan";
+option java_package = "dev.talos.api.resource.definitions.kubespan";
 
 import "common/common.proto";
 import "google/protobuf/timestamp.proto";

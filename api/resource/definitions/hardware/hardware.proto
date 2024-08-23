@@ -3,6 +3,7 @@ syntax = "proto3";
 package talos.resource.definitions.hardware;
 
 option go_package = "github.com/siderolabs/talos/pkg/machinery/api/resource/definitions/hardware";
+option java_package = "dev.talos.api.resource.definitions.hardware";
 
 // MemoryModuleSpec represents a single Memory.
 message MemoryModuleSpec {

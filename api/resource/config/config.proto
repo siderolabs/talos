@@ -3,6 +3,7 @@ syntax = "proto3";
 package resource.config;
 
 option go_package = "github.com/siderolabs/talos/pkg/machinery/api/resource/config";
+option java_package = "dev.talos.api.resource.config";
 
 // MessageConfigSpec is the spec for the config.MachineConfig resource.
 message MachineConfigSpec {

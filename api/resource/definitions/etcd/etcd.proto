@@ -3,6 +3,7 @@ syntax = "proto3";
 package talos.resource.definitions.etcd;
 
 option go_package = "github.com/siderolabs/talos/pkg/machinery/api/resource/definitions/etcd";
+option java_package = "dev.talos.api.resource.definitions.etcd";
 
 import "common/common.proto";
 

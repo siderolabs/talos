@@ -3,6 +3,7 @@ syntax = "proto3";
 package talos.resource.definitions.proto;
 
 option go_package = "github.com/siderolabs/talos/pkg/machinery/api/resource/definitions/proto";
+option java_package = "dev.talos.api.resource.definitions.proto";
 
 // LinuxIDMapping specifies UID/GID mappings.
 message LinuxIDMapping {

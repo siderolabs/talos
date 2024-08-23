@@ -61,7 +61,8 @@ func (p *Pkg) WriteDebug(w io.Writer) {
 
 	fmt.Fprint(w, "syntax = \"proto3\";\n\n")
 	fmt.Fprintf(w, "package talos.resource.definitions.%s; // %s\n\n", p.Name, p.GoPkg)
-	fmt.Fprintf(w, "option go_package = \"github.com/siderolabs/talos/pkg/machinery/api/resource/definitions/%s\";\n\n", pkgName) // TODO: insert proper path
+	fmt.Fprintf(w, "option go_package = \"github.com/siderolabs/talos/pkg/machinery/api/resource/definitions/%s\";\n", pkgName) // TODO: insert proper path
+	fmt.Fprintf(w, "option java_package = \"dev.talos.api.resource.definitions.%s\";\n\n", pkgName)
 
 	if p.imports.Len() > 0 {
 		for i := 0; i < p.imports.Len(); i++ {
@@ -88,7 +89,8 @@ func (p *Pkg) Format(w io.Writer) {
 
 	fmt.Fprint(w, "syntax = \"proto3\";\n\n")
 	fmt.Fprintf(w, "package talos.resource.definitions.%s;\n\n", p.Name)
-	fmt.Fprintf(w, "option go_package = \"github.com/siderolabs/talos/pkg/machinery/api/resource/definitions/%s\";\n\n", pkgName) // TODO: insert proper path
+	fmt.Fprintf(w, "option go_package = \"github.com/siderolabs/talos/pkg/machinery/api/resource/definitions/%s\";\n", pkgName) // TODO: insert proper path
+	fmt.Fprintf(w, "option java_package = \"dev.talos.api.resource.definitions.%s\";\n\n", pkgName)
 
 	if p.imports.Len() > 0 {
 		for i := 0; i < p.imports.Len(); i++ {

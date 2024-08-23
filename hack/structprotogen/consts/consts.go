@@ -229,7 +229,8 @@ type ConstBlocks []ConstBlock
 func (b *ConstBlocks) FormatProtoFile(w io.Writer) error {
 	fmt.Fprint(w, "syntax = \"proto3\";\n\n")
 	fmt.Fprint(w, "package talos.resource.definitions.enums;\n\n")
-	fmt.Fprint(w, `option go_package = "github.com/siderolabs/talos/pkg/machinery/api/resource/definitions/enums";`+"\n\n")
+	fmt.Fprint(w, `option go_package = "github.com/siderolabs/talos/pkg/machinery/api/resource/definitions/enums";`+"\n")
+	fmt.Fprint(w, `option java_package = "dev.talos.api.resource.definitions.enums";`+"\n\n")
 
 	for _, block := range *b {
 		for _, comment := range block.CommentLines {

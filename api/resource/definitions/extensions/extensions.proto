@@ -3,6 +3,7 @@ syntax = "proto3";
 package talos.resource.definitions.extensions;
 
 option go_package = "github.com/siderolabs/talos/pkg/machinery/api/resource/definitions/extensions";
+option java_package = "dev.talos.api.resource.definitions.extensions";
 
 // Compatibility describes extension compatibility.
 message Compatibility {

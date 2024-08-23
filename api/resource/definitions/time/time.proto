@@ -3,6 +3,7 @@ syntax = "proto3";
 package talos.resource.definitions.time;
 
 option go_package = "github.com/siderolabs/talos/pkg/machinery/api/resource/definitions/time";
+option java_package = "dev.talos.api.resource.definitions.time";
 
 import "google/protobuf/duration.proto";
 

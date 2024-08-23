@@ -3,6 +3,7 @@ syntax = "proto3";
 package cluster;
 
 option go_package = "github.com/siderolabs/talos/pkg/machinery/api/cluster";
+option java_package = "dev.talos.api.cluster";
 
 import "common/common.proto";
 import "google/protobuf/duration.proto";

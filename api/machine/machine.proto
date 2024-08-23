@@ -3,6 +3,7 @@ syntax = "proto3";
 package machine;
 
 option go_package = "github.com/siderolabs/talos/pkg/machinery/api/machine";
+option java_package = "dev.talos.api.machine";
 
 import "common/common.proto";
 import "google/protobuf/any.proto";

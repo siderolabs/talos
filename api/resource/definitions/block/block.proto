@@ -3,6 +3,7 @@ syntax = "proto3";
 package talos.resource.definitions.block;
 
 option go_package = "github.com/siderolabs/talos/pkg/machinery/api/resource/definitions/block";
+option java_package = "dev.talos.api.resource.definitions.block";
 
 // DeviceSpec is the spec for devices status.
 message DeviceSpec {

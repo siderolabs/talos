@@ -3,6 +3,7 @@ syntax = "proto3";
 package talos.resource.definitions.cluster;
 
 option go_package = "github.com/siderolabs/talos/pkg/machinery/api/resource/definitions/cluster";
+option java_package = "dev.talos.api.resource.definitions.cluster";
 
 import "common/common.proto";
 import "resource/definitions/enums/enums.proto";

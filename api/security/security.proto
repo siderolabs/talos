@@ -3,6 +3,7 @@ syntax = "proto3";
 package securityapi;
 
 option go_package = "github.com/siderolabs/talos/pkg/machinery/api/security";
+option java_package = "dev.talos.api.security";
 
 // The security service definition.
 service SecurityService {

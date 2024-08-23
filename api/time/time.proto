@@ -3,6 +3,7 @@ syntax = "proto3";
 package time;
 
 option go_package = "github.com/siderolabs/talos/pkg/machinery/api/time";
+option java_package = "dev.talos.api.time";
 
 import "common/common.proto";
 import "google/protobuf/empty.proto";

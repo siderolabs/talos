@@ -3,6 +3,7 @@ syntax = "proto3";
 package talos.resource.definitions.k8s;
 
 option go_package = "github.com/siderolabs/talos/pkg/machinery/api/resource/definitions/k8s";
+option java_package = "dev.talos.api.resource.definitions.k8s";
 
 import "common/common.proto";
 import "google/protobuf/struct.proto";

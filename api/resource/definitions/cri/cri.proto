@@ -3,6 +3,7 @@ syntax = "proto3";
 package talos.resource.definitions.cri;
 
 option go_package = "github.com/siderolabs/talos/pkg/machinery/api/resource/definitions/cri";
+option java_package = "dev.talos.api.resource.definitions.cri";
 
 import "google/protobuf/struct.proto";
 
