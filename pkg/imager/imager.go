@@ -335,6 +335,11 @@ func (i *Imager) buildCmdline() error {
 
 	// platform kernel args
 	cmdline.Append(constants.KernelParamPlatform, p.Name())
+
+	if quirks.New(i.prof.Version).SupportsMetalPlatformConsoleTTYS0() && i.prof.Platform == constants.PlatformMetal {
+		cmdline.Append("console", "ttyS0")
+	}
+
 	cmdline.SetAll(p.KernelArgs(i.prof.Arch).Strings())
 
 	// board kernel args

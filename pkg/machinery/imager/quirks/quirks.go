@@ -98,3 +98,16 @@ func (q Quirks) SupportsMultidoc() bool {
 
 	return q.v.GTE(minVersionMultidoc)
 }
+
+// maxVersionMetalPlatformConsoleTTYS0Dropped is the version that dropped console=ttyS0 for metal image.
+var maxVersionMetalPlatformConsoleTTYS0Dropped = semver.MustParse("1.8.0")
+
+// SupportsMetalPlatformConsoleTTYS0 returns true if the Talos version supports already has console=ttyS0 kernel argument.
+func (q Quirks) SupportsMetalPlatformConsoleTTYS0() bool {
+	// if the version doesn't parse, we assume it's latest Talos
+	if q.v == nil {
+		return false
+	}
+
+	return q.v.LT(maxVersionMetalPlatformConsoleTTYS0Dropped)
+}

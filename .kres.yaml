@@ -425,12 +425,14 @@ spec:
             - only-on-schedule
           environment:
             PLATFORM: linux/amd64
+            IMAGER_ARGS: "--extra-kernel-arg=console=ttyS0"
             IMAGE_REGISTRY: registry.dev.siderolabs.io
         - name: secureboot-iso
           conditions:
             - only-on-schedule
           environment:
             PLATFORM: linux/amd64
+            IMAGER_ARGS: "--extra-kernel-arg=console=ttyS0"
             IMAGE_REGISTRY: registry.dev.siderolabs.io
         - name: integration-trusted-boot
           command: e2e-qemu
@@ -1425,12 +1427,14 @@ spec:
             - only-on-schedule
           command: iso secureboot-iso
           environment:
+            IMAGER_ARGS: "--extra-kernel-arg=console=ttyS0"
             IMAGE_REGISTRY: registry.dev.siderolabs.io
         - name: images-essential
           conditions:
             - only-on-schedule
           environment:
             PLATFORM: linux/amd64
+            IMAGER_ARGS: "--extra-kernel-arg=console=ttyS0"
             IMAGE_REGISTRY: registry.dev.siderolabs.io
         - name: factory-1.6-iso
           command: e2e-image-factory

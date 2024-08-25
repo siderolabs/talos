@@ -200,6 +200,14 @@ Talos Linux now supports a kernel command line argument `talos.device.settle_tim
 Talos Linux now supports Apache CloudStack platform.
 """
 
+    [notes.metal-image]
+        title = "Metal images"
+        description = """\
+Starting with Talos 1.8, `console=ttyS0` kernel argument is removed from the metal images and installer. If running virtualized in QEMU (For eg: Proxmox), this can be added as an extra kernel argument if needed via Image Factory or using Imager.
+
+This should fix slow boot or no console output issues on most bare metal hardware.
+"""
+
 [make_deps]
 
     [make_deps.tools]

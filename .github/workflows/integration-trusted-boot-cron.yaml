@@ -1,6 +1,6 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
 #
-# Generated on 2024-05-27T16:20:10Z by kres bcb280a.
+# Generated on 2024-08-25T05:01:25Z by kres 8e4bbb4.
 
 name: integration-trusted-boot-cron
 concurrency:
@@ -84,6 +84,7 @@ jobs:
         if: github.event_name == 'schedule'
         env:
           IMAGE_REGISTRY: registry.dev.siderolabs.io
+          IMAGER_ARGS: --extra-kernel-arg=console=ttyS0
           PLATFORM: linux/amd64
         run: |
           make images-essential
@@ -91,6 +92,7 @@ jobs:
         if: github.event_name == 'schedule'
         env:
           IMAGE_REGISTRY: registry.dev.siderolabs.io
+          IMAGER_ARGS: --extra-kernel-arg=console=ttyS0
           PLATFORM: linux/amd64
         run: |
           make secureboot-iso

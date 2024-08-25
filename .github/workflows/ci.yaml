@@ -1523,12 +1523,14 @@ jobs:
         if: github.event_name == 'schedule'
         env:
           IMAGE_REGISTRY: registry.dev.siderolabs.io
+          IMAGER_ARGS: --extra-kernel-arg=console=ttyS0
         run: |
           make iso secureboot-iso
       - name: images-essential
         if: github.event_name == 'schedule'
         env:
           IMAGE_REGISTRY: registry.dev.siderolabs.io
+          IMAGER_ARGS: --extra-kernel-arg=console=ttyS0
           PLATFORM: linux/amd64
         run: |
           make images-essential
@@ -3110,6 +3112,7 @@ jobs:
         if: github.event_name == 'schedule'
         env:
           IMAGE_REGISTRY: registry.dev.siderolabs.io
+          IMAGER_ARGS: --extra-kernel-arg=console=ttyS0
           PLATFORM: linux/amd64
         run: |
           make images-essential
@@ -3117,6 +3120,7 @@ jobs:
         if: github.event_name == 'schedule'
         env:
           IMAGE_REGISTRY: registry.dev.siderolabs.io
+          IMAGER_ARGS: --extra-kernel-arg=console=ttyS0
           PLATFORM: linux/amd64
         run: |
           make secureboot-iso

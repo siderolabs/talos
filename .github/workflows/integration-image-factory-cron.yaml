@@ -1,6 +1,6 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
 #
-# Generated on 2024-05-27T16:20:10Z by kres bcb280a.
+# Generated on 2024-08-25T07:59:04Z by kres 8e4bbb4.
 
 name: integration-image-factory-cron
 concurrency:
@@ -84,12 +84,14 @@ jobs:
         if: github.event_name == 'schedule'
         env:
           IMAGE_REGISTRY: registry.dev.siderolabs.io
+          IMAGER_ARGS: --extra-kernel-arg=console=ttyS0
         run: |
           make iso secureboot-iso
       - name: images-essential
         if: github.event_name == 'schedule'
         env:
           IMAGE_REGISTRY: registry.dev.siderolabs.io
+          IMAGER_ARGS: --extra-kernel-arg=console=ttyS0
           PLATFORM: linux/amd64
         run: |
           make images-essential

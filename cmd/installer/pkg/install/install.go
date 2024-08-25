@@ -12,6 +12,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"slices"
 	"syscall"
 	"time"
 
@@ -146,6 +147,15 @@ func Install(ctx context.Context, p runtime.Platform, mode Mode, opts *Options) 
 		opts.OverlayName = overlayOpts.Name
 
 		cmdline.SetAll(overlayOpts.KernelArgs)
+	}
+
+	// preserve console=ttyS0 if it was already present in cmdline for metal platform
+	existingCmdline := procfs.ProcCmdline()
+
+	if *existingCmdline.Get(constants.KernelParamPlatform).First() == constants.PlatformMetal && existingCmdline.Get("console").Contains("ttyS0") {
+		if !slices.Contains(opts.ExtraKernelArgs, "console=ttyS0") {
+			cmdline.Append("console", "ttyS0")
+		}
 	}
 
 	if err := cmdline.AppendAll(
