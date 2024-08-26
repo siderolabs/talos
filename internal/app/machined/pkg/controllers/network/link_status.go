@@ -22,6 +22,7 @@ import (
 	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
 
 	networkadapter "github.com/siderolabs/talos/internal/app/machined/pkg/adapters/network"
+	networkutils "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/network/utils"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/network/watch"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/runtime"
 	"github.com/siderolabs/talos/internal/pkg/pci"
@@ -166,6 +167,8 @@ func (ctrl *LinkStatusController) reconcile(
 			ethMode       *ethtool.LinkMode
 			driverInfo    ethtoolioctl.DrvInfo
 			permanentAddr net.HardwareAddr
+			features      map[string]ethtoolioctl.FeatureState
+			privateFlags  map[string]bool
 		)
 
 		if ethClient != nil {
@@ -220,6 +223,16 @@ func (ctrl *LinkStatusController) reconcile(
 						Link: state > 0,
 					}
 				}
+			}
+
+			features, err = ethtoolIoctlClient.FeaturesWithState(link.Attributes.Name)
+			if err != nil {
+				logger.Warn("error querying ethtool ioctl features", zap.String("link", link.Attributes.Name), zap.Error(err))
+			}
+
+			privateFlags, err = ethtoolIoctlClient.PrivFlags(link.Attributes.Name)
+			if err != nil {
+				logger.Warn("error querying ethtool ioctl private flags", zap.String("link", link.Attributes.Name), zap.Error(err))
 			}
 		}
 
@@ -309,6 +322,9 @@ func (ctrl *LinkStatusController) reconcile(
 
 			status.DriverVersion = driverInfo.Version
 			status.FirmwareVersion = driverInfo.FwVersion
+
+			status.PrivateFlags = privateFlags
+			status.Features = networkutils.FormatFeatures(features)
 
 			// link.Attributes.Info will be non-nil, because we set status.Kind above using link.Attributes.Info.Kind
 			var rawLinkData []byte

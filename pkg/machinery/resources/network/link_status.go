@@ -52,6 +52,8 @@ type LinkStatusSpec struct {
 	SpeedMegabits int               `yaml:"speedMbit,omitempty" protobuf:"23"`
 	Port          nethelpers.Port   `yaml:"port" protobuf:"24"`
 	Duplex        nethelpers.Duplex `yaml:"duplex" protobuf:"25"`
+	Features      map[string]string `yaml:"features,omitempty" protobuf:"31"`
+	PrivateFlags  map[string]bool   `yaml:"privateFlags,omitempty" protobuf:"32"`
 	// Following fields are only populated with respective Kind.
 	VLAN         VLANSpec         `yaml:"vlan,omitempty" protobuf:"26"`
 	BridgeMaster BridgeMasterSpec `yaml:"bridgeMaster,omitempty" protobuf:"27"`
