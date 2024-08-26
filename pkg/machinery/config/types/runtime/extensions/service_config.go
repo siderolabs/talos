@@ -13,6 +13,7 @@ import (
 
 	"github.com/siderolabs/talos/pkg/machinery/config/config"
 	"github.com/siderolabs/talos/pkg/machinery/config/internal/registry"
+	"github.com/siderolabs/talos/pkg/machinery/config/merge"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/meta"
 	"github.com/siderolabs/talos/pkg/machinery/config/validation"
 )
@@ -53,10 +54,51 @@ type ServiceConfigV1Alpha1 struct {
 	ServiceName string `yaml:"name"`
 	//   description: |
 	//     The config files for the extension service.
-	ServiceConfigFiles []ConfigFile `yaml:"configFiles,omitempty"`
+	ServiceConfigFiles ConfigFileList `yaml:"configFiles,omitempty"`
 	//   description: |
 	//     The environment for the extension service.
 	ServiceEnvironment []string `yaml:"environment,omitempty"`
+}
+
+// ConfigFileList is a list of ConfigFiles.
+//
+//docgen:alias
+type ConfigFileList []ConfigFile
+
+// Merge the config files by mountPath.
+func (list *ConfigFileList) Merge(other any) error {
+	otherFiles, ok := other.(ConfigFileList)
+	if !ok {
+		return fmt.Errorf("unexpected type for config file merge %T", other)
+	}
+
+	for _, configFile := range otherFiles {
+		if err := list.mergeConfigFile(configFile); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (list *ConfigFileList) mergeConfigFile(configFile ConfigFile) error {
+	var existing *ConfigFile
+
+	for idx, cf := range *list {
+		if cf.ConfigFileMountPath == configFile.ConfigFileMountPath {
+			existing = &(*list)[idx]
+
+			break
+		}
+	}
+
+	if existing != nil {
+		return merge.Merge(existing, &configFile)
+	}
+
+	*list = append(*list, configFile)
+
+	return nil
 }
 
 // ConfigFile is a config file for extension services.

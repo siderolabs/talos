@@ -9,3 +9,12 @@ machine:
 apiVersion: v1alpha1
 kind: SideroLinkConfig
 apiUrl: https://siderolink.api/join?jointoken=secret&user=alice
+---
+apiVersion: v1alpha1
+kind: ExtensionServiceConfig
+name: foo
+configFiles:
+    - content: hello
+      mountPath: /etc/foo
+environment:
+    - FOO=BAR
