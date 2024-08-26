@@ -12,6 +12,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/siderolabs/talos/pkg/machinery/config/encoder"
+	"github.com/siderolabs/talos/pkg/machinery/config/merge"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/runtime/extensions"
 )
 
@@ -37,4 +38,34 @@ func TestExtensionServiceConfigMarshalStability(t *testing.T) {
 	t.Log(string(marshaled))
 
 	assert.Equal(t, expectedExtensionServiceConfigDocument, marshaled)
+}
+
+func TestExtensionServiceConfigMerge(t *testing.T) {
+	t.Parallel()
+
+	cfgLeft := extensions.NewServicesConfigV1Alpha1()
+	cfgLeft.ServiceName = "foo"
+	cfgLeft.ServiceConfigFiles = []extensions.ConfigFile{
+		{
+			ConfigFileContent:   "hello",
+			ConfigFileMountPath: "/etc/foo",
+		},
+	}
+
+	cfgRight := cfgLeft.DeepCopy()
+	cfgRight.ServiceConfigFiles[0].ConfigFileContent = "hello world"
+
+	cfgRight.ServiceConfigFiles = append(cfgRight.ServiceConfigFiles,
+		extensions.ConfigFile{
+			ConfigFileContent:   "bar",
+			ConfigFileMountPath: "/etc/bar",
+		},
+	)
+
+	require.NoError(t, merge.Merge(cfgLeft, cfgRight))
+
+	require.Len(t, cfgLeft.ConfigFiles(), 2)
+
+	assert.Equal(t, "hello world", cfgLeft.ConfigFiles()[0].Content())
+	assert.Equal(t, "bar", cfgLeft.ConfigFiles()[1].Content())
 }
