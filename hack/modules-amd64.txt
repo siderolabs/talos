@@ -130,6 +130,7 @@ kernel/drivers/net/usb/r8152.ko
 kernel/drivers/net/vmxnet3/vmxnet3.ko
 kernel/drivers/net/vrf.ko
 kernel/drivers/nvme/host/nvme.ko
+kernel/drivers/nvme/host/nvme-rdma.ko
 kernel/drivers/nvme/target/nvme-loop.ko
 kernel/drivers/nvme/target/nvmet-fc.ko
 kernel/drivers/nvme/target/nvmet.ko
