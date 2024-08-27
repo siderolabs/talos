@@ -1237,6 +1237,9 @@ spec:
             type: download
             artifactName: talos-artifacts
             artifactPath: _out
+        - name: generate
+          conditions:
+            - only-on-schedule
         - name: build
           conditions:
             - only-on-schedule
