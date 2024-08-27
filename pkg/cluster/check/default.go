@@ -29,7 +29,7 @@ func DefaultClusterChecks() []ClusterCheck {
 			// wait for kube-proxy to report ready
 			func(cluster ClusterInfo) conditions.Condition {
 				return conditions.PollingCondition("kube-proxy to report ready", func(ctx context.Context) error {
-					present, err := DaemonSetPresent(ctx, cluster, "kube-system", "k8s-app=kube-proxy")
+					present, replicas, err := DaemonSetPresent(ctx, cluster, "kube-system", "k8s-app=kube-proxy")
 					if err != nil {
 						return err
 					}
@@ -38,14 +38,14 @@ func DefaultClusterChecks() []ClusterCheck {
 						return conditions.ErrSkipAssertion
 					}
 
-					return K8sPodReadyAssertion(ctx, cluster, "kube-system", "k8s-app=kube-proxy")
-				}, 3*time.Minute, 5*time.Second)
+					return K8sPodReadyAssertion(ctx, cluster, replicas, "kube-system", "k8s-app=kube-proxy")
+				}, 5*time.Minute, 5*time.Second)
 			},
 
 			// wait for coredns to report ready
 			func(cluster ClusterInfo) conditions.Condition {
 				return conditions.PollingCondition("coredns to report ready", func(ctx context.Context) error {
-					present, err := ReplicaSetPresent(ctx, cluster, "kube-system", "k8s-app=kube-dns")
+					present, replicas, err := ReplicaSetPresent(ctx, cluster, "kube-system", "k8s-app=kube-dns")
 					if err != nil {
 						return err
 					}
@@ -54,8 +54,8 @@ func DefaultClusterChecks() []ClusterCheck {
 						return conditions.ErrSkipAssertion
 					}
 
-					return K8sPodReadyAssertion(ctx, cluster, "kube-system", "k8s-app=kube-dns")
-				}, 3*time.Minute, 5*time.Second)
+					return K8sPodReadyAssertion(ctx, cluster, replicas, "kube-system", "k8s-app=kube-dns")
+				}, 5*time.Minute, 5*time.Second)
 			},
 
 			// wait for all the nodes to be schedulable

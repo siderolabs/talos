@@ -274,7 +274,7 @@ func K8sAllNodesSchedulableAssertion(ctx context.Context, cluster cluster.K8sPro
 // K8sPodReadyAssertion checks whether all the pods matching label selector are Ready, and there is at least one.
 //
 //nolint:gocyclo
-func K8sPodReadyAssertion(ctx context.Context, cluster cluster.K8sProvider, namespace, labelSelector string) error {
+func K8sPodReadyAssertion(ctx context.Context, cluster cluster.K8sProvider, replicas int, namespace, labelSelector string) error {
 	clientset, err := cluster.K8sClient(ctx)
 	if err != nil {
 		return err
@@ -345,6 +345,10 @@ func K8sPodReadyAssertion(ctx context.Context, cluster cluster.K8sProvider, name
 	}
 
 	if len(notReadyPods) == 0 {
+		if len(readyPods) != replicas {
+			return fmt.Errorf("expected %d ready pods, got %d", replicas, len(readyPods))
+		}
+
 		return nil
 	}
 
@@ -352,37 +356,49 @@ func K8sPodReadyAssertion(ctx context.Context, cluster cluster.K8sProvider, name
 }
 
 // DaemonSetPresent returns true if there is at least one DaemonSet matching given label selector.
-func DaemonSetPresent(ctx context.Context, cluster cluster.K8sProvider, namespace, labelSelector string) (bool, error) {
+//
+//nolint:dupl
+func DaemonSetPresent(ctx context.Context, cluster cluster.K8sProvider, namespace, labelSelector string) (bool, int, error) {
 	clientset, err := cluster.K8sClient(ctx)
 	if err != nil {
-		return false, err
+		return false, 0, err
 	}
 
 	dss, err := clientset.AppsV1().DaemonSets(namespace).List(ctx, metav1.ListOptions{
 		LabelSelector: labelSelector,
 	})
 	if err != nil {
-		return false, err
+		return false, 0, err
 	}
 
-	return len(dss.Items) > 0, nil
+	if len(dss.Items) == 0 {
+		return false, 0, nil
+	}
+
+	return true, int(dss.Items[0].Status.DesiredNumberScheduled), nil
 }
 
 // ReplicaSetPresent returns true if there is at least one ReplicaSet matching given label selector.
-func ReplicaSetPresent(ctx context.Context, cluster cluster.K8sProvider, namespace, labelSelector string) (bool, error) {
+//
+//nolint:dupl
+func ReplicaSetPresent(ctx context.Context, cluster cluster.K8sProvider, namespace, labelSelector string) (bool, int, error) {
 	clientset, err := cluster.K8sClient(ctx)
 	if err != nil {
-		return false, err
+		return false, 0, err
 	}
 
 	rss, err := clientset.AppsV1().ReplicaSets(namespace).List(ctx, metav1.ListOptions{
 		LabelSelector: labelSelector,
 	})
 	if err != nil {
-		return false, err
+		return false, 0, err
 	}
 
-	return len(rss.Items) > 0, nil
+	if len(rss.Items) == 0 {
+		return false, 0, nil
+	}
+
+	return true, int(rss.Items[0].Status.Replicas), nil
 }
 
 // K8sControlPlaneStaticPods checks whether all the controlplane nodes are running required Kubernetes static pods.

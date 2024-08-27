@@ -152,6 +152,37 @@ func (ctrl *NfTablesChainConfigController) Run(ctx context.Context, r controller
 							},
 						)
 
+						if cfg.Config().Machine() != nil && cfg.Config().Cluster() != nil {
+							if cfg.Config().Machine().Features().HostDNS().ForwardKubeDNSToHost() {
+								hostDNSIP := netip.MustParseAddr(constants.HostDNSAddress)
+
+								// allow traffic to host DNS
+								for _, protocol := range []nethelpers.Protocol{nethelpers.ProtocolUDP, nethelpers.ProtocolTCP} {
+									spec.Rules = append(spec.Rules,
+										network.NfTablesRule{
+											MatchSourceAddress: &network.NfTablesAddressMatch{
+												IncludeSubnets: xslices.Map(
+													append(slices.Clone(cfg.Config().Cluster().Network().PodCIDRs()), cfg.Config().Cluster().Network().ServiceCIDRs()...),
+													netip.MustParsePrefix,
+												),
+											},
+											MatchDestinationAddress: &network.NfTablesAddressMatch{
+												IncludeSubnets: []netip.Prefix{netip.PrefixFrom(hostDNSIP, hostDNSIP.BitLen())},
+											},
+											MatchLayer4: &network.NfTablesLayer4Match{
+												Protocol: protocol,
+												MatchDestinationPort: &network.NfTablesPortMatch{
+													Ranges: []network.PortRange{{Lo: 53, Hi: 53}},
+												},
+											},
+											AnonCounter: true,
+											Verdict:     pointer.To(nethelpers.VerdictAccept),
+										},
+									)
+								}
+							}
+						}
+
 						if cfg.Config().Cluster() != nil {
 							spec.Rules = append(spec.Rules,
 								// allow Kubernetes pod/service traffic

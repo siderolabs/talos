@@ -174,6 +174,12 @@ func (suite *CommonSuite) TestDNSResolver() {
 	suite.Assert().Contains(stderr, "'index.html' saved")
 
 	if suite.T().Failed() {
+		suite.LogPodLogsByLabel(suite.ctx, "kube-system", "k8s-app", "kube-dns")
+
+		for _, node := range suite.DiscoverNodeInternalIPs(suite.ctx) {
+			suite.DumpLogs(suite.ctx, node, "dns-resolve-cache", "google")
+		}
+
 		suite.T().FailNow()
 	}
 

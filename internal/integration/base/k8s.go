@@ -231,6 +231,21 @@ func (k8sSuite *K8sSuite) WaitForPodToBeRunning(ctx context.Context, timeout tim
 	}
 }
 
+// LogPodLogsByLabel logs the logs of the pod with the given namespace and label.
+func (k8sSuite *K8sSuite) LogPodLogsByLabel(ctx context.Context, namespace, label, value string) {
+	ctx, cancel := context.WithTimeout(ctx, time.Minute)
+	defer cancel()
+
+	podList, err := k8sSuite.Clientset.CoreV1().Pods(namespace).List(ctx, metav1.ListOptions{
+		LabelSelector: fmt.Sprintf("%s=%s", label, value),
+	})
+	k8sSuite.Require().NoError(err)
+
+	for _, pod := range podList.Items {
+		k8sSuite.LogPodLogs(ctx, namespace, pod.Name)
+	}
+}
+
 // LogPodLogs logs the logs of the pod with the given namespace and name.
 func (k8sSuite *K8sSuite) LogPodLogs(ctx context.Context, namespace, podName string) {
 	ctx, cancel := context.WithTimeout(ctx, time.Minute)
