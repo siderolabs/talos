@@ -19,7 +19,7 @@ As Talos Linux is fully contained in the UKI image, the full operating system is
 
 ## SecureBoot with Sidero Labs Images
 
-[Sidero Labs](https://www.siderolabs.com/) provides Talos images signed with the Sidero Labs SecureBoot key via [Image Factory]({{< relref "../../../learn-more/image-factory" >}}).
+[Sidero Labs](https://www.siderolabs.com/) provides Talos images signed with the [Sidero Labs SecureBoot key](https://factory.talos.dev/secureboot/signing-cert.pem) via [Image Factory]({{< relref "../../../learn-more/image-factory" >}}).
 
 > Note: The SecureBoot images are available for Talos releases starting from `v1.5.0`.
 
