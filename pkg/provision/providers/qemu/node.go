@@ -129,16 +129,14 @@ func (p *provisioner) createNode(state *vm.State, clusterReq provision.ClusterRe
 	}
 
 	launchConfig := LaunchConfig{
-		QemuExecutable: arch.QemuExecutable(),
-		Architecture:   arch.Architecture(),
-		DiskPaths:      diskPaths,
+		ArchitectureData: arch,
+		DiskPaths:        diskPaths,
 		DiskDrivers: xslices.Map(nodeReq.Disks, func(disk *provision.Disk) string {
 			return disk.Driver
 		}),
 		VCPUCount:         vcpuCount,
 		MemSize:           memSize,
 		KernelArgs:        cmdline.String(),
-		MachineType:       arch.QemuMachine(),
 		PFlashImages:      pflashImages,
 		MonitorPath:       state.GetRelativePath(fmt.Sprintf("%s.monitor", nodeReq.Name)),
 		EnableKVM:         opts.TargetArch == runtime.GOARCH,

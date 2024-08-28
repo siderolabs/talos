@@ -43,14 +43,11 @@ type LaunchConfig struct {
 	DiskDrivers       []string
 	VCPUCount         int64
 	MemSize           int64
-	QemuExecutable    string
-	Architecture      string
 	KernelImagePath   string
 	InitrdPath        string
 	ISOPath           string
 	PFlashImages      []string
 	KernelArgs        string
-	MachineType       string
 	MonitorPath       string
 	DefaultBootOrder  string
 	EnableKVM         bool
@@ -58,6 +55,7 @@ type LaunchConfig struct {
 	TPM2Config        tpm2Config
 	NodeUUID          uuid.UUID
 	BadRTC            bool
+	ArchitectureData  Arch
 
 	// Talos config
 	Config string
@@ -390,18 +388,7 @@ func launchVM(config *LaunchConfig) error {
 		}
 	}
 
-	machineArg := config.MachineType
-
-	if config.EnableKVM {
-		machineArg += ",accel=kvm"
-
-		// smm is not supported on aarch64
-		if Arch(config.QemuExecutable) == ArchAmd64 {
-			machineArg += ",smm=on"
-		}
-	}
-
-	args = append(args, "-machine", machineArg)
+	args = append(args, config.ArchitectureData.KVMArgs(config.EnableKVM)...)
 
 	pflashArgs := make([]string, 2*len(config.PFlashImages))
 	for i := range config.PFlashImages {
@@ -440,12 +427,7 @@ func launchVM(config *LaunchConfig) error {
 		}
 
 		args = append(args,
-			"-chardev",
-			fmt.Sprintf("socket,id=chrtpm,path=%s", tpm2SocketPath),
-			"-tpmdev",
-			"emulator,id=tpm0,chardev=chrtpm",
-			"-device",
-			"tpm-tis,tpmdev=tpm0",
+			config.ArchitectureData.TPMDeviceArgs(tpm2SocketPath)...,
 		)
 	}
 
@@ -470,9 +452,9 @@ func launchVM(config *LaunchConfig) error {
 		)
 	}
 
-	fmt.Fprintf(os.Stderr, "starting %s with args:\n%s\n", config.QemuExecutable, strings.Join(args, " "))
+	fmt.Fprintf(os.Stderr, "starting %s with args:\n%s\n", config.ArchitectureData.QemuExecutable(), strings.Join(args, " "))
 	cmd := exec.Command(
-		config.QemuExecutable,
+		config.ArchitectureData.QemuExecutable(),
 		args...,
 	)
 
