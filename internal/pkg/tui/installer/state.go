@@ -24,14 +24,6 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
 )
 
-const canalCustomCNI = "canal"
-
-var customCNIPresets = map[string][]string{
-	canalCustomCNI: {
-		"https://docs.projectcalico.org/archive/v3.20/manifests/canal.yaml",
-	},
-}
-
 // NewState creates new installer state.
 //
 //nolint:gocyclo
@@ -154,7 +146,6 @@ func NewState(ctx context.Context, installer *Installer, conn *Connection) (*Sta
 				&state.cni,
 				components.NewTableHeaders("CNI", "description"),
 				constants.FlannelCNI, "CNI used by Talos by default",
-				canalCustomCNI, "Canal v3.20",
 				constants.NoneCNI, "CNI will not be installed",
 			))
 	}
@@ -224,11 +215,6 @@ type State struct {
 func (s *State) GenConfig() (*machineapi.GenerateConfigurationResponse, error) {
 	cniConfig := &machineapi.CNIConfig{
 		Name: s.cni,
-	}
-
-	if urls, ok := customCNIPresets[s.cni]; ok {
-		cniConfig.Name = constants.CustomCNI
-		cniConfig.Urls = urls
 	}
 
 	s.opts.ClusterConfig.ClusterNetwork.CniConfig = cniConfig
