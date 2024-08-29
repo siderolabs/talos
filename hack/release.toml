@@ -208,6 +208,16 @@ Starting with Talos 1.8, `console=ttyS0` kernel argument is removed from the met
 This should fix slow boot or no console output issues on most bare metal hardware.
 """
 
+    [notes.kernel-args]
+        title = "`talos.halt_if_installed` kernel argument"
+        description = """\
+Starting with Talos 1.8, ISO's generated from Boot Assets would have a new kernel argument `talos.halt_if_installed` which would pause the boot sequence until boot timeout if Talos is already installed on the disk.
+ISO generated for pre 1.8 versions would not have this kernel argument.
+
+This can be also explicitly enabled by setting `talos.halt_if_installed=1` in kernel argument.
+"""
+
+
 [make_deps]
 
     [make_deps.tools]

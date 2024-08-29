@@ -1924,6 +1924,25 @@ func UnmountEFIPartition(runtime.Sequence, any) (runtime.TaskExecutionFunc, stri
 	}, "unmountEFIPartition"
 }
 
+// haltIfInstalled halts the boot process if Talos is installed to disk but booted from ISO.
+func haltIfInstalled(seq runtime.Sequence, _ any) (runtime.TaskExecutionFunc, string) {
+	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) error {
+		ctx, cancel := context.WithTimeout(ctx, constants.BootTimeout)
+		defer cancel()
+
+		timer := time.NewTicker(30 * time.Second)
+		defer timer.Stop()
+
+		select {
+		case <-timer.C:
+			logger.Printf("Talos is already installed to disk but booted from another media and %s kernel parameter is set. Please reboot from the disk.", constants.KernelParamHaltIfInstalled)
+		case <-ctx.Done():
+		}
+
+		return nil
+	}, "haltIfInstalled"
+}
+
 // MountStatePartition mounts the system partition.
 func MountStatePartition(seq runtime.Sequence, _ any) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {

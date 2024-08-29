@@ -133,6 +133,15 @@ func (*Sequencer) Initialize(r runtime.Runtime) []runtime.Phase {
 			ResetSystemDiskPartitions,
 		).AppendWithDeferredCheck(
 			func() bool {
+				haltIfInstalledStr := procfs.ProcCmdline().Get(constants.KernelParamHaltIfInstalled).First()
+				haltIfInstalled, _ := strconv.ParseBool(pointer.SafeDeref(haltIfInstalledStr)) //nolint:errcheck
+
+				return r.State().Machine().Installed() && haltIfInstalled
+			},
+			"haltIfInstalled",
+			haltIfInstalled,
+		).AppendWithDeferredCheck(
+			func() bool {
 				return r.State().Machine().Installed()
 			},
 			"mountSystem",

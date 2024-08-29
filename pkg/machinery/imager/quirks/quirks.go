@@ -111,3 +111,16 @@ func (q Quirks) SupportsMetalPlatformConsoleTTYS0() bool {
 
 	return q.v.LT(maxVersionMetalPlatformConsoleTTYS0Dropped)
 }
+
+// minVersionSupportsHalfIfInstalled is the version that supports half if installed.
+var minVersionSupportsHalfIfInstalled = semver.MustParse("1.8.0")
+
+// SupportsHaltIfInstalled returns true if the Talos version supports half if installed.
+func (q Quirks) SupportsHaltIfInstalled() bool {
+	// if the version doesn't parse, we assume it's latest Talos
+	if q.v == nil {
+		return true
+	}
+
+	return q.v.GTE(minVersionSupportsHalfIfInstalled)
+}

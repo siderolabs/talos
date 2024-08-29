@@ -259,3 +259,8 @@ Example:
 ```text
 talos.device.settle_time=3m
 ```
+
+#### `talos.halt_if_installed`
+
+If set to `1`, Talos will pause the boot sequence and keeps printing a message until the boot timeout is reached if it detects that it is already installed.
+This is useful if booting from ISO/PXE and you want to prevent the machine accidentally booting from the ISO/PXE after installation to the disk.

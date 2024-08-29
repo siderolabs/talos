@@ -84,6 +84,9 @@ const (
 	// KernelParamNetIfnames is the kernel parameter name to control predictable network interface names.
 	KernelParamNetIfnames = "net.ifnames"
 
+	// KernelParamHaltIfInstalled is the kernel parameter name to control if Talos should pause if booting from boot media while Talos is already installed.
+	KernelParamHaltIfInstalled = "talos.halt_if_installed"
+
 	// BoardNone indicates that the install is not for a specific board.
 	BoardNone = "none"
 
