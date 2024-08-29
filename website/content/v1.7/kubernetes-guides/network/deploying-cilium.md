@@ -64,7 +64,7 @@ Install the [Cilium CLI](https://docs.cilium.io/en/v1.13/gettingstarted/k8s-inst
 ```bash
 cilium install \
     --set ipam.mode=kubernetes \
-    --set kubeProxyReplacement=disabled \
+    --set kubeProxyReplacement=false \
     --set securityContext.capabilities.ciliumAgent="{CHOWN,KILL,NET_ADMIN,NET_RAW,IPC_LOCK,SYS_ADMIN,SYS_RESOURCE,DAC_OVERRIDE,FOWNER,SETGID,SETUID}" \
     --set securityContext.capabilities.cleanCiliumState="{NET_ADMIN,SYS_ADMIN,SYS_RESOURCE}" \
     --set cgroup.autoMount.enabled=false \
@@ -111,7 +111,7 @@ helm install \
     --version 1.15.6 \
     --namespace kube-system \
     --set ipam.mode=kubernetes \
-    --set kubeProxyReplacement=disabled \
+    --set kubeProxyReplacement=false \
     --set securityContext.capabilities.ciliumAgent="{CHOWN,KILL,NET_ADMIN,NET_RAW,IPC_LOCK,SYS_ADMIN,SYS_RESOURCE,DAC_OVERRIDE,FOWNER,SETGID,SETUID}" \
     --set securityContext.capabilities.cleanCiliumState="{NET_ADMIN,SYS_ADMIN,SYS_RESOURCE}" \
     --set cgroup.autoMount.enabled=false \
@@ -149,7 +149,7 @@ helm template \
     --version 1.15.6 \
     --namespace kube-system \
     --set ipam.mode=kubernetes \
-    --set kubeProxyReplacement=disabled \
+    --set kubeProxyReplacement=false \
     --set securityContext.capabilities.ciliumAgent="{CHOWN,KILL,NET_ADMIN,NET_RAW,IPC_LOCK,SYS_ADMIN,SYS_RESOURCE,DAC_OVERRIDE,FOWNER,SETGID,SETUID}" \
     --set securityContext.capabilities.cleanCiliumState="{NET_ADMIN,SYS_ADMIN,SYS_RESOURCE}" \
     --set cgroup.autoMount.enabled=false \
