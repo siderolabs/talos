@@ -47,10 +47,10 @@ func Untar(ctx context.Context, r io.Reader, rootPath string) error {
 
 		switch hdr.Typeflag {
 		case tar.TypeDir:
-			mode := hdr.FileInfo().Mode()
+			mode := hdr.FileInfo().Mode() & os.ModePerm
 			mode |= 0o700 // make rwx for the owner
 
-			if err = os.Mkdir(path, mode); err != nil {
+			if err = os.Mkdir(path, mode); err != nil && !os.IsExist(err) {
 				return fmt.Errorf("error creating directory %q mode %s: %w", path, mode, err)
 			}
 

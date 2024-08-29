@@ -351,13 +351,25 @@ func (c *ContainerAsset) Extract(ctx context.Context, destination, arch string, 
 	eg, ctx := errgroup.WithContext(ctx)
 
 	eg.Go(func() error {
-		defer w.Close() //nolint:errcheck
+		if exportErr := crane.Export(img, w); exportErr != nil {
+			w.CloseWithError(exportErr)
 
-		return crane.Export(img, w)
+			return exportErr
+		}
+
+		w.Close() //nolint:errcheck
+
+		return nil
 	})
 
 	eg.Go(func() error {
-		return archiver.Untar(ctx, r, destination)
+		if untarErr := archiver.Untar(ctx, r, destination); untarErr != nil {
+			r.CloseWithError(untarErr)
+
+			return untarErr
+		}
+
+		return nil
 	})
 
 	return eg.Wait()
