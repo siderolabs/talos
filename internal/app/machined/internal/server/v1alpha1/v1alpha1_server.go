@@ -197,7 +197,7 @@ func (s *Server) ApplyConfiguration(ctx context.Context, in *machine.ApplyConfig
 	// --mode=no-reboot
 	case machine.ApplyConfigurationRequest_NO_REBOOT:
 		if err = s.Controller.Runtime().CanApplyImmediate(cfgProvider); err != nil {
-			return nil, status.Errorf(codes.InvalidArgument, err.Error())
+			return nil, status.Error(codes.InvalidArgument, err.Error())
 		}
 
 		modeDetails = "Applied configuration without a reboot"
@@ -1768,7 +1768,7 @@ func (s *Server) EtcdRemoveMemberByID(ctx context.Context, in *machine.EtcdRemov
 
 	if err = client.RemoveMemberByMemberID(ctx, in.MemberId); err != nil {
 		if errors.Is(err, rpctypes.ErrMemberNotFound) {
-			return nil, status.Errorf(codes.NotFound, err.Error())
+			return nil, status.Error(codes.NotFound, err.Error())
 		}
 
 		return nil, fmt.Errorf("failed to remove member: %w", err)

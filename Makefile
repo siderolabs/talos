@@ -17,11 +17,11 @@ ZSTD_COMPRESSION_LEVEL ?= 18
 CI_RELEASE_TAG := $(shell git log --oneline --format=%B -n 1 -- HEAD^2 | head -n 1 | sed -r "/^release\(.*\)/ s/^release\((.*)\):.*$$/\\1/; t; Q")
 
 ARTIFACTS := _out
-TOOLS ?= ghcr.io/siderolabs/tools:v1.8.0-alpha.0-8-ga764e8d
+TOOLS ?= ghcr.io/siderolabs/tools:v1.8.0
 
 PKGS_PREFIX ?= ghcr.io/siderolabs
-PKGS ?= v1.8.0-alpha.0-51-g467d127
-EXTRAS ?= v1.8.0-alpha.0-5-g6f4a373
+PKGS ?= v1.8.0-alpha.0-52-g4fd2541
+EXTRAS ?= v1.8.0-alpha.0-6-g43a2821
 
 KRES_IMAGE ?= ghcr.io/siderolabs/kres:latest
 CONFORMANCE_IMAGE ?= ghcr.io/siderolabs/conform:latest
@@ -59,17 +59,17 @@ PKG_TALOSCTL_CNI_BUNDLE_INSTALL ?= $(PKGS_PREFIX)/talosctl-cni-bundle-install:$(
 # renovate: datasource=github-tags depName=golang/go
 GO_VERSION ?= 1.22
 # renovate: datasource=go depName=golang.org/x/tools
-GOIMPORTS_VERSION ?= v0.21.0
+GOIMPORTS_VERSION ?= v0.24.0
 # renovate: datasource=go depName=mvdan.cc/gofumpt
-GOFUMPT_VERSION ?= v0.6.0
+GOFUMPT_VERSION ?= v0.7.0
 # renovate: datasource=go depName=github.com/golangci/golangci-lint
-GOLANGCILINT_VERSION ?= v1.59.1
+GOLANGCILINT_VERSION ?= v1.60.3
 # renovate: datasource=go depName=golang.org/x/tools
 STRINGER_VERSION ?= v0.24.0
 # renovate: datasource=go depName=github.com/dmarkham/enumer
 ENUMER_VERSION ?= v1.5.10
 # renovate: datasource=go depName=k8s.io/code-generator
-DEEPCOPY_GEN_VERSION ?= v0.30.3
+DEEPCOPY_GEN_VERSION ?= v0.31.0
 # renovate: datasource=go depName=github.com/planetscale/vtprotobuf
 VTPROTOBUF_VERSION ?= v0.6.0
 # renovate: datasource=go depName=github.com/siderolabs/deep-copy
@@ -99,13 +99,13 @@ INTEGRATION_TEST_PROVISION_DEFAULT_TARGET := integration-test-provision-$(OPERAT
 # renovate: datasource=github-releases depName=kubernetes/kubernetes
 KUBECTL_VERSION ?= v1.31.0
 # renovate: datasource=github-releases depName=kastenhq/kubestr
-KUBESTR_VERSION ?= v0.4.44
+KUBESTR_VERSION ?= v0.4.46
 # renovate: datasource=github-releases depName=helm/helm
-HELM_VERSION ?= v3.15.3
+HELM_VERSION ?= v3.15.4
 # renovate: datasource=github-releases depName=kubernetes-sigs/cluster-api
-CLUSTERCTL_VERSION ?= 1.7.4
+CLUSTERCTL_VERSION ?= 1.8.1
 # renovate: datasource=github-releases depName=cilium/cilium-cli
-CILIUM_CLI_VERSION ?= v0.16.15
+CILIUM_CLI_VERSION ?= v0.16.16
 # renovate: datasource=github-releases depName=microsoft/secureboot_objects
 MICROSOFT_SECUREBOOT_RELEASE ?= v1.1.3
 

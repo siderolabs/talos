@@ -127,6 +127,7 @@ func (suite *DiskUsageSuite) TestDiskUsageRequests() {
 
 			sizes[info.Name] = info.Size
 		}
+
 		suite.Require().Greater(responseCount, 1)
 	}
 }

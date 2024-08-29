@@ -193,7 +193,7 @@ func (s *singleton) Start(serviceIDs ...string) error {
 					msg = strings.ToUpper(msg[:1]) + msg[1:]
 				}
 
-				svcrunner.UpdateState(context.Background(), events.StateFailed, msg)
+				svcrunner.UpdateState(context.Background(), events.StateFailed, "%s", msg)
 			}
 		}(id, svcrunner)
 

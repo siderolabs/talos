@@ -70,6 +70,7 @@ func (suite *EventsSuite) TestOverflow() {
 	for i := numEvents - events.MaxEventsToKeep; i < numEvents; i++ {
 		expected = append(expected, strconv.Itoa(i))
 	}
+
 	suite.assertEvents(expected, e.Get(events.MaxEventsToKeep*10))
 	suite.assertEvents(expected[len(expected)-3:], e.Get(3))
 }

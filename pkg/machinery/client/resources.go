@@ -6,7 +6,6 @@ package client
 
 import (
 	"context"
-	"fmt"
 	"strings"
 
 	"github.com/cosi-project/runtime/pkg/resource"
@@ -56,8 +55,8 @@ func (c *Client) ResolveResourceKind(ctx context.Context, resourceNamespace *res
 	case len(matched) > 1:
 		matchedTypes := xslices.Map(matched, func(rd *meta.ResourceDefinition) string { return rd.Metadata().ID() })
 
-		return nil, status.Errorf(codes.InvalidArgument, fmt.Sprintf("resource type %q is ambiguous: %v", resourceType, matchedTypes))
+		return nil, status.Errorf(codes.InvalidArgument, "resource type %q is ambiguous: %v", resourceType, matchedTypes)
 	default:
-		return nil, status.Error(codes.NotFound, fmt.Sprintf("resource %q is not registered", resourceType))
+		return nil, status.Errorf(codes.NotFound, "resource %q is not registered", resourceType)
 	}
 }

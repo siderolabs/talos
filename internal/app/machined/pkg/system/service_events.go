@@ -83,6 +83,7 @@ func (sc *serviceCondition) waitRegister(ctx context.Context) error {
 		case <-ticker.C:
 		}
 	}
+
 	sc.mu.Lock()
 	sc.waitingRegister = false
 	sc.mu.Unlock()

@@ -565,6 +565,7 @@ func (apiSuite *APISuite) AssertExpectedModules(ctx context.Context, node string
 	for scanner.Scan() {
 		loadedModules = append(loadedModules, strings.Split(scanner.Text(), " ")[0])
 	}
+
 	apiSuite.Require().NoError(scanner.Err())
 
 	fileReader, err = apiSuite.Client.Read(nodeCtx, fmt.Sprintf("/lib/modules/%s/modules.dep", constants.DefaultKernelVersion))
@@ -581,6 +582,7 @@ func (apiSuite *APISuite) AssertExpectedModules(ctx context.Context, node string
 	for scanner.Scan() {
 		modulesDep = append(modulesDep, filepath.Base(strings.Split(scanner.Text(), ":")[0]))
 	}
+
 	apiSuite.Require().NoError(scanner.Err())
 
 	for module, moduleDep := range expectedModules {

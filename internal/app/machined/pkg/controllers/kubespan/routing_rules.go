@@ -10,6 +10,7 @@ import (
 	"os"
 
 	"github.com/hashicorp/go-multierror"
+	"github.com/siderolabs/go-pointer"
 	"github.com/vishvananda/netlink"
 	"golang.org/x/sys/unix"
 )
@@ -50,8 +51,8 @@ func (m *rulesManager) Install() error {
 		Priority:          nextRuleNumber(nc, unix.AF_INET),
 		Family:            unix.AF_INET,
 		Table:             m.TargetTable,
-		Mark:              m.InternalMark,
-		Mask:              m.MarkMask,
+		Mark:              uint32(m.InternalMark),
+		Mask:              pointer.To(uint32(m.MarkMask)),
 		Goto:              -1,
 		Flow:              -1,
 		SuppressIfgroup:   -1,
@@ -66,8 +67,8 @@ func (m *rulesManager) Install() error {
 		Priority:          nextRuleNumber(nc, unix.AF_INET6),
 		Family:            unix.AF_INET6,
 		Table:             m.TargetTable,
-		Mark:              m.InternalMark,
-		Mask:              m.MarkMask,
+		Mark:              uint32(m.InternalMark),
+		Mask:              pointer.To(uint32(m.MarkMask)),
 		Goto:              -1,
 		Flow:              -1,
 		SuppressIfgroup:   -1,
@@ -91,7 +92,7 @@ func (m *rulesManager) deleteRulesFamily(nc *netlink.Handle, family int) error {
 
 	for _, r := range list {
 		if r.Table == m.TargetTable &&
-			r.Mark == m.InternalMark {
+			r.Mark == uint32(m.InternalMark) {
 			thisRule := r
 
 			if err := nc.RuleDel(&thisRule); err != nil {

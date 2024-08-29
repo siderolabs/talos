@@ -63,7 +63,7 @@ func ForEachResource(ctx context.Context,
 		var nodeCtx context.Context
 
 		if node == "" {
-			nodeCtx = ctx
+			nodeCtx = ctx //nolint:fatcontext
 		} else {
 			nodeCtx = client.WithNode(ctx, node)
 		}

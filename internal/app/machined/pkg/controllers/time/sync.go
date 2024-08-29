@@ -208,7 +208,7 @@ func (ctrl *SyncController) Run(ctx context.Context, r controller.Runtime, logge
 
 			timeSynced = false
 
-			syncCtx, syncCtxCancel = context.WithCancel(ctx) //nolint:govet
+			syncCtx, syncCtxCancel = context.WithCancel(ctx) //nolint:govet,fatcontext
 
 			syncWg.Add(1)
 

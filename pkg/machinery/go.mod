@@ -20,33 +20,33 @@ require (
 	github.com/jsimonetti/rtnetlink/v2 v2.0.2
 	github.com/mdlayher/ethtool v0.1.0
 	github.com/opencontainers/runtime-spec v1.2.0
-	github.com/planetscale/vtprotobuf v0.6.0
+	github.com/planetscale/vtprotobuf v0.6.1-0.20240319094008-0393e58bdf10
 	github.com/santhosh-tekuri/jsonschema/v5 v5.3.1
 	github.com/siderolabs/crypto v0.4.4
 	github.com/siderolabs/gen v0.5.0
-	github.com/siderolabs/go-api-signature v0.3.4
+	github.com/siderolabs/go-api-signature v0.3.5
 	github.com/siderolabs/go-blockdevice v0.4.7
 	github.com/siderolabs/go-pointer v1.0.0
 	github.com/siderolabs/net v0.4.0
 	github.com/siderolabs/protoenc v0.2.1
 	github.com/stretchr/testify v1.9.0
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20240808171019-573a1156607a
-	google.golang.org/grpc v1.65.0
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20240827150818-7e3bb234dfed
+	google.golang.org/grpc v1.66.0
 	google.golang.org/protobuf v1.34.2
 	gopkg.in/yaml.v3 v3.0.1
 )
 
 require (
-	github.com/ProtonMail/go-crypto v1.0.0 // indirect
+	github.com/ProtonMail/go-crypto v1.1.0-alpha.5.0.20240827111422-b5837fa4476e // indirect
 	github.com/ProtonMail/go-mime v0.0.0-20230322103455-7d82a3887f2f // indirect
 	github.com/ProtonMail/gopenpgp/v2 v2.7.5 // indirect
-	github.com/adrg/xdg v0.4.0 // indirect
+	github.com/adrg/xdg v0.5.0 // indirect
 	github.com/cloudflare/circl v1.3.9 // indirect
 	github.com/containernetworking/cni v1.2.3 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/gertd/go-pluralize v0.2.1 // indirect
 	github.com/google/go-cmp v0.6.0 // indirect
-	github.com/grpc-ecosystem/grpc-gateway/v2 v2.20.0 // indirect
+	github.com/grpc-ecosystem/grpc-gateway/v2 v2.22.0 // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/josharian/native v1.1.0 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
@@ -67,6 +67,6 @@ require (
 	golang.org/x/sys v0.24.0 // indirect
 	golang.org/x/text v0.17.0 // indirect
 	golang.org/x/time v0.6.0 // indirect
-	google.golang.org/genproto/googleapis/api v0.0.0-20240617180043-68d350f18fd4 // indirect
+	google.golang.org/genproto/googleapis/api v0.0.0-20240827150818-7e3bb234dfed // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 )

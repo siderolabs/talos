@@ -166,7 +166,7 @@ func (ctrl *CRDController) Run(ctx context.Context, r controller.Runtime, logger
 
 		var crdControllerCtx context.Context
 
-		crdControllerCtx, crdControllerCtxCancel = context.WithCancel(ctx) //nolint:govet,fatcontext
+		crdControllerCtx, crdControllerCtxCancel = context.WithCancel(ctx) //nolint:govet
 
 		go func() {
 			crdControllerErrCh <- ctrl.runCRDController(

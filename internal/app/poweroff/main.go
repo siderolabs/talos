@@ -6,7 +6,6 @@ package poweroff
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"slices"
 
@@ -40,19 +39,19 @@ func Main(args []string) {
 
 	client, err := client.New(adminCtx, client.WithUnixSocket(constants.MachineSocketPath), client.WithGRPCDialOptions(grpc.WithTransportCredentials(insecure.NewCredentials())))
 	if err != nil {
-		log.Fatalf(fmt.Errorf("error while creating machinery client: %w", err).Error())
+		log.Fatalf("error while creating machinery client: %s", err)
 	}
 
 	switch ActionFromArgs(args) {
 	case Shutdown:
 		err = client.Shutdown(adminCtx)
 		if err != nil {
-			log.Fatalf(fmt.Errorf("error while sending shutdown command: %w", err).Error())
+			log.Fatalf("error while sending shutdown command: %s", err)
 		}
 	case Reboot:
 		err = client.Reboot(adminCtx)
 		if err != nil {
-			log.Fatalf(fmt.Errorf("error while sending reboot command: %w", err).Error())
+			log.Fatalf("error while sending reboot command: %s", err)
 		}
 	}
 }
