@@ -14,7 +14,7 @@ NAME = Talos
 CLOUD_IMAGES_EXTRA_ARGS ?= ""
 ZSTD_COMPRESSION_LEVEL ?= 18
 
-CI_RELEASE_TAG := $(shell git log --oneline --format=%B -n 1 -- HEAD^2 | head -n 1 | sed -r "/^release\(.*\)/ s/^release\((.*)\):.*$$/\\1/; t; Q")
+CI_RELEASE_TAG := $(shell git log --oneline --format=%B -n 1 HEAD^2 -- 2>/dev/null | head -n 1 | sed -r "/^release\(.*\)/ s/^release\((.*)\):.*$$/\\1/; t; Q")
 
 ARTIFACTS := _out
 TOOLS ?= ghcr.io/siderolabs/tools:v1.8.0
