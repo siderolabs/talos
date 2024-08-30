@@ -147,6 +147,8 @@ kernel/drivers/scsi/mpi3mr/mpi3mr.ko
 kernel/drivers/scsi/mpt3sas/mpt3sas.ko
 kernel/drivers/scsi/smartpqi/smartpqi.ko
 kernel/drivers/scsi/vmw_pvscsi.ko
+kernel/drivers/uio/uio.ko
+kernel/drivers/uio/uio_pci_generic.ko
 kernel/drivers/usb/serial/ch341.ko
 kernel/drivers/usb/serial/cp210x.ko
 kernel/drivers/usb/serial/ftdi_sio.ko
