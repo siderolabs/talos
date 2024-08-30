@@ -180,11 +180,14 @@ hcloud load-balancer add-target controlplane \
 Using the IP/DNS name of the loadbalancer created earlier, generate the base configuration files for the Talos machines by issuing:
 
 ```bash
-$ talosctl gen config talos-k8s-hcloud-tutorial https://<load balancer IP or DNS>:6443
+$ talosctl gen config talos-k8s-hcloud-tutorial https://<load balancer IP or DNS>:6443 \
+    --with-examples=false --with-docs=false
 created controlplane.yaml
 created worker.yaml
 created talosconfig
 ```
+
+Generating the config without examples and docs is necessary because otherwise you can easily exceed the 32 kb limit on uploadable userdata (see [issue 8805](https://github.com/siderolabs/talos/issues/8805)).
 
 At this point, you can modify the generated configs to your liking.
 Optionally, you can specify `--config-patch` with RFC6902 jsonpatches which will be applied during the config generation.
