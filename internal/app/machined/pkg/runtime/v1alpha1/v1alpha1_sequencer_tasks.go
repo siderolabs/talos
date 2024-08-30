@@ -57,7 +57,6 @@ import (
 	"github.com/siderolabs/talos/internal/pkg/etcd"
 	"github.com/siderolabs/talos/internal/pkg/install"
 	"github.com/siderolabs/talos/internal/pkg/logind"
-	"github.com/siderolabs/talos/internal/pkg/meta"
 	"github.com/siderolabs/talos/internal/pkg/mount"
 	mountv2 "github.com/siderolabs/talos/internal/pkg/mount/v2"
 	"github.com/siderolabs/talos/internal/pkg/partition"
@@ -1640,7 +1639,7 @@ func ResetSystemDiskSpec(_ runtime.Sequence, data any) (runtime.TaskExecutionFun
 		if stateWiped && !metaWiped {
 			var removed bool
 
-			removed, err = r.State().Machine().Meta().DeleteTag(ctx, meta.StateEncryptionConfig)
+			removed, err = r.State().Machine().Meta().DeleteTag(ctx, metamachinery.StateEncryptionConfig)
 			if err != nil {
 				return fmt.Errorf("failed to remove state encryption META config tag: %w", err)
 			}
@@ -1766,7 +1765,7 @@ func SaveStateEncryptionConfig(runtime.Sequence, any) (runtime.TaskExecutionFunc
 			return err
 		}
 
-		ok, err := r.State().Machine().Meta().SetTagBytes(ctx, meta.StateEncryptionConfig, data)
+		ok, err := r.State().Machine().Meta().SetTagBytes(ctx, metamachinery.StateEncryptionConfig, data)
 		if err != nil {
 			return err
 		}

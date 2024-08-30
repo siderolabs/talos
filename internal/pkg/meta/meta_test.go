@@ -19,6 +19,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/siderolabs/talos/internal/pkg/meta"
+	metaconsts "github.com/siderolabs/talos/pkg/machinery/meta"
 	"github.com/siderolabs/talos/pkg/machinery/resources/runtime"
 )
 
@@ -51,22 +52,22 @@ func TestFlow(t *testing.T) {
 
 	ctx := context.Background()
 
-	ok, err := m.SetTag(ctx, meta.Upgrade, "1.2.3")
+	ok, err := m.SetTag(ctx, metaconsts.Upgrade, "1.2.3")
 	require.NoError(t, err)
 	assert.True(t, ok)
 
-	val, ok := m.ReadTag(meta.Upgrade)
+	val, ok := m.ReadTag(metaconsts.Upgrade)
 	assert.True(t, ok)
 	assert.Equal(t, "1.2.3", val)
 
-	_, ok = m.ReadTag(meta.StagedUpgradeImageRef)
+	_, ok = m.ReadTag(metaconsts.StagedUpgradeImageRef)
 	assert.False(t, ok)
 
-	ok, err = m.DeleteTag(ctx, meta.Upgrade)
+	ok, err = m.DeleteTag(ctx, metaconsts.Upgrade)
 	require.NoError(t, err)
 	assert.True(t, ok)
 
-	ok, err = m.SetTag(ctx, meta.StagedUpgradeInstallOptions, "install-fast")
+	ok, err = m.SetTag(ctx, metaconsts.StagedUpgradeInstallOptions, "install-fast")
 	require.NoError(t, err)
 	assert.True(t, ok)
 
@@ -74,17 +75,17 @@ func TestFlow(t *testing.T) {
 
 	assert.NoError(t, m.Reload(ctx))
 
-	val, ok = m.ReadTag(meta.StagedUpgradeInstallOptions)
+	val, ok = m.ReadTag(metaconsts.StagedUpgradeInstallOptions)
 	assert.True(t, ok)
 	assert.Equal(t, "install-fast", val)
 
 	m2, err := meta.New(ctx, st, meta.WithFixedPath(path))
 	require.NoError(t, err)
 
-	_, ok = m2.ReadTag(meta.Upgrade)
+	_, ok = m2.ReadTag(metaconsts.Upgrade)
 	assert.False(t, ok)
 
-	val, ok = m2.ReadTag(meta.StagedUpgradeInstallOptions)
+	val, ok = m2.ReadTag(metaconsts.StagedUpgradeInstallOptions)
 	assert.True(t, ok)
 	assert.Equal(t, "install-fast", val)
 

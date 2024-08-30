@@ -15,6 +15,7 @@ import (
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/options"
 	"github.com/siderolabs/talos/internal/pkg/meta"
+	metaconsts "github.com/siderolabs/talos/pkg/machinery/meta"
 	"github.com/siderolabs/talos/pkg/machinery/resources/block"
 )
 
@@ -59,13 +60,13 @@ func revertBootloadInternal(ctx context.Context, resourceState state.State) erro
 		return err
 	}
 
-	label, ok := metaState.ReadTag(meta.Upgrade)
+	label, ok := metaState.ReadTag(metaconsts.Upgrade)
 	if !ok {
 		return nil
 	}
 
 	if label == "" {
-		if _, err = metaState.DeleteTag(ctx, meta.Upgrade); err != nil {
+		if _, err = metaState.DeleteTag(ctx, metaconsts.Upgrade); err != nil {
 			return err
 		}
 
@@ -85,7 +86,7 @@ func revertBootloadInternal(ctx context.Context, resourceState state.State) erro
 		return err
 	}
 
-	if _, err = metaState.DeleteTag(ctx, meta.Upgrade); err != nil {
+	if _, err = metaState.DeleteTag(ctx, metaconsts.Upgrade); err != nil {
 		return err
 	}
 

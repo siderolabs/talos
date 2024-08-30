@@ -10,7 +10,7 @@ import (
 
 	"github.com/cosi-project/runtime/pkg/state"
 
-	"github.com/siderolabs/talos/internal/pkg/meta"
+	"github.com/siderolabs/talos/pkg/machinery/meta"
 	"github.com/siderolabs/talos/pkg/machinery/resources/hardware"
 	"github.com/siderolabs/talos/pkg/machinery/resources/network"
 	"github.com/siderolabs/talos/pkg/machinery/resources/runtime"

@@ -34,6 +34,7 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/imager/quirks"
 	"github.com/siderolabs/talos/pkg/machinery/kernel"
+	metaconsts "github.com/siderolabs/talos/pkg/machinery/meta"
 	"github.com/siderolabs/talos/pkg/machinery/overlay"
 	"github.com/siderolabs/talos/pkg/machinery/version"
 )
@@ -410,7 +411,7 @@ func (i *Installer) Install(ctx context.Context, mode Mode) (err error) {
 		var ok bool
 
 		if mode == ModeUpgrade {
-			if ok, err = metaState.SetTag(ctx, meta.Upgrade, bootInstallResult.PreviousLabel); !ok || err != nil {
+			if ok, err = metaState.SetTag(ctx, metaconsts.Upgrade, bootInstallResult.PreviousLabel); !ok || err != nil {
 				return fmt.Errorf("failed to set upgrade tag: %q", bootInstallResult.PreviousLabel)
 			}
 		}

@@ -18,8 +18,8 @@ import (
 
 	hwadapter "github.com/siderolabs/talos/internal/app/machined/pkg/adapters/hardware"
 	runtimetalos "github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
-	"github.com/siderolabs/talos/internal/pkg/meta"
 	pkgSMBIOS "github.com/siderolabs/talos/internal/pkg/smbios"
+	"github.com/siderolabs/talos/pkg/machinery/meta"
 	"github.com/siderolabs/talos/pkg/machinery/resources/hardware"
 	"github.com/siderolabs/talos/pkg/machinery/resources/runtime"
 )

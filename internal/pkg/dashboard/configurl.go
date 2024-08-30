@@ -15,8 +15,8 @@ import (
 	"google.golang.org/grpc/status"
 
 	"github.com/siderolabs/talos/internal/pkg/dashboard/resourcedata"
-	"github.com/siderolabs/talos/internal/pkg/meta"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
+	"github.com/siderolabs/talos/pkg/machinery/meta"
 	runtimeres "github.com/siderolabs/talos/pkg/machinery/resources/runtime"
 )
 

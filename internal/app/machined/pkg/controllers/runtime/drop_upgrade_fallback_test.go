@@ -22,6 +22,7 @@ import (
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/runtime"
 	machineruntime "github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
 	"github.com/siderolabs/talos/internal/pkg/meta"
+	metaconsts "github.com/siderolabs/talos/pkg/machinery/meta"
 	runtimeres "github.com/siderolabs/talos/pkg/machinery/resources/runtime"
 )
 
@@ -67,7 +68,7 @@ func TestUpgradeFallbackControllerSuite(t *testing.T) {
 }
 
 func (suite *DropUpgradeFallbackControllerSuite) TestDropUpgradeFallback() {
-	_, err := suite.meta.SetTag(suite.Ctx(), meta.Upgrade, "A")
+	_, err := suite.meta.SetTag(suite.Ctx(), metaconsts.Upgrade, "A")
 	suite.Require().NoError(err)
 
 	machineStatus := runtimeres.NewMachineStatus()
@@ -78,7 +79,7 @@ func (suite *DropUpgradeFallbackControllerSuite) TestDropUpgradeFallback() {
 	time.Sleep(time.Second)
 
 	// controller should not remove the tag
-	val, ok := suite.meta.ReadTag(meta.Upgrade)
+	val, ok := suite.meta.ReadTag(metaconsts.Upgrade)
 	suite.Require().True(ok)
 	suite.Require().Equal("A", val)
 
@@ -88,7 +89,7 @@ func (suite *DropUpgradeFallbackControllerSuite) TestDropUpgradeFallback() {
 	suite.Require().NoError(suite.State().Update(suite.Ctx(), machineStatus))
 
 	suite.AssertWithin(time.Second, 10*time.Millisecond, func() error {
-		_, ok = suite.meta.ReadTag(meta.Upgrade)
+		_, ok = suite.meta.ReadTag(metaconsts.Upgrade)
 		if ok {
 			return retry.ExpectedErrorf("tag is still present")
 		}

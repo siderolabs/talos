@@ -20,6 +20,7 @@ import (
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha2"
 	"github.com/siderolabs/talos/internal/pkg/meta"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
+	metaconsts "github.com/siderolabs/talos/pkg/machinery/meta"
 	"github.com/siderolabs/talos/pkg/machinery/resources/block"
 )
 
@@ -201,15 +202,15 @@ func (s *MachineState) Flush() error {
 }
 
 func (s *MachineState) probeMeta() {
-	stagedInstallImageRef, ok1 := s.meta.ReadTag(meta.StagedUpgradeImageRef)
-	stagedInstallOptions, ok2 := s.meta.ReadTag(meta.StagedUpgradeInstallOptions)
+	stagedInstallImageRef, ok1 := s.meta.ReadTag(metaconsts.StagedUpgradeImageRef)
+	stagedInstallOptions, ok2 := s.meta.ReadTag(metaconsts.StagedUpgradeInstallOptions)
 
 	s.stagedInstall = ok1 && ok2
 
 	if s.stagedInstall {
 		// clear the staged install flags
-		_, err1 := s.meta.DeleteTag(context.Background(), meta.StagedUpgradeImageRef)
-		_, err2 := s.meta.DeleteTag(context.Background(), meta.StagedUpgradeInstallOptions)
+		_, err1 := s.meta.DeleteTag(context.Background(), metaconsts.StagedUpgradeImageRef)
+		_, err2 := s.meta.DeleteTag(context.Background(), metaconsts.StagedUpgradeInstallOptions)
 
 		if err := s.meta.Flush(); err != nil || err1 != nil || err2 != nil {
 			// failed to delete staged install tags, clear the stagedInstall to prevent boot looping
