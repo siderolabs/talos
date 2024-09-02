@@ -339,7 +339,7 @@ COPY --from=pkg-ipxe-arm64 /usr/libexec/snp.efi /arm64/snp.efi
 
 FROM scratch AS microsoft-secureboot-database
 ARG MICROSOFT_SECUREBOOT_RELEASE
-ADD https://github.com/microsoft/secureboot_objects.git#${MICROSOFT_SECUREBOOT_RELEASE}:PreSignedObjects /
+ADD https://github.com/microsoft/secureboot_objects.git#${MICROSOFT_SECUREBOOT_RELEASE}:PreSignedObjects  /
 
 FROM scratch AS microsoft-key-keys
 COPY --from=microsoft-secureboot-database /KEK/Certificates/*.der /kek/
