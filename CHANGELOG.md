@@ -1,4 +1,4 @@
-## [Talos 1.8.0-alpha.2](https://github.com/siderolabs/talos/releases/tag/v1.8.0-alpha.2) (2024-08-30)
+## [Talos 1.8.0-alpha.2](https://github.com/siderolabs/talos/releases/tag/v1.8.0-alpha.2) (2024-09-02)
 
 Welcome to the v1.8.0-alpha.2 release of Talos!  
 *This is a pre-release of Talos*
@@ -264,9 +264,11 @@ Linux arm64 kernel is now compressed (previously it was uncompressed).
 * looklose
 
 ### Changes
-<details><summary>277 commits</summary>
+<details><summary>279 commits</summary>
 <p>
 
+* [`6f7c3a8e5`](https://github.com/siderolabs/talos/commit/6f7c3a8e5c6311bf1a2f9b1cbc6cd02d48746e02) fix: build of talosctl on non-Linux arches
+* [`f0a59cec7`](https://github.com/siderolabs/talos/commit/f0a59cec71739dd377082b0279684bb6ce46a0db) release(v1.8.0-alpha.2): prepare release
 * [`c8aed3be4`](https://github.com/siderolabs/talos/commit/c8aed3be4db9f4a510ddddb4c4baeff83432ee1f) fix: correctly add console args for ttyS0
 * [`b453385bd`](https://github.com/siderolabs/talos/commit/b453385bd960cacc4baf43ff274a5c88e46d5f79) feat: support volume configuration, provisioning, etc
 * [`b6b16b35f`](https://github.com/siderolabs/talos/commit/b6b16b35fbccc861410f53bc29ad4cade962f1d6) chore: pause sequencer when talos installed and iso booted
@@ -548,9 +550,11 @@ Linux arm64 kernel is now compressed (previously it was uncompressed).
 </details>
 
 ### Changes since v1.8.0-alpha.1
-<details><summary>111 commits</summary>
+<details><summary>113 commits</summary>
 <p>
 
+* [`6f7c3a8e5`](https://github.com/siderolabs/talos/commit/6f7c3a8e5c6311bf1a2f9b1cbc6cd02d48746e02) fix: build of talosctl on non-Linux arches
+* [`f0a59cec7`](https://github.com/siderolabs/talos/commit/f0a59cec71739dd377082b0279684bb6ce46a0db) release(v1.8.0-alpha.2): prepare release
 * [`c8aed3be4`](https://github.com/siderolabs/talos/commit/c8aed3be4db9f4a510ddddb4c4baeff83432ee1f) fix: correctly add console args for ttyS0
 * [`b453385bd`](https://github.com/siderolabs/talos/commit/b453385bd960cacc4baf43ff274a5c88e46d5f79) feat: support volume configuration, provisioning, etc
 * [`b6b16b35f`](https://github.com/siderolabs/talos/commit/b6b16b35fbccc861410f53bc29ad4cade962f1d6) chore: pause sequencer when talos installed and iso booted
@@ -966,7 +970,7 @@ Linux arm64 kernel is now compressed (previously it was uncompressed).
 * **github.com/siderolabs/pkgs**                        v1.7.0-6-g29106c0 -> v1.8.0-alpha.0-54-g4ce5bc6
 * **github.com/siderolabs/protoenc**                    v0.2.1 **_new_**
 * **github.com/siderolabs/siderolink**                  v0.3.5 -> v0.3.9
-* **github.com/siderolabs/talos/pkg/machinery**         v1.7.0 -> v1.8.0-alpha.1
+* **github.com/siderolabs/talos/pkg/machinery**         v1.7.0 -> v1.8.0-alpha.2
 * **github.com/siderolabs/tools**                       v1.7.0-1-g10b2a69 -> v1.8.0
 * **github.com/spf13/cobra**                            v1.8.0 -> v1.8.1
 * **github.com/vishvananda/netlink**                    v1.2.1-beta.2 -> v1.3.0
