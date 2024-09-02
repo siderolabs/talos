@@ -107,7 +107,7 @@ CLUSTERCTL_VERSION ?= 1.8.1
 # renovate: datasource=github-releases depName=cilium/cilium-cli
 CILIUM_CLI_VERSION ?= v0.16.16
 # renovate: datasource=github-releases depName=microsoft/secureboot_objects
-MICROSOFT_SECUREBOOT_RELEASE ?= v1.1.3
+MICROSOFT_SECUREBOOT_RELEASE ?= bcea1b36acc3d86b73c2479a97a9aaceca85b397
 
 KUBECTL_URL ?= https://dl.k8s.io/release/$(KUBECTL_VERSION)/bin/$(OPERATING_SYSTEM)/amd64/kubectl
 KUBESTR_URL ?= https://github.com/kastenhq/kubestr/releases/download/$(KUBESTR_VERSION)/kubestr_$(subst v,,$(KUBESTR_VERSION))_Linux_amd64.tar.gz
