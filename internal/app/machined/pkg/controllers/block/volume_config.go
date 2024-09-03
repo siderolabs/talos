@@ -204,16 +204,19 @@ func (ctrl *VolumeConfigController) Run(ctx context.Context, r controller.Runtim
 
 func (ctrl *VolumeConfigController) manageEphemeral(config cfg.Config) func(vc *block.VolumeConfig) error {
 	return func(vc *block.VolumeConfig) error {
+		extraVolumeConfig := config.Volumes().ByName(constants.EphemeralPartitionLabel)
+
 		vc.TypedSpec().Type = block.VolumeTypePartition
 
 		vc.TypedSpec().Provisioning = block.ProvisioningSpec{
 			Wave: block.WaveSystemDisk,
 			DiskSelector: block.DiskSelector{
-				Match: systemDiskMatch(),
+				Match: extraVolumeConfig.Provisioning().DiskSelector().ValueOr(systemDiskMatch()),
 			},
 			PartitionSpec: block.PartitionSpec{
-				MinSize:  partition.EphemeralMinSize,
-				Grow:     true,
+				MinSize:  extraVolumeConfig.Provisioning().MinSize().ValueOr(partition.EphemeralMinSize),
+				MaxSize:  extraVolumeConfig.Provisioning().MaxSize().ValueOr(0),
+				Grow:     extraVolumeConfig.Provisioning().Grow().ValueOr(true),
 				Label:    constants.EphemeralPartitionLabel,
 				TypeUUID: partition.LinuxFilesystemData,
 			},

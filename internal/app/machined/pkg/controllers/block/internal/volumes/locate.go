@@ -55,7 +55,7 @@ func LocateAndProvision(ctx context.Context, logger *zap.Logger, volumeContext M
 
 			volumeContext.Status.UUID = dv.Uuid
 			volumeContext.Status.PartitionUUID = dv.PartitionUuid
-			volumeContext.Status.Size = dv.Size
+			volumeContext.Status.SetSize(dv.Size)
 
 			return nil
 		}
@@ -138,7 +138,7 @@ func LocateAndProvision(ctx context.Context, logger *zap.Logger, volumeContext M
 		volumeContext.Status.Phase = block.VolumePhaseProvisioned
 		volumeContext.Status.Location = pickedDisk
 		volumeContext.Status.ParentLocation = ""
-		volumeContext.Status.Size = diskCheckResult.DiskSize
+		volumeContext.Status.SetSize(diskCheckResult.DiskSize)
 	case block.VolumeTypePartition:
 		// we need to create a partition on the disk
 		partitionCreateResult, err := CreatePartition(ctx, logger, pickedDisk, volumeContext.Cfg, diskCheckResult.HasGPT)
@@ -151,7 +151,7 @@ func LocateAndProvision(ctx context.Context, logger *zap.Logger, volumeContext M
 		volumeContext.Status.PartitionIndex = partitionCreateResult.PartitionIdx
 		volumeContext.Status.ParentLocation = pickedDisk
 		volumeContext.Status.PartitionUUID = partitionCreateResult.Partition.PartGUID.String()
-		volumeContext.Status.Size = partitionCreateResult.Size
+		volumeContext.Status.SetSize(partitionCreateResult.Size)
 	default:
 		panic("unexpected volume type")
 	}

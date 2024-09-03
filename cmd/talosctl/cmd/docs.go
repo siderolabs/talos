@@ -19,6 +19,7 @@ import (
 	"gopkg.in/yaml.v3"
 
 	"github.com/siderolabs/talos/pkg/machinery/config/encoder"
+	"github.com/siderolabs/talos/pkg/machinery/config/types/block"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/network"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/runtime"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/runtime/extensions"
@@ -129,6 +130,10 @@ var docsCmd = &cobra.Command{
 				{
 					name:    "security",
 					fileDoc: security.GetFileDoc(),
+				},
+				{
+					name:    "block",
+					fileDoc: block.GetFileDoc(),
 				},
 			} {
 				path := filepath.Join(dir, pkg.name)

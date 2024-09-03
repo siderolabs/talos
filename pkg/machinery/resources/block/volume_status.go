@@ -9,6 +9,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/resource/meta"
 	"github.com/cosi-project/runtime/pkg/resource/protobuf"
 	"github.com/cosi-project/runtime/pkg/resource/typed"
+	"github.com/dustin/go-humanize"
 
 	"github.com/siderolabs/talos/pkg/machinery/proto"
 )
@@ -38,6 +39,7 @@ type VolumeStatusSpec struct {
 	UUID           string `yaml:"uuid,omitempty" protobuf:"4"`
 	PartitionUUID  string `yaml:"partitionUUID,omitempty" protobuf:"5"`
 	Size           uint64 `yaml:"size,omitempty" protobuf:"9"`
+	PrettySize     string `yaml:"prettySize,omitempty" protobuf:"13"`
 
 	// Filesystem is the filesystem type.
 	Filesystem FilesystemType `yaml:"filesystem,omitempty" protobuf:"10"`
@@ -46,6 +48,12 @@ type VolumeStatusSpec struct {
 	EncryptionProvider EncryptionProviderType `yaml:"encryptionProvider,omitempty" protobuf:"12"`
 
 	ErrorMessage string `yaml:"errorMessage,omitempty" protobuf:"3"`
+}
+
+// SetSize sets the size of the volume status, including the pretty size.
+func (s *VolumeStatusSpec) SetSize(size uint64) {
+	s.Size = size
+	s.PrettySize = humanize.Bytes(size)
 }
 
 // NewVolumeStatus initializes a BlockVolumeStatus resource.
@@ -73,6 +81,10 @@ func (VolumeStatusExtension) ResourceDefinition() meta.ResourceDefinitionSpec {
 			{
 				Name:     "Location",
 				JSONPath: `{.location}`,
+			},
+			{
+				Name:     "Size",
+				JSONPath: `{.prettySize}`,
 			},
 		},
 	}

@@ -9,6 +9,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/resource/meta"
 	"github.com/cosi-project/runtime/pkg/resource/protobuf"
 	"github.com/cosi-project/runtime/pkg/resource/typed"
+	"github.com/dustin/go-humanize"
 
 	"github.com/siderolabs/talos/pkg/machinery/proto"
 )
@@ -41,6 +42,12 @@ type DiskSpec struct {
 	SubSystem  string `yaml:"sub_system,omitempty" protobuf:"10"`
 	Transport  string `yaml:"transport,omitempty" protobuf:"11"`
 	Rotational bool   `yaml:"rotational,omitempty" protobuf:"12"`
+}
+
+// SetSize sets the size of the disk, including the pretty size.
+func (s *DiskSpec) SetSize(size uint64) {
+	s.Size = size
+	s.PrettySize = humanize.Bytes(size)
 }
 
 // NewDisk initializes a BlockDisk resource.

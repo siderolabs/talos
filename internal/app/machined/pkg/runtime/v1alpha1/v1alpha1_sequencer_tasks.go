@@ -32,6 +32,7 @@ import (
 	"github.com/hashicorp/go-multierror"
 	"github.com/opencontainers/runtime-spec/specs-go"
 	pprocfs "github.com/prometheus/procfs"
+	"github.com/siderolabs/gen/maps"
 	"github.com/siderolabs/gen/xslices"
 	"github.com/siderolabs/go-blockdevice/v2/blkid"
 	"github.com/siderolabs/go-blockdevice/v2/block"
@@ -1501,29 +1502,68 @@ func ResetSystemDiskPartitions(seq runtime.Sequence, _ any) (runtime.TaskExecuti
 }
 
 // ResetSystemDisk represents the task to reset the system disk.
+//
+//nolint:gocyclo
 func ResetSystemDisk(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) error {
+		systemDisks := map[string]struct{}{}
+
+		// fetch system disk (where Talos is installed)
 		systemDisk, err := blockres.GetSystemDisk(ctx, r.State().V1Alpha2().Resources())
 		if err != nil {
 			return err
 		}
 
-		if systemDisk == nil {
+		if systemDisk != nil {
+			systemDisks[systemDisk.DevPath] = struct{}{}
+		}
+
+		// fetch additional system volumes (which might be on the same or other disks)
+		for _, volumeID := range []string{constants.StatePartitionLabel, constants.EphemeralPartitionLabel} {
+			volumeStatus, err := safe.ReaderGetByID[*blockres.VolumeStatus](ctx, r.State().V1Alpha2().Resources(), volumeID)
+			if err != nil {
+				if state.IsNotFoundError(err) {
+					continue
+				}
+
+				return err
+			}
+
+			if volumeStatus.TypedSpec().ParentLocation != "" {
+				systemDisks[volumeStatus.TypedSpec().ParentLocation] = struct{}{}
+			} else if volumeStatus.TypedSpec().Location != "" {
+				systemDisks[volumeStatus.TypedSpec().Location] = struct{}{}
+			}
+		}
+
+		if len(systemDisks) == 0 {
 			return nil
 		}
 
-		dev, err := block.NewFromPath(systemDisk.DevPath, block.OpenForWrite())
-		if err != nil {
-			return err
+		systemDiskPaths := maps.Keys(systemDisks)
+
+		for _, systemDiskPath := range systemDiskPaths {
+			if err := func(devPath string) error {
+				logger.Printf("wiping system disk %s", devPath)
+
+				dev, err := block.NewFromPath(devPath, block.OpenForWrite())
+				if err != nil {
+					return err
+				}
+
+				if err = dev.RetryLockWithTimeout(ctx, true, time.Minute); err != nil {
+					return fmt.Errorf("failed to lock device %s: %w", systemDisk.DevPath, err)
+				}
+
+				defer dev.Close() //nolint:errcheck
+
+				return dev.FastWipe()
+			}(systemDiskPath); err != nil {
+				return fmt.Errorf("failed to wipe system disk %s: %w", systemDiskPath, err)
+			}
 		}
 
-		if err = dev.RetryLockWithTimeout(ctx, true, time.Minute); err != nil {
-			return fmt.Errorf("failed to lock device %s: %w", systemDisk.DevPath, err)
-		}
-
-		defer dev.Close() //nolint:errcheck
-
-		return dev.FastWipe()
+		return nil
 	}, "resetSystemDisk"
 }
 

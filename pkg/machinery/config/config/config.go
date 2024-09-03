@@ -15,4 +15,5 @@ type Config interface {
 	Runtime() RuntimeConfig
 	NetworkRules() NetworkRuleConfig
 	TrustedRoots() TrustedRootsConfig
+	Volumes() VolumesConfig
 }

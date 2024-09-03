@@ -6,10 +6,12 @@
 package celenv
 
 import (
+	"slices"
 	"sync"
 
 	"github.com/google/cel-go/cel"
 	"github.com/google/cel-go/common/types"
+	"github.com/siderolabs/gen/xslices"
 
 	"github.com/siderolabs/talos/pkg/machinery/api/resource/definitions/block"
 )
@@ -19,9 +21,14 @@ var DiskLocator = sync.OnceValue(func() *cel.Env {
 	var diskSpec block.DiskSpec
 
 	env, err := cel.NewEnv(
-		cel.Types(&diskSpec),
-		cel.Variable("disk", cel.ObjectType(string(diskSpec.ProtoReflect().Descriptor().FullName()))),
-		cel.Variable("system_disk", types.BoolType),
+		slices.Concat(
+			[]cel.EnvOption{
+				cel.Types(&diskSpec),
+				cel.Variable("disk", cel.ObjectType(string(diskSpec.ProtoReflect().Descriptor().FullName()))),
+				cel.Variable("system_disk", types.BoolType),
+			},
+			celUnitMultipliersConstants(),
+		)...,
 	)
 	if err != nil {
 		panic(err)
@@ -35,8 +42,13 @@ var VolumeLocator = sync.OnceValue(func() *cel.Env {
 	var volumeSpec block.DiscoveredVolumeSpec
 
 	env, err := cel.NewEnv(
-		cel.Types(&volumeSpec),
-		cel.Variable("volume", cel.ObjectType(string(volumeSpec.ProtoReflect().Descriptor().FullName()))),
+		slices.Concat(
+			[]cel.EnvOption{
+				cel.Types(&volumeSpec),
+				cel.Variable("volume", cel.ObjectType(string(volumeSpec.ProtoReflect().Descriptor().FullName()))),
+			},
+			celUnitMultipliersConstants(),
+		)...,
 	)
 	if err != nil {
 		panic(err)
@@ -44,3 +56,31 @@ var VolumeLocator = sync.OnceValue(func() *cel.Env {
 
 	return env
 })
+
+type unitMultiplier struct {
+	unit       string
+	multiplier uint64
+}
+
+var unitMultipliers = []unitMultiplier{
+	// IEC.
+	{"KiB", 1024},
+	{"MiB", 1024 * 1024},
+	{"GiB", 1024 * 1024 * 1024},
+	{"TiB", 1024 * 1024 * 1024 * 1024},
+	{"PiB", 1024 * 1024 * 1024 * 1024 * 1024},
+	{"EiB", 1024 * 1024 * 1024 * 1024 * 1024 * 1024},
+	// Metric (used for disk sizes).
+	{"kB", 1000},
+	{"MB", 1000 * 1000},
+	{"GB", 1000 * 1000 * 1000},
+	{"TB", 1000 * 1000 * 1000 * 1000},
+	{"PB", 1000 * 1000 * 1000 * 1000 * 1000},
+	{"EB", 1000 * 1000 * 1000 * 1000 * 1000 * 1000},
+}
+
+func celUnitMultipliersConstants() []cel.EnvOption {
+	return xslices.Map(unitMultipliers, func(um unitMultiplier) cel.EnvOption {
+		return cel.Constant(um.unit, types.UintType, types.Uint(um.multiplier))
+	})
+}

@@ -9,6 +9,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/resource/meta"
 	"github.com/cosi-project/runtime/pkg/resource/protobuf"
 	"github.com/cosi-project/runtime/pkg/resource/typed"
+	"github.com/dustin/go-humanize"
 
 	"github.com/siderolabs/talos/pkg/machinery/proto"
 )
@@ -51,6 +52,12 @@ type DiscoveredVolumeSpec struct {
 	PartitionType  string `yaml:"partition_type,omitempty" protobuf:"11"`
 	PartitionLabel string `yaml:"partition_label,omitempty" protobuf:"12"`
 	PartitionIndex uint   `yaml:"partition_index,omitempty" protobuf:"13"`
+}
+
+// SetSize sets the size of the DiscoveredVolume, including the pretty size.
+func (s *DiscoveredVolumeSpec) SetSize(size uint64) {
+	s.Size = size
+	s.PrettySize = humanize.Bytes(size)
 }
 
 // NewDiscoveredVolume initializes a BlockDiscoveredVolume resource.

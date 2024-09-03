@@ -43,25 +43,58 @@ func MustExpression(expr Expression, err error) Expression {
 
 // ParseBooleanExpression parses the expression and asserts the result to boolean.
 func ParseBooleanExpression(expression string, env *cel.Env) (Expression, error) {
-	ast, issues := env.Parse(expression)
-	if issues != nil && issues.Err() != nil {
-		return Expression{}, issues.Err()
-	}
-
-	ast, issues = env.Check(ast)
-	if issues != nil && issues.Err() != nil {
-		return Expression{}, issues.Err()
-	}
-
-	if outputType := ast.OutputType(); !outputType.IsExactType(types.BoolType) {
-		return Expression{}, fmt.Errorf("expression output type is %s, expected bool", outputType)
+	ast, err := parseBooleanExpression(expression, env)
+	if err != nil {
+		return Expression{}, err
 	}
 
 	return Expression{ast: ast}, nil
 }
 
+// parseBooleanExpression parses the expression and asserts the result to boolean.
+func parseBooleanExpression(expression string, env *cel.Env) (*cel.Ast, error) {
+	ast, issues := env.Parse(expression)
+	if issues != nil && issues.Err() != nil {
+		return nil, issues.Err()
+	}
+
+	ast, issues = env.Check(ast)
+	if issues != nil && issues.Err() != nil {
+		return nil, issues.Err()
+	}
+
+	if outputType := ast.OutputType(); !outputType.IsExactType(types.BoolType) {
+		return nil, fmt.Errorf("expression output type is %s, expected bool", outputType)
+	}
+
+	return ast, nil
+}
+
+// ParseBool parses the expression and asserts the result to boolean.
+//
+// ParseBoolean can be used after unmarshaling the expression from text.
+func (expr *Expression) ParseBool(env *cel.Env) error {
+	if expr.ast != nil {
+		return nil
+	}
+
+	if expr.expression == nil {
+		panic("expression is not set")
+	}
+
+	var err error
+
+	expr.ast, err = parseBooleanExpression(*expr.expression, env)
+
+	return err
+}
+
 // EvalBool evaluates the expression in the given environment.
 func (expr Expression) EvalBool(env *cel.Env, values map[string]any) (bool, error) {
+	if err := expr.ParseBool(env); err != nil {
+		return false, err
+	}
+
 	prog, err := env.Program(expr.ast)
 	if err != nil {
 		return false, err

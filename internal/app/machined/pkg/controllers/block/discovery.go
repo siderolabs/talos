@@ -14,7 +14,6 @@ import (
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
-	"github.com/dustin/go-humanize"
 	"github.com/siderolabs/gen/maps"
 	"github.com/siderolabs/go-blockdevice/v2/blkid"
 	"github.com/siderolabs/go-blockdevice/v2/partitioning"
@@ -208,8 +207,7 @@ func (ctrl *DiscoveryController) rescan(ctx context.Context, r controller.Runtim
 			dv.TypedSpec().Parent = device.TypedSpec().Parent
 			dv.TypedSpec().ParentDevPath = filepath.Join("/dev", device.TypedSpec().Parent)
 
-			dv.TypedSpec().Size = info.Size
-			dv.TypedSpec().PrettySize = humanize.Bytes(info.Size)
+			dv.TypedSpec().SetSize(info.Size)
 			dv.TypedSpec().SectorSize = info.SectorSize
 			dv.TypedSpec().IOSize = info.IOSize
 
@@ -232,13 +230,11 @@ func (ctrl *DiscoveryController) rescan(ctx context.Context, r controller.Runtim
 				dv.TypedSpec().Parent = id
 				dv.TypedSpec().ParentDevPath = filepath.Join("/dev", id)
 
-				dv.TypedSpec().Size = nested.ProbedSize
-
-				if dv.TypedSpec().Size == 0 {
-					dv.TypedSpec().Size = nested.PartitionSize
+				if nested.ProbedSize != 0 {
+					dv.TypedSpec().SetSize(nested.ProbedSize)
+				} else {
+					dv.TypedSpec().SetSize(nested.PartitionSize)
 				}
-
-				dv.TypedSpec().PrettySize = humanize.Bytes(dv.TypedSpec().Size)
 
 				dv.TypedSpec().SectorSize = info.SectorSize
 				dv.TypedSpec().IOSize = info.IOSize

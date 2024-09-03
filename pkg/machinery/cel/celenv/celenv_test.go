@@ -28,7 +28,7 @@ func TestDiskLocator(t *testing.T) {
 		},
 		{
 			name:       "disk size",
-			expression: "disk.size > 1000u && !disk.rotational",
+			expression: "disk.size > 1000u * GiB && !disk.rotational",
 		},
 	} {
 		t.Run(test.name, func(t *testing.T) {
@@ -52,6 +52,10 @@ func TestVolumeLocator(t *testing.T) {
 		{
 			name:       "by label",
 			expression: "volume.label == 'EPHEMERAL'",
+		},
+		{
+			name:       "by filesystem and size",
+			expression: "volume.name == 'ext4' && volume.size > 1000u * TB",
 		},
 	} {
 		t.Run(test.name, func(t *testing.T) {

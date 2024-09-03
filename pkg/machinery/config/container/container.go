@@ -194,6 +194,11 @@ func (container *Container) TrustedRoots() config.TrustedRootsConfig {
 	return config.WrapTrustedRootsConfig(findMatchingDocs[config.TrustedRootsConfig](container.documents)...)
 }
 
+// Volumes implements config.Config interface.
+func (container *Container) Volumes() config.VolumesConfig {
+	return config.WrapVolumesConfigList(findMatchingDocs[config.VolumeConfig](container.documents)...)
+}
+
 // Bytes returns source YAML representation (if available) or does default encoding.
 func (container *Container) Bytes() ([]byte, error) {
 	if !container.readonly {

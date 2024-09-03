@@ -84,7 +84,7 @@ func Grow(ctx context.Context, logger *zap.Logger, volumeContext ManagerContext)
 	}
 
 	volumeContext.Status.Phase = block.VolumePhaseProvisioned
-	volumeContext.Status.Size += availableGrowth
+	volumeContext.Status.SetSize(volumeContext.Status.Size + availableGrowth)
 
 	return nil
 }

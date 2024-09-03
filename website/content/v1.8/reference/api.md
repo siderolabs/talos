@@ -1108,6 +1108,7 @@ VolumeStatusSpec is the spec for VolumeStatus resource.
 | filesystem | [talos.resource.definitions.enums.BlockFilesystemType](#talos.resource.definitions.enums.BlockFilesystemType) |  |  |
 | mount_location | [string](#string) |  |  |
 | encryption_provider | [talos.resource.definitions.enums.BlockEncryptionProviderType](#talos.resource.definitions.enums.BlockEncryptionProviderType) |  |  |
+| pretty_size | [string](#string) |  |  |
 
 
 

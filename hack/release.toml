@@ -225,6 +225,12 @@ Talos Linux installer now never wipes the system disk on upgrades, which means t
 `--preserve` is always set for `talosctl upgrade`.
 """
 
+    [notes.disk-management]
+        title = "Disk Management"
+        description = """\
+Talos Linux now supports [configuration](https://www.talos.dev/v1.8/talos-guides/configuration/disk-management/#machine-configuration) for the `EPHEMERAL` volume.
+"""
+
 [make_deps]
 
     [make_deps.tools]

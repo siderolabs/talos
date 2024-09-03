@@ -7,9 +7,11 @@ package cel_test
 import (
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/yaml.v3"
 
+	"github.com/siderolabs/talos/pkg/machinery/api/resource/definitions/block"
 	"github.com/siderolabs/talos/pkg/machinery/cel"
 	"github.com/siderolabs/talos/pkg/machinery/cel/celenv"
 )
@@ -61,6 +63,69 @@ func TestCELMarshal(t *testing.T) {
 			require.NoError(t, err)
 
 			require.Equal(t, test.expectedYAML, string(yaml))
+		})
+	}
+}
+
+func TestCELEvalFromYAML(t *testing.T) {
+	t.Parallel()
+
+	env := celenv.DiskLocator()
+
+	type yamlRaw struct {
+		Expr string `yaml:"expr,omitempty"`
+	}
+
+	type yamlTest struct {
+		Expr cel.Expression `yaml:"expr,omitempty"`
+	}
+
+	for _, test := range []struct {
+		name string
+
+		expression string
+
+		expected bool
+	}{
+		{
+			name: "consts",
+
+			expression: "1u * GiB < 2u * GiB",
+
+			expected: true,
+		},
+		{
+			name: "vars",
+
+			expression: "!system_disk",
+
+			expected: false,
+		},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+
+			yamlRaw := yamlRaw{
+				Expr: test.expression,
+			}
+
+			marshaled, err := yaml.Marshal(yamlRaw)
+			require.NoError(t, err)
+
+			var yamlTest yamlTest
+
+			err = yaml.Unmarshal(marshaled, &yamlTest)
+			require.NoError(t, err)
+
+			val, err := yamlTest.Expr.EvalBool(env, map[string]any{
+				"system_disk": true,
+				"disk": block.DiskSpec{
+					Size: 1024,
+				},
+			})
+			require.NoError(t, err)
+
+			assert.Equal(t, test.expected, val)
 		})
 	}
 }

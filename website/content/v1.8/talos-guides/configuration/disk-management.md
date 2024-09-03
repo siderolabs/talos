@@ -3,12 +3,12 @@ title: "Disk Management"
 description: "Guide on managing disks"
 ---
 
-Talos Linux in version 1.8.0 provides a new backend to manage system and user disks.
-The machine configuration changes are minimal, and the new backend is fully compatible with the existing machine configuration.
+Talos Linux version 1.8.0 introduces a new backend for managing system and user disks.
+The machine configuration changes required are minimal, and the new backend is fully compatible with the existing machine configuration.
 
 ## Listing Disks
 
-To list all disks (block devices) available on the machine, use the following command:
+To obtain a list of all available block devices (disks) on the machine, you can use the following command:
 
 ```bash
 $ talosctl get disks
@@ -21,7 +21,7 @@ NODE         NAMESPACE   TYPE   ID        VERSION   SIZE    READ ONLY   TRANSPOR
 172.20.0.5   runtime     Disk   vda       1         13 GB   false       virtio      true
 ```
 
-To get details about a specific disk, use the following command:
+To obtain detailed information about a specific disk, execute the following command:
 
 ```yaml
 # talosctl get disk sda -o yaml
@@ -53,8 +53,8 @@ spec:
 
 ## Discovering Volumes
 
-Talos Linux watches all block devices and partitions on the machine.
-The information about all block devices, partitions, their type can be found in the `DiscoveredVolume` resource:
+Talos Linux monitors all block devices and partitions on the machine.
+Details about these devices, including their type, can be found in the `DiscoveredVolume` resource.
 
 ```bash
 $ talosctl get discoveredvolumes
@@ -79,8 +79,8 @@ NODE         NAMESPACE   TYPE               ID        VERSION   TYPE        SIZE
 172.20.0.5   runtime     DiscoveredVolume   vda6      1         partition   12 GB    xfs          EPHEMERAL   EPHEMERAL
 ```
 
-Talos Linux automatically detects the filesystem type, GPT partition tables.
-The following filesystem types are detected at the moment:
+Talos Linux has built-in automatic detection for various filesystem types and GPT partition tables.
+Currently, the following filesystem types are supported:
 
 - `bluestore` (Ceph)
 - `ext2`, `ext3`, `ext4`
@@ -94,15 +94,14 @@ The following filesystem types are detected at the moment:
 - `xfs`
 - `zfs`
 
-The discovered volumes might include Talos-managed volumes, and also any other volumes that are present on the machine (e.g. Ceph volumes).
+The discovered volumes can include both Talos-managed volumes and any other volumes present on the machine, such as Ceph volumes.
 
 ## Volume Management
 
-Talos Linux disk management is based on the volume concept: a volume is something that can be provisioned,
-located, mounted and unmounted.
-A volume can be a disk, a partition, a `tmpfs` filesystem, etc.
+Talos Linux implements disk management through the concept of volumes.
+A volume represents a provisioned, located, mounted, or unmounted entity, such as a disk, partition, or `tmpfs` filesystem.
 
-Volume configuration is described in the `VolumeConfig` resource, while the actual volume state is stored in the `VolumeStatus` resource.
+The configuration of volumes is defined using the `VolumeConfig` resource, while the current state of volumes is stored in the `VolumeStatus` resource.
 
 ### Configuration
 
@@ -120,7 +119,7 @@ NODE         NAMESPACE   TYPE           ID                                      
 172.20.0.5   runtime     VolumeConfig   STATE                                         4
 ```
 
-In the output above, `EPHEMERAL`, `META`, and `STATE` are Talos-managed system volumes, while the other volumes are based on the machine configuration for `machine.disks`.
+In the provided output, the volumes `EPHEMERAL`, `META`, and `STATE` are system volumes managed by Talos, while the remaining volumes are based on the machine configuration for `machine.disks`.
 
 To get details about a specific volume configuration, use the following command:
 
@@ -166,25 +165,116 @@ spec:
 
 ### Status
 
-Current volume status can be checked using the following command:
+Current volume status can be obtained using the following command:
 
 ```bash
 $ talosctl get volumestatus
-NODE         NAMESPACE   TYPE           ID                                            VERSION   PHASE   LOCATION
-172.20.0.5   runtime     VolumeStatus   /dev/disk/by-id/ata-QEMU_HARDDISK_QM00001-1   1         ready   /dev/sdc1
-172.20.0.5   runtime     VolumeStatus   /dev/disk/by-id/ata-QEMU_HARDDISK_QM00001-2   1         ready   /dev/sdc2
-172.20.0.5   runtime     VolumeStatus   /dev/disk/by-id/ata-QEMU_HARDDISK_QM00003-1   1         ready   /dev/sdd1
-172.20.0.5   runtime     VolumeStatus   EPHEMERAL                                     1         ready   /dev/vda6
-172.20.0.5   runtime     VolumeStatus   META                                          2         ready   /dev/vda4
-172.20.0.5   runtime     VolumeStatus   STATE                                         3         ready   /dev/vda5
+NODE         NAMESPACE   TYPE           ID                                            VERSION   PHASE   LOCATION         SIZE
+172.20.0.5   runtime     VolumeStatus   /dev/disk/by-id/ata-QEMU_HARDDISK_QM00001-1   1         ready   /dev/sdc1        957 MB
+172.20.0.5   runtime     VolumeStatus   /dev/disk/by-id/ata-QEMU_HARDDISK_QM00001-2   1         ready   /dev/sdc2        957 MB
+172.20.0.5   runtime     VolumeStatus   /dev/disk/by-id/ata-QEMU_HARDDISK_QM00003-1   1         ready   /dev/sdd1        957 MB
+172.20.0.5   runtime     VolumeStatus   EPHEMERAL                                     1         ready   /dev/nvme0n1p1   10 GB
+172.20.0.5   runtime     VolumeStatus   META                                          2         ready   /dev/vda4        524 kB
+172.20.0.5   runtime     VolumeStatus   STATE                                         2         ready   /dev/vda5        92 MB
 ```
 
-Each volume transitions through different phases during its lifecycle:
+Each volume goes through different phases during its lifecycle:
 
-- `waiting`: the volume is waiting for provisioning
-- `missing`: all disks were discovered, but the volume is not found
+- `waiting`: the volume is waiting to be provisioned
+- `missing`: all disks have been discovered, but the volume cannot be found
 - `located`: the volume is found without prior provisioning
-- `provisioned`: the volume is provisioned (e.g. partitioned, grown as needed)
+- `provisioned`: the volume has been provisioned (e.g., partitioned, resized if necessary)
 - `prepared`: the encrypted volume is open
-- `ready`: the volume is formatted, ready to be mounted
+- `ready`: the volume is formatted and ready to be mounted
 - `closed`: the encrypted volume is closed
+
+## Machine Configuration
+
+> Note: In Talos Linux 1.8, only `EPHEMERAL` system volume configuration can be managed through the machine configuration.
+>
+> Note: The volume configuration in the machine configuration is only applied when the volume has not been provisioned yet.
+> So applying changes after the initial provisioning will not have any effect.
+
+To configure the `EPHEMERAL` (`/var`) volume, add the following [document]({{< relref "../../reference/configuration/block/volumeconfig" >}}) to the machine configuration:
+
+```yaml
+apiVersion: v1alpha1
+kind: VolumeConfig
+name: EPHEMERAL
+provisioning:
+  diskSelector:
+    match: disk.transport == 'nvme'
+  minSize: 2GB
+  maxSize: 40GB
+  grow: false
+```
+
+Every field in the `VolumeConfig` resource is optional, and if a field is not specified, the default value is used.
+The default built-in values are:
+
+```yaml
+provisioning:
+    diskSelector:
+        match: system_disk
+    minSize: 2GiB
+    grow: true
+```
+
+By default, the `EPHEMERAL` volume is provisioned on the system disk, which is the disk where Talos Linux is installed.
+It has a minimum size of 2 GiB and automatically grows to utilize the maximum available space on the disk.
+
+### Disk Selector
+
+The `diskSelector` field is utilized to choose the disk where the volume will be provisioned.
+It is a [Common Expression Language (CEL)](https://cel.dev/) expression that evaluates against the available disks.
+The volume will be provisioned on the first disk that matches the expression and has sufficient free space for the volume.
+
+The expression is evaluated in the following context:
+
+- `system_disk` (`bool`) - indicates if the disk is the system disk
+- `disk` (`Disks.block.talos.dev`) - the disk resource being evaluated
+
+For the disk resource, any field available in the resource specification can be used (use `talosctl get disks -o yaml` to see the output for your machine):
+
+```yaml
+dev_path: /dev/nvme0n1
+size: 10485760000
+pretty_size: 10 GB
+io_size: 512
+sector_size: 512
+readonly: false
+cdrom: false
+model: QEMU NVMe Ctrl
+serial: deadbeef
+wwid: nvme.1b36-6465616462656566-51454d55204e564d65204374726c-00000001
+bus_path: /pci0000:00/0000:00:09.0/nvme
+sub_system: /sys/class/block
+transport: nvme
+```
+
+Additionally, constants for disk size multipliers are available:
+
+- `KiB`, `MiB`, `GiB`, `TiB`, `PiB`, `EiB` - binary size multipliers (1024)
+- `kB`, `MB`, `GB`, `TB`, `PB`, `EB` - decimal size multipliers (1000)
+
+The disk expression is evaluated against each available disk, and the expression should either return `true` or `false`.
+If the expression returns `true`, the disk is selected for provisioning.
+
+> Note: In CEL, signed and unsigned integers are not interchangeable.
+> Disk sizes are represented as unsigned integers, so suffix `u` should be used in constants to avoid type mismatch, e.g. `disk.size > 10u * GiB`.
+
+Examples of disk selector expressions:
+
+- `disk.transport == 'nvme'`: select the NVMe disks only
+- `disk.transport == 'scsi' && disk.size < 2u * TiB`: select SCSI disks smaller than 2 TiB
+- `disk.serial.startsWith('deadbeef') && !cdrom`: select disks with serial number starting with `deadbeef` and not of CD-ROM type
+
+### Minimum and Maximum Size
+
+The `minSize` and `maxSize` fields define the minimum and maximum size of the volume, respectively.
+Talos Linux will always ensure that the volume is at least `minSize` in size and will not exceed `maxSize`.
+If `maxSize` is not set, the volume will grow to utilize the maximum available space on the disk.
+
+If `grow` is set to `true`, the volume will automatically grow to utilize the maximum available space on the disk on each boot.
+
+Setting `minSize` might influence disk selection - if the disk does not have enough free space to satisfy the minimum size requirement, it will not be selected for provisioning.

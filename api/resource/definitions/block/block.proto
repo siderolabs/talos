@@ -164,5 +164,6 @@ message VolumeStatusSpec {
   talos.resource.definitions.enums.BlockFilesystemType filesystem = 10;
   string mount_location = 11;
   talos.resource.definitions.enums.BlockEncryptionProviderType encryption_provider = 12;
+  string pretty_size = 13;
 }
 

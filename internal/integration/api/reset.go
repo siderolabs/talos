@@ -145,7 +145,7 @@ func (suite *ResetSuite) TestResetWithSpecStateAndUserDisks() {
 			switch {
 			case disk.SystemDisk:
 				return false
-			case disk.Type == storage.Disk_UNKNOWN, disk.Type == storage.Disk_CD, disk.Type == storage.Disk_SD:
+			case disk.Type == storage.Disk_UNKNOWN, disk.Type == storage.Disk_CD, disk.Type == storage.Disk_SD, disk.Type == storage.Disk_NVME:
 				return false
 			case disk.Readonly:
 				return false
