@@ -1,6 +1,6 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
 #
-# Generated on 2024-08-25T07:59:04Z by kres 8e4bbb4.
+# Generated on 2024-09-03T14:18:03Z by kres b5ca957.
 
 name: integration-image-factory-cron
 concurrency:
@@ -95,34 +95,45 @@ jobs:
           PLATFORM: linux/amd64
         run: |
           make images-essential
-      - name: factory-1.6-iso
+      - name: factory-1.7-iso
         env:
           FACTORY_BOOT_METHOD: iso
           FACTORY_SCHEMATIC: 376567988ad370138ad8b2698212367b8edcb69b5fd68c80be1f2ec7d603b4ba
           FACTORY_UPGRADE: "true"
           FACTORY_UPGRADE_SCHEMATIC: cf9b7aab9ed7c365d5384509b4d31c02fdaa06d2b3ac6cc0bc806f28130eff1f
-          FACTORY_UPGRADE_VERSION: v1.6.1
-          FACTORY_VERSION: v1.6.0
-          KUBERNETES_VERSION: 1.29.0
+          FACTORY_UPGRADE_VERSION: v1.7.6
+          FACTORY_VERSION: v1.7.5
+          KUBERNETES_VERSION: 1.30.1
         run: |
           sudo -E make e2e-image-factory
-      - name: factory-1.6-image
+      - name: factory-1.7-image
         env:
           FACTORY_BOOT_METHOD: disk-image
           FACTORY_SCHEMATIC: 376567988ad370138ad8b2698212367b8edcb69b5fd68c80be1f2ec7d603b4ba
           FACTORY_UPGRADE: "true"
           FACTORY_UPGRADE_SCHEMATIC: cf9b7aab9ed7c365d5384509b4d31c02fdaa06d2b3ac6cc0bc806f28130eff1f
-          FACTORY_UPGRADE_VERSION: v1.6.1
-          FACTORY_VERSION: v1.6.0
-          KUBERNETES_VERSION: 1.29.0
+          FACTORY_UPGRADE_VERSION: v1.7.6
+          FACTORY_VERSION: v1.7.5
+          KUBERNETES_VERSION: 1.30.1
         run: |
           sudo -E make e2e-image-factory
-      - name: factory-1.6-pxe
+      - name: factory-1.7-pxe
         env:
           FACTORY_BOOT_METHOD: pxe
           FACTORY_SCHEMATIC: 376567988ad370138ad8b2698212367b8edcb69b5fd68c80be1f2ec7d603b4ba
-          FACTORY_VERSION: v1.6.1
-          KUBERNETES_VERSION: 1.29.0
+          FACTORY_VERSION: v1.7.6
+          KUBERNETES_VERSION: 1.30.1
+        run: |
+          sudo -E make e2e-image-factory
+      - name: factory-1.7-secureboot
+        env:
+          FACTORY_BOOT_METHOD: secureboot-iso
+          FACTORY_SCHEMATIC: cf9b7aab9ed7c365d5384509b4d31c02fdaa06d2b3ac6cc0bc806f28130eff1f
+          FACTORY_UPGRADE: "true"
+          FACTORY_UPGRADE_SCHEMATIC: 376567988ad370138ad8b2698212367b8edcb69b5fd68c80be1f2ec7d603b4ba
+          FACTORY_UPGRADE_VERSION: v1.7.6
+          FACTORY_VERSION: v1.7.5
+          KUBERNETES_VERSION: 1.30.1
         run: |
           sudo -E make e2e-image-factory
       - name: factory-1.6-secureboot
@@ -131,6 +142,17 @@ jobs:
           FACTORY_SCHEMATIC: cf9b7aab9ed7c365d5384509b4d31c02fdaa06d2b3ac6cc0bc806f28130eff1f
           FACTORY_UPGRADE: "true"
           FACTORY_UPGRADE_SCHEMATIC: 376567988ad370138ad8b2698212367b8edcb69b5fd68c80be1f2ec7d603b4ba
+          FACTORY_UPGRADE_VERSION: v1.6.1
+          FACTORY_VERSION: v1.6.0
+          KUBERNETES_VERSION: 1.29.0
+        run: |
+          sudo -E make e2e-image-factory
+      - name: factory-1.6-iso
+        env:
+          FACTORY_BOOT_METHOD: iso
+          FACTORY_SCHEMATIC: 376567988ad370138ad8b2698212367b8edcb69b5fd68c80be1f2ec7d603b4ba
+          FACTORY_UPGRADE: "true"
+          FACTORY_UPGRADE_SCHEMATIC: cf9b7aab9ed7c365d5384509b4d31c02fdaa06d2b3ac6cc0bc806f28130eff1f
           FACTORY_UPGRADE_VERSION: v1.6.1
           FACTORY_VERSION: v1.6.0
           KUBERNETES_VERSION: 1.29.0
@@ -145,25 +167,6 @@ jobs:
           FACTORY_UPGRADE_VERSION: v1.5.5
           FACTORY_VERSION: v1.5.5
           KUBERNETES_VERSION: 1.28.5
-        run: |
-          sudo -E make e2e-image-factory
-      - name: factory-1.3-iso
-        env:
-          FACTORY_BOOT_METHOD: iso
-          FACTORY_SCHEMATIC: 376567988ad370138ad8b2698212367b8edcb69b5fd68c80be1f2ec7d603b4ba
-          FACTORY_UPGRADE: "true"
-          FACTORY_UPGRADE_SCHEMATIC: cf9b7aab9ed7c365d5384509b4d31c02fdaa06d2b3ac6cc0bc806f28130eff1f
-          FACTORY_UPGRADE_VERSION: v1.3.7
-          FACTORY_VERSION: v1.3.7
-          KUBERNETES_VERSION: 1.26.5
-        run: |
-          sudo -E make e2e-image-factory
-      - name: factory-1.3-image
-        env:
-          FACTORY_BOOT_METHOD: disk-image
-          FACTORY_SCHEMATIC: 376567988ad370138ad8b2698212367b8edcb69b5fd68c80be1f2ec7d603b4ba
-          FACTORY_VERSION: v1.3.7
-          KUBERNETES_VERSION: 1.26.5
         run: |
           sudo -E make e2e-image-factory
       - name: save artifacts
