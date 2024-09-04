@@ -89,3 +89,8 @@ The App registration only needs permissions to the Compute Gallery and the Stora
   - Select Access control (IAM)
   - Select Add role assignment
   - Select the **Storage Blob Data Contributor** role
+
+## Google Cloud Pre-requisites
+
+- `GOOGLE_PROJECT_ID` - Google Cloud Project ID
+- `GOOGLE_CREDENTIALS_JSON` - Google Cloud Service Account JSON

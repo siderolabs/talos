@@ -51,6 +51,7 @@ func main() {
 	}
 }
 
+//nolint:gocyclo
 func run() error {
 	var err error
 
@@ -101,6 +102,15 @@ func run() error {
 				}
 
 				return azure.AzureGalleryUpload(ctx)
+			})
+		case "gcp":
+			g.Go(func() error {
+				gcp, err := NewGCPUploder(DefaultOptions)
+				if err != nil {
+					return fmt.Errorf("failed to create GCP uploader: %w", err)
+				}
+
+				return gcp.Upload(ctx)
 			})
 		default:
 			return fmt.Errorf("unknown target: %s", target)

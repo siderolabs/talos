@@ -42,3 +42,8 @@ func (o *Options) AWSImage(architecture string) string {
 func (o *Options) AzureImage(architecture string) string {
 	return filepath.Join(o.ArtifactsPath, fmt.Sprintf("azure-%s.vhd.zst", architecture))
 }
+
+// GCPImage returns path to GCP pre-built image.
+func (o *Options) GCPImage(architecture string) string {
+	return filepath.Join(o.ArtifactsPath, fmt.Sprintf("gcp-%s.raw.tar.gz", architecture))
+}
