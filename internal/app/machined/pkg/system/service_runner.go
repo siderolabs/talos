@@ -282,6 +282,10 @@ func (svcrunner *ServiceRunner) run(ctx context.Context, runnr runner.Runner) er
 	go func() {
 		errCh <- runnr.Run(func(s events.ServiceState, msg string, args ...interface{}) {
 			svcrunner.UpdateState(ctx, s, msg, args...)
+
+			if s != events.StateRunning {
+				svcrunner.healthState.Update(false, "service not running")
+			}
 		})
 	}()
 
