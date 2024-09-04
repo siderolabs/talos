@@ -5,10 +5,14 @@
 package configpatcher
 
 import (
+	"errors"
+	"slices"
+
 	"github.com/siderolabs/gen/xslices"
 
 	coreconfig "github.com/siderolabs/talos/pkg/machinery/config"
 	"github.com/siderolabs/talos/pkg/machinery/config/config"
+	"github.com/siderolabs/talos/pkg/machinery/config/configloader"
 	"github.com/siderolabs/talos/pkg/machinery/config/container"
 	"github.com/siderolabs/talos/pkg/machinery/config/merge"
 )
@@ -46,8 +50,25 @@ func StrategicMerge(cfg coreconfig.Provider, patch StrategicMergePatch) (corecon
 		id := documentID(rightDoc)
 
 		if leftDoc, ok := leftIndex[id]; ok {
-			if err := merge.Merge(leftDoc, rightDoc); err != nil {
-				return nil, err
+			sel, isSel := rightDoc.(configloader.Selector)
+			if !isSel {
+				if err := merge.Merge(leftDoc, rightDoc); err != nil {
+					return nil, err
+				}
+
+				continue
+			}
+
+			err := sel.ApplyTo(leftDoc)
+			if err != nil {
+				if !errors.Is(err, configloader.ErrZeroedDocument) {
+					return nil, err
+				}
+
+				delete(leftIndex, id)
+
+				idx := slices.Index(left, leftDoc)
+				left = slices.Delete(left, idx, idx+1)
 			}
 		} else {
 			left = append(left, rightDoc)

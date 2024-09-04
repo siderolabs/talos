@@ -1,0 +1,6 @@
+version: v1alpha1
+cluster:
+  apiServer:
+    admissionControl:
+    - name: PodSecurity
+      $patch: delete

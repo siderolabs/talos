@@ -21,7 +21,7 @@ type patch []map[string]any
 // LoadPatch loads the strategic merge patch or JSON patch (JSON/YAML for JSON patch).
 func LoadPatch(in []byte) (Patch, error) {
 	// Try configloader first, as it is more strict about the config format
-	cfg, strategicErr := configloader.NewFromBytes(in)
+	cfg, strategicErr := configloader.NewFromBytes(in, configloader.WithAllowPatchDelete())
 	if strategicErr == nil {
 		return NewStrategicMergePatch(cfg), nil
 	}

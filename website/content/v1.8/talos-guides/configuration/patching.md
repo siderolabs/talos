@@ -58,6 +58,57 @@ When patching a [multi-document machine configuration]({{< relref "../../referen
 - if the patch document doesn't exist in the machine configuration, it is appended to the machine configuration
 
 The strategic merge patch itself might be a multi-document YAML, and each document will be applied as a patch to the base machine configuration.
+Keep in mind that you can't patch the same document multiple times with the same patch.
+
+You can also delete parts from the configuration using `$patch: delete` syntax similar to the
+[Kubernetes](https://github.com/kubernetes/community/blob/master/contributors/devel/sig-api-machinery/strategic-merge-patch.md#delete-directive)
+strategic merge patch.
+
+For example, with configuration:
+
+```yaml
+machine:
+  network:
+    interfaces:
+      - interface: eth0
+        addresses:
+          - 10.0.0.2/24
+    hostname: worker1
+```
+
+and patch document:
+
+```yaml
+machine:
+  network:
+    interfaces:
+    - interface: eth0
+      $patch: delete
+    hostname: worker1
+```
+
+The resulting configuration will be:
+
+```yaml
+machine:
+  network:
+    hostname: worker1
+```
+
+You can also delete entire docs (but not the main `v1alpha1` configuration!) using this syntax:
+
+```yaml
+apiVersion: v1alpha1
+kind: SideroLinkConfig
+$patch: delete
+---
+apiVersion: v1alpha1
+kind: ExtensionServiceConfig
+name: foo
+$patch: delete
+```
+
+This will remove the documents `SideroLinkConfig` and `ExtensionServiceConfig` with name `foo` from the configuration.
 
 ### RFC6902 (JSON Patches)
 

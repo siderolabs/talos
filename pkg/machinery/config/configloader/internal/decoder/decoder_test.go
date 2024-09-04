@@ -311,7 +311,7 @@ config:
 			t.Parallel()
 
 			d := decoder.NewDecoder()
-			actual, err := d.Decode(bytes.NewReader(tt.source))
+			actual, err := d.Decode(bytes.NewReader(tt.source), false)
 
 			if tt.expected != nil {
 				assert.Equal(t, tt.expected, actual)
@@ -340,7 +340,7 @@ func TestDecoderV1Alpha1Config(t *testing.T) {
 			require.NoError(t, err)
 
 			d := decoder.NewDecoder()
-			_, err = d.Decode(bytes.NewReader(contents))
+			_, err = d.Decode(bytes.NewReader(contents), false)
 
 			assert.NoError(t, err)
 		})
@@ -354,7 +354,7 @@ func TestDoubleV1Alpha1(t *testing.T) {
 	contents := must.Value(files.ReadFile("v1alpha1.yaml"))(t)
 
 	d := decoder.NewDecoder()
-	_, err := d.Decode(bytes.NewReader(contents))
+	_, err := d.Decode(bytes.NewReader(contents), false)
 	require.Error(t, err)
 	require.ErrorContains(t, err, "not allowed")
 }
@@ -367,7 +367,7 @@ func BenchmarkDecoderV1Alpha1Config(b *testing.B) {
 
 	for range b.N {
 		d := decoder.NewDecoder()
-		_, err = d.Decode(bytes.NewReader(contents))
+		_, err = d.Decode(bytes.NewReader(contents), false)
 
 		assert.NoError(b, err)
 	}

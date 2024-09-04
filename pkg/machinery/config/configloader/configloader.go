@@ -21,7 +21,13 @@ import (
 var ErrNoConfig = errors.New("config not found")
 
 // newConfig initializes and returns a Configurator.
-func newConfig(r io.Reader) (config config.Provider, err error) {
+func newConfig(r io.Reader, opt ...Opt) (config config.Provider, err error) {
+	var opts Opts
+
+	for _, o := range opt {
+		o(&opts)
+	}
+
 	dec := decoder.NewDecoder()
 
 	var buf bytes.Buffer
@@ -29,7 +35,7 @@ func newConfig(r io.Reader) (config config.Provider, err error) {
 	// preserve the original contents
 	r = io.TeeReader(r, &buf)
 
-	manifests, err := dec.Decode(r)
+	manifests, err := dec.Decode(r, opts.allowPatchDelete)
 	if err != nil {
 		return nil, err
 	}
@@ -59,6 +65,30 @@ func NewFromStdin() (config.Provider, error) {
 }
 
 // NewFromBytes will take a byteslice and attempt to parse a config file from it.
-func NewFromBytes(source []byte) (config.Provider, error) {
-	return newConfig(bytes.NewReader(source))
+func NewFromBytes(source []byte, o ...Opt) (config.Provider, error) {
+	return newConfig(bytes.NewReader(source), o...)
 }
+
+// Opts represents the options for the config loader.
+type Opts struct {
+	allowPatchDelete bool
+}
+
+// Opt is a functional option for the config loader.
+type Opt func(*Opts)
+
+// WithAllowPatchDelete allows the loader to parse patch delete operations.
+func WithAllowPatchDelete() Opt {
+	return func(o *Opts) {
+		o.allowPatchDelete = true
+	}
+}
+
+// Selector represents a delete selector for a document.
+type Selector = decoder.Selector
+
+// ErrZeroedDocument is returned when the document is empty after applying the delete selector.
+var ErrZeroedDocument = decoder.ErrZeroedDocument
+
+// ErrLookupFailed is returned when the lookup failed.
+var ErrLookupFailed = decoder.ErrLookupFailed

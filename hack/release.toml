@@ -243,6 +243,13 @@ Extra announced endpoints can be added using the [`KubespanEndpointsConfig` docu
 Talos Linux supports supplying zstd-compressed, base64-encoded machine configuration small documents via the kernel command line parameter `talos.config.inline`.
 """
 
+    [notes.patch-delete]
+        title = "Removing parts of the configuration using `$patch: delete` syntax"
+        description = """\
+Talos Linux now supports removing parts of the configuration using the `$patch: delete` syntax similar to the kubernetes.
+More information can be found [here](https://www.talos.dev/v1.8/talos-guides/configuration/patching/#strategic-merge-patches).
+"""
+
 [make_deps]
 
     [make_deps.tools]

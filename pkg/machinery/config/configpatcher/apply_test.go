@@ -210,3 +210,85 @@ func TestApplyWithManifestNewline(t *testing.T) {
 		})
 	}
 }
+
+//go:embed testdata/patchdelete/config.yaml
+var configMultidocDelete []byte
+
+//go:embed testdata/patchdelete/expected.yaml
+var expectedMultidocDelete string
+
+func TestApplyMultiDocDelete(t *testing.T) {
+	patches, err := configpatcher.LoadPatches([]string{
+		"@testdata/patchdelete/strategic1.yaml",
+	})
+	require.NoError(t, err)
+
+	cfg, err := configloader.NewFromBytes(configMultidocDelete)
+	require.NoError(t, err)
+
+	for _, tt := range []struct {
+		name  string
+		input configpatcher.Input
+	}{
+		{
+			name:  "WithConfig",
+			input: configpatcher.WithConfig(cfg),
+		},
+		{
+			name:  "WithBytes",
+			input: configpatcher.WithBytes(configMultidocDelete),
+		},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			out, err := configpatcher.Apply(tt.input, patches)
+			require.NoError(t, err)
+
+			bytes, err := out.Bytes()
+			require.NoError(t, err)
+
+			assert.Equal(t, expectedMultidocDelete, string(bytes))
+		})
+	}
+}
+
+//go:embed testdata/patchdelete/controlplane_orig.yaml
+var controlPlane []byte
+
+//go:embed testdata/patchdelete/controlplane_expected.yaml
+var controlPlaneExpected string
+
+func TestApplyMultiDocCPDelete(t *testing.T) {
+	patches, err := configpatcher.LoadPatches([]string{
+		"@testdata/patchdelete/strategic2.yaml",
+		"@testdata/patchdelete/strategic3.yaml",
+		"@testdata/patchdelete/strategic4.yaml",
+	})
+	require.NoError(t, err)
+
+	cfg, err := configloader.NewFromBytes(controlPlane)
+	require.NoError(t, err)
+
+	for _, tt := range []struct {
+		name  string
+		input configpatcher.Input
+	}{
+		{
+			name:  "WithConfig",
+			input: configpatcher.WithConfig(cfg),
+		},
+		{
+			name:  "WithBytes",
+			input: configpatcher.WithBytes(controlPlane),
+		},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			out, err := configpatcher.Apply(tt.input, patches)
+			require.NoError(t, err)
+
+			bytes, err := out.Bytes()
+			require.NoError(t, err)
+
+			assert.Equal(t, controlPlaneExpected, string(bytes))
+		})
+	}
+}

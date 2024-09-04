@@ -9,7 +9,6 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"slices"
 	"strings"
 
 	"github.com/hashicorp/go-multierror"
@@ -49,17 +48,19 @@ func New(documents ...config.Document) (*Container, error) {
 
 			container.v1alpha1Config = d
 		default:
-			documentID := d.Kind() + "/"
+			if _, ok := d.(selector); !ok {
+				documentID := d.Kind() + "/"
 
-			if named, ok := d.(config.NamedDocument); ok {
-				documentID += named.Name()
+				if named, ok := d.(config.NamedDocument); ok {
+					documentID += named.Name()
+				}
+
+				if _, alreadySeen := seenDocuments[documentID]; alreadySeen {
+					return nil, fmt.Errorf("duplicate document: %s", documentID)
+				}
+
+				seenDocuments[documentID] = struct{}{}
 			}
-
-			if _, alreadySeen := seenDocuments[documentID]; alreadySeen {
-				return nil, fmt.Errorf("duplicate document: %s", documentID)
-			}
-
-			seenDocuments[documentID] = struct{}{}
 
 			container.documents = append(container.documents, d)
 		}
@@ -334,14 +335,33 @@ func (container *Container) RawV1Alpha1() *v1alpha1.Config {
 //
 // Documents should not be modified.
 func (container *Container) Documents() []config.Document {
-	docs := slices.Clone(container.documents)
+	result := make([]config.Document, 0, len(container.documents)+1)
 
-	if container.v1alpha1Config != nil {
-		docs = append([]config.Document{container.v1alpha1Config}, docs...)
+	// first we take deletes for v1alpha1
+	for _, doc := range container.documents {
+		if _, ok := doc.(selector); ok && doc.Kind() == v1alpha1.Version {
+			result = append(result, doc)
+		}
 	}
 
-	return docs
+	// then we take the v1alpha1 config
+	if container.v1alpha1Config != nil {
+		result = append(result, container.v1alpha1Config)
+	}
+
+	// then we take the rest
+	for _, doc := range container.documents {
+		if _, ok := doc.(selector); ok && doc.Kind() == v1alpha1.Version {
+			continue
+		}
+
+		result = append(result, doc)
+	}
+
+	return result
 }
+
+type selector interface{ ApplyTo(config.Document) error }
 
 // CompleteForBoot return true if the machine config is enough to proceed with the boot process.
 func (container *Container) CompleteForBoot() bool {

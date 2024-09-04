@@ -39,8 +39,8 @@ const (
 type Decoder struct{}
 
 // Decode decodes all known manifests.
-func (d *Decoder) Decode(r io.Reader) ([]config.Document, error) {
-	return parse(r)
+func (d *Decoder) Decode(r io.Reader, allowPatchDelete bool) ([]config.Document, error) {
+	return parse(r, allowPatchDelete)
 }
 
 // NewDecoder initializes and returns a `Decoder`.
@@ -54,7 +54,8 @@ type documentID struct {
 	Name       string
 }
 
-func parse(r io.Reader) (decoded []config.Document, err error) {
+//nolint:gocyclo
+func parse(r io.Reader, allowPatchDelete bool) (decoded []config.Document, err error) {
 	// Recover from yaml.v3 panics because we rely on machine configuration loading _a lot_.
 	defer func() {
 		if p := recover(); p != nil {
@@ -71,7 +72,7 @@ func parse(r io.Reader) (decoded []config.Document, err error) {
 	knownDocuments := map[documentID]struct{}{}
 
 	// Iterate through all defined documents.
-	for {
+	for i := 0; ; i++ {
 		var manifests yaml.Node
 
 		if err = dec.Decode(&manifests); err != nil {
@@ -84,6 +85,17 @@ func parse(r io.Reader) (decoded []config.Document, err error) {
 
 		if manifests.Kind != yaml.DocumentNode {
 			return nil, errors.New("expected a document")
+		}
+
+		if allowPatchDelete {
+			decoded, err = AppendDeletesTo(&manifests, decoded, i)
+			if err != nil {
+				return nil, err
+			}
+
+			if manifests.IsZero() {
+				continue
+			}
 		}
 
 		for _, manifest := range manifests.Content {
@@ -166,25 +178,4 @@ func decode(manifest *yaml.Node) (target config.Document, err error) {
 	}
 
 	return target, nil
-}
-
-func findValue(node *yaml.Node, key string, required bool) string {
-	if node.Kind != yaml.MappingNode {
-		panic(errors.New("expected a mapping node"))
-	}
-
-	for i := 0; i < len(node.Content)-1; i += 2 {
-		keyNode := node.Content[i]
-		val := node.Content[i+1]
-
-		if keyNode.Kind == yaml.ScalarNode && keyNode.Value == key {
-			return val.Value
-		}
-	}
-
-	if required {
-		panic(fmt.Errorf("missing '%s'", key))
-	}
-
-	return ""
 }

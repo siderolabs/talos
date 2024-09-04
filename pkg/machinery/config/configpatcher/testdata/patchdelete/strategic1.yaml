@@ -1,0 +1,25 @@
+apiVersion: v1alpha1
+kind: SideroLinkConfig
+$patch: delete
+---
+apiVersion: v1alpha1
+kind: ExtensionServiceConfig
+name: foo
+configFiles:
+  - content: hello
+    $patch: delete
+  - content: hello2
+    mountPath: /etc/foo2
+---
+version: v1alpha1
+machine:
+  network:
+    hostname:
+      $patch: delete
+    interfaces:
+      - interface: eth0
+        $patch: delete
+      - interface: eth1
+        addresses: [10.3.5.5/32]
+      - interface: eth0
+        dummy: true

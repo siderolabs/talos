@@ -1,0 +1,23 @@
+version: v1alpha1
+machine:
+    type: ""
+    token: ""
+    certSANs: []
+    network:
+        interfaces:
+            - interface: eth1
+              addresses:
+                - 10.3.5.4/32
+                - 10.3.5.5/32
+            - interface: eth0
+              dummy: true
+cluster: null
+---
+apiVersion: v1alpha1
+kind: ExtensionServiceConfig
+name: foo
+configFiles:
+    - content: hello2
+      mountPath: /etc/foo2
+environment:
+    - FOO=BAR
