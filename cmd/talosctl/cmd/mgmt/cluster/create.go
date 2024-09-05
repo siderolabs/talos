@@ -194,19 +194,32 @@ var createCmd = &cobra.Command{
 	},
 }
 
+//nolint:gocyclo
 func downloadBootAssets(ctx context.Context) error {
 	// download & cache images if provides as URLs
-	for _, downloadableImage := range []*string{
-		&nodeVmlinuzPath,
-		&nodeInitramfsPath,
-		&nodeISOPath,
-		&nodeDiskImagePath,
+	for _, downloadableImage := range []struct {
+		path           *string
+		disableArchive bool
+	}{
+		{
+			path: &nodeVmlinuzPath,
+		},
+		{
+			path:           &nodeInitramfsPath,
+			disableArchive: true,
+		},
+		{
+			path: &nodeISOPath,
+		},
+		{
+			path: &nodeDiskImagePath,
+		},
 	} {
-		if *downloadableImage == "" {
+		if *downloadableImage.path == "" {
 			continue
 		}
 
-		u, err := url.Parse(*downloadableImage)
+		u, err := url.Parse(*downloadableImage.path)
 		if err != nil || !(u.Scheme == "http" || u.Scheme == "https") {
 			// not a URL
 			continue
@@ -229,7 +242,7 @@ func downloadBootAssets(ctx context.Context) error {
 
 		_, err = os.Stat(filepath.Join(cacheDir, destPath))
 		if err == nil {
-			*downloadableImage = filepath.Join(cacheDir, destPath)
+			*downloadableImage.path = filepath.Join(cacheDir, destPath)
 
 			// already cached
 			continue
@@ -246,6 +259,14 @@ func downloadBootAssets(ctx context.Context) error {
 			},
 		}
 
+		if downloadableImage.disableArchive {
+			q := u.Query()
+
+			q.Set("archive", "false")
+
+			u.RawQuery = q.Encode()
+		}
+
 		_, err = client.Get(ctx, &getter.Request{
 			Src:     u.String(),
 			Dst:     filepath.Join(cacheDir, destPath),
@@ -258,7 +279,7 @@ func downloadBootAssets(ctx context.Context) error {
 			return err
 		}
 
-		*downloadableImage = filepath.Join(cacheDir, destPath)
+		*downloadableImage.path = filepath.Join(cacheDir, destPath)
 	}
 
 	return nil
