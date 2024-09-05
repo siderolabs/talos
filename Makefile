@@ -102,8 +102,6 @@ KUBECTL_VERSION ?= v1.31.0
 KUBESTR_VERSION ?= v0.4.46
 # renovate: datasource=github-releases depName=helm/helm
 HELM_VERSION ?= v3.15.4
-# renovate: datasource=github-releases depName=kubernetes-sigs/cluster-api
-CLUSTERCTL_VERSION ?= 1.8.1
 # renovate: datasource=github-releases depName=cilium/cilium-cli
 CILIUM_CLI_VERSION ?= v0.16.16
 # renovate: datasource=github-releases depName=microsoft/secureboot_objects
@@ -112,7 +110,6 @@ MICROSOFT_SECUREBOOT_RELEASE ?= v1.1.3
 KUBECTL_URL ?= https://dl.k8s.io/release/$(KUBECTL_VERSION)/bin/$(OPERATING_SYSTEM)/amd64/kubectl
 KUBESTR_URL ?= https://github.com/kastenhq/kubestr/releases/download/$(KUBESTR_VERSION)/kubestr_$(subst v,,$(KUBESTR_VERSION))_Linux_amd64.tar.gz
 HELM_URL ?= https://get.helm.sh/helm-$(HELM_VERSION)-linux-amd64.tar.gz
-CLUSTERCTL_URL ?= https://github.com/kubernetes-sigs/cluster-api/releases/download/v$(CLUSTERCTL_VERSION)/clusterctl-$(OPERATING_SYSTEM)-amd64
 CILIUM_CLI_URL ?= https://github.com/cilium/cilium-cli/releases/download/$(CILIUM_CLI_VERSION)/cilium-$(OPERATING_SYSTEM)-amd64.tar.gz
 TESTPKGS ?= github.com/siderolabs/talos/...
 RELEASES ?= v1.6.7 v1.7.0
@@ -426,6 +423,7 @@ cloud-images: ## Uploads cloud images (AMIs, etc.) to the cloud registry.
 		-e TAG=$(TAG) -e ARTIFACTS=$(ARTIFACTS) -e ABBREV_TAG=$(ABBREV_TAG) \
 		-e AWS_ACCESS_KEY_ID -e AWS_SECRET_ACCESS_KEY \
 		-e AZURE_SUBSCRIPTION_ID -e AZURE_CLIENT_ID -e AZURE_CLIENT_SECRET -e AZURE_TENANT_ID \
+		-e GOOGLE_PROJECT_ID -e GOOGLE_CREDENTIALS \
 		golang:$(GO_VERSION) \
 		./hack/cloud-image-uploader.sh $(CLOUD_IMAGES_EXTRA_ARGS)
 
@@ -492,17 +490,12 @@ $(ARTIFACTS)/helm:
 	@curl -L "$(HELM_URL)" | tar xzf - -C $(ARTIFACTS) --strip-components=1 linux-amd64/helm
 	@chmod +x $(ARTIFACTS)/helm
 
-$(ARTIFACTS)/clusterctl:
-	@mkdir -p $(ARTIFACTS)
-	@curl -L -o $(ARTIFACTS)/clusterctl "$(CLUSTERCTL_URL)"
-	@chmod +x $(ARTIFACTS)/clusterctl
-
 $(ARTIFACTS)/cilium:
 	@mkdir -p $(ARTIFACTS)
 	@curl -L "$(CILIUM_CLI_URL)" | tar xzf - -C $(ARTIFACTS) cilium
 	@chmod +x $(ARTIFACTS)/cilium
 
-external-artifacts: $(ARTIFACTS)/kubectl $(ARTIFACTS)/clusterctl $(ARTIFACTS)/kubestr $(ARTIFACTS)/helm $(ARTIFACTS)/cilium
+external-artifacts: $(ARTIFACTS)/kubectl $(ARTIFACTS)/kubestr $(ARTIFACTS)/helm $(ARTIFACTS)/cilium
 
 e2e-%: $(ARTIFACTS)/$(INTEGRATION_TEST_DEFAULT_TARGET)-amd64 external-artifacts ## Runs the E2E test for the specified platform (e.g. e2e-docker).
 	@$(MAKE) hack-test-$@ \
@@ -520,7 +513,6 @@ e2e-%: $(ARTIFACTS)/$(INTEGRATION_TEST_DEFAULT_TARGET)-amd64 external-artifacts 
 		KUBECTL=$(PWD)/$(ARTIFACTS)/kubectl \
 		KUBESTR=$(PWD)/$(ARTIFACTS)/kubestr \
 		HELM=$(PWD)/$(ARTIFACTS)/helm \
-		CLUSTERCTL=$(PWD)/$(ARTIFACTS)/clusterctl \
 		CILIUM_CLI=$(PWD)/$(ARTIFACTS)/cilium
 
 provision-tests-prepare: release-artifacts $(ARTIFACTS)/$(INTEGRATION_TEST_PROVISION_DEFAULT_TARGET)-amd64

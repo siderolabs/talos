@@ -1,14 +1,14 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
 #
-# Generated on 2024-09-05T17:53:07Z by kres 8be5fa7.
+# Generated on 2024-09-06T05:05:58Z by kres 8be5fa7.
 
-name: integration-cloud-images-cron
+name: integration-gcp-cron
 concurrency:
   group: ${{ github.head_ref || github.run_id }}
   cancel-in-progress: true
 "on":
   schedule:
-    - cron: 30 2 * * *
+    - cron: 30 7 * * *
 jobs:
   default:
     runs-on:
@@ -68,6 +68,12 @@ jobs:
         if: github.event_name != 'schedule'
         run: |
           xargs -a _out/executable-artifacts -I {} chmod +x {}
+      - name: uki-certs
+        if: github.event_name == 'schedule'
+        env:
+          PLATFORM: linux/amd64
+        run: |
+          make uki-certs
       - name: build
         if: github.event_name == 'schedule'
         env:
@@ -76,12 +82,45 @@ jobs:
           PUSH: "true"
         run: |
           make talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer imager talos _out/integration-test-linux-amd64
-      - name: images
+      - name: talosctl-cni-bundle
+        if: github.event_name == 'schedule'
+        run: |
+          make talosctl-cni-bundle
+      - name: images-essential
+        if: github.event_name == 'schedule'
         env:
           IMAGE_REGISTRY: registry.dev.siderolabs.io
-          PLATFORM: linux/amd64,linux/arm64
+          PLATFORM: linux/amd64
         run: |
-          make images
-      - name: cloud-images
+          make images-essential
+      - name: e2e-gcp-prepare
         run: |
-          make cloud-images
+          make e2e-gcp-prepare
+      - name: checkout contrib
+        uses: actions/checkout@v4
+        with:
+          path: _out/contrib
+          ref: main
+          repository: siderolabs/contrib
+      - name: setup tf
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_wrapper: "false"
+      - name: tf apply
+        env:
+          TF_E2E_ACTION: apply
+          TF_E2E_TEST_TYPE: gcp
+          TF_SCRIPT_DIR: _out/contrib
+        run: |
+          make e2e-cloud-tf
+      - name: e2e-gcp
+        run: |
+          make e2e-gcp
+      - name: tf destroy
+        if: always()
+        env:
+          TF_E2E_ACTION: destroy
+          TF_E2E_TEST_TYPE: gcp
+          TF_SCRIPT_DIR: _out/contrib
+        run: |
+          make e2e-cloud-tf

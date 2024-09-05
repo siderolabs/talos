@@ -40,14 +40,14 @@ type GCPUploder struct {
 // NewGCPUploder creates a new GCPUploder.
 func NewGCPUploder(options Options) (*GCPUploder, error) {
 	projectID := os.Getenv("GOOGLE_PROJECT_ID")
-	credentials := os.Getenv("GOOGLE_CREDENTIALS_JSON")
+	credentials := os.Getenv("GOOGLE_CREDENTIALS")
 
 	if projectID == "" {
 		return nil, fmt.Errorf("gcp: GOOGLE_PROJECT_ID is not set")
 	}
 
 	if credentials == "" {
-		return nil, fmt.Errorf("gcp: GOOGLE_CREDENTIALS_JSON is not set")
+		return nil, fmt.Errorf("gcp: GOOGLE_CREDENTIALS is not set")
 	}
 
 	gcpUploader := &GCPUploder{

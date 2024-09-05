@@ -17,13 +17,7 @@
 #  - KUBECTL
 #  - KUBESTR
 #  - HELM
-#  - CLUSTERCTL
 #  - CILIUM_CLI
-
-#
-# Some environment variables set in this file (e. g. TALOS_VERSION and KUBERNETES_VERSION)
-# are referenced by https://github.com/siderolabs/cluster-api-templates.
-# See other e2e-*.sh scripts.
 
 set -eoux pipefail
 
@@ -48,86 +42,6 @@ export NUM_NODES=${TEST_NUM_NODES:-6}
 # default values, overridden by talosctl cluster create tests
 PROVISIONER=
 CLUSTER_NAME=
-
-cleanup_capi() {
-  ${KUBECTL} --kubeconfig /tmp/e2e/docker/kubeconfig delete cluster "${NAME_PREFIX}"
-}
-
-# Create a cluster via CAPI.
-function create_cluster_capi {
-  trap cleanup_capi EXIT
-
-  ${KUBECTL} --kubeconfig /tmp/e2e/docker/kubeconfig apply -f "${TMP}/cluster.yaml"
-
-  # Wait for first controlplane machine to have a name
-  timeout=$(($(date +%s) + TIMEOUT))
-  until [ -n "$(${KUBECTL} --kubeconfig /tmp/e2e/docker/kubeconfig get machine -l cluster.x-k8s.io/control-plane,cluster.x-k8s.io/cluster-name="${NAME_PREFIX}" --all-namespaces -o json | jq -re '.items[0].metadata.name | select (.!=null)')" ]; do
-    [[ $(date +%s) -gt $timeout ]] && exit 1
-    sleep 10
-    ${KUBECTL} --kubeconfig /tmp/e2e/docker/kubeconfig get machine -l cluster.x-k8s.io/control-plane,cluster.x-k8s.io/cluster-name="${NAME_PREFIX}" --all-namespaces
-  done
-
-  FIRST_CP_NODE=$(${KUBECTL} --kubeconfig /tmp/e2e/docker/kubeconfig get machine -l cluster.x-k8s.io/control-plane,cluster.x-k8s.io/cluster-name="${NAME_PREFIX}" --all-namespaces -o json | jq -r '.items[0].metadata.name')
-
-  # Wait for first controlplane machine to have a talosconfig ref
-  timeout=$(($(date +%s) + TIMEOUT))
-  until [ -n "$(${KUBECTL} --kubeconfig /tmp/e2e/docker/kubeconfig get machine "${FIRST_CP_NODE}" -o json | jq -re '.spec.bootstrap.configRef.name | select (.!=null)')" ]; do
-    [[ $(date +%s) -gt $timeout ]] && exit 1
-    sleep 10
-  done
-
-  FIRST_CP_TALOSCONFIG=$(${KUBECTL} --kubeconfig /tmp/e2e/docker/kubeconfig get machine "${FIRST_CP_NODE}" -o json | jq -re '.spec.bootstrap.configRef.name')
-
-  # Wait for talosconfig in cm then dump it out
-  timeout=$(($(date +%s) + TIMEOUT))
-  until [ -n "$(${KUBECTL} --kubeconfig /tmp/e2e/docker/kubeconfig get talosconfig "${FIRST_CP_TALOSCONFIG}" -o jsonpath='{.status.talosConfig}')" ]; do
-    [[ $(date +%s) -gt $timeout ]] && exit 1
-    sleep 10
-  done
-  ${KUBECTL} --kubeconfig /tmp/e2e/docker/kubeconfig get talosconfig "${FIRST_CP_TALOSCONFIG}" -o jsonpath='{.status.talosConfig}' > "${TALOSCONFIG}"
-
-  # Wait until we have an IP for first controlplane node
-  timeout=$(($(date +%s) + TIMEOUT))
-  until [ -n "$(${KUBECTL} --kubeconfig /tmp/e2e/docker/kubeconfig get machine -o go-template --template='{{range .status.addresses}}{{if eq .type "ExternalIP"}}{{.address}}{{end}}{{end}}' "${FIRST_CP_NODE}")" ]; do
-    [[ $(date +%s) -gt $timeout ]] && exit 1
-    sleep 10
-  done
-
-  MASTER_IP=$(${KUBECTL} --kubeconfig /tmp/e2e/docker/kubeconfig get machine -o go-template --template='{{range .status.addresses}}{{if eq .type "ExternalIP"}}{{.address}}{{end}}{{end}}' "${FIRST_CP_NODE}")
-  "${TALOSCTL}" config endpoint "${MASTER_IP}"
-  "${TALOSCTL}" config node "${MASTER_IP}"
-
-  # Wait for the kubeconfig from first cp node
-  timeout=$(($(date +%s) + TIMEOUT))
-  until get_kubeconfig; do
-    [[ $(date +%s) -gt $timeout ]] && exit 1
-    sleep 10
-  done
-
-  # Wait for nodes to check in
-  timeout=$(($(date +%s) + TIMEOUT))
-  until ${KUBECTL} get nodes -o go-template='{{ len .items }}' | grep "${NUM_NODES}" >/dev/null; do
-    [[ $(date +%s) -gt $timeout ]] && exit 1
-    ${KUBECTL} get nodes -o wide && :
-    sleep 10
-  done
-
-  # Wait for nodes to be ready
-  timeout=$(($(date +%s) + TIMEOUT))
-  until ${KUBECTL} wait --timeout=1s --for=condition=ready=true --all nodes > /dev/null; do
-    [[ $(date +%s) -gt $timeout ]] && exit 1
-    ${KUBECTL} get nodes -o wide && :
-    sleep 10
-  done
-
-  # Verify that we have an HA controlplane
-  timeout=$(($(date +%s) + TIMEOUT))
-  until ${KUBECTL} get nodes -l node-role.kubernetes.io/control-plane='' -o go-template='{{ len .items }}' | grep 3 > /dev/null; do
-    [[ $(date +%s) -gt $timeout ]] && exit 1
-    ${KUBECTL} get nodes -l node-role.kubernetes.io/control-plane='' && :
-    sleep 10
-  done
-}
 
 TEST_SHORT=()
 TEST_RUN=("-test.run" ".")

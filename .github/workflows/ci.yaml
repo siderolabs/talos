@@ -1,6 +1,6 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
 #
-# Generated on 2024-09-05T10:32:02Z by kres b5ca957.
+# Generated on 2024-09-06T05:05:58Z by kres 8be5fa7.
 
 name: default
 concurrency:
@@ -410,7 +410,7 @@ jobs:
         timeout-minutes: 10
       - name: Mask secrets
         run: |
-          echo -e "$(sops -d .secrets.yaml | yq -e '.secrets | to_entries[] | "::add-mask::" + .value')"
+          echo "$(sops -d .secrets.yaml | yq -e '.secrets | to_entries[] | "::add-mask::" + .value')"
       - name: Set secrets for job
         run: |
           sops -d .secrets.yaml | yq -e '.secrets | to_entries[] | .key + "=" + .value' >> "$GITHUB_ENV"
@@ -536,7 +536,7 @@ jobs:
         timeout-minutes: 10
       - name: Mask secrets
         run: |
-          echo -e "$(sops -d .secrets.yaml | yq -e '.secrets | to_entries[] | "::add-mask::" + .value')"
+          echo "$(sops -d .secrets.yaml | yq -e '.secrets | to_entries[] | "::add-mask::" + .value')"
       - name: Set secrets for job
         run: |
           sops -d .secrets.yaml | yq -e '.secrets | to_entries[] | .key + "=" + .value' >> "$GITHUB_ENV"
@@ -686,7 +686,7 @@ jobs:
         timeout-minutes: 10
       - name: Mask secrets
         run: |
-          echo -e "$(sops -d .secrets.yaml | yq -e '.secrets | to_entries[] | "::add-mask::" + .value')"
+          echo "$(sops -d .secrets.yaml | yq -e '.secrets | to_entries[] | "::add-mask::" + .value')"
       - name: Set secrets for job
         run: |
           sops -d .secrets.yaml | yq -e '.secrets | to_entries[] | .key + "=" + .value' >> "$GITHUB_ENV"
@@ -836,7 +836,7 @@ jobs:
         timeout-minutes: 10
       - name: Mask secrets
         run: |
-          echo -e "$(sops -d .secrets.yaml | yq -e '.secrets | to_entries[] | "::add-mask::" + .value')"
+          echo "$(sops -d .secrets.yaml | yq -e '.secrets | to_entries[] | "::add-mask::" + .value')"
       - name: Set secrets for job
         run: |
           sops -d .secrets.yaml | yq -e '.secrets | to_entries[] | .key + "=" + .value' >> "$GITHUB_ENV"
@@ -1087,7 +1087,7 @@ jobs:
         timeout-minutes: 10
       - name: Mask secrets
         run: |
-          echo -e "$(sops -d .secrets.yaml | yq -e '.secrets | to_entries[] | "::add-mask::" + .value')"
+          echo "$(sops -d .secrets.yaml | yq -e '.secrets | to_entries[] | "::add-mask::" + .value')"
       - name: Set secrets for job
         run: |
           sops -d .secrets.yaml | yq -e '.secrets | to_entries[] | .key + "=" + .value' >> "$GITHUB_ENV"
@@ -1261,7 +1261,7 @@ jobs:
         timeout-minutes: 10
       - name: Mask secrets
         run: |
-          echo -e "$(sops -d .secrets.yaml | yq -e '.secrets | to_entries[] | "::add-mask::" + .value')"
+          echo "$(sops -d .secrets.yaml | yq -e '.secrets | to_entries[] | "::add-mask::" + .value')"
       - name: Set secrets for job
         run: |
           sops -d .secrets.yaml | yq -e '.secrets | to_entries[] | .key + "=" + .value' >> "$GITHUB_ENV"
@@ -1440,6 +1440,129 @@ jobs:
             ~/.talos/clusters/**/*.log
             !~/.talos/clusters/**/swtpm.log
           retention-days: "5"
+  integration-gcp:
+    permissions:
+      actions: read
+      contents: write
+      issues: read
+      packages: write
+      pull-requests: read
+    runs-on:
+      - self-hosted
+      - generic
+    if: contains(fromJSON(needs.default.outputs.labels), 'integration/gcp')
+    needs:
+      - default
+    steps:
+      - name: gather-system-info
+        id: system-info
+        uses: kenchan0130/actions-system-info@v1.3.0
+        continue-on-error: true
+      - name: print-system-info
+        run: |
+          MEMORY_GB=$((${{ steps.system-info.outputs.totalmem }}/1024/1024/1024))
+
+          OUTPUTS=(
+            "CPU Core: ${{ steps.system-info.outputs.cpu-core }}"
+            "CPU Model: ${{ steps.system-info.outputs.cpu-model }}"
+            "Hostname: ${{ steps.system-info.outputs.hostname }}"
+            "NodeName: ${NODE_NAME}"
+            "Kernel release: ${{ steps.system-info.outputs.kernel-release }}"
+            "Kernel version: ${{ steps.system-info.outputs.kernel-version }}"
+            "Name: ${{ steps.system-info.outputs.name }}"
+            "Platform: ${{ steps.system-info.outputs.platform }}"
+            "Release: ${{ steps.system-info.outputs.release }}"
+            "Total memory: ${MEMORY_GB} GB"
+          )
+
+          for OUTPUT in "${OUTPUTS[@]}";do
+            echo "${OUTPUT}"
+          done
+        continue-on-error: true
+      - name: checkout
+        uses: actions/checkout@v4
+      - name: Unshallow
+        run: |
+          git fetch --prune --unshallow
+      - name: Set up Docker Buildx
+        id: setup-buildx
+        uses: docker/setup-buildx-action@v3
+        with:
+          driver: remote
+          endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
+        timeout-minutes: 10
+      - name: Mask secrets
+        run: |
+          echo "$(sops -d .secrets.yaml | yq -e '.secrets | to_entries[] | "::add-mask::" + .value')"
+      - name: Set secrets for job
+        run: |
+          sops -d .secrets.yaml | yq -e '.secrets | to_entries[] | .key + "=" + .value' >> "$GITHUB_ENV"
+      - name: Download artifacts
+        if: github.event_name != 'schedule'
+        uses: actions/download-artifact@v4
+        with:
+          name: talos-artifacts
+          path: _out
+      - name: Fix artifact permissions
+        if: github.event_name != 'schedule'
+        run: |
+          xargs -a _out/executable-artifacts -I {} chmod +x {}
+      - name: uki-certs
+        if: github.event_name == 'schedule'
+        env:
+          PLATFORM: linux/amd64
+        run: |
+          make uki-certs
+      - name: build
+        if: github.event_name == 'schedule'
+        env:
+          IMAGE_REGISTRY: registry.dev.siderolabs.io
+          PLATFORM: linux/amd64
+          PUSH: "true"
+        run: |
+          make talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer imager talos _out/integration-test-linux-amd64
+      - name: talosctl-cni-bundle
+        if: github.event_name == 'schedule'
+        run: |
+          make talosctl-cni-bundle
+      - name: images-essential
+        if: github.event_name == 'schedule'
+        env:
+          IMAGE_REGISTRY: registry.dev.siderolabs.io
+          PLATFORM: linux/amd64
+        run: |
+          make images-essential
+      - name: e2e-gcp-prepare
+        run: |
+          make e2e-gcp-prepare
+      - name: checkout contrib
+        uses: actions/checkout@v4
+        with:
+          path: _out/contrib
+          ref: main
+          repository: siderolabs/contrib
+      - name: setup tf
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_wrapper: "false"
+      - name: tf apply
+        env:
+          TF_E2E_ACTION: apply
+          TF_E2E_TEST_TYPE: gcp
+          TF_SCRIPT_DIR: _out/contrib
+        run: |
+          make e2e-cloud-tf
+      - name: e2e-gcp
+        run: |
+          make e2e-gcp
+      - name: tf destroy
+        if: always()
+        env:
+          TF_E2E_ACTION: destroy
+          TF_E2E_TEST_TYPE: gcp
+          TF_SCRIPT_DIR: _out/contrib
+        run: |
+          make e2e-cloud-tf
   integration-image-factory:
     permissions:
       actions: read
@@ -3277,7 +3400,7 @@ jobs:
         timeout-minutes: 10
       - name: Mask secrets
         run: |
-          echo -e "$(sops -d .secrets.yaml | yq -e '.secrets | to_entries[] | "::add-mask::" + .value')"
+          echo "$(sops -d .secrets.yaml | yq -e '.secrets | to_entries[] | "::add-mask::" + .value')"
       - name: Set secrets for job
         run: |
           sops -d .secrets.yaml | yq -e '.secrets | to_entries[] | .key + "=" + .value' >> "$GITHUB_ENV"
