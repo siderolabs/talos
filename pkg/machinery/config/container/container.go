@@ -199,6 +199,11 @@ func (container *Container) Volumes() config.VolumesConfig {
 	return config.WrapVolumesConfigList(findMatchingDocs[config.VolumeConfig](container.documents)...)
 }
 
+// KubespanConfig implements config.Config interface.
+func (container *Container) KubespanConfig() config.KubespanConfig {
+	return config.WrapKubespanConfig(findMatchingDocs[config.KubespanConfig](container.documents)...)
+}
+
 // Bytes returns source YAML representation (if available) or does default encoding.
 func (container *Container) Bytes() ([]byte, error) {
 	if !container.readonly {

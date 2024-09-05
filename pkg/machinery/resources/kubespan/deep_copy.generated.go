@@ -17,6 +17,10 @@ func (o ConfigSpec) DeepCopy() ConfigSpec {
 		cp.EndpointFilters = make([]string, len(o.EndpointFilters))
 		copy(cp.EndpointFilters, o.EndpointFilters)
 	}
+	if o.ExtraEndpoints != nil {
+		cp.ExtraEndpoints = make([]netip.AddrPort, len(o.ExtraEndpoints))
+		copy(cp.ExtraEndpoints, o.ExtraEndpoints)
+	}
 	return cp
 }
 

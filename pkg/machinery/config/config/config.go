@@ -16,4 +16,5 @@ type Config interface {
 	NetworkRules() NetworkRuleConfig
 	TrustedRoots() TrustedRootsConfig
 	Volumes() VolumesConfig
+	KubespanConfig() KubespanConfig
 }

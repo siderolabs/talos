@@ -4,6 +4,8 @@
 package kubespan_test
 
 import (
+	"fmt"
+	"net/netip"
 	"testing"
 	"time"
 
@@ -14,6 +16,7 @@ import (
 
 	kubespanctrl "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/kubespan"
 	"github.com/siderolabs/talos/pkg/machinery/config/container"
+	"github.com/siderolabs/talos/pkg/machinery/config/types/network"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
 	"github.com/siderolabs/talos/pkg/machinery/resources/config"
 	"github.com/siderolabs/talos/pkg/machinery/resources/kubespan"
@@ -28,22 +31,30 @@ func (suite *ConfigSuite) TestReconcileConfig() {
 
 	suite.startRuntime()
 
-	cfg := config.NewMachineConfig(
-		container.NewV1Alpha1(
-			&v1alpha1.Config{
-				ConfigVersion: "v1alpha1",
-				MachineConfig: &v1alpha1.MachineConfig{
-					MachineNetwork: &v1alpha1.NetworkConfig{
-						NetworkKubeSpan: &v1alpha1.NetworkKubeSpan{
-							KubeSpanEnabled: pointer.To(true),
-						},
+	ctr, err := container.New(
+		&v1alpha1.Config{
+			ConfigVersion: "v1alpha1",
+			MachineConfig: &v1alpha1.MachineConfig{
+				MachineNetwork: &v1alpha1.NetworkConfig{
+					NetworkKubeSpan: &v1alpha1.NetworkKubeSpan{
+						KubeSpanEnabled: pointer.To(true),
 					},
 				},
-				ClusterConfig: &v1alpha1.ClusterConfig{
-					ClusterID:     "8XuV9TZHW08DOk3bVxQjH9ih_TBKjnh-j44tsCLSBzo=",
-					ClusterSecret: "I+1In7fLnpcRIjUmEoeugZnSyFoTF6MztLxICL5Yu0s=",
-				},
-			}))
+			},
+			ClusterConfig: &v1alpha1.ClusterConfig{
+				ClusterID:     "8XuV9TZHW08DOk3bVxQjH9ih_TBKjnh-j44tsCLSBzo=",
+				ClusterSecret: "I+1In7fLnpcRIjUmEoeugZnSyFoTF6MztLxICL5Yu0s=",
+			},
+		},
+		&network.KubespanEndpointsConfigV1Alpha1{
+			ExtraAnnouncedEndpointsConfig: []netip.AddrPort{
+				netip.MustParseAddrPort("192.168.33.11:1001"),
+			},
+		},
+	)
+	suite.Require().NoError(err)
+
+	cfg := config.NewMachineConfig(ctr)
 
 	suite.Require().NoError(suite.state.Create(suite.ctx, cfg))
 
@@ -61,6 +72,7 @@ func (suite *ConfigSuite) TestReconcileConfig() {
 				suite.Assert().True(spec.ForceRouting)
 				suite.Assert().False(spec.AdvertiseKubernetesNetworks)
 				suite.Assert().False(spec.HarvestExtraEndpoints)
+				suite.Assert().Equal("[\"192.168.33.11:1001\"]", fmt.Sprintf("%q", spec.ExtraEndpoints))
 
 				return nil
 			},

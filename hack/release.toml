@@ -231,6 +231,12 @@ Talos Linux installer now never wipes the system disk on upgrades, which means t
 Talos Linux now supports [configuration](https://www.talos.dev/v1.8/talos-guides/configuration/disk-management/#machine-configuration) for the `EPHEMERAL` volume.
 """
 
+    [notes.kubespan]
+        title = "KubeSpan"
+        description = """\
+Extra announced endpoints can be added using the [`KubespanEndpointsConfig` document](https://www.talos.dev/v1.8/talos-guides/network/kubespan/#configuration).
+"""
+
 [make_deps]
 
     [make_deps.tools]

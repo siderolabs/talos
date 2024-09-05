@@ -5,6 +5,8 @@
 package kubespan
 
 import (
+	"net/netip"
+
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/meta"
 	"github.com/cosi-project/runtime/pkg/resource/protobuf"
@@ -42,6 +44,8 @@ type ConfigSpec struct {
 	EndpointFilters []string `yaml:"endpointFilters,omitempty" protobuf:"7"`
 	// Harvest endpoints from the peer statuses.
 	HarvestExtraEndpoints bool `yaml:"harvestExtraEndpoints" protobuf:"8"`
+	// Extra endpoints to announce.
+	ExtraEndpoints []netip.AddrPort `yaml:"extraEndpoints,omitempty" protobuf:"9"`
 }
 
 // NewConfig initializes a Config resource.

@@ -288,6 +288,13 @@ func (ctrl *LocalAffiliateController) Run(ctx context.Context, r controller.Runt
 					spec.KubeSpan.Endpoints = xslices.Map(endpointIPs, func(addr netip.Addr) netip.AddrPort {
 						return netip.AddrPortFrom(addr, constants.KubeSpanDefaultPort)
 					})
+
+					// add extra announced endpoints, deduplicating on the way
+					for _, addr := range kubespanConfig.TypedSpec().ExtraEndpoints {
+						if !slices.Contains(spec.KubeSpan.Endpoints, addr) {
+							spec.KubeSpan.Endpoints = append(spec.KubeSpan.Endpoints, addr)
+						}
+					}
 				}
 
 				return nil

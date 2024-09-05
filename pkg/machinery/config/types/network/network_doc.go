@@ -37,6 +37,27 @@ func (DefaultActionConfigV1Alpha1) Doc() *encoder.Doc {
 	return doc
 }
 
+func (KubespanEndpointsConfigV1Alpha1) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "KubespanEndpoints",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "KubespanEndpoints is a config document to configure KubeSpan endpoints." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "KubespanEndpoints is a config document to configure KubeSpan endpoints.",
+		Fields: []encoder.Doc{
+			{}, {
+				Name:        "extraAnnouncedEndpoints",
+				Type:        "[]AddrPort",
+				Note:        "",
+				Description: "A list of extra Wireguard endpoints to announce from this machine.\n\nTalos automatically adds endpoints based on machine addresses, public IP, etc.\nThis field allows to add extra endpoints which are managed outside of Talos, e.g. NAT mapping.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "A list of extra Wireguard endpoints to announce from this machine." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
+
+	doc.AddExample("", exampleKubespanEndpointsV1Alpha1())
+
+	return doc
+}
+
 func (RuleConfigV1Alpha1) Doc() *encoder.Doc {
 	doc := &encoder.Doc{
 		Type:        "NetworkRuleConfig",
@@ -157,6 +178,7 @@ func GetFileDoc() *encoder.FileDoc {
 		Description: "Package network provides network machine configuration documents.\n",
 		Structs: []*encoder.Doc{
 			DefaultActionConfigV1Alpha1{}.Doc(),
+			KubespanEndpointsConfigV1Alpha1{}.Doc(),
 			RuleConfigV1Alpha1{}.Doc(),
 			RulePortSelector{}.Doc(),
 			IngressRule{}.Doc(),

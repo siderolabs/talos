@@ -19,7 +19,7 @@ const DefaultActionConfig = "NetworkDefaultActionConfig"
 func init() {
 	registry.Register(DefaultActionConfig, func(version string) config.Document {
 		switch version {
-		case "v1alpha1":
+		case "v1alpha1": //nolint:goconst
 			return &DefaultActionConfigV1Alpha1{}
 		default:
 			return nil
