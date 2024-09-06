@@ -37,7 +37,7 @@ Flannel: 0.25.6
 Flannel CNI plugin: 1.5.1
 CoreDNS: 1.1.13
 
-Talos is built with Go 1.22.6.
+Talos is built with Go 1.22.7.
 """
 
     [notes.apparmor]
