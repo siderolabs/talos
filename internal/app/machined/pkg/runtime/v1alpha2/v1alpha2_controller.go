@@ -117,6 +117,8 @@ func (ctrl *Controller) Run(ctx context.Context, drainer *runtime.Drainer) error
 			PlatformEvent: &platformEventer{
 				platform: ctrl.v1alpha1Runtime.State().Platform(),
 			},
+			Mode:           ctrl.v1alpha1Runtime.State().Platform().Mode(),
+			CmdlineGetter:  procfs.ProcCmdline,
 			ConfigSetter:   ctrl.v1alpha1Runtime,
 			EventPublisher: ctrl.v1alpha1Runtime.Events(),
 			ValidationMode: ctrl.v1alpha1Runtime.State().Platform().Mode(),

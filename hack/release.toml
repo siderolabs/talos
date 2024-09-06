@@ -237,6 +237,12 @@ Talos Linux now supports [configuration](https://www.talos.dev/v1.8/talos-guides
 Extra announced endpoints can be added using the [`KubespanEndpointsConfig` document](https://www.talos.dev/v1.8/talos-guides/network/kubespan/#configuration).
 """
 
+    [notes.cmdline-config]
+        title = "Machine Configuration via Kernel Command Line"
+        description = """\
+Talos Linux supports supplying zstd-compressed, base64-encoded machine configuration small documents via the kernel command line parameter `talos.config.inline`.
+"""
+
 [make_deps]
 
     [make_deps.tools]

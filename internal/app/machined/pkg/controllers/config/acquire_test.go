@@ -8,6 +8,7 @@ import (
 	"bytes"
 	"compress/gzip"
 	"context"
+	"encoding/base64"
 	stderrors "errors"
 	"fmt"
 	"math/rand/v2"
@@ -22,6 +23,8 @@ import (
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/rtestutils"
 	"github.com/cosi-project/runtime/pkg/state"
+	"github.com/klauspost/compress/zstd"
+	"github.com/siderolabs/go-procfs/procfs"
 	"github.com/siderolabs/go-retry/retry"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
@@ -37,6 +40,7 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/config/generate"
 	"github.com/siderolabs/talos/pkg/machinery/config/machine"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/siderolink"
+	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/proto"
 	configresource "github.com/siderolabs/talos/pkg/machinery/resources/config"
 	"github.com/siderolabs/talos/pkg/machinery/resources/runtime"
@@ -51,6 +55,7 @@ type AcquireSuite struct {
 	platformEvent  *platformEventMock
 	configSetter   *configSetterMock
 	eventPublisher *eventPublisherMock
+	cmdline        *cmdlineGetterMock
 
 	clusterName           string
 	completeMachineConfig []byte
@@ -118,6 +123,16 @@ func (e *eventPublisherMock) getEvents() []proto.Message {
 	return slices.Clone(e.events)
 }
 
+type cmdlineGetterMock struct {
+	cmdline *procfs.Cmdline
+}
+
+func (c *cmdlineGetterMock) Getter() func() *procfs.Cmdline {
+	return func() *procfs.Cmdline {
+		return c.cmdline
+	}
+}
+
 type validationModeMock struct{}
 
 func (v validationModeMock) String() string {
@@ -152,6 +167,9 @@ func TestAcquireSuite(t *testing.T) {
 			cfgCh: make(chan config.Provider, 1),
 		}
 		s.eventPublisher = &eventPublisherMock{}
+		s.cmdline = &cmdlineGetterMock{
+			procfs.NewCmdline(""),
+		}
 
 		s.clusterName = fmt.Sprintf("cluster-%d", rand.Int32())
 		input, err := generate.NewInput(s.clusterName, "https://localhost:6443", "")
@@ -176,6 +194,8 @@ func TestAcquireSuite(t *testing.T) {
 			PlatformConfiguration: s.platformConfig,
 			PlatformEvent:         s.platformEvent,
 			ConfigSetter:          s.configSetter,
+			Mode:                  validationModeMock{},
+			CmdlineGetter:         s.cmdline.Getter(),
 			EventPublisher:        s.eventPublisher,
 			ValidationMode:        validationModeMock{},
 			ConfigPath:            s.configPath,
@@ -383,6 +403,66 @@ func (suite *AcquireSuite) TestFromPlatformGzip() {
 func (suite *AcquireSuite) TestFromPlatformToMaintenance() {
 	suite.platformConfig.configuration = suite.partialMachineConfig
 	suite.platformConfig.err = nil
+
+	suite.triggerAcquire()
+
+	var cfg config.Provider
+
+	select {
+	case cfg = <-suite.configSetter.cfgCh:
+	case <-suite.Ctx().Done():
+		suite.Require().Fail("timed out waiting for config")
+	}
+
+	suite.Require().Equal(cfg.SideroLink().APIUrl().Host, "siderolink.api")
+
+	suite.injectViaMaintenance(suite.completeMachineConfig)
+
+	cfg = suite.waitForConfig()
+	suite.Require().Equal(cfg.Cluster().Name(), suite.clusterName)
+
+	suite.Assert().Equal(
+		[]proto.Message{
+			&machineapi.TaskEvent{
+				Action: machineapi.TaskEvent_START,
+				Task:   "runningMaintenance",
+			},
+			&machineapi.TaskEvent{
+				Action: machineapi.TaskEvent_STOP,
+				Task:   "runningMaintenance",
+			},
+		},
+		suite.eventPublisher.getEvents(),
+	)
+	suite.Assert().Equal(
+		[]platform.Event{
+			{
+				Type:    platform.EventTypeActivate,
+				Message: "Talos booted into maintenance mode. Ready for user interaction.",
+			},
+			{
+				Type:    platform.EventTypeConfigLoaded,
+				Message: "Talos machine config loaded successfully.",
+			},
+		},
+		suite.platformEvent.getEvents(),
+	)
+}
+
+func (suite *AcquireSuite) TestFromCmdlineToMaintenance() {
+	var cfgCompressed bytes.Buffer
+
+	zw, err := zstd.NewWriter(&cfgCompressed)
+	suite.Require().NoError(err)
+
+	_, err = zw.Write(suite.partialMachineConfig)
+	suite.Require().NoError(err)
+
+	suite.Require().NoError(zw.Close())
+
+	cfgEncoded := base64.StdEncoding.EncodeToString(cfgCompressed.Bytes())
+
+	suite.cmdline.cmdline = procfs.NewCmdline(fmt.Sprintf("%s=%s", constants.KernelParamConfigInline, cfgEncoded))
 
 	suite.triggerAcquire()
 
