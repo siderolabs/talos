@@ -6,10 +6,12 @@ package decoder_test
 
 import (
 	"bytes"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"testing"
 
+	"github.com/siderolabs/gen/xtesting/must"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -343,6 +345,18 @@ func TestDecoderV1Alpha1Config(t *testing.T) {
 			assert.NoError(t, err)
 		})
 	}
+}
+
+func TestDoubleV1Alpha1(t *testing.T) {
+	t.Parallel()
+
+	files := os.DirFS("testdata/double").(fs.ReadFileFS) //nolint:errcheck
+	contents := must.Value(files.ReadFile("v1alpha1.yaml"))(t)
+
+	d := decoder.NewDecoder()
+	_, err := d.Decode(bytes.NewReader(contents))
+	require.Error(t, err)
+	require.ErrorContains(t, err, "not allowed")
 }
 
 func BenchmarkDecoderV1Alpha1Config(b *testing.B) {

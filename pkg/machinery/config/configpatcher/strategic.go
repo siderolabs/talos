@@ -14,8 +14,9 @@ import (
 )
 
 // StrategicMergePatch is a strategic merge config patch.
-type StrategicMergePatch struct {
-	coreconfig.Provider
+type StrategicMergePatch interface {
+	Documents() []config.Document
+	Provider() coreconfig.Provider
 }
 
 // StrategicMerge performs strategic merge config patching.
@@ -55,3 +56,20 @@ func StrategicMerge(cfg coreconfig.Provider, patch StrategicMergePatch) (corecon
 
 	return container.New(left...)
 }
+
+// NewStrategicMergePatch creates a new strategic merge patch. deleteSelectors is a list of delete selectors, can be empty.
+func NewStrategicMergePatch(cfg coreconfig.Provider) StrategicMergePatch {
+	return strategicMergePatch{provider: cfg}
+}
+
+type strategicMergePatch struct {
+	provider coreconfig.Provider
+}
+
+func (s strategicMergePatch) Documents() []config.Document {
+	return s.provider.Documents()
+}
+
+func (s strategicMergePatch) Provider() coreconfig.Provider { return s.provider }
+
+var _ StrategicMergePatch = strategicMergePatch{}

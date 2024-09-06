@@ -135,7 +135,7 @@ func ControlPlane(defaultAction nethelpers.DefaultAction, cidrs []netip.Prefix, 
 		panic(err)
 	}
 
-	return configpatcher.StrategicMergePatch{Provider: provider}
+	return configpatcher.NewStrategicMergePatch(provider)
 }
 
 // Worker generates a default firewall for a worker node.
@@ -187,5 +187,5 @@ func Worker(defaultAction nethelpers.DefaultAction, cidrs []netip.Prefix, gatewa
 		panic(err)
 	}
 
-	return configpatcher.StrategicMergePatch{Provider: provider}
+	return configpatcher.NewStrategicMergePatch(provider)
 }

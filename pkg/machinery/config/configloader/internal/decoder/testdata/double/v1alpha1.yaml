@@ -1,0 +1,7 @@
+version: v1alpha1
+machine:
+    type: controlplane
+---
+version: v1alpha1
+machine:
+    type: worker

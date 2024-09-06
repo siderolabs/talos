@@ -70,7 +70,7 @@ func TestLoadStrategic(t *testing.T) {
 	p, ok := raw.(configpatcher.StrategicMergePatch)
 	require.True(t, ok)
 
-	assert.Equal(t, "foo.bar", p.Machine().Network().Hostname())
+	assert.Equal(t, "foo.bar", p.Provider().Machine().Network().Hostname())
 }
 
 func TestLoadJSONPatches(t *testing.T) {
@@ -106,6 +106,6 @@ func TestLoadMixedPatches(t *testing.T) {
 	require.Len(t, patchList, 3)
 
 	assert.IsType(t, jsonpatch.Patch{}, patchList[0])
-	assert.IsType(t, configpatcher.StrategicMergePatch{}, patchList[1])
+	assert.Implements(t, (*configpatcher.StrategicMergePatch)(nil), patchList[1])
 	assert.IsType(t, jsonpatch.Patch{}, patchList[2])
 }

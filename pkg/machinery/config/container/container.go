@@ -91,7 +91,9 @@ func NewV1Alpha1(config *v1alpha1.Config) *Container {
 // Clone the container.
 //
 // Cloned container is not readonly.
-func (container *Container) Clone() coreconfig.Provider {
+func (container *Container) Clone() coreconfig.Provider { return container.clone() }
+
+func (container *Container) clone() *Container {
 	return &Container{
 		v1alpha1Config: container.v1alpha1Config.DeepCopy(),
 		documents:      xslices.Map(container.documents, config.Document.Clone),
@@ -304,7 +306,7 @@ func (container *Container) Validate(mode validation.RuntimeMode, opt ...validat
 
 // RedactSecrets returns a copy of the Provider with all secrets replaced with the given string.
 func (container *Container) RedactSecrets(replacement string) coreconfig.Provider {
-	clone := container.Clone().(*Container) //nolint:forcetypeassert,errcheck
+	clone := container.clone()
 
 	if clone.v1alpha1Config != nil {
 		clone.v1alpha1Config.Redact(replacement)

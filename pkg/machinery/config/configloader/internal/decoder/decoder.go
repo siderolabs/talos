@@ -6,6 +6,7 @@
 package decoder
 
 import (
+	"cmp"
 	"errors"
 	"fmt"
 	"io"
@@ -47,6 +48,12 @@ func NewDecoder() *Decoder {
 	return &Decoder{}
 }
 
+type documentID struct {
+	APIVersion string
+	Kind       string
+	Name       string
+}
+
 func parse(r io.Reader) (decoded []config.Document, err error) {
 	// Recover from yaml.v3 panics because we rely on machine configuration loading _a lot_.
 	defer func() {
@@ -60,6 +67,8 @@ func parse(r io.Reader) (decoded []config.Document, err error) {
 	dec := yaml.NewDecoder(r)
 
 	dec.KnownFields(true)
+
+	knownDocuments := map[documentID]struct{}{}
 
 	// Iterate through all defined documents.
 	for {
@@ -78,6 +87,18 @@ func parse(r io.Reader) (decoded []config.Document, err error) {
 		}
 
 		for _, manifest := range manifests.Content {
+			id := documentID{
+				APIVersion: findValue(manifest, ManifestAPIVersionKey, false),
+				Kind:       cmp.Or(findValue(manifest, ManifestKindKey, false), "v1alpha1"),
+				Name:       findValue(manifest, "name", false),
+			}
+
+			if _, ok := knownDocuments[id]; ok {
+				return nil, fmt.Errorf("duplicate document %s/%s/%s is not allowed", id.APIVersion, id.Kind, id.Name)
+			}
+
+			knownDocuments[id] = struct{}{}
+
 			var target config.Document
 
 			if target, err = decode(manifest); err != nil {
@@ -145,4 +166,25 @@ func decode(manifest *yaml.Node) (target config.Document, err error) {
 	}
 
 	return target, nil
+}
+
+func findValue(node *yaml.Node, key string, required bool) string {
+	if node.Kind != yaml.MappingNode {
+		panic(errors.New("expected a mapping node"))
+	}
+
+	for i := 0; i < len(node.Content)-1; i += 2 {
+		keyNode := node.Content[i]
+		val := node.Content[i+1]
+
+		if keyNode.Kind == yaml.ScalarNode && keyNode.Value == key {
+			return val.Value
+		}
+	}
+
+	if required {
+		panic(fmt.Errorf("missing '%s'", key))
+	}
+
+	return ""
 }
