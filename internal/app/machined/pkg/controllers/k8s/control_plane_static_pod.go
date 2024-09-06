@@ -19,6 +19,7 @@ import (
 	"github.com/siderolabs/gen/maps"
 	"github.com/siderolabs/gen/optional"
 	"github.com/siderolabs/gen/xslices"
+	"github.com/siderolabs/go-kubernetes/kubernetes/compatibility"
 	"github.com/siderolabs/go-pointer"
 	"go.uber.org/zap"
 	v1 "k8s.io/api/core/v1"
@@ -770,6 +771,41 @@ func (ctrl *ControlPlaneStaticPodController) manageScheduler(ctx context.Context
 		env = append(env, goGCEnv)
 	}
 
+	kubeSchedulerVersion := compatibility.VersionFromImageRef(cfg.Image)
+
+	livenessProbe := &v1.Probe{
+		ProbeHandler: v1.ProbeHandler{
+			HTTPGet: &v1.HTTPGetAction{
+				Path:   kubeSchedulerVersion.KubeSchedulerHealthLivenessEndpoint(),
+				Host:   "localhost",
+				Port:   intstr.FromInt(10259),
+				Scheme: v1.URISchemeHTTPS,
+			},
+		},
+	}
+
+	readinessProbe := &v1.Probe{
+		ProbeHandler: v1.ProbeHandler{
+			HTTPGet: &v1.HTTPGetAction{
+				Path:   kubeSchedulerVersion.KubeSchedulerHealthReadinessEndpoint(),
+				Host:   "localhost",
+				Port:   intstr.FromInt(10259),
+				Scheme: v1.URISchemeHTTPS,
+			},
+		},
+	}
+
+	startupProbe := &v1.Probe{
+		ProbeHandler: v1.ProbeHandler{
+			HTTPGet: &v1.HTTPGetAction{
+				Path:   kubeSchedulerVersion.KubeSchedulerHealthStartupEndpoint(),
+				Host:   "localhost",
+				Port:   intstr.FromInt(10259),
+				Scheme: v1.URISchemeHTTPS,
+			},
+		},
+	}
+
 	return k8s.SchedulerID, safe.WriterModify(ctx, r, k8s.NewStaticPod(k8s.NamespaceName, k8s.SchedulerID), func(r *k8s.StaticPod) error {
 		return k8sadapter.StaticPod(r).SetPod(&v1.Pod{
 			TypeMeta: metav1.TypeMeta{
@@ -820,32 +856,10 @@ func (ctrl *ControlPlaneStaticPodController) manageScheduler(ctx context.Context
 								ReadOnly:  true,
 							},
 						}, volumeMounts(cfg.ExtraVolumes)...),
-						StartupProbe: &v1.Probe{
-							ProbeHandler: v1.ProbeHandler{
-								HTTPGet: &v1.HTTPGetAction{
-									Path:   "/healthz",
-									Host:   "localhost",
-									Port:   intstr.FromInt(10259),
-									Scheme: v1.URISchemeHTTPS,
-								},
-							},
-							// Give 60 seconds for the container to start up
-							PeriodSeconds:                 5,
-							FailureThreshold:              12,
-							TerminationGracePeriodSeconds: nil,
-						},
-						LivenessProbe: &v1.Probe{
-							ProbeHandler: v1.ProbeHandler{
-								HTTPGet: &v1.HTTPGetAction{
-									Path:   "/healthz",
-									Host:   "localhost",
-									Port:   intstr.FromInt(10259),
-									Scheme: v1.URISchemeHTTPS,
-								},
-							},
-							TimeoutSeconds: 15,
-						},
-						Resources: resources,
+						StartupProbe:   startupProbe,
+						LivenessProbe:  livenessProbe,
+						ReadinessProbe: readinessProbe,
+						Resources:      resources,
 						SecurityContext: &v1.SecurityContext{
 							AllowPrivilegeEscalation: pointer.To(false),
 							Capabilities: &v1.Capabilities{
