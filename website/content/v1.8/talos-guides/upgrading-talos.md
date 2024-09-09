@@ -36,7 +36,8 @@ For example, if upgrading from Talos 1.0 to Talos 1.2.4, the recommended upgrade
 
 ## Before Upgrade to {{% release %}}
 
-TBD
+Talos Linux NVIDIA extension names got changed to include `-lts` suffix in their name.
+If upgrading using Image Factory, the upgrade will go seamlessly, if using `imager`, adjust the image reference accordingly.
 
 ## Video Walkthrough
 
@@ -47,6 +48,8 @@ To see a live demo of an upgrade of Talos Linux, see the video below:
 ## After Upgrade to {{% release %}}
 
 There are no specific actions to be taken after an upgrade.
+
+> Note: If you are downgrading from Talos 1.8 to 1.7 while using custom `EPHEMERAL` configuration, it might have unpredictable results.
 
 ## `talosctl upgrade`
 
@@ -93,7 +96,12 @@ future.
 
 ## Machine Configuration Changes
 
-TBD
+* new machine configuration documents: [VolumeConfig]({{< relref "../reference/configuration/block/volumeconfig" >}}), [KubespanEndpointsConfig]({{< relref "../reference/configuration/network/kubespanendpoints" >}}),
+  [TrustedRootsConfig]({{< relref "../reference/configuration/security/trustedrootsconfig" >}})
+* new fields in the [v1alpha1]({{< relref "../reference/configuration/v1alpha1/config" >}}) document:
+  * [`.machine.nodeAnnotations`]({{< relref "../reference/configuration/v1alpha1/config#Config.machine" >}})
+  * [`.machine.systemDiskEncryption.*.keys.tpm.checkSecurebootStatusOnEnroll]({{< relref "../reference/configuration/v1alpha1/config#Config.machine.systemDiskEncryption.ephemeral.keys..tpm" >}})
+  * [`.machine.network.interfaces.bridge.vlan`]({{< relref "../reference/configuration/v1alpha1/config#Config.machine.network.interfaces..bridge.vlan" >}})
 
 ## Upgrade Sequence
 

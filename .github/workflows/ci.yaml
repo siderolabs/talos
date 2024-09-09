@@ -1,6 +1,6 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
 #
-# Generated on 2024-09-06T05:05:58Z by kres 8be5fa7.
+# Generated on 2024-09-09T13:58:35Z by kres 8be5fa7.
 
 name: default
 concurrency:
@@ -424,6 +424,10 @@ jobs:
         if: github.event_name != 'schedule'
         run: |
           xargs -a _out/executable-artifacts -I {} chmod +x {}
+      - name: ci-temp-release-tag
+        if: github.event_name != 'schedule'
+        run: |
+          make ci-temp-release-tag
       - name: uki-certs
         if: github.event_name == 'schedule'
         env:
@@ -550,6 +554,10 @@ jobs:
         if: github.event_name != 'schedule'
         run: |
           xargs -a _out/executable-artifacts -I {} chmod +x {}
+      - name: ci-temp-release-tag
+        if: github.event_name != 'schedule'
+        run: |
+          make ci-temp-release-tag
       - name: generate
         if: github.event_name == 'schedule'
         run: |
@@ -700,6 +708,10 @@ jobs:
         if: github.event_name != 'schedule'
         run: |
           xargs -a _out/executable-artifacts -I {} chmod +x {}
+      - name: ci-temp-release-tag
+        if: github.event_name != 'schedule'
+        run: |
+          make ci-temp-release-tag
       - name: generate
         if: github.event_name == 'schedule'
         run: |
@@ -850,6 +862,10 @@ jobs:
         if: github.event_name != 'schedule'
         run: |
           xargs -a _out/executable-artifacts -I {} chmod +x {}
+      - name: ci-temp-release-tag
+        if: github.event_name != 'schedule'
+        run: |
+          make ci-temp-release-tag
       - name: uki-certs
         if: github.event_name == 'schedule'
         env:
@@ -977,6 +993,10 @@ jobs:
         if: github.event_name != 'schedule'
         run: |
           xargs -a _out/executable-artifacts -I {} chmod +x {}
+      - name: ci-temp-release-tag
+        if: github.event_name != 'schedule'
+        run: |
+          make ci-temp-release-tag
       - name: build
         if: github.event_name == 'schedule'
         env:
@@ -1101,6 +1121,10 @@ jobs:
         if: github.event_name != 'schedule'
         run: |
           xargs -a _out/executable-artifacts -I {} chmod +x {}
+      - name: ci-temp-release-tag
+        if: github.event_name != 'schedule'
+        run: |
+          make ci-temp-release-tag
       - name: build
         if: github.event_name == 'schedule'
         env:
@@ -1179,6 +1203,10 @@ jobs:
         if: github.event_name != 'schedule'
         run: |
           xargs -a _out/executable-artifacts -I {} chmod +x {}
+      - name: ci-temp-release-tag
+        if: github.event_name != 'schedule'
+        run: |
+          make ci-temp-release-tag
       - name: build
         if: github.event_name == 'schedule'
         env:
@@ -1275,6 +1303,10 @@ jobs:
         if: github.event_name != 'schedule'
         run: |
           xargs -a _out/executable-artifacts -I {} chmod +x {}
+      - name: ci-temp-release-tag
+        if: github.event_name != 'schedule'
+        run: |
+          make ci-temp-release-tag
       - name: build
         if: github.event_name == 'schedule'
         env:
@@ -1381,6 +1413,10 @@ jobs:
         if: github.event_name != 'schedule'
         run: |
           xargs -a _out/executable-artifacts -I {} chmod +x {}
+      - name: ci-temp-release-tag
+        if: github.event_name != 'schedule'
+        run: |
+          make ci-temp-release-tag
       - name: generate
         if: github.event_name == 'schedule'
         run: |
@@ -1507,6 +1543,10 @@ jobs:
         if: github.event_name != 'schedule'
         run: |
           xargs -a _out/executable-artifacts -I {} chmod +x {}
+      - name: ci-temp-release-tag
+        if: github.event_name != 'schedule'
+        run: |
+          make ci-temp-release-tag
       - name: uki-certs
         if: github.event_name == 'schedule'
         env:
@@ -1624,6 +1664,10 @@ jobs:
         if: github.event_name != 'schedule'
         run: |
           xargs -a _out/executable-artifacts -I {} chmod +x {}
+      - name: ci-temp-release-tag
+        if: github.event_name != 'schedule'
+        run: |
+          make ci-temp-release-tag
       - name: uki-certs
         if: github.event_name == 'schedule'
         env:
@@ -1801,6 +1845,10 @@ jobs:
         if: github.event_name != 'schedule'
         run: |
           xargs -a _out/executable-artifacts -I {} chmod +x {}
+      - name: ci-temp-release-tag
+        if: github.event_name != 'schedule'
+        run: |
+          make ci-temp-release-tag
       - name: build
         if: github.event_name == 'schedule'
         env:
@@ -1880,6 +1928,10 @@ jobs:
         if: github.event_name != 'schedule'
         run: |
           xargs -a _out/executable-artifacts -I {} chmod +x {}
+      - name: ci-temp-release-tag
+        if: github.event_name != 'schedule'
+        run: |
+          make ci-temp-release-tag
       - name: build
         if: github.event_name == 'schedule'
         env:
@@ -1983,6 +2035,10 @@ jobs:
         if: github.event_name != 'schedule'
         run: |
           xargs -a _out/executable-artifacts -I {} chmod +x {}
+      - name: ci-temp-release-tag
+        if: github.event_name != 'schedule'
+        run: |
+          make ci-temp-release-tag
       - name: build
         if: github.event_name == 'schedule'
         env:
@@ -2088,6 +2144,10 @@ jobs:
         if: github.event_name != 'schedule'
         run: |
           xargs -a _out/executable-artifacts -I {} chmod +x {}
+      - name: ci-temp-release-tag
+        if: github.event_name != 'schedule'
+        run: |
+          make ci-temp-release-tag
       - name: uki-certs
         if: github.event_name == 'schedule'
         env:
@@ -2200,6 +2260,10 @@ jobs:
         if: github.event_name != 'schedule'
         run: |
           xargs -a _out/executable-artifacts -I {} chmod +x {}
+      - name: ci-temp-release-tag
+        if: github.event_name != 'schedule'
+        run: |
+          make ci-temp-release-tag
       - name: build
         if: github.event_name == 'schedule'
         env:
@@ -2289,6 +2353,10 @@ jobs:
         if: github.event_name != 'schedule'
         run: |
           xargs -a _out/executable-artifacts -I {} chmod +x {}
+      - name: ci-temp-release-tag
+        if: github.event_name != 'schedule'
+        run: |
+          make ci-temp-release-tag
       - name: build
         if: github.event_name == 'schedule'
         env:
@@ -2394,6 +2462,10 @@ jobs:
         if: github.event_name != 'schedule'
         run: |
           xargs -a _out/executable-artifacts -I {} chmod +x {}
+      - name: ci-temp-release-tag
+        if: github.event_name != 'schedule'
+        run: |
+          make ci-temp-release-tag
       - name: build
         if: github.event_name == 'schedule'
         env:
@@ -2484,6 +2556,10 @@ jobs:
         if: github.event_name != 'schedule'
         run: |
           xargs -a _out/executable-artifacts -I {} chmod +x {}
+      - name: ci-temp-release-tag
+        if: github.event_name != 'schedule'
+        run: |
+          make ci-temp-release-tag
       - name: build
         if: github.event_name == 'schedule'
         env:
@@ -2574,6 +2650,10 @@ jobs:
         if: github.event_name != 'schedule'
         run: |
           xargs -a _out/executable-artifacts -I {} chmod +x {}
+      - name: ci-temp-release-tag
+        if: github.event_name != 'schedule'
+        run: |
+          make ci-temp-release-tag
       - name: build
         if: github.event_name == 'schedule'
         env:
@@ -2664,6 +2744,10 @@ jobs:
         if: github.event_name != 'schedule'
         run: |
           xargs -a _out/executable-artifacts -I {} chmod +x {}
+      - name: ci-temp-release-tag
+        if: github.event_name != 'schedule'
+        run: |
+          make ci-temp-release-tag
       - name: build
         if: github.event_name == 'schedule'
         env:
@@ -2755,6 +2839,10 @@ jobs:
         if: github.event_name != 'schedule'
         run: |
           xargs -a _out/executable-artifacts -I {} chmod +x {}
+      - name: ci-temp-release-tag
+        if: github.event_name != 'schedule'
+        run: |
+          make ci-temp-release-tag
       - name: generate
         if: github.event_name == 'schedule'
         run: |
@@ -2872,6 +2960,10 @@ jobs:
         if: github.event_name != 'schedule'
         run: |
           xargs -a _out/executable-artifacts -I {} chmod +x {}
+      - name: ci-temp-release-tag
+        if: github.event_name != 'schedule'
+        run: |
+          make ci-temp-release-tag
       - name: build
         if: github.event_name == 'schedule'
         env:
@@ -2967,6 +3059,10 @@ jobs:
         if: github.event_name != 'schedule'
         run: |
           xargs -a _out/executable-artifacts -I {} chmod +x {}
+      - name: ci-temp-release-tag
+        if: github.event_name != 'schedule'
+        run: |
+          make ci-temp-release-tag
       - name: build
         if: github.event_name == 'schedule'
         env:
@@ -3061,6 +3157,10 @@ jobs:
         if: github.event_name != 'schedule'
         run: |
           xargs -a _out/executable-artifacts -I {} chmod +x {}
+      - name: ci-temp-release-tag
+        if: github.event_name != 'schedule'
+        run: |
+          make ci-temp-release-tag
       - name: build
         if: github.event_name == 'schedule'
         env:
@@ -3158,6 +3258,10 @@ jobs:
         if: github.event_name != 'schedule'
         run: |
           xargs -a _out/executable-artifacts -I {} chmod +x {}
+      - name: ci-temp-release-tag
+        if: github.event_name != 'schedule'
+        run: |
+          make ci-temp-release-tag
       - name: reproducibility-test
         env:
           IMAGE_REGISTRY: registry.dev.siderolabs.io
@@ -3224,6 +3328,10 @@ jobs:
         if: github.event_name != 'schedule'
         run: |
           xargs -a _out/executable-artifacts -I {} chmod +x {}
+      - name: ci-temp-release-tag
+        if: github.event_name != 'schedule'
+        run: |
+          make ci-temp-release-tag
       - name: uki-certs
         if: github.event_name == 'schedule'
         env:

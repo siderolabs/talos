@@ -311,6 +311,9 @@ spec:
             type: download
             artifactName: talos-artifacts
             artifactPath: _out
+        - name: ci-temp-release-tag
+          conditions:
+            - not-on-schedule
         - name: build
           conditions:
             - only-on-schedule
@@ -360,6 +363,9 @@ spec:
             type: download
             artifactName: talos-artifacts
             artifactPath: _out
+        - name: ci-temp-release-tag
+          conditions:
+            - not-on-schedule
         - name: build
           conditions:
             - only-on-schedule
@@ -409,6 +415,9 @@ spec:
             type: download
             artifactName: talos-artifacts
             artifactPath: _out
+        - name: ci-temp-release-tag
+          conditions:
+            - not-on-schedule
         - name: uki-certs
           conditions:
             - only-on-schedule
@@ -478,6 +487,9 @@ spec:
             type: download
             artifactName: talos-artifacts
             artifactPath: _out
+        - name: ci-temp-release-tag
+          conditions:
+            - not-on-schedule
         - name: build
           conditions:
             - only-on-schedule
@@ -525,6 +537,9 @@ spec:
             type: download
             artifactName: talos-artifacts
             artifactPath: _out
+        - name: ci-temp-release-tag
+          conditions:
+            - not-on-schedule
         - name: build
           conditions:
             - only-on-schedule
@@ -572,6 +587,9 @@ spec:
             type: download
             artifactName: talos-artifacts
             artifactPath: _out
+        - name: ci-temp-release-tag
+          conditions:
+            - not-on-schedule
         - name: build
           conditions:
             - only-on-schedule
@@ -619,6 +637,9 @@ spec:
             type: download
             artifactName: talos-artifacts
             artifactPath: _out
+        - name: ci-temp-release-tag
+          conditions:
+            - not-on-schedule
         - name: build
           conditions:
             - only-on-schedule
@@ -682,6 +703,9 @@ spec:
             type: download
             artifactName: talos-artifacts
             artifactPath: _out
+        - name: ci-temp-release-tag
+          conditions:
+            - not-on-schedule
         - name: build
           conditions:
             - only-on-schedule
@@ -747,6 +771,9 @@ spec:
             type: download
             artifactName: talos-artifacts
             artifactPath: _out
+        - name: ci-temp-release-tag
+          conditions:
+            - not-on-schedule
         - name: uki-certs
           conditions:
             - only-on-schedule
@@ -817,6 +844,9 @@ spec:
             type: download
             artifactName: talos-artifacts
             artifactPath: _out
+        - name: ci-temp-release-tag
+          conditions:
+            - not-on-schedule
         - name: build
           conditions:
             - only-on-schedule
@@ -866,6 +896,9 @@ spec:
             type: download
             artifactName: talos-artifacts
             artifactPath: _out
+        - name: ci-temp-release-tag
+          conditions:
+            - not-on-schedule
         - name: build
           conditions:
             - only-on-schedule
@@ -930,6 +963,9 @@ spec:
             type: download
             artifactName: talos-artifacts
             artifactPath: _out
+        - name: ci-temp-release-tag
+          conditions:
+            - not-on-schedule
         - name: generate
           conditions:
             - only-on-schedule
@@ -1008,6 +1044,9 @@ spec:
             type: download
             artifactName: talos-artifacts
             artifactPath: _out
+        - name: ci-temp-release-tag
+          conditions:
+            - not-on-schedule
         - name: build
           conditions:
             - only-on-schedule
@@ -1085,6 +1124,9 @@ spec:
             type: download
             artifactName: talos-artifacts
             artifactPath: _out
+        - name: ci-temp-release-tag
+          conditions:
+            - not-on-schedule
         - name: build
           conditions:
             - only-on-schedule
@@ -1137,6 +1179,9 @@ spec:
             type: download
             artifactName: talos-artifacts
             artifactPath: _out
+        - name: ci-temp-release-tag
+          conditions:
+            - not-on-schedule
         - name: build
           conditions:
             - only-on-schedule
@@ -1193,6 +1238,9 @@ spec:
             type: download
             artifactName: talos-artifacts
             artifactPath: _out
+        - name: ci-temp-release-tag
+          conditions:
+            - not-on-schedule
         - name: build
           conditions:
             - only-on-schedule
@@ -1248,6 +1296,9 @@ spec:
             type: download
             artifactName: talos-artifacts
             artifactPath: _out
+        - name: ci-temp-release-tag
+          conditions:
+            - not-on-schedule
         - name: generate
           conditions:
             - only-on-schedule
@@ -1323,6 +1374,9 @@ spec:
             type: download
             artifactName: talos-artifacts
             artifactPath: _out
+        - name: ci-temp-release-tag
+          conditions:
+            - not-on-schedule
         - name: build
           conditions:
             - only-on-schedule
@@ -1358,6 +1412,9 @@ spec:
             type: download
             artifactName: talos-artifacts
             artifactPath: _out
+        - name: ci-temp-release-tag
+          conditions:
+            - not-on-schedule
         - name: reproducibility-test
           environment:
             IMAGE_REGISTRY: registry.dev.siderolabs.io
@@ -1382,6 +1439,9 @@ spec:
             type: download
             artifactName: talos-artifacts
             artifactPath: _out
+        - name: ci-temp-release-tag
+          conditions:
+            - not-on-schedule
         - name: build
           conditions:
             - only-on-schedule
@@ -1415,6 +1475,9 @@ spec:
             type: download
             artifactName: talos-artifacts
             artifactPath: _out
+        - name: ci-temp-release-tag
+          conditions:
+            - not-on-schedule
         - name: uki-certs
           conditions:
             - only-on-schedule
@@ -1550,6 +1613,9 @@ spec:
             type: download
             artifactName: talos-artifacts
             artifactPath: _out
+        - name: ci-temp-release-tag
+          conditions:
+            - not-on-schedule
         - name: uki-certs
           conditions:
             - only-on-schedule
@@ -1619,6 +1685,9 @@ spec:
             type: download
             artifactName: talos-artifacts
             artifactPath: _out
+        - name: ci-temp-release-tag
+          conditions:
+            - not-on-schedule
         - name: generate
           conditions:
             - only-on-schedule
@@ -1713,6 +1782,9 @@ spec:
             type: download
             artifactName: talos-artifacts
             artifactPath: _out
+        - name: ci-temp-release-tag
+          conditions:
+            - not-on-schedule
         - name: generate
           conditions:
             - only-on-schedule
@@ -1807,6 +1879,9 @@ spec:
             type: download
             artifactName: talos-artifacts
             artifactPath: _out
+        - name: ci-temp-release-tag
+          conditions:
+            - not-on-schedule
         - name: uki-certs
           conditions:
             - only-on-schedule
@@ -1883,6 +1958,9 @@ spec:
             type: download
             artifactName: talos-artifacts
             artifactPath: _out
+        - name: ci-temp-release-tag
+          conditions:
+            - not-on-schedule
         - name: uki-certs
           conditions:
             - only-on-schedule
@@ -1949,6 +2027,9 @@ spec:
             type: download
             artifactName: talos-artifacts
             artifactPath: _out
+        - name: ci-temp-release-tag
+          conditions:
+            - not-on-schedule
         - name: build
           conditions:
             - only-on-schedule

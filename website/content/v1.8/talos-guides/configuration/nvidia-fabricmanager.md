@@ -17,8 +17,8 @@ The published versions of the NVIDIA fabricmanager system extensions is availabl
 Create the [boot assets]({{< relref "../install/boot-assets" >}}) or a custom installer and perform a machine upgrade which include the following system extensions:
 
 ```text
-ghcr.io/siderolabs/nvidia-open-gpu-kernel-modules:{{< nvidia_driver_release >}}-{{< release >}}
-ghcr.io/siderolabs/nvidia-container-toolkit:{{< nvidia_driver_release >}}-{{< nvidia_container_toolkit_release >}}
+ghcr.io/siderolabs/nvidia-open-gpu-kernel-modules-lts:{{< nvidia_driver_release >}}-{{< release >}}
+ghcr.io/siderolabs/nvidia-container-toolkit-lts:{{< nvidia_driver_release >}}-{{< nvidia_container_toolkit_release >}}
 ghcr.io/siderolabs/nvidia-fabricmanager:{{< nvidia_driver_release >}}
 ```
 
