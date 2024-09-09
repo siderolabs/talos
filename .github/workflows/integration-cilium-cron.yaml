@@ -1,6 +1,6 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
 #
-# Generated on 2024-08-24T17:38:15Z by kres 8e4bbb4.
+# Generated on 2024-09-09T12:40:13Z by kres 8be5fa7.
 
 name: integration-cilium-cron
 concurrency:
@@ -62,6 +62,10 @@ jobs:
         if: github.event_name != 'schedule'
         run: |
           xargs -a _out/executable-artifacts -I {} chmod +x {}
+      - name: ci-temp-release-tag
+        if: github.event_name != 'schedule'
+        run: |
+          make ci-temp-release-tag
       - name: build
         if: github.event_name == 'schedule'
         env:

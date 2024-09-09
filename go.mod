@@ -153,7 +153,7 @@ require (
 	github.com/siderolabs/net v0.4.0
 	github.com/siderolabs/protoenc v0.2.1
 	github.com/siderolabs/siderolink v0.3.9
-	github.com/siderolabs/talos/pkg/machinery v1.8.0-alpha.2
+	github.com/siderolabs/talos/pkg/machinery v1.8.0-beta.0
 	github.com/spf13/cobra v1.8.1
 	github.com/spf13/pflag v1.0.5
 	github.com/stretchr/testify v1.9.0

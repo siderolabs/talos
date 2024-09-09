@@ -1,6 +1,6 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
 #
-# Generated on 2024-06-11T15:17:44Z by kres 7360563.
+# Generated on 2024-09-09T12:40:13Z by kres 8be5fa7.
 
 name: integration-conformance-cron
 concurrency:
@@ -62,6 +62,10 @@ jobs:
         if: github.event_name != 'schedule'
         run: |
           xargs -a _out/executable-artifacts -I {} chmod +x {}
+      - name: ci-temp-release-tag
+        if: github.event_name != 'schedule'
+        run: |
+          make ci-temp-release-tag
       - name: build
         if: github.event_name == 'schedule'
         env:
