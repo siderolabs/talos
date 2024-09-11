@@ -14,6 +14,7 @@ import (
 
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/rtestutils"
+	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/miekg/dns"
 	"github.com/siderolabs/gen/xslices"
 	"github.com/siderolabs/gen/xtesting/must"
@@ -283,4 +284,55 @@ func makeAddrs(port string) []netip.AddrPort {
 	return []netip.AddrPort{
 		netip.MustParseAddrPort("127.0.0.53:" + port),
 	}
+}
+
+type DNSUpstreams struct {
+	ctest.DefaultSuite
+}
+
+func (suite *DNSUpstreams) TestOrder() {
+	port := must.Value(getDynamicPort())(suite.T())
+
+	cfg := network.NewHostDNSConfig(network.HostDNSConfigID)
+	cfg.TypedSpec().Enabled = true
+	cfg.TypedSpec().ListenAddresses = makeAddrs(port)
+
+	suite.Require().NoError(suite.State().Create(suite.Ctx(), cfg))
+
+	resolverSpec := network.NewResolverStatus(network.NamespaceName, network.ResolverID)
+
+	for i, addrs := range [][]string{
+		{"1.0.0.1", "8.8.8.8", "1.1.1.1"},
+		{"1.1.1.1", "8.8.8.8", "1.0.0.1", "8.0.0.8"},
+		{"192.168.0.1"},
+	} {
+		resolverSpec.TypedSpec().DNSServers = xslices.Map(addrs, netip.MustParseAddr)
+
+		switch i {
+		case 0:
+			suite.Require().NoError(suite.State().Create(suite.Ctx(), resolverSpec))
+		default:
+			suite.Require().NoError(suite.State().Update(suite.Ctx(), resolverSpec))
+		}
+
+		rtestutils.AssertLength[*network.DNSUpstream](suite.Ctx(), suite.T(), suite.State(), len(addrs))
+
+		upstreams, err := safe.ReaderListAll[*network.DNSUpstream](suite.Ctx(), suite.State())
+		suite.Require().NoError(err)
+
+		_, upstreamAddrs := netctrl.SortedProxies(upstreams)
+
+		suite.Require().Equal(xslices.Map(addrs, func(t string) string { return t + ":53" }), upstreamAddrs)
+	}
+}
+
+func TestDNSUpstreams(t *testing.T) {
+	suite.Run(t, &DNSUpstreams{
+		DefaultSuite: ctest.DefaultSuite{
+			Timeout: 10 * time.Second,
+			AfterSetup: func(suite *ctest.DefaultSuite) {
+				suite.Require().NoError(suite.Runtime().RegisterController(&netctrl.DNSUpstreamController{}))
+			},
+		},
+	})
 }
