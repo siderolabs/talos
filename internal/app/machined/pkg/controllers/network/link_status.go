@@ -210,9 +210,7 @@ func (ctrl *LinkStatusController) reconcile(
 
 			if ethState == nil {
 				state, err := ethtoolIoctlClient.LinkState(link.Attributes.Name)
-				if err != nil {
-					logger.Warn("error querying ethtool ioctl link state", zap.String("link", link.Attributes.Name), zap.Error(err))
-				} else {
+				if err == nil {
 					ethState = &ethtool.LinkState{
 						Interface: ethtool.Interface{
 							Index: int(link.Index),
