@@ -2011,17 +2011,6 @@ func Install(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
 	}, "install"
 }
 
-// ActivateLogicalVolumes represents the task for activating logical volumes.
-func ActivateLogicalVolumes(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
-	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
-		if _, err = cmd.Run("/sbin/lvm", "vgchange", "-ay"); err != nil {
-			return fmt.Errorf("failed to activate logical volumes: %w", err)
-		}
-
-		return nil
-	}, "activateLogicalVolumes"
-}
-
 // KexecPrepare loads next boot kernel via kexec_file_load.
 //
 //nolint:gocyclo
