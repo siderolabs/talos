@@ -44,7 +44,7 @@ func (suite *ConfigSuite) TestConfig() {
 
 	siderolinkConfig := &siderolinkcfg.ConfigV1Alpha1{
 		APIUrlConfig: meta.URL{
-			URL: must.Value(url.Parse("https://api.sidero.dev"))(suite.T()),
+			URL: must.Value(url.Parse("https://api.sidero.dev:334"))(suite.T()),
 		},
 	}
 
@@ -55,7 +55,8 @@ func (suite *ConfigSuite) TestConfig() {
 
 	rtestutils.AssertResources(suite.Ctx(), suite.T(), suite.State(), []resource.ID{siderolink.ConfigID},
 		func(c *siderolink.Config, assert *assert.Assertions) {
-			assert.Equal("https://api.sidero.dev", c.TypedSpec().APIEndpoint)
+			assert.Equal("https://api.sidero.dev:334", c.TypedSpec().APIEndpoint)
+			assert.Equal("api.sidero.dev:334", c.TypedSpec().Host)
 		})
 }
 

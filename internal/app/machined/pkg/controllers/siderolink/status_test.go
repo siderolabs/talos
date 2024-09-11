@@ -57,6 +57,7 @@ func (suite *StatusSuite) TestStatus() {
 	siderolinkConfig := siderolink.NewConfig(config.NamespaceName, siderolink.ConfigID)
 
 	siderolinkConfig.TypedSpec().APIEndpoint = "https://siderolink.example.org:1234?jointoken=supersecret&foo=bar#some=fragment"
+	siderolinkConfig.TypedSpec().Host = "siderolink.example.org:1234"
 
 	suite.Require().NoError(suite.State().Create(suite.Ctx(), siderolinkConfig))
 
@@ -86,6 +87,7 @@ func (suite *StatusSuite) TestStatus() {
 	// update API endpoint
 
 	siderolinkConfig.TypedSpec().APIEndpoint = "https://new.example.org?jointoken=supersecret"
+	siderolinkConfig.TypedSpec().Host = "new.example.org"
 
 	suite.Require().NoError(suite.State().Update(suite.Ctx(), siderolinkConfig))
 	suite.assertStatus("new.example.org", true)
