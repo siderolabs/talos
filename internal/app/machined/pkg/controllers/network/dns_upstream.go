@@ -6,6 +6,7 @@ package network
 
 import (
 	"context"
+	"fmt"
 	"net"
 	"time"
 
@@ -103,17 +104,25 @@ func (ctrl *DNSUpstreamController) run(ctx context.Context, r controller.Runtime
 		return err
 	}
 
-	for _, s := range rs.TypedSpec().DNSServers {
+	for i, s := range rs.TypedSpec().DNSServers {
 		remoteAddr := s.String()
 
 		if err = safe.WriterModify[*network.DNSUpstream](
 			ctx,
 			r,
-			network.NewDNSUpstream(remoteAddr),
+			network.NewDNSUpstream(fmt.Sprintf("dns upstream №%d", i+1)),
 			func(u *network.DNSUpstream) error {
 				touchedIDs[u.Metadata().ID()] = struct{}{}
 
 				if u.TypedSpec().Value.Prx != nil {
+					if u.TypedSpec().Value.Prx.Addr() == net.JoinHostPort(remoteAddr, "53") {
+						// existing upstream in this position is already correct
+						return nil
+					}
+
+					// existing upstream in this position is incorrect, stop it
+					u.TypedSpec().Value.Prx.Stop()
+
 					return nil
 				}
 

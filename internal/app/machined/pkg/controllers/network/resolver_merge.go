@@ -94,9 +94,7 @@ func (ctrl *ResolverMergeController) Run(ctx context.Context, r controller.Runti
 		}
 
 		if final.DNSServers != nil {
-			if err = r.Modify(ctx, network.NewResolverSpec(network.NamespaceName, network.ResolverID), func(res resource.Resource) error {
-				spec := res.(*network.ResolverSpec) //nolint:errcheck,forcetypeassert
-
+			if err = safe.WriterModify(ctx, r, network.NewResolverSpec(network.NamespaceName, network.ResolverID), func(spec *network.ResolverSpec) error {
 				*spec.TypedSpec() = final
 
 				return nil
@@ -150,9 +148,9 @@ func mergeDNSServers(dst *[]netip.Addr, src []netip.Addr) {
 	// and same vice versa for IPv6
 	switch {
 	case dstHasV4 && !srcHasV4:
-		*dst = append(slices.Clone(src), filterIPFamily(*dst, true)...)
+		*dst = slices.Concat(src, filterIPFamily(*dst, true))
 	case dstHasV6 && !srcHasV6:
-		*dst = append(slices.Clone(src), filterIPFamily(*dst, false)...)
+		*dst = slices.Concat(src, filterIPFamily(*dst, false))
 	default:
 		*dst = src
 	}
