@@ -9,7 +9,6 @@ import (
 	"errors"
 	"fmt"
 	"net"
-	"net/url"
 	"os"
 	"time"
 
@@ -125,15 +124,9 @@ func (ctrl *StatusController) reconcileStatus(ctx context.Context, r controller.
 		return nil
 	}
 
-	var parsed *url.URL
-
-	if parsed, err = url.Parse(cfg.TypedSpec().APIEndpoint); err != nil {
-		return fmt.Errorf("failed to parse siderolink API endpoint: %w", err)
-	}
-
-	host, _, err := net.SplitHostPort(parsed.Host)
+	host, _, err := net.SplitHostPort(cfg.TypedSpec().Host)
 	if err != nil {
-		host = parsed.Host
+		host = cfg.TypedSpec().Host
 	}
 
 	down, err := peerDown(wgClient)
