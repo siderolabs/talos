@@ -29,6 +29,7 @@ type DNSUpstreamSpecSpec struct {
 	// We could use a generic struct here, but without generic aliases the usage would look ugly.
 	// Once generic aliases are here, redo the type above as `type DNSUpstream[P Proxy] = typed.Resource[...]`.
 	Prx Proxy
+	Idx int
 }
 
 // MarshalYAML implements yaml.Marshaler interface.
@@ -38,6 +39,7 @@ func (d *DNSUpstreamSpecSpec) MarshalYAML() (any, error) {
 	return map[string]string{
 		"healthy": strconv.FormatBool(d.Prx.Fails() == 0),
 		"addr":    d.Prx.Addr(),
+		"idx":     strconv.Itoa(d.Idx),
 	}, nil
 }
 
@@ -66,6 +68,10 @@ func (DNSUpstreamExtension) ResourceDefinition() meta.ResourceDefinitionSpec {
 			{
 				Name:     "Address",
 				JSONPath: "{.addr}",
+			},
+			{
+				Name:     "Idx",
+				JSONPath: "{.idx}",
 			},
 		},
 	}

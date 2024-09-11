@@ -103,7 +103,7 @@ func (ctrl *DNSUpstreamController) run(ctx context.Context, r controller.Runtime
 		return err
 	}
 
-	for _, s := range rs.TypedSpec().DNSServers {
+	for i, s := range rs.TypedSpec().DNSServers {
 		remoteAddr := s.String()
 
 		if err = safe.WriterModify[*network.DNSUpstream](
@@ -114,6 +114,14 @@ func (ctrl *DNSUpstreamController) run(ctx context.Context, r controller.Runtime
 				touchedIDs[u.Metadata().ID()] = struct{}{}
 
 				if u.TypedSpec().Value.Prx != nil {
+					// Found upstream, update index
+					if u.TypedSpec().Value.Idx != i {
+						old := u.TypedSpec().Value.Idx
+						u.TypedSpec().Value.Idx = i
+
+						l.Info("updated dns upstream idx", zap.String("addr", remoteAddr), zap.Int("was", old), zap.Int("now", i))
+					}
+
 					return nil
 				}
 
@@ -122,8 +130,9 @@ func (ctrl *DNSUpstreamController) run(ctx context.Context, r controller.Runtime
 				prx.Start(500 * time.Millisecond)
 
 				u.TypedSpec().Value.Prx = prx
+				u.TypedSpec().Value.Idx = i
 
-				l.Info("created dns upstream", zap.String("addr", remoteAddr))
+				l.Info("created dns upstream", zap.String("addr", remoteAddr), zap.Int("idx", i))
 
 				return nil
 			},

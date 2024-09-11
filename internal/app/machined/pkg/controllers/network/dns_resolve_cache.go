@@ -5,6 +5,7 @@
 package network
 
 import (
+	"cmp"
 	"context"
 	"errors"
 	"fmt"
@@ -160,14 +161,7 @@ func (ctrl *DNSResolveCacheController) Run(ctx context.Context, r controller.Run
 			return fmt.Errorf("error getting resolver status: %w", err)
 		}
 
-		addrs, prxs := make([]string, 0, upstreams.Len()), make([]*proxy.Proxy, 0, upstreams.Len())
-
-		for it := upstreams.Iterator(); it.Next(); {
-			prx := it.Value().TypedSpec().Value.Prx
-
-			addrs = append(addrs, prx.Addr())
-			prxs = append(prxs, prx.(*proxy.Proxy)) //nolint:forcetypeassert
-		}
+		prxs, addrs := SortedProxies(upstreams)
 
 		if ctrl.handler.SetProxy(prxs) {
 			ctrl.Logger.Info("updated dns server nameservers", zap.Strings("addrs", addrs))
@@ -177,6 +171,17 @@ func (ctrl *DNSResolveCacheController) Run(ctx context.Context, r controller.Run
 			return fmt.Errorf("error cleaning up dns status: %w", err)
 		}
 	}
+}
+
+// SortedProxies returns sorted list of proxies and their addresses.
+func SortedProxies(upstreams safe.List[*network.DNSUpstream]) ([]*proxy.Proxy, []string) {
+	upstreams.SortFunc(func(a, b *network.DNSUpstream) int {
+		return cmp.Compare(a.TypedSpec().Value.Idx, b.TypedSpec().Value.Idx)
+	})
+
+	//nolint:forcetypeassert
+	return safe.ToSlice(upstreams, func(d *network.DNSUpstream) *proxy.Proxy { return d.TypedSpec().Value.Prx.(*proxy.Proxy) }),
+		safe.ToSlice(upstreams, func(d *network.DNSUpstream) string { return d.TypedSpec().Value.Prx.Addr() })
 }
 
 func (ctrl *DNSResolveCacheController) writeDNSStatus(ctx context.Context, r controller.Runtime, config runnerConfig) error {
