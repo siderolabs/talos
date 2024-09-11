@@ -271,10 +271,6 @@ func (*Sequencer) Boot(r runtime.Runtime) []runtime.Phase {
 	).Append(
 		"userSetup",
 		pauseOnFailure(WriteUserFiles, constants.FailurePauseTimeout),
-	).AppendWhen(
-		r.State().Platform().Mode() != runtime.ModeContainer,
-		"lvm",
-		ActivateLogicalVolumes,
 	).Append(
 		"extendPCRStartAll",
 		ExtendPCRStartAll,
