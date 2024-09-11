@@ -205,7 +205,7 @@ Linux arm64 kernel is now compressed (previously it was uncompressed).
 * Linux: 6.6.49
 * containerd: 2.0.0-rc.4
 * runc: 1.2.0-rc.3
-* etcd: 3.5.15
+* etcd: 3.5.16
 * Flannel: 0.25.6
 * Flannel CNI plugin: 1.5.1
 * CoreDNS: 1.1.13
