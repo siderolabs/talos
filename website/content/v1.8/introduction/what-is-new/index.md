@@ -201,7 +201,7 @@ Linux arm64 kernel is now compressed (previously it was uncompressed).
 
 ## Component Updates
 
-* Kubernetes: 1.31.0
+* Kubernetes: 1.31.1
 * Linux: 6.6.49
 * containerd: 2.0.0-rc.4
 * runc: 1.2.0-rc.3
