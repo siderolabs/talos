@@ -18,6 +18,8 @@ import (
 const (
 	siderolinkAgentPid = "siderolink-agent.pid"
 	siderolinkAgentLog = "siderolink-agent.log"
+	siderolinkCert     = "siderolink-agent-cert.pem"
+	siderolinkKey      = "siderolink-agent-key.pem"
 )
 
 // CreateSiderolinkAgent creates siderlink agent.
@@ -38,6 +40,21 @@ func (p *Provisioner) CreateSiderolinkAgent(state *State, clusterReq provision.C
 		"--event-sink-endpoint", clusterReq.SiderolinkRequest.SinkEndpoint,
 		"--sidero-link-api-endpoint", clusterReq.SiderolinkRequest.APIEndpoint,
 		"--log-receiver-endpoint", clusterReq.SiderolinkRequest.LogEndpoint,
+	}
+
+	if clusterReq.SiderolinkRequest.APICertificate != nil && clusterReq.SiderolinkRequest.APIKey != nil {
+		apiCertPath := state.GetRelativePath(siderolinkCert)
+		apiKeyPath := state.GetRelativePath(siderolinkKey)
+
+		if err = os.WriteFile(apiCertPath, clusterReq.SiderolinkRequest.APICertificate, 0o600); err != nil {
+			return fmt.Errorf("error writing SideroLink API certificate: %w", err)
+		}
+
+		if err = os.WriteFile(apiKeyPath, clusterReq.SiderolinkRequest.APIKey, 0o600); err != nil {
+			return fmt.Errorf("error writing SideroLink API key: %w", err)
+		}
+
+		args = append(args, "--sidero-link-api-cert", apiCertPath, "--sidero-link-api-key", apiKeyPath)
 	}
 
 	for _, bind := range clusterReq.SiderolinkRequest.SiderolinkBind {

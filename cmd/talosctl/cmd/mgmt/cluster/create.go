@@ -5,7 +5,9 @@
 package cluster
 
 import (
+	"bytes"
 	"context"
+	"encoding/base64"
 	"errors"
 	"fmt"
 	"math/big"
@@ -23,6 +25,8 @@ import (
 	"github.com/dustin/go-humanize"
 	"github.com/google/uuid"
 	"github.com/hashicorp/go-getter/v2"
+	"github.com/klauspost/compress/zstd"
+	"github.com/siderolabs/crypto/x509"
 	"github.com/siderolabs/gen/maps"
 	"github.com/siderolabs/go-blockdevice/v2/encryption"
 	"github.com/siderolabs/go-kubeconfig"
@@ -40,10 +44,12 @@ import (
 	clientconfig "github.com/siderolabs/talos/pkg/machinery/client/config"
 	"github.com/siderolabs/talos/pkg/machinery/config"
 	"github.com/siderolabs/talos/pkg/machinery/config/bundle"
+	"github.com/siderolabs/talos/pkg/machinery/config/configloader"
 	"github.com/siderolabs/talos/pkg/machinery/config/configpatcher"
 	"github.com/siderolabs/talos/pkg/machinery/config/encoder"
 	"github.com/siderolabs/talos/pkg/machinery/config/generate"
 	"github.com/siderolabs/talos/pkg/machinery/config/machine"
+	"github.com/siderolabs/talos/pkg/machinery/config/types/security"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
@@ -752,6 +758,24 @@ func create(ctx context.Context) error {
 		)
 	}
 
+	var slb *siderolinkBuilder
+
+	if withSiderolinkAgent.IsEnabled() {
+		slb, err = newSiderolinkBuilder(gatewayIPs[0].String(), withSiderolinkAgent.IsTLS())
+		if err != nil {
+			return err
+		}
+	}
+
+	if trustedRootsConfig := slb.TrustedRootsConfig(); trustedRootsConfig != nil {
+		trustedRootsPatch, err := configloader.NewFromBytes(trustedRootsConfig)
+		if err != nil {
+			return fmt.Errorf("error loading trusted roots config: %w", err)
+		}
+
+		configBundleOpts = append(configBundleOpts, bundle.WithPatch([]configpatcher.Patch{configpatcher.NewStrategicMergePatch(trustedRootsPatch)}))
+	}
+
 	configBundle, err := bundle.NewBundle(configBundleOpts...)
 	if err != nil {
 		return err
@@ -793,15 +817,6 @@ func create(ctx context.Context) error {
 
 	if extraBootKernelArgs != "" || withSiderolinkAgent.IsEnabled() {
 		extraKernelArgs = procfs.NewCmdline(extraBootKernelArgs)
-	}
-
-	var slb *siderolinkBuilder
-
-	if withSiderolinkAgent.IsEnabled() {
-		slb, err = newSiderolinkBuilder(gatewayIPs[0].String())
-		if err != nil {
-			return err
-		}
 	}
 
 	err = slb.SetKernelArgs(extraKernelArgs, withSiderolinkAgent.IsTunnel())
@@ -1255,7 +1270,7 @@ func init() {
 	Cmd.AddCommand(createCmd)
 }
 
-func newSiderolinkBuilder(wgHost string) (*siderolinkBuilder, error) {
+func newSiderolinkBuilder(wgHost string, useTLS bool) (*siderolinkBuilder, error) {
 	prefix, err := networkPrefix("")
 	if err != nil {
 		return nil, err
@@ -1266,6 +1281,16 @@ func newSiderolinkBuilder(wgHost string) (*siderolinkBuilder, error) {
 		binds:        map[uuid.UUID]netip.Addr{},
 		prefix:       prefix,
 		nodeIPv6Addr: prefix.Addr().Next().String(),
+	}
+
+	if useTLS {
+		ca, err := x509.NewSelfSignedCertificateAuthority(x509.ECDSA(true), x509.IPAddresses([]net.IP{net.ParseIP(wgHost)}))
+		if err != nil {
+			return nil, err
+		}
+
+		result.apiCert = ca.CrtPEM
+		result.apiKey = ca.KeyPEM
 	}
 
 	var resultErr error
@@ -1312,6 +1337,9 @@ type siderolinkBuilder struct {
 	apiPort      int
 	sinkPort     int
 	logPort      int
+
+	apiCert []byte
+	apiKey  []byte
 }
 
 // DefineIPv6ForUUID defines an IPv6 address for a given UUID. It is safe to call this method on a nil pointer.
@@ -1340,6 +1368,8 @@ func (slb *siderolinkBuilder) SiderolinkRequest() provision.SiderolinkRequest {
 	return provision.SiderolinkRequest{
 		WireguardEndpoint: net.JoinHostPort(slb.wgHost, strconv.Itoa(slb.wgPort)),
 		APIEndpoint:       ":" + strconv.Itoa(slb.apiPort),
+		APICertificate:    slb.apiCert,
+		APIKey:            slb.apiKey,
 		SinkEndpoint:      ":" + strconv.Itoa(slb.sinkPort),
 		LogEndpoint:       ":" + strconv.Itoa(slb.logPort),
 		SiderolinkBind: maps.ToSlice(slb.binds, func(k uuid.UUID, v netip.Addr) provision.SiderolinkBind {
@@ -1349,6 +1379,24 @@ func (slb *siderolinkBuilder) SiderolinkRequest() provision.SiderolinkRequest {
 			}
 		}),
 	}
+}
+
+// TrustedRootsConfig returns the trusted roots config for the current builder.
+func (slb *siderolinkBuilder) TrustedRootsConfig() []byte {
+	if slb == nil || slb.apiCert == nil {
+		return nil
+	}
+
+	trustedRootsConfig := security.NewTrustedRootsConfigV1Alpha1()
+	trustedRootsConfig.MetaName = "siderolink-ca"
+	trustedRootsConfig.Certificates = string(slb.apiCert)
+
+	marshaled, err := encoder.NewEncoder(trustedRootsConfig, encoder.WithComments(encoder.CommentsDisabled)).Encode()
+	if err != nil {
+		panic(fmt.Sprintf("failed to marshal trusted roots config: %s", err))
+	}
+
+	return marshaled
 }
 
 // SetKernelArgs sets the kernel arguments for the current builder. It is safe to call this method on a nil pointer.
@@ -1361,7 +1409,13 @@ func (slb *siderolinkBuilder) SetKernelArgs(extraKernelArgs *procfs.Cmdline, tun
 		extraKernelArgs.Get("talos.logging.kernel") != nil:
 		return errors.New("siderolink kernel arguments are already set, cannot run with --with-siderolink")
 	default:
-		apiLink := "grpc://" + net.JoinHostPort(slb.wgHost, strconv.Itoa(slb.apiPort)) + "?jointoken=foo"
+		scheme := "grpc://"
+
+		if slb.apiCert != nil {
+			scheme = "https://"
+		}
+
+		apiLink := scheme + net.JoinHostPort(slb.wgHost, strconv.Itoa(slb.apiPort)) + "?jointoken=foo"
 
 		if tunnel {
 			apiLink += "&grpc_tunnel=true"
@@ -1370,6 +1424,26 @@ func (slb *siderolinkBuilder) SetKernelArgs(extraKernelArgs *procfs.Cmdline, tun
 		extraKernelArgs.Append("siderolink.api", apiLink)
 		extraKernelArgs.Append("talos.events.sink", net.JoinHostPort(slb.nodeIPv6Addr, strconv.Itoa(slb.sinkPort)))
 		extraKernelArgs.Append("talos.logging.kernel", "tcp://"+net.JoinHostPort(slb.nodeIPv6Addr, strconv.Itoa(slb.logPort)))
+
+		if trustedRootsConfig := slb.TrustedRootsConfig(); trustedRootsConfig != nil {
+			var buf bytes.Buffer
+
+			zencoder, err := zstd.NewWriter(&buf)
+			if err != nil {
+				return fmt.Errorf("failed to create zstd encoder: %w", err)
+			}
+
+			_, err = zencoder.Write(trustedRootsConfig)
+			if err != nil {
+				return fmt.Errorf("failed to write zstd data: %w", err)
+			}
+
+			if err = zencoder.Close(); err != nil {
+				return fmt.Errorf("failed to close zstd encoder: %w", err)
+			}
+
+			extraKernelArgs.Append(constants.KernelParamConfigInline, base64.StdEncoding.EncodeToString(buf.Bytes()))
+		}
 
 		return nil
 	}
@@ -1444,6 +1518,10 @@ func (a *agentFlag) String() string {
 		return "wireguard"
 	case 2:
 		return "grpc-tunnel"
+	case 3:
+		return "wireguard+tls"
+	case 4:
+		return "grpc-tunnel+tls"
 	default:
 		return "none"
 	}
@@ -1455,8 +1533,12 @@ func (a *agentFlag) Set(s string) error {
 		*a = 1
 	case "tunnel":
 		*a = 2
+	case "wireguard+tls":
+		*a = 3
+	case "grpc-tunnel+tls":
+		*a = 4
 	default:
-		return fmt.Errorf("unknown type: %s, possible values: 'true', 'wireguard' for the usual WG; 'tunnel' for WG over GRPC", s)
+		return fmt.Errorf("unknown type: %s, possible values: 'true', 'wireguard' for the usual WG; 'tunnel' for WG over GRPC, add '+tls' to enable TLS for API", s)
 	}
 
 	return nil
@@ -1464,4 +1546,5 @@ func (a *agentFlag) Set(s string) error {
 
 func (a *agentFlag) Type() string    { return "agent" }
 func (a *agentFlag) IsEnabled() bool { return *a != 0 }
-func (a *agentFlag) IsTunnel() bool  { return *a == 2 }
+func (a *agentFlag) IsTunnel() bool  { return *a == 2 || *a == 4 }
+func (a *agentFlag) IsTLS() bool     { return *a == 3 || *a == 4 }

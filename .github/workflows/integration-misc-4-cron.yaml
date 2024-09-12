@@ -1,6 +1,6 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
 #
-# Generated on 2024-09-09T13:58:35Z by kres 8be5fa7.
+# Generated on 2024-09-12T16:43:46Z by kres 8be5fa7.
 
 name: integration-misc-4-cron
 concurrency:
@@ -92,6 +92,14 @@ jobs:
           SHORT_INTEGRATION_TEST: "yes"
           VIA_MAINTENANCE_MODE: "true"
           WITH_SIDEROLINK_AGENT: tunnel
+        run: |
+          sudo -E make e2e-qemu
+      - name: e2e-siderolink-tls
+        env:
+          IMAGE_REGISTRY: registry.dev.siderolabs.io
+          SHORT_INTEGRATION_TEST: "yes"
+          VIA_MAINTENANCE_MODE: "true"
+          WITH_SIDEROLINK_AGENT: wireguard+tls
         run: |
           sudo -E make e2e-qemu
       - name: e2e-apparmor

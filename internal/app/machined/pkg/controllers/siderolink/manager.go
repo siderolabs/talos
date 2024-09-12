@@ -30,6 +30,7 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 
 	networkutils "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/network/utils"
+	"github.com/siderolabs/talos/pkg/httpdefaults"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
 	"github.com/siderolabs/talos/pkg/machinery/resources/config"
@@ -487,7 +488,9 @@ func withTransportCredentials(insec bool) grpc.DialOption {
 	if insec {
 		transportCredentials = insecure.NewCredentials()
 	} else {
-		transportCredentials = credentials.NewTLS(&tls.Config{})
+		transportCredentials = credentials.NewTLS(&tls.Config{
+			RootCAs: httpdefaults.RootCAs(),
+		})
 	}
 
 	return grpc.WithTransportCredentials(transportCredentials)
