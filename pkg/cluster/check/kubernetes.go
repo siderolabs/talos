@@ -14,6 +14,7 @@ import (
 
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/siderolabs/gen/maps"
+	"github.com/siderolabs/go-pointer"
 	"google.golang.org/grpc/codes"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -356,8 +357,6 @@ func K8sPodReadyAssertion(ctx context.Context, cluster cluster.K8sProvider, repl
 }
 
 // DaemonSetPresent returns true if there is at least one DaemonSet matching given label selector.
-//
-//nolint:dupl
 func DaemonSetPresent(ctx context.Context, cluster cluster.K8sProvider, namespace, labelSelector string) (bool, int, error) {
 	clientset, err := cluster.K8sClient(ctx)
 	if err != nil {
@@ -378,27 +377,27 @@ func DaemonSetPresent(ctx context.Context, cluster cluster.K8sProvider, namespac
 	return true, int(dss.Items[0].Status.DesiredNumberScheduled), nil
 }
 
-// ReplicaSetPresent returns true if there is at least one ReplicaSet matching given label selector.
-//
-//nolint:dupl
-func ReplicaSetPresent(ctx context.Context, cluster cluster.K8sProvider, namespace, labelSelector string) (bool, int, error) {
+// DeploymentPresent returns true if there is at least one ReplicaSet matching given label selector.
+func DeploymentPresent(ctx context.Context, cluster cluster.K8sProvider, namespace, labelSelector string) (bool, int, error) {
 	clientset, err := cluster.K8sClient(ctx)
 	if err != nil {
 		return false, 0, err
 	}
 
-	rss, err := clientset.AppsV1().ReplicaSets(namespace).List(ctx, metav1.ListOptions{
+	deployments, err := clientset.AppsV1().Deployments(namespace).List(ctx, metav1.ListOptions{
 		LabelSelector: labelSelector,
 	})
 	if err != nil {
 		return false, 0, err
 	}
 
-	if len(rss.Items) == 0 {
+	if len(deployments.Items) == 0 {
 		return false, 0, nil
 	}
 
-	return true, int(rss.Items[0].Status.Replicas), nil
+	deployment := deployments.Items[0]
+
+	return true, int(pointer.SafeDeref(deployment.Spec.Replicas)), nil
 }
 
 // K8sControlPlaneStaticPods checks whether all the controlplane nodes are running required Kubernetes static pods.
