@@ -11,9 +11,9 @@ import (
 
 	"github.com/containerd/containerd"
 	"github.com/containerd/containerd/cio"
-	"github.com/containerd/containerd/errdefs"
 	"github.com/containerd/containerd/namespaces"
 	"github.com/containerd/containerd/oci"
+	"github.com/containerd/errdefs"
 
 	"github.com/siderolabs/talos/internal/pkg/containers/image"
 	"github.com/siderolabs/talos/pkg/machinery/config/config"

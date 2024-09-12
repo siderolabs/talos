@@ -392,18 +392,15 @@ func (syncer *Syncer) queryNTP(server string) (*Measurement, error) {
 	)
 
 	validationError := resp.Validate()
+	if validationError != nil {
+		return nil, validationError
+	}
 
-	measurement := &Measurement{
+	return &Measurement{
 		ClockOffset: resp.ClockOffset,
 		Leap:        resp.Leap,
-		Spike:       false,
-	}
-
-	if validationError == nil {
-		measurement.Spike = syncer.isSpike(resp)
-	}
-
-	return measurement, validationError
+		Spike:       syncer.isSpike(resp),
+	}, nil
 }
 
 // log2i returns 0 for v == 0 and v == 1.

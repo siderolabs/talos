@@ -8,10 +8,10 @@ import (
 	"context"
 
 	containerdapi "github.com/containerd/containerd"
-	"github.com/containerd/containerd/errdefs"
 	"github.com/containerd/containerd/namespaces"
 	criconstants "github.com/containerd/containerd/pkg/cri/constants"
-	"github.com/containerd/containerd/platforms"
+	"github.com/containerd/errdefs"
+	"github.com/containerd/platforms"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"

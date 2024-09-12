@@ -177,7 +177,11 @@ require (
 	sigs.k8s.io/yaml v1.4.0
 )
 
-require github.com/containerd/containerd/api v1.7.19
+require (
+	github.com/containerd/containerd/api v1.7.19
+	github.com/containerd/errdefs v0.1.0
+	github.com/containerd/platforms v0.2.1
+)
 
 require (
 	cloud.google.com/go/compute v1.24.0 // indirect
@@ -215,11 +219,9 @@ require (
 	github.com/cilium/ebpf v0.12.3 // indirect
 	github.com/cloudflare/circl v1.3.7 // indirect
 	github.com/containerd/continuity v0.4.2 // indirect
-	github.com/containerd/errdefs v0.1.0 // indirect
 	github.com/containerd/fifo v1.1.0 // indirect
 	github.com/containerd/go-cni v1.1.9 // indirect
 	github.com/containerd/log v0.1.0 // indirect
-	github.com/containerd/platforms v0.2.1 // indirect
 	github.com/containerd/stargz-snapshotter/estargz v0.14.3 // indirect
 	github.com/containerd/ttrpc v1.2.5 // indirect
 	github.com/coreos/go-semver v0.3.1 // indirect

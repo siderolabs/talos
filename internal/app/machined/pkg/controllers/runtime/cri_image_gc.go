@@ -14,11 +14,11 @@ import (
 	"github.com/containerd/containerd"
 	"github.com/containerd/containerd/images"
 	"github.com/containerd/containerd/namespaces"
-	"github.com/containerd/containerd/reference/docker"
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
+	"github.com/distribution/reference"
 	"github.com/siderolabs/gen/optional"
 	"github.com/siderolabs/gen/xslices"
 	"go.uber.org/zap"
@@ -195,8 +195,8 @@ func (ctrl *CRIImageGCController) Run(ctx context.Context, r controller.Runtime,
 func buildExpectedImageNames(logger *zap.Logger, actualImages []images.Image, expectedImages []string) (map[string]struct{}, error) {
 	var parseErrors []error
 
-	expectedReferences := xslices.Map(expectedImages, func(ref string) docker.Named {
-		res, parseErr := docker.ParseNamed(ref)
+	expectedReferences := xslices.Map(expectedImages, func(ref string) reference.Named {
+		res, parseErr := reference.ParseNamed(ref)
 
 		parseErrors = append(parseErrors, parseErr)
 
@@ -210,7 +210,7 @@ func buildExpectedImageNames(logger *zap.Logger, actualImages []images.Image, ex
 	expectedImageNames := map[string]struct{}{}
 
 	for _, image := range actualImages {
-		imageRef, err := docker.ParseAnyReference(image.Name)
+		imageRef, err := reference.ParseAnyReference(image.Name)
 		if err != nil {
 			logger.Debug("failed to parse image reference", zap.Error(err), zap.String("image", image.Name))
 
@@ -220,32 +220,32 @@ func buildExpectedImageNames(logger *zap.Logger, actualImages []images.Image, ex
 		digest := image.Target.Digest.String()
 
 		switch ref := imageRef.(type) {
-		case docker.NamedTagged:
+		case reference.NamedTagged:
 			for _, expectedRef := range expectedReferences {
 				if expectedRef.Name() != ref.Name() {
 					continue
 				}
 
-				if expectedTagged, ok := expectedRef.(docker.Tagged); ok && ref.Tag() == expectedTagged.Tag() {
+				if expectedTagged, ok := expectedRef.(reference.Tagged); ok && ref.Tag() == expectedTagged.Tag() {
 					// this is expected image by tag, inject other forms of the ref
 					expectedImageNames[digest] = struct{}{}
 					expectedImageNames[expectedRef.Name()+":"+expectedTagged.Tag()] = struct{}{}
 					expectedImageNames[expectedRef.Name()+"@"+digest] = struct{}{}
 				}
 			}
-		case docker.Canonical:
+		case reference.Canonical:
 			for _, expectedRef := range expectedReferences {
 				if expectedRef.Name() != ref.Name() {
 					continue
 				}
 
-				if expectedDigested, ok := expectedRef.(docker.Digested); ok && ref.Digest() == expectedDigested.Digest() {
+				if expectedDigested, ok := expectedRef.(reference.Digested); ok && ref.Digest() == expectedDigested.Digest() {
 					// this is expected image by digest, inject other forms of the ref
 					expectedImageNames[digest] = struct{}{}
 					expectedImageNames[expectedRef.Name()+"@"+digest] = struct{}{}
 
 					// if the image is also tagged, inject the tagged version of it
-					if expectedTagged, ok := expectedRef.(docker.Tagged); ok {
+					if expectedTagged, ok := expectedRef.(reference.Tagged); ok {
 						expectedImageNames[expectedRef.Name()+":"+expectedTagged.Tag()] = struct{}{}
 					}
 				}
