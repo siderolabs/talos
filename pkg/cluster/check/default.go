@@ -45,7 +45,7 @@ func DefaultClusterChecks() []ClusterCheck {
 			// wait for coredns to report ready
 			func(cluster ClusterInfo) conditions.Condition {
 				return conditions.PollingCondition("coredns to report ready", func(ctx context.Context) error {
-					present, replicas, err := ReplicaSetPresent(ctx, cluster, "kube-system", "k8s-app=kube-dns")
+					present, replicas, err := DeploymentPresent(ctx, cluster, "kube-system", "k8s-app=kube-dns")
 					if err != nil {
 						return err
 					}
