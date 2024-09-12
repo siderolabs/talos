@@ -6,6 +6,7 @@ package mgmt
 
 import (
 	"context"
+	"crypto/tls"
 	"fmt"
 	"os"
 	"os/signal"
@@ -23,6 +24,8 @@ var siderolinkFlags struct {
 	wireguardEndpoint string
 	sinkEndpoint      string
 	apiEndpoint       string
+	apiCertPath       string
+	apiKeyPath        string
 	logEndpoint       string
 	predefinedPairs   []string
 }
@@ -46,6 +49,8 @@ func init() {
 	siderolinkCmd.PersistentFlags().StringVar(&siderolinkFlags.wireguardEndpoint, "sidero-link-wireguard-endpoint", "", "advertised Wireguard endpoint")
 	siderolinkCmd.PersistentFlags().StringVar(&siderolinkFlags.sinkEndpoint, "event-sink-endpoint", "", "gRPC API endpoint for the Event Sink")
 	siderolinkCmd.PersistentFlags().StringVar(&siderolinkFlags.apiEndpoint, "sidero-link-api-endpoint", "", "gRPC API endpoint for the SideroLink")
+	siderolinkCmd.PersistentFlags().StringVar(&siderolinkFlags.apiCertPath, "sidero-link-api-cert", "", "path to the API server certificate (optional)")
+	siderolinkCmd.PersistentFlags().StringVar(&siderolinkFlags.apiKeyPath, "sidero-link-api-key", "", "path to the API server key (optional)")
 	siderolinkCmd.PersistentFlags().StringVar(&siderolinkFlags.logEndpoint, "log-receiver-endpoint", "", "TCP log receiver endpoint")
 	siderolinkCmd.PersistentFlags().StringArrayVar(&siderolinkFlags.predefinedPairs, "predefined-pair", nil, "predefined pairs of UUID=IPv6 addrs for the nodes")
 
@@ -68,11 +73,25 @@ func run(ctx context.Context) error {
 	logger.Info("starting embedded siderolink agent")
 	defer logger.Info("stopping embedded siderolink agent")
 
+	var apiTLSConfig *tls.Config
+
+	if siderolinkFlags.apiCertPath != "" && siderolinkFlags.apiKeyPath != "" {
+		apiCert, err := tls.LoadX509KeyPair(siderolinkFlags.apiCertPath, siderolinkFlags.apiKeyPath)
+		if err != nil {
+			return fmt.Errorf("failed to load API server certificate: %w", err)
+		}
+
+		apiTLSConfig = &tls.Config{
+			Certificates: []tls.Certificate{apiCert},
+		}
+	}
+
 	err = agent.Run(
 		ctx,
 		agent.Config{
 			WireguardEndpoint: siderolinkFlags.wireguardEndpoint,
 			APIEndpoint:       siderolinkFlags.apiEndpoint,
+			APITLSConfig:      apiTLSConfig,
 			JoinToken:         siderolinkFlags.joinToken,
 			SinkEndpoint:      siderolinkFlags.sinkEndpoint,
 			LogEndpoint:       siderolinkFlags.logEndpoint,

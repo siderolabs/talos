@@ -926,6 +926,14 @@ spec:
             WITH_SIDEROLINK_AGENT: tunnel
             VIA_MAINTENANCE_MODE: true
             IMAGE_REGISTRY: registry.dev.siderolabs.io
+        - name: e2e-siderolink-tls
+          command: e2e-qemu
+          withSudo: true
+          environment:
+            SHORT_INTEGRATION_TEST: yes
+            WITH_SIDEROLINK_AGENT: wireguard+tls
+            VIA_MAINTENANCE_MODE: true
+            IMAGE_REGISTRY: registry.dev.siderolabs.io
         - name: e2e-apparmor
           command: e2e-qemu
           withSudo: true

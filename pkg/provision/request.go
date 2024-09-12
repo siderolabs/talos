@@ -212,6 +212,8 @@ type NodeRequest struct {
 type SiderolinkRequest struct {
 	WireguardEndpoint string
 	APIEndpoint       string
+	APICertificate    []byte
+	APIKey            []byte
 	SinkEndpoint      string
 	LogEndpoint       string
 	SiderolinkBind    []SiderolinkBind

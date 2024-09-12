@@ -23,6 +23,7 @@ import (
 
 	"github.com/siderolabs/talos/internal/pkg/encryption/helpers"
 	"github.com/siderolabs/talos/internal/pkg/endpoint"
+	"github.com/siderolabs/talos/pkg/httpdefaults"
 )
 
 // KMSToken is the userdata stored in the partition token metadata.
@@ -130,7 +131,9 @@ func (h *KMSKeyHandler) getConn() (*grpc.ClientConn, error) {
 	if endpoint.Insecure {
 		transportCredentials = insecure.NewCredentials()
 	} else {
-		transportCredentials = credentials.NewTLS(&tls.Config{})
+		transportCredentials = credentials.NewTLS(&tls.Config{
+			RootCAs: httpdefaults.RootCAs(),
+		})
 	}
 
 	return grpc.NewClient(
