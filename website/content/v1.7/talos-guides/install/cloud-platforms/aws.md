@@ -17,7 +17,7 @@ To install the dependencies for this tutorial you can use homebrew on macOS or L
 brew install siderolabs/tap/talosctl kubectl jq curl xz
 ```
 
-If you would like to create infrastructure via `terraform` or `opentofu` please see the exmaple in the [contrib repository](https://github.com/siderolabs/contrib/tree/main/examples/terraform/aws).
+If you would like to create infrastructure via `terraform` or `opentofu` please see the example in the [contrib repository](https://github.com/siderolabs/contrib/tree/main/examples/terraform/aws).
 
 > Note: this guide is not a production set up and steps were tested in `bash` and `zsh` shells.
 
