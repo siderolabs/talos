@@ -2074,3 +2074,7 @@ spec:
             TF_SCRIPT_DIR: _out/contrib
             TF_E2E_TEST_TYPE: equinix-metal
             TF_E2E_ACTION: destroy
+---
+kind: common.Repository
+spec:
+  conformMaximumOfOneCommit: false
