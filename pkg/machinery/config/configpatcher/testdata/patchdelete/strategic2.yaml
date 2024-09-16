@@ -4,3 +4,7 @@ cluster:
     admissionControl:
     - name: PodSecurity
       $patch: delete
+machine:
+  nodeLabels:
+    node.kubernetes.io/exclude-from-external-load-balancers:
+      $patch: delete
