@@ -187,7 +187,7 @@ func deleteForPath(val reflect.Value, path []string, key, value string) error {
 
 			if idx := val.MapIndex(searchForVal); idx.IsValid() {
 				if len(path) == 0 {
-					val.SetMapIndex(searchForVal, reflect.Zero(valType.Elem()))
+					val.SetMapIndex(searchForVal, reflect.Value{})
 
 					return nil
 				}
