@@ -201,6 +201,7 @@ func (i *inspector) buildPod(sandbox *runtimeapi.PodSandbox) (*ctrs.Pod, error) 
 				Display:      podName,
 				Name:         podName,
 				ID:           sandbox.Id,
+				UID:          sandbox.Metadata.Uid,
 				PodName:      podName,
 				Status:       sandboxStatus.State.String(),
 				IsPodSandbox: true,

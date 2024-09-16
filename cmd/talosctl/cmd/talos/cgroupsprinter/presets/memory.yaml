@@ -1,0 +1,18 @@
+# Memory-related cgroup metrics
+columns:
+  - name: MemCurrent
+    template: '{{ .MemoryCurrent.HumanizeIBytes | printf "%8s" }}'
+  - name: MemPeak
+    template: '{{ .MemoryPeak.HumanizeIBytes | printf "%8s" }}'
+  - name: MemLow
+    template: '{{ .MemoryLow.HumanizeIBytes | printf "%8s" }}'
+  - name: Peak/Low
+    template: '{{ .MemoryPeak.DivideBy .MemoryLow | printf "%6s%%" }}'
+  - name: MemHigh
+    template: '{{ .MemoryHigh.HumanizeIBytes | printf "%8s" }}'
+  - name: MemMin
+    template: '{{ .MemoryMin.HumanizeIBytes | printf "%8s" }}'
+  - name: Current/Min
+    template: '{{ .MemoryCurrent.DivideBy .MemoryMin | printf "%6s%%" }}'
+  - name: MemMax
+    template: '{{ .MemoryMax.HumanizeIBytes | printf "%8s" }}'

@@ -615,6 +615,8 @@ message ContainersRequest {
 message ContainerInfo {
   string namespace = 1;
   string id = 2;
+  string uid = 10;
+  string internal_id = 9;
   string image = 3;
   uint32 pid = 4;
   string status = 5;

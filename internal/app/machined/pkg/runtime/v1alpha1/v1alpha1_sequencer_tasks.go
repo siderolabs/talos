@@ -63,7 +63,7 @@ import (
 	"github.com/siderolabs/talos/internal/pkg/partition"
 	"github.com/siderolabs/talos/internal/pkg/secureboot"
 	"github.com/siderolabs/talos/internal/pkg/secureboot/tpm2"
-	"github.com/siderolabs/talos/internal/zboot"
+	"github.com/siderolabs/talos/internal/pkg/zboot"
 	"github.com/siderolabs/talos/pkg/conditions"
 	"github.com/siderolabs/talos/pkg/images"
 	"github.com/siderolabs/talos/pkg/kernel/kspp"

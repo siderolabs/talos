@@ -1435,6 +1435,8 @@ func (s *Server) Containers(ctx context.Context, in *machine.ContainersRequest) 
 			container := &machine.ContainerInfo{
 				Namespace:        in.Namespace,
 				Id:               container.Display,
+				InternalId:       container.ID,
+				Uid:              container.UID,
 				PodId:            pod.Name,
 				Name:             container.Name,
 				Image:            container.Image,

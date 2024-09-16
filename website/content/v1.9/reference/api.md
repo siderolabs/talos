@@ -5582,6 +5582,8 @@ The messages message containing the requested containers.
 | ----- | ---- | ----- | ----------- |
 | namespace | [string](#string) |  |  |
 | id | [string](#string) |  |  |
+| uid | [string](#string) |  |  |
+| internal_id | [string](#string) |  |  |
 | image | [string](#string) |  |  |
 | pid | [uint32](#uint32) |  |  |
 | status | [string](#string) |  |  |

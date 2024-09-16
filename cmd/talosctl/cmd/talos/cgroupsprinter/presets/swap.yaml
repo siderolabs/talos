@@ -1,0 +1,9 @@
+columns:
+  - name: SwapCurrent
+    template: '{{ .MemorySwapCurrent.HumanizeIBytes | printf "%8s" }}'
+  - name: SwapPeak
+    template: '{{ .MemorySwapPeak.HumanizeIBytes | printf "%8s" }}'
+  - name: SwapHigh
+    template: '{{ .MemorySwapHigh.HumanizeIBytes | printf "%8s" }}'
+  - name: SwapMax
+    template: '{{ .MemorySwapMax.HumanizeIBytes | printf "%8s" }}'

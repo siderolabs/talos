@@ -81,6 +81,54 @@ talosctl bootstrap [flags]
 
 * [talosctl](#talosctl)	 - A CLI for out-of-band management of Kubernetes nodes created by Talos
 
+## talosctl cgroups
+
+Retrieve cgroups usage information
+
+### Synopsis
+
+The cgroups command fetches control group v2 (cgroupv2) usage details from the machine.
+Several presets are available to focus on specific cgroup subsystems:
+
+* cpu
+* cpuset
+* io
+* memory
+* process
+* swap
+
+You can specify the preset using the --preset flag.
+
+Alternatively, a custom schema can be provided using the --schema-file flag.
+To see schema examples, refer to https://github.com/siderolabs/talos/tree/main/cmd/talosctl/cmd/talos/cgroupsprinter/schemas.
+
+
+```
+talosctl cgroups [flags]
+```
+
+### Options
+
+```
+  -h, --help                 help for cgroups
+      --preset string        preset name (one of: [cpu cpuset io memory process swap])
+      --schema-file string   path to the columns schema file
+```
+
+### Options inherited from parent commands
+
+```
+      --cluster string       Cluster to connect to if a proxy endpoint is used.
+      --context string       Context to be used in command
+  -e, --endpoints strings    override default endpoints in Talos configuration
+  -n, --nodes strings        target the specified nodes
+      --talosconfig string   The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
+```
+
+### SEE ALSO
+
+* [talosctl](#talosctl)	 - A CLI for out-of-band management of Kubernetes nodes created by Talos
+
 ## talosctl cluster create
 
 Creates a local docker-based or QEMU-based kubernetes cluster
@@ -3081,6 +3129,7 @@ A CLI for out-of-band management of Kubernetes nodes created by Talos
 
 * [talosctl apply-config](#talosctl-apply-config)	 - Apply a new configuration to a node
 * [talosctl bootstrap](#talosctl-bootstrap)	 - Bootstrap the etcd cluster on the specified node.
+* [talosctl cgroups](#talosctl-cgroups)	 - Retrieve cgroups usage information
 * [talosctl cluster](#talosctl-cluster)	 - A collection of commands for managing local docker-based or QEMU-based clusters
 * [talosctl completion](#talosctl-completion)	 - Output shell completion code for the specified shell (bash, fish or zsh)
 * [talosctl config](#talosctl-config)	 - Manage the client configuration file (talosconfig)

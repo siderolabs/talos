@@ -33,6 +33,14 @@ Linux: 6.6.52
 Talos is built with Go 1.23.1.
 """
 
+    [notes.cgroups]
+        title = "`talosctl cgroups`"
+        description = """\
+The `talosctl cgroups` command has been added to the `talosctl` tool.
+This command allows you to view the cgroup resource consumption and limits for a machine, e.g.
+`talosctl cgroups --preset memory`.
+"""
+
 [make_deps]
 
     [make_deps.tools]
