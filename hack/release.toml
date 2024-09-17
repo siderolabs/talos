@@ -250,6 +250,14 @@ Talos Linux now supports removing parts of the configuration using the `$patch: 
 More information can be found [here](https://www.talos.dev/v1.8/talos-guides/configuration/patching/#strategic-merge-patches).
 """
 
+    [notes.dev-tun]
+        title = "Accessing `/dev/net/tun` in Kubernetes Pods"
+        description = """\
+Talos Linux ships with `runc` 1.2, which [drops](https://github.com/opencontainers/runc/pull/3468) legacy rule to expose `/dev/net/tun` devices by default in the container.
+
+If you need to access `/dev/net/tun` in your Kubernetes pods (e.g. running Tailscale as a Kubernetes pod), you can add use [device plugins](https:/www.talos.dev/v1.8/kubernetes-guides/configuration/device-plugins/) to expose `/dev/net/tun` to the pod.
+"""
+
 [make_deps]
 
     [make_deps.tools]

@@ -29,6 +29,11 @@ If you are running Talos virtualized in QEMU (e.g., Proxmox), you can add this a
 You can refer to the [Image Factory or Imager documentation]({{< relref "../../talos-guides/install/boot-assets" >}}) for instructions on how to do this.
 This change addresses issues such as slow boot or lack of console output on bare metal hardware without a serial console.
 
+### Accessing `/dev/net/tun` in Kubernetes Pods
+
+Talos Linux includes `runc` 1.2, which [no longer](https://github.com/opencontainers/runc/pull/3468) exposes `/dev/net/tun` devices by default in containers.
+If you require access to `/dev/net/tun` in your Kubernetes pods (such as when running Tailscale as a pod), you can use [device plugins]({{< relref "../../kubernetes-guides/configuration/device-plugins" >}}) to expose `/dev/net/tun` to the pod.
+
 ## Disk Management
 
 The disk management backend has been rewritten to support more complex configurations, but the existing configuration should continue to work as before.
