@@ -10,6 +10,7 @@ import (
 	"bufio"
 	"bytes"
 	"context"
+	"crypto/rand"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -21,6 +22,7 @@ import (
 	"time"
 
 	"github.com/siderolabs/gen/xslices"
+	"github.com/siderolabs/go-pointer"
 	"github.com/siderolabs/go-retry/retry"
 	corev1 "k8s.io/api/core/v1"
 	eventsv1 "k8s.io/api/events/v1"
@@ -194,6 +196,185 @@ func (k8sSuite *K8sSuite) WaitForEventExists(ctx context.Context, ns string, che
 
 		return nil
 	})
+}
+
+type podInfo interface {
+	Name() string
+	Create(ctx context.Context, waitTimeout time.Duration) error
+	Delete(ctx context.Context) error
+	Exec(ctx context.Context, command string) (string, string, error)
+}
+
+type pod struct {
+	name      string
+	namespace string
+
+	client     *kubernetes.Clientset
+	restConfig *rest.Config
+
+	logF func(format string, args ...any)
+}
+
+func (p *pod) Name() string {
+	return p.name
+}
+
+func (p *pod) Create(ctx context.Context, waitTimeout time.Duration) error {
+	_, err := p.client.CoreV1().Pods(p.namespace).Create(ctx, &corev1.Pod{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: p.name,
+		},
+		Spec: corev1.PodSpec{
+			Containers: []corev1.Container{
+				{
+					Name:  p.name,
+					Image: "alpine",
+					Command: []string{
+						"/bin/sh",
+						"-c",
+						"--",
+					},
+					Args: []string{
+						"trap : TERM INT; (tail -f /dev/null) & wait",
+					},
+					SecurityContext: &corev1.SecurityContext{
+						Privileged: pointer.To(true),
+					},
+					// lvm commands even though executed in the host mount namespace, still need access to /dev 🤷🏼,
+					// otherwise lvcreate commands hangs on semop syscall
+					VolumeMounts: []corev1.VolumeMount{
+						{
+							Name:      "dev",
+							MountPath: "/dev",
+						},
+					},
+				},
+			},
+			Volumes: []corev1.Volume{
+				{
+					Name: "dev",
+					VolumeSource: corev1.VolumeSource{
+						HostPath: &corev1.HostPathVolumeSource{
+							Path: "/dev",
+						},
+					},
+				},
+			},
+			HostNetwork: true,
+			HostIPC:     true,
+			HostPID:     true,
+		},
+	}, metav1.CreateOptions{})
+	if err != nil {
+		return err
+	}
+
+	return p.waitForRunning(ctx, waitTimeout)
+}
+
+func (p *pod) Exec(ctx context.Context, command string) (string, string, error) {
+	cmd := []string{
+		"/bin/sh",
+		"-c",
+		command,
+	}
+	req := p.client.CoreV1().RESTClient().Post().Resource("pods").Name(p.name).
+		Namespace(p.namespace).SubResource("exec")
+	option := &corev1.PodExecOptions{
+		Command: cmd,
+		Stdin:   false,
+		Stdout:  true,
+		Stderr:  true,
+		TTY:     false,
+	}
+
+	req.VersionedParams(
+		option,
+		scheme.ParameterCodec,
+	)
+
+	exec, err := remotecommand.NewSPDYExecutor(p.restConfig, "POST", req.URL())
+	if err != nil {
+		return "", "", err
+	}
+
+	var stdout, stderr strings.Builder
+
+	err = exec.StreamWithContext(ctx, remotecommand.StreamOptions{
+		Stdout: &stdout,
+		Stderr: &stderr,
+	})
+	if err != nil {
+		p.logF(
+			"error executing command in pod %s/%s: %v\n\ncommand %q stdout:\n%s\n\ncommand %q stderr:\n%s",
+			p.namespace,
+			p.name,
+			err,
+			command,
+			stdout.String(),
+			command,
+			stderr.String(),
+		)
+	}
+
+	return stdout.String(), stderr.String(), err
+}
+
+func (p *pod) Delete(ctx context.Context) error {
+	return p.client.CoreV1().Pods(p.namespace).Delete(ctx, p.name, metav1.DeleteOptions{})
+}
+
+func (p *pod) waitForRunning(ctx context.Context, timeout time.Duration) error {
+	ctx, cancel := context.WithTimeout(ctx, timeout)
+	defer cancel()
+
+	watcher, err := p.client.CoreV1().Pods(p.namespace).Watch(ctx, metav1.ListOptions{
+		FieldSelector: fields.OneTermEqualSelector("metadata.name", p.name).String(),
+	})
+	if err != nil {
+		return err
+	}
+
+	defer watcher.Stop()
+
+	for {
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		case event := <-watcher.ResultChan():
+			if event.Type == watch.Error {
+				return fmt.Errorf("error watching pod: %v", event.Object)
+			}
+
+			pod, ok := event.Object.(*corev1.Pod)
+			if !ok {
+				continue
+			}
+
+			if pod.Name == p.name && pod.Status.Phase == corev1.PodRunning {
+				return nil
+			}
+		}
+	}
+}
+
+// NewPodOp creates a new pod operation with the given name and namespace.
+func (k8sSuite *K8sSuite) NewPodOp(name, namespace string) (podInfo, error) {
+	randomSuffix := make([]byte, 4)
+
+	if _, err := rand.Read(randomSuffix); err != nil {
+		return nil, fmt.Errorf("failed to generate random suffix: %w", err)
+	}
+
+	return &pod{
+		name:      fmt.Sprintf("%s-%x", name, randomSuffix),
+		namespace: namespace,
+
+		client:     k8sSuite.Clientset,
+		restConfig: k8sSuite.RestConfig,
+
+		logF: k8sSuite.T().Logf,
+	}, nil
 }
 
 // WaitForPodToBeRunning waits for the pod with the given namespace and name to be running.

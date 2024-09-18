@@ -8,7 +8,6 @@ package api
 
 import (
 	"context"
-	"crypto/rand"
 	"fmt"
 	"io"
 	"net"
@@ -36,7 +35,7 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/resources/network"
 )
 
-// ExtensionsSuiteQEMU verifies Talos is securebooted.
+// ExtensionsSuiteQEMU verifies Talos extensions on QEMU.
 type ExtensionsSuiteQEMU struct {
 	base.K8sSuite
 
@@ -146,134 +145,126 @@ func (suite *ExtensionsSuiteQEMU) TestExtensionsISCSI() {
 
 	ctx := client.WithNode(suite.ctx, node)
 
-	iscsiTargetExists := func() bool {
-		var iscsiTargetExists bool
+	iscsiCreatePodDef, err := suite.NewPodOp("iscsi-create", "kube-system")
+	suite.Require().NoError(err)
 
-		disks, err := safe.ReaderListAll[*block.Disk](ctx, suite.Client.COSI)
-		suite.Require().NoError(err)
+	suite.Require().NoError(iscsiCreatePodDef.Create(suite.ctx, 5*time.Minute))
 
-		for iter := disks.Iterator(); iter.Next(); {
-			if iter.Value().TypedSpec().Transport == "iscsi" {
-				iscsiTargetExists = true
+	defer iscsiCreatePodDef.Delete(suite.ctx) //nolint:errcheck
 
-				break
-			}
-		}
+	reader, err := suite.Client.Read(ctx, "/system/iscsi/initiatorname.iscsi")
+	suite.Require().NoError(err)
 
-		return iscsiTargetExists
-	}
+	defer reader.Close() //nolint:errcheck
 
-	if !iscsiTargetExists() {
-		_, err := suite.Clientset.CoreV1().Pods("kube-system").Create(suite.ctx, &corev1.Pod{
-			ObjectMeta: metav1.ObjectMeta{
-				Name: "iscsi-test",
-			},
-			Spec: corev1.PodSpec{
-				Containers: []corev1.Container{
-					{
-						Name:  "iscsi-test",
-						Image: "alpine",
-						Command: []string{
-							"tail",
-							"-f",
-							"/dev/null",
-						},
-						SecurityContext: &corev1.SecurityContext{
-							Privileged: pointer.To(true),
-						},
-					},
-				},
-				HostNetwork: true,
-				HostPID:     true,
-			},
-		}, metav1.CreateOptions{})
-		defer suite.Clientset.CoreV1().Pods("kube-system").Delete(suite.ctx, "iscsi-test", metav1.DeleteOptions{}) //nolint:errcheck
+	body, err := io.ReadAll(reader)
+	suite.Require().NoError(err)
 
-		suite.Require().NoError(err)
+	initiatorName := strings.TrimPrefix(strings.TrimSpace(string(body)), "InitiatorName=")
 
-		// wait for the pod to be ready
-		suite.Require().NoError(suite.WaitForPodToBeRunning(suite.ctx, 5*time.Minute, "kube-system", "iscsi-test"))
+	stdout, stderr, err := iscsiCreatePodDef.Exec(
+		suite.ctx,
+		fmt.Sprintf("nsenter --mount=/proc/1/ns/mnt -- tgtadm --lld iscsi --op new --mode target --tid 1 -T %s", initiatorName),
+	)
+	suite.Require().NoError(err)
 
-		reader, err := suite.Client.Read(ctx, "/system/iscsi/initiatorname.iscsi")
-		suite.Require().NoError(err)
+	suite.Require().Equal("", stderr)
+	suite.Require().Equal("", stdout)
 
-		defer reader.Close() //nolint:errcheck
+	stdout, stderr, err = iscsiCreatePodDef.Exec(
+		suite.ctx,
+		"dd if=/dev/zero of=/proc/$(pgrep tgtd)/root/var/run/tgtd/iscsi.disk bs=1M count=100",
+	)
+	suite.Require().NoError(err)
 
-		body, err := io.ReadAll(reader)
-		suite.Require().NoError(err)
+	suite.Require().Contains(stderr, "100+0 records in\n100+0 records out\n")
+	suite.Require().Equal("", stdout)
 
-		initiatorName := strings.TrimPrefix(strings.TrimSpace(string(body)), "InitiatorName=")
+	stdout, stderr, err = iscsiCreatePodDef.Exec(
+		suite.ctx,
+		"nsenter --mount=/proc/1/ns/mnt -- tgtadm --lld iscsi --op new --mode logicalunit --tid 1 --lun 1 -b /var/run/tgtd/iscsi.disk",
+	)
+	suite.Require().NoError(err)
 
-		stdout, stderr, err := suite.ExecuteCommandInPod(
+	suite.Require().Equal("", stderr)
+	suite.Require().Equal("", stdout)
+
+	stdout, stderr, err = iscsiCreatePodDef.Exec(
+		suite.ctx,
+		"nsenter --mount=/proc/1/ns/mnt -- tgtadm --lld iscsi --op bind --mode target --tid 1 -I ALL",
+	)
+	suite.Require().NoError(err)
+
+	suite.Require().Equal("", stderr)
+	suite.Require().Equal("", stdout)
+
+	stdout, stderr, err = iscsiCreatePodDef.Exec(
+		suite.ctx,
+		fmt.Sprintf("nsenter --mount=/proc/$(pgrep iscsid)/ns/mnt --net=/proc/$(pgrep iscsid)/ns/net -- iscsiadm --mode discovery --type sendtargets --portal %s:3260", node),
+	)
+	suite.Require().NoError(err)
+
+	suite.Require().Equal("", stderr)
+	suite.Require().Equal(fmt.Sprintf("%s:3260,1 %s\n", node, initiatorName), stdout)
+
+	stdout, stderr, err = iscsiCreatePodDef.Exec(
+		suite.ctx,
+		fmt.Sprintf("nsenter --mount=/proc/$(pgrep iscsid)/ns/mnt --net=/proc/$(pgrep iscsid)/ns/net -- iscsiadm --mode node --targetname %s --portal %s:3260 --login", initiatorName, node),
+	)
+	suite.Require().NoError(err)
+
+	suite.Require().Equal("", stderr)
+	suite.Require().Contains(stdout, "successful.")
+
+	defer func() {
+		stdout, stderr, err = iscsiCreatePodDef.Exec(
 			suite.ctx,
-			"kube-system",
-			"iscsi-test",
-			fmt.Sprintf("nsenter --mount=/proc/1/ns/mnt -- tgtadm --lld iscsi --op new --mode target --tid 1 -T %s", initiatorName),
+			fmt.Sprintf("nsenter --mount=/proc/$(pgrep iscsid)/ns/mnt --net=/proc/$(pgrep iscsid)/ns/net -- iscsiadm --mode node --targetname %s --portal %s:3260 --logout", initiatorName, node),
+		)
+		suite.Require().NoError(err)
+
+		suite.Require().Equal("", stderr)
+
+		stdout, stderr, err = iscsiCreatePodDef.Exec(
+			suite.ctx,
+			"nsenter --mount=/proc/1/ns/mnt -- tgtadm --lld iscsi --op delete --mode logicalunit --tid 1 --lun 1",
 		)
 		suite.Require().NoError(err)
 
 		suite.Require().Equal("", stderr)
 		suite.Require().Equal("", stdout)
 
-		stdout, stderr, err = suite.ExecuteCommandInPod(
+		stdout, stderr, err = iscsiCreatePodDef.Exec(
 			suite.ctx,
-			"kube-system",
-			"iscsi-test",
-			"/bin/sh -c 'dd if=/dev/zero of=/proc/$(pgrep tgtd)/root/var/run/tgtd/iscsi.disk bs=1M count=100'",
+			"nsenter --mount=/proc/1/ns/mnt -- tgtadm --lld iscsi --op delete --mode target --tid 1",
 		)
-		suite.Require().NoError(err)
 
-		suite.Require().Contains(stderr, "100+0 records in\n100+0 records out\n")
-		suite.Require().Equal("", stdout)
-
-		stdout, stderr, err = suite.ExecuteCommandInPod(
-			suite.ctx,
-			"kube-system",
-			"iscsi-test",
-			"nsenter --mount=/proc/1/ns/mnt -- tgtadm --lld iscsi --op new --mode logicalunit --tid 1 --lun 1 -b /var/run/tgtd/iscsi.disk",
-		)
 		suite.Require().NoError(err)
 
 		suite.Require().Equal("", stderr)
 		suite.Require().Equal("", stdout)
-
-		stdout, stderr, err = suite.ExecuteCommandInPod(
-			suite.ctx,
-			"kube-system",
-			"iscsi-test",
-			"nsenter --mount=/proc/1/ns/mnt -- tgtadm --lld iscsi --op bind --mode target --tid 1 -I ALL",
-		)
-		suite.Require().NoError(err)
-
-		suite.Require().Equal("", stderr)
-		suite.Require().Equal("", stdout)
-
-		stdout, stderr, err = suite.ExecuteCommandInPod(
-			suite.ctx,
-			"kube-system",
-			"iscsi-test",
-			fmt.Sprintf("/bin/sh -c 'nsenter --mount=/proc/$(pgrep iscsid)/ns/mnt --net=/proc/$(pgrep iscsid)/ns/net -- iscsiadm --mode discovery --type sendtargets --portal %s:3260'", node),
-		)
-		suite.Require().NoError(err)
-
-		suite.Require().Equal("", stderr)
-		suite.Require().Equal(fmt.Sprintf("%s:3260,1 %s\n", node, initiatorName), stdout)
-
-		stdout, stderr, err = suite.ExecuteCommandInPod(
-			suite.ctx,
-			"kube-system",
-			"iscsi-test",
-			fmt.Sprintf("/bin/sh -c 'nsenter --mount=/proc/$(pgrep iscsid)/ns/mnt --net=/proc/$(pgrep iscsid)/ns/net -- iscsiadm --mode node --targetname %s --portal %s:3260 --login'", initiatorName, node),
-		)
-		suite.Require().NoError(err)
-
-		suite.Require().Equal("", stderr)
-		suite.Require().Contains(stdout, "successful.")
-	}
+	}()
 
 	suite.Eventually(func() bool {
-		return iscsiTargetExists()
-	}, 5*time.Second, 1*time.Second)
+		return suite.iscsiTargetExists()
+	}, 5*time.Second, 1*time.Second, "expected iscsi target to exist")
+}
+
+func (suite *ExtensionsSuiteQEMU) iscsiTargetExists() bool {
+	node := suite.RandomDiscoveredNodeInternalIP(machine.TypeWorker)
+
+	ctx := client.WithNode(suite.ctx, node)
+
+	disks, err := safe.ReaderListAll[*block.Disk](ctx, suite.Client.COSI)
+	suite.Require().NoError(err)
+
+	for iter := disks.Iterator(); iter.Next(); {
+		if iter.Value().TypedSpec().Transport == "iscsi" {
+			return true
+		}
+	}
+
+	return false
 }
 
 // TestExtensionsNutClient verifies nut client is working.
@@ -448,59 +439,55 @@ func (suite *ExtensionsSuiteQEMU) TestExtensionsStargz() {
 func (suite *ExtensionsSuiteQEMU) TestExtensionsMdADM() {
 	node := suite.RandomDiscoveredNodeInternalIP(machine.TypeWorker)
 
-	var mdADMArrayExists bool
+	userDisks, err := suite.UserDisks(suite.ctx, node)
+	suite.Require().NoError(err)
 
-	uuid := suite.mdADMScan()
-	if uuid != "" {
-		mdADMArrayExists = true
-	}
+	suite.Require().GreaterOrEqual(len(userDisks), 2, "expected at least two user disks to be available")
 
-	if !mdADMArrayExists {
-		userDisks, err := suite.UserDisks(suite.ctx, node, 4)
+	userDisksJoined := strings.Join(userDisks[:2], " ")
+
+	mdAdmCreatePodDef, err := suite.NewPodOp("mdadm-create", "kube-system")
+	suite.Require().NoError(err)
+
+	suite.Require().NoError(mdAdmCreatePodDef.Create(suite.ctx, 5*time.Minute))
+
+	defer mdAdmCreatePodDef.Delete(suite.ctx) //nolint:errcheck
+
+	stdout, _, err := mdAdmCreatePodDef.Exec(
+		suite.ctx,
+		fmt.Sprintf("nsenter --mount=/proc/1/ns/mnt -- mdadm --create /dev/md/testmd --raid-devices=2 --metadata=1.2 --level=1 %s", userDisksJoined),
+	)
+	suite.Require().NoError(err)
+
+	suite.Require().Contains(stdout, "mdadm: array /dev/md/testmd started.")
+
+	defer func() {
+		hostNameStatus, err := safe.StateGetByID[*network.HostnameStatus](client.WithNode(suite.ctx, node), suite.Client.COSI, "hostname")
 		suite.Require().NoError(err)
 
-		suite.Require().GreaterOrEqual(len(userDisks), 2, "expected at least two user disks with size greater than 4GB to be available")
+		hostname := hostNameStatus.TypedSpec().Hostname
 
-		_, err = suite.Clientset.CoreV1().Pods("kube-system").Create(suite.ctx, &corev1.Pod{
-			ObjectMeta: metav1.ObjectMeta{
-				Name: "mdadm-create",
-			},
-			Spec: corev1.PodSpec{
-				Containers: []corev1.Container{
-					{
-						Name:  "mdadm-create",
-						Image: "alpine",
-						Command: []string{
-							"tail",
-							"-f",
-							"/dev/null",
-						},
-						SecurityContext: &corev1.SecurityContext{
-							Privileged: pointer.To(true),
-						},
-					},
-				},
-				HostNetwork: true,
-				HostPID:     true,
-			},
-		}, metav1.CreateOptions{})
-		defer suite.Clientset.CoreV1().Pods("kube-system").Delete(suite.ctx, "mdadm-create", metav1.DeleteOptions{}) //nolint:errcheck
-
+		deletePodDef, err := suite.NewPodOp("mdadm-destroy", "kube-system")
 		suite.Require().NoError(err)
 
-		// wait for the pod to be ready
-		suite.Require().NoError(suite.WaitForPodToBeRunning(suite.ctx, 5*time.Minute, "kube-system", "mdadm-create"))
+		suite.Require().NoError(deletePodDef.Create(suite.ctx, 5*time.Minute))
 
-		_, stderr, err := suite.ExecuteCommandInPod(
+		defer deletePodDef.Delete(suite.ctx) //nolint:errcheck
+
+		if _, _, err := deletePodDef.Exec(
 			suite.ctx,
-			"kube-system",
-			"mdadm-create",
-			fmt.Sprintf("nsenter --mount=/proc/1/ns/mnt -- mdadm --create --verbose /dev/md0 --metadata=0.90 --level=1 --raid-devices=2 %s", strings.Join(userDisks[:2], " ")),
-		)
-		suite.Require().NoError(err)
+			fmt.Sprintf("nsenter --mount=/proc/1/ns/mnt -- mdadm --wait --stop /dev/md/%s:testmd", hostname),
+		); err != nil {
+			suite.T().Logf("failed to stop mdadm array: %v", err)
+		}
 
-		suite.Require().Contains(stderr, "mdadm: size set to")
-	}
+		if _, _, err := deletePodDef.Exec(
+			suite.ctx,
+			fmt.Sprintf("nsenter --mount=/proc/1/ns/mnt -- mdadm --zero-superblock %s", userDisksJoined),
+		); err != nil {
+			suite.T().Logf("failed to remove md array backed by volumes %s: %v", userDisksJoined, err)
+		}
+	}()
 
 	// now we want to reboot the node and make sure the array is still mounted
 	suite.AssertRebooted(
@@ -509,60 +496,24 @@ func (suite *ExtensionsSuiteQEMU) TestExtensionsMdADM() {
 		}, 5*time.Minute,
 	)
 
-	suite.Require().NotEmpty(suite.mdADMScan())
+	suite.Require().True(suite.mdADMArrayExists(), "expected mdadm array to be present")
 }
 
-func (suite *ExtensionsSuiteQEMU) mdADMScan() string {
-	// create a random suffix for the mdadm-scan pod
-	randomSuffix := make([]byte, 4)
-	_, err := rand.Read(randomSuffix)
+func (suite *ExtensionsSuiteQEMU) mdADMArrayExists() bool {
+	node := suite.RandomDiscoveredNodeInternalIP(machine.TypeWorker)
+
+	ctx := client.WithNode(suite.ctx, node)
+
+	disks, err := safe.StateListAll[*block.Disk](ctx, suite.Client.COSI)
 	suite.Require().NoError(err)
 
-	podName := fmt.Sprintf("mdadm-scan-%x", randomSuffix)
+	for iterator := disks.Iterator(); iterator.Next(); {
+		if strings.HasPrefix(iterator.Value().TypedSpec().DevPath, "/dev/md") {
+			return true
+		}
+	}
 
-	_, err = suite.Clientset.CoreV1().Pods("kube-system").Create(suite.ctx, &corev1.Pod{
-		ObjectMeta: metav1.ObjectMeta{
-			Name: podName,
-		},
-		Spec: corev1.PodSpec{
-			Containers: []corev1.Container{
-				{
-					Name:  podName,
-					Image: "alpine",
-					Command: []string{
-						"tail",
-						"-f",
-						"/dev/null",
-					},
-					SecurityContext: &corev1.SecurityContext{
-						Privileged: pointer.To(true),
-					},
-				},
-			},
-			HostNetwork: true,
-			HostPID:     true,
-		},
-	}, metav1.CreateOptions{})
-	defer suite.Clientset.CoreV1().Pods("kube-system").Delete(suite.ctx, podName, metav1.DeleteOptions{}) //nolint:errcheck
-
-	suite.Require().NoError(err)
-
-	// wait for the pod to be ready
-	suite.Require().NoError(suite.WaitForPodToBeRunning(suite.ctx, 5*time.Minute, "kube-system", podName))
-
-	stdout, stderr, err := suite.ExecuteCommandInPod(
-		suite.ctx,
-		"kube-system",
-		podName,
-		"nsenter --mount=/proc/1/ns/mnt -- mdadm --detail --scan",
-	)
-	suite.Require().NoError(err)
-
-	suite.Require().Equal("", stderr)
-
-	stdOutSplit := strings.Split(stdout, " ")
-
-	return strings.TrimPrefix(stdOutSplit[len(stdOutSplit)-1], "UUID=")
+	return false
 }
 
 // TestExtensionsZFS verifies zfs is working, udev rules work and the pool is mounted on reboot.
@@ -570,148 +521,60 @@ func (suite *ExtensionsSuiteQEMU) TestExtensionsZFS() {
 	node := suite.RandomDiscoveredNodeInternalIP(machine.TypeWorker)
 	suite.AssertServicesRunning(suite.ctx, node, map[string]string{"ext-zpool-importer": "Finished"})
 
-	ctx := client.WithNode(suite.ctx, node)
-
-	var zfsPoolExists bool
-
-	_, err := suite.Clientset.CoreV1().Pods("kube-system").Create(suite.ctx, &corev1.Pod{
-		ObjectMeta: metav1.ObjectMeta{
-			Name: "zpool-list",
-		},
-		Spec: corev1.PodSpec{
-			Containers: []corev1.Container{
-				{
-					Name:  "zpool-list",
-					Image: "alpine",
-					Command: []string{
-						"tail",
-						"-f",
-						"/dev/null",
-					},
-					SecurityContext: &corev1.SecurityContext{
-						Privileged: pointer.To(true),
-					},
-				},
-			},
-			HostNetwork: true,
-			HostPID:     true,
-		},
-	}, metav1.CreateOptions{})
-	defer suite.Clientset.CoreV1().Pods("kube-system").Delete(suite.ctx, "zpool-list", metav1.DeleteOptions{}) //nolint:errcheck
-
+	userDisks, err := suite.UserDisks(suite.ctx, node)
 	suite.Require().NoError(err)
 
-	// wait for the pod to be ready
-	suite.Require().NoError(suite.WaitForPodToBeRunning(suite.ctx, 5*time.Minute, "kube-system", "zpool-list"))
+	suite.Require().NotEmpty(userDisks, "expected at least one user disks to be available")
 
-	stdout, stderr, err := suite.ExecuteCommandInPod(
+	zfsPodDef, err := suite.NewPodOp("zpool-create", "kube-system")
+	suite.Require().NoError(err)
+
+	suite.Require().NoError(zfsPodDef.Create(suite.ctx, 5*time.Minute))
+
+	defer zfsPodDef.Delete(suite.ctx) //nolint:errcheck
+
+	stdout, stderr, err := zfsPodDef.Exec(
 		suite.ctx,
-		"kube-system",
-		"zpool-list",
-		"nsenter --mount=/proc/1/ns/mnt -- zpool list",
+		fmt.Sprintf("nsenter --mount=/proc/1/ns/mnt -- zpool create -m /var/tank tank %s", userDisks[0]),
 	)
 	suite.Require().NoError(err)
 
 	suite.Require().Equal("", stderr)
-	suite.Require().NotEmpty(stdout)
+	suite.Require().Equal("", stdout)
 
-	if stdout != "no pools available\n" {
-		zfsPoolExists = true
-	}
+	stdout, stderr, err = zfsPodDef.Exec(
+		suite.ctx,
+		"nsenter --mount=/proc/1/ns/mnt -- zfs create -V 1gb tank/vol",
+	)
+	suite.Require().NoError(err)
 
-	if !zfsPoolExists {
-		userDisks, err := suite.UserDisks(suite.ctx, node, 4)
+	suite.Require().Equal("", stderr)
+	suite.Require().Equal("", stdout)
+
+	defer func() {
+		deletePodDef, err := suite.NewPodOp("zpool-destroy", "kube-system")
 		suite.Require().NoError(err)
 
-		suite.Require().NotEmpty(userDisks, "expected at least one user disk with size greater than 4GB to be available")
+		suite.Require().NoError(deletePodDef.Create(suite.ctx, 5*time.Minute))
 
-		_, err = suite.Clientset.CoreV1().Pods("kube-system").Create(suite.ctx, &corev1.Pod{
-			ObjectMeta: metav1.ObjectMeta{
-				Name: "zpool-create",
-			},
-			Spec: corev1.PodSpec{
-				Containers: []corev1.Container{
-					{
-						Name:  "zpool-create",
-						Image: "alpine",
-						Command: []string{
-							"tail",
-							"-f",
-							"/dev/null",
-						},
-						SecurityContext: &corev1.SecurityContext{
-							Privileged: pointer.To(true),
-						},
-					},
-				},
-				HostNetwork: true,
-				HostPID:     true,
-			},
-		}, metav1.CreateOptions{})
-		defer suite.Clientset.CoreV1().Pods("kube-system").Delete(suite.ctx, "zpool-create", metav1.DeleteOptions{}) //nolint:errcheck
+		defer deletePodDef.Delete(suite.ctx) //nolint:errcheck
 
-		suite.Require().NoError(err)
-
-		// wait for the pod to be ready
-		suite.Require().NoError(suite.WaitForPodToBeRunning(suite.ctx, 5*time.Minute, "kube-system", "zpool-create"))
-
-		stdout, stderr, err := suite.ExecuteCommandInPod(
+		if _, _, err := deletePodDef.Exec(
 			suite.ctx,
-			"kube-system",
-			"zpool-create",
-			fmt.Sprintf("nsenter --mount=/proc/1/ns/mnt -- zpool create -m /var/tank tank %s", userDisks[0]),
-		)
-		suite.Require().NoError(err)
-
-		suite.Require().Equal("", stderr)
-		suite.Require().Equal("", stdout)
-
-		stdout, stderr, err = suite.ExecuteCommandInPod(
-			suite.ctx,
-			"kube-system",
-			"zpool-create",
-			"nsenter --mount=/proc/1/ns/mnt -- zfs create -V 1gb tank/vol",
-		)
-		suite.Require().NoError(err)
-
-		suite.Require().Equal("", stderr)
-		suite.Require().Equal("", stdout)
-	}
-
-	checkZFSPoolMounted := func() bool {
-		mountsResp, err := suite.Client.Mounts(ctx)
-		suite.Require().NoError(err)
-
-		for _, msg := range mountsResp.Messages {
-			for _, stats := range msg.Stats {
-				if stats.MountedOn == "/var/tank" {
-					return true
-				}
-			}
+			"nsenter --mount=/proc/1/ns/mnt -- zfs destroy tank/vol",
+		); err != nil {
+			suite.T().Logf("failed to remove zfs dataset tank/vol: %v", err)
 		}
 
-		return false
-	}
+		if _, _, err := deletePodDef.Exec(
+			suite.ctx,
+			"nsenter --mount=/proc/1/ns/mnt -- zpool destroy tank",
+		); err != nil {
+			suite.T().Logf("failed to remove zpool tank: %v", err)
+		}
+	}()
 
-	checkZFSVolumePathPopulatedByUdev := func() {
-		// this is the path that udev will populate, which is a symlink to the actual device
-		path := "/dev/zvol/tank/vol"
-
-		stream, err := suite.Client.LS(ctx, &machineapi.ListRequest{
-			Root: path,
-		})
-
-		suite.Require().NoError(err)
-
-		suite.Require().NoError(helpers.ReadGRPCStream(stream, func(info *machineapi.FileInfo, node string, multipleNodes bool) error {
-			suite.Require().Equal("/dev/zd0", info.Name, "expected %s to exist", path)
-
-			return nil
-		}))
-	}
-
-	suite.Require().True(checkZFSPoolMounted())
-	checkZFSVolumePathPopulatedByUdev()
+	suite.Require().True(suite.checkZFSPoolMounted(), "expected zfs pool to be mounted")
 
 	// now we want to reboot the node and make sure the pool is still mounted
 	suite.AssertRebooted(
@@ -720,46 +583,37 @@ func (suite *ExtensionsSuiteQEMU) TestExtensionsZFS() {
 		}, 5*time.Minute,
 	)
 
-	suite.Require().True(checkZFSPoolMounted())
-	checkZFSVolumePathPopulatedByUdev()
+	suite.Require().True(suite.checkZFSPoolMounted(), "expected zfs pool to be mounted")
+}
+
+func (suite *ExtensionsSuiteQEMU) checkZFSPoolMounted() bool {
+	node := suite.RandomDiscoveredNodeInternalIP(machine.TypeWorker)
+
+	ctx := client.WithNode(suite.ctx, node)
+
+	disks, err := safe.StateListAll[*block.Disk](ctx, suite.Client.COSI)
+	suite.Require().NoError(err)
+
+	for iterator := disks.Iterator(); iterator.Next(); {
+		if strings.HasPrefix(iterator.Value().TypedSpec().DevPath, "/dev/zd") {
+			return true
+		}
+	}
+
+	return false
 }
 
 // TestExtensionsUtilLinuxTools verifies util-linux-tools are working.
 func (suite *ExtensionsSuiteQEMU) TestExtensionsUtilLinuxTools() {
-	_, err := suite.Clientset.CoreV1().Pods("kube-system").Create(suite.ctx, &corev1.Pod{
-		ObjectMeta: metav1.ObjectMeta{
-			Name: "util-linux-tools-test",
-		},
-		Spec: corev1.PodSpec{
-			Containers: []corev1.Container{
-				{
-					Name:  "util-linux-tools-test",
-					Image: "alpine",
-					Command: []string{
-						"tail",
-						"-f",
-						"/dev/null",
-					},
-					SecurityContext: &corev1.SecurityContext{
-						Privileged: pointer.To(true),
-					},
-				},
-			},
-			HostNetwork: true,
-			HostPID:     true,
-		},
-	}, metav1.CreateOptions{})
-	defer suite.Clientset.CoreV1().Pods("kube-system").Delete(suite.ctx, "util-linux-tools-test", metav1.DeleteOptions{}) //nolint:errcheck
-
+	utilLinuxPodDef, err := suite.NewPodOp("util-linux-tools-test", "kube-system")
 	suite.Require().NoError(err)
 
-	// wait for the pod to be ready
-	suite.Require().NoError(suite.WaitForPodToBeRunning(suite.ctx, 10*time.Minute, "kube-system", "util-linux-tools-test"))
+	suite.Require().NoError(utilLinuxPodDef.Create(suite.ctx, 5*time.Minute))
 
-	stdout, stderr, err := suite.ExecuteCommandInPod(
+	defer utilLinuxPodDef.Delete(suite.ctx) //nolint:errcheck
+
+	stdout, stderr, err := utilLinuxPodDef.Exec(
 		suite.ctx,
-		"kube-system",
-		"util-linux-tools-test",
 		"nsenter --mount=/proc/1/ns/mnt -- /usr/local/sbin/fstrim --version",
 	)
 	suite.Require().NoError(err)

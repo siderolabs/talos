@@ -28,13 +28,11 @@ import (
 	"google.golang.org/grpc/codes"
 	"gopkg.in/yaml.v3"
 
-	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/helpers"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
 	"github.com/siderolabs/talos/pkg/cluster"
 	"github.com/siderolabs/talos/pkg/cluster/check"
 	"github.com/siderolabs/talos/pkg/machinery/api/common"
 	machineapi "github.com/siderolabs/talos/pkg/machinery/api/machine"
-	"github.com/siderolabs/talos/pkg/machinery/api/storage"
 	"github.com/siderolabs/talos/pkg/machinery/client"
 	clientconfig "github.com/siderolabs/talos/pkg/machinery/client/config"
 	"github.com/siderolabs/talos/pkg/machinery/config"
@@ -44,6 +42,7 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/config/machine"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
+	"github.com/siderolabs/talos/pkg/machinery/resources/block"
 	configres "github.com/siderolabs/talos/pkg/machinery/resources/config"
 	runtimeres "github.com/siderolabs/talos/pkg/machinery/resources/runtime"
 	"github.com/siderolabs/talos/pkg/provision"
@@ -467,69 +466,40 @@ func (apiSuite *APISuite) ReadConfigFromNode(nodeCtx context.Context) (config.Pr
 }
 
 // UserDisks returns list of user disks on with size greater than sizeGreaterThanGB and not having any partitions present.
-//
-//nolint:gocyclo
-func (apiSuite *APISuite) UserDisks(ctx context.Context, node string, sizeGreaterThanGB int) ([]string, error) {
-	nodeCtx := client.WithNodes(ctx, node)
+func (apiSuite *APISuite) UserDisks(ctx context.Context, node string) ([]string, error) {
+	nodeCtx := client.WithNode(ctx, node)
 
-	resp, err := apiSuite.Client.Disks(nodeCtx)
+	disks, err := safe.ReaderListAll[*block.Disk](nodeCtx, apiSuite.Client.COSI)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to list disks: %w", err)
 	}
 
-	var disks []string
+	var candidateDisks []string
 
-	blockDeviceInUse := func(deviceName string) (bool, error) {
-		devicePart := strings.Split(deviceName, "/dev/")[1]
+	for iterator := disks.Iterator(); iterator.Next(); {
+		// skip CD-ROM, readonly and disks witho	for iteratorut transport (this is usually lvms, md, zfs devices etc)
+		// also skip iscsi disks (these are created in tests)
+		if iterator.Value().TypedSpec().Readonly || iterator.Value().TypedSpec().CDROM || iterator.Value().TypedSpec().Transport == "" || iterator.Value().TypedSpec().Transport == "iscsi" {
+			continue
+		}
 
-		// https://unix.stackexchange.com/questions/111779/how-to-find-out-easily-whether-a-block-device-or-a-part-of-it-is-mounted-someh
-		// this was the only easy way I could find to check if the block device is already in use by something like raid
-		stream, err := apiSuite.Client.LS(nodeCtx, &machineapi.ListRequest{
-			Root: fmt.Sprintf("/sys/block/%s/holders", devicePart),
-		})
+		candidateDisks = append(candidateDisks, iterator.Value().Metadata().ID())
+	}
+
+	var availableDisks []string
+
+	for _, disk := range candidateDisks {
+		discoveredVolume, err := safe.ReaderGetByID[*block.DiscoveredVolume](nodeCtx, apiSuite.Client.COSI, disk)
 		if err != nil {
-			return false, err
+			return nil, fmt.Errorf("failed to get discovered volume: %w", err)
 		}
 
-		counter := 0
-
-		if err = helpers.ReadGRPCStream(stream, func(info *machineapi.FileInfo, node string, multipleNodes bool) error {
-			counter++
-
-			return nil
-		}); err != nil {
-			return false, err
-		}
-
-		if counter > 1 {
-			return true, nil
-		}
-
-		return false, nil
-	}
-
-	for _, msg := range resp.Messages {
-		for _, disk := range msg.Disks {
-			if disk.SystemDisk || disk.Readonly || disk.Type == storage.Disk_CD {
-				continue
-			}
-
-			if disk.BusPath == "/virtual" {
-				continue
-			}
-
-			blockDeviceUsed, err := blockDeviceInUse(disk.DeviceName)
-			if err != nil {
-				return nil, err
-			}
-
-			if disk.Size > uint64(sizeGreaterThanGB)*1024*1024*1024 && !blockDeviceUsed {
-				disks = append(disks, disk.DeviceName)
-			}
+		if discoveredVolume.TypedSpec().Name == "" {
+			availableDisks = append(availableDisks, discoveredVolume.TypedSpec().DevPath)
 		}
 	}
 
-	return disks, nil
+	return availableDisks, nil
 }
 
 // AssertServicesRunning verifies that services are running on the node.

@@ -8,18 +8,22 @@ package api
 
 import (
 	"context"
+	"fmt"
+	"strings"
+	"testing"
 	"time"
 
 	"github.com/cosi-project/runtime/pkg/safe"
 
 	"github.com/siderolabs/talos/internal/integration/base"
 	"github.com/siderolabs/talos/pkg/machinery/client"
+	"github.com/siderolabs/talos/pkg/machinery/config/machine"
 	"github.com/siderolabs/talos/pkg/machinery/resources/block"
 )
 
 // VolumesSuite ...
 type VolumesSuite struct {
-	base.APISuite
+	base.K8sSuite
 
 	ctx       context.Context //nolint:containedctx
 	ctxCancel context.CancelFunc
@@ -173,6 +177,105 @@ func (suite *VolumesSuite) TestDisks() {
 			suite.T().Logf("disks: %v", diskNames)
 		})
 	}
+}
+
+// TestLVMActivation verifies that LVM volume group is activated after reboot.
+func (suite *VolumesSuite) TestLVMActivation() {
+	if testing.Short() {
+		suite.T().Skip("skipping test in short mode.")
+	}
+
+	node := suite.RandomDiscoveredNodeInternalIP(machine.TypeWorker)
+
+	userDisks, err := suite.UserDisks(suite.ctx, node)
+	suite.Require().NoError(err)
+
+	suite.Require().GreaterOrEqual(len(userDisks), 2, "expected at least two user disks to be available")
+
+	userDisksJoined := strings.Join(userDisks[:2], " ")
+
+	podDef, err := suite.NewPodOp("pv-create", "kube-system")
+	suite.Require().NoError(err)
+
+	suite.Require().NoError(podDef.Create(suite.ctx, 5*time.Minute))
+
+	defer podDef.Delete(suite.ctx) //nolint:errcheck
+
+	stdout, _, err := podDef.Exec(
+		suite.ctx,
+		fmt.Sprintf("nsenter --mount=/proc/1/ns/mnt -- vgcreate vg0 %s", userDisksJoined),
+	)
+	suite.Require().NoError(err)
+
+	suite.Require().Contains(stdout, "Volume group \"vg0\" successfully created")
+
+	stdout, _, err = podDef.Exec(
+		suite.ctx,
+		"nsenter --mount=/proc/1/ns/mnt -- lvcreate -n lv0 -L 1G vg0",
+	)
+	suite.Require().NoError(err)
+
+	suite.Require().Contains(stdout, "Logical volume \"lv0\" created.")
+
+	stdout, _, err = podDef.Exec(
+		suite.ctx,
+		"nsenter --mount=/proc/1/ns/mnt -- lvcreate -n lv1 -L 1G vg0",
+	)
+	suite.Require().NoError(err)
+
+	suite.Require().Contains(stdout, "Logical volume \"lv1\" created.")
+
+	defer func() {
+		deletePodDef, err := suite.NewPodOp("pv-destroy", "kube-system")
+		suite.Require().NoError(err)
+
+		suite.Require().NoError(deletePodDef.Create(suite.ctx, 5*time.Minute))
+
+		defer deletePodDef.Delete(suite.ctx) //nolint:errcheck
+
+		if _, _, err := deletePodDef.Exec(
+			suite.ctx,
+			"nsenter --mount=/proc/1/ns/mnt -- vgremove --yes vg0",
+		); err != nil {
+			suite.T().Logf("failed to remove pv vg0: %v", err)
+		}
+
+		if _, _, err := deletePodDef.Exec(
+			suite.ctx,
+			fmt.Sprintf("nsenter --mount=/proc/1/ns/mnt -- pvremove --yes %s", userDisksJoined),
+		); err != nil {
+			suite.T().Logf("failed to remove pv backed by volumes %s: %v", userDisksJoined, err)
+		}
+	}()
+
+	// now we want to reboot the node and make sure the array is still mounted
+	suite.AssertRebooted(
+		suite.ctx, node, func(nodeCtx context.Context) error {
+			return base.IgnoreGRPCUnavailable(suite.Client.Reboot(nodeCtx))
+		}, 5*time.Minute,
+	)
+
+	suite.Require().True(suite.lvmVolumeExists(), "LVM volume group was not activated after reboot")
+}
+
+func (suite *VolumesSuite) lvmVolumeExists() bool {
+	node := suite.RandomDiscoveredNodeInternalIP(machine.TypeWorker)
+
+	ctx := client.WithNode(suite.ctx, node)
+
+	disks, err := safe.StateListAll[*block.Disk](ctx, suite.Client.COSI)
+	suite.Require().NoError(err)
+
+	var lvmVolumeCount int
+
+	for iterator := disks.Iterator(); iterator.Next(); {
+		if strings.HasPrefix(iterator.Value().TypedSpec().DevPath, "/dev/dm") {
+			lvmVolumeCount++
+		}
+	}
+
+	// we test with creating a volume group with two logical volumes
+	return lvmVolumeCount == 2
 }
 
 func init() {
