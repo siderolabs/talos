@@ -10,6 +10,9 @@
     <a href="https://github.com/talos-systems/talos/releases/latest">
       <img alt="Pre-release" src="https://img.shields.io/github/release-pre/talos-systems/talos.svg?label=pre-release&logo=GitHub&logoColor=white&style=flat-square">
     </a>
+    <a href="https://www.bestpractices.dev/projects/7340">
+      <img src="https://www.bestpractices.dev/projects/7340/badge" alt="OpenSSF badge">
+    </a>
   </p>
 </p>
 
@@ -31,14 +34,14 @@ For instructions on deploying and managing Talos, see the [Documentation](https:
 
 ## Community
 
+- Support: Questions, bugs, feature requests [GitHub Discussions](https://github.com/siderolabs/talos/discussions)
 - Slack: Join our [slack channel](https://slack.dev.talos-systems.io)
-- Support: Questions, bugs, feature requests [GitHub Discussions](https://github.com/talos-systems/talos/discussions)
 - Forum: [community](https://groups.google.com/a/SideroLabs.com/forum/#!forum/community)
 - Twitter: [@SideroLabs](https://twitter.com/SideroLabs)
 - Email: [info@SideroLabs.com](mailto:info@SideroLabs.com)
 
 If you're interested in this project and would like to help in engineering efforts or have general usage questions, we are happy to have you!
-We hold a weekly meeting that all audiences are welcome to attend.
+We hold a monthly meeting that all audiences are welcome to attend.
 
 We would appreciate your feedback so that we can make Talos even better!
 To do so, you can take our [survey](https://docs.google.com/forms/d/1TUna5YTYGCKot68Y9YN_CLobY6z9JzLVCq1G7DoyNjA/edit).
@@ -59,8 +62,8 @@ See [Contributing](CONTRIBUTING.md) for our guidelines.
 
 ## License
 
-<a href="https://github.com/talos-systems/talos/blob/master/LICENSE">
-  <img alt="GitHub" src="https://img.shields.io/github/license/talos-systems/talos?style=flat-square">
+<a href="https://github.com/siderolabs/talos/blob/master/LICENSE">
+  <img alt="GitHub" src="https://img.shields.io/github/license/siderolabs/talos?style=flat-square">
 </a>
 
 Some software we distribute is under the General Public License family

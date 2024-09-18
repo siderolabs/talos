@@ -1,5 +1,7 @@
 # Contributing
 
+More information about contributing to Talos can be found in the [Documentation](https://www.talos.dev/latest/learn-more/developing-talos/).
+
 ## Developer Certificate of Origin
 
 All commits require a [DCO](https://developercertificate.org/) sign-off.
