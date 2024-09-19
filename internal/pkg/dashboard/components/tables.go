@@ -50,6 +50,8 @@ func NewProcessTable() *ProcessTable {
 }
 
 // OnAPIDataChange implements the APIDataListener interface.
+//
+//nolint:gocyclo
 func (widget *ProcessTable) OnAPIDataChange(node string, data *apidata.Data) {
 	nodeData := data.Nodes[node]
 
@@ -96,6 +98,15 @@ func (widget *ProcessTable) OnAPIDataChange(node string, data *apidata.Data) {
 			default:
 				args = proc.Args
 			}
+
+			// filter out non-printable characters
+			args = strings.Map(func(r rune) rune {
+				if r < 32 || r > 126 {
+					return ' '
+				}
+
+				return r
+			}, args)
 
 			line := fmt.Sprintf("%7d  %s  %6.1f  %6.1f  %8s  %8s  %10s  %4d  %s",
 				proc.GetPid(),
