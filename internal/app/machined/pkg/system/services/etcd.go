@@ -36,6 +36,7 @@ import (
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system/runner"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system/runner/containerd"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system/runner/restart"
+	"github.com/siderolabs/talos/internal/pkg/cgroup"
 	"github.com/siderolabs/talos/internal/pkg/containers/image"
 	"github.com/siderolabs/talos/internal/pkg/environment"
 	"github.com/siderolabs/talos/internal/pkg/etcd"
@@ -224,6 +225,8 @@ func (e *Etcd) Runner(r runtime.Runtime) (runner.Runner, error) {
 			oci.WithHostNamespace(specs.NetworkNamespace),
 			oci.WithMounts(mounts),
 			oci.WithUser(fmt.Sprintf("%d:%d", constants.EtcdUserID, constants.EtcdUserID)),
+			runner.WithMemoryReservation(constants.CgroupEtcdReservedMemory),
+			oci.WithCPUShares(uint64(cgroup.MilliCoresToShares(constants.CgroupEtcdMillicores))),
 		),
 		runner.WithOOMScoreAdj(-998),
 	),

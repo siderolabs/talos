@@ -80,6 +80,7 @@ require (
 	github.com/gizak/termui/v3 v3.1.0
 	github.com/godbus/dbus/v5 v5.1.0
 	github.com/golang/mock v1.6.0
+	github.com/google/cadvisor v0.50.0
 	github.com/google/go-containerregistry v0.20.2
 	github.com/google/go-tpm v0.9.1
 	github.com/google/nftables v0.2.0

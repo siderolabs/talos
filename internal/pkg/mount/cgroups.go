@@ -32,7 +32,7 @@ func CGroupMountPoints() (mountpoints *Points, err error) {
 func cgroupMountPointsV2() (mountpoints *Points, err error) {
 	cgroups := NewMountPoints()
 
-	cgroups.Set("cgroup2", NewMountPoint("cgroup", constants.CgroupMountPath, "cgroup2", unix.MS_NOSUID|unix.MS_NODEV|unix.MS_NOEXEC|unix.MS_RELATIME, "nsdelegate"))
+	cgroups.Set("cgroup2", NewMountPoint("cgroup", constants.CgroupMountPath, "cgroup2", unix.MS_NOSUID|unix.MS_NODEV|unix.MS_NOEXEC|unix.MS_RELATIME, "nsdelegate,memory_recursiveprot"))
 
 	return cgroups, nil
 }
