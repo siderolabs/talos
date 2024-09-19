@@ -13,18 +13,6 @@ import (
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 )
 
-// WithMemoryLimit sets the linux resource memory limit field.
-func WithMemoryLimit(limit int64) oci.SpecOpts {
-	return func(_ context.Context, _ oci.Client, _ *containers.Container, s *specs.Spec) error {
-		s.Linux.Resources.Memory = &specs.LinuxMemory{
-			Limit: &limit,
-			// DisableOOMKiller: &disable,
-		}
-
-		return nil
-	}
-}
-
 // WithRootfsPropagation sets the root filesystem propagation.
 func WithRootfsPropagation(rp string) oci.SpecOpts {
 	return func(_ context.Context, _ oci.Client, _ *containers.Container, s *specs.Spec) error {

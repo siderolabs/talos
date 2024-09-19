@@ -8,6 +8,7 @@ package services
 import (
 	"context"
 	"fmt"
+	"strconv"
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system/events"
@@ -61,6 +62,7 @@ func (d *Dashboard) Runner(r runtime.Runtime) (runner.Runner, error) {
 		runner.WithEnv([]string{
 			"TERM=linux",
 			constants.TcellMinimizeEnvironment,
+			"GOMEMLIMIT=" + strconv.Itoa(constants.CgroupDashboardMaxMemory/5*4),
 		}),
 		runner.WithStdinFile(tty),
 		runner.WithStdoutFile(tty),

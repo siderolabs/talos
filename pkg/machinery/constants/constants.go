@@ -402,8 +402,11 @@ const (
 	// KubeletSystemReservedCPU cpu system reservation value for kubelet kubeconfig.
 	KubeletSystemReservedCPU = "50m"
 
-	// KubeletSystemReservedMemory memory system reservation value for kubelet kubeconfig.
-	KubeletSystemReservedMemory = "192Mi"
+	// KubeletSystemReservedMemoryControlPlane memory system reservation value for kubelet kubeconfig (controlplane nodes).
+	KubeletSystemReservedMemoryControlPlane = "512Mi"
+
+	// KubeletSystemReservedMemoryWorker memory system reservation value for kubelet kubeconfig (worker nodes).
+	KubeletSystemReservedMemoryWorker = "384Mi"
 
 	// KubeletSystemReservedPid pid system reservation value for kubelet kubeconfig.
 	KubeletSystemReservedPid = "100"
@@ -672,8 +675,14 @@ const (
 	// CgroupInitReservedMemory is the hard memory protection for the init process.
 	CgroupInitReservedMemory = 96 * 1024 * 1024
 
+	// CgroupInitMillicores is the CPU weight for the init process.
+	CgroupInitMillicores = 2000
+
 	// CgroupSystem is the cgroup name for system processes.
 	CgroupSystem = "/system"
+
+	// CgroupSystemMillicores is the CPU weight for the system cgroup.
+	CgroupSystemMillicores = 1500
 
 	// CgroupSystemReservedMemory is the hard memory protection for the system processes.
 	CgroupSystemReservedMemory = 96 * 1024 * 1024
@@ -681,14 +690,44 @@ const (
 	// CgroupSystemRuntime is the cgroup name for containerd runtime processes.
 	CgroupSystemRuntime = CgroupSystem + "/runtime"
 
+	// CgroupSystemRuntimeReservedMemory is the hard memory protection for the system containerd process.
+	CgroupSystemRuntimeReservedMemory = 48 * 1024 * 1024
+
+	// CgroupSystemRuntimeMillicores is the CPU weight for the system containerd process.
+	CgroupSystemRuntimeMillicores = 500
+
 	// CgroupApid is the cgroup name for apid runtime processes.
 	CgroupApid = CgroupSystem + "/apid"
+
+	// CgroupApidReservedMemory is the hard memory protection for the apid processes.
+	CgroupApidReservedMemory = 16 * 1024 * 1024
+
+	// CgroupApidMaxMemory is the hard memory limit for the apid process.
+	CgroupApidMaxMemory = 40 * 1024 * 1024
+
+	// CgroupApidMillicores is the CPU weight for the apid process.
+	CgroupApidMillicores = 500
 
 	// CgroupTrustd is the cgroup name for trustd runtime processes.
 	CgroupTrustd = CgroupSystem + "/trustd"
 
+	// CgroupTrustdReservedMemory is the hard memory protection for the trustd processes.
+	CgroupTrustdReservedMemory = 8 * 1024 * 1024
+
+	// CgroupTrustdMaxMemory is the hard memory limit for the trustd process.
+	CgroupTrustdMaxMemory = 24 * 1024 * 1024
+
+	// CgroupTrustdMillicores is the CPU weight for the trustd process.
+	CgroupTrustdMillicores = 250
+
 	// CgroupUdevd is the cgroup name for udevd runtime processes.
 	CgroupUdevd = CgroupSystem + "/udevd"
+
+	// CgroupUdevdReservedMemory is the hard memory protection for the udevd processes.
+	CgroupUdevdReservedMemory = 8 * 1024 * 1024
+
+	// CgroupUdevdMillicores is the CPU weight for the udevd process.
+	CgroupUdevdMillicores = 250
 
 	// CgroupExtensions is the cgroup name for system extension processes.
 	CgroupExtensions = CgroupSystem + "/extensions"
@@ -696,26 +735,44 @@ const (
 	// CgroupDashboard is the cgroup name for dashboard process.
 	CgroupDashboard = CgroupSystem + "/dashboard"
 
+	// CgroupPodRuntimeRoot is the cgroup containing Kubernetes runtime components.
+	CgroupPodRuntimeRoot = "/podruntime"
+
+	// CgroupPodRuntimeRootMillicores is the CPU weight for the pod runtime cgroup.
+	CgroupPodRuntimeRootMillicores = 4000
+
 	// CgroupPodRuntime is the cgroup name for kubernetes containerd runtime processes.
-	CgroupPodRuntime = "/podruntime/runtime"
+	CgroupPodRuntime = CgroupPodRuntimeRoot + "/runtime"
+
+	// CgroupPodRuntimeMillicores is the CPU weight for the pod runtime cgroup.
+	CgroupPodRuntimeMillicores = 1000
 
 	// CgroupPodRuntimeReservedMemory is the hard memory protection for the cri runtime processes.
-	CgroupPodRuntimeReservedMemory = 128 * 1024 * 1024
+	CgroupPodRuntimeReservedMemory = 196 * 1024 * 1024
 
 	// CgroupEtcd is the cgroup name for etcd process.
-	CgroupEtcd = "/podruntime/etcd"
+	CgroupEtcd = CgroupPodRuntimeRoot + "/etcd"
+
+	// CgroupEtcdReservedMemory is the soft memory protection for the etcd processes.
+	CgroupEtcdReservedMemory = 256 * 1024 * 1024
+
+	// CgroupEtcdMillicores is the CPU weight for the etcd process.
+	CgroupEtcdMillicores = 2000
 
 	// CgroupKubelet is the cgroup name for kubelet process.
-	CgroupKubelet = "/podruntime/kubelet"
+	CgroupKubelet = CgroupPodRuntimeRoot + "/kubelet"
 
 	// CgroupKubeletReservedMemory is the hard memory protection for the kubelet processes.
-	CgroupKubeletReservedMemory = 64 * 1024 * 1024
+	CgroupKubeletReservedMemory = 96 * 1024 * 1024
 
-	// CgroupDashboardReservedMemory is the hard memory protection for the dashboard process.
-	CgroupDashboardReservedMemory = 85 * 1024 * 1024
+	// CgroupKubeletMillicores is the CPU weight for the kubelet process.
+	CgroupKubeletMillicores = 1000
 
-	// CgroupDashboardLowMemory is the low memory value for the dashboard process.
-	CgroupDashboardLowMemory = 100 * 1024 * 1024
+	// CgroupDashboardMaxMemory is the hard memory limit for the dashboard process.
+	CgroupDashboardMaxMemory = 196 * 1024 * 1024
+
+	// CgroupDashboardMillicores is the CPU weight for the dashboard process.
+	CgroupDashboardMillicores = 200
 
 	// FlannelCNI is the string to use Tanos-managed Flannel CNI (default).
 	FlannelCNI = "flannel"

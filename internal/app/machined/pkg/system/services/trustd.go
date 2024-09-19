@@ -12,6 +12,7 @@ import (
 	"net"
 	"os"
 	"path/filepath"
+	"strconv"
 
 	"github.com/containerd/containerd/v2/pkg/cap"
 	"github.com/containerd/containerd/v2/pkg/oci"
@@ -142,7 +143,10 @@ func (t *Trustd) Runner(r runtime.Runtime) (runner.Runner, error) {
 	}
 
 	env := environment.Get(r.Config())
-	env = append(env, constants.TcellMinimizeEnvironment)
+	env = append(env,
+		constants.TcellMinimizeEnvironment,
+		"GOMEMLIMIT="+strconv.Itoa(constants.CgroupTrustdMaxMemory/5*4),
+	)
 
 	if debug.RaceEnabled {
 		env = append(env, "GORACE=halt_on_error=1")
@@ -156,7 +160,6 @@ func (t *Trustd) Runner(r runtime.Runtime) (runner.Runner, error) {
 		runner.WithEnv(env),
 		runner.WithCgroupPath(constants.CgroupTrustd),
 		runner.WithOCISpecOpts(
-			containerd.WithMemoryLimit(int64(1000000*512)),
 			oci.WithDroppedCapabilities(cap.Known()),
 			oci.WithHostNamespace(specs.NetworkNamespace),
 			oci.WithMounts(mounts),

@@ -182,6 +182,9 @@ func CreateSystemCgroups(runtime.Sequence, any) (runtime.TaskExecutionFunc, stri
 						Min: pointer.To[int64](constants.CgroupInitReservedMemory),
 						Low: pointer.To[int64](constants.CgroupInitReservedMemory * 2),
 					},
+					CPU: &cgroup2.CPU{
+						Weight: pointer.To[uint64](cgroup.MillicoresToCPUWeight(cgroup.MilliCores(constants.CgroupInitMillicores))),
+					},
 				},
 			},
 			{
@@ -191,15 +194,42 @@ func CreateSystemCgroups(runtime.Sequence, any) (runtime.TaskExecutionFunc, stri
 						Min: pointer.To[int64](constants.CgroupSystemReservedMemory),
 						Low: pointer.To[int64](constants.CgroupSystemReservedMemory * 2),
 					},
+					CPU: &cgroup2.CPU{
+						Weight: pointer.To[uint64](cgroup.MillicoresToCPUWeight(cgroup.MilliCores(constants.CgroupSystemMillicores))),
+					},
 				},
 			},
 			{
-				name:      constants.CgroupSystemRuntime,
-				resources: &cgroup2.Resources{},
+				name: constants.CgroupSystemRuntime,
+				resources: &cgroup2.Resources{
+					Memory: &cgroup2.Memory{
+						Min: pointer.To[int64](constants.CgroupSystemRuntimeReservedMemory),
+						Low: pointer.To[int64](constants.CgroupSystemRuntimeReservedMemory * 2),
+					},
+					CPU: &cgroup2.CPU{
+						Weight: pointer.To[uint64](cgroup.MillicoresToCPUWeight(cgroup.MilliCores(constants.CgroupSystemRuntimeMillicores))),
+					},
+				},
 			},
 			{
-				name:      constants.CgroupUdevd,
-				resources: &cgroup2.Resources{},
+				name: constants.CgroupUdevd,
+				resources: &cgroup2.Resources{
+					Memory: &cgroup2.Memory{
+						Min: pointer.To[int64](constants.CgroupUdevdReservedMemory),
+						Low: pointer.To[int64](constants.CgroupUdevdReservedMemory * 2),
+					},
+					CPU: &cgroup2.CPU{
+						Weight: pointer.To[uint64](cgroup.MillicoresToCPUWeight(cgroup.MilliCores(constants.CgroupUdevdMillicores))),
+					},
+				},
+			},
+			{
+				name: constants.CgroupPodRuntimeRoot,
+				resources: &cgroup2.Resources{
+					CPU: &cgroup2.CPU{
+						Weight: pointer.To[uint64](cgroup.MillicoresToCPUWeight(cgroup.MilliCores(constants.CgroupPodRuntimeRootMillicores))),
+					},
+				},
 			},
 			{
 				name: constants.CgroupPodRuntime,
@@ -207,6 +237,9 @@ func CreateSystemCgroups(runtime.Sequence, any) (runtime.TaskExecutionFunc, stri
 					Memory: &cgroup2.Memory{
 						Min: pointer.To[int64](constants.CgroupPodRuntimeReservedMemory),
 						Low: pointer.To[int64](constants.CgroupPodRuntimeReservedMemory * 2),
+					},
+					CPU: &cgroup2.CPU{
+						Weight: pointer.To[uint64](cgroup.MillicoresToCPUWeight(cgroup.MilliCores(constants.CgroupPodRuntimeMillicores))),
 					},
 				},
 			},
@@ -217,14 +250,45 @@ func CreateSystemCgroups(runtime.Sequence, any) (runtime.TaskExecutionFunc, stri
 						Min: pointer.To[int64](constants.CgroupKubeletReservedMemory),
 						Low: pointer.To[int64](constants.CgroupKubeletReservedMemory * 2),
 					},
+					CPU: &cgroup2.CPU{
+						Weight: pointer.To[uint64](cgroup.MillicoresToCPUWeight(cgroup.MilliCores(constants.CgroupKubeletMillicores))),
+					},
 				},
 			},
 			{
 				name: constants.CgroupDashboard,
 				resources: &cgroup2.Resources{
 					Memory: &cgroup2.Memory{
-						Min: pointer.To[int64](constants.CgroupDashboardReservedMemory),
-						Low: pointer.To[int64](constants.CgroupDashboardLowMemory),
+						Max: pointer.To[int64](constants.CgroupDashboardMaxMemory),
+					},
+					CPU: &cgroup2.CPU{
+						Weight: pointer.To[uint64](cgroup.MillicoresToCPUWeight(cgroup.MilliCores(constants.CgroupDashboardMillicores))),
+					},
+				},
+			},
+			{
+				name: constants.CgroupApid,
+				resources: &cgroup2.Resources{
+					Memory: &cgroup2.Memory{
+						Min: pointer.To[int64](constants.CgroupApidReservedMemory),
+						Low: pointer.To[int64](constants.CgroupApidReservedMemory * 2),
+						Max: pointer.To[int64](constants.CgroupApidMaxMemory),
+					},
+					CPU: &cgroup2.CPU{
+						Weight: pointer.To[uint64](cgroup.MillicoresToCPUWeight(cgroup.MilliCores(constants.CgroupApidMillicores))),
+					},
+				},
+			},
+			{
+				name: constants.CgroupTrustd,
+				resources: &cgroup2.Resources{
+					Memory: &cgroup2.Memory{
+						Min: pointer.To[int64](constants.CgroupTrustdReservedMemory),
+						Low: pointer.To[int64](constants.CgroupTrustdReservedMemory * 2),
+						Max: pointer.To[int64](constants.CgroupTrustdMaxMemory),
+					},
+					CPU: &cgroup2.CPU{
+						Weight: pointer.To[uint64](cgroup.MillicoresToCPUWeight(cgroup.MilliCores(constants.CgroupTrustdMillicores))),
 					},
 				},
 			},

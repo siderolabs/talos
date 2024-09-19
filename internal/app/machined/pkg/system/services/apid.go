@@ -12,6 +12,7 @@ import (
 	"net"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 
 	"github.com/containerd/containerd/v2/pkg/cap"
@@ -164,6 +165,7 @@ func (o *APID) Runner(r runtime.Runtime) (runner.Runner, error) {
 
 	env := []string{
 		constants.TcellMinimizeEnvironment,
+		"GOMEMLIMIT=" + strconv.Itoa(constants.CgroupApidMaxMemory/5*4),
 	}
 
 	for _, value := range environment.Get(r.Config()) {

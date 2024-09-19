@@ -27,8 +27,10 @@ import (
 	v1alpha1runtime "github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
 	"github.com/siderolabs/talos/internal/pkg/cgroup"
 	"github.com/siderolabs/talos/pkg/argsbuilder"
+	"github.com/siderolabs/talos/pkg/machinery/config/machine"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/kubelet"
+	"github.com/siderolabs/talos/pkg/machinery/resources/config"
 	"github.com/siderolabs/talos/pkg/machinery/resources/k8s"
 )
 
@@ -61,6 +63,12 @@ func (ctrl *KubeletSpecController) Inputs() []controller.Input {
 			Namespace: k8s.NamespaceName,
 			Type:      k8s.NodeIPType,
 			ID:        optional.Some(k8s.KubeletID),
+			Kind:      controller.InputWeak,
+		},
+		{
+			Namespace: config.NamespaceName,
+			Type:      config.MachineTypeType,
+			ID:        optional.Some(config.MachineTypeID),
 			Kind:      controller.InputWeak,
 		},
 	}
@@ -99,6 +107,15 @@ func (ctrl *KubeletSpecController) Run(ctx context.Context, r controller.Runtime
 		cfgSpec := cfg.TypedSpec()
 
 		kubeletVersion := compatibility.VersionFromImageRef(cfgSpec.Image)
+
+		machineType, err := safe.ReaderGetByID[*config.MachineType](ctx, r, config.MachineTypeID)
+		if err != nil {
+			if state.IsNotFoundError(err) {
+				continue
+			}
+
+			return fmt.Errorf("error getting machine type: %w", err)
+		}
 
 		nodename, err := safe.ReaderGetByID[*k8s.Nodename](ctx, r, k8s.NodenameID)
 		if err != nil {
@@ -173,7 +190,7 @@ func (ctrl *KubeletSpecController) Run(ctx context.Context, r controller.Runtime
 			args["image-credential-provider-config"] = constants.KubeletCredentialProviderConfig
 		}
 
-		kubeletConfig, err := NewKubeletConfiguration(cfgSpec, kubeletVersion)
+		kubeletConfig, err := NewKubeletConfiguration(cfgSpec, kubeletVersion, machineType.MachineType())
 		if err != nil {
 			return fmt.Errorf("error creating kubelet configuration: %w", err)
 		}
@@ -242,7 +259,7 @@ func prepareExtraConfig(extraConfig map[string]any) (*kubeletconfig.KubeletConfi
 // NewKubeletConfiguration builds kubelet configuration with defaults and overrides from extraConfig.
 //
 //nolint:gocyclo,cyclop
-func NewKubeletConfiguration(cfgSpec *k8s.KubeletConfigSpec, kubeletVersion compatibility.Version) (*kubeletconfig.KubeletConfiguration, error) {
+func NewKubeletConfiguration(cfgSpec *k8s.KubeletConfigSpec, kubeletVersion compatibility.Version, machineType machine.Type) (*kubeletconfig.KubeletConfiguration, error) {
 	config, err := prepareExtraConfig(cfgSpec.ExtraConfig)
 	if err != nil {
 		return nil, err
@@ -333,9 +350,14 @@ func NewKubeletConfiguration(cfgSpec *k8s.KubeletConfigSpec, kubeletVersion comp
 	if len(config.SystemReserved) == 0 {
 		config.SystemReserved = map[string]string{
 			"cpu":               constants.KubeletSystemReservedCPU,
-			"memory":            constants.KubeletSystemReservedMemory,
 			"pid":               constants.KubeletSystemReservedPid,
 			"ephemeral-storage": constants.KubeletSystemReservedEphemeralStorage,
+		}
+
+		if machineType.IsControlPlane() {
+			config.SystemReserved["memory"] = constants.KubeletSystemReservedMemoryControlPlane
+		} else {
+			config.SystemReserved["memory"] = constants.KubeletSystemReservedMemoryWorker
 		}
 	}
 
