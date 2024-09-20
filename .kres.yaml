@@ -332,7 +332,7 @@ spec:
             QEMU_EXTRA_DISKS: "3"
             QEMU_EXTRA_DISKS_SIZE: "10240"
             QEMU_EXTRA_DISKS_DRIVERS: "ide,nvme"
-            WITH_CONFIG_PATCH_WORKER: "@hack/test/patches/ephemeral-nvme.yaml"
+            WITH_CONFIG_PATCH_WORKER: "@hack/test/patches/ephemeral-nvme.yaml:@hack/test/patches/dm-raid-module.yaml"
         - name: save-talos-logs
           conditions:
             - always
@@ -1017,7 +1017,7 @@ spec:
           withSudo: true
           environment:
             QEMU_MEMORY_WORKERS: 4096
-            WITH_CONFIG_PATCH_WORKER: "@_out/installer-extensions-patch.yaml:@hack/test/patches/extensions.yaml"
+            WITH_CONFIG_PATCH_WORKER: "@_out/installer-extensions-patch.yaml:@hack/test/patches/extensions.yaml:@hack/test/patches/dm-raid-module.yaml"
             QEMU_EXTRA_DISKS: 3
             SHORT_INTEGRATION_TEST: yes
             EXTRA_TEST_ARGS: -talos.extensions.qemu
@@ -1153,10 +1153,10 @@ spec:
             WITH_VIRTUAL_IP: true
             WITH_KUBESPAN: true
             IMAGE_REGISTRY: registry.dev.siderolabs.io
-            QEMU_EXTRA_DISKS: "2"
+            QEMU_EXTRA_DISKS: "3"
             QEMU_EXTRA_DISKS_SIZE: "10240"
             QEMU_EXTRA_DISKS_DRIVERS: "ide,nvme"
-            WITH_CONFIG_PATCH_WORKER: "@hack/test/patches/ephemeral-nvme.yaml"
+            WITH_CONFIG_PATCH_WORKER: "@hack/test/patches/ephemeral-nvme.yaml:@hack/test/patches/dm-raid-module.yaml"
         - name: save-talos-logs
           conditions:
             - always
@@ -1213,6 +1213,10 @@ spec:
           command: e2e-qemu
           withSudo: true
           environment:
+            QEMU_EXTRA_DISKS: "3"
+            QEMU_EXTRA_DISKS_SIZE: "10240"
+            QEMU_EXTRA_DISKS_DRIVERS: "ide,nvme"
+            WITH_CONFIG_PATCH_WORKER: "@hack/test/patches/ephemeral-nvme.yaml:@hack/test/patches/dm-raid-module.yaml"
             TAG_SUFFIX: -race
             IMAGE_REGISTRY: registry.dev.siderolabs.io
         - name: save-talos-logs

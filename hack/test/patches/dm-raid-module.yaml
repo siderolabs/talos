@@ -1,0 +1,4 @@
+machine:
+  kernel:
+    modules:
+      - name: dm_raid

@@ -15,6 +15,11 @@ import (
 	"github.com/siderolabs/talos/pkg/provision/access"
 )
 
+const (
+	// ProvisionerQEMU is the name of the QEMU provisioner.
+	ProvisionerQEMU = "qemu"
+)
+
 // TalosSuite defines most common settings for integration test suites.
 type TalosSuite struct {
 	// Endpoint to use to connect, if not set config is used
