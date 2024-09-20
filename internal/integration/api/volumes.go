@@ -194,7 +194,7 @@ func (suite *VolumesSuite) TestLVMActivation() {
 
 	userDisksJoined := strings.Join(userDisks[:2], " ")
 
-	podDef, err := suite.NewPodOp("pv-create", "kube-system")
+	podDef, err := suite.NewPrivilegedPod("pv-create")
 	suite.Require().NoError(err)
 
 	suite.Require().NoError(podDef.Create(suite.ctx, 5*time.Minute))
@@ -226,7 +226,7 @@ func (suite *VolumesSuite) TestLVMActivation() {
 	suite.Require().Contains(stdout, "Logical volume \"lv1\" created.")
 
 	defer func() {
-		deletePodDef, err := suite.NewPodOp("pv-destroy", "kube-system")
+		deletePodDef, err := suite.NewPrivilegedPod("pv-destroy")
 		suite.Require().NoError(err)
 
 		suite.Require().NoError(deletePodDef.Create(suite.ctx, 5*time.Minute))

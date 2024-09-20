@@ -11,10 +11,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/siderolabs/go-pointer"
-	corev1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
 	"github.com/siderolabs/talos/internal/integration/base"
 )
 
@@ -83,39 +79,17 @@ virtual memory (kb)             (-v) unlimited
 file locks                      (-x) unlimited
 `
 
-	const (
-		namespace = "default"
-		pod       = "defaults-test"
-	)
-
-	_, err := suite.Clientset.CoreV1().Pods(namespace).Create(suite.ctx, &corev1.Pod{
-		ObjectMeta: metav1.ObjectMeta{
-			Name: pod,
-		},
-		Spec: corev1.PodSpec{
-			Containers: []corev1.Container{
-				{
-					Name:  pod,
-					Image: "alpine",
-					Command: []string{
-						"tail",
-						"-f",
-						"/dev/null",
-					},
-				},
-			},
-			TerminationGracePeriodSeconds: pointer.To[int64](0),
-		},
-	}, metav1.CreateOptions{})
-
+	defaultsTestPodDef, err := suite.NewPod("defaults-ulimits-test")
 	suite.Require().NoError(err)
 
-	defer suite.Clientset.CoreV1().Pods(namespace).Delete(suite.ctx, pod, metav1.DeleteOptions{}) //nolint:errcheck
+	suite.Require().NoError(defaultsTestPodDef.Create(suite.ctx, 5*time.Minute))
 
-	// wait for the pod to be ready
-	suite.Require().NoError(suite.WaitForPodToBeRunning(suite.ctx, 10*time.Minute, namespace, pod))
+	defer defaultsTestPodDef.Delete(suite.ctx) //nolint:errcheck
 
-	stdout, stderr, err := suite.ExecuteCommandInPod(suite.ctx, namespace, pod, "ulimit -c -d -e -f -l -m -n -q -r -s -t -v -x")
+	stdout, stderr, err := defaultsTestPodDef.Exec(
+		suite.ctx,
+		"ulimit -c -d -e -f -l -m -n -q -r -s -t -v -x",
+	)
 	suite.Require().NoError(err)
 
 	suite.Require().Equal("", stderr)
@@ -129,47 +103,19 @@ func (suite *CommonSuite) TestDNSResolver() {
 		suite.AssertClusterHealthy(suite.ctx)
 	}
 
-	const (
-		namespace = "default"
-		pod       = "dns-test"
-	)
-
-	_, err := suite.Clientset.CoreV1().Pods(namespace).Create(suite.ctx, &corev1.Pod{
-		ObjectMeta: metav1.ObjectMeta{
-			Name: pod,
-		},
-		Spec: corev1.PodSpec{
-			Containers: []corev1.Container{
-				{
-					Name:  pod,
-					Image: "alpine",
-					Command: []string{
-						"tail",
-						"-f",
-						"/dev/null",
-					},
-				},
-			},
-			TerminationGracePeriodSeconds: pointer.To[int64](0),
-		},
-	}, metav1.CreateOptions{})
-
+	dnsTestPodDef, err := suite.NewPod("dns-test")
 	suite.Require().NoError(err)
 
-	suite.T().Cleanup(func() {
-		cleanUpCtx, cleanupCancel := context.WithTimeout(context.Background(), time.Minute)
-		defer cleanupCancel()
+	suite.Require().NoError(dnsTestPodDef.Create(suite.ctx, 5*time.Minute))
 
-		suite.Require().NoError(
-			suite.Clientset.CoreV1().Pods(namespace).Delete(cleanUpCtx, pod, metav1.DeleteOptions{}),
-		)
-	})
+	defer dnsTestPodDef.Delete(suite.ctx) //nolint:errcheck
 
-	// wait for the pod to be ready
-	suite.Require().NoError(suite.WaitForPodToBeRunning(suite.ctx, time.Minute, namespace, pod))
-
-	stdout, stderr, err := suite.ExecuteCommandInPod(suite.ctx, namespace, pod, "wget -S https://www.google.com/")
+	stdout, stderr, err := dnsTestPodDef.Exec(
+		suite.ctx,
+		"wget -S https://www.google.com/",
+	)
 	suite.Assert().NoError(err)
+
 	suite.Assert().Equal("", stdout)
 	suite.Assert().Contains(stderr, "'index.html' saved")
 
@@ -183,7 +129,10 @@ func (suite *CommonSuite) TestDNSResolver() {
 		suite.T().FailNow()
 	}
 
-	_, stderr, err = suite.ExecuteCommandInPod(suite.ctx, namespace, pod, "apk add --update bind-tools")
+	_, stderr, err = dnsTestPodDef.Exec(
+		suite.ctx,
+		"apk add --update bind-tools",
+	)
 
 	suite.Assert().NoError(err)
 	suite.Assert().Empty(stderr, "stderr: %s", stderr)
@@ -192,7 +141,10 @@ func (suite *CommonSuite) TestDNSResolver() {
 		suite.T().FailNow()
 	}
 
-	stdout, stderr, err = suite.ExecuteCommandInPod(suite.ctx, namespace, pod, "dig really-long-record.dev.siderolabs.io")
+	stdout, stderr, err = dnsTestPodDef.Exec(
+		suite.ctx,
+		"dig really-long-record.dev.siderolabs.io",
+	)
 
 	suite.Assert().NoError(err)
 	suite.Assert().Contains(stdout, "status: NOERROR")
