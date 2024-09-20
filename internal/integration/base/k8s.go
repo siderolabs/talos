@@ -208,11 +208,9 @@ type podInfo interface {
 type pod struct {
 	name      string
 	namespace string
+	pod       *corev1.Pod
 
-	client     *kubernetes.Clientset
-	restConfig *rest.Config
-
-	logF func(format string, args ...any)
+	suite *K8sSuite
 }
 
 func (p *pod) Name() string {
@@ -220,56 +218,12 @@ func (p *pod) Name() string {
 }
 
 func (p *pod) Create(ctx context.Context, waitTimeout time.Duration) error {
-	_, err := p.client.CoreV1().Pods(p.namespace).Create(ctx, &corev1.Pod{
-		ObjectMeta: metav1.ObjectMeta{
-			Name: p.name,
-		},
-		Spec: corev1.PodSpec{
-			Containers: []corev1.Container{
-				{
-					Name:  p.name,
-					Image: "alpine",
-					Command: []string{
-						"/bin/sh",
-						"-c",
-						"--",
-					},
-					Args: []string{
-						"trap : TERM INT; (tail -f /dev/null) & wait",
-					},
-					SecurityContext: &corev1.SecurityContext{
-						Privileged: pointer.To(true),
-					},
-					// lvm commands even though executed in the host mount namespace, still need access to /dev 🤷🏼,
-					// otherwise lvcreate commands hangs on semop syscall
-					VolumeMounts: []corev1.VolumeMount{
-						{
-							Name:      "dev",
-							MountPath: "/dev",
-						},
-					},
-				},
-			},
-			Volumes: []corev1.Volume{
-				{
-					Name: "dev",
-					VolumeSource: corev1.VolumeSource{
-						HostPath: &corev1.HostPathVolumeSource{
-							Path: "/dev",
-						},
-					},
-				},
-			},
-			HostNetwork: true,
-			HostIPC:     true,
-			HostPID:     true,
-		},
-	}, metav1.CreateOptions{})
+	_, err := p.suite.Clientset.CoreV1().Pods(p.namespace).Create(ctx, p.pod, metav1.CreateOptions{})
 	if err != nil {
 		return err
 	}
 
-	return p.waitForRunning(ctx, waitTimeout)
+	return p.suite.WaitForPodToBeRunning(ctx, waitTimeout, p.namespace, p.name)
 }
 
 func (p *pod) Exec(ctx context.Context, command string) (string, string, error) {
@@ -278,7 +232,7 @@ func (p *pod) Exec(ctx context.Context, command string) (string, string, error) 
 		"-c",
 		command,
 	}
-	req := p.client.CoreV1().RESTClient().Post().Resource("pods").Name(p.name).
+	req := p.suite.Clientset.CoreV1().RESTClient().Post().Resource("pods").Name(p.name).
 		Namespace(p.namespace).SubResource("exec")
 	option := &corev1.PodExecOptions{
 		Command: cmd,
@@ -293,7 +247,7 @@ func (p *pod) Exec(ctx context.Context, command string) (string, string, error) 
 		scheme.ParameterCodec,
 	)
 
-	exec, err := remotecommand.NewSPDYExecutor(p.restConfig, "POST", req.URL())
+	exec, err := remotecommand.NewSPDYExecutor(p.suite.RestConfig, "POST", req.URL())
 	if err != nil {
 		return "", "", err
 	}
@@ -305,7 +259,7 @@ func (p *pod) Exec(ctx context.Context, command string) (string, string, error) 
 		Stderr: &stderr,
 	})
 	if err != nil {
-		p.logF(
+		p.suite.T().Logf(
 			"error executing command in pod %s/%s: %v\n\ncommand %q stdout:\n%s\n\ncommand %q stderr:\n%s",
 			p.namespace,
 			p.name,
@@ -321,59 +275,110 @@ func (p *pod) Exec(ctx context.Context, command string) (string, string, error) 
 }
 
 func (p *pod) Delete(ctx context.Context) error {
-	return p.client.CoreV1().Pods(p.namespace).Delete(ctx, p.name, metav1.DeleteOptions{})
+	return p.suite.Clientset.CoreV1().Pods(p.namespace).Delete(ctx, p.name, metav1.DeleteOptions{})
 }
 
-func (p *pod) waitForRunning(ctx context.Context, timeout time.Duration) error {
-	ctx, cancel := context.WithTimeout(ctx, timeout)
-	defer cancel()
-
-	watcher, err := p.client.CoreV1().Pods(p.namespace).Watch(ctx, metav1.ListOptions{
-		FieldSelector: fields.OneTermEqualSelector("metadata.name", p.name).String(),
-	})
-	if err != nil {
-		return err
-	}
-
-	defer watcher.Stop()
-
-	for {
-		select {
-		case <-ctx.Done():
-			return ctx.Err()
-		case event := <-watcher.ResultChan():
-			if event.Type == watch.Error {
-				return fmt.Errorf("error watching pod: %v", event.Object)
-			}
-
-			pod, ok := event.Object.(*corev1.Pod)
-			if !ok {
-				continue
-			}
-
-			if pod.Name == p.name && pod.Status.Phase == corev1.PodRunning {
-				return nil
-			}
-		}
-	}
-}
-
-// NewPodOp creates a new pod operation with the given name and namespace.
-func (k8sSuite *K8sSuite) NewPodOp(name, namespace string) (podInfo, error) {
+// NewPrivilegedPod creates a new pod definition with a random suffix
+// in the kube-system namespace with privileged security context.
+func (k8sSuite *K8sSuite) NewPrivilegedPod(name string) (podInfo, error) {
 	randomSuffix := make([]byte, 4)
 
 	if _, err := rand.Read(randomSuffix); err != nil {
 		return nil, fmt.Errorf("failed to generate random suffix: %w", err)
 	}
 
+	podName := fmt.Sprintf("%s-%x", name, randomSuffix)
+
 	return &pod{
-		name:      fmt.Sprintf("%s-%x", name, randomSuffix),
-		namespace: namespace,
+		name:      podName,
+		namespace: "kube-system",
+		pod: &corev1.Pod{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: podName,
+			},
+			Spec: corev1.PodSpec{
+				Containers: []corev1.Container{
+					{
+						Name:  podName,
+						Image: "alpine",
+						Command: []string{
+							"/bin/sh",
+							"-c",
+							"--",
+						},
+						Args: []string{
+							"trap : TERM INT; (tail -f /dev/null) & wait",
+						},
+						SecurityContext: &corev1.SecurityContext{
+							Privileged: pointer.To(true),
+						},
+						// lvm commands even though executed in the host mount namespace, still need access to /dev 🤷🏼,
+						// otherwise lvcreate commands hangs on semop syscall
+						VolumeMounts: []corev1.VolumeMount{
+							{
+								Name:      "dev",
+								MountPath: "/dev",
+							},
+						},
+					},
+				},
+				Volumes: []corev1.Volume{
+					{
+						Name: "dev",
+						VolumeSource: corev1.VolumeSource{
+							HostPath: &corev1.HostPathVolumeSource{
+								Path: "/dev",
+							},
+						},
+					},
+				},
+				HostNetwork: true,
+				HostIPC:     true,
+				HostPID:     true,
+			},
+		},
 
-		client:     k8sSuite.Clientset,
-		restConfig: k8sSuite.RestConfig,
+		suite: k8sSuite,
+	}, nil
+}
 
-		logF: k8sSuite.T().Logf,
+// NewPod creates a new pod definition with a random suffix
+// in the default namespace.
+func (k8sSuite *K8sSuite) NewPod(name string) (podInfo, error) {
+	randomSuffix := make([]byte, 4)
+
+	if _, err := rand.Read(randomSuffix); err != nil {
+		return nil, fmt.Errorf("failed to generate random suffix: %w", err)
+	}
+
+	podName := fmt.Sprintf("%s-%x", name, randomSuffix)
+
+	return &pod{
+		name:      podName,
+		namespace: "default",
+		pod: &corev1.Pod{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: podName,
+			},
+			Spec: corev1.PodSpec{
+				Containers: []corev1.Container{
+					{
+						Name:  podName,
+						Image: "alpine",
+						Command: []string{
+							"/bin/sh",
+							"-c",
+							"--",
+						},
+						Args: []string{
+							"trap : TERM INT; (tail -f /dev/null) & wait",
+						},
+					},
+				},
+			},
+		},
+
+		suite: k8sSuite,
 	}, nil
 }
 
@@ -445,36 +450,6 @@ func (k8sSuite *K8sSuite) LogPodLogs(ctx context.Context, namespace, podName str
 
 	for scanner.Scan() {
 		k8sSuite.T().Logf("%s/%s: %s", namespace, podName, scanner.Text())
-	}
-}
-
-// WaitForPodToBeDeleted waits for the pod with the given namespace and name to be deleted.
-func (k8sSuite *K8sSuite) WaitForPodToBeDeleted(ctx context.Context, timeout time.Duration, namespace, podName string) error {
-	ctx, cancel := context.WithTimeout(ctx, timeout)
-	defer cancel()
-
-	watcher, err := k8sSuite.Clientset.CoreV1().Pods(namespace).Watch(ctx, metav1.ListOptions{
-		FieldSelector: fields.OneTermEqualSelector("metadata.name", podName).String(),
-	})
-	if err != nil {
-		return err
-	}
-
-	defer watcher.Stop()
-
-	for {
-		select {
-		case <-ctx.Done():
-			return ctx.Err()
-		case event := <-watcher.ResultChan():
-			if event.Type == watch.Deleted {
-				return nil
-			}
-
-			if event.Type == watch.Error {
-				return fmt.Errorf("error watching pod: %v", event.Object)
-			}
-		}
 	}
 }
 
@@ -633,55 +608,6 @@ func (k8sSuite *K8sSuite) RunFIOTest(ctx context.Context, storageClasss, size st
 	k8sSuite.T().Logf("running kubestr command: %s", strings.Join(cmd.Args, " "))
 
 	return cmd.Run()
-}
-
-// ExecuteCommandInPod executes the given command in the pod with the given namespace and name.
-func (k8sSuite *K8sSuite) ExecuteCommandInPod(ctx context.Context, namespace, podName, command string) (string, string, error) {
-	cmd := []string{
-		"/bin/sh",
-		"-c",
-		command,
-	}
-	req := k8sSuite.Clientset.CoreV1().RESTClient().Post().Resource("pods").Name(podName).
-		Namespace(namespace).SubResource("exec")
-	option := &corev1.PodExecOptions{
-		Command: cmd,
-		Stdin:   false,
-		Stdout:  true,
-		Stderr:  true,
-		TTY:     false,
-	}
-
-	req.VersionedParams(
-		option,
-		scheme.ParameterCodec,
-	)
-
-	exec, err := remotecommand.NewSPDYExecutor(k8sSuite.RestConfig, "POST", req.URL())
-	if err != nil {
-		return "", "", err
-	}
-
-	var stdout, stderr strings.Builder
-
-	err = exec.StreamWithContext(ctx, remotecommand.StreamOptions{
-		Stdout: &stdout,
-		Stderr: &stderr,
-	})
-	if err != nil {
-		k8sSuite.T().Logf(
-			"error executing command in pod %s/%s: %v\n\ncommand %q stdout:\n%s\n\ncommand %q stderr:\n%s",
-			namespace,
-			podName,
-			err,
-			command,
-			stdout.String(),
-			command,
-			stderr.String(),
-		)
-	}
-
-	return stdout.String(), stderr.String(), err
 }
 
 // GetPodsWithLabel returns the pods with the given label in the specified namespace.

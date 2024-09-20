@@ -145,7 +145,7 @@ func (suite *ExtensionsSuiteQEMU) TestExtensionsISCSI() {
 
 	ctx := client.WithNode(suite.ctx, node)
 
-	iscsiCreatePodDef, err := suite.NewPodOp("iscsi-create", "kube-system")
+	iscsiCreatePodDef, err := suite.NewPrivilegedPod("iscsi-create")
 	suite.Require().NoError(err)
 
 	suite.Require().NoError(iscsiCreatePodDef.Create(suite.ctx, 5*time.Minute))
@@ -446,7 +446,7 @@ func (suite *ExtensionsSuiteQEMU) TestExtensionsMdADM() {
 
 	userDisksJoined := strings.Join(userDisks[:2], " ")
 
-	mdAdmCreatePodDef, err := suite.NewPodOp("mdadm-create", "kube-system")
+	mdAdmCreatePodDef, err := suite.NewPrivilegedPod("mdadm-create")
 	suite.Require().NoError(err)
 
 	suite.Require().NoError(mdAdmCreatePodDef.Create(suite.ctx, 5*time.Minute))
@@ -467,7 +467,7 @@ func (suite *ExtensionsSuiteQEMU) TestExtensionsMdADM() {
 
 		hostname := hostNameStatus.TypedSpec().Hostname
 
-		deletePodDef, err := suite.NewPodOp("mdadm-destroy", "kube-system")
+		deletePodDef, err := suite.NewPrivilegedPod("mdadm-destroy")
 		suite.Require().NoError(err)
 
 		suite.Require().NoError(deletePodDef.Create(suite.ctx, 5*time.Minute))
@@ -526,7 +526,7 @@ func (suite *ExtensionsSuiteQEMU) TestExtensionsZFS() {
 
 	suite.Require().NotEmpty(userDisks, "expected at least one user disks to be available")
 
-	zfsPodDef, err := suite.NewPodOp("zpool-create", "kube-system")
+	zfsPodDef, err := suite.NewPrivilegedPod("zpool-create")
 	suite.Require().NoError(err)
 
 	suite.Require().NoError(zfsPodDef.Create(suite.ctx, 5*time.Minute))
@@ -552,7 +552,7 @@ func (suite *ExtensionsSuiteQEMU) TestExtensionsZFS() {
 	suite.Require().Equal("", stdout)
 
 	defer func() {
-		deletePodDef, err := suite.NewPodOp("zpool-destroy", "kube-system")
+		deletePodDef, err := suite.NewPrivilegedPod("zpool-destroy")
 		suite.Require().NoError(err)
 
 		suite.Require().NoError(deletePodDef.Create(suite.ctx, 5*time.Minute))
@@ -605,7 +605,7 @@ func (suite *ExtensionsSuiteQEMU) checkZFSPoolMounted() bool {
 
 // TestExtensionsUtilLinuxTools verifies util-linux-tools are working.
 func (suite *ExtensionsSuiteQEMU) TestExtensionsUtilLinuxTools() {
-	utilLinuxPodDef, err := suite.NewPodOp("util-linux-tools-test", "kube-system")
+	utilLinuxPodDef, err := suite.NewPrivilegedPod("util-linux-tools-test")
 	suite.Require().NoError(err)
 
 	suite.Require().NoError(utilLinuxPodDef.Create(suite.ctx, 5*time.Minute))
