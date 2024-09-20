@@ -42,7 +42,7 @@ func (suite *CommonSuite) TearDownTest() {
 
 // TestVirtioModulesLoaded verifies that the virtio modules are loaded.
 func (suite *CommonSuite) TestVirtioModulesLoaded() {
-	if suite.Cluster == nil || suite.Cluster.Provisioner() != "qemu" {
+	if suite.Cluster == nil || suite.Cluster.Provisioner() != base.ProvisionerQEMU {
 		suite.T().Skip("skipping virtio test since provisioner is not qemu")
 	}
 

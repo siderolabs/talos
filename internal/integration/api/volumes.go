@@ -185,6 +185,10 @@ func (suite *VolumesSuite) TestLVMActivation() {
 		suite.T().Skip("skipping test in short mode.")
 	}
 
+	if suite.Cluster == nil || suite.Cluster.Provisioner() != base.ProvisionerQEMU {
+		suite.T().Skip("skipping test for non-qemu provisioner")
+	}
+
 	node := suite.RandomDiscoveredNodeInternalIP(machine.TypeWorker)
 
 	userDisks, err := suite.UserDisks(suite.ctx, node)
@@ -211,7 +215,7 @@ func (suite *VolumesSuite) TestLVMActivation() {
 
 	stdout, _, err = podDef.Exec(
 		suite.ctx,
-		"nsenter --mount=/proc/1/ns/mnt -- lvcreate -n lv0 -L 1G vg0",
+		"nsenter --mount=/proc/1/ns/mnt -- lvcreate --mirrors=1 --type=raid1 --nosync -n lv0 -L 1G vg0",
 	)
 	suite.Require().NoError(err)
 
@@ -255,7 +259,9 @@ func (suite *VolumesSuite) TestLVMActivation() {
 		}, 5*time.Minute,
 	)
 
-	suite.Require().True(suite.lvmVolumeExists(), "LVM volume group was not activated after reboot")
+	suite.Require().Eventually(func() bool {
+		return suite.lvmVolumeExists()
+	}, 5*time.Second, 1*time.Second, "LVM volume group was not activated after reboot")
 }
 
 func (suite *VolumesSuite) lvmVolumeExists() bool {
@@ -275,7 +281,8 @@ func (suite *VolumesSuite) lvmVolumeExists() bool {
 	}
 
 	// we test with creating a volume group with two logical volumes
-	return lvmVolumeCount == 2
+	// one mirrored and one not, so we expect to see 6 volumes
+	return lvmVolumeCount == 6
 }
 
 func init() {

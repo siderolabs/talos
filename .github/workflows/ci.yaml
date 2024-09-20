@@ -1,6 +1,6 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
 #
-# Generated on 2024-09-20T00:40:37Z by kres 8be5fa7.
+# Generated on 2024-09-23T13:32:15Z by kres 8be5fa7.
 
 name: default
 concurrency:
@@ -1464,7 +1464,7 @@ jobs:
           QEMU_EXTRA_DISKS: "3"
           QEMU_MEMORY_WORKERS: "4096"
           SHORT_INTEGRATION_TEST: "yes"
-          WITH_CONFIG_PATCH_WORKER: '@_out/installer-extensions-patch.yaml:@hack/test/patches/extensions.yaml'
+          WITH_CONFIG_PATCH_WORKER: '@_out/installer-extensions-patch.yaml:@hack/test/patches/extensions.yaml:@hack/test/patches/dm-raid-module.yaml'
         run: |
           sudo -E make e2e-qemu
       - name: save artifacts
@@ -2774,7 +2774,7 @@ jobs:
           QEMU_EXTRA_DISKS: "3"
           QEMU_EXTRA_DISKS_DRIVERS: ide,nvme
           QEMU_EXTRA_DISKS_SIZE: "10240"
-          WITH_CONFIG_PATCH_WORKER: '@hack/test/patches/ephemeral-nvme.yaml'
+          WITH_CONFIG_PATCH_WORKER: '@hack/test/patches/ephemeral-nvme.yaml:@hack/test/patches/dm-raid-module.yaml'
         run: |
           sudo -E make e2e-qemu
       - name: save artifacts
@@ -2988,10 +2988,10 @@ jobs:
         env:
           EXTRA_TEST_ARGS: -talos.csi=rook-ceph
           IMAGE_REGISTRY: registry.dev.siderolabs.io
-          QEMU_CPUS_WORKERS: "4"
+          QEMU_CPUS_WORKERS: "6"
           QEMU_EXTRA_DISKS: "1"
           QEMU_EXTRA_DISKS_SIZE: "12288"
-          QEMU_MEMORY_WORKERS: "5120"
+          QEMU_MEMORY_WORKERS: "8192"
           QEMU_WORKERS: "3"
           SHORT_INTEGRATION_TEST: "yes"
           WITH_CONFIG_PATCH: '@hack/test/patches/rook-ceph.yaml'
@@ -3086,10 +3086,10 @@ jobs:
       - name: e2e-qemu
         env:
           IMAGE_REGISTRY: registry.dev.siderolabs.io
-          QEMU_EXTRA_DISKS: "2"
+          QEMU_EXTRA_DISKS: "3"
           QEMU_EXTRA_DISKS_DRIVERS: ide,nvme
           QEMU_EXTRA_DISKS_SIZE: "10240"
-          WITH_CONFIG_PATCH_WORKER: '@hack/test/patches/ephemeral-nvme.yaml'
+          WITH_CONFIG_PATCH_WORKER: '@hack/test/patches/ephemeral-nvme.yaml:@hack/test/patches/dm-raid-module.yaml'
           WITH_DISK_ENCRYPTION: "true"
           WITH_KUBESPAN: "true"
           WITH_VIRTUAL_IP: "true"
@@ -3193,7 +3193,11 @@ jobs:
       - name: e2e-qemu-race
         env:
           IMAGE_REGISTRY: registry.dev.siderolabs.io
+          QEMU_EXTRA_DISKS: "3"
+          QEMU_EXTRA_DISKS_DRIVERS: ide,nvme
+          QEMU_EXTRA_DISKS_SIZE: "10240"
           TAG_SUFFIX: -race
+          WITH_CONFIG_PATCH_WORKER: '@hack/test/patches/ephemeral-nvme.yaml:@hack/test/patches/dm-raid-module.yaml'
         run: |
           sudo -E make e2e-qemu
       - name: save artifacts

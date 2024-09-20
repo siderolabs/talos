@@ -39,7 +39,7 @@ func (suite *WatchdogSuite) SuiteName() string {
 func (suite *WatchdogSuite) SetupTest() {
 	suite.ctx, suite.ctxCancel = context.WithTimeout(context.Background(), 1*time.Minute)
 
-	if suite.Cluster == nil || suite.Cluster.Provisioner() != "qemu" {
+	if suite.Cluster == nil || suite.Cluster.Provisioner() != base.ProvisionerQEMU {
 		suite.T().Skip("skipping watchdog test since provisioner is not qemu")
 	}
 }

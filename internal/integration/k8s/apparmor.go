@@ -35,7 +35,7 @@ func (suite *ApparmorSuite) TestApparmor() {
 		suite.T().Skip("without full cluster state reaching out to the node IP is not reliable")
 	}
 
-	if suite.Cluster.Provisioner() != "qemu" {
+	if suite.Cluster.Provisioner() != base.ProvisionerQEMU {
 		suite.T().Skip("skipping apparmor test since provisioner is not qemu")
 	}
 
