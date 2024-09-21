@@ -1,6 +1,6 @@
 ---
-description: KubespanEndpoints is a config document to configure KubeSpan endpoints.
-title: KubespanEndpoints
+description: KubeSpanEndpointsConfig is a config document to configure KubeSpan endpoints.
+title: KubeSpanEndpointsConfig
 ---
 
 <!-- markdownlint-disable -->
@@ -15,7 +15,7 @@ title: KubespanEndpoints
 
 {{< highlight yaml >}}
 apiVersion: v1alpha1
-kind: KubespanEndpointsConfig
+kind: KubeSpanEndpointsConfig
 # A list of extra Wireguard endpoints to announce from this machine.
 extraAnnouncedEndpoints:
     - 192.168.13.46:52000

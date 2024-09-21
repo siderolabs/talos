@@ -16,7 +16,7 @@ import (
 )
 
 // KubespanEndpointsKind is a KubeSpan endpoints document kind.
-const KubespanEndpointsKind = "KubespanEndpointsConfig"
+const KubespanEndpointsKind = "KubeSpanEndpointsConfig"
 
 func init() {
 	registry.Register(KubespanEndpointsKind, func(version string) config.Document {
@@ -38,9 +38,9 @@ var (
 //
 //	examples:
 //	  - value: exampleKubespanEndpointsV1Alpha1()
-//	alias: KubespanEndpoints
+//	alias: KubeSpanEndpointsConfig
 //	schemaRoot: true
-//	schemaMeta: v1alpha1/KubespanEndpoints
+//	schemaMeta: v1alpha1/KubeSpanEndpoints
 type KubespanEndpointsConfigV1Alpha1 struct {
 	meta.Meta `yaml:",inline"`
 	//   description: |
