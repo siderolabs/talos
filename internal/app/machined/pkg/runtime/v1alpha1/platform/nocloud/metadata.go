@@ -43,6 +43,11 @@ const (
 	mnt                     = "/mnt"
 )
 
+// NetworkCloudInitConfig wraps nocloud network config to match cloud-init format.
+type NetworkCloudInitConfig struct {
+	Config NetworkConfig `yaml:"network"`
+}
+
 // NetworkConfig holds network-config info.
 type NetworkConfig struct {
 	Version int `yaml:"version"`

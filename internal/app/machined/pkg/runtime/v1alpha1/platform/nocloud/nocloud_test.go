@@ -7,7 +7,6 @@ package nocloud_test
 import (
 	"context"
 	_ "embed"
-	"fmt"
 	"testing"
 
 	"github.com/cosi-project/runtime/pkg/state"
@@ -25,8 +24,11 @@ import (
 //go:embed testdata/metadata-v1.yaml
 var rawMetadataV1 []byte
 
-//go:embed testdata/metadata-v2.yaml
-var rawMetadataV2 []byte
+//go:embed testdata/metadata-v2-nocloud.yaml
+var rawMetadataV2Nocloud []byte
+
+//go:embed testdata/metadata-v2-cloud-init.yaml
+var rawMetadataV2CloudInit []byte
 
 //go:embed testdata/expected-v1.yaml
 var expectedNetworkConfigV1 string
@@ -46,8 +48,13 @@ func TestParseMetadata(t *testing.T) {
 			expected: expectedNetworkConfigV1,
 		},
 		{
-			name:     "V2",
-			raw:      rawMetadataV2,
+			name:     "V2-nocloud",
+			raw:      rawMetadataV2Nocloud,
+			expected: expectedNetworkConfigV2,
+		},
+		{
+			name:     "V2-cloud-init",
+			raw:      rawMetadataV2CloudInit,
 			expected: expectedNetworkConfigV2,
 		},
 	} {
@@ -74,9 +81,8 @@ func TestParseMetadata(t *testing.T) {
 			eth2.TypedSpec().Kind = ""
 			require.NoError(t, st.Create(context.TODO(), eth2))
 
-			var m nocloud.NetworkConfig
-
-			require.NoError(t, yaml.Unmarshal(tt.raw, &m))
+			m, err := nocloud.DecodeNetworkConfig(tt.raw)
+			require.NoError(t, err)
 
 			mc := nocloud.MetadataConfig{
 				Hostname:    "talos.fqdn",
@@ -88,17 +94,15 @@ func TestParseMetadata(t *testing.T) {
 				InstanceID:  "0",
 			}
 
-			networkConfig, err := n.ParseMetadata(&m, st, &mc)
+			networkConfig, err := n.ParseMetadata(m, st, &mc)
 			require.NoError(t, err)
-			networkConfig2, err := n.ParseMetadata(&m, st, &mc2)
+			networkConfig2, err := n.ParseMetadata(m, st, &mc2)
 			require.NoError(t, err)
 
 			marshaled, err := yaml.Marshal(networkConfig)
 			require.NoError(t, err)
 			marshaled2, err := yaml.Marshal(networkConfig2)
 			require.NoError(t, err)
-
-			fmt.Print(string(marshaled))
 
 			assert.Equal(t, tt.expected, string(marshaled))
 			assert.Equal(t, tt.expected, string(marshaled2))
