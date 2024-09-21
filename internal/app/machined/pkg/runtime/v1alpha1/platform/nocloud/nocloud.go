@@ -11,6 +11,7 @@ import (
 	"fmt"
 
 	"github.com/cosi-project/runtime/pkg/state"
+	"github.com/siderolabs/gen/maps"
 	"github.com/siderolabs/go-procfs/procfs"
 	yaml "gopkg.in/yaml.v3"
 
@@ -121,14 +122,18 @@ func (n *Nocloud) NetworkConfiguration(ctx context.Context, st state.State, ch c
 		return nil
 	}
 
-	var unmarshalledNetworkConfig NetworkConfig
+	var unmarshalledNetworkConfig *NetworkConfig
+
 	if metadataNetworkConfigDl != nil {
-		if err = yaml.Unmarshal(metadataNetworkConfigDl, &unmarshalledNetworkConfig); err != nil {
+		nc, err := DecodeNetworkConfig(metadataNetworkConfigDl)
+		if err != nil {
 			return err
 		}
+
+		unmarshalledNetworkConfig = nc
 	}
 
-	networkConfig, err := n.ParseMetadata(&unmarshalledNetworkConfig, st, metadata)
+	networkConfig, err := n.ParseMetadata(unmarshalledNetworkConfig, st, metadata)
 	if err != nil {
 		return err
 	}
@@ -140,4 +145,39 @@ func (n *Nocloud) NetworkConfiguration(ctx context.Context, st state.State, ch c
 	}
 
 	return nil
+}
+
+// DecodeNetworkConfig decodes the network configuration guessing the format from the content.
+func DecodeNetworkConfig(content []byte) (*NetworkConfig, error) {
+	var decoded map[string]any
+
+	err := yaml.Unmarshal(content, &decoded)
+	if err != nil {
+		return nil, err
+	}
+
+	if _, ok := decoded["network"]; ok {
+		var ciNetworkConfig NetworkCloudInitConfig
+
+		err = yaml.Unmarshal(content, &ciNetworkConfig)
+		if err != nil {
+			return nil, err
+		}
+
+		return &ciNetworkConfig.Config, nil
+	}
+
+	// If it is not plain *v2 cloud-init* config then we attempt to decode *nocloud*
+	if _, ok := decoded["version"]; ok {
+		var nc NetworkConfig
+
+		err = yaml.Unmarshal(content, &nc)
+		if err != nil {
+			return nil, err
+		}
+
+		return &nc, nil
+	}
+
+	return nil, fmt.Errorf("failed to decode network configuration, keys: %v", maps.Keys(decoded))
 }
