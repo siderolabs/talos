@@ -134,7 +134,7 @@ The `filters` setting allows hiding some endpoints from being advertised over Ku
 This is useful when some endpoints are known to be unreachable between the nodes, so that KubeSpan doesn't try to establish a connection to them.
 Another use-case is hiding some endpoints if nodes can connect on multiple networks, and some of the networks are more preferable than others.
 
-To include additional announced endpoints, such as inbound NAT mappings, you can add the [machine config document]({{< relref "../../reference/configuration/network/kubespanendpoints" >}}).
+To include additional announced endpoints, such as inbound NAT mappings, you can add the [machine config document]({{< relref "../../reference/configuration/network/kubespanendpointsconfig" >}}).
 
 ```yaml
 apiVersion: v1alpha1

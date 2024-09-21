@@ -96,7 +96,7 @@ future.
 
 ## Machine Configuration Changes
 
-* new machine configuration documents: [VolumeConfig]({{< relref "../reference/configuration/block/volumeconfig" >}}), [KubespanEndpointsConfig]({{< relref "../reference/configuration/network/kubespanendpoints" >}}),
+* new machine configuration documents: [VolumeConfig]({{< relref "../reference/configuration/block/volumeconfig" >}}), [KubespanEndpointsConfig]({{< relref "../reference/configuration/network/kubespanendpointsconfig" >}}),
   [TrustedRootsConfig]({{< relref "../reference/configuration/security/trustedrootsconfig" >}})
 * new fields in the [v1alpha1]({{< relref "../reference/configuration/v1alpha1/config" >}}) document:
   * [`.machine.nodeAnnotations`]({{< relref "../reference/configuration/v1alpha1/config#Config.machine" >}})

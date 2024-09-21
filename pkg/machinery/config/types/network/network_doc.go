@@ -39,9 +39,9 @@ func (DefaultActionConfigV1Alpha1) Doc() *encoder.Doc {
 
 func (KubespanEndpointsConfigV1Alpha1) Doc() *encoder.Doc {
 	doc := &encoder.Doc{
-		Type:        "KubespanEndpoints",
-		Comments:    [3]string{"" /* encoder.HeadComment */, "KubespanEndpoints is a config document to configure KubeSpan endpoints." /* encoder.LineComment */, "" /* encoder.FootComment */},
-		Description: "KubespanEndpoints is a config document to configure KubeSpan endpoints.",
+		Type:        "KubeSpanEndpointsConfig",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "KubeSpanEndpointsConfig is a config document to configure KubeSpan endpoints." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "KubeSpanEndpointsConfig is a config document to configure KubeSpan endpoints.",
 		Fields: []encoder.Doc{
 			{}, {
 				Name:        "extraAnnouncedEndpoints",

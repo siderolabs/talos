@@ -240,7 +240,7 @@
         },
         "kind": {
           "enum": [
-            "KubespanEndpoints"
+            "KubeSpanEndpoints"
           ],
           "title": "kind",
           "description": "kind is the kind of the resource.\n",
