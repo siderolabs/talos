@@ -72,7 +72,7 @@ func Switch(prefix string, mountpoints *mount.Points) (err error) {
 	}
 
 	// extend PCR 11 with leave-initrd
-	if err = tpm2.PCRExtent(secureboot.UKIPCR, []byte(secureboot.LeaveInitrd)); err != nil {
+	if err = tpm2.PCRExtend(secureboot.UKIPCR, []byte(secureboot.LeaveInitrd)); err != nil {
 		return fmt.Errorf("failed to extend PCR %d with leave-initrd: %v", secureboot.UKIPCR, err)
 	}
 

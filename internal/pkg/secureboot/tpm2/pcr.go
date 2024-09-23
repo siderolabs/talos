@@ -62,8 +62,8 @@ func ReadPCR(t transport.TPM, pcr int) ([]byte, error) {
 	return pcrValue.PCRValues.Digests[0].Buffer, nil
 }
 
-// PCRExtent hashes the input and extends the PCR with the hash.
-func PCRExtent(pcr int, data []byte) error {
+// PCRExtend hashes the input and extends the PCR with the hash.
+func PCRExtend(pcr int, data []byte) error {
 	t, err := transport.OpenTPM()
 	if err != nil {
 		// if the TPM is not available or not a TPM 2.0, we can skip the PCR extension

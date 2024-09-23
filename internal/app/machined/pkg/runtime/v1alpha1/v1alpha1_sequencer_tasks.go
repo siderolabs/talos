@@ -672,7 +672,7 @@ func WriteUdevRules(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
 // StartMachined represents the task to start machined.
 func StartMachined(_ runtime.Sequence, _ any) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) error {
-		if err := tpm2.PCRExtent(secureboot.UKIPCR, []byte(secureboot.EnterMachined)); err != nil {
+		if err := tpm2.PCRExtend(secureboot.UKIPCR, []byte(secureboot.EnterMachined)); err != nil {
 			return err
 		}
 
@@ -748,7 +748,7 @@ func StartUdevd(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
 // ExtendPCRStartAll represents the task to extend the PCR with the StartTheWorld PCR phase.
 func ExtendPCRStartAll(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
-		return tpm2.PCRExtent(secureboot.UKIPCR, []byte(secureboot.StartTheWorld))
+		return tpm2.PCRExtend(secureboot.UKIPCR, []byte(secureboot.StartTheWorld))
 	}, "extendPCRStartAll"
 }
 
