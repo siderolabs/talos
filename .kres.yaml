@@ -1270,8 +1270,8 @@ spec:
           environment:
             SHORT_INTEGRATION_TEST: yes
             QEMU_WORKERS: 3
-            QEMU_CPUS_WORKERS: 4
-            QEMU_MEMORY_WORKERS: 5120
+            QEMU_CPUS_WORKERS: 6
+            QEMU_MEMORY_WORKERS: 8192
             QEMU_EXTRA_DISKS: 1
             QEMU_EXTRA_DISKS_SIZE: 12288
             WITH_CONFIG_PATCH: "@hack/test/patches/rook-ceph.yaml"
