@@ -113,7 +113,7 @@ version_menu = "Releases"
 
 # A link to latest version of the docs. Used in the "version-banner" partial to
 # point people to the main doc site.
-url_latest_version = "/v1.7"
+url_latest_version = "/v1.8"
 
 # Repository configuration (URLs for in-page links to opening issues and suggesting changes)
 # github_repo = "https://github.com/googley-example"
@@ -142,11 +142,11 @@ prism_syntax_highlighting = false
 
 [[params.versions]]
 url = "/v1.8/"
-version = "v1.8 (pre-release)"
+version = "v1.8 (latest)"
 
 [[params.versions]]
 url = "/v1.7/"
-version = "v1.7 (latest)"
+version = "v1.7"
 
 [[params.versions]]
 url = "/v1.6/"
