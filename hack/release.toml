@@ -9,7 +9,7 @@ ignore_deps = ["github.com/coredns/coredns"]
 # previous release
 previous = "v1.7.0"
 
-pre_release = true
+pre_release = false
 
 preface = """\
 Starting with Talos v1.8.0, only standard assets would be published as github release assets. These include:
