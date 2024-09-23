@@ -8,7 +8,7 @@ description: "Linux kernel reference."
 Talos supports a number of kernel commandline parameters.  Some are required for
 it to operate.  Others are optional and useful in certain circumstances.
 
-Several of these are enforced by the Kernel Self Protection Project [KSPP](https://kernsec.org/wiki/index.php/Kernel_Self_Protection_Project/Recommended_Settings).
+Several of these are enforced by the Kernel Self Protection Project [KSPP](https://kspp.github.io/Recommended_Settings).
 
 **Required** parameters:
 
