@@ -11,11 +11,7 @@
   <a href="{{ $gh_url }}" target="_blank"><i class="fa fa-edit fa-fw"></i> {{ T "post_edit_this" }}</a>
 {{ else if $gh_repo -}}
   {{ $gh_repo_path := printf "%s/content/%s" $gh_branch $pathFormatted -}}
-  {{ if and ($gh_subdir) (.Site.Language.Lang) -}}
-    {{ $gh_repo_path = printf "%s/%s/content/%s/%s" $gh_branch $gh_subdir ($.Site.Language.Lang) $pathFormatted -}}
-  {{ else if .Site.Language.Lang -}}
-    {{ $gh_repo_path = printf "%s/content/%s/%s" $gh_branch ($.Site.Language.Lang) $pathFormatted -}}
-  {{ else if $gh_subdir -}}
+  {{ if $gh_subdir -}}
     {{ $gh_repo_path = printf "%s/%s/content/%s" $gh_branch $gh_subdir $pathFormatted -}}
   {{ end -}}
 
@@ -39,7 +35,6 @@
 
   <a href="{{ $viewURL }}" class="td-page-meta--view" target="_blank" rel="noopener"><i class="fa fa-file-alt fa-fw"></i> {{ T "post_view_this" }}</a>
   <a href="{{ $editURL }}" class="td-page-meta--edit" target="_blank" rel="noopener"><i class="fa fa-edit fa-fw"></i> {{ T "post_edit_this" }}</a>
-  <a href="{{ $newPageURL }}" class="td-page-meta--child" target="_blank" rel="noopener"><i class="fa fa-edit fa-fw"></i> {{ T "post_create_child_page" }}</a>
   <a href="{{ $issuesURL }}" class="td-page-meta--issue" target="_blank" rel="noopener"><i class="fab fa-github fa-fw"></i> {{ T "post_create_issue" }}</a>
   {{ with $gh_project_repo -}}
     {{ $project_issueURL := printf "%s/issues/new" . -}}
