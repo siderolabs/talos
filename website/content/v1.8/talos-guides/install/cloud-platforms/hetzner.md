@@ -275,3 +275,22 @@ At this point we can retrieve the admin `kubeconfig` by running:
 ```bash
 talosctl --talosconfig talosconfig kubeconfig .
 ```
+
+### Install Hetzner's Cloud Controller Manager
+
+First of all, we need to patch the Talos machine configuration used by each node:
+
+```yaml
+# patch.yaml
+cluster:
+    externalCloudProvider:
+        enabled: true
+```
+
+Then run the following command:
+
+```bash
+talosctl patch machineconfig --patch-file patch.yaml --nodes <comma separated list of all your nodes' IP addresses>
+```
+
+With that in place, we can now follow the [official instructions](https://github.com/hetznercloud/hcloud-cloud-controller-manager), ignoring the `kubeadm` related steps.
