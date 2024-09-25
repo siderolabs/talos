@@ -142,7 +142,7 @@ https://github.com/piraeusdatastore/kubectl-linstor
 Or use [krew](https://krew.sigs.k8s.io/): `kubectl krew install linstor`
 
 ```sh
-# Create device pool on a blank (no partitation table!) disk on node01
+# Create device pool on a blank (no partition table!) disk on node01
 kubectl linstor physical-storage create-device-pool --pool-name nvme_lvm_pool LVM node01 /dev/nvme0n1 --storage-pool nvme_pool
 ```
 
