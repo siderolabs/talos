@@ -15,10 +15,10 @@ NAME = Talos
 CLOUD_IMAGES_EXTRA_ARGS ?= ""
 
 ARTIFACTS := _out
-TOOLS ?= ghcr.io/siderolabs/tools:v1.7.0-4-gc844dc3
+TOOLS ?= ghcr.io/siderolabs/tools:v1.7.0-5-gc936ce1
 
 PKGS_PREFIX ?= ghcr.io/siderolabs
-PKGS ?= v1.7.0-29-gf0c088f
+PKGS ?= v1.7.0-33-g868e459
 EXTRAS ?= v1.7.0-2-g7c627a8
 
 PKG_FHS ?= $(PKGS_PREFIX)/fhs:$(PKGS)
@@ -86,7 +86,7 @@ INTEGRATION_TEST_DEFAULT_TARGET := integration-test-$(OPERATING_SYSTEM)
 MODULE_SIG_VERIFY_DEFAULT_TARGET := module-sig-verify-$(OPERATING_SYSTEM)
 INTEGRATION_TEST_PROVISION_DEFAULT_TARGET := integration-test-provision-$(OPERATING_SYSTEM)
 # renovate: datasource=github-releases depName=kubernetes/kubernetes
-KUBECTL_VERSION ?= v1.30.3
+KUBECTL_VERSION ?= v1.30.5
 # renovate: datasource=github-releases depName=kastenhq/kubestr
 KUBESTR_VERSION ?= v0.4.44
 # renovate: datasource=github-releases depName=helm/helm

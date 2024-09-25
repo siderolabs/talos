@@ -135,7 +135,7 @@ talosctl cluster create [flags]
       --ipxe-boot-script string                  iPXE boot script (URL) to use
       --iso-path string                          the ISO path to use for the initial boot (VM only)
       --kubeprism-port int                       KubePrism port (set to 0 to disable) (default 7445)
-      --kubernetes-version string                desired kubernetes version to run (default "1.30.3")
+      --kubernetes-version string                desired kubernetes version to run (default "1.30.5")
       --memory int                               the limit on memory usage in MB (each control plane/VM) (default 2048)
       --memory-workers int                       the limit on memory usage in MB (each worker/VM) (default 2048)
       --mtu int                                  MTU of the cluster network (default 1500)
@@ -1333,7 +1333,7 @@ talosctl gen config <cluster name> <cluster endpoint> [flags]
   -h, --help                                     help for config
       --install-disk string                      the disk to install to (default "/dev/sda")
       --install-image string                     the image used to perform an installation (default "ghcr.io/siderolabs/installer:latest")
-      --kubernetes-version string                desired kubernetes version to run (default "1.30.3")
+      --kubernetes-version string                desired kubernetes version to run (default "1.30.5")
   -o, --output string                            destination to output generated files. when multiple output types are specified, it must be a directory. for a single output type, it must either be a file path, or "-" for stdout
   -t, --output-types strings                     types of outputs to be generated. valid types are: ["controlplane" "worker" "talosconfig"] (default [controlplane,worker,talosconfig])
   -p, --persist                                  the desired persist value for configs (default true)
@@ -2946,7 +2946,7 @@ talosctl upgrade-k8s [flags]
       --pre-pull-images                   pre-pull images before upgrade (default true)
       --proxy-image string                kube-proxy image to use (default "registry.k8s.io/kube-proxy")
       --scheduler-image string            kube-scheduler image to use (default "registry.k8s.io/kube-scheduler")
-      --to string                         the Kubernetes control plane version to upgrade to (default "1.30.3")
+      --to string                         the Kubernetes control plane version to upgrade to (default "1.30.5")
       --upgrade-kubelet                   upgrade kubelet service (default true)
       --with-docs                         patch all machine configs adding the documentation for each field (default true)
       --with-examples                     patch all machine configs with the commented examples (default true)
