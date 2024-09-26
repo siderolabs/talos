@@ -445,67 +445,67 @@ COPY --from=machined-build /machined /machined
 
 FROM base AS talosctl-linux-amd64-build
 WORKDIR /src/cmd/talosctl
-ARG GO_BUILDFLAGS
+ARG GO_BUILDFLAGS_TALOSCTL
 ARG GO_LDFLAGS
 ARG GOAMD64
-RUN --mount=type=cache,target=/.cache GOOS=linux GOARCH=amd64 GOAMD64=${GOAMD64} go build ${GO_BUILDFLAGS} -ldflags "${GO_LDFLAGS}" -o /talosctl-linux-amd64
+RUN --mount=type=cache,target=/.cache GOOS=linux GOARCH=amd64 GOAMD64=${GOAMD64} go build ${GO_BUILDFLAGS_TALOSCTL} -ldflags "${GO_LDFLAGS}" -o /talosctl-linux-amd64
 RUN chmod +x /talosctl-linux-amd64
 RUN touch --date="@${SOURCE_DATE_EPOCH}" /talosctl-linux-amd64
 
 FROM base AS talosctl-linux-arm64-build
 WORKDIR /src/cmd/talosctl
-ARG GO_BUILDFLAGS
+ARG GO_BUILDFLAGS_TALOSCTL
 ARG GO_LDFLAGS
-RUN --mount=type=cache,target=/.cache GOOS=linux GOARCH=arm64 go build ${GO_BUILDFLAGS} -ldflags "${GO_LDFLAGS}" -o /talosctl-linux-arm64
+RUN --mount=type=cache,target=/.cache GOOS=linux GOARCH=arm64 go build ${GO_BUILDFLAGS_TALOSCTL} -ldflags "${GO_LDFLAGS}" -o /talosctl-linux-arm64
 RUN chmod +x /talosctl-linux-arm64
 RUN touch --date="@${SOURCE_DATE_EPOCH}" /talosctl-linux-arm64
 
 FROM base AS talosctl-linux-armv7-build
 WORKDIR /src/cmd/talosctl
-ARG GO_BUILDFLAGS
+ARG GO_BUILDFLAGS_TALOSCTL
 ARG GO_LDFLAGS
-RUN --mount=type=cache,target=/.cache GOOS=linux GOARCH=arm GOARM=7 go build ${GO_BUILDFLAGS} -ldflags "${GO_LDFLAGS}" -o /talosctl-linux-armv7
+RUN --mount=type=cache,target=/.cache GOOS=linux GOARCH=arm GOARM=7 go build ${GO_BUILDFLAGS_TALOSCTL} -ldflags "${GO_LDFLAGS}" -o /talosctl-linux-armv7
 RUN chmod +x /talosctl-linux-armv7
 RUN touch --date="@${SOURCE_DATE_EPOCH}" /talosctl-linux-armv7
 
 FROM base AS talosctl-darwin-amd64-build
 WORKDIR /src/cmd/talosctl
-ARG GO_BUILDFLAGS
+ARG GO_BUILDFLAGS_TALOSCTL
 ARG GO_LDFLAGS
 ARG GOAMD64
-RUN --mount=type=cache,target=/.cache GOOS=darwin GOARCH=amd64 GOAMD64=${GOAMD64} go build ${GO_BUILDFLAGS} -ldflags "${GO_LDFLAGS}" -o /talosctl-darwin-amd64
+RUN --mount=type=cache,target=/.cache GOOS=darwin GOARCH=amd64 GOAMD64=${GOAMD64} go build ${GO_BUILDFLAGS_TALOSCTL} -ldflags "${GO_LDFLAGS}" -o /talosctl-darwin-amd64
 RUN chmod +x /talosctl-darwin-amd64
 RUN touch --date="@${SOURCE_DATE_EPOCH}" /talosctl-darwin-amd64
 
 FROM base AS talosctl-darwin-arm64-build
 WORKDIR /src/cmd/talosctl
-ARG GO_BUILDFLAGS
+ARG GO_BUILDFLAGS_TALOSCTL
 ARG GO_LDFLAGS
-RUN --mount=type=cache,target=/.cache GOOS=darwin GOARCH=arm64 go build ${GO_BUILDFLAGS} -ldflags "${GO_LDFLAGS}" -o /talosctl-darwin-arm64
+RUN --mount=type=cache,target=/.cache GOOS=darwin GOARCH=arm64 go build ${GO_BUILDFLAGS_TALOSCTL} -ldflags "${GO_LDFLAGS}" -o /talosctl-darwin-arm64
 RUN chmod +x /talosctl-darwin-arm64
 RUN touch --date="@${SOURCE_DATE_EPOCH}" talosctl-darwin-arm64
 
 FROM base AS talosctl-windows-amd64-build
 WORKDIR /src/cmd/talosctl
-ARG GO_BUILDFLAGS
+ARG GO_BUILDFLAGS_TALOSCTL
 ARG GO_LDFLAGS
 ARG GOAMD64
-RUN --mount=type=cache,target=/.cache GOOS=windows GOARCH=amd64 GOAMD64=${GOAMD64} go build ${GO_BUILDFLAGS} -ldflags "${GO_LDFLAGS}" -o /talosctl-windows-amd64.exe
+RUN --mount=type=cache,target=/.cache GOOS=windows GOARCH=amd64 GOAMD64=${GOAMD64} go build ${GO_BUILDFLAGS_TALOSCTL} -ldflags "${GO_LDFLAGS}" -o /talosctl-windows-amd64.exe
 RUN touch --date="@${SOURCE_DATE_EPOCH}" /talosctl-windows-amd64.exe
 
 FROM base AS talosctl-freebsd-amd64-build
 WORKDIR /src/cmd/talosctl
-ARG GO_BUILDFLAGS
+ARG GO_BUILDFLAGS_TALOSCTL
 ARG GO_LDFLAGS
 ARG GOAMD64
-RUN --mount=type=cache,target=/.cache GOOS=freebsd GOARCH=amd64 GOAMD64=${GOAMD64} go build ${GO_BUILDFLAGS} -ldflags "${GO_LDFLAGS}" -o /talosctl-freebsd-amd64
+RUN --mount=type=cache,target=/.cache GOOS=freebsd GOARCH=amd64 GOAMD64=${GOAMD64} go build ${GO_BUILDFLAGS_TALOSCTL} -ldflags "${GO_LDFLAGS}" -o /talosctl-freebsd-amd64
 RUN touch --date="@${SOURCE_DATE_EPOCH}" /talosctl-freebsd-amd64
 
 FROM base AS talosctl-freebsd-arm64-build
 WORKDIR /src/cmd/talosctl
-ARG GO_BUILDFLAGS
+ARG GO_BUILDFLAGS_TALOSCTL
 ARG GO_LDFLAGS
-RUN --mount=type=cache,target=/.cache GOOS=freebsd GOARCH=arm64 go build ${GO_BUILDFLAGS} -ldflags "${GO_LDFLAGS}" -o /talosctl-freebsd-arm64
+RUN --mount=type=cache,target=/.cache GOOS=freebsd GOARCH=arm64 go build ${GO_BUILDFLAGS_TALOSCTL} -ldflags "${GO_LDFLAGS}" -o /talosctl-freebsd-arm64
 RUN touch --date="@${SOURCE_DATE_EPOCH}" /talosctl-freebsd-arm64
 
 FROM scratch AS talosctl-linux-amd64
