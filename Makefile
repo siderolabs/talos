@@ -121,6 +121,7 @@ IMAGER_ARGS ?=
 CGO_ENABLED ?= 0
 GO_BUILDFLAGS ?=
 GO_BUILDTAGS ?= tcell_minimal,grpcnotrace
+GO_BUILDTAGS_TALOSCTL ?= grpcnotrace
 GO_LDFLAGS ?=
 GOAMD64 ?= v2
 
@@ -136,10 +137,12 @@ endif
 
 ifneq (, $(filter $(WITH_DEBUG), t true TRUE y yes 1))
 GO_BUILDTAGS := $(GO_BUILDTAGS),sidero.debug
+GO_BUILDTAGS_TALOSCTL := $(GO_BUILDTAGS_TALOSCTL),sidero.debug
 else
 GO_LDFLAGS += -s -w
 endif
 
+GO_BUILDFLAGS_TALOSCTL := $(GO_BUILDFLAGS) -tags "$(GO_BUILDTAGS_TALOSCTL)"
 GO_BUILDFLAGS += -tags "$(GO_BUILDTAGS)"
 
 , := ,
@@ -177,6 +180,7 @@ COMMON_ARGS += --build-arg=TESTPKGS=$(TESTPKGS)
 COMMON_ARGS += --build-arg=INSTALLER_ARCH=$(INSTALLER_ARCH)
 COMMON_ARGS += --build-arg=CGO_ENABLED=$(CGO_ENABLED)
 COMMON_ARGS += --build-arg=GO_BUILDFLAGS="$(GO_BUILDFLAGS)"
+COMMON_ARGS += --build-arg=GO_BUILDFLAGS_TALOSCTL="$(GO_BUILDFLAGS_TALOSCTL)"
 COMMON_ARGS += --build-arg=GO_LDFLAGS="$(GO_LDFLAGS)"
 COMMON_ARGS += --build-arg=GOAMD64="$(GOAMD64)"
 COMMON_ARGS += --build-arg=http_proxy=$(http_proxy)
