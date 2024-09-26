@@ -1,3 +1,98 @@
+## [Talos 1.7.7](https://github.com/siderolabs/talos/releases/tag/v1.7.7) (2024-09-26)
+
+Welcome to the v1.7.7 release of Talos!
+
+
+
+Please try out the release binaries and report any issues at
+https://github.com/siderolabs/talos/issues.
+
+### Component Updates
+
+Linux: 6.6.52
+Kubernetes: 1.30.5
+containerd: 1.7.22
+runc: 1.1.14
+
+Talos is built with Go 1.22.7.
+
+
+### Contributors
+
+* Andrey Smirnov
+* Dmitriy Matrenichev
+* Matthieu Mottet
+* Mike Beaumont
+* Noel Georgi
+* Utku Ozdemir
+
+### Changes
+<details><summary>11 commits</summary>
+<p>
+
+* [`e53eff902`](https://github.com/siderolabs/talos/commit/e53eff902ff385a3a4208d2493612554e5e8cf53) fix: ignore invalid NTP responses
+* [`28b81b2b0`](https://github.com/siderolabs/talos/commit/28b81b2b0d06c60831c2ab328383708e8f2a9527) fix: report internally service as unhealthy if not running
+* [`da5b526e5`](https://github.com/siderolabs/talos/commit/da5b526e52c55075f85ac9b6168accf165ae336e) fix: report errors correctly when pulling, fix EEXIST
+* [`1e4e5acfe`](https://github.com/siderolabs/talos/commit/1e4e5acfe8140a525be96052eb4ed4126a19743a) chore: drop calico from interactive installer
+* [`e6fd4e078`](https://github.com/siderolabs/talos/commit/e6fd4e07874b89cb8785bfb76a109b539709ca0d) fix: merge extension service config files by `mountPath`
+* [`c95d1fee6`](https://github.com/siderolabs/talos/commit/c95d1fee642d74ebd8a1e69637b23466943d5ea0) fix: add missing host/nvme-rdma
+* [`0bd287838`](https://github.com/siderolabs/talos/commit/0bd287838ebdeca258a233871779f94543b96cf5) fix: bump go-smbios for broken SMIOS tables
+* [`63b59ebe4`](https://github.com/siderolabs/talos/commit/63b59ebe453298b771f8c375cdc263a2d959f37b) fix: add NVMe target kernel modules
+* [`d7b713679`](https://github.com/siderolabs/talos/commit/d7b7136793f57ca73d609772b759671dd0a2ee54) fix: retry with another upstream if the previous failed
+* [`c7f2da147`](https://github.com/siderolabs/talos/commit/c7f2da147a75260132bcd66e4fd2b7f4263538e5) fix: fix graph diffs in dashboard when node aliases are used
+* [`ae230db28`](https://github.com/siderolabs/talos/commit/ae230db28d1a1706f3169679ca8b470a92f2e15e) feat: update Linux 6.6.52, Kubernetes 1.30.3
+</p>
+</details>
+
+### Changes from siderolabs/go-smbios
+<details><summary>2 commits</summary>
+<p>
+
+* [`e781237`](https://github.com/siderolabs/go-smbios/commit/e781237bb6d0b04cfb9d380bc36b552f5ee53af2) fix: stop decoding without error if EOF encountered during header read
+* [`6a719a6`](https://github.com/siderolabs/go-smbios/commit/6a719a63dcd3b2c58ee14412973fa6a565e2905e) chore: rekres, bump deps
+</p>
+</details>
+
+### Changes from siderolabs/pkgs
+<details><summary>4 commits</summary>
+<p>
+
+* [`868e459`](https://github.com/siderolabs/pkgs/commit/868e459d0802e7b97e237cf74908191300a0b1ab) chore: rekres
+* [`ed36e2e`](https://github.com/siderolabs/pkgs/commit/ed36e2ef391f65c45e82cc67dd5d5af95b0258fb) fix: add mpt3sas UBSAN patches
+* [`3bfb1b5`](https://github.com/siderolabs/pkgs/commit/3bfb1b50d206dd819e8b62286ce0d4169ed1c654) feat: update packages
+* [`a3ca3b5`](https://github.com/siderolabs/pkgs/commit/a3ca3b527a5bd04ce6b49e7b0f1432580242e5f6) feat: update runc to 1.1.14
+</p>
+</details>
+
+### Changes from siderolabs/tools
+<details><summary>1 commit</summary>
+<p>
+
+* [`c936ce1`](https://github.com/siderolabs/tools/commit/c936ce11b44bddf29814e0d7040f9a558c617671) feat: update Go to 1.22.7
+</p>
+</details>
+
+### Dependency Changes
+
+* **github.com/containerd/containerd**      v1.7.16 -> v1.7.22
+* **github.com/containerd/containerd/api**  v1.7.19 **_new_**
+* **github.com/containerd/errdefs**         v0.1.0 **_new_**
+* **github.com/containerd/platforms**       v0.2.1 **_new_**
+* **github.com/siderolabs/go-smbios**       v0.3.2 -> v0.3.3
+* **github.com/siderolabs/pkgs**            v1.7.0-29-gf0c088f -> v1.7.0-33-g868e459
+* **github.com/siderolabs/tools**           v1.7.0-4-gc844dc3 -> v1.7.0-5-gc936ce1
+* **k8s.io/api**                            v0.30.3 -> v0.30.5
+* **k8s.io/apimachinery**                   v0.30.3 -> v0.30.5
+* **k8s.io/apiserver**                      v0.30.3 -> v0.30.5
+* **k8s.io/client-go**                      v0.30.3 -> v0.30.5
+* **k8s.io/component-base**                 v0.30.3 -> v0.30.5
+* **k8s.io/kube-scheduler**                 v0.30.3 -> v0.30.5
+* **k8s.io/kubectl**                        v0.30.3 -> v0.30.5
+* **k8s.io/kubelet**                        v0.30.3 -> v0.30.5
+* **k8s.io/pod-security-admission**         v0.30.3 -> v0.30.5
+
+Previous release can be found at [v1.7.6](https://github.com/siderolabs/talos/releases/tag/v1.7.6)
+
 ## [Talos 1.7.6](https://github.com/siderolabs/talos/releases/tag/v1.7.6) (2024-08-06)
 
 Welcome to the v1.7.6 release of Talos!
