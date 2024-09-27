@@ -40,7 +40,7 @@ func Run(ctx context.Context, settings *Settings, state *State, check Check) err
 
 	for {
 		err = func() error {
-			checkCtx, checkCtxCancel = context.WithTimeout(ctx, settings.Timeout)
+			checkCtx, checkCtxCancel = context.WithTimeout(ctx, settings.Timeout) //nolint:fatcontext
 			defer checkCtxCancel()
 
 			return check(checkCtx)

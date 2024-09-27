@@ -193,8 +193,8 @@ func Walker(ctx context.Context, rootPath string, options ...WalkerOption) (<-ch
 // OSPathSeparator is the string version of the os.PathSeparator.
 const OSPathSeparator = string(os.PathSeparator)
 
-func atMaxDepth(max int, root, cur string) bool {
-	if max < 0 {
+func atMaxDepth(maximum int, root, cur string) bool {
+	if maximum < 0 {
 		return false
 	}
 
@@ -203,5 +203,5 @@ func atMaxDepth(max int, root, cur string) bool {
 		return false
 	}
 
-	return (strings.Count(cur, OSPathSeparator) - strings.Count(root, OSPathSeparator)) >= max
+	return (strings.Count(cur, OSPathSeparator) - strings.Count(root, OSPathSeparator)) >= maximum
 }

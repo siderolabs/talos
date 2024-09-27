@@ -163,7 +163,7 @@ func (i *Injector) StreamInterceptor() grpc.StreamServerInterceptor {
 		ctx = ContextWithRoles(ctx, i.extractRoles(ctx))
 
 		wrapped := grpc_middleware.WrapServerStream(stream)
-		wrapped.WrappedContext = ctx
+		wrapped.WrappedContext = ctx //nolint:fatcontext
 
 		return handler(srv, wrapped)
 	}

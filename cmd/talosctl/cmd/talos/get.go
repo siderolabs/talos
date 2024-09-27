@@ -109,7 +109,7 @@ func getResources(args []string) func(ctx context.Context, c *client.Client) err
 				var nodeCtx context.Context
 
 				if node == "" {
-					nodeCtx = ctx //nolint:fatcontext
+					nodeCtx = ctx
 				} else {
 					nodeCtx = client.WithNode(ctx, node)
 				}

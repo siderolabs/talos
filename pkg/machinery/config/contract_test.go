@@ -67,6 +67,29 @@ func TestContractCurrent(t *testing.T) {
 	assert.True(t, contract.SecureBootEnrollEnforcementSupported())
 }
 
+func TestContract1_9(t *testing.T) {
+	contract := config.TalosVersion1_9
+
+	assert.True(t, contract.PodSecurityAdmissionEnabled())
+	assert.True(t, contract.StableHostnameEnabled())
+	assert.True(t, contract.KubeletDefaultRuntimeSeccompProfileEnabled())
+	assert.False(t, contract.KubernetesAlternateImageRegistries())
+	assert.True(t, contract.KubernetesAllowSchedulingOnControlPlanes())
+	assert.True(t, contract.KubernetesDiscoveryBackendDisabled())
+	assert.True(t, contract.ApidExtKeyUsageCheckEnabled())
+	assert.True(t, contract.APIServerAuditPolicySupported())
+	assert.True(t, contract.KubeletManifestsDirectoryDisabled())
+	assert.True(t, contract.SecretboxEncryptionSupported())
+	assert.True(t, contract.DiskQuotaSupportEnabled())
+	assert.True(t, contract.KubePrismEnabled())
+	assert.True(t, contract.HostDNSEnabled())
+	assert.True(t, contract.UseRSAServiceAccountKey())
+	assert.True(t, contract.ClusterNameForWorkers())
+	assert.True(t, contract.HostDNSForwardKubeDNSToHost())
+	assert.True(t, contract.AddExcludeFromExternalLoadBalancer())
+	assert.True(t, contract.SecureBootEnrollEnforcementSupported())
+}
+
 func TestContract1_8(t *testing.T) {
 	contract := config.TalosVersion1_8
 

@@ -125,7 +125,6 @@ func (suite *GenerateSuite) TestGenerateTalosconfigSuccess() {
 
 	creds, err := client.CertificateFromConfigContext(cfg.Contexts[cfg.Context])
 	suite.Require().NoError(err)
-	suite.Require().Nil(creds.Leaf)
 	suite.Require().Len(creds.Certificate, 1)
 
 	cert, err := x509.ParseCertificate(creds.Certificate[0])

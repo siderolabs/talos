@@ -140,7 +140,7 @@ func WithBootstrapNode(ctx context.Context, bootstrapClient *client.Client, boot
 	return func(c *Connection) error {
 		c.bootstrapEndpoint = bootstrapNode
 		c.bootstrapClient = bootstrapClient
-		c.bootstrapCtx = ctx
+		c.bootstrapCtx = ctx //nolint:fatcontext
 
 		return nil
 	}

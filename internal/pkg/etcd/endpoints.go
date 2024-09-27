@@ -42,7 +42,7 @@ func GetEndpoints(ctx context.Context, resources state.State) ([]string, error) 
 	endpoints := endpointAddrs.Strings()
 
 	// Etcd expects host:port format.
-	for i := range len(endpoints) {
+	for i := range endpoints {
 		endpoints[i] = nethelpers.JoinHostPort(endpoints[i], constants.EtcdClientPort)
 	}
 

@@ -229,6 +229,8 @@ func TypeInfo(t types.Type) TypeInfoData {
 		return makeType[Basic]("", t.Name())
 	case *types.Pointer:
 		return TypeInfo(t.Elem())
+	case *types.Alias:
+		return TypeInfo(types.Unalias(t))
 	case *types.Named:
 		if _, ok := t.Underlying().(*types.Basic); ok {
 			return makeType[Basic](t.Obj().Pkg().Path(), t.Obj().Name())

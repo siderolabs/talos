@@ -1,0 +1,95 @@
+version: v1alpha1
+debug: false
+persist: true
+machine:
+    type: controlplane
+    token: d8cwfa.eyvpi0xwxyarbfid
+    ca:
+        crt: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUJQakNCOGFBREFnRUNBaEI5cStGVXpodzkycHVPemtpNzB1eGRNQVVHQXl0bGNEQVFNUTR3REFZRFZRUUsKRXdWMFlXeHZjekFlRncweU16RXdNVEl4TURRMk1EbGFGdzB6TXpFd01Ea3hNRFEyTURsYU1CQXhEakFNQmdOVgpCQW9UQlhSaGJHOXpNQ293QlFZREsyVndBeUVBaHVLczZxeCtKWi8wWG8ybXdpQUNjK1EwSVYySGhMd3ozVTZICmUxemZjS2lqWVRCZk1BNEdBMVVkRHdFQi93UUVBd0lDaERBZEJnTlZIU1VFRmpBVUJnZ3JCZ0VGQlFjREFRWUkKS3dZQkJRVUhBd0l3RHdZRFZSMFRBUUgvQkFVd0F3RUIvekFkQmdOVkhRNEVGZ1FVSlgzWlVNRktWWFZ5NWhKWQozZG9NWENpVEJZRXdCUVlESzJWd0EwRUFCbUxrbDhITmQ3cUpEN3VqQkk2UG9abVRQQWlEcU9GQ0NTVDZJYlZDClF3UzQ1bk1tMldtalRIc3ZrYU5FQ0dneTBhQXJaaFdsbnVYWUswY0t3Z2VJQ0E9PQotLS0tLUVORCBDRVJUSUZJQ0FURS0tLS0tCg==
+        key: LS0tLS1CRUdJTiBFRDI1NTE5IFBSSVZBVEUgS0VZLS0tLS0KTUM0Q0FRQXdCUVlESzJWd0JDSUVJTURXbklEdVpSdlhQcW1tbSt6bk15SWMrdk53ZjdnYksvSmR3WC9iN2d1RQotLS0tLUVORCBFRDI1NTE5IFBSSVZBVEUgS0VZLS0tLS0K
+    certSANs: []
+    kubelet:
+        image: ghcr.io/siderolabs/kubelet:v1.28.0
+        defaultRuntimeSeccompProfileEnabled: true
+        disableManifestsDirectory: true
+    network: {}
+    install:
+        wipe: false
+    features:
+        rbac: true
+        stableHostname: true
+        apidCheckExtKeyUsage: true
+        diskQuotaSupport: true
+        kubePrism:
+            enabled: true
+            port: 7445
+        hostDNS:
+            enabled: true
+            forwardKubeDNSToHost: true
+    nodeLabels:
+        node.kubernetes.io/exclude-from-external-load-balancers: ""
+cluster:
+    id: 0raF93qnkMvF-FZNuvyGozXNdLiT2FOWSlyBaW4PR-w=
+    secret: pofHbABZq7VXuObsdLdy/bHmz6hlMHZ3p8+6WKrv1ic=
+    controlPlane:
+        endpoint: https://base:6443
+    clusterName: base
+    network:
+        dnsDomain: cluster.local
+        podSubnets:
+            - 10.244.0.0/16
+        serviceSubnets:
+            - 10.96.0.0/12
+    token: inn7ol.u4ehnti8qyls9ymo
+    secretboxEncryptionSecret: 45yd2Ke+sytiICojDf8aibTfgt99nzJmO53cjDqrCto=
+    ca:
+        crt: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUJpVENDQVMrZ0F3SUJBZ0lRYm1hNDNPalRwR0I5TjVxOVFEc3RFekFLQmdncWhrak9QUVFEQWpBVk1STXcKRVFZRFZRUUtFd3ByZFdKbGNtNWxkR1Z6TUI0WERUSXpNVEF4TWpFd05EWXdPVm9YRFRNek1UQXdPVEV3TkRZdwpPVm93RlRFVE1CRUdBMVVFQ2hNS2EzVmlaWEp1WlhSbGN6QlpNQk1HQnlxR1NNNDlBZ0VHQ0NxR1NNNDlBd0VICkEwSUFCTXNhRWZ5R3lFb0xyK0p1Wk91dkVVaXVNMStIQjZvZGtSdVV3ZEJ0ODdacDd1SkVoaEFsZitxNFFjT3gKcFRpZnBIRHJBOEFURjNCWUlFRmFXZ0xPTld1allUQmZNQTRHQTFVZER3RUIvd1FFQXdJQ2hEQWRCZ05WSFNVRQpGakFVQmdnckJnRUZCUWNEQVFZSUt3WUJCUVVIQXdJd0R3WURWUjBUQVFIL0JBVXdBd0VCL3pBZEJnTlZIUTRFCkZnUVU0ZEVkM1RoVzRKWlVWcXR1OEFZNWx1NUhQeGN3Q2dZSUtvWkl6ajBFQXdJRFNBQXdSUUloQUpJbkFMb0EKY1VhRUp4VlJ5dkhQenFQcTBvaGJOY2oyT3N2d3VKUFMzSktVQWlCSmhwNGFWMG9zUURRSGJnbjdXUWFYaHZFTwo5bWxTbVRURTAyOXBWb0YyWkE9PQotLS0tLUVORCBDRVJUSUZJQ0FURS0tLS0tCg==
+        key: LS0tLS1CRUdJTiBFQyBQUklWQVRFIEtFWS0tLS0tCk1IY0NBUUVFSUVZbFloNzVTUTZ6VUJFTUZ6em5pUzZuVVg3Q2VxQ013S3k0RTZHVEVFMGNvQW9HQ0NxR1NNNDkKQXdFSG9VUURRZ0FFeXhvUi9JYklTZ3V2NG01azY2OFJTSzR6WDRjSHFoMlJHNVRCMEczenRtbnU0a1NHRUNWLwo2cmhCdzdHbE9KK2tjT3NEd0JNWGNGZ2dRVnBhQXM0MWF3PT0KLS0tLS1FTkQgRUMgUFJJVkFURSBLRVktLS0tLQo=
+    aggregatorCA:
+        crt: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUJYakNDQVFXZ0F3SUJBZ0lRWnNnVDRZZzVxRkNIbS9QTnV5QUVSekFLQmdncWhrak9QUVFEQWpBQU1CNFgKRFRJek1UQXhNakV3TkRZd09Wb1hEVE16TVRBd09URXdORFl3T1Zvd0FEQlpNQk1HQnlxR1NNNDlBZ0VHQ0NxRwpTTTQ5QXdFSEEwSUFCRmQ1eEhFWHhZRndQeTdaWjhmd3FHRGU2YVQ5ZmxNRVlWZENRNDlEaWZobWVteTVDaHZRCnlVRkpZcFM4b21HODVTS1dnOEpFTkoyNnhEdm9WMFBCS2srallUQmZNQTRHQTFVZER3RUIvd1FFQXdJQ2hEQWQKQmdOVkhTVUVGakFVQmdnckJnRUZCUWNEQVFZSUt3WUJCUVVIQXdJd0R3WURWUjBUQVFIL0JBVXdBd0VCL3pBZApCZ05WSFE0RUZnUVV4K0xab1FrYjlmOTN0Y0g4NnZjOUc2ZE13T2t3Q2dZSUtvWkl6ajBFQXdJRFJ3QXdSQUlnClhudDVXdmEzOGtWVTB3NjExMEp4bU43Qm5zcWl2NnNMaXlJNXRUR1BDQk1DSUZDQlJ3RXZSYTNnU3pkdXB6ajcKQVJLV3NlK3V5YW9rMnlNYXZnaUVITWpUCi0tLS0tRU5EIENFUlRJRklDQVRFLS0tLS0K
+        key: LS0tLS1CRUdJTiBFQyBQUklWQVRFIEtFWS0tLS0tCk1IY0NBUUVFSUlMblhpQ3hOWU1CWHpncjVuYmc3bnVtUWM2UGlHaXdmWUN2eFF3Tlhxc3dvQW9HQ0NxR1NNNDkKQXdFSG9VUURRZ0FFVjNuRWNSZkZnWEEvTHRsbngvQ29ZTjdwcFAxK1V3UmhWMEpEajBPSitHWjZiTGtLRzlESgpRVWxpbEx5aVliemxJcGFEd2tRMG5ickVPK2hYUThFcVR3PT0KLS0tLS1FTkQgRUMgUFJJVkFURSBLRVktLS0tLQo=
+    serviceAccount:
+        key: LS0tLS1CRUdJTiBFQyBQUklWQVRFIEtFWS0tLS0tCk1IY0NBUUVFSUlHVElBQjZZUzV0cFcrUnYxeDBPY09Jb1h0SXgzdGZteVFZNGxOWWRCbmpvQW9HQ0NxR1NNNDkKQXdFSG9VUURRZ0FFQ3drbVVTUmtrbnlOc0NjTFJNUTlmZWx6cFY0dDdIdlNRcnp6ZGRvK2pWYmlqd2kwVVE1YQp0VW8vZkxQbDlBckVNOHNRWTVOSlgraVdxYjFkQWFXa2VnPT0KLS0tLS1FTkQgRUMgUFJJVkFURSBLRVktLS0tLQo=
+    apiServer:
+        image: registry.k8s.io/kube-apiserver:v1.28.0
+        certSANs:
+            - base
+        disablePodSecurityPolicy: true
+        admissionControl:
+            - name: PodSecurity
+              configuration:
+                apiVersion: pod-security.admission.config.k8s.io/v1alpha1
+                defaults:
+                    audit: restricted
+                    audit-version: latest
+                    enforce: baseline
+                    enforce-version: latest
+                    warn: restricted
+                    warn-version: latest
+                exemptions:
+                    namespaces:
+                        - kube-system
+                    runtimeClasses: []
+                    usernames: []
+                kind: PodSecurityConfiguration
+        auditPolicy:
+            apiVersion: audit.k8s.io/v1
+            kind: Policy
+            rules:
+                - level: Metadata
+    controllerManager:
+        image: registry.k8s.io/kube-controller-manager:v1.28.0
+    proxy:
+        image: registry.k8s.io/kube-proxy:v1.28.0
+    scheduler:
+        image: registry.k8s.io/kube-scheduler:v1.28.0
+    discovery:
+        enabled: true
+        registries:
+            kubernetes:
+                disabled: true
+            service: {}
+    etcd:
+        ca:
+            crt: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUJmVENDQVNPZ0F3SUJBZ0lRVkNTWmFQU3Z0TlZTcjYrVkRyUks0akFLQmdncWhrak9QUVFEQWpBUE1RMHcKQ3dZRFZRUUtFd1JsZEdOa01CNFhEVEl6TVRBeE1qRXdORFl3T1ZvWERUTXpNVEF3T1RFd05EWXdPVm93RHpFTgpNQXNHQTFVRUNoTUVaWFJqWkRCWk1CTUdCeXFHU000OUFnRUdDQ3FHU000OUF3RUhBMElBQk9wVXN0MHN3MEJZCkFDN0hpTGNrRElvdVdTRVhWTlJVWE42UmNLTWVRQU9VOEhJQkZBaTJlS2Rka2VJOEhZOTJNWTU1U21xQlhNK3cKRTh0RFgyT3kxSk9qWVRCZk1BNEdBMVVkRHdFQi93UUVBd0lDaERBZEJnTlZIU1VFRmpBVUJnZ3JCZ0VGQlFjRApBUVlJS3dZQkJRVUhBd0l3RHdZRFZSMFRBUUgvQkFVd0F3RUIvekFkQmdOVkhRNEVGZ1FVejVmai9oZTZoUjhMCkFRTU5qTjgxNS8zV3B6d3dDZ1lJS29aSXpqMEVBd0lEU0FBd1JRSWdFWWcyTlp3NkExek02eURNWTRHN1JPVkwKc0JOU0VhSDd4VmVSalBSblAvZ0NJUURiYzFMNmI0SkU0MCtuUCtYNG5pZlB0QWp5REhhUzVMS0YzQWZkUkRWdApMUT09Ci0tLS0tRU5EIENFUlRJRklDQVRFLS0tLS0K
+            key: LS0tLS1CRUdJTiBFQyBQUklWQVRFIEtFWS0tLS0tCk1IY0NBUUVFSU03Q2VnMk1GQW5TM3ROMzV6QTc0aFZ3VElkTkthK0ZwUHlYVERCdU4wVFlvQW9HQ0NxR1NNNDkKQXdFSG9VUURRZ0FFNmxTeTNTekRRRmdBTHNlSXR5UU1paTVaSVJkVTFGUmMzcEZ3b3g1QUE1VHdjZ0VVQ0xaNApwMTJSNGp3ZGozWXhqbmxLYW9GY3o3QVR5ME5mWTdMVWt3PT0KLS0tLS1FTkQgRUMgUFJJVkFURSBLRVktLS0tLQo=
