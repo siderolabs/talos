@@ -72,7 +72,7 @@ func (c *Udevd) Runner(r runtime.Runtime) (runner.Runner, error) {
 	args := &runner.Args{
 		ID: c.ID(r),
 		ProcessArgs: []string{
-			"/sbin/udevd",
+			"/sbin/systemd-udevd",
 			"--resolve-names=never",
 		},
 	}

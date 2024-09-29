@@ -13,7 +13,8 @@ ARG PKG_CA_CERTIFICATES
 ARG PKG_CRYPTSETUP
 ARG PKG_CONTAINERD
 ARG PKG_DOSFSTOOLS
-ARG PKG_EUDEV
+ARG PKG_SYSTEMD_UDEVD
+ARG PKG_LIBCAP
 ARG PKG_GRUB
 ARG PKG_SD_BOOT
 ARG PKG_IPTABLES
@@ -21,6 +22,9 @@ ARG PKG_IPXE
 ARG PKG_LIBINIH
 ARG PKG_LIBJSON_C
 ARG PKG_LIBPOPT
+ARG PKG_LIBSEPOL
+ARG PKG_LIBSELINUX
+ARG PKG_PCRE2
 ARG PKG_LIBURCU
 ARG PKG_OPENSSL
 ARG PKG_LIBSECCOMP
@@ -55,8 +59,11 @@ FROM --platform=arm64 ${PKG_CONTAINERD} AS pkg-containerd-arm64
 FROM --platform=amd64 ${PKG_DOSFSTOOLS} AS pkg-dosfstools-amd64
 FROM --platform=arm64 ${PKG_DOSFSTOOLS} AS pkg-dosfstools-arm64
 
-FROM --platform=amd64 ${PKG_EUDEV} AS pkg-eudev-amd64
-FROM --platform=arm64 ${PKG_EUDEV} AS pkg-eudev-arm64
+FROM --platform=amd64 ${PKG_SYSTEMD_UDEVD} AS pkg-systemd-udevd-amd64
+FROM --platform=arm64 ${PKG_SYSTEMD_UDEVD} AS pkg-systemd-udevd-arm64
+
+FROM --platform=amd64 ${PKG_LIBCAP} AS pkg-libcap-amd64
+FROM --platform=arm64 ${PKG_LIBCAP} AS pkg-libcap-arm64
 
 FROM ${PKG_GRUB} AS pkg-grub
 FROM --platform=amd64 ${PKG_GRUB} AS pkg-grub-amd64
@@ -83,6 +90,15 @@ FROM --platform=arm64 ${PKG_LIBPOPT} AS pkg-libpopt-arm64
 
 FROM --platform=amd64 ${PKG_LIBURCU} AS pkg-liburcu-amd64
 FROM --platform=arm64 ${PKG_LIBURCU} AS pkg-liburcu-arm64
+
+FROM --platform=amd64 ${PKG_LIBSEPOL} AS pkg-libsepol-amd64
+FROM --platform=arm64 ${PKG_LIBSEPOL} AS pkg-libsepol-arm64
+
+FROM --platform=amd64 ${PKG_LIBSELINUX} AS pkg-libselinux-amd64
+FROM --platform=arm64 ${PKG_LIBSELINUX} AS pkg-libselinux-arm64
+
+FROM --platform=amd64 ${PKG_PCRE2} AS pkg-pcre2-amd64
+FROM --platform=arm64 ${PKG_PCRE2} AS pkg-pcre2-arm64
 
 FROM --platform=amd64 ${PKG_OPENSSL} AS pkg-openssl-amd64
 FROM --platform=arm64 ${PKG_OPENSSL} AS pkg-openssl-arm64
@@ -611,12 +627,16 @@ COPY --link --from=pkg-flannel-cni-amd64 / /rootfs
 COPY --link --from=pkg-cryptsetup-amd64 / /rootfs
 COPY --link --from=pkg-containerd-amd64 / /rootfs
 COPY --link --from=pkg-dosfstools-amd64 / /rootfs
-COPY --link --from=pkg-eudev-amd64 / /rootfs
+COPY --link --from=pkg-systemd-udevd-amd64 / /rootfs
+COPY --link --from=pkg-libcap-amd64 / /rootfs
 COPY --link --from=pkg-iptables-amd64 / /rootfs
 COPY --link --from=pkg-libinih-amd64 / /rootfs
 COPY --link --from=pkg-libjson-c-amd64 / /rootfs
 COPY --link --from=pkg-libpopt-amd64 / /rootfs
 COPY --link --from=pkg-liburcu-amd64 / /rootfs
+COPY --link --from=pkg-libsepol-amd64 / /rootfs
+COPY --link --from=pkg-libselinux-amd64 / /rootfs
+COPY --link --from=pkg-pcre2-amd64 / /rootfs
 COPY --link --from=pkg-openssl-amd64 / /rootfs
 COPY --link --from=pkg-libseccomp-amd64 / /rootfs
 COPY --link --from=pkg-lvm2-amd64 / /rootfs
@@ -677,12 +697,16 @@ COPY --link --from=pkg-flannel-cni-arm64 / /rootfs
 COPY --link --from=pkg-cryptsetup-arm64 / /rootfs
 COPY --link --from=pkg-containerd-arm64 / /rootfs
 COPY --link --from=pkg-dosfstools-arm64 / /rootfs
-COPY --link --from=pkg-eudev-arm64 / /rootfs
+COPY --link --from=pkg-systemd-udevd-arm64 / /rootfs
+COPY --link --from=pkg-libcap-arm64 / /rootfs
 COPY --link --from=pkg-iptables-arm64 / /rootfs
 COPY --link --from=pkg-libinih-arm64 / /rootfs
 COPY --link --from=pkg-libjson-c-arm64 / /rootfs
 COPY --link --from=pkg-libpopt-arm64 / /rootfs
 COPY --link --from=pkg-liburcu-arm64 / /rootfs
+COPY --link --from=pkg-libsepol-arm64 / /rootfs
+COPY --link --from=pkg-libselinux-arm64 / /rootfs
+COPY --link --from=pkg-pcre2-arm64 / /rootfs
 COPY --link --from=pkg-openssl-arm64 / /rootfs
 COPY --link --from=pkg-libseccomp-arm64 / /rootfs
 COPY --link --from=pkg-lvm2-arm64 / /rootfs
