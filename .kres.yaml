@@ -1435,8 +1435,6 @@ spec:
       runners:
         - self-hosted
         - generic # this is not compute intensive, so we can use generic
-      crons:
-        - '30 2 * * *'
       triggerLabels:
         - integration/cloud-images
       steps:
