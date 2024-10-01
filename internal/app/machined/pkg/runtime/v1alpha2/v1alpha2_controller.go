@@ -298,6 +298,7 @@ func (ctrl *Controller) Run(ctx context.Context, drainer *runtime.Drainer) error
 			ConfigPath:       constants.ExtensionServiceConfigPath,
 		},
 		&runtimecontrollers.ExtensionStatusController{},
+		&runtimecontrollers.FDSpyController{},
 		&runtimecontrollers.KernelModuleConfigController{},
 		&runtimecontrollers.KernelModuleSpecController{
 			V1Alpha1Mode: ctrl.v1alpha1Runtime.State().Platform().Mode(),
