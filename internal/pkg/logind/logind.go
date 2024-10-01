@@ -49,7 +49,7 @@ func (mock *logindMock) Inhibit(what, who, why, mode string) (dbus.UnixFD, *dbus
 	}
 
 	mock.inhibitPipe = make([]int, 2)
-	if err := syscall.Pipe(mock.inhibitPipe); err != nil {
+	if err := syscall.Pipe2(mock.inhibitPipe, syscall.O_CLOEXEC); err != nil {
 		return dbus.UnixFD(0), dbus.MakeFailedError(err)
 	}
 
