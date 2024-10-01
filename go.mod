@@ -26,6 +26,18 @@ replace (
 	gopkg.in/yaml.v3 => github.com/unix4ever/yaml v0.0.0-20220527175918-f17b0f05cf2c
 )
 
+// fd-leak related replacements: https://github.com/siderolabs/talos/issues/9412
+replace (
+	// https://github.com/insomniacslk/dhcp/pull/550
+	github.com/insomniacslk/dhcp => github.com/smira/dhcp v0.0.0-20241001122726-31e9ef21c016
+
+	// https://github.com/safchain/ethtool/pull/88
+	github.com/safchain/ethtool => github.com/smira/ethtool v0.0.0-20241001133415-4d519940893f
+
+	// https://github.com/vishvananda/netlink/pull/1023
+	github.com/vishvananda/netlink => github.com/smira/netlink v0.0.0-20241001134714-cf141a3c404c
+)
+
 // Kubernetes dependencies sharing the same version.
 require (
 	k8s.io/api v0.31.1

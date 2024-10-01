@@ -128,7 +128,7 @@ func recusiveDeleteInner(parentFd int, parentDev uint64, childName, path string)
 		return preserved, nil
 	}
 
-	childFd, err := unix.Openat(parentFd, childName, unix.O_DIRECTORY|unix.O_NOFOLLOW, unix.O_RDWR)
+	childFd, err := unix.Openat(parentFd, childName, unix.O_DIRECTORY|unix.O_NOFOLLOW|unix.O_CLOEXEC, unix.O_RDWR)
 	if err != nil {
 		return false, unix.Unlinkat(parentFd, childName, 0)
 	}

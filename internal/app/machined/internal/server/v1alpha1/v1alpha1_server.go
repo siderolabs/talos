@@ -2205,6 +2205,7 @@ func (s *Server) PacketCapture(in *machine.PacketCaptureRequest, srv machine.Mac
 	handle, err := afpacket.NewTPacket(
 		afpacket.OptInterface(in.Interface),
 		afpacket.OptPollTimeout(100*time.Millisecond),
+		afpacket.OptSocketType(unix.SOCK_RAW|unix.SOCK_CLOEXEC),
 	)
 	if err != nil {
 		return fmt.Errorf("error creating afpacket handle: %w", err)
