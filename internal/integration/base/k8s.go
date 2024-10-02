@@ -200,6 +200,7 @@ func (k8sSuite *K8sSuite) WaitForEventExists(ctx context.Context, ns string, che
 
 type podInfo interface {
 	Name() string
+	WithNodeName(nodeName string) podInfo
 	Create(ctx context.Context, waitTimeout time.Duration) error
 	Delete(ctx context.Context) error
 	Exec(ctx context.Context, command string) (string, string, error)
@@ -215,6 +216,12 @@ type pod struct {
 
 func (p *pod) Name() string {
 	return p.name
+}
+
+func (p *pod) WithNodeName(nodeName string) podInfo {
+	p.pod.Spec.NodeName = nodeName
+
+	return p
 }
 
 func (p *pod) Create(ctx context.Context, waitTimeout time.Duration) error {
