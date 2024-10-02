@@ -148,7 +148,7 @@ Make any adjustments to the `controlplane.yaml` and/or `worker.yaml` as you like
 Next we will create the actual VM and supply the `controlplane.yaml` as base64 encoded `userdata`.
 
 ```bash
-$ cmk deploy virtualmachine zoneid=${ZONEID} templateid=${IMAGE_ID} serviceofferingid=${SERVICEOFFERING_ID} networkIds=${NETWORK_ID} name=talosdemo  usersdata=$(base64 controlplane.yaml | tr -d '\n')
+$ cmk deploy virtualmachine zoneid=${ZONE_ID} templateid=${IMAGE_ID} serviceofferingid=${SERVICEOFFERING_ID} networkIds=${NETWORK_ID} name=talosdemo  usersdata=$(base64 controlplane.yaml | tr -d '\n')
 {
   "virtualmachine": {
     "account": "admin",
