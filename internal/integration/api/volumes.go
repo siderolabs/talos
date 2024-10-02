@@ -191,6 +191,13 @@ func (suite *VolumesSuite) TestLVMActivation() {
 
 	node := suite.RandomDiscoveredNodeInternalIP(machine.TypeWorker)
 
+	k8sNode, err := suite.GetK8sNodeByInternalIP(suite.ctx, node)
+	suite.Require().NoError(err)
+
+	nodeName := k8sNode.Name
+
+	suite.T().Logf("creating LVM volume group on node %s/%s", node, nodeName)
+
 	userDisks, err := suite.UserDisks(suite.ctx, node)
 	suite.Require().NoError(err)
 
@@ -200,6 +207,8 @@ func (suite *VolumesSuite) TestLVMActivation() {
 
 	podDef, err := suite.NewPrivilegedPod("pv-create")
 	suite.Require().NoError(err)
+
+	podDef = podDef.WithNodeName(nodeName)
 
 	suite.Require().NoError(podDef.Create(suite.ctx, 5*time.Minute))
 
@@ -230,8 +239,12 @@ func (suite *VolumesSuite) TestLVMActivation() {
 	suite.Require().Contains(stdout, "Logical volume \"lv1\" created.")
 
 	defer func() {
+		suite.T().Logf("removing LVM volumes %s/%s", node, nodeName)
+
 		deletePodDef, err := suite.NewPrivilegedPod("pv-destroy")
 		suite.Require().NoError(err)
+
+		deletePodDef = deletePodDef.WithNodeName(nodeName)
 
 		suite.Require().NoError(deletePodDef.Create(suite.ctx, 5*time.Minute))
 
@@ -252,6 +265,8 @@ func (suite *VolumesSuite) TestLVMActivation() {
 		}
 	}()
 
+	suite.T().Logf("rebooting node %s/%s", node, nodeName)
+
 	// now we want to reboot the node and make sure the array is still mounted
 	suite.AssertRebooted(
 		suite.ctx, node, func(nodeCtx context.Context) error {
@@ -259,14 +274,14 @@ func (suite *VolumesSuite) TestLVMActivation() {
 		}, 5*time.Minute,
 	)
 
+	suite.T().Logf("verifying LVM activation %s/%s", node, nodeName)
+
 	suite.Require().Eventually(func() bool {
-		return suite.lvmVolumeExists()
+		return suite.lvmVolumeExists(node)
 	}, 5*time.Second, 1*time.Second, "LVM volume group was not activated after reboot")
 }
 
-func (suite *VolumesSuite) lvmVolumeExists() bool {
-	node := suite.RandomDiscoveredNodeInternalIP(machine.TypeWorker)
-
+func (suite *VolumesSuite) lvmVolumeExists(node string) bool {
 	ctx := client.WithNode(suite.ctx, node)
 
 	disks, err := safe.StateListAll[*block.Disk](ctx, suite.Client.COSI)

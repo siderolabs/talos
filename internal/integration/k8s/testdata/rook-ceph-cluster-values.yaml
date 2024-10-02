@@ -15,3 +15,8 @@ cephClusterSpec:
       requests:
         cpu: "500m"
         memory: "1Gi"
+  storage:
+    useAllNodes: true
+    useAllDevices: true
+    config:
+      encryptedDevice: "true"

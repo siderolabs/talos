@@ -11,16 +11,11 @@ import (
 
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/safe"
-	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/hashicorp/go-multierror"
-	"github.com/siderolabs/gen/optional"
 	"github.com/siderolabs/go-cmd/pkg/cmd"
 	"go.uber.org/zap"
 
-	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/resources/block"
-	runtimeres "github.com/siderolabs/talos/pkg/machinery/resources/runtime"
-	"github.com/siderolabs/talos/pkg/machinery/resources/v1alpha1"
 )
 
 // LVMActivationController activates LVM volumes when they are discovered by the block.DiscoveryController.
@@ -37,12 +32,6 @@ func (ctrl *LVMActivationController) Name() string {
 // Inputs implements controller.Controller interface.
 func (ctrl *LVMActivationController) Inputs() []controller.Input {
 	return []controller.Input{
-		{
-			Namespace: v1alpha1.NamespaceName,
-			Type:      runtimeres.MountStatusType,
-			ID:        optional.Some(constants.EphemeralPartitionLabel),
-			Kind:      controller.InputWeak,
-		},
 		{
 			Namespace: block.NamespaceName,
 			Type:      block.DiscoveredVolumeType,
@@ -75,15 +64,6 @@ func (ctrl *LVMActivationController) Run(ctx context.Context, r controller.Runti
 		case <-r.EventCh():
 		}
 
-		if _, err := safe.ReaderGetByID[*runtimeres.MountStatus](ctx, r, constants.EphemeralPartitionLabel); err != nil {
-			if state.IsNotFoundError(err) {
-				// wait for the mount status to be available
-				continue
-			}
-
-			return fmt.Errorf("failed to get mount status: %w", err)
-		}
-
 		discoveredVolumes, err := safe.ReaderListAll[*block.DiscoveredVolume](ctx, r)
 		if err != nil {
 			return fmt.Errorf("failed to list discovered volumes: %w", err)
@@ -92,17 +72,19 @@ func (ctrl *LVMActivationController) Run(ctx context.Context, r controller.Runti
 		var multiErr error
 
 		for iterator := discoveredVolumes.Iterator(); iterator.Next(); {
-			if _, ok := ctrl.seenVolumes[iterator.Value().Metadata().ID()]; ok {
-				continue
-			}
-
 			if iterator.Value().TypedSpec().Name != "lvm2-pv" {
+				// if the volume is not an LVM volume the moment we saw it, we can skip it
+				// we need to activate the volumes only on reboot, not when they are first formatted
 				ctrl.seenVolumes[iterator.Value().Metadata().ID()] = struct{}{}
 
 				continue
 			}
 
-			logger.Info("checking device for LVM volume activation", zap.String("device", iterator.Value().TypedSpec().DevPath))
+			if _, ok := ctrl.seenVolumes[iterator.Value().Metadata().ID()]; ok {
+				continue
+			}
+
+			logger.Debug("checking device for LVM volume activation", zap.String("device", iterator.Value().TypedSpec().DevPath))
 
 			vgName, err := ctrl.checkVGNeedsActivation(ctx, iterator.Value().TypedSpec().DevPath)
 			if err != nil {
@@ -112,8 +94,6 @@ func (ctrl *LVMActivationController) Run(ctx context.Context, r controller.Runti
 			}
 
 			if vgName == "" {
-				ctrl.seenVolumes[iterator.Value().Metadata().ID()] = struct{}{}
-
 				continue
 			}
 
@@ -132,10 +112,10 @@ func (ctrl *LVMActivationController) Run(ctx context.Context, r controller.Runti
 				"event",
 				vgName,
 			); err != nil {
-				return fmt.Errorf("failed to activate LVM volume %s: %w", vgName, err)
+				multiErr = multierror.Append(multiErr, fmt.Errorf("failed to activate LVM volume %s: %w", vgName, err))
+			} else {
+				ctrl.activatedVGs[vgName] = struct{}{}
 			}
-
-			ctrl.activatedVGs[vgName] = struct{}{}
 		}
 
 		if multiErr != nil {
@@ -153,7 +133,6 @@ func (ctrl *LVMActivationController) checkVGNeedsActivation(ctx context.Context,
 		"/sbin/lvm",
 		"pvscan",
 		"--cache",
-		"--verbose",
 		"--listvg",
 		"--checkcomplete",
 		"--vgonline",
@@ -166,11 +145,19 @@ func (ctrl *LVMActivationController) checkVGNeedsActivation(ctx context.Context,
 		return "", fmt.Errorf("failed to check if LVM volume backed by device %s needs activation: %w", devicePath, err)
 	}
 
-	if strings.HasPrefix(stdOut, "LVM_VG_NAME_INCOMPLETE") {
-		return "", nil
+	// parse the key-value pairs from the udev output
+	for _, line := range strings.Split(stdOut, "\n") {
+		key, value, ok := strings.Cut(line, "=")
+		if !ok {
+			continue
+		}
+
+		value = strings.Trim(value, "'\"")
+
+		if key == "LVM_VG_NAME_COMPLETE" {
+			return value, nil
+		}
 	}
 
-	vgName := strings.TrimSuffix(strings.TrimPrefix(strings.TrimSuffix(stdOut, "\n"), "LVM_VG_NAME_COMPLETE='"), "'")
-
-	return vgName, nil
+	return "", nil
 }
