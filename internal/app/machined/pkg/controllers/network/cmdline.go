@@ -214,7 +214,7 @@ func ParseCmdlineNetwork(cmdline *procfs.Cmdline) (CmdlineNetworking, error) {
 
 					ntpIP, err = netip.ParseAddr(fields[i])
 					if err != nil {
-						return settings, fmt.Errorf("error parsing DNS IP: %w", err)
+						return settings, fmt.Errorf("error parsing NTP IP: %w", err)
 					}
 
 					settings.NTPAddresses = append(settings.NTPAddresses, ntpIP)
