@@ -882,26 +882,56 @@ func SetupSharedFilesystems(runtime.Sequence, any) (runtime.TaskExecutionFunc, s
 
 // SetupVarDirectory represents the SetupVarDirectory task.
 func SetupVarDirectory(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
-	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
+	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) error {
+		if err := setupVarRun(logger); err != nil {
+			return err
+		}
+
 		for _, p := range []string{"/var/log/audit", "/var/log/containers", "/var/log/pods", "/var/lib/kubelet", "/var/run/lock", constants.SeccompProfilesDirectory} {
-			if err = os.MkdirAll(p, 0o700); err != nil {
+			if err := os.MkdirAll(p, 0o700); err != nil {
 				return err
 			}
 		}
 
 		// Handle Kubernetes directories which need different ownership
 		for _, p := range []string{constants.KubernetesAuditLogDir} {
-			if err = os.MkdirAll(p, 0o700); err != nil {
+			if err := os.MkdirAll(p, 0o700); err != nil {
 				return err
 			}
 
-			if err = os.Chown(p, constants.KubernetesAPIServerRunUser, constants.KubernetesAPIServerRunGroup); err != nil {
+			if err := os.Chown(p, constants.KubernetesAPIServerRunUser, constants.KubernetesAPIServerRunGroup); err != nil {
 				return fmt.Errorf("failed to chown %s: %w", p, err)
 			}
 		}
 
 		return nil
 	}, "setupVarDirectory"
+}
+
+func setupVarRun(logger *log.Logger) error {
+	// handle '/var/run' - if that exists after an upgrade, and is a directory, clean it up
+	// if it doesn't exist, create as a symlink to '/run'
+	runSt, err := os.Lstat("/var/run")
+	if err == nil && runSt.IsDir() {
+		// old Talos versions had '/var/run' as a directory, clean it up on boot
+		entries, err := os.ReadDir("/var/run")
+		if err != nil {
+			return fmt.Errorf("failed to read /var/run: %w", err)
+		}
+
+		for _, e := range entries {
+			if err = os.RemoveAll(filepath.Join("/var/run", e.Name())); err != nil {
+				logger.Printf("failed to remove %s: %s", e.Name(), err)
+			}
+		}
+	} else if err != nil && os.IsNotExist(err) {
+		// '/var/run' doesn't exist, create as a symlink to '/run'
+		if err = os.Symlink("/run", "/var/run"); err != nil {
+			return fmt.Errorf("failed to create /var/run symlink: %w", err)
+		}
+	}
+
+	return nil
 }
 
 // MountUserDisks represents the MountUserDisks task.
