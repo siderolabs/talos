@@ -19,6 +19,17 @@ Create the [boot assets]({{< relref "../install/boot-assets" >}}) which includes
 > Make sure the driver version matches for both the `nvidia-open-gpu-kernel-modules` and `nvidia-container-toolkit` extensions.
 > The `nvidia-open-gpu-kernel-modules` extension is versioned as `<nvidia-driver-version>-<talos-release-version>` and the `nvidia-container-toolkit` extension is versioned as `<nvidia-driver-version>-<nvidia-container-toolkit-version>`.
 
+## Proprietary vs OSS Nvidia Driver Support
+
+The NVIDIA Linux GPU Driver contains several kernel modules: `nvidia.ko`, `nvidia-modeset.ko`, `nvidia-uvm.ko`, `nvidia-drm.ko`, and `nvidia-peermem.ko`.
+Two "flavors" of these kernel modules are provided, and both are available for use within Talos:
+
+- Proprietary, This is the flavor that NVIDIA has historically shipped.
+- Open, i.e. source-published/OSS, kernel modules that are dual licensed MIT/GPLv2.
+  With every driver release, the source code to the open kernel modules is published on https://github.com/NVIDIA/open-gpu-kernel-modules and a tarball is provided on https://download.nvidia.com/XFree86/.
+
+The choice between Proprietary/OSS may be decided after referencing the Official [NVIDIA announcement](https://developer.nvidia.com/blog/nvidia-transitions-fully-towards-open-source-gpu-kernel-modules/).
+
 ## Enabling the NVIDIA OSS modules
 
 Patch Talos machine configuration using the patch `gpu-worker-patch.yaml`:
