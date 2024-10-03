@@ -148,10 +148,16 @@ FROM --platform=arm64 ${TOOLS} as tools-arm64
 FROM scratch as pkg-debug-tools-amd64
 COPY --from=tools-amd64 /toolchain/bin/bash /toolchain/bin/bash
 COPY --from=tools-amd64 /toolchain/lib/ld-musl-x86_64.so.1 /toolchain/toolchain/lib/ld-musl-x86_64.so.1
+COPY --from=tools-amd64 /toolchain/bin/cat /toolchain/bin/cat
+COPY --from=tools-amd64 /toolchain/bin/ls /toolchain/bin/ls
+COPY --from=tools-amd64 /toolchain/bin/tee /toolchain/bin/tee
 
 FROM scratch as pkg-debug-tools-arm64
-COPY --from=tools-arm64 /toolchain/bin/bash /bin/bash
-COPY --from=tools-arm64 /toolchain/lib/ld-musl-aarch64.so.1 /toolchain/lib/ld-musl-aarch64.so.1
+COPY --from=tools-arm64 /toolchain/bin/bash /toolchain/bin/bash
+COPY --from=tools-arm64 /toolchain/lib/ld-musl-aarch64.so.1 /toolchain/toolchain/lib/ld-musl-aarch64.so.1
+COPY --from=tools-arm64 /toolchain/bin/cat /toolchain/bin/cat
+COPY --from=tools-arm64 /toolchain/bin/ls /toolchain/bin/ls
+COPY --from=tools-arm64 /toolchain/bin/tee /toolchain/bin/tee
 
 # Strip CNI package.
 
@@ -738,6 +744,10 @@ COPY --link --from=pkg-kmod-arm64 /usr/lib/libkmod.* /rootfs/lib/
 COPY --link --from=pkg-kmod-arm64 /usr/bin/kmod /rootfs/sbin/modprobe
 COPY --link --from=modules-arm64 /lib/modules /rootfs/lib/modules
 COPY --link --from=machined-build-arm64 /machined /rootfs/sbin/init
+
+# this is a no-op as it copies from a scratch image when WITH_DEBUG_SHELL is not set
+COPY --link --from=pkg-debug-tools-arm64 * /rootfs/
+
 RUN <<END
     # the orderly_poweroff call by the kernel will call '/sbin/poweroff'
     ln /rootfs/sbin/init /rootfs/sbin/poweroff
