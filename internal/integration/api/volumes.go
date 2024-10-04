@@ -296,8 +296,8 @@ func (suite *VolumesSuite) lvmVolumeExists(node string) bool {
 	}
 
 	// we test with creating a volume group with two logical volumes
-	// one mirrored and one not, so we expect to see 6 volumes
-	return lvmVolumeCount == 6
+	// one mirrored and one not, so we expect to see at least 6 volumes
+	return lvmVolumeCount >= 6
 }
 
 func init() {

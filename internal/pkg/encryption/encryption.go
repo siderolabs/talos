@@ -88,34 +88,42 @@ type Handler struct {
 
 // Open encrypted partition.
 func (h *Handler) Open(ctx context.Context, logger *zap.Logger, devicePath, encryptedName string) (string, error) {
-	var (
-		path string
-		key  *encryption.Key
-	)
+	isOpen, path, err := h.encryptionProvider.IsOpen(ctx, devicePath, encryptedName)
+	if err != nil {
+		return "", err
+	}
 
-	if err := h.tryHandlers(ctx, logger, func(ctx context.Context, handler keys.Handler) error {
-		token, err := h.readToken(ctx, devicePath, handler.Slot())
+	var usedKey *encryption.Key
+
+	if !isOpen {
+		handler, key, _, err := h.tryHandlers(ctx, logger, func(ctx context.Context, handler keys.Handler) (*encryption.Key, token.Token, error) {
+			slotToken, err := h.readToken(ctx, devicePath, handler.Slot())
+			if err != nil {
+				return nil, nil, err
+			}
+
+			slotKey, err := handler.GetKey(ctx, slotToken)
+			if err != nil {
+				return nil, nil, err
+			}
+
+			return slotKey, slotToken, nil
+		})
 		if err != nil {
-			return err
-		}
-
-		if key, err = handler.GetKey(ctx, token); err != nil {
-			return err
+			return "", err
 		}
 
 		path, err = h.encryptionProvider.Open(ctx, devicePath, encryptedName, key)
 		if err != nil {
-			return err
+			return "", err
 		}
 
 		logger.Info("opened encrypted device", zap.Int("slot", handler.Slot()), zap.String("type", fmt.Sprintf("%T", handler)))
 
-		return nil
-	}); err != nil {
-		return "", fmt.Errorf("failed to open encrypted device %s: %w", devicePath, err)
+		usedKey = key
 	}
 
-	if err := h.syncKeys(ctx, logger, devicePath, key); err != nil {
+	if err := h.syncKeys(ctx, logger, devicePath, usedKey); err != nil {
 		return "", err
 	}
 
@@ -125,6 +133,10 @@ func (h *Handler) Open(ctx context.Context, logger *zap.Logger, devicePath, encr
 // Close encrypted partition.
 func (h *Handler) Close(ctx context.Context, encryptedPath string) error {
 	if err := h.encryptionProvider.Close(ctx, encryptedPath); err != nil {
+		if errors.Is(err, encryption.ErrDeviceNotReady) {
+			return nil
+		}
+
 		return fmt.Errorf("error closing %s: %w", encryptedPath, err)
 	}
 
@@ -133,23 +145,10 @@ func (h *Handler) Close(ctx context.Context, encryptedPath string) error {
 
 // FormatAndEncrypt formats and encrypts the volume.
 func (h *Handler) FormatAndEncrypt(ctx context.Context, logger *zap.Logger, path string) error {
-	if len(h.keyHandlers) == 0 {
-		return errors.New("no encryption keys found")
-	}
-
-	var (
-		key   *encryption.Key
-		token token.Token
-		err   error
-	)
-
-	if err = h.tryHandlers(ctx, logger, func(ctx context.Context, h keys.Handler) error {
-		if key, token, err = h.NewKey(ctx); err != nil {
-			return err
-		}
-
-		return nil
-	}); err != nil {
+	_, key, token, err := h.tryHandlers(ctx, logger, func(ctx context.Context, h keys.Handler) (*encryption.Key, token.Token, error) {
+		return h.NewKey(ctx)
+	})
+	if err != nil {
 		return err
 	}
 
@@ -189,21 +188,21 @@ func (h *Handler) syncKeys(ctx context.Context, logger *zap.Logger, path string,
 		slot := strconv.Itoa(handler.Slot())
 		visited[slot] = true
 		// no need to update the key which we already detected as unchanged
-		if k.Slot == handler.Slot() {
+		if k != nil && k.Slot == handler.Slot() {
 			continue
 		}
 
 		// keyslot exists
 		if _, ok := keyslots.Keyslots[slot]; ok {
 			if err = h.updateKey(ctx, path, k, handler); err != nil {
-				return err
+				return fmt.Errorf("error updating key slot %s %T: %w", slot, handler, err)
 			}
 
 			logger.Info("updated encryption key", zap.Int("slot", handler.Slot()))
 		} else {
 			// keyslot does not exist so just add the key
 			if err = h.addKey(ctx, path, k, handler); err != nil {
-				return err
+				return fmt.Errorf("error adding key slot %s %T: %w", slot, handler, err)
 			}
 
 			logger.Info("added encryption key", zap.Int("slot", handler.Slot()))
@@ -219,7 +218,7 @@ func (h *Handler) syncKeys(ctx context.Context, logger *zap.Logger, path string,
 			}
 
 			if err = h.encryptionProvider.RemoveKey(ctx, path, int(s), k); err != nil {
-				return err
+				return fmt.Errorf("error removing key slot %s: %w", slot, err)
 			}
 
 			logger.Info("removed encryption key", zap.Int("slot", k.Slot))
@@ -291,8 +290,20 @@ func (h *Handler) addKey(ctx context.Context, path string, existingKey *encrypti
 	return nil
 }
 
-func (h *Handler) tryHandlers(ctx context.Context, logger *zap.Logger, cb func(ctx context.Context, h keys.Handler) error) error {
-	callback := func(ctx context.Context, h keys.Handler) error {
+// tryHandlers tries to get encryption keys from all available handlers.
+//
+// It returns the first handler that successfully returns a key.
+func (h *Handler) tryHandlers(
+	ctx context.Context, logger *zap.Logger,
+	cb func(ctx context.Context, h keys.Handler) (*encryption.Key, token.Token, error),
+) (
+	keys.Handler, *encryption.Key, token.Token, error,
+) {
+	if len(h.keyHandlers) == 0 {
+		return nil, nil, nil, errors.New("no encryption keys found")
+	}
+
+	callback := func(ctx context.Context, h keys.Handler) (*encryption.Key, token.Token, error) {
 		ctx, cancel := context.WithTimeout(ctx, keyHandlerTimeout)
 		defer cancel()
 
@@ -302,7 +313,8 @@ func (h *Handler) tryHandlers(ctx context.Context, logger *zap.Logger, cb func(c
 	var errs error
 
 	for _, h := range h.keyHandlers {
-		if err := callback(ctx, h); err != nil {
+		key, token, err := callback(ctx, h)
+		if err != nil {
 			errs = multierror.Append(errs, err)
 
 			logger.Warn("failed to call key handler", zap.Int("slot", h.Slot()), zap.Error(err))
@@ -310,10 +322,10 @@ func (h *Handler) tryHandlers(ctx context.Context, logger *zap.Logger, cb func(c
 			continue
 		}
 
-		return nil
+		return h, key, token, nil
 	}
 
-	return fmt.Errorf("no handlers available to get encryption keys from: %w", errs)
+	return nil, nil, nil, fmt.Errorf("no handlers available to get encryption keys from: %w", errs)
 }
 
 func (h *Handler) readToken(ctx context.Context, path string, id int) (token.Token, error) {
