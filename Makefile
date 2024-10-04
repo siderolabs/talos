@@ -20,7 +20,7 @@ ARTIFACTS := _out
 TOOLS ?= ghcr.io/siderolabs/tools:v1.9.0-alpha.0-3-g1151610
 
 PKGS_PREFIX ?= ghcr.io/siderolabs
-PKGS ?= v1.9.0-alpha.0-17-g2b193f1
+PKGS ?= v1.9.0-alpha.0-18-gba0341e
 EXTRAS ?= v1.9.0-alpha.0
 
 KRES_IMAGE ?= ghcr.io/siderolabs/kres:latest

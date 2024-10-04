@@ -437,7 +437,6 @@ func (suite *ExtensionsSuiteQEMU) TestExtensionsStargz() {
 
 // TestExtensionsMdADM verifies mdadm is working, udev rules work and the raid is mounted on reboot.
 func (suite *ExtensionsSuiteQEMU) TestExtensionsMdADM() {
-	suite.T().Skip("skipped - see https://github.com/siderolabs/talos/issue/9423")
 	node := suite.RandomDiscoveredNodeInternalIP(machine.TypeWorker)
 
 	userDisks, err := suite.UserDisks(suite.ctx, node)
