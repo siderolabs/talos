@@ -142,6 +142,7 @@ kernel/drivers/scsi/fnic/fnic.ko
 kernel/drivers/scsi/hpsa.ko
 kernel/drivers/scsi/isci/isci.ko
 kernel/drivers/scsi/libfc/libfc.ko
+kernel/drivers/scsi/lpfc/lpfc.ko
 kernel/drivers/scsi/megaraid/megaraid_sas.ko
 kernel/drivers/scsi/mpi3mr/mpi3mr.ko
 kernel/drivers/scsi/mpt3sas/mpt3sas.ko

@@ -40,6 +40,7 @@ kernel/drivers/nvme/target/nvmet-tcp.ko
 kernel/drivers/nvme/target/nvmet.ko
 kernel/drivers/scsi/fcoe/libfcoe.ko
 kernel/drivers/scsi/libfc/libfc.ko
+kernel/drivers/scsi/lpfc/lpfc.ko
 kernel/drivers/scsi/mpi3mr/mpi3mr.ko
 kernel/drivers/scsi/qedf/qedf.ko
 kernel/drivers/uio/uio_pci_generic.ko
