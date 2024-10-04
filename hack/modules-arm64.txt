@@ -35,12 +35,15 @@ kernel/drivers/net/vrf.ko
 kernel/drivers/nvme/host/nvme-rdma.ko
 kernel/drivers/nvme/target/nvme-loop.ko
 kernel/drivers/nvme/target/nvmet-fc.ko
-kernel/drivers/nvme/target/nvmet.ko
 kernel/drivers/nvme/target/nvmet-rdma.ko
 kernel/drivers/nvme/target/nvmet-tcp.ko
+kernel/drivers/nvme/target/nvmet.ko
+kernel/drivers/scsi/fcoe/libfcoe.ko
+kernel/drivers/scsi/libfc/libfc.ko
 kernel/drivers/scsi/mpi3mr/mpi3mr.ko
-kernel/drivers/uio/uio.ko
+kernel/drivers/scsi/qedf/qedf.ko
 kernel/drivers/uio/uio_pci_generic.ko
+kernel/drivers/uio/uio.ko
 kernel/drivers/vfio/pci/vfio-pci-core.ko
 kernel/drivers/vfio/pci/vfio-pci.ko
 kernel/drivers/vfio/vfio_iommu_type1.ko
