@@ -479,6 +479,12 @@ func create(ctx context.Context) error {
 
 	var configBundleOpts []bundle.Option
 
+	if debugShellEnabled {
+		if provisionerName != "qemu" {
+			return errors.New("debug shell only supported with qemu provisioner")
+		}
+	}
+
 	if ports != "" {
 		if provisionerName != docker {
 			return errors.New("exposed-ports flag only supported with docker provisioner")
@@ -936,6 +942,21 @@ func create(ctx context.Context) error {
 	cluster, err := provisioner.Create(ctx, request, provisionOptions...)
 	if err != nil {
 		return err
+	}
+
+	if debugShellEnabled {
+		fmt.Println("You can now connect to debug shell on any node using these commands:")
+
+		for _, node := range request.Nodes {
+			talosDir, err := clientconfig.GetTalosDirectory()
+			if err != nil {
+				return nil
+			}
+
+			fmt.Printf("socat - UNIX-CONNECT:%s\n", filepath.Join(talosDir, "clusters", clusterName, node.Name+".serial"))
+		}
+
+		return nil
 	}
 
 	// No talosconfig in the bundle - skip the operations below
