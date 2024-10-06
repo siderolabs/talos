@@ -79,7 +79,7 @@ func WithTPM2(enabled bool) Option {
 	}
 }
 
-// WithDebugShell drops into debug shell in the bootloader.
+// WithDebugShell drops into debug shell in initramfs.
 func WithDebugShell(enabled bool) Option {
 	return func(o *Options) error {
 		o.WithDebugShell = enabled

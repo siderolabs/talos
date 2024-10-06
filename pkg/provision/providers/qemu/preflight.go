@@ -34,7 +34,6 @@ func (p *provisioner) preflightChecks(ctx context.Context, request provision.Clu
 		checkContext.qemuExecutable,
 		checkContext.checkFlashImages,
 		checkContext.swtpmExecutable,
-		checkContext.numberOfNodesWhenDebugShellEnabled,
 		checkContext.cniDirectories,
 		checkContext.cniBundle,
 		checkContext.checkIptables,
@@ -109,14 +108,6 @@ func (check *preflightCheckContext) swtpmExecutable(ctx context.Context) error {
 		if _, err := exec.LookPath("swtpm"); err != nil {
 			return fmt.Errorf("swtpm not found in PATH, please install swtpm-tools with the package manager: %w", err)
 		}
-	}
-
-	return nil
-}
-
-func (check *preflightCheckContext) numberOfNodesWhenDebugShellEnabled(ctx context.Context) error {
-	if check.options.WithDebugShell && len(check.request.Nodes.ControlPlaneNodes())+len(check.request.Nodes.WorkerNodes()) > 1 {
-		return fmt.Errorf("error: --with-debug-shell is not supported with more than one node")
 	}
 
 	return nil
