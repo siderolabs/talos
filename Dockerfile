@@ -760,6 +760,7 @@ RUN <<END
 END
 
 FROM rootfs-base-${TARGETARCH} AS rootfs-base
+RUN echo "true" > /rootfs/usr/etc/in-container
 RUN find /rootfs -print0 \
     | xargs -0r touch --no-dereference --date="@${SOURCE_DATE_EPOCH}"
 

@@ -67,6 +67,10 @@ const (
 
 // CurrentPlatform is a helper func for discovering the current platform.
 func CurrentPlatform() (p runtime.Platform, err error) {
+	if _, err := os.Stat("/usr/etc/in-container"); err == nil {
+		return newPlatform("container")
+	}
+
 	var platform string
 
 	if p := procfs.ProcCmdline().Get(constants.KernelParamPlatform).First(); p != nil {
