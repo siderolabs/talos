@@ -8,8 +8,24 @@
     "public_ip": {
         "id": "11111111-1111-1111-1111-111111111111",
         "address": "11.22.222.222",
-        "dynamic": false
+        "dynamic": false,
+        "family": "inet"
     },
+    "public_ips_v4": [
+        {
+            "address": "11.22.222.222",
+            "dynamic": false,
+            "family": "inet",
+            "gateway": null,
+            "id": "11111111-1111-1111-1111-111111111111",
+            "ipam_id": null,
+            "netmask": "32",
+            "provisioning_mode": "dhcp",
+            "state": "detached",
+            "tags": []
+        }
+    ],
+    "public_ips_v6": [],
     "private_ip": "10.00.222.222",
     "ipv6": {
         "address": "2001:111:222:3333::1",
@@ -17,6 +33,6 @@
         "netmask": "64"
     },
     "location": {
-        "zone_id": "zone-name-1"
+        "zone_id": "fr-par-1"
     }
 }

@@ -20,7 +20,7 @@ routes:
       gateway: ""
       outLinkName: eth0
       table: main
-      priority: 1024
+      priority: 4096
       scope: link
       type: unicast
       flags: ""
@@ -57,8 +57,8 @@ externalIPs:
 metadata:
     platform: scaleway
     hostname: scw-talos
-    region: zone-name
-    zone: zone-name-1
+    region: fr-par
+    zone: fr-par-2
     instanceType: DEV1-S
     instanceId: 11111111-1111-1111-1111-111111111111
-    providerId: scaleway://instance/zone-name-1/11111111-1111-1111-1111-111111111111
+    providerId: scaleway://instance/fr-par-2/11111111-1111-1111-1111-111111111111
