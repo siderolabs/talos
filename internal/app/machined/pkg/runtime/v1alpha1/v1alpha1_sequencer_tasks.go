@@ -1583,15 +1583,7 @@ func ResetSystemDiskPartitions(seq runtime.Sequence, _ any) (runtime.TaskExecuti
 
 		logger.Printf("finished resetting system disks %s", diskTargets)
 
-		bootWiped := slices.ContainsFunc(diskTargets, func(t runtime.PartitionTarget) bool {
-			return t.GetLabel() == constants.BootPartitionLabel
-		})
-
-		if bootWiped {
-			return reboot(ctx, logger, r) // only reboot when we wiped boot partition
-		}
-
-		return nil
+		return reboot(ctx, logger, r)
 	}, "wipeSystemDiskPartitions"
 }
 
@@ -1710,29 +1702,45 @@ func (opt targets) GetSystemDiskTargets() []runtime.PartitionTarget {
 	return xslices.Map(opt.systemDiskTargets, func(t *partition.VolumeWipeTarget) runtime.PartitionTarget { return t })
 }
 
-func parseTargets(ctx context.Context, r runtime.Runtime, wipeStr string) (targets, error) {
+func (opt targets) String() string {
+	return strings.Join(xslices.Map(opt.systemDiskTargets, func(t *partition.VolumeWipeTarget) string { return t.String() }), ", ")
+}
+
+func parseTargets(ctx context.Context, r runtime.Runtime, wipeStr string) (SystemDiskTargets, error) {
 	after, found := strings.CutPrefix(wipeStr, "system:")
 	if !found {
 		return targets{}, fmt.Errorf("invalid wipe labels string: %q", wipeStr)
 	}
 
-	var result []*partition.VolumeWipeTarget //nolint:prealloc
+	var result []*partition.VolumeWipeTarget
+
+	// in this early phase, we don't have VolumeStatus resources, so instead we'd use DiscoveredVolumes
+	// to get the volume paths
+	discoveredVolumes, err := safe.StateListAll[*blockres.DiscoveredVolume](ctx, r.State().V1Alpha2().Resources())
+	if err != nil {
+		return targets{}, err
+	}
 
 	for _, label := range strings.Split(after, ",") {
-		volumeStatus, err := safe.ReaderGetByID[*blockres.VolumeStatus](ctx, r.State().V1Alpha2().Resources(), label)
-		if err != nil {
-			return targets{}, fmt.Errorf("failed to get volume status with label %q: %w", label, err)
+		found := false
+
+		for iter := discoveredVolumes.Iterator(); iter.Next(); {
+			discoveredVolume := iter.Value()
+
+			if discoveredVolume.TypedSpec().PartitionLabel != label {
+				continue
+			}
+
+			result = append(result, partition.VolumeWipeTargetFromDiscoveredVolume(discoveredVolume))
+
+			found = true
+
+			break
 		}
 
-		if volumeStatus.TypedSpec().Phase != blockres.VolumePhaseReady {
-			return targets{}, fmt.Errorf("failed to reset: volume %q is not ready", label)
+		if !found {
+			return targets{}, fmt.Errorf("failed to get volume status with label %q", label)
 		}
-
-		target := &partition.VolumeWipeTarget{
-			VolumeStatus: volumeStatus,
-		}
-
-		result = append(result, target)
 	}
 
 	if len(result) == 0 {
@@ -1746,6 +1754,7 @@ func parseTargets(ctx context.Context, r runtime.Runtime, wipeStr string) (targe
 // It's a subset of [runtime.ResetOptions].
 type SystemDiskTargets interface {
 	GetSystemDiskTargets() []runtime.PartitionTarget
+	fmt.Stringer
 }
 
 // ResetSystemDiskSpec represents the task to reset the system disk by spec.

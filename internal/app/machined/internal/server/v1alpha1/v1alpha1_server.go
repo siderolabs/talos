@@ -569,6 +569,11 @@ func (opt *ResetOptions) GetSystemDiskTargets() []runtime.PartitionTarget {
 	return xslices.Map(opt.systemDiskTargets, func(t *partition.VolumeWipeTarget) runtime.PartitionTarget { return t })
 }
 
+// String implements runtime.ResetOptions interface.
+func (opt *ResetOptions) String() string {
+	return strings.Join(xslices.Map(opt.systemDiskTargets, func(t *partition.VolumeWipeTarget) string { return t.String() }), ", ")
+}
+
 // Reset resets the node.
 //
 //nolint:gocyclo
@@ -635,9 +640,7 @@ func (s *Server) Reset(ctx context.Context, in *machine.ResetRequest) (reply *ma
 				return nil, fmt.Errorf("failed to reset: volume %q is not ready", spec.Label)
 			}
 
-			target := &partition.VolumeWipeTarget{
-				VolumeStatus: volumeStatus,
-			}
+			target := partition.VolumeWipeTargetFromVolumeStatus(volumeStatus)
 
 			if spec.Wipe {
 				opts.systemDiskTargets = append(opts.systemDiskTargets, target)
