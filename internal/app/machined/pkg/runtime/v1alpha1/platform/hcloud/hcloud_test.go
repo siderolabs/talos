@@ -44,3 +44,17 @@ func TestParseMetadata(t *testing.T) {
 
 	assert.Equal(t, expectedNetworkConfig, string(marshaled))
 }
+
+//go:embed testdata/userdata-plain.yaml
+var userdataPlain []byte
+
+//go:embed testdata/userdata-base64.txt
+var userdataBase64 []byte
+
+func TestParseUserdata(t *testing.T) {
+	decodedUserdataPlain := hcloud.MaybeBase64Decode(userdataPlain)
+	decodedUserdataBase64 := hcloud.MaybeBase64Decode(userdataBase64)
+
+	assert.Equal(t, decodedUserdataPlain, decodedUserdataBase64)
+	assert.Equal(t, userdataPlain, decodedUserdataBase64)
+}
