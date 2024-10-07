@@ -7,19 +7,10 @@
     "state_detail": "booted",
     "public_ip": {
         "id": "11111111-1111-1111-1111-111111111111",
-        "address": "11.22.222.222",
-        "dynamic": false,
-        "family": "inet"
+        "address": "2001:111:222:3333::1",
+        "dynamic": false
     },
-    "public_ips_v4": [
-        {
-            "address": "11.22.222.222",
-            "dynamic": false,
-            "family": "inet",
-            "gateway": "11.22.222.1",
-            "netmask": "32"
-        }
-    ],
+    "public_ips_v4": [],
     "public_ips_v6": [
         {
             "address": "2001:111:222:3333::1",
@@ -30,6 +21,6 @@
         }
     ],
     "location": {
-        "zone_id": "fr-par-2"
+        "zone_id": "ams1"
     }
 }
