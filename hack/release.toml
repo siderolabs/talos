@@ -30,6 +30,7 @@ All other release assets can be downloaded from [Image Factory](https://www.talo
         description = """\
 Linux: 6.6.52
 containerd: 2.0.0-rc.5
+Flannel: 0.25.7
 
 Talos is built with Go 1.23.2.
 """
