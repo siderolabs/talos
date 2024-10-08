@@ -1,3 +1,91 @@
+## [Talos 1.8.1](https://github.com/siderolabs/talos/releases/tag/v1.8.1) (2024-10-08)
+
+Welcome to the v1.8.1 release of Talos!
+
+Starting with Talos v1.8.0, only standard assets would be published as github release assets. These include:
+
+* `cloud-images.json`
+* `talosctl` binaries
+* `kernel`
+* `initramfs`
+* `metal` iso and disk images
+* `talosctl-cni-bundle`
+
+All other release assets can be downloaded from [Image Factory](https://www.talos.dev/latest/talos-guides/install/boot-assets/#image-factory).
+
+Please try out the release binaries and report any issues at
+https://github.com/siderolabs/talos/issues.
+
+### Component Updates
+
+Linux: 6.6.54
+containerd: 2.0.0-rc.5
+Flannel: 0.25.7
+
+Talos is built with Go 1.22.8.
+
+
+### Contributors
+
+* Andrey Smirnov
+* Hexoplon
+* ekarlso
+
+### Changes
+<details><summary>15 commits</summary>
+<p>
+
+* [`362c9f812`](https://github.com/siderolabs/talos/commit/362c9f812cfc8148e5d1cecf60091969ec15582a) test: skip lvm test if not enough user disks available
+* [`79305007f`](https://github.com/siderolabs/talos/commit/79305007f8d4f8571b33d9dd7701ae5aa22b4ddf) chore: checkout extensions from release-1.8, not main
+* [`f6d630624`](https://github.com/siderolabs/talos/commit/f6d630624aec812623b4ebe677f4835fdb246f73) fix: wipe system partitions correctly via kernel args
+* [`4d279c65f`](https://github.com/siderolabs/talos/commit/4d279c65f43d20e508d1fd17d13068d711a432ee) fix: volume encryption with failing keyslots
+* [`070defad1`](https://github.com/siderolabs/talos/commit/070defad157d3eecccad8ce6bc32ee946740185e) fix: update grpc-go the latest patch release
+* [`a2d12fd7b`](https://github.com/siderolabs/talos/commit/a2d12fd7ba5afe31bdb84c22aff468124a5e943c) feat: update Flannel to v0.25.7
+* [`e2f560b96`](https://github.com/siderolabs/talos/commit/e2f560b9656ef24dbadb1cf4db674e3f5e088bfd) feat: bring in lpfc kernel module driver
+* [`788336afb`](https://github.com/siderolabs/talos/commit/788336afbbf3e32076e3c4e5c5eabe1e6c6c256a) feat: enable QEDF driver
+* [`e4341fa66`](https://github.com/siderolabs/talos/commit/e4341fa664f9087fe0715852cbcc81e47d14a84a) fix: make /var/run empty on reboots
+* [`66228ef10`](https://github.com/siderolabs/talos/commit/66228ef10e1fc2a0788578a4082a3d4a86aa566e) fix: multiple fixes for LVM activation
+* [`5f4515f30`](https://github.com/siderolabs/talos/commit/5f4515f3063b2cfb72217999673eb43b4473beaa) fix: prevent file descriptors leaks to child processes
+* [`a55103ee6`](https://github.com/siderolabs/talos/commit/a55103ee6b030820e9ded8195c6ed571a6875575) chore: ignore more plugins for system containerd
+* [`ffcdc0bb7`](https://github.com/siderolabs/talos/commit/ffcdc0bb7af8ca289aaa6c34a801bdcb13bbb402) fix: build talosctl without `tcell_minimal`
+* [`d29f66079`](https://github.com/siderolabs/talos/commit/d29f6607999e1a62dba3029af2027d59ae9c0534) feat: add support for CI Network config in nocloud
+* [`01e580bdd`](https://github.com/siderolabs/talos/commit/01e580bddb73945b9e3ca0b434fa91e7778eca38) feat: update Go 1.22.8, Linux, pkgs
+</p>
+</details>
+
+### Changes from siderolabs/pkgs
+<details><summary>8 commits</summary>
+<p>
+
+* [`71d23b4`](https://github.com/siderolabs/pkgs/commit/71d23b423a13b43e6a03eb3883bdb9699271b9dd) feat: update Linux to 6.6.54
+* [`8906a9b`](https://github.com/siderolabs/pkgs/commit/8906a9b158fb74d94d65ff6923ff083f5168d44c) feat: add lpfc kernel module
+* [`3c57dff`](https://github.com/siderolabs/pkgs/commit/3c57dff5caa5bcc915f05f533a22362bbed1dc8f) feat: enable QEDF driver
+* [`1ecbd58`](https://github.com/siderolabs/pkgs/commit/1ecbd58edd6750eee1b09f3f1a0309c08190002c) feat: update containerd to v2.0.0-rc.5
+* [`47dff98`](https://github.com/siderolabs/pkgs/commit/47dff984abe9ce57c3515cc36f34171ef3fd58b6) fix: drop the LVM2 udev lvm rule
+* [`480d765`](https://github.com/siderolabs/pkgs/commit/480d76519e21d2b26ec99f9b608787bca25fb37c) fix: force LVM to use `/run` as state directory
+* [`c663212`](https://github.com/siderolabs/pkgs/commit/c663212e1f7e608202ae08acf64e39019da40ff7) feat: enable transparent huge pages in madvise mode
+* [`832f11b`](https://github.com/siderolabs/pkgs/commit/832f11bb0eb4e728b9ce53f70f71be807e188990) feat: update Go to 1.22.8
+</p>
+</details>
+
+### Changes from siderolabs/tools
+<details><summary>1 commit</summary>
+<p>
+
+* [`7719230`](https://github.com/siderolabs/tools/commit/7719230b3f32abb47401d6c991d5fcf9ce455d71) feat: update Go to 1.22.8
+</p>
+</details>
+
+### Dependency Changes
+
+* **github.com/klauspost/compress**            v1.17.9 -> v1.17.10
+* **github.com/siderolabs/go-blockdevice/v2**  v2.0.2 -> v2.0.3
+* **github.com/siderolabs/pkgs**               v1.8.0-8-gdf1a1a5 -> v1.8.0-16-g71d23b4
+* **github.com/siderolabs/tools**              v1.8.0-1-ga0c06c6 -> v1.8.0-2-g7719230
+* **google.golang.org/grpc**                   v1.66.0 -> v1.66.3
+
+Previous release can be found at [v1.8.0](https://github.com/siderolabs/talos/releases/tag/v1.8.0)
+
 ## [Talos 1.8.0](https://github.com/siderolabs/talos/releases/tag/v1.8.0) (2024-09-23)
 
 Welcome to the v1.8.0 release of Talos!
