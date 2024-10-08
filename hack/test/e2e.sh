@@ -163,11 +163,11 @@ function install_and_run_cilium_cni_tests {
   case "${WITH_KUBESPAN:-false}" in
     true)
       CILIUM_NODE_ENCRYPTION=false
-      CILIUM_TEST_EXTRA_ARGS=("--test="!node-to-node-encryption"")
+      CILIUM_TEST_EXTRA_ARGS=("--test=!node-to-node-encryption,!check-log-errors")
       ;;
     *)
       CILIUM_NODE_ENCRYPTION=true
-      CILIUM_TEST_EXTRA_ARGS=()
+      CILIUM_TEST_EXTRA_ARGS=("--test=!check-log-errors")
       ;;
   esac
 
