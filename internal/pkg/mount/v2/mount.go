@@ -10,11 +10,15 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"path/filepath"
+	"slices"
 	"strings"
 	"time"
 
 	"github.com/siderolabs/go-retry/retry"
 	"golang.org/x/sys/unix"
+
+	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
 
 // Point represents a mount point.
@@ -24,6 +28,9 @@ type Point struct {
 	fstype string
 	flags  uintptr
 	data   string
+
+	shared    bool
+	extraDirs []string
 }
 
 // NewPointOption is a mount point option.
@@ -36,11 +43,18 @@ func WithProjectQuota(enabled bool) NewPointOption {
 			return
 		}
 
+		WithData("prjquota")(p)
+	}
+}
+
+// WithData sets the mount data.
+func WithData(data string) NewPointOption {
+	return func(p *Point) {
 		if len(p.data) > 0 {
 			p.data += ","
 		}
 
-		p.data += "prjquota"
+		p.data += data
 	}
 }
 
@@ -56,6 +70,20 @@ func WithReadonly() NewPointOption {
 	return WithFlags(unix.MS_RDONLY)
 }
 
+// WithShared sets the shared flag.
+func WithShared() NewPointOption {
+	return func(p *Point) {
+		p.shared = true
+	}
+}
+
+// WithExtraDirs sets the extra directories to be created on mount.
+func WithExtraDirs(dirs ...string) NewPointOption {
+	return func(p *Point) {
+		p.extraDirs = append(p.extraDirs, dirs...)
+	}
+}
+
 // NewPoint creates a new mount point.
 func NewPoint(source, target, fstype string, opts ...NewPointOption) *Point {
 	p := &Point{
@@ -69,6 +97,41 @@ func NewPoint(source, target, fstype string, opts ...NewPointOption) *Point {
 	}
 
 	return p
+}
+
+// NewReadonlyOverlay creates a new read-only overlay mount point.
+func NewReadonlyOverlay(sources []string, target string, opts ...NewPointOption) *Point {
+	opts = append(opts, WithReadonly(), WithData("lowerdir="+strings.Join(sources, ":")))
+
+	return NewPoint("overlay", target, "overlay", opts...)
+}
+
+// NewVarOverlay creates a new /var overlay mount point.
+func NewVarOverlay(sources []string, target string, opts ...NewPointOption) *Point {
+	return NewOverlayWithBasePath(sources, target, constants.VarSystemOverlaysPath, opts...)
+}
+
+// NewSystemOverlay creates a new /system overlay mount point.
+func NewSystemOverlay(sources []string, target string, opts ...NewPointOption) *Point {
+	return NewOverlayWithBasePath(sources, target, constants.SystemOverlaysPath, opts...)
+}
+
+// NewOverlayWithBasePath creates a new overlay mount point with a base path.
+func NewOverlayWithBasePath(sources []string, target, basePath string, opts ...NewPointOption) *Point {
+	_, overlayPrefix, _ := strings.Cut(target, "/")
+	overlayPrefix = strings.ReplaceAll(overlayPrefix, "/", "-")
+
+	diff := fmt.Sprintf(filepath.Join(basePath, "%s-diff"), overlayPrefix)
+	workdir := fmt.Sprintf(filepath.Join(basePath, "%s-workdir"), overlayPrefix)
+
+	opts = append(opts,
+		WithData("lowerdir="+strings.Join(sources, ":")),
+		WithData("upperdir="+diff),
+		WithData("workdir="+workdir),
+		WithExtraDirs(diff, workdir),
+	)
+
+	return NewPoint("overlay", target, "overlay", opts...)
 }
 
 // PrinterOptions are printer options.
@@ -177,13 +240,21 @@ func (p *Point) Mount(opts ...OperationOption) (unmounter func() error, err erro
 		}
 	}
 
-	if err = os.MkdirAll(p.target, options.TargetMode); err != nil {
-		return nil, fmt.Errorf("error creating mount point directory %s: %w", p.target, err)
+	for _, dir := range slices.Concat(p.extraDirs, []string{p.target}) {
+		if err = os.MkdirAll(dir, options.TargetMode); err != nil {
+			return nil, fmt.Errorf("error creating mount point directory %s: %w", dir, err)
+		}
 	}
 
 	err = p.retry(p.mount, false, options.PrinterOptions)
 	if err != nil {
 		return nil, fmt.Errorf("error mounting %s: %w", p.source, err)
+	}
+
+	if p.shared {
+		if err = p.share(); err != nil {
+			return nil, fmt.Errorf("error sharing %s: %w", p.target, err)
+		}
 	}
 
 	return func() error {
@@ -213,12 +284,21 @@ func (p *Point) Unmount(opts ...UnmountOption) error {
 	}, true, options.PrinterOptions)
 }
 
+// Move the mount point to a new target.
+func (p *Point) Move(newTarget string) error {
+	return unix.Mount(p.target, newTarget, "", unix.MS_MOVE, "")
+}
+
 func (p *Point) mount() error {
 	return unix.Mount(p.source, p.target, p.fstype, p.flags, p.data)
 }
 
 func (p *Point) unmount(printer func(string, ...any)) error {
 	return SafeUnmount(context.Background(), printer, p.target)
+}
+
+func (p *Point) share() error {
+	return unix.Mount("", p.target, "", unix.MS_SHARED|unix.MS_REC, "")
 }
 
 //nolint:gocyclo

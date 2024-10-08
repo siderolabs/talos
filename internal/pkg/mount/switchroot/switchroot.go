@@ -2,6 +2,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+// Package switchroot provides the switching root filesystem functionality.
 package switchroot
 
 import (
@@ -14,7 +15,7 @@ import (
 	"github.com/siderolabs/go-procfs/procfs"
 	"golang.org/x/sys/unix"
 
-	"github.com/siderolabs/talos/internal/pkg/mount"
+	"github.com/siderolabs/talos/internal/pkg/mount/v2"
 	"github.com/siderolabs/talos/internal/pkg/secureboot"
 	"github.com/siderolabs/talos/internal/pkg/secureboot/tpm2"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
@@ -31,10 +32,10 @@ var preservedPaths = map[string]struct{}{
 // https://github.com/karelzak/util-linux/blob/master/sys-utils/switch_root.c.
 //
 //nolint:gocyclo
-func Switch(prefix string, mountpoints *mount.Points) (err error) {
+func Switch(prefix string, mountpoints mount.Points) (err error) {
 	log.Println("moving mounts to the new rootfs")
 
-	if err = mount.Move(mountpoints, prefix); err != nil {
+	if err = mountpoints.Move(prefix); err != nil {
 		return err
 	}
 

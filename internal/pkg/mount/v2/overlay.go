@@ -5,6 +5,7 @@
 package mount
 
 import (
+	"github.com/siderolabs/gen/xslices"
 	"golang.org/x/sys/unix"
 
 	"github.com/siderolabs/talos/pkg/machinery/constants"
@@ -12,13 +13,8 @@ import (
 
 // OverlayMountPoints returns the mountpoints required to boot the system.
 // These mountpoints are used as overlays on top of the read only rootfs.
-func OverlayMountPoints() (mountpoints *Points, err error) {
-	mountpoints = NewMountPoints()
-
-	for _, target := range constants.Overlays {
-		mountpoint := NewMountPoint("", target, "", unix.MS_I_VERSION, "", WithFlags(Overlay))
-		mountpoints.Set(target, mountpoint)
-	}
-
-	return mountpoints, nil
+func OverlayMountPoints() Points {
+	return xslices.Map(constants.Overlays, func(target string) *Point {
+		return NewVarOverlay([]string{target}, target, WithFlags(unix.MS_I_VERSION))
+	})
 }

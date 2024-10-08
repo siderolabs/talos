@@ -168,7 +168,7 @@ func CreateSystemCgroups(runtime.Sequence, any) (runtime.TaskExecutionFunc, stri
 		if r.State().Platform().Mode() != runtime.ModeContainer {
 			// assert that cgroupsv2 is being used when running not in container mode,
 			// as Talos sets up cgroupsv2 on its own
-			if cgroups.Mode() != cgroups.Unified && !mount.ForceGGroupsV1() {
+			if cgroups.Mode() != cgroups.Unified && !mountv2.ForceGGroupsV1() {
 				return errors.New("cgroupsv2 should be used")
 			}
 		}
@@ -342,45 +342,21 @@ func CreateSystemCgroups(runtime.Sequence, any) (runtime.TaskExecutionFunc, stri
 	}, "CreateSystemCgroups"
 }
 
-// MountBPFFS represents the MountBPFFS task.
-func MountBPFFS(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
-	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
-		var mountpoints *mount.Points
-
-		mountpoints, err = mount.BPFMountPoints()
-		if err != nil {
-			return err
-		}
-
-		return mount.Mount(mountpoints)
-	}, "mountBPFFS"
-}
-
 // MountCgroups represents the MountCgroups task.
 func MountCgroups(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
-	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
-		var mountpoints *mount.Points
+	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) error {
+		_, err := mountv2.CGroupMountPoints().Mount()
 
-		mountpoints, err = mount.CGroupMountPoints()
-		if err != nil {
-			return err
-		}
-
-		return mount.Mount(mountpoints)
+		return err
 	}, "mountCgroups"
 }
 
 // MountPseudoFilesystems represents the MountPseudoFilesystems task.
 func MountPseudoFilesystems(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
-	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
-		var mountpoints *mount.Points
+	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) error {
+		_, err := mountv2.PseudoSubMountPoints().Mount()
 
-		mountpoints, err = mount.PseudoSubMountPoints()
-		if err != nil {
-			return err
-		}
-
-		return mount.Mount(mountpoints)
+		return err
 	}, "mountPseudoFilesystems"
 }
 
@@ -722,10 +698,9 @@ func StartDashboard(_ runtime.Sequence, _ any) (runtime.TaskExecutionFunc, strin
 // StartUdevd represents the task to start udevd.
 func StartUdevd(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
-		mp := mount.NewMountPoints()
-		mp.Set("udev-data", mount.NewMountPoint("", constants.UdevDir, "", unix.MS_I_VERSION, "", mount.WithFlags(mount.Overlay|mount.SystemOverlay|mount.Shared)))
+		mp := mountv2.NewSystemOverlay([]string{constants.UdevDir}, constants.UdevDir, mountv2.WithShared(), mountv2.WithFlags(unix.MS_I_VERSION))
 
-		if err = mount.Mount(mp); err != nil {
+		if _, err = mp.Mount(); err != nil {
 			return err
 		}
 
@@ -864,14 +839,9 @@ func StopAllServices(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) 
 // MountOverlayFilesystems represents the MountOverlayFilesystems task.
 func MountOverlayFilesystems(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
-		var mountpoints *mount.Points
+		_, err = mountv2.OverlayMountPoints().Mount()
 
-		mountpoints, err = mount.OverlayMountPoints()
-		if err != nil {
-			return err
-		}
-
-		return mount.Mount(mountpoints)
+		return err
 	}, "mountOverlayFilesystems"
 }
 
@@ -1191,14 +1161,7 @@ func existsAndIsFile(p string) (err error) {
 // UnmountOverlayFilesystems represents the UnmountOverlayFilesystems task.
 func UnmountOverlayFilesystems(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
-		var mountpoints *mount.Points
-
-		mountpoints, err = mount.OverlayMountPoints()
-		if err != nil {
-			return err
-		}
-
-		return mount.Unmount(mountpoints)
+		return mountv2.OverlayMountPoints().Unmount()
 	}, "unmountOverlayFilesystems"
 }
 
@@ -1266,7 +1229,7 @@ func UnmountPodMounts(runtime.Sequence, any) (runtime.TaskExecutionFunc, string)
 			if strings.HasPrefix(mountpoint, constants.EphemeralMountPoint+"/") {
 				logger.Printf("unmounting %s\n", mountpoint)
 
-				if err = mount.SafeUnmount(ctx, logger, mountpoint); err != nil {
+				if err = mountv2.SafeUnmount(ctx, logger.Printf, mountpoint); err != nil {
 					if errors.Is(err, syscall.EINVAL) {
 						log.Printf("ignoring unmount error %s: %v", mountpoint, err)
 					} else {
@@ -1315,7 +1278,7 @@ func UnmountSystemDiskBindMounts(runtime.Sequence, any) (runtime.TaskExecutionFu
 			if strings.HasPrefix(device, devname) && device != devname {
 				logger.Printf("unmounting %s\n", mountpoint)
 
-				if err = mount.SafeUnmount(ctx, logger, mountpoint); err != nil {
+				if err = mountv2.SafeUnmount(ctx, logger.Printf, mountpoint); err != nil {
 					if errors.Is(err, syscall.EINVAL) {
 						log.Printf("ignoring unmount error %s: %v", mountpoint, err)
 					} else {
@@ -2257,7 +2220,7 @@ func ForceCleanup(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
 			logger.Printf("error killing all procs: %s", err)
 		}
 
-		if err := mount.UnmountAll(); err != nil {
+		if err := mountv2.UnmountAll(); err != nil {
 			logger.Printf("error unmounting: %s", err)
 		}
 

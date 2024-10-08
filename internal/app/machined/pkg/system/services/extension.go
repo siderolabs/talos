@@ -26,7 +26,7 @@ import (
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system/runner/restart"
 	"github.com/siderolabs/talos/internal/pkg/capability"
 	"github.com/siderolabs/talos/internal/pkg/environment"
-	"github.com/siderolabs/talos/internal/pkg/mount"
+	"github.com/siderolabs/talos/internal/pkg/mount/v2"
 	"github.com/siderolabs/talos/pkg/conditions"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	extservices "github.com/siderolabs/talos/pkg/machinery/extensions/services"
@@ -39,7 +39,7 @@ import (
 type Extension struct {
 	Spec extservices.Spec
 
-	overlay *mount.Point
+	overlayUnmounter func() error
 }
 
 // ID implements the Service interface.
@@ -50,21 +50,23 @@ func (svc *Extension) ID(r runtime.Runtime) string {
 // PreFunc implements the Service interface.
 func (svc *Extension) PreFunc(ctx context.Context, r runtime.Runtime) error {
 	// re-mount service rootfs as overlay rw mount to allow containerd to mount there /dev, /proc, etc.
-	svc.overlay = mount.NewMountPoint(
-		"",
-		filepath.Join(constants.ExtensionServiceRootfsPath, svc.Spec.Name),
-		"",
-		0,
-		"",
-		mount.WithFlags(mount.Overlay|mount.SystemOverlay),
+	rootfsPath := filepath.Join(constants.ExtensionServiceRootfsPath, svc.Spec.Name)
+
+	overlay := mount.NewSystemOverlay(
+		[]string{rootfsPath},
+		rootfsPath,
 	)
 
-	return svc.overlay.Mount()
+	var err error
+
+	svc.overlayUnmounter, err = overlay.Mount()
+
+	return err
 }
 
 // PostFunc implements the Service interface.
 func (svc *Extension) PostFunc(r runtime.Runtime, state events.ServiceState) (err error) {
-	return svc.overlay.Unmount()
+	return svc.overlayUnmounter()
 }
 
 // Condition implements the Service interface.
