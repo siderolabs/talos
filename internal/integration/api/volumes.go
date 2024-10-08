@@ -201,7 +201,9 @@ func (suite *VolumesSuite) TestLVMActivation() {
 	userDisks, err := suite.UserDisks(suite.ctx, node)
 	suite.Require().NoError(err)
 
-	suite.Require().GreaterOrEqual(len(userDisks), 2, "expected at least two user disks to be available")
+	if len(userDisks) < 2 {
+		suite.T().Skipf("skipping test, not enough user disks available on node %s/%s: %q", node, nodeName, userDisks)
+	}
 
 	userDisksJoined := strings.Join(userDisks[:2], " ")
 
