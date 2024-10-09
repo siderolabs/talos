@@ -462,8 +462,13 @@ func (ctrl *ControlPlaneStaticPodController) manageAPIServer(ctx context.Context
 					constants.AnnotationStaticPodConfigVersion:     configResource.Metadata().Version().String(),
 				},
 				Labels: map[string]string{
-					"tier":    "control-plane",
-					"k8s-app": k8s.APIServerID,
+					"tier":                         "control-plane",
+					"k8s-app":                      k8s.APIServerID,
+					"component":                    k8s.APIServerID,
+					"app.kubernetes.io/name":       k8s.APIServerID,
+					"app.kubernetes.io/version":    compatibility.VersionFromImageRef(cfg.Image).String(),
+					"app.kubernetes.io/component":  "control-plane",
+					"app.kubernetes.io/managed-by": "Talos",
 				},
 			},
 			Spec: v1.PodSpec{
@@ -635,8 +640,13 @@ func (ctrl *ControlPlaneStaticPodController) manageControllerManager(ctx context
 					constants.AnnotationStaticPodConfigVersion:  configResource.Metadata().Version().String(),
 				},
 				Labels: map[string]string{
-					"tier":    "control-plane",
-					"k8s-app": k8s.ControllerManagerID,
+					"tier":                         "control-plane",
+					"k8s-app":                      k8s.ControllerManagerID,
+					"component":                    k8s.ControllerManagerID,
+					"app.kubernetes.io/name":       k8s.ControllerManagerID,
+					"app.kubernetes.io/version":    compatibility.VersionFromImageRef(cfg.Image).String(),
+					"app.kubernetes.io/component":  "control-plane",
+					"app.kubernetes.io/managed-by": "Talos",
 				},
 			},
 			Spec: v1.PodSpec{
@@ -820,8 +830,13 @@ func (ctrl *ControlPlaneStaticPodController) manageScheduler(ctx context.Context
 					constants.AnnotationStaticPodConfigVersion:  configResource.Metadata().Version().String(),
 				},
 				Labels: map[string]string{
-					"tier":    "control-plane",
-					"k8s-app": k8s.SchedulerID,
+					"tier":                         "control-plane",
+					"k8s-app":                      k8s.SchedulerID,
+					"component":                    k8s.SchedulerID,
+					"app.kubernetes.io/name":       k8s.SchedulerID,
+					"app.kubernetes.io/version":    compatibility.VersionFromImageRef(cfg.Image).String(),
+					"app.kubernetes.io/component":  "control-plane",
+					"app.kubernetes.io/managed-by": "Talos",
 				},
 			},
 			Spec: v1.PodSpec{
