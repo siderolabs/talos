@@ -25,6 +25,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 
+	machinedruntime "github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
 	"github.com/siderolabs/talos/internal/app/maintenance"
 	"github.com/siderolabs/talos/pkg/grpc/factory"
 	"github.com/siderolabs/talos/pkg/grpc/middleware/authz"
@@ -37,6 +38,7 @@ import (
 // MaintenanceServiceController runs the maintenance service based on the configuration.
 type MaintenanceServiceController struct {
 	SiderolinkPeerCheckFunc authz.SideroLinkPeerCheckFunc
+	V1Alpha1Mode            machinedruntime.Mode
 }
 
 // Name implements controller.Controller interface.
@@ -122,7 +124,7 @@ func (ctrl *MaintenanceServiceController) Run(ctx context.Context, r controller.
 	defer shutdownServer(context.Background())
 
 	cfgCh := make(chan machineryconfig.Provider)
-	srv := maintenance.New(cfgCh)
+	srv := maintenance.New(cfgCh, ctrl.V1Alpha1Mode)
 
 	injector := &authz.Injector{
 		Mode:                    authz.ReadOnlyWithAdminOnSiderolink,
@@ -289,7 +291,7 @@ func (ctrl *MaintenanceServiceController) Run(ctx context.Context, r controller.
 			lastCertificateFingerprint = fingerprint
 		}
 
-		if !usagePrinted && len(reachableAddresses) > 0 && lastCertificateFingerprint != "" {
+		if !usagePrinted && len(reachableAddresses) > 0 && lastCertificateFingerprint != "" && !ctrl.V1Alpha1Mode.IsAgent() {
 			firstIP := reachableAddresses[0]
 
 			logger.Sugar().Info("upload configuration using talosctl:")

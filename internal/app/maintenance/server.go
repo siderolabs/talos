@@ -44,10 +44,12 @@ type Server struct {
 	controller runtime.Controller
 	cfgCh      chan<- config.Provider
 	server     *grpc.Server
+
+	mode runtime.Mode
 }
 
 // New initializes and returns a [Server].
-func New(cfgCh chan<- config.Provider) *Server {
+func New(cfgCh chan<- config.Provider, mode runtime.Mode) *Server {
 	if runtimeController == nil {
 		panic("runtime controller is not set")
 	}
@@ -55,6 +57,7 @@ func New(cfgCh chan<- config.Provider) *Server {
 	return &Server{
 		controller: runtimeController,
 		cfgCh:      cfgCh,
+		mode:       mode,
 	}
 }
 
@@ -73,6 +76,10 @@ func (s *Server) Register(obj *grpc.Server) {
 
 // ApplyConfiguration implements [machine.MachineServiceServer].
 func (s *Server) ApplyConfiguration(_ context.Context, in *machine.ApplyConfigurationRequest) (*machine.ApplyConfigurationResponse, error) {
+	if s.mode.IsAgent() {
+		return nil, status.Error(codes.Unimplemented, "API is not implemented in agent mode")
+	}
+
 	//nolint:exhaustive
 	switch in.Mode {
 	case machine.ApplyConfigurationRequest_TRY:
@@ -117,6 +124,10 @@ Node is running in maintenance mode and does not have a config yet.`
 
 // GenerateConfiguration implements the [machine.MachineServiceServer] interface.
 func (s *Server) GenerateConfiguration(ctx context.Context, in *machine.GenerateConfigurationRequest) (*machine.GenerateConfigurationResponse, error) {
+	if s.mode.IsAgent() {
+		return nil, status.Error(codes.Unimplemented, "API is not implemented in agent mode")
+	}
+
 	if in.MachineConfig == nil {
 		return nil, errors.New("invalid generate request")
 	}
@@ -162,6 +173,10 @@ func (s *Server) Version(ctx context.Context, _ *emptypb.Empty) (*machine.Versio
 
 // Upgrade initiates an upgrade.
 func (s *Server) Upgrade(ctx context.Context, in *machine.UpgradeRequest) (reply *machine.UpgradeResponse, err error) {
+	if s.mode.IsAgent() {
+		return nil, status.Error(codes.Unimplemented, "API is not implemented in agent mode")
+	}
+
 	if err = s.assertAdminRole(ctx); err != nil {
 		return nil, err
 	}
@@ -211,6 +226,10 @@ func (s *Server) Upgrade(ctx context.Context, in *machine.UpgradeRequest) (reply
 //
 //nolint:gocyclo
 func (s *Server) Reset(ctx context.Context, in *machine.ResetRequest) (*machine.ResetResponse, error) {
+	if s.mode.IsAgent() {
+		return nil, status.Error(codes.Unimplemented, "API is not implemented in agent mode")
+	}
+
 	if err := s.assertAdminRole(ctx); err != nil {
 		return nil, err
 	}

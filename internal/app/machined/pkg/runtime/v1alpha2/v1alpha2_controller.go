@@ -96,7 +96,9 @@ func (ctrl *Controller) Run(ctx context.Context, drainer *runtime.Drainer) error
 		&block.LVMActivationController{},
 		&block.SystemDiskController{},
 		&block.UserDiskConfigController{},
-		&block.VolumeConfigController{},
+		&block.VolumeConfigController{
+			V1Alpha1Mode: ctrl.v1alpha1Runtime.State().Platform().Mode(),
+		},
 		&block.VolumeManagerController{},
 		&cluster.AffiliateMergeController{},
 		cluster.NewConfigController(),
@@ -314,7 +316,9 @@ func (ctrl *Controller) Run(ctx context.Context, drainer *runtime.Drainer) error
 			Drainer: drainer,
 		},
 		&runtimecontrollers.MaintenanceConfigController{},
-		&runtimecontrollers.MaintenanceServiceController{},
+		&runtimecontrollers.MaintenanceServiceController{
+			V1Alpha1Mode: ctrl.v1alpha1Runtime.State().Platform().Mode(),
+		},
 		&runtimecontrollers.MachineStatusController{
 			V1Alpha1Events: ctrl.v1alpha1Runtime.Events(),
 		},

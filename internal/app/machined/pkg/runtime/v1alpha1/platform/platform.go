@@ -113,7 +113,11 @@ func newPlatform(platform string) (p runtime.Platform, err error) {
 	case "hcloud":
 		p = &hcloud.Hcloud{}
 	case constants.PlatformMetal:
-		p = &metal.Metal{}
+		_, metalAgentCheckErr := os.Stat(constants.MetalAgentModeFlagPath)
+
+		p = &metal.Metal{
+			IsAgent: metalAgentCheckErr == nil,
+		}
 	case "opennebula":
 		p = &opennebula.OpenNebula{}
 	case "openstack":

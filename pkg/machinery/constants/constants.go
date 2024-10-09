@@ -1094,6 +1094,9 @@ const (
 	//
 	// Note: 116 = 't' and 108 = 'l' in ASCII.
 	HostDNSAddress = "169.254.116.108"
+
+	// MetalAgentModeFlagPath is the path to the file indicating if the node is running in Metal Agent mode.
+	MetalAgentModeFlagPath = "/usr/local/etc/is-metal-agent"
 )
 
 // See https://linux.die.net/man/3/klogctl

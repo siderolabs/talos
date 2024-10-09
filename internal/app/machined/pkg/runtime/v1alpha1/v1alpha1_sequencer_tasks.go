@@ -120,6 +120,15 @@ func WaitForUSB(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
 	}, "waitForUSB"
 }
 
+// LogMode represents the LogMode task.
+func LogMode(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
+	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) error {
+		logger.Printf("running in mode: %s", r.State().Platform().Mode())
+
+		return nil
+	}, "logMode"
+}
+
 // EnforceKSPPRequirements represents the EnforceKSPPRequirements task.
 func EnforceKSPPRequirements(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {

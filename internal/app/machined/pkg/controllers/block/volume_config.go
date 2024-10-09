@@ -16,6 +16,7 @@ import (
 	"github.com/siderolabs/go-blockdevice/v2/encryption"
 	"go.uber.org/zap"
 
+	machinedruntime "github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
 	"github.com/siderolabs/talos/internal/pkg/partition"
 	"github.com/siderolabs/talos/pkg/machinery/cel"
 	"github.com/siderolabs/talos/pkg/machinery/cel/celenv"
@@ -28,8 +29,12 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/resources/runtime"
 )
 
+var noMatch = cel.MustExpression(cel.ParseBooleanExpression("false", celenv.Empty()))
+
 // VolumeConfigController provides volume configuration based on Talos defaults and machine configuration.
-type VolumeConfigController struct{}
+type VolumeConfigController struct {
+	V1Alpha1Mode machinedruntime.Mode
+}
 
 // Name implements controller.Controller interface.
 func (ctrl *VolumeConfigController) Name() string {
@@ -291,8 +296,14 @@ func (ctrl *VolumeConfigController) manageStateNoConfig(encryptionMeta *runtime.
 			TargetPath: constants.StateMountPoint,
 		}
 
+		match := labelVolumeMatchAndNonEmpty(constants.StatePartitionLabel)
+		if ctrl.V1Alpha1Mode.IsAgent() { // mark as missing
+			match = noMatch
+		}
+
+		// check here - make match false
 		vc.TypedSpec().Locator = block.LocatorSpec{
-			Match: labelVolumeMatchAndNonEmpty(constants.StatePartitionLabel),
+			Match: match,
 		}
 
 		if encryptionMeta != nil {

@@ -21,6 +21,8 @@ const (
 	ModeContainer
 	// ModeMetal is the metal runtime mode.
 	ModeMetal
+	// ModeMetalAgent is the metal agent runtime mode.
+	ModeMetalAgent
 )
 
 const (
@@ -37,14 +39,15 @@ const (
 )
 
 const (
-	cloud     = "cloud"
-	container = "container"
-	metal     = "metal"
+	cloud      = "cloud"
+	container  = "container"
+	metal      = "metal"
+	metalAgent = "metal-agent"
 )
 
 // String returns the string representation of a Mode.
 func (m Mode) String() string {
-	return [...]string{cloud, container, metal}[m]
+	return [...]string{cloud, container, metal, metalAgent}[m]
 }
 
 // RequiresInstall implements config.RuntimeMode.
@@ -62,6 +65,11 @@ func (m Mode) Supports(feature ModeCapability) bool {
 	return (m.capabilities() & uint64(feature)) != 0
 }
 
+// IsAgent returns true if the mode is an agent mode (i.e. metal agent mode).
+func (m Mode) IsAgent() bool {
+	return m == ModeMetalAgent
+}
+
 // ParseMode returns a `Mode` that matches the specified string.
 func ParseMode(s string) (mod Mode, err error) {
 	switch s {
@@ -71,6 +79,8 @@ func ParseMode(s string) (mod Mode, err error) {
 		mod = ModeContainer
 	case metal:
 		mod = ModeMetal
+	case metalAgent:
+		mod = ModeMetalAgent
 	default:
 		return mod, fmt.Errorf("unknown runtime mode: %q", s)
 	}

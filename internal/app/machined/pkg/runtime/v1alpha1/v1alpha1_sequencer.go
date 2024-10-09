@@ -65,9 +65,12 @@ func (p PhaseList) AppendList(list PhaseList) PhaseList {
 // Initialize is the initialize sequence. The primary goals of this sequence is
 // to load the config and enforce kernel security requirements.
 func (*Sequencer) Initialize(r runtime.Runtime) []runtime.Phase {
+	mode := r.State().Platform().Mode()
 	phases := PhaseList{}
 
-	switch r.State().Platform().Mode() { //nolint:exhaustive
+	phases = phases.Append("logMode", LogMode)
+
+	switch mode { //nolint:exhaustive
 	case runtime.ModeContainer:
 		phases = phases.Append(
 			"systemRequirements",
@@ -118,6 +121,10 @@ func (*Sequencer) Initialize(r runtime.Runtime) []runtime.Phase {
 			ReloadMeta,
 		).AppendWithDeferredCheck(
 			func() bool {
+				if mode == runtime.ModeMetalAgent {
+					return false
+				}
+
 				disabledStr := procfs.ProcCmdline().Get(constants.KernelParamDashboardDisabled).First()
 				disabled, _ := strconv.ParseBool(pointer.SafeDeref(disabledStr)) //nolint:errcheck
 

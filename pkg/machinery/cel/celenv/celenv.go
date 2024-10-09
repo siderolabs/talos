@@ -16,6 +16,16 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/api/resource/definitions/block"
 )
 
+// Empty is an empty CEL environment.
+var Empty = sync.OnceValue(func() *cel.Env {
+	env, err := cel.NewEnv()
+	if err != nil {
+		panic(err)
+	}
+
+	return env
+})
+
 // DiskLocator is a disk locator CEL environment.
 var DiskLocator = sync.OnceValue(func() *cel.Env {
 	var diskSpec block.DiskSpec
