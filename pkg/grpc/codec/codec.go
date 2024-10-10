@@ -12,6 +12,7 @@ import (
 
 	"google.golang.org/grpc/encoding"
 	"google.golang.org/grpc/encoding/proto"
+	"google.golang.org/grpc/mem"
 
 	talosproto "github.com/siderolabs/talos/pkg/machinery/proto"
 )
@@ -69,6 +70,33 @@ func (Codec) Name() string {
 	return proto.Name // overrides google.golang.org/grpc/encoding/proto codec
 }
 
+type codecV1Bridge struct {
+	codec interface {
+		Marshal(v any) ([]byte, error)
+		Unmarshal(data []byte, v any) error
+		Name() string
+	}
+}
+
+var _ encoding.CodecV2 = codecV1Bridge{}
+
+func (c codecV1Bridge) Marshal(v any) (mem.BufferSlice, error) {
+	data, err := c.codec.Marshal(v)
+	if err != nil {
+		return nil, err
+	}
+
+	return mem.BufferSlice{mem.NewBuffer(&data, nil)}, nil
+}
+
+func (c codecV1Bridge) Unmarshal(data mem.BufferSlice, v any) (err error) {
+	return c.codec.Unmarshal(data.Materialize(), v)
+}
+
+func (c codecV1Bridge) Name() string {
+	return c.codec.Name()
+}
+
 func init() {
-	encoding.RegisterCodec(Codec{})
+	encoding.RegisterCodecV2(codecV1Bridge{codec: Codec{}})
 }

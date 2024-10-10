@@ -193,7 +193,7 @@ func (p *certificateProvider) GetCACertPool() (*stdx509.CertPool, error) {
 	return p.caCertPool, nil
 }
 
-func (p *certificateProvider) GetCertificate(h *stdlibtls.ClientHelloInfo) (*stdlibtls.Certificate, error) {
+func (p *certificateProvider) GetCertificate(*stdlibtls.ClientHelloInfo) (*stdlibtls.Certificate, error) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 

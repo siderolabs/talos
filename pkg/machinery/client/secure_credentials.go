@@ -17,7 +17,7 @@ func (c BasicAuth) RequireTransportSecurity() bool {
 	return true
 }
 
-func buildCredentials(configContext *clientconfig.Context, endpoints []string) (credentials.TransportCredentials, error) {
+func buildCredentials(configContext *clientconfig.Context, _ []string) (credentials.TransportCredentials, error) {
 	tlsConfig, err := buildTLSConfig(configContext)
 	if err != nil {
 		return nil, err
