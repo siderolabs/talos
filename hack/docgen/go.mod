@@ -25,6 +25,6 @@ require (
 	github.com/gorilla/css v1.0.1 // indirect
 	github.com/mailru/easyjson v0.7.7 // indirect
 	golang.org/x/mod v0.20.0 // indirect
-	golang.org/x/net v0.28.0 // indirect
+	golang.org/x/net v0.30.0 // indirect
 	golang.org/x/tools v0.24.0 // indirect
 )

@@ -144,7 +144,7 @@ func (c *Client) GetClusterName() string {
 }
 
 // New returns a new Client.
-func New(ctx context.Context, opts ...OptionFunc) (c *Client, err error) {
+func New(_ context.Context, opts ...OptionFunc) (c *Client, err error) {
 	c = new(Client)
 
 	c.options = new(Options)

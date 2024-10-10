@@ -41,7 +41,7 @@ func (l *Local) String() string {
 }
 
 // GetConnection returns a grpc connection to the backend.
-func (l *Local) GetConnection(ctx context.Context, fullMethodName string) (context.Context, *grpc.ClientConn, error) {
+func (l *Local) GetConnection(ctx context.Context, _ string) (context.Context, *grpc.ClientConn, error) {
 	md, _ := metadata.FromIncomingContext(ctx)
 	md = md.Copy()
 
@@ -62,7 +62,7 @@ func (l *Local) GetConnection(ctx context.Context, fullMethodName string) (conte
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 		grpc.WithDefaultCallOptions(
 			grpc.MaxCallRecvMsgSize(constants.GRPCMaxMessageSize),
-			grpc.ForceCodec(proxy.Codec()),
+			grpc.ForceCodecV2(proxy.Codec()),
 		),
 		grpc.WithSharedWriteBuffer(true),
 	)
@@ -71,11 +71,11 @@ func (l *Local) GetConnection(ctx context.Context, fullMethodName string) (conte
 }
 
 // AppendInfo is called to enhance response from the backend with additional data.
-func (l *Local) AppendInfo(streaming bool, resp []byte) ([]byte, error) {
+func (l *Local) AppendInfo(_ bool, resp []byte) ([]byte, error) {
 	return resp, nil
 }
 
 // BuildError is called to convert error from upstream into response field.
-func (l *Local) BuildError(streaming bool, err error) ([]byte, error) {
+func (l *Local) BuildError(bool, error) ([]byte, error) {
 	return nil, nil
 }

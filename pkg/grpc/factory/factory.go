@@ -6,7 +6,6 @@ package factory
 
 import (
 	"context"
-	"crypto/tls"
 	"errors"
 	"fmt"
 	"io"
@@ -18,12 +17,12 @@ import (
 	"strconv"
 
 	grpc_recovery "github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/recovery"
+	_ "github.com/siderolabs/proto-codec/codec" // register codec v2
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/reflection"
 	"google.golang.org/grpc/status"
 
-	_ "github.com/siderolabs/talos/pkg/grpc/codec" // register codec
 	grpclog "github.com/siderolabs/talos/pkg/grpc/middleware/log"
 )
 
@@ -39,7 +38,6 @@ type Options struct {
 	Port               int
 	SocketPath         string
 	Network            string
-	Config             *tls.Config
 	ServerOptions      []grpc.ServerOption
 	UnaryInterceptors  []grpc.UnaryServerInterceptor
 	StreamInterceptors []grpc.StreamServerInterceptor
@@ -76,13 +74,6 @@ func SocketPath(o string) Option {
 func Network(o string) Option {
 	return func(args *Options) {
 		args.Network = o
-	}
-}
-
-// Config sets the listen port of the server.
-func Config(o *tls.Config) Option {
-	return func(args *Options) {
-		args.Config = o
 	}
 }
 

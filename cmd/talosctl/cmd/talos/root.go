@@ -12,13 +12,13 @@ import (
 	"strings"
 
 	"github.com/siderolabs/gen/maps"
+	_ "github.com/siderolabs/proto-codec/codec" // register codec v2
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/peer"
 
 	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/global"
-	_ "github.com/siderolabs/talos/pkg/grpc/codec" // register codec
 	"github.com/siderolabs/talos/pkg/machinery/api/common"
 	machineapi "github.com/siderolabs/talos/pkg/machinery/api/machine"
 	"github.com/siderolabs/talos/pkg/machinery/client"

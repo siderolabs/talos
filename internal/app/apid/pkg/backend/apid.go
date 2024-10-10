@@ -66,7 +66,7 @@ func (a *APID) String() string {
 }
 
 // GetConnection returns a grpc connection to the backend.
-func (a *APID) GetConnection(ctx context.Context, fullMethodName string) (context.Context, *grpc.ClientConn, error) {
+func (a *APID) GetConnection(ctx context.Context, _ string) (context.Context, *grpc.ClientConn, error) {
 	md, _ := metadata.FromIncomingContext(ctx)
 	md = md.Copy()
 
@@ -117,7 +117,7 @@ func (a *APID) GetConnection(ctx context.Context, fullMethodName string) (contex
 		}),
 		grpc.WithDefaultCallOptions(
 			grpc.MaxCallRecvMsgSize(constants.GRPCMaxMessageSize),
-			grpc.ForceCodec(proxy.Codec()),
+			grpc.ForceCodecV2(proxy.Codec()),
 		),
 		grpc.WithSharedWriteBuffer(true),
 	)

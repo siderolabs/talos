@@ -21,7 +21,7 @@ import (
 	"github.com/cosi-project/runtime/api/v1alpha1"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/cosi-project/runtime/pkg/state/protobuf/client"
-	debug "github.com/siderolabs/go-debug"
+	"github.com/siderolabs/go-debug"
 	"github.com/siderolabs/grpc-proxy/proxy"
 	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc"
@@ -178,7 +178,7 @@ func apidMain() error {
 				grpc.Creds(
 					credentials.NewTLS(serverTLSConfig),
 				),
-				grpc.ForceServerCodec(proxy.Codec()),
+				grpc.ForceServerCodecV2(proxy.Codec()),
 				grpc.UnknownServiceHandler(
 					proxy.TransparentHandler(
 						router.Director,
@@ -205,7 +205,7 @@ func apidMain() error {
 			router,
 			factory.WithDefaultLog(),
 			factory.ServerOptions(
-				grpc.ForceServerCodec(proxy.Codec()),
+				grpc.ForceServerCodecV2(proxy.Codec()),
 				grpc.UnknownServiceHandler(
 					proxy.TransparentHandler(
 						router.Director,
@@ -248,7 +248,7 @@ func apidMain() error {
 	return errGroup.Wait()
 }
 
-func verifyExtKeyUsage(rawCerts [][]byte, verifiedChains [][]*x509.Certificate) error {
+func verifyExtKeyUsage(_ [][]byte, verifiedChains [][]*x509.Certificate) error {
 	if len(verifiedChains) == 0 {
 		return errors.New("no verified chains")
 	}
