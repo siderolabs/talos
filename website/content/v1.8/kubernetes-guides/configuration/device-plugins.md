@@ -103,7 +103,7 @@ Now that the device plugin is deployed, you can deploy a pod that requests the d
 The request for the device is specified as a [resource](https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/) in the pod spec.
 
 ```yaml
-requests:
+resources:
   limits:
     squat.ai/tun: "1"
 ```
