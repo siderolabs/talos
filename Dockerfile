@@ -688,8 +688,6 @@ RUN <<END
     # some extensions like qemu-guest agent will call '/sbin/shutdown'
     ln /rootfs/sbin/init /rootfs/sbin/shutdown
     chmod +x /rootfs/sbin/shutdown
-    ln /rootfs/sbin/init /rootfs/sbin/wrapperd
-    chmod +x /rootfs/sbin/wrapperd
     ln /rootfs/sbin/init /rootfs/sbin/dashboard
     chmod +x /rootfs/sbin/dashboard
 END
@@ -762,8 +760,6 @@ RUN <<END
     # some extensions like qemu-guest agent will call '/sbin/shutdown'
     ln /rootfs/sbin/init /rootfs/sbin/shutdown
     chmod +x /rootfs/sbin/shutdown
-    ln /rootfs/sbin/init /rootfs/sbin/wrapperd
-    chmod +x /rootfs/sbin/wrapperd
     ln /rootfs/sbin/init /rootfs/sbin/dashboard
     chmod +x /rootfs/sbin/dashboard
 END

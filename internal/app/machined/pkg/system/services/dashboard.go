@@ -66,7 +66,7 @@ func (d *Dashboard) Runner(r runtime.Runtime) (runner.Runner, error) {
 		}),
 		runner.WithStdinFile(tty),
 		runner.WithStdoutFile(tty),
-		runner.WithCtty(1),
+		runner.WithCtty(0),
 		runner.WithOOMScoreAdj(-400),
 		runner.WithDroppedCapabilities(capability.AllCapabilitiesSetLowercase()),
 		runner.WithCgroupPath(constants.CgroupDashboard),

@@ -143,7 +143,7 @@ func (suite *ProcessSuite) TestRunRestartFailed() {
 
 	wg.Wait()
 
-	suite.Assert().True(len(fetchLog()) > 20)
+	suite.Assert().GreaterOrEqual(len(fetchLog()), 20, fetchLog())
 }
 
 func (suite *ProcessSuite) TestStopFailingAndRestarting() {
@@ -220,10 +220,6 @@ func (suite *ProcessSuite) TestStopSigKill() {
 }
 
 func TestProcessSuite(t *testing.T) {
-	if _, err := os.Stat("/sbin/wrapperd"); err != nil {
-		t.Skip("wrapperd not found")
-	}
-
 	for _, runReaper := range []bool{true, false} {
 		func(runReaper bool) {
 			t.Run(fmt.Sprintf("runReaper=%v", runReaper), func(t *testing.T) { suite.Run(t, &ProcessSuite{runReaper: runReaper}) })

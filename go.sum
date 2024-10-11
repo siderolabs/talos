@@ -640,8 +640,8 @@ github.com/siderolabs/go-blockdevice/v2 v2.0.3 h1:IEgDqd3H3gPphahrdvfAzU8RmD4r5e
 github.com/siderolabs/go-blockdevice/v2 v2.0.3/go.mod h1:74htzCV913UzaLZ4H+NBXkwWlYnBJIq5m/379ZEcu8w=
 github.com/siderolabs/go-circular v0.2.1 h1:a++iVCn9jyhICX3POQZZX8n72p2h5JGdGU6w1ulmpcA=
 github.com/siderolabs/go-circular v0.2.1/go.mod h1:ZDItzVyXK+B/XuqTBV5MtQtSv06VI+oCmWGRnNCATo8=
-github.com/siderolabs/go-cmd v0.1.1 h1:nTouZUSxLeiiEe7hFexSVvaTsY/3O8k1s08BxPRrsps=
-github.com/siderolabs/go-cmd v0.1.1/go.mod h1:6hY0JG34LxEEwYE8aH2iIHkHX/ir12VRLqfwAf2yJIY=
+github.com/siderolabs/go-cmd v0.1.3 h1:JrgZwqhJQeoec3QRON0LK+fv+0y7d0DyY7zsfkO6ciw=
+github.com/siderolabs/go-cmd v0.1.3/go.mod h1:bg7HY4mRNu4zKebAgUevSwuYNtcvPMJfuhLRkVKHZ0k=
 github.com/siderolabs/go-copy v0.1.0 h1:OIWCtSg+rhOtnIZTpT31Gfpn17rv5kwJqQHG+QUEgC8=
 github.com/siderolabs/go-copy v0.1.0/go.mod h1:4bF2rZOZAR/ags/U4AVSpjFE5RPGdEeSkOq6yR9YOkU=
 github.com/siderolabs/go-debug v0.4.0 h1:pbFt6Rzumm90s3GvbRer7yIxFNc0gQ94I53omkqswHA=

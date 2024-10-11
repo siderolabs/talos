@@ -5,16 +5,28 @@
 package process
 
 import (
+	"cmp"
 	"fmt"
 	"io"
+	"io/fs"
 	"os"
-	"os/exec"
+	"path"
+	"slices"
 	"strings"
 	"syscall"
 	"time"
 
+	"github.com/containerd/cgroups/v3"
+	"github.com/containerd/cgroups/v3/cgroup1"
+	"github.com/containerd/cgroups/v3/cgroup2"
+	"github.com/containerd/containerd/v2/pkg/sys"
+	"github.com/siderolabs/gen/optional"
+	"github.com/siderolabs/gen/xslices"
 	"github.com/siderolabs/go-cmd/pkg/cmd/proc/reaper"
+	"kernel.org/pub/linux/libs/security/libcap/cap"
 
+	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/platform"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system/events"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system/runner"
 	"github.com/siderolabs/talos/internal/pkg/cgroup"
@@ -78,27 +90,95 @@ func (p *processRunner) Close() error {
 }
 
 type commandWrapper struct {
-	cmd              *exec.Cmd
+	launcher         *cap.Launcher
+	ctty             optional.Optional[int]
+	cgroupFile       *os.File
+	stdin            *os.File
+	stdout           *os.File
+	stderr           *os.File
 	afterStart       func()
 	afterTermination func() error
 }
 
-//nolint:gocyclo
-func (p *processRunner) build() (commandWrapper, error) {
-	args := []string{
-		fmt.Sprintf("-name=%s", p.args.ID),
-		fmt.Sprintf("-dropped-caps=%s", strings.Join(p.opts.DroppedCapabilities, ",")),
-		fmt.Sprintf("-cgroup-path=%s", cgroup.Path(p.opts.CgroupPath)),
-		fmt.Sprintf("-oom-score=%d", p.opts.OOMScoreAdj),
-		fmt.Sprintf("-uid=%d", p.opts.UID),
+func dropCaps(droppedCapabilities []string, launcher *cap.Launcher) error {
+	droppedCaps := strings.Join(droppedCapabilities, ",")
+
+	if droppedCaps != "" {
+		caps := strings.Split(droppedCaps, ",")
+		dropCaps := xslices.Map(caps, func(c string) cap.Value {
+			capability, capErr := cap.FromName(c)
+			if capErr != nil {
+				panic(fmt.Errorf("failed to parse capability: %s", capErr))
+			}
+
+			return capability
+		})
+
+		iab := cap.IABGetProc()
+		if err := iab.SetVector(cap.Bound, true, dropCaps...); err != nil {
+			return fmt.Errorf("failed to set capabilities: %w", err)
+		}
+
+		launcher.SetIAB(iab)
 	}
 
-	args = append(args, p.args.ProcessArgs...)
+	return nil
+}
 
-	cmd := exec.Command("/sbin/wrapperd", args...)
+// This callback is run in the thread before executing child process.
+func beforeExecCallback(pa *syscall.ProcAttr, data any) error {
+	wrapper, ok := data.(*commandWrapper)
+	if !ok {
+		return fmt.Errorf("failed to get command info")
+	}
 
-	// Set the environment for the service.
-	cmd.Env = append([]string{fmt.Sprintf("PATH=%s", constants.PATH)}, p.opts.Env...)
+	ctty, cttySet := wrapper.ctty.Get()
+	if cttySet {
+		if pa.Sys == nil {
+			pa.Sys = &syscall.SysProcAttr{}
+		}
+
+		pa.Sys.Ctty = ctty
+		pa.Sys.Setsid = true
+		pa.Sys.Setctty = true
+	}
+
+	pa.Files = []uintptr{
+		wrapper.stdin.Fd(),
+		wrapper.stdout.Fd(),
+		wrapper.stderr.Fd(),
+	}
+
+	// It is only set in case we should use CgroupFD
+	if wrapper.cgroupFile != nil {
+		if pa.Sys == nil {
+			pa.Sys = &syscall.SysProcAttr{}
+		}
+
+		pa.Sys.UseCgroupFD = true
+		pa.Sys.CgroupFD = int(wrapper.cgroupFile.Fd())
+	}
+
+	return nil
+}
+
+//nolint:gocyclo
+func (p *processRunner) build() (commandWrapper, error) {
+	wrapper := commandWrapper{}
+
+	env := slices.Concat([]string{"PATH=" + constants.PATH}, p.opts.Env, os.Environ())
+	launcher := cap.NewLauncher(p.args.ProcessArgs[0], p.args.ProcessArgs, env)
+
+	if p.opts.UID > 0 {
+		launcher.SetUID(int(p.opts.UID))
+	}
+
+	// reduce capabilities and assign them to launcher
+	if err := dropCaps(p.opts.DroppedCapabilities, launcher); err != nil {
+		return commandWrapper{}, err
+	}
+
+	launcher.Callback(beforeExecCallback)
 
 	// Setup logging.
 	w, err := p.opts.LoggingManager.ServiceLog(p.args.ID).Writer()
@@ -113,12 +193,29 @@ func (p *processRunner) build() (commandWrapper, error) {
 		writer = w
 	}
 
+	// As MultiWriter is not a file, we need to create a pipe
+	// Pipe writer is passed to the child process while we read from the read side
+	pr, pw, err := os.Pipe()
+	if err != nil {
+		return commandWrapper{}, err
+	}
+
+	go io.Copy(writer, pr) //nolint:errcheck
+
 	// close the writer if we exit early due to an error
 	closeWriter := true
 
+	closeLogging := func() (e error) {
+		for _, closer := range []io.Closer{w, pr, pw} {
+			e = cmp.Or(closer.Close(), e)
+		}
+
+		return e
+	}
+
 	defer func() {
 		if closeWriter {
-			w.Close() //nolint:errcheck
+			closeLogging() //nolint:errcheck
 		}
 	}()
 
@@ -130,7 +227,7 @@ func (p *processRunner) build() (commandWrapper, error) {
 			return commandWrapper{}, err
 		}
 
-		cmd.Stdin = stdin
+		wrapper.stdin = stdin
 
 		afterStartFuncs = append(afterStartFuncs, func() {
 			stdin.Close() //nolint:errcheck
@@ -143,13 +240,14 @@ func (p *processRunner) build() (commandWrapper, error) {
 			return commandWrapper{}, err
 		}
 
-		cmd.Stdout = stdout
+		wrapper.stdout = stdout
 
 		afterStartFuncs = append(afterStartFuncs, func() {
 			stdout.Close() //nolint:errcheck
 		})
 	} else {
-		cmd.Stdout = writer
+		// Do not close the fd in this case, it'll be done by closeLogger
+		wrapper.stdout = pw
 	}
 
 	if p.opts.StderrFile != "" {
@@ -158,37 +256,92 @@ func (p *processRunner) build() (commandWrapper, error) {
 			return commandWrapper{}, err
 		}
 
-		cmd.Stderr = stderr
+		wrapper.stderr = stderr
 
 		afterStartFuncs = append(afterStartFuncs, func() {
 			stderr.Close() //nolint:errcheck
 		})
 	} else {
-		cmd.Stderr = writer
-	}
-
-	ctty, cttySet := p.opts.Ctty.Get()
-	if cttySet {
-		cmd.SysProcAttr = &syscall.SysProcAttr{
-			Setsid:  true,
-			Setctty: true,
-			Ctty:    ctty,
-		}
+		// Do not close the fd in this case, it'll be done by closeLogger
+		wrapper.stderr = pw
 	}
 
 	closeWriter = false
 
-	return commandWrapper{
-		cmd: cmd,
-		afterStart: func() {
-			for _, f := range afterStartFuncs {
-				f()
+	wrapper.launcher = launcher
+	wrapper.afterStart = func() {
+		for _, f := range afterStartFuncs {
+			f()
+		}
+	}
+	wrapper.afterTermination = closeLogging
+	wrapper.ctty = p.opts.Ctty
+
+	cgroupFdSupported := false
+
+	platform, err := platform.CurrentPlatform()
+	if err == nil {
+		cgroupFdSupported = platform.Mode() != runtime.ModeContainer
+	}
+
+	// cgroupfd is more reliable, use it when possible
+	if cgroups.Mode() == cgroups.Unified && cgroupFdSupported && p.opts.UID == 0 {
+		cg, err := os.Open(path.Join(constants.CgroupMountPath, cgroup.Path(p.opts.CgroupPath)))
+		if err == nil {
+			wrapper.cgroupFile = cg
+
+			afterStartFuncs = append(afterStartFuncs, func() {
+				cg.Close() //nolint:errcheck
+			})
+		}
+	}
+
+	return wrapper, nil
+}
+
+// Apply cgroup and OOM score after the process is launched.
+//
+//nolint:gocyclo
+func applyProperties(p *processRunner, pid int) error {
+	path := cgroup.Path(p.opts.CgroupPath)
+
+	if cgroups.Mode() == cgroups.Unified {
+		cgv2, err := cgroup2.Load(path)
+		if err != nil {
+			return fmt.Errorf("failed to load cgroup %s: %w", path, err)
+		}
+
+		// No such process error can happen in case the process is terminated before this code runs
+		if err := cgv2.AddProc(uint64(pid)); err != nil {
+			pathError, ok := err.(*fs.PathError)
+			if !ok || pathError.Err != syscall.ESRCH {
+				return fmt.Errorf("failed to move process %s to cgroup: %w", p, err)
 			}
-		},
-		afterTermination: func() error {
-			return w.Close()
-		},
-	}, nil
+		}
+	} else {
+		cgv1, err := cgroup1.Load(cgroup1.StaticPath(path))
+		if err != nil {
+			return fmt.Errorf("failed to load cgroup %s: %w", path, err)
+		}
+
+		if err := cgv1.Add(cgroup1.Process{
+			Pid: pid,
+		}); err != nil {
+			pathError, ok := err.(*fs.PathError)
+			if !ok || pathError.Err != syscall.ESRCH {
+				return fmt.Errorf("failed to move process %s to cgroup: %w", p, err)
+			}
+		}
+	}
+
+	if err := sys.AdjustOOMScore(pid, p.opts.OOMScoreAdj); err != nil {
+		pathError, ok := err.(*fs.PathError)
+		if !ok || pathError.Err != syscall.ENOENT {
+			return fmt.Errorf("failed to change OOMScoreAdj of process %s to %d: %w", p, p.opts.OOMScoreAdj, err)
+		}
+	}
+
+	return nil
 }
 
 func (p *processRunner) run(eventSink events.Recorder) error {
@@ -206,20 +359,28 @@ func (p *processRunner) run(eventSink events.Recorder) error {
 		defer reaper.Stop(notifyCh)
 	}
 
-	err = cmdWrapper.cmd.Start()
-
-	cmdWrapper.afterStart()
-
+	pid, err := cmdWrapper.launcher.Launch(&cmdWrapper)
 	if err != nil {
 		return fmt.Errorf("error starting process: %w", err)
 	}
 
-	eventSink(events.StateRunning, "Process %s started with PID %d", p, cmdWrapper.cmd.Process.Pid)
+	if err := applyProperties(p, pid); err != nil {
+		return err
+	}
+
+	cmdWrapper.afterStart()
+
+	eventSink(events.StateRunning, "Process %s started with PID %d", p, pid)
+
+	process, err := os.FindProcess(pid)
+	if err != nil {
+		return fmt.Errorf("could not find process: %w", err)
+	}
 
 	waitCh := make(chan error)
 
 	go func() {
-		waitCh <- reaper.WaitWrapper(usingReaper, notifyCh, cmdWrapper.cmd)
+		waitCh <- reaper.ProcessWaitWrapper(usingReaper, notifyCh, process)
 	}()
 
 	select {
@@ -231,7 +392,7 @@ func (p *processRunner) run(eventSink events.Recorder) error {
 		eventSink(events.StateStopping, "Sending SIGTERM to %s", p)
 
 		//nolint:errcheck
-		_ = cmdWrapper.cmd.Process.Signal(syscall.SIGTERM)
+		_ = process.Signal(syscall.SIGTERM)
 	}
 
 	select {
@@ -243,7 +404,7 @@ func (p *processRunner) run(eventSink events.Recorder) error {
 		eventSink(events.StateStopping, "Sending SIGKILL to %s", p)
 
 		//nolint:errcheck
-		_ = cmdWrapper.cmd.Process.Signal(syscall.SIGKILL)
+		_ = process.Signal(syscall.SIGKILL)
 	}
 
 	// wait for process to terminate
