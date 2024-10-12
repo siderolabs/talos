@@ -17,7 +17,7 @@ talosctl apply-config [flags]
 
 ```
       --cert-fingerprint strings                                 list of server certificate fingeprints to accept (defaults to no check)
-  -p, --config-patch strings                                     the list of config patches to apply to the local config file before sending it to the node
+  -p, --config-patch stringArray                                 the list of config patches to apply to the local config file before sending it to the node
       --dry-run                                                  check how the config change will be applied in dry-run mode
   -f, --file string                                              the filename of the updated configuration
   -h, --help                                                     help for apply-config
