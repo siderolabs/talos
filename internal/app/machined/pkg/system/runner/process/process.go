@@ -147,8 +147,7 @@ func (p *processRunner) build() (commandWrapper, error) {
 			wrapper.stdout,
 			wrapper.stderr,
 		}
-		// TODO: do pa.Sys.CgroupFD here?
-		// pa.Sys.UseCgroupFD
+		// TODO: use pa.Sys.CgroupFD here when we can be sure clone3 is available
 		fmt.Println("Callback executed")
 		return nil
 	})
@@ -156,27 +155,27 @@ func (p *processRunner) build() (commandWrapper, error) {
 	// FIXME: restore
 	/// #############?////////////////////////////??????//////////?????????????/#####
 
-	// Setup logging.
-	// w, err := p.opts.LoggingManager.ServiceLog(p.args.ID).Writer()
-	// if err != nil {
-	// 	return commandWrapper{}, fmt.Errorf("service log handler: %w", err)
-	// }
+	/// Setup logging.
+	/// w, err := p.opts.LoggingManager.ServiceLog(p.args.ID).Writer()
+	/// if err != nil {
+	/// 	return commandWrapper{}, fmt.Errorf("service log handler: %w", err)
+	/// }
 
-	// var writer io.Writer
-	// if p.debug { // TODO: wrap it into LoggingManager
-	// 	writer = io.MultiWriter(w, os.Stdout)
-	// } else {
-	// 	writer = w
-	// }
+	/// var writer io.Writer
+	/// if p.debug { // TODO: wrap it into LoggingManager
+	/// 	writer = io.MultiWriter(w, os.Stdout)
+	/// } else {
+	/// 	writer = w
+	/// }
 
-	// close the writer if we exit early due to an error
-	// closeWriter := true
+	/// close the writer if we exit early due to an error
+	/// closeWriter := true
 
-	// defer func() {
-	// 	if closeWriter {
-	// 		w.Close() //nolint:errcheck
-	// 	}
-	// }()
+	/// defer func() {
+	/// 	if closeWriter {
+	/// 		w.Close() //nolint:errcheck
+	/// 	}
+	/// }()
 
 	var afterStartFuncs []func()
 
@@ -206,7 +205,7 @@ func (p *processRunner) build() (commandWrapper, error) {
 		})
 	} else {
 		wrapper.stdout = os.Stdout.Fd()
-		// wrapper.stdout = writer
+		/// wrapper.stdout = writer
 	}
 
 	if p.opts.StderrFile != "" {
@@ -222,10 +221,10 @@ func (p *processRunner) build() (commandWrapper, error) {
 		})
 	} else {
 		wrapper.stderr = os.Stdout.Fd()
-		// wrapper.stderr = writer
+		/// wrapper.stderr = writer
 	}
 
-	// closeWriter = false
+	/// closeWriter = false
 
 	wrapper.launcher = launcher
 	wrapper.afterStart = func() {
@@ -234,7 +233,7 @@ func (p *processRunner) build() (commandWrapper, error) {
 		}
 	}
 	wrapper.afterTermination = func() error {
-		// return w.Close()
+		/// return w.Close()
 		return nil
 	}
 	wrapper.ctty = p.opts.Ctty
@@ -243,8 +242,6 @@ func (p *processRunner) build() (commandWrapper, error) {
 }
 
 func (p *processRunner) run(eventSink events.Recorder) error {
-	cgroupPath := cgroup.Path(p.opts.CgroupPath)
-
 	cmdWrapper, err := p.build()
 	if err != nil {
 		return fmt.Errorf("error building command: %w", err)
@@ -272,6 +269,8 @@ func (p *processRunner) run(eventSink events.Recorder) error {
 	if err := sys.AdjustOOMScore(pid, p.opts.OOMScoreAdj); err != nil {
 		return fmt.Errorf("failed to change OOMScoreAdj of process %s to %d", p, p.opts.OOMScoreAdj)
 	}
+
+	cgroupPath := cgroup.Path(p.opts.CgroupPath)
 
 	if cgroups.Mode() == cgroups.Unified {
 		cgv2, err := cgroup2.Load(cgroupPath)
