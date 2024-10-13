@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"slices"
 	"strings"
 	"syscall"
 	"time"
@@ -99,9 +100,7 @@ type commandWrapper struct {
 func (p *processRunner) build() (commandWrapper, error) {
 	wrapper := commandWrapper{}
 
-	env := []string{fmt.Sprintf("PATH=%s", constants.PATH)}
-	env = append(env, p.opts.Env...)
-	env = append(env, os.Environ()...)
+	env := slices.Concat([]string{"PATH=" + constants.PATH}, p.opts.Env, os.Environ())
 	launcher := cap.NewLauncher(p.args.ProcessArgs[0], p.args.ProcessArgs[1:], env)
 
 	if p.opts.UID > 0 {
@@ -112,13 +111,13 @@ func (p *processRunner) build() (commandWrapper, error) {
 
 	prop, err := krnl.ReadParam(&kernel.Param{Key: "proc.sys.kernel.kexec_load_disabled"})
 	if v := strings.TrimSpace(string(prop)); err == nil && v != "0" {
-		log.Printf("kernel.kexec_load_disabled is %v, skipping dropping capabilities", v)
+		log.Printf("kernel.kexec_load_disabled is %s, skipping dropping capabilities", v)
 	} else if droppedCaps != "" {
 		caps := strings.Split(droppedCaps, ",")
 		dropCaps := xslices.Map(caps, func(c string) cap.Value {
 			capability, capErr := cap.FromName(c)
 			if capErr != nil {
-				fmt.Printf("failed to parse capability: %v", capErr)
+				fmt.Printf("failed to parse capability: %s", capErr)
 			}
 
 			return capability
@@ -127,14 +126,18 @@ func (p *processRunner) build() (commandWrapper, error) {
 		// reduce capabilities and assign them to launcher
 		iab := cap.IABGetProc()
 		if err = iab.SetVector(cap.Bound, true, dropCaps...); err != nil {
-			return commandWrapper{}, fmt.Errorf("failed to set capabilities: %v", err)
+			return commandWrapper{}, fmt.Errorf("failed to set capabilities: %s", err)
 		}
 
 		launcher.SetIAB(iab)
 	}
 
 	launcher.Callback(func(pa *syscall.ProcAttr, data interface{}) error {
-		wrapper := data.(*commandWrapper)
+		wrapper, ok := data.(*commandWrapper)
+		if !ok {
+			return fmt.Errorf("failed to get command info")
+		}
+
 		ctty, cttySet := wrapper.ctty.Get()
 		if cttySet {
 			pa.Sys.Ctty = ctty
@@ -147,8 +150,10 @@ func (p *processRunner) build() (commandWrapper, error) {
 			wrapper.stdout,
 			wrapper.stderr,
 		}
+
 		// TODO: use pa.Sys.CgroupFD here when we can be sure clone3 is available
 		fmt.Println("Callback executed")
+
 		return nil
 	})
 
@@ -204,8 +209,8 @@ func (p *processRunner) build() (commandWrapper, error) {
 			stdout.Close() //nolint:errcheck
 		})
 	} else {
-		wrapper.stdout = os.Stdout.Fd()
 		/// wrapper.stdout = writer
+		wrapper.stdout = os.Stdout.Fd()
 	}
 
 	if p.opts.StderrFile != "" {
@@ -220,8 +225,8 @@ func (p *processRunner) build() (commandWrapper, error) {
 			stderr.Close() //nolint:errcheck
 		})
 	} else {
-		wrapper.stderr = os.Stdout.Fd()
 		/// wrapper.stderr = writer
+		wrapper.stderr = os.Stdout.Fd()
 	}
 
 	/// closeWriter = false
@@ -275,22 +280,22 @@ func (p *processRunner) run(eventSink events.Recorder) error {
 	if cgroups.Mode() == cgroups.Unified {
 		cgv2, err := cgroup2.Load(cgroupPath)
 		if err != nil {
-			return fmt.Errorf("failed to load cgroup %s: %v", cgroupPath, err)
+			return fmt.Errorf("failed to load cgroup %s: %s", cgroupPath, err)
 		}
 
 		if err := cgv2.AddProc(uint64(pid)); err != nil {
-			return fmt.Errorf("failed to move process %s to cgroup: %v", p, err)
+			return fmt.Errorf("failed to move process %s to cgroup: %s", p, err)
 		}
 	} else {
 		cgv1, err := cgroup1.Load(cgroup1.StaticPath(cgroupPath))
 		if err != nil {
-			return fmt.Errorf("failed to load cgroup %s: %v", cgroupPath, err)
+			return fmt.Errorf("failed to load cgroup %s: %s", cgroupPath, err)
 		}
 
 		if err := cgv1.Add(cgroup1.Process{
 			Pid: pid,
 		}); err != nil {
-			return fmt.Errorf("failed to move process %s to cgroup: %v", p, err)
+			return fmt.Errorf("failed to move process %s to cgroup: %s", p, err)
 		}
 	}
 
