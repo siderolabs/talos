@@ -6,6 +6,7 @@ package process
 
 import (
 	"fmt"
+	"io"
 	"log"
 	"os"
 	"slices"
@@ -157,30 +158,38 @@ func (p *processRunner) build() (commandWrapper, error) {
 		return nil
 	})
 
-	// FIXME: restore
-	/// #############?////////////////////////////??????//////////?????????????/#####
+	// Setup logging.
+	w, err := p.opts.LoggingManager.ServiceLog(p.args.ID).Writer()
+	if err != nil {
+		return commandWrapper{}, fmt.Errorf("service log handler: %w", err)
+	}
 
-	/// Setup logging.
-	/// w, err := p.opts.LoggingManager.ServiceLog(p.args.ID).Writer()
-	/// if err != nil {
-	/// 	return commandWrapper{}, fmt.Errorf("service log handler: %w", err)
-	/// }
+	var writer io.Writer
+	if p.debug { // TODO: wrap it into LoggingManager
+		writer = io.MultiWriter(w, os.Stdout)
+	} else {
+		writer = w
+	}
 
-	/// var writer io.Writer
-	/// if p.debug { // TODO: wrap it into LoggingManager
-	/// 	writer = io.MultiWriter(w, os.Stdout)
-	/// } else {
-	/// 	writer = w
-	/// }
+	// As MultiWriter is not a file, we need to create a pipe
+	// Pipe writer is passed to the child process while we read from the read side
+	pr, pw, err := os.Pipe()
+	if err != nil {
+		return commandWrapper{}, err
+	}
 
-	/// close the writer if we exit early due to an error
-	/// closeWriter := true
+	go io.Copy(writer, pr) //nolint:errcheck
 
-	/// defer func() {
-	/// 	if closeWriter {
-	/// 		w.Close() //nolint:errcheck
-	/// 	}
-	/// }()
+	// close the writer if we exit early due to an error
+	closeWriter := true
+
+	defer func() {
+		if closeWriter {
+			w.Close()  //nolint:errcheck
+			pr.Close() //nolint:errcheck
+			pw.Close() //nolint:errcheck
+		}
+	}()
 
 	var afterStartFuncs []func()
 
@@ -209,8 +218,7 @@ func (p *processRunner) build() (commandWrapper, error) {
 			stdout.Close() //nolint:errcheck
 		})
 	} else {
-		/// wrapper.stdout = writer
-		wrapper.stdout = os.Stdout.Fd()
+		wrapper.stdout = pw.Fd()
 	}
 
 	if p.opts.StderrFile != "" {
@@ -225,11 +233,10 @@ func (p *processRunner) build() (commandWrapper, error) {
 			stderr.Close() //nolint:errcheck
 		})
 	} else {
-		/// wrapper.stderr = writer
-		wrapper.stderr = os.Stdout.Fd()
+		wrapper.stderr = pw.Fd()
 	}
 
-	/// closeWriter = false
+	closeWriter = false
 
 	wrapper.launcher = launcher
 	wrapper.afterStart = func() {
@@ -237,9 +244,23 @@ func (p *processRunner) build() (commandWrapper, error) {
 			f()
 		}
 	}
-	wrapper.afterTermination = func() error {
-		/// return w.Close()
-		return nil
+	wrapper.afterTermination = func() (e error) {
+		err := w.Close()
+		if err != nil {
+			e = err
+		}
+
+		err = pr.Close()
+		if err != nil {
+			e = err
+		}
+
+		err = pw.Close()
+		if err != nil {
+			e = err
+		}
+
+		return e
 	}
 	wrapper.ctty = p.opts.Ctty
 
