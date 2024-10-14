@@ -116,7 +116,7 @@ func dropCaps(droppedCapabilities []string, launcher *cap.Launcher) error {
 
 		iab := cap.IABGetProc()
 		if err = iab.SetVector(cap.Bound, true, dropCaps...); err != nil {
-			return fmt.Errorf("failed to set capabilities: %s", err)
+			return fmt.Errorf("failed to set capabilities: %w", err)
 		}
 
 		launcher.SetIAB(iab)
@@ -285,27 +285,27 @@ func applyProperties(p *processRunner, pid int) error {
 	if cgroups.Mode() == cgroups.Unified {
 		cgv2, err := cgroup2.Load(path)
 		if err != nil {
-			return fmt.Errorf("failed to load cgroup %s: %s", path, err)
+			return fmt.Errorf("failed to load cgroup %s: %w", path, err)
 		}
 
 		if err := cgv2.AddProc(uint64(pid)); err != nil {
-			return fmt.Errorf("failed to move process %s to cgroup: %s", p, err)
+			return fmt.Errorf("failed to move process %s to cgroup: %w", p, err)
 		}
 	} else {
 		cgv1, err := cgroup1.Load(cgroup1.StaticPath(path))
 		if err != nil {
-			return fmt.Errorf("failed to load cgroup %s: %s", path, err)
+			return fmt.Errorf("failed to load cgroup %s: %w", path, err)
 		}
 
 		if err := cgv1.Add(cgroup1.Process{
 			Pid: pid,
 		}); err != nil {
-			return fmt.Errorf("failed to move process %s to cgroup: %s", p, err)
+			return fmt.Errorf("failed to move process %s to cgroup: %w", p, err)
 		}
 	}
 
 	if err := sys.AdjustOOMScore(pid, p.opts.OOMScoreAdj); err != nil {
-		return fmt.Errorf("failed to change OOMScoreAdj of process %s to %d", p, p.opts.OOMScoreAdj)
+		return fmt.Errorf("failed to change OOMScoreAdj of process %s to %d: %w", p, p.opts.OOMScoreAdj, err)
 	}
 
 	return nil
