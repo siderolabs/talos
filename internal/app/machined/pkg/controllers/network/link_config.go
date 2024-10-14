@@ -280,10 +280,6 @@ func (ctrl *LinkConfigController) processDevicesConfiguration(logger *zap.Logger
 			continue
 		}
 
-		if device.Bond() == nil && device.Bridge() == nil {
-			continue
-		}
-
 		if device.Bond() != nil {
 			for idx, linkName := range device.Bond().Interfaces() {
 				if bondData, exists := bondedLinks[linkName]; exists && bondData.F1 != device.Interface() {
@@ -314,6 +310,20 @@ func (ctrl *LinkConfigController) processDevicesConfiguration(logger *zap.Logger
 
 				bridgedLinks[linkName] = device.Interface()
 			}
+		}
+
+		if device.BridgePort() != nil {
+			if bridgeName, exists := bridgedLinks[device.Interface()]; exists && bridgeName != device.BridgePort().Master() {
+				logger.Sugar().Warnf("link %q is included in both bridges %q and %q", device.Interface(),
+					bridgeName, device.BridgePort().Master())
+			}
+
+			if bondData, exists := bondedLinks[device.Interface()]; exists {
+				logger.Sugar().Warnf("link %q is included into both bond %q and bridge %q", device.Interface(),
+					bondData.F1, device.BridgePort().Master())
+			}
+
+			bridgedLinks[device.Interface()] = device.BridgePort().Master()
 		}
 	}
 

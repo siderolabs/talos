@@ -664,6 +664,15 @@ func (d *Device) Bridge() config.Bridge {
 	return d.DeviceBridge
 }
 
+// BridgePort implements the MachineNetwork interface.
+func (d *Device) BridgePort() config.BridgePort {
+	if d.DeviceBridgePort == nil {
+		return nil
+	}
+
+	return d.DeviceBridgePort
+}
+
 // Vlans implements the MachineNetwork interface.
 func (d *Device) Vlans() []config.Vlan {
 	return xslices.Map(d.DeviceVlans, func(v *Vlan) config.Vlan { return v })
@@ -1074,6 +1083,15 @@ func (b *Bridge) VLAN() config.BridgeVLAN {
 	}
 
 	return b.BridgeVLAN
+}
+
+// Master implements the config.BridgePort interface.
+func (b *BridgePort) Master() string {
+	if b == nil {
+		return ""
+	}
+
+	return b.BridgePortMaster
 }
 
 // Addresses implements the MachineNetwork interface.

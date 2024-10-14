@@ -204,6 +204,10 @@ network:
           #     stp:
           #         enabled: true # Whether Spanning Tree Protocol (STP) is enabled.
 
+          # # Configure this device as a bridge port.
+          # bridgePort:
+          #     master: br0 # The name of the bridge master interface
+
           # # Indicates if DHCP should be used to configure the interface.
           # dhcp: true
 
@@ -775,6 +779,10 @@ machine:
               #     stp:
               #         enabled: true # Whether Spanning Tree Protocol (STP) is enabled.
 
+              # # Configure this device as a bridge port.
+              # bridgePort:
+              #     master: br0 # The name of the bridge master interface
+
               # # Indicates if DHCP should be used to configure the interface.
               # dhcp: true
 
@@ -885,6 +893,10 @@ interfaces:
       #     # Enable STP on this bridge.
       #     stp:
       #         enabled: true # Whether Spanning Tree Protocol (STP) is enabled.
+
+      # # Configure this device as a bridge port.
+      # bridgePort:
+      #     master: br0 # The name of the bridge master interface
 
       # # Indicates if DHCP should be used to configure the interface.
       # dhcp: true
@@ -1006,6 +1018,10 @@ machine:
               #     stp:
               #         enabled: true # Whether Spanning Tree Protocol (STP) is enabled.
 
+              # # Configure this device as a bridge port.
+              # bridgePort:
+              #     master: br0 # The name of the bridge master interface
+
               # # Indicates if DHCP should be used to configure the interface.
               # dhcp: true
 
@@ -1097,6 +1113,10 @@ bridge:
     # Enable STP on this bridge.
     stp:
         enabled: true # Whether Spanning Tree Protocol (STP) is enabled.
+{{< /highlight >}}</details> | |
+|`bridgePort` |<a href="#Config.machine.network.interfaces..bridgePort">BridgePort</a> |<details><summary>Configure this device as a bridge port.</summary>This can be used to dynamically assign network interfaces to a bridge.</details> <details><summary>Show example(s)</summary>{{< highlight yaml >}}
+bridgePort:
+    master: br0 # The name of the bridge master interface
 {{< /highlight >}}</details> | |
 |`vlans` |<a href="#Config.machine.network.interfaces..vlans.">[]Vlan</a> |VLAN specific options.  | |
 |`mtu` |int |<details><summary>The interface's MTU.</summary>If used in combination with DHCP, this will override any MTU settings returned from DHCP server.</details>  | |
@@ -1395,6 +1415,30 @@ BridgeVLAN contains the various options for configuring the VLAN properties of a
 |`vlanFiltering` |bool |Whether VLAN filtering is enabled.  | |
 
 
+
+
+
+
+
+
+##### bridgePort {#Config.machine.network.interfaces..bridgePort}
+
+BridgePort contains settings for assigning a link to a bridge interface.
+
+
+
+{{< highlight yaml >}}
+machine:
+    network:
+        interfaces:
+            - bridgePort:
+                master: br0 # The name of the bridge master interface
+{{< /highlight >}}
+
+
+| Field | Type | Description | Value(s) |
+|-------|------|-------------|----------|
+|`master` |string |The name of the bridge master interface  | |
 
 
 

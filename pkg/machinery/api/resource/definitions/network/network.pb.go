@@ -575,7 +575,7 @@ func (x *BridgeMasterSpec) GetVlan() *BridgeVLANSpec {
 	return nil
 }
 
-// BridgeSlave contains a bond's master name and slave index.
+// BridgeSlave contains the name of the master bridge of a bridged interface
 type BridgeSlave struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache

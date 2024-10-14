@@ -2408,6 +2408,13 @@ func (Device) Doc() *encoder.Doc {
 				Comments:    [3]string{"" /* encoder.HeadComment */, "Bridge specific options." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
 			{
+				Name:        "bridgePort",
+				Type:        "BridgePort",
+				Note:        "",
+				Description: "Configure this device as a bridge port.\nThis can be used to dynamically assign network interfaces to a bridge.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Configure this device as a bridge port." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
 				Name:        "vlans",
 				Type:        "[]Vlan",
 				Note:        "",
@@ -2475,11 +2482,12 @@ func (Device) Doc() *encoder.Doc {
 	doc.Fields[4].AddExample("", networkConfigRoutesExample())
 	doc.Fields[5].AddExample("", networkConfigBondExample())
 	doc.Fields[6].AddExample("", networkConfigBridgeExample())
-	doc.Fields[9].AddExample("", true)
-	doc.Fields[12].AddExample("", networkConfigDHCPOptionsExample())
-	doc.Fields[13].AddExample("wireguard server example", networkConfigWireguardHostExample())
-	doc.Fields[13].AddExample("wireguard peer example", networkConfigWireguardPeerExample())
-	doc.Fields[14].AddExample("layer2 vip example", networkConfigVIPLayer2Example())
+	doc.Fields[7].AddExample("", networkConfigDynamicBridgePortsExample())
+	doc.Fields[10].AddExample("", true)
+	doc.Fields[13].AddExample("", networkConfigDHCPOptionsExample())
+	doc.Fields[14].AddExample("wireguard server example", networkConfigWireguardHostExample())
+	doc.Fields[14].AddExample("wireguard peer example", networkConfigWireguardPeerExample())
+	doc.Fields[15].AddExample("layer2 vip example", networkConfigVIPLayer2Example())
 
 	return doc
 }
@@ -3032,6 +3040,33 @@ func (Bridge) Doc() *encoder.Doc {
 	}
 
 	doc.AddExample("", networkConfigBridgeExample())
+
+	return doc
+}
+
+func (BridgePort) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "BridgePort",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "BridgePort contains settings for assigning a link to a bridge interface." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "BridgePort contains settings for assigning a link to a bridge interface.",
+		AppearsIn: []encoder.Appearance{
+			{
+				TypeName:  "Device",
+				FieldName: "bridgePort",
+			},
+		},
+		Fields: []encoder.Doc{
+			{
+				Name:        "master",
+				Type:        "string",
+				Note:        "",
+				Description: "The name of the bridge master interface",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "The name of the bridge master interface" /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
+
+	doc.AddExample("", networkConfigDynamicBridgePortsExample())
 
 	return doc
 }
@@ -4127,6 +4162,7 @@ func GetFileDoc() *encoder.FileDoc {
 			STP{}.Doc(),
 			BridgeVLAN{}.Doc(),
 			Bridge{}.Doc(),
+			BridgePort{}.Doc(),
 			Vlan{}.Doc(),
 			Route{}.Doc(),
 			RegistryMirrorConfig{}.Doc(),

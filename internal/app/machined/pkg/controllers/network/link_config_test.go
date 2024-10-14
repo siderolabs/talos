@@ -215,6 +215,12 @@ func (suite *LinkConfigSuite) TestMachineConfiguration() {
 								DeviceAddresses: []string{"192.168.0.43/24"},
 							},
 							{
+								DeviceInterface: "eth8",
+								DeviceBridgePort: &v1alpha1.BridgePort{
+									BridgePortMaster: "br1",
+								},
+							},
+							{
 								DeviceInterface: "br0",
 								DeviceBridge: &v1alpha1.Bridge{
 									BridgedInterfaces: []string{"eth4", "eth5"},
@@ -222,6 +228,10 @@ func (suite *LinkConfigSuite) TestMachineConfiguration() {
 										STPEnabled: pointer.To(false),
 									},
 								},
+							},
+							{
+								DeviceInterface: "br1",
+								DeviceBridge:    &v1alpha1.Bridge{},
 							},
 							{
 								DeviceInterface: "br0",
@@ -287,9 +297,11 @@ func (suite *LinkConfigSuite) TestMachineConfiguration() {
 			"configuration/eth3",
 			"configuration/eth6",
 			"configuration/eth7",
+			"configuration/eth8",
 			"configuration/bond0",
 			"configuration/bond1",
 			"configuration/br0",
+			"configuration/br1",
 			"configuration/dummy0",
 			"configuration/wireguard0",
 		}, func(r *network.LinkSpec, asrt *assert.Assertions) {
@@ -346,6 +358,10 @@ func (suite *LinkConfigSuite) TestMachineConfiguration() {
 				asrt.True(r.TypedSpec().Up)
 				asrt.False(r.TypedSpec().Logical)
 				asrt.Equal("br0", r.TypedSpec().BridgeSlave.MasterName)
+			case "eth8":
+				asrt.True(r.TypedSpec().Up)
+				asrt.False(r.TypedSpec().Logical)
+				asrt.Equal("br1", r.TypedSpec().BridgeSlave.MasterName)
 			case "br0":
 				asrt.True(r.TypedSpec().Up)
 				asrt.True(r.TypedSpec().Logical)
@@ -353,6 +369,13 @@ func (suite *LinkConfigSuite) TestMachineConfiguration() {
 				asrt.Equal(network.LinkKindBridge, r.TypedSpec().Kind)
 				asrt.True(r.TypedSpec().BridgeMaster.STP.Enabled)
 				asrt.True(r.TypedSpec().BridgeMaster.VLAN.FilteringEnabled)
+			case "br1":
+				asrt.True(r.TypedSpec().Up)
+				asrt.True(r.TypedSpec().Logical)
+				asrt.Equal(nethelpers.LinkEther, r.TypedSpec().Type)
+				asrt.Equal(network.LinkKindBridge, r.TypedSpec().Kind)
+				asrt.True(r.TypedSpec().BridgeMaster.STP.Enabled)
+				asrt.False(r.TypedSpec().BridgeMaster.VLAN.FilteringEnabled)
 			case "wireguard0":
 				asrt.True(r.TypedSpec().Up)
 				asrt.True(r.TypedSpec().Logical)

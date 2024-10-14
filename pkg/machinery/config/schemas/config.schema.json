@@ -916,6 +916,19 @@
       "additionalProperties": false,
       "type": "object"
     },
+    "v1alpha1.BridgePort": {
+      "properties": {
+        "master": {
+          "type": "string",
+          "title": "master",
+          "description": "The name of the bridge master interface\n",
+          "markdownDescription": "The name of the bridge master interface",
+          "x-intellij-html-description": "\u003cp\u003eThe name of the bridge master interface\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
     "v1alpha1.BridgeVLAN": {
       "properties": {
         "vlanFiltering": {
@@ -1481,6 +1494,13 @@
           "description": "Bridge specific options.\n",
           "markdownDescription": "Bridge specific options.",
           "x-intellij-html-description": "\u003cp\u003eBridge specific options.\u003c/p\u003e\n"
+        },
+        "bridgePort": {
+          "$ref": "#/$defs/v1alpha1.BridgePort",
+          "title": "bridgePort",
+          "description": "Configure this device as a bridge port.\nThis can be used to dynamically assign network interfaces to a bridge.\n",
+          "markdownDescription": "Configure this device as a bridge port.\nThis can be used to dynamically assign network interfaces to a bridge.",
+          "x-intellij-html-description": "\u003cp\u003eConfigure this device as a bridge port.\nThis can be used to dynamically assign network interfaces to a bridge.\u003c/p\u003e\n"
         },
         "vlans": {
           "items": {

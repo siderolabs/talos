@@ -157,6 +157,7 @@ type Device interface {
 	Routes() []Route
 	Bond() Bond
 	Bridge() Bridge
+	BridgePort() BridgePort
 	Vlans() []Vlan
 	MTU() int
 	DHCP() bool
@@ -259,6 +260,11 @@ type Bridge interface {
 	Interfaces() []string
 	STP() STP
 	VLAN() BridgeVLAN
+}
+
+// BridgePort contains the options for a bridge port.
+type BridgePort interface {
+	Master() string
 }
 
 // Vlan represents vlan settings for a device.

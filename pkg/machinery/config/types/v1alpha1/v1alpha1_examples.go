@@ -527,6 +527,12 @@ func networkConfigBridgeExample() *Bridge {
 	}
 }
 
+func networkConfigDynamicBridgePortsExample() *BridgePort {
+	return &BridgePort{
+		BridgePortMaster: "br0",
+	}
+}
+
 func networkConfigDHCPOptionsExample() *DHCPOptions {
 	return &DHCPOptions{
 		DHCPRouteMetric: 1024,

@@ -74,7 +74,7 @@ message BridgeMasterSpec {
   BridgeVLANSpec vlan = 2;
 }
 
-// BridgeSlave contains a bond's master name and slave index.
+// BridgeSlave contains the name of the master bridge of a bridged interface
 message BridgeSlave {
   string master_name = 1;
 }

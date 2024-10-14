@@ -128,13 +128,16 @@ func SetBridgeMaster(link *network.LinkSpecSpec, bridge talosconfig.Bridge) erro
 	link.Logical = true
 	link.Kind = network.LinkKindBridge
 	link.Type = nethelpers.LinkEther
-	link.BridgeMaster = network.BridgeMasterSpec{
-		STP: network.STPSpec{
-			Enabled: bridge.STP().Enabled(),
-		},
-		VLAN: network.BridgeVLANSpec{
-			FilteringEnabled: bridge.VLAN().FilteringEnabled(),
-		},
+
+	if bridge != nil {
+		link.BridgeMaster = network.BridgeMasterSpec{
+			STP: network.STPSpec{
+				Enabled: bridge.STP().Enabled(),
+			},
+			VLAN: network.BridgeVLANSpec{
+				FilteringEnabled: bridge.VLAN().FilteringEnabled(),
+			},
+		}
 	}
 
 	return nil

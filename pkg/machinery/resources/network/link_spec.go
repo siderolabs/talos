@@ -72,7 +72,7 @@ type BondSlave struct {
 	SlaveIndex int `yaml:"slaveIndex,omitempty" protobuf:"2"`
 }
 
-// BridgeSlave contains a bond's master name and slave index.
+// BridgeSlave contains the name of the master bridge of a bridged interface
 //
 //gotagsrewrite:gen
 type BridgeSlave struct {
