@@ -134,6 +134,10 @@ func beforeExecCallback(pa *syscall.ProcAttr, data interface{}) error {
 
 	ctty, cttySet := wrapper.ctty.Get()
 	if cttySet {
+		if pa.Sys == nil {
+			pa.Sys = &syscall.SysProcAttr{}
+		}
+
 		pa.Sys.Ctty = ctty
 		pa.Sys.Setsid = true
 		pa.Sys.Setctty = true
@@ -156,7 +160,7 @@ func (p *processRunner) build() (commandWrapper, error) {
 	wrapper := commandWrapper{}
 
 	env := slices.Concat([]string{"PATH=" + constants.PATH}, p.opts.Env, os.Environ())
-	launcher := cap.NewLauncher(p.args.ProcessArgs[0], p.args.ProcessArgs[1:], env)
+	launcher := cap.NewLauncher(p.args.ProcessArgs[0], p.args.ProcessArgs, env)
 
 	if p.opts.UID > 0 {
 		launcher.SetUID(int(p.opts.UID))
