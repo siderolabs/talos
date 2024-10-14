@@ -97,18 +97,8 @@ type commandWrapper struct {
 	afterTermination func() error
 }
 
-//nolint:gocyclo
-func (p *processRunner) build() (commandWrapper, error) {
-	wrapper := commandWrapper{}
-
-	env := slices.Concat([]string{"PATH=" + constants.PATH}, p.opts.Env, os.Environ())
-	launcher := cap.NewLauncher(p.args.ProcessArgs[0], p.args.ProcessArgs[1:], env)
-
-	if p.opts.UID > 0 {
-		launcher.SetUID(int(p.opts.UID))
-	}
-
-	droppedCaps := strings.Join(p.opts.DroppedCapabilities, ",")
+func dropCaps(droppedCapabilities []string, launcher *cap.Launcher) error {
+	droppedCaps := strings.Join(droppedCapabilities, ",")
 
 	prop, err := krnl.ReadParam(&kernel.Param{Key: "proc.sys.kernel.kexec_load_disabled"})
 	if v := strings.TrimSpace(string(prop)); err == nil && v != "0" {
@@ -124,39 +114,60 @@ func (p *processRunner) build() (commandWrapper, error) {
 			return capability
 		})
 
-		// reduce capabilities and assign them to launcher
 		iab := cap.IABGetProc()
 		if err = iab.SetVector(cap.Bound, true, dropCaps...); err != nil {
-			return commandWrapper{}, fmt.Errorf("failed to set capabilities: %s", err)
+			return fmt.Errorf("failed to set capabilities: %s", err)
 		}
 
 		launcher.SetIAB(iab)
 	}
 
-	launcher.Callback(func(pa *syscall.ProcAttr, data interface{}) error {
-		wrapper, ok := data.(*commandWrapper)
-		if !ok {
-			return fmt.Errorf("failed to get command info")
-		}
+	return nil
+}
 
-		ctty, cttySet := wrapper.ctty.Get()
-		if cttySet {
-			pa.Sys.Ctty = ctty
-			pa.Sys.Setsid = true
-			pa.Sys.Setctty = true
-		}
+// This callback is run in the thread before executing child process.
+func beforeExecCallback(pa *syscall.ProcAttr, data interface{}) error {
+	wrapper, ok := data.(*commandWrapper)
+	if !ok {
+		return fmt.Errorf("failed to get command info")
+	}
 
-		pa.Files = []uintptr{
-			wrapper.stdin,
-			wrapper.stdout,
-			wrapper.stderr,
-		}
+	ctty, cttySet := wrapper.ctty.Get()
+	if cttySet {
+		pa.Sys.Ctty = ctty
+		pa.Sys.Setsid = true
+		pa.Sys.Setctty = true
+	}
 
-		// TODO: use pa.Sys.CgroupFD here when we can be sure clone3 is available
-		fmt.Println("Callback executed")
+	pa.Files = []uintptr{
+		wrapper.stdin,
+		wrapper.stdout,
+		wrapper.stderr,
+	}
 
-		return nil
-	})
+	// TODO: use pa.Sys.CgroupFD here when we can be sure clone3 is available
+	fmt.Println("Callback executed")
+
+	return nil
+}
+
+//nolint:gocyclo
+func (p *processRunner) build() (commandWrapper, error) {
+	wrapper := commandWrapper{}
+
+	env := slices.Concat([]string{"PATH=" + constants.PATH}, p.opts.Env, os.Environ())
+	launcher := cap.NewLauncher(p.args.ProcessArgs[0], p.args.ProcessArgs[1:], env)
+
+	if p.opts.UID > 0 {
+		launcher.SetUID(int(p.opts.UID))
+	}
+
+	// reduce capabilities and assign them to launcher
+	if err := dropCaps(p.opts.DroppedCapabilities, launcher); err != nil {
+		return commandWrapper{}, err
+	}
+
+	launcher.Callback(beforeExecCallback)
 
 	// Setup logging.
 	w, err := p.opts.LoggingManager.ServiceLog(p.args.ID).Writer()
@@ -183,11 +194,28 @@ func (p *processRunner) build() (commandWrapper, error) {
 	// close the writer if we exit early due to an error
 	closeWriter := true
 
+	closeLogging := func() (e error) {
+		err := w.Close()
+		if err != nil {
+			e = err
+		}
+
+		err = pr.Close()
+		if err != nil {
+			e = err
+		}
+
+		err = pw.Close()
+		if err != nil {
+			e = err
+		}
+
+		return e
+	}
+
 	defer func() {
 		if closeWriter {
-			w.Close()  //nolint:errcheck
-			pr.Close() //nolint:errcheck
-			pw.Close() //nolint:errcheck
+			closeLogging() //nolint:errcheck
 		}
 	}()
 
@@ -244,27 +272,43 @@ func (p *processRunner) build() (commandWrapper, error) {
 			f()
 		}
 	}
-	wrapper.afterTermination = func() (e error) {
-		err := w.Close()
-		if err != nil {
-			e = err
-		}
-
-		err = pr.Close()
-		if err != nil {
-			e = err
-		}
-
-		err = pw.Close()
-		if err != nil {
-			e = err
-		}
-
-		return e
-	}
+	wrapper.afterTermination = closeLogging
 	wrapper.ctty = p.opts.Ctty
 
 	return wrapper, nil
+}
+
+// Apply cgroup and OOM score after the process is launched.
+func applyProperties(p *processRunner, pid int) error {
+	path := cgroup.Path(p.opts.CgroupPath)
+
+	if cgroups.Mode() == cgroups.Unified {
+		cgv2, err := cgroup2.Load(path)
+		if err != nil {
+			return fmt.Errorf("failed to load cgroup %s: %s", path, err)
+		}
+
+		if err := cgv2.AddProc(uint64(pid)); err != nil {
+			return fmt.Errorf("failed to move process %s to cgroup: %s", p, err)
+		}
+	} else {
+		cgv1, err := cgroup1.Load(cgroup1.StaticPath(path))
+		if err != nil {
+			return fmt.Errorf("failed to load cgroup %s: %s", path, err)
+		}
+
+		if err := cgv1.Add(cgroup1.Process{
+			Pid: pid,
+		}); err != nil {
+			return fmt.Errorf("failed to move process %s to cgroup: %s", p, err)
+		}
+	}
+
+	if err := sys.AdjustOOMScore(pid, p.opts.OOMScoreAdj); err != nil {
+		return fmt.Errorf("failed to change OOMScoreAdj of process %s to %d", p, p.opts.OOMScoreAdj)
+	}
+
+	return nil
 }
 
 func (p *processRunner) run(eventSink events.Recorder) error {
@@ -287,42 +331,18 @@ func (p *processRunner) run(eventSink events.Recorder) error {
 		return fmt.Errorf("error starting process: %w", err)
 	}
 
-	process, err := os.FindProcess(pid)
-	if err != nil {
-		return fmt.Errorf("could not find process: %w", err)
-	}
-
-	if err := sys.AdjustOOMScore(pid, p.opts.OOMScoreAdj); err != nil {
-		return fmt.Errorf("failed to change OOMScoreAdj of process %s to %d", p, p.opts.OOMScoreAdj)
-	}
-
-	cgroupPath := cgroup.Path(p.opts.CgroupPath)
-
-	if cgroups.Mode() == cgroups.Unified {
-		cgv2, err := cgroup2.Load(cgroupPath)
-		if err != nil {
-			return fmt.Errorf("failed to load cgroup %s: %s", cgroupPath, err)
-		}
-
-		if err := cgv2.AddProc(uint64(pid)); err != nil {
-			return fmt.Errorf("failed to move process %s to cgroup: %s", p, err)
-		}
-	} else {
-		cgv1, err := cgroup1.Load(cgroup1.StaticPath(cgroupPath))
-		if err != nil {
-			return fmt.Errorf("failed to load cgroup %s: %s", cgroupPath, err)
-		}
-
-		if err := cgv1.Add(cgroup1.Process{
-			Pid: pid,
-		}); err != nil {
-			return fmt.Errorf("failed to move process %s to cgroup: %s", p, err)
-		}
+	if err := applyProperties(p, pid); err != nil {
+		return err
 	}
 
 	cmdWrapper.afterStart()
 
 	eventSink(events.StateRunning, "Process %s started with PID %d", p, pid)
+
+	process, err := os.FindProcess(pid)
+	if err != nil {
+		return fmt.Errorf("could not find process: %w", err)
+	}
 
 	waitCh := make(chan error)
 
