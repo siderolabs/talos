@@ -287,11 +287,13 @@ func (ctrl *LinkConfigController) processDevicesConfiguration(logger *zap.Logger
 		if device.Bond() != nil {
 			for idx, linkName := range device.Bond().Interfaces() {
 				if bondData, exists := bondedLinks[linkName]; exists && bondData.F1 != device.Interface() {
-					logger.Sugar().Warnf("link %q is included into more than two bonds", linkName)
+					logger.Sugar().Warnf("link %q is included in both bonds %q and %q", linkName,
+						bondData.F1, device.Interface())
 				}
 
-				if bridgeIface, exists := bridgedLinks[linkName]; exists && bridgeIface != device.Interface() {
-					logger.Sugar().Warnf("link %q is included into both a bond and a bridge", linkName)
+				if bridgeName, exists := bridgedLinks[linkName]; exists {
+					logger.Sugar().Warnf("link %q is included in both bond %q and bridge %q", linkName,
+						bridgeName, device.Interface())
 				}
 
 				bondedLinks[linkName] = ordered.MakePair(device.Interface(), idx)
@@ -300,12 +302,14 @@ func (ctrl *LinkConfigController) processDevicesConfiguration(logger *zap.Logger
 
 		if device.Bridge() != nil {
 			for _, linkName := range device.Bridge().Interfaces() {
-				if iface, exists := bridgedLinks[linkName]; exists && iface != device.Interface() {
-					logger.Sugar().Warnf("link %q is included into more than two bridges", linkName)
+				if bridgeName, exists := bridgedLinks[linkName]; exists && bridgeName != device.Interface() {
+					logger.Sugar().Warnf("link %q is included in both bridges %q and %q", linkName,
+						bridgeName, device.Interface())
 				}
 
-				if bondData, exists := bondedLinks[linkName]; exists && bondData.F1 != device.Interface() {
-					logger.Sugar().Warnf("link %q is included into both a bond and a bridge", linkName)
+				if bondData, exists := bondedLinks[linkName]; exists {
+					logger.Sugar().Warnf("link %q is included in both bond %q and bridge %q", linkName,
+						bondData.F1, device.Interface())
 				}
 
 				bridgedLinks[linkName] = device.Interface()
