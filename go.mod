@@ -139,7 +139,7 @@ require (
 	github.com/ryanuber/go-glob v1.0.0
 	github.com/safchain/ethtool v0.4.1
 	github.com/scaleway/scaleway-sdk-go v1.0.0-beta.30
-	github.com/siderolabs/crypto v0.4.4
+	github.com/siderolabs/crypto v0.5.0
 	github.com/siderolabs/discovery-api v0.1.4
 	github.com/siderolabs/discovery-client v0.1.9
 	github.com/siderolabs/gen v0.5.0
@@ -165,7 +165,7 @@ require (
 	github.com/siderolabs/kms-client v0.1.0
 	github.com/siderolabs/net v0.4.0
 	github.com/siderolabs/protoenc v0.2.1
-	github.com/siderolabs/siderolink v0.3.10
+	github.com/siderolabs/siderolink v0.3.11
 	github.com/siderolabs/talos/pkg/machinery v1.8.1
 	github.com/spf13/cobra v1.8.1
 	github.com/spf13/pflag v1.0.5
