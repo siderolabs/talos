@@ -7,7 +7,6 @@ package process
 import (
 	"fmt"
 	"io"
-	"log"
 	"os"
 	"slices"
 	"strings"
@@ -26,9 +25,7 @@ import (
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system/events"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system/runner"
 	"github.com/siderolabs/talos/internal/pkg/cgroup"
-	krnl "github.com/siderolabs/talos/pkg/kernel"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
-	"github.com/siderolabs/talos/pkg/machinery/kernel"
 )
 
 // processRunner is a runner.Runner that runs a process on the host.
@@ -100,10 +97,7 @@ type commandWrapper struct {
 func dropCaps(droppedCapabilities []string, launcher *cap.Launcher) error {
 	droppedCaps := strings.Join(droppedCapabilities, ",")
 
-	prop, err := krnl.ReadParam(&kernel.Param{Key: "proc.sys.kernel.kexec_load_disabled"})
-	if v := strings.TrimSpace(string(prop)); err == nil && v != "0" {
-		log.Printf("kernel.kexec_load_disabled is %s, skipping dropping capabilities", v)
-	} else if droppedCaps != "" {
+	if droppedCaps != "" {
 		caps := strings.Split(droppedCaps, ",")
 		dropCaps := xslices.Map(caps, func(c string) cap.Value {
 			capability, capErr := cap.FromName(c)
@@ -115,7 +109,7 @@ func dropCaps(droppedCapabilities []string, launcher *cap.Launcher) error {
 		})
 
 		iab := cap.IABGetProc()
-		if err = iab.SetVector(cap.Bound, true, dropCaps...); err != nil {
+		if err := iab.SetVector(cap.Bound, true, dropCaps...); err != nil {
 			return fmt.Errorf("failed to set capabilities: %w", err)
 		}
 
