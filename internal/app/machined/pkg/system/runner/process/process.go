@@ -150,8 +150,6 @@ func beforeExecCallback(pa *syscall.ProcAttr, data interface{}) error {
 	}
 
 	// TODO: use pa.Sys.CgroupFD here when we can be sure clone3 is available
-	fmt.Println("Callback executed")
-
 	return nil
 }
 
