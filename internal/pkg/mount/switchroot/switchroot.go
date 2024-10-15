@@ -78,6 +78,7 @@ func Switch(prefix string, mountpoints *mount.Points) (err error) {
 	log.Println("executing /sbin/init")
 
 	envv := []string{
+		"GRPC_ENFORCE_ALPN_ENABLED=false",
 		constants.TcellMinimizeEnvironment,
 	}
 

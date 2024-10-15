@@ -165,6 +165,7 @@ func (o *APID) Runner(r runtime.Runtime) (runner.Runner, error) {
 
 	env := []string{
 		constants.TcellMinimizeEnvironment,
+		"GRPC_ENFORCE_ALPN_ENABLED=false",
 		"GOMEMLIMIT=" + strconv.Itoa(constants.CgroupApidMaxMemory/5*4),
 	}
 
