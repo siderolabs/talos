@@ -878,6 +878,11 @@ func create(ctx context.Context) error {
 	for i := range extraDisks {
 		driver := "ide"
 
+		// ide driver is not supported on arm64
+		if targetArch == "arm64" {
+			driver = "virtio"
+		}
+
 		if i < len(extraDisksDrivers) {
 			driver = extraDisksDrivers[i]
 		}
