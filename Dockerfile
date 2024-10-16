@@ -964,7 +964,7 @@ RUN --security=insecure --mount=type=cache,id=testspace,target=/tmp --mount=type
 
 # The integration-test targets builds integration test binary.
 
-FROM base AS integration-test-linux-build
+FROM base AS integration-test-linux-amd64-build
 ARG GO_BUILDFLAGS
 ARG GO_LDFLAGS
 ARG GOAMD64
@@ -973,20 +973,21 @@ RUN --mount=type=cache,target=/.cache GOOS=linux GOARCH=amd64 GOAMD64=${GOAMD64}
     -tags integration,integration_api,integration_cli,integration_k8s \
     ./internal/integration
 
-FROM scratch AS integration-test-linux
-COPY --from=integration-test-linux-build /src/integration.test /integration-test-linux-amd64
+FROM scratch AS integration-test-linux-amd64
+COPY --from=integration-test-linux-amd64-build /src/integration.test /integration-test-linux-amd64
 
-FROM base AS integration-test-darwin-build
+FROM base AS integration-test-linux-arm64-build
 ARG GO_BUILDFLAGS
 ARG GO_LDFLAGS
-ARG GOAMD64
-RUN --mount=type=cache,target=/.cache GOOS=darwin GOARCH=amd64 GOAMD64=${GOAMD64} go test -v -c ${GO_BUILDFLAGS} \
+RUN --mount=type=cache,target=/.cache GOOS=linux GOARCH=arm64 go test -v -c ${GO_BUILDFLAGS} \
     -ldflags "${GO_LDFLAGS}" \
     -tags integration,integration_api,integration_cli,integration_k8s \
     ./internal/integration
 
-FROM scratch AS integration-test-darwin
-COPY --from=integration-test-darwin-build /src/integration.test /integration-test-darwin-amd64
+FROM scratch AS integration-test-linux-arm64
+COPY --from=integration-test-linux-arm64-build /src/integration.test /integration-test-linux-arm64
+
+FROM --platform=${BUILDPLATFORM} integration-test-${TARGETOS}-${TARGETARCH} AS integration-test-targetarch
 
 # The integration-test-provision target builds integration test binary with provisioning tests.
 
