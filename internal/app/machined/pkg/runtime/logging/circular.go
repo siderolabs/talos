@@ -177,6 +177,12 @@ func (handler *circularHandler) Writer() (io.WriteCloser, error) {
 		}
 
 		go func() {
+			defer func() {
+				if r := recover(); r != nil {
+					handler.manager.fallbackLogger.Printf("log sender panic: %v", r)
+				}
+			}()
+
 			if err := handler.runSenders(); err != nil {
 				handler.manager.fallbackLogger.Printf("log senders stopped: %s", err)
 			}

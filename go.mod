@@ -109,7 +109,7 @@ require (
 	github.com/jeromer/syslogparser v1.1.0
 	github.com/jsimonetti/rtnetlink/v2 v2.0.2
 	github.com/jxskiss/base62 v1.1.0
-	github.com/klauspost/compress v1.17.9
+	github.com/klauspost/compress v1.17.11
 	github.com/klauspost/cpuid/v2 v2.2.8
 	github.com/linode/go-metadata v0.2.0
 	github.com/martinlindhe/base36 v1.1.1
@@ -146,7 +146,7 @@ require (
 	github.com/siderolabs/go-api-signature v0.3.6
 	github.com/siderolabs/go-blockdevice v0.4.7
 	github.com/siderolabs/go-blockdevice/v2 v2.0.3
-	github.com/siderolabs/go-circular v0.2.0
+	github.com/siderolabs/go-circular v0.2.1
 	github.com/siderolabs/go-cmd v0.1.1
 	github.com/siderolabs/go-copy v0.1.0
 	github.com/siderolabs/go-debug v0.4.0
@@ -187,7 +187,7 @@ require (
 	golang.org/x/sys v0.25.0
 	golang.org/x/term v0.24.0
 	golang.org/x/text v0.18.0
-	golang.org/x/time v0.6.0
+	golang.org/x/time v0.7.0
 	golang.zx2c4.com/wireguard/wgctrl v0.0.0-20230429144221-925a1e7659e6
 	google.golang.org/grpc v1.66.3
 	google.golang.org/protobuf v1.34.2
