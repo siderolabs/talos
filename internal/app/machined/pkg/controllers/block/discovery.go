@@ -130,6 +130,13 @@ func (ctrl *DiscoveryController) Run(ctx context.Context, r controller.Runtime, 
 			for iterator := devices.Iterator(); iterator.Next(); {
 				device := iterator.Value()
 
+				if device.TypedSpec().Major == 1 {
+					// ignore ram disks (/dev/ramX), major number is 1
+					// ref: https://www.kernel.org/doc/Documentation/admin-guide/devices.txt
+					// ref: https://github.com/util-linux/util-linux/blob/c0207d354ee47fb56acfa64b03b5b559bb301280/misc-utils/lsblk.c#L2697-L2699
+					continue
+				}
+
 				allDevices[device.Metadata().ID()] = struct{}{}
 
 				if device.TypedSpec().Parent != "" {

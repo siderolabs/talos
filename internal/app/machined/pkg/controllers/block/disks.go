@@ -76,6 +76,13 @@ func (ctrl *DisksController) Run(ctx context.Context, r controller.Runtime, logg
 				continue
 			}
 
+			if device.TypedSpec().Major == 1 {
+				// ignore ram disks (/dev/ramX), major number is 1
+				// ref: https://www.kernel.org/doc/Documentation/admin-guide/devices.txt
+				// ref: https://github.com/util-linux/util-linux/blob/c0207d354ee47fb56acfa64b03b5b559bb301280/misc-utils/lsblk.c#L2697-L2699
+				continue
+			}
+
 			if lastObserved, ok := lastObservedGenerations[device.Metadata().ID()]; ok && device.TypedSpec().Generation == lastObserved {
 				// ignore disks which have some generation as before (don't query them once again)
 				touchedDisks[device.Metadata().ID()] = struct{}{}
