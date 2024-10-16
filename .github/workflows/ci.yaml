@@ -1,6 +1,6 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
 #
-# Generated on 2024-10-16T13:22:04Z by kres 34e72ac.
+# Generated on 2024-10-18T16:27:22Z by kres 34e72ac.
 
 name: default
 concurrency:
@@ -2491,6 +2491,7 @@ jobs:
           make provision-tests-prepare
       - name: provision-tests-track-0
         env:
+          GRPC_ENFORCE_ALPN_ENABLED: "false"
           IMAGE_REGISTRY: registry.dev.siderolabs.io
         run: |
           sudo -E make provision-tests-track-0
@@ -2585,6 +2586,7 @@ jobs:
           make provision-tests-prepare
       - name: provision-tests-track-1
         env:
+          GRPC_ENFORCE_ALPN_ENABLED: "false"
           IMAGE_REGISTRY: registry.dev.siderolabs.io
         run: |
           sudo -E make provision-tests-track-1
@@ -2679,6 +2681,7 @@ jobs:
           make provision-tests-prepare
       - name: provision-tests-track-2
         env:
+          GRPC_ENFORCE_ALPN_ENABLED: "false"
           IMAGE_REGISTRY: registry.dev.siderolabs.io
         run: |
           sudo -E make provision-tests-track-2

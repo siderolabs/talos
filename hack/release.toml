@@ -21,6 +21,7 @@ preface = """
 Linux: 6.6.57
 containerd: 2.0.0-rc.5
 Flannel: 0.25.7
+Kubernetes: 1.32.0-alpha.1
 
 Talos is built with Go 1.23.2.
 """
