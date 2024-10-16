@@ -333,6 +333,7 @@ spec:
             QEMU_EXTRA_DISKS_SIZE: "10240"
             QEMU_EXTRA_DISKS_DRIVERS: "ide,nvme"
             WITH_CONFIG_PATCH_WORKER: "@hack/test/patches/ephemeral-nvme.yaml:@hack/test/patches/dm-raid-module.yaml"
+            WITH_JSON_LOGS: "true"
         - name: save-talos-logs
           conditions:
             - always

@@ -133,6 +133,15 @@ func WithKMS(endpoint string) Option {
 	}
 }
 
+// WithJSONLogs specifies endpoint to send logs in JSON format.
+func WithJSONLogs(endpoint string) Option {
+	return func(o *Options) error {
+		o.JSONLogsEndpoint = endpoint
+
+		return nil
+	}
+}
+
 // WithSiderolinkAgent enables or disables siderolink agent.
 func WithSiderolinkAgent(v bool) Option {
 	return func(o *Options) error {
@@ -165,7 +174,8 @@ type Options struct {
 	DockerPortsHostIP string
 	DeleteStateOnErr  bool
 
-	KMSEndpoint string
+	KMSEndpoint      string
+	JSONLogsEndpoint string
 
 	SiderolinkEnabled bool
 }

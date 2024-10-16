@@ -1,6 +1,6 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
 #
-# Generated on 2024-09-23T13:32:15Z by kres 8be5fa7.
+# Generated on 2024-10-16T13:22:04Z by kres 34e72ac.
 
 name: default
 concurrency:
@@ -2775,6 +2775,7 @@ jobs:
           QEMU_EXTRA_DISKS_DRIVERS: ide,nvme
           QEMU_EXTRA_DISKS_SIZE: "10240"
           WITH_CONFIG_PATCH_WORKER: '@hack/test/patches/ephemeral-nvme.yaml:@hack/test/patches/dm-raid-module.yaml'
+          WITH_JSON_LOGS: "true"
         run: |
           sudo -E make e2e-qemu
       - name: save artifacts

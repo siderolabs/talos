@@ -46,6 +46,7 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/config/bundle"
 	"github.com/siderolabs/talos/pkg/machinery/config/configloader"
 	"github.com/siderolabs/talos/pkg/machinery/config/configpatcher"
+	"github.com/siderolabs/talos/pkg/machinery/config/container"
 	"github.com/siderolabs/talos/pkg/machinery/config/encoder"
 	"github.com/siderolabs/talos/pkg/machinery/config/generate"
 	"github.com/siderolabs/talos/pkg/machinery/config/machine"
@@ -188,6 +189,7 @@ var (
 	withFirewall              string
 	withUUIDHostnames         bool
 	withSiderolinkAgent       agentFlag
+	withJSONLogs              bool
 )
 
 // createCmd represents the cluster up command.
@@ -578,7 +580,7 @@ func create(ctx context.Context) error {
 						return err
 					}
 
-					port := 4050
+					const port = 4050
 
 					keys = append(keys, &v1alpha1.EncryptionKey{
 						KeyKMS: &v1alpha1.EncryptionKeyKMS{
@@ -774,6 +776,33 @@ func create(ctx context.Context) error {
 		}
 
 		configBundleOpts = append(configBundleOpts, bundle.WithPatch([]configpatcher.Patch{configpatcher.NewStrategicMergePatch(trustedRootsPatch)}))
+	}
+
+	if withJSONLogs {
+		const port = 4003
+
+		provisionOptions = append(provisionOptions, provision.WithJSONLogs(nethelpers.JoinHostPort(gatewayIPs[0].String(), port)))
+
+		cfg := container.NewV1Alpha1(
+			&v1alpha1.Config{
+				ConfigVersion: "v1alpha1",
+				MachineConfig: &v1alpha1.MachineConfig{
+					MachineLogging: &v1alpha1.LoggingConfig{
+						LoggingDestinations: []v1alpha1.LoggingDestination{
+							{
+								LoggingEndpoint: &v1alpha1.Endpoint{
+									URL: &url.URL{
+										Scheme: "tcp",
+										Host:   nethelpers.JoinHostPort(gatewayIPs[0].String(), port),
+									},
+								},
+								LoggingFormat: "json_lines",
+							},
+						},
+					},
+				},
+			})
+		configBundleOpts = append(configBundleOpts, bundle.WithPatch([]configpatcher.Patch{configpatcher.NewStrategicMergePatch(cfg)}))
 	}
 
 	configBundle, err := bundle.NewBundle(configBundleOpts...)
@@ -1256,6 +1285,7 @@ func init() {
 	createCmd.Flags().StringVar(&withFirewall, firewallFlag, "", "inject firewall rules into the cluster, value is default policy - accept/block (QEMU only)")
 	createCmd.Flags().BoolVar(&withUUIDHostnames, "with-uuid-hostnames", false, "use machine UUIDs as default hostnames (QEMU only)")
 	createCmd.Flags().Var(&withSiderolinkAgent, "with-siderolink", "enables the use of siderolink agent as configuration apply mechanism. `true` or `wireguard` enables the agent, `tunnel` enables the agent with grpc tunneling") //nolint:lll
+	createCmd.Flags().BoolVar(&withJSONLogs, "with-json-logs", false, "enable JSON logs receiver and configure Talos to send logs there")
 
 	createCmd.MarkFlagsMutuallyExclusive(inputDirFlag, nodeInstallImageFlag)
 	createCmd.MarkFlagsMutuallyExclusive(inputDirFlag, configDebugFlag)

@@ -16,7 +16,7 @@ import (
 
 // Create Talos cluster as a set of qemu VMs.
 //
-//nolint:gocyclo
+//nolint:gocyclo,cyclop
 func (p *provisioner) Create(ctx context.Context, request provision.ClusterRequest, opts ...provision.Option) (provision.Cluster, error) {
 	options := provision.DefaultOptions()
 
@@ -75,6 +75,14 @@ func (p *provisioner) Create(ctx context.Context, request provision.ClusterReque
 
 		if err = p.CreateKMS(state, request, options); err != nil {
 			return nil, fmt.Errorf("error creating KMS server: %w", err)
+		}
+	}
+
+	if options.JSONLogsEndpoint != "" {
+		fmt.Fprintln(options.LogWriter, "creating JSON logs server")
+
+		if err = p.CreateJSONLogs(state, request, options); err != nil {
+			return nil, fmt.Errorf("error creating JSON logs server: %w", err)
 		}
 	}
 

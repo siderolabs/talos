@@ -74,7 +74,7 @@ var kmsLaunchCmd = &cobra.Command{
 			return nil
 		})
 
-		return s.Serve(lis)
+		return eg.Wait()
 	},
 }
 
