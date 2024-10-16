@@ -419,7 +419,8 @@ func launchVM(config *LaunchConfig) error {
 	if !diskBootable || !config.BootloaderEnabled {
 		if config.ISOPath != "" {
 			args = append(args,
-				"-cdrom", config.ISOPath,
+				"-drive",
+				fmt.Sprintf("file=%s,media=cdrom", config.ISOPath),
 			)
 		} else if config.KernelImagePath != "" {
 			args = append(args,
