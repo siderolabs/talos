@@ -40,16 +40,16 @@ replace (
 
 // Kubernetes dependencies sharing the same version.
 require (
-	k8s.io/api v0.31.1
-	k8s.io/apimachinery v0.31.1
-	k8s.io/apiserver v0.31.1
-	k8s.io/client-go v0.31.1
-	k8s.io/component-base v0.31.1
-	k8s.io/cri-api v0.32.0-alpha.0
-	k8s.io/kube-scheduler v0.31.1
-	k8s.io/kubectl v0.31.1
-	k8s.io/kubelet v0.31.1
-	k8s.io/pod-security-admission v0.31.1
+	k8s.io/api v0.32.0-alpha.1
+	k8s.io/apimachinery v0.32.0-alpha.1
+	k8s.io/apiserver v0.32.0-alpha.1
+	k8s.io/client-go v0.32.0-alpha.1
+	k8s.io/component-base v0.32.0-alpha.1
+	k8s.io/cri-api v0.32.0-alpha.1
+	k8s.io/kube-scheduler v0.32.0-alpha.1
+	k8s.io/kubectl v0.32.0-alpha.1
+	k8s.io/kubelet v0.32.0-alpha.1
+	k8s.io/pod-security-admission v0.32.0-alpha.1
 )
 
 require (
@@ -152,7 +152,7 @@ require (
 	github.com/siderolabs/go-debug v0.4.0
 	github.com/siderolabs/go-kmsg v0.1.4
 	github.com/siderolabs/go-kubeconfig v0.1.0
-	github.com/siderolabs/go-kubernetes v0.2.12
+	github.com/siderolabs/go-kubernetes v0.2.13
 	github.com/siderolabs/go-loadbalancer v0.3.4
 	github.com/siderolabs/go-pcidb v0.3.0
 	github.com/siderolabs/go-pointer v1.0.0
@@ -166,7 +166,7 @@ require (
 	github.com/siderolabs/net v0.4.0
 	github.com/siderolabs/protoenc v0.2.1
 	github.com/siderolabs/siderolink v0.3.10
-	github.com/siderolabs/talos/pkg/machinery v1.8.0-alpha.2
+	github.com/siderolabs/talos/pkg/machinery v1.8.1
 	github.com/spf13/cobra v1.8.1
 	github.com/spf13/pflag v1.0.5
 	github.com/stretchr/testify v1.9.0
@@ -184,7 +184,7 @@ require (
 	golang.org/x/net v0.29.0
 	golang.org/x/oauth2 v0.23.0
 	golang.org/x/sync v0.8.0
-	golang.org/x/sys v0.25.0
+	golang.org/x/sys v0.26.0
 	golang.org/x/term v0.24.0
 	golang.org/x/text v0.18.0
 	golang.org/x/time v0.7.0
@@ -258,9 +258,9 @@ require (
 	github.com/go-errors/errors v1.4.2 // indirect
 	github.com/go-logr/logr v1.4.2 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
-	github.com/go-openapi/jsonpointer v0.20.2 // indirect
+	github.com/go-openapi/jsonpointer v0.21.0 // indirect
 	github.com/go-openapi/jsonreference v0.20.4 // indirect
-	github.com/go-openapi/swag v0.22.9 // indirect
+	github.com/go-openapi/swag v0.23.0 // indirect
 	github.com/go-resty/resty/v2 v2.9.1 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang-jwt/jwt/v4 v4.5.0 // indirect
@@ -281,7 +281,6 @@ require (
 	github.com/hashicorp/go-safetemp v1.0.0 // indirect
 	github.com/hashicorp/go-version v1.6.0 // indirect
 	github.com/hexops/gotextdiff v1.0.3 // indirect
-	github.com/imdario/mergo v0.3.16 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/jonboulle/clockwork v0.2.2 // indirect
 	github.com/josharian/intern v1.0.0 // indirect
@@ -355,7 +354,7 @@ require (
 	go.starlark.net v0.0.0-20230525235612-a134d8f9ddca // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	golang.org/x/crypto v0.27.0 // indirect
-	golang.org/x/exp v0.0.0-20240506185415-9bf2ced13842 // indirect
+	golang.org/x/exp v0.0.0-20240719175910-8a7402abbf56 // indirect
 	golang.org/x/mod v0.20.0 // indirect
 	golang.org/x/tools v0.24.0 // indirect
 	golang.zx2c4.com/wintun v0.0.0-20230126152724-0fa3db229ce2 // indirect
@@ -365,8 +364,8 @@ require (
 	gopkg.in/evanphx/json-patch.v4 v4.12.0 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
-	k8s.io/cli-runtime v0.31.1 // indirect
-	k8s.io/kube-openapi v0.0.0-20240709000822-3c01b740850f // indirect
+	k8s.io/cli-runtime v0.32.0-alpha.1 // indirect
+	k8s.io/kube-openapi v0.0.0-20240827152857-f7e401e7b4c2 // indirect
 	k8s.io/utils v0.0.0-20240711033017-18e509b52bc8 // indirect
 	kernel.org/pub/linux/libs/security/libcap/psx v1.2.70 // indirect
 	rsc.io/qr v0.2.0 // indirect
