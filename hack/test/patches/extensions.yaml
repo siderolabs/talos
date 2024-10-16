@@ -45,3 +45,14 @@ configFiles:
       MONITOR ${upsmonHost} 1 remote ${upsmonPasswd} slave
       SHUTDOWNCMD "/sbin/poweroff"
     mountPath: /usr/local/etc/nut/upsmon.conf
+---
+apiVersion: v1alpha1
+kind: ExtensionServiceConfig
+name: lldpd
+configFiles:
+  - content: |
+      configure lldpd portidsubtype ifname
+      unconfigure lldp management-addresses-advertisements
+      unconfigure lldp capabilities-advertisements
+      configure system description "Talos Node"
+    mountPath: /usr/local/etc/lldpd/lldpd.conf
