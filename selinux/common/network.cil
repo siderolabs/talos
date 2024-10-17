@@ -1,0 +1,73 @@
+(allow any_p port_t (dccp_socket (name_connect)))
+(allow any_p port_t (sctp_socket (name_bind name_connect)))
+(allow any_p port_t (tcp_socket (name_bind name_connect)))
+(allow any_p port_t (udp_socket (name_bind)))
+(allow any_p port_t (rawip_socket (name_bind)))
+(allow any_p node_t (dccp_socket (node_bind)))
+(allow any_p node_t (tcp_socket (node_bind)))
+(allow any_p node_t (udp_socket (node_bind)))
+(allow any_p node_t (rawip_socket (node_bind)))
+(allow any_p node_t (sctp_socket (node_bind)))
+(allow any_p node_t (icmp_socket (node_bind)))
+
+(allow any_p netif_t (netif (egress ingress)))
+
+; Network sockets, except relabeling
+(allow any_p any_p (socket (accept append bind connect create getattr getopt ioctl listen lock map name_bind read recvfrom sendto setattr setopt shutdown write)))
+(allow any_p any_p (dccp_socket (accept append bind connect create getattr getopt ioctl listen lock map name_bind read recvfrom sendto setattr setopt shutdown write)))
+(allow any_p any_p (tcp_socket (accept append bind connect create getattr getopt ioctl listen lock map name_bind read recvfrom sendto setattr setopt shutdown write)))
+(allow any_p any_p (udp_socket (accept append bind connect create getattr getopt ioctl listen lock map name_bind read recvfrom sendto setattr setopt shutdown write)))
+(allow any_p any_p (rawip_socket (accept append bind connect create getattr getopt ioctl listen lock map name_bind read recvfrom sendto setattr setopt shutdown write)))
+(allow any_p any_p (packet_socket (accept append bind connect create getattr getopt ioctl listen lock map name_bind read recvfrom sendto setattr setopt shutdown write)))
+(allow any_p any_p (key_socket (accept append bind connect create getattr getopt ioctl listen lock map name_bind read recvfrom sendto setattr setopt shutdown write)))
+(allow any_p any_p (appletalk_socket (accept append bind connect create getattr getopt ioctl listen lock map name_bind read recvfrom sendto setattr setopt shutdown write)))
+(allow any_p any_p (tun_socket (
+    accept append bind connect create getattr getopt ioctl listen lock map name_bind read recvfrom sendto setattr setopt shutdown write
+    attach_queue
+)))
+(allow any_p any_p (sctp_socket (accept append bind connect create getattr getopt ioctl listen lock map name_bind read recvfrom sendto setattr setopt shutdown write)))
+(allow any_p any_p (icmp_socket (accept append bind connect create getattr getopt ioctl listen lock map name_bind read recvfrom sendto setattr setopt shutdown write)))
+(allow any_p any_p (ax25_socket (accept append bind connect create getattr getopt ioctl listen lock map name_bind read recvfrom sendto setattr setopt shutdown write)))
+(allow any_p any_p (ipx_socket (accept append bind connect create getattr getopt ioctl listen lock map name_bind read recvfrom sendto setattr setopt shutdown write)))
+(allow any_p any_p (netrom_socket (accept append bind connect create getattr getopt ioctl listen lock map name_bind read recvfrom sendto setattr setopt shutdown write)))
+(allow any_p any_p (atmpvc_socket (accept append bind connect create getattr getopt ioctl listen lock map name_bind read recvfrom sendto setattr setopt shutdown write)))
+(allow any_p any_p (x25_socket (accept append bind connect create getattr getopt ioctl listen lock map name_bind read recvfrom sendto setattr setopt shutdown write)))
+(allow any_p any_p (rose_socket (accept append bind connect create getattr getopt ioctl listen lock map name_bind read recvfrom sendto setattr setopt shutdown write)))
+(allow any_p any_p (decnet_socket (accept append bind connect create getattr getopt ioctl listen lock map name_bind read recvfrom sendto setattr setopt shutdown write)))
+(allow any_p any_p (atmsvc_socket (accept append bind connect create getattr getopt ioctl listen lock map name_bind read recvfrom sendto setattr setopt shutdown write)))
+(allow any_p any_p (rds_socket (accept append bind connect create getattr getopt ioctl listen lock map name_bind read recvfrom sendto setattr setopt shutdown write)))
+(allow any_p any_p (irda_socket (accept append bind connect create getattr getopt ioctl listen lock map name_bind read recvfrom sendto setattr setopt shutdown write)))
+(allow any_p any_p (pppox_socket (accept append bind connect create getattr getopt ioctl listen lock map name_bind read recvfrom sendto setattr setopt shutdown write)))
+(allow any_p any_p (llc_socket (accept append bind connect create getattr getopt ioctl listen lock map name_bind read recvfrom sendto setattr setopt shutdown write)))
+(allow any_p any_p (can_socket (accept append bind connect create getattr getopt ioctl listen lock map name_bind read recvfrom sendto setattr setopt shutdown write)))
+(allow any_p any_p (tipc_socket (accept append bind connect create getattr getopt ioctl listen lock map name_bind read recvfrom sendto setattr setopt shutdown write)))
+(allow any_p any_p (bluetooth_socket (accept append bind connect create getattr getopt ioctl listen lock map name_bind read recvfrom sendto setattr setopt shutdown write)))
+(allow any_p any_p (iucv_socket (accept append bind connect create getattr getopt ioctl listen lock map name_bind read recvfrom sendto setattr setopt shutdown write)))
+(allow any_p any_p (rxrpc_socket (accept append bind connect create getattr getopt ioctl listen lock map name_bind read recvfrom sendto setattr setopt shutdown write)))
+(allow any_p any_p (isdn_socket (accept append bind connect create getattr getopt ioctl listen lock map name_bind read recvfrom sendto setattr setopt shutdown write)))
+(allow any_p any_p (phonet_socket (accept append bind connect create getattr getopt ioctl listen lock map name_bind read recvfrom sendto setattr setopt shutdown write)))
+(allow any_p any_p (ieee802154_socket (accept append bind connect create getattr getopt ioctl listen lock map name_bind read recvfrom sendto setattr setopt shutdown write)))
+(allow any_p any_p (caif_socket (accept append bind connect create getattr getopt ioctl listen lock map name_bind read recvfrom sendto setattr setopt shutdown write)))
+(allow any_p any_p (alg_socket (accept append bind connect create getattr getopt ioctl listen lock map name_bind read recvfrom sendto setattr setopt shutdown write)))
+(allow any_p any_p (nfc_socket (accept append bind connect create getattr getopt ioctl listen lock map name_bind read recvfrom sendto setattr setopt shutdown write)))
+(allow any_p any_p (vsock_socket (accept append bind connect create getattr getopt ioctl listen lock map name_bind read recvfrom sendto setattr setopt shutdown write)))
+(allow any_p any_p (kcm_socket (accept append bind connect create getattr getopt ioctl listen lock map name_bind read recvfrom sendto setattr setopt shutdown write)))
+(allow any_p any_p (qipcrtr_socket (accept append bind connect create getattr getopt ioctl listen lock map name_bind read recvfrom sendto setattr setopt shutdown write)))
+(allow any_p any_p (smc_socket (accept append bind connect create getattr getopt ioctl listen lock map name_bind read recvfrom sendto setattr setopt shutdown write)))
+(allow any_p any_p (xdp_socket (accept append bind connect create getattr getopt ioctl listen lock map name_bind read recvfrom sendto setattr setopt shutdown write)))
+
+; UDS within any domain is always allowed
+(allow any_p self (unix_stream_socket (accept append bind connect create getattr getopt ioctl listen lock map name_bind read recvfrom sendto setattr setopt shutdown write)))
+(allow any_p self (unix_dgram_socket (accept append bind connect create getattr getopt ioctl listen lock map name_bind read recvfrom sendto setattr setopt shutdown write)))
+
+; Netlink
+(allow any_p self (netlink_classes (full)))
+(allow system_p any_p (netlink_classes (full)))
+
+; IPsec
+(allow any_p self (association (sendto recvfrom setcontext polmatch)))
+(allow any_p unlabeled_t (association (sendto recvfrom setcontext polmatch)))
+
+; InfiniBand
+(allow any_p unlabeled_t (infiniband_pkey (access)))
+(allow any_p unlabeled_t (infiniband_endport (manage_subnet)))

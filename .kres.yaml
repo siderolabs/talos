@@ -232,7 +232,7 @@ spec:
             type: upload
             artifactName: talos-logs-e2e-iso
             disableExecutableListGeneration: true
-            artifactPath: ~/.talos/clusters/**/*.log
+            artifactPath: ~/logs/*.log
             additionalArtifacts:
               - "!~/.talos/clusters/**/swtpm.log"
     - name: e2e-qemu-short
@@ -260,7 +260,7 @@ spec:
             type: upload
             artifactName: talos-logs-e2e-qemu-short
             disableExecutableListGeneration: true
-            artifactPath: ~/.talos/clusters/**/*.log
+            artifactPath: ~/logs/*.log
             additionalArtifacts:
               - "!~/.talos/clusters/**/swtpm.log"
     - name: e2e-docker-short
@@ -288,7 +288,7 @@ spec:
             type: upload
             artifactName: talos-logs-e2e-docker-short
             disableExecutableListGeneration: true
-            artifactPath: ~/.talos/clusters/**/*.log
+            artifactPath: ~/logs/*.log
             additionalArtifacts:
               - "!~/.talos/clusters/**/swtpm.log"
     - name: integration-qemu
@@ -340,7 +340,7 @@ spec:
             type: upload
             artifactName: talos-logs-integration-qemu
             disableExecutableListGeneration: true
-            artifactPath: ~/.talos/clusters/**/*.log
+            artifactPath: ~/logs/*.log
             additionalArtifacts:
               - "!~/.talos/clusters/**/swtpm.log"
     - name: integration-conformance
@@ -392,7 +392,7 @@ spec:
             type: upload
             artifactName: talos-logs-integration-qemu
             disableExecutableListGeneration: true
-            artifactPath: ~/.talos/clusters/**/*.log
+            artifactPath: ~/logs/*.log
             additionalArtifacts:
               - "!~/.talos/clusters/**/swtpm.log"
     - name: integration-trusted-boot
@@ -463,7 +463,7 @@ spec:
             type: upload
             artifactName: talos-logs-integration-trusted-boot
             disableExecutableListGeneration: true
-            artifactPath: ~/.talos/clusters/**/*.log
+            artifactPath: ~/logs/*.log
             additionalArtifacts:
               - "!~/.talos/clusters/**/swtpm.log"
     - name: integration-provision-0
@@ -513,7 +513,7 @@ spec:
             type: upload
             artifactName: talos-logs-integration-provision-0
             disableExecutableListGeneration: true
-            artifactPath: ~/.talos/clusters/**/*.log
+            artifactPath: ~/logs/*.log
             additionalArtifacts:
               - "!~/.talos/clusters/**/swtpm.log"
     - name: integration-provision-1
@@ -563,7 +563,7 @@ spec:
             type: upload
             artifactName: talos-logs-integration-provision-1
             disableExecutableListGeneration: true
-            artifactPath: ~/.talos/clusters/**/*.log
+            artifactPath: ~/logs/*.log
             additionalArtifacts:
               - "!~/.talos/clusters/**/swtpm.log"
     - name: integration-provision-2
@@ -613,7 +613,7 @@ spec:
             type: upload
             artifactName: talos-logs-integration-provision-2
             disableExecutableListGeneration: true
-            artifactPath: ~/.talos/clusters/**/*.log
+            artifactPath: ~/logs/*.log
             additionalArtifacts:
               - "!~/.talos/clusters/**/swtpm.log"
     - name: integration-misc-0
@@ -679,7 +679,7 @@ spec:
             type: upload
             artifactName: talos-logs-integration-misc-0
             disableExecutableListGeneration: true
-            artifactPath: ~/.talos/clusters/**/*.log
+            artifactPath: ~/logs/*.log
             additionalArtifacts:
               - "!~/.talos/clusters/**/swtpm.log"
     - name: integration-misc-1
@@ -747,7 +747,7 @@ spec:
             type: upload
             artifactName: talos-logs-integration-misc-1
             disableExecutableListGeneration: true
-            artifactPath: ~/.talos/clusters/**/*.log
+            artifactPath: ~/logs/*.log
             additionalArtifacts:
               - "!~/.talos/clusters/**/swtpm.log"
     - name: integration-misc-2
@@ -820,7 +820,7 @@ spec:
             type: upload
             artifactName: talos-logs-integration-misc-2
             disableExecutableListGeneration: true
-            artifactPath: ~/.talos/clusters/**/*.log
+            artifactPath: ~/logs/*.log
             additionalArtifacts:
               - "!~/.talos/clusters/**/swtpm.log"
     - name: integration-misc-3
@@ -872,7 +872,7 @@ spec:
             type: upload
             artifactName: talos-logs-integration-misc-3
             disableExecutableListGeneration: true
-            artifactPath: ~/.talos/clusters/**/*.log
+            artifactPath: ~/logs/*.log
             additionalArtifacts:
               - "!~/.talos/clusters/**/swtpm.log"
     - name: integration-misc-4
@@ -948,7 +948,7 @@ spec:
             type: upload
             artifactName: talos-logs-integration-misc-4
             disableExecutableListGeneration: true
-            artifactPath: ~/.talos/clusters/**/*.log
+            artifactPath: ~/logs/*.log
             additionalArtifacts:
               - "!~/.talos/clusters/**/swtpm.log"
     - name: integration-extensions
@@ -1029,7 +1029,7 @@ spec:
             type: upload
             artifactName: talos-logs-integration-extensions
             disableExecutableListGeneration: true
-            artifactPath: ~/.talos/clusters/**/*.log
+            artifactPath: ~/logs/*.log
             additionalArtifacts:
               - "!~/.talos/clusters/**/swtpm.log"
     - name: integration-cilium
@@ -1109,7 +1109,7 @@ spec:
             type: upload
             artifactName: talos-logs-integration-cilium
             disableExecutableListGeneration: true
-            artifactPath: ~/.talos/clusters/**/*.log
+            artifactPath: ~/logs/*.log
             additionalArtifacts:
               - "!~/.talos/clusters/**/swtpm.log"
     - name: integration-qemu-encrypted-vip
@@ -1164,7 +1164,7 @@ spec:
             type: upload
             artifactName: talos-logs-integration-qemu-encrypted-vip
             disableExecutableListGeneration: true
-            artifactPath: ~/.talos/clusters/**/*.log
+            artifactPath: ~/logs/*.log
             additionalArtifacts:
               - "!~/.talos/clusters/**/swtpm.log"
     - name: integration-qemu-race
@@ -1226,7 +1226,7 @@ spec:
             type: upload
             artifactName: talos-logs-integration-qemu-race
             disableExecutableListGeneration: true
-            artifactPath: ~/.talos/clusters/**/*.log
+            artifactPath: ~/logs/*.log
             additionalArtifacts:
               - "!~/.talos/clusters/**/swtpm.log"
     - name: integration-qemu-csi-rook-ceph
@@ -1284,7 +1284,7 @@ spec:
             type: upload
             artifactName: talos-logs-integration-qemu-csi-rook-ceph
             disableExecutableListGeneration: true
-            artifactPath: ~/.talos/clusters/**/*.log
+            artifactPath: ~/logs/*.log
             additionalArtifacts:
               - "!~/.talos/clusters/**/swtpm.log"
     - name: integration-qemu-csi-longhorn
@@ -1363,7 +1363,7 @@ spec:
             type: upload
             artifactName: talos-logs-integration-qemu-csi-longhorn
             disableExecutableListGeneration: true
-            artifactPath: ~/.talos/clusters/**/*.log
+            artifactPath: ~/logs/*.log
             additionalArtifacts:
               - "!~/.talos/clusters/**/swtpm.log"
     - name: integration-images
@@ -1599,7 +1599,7 @@ spec:
             type: upload
             artifactName: talos-logs-integration-image-factory
             disableExecutableListGeneration: true
-            artifactPath: ~/.talos/clusters/**/*.log
+            artifactPath: ~/logs/*.log
             additionalArtifacts:
               - "!~/.talos/clusters/**/swtpm.log"
     - name: integration-aws

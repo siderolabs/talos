@@ -1,0 +1,3 @@
+(type dashboard_t)
+(call system_service_p (dashboard_t))
+(allow dashboard_t init_exec_t (file (entrypoint)))

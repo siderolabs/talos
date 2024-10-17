@@ -29,6 +29,7 @@ const (
 func (c *Config) Install(opts options.InstallOptions) (*options.InstallResult, error) {
 	var installResult *options.InstallResult
 
+	// TODO: label /boot
 	err := mount.PartitionOp(
 		opts.BootDisk,
 		[]mount.Spec{

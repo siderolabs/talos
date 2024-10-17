@@ -31,6 +31,7 @@ import (
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system/runner/containerd"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system/runner/restart"
 	"github.com/siderolabs/talos/internal/pkg/environment"
+	"github.com/siderolabs/talos/internal/pkg/selinux"
 	"github.com/siderolabs/talos/pkg/conditions"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/resources/network"
@@ -91,6 +92,10 @@ func (t *Trustd) PreFunc(ctx context.Context, r runtime.Runtime) error {
 
 	listener, err := net.Listen("unix", constants.TrustdRuntimeSocketPath)
 	if err != nil {
+		return err
+	}
+
+	if err := selinux.SetLabel(constants.TrustdRuntimeSocketPath, "system_u:object_r:trustd_runtime_socket_t:s0"); err != nil {
 		return err
 	}
 
@@ -159,6 +164,7 @@ func (t *Trustd) Runner(r runtime.Runtime) (runner.Runner, error) {
 		runner.WithContainerdAddress(constants.SystemContainerdAddress),
 		runner.WithEnv(env),
 		runner.WithCgroupPath(constants.CgroupTrustd),
+		runner.WithSelinuxLabel(constants.SelinuxLabelTrustd),
 		runner.WithOCISpecOpts(
 			oci.WithDroppedCapabilities(cap.Known()),
 			oci.WithHostNamespace(specs.NetworkNamespace),

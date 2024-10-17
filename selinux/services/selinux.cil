@@ -1,0 +1,13 @@
+; FIXME: init (running as kernel_t) does this, but not enforcing yet
+(neverallow any_p security_t (security (load_policy setbool setenforce setsecparam)))
+(allow any_p security_t (security (
+    check_context
+    compute_av
+    compute_create
+    compute_member
+    compute_relabel
+    compute_user
+    read_policy
+    setcheckreqprot
+    validate_trans
+)))

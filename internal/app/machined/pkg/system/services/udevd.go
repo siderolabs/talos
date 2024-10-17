@@ -74,10 +74,11 @@ func (c *Udevd) Runner(r runtime.Runtime) (runner.Runner, error) {
 		ProcessArgs: []string{
 			"/sbin/systemd-udevd",
 			"--resolve-names=never",
+			"-D",
 		},
 	}
 
-	debug := false
+	debug := true
 
 	if r.Config() != nil {
 		debug = r.Config().Debug()
@@ -88,6 +89,7 @@ func (c *Udevd) Runner(r runtime.Runtime) (runner.Runner, error) {
 		args,
 		runner.WithLoggingManager(r.Logging()),
 		runner.WithCgroupPath(constants.CgroupUdevd),
+		runner.WithSelinuxLabel(constants.SelinuxLabelUdevd),
 		runner.WithDroppedCapabilities(constants.UdevdDroppedCapabilities),
 		runner.WithEnv([]string{
 			// append a default value for XDG_RUNTIME_DIR for the services running on the host

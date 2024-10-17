@@ -1,0 +1,113 @@
+(type null_device_t)
+(call common_device_f (null_device_t))
+(sid devnull)
+(sidcontext devnull (system_u object_r null_device_t (systemLow systemLow)))
+
+(sid igmp_packet)
+(sidcontext igmp_packet (system_u object_r unlabeled_t (systemLow systemLow)))
+(sid icmp_socket)
+(sidcontext icmp_socket (system_u object_r unlabeled_t (systemLow systemLow)))
+(sid tcp_socket)
+(sidcontext tcp_socket (system_u object_r unlabeled_t (systemLow systemLow)))
+(sid sysctl_modprobe)
+(sidcontext sysctl_modprobe (system_u object_r unlabeled_t (systemLow systemLow)))
+(sid sysctl)
+(sidcontext sysctl (system_u object_r unlabeled_t (systemLow systemLow)))
+(sid sysctl_fs)
+(sidcontext sysctl_fs (system_u object_r unlabeled_t (systemLow systemLow)))
+(sid sysctl_kernel)
+(sidcontext sysctl_kernel (system_u object_r unlabeled_t (systemLow systemLow)))
+(sid sysctl_net)
+(sidcontext sysctl_net (system_u object_r unlabeled_t (systemLow systemLow)))
+(sid sysctl_net_unix)
+(sidcontext sysctl_net_unix (system_u object_r unlabeled_t (systemLow systemLow)))
+(sid sysctl_vm)
+(sidcontext sysctl_vm (system_u object_r unlabeled_t (systemLow systemLow)))
+(sid sysctl_dev)
+(sidcontext sysctl_dev (system_u object_r unlabeled_t (systemLow systemLow)))
+(sid kmod)
+(sidcontext kmod (system_u object_r unlabeled_t (systemLow systemLow)))
+(sid policy)
+(sidcontext policy (system_u object_r unlabeled_t (systemLow systemLow)))
+(sid scmp_packet)
+(sidcontext scmp_packet (system_u object_r unlabeled_t (systemLow systemLow)))
+
+(type unlabeled_t)
+(call system_f (unlabeled_t))
+(type fs_t)
+(call filesystem_f (fs_t))
+(allow unlabeled_t fs_t (filesystem (associate)))
+
+(type node_t)
+(roletype object_r node_t)
+(sid node)
+(sidcontext node (system_u object_r node_t (systemLow systemLow)))
+
+(type netlabel_peer_t)
+(roletype object_r netlabel_peer_t)
+(sid netmsg)
+(sidcontext netmsg (system_u object_r netlabel_peer_t (systemLow systemLow)))
+
+(type netif_t)
+(roletype object_r netif_t)
+(sid netif)
+(sidcontext netif (system_u object_r netif_t (systemLow systemLow)))
+
+(type port_t)
+(roletype object_r port_t)
+(sid port)
+(sidcontext port (system_u object_r port_t (systemLow systemLow)))
+
+(sid any_socket)
+(sidcontext any_socket (system_u object_r unlabeled_t (systemLow systemLow)))
+(sid init)
+(sidcontext init (system_u object_r unlabeled_t (systemLow systemLow)))
+(sid file_labels)
+(sidcontext file_labels (system_u object_r unlabeled_t (systemLow systemLow)))
+(sid file)
+(sidcontext file (system_u object_r unlabeled_t (systemLow systemLow)))
+(sid fs)
+(sidcontext fs (system_u object_r fs_t (systemLow systemLow)))
+
+(sid unlabeled)
+(sidcontext unlabeled (system_u object_r unlabeled_t (systemLow systemLow)))
+
+(type security_t)
+(roletype object_r security_t)
+(sid security)
+(sidcontext security (system_u object_r security_t (systemLow systemLow)))
+
+(type kernel_t)
+(roletype system_r kernel_t)
+(sid kernel)
+(sidcontext kernel (system_u system_r kernel_t (systemLow systemLow)))
+
+(sidorder (
+    kernel
+    security
+    unlabeled
+    fs
+    file
+    file_labels
+    init
+    any_socket
+    port
+    netif
+    netmsg
+    node
+    igmp_packet
+    icmp_socket
+    tcp_socket
+    sysctl_modprobe
+    sysctl
+    sysctl_fs
+    sysctl_kernel
+    sysctl_net
+    sysctl_net_unix
+    sysctl_vm
+    sysctl_dev
+    kmod
+    policy
+    scmp_packet
+    devnull
+))

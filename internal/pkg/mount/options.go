@@ -51,6 +51,7 @@ type Options struct {
 	SystemInformationGetter helpers.SystemInformationGetter
 	Logger                  *log.Logger
 	ProjectQuota            bool
+	SelinuxLabel            string
 }
 
 // Option is the functional option func.
@@ -112,6 +113,13 @@ func WithLogger(logger *log.Logger) Option {
 func WithProjectQuota(enable bool) Option {
 	return func(args *Options) {
 		args.ProjectQuota = enable
+	}
+}
+
+// WithSelinuxLabel sets SELinux label to be set after mount.
+func WithSelinuxLabel(label string) Option {
+	return func(args *Options) {
+		args.SelinuxLabel = label
 	}
 }
 

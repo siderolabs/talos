@@ -83,6 +83,7 @@ func (ctrl *CRIConfigPartsController) Run(ctx context.Context, r controller.Runt
 
 				spec.Contents = out
 				spec.Mode = 0o600
+				spec.SelinuxLabel = "system_u:object_r:k8s_conf_t:s0"
 
 				return nil
 			}); err != nil {

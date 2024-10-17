@@ -123,6 +123,7 @@ func (ctrl *UserDiskConfigController) Run(ctx context.Context, r controller.Runt
 								Match: partitionIdxMatch(resolvedDevicePath, idx+1),
 							}
 
+							// TODO: does this need a SELinux label?
 							vc.TypedSpec().Mount = block.MountSpec{
 								TargetPath: part.MountPoint(),
 							}

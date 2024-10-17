@@ -1,0 +1,192 @@
+(allow any_p self (fs_classes (ro)))
+; All but ptrace and setcurrent
+(allow any_p self (process (
+    dyntransition
+    execheap
+    execmem
+    execstack
+    fork
+    getattr
+    getcap
+    getpgid
+    getrlimit
+    getsched
+    getsession
+    noatsecure
+    rlimitinh
+    setcap
+    setexec
+    setfscreate
+    setkeycreate
+    setpgid
+    setrlimit
+    setsched
+    setsockcreate
+    share
+    sigchld
+    siginh
+    sigkill
+    signal
+    signull
+    sigstop
+    transition
+)))
+(allow any_p null_device_t (chr_file (ioctl read write getattr lock append open)))
+(allow any_p sysfs_t (fs_classes (ro)))
+(allow any_p proc_sysctl_t (fs_classes (ro)))
+(allow any_p procfs_t (fs_classes (ro)))
+(allow any_p device_t (fs_classes (ro)))
+(allow any_p rootfs_t (fs_classes (ro)))
+
+; BPF, observability
+(allow any_p self (bpf (map_create map_read map_write prog_load prog_run)))
+
+; All caps, except sys_boot and sys_modules
+(allow any_p self (capability (
+    audit_control
+    audit_write
+    chown
+    dac_override
+    dac_read_search
+    fowner
+    fsetid
+    ipc_lock
+    ipc_owner
+    kill
+    lease
+    linux_immutable
+    mknod
+    net_admin
+    net_bind_service
+    net_broadcast
+    net_raw
+    setfcap
+    setgid
+    setpcap
+    setuid
+    sys_admin
+    sys_chroot
+    sys_nice
+    sys_pacct
+    sys_ptrace
+    sys_rawio
+    sys_resource
+    sys_time
+    sys_tty_config
+)))
+(allow any_p self (cap_userns (
+    audit_control
+    audit_write
+    chown
+    dac_override
+    dac_read_search
+    fowner
+    fsetid
+    ipc_lock
+    ipc_owner
+    kill
+    lease
+    linux_immutable
+    mknod
+    net_admin
+    net_bind_service
+    net_broadcast
+    net_raw
+    setfcap
+    setgid
+    setpcap
+    setuid
+    sys_admin
+    sys_chroot
+    sys_nice
+    sys_pacct
+    sys_ptrace
+    sys_rawio
+    sys_resource
+    sys_time
+    sys_tty_config
+)))
+; All but mac_admin, mac_override and syslog
+(allow any_p self (capability2 (
+    audit_read
+    block_suspend
+    bpf
+    checkpoint_restore
+    perfmon
+    wake_alarm
+)))
+(allow any_p self (cap2_userns (
+    audit_read
+    block_suspend
+    bpf
+    checkpoint_restore
+    perfmon
+    wake_alarm
+)))
+
+(allow system_p any_p (process (
+    dyntransition
+    execheap
+    execmem
+    execstack
+    fork
+    getattr
+    getcap
+    getpgid
+    getrlimit
+    getsched
+    getsession
+    noatsecure
+    ptrace
+    rlimitinh
+    setcap
+    setcurrent
+    setexec
+    setfscreate
+    setkeycreate
+    setpgid
+    setrlimit
+    setsched
+    setsockcreate
+    share
+    sigchld
+    siginh
+    sigkill
+    signal
+    signull
+    sigstop
+    transition
+)))
+
+(allow system_p any_p (unix_stream_socket (connectto)))
+
+(allow any_p self (fd (use)))
+(allow any_p self (key (view read write search link setattr create)))
+(allow any_p self (sem (associate create destroy getattr read setattr unix_read unix_write write)))
+(allow any_p self (msgq (
+    associate create destroy getattr read setattr unix_read unix_write write
+    enqueue
+)))
+(allow any_p self (msg (
+    associate create destroy getattr read setattr unix_read unix_write write
+    send receive
+)))
+; used by X Server
+(allow any_p any_p (shm (
+    associate create destroy getattr read setattr unix_read unix_write write
+    lock
+)))
+; TODO: restrict (boolean)?
+(allow any_p self (perf_event (open cpu kernel tracepoint read write)))
+; Used by chromium, wine, other. Might be useful to disable to protect from kernel null-deref exploits
+(allow any_p self (memprotect (mmap_zero)))
+; TODO: kernel_service, anon_inode
+(allow any_p self (io_uring (sqpoll cmd override_creds)))
+(allow any_p self (user_namespace (create)))
+
+(allow pod_t pod_t (fs_classes (rw)))
+; TODO: constrain more
+(allow system_p any_f_any_p (fs_classes (full)))
+; All spawned by init need to use fd of parent
+(allow system_service_p init_t (fd (use)))
+(allow client_p init_t (fd (use)))

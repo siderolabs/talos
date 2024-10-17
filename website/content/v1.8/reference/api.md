@@ -994,6 +994,7 @@ MountSpec is the spec for volume mount.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | target_path | [string](#string) |  |  |
+| selinux_label | [string](#string) |  |  |
 
 
 
@@ -2167,6 +2168,7 @@ EtcFileSpecSpec describes status of rendered secrets.
 | ----- | ---- | ----- | ----------- |
 | contents | [bytes](#bytes) |  |  |
 | mode | [uint32](#uint32) |  |  |
+| selinux_label | [string](#string) |  |  |
 
 
 

@@ -42,6 +42,8 @@ ARG PKG_CNI
 ARG PKG_FLANNEL_CNI
 ARG PKG_TALOSCTL_CNI_BUNDLE_INSTALL
 
+ARG DEBUG_TOOLS_SOURCE
+
 # Resolve package images using ${PKGS} to be used later in COPY --from=.
 
 FROM ${PKG_FHS} AS pkg-fhs
@@ -139,6 +141,23 @@ FROM --platform=arm64 ${PKG_FLANNEL_CNI} AS pkg-flannel-cni-arm64
 FROM ${PKG_KERNEL} AS pkg-kernel
 FROM --platform=amd64 ${PKG_KERNEL} AS pkg-kernel-amd64
 FROM --platform=arm64 ${PKG_KERNEL} AS pkg-kernel-arm64
+
+FROM --platform=amd64 ${TOOLS} as tools-amd64
+FROM --platform=arm64 ${TOOLS} as tools-arm64
+
+FROM scratch as pkg-debug-tools-amd64
+COPY --from=tools-amd64 /toolchain/bin/bash /toolchain/bin/bash
+COPY --from=tools-amd64 /toolchain/lib/ld-musl-x86_64.so.1 /toolchain/toolchain/lib/ld-musl-x86_64.so.1
+COPY --from=tools-amd64 /toolchain/bin/cat /toolchain/bin/cat
+COPY --from=tools-amd64 /toolchain/bin/ls /toolchain/bin/ls
+COPY --from=tools-amd64 /toolchain/bin/tee /toolchain/bin/tee
+
+FROM scratch as pkg-debug-tools-arm64
+COPY --from=tools-arm64 /toolchain/bin/bash /toolchain/bin/bash
+COPY --from=tools-arm64 /toolchain/lib/ld-musl-aarch64.so.1 /toolchain/toolchain/lib/ld-musl-aarch64.so.1
+COPY --from=tools-arm64 /toolchain/bin/cat /toolchain/bin/cat
+COPY --from=tools-arm64 /toolchain/bin/ls /toolchain/bin/ls
+COPY --from=tools-arm64 /toolchain/bin/tee /toolchain/bin/tee
 
 # Strip CNI package.
 
@@ -349,6 +368,10 @@ COPY --from=embed-abbrev-generate /src/pkg/machinery/gendata/data /pkg/machinery
 COPY --from=embed-abbrev-generate /src/_out/talos-metadata /_out/talos-metadata
 COPY --from=embed-abbrev-generate /src/_out/signing_key.x509 /_out/signing_key.x509
 
+FROM tools as selinux
+COPY ./selinux /selinux
+RUN secilc -c 33 /selinux/**/*.cil -vvvvv -O
+
 FROM scratch AS ipxe-generate
 COPY --from=pkg-ipxe-amd64 /usr/libexec/snp.efi /amd64/snp.efi
 COPY --from=pkg-ipxe-arm64 /usr/libexec/snp.efi /arm64/snp.efi
@@ -386,6 +409,7 @@ COPY --from=go-generate /src/pkg/machinery/config/types/ /pkg/machinery/config/t
 COPY --from=go-generate /src/pkg/machinery/nethelpers/ /pkg/machinery/nethelpers/
 COPY --from=go-generate /src/pkg/machinery/extensions/ /pkg/machinery/extensions/
 COPY --from=ipxe-generate / /pkg/provision/providers/vm/internal/ipxe/data/ipxe/
+COPY --from=selinux /policy.33 ./internal/pkg/mount/switchroot/
 COPY --from=embed-abbrev / /
 COPY --from=pkg-ca-certificates /etc/ssl/certs/ca-certificates /internal/app/machined/pkg/controllers/secrets/data/
 COPY --from=microsoft-key-keys / /internal/pkg/secureboot/database/certs/
@@ -403,6 +427,7 @@ COPY --from=generate /pkg/imager/ ./pkg/imager/
 COPY --from=generate /pkg/machinery/ ./pkg/machinery/
 COPY --from=generate /internal/app/machined/pkg/controllers/secrets/data/ ./internal/app/machined/pkg/controllers/secrets/data/
 COPY --from=generate /internal/pkg/secureboot/database/certs/ ./internal/pkg/secureboot/database/certs/
+COPY --from=generate /internal/pkg/mount/switchroot/ ./internal/pkg/mount/switchroot/
 COPY --from=embed / ./
 RUN --mount=type=cache,target=/.cache go list all >/dev/null
 WORKDIR /src/pkg/machinery
@@ -621,6 +646,7 @@ COPY --from=depmod-arm64 /build/lib/modules /lib/modules
 # The rootfs target provides the Talos rootfs.
 FROM build AS rootfs-base-amd64
 COPY --link --from=pkg-fhs / /rootfs
+COPY --link --from=pkg-ca-certificates / /rootfs
 COPY --link --from=pkg-apparmor-amd64 / /rootfs
 COPY --link --from=pkg-cni-stripped-amd64 / /rootfs
 COPY --link --from=pkg-flannel-cni-amd64 / /rootfs
@@ -651,6 +677,10 @@ COPY --link --from=pkg-kmod-amd64 /usr/lib/libkmod.* /rootfs/lib/
 COPY --link --from=pkg-kmod-amd64 /usr/bin/kmod /rootfs/sbin/modprobe
 COPY --link --from=modules-amd64 /lib/modules /rootfs/lib/modules
 COPY --link --from=machined-build-amd64 /machined /rootfs/sbin/init
+
+# this is a no-op as it copies from a scratch image when WITH_DEBUG_SHELL is not set
+COPY --link --from=pkg-debug-tools-amd64 * /rootfs/
+
 RUN <<END
     # the orderly_poweroff call by the kernel will call '/sbin/poweroff'
     ln /rootfs/sbin/init /rootfs/sbin/poweroff
@@ -678,6 +708,7 @@ COPY --chmod=0644 hack/containerd.toml /rootfs/etc/containerd/config.toml
 COPY --chmod=0644 hack/cri-containerd.toml /rootfs/etc/cri/containerd.toml
 COPY --chmod=0644 hack/cri-plugin.part /rootfs/etc/cri/conf.d/00-base.part
 COPY --chmod=0644 hack/udevd/80-net-name-slot.rules /rootfs/usr/lib/udev/rules.d/
+COPY --chmod=0644 hack/udevd/xx-selinux.rules /rootfs/usr/lib/udev/rules.d/
 COPY --chmod=0644 hack/lvm.conf /rootfs/etc/lvm/lvm.conf
 RUN <<END
     ln -s /usr/share/zoneinfo/Etc/UTC /rootfs/etc/localtime
@@ -688,6 +719,7 @@ RUN <<END
     ln -s /etc/ssl /rootfs/usr/local/share/ca-certificates
     ln -s /etc/ssl /rootfs/etc/ca-certificates
 END
+RUN mkdir -p /rootfs/selinux
 
 FROM build AS rootfs-base-arm64
 COPY --link --from=pkg-fhs / /rootfs
@@ -721,6 +753,10 @@ COPY --link --from=pkg-kmod-arm64 /usr/lib/libkmod.* /rootfs/lib/
 COPY --link --from=pkg-kmod-arm64 /usr/bin/kmod /rootfs/sbin/modprobe
 COPY --link --from=modules-arm64 /lib/modules /rootfs/lib/modules
 COPY --link --from=machined-build-arm64 /machined /rootfs/sbin/init
+
+# this is a no-op as it copies from a scratch image when WITH_DEBUG_SHELL is not set
+COPY --link --from=pkg-debug-tools-arm64 * /rootfs/
+
 RUN <<END
     # the orderly_poweroff call by the kernel will call '/sbin/poweroff'
     ln /rootfs/sbin/init /rootfs/sbin/poweroff
@@ -748,6 +784,7 @@ COPY --chmod=0644 hack/containerd.toml /rootfs/etc/containerd/config.toml
 COPY --chmod=0644 hack/cri-containerd.toml /rootfs/etc/cri/containerd.toml
 COPY --chmod=0644 hack/cri-plugin.part /rootfs/etc/cri/conf.d/00-base.part
 COPY --chmod=0644 hack/udevd/80-net-name-slot.rules /rootfs/usr/lib/udev/rules.d/
+COPY --chmod=0644 hack/udevd/xx-selinux.rules /rootfs/usr/lib/udev/rules.d/
 COPY --chmod=0644 hack/lvm.conf /rootfs/etc/lvm/lvm.conf
 RUN <<END
     ln -s /usr/share/zoneinfo/Etc/UTC /rootfs/etc/localtime
@@ -758,6 +795,7 @@ RUN <<END
     ln -s /etc/ssl /rootfs/usr/local/share/ca-certificates
     ln -s /etc/ssl /rootfs/etc/ca-certificates
 END
+RUN mkdir -p /rootfs/selinux
 
 FROM rootfs-base-${TARGETARCH} AS rootfs-base
 RUN echo "true" > /rootfs/usr/etc/in-container
@@ -768,13 +806,19 @@ FROM rootfs-base-arm64 AS rootfs-squashfs-arm64
 ARG ZSTD_COMPRESSION_LEVEL
 RUN find /rootfs -print0 \
     | xargs -0r touch --no-dereference --date="@${SOURCE_DATE_EPOCH}"
-RUN mksquashfs /rootfs /rootfs.sqsh -all-root -noappend -comp zstd -Xcompression-level ${ZSTD_COMPRESSION_LEVEL} -no-progress
+COPY --from=selinux /file_contexts /file_contexts
+COPY ./hack/labeled-squashfs.sh /
+ENV SHELL=/toolchain/bin/bash
+RUN fakeroot /labeled-squashfs.sh /rootfs /rootfs.sqsh /file_contexts ${ZSTD_COMPRESSION_LEVEL}
 
 FROM rootfs-base-amd64 AS rootfs-squashfs-amd64
 ARG ZSTD_COMPRESSION_LEVEL
 RUN find /rootfs -print0 \
     | xargs -0r touch --no-dereference --date="@${SOURCE_DATE_EPOCH}"
-RUN mksquashfs /rootfs /rootfs.sqsh -all-root -noappend -comp zstd -Xcompression-level ${ZSTD_COMPRESSION_LEVEL} -no-progress
+COPY --from=selinux /file_contexts /file_contexts
+COPY ./hack/labeled-squashfs.sh /
+ENV SHELL=/toolchain/bin/bash
+RUN fakeroot /labeled-squashfs.sh /rootfs /rootfs.sqsh /file_contexts ${ZSTD_COMPRESSION_LEVEL}
 
 FROM scratch AS squashfs-arm64
 COPY --from=rootfs-squashfs-arm64 /rootfs.sqsh /

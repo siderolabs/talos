@@ -41,7 +41,7 @@ func TestImager(t *testing.T) {
 				Version: "1.7.0",
 			},
 
-			expected: "talos.platform=metal console=ttyS0 console=tty0 init_on_alloc=1 slab_nomerge pti=on consoleblank=0 nvme_core.io_timeout=4294967295 printk.devkmsg=on ima_template=ima-ng ima_appraise=fix ima_hash=sha512", //nolint:lll
+			expected: "talos.platform=metal console=ttyS0 console=tty0 init_on_alloc=1 slab_nomerge pti=on consoleblank=0 nvme_core.io_timeout=4294967295 printk.devkmsg=on ima_template=ima-ng ima_appraise=fix ima_hash=sha512 talos.selinux=permissive audit=1 sysctl.kernel.printk_delay=0 sysctl.kernel.printk_ratelimit=0 sysctl.kernel.printk_ratelimit_burst=0 audit_backlog_limit=65536", //nolint:lll
 		},
 		{
 			name: "cmdline-pre1.8-arm64",
@@ -56,7 +56,7 @@ func TestImager(t *testing.T) {
 				Version: "1.7.0",
 			},
 
-			expected: "talos.platform=metal console=ttyAMA0 console=tty0 init_on_alloc=1 slab_nomerge pti=on consoleblank=0 nvme_core.io_timeout=4294967295 printk.devkmsg=on ima_template=ima-ng ima_appraise=fix ima_hash=sha512", //nolint:lll
+			expected: "talos.platform=metal console=ttyAMA0 console=tty0 init_on_alloc=1 slab_nomerge pti=on consoleblank=0 nvme_core.io_timeout=4294967295 printk.devkmsg=on ima_template=ima-ng ima_appraise=fix ima_hash=sha512 talos.selinux=permissive audit=1 sysctl.kernel.printk_delay=0 sysctl.kernel.printk_ratelimit=0 sysctl.kernel.printk_ratelimit_burst=0 audit_backlog_limit=65536", //nolint:lll
 		},
 		{
 			name: "cmdline-1.8-amd64",
@@ -71,7 +71,7 @@ func TestImager(t *testing.T) {
 				Version: "1.8.0",
 			},
 
-			expected: "talos.platform=metal console=tty0 init_on_alloc=1 slab_nomerge pti=on consoleblank=0 nvme_core.io_timeout=4294967295 printk.devkmsg=on ima_template=ima-ng ima_appraise=fix ima_hash=sha512", //nolint:lll
+			expected: "talos.platform=metal console=tty0 init_on_alloc=1 slab_nomerge pti=on consoleblank=0 nvme_core.io_timeout=4294967295 printk.devkmsg=on ima_template=ima-ng ima_appraise=fix ima_hash=sha512 talos.selinux=permissive audit=1 sysctl.kernel.printk_delay=0 sysctl.kernel.printk_ratelimit=0 sysctl.kernel.printk_ratelimit_burst=0 audit_backlog_limit=65536", //nolint:lll
 		},
 		{
 			name: "cmdline-1.8-arm64",
@@ -86,7 +86,7 @@ func TestImager(t *testing.T) {
 				Version: "1.8.0",
 			},
 
-			expected: "talos.platform=metal console=ttyAMA0 console=tty0 init_on_alloc=1 slab_nomerge pti=on consoleblank=0 nvme_core.io_timeout=4294967295 printk.devkmsg=on ima_template=ima-ng ima_appraise=fix ima_hash=sha512", //nolint:lll
+			expected: "talos.platform=metal console=ttyAMA0 console=tty0 init_on_alloc=1 slab_nomerge pti=on consoleblank=0 nvme_core.io_timeout=4294967295 printk.devkmsg=on ima_template=ima-ng ima_appraise=fix ima_hash=sha512 talos.selinux=permissive audit=1 sysctl.kernel.printk_delay=0 sysctl.kernel.printk_ratelimit=0 sysctl.kernel.printk_ratelimit_burst=0 audit_backlog_limit=65536", //nolint:lll
 		},
 	} {
 		t.Run(test.name, func(t *testing.T) {

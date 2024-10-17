@@ -1,0 +1,25 @@
+(role object_r)
+(type object_r)
+(roletype object_r object_r)
+
+(role system_r)
+(type system_r)
+(roletype system_r system_r)
+
+(user system_u)
+(userrange system_u (systemLow systemLow))
+(userlevel system_u systemLow)
+(userrole system_u object_r)
+(userrole system_u system_r)
+
+(role client_r)
+(type client_r)
+(roletype client_r client_r)
+
+(user client_u)
+(userrange client_u (systemLow systemLow))
+(userlevel client_u systemLow)
+(userrole client_u object_r)
+(userrole client_u client_r)
+
+(roleallow system_r client_r)

@@ -44,6 +44,7 @@ import (
 	"golang.org/x/sys/unix"
 	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1"
 
+	efiles "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/files"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/emergency"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/grub"
@@ -63,6 +64,7 @@ import (
 	"github.com/siderolabs/talos/internal/pkg/partition"
 	"github.com/siderolabs/talos/internal/pkg/secureboot"
 	"github.com/siderolabs/talos/internal/pkg/secureboot/tpm2"
+	"github.com/siderolabs/talos/internal/pkg/selinux"
 	"github.com/siderolabs/talos/internal/pkg/zboot"
 	"github.com/siderolabs/talos/pkg/conditions"
 	"github.com/siderolabs/talos/pkg/images"
@@ -136,6 +138,21 @@ func SetupSystemDirectory(runtime.Sequence, any) (runtime.TaskExecutionFunc, str
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
 		for _, p := range []string{constants.SystemEtcPath, constants.SystemVarPath, constants.StateMountPoint} {
 			if err = os.MkdirAll(p, 0o700); err != nil {
+				return err
+			}
+
+			var label string
+
+			switch p {
+			case constants.SystemEtcPath:
+				label = "system_u:object_r:system_etc_t:s0"
+			case constants.SystemVarPath:
+				label = "system_u:object_r:system_var_t:s0"
+			default: // /system/state is another mount
+				label = ""
+			}
+
+			if err = selinux.SetLabel(p, label); err != nil {
 				return err
 			}
 		}
@@ -459,7 +476,7 @@ func OSRelease() (err error) {
 		return err
 	}
 
-	return os.WriteFile(filepath.Join(constants.SystemEtcPath, "os-release"), contents, 0o644)
+	return efiles.UpdateFile(filepath.Join(constants.SystemEtcPath, "os-release"), contents, 0o644, "system_u:object_r:etc_os_release_t:s0")
 }
 
 // createBindMount creates a common way to create a writable source file with a
@@ -982,6 +999,7 @@ func MountUserDisks(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
 				volumeStatus.TypedSpec().MountLocation,
 				volumeConfig.TypedSpec().Mount.TargetPath,
 				volumeStatus.TypedSpec().Filesystem.String(),
+				mountv2.WithSelinuxLabel(volumeConfig.TypedSpec().Mount.SelinuxLabel),
 			))
 		}
 
@@ -1134,6 +1152,7 @@ func injectCRIConfigPatch(ctx context.Context, st state.State, content []byte) e
 	etcFileSpec := resourcefiles.NewEtcFileSpec(resourcefiles.NamespaceName, constants.CRICustomizationConfigPart)
 	etcFileSpec.TypedSpec().Mode = 0o600
 	etcFileSpec.TypedSpec().Contents = content
+	etcFileSpec.TypedSpec().SelinuxLabel = "system_u:object_r:k8s_conf_t:s0"
 
 	if err := st.Create(ctx, etcFileSpec); err != nil {
 		return err

@@ -184,6 +184,7 @@ func RunInstallerContainer(disk, platform, ref string, cfg configcore.Config, cf
 		constants.KernelParamEquinixMetalEvents,
 		constants.KernelParamDashboardDisabled,
 		constants.KernelParamNetIfnames,
+		constants.KernelParamSELinux,
 	} {
 		if c := procfs.ProcCmdline().Get(preservedArg).First(); c != nil {
 			args = append(args, "--extra-kernel-arg", fmt.Sprintf("%s=%s", preservedArg, *c))
@@ -204,7 +205,7 @@ func RunInstallerContainer(disk, platform, ref string, cfg configcore.Config, cf
 		oci.WithReadonlyPaths(nil),
 		oci.WithWriteableSysfs,
 		oci.WithWriteableCgroupfs,
-		oci.WithSelinuxLabel(""),
+		oci.WithSelinuxLabel("system_u:system_r:installer_t:s0"), // TODO: specify
 		oci.WithApparmorProfile(""),
 		oci.WithSeccompUnconfined,
 		oci.WithAllDevicesAllowed,
