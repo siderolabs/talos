@@ -105,6 +105,7 @@ linters-settings:
       - golang.zx2c4.com/wireguard
       - golang.zx2c4.com/wireguard/wgctrl
       - cloud.google.com/go
+      - kernel.org/pub/linux/libs/security/libcap/cap
       # fd-leak related replacements: https://github.com/siderolabs/talos/issues/9412
       - github.com/insomniacslk/dhcp
       - github.com/safchain/ethtool
