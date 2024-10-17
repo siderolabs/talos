@@ -89,6 +89,10 @@ func (p *provisioner) createNode(state *vm.State, clusterReq provision.ClusterRe
 		}
 	}
 
+	if opts.WithDebugShell {
+		cmdline.Append("talos.debugshell", "")
+	}
+
 	var nodeConfig string
 
 	if !nodeReq.SkipInjectingConfig {
@@ -157,6 +161,7 @@ func (p *provisioner) createNode(state *vm.State, clusterReq provision.ClusterRe
 		TFTPServer:        nodeReq.TFTPServer,
 		IPXEBootFileName:  nodeReq.IPXEBootFilename,
 		APIPort:           apiPort,
+		WithDebugShell:    opts.WithDebugShell,
 	}
 
 	if clusterReq.IPXEBootScript != "" {
