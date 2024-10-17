@@ -150,16 +150,16 @@ func (suite *ProcessSuite) TestProcessCapabilities() {
 							"-500",
 						)
 					}
+					suite.Require().Contains(
+						suite.readProcfs(nodeCtx, p.Pid, "environ"),
+						"XDG_RUNTIME_DIR=/run",
+					)
+					suite.Require().Contains(
+						suite.readProcfs(nodeCtx, p.Pid, "status"),
+						"Uid:\t0",
+					)
 				}
 			}
-			suite.Require().Contains(
-				suite.readProcfs(nodeCtx, p.Pid, "environ"),
-				"XDG_RUNTIME_DIR=/run",
-			)
-			suite.Require().Contains(
-				suite.readProcfs(nodeCtx, p.Pid, "status"),
-				"Uid:\t0",
-			)
 		}
 
 		suite.Require().Equal(4, found, "Not all processes found")
