@@ -16,7 +16,6 @@ import (
 	"time"
 
 	"github.com/siderolabs/talos/internal/integration/base"
-	machineapi "github.com/siderolabs/talos/pkg/machinery/api/machine"
 	"github.com/siderolabs/talos/pkg/machinery/client"
 )
 
@@ -74,12 +73,13 @@ func (suite *ProcessSuite) TestProcessCapabilities() {
 		suite.Require().NoError(err)
 
 		found := 0
+
 		for _, msg := range r.Messages {
-			var procs []*machineapi.ProcessInfo
-			procs = msg.Processes
+			procs := msg.Processes
 
 			for _, p := range procs {
-				if p.Command == "systemd-udevd" {
+				switch p.Command {
+				case "systemd-udevd":
 					found++
 
 					// All but cap_sys_boot
@@ -99,7 +99,7 @@ func (suite *ProcessSuite) TestProcessCapabilities() {
 						suite.readProcfs(nodeCtx, p.Pid, "status"),
 						"Uid:\t0",
 					)
-				} else if p.Command == "dashboard" {
+				case "dashboard":
 					found++
 
 					// None
@@ -123,7 +123,7 @@ func (suite *ProcessSuite) TestProcessCapabilities() {
 						suite.readProcfs(nodeCtx, p.Pid, "status"),
 						"Uid:\t50",
 					)
-				} else if p.Command == "containerd" {
+				case "containerd":
 					found++
 
 					// All but cap_sys_boot, cap_sys_module
@@ -131,6 +131,7 @@ func (suite *ProcessSuite) TestProcessCapabilities() {
 						suite.readProcfs(nodeCtx, p.Pid, "status"),
 						"CapPrm:\t000001ffffbeffff\nCapEff:\t000001ffffbeffff\nCapBnd:\t000001ffffbeffff",
 					)
+
 					if strings.Contains(p.Args, "/system/run/containerd") {
 						suite.Require().Equal(
 							suite.readProcfs(nodeCtx, p.Pid, "cgroup"),
@@ -150,6 +151,7 @@ func (suite *ProcessSuite) TestProcessCapabilities() {
 							"-500",
 						)
 					}
+
 					suite.Require().Contains(
 						suite.readProcfs(nodeCtx, p.Pid, "environ"),
 						"XDG_RUNTIME_DIR=/run",
