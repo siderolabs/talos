@@ -85,9 +85,9 @@ PROTOTOOL_VERSION ?= v1.10.0
 # renovate: datasource=go depName=github.com/pseudomuto/protoc-gen-doc
 PROTOC_GEN_DOC_VERSION ?= v1.5.1
 # renovate: datasource=npm depName=markdownlint-cli
-MARKDOWNLINTCLI_VERSION ?= 0.40.0
+MARKDOWNLINTCLI_VERSION ?= 0.42.0
 # renovate: datasource=npm depName=textlint
-TEXTLINT_VERSION ?= 14.0.4
+TEXTLINT_VERSION ?= 14.2.1
 # renovate: datasource=npm depName=textlint-filter-rule-comments
 TEXTLINT_FILTER_RULE_COMMENTS_VERSION ?= 1.2.2
 # renovate: datasource=npm depName=textlint-rule-one-sentence-per-line
