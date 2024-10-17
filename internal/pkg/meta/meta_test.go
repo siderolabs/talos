@@ -92,8 +92,8 @@ func TestFlow(t *testing.T) {
 	list, err := safe.StateList[*runtime.MetaKey](ctx, st, runtime.NewMetaKey(runtime.NamespaceName, "").Metadata())
 	require.NoError(t, err)
 
-	for iter := list.Iterator(); iter.Next(); {
-		assert.Equal(t, "0x08", iter.Value().Metadata().ID())
-		assert.Equal(t, "install-fast", iter.Value().TypedSpec().Value)
+	for res := range list.All() {
+		assert.Equal(t, "0x08", res.Metadata().ID())
+		assert.Equal(t, "install-fast", res.TypedSpec().Value)
 	}
 }

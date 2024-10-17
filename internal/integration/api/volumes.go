@@ -79,9 +79,7 @@ func (suite *VolumesSuite) testDiscoveredVolumes(node string) {
 		},
 	}
 
-	for iterator := volumes.Iterator(); iterator.Next(); {
-		dv := iterator.Value()
-
+	for dv := range volumes.All() {
 		suite.T().Logf("volume: %s %s %s %s", dv.Metadata().ID(), dv.TypedSpec().Name, dv.TypedSpec().PartitionLabel, dv.TypedSpec().Label)
 
 		partitionLabel := dv.TypedSpec().PartitionLabel
@@ -148,9 +146,7 @@ func (suite *VolumesSuite) TestDisks() {
 
 			var diskNames []string
 
-			for iter := disks.Iterator(); iter.Next(); {
-				disk := iter.Value()
-
+			for disk := range disks.All() {
 				if disk.TypedSpec().Readonly {
 					continue
 				}
@@ -291,8 +287,8 @@ func (suite *VolumesSuite) lvmVolumeExists(node string) bool {
 
 	var lvmVolumeCount int
 
-	for iterator := disks.Iterator(); iterator.Next(); {
-		if strings.HasPrefix(iterator.Value().TypedSpec().DevPath, "/dev/dm") {
+	for disk := range disks.All() {
+		if strings.HasPrefix(disk.TypedSpec().DevPath, "/dev/dm") {
 			lvmVolumeCount++
 		}
 	}

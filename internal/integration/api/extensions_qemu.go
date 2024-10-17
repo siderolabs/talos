@@ -258,8 +258,8 @@ func (suite *ExtensionsSuiteQEMU) iscsiTargetExists() bool {
 	disks, err := safe.ReaderListAll[*block.Disk](ctx, suite.Client.COSI)
 	suite.Require().NoError(err)
 
-	for iter := disks.Iterator(); iter.Next(); {
-		if iter.Value().TypedSpec().Transport == "iscsi" {
+	for disk := range disks.All() {
+		if disk.TypedSpec().Transport == "iscsi" {
 			return true
 		}
 	}
@@ -507,8 +507,8 @@ func (suite *ExtensionsSuiteQEMU) mdADMArrayExists() bool {
 	disks, err := safe.StateListAll[*block.Disk](ctx, suite.Client.COSI)
 	suite.Require().NoError(err)
 
-	for iterator := disks.Iterator(); iterator.Next(); {
-		if strings.HasPrefix(iterator.Value().TypedSpec().DevPath, "/dev/md") {
+	for disk := range disks.All() {
+		if strings.HasPrefix(disk.TypedSpec().DevPath, "/dev/md") {
 			return true
 		}
 	}
@@ -594,8 +594,8 @@ func (suite *ExtensionsSuiteQEMU) checkZFSPoolMounted() bool {
 	disks, err := safe.StateListAll[*block.Disk](ctx, suite.Client.COSI)
 	suite.Require().NoError(err)
 
-	for iterator := disks.Iterator(); iterator.Next(); {
-		if strings.HasPrefix(iterator.Value().TypedSpec().DevPath, "/dev/zd") {
+	for disk := range disks.All() {
+		if strings.HasPrefix(disk.TypedSpec().DevPath, "/dev/zd") {
 			return true
 		}
 	}

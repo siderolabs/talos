@@ -28,7 +28,7 @@ All other release assets can be downloaded from [Image Factory](https://www.talo
     [notes.updates]
         title = "Component Updates"
         description = """\
-Linux: 6.6.52
+Linux: 6.6.57
 containerd: 2.0.0-rc.5
 Flannel: 0.25.7
 

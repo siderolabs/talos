@@ -236,13 +236,7 @@ func getDiscoveryMemberList(ctx context.Context, runtime runtime.Runtime) ([]*cl
 		return nil, err
 	}
 
-	result := make([]*clusterres.Member, 0, list.Len())
-
-	for iter := list.Iterator(); iter.Next(); {
-		result = append(result, iter.Value())
-	}
-
-	return result, nil
+	return safe.ToSlice(list, func(m *clusterres.Member) *clusterres.Member { return m }), nil
 }
 
 func isControlPlaneNode(node *corev1.Node) bool {

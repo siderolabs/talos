@@ -333,18 +333,10 @@ func (suite *DiscoverySuite) TestKubeSpanExtraEndpoints() {
 }
 
 func (suite *DiscoverySuite) getMembers(nodeCtx context.Context) []*cluster.Member {
-	var result []*cluster.Member
-
 	items, err := safe.StateListAll[*cluster.Member](nodeCtx, suite.Client.COSI)
 	suite.Require().NoError(err)
 
-	it := items.Iterator()
-
-	for it.Next() {
-		result = append(result, it.Value())
-	}
-
-	return result
+	return safe.ToSlice(items, func(m *cluster.Member) *cluster.Member { return m })
 }
 
 func (suite *DiscoverySuite) getNodeIdentity(nodeCtx context.Context) *cluster.Identity {

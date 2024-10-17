@@ -108,9 +108,9 @@ func (ctrl *StaticPodServerController) buildPodList(ctx context.Context, r contr
 
 	touchedPodIDs := map[string]struct{}{}
 
-	for iter := staticPods.Iterator(); iter.Next(); {
-		id := iter.Value().Metadata().ID()
-		version := iter.Value().Metadata().Version().String()
+	for staticPod := range staticPods.All() {
+		id := staticPod.Metadata().ID()
+		version := staticPod.Metadata().Version().String()
 
 		if oldVersion, exists := ctrl.staticPodVersions[id]; !exists || oldVersion != version {
 			ctrl.staticPodVersions[id] = version
@@ -122,7 +122,7 @@ func (ctrl *StaticPodServerController) buildPodList(ctx context.Context, r contr
 			}
 		}
 
-		staticPodSpec := iter.Value().TypedSpec()
+		staticPodSpec := staticPod.TypedSpec()
 
 		pl.Items = append(pl.Items, staticPodSpec.Pod)
 

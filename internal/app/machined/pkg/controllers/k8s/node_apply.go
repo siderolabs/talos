@@ -112,7 +112,6 @@ func (ctrl *NodeApplyController) Run(ctx context.Context, r controller.Runtime, 
 	}
 }
 
-//nolint:dupl
 func (ctrl *NodeApplyController) getNodeLabelSpecs(ctx context.Context, r controller.Runtime) (map[string]string, error) {
 	items, err := safe.ReaderListAll[*k8s.NodeLabelSpec](ctx, r)
 	if err != nil {
@@ -121,14 +120,13 @@ func (ctrl *NodeApplyController) getNodeLabelSpecs(ctx context.Context, r contro
 
 	result := make(map[string]string, items.Len())
 
-	for iter := items.Iterator(); iter.Next(); {
-		result[iter.Value().TypedSpec().Key] = iter.Value().TypedSpec().Value
+	for res := range items.All() {
+		result[res.TypedSpec().Key] = res.TypedSpec().Value
 	}
 
 	return result, nil
 }
 
-//nolint:dupl
 func (ctrl *NodeApplyController) getNodeAnnotationSpecs(ctx context.Context, r controller.Runtime) (map[string]string, error) {
 	items, err := safe.ReaderListAll[*k8s.NodeAnnotationSpec](ctx, r)
 	if err != nil {
@@ -137,8 +135,8 @@ func (ctrl *NodeApplyController) getNodeAnnotationSpecs(ctx context.Context, r c
 
 	result := make(map[string]string, items.Len())
 
-	for iter := items.Iterator(); iter.Next(); {
-		result[iter.Value().TypedSpec().Key] = iter.Value().TypedSpec().Value
+	for res := range items.All() {
+		result[res.TypedSpec().Key] = res.TypedSpec().Value
 	}
 
 	return result, nil
@@ -152,8 +150,8 @@ func (ctrl *NodeApplyController) getNodeTaintSpecs(ctx context.Context, r contro
 
 	result := make([]k8s.NodeTaintSpecSpec, 0, items.Len())
 
-	for iter := items.Iterator(); iter.Next(); {
-		result = append(result, *iter.Value().TypedSpec())
+	for res := range items.All() {
+		result = append(result, *res.TypedSpec())
 	}
 
 	return result, nil

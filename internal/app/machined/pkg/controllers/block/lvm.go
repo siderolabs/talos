@@ -71,22 +71,22 @@ func (ctrl *LVMActivationController) Run(ctx context.Context, r controller.Runti
 
 		var multiErr error
 
-		for iterator := discoveredVolumes.Iterator(); iterator.Next(); {
-			if iterator.Value().TypedSpec().Name != "lvm2-pv" {
+		for dv := range discoveredVolumes.All() {
+			if dv.TypedSpec().Name != "lvm2-pv" {
 				// if the volume is not an LVM volume the moment we saw it, we can skip it
 				// we need to activate the volumes only on reboot, not when they are first formatted
-				ctrl.seenVolumes[iterator.Value().Metadata().ID()] = struct{}{}
+				ctrl.seenVolumes[dv.Metadata().ID()] = struct{}{}
 
 				continue
 			}
 
-			if _, ok := ctrl.seenVolumes[iterator.Value().Metadata().ID()]; ok {
+			if _, ok := ctrl.seenVolumes[dv.Metadata().ID()]; ok {
 				continue
 			}
 
-			logger.Debug("checking device for LVM volume activation", zap.String("device", iterator.Value().TypedSpec().DevPath))
+			logger.Debug("checking device for LVM volume activation", zap.String("device", dv.TypedSpec().DevPath))
 
-			vgName, err := ctrl.checkVGNeedsActivation(ctx, iterator.Value().TypedSpec().DevPath)
+			vgName, err := ctrl.checkVGNeedsActivation(ctx, dv.TypedSpec().DevPath)
 			if err != nil {
 				multiErr = multierror.Append(multiErr, err)
 

@@ -474,16 +474,16 @@ func (apiSuite *APISuite) UserDisks(ctx context.Context, node string) ([]string,
 		return nil, fmt.Errorf("failed to list disks: %w", err)
 	}
 
-	var candidateDisks []string
+	var candidateDisks []string //nolint:prealloc
 
-	for iterator := disks.Iterator(); iterator.Next(); {
+	for disk := range disks.All() {
 		// skip CD-ROM, readonly and disks witho	for iteratorut transport (this is usually lvms, md, zfs devices etc)
 		// also skip iscsi disks (these are created in tests)
-		if iterator.Value().TypedSpec().Readonly || iterator.Value().TypedSpec().CDROM || iterator.Value().TypedSpec().Transport == "" || iterator.Value().TypedSpec().Transport == "iscsi" {
+		if disk.TypedSpec().Readonly || disk.TypedSpec().CDROM || disk.TypedSpec().Transport == "" || disk.TypedSpec().Transport == "iscsi" {
 			continue
 		}
 
-		candidateDisks = append(candidateDisks, iterator.Value().Metadata().ID())
+		candidateDisks = append(candidateDisks, disk.Metadata().ID())
 	}
 
 	var availableDisks []string

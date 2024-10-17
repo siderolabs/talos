@@ -963,9 +963,7 @@ func MountUserDisks(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
 		var mountpoints mountv2.Points
 
 		// wait for volume statuses to be ready
-		for iter := volumeConfigs.Iterator(); iter.Next(); {
-			volumeConfig := iter.Value()
-
+		for volumeConfig := range volumeConfigs.All() {
 			volumeStatus, err := safe.StateWatchFor[*blockres.VolumeStatus](ctx,
 				r.State().V1Alpha2().Resources(),
 				blockres.NewVolumeStatus(volumeConfig.Metadata().Namespace(), volumeConfig.Metadata().ID()).Metadata(),
@@ -1211,9 +1209,7 @@ func UnmountUserDisks(runtime.Sequence, any) (runtime.TaskExecutionFunc, string)
 
 		var mountpoints mountv2.Points
 
-		for iter := volumeConfigs.Iterator(); iter.Next(); {
-			volumeConfig := iter.Value()
-
+		for volumeConfig := range volumeConfigs.All() {
 			volumeStatus, err := safe.StateGetByID[*blockres.VolumeStatus](
 				ctx,
 				r.State().V1Alpha2().Resources(),
@@ -1724,9 +1720,7 @@ func parseTargets(ctx context.Context, r runtime.Runtime, wipeStr string) (Syste
 	for _, label := range strings.Split(after, ",") {
 		found := false
 
-		for iter := discoveredVolumes.Iterator(); iter.Next(); {
-			discoveredVolume := iter.Value()
-
+		for discoveredVolume := range discoveredVolumes.All() {
 			if discoveredVolume.TypedSpec().PartitionLabel != label {
 				continue
 			}

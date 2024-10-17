@@ -101,16 +101,15 @@ func (ctrl *EndpointController) Run(ctx context.Context, r controller.Runtime, l
 		// build lookup table of affiliate's kubespan public key back to affiliate ID
 		affiliateLookup := make(map[string]string)
 
-		for it := affiliates.Iterator(); it.Next(); {
-			affiliate := it.Value().TypedSpec()
+		for affiliate := range affiliates.All() {
+			affiliateSpec := affiliate.TypedSpec()
 
-			if affiliate.KubeSpan.PublicKey != "" {
-				affiliateLookup[affiliate.KubeSpan.PublicKey] = affiliate.NodeID
+			if affiliateSpec.KubeSpan.PublicKey != "" {
+				affiliateLookup[affiliateSpec.KubeSpan.PublicKey] = affiliateSpec.NodeID
 			}
 		}
 
-		for it := peerStatuses.Iterator(); it.Next(); {
-			res := it.Value()
+		for res := range peerStatuses.All() {
 			peerStatus := res.TypedSpec()
 
 			if peerStatus.State != kubespan.PeerStateUp {

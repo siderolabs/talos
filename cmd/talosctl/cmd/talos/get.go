@@ -239,12 +239,12 @@ func completeResourceDefinition(withAliases bool) ([]string, cobra.ShellCompDire
 			return err
 		}
 
-		for iter := items.Iterator(); iter.Next(); {
+		for res := range items.All() {
 			if withAliases {
-				result = append(result, iter.Value().TypedSpec().Aliases...)
+				result = append(result, res.TypedSpec().Aliases...)
 			}
 
-			result = append(result, iter.Value().Metadata().ID())
+			result = append(result, res.Metadata().ID())
 		}
 
 		return nil
@@ -296,12 +296,12 @@ func CompleteNodes(*cobra.Command, []string, string) ([]string, cobra.ShellCompD
 			return err
 		}
 
-		for it := items.Iterator(); it.Next(); {
-			if hostname := it.Value().TypedSpec().Hostname; hostname != "" {
+		for res := range items.All() {
+			if hostname := res.TypedSpec().Hostname; hostname != "" {
 				nodes = append(nodes, hostname)
 			}
 
-			for _, address := range it.Value().TypedSpec().Addresses {
+			for _, address := range res.TypedSpec().Addresses {
 				nodes = append(nodes, address.String())
 			}
 		}

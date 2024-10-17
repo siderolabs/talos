@@ -76,8 +76,8 @@ func (ctrl *ExtensionServiceConfigFilesController) Run(ctx context.Context, r co
 
 		touchedFiles := map[string]struct{}{}
 
-		for iter := list.Iterator(); iter.Next(); {
-			extensionConfigPath := filepath.Join(ctrl.ExtensionsConfigBaseDir, iter.Value().Metadata().ID())
+		for res := range list.All() {
+			extensionConfigPath := filepath.Join(ctrl.ExtensionsConfigBaseDir, res.Metadata().ID())
 
 			if err = os.MkdirAll(extensionConfigPath, 0o755); err != nil {
 				return fmt.Errorf("error creating directory %q: %w", extensionConfigPath, err)
@@ -85,7 +85,7 @@ func (ctrl *ExtensionServiceConfigFilesController) Run(ctx context.Context, r co
 
 			touchedFiles[extensionConfigPath] = struct{}{}
 
-			for _, file := range iter.Value().TypedSpec().Files {
+			for _, file := range res.TypedSpec().Files {
 				fileName := filepath.Join(extensionConfigPath, strings.ReplaceAll(strings.TrimPrefix(file.MountPath, "/"), "/", "-"))
 
 				if err = updateFile(fileName, []byte(file.Content), 0o644); err != nil {
@@ -95,8 +95,8 @@ func (ctrl *ExtensionServiceConfigFilesController) Run(ctx context.Context, r co
 				touchedFiles[fileName] = struct{}{}
 			}
 
-			if err = safe.WriterModify(ctx, r, runtime.NewExtensionServiceConfigStatusSpec(runtime.NamespaceName, iter.Value().Metadata().ID()), func(spec *runtime.ExtensionServiceConfigStatus) error {
-				spec.TypedSpec().SpecVersion = iter.Value().Metadata().Version().String()
+			if err = safe.WriterModify(ctx, r, runtime.NewExtensionServiceConfigStatusSpec(runtime.NamespaceName, res.Metadata().ID()), func(spec *runtime.ExtensionServiceConfigStatus) error {
+				spec.TypedSpec().SpecVersion = res.Metadata().Version().String()
 
 				return nil
 			}); err != nil {

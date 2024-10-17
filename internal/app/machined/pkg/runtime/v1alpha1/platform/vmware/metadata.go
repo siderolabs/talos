@@ -104,12 +104,11 @@ func (v *VMware) ApplyNetworkConfigV2(ctx context.Context, st state.State, confi
 			var availableMACAddresses []string
 
 			macAddressMatched := false
-			hostInterfaceIter := hostInterfaces.Iterator()
 
-			for hostInterfaceIter.Next() {
-				macAddress := hostInterfaceIter.Value().TypedSpec().PermanentAddr.String()
+			for hostInterface := range hostInterfaces.All() {
+				macAddress := hostInterface.TypedSpec().PermanentAddr.String()
 				if macAddress == eth.Match.HWAddr {
-					name = hostInterfaceIter.Value().Metadata().ID()
+					name = hostInterface.Metadata().ID()
 					macAddressMatched = true
 
 					break

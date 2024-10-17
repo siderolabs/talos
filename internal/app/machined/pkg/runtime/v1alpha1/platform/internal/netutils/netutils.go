@@ -42,9 +42,7 @@ func WaitInterfaces(ctx context.Context, r state.State) error {
 
 		numPhysical := 0
 
-		for iter := hostInterfaces.Iterator(); iter.Next(); {
-			iface := iter.Value()
-
+		for iface := range hostInterfaces.All() {
 			if iface.TypedSpec().Physical() {
 				numPhysical++
 			}
