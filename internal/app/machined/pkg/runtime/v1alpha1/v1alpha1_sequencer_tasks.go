@@ -120,6 +120,19 @@ func WaitForUSB(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
 	}, "waitForUSB"
 }
 
+// LogMetalAgentMode represents the LogMetalAgentMode task.
+func LogMetalAgentMode(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
+	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) error {
+		if r.State().Platform().Mode() == runtime.ModeMetalAgent {
+			logger.Printf("running in metal agent mode")
+		} else {
+			logger.Printf("metal agent mode is disabled")
+		}
+
+		return nil
+	}, "logMetalAgentMode"
+}
+
 // EnforceKSPPRequirements represents the EnforceKSPPRequirements task.
 func EnforceKSPPRequirements(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {

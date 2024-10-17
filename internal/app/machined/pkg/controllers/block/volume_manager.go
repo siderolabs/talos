@@ -21,6 +21,7 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/block/internal/volumes"
+	machinedruntime "github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
 	blockpb "github.com/siderolabs/talos/pkg/machinery/api/resource/definitions/block"
 	"github.com/siderolabs/talos/pkg/machinery/resources/block"
 	"github.com/siderolabs/talos/pkg/machinery/resources/hardware"
@@ -28,7 +29,9 @@ import (
 )
 
 // VolumeManagerController manages volumes in the system, converting VolumeConfig resources to VolumeStatuses.
-type VolumeManagerController struct{}
+type VolumeManagerController struct {
+	V1Alpha1Mode machinedruntime.Mode
+}
 
 // Name implements controller.Controller interface.
 func (ctrl *VolumeManagerController) Name() string {
@@ -112,6 +115,11 @@ func (ctrl *VolumeManagerController) Run(ctx context.Context, r controller.Runti
 	defer retryTicker.Stop()
 
 	shouldRetry := false
+	metalAgentMode := ctrl.V1Alpha1Mode == machinedruntime.ModeMetalAgent
+
+	if metalAgentMode {
+		logger.Debug("running in metal agent mode, will mark all volumes as missing")
+	}
 
 	for {
 		select {
@@ -277,67 +285,76 @@ func (ctrl *VolumeManagerController) Run(ctx context.Context, r controller.Runti
 			}
 		}
 
-		volumeConfigs := safe.ToSlice(volumeConfigList, func(vc *block.VolumeConfig) *block.VolumeConfig { return vc })
+		if metalAgentMode {
+			for _, spec := range volumeStatuses {
+				spec.Phase = block.VolumePhaseMissing
+			}
+		}
 
-		// re-sort volume configs by provisioning wave
-		slices.SortStableFunc(volumeConfigs, volumes.CompareVolumeConfigs)
-
-		fullyProvisionedWave := math.MaxInt
 		allClosed := true
 
-		for _, vc := range volumeConfigs {
-			// abort on context cancel, as each volume processing might take a while
-			select {
-			case <-ctx.Done():
-				return nil
-			default:
-			}
+		if !metalAgentMode {
+			volumeConfigs := safe.ToSlice(volumeConfigList, func(vc *block.VolumeConfig) *block.VolumeConfig { return vc })
 
-			volumeStatus := volumeStatuses[vc.Metadata().ID()]
-			volumeLogger := logger.With(zap.String("volume", vc.Metadata().ID()))
+			// re-sort volume configs by provisioning wave
+			slices.SortStableFunc(volumeConfigs, volumes.CompareVolumeConfigs)
 
-			if vc.Metadata().Phase() != resource.PhaseRunning {
-				// [TODO]: handle me later
-				continue
-			}
+			fullyProvisionedWave := math.MaxInt
 
-			prevPhase := volumeStatus.Phase
-
-			if err = ctrl.processVolumeConfig(
-				ctx,
-				volumeLogger,
-				volumes.ManagerContext{
-					Cfg:                     vc,
-					Status:                  volumeStatus,
-					DiscoveredVolumes:       discoveredVolumesSpecs,
-					Disks:                   diskSpecs,
-					DevicesReady:            devicesReady,
-					PreviousWaveProvisioned: vc.TypedSpec().Provisioning.Wave <= fullyProvisionedWave,
-					SystemInformation:       systemInfo,
-					Lifecycle:               volumeLifecycle,
-				},
-			); err != nil {
-				volumeStatus.PreFailPhase = volumeStatus.Phase
-				volumeStatus.Phase = block.VolumePhaseFailed
-				volumeStatus.ErrorMessage = err.Error()
-
-				if xerrors.TagIs[volumes.Retryable](err) {
-					shouldRetry = true
+			for _, vc := range volumeConfigs {
+				// abort on context cancel, as each volume processing might take a while
+				select {
+				case <-ctx.Done():
+					return nil
+				default:
 				}
-			} else {
-				volumeStatus.ErrorMessage = ""
-				volumeStatus.PreFailPhase = block.VolumePhase(0)
-			}
 
-			if volumeStatus.Phase != block.VolumePhaseReady {
-				fullyProvisionedWave = vc.TypedSpec().Provisioning.Wave - 1
-			}
+				volumeStatus := volumeStatuses[vc.Metadata().ID()]
+				volumeLogger := logger.With(zap.String("volume", vc.Metadata().ID()))
 
-			if prevPhase != volumeStatus.Phase || err != nil {
-				volumeLogger.Info("volume status", zap.String("phase", fmt.Sprintf("%s -> %s", prevPhase, volumeStatus.Phase)), zap.Error(err))
-			}
+				if vc.Metadata().Phase() != resource.PhaseRunning {
+					// [TODO]: handle me later
+					continue
+				}
 
-			allClosed = allClosed && volumeStatus.Phase == block.VolumePhaseClosed
+				prevPhase := volumeStatus.Phase
+
+				if err = ctrl.processVolumeConfig(
+					ctx,
+					volumeLogger,
+					volumes.ManagerContext{
+						Cfg:                     vc,
+						Status:                  volumeStatus,
+						DiscoveredVolumes:       discoveredVolumesSpecs,
+						Disks:                   diskSpecs,
+						DevicesReady:            devicesReady,
+						PreviousWaveProvisioned: vc.TypedSpec().Provisioning.Wave <= fullyProvisionedWave,
+						SystemInformation:       systemInfo,
+						Lifecycle:               volumeLifecycle,
+					},
+				); err != nil {
+					volumeStatus.PreFailPhase = volumeStatus.Phase
+					volumeStatus.Phase = block.VolumePhaseFailed
+					volumeStatus.ErrorMessage = err.Error()
+
+					if xerrors.TagIs[volumes.Retryable](err) {
+						shouldRetry = true
+					}
+				} else {
+					volumeStatus.ErrorMessage = ""
+					volumeStatus.PreFailPhase = block.VolumePhase(0)
+				}
+
+				if volumeStatus.Phase != block.VolumePhaseReady {
+					fullyProvisionedWave = vc.TypedSpec().Provisioning.Wave - 1
+				}
+
+				if prevPhase != volumeStatus.Phase || err != nil {
+					volumeLogger.Info("volume status", zap.String("phase", fmt.Sprintf("%s -> %s", prevPhase, volumeStatus.Phase)), zap.Error(err))
+				}
+
+				allClosed = allClosed && volumeStatus.Phase == block.VolumePhaseClosed
+			}
 		}
 
 		// update statuses

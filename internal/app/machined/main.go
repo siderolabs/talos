@@ -246,8 +246,10 @@ func run() error {
 		}
 	}
 
-	// If Initialize sequence was canceled, don't run any other sequence.
-	if !initializeCanceled {
+	inAgentMode := c.Runtime().State().Platform().Mode() == runtime.ModeMetalAgent
+
+	// If the Initialize sequence was canceled or if Talos is running in metal agent mode, don't run any other sequence.
+	if !initializeCanceled && !inAgentMode {
 		// Perform an installation if required.
 		if err = c.Run(ctx, runtime.SequenceInstall, nil); err != nil {
 			return err
