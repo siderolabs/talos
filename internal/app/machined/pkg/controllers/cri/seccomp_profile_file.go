@@ -114,9 +114,7 @@ func (ctrl *SeccompProfileFileController) Run(ctx context.Context, r controller.
 
 		touchedIDs := make(map[string]struct{}, list.Len())
 
-		for iter := list.Iterator(); iter.Next(); {
-			profile := iter.Value()
-
+		for profile := range list.All() {
 			profileName := profile.TypedSpec().Name
 			profilePath := filepath.Join(ctrl.SeccompProfilesDirectory, profileName)
 

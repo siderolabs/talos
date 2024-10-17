@@ -103,9 +103,7 @@ func (ctrl *LinkSpecController) Run(ctx context.Context, r controller.Runtime, l
 		}
 
 		// add finalizers for all live resources
-		for it := list.Iterator(); it.Next(); {
-			res := it.Value()
-
+		for res := range list.All() {
 			if res.Metadata().Phase() != resource.PhaseRunning {
 				continue
 			}
@@ -126,9 +124,7 @@ func (ctrl *LinkSpecController) Run(ctx context.Context, r controller.Runtime, l
 
 		SortBonds(&list)
 
-		for it := list.Iterator(); it.Next(); {
-			link := it.Value()
-
+		for link := range list.All() {
 			if err = ctrl.syncLink(ctx, r, logger, conn, wgClient, &links, link); err != nil {
 				multiErr = multierror.Append(multiErr, err)
 			}

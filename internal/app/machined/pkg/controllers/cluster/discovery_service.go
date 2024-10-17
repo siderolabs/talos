@@ -8,6 +8,7 @@ import (
 	"context"
 	"crypto/aes"
 	"crypto/cipher"
+	"crypto/tls"
 	"errors"
 	"fmt"
 	"net/netip"
@@ -23,6 +24,7 @@ import (
 	"github.com/siderolabs/gen/xslices"
 	"go.uber.org/zap"
 
+	"github.com/siderolabs/talos/pkg/httpdefaults"
 	"github.com/siderolabs/talos/pkg/machinery/config/machine"
 	"github.com/siderolabs/talos/pkg/machinery/proto"
 	"github.com/siderolabs/talos/pkg/machinery/resources/cluster"
@@ -239,6 +241,9 @@ func (ctrl *DiscoveryServiceController) Run(ctx context.Context, r controller.Ru
 				TTL:           defaultDiscoveryTTL,
 				Insecure:      discoveryConfig.TypedSpec().ServiceEndpointInsecure,
 				ClientVersion: version.Tag,
+				TLSConfig: &tls.Config{
+					RootCAs: httpdefaults.RootCAs(),
+				},
 			})
 			if err != nil {
 				return fmt.Errorf("error initializing discovery client: %w", err)
@@ -384,15 +389,15 @@ func pbOtherEndpoints(otherEndpointsList safe.List[*kubespan.Endpoint]) []discov
 
 	result := make([]discoveryclient.Endpoint, 0, otherEndpointsList.Len())
 
-	for it := otherEndpointsList.Iterator(); it.Next(); {
-		endpoint := it.Value().TypedSpec()
+	for endpoint := range otherEndpointsList.All() {
+		endpointSpec := endpoint.TypedSpec()
 
 		result = append(result, discoveryclient.Endpoint{
-			AffiliateID: endpoint.AffiliateID,
+			AffiliateID: endpointSpec.AffiliateID,
 			Endpoints: []*pb.Endpoint{
 				{
-					Port: uint32(endpoint.Endpoint.Port()),
-					Ip:   takeResult(endpoint.Endpoint.Addr().MarshalBinary()),
+					Port: uint32(endpointSpec.Endpoint.Port()),
+					Ip:   takeResult(endpointSpec.Endpoint.Addr().MarshalBinary()),
 				},
 			},
 		})

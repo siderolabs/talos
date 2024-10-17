@@ -241,9 +241,7 @@ func (ctrl *VolumeManagerController) Run(ctx context.Context, r controller.Runti
 		}
 
 		// ensure all volume configs have our finalizers
-		for iter := volumeConfigList.Iterator(); iter.Next(); {
-			vc := iter.Value()
-
+		for vc := range volumeConfigList.All() {
 			if vc.Metadata().Phase() != resource.PhaseRunning {
 				continue
 			}

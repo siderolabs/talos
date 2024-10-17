@@ -147,9 +147,7 @@ func (ctrl *HostDNSConfigController) cleanupAddressSpecs(ctx context.Context, r 
 		return err
 	}
 
-	for iter := list.Iterator(); iter.Next(); {
-		address := iter.Value()
-
+	for address := range list.All() {
 		if address.Metadata().Owner() != ctrl.Name() {
 			continue
 		}

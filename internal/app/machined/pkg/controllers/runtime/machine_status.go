@@ -278,9 +278,7 @@ func (ctrl *MachineStatusController) servicesCheck(requiredServices []string) fu
 
 		runningServices := map[string]struct{}{}
 
-		for it := serviceList.Iterator(); it.Next(); {
-			service := it.Value()
-
+		for service := range serviceList.All() {
 			if !service.TypedSpec().Running {
 				problems = append(problems, fmt.Sprintf("%s not running", service.Metadata().ID()))
 
@@ -317,15 +315,15 @@ func (ctrl *MachineStatusController) staticPodsCheck(ctx context.Context, r cont
 
 	var problems []string
 
-	for it := staticPodList.Iterator(); it.Next(); {
-		status, err := k8sadapter.StaticPodStatus(it.Value()).Status()
+	for staticPod := range staticPodList.All() {
+		status, err := k8sadapter.StaticPodStatus(staticPod).Status()
 		if err != nil {
 			return err
 		}
 
 		switch status.Phase {
 		case v1.PodPending, v1.PodFailed, v1.PodUnknown:
-			problems = append(problems, fmt.Sprintf("%s %s", it.Value().Metadata().ID(), strings.ToLower(string(status.Phase))))
+			problems = append(problems, fmt.Sprintf("%s %s", staticPod.Metadata().ID(), strings.ToLower(string(status.Phase))))
 		case v1.PodSucceeded:
 			// do nothing, terminal phase
 		case v1.PodRunning:
@@ -341,7 +339,7 @@ func (ctrl *MachineStatusController) staticPodsCheck(ctx context.Context, r cont
 			}
 
 			if !ready {
-				problems = append(problems, fmt.Sprintf("%s not ready", it.Value().Metadata().ID()))
+				problems = append(problems, fmt.Sprintf("%s not ready", staticPod.Metadata().ID()))
 			}
 		}
 	}

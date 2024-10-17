@@ -266,8 +266,8 @@ func (ctrl *LocalAffiliateController) Run(ctx context.Context, r controller.Runt
 					})
 
 					// mix in discovered public IPs
-					for iter := discoveredPublicIPs.Iterator(); iter.Next(); {
-						addr := iter.Value().TypedSpec().Address.Addr()
+					for res := range discoveredPublicIPs.All() {
+						addr := res.TypedSpec().Address.Addr()
 
 						if slices.ContainsFunc(endpointIPs, func(a netip.Addr) bool { return addr == a }) {
 							// this address is already published
@@ -311,9 +311,7 @@ func (ctrl *LocalAffiliateController) Run(ctx context.Context, r controller.Runt
 			return fmt.Errorf("error listing resources: %w", err)
 		}
 
-		for it := list.Iterator(); it.Next(); {
-			res := it.Value()
-
+		for res := range list.All() {
 			if res.Metadata().Owner() != ctrl.Name() {
 				continue
 			}

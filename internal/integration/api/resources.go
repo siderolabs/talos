@@ -53,23 +53,19 @@ func (suite *ResourcesSuite) TestListResources() {
 	node := suite.RandomDiscoveredNodeInternalIP(machine.TypeControlPlane)
 	ctx := client.WithNode(suite.ctx, node)
 
-	var namespaces []string
-
 	nsList, err := safe.StateListAll[*meta.Namespace](ctx, suite.Client.COSI)
 	suite.Require().NoError(err)
 
-	for nsIt := nsList.Iterator(); nsIt.Next(); {
-		namespaces = append(namespaces, nsIt.Value().Metadata().ID())
-	}
-
-	var resourceTypes []string
+	namespaces := safe.ToSlice(nsList, func(ns *meta.Namespace) string {
+		return ns.Metadata().ID()
+	})
 
 	rdList, err := safe.StateListAll[*meta.ResourceDefinition](ctx, suite.Client.COSI)
 	suite.Require().NoError(err)
 
-	for rdIt := rdList.Iterator(); rdIt.Next(); {
-		resourceTypes = append(resourceTypes, rdIt.Value().TypedSpec().Type)
-	}
+	resourceTypes := safe.ToSlice(rdList, func(rd *meta.ResourceDefinition) string {
+		return rd.TypedSpec().Type
+	})
 
 	eg, egCtx := errgroup.WithContext(ctx)
 

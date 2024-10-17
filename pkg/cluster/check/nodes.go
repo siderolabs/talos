@@ -218,8 +218,7 @@ func getEphemeralPartitionData(ctx context.Context, state state.State, nodeIP st
 		return mountData{}, fmt.Errorf("error listing mounts for node %q: %w", nodeIP, err)
 	}
 
-	for it := items.Iterator(); it.Next(); {
-		mount := it.Value()
+	for mount := range items.All() {
 		mountID := mount.Metadata().ID()
 
 		if mountID == constants.EphemeralPartitionLabel {

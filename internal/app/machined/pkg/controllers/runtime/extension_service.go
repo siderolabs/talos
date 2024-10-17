@@ -91,8 +91,8 @@ func (ctrl *ExtensionServiceController) Run(ctx context.Context, r controller.Ru
 
 		ctrl.configStatusCache = make(map[string]string, configStatuses.Len())
 
-		for iter := configStatuses.Iterator(); iter.Next(); {
-			ctrl.configStatusCache[iter.Value().Metadata().ID()] = iter.Value().TypedSpec().SpecVersion
+		for res := range configStatuses.All() {
+			ctrl.configStatusCache[res.Metadata().ID()] = res.TypedSpec().SpecVersion
 		}
 	}
 
@@ -153,18 +153,18 @@ func (ctrl *ExtensionServiceController) Run(ctx context.Context, r controller.Ru
 
 		configStatusesPresent := map[string]struct{}{}
 
-		for iter := configStatuses.Iterator(); iter.Next(); {
-			configStatusesPresent[iter.Value().Metadata().ID()] = struct{}{}
+		for res := range configStatuses.All() {
+			configStatusesPresent[res.Metadata().ID()] = struct{}{}
 
-			if ctrl.configStatusCache[iter.Value().Metadata().ID()] == iter.Value().TypedSpec().SpecVersion {
+			if ctrl.configStatusCache[res.Metadata().ID()] == res.TypedSpec().SpecVersion {
 				continue
 			}
 
-			if err = ctrl.handleRestart(ctx, logger, "ext-"+iter.Value().Metadata().ID(), iter.Value().TypedSpec().SpecVersion); err != nil {
+			if err = ctrl.handleRestart(ctx, logger, "ext-"+res.Metadata().ID(), res.TypedSpec().SpecVersion); err != nil {
 				return err
 			}
 
-			ctrl.configStatusCache[iter.Value().Metadata().ID()] = iter.Value().TypedSpec().SpecVersion
+			ctrl.configStatusCache[res.Metadata().ID()] = res.TypedSpec().SpecVersion
 		}
 
 		// cleanup configStatusesCache

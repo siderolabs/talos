@@ -110,9 +110,7 @@ func (ctrl *NfTablesChainController) Run(ctx context.Context, r controller.Runti
 
 		setID := uint32(0)
 
-		for iter := list.Iterator(); iter.Next(); {
-			chain := iter.Value()
-
+		for chain := range list.All() {
 			nfChain := conn.AddChain(&nftables.Chain{
 				Name:     chain.Metadata().ID(),
 				Table:    talosTable,

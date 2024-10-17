@@ -69,9 +69,7 @@ func (ctrl *DisksController) Run(ctx context.Context, r controller.Runtime, logg
 
 		touchedDisks := map[string]struct{}{}
 
-		for iter := blockdevices.Iterator(); iter.Next(); {
-			device := iter.Value()
-
+		for device := range blockdevices.All() {
 			if device.TypedSpec().Type != "disk" {
 				continue
 			}
@@ -102,9 +100,7 @@ func (ctrl *DisksController) Run(ctx context.Context, r controller.Runtime, logg
 			return fmt.Errorf("failed to list disks: %w", err)
 		}
 
-		for iter := disks.Iterator(); iter.Next(); {
-			disk := iter.Value()
-
+		for disk := range disks.All() {
 			if _, ok := touchedDisks[disk.Metadata().ID()]; ok {
 				continue
 			}

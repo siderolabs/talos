@@ -156,9 +156,7 @@ func (ctrl *DevicesController) resync(ctx context.Context, r controller.Runtime,
 		return fmt.Errorf("failed to list devices: %w", err)
 	}
 
-	for iterator := devices.Iterator(); iterator.Next(); {
-		dev := iterator.Value()
-
+	for dev := range devices.All() {
 		if _, ok := touchedIDs[dev.Metadata().ID()]; ok {
 			continue
 		}

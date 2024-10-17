@@ -67,9 +67,7 @@ func (ctrl *SystemDiskController) Run(ctx context.Context, r controller.Runtime,
 			systemDiskPath string
 		)
 
-		for iter := discoveredVolumes.Iterator(); iter.Next(); {
-			volume := iter.Value()
-
+		for volume := range discoveredVolumes.All() {
 			if volume.TypedSpec().PartitionLabel == constants.MetaPartitionLabel {
 				systemDiskID = volume.TypedSpec().Parent
 				systemDiskPath = volume.TypedSpec().ParentDevPath

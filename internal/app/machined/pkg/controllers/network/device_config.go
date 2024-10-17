@@ -207,16 +207,16 @@ func (ctrl *DeviceConfigController) expandBondSelector(device *v1alpha1.Device, 
 func (ctrl *DeviceConfigController) selectDevices(selector talosconfig.NetworkDeviceSelector, links safe.List[*network.LinkStatus]) []*network.LinkStatus {
 	var result []*network.LinkStatus
 
-	for iter := links.Iterator(); iter.Next(); {
-		linkStatus := iter.Value().TypedSpec()
+	for linkStatus := range links.All() {
+		linkStatusSpec := linkStatus.TypedSpec()
 
 		var match optional.Optional[bool]
 
 		for _, pair := range [][]string{
-			{selector.HardwareAddress(), linkStatus.HardwareAddr.String()},
-			{selector.PCIID(), linkStatus.PCIID},
-			{selector.KernelDriver(), linkStatus.Driver},
-			{selector.Bus(), linkStatus.BusPath},
+			{selector.HardwareAddress(), linkStatusSpec.HardwareAddr.String()},
+			{selector.PCIID(), linkStatusSpec.PCIID},
+			{selector.KernelDriver(), linkStatusSpec.Driver},
+			{selector.Bus(), linkStatusSpec.BusPath},
 		} {
 			if pair[0] == "" {
 				continue
@@ -232,11 +232,11 @@ func (ctrl *DeviceConfigController) selectDevices(selector talosconfig.NetworkDe
 		}
 
 		if selector.Physical() != nil && match.ValueOr(true) {
-			match = optional.Some(*selector.Physical() == linkStatus.Physical())
+			match = optional.Some(*selector.Physical() == linkStatusSpec.Physical())
 		}
 
 		if match.ValueOrZero() {
-			result = append(result, iter.Value())
+			result = append(result, linkStatus)
 		}
 	}
 

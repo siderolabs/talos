@@ -88,8 +88,8 @@ func (ctrl *ProbeController) reconcileRunners(ctx context.Context, r controller.
 	// figure out which operators should run
 	shouldRun := make(map[string]network.ProbeSpecSpec)
 
-	for iter := specList.Iterator(); iter.Next(); {
-		shouldRun[iter.Value().Metadata().ID()] = *iter.Value().TypedSpec()
+	for probeSpec := range specList.All() {
+		shouldRun[probeSpec.Metadata().ID()] = *probeSpec.TypedSpec()
 	}
 
 	// stop running probes which shouldn't run
@@ -126,12 +126,12 @@ func (ctrl *ProbeController) reconcileRunners(ctx context.Context, r controller.
 		return fmt.Errorf("error listing probe statuses: %w", err)
 	}
 
-	for iter := statusList.Iterator(); iter.Next(); {
-		if _, exists := shouldRun[iter.Value().Metadata().ID()]; exists {
+	for res := range statusList.All() {
+		if _, exists := shouldRun[res.Metadata().ID()]; exists {
 			continue
 		}
 
-		if err = r.Destroy(ctx, iter.Value().Metadata()); err != nil && !state.IsNotFoundError(err) {
+		if err = r.Destroy(ctx, res.Metadata()); err != nil && !state.IsNotFoundError(err) {
 			return fmt.Errorf("error destroying probe status: %w", err)
 		}
 	}
