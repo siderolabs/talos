@@ -24,6 +24,9 @@ replace (
 	// forked go-yaml that introduces RawYAML interface, which can be used to populate YAML fields using bytes
 	// which are then encoded as a valid YAML blocks with proper indentiation
 	gopkg.in/yaml.v3 => github.com/unix4ever/yaml v0.0.0-20220527175918-f17b0f05cf2c
+
+	// improved error logging
+	kernel.org/pub/linux/libs/security/libcap/cap => github.com/dsseng/go-libcap/cap v0.0.0-20241015195416-c3ab072bd718
 )
 
 // fd-leak related replacements: https://github.com/siderolabs/talos/issues/9412
