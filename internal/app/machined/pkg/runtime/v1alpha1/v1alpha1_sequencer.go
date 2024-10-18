@@ -67,7 +67,9 @@ func (p PhaseList) AppendList(list PhaseList) PhaseList {
 func (*Sequencer) Initialize(r runtime.Runtime) []runtime.Phase {
 	phases := PhaseList{}
 
-	switch r.State().Platform().Mode() { //nolint:exhaustive
+	mode := r.State().Platform().Mode()
+
+	switch mode { //nolint:exhaustive
 	case runtime.ModeContainer:
 		phases = phases.Append(
 			"systemRequirements",
@@ -88,6 +90,9 @@ func (*Sequencer) Initialize(r runtime.Runtime) []runtime.Phase {
 		)
 	default:
 		phases = phases.Append(
+			"logMetalAgentMode",
+			LogMetalAgentMode,
+		).Append(
 			"systemRequirements",
 			EnforceKSPPRequirements,
 			SetupSystemDirectory,
@@ -118,6 +123,10 @@ func (*Sequencer) Initialize(r runtime.Runtime) []runtime.Phase {
 			ReloadMeta,
 		).AppendWithDeferredCheck(
 			func() bool {
+				if mode == runtime.ModeMetalAgent {
+					return false
+				}
+
 				disabledStr := procfs.ProcCmdline().Get(constants.KernelParamDashboardDisabled).First()
 				disabled, _ := strconv.ParseBool(pointer.SafeDeref(disabledStr)) //nolint:errcheck
 
@@ -168,7 +177,7 @@ func (*Sequencer) Install(r runtime.Runtime) []runtime.Phase {
 	phases := PhaseList{}
 
 	switch r.State().Platform().Mode() { //nolint:exhaustive
-	case runtime.ModeContainer:
+	case runtime.ModeContainer, runtime.ModeMetalAgent:
 		return nil
 	default:
 		if !r.State().Machine().Installed() || r.State().Machine().IsInstallStaged() {

@@ -41,7 +41,9 @@ const (
 )
 
 // Metal is a discoverer for non-cloud environments.
-type Metal struct{}
+type Metal struct {
+	IsAgentMode bool
+}
 
 // Name implements the platform.Platform interface.
 func (m *Metal) Name() string {
@@ -116,6 +118,10 @@ func (m *Metal) Configuration(ctx context.Context, r state.State) ([]byte, error
 
 // Mode implements the platform.Platform interface.
 func (m *Metal) Mode() runtime.Mode {
+	if m.IsAgentMode {
+		return runtime.ModeMetalAgent
+	}
+
 	return runtime.ModeMetal
 }
 
