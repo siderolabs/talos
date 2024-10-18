@@ -39,7 +39,7 @@ policies:
           - kernel
           - security
           - ci
-          - ^v1.8
+          - ^v1.9
   - type: license
     spec:
       skipPaths:
