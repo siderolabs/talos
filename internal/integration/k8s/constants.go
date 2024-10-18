@@ -13,5 +13,5 @@ const (
 	RookCephHelmChartVersion = "v1.15.3"
 	// LongHornHelmChartVersion is the version of the Longhorn Helm chart to use.
 	// renovate: datasource=helm versioning=helm depName=longhorn registryUrl=https://charts.longhorn.io
-	LongHornHelmChartVersion = "v1.7.1"
+	LongHornHelmChartVersion = "1.7.2"
 )
