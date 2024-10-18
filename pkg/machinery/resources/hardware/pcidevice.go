@@ -50,8 +50,8 @@ func (PCIDeviceExtension) ResourceDefinition() meta.ResourceDefinitionSpec {
 	return meta.ResourceDefinitionSpec{
 		Type: PCIDeviceType,
 		Aliases: []resource.Type{
-			"cpus",
-			"cpu",
+			"devices",
+			"device",
 		},
 		DefaultNamespace: NamespaceName,
 		PrintColumns: []meta.PrintColumn{
