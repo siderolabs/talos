@@ -97,6 +97,8 @@ github.com/pkg/errors v0.9.1 h1:FEBLx1zS214owpjy7qsBeixbURkuhQAwrK5UwLGTwt4=
 github.com/pkg/errors v0.9.1/go.mod h1:bwawxfHBFNV+L2hUp1rHADufV3IMtnDRdf1r5NINEl0=
 github.com/planetscale/vtprotobuf v0.6.1-0.20240319094008-0393e58bdf10 h1:GFCKgmp0tecUJ0sJuv4pzYCqS9+RGSn52M3FUwPs+uo=
 github.com/planetscale/vtprotobuf v0.6.1-0.20240319094008-0393e58bdf10/go.mod h1:t/avpk3KcrXxUnYOhZhMXJlSEyie6gQbtLq5NM3loB8=
+github.com/planetscale/vtprotobuf v0.6.1-0.20241011083415-71c992bc3c87 h1:ejBLlgnQdFWS/QGVdGYBRKsorfWl8rOysCC6aUOlCZc=
+github.com/planetscale/vtprotobuf v0.6.1-0.20241011083415-71c992bc3c87/go.mod h1:t/avpk3KcrXxUnYOhZhMXJlSEyie6gQbtLq5NM3loB8=
 github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZbAQM=
 github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
 github.com/rogpeppe/go-internal v1.12.0 h1:exVL4IDcn6na9z1rAb56Vxr+CgyK3nn3O+epU5NdKM8=
@@ -117,6 +119,8 @@ github.com/siderolabs/go-blockdevice v0.4.8 h1:KfdWvIx0Jft5YVuCsFIJFwjWEF1oqtzkg
 github.com/siderolabs/go-blockdevice v0.4.8/go.mod h1:4PeOuk71pReJj1JQEXDE7kIIQJPVe8a+HZQa+qjxSEA=
 github.com/siderolabs/go-blockdevice/v2 v2.0.2 h1:GIdOBrCLQ7X9jbr0P/+7paw5SIfp/LL+dx9mTOzmw8w=
 github.com/siderolabs/go-blockdevice/v2 v2.0.2/go.mod h1:74htzCV913UzaLZ4H+NBXkwWlYnBJIq5m/379ZEcu8w=
+github.com/siderolabs/go-blockdevice/v2 v2.0.3 h1:IEgDqd3H3gPphahrdvfAzU8RmD4r5eQdWC+vgFQQoEg=
+github.com/siderolabs/go-blockdevice/v2 v2.0.3/go.mod h1:74htzCV913UzaLZ4H+NBXkwWlYnBJIq5m/379ZEcu8w=
 github.com/siderolabs/go-pointer v1.0.0 h1:6TshPKep2doDQJAAtHUuHWXbca8ZfyRySjSBT/4GsMU=
 github.com/siderolabs/go-pointer v1.0.0/go.mod h1:HTRFUNYa3R+k0FFKNv11zgkaCLzEkWVzoYZ433P3kHc=
 github.com/siderolabs/go-retry v0.3.3 h1:zKV+S1vumtO72E6sYsLlmIdV/G/GcYSBLiEx/c9oCEg=
