@@ -24,6 +24,8 @@ type Point struct {
 	fstype string
 	flags  uintptr
 	data   string
+
+	shared bool
 }
 
 // NewPointOption is a mount point option.
@@ -36,11 +38,18 @@ func WithProjectQuota(enabled bool) NewPointOption {
 			return
 		}
 
+		WithData("prjquota")(p)
+	}
+}
+
+// WithData sets the mount data.
+func WithData(data string) NewPointOption {
+	return func(p *Point) {
 		if len(p.data) > 0 {
 			p.data += ","
 		}
 
-		p.data += "prjquota"
+		p.data += data
 	}
 }
 
@@ -56,6 +65,13 @@ func WithReadonly() NewPointOption {
 	return WithFlags(unix.MS_RDONLY)
 }
 
+// WithShared sets the shared flag.
+func WithShared() NewPointOption {
+	return func(p *Point) {
+		p.shared = true
+	}
+}
+
 // NewPoint creates a new mount point.
 func NewPoint(source, target, fstype string, opts ...NewPointOption) *Point {
 	p := &Point{
@@ -69,6 +85,13 @@ func NewPoint(source, target, fstype string, opts ...NewPointOption) *Point {
 	}
 
 	return p
+}
+
+// NewReadonlyOverlay creates a new read-only overlay mount point.
+func NewReadonlyOverlay(sources []string, target string, opts ...NewPointOption) *Point {
+	opts = append(opts, WithReadonly(), WithData("lowerdir="+strings.Join(sources, ":")))
+
+	return NewPoint("overlay", target, "overlay", opts...)
 }
 
 // PrinterOptions are printer options.
@@ -186,6 +209,12 @@ func (p *Point) Mount(opts ...OperationOption) (unmounter func() error, err erro
 		return nil, fmt.Errorf("error mounting %s: %w", p.source, err)
 	}
 
+	if p.shared {
+		if err = p.share(); err != nil {
+			return nil, fmt.Errorf("error sharing %s: %w", p.target, err)
+		}
+	}
+
 	return func() error {
 		return p.Unmount(WithUnmountPrinter(options.Printer))
 	}, nil
@@ -213,12 +242,21 @@ func (p *Point) Unmount(opts ...UnmountOption) error {
 	}, true, options.PrinterOptions)
 }
 
+// Move the mount point to a new target.
+func (p *Point) Move(newTarget string) error {
+	return unix.Mount(p.target, newTarget, "", unix.MS_MOVE, "")
+}
+
 func (p *Point) mount() error {
 	return unix.Mount(p.source, p.target, p.fstype, p.flags, p.data)
 }
 
 func (p *Point) unmount(printer func(string, ...any)) error {
 	return SafeUnmount(context.Background(), printer, p.target)
+}
+
+func (p *Point) share() error {
+	return unix.Mount("", p.target, "", unix.MS_SHARED|unix.MS_REC, "")
 }
 
 //nolint:gocyclo

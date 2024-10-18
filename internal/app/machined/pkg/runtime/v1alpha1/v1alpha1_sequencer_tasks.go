@@ -2248,7 +2248,7 @@ func ForceCleanup(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
 			logger.Printf("error killing all procs: %s", err)
 		}
 
-		if err := mount.UnmountAll(); err != nil {
+		if err := mountv2.UnmountAll(); err != nil {
 			logger.Printf("error unmounting: %s", err)
 		}
 
