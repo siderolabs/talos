@@ -11,11 +11,11 @@ For KubeVirt and Talos to work you have to enable certain configurations in the 
 
 ### Enable virtualization in your BIOS
 
-On many new PCs and servers virtualization is enabled by default. Please consult your manufacturer on how to enable this in the BIOS. You can also run KubeVirt from within a virtual machine. For that to work you have to enable Nested Virtualization. This can also be done in the BIOS.
+On many new PCs and servers, virtualization is enabled by default. Please consult your manufacturer on how to enable this in the BIOS. You can also run KubeVirt from within a virtual machine. For that to work you have to enable Nested Virtualization. This can also be done in the BIOS.
 
 ### Configure your network interface in bridge mode (optional)
 
-When you want to leverage [Multus](../kubernetes-guides/network/multus) to give your virtualm achines direct access to your nodes network, your bridge need to configured properly. This can be done by setting your network interface in bridge mode. You can look up the network interface name by using the following command:
+When you want to leverage [Multus](../kubernetes-guides/network/multus) to give your virtual machines direct access to your node network, your bridge needs to be configured properly. This can be done by setting your network interface in bridge mode. You can look up the network interface name by using the following command:
 
 ```bash
 $ talosctl get links -n 10.99.101.9
@@ -50,7 +50,7 @@ machine:
 
 When we are using KubeVirt, we are also installing the CDI (containerized data importer) operator. For this to work properly, we have to install the `local-path-provisioner`. This CNI kan be used to write scratch space when importing images with the CDI. 
 
-You can simply install the `local-path-provisioner` by following [this](../kubernetes-guides/configuration/local-storage) guide
+You can install the `local-path-provisioner` by following [this guide](../kubernetes-guides/configuration/local-storage).
 
 ### Configure storage
 
@@ -87,13 +87,13 @@ Note that this is just an example. Make sure to set the `nolock` option. If not,
 You can install the `virtctl` client directly by running:
 
 ```bash
-$ export VERSION=$(curl https://storage.googleapis.com/kubevirt-prow/release/kubevirt/kubevirt/stable.txt)
-$ wget https://github.com/kubevirt/kubevirt/releases/download/${VERSION}/virtctl-${VERSION}-linux-amd64
+export VERSION=$(curl https://storage.googleapis.com/kubevirt-prow/release/kubevirt/kubevirt/stable.txt)
+wget https://github.com/kubevirt/kubevirt/releases/download/${VERSION}/virtctl-${VERSION}-linux-amd64
 ```
 Or you can use [krew](https://github.com/kubernetes-sigs/krew/#installation) to integrate it nicely in `kubectl`:
 
 ```bash
-$ kubectl krew install virt
+kubectl krew install virt
 ```
 
 ## Installing KubeVirt
@@ -102,9 +102,9 @@ After the neccesary preperations are done, you can now install KubeVirt. This ca
 
 ```bash
 # Point at latest release
-$ export RELEASE=$(curl https://storage.googleapis.com/kubevirt-prow/release/kubevirt/kubevirt/stable.txt)
+export RELEASE=$(curl https://storage.googleapis.com/kubevirt-prow/release/kubevirt/kubevirt/stable.txt)
 # Deploy the KubeVirt operator
-$ kubectl apply -f https://github.com/kubevirt/kubevirt/releases/download/${RELEASE}/kubevirt-operator.yaml
+kubectl apply -f https://github.com/kubevirt/kubevirt/releases/download/${RELEASE}/kubevirt-operator.yaml
 ```
 
 After the operator is installed, it is time to apply the Custom Resource (CR) for the operator to fully deploy KubeVirt. 
@@ -130,7 +130,7 @@ spec:
       family: "ccio"
   workloadUpdateStrategy:
     workloadUpdateMethods:
-    - LiveMigrate
+    - LiveMigrate # enable if you have deployed either Longhorn or NFS-CSI for shared storage.
 ```
 
 ### KubeVirt configuration options
@@ -173,23 +173,23 @@ You can either import these images by creating a DataVolume CR or by integrating
 When applying either the `DataVolume` CR or the `VirtualMachine` CR with a `dataVolumeTemplates`, the CDI kicks in and will do the following:
 
 - creates a PVC with the requirements from either the `DataVolume` or the `dataVolumeTemplates`
-- Start a pod
+- starts a pod
 - writes temporary scratch space to local disk
 - downloads the image
 - extracts it to the temporary scratch space
-- Copies the image to the PVC
+- copies the image to the PVC
 
 Installing the CDI is very simple:
 
 ```bash
 # Point to latest release
-$ export TAG=$(curl -s -w %{redirect_url} \
+export TAG=$(curl -s -w %{redirect_url} \
 https://github.com/kubevirt/containerized-data-importer/releases/latest)
 
-$ export VERSION=$(echo ${TAG##*/})
+export VERSION=$(echo ${TAG##*/})
 
 # install operator
-$ kubectl create -f \
+kubectl create -f \
 https://github.com/kubevirt/containerized-data-importer/releases/download/$VERSION/cdi-operator.yaml
 ```
 
@@ -224,7 +224,7 @@ In many cases the default resource requests and limits are not sufficient for th
 
 After applying this yaml file, the CDI operator is ready.
 
-## creating your first virtual machine
+## Creating your first virtual machine
 
 Now it is time to create your first virtual machine in KubeVirt. This is a basic virtual machine that you can use as a boiler plate:
 
