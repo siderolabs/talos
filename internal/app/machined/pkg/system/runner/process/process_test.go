@@ -224,6 +224,7 @@ func TestProcessSuite(t *testing.T) {
 		t.Skip("wrapperd not found")
 	}
 
+	// What's the purpose of this test? Should it be replaced for new subprocess start method?
 	for _, runReaper := range []bool{true, false} {
 		func(runReaper bool) {
 			t.Run(fmt.Sprintf("runReaper=%v", runReaper), func(t *testing.T) { suite.Run(t, &ProcessSuite{runReaper: runReaper}) })
