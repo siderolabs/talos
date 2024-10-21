@@ -22,7 +22,7 @@ chmod +x /usr/local/bin/talosctl
 ## Download the Image
 
 The default schematic id for "vanilla" Pine64 is `185431e0f0bf34c983c6f47f4c6d3703aa2f02cd202ca013216fd71ffc34e175`.
-Refer to the [Image Factory](/../../../learn-more/image-factory) documentation for more information.
+Refer to the [Image Factory]({{< relref "../../../learn-more/image-factory" >}}) documentation for more information.
 
 Download the image and decompress it:
 

@@ -22,7 +22,7 @@ chmod +x /usr/local/bin/talosctl
 ## Download the Image
 
 The default schematic id for "vanilla" NanoPi R4S is `5f74a09891d5830f0b36158d3d9ea3b1c9cc019848ace08ff63ba255e38c8da4`.
-Refer to the [Image Factory](/../../../learn-more/image-factory) documentation for more information.
+Refer to the [Image Factory]({{< relref "../../../learn-more/image-factory" >}}) documentation for more information.
 
 Download the image and decompress it:
 

@@ -22,7 +22,7 @@ chmod +x /usr/local/bin/talosctl
 ## Download the Image
 
 The default schematic id for "vanilla" Libretech H3 CC H5 is `5689d7795f91ac5bf6ccc85093fad8f8b27f6ea9d96a9ac5a059997bffd8ad5c`.
-Refer to the [Image Factory](/../../../learn-more/image-factory) documentation for more information.
+Refer to the [Image Factory]({{< relref "../../../learn-more/image-factory" >}}) documentation for more information.
 
 Download the image and decompress it:
 
