@@ -933,7 +933,7 @@ const (
 	KubeSpanLinkMinimumMTU = 1280
 
 	// UdevDir is the path to the udev directory.
-	UdevDir = "/usr/etc/udev"
+	UdevDir = "/usr/lib/udev"
 
 	// UdevRulesPath rules file path.
 	UdevRulesPath = UdevDir + "/" + "rules.d/99-talos.rules"
