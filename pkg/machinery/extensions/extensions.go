@@ -16,7 +16,7 @@ var AllowedPaths = []string{
 	"/lib64/ld-linux-x86-64.so.2",
 	// /sbin/ldconfig is required by the nvidia container toolkit.
 	"/sbin/ldconfig",
-	"/usr/etc/udev/rules.d",
+	"/usr/lib/udev/rules.d",
 	"/usr/local",
 	// glvnd, egl and vulkan are needed for OpenGL/Vulkan.
 	"/usr/share/glvnd",

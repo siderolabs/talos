@@ -14,7 +14,7 @@ import (
 
 const (
 	// DefaultKernelVersion is the default Linux kernel version.
-	DefaultKernelVersion = "6.6.57-talos"
+	DefaultKernelVersion = "6.6.58-talos"
 
 	// KernelModulesPath is the default path to the kernel modules without the kernel version.
 	KernelModulesPath = "/lib/modules"
@@ -933,7 +933,7 @@ const (
 	KubeSpanLinkMinimumMTU = 1280
 
 	// UdevDir is the path to the udev directory.
-	UdevDir = "/usr/etc/udev"
+	UdevDir = "/usr/lib/udev"
 
 	// UdevRulesPath rules file path.
 	UdevRulesPath = UdevDir + "/" + "rules.d/99-talos.rules"
