@@ -1997,11 +1997,11 @@ type Bridge struct {
 	//   description: The interfaces that make up the bridge.
 	BridgedInterfaces []string `yaml:"interfaces"`
 	//   description: |
-	//     A bridge option.
+	//     Enable STP on this bridge.
 	//     Please see the official kernel documentation.
 	BridgeSTP *STP `yaml:"stp,omitempty"`
 	//   description: |
-	//     A bridge option.
+	//     Enable VLAN-awareness on this bridge.
 	//     Please see the official kernel documentation.
 	BridgeVLAN *BridgeVLAN `yaml:"vlan,omitempty"`
 }

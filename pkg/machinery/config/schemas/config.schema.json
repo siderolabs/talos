@@ -901,16 +901,16 @@
         "stp": {
           "$ref": "#/$defs/v1alpha1.STP",
           "title": "stp",
-          "description": "A bridge option.\nPlease see the official kernel documentation.\n",
-          "markdownDescription": "A bridge option.\nPlease see the official kernel documentation.",
-          "x-intellij-html-description": "\u003cp\u003eA bridge option.\nPlease see the official kernel documentation.\u003c/p\u003e\n"
+          "description": "Enable STP on this bridge.\nPlease see the official kernel documentation.\n",
+          "markdownDescription": "Enable STP on this bridge.\nPlease see the official kernel documentation.",
+          "x-intellij-html-description": "\u003cp\u003eEnable STP on this bridge.\nPlease see the official kernel documentation.\u003c/p\u003e\n"
         },
         "vlan": {
           "$ref": "#/$defs/v1alpha1.BridgeVLAN",
           "title": "vlan",
-          "description": "A bridge option.\nPlease see the official kernel documentation.\n",
-          "markdownDescription": "A bridge option.\nPlease see the official kernel documentation.",
-          "x-intellij-html-description": "\u003cp\u003eA bridge option.\nPlease see the official kernel documentation.\u003c/p\u003e\n"
+          "description": "Enable VLAN-awareness on this bridge.\nPlease see the official kernel documentation.\n",
+          "markdownDescription": "Enable VLAN-awareness on this bridge.\nPlease see the official kernel documentation.",
+          "x-intellij-html-description": "\u003cp\u003eEnable VLAN-awareness on this bridge.\nPlease see the official kernel documentation.\u003c/p\u003e\n"
         }
       },
       "additionalProperties": false,

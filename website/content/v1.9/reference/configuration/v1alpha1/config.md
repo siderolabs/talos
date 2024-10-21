@@ -200,7 +200,7 @@ network:
           #     interfaces:
           #         - enxda4042ca9a51
           #         - enxae2a6774c259
-          #     # A bridge option.
+          #     # Enable STP on this bridge.
           #     stp:
           #         enabled: true # Whether Spanning Tree Protocol (STP) is enabled.
 
@@ -771,7 +771,7 @@ machine:
               #     interfaces:
               #         - enxda4042ca9a51
               #         - enxae2a6774c259
-              #     # A bridge option.
+              #     # Enable STP on this bridge.
               #     stp:
               #         enabled: true # Whether Spanning Tree Protocol (STP) is enabled.
 
@@ -882,7 +882,7 @@ interfaces:
       #     interfaces:
       #         - enxda4042ca9a51
       #         - enxae2a6774c259
-      #     # A bridge option.
+      #     # Enable STP on this bridge.
       #     stp:
       #         enabled: true # Whether Spanning Tree Protocol (STP) is enabled.
 
@@ -1002,7 +1002,7 @@ machine:
               #     interfaces:
               #         - enxda4042ca9a51
               #         - enxae2a6774c259
-              #     # A bridge option.
+              #     # Enable STP on this bridge.
               #     stp:
               #         enabled: true # Whether Spanning Tree Protocol (STP) is enabled.
 
@@ -1094,7 +1094,7 @@ bridge:
     interfaces:
         - enxda4042ca9a51
         - enxae2a6774c259
-    # A bridge option.
+    # Enable STP on this bridge.
     stp:
         enabled: true # Whether Spanning Tree Protocol (STP) is enabled.
 {{< /highlight >}}</details> | |
@@ -1352,7 +1352,7 @@ machine:
                 interfaces:
                     - enxda4042ca9a51
                     - enxae2a6774c259
-                # A bridge option.
+                # Enable STP on this bridge.
                 stp:
                     enabled: true # Whether Spanning Tree Protocol (STP) is enabled.
 {{< /highlight >}}
@@ -1361,8 +1361,8 @@ machine:
 | Field | Type | Description | Value(s) |
 |-------|------|-------------|----------|
 |`interfaces` |[]string |The interfaces that make up the bridge.  | |
-|`stp` |<a href="#Config.machine.network.interfaces..bridge.stp">STP</a> |<details><summary>A bridge option.</summary>Please see the official kernel documentation.</details>  | |
-|`vlan` |<a href="#Config.machine.network.interfaces..bridge.vlan">BridgeVLAN</a> |<details><summary>A bridge option.</summary>Please see the official kernel documentation.</details>  | |
+|`stp` |<a href="#Config.machine.network.interfaces..bridge.stp">STP</a> |<details><summary>Enable STP on this bridge.</summary>Please see the official kernel documentation.</details>  | |
+|`vlan` |<a href="#Config.machine.network.interfaces..bridge.vlan">BridgeVLAN</a> |<details><summary>Enable VLAN-awareness on this bridge.</summary>Please see the official kernel documentation.</details>  | |
 
 
 
