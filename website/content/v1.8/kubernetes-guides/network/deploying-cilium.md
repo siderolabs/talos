@@ -118,7 +118,7 @@ helm install \
     --set cgroup.hostRoot=/sys/fs/cgroup
 ```
 
-Or if you want to deploy Cilium without kube-proxy, also set some extra paramaters:
+Or if you want to deploy Cilium without kube-proxy, also set some extra parameters:
 
 ```bash
 helm install \
