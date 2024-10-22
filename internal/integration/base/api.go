@@ -756,6 +756,26 @@ func (apiSuite *APISuite) DumpLogs(ctx context.Context, node string, service, pa
 	}
 }
 
+// ReadCmdline reads cmdline from the node.
+func (apiSuite *APISuite) ReadCmdline(nodeCtx context.Context) string {
+	reader, err := apiSuite.Client.Read(nodeCtx, "/proc/cmdline")
+	apiSuite.Require().NoError(err)
+
+	defer reader.Close() //nolint:errcheck
+
+	body, err := io.ReadAll(reader)
+	apiSuite.Require().NoError(err)
+
+	cmdline := strings.TrimSpace(string(body))
+
+	_, err = io.Copy(io.Discard, reader)
+	apiSuite.Require().NoError(err)
+
+	apiSuite.Require().NoError(reader.Close())
+
+	return cmdline
+}
+
 // TearDownSuite closes Talos API client.
 func (apiSuite *APISuite) TearDownSuite() {
 	if apiSuite.Client != nil {

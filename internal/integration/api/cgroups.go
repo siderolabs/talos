@@ -10,7 +10,6 @@ import (
 	"context"
 	"io"
 	"path/filepath"
-	"strings"
 	"time"
 
 	"github.com/siderolabs/go-procfs/procfs"
@@ -52,8 +51,7 @@ func (suite *CGroupsSuite) TestCGroupsVersion() {
 	node := suite.RandomDiscoveredNodeInternalIP()
 	ctx := client.WithNode(suite.ctx, node)
 
-	cmdline, err := suite.readCmdline(ctx)
-	suite.Require().NoError(err)
+	cmdline := suite.ReadCmdline(ctx)
 
 	unified := procfs.NewCmdline(cmdline).Get(constants.KernelParamCGroups).First()
 	cgroupsV1 := false
@@ -124,29 +122,6 @@ func (suite *CGroupsSuite) TestCGroupsVersion() {
 			suite.Assert().Contains(names, subpath)
 		}
 	}
-}
-
-func (suite *CGroupsSuite) readCmdline(ctx context.Context) (string, error) {
-	reader, err := suite.Client.Read(ctx, "/proc/cmdline")
-	if err != nil {
-		return "", err
-	}
-
-	defer reader.Close() //nolint:errcheck
-
-	body, err := io.ReadAll(reader)
-	if err != nil {
-		return "", err
-	}
-
-	bootID := strings.TrimSpace(string(body))
-
-	_, err = io.Copy(io.Discard, reader)
-	if err != nil {
-		return "", err
-	}
-
-	return bootID, reader.Close()
 }
 
 func init() {
