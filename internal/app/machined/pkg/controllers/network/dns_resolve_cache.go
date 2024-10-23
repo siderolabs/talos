@@ -5,7 +5,6 @@
 package network
 
 import (
-	"cmp"
 	"context"
 	"errors"
 	"fmt"
@@ -23,7 +22,9 @@ import (
 	dnssrv "github.com/miekg/dns"
 	"github.com/siderolabs/gen/optional"
 	"github.com/siderolabs/gen/pair"
+	"github.com/siderolabs/gen/xiter"
 	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 
 	"github.com/siderolabs/talos/internal/pkg/dns"
 	"github.com/siderolabs/talos/pkg/machinery/resources/cluster"
@@ -161,27 +162,21 @@ func (ctrl *DNSResolveCacheController) Run(ctx context.Context, r controller.Run
 			return fmt.Errorf("error getting resolver status: %w", err)
 		}
 
-		prxs, addrs := SortedProxies(upstreams)
+		prxs := xiter.Map(
+			upstreams.All(),
+			// We are using iterator here to preserve finalizer on
+			func(upstream *network.DNSUpstream) *proxy.Proxy {
+				return upstream.TypedSpec().Value.Conn.Proxy().(*proxy.Proxy)
+			})
 
 		if ctrl.handler.SetProxy(prxs) {
-			ctrl.Logger.Info("updated dns server nameservers", zap.Strings("addrs", addrs))
+			ctrl.Logger.Info("updated dns server nameservers", zap.Array("addrs", addrsArr(upstreams)))
 		}
 
 		if err = safe.CleanupOutputs[*network.DNSResolveCache](ctx, r); err != nil {
 			return fmt.Errorf("error cleaning up dns status: %w", err)
 		}
 	}
-}
-
-// SortedProxies returns sorted list of proxies and their addresses.
-func SortedProxies(upstreams safe.List[*network.DNSUpstream]) ([]*proxy.Proxy, []string) {
-	upstreams.SortFunc(func(a, b *network.DNSUpstream) int {
-		return cmp.Compare(a.TypedSpec().Value.Idx, b.TypedSpec().Value.Idx)
-	})
-
-	//nolint:forcetypeassert
-	return safe.ToSlice(upstreams, func(d *network.DNSUpstream) *proxy.Proxy { return d.TypedSpec().Value.Prx.(*proxy.Proxy) }),
-		safe.ToSlice(upstreams, func(d *network.DNSUpstream) string { return d.TypedSpec().Value.Prx.Addr() })
 }
 
 func (ctrl *DNSResolveCacheController) writeDNSStatus(ctx context.Context, r controller.Runtime, config runnerConfig) error {
@@ -352,4 +347,16 @@ func fqdnMatch(what, where string) bool {
 	}
 
 	return what == first
+}
+
+type addrsArr safe.List[*network.DNSUpstream]
+
+func (a addrsArr) MarshalLogArray(encoder zapcore.ArrayEncoder) error {
+	list := safe.List[*network.DNSUpstream](a)
+
+	for u := range list.All() {
+		encoder.AppendString(u.TypedSpec().Value.Conn.Addr())
+	}
+
+	return nil
 }

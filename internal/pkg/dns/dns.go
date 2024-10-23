@@ -10,6 +10,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"iter"
 	"net"
 	"net/netip"
 	"slices"
@@ -25,6 +26,7 @@ import (
 	"github.com/coredns/coredns/plugin/pkg/proxy"
 	"github.com/coredns/coredns/request"
 	"github.com/miekg/dns"
+	"github.com/siderolabs/gen/xiter"
 	"go.uber.org/zap"
 	"golang.org/x/sys/unix"
 )
@@ -90,7 +92,7 @@ func clientWrite(rcode int) bool {
 // Handler is a dns proxy selector.
 type Handler struct {
 	mx     sync.RWMutex
-	dests  []*proxy.Proxy
+	dests  iter.Seq[*proxy.Proxy]
 	logger *zap.Logger
 }
 
@@ -98,6 +100,7 @@ type Handler struct {
 func NewHandler(logger *zap.Logger) *Handler {
 	return &Handler{
 		logger: logger,
+		dests:  xiter.Empty[*proxy.Proxy],
 	}
 }
 
@@ -117,16 +120,14 @@ func (h *Handler) ServeDNS(ctx context.Context, wrt dns.ResponseWriter, msg *dns
 
 	h.logger.Debug("dns request", zap.Stringer("data", msg))
 
-	if len(h.dests) == 0 {
-		return dns.RcodeServerFailure, errors.New("no destination available")
-	}
-
 	var (
-		resp *dns.Msg
-		err  error
+		called bool
+		resp   *dns.Msg
+		err    error
 	)
 
-	for _, ups := range h.dests {
+	for ups := range h.dests {
+		called = true
 		opts := proxy.Options{}
 
 		for {
@@ -155,6 +156,10 @@ func (h *Handler) ServeDNS(ctx context.Context, wrt dns.ResponseWriter, msg *dns
 		continue
 	}
 
+	if !called {
+		return dns.RcodeServerFailure, errors.New("no destination available")
+	}
+
 	if ctx.Err() != nil {
 		return dns.RcodeServerFailure, ctx.Err()
 	} else if err != nil {
@@ -179,11 +184,11 @@ func (h *Handler) ServeDNS(ctx context.Context, wrt dns.ResponseWriter, msg *dns
 }
 
 // SetProxy sets destination dns proxy servers.
-func (h *Handler) SetProxy(prxs []*proxy.Proxy) bool {
+func (h *Handler) SetProxy(prxs iter.Seq[*proxy.Proxy]) bool {
 	h.mx.Lock()
 	defer h.mx.Unlock()
 
-	if slices.Equal(h.dests, prxs) {
+	if xiter.Equal(h.dests, prxs) {
 		return false
 	}
 
@@ -193,7 +198,7 @@ func (h *Handler) SetProxy(prxs []*proxy.Proxy) bool {
 }
 
 // Stop stops and clears dns proxy selector.
-func (h *Handler) Stop() { h.SetProxy(nil) }
+func (h *Handler) Stop() { h.SetProxy(xiter.Empty) }
 
 // NewNodeHandler creates a new NodeHandler.
 func NewNodeHandler(next plugin.Handler, hostMapper HostMapper, logger *zap.Logger) *NodeHandler {

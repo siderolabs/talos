@@ -8,12 +8,14 @@ import (
 	"context"
 	"net"
 	"net/netip"
+	"slices"
 	"testing"
 	"time"
 
 	"github.com/coredns/coredns/plugin/pkg/proxy"
 	dnssrv "github.com/miekg/dns"
 	"github.com/siderolabs/gen/ensure"
+	"github.com/siderolabs/gen/xiter"
 	"github.com/siderolabs/gen/xslices"
 	"github.com/siderolabs/gen/xtesting/check"
 	"github.com/stretchr/testify/require"
@@ -125,7 +127,7 @@ func newServer(t *testing.T, nameservers ...string) func() {
 		return p
 	})
 
-	handler.SetProxy(pxs)
+	handler.SetProxy(xiter.Values(slices.All(pxs)))
 
 	pc, err := dns.NewUDPPacketConn("udp", "127.0.0.53:10700", ensure.Value(dns.MakeControl("udp", false)))
 	require.NoError(t, err)

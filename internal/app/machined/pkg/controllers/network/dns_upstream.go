@@ -6,8 +6,8 @@ package network
 
 import (
 	"context"
+	"fmt"
 	"net"
-	"time"
 
 	"github.com/coredns/coredns/plugin/pkg/proxy"
 	"github.com/cosi-project/runtime/pkg/controller"
@@ -58,7 +58,7 @@ func (ctrl *DNSUpstreamController) Outputs() []controller.Output {
 
 // Run implements controller.Controller interface.
 func (ctrl *DNSUpstreamController) Run(ctx context.Context, r controller.Runtime, l *zap.Logger) error {
-	defer ctrl.cleanupUpstream(context.Background(), r, nil, l)
+	defer cleanupUpstream(context.Background(), r, nil, l)
 
 	for {
 		select {
@@ -78,7 +78,7 @@ func (ctrl *DNSUpstreamController) Run(ctx context.Context, r controller.Runtime
 func (ctrl *DNSUpstreamController) run(ctx context.Context, r controller.Runtime, l *zap.Logger) error {
 	touchedIDs := map[resource.ID]struct{}{}
 
-	defer ctrl.cleanupUpstream(ctx, r, touchedIDs, l)
+	defer cleanupUpstream(ctx, r, touchedIDs, l)
 
 	cfg, err := safe.ReaderGetByID[*network.HostDNSConfig](ctx, r, network.HostDNSConfigID)
 	if err != nil {
@@ -103,36 +103,22 @@ func (ctrl *DNSUpstreamController) run(ctx context.Context, r controller.Runtime
 		return err
 	}
 
-	for i, s := range rs.TypedSpec().DNSServers {
-		remoteAddr := s.String()
+	initConn, err := existingConnections(ctx, r)
+	if err != nil {
+		return err
+	}
+
+	for i, srv := range rs.TypedSpec().DNSServers {
+		remoteHost := srv.String()
 
 		if err = safe.WriterModify[*network.DNSUpstream](
 			ctx,
 			r,
-			network.NewDNSUpstream(remoteAddr),
+			network.NewDNSUpstream(fmt.Sprintf("#%03d %s", i, remoteHost)),
 			func(u *network.DNSUpstream) error {
 				touchedIDs[u.Metadata().ID()] = struct{}{}
 
-				if u.TypedSpec().Value.Prx != nil {
-					// Found upstream, update index
-					if u.TypedSpec().Value.Idx != i {
-						old := u.TypedSpec().Value.Idx
-						u.TypedSpec().Value.Idx = i
-
-						l.Info("updated dns upstream idx", zap.String("addr", remoteAddr), zap.Int("was", old), zap.Int("now", i))
-					}
-
-					return nil
-				}
-
-				prx := proxy.NewProxy(remoteAddr, net.JoinHostPort(remoteAddr, "53"), "dns")
-
-				prx.Start(500 * time.Millisecond)
-
-				u.TypedSpec().Value.Prx = prx
-				u.TypedSpec().Value.Idx = i
-
-				l.Info("created dns upstream", zap.String("addr", remoteAddr), zap.Int("idx", i))
+				initConn(&u.TypedSpec().Value, remoteHost, l)
 
 				return nil
 			},
@@ -144,7 +130,43 @@ func (ctrl *DNSUpstreamController) run(ctx context.Context, r controller.Runtime
 	return nil
 }
 
-func (ctrl *DNSUpstreamController) cleanupUpstream(ctx context.Context, r controller.Runtime, touchedIDs map[resource.ID]struct{}, l *zap.Logger) {
+func existingConnections(ctx context.Context, r controller.Runtime) (func(*network.DNSUpstreamSpecSpec, string, *zap.Logger), error) {
+	upstream, err := safe.ReaderListAll[*network.DNSUpstream](ctx, r)
+	if err != nil {
+		return nil, err
+	}
+
+	existingConn := make(map[string]*network.DNSConn, upstream.Len())
+
+	for u := range upstream.All() {
+		existingConn[u.TypedSpec().Value.Conn.Addr()] = u.TypedSpec().Value.Conn
+	}
+
+	return func(spec *network.DNSUpstreamSpecSpec, remoteHost string, l *zap.Logger) {
+		remoteAddr := net.JoinHostPort(remoteHost, "53")
+		if spec.Conn != nil && spec.Conn.Addr() == remoteAddr {
+			l.Debug("reusing existing upstream spec", zap.String("addr", remoteAddr))
+
+			return
+		}
+
+		if conn, ok := existingConn[remoteAddr]; ok {
+			spec.Conn = conn
+
+			l.Debug("reusing existing upstream connection", zap.String("addr", remoteAddr))
+
+			return
+		}
+
+		spec.Conn = network.NewDNSConn(proxy.NewProxy(remoteHost, remoteAddr, "dns"), l)
+
+		l.Debug("created new upstream connection", zap.String("addr", remoteAddr))
+
+		existingConn[remoteAddr] = spec.Conn
+	}, nil
+}
+
+func cleanupUpstream(ctx context.Context, r controller.Runtime, touchedIDs map[resource.ID]struct{}, l *zap.Logger) {
 	list, err := safe.ReaderListAll[*network.DNSUpstream](ctx, r)
 	if err != nil {
 		l.Error("error listing upstreams", zap.Error(err))
@@ -156,15 +178,13 @@ func (ctrl *DNSUpstreamController) cleanupUpstream(ctx context.Context, r contro
 		md := val.Metadata()
 
 		if _, ok := touchedIDs[md.ID()]; !ok {
-			val.TypedSpec().Value.Prx.Stop()
-
 			if err = r.Destroy(ctx, md); err != nil {
 				l.Error("error destroying upstream", zap.Error(err), zap.String("id", md.ID()))
 
 				return
 			}
 
-			l.Info("destroyed dns upstream", zap.String("addr", md.ID()))
+			l.Debug("destroyed dns upstream", zap.String("addr", md.ID()))
 		}
 	}
 }

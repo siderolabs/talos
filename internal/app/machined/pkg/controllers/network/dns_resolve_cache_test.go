@@ -8,6 +8,8 @@ import (
 	"errors"
 	"net"
 	"net/netip"
+	"slices"
+	"strings"
 	"sync"
 	"testing"
 	"time"
@@ -306,23 +308,37 @@ func (suite *DNSUpstreams) TestOrder() {
 		{"1.1.1.1", "8.8.8.8", "1.0.0.1", "8.0.0.8"},
 		{"192.168.0.1"},
 	} {
-		resolverSpec.TypedSpec().DNSServers = xslices.Map(addrs, netip.MustParseAddr)
+		if !suite.Run(strings.Join(addrs, ","), func() {
+			resolverSpec.TypedSpec().DNSServers = xslices.Map(addrs, netip.MustParseAddr)
 
-		switch i {
-		case 0:
-			suite.Require().NoError(suite.State().Create(suite.Ctx(), resolverSpec))
-		default:
-			suite.Require().NoError(suite.State().Update(suite.Ctx(), resolverSpec))
+			switch i {
+			case 0:
+				suite.Require().NoError(suite.State().Create(suite.Ctx(), resolverSpec))
+			default:
+				suite.Require().NoError(suite.State().Update(suite.Ctx(), resolverSpec))
+			}
+
+			expected := xslices.Map(addrs, func(t string) string { return t + ":53" })
+
+			rtestutils.AssertLength[*network.DNSUpstream](suite.Ctx(), suite.T(), suite.State(), len(addrs))
+
+			var actual []string
+
+			defer func() { suite.Require().Equal(expected, actual) }()
+
+			for suite.Ctx().Err() == nil {
+				upstreams, err := safe.ReaderListAll[*network.DNSUpstream](suite.Ctx(), suite.State())
+				suite.Require().NoError(err)
+
+				actual = safe.ToSlice(upstreams, func(u *network.DNSUpstream) string { return u.TypedSpec().Value.Conn.Addr() })
+
+				if slices.Equal(expected, actual) {
+					break
+				}
+			}
+		}) {
+			break
 		}
-
-		rtestutils.AssertLength[*network.DNSUpstream](suite.Ctx(), suite.T(), suite.State(), len(addrs))
-
-		upstreams, err := safe.ReaderListAll[*network.DNSUpstream](suite.Ctx(), suite.State())
-		suite.Require().NoError(err)
-
-		_, upstreamAddrs := netctrl.SortedProxies(upstreams)
-
-		suite.Require().Equal(xslices.Map(addrs, func(t string) string { return t + ":53" }), upstreamAddrs)
 	}
 }
 
