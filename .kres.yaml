@@ -865,6 +865,13 @@ spec:
             SHORT_INTEGRATION_TEST: yes
             WITH_NETWORK_CHAOS: yes
             IMAGE_REGISTRY: registry.dev.siderolabs.io
+        - name: e2e-metal-iso
+          command: e2e-qemu
+          withSudo: true
+          environment:
+            SHORT_INTEGRATION_TEST: yes
+            WITH_CONFIG_INJECTION_METHOD: "metal-iso"
+            IMAGE_REGISTRY: registry.dev.siderolabs.io
         - name: save-talos-logs
           conditions:
             - always

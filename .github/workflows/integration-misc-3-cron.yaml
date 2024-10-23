@@ -1,6 +1,6 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
 #
-# Generated on 2024-09-09T12:40:13Z by kres 8be5fa7.
+# Generated on 2024-10-25T14:37:51Z by kres 6d3cad4.
 
 name: integration-misc-3-cron
 concurrency:
@@ -83,6 +83,13 @@ jobs:
           IMAGE_REGISTRY: registry.dev.siderolabs.io
           SHORT_INTEGRATION_TEST: "yes"
           WITH_NETWORK_CHAOS: "yes"
+        run: |
+          sudo -E make e2e-qemu
+      - name: e2e-metal-iso
+        env:
+          IMAGE_REGISTRY: registry.dev.siderolabs.io
+          SHORT_INTEGRATION_TEST: "yes"
+          WITH_CONFIG_INJECTION_METHOD: metal-iso
         run: |
           sudo -E make e2e-qemu
       - name: save artifacts

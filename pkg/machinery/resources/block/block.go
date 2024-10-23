@@ -27,6 +27,9 @@ const NamespaceName resource.Namespace = v1alpha1.NamespaceName
 // UserDiskLabel is the label for user disks.
 const UserDiskLabel = "talos.dev/user-disk"
 
+// PlatformLabel is the label for platform volumes.
+const PlatformLabel = "talos.dev/platform"
+
 // WaitForVolumePhase waits for the volume to reach the expected phase(s).
 func WaitForVolumePhase(ctx context.Context, st state.State, volumeID string, expectedPhases ...VolumePhase) (*VolumeStatus, error) {
 	volumeStatus, err := st.WatchFor(ctx,

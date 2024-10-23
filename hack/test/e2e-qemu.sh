@@ -184,6 +184,14 @@ EOF
     ;;
 esac
 
+case "${WITH_CONFIG_INJECTION_METHOD:-default}" in
+  default)
+    ;;
+  *)
+    QEMU_FLAGS+=("--config-injection-method=${WITH_CONFIG_INJECTION_METHOD}")
+    ;;
+esac
+
 function create_cluster {
   build_registry_mirrors
 
