@@ -20,7 +20,7 @@ preface = """
         description = """\
 Linux: 6.6.57
 containerd: 2.0.0-rc.5
-Flannel: 0.25.7
+Flannel: 0.26.0
 Kubernetes: 1.32.0-alpha.2
 runc: 1.2.0
 
