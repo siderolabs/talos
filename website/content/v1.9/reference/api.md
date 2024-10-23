@@ -1346,6 +1346,9 @@ BlockFilesystemType describes filesystem type.
 | ---- | ------ | ----------- |
 | FILESYSTEM_TYPE_NONE | 0 |  |
 | FILESYSTEM_TYPE_XFS | 1 |  |
+| FILESYSTEM_TYPE_VFAT | 2 |  |
+| FILESYSTEM_TYPE_EXT4 | 3 |  |
+| FILESYSTEM_TYPE_ISO9660 | 4 |  |
 
 
 

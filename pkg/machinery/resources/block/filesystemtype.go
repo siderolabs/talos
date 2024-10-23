@@ -11,6 +11,9 @@ type FilesystemType int
 //
 //structprotogen:gen_enum
 const (
-	FilesystemTypeNone FilesystemType = iota // none
-	FilesystemTypeXFS                        // xfs
+	FilesystemTypeNone    FilesystemType = iota // none
+	FilesystemTypeXFS                           // xfs
+	FilesystemTypeVFAT                          // vfat
+	FilesystemTypeEXT4                          // ext4
+	FilesystemTypeISO9660                       // iso9660
 )

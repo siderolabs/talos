@@ -192,6 +192,7 @@ var (
 	withSiderolinkAgent       agentFlag
 	withJSONLogs              bool
 	debugShellEnabled         bool
+	configInjectionMethodFlag string
 )
 
 // createCmd represents the cluster up command.
@@ -865,6 +866,17 @@ func create(ctx context.Context) error {
 	// Add talosconfig to provision options, so we'll have it to parse there
 	provisionOptions = append(provisionOptions, provision.WithTalosConfig(configBundle.TalosConfig()))
 
+	var configInjectionMethod provision.ConfigInjectionMethod
+
+	switch configInjectionMethodFlag {
+	case "", "default", "http":
+		configInjectionMethod = provision.ConfigInjectionMethodHTTP
+	case "metal-iso":
+		configInjectionMethod = provision.ConfigInjectionMethodMetalISO
+	default:
+		return fmt.Errorf("unknown config injection method %q", configInjectionMethod)
+	}
+
 	// Create the controlplane nodes.
 	for i := range controlplanes {
 		var cfg config.Provider
@@ -882,16 +894,17 @@ func create(ctx context.Context) error {
 		}
 
 		nodeReq := provision.NodeRequest{
-			Name:                nodeName(clusterName, "controlplane", i+1, nodeUUID),
-			Type:                machine.TypeControlPlane,
-			IPs:                 nodeIPs,
-			Memory:              controlPlaneMemory,
-			NanoCPUs:            controlPlaneNanoCPUs,
-			Disks:               disks,
-			SkipInjectingConfig: skipInjectingConfig,
-			BadRTC:              badRTC,
-			ExtraKernelArgs:     extraKernelArgs,
-			UUID:                pointer.To(nodeUUID),
+			Name:                  nodeName(clusterName, "controlplane", i+1, nodeUUID),
+			Type:                  machine.TypeControlPlane,
+			IPs:                   nodeIPs,
+			Memory:                controlPlaneMemory,
+			NanoCPUs:              controlPlaneNanoCPUs,
+			Disks:                 disks,
+			SkipInjectingConfig:   skipInjectingConfig,
+			ConfigInjectionMethod: configInjectionMethod,
+			BadRTC:                badRTC,
+			ExtraKernelArgs:       extraKernelArgs,
+			UUID:                  pointer.To(nodeUUID),
 		}
 
 		if withInitNode && i == 0 {
@@ -909,6 +922,7 @@ func create(ctx context.Context) error {
 		}
 
 		nodeReq.Config = cfg
+
 		request.Nodes = append(request.Nodes, nodeReq)
 	}
 
@@ -956,17 +970,18 @@ func create(ctx context.Context) error {
 
 		request.Nodes = append(request.Nodes,
 			provision.NodeRequest{
-				Name:                nodeName(clusterName, "worker", i, nodeUUID),
-				Type:                machine.TypeWorker,
-				IPs:                 nodeIPs,
-				Memory:              workerMemory,
-				NanoCPUs:            workerNanoCPUs,
-				Disks:               disks,
-				Config:              cfg,
-				SkipInjectingConfig: skipInjectingConfig,
-				BadRTC:              badRTC,
-				ExtraKernelArgs:     extraKernelArgs,
-				UUID:                pointer.To(nodeUUID),
+				Name:                  nodeName(clusterName, "worker", i, nodeUUID),
+				Type:                  machine.TypeWorker,
+				IPs:                   nodeIPs,
+				Memory:                workerMemory,
+				NanoCPUs:              workerNanoCPUs,
+				Disks:                 disks,
+				Config:                cfg,
+				ConfigInjectionMethod: configInjectionMethod,
+				SkipInjectingConfig:   skipInjectingConfig,
+				BadRTC:                badRTC,
+				ExtraKernelArgs:       extraKernelArgs,
+				UUID:                  pointer.To(nodeUUID),
 			})
 	}
 
@@ -1312,6 +1327,7 @@ func init() {
 	createCmd.Flags().BoolVar(&withUUIDHostnames, "with-uuid-hostnames", false, "use machine UUIDs as default hostnames (QEMU only)")
 	createCmd.Flags().Var(&withSiderolinkAgent, "with-siderolink", "enables the use of siderolink agent as configuration apply mechanism. `true` or `wireguard` enables the agent, `tunnel` enables the agent with grpc tunneling") //nolint:lll
 	createCmd.Flags().BoolVar(&withJSONLogs, "with-json-logs", false, "enable JSON logs receiver and configure Talos to send logs there")
+	createCmd.Flags().StringVar(&configInjectionMethodFlag, "config-injection-method", "", "a method to inject machine config: default is HTTP server, 'metal-iso' to mount an ISO (QEMU only)")
 
 	createCmd.MarkFlagsMutuallyExclusive(inputDirFlag, nodeInstallImageFlag)
 	createCmd.MarkFlagsMutuallyExclusive(inputDirFlag, configDebugFlag)

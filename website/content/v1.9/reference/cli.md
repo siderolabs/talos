@@ -147,6 +147,7 @@ talosctl cluster create [flags]
       --cni-bundle-url string                    URL to download CNI bundle from (VM only) (default "https://github.com/siderolabs/talos/releases/download/v1.9.0-alpha.0/talosctl-cni-bundle-${ARCH}.tar.gz")
       --cni-cache-dir string                     CNI cache directory path (VM only) (default "/home/user/.talos/cni/cache")
       --cni-conf-dir string                      CNI config directory path (VM only) (default "/home/user/.talos/cni/conf.d")
+      --config-injection-method string           a method to inject machine config: default is HTTP server, 'metal-iso' to mount an ISO (QEMU only)
       --config-patch stringArray                 patch generated machineconfigs (applied to all node types), use @file to read a patch from file
       --config-patch-control-plane stringArray   patch generated machineconfigs (applied to 'init' and 'controlplane' types)
       --config-patch-worker stringArray          patch generated machineconfigs (applied to 'worker' type)

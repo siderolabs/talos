@@ -46,6 +46,7 @@ type LaunchConfig struct {
 	KernelImagePath   string
 	InitrdPath        string
 	ISOPath           string
+	ExtraISOPath      string
 	PFlashImages      []string
 	KernelArgs        string
 	MonitorPath       string
@@ -391,6 +392,13 @@ func launchVM(config *LaunchConfig) error {
 	}
 
 	args = append(args, pflashArgs...)
+
+	if config.ExtraISOPath != "" {
+		args = append(args,
+			"-drive",
+			fmt.Sprintf("file=%s,media=cdrom", config.ExtraISOPath),
+		)
+	}
 
 	// check if disk is empty/wiped
 	diskBootable, err := checkPartitions(config)

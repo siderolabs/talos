@@ -210,7 +210,10 @@ func (ctrl *DiscoveryController) rescan(ctx context.Context, r controller.Runtim
 			dv.TypedSpec().Type = device.TypedSpec().Type
 			dv.TypedSpec().DevicePath = device.TypedSpec().DevicePath
 			dv.TypedSpec().Parent = device.TypedSpec().Parent
-			dv.TypedSpec().ParentDevPath = filepath.Join("/dev", device.TypedSpec().Parent)
+
+			if device.TypedSpec().Parent != "" {
+				dv.TypedSpec().ParentDevPath = filepath.Join("/dev", device.TypedSpec().Parent)
+			}
 
 			dv.TypedSpec().SetSize(info.Size)
 			dv.TypedSpec().SectorSize = info.SectorSize

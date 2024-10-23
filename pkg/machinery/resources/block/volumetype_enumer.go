@@ -199,11 +199,11 @@ func (i *VolumePhase) UnmarshalText(text []byte) error {
 	return err
 }
 
-const _FilesystemTypeName = "nonexfs"
+const _FilesystemTypeName = "nonexfsvfatext4iso9660"
 
-var _FilesystemTypeIndex = [...]uint8{0, 4, 7}
+var _FilesystemTypeIndex = [...]uint8{0, 4, 7, 11, 15, 22}
 
-const _FilesystemTypeLowerName = "nonexfs"
+const _FilesystemTypeLowerName = "nonexfsvfatext4iso9660"
 
 func (i FilesystemType) String() string {
 	if i < 0 || i >= FilesystemType(len(_FilesystemTypeIndex)-1) {
@@ -218,20 +218,32 @@ func _FilesystemTypeNoOp() {
 	var x [1]struct{}
 	_ = x[FilesystemTypeNone-(0)]
 	_ = x[FilesystemTypeXFS-(1)]
+	_ = x[FilesystemTypeVFAT-(2)]
+	_ = x[FilesystemTypeEXT4-(3)]
+	_ = x[FilesystemTypeISO9660-(4)]
 }
 
-var _FilesystemTypeValues = []FilesystemType{FilesystemTypeNone, FilesystemTypeXFS}
+var _FilesystemTypeValues = []FilesystemType{FilesystemTypeNone, FilesystemTypeXFS, FilesystemTypeVFAT, FilesystemTypeEXT4, FilesystemTypeISO9660}
 
 var _FilesystemTypeNameToValueMap = map[string]FilesystemType{
-	_FilesystemTypeName[0:4]:      FilesystemTypeNone,
-	_FilesystemTypeLowerName[0:4]: FilesystemTypeNone,
-	_FilesystemTypeName[4:7]:      FilesystemTypeXFS,
-	_FilesystemTypeLowerName[4:7]: FilesystemTypeXFS,
+	_FilesystemTypeName[0:4]:        FilesystemTypeNone,
+	_FilesystemTypeLowerName[0:4]:   FilesystemTypeNone,
+	_FilesystemTypeName[4:7]:        FilesystemTypeXFS,
+	_FilesystemTypeLowerName[4:7]:   FilesystemTypeXFS,
+	_FilesystemTypeName[7:11]:       FilesystemTypeVFAT,
+	_FilesystemTypeLowerName[7:11]:  FilesystemTypeVFAT,
+	_FilesystemTypeName[11:15]:      FilesystemTypeEXT4,
+	_FilesystemTypeLowerName[11:15]: FilesystemTypeEXT4,
+	_FilesystemTypeName[15:22]:      FilesystemTypeISO9660,
+	_FilesystemTypeLowerName[15:22]: FilesystemTypeISO9660,
 }
 
 var _FilesystemTypeNames = []string{
 	_FilesystemTypeName[0:4],
 	_FilesystemTypeName[4:7],
+	_FilesystemTypeName[7:11],
+	_FilesystemTypeName[11:15],
+	_FilesystemTypeName[15:22],
 }
 
 // FilesystemTypeString retrieves an enum value from the enum constants string name.
