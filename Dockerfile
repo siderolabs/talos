@@ -698,7 +698,7 @@ END
 COPY ./hack/cleanup.sh /toolchain/bin/cleanup.sh
 RUN <<END
     cleanup.sh /rootfs
-    mkdir -pv /rootfs/{boot/EFI,etc/cri/conf.d/hosts,lib/firmware,usr/local/share,usr/share/zoneinfo/Etc,mnt,system,opt,.extra}
+    mkdir -pv /rootfs/{boot/EFI,etc/cri/conf.d/hosts,lib/firmware,usr/etc,usr/local/share,usr/share/zoneinfo/Etc,mnt,system,opt,.extra}
     mkdir -pv /rootfs/{etc/kubernetes/manifests,etc/cni/net.d,etc/ssl/certs,usr/libexec/kubernetes,/usr/local/lib/kubelet/credentialproviders}
     mkdir -pv /rootfs/opt/{containerd/bin,containerd/lib}
 END
@@ -772,7 +772,7 @@ END
 COPY ./hack/cleanup.sh /toolchain/bin/cleanup.sh
 RUN <<END
     cleanup.sh /rootfs
-    mkdir -pv /rootfs/{boot/EFI,etc/cri/conf.d/hosts,lib/firmware,usr/local/share,usr/share/zoneinfo/Etc,mnt,system,opt,.extra}
+    mkdir -pv /rootfs/{boot/EFI,etc/cri/conf.d/hosts,lib/firmware,usr/etc,usr/local/share,usr/share/zoneinfo/Etc,mnt,system,opt,.extra}
     mkdir -pv /rootfs/{etc/kubernetes/manifests,etc/cni/net.d,etc/ssl/certs,usr/libexec/kubernetes,/usr/local/lib/kubelet/credentialproviders}
     mkdir -pv /rootfs/opt/{containerd/bin,containerd/lib}
 END
@@ -794,7 +794,6 @@ RUN <<END
 END
 
 FROM rootfs-base-${TARGETARCH} AS rootfs-base
-RUN mkdir -p /rootfs/usr/etc
 RUN echo "true" > /rootfs/usr/etc/in-container
 RUN find /rootfs -print0 \
     | xargs -0r touch --no-dereference --date="@${SOURCE_DATE_EPOCH}"
