@@ -6,7 +6,7 @@ require (
 	github.com/fatih/structtag v1.2.0
 	github.com/spf13/cobra v1.8.1
 	golang.org/x/tools v0.26.0
-	gopkg.in/typ.v4 v4.3.0
+	gopkg.in/typ.v4 v4.3.1
 )
 
 require (
