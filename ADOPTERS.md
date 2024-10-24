@@ -15,6 +15,9 @@ A list of adopters of Talos Linux, and the use
 * **[Lofty](https://hirelofty.com)**  
   Lofty makes amazing custom software for our clients that our employees are passionate about. Lofty's specialization in software development around GIS/geospatial applications, field data collection, and data science operations makes Lofty an ideal partner for our key industries. Lofty is using Talos as a secure and portable base Operating System for deploying our applications.
 
+* **[Mynewsdesk](https://mynewsdesk.com)**
+  Mynewsdesk provides a SaaS product for PR work. In 2022 they created [Reclaim the Stack](https://reclaim-the-stack.com), a Kubernetes based open source deployment platform to replace Heroku. They are now running their application on this platform using Talos Linux on Hetzner bare metal servers with 30+ nodes in the cluster.
+
 * **[Nedap Security Atlas](https://nedapsecurityatlas.com)**  
   Nedap Security Atlas does all on-premise development, unit and integration testing in Gitlab running on Talos clusters.
 
