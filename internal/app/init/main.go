@@ -13,18 +13,16 @@ import (
 	"os/signal"
 	"path/filepath"
 	"runtime"
-	"strings"
 	"syscall"
 	"time"
 
-	"github.com/freddierice/go-losetup/v2"
 	"github.com/klauspost/cpuid/v2"
 	"github.com/siderolabs/go-kmsg"
 	"github.com/siderolabs/go-procfs/procfs"
 	"golang.org/x/sys/unix"
 
-	"github.com/siderolabs/talos/internal/pkg/mount"
 	"github.com/siderolabs/talos/internal/pkg/mount/switchroot"
+	"github.com/siderolabs/talos/internal/pkg/mount/v2"
 	"github.com/siderolabs/talos/internal/pkg/rng"
 	"github.com/siderolabs/talos/internal/pkg/secureboot"
 	"github.com/siderolabs/talos/internal/pkg/secureboot/tpm2"
@@ -38,31 +36,27 @@ func init() {
 	runtime.MemProfileRate = 0
 }
 
-func run() (err error) {
+func run() error {
 	// Mount the pseudo devices.
-	pseudo, err := mount.PseudoMountPoints()
-	if err != nil {
-		return err
-	}
+	pseudoMountPoints := mount.Pseudo()
 
-	if err = mount.Mount(pseudo); err != nil {
+	if _, err := pseudoMountPoints.Mount(); err != nil {
 		return err
 	}
 
 	// Setup logging to /dev/kmsg.
-	err = kmsg.SetupLogger(nil, "[talos] [initramfs]", nil)
-	if err != nil {
+	if err := kmsg.SetupLogger(nil, "[talos] [initramfs]", nil); err != nil {
 		return err
 	}
 
 	// Seed RNG.
-	if err = rng.TPMSeed(); err != nil {
+	if err := rng.TPMSeed(); err != nil {
 		// not making this fatal error
 		log.Printf("failed to seed from the TPM: %s", err)
 	}
 
 	// extend PCR 11 with enter-initrd
-	if err = tpm2.PCRExtend(secureboot.UKIPCR, []byte(secureboot.EnterInitrd)); err != nil {
+	if err := tpm2.PCRExtend(secureboot.UKIPCR, []byte(secureboot.EnterInitrd)); err != nil {
 		return fmt.Errorf("failed to extend PCR %d with enter-initrd: %v", secureboot.UKIPCR, err)
 	}
 
@@ -71,24 +65,24 @@ func run() (err error) {
 	cpuInfo()
 
 	// Mount the rootfs.
-	if err = mountRootFS(); err != nil {
+	if err := mountRootFS(); err != nil {
 		return err
 	}
 
 	// Bind mount the lib/firmware if needed.
-	if err = bindMountFirmware(); err != nil {
+	if err := bindMountFirmware(); err != nil {
 		return err
 	}
 
 	// Bind mount /.extra if needed.
-	if err = bindMountExtra(); err != nil {
+	if err := bindMountExtra(); err != nil {
 		return err
 	}
 
 	// Switch into the new rootfs.
 	log.Println("entering the rootfs")
 
-	return switchroot.Switch(constants.NewRoot, pseudo)
+	return switchroot.Switch(constants.NewRoot, pseudoMountPoints)
 }
 
 func recovery() {
@@ -131,12 +125,14 @@ func mountRootFS() error {
 
 	// if no extensions found use plain squashfs mount
 	if len(extensionsConfig.Layers) == 0 {
-		squashfs, err := mount.SquashfsMountPoints(constants.NewRoot)
+		squashfs, err := mount.Squashfs(constants.NewRoot, "/"+constants.RootfsAsset)
 		if err != nil {
 			return err
 		}
 
-		return mount.Mount(squashfs)
+		_, err = squashfs.Mount()
+
+		return err
 	}
 
 	// otherwise compose overlay mounts
@@ -145,9 +141,10 @@ func mountRootFS() error {
 		image string
 	}
 
-	var layers []layer
-
-	squashfs := mount.NewMountPoints()
+	var (
+		layers         []layer
+		squashfsPoints mount.Points
+	)
 
 	// going in the inverse order as earlier layers are overlayed on top of the latter ones
 	for i := len(extensionsConfig.Layers) - 1; i >= 0; i-- {
@@ -167,29 +164,27 @@ func mountRootFS() error {
 	overlays := make([]string, 0, len(layers))
 
 	for _, layer := range layers {
-		dev, err := losetup.Attach(layer.image, 0, true)
+		point, err := mount.Squashfs(filepath.Join(constants.ExtensionLayers, layer.name), layer.image)
 		if err != nil {
 			return err
 		}
 
-		p := mount.NewMountPoint(dev.Path(), "/"+layer.name, "squashfs", unix.MS_RDONLY|unix.MS_I_VERSION, "", mount.WithPrefix(constants.ExtensionLayers), mount.WithFlags(mount.ReadOnly|mount.Shared))
-
-		overlays = append(overlays, p.Target())
-		squashfs.Set(layer.name, p)
+		squashfsPoints = append(squashfsPoints, point)
 	}
 
-	if err := mount.Mount(squashfs); err != nil {
+	squashfsUnmounter, err := squashfsPoints.Mount()
+	if err != nil {
 		return err
 	}
 
-	overlay := mount.NewMountPoints()
-	overlay.Set(constants.NewRoot, mount.NewMountPoint(strings.Join(overlays, ":"), constants.NewRoot, "", unix.MS_I_VERSION, "", mount.WithFlags(mount.ReadOnly|mount.ReadonlyOverlay|mount.Shared)))
+	overlayPoint := mount.NewReadonlyOverlay(overlays, constants.NewRoot, mount.WithShared(), mount.WithFlags(unix.MS_I_VERSION))
 
-	if err := mount.Mount(overlay); err != nil {
+	_, err = overlayPoint.Mount()
+	if err != nil {
 		return err
 	}
 
-	if err := mount.Unmount(squashfs); err != nil {
+	if err = squashfsUnmounter(); err != nil {
 		return err
 	}
 

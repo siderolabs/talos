@@ -6,6 +6,7 @@ package mount
 
 import (
 	"errors"
+	"path/filepath"
 	"slices"
 )
 
@@ -49,6 +50,17 @@ func (points Points) Mount(opts ...OperationOption) (unmounter func() error, err
 func (points Points) Unmount() error {
 	for i := len(points) - 1; i >= 0; i-- {
 		if err := points[i].Unmount(); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+// Move all mount points to a new prefix.
+func (points Points) Move(prefix string) error {
+	for _, point := range points {
+		if err := point.Move(filepath.Join(prefix, point.target)); err != nil {
 			return err
 		}
 	}
