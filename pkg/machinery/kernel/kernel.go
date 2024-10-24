@@ -35,7 +35,7 @@ var DefaultArgs = []string{
 
 // SecureBootArgs returns the kernel commandline options required for secure boot.
 var SecureBootArgs = []string{
-	"lockdown=confidentiality",
+	"lockdown=integrity",
 }
 
 // Param represents a kernel system property.
