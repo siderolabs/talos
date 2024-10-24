@@ -10,8 +10,8 @@ import (
 	"os"
 
 	"github.com/hashicorp/go-multierror"
+	"github.com/jsimonetti/rtnetlink/v2"
 	"github.com/siderolabs/go-pointer"
-	"github.com/vishvananda/netlink"
 	"golang.org/x/sys/unix"
 )
 
@@ -24,7 +24,7 @@ type RulesManager interface {
 }
 
 // NewRulesManager initializes new RulesManager.
-func NewRulesManager(targetTable, internalMark, markMask int) RulesManager {
+func NewRulesManager(targetTable uint8, internalMark, markMask uint32) RulesManager {
 	return &rulesManager{
 		TargetTable:  targetTable,
 		InternalMark: internalMark,
@@ -33,46 +33,44 @@ func NewRulesManager(targetTable, internalMark, markMask int) RulesManager {
 }
 
 type rulesManager struct {
-	TargetTable  int
-	InternalMark int
-	MarkMask     int
+	TargetTable  uint8
+	InternalMark uint32
+	MarkMask     uint32
 }
 
 // Install routing rules.
 func (m *rulesManager) Install() error {
-	nc, err := netlink.NewHandle()
+	nc, err := rtnetlink.Dial(nil)
 	if err != nil {
 		return fmt.Errorf("failed to get netlink handle: %w", err)
 	}
 
-	defer nc.Close()
+	defer nc.Close() //nolint:errcheck
 
-	if err := nc.RuleAdd(&netlink.Rule{
-		Priority:          nextRuleNumber(nc, unix.AF_INET),
-		Family:            unix.AF_INET,
-		Table:             m.TargetTable,
-		Mark:              uint32(m.InternalMark),
-		Mask:              pointer.To(uint32(m.MarkMask)),
-		Goto:              -1,
-		Flow:              -1,
-		SuppressIfgroup:   -1,
-		SuppressPrefixlen: -1,
+	if err := nc.Rule.Add(&rtnetlink.RuleMessage{
+		Family: unix.AF_INET,
+		Table:  m.TargetTable,
+		Action: unix.RTN_UNICAST,
+		Attributes: &rtnetlink.RuleAttributes{
+			FwMark:   pointer.To(m.InternalMark),
+			FwMask:   pointer.To(m.MarkMask),
+			Priority: pointer.To(nextRuleNumber(nc, unix.AF_INET)),
+		},
 	}); err != nil {
 		if !errors.Is(err, os.ErrExist) {
 			return fmt.Errorf("failed to add IPv4 table-mark rule: %w", err)
 		}
 	}
 
-	if err := nc.RuleAdd(&netlink.Rule{
-		Priority:          nextRuleNumber(nc, unix.AF_INET6),
-		Family:            unix.AF_INET6,
-		Table:             m.TargetTable,
-		Mark:              uint32(m.InternalMark),
-		Mask:              pointer.To(uint32(m.MarkMask)),
-		Goto:              -1,
-		Flow:              -1,
-		SuppressIfgroup:   -1,
-		SuppressPrefixlen: -1,
+	if err := nc.Rule.Add(&rtnetlink.RuleMessage{
+		Family: unix.AF_INET6,
+		Table:  m.TargetTable,
+		Action: unix.RTN_UNICAST,
+		Attributes: &rtnetlink.RuleAttributes{
+			FwMark:   pointer.To(m.InternalMark),
+			FwMask:   pointer.To(m.MarkMask),
+			Priority: pointer.To(nextRuleNumber(nc, unix.AF_INET)),
+		},
 	}); err != nil {
 		if !errors.Is(err, os.ErrExist) {
 			return fmt.Errorf("failed to add IPv6 table-mark rule: %w", err)
@@ -82,20 +80,19 @@ func (m *rulesManager) Install() error {
 	return nil
 }
 
-func (m *rulesManager) deleteRulesFamily(nc *netlink.Handle, family int) error {
+func (m *rulesManager) deleteRulesFamily(nc *rtnetlink.Conn, family uint8) error {
 	var merr *multierror.Error
 
-	list, err := nc.RuleList(family)
+	list, err := nc.Rule.List()
 	if err != nil {
 		merr = multierror.Append(merr, fmt.Errorf("failed to get route rules: %w", err))
 	}
 
 	for _, r := range list {
-		if r.Table == m.TargetTable &&
-			r.Mark == uint32(m.InternalMark) {
-			thisRule := r
-
-			if err := nc.RuleDel(&thisRule); err != nil {
+		if r.Family == family &&
+			r.Table == m.TargetTable &&
+			pointer.SafeDeref(r.Attributes.FwMark) == m.InternalMark {
+			if err := nc.Rule.Delete(&r); err != nil {
 				if !errors.Is(err, os.ErrNotExist) {
 					merr = multierror.Append(merr, err)
 				}
@@ -112,12 +109,12 @@ func (m *rulesManager) deleteRulesFamily(nc *netlink.Handle, family int) error {
 func (m *rulesManager) Cleanup() error {
 	var merr *multierror.Error
 
-	nc, err := netlink.NewHandle()
+	nc, err := rtnetlink.Dial(nil)
 	if err != nil {
 		return fmt.Errorf("failed to get netlink handle: %w", err)
 	}
 
-	defer nc.Close()
+	defer nc.Close() //nolint:errcheck
 
 	if err = m.deleteRulesFamily(nc, unix.AF_INET); err != nil {
 		merr = multierror.Append(merr, fmt.Errorf("failed to delete all IPv4 route rules: %w", err))
@@ -130,17 +127,17 @@ func (m *rulesManager) Cleanup() error {
 	return merr.ErrorOrNil()
 }
 
-func nextRuleNumber(nc *netlink.Handle, family int) int {
-	list, err := nc.RuleList(family)
+func nextRuleNumber(nc *rtnetlink.Conn, family uint8) uint32 {
+	list, err := nc.Rule.List()
 	if err != nil {
 		return 0
 	}
 
-	for i := 32500; i > 0; i-- {
+	for i := uint32(32500); i > 0; i-- {
 		var found bool
 
 		for _, r := range list {
-			if r.Priority == i {
+			if r.Family == family && pointer.SafeDeref(r.Attributes.Priority) == i {
 				found = true
 
 				break

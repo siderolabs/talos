@@ -60,7 +60,7 @@ type WireguardClient interface {
 }
 
 // RulesManagerFactory allows mocking RulesManager.
-type RulesManagerFactory func(targetTable, internalMark, markMask int) RulesManager
+type RulesManagerFactory func(targetTable uint8, internalMark, markMask uint32) RulesManager
 
 // Inputs implements controller.Controller interface.
 func (ctrl *ManagerController) Inputs() []controller.Input {

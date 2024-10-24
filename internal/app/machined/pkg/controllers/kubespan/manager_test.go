@@ -397,7 +397,7 @@ func TestManagerSuite(t *testing.T) {
 					WireguardClientFactory: func() (kubespanctrl.WireguardClient, error) {
 						return mockWireguard, nil
 					},
-					RulesManagerFactory: func(_, _, _ int) kubespanctrl.RulesManager {
+					RulesManagerFactory: func(_ uint8, _, _ uint32) kubespanctrl.RulesManager {
 						return mockRulesManager{}
 					},
 					PeerReconcileInterval: time.Second,

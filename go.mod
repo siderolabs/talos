@@ -33,9 +33,6 @@ replace (
 
 	// https://github.com/safchain/ethtool/pull/88
 	github.com/safchain/ethtool => github.com/smira/ethtool v0.0.0-20241001133415-4d519940893f
-
-	// https://github.com/vishvananda/netlink/pull/1023
-	github.com/vishvananda/netlink => github.com/smira/netlink v0.0.0-20241001134714-cf141a3c404c
 )
 
 // Kubernetes dependencies sharing the same version.
@@ -84,6 +81,7 @@ require (
 	github.com/dustin/go-humanize v1.0.1
 	github.com/ecks/uefi v0.0.0-20221116212947-caef65d070eb
 	github.com/fatih/color v1.17.0
+	github.com/florianl/go-tc v0.4.4
 	github.com/foxboron/go-uefi v0.0.0-20240805124652-e2076f0e58ca
 	github.com/freddierice/go-losetup/v2 v2.0.1
 	github.com/fsnotify/fsnotify v1.7.0
@@ -173,7 +171,6 @@ require (
 	github.com/stretchr/testify v1.9.0
 	github.com/u-root/u-root v0.14.0
 	github.com/ulikunitz/xz v0.5.12
-	github.com/vishvananda/netlink v1.3.0
 	github.com/vmware/vmw-guestinfo v0.0.0-20220317130741-510905f0efa3
 	github.com/vultr/metadata v1.1.0
 	go.etcd.io/etcd/api/v3 v3.5.16
@@ -339,6 +336,7 @@ require (
 	github.com/syndtr/gocapability v0.0.0-20200815063812-42c35b437635 // indirect
 	github.com/u-root/uio v0.0.0-20240224005618-d2acac8f3701 // indirect
 	github.com/vbatts/tar-split v0.11.3 // indirect
+	github.com/vishvananda/netlink v1.3.0 // indirect
 	github.com/vishvananda/netns v0.0.4 // indirect
 	github.com/x448/float16 v0.8.4 // indirect
 	github.com/xiang90/probing v0.0.0-20221125231312-a49e3df8f510 // indirect
