@@ -11,6 +11,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"math"
 	"net"
 	"net/netip"
 	"strconv"
@@ -20,11 +21,14 @@ import (
 	"github.com/containernetworking/cni/libcni"
 	"github.com/containernetworking/plugins/pkg/testutils"
 	"github.com/coreos/go-iptables/iptables"
+	"github.com/florianl/go-tc"
+	"github.com/florianl/go-tc/core"
 	"github.com/google/uuid"
 	"github.com/jsimonetti/rtnetlink/v2"
 	"github.com/siderolabs/gen/xslices"
+	"github.com/siderolabs/go-pointer"
 	sideronet "github.com/siderolabs/net"
-	"github.com/vishvananda/netlink"
+	"golang.org/x/sys/unix"
 
 	"github.com/siderolabs/talos/pkg/provision"
 )
@@ -203,7 +207,14 @@ func (p *Provisioner) configureNetworkChaos(network provision.NetworkRequest, st
 		return errors.New("bandwidth and other chaos options cannot be used together")
 	}
 
-	link, err := netlink.LinkByName(state.BridgeName)
+	tcnl, err := tc.Open(&tc.Config{})
+	if err != nil {
+		return fmt.Errorf("could not open tc: %v", err)
+	}
+
+	defer tcnl.Close() //nolint:errcheck
+
+	link, err := net.InterfaceByName(state.BridgeName)
 	if err != nil {
 		return fmt.Errorf("could not get link: %v", err)
 	}
@@ -214,23 +225,33 @@ func (p *Provisioner) configureNetworkChaos(network provision.NetworkRequest, st
 		fmt.Fprintf(options.LogWriter, "  bandwidth: %4d kbps\n", network.Bandwidth)
 
 		rate := network.Bandwidth * 1000 / 8
+		buffer := 1000000 / 10
+		limit := float64(rate)*0.030 + float64(network.Bandwidth)
 
-		buffer := rate / 10
-
-		limit := buffer * 5
-
-		qdisc := &netlink.Tbf{
-			QdiscAttrs: netlink.QdiscAttrs{
-				LinkIndex: link.Attrs().Index,
-				Handle:    netlink.MakeHandle(1, 0),
-				Parent:    netlink.HANDLE_ROOT,
+		qdisc := tc.Object{
+			Msg: tc.Msg{
+				Family:  unix.AF_UNSPEC,
+				Ifindex: uint32(link.Index),
+				Handle:  core.BuildHandle(tc.HandleRoot, 0x0),
+				Parent:  tc.HandleRoot,
+				Info:    0,
 			},
-			Rate:   uint64(rate),
-			Buffer: uint32(buffer),
-			Limit:  uint32(limit),
+			Attribute: tc.Attribute{
+				Kind: "tbf",
+				Tbf: &tc.Tbf{
+					Parms: &tc.TbfQopt{
+						Limit: uint32(limit),
+						Rate: tc.RateSpec{
+							Rate:      uint32(rate),
+							Linklayer: 1,
+						},
+						Buffer: uint32(buffer),
+					},
+				},
+			},
 		}
 
-		if err := netlink.QdiscAdd(qdisc); err != nil {
+		if err := tcnl.Qdisc().Add(&qdisc); err != nil {
 			return fmt.Errorf("could not add netem qdisc: %v", err)
 		}
 	} else {
@@ -244,21 +265,34 @@ func (p *Provisioner) configureNetworkChaos(network provision.NetworkRequest, st
 		fmt.Fprintf(options.LogWriter, "  packet reordering: %4v%%\n", packetReorder)
 		fmt.Fprintf(options.LogWriter, "  packet corruption: %4v%%\n", packetCorrupt)
 
-		qdisc := netlink.NewNetem(
-			netlink.QdiscAttrs{
-				LinkIndex: link.Attrs().Index,
-				Handle:    netlink.MakeHandle(1, 0),
-				Parent:    netlink.HANDLE_ROOT,
+		qdisc := tc.Object{
+			Msg: tc.Msg{
+				Family:  unix.AF_UNSPEC,
+				Ifindex: uint32(link.Index),
+				Handle:  core.BuildHandle(tc.HandleRoot, 0x0),
+				Parent:  tc.HandleRoot,
+				Info:    0,
 			},
-			netlink.NetemQdiscAttrs{
-				Jitter:      uint32(network.Jitter / 1000),
-				Latency:     uint32(network.Latency / 1000),
-				Loss:        float32(packetLoss),
-				ReorderProb: float32(packetReorder),
-				CorruptProb: float32(packetCorrupt),
+			Attribute: tc.Attribute{
+				Kind: "netem",
+				Netem: &tc.Netem{
+					Jitter64:  pointer.To(int64(network.Jitter)),
+					Latency64: pointer.To(int64(network.Latency)),
+					Qopt: tc.NetemQopt{
+						Limit: 1000,
+						Loss:  uint32(packetLoss / 100 * math.MaxUint32),
+					},
+					Corrupt: &tc.NetemCorrupt{
+						Probability: uint32(packetCorrupt / 100 * math.MaxUint32),
+					},
+					Reorder: &tc.NetemReorder{
+						Probability: uint32(packetReorder / 100 * math.MaxUint32),
+					},
+				},
 			},
-		)
-		if err := netlink.QdiscAdd(qdisc); err != nil {
+		}
+
+		if err := tcnl.Qdisc().Add(&qdisc); err != nil {
 			return fmt.Errorf("could not add netem qdisc: %v", err)
 		}
 	}

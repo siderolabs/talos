@@ -108,7 +108,6 @@ linters-settings:
       # fd-leak related replacements: https://github.com/siderolabs/talos/issues/9412
       - github.com/insomniacslk/dhcp
       - github.com/safchain/ethtool
-      - github.com/vishvananda/netlink
     retract-allow-no-explanation: false
     exclude-forbidden: false
 
