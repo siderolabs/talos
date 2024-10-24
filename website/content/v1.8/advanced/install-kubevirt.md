@@ -3,7 +3,9 @@ title: "Install KubeVirt on Talos"
 description: "This is a guide on how to get started with KubeVirt on Talos"
 ---
 
-KubeVirt allows you to run virtual machines on Kubernetes. It runs with QEMU and KVM to provide a seamless virtual machine experience and can be mixed with containerized workloads. This guide explains on how to install KubeVirt on Talos.
+KubeVirt allows you to run virtual machines on Kubernetes. 
+It runs with QEMU and KVM to provide a seamless virtual machine experience and can be mixed with containerized workloads. T
+his guide explains on how to install KubeVirt on Talos.
 
 ## Prerequisites
 
@@ -11,11 +13,15 @@ For KubeVirt and Talos to work you have to enable certain configurations in the 
 
 ### Enable virtualization in your BIOS
 
-On many new PCs and servers, virtualization is enabled by default. Please consult your manufacturer on how to enable this in the BIOS. You can also run KubeVirt from within a virtual machine. For that to work you have to enable Nested Virtualization. This can also be done in the BIOS.
+On many new PCs and servers, virtualization is enabled by default. 
+Please consult your manufacturer on how to enable this in the BIOS. 
+You can also run KubeVirt from within a virtual machine. For that to work you have to enable Nested Virtualization. 
+This can also be done in the BIOS.
 
 ### Configure your network interface in bridge mode (optional)
 
-When you want to leverage [Multus](../kubernetes-guides/network/multus) to give your virtual machines direct access to your node network, your bridge needs to be configured properly. This can be done by setting your network interface in bridge mode. You can look up the network interface name by using the following command:
+When you want to leverage [Multus](../kubernetes-guides/network/multus) to give your virtual machines direct access to your node network, your bridge needs to be configured properly. 
+This can be done by setting your network interface in bridge mode. You can look up the network interface name by using the following command:
 
 ```bash
 $ talosctl get links -n 10.99.101.9
@@ -27,7 +33,9 @@ NODE          NAMESPACE   TYPE         ID             VERSION   TYPE       KIND 
 10.99.101.9   network     LinkStatus   eth0           5         ether               bc:24:11:a1:98:fc                         
 ```
 
-In this case, this network interface is called `eth0`. Now you can configure your bridge properly. This can be done in the machine config of your node:
+In this case, this network interface is called `eth0`. 
+Now you can configure your bridge properly. 
+This can be done in the machine config of your node:
 
 ```yaml
 machine:
@@ -48,13 +56,17 @@ machine:
 
 ### Install the `local-path-provisioner`
 
-When we are using KubeVirt, we are also installing the CDI (containerized data importer) operator. For this to work properly, we have to install the `local-path-provisioner`. This CNI kan be used to write scratch space when importing images with the CDI. 
+When we are using KubeVirt, we are also installing the CDI (containerized data importer) operator. 
+For this to work properly, we have to install the `local-path-provisioner`. 
+This CNI kan be used to write scratch space when importing images with the CDI. 
 
 You can install the `local-path-provisioner` by following [this guide](../kubernetes-guides/configuration/local-storage).
 
 ### Configure storage
 
-If you would like to use features such as `LiveMigration` shared storage is neccesary. You can either choose to install a CSI that connects to NFS or you can install Longhorn, for example. For more information on how to install Longhorn on Talos you can follow [this](https://longhorn.io/docs/1.7.2/advanced-resources/os-distro-specific/talos-linux-support/) link.
+If you would like to use features such as `LiveMigration` shared storage is neccesary. 
+You can either choose to install a CSI that connects to NFS or you can install Longhorn, for example. 
+For more information on how to install Longhorn on Talos you can follow [this](https://longhorn.io/docs/1.7.2/advanced-resources/os-distro-specific/talos-linux-support/) link.
 
 To install the NFS-CSI driver, you can follow [This](https://github.com/kubernetes-csi/csi-driver-nfs/blob/master/docs/install-csi-driver-v4.9.0.md) guide. 
 
@@ -78,7 +90,8 @@ mountOptions:
   - nolock
 ```
 
-Note that this is just an example. Make sure to set the `nolock` option. If not, the nfs-csi storageclass won't work, because talos doesn't have a `rpc.statd` daemon running.
+Note that this is just an example. Make sure to set the `nolock` option. 
+If not, the nfs-csi storageclass won't work, because talos doesn't have a `rpc.statd` daemon running.
 
 ### Install `virtctl`
 
@@ -98,7 +111,9 @@ kubectl krew install virt
 
 ## Installing KubeVirt
 
-After the neccesary preperations are done, you can now install KubeVirt. This can either be done through the [Operator Lifecycle Manager](https://olm.operatorframework.io/docs/getting-started/) or by just simply applying a YAML file. We will keep this simple and do the following:
+After the neccesary preperations are done, you can now install KubeVirt. 
+This can either be done through the [Operator Lifecycle Manager](https://olm.operatorframework.io/docs/getting-started/) or by just simply applying a YAML file. 
+We will keep this simple and do the following:
 
 ```bash
 # Point at latest release
@@ -139,7 +154,9 @@ In this yaml file we specified certain configurations:
 
 #### `featureGates`
 
-KubeVirt has a set of features that are not mature enough to be enabled by default. As such, they are protected by a Kubernetes concept called feature gates. More information about the feature gates can be found in the [KubeVirt](https://kubevirt.io/user-guide/cluster_admin/activating_feature_gates/) documentation.
+KubeVirt has a set of features that are not mature enough to be enabled by default. 
+As such, they are protected by a Kubernetes concept called feature gates. 
+More information about the feature gates can be found in the [KubeVirt](https://kubevirt.io/user-guide/cluster_admin/activating_feature_gates/) documentation.
 
 In this example we enable:
 
@@ -148,7 +165,8 @@ In this example we enable:
 
 #### `smbios`
 
-Here we configure a specific smbios configuration. This can be useful when you want to give your virtual machines a own sku, manufacturer name etc. 
+Here we configure a specific smbios configuration. 
+This can be useful when you want to give your virtual machines a own sku, manufacturer name etc. 
 
 #### `workloadUpdateStrategy`
 
@@ -156,7 +174,8 @@ If this is configured, virtual machines will be live migrated to other nodes whe
 
 ## Installing CDI
 
-The CDI (containerized data importer) is needed to import virtual disk images in your KubeVirt cluster. The CDI can do the following:
+The CDI (containerized data importer) is needed to import virtual disk images in your KubeVirt cluster. 
+The CDI can do the following:
 
 - Import images of type:
   - qcow2
@@ -216,17 +235,26 @@ This CR has some special settings that are needed for CDI to work properly:
 
 ### `scratchSpaceStorageClass`
 
-This is the storage class that we installed earlier with the `local-path-provisioner`. This is needed for the CDI to write scratch space to local disk before importing the image
+This is the storage class that we installed earlier with the `local-path-provisioner`. 
+This is needed for the CDI to write scratch space to local disk before importing the image
 
 ### `podResourceRequirements`
 
-In many cases the default resource requests and limits are not sufficient for the importer pod to import the image. This will result in a crash of the importer pod.
+In many cases the default resource requests and limits are not sufficient for the importer pod to import the image. 
+This will result in a crash of the importer pod.
 
 After applying this yaml file, the CDI operator is ready.
 
 ## Creating your first virtual machine
 
-Now it is time to create your first virtual machine in KubeVirt. This is a basic virtual machine that you can use as a boiler plate:
+
+Now it is time to create your first virtual machine in KubeVirt. 
+Below we will describe two examples:
+
+- A virtual machine with the default CNI
+- A virtual machine with Multus
+
+### Basic virtual machine example with default CNO
 
 ```yaml
 ---
@@ -312,9 +340,11 @@ spec:
           url: "https://fedora.mirror.wearetriple.com/linux/releases/40/Cloud/x86_64/images/Fedora-Cloud-Base-Generic.x86_64-40-1.14.qcow2"
 ```
 
-In this example we install a basic Fedora 40 virtual machine and install a webserver.
 
-After applying this YAML, the CDI will import the image and create a `Datavolume`. You can monitor this process by running:
+In this examples we install a basic Fedora 40 virtual machine and install a webserver.
+
+After applying this YAML, the CDI will import the image and create a `Datavolume`. 
+You can monitor this process by running:
 
 ```bash
 kubectl get dv -w
@@ -344,9 +374,12 @@ or by running:
 $ kubectl virt vnc fedora-vm
 ```
 
-with the `console` command it will open a terminal to the virtual machine. With the `vnc` command, it will open `vncviewer`. Note that a `vncviewer` needs to installed for it to work.
+with the `console` command it will open a terminal to the virtual machine. 
+With the `vnc` command, it will open `vncviewer`. 
+Note that a `vncviewer` needs to installed for it to work.
 
-Now you can create a `Service` object to expose the virtual machine to the outside. In this example we will use [MetalLB](https://metallb.universe.tf/) as a LoadBalancer.
+Now you can create a `Service` object to expose the virtual machine to the outside. 
+In this example we will use [MetalLB](https://metallb.universe.tf/) as a LoadBalancer.
 
 ```yaml
 apiVersion: v1
@@ -392,10 +425,108 @@ Ncat: Connected to 10.99.50.1:80.
 Ncat: 0 bytes sent, 0 bytes received in 0.01 seconds.
 ```
 
+### Basic virtual machine example with Multus
+```yaml
+---
+apiVersion: kubevirt.io/v1
+kind: VirtualMachine
+metadata:
+  name: fedora-vm
+spec:
+  running: false
+  template:
+    metadata:
+      labels:
+        kubevirt.io/vm: fedora-vm
+      annotations:
+        kubevirt.io/allow-pod-bridge-network-live-migration: "true"
+        
+    spec:
+      evictionStrategy: LiveMigrate
+      domain:
+        cpu:
+          cores: 2
+        resources:
+          requests:
+            memory: 4G
+        devices:
+          disks:
+            - name: fedora-vm-pvc
+              disk:
+                bus: virtio
+            - name: cloudinitdisk
+              disk:
+                bus: virtio
+          interfaces:
+          - name: external
+            bridge: {} # We use the bridge interface.    
+      networks:
+        - name: external
+          multus:
+            networkName: namespace/networkattachmentdefinition # This is the NetworkAttachmentDefinition. See multus docs for more info.
+      volumes:
+        - name: fedora-vm-pvc
+          persistentVolumeClaim:
+            claimName: fedora-vm-pvc
+        - name: cloudinitdisk
+          cloudInitNoCloud:
+            networkData: |
+              network:
+                version: 1
+                config:
+                  - type: physical
+                    name: eth0
+                    subnets:
+                      - type: dhcp
+            userData: |-
+              #cloud-config
+              users:
+                - name: cloud-user
+                  ssh_authorized_keys:
+                    - ssh-rsa ....
+                  sudo: ['ALL=(ALL) NOPASSWD:ALL']
+                  groups: sudo
+                  shell: /bin/bash
+              runcmd:
+                - "sudo touch /root/installed"
+                - "sudo dnf update" 
+                - "sudo dnf install httpd fastfetch -y"
+                - "sudo systemctl daemon-reload"
+                - "sudo systemctl enable httpd"
+                - "sudo systemctl start --no-block httpd"
+
+  dataVolumeTemplates:
+  - metadata:
+      name: fedora-vm-pvc
+    spec:
+      storage:
+        resources:
+          requests:
+            storage: 35Gi
+        accessModes:
+          - ReadWriteMany
+        storageClassName: "nfs-csi"
+      source:
+        http:
+          url: "https://fedora.mirror.wearetriple.com/linux/releases/40/Cloud/x86_64/images/Fedora-Cloud-Base-Generic.x86_64-40-1.14.qcow2"
+```
+
+In this example we will create a virtual machine that is bound to the bridge interface with the help of [Multus](../kubernetes-guides/network/multus).
+You can start the machine with `kubectl virt start fedora-vm`.
+After that you can look up the ip address of the virtual machine with
+
+```bash
+kubectl get vmi -owide
+```
+NAME        AGE    PHASE     IP            NODENAME   READY   LIVE-MIGRATABLE   PAUSED
+fedora-vm   6d9h   Running   10.99.101.53   kube1      True    True              
+
 ## Other forms of management
 
-There is a project called [KubeVirt-Manager](https://kubevirt-manager.io/) for managing virtual machines with KubeVirt through a nice web interface. You can also choose to deploy virtual machines with ArgoCD of Flux.
+There is a project called [KubeVirt-Manager](https://kubevirt-manager.io/) for managing virtual machines with KubeVirt through a nice web interface.
+You can also choose to deploy virtual machines with ArgoCD of Flux.
 
 ## Documentation
 
-KubeVirt has a huge documentation page where you can check out everything on running virtual machines with KubeVirt. The documentation can be found [here](https://kubevirt.io/user-guide/).
+KubeVirt has a huge documentation page where you can check out everything on running virtual machines with KubeVirt. 
+The documentation can be found [here](https://kubevirt.io/user-guide/).
