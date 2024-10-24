@@ -152,8 +152,7 @@ func (ctrl *DNSUpstreamController) cleanupUpstream(ctx context.Context, r contro
 		return
 	}
 
-	for it := list.Iterator(); it.Next(); {
-		val := it.Value()
+	for val := range list.All() {
 		md := val.Metadata()
 
 		if _, ok := touchedIDs[md.ID()]; !ok {

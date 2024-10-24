@@ -20,7 +20,7 @@ chmod +x /usr/local/bin/talosctl
 ## Download the Image using Image Factory
 
 The default schematic id for "vanilla" Orange Pi R1 Plus LTS is `da388062cd9318efdc7391982a77ebb2a97ed4fbda68f221354c17839a750509`.
-Refer to the [Image Factory](/../../../learn-more/image-factory) documentation for more information.
+Refer to the [Image Factory]({{< relref "../../../learn-more/image-factory" >}}) documentation for more information.
 
 Download the image and decompress it:
 

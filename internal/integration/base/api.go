@@ -474,16 +474,16 @@ func (apiSuite *APISuite) UserDisks(ctx context.Context, node string) ([]string,
 		return nil, fmt.Errorf("failed to list disks: %w", err)
 	}
 
-	var candidateDisks []string
+	var candidateDisks []string //nolint:prealloc
 
-	for iterator := disks.Iterator(); iterator.Next(); {
+	for disk := range disks.All() {
 		// skip CD-ROM, readonly and disks witho	for iteratorut transport (this is usually lvms, md, zfs devices etc)
 		// also skip iscsi disks (these are created in tests)
-		if iterator.Value().TypedSpec().Readonly || iterator.Value().TypedSpec().CDROM || iterator.Value().TypedSpec().Transport == "" || iterator.Value().TypedSpec().Transport == "iscsi" {
+		if disk.TypedSpec().Readonly || disk.TypedSpec().CDROM || disk.TypedSpec().Transport == "" || disk.TypedSpec().Transport == "iscsi" {
 			continue
 		}
 
-		candidateDisks = append(candidateDisks, iterator.Value().Metadata().ID())
+		candidateDisks = append(candidateDisks, disk.Metadata().ID())
 	}
 
 	var availableDisks []string
@@ -754,6 +754,26 @@ func (apiSuite *APISuite) DumpLogs(ctx context.Context, node string, service, pa
 			apiSuite.T().Logf("%s (%s): %s", node, service, scanner.Text())
 		}
 	}
+}
+
+// ReadCmdline reads cmdline from the node.
+func (apiSuite *APISuite) ReadCmdline(nodeCtx context.Context) string {
+	reader, err := apiSuite.Client.Read(nodeCtx, "/proc/cmdline")
+	apiSuite.Require().NoError(err)
+
+	defer reader.Close() //nolint:errcheck
+
+	body, err := io.ReadAll(reader)
+	apiSuite.Require().NoError(err)
+
+	cmdline := strings.TrimSpace(string(body))
+
+	_, err = io.Copy(io.Discard, reader)
+	apiSuite.Require().NoError(err)
+
+	apiSuite.Require().NoError(reader.Close())
+
+	return cmdline
 }
 
 // TearDownSuite closes Talos API client.

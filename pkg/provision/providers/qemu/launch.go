@@ -46,6 +46,7 @@ type LaunchConfig struct {
 	KernelImagePath   string
 	InitrdPath        string
 	ISOPath           string
+	ExtraISOPath      string
 	PFlashImages      []string
 	KernelArgs        string
 	MonitorPath       string
@@ -56,6 +57,7 @@ type LaunchConfig struct {
 	NodeUUID          uuid.UUID
 	BadRTC            bool
 	ArchitectureData  Arch
+	WithDebugShell    bool
 
 	// Talos config
 	Config string
@@ -320,6 +322,14 @@ func launchVM(config *LaunchConfig) error {
 		"pause",
 	}
 
+	if config.WithDebugShell {
+		args = append(
+			args,
+			"-serial",
+			fmt.Sprintf("unix:%s/%s.serial,server,nowait", config.StatePath, config.Hostname),
+		)
+	}
+
 	var (
 		scsiAttached, ahciAttached, nvmeAttached bool
 		ahciBus                                  int
@@ -382,6 +392,13 @@ func launchVM(config *LaunchConfig) error {
 	}
 
 	args = append(args, pflashArgs...)
+
+	if config.ExtraISOPath != "" {
+		args = append(args,
+			"-drive",
+			fmt.Sprintf("file=%s,media=cdrom", config.ExtraISOPath),
+		)
+	}
 
 	// check if disk is empty/wiped
 	diskBootable, err := checkPartitions(config)

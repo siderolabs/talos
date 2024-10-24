@@ -142,6 +142,16 @@ func (expr *Expression) UnmarshalText(data []byte) error {
 	return nil
 }
 
+// String implements fmt.Stringer.
+func (expr Expression) String() string {
+	b, err := expr.MarshalText()
+	if err != nil {
+		return "ERROR: " + err.Error()
+	}
+
+	return string(b)
+}
+
 // IsZero returns true if the expression is zero.
 func (expr Expression) IsZero() bool {
 	return expr.ast == nil && expr.expression == nil

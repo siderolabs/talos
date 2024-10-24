@@ -427,9 +427,9 @@ func K8sControlPlaneStaticPods(ctx context.Context, cl ClusterInfo) error {
 			return fmt.Errorf("error listing static pods on node %s: %w", node.InternalIP, err)
 		}
 
-		for iter := items.Iterator(); iter.Next(); {
+		for res := range items.All() {
 			for expectedStaticPod := range expectedStaticPods {
-				if strings.HasPrefix(iter.Value().Metadata().ID(), expectedStaticPod) {
+				if strings.HasPrefix(res.Metadata().ID(), expectedStaticPod) {
 					delete(expectedStaticPods, expectedStaticPod)
 				}
 			}

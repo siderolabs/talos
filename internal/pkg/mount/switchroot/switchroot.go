@@ -11,6 +11,7 @@ import (
 	"path/filepath"
 
 	"github.com/siderolabs/go-debug"
+	"github.com/siderolabs/go-procfs/procfs"
 	"golang.org/x/sys/unix"
 
 	"github.com/siderolabs/talos/internal/pkg/mount"
@@ -28,6 +29,8 @@ var preservedPaths = map[string]struct{}{
 
 // Switch moves the rootfs to a specified directory. See
 // https://github.com/karelzak/util-linux/blob/master/sys-utils/switch_root.c.
+//
+//nolint:gocyclo
 func Switch(prefix string, mountpoints *mount.Points) (err error) {
 	log.Println("moving mounts to the new rootfs")
 
@@ -69,7 +72,7 @@ func Switch(prefix string, mountpoints *mount.Points) (err error) {
 	}
 
 	// extend PCR 11 with leave-initrd
-	if err = tpm2.PCRExtent(secureboot.UKIPCR, []byte(secureboot.LeaveInitrd)); err != nil {
+	if err = tpm2.PCRExtend(secureboot.UKIPCR, []byte(secureboot.LeaveInitrd)); err != nil {
 		return fmt.Errorf("failed to extend PCR %d with leave-initrd: %v", secureboot.UKIPCR, err)
 	}
 
@@ -86,6 +89,14 @@ func Switch(prefix string, mountpoints *mount.Points) (err error) {
 		envv = append(envv, "GORACE=halt_on_error=1")
 
 		log.Printf("race detection enabled with halt_on_error=1")
+	}
+
+	if val := procfs.ProcCmdline().Get("talos.debugshell"); val != nil {
+		if err = unix.Exec("/bin/bash", []string{"/bin/bash"}, envv); err != nil {
+			return fmt.Errorf("error executing /bin/bash: %w", err)
+		}
+
+		return nil
 	}
 
 	if err = unix.Exec("/sbin/init", []string{"/sbin/init"}, envv); err != nil {

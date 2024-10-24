@@ -164,12 +164,24 @@ type Disk struct {
 	Driver string
 }
 
+// ConfigInjectionMethod describes how to inject configuration into the node.
+type ConfigInjectionMethod int
+
+const (
+	// ConfigInjectionMethodHTTP injects configuration via HTTP.
+	ConfigInjectionMethodHTTP ConfigInjectionMethod = iota
+	// ConfigInjectionMethodMetalISO injects configuration via Metal ISO.
+	ConfigInjectionMethodMetalISO
+)
+
 // NodeRequest describes a request for a node.
 type NodeRequest struct {
-	Name   string
-	IPs    []netip.Addr
-	Config config.Provider
-	Type   machine.Type
+	Name string
+	IPs  []netip.Addr
+	Type machine.Type
+
+	Config                config.Provider
+	ConfigInjectionMethod ConfigInjectionMethod
 
 	// Share of CPUs, in 1e-9 fractions
 	NanoCPUs int64

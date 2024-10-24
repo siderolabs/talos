@@ -200,12 +200,12 @@ func (ctrl *NodeStatusController) Run(ctx context.Context, r controller.Runtime,
 			return fmt.Errorf("error listing node statuses: %w", err)
 		}
 
-		for iter := items.Iterator(); iter.Next(); {
-			if _, touched := touchedIDs[iter.Value().Metadata().ID()]; touched {
+		for res := range items.All() {
+			if _, touched := touchedIDs[res.Metadata().ID()]; touched {
 				continue
 			}
 
-			if err = r.Destroy(ctx, iter.Value().Metadata()); err != nil {
+			if err = r.Destroy(ctx, res.Metadata()); err != nil {
 				return fmt.Errorf("error destroying node status: %w", err)
 			}
 		}

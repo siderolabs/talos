@@ -101,7 +101,7 @@ https://kube.cluster1.mydomain.com:6443
 
 ## Multihoming
 
-If your machines are multihomed, i.e., they have more than one IPv4 and/or IPv6 addresss other than loopback, then additional configuration is required.
+If your machines are multihomed, i.e., they have more than one IPv4 and/or IPv6 addresses other than loopback, then additional configuration is required.
 A point to note is that the machines may become multihomed via privileged workloads.
 
 ### Multihoming and etcd

@@ -25,9 +25,7 @@ func (c *Client) ResolveResourceKind(ctx context.Context, resourceNamespace *res
 
 	var matched []*meta.ResourceDefinition
 
-	for it := registeredResources.Iterator(); it.Next(); {
-		rd := it.Value()
-
+	for rd := range registeredResources.All() {
 		if strings.EqualFold(rd.Metadata().ID(), resourceType) {
 			matched = append(matched, rd)
 

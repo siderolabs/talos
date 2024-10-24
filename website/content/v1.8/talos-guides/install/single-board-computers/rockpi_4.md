@@ -22,7 +22,7 @@ chmod +x /usr/local/bin/talosctl
 ## Download the Image
 
 The default schematic id for "vanilla" RockPi 4 is `25d2690bb48685de5939edd6dee83a0e09591311e64ad03c550de00f8a521f51`.
-Refer to the [Image Factory](/../../../learn-more/image-factory) documentation for more information.
+Refer to the [Image Factory]({{< relref "../../../learn-more/image-factory" >}}) documentation for more information.
 
 Download the image and decompress it:
 

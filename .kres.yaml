@@ -29,7 +29,7 @@ spec:
     - kernel
     - security
     - ci
-    - ^v1.8
+    - ^v1.9
   licenseChecks:
     - skipPaths:
         - .git/
@@ -507,6 +507,7 @@ spec:
           withSudo: true
           environment:
             IMAGE_REGISTRY: registry.dev.siderolabs.io
+            GRPC_ENFORCE_ALPN_ENABLED: "false"
         - name: save-talos-logs
           conditions:
             - always
@@ -557,6 +558,7 @@ spec:
           withSudo: true
           environment:
             IMAGE_REGISTRY: registry.dev.siderolabs.io
+            GRPC_ENFORCE_ALPN_ENABLED: "false"
         - name: save-talos-logs
           conditions:
             - always
@@ -607,6 +609,7 @@ spec:
           withSudo: true
           environment:
             IMAGE_REGISTRY: registry.dev.siderolabs.io
+            GRPC_ENFORCE_ALPN_ENABLED: "false"
         - name: save-talos-logs
           conditions:
             - always
@@ -865,6 +868,13 @@ spec:
           environment:
             SHORT_INTEGRATION_TEST: yes
             WITH_NETWORK_CHAOS: yes
+            IMAGE_REGISTRY: registry.dev.siderolabs.io
+        - name: e2e-metal-iso
+          command: e2e-qemu
+          withSudo: true
+          environment:
+            SHORT_INTEGRATION_TEST: yes
+            WITH_CONFIG_INJECTION_METHOD: "metal-iso"
             IMAGE_REGISTRY: registry.dev.siderolabs.io
         - name: save-talos-logs
           conditions:

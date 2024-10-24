@@ -87,6 +87,7 @@ const (
 	controlPlanePortFlag         = "control-plane-port"
 	firewallFlag                 = "with-firewall"
 	tpm2EnabledFlag              = "with-tpm2"
+	withDebugShellFlag           = "with-debug-shell"
 
 	// The following flags are the gen options - the options that are only used in machine configuration (i.e., not during the qemu/docker provisioning).
 	// They are not applicable when no machine configuration is generated, hence mutually exclusive with the --input-dir flag.
@@ -190,6 +191,8 @@ var (
 	withUUIDHostnames         bool
 	withSiderolinkAgent       agentFlag
 	withJSONLogs              bool
+	debugShellEnabled         bool
+	configInjectionMethodFlag string
 )
 
 // createCmd represents the cluster up command.
@@ -470,12 +473,19 @@ func create(ctx context.Context) error {
 		provision.WithBootlader(bootloaderEnabled),
 		provision.WithUEFI(uefiEnabled),
 		provision.WithTPM2(tpm2Enabled),
+		provision.WithDebugShell(debugShellEnabled),
 		provision.WithExtraUEFISearchPaths(extraUEFISearchPaths),
 		provision.WithTargetArch(targetArch),
 		provision.WithSiderolinkAgent(withSiderolinkAgent.IsEnabled()),
 	}
 
 	var configBundleOpts []bundle.Option
+
+	if debugShellEnabled {
+		if provisionerName != "qemu" {
+			return errors.New("debug shell only supported with qemu provisioner")
+		}
+	}
 
 	if ports != "" {
 		if provisionerName != docker {
@@ -856,6 +866,17 @@ func create(ctx context.Context) error {
 	// Add talosconfig to provision options, so we'll have it to parse there
 	provisionOptions = append(provisionOptions, provision.WithTalosConfig(configBundle.TalosConfig()))
 
+	var configInjectionMethod provision.ConfigInjectionMethod
+
+	switch configInjectionMethodFlag {
+	case "", "default", "http":
+		configInjectionMethod = provision.ConfigInjectionMethodHTTP
+	case "metal-iso":
+		configInjectionMethod = provision.ConfigInjectionMethodMetalISO
+	default:
+		return fmt.Errorf("unknown config injection method %q", configInjectionMethod)
+	}
+
 	// Create the controlplane nodes.
 	for i := range controlplanes {
 		var cfg config.Provider
@@ -873,16 +894,17 @@ func create(ctx context.Context) error {
 		}
 
 		nodeReq := provision.NodeRequest{
-			Name:                nodeName(clusterName, "controlplane", i+1, nodeUUID),
-			Type:                machine.TypeControlPlane,
-			IPs:                 nodeIPs,
-			Memory:              controlPlaneMemory,
-			NanoCPUs:            controlPlaneNanoCPUs,
-			Disks:               disks,
-			SkipInjectingConfig: skipInjectingConfig,
-			BadRTC:              badRTC,
-			ExtraKernelArgs:     extraKernelArgs,
-			UUID:                pointer.To(nodeUUID),
+			Name:                  nodeName(clusterName, "controlplane", i+1, nodeUUID),
+			Type:                  machine.TypeControlPlane,
+			IPs:                   nodeIPs,
+			Memory:                controlPlaneMemory,
+			NanoCPUs:              controlPlaneNanoCPUs,
+			Disks:                 disks,
+			SkipInjectingConfig:   skipInjectingConfig,
+			ConfigInjectionMethod: configInjectionMethod,
+			BadRTC:                badRTC,
+			ExtraKernelArgs:       extraKernelArgs,
+			UUID:                  pointer.To(nodeUUID),
 		}
 
 		if withInitNode && i == 0 {
@@ -900,6 +922,7 @@ func create(ctx context.Context) error {
 		}
 
 		nodeReq.Config = cfg
+
 		request.Nodes = append(request.Nodes, nodeReq)
 	}
 
@@ -947,17 +970,18 @@ func create(ctx context.Context) error {
 
 		request.Nodes = append(request.Nodes,
 			provision.NodeRequest{
-				Name:                nodeName(clusterName, "worker", i, nodeUUID),
-				Type:                machine.TypeWorker,
-				IPs:                 nodeIPs,
-				Memory:              workerMemory,
-				NanoCPUs:            workerNanoCPUs,
-				Disks:               disks,
-				Config:              cfg,
-				SkipInjectingConfig: skipInjectingConfig,
-				BadRTC:              badRTC,
-				ExtraKernelArgs:     extraKernelArgs,
-				UUID:                pointer.To(nodeUUID),
+				Name:                  nodeName(clusterName, "worker", i, nodeUUID),
+				Type:                  machine.TypeWorker,
+				IPs:                   nodeIPs,
+				Memory:                workerMemory,
+				NanoCPUs:              workerNanoCPUs,
+				Disks:                 disks,
+				Config:                cfg,
+				ConfigInjectionMethod: configInjectionMethod,
+				SkipInjectingConfig:   skipInjectingConfig,
+				BadRTC:                badRTC,
+				ExtraKernelArgs:       extraKernelArgs,
+				UUID:                  pointer.To(nodeUUID),
 			})
 	}
 
@@ -966,6 +990,21 @@ func create(ctx context.Context) error {
 	cluster, err := provisioner.Create(ctx, request, provisionOptions...)
 	if err != nil {
 		return err
+	}
+
+	if debugShellEnabled {
+		fmt.Println("You can now connect to debug shell on any node using these commands:")
+
+		for _, node := range request.Nodes {
+			talosDir, err := clientconfig.GetTalosDirectory()
+			if err != nil {
+				return nil
+			}
+
+			fmt.Printf("socat - UNIX-CONNECT:%s\n", filepath.Join(talosDir, "clusters", clusterName, node.Name+".serial"))
+		}
+
+		return nil
 	}
 
 	// No talosconfig in the bundle - skip the operations below
@@ -1206,6 +1245,8 @@ func init() {
 	createCmd.Flags().BoolVar(&bootloaderEnabled, bootloaderEnabledFlag, true, "enable bootloader to load kernel and initramfs from disk image after install")
 	createCmd.Flags().BoolVar(&uefiEnabled, "with-uefi", true, "enable UEFI on x86_64 architecture")
 	createCmd.Flags().BoolVar(&tpm2Enabled, tpm2EnabledFlag, false, "enable TPM2 emulation support using swtpm")
+	createCmd.Flags().BoolVar(&debugShellEnabled, withDebugShellFlag, false, "drop talos into a maintenance shell on boot, this is for advanced debugging for developers only")
+	createCmd.Flags().MarkHidden("with-debug-shell") //nolint:errcheck
 	createCmd.Flags().StringSliceVar(&extraUEFISearchPaths, "extra-uefi-search-paths", []string{}, "additional search paths for UEFI firmware (only applies when UEFI is enabled)")
 	createCmd.Flags().StringSliceVar(&registryMirrors, registryMirrorFlag, []string{}, "list of registry mirrors to use in format: <registry host>=<mirror URL>")
 	createCmd.Flags().StringSliceVar(&registryInsecure, registryInsecureFlag, []string{}, "list of registry hostnames to skip TLS verification for")
@@ -1286,6 +1327,7 @@ func init() {
 	createCmd.Flags().BoolVar(&withUUIDHostnames, "with-uuid-hostnames", false, "use machine UUIDs as default hostnames (QEMU only)")
 	createCmd.Flags().Var(&withSiderolinkAgent, "with-siderolink", "enables the use of siderolink agent as configuration apply mechanism. `true` or `wireguard` enables the agent, `tunnel` enables the agent with grpc tunneling") //nolint:lll
 	createCmd.Flags().BoolVar(&withJSONLogs, "with-json-logs", false, "enable JSON logs receiver and configure Talos to send logs there")
+	createCmd.Flags().StringVar(&configInjectionMethodFlag, "config-injection-method", "", "a method to inject machine config: default is HTTP server, 'metal-iso' to mount an ISO (QEMU only)")
 
 	createCmd.MarkFlagsMutuallyExclusive(inputDirFlag, nodeInstallImageFlag)
 	createCmd.MarkFlagsMutuallyExclusive(inputDirFlag, configDebugFlag)

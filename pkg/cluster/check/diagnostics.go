@@ -43,8 +43,8 @@ func NoDiagnostics(ctx context.Context, cluster ClusterInfo) error {
 			return err
 		}
 
-		for iter := warnings.Iterator(); iter.Next(); {
-			warningsByNode[nodeIP] = append(warningsByNode[nodeIP], iter.Value())
+		for res := range warnings.All() {
+			warningsByNode[nodeIP] = append(warningsByNode[nodeIP], res)
 		}
 	}
 

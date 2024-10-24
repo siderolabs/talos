@@ -93,8 +93,8 @@ func (ctrl *NodeCordonedSpecController) Run(ctx context.Context, r controller.Ru
 				return fmt.Errorf("error getting node cordoned specs: %w", err)
 			}
 
-			for iter := nodeCordoned.Iterator(); iter.Next(); {
-				if err = r.Destroy(ctx, iter.Value().Metadata()); err != nil {
+			for res := range nodeCordoned.All() {
+				if err = r.Destroy(ctx, res.Metadata()); err != nil {
 					return fmt.Errorf("error destroying node cordoned spec: %w", err)
 				}
 			}

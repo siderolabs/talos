@@ -118,9 +118,7 @@ func extensionsToNodeKV(ctx context.Context, r controller.Reader, spec map[strin
 		return fmt.Errorf("error listing extension statuses: %w", err)
 	}
 
-	for iter := extensionStatuses.Iterator(); iter.Next(); {
-		extensionStatus := iter.Value()
-
+	for extensionStatus := range extensionStatuses.All() {
 		if extensionStatus.TypedSpec().Metadata.Name == "" {
 			continue
 		}

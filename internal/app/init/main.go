@@ -62,7 +62,7 @@ func run() (err error) {
 	}
 
 	// extend PCR 11 with enter-initrd
-	if err = tpm2.PCRExtent(secureboot.UKIPCR, []byte(secureboot.EnterInitrd)); err != nil {
+	if err = tpm2.PCRExtend(secureboot.UKIPCR, []byte(secureboot.EnterInitrd)); err != nil {
 		return fmt.Errorf("failed to extend PCR %d with enter-initrd: %v", secureboot.UKIPCR, err)
 	}
 

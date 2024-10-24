@@ -22,7 +22,7 @@ chmod +x /usr/local/bin/talosctl
 ## Download the Image using Image Factory
 
 The default schematic id for "vanilla" Banana Pi M64 is `8e11dcb3c2803fbe893ab201fcadf1ef295568410e7ced95c6c8b122a5070ce4`.
-Refer to the [Image Factory](/../../../learn-more/image-factory) documentation for more information.
+Refer to the [Image Factory]({{< relref "../../../learn-more/image-factory" >}}) documentation for more information.
 
 Download the image and decompress it:
 

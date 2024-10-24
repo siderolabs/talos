@@ -98,9 +98,7 @@ func (ctrl *PeerSpecController) Run(ctx context.Context, r controller.Runtime, l
 			peerIPSets := make(map[string]*netipx.IPSet, affiliates.Len())
 
 		affiliateLoop:
-			for it := affiliates.Iterator(); it.Next(); {
-				affiliate := it.Value()
-
+			for affiliate := range affiliates.All() {
 				if affiliate.Metadata().ID() == localAffiliateID {
 					// skip local affiliate, it's not a peer
 					continue
@@ -185,9 +183,7 @@ func (ctrl *PeerSpecController) Run(ctx context.Context, r controller.Runtime, l
 			return fmt.Errorf("error listing resources: %w", err)
 		}
 
-		for it := list.Iterator(); it.Next(); {
-			res := it.Value()
-
+		for res := range list.All() {
 			if res.Metadata().Owner() != ctrl.Name() {
 				continue
 			}

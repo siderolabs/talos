@@ -26,13 +26,11 @@ func GetEndpoints(ctx context.Context, resources state.State) ([]string, error) 
 		return nil, fmt.Errorf("error getting endpoints resources: %w", err)
 	}
 
-	iter := endpointResources.Iterator()
-
 	var endpointAddrs k8s.EndpointList
 
 	// merge all endpoints into a single list
-	for iter.Next() {
-		endpointAddrs = endpointAddrs.Merge(iter.Value())
+	for res := range endpointResources.All() {
+		endpointAddrs = endpointAddrs.Merge(res)
 	}
 
 	if len(endpointAddrs) == 0 {

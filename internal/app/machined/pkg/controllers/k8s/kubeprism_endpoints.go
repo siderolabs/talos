@@ -63,8 +63,8 @@ func NewKubePrismEndpointsController() *KubePrismEndpointsController {
 					})
 				}
 
-				for it := members.Iterator(); it.Next(); {
-					memberSpec := it.Value().TypedSpec()
+				for member := range members.All() {
+					memberSpec := member.TypedSpec()
 
 					if len(memberSpec.Addresses) > 0 && memberSpec.ControlPlane != nil {
 						for _, addr := range memberSpec.Addresses {

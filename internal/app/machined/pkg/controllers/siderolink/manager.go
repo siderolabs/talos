@@ -433,9 +433,7 @@ func (ctrl *ManagerController) cleanupLinkSpecs(ctx context.Context, r controlle
 		return err
 	}
 
-	for iter := list.Iterator(); iter.Next(); {
-		link := iter.Value()
-
+	for link := range list.All() {
 		if link.Metadata().Owner() != ctrl.Name() {
 			continue
 		}
@@ -461,9 +459,7 @@ func (ctrl *ManagerController) cleanupAddressSpecs(ctx context.Context, r contro
 		return err
 	}
 
-	for iter := list.Iterator(); iter.Next(); {
-		address := iter.Value()
-
+	for address := range list.All() {
 		if address.Metadata().Owner() != ctrl.Name() {
 			continue
 		}

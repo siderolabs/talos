@@ -14,7 +14,7 @@ import (
 
 const (
 	// DefaultKernelVersion is the default Linux kernel version.
-	DefaultKernelVersion = "6.6.52-talos"
+	DefaultKernelVersion = "6.6.58-talos"
 
 	// KernelModulesPath is the default path to the kernel modules without the kernel version.
 	KernelModulesPath = "/lib/modules"
@@ -354,7 +354,7 @@ const (
 
 	// DefaultKubernetesVersion is the default target version of the control plane.
 	// renovate: datasource=github-releases depName=kubernetes/kubernetes
-	DefaultKubernetesVersion = "1.31.1"
+	DefaultKubernetesVersion = "1.32.0-alpha.2"
 
 	// SupportedKubernetesVersions is the number of Kubernetes versions supported by Talos starting from DefaultKubernesVersion going backwards.
 	SupportedKubernetesVersions = 6
@@ -495,7 +495,7 @@ const (
 	TrustdUserID = 51
 
 	// DefaultContainerdVersion is the default container runtime version.
-	DefaultContainerdVersion = "2.0.0-rc.5"
+	DefaultContainerdVersion = "2.0.0-rc.6"
 
 	// SystemContainerdNamespace is the Containerd namespace for Talos services.
 	SystemContainerdNamespace = "system"
@@ -933,7 +933,7 @@ const (
 	KubeSpanLinkMinimumMTU = 1280
 
 	// UdevDir is the path to the udev directory.
-	UdevDir = "/usr/etc/udev"
+	UdevDir = "/usr/lib/udev"
 
 	// UdevRulesPath rules file path.
 	UdevRulesPath = UdevDir + "/" + "rules.d/99-talos.rules"
@@ -1037,7 +1037,7 @@ const (
 	DashboardTTY = 2
 
 	// FlannelVersion is the version of flannel to use.
-	FlannelVersion = "v0.25.7"
+	FlannelVersion = "v0.26.0"
 
 	// PlatformMetal is the name of the metal platform.
 	PlatformMetal = "metal"

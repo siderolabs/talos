@@ -20,7 +20,7 @@ chmod +x /usr/local/bin/talosctl
 ## Download the Image
 
 The default schematic id for "vanilla" Rock 4c Plus is `ed7091ab924ef1406dadc4623c90f245868f03d262764ddc2c22c8a19eb37c1c`.
-Refer to the [Image Factory](/../../../learn-more/image-factory) documentation for more information.
+Refer to the [Image Factory]({{< relref "../../../learn-more/image-factory" >}}) documentation for more information.
 
 Download the image and decompress it:
 

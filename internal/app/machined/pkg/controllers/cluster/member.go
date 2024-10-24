@@ -65,8 +65,8 @@ func (ctrl *MemberController) Run(ctx context.Context, r controller.Runtime, _ *
 
 		touchedIDs := make(map[resource.ID]struct{})
 
-		for it := affiliates.Iterator(); it.Next(); {
-			affiliateSpec := it.Value().TypedSpec()
+		for affiliate := range affiliates.All() {
+			affiliateSpec := affiliate.TypedSpec()
 			if affiliateSpec.Nodename == "" {
 				// not a cluster member
 				continue
@@ -96,9 +96,7 @@ func (ctrl *MemberController) Run(ctx context.Context, r controller.Runtime, _ *
 			return fmt.Errorf("error listing resources: %w", err)
 		}
 
-		for it := list.Iterator(); it.Next(); {
-			res := it.Value()
-
+		for res := range list.All() {
 			if res.Metadata().Owner() != ctrl.Name() {
 				continue
 			}

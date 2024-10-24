@@ -83,7 +83,7 @@ Once the flashing is done you can disconnect the USB cable and power off the Jet
 ## Download the Image
 
 The default schematic id for "vanilla" Jetson Nano is `c7d6f36c6bdfb45fd63178b202a67cff0dd270262269c64886b43f76880ecf1e`.
-Refer to the [Image Factory](/../../../learn-more/image-factory) documentation for more information.
+Refer to the [Image Factory]({{< relref "../../../learn-more/image-factory" >}}) documentation for more information.
 
 Download the image and decompress it:
 

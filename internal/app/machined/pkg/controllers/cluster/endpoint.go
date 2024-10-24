@@ -65,14 +65,14 @@ func (ctrl *EndpointController) Run(ctx context.Context, r controller.Runtime, l
 
 		var endpoints []netip.Addr
 
-		for it := memberList.Iterator(); it.Next(); {
-			member := it.Value().TypedSpec()
+		for member := range memberList.All() {
+			memberSpec := member.TypedSpec()
 
-			if !(member.MachineType == machine.TypeControlPlane || member.MachineType == machine.TypeInit) {
+			if !(memberSpec.MachineType == machine.TypeControlPlane || memberSpec.MachineType == machine.TypeInit) {
 				continue
 			}
 
-			endpoints = append(endpoints, member.Addresses...)
+			endpoints = append(endpoints, memberSpec.Addresses...)
 		}
 
 		sort.Slice(endpoints, func(i, j int) bool { return endpoints[i].Compare(endpoints[j]) < 0 })

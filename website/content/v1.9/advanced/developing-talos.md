@@ -177,6 +177,10 @@ Specfic tests can be run with `-test.run=TestIntegration/api.ResetSuite`.
 
 `make <something> WITH_DEBUG=1` enables Go profiling and other debug features, useful for local development.
 
+`make initramfs WITH_DEBUG_SHELL=true` adds bash and minimal utilities for debugging purposes.
+Combine with `--with-debug-shell` flag when creating cluster to obtain shell access.
+This is uncommonly used as in this case the bash shell will run in place of machined.
+
 ## Destroying Cluster
 
 ```bash

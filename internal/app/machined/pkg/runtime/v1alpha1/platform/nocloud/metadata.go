@@ -315,12 +315,11 @@ func (n *Nocloud) applyNetworkConfigV1(config *NetworkConfig, st state.State, ne
 
 			if ntwrk.Mac != "" {
 				macAddressMatched := false
-				hostInterfaceIter := hostInterfaces.Iterator()
 
-				for hostInterfaceIter.Next() {
-					macAddress := hostInterfaceIter.Value().TypedSpec().PermanentAddr.String()
+				for hostInterface := range hostInterfaces.All() {
+					macAddress := hostInterface.TypedSpec().PermanentAddr.String()
 					if macAddress == ntwrk.Mac {
-						name = hostInterfaceIter.Value().Metadata().ID()
+						name = hostInterface.Metadata().ID()
 						macAddressMatched = true
 
 						break
@@ -596,12 +595,11 @@ func (n *Nocloud) applyNetworkConfigV2(config *NetworkConfig, st state.State, ne
 			var availableMACAddresses []string
 
 			macAddressMatched := false
-			hostInterfaceIter := hostInterfaces.Iterator()
 
-			for hostInterfaceIter.Next() {
-				macAddress := hostInterfaceIter.Value().TypedSpec().PermanentAddr.String()
+			for hostInterface := range hostInterfaces.All() {
+				macAddress := hostInterface.TypedSpec().PermanentAddr.String()
 				if macAddress == eth.Match.HWAddr {
-					name = hostInterfaceIter.Value().Metadata().ID()
+					name = hostInterface.Metadata().ID()
 					macAddressMatched = true
 
 					break

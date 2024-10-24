@@ -164,7 +164,7 @@ func (procs *Processes) readProc(pidString string) (*machine.ProcessInfo, error)
 	var label string
 
 	if err = procs.readFileIntoBuf(path + "attr/current"); err == nil {
-		label = string(bytes.TrimSpace(procs.buf))
+		label = string(bytes.Trim(procs.buf, "\x000\n"))
 	}
 
 	return &machine.ProcessInfo{

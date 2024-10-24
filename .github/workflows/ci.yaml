@@ -1,6 +1,6 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
 #
-# Generated on 2024-10-16T13:22:04Z by kres 34e72ac.
+# Generated on 2024-10-23T17:20:56Z by kres 6d3cad4.
 
 name: default
 concurrency:
@@ -2283,6 +2283,13 @@ jobs:
           WITH_NETWORK_CHAOS: "yes"
         run: |
           sudo -E make e2e-qemu
+      - name: e2e-metal-iso
+        env:
+          IMAGE_REGISTRY: registry.dev.siderolabs.io
+          SHORT_INTEGRATION_TEST: "yes"
+          WITH_CONFIG_INJECTION_METHOD: metal-iso
+        run: |
+          sudo -E make e2e-qemu
       - name: save artifacts
         if: always()
         uses: actions/upload-artifact@v4
@@ -2491,6 +2498,7 @@ jobs:
           make provision-tests-prepare
       - name: provision-tests-track-0
         env:
+          GRPC_ENFORCE_ALPN_ENABLED: "false"
           IMAGE_REGISTRY: registry.dev.siderolabs.io
         run: |
           sudo -E make provision-tests-track-0
@@ -2585,6 +2593,7 @@ jobs:
           make provision-tests-prepare
       - name: provision-tests-track-1
         env:
+          GRPC_ENFORCE_ALPN_ENABLED: "false"
           IMAGE_REGISTRY: registry.dev.siderolabs.io
         run: |
           sudo -E make provision-tests-track-1
@@ -2679,6 +2688,7 @@ jobs:
           make provision-tests-prepare
       - name: provision-tests-track-2
         env:
+          GRPC_ENFORCE_ALPN_ENABLED: "false"
           IMAGE_REGISTRY: registry.dev.siderolabs.io
         run: |
           sudo -E make provision-tests-track-2

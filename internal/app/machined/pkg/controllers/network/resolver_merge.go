@@ -80,8 +80,8 @@ func (ctrl *ResolverMergeController) Run(ctx context.Context, r controller.Runti
 		// simply merge by layers, overriding with the next configuration layer
 		var final network.ResolverSpecSpec
 
-		for iter := list.Iterator(); iter.Next(); {
-			spec := iter.Value().TypedSpec()
+		for res := range list.All() {
+			spec := res.TypedSpec()
 
 			if spec.ConfigLayer == final.ConfigLayer {
 				// simply append server lists on the same layer

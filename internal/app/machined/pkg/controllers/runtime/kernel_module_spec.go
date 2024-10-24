@@ -72,12 +72,12 @@ func (ctrl *KernelModuleSpecController) Run(ctx context.Context, r controller.Ru
 		var multiErr error
 
 		// note: this code doesn't support module unloading in any way for now
-		for iter := modules.Iterator(); iter.Next(); {
-			module := iter.Value().TypedSpec()
-			parameters := strings.Join(module.Parameters, " ")
+		for module := range modules.All() {
+			moduleSpec := module.TypedSpec()
+			parameters := strings.Join(moduleSpec.Parameters, " ")
 
-			if err = manager.Load(module.Name, parameters, 0); err != nil {
-				multiErr = errors.Join(multiErr, fmt.Errorf("error loading module %q: %w", module.Name, err))
+			if err = manager.Load(moduleSpec.Name, parameters, 0); err != nil {
+				multiErr = errors.Join(multiErr, fmt.Errorf("error loading module %q: %w", moduleSpec.Name, err))
 			}
 		}
 

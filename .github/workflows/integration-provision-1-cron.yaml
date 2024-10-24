@@ -1,6 +1,6 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
 #
-# Generated on 2024-09-09T13:58:35Z by kres 8be5fa7.
+# Generated on 2024-10-18T16:27:22Z by kres 34e72ac.
 
 name: integration-provision-1-cron
 concurrency:
@@ -83,6 +83,7 @@ jobs:
           make provision-tests-prepare
       - name: provision-tests-track-1
         env:
+          GRPC_ENFORCE_ALPN_ENABLED: "false"
           IMAGE_REGISTRY: registry.dev.siderolabs.io
         run: |
           sudo -E make provision-tests-track-1

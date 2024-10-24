@@ -99,18 +99,16 @@ func (c *Connection) Links() ([]Link, error) {
 		return nil, err
 	}
 
-	it := items.Iterator()
+	links := make([]Link, 0, items.Len())
 
-	var links []Link
-
-	for it.Next() {
+	for res := range items.All() {
 		var link Link
 
-		link.Name = it.Value().Metadata().ID()
-		link.Physical = it.Value().TypedSpec().Physical()
-		link.MTU = int(it.Value().TypedSpec().MTU)
+		link.Name = res.Metadata().ID()
+		link.Physical = res.TypedSpec().Physical()
+		link.MTU = int(res.TypedSpec().MTU)
 
-		switch it.Value().TypedSpec().OperationalState { //nolint:exhaustive
+		switch res.TypedSpec().OperationalState { //nolint:exhaustive
 		case nethelpers.OperStateUnknown:
 			link.Up = true
 		case nethelpers.OperStateUp:
@@ -119,7 +117,7 @@ func (c *Connection) Links() ([]Link, error) {
 			link.Up = false
 		}
 
-		link.HardwareAddr = net.HardwareAddr(it.Value().TypedSpec().HardwareAddr)
+		link.HardwareAddr = net.HardwareAddr(res.TypedSpec().HardwareAddr)
 
 		links = append(links, link)
 	}

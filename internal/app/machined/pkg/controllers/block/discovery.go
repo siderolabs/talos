@@ -127,9 +127,7 @@ func (ctrl *DiscoveryController) Run(ctx context.Context, r controller.Runtime, 
 			parents := map[string]string{}
 			allDevices := map[string]struct{}{}
 
-			for iterator := devices.Iterator(); iterator.Next(); {
-				device := iterator.Value()
-
+			for device := range devices.All() {
 				if device.TypedSpec().Major == 1 {
 					// ignore ram disks (/dev/ramX), major number is 1
 					// ref: https://www.kernel.org/doc/Documentation/admin-guide/devices.txt
@@ -212,7 +210,10 @@ func (ctrl *DiscoveryController) rescan(ctx context.Context, r controller.Runtim
 			dv.TypedSpec().Type = device.TypedSpec().Type
 			dv.TypedSpec().DevicePath = device.TypedSpec().DevicePath
 			dv.TypedSpec().Parent = device.TypedSpec().Parent
-			dv.TypedSpec().ParentDevPath = filepath.Join("/dev", device.TypedSpec().Parent)
+
+			if device.TypedSpec().Parent != "" {
+				dv.TypedSpec().ParentDevPath = filepath.Join("/dev", device.TypedSpec().Parent)
+			}
 
 			dv.TypedSpec().SetSize(info.Size)
 			dv.TypedSpec().SectorSize = info.SectorSize
@@ -283,9 +284,7 @@ func (ctrl *DiscoveryController) rescan(ctx context.Context, r controller.Runtim
 		return nil, fmt.Errorf("failed to list discovered volumes: %w", err)
 	}
 
-	for iterator := discoveredVolumes.Iterator(); iterator.Next(); {
-		dv := iterator.Value()
-
+	for dv := range discoveredVolumes.All() {
 		if _, ok := touchedIDs[dv.Metadata().ID()]; ok {
 			continue
 		}

@@ -44,7 +44,7 @@ Power off the Raspberry Pi and remove the SD card from it.
 
 ## Download the Image
 
-The default schematic id for "vanilla" Raspberry Pi generic image is `ee21ef4a5ef808a9b7484cc0dda0f25075021691c8c09a276591eedb638ea1f9`.Refer to the [Image Factory](/../../../learn-more/image-factory) documentation for more information.
+The default schematic id for "vanilla" Raspberry Pi generic image is `ee21ef4a5ef808a9b7484cc0dda0f25075021691c8c09a276591eedb638ea1f9`.Refer to the [Image Factory]({{< relref "../../../learn-more/image-factory" >}}) documentation for more information.
 
 Download the image and decompress it:
 
