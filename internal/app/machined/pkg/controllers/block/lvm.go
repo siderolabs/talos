@@ -11,11 +11,14 @@ import (
 
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/safe"
+	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/hashicorp/go-multierror"
+	"github.com/siderolabs/gen/optional"
 	"github.com/siderolabs/go-cmd/pkg/cmd"
 	"go.uber.org/zap"
 
 	"github.com/siderolabs/talos/pkg/machinery/resources/block"
+	"github.com/siderolabs/talos/pkg/machinery/resources/v1alpha1"
 )
 
 // LVMActivationController activates LVM volumes when they are discovered by the block.DiscoveryController.
@@ -35,6 +38,12 @@ func (ctrl *LVMActivationController) Inputs() []controller.Input {
 		{
 			Namespace: block.NamespaceName,
 			Type:      block.DiscoveredVolumeType,
+			Kind:      controller.InputWeak,
+		},
+		{
+			Namespace: v1alpha1.NamespaceName,
+			Type:      v1alpha1.ServiceType,
+			ID:        optional.Some("udevd"),
 			Kind:      controller.InputWeak,
 		},
 	}
@@ -62,6 +71,23 @@ func (ctrl *LVMActivationController) Run(ctx context.Context, r controller.Runti
 		case <-ctx.Done():
 			return nil
 		case <-r.EventCh():
+		}
+
+		udevdService, err := safe.ReaderGetByID[*v1alpha1.Service](ctx, r, "udevd")
+		if err != nil && !state.IsNotFoundError(err) {
+			return fmt.Errorf("failed to get udevd service: %w", err)
+		}
+
+		if udevdService == nil {
+			logger.Debug("udevd service not registered yet")
+
+			continue
+		}
+
+		if !(udevdService.TypedSpec().Running && udevdService.TypedSpec().Healthy) {
+			logger.Debug("waiting for udevd service to be running and healthy")
+
+			continue
 		}
 
 		discoveredVolumes, err := safe.ReaderListAll[*block.DiscoveredVolume](ctx, r)
