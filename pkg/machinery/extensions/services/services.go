@@ -31,6 +31,8 @@ type Spec struct {
 	Depends []Dependency `yaml:"depends"`
 	// Restart configuration.
 	Restart RestartKind `yaml:"restart"`
+	// LogToConsole enables sending service logs to the console.
+	LogToConsole bool `yaml:"logToConsole"`
 }
 
 // Container specifies service container to run.

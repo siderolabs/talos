@@ -201,14 +201,18 @@ func (svc *Extension) Runner(r runtime.Runtime) (runner.Runner, error) {
 
 	ociSpecOpts := svc.getOCIOptions(envVars, mounts)
 
-	debug := false
+	logToConsole := false
 
 	if r.Config() != nil {
-		debug = r.Config().Debug()
+		logToConsole = r.Config().Debug()
+	}
+
+	if svc.Spec.LogToConsole {
+		logToConsole = true
 	}
 
 	return restart.New(containerd.NewRunner(
-		debug,
+		logToConsole,
 		&args,
 		runner.WithLoggingManager(r.Logging()),
 		runner.WithNamespace(constants.SystemContainerdNamespace),

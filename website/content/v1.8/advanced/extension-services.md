@@ -44,6 +44,7 @@ depends:
        - etcfiles
    - time: true
 restart: never|always|untilSuccess
+logToConsole: true|false
 ```
 
 ### `name`
@@ -138,6 +139,12 @@ Field `restart` defines the service restart policy, it allows to either configur
 * `always`: restart service always
 * `never`: start service only once and never restart
 * `untilSuccess`: restart failing service, stop restarting on successful run
+
+### `logToConsole`
+
+Field `logToConsole` defines whether the service logs should also be written to the console, i.e., to kernel log buffer (or to the container logs in container mode).
+
+This feature is particularly useful for debugging extensions that operate in maintenance mode or early in the boot process when service logs cannot be accessed yet.
 
 ## Example
 

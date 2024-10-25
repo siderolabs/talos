@@ -27,9 +27,9 @@ import (
 
 // containerdRunner is a runner.Runner that runs container in containerd.
 type containerdRunner struct {
-	args  *runner.Args
-	opts  *runner.Options
-	debug bool
+	args         *runner.Args
+	opts         *runner.Options
+	logToConsole bool
 
 	stop    chan struct{}
 	stopped chan struct{}
@@ -41,13 +41,13 @@ type containerdRunner struct {
 }
 
 // NewRunner creates runner.Runner that runs a container in containerd.
-func NewRunner(debug bool, args *runner.Args, setters ...runner.Option) runner.Runner {
+func NewRunner(logToConsole bool, args *runner.Args, setters ...runner.Option) runner.Runner {
 	r := &containerdRunner{
-		args:    args,
-		opts:    runner.DefaultOptions(),
-		debug:   debug,
-		stop:    make(chan struct{}),
-		stopped: make(chan struct{}),
+		args:         args,
+		opts:         runner.DefaultOptions(),
+		logToConsole: logToConsole,
+		stop:         make(chan struct{}),
+		stopped:      make(chan struct{}),
 	}
 
 	for _, setter := range setters {
@@ -170,7 +170,7 @@ func (c *containerdRunner) Run(eventSink events.Recorder) error {
 
 	var w io.Writer = logW
 
-	if c.debug {
+	if c.logToConsole {
 		w = io.MultiWriter(w, os.Stdout)
 	}
 
