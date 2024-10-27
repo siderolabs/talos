@@ -6,15 +6,14 @@ package iso
 
 import (
 	"bytes"
-	"context"
 	_ "embed"
 	"fmt"
 	"os"
 	"path/filepath"
 	"text/template"
-	"time"
 
 	"github.com/siderolabs/go-cmd/pkg/cmd"
+	"github.com/siderolabs/go-copy/copy"
 
 	"github.com/siderolabs/talos/pkg/imager/utils"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
@@ -67,6 +66,8 @@ func CreateUEFI(printf func(string, ...any), options UEFIOptions) error {
 
 	efiBootImg := filepath.Join(options.ScratchDir, "efiboot.img")
 
+	isoRoot := filepath.Join(options.ScratchDir, "isoroot")
+
 	// initial size
 	isoSize := int64(10 * mib)
 
@@ -109,75 +110,75 @@ func CreateUEFI(printf func(string, ...any), options UEFIOptions) error {
 		return err
 	}
 
-	if _, err := cmd.Run("mmd", "-i", efiBootImg, "::EFI"); err != nil {
+	if err := os.MkdirAll(filepath.Join(isoRoot, "EFI/Linux"), 0o755); err != nil {
 		return err
 	}
 
-	if _, err := cmd.Run("mmd", "-i", efiBootImg, "::EFI/BOOT"); err != nil {
+	if err := os.MkdirAll(filepath.Join(isoRoot, "EFI/BOOT"), 0o755); err != nil {
 		return err
 	}
 
-	if _, err := cmd.Run("mmd", "-i", efiBootImg, "::EFI/Linux"); err != nil {
+	if err := os.MkdirAll(filepath.Join(isoRoot, "EFI/keys"), 0o755); err != nil {
 		return err
 	}
 
-	if _, err := cmd.Run("mmd", "-i", efiBootImg, "::EFI/keys"); err != nil {
+	if err := os.MkdirAll(filepath.Join(isoRoot, "loader/keys/auto"), 0o755); err != nil {
 		return err
 	}
 
-	if _, err := cmd.Run("mmd", "-i", efiBootImg, "::loader"); err != nil {
-		return err
-	}
-
-	if _, err := cmd.Run("mmd", "-i", efiBootImg, "::loader/keys"); err != nil {
-		return err
-	}
-
-	if _, err := cmd.Run("mmd", "-i", efiBootImg, "::loader/keys/auto"); err != nil {
-		return err
-	}
-
-	efiBootPath := "::EFI/BOOT/BOOTX64.EFI"
+	efiBootPath := "EFI/BOOT/BOOTX64.EFI"
 
 	if options.Arch == "arm64" {
-		efiBootPath = "::EFI/BOOT/BOOTAA64.EFI"
+		efiBootPath = "EFI/BOOT/BOOTAA64.EFI"
 	}
 
-	if _, err := cmd.Run("mcopy", "-i", efiBootImg, options.SDBootPath, efiBootPath); err != nil {
+	if err := copy.File(options.SDBootPath, filepath.Join(isoRoot, efiBootPath)); err != nil {
 		return err
 	}
 
-	if _, err := cmd.Run("mcopy", "-i", efiBootImg, options.UKIPath, fmt.Sprintf("::EFI/Linux/Talos-%s.efi", options.Version)); err != nil {
+	if err := copy.File(options.UKIPath, filepath.Join(isoRoot, fmt.Sprintf("EFI/Linux/Talos-%s.efi", options.Version))); err != nil {
 		return err
 	}
 
-	if _, err := cmd.RunContext(
-		cmd.WithStdin(context.Background(), &loaderConfigOut),
-		"mcopy", "-i", efiBootImg, "-", "::loader/loader.conf",
-	); err != nil {
+	if err := os.WriteFile(filepath.Join(isoRoot, "loader/loader.conf"), loaderConfigOut.Bytes(), 0o644); err != nil {
 		return err
 	}
 
-	if _, err := cmd.Run("mcopy", "-i", efiBootImg, options.UKISigningCertDerPath, "::EFI/keys/uki-signing-cert.der"); err != nil {
+	if err := copy.File(options.UKISigningCertDerPath, filepath.Join(isoRoot, "EFI/keys/uki-signing-cert.der")); err != nil {
 		return err
 	}
 
 	if options.PlatformKeyPath != "" {
-		if _, err := cmd.Run("mcopy", "-i", efiBootImg, options.PlatformKeyPath, filepath.Join("::loader/keys/auto", constants.PlatformKeyAsset)); err != nil {
+		if err := copy.File(options.PlatformKeyPath, filepath.Join(isoRoot, "loader/keys/auto", constants.PlatformKeyAsset)); err != nil {
 			return err
 		}
 	}
 
 	if options.KeyExchangeKeyPath != "" {
-		if _, err := cmd.Run("mcopy", "-i", efiBootImg, options.KeyExchangeKeyPath, filepath.Join("::loader/keys/auto", constants.KeyExchangeKeyAsset)); err != nil {
+		if err := copy.File(options.KeyExchangeKeyPath, filepath.Join(isoRoot, "loader/keys/auto", constants.KeyExchangeKeyAsset)); err != nil {
 			return err
 		}
 	}
 
 	if options.SignatureKeyPath != "" {
-		if _, err := cmd.Run("mcopy", "-i", efiBootImg, options.SignatureKeyPath, filepath.Join("::loader/keys/auto", constants.SignatureKeyAsset)); err != nil {
+		if err := copy.File(options.SignatureKeyPath, filepath.Join(isoRoot, "loader/keys/auto", constants.SignatureKeyAsset)); err != nil {
 			return err
 		}
+	}
+
+	if _, err := cmd.Run(
+		"mcopy",
+		"-s", // recursive
+		"-p", // preserve attributes
+		"-Q", // quit on error
+		"-m", // preserve modification time
+		"-i",
+		efiBootImg,
+		filepath.Join(isoRoot, "EFI"),
+		filepath.Join(isoRoot, "loader"),
+		"::",
+	); err != nil {
+		return err
 	}
 
 	// fixup directory timestamps recursively
@@ -187,22 +188,17 @@ func CreateUEFI(printf func(string, ...any), options UEFIOptions) error {
 
 	printf("creating ISO image")
 
+	// ref: https://askubuntu.com/questions/1110651/how-to-produce-an-iso-image-that-boots-only-on-uefi/1111760#1111760
 	args := []string{
-		"-as", "mkisofs",
-		"-e", "efiboot.img",
+		"-e", "--interval:appended_partition_2:all::", // use appended partition 2 for EFI
+		"-append_partition", "2", "0xef", efiBootImg,
+		"-partition_cyl_align", // pad partition to cylinder boundary
+		"all",
+		"-partition_offset", "16", // support booting from USB
+		"-iso_mbr_part_type", "0x83", // just to have more clear info when doing a fdisk -l
 		"-no-emul-boot",
 		"-o", options.OutPath,
-		options.ScratchDir,
-		"--",
-	}
-
-	if epoch, ok, err := utils.SourceDateEpoch(); err != nil {
-		return err
-	} else if ok {
-		args = append(args,
-			"-volume_date", "all_file_dates", fmt.Sprintf("=%d", epoch),
-			"-volume_date", "uuid", time.Unix(epoch, 0).Format("2006010215040500"),
-		)
+		isoRoot,
 	}
 
 	if quirks.New(options.Version).SupportsISOLabel() {
@@ -210,11 +206,11 @@ func CreateUEFI(printf func(string, ...any), options UEFIOptions) error {
 
 		args = append(args,
 			"-volid", VolumeID(label),
-			"-volset-id", label,
+			"-volset", label,
 		)
 	}
 
-	if _, err := cmd.Run("xorriso", args...); err != nil {
+	if _, err := cmd.Run("xorrisofs", args...); err != nil {
 		return err
 	}
 
