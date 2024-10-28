@@ -5,6 +5,7 @@
 package network_test
 
 import (
+	"fmt"
 	"net"
 	"net/netip"
 	"sort"
@@ -431,6 +432,58 @@ func (suite *CmdlineSuite) TestParse() {
 					},
 				},
 			},
+		},
+		{
+			name:    "vlan configuration with alternative link name vlan0008",
+			cmdline: "vlan=vlan0008:eth1",
+			expectedSettings: network.CmdlineNetworking{
+				NetworkLinkSpecs: []netconfig.LinkSpecSpec{
+					{
+						Name:        "eth1.8",
+						Logical:     true,
+						Up:          true,
+						Kind:        netconfig.LinkKindVLAN,
+						Type:        nethelpers.LinkEther,
+						ParentName:  "eth1",
+						ConfigLayer: netconfig.ConfigCmdline,
+						VLAN: netconfig.VLANSpec{
+							VID:      8,
+							Protocol: nethelpers.VLANProtocol8021Q,
+						},
+					},
+				},
+			},
+		},
+		{
+			name:    "vlan configuration with alternative link name vlan1",
+			cmdline: "vlan=vlan4095:eth1",
+			expectedSettings: network.CmdlineNetworking{
+				NetworkLinkSpecs: []netconfig.LinkSpecSpec{
+					{
+						Name:        "eth1.4095",
+						Logical:     true,
+						Up:          true,
+						Kind:        netconfig.LinkKindVLAN,
+						Type:        nethelpers.LinkEther,
+						ParentName:  "eth1",
+						ConfigLayer: netconfig.ConfigCmdline,
+						VLAN: netconfig.VLANSpec{
+							VID:      4095,
+							Protocol: nethelpers.VLANProtocol8021Q,
+						},
+					},
+				},
+			},
+		},
+		{
+			name:          "vlan configuration with invalid vlan ID 4096",
+			cmdline:       "vlan=eth1.4096:eth1",
+			expectedError: fmt.Sprintf("invalid vlanID=%d, must be in the range 1..4095: %s", 4096, "eth1.4096:eth1"),
+		},
+		{
+			name:          "vlan configuration with invalid vlan ID 0",
+			cmdline:       "vlan=eth1.0:eth1",
+			expectedError: fmt.Sprintf("invalid vlanID=%d, must be in the range 1..4095: %s", 0, "eth1.0:eth1"),
 		},
 		{
 			name:    "multiple ip configurations",
