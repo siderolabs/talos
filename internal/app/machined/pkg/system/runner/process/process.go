@@ -219,7 +219,7 @@ func (p *processRunner) build() (commandWrapper, error) {
 		}
 	}()
 
-	var afterStartFuncs []func()
+	var afterStartClosers []io.Closer
 
 	if p.opts.StdinFile != "" {
 		stdin, err := os.Open(p.opts.StdinFile)
@@ -229,9 +229,7 @@ func (p *processRunner) build() (commandWrapper, error) {
 
 		wrapper.stdin = stdin
 
-		afterStartFuncs = append(afterStartFuncs, func() {
-			stdin.Close() //nolint:errcheck
-		})
+		afterStartClosers = append(afterStartClosers, stdin)
 	}
 
 	if p.opts.StdoutFile != "" {
@@ -242,9 +240,7 @@ func (p *processRunner) build() (commandWrapper, error) {
 
 		wrapper.stdout = stdout
 
-		afterStartFuncs = append(afterStartFuncs, func() {
-			stdout.Close() //nolint:errcheck
-		})
+		afterStartClosers = append(afterStartClosers, stdout)
 	} else {
 		// Do not close the fd in this case, it'll be done by closeLogger
 		wrapper.stdout = pw
@@ -258,9 +254,7 @@ func (p *processRunner) build() (commandWrapper, error) {
 
 		wrapper.stderr = stderr
 
-		afterStartFuncs = append(afterStartFuncs, func() {
-			stderr.Close() //nolint:errcheck
-		})
+		afterStartClosers = append(afterStartClosers, stderr)
 	} else {
 		// Do not close the fd in this case, it'll be done by closeLogger
 		wrapper.stderr = pw
@@ -269,11 +263,7 @@ func (p *processRunner) build() (commandWrapper, error) {
 	closeWriter = false
 
 	wrapper.launcher = launcher
-	wrapper.afterStart = func() {
-		for _, f := range afterStartFuncs {
-			f()
-		}
-	}
+	wrapper.afterStart = func() { xslices.Map(afterStartClosers, io.Closer.Close) }
 	wrapper.afterTermination = closeLogging
 	wrapper.ctty = p.opts.Ctty
 
@@ -290,9 +280,7 @@ func (p *processRunner) build() (commandWrapper, error) {
 		if err == nil {
 			wrapper.cgroupFile = cg
 
-			afterStartFuncs = append(afterStartFuncs, func() {
-				cg.Close() //nolint:errcheck
-			})
+			afterStartClosers = append(afterStartClosers, cg)
 		}
 	}
 
