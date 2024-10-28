@@ -215,10 +215,10 @@ func (n *Nocloud) configFromCD(ctx context.Context, r state.State) (metaConfig [
 }
 
 //nolint:gocyclo
-func (n *Nocloud) acquireConfig(ctx context.Context, r state.State) (metadataConfigDl, metadataNetworkConfigDl, machineConfigDl []byte, metadata *MetadataConfig, err error) {
+func (n *Nocloud) acquireConfig(ctx context.Context, r state.State) (metadataNetworkConfigDl, machineConfigDl []byte, metadata *MetadataConfig, err error) {
 	s, err := smbios.GetSMBIOSInfo()
 	if err != nil {
-		return nil, nil, nil, nil, err
+		return nil, nil, nil, err
 	}
 
 	var (
@@ -252,6 +252,8 @@ func (n *Nocloud) acquireConfig(ctx context.Context, r state.State) (metadataCon
 		}
 	}
 
+	var metadataConfigDl []byte
+
 	if networkSource && metaBaseURL != "" {
 		metadataConfigDl, metadataNetworkConfigDl, machineConfigDl, err = n.configFromNetwork(ctx, metaBaseURL, r)
 	} else {
@@ -277,7 +279,7 @@ func (n *Nocloud) acquireConfig(ctx context.Context, r state.State) (metadataCon
 		metadata.InternalDNS = fallbackMetadata.InternalDNS
 	}
 
-	return metadataConfigDl, metadataNetworkConfigDl, machineConfigDl, metadata, err
+	return metadataNetworkConfigDl, machineConfigDl, metadata, err
 }
 
 //nolint:gocyclo,cyclop

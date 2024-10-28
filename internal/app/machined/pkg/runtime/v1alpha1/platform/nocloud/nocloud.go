@@ -81,7 +81,7 @@ func (n *Nocloud) ParseMetadata(unmarshalledNetworkConfig *NetworkConfig, st sta
 
 // Configuration implements the runtime.Platform interface.
 func (n *Nocloud) Configuration(ctx context.Context, r state.State) ([]byte, error) {
-	_, _, machineConfigDl, _, err := n.acquireConfig(ctx, r) //nolint:dogsled
+	_, machineConfigDl, _, err := n.acquireConfig(ctx, r)
 	if err != nil {
 		return nil, err
 	}
@@ -108,7 +108,7 @@ func (n *Nocloud) KernelArgs(string) procfs.Parameters {
 
 // NetworkConfiguration implements the runtime.Platform interface.
 func (n *Nocloud) NetworkConfiguration(ctx context.Context, st state.State, ch chan<- *runtime.PlatformNetworkConfig) error {
-	metadataConfigDl, metadataNetworkConfigDl, _, metadata, err := n.acquireConfig(ctx, st)
+	metadataNetworkConfigDl, _, metadata, err := n.acquireConfig(ctx, st)
 	if stderrors.Is(err, errors.ErrNoConfigSource) {
 		err = nil
 	}
@@ -117,20 +117,14 @@ func (n *Nocloud) NetworkConfiguration(ctx context.Context, st state.State, ch c
 		return err
 	}
 
-	if metadataConfigDl == nil && metadataNetworkConfigDl == nil {
+	if metadataNetworkConfigDl == nil {
 		// no data, use cached network configuration if available
 		return nil
 	}
 
-	var unmarshalledNetworkConfig *NetworkConfig
-
-	if metadataNetworkConfigDl != nil {
-		nc, err := DecodeNetworkConfig(metadataNetworkConfigDl)
-		if err != nil {
-			return err
-		}
-
-		unmarshalledNetworkConfig = nc
+	unmarshalledNetworkConfig, err := DecodeNetworkConfig(metadataNetworkConfigDl)
+	if err != nil {
+		return err
 	}
 
 	networkConfig, err := n.ParseMetadata(unmarshalledNetworkConfig, st, metadata)
