@@ -56,11 +56,17 @@ func (suite *ContainersSuite) TestSandboxImage() {
 	for _, message := range resp.GetMessages() {
 		suite.Assert().NotEmpty(message.GetContainers())
 
+		matched := false
+
 		for _, ctr := range message.GetContainers() {
-			if ctr.PodId == "" {
+			if ctr.PodId == ctr.Id {
 				suite.Assert().Equal(images.DefaultSandboxImage, ctr.Image)
+
+				matched = true
 			}
 		}
+
+		suite.Assert().True(matched, "no pods found, node %s", node)
 	}
 }
 
