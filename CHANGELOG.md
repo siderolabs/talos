@@ -1,3 +1,123 @@
+## [Talos 1.8.2](https://github.com/siderolabs/talos/releases/tag/v1.8.2) (2024-10-28)
+
+Welcome to the v1.8.2 release of Talos!
+
+Starting with Talos v1.8.0, only standard assets would be published as github release assets. These include:
+
+* `cloud-images.json`
+* `talosctl` binaries
+* `kernel`
+* `initramfs`
+* `metal` iso and disk images
+* `talosctl-cni-bundle`
+
+All other release assets can be downloaded from [Image Factory](https://www.talos.dev/latest/talos-guides/install/boot-assets/#image-factory).
+
+Please try out the release binaries and report any issues at
+https://github.com/siderolabs/talos/issues.
+
+### Component Updates
+
+Linux: 6.6.58
+containerd: 2.0.0-rc.6
+runc: 1.2.0
+Kubernetes: 1.31.2
+
+Talos is built with Go 1.22.8.
+
+
+### Contributors
+
+* Andrey Smirnov
+* Dmitriy Matrenichev
+* Joakim Nohlgård
+* Noel Georgi
+* Philip Schmid
+* Philipp Kleber
+* Serge Logvinov
+
+### Changes
+<details><summary>17 commits</summary>
+<p>
+
+* [`cfc10106a`](https://github.com/siderolabs/talos/commit/cfc10106adbe4f96e5b92f8e880020a649893d0e) fix: include iptables/netfilter ipv6 fix
+* [`d8e2daf77`](https://github.com/siderolabs/talos/commit/d8e2daf7798fe5a4b3bb8d4005e303013666c2dd) fix: wait for udevd to be running before activating LVM
+* [`e105a3d74`](https://github.com/siderolabs/talos/commit/e105a3d740ae261dc5287d3eb27f1e438b8c4fa8) fix: talosctl process null character
+* [`0e96e99b2`](https://github.com/siderolabs/talos/commit/0e96e99b26b8eb584fc050f622db55a6d9d0b739) fix: rework the 'metal-iso' config acquisition
+* [`7ef579650`](https://github.com/siderolabs/talos/commit/7ef57965007b694c6bc8cfc748bd39d89f999574) fix: improve error messages for invalid bridge/bond configuration
+* [`a3fcbe0ba`](https://github.com/siderolabs/talos/commit/a3fcbe0ba75f822681a6a009673d9f2462b3fcb9) chore: rename tpm2.PCRExtent -> tpm2.PCRExtend
+* [`a9e6e60ca`](https://github.com/siderolabs/talos/commit/a9e6e60ca6611f2afef5254f8ac53c7ec479d8d9) fix: correct error message for invalid ip=
+* [`49de0abaa`](https://github.com/siderolabs/talos/commit/49de0abaa909b52151a5548fb8cb759683c90638) fix: update incorrect alias for PCIDevice resource
+* [`9b561ac3d`](https://github.com/siderolabs/talos/commit/9b561ac3d3fa4b1f71d47f44255b817ec1c22d1c) feat: add Talos 1.9 compatibility guarantees
+* [`2ea3f85bc`](https://github.com/siderolabs/talos/commit/2ea3f85bc6cda3d0f6e86c575d4b351466b1d7af) chore: update siderolabs/crypto module and return proper ALPN
+* [`ce4791251`](https://github.com/siderolabs/talos/commit/ce479125186d2ef238c82b8350b0ef0ec83b66bc) feat: optionally decode hcloud userdata as base64
+* [`f20a6900d`](https://github.com/siderolabs/talos/commit/f20a6900db7763fc214ca6e82c0d121aed6566bd) fix: json logging panic
+* [`d855bb8be`](https://github.com/siderolabs/talos/commit/d855bb8beea91a9079dc821f3b303228ad2478c6) fix: skip ram disks
+* [`b429e7f28`](https://github.com/siderolabs/talos/commit/b429e7f288635c85dff29d05837732148526b562) fix: do not use pflag csv comma reader for config-patch
+* [`ee44f2c51`](https://github.com/siderolabs/talos/commit/ee44f2c5126a7ffacf8ace4c1f375ec7377b6b24) test: skip no error test in Cilium
+* [`7d055af29`](https://github.com/siderolabs/talos/commit/7d055af29d07d709e05121bbbfee5e30313f4750) fix: scaleway metadata
+* [`9f62fe96c`](https://github.com/siderolabs/talos/commit/9f62fe96cef9984e8683252daf1366dbf4ca63d9) feat: update pkgs and Kubernetes
+</p>
+</details>
+
+### Changes from siderolabs/crypto
+<details><summary>1 commit</summary>
+<p>
+
+* [`58b2f92`](https://github.com/siderolabs/crypto/commit/58b2f9291c7e763a7210cfa681f88a7fa2230bf3) chore: use HTTP/2 ALPN by default
+</p>
+</details>
+
+### Changes from siderolabs/go-circular
+<details><summary>1 commit</summary>
+<p>
+
+* [`9a0f7b0`](https://github.com/siderolabs/go-circular/commit/9a0f7b02c80ad6c2d953b2d3dd388c56e89363ea) fix: multiple data race issues
+</p>
+</details>
+
+### Changes from siderolabs/pkgs
+<details><summary>8 commits</summary>
+<p>
+
+* [`e72b2f4`](https://github.com/siderolabs/pkgs/commit/e72b2f4bd585ded3ad5f64e66e5b545c703ab3dc) fix: apply netfilter ipv6 fix
+* [`9aac1a8`](https://github.com/siderolabs/pkgs/commit/9aac1a8c85c0eac9882ccc89fcece6b5f28fb446) feat: update containerd to v2.0.0-rc.6
+* [`9668729`](https://github.com/siderolabs/pkgs/commit/966872967989d1a1e741dca46e7a9fc24ed75e63) feat: update Linux to 6.6.58
+* [`9bc27b3`](https://github.com/siderolabs/pkgs/commit/9bc27b3b6df033dc987de390f2418aea5c14d40a) feat: update runc to 1.2.0
+* [`f7cc89e`](https://github.com/siderolabs/pkgs/commit/f7cc89e0e6445e5d2b4177437ed878da9e9e523e) fix: default IOMMU mode to 'lazy'
+* [`7ca4e2c`](https://github.com/siderolabs/pkgs/commit/7ca4e2c06883de8446883e0f3649bef2875a9c30) feat: update Linux to 6.6.57, update Linux firmware
+* [`e2c4848`](https://github.com/siderolabs/pkgs/commit/e2c4848212a70d10ad735a7460d281b2bc3a20ac) feat: update Linux 6.6.56 and protect /proc/mem
+* [`c7729c3`](https://github.com/siderolabs/pkgs/commit/c7729c31934c4ef7603166b771d54138790549a5) feat: enable CONFIG_XFRM_STATISTICS
+</p>
+</details>
+
+### Changes from siderolabs/siderolink
+<details><summary>1 commit</summary>
+<p>
+
+* [`1893385`](https://github.com/siderolabs/siderolink/commit/1893385fe45bf110357a770d31b06f5d79403065) fix: initialize tls listener properly
+</p>
+</details>
+
+### Dependency Changes
+
+* **github.com/klauspost/compress**      v1.17.10 -> v1.17.11
+* **github.com/siderolabs/crypto**       v0.4.4 -> v0.5.0
+* **github.com/siderolabs/go-circular**  v0.2.0 -> v0.2.1
+* **github.com/siderolabs/pkgs**         v1.8.0-16-g71d23b4 -> v1.8.0-24-ge72b2f4
+* **github.com/siderolabs/siderolink**   v0.3.10 -> v0.3.11
+* **golang.org/x/time**                  v0.6.0 -> v0.7.0
+* **k8s.io/api**                         v0.31.1 -> v0.31.2
+* **k8s.io/apiserver**                   v0.31.1 -> v0.31.2
+* **k8s.io/client-go**                   v0.31.1 -> v0.31.2
+* **k8s.io/component-base**              v0.31.1 -> v0.31.2
+* **k8s.io/kube-scheduler**              v0.31.1 -> v0.31.2
+* **k8s.io/kubectl**                     v0.31.1 -> v0.31.2
+* **k8s.io/kubelet**                     v0.31.1 -> v0.31.2
+* **k8s.io/pod-security-admission**      v0.31.1 -> v0.31.2
+
+Previous release can be found at [v1.8.1](https://github.com/siderolabs/talos/releases/tag/v1.8.1)
+
 ## [Talos 1.8.1](https://github.com/siderolabs/talos/releases/tag/v1.8.1) (2024-10-08)
 
 Welcome to the v1.8.1 release of Talos!
