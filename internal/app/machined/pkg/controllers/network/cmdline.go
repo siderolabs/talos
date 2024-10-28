@@ -337,10 +337,17 @@ func ParseCmdlineNetwork(cmdline *procfs.Cmdline) (CmdlineNetworking, error) {
 
 		_, vlanNumberString, ok := strings.Cut(vlanName, ".")
 		if !ok {
-			return settings, fmt.Errorf("malformed vlan commandline argument: %s", *vlanSettings)
+			vlanNumberString, ok = strings.CutPrefix(vlanName, "vlan")
+			if !ok {
+				return settings, fmt.Errorf("malformed vlan commandline argument: %s", *vlanSettings)
+			}
 		}
 
 		vlanID, err := strconv.Atoi(vlanNumberString)
+
+		if vlanID < 1 || 4095 < vlanID {
+			return settings, fmt.Errorf("invalid vlanID=%d, must be in the range 1..4095: %s", vlanID, *vlanSettings)
+		}
 
 		if err != nil || vlanNumberString == "" {
 			return settings, errors.New("unable to parse vlan")
