@@ -20,8 +20,8 @@ import (
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/siderolabs/gen/optional"
-	"github.com/siderolabs/gen/value"
 	"github.com/siderolabs/gen/xiter"
+	"github.com/siderolabs/gen/xslices"
 	"go.uber.org/zap"
 
 	efiles "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/files"
@@ -158,10 +158,13 @@ func (ctrl *EtcFileController) Run(ctx context.Context, r controller.Runtime, _ 
 		}
 
 		if resolverStatus != nil && hostDNSCfg != nil {
-			dnsServers := resolverStatus.TypedSpec().DNSServers
+			dnsServers := xslices.FilterInPlace(
+				[]netip.Addr{hostDNSCfg.TypedSpec().ServiceHostDNSAddress},
+				netip.Addr.IsValid,
+			)
 
-			if !value.IsZero(hostDNSCfg.TypedSpec().ServiceHostDNSAddress) {
-				dnsServers = []netip.Addr{hostDNSCfg.TypedSpec().ServiceHostDNSAddress}
+			if len(dnsServers) == 0 {
+				dnsServers = resolverStatus.TypedSpec().DNSServers
 			}
 
 			conf := renderResolvConf(slices.All(dnsServers), hostnameStatusSpec, cfgProvider)

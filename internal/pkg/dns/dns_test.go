@@ -6,22 +6,26 @@ package dns_test
 
 import (
 	"context"
+	"iter"
 	"net"
 	"net/netip"
+	"runtime"
 	"slices"
+	"strings"
 	"testing"
 	"time"
 
 	"github.com/coredns/coredns/plugin/pkg/proxy"
 	dnssrv "github.com/miekg/dns"
-	"github.com/siderolabs/gen/ensure"
-	"github.com/siderolabs/gen/xiter"
+	"github.com/siderolabs/gen/maps"
 	"github.com/siderolabs/gen/xslices"
 	"github.com/siderolabs/gen/xtesting/check"
 	"github.com/stretchr/testify/require"
+	"github.com/thejerf/suture/v4"
 	"go.uber.org/zap/zaptest"
 
 	"github.com/siderolabs/talos/internal/pkg/dns"
+	"github.com/siderolabs/talos/pkg/machinery/resources/cluster"
 )
 
 func TestDNS(t *testing.T) {
@@ -76,47 +80,88 @@ func TestDNS(t *testing.T) {
 		},
 	}
 
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			stop := newServer(t, test.nameservers...)
-			t.Cleanup(stop)
+	for _, dnsAddr := range []string{"127.0.0.1:10700"} {
+		for _, test := range tests {
+			t.Run(dnsAddr+"/"+test.name, func(t *testing.T) {
+				stop := newManager(t, test.nameservers...)
+				t.Cleanup(stop)
 
-			time.Sleep(10 * time.Millisecond)
+				time.Sleep(10 * time.Millisecond)
 
-			r, err := dnssrv.Exchange(createQuery(test.hostname), "127.0.0.53:10700")
-			test.errCheck(t, err)
+				r, err := dnssrv.Exchange(createQuery(test.hostname), dnsAddr)
+				test.errCheck(t, err)
 
-			if r != nil {
-				require.Equal(t, test.expectedCode, r.Rcode, r)
-			}
+				if r != nil {
+					require.Equal(t, test.expectedCode, r.Rcode, r)
+				}
 
-			t.Logf("r: %s", r)
-		})
+				t.Logf("r: %s", r)
+			})
+		}
 	}
 }
 
 func TestDNSEmptyDestinations(t *testing.T) {
-	stop := newServer(t)
+	stop := newManager(t)
 	defer stop()
 
 	time.Sleep(10 * time.Millisecond)
 
-	r, err := dnssrv.Exchange(createQuery("google.com"), "127.0.0.53:10700")
+	r, err := dnssrv.Exchange(createQuery("google.com"), "127.0.0.1:10700")
 	require.NoError(t, err)
 	require.Equal(t, dnssrv.RcodeServerFailure, r.Rcode, r)
 
-	r, err = dnssrv.Exchange(createQuery("google.com"), "127.0.0.53:10700")
+	r, err = dnssrv.Exchange(createQuery("google.com"), "127.0.0.1:10700")
 	require.NoError(t, err)
 	require.Equal(t, dnssrv.RcodeServerFailure, r.Rcode, r)
 
 	stop()
 }
 
-func newServer(t *testing.T, nameservers ...string) func() {
-	l := zaptest.NewLogger(t)
+func TestGC_NOGC(t *testing.T) {
+	tests := map[string]bool{
+		"ClearAll":    false,
+		"No ClearAll": true,
+	}
 
-	handler := dns.NewHandler(l)
-	t.Cleanup(handler.Stop)
+	for name, f := range tests {
+		t.Run(name, func(t *testing.T) {
+			m := dns.NewManager(&testReader{}, func(e suture.Event) { t.Log("dns-runners event:", e) }, zaptest.NewLogger(t))
+
+			m.ServeBackground(context.Background())
+			m.ServeBackground(context.Background())
+			require.Panics(t, func() { m.ServeBackground(context.TODO()) })
+
+			for _, err := range m.RunAll(slices.Values([]dns.AddressPair{
+				{Network: "udp", Addr: netip.MustParseAddrPort("127.0.0.1:10700")},
+				{Network: "udp", Addr: netip.MustParseAddrPort("127.0.0.1:10701")},
+			}), false) {
+				require.NoError(t, err)
+			}
+
+			require.NoError(t, m.ClearAll(f))
+
+			m = nil
+
+			for range 100 {
+				runtime.GC()
+			}
+		})
+	}
+}
+
+func newManager(t *testing.T, nameservers ...string) func() {
+	m := dns.NewManager(&testReader{}, func(e suture.Event) {
+		t.Log("dns-runners event:", e)
+	}, zaptest.NewLogger(t))
+
+	m.AllowNodeResolving(true)
+
+	t.Cleanup(func() {
+		if err := m.ClearAll(false); err != nil {
+			t.Logf("error stopping dns runners: %v", err)
+		}
+	})
 
 	pxs := xslices.Map(nameservers, func(ns string) *proxy.Proxy {
 		p := proxy.NewProxy(ns, net.JoinHostPort(ns, "53"), "dns")
@@ -127,30 +172,42 @@ func newServer(t *testing.T, nameservers ...string) func() {
 		return p
 	})
 
-	handler.SetProxy(xiter.Values(slices.All(pxs)))
+	ctx, cancel := context.WithCancel(context.Background())
+	t.Cleanup(cancel)
 
-	pc, err := dns.NewUDPPacketConn("udp", "127.0.0.53:10700", ensure.Value(dns.MakeControl("udp", false)))
-	require.NoError(t, err)
+	m.SetUpstreams(slices.Values(pxs))
 
-	nodeHandler := dns.NewNodeHandler(handler, &testResolver{}, l)
+	m.ServeBackground(ctx)
+	m.ServeBackground(ctx)
 
-	nodeHandler.SetEnabled(true)
-
-	srv := dns.NewServer(dns.ServerOptions{
-		PacketConn: pc,
-		Handler:    dns.NewCache(nodeHandler, l),
-		Logger:     l,
-	})
-
-	stop, _ := srv.Start(func(err error) {
-		if err != nil {
-			t.Errorf("error running dns server: %v", err)
+	for _, err := range m.RunAll(slices.Values([]dns.AddressPair{
+		{Network: "udp", Addr: netip.MustParseAddrPort("127.0.0.1:10700")},
+		{Network: "udp", Addr: netip.MustParseAddrPort("127.0.0.1:10701")},
+		{Network: "tcp", Addr: netip.MustParseAddrPort("127.0.0.1:10700")},
+	}), false) {
+		if err != nil && strings.Contains(err.Error(), "failed to set TCP_FASTOPEN") {
+			continue
 		}
 
-		t.Logf("dns server stopped")
-	})
+		require.NoError(t, err)
+	}
 
-	return stop
+	for _, err := range m.RunAll(slices.Values([]dns.AddressPair{
+		{Network: "udp", Addr: netip.MustParseAddrPort("127.0.0.1:10700")},
+		{Network: "tcp", Addr: netip.MustParseAddrPort("127.0.0.1:10700")},
+	}), false) {
+		if err != nil && strings.Contains(err.Error(), "failed to set TCP_FASTOPEN") {
+			continue
+		}
+
+		require.NoError(t, err)
+	}
+
+	return func() {
+		if err := m.ClearAll(false); err != nil {
+			t.Logf("error stopping dns runners: %v", err)
+		}
+	}
 }
 
 func createQuery(name string) *dnssrv.Msg {
@@ -169,19 +226,21 @@ func createQuery(name string) *dnssrv.Msg {
 	}
 }
 
-type testResolver struct{}
+type testReader struct{}
 
-func (*testResolver) ResolveAddr(_ context.Context, qType uint16, name string) []netip.Addr {
-	if qType != dnssrv.TypeA {
-		return nil
+func (r *testReader) ReadMembers(context.Context) (iter.Seq[*cluster.Member], error) {
+	namesToAddresses := map[string][]netip.Addr{
+		"talos-default-controlplane-1": {netip.MustParseAddr("172.20.0.2")},
+		"talos-default-worker-1":       {netip.MustParseAddr("172.20.0.3")},
 	}
 
-	switch name {
-	case "talos-default-controlplane-1.":
-		return []netip.Addr{netip.MustParseAddr("172.20.0.2")}
-	case "talos-default-worker-1.":
-		return []netip.Addr{netip.MustParseAddr("172.20.0.3")}
-	default:
-		return nil
-	}
+	result := maps.ToSlice(namesToAddresses, func(k string, v []netip.Addr) *cluster.Member {
+		result := cluster.NewMember(cluster.NamespaceName, k)
+
+		result.TypedSpec().Addresses = v
+
+		return result
+	})
+
+	return slices.Values(result), nil
 }

@@ -8,13 +8,12 @@ import (
 	"context"
 	"fmt"
 	"net/netip"
+	"slices"
 
 	"github.com/cosi-project/runtime/pkg/controller"
-	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/siderolabs/gen/optional"
-	"github.com/siderolabs/gen/value"
 	"github.com/siderolabs/go-procfs/procfs"
 	"go.uber.org/zap"
 
@@ -74,6 +73,8 @@ func (ctrl *HostDNSConfigController) Run(ctx context.Context, r controller.Runti
 
 		var cfgProvider talosconfig.Config
 
+		r.StartTrackingOutputs()
+
 		cfg, err := safe.ReaderGetByID[*config.MachineConfig](ctx, r, config.V1Alpha1ID)
 		if err != nil {
 			if !state.IsNotFoundError(err) {
@@ -83,7 +84,7 @@ func (ctrl *HostDNSConfigController) Run(ctx context.Context, r controller.Runti
 			cfgProvider = cfg.Config()
 		}
 
-		var newServiceAddr netip.Addr
+		newServiceAddrs := make([]netip.Addr, 0, 2)
 
 		if err := safe.WriterModify(ctx, r, network.NewHostDNSConfig(network.HostDNSConfigID), func(res *network.HostDNSConfig) error {
 			res.TypedSpec().ListenAddresses = []netip.AddrPort{
@@ -101,11 +102,19 @@ func (ctrl *HostDNSConfigController) Run(ctx context.Context, r controller.Runti
 			res.TypedSpec().Enabled = cfgProvider.Machine().Features().HostDNS().Enabled()
 			res.TypedSpec().ResolveMemberNames = cfgProvider.Machine().Features().HostDNS().ResolveMemberNames()
 
-			if cfgProvider.Machine().Features().HostDNS().ForwardKubeDNSToHost() {
-				newServiceAddr = netip.MustParseAddr(constants.HostDNSAddress)
+			if !cfgProvider.Machine().Features().HostDNS().ForwardKubeDNSToHost() {
+				return nil
+			}
 
-				res.TypedSpec().ListenAddresses = append(res.TypedSpec().ListenAddresses, netip.AddrPortFrom(newServiceAddr, 53))
-				res.TypedSpec().ServiceHostDNSAddress = newServiceAddr
+			if slices.ContainsFunc(
+				cfgProvider.Cluster().Network().PodCIDRs(),
+				func(cidr string) bool { return netip.MustParsePrefix(cidr).Addr().Is4() },
+			) {
+				parsed := netip.MustParseAddr(constants.HostDNSAddress)
+				newServiceAddrs = append(newServiceAddrs, parsed)
+
+				res.TypedSpec().ListenAddresses = append(res.TypedSpec().ListenAddresses, netip.AddrPortFrom(parsed, 53))
+				res.TypedSpec().ServiceHostDNSAddress = parsed
 			}
 
 			return nil
@@ -113,65 +122,25 @@ func (ctrl *HostDNSConfigController) Run(ctx context.Context, r controller.Runti
 			return fmt.Errorf("error writing host dns config: %w", err)
 		}
 
-		var touched *network.AddressSpec
-
-		if !value.IsZero(newServiceAddr) {
-			touched, err = updateSpec(ctx, r, newServiceAddr, logger)
+		for _, newServiceAddr := range newServiceAddrs {
+			err := updateSpec(ctx, r, newServiceAddr, logger)
 			if err != nil {
 				return err
 			}
 		}
 
-		if err = ctrl.cleanupAddressSpecs(
-			ctx,
-			r,
-			func(id resource.ID) bool {
-				if touched == nil {
-					return false
-				}
-
-				return id == touched.Metadata().ID()
-			},
-			logger,
-		); err != nil {
+		if err = safe.CleanupOutputs[*network.HostDNSConfig](ctx, r); err != nil {
 			return err
 		}
-
-		r.ResetRestartBackoff()
 	}
 }
 
-func (ctrl *HostDNSConfigController) cleanupAddressSpecs(ctx context.Context, r controller.Runtime, checkResource func(id resource.ID) bool, logger *zap.Logger) error {
-	list, err := safe.ReaderList[*network.AddressSpec](ctx, r, network.NewAddressSpec(network.ConfigNamespaceName, "").Metadata())
-	if err != nil {
-		return err
-	}
-
-	for address := range list.All() {
-		if address.Metadata().Owner() != ctrl.Name() {
-			continue
-		}
-
-		if checkResource(address.Metadata().ID()) {
-			continue
-		}
-
-		if err = r.Destroy(ctx, address.Metadata()); err != nil && !state.IsNotFoundError(err) {
-			return err
-		}
-
-		logger.Info("destroyed address spec", zap.String("address_id", address.Metadata().ID()))
-	}
-
-	return nil
-}
-
-func updateSpec(ctx context.Context, r controller.Runtime, newServiceAddr netip.Addr, logger *zap.Logger) (*network.AddressSpec, error) {
+func updateSpec(ctx context.Context, r controller.Runtime, newServiceAddr netip.Addr, logger *zap.Logger) error {
 	newDNSAddrPrefix := netip.PrefixFrom(newServiceAddr, newServiceAddr.BitLen())
 
 	logger.Debug("creating new host dns address spec", zap.String("address", newServiceAddr.String()))
 
-	res, err := safe.WriterModifyWithResult(
+	err := safe.WriterModify(
 		ctx,
 		r,
 		network.NewAddressSpec(
@@ -192,14 +161,19 @@ func updateSpec(ctx context.Context, r controller.Runtime, newServiceAddr netip.
 
 			spec.Flags = nethelpers.AddressFlags(nethelpers.AddressPermanent)
 			spec.LinkName = "lo"
-			spec.Scope = nethelpers.ScopeHost
+
+			if newServiceAddr.Is6() && newServiceAddr.IsPrivate() {
+				spec.Scope = nethelpers.ScopeGlobal
+			} else {
+				spec.Scope = nethelpers.ScopeHost
+			}
 
 			return nil
 		},
 	)
 	if err != nil {
-		return nil, fmt.Errorf("error modifying address: %w", err)
+		return fmt.Errorf("error modifying address: %w", err)
 	}
 
-	return res, nil
+	return nil
 }
