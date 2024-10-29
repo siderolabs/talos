@@ -43,24 +43,24 @@ The platform network configuration is a YAML document which contains resource sp
 For the `metal` platform, the [interactive dashboard]({{< relref "../../interactive-dashboard" >}}) can be used to edit the platform network configuration, also the configuration can be
 created [manually]({{< relref "../../../advanced/metal-network-configuration" >}}).
 
-The current value of the platform network configuration can be retrieved using the `MetaKeys` resource (key `0xa`):
+The current value of the platform network configuration can be retrieved using the `MetaKeys` resource (key `0x0a`):
 
 ```bash
-talosctl get meta 0xa
+talosctl get meta 0x0a
 ```
 
 The platform network configuration can be updated using the `talosctl meta` command for the running node:
 
 ```bash
-talosctl meta write 0xa '{"externalIPs": ["1.2.3.4"]}'
-talosctl meta delete 0xa
+talosctl meta write 0x0a '{"externalIPs": ["1.2.3.4"]}'
+talosctl meta delete 0x0a
 ```
 
 The initial platform network configuration for the `metal` platform can be also included into the generated Talos image:
 
 ```bash
-docker run --rm -i ghcr.io/siderolabs/imager:{{< release >}} iso --arch amd64 --tar-to-stdout --meta 0xa='{...}' | tar xz
-docker run --rm -i --privileged ghcr.io/siderolabs/imager:{{< release >}} image --platform metal --arch amd64 --tar-to-stdout --meta 0xa='{...}' | tar xz
+docker run --rm -i ghcr.io/siderolabs/imager:{{< release >}} iso --arch amd64 --tar-to-stdout --meta 0x0a='{...}' | tar xz
+docker run --rm -i --privileged ghcr.io/siderolabs/imager:{{< release >}} image --platform metal --arch amd64 --tar-to-stdout --meta 0x0a='{...}' | tar xz
 ```
 
 The platform network configuration gets merged with other sources of network configuration, the details can be found in the [network resources guide]({{< relref "../../../learn-more/networking-resources.md#configuration-merging" >}}).
