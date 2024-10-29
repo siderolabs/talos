@@ -972,7 +972,9 @@ type InstallDiskSelector struct {
 	//     - nvme
 	//     - sd
 	Type InstallDiskType `yaml:"type,omitempty"`
-	//   description: Disk bus path.
+	//   description: |
+	//      Disk bus path.
+	//      Warning: This requires special configuration for NVMe drives. For details, see https://github.com/siderolabs/go-blockdevice/issues/114.
 	//   examples:
 	//     - value: '"/pci0000:00/0000:00:17.0/ata1/host0/target0:0:0/0:0:0:0"'
 	//     - value: '"/pci0000:00/*"'

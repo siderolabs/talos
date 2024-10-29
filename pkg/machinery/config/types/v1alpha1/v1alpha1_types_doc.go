@@ -1150,7 +1150,7 @@ func (InstallDiskSelector) Doc() *encoder.Doc {
 				Name:        "busPath",
 				Type:        "string",
 				Note:        "",
-				Description: "Disk bus path.",
+				Description: "Disk bus path.\nWarning: This requires special configuration for NVMe drives. For details, see https://github.com/siderolabs/go-blockdevice/issues/114.",
 				Comments:    [3]string{"" /* encoder.HeadComment */, "Disk bus path." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
 		},
