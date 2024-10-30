@@ -119,12 +119,25 @@ func (suite *SELinuxSuite) TestFileMountLabels() {
 	}
 	maps.Copy(expectedLabelsControlPlane, expectedLabelsWorker)
 
-	suite.checkFileLabels(workers, expectedLabelsWorker)
-	suite.checkFileLabels(controlplanes, expectedLabelsControlPlane)
+	// Devices labeled by subsystems, labeled by udev
+	expectedLabelsDevices := map[string]string{
+		"/dev/rtc0":      "system_u:object_r:rtc_device_t:s0",
+		"/dev/tpm0":      "system_u:object_r:tpm_device_t:s0",
+		"/dev/tpmrm0":    "system_u:object_r:tpm_device_t:s0",
+		"/dev/watchdog":  "system_u:object_r:wdt_device_t:s0",
+		"/dev/watchdog0": "system_u:object_r:wdt_device_t:s0",
+		"/dev/null":      "system_u:object_r:null_device_t:s0",
+		"/dev/zero":      "system_u:object_r:null_device_t:s0",
+	}
+
+	suite.checkFileLabels(workers, expectedLabelsWorker, false)
+	suite.checkFileLabels(controlplanes, expectedLabelsControlPlane, false)
+	suite.checkFileLabels(workers, expectedLabelsDevices, true)
+	suite.checkFileLabels(controlplanes, expectedLabelsDevices, true)
 }
 
 //nolint:gocyclo
-func (suite *SELinuxSuite) checkFileLabels(nodes []string, expectedLabels map[string]string) {
+func (suite *SELinuxSuite) checkFileLabels(nodes []string, expectedLabels map[string]string, allowMissing bool) {
 	paths := make([]string, 0, len(expectedLabels))
 	for k := range expectedLabels {
 		paths = append(paths, k)
@@ -154,7 +167,7 @@ func (suite *SELinuxSuite) checkFileLabels(nodes []string, expectedLabels map[st
 
 				suite.Require().NoError(err)
 
-				suite.Require().NoError(helpers.ReadGRPCStream(stream, func(info *machineapi.FileInfo, node string, multipleNodes bool) error {
+				err = helpers.ReadGRPCStream(stream, func(info *machineapi.FileInfo, node string, multipleNodes bool) error {
 					// E.g. /var/lib should inherit /var label, while /var/run is a new mountpoint
 					if slices.Contains(paths, info.Name) && info.Name != path {
 						return nil
@@ -178,7 +191,16 @@ func (suite *SELinuxSuite) checkFileLabels(nodes []string, expectedLabels map[st
 					suite.Require().True(found)
 
 					return nil
-				}))
+				})
+
+				if allowMissing {
+					if err != nil {
+						suite.Require().Contains(err.Error(), "lstat")
+						suite.Require().Contains(err.Error(), "no such file or directory")
+					}
+				} else {
+					suite.Require().NoError(err)
+				}
 			}
 		}
 	}
