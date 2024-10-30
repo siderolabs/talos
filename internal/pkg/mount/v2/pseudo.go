@@ -33,6 +33,7 @@ func PseudoSubMountPoints() Points {
 		NewPoint("bpf", "/sys/fs/bpf", "bpf"),
 		NewPoint("securityfs", "/sys/kernel/security", "securityfs", WithFlags(unix.MS_NOSUID|unix.MS_NOEXEC|unix.MS_NODEV|unix.MS_RELATIME)),
 		NewPoint("tracefs", "/sys/kernel/tracing", "tracefs", WithFlags(unix.MS_NOSUID|unix.MS_NOEXEC|unix.MS_NODEV)),
+		NewPoint("selinuxfs", "/sys/fs/selinux", "selinuxfs", WithFlags(unix.MS_NOSUID|unix.MS_NOEXEC|unix.MS_RELATIME)),
 	}
 
 	if _, err := os.Stat(constants.EFIVarsMountPoint); err == nil {

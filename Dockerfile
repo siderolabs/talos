@@ -375,6 +375,13 @@ COPY --from=embed-abbrev-generate /src/pkg/machinery/gendata/data /pkg/machinery
 COPY --from=embed-abbrev-generate /src/_out/talos-metadata /_out/talos-metadata
 COPY --from=embed-abbrev-generate /src/_out/signing_key.x509 /_out/signing_key.x509
 
+FROM tools AS selinux
+COPY ./internal/pkg/selinux/policy/* /selinux/
+RUN mkdir /policy; secilc -o /policy/policy.33 -f /policy/file_contexts -c 33 /selinux/**/*.cil -vvvvv -O
+
+FROM scratch AS selinux-generate
+COPY --from=selinux /policy /policy
+
 FROM scratch AS ipxe-generate
 COPY --from=pkg-ipxe-amd64 /usr/libexec/snp.efi /amd64/snp.efi
 COPY --from=pkg-ipxe-arm64 /usr/libexec/snp.efi /arm64/snp.efi
@@ -412,6 +419,7 @@ COPY --from=go-generate /src/pkg/machinery/config/types/ /pkg/machinery/config/t
 COPY --from=go-generate /src/pkg/machinery/nethelpers/ /pkg/machinery/nethelpers/
 COPY --from=go-generate /src/pkg/machinery/extensions/ /pkg/machinery/extensions/
 COPY --from=ipxe-generate / /pkg/provision/providers/vm/internal/ipxe/data/ipxe/
+COPY --from=selinux-generate / /internal/pkg/selinux/
 COPY --from=embed-abbrev / /
 COPY --from=pkg-ca-certificates /etc/ssl/certs/ca-certificates /internal/app/machined/pkg/controllers/secrets/data/
 COPY --from=microsoft-key-keys / /internal/pkg/secureboot/database/certs/
@@ -429,6 +437,7 @@ COPY --from=generate /pkg/imager/ ./pkg/imager/
 COPY --from=generate /pkg/machinery/ ./pkg/machinery/
 COPY --from=generate /internal/app/machined/pkg/controllers/secrets/data/ ./internal/app/machined/pkg/controllers/secrets/data/
 COPY --from=generate /internal/pkg/secureboot/database/certs/ ./internal/pkg/secureboot/database/certs/
+COPY --from=generate /internal/pkg/selinux/ ./internal/pkg/selinux/
 COPY --from=embed / ./
 RUN --mount=type=cache,target=/.cache go list all >/dev/null
 WORKDIR /src/pkg/machinery
@@ -809,13 +818,19 @@ FROM rootfs-base-arm64 AS rootfs-squashfs-arm64
 ARG ZSTD_COMPRESSION_LEVEL
 RUN find /rootfs -print0 \
     | xargs -0r touch --no-dereference --date="@${SOURCE_DATE_EPOCH}"
-RUN mksquashfs /rootfs /rootfs.sqsh -all-root -noappend -comp zstd -Xcompression-level ${ZSTD_COMPRESSION_LEVEL} -no-progress
+COPY --from=selinux-generate /policy/file_contexts /file_contexts
+COPY ./hack/labeled-squashfs.sh /
+ENV SHELL=/toolchain/bin/bash
+RUN fakeroot /labeled-squashfs.sh /rootfs /rootfs.sqsh /file_contexts ${ZSTD_COMPRESSION_LEVEL}
 
 FROM rootfs-base-amd64 AS rootfs-squashfs-amd64
 ARG ZSTD_COMPRESSION_LEVEL
 RUN find /rootfs -print0 \
     | xargs -0r touch --no-dereference --date="@${SOURCE_DATE_EPOCH}"
-RUN mksquashfs /rootfs /rootfs.sqsh -all-root -noappend -comp zstd -Xcompression-level ${ZSTD_COMPRESSION_LEVEL} -no-progress
+COPY --from=selinux-generate /policy/file_contexts /file_contexts
+COPY ./hack/labeled-squashfs.sh /
+ENV SHELL=/toolchain/bin/bash
+RUN fakeroot /labeled-squashfs.sh /rootfs /rootfs.sqsh /file_contexts ${ZSTD_COMPRESSION_LEVEL}
 
 FROM scratch AS squashfs-arm64
 COPY --from=rootfs-squashfs-arm64 /rootfs.sqsh /

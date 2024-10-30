@@ -106,6 +106,7 @@ func (c *CRI) Runner(r runtime.Runtime) (runner.Runner, error) {
 		)),
 		runner.WithOOMScoreAdj(-500),
 		runner.WithCgroupPath(constants.CgroupPodRuntime),
+		runner.WithSelinuxLabel(constants.SelinuxLabelPodRuntime),
 		runner.WithDroppedCapabilities(constants.DefaultDroppedCapabilities),
 	),
 		restart.WithType(restart.Forever),

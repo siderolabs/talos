@@ -1,0 +1,33 @@
+; Netlink socket access
+(classmap netlink_classes (full))
+; Full means any access except relabeling
+(classmapping netlink_classes full (netlink_socket (accept append bind connect create getattr getopt ioctl listen lock map name_bind read recvfrom sendto setattr setopt shutdown write)))
+(classmapping netlink_classes full (netlink_route_socket (
+    accept append bind connect create getattr getopt ioctl listen lock map name_bind read recvfrom sendto setattr setopt shutdown write
+    nlmsg_read nlmsg_write
+)))
+(classmapping netlink_classes full (netlink_tcpdiag_socket (
+    accept append bind connect create getattr getopt ioctl listen lock map name_bind read recvfrom sendto setattr setopt shutdown write
+    nlmsg_read nlmsg_write
+)))
+(classmapping netlink_classes full (netlink_nflog_socket (accept append bind connect create getattr getopt ioctl listen lock map name_bind read recvfrom sendto setattr setopt shutdown write)))
+(classmapping netlink_classes full (netlink_xfrm_socket (
+    accept append bind connect create getattr getopt ioctl listen lock map name_bind read recvfrom sendto setattr setopt shutdown write
+    nlmsg_read nlmsg_write
+)))
+(classmapping netlink_classes full (netlink_selinux_socket (accept append bind connect create getattr getopt ioctl listen lock map name_bind read recvfrom sendto setattr setopt shutdown write)))
+(classmapping netlink_classes full (netlink_audit_socket (
+    accept append bind connect create getattr getopt ioctl listen lock map name_bind read recvfrom sendto setattr setopt shutdown write
+    nlmsg_read nlmsg_write nlmsg_relay nlmsg_readpriv nlmsg_tty_audit
+)))
+(classmapping netlink_classes full (netlink_dnrt_socket (accept append bind connect create getattr getopt ioctl listen lock map name_bind read recvfrom sendto setattr setopt shutdown write)))
+; Used by eBPF performance utilities
+(classmapping netlink_classes full (netlink_kobject_uevent_socket (accept append bind connect create getattr getopt ioctl listen lock map name_bind read recvfrom sendto setattr setopt shutdown write)))
+(classmapping netlink_classes full (netlink_iscsi_socket (accept append bind connect create getattr getopt ioctl listen lock map name_bind read recvfrom sendto setattr setopt shutdown write)))
+(classmapping netlink_classes full (netlink_fib_lookup_socket (accept append bind connect create getattr getopt ioctl listen lock map name_bind read recvfrom sendto setattr setopt shutdown write)))
+(classmapping netlink_classes full (netlink_connector_socket (accept append bind connect create getattr getopt ioctl listen lock map name_bind read recvfrom sendto setattr setopt shutdown write)))
+(classmapping netlink_classes full (netlink_netfilter_socket (accept append bind connect create getattr getopt ioctl listen lock map name_bind read recvfrom sendto setattr setopt shutdown write)))
+(classmapping netlink_classes full (netlink_generic_socket (accept append bind connect create getattr getopt ioctl listen lock map name_bind read recvfrom sendto setattr setopt shutdown write)))
+(classmapping netlink_classes full (netlink_scsitransport_socket (accept append bind connect create getattr getopt ioctl listen lock map name_bind read recvfrom sendto setattr setopt shutdown write)))
+(classmapping netlink_classes full (netlink_rdma_socket (accept append bind connect create getattr getopt ioctl listen lock map name_bind read recvfrom sendto setattr setopt shutdown write)))
+(classmapping netlink_classes full (netlink_crypto_socket (accept append bind connect create getattr getopt ioctl listen lock map name_bind read recvfrom sendto setattr setopt shutdown write)))

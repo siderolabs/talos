@@ -159,6 +159,7 @@ func (t *Trustd) Runner(r runtime.Runtime) (runner.Runner, error) {
 		runner.WithContainerdAddress(constants.SystemContainerdAddress),
 		runner.WithEnv(env),
 		runner.WithCgroupPath(constants.CgroupTrustd),
+		runner.WithSelinuxLabel(constants.SelinuxLabelTrustd),
 		runner.WithOCISpecOpts(
 			oci.WithDroppedCapabilities(cap.Known()),
 			oci.WithHostNamespace(specs.NetworkNamespace),

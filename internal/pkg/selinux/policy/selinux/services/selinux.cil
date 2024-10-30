@@ -1,0 +1,16 @@
+(allow kernel_t security_t (security (setbool setsecparam)))
+(allow init_t security_t (security (setbool setsecparam)))
+; Policy is loaded by initramfs init and mustn't be modified
+; The only way to set mode to permissive is setting enforcing=0 in kernel cmdline
+(neverallow any_p security_t (security (load_policy setenforce)))
+(allow any_p security_t (security (
+    check_context
+    compute_av
+    compute_create
+    compute_member
+    compute_relabel
+    compute_user
+    read_policy
+    setcheckreqprot
+    validate_trans
+)))

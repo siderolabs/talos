@@ -92,6 +92,12 @@ const (
 	// KernelParamHaltIfInstalled is the kernel parameter name to control if Talos should pause if booting from boot media while Talos is already installed.
 	KernelParamHaltIfInstalled = "talos.halt_if_installed"
 
+	// KernelParamSELinux is the kernel parameter name to enable/disable SELinux.
+	KernelParamSELinux = "selinux"
+
+	// KernelParamSELinuxEnforcing is the kernel parameter name to control SELinux enforcement mode.
+	KernelParamSELinuxEnforcing = "enforcing"
+
 	// BoardNone indicates that the install is not for a specific board.
 	BoardNone = "none"
 
@@ -696,6 +702,21 @@ const (
 	// CgroupSystemRuntimeMillicores is the CPU weight for the system containerd process.
 	CgroupSystemRuntimeMillicores = 500
 
+	// SelinuxLabelMachined is the SELinux label for machined.
+	SelinuxLabelMachined = "system_u:system_r:init_t:s0"
+
+	// SelinuxLabelInstaller is the SELinux label for the installer.
+	SelinuxLabelInstaller = "system_u:system_r:installer_t:s0"
+
+	// SelinuxLabelUnconfinedSysContainer is the SELinux label for system containers without label set (normally extensions).
+	SelinuxLabelUnconfinedSysContainer = "system_u:system_r:unconfined_container_t:s0"
+
+	// SelinuxLabelUnconfinedService is the SELinux label for process without label set (normally should not occur).
+	SelinuxLabelUnconfinedService = "system_u:system_r:unconfined_service_t:s0"
+
+	// SelinuxLabelSystemRuntime is the SELinux label for containerd runtime processes.
+	SelinuxLabelSystemRuntime = "system_u:system_r:sys_containerd_t:s0"
+
 	// CgroupApid is the cgroup name for apid runtime processes.
 	CgroupApid = CgroupSystem + "/apid"
 
@@ -707,6 +728,9 @@ const (
 
 	// CgroupApidMillicores is the CPU weight for the apid process.
 	CgroupApidMillicores = 500
+
+	// SelinuxLabelApid is the SELinux label for apid runtime processes.
+	SelinuxLabelApid = "system_u:system_r:apid_t:s0"
 
 	// CgroupTrustd is the cgroup name for trustd runtime processes.
 	CgroupTrustd = CgroupSystem + "/trustd"
@@ -720,6 +744,9 @@ const (
 	// CgroupTrustdMillicores is the CPU weight for the trustd process.
 	CgroupTrustdMillicores = 250
 
+	// SelinuxLabelTrustd is the SELinux label for trustd runtime processes.
+	SelinuxLabelTrustd = "system_u:system_r:trustd_t:s0"
+
 	// CgroupUdevd is the cgroup name for udevd runtime processes.
 	CgroupUdevd = CgroupSystem + "/udevd"
 
@@ -729,11 +756,17 @@ const (
 	// CgroupUdevdMillicores is the CPU weight for the udevd process.
 	CgroupUdevdMillicores = 250
 
+	// SelinuxLabelUdevd is the SELinux label for udevd runtime processes.
+	SelinuxLabelUdevd = "system_u:system_r:udev_t:s0"
+
 	// CgroupExtensions is the cgroup name for system extension processes.
 	CgroupExtensions = CgroupSystem + "/extensions"
 
 	// CgroupDashboard is the cgroup name for dashboard process.
 	CgroupDashboard = CgroupSystem + "/dashboard"
+
+	// SelinuxLabelDashboard is the SELinux label for dashboard process.
+	SelinuxLabelDashboard = "system_u:system_r:dashboard_t:s0"
 
 	// CgroupPodRuntimeRoot is the cgroup containing Kubernetes runtime components.
 	CgroupPodRuntimeRoot = "/podruntime"
@@ -747,6 +780,9 @@ const (
 	// CgroupPodRuntimeMillicores is the CPU weight for the pod runtime cgroup.
 	CgroupPodRuntimeMillicores = 1000
 
+	// SelinuxLabelPodRuntime is the SELinux label for kubernetes containerd runtime processes.
+	SelinuxLabelPodRuntime = "client_u:client_r:pod_containerd_t:s0"
+
 	// CgroupPodRuntimeReservedMemory is the hard memory protection for the cri runtime processes.
 	CgroupPodRuntimeReservedMemory = 196 * 1024 * 1024
 
@@ -759,8 +795,14 @@ const (
 	// CgroupEtcdMillicores is the CPU weight for the etcd process.
 	CgroupEtcdMillicores = 2000
 
+	// SELinuxLabelEtcd is the SELinux label for etcd process.
+	SELinuxLabelEtcd = "client_u:client_r:etcd_t:s0"
+
 	// CgroupKubelet is the cgroup name for kubelet process.
 	CgroupKubelet = CgroupPodRuntimeRoot + "/kubelet"
+
+	// SelinuxLabelKubelet is the SELinux label for kubelet process.
+	SelinuxLabelKubelet = "client_u:client_r:kubelet_t:s0"
 
 	// CgroupKubeletReservedMemory is the hard memory protection for the kubelet processes.
 	CgroupKubeletReservedMemory = 96 * 1024 * 1024
@@ -937,6 +979,9 @@ const (
 
 	// UdevRulesPath rules file path.
 	UdevRulesPath = UdevDir + "/" + "rules.d/99-talos.rules"
+
+	// UdevRulesLabel rules file SELinux label.
+	UdevRulesLabel = "system_u:object_r:udev_rules_t:s0"
 
 	// LoggingFormatJSONLines represents "JSON lines" logging format.
 	LoggingFormatJSONLines = "json_lines"

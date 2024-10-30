@@ -88,6 +88,36 @@ func TestImager(t *testing.T) {
 
 			expected: "talos.platform=metal console=ttyAMA0 console=tty0 init_on_alloc=1 slab_nomerge pti=on consoleblank=0 nvme_core.io_timeout=4294967295 printk.devkmsg=on ima_template=ima-ng ima_appraise=fix ima_hash=sha512", //nolint:lll
 		},
+		{
+			name: "cmdline-1.9-amd64",
+
+			prof: profile.Profile{
+				BaseProfileName: "metal",
+				Arch:            "amd64",
+				Output: profile.Output{
+					Kind:      profile.OutKindCmdline,
+					OutFormat: profile.OutFormatRaw,
+				},
+				Version: "1.9.0",
+			},
+
+			expected: "talos.platform=metal console=tty0 selinux=1 init_on_alloc=1 slab_nomerge pti=on consoleblank=0 nvme_core.io_timeout=4294967295 printk.devkmsg=on ima_template=ima-ng ima_appraise=fix ima_hash=sha512", //nolint:lll
+		},
+		{
+			name: "cmdline-1.9-arm64",
+
+			prof: profile.Profile{
+				BaseProfileName: "metal",
+				Arch:            "arm64",
+				Output: profile.Output{
+					Kind:      profile.OutKindCmdline,
+					OutFormat: profile.OutFormatRaw,
+				},
+				Version: "1.9.0",
+			},
+
+			expected: "talos.platform=metal console=ttyAMA0 console=tty0 selinux=1 init_on_alloc=1 slab_nomerge pti=on consoleblank=0 nvme_core.io_timeout=4294967295 printk.devkmsg=on ima_template=ima-ng ima_appraise=fix ima_hash=sha512", //nolint:lll
+		},
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()

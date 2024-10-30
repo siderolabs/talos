@@ -1,0 +1,34 @@
+(type init_exec_t)
+(call system_f (init_exec_t))
+(context init_exec_t (system_u object_r init_exec_t (systemLow systemLow)))
+(filecon "/sbin/init" file init_exec_t)
+(filecon "/sbin/poweroff" any init_exec_t)
+(filecon "/sbin/shutdown" any init_exec_t)
+(filecon "/sbin/dashboard" any init_exec_t)
+
+(type init_t)
+(roletype system_r init_t)
+(typetransition kernel_t init_exec_t process init_t)
+(allow init_t init_exec_t (file (execute entrypoint)))
+
+(allow init_t service_p (process (transition)))
+(allow init_t service_exec_f (file (execute)))
+
+; TODO: allow execute for libraries
+; (type lib_exec_t)
+; (call system_f (lib_exec_t))
+; (filecon "/usr/lib/libc.so" file (system_u object_r lib_exec_t (systemLow systemLow)))
+; (allow service_p lib_exec_t (file (execute)))
+
+; Should not occur unless misconfigured by machined
+(type unconfined_service_t)
+(roletype system_r unconfined_service_t)
+(typeattributeset system_service_p unconfined_service_t)
+
+(type sbin_exec_t)
+(call system_f (sbin_exec_t))
+(filecon "/sbin(/.*)?" any (system_u object_r sbin_exec_t (systemLow systemLow)))
+(filecon "/usr/sbin(/.*)?" any (system_u object_r sbin_exec_t (systemLow systemLow)))
+; Typically machined executes LVM, cryptsetup and similar utilities
+; They are short-running, come from the rootfs and do not accept user input, so can be started in init_t domain
+(allow init_t sbin_exec_t (file (execute execute_no_trans)))

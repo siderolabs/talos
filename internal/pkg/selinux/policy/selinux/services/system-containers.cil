@@ -1,0 +1,7 @@
+(type apid_t)
+(call system_container_p (apid_t))
+(allow apid_t init_exec_t (file (entrypoint execute)))
+
+(type trustd_t)
+(call system_container_p (trustd_t))
+(allow trustd_t init_exec_t (file (entrypoint execute)))

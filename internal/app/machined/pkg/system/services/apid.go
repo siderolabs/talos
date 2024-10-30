@@ -196,6 +196,7 @@ func (o *APID) Runner(r runtime.Runtime) (runner.Runner, error) {
 		runner.WithContainerdAddress(constants.SystemContainerdAddress),
 		runner.WithEnv(env),
 		runner.WithCgroupPath(constants.CgroupApid),
+		runner.WithSelinuxLabel(constants.SelinuxLabelApid),
 		runner.WithOCISpecOpts(
 			oci.WithDroppedCapabilities(cap.Known()),
 			oci.WithHostNamespace(specs.NetworkNamespace),

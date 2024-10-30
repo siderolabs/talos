@@ -220,6 +220,7 @@ func (e *Etcd) Runner(r runtime.Runtime) (runner.Runner, error) {
 		runner.WithContainerImage(e.imgRef),
 		runner.WithEnv(env),
 		runner.WithCgroupPath(constants.CgroupEtcd),
+		runner.WithSelinuxLabel(constants.SELinuxLabelEtcd),
 		runner.WithOCISpecOpts(
 			oci.WithDroppedCapabilities(cap.Known()),
 			oci.WithHostNamespace(specs.NetworkNamespace),

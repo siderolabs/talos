@@ -18,6 +18,7 @@ import (
 	"github.com/siderolabs/talos/internal/pkg/mount/v2"
 	"github.com/siderolabs/talos/internal/pkg/secureboot"
 	"github.com/siderolabs/talos/internal/pkg/secureboot/tpm2"
+	"github.com/siderolabs/talos/internal/pkg/selinux"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
 
@@ -70,6 +71,10 @@ func Switch(prefix string, mountpoints mount.Points) (err error) {
 
 	if _, err = recursiveDelete(int(old.Fd()), "/"); err != nil {
 		return fmt.Errorf("error deleting initramfs: %w", err)
+	}
+
+	if err := selinux.Init(); err != nil {
+		return err
 	}
 
 	// extend PCR 11 with leave-initrd

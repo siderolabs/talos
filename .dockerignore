@@ -1,5 +1,6 @@
 **
 !api
+!selinux
 !cmd
 !docs
 !hack

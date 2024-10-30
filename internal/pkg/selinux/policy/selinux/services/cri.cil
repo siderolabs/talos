@@ -1,0 +1,17 @@
+; Pod (CRI) containerd
+(type pod_containerd_t)
+(call client_service_p (pod_containerd_t containerd_exec_t))
+
+; TODO: label /run
+
+(allow pod_containerd_t pod_p (process2 (nnp_transition nosuid_transition)))
+(allow pod_containerd_t pod_p (process (transition)))
+
+(type pod_t)
+(call pod_p (pod_t))
+; TODO: label ephemeral
+
+(type etcd_t)
+(call pod_p (etcd_t))
+; FIXME: insecure as anyone with access to the pod containerd may obtain this domain (executable in ephemeral)
+

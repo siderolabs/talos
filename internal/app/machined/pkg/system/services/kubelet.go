@@ -164,6 +164,7 @@ func (k *Kubelet) Runner(r runtime.Runtime) (runner.Runner, error) {
 		runner.WithContainerImage(k.imgRef),
 		runner.WithEnv(environment.Get(r.Config())),
 		runner.WithCgroupPath(constants.CgroupKubelet),
+		runner.WithSelinuxLabel(constants.SelinuxLabelKubelet),
 		runner.WithOCISpecOpts(
 			containerd.WithRootfsPropagation("shared"),
 			oci.WithMounts(mounts),
@@ -174,7 +175,6 @@ func (k *Kubelet) Runner(r runtime.Runtime) (runner.Runner, error) {
 			oci.WithReadonlyPaths(nil),
 			oci.WithWriteableSysfs,
 			oci.WithWriteableCgroupfs,
-			oci.WithSelinuxLabel(""),
 			oci.WithApparmorProfile(""),
 			oci.WithAllDevicesAllowed,
 			oci.WithCapabilities(capability.AllGrantableCapabilities()), // TODO: kubelet doesn't need all of these, we should consider limiting capabilities

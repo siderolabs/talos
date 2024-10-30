@@ -63,6 +63,7 @@ import (
 	"github.com/siderolabs/talos/internal/pkg/partition"
 	"github.com/siderolabs/talos/internal/pkg/secureboot"
 	"github.com/siderolabs/talos/internal/pkg/secureboot/tpm2"
+	"github.com/siderolabs/talos/internal/pkg/selinux"
 	"github.com/siderolabs/talos/internal/pkg/zboot"
 	"github.com/siderolabs/talos/pkg/conditions"
 	"github.com/siderolabs/talos/pkg/images"
@@ -618,6 +619,10 @@ func WriteUdevRules(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
 
 		if err = os.WriteFile(constants.UdevRulesPath, []byte(content.String()), 0o644); err != nil {
 			return fmt.Errorf("failed writing custom udev rules: %w", err)
+		}
+
+		if err = selinux.SetLabel(constants.UdevRulesPath, constants.UdevRulesLabel); err != nil {
+			return fmt.Errorf("failed labeling custom udev rules: %w", err)
 		}
 
 		if len(rules) > 0 {

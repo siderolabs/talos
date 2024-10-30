@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
+	"log"
 	"os"
 	"path"
 	"slices"
@@ -30,6 +31,7 @@ import (
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system/events"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system/runner"
 	"github.com/siderolabs/talos/internal/pkg/cgroup"
+	"github.com/siderolabs/talos/internal/pkg/selinux"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
 
@@ -92,6 +94,7 @@ func (p *processRunner) Close() error {
 type commandWrapper struct {
 	launcher         *cap.Launcher
 	ctty             optional.Optional[int]
+	selinuxLabel     string
 	cgroupFile       *os.File
 	stdin            *os.File
 	stdout           *os.File
@@ -157,6 +160,22 @@ func beforeExecCallback(pa *syscall.ProcAttr, data any) error {
 
 		pa.Sys.UseCgroupFD = true
 		pa.Sys.CgroupFD = int(wrapper.cgroupFile.Fd())
+	}
+
+	// Use /proc/thread-self (Linux 3.17+) to avoid races between current
+	// process threads leading to loss of the domain transition
+	if selinux.IsEnabled() {
+		if wrapper.selinuxLabel != "" {
+			err := os.WriteFile("/proc/thread-self/attr/exec", []byte(wrapper.selinuxLabel), 0o777)
+			if err != nil {
+				log.Fatalf("%s", err)
+			}
+		} else {
+			err := os.WriteFile("/proc/thread-self/attr/exec", []byte(constants.SelinuxLabelUnconfinedService), 0o777)
+			if err != nil {
+				log.Fatalf("%s", err)
+			}
+		}
 	}
 
 	return nil
@@ -266,6 +285,7 @@ func (p *processRunner) build() (commandWrapper, error) {
 	wrapper.afterStart = func() { xslices.Map(afterStartClosers, io.Closer.Close) }
 	wrapper.afterTermination = closeLogging
 	wrapper.ctty = p.opts.Ctty
+	wrapper.selinuxLabel = p.opts.SelinuxLabel
 
 	cgroupFdSupported := false
 

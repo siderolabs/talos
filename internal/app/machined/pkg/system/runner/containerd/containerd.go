@@ -23,6 +23,8 @@ import (
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system/events"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system/runner"
 	"github.com/siderolabs/talos/internal/pkg/cgroup"
+	"github.com/siderolabs/talos/internal/pkg/selinux"
+	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
 
 // containerdRunner is a runner.Runner that runs container in containerd.
@@ -339,6 +341,20 @@ func (c *containerdRunner) newOCISpecOpts(image oci.Image) []oci.SpecOpts {
 			specOpts,
 			seccomp.WithDefaultProfile(), // add seccomp profile last, as it depends on process capabilities
 		)
+	}
+
+	if selinux.IsEnabled() {
+		if c.opts.SelinuxLabel != "" {
+			specOpts = append(
+				specOpts,
+				oci.WithSelinuxLabel(c.opts.SelinuxLabel),
+			)
+		} else {
+			specOpts = append(
+				specOpts,
+				oci.WithSelinuxLabel(constants.SelinuxLabelUnconfinedSysContainer),
+			)
+		}
 	}
 
 	return specOpts

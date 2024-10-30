@@ -69,6 +69,7 @@ func (d *Dashboard) Runner(r runtime.Runtime) (runner.Runner, error) {
 		runner.WithCtty(0),
 		runner.WithOOMScoreAdj(-400),
 		runner.WithDroppedCapabilities(capability.AllCapabilitiesSetLowercase()),
+		runner.WithSelinuxLabel(constants.SelinuxLabelDashboard),
 		runner.WithCgroupPath(constants.CgroupDashboard),
 		runner.WithUID(constants.DashboardUserID),
 	),

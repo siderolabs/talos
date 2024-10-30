@@ -349,6 +349,11 @@ func (i *Imager) buildCmdline() error {
 		cmdline.Append("console", "tty0")
 	}
 
+	if quirks.New(i.prof.Version).SupportsSELinux() {
+		// Talos 1.9 introduces SELinux in permissive mode
+		cmdline.Append("selinux", "1")
+	}
+
 	// board kernel args
 	if i.prof.Board != "" && !quirks.New(i.prof.Version).SupportsOverlay() {
 		var b talosruntime.Board
