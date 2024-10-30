@@ -136,15 +136,6 @@ func TestGenerateHostsWithoutTLS(t *testing.T) {
 					},
 				},
 			},
-			"some.host_123_": {
-				Files: []*containerd.HostsFile{
-					{
-						Name:     "hosts.toml",
-						Mode:     0o600,
-						Contents: []byte("[host]\n  [host.'https://some.host:123']\n"),
-					},
-				},
-			},
 			"_default": {
 				Files: []*containerd.HostsFile{
 					{

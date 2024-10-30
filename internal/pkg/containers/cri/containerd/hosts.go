@@ -172,7 +172,7 @@ func GenerateHosts(cfg config.Registries, basePath string) (*HostsConfig, error)
 	}
 
 	// process TLS config for non-mirrored endpoints (even if they were already processed)
-	for hostname, tlsConfig := range cfg.Config() {
+	for hostname, registryConfig := range cfg.Config() {
 		directoryName := hostDirectory(hostname)
 
 		if _, ok := config.Directories[directoryName]; ok {
@@ -180,11 +180,9 @@ func GenerateHosts(cfg config.Registries, basePath string) (*HostsConfig, error)
 			continue
 		}
 
-		if tlsConfig.TLS() != nil {
-			if tlsConfig.TLS().CA() == nil && tlsConfig.TLS().ClientIdentity() == nil && !tlsConfig.TLS().InsecureSkipVerify() {
-				// skip, no specific config
-				continue
-			}
+		if registryConfig.TLS() == nil || (registryConfig.TLS().CA() == nil && registryConfig.TLS().ClientIdentity() == nil && !registryConfig.TLS().InsecureSkipVerify()) {
+			// skip, no specific config
+			continue
 		}
 
 		if hostname == "*" {
