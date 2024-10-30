@@ -42,6 +42,8 @@ func SystemPartitionMount(ctx context.Context, r runtime.Runtime, logger *log.Lo
 		return fmt.Errorf("error getting volume config %q: %w", label, err)
 	}
 
+	opts = append(opts, mountv2.WithSelinuxLabel(volumeConfig.TypedSpec().Mount.SelinuxLabel))
+
 	mountpoint := mountv2.NewPoint(
 		volumeStatus.TypedSpec().MountLocation,
 		volumeConfig.TypedSpec().Mount.TargetPath,

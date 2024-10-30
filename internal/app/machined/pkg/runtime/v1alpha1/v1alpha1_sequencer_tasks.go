@@ -362,7 +362,7 @@ func StartDashboard(_ runtime.Sequence, _ any) (runtime.TaskExecutionFunc, strin
 // StartUdevd represents the task to start udevd.
 func StartUdevd(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
-		mp := mountv2.NewSystemOverlay([]string{constants.UdevDir}, constants.UdevDir, mountv2.WithShared(), mountv2.WithFlags(unix.MS_I_VERSION))
+		mp := mountv2.NewSystemOverlay([]string{constants.UdevDir}, constants.UdevDir, mountv2.WithShared(), mountv2.WithFlags(unix.MS_I_VERSION), mountv2.WithSelinuxLabel(constants.UdevRulesLabel))
 
 		if _, err = mp.Mount(); err != nil {
 			return err
@@ -531,9 +531,10 @@ func SetupVarDirectory(runtime.Sequence, any) (runtime.TaskExecutionFunc, string
 		}
 
 		for _, dir := range []struct {
-			Path     string
-			Mode     os.FileMode
-			UID, GID int
+			Path         string
+			Mode         os.FileMode
+			UID, GID     int
+			SELinuxLabel string
 		}{
 			{
 				Path: "/var/log",
@@ -552,8 +553,14 @@ func SetupVarDirectory(runtime.Sequence, any) (runtime.TaskExecutionFunc, string
 				Mode: 0o755,
 			},
 			{
-				Path: "/var/lib/kubelet",
-				Mode: 0o700,
+				Path:         "/var/lib/containerd",
+				Mode:         0o000,
+				SELinuxLabel: "system_u:object_r:containerd_state_t:s0",
+			},
+			{
+				Path:         "/var/lib/kubelet",
+				Mode:         0o700,
+				SELinuxLabel: "system_u:object_r:kubelet_state_t:s0",
 			},
 			{
 				Path: "/var/run/lock",
@@ -575,6 +582,10 @@ func SetupVarDirectory(runtime.Sequence, any) (runtime.TaskExecutionFunc, string
 			}
 
 			if err := os.Chmod(dir.Path, dir.Mode); err != nil {
+				return err
+			}
+
+			if err := selinux.SetLabel(dir.Path, dir.SELinuxLabel); err != nil {
 				return err
 			}
 
@@ -661,6 +672,7 @@ func MountUserDisks(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
 				volumeStatus.TypedSpec().MountLocation,
 				volumeConfig.TypedSpec().Mount.TargetPath,
 				volumeStatus.TypedSpec().Filesystem.String(),
+				mountv2.WithSelinuxLabel(volumeConfig.TypedSpec().Mount.SelinuxLabel),
 			))
 		}
 

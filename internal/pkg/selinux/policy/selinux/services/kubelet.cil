@@ -1,3 +1,15 @@
 (type kubelet_t)
 (call pod_p (kubelet_t))
-; FIXME: insecure as anyone with access to the pod containerd may obtain this domain (executable in ephemeral)
+; FIXME: insecure as anyone with access to the pod containerd may obtain this domain
+(allow kubelet_t containerd_state_t (file (entrypoint execute_no_trans)))
+
+(type k8s_conf_t)
+(call filesystem_f (k8s_conf_t))
+(filecon "/etc/kubernetes(/.*)?" any (system_u object_r k8s_conf_t (systemLow systemLow)))
+
+(type k8s_plugin_t)
+(call filesystem_f (k8s_plugin_t))
+(filecon "/usr/libexec/kubernetes(/.*)?" any (system_u object_r k8s_plugin_t (systemLow systemLow)))
+
+(type kubelet_state_t)
+(call system_f (kubelet_state_t))

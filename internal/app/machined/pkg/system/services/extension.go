@@ -52,6 +52,7 @@ func (svc *Extension) PreFunc(ctx context.Context, r runtime.Runtime) error {
 	// re-mount service rootfs as overlay rw mount to allow containerd to mount there /dev, /proc, etc.
 	rootfsPath := filepath.Join(constants.ExtensionServiceRootfsPath, svc.Spec.Name)
 
+	// TODO: label system extensions
 	overlay := mount.NewSystemOverlay(
 		[]string{rootfsPath},
 		rootfsPath,

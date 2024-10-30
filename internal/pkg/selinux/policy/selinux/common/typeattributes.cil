@@ -61,6 +61,7 @@
 )
 
 (allow filesystem_f self (filesystem (associate)))
+(allow any_f fs_t (filesystem (associate)))
 (allow filesystem_f fs_t (filesystem (associate)))
 
 (typeattribute service_exec_f)

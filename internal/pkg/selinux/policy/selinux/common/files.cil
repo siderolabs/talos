@@ -1,0 +1,26 @@
+; Runtime and mounted filesystems
+(type system_t)
+(call filesystem_f (system_t))
+(allow system_t tmpfs_t (filesystem (associate)))
+
+(type system_etc_t)
+(call system_f (system_etc_t))
+(allow system_etc_t fs_t (filesystem (associate)))
+(allow system_etc_t tmpfs_t (filesystem (associate)))
+(type system_var_t)
+(call system_f (system_var_t))
+(allow system_var_t fs_t (filesystem (associate)))
+(allow system_var_t tmpfs_t (filesystem (associate)))
+
+(type ephemeral_t)
+(call filesystem_f (ephemeral_t))
+(type system_state_t)
+(call filesystem_f (system_state_t))
+
+(type run_t)
+(call filesystem_f (run_t))
+(allow run_t tmpfs_t (filesystem (associate)))
+
+(type opt_t)
+(call filesystem_f (opt_t))
+(filecon "/opt(/.*)?" any (system_u object_r opt_t (systemLow systemLow)))

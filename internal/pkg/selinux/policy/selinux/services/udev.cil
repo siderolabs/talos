@@ -14,7 +14,11 @@
 (type udev_t)
 (call service_p (udev_t udev_exec_t))
 
-; TODO: label /run
+(type udev_socket_t)
+(call system_socket_f (udev_socket_t))
+(typetransition udev_t run_t sock_file udev_socket_t)
+; udevadm called by machined in its context
+(allow init_t udev_t (unix_stream_socket (connectto)))
 
 (type modprobe_exec_t)
 (call system_f (modprobe_exec_t))
