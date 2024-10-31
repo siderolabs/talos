@@ -95,7 +95,6 @@ func (*Sequencer) Initialize(r runtime.Runtime) []runtime.Phase {
 			EnforceKSPPRequirements,
 			SetupSystemDirectory,
 			MountCgroups,
-			MountPseudoFilesystems,
 			SetRLimit,
 			InitVolumeLifecycle,
 		).Append(

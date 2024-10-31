@@ -351,15 +351,6 @@ func MountCgroups(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
 	}, "mountCgroups"
 }
 
-// MountPseudoFilesystems represents the MountPseudoFilesystems task.
-func MountPseudoFilesystems(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
-	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) error {
-		_, err := mountv2.PseudoSubMountPoints().Mount()
-
-		return err
-	}, "mountPseudoFilesystems"
-}
-
 // SetRLimit represents the SetRLimit task.
 func SetRLimit(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {

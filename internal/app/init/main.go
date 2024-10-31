@@ -44,6 +44,10 @@ func run() error {
 		return err
 	}
 
+	if _, err := mount.PseudoSubMountPoints().Mount(); err != nil {
+		return err
+	}
+
 	// Setup logging to /dev/kmsg.
 	if err := kmsg.SetupLogger(nil, "[talos] [initramfs]", nil); err != nil {
 		return err
