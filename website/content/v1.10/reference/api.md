@@ -37,13 +37,17 @@ description: Talos gRPC API reference.
     - [EncryptionSpec](#talos.resource.definitions.block.EncryptionSpec)
     - [FilesystemSpec](#talos.resource.definitions.block.FilesystemSpec)
     - [LocatorSpec](#talos.resource.definitions.block.LocatorSpec)
+    - [MountRequestSpec](#talos.resource.definitions.block.MountRequestSpec)
     - [MountSpec](#talos.resource.definitions.block.MountSpec)
+    - [MountStatusSpec](#talos.resource.definitions.block.MountStatusSpec)
     - [PartitionSpec](#talos.resource.definitions.block.PartitionSpec)
     - [ProvisioningSpec](#talos.resource.definitions.block.ProvisioningSpec)
     - [SymlinkSpec](#talos.resource.definitions.block.SymlinkSpec)
     - [SystemDiskSpec](#talos.resource.definitions.block.SystemDiskSpec)
     - [UserDiskConfigStatusSpec](#talos.resource.definitions.block.UserDiskConfigStatusSpec)
     - [VolumeConfigSpec](#talos.resource.definitions.block.VolumeConfigSpec)
+    - [VolumeMountRequestSpec](#talos.resource.definitions.block.VolumeMountRequestSpec)
+    - [VolumeMountStatusSpec](#talos.resource.definitions.block.VolumeMountStatusSpec)
     - [VolumeStatusSpec](#talos.resource.definitions.block.VolumeStatusSpec)
   
 - [resource/definitions/cluster/cluster.proto](#resource/definitions/cluster/cluster.proto)
@@ -1020,6 +1024,25 @@ LocatorSpec is the spec for volume locator.
 
 
 
+<a name="talos.resource.definitions.block.MountRequestSpec"></a>
+
+### MountRequestSpec
+MountRequestSpec is the spec for MountRequest.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| volume_id | [string](#string) |  |  |
+| parent_mount_id | [string](#string) |  |  |
+| requesters | [string](#string) | repeated |  |
+| requester_i_ds | [string](#string) | repeated |  |
+| read_only | [bool](#bool) |  |  |
+
+
+
+
+
+
 <a name="talos.resource.definitions.block.MountSpec"></a>
 
 ### MountSpec
@@ -1030,6 +1053,26 @@ MountSpec is the spec for volume mount.
 | ----- | ---- | ----- | ----------- |
 | target_path | [string](#string) |  |  |
 | selinux_label | [string](#string) |  |  |
+| options | [string](#string) | repeated |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.block.MountStatusSpec"></a>
+
+### MountStatusSpec
+MountStatusSpec is the spec for MountStatus.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| spec | [MountRequestSpec](#talos.resource.definitions.block.MountRequestSpec) |  |  |
+| target | [string](#string) |  |  |
+| source | [string](#string) |  |  |
+| filesystem | [talos.resource.definitions.enums.BlockFilesystemType](#talos.resource.definitions.enums.BlockFilesystemType) |  |  |
+| read_only | [bool](#bool) |  |  |
 
 
 
@@ -1139,6 +1182,41 @@ VolumeConfigSpec is the spec for VolumeConfig resource.
 
 
 
+<a name="talos.resource.definitions.block.VolumeMountRequestSpec"></a>
+
+### VolumeMountRequestSpec
+VolumeMountRequestSpec is the spec for VolumeMountRequest.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| volume_id | [string](#string) |  |  |
+| requester | [string](#string) |  |  |
+| read_only | [bool](#bool) |  |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.block.VolumeMountStatusSpec"></a>
+
+### VolumeMountStatusSpec
+VolumeMountStatusSpec is the spec for VolumeMountStatus.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| volume_id | [string](#string) |  |  |
+| requester | [string](#string) |  |  |
+| target | [string](#string) |  |  |
+| read_only | [bool](#bool) |  |  |
+
+
+
+
+
+
 <a name="talos.resource.definitions.block.VolumeStatusSpec"></a>
 
 ### VolumeStatusSpec
@@ -1161,6 +1239,7 @@ VolumeStatusSpec is the spec for VolumeStatus resource.
 | encryption_provider | [talos.resource.definitions.enums.BlockEncryptionProviderType](#talos.resource.definitions.enums.BlockEncryptionProviderType) |  |  |
 | pretty_size | [string](#string) |  |  |
 | encryption_failed_syncs | [string](#string) | repeated |  |
+| mount_spec | [MountSpec](#talos.resource.definitions.block.MountSpec) |  |  |
 
 
 

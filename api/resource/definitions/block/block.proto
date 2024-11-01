@@ -111,10 +111,29 @@ message LocatorSpec {
   google.api.expr.v1alpha1.CheckedExpr match = 1;
 }
 
+// MountRequestSpec is the spec for MountRequest.
+message MountRequestSpec {
+  string volume_id = 1;
+  string parent_mount_id = 2;
+  repeated string requesters = 3;
+  repeated string requester_i_ds = 4;
+  bool read_only = 5;
+}
+
 // MountSpec is the spec for volume mount.
 message MountSpec {
   string target_path = 1;
   string selinux_label = 2;
+  repeated string options = 3;
+}
+
+// MountStatusSpec is the spec for MountStatus.
+message MountStatusSpec {
+  MountRequestSpec spec = 1;
+  string target = 2;
+  string source = 3;
+  talos.resource.definitions.enums.BlockFilesystemType filesystem = 4;
+  bool read_only = 5;
 }
 
 // PartitionSpec is the spec for volume partitioning.
@@ -160,6 +179,21 @@ message VolumeConfigSpec {
   EncryptionSpec encryption = 6;
 }
 
+// VolumeMountRequestSpec is the spec for VolumeMountRequest.
+message VolumeMountRequestSpec {
+  string volume_id = 1;
+  string requester = 2;
+  bool read_only = 3;
+}
+
+// VolumeMountStatusSpec is the spec for VolumeMountStatus.
+message VolumeMountStatusSpec {
+  string volume_id = 1;
+  string requester = 2;
+  string target = 3;
+  bool read_only = 4;
+}
+
 // VolumeStatusSpec is the spec for VolumeStatus resource.
 message VolumeStatusSpec {
   talos.resource.definitions.enums.BlockVolumePhase phase = 1;
@@ -176,5 +210,6 @@ message VolumeStatusSpec {
   talos.resource.definitions.enums.BlockEncryptionProviderType encryption_provider = 12;
   string pretty_size = 13;
   repeated string encryption_failed_syncs = 14;
+  MountSpec mount_spec = 15;
 }
 

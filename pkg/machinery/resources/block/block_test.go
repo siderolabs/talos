@@ -30,11 +30,15 @@ func TestRegisterResource(t *testing.T) {
 		&block.DiscoveryRefreshStatus{},
 		&block.DiscoveredVolume{},
 		&block.Disk{},
+		&block.MountRequest{},
+		&block.MountStatus{},
 		&block.Symlink{},
 		&block.SystemDisk{},
 		&block.UserDiskConfigStatus{},
 		&block.VolumeConfig{},
 		&block.VolumeLifecycle{},
+		&block.VolumeMountRequest{},
+		&block.VolumeMountStatus{},
 		&block.VolumeStatus{},
 	} {
 		assert.NoError(t, resourceRegistry.Register(ctx, resource))

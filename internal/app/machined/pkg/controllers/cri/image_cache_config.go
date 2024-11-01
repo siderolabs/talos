@@ -13,6 +13,7 @@ import (
 	"path/filepath"
 
 	"github.com/cosi-project/runtime/pkg/controller"
+	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/dustin/go-humanize"
@@ -24,7 +25,6 @@ import (
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system/services"
-	mountv2 "github.com/siderolabs/talos/internal/pkg/mount/v2"
 	"github.com/siderolabs/talos/internal/pkg/partition"
 	"github.com/siderolabs/talos/pkg/machinery/cel"
 	"github.com/siderolabs/talos/pkg/machinery/cel/celenv"
@@ -46,7 +46,6 @@ type ServiceManager interface {
 // ImageCacheConfigController manages configures Image Cache.
 type ImageCacheConfigController struct {
 	V1Alpha1ServiceManager ServiceManager
-	VolumeMounter          func(label string, opts ...mountv2.NewPointOption) error
 
 	DisableCacheCopy bool // used for testing
 
@@ -78,6 +77,11 @@ func (ctrl *ImageCacheConfigController) Inputs() []controller.Input {
 			ID:        optional.Some(RegistrydServiceID),
 			Kind:      controller.InputWeak,
 		},
+		{
+			Namespace: block.NamespaceName,
+			Type:      block.VolumeMountStatusType,
+			Kind:      controller.InputStrong,
+		},
 	}
 }
 
@@ -90,6 +94,10 @@ func (ctrl *ImageCacheConfigController) Outputs() []controller.Output {
 		},
 		{
 			Type: block.VolumeConfigType,
+			Kind: controller.OutputShared,
+		},
+		{
+			Type: block.VolumeMountRequestType,
 			Kind: controller.OutputShared,
 		},
 	}
@@ -310,7 +318,7 @@ type imageCacheVolumeStatus struct {
 }
 
 //nolint:gocyclo,cyclop
-func (ctrl *ImageCacheConfigController) analyzeImageCacheVolumes(ctx context.Context, logger *zap.Logger, r controller.Reader) (*imageCacheVolumeStatus, error) {
+func (ctrl *ImageCacheConfigController) analyzeImageCacheVolumes(ctx context.Context, logger *zap.Logger, r controller.ReaderWriter) (*imageCacheVolumeStatus, error) {
 	volumeIDs := []string{VolumeImageCacheDISK, VolumeImageCacheISO} // prefer disk cache over ISO cache
 	volumeStatuses := make([]*block.VolumeStatus, 0, len(volumeIDs))
 
@@ -348,6 +356,26 @@ func (ctrl *ImageCacheConfigController) analyzeImageCacheVolumes(ctx context.Con
 	isoPresent := isoStatus == block.VolumePhaseReady
 	diskMissing := diskStatus == block.VolumePhaseMissing
 
+	for _, volumeStatus := range volumeStatuses {
+		volumeID := volumeStatus.Metadata().ID()
+
+		// create a mount request for the volume, it doesn't matter if the volume is ready or not,
+		// but we want them to be mounted whenever they are ready
+		mountID := ctrl.Name() + "-" + volumeID
+
+		if err := safe.WriterModify(ctx, r, block.NewVolumeMountRequest(block.NamespaceName, mountID),
+			func(mountRequest *block.VolumeMountRequest) error {
+				mountRequest.TypedSpec().Requester = ctrl.Name()
+				mountRequest.TypedSpec().VolumeID = volumeID
+				mountRequest.TypedSpec().ReadOnly = !(volumeStatus.Metadata().ID() == VolumeImageCacheDISK && isoPresent)
+
+				return nil
+			},
+		); err != nil {
+			return nil, fmt.Errorf("error creating volume mount request: %w", err)
+		}
+	}
+
 	roots := make([]string, 0, len(volumeIDs))
 
 	var (
@@ -360,7 +388,7 @@ func (ctrl *ImageCacheConfigController) analyzeImageCacheVolumes(ctx context.Con
 	// analyze volume statuses, and build the roots
 	for _, volumeStatus := range volumeStatuses {
 		// mount as rw only disk cache if the ISO cache is present
-		root, ready, err := ctrl.getImageCacheRoot(ctx, r, volumeStatus, !(volumeStatus.Metadata().ID() == VolumeImageCacheDISK && isoPresent))
+		root, ready, err := ctrl.getImageCacheRoot(ctx, r, volumeStatus)
 		if err != nil {
 			return nil, fmt.Errorf("error getting image cache root: %w", err)
 		}
@@ -418,7 +446,9 @@ func (ctrl *ImageCacheConfigController) analyzeImageCacheVolumes(ctx context.Con
 	}, nil
 }
 
-func (ctrl *ImageCacheConfigController) getImageCacheRoot(ctx context.Context, r controller.Reader, volumeStatus *block.VolumeStatus, mountReadyOnly bool) (optional.Optional[string], bool, error) {
+func (ctrl *ImageCacheConfigController) getImageCacheRoot(
+	ctx context.Context, r controller.ReaderWriter, volumeStatus *block.VolumeStatus,
+) (optional.Optional[string], bool, error) {
 	switch volumeStatus.TypedSpec().Phase { //nolint:exhaustive
 	case block.VolumePhaseMissing, block.VolumePhaseFailed, block.VolumePhaseWaiting:
 		// image cache is missing
@@ -432,22 +462,34 @@ func (ctrl *ImageCacheConfigController) getImageCacheRoot(ctx context.Context, r
 
 	volumeID := volumeStatus.Metadata().ID()
 
-	volumeConfig, err := safe.ReaderGetByID[*block.VolumeConfig](ctx, r, volumeID)
+	mountID := ctrl.Name() + "-" + volumeID
+
+	mountStatus, err := safe.ReaderGetByID[*block.VolumeMountStatus](ctx, r, mountID)
 	if err != nil {
-		return optional.None[string](), false, fmt.Errorf("error getting volume config: %w", err)
+		if state.IsNotFoundError(err) {
+			return optional.None[string](), false, nil
+		}
+
+		return optional.None[string](), false, fmt.Errorf("error fetching volume mount status: %w", err)
 	}
 
-	var mountOpts []mountv2.NewPointOption
+	if mountStatus.Metadata().Phase() == resource.PhaseTearingDown {
+		// the mount status is being torn down, so we should stop using it
+		if err = r.RemoveFinalizer(ctx, mountStatus.Metadata(), ctrl.Name()); err != nil {
+			return optional.None[string](), false, fmt.Errorf("error removing finalizer: %w", err)
+		}
 
-	if mountReadyOnly {
-		mountOpts = append(mountOpts, mountv2.WithReadonly())
+		return optional.None[string](), true, nil
 	}
 
-	if err = ctrl.VolumeMounter(volumeID, mountOpts...); err != nil {
-		return optional.None[string](), false, fmt.Errorf("error mounting volume: %w", err)
+	// put a finalizer on the mount status, meaning that we are using it
+	if !mountStatus.Metadata().Finalizers().Has(ctrl.Name()) {
+		if err = r.AddFinalizer(ctx, mountStatus.Metadata(), ctrl.Name()); err != nil {
+			return optional.None[string](), false, fmt.Errorf("error adding finalizer: %w", err)
+		}
 	}
 
-	targetPath := volumeConfig.TypedSpec().Mount.TargetPath
+	targetPath := mountStatus.TypedSpec().Target
 
 	if volumeID == VolumeImageCacheISO {
 		// the ISO volume has a subdirectory with the actual image cache

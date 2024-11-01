@@ -150,6 +150,8 @@ type MountSpec struct {
 	TargetPath string `yaml:"targetPath" protobuf:"1"`
 	// SELinux label for the volume.
 	SelinuxLabel string `yaml:"selinuxLabel" protobuf:"2"`
+	// Mount options for the volume.
+	Options []string `yaml:"options,omitempty" protobuf:"3"`
 }
 
 // NewVolumeConfig initializes a BlockVolumeConfig resource.

@@ -48,6 +48,9 @@ type VolumeStatusSpec struct {
 	EncryptionProvider    EncryptionProviderType `yaml:"encryptionProvider,omitempty" protobuf:"12"`
 	EncryptionFailedSyncs []string               `yaml:"encryptionFailedSyncs,omitempty" protobuf:"14"`
 
+	// MountSpec is the mount specification.
+	MountSpec MountSpec `yaml:"mountSpec,omitempty" protobuf:"15"`
+
 	ErrorMessage string `yaml:"errorMessage,omitempty" protobuf:"3"`
 }
 

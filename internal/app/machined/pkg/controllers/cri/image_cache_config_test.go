@@ -6,8 +6,6 @@ package cri_test
 
 import (
 	"path/filepath"
-	"slices"
-	"sync"
 	"testing"
 	"time"
 
@@ -18,7 +16,6 @@ import (
 	crictrl "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/cri"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/ctest"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system"
-	mountv2 "github.com/siderolabs/talos/internal/pkg/mount/v2"
 	"github.com/siderolabs/talos/pkg/machinery/config/container"
 	blockcfg "github.com/siderolabs/talos/pkg/machinery/config/types/block"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
@@ -50,6 +47,8 @@ func (suite *ImageCacheConfigSuite) TestReconcileFeatureNotEnabled() {
 }
 
 func (suite *ImageCacheConfigSuite) TestReconcileFeatureEnabled() {
+	ctrlName := (&crictrl.ImageCacheConfigController{}).Name()
+
 	cfg := config.NewMachineConfig(container.NewV1Alpha1(&v1alpha1.Config{
 		MachineConfig: &v1alpha1.MachineConfig{
 			MachineFeatures: &v1alpha1.FeaturesConfig{
@@ -74,8 +73,6 @@ func (suite *ImageCacheConfigSuite) TestReconcileFeatureEnabled() {
 		asrt.Equal(cri.ImageCacheCopyStatusUnknown, r.TypedSpec().CopyStatus)
 	})
 
-	suite.Assert().Empty(suite.getMountedVolumes())
-
 	// create volume statuses to simulate the volume being ready
 	vs1 := block.NewVolumeStatus(block.NamespaceName, crictrl.VolumeImageCacheISO)
 	vs1.TypedSpec().Phase = block.VolumePhaseReady
@@ -85,6 +82,23 @@ func (suite *ImageCacheConfigSuite) TestReconcileFeatureEnabled() {
 	vs2.TypedSpec().Phase = block.VolumePhaseWaiting
 	suite.Require().NoError(suite.State().Create(suite.Ctx(), vs2))
 
+	// controller should create mount requests
+	ctest.AssertResources(suite,
+		[]string{
+			ctrlName + "-" + crictrl.VolumeImageCacheISO,
+			ctrlName + "-" + crictrl.VolumeImageCacheDISK,
+		},
+		func(vmr *block.VolumeMountRequest, asrt *assert.Assertions) {
+			asrt.Equal(vmr.TypedSpec().VolumeID == crictrl.VolumeImageCacheISO, vmr.TypedSpec().ReadOnly)
+		},
+	)
+
+	// simulate ISO being mounted
+	vms1 := block.NewVolumeMountStatus(block.NamespaceName, ctrlName+"-"+crictrl.VolumeImageCacheISO)
+	vms1.TypedSpec().ReadOnly = true
+	vms1.TypedSpec().Target = constants.ImageCacheISOMountPoint
+	suite.Require().NoError(suite.State().Create(suite.Ctx(), vms1))
+
 	// one volume is ready, but second one is not (yet)
 	ctest.AssertResource(suite, cri.ImageCacheConfigID, func(r *cri.ImageCacheConfig, asrt *assert.Assertions) {
 		asrt.Equal(cri.ImageCacheStatusPreparing, r.TypedSpec().Status)
@@ -92,19 +106,21 @@ func (suite *ImageCacheConfigSuite) TestReconcileFeatureEnabled() {
 		asrt.Equal([]string{filepath.Join(constants.ImageCacheISOMountPoint, "imagecache")}, r.TypedSpec().Roots)
 	})
 
-	suite.Assert().Equal([]string{crictrl.VolumeImageCacheISO}, suite.getMountedVolumes())
-
 	// mark second as ready
 	vs2.TypedSpec().Phase = block.VolumePhaseReady
 	suite.Require().NoError(suite.State().Update(suite.Ctx(), vs2))
+
+	// simulate disk being mounted
+	vms2 := block.NewVolumeMountStatus(block.NamespaceName, ctrlName+"-"+crictrl.VolumeImageCacheDISK)
+	vms2.TypedSpec().ReadOnly = false
+	vms2.TypedSpec().Target = constants.ImageCacheDiskMountPoint
+	suite.Require().NoError(suite.State().Create(suite.Ctx(), vms2))
 
 	// now both volumes are ready, but service hasn't started yet
 	ctest.AssertResource(suite, cri.ImageCacheConfigID, func(r *cri.ImageCacheConfig, asrt *assert.Assertions) {
 		asrt.Equal(cri.ImageCacheStatusPreparing, r.TypedSpec().Status)
 		asrt.Equal([]string{constants.ImageCacheDiskMountPoint, filepath.Join(constants.ImageCacheISOMountPoint, "imagecache")}, r.TypedSpec().Roots)
 	})
-
-	suite.Assert().Equal([]string{crictrl.VolumeImageCacheISO, crictrl.VolumeImageCacheDISK}, suite.getMountedVolumes())
 
 	// simulate registryd being ready
 	service := v1alpha1res.NewService(crictrl.RegistrydServiceID)
@@ -156,6 +172,8 @@ func (suite *ImageCacheConfigSuite) TestReconcileJustDiskVolume() {
 }
 
 func (suite *ImageCacheConfigSuite) TestReconcileWithImageCacheVolume() {
+	ctrlName := (&crictrl.ImageCacheConfigController{}).Name()
+
 	v1alpha1Cfg := &v1alpha1.Config{
 		MachineConfig: &v1alpha1.MachineConfig{
 			MachineFeatures: &v1alpha1.FeaturesConfig{
@@ -199,6 +217,12 @@ func (suite *ImageCacheConfigSuite) TestReconcileWithImageCacheVolume() {
 	vs2.TypedSpec().Phase = block.VolumePhaseReady
 	suite.Require().NoError(suite.State().Create(suite.Ctx(), vs2))
 
+	// simulate disk being mounted
+	vms := block.NewVolumeMountStatus(block.NamespaceName, ctrlName+"-"+crictrl.VolumeImageCacheDISK)
+	vms.TypedSpec().ReadOnly = false
+	vms.TypedSpec().Target = constants.ImageCacheDiskMountPoint
+	suite.Require().NoError(suite.State().Create(suite.Ctx(), vms))
+
 	// simulate registryd being ready
 	service := v1alpha1res.NewService(crictrl.RegistrydServiceID)
 	service.TypedSpec().Healthy = true
@@ -213,19 +237,6 @@ func (suite *ImageCacheConfigSuite) TestReconcileWithImageCacheVolume() {
 	})
 }
 
-func (suite *ImageCacheConfigSuite) SetupTest() {
-	suite.mountedVolumes = nil
-
-	suite.DefaultSuite.SetupTest()
-}
-
-func (suite *ImageCacheConfigSuite) getMountedVolumes() []string {
-	suite.mountedVolumesMutex.Lock()
-	defer suite.mountedVolumesMutex.Unlock()
-
-	return suite.mountedVolumes
-}
-
 func TestImageCacheConfigSuite(t *testing.T) {
 	s := &ImageCacheConfigSuite{
 		DefaultSuite: ctest.DefaultSuite{
@@ -235,18 +246,6 @@ func TestImageCacheConfigSuite(t *testing.T) {
 
 	s.AfterSetup = func(suite *ctest.DefaultSuite) {
 		suite.Require().NoError(suite.Runtime().RegisterController(&crictrl.ImageCacheConfigController{
-			VolumeMounter: func(label string, opts ...mountv2.NewPointOption) error {
-				s.mountedVolumesMutex.Lock()
-				defer s.mountedVolumesMutex.Unlock()
-
-				if slices.Index(s.mountedVolumes, label) >= 0 {
-					return nil
-				}
-
-				s.mountedVolumes = append(s.mountedVolumes, label)
-
-				return nil
-			},
 			V1Alpha1ServiceManager: &mockServiceRunner{},
 			DisableCacheCopy:       true,
 		}))
@@ -257,9 +256,6 @@ func TestImageCacheConfigSuite(t *testing.T) {
 
 type ImageCacheConfigSuite struct {
 	ctest.DefaultSuite
-
-	mountedVolumesMutex sync.Mutex
-	mountedVolumes      []string
 }
 
 type mockServiceRunner struct{}

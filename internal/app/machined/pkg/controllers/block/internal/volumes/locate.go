@@ -24,6 +24,7 @@ import (
 //
 //nolint:gocyclo,cyclop
 func LocateAndProvision(ctx context.Context, logger *zap.Logger, volumeContext ManagerContext) error {
+	volumeContext.Status.MountSpec = volumeContext.Cfg.TypedSpec().Mount
 	volumeType := volumeContext.Cfg.TypedSpec().Type
 
 	if volumeType == block.VolumeTypeTmpfs {

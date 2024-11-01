@@ -113,6 +113,26 @@ func (suite *DefaultSuite) Create(res resource.Resource, opts ...state.CreateOpt
 	suite.Require().NoError(suite.State().Create(suite.Ctx(), res, opts...))
 }
 
+// Update updates a resource in the state of the suite.
+func (suite *DefaultSuite) Update(res resource.Resource, opts ...state.UpdateOption) {
+	suite.Require().NoError(suite.State().Update(suite.Ctx(), res, opts...))
+}
+
+// AddFinalizer adds a finalizer to a resource in the state of the suite.
+func (suite *DefaultSuite) AddFinalizer(resourcePointer resource.Pointer, finalizer string) {
+	suite.Require().NoError(suite.State().AddFinalizer(suite.Ctx(), resourcePointer, finalizer))
+}
+
+// RemoveFinalizer removes a finalizer from a resource in the state of the suite.
+func (suite *DefaultSuite) RemoveFinalizer(resourcePointer resource.Pointer, finalizer string) {
+	suite.Require().NoError(suite.State().RemoveFinalizer(suite.Ctx(), resourcePointer, finalizer))
+}
+
+// Destroy destroys a resource in the state of the suite.
+func (suite *DefaultSuite) Destroy(res resource.Resource, opts ...state.DestroyOption) {
+	suite.Require().NoError(suite.State().Destroy(suite.Ctx(), res.Metadata(), opts...))
+}
+
 // Suite is a type which describes the suite type.
 type Suite interface {
 	T() *testing.T

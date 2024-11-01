@@ -196,6 +196,21 @@ func WithUnmountPrinter(printer func(string, ...any)) UnmountOption {
 	}
 }
 
+// Source returns the mount source.
+func (p *Point) Source() string {
+	return p.source
+}
+
+// Target returns the mount target.
+func (p *Point) Target() string {
+	return p.target
+}
+
+// FSType returns the mount filesystem type.
+func (p *Point) FSType() string {
+	return p.fstype
+}
+
 // IsMounted checks if the mount point is mounted by checking the mount on the target.
 func (p *Point) IsMounted() (bool, error) {
 	f, err := os.Open("/proc/mounts")
@@ -298,6 +313,20 @@ func (p *Point) Move(newTarget string) error {
 	return unix.Mount(p.target, newTarget, "", unix.MS_MOVE, "")
 }
 
+// RemountReadOnly remounts the mount point as read-only.
+func (p *Point) RemountReadOnly() error {
+	p.flags |= unix.MS_RDONLY
+
+	return p.remount()
+}
+
+// RemountReadWrite remounts the mount point as read-write.
+func (p *Point) RemountReadWrite() error {
+	p.flags &^= unix.MS_RDONLY
+
+	return p.remount()
+}
+
 func (p *Point) mount() error {
 	if err := unix.Mount(p.source, p.target, p.fstype, p.flags, p.data); err != nil {
 		return err
@@ -312,6 +341,10 @@ func (p *Point) unmount(printer func(string, ...any)) error {
 
 func (p *Point) share() error {
 	return unix.Mount("", p.target, "", unix.MS_SHARED|unix.MS_REC, "")
+}
+
+func (p *Point) remount() error {
+	return unix.Mount("", p.target, "", unix.MS_REMOUNT|p.flags, "")
 }
 
 //nolint:gocyclo
