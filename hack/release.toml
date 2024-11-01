@@ -27,6 +27,13 @@ runc: 1.2.0
 Talos is built with Go 1.23.2.
 """
 
+    [notes.auditd]
+        title = "Auditd"
+        description = """\
+Talos Linux now starts a auditd service by default.
+Logs can be read with `talosctl logs auditd`.
+"""
+
     [notes.cgroups]
         title = "`talosctl cgroups`"
         description = """\

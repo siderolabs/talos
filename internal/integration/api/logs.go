@@ -82,6 +82,32 @@ func (suite *LogsSuite) TestServicesHaveLogs() {
 	suite.Require().Greater(logsSize, int64(1024))
 }
 
+// TestAuditdLogs verifies that auditd logs are present.
+func (suite *LogsSuite) TestAuditdLogs() {
+	if suite.Cluster == nil || suite.Cluster.Provisioner() != base.ProvisionerQEMU {
+		suite.T().Skip("skip auditd logs test for non-QEMU clusters")
+	}
+
+	logsStream, err := suite.Client.Logs(
+		suite.nodeCtx,
+		constants.SystemContainerdNamespace,
+		common.ContainerDriver_CONTAINERD,
+		"auditd",
+		false,
+		-1,
+	)
+	suite.Require().NoError(err)
+
+	logReader, err := client.ReadStream(logsStream)
+	suite.Require().NoError(err)
+
+	n, err := io.Copy(io.Discard, logReader)
+	suite.Require().NoError(err)
+
+	// auditd logs shouldn't be empty
+	suite.Require().Greater(n, int64(1024))
+}
+
 // TestTail verifies that log tail might be requested.
 func (suite *LogsSuite) TestTail() {
 	// invoke machined enough times to generate

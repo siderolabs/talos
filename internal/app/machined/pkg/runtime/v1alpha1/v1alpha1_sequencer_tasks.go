@@ -677,6 +677,15 @@ func StartSyslogd(r runtime.Sequence, _ any) (runtime.TaskExecutionFunc, string)
 	}, "startSyslogd"
 }
 
+// StartAuditd represents the task to start auditd.
+func StartAuditd(r runtime.Sequence, _ any) (runtime.TaskExecutionFunc, string) {
+	return func(_ context.Context, _ *log.Logger, r runtime.Runtime) error {
+		system.Services(r).LoadAndStart(&services.Auditd{})
+
+		return nil
+	}, "startAuditd"
+}
+
 // StartDashboard represents the task to start dashboard.
 func StartDashboard(_ runtime.Sequence, _ any) (runtime.TaskExecutionFunc, string) {
 	return func(_ context.Context, _ *log.Logger, r runtime.Runtime) error {

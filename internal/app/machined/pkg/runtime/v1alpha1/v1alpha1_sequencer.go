@@ -109,6 +109,7 @@ func (*Sequencer) Initialize(r runtime.Runtime) []runtime.Phase {
 			"earlyServices",
 			StartUdevd,
 			StartMachined,
+			StartAuditd,
 			StartSyslogd,
 			StartContainerd,
 		).Append(

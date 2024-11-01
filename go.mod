@@ -80,6 +80,7 @@ require (
 	github.com/docker/go-connections v0.5.0
 	github.com/dustin/go-humanize v1.0.1
 	github.com/ecks/uefi v0.0.0-20221116212947-caef65d070eb
+	github.com/elastic/go-libaudit/v2 v2.5.0
 	github.com/fatih/color v1.17.0
 	github.com/florianl/go-tc v0.4.4
 	github.com/foxboron/go-uefi v0.0.0-20240805124652-e2076f0e58ca
@@ -123,7 +124,7 @@ require (
 	github.com/nberlee/go-netstat v0.1.2
 	github.com/opencontainers/go-digest v1.0.0
 	github.com/opencontainers/image-spec v1.1.0
-	github.com/opencontainers/runc v1.2.0-rc.3
+	github.com/opencontainers/runc v1.2.0
 	github.com/opencontainers/runtime-spec v1.2.0
 	github.com/packethost/packngo v0.31.0
 	github.com/pelletier/go-toml/v2 v2.2.3
@@ -228,7 +229,7 @@ require (
 	github.com/bgentry/go-netrc v0.0.0-20140422174119-9fd32a8b3d3d // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/chai2010/gettext-go v1.0.2 // indirect
-	github.com/cilium/ebpf v0.12.3 // indirect
+	github.com/cilium/ebpf v0.16.0 // indirect
 	github.com/cloudflare/circl v1.3.9 // indirect
 	github.com/containerd/containerd v1.7.23 // indirect
 	github.com/containerd/continuity v0.4.3 // indirect
@@ -242,6 +243,7 @@ require (
 	github.com/coreos/go-semver v0.3.1 // indirect
 	github.com/coreos/go-systemd/v22 v22.5.0 // indirect
 	github.com/cpuguy83/go-md2man/v2 v2.0.5 // indirect
+	github.com/cyphar/filepath-securejoin v0.3.4 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/docker/cli v27.1.1+incompatible // indirect
 	github.com/docker/distribution v2.8.3+incompatible // indirect
