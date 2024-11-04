@@ -401,6 +401,9 @@ taloscl-freebsd-arm64:
 talosctl-windows-amd64:
 	@$(MAKE) local-talosctl-windows-amd64 DEST=$(ARTIFACTS) PUSH=false NAME=Client
 
+talosctl-windows-arm64:
+	@$(MAKE) local-talosctl-windows-arm64 DEST=$(ARTIFACTS) PUSH=false NAME=Client
+
 talosctl:
 	@$(MAKE) local-talosctl-targetarch DEST=$(ARTIFACTS)
 

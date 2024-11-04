@@ -535,6 +535,13 @@ ARG GOAMD64
 RUN --mount=type=cache,target=/.cache GOOS=windows GOARCH=amd64 GOAMD64=${GOAMD64} go build ${GO_BUILDFLAGS_TALOSCTL} -ldflags "${GO_LDFLAGS}" -o /talosctl-windows-amd64.exe
 RUN touch --date="@${SOURCE_DATE_EPOCH}" /talosctl-windows-amd64.exe
 
+FROM base AS talosctl-windows-arm64-build
+WORKDIR /src/cmd/talosctl
+ARG GO_BUILDFLAGS_TALOSCTL
+ARG GO_LDFLAGS
+RUN --mount=type=cache,target=/.cache GOOS=windows GOARCH=arm64 go build ${GO_BUILDFLAGS_TALOSCTL} -ldflags "${GO_LDFLAGS}" -o /talosctl-windows-arm64.exe
+RUN touch --date="@${SOURCE_DATE_EPOCH}" /talosctl-windows-arm64.exe
+
 FROM base AS talosctl-freebsd-amd64-build
 WORKDIR /src/cmd/talosctl
 ARG GO_BUILDFLAGS_TALOSCTL
@@ -585,6 +592,7 @@ COPY --from=talosctl-darwin-arm64 / /
 COPY --from=talosctl-freebsd-amd64 / /
 COPY --from=talosctl-freebsd-arm64 / /
 COPY --from=talosctl-windows-amd64 / /
+COPY --from=talosctl-windows-arm64 / /
 
 FROM scratch AS talosctl
 ARG TARGETARCH
