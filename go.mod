@@ -80,7 +80,7 @@ require (
 	github.com/docker/go-connections v0.5.0
 	github.com/dustin/go-humanize v1.0.1
 	github.com/ecks/uefi v0.0.0-20221116212947-caef65d070eb
-	github.com/elastic/go-libaudit/v2 v2.5.0
+	github.com/elastic/go-libaudit/v2 v2.5.1-0.20241104162019-1df86e79cca7
 	github.com/fatih/color v1.17.0
 	github.com/florianl/go-tc v0.4.4
 	github.com/foxboron/go-uefi v0.0.0-20240805124652-e2076f0e58ca
