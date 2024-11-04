@@ -31,6 +31,7 @@ import (
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system/runner/containerd"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system/runner/restart"
 	"github.com/siderolabs/talos/internal/pkg/environment"
+	"github.com/siderolabs/talos/internal/pkg/selinux"
 	"github.com/siderolabs/talos/pkg/conditions"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/resources/network"
@@ -91,6 +92,10 @@ func (t *Trustd) PreFunc(ctx context.Context, r runtime.Runtime) error {
 
 	listener, err := net.Listen("unix", constants.TrustdRuntimeSocketPath)
 	if err != nil {
+		return err
+	}
+
+	if err := selinux.SetLabel(constants.TrustdRuntimeSocketPath, constants.TrustdRuntimeSocketLabel); err != nil {
 		return err
 	}
 

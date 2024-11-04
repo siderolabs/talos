@@ -11,6 +11,17 @@
 (typetransition kernel_t init_exec_t process init_t)
 (allow init_t init_exec_t (file (execute entrypoint)))
 
+; System daemon sockets
+(type machine_socket_t)
+(call system_socket_f (machine_socket_t))
+(allow init_t machine_socket_t (sock_file (relabelto)))
+(type dbus_service_socket_t)
+(call system_socket_f (dbus_service_socket_t))
+(allow init_t dbus_service_socket_t (sock_file (relabelto)))
+(type dbus_client_socket_t)
+(call system_socket_f (dbus_client_socket_t))
+(allow init_t dbus_client_socket_t (sock_file (relabelto)))
+
 (allow init_t service_p (process (transition)))
 (allow init_t service_exec_f (file (execute)))
 

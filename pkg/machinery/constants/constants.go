@@ -295,17 +295,32 @@ const (
 	// KubernetesAPIServerSecretsDir defines directory with kube-apiserver secrets.
 	KubernetesAPIServerSecretsDir = KubebernetesStaticSecretsDir + "/" + "kube-apiserver"
 
+	// KubernetesAPIServerSecretsDirSELinuxLabel defines SELinux label for the directory with kube-apiserver secrets.
+	KubernetesAPIServerSecretsDirSELinuxLabel = "system_u:object_r:kube_apiserver_secret_t:s0"
+
 	// KubernetesAPIServerConfigDir defines directory with kube-apiserver configs.
 	KubernetesAPIServerConfigDir = KubebernetesStaticConfigDir + "/" + "kube-apiserver"
+
+	// KubernetesAPIServerConfigDirSELinuxLabel defines SELinux label for the directory with kube-apiserver configs.
+	KubernetesAPIServerConfigDirSELinuxLabel = "system_u:object_r:kube_apiserver_config_t:s0"
 
 	// KubernetesControllerManagerSecretsDir defines ephemeral directory with kube-controller-manager secrets.
 	KubernetesControllerManagerSecretsDir = KubebernetesStaticSecretsDir + "/" + "kube-controller-manager"
 
+	// KubernetesControllerManagerSecretsDirSELinuxLabel defines SELinux label for the ephemeral directory with kube-controller-manager secrets.
+	KubernetesControllerManagerSecretsDirSELinuxLabel = "system_u:object_r:kube_controller_manager_secret_t:s0"
+
 	// KubernetesSchedulerSecretsDir defines ephemeral directory with kube-scheduler secrets.
 	KubernetesSchedulerSecretsDir = KubebernetesStaticSecretsDir + "/" + "kube-scheduler"
 
+	// KubernetesSchedulerSecretsDirSELinuxLabel defines SELinux label for the ephemeral directory with kube-scheduler secrets.
+	KubernetesSchedulerSecretsDirSELinuxLabel = "system_u:object_r:kube_scheduler_secret_t:s0"
+
 	// KubernetesSchedulerConfigDir defines ephemeral directory with kube-scheduler configs.
 	KubernetesSchedulerConfigDir = KubebernetesStaticConfigDir + "/" + "kube-scheduler"
+
+	// KubernetesSchedulerConfigDirSELinuxLabel defines SELinux label for the ephemeral directory with kube-scheduler configs.
+	KubernetesSchedulerConfigDirSELinuxLabel = "system_u:object_r:kube_scheduler_config_t:s0"
 
 	// KubernetesAPIServerRunUser defines UID to the API Server.
 	KubernetesAPIServerRunUser = 65534
@@ -442,6 +457,9 @@ const (
 	// EtcdPKIPath is the path to the etcd PKI directory.
 	EtcdPKIPath = "/system/secrets/etcd"
 
+	// EtcdPKISELinuxLabel is the SELinux label for the etcd PKI directory.
+	EtcdPKISELinuxLabel = "system_u:object_r:etcd_pki_t:s0"
+
 	// EtcdDataPath is the path where etcd stores its' data.
 	EtcdDataPath = "/var/lib/etcd"
 
@@ -536,14 +554,26 @@ const (
 	// APISocketPath is the path to file socket of apid.
 	APISocketPath = SystemRunPath + "/apid/apid.sock"
 
+	// APISocketLabel is the SELinux label for apid socket file.
+	APISocketLabel = "system_u:object_r:apid_socket_t:s0"
+
 	// APIRuntimeSocketPath is the path to file socket of runtime server for apid.
 	APIRuntimeSocketPath = SystemRunPath + "/apid/runtime.sock"
+
+	// APIRuntimeSocketLabel is the SELinux label for apid runtime socket file.
+	APIRuntimeSocketLabel = "system_u:object_r:apid_runtime_socket_t:s0"
 
 	// TrustdRuntimeSocketPath is the path to file socket of runtime server for trustd.
 	TrustdRuntimeSocketPath = SystemRunPath + "/trustd/runtime.sock"
 
+	// TrustdRuntimeSocketLabel is the SELinux label for trustd runtime socket file.
+	TrustdRuntimeSocketLabel = "system_u:object_r:trustd_runtime_socket_t:s0"
+
 	// MachineSocketPath is the path to file socket of machine API.
 	MachineSocketPath = SystemRunPath + "/machined/machine.sock"
+
+	// MachineSocketLabel is the SELinux label for socket of machine API.
+	MachineSocketLabel = "system_u:object_r:machine_socket_t:s0"
 
 	// NetworkSocketPath is the path to file socket of network API.
 	NetworkSocketPath = SystemRunPath + "/networkd/networkd.sock"
@@ -1012,8 +1042,14 @@ const (
 	// DBusServiceSocketPath is the path to the D-Bus socket for the logind mock to connect to.
 	DBusServiceSocketPath = SystemRunPath + "/dbus/service.socket"
 
+	// DBusServiceSocketLabel is the SELinux label for the D-Bus socket for the logind mock to connect to.
+	DBusServiceSocketLabel = "system_u:object_r:dbus_service_socket_t:s0"
+
 	// DBusClientSocketPath is the path to the D-Bus socket for the kubelet to connect to.
 	DBusClientSocketPath = "/run/dbus/system_bus_socket"
+
+	// DBusClientSocketLabel is the SELinux label for the D-Bus socket for the kubelet to connect to.
+	DBusClientSocketLabel = "system_u:object_r:dbus_client_socket_t:s0"
 
 	// GoVersion is the version of Go compiler this release was built with.
 	GoVersion = "go1.23.2"

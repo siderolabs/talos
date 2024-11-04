@@ -2,6 +2,18 @@
 (call system_container_p (apid_t))
 (allow apid_t init_exec_t (file (entrypoint execute)))
 
+(type apid_socket_t)
+(call system_socket_f (apid_socket_t))
+(type apid_runtime_socket_t)
+(call system_socket_f (apid_runtime_socket_t))
+(allow apid_t apid_socket_t (sock_file (relabelto)))
+(allow apid_t apid_runtime_socket_t (sock_file (relabelto)))
+
 (type trustd_t)
 (call system_container_p (trustd_t))
 (allow trustd_t init_exec_t (file (entrypoint execute)))
+
+(type trustd_runtime_socket_t)
+(call system_socket_f (trustd_runtime_socket_t))
+(allow trustd_t trustd_runtime_socket_t (sock_file (write)))
+(allow trustd_t trustd_runtime_socket_t (sock_file (relabelto)))

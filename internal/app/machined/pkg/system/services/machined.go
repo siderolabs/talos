@@ -23,6 +23,7 @@ import (
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system/health"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system/runner"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system/runner/goroutine"
+	"github.com/siderolabs/talos/internal/pkg/selinux"
 	"github.com/siderolabs/talos/pkg/conditions"
 	"github.com/siderolabs/talos/pkg/grpc/factory"
 	"github.com/siderolabs/talos/pkg/grpc/middleware/authz"
@@ -157,6 +158,10 @@ func (s *machinedService) Main(ctx context.Context, r runtime.Runtime, logWriter
 
 	listener, err := factory.NewListener(factory.Network("unix"), factory.SocketPath(constants.MachineSocketPath)) //nolint:contextcheck
 	if err != nil {
+		return err
+	}
+
+	if err := selinux.SetLabel(constants.MachineSocketPath, constants.MachineSocketLabel); err != nil {
 		return err
 	}
 

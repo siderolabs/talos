@@ -21,6 +21,7 @@ import (
 	"github.com/siderolabs/gen/xslices"
 	"go.uber.org/zap"
 
+	"github.com/siderolabs/talos/internal/pkg/selinux"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/resources/k8s"
 	"github.com/siderolabs/talos/pkg/machinery/resources/secrets"
@@ -162,18 +163,20 @@ func (ctrl *RenderSecretsStaticPodController) Run(ctx context.Context, r control
 		}
 
 		for _, pod := range []struct {
-			name      string
-			directory string
-			uid       int
-			gid       int
-			secrets   []secret
-			templates []template
+			name         string
+			directory    string
+			selinuxLabel string
+			uid          int
+			gid          int
+			secrets      []secret
+			templates    []template
 		}{
 			{
-				name:      "kube-apiserver",
-				directory: constants.KubernetesAPIServerSecretsDir,
-				uid:       constants.KubernetesAPIServerRunUser,
-				gid:       constants.KubernetesAPIServerRunGroup,
+				name:         "kube-apiserver",
+				directory:    constants.KubernetesAPIServerSecretsDir,
+				selinuxLabel: constants.KubernetesAPIServerSecretsDirSELinuxLabel,
+				uid:          constants.KubernetesAPIServerRunUser,
+				gid:          constants.KubernetesAPIServerRunGroup,
 				secrets: []secret{
 					{
 						getter:       func() *x509.PEMEncodedCertificateAndKey { return rootEtcdSecrets.EtcdCA },
@@ -230,10 +233,11 @@ func (ctrl *RenderSecretsStaticPodController) Run(ctx context.Context, r control
 				},
 			},
 			{
-				name:      "kube-controller-manager",
-				directory: constants.KubernetesControllerManagerSecretsDir,
-				uid:       constants.KubernetesControllerManagerRunUser,
-				gid:       constants.KubernetesControllerManagerRunGroup,
+				name:         "kube-controller-manager",
+				directory:    constants.KubernetesControllerManagerSecretsDir,
+				selinuxLabel: constants.KubernetesControllerManagerSecretsDirSELinuxLabel,
+				uid:          constants.KubernetesControllerManagerRunUser,
+				gid:          constants.KubernetesControllerManagerRunGroup,
 				secrets: []secret{
 					{
 						getter:       func() *x509.PEMEncodedCertificateAndKey { return rootK8sSecrets.IssuingCA },
@@ -258,10 +262,11 @@ func (ctrl *RenderSecretsStaticPodController) Run(ctx context.Context, r control
 				},
 			},
 			{
-				name:      "kube-scheduler",
-				directory: constants.KubernetesSchedulerSecretsDir,
-				uid:       constants.KubernetesSchedulerRunUser,
-				gid:       constants.KubernetesSchedulerRunGroup,
+				name:         "kube-scheduler",
+				directory:    constants.KubernetesSchedulerSecretsDir,
+				selinuxLabel: constants.KubernetesSchedulerSecretsDirSELinuxLabel,
+				uid:          constants.KubernetesSchedulerRunUser,
+				gid:          constants.KubernetesSchedulerRunGroup,
 				templates: []template{
 					{
 						filename: "kubeconfig",
@@ -272,6 +277,10 @@ func (ctrl *RenderSecretsStaticPodController) Run(ctx context.Context, r control
 		} {
 			if err = os.MkdirAll(pod.directory, 0o755); err != nil {
 				return fmt.Errorf("error creating secrets directory for %q: %w", pod.name, err)
+			}
+
+			if err = selinux.SetLabel(pod.directory, pod.selinuxLabel); err != nil {
+				return err
 			}
 
 			for _, secret := range pod.secrets {

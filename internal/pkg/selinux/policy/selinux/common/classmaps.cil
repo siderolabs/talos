@@ -1,3 +1,102 @@
+; Access to all file classes
+(classmap fs_classes (full rw ro))
+(classmapping fs_classes full (filesystem (
+    associate
+    getattr
+    mount
+    quotaget
+    quotamod
+    relabelfrom
+    relabelto
+    remount
+    unmount
+    watch
+)))
+(classmapping fs_classes full (file (
+    append create execmod execute getattr ioctl link lock map mounton open quotaon read relabelfrom relabelto rename setattr unlink watch watch_mount watch_reads watch_sb watch_with_perm write
+)))
+(classmapping fs_classes full (dir (
+    append create execmod execute getattr ioctl link lock map mounton open quotaon read relabelfrom relabelto rename setattr unlink watch watch_mount watch_reads watch_sb watch_with_perm write
+    add_name remove_name reparent rmdir search
+)))
+(classmapping fs_classes full (lnk_file (
+    append create execmod execute getattr ioctl link lock map mounton open quotaon read relabelfrom relabelto rename setattr unlink watch watch_mount watch_reads watch_sb watch_with_perm write
+)))
+(classmapping fs_classes full (chr_file (
+    append create execmod execute getattr ioctl link lock map mounton open quotaon read relabelfrom relabelto rename setattr unlink watch watch_mount watch_reads watch_sb watch_with_perm write
+)))
+(classmapping fs_classes full (blk_file (
+    append create execmod execute getattr ioctl link lock map mounton open quotaon read relabelfrom relabelto rename setattr unlink watch watch_mount watch_reads watch_sb watch_with_perm write
+)))
+(classmapping fs_classes full (sock_file (
+    append create execmod execute getattr ioctl link lock map mounton open quotaon read relabelfrom relabelto rename setattr unlink watch watch_mount watch_reads watch_sb watch_with_perm write
+)))
+(classmapping fs_classes full (fifo_file (
+    append create execmod execute getattr ioctl link lock map mounton open quotaon read relabelfrom relabelto rename setattr unlink watch watch_mount watch_reads watch_sb watch_with_perm write
+)))
+; rw is full without SELinux management
+(classmapping fs_classes rw (filesystem (
+    associate
+    getattr
+    mount
+    quotaget
+    quotamod
+    remount
+    unmount
+    watch
+)))
+(classmapping fs_classes rw (file (
+    append create execmod execute getattr ioctl link lock map mounton open quotaon read rename setattr unlink watch watch_mount watch_reads watch_sb watch_with_perm write
+)))
+(classmapping fs_classes rw (dir (
+    append create execmod execute getattr ioctl link lock map mounton open quotaon read rename setattr unlink watch watch_mount watch_reads watch_sb watch_with_perm write
+    add_name remove_name reparent rmdir search
+)))
+(classmapping fs_classes rw (lnk_file (
+    append create execmod execute getattr ioctl link lock map mounton open quotaon read rename setattr unlink watch watch_mount watch_reads watch_sb watch_with_perm write
+)))
+(classmapping fs_classes rw (chr_file (
+    append create execmod execute getattr ioctl link lock map mounton open quotaon read rename setattr unlink watch watch_mount watch_reads watch_sb watch_with_perm write
+)))
+(classmapping fs_classes rw (blk_file (
+    append create execmod execute getattr ioctl link lock map mounton open quotaon read rename setattr unlink watch watch_mount watch_reads watch_sb watch_with_perm write
+)))
+(classmapping fs_classes rw (sock_file (
+    append create execmod execute getattr ioctl link lock map mounton open quotaon read rename setattr unlink watch watch_mount watch_reads watch_sb watch_with_perm write
+)))
+(classmapping fs_classes rw (fifo_file (
+    append create execmod execute getattr ioctl link lock map mounton open quotaon read rename setattr unlink watch watch_mount watch_reads watch_sb watch_with_perm write
+)))
+; ro is rw without write and configure
+(classmapping fs_classes ro (filesystem (
+    associate
+    getattr
+    quotaget
+    watch
+)))
+(classmapping fs_classes ro (file (
+    append create execmod execute getattr ioctl lock map mounton open quotaon read rename unlink watch watch_mount watch_reads watch_sb watch_with_perm
+)))
+(classmapping fs_classes ro (dir (
+    execmod execute getattr ioctl lock map open read watch watch_mount watch_reads watch_sb watch_with_perm
+    search
+)))
+(classmapping fs_classes ro (lnk_file (
+    execmod execute getattr ioctl lock map open read watch watch_mount watch_reads watch_sb watch_with_perm
+)))
+(classmapping fs_classes ro (chr_file (
+    execmod execute getattr ioctl lock map open read watch watch_mount watch_reads watch_sb watch_with_perm
+)))
+(classmapping fs_classes ro (blk_file (
+    execmod execute getattr ioctl lock map open read watch watch_mount watch_reads watch_sb watch_with_perm
+)))
+(classmapping fs_classes ro (sock_file (
+    execmod execute getattr ioctl lock map open read watch watch_mount watch_reads watch_sb watch_with_perm
+)))
+(classmapping fs_classes ro (fifo_file (
+    execmod execute getattr ioctl lock map open read watch watch_mount watch_reads watch_sb watch_with_perm
+)))
+
 ; Netlink socket access
 (classmap netlink_classes (full))
 ; Full means any access except relabeling

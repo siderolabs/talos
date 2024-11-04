@@ -19,6 +19,9 @@ import (
 	"time"
 
 	"golang.org/x/sync/errgroup"
+
+	"github.com/siderolabs/talos/internal/pkg/selinux"
+	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
 
 // DBusBroker implements simplified D-Bus broker which allows to connect
@@ -48,8 +51,16 @@ func NewBroker(serviceSocketPath, clientSocketPath string) (*DBusBroker, error) 
 		return nil, err
 	}
 
+	if err = selinux.SetLabel(serviceSocketPath, constants.DBusServiceSocketLabel); err != nil {
+		return nil, err
+	}
+
 	broker.listenClient, err = net.Listen("unix", clientSocketPath)
 	if err != nil {
+		return nil, err
+	}
+
+	if err = selinux.SetLabel(clientSocketPath, constants.DBusClientSocketLabel); err != nil {
 		return nil, err
 	}
 

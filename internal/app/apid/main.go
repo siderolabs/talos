@@ -31,6 +31,7 @@ import (
 	apidbackend "github.com/siderolabs/talos/internal/app/apid/pkg/backend"
 	"github.com/siderolabs/talos/internal/app/apid/pkg/director"
 	"github.com/siderolabs/talos/internal/app/apid/pkg/provider"
+	"github.com/siderolabs/talos/internal/pkg/selinux"
 	"github.com/siderolabs/talos/pkg/grpc/factory"
 	"github.com/siderolabs/talos/pkg/grpc/middleware/authz"
 	"github.com/siderolabs/talos/pkg/grpc/proxy/backend"
@@ -155,6 +156,10 @@ func apidMain() error {
 	)
 	if err != nil {
 		return fmt.Errorf("error creating listner: %w", err)
+	}
+
+	if err = selinux.SetLabel(constants.APISocketPath, constants.APISocketLabel); err != nil {
+		return err
 	}
 
 	networkServer := func() *grpc.Server {

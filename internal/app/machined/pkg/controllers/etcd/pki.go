@@ -17,6 +17,7 @@ import (
 	"github.com/siderolabs/gen/optional"
 	"go.uber.org/zap"
 
+	"github.com/siderolabs/talos/internal/pkg/selinux"
 	"github.com/siderolabs/talos/pkg/filetree"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/resources/etcd"
@@ -89,6 +90,10 @@ func (ctrl *PKIController) Run(ctx context.Context, r controller.Runtime, _ *zap
 		}
 
 		if err = os.MkdirAll(constants.EtcdPKIPath, 0o700); err != nil {
+			return err
+		}
+
+		if err = selinux.SetLabel(constants.EtcdPKIPath, constants.EtcdPKISELinuxLabel); err != nil {
 			return err
 		}
 
