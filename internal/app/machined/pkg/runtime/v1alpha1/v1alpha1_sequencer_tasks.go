@@ -887,20 +887,58 @@ func SetupVarDirectory(runtime.Sequence, any) (runtime.TaskExecutionFunc, string
 			return err
 		}
 
-		for _, p := range []string{"/var/log/audit", "/var/log/containers", "/var/log/pods", "/var/lib/kubelet", "/var/run/lock", constants.SeccompProfilesDirectory} {
-			if err := os.MkdirAll(p, 0o700); err != nil {
+		for _, dir := range []struct {
+			Path     string
+			Mode     os.FileMode
+			UID, GID int
+		}{
+			{
+				Path: "/var/log",
+				Mode: 0o755,
+			},
+			{
+				Path: "/var/log/audit",
+				Mode: 0o700,
+			},
+			{
+				Path: "/var/log/containers",
+				Mode: 0o755,
+			},
+			{
+				Path: "/var/log/pods",
+				Mode: 0o755,
+			},
+			{
+				Path: "/var/lib/kubelet",
+				Mode: 0o700,
+			},
+			{
+				Path: "/var/run/lock",
+				Mode: 0o755,
+			},
+			{
+				Path: constants.SeccompProfilesDirectory,
+				Mode: 0o700,
+			},
+			{
+				Path: constants.KubernetesAuditLogDir,
+				Mode: 0o700,
+				UID:  constants.KubernetesAPIServerRunUser,
+				GID:  constants.KubernetesAPIServerRunGroup,
+			},
+		} {
+			if err := os.MkdirAll(dir.Path, dir.Mode); err != nil {
 				return err
 			}
-		}
 
-		// Handle Kubernetes directories which need different ownership
-		for _, p := range []string{constants.KubernetesAuditLogDir} {
-			if err := os.MkdirAll(p, 0o700); err != nil {
+			if err := os.Chmod(dir.Path, dir.Mode); err != nil {
 				return err
 			}
 
-			if err := os.Chown(p, constants.KubernetesAPIServerRunUser, constants.KubernetesAPIServerRunGroup); err != nil {
-				return fmt.Errorf("failed to chown %s: %w", p, err)
+			if dir.UID != 0 || dir.GID != 0 {
+				if err := os.Chown(dir.Path, dir.UID, dir.GID); err != nil {
+					return err
+				}
 			}
 		}
 
