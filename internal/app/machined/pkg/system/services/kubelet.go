@@ -116,11 +116,11 @@ func (k *Kubelet) Runner(r runtime.Runtime) (runner.Runner, error) {
 		ID:          k.ID(r),
 		ProcessArgs: append([]string{"/usr/local/bin/kubelet"}, spec.Args...),
 	}
+
 	// Set the required kubelet mounts.
 	mounts := []specs.Mount{
 		{Type: "bind", Destination: "/dev", Source: "/dev", Options: []string{"rbind", "rshared", "rw"}},
 		{Type: "sysfs", Destination: "/sys", Source: "/sys", Options: []string{"bind", "ro"}},
-		{Type: "securityfs", Destination: "/sys/kernel/security", Source: "/sys/kernel/security", Options: []string{"bind", "ro"}},
 		{Type: "bind", Destination: constants.CgroupMountPath, Source: constants.CgroupMountPath, Options: []string{"rbind", "rshared", "rw"}},
 		{Type: "bind", Destination: "/lib/modules", Source: "/lib/modules", Options: []string{"bind", "ro"}},
 		{Type: "bind", Destination: "/etc/kubernetes", Source: "/etc/kubernetes", Options: []string{"bind", "rshared", "rw"}},
@@ -136,6 +136,12 @@ func (k *Kubelet) Runner(r runtime.Runtime) (runner.Runner, error) {
 		{Type: "bind", Destination: "/var/lib/kubelet", Source: "/var/lib/kubelet", Options: []string{"rbind", "rshared", "rw"}},
 		{Type: "bind", Destination: "/var/log/containers", Source: "/var/log/containers", Options: []string{"rbind", "rshared", "rw"}},
 		{Type: "bind", Destination: "/var/log/pods", Source: "/var/log/pods", Options: []string{"rbind", "rshared", "rw"}},
+	}
+
+	if _, err := os.Stat("/sys/kernel/security"); err == nil {
+		mounts = append(mounts,
+			specs.Mount{Type: "securityfs", Destination: "/sys/kernel/security", Source: "/sys/kernel/security", Options: []string{"bind", "ro"}},
+		)
 	}
 
 	// Add extra mounts.
