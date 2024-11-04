@@ -581,6 +581,9 @@ COPY --from=talosctl-freebsd-arm64-build /talosctl-freebsd-arm64 /talosctl-freeb
 FROM scratch AS talosctl-windows-amd64
 COPY --from=talosctl-windows-amd64-build /talosctl-windows-amd64.exe /talosctl-windows-amd64.exe
 
+FROM scratch AS talosctl-windows-arm64
+COPY --from=talosctl-windows-arm64-build /talosctl-windows-arm64.exe /talosctl-windows-arm64.exe
+
 FROM --platform=${BUILDPLATFORM} talosctl-${TARGETOS}-${TARGETARCH} AS talosctl-targetarch
 
 FROM scratch AS talosctl-all
