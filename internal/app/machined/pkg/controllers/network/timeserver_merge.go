@@ -11,6 +11,7 @@ import (
 
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
+	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
 	"go.uber.org/zap"
 
@@ -54,7 +55,7 @@ func (ctrl *TimeServerMergeController) Outputs() []controller.Output {
 // Run implements controller.Controller interface.
 //
 //nolint:gocyclo
-func (ctrl *TimeServerMergeController) Run(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
+func (ctrl *TimeServerMergeController) Run(ctx context.Context, r controller.Runtime, _ *zap.Logger) error {
 	for {
 		select {
 		case <-ctx.Done():
@@ -89,9 +90,7 @@ func (ctrl *TimeServerMergeController) Run(ctx context.Context, r controller.Run
 		}
 
 		if final.NTPServers != nil {
-			if err = r.Modify(ctx, network.NewTimeServerSpec(network.NamespaceName, network.TimeServerID), func(res resource.Resource) error {
-				spec := res.(*network.TimeServerSpec) //nolint:errcheck,forcetypeassert
-
+			if err = safe.WriterModify(ctx, r, network.NewTimeServerSpec(network.NamespaceName, network.TimeServerID), func(spec *network.TimeServerSpec) error {
 				*spec.TypedSpec() = final
 
 				return nil

@@ -140,11 +140,12 @@ func (ctrl *TimeServerConfigController) apply(ctx context.Context, r controller.
 	for _, spec := range specs {
 		id := network.LayeredID(spec.ConfigLayer, network.TimeServerID)
 
-		if err := r.Modify(
+		if err := safe.WriterModify(
 			ctx,
+			r,
 			network.NewTimeServerSpec(network.ConfigNamespaceName, id),
-			func(r resource.Resource) error {
-				*r.(*network.TimeServerSpec).TypedSpec() = spec
+			func(r *network.TimeServerSpec) error {
+				*r.TypedSpec() = spec
 
 				return nil
 			},

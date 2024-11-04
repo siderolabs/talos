@@ -13,6 +13,7 @@ import (
 
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
+	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/siderolabs/gen/value"
 	"go.uber.org/zap"
 
@@ -62,7 +63,7 @@ func (ctrl *NodeAddressController) Outputs() []controller.Output {
 // Run implements controller.Controller interface.
 //
 //nolint:gocyclo,cyclop
-func (ctrl *NodeAddressController) Run(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
+func (ctrl *NodeAddressController) Run(ctx context.Context, r controller.Runtime, _ *zap.Logger) error {
 	var addressStatusController AddressStatusController
 
 	addressStatusControllerName := addressStatusController.Name()
@@ -161,8 +162,8 @@ func (ctrl *NodeAddressController) Run(ctx context.Context, r controller.Runtime
 
 		// update output resources
 		if !value.IsZero(defaultAddress) {
-			if err = r.Modify(ctx, network.NewNodeAddress(network.NamespaceName, network.NodeAddressDefaultID), func(r resource.Resource) error {
-				spec := r.(*network.NodeAddress).TypedSpec()
+			if err = safe.WriterModify(ctx, r, network.NewNodeAddress(network.NamespaceName, network.NodeAddressDefaultID), func(r *network.NodeAddress) error {
+				spec := r.TypedSpec()
 
 				// never overwrite default address if it's already set
 				// we should start handing default address updates, but for now we're not ready
@@ -300,8 +301,8 @@ outer:
 }
 
 func updateCurrentAddresses(ctx context.Context, r controller.Runtime, id resource.ID, current []netip.Prefix) error {
-	if err := r.Modify(ctx, network.NewNodeAddress(network.NamespaceName, id), func(r resource.Resource) error {
-		spec := r.(*network.NodeAddress).TypedSpec()
+	if err := safe.WriterModify(ctx, r, network.NewNodeAddress(network.NamespaceName, id), func(r *network.NodeAddress) error {
+		spec := r.TypedSpec()
 
 		spec.Addresses = current
 
@@ -314,8 +315,8 @@ func updateCurrentAddresses(ctx context.Context, r controller.Runtime, id resour
 }
 
 func updateAccumulativeAddresses(ctx context.Context, r controller.Runtime, id resource.ID, accumulative []netip.Prefix) error {
-	if err := r.Modify(ctx, network.NewNodeAddress(network.NamespaceName, id), func(r resource.Resource) error {
-		spec := r.(*network.NodeAddress).TypedSpec()
+	if err := safe.WriterModify(ctx, r, network.NewNodeAddress(network.NamespaceName, id), func(r *network.NodeAddress) error {
+		spec := r.TypedSpec()
 
 		for _, ip := range accumulative {
 			// find insert position using binary search
@@ -328,9 +329,7 @@ func updateAccumulativeAddresses(ctx context.Context, r controller.Runtime, id r
 			}
 
 			// insert at position i
-			spec.Addresses = append(spec.Addresses, netip.Prefix{})
-			copy(spec.Addresses[i+1:], spec.Addresses[i:])
-			spec.Addresses[i] = ip
+			spec.Addresses = slices.Insert(spec.Addresses, i, ip)
 		}
 
 		return nil

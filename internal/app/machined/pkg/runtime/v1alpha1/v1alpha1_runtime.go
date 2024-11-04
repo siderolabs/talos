@@ -195,12 +195,16 @@ func (r *Runtime) Logging() runtime.LoggingManager {
 
 // NodeName implements the Runtime interface.
 func (r *Runtime) NodeName() (string, error) {
-	nodenameResource, err := r.s.V1Alpha2().Resources().Get(context.Background(), resource.NewMetadata(k8s.NamespaceName, k8s.NodenameType, k8s.NodenameID, resource.VersionUndefined))
+	nodenameResource, err := safe.ReaderGet[*k8s.Nodename](
+		context.Background(),
+		r.s.V1Alpha2().Resources(),
+		resource.NewMetadata(k8s.NamespaceName, k8s.NodenameType, k8s.NodenameID, resource.VersionUndefined),
+	)
 	if err != nil {
 		return "", fmt.Errorf("error getting nodename resource: %w", err)
 	}
 
-	return nodenameResource.(*k8s.Nodename).TypedSpec().Nodename, nil
+	return nodenameResource.TypedSpec().Nodename, nil
 }
 
 // IsBootstrapAllowed checks for CRI to be up, checked in the bootstrap method.

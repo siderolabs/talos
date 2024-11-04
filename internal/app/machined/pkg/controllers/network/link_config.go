@@ -11,6 +11,7 @@ import (
 
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
+	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/siderolabs/gen/maps"
 	"github.com/siderolabs/gen/pair/ordered"
@@ -236,11 +237,12 @@ func (ctrl *LinkConfigController) apply(ctx context.Context, r controller.Runtim
 	for _, link := range links {
 		id := network.LayeredID(link.ConfigLayer, network.LinkID(link.Name))
 
-		if err := r.Modify(
+		if err := safe.WriterModify(
 			ctx,
+			r,
 			network.NewLinkSpec(network.ConfigNamespaceName, id),
-			func(r resource.Resource) error {
-				*r.(*network.LinkSpec).TypedSpec() = link
+			func(r *network.LinkSpec) error {
+				*r.TypedSpec() = link
 
 				return nil
 			},

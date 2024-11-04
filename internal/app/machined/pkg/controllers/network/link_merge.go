@@ -12,6 +12,7 @@ import (
 
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
+	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
 	"go.uber.org/zap"
 
@@ -103,9 +104,7 @@ func (ctrl *LinkMergeController) Run(ctx context.Context, r controller.Runtime, 
 		conflictsDetected := 0
 
 		for id, link := range links {
-			if err = r.Modify(ctx, network.NewLinkSpec(network.NamespaceName, id), func(res resource.Resource) error {
-				l := res.(*network.LinkSpec) //nolint:errcheck,forcetypeassert
-
+			if err = safe.WriterModify(ctx, r, network.NewLinkSpec(network.NamespaceName, id), func(l *network.LinkSpec) error {
 				*l.TypedSpec() = *link
 
 				return nil

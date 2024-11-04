@@ -141,7 +141,7 @@ func (mock *mockOperator) TimeServerSpecs() []network.TimeServerSpecSpec {
 	return mock.timeservers
 }
 
-func (suite *OperatorSpecSuite) newOperator(logger *zap.Logger, spec *network.OperatorSpecSpec) operator.Operator {
+func (suite *OperatorSpecSuite) newOperator(_ *zap.Logger, spec *network.OperatorSpecSpec) operator.Operator {
 	return &mockOperator{
 		spec: *spec,
 	}
@@ -311,7 +311,8 @@ func (suite *OperatorSpecSuite) TestScheduling() {
 		retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
 			func() error {
 				return suite.assertRunning(
-					[]string{"dhcp4/eth0", "vip/eth0"}, func(op *mockOperator) error {
+					[]string{"dhcp4/eth0", "vip/eth0"},
+					func(op *mockOperator) error {
 						switch op.spec.Operator { //nolint:exhaustive
 						case network.OperatorDHCP4:
 							suite.Assert().EqualValues(1024, op.spec.DHCP4.RouteMetric)
@@ -339,7 +340,8 @@ func (suite *OperatorSpecSuite) TestScheduling() {
 		retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
 			func() error {
 				return suite.assertRunning(
-					[]string{"dhcp4/eth0", "vip/eth0"}, func(op *mockOperator) error {
+					[]string{"dhcp4/eth0", "vip/eth0"},
+					func(op *mockOperator) error {
 						switch op.spec.Operator { //nolint:exhaustive
 						case network.OperatorDHCP4:
 							suite.Assert().EqualValues(1024, op.spec.DHCP4.RouteMetric)

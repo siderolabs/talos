@@ -10,6 +10,7 @@ import (
 
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
+	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
 	"go.uber.org/zap"
 
@@ -57,13 +58,13 @@ func (ctrl *ResolverSpecController) Run(ctx context.Context, r controller.Runtim
 		}
 
 		// list source network configuration resources
-		list, err := r.List(ctx, resource.NewMetadata(network.NamespaceName, network.ResolverSpecType, "", resource.VersionUndefined))
+		list, err := safe.ReaderListAll[*network.ResolverSpec](ctx, r)
 		if err != nil {
 			return fmt.Errorf("error listing source network addresses: %w", err)
 		}
 
 		// add finalizers for all live resources
-		for _, res := range list.Items {
+		for res := range list.All() {
 			if res.Metadata().Phase() != resource.PhaseRunning {
 				continue
 			}
@@ -74,9 +75,7 @@ func (ctrl *ResolverSpecController) Run(ctx context.Context, r controller.Runtim
 		}
 
 		// loop over specs and sync to statuses
-		for _, res := range list.Items {
-			spec := res.(*network.ResolverSpec) //nolint:forcetypeassert,errcheck
-
+		for spec := range list.All() {
 			switch spec.Metadata().Phase() {
 			case resource.PhaseTearingDown:
 				if err = r.Destroy(ctx, resource.NewMetadata(network.NamespaceName, network.ResolverStatusType, spec.Metadata().ID(), resource.VersionUndefined)); err != nil && !state.IsNotFoundError(err) {
@@ -89,10 +88,8 @@ func (ctrl *ResolverSpecController) Run(ctx context.Context, r controller.Runtim
 			case resource.PhaseRunning:
 				logger.Info("setting resolvers", zap.Stringers("resolvers", spec.TypedSpec().DNSServers))
 
-				if err = r.Modify(ctx, network.NewResolverStatus(network.NamespaceName, spec.Metadata().ID()), func(r resource.Resource) error {
-					status := r.(*network.ResolverStatus) //nolint:forcetypeassert,errcheck
-
-					status.TypedSpec().DNSServers = spec.TypedSpec().DNSServers
+				if err = safe.WriterModify(ctx, r, network.NewResolverStatus(network.NamespaceName, spec.Metadata().ID()), func(r *network.ResolverStatus) error {
+					r.TypedSpec().DNSServers = spec.TypedSpec().DNSServers
 
 					return nil
 				}); err != nil {

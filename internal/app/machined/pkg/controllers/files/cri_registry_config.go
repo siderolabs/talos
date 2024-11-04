@@ -13,7 +13,6 @@ import (
 	"path/filepath"
 
 	"github.com/cosi-project/runtime/pkg/controller"
-	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/siderolabs/gen/optional"
@@ -62,7 +61,7 @@ func (ctrl *CRIRegistryConfigController) Outputs() []controller.Output {
 // Run implements controller.Controller interface.
 //
 //nolint:gocyclo
-func (ctrl *CRIRegistryConfigController) Run(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
+func (ctrl *CRIRegistryConfigController) Run(ctx context.Context, r controller.Runtime, _ *zap.Logger) error {
 	basePath := filepath.Join(constants.CRIConfdPath, "hosts")
 	shadowPath := filepath.Join(constants.SystemPath, basePath)
 
@@ -113,9 +112,9 @@ func (ctrl *CRIRegistryConfigController) Run(ctx context.Context, r controller.R
 			criHosts = &containerd.HostsConfig{}
 		}
 
-		if err := r.Modify(ctx, files.NewEtcFileSpec(files.NamespaceName, constants.CRIRegistryConfigPart),
-			func(r resource.Resource) error {
-				spec := r.(*files.EtcFileSpec).TypedSpec()
+		if err := safe.WriterModify(ctx, r, files.NewEtcFileSpec(files.NamespaceName, constants.CRIRegistryConfigPart),
+			func(r *files.EtcFileSpec) error {
+				spec := r.TypedSpec()
 
 				spec.Contents = criRegistryContents
 				spec.Mode = 0o600

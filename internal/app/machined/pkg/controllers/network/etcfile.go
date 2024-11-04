@@ -8,9 +8,11 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"iter"
 	"net/netip"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"text/tabwriter"
 
@@ -19,6 +21,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/siderolabs/gen/optional"
 	"github.com/siderolabs/gen/value"
+	"github.com/siderolabs/gen/xiter"
 	"go.uber.org/zap"
 
 	efiles "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/files"
@@ -89,7 +92,7 @@ func (ctrl *EtcFileController) Outputs() []controller.Output {
 // Run implements controller.Controller interface.
 //
 //nolint:gocyclo,cyclop
-func (ctrl *EtcFileController) Run(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
+func (ctrl *EtcFileController) Run(ctx context.Context, r controller.Runtime, _ *zap.Logger) error {
 	for {
 		select {
 		case <-ctx.Done():
@@ -161,7 +164,7 @@ func (ctrl *EtcFileController) Run(ctx context.Context, r controller.Runtime, lo
 				dnsServers = []netip.Addr{hostDNSCfg.TypedSpec().ServiceHostDNSAddress}
 			}
 
-			conf := renderResolvConf(dnsServers, hostnameStatusSpec, cfgProvider)
+			conf := renderResolvConf(slices.All(dnsServers), hostnameStatusSpec, cfgProvider)
 
 			if err = os.MkdirAll(filepath.Dir(ctrl.PodResolvConfPath), 0o755); err != nil {
 				return fmt.Errorf("error creating pod resolv.conf dir: %w", err)
@@ -189,18 +192,18 @@ func (ctrl *EtcFileController) Run(ctx context.Context, r controller.Runtime, lo
 	}
 }
 
-var localDNS = []netip.Addr{netip.MustParseAddr("127.0.0.53")}
+var localDNS = xiter.Single2(0, netip.MustParseAddr("127.0.0.53"))
 
-func pickNameservers(hostDNSCfg *network.HostDNSConfig, resolverStatus *network.ResolverStatus) []netip.Addr {
+func pickNameservers(hostDNSCfg *network.HostDNSConfig, resolverStatus *network.ResolverStatus) iter.Seq2[int, netip.Addr] {
 	if hostDNSCfg.TypedSpec().Enabled {
 		// local dns resolve cache enabled, route host dns requests to 127.0.0.1
 		return localDNS
 	}
 
-	return resolverStatus.TypedSpec().DNSServers
+	return slices.All(resolverStatus.TypedSpec().DNSServers)
 }
 
-func renderResolvConf(nameservers []netip.Addr, hostnameStatus *network.HostnameStatusSpec, cfgProvider talosconfig.Config) []byte {
+func renderResolvConf(nameservers iter.Seq2[int, netip.Addr], hostnameStatus *network.HostnameStatusSpec, cfgProvider talosconfig.Config) []byte {
 	var buf bytes.Buffer
 
 	for i, ns := range nameservers {
@@ -229,9 +232,7 @@ func (ctrl *EtcFileController) renderHosts(hostnameStatus *network.HostnameStatu
 
 	tabW := tabwriter.NewWriter(&buf, 0, 0, 1, ' ', 0)
 
-	write := func(s string) {
-		tabW.Write([]byte(s)) //nolint:errcheck
-	}
+	write := func(s string) { tabW.Write([]byte(s)) } //nolint:errcheck
 
 	write("127.0.0.1\tlocalhost\n")
 

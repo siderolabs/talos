@@ -132,7 +132,7 @@ func (ctrl *VolumeConfigController) convertEncryption(in cfg.Encryption, out *bl
 // Run implements controller.Controller interface.
 //
 //nolint:gocyclo
-func (ctrl *VolumeConfigController) Run(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
+func (ctrl *VolumeConfigController) Run(ctx context.Context, r controller.Runtime, _ *zap.Logger) error {
 	for {
 		select {
 		case <-r.EventCh():

@@ -11,6 +11,7 @@ import (
 
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
+	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/jsimonetti/rtnetlink/v2"
 	"go.uber.org/zap"
 	"golang.org/x/sys/unix"
@@ -46,7 +47,7 @@ func (ctrl *AddressStatusController) Outputs() []controller.Output {
 // Run implements controller.Controller interface.
 //
 //nolint:gocyclo
-func (ctrl *AddressStatusController) Run(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
+func (ctrl *AddressStatusController) Run(ctx context.Context, r controller.Runtime, _ *zap.Logger) error {
 	watcher, err := watch.NewRtNetlink(watch.NewDefaultRateLimitedTrigger(ctx, r), unix.RTMGRP_LINK|unix.RTMGRP_IPV4_IFADDR|unix.RTMGRP_IPV6_IFADDR)
 	if err != nil {
 		return err
@@ -98,8 +99,8 @@ func (ctrl *AddressStatusController) Run(ctx context.Context, r controller.Runti
 			ipPrefix := netip.PrefixFrom(ipAddr, int(addr.PrefixLength))
 			id := network.AddressID(linkLookup[addr.Index], ipPrefix)
 
-			if err = r.Modify(ctx, network.NewAddressStatus(network.NamespaceName, id), func(r resource.Resource) error {
-				status := r.(*network.AddressStatus).TypedSpec()
+			if err = safe.WriterModify(ctx, r, network.NewAddressStatus(network.NamespaceName, id), func(r *network.AddressStatus) error {
+				status := r.TypedSpec()
 
 				status.Address = ipPrefix
 				status.Local, _ = netip.AddrFromSlice(addr.Attributes.Local)

@@ -10,7 +10,6 @@ import (
 	"net/netip"
 
 	"github.com/cosi-project/runtime/pkg/controller"
-	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/siderolabs/gen/optional"
@@ -58,7 +57,7 @@ func (ctrl *MaintenanceCertSANsController) Outputs() []controller.Output {
 }
 
 // Run implements controller.Controller interface.
-func (ctrl *MaintenanceCertSANsController) Run(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
+func (ctrl *MaintenanceCertSANsController) Run(ctx context.Context, r controller.Runtime, _ *zap.Logger) error {
 	for {
 		select {
 		case <-ctx.Done():
@@ -80,8 +79,8 @@ func (ctrl *MaintenanceCertSANsController) Run(ctx context.Context, r controller
 			return err
 		}
 
-		if err = r.Modify(ctx, secrets.NewCertSAN(secrets.NamespaceName, secrets.CertSANMaintenanceID), func(r resource.Resource) error {
-			spec := r.(*secrets.CertSAN).TypedSpec()
+		if err = safe.WriterModify(ctx, r, secrets.NewCertSAN(secrets.NamespaceName, secrets.CertSANMaintenanceID), func(r *secrets.CertSAN) error {
+			spec := r.TypedSpec()
 
 			spec.Reset()
 

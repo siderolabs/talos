@@ -10,6 +10,7 @@ import (
 
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
+	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/hashicorp/go-multierror"
 	"github.com/siderolabs/gen/xslices"
@@ -303,11 +304,12 @@ func (ctrl *OperatorConfigController) apply(ctx context.Context, r controller.Ru
 	for _, spec := range specs {
 		id := network.LayeredID(spec.ConfigLayer, network.OperatorID(spec.Operator, spec.LinkName))
 
-		if err := r.Modify(
+		if err := safe.WriterModify(
 			ctx,
+			r,
 			network.NewOperatorSpec(network.ConfigNamespaceName, id),
-			func(r resource.Resource) error {
-				*r.(*network.OperatorSpec).TypedSpec() = spec
+			func(r *network.OperatorSpec) error {
+				*r.TypedSpec() = spec
 
 				return nil
 			},

@@ -163,11 +163,12 @@ func (ctrl *DNSResolveCacheController) Run(ctx context.Context, r controller.Run
 		}
 
 		prxs := xiter.Map(
-			upstreams.All(),
 			// We are using iterator here to preserve finalizer on
 			func(upstream *network.DNSUpstream) *proxy.Proxy {
 				return upstream.TypedSpec().Value.Conn.Proxy().(*proxy.Proxy)
-			})
+			},
+			upstreams.All(),
+		)
 
 		if ctrl.handler.SetProxy(prxs) {
 			ctrl.Logger.Info("updated dns server nameservers", zap.Array("addrs", addrsArr(upstreams)))

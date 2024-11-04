@@ -42,7 +42,7 @@ type MemberSuite struct {
 
 func (suite *MemberSuite) assertEtcdMember(member *etcd.Member) func() error {
 	return func() error {
-		r, err := suite.State().Get(suite.Ctx(), member.Metadata())
+		r, err := ctest.Get[*etcd.Member](suite, member.Metadata())
 		if err != nil {
 			if state.IsNotFoundError(err) {
 				return retry.ExpectedError(err)
@@ -51,7 +51,7 @@ func (suite *MemberSuite) assertEtcdMember(member *etcd.Member) func() error {
 			return err
 		}
 
-		spec := r.(*etcd.Member).TypedSpec()
+		spec := r.TypedSpec()
 		expectedSpec := member.TypedSpec()
 
 		suite.Require().Equal(expectedSpec.MemberID, spec.MemberID)

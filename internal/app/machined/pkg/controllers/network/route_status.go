@@ -11,6 +11,7 @@ import (
 
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
+	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/jsimonetti/rtnetlink/v2"
 	"go.uber.org/zap"
 	"golang.org/x/sys/unix"
@@ -46,7 +47,7 @@ func (ctrl *RouteStatusController) Outputs() []controller.Output {
 // Run implements controller.Controller interface.
 //
 //nolint:gocyclo
-func (ctrl *RouteStatusController) Run(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
+func (ctrl *RouteStatusController) Run(ctx context.Context, r controller.Runtime, _ *zap.Logger) error {
 	watcher, err := watch.NewRtNetlink(watch.NewDefaultRateLimitedTrigger(ctx, r), unix.RTMGRP_IPV4_MROUTE|unix.RTMGRP_IPV4_ROUTE|unix.RTMGRP_IPV6_MROUTE|unix.RTMGRP_IPV6_ROUTE)
 	if err != nil {
 		return err
@@ -106,8 +107,8 @@ func (ctrl *RouteStatusController) Run(ctx context.Context, r controller.Runtime
 
 			id := network.RouteID(nethelpers.RoutingTable(route.Table), nethelpers.Family(route.Family), dstPrefix, gatewayAddr, route.Attributes.Priority, outLinkName)
 
-			if err = r.Modify(ctx, network.NewRouteStatus(network.NamespaceName, id), func(r resource.Resource) error {
-				status := r.(*network.RouteStatus).TypedSpec()
+			if err = safe.WriterModify(ctx, r, network.NewRouteStatus(network.NamespaceName, id), func(r *network.RouteStatus) error {
+				status := r.TypedSpec()
 
 				status.Family = nethelpers.Family(route.Family)
 				status.Destination = dstPrefix

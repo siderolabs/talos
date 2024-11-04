@@ -10,7 +10,7 @@ import (
 	"os"
 
 	"github.com/cosi-project/runtime/pkg/controller"
-	"github.com/cosi-project/runtime/pkg/resource"
+	"github.com/cosi-project/runtime/pkg/safe"
 	"go.uber.org/zap"
 
 	v1alpha1runtime "github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
@@ -45,7 +45,7 @@ func (ctrl *KernelParamDefaultsController) Outputs() []controller.Output {
 }
 
 // Run implements controller.Controller interface.
-func (ctrl *KernelParamDefaultsController) Run(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
+func (ctrl *KernelParamDefaultsController) Run(ctx context.Context, r controller.Runtime, _ *zap.Logger) error {
 	select {
 	case <-ctx.Done():
 		return nil
@@ -59,8 +59,8 @@ func (ctrl *KernelParamDefaultsController) Run(ctx context.Context, r controller
 			value := prop.Value
 			item := runtime.NewKernelParamDefaultSpec(runtime.NamespaceName, prop.Key)
 
-			if err := r.Modify(ctx, item, func(res resource.Resource) error {
-				res.(*runtime.KernelParamDefaultSpec).TypedSpec().Value = value
+			if err := safe.WriterModify(ctx, r, item, func(res *runtime.KernelParamDefaultSpec) error {
+				res.TypedSpec().Value = value
 
 				return nil
 			}); err != nil {

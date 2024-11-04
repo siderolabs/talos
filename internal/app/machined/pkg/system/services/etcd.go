@@ -76,7 +76,7 @@ type Etcd struct {
 }
 
 // ID implements the Service interface.
-func (e *Etcd) ID(r runtime.Runtime) string {
+func (e *Etcd) ID(runtime.Runtime) string {
 	return "etcd"
 }
 
@@ -149,7 +149,7 @@ func (e *Etcd) PreFunc(ctx context.Context, r runtime.Runtime) error {
 }
 
 // PostFunc implements the Service interface.
-func (e *Etcd) PostFunc(r runtime.Runtime, state events.ServiceState) (err error) {
+func (e *Etcd) PostFunc(runtime.Runtime, events.ServiceState) (err error) {
 	if e.promoteCtxCancel != nil {
 		e.promoteCtxCancel()
 	}
@@ -173,7 +173,7 @@ func (e *Etcd) Condition(r runtime.Runtime) conditions.Condition {
 }
 
 // DependsOn implements the Service interface.
-func (e *Etcd) DependsOn(r runtime.Runtime) []string {
+func (e *Etcd) DependsOn(runtime.Runtime) []string {
 	return []string{"cri"}
 }
 
@@ -330,12 +330,15 @@ func buildInitialCluster(ctx context.Context, r runtime.Runtime, name string, pe
 
 			// we "allow" a failure here since we want to fallthrough and attempt to add the etcd member regardless of
 			// whether we can print our IPs
-			currentAddresses, addrErr := r.State().V1Alpha2().Resources().Get(ctx,
-				resource.NewMetadata(network.NamespaceName, network.NodeAddressType, network.FilteredNodeAddressID(network.NodeAddressCurrentID, k8s.NodeAddressFilterNoK8s), resource.VersionUndefined))
+			currentAddresses, addrErr := safe.ReaderGet[*network.NodeAddress](
+				ctx,
+				r.State().V1Alpha2().Resources(),
+				resource.NewMetadata(network.NamespaceName, network.NodeAddressType, network.FilteredNodeAddressID(network.NodeAddressCurrentID, k8s.NodeAddressFilterNoK8s), resource.VersionUndefined),
+			)
 			if addrErr != nil {
 				log.Printf("error getting node addresses: %s", addrErr.Error())
 			} else {
-				ips := currentAddresses.(*network.NodeAddress).TypedSpec().IPs()
+				ips := currentAddresses.TypedSpec().IPs()
 				log.Printf("%s", ips)
 			}
 		}

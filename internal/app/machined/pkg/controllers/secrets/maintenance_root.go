@@ -40,7 +40,7 @@ func (ctrl *MaintenanceRootController) Outputs() []controller.Output {
 }
 
 // Run implements controller.Controller interface.
-func (ctrl *MaintenanceRootController) Run(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
+func (ctrl *MaintenanceRootController) Run(ctx context.Context, r controller.Runtime, _ *zap.Logger) error {
 	// run this controller only once, as the CA never changes
 	select {
 	case <-ctx.Done():

@@ -46,7 +46,7 @@ func (ctrl *KernelModuleSpecController) Outputs() []controller.Output {
 }
 
 // Run implements controller.Controller interface.
-func (ctrl *KernelModuleSpecController) Run(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
+func (ctrl *KernelModuleSpecController) Run(ctx context.Context, r controller.Runtime, _ *zap.Logger) error {
 	if ctrl.V1Alpha1Mode == v1alpha1runtime.ModeContainer {
 		// not supported in container mode
 		return nil

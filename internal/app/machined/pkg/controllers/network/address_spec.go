@@ -14,6 +14,7 @@ import (
 
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
+	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/jsimonetti/rtnetlink/v2"
 	"github.com/mdlayher/arp"
 	"go.uber.org/zap"
@@ -76,13 +77,13 @@ func (ctrl *AddressSpecController) Run(ctx context.Context, r controller.Runtime
 		}
 
 		// list source network configuration resources
-		list, err := r.List(ctx, resource.NewMetadata(network.NamespaceName, network.AddressSpecType, "", resource.VersionUndefined))
+		list, err := safe.ReaderList[*network.AddressSpec](ctx, r, resource.NewMetadata(network.NamespaceName, network.AddressSpecType, "", resource.VersionUndefined))
 		if err != nil {
 			return fmt.Errorf("error listing source network addresses: %w", err)
 		}
 
 		// add finalizers for all live resources
-		for _, res := range list.Items {
+		for res := range list.All() {
 			if res.Metadata().Phase() != resource.PhaseRunning {
 				continue
 			}
@@ -105,9 +106,7 @@ func (ctrl *AddressSpecController) Run(ctx context.Context, r controller.Runtime
 		}
 
 		// loop over addresses and make reconcile decision
-		for _, res := range list.Items {
-			address := res.(*network.AddressSpec) //nolint:forcetypeassert,errcheck
-
+		for address := range list.All() {
 			if err = ctrl.syncAddress(ctx, r, logger, conn, links, addrs, address); err != nil {
 				return err
 			}

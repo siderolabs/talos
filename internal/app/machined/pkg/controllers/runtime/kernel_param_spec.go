@@ -8,10 +8,12 @@ import (
 	"context"
 	"errors"
 	"os"
+	"slices"
 	"strings"
 
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
+	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/hashicorp/go-multierror"
 	"go.uber.org/zap"
 
@@ -93,9 +95,7 @@ func (ctrl *KernelParamSpecController) Run(ctx context.Context, r controller.Run
 
 			configsCounts := len(configs.Items)
 
-			list := configs.Items
-
-			list = append(list, defaults.Items...)
+			list := slices.Concat(configs.Items, defaults.Items)
 
 			touchedIDs := map[string]string{}
 
@@ -117,8 +117,8 @@ func (ctrl *KernelParamSpecController) Run(ctx context.Context, r controller.Run
 					if errors.Is(err, os.ErrNotExist) && spec.IgnoreErrors {
 						status := runtime.NewKernelParamStatus(runtime.NamespaceName, id)
 
-						if e := r.Modify(ctx, status, func(res resource.Resource) error {
-							res.(*runtime.KernelParamStatus).TypedSpec().Unsupported = true
+						if e := safe.WriterModify(ctx, r, status, func(res *runtime.KernelParamStatus) error {
+							res.TypedSpec().Unsupported = true
 
 							return nil
 						}); e != nil {
@@ -154,10 +154,7 @@ func (ctrl *KernelParamSpecController) Run(ctx context.Context, r controller.Run
 }
 
 func (ctrl *KernelParamSpecController) updateKernelParam(ctx context.Context, r controller.Runtime, key, value string) error {
-	prop := &kernel.Param{
-		Key:   key,
-		Value: value,
-	}
+	prop := &kernel.Param{Key: key, Value: value}
 
 	if _, ok := ctrl.defaults[key]; !ok {
 		if data, err := krnl.ReadParam(prop); err == nil {
@@ -175,9 +172,9 @@ func (ctrl *KernelParamSpecController) updateKernelParam(ctx context.Context, r 
 
 	status := runtime.NewKernelParamStatus(runtime.NamespaceName, key)
 
-	return r.Modify(ctx, status, func(res resource.Resource) error {
-		res.(*runtime.KernelParamStatus).TypedSpec().Current = value
-		res.(*runtime.KernelParamStatus).TypedSpec().Default = strings.TrimSpace(ctrl.defaults[key])
+	return safe.WriterModify(ctx, r, status, func(res *runtime.KernelParamStatus) error {
+		res.TypedSpec().Current = value
+		res.TypedSpec().Default = strings.TrimSpace(ctrl.defaults[key])
 
 		return nil
 	})
@@ -187,10 +184,7 @@ func (ctrl *KernelParamSpecController) resetKernelParam(ctx context.Context, r c
 	var err error
 
 	if def, ok := ctrl.defaults[key]; ok {
-		err = krnl.WriteParam(&kernel.Param{
-			Key:   key,
-			Value: def,
-		})
+		err = krnl.WriteParam(&kernel.Param{Key: key, Value: def})
 	} else {
 		err = krnl.DeleteParam(&kernel.Param{Key: key})
 	}

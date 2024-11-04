@@ -163,12 +163,12 @@ func (ctrl *ManagerController) Run(ctx context.Context, r controller.Runtime, lo
 		case <-tickerC:
 		}
 
-		cfg, err := r.Get(ctx, resource.NewMetadata(config.NamespaceName, kubespan.ConfigType, kubespan.ConfigID, resource.VersionUndefined))
+		cfg, err := safe.ReaderGet[*kubespan.Config](ctx, r, resource.NewMetadata(config.NamespaceName, kubespan.ConfigType, kubespan.ConfigID, resource.VersionUndefined))
 		if err != nil && !state.IsNotFoundError(err) {
 			return fmt.Errorf("error getting kubespan configuration: %w", err)
 		}
 
-		if cfg == nil || !cfg.(*kubespan.Config).TypedSpec().Enabled {
+		if cfg == nil || !cfg.TypedSpec().Enabled {
 			if ticker != nil {
 				ticker.Stop()
 
@@ -203,9 +203,9 @@ func (ctrl *ManagerController) Run(ctx context.Context, r controller.Runtime, lo
 			tickerC = ticker.C
 		}
 
-		cfgSpec := cfg.(*kubespan.Config).TypedSpec()
+		cfgSpec := cfg.TypedSpec()
 
-		localIdentity, err := r.Get(ctx, resource.NewMetadata(kubespan.NamespaceName, kubespan.IdentityType, kubespan.LocalIdentity, resource.VersionUndefined))
+		localIdentity, err := safe.ReaderGet[*kubespan.Identity](ctx, r, resource.NewMetadata(kubespan.NamespaceName, kubespan.IdentityType, kubespan.LocalIdentity, resource.VersionUndefined))
 		if err != nil {
 			if state.IsNotFoundError(err) {
 				continue
@@ -214,7 +214,7 @@ func (ctrl *ManagerController) Run(ctx context.Context, r controller.Runtime, lo
 			return fmt.Errorf("error getting local KubeSpan identity: %w", err)
 		}
 
-		localSpec := localIdentity.(*kubespan.Identity).TypedSpec()
+		localSpec := localIdentity.TypedSpec()
 
 		// fetch PeerSpecs and PeerStatuses and sync them
 		peerSpecList, err := r.List(ctx, resource.NewMetadata(kubespan.NamespaceName, kubespan.PeerSpecType, "", resource.VersionUndefined))

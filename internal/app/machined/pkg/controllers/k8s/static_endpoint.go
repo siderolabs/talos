@@ -54,7 +54,7 @@ func (ctrl *StaticEndpointController) Outputs() []controller.Output {
 // Run implements controller.Controller interface.
 //
 //nolint:gocyclo
-func (ctrl *StaticEndpointController) Run(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
+func (ctrl *StaticEndpointController) Run(ctx context.Context, r controller.Runtime, _ *zap.Logger) error {
 	for {
 		select {
 		case <-ctx.Done():

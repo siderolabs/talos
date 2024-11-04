@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/cosi-project/runtime/pkg/controller"
-	"github.com/cosi-project/runtime/pkg/resource"
+	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/prometheus/procfs"
 	"go.uber.org/zap"
 
@@ -47,7 +47,7 @@ func (ctrl *StatsController) Outputs() []controller.Output {
 }
 
 // Run implements controller.StatsController interface.
-func (ctrl *StatsController) Run(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
+func (ctrl *StatsController) Run(ctx context.Context, r controller.Runtime, _ *zap.Logger) error {
 	ticker := time.NewTicker(updateInterval)
 
 	defer ticker.Stop()
@@ -90,8 +90,8 @@ func (ctrl *StatsController) updateCPU(ctx context.Context, r controller.Runtime
 		return err
 	}
 
-	return r.Modify(ctx, cpu, func(r resource.Resource) error {
-		perfadapter.CPU(r.(*perf.CPU)).Update(&stat)
+	return safe.WriterModify(ctx, r, cpu, func(r *perf.CPU) error {
+		perfadapter.CPU(r).Update(&stat)
 
 		return nil
 	})
@@ -105,8 +105,8 @@ func (ctrl *StatsController) updateMemory(ctx context.Context, r controller.Runt
 		return err
 	}
 
-	return r.Modify(ctx, mem, func(r resource.Resource) error {
-		perfadapter.Memory(r.(*perf.Memory)).Update(&info)
+	return safe.WriterModify(ctx, r, mem, func(r *perf.Memory) error {
+		perfadapter.Memory(r).Update(&info)
 
 		return nil
 	})

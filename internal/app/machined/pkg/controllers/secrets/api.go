@@ -13,6 +13,7 @@ import (
 
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
+	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/siderolabs/crypto/x509"
 	"github.com/siderolabs/gen/optional"
@@ -82,7 +83,7 @@ func (ctrl *APIController) Run(ctx context.Context, r controller.Runtime, logger
 			return err
 		}
 
-		machineTypeRes, err := r.Get(ctx, resource.NewMetadata(config.NamespaceName, config.MachineTypeType, config.MachineTypeID, resource.VersionUndefined))
+		machineTypeRes, err := safe.ReaderGet[*config.MachineType](ctx, r, resource.NewMetadata(config.NamespaceName, config.MachineTypeType, config.MachineTypeID, resource.VersionUndefined))
 		if err != nil {
 			if state.IsNotFoundError(err) {
 				continue
@@ -91,9 +92,9 @@ func (ctrl *APIController) Run(ctx context.Context, r controller.Runtime, logger
 			return fmt.Errorf("error getting machine type: %w", err)
 		}
 
-		machineType := machineTypeRes.(*config.MachineType).MachineType()
+		machineType := machineTypeRes.MachineType()
 
-		networkResource, err := r.Get(ctx, resource.NewMetadata(network.NamespaceName, network.StatusType, network.StatusID, resource.VersionUndefined))
+		networkResource, err := safe.ReaderGet[*network.Status](ctx, r, resource.NewMetadata(network.NamespaceName, network.StatusType, network.StatusID, resource.VersionUndefined))
 		if err != nil {
 			if state.IsNotFoundError(err) {
 				continue
@@ -102,7 +103,7 @@ func (ctrl *APIController) Run(ctx context.Context, r controller.Runtime, logger
 			return err
 		}
 
-		networkStatus := networkResource.(*network.Status).TypedSpec()
+		networkStatus := networkResource.TypedSpec()
 
 		if !(networkStatus.AddressReady && networkStatus.HostnameReady) {
 			continue
@@ -189,7 +190,7 @@ func (ctrl *APIController) reconcile(ctx context.Context, r controller.Runtime, 
 		case <-refreshTicker.C:
 		}
 
-		machineTypeRes, err := r.Get(ctx, resource.NewMetadata(config.NamespaceName, config.MachineTypeType, config.MachineTypeID, resource.VersionUndefined))
+		machineTypeRes, err := safe.ReaderGet[*config.MachineType](ctx, r, resource.NewMetadata(config.NamespaceName, config.MachineTypeType, config.MachineTypeID, resource.VersionUndefined))
 		if err != nil {
 			if state.IsNotFoundError(err) {
 				continue
@@ -198,7 +199,7 @@ func (ctrl *APIController) reconcile(ctx context.Context, r controller.Runtime, 
 			return fmt.Errorf("error getting machine type: %w", err)
 		}
 
-		machineType := machineTypeRes.(*config.MachineType).MachineType()
+		machineType := machineTypeRes.MachineType()
 
 		switch machineType {
 		case machine.TypeInit, machine.TypeControlPlane:
@@ -215,7 +216,7 @@ func (ctrl *APIController) reconcile(ctx context.Context, r controller.Runtime, 
 			panic(fmt.Sprintf("unexpected machine type %v", machineType))
 		}
 
-		rootResource, err := r.Get(ctx, resource.NewMetadata(secrets.NamespaceName, secrets.OSRootType, secrets.OSRootID, resource.VersionUndefined))
+		rootResource, err := safe.ReaderGet[*secrets.OSRoot](ctx, r, resource.NewMetadata(secrets.NamespaceName, secrets.OSRootType, secrets.OSRootID, resource.VersionUndefined))
 		if err != nil {
 			if state.IsNotFoundError(err) {
 				if err = ctrl.teardownAll(ctx, r); err != nil {
@@ -228,9 +229,9 @@ func (ctrl *APIController) reconcile(ctx context.Context, r controller.Runtime, 
 			return fmt.Errorf("error getting etcd root secrets: %w", err)
 		}
 
-		rootSpec := rootResource.(*secrets.OSRoot).TypedSpec()
+		rootSpec := rootResource.TypedSpec()
 
-		certSANResource, err := r.Get(ctx, resource.NewMetadata(secrets.NamespaceName, secrets.CertSANType, secrets.CertSANAPIID, resource.VersionUndefined))
+		certSANResource, err := safe.ReaderGet[*secrets.CertSAN](ctx, r, resource.NewMetadata(secrets.NamespaceName, secrets.CertSANType, secrets.CertSANAPIID, resource.VersionUndefined))
 		if err != nil {
 			if state.IsNotFoundError(err) {
 				continue
@@ -239,7 +240,7 @@ func (ctrl *APIController) reconcile(ctx context.Context, r controller.Runtime, 
 			return fmt.Errorf("error getting certSANs: %w", err)
 		}
 
-		certSANs := certSANResource.(*secrets.CertSAN).TypedSpec()
+		certSANs := certSANResource.TypedSpec()
 
 		var endpointsStr []string
 
@@ -310,9 +311,9 @@ func (ctrl *APIController) generateControlPlane(ctx context.Context, r controlle
 		return fmt.Errorf("failed to generate API client cert: %w", err)
 	}
 
-	if err := r.Modify(ctx, secrets.NewAPI(),
-		func(r resource.Resource) error {
-			apiSecrets := r.(*secrets.API).TypedSpec()
+	if err := safe.WriterModify(ctx, r, secrets.NewAPI(),
+		func(r *secrets.API) error {
+			apiSecrets := r.TypedSpec()
 
 			apiSecrets.AcceptedCAs = rootSpec.AcceptedCAs
 			apiSecrets.Server = x509.NewCertificateAndKeyFromKeyPair(serverCert)
@@ -387,9 +388,9 @@ func (ctrl *APIController) generateWorker(ctx context.Context, r controller.Runt
 		return fmt.Errorf("failed to sign API server CSR: %w", err)
 	}
 
-	if err := r.Modify(ctx, secrets.NewAPI(),
-		func(r resource.Resource) error {
-			apiSecrets := r.(*secrets.API).TypedSpec()
+	if err := safe.WriterModify(ctx, r, secrets.NewAPI(),
+		func(r *secrets.API) error {
+			apiSecrets := r.TypedSpec()
 
 			apiSecrets.AcceptedCAs = []*x509.PEMEncodedCertificate{
 				{

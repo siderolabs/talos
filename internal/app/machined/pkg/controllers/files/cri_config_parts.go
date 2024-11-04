@@ -11,7 +11,7 @@ import (
 	"sort"
 
 	"github.com/cosi-project/runtime/pkg/controller"
-	"github.com/cosi-project/runtime/pkg/resource"
+	"github.com/cosi-project/runtime/pkg/safe"
 	"go.uber.org/zap"
 
 	"github.com/siderolabs/talos/internal/pkg/toml"
@@ -52,7 +52,7 @@ func (ctrl *CRIConfigPartsController) Outputs() []controller.Output {
 }
 
 // Run implements controller.Controller interface.
-func (ctrl *CRIConfigPartsController) Run(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
+func (ctrl *CRIConfigPartsController) Run(ctx context.Context, r controller.Runtime, _ *zap.Logger) error {
 	if ctrl.CRIConfdPath == "" {
 		ctrl.CRIConfdPath = constants.CRIConfdPath
 	}
@@ -77,9 +77,9 @@ func (ctrl *CRIConfigPartsController) Run(ctx context.Context, r controller.Runt
 			return err
 		}
 
-		if err := r.Modify(ctx, files.NewEtcFileSpec(files.NamespaceName, constants.CRIConfig),
-			func(r resource.Resource) error {
-				spec := r.(*files.EtcFileSpec).TypedSpec()
+		if err := safe.WriterModify(ctx, r, files.NewEtcFileSpec(files.NamespaceName, constants.CRIConfig),
+			func(r *files.EtcFileSpec) error {
+				spec := r.TypedSpec()
 
 				spec.Contents = out
 				spec.Mode = 0o600

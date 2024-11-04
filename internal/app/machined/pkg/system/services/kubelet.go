@@ -15,6 +15,7 @@ import (
 	"github.com/containerd/containerd/v2/pkg/namespaces"
 	"github.com/containerd/containerd/v2/pkg/oci"
 	"github.com/cosi-project/runtime/pkg/resource"
+	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 
@@ -45,18 +46,18 @@ type Kubelet struct {
 }
 
 // ID implements the Service interface.
-func (k *Kubelet) ID(r runtime.Runtime) string {
+func (k *Kubelet) ID(runtime.Runtime) string {
 	return "kubelet"
 }
 
 // PreFunc implements the Service interface.
 func (k *Kubelet) PreFunc(ctx context.Context, r runtime.Runtime) error {
-	specResource, err := r.State().V1Alpha2().Resources().Get(ctx, resource.NewMetadata(k8s.NamespaceName, k8s.KubeletSpecType, k8s.KubeletID, resource.VersionUndefined))
+	specResource, err := safe.ReaderGet[*k8s.KubeletSpec](ctx, r.State().V1Alpha2().Resources(), resource.NewMetadata(k8s.NamespaceName, k8s.KubeletSpecType, k8s.KubeletID, resource.VersionUndefined))
 	if err != nil {
 		return err
 	}
 
-	spec := specResource.(*k8s.KubeletSpec).TypedSpec()
+	spec := specResource.TypedSpec()
 
 	client, err := containerdapi.New(constants.CRIContainerdAddress)
 	if err != nil {
@@ -85,7 +86,7 @@ func (k *Kubelet) PreFunc(ctx context.Context, r runtime.Runtime) error {
 }
 
 // PostFunc implements the Service interface.
-func (k *Kubelet) PostFunc(r runtime.Runtime, state events.ServiceState) (err error) {
+func (k *Kubelet) PostFunc(runtime.Runtime, events.ServiceState) (err error) {
 	return nil
 }
 
@@ -98,18 +99,22 @@ func (k *Kubelet) Condition(r runtime.Runtime) conditions.Condition {
 }
 
 // DependsOn implements the Service interface.
-func (k *Kubelet) DependsOn(r runtime.Runtime) []string {
+func (k *Kubelet) DependsOn(runtime.Runtime) []string {
 	return []string{"cri"}
 }
 
 // Runner implements the Service interface.
 func (k *Kubelet) Runner(r runtime.Runtime) (runner.Runner, error) {
-	specResource, err := r.State().V1Alpha2().Resources().Get(context.Background(), resource.NewMetadata(k8s.NamespaceName, k8s.KubeletSpecType, k8s.KubeletID, resource.VersionUndefined))
+	specResource, err := safe.ReaderGet[*k8s.KubeletSpec](
+		context.Background(),
+		r.State().V1Alpha2().Resources(),
+		resource.NewMetadata(k8s.NamespaceName, k8s.KubeletSpecType, k8s.KubeletID, resource.VersionUndefined),
+	)
 	if err != nil {
 		return nil, err
 	}
 
-	spec := specResource.(*k8s.KubeletSpec).TypedSpec()
+	spec := specResource.TypedSpec()
 
 	// Set the process arguments.
 	args := runner.Args{

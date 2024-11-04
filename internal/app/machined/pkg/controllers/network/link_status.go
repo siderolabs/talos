@@ -13,6 +13,7 @@ import (
 
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
+	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/jsimonetti/rtnetlink/v2"
 	"github.com/mdlayher/ethtool"
 	ethtoolioctl "github.com/safchain/ethtool"
@@ -221,8 +222,8 @@ func (ctrl *LinkStatusController) reconcile(
 			}
 		}
 
-		if err = r.Modify(ctx, network.NewLinkStatus(network.NamespaceName, link.Attributes.Name), func(r resource.Resource) error {
-			status := r.(*network.LinkStatus).TypedSpec()
+		if err = safe.WriterModify(ctx, r, network.NewLinkStatus(network.NamespaceName, link.Attributes.Name), func(r *network.LinkStatus) error {
+			status := r.TypedSpec()
 
 			status.Index = link.Index
 			status.HardwareAddr = nethelpers.HardwareAddr(link.Attributes.Address)

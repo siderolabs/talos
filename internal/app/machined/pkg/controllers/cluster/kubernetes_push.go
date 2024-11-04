@@ -60,7 +60,7 @@ func (ctrl *KubernetesPushController) Outputs() []controller.Output {
 // Run implements controller.Controller interface.
 //
 //nolint:gocyclo
-func (ctrl *KubernetesPushController) Run(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
+func (ctrl *KubernetesPushController) Run(ctx context.Context, r controller.Runtime, _ *zap.Logger) error {
 	defer func() {
 		if ctrl.kubernetesClient != nil {
 			ctrl.kubernetesClient.Close() //nolint:errcheck

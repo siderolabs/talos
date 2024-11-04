@@ -11,6 +11,7 @@ import (
 
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
+	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
 	"go.uber.org/zap"
 
@@ -54,7 +55,7 @@ func (ctrl *HostnameMergeController) Outputs() []controller.Output {
 // Run implements controller.Controller interface.
 //
 //nolint:gocyclo
-func (ctrl *HostnameMergeController) Run(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
+func (ctrl *HostnameMergeController) Run(ctx context.Context, r controller.Runtime, _ *zap.Logger) error {
 	for {
 		select {
 		case <-ctx.Done():
@@ -83,9 +84,7 @@ func (ctrl *HostnameMergeController) Run(ctx context.Context, r controller.Runti
 		}
 
 		if final.Hostname != "" {
-			if err = r.Modify(ctx, network.NewHostnameSpec(network.NamespaceName, network.HostnameID), func(res resource.Resource) error {
-				spec := res.(*network.HostnameSpec) //nolint:errcheck,forcetypeassert
-
+			if err = safe.WriterModify(ctx, r, network.NewHostnameSpec(network.NamespaceName, network.HostnameID), func(spec *network.HostnameSpec) error {
 				*spec.TypedSpec() = final
 
 				return nil

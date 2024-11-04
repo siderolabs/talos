@@ -48,7 +48,7 @@ func (ctrl *MachineStatusPublisherController) Outputs() []controller.Output {
 }
 
 // Run implements controller.Controller interface.
-func (ctrl *MachineStatusPublisherController) Run(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
+func (ctrl *MachineStatusPublisherController) Run(ctx context.Context, r controller.Runtime, _ *zap.Logger) error {
 	for {
 		select {
 		case <-ctx.Done():

@@ -42,7 +42,7 @@ func (ctrl *DevicesStatusController) Outputs() []controller.Output {
 }
 
 // Run implements controller.Controller interface.
-func (ctrl *DevicesStatusController) Run(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
+func (ctrl *DevicesStatusController) Run(ctx context.Context, r controller.Runtime, _ *zap.Logger) error {
 	// in container mode, devices are always ready
 	if ctrl.V1Alpha1Mode != machineruntime.ModeContainer {
 		if err := v1alpha1.WaitForServiceHealthy(ctx, r, "udevd", nil); err != nil {

@@ -13,6 +13,7 @@ import (
 
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
+	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
 	"go.uber.org/zap"
 
@@ -56,7 +57,7 @@ func (ctrl *OperatorMergeController) Outputs() []controller.Output {
 // Run implements controller.Controller interface.
 //
 //nolint:gocyclo
-func (ctrl *OperatorMergeController) Run(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
+func (ctrl *OperatorMergeController) Run(ctx context.Context, r controller.Runtime, _ *zap.Logger) error {
 	for {
 		select {
 		case <-ctx.Done():
@@ -89,9 +90,7 @@ func (ctrl *OperatorMergeController) Run(ctx context.Context, r controller.Runti
 		conflictsDetected := 0
 
 		for id, operator := range operators {
-			if err = r.Modify(ctx, network.NewOperatorSpec(network.NamespaceName, id), func(res resource.Resource) error {
-				op := res.(*network.OperatorSpec) //nolint:errcheck,forcetypeassert
-
+			if err = safe.WriterModify(ctx, r, network.NewOperatorSpec(network.NamespaceName, id), func(op *network.OperatorSpec) error {
 				*op.TypedSpec() = *operator.TypedSpec()
 
 				return nil

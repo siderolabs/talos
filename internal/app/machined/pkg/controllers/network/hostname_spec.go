@@ -10,6 +10,7 @@ import (
 
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
+	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
 	"go.uber.org/zap"
 	"golang.org/x/sys/unix"
@@ -91,9 +92,7 @@ func (ctrl *HostnameSpecController) Run(ctx context.Context, r controller.Runtim
 					return fmt.Errorf("error removing finalizer: %w", err)
 				}
 			case resource.PhaseRunning:
-				if err = r.Modify(ctx, network.NewHostnameStatus(network.NamespaceName, spec.Metadata().ID()), func(r resource.Resource) error {
-					status := r.(*network.HostnameStatus) //nolint:forcetypeassert,errcheck
-
+				if err = safe.WriterModify(ctx, r, network.NewHostnameStatus(network.NamespaceName, spec.Metadata().ID()), func(status *network.HostnameStatus) error {
 					status.TypedSpec().Hostname = spec.TypedSpec().Hostname
 					status.TypedSpec().Domainname = spec.TypedSpec().Domainname
 

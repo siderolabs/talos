@@ -51,7 +51,7 @@ func (ctrl *KubernetesDynamicCertsController) Outputs() []controller.Output {
 // Run implements controller.Controller interface.
 //
 //nolint:gocyclo,cyclop
-func (ctrl *KubernetesDynamicCertsController) Run(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
+func (ctrl *KubernetesDynamicCertsController) Run(ctx context.Context, r controller.Runtime, _ *zap.Logger) error {
 	// wait for the network to be ready first, then switch to regular inputs
 	if err := r.UpdateInputs([]controller.Input{
 		{

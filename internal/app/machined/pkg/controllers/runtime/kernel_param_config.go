@@ -9,7 +9,6 @@ import (
 	"fmt"
 
 	"github.com/cosi-project/runtime/pkg/controller"
-	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/siderolabs/gen/optional"
@@ -52,7 +51,7 @@ func (ctrl *KernelParamConfigController) Outputs() []controller.Output {
 // Run implements controller.Controller interface.
 //
 //nolint:gocyclo
-func (ctrl *KernelParamConfigController) Run(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
+func (ctrl *KernelParamConfigController) Run(ctx context.Context, r controller.Runtime, _ *zap.Logger) error {
 	for {
 		select {
 		case <-ctx.Done():
@@ -72,8 +71,8 @@ func (ctrl *KernelParamConfigController) Run(ctx context.Context, r controller.R
 		setKernelParam := func(kind, key, value string) error {
 			item := runtime.NewKernelParamSpec(runtime.NamespaceName, kind+"."+key)
 
-			return r.Modify(ctx, item, func(res resource.Resource) error {
-				res.(*runtime.KernelParamSpec).TypedSpec().Value = value
+			return safe.WriterModify(ctx, r, item, func(res *runtime.KernelParamSpec) error {
+				res.TypedSpec().Value = value
 
 				return nil
 			})

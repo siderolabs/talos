@@ -45,7 +45,7 @@ func (ctrl *AdjtimeStatusController) Outputs() []controller.Output {
 }
 
 // Run implements controller.Controller interface.
-func (ctrl *AdjtimeStatusController) Run(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
+func (ctrl *AdjtimeStatusController) Run(ctx context.Context, r controller.Runtime, _ *zap.Logger) error {
 	if ctrl.V1Alpha1Mode == v1alpha1runtime.ModeContainer {
 		// in container mode, clock is managed by the host
 		return nil

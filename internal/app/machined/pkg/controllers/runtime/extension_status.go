@@ -12,7 +12,7 @@ import (
 	"strings"
 
 	"github.com/cosi-project/runtime/pkg/controller"
-	"github.com/cosi-project/runtime/pkg/resource"
+	"github.com/cosi-project/runtime/pkg/safe"
 	"go.uber.org/zap"
 
 	"github.com/siderolabs/talos/pkg/machinery/constants"
@@ -44,7 +44,7 @@ func (ctrl *ExtensionStatusController) Outputs() []controller.Output {
 }
 
 // Run implements controller.Controller interface.
-func (ctrl *ExtensionStatusController) Run(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
+func (ctrl *ExtensionStatusController) Run(ctx context.Context, r controller.Runtime, _ *zap.Logger) error {
 	// controller runs once, as extensions are static
 	select {
 	case <-ctx.Done():
@@ -66,8 +66,8 @@ func (ctrl *ExtensionStatusController) Run(ctx context.Context, r controller.Run
 	for _, layer := range cfg.Layers {
 		id := strings.TrimSuffix(layer.Image, ".sqsh")
 
-		if err := r.Modify(ctx, runtime.NewExtensionStatus(runtime.NamespaceName, id), func(res resource.Resource) error {
-			*res.(*runtime.ExtensionStatus).TypedSpec() = *layer
+		if err := safe.WriterModify(ctx, r, runtime.NewExtensionStatus(runtime.NamespaceName, id), func(res *runtime.ExtensionStatus) error {
+			*res.TypedSpec() = *layer
 
 			return nil
 		}); err != nil {

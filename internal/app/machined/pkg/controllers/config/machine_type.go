@@ -9,7 +9,6 @@ import (
 	"fmt"
 
 	"github.com/cosi-project/runtime/pkg/controller"
-	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/siderolabs/gen/optional"
@@ -50,7 +49,7 @@ func (ctrl *MachineTypeController) Outputs() []controller.Output {
 }
 
 // Run implements controller.Controller interface.
-func (ctrl *MachineTypeController) Run(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
+func (ctrl *MachineTypeController) Run(ctx context.Context, r controller.Runtime, _ *zap.Logger) error {
 	for {
 		select {
 		case <-ctx.Done():
@@ -69,8 +68,8 @@ func (ctrl *MachineTypeController) Run(ctx context.Context, r controller.Runtime
 			machineType = cfg.Config().Machine().Type()
 		}
 
-		if err = r.Modify(ctx, config.NewMachineType(), func(r resource.Resource) error {
-			r.(*config.MachineType).SetMachineType(machineType)
+		if err = safe.WriterModify(ctx, r, config.NewMachineType(), func(r *config.MachineType) error {
+			r.SetMachineType(machineType)
 
 			return nil
 		}); err != nil {

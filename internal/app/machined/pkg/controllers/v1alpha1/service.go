@@ -9,7 +9,7 @@ import (
 	"sync"
 
 	"github.com/cosi-project/runtime/pkg/controller"
-	"github.com/cosi-project/runtime/pkg/resource"
+	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
 	"go.uber.org/zap"
 
@@ -74,9 +74,7 @@ func (ctrl *ServiceController) Run(ctx context.Context, r controller.Runtime, lo
 
 				switch msg.Action { //nolint:exhaustive
 				case machine.ServiceStateEvent_RUNNING:
-					if err := r.Modify(ctx, service, func(r resource.Resource) error {
-						svc := r.(*v1alpha1.Service) //nolint:errcheck,forcetypeassert
-
+					if err := safe.WriterModify(ctx, r, service, func(svc *v1alpha1.Service) error {
 						*svc.TypedSpec() = v1alpha1.ServiceSpec{
 							Running: true,
 							Healthy: msg.GetHealth().GetHealthy(),

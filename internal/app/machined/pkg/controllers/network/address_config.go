@@ -12,6 +12,7 @@ import (
 
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
+	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/siderolabs/gen/value"
 	"github.com/siderolabs/go-procfs/procfs"
@@ -162,11 +163,12 @@ func (ctrl *AddressConfigController) apply(ctx context.Context, r controller.Run
 	for _, address := range addresses {
 		id := network.LayeredID(address.ConfigLayer, network.AddressID(address.LinkName, address.Address))
 
-		if err := r.Modify(
+		if err := safe.WriterModify(
 			ctx,
+			r,
 			network.NewAddressSpec(network.ConfigNamespaceName, id),
-			func(r resource.Resource) error {
-				*r.(*network.AddressSpec).TypedSpec() = address
+			func(r *network.AddressSpec) error {
+				*r.TypedSpec() = address
 
 				return nil
 			},

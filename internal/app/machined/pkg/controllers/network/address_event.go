@@ -10,6 +10,7 @@ import (
 
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
+	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/siderolabs/gen/optional"
 	"go.uber.org/zap"
@@ -57,7 +58,7 @@ func (ctrl *AddressEventController) Outputs() []controller.Output {
 }
 
 // Run implements controller.Controller interface.
-func (ctrl *AddressEventController) Run(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
+func (ctrl *AddressEventController) Run(ctx context.Context, r controller.Runtime, _ *zap.Logger) error {
 	ticker := time.NewTicker(time.Minute * 10)
 
 	defer ticker.Stop()
@@ -72,8 +73,9 @@ func (ctrl *AddressEventController) Run(ctx context.Context, r controller.Runtim
 
 		var addresses []string
 
-		nodeAddr, err := r.Get(
+		nodeAddr, err := safe.ReaderGet[*network.NodeAddress](
 			ctx,
+			r,
 			resource.NewMetadata(
 				network.NamespaceName,
 				network.NodeAddressType,
@@ -87,7 +89,7 @@ func (ctrl *AddressEventController) Run(ctx context.Context, r controller.Runtim
 				return err
 			}
 		} else {
-			for _, addr := range nodeAddr.(*network.NodeAddress).TypedSpec().Addresses {
+			for _, addr := range nodeAddr.TypedSpec().Addresses {
 				addresses = append(
 					addresses,
 					addr.Addr().String(),
@@ -97,13 +99,13 @@ func (ctrl *AddressEventController) Run(ctx context.Context, r controller.Runtim
 
 		var hostname string
 
-		hostnameStatus, err := r.Get(ctx, resource.NewMetadata(network.NamespaceName, network.HostnameStatusType, network.HostnameID, resource.VersionUndefined))
+		hostnameStatus, err := safe.ReaderGet[*network.HostnameStatus](ctx, r, resource.NewMetadata(network.NamespaceName, network.HostnameStatusType, network.HostnameID, resource.VersionUndefined))
 		if err != nil {
 			if !state.IsNotFoundError(err) {
 				return err
 			}
 		} else {
-			hostname = hostnameStatus.(*network.HostnameStatus).TypedSpec().Hostname
+			hostname = hostnameStatus.TypedSpec().Hostname
 		}
 
 		ctrl.V1Alpha1Events.Publish(ctx, &machine.AddressEvent{

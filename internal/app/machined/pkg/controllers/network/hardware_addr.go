@@ -10,6 +10,7 @@ import (
 
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
+	"github.com/cosi-project/runtime/pkg/safe"
 	"go.uber.org/zap"
 
 	"github.com/siderolabs/talos/pkg/machinery/resources/network"
@@ -47,7 +48,7 @@ func (ctrl *HardwareAddrController) Outputs() []controller.Output {
 // Run implements controller.Controller interface.
 //
 //nolint:gocyclo
-func (ctrl *HardwareAddrController) Run(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
+func (ctrl *HardwareAddrController) Run(ctx context.Context, r controller.Runtime, _ *zap.Logger) error {
 	for {
 		select {
 		case <-ctx.Done():
@@ -80,8 +81,8 @@ func (ctrl *HardwareAddrController) Run(ctx context.Context, r controller.Runtim
 				continue
 			}
 
-			if err = r.Modify(ctx, network.NewHardwareAddr(network.NamespaceName, network.FirstHardwareAddr), func(r resource.Resource) error {
-				spec := r.(*network.HardwareAddr).TypedSpec()
+			if err = safe.WriterModify(ctx, r, network.NewHardwareAddr(network.NamespaceName, network.FirstHardwareAddr), func(r *network.HardwareAddr) error {
+				spec := r.TypedSpec()
 
 				spec.HardwareAddr = link.TypedSpec().HardwareAddr
 				spec.Name = link.Metadata().ID()

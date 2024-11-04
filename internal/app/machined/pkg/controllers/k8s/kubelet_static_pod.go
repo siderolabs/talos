@@ -74,7 +74,7 @@ func (ctrl *KubeletStaticPodController) Outputs() []controller.Output {
 // Run implements controller.Controller interface.
 //
 //nolint:gocyclo
-func (ctrl *KubeletStaticPodController) Run(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
+func (ctrl *KubeletStaticPodController) Run(ctx context.Context, r controller.Runtime, _ *zap.Logger) error {
 	var kubeletClient *kubelet.Client
 
 	refreshTicker := time.NewTicker(15 * time.Second) // refresh kubelet pods status every 15 seconds

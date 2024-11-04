@@ -49,7 +49,7 @@ func (ctrl *WatchdogTimerConfigController) Outputs() []controller.Output {
 }
 
 // Run implements controller.Controller interface.
-func (ctrl *WatchdogTimerConfigController) Run(ctx context.Context, r controller.Runtime, logger *zap.Logger) (err error) {
+func (ctrl *WatchdogTimerConfigController) Run(ctx context.Context, r controller.Runtime, _ *zap.Logger) (err error) {
 	for {
 		select {
 		case <-ctx.Done():

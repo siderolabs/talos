@@ -12,6 +12,7 @@ import (
 
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
+	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/siderolabs/gen/optional"
 	"go.uber.org/zap"
@@ -73,7 +74,7 @@ func (ctrl *IdentityController) Outputs() []controller.Output {
 // Run implements controller.Controller interface.
 //
 //nolint:gocyclo,cyclop
-func (ctrl *IdentityController) Run(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
+func (ctrl *IdentityController) Run(ctx context.Context, r controller.Runtime, _ *zap.Logger) error {
 	if ctrl.StatePath == "" {
 		ctrl.StatePath = constants.StateMountPoint
 	}
@@ -92,19 +93,19 @@ func (ctrl *IdentityController) Run(ctx context.Context, r controller.Runtime, l
 				return fmt.Errorf("error reading mount status: %w", err)
 			}
 
-			cfg, err := r.Get(ctx, resource.NewMetadata(config.NamespaceName, kubespan.ConfigType, kubespan.ConfigID, resource.VersionUndefined))
+			cfg, err := safe.ReaderGet[*kubespan.Config](ctx, r, resource.NewMetadata(config.NamespaceName, kubespan.ConfigType, kubespan.ConfigID, resource.VersionUndefined))
 			if err != nil && !state.IsNotFoundError(err) {
 				return fmt.Errorf("error getting kubespan configuration: %w", err)
 			}
 
-			firstMAC, err := r.Get(ctx, resource.NewMetadata(network.NamespaceName, network.HardwareAddrType, network.FirstHardwareAddr, resource.VersionUndefined))
+			firstMAC, err := safe.ReaderGet[*network.HardwareAddr](ctx, r, resource.NewMetadata(network.NamespaceName, network.HardwareAddrType, network.FirstHardwareAddr, resource.VersionUndefined))
 			if err != nil && !state.IsNotFoundError(err) {
 				return fmt.Errorf("error getting first MAC address: %w", err)
 			}
 
 			touchedIDs := make(map[resource.ID]struct{})
 
-			if cfg != nil && firstMAC != nil && cfg.(*kubespan.Config).TypedSpec().Enabled {
+			if cfg != nil && firstMAC != nil && cfg.TypedSpec().Enabled {
 				var localIdentity kubespan.IdentitySpec
 
 				if err = controllers.LoadOrNewFromFile(filepath.Join(ctrl.StatePath, constants.KubeSpanIdentityFilename), &localIdentity, func(v any) error {
@@ -113,15 +114,15 @@ func (ctrl *IdentityController) Run(ctx context.Context, r controller.Runtime, l
 					return fmt.Errorf("error caching kubespan identity: %w", err)
 				}
 
-				kubespanCfg := cfg.(*kubespan.Config).TypedSpec()
-				mac := firstMAC.(*network.HardwareAddr).TypedSpec()
+				kubespanCfg := cfg.TypedSpec()
+				mac := firstMAC.TypedSpec()
 
 				if err = kubespanadapter.IdentitySpec(&localIdentity).UpdateAddress(kubespanCfg.ClusterID, net.HardwareAddr(mac.HardwareAddr)); err != nil {
 					return fmt.Errorf("error updating KubeSpan address: %w", err)
 				}
 
-				if err = r.Modify(ctx, kubespan.NewIdentity(kubespan.NamespaceName, kubespan.LocalIdentity), func(res resource.Resource) error {
-					*res.(*kubespan.Identity).TypedSpec() = localIdentity
+				if err = safe.WriterModify(ctx, r, kubespan.NewIdentity(kubespan.NamespaceName, kubespan.LocalIdentity), func(res *kubespan.Identity) error {
+					*res.TypedSpec() = localIdentity
 
 					return nil
 				}); err != nil {

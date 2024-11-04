@@ -55,7 +55,7 @@ func (ctrl *ExtensionServiceConfigFilesController) Outputs() []controller.Output
 // Run implements controller.Controller interface.
 //
 //nolint:gocyclo
-func (ctrl *ExtensionServiceConfigFilesController) Run(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
+func (ctrl *ExtensionServiceConfigFilesController) Run(ctx context.Context, r controller.Runtime, _ *zap.Logger) error {
 	if ctrl.V1Alpha1Mode == v1alpha1runtime.ModeContainer {
 		return nil
 	}

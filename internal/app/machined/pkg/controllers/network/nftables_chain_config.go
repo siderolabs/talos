@@ -61,7 +61,7 @@ func (ctrl *NfTablesChainConfigController) Outputs() []controller.Output {
 // Run implements controller.Controller interface.
 //
 //nolint:gocyclo
-func (ctrl *NfTablesChainConfigController) Run(ctx context.Context, r controller.Runtime, logger *zap.Logger) (err error) {
+func (ctrl *NfTablesChainConfigController) Run(ctx context.Context, r controller.Runtime, _ *zap.Logger) (err error) {
 	for {
 		select {
 		case <-ctx.Done():
@@ -162,7 +162,10 @@ func (ctrl *NfTablesChainConfigController) Run(ctx context.Context, r controller
 										network.NfTablesRule{
 											MatchSourceAddress: &network.NfTablesAddressMatch{
 												IncludeSubnets: xslices.Map(
-													append(slices.Clone(cfg.Config().Cluster().Network().PodCIDRs()), cfg.Config().Cluster().Network().ServiceCIDRs()...),
+													slices.Concat(
+														cfg.Config().Cluster().Network().PodCIDRs(),
+														cfg.Config().Cluster().Network().ServiceCIDRs(),
+													),
 													netip.MustParsePrefix,
 												),
 											},

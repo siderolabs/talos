@@ -11,6 +11,7 @@ import (
 
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
+	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/siderolabs/gen/optional"
 	"go.uber.org/zap"
@@ -67,7 +68,7 @@ func (ctrl *KubernetesCertSANsController) Outputs() []controller.Output {
 // Run implements controller.Controller interface.
 //
 //nolint:gocyclo
-func (ctrl *KubernetesCertSANsController) Run(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
+func (ctrl *KubernetesCertSANsController) Run(ctx context.Context, r controller.Runtime, _ *zap.Logger) error {
 	for {
 		select {
 		case <-ctx.Done():
@@ -75,7 +76,7 @@ func (ctrl *KubernetesCertSANsController) Run(ctx context.Context, r controller.
 		case <-r.EventCh():
 		}
 
-		k8sRootRes, err := r.Get(ctx, resource.NewMetadata(secrets.NamespaceName, secrets.KubernetesRootType, secrets.KubernetesRootID, resource.VersionUndefined))
+		k8sRootRes, err := safe.ReaderGet[*secrets.KubernetesRoot](ctx, r, resource.NewMetadata(secrets.NamespaceName, secrets.KubernetesRootType, secrets.KubernetesRootID, resource.VersionUndefined))
 		if err != nil {
 			if state.IsNotFoundError(err) {
 				if err = ctrl.teardownAll(ctx, r); err != nil {
@@ -88,9 +89,9 @@ func (ctrl *KubernetesCertSANsController) Run(ctx context.Context, r controller.
 			return fmt.Errorf("error getting root k8s secrets: %w", err)
 		}
 
-		k8sRoot := k8sRootRes.(*secrets.KubernetesRoot).TypedSpec()
+		k8sRoot := k8sRootRes.TypedSpec()
 
-		hostnameResource, err := r.Get(ctx, resource.NewMetadata(network.NamespaceName, network.HostnameStatusType, network.HostnameID, resource.VersionUndefined))
+		hostnameResource, err := safe.ReaderGet[*network.HostnameStatus](ctx, r, resource.NewMetadata(network.NamespaceName, network.HostnameStatusType, network.HostnameID, resource.VersionUndefined))
 		if err != nil {
 			if state.IsNotFoundError(err) {
 				continue
@@ -99,9 +100,10 @@ func (ctrl *KubernetesCertSANsController) Run(ctx context.Context, r controller.
 			return err
 		}
 
-		hostnameStatus := hostnameResource.(*network.HostnameStatus).TypedSpec()
+		hostnameStatus := hostnameResource.TypedSpec()
 
-		addressesResource, err := r.Get(ctx,
+		addressesResource, err := safe.ReaderGet[*network.NodeAddress](ctx,
+			r,
 			resource.NewMetadata(network.NamespaceName, network.NodeAddressType, network.FilteredNodeAddressID(network.NodeAddressAccumulativeID, k8s.NodeAddressFilterNoK8s), resource.VersionUndefined))
 		if err != nil {
 			if state.IsNotFoundError(err) {
@@ -111,10 +113,10 @@ func (ctrl *KubernetesCertSANsController) Run(ctx context.Context, r controller.
 			return err
 		}
 
-		nodeAddresses := addressesResource.(*network.NodeAddress).TypedSpec()
+		nodeAddresses := addressesResource.TypedSpec()
 
-		if err = r.Modify(ctx, secrets.NewCertSAN(secrets.NamespaceName, secrets.CertSANKubernetesID), func(r resource.Resource) error {
-			spec := r.(*secrets.CertSAN).TypedSpec()
+		if err = safe.WriterModify(ctx, r, secrets.NewCertSAN(secrets.NamespaceName, secrets.CertSANKubernetesID), func(r *secrets.CertSAN) error {
+			spec := r.TypedSpec()
 
 			spec.Reset()
 

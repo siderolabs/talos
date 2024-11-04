@@ -245,9 +245,7 @@ func (widget *NetworkInfo) gateway(statuses []*network.RouteStatus) string {
 }
 
 func (widget *NetworkInfo) resolvers(status *network.ResolverStatus) string {
-	strs := xslices.Map(status.TypedSpec().DNSServers, func(t netip.Addr) string {
-		return t.String()
-	})
+	strs := xslices.Map(status.TypedSpec().DNSServers, netip.Addr.String)
 
 	if len(strs) == 0 {
 		return none

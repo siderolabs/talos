@@ -59,11 +59,11 @@ func (ctrl *LVMActivationController) Outputs() []controller.Output {
 //nolint:gocyclo
 func (ctrl *LVMActivationController) Run(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
 	if ctrl.seenVolumes == nil {
-		ctrl.seenVolumes = make(map[string]struct{})
+		ctrl.seenVolumes = map[string]struct{}{}
 	}
 
 	if ctrl.activatedVGs == nil {
-		ctrl.activatedVGs = make(map[string]struct{})
+		ctrl.activatedVGs = map[string]struct{}{}
 	}
 
 	for {

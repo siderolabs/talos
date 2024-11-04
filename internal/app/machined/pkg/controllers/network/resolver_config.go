@@ -140,11 +140,12 @@ func (ctrl *ResolverConfigController) apply(ctx context.Context, r controller.Ru
 	for _, spec := range specs {
 		id := network.LayeredID(spec.ConfigLayer, network.ResolverID)
 
-		if err := r.Modify(
+		if err := safe.WriterModify(
 			ctx,
+			r,
 			network.NewResolverSpec(network.ConfigNamespaceName, id),
-			func(r resource.Resource) error {
-				*r.(*network.ResolverSpec).TypedSpec() = spec
+			func(r *network.ResolverSpec) error {
+				*r.TypedSpec() = spec
 
 				return nil
 			},

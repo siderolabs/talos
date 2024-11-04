@@ -11,6 +11,7 @@ import (
 
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
+	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
 	"go.uber.org/zap"
 
@@ -54,7 +55,7 @@ func (ctrl *RouteMergeController) Outputs() []controller.Output {
 // Run implements controller.Controller interface.
 //
 //nolint:gocyclo
-func (ctrl *RouteMergeController) Run(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
+func (ctrl *RouteMergeController) Run(ctx context.Context, r controller.Runtime, _ *zap.Logger) error {
 	for {
 		select {
 		case <-ctx.Done():
@@ -87,9 +88,7 @@ func (ctrl *RouteMergeController) Run(ctx context.Context, r controller.Runtime,
 		conflictsDetected := 0
 
 		for id, route := range routes {
-			if err = r.Modify(ctx, network.NewRouteSpec(network.NamespaceName, id), func(res resource.Resource) error {
-				rt := res.(*network.RouteSpec) //nolint:errcheck,forcetypeassert
-
+			if err = safe.WriterModify(ctx, r, network.NewRouteSpec(network.NamespaceName, id), func(rt *network.RouteSpec) error {
 				*rt.TypedSpec() = *route.TypedSpec()
 
 				return nil

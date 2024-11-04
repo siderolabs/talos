@@ -80,7 +80,7 @@ func (ctrl *EtcdController) Outputs() []controller.Output {
 // Run implements controller.Controller interface.
 //
 //nolint:gocyclo
-func (ctrl *EtcdController) Run(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
+func (ctrl *EtcdController) Run(ctx context.Context, r controller.Runtime, _ *zap.Logger) error {
 	for {
 		select {
 		case <-ctx.Done():
@@ -120,7 +120,7 @@ func (ctrl *EtcdController) Run(ctx context.Context, r controller.Runtime, logge
 		}
 
 		// wait for time sync as certs depend on current time
-		timeSyncResource, err := r.Get(ctx, resource.NewMetadata(v1alpha1.NamespaceName, time.StatusType, time.StatusID, resource.VersionUndefined))
+		timeSyncResource, err := safe.ReaderGet[*time.Status](ctx, r, resource.NewMetadata(v1alpha1.NamespaceName, time.StatusType, time.StatusID, resource.VersionUndefined))
 		if err != nil {
 			if state.IsNotFoundError(err) {
 				continue
@@ -129,7 +129,7 @@ func (ctrl *EtcdController) Run(ctx context.Context, r controller.Runtime, logge
 			return err
 		}
 
-		if !timeSyncResource.(*time.Status).TypedSpec().Synced {
+		if !timeSyncResource.TypedSpec().Synced {
 			continue
 		}
 

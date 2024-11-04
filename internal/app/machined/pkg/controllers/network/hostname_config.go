@@ -98,13 +98,13 @@ func (ctrl *HostnameConfigController) Run(ctx context.Context, r controller.Runt
 		// defaults
 		var defaultAddr *network.NodeAddress
 
-		addrs, err := r.Get(ctx, resource.NewMetadata(network.NamespaceName, network.NodeAddressType, network.NodeAddressDefaultID, resource.VersionUndefined))
+		addrs, err := safe.ReaderGet[*network.NodeAddress](ctx, r, resource.NewMetadata(network.NamespaceName, network.NodeAddressType, network.NodeAddressDefaultID, resource.VersionUndefined))
 		if err != nil {
 			if !state.IsNotFoundError(err) {
 				return fmt.Errorf("error getting config: %w", err)
 			}
 		} else {
-			defaultAddr = addrs.(*network.NodeAddress) //nolint:errcheck,forcetypeassert
+			defaultAddr = addrs
 		}
 
 		// parse kernel cmdline for the default gateway
@@ -122,9 +122,9 @@ func (ctrl *HostnameConfigController) Run(ctx context.Context, r controller.Runt
 			}
 
 			if cfgProvider.Machine().Features().StableHostnameEnabled() {
-				var identity resource.Resource
+				var identity *cluster.Identity
 
-				identity, err = r.Get(ctx, resource.NewMetadata(cluster.NamespaceName, cluster.IdentityType, cluster.LocalIdentity, resource.VersionUndefined))
+				identity, err = safe.ReaderGet[*cluster.Identity](ctx, r, resource.NewMetadata(cluster.NamespaceName, cluster.IdentityType, cluster.LocalIdentity, resource.VersionUndefined))
 				if err != nil {
 					if !state.IsNotFoundError(err) {
 						return fmt.Errorf("error getting local identity: %w", err)
@@ -133,7 +133,7 @@ func (ctrl *HostnameConfigController) Run(ctx context.Context, r controller.Runt
 					continue
 				}
 
-				nodeID := identity.(*cluster.Identity).TypedSpec().NodeID
+				nodeID := identity.TypedSpec().NodeID
 
 				stableHostname := ctrl.getStableDefault(nodeID)
 				specs = append(specs, *stableHostname)
@@ -183,11 +183,12 @@ func (ctrl *HostnameConfigController) apply(ctx context.Context, r controller.Ru
 	for _, spec := range specs {
 		id := network.LayeredID(spec.ConfigLayer, network.HostnameID)
 
-		if err := r.Modify(
+		if err := safe.WriterModify(
 			ctx,
+			r,
 			network.NewHostnameSpec(network.ConfigNamespaceName, id),
-			func(r resource.Resource) error {
-				*r.(*network.HostnameSpec).TypedSpec() = spec
+			func(r *network.HostnameSpec) error {
+				*r.TypedSpec() = spec
 
 				return nil
 			},

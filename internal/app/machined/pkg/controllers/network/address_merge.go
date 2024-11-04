@@ -13,6 +13,7 @@ import (
 
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
+	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
 	"go.uber.org/zap"
 
@@ -56,7 +57,7 @@ func (ctrl *AddressMergeController) Outputs() []controller.Output {
 // Run implements controller.Controller interface.
 //
 //nolint:gocyclo
-func (ctrl *AddressMergeController) Run(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
+func (ctrl *AddressMergeController) Run(ctx context.Context, r controller.Runtime, _ *zap.Logger) error {
 	for {
 		select {
 		case <-ctx.Done():
@@ -89,9 +90,7 @@ func (ctrl *AddressMergeController) Run(ctx context.Context, r controller.Runtim
 		conflictsDetected := 0
 
 		for id, address := range addresses {
-			if err = r.Modify(ctx, network.NewAddressSpec(network.NamespaceName, id), func(res resource.Resource) error {
-				addr := res.(*network.AddressSpec) //nolint:errcheck,forcetypeassert
-
+			if err = safe.WriterModify(ctx, r, network.NewAddressSpec(network.NamespaceName, id), func(addr *network.AddressSpec) error {
 				*addr.TypedSpec() = *address.TypedSpec()
 
 				return nil

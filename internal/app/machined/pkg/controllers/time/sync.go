@@ -132,7 +132,11 @@ func (ctrl *SyncController) Run(ctx context.Context, r controller.Runtime, logge
 			timeSyncTimeoutTimer = nil
 		}
 
-		timeServersStatus, err := r.Get(ctx, resource.NewMetadata(network.NamespaceName, network.TimeServerStatusType, network.TimeServerID, resource.VersionUndefined))
+		timeServersStatus, err := safe.ReaderGet[*network.TimeServerStatus](
+			ctx,
+			r,
+			resource.NewMetadata(network.NamespaceName, network.TimeServerStatusType, network.TimeServerID, resource.VersionUndefined),
+		)
 		if err != nil {
 			if !state.IsNotFoundError(err) {
 				return fmt.Errorf("error getting time server status: %w", err)
@@ -142,7 +146,7 @@ func (ctrl *SyncController) Run(ctx context.Context, r controller.Runtime, logge
 			continue
 		}
 
-		timeServers := timeServersStatus.(*network.TimeServerStatus).TypedSpec().NTPServers
+		timeServers := timeServersStatus.TypedSpec().NTPServers
 
 		cfg, err := safe.ReaderGetByID[*config.MachineConfig](ctx, r, config.V1Alpha1ID)
 		if err != nil {
@@ -227,8 +231,8 @@ func (ctrl *SyncController) Run(ctx context.Context, r controller.Runtime, logge
 			timeSynced = true
 		}
 
-		if err = r.Modify(ctx, time.NewStatus(), func(r resource.Resource) error {
-			*r.(*time.Status).TypedSpec() = time.StatusSpec{
+		if err = safe.WriterModify(ctx, r, time.NewStatus(), func(r *time.Status) error {
+			*r.TypedSpec() = time.StatusSpec{
 				Epoch:        epoch,
 				Synced:       timeSynced,
 				SyncDisabled: syncDisabled,
