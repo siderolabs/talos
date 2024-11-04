@@ -73,9 +73,31 @@ func TestRoutSpecNormalize(t *testing.T) {
 		MTU:         1400,
 	}
 
-	spec.Normalize()
+	normalizedFamily := spec.Normalize()
 
 	assert.Equal(t, netip.Prefix{}, spec.Destination)
 	assert.Equal(t, netip.Addr{}, spec.Source)
 	assert.Equal(t, netip.Addr{}, spec.Gateway)
+	assert.Equal(t, nethelpers.FamilyInet4, normalizedFamily)
+	assert.Equal(t, nethelpers.ScopeGlobal, spec.Scope)
+}
+
+func TestRoutSpecNormalizeV6(t *testing.T) {
+	spec := network.RouteSpecSpec{
+		Family:      nethelpers.FamilyInet4,
+		Destination: netip.MustParsePrefix("::/0"),
+		OutLinkName: "eth0",
+		Table:       nethelpers.TableLocal,
+		Priority:    1024,
+		ConfigLayer: network.ConfigPlatform,
+		MTU:         1400,
+	}
+
+	normalizedFamily := spec.Normalize()
+
+	assert.Equal(t, netip.Prefix{}, spec.Destination)
+	assert.Equal(t, netip.Addr{}, spec.Source)
+	assert.Equal(t, netip.Addr{}, spec.Gateway)
+	assert.Equal(t, nethelpers.FamilyInet6, normalizedFamily)
+	assert.Equal(t, nethelpers.ScopeGlobal, spec.Scope)
 }

@@ -48,28 +48,54 @@ var (
 )
 
 // Normalize converts 0.0.0.0 to zero value.
-func (route *RouteSpecSpec) Normalize() {
-	if route.Destination.Bits() == 0 && (route.Destination.Addr().Compare(zero4) == 0 || route.Destination.Addr().Compare(zero16) == 0) {
+//
+//nolint:gocyclo
+func (route *RouteSpecSpec) Normalize() nethelpers.Family {
+	var family nethelpers.Family
+
+	if route.Destination.Bits() == 0 {
 		// clear destination to be zero value to support "0.0.0.0/0" routes
-		route.Destination = netip.Prefix{}
+		if route.Destination.Addr().Compare(zero4) == 0 {
+			family = nethelpers.FamilyInet4
+			route.Destination = netip.Prefix{}
+		}
+
+		if route.Destination.Addr().Compare(zero16) == 0 {
+			family = nethelpers.FamilyInet6
+			route.Destination = netip.Prefix{}
+		}
 	}
 
-	if route.Gateway.Compare(zero4) == 0 || route.Gateway.Compare(zero16) == 0 {
+	if route.Gateway.Compare(zero4) == 0 {
+		family = nethelpers.FamilyInet4
 		route.Gateway = netip.Addr{}
 	}
 
-	if route.Source.Compare(zero4) == 0 || route.Source.Compare(zero16) == 0 {
+	if route.Gateway.Compare(zero16) == 0 {
+		family = nethelpers.FamilyInet6
+		route.Gateway = netip.Addr{}
+	}
+
+	if route.Source.Compare(zero4) == 0 {
+		family = nethelpers.FamilyInet4
+		route.Source = netip.Addr{}
+	}
+
+	if route.Source.Compare(zero16) == 0 {
+		family = nethelpers.FamilyInet6
 		route.Source = netip.Addr{}
 	}
 
 	switch {
-	case value.IsZero(route.Gateway):
+	case value.IsZero(route.Gateway) && !value.IsZero(route.Destination):
 		route.Scope = nethelpers.ScopeLink
 	case route.Destination.Addr().IsLoopback():
 		route.Scope = nethelpers.ScopeHost
 	default:
 		route.Scope = nethelpers.ScopeGlobal
 	}
+
+	return family
 }
 
 // NewRouteSpec initializes a RouteSpec resource.

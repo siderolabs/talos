@@ -257,7 +257,7 @@ func (ctrl *RouteConfigController) processDevicesConfiguration(logger *zap.Logge
 			}
 		}
 
-		route.Normalize()
+		normalizedFamily := route.Normalize()
 
 		route.Priority = in.Metric()
 		if route.Priority == 0 {
@@ -271,6 +271,8 @@ func (ctrl *RouteConfigController) processDevicesConfiguration(logger *zap.Logge
 			route.Family = nethelpers.FamilyInet6
 		case !value.IsZero(route.Destination) && route.Destination.Addr().Is6():
 			route.Family = nethelpers.FamilyInet6
+		case normalizedFamily != 0:
+			route.Family = normalizedFamily
 		default:
 			route.Family = nethelpers.FamilyInet4
 		}
