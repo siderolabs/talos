@@ -66,6 +66,8 @@ kernel/drivers/i2c/i2c-smbus.ko
 kernel/drivers/infiniband/hw/mlx4/mlx4_ib.ko
 kernel/drivers/infiniband/hw/mlx5/mlx5_ib.ko
 kernel/drivers/infiniband/sw/rxe/rdma_rxe.ko
+kernel/drivers/md/dm-cache.ko
+kernel/drivers/md/dm-cache-smq.ko
 kernel/drivers/md/dm-bio-prison.ko
 kernel/drivers/md/dm-multipath.ko
 kernel/drivers/md/dm-raid.ko
