@@ -142,10 +142,6 @@ func (suite *BaseSuite) TearDownSuite() {
 		// for failed tests, produce crash dump for easier debugging,
 		// as cluster is going to be torn down below
 		suite.provisioner.CrashDump(suite.ctx, suite.Cluster, os.Stderr)
-
-		if suite.clusterAccess != nil {
-			suite.clusterAccess.CrashDump(suite.ctx, os.Stderr)
-		}
 	}
 
 	if suite.clusterAccess != nil {

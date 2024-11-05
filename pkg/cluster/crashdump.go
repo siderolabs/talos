@@ -8,88 +8,102 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"strings"
-	"time"
+	"os"
+	"path/filepath"
 
-	"github.com/siderolabs/talos/pkg/machinery/api/common"
+	"github.com/siderolabs/gen/xslices"
+	"github.com/siderolabs/go-talos-support/support"
+	"github.com/siderolabs/go-talos-support/support/bundle"
+	"github.com/siderolabs/go-talos-support/support/collectors"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	k8s "k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/tools/clientcmd"
+
 	"github.com/siderolabs/talos/pkg/machinery/client"
-	"github.com/siderolabs/talos/pkg/machinery/constants"
+	"github.com/siderolabs/talos/pkg/provision"
 )
 
-// APICrashDumper collects crash dump via Talos API.
-type APICrashDumper struct {
-	ClientProvider
-	Info
-}
-
-// DefaultServiceLogTailLines specifies number of log lines to tail from each service.
-const DefaultServiceLogTailLines = 100
-
-// LogLinesPerService customizes defaults for specific services.
-var LogLinesPerService = map[string]int32{
-	"etcd": 5000,
-}
-
-// CrashDump produces information to help with debugging.
-//
-// CrashDump implements CrashDumper interface.
-func (s *APICrashDumper) CrashDump(ctx context.Context, out io.Writer) {
-	cli, err := s.Client()
+// Crashdump creates a support.zip for the cluster.
+func Crashdump(ctx context.Context, cluster provision.Cluster, out io.Writer) {
+	statePath, err := cluster.StatePath()
 	if err != nil {
-		fmt.Fprintf(out, "error creating crashdump: %s\n", err)
+		fmt.Fprintf(out, "error getting state path: %s\n", err)
 
 		return
 	}
 
-	nodes := s.Nodes()
+	supportZip := filepath.Join(statePath, "support.zip")
 
-	for _, node := range nodes {
-		func(node NodeInfo) {
-			nodeIP := node.InternalIP.String()
+	supportFile, err := os.Create(supportZip)
+	if err != nil {
+		fmt.Fprintf(out, "error creating crashdump file: %s\n", err)
 
-			nodeCtx, nodeCtxCancel := context.WithTimeout(client.WithNodes(ctx, nodeIP), 30*time.Second)
-			defer nodeCtxCancel()
-
-			fmt.Fprintf(out, "\n%s\n%s\n\n", node, strings.Repeat("=", len(nodeIP)))
-
-			services, err := cli.ServiceList(nodeCtx)
-			if err != nil {
-				fmt.Fprintf(out, "error getting services: %s\n", err)
-
-				return
-			}
-
-			for _, msg := range services.Messages {
-				for _, svc := range msg.Services {
-					logLines, ok := LogLinesPerService[svc.Id]
-					if !ok {
-						logLines = DefaultServiceLogTailLines
-					}
-
-					stream, err := cli.Logs(nodeCtx, constants.SystemContainerdNamespace, common.ContainerDriver_CONTAINERD, svc.Id, false, logLines)
-					if err != nil {
-						fmt.Fprintf(out, "error getting service logs for %s: %s\n", svc.Id, err)
-
-						continue
-					}
-
-					r, err := client.ReadStream(stream)
-					if err != nil {
-						fmt.Fprintf(out, "error getting service logs for %s: %s\n", svc.Id, err)
-
-						continue
-					}
-
-					fmt.Fprintf(out, "\n> %s\n%s\n\n", svc.Id, strings.Repeat("-", len(svc.Id)+2))
-
-					_, err = io.Copy(out, r)
-					if err != nil {
-						fmt.Fprintf(out, "error streaming service logs: %s\n", err)
-					}
-
-					r.Close() //nolint:errcheck
-				}
-			}
-		}(node)
+		return
 	}
+
+	defer supportFile.Close() //nolint:errcheck
+
+	c, err := client.New(ctx, client.WithDefaultConfig())
+	if err != nil {
+		fmt.Fprintf(out, "error creating crashdump: %s\n", err)
+	}
+
+	nodes := xslices.Map(cluster.Info().Nodes, func(nodeInfo provision.NodeInfo) string {
+		return nodeInfo.IPs[0].String()
+	})
+
+	controlplane := nodes[0]
+
+	opts := []bundle.Option{
+		bundle.WithArchiveOutput(supportFile),
+		bundle.WithTalosClient(c),
+		bundle.WithNodes(nodes...),
+		bundle.WithNumWorkers(1),
+	}
+
+	kubeclient, err := getKubernetesClient(ctx, c, controlplane)
+	if err == nil {
+		opts = append(opts, bundle.WithKubernetesClient(kubeclient))
+	}
+
+	options := bundle.NewOptions(opts...)
+
+	collectors, err := collectors.GetForOptions(ctx, options)
+	if err != nil {
+		fmt.Fprintf(out, "error creating crashdump collector options: %s\n", err)
+	}
+
+	if err := support.CreateSupportBundle(ctx, options, collectors...); err != nil {
+		fmt.Fprintf(out, "error creating crashdump: %s\n", err)
+	}
+}
+
+func getKubernetesClient(ctx context.Context, c *client.Client, endpoint string) (*k8s.Clientset, error) {
+	kubeconfig, err := c.Kubeconfig(client.WithNodes(ctx, endpoint))
+	if err != nil {
+		return nil, err
+	}
+
+	config, err := clientcmd.NewClientConfigFromBytes(kubeconfig)
+	if err != nil {
+		return nil, err
+	}
+
+	restconfig, err := config.ClientConfig()
+	if err != nil {
+		return nil, err
+	}
+
+	clientset, err := k8s.NewForConfig(restconfig)
+	if err != nil {
+		return nil, err
+	}
+
+	// just checking that k8s responds
+	_, err = clientset.CoreV1().Namespaces().Get(ctx, "kube-system", v1.GetOptions{})
+	if err != nil {
+		return nil, err
+	}
+
+	return clientset, nil
 }

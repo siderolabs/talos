@@ -22,6 +22,7 @@ func (p *provisioner) Reflect(ctx context.Context, clusterName, stateDirectory s
 		clusterInfo: provision.ClusterInfo{
 			ClusterName: clusterName,
 		},
+		statePath: stateDirectory,
 	}
 
 	// find network assuming network name == cluster name

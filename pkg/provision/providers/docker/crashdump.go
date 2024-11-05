@@ -5,13 +5,16 @@
 package docker
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"io"
-	"strings"
+	"os"
+	"path/filepath"
 
 	"github.com/docker/docker/api/types/container"
 
+	cl "github.com/siderolabs/talos/pkg/cluster"
 	"github.com/siderolabs/talos/pkg/provision"
 )
 
@@ -24,9 +27,15 @@ func (p *provisioner) CrashDump(ctx context.Context, cluster provision.Cluster, 
 		return
 	}
 
+	statePath, err := cluster.StatePath()
+	if err != nil {
+		fmt.Fprintf(out, "error getting state path: %s\n", err)
+
+		return
+	}
+
 	for _, ctr := range containers {
 		name := ctr.Names[0][1:]
-		fmt.Fprintf(out, "%s\n%s\n\n", name, strings.Repeat("=", len(name)))
 
 		logs, err := p.client.ContainerLogs(ctx, ctr.ID, container.LogsOptions{
 			ShowStdout: true,
@@ -39,6 +48,22 @@ func (p *provisioner) CrashDump(ctx context.Context, cluster provision.Cluster, 
 			continue
 		}
 
-		_, _ = io.Copy(out, logs) //nolint:errcheck
+		logPath := filepath.Join(statePath, fmt.Sprintf("%s.log", name))
+
+		var logData bytes.Buffer
+
+		if _, err := io.Copy(&logData, logs); err != nil {
+			fmt.Fprintf(out, "error reading container logs: %s\n", err)
+
+			continue
+		}
+
+		if err := os.WriteFile(logPath, logData.Bytes(), 0o644); err != nil {
+			fmt.Fprintf(out, "error writing container logs: %s\n", err)
+
+			continue
+		}
 	}
+
+	cl.Crashdump(ctx, cluster, out)
 }

@@ -7,6 +7,8 @@ package docker
 import (
 	"context"
 	"fmt"
+	"os"
+	"path/filepath"
 
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/provision"
@@ -22,6 +24,14 @@ func (p *provisioner) Create(ctx context.Context, request provision.ClusterReque
 		if err = opt(&options); err != nil {
 			return nil, err
 		}
+	}
+
+	statePath := filepath.Join(request.StateDirectory, request.Name)
+
+	fmt.Fprintf(options.LogWriter, "creating state directory in %q\n", statePath)
+
+	if err := os.MkdirAll(statePath, 0o755); err != nil {
+		return nil, fmt.Errorf("unable to create state directory: %w", err)
 	}
 
 	if err = p.ensureImageExists(ctx, request.Image, &options); err != nil {
@@ -64,6 +74,7 @@ func (p *provisioner) Create(ctx context.Context, request provision.ClusterReque
 			Nodes:              nodeInfo,
 			KubernetesEndpoint: p.GetExternalKubernetesControlPlaneEndpoint(request.Network, constants.DefaultControlPlanePort),
 		},
+		statePath: statePath,
 	}
 
 	return res, nil

@@ -30,5 +30,14 @@ func (p *provisioner) Destroy(ctx context.Context, cluster provision.Cluster, op
 
 	fmt.Fprintln(os.Stderr, "destroying network", cluster.Info().Network.Name)
 
-	return p.destroyNetwork(ctx, cluster.Info().Network.Name)
+	if err := p.destroyNetwork(ctx, cluster.Info().Network.Name); err != nil {
+		return err
+	}
+
+	statePath, err := cluster.StatePath()
+	if err != nil {
+		return err
+	}
+
+	return os.RemoveAll(statePath)
 }

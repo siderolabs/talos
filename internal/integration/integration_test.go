@@ -136,8 +136,6 @@ func TestIntegration(t *testing.T) {
 	}
 
 	if t.Failed() && crashdumpEnabled && cluster != nil && provisioner != nil {
-		// if provisioner & cluster are available,
-		// debugging failed test is easier with crashdump
 		provisioner.CrashDump(context.Background(), cluster, os.Stderr)
 	}
 }

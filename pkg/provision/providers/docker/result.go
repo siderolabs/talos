@@ -12,6 +12,8 @@ import (
 
 type result struct {
 	clusterInfo provision.ClusterInfo
+
+	statePath string
 }
 
 func (res *result) Provisioner() string {
@@ -23,5 +25,9 @@ func (res *result) Info() provision.ClusterInfo {
 }
 
 func (res *result) StatePath() (string, error) {
-	return "", errors.New("state path is not used for docker provisioner")
+	if res.statePath == "" {
+		return "", errors.New("state path is not used for docker provisioner")
+	}
+
+	return res.statePath, nil
 }
