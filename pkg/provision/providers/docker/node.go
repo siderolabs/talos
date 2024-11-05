@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"net/netip"
 	"runtime"
+	"slices"
 	"strings"
 
 	"github.com/docker/docker/api/types"
@@ -115,7 +116,7 @@ func (p *provisioner) createNode(ctx context.Context, clusterReq provision.Clust
 	}
 
 	// Create the host config.
-	mounts := make([]mount.Mount, 0, len(constants.Overlays)+5)
+	mounts := make([]mount.Mount, 0, len(constants.Overlays)+5+len(nodeReq.Mounts))
 
 	for _, path := range []string{"/run", "/system", "/tmp"} {
 		mounts = append(mounts, mount.Mount{
@@ -130,6 +131,8 @@ func (p *provisioner) createNode(ctx context.Context, clusterReq provision.Clust
 			Target: path,
 		})
 	}
+
+	mounts = slices.Concat(mounts, nodeReq.Mounts)
 
 	hostConfig := &container.HostConfig{
 		Privileged:  true,

@@ -188,6 +188,7 @@ talosctl cluster create [flags]
       --kubernetes-version string                desired kubernetes version to run (default "1.32.0-alpha.3")
       --memory int                               the limit on memory usage in MB (each control plane/VM) (default 2048)
       --memory-workers int                       the limit on memory usage in MB (each worker/VM) (default 2048)
+      --mount mount                              attach a mount to the container (Docker only)
       --mtu int                                  MTU of the cluster network (default 1500)
       --nameservers strings                      list of nameservers to use (default [8.8.8.8,1.1.1.1,2001:4860:4860::8888,2606:4700:4700::1111])
       --no-masquerade-cidrs strings              list of CIDRs to exclude from NAT (QEMU provisioner only)
