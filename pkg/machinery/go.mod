@@ -9,11 +9,11 @@ replace gopkg.in/yaml.v3 => github.com/unix4ever/yaml v0.0.0-20220527175918-f17b
 require (
 	github.com/blang/semver/v4 v4.0.0
 	github.com/containerd/go-cni v1.1.10
-	github.com/cosi-project/runtime v0.6.4
+	github.com/cosi-project/runtime v0.7.1
 	github.com/dustin/go-humanize v1.0.1
 	github.com/emicklei/dot v1.6.2
 	github.com/evanphx/json-patch v5.9.0+incompatible
-	github.com/fatih/color v1.17.0
+	github.com/fatih/color v1.18.0
 	github.com/ghodss/yaml v1.0.0
 	github.com/google/cel-go v0.21.0
 	github.com/hashicorp/go-multierror v1.1.1
@@ -33,8 +33,8 @@ require (
 	github.com/siderolabs/protoenc v0.2.1
 	github.com/stretchr/testify v1.9.0
 	go.uber.org/zap v1.27.0
-	google.golang.org/genproto/googleapis/api v0.0.0-20241015192408-796eee8c2d53
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20241015192408-796eee8c2d53
+	google.golang.org/genproto/googleapis/api v0.0.0-20241104194629-dd2ea8efbc28
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20241104194629-dd2ea8efbc28
 	google.golang.org/grpc v1.67.1 // do not update to 1.68.0 until we find a way around https://github.com/grpc/grpc-go/pull/7535
 	google.golang.org/protobuf v1.35.1
 	gopkg.in/yaml.v3 v3.0.1
@@ -46,6 +46,7 @@ require (
 	github.com/ProtonMail/gopenpgp/v2 v2.7.5 // indirect
 	github.com/adrg/xdg v0.5.0 // indirect
 	github.com/antlr4-go/antlr/v4 v4.13.0 // indirect
+	github.com/cenkalti/backoff/v4 v4.3.0 // indirect
 	github.com/cloudflare/circl v1.3.9 // indirect
 	github.com/containernetworking/cni v1.2.3 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
