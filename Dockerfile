@@ -736,6 +736,7 @@ RUN <<END
 END
 
 FROM rootfs-base-${TARGETARCH} AS rootfs-base
+RUN rm -rf /rootfs/lib/modules/*
 RUN find /rootfs -print0 \
     | xargs -0r touch --no-dereference --date="@${SOURCE_DATE_EPOCH}"
 

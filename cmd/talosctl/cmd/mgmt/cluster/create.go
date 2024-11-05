@@ -22,6 +22,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/docker/cli/opts"
 	"github.com/dustin/go-humanize"
 	"github.com/google/uuid"
 	"github.com/hashicorp/go-getter/v2"
@@ -189,6 +190,7 @@ var (
 	withUUIDHostnames         bool
 	withSiderolinkAgent       agentFlag
 	configInjectionMethodFlag string
+	mountOpts                 opts.MountOpt
 )
 
 // createCmd represents the cluster up command.
@@ -862,6 +864,7 @@ func create(ctx context.Context) error {
 			Memory:                controlPlaneMemory,
 			NanoCPUs:              controlPlaneNanoCPUs,
 			Disks:                 disks,
+			Mounts:                mountOpts.Value(),
 			SkipInjectingConfig:   skipInjectingConfig,
 			ConfigInjectionMethod: configInjectionMethod,
 			BadRTC:                badRTC,
@@ -933,6 +936,7 @@ func create(ctx context.Context) error {
 				Memory:                workerMemory,
 				NanoCPUs:              workerNanoCPUs,
 				Disks:                 disks,
+				Mounts:                mountOpts.Value(),
 				Config:                cfg,
 				ConfigInjectionMethod: configInjectionMethod,
 				SkipInjectingConfig:   skipInjectingConfig,
@@ -1267,6 +1271,7 @@ func init() {
 	createCmd.Flags().BoolVar(&withUUIDHostnames, "with-uuid-hostnames", false, "use machine UUIDs as default hostnames (QEMU only)")
 	createCmd.Flags().Var(&withSiderolinkAgent, "with-siderolink", "enables the use of siderolink agent as configuration apply mechanism. `true` or `wireguard` enables the agent, `tunnel` enables the agent with grpc tunneling") //nolint:lll
 	createCmd.Flags().StringVar(&configInjectionMethodFlag, "config-injection-method", "", "a method to inject machine config: default is HTTP server, 'metal-iso' to mount an ISO (QEMU only)")
+	createCmd.Flags().Var(&mountOpts, "mount", "attach a mount to the container (Docker only)")
 
 	createCmd.MarkFlagsMutuallyExclusive(inputDirFlag, nodeInstallImageFlag)
 	createCmd.MarkFlagsMutuallyExclusive(inputDirFlag, configDebugFlag)

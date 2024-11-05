@@ -10,6 +10,7 @@ import (
 	"slices"
 	"time"
 
+	mounttypes "github.com/docker/docker/api/types/mount"
 	"github.com/google/uuid"
 	"github.com/siderolabs/go-procfs/procfs"
 
@@ -187,8 +188,10 @@ type NodeRequest struct {
 	NanoCPUs int64
 	// Memory limit in bytes
 	Memory int64
-	// Disks (volumes), if applicable
+	// Disks (volumes), if applicable (VM only)
 	Disks []*Disk
+	// Mounts (containers only)
+	Mounts []mounttypes.Mount
 	// Ports
 	Ports []string
 	// SkipInjectingConfig disables reading configuration from http server
