@@ -183,10 +183,12 @@ case "${WITH_APPARMOR_LSM_ENABLED:-false}" in
 machine:
   install:
     extraKernelArgs:
-      - security=apparmor
+      - lsm=lockdown,capability,yama,apparmor,bpf
+      - apparmor=1
 EOF
 
     QEMU_FLAGS+=("--config-patch=@${TMP}/kernel-security.patch")
+    QEMU_FLAGS+=("--extra-boot-kernel-args=-selinux")
     ;;
 esac
 

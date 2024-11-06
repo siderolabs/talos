@@ -85,11 +85,14 @@ func (p *provisioner) createNode(state *vm.State, clusterReq provision.ClusterRe
 	cmdline.Append("talos.platform", constants.PlatformMetal)
 
 	// SELinux
-	cmdline.Append("selinux", "1")
+	cmdline.Append(constants.KernelParamSELinux, "1")
 
 	// add overrides
 	if nodeReq.ExtraKernelArgs != nil {
-		if err = cmdline.AppendAll(nodeReq.ExtraKernelArgs.Strings()); err != nil {
+		if err = cmdline.AppendAll(
+			nodeReq.ExtraKernelArgs.Strings(),
+			procfs.WithDeleteNegatedArgs(),
+		); err != nil {
 			return provision.NodeInfo{}, err
 		}
 	}

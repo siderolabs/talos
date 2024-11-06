@@ -14,6 +14,8 @@ import (
 	"time"
 
 	"github.com/siderolabs/talos/internal/integration/base"
+	"github.com/siderolabs/talos/pkg/machinery/client"
+	"github.com/siderolabs/talos/pkg/machinery/config/machine"
 )
 
 // ApparmorSuite verifies that a pod with apparmor security context with `RuntimeDefault` works.
@@ -42,7 +44,11 @@ func (suite *ApparmorSuite) TestApparmor() {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Minute)
 	suite.T().Cleanup(cancel)
 
-	reader, err := suite.Client.Read(ctx, "/sys/kernel/security/lsm")
+	node := suite.RandomDiscoveredNodeInternalIP(machine.TypeWorker)
+
+	nodeCtx := client.WithNodes(ctx, node)
+
+	reader, err := suite.Client.Read(nodeCtx, "/sys/kernel/security/lsm")
 	suite.Require().NoError(err)
 
 	// read from reader into a buffer

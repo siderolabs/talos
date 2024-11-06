@@ -29,6 +29,7 @@ import (
 	"github.com/siderolabs/talos/internal/pkg/containers/image"
 	"github.com/siderolabs/talos/internal/pkg/environment"
 	"github.com/siderolabs/talos/internal/pkg/extensions"
+	"github.com/siderolabs/talos/internal/pkg/selinux"
 	machineapi "github.com/siderolabs/talos/pkg/machinery/api/machine"
 	configcore "github.com/siderolabs/talos/pkg/machinery/config"
 	"github.com/siderolabs/talos/pkg/machinery/config/config"
@@ -206,11 +207,14 @@ func RunInstallerContainer(disk, platform, ref string, cfg configcore.Config, cf
 		oci.WithReadonlyPaths(nil),
 		oci.WithWriteableSysfs,
 		oci.WithWriteableCgroupfs,
-		oci.WithSelinuxLabel(constants.SelinuxLabelInstaller),
 		oci.WithApparmorProfile(""),
 		oci.WithSeccompUnconfined,
 		oci.WithAllDevicesAllowed,
 		oci.WithEnv(environment.Get(cfg)),
+	}
+
+	if selinux.IsEnabled() {
+		specOpts = append(specOpts, oci.WithSelinuxLabel(constants.SelinuxLabelInstaller))
 	}
 
 	containerOpts := []containerd.NewContainerOpts{
