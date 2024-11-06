@@ -37,16 +37,16 @@ replace (
 
 // Kubernetes dependencies sharing the same version.
 require (
-	k8s.io/api v0.32.0-alpha.3
-	k8s.io/apimachinery v0.32.0-alpha.3
-	k8s.io/apiserver v0.32.0-alpha.3
-	k8s.io/client-go v0.32.0-alpha.3
-	k8s.io/component-base v0.32.0-alpha.3
-	k8s.io/cri-api v0.32.0-alpha.3
-	k8s.io/kube-scheduler v0.32.0-alpha.3
-	k8s.io/kubectl v0.32.0-alpha.3
-	k8s.io/kubelet v0.32.0-alpha.3
-	k8s.io/pod-security-admission v0.32.0-alpha.3
+	k8s.io/api v0.32.0-beta.0
+	k8s.io/apimachinery v0.32.0-beta.0
+	k8s.io/apiserver v0.32.0-beta.0
+	k8s.io/client-go v0.32.0-beta.0
+	k8s.io/component-base v0.32.0-beta.0
+	k8s.io/cri-api v0.32.0-beta.0
+	k8s.io/kube-scheduler v0.32.0-beta.0
+	k8s.io/kubectl v0.32.0-beta.0
+	k8s.io/kubelet v0.32.0-beta.0
+	k8s.io/pod-security-admission v0.32.0-beta.0
 )
 
 require (
@@ -152,7 +152,7 @@ require (
 	github.com/siderolabs/go-debug v0.4.0
 	github.com/siderolabs/go-kmsg v0.1.4
 	github.com/siderolabs/go-kubeconfig v0.1.0
-	github.com/siderolabs/go-kubernetes v0.2.14
+	github.com/siderolabs/go-kubernetes v0.2.15
 	github.com/siderolabs/go-loadbalancer v0.3.4
 	github.com/siderolabs/go-pcidb v0.3.0
 	github.com/siderolabs/go-pointer v1.0.0
@@ -365,16 +365,16 @@ require (
 	gopkg.in/evanphx/json-patch.v4 v4.12.0 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
-	k8s.io/cli-runtime v0.32.0-alpha.3 // indirect
+	k8s.io/cli-runtime v0.32.0-beta.0 // indirect
 	k8s.io/kube-openapi v0.0.0-20240827152857-f7e401e7b4c2 // indirect
-	k8s.io/utils v0.0.0-20240711033017-18e509b52bc8 // indirect
+	k8s.io/utils v0.0.0-20241104100929-3ea5e8cea738 // indirect
 	kernel.org/pub/linux/libs/security/libcap/psx v1.2.71 // indirect
 	rsc.io/qr v0.2.0 // indirect
 	sigs.k8s.io/json v0.0.0-20241010143419-9aa6b5e7a4b3 // indirect
 	sigs.k8s.io/knftables v0.0.17 // indirect
 	sigs.k8s.io/kustomize/api v0.18.0 // indirect
 	sigs.k8s.io/kustomize/kyaml v0.18.1 // indirect
-	sigs.k8s.io/structured-merge-diff/v4 v4.4.1 // indirect
+	sigs.k8s.io/structured-merge-diff/v4 v4.4.2 // indirect
 	tags.cncf.io/container-device-interface v0.8.0 // indirect
 	tags.cncf.io/container-device-interface/specs-go v0.8.0 // indirect
 )
