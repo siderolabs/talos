@@ -138,24 +138,34 @@ Also the machine configuration can be edited manually with `talosctl -n <IP>  ed
 Capture the new version of `kube-apiserver` config with:
 
 ```bash
-$ talosctl -n <CONTROL_PLANE_IP_1> get kcpc kube-apiserver -o yaml
+$ talosctl -n <CONTROL_PLANE_IP_1> get apiserverconfig -o yaml
 node: 172.20.0.2
 metadata:
-    namespace: config
-    type: KubernetesControlPlaneConfigs.config.talos.dev
+    namespace: controlplane
+    type: APIServerConfigs.kubernetes.talos.dev
     id: kube-apiserver
     version: 5
+    owner: k8s.ControlPlaneAPIServerController
     phase: running
 spec:
     image: registry.k8s.io/kube-apiserver:v{{< k8s_release >}}
     cloudProvider: ""
     controlPlaneEndpoint: https://172.20.0.1:6443
     etcdServers:
-        - https://127.0.0.1:2379
+        - https://localhost:2379
     localPort: 6443
-    serviceCIDR: 10.96.0.0/12
+    serviceCIDR:
+        - 10.96.0.0/12
     extraArgs: {}
     extraVolumes: []
+    environmentVariables: {}
+    podSecurityPolicyEnabled: false
+    advertisedAddress: $(POD_IP)
+    resources:
+        requests:
+            cpu: ""
+            memory: ""
+        limits: {}
 ```
 
 In this example, the new version is `5`.
@@ -190,21 +200,31 @@ The JSON patch might need be adjusted if current machine configuration is missin
 Capture new version of `kube-controller-manager` config with:
 
 ```bash
-$ talosctl -n <CONTROL_PLANE_IP_1> get kcpc kube-controller-manager -o yaml
+$ talosctl -n <CONTROL_PLANE_IP_1> get kcpc controllermanagerconfig -o yaml
 node: 172.20.0.2
 metadata:
-    namespace: config
-    type: KubernetesControlPlaneConfigs.config.talos.dev
+    namespace: controlplane
+    type: ControllerManagerConfigs.kubernetes.talos.dev
     id: kube-controller-manager
     version: 3
+    owner: k8s.ControlPlaneControllerManagerController
     phase: running
 spec:
+    enabled: true
     image: registry.k8s.io/kube-controller-manager:v{{< k8s_release >}}
     cloudProvider: ""
-    podCIDR: 10.244.0.0/16
-    serviceCIDR: 10.96.0.0/12
+    podCIDRs:
+        - 10.244.0.0/16
+    serviceCIDRs:
+        - 10.96.0.0/12
     extraArgs: {}
     extraVolumes: []
+    environmentVariables: {}
+    resources:
+        requests:
+            cpu: ""
+            memory: ""
+        limits: {}
 ```
 
 In this example, new version is `3`.
@@ -239,18 +259,29 @@ JSON patch might need be adjusted if current machine configuration is missing `.
 Capture new version of `kube-scheduler` config with:
 
 ```bash
-$ talosctl -n <CONTROL_PLANE_IP_1> get kcpc kube-scheduler -o yaml
+$ talosctl -n <CONTROL_PLANE_IP_1> get schedulerconfig -o yaml
 node: 172.20.0.2
 metadata:
-    namespace: config
-    type: KubernetesControlPlaneConfigs.config.talos.dev
+    namespace: controlplane
+    type: SchedulerConfigs.kubernetes.talos.dev
     id: kube-scheduler
     version: 3
+    owner: k8s.ControlPlaneSchedulerController
     phase: running
+    created: 2024-11-06T12:37:22Z
+    updated: 2024-11-06T12:37:20Z
 spec:
+    enabled: true
     image: registry.k8s.io/kube-scheduler:v{{< k8s_release >}}
     extraArgs: {}
     extraVolumes: []
+    environmentVariables: {}
+    resources:
+        requests:
+            cpu: ""
+            memory: ""
+        limits: {}
+    config: {}
 ```
 
 In this example, new version is `3`.
