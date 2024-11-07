@@ -109,7 +109,7 @@ func (c *Config) Validate(mode validation.RuntimeMode, options ...validation.Opt
 					}
 
 					if _, err := os.Stat(disk); os.IsNotExist(err) {
-						result = multierror.Append(result, fmt.Errorf("specified install disk does not exist: %q", c.MachineConfig.MachineInstall.InstallDisk))
+						result = multierror.Append(result, fmt.Errorf("specified install disk does not exist: %q", disk))
 					}
 				}
 			}
