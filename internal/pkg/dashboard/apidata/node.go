@@ -13,16 +13,17 @@ import (
 // Node represents data gathered from a single node.
 type Node struct {
 	// These fields are directly API responses.
-	Hostname    *machine.Hostname
-	LoadAvg     *machine.LoadAvg
-	Version     *machine.Version
-	Memory      *machine.Memory
-	SystemStat  *machine.SystemStat
-	CPUsInfo    *machine.CPUsInfo
-	NetDevStats *machine.NetworkDeviceStats
-	DiskStats   *machine.DiskStats
-	Processes   *machine.Process
-	ServiceList *machine.ServiceList
+	Hostname      *machine.Hostname
+	LoadAvg       *machine.LoadAvg
+	Version       *machine.Version
+	Memory        *machine.Memory
+	SystemStat    *machine.SystemStat
+	CPUsFreqStats *machine.CPUsFreqStats
+	CPUsInfo      *machine.CPUsInfo
+	NetDevStats   *machine.NetworkDeviceStats
+	DiskStats     *machine.DiskStats
+	Processes     *machine.Process
+	ServiceList   *machine.ServiceList
 
 	// These fields are calculated as diff with Node data from previous pol.
 	SystemStatDiff  *machine.SystemStat

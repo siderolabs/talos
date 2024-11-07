@@ -304,9 +304,12 @@ description: Talos gRPC API reference.
     - [BootstrapRequest](#machine.BootstrapRequest)
     - [BootstrapResponse](#machine.BootstrapResponse)
     - [CNIConfig](#machine.CNIConfig)
+    - [CPUFreqStats](#machine.CPUFreqStats)
+    - [CPUFreqStatsResponse](#machine.CPUFreqStatsResponse)
     - [CPUInfo](#machine.CPUInfo)
     - [CPUInfoResponse](#machine.CPUInfoResponse)
     - [CPUStat](#machine.CPUStat)
+    - [CPUsFreqStats](#machine.CPUsFreqStats)
     - [CPUsInfo](#machine.CPUsInfo)
     - [ClusterConfig](#machine.ClusterConfig)
     - [ClusterNetworkConfig](#machine.ClusterNetworkConfig)
@@ -5352,6 +5355,39 @@ rpc Bootstrap
 
 
 
+<a name="machine.CPUFreqStats"></a>
+
+### CPUFreqStats
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| current_frequency | [uint64](#uint64) |  |  |
+| minimum_frequency | [uint64](#uint64) |  |  |
+| maximum_frequency | [uint64](#uint64) |  |  |
+| governor | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="machine.CPUFreqStatsResponse"></a>
+
+### CPUFreqStatsResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| messages | [CPUsFreqStats](#machine.CPUsFreqStats) | repeated |  |
+
+
+
+
+
+
 <a name="machine.CPUInfo"></a>
 
 ### CPUInfo
@@ -5425,6 +5461,22 @@ rpc Bootstrap
 | steal | [double](#double) |  |  |
 | guest | [double](#double) |  |  |
 | guest_nice | [double](#double) |  |  |
+
+
+
+
+
+
+<a name="machine.CPUsFreqStats"></a>
+
+### CPUsFreqStats
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| metadata | [common.Metadata](#common.Metadata) |  |  |
+| cpu_freq_stats | [CPUFreqStats](#machine.CPUFreqStats) | repeated |  |
 
 
 
@@ -8316,6 +8368,7 @@ The machine service definition.
 | Bootstrap | [BootstrapRequest](#machine.BootstrapRequest) | [BootstrapResponse](#machine.BootstrapResponse) | Bootstrap method makes control plane node enter etcd bootstrap mode. Node aborts etcd join sequence and creates single-node etcd cluster. If recover_etcd argument is specified, etcd is recovered from a snapshot uploaded with EtcdRecover. |
 | Containers | [ContainersRequest](#machine.ContainersRequest) | [ContainersResponse](#machine.ContainersResponse) |  |
 | Copy | [CopyRequest](#machine.CopyRequest) | [.common.Data](#common.Data) stream |  |
+| CPUFreqStats | [.google.protobuf.Empty](#google.protobuf.Empty) | [CPUFreqStatsResponse](#machine.CPUFreqStatsResponse) |  |
 | CPUInfo | [.google.protobuf.Empty](#google.protobuf.Empty) | [CPUInfoResponse](#machine.CPUInfoResponse) |  |
 | DiskStats | [.google.protobuf.Empty](#google.protobuf.Empty) | [DiskStatsResponse](#machine.DiskStatsResponse) |  |
 | Dmesg | [DmesgRequest](#machine.DmesgRequest) | [.common.Data](#common.Data) stream |  |

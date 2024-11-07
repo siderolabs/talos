@@ -21,6 +21,7 @@ service MachineService {
   rpc Bootstrap(BootstrapRequest) returns (BootstrapResponse);
   rpc Containers(ContainersRequest) returns (ContainersResponse);
   rpc Copy(CopyRequest) returns (stream common.Data);
+  rpc CPUFreqStats(google.protobuf.Empty) returns (CPUFreqStatsResponse);
   rpc CPUInfo(google.protobuf.Empty) returns (CPUInfoResponse);
   rpc DiskStats(google.protobuf.Empty) returns (DiskStatsResponse);
   rpc Dmesg(DmesgRequest) returns (stream common.Data);
@@ -841,6 +842,24 @@ message SoftIRQStat {
   uint64 sched = 8;
   uint64 hrtimer = 9;
   uint64 rcu = 10;
+}
+
+// rpc CPUFreqStats
+
+message CPUFreqStatsResponse {
+  repeated CPUsFreqStats messages = 1;
+}
+
+message CPUsFreqStats {
+  common.Metadata metadata = 1;
+  repeated CPUFreqStats cpu_freq_stats = 2;
+}
+
+message CPUFreqStats {
+  uint64 current_frequency = 1;
+  uint64 minimum_frequency = 2;
+  uint64 maximum_frequency = 3;
+  string governor = 4;
 }
 
 // rpc CPUInfo

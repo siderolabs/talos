@@ -7,6 +7,7 @@ package components
 import (
 	"fmt"
 	"math"
+	"sort"
 	"strconv"
 	"time"
 
@@ -24,7 +25,6 @@ type headerData struct {
 	hostname        string
 	version         string
 	uptime          string
-	numCPUs         string
 	cpuFreq         string
 	totalMem        string
 	numProcesses    string
@@ -107,11 +107,10 @@ func (widget *Header) redraw() {
 	data := widget.getOrCreateNodeData(widget.selectedNode)
 
 	text := fmt.Sprintf(
-		"[yellow::b]%s[-:-:-] (%s): uptime %s, %sx%s, %s RAM, PROCS %s, CPU %s, RAM %s",
+		"[yellow::b]%s[-:-:-] (%s): uptime %s, %s, %s RAM, PROCS %s, CPU %s, RAM %s",
 		data.hostname,
 		data.version,
 		data.uptime,
-		data.numCPUs,
 		data.cpuFreq,
 		data.totalMem,
 		data.numProcesses,
@@ -122,6 +121,7 @@ func (widget *Header) redraw() {
 	widget.SetText(text)
 }
 
+//nolint:gocyclo
 func (widget *Header) updateNodeAPIData(node string, data *apidata.Node) {
 	nodeData := widget.getOrCreateNodeData(node)
 
@@ -147,10 +147,43 @@ func (widget *Header) updateNodeAPIData(node string, data *apidata.Node) {
 	if data.CPUsInfo != nil {
 		numCPUs := len(data.CPUsInfo.GetCpuInfo())
 
-		nodeData.numCPUs = strconv.Itoa(numCPUs)
-
 		if numCPUs > 0 {
+			nodeData.cpuFreq = fmt.Sprintf("%dx%s", numCPUs, widget.humanizeCPUFrequency(data.CPUsInfo.GetCpuInfo()[0].GetCpuMhz()))
+		} else {
 			nodeData.cpuFreq = widget.humanizeCPUFrequency(data.CPUsInfo.GetCpuInfo()[0].GetCpuMhz())
+		}
+	}
+
+	if data.CPUsFreqStats != nil && data.CPUsFreqStats.CpuFreqStats != nil {
+		numCPUs := len(data.CPUsFreqStats.CpuFreqStats)
+		uniqMhz := make(map[uint64]int, numCPUs)
+
+		for _, cpuFreqStat := range data.CPUsFreqStats.CpuFreqStats {
+			uniqMhz[cpuFreqStat.CurrentFrequency]++
+		}
+
+		keys := make([]uint64, 0, len(uniqMhz))
+
+		for mhz := range uniqMhz {
+			if mhz == 0 {
+				continue
+			}
+
+			keys = append(keys, mhz)
+		}
+
+		if len(keys) > 0 {
+			sort.Slice(keys, func(i, j int) bool { return keys[i] > keys[j] })
+
+			nodeData.cpuFreq = ""
+		}
+
+		for i, mhz := range keys {
+			if i > 0 {
+				nodeData.cpuFreq += " "
+			}
+
+			nodeData.cpuFreq += fmt.Sprintf("%dx%s", uniqMhz[mhz], widget.humanizeCPUFrequency(float64(mhz)/1000.0))
 		}
 	}
 
@@ -170,7 +203,6 @@ func (widget *Header) getOrCreateNodeData(node string) *headerData {
 			hostname:        notAvailable,
 			version:         notAvailable,
 			uptime:          notAvailable,
-			numCPUs:         notAvailable,
 			cpuFreq:         notAvailable,
 			totalMem:        notAvailable,
 			numProcesses:    notAvailable,

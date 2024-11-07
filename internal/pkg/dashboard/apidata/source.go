@@ -180,6 +180,27 @@ func (source *Source) gather() *Data {
 			return nil
 		},
 		func() error {
+			resp, err := source.MachineClient.CPUFreqStats(source.ctx, &emptypb.Empty{})
+			if err != nil {
+				return err
+			}
+
+			resultLock.Lock()
+			defer resultLock.Unlock()
+
+			for _, msg := range resp.GetMessages() {
+				node := source.node(msg)
+
+				if _, ok := result.Nodes[node]; !ok {
+					result.Nodes[node] = &Node{}
+				}
+
+				result.Nodes[node].CPUsFreqStats = msg
+			}
+
+			return nil
+		},
+		func() error {
 			resp, err := source.MachineClient.CPUInfo(source.ctx, &emptypb.Empty{})
 			if err != nil {
 				return err
