@@ -199,6 +199,7 @@ func TestAcquireSuite(t *testing.T) {
 			EventPublisher:        s.eventPublisher,
 			ValidationMode:        validationModeMock{},
 			ConfigPath:            s.configPath,
+			ResourceState:         s.State(),
 		}))
 	}
 

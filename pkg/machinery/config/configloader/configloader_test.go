@@ -21,7 +21,7 @@ import (
 func callMethods(t testing.TB, obj reflect.Value, chain ...string) {
 	t.Helper()
 
-	if obj.Kind() == reflect.Interface && obj.IsNil() {
+	if (obj.Kind() == reflect.Interface || obj.Kind() == reflect.Pointer) && obj.IsNil() {
 		return
 	}
 

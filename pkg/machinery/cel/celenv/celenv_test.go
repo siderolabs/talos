@@ -30,6 +30,10 @@ func TestDiskLocator(t *testing.T) {
 			name:       "disk size",
 			expression: "disk.size > 1000u * GiB && !disk.rotational",
 		},
+		{
+			name:       "glob",
+			expression: "glob('sd[a-z]', disk.dev_path)",
+		},
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()

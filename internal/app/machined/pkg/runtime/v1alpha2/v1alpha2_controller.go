@@ -125,6 +125,7 @@ func (ctrl *Controller) Run(ctx context.Context, drainer *runtime.Drainer) error
 			ConfigSetter:   ctrl.v1alpha1Runtime,
 			EventPublisher: ctrl.v1alpha1Runtime.Events(),
 			ValidationMode: ctrl.v1alpha1Runtime.State().Platform().Mode(),
+			ResourceState:  ctrl.v1alpha1Runtime.State().V1Alpha2().Resources(),
 		},
 		&config.MachineTypeController{},
 		&cri.SeccompProfileController{},

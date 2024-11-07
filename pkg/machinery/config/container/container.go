@@ -7,10 +7,12 @@ package container
 
 import (
 	"bytes"
+	"context"
 	"errors"
 	"fmt"
 	"strings"
 
+	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/hashicorp/go-multierror"
 	"github.com/siderolabs/gen/xslices"
 
@@ -296,6 +298,35 @@ func (container *Container) Validate(mode validation.RuntimeMode, opt ...validat
 	for _, doc := range container.documents {
 		if validatableDoc, ok := doc.(config.Validator); ok {
 			docWarnings, docErr := validatableDoc.Validate(mode, opt...)
+
+			warnings = append(warnings, docWarnings...)
+			multiErr = multierror.Append(multiErr, docErr)
+		}
+	}
+
+	return warnings, multiErr.ErrorOrNil()
+}
+
+// RuntimeValidate validates the config in the runtime context.
+func (container *Container) RuntimeValidate(ctx context.Context, st state.State, mode validation.RuntimeMode, opt ...validation.Option) ([]string, error) {
+	var (
+		warnings []string
+		err      error
+	)
+
+	if container.v1alpha1Config != nil {
+		warnings, err = container.v1alpha1Config.RuntimeValidate(ctx, st, mode, opt...)
+	}
+
+	var multiErr *multierror.Error
+
+	if err != nil {
+		multiErr = multierror.Append(multiErr, err)
+	}
+
+	for _, doc := range container.documents {
+		if validatableDoc, ok := doc.(config.RuntimeValidator); ok {
+			docWarnings, docErr := validatableDoc.RuntimeValidate(ctx, st, mode, opt...)
 
 			warnings = append(warnings, docWarnings...)
 			multiErr = multierror.Append(multiErr, docErr)

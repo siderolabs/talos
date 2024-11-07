@@ -2245,9 +2245,9 @@
         "busPath": {
           "type": "string",
           "title": "busPath",
-          "description": "Disk bus path.\nWarning: This requires special configuration for NVMe drives. For details, see https://github.com/siderolabs/go-blockdevice/issues/114.\n",
-          "markdownDescription": "Disk bus path.\nWarning: This requires special configuration for NVMe drives. For details, see https://github.com/siderolabs/go-blockdevice/issues/114.",
-          "x-intellij-html-description": "\u003cp\u003eDisk bus path.\nWarning: This requires special configuration for NVMe drives. For details, see \u003ca href=\"https://github.com/siderolabs/go-blockdevice/issues/114\" target=\"_blank\"\u003ehttps://github.com/siderolabs/go-blockdevice/issues/114\u003c/a\u003e.\u003c/p\u003e\n"
+          "description": "Disk bus path.\n",
+          "markdownDescription": "Disk bus path.",
+          "x-intellij-html-description": "\u003cp\u003eDisk bus path.\u003c/p\u003e\n"
         }
       },
       "additionalProperties": false,

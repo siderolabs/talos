@@ -95,9 +95,6 @@ func (suite *GenerateConfigSuite) TestGenerate() {
 
 	suite.Require().NoError(err)
 
-	disk, err := config.Machine().Install().Disk()
-	suite.Require().NoError(err)
-
 	suite.Require().EqualValues(request.MachineConfig.Type, config.Machine().Type())
 	suite.Require().EqualValues(request.ClusterConfig.Name, config.Cluster().Name())
 	suite.Require().EqualValues(request.ClusterConfig.ControlPlane.Endpoint, config.Cluster().Endpoint().String())
@@ -114,7 +111,7 @@ func (suite *GenerateConfigSuite) TestGenerate() {
 		fmt.Sprintf("%s:v%s", constants.KubeletImage, request.MachineConfig.KubernetesVersion),
 		config.Machine().Kubelet().Image(),
 	)
-	suite.Require().EqualValues(request.MachineConfig.InstallConfig.InstallDisk, disk)
+	suite.Require().EqualValues(request.MachineConfig.InstallConfig.InstallDisk, config.Machine().Install().Disk())
 	suite.Require().EqualValues(request.MachineConfig.InstallConfig.InstallImage, config.Machine().Install().Image())
 	suite.Require().EqualValues(request.MachineConfig.NetworkConfig.Hostname, config.Machine().Network().Hostname())
 	suite.Require().EqualValues(request.MachineConfig.NetworkConfig.Hostname, config.Machine().Network().Hostname())
@@ -149,9 +146,6 @@ func (suite *GenerateConfigSuite) TestGenerate() {
 
 	suite.Require().NoError(err)
 
-	disk, err = config.Machine().Install().Disk()
-	suite.Require().NoError(err)
-
 	suite.Require().EqualValues(request.MachineConfig.Type, joinedConfig.Machine().Type())
 	suite.Require().EqualValues(request.ClusterConfig.Name, joinedConfig.Cluster().Name())
 	suite.Require().EqualValues(request.ClusterConfig.ControlPlane.Endpoint, joinedConfig.Cluster().Endpoint().String())
@@ -163,7 +157,7 @@ func (suite *GenerateConfigSuite) TestGenerate() {
 		fmt.Sprintf("%s:v%s", constants.KubeletImage, request.MachineConfig.KubernetesVersion),
 		joinedConfig.Machine().Kubelet().Image(),
 	)
-	suite.Require().EqualValues(request.MachineConfig.InstallConfig.InstallDisk, disk)
+	suite.Require().EqualValues(request.MachineConfig.InstallConfig.InstallDisk, config.Machine().Install().Disk())
 	suite.Require().EqualValues(
 		request.MachineConfig.InstallConfig.InstallImage,
 		joinedConfig.Machine().Install().Image(),

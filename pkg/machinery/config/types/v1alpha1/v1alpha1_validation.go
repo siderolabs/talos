@@ -5,23 +5,25 @@
 package v1alpha1
 
 import (
+	"context"
 	"encoding/base64"
 	"errors"
 	"fmt"
 	"net"
 	"net/url"
-	"os"
 	"reflect"
 	"regexp"
 	"strconv"
 	"strings"
 	"sync"
 
+	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/hashicorp/go-multierror"
 	sideronet "github.com/siderolabs/net"
 
 	"github.com/siderolabs/talos/pkg/machinery/config/config"
 	"github.com/siderolabs/talos/pkg/machinery/config/machine"
+	"github.com/siderolabs/talos/pkg/machinery/config/types/block/blockhelpers"
 	"github.com/siderolabs/talos/pkg/machinery/config/validation"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/kubelet"
@@ -94,24 +96,13 @@ func (c *Config) Validate(mode validation.RuntimeMode, options ...validation.Opt
 		if c.MachineConfig.MachineInstall == nil {
 			result = multierror.Append(result, fmt.Errorf("install instructions are required in %q mode", mode))
 		} else {
-			if opts.Local {
-				if c.MachineConfig.MachineInstall.InstallDisk == "" && len(c.MachineConfig.MachineInstall.DiskMatchers()) == 0 {
-					result = multierror.Append(result, errors.New("either install disk or diskSelector should be defined"))
-				}
-			} else {
-				disk, err := c.MachineConfig.MachineInstall.Disk()
+			matcher, err := c.MachineConfig.MachineInstall.DiskMatchExpression()
+			if err != nil {
+				result = multierror.Append(result, fmt.Errorf("install disk selector is invalid: %w", err))
+			}
 
-				if err != nil {
-					result = multierror.Append(result, err)
-				} else {
-					if disk == "" {
-						result = multierror.Append(result, fmt.Errorf("an install disk is required in %q mode", mode))
-					}
-
-					if _, err := os.Stat(disk); os.IsNotExist(err) {
-						result = multierror.Append(result, fmt.Errorf("specified install disk does not exist: %q", disk))
-					}
-				}
+			if c.MachineConfig.MachineInstall.InstallDisk == "" && matcher == nil {
+				result = multierror.Append(result, errors.New("either install disk or diskSelector should be defined"))
 			}
 		}
 	}
@@ -915,4 +906,34 @@ func (e *EtcdConfig) Validate() error {
 	}
 
 	return result.ErrorOrNil()
+}
+
+// RuntimeValidate validates the config in runtime context.
+//
+// In runtime context, resource state is available.
+func (c *Config) RuntimeValidate(ctx context.Context, st state.State, mode validation.RuntimeMode, opt ...validation.Option) ([]string, error) {
+	var (
+		warnings []string
+		result   *multierror.Error
+	)
+
+	if c.MachineConfig != nil {
+		if mode.RequiresInstall() && c.MachineConfig.MachineInstall != nil {
+			diskExpr, err := c.MachineConfig.MachineInstall.DiskMatchExpression()
+			if err != nil {
+				result = multierror.Append(result, fmt.Errorf("install disk selector is invalid: %w", err))
+			} else if diskExpr != nil {
+				matchedDisks, err := blockhelpers.MatchDisks(ctx, st, diskExpr)
+				if err != nil {
+					result = multierror.Append(result, err)
+				}
+
+				if len(matchedDisks) == 0 {
+					result = multierror.Append(result, fmt.Errorf("no disks matched the expression: %s", diskExpr))
+				}
+			}
+		}
+	}
+
+	return warnings, result.ErrorOrNil()
 }

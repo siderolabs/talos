@@ -22,6 +22,7 @@ import (
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/block/internal/volumes"
 	blockpb "github.com/siderolabs/talos/pkg/machinery/api/resource/definitions/block"
+	"github.com/siderolabs/talos/pkg/machinery/proto"
 	"github.com/siderolabs/talos/pkg/machinery/resources/block"
 	"github.com/siderolabs/talos/pkg/machinery/resources/hardware"
 	"github.com/siderolabs/talos/pkg/machinery/resources/runtime"
@@ -164,7 +165,7 @@ func (ctrl *VolumeManagerController) Run(ctx context.Context, r controller.Runti
 		discoveredVolumesSpecs, err := safe.Map(discoveredVolumes, func(dv *block.DiscoveredVolume) (*blockpb.DiscoveredVolumeSpec, error) {
 			spec := &blockpb.DiscoveredVolumeSpec{}
 
-			return spec, volumes.ResourceSpecToProto(dv, spec)
+			return spec, proto.ResourceSpecToProto(dv, spec)
 		})
 		if err != nil {
 			return fmt.Errorf("error mapping discovered volumes: %w", err)
@@ -204,7 +205,7 @@ func (ctrl *VolumeManagerController) Run(ctx context.Context, r controller.Runti
 		diskSpecs, err := safe.Map(disks, func(d *block.Disk) (volumes.DiskContext, error) {
 			spec := &blockpb.DiskSpec{}
 
-			if err := volumes.ResourceSpecToProto(d, spec); err != nil {
+			if err := proto.ResourceSpecToProto(d, spec); err != nil {
 				return volumes.DiskContext{}, err
 			}
 

@@ -8,8 +8,6 @@ import (
 	"fmt"
 	"testing"
 
-	humanize "github.com/dustin/go-humanize"
-	"github.com/siderolabs/go-blockdevice/blockdevice/util/disk"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	yaml "gopkg.in/yaml.v3"
@@ -125,25 +123,11 @@ func TestDiskSizeMatcherUnmarshal(t *testing.T) {
 			match:     false,
 		},
 	} {
-		var (
-			size uint64
-			err  error
-		)
-
-		if test.size != "" {
-			size, err = humanize.ParseBytes(test.size)
-			require.NoError(t, err)
-		}
-
-		err = yaml.Unmarshal([]byte(fmt.Sprintf("m: '%s'\n", test.condition)), &obj)
+		err := yaml.Unmarshal([]byte(fmt.Sprintf("m: '%s'\n", test.condition)), &obj)
 		if test.err {
 			require.Error(t, err)
 		} else {
 			require.NoError(t, err)
-		}
-
-		if test.size != "" {
-			require.Equal(t, obj.M.Matcher(&disk.Disk{Size: size}), test.match, test.size)
 		}
 	}
 }

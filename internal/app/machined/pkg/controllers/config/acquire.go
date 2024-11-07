@@ -14,6 +14,7 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"slices"
 	"strings"
 
 	"github.com/cosi-project/runtime/pkg/controller"
@@ -68,6 +69,7 @@ type AcquireController struct {
 	EventPublisher        talosruntime.Publisher
 	ValidationMode        validation.RuntimeMode
 	ConfigPath            string
+	ResourceState         state.State
 
 	configSourcesUsed []string
 }
@@ -345,7 +347,12 @@ func (ctrl *AcquireController) loadFromPlatform(ctx context.Context, logger *zap
 		return nil, fmt.Errorf("failed to validate config acquired via platform %s: %w", platformName, err)
 	}
 
-	for _, warning := range warnings {
+	warningsRuntime, err := cfg.RuntimeValidate(ctx, ctrl.ResourceState, ctrl.ValidationMode)
+	if err != nil {
+		return nil, fmt.Errorf("failed to runtime validate config acquired via platform %s: %w", platformName, err)
+	}
+
+	for _, warning := range slices.Concat(warnings, warningsRuntime) {
 		logger.Warn("config validation warning", zap.String("platform", platformName), zap.String("warning", warning))
 	}
 
@@ -364,7 +371,7 @@ func (ctrl *AcquireController) stateCmdline(ctx context.Context, r controller.Ru
 		return ctrl.stateMaintenanceEnter, nil, nil
 	}
 
-	cfg, err := ctrl.loadFromCmdline(logger)
+	cfg, err := ctrl.loadFromCmdline(ctx, logger)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -386,7 +393,9 @@ func (ctrl *AcquireController) stateCmdline(ctx context.Context, r controller.Ru
 }
 
 // loadFromCmdline is a helper function for stateCmdline.
-func (ctrl *AcquireController) loadFromCmdline(logger *zap.Logger) (config.Provider, error) {
+//
+//nolint:gocyclo
+func (ctrl *AcquireController) loadFromCmdline(ctx context.Context, logger *zap.Logger) (config.Provider, error) {
 	cmdline := ctrl.CmdlineGetter()
 
 	param := cmdline.Get(constants.KernelParamConfigInline)
@@ -435,7 +444,12 @@ func (ctrl *AcquireController) loadFromCmdline(logger *zap.Logger) (config.Provi
 		return nil, fmt.Errorf("failed to validate config acquired via cmdline %s: %w", constants.KernelParamConfigInline, err)
 	}
 
-	for _, warning := range warnings {
+	warningsRuntime, err := cfg.RuntimeValidate(ctx, ctrl.ResourceState, ctrl.ValidationMode)
+	if err != nil {
+		return nil, fmt.Errorf("failed to validate config acquired via cmdline %s: %w", constants.KernelParamConfigInline, err)
+	}
+
+	for _, warning := range slices.Concat(warnings, warningsRuntime) {
 		logger.Warn("config validation warning", zap.String("cmdline", constants.KernelParamConfigInline), zap.String("warning", warning))
 	}
 

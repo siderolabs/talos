@@ -11,6 +11,8 @@ import (
 
 	"github.com/google/cel-go/cel"
 	"github.com/google/cel-go/common/types"
+	"github.com/google/cel-go/common/types/ref"
+	"github.com/ryanuber/go-glob"
 	"github.com/siderolabs/gen/xslices"
 
 	"github.com/siderolabs/talos/pkg/machinery/api/resource/definitions/block"
@@ -36,6 +38,13 @@ var DiskLocator = sync.OnceValue(func() *cel.Env {
 				cel.Types(&diskSpec),
 				cel.Variable("disk", cel.ObjectType(string(diskSpec.ProtoReflect().Descriptor().FullName()))),
 				cel.Variable("system_disk", types.BoolType),
+				cel.Function("glob", // glob(pattern, string)
+					cel.Overload("glob_string_string", []*cel.Type{cel.StringType, cel.StringType}, cel.BoolType,
+						cel.BinaryBinding(func(arg1, arg2 ref.Val) ref.Val {
+							return types.Bool(glob.Glob(string(arg1.(types.String)), string(arg2.(types.String))))
+						}),
+					),
+				),
 			},
 			celUnitMultipliersConstants(),
 		)...,

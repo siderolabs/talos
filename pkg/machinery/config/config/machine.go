@@ -13,6 +13,7 @@ import (
 	"github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/siderolabs/crypto/x509"
 
+	"github.com/siderolabs/talos/pkg/machinery/cel"
 	"github.com/siderolabs/talos/pkg/machinery/config/machine"
 )
 
@@ -91,7 +92,8 @@ type File interface {
 type Install interface {
 	Image() string
 	Extensions() []Extension
-	Disk() (string, error)
+	Disk() string
+	DiskMatchExpression() (*cel.Expression, error)
 	ExtraKernelArgs() []string
 	Zero() bool
 	LegacyBIOSSupport() bool

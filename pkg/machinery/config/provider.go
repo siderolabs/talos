@@ -15,6 +15,9 @@ type Encoder = config.Encoder
 // Validator provides the interface to validate configuration.
 type Validator = config.Validator
 
+// RuntimeValidator provides the interface to validate configuration in the runtime context.
+type RuntimeValidator = config.RuntimeValidator
+
 // Container provides the interface to access configuration documents.
 //
 // Container might contain multiple config documents, supporting encoding/decoding,
@@ -22,6 +25,7 @@ type Validator = config.Validator
 type Container interface {
 	Encoder
 	Validator
+	RuntimeValidator
 
 	Readonly() bool
 

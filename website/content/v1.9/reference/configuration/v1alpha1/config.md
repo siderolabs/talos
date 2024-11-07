@@ -1976,7 +1976,7 @@ size: <= 2TB
 |`uuid` |string |Disk UUID `/sys/block/<dev>/uuid`.  | |
 |`wwid` |string |Disk WWID `/sys/block/<dev>/wwid`.  | |
 |`type` |InstallDiskType |Disk Type.  |`ssd`<br />`hdd`<br />`nvme`<br />`sd`<br /> |
-|`busPath` |string |<details><summary>Disk bus path.</summary>Warning: This requires special configuration for NVMe drives. For details, see https://github.com/siderolabs/go-blockdevice/issues/114.</details> <details><summary>Show example(s)</summary>{{< highlight yaml >}}
+|`busPath` |string |Disk bus path. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 busPath: /pci0000:00/0000:00:17.0/ata1/host0/target0:0:0/0:0:0:0
 {{< /highlight >}}{{< highlight yaml >}}
 busPath: /pci0000:00/*

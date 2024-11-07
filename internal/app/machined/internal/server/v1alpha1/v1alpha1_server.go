@@ -179,15 +179,22 @@ func (s *Server) ApplyConfiguration(ctx context.Context, in *machine.ApplyConfig
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
-	warnings, err := cfgProvider.Validate(
-		modeWrapper{
-			Mode:      s.Controller.Runtime().State().Platform().Mode(),
-			installed: s.Controller.Runtime().State().Machine().Installed(),
-		},
-	)
+	validationMode := modeWrapper{
+		Mode:      s.Controller.Runtime().State().Platform().Mode(),
+		installed: s.Controller.Runtime().State().Machine().Installed(),
+	}
+
+	warnings, err := cfgProvider.Validate(validationMode)
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
+
+	warningsRuntime, err := cfgProvider.RuntimeValidate(ctx, s.Controller.Runtime().State().V1Alpha2().Resources(), validationMode)
+	if err != nil {
+		return nil, status.Error(codes.InvalidArgument, err.Error())
+	}
+
+	warnings = slices.Concat(warnings, warningsRuntime)
 
 	//nolint:exhaustive
 	switch in.Mode {

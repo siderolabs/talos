@@ -30,7 +30,6 @@ import (
 
 	"github.com/dustin/go-humanize"
 	"github.com/siderolabs/crypto/x509"
-	"github.com/siderolabs/go-blockdevice/blockdevice/util/disk"
 	"gopkg.in/yaml.v3"
 
 	"github.com/siderolabs/talos/pkg/machinery/config/config"
@@ -879,11 +878,6 @@ func (m *InstallDiskSizeMatcher) UnmarshalYAML(unmarshal func(any) error) error 
 	return nil
 }
 
-// Matcher is a method that can handle some custom disk matching logic.
-func (m *InstallDiskSizeMatcher) Matcher(d *disk.Disk) bool {
-	return m.MatchData.Compare(d)
-}
-
 // InstallDiskSizeMatchData contains data for comparison - Op and Size.
 //
 //docgen:nodoc
@@ -892,53 +886,8 @@ type InstallDiskSizeMatchData struct {
 	Size uint64
 }
 
-// Compare is the method to compare disk size.
-func (in *InstallDiskSizeMatchData) Compare(d *disk.Disk) bool {
-	switch in.Op {
-	case ">=":
-		return d.Size >= in.Size
-	case "<=":
-		return d.Size <= in.Size
-	case ">":
-		return d.Size > in.Size
-	case "<":
-		return d.Size < in.Size
-	case "":
-		fallthrough
-	case "==":
-		return d.Size == in.Size
-	default:
-		return false
-	}
-}
-
 // InstallDiskType custom type for disk type selector.
-type InstallDiskType disk.Type
-
-// MarshalYAML is a custom marshaller for `InstallDiskSizeMatcher`.
-func (it InstallDiskType) MarshalYAML() (any, error) {
-	return disk.Type(it).String(), nil
-}
-
-// UnmarshalYAML is a custom unmarshaler for `InstallDiskType`.
-func (it *InstallDiskType) UnmarshalYAML(unmarshal func(any) error) error {
-	var (
-		t   string
-		err error
-	)
-
-	if err = unmarshal(&t); err != nil {
-		return err
-	}
-
-	if dt, err := disk.ParseType(t); err == nil {
-		*it = InstallDiskType(dt)
-	} else {
-		return err
-	}
-
-	return nil
-}
+type InstallDiskType string
 
 // InstallDiskSelector represents a disk query parameters for the install disk lookup.
 type InstallDiskSelector struct {
@@ -974,7 +923,6 @@ type InstallDiskSelector struct {
 	Type InstallDiskType `yaml:"type,omitempty"`
 	//   description: |
 	//      Disk bus path.
-	//      Warning: This requires special configuration for NVMe drives. For details, see https://github.com/siderolabs/go-blockdevice/issues/114.
 	//   examples:
 	//     - value: '"/pci0000:00/0000:00:17.0/ata1/host0/target0:0:0/0:0:0:0"'
 	//     - value: '"/pci0000:00/*"'

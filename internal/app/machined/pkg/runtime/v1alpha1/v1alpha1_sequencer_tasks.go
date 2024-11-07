@@ -71,6 +71,7 @@ import (
 	"github.com/siderolabs/talos/pkg/kubernetes"
 	machineapi "github.com/siderolabs/talos/pkg/machinery/api/machine"
 	"github.com/siderolabs/talos/pkg/machinery/config/machine"
+	"github.com/siderolabs/talos/pkg/machinery/config/types/block/blockhelpers"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	metamachinery "github.com/siderolabs/talos/pkg/machinery/meta"
 	blockres "github.com/siderolabs/talos/pkg/machinery/resources/block"
@@ -2015,15 +2016,35 @@ func Install(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
 
 			var disk string
 
-			disk, err = r.Config().Machine().Install().Disk()
+			matchExpr, err := r.Config().Machine().Install().DiskMatchExpression()
 			if err != nil {
-				return err
+				return fmt.Errorf("failed to get disk match expression: %w", err)
+			}
+
+			switch {
+			case matchExpr != nil:
+				logger.Printf("using disk match expression: %s", matchExpr)
+
+				matchedDisks, err := blockhelpers.MatchDisks(ctx, r.State().V1Alpha2().Resources(), matchExpr)
+				if err != nil {
+					return err
+				}
+
+				if len(matchedDisks) == 0 {
+					return fmt.Errorf("no disks matched the expression: %s", matchExpr)
+				}
+
+				disk = matchedDisks[0].TypedSpec().DevPath
+			case r.Config().Machine().Install().Disk() != "":
+				disk = r.Config().Machine().Install().Disk()
 			}
 
 			disk, err = filepath.EvalSymlinks(disk)
 			if err != nil {
 				return err
 			}
+
+			logger.Printf("installing Talos to disk %s", disk)
 
 			err = install.RunInstallerContainer(
 				disk,

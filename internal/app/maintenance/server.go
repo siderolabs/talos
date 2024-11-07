@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"io/fs"
 	"log"
+	"slices"
 	"strings"
 
 	cosiv1alpha1 "github.com/cosi-project/runtime/api/v1alpha1"
@@ -75,7 +76,7 @@ func (s *Server) Register(obj *grpc.Server) {
 }
 
 // ApplyConfiguration implements [machine.MachineServiceServer].
-func (s *Server) ApplyConfiguration(_ context.Context, in *machine.ApplyConfigurationRequest) (*machine.ApplyConfigurationResponse, error) {
+func (s *Server) ApplyConfiguration(ctx context.Context, in *machine.ApplyConfigurationRequest) (*machine.ApplyConfigurationResponse, error) {
 	if s.mode.IsAgent() {
 		return nil, status.Error(codes.Unimplemented, "API is not implemented in agent mode")
 	}
@@ -102,10 +103,15 @@ func (s *Server) ApplyConfiguration(_ context.Context, in *machine.ApplyConfigur
 		return nil, status.Errorf(codes.InvalidArgument, "configuration validation failed: %s", err)
 	}
 
+	warningsRuntime, err := cfgProvider.RuntimeValidate(ctx, s.controller.Runtime().State().V1Alpha2().Resources(), s.controller.Runtime().State().Platform().Mode())
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "runtime configuration validation failed: %s", err)
+	}
+
 	reply := &machine.ApplyConfigurationResponse{
 		Messages: []*machine.ApplyConfiguration{
 			{
-				Warnings: warnings,
+				Warnings: slices.Concat(warnings, warningsRuntime),
 			},
 		},
 	}

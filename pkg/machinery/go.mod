@@ -22,11 +22,11 @@ require (
 	github.com/mdlayher/ethtool v0.2.0
 	github.com/opencontainers/runtime-spec v1.2.0
 	github.com/planetscale/vtprotobuf v0.6.1-0.20240319094008-0393e58bdf10
+	github.com/ryanuber/go-glob v1.0.0
 	github.com/santhosh-tekuri/jsonschema/v5 v5.3.1
 	github.com/siderolabs/crypto v0.5.0
 	github.com/siderolabs/gen v0.7.0
 	github.com/siderolabs/go-api-signature v0.3.6
-	github.com/siderolabs/go-blockdevice v0.4.8
 	github.com/siderolabs/go-blockdevice/v2 v2.0.2
 	github.com/siderolabs/go-pointer v1.0.0
 	github.com/siderolabs/net v0.4.0
@@ -63,7 +63,6 @@ require (
 	github.com/pkg/browser v0.0.0-20240102092130-5ac0b6a4141c // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
-	github.com/ryanuber/go-glob v1.0.0 // indirect
 	github.com/stoewer/go-strcase v1.2.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	golang.org/x/crypto v0.28.0 // indirect
