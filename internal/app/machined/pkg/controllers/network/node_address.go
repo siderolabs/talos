@@ -320,16 +320,16 @@ func updateAccumulativeAddresses(ctx context.Context, r controller.Runtime, id r
 
 		for _, ip := range accumulative {
 			// find insert position using binary search
-			i := sort.Search(len(spec.Addresses), func(j int) bool {
-				return !spec.Addresses[j].Addr().Less(ip.Addr())
+			pos, _ := slices.BinarySearchFunc(spec.Addresses, ip.Addr(), func(prefix netip.Prefix, addr netip.Addr) int {
+				return prefix.Addr().Compare(ip.Addr())
 			})
 
-			if i < len(spec.Addresses) && spec.Addresses[i].Addr().Compare(ip.Addr()) == 0 {
+			if pos < len(spec.Addresses) && spec.Addresses[pos].Addr().Compare(ip.Addr()) == 0 {
 				continue
 			}
 
 			// insert at position i
-			spec.Addresses = slices.Insert(spec.Addresses, i, ip)
+			spec.Addresses = slices.Insert(spec.Addresses, pos, ip)
 		}
 
 		return nil

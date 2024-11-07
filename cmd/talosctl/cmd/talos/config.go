@@ -14,7 +14,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	"sort"
+	"slices"
 	"strings"
 	"text/tabwriter"
 	"text/template"
@@ -279,7 +279,7 @@ var configRemoveCmd = &cobra.Command{
 }
 
 func sortInPlace(slc []string) []string {
-	sort.Slice(slc, func(i, j int) bool { return slc[i] < slc[j] })
+	slices.Sort(slc)
 
 	return slc
 }
@@ -326,7 +326,7 @@ var configGetContextsCmd = &cobra.Command{
 		}
 
 		keys := maps.Keys(c.Contexts)
-		sort.Strings(keys)
+		slices.Sort(keys)
 
 		w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
 		fmt.Fprintln(w, "CURRENT\tNAME\tENDPOINTS\tNODES")
@@ -587,7 +587,7 @@ func CompleteConfigContext(*cobra.Command, []string, string) ([]string, cobra.Sh
 	}
 
 	contextnames := maps.Keys(c.Contexts)
-	sort.Strings(contextnames)
+	slices.Sort(contextnames)
 
 	return contextnames, cobra.ShellCompDirectiveNoFileComp
 }

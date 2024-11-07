@@ -13,7 +13,6 @@ import (
 	"errors"
 	"fmt"
 	"slices"
-	"sort"
 	"sync"
 	"time"
 
@@ -584,8 +583,8 @@ func (t *CRDController) needsUpdate(secret *corev1.Secret, desiredRoles []string
 
 	actualRoles := certificate.Subject.Organization
 
-	sort.Strings(actualRoles)
-	sort.Strings(desiredRoles)
+	slices.Sort(actualRoles)
+	slices.Sort(desiredRoles)
 
 	if !slices.Equal(actualRoles, desiredRoles) {
 		t.logger.Debug("roles in certificate do not match desired roles",

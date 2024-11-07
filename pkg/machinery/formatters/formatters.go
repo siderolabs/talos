@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"io"
 	"math"
+	"slices"
 	"strings"
 	"text/tabwriter"
 	"time"
@@ -58,7 +59,7 @@ func RenderMounts(resp *machine.MountsResponse, output io.Writer, remotePeer *pe
 			if defaultNode != "" {
 				format = "%s\t" + format
 
-				args = append([]any{node}, args...)
+				args = slices.Insert(args, 0, any(node))
 			}
 
 			fmt.Fprintf(w, format, args...)

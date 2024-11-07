@@ -7,7 +7,7 @@ package helpers
 import (
 	"fmt"
 	"os"
-	"sort"
+	"slices"
 	"strings"
 
 	"github.com/siderolabs/gen/maps"
@@ -61,7 +61,7 @@ func (m *Mode) Set(value string) error {
 // Type implements Flag interface.
 func (m *Mode) Type() string {
 	options := maps.Keys(m.options)
-	sort.Strings(options)
+	slices.Sort(options)
 
 	return strings.Join(options, ", ")
 }

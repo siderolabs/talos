@@ -5,7 +5,7 @@
 package role
 
 import (
-	"sort"
+	"slices"
 	"strings"
 
 	"github.com/siderolabs/gen/maps"
@@ -93,7 +93,7 @@ func Parse(str []string) (Set, []string) {
 // Strings returns a set as a slice of strings.
 func (s Set) Strings() []string {
 	res := maps.KeysFunc(s.roles, func(r Role) string { return string(r) })
-	sort.Strings(res)
+	slices.Sort(res)
 
 	return res
 }

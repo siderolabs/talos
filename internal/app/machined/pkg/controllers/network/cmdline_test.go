@@ -5,10 +5,11 @@
 package network_test
 
 import (
+	"cmp"
 	"fmt"
 	"net"
 	"net/netip"
-	"sort"
+	"slices"
 	"testing"
 
 	"github.com/siderolabs/go-procfs/procfs"
@@ -26,7 +27,7 @@ type CmdlineSuite struct {
 func (suite *CmdlineSuite) TestParse() {
 	ifaces, _ := net.Interfaces() //nolint:errcheck // ignoring error here as ifaces will be empty
 
-	sort.Slice(ifaces, func(i, j int) bool { return ifaces[i].Name < ifaces[j].Name })
+	slices.SortFunc(ifaces, func(a, b net.Interface) int { return cmp.Compare(a.Name, b.Name) })
 
 	defaultIfaceName := ""
 

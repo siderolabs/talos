@@ -7,7 +7,7 @@ package dashboard
 import (
 	"context"
 	"fmt"
-	"sort"
+	"slices"
 	"strings"
 
 	"github.com/gdamore/tcell/v2"
@@ -348,7 +348,7 @@ func (widget *NetworkConfigGrid) updateNodeData(data resourcedata.Data) {
 
 		links := maps.Keys(nodeData.linkSet)
 
-		sort.Strings(links)
+		slices.Sort(links)
 
 		allLinks := append([]string{interfaceNone}, links...)
 

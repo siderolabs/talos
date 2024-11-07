@@ -10,7 +10,7 @@ import (
 	"fmt"
 	"io"
 	"net/netip"
-	"sort"
+	"slices"
 
 	"github.com/siderolabs/gen/maps"
 	"github.com/siderolabs/gen/xslices"
@@ -123,7 +123,7 @@ func NodesMatch(expected, actual []NodeInfo) error {
 	if len(actualNodes) > 0 {
 		unexpectedIPs := xslices.FlatMap(maps.Keys(actualNodes), func(n *NodeInfo) []netip.Addr { return n.IPs })
 
-		sort.Slice(unexpectedIPs, func(i, j int) bool { return unexpectedIPs[i].Less(unexpectedIPs[j]) })
+		slices.SortFunc(unexpectedIPs, func(a, b netip.Addr) int { return a.Compare(b) })
 
 		return fmt.Errorf("unexpected nodes with IPs %q", unexpectedIPs)
 	}

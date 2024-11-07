@@ -6,7 +6,7 @@ package merge_test
 
 import (
 	"fmt"
-	"sort"
+	"slices"
 	"testing"
 
 	"github.com/siderolabs/go-pointer"
@@ -40,7 +40,7 @@ func (s *CustomSlice) Merge(other any) error {
 	}
 
 	*s = append(*s, otherSlice...)
-	sort.Strings(*s)
+	slices.Sort(*s)
 
 	return nil
 }

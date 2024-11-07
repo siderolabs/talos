@@ -82,12 +82,6 @@ func main() {
 	}
 }
 
-type noOPCloser struct {
-	io.ReadSeeker
-}
-
-func (noOPCloser) Close() error { return nil }
-
 func parseModuleInput(module string) (io.ReadSeekCloser, error) {
 	if module == "-" {
 		moduleData, err := io.ReadAll(os.Stdin)
@@ -95,7 +89,13 @@ func parseModuleInput(module string) (io.ReadSeekCloser, error) {
 			return nil, fmt.Errorf("failed to read module from stdin: %w", err)
 		}
 
-		return noOPCloser{bytes.NewReader(moduleData)}, nil
+		return struct {
+			io.ReadSeeker
+			io.Closer
+		}{
+			bytes.NewReader(moduleData),
+			io.NopCloser(nil),
+		}, nil
 	}
 
 	moduleData, err := os.Open(module)

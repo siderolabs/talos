@@ -9,7 +9,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"sort"
+	"slices"
 	"strings"
 	"time"
 
@@ -45,9 +45,7 @@ func (s *APIBootstrapper) Bootstrap(ctx context.Context, out io.Writer) error {
 		return errors.New("no control plane nodes to bootstrap")
 	}
 
-	sort.Slice(controlPlaneNodes, func(i, j int) bool {
-		return controlPlaneNodes[i].IPs[0].String() < controlPlaneNodes[j].IPs[0].String()
-	})
+	slices.SortFunc(controlPlaneNodes, func(a, b NodeInfo) int { return strings.Compare(a.IPs[0].String(), b.IPs[0].String()) })
 
 	nodeIP := controlPlaneNodes[0].IPs[0]
 	nodeCtx := client.WithNodes(ctx, nodeIP.String())

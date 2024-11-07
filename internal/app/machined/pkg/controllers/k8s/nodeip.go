@@ -8,6 +8,7 @@ import (
 	"context"
 	"fmt"
 	"net/netip"
+	"slices"
 
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
@@ -99,10 +100,10 @@ func (ctrl *NodeIPController) Run(ctx context.Context, r controller.Runtime, log
 		}
 
 		addrs := nodeAddrs.TypedSpec().IPs()
-
-		cidrs := make([]string, 0, len(cfgSpec.ValidSubnets)+len(cfgSpec.ExcludeSubnets))
-		cidrs = append(cidrs, cfgSpec.ValidSubnets...)
-		cidrs = append(cidrs, xslices.Map(cfgSpec.ExcludeSubnets, func(cidr string) string { return "!" + cidr })...)
+		cidrs := slices.Concat(
+			cfgSpec.ValidSubnets,
+			xslices.Map(cfgSpec.ExcludeSubnets, func(cidr string) string { return "!" + cidr }),
+		)
 
 		ips, err := net.FilterIPs(addrs, cidrs)
 		if err != nil {

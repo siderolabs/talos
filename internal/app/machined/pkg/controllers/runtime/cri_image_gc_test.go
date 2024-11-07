@@ -7,7 +7,6 @@ package runtime_test
 import (
 	"context"
 	"slices"
-	"sort"
 	"sync"
 	"testing"
 	"time"
@@ -288,8 +287,8 @@ func TestBuildExpectedImageNames(t *testing.T) {
 
 			expectedImageNames := maps.Keys(expectedImages)
 
-			sort.Strings(test.expectedImageNames)
-			sort.Strings(expectedImageNames)
+			slices.Sort(test.expectedImageNames)
+			slices.Sort(expectedImageNames)
 
 			assert.Equal(t, test.expectedImageNames, expectedImageNames)
 		})

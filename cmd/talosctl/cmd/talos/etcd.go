@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"slices"
 	"strings"
 	"text/tabwriter"
 
@@ -72,7 +73,7 @@ func displayAlarms(messages []alarmMessage) error {
 				alarm.GetAlarm().String(),
 			}
 			if node != "" {
-				args = append([]any{node}, args...)
+				args = slices.Insert(args, 0, any(node))
 			}
 
 			fmt.Fprintf(w, pattern, args...)
@@ -241,7 +242,7 @@ var etcdMemberListCmd = &cobra.Command{
 						member.IsLearner,
 					}
 					if node != "" {
-						args = append([]any{node}, args...)
+						args = slices.Insert(args, 0, any(node))
 					}
 
 					fmt.Fprintf(w, pattern, args...)
@@ -305,7 +306,7 @@ var etcdStatusCmd = &cobra.Command{
 					strings.Join(message.GetMemberStatus().GetErrors(), ", "),
 				}
 				if node != "" {
-					args = append([]any{node}, args...)
+					args = slices.Insert(args, 0, any(node))
 				}
 
 				fmt.Fprintf(w, pattern, args...)

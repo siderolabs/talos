@@ -8,12 +8,14 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"slices"
 	"strings"
 	"time"
 
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/siderolabs/gen/channel"
+	"github.com/siderolabs/gen/xiter"
 	"github.com/siderolabs/go-kubernetes/kubernetes/manifests"
 	"github.com/siderolabs/go-kubernetes/kubernetes/upgrade"
 	"google.golang.org/grpc/codes"
@@ -148,7 +150,7 @@ func prePullImages(ctx context.Context, talosClient *client.Client, options Upgr
 
 	imageRef := fmt.Sprintf("%s:v%s", options.KubeletImage, options.Path.ToVersion())
 
-	for _, node := range append(append([]string(nil), options.controlPlaneNodes...), options.workerNodes...) {
+	for node := range xiter.Concat(slices.Values(options.controlPlaneNodes), slices.Values(options.workerNodes)) {
 		options.Log(" > %q: pre-pulling %s", node, imageRef)
 
 		err := talosClient.ImagePull(client.WithNode(ctx, node), common.ContainerdNamespace_NS_SYSTEM, imageRef)

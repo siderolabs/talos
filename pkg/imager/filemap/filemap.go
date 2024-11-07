@@ -7,10 +7,11 @@ package filemap
 
 import (
 	"archive/tar"
+	"cmp"
 	"io"
 	"os"
 	"path/filepath"
-	"sort"
+	"slices"
 
 	v1 "github.com/google/go-containerregistry/pkg/v1"
 	"github.com/google/go-containerregistry/pkg/v1/tarball"
@@ -105,9 +106,7 @@ func build(filemap []File) io.ReadCloser {
 //
 // A filemap is a path -> file content map representing a file system.
 func Layer(filemap []File) (v1.Layer, error) {
-	sort.Slice(filemap, func(i, j int) bool {
-		return filemap[i].ImagePath < filemap[j].ImagePath
-	})
+	slices.SortFunc(filemap, func(a, b File) int { return cmp.Compare(a.ImagePath, b.ImagePath) })
 
 	// Return a new copy of the buffer each time it's opened.
 	return tarball.LayerFromOpener(func() (io.ReadCloser, error) {

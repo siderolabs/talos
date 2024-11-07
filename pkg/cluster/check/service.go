@@ -6,10 +6,11 @@
 package check
 
 import (
+	"cmp"
 	"context"
 	"errors"
 	"fmt"
-	"sort"
+	"slices"
 
 	"github.com/hashicorp/go-multierror"
 
@@ -111,8 +112,8 @@ func ServiceHealthAssertion(ctx context.Context, cl ClusterInfo, service string,
 	var multiErr *multierror.Error
 
 	// sort service info list so that errors returned are consistent
-	sort.Slice(servicesInfo, func(i, j int) bool {
-		return servicesInfo[i].Metadata.GetHostname() < servicesInfo[j].Metadata.GetHostname()
+	slices.SortFunc(servicesInfo, func(a, b client.ServiceInfo) int {
+		return cmp.Compare(a.Metadata.GetHostname(), b.Metadata.GetHostname())
 	})
 
 	for _, serviceInfo := range servicesInfo {

@@ -7,6 +7,7 @@ package runtime
 import (
 	"context"
 	"errors"
+	"slices"
 	"sync"
 )
 
@@ -98,7 +99,7 @@ func (s *DrainSubscription) Cancel() {
 
 	for i, sub := range s.drainer.subscriptions {
 		if sub == s {
-			s.drainer.subscriptions = append(s.drainer.subscriptions[:i], s.drainer.subscriptions[i+1:]...)
+			s.drainer.subscriptions = slices.Delete(s.drainer.subscriptions, i, i+1)
 
 			break
 		}

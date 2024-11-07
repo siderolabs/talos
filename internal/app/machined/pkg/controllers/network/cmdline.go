@@ -5,11 +5,12 @@
 package network
 
 import (
+	"cmp"
 	"errors"
 	"fmt"
 	"net"
 	"net/netip"
-	"sort"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -230,7 +231,7 @@ func ParseCmdlineNetwork(cmdline *procfs.Cmdline) (CmdlineNetworking, error) {
 			if linkConfig.LinkName == "" {
 				ifaces, _ := net.Interfaces() //nolint:errcheck // ignoring error here as ifaces will be empty
 
-				sort.Slice(ifaces, func(i, j int) bool { return ifaces[i].Name < ifaces[j].Name })
+				slices.SortFunc(ifaces, func(a, b net.Interface) int { return cmp.Compare(a.Name, b.Name) })
 
 				for _, iface := range ifaces {
 					if iface.Flags&net.FlagLoopback != 0 {

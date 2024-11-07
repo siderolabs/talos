@@ -6,7 +6,7 @@ package k8s
 
 import (
 	"net/netip"
-	"sort"
+	"slices"
 
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/meta"
@@ -71,13 +71,14 @@ type EndpointList []netip.Addr
 // Merge endpoints from multiple Endpoint resources into a single list.
 func (l EndpointList) Merge(endpoint *Endpoint) EndpointList {
 	for _, ip := range endpoint.TypedSpec().Addresses {
-		idx := sort.Search(len(l), func(i int) bool { return !l[i].Less(ip) })
-
+		idx, _ := slices.BinarySearchFunc(l, ip, func(a netip.Addr, target netip.Addr) int {
+			return a.Compare(target)
+		})
 		if idx < len(l) && l[idx].Compare(ip) == 0 {
 			continue
 		}
 
-		l = append(l[:idx], append([]netip.Addr{ip}, l[idx:]...)...)
+		l = slices.Insert(l, idx, ip)
 	}
 
 	return l

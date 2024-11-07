@@ -14,7 +14,7 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
-	"sort"
+	"slices"
 	"strings"
 
 	"github.com/cosi-project/runtime/pkg/safe"
@@ -577,7 +577,7 @@ func (n *Nocloud) applyNetworkConfigV2(config *NetworkConfig, st state.State, ne
 	}
 
 	ethernetNames := maps.Keys(config.Ethernets)
-	sort.Strings(ethernetNames)
+	slices.Sort(ethernetNames)
 
 	for _, name := range ethernetNames {
 		eth := config.Ethernets[name]

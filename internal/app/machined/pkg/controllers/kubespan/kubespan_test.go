@@ -7,7 +7,6 @@ package kubespan_test
 import (
 	"context"
 	"slices"
-	"sort"
 	"sync"
 	"time"
 
@@ -64,7 +63,7 @@ func (suite *KubeSpanSuite) assertResourceIDs(md resource.Metadata, expectedIDs 
 
 		actualIDs := xslices.Map(l.Items, func(r resource.Resource) string { return r.Metadata().ID() })
 
-		sort.Strings(expectedIDs)
+		slices.Sort(expectedIDs)
 
 		if !slices.Equal(actualIDs, expectedIDs) {
 			return retry.ExpectedErrorf("ids do no match expected %v != actual %v", expectedIDs, actualIDs)

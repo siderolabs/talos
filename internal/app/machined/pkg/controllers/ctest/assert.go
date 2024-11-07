@@ -6,7 +6,7 @@ package ctest
 
 import (
 	"fmt"
-	"sort"
+	"slices"
 	"strings"
 
 	"github.com/siderolabs/go-retry/retry"
@@ -46,7 +46,7 @@ func (agg *assertionAggregator) Error() error {
 		lines = append(lines, " * "+errorString)
 	}
 
-	sort.Strings(lines)
+	slices.Sort(lines)
 
 	return fmt.Errorf("%s", strings.Join(lines, "\n"))
 }

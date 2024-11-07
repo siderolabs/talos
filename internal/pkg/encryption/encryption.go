@@ -6,11 +6,12 @@
 package encryption
 
 import (
+	"cmp"
 	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
-	"sort"
+	"slices"
 	"strconv"
 	"time"
 
@@ -66,7 +67,7 @@ func NewHandler(encryptionConfig block.EncryptionSpec, volumeID string, getSyste
 	}
 
 	//nolint:scopelint
-	sort.Slice(keyHandlers, func(i, j int) bool { return keyHandlers[i].Slot() < keyHandlers[j].Slot() })
+	slices.SortFunc(keyHandlers, func(a, b keys.Handler) int { return cmp.Compare(a.Slot(), b.Slot()) })
 
 	provider := luks.New(
 		cipher,

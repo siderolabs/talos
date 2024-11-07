@@ -8,7 +8,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"sort"
+	"slices"
 	"strings"
 
 	"github.com/siderolabs/gen/maps"
@@ -63,7 +63,7 @@ func (m *WipeMode) Set(value string) error {
 // Type implements Flag interface.
 func (m *WipeMode) Type() string {
 	options := maps.Keys(wipeOptions)
-	sort.Strings(options)
+	slices.Sort(options)
 
 	return strings.Join(options, ", ")
 }

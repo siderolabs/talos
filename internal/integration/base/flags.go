@@ -6,7 +6,12 @@
 
 package base
 
-import "strings"
+import (
+	"slices"
+	"strings"
+
+	"github.com/siderolabs/gen/xiter/xstrings"
+)
 
 // StringList implements flag.Value for list of strings.
 type StringList []string
@@ -18,7 +23,7 @@ func (l *StringList) String() string {
 
 // Set implements flag.Value.
 func (l *StringList) Set(value string) error {
-	*l = append(*l, strings.Split(value, ",")...)
+	*l = slices.AppendSeq(*l, xstrings.SplitSeq(value, ","))
 
 	return nil
 }

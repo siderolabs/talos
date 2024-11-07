@@ -10,6 +10,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"slices"
 	"strings"
 
 	"github.com/cosi-project/runtime/pkg/state"
@@ -122,7 +123,7 @@ func (container *Container) PatchV1Alpha1(patcher func(*v1alpha1.Config) error) 
 		return !ok
 	})
 
-	return New(append([]config.Document{cfg}, otherDocs...)...)
+	return New(slices.Insert(otherDocs, 0, config.Document(cfg))...)
 }
 
 // Readonly implements config.Container interface.

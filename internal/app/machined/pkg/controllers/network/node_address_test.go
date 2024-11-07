@@ -7,7 +7,7 @@ package network_test
 
 import (
 	"net/netip"
-	"sort"
+	"slices"
 	"strings"
 	"testing"
 	"time"
@@ -51,9 +51,10 @@ func (suite *NodeAddressSuite) TestDefaults() {
 			suite.T().Logf("id %q val %s", r.Metadata().ID(), addrs)
 
 			asrt.True(
-				sort.SliceIsSorted(
-					addrs, func(i, j int) bool {
-						return addrs[i].Addr().Compare(addrs[j].Addr()) < 0
+				slices.IsSortedFunc(
+					addrs,
+					func(a, b netip.Prefix) int {
+						return a.Addr().Compare(b.Addr())
 					},
 				), "addresses %s", addrs,
 			)

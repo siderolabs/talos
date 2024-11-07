@@ -9,7 +9,6 @@ import (
 	"fmt"
 	"net/netip"
 	"slices"
-	"sort"
 
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/safe"
@@ -75,7 +74,7 @@ func (ctrl *EndpointController) Run(ctx context.Context, r controller.Runtime, l
 			endpoints = append(endpoints, memberSpec.Addresses...)
 		}
 
-		sort.Slice(endpoints, func(i, j int) bool { return endpoints[i].Compare(endpoints[j]) < 0 })
+		slices.SortFunc(endpoints, func(a, b netip.Addr) int { return a.Compare(b) })
 
 		if err := safe.WriterModify(
 			ctx,

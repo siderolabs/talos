@@ -5,11 +5,12 @@
 package network_test
 
 import (
+	"cmp"
 	"context"
 	"fmt"
 	"net"
 	"net/url"
-	"sort"
+	"slices"
 	"sync"
 	"testing"
 	"time"
@@ -126,7 +127,7 @@ func (suite *AddressConfigSuite) TestCmdlineNoNetmask() {
 
 	ifaces, _ := net.Interfaces() //nolint:errcheck // ignoring error here as ifaces will be empty
 
-	sort.Slice(ifaces, func(i, j int) bool { return ifaces[i].Name < ifaces[j].Name })
+	slices.SortFunc(ifaces, func(a, b net.Interface) int { return cmp.Compare(a.Name, b.Name) })
 
 	ifaceName := ""
 

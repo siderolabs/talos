@@ -8,7 +8,7 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"sort"
+	"slices"
 	"strings"
 	"text/tabwriter"
 
@@ -68,10 +68,7 @@ func containerRender(remotePeer *peer.Peer, resp *machineapi.ContainersResponse)
 	defaultNode := client.AddrFromPeer(remotePeer)
 
 	for _, msg := range resp.Messages {
-		sort.Slice(msg.Containers,
-			func(i, j int) bool {
-				return strings.Compare(msg.Containers[i].Id, msg.Containers[j].Id) < 0
-			})
+		slices.SortFunc(msg.Containers, func(a, b *machineapi.ContainerInfo) int { return strings.Compare(a.Id, b.Id) })
 
 		for _, p := range msg.Containers {
 			display := p.Id

@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"slices"
 	"time"
 
 	"github.com/cosi-project/runtime/pkg/safe"
@@ -62,11 +63,7 @@ func (cl *clusterNodes) InitNodeInfos() error {
 	nodesByType[machine.TypeWorker] = workerNodeInfos
 	cl.nodesByType = nodesByType
 
-	nodes := make([]cluster.NodeInfo, 0, len(initNodeInfos)+len(controlPlaneNodeInfos)+len(workerNodeInfos))
-	nodes = append(nodes, initNodeInfos...)
-	nodes = append(nodes, controlPlaneNodeInfos...)
-	nodes = append(nodes, workerNodeInfos...)
-	cl.nodes = nodes
+	cl.nodes = slices.Concat(initNodeInfos, controlPlaneNodeInfos, workerNodeInfos)
 
 	return nil
 }

@@ -7,7 +7,7 @@ package secrets
 import (
 	"net"
 	"net/netip"
-	"sort"
+	"slices"
 
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/meta"
@@ -126,8 +126,8 @@ func (spec *CertSANSpec) StdIPs() []net.IP {
 
 // Sort the CertSANs.
 func (spec *CertSANSpec) Sort() {
-	sort.Strings(spec.DNSNames)
-	sort.Slice(spec.IPs, func(i, j int) bool { return spec.IPs[i].Compare(spec.IPs[j]) < 0 })
+	slices.Sort(spec.DNSNames)
+	slices.SortFunc(spec.IPs, func(a, b netip.Addr) int { return a.Compare(b) })
 }
 
 func init() {

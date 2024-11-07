@@ -5,11 +5,12 @@
 package system
 
 import (
+	"cmp"
 	"context"
 	"errors"
 	"fmt"
 	"log"
-	"sort"
+	"slices"
 	"strings"
 	"sync"
 	"time"
@@ -386,7 +387,7 @@ func (s *singleton) List() (result []*ServiceRunner) {
 
 	// TODO: results should be sorted properly with topological sort on dependencies
 	//       but, we don't have dependencies yet, so sort by service id for now to get stable order
-	sort.Slice(result, func(i, j int) bool { return result[i].id < result[j].id })
+	slices.SortFunc(result, func(a, b *ServiceRunner) int { return cmp.Compare(a.id, b.id) })
 
 	return
 }

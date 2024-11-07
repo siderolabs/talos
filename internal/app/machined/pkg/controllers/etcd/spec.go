@@ -8,6 +8,7 @@ import (
 	"context"
 	"fmt"
 	"net/netip"
+	"slices"
 
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
@@ -144,13 +145,15 @@ func (ctrl *SpecController) Run(ctx context.Context, r controller.Runtime, _ *za
 			advertiseValidSubnets = []string{"0.0.0.0/0", "::/0"}
 		}
 
-		advertisedCIDRs := make([]string, 0, len(advertiseValidSubnets)+len(etcdConfig.TypedSpec().AdvertiseExcludeSubnets))
-		advertisedCIDRs = append(advertisedCIDRs, advertiseValidSubnets...)
-		advertisedCIDRs = append(advertisedCIDRs, xslices.Map(etcdConfig.TypedSpec().AdvertiseExcludeSubnets, func(cidr string) string { return "!" + cidr })...)
+		advertisedCIDRs := slices.Concat(
+			advertiseValidSubnets,
+			xslices.Map(etcdConfig.TypedSpec().AdvertiseExcludeSubnets, func(cidr string) string { return "!" + cidr }),
+		)
 
-		listenCIDRs := make([]string, 0, len(etcdConfig.TypedSpec().ListenValidSubnets)+len(etcdConfig.TypedSpec().ListenExcludeSubnets))
-		listenCIDRs = append(listenCIDRs, etcdConfig.TypedSpec().ListenValidSubnets...)
-		listenCIDRs = append(listenCIDRs, xslices.Map(etcdConfig.TypedSpec().ListenExcludeSubnets, func(cidr string) string { return "!" + cidr })...)
+		listenCIDRs := slices.Concat(
+			etcdConfig.TypedSpec().ListenValidSubnets,
+			xslices.Map(etcdConfig.TypedSpec().ListenExcludeSubnets, func(cidr string) string { return "!" + cidr }),
+		)
 
 		defaultListenAddress := netip.AddrFrom4([4]byte{0, 0, 0, 0})
 		loopbackAddress := netip.AddrFrom4([4]byte{127, 0, 0, 1})

@@ -676,36 +676,16 @@ func (a nftablesRule) Compile() (*NfTablesCompiled, error) {
 		result.Rules = [][]expr.Any{append(rulePre, rulePost...)}
 	case rule4 != nil && rule6 == nil:
 		result.Rules = [][]expr.Any{
-			append(rulePre,
-				append(
-					append(matchV4, rule4...),
-					rulePost...,
-				)...,
-			),
+			slices.Concat(rulePre, matchV4, rule4, rulePost),
 		}
 	case rule4 == nil && rule6 != nil:
 		result.Rules = [][]expr.Any{
-			append(rulePre,
-				append(
-					append(matchV6, rule6...),
-					rulePost...,
-				)...,
-			),
+			slices.Concat(rulePre, matchV6, rule6, rulePost),
 		}
 	case rule4 != nil && rule6 != nil:
 		result.Rules = [][]expr.Any{
-			append(slices.Clone(rulePre),
-				append(
-					append(matchV4, rule4...),
-					rulePost...,
-				)...,
-			),
-			append(slices.Clone(rulePre),
-				append(
-					append(matchV6, rule6...),
-					rulePost...,
-				)...,
-			),
+			slices.Concat(rulePre, matchV4, rule4, rulePost),
+			slices.Concat(rulePre, matchV6, rule6, rulePost),
 		}
 	}
 

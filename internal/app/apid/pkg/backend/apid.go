@@ -8,6 +8,7 @@ import (
 	"context"
 	"crypto/tls"
 	"fmt"
+	"slices"
 	"sync"
 	"time"
 
@@ -212,9 +213,8 @@ func (a *APID) AppendInfo(streaming bool, resp []byte) ([]byte, error) {
 		protowire.AppendVarint(nil, (metadataField<<3)|metadataType),
 		uint64(len(resp)+len(payload)),
 	)
-	resp = append(prefix, resp...)
 
-	return append(resp, payload...), err
+	return slices.Concat(prefix, resp, payload), err
 }
 
 // BuildError is called to convert error from upstream into response field.

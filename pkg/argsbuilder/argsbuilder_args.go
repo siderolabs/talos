@@ -6,7 +6,7 @@ package argsbuilder
 
 import (
 	"fmt"
-	"sort"
+	"slices"
 	"strings"
 
 	"github.com/siderolabs/gen/maps"
@@ -92,7 +92,7 @@ func (a Args) Set(k, v Key) ArgsBuilder {
 // Args implements the ArgsBuilder interface.
 func (a Args) Args() []string {
 	keys := maps.Keys(a)
-	sort.Strings(keys)
+	slices.Sort(keys)
 
 	args := make([]string, 0, len(a))
 

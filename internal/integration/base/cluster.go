@@ -30,7 +30,7 @@ func newNodeInfo(masterNodes, workerNodes []string) (*infoWrapper, error) {
 	}
 
 	return &infoWrapper{
-		nodeInfos: append(slices.Clone(controlPlaneNodeInfos), workerNodeInfos...),
+		nodeInfos: slices.Concat(controlPlaneNodeInfos, workerNodeInfos),
 		nodeInfosByType: map[machine.Type][]cluster.NodeInfo{
 			machine.TypeControlPlane: controlPlaneNodeInfos,
 			machine.TypeWorker:       workerNodeInfos,

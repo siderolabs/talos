@@ -9,6 +9,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"slices"
 	"strconv"
 	"text/tabwriter"
 
@@ -109,7 +110,7 @@ var duCmd = &cobra.Command{
 
 				if multipleNodes {
 					pattern = "%s\t%s\t%s\n"
-					args = append([]any{node}, args...)
+					args = slices.Insert(args, 0, any(node))
 				}
 
 				fmt.Fprintf(w, pattern, args...)

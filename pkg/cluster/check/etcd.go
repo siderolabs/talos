@@ -5,11 +5,12 @@
 package check
 
 import (
+	"cmp"
 	"context"
 	"errors"
 	"fmt"
 	"net/url"
-	"sort"
+	"slices"
 
 	"github.com/siderolabs/gen/maps"
 	"github.com/siderolabs/gen/xslices"
@@ -55,8 +56,8 @@ func EtcdConsistentAssertion(ctx context.Context, cl ClusterInfo) error {
 		return errors.New("no messages returned")
 	}
 
-	sort.Slice(messages, func(i, j int) bool {
-		return messages[i].GetMetadata().GetHostname() < messages[j].GetMetadata().GetHostname()
+	slices.SortFunc(messages, func(a, b *machineapi.EtcdMembers) int {
+		return cmp.Compare(a.GetMetadata().GetHostname(), b.GetMetadata().GetHostname())
 	})
 
 	for i, message := range messages {

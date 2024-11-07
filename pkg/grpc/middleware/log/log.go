@@ -8,7 +8,7 @@ package log
 import (
 	"context"
 	"log"
-	"sort"
+	"slices"
 	"strings"
 	"time"
 
@@ -38,7 +38,7 @@ var sensitiveFields = map[string]struct{}{
 func ExtractMetadata(ctx context.Context) string {
 	md, _ := metadata.FromIncomingContext(ctx)
 	keys := maps.Keys(md)
-	sort.Strings(keys)
+	slices.Sort(keys)
 
 	pairs := make([]string, 0, len(keys))
 

@@ -6,6 +6,7 @@ package vm
 
 import (
 	"fmt"
+	"slices"
 
 	multierror "github.com/hashicorp/go-multierror"
 
@@ -16,8 +17,7 @@ import (
 func (p *Provisioner) DestroyNodes(cluster provision.ClusterInfo, options *provision.Options) error {
 	errCh := make(chan error)
 
-	nodes := append([]provision.NodeInfo{}, cluster.Nodes...)
-	nodes = append(nodes, cluster.ExtraNodes...)
+	nodes := slices.Concat(cluster.Nodes, cluster.ExtraNodes)
 
 	for _, node := range nodes {
 		go func(node provision.NodeInfo) {

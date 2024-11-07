@@ -192,13 +192,13 @@ func (ctrl *NfTablesChainConfigController) Run(ctx context.Context, r controller
 								network.NfTablesRule{
 									MatchSourceAddress: &network.NfTablesAddressMatch{
 										IncludeSubnets: xslices.Map(
-											append(slices.Clone(cfg.Config().Cluster().Network().PodCIDRs()), cfg.Config().Cluster().Network().ServiceCIDRs()...),
+											slices.Concat(cfg.Config().Cluster().Network().PodCIDRs(), cfg.Config().Cluster().Network().ServiceCIDRs()),
 											netip.MustParsePrefix,
 										),
 									},
 									MatchDestinationAddress: &network.NfTablesAddressMatch{
 										IncludeSubnets: xslices.Map(
-											append(slices.Clone(cfg.Config().Cluster().Network().PodCIDRs()), cfg.Config().Cluster().Network().ServiceCIDRs()...),
+											slices.Concat(cfg.Config().Cluster().Network().PodCIDRs(), cfg.Config().Cluster().Network().ServiceCIDRs()),
 											netip.MustParsePrefix,
 										),
 									},

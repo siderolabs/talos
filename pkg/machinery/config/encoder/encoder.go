@@ -5,9 +5,10 @@
 package encoder
 
 import (
+	"cmp"
 	"encoding"
 	"reflect"
-	"sort"
+	"slices"
 	"strings"
 
 	yaml "gopkg.in/yaml.v3"
@@ -287,9 +288,7 @@ func toYamlNode(in any, options *Options) (*yaml.Node, error) {
 		node.Kind = yaml.MappingNode
 		keys := v.MapKeys()
 		// always interate keys in alphabetical order to preserve the same output for maps
-		sort.Slice(keys, func(i, j int) bool {
-			return keys[i].String() < keys[j].String()
-		})
+		slices.SortFunc(keys, func(a, b reflect.Value) int { return cmp.Compare(a.String(), b.String()) })
 
 		for _, k := range keys {
 			element := v.MapIndex(k)

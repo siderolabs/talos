@@ -6,7 +6,7 @@ package components
 
 import (
 	"fmt"
-	"sort"
+	"slices"
 	"strings"
 
 	"github.com/gdamore/tcell/v2"
@@ -109,7 +109,7 @@ func (widget *Footer) nodesText() string {
 
 func (widget *Footer) screensText() string {
 	screenKeys := maps.Keys(widget.screenKeyToName)
-	sort.Strings(screenKeys)
+	slices.Sort(screenKeys)
 
 	screenTexts := make([]string, 0, len(widget.screenKeyToName))
 

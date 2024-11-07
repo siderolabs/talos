@@ -8,7 +8,7 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"sort"
+	"slices"
 	"strings"
 	"text/tabwriter"
 
@@ -68,10 +68,7 @@ func statsRender(remotePeer *peer.Peer, resp *machineapi.StatsResponse) error {
 	defaultNode := client.AddrFromPeer(remotePeer)
 
 	for _, msg := range resp.Messages {
-		sort.Slice(msg.Stats,
-			func(i, j int) bool {
-				return strings.Compare(msg.Stats[i].Id, msg.Stats[j].Id) < 0
-			})
+		slices.SortFunc(msg.Stats, func(a, b *machineapi.Stat) int { return strings.Compare(a.Id, b.Id) })
 
 		for _, s := range msg.Stats {
 			display := s.Id

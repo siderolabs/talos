@@ -8,6 +8,7 @@ import (
 	"bytes"
 	"os"
 	"path/filepath"
+	"slices"
 
 	"github.com/stretchr/testify/suite"
 )
@@ -74,8 +75,10 @@ func (suite *CommonSuite) SetupSuite() {
 		var contents []byte
 
 		if file.Size > 0 {
-			contents = bytes.Repeat(file.Contents, file.Size/len(file.Contents))
-			contents = append(contents, file.Contents[:file.Size-file.Size/len(file.Contents)*len(file.Contents)]...)
+			contents = slices.Concat(
+				bytes.Repeat(file.Contents, file.Size/len(file.Contents)),
+				file.Contents[:file.Size-file.Size/len(file.Contents)*len(file.Contents)],
+			)
 		} else {
 			contents = file.Contents
 		}

@@ -12,6 +12,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"runtime"
+	"slices"
 	"strings"
 
 	"github.com/coreos/go-iptables/iptables"
@@ -52,7 +53,7 @@ type preflightCheckContext struct {
 	arch    Arch
 }
 
-func (check *preflightCheckContext) verifyRoot(ctx context.Context) error {
+func (check *preflightCheckContext) verifyRoot(context.Context) error {
 	if os.Geteuid() != 0 {
 		return errors.New("error: please run as root user (CNI requirement), we recommend running with `sudo -E`")
 	}
@@ -60,7 +61,7 @@ func (check *preflightCheckContext) verifyRoot(ctx context.Context) error {
 	return nil
 }
 
-func (check *preflightCheckContext) checkKVM(ctx context.Context) error {
+func (check *preflightCheckContext) checkKVM(context.Context) error {
 	f, err := os.OpenFile("/dev/kvm", os.O_RDWR, 0)
 	if err != nil {
 		return fmt.Errorf("error opening /dev/kvm, please make sure KVM support is enabled in Linux kernel: %w", err)
@@ -69,7 +70,7 @@ func (check *preflightCheckContext) checkKVM(ctx context.Context) error {
 	return f.Close()
 }
 
-func (check *preflightCheckContext) qemuExecutable(ctx context.Context) error {
+func (check *preflightCheckContext) qemuExecutable(context.Context) error {
 	if check.arch.QemuExecutable() == "" {
 		return fmt.Errorf("QEMU executable (qemu-system-%s or qemu-kvm) not found, please install QEMU with package manager", check.arch.QemuArch())
 	}
@@ -77,7 +78,7 @@ func (check *preflightCheckContext) qemuExecutable(ctx context.Context) error {
 	return nil
 }
 
-func (check *preflightCheckContext) checkFlashImages(ctx context.Context) error {
+func (check *preflightCheckContext) checkFlashImages(context.Context) error {
 	for _, flashImage := range check.arch.PFlash(check.options.UEFIEnabled, check.options.ExtraUEFISearchPaths) {
 		if len(flashImage.SourcePaths) == 0 {
 			continue
@@ -103,7 +104,7 @@ func (check *preflightCheckContext) checkFlashImages(ctx context.Context) error 
 	return nil
 }
 
-func (check *preflightCheckContext) swtpmExecutable(ctx context.Context) error {
+func (check *preflightCheckContext) swtpmExecutable(context.Context) error {
 	if check.options.TPM2Enabled {
 		if _, err := exec.LookPath("swtpm"); err != nil {
 			return fmt.Errorf("swtpm not found in PATH, please install swtpm-tools with the package manager: %w", err)
@@ -113,8 +114,8 @@ func (check *preflightCheckContext) swtpmExecutable(ctx context.Context) error {
 	return nil
 }
 
-func (check *preflightCheckContext) cniDirectories(ctx context.Context) error {
-	cniDirs := append([]string{}, check.request.Network.CNI.BinPath...)
+func (check *preflightCheckContext) cniDirectories(context.Context) error {
+	cniDirs := slices.Clone(check.request.Network.CNI.BinPath)
 	cniDirs = append(cniDirs, check.request.Network.CNI.CacheDir, check.request.Network.CNI.ConfDir)
 
 	for _, cniDir := range cniDirs {

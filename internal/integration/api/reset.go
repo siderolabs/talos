@@ -8,7 +8,7 @@ package api
 
 import (
 	"context"
-	"sort"
+	"slices"
 	"testing"
 	"time"
 
@@ -73,7 +73,7 @@ func (suite *ResetSuite) TestResetNodeByNode() {
 	nodes := suite.DiscoverNodeInternalIPs(suite.ctx)
 	suite.Require().NotEmpty(nodes)
 
-	sort.Strings(nodes)
+	slices.Sort(nodes)
 
 	for _, node := range nodes {
 		suite.ResetNode(suite.ctx, node, &machineapi.ResetRequest{

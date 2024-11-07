@@ -837,7 +837,7 @@ func create(ctx context.Context) error {
 		types := []machine.Type{machine.TypeControlPlane, machine.TypeWorker}
 
 		if withInitNode {
-			types = append([]machine.Type{machine.TypeInit}, types...)
+			types = slices.Insert(types, 0, machine.TypeInit)
 		}
 
 		if err = configBundle.Write(".", encoder.CommentsAll, types...); err != nil {

@@ -5,11 +5,12 @@
 package cluster
 
 import (
+	"cmp"
 	"context"
 	"fmt"
 	"net/netip"
 	"os"
-	"sort"
+	"slices"
 	"strings"
 	"text/tabwriter"
 
@@ -76,7 +77,7 @@ func showCluster(cluster provision.Cluster) error {
 	fmt.Fprintf(w, "NAME\tTYPE\tIP\tCPU\tRAM\tDISK\n")
 
 	nodes := cluster.Info().Nodes
-	sort.Slice(nodes, func(i, j int) bool { return nodes[i].Name < nodes[j].Name })
+	slices.SortFunc(nodes, func(a, b provision.NodeInfo) int { return cmp.Compare(a.Name, b.Name) })
 
 	for _, node := range nodes {
 		cpus := "-"

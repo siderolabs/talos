@@ -8,7 +8,7 @@ import (
 	"context"
 	"fmt"
 	"path/filepath"
-	"sort"
+	"slices"
 
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/safe"
@@ -70,7 +70,7 @@ func (ctrl *CRIConfigPartsController) Run(ctx context.Context, r controller.Runt
 			return err
 		}
 
-		sort.Strings(parts)
+		slices.Sort(parts)
 
 		out, err := toml.Merge(parts)
 		if err != nil {

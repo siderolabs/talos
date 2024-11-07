@@ -7,7 +7,6 @@ package talos_test
 import (
 	"bytes"
 	"slices"
-	"sort"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -86,7 +85,7 @@ func TestMarshalUnmarshal(t *testing.T) {
 		assert.Equal(t, val3, val)
 
 		tags := a.ListTags()
-		sort.Slice(tags, func(i, j int) bool { return tags[i] < tags[j] })
+		slices.Sort(tags)
 		assert.Equal(t, []uint8{adv.Reserved1, adv.Reserved2, adv.Reserved3}, tags)
 	}
 }

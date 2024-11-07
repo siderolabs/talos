@@ -6,9 +6,9 @@
 package network
 
 import (
+	"cmp"
 	"context"
 	"fmt"
-	"sort"
 
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
@@ -65,32 +65,24 @@ func (ctrl *LinkMergeController) Run(ctx context.Context, r controller.Runtime, 
 		}
 
 		// list source network configuration resources
-		list, err := r.List(ctx, resource.NewMetadata(network.ConfigNamespaceName, network.LinkSpecType, "", resource.VersionUndefined))
+		list, err := safe.ReaderList[*network.LinkSpec](ctx, r, resource.NewMetadata(network.ConfigNamespaceName, network.LinkSpecType, "", resource.VersionUndefined))
 		if err != nil {
 			return fmt.Errorf("error listing source network routes: %w", err)
 		}
 
 		// sort by link name, configuration layer
-		sort.Slice(list.Items, func(i, j int) bool {
-			left := list.Items[i].(*network.LinkSpec)  //nolint:forcetypeassert
-			right := list.Items[j].(*network.LinkSpec) //nolint:forcetypeassert
-
-			if left.TypedSpec().Name < right.TypedSpec().Name {
-				return false
+		list.SortFunc(func(left, right *network.LinkSpec) int {
+			if res := cmp.Compare(left.TypedSpec().Name, right.TypedSpec().Name); res != 0 {
+				return res
 			}
 
-			if left.TypedSpec().Name == right.TypedSpec().Name {
-				return left.TypedSpec().ConfigLayer < right.TypedSpec().ConfigLayer
-			}
-
-			return true
+			return cmp.Compare(left.TypedSpec().ConfigLayer, right.TypedSpec().ConfigLayer)
 		})
 
 		// build final link definition merging multiple layers
-		links := map[string]*network.LinkSpecSpec{}
+		links := make(map[string]*network.LinkSpecSpec, list.Len())
 
-		for _, res := range list.Items {
-			link := res.(*network.LinkSpec) //nolint:forcetypeassert
+		for link := range list.All() {
 			id := network.LinkID(link.TypedSpec().Name)
 
 			existing, ok := links[id]
@@ -124,12 +116,12 @@ func (ctrl *LinkMergeController) Run(ctx context.Context, r controller.Runtime, 
 		}
 
 		// list link for cleanup
-		list, err = r.List(ctx, resource.NewMetadata(network.NamespaceName, network.LinkSpecType, "", resource.VersionUndefined))
+		list, err = safe.ReaderList[*network.LinkSpec](ctx, r, resource.NewMetadata(network.NamespaceName, network.LinkSpecType, "", resource.VersionUndefined))
 		if err != nil {
 			return fmt.Errorf("error listing resources: %w", err)
 		}
 
-		for _, res := range list.Items {
+		for res := range list.All() {
 			if _, ok := links[res.Metadata().ID()]; !ok {
 				var okToDestroy bool
 
