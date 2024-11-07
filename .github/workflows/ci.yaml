@@ -1,6 +1,6 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
 #
-# Generated on 2024-10-23T17:20:56Z by kres 6d3cad4.
+# Generated on 2024-11-07T15:01:48Z by kres 1fc767a.
 
 name: default
 concurrency:
@@ -2405,6 +2405,13 @@ jobs:
           IMAGE_REGISTRY: registry.dev.siderolabs.io
           SHORT_INTEGRATION_TEST: "yes"
           WITH_APPARMOR_LSM_ENABLED: "yes"
+        run: |
+          sudo -E make e2e-qemu
+      - name: e2e-k8s-user-namespace
+        env:
+          IMAGE_REGISTRY: registry.dev.siderolabs.io
+          SHORT_INTEGRATION_TEST: "yes"
+          WITH_CONFIG_PATCH: '@hack/test/patches/usernamespace.yaml'
         run: |
           sudo -E make e2e-qemu
       - name: save artifacts

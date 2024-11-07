@@ -1,0 +1,13 @@
+---
+cluster:
+  apiServer:
+    extraArgs:
+      feature-gates: UserNamespacesSupport=true,UserNamespacesPodSecurityStandards=true
+machine:
+  sysctls:
+    user.max_user_namespaces: "11255"
+  kubelet:
+    extraConfig:
+      featureGates:
+        UserNamespacesSupport: true
+        UserNamespacesPodSecurityStandards: true

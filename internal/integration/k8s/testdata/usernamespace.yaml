@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: userns
+  namespace: default
+spec:
+  hostUsers: false
+  containers:
+  - name: userns
+    command: ["/bin/sh", "-c", "--"]
+    args: ["trap : TERM INT; (sleep 1000) & wait"]
+    image: alpine

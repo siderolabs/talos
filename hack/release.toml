@@ -27,6 +27,13 @@ runc: 1.2.1
 Talos is built with Go 1.23.2.
 """
 
+    [notes.usernamespaces]
+        title = "User Namespaces"
+        description = """\
+Talos Linux now supports running Kubernetes pods with user namespaces enabled.
+Refer to the [documentation](https://www.talos.dev/v1.9/kubernetes-guides/configuration/usernamespace/) for more information.
+"""
+
     [notes.apparmor]
         title = "AppArmor"
         description = """\

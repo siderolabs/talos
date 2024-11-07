@@ -953,6 +953,13 @@ spec:
             SHORT_INTEGRATION_TEST: yes
             WITH_APPARMOR_LSM_ENABLED: yes
             IMAGE_REGISTRY: registry.dev.siderolabs.io
+        - name: e2e-k8s-user-namespace
+          command: e2e-qemu
+          withSudo: true
+          environment:
+            SHORT_INTEGRATION_TEST: yes
+            WITH_CONFIG_PATCH: "@hack/test/patches/usernamespace.yaml"
+            IMAGE_REGISTRY: registry.dev.siderolabs.io
         - name: save-talos-logs
           conditions:
             - always
