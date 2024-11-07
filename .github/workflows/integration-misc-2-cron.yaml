@@ -1,6 +1,6 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
 #
-# Generated on 2024-09-09T13:58:35Z by kres 8be5fa7.
+# Generated on 2024-11-08T11:46:41Z by kres 1fc767a.
 
 name: integration-misc-2-cron
 concurrency:
@@ -115,5 +115,7 @@ jobs:
           name: talos-logs-integration-misc-2
           path: |-
             ~/.talos/clusters/**/*.log
+            ~/.talos/clusters/**/support.zip
+            /tmp/support-*.zip
             !~/.talos/clusters/**/swtpm.log
           retention-days: "5"

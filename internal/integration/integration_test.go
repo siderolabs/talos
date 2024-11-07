@@ -11,7 +11,6 @@ import (
 	"context"
 	"flag"
 	"fmt"
-	"os"
 	"path/filepath"
 	"slices"
 	"testing"
@@ -37,7 +36,6 @@ var allSuites []suite.TestingSuite
 // Flag values.
 var (
 	failFast         bool
-	crashdumpEnabled bool
 	trustedBoot      bool
 	extensionsQEMU   bool
 	extensionsNvidia bool
@@ -95,7 +93,6 @@ func TestIntegration(t *testing.T) {
 	}
 
 	provision_test.DefaultSettings.CurrentVersion = expectedVersion
-	provision_test.DefaultSettings.CrashdumpEnabled = crashdumpEnabled
 
 	for _, s := range allSuites {
 		if configuredSuite, ok := s.(base.ConfiguredSuite); ok {
@@ -134,10 +131,6 @@ func TestIntegration(t *testing.T) {
 			break
 		}
 	}
-
-	if t.Failed() && crashdumpEnabled && cluster != nil && provisioner != nil {
-		provisioner.CrashDump(context.Background(), cluster, os.Stderr)
-	}
 }
 
 func init() {
@@ -149,7 +142,6 @@ func init() {
 	}
 
 	flag.BoolVar(&failFast, "talos.failfast", false, "fail the test run on the first failed test")
-	flag.BoolVar(&crashdumpEnabled, "talos.crashdump", false, "print crashdump on test failure (only if provisioner is enabled)")
 	flag.BoolVar(&trustedBoot, "talos.trustedboot", false, "enable tests for trusted boot mode")
 	flag.BoolVar(&extensionsQEMU, "talos.extensions.qemu", false, "enable tests for qemu extensions")
 	flag.BoolVar(&extensionsNvidia, "talos.extensions.nvidia", false, "enable tests for nvidia extensions")

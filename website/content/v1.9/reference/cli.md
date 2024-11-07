@@ -155,7 +155,7 @@ talosctl cluster create [flags]
       --controlplanes int                        the number of controlplanes to create (default 1)
       --cpus string                              the share of CPUs as fraction (each control plane/VM) (default "2.0")
       --cpus-workers string                      the share of CPUs as fraction (each worker/VM) (default "2.0")
-      --crashdump                                print debug crashdump to stderr when cluster startup fails
+      --crashdump                                generate support zip when cluster startup fails
       --custom-cni-url string                    install custom CNI from the URL (Talos cluster)
       --disable-dhcp-hostname                    skip announcing hostname via DHCP (QEMU only)
       --disk int                                 default limit on disk size in MB (each VM) (default 6144)
@@ -254,8 +254,9 @@ talosctl cluster destroy [flags]
 ### Options
 
 ```
-  -f, --force   force deletion of cluster directory if there were errors
-  -h, --help    help for destroy
+  -f, --force                              force deletion of cluster directory if there were errors
+  -h, --help                               help for destroy
+      --save-support-archive-path string   save support archive to the specified file on destroy
 ```
 
 ### Options inherited from parent commands

@@ -79,8 +79,6 @@ type Settings struct {
 	CurrentVersion string
 	// Custom CNI URL to use.
 	CustomCNIURL string
-	// Enable crashdump on failure.
-	CrashdumpEnabled bool
 	// CNI bundle for QEMU provisioner.
 	CNIBundleURL string
 }
@@ -138,12 +136,6 @@ func (suite *BaseSuite) SetupSuite() {
 
 // TearDownSuite ...
 func (suite *BaseSuite) TearDownSuite() {
-	if suite.T().Failed() && DefaultSettings.CrashdumpEnabled && suite.Cluster != nil {
-		// for failed tests, produce crash dump for easier debugging,
-		// as cluster is going to be torn down below
-		suite.provisioner.CrashDump(suite.ctx, suite.Cluster, os.Stderr)
-	}
-
 	if suite.clusterAccess != nil {
 		suite.Assert().NoError(suite.clusterAccess.Close())
 	}

@@ -162,7 +162,6 @@ Running short tests against QEMU provisioned cluster:
 _out/integration-test-linux-amd64 \
     -talos.provisioner=qemu \
     -test.v \
-    -talos.crashdump=false \
     -test.short \
     -talos.talosctlpath=$PWD/_out/talosctl-linux-amd64
 ```

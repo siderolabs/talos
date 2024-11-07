@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"os"
 
+	cl "github.com/siderolabs/talos/pkg/cluster"
 	"github.com/siderolabs/talos/pkg/provision"
 	"github.com/siderolabs/talos/pkg/provision/providers/vm"
 )
@@ -42,6 +43,12 @@ func (p *provisioner) Destroy(ctx context.Context, cluster provision.Cluster, op
 	}
 
 	defer deleteStateDirectory(options.DeleteStateOnErr) //nolint:errcheck
+
+	if options.SaveSupportArchivePath != "" {
+		fmt.Fprintln(options.LogWriter, "saving support archive")
+
+		cl.Crashdump(ctx, cluster, options.LogWriter, options.SaveSupportArchivePath)
+	}
 
 	fmt.Fprintln(options.LogWriter, "stopping VMs")
 

@@ -32,9 +32,10 @@ function create_cluster {
 }
 
 function destroy_cluster() {
-  "${TALOSCTL}" cluster destroy --name "${CLUSTER_NAME}" --provisioner "${PROVISIONER}"
+  "${TALOSCTL}" cluster destroy --name "${CLUSTER_NAME}" --provisioner "${PROVISIONER}" --save-support-archive-path=/tmp/support-${CLUSTER_NAME}.zip
 }
+
+trap destroy_cluster SIGINT EXIT
 
 create_cluster
 sleep 5
-destroy_cluster

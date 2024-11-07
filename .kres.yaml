@@ -235,6 +235,8 @@ spec:
             disableExecutableListGeneration: true
             artifactPath: ~/.talos/clusters/**/*.log
             additionalArtifacts:
+              - "~/.talos/clusters/**/support.zip"
+              - "/tmp/support-*.zip"
               - "!~/.talos/clusters/**/swtpm.log"
     - name: e2e-qemu-short
       depends:
@@ -263,6 +265,8 @@ spec:
             disableExecutableListGeneration: true
             artifactPath: ~/.talos/clusters/**/*.log
             additionalArtifacts:
+              - "~/.talos/clusters/**/support.zip"
+              - "/tmp/support-*.zip"
               - "!~/.talos/clusters/**/swtpm.log"
     - name: e2e-docker-short
       depends:
@@ -291,6 +295,8 @@ spec:
             disableExecutableListGeneration: true
             artifactPath: ~/.talos/clusters/**/*.log
             additionalArtifacts:
+              - "~/.talos/clusters/**/support.zip"
+              - "/tmp/support-*.zip"
               - "!~/.talos/clusters/**/swtpm.log"
     - name: integration-qemu
       buildxOptions:
@@ -344,6 +350,8 @@ spec:
             disableExecutableListGeneration: true
             artifactPath: ~/.talos/clusters/**/*.log
             additionalArtifacts:
+              - "~/.talos/clusters/**/support.zip"
+              - "/tmp/support-*.zip"
               - "!~/.talos/clusters/**/swtpm.log"
     - name: integration-conformance
       buildxOptions:
@@ -396,6 +404,8 @@ spec:
             disableExecutableListGeneration: true
             artifactPath: ~/.talos/clusters/**/*.log
             additionalArtifacts:
+              - "~/.talos/clusters/**/support.zip"
+              - "/tmp/support-*.zip"
               - "!~/.talos/clusters/**/swtpm.log"
     - name: integration-trusted-boot
       buildxOptions:
@@ -467,6 +477,8 @@ spec:
             disableExecutableListGeneration: true
             artifactPath: ~/.talos/clusters/**/*.log
             additionalArtifacts:
+              - "~/.talos/clusters/**/support.zip"
+              - "/tmp/support-*.zip"
               - "!~/.talos/clusters/**/swtpm.log"
     - name: integration-provision-0
       buildxOptions:
@@ -518,6 +530,8 @@ spec:
             disableExecutableListGeneration: true
             artifactPath: ~/.talos/clusters/**/*.log
             additionalArtifacts:
+              - "~/.talos/clusters/**/support.zip"
+              - "/tmp/support-*.zip"
               - "!~/.talos/clusters/**/swtpm.log"
     - name: integration-provision-1
       buildxOptions:
@@ -569,6 +583,8 @@ spec:
             disableExecutableListGeneration: true
             artifactPath: ~/.talos/clusters/**/*.log
             additionalArtifacts:
+              - "~/.talos/clusters/**/support.zip"
+              - "/tmp/support-*.zip"
               - "!~/.talos/clusters/**/swtpm.log"
     - name: integration-provision-2
       buildxOptions:
@@ -620,6 +636,8 @@ spec:
             disableExecutableListGeneration: true
             artifactPath: ~/.talos/clusters/**/*.log
             additionalArtifacts:
+              - "~/.talos/clusters/**/support.zip"
+              - "/tmp/support-*.zip"
               - "!~/.talos/clusters/**/swtpm.log"
     - name: integration-misc-0
       buildxOptions:
@@ -686,6 +704,8 @@ spec:
             disableExecutableListGeneration: true
             artifactPath: ~/.talos/clusters/**/*.log
             additionalArtifacts:
+              - "~/.talos/clusters/**/support.zip"
+              - "/tmp/support-*.zip"
               - "!~/.talos/clusters/**/swtpm.log"
     - name: integration-misc-1
       buildxOptions:
@@ -754,6 +774,8 @@ spec:
             disableExecutableListGeneration: true
             artifactPath: ~/.talos/clusters/**/*.log
             additionalArtifacts:
+              - "~/.talos/clusters/**/support.zip"
+              - "/tmp/support-*.zip"
               - "!~/.talos/clusters/**/swtpm.log"
     - name: integration-misc-2
       buildxOptions:
@@ -827,6 +849,8 @@ spec:
             disableExecutableListGeneration: true
             artifactPath: ~/.talos/clusters/**/*.log
             additionalArtifacts:
+              - "~/.talos/clusters/**/support.zip"
+              - "/tmp/support-*.zip"
               - "!~/.talos/clusters/**/swtpm.log"
     - name: integration-misc-3
       buildxOptions:
@@ -886,6 +910,8 @@ spec:
             disableExecutableListGeneration: true
             artifactPath: ~/.talos/clusters/**/*.log
             additionalArtifacts:
+              - "~/.talos/clusters/**/support.zip"
+              - "/tmp/support-*.zip"
               - "!~/.talos/clusters/**/swtpm.log"
     - name: integration-misc-4
       buildxOptions:
@@ -969,6 +995,8 @@ spec:
             disableExecutableListGeneration: true
             artifactPath: ~/.talos/clusters/**/*.log
             additionalArtifacts:
+              - "~/.talos/clusters/**/support.zip"
+              - "/tmp/support-*.zip"
               - "!~/.talos/clusters/**/swtpm.log"
     - name: integration-extensions
       buildxOptions:
@@ -1050,6 +1078,8 @@ spec:
             disableExecutableListGeneration: true
             artifactPath: ~/.talos/clusters/**/*.log
             additionalArtifacts:
+              - "~/.talos/clusters/**/support.zip"
+              - "/tmp/support-*.zip"
               - "!~/.talos/clusters/**/swtpm.log"
     - name: integration-cilium
       buildxOptions:
@@ -1130,6 +1160,8 @@ spec:
             disableExecutableListGeneration: true
             artifactPath: ~/.talos/clusters/**/*.log
             additionalArtifacts:
+              - "~/.talos/clusters/**/support.zip"
+              - "/tmp/support-*.zip"
               - "!~/.talos/clusters/**/swtpm.log"
     - name: integration-qemu-encrypted-vip
       buildxOptions:
@@ -1185,6 +1217,8 @@ spec:
             disableExecutableListGeneration: true
             artifactPath: ~/.talos/clusters/**/*.log
             additionalArtifacts:
+              - "~/.talos/clusters/**/support.zip"
+              - "/tmp/support-*.zip"
               - "!~/.talos/clusters/**/swtpm.log"
     - name: integration-qemu-race
       buildxOptions:
@@ -1247,6 +1281,8 @@ spec:
             disableExecutableListGeneration: true
             artifactPath: ~/.talos/clusters/**/*.log
             additionalArtifacts:
+              - "~/.talos/clusters/**/support.zip"
+              - "/tmp/support-*.zip"
               - "!~/.talos/clusters/**/swtpm.log"
     - name: integration-qemu-csi-rook-ceph
       buildxOptions:
@@ -1305,6 +1341,8 @@ spec:
             disableExecutableListGeneration: true
             artifactPath: ~/.talos/clusters/**/*.log
             additionalArtifacts:
+              - "~/.talos/clusters/**/support.zip"
+              - "/tmp/support-*.zip"
               - "!~/.talos/clusters/**/swtpm.log"
     - name: integration-qemu-csi-longhorn
       buildxOptions:
@@ -1384,6 +1422,8 @@ spec:
             disableExecutableListGeneration: true
             artifactPath: ~/.talos/clusters/**/*.log
             additionalArtifacts:
+              - "~/.talos/clusters/**/support.zip"
+              - "/tmp/support-*.zip"
               - "!~/.talos/clusters/**/swtpm.log"
     - name: integration-images
       buildxOptions:
@@ -1620,6 +1660,8 @@ spec:
             disableExecutableListGeneration: true
             artifactPath: ~/.talos/clusters/**/*.log
             additionalArtifacts:
+              - "~/.talos/clusters/**/support.zip"
+              - "/tmp/support-*.zip"
               - "!~/.talos/clusters/**/swtpm.log"
     - name: integration-aws
       buildxOptions:

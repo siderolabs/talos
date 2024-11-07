@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"os"
 
+	cl "github.com/siderolabs/talos/pkg/cluster"
 	"github.com/siderolabs/talos/pkg/provision"
 )
 
@@ -24,6 +25,30 @@ func (p *provisioner) Destroy(ctx context.Context, cluster provision.Cluster, op
 		}
 	}
 
+	complete := false
+	deleteStateDirectory := func(shouldDelete bool) error {
+		if complete || !shouldDelete {
+			return nil
+		}
+
+		complete = true
+
+		stateDirectoryPath, err := cluster.StatePath()
+		if err != nil {
+			return err
+		}
+
+		return os.RemoveAll(stateDirectoryPath)
+	}
+
+	if options.SaveSupportArchivePath != "" {
+		fmt.Fprintln(options.LogWriter, "saving support archive")
+
+		cl.Crashdump(ctx, cluster, options.LogWriter, options.SaveSupportArchivePath)
+	}
+
+	defer deleteStateDirectory(options.DeleteStateOnErr) //nolint:errcheck
+
 	if err := p.destroyNodes(ctx, cluster.Info().ClusterName, &options); err != nil {
 		return err
 	}
@@ -34,10 +59,5 @@ func (p *provisioner) Destroy(ctx context.Context, cluster provision.Cluster, op
 		return err
 	}
 
-	statePath, err := cluster.StatePath()
-	if err != nil {
-		return err
-	}
-
-	return os.RemoveAll(statePath)
+	return deleteStateDirectory(true)
 }

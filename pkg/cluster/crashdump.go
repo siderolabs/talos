@@ -9,7 +9,6 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"path/filepath"
 
 	"github.com/siderolabs/gen/xslices"
 	"github.com/siderolabs/go-talos-support/support"
@@ -24,19 +23,10 @@ import (
 )
 
 // Crashdump creates a support.zip for the cluster.
-func Crashdump(ctx context.Context, cluster provision.Cluster, out io.Writer) {
-	statePath, err := cluster.StatePath()
+func Crashdump(ctx context.Context, cluster provision.Cluster, logWriter io.Writer, zipFilePath string) {
+	supportFile, err := os.Create(zipFilePath)
 	if err != nil {
-		fmt.Fprintf(out, "error getting state path: %s\n", err)
-
-		return
-	}
-
-	supportZip := filepath.Join(statePath, "support.zip")
-
-	supportFile, err := os.Create(supportZip)
-	if err != nil {
-		fmt.Fprintf(out, "error creating crashdump file: %s\n", err)
+		fmt.Fprintf(logWriter, "error creating crashdump file: %s\n", err)
 
 		return
 	}
@@ -45,7 +35,9 @@ func Crashdump(ctx context.Context, cluster provision.Cluster, out io.Writer) {
 
 	c, err := client.New(ctx, client.WithDefaultConfig())
 	if err != nil {
-		fmt.Fprintf(out, "error creating crashdump: %s\n", err)
+		fmt.Fprintf(logWriter, "error creating crashdump: %s\n", err)
+
+		return
 	}
 
 	nodes := xslices.Map(cluster.Info().Nodes, func(nodeInfo provision.NodeInfo) string {
@@ -62,6 +54,7 @@ func Crashdump(ctx context.Context, cluster provision.Cluster, out io.Writer) {
 	}
 
 	kubeclient, err := getKubernetesClient(ctx, c, controlplane)
+	// ignore error if we can't get a k8s client
 	if err == nil {
 		opts = append(opts, bundle.WithKubernetesClient(kubeclient))
 	}
@@ -70,11 +63,15 @@ func Crashdump(ctx context.Context, cluster provision.Cluster, out io.Writer) {
 
 	collectors, err := collectors.GetForOptions(ctx, options)
 	if err != nil {
-		fmt.Fprintf(out, "error creating crashdump collector options: %s\n", err)
+		fmt.Fprintf(logWriter, "error creating crashdump collector options: %s\n", err)
+
+		return
 	}
 
 	if err := support.CreateSupportBundle(ctx, options, collectors...); err != nil {
-		fmt.Fprintf(out, "error creating crashdump: %s\n", err)
+		fmt.Fprintf(logWriter, "error creating crashdump: %s\n", err)
+
+		return
 	}
 }
 

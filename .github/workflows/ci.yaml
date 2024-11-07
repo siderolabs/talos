@@ -1,6 +1,6 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
 #
-# Generated on 2024-11-07T15:01:48Z by kres 1fc767a.
+# Generated on 2024-11-08T11:46:41Z by kres 1fc767a.
 
 name: default
 concurrency:
@@ -216,6 +216,8 @@ jobs:
           name: talos-logs-e2e-docker-short
           path: |-
             ~/.talos/clusters/**/*.log
+            ~/.talos/clusters/**/support.zip
+            /tmp/support-*.zip
             !~/.talos/clusters/**/swtpm.log
           retention-days: "5"
   e2e-iso:
@@ -285,6 +287,8 @@ jobs:
           name: talos-logs-e2e-iso
           path: |-
             ~/.talos/clusters/**/*.log
+            ~/.talos/clusters/**/support.zip
+            /tmp/support-*.zip
             !~/.talos/clusters/**/swtpm.log
           retention-days: "5"
   e2e-qemu-short:
@@ -355,6 +359,8 @@ jobs:
           name: talos-logs-e2e-qemu-short
           path: |-
             ~/.talos/clusters/**/*.log
+            ~/.talos/clusters/**/support.zip
+            /tmp/support-*.zip
             !~/.talos/clusters/**/swtpm.log
           retention-days: "5"
   integration-aws:
@@ -1052,6 +1058,8 @@ jobs:
           name: talos-logs-integration-cilium
           path: |-
             ~/.talos/clusters/**/*.log
+            ~/.talos/clusters/**/support.zip
+            /tmp/support-*.zip
             !~/.talos/clusters/**/swtpm.log
           retention-days: "5"
   integration-cloud-images:
@@ -1234,6 +1242,8 @@ jobs:
           name: talos-logs-integration-qemu
           path: |-
             ~/.talos/clusters/**/*.log
+            ~/.talos/clusters/**/support.zip
+            /tmp/support-*.zip
             !~/.talos/clusters/**/swtpm.log
           retention-days: "5"
   integration-equinix-metal:
@@ -1474,6 +1484,8 @@ jobs:
           name: talos-logs-integration-extensions
           path: |-
             ~/.talos/clusters/**/*.log
+            ~/.talos/clusters/**/support.zip
+            /tmp/support-*.zip
             !~/.talos/clusters/**/swtpm.log
           retention-days: "5"
   integration-gcp:
@@ -1782,6 +1794,8 @@ jobs:
           name: talos-logs-integration-image-factory
           path: |-
             ~/.talos/clusters/**/*.log
+            ~/.talos/clusters/**/support.zip
+            /tmp/support-*.zip
             !~/.talos/clusters/**/swtpm.log
           retention-days: "5"
   integration-images:
@@ -1972,6 +1986,8 @@ jobs:
           name: talos-logs-integration-misc-0
           path: |-
             ~/.talos/clusters/**/*.log
+            ~/.talos/clusters/**/support.zip
+            /tmp/support-*.zip
             !~/.talos/clusters/**/swtpm.log
           retention-days: "5"
   integration-misc-1:
@@ -2081,6 +2097,8 @@ jobs:
           name: talos-logs-integration-misc-1
           path: |-
             ~/.talos/clusters/**/*.log
+            ~/.talos/clusters/**/support.zip
+            /tmp/support-*.zip
             !~/.talos/clusters/**/swtpm.log
           retention-days: "5"
   integration-misc-2:
@@ -2197,6 +2215,8 @@ jobs:
           name: talos-logs-integration-misc-2
           path: |-
             ~/.talos/clusters/**/*.log
+            ~/.talos/clusters/**/support.zip
+            /tmp/support-*.zip
             !~/.talos/clusters/**/swtpm.log
           retention-days: "5"
   integration-misc-3:
@@ -2297,6 +2317,8 @@ jobs:
           name: talos-logs-integration-misc-3
           path: |-
             ~/.talos/clusters/**/*.log
+            ~/.talos/clusters/**/support.zip
+            /tmp/support-*.zip
             !~/.talos/clusters/**/swtpm.log
           retention-days: "5"
   integration-misc-4:
@@ -2421,6 +2443,8 @@ jobs:
           name: talos-logs-integration-misc-4
           path: |-
             ~/.talos/clusters/**/*.log
+            ~/.talos/clusters/**/support.zip
+            /tmp/support-*.zip
             !~/.talos/clusters/**/swtpm.log
           retention-days: "5"
   integration-provision-0:
@@ -2516,6 +2540,8 @@ jobs:
           name: talos-logs-integration-provision-0
           path: |-
             ~/.talos/clusters/**/*.log
+            ~/.talos/clusters/**/support.zip
+            /tmp/support-*.zip
             !~/.talos/clusters/**/swtpm.log
           retention-days: "5"
   integration-provision-1:
@@ -2611,6 +2637,8 @@ jobs:
           name: talos-logs-integration-provision-1
           path: |-
             ~/.talos/clusters/**/*.log
+            ~/.talos/clusters/**/support.zip
+            /tmp/support-*.zip
             !~/.talos/clusters/**/swtpm.log
           retention-days: "5"
   integration-provision-2:
@@ -2706,6 +2734,8 @@ jobs:
           name: talos-logs-integration-provision-2
           path: |-
             ~/.talos/clusters/**/*.log
+            ~/.talos/clusters/**/support.zip
+            /tmp/support-*.zip
             !~/.talos/clusters/**/swtpm.log
           retention-days: "5"
   integration-qemu:
@@ -2802,6 +2832,8 @@ jobs:
           name: talos-logs-integration-qemu
           path: |-
             ~/.talos/clusters/**/*.log
+            ~/.talos/clusters/**/support.zip
+            /tmp/support-*.zip
             !~/.talos/clusters/**/swtpm.log
           retention-days: "5"
   integration-qemu-csi-longhorn:
@@ -2923,6 +2955,8 @@ jobs:
           name: talos-logs-integration-qemu-csi-longhorn
           path: |-
             ~/.talos/clusters/**/*.log
+            ~/.talos/clusters/**/support.zip
+            /tmp/support-*.zip
             !~/.talos/clusters/**/swtpm.log
           retention-days: "5"
   integration-qemu-csi-rook-ceph:
@@ -3022,6 +3056,8 @@ jobs:
           name: talos-logs-integration-qemu-csi-rook-ceph
           path: |-
             ~/.talos/clusters/**/*.log
+            ~/.talos/clusters/**/support.zip
+            /tmp/support-*.zip
             !~/.talos/clusters/**/swtpm.log
           retention-days: "5"
   integration-qemu-encrypted-vip:
@@ -3120,6 +3156,8 @@ jobs:
           name: talos-logs-integration-qemu-encrypted-vip
           path: |-
             ~/.talos/clusters/**/*.log
+            ~/.talos/clusters/**/support.zip
+            /tmp/support-*.zip
             !~/.talos/clusters/**/swtpm.log
           retention-days: "5"
   integration-qemu-race:
@@ -3225,6 +3263,8 @@ jobs:
           name: talos-logs-integration-qemu-race
           path: |-
             ~/.talos/clusters/**/*.log
+            ~/.talos/clusters/**/support.zip
+            /tmp/support-*.zip
             !~/.talos/clusters/**/swtpm.log
           retention-days: "5"
   integration-reproducibility-test:
@@ -3411,6 +3451,8 @@ jobs:
           name: talos-logs-integration-trusted-boot
           path: |-
             ~/.talos/clusters/**/*.log
+            ~/.talos/clusters/**/support.zip
+            /tmp/support-*.zip
             !~/.talos/clusters/**/swtpm.log
           retention-days: "5"
   push:

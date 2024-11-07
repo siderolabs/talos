@@ -19,17 +19,17 @@ import (
 )
 
 // CrashDump produces debug information to help with debugging failures.
-func (p *provisioner) CrashDump(ctx context.Context, cluster provision.Cluster, out io.Writer) {
+func (p *provisioner) CrashDump(ctx context.Context, cluster provision.Cluster, logWriter io.Writer) {
 	containers, err := p.listNodes(ctx, cluster.Info().ClusterName)
 	if err != nil {
-		fmt.Fprintf(out, "error listing containers: %s\n", err)
+		fmt.Fprintf(logWriter, "error listing containers: %s\n", err)
 
 		return
 	}
 
 	statePath, err := cluster.StatePath()
 	if err != nil {
-		fmt.Fprintf(out, "error getting state path: %s\n", err)
+		fmt.Fprintf(logWriter, "error getting state path: %s\n", err)
 
 		return
 	}
@@ -43,7 +43,7 @@ func (p *provisioner) CrashDump(ctx context.Context, cluster provision.Cluster, 
 			Tail:       "1000",
 		})
 		if err != nil {
-			fmt.Fprintf(out, "error querying container logs: %s\n", err)
+			fmt.Fprintf(logWriter, "error querying container logs: %s\n", err)
 
 			continue
 		}
@@ -53,17 +53,19 @@ func (p *provisioner) CrashDump(ctx context.Context, cluster provision.Cluster, 
 		var logData bytes.Buffer
 
 		if _, err := io.Copy(&logData, logs); err != nil {
-			fmt.Fprintf(out, "error reading container logs: %s\n", err)
+			fmt.Fprintf(logWriter, "error reading container logs: %s\n", err)
 
 			continue
 		}
 
 		if err := os.WriteFile(logPath, logData.Bytes(), 0o644); err != nil {
-			fmt.Fprintf(out, "error writing container logs: %s\n", err)
+			fmt.Fprintf(logWriter, "error writing container logs: %s\n", err)
 
 			continue
 		}
 	}
 
-	cl.Crashdump(ctx, cluster, out)
+	supportZipPath := filepath.Join(statePath, "support.zip")
+
+	cl.Crashdump(ctx, cluster, logWriter, supportZipPath)
 }

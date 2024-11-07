@@ -133,6 +133,15 @@ func WithDeleteOnErr(v bool) Option {
 	}
 }
 
+// WithSaveSupportArchivePath specifies path to save support archive on destroy.
+func WithSaveSupportArchivePath(path string) Option {
+	return func(o *Options) error {
+		o.SaveSupportArchivePath = path
+
+		return nil
+	}
+}
+
 // WithKMS inits KMS server in the provisioner.
 func WithKMS(endpoint string) Option {
 	return func(o *Options) error {
@@ -181,9 +190,10 @@ type Options struct {
 	ExtraUEFISearchPaths []string
 
 	// Expose ports to worker machines in docker provisioner
-	DockerPorts       []string
-	DockerPortsHostIP string
-	DeleteStateOnErr  bool
+	DockerPorts            []string
+	DockerPortsHostIP      string
+	SaveSupportArchivePath string
+	DeleteStateOnErr       bool
 
 	KMSEndpoint      string
 	JSONLogsEndpoint string
