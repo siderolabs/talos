@@ -22,7 +22,7 @@ TOOLS ?= ghcr.io/siderolabs/tools:v1.9.0-alpha.0-7-g3750064
 DEBUG_TOOLS_SOURCE := scratch
 
 PKGS_PREFIX ?= ghcr.io/siderolabs
-PKGS ?= v1.9.0-alpha.0-36-g9a98f73
+PKGS ?= v1.9.0-alpha.0-37-g4699763
 EXTRAS ?= v1.9.0-alpha.0-1-geab6e58
 
 KRES_IMAGE ?= ghcr.io/siderolabs/kres:latest
@@ -244,7 +244,7 @@ COMMON_ARGS += --build-arg=MICROSOFT_SECUREBOOT_RELEASE=$(MICROSOFT_SECUREBOOT_R
 
 CI_ARGS ?=
 
-EXTENSIONS_FILTER_COMMAND ?= grep -vE 'tailscale|xen-guest-agent|nvidia|vmtoolsd-guest-agent'
+EXTENSIONS_FILTER_COMMAND ?= grep -vE 'tailscale|xen-guest-agent|nvidia|vmtoolsd-guest-agent|metal-agent'
 
 all: initramfs kernel installer imager talosctl talosctl-image talos
 
