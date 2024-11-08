@@ -311,41 +311,45 @@ func (p *processRunner) build() (commandWrapper, error) {
 //
 //nolint:gocyclo
 func applyProperties(p *processRunner, pid int) error {
-	path := cgroup.Path(p.opts.CgroupPath)
+	if p.opts.CgroupPath != "" {
+		path := cgroup.Path(p.opts.CgroupPath)
 
-	if cgroups.Mode() == cgroups.Unified {
-		cgv2, err := cgroup2.Load(path)
-		if err != nil {
-			return fmt.Errorf("failed to load cgroup %s: %w", path, err)
-		}
-
-		// No such process error can happen in case the process is terminated before this code runs
-		if err := cgv2.AddProc(uint64(pid)); err != nil {
-			pathError, ok := err.(*fs.PathError)
-			if !ok || pathError.Err != syscall.ESRCH {
-				return fmt.Errorf("failed to move process %s to cgroup: %w", p, err)
+		if cgroups.Mode() == cgroups.Unified {
+			cgv2, err := cgroup2.Load(path)
+			if err != nil {
+				return fmt.Errorf("failed to load cgroup %s: %w", path, err)
 			}
-		}
-	} else {
-		cgv1, err := cgroup1.Load(cgroup1.StaticPath(path))
-		if err != nil {
-			return fmt.Errorf("failed to load cgroup %s: %w", path, err)
-		}
 
-		if err := cgv1.Add(cgroup1.Process{
-			Pid: pid,
-		}); err != nil {
-			pathError, ok := err.(*fs.PathError)
-			if !ok || pathError.Err != syscall.ESRCH {
-				return fmt.Errorf("failed to move process %s to cgroup: %w", p, err)
+			// No such process error can happen in case the process is terminated before this code runs
+			if err := cgv2.AddProc(uint64(pid)); err != nil {
+				pathError, ok := err.(*fs.PathError)
+				if !ok || pathError.Err != syscall.ESRCH {
+					return fmt.Errorf("failed to move process %s to cgroup: %w", p, err)
+				}
+			}
+		} else {
+			cgv1, err := cgroup1.Load(cgroup1.StaticPath(path))
+			if err != nil {
+				return fmt.Errorf("failed to load cgroup %s: %w", path, err)
+			}
+
+			if err := cgv1.Add(cgroup1.Process{
+				Pid: pid,
+			}); err != nil {
+				pathError, ok := err.(*fs.PathError)
+				if !ok || pathError.Err != syscall.ESRCH {
+					return fmt.Errorf("failed to move process %s to cgroup: %w", p, err)
+				}
 			}
 		}
 	}
 
-	if err := sys.AdjustOOMScore(pid, p.opts.OOMScoreAdj); err != nil {
-		pathError, ok := err.(*fs.PathError)
-		if !ok || pathError.Err != syscall.ENOENT {
-			return fmt.Errorf("failed to change OOMScoreAdj of process %s to %d: %w", p, p.opts.OOMScoreAdj, err)
+	if p.opts.OOMScoreAdj != 0 {
+		if err := sys.AdjustOOMScore(pid, p.opts.OOMScoreAdj); err != nil {
+			pathError, ok := err.(*fs.PathError)
+			if !ok || pathError.Err != syscall.ENOENT {
+				return fmt.Errorf("failed to change OOMScoreAdj of process %s to %d: %w", p, p.opts.OOMScoreAdj, err)
+			}
 		}
 	}
 
