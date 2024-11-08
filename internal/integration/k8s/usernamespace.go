@@ -35,7 +35,7 @@ func (suite *UserNamespaceSuite) SuiteName() string {
 
 // TestUserNamespace verifies that a pod with user namespace works.
 //
-//nolint:gocyclo
+//nolint:gocyclo,cyclop
 func (suite *UserNamespaceSuite) TestUserNamespace() {
 	if suite.Cluster == nil {
 		suite.T().Skip("without full cluster state reaching out to the node IP is not reliable")
@@ -62,6 +62,38 @@ func (suite *UserNamespaceSuite) TestUserNamespace() {
 
 	if strings.TrimSpace(maxUserNamespaces.String()) == "0" {
 		suite.T().Skip("skipping test since user namespace is disabled")
+	}
+
+	controlPlaneNode := suite.RandomDiscoveredNodeInternalIP(machine.TypeControlPlane)
+
+	controlPlaneNodeCtx := client.WithNode(ctx, controlPlaneNode)
+
+	controlPlaneNodeConfig, err := suite.ReadConfigFromNode(controlPlaneNodeCtx)
+	suite.Require().NoError(err)
+
+	if controlPlaneNodeConfig.Cluster().APIServer().ExtraArgs() == nil {
+		suite.T().Skip("skipping test since no api server extra args found")
+	} else {
+		if featureGates, ok := controlPlaneNodeConfig.Cluster().APIServer().ExtraArgs()["feature-gates"]; ok {
+			if !strings.Contains(featureGates, "UserNamespacesSupport=true") {
+				suite.T().Skip("skipping test since user namespace feature gate is not enabled for kube-apiserver")
+			}
+		}
+	}
+
+	workerNodeConfig, err := suite.ReadConfigFromNode(client.WithNode(ctx, node))
+	suite.Require().NoError(err)
+
+	if workerNodeConfig.Machine().Kubelet().ExtraConfig() == nil {
+		suite.T().Skip("skipping test since no kubelet extra config found")
+	} else {
+		if featureGates, ok := workerNodeConfig.Machine().Kubelet().ExtraConfig()["featureGates"]; ok {
+			if fg, ok := featureGates.(map[string]string); ok {
+				if val, ok := fg["UserNamespacesSupport"]; !ok || val != "true" {
+					suite.T().Skip("skipping test since user namespace feature gate is not enabled for kubelet")
+				}
+			}
+		}
 	}
 
 	usernamespacePodManifest := suite.ParseManifests(userNamespacePodSpec)

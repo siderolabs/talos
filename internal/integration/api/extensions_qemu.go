@@ -519,7 +519,7 @@ func (suite *ExtensionsSuiteQEMU) mdADMArrayExists() bool {
 // TestExtensionsZFS verifies zfs is working, udev rules work and the pool is mounted on reboot.
 func (suite *ExtensionsSuiteQEMU) TestExtensionsZFS() {
 	node := suite.RandomDiscoveredNodeInternalIP(machine.TypeWorker)
-	suite.AssertServicesRunning(suite.ctx, node, map[string]string{"ext-zpool-importer": "Finished"})
+	suite.AssertServicesRunning(suite.ctx, node, map[string]string{"ext-zfs-service": "Running"})
 
 	userDisks, err := suite.UserDisks(suite.ctx, node)
 	suite.Require().NoError(err)
