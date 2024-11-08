@@ -28,10 +28,11 @@ const HostDNSConfigID resource.ID = "config"
 //
 //gotagsrewrite:gen
 type HostDNSConfigSpec struct {
-	Enabled               bool             `yaml:"enabled" protobuf:"1"`
-	ListenAddresses       []netip.AddrPort `yaml:"listenAddresses,omitempty" protobuf:"2"`
-	ServiceHostDNSAddress netip.Addr       `yaml:"serviceHostDNSAddress,omitempty" protobuf:"3"`
-	ResolveMemberNames    bool             `yaml:"resolveMemberNames,omitempty" protobuf:"4"`
+	Enabled                 bool             `yaml:"enabled" protobuf:"1"`
+	ListenAddresses         []netip.AddrPort `yaml:"listenAddresses,omitempty" protobuf:"2"`
+	ServiceHostDNSAddress   netip.Addr       `yaml:"serviceHostDNSAddress,omitempty" protobuf:"3"`
+	ResolveMemberNames      bool             `yaml:"resolveMemberNames,omitempty" protobuf:"4"`
+	ServiceHostDNSAddressV6 netip.Addr       `yaml:"serviceHostDNSAddressV6,omitempty" protobuf:"5"`
 }
 
 // NewHostDNSConfig initializes a HostDNSConfig resource.

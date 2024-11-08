@@ -159,7 +159,7 @@ func (ctrl *EtcFileController) Run(ctx context.Context, r controller.Runtime, _ 
 
 		if resolverStatus != nil && hostDNSCfg != nil {
 			dnsServers := xslices.FilterInPlace(
-				[]netip.Addr{hostDNSCfg.TypedSpec().ServiceHostDNSAddress},
+				[]netip.Addr{hostDNSCfg.TypedSpec().ServiceHostDNSAddress, hostDNSCfg.TypedSpec().ServiceHostDNSAddressV6},
 				netip.Addr.IsValid,
 			)
 

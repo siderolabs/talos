@@ -1176,6 +1176,11 @@ const (
 	// Note: 116 = 't' and 108 = 'l' in ASCII.
 	HostDNSAddress = "169.254.116.108"
 
+	// HostDNSAddressV6 is the address of the host DNS server in IPv6 network.
+	//
+	// Note: fd54:616c:6f73::204f:5320:444e:53 is "Talos OS DNS".
+	HostDNSAddressV6 = "fd54:616c:6f73::204f:5320:444e:531"
+
 	// MetalAgentModeFlagPath is the path to the file indicating if the node is running in Metal Agent mode.
 	MetalAgentModeFlagPath = "/usr/local/etc/is-metal-agent"
 )

@@ -285,6 +285,7 @@ func getDynamicPort() (string, error) {
 func makeAddrs(port string) []netip.AddrPort {
 	return []netip.AddrPort{
 		netip.MustParseAddrPort("127.0.0.53:" + port),
+		netip.MustParseAddrPort("[::1]:" + port),
 	}
 }
 

@@ -19,6 +19,7 @@ import (
 	"github.com/siderolabs/go-pointer"
 	"go.uber.org/zap"
 
+	cfg "github.com/siderolabs/talos/pkg/machinery/config/config"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
 	"github.com/siderolabs/talos/pkg/machinery/resources/config"
@@ -154,8 +155,6 @@ func (ctrl *NfTablesChainConfigController) Run(ctx context.Context, r controller
 
 						if cfg.Config().Machine() != nil && cfg.Config().Cluster() != nil {
 							if cfg.Config().Machine().Features().HostDNS().ForwardKubeDNSToHost() {
-								hostDNSIP := netip.MustParseAddr(constants.HostDNSAddress)
-
 								// allow traffic to host DNS
 								for _, protocol := range []nethelpers.Protocol{nethelpers.ProtocolUDP, nethelpers.ProtocolTCP} {
 									spec.Rules = append(spec.Rules,
@@ -170,7 +169,7 @@ func (ctrl *NfTablesChainConfigController) Run(ctx context.Context, r controller
 												),
 											},
 											MatchDestinationAddress: &network.NfTablesAddressMatch{
-												IncludeSubnets: []netip.Prefix{netip.PrefixFrom(hostDNSIP, hostDNSIP.BitLen())},
+												IncludeSubnets: hostDNSSubnets(cfg.Config().Cluster().Network()),
 											},
 											MatchLayer4: &network.NfTablesLayer4Match{
 												Protocol: protocol,
@@ -256,3 +255,20 @@ func (ctrl *NfTablesChainConfigController) Run(ctx context.Context, r controller
 		}
 	}
 }
+
+func hostDNSSubnets(clusterNetwork cfg.ClusterNetwork) []netip.Prefix {
+	result := []netip.Addr{hostDNSIPv4}
+
+	for _, podCIDR := range clusterNetwork.PodCIDRs() {
+		if netip.MustParsePrefix(podCIDR).Addr().Is6() {
+			result = append(result, hostDNSIPv6)
+		}
+	}
+
+	return xslices.Map(result, func(a netip.Addr) netip.Prefix { return netip.PrefixFrom(a, a.BitLen()) })
+}
+
+var (
+	hostDNSIPv4 = netip.MustParseAddr(constants.HostDNSAddress)
+	hostDNSIPv6 = netip.MustParseAddr(constants.HostDNSAddressV6)
+)

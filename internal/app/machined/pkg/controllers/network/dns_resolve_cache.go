@@ -117,7 +117,7 @@ func (ctrl *DNSResolveCacheController) run(ctx context.Context, r controller.Run
 	}
 
 	pairs := allAddressPairs(cfg.TypedSpec().ListenAddresses)
-	forwardKubeDNSToHost := cfg.TypedSpec().ServiceHostDNSAddress.IsValid()
+	forwardKubeDNSToHost := cfg.TypedSpec().ServiceHostDNSAddress.IsValid() || cfg.TypedSpec().ServiceHostDNSAddressV6.IsValid()
 
 	for runCfg, runErr := range ctrl.manager.RunAll(pairs, forwardKubeDNSToHost) {
 		switch {
