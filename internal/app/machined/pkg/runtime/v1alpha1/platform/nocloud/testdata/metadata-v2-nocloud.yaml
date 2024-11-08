@@ -12,6 +12,18 @@ ethernets:
     nameservers:
       search: [foo.local, bar.local]
       addresses: [8.8.8.8]
+  eth1:
+    match:
+      macaddress: '00:20:6e:1f:f9:a9'
+    addresses:
+      - 10.22.14.2/32
+    nameservers:
+      search: [ foo.local, bar.local ]
+    routes:
+      - to: "0.0.0.0/0"
+        via: "192.168.14.1"
+        metric: 100
+        on-link: true
 
   ext1:
     match:
