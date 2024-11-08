@@ -18,6 +18,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	"github.com/google/uuid"
 	"github.com/klauspost/compress/zstd"
+	"github.com/siderolabs/go-pointer"
 	"github.com/siderolabs/go-retry/retry"
 	"golang.org/x/sync/errgroup"
 )
@@ -251,15 +252,23 @@ func (au *AWSUploader) registerAMIArch(ctx context.Context, region string, svc *
 		}
 
 		for _, task := range status.ImportSnapshotTasks {
-			if *task.ImportTaskId == taskID {
-				if *task.SnapshotTaskDetail.Status == "completed" {
-					snapshotID = *task.SnapshotTaskDetail.SnapshotId
+			if task == nil {
+				continue
+			}
+
+			if pointer.SafeDeref(task.ImportTaskId) == taskID {
+				if task.SnapshotTaskDetail == nil {
+					continue
+				}
+
+				if pointer.SafeDeref(task.SnapshotTaskDetail.Status) == "completed" {
+					snapshotID = pointer.SafeDeref(task.SnapshotTaskDetail.SnapshotId)
 
 					return nil
 				}
 
-				if *task.SnapshotTaskDetail.Progress != progress {
-					progress = *task.SnapshotTaskDetail.Progress
+				if pointer.SafeDeref(task.SnapshotTaskDetail.Progress) != progress {
+					progress = pointer.SafeDeref(task.SnapshotTaskDetail.Progress)
 
 					log.Printf("aws: import into %s/%s, import snapshot %s%%", region, arch, progress)
 				}
