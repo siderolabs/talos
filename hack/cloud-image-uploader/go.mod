@@ -17,6 +17,7 @@ require (
 	github.com/google/uuid v1.6.0
 	github.com/klauspost/compress v1.17.9
 	github.com/siderolabs/gen v0.5.0
+	github.com/siderolabs/go-pointer v1.0.0
 	github.com/siderolabs/go-retry v0.3.3
 	github.com/spf13/pflag v1.0.5
 	golang.org/x/sync v0.8.0
