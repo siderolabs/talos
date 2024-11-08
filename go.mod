@@ -167,7 +167,7 @@ require (
 	github.com/siderolabs/proto-codec v0.1.1
 	github.com/siderolabs/protoenc v0.2.1
 	github.com/siderolabs/siderolink v0.3.11
-	github.com/siderolabs/talos/pkg/machinery v1.9.0-alpha.0
+	github.com/siderolabs/talos/pkg/machinery v1.9.0-alpha.1
 	github.com/spf13/cobra v1.8.1
 	github.com/spf13/pflag v1.0.5
 	github.com/stretchr/testify v1.9.0
