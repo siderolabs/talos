@@ -1949,6 +1949,22 @@ func haltIfInstalled(seq runtime.Sequence, _ any) (runtime.TaskExecutionFunc, st
 	}, "haltIfInstalled"
 }
 
+// MountTmpFilesystems represents the MountTmpFilesystems task.
+func MountTmpFilesystems(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
+	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) error {
+		tmpPoints := mountv2.Points{
+			mountv2.NewPoint("tmpfs", "/run", "tmpfs", mountv2.WithFlags(unix.MS_NOSUID|unix.MS_NOEXEC|unix.MS_RELATIME), mountv2.WithData("mode=0755")),
+			mountv2.NewPoint("tmpfs", "/system", "tmpfs", mountv2.WithData("mode=0755")),
+			mountv2.NewPoint("tmpfs", "/tmp", "tmpfs", mountv2.WithFlags(unix.MS_NOSUID|unix.MS_NOEXEC|unix.MS_NODEV), mountv2.WithData("size=64M"), mountv2.WithData("mode=0755")),
+		}
+
+		// TODO REVIEW: do we need to unmount these?
+		_, err := tmpPoints.Mount()
+
+		return err
+	}, "mountTmpfs"
+}
+
 // MountStatePartition mounts the system partition.
 func MountStatePartition(required bool) func(seq runtime.Sequence, _ any) (runtime.TaskExecutionFunc, string) {
 	return func(seq runtime.Sequence, _ any) (runtime.TaskExecutionFunc, string) {
