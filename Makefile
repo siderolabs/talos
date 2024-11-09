@@ -126,10 +126,10 @@ INSTALLER_ARCH ?= all
 IMAGER_ARGS ?=
 
 CGO_ENABLED ?= 0
-GO_BUILDFLAGS ?=
+GO_BUILDFLAGS ?= -trimpath
 GO_BUILDTAGS ?= tcell_minimal,grpcnotrace
 GO_BUILDTAGS_TALOSCTL ?= grpcnotrace
-GO_LDFLAGS ?=
+GO_LDFLAGS ?= -buildid=${SHA}
 GOAMD64 ?= v2
 
 WITH_RACE ?= false
