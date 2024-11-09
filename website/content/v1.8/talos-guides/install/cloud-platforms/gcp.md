@@ -139,10 +139,9 @@ for i in $( seq 0 2 ); do
   gcloud compute instances create talos-controlplane-$i \
     --image talos \
     --zone $REGION-b \
-    --tags talos-controlplane \
+    --tags talos-controlplane,talos-controlplane-$i \
     --boot-disk-size 20GB \
-    --metadata-from-file=user-data=./controlplane.yaml \
-    --tags talos-controlplane-$i
+    --metadata-from-file=user-data=./controlplane.yaml
 done
 
 # Add control plane nodes to instance group
