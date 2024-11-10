@@ -290,7 +290,7 @@ cluster:
 Then run the following command:
 
 ```bash
-talosctl patch machineconfig --patch-file patch.yaml --nodes <comma separated list of all your nodes' IP addresses>
+talosctl --talosconfig talosconfig patch machineconfig --patch-file patch.yaml --nodes <comma separated list of all your nodes' IP addresses>
 ```
 
 With that in place, we can now follow the [official instructions](https://github.com/hetznercloud/hcloud-cloud-controller-manager), ignoring the `kubeadm` related steps.
