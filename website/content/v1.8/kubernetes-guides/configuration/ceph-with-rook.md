@@ -44,6 +44,13 @@ Important Notes:
 - Any disk devices you add to the cluster in the 'CephCluster' must be empty (no filesystem and no partitions).
 ```
 
+Default PodSecurity configuration prevents execution of priviledged pods.
+Adding a label to the namespace will allow ceph to start.
+
+```shell
+kubectl label namespace rook-ceph pod-security.kubernetes.io/enforce=privileged
+```
+
 Once that is complete, the Ceph cluster can be installed with the official Helm Chart.
 The Chart can be installed with default values, which will attempt to use all nodes in the Kubernetes cluster, and all unused disks on each node for Ceph storage, and make available block storage, object storage, as well as a shared filesystem.
 Generally more specific node/device/cluster configuration is used, and the [Rook documentation](https://rook.io/docs/rook/v1.8/ceph-cluster-crd.html) explains all the available options in detail.
