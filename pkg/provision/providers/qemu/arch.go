@@ -129,11 +129,13 @@ func (arch Arch) PFlash(uefiEnabled bool, extraUEFISearchPaths []string) []PFlas
 			"/usr/share/ovmf",
 			"/usr/share/OVMF",
 			"/usr/share/qemu",
+			"/usr/share/ovmf/x64", // Arch Linux
 		}
 
 		// Secure boot enabled firmware files
 		uefiSourceFiles := []string{
 			"OVMF_CODE_4M.secboot.fd",
+			"OVMF_CODE.secboot.4m.fd", // Arch Linux
 			"OVMF_CODE.secboot.fd",
 			"OVMF.secboot.fd",
 			"edk2-x86_64-secure-code.fd", // Alpine Linux
@@ -143,6 +145,7 @@ func (arch Arch) PFlash(uefiEnabled bool, extraUEFISearchPaths []string) []PFlas
 		// Non-secure boot firmware files
 		uefiSourceFilesInsecure := []string{
 			"OVMF_CODE_4M.fd",
+			"OVMF_CODE.4m.fd", // Arch Linux
 			"OVMF_CODE.fd",
 			"OVMF.fd",
 			"ovmf-x86_64-4m-code.bin",
@@ -151,6 +154,7 @@ func (arch Arch) PFlash(uefiEnabled bool, extraUEFISearchPaths []string) []PFlas
 		// Empty vars files
 		uefiVarsFiles := []string{
 			"OVMF_VARS_4M.fd",
+			"OVMF_VARS.4m.fd", // Arch Linux
 			"OVMF_VARS.fd",
 			"ovmf-x86_64-4m-vars.bin",
 		}
