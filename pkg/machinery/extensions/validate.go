@@ -16,24 +16,83 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/version"
 )
 
-// Validate the extension: compatibility, contents, etc.
-func (ext *Extension) Validate() error {
-	if err := ext.validateConstraints(); err != nil {
-		return err
-	}
+// ValidationOptions are used to configure the validation process.
+type ValidationOptions struct {
+	// ValidateContstraints enables validation of the extension constraints.
+	ValidateContstraints bool
+	// ValidateContents enables validation of the extension contents.
+	ValidateContents bool
 
-	return ext.validateContents()
+	// TalosVersion is the version of Talos to validate against.
+	TalosVersion *semver.Version
 }
 
-func (ext *Extension) validateConstraints() error {
-	constraint := ext.Manifest.Metadata.Compatibility.Talos.Version
+// WithValidateConstraints enables validation of the extension constraints.
+func WithValidateConstraints() ValidationOption {
+	return func(o *ValidationOptions) error {
+		o.ValidateContstraints = true
 
-	if constraint != "" {
-		talosVersion, err := semver.ParseTolerant(version.Tag)
+		return nil
+	}
+}
+
+// WithValidateContents enables validation of the extension contents.
+func WithValidateContents() ValidationOption {
+	return func(o *ValidationOptions) error {
+		o.ValidateContents = true
+
+		return nil
+	}
+}
+
+// WithTalosVersion sets the Talos version to validate against.
+func WithTalosVersion(version semver.Version) ValidationOption {
+	return func(o *ValidationOptions) error {
+		o.TalosVersion = &version
+
+		return nil
+	}
+}
+
+// ValidationOption is a function that configures the validation options.
+type ValidationOption func(*ValidationOptions) error
+
+// Validate the extension: compatibility, contents, etc.
+func (ext *Extension) Validate(opts ...ValidationOption) error {
+	validationOptions := &ValidationOptions{}
+
+	for _, opt := range opts {
+		if err := opt(validationOptions); err != nil {
+			panic(err)
+		}
+	}
+
+	if validationOptions.TalosVersion == nil {
+		version, err := semver.ParseTolerant(version.Tag)
 		if err != nil {
 			return err
 		}
 
+		validationOptions.TalosVersion = &version
+	}
+
+	if validationOptions.ValidateContstraints {
+		if err := ext.validateConstraints(*validationOptions.TalosVersion); err != nil {
+			return err
+		}
+	}
+
+	if validationOptions.ValidateContents {
+		return ext.validateContents()
+	}
+
+	return nil
+}
+
+func (ext *Extension) validateConstraints(talosVersion semver.Version) error {
+	constraint := ext.Manifest.Metadata.Compatibility.Talos.Version
+
+	if constraint != "" {
 		versionConstraint, err := semver.ParseRange(trim(constraint))
 		if err != nil {
 			return fmt.Errorf("error parsing Talos version constraint: %w", err)

@@ -16,11 +16,12 @@ import (
 
 func (i *Installer) installExtensions() error {
 	builder := extensions.Builder{
-		InitramfsPath:     fmt.Sprintf(constants.InitramfsAssetPath, i.options.Arch),
-		Arch:              i.options.Arch,
-		ExtensionTreePath: constants.SystemExtensionsPath,
-		Printf:            log.Printf,
-		Quirks:            quirks.New(i.options.Version),
+		InitramfsPath:             fmt.Sprintf(constants.InitramfsAssetPath, i.options.Arch),
+		Arch:                      i.options.Arch,
+		ExtensionTreePath:         constants.SystemExtensionsPath,
+		ExtensionValidateContents: true,
+		Printf:                    log.Printf,
+		Quirks:                    quirks.New(i.options.Version),
 	}
 
 	return builder.Build()

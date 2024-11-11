@@ -24,6 +24,8 @@ type Builder struct {
 	Arch string
 	// ExtensionTreePath is a path to the extracted extension tree.
 	ExtensionTreePath string
+	// ExtensionValidateContents enables validation of the extension contents.
+	ExtensionValidateContents bool
 	// Printf is used for logging.
 	Printf func(format string, v ...any)
 	// Quirks for the Talos version being used.
@@ -95,8 +97,17 @@ func (builder *Builder) Build() error {
 func (builder *Builder) validateExtensions(extensions []*extensions.Extension) error {
 	builder.Printf("validating system extensions")
 
+	opts := []extinterface.ValidationOption{
+		extinterface.WithValidateConstraints(),
+		extinterface.WithTalosVersion(builder.Quirks.Version()),
+	}
+
+	if builder.ExtensionValidateContents {
+		opts = append(opts, extinterface.WithValidateContents())
+	}
+
 	for _, ext := range extensions {
-		if err := ext.Validate(); err != nil {
+		if err := ext.Validate(opts...); err != nil {
 			return fmt.Errorf("error validating extension %q: %w", ext.Manifest.Metadata.Name, err)
 		}
 	}

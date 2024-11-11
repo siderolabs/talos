@@ -8,11 +8,11 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/blang/semver/v4"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/siderolabs/talos/pkg/machinery/extensions"
-	"github.com/siderolabs/talos/pkg/machinery/version"
 )
 
 func TestLoadValidate(t *testing.T) {
@@ -21,25 +21,19 @@ func TestLoadValidate(t *testing.T) {
 
 	assert.Equal(t, "gvisor", ext.Manifest.Metadata.Name)
 
-	// override Talos version to make it predictable
-	oldVersion := version.Tag
-	version.Tag = "v1.0.0"
+	version, err := semver.Parse("1.0.0")
+	require.NoError(t, err)
 
-	t.Cleanup(func() {
-		version.Tag = oldVersion
-	})
-
-	assert.NoError(t, ext.Validate())
+	assert.NoError(t, ext.Validate(
+		extensions.WithValidateConstraints(),
+		extensions.WithValidateContents(),
+		extensions.WithTalosVersion(version),
+	))
 }
 
 func TestValidateFailures(t *testing.T) {
-	// override Talos version to make it predictable
-	oldVersion := version.Tag
-	version.Tag = "v1.0.0"
-
-	t.Cleanup(func() {
-		version.Tag = oldVersion
-	})
+	version, err := semver.Parse("1.0.0")
+	require.NoError(t, err)
 
 	for _, tt := range []struct {
 		name          string
@@ -73,7 +67,12 @@ func TestValidateFailures(t *testing.T) {
 			}
 
 			if err == nil {
-				err = ext.Validate()
+				err = ext.Validate(
+					extensions.WithValidateConstraints(),
+					extensions.WithValidateContents(),
+					extensions.WithTalosVersion(version),
+				)
+
 				assert.EqualError(t, err, tt.validateError)
 			}
 		})
