@@ -1805,6 +1805,53 @@ talosctl health [flags]
 
 * [talosctl](#talosctl)	 - A CLI for out-of-band management of Kubernetes nodes created by Talos
 
+## talosctl image cache-create
+
+Create a cache of images
+
+### Synopsis
+
+Create a oci tarball of image cache that talos imager can use
+
+```
+talosctl image cache-create [flags]
+```
+
+### Examples
+
+```
+talosctl images cache-create --images=ghcr.io/siderolabs/kubelet:1.32.0-beta.0 --image-cache-path=/tmp/cache.tar
+
+Alternatively, stdin can be piped to the command:
+talosctl images default | talosctl images cache-create --image-cache-path=/tmp/cache.tar --images=-
+
+```
+
+### Options
+
+```
+  -h, --help                      help for cache-create
+      --image-cache-path string   path to save the image cache
+      --images strings            images to cache
+      --insecure                  allow insecure registries
+      --platform string           platform to use for the cache (default "linux/amd64")
+```
+
+### Options inherited from parent commands
+
+```
+      --cluster string       Cluster to connect to if a proxy endpoint is used.
+      --context string       Context to be used in command
+  -e, --endpoints strings    override default endpoints in Talos configuration
+      --namespace system     namespace to use: system (etcd and kubelet images) or `cri` for all Kubernetes workloads (default "cri")
+  -n, --nodes strings        target the specified nodes
+      --talosconfig string   The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
+```
+
+### SEE ALSO
+
+* [talosctl image](#talosctl-image)	 - Manage CRI containter images
+
 ## talosctl image default
 
 List the default images used by Talos
@@ -1916,6 +1963,7 @@ Manage CRI containter images
 ### SEE ALSO
 
 * [talosctl](#talosctl)	 - A CLI for out-of-band management of Kubernetes nodes created by Talos
+* [talosctl image cache-create](#talosctl-image-cache-create)	 - Create a cache of images
 * [talosctl image default](#talosctl-image-default)	 - List the default images used by Talos
 * [talosctl image list](#talosctl-image-list)	 - List CRI images
 * [talosctl image pull](#talosctl-image-pull)	 - Pull an image into CRI

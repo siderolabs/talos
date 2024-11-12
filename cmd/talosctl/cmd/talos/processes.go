@@ -237,9 +237,6 @@ func processesOutput(ctx context.Context, c *client.Client) (output string, err 
 	}
 
 	res := columnize.SimpleFormat(s)
-	if err != nil {
-		return res, err
-	}
 
 	return res, helpers.CheckErrors(resp.Messages...)
 }
