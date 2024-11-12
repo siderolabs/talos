@@ -159,7 +159,7 @@ func (vip *VIP) waitForPreconditions(ctx context.Context) error {
 				return false, nil
 			}
 
-			svc := r.(*v1alpha1.Service) //nolint:errcheck,forcetypeassert
+			svc := r.(*v1alpha1.Service) //nolint:forcetypeassert
 
 			return svc.TypedSpec().Running && svc.TypedSpec().Healthy, nil
 		}))

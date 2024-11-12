@@ -260,7 +260,7 @@ func TestAPIIdiosyncrasies(t *testing.T) {
 	}
 }
 
-//nolint:nakedret,gocyclo,errcheck,forcetypeassert
+//nolint:nakedret,gocyclo,forcetypeassert
 func getOptions(t *testing.T, descriptor protoreflect.Descriptor) (deprecated bool, version string) {
 	switch opts := descriptor.Options().(type) {
 	case *descriptorpb.EnumOptions:

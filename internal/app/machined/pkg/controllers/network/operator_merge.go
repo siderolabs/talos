@@ -75,7 +75,7 @@ func (ctrl *OperatorMergeController) Run(ctx context.Context, r controller.Runti
 		operators := map[string]*network.OperatorSpec{}
 
 		for _, res := range list.Items {
-			operator := res.(*network.OperatorSpec) //nolint:errcheck,forcetypeassert
+			operator := res.(*network.OperatorSpec) //nolint:forcetypeassert
 			id := network.OperatorID(operator.TypedSpec().Operator, operator.TypedSpec().LinkName)
 
 			existing, ok := operators[id]

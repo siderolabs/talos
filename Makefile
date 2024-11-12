@@ -17,13 +17,13 @@ ZSTD_COMPRESSION_LEVEL ?= 18
 CI_RELEASE_TAG := $(shell git log --oneline --format=%B -n 1 HEAD^2 -- 2>/dev/null | head -n 1 | sed -r "/^release\(.*\)/ s/^release\((.*)\):.*$$/\\1/; t; Q")
 
 ARTIFACTS := _out
-TOOLS ?= ghcr.io/siderolabs/tools:v1.9.0-alpha.0-7-g3750064
+TOOLS ?= ghcr.io/siderolabs/tools:v1.9.0-alpha.0-9-ge061b6f
 
 DEBUG_TOOLS_SOURCE := scratch
 
 PKGS_PREFIX ?= ghcr.io/siderolabs
-PKGS ?= v1.9.0-alpha.0-37-g4699763
-EXTRAS ?= v1.9.0-alpha.0-1-geab6e58
+PKGS ?= v1.9.0-alpha.0-40-g567a14a
+EXTRAS ?= v1.9.0-alpha.0-2-g78ba66b
 
 KRES_IMAGE ?= ghcr.io/siderolabs/kres:latest
 CONFORMANCE_IMAGE ?= ghcr.io/siderolabs/conform:latest
@@ -65,17 +65,17 @@ PKG_TALOSCTL_CNI_BUNDLE_INSTALL ?= $(PKGS_PREFIX)/talosctl-cni-bundle-install:$(
 # renovate: datasource=github-tags depName=golang/go
 GO_VERSION ?= 1.23
 # renovate: datasource=go depName=golang.org/x/tools
-GOIMPORTS_VERSION ?= v0.26.0
+GOIMPORTS_VERSION ?= v0.27.0
 # renovate: datasource=go depName=mvdan.cc/gofumpt
 GOFUMPT_VERSION ?= v0.7.0
 # renovate: datasource=go depName=github.com/golangci/golangci-lint
-GOLANGCILINT_VERSION ?= v1.61.0
+GOLANGCILINT_VERSION ?= v1.62.0
 # renovate: datasource=go depName=golang.org/x/tools
-STRINGER_VERSION ?= v0.26.0
+STRINGER_VERSION ?= v0.27.0
 # renovate: datasource=go depName=github.com/dmarkham/enumer
 ENUMER_VERSION ?= v1.5.10
 # renovate: datasource=go depName=k8s.io/code-generator
-DEEPCOPY_GEN_VERSION ?= v0.31.1
+DEEPCOPY_GEN_VERSION ?= v0.31.2
 # renovate: datasource=go depName=github.com/planetscale/vtprotobuf
 VTPROTOBUF_VERSION ?= v0.6.0
 # renovate: datasource=go depName=github.com/siderolabs/deep-copy
@@ -110,7 +110,7 @@ KUBESTR_VERSION ?= v0.4.46
 # renovate: datasource=github-releases depName=helm/helm
 HELM_VERSION ?= v3.16.2
 # renovate: datasource=github-releases depName=cilium/cilium-cli
-CILIUM_CLI_VERSION ?= v0.16.19
+CILIUM_CLI_VERSION ?= v0.16.20
 # renovate: datasource=github-releases depName=microsoft/secureboot_objects
 MICROSOFT_SECUREBOOT_RELEASE ?= v1.1.3
 

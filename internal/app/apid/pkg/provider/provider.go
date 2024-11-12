@@ -58,7 +58,7 @@ func NewTLSConfig(ctx context.Context, resources state.State) (*TLSConfig, error
 			return nil, fmt.Errorf("error watching for API certificates: %w", event.Error)
 		}
 
-		apiCerts := event.Resource.(*secrets.API) //nolint:errcheck,forcetypeassert
+		apiCerts := event.Resource.(*secrets.API) //nolint:forcetypeassert
 
 		if err := provider.Update(apiCerts); err != nil {
 			return nil, err
@@ -92,7 +92,7 @@ func (tlsConfig *TLSConfig) Watch(ctx context.Context, onUpdate func()) error {
 			return fmt.Errorf("error watching API certificates: %w", event.Error)
 		}
 
-		apiCerts := event.Resource.(*secrets.API) //nolint:errcheck,forcetypeassert
+		apiCerts := event.Resource.(*secrets.API) //nolint:forcetypeassert
 
 		if err := tlsConfig.certificateProvider.Update(apiCerts); err != nil {
 			return fmt.Errorf("failed updating cert: %v", err)

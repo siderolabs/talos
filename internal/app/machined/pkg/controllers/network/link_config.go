@@ -184,7 +184,7 @@ func (ctrl *LinkConfigController) Run(ctx context.Context, r controller.Runtime,
 		}
 
 		for _, item := range list.Items {
-			linkStatus := item.(*network.LinkStatus) //nolint:errcheck,forcetypeassert
+			linkStatus := item.(*network.LinkStatus) //nolint:forcetypeassert
 
 			if _, configured := configuredLinks[linkStatus.Metadata().ID()]; !configured {
 				if linkStatus.TypedSpec().Physical() {

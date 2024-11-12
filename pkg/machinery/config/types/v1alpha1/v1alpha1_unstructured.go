@@ -25,7 +25,7 @@ func (in *Unstructured) DeepCopy() *Unstructured {
 
 	out := new(Unstructured)
 
-	out.Object = deepCopyUnstructured(in.Object).(map[string]any) //nolint:errcheck,forcetypeassert
+	out.Object = deepCopyUnstructured(in.Object).(map[string]any) //nolint:forcetypeassert
 
 	return out
 }

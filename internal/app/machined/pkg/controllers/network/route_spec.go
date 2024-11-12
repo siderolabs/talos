@@ -105,7 +105,7 @@ func (ctrl *RouteSpecController) Run(ctx context.Context, r controller.Runtime, 
 
 		// loop over routes and make reconcile decision
 		for _, res := range list.Items {
-			route := res.(*network.RouteSpec) //nolint:forcetypeassert,errcheck
+			route := res.(*network.RouteSpec) //nolint:forcetypeassert
 
 			if err = ctrl.syncRoute(ctx, r, logger, conn, links, routes, route); err != nil {
 				multiErr = multierror.Append(multiErr, err)

@@ -238,7 +238,7 @@ func (ctrl *OperatorConfigController) Run(ctx context.Context, r controller.Runt
 		}
 
 		for _, item := range list.Items {
-			linkStatus := item.(*network.LinkStatus) //nolint:errcheck,forcetypeassert
+			linkStatus := item.(*network.LinkStatus) //nolint:forcetypeassert
 
 			if linkStatus.TypedSpec().Physical() {
 				if _, configured := configuredInterfaces[linkStatus.Metadata().ID()]; !configured {

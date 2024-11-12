@@ -78,7 +78,7 @@ func (ctrl *TimeServerSpecController) Run(ctx context.Context, r controller.Runt
 
 		// loop over specs and sync to statuses
 		for _, res := range list.Items {
-			spec := res.(*network.TimeServerSpec) //nolint:forcetypeassert,errcheck
+			spec := res.(*network.TimeServerSpec) //nolint:forcetypeassert
 
 			switch spec.Metadata().Phase() {
 			case resource.PhaseTearingDown:

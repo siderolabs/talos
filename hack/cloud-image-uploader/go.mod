@@ -1,6 +1,6 @@
 module github.com/siderolabs/cloud-image-uploader
 
-go 1.23.2
+go 1.23.3
 
 require (
 	cloud.google.com/go/storage v1.46.0
@@ -20,14 +20,14 @@ require (
 	github.com/siderolabs/go-pointer v1.0.0
 	github.com/siderolabs/go-retry v0.3.3
 	github.com/spf13/pflag v1.0.5
-	golang.org/x/sync v0.8.0
-	google.golang.org/api v0.204.0
+	golang.org/x/sync v0.9.0
+	google.golang.org/api v0.205.0
 )
 
 require (
 	cel.dev/expr v0.16.1 // indirect
 	cloud.google.com/go v0.116.0 // indirect
-	cloud.google.com/go/auth v0.10.0 // indirect
+	cloud.google.com/go/auth v0.10.1 // indirect
 	cloud.google.com/go/auth/oauth2adapt v0.2.5 // indirect
 	cloud.google.com/go/compute/metadata v0.5.2 // indirect
 	cloud.google.com/go/iam v1.2.1 // indirect

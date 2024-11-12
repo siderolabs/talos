@@ -123,12 +123,16 @@ type MachineControlPlane interface {
 
 // MachineControllerManager defines the requirements for a config that pertains to ControllerManager
 // related options.
+//
+//nolint:iface
 type MachineControllerManager interface {
 	Disabled() bool
 }
 
 // MachineScheduler defines the requirements for a config that pertains to Scheduler
 // related options.
+//
+//nolint:iface
 type MachineScheduler interface {
 	Disabled() bool
 }
@@ -187,11 +191,15 @@ type VIPConfig interface {
 }
 
 // VIPEquinixMetal contains Equinix Metal API VIP settings.
+//
+//nolint:iface
 type VIPEquinixMetal interface {
 	APIToken() string
 }
 
 // VIPHCloud contains Hetzner Cloud API VIP settings.
+//
+//nolint:iface
 type VIPHCloud interface {
 	APIToken() string
 }
@@ -248,6 +256,8 @@ type Bond interface {
 }
 
 // STP contains the Spanning Tree Protocol settings for a bridge.
+//
+//nolint:iface
 type STP interface {
 	Enabled() bool
 }

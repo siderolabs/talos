@@ -80,7 +80,7 @@ func (ctrl *HostnameSpecController) Run(ctx context.Context, r controller.Runtim
 
 		// loop over specs and sync to statuses
 		for _, res := range list.Items {
-			spec := res.(*network.HostnameSpec) //nolint:forcetypeassert,errcheck
+			spec := res.(*network.HostnameSpec) //nolint:forcetypeassert
 
 			switch spec.Metadata().Phase() {
 			case resource.PhaseTearingDown:

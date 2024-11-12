@@ -1,5 +1,5 @@
 module module-sig-verify
 
-go 1.23.2
+go 1.23.3
 
-require go.mozilla.org/pkcs7 v0.0.0-20210826202110-33d05740a352
+require go.mozilla.org/pkcs7 v0.9.0

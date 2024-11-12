@@ -75,7 +75,7 @@ func (ctrl *AddressMergeController) Run(ctx context.Context, r controller.Runtim
 		addresses := map[string]*network.AddressSpec{}
 
 		for _, res := range list.Items {
-			address := res.(*network.AddressSpec) //nolint:errcheck,forcetypeassert
+			address := res.(*network.AddressSpec) //nolint:forcetypeassert
 			id := network.AddressID(address.TypedSpec().LinkName, address.TypedSpec().Address)
 
 			existing, ok := addresses[id]

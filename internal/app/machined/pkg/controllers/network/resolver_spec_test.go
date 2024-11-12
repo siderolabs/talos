@@ -77,7 +77,7 @@ func (suite *ResolverSpecSuite) assertStatus(id string, servers ...netip.Addr) e
 		return err
 	}
 
-	status := r.(*network.ResolverStatus) //nolint:errcheck,forcetypeassert
+	status := r.(*network.ResolverStatus) //nolint:forcetypeassert
 
 	if !slices.Equal(status.TypedSpec().DNSServers, servers) {
 		return retry.ExpectedErrorf("server list mismatch: %q != %q", status.TypedSpec().DNSServers, servers)

@@ -85,7 +85,7 @@ func (ctrl *NodeAddressController) Run(ctx context.Context, r controller.Runtime
 		linksUp := make(map[uint32]struct{})
 
 		for _, r := range links.Items {
-			link := r.(*network.LinkStatus) //nolint:errcheck,forcetypeassert
+			link := r.(*network.LinkStatus) //nolint:forcetypeassert
 
 			if link.TypedSpec().OperationalState == nethelpers.OperStateUp || link.TypedSpec().OperationalState == nethelpers.OperStateUnknown {
 				// skip physical interfaces without carrier
@@ -115,7 +115,7 @@ func (ctrl *NodeAddressController) Run(ctx context.Context, r controller.Runtime
 		)
 
 		for _, r := range addresses.Items {
-			addr := r.(*network.AddressStatus) //nolint:errcheck,forcetypeassert
+			addr := r.(*network.AddressStatus) //nolint:forcetypeassert
 
 			if addr.TypedSpec().Scope >= nethelpers.ScopeLink {
 				continue

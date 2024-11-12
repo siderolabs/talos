@@ -166,7 +166,7 @@ func (suite *RebootSuite) TestRebootAllNodes() {
 					return fmt.Errorf("bootID record not found for %q", node)
 				}
 
-				bootIDBefore := bootIDBeforeInterface.(string) //nolint:errcheck,forcetypeassert
+				bootIDBefore := bootIDBeforeInterface.(string) //nolint:forcetypeassert
 
 				nodeCtx := client.WithNodes(suite.ctx, node)
 

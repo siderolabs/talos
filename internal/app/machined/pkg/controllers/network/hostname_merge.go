@@ -73,7 +73,7 @@ func (ctrl *HostnameMergeController) Run(ctx context.Context, r controller.Runti
 		var final network.HostnameSpecSpec
 
 		for _, res := range list.Items {
-			spec := res.(*network.HostnameSpec) //nolint:errcheck,forcetypeassert
+			spec := res.(*network.HostnameSpec) //nolint:forcetypeassert
 
 			if final.Hostname != "" && spec.TypedSpec().ConfigLayer <= final.ConfigLayer {
 				// skip this spec, as existing one is higher layer

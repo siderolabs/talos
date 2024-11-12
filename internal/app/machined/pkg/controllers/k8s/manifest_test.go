@@ -217,14 +217,14 @@ func (suite *ManifestSuite) TestReconcileKubeProxyExtraArgs() {
 	)
 	suite.Require().NoError(err)
 
-	manifest := r.(*k8s.Manifest) //nolint:errcheck,forcetypeassert
+	manifest := r.(*k8s.Manifest) //nolint:forcetypeassert
 	suite.Assert().Len(k8sadapter.Manifest(manifest).Objects(), 3)
 
 	suite.Assert().Equal("DaemonSet", k8sadapter.Manifest(manifest).Objects()[0].GetKind())
 
 	ds := k8sadapter.Manifest(manifest).Objects()[0].Object
 	containerSpec := ds["spec"].(map[string]any)["template"].(map[string]any)["spec"].(map[string]any)["containers"].([]any)[0]
-	args := containerSpec.(map[string]any)["command"].([]any) //nolint:errcheck,forcetypeassert
+	args := containerSpec.(map[string]any)["command"].([]any) //nolint:forcetypeassert
 
 	suite.Assert().Equal("--bind-address=\"::\"", args[len(args)-1])
 }
@@ -273,7 +273,7 @@ func (suite *ManifestSuite) TestReconcileIPv6() {
 	)
 	suite.Require().NoError(err)
 
-	manifest := r.(*k8s.Manifest) //nolint:errcheck,forcetypeassert
+	manifest := r.(*k8s.Manifest) //nolint:forcetypeassert
 	suite.Assert().Len(k8sadapter.Manifest(manifest).Objects(), 1)
 
 	service := k8sadapter.Manifest(manifest).Objects()[0]
@@ -302,7 +302,7 @@ func (suite *ManifestSuite) TestReconcileIPv6() {
 	)
 	suite.Require().NoError(err)
 
-	manifest = r.(*k8s.Manifest) //nolint:errcheck,forcetypeassert
+	manifest = r.(*k8s.Manifest) //nolint:forcetypeassert
 	suite.Assert().Len(k8sadapter.Manifest(manifest).Objects(), 5)
 
 	configmap := k8sadapter.Manifest(manifest).Objects()[3]

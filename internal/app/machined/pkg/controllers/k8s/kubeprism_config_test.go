@@ -75,7 +75,7 @@ func (suite *KubePrismConfigControllerSuite) TestGeneration() {
 	})
 
 	ctest.UpdateWithConflicts(suite, mc, func(cfg *config.MachineConfig) error {
-		balancer := cfg.Config().Machine().Features().KubePrism().(*v1alpha1.KubePrism) //nolint:errcheck
+		balancer := cfg.Config().Machine().Features().KubePrism().(*v1alpha1.KubePrism)
 		balancer.ServerEnabled = pointer.To(false)
 
 		return nil
@@ -84,7 +84,7 @@ func (suite *KubePrismConfigControllerSuite) TestGeneration() {
 	ctest.AssertNoResource[*k8s.KubePrismConfig](suite, k8s.KubePrismConfigID)
 
 	ctest.UpdateWithConflicts(suite, mc, func(cfg *config.MachineConfig) error {
-		balancer := cfg.Config().Machine().Features().KubePrism().(*v1alpha1.KubePrism) //nolint:errcheck
+		balancer := cfg.Config().Machine().Features().KubePrism().(*v1alpha1.KubePrism)
 		balancer.ServerEnabled = pointer.To(true)
 		balancer.ServerPort = 7446
 

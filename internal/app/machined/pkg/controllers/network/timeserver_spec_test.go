@@ -76,7 +76,7 @@ func (suite *TimeServerSpecSuite) assertStatus(id string, servers ...string) err
 		return err
 	}
 
-	status := r.(*network.TimeServerStatus) //nolint:errcheck,forcetypeassert
+	status := r.(*network.TimeServerStatus) //nolint:forcetypeassert
 
 	if !slices.Equal(status.TypedSpec().NTPServers, servers) {
 		return retry.ExpectedErrorf("server list mismatch: %q != %q", status.TypedSpec().NTPServers, servers)

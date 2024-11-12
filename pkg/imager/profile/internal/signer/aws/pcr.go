@@ -132,7 +132,7 @@ func NewPCRSigner(ctx context.Context, kmsKeyID, awsRegion string) (*KeySigner, 
 		return nil, fmt.Errorf("Public key is not valid: %w", err)
 	}
 
-	rsaKey := parsedKey.(*rsa.PublicKey) //nolint:errcheck
+	rsaKey := parsedKey.(*rsa.PublicKey)
 	if rsaKey.E == 0 {
 		return nil, fmt.Errorf("property e is empty")
 	}

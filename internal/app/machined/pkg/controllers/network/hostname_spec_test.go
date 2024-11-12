@@ -80,7 +80,7 @@ func (suite *HostnameSpecSuite) assertStatus(id string, fqdn string) error {
 		return err
 	}
 
-	status := r.(*network.HostnameStatus) //nolint:errcheck,forcetypeassert
+	status := r.(*network.HostnameStatus) //nolint:forcetypeassert
 
 	if status.TypedSpec().FQDN() != fqdn {
 		return retry.ExpectedErrorf("fqdn mismatch: %q != %q", status.TypedSpec().FQDN(), fqdn)

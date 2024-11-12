@@ -184,8 +184,8 @@ func NewCRDController(
 	if _, err = secrets.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
 		AddFunc: controller.handleSecret,
 		UpdateFunc: func(oldSec, newSec any) {
-			newSecret := newSec.(*corev1.Secret) //nolint:errcheck
-			oldSecret := oldSec.(*corev1.Secret) //nolint:errcheck
+			newSecret := newSec.(*corev1.Secret)
+			oldSecret := oldSec.(*corev1.Secret)
 
 			if newSecret.ResourceVersion == oldSecret.ResourceVersion {
 				return

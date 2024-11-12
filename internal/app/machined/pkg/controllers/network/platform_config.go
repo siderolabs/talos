@@ -229,7 +229,7 @@ func (ctrl *PlatformConfigController) apply(ctx context.Context, r controller.Ru
 				return networkConfig.Addresses[i]
 			},
 			idBuilder: func(spec any) (resource.ID, error) {
-				addressSpec := spec.(network.AddressSpecSpec) //nolint:errcheck,forcetypeassert
+				addressSpec := spec.(network.AddressSpecSpec) //nolint:forcetypeassert
 
 				return network.LayeredID(network.ConfigPlatform, network.AddressID(addressSpec.LinkName, addressSpec.Address)), nil
 			},
@@ -240,7 +240,7 @@ func (ctrl *PlatformConfigController) apply(ctx context.Context, r controller.Ru
 				return func(r resource.Resource) error {
 					spec := r.(*network.AddressSpec).TypedSpec()
 
-					*spec = newSpec.(network.AddressSpecSpec) //nolint:errcheck,forcetypeassert
+					*spec = newSpec.(network.AddressSpecSpec) //nolint:forcetypeassert
 					spec.ConfigLayer = network.ConfigPlatform
 
 					return nil
@@ -254,7 +254,7 @@ func (ctrl *PlatformConfigController) apply(ctx context.Context, r controller.Ru
 				return networkConfig.Links[i]
 			},
 			idBuilder: func(spec any) (resource.ID, error) {
-				linkSpec := spec.(network.LinkSpecSpec) //nolint:errcheck,forcetypeassert
+				linkSpec := spec.(network.LinkSpecSpec) //nolint:forcetypeassert
 
 				return network.LayeredID(network.ConfigPlatform, network.LinkID(linkSpec.Name)), nil
 			},
@@ -265,7 +265,7 @@ func (ctrl *PlatformConfigController) apply(ctx context.Context, r controller.Ru
 				return func(r resource.Resource) error {
 					spec := r.(*network.LinkSpec).TypedSpec()
 
-					*spec = newSpec.(network.LinkSpecSpec) //nolint:errcheck,forcetypeassert
+					*spec = newSpec.(network.LinkSpecSpec) //nolint:forcetypeassert
 					spec.ConfigLayer = network.ConfigPlatform
 
 					return nil
@@ -279,7 +279,7 @@ func (ctrl *PlatformConfigController) apply(ctx context.Context, r controller.Ru
 				return networkConfig.Routes[i]
 			},
 			idBuilder: func(spec any) (resource.ID, error) {
-				routeSpec := spec.(network.RouteSpecSpec) //nolint:errcheck,forcetypeassert
+				routeSpec := spec.(network.RouteSpecSpec) //nolint:forcetypeassert
 
 				return network.LayeredID(
 					network.ConfigPlatform,
@@ -293,7 +293,7 @@ func (ctrl *PlatformConfigController) apply(ctx context.Context, r controller.Ru
 				return func(r resource.Resource) error {
 					spec := r.(*network.RouteSpec).TypedSpec()
 
-					*spec = newSpec.(network.RouteSpecSpec) //nolint:errcheck,forcetypeassert
+					*spec = newSpec.(network.RouteSpecSpec) //nolint:forcetypeassert
 					spec.ConfigLayer = network.ConfigPlatform
 
 					return nil
@@ -316,7 +316,7 @@ func (ctrl *PlatformConfigController) apply(ctx context.Context, r controller.Ru
 				return func(r resource.Resource) error {
 					spec := r.(*network.HostnameSpec).TypedSpec()
 
-					*spec = newSpec.(network.HostnameSpecSpec) //nolint:errcheck,forcetypeassert
+					*spec = newSpec.(network.HostnameSpecSpec) //nolint:forcetypeassert
 					spec.ConfigLayer = network.ConfigPlatform
 
 					return nil
@@ -339,7 +339,7 @@ func (ctrl *PlatformConfigController) apply(ctx context.Context, r controller.Ru
 				return func(r resource.Resource) error {
 					spec := r.(*network.ResolverSpec).TypedSpec()
 
-					*spec = newSpec.(network.ResolverSpecSpec) //nolint:errcheck,forcetypeassert
+					*spec = newSpec.(network.ResolverSpecSpec) //nolint:forcetypeassert
 					spec.ConfigLayer = network.ConfigPlatform
 
 					return nil
@@ -362,7 +362,7 @@ func (ctrl *PlatformConfigController) apply(ctx context.Context, r controller.Ru
 				return func(r resource.Resource) error {
 					spec := r.(*network.TimeServerSpec).TypedSpec()
 
-					*spec = newSpec.(network.TimeServerSpecSpec) //nolint:errcheck,forcetypeassert
+					*spec = newSpec.(network.TimeServerSpecSpec) //nolint:forcetypeassert
 					spec.ConfigLayer = network.ConfigPlatform
 
 					return nil
@@ -376,7 +376,7 @@ func (ctrl *PlatformConfigController) apply(ctx context.Context, r controller.Ru
 				return networkConfig.Operators[i]
 			},
 			idBuilder: func(spec any) (resource.ID, error) {
-				operatorSpec := spec.(network.OperatorSpecSpec) //nolint:errcheck,forcetypeassert
+				operatorSpec := spec.(network.OperatorSpecSpec) //nolint:forcetypeassert
 
 				return network.LayeredID(network.ConfigPlatform, network.OperatorID(operatorSpec.Operator, operatorSpec.LinkName)), nil
 			},
@@ -387,7 +387,7 @@ func (ctrl *PlatformConfigController) apply(ctx context.Context, r controller.Ru
 				return func(r resource.Resource) error {
 					spec := r.(*network.OperatorSpec).TypedSpec()
 
-					*spec = newSpec.(network.OperatorSpecSpec) //nolint:errcheck,forcetypeassert
+					*spec = newSpec.(network.OperatorSpecSpec) //nolint:forcetypeassert
 					spec.ConfigLayer = network.ConfigPlatform
 
 					return nil
@@ -401,7 +401,7 @@ func (ctrl *PlatformConfigController) apply(ctx context.Context, r controller.Ru
 				return networkConfig.ExternalIPs[i]
 			},
 			idBuilder: func(spec any) (resource.ID, error) {
-				ipAddr := spec.(netip.Addr) //nolint:errcheck,forcetypeassert
+				ipAddr := spec.(netip.Addr) //nolint:forcetypeassert
 				ipPrefix := netip.PrefixFrom(ipAddr, ipAddr.BitLen())
 
 				return network.AddressID(externalLink, ipPrefix), nil
@@ -411,7 +411,7 @@ func (ctrl *PlatformConfigController) apply(ctx context.Context, r controller.Ru
 			},
 			resourceModifier: func(newSpec any) func(r resource.Resource) error {
 				return func(r resource.Resource) error {
-					ipAddr := newSpec.(netip.Addr) //nolint:errcheck,forcetypeassert
+					ipAddr := newSpec.(netip.Addr) //nolint:forcetypeassert
 					ipPrefix := netip.PrefixFrom(ipAddr, ipAddr.BitLen())
 
 					status := r.(*network.AddressStatus).TypedSpec()
@@ -438,7 +438,7 @@ func (ctrl *PlatformConfigController) apply(ctx context.Context, r controller.Ru
 				return networkConfig.Probes[i]
 			},
 			idBuilder: func(spec any) (resource.ID, error) {
-				probeSpec := spec.(network.ProbeSpecSpec) //nolint:errcheck,forcetypeassert
+				probeSpec := spec.(network.ProbeSpecSpec) //nolint:forcetypeassert
 
 				return probeSpec.ID()
 			},
@@ -449,7 +449,7 @@ func (ctrl *PlatformConfigController) apply(ctx context.Context, r controller.Ru
 				return func(r resource.Resource) error {
 					spec := r.(*network.ProbeSpec).TypedSpec()
 
-					*spec = newSpec.(network.ProbeSpecSpec) //nolint:errcheck,forcetypeassert
+					*spec = newSpec.(network.ProbeSpecSpec) //nolint:forcetypeassert
 					spec.ConfigLayer = network.ConfigPlatform
 
 					return nil
@@ -470,7 +470,7 @@ func (ctrl *PlatformConfigController) apply(ctx context.Context, r controller.Ru
 			},
 			resourceModifier: func(newSpec any) func(r resource.Resource) error {
 				return func(r resource.Resource) error {
-					metadata := newSpec.(*runtimeres.PlatformMetadataSpec) //nolint:errcheck,forcetypeassert
+					metadata := newSpec.(*runtimeres.PlatformMetadataSpec) //nolint:forcetypeassert
 
 					*r.(*runtimeres.PlatformMetadata).TypedSpec() = *metadata
 

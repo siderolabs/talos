@@ -39,7 +39,7 @@ linters-settings:
   errcheck:
     # report about not checking of errors in type assetions: `a := b.(MyStruct)`;
     # default is false: such cases aren't reported by default.
-    check-type-assertions: true
+    check-type-assertions: false # we have forcetypeassert linter for it
 
     # report about assignment of errors to blank identifier: `num, _ := strconv.Atoi(numStr)`;
     # default is false: such cases aren't reported by default.
@@ -148,6 +148,7 @@ linters:
     - inamedparam # too annoying
     - protogetter # too annoying
     - perfsprint
+    - recvcheck # too annoying
   disable-all: false
   fast: false
 

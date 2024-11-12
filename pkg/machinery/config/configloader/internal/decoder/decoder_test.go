@@ -350,7 +350,7 @@ func TestDecoderV1Alpha1Config(t *testing.T) {
 func TestDoubleV1Alpha1(t *testing.T) {
 	t.Parallel()
 
-	files := os.DirFS("testdata/double").(fs.ReadFileFS) //nolint:errcheck
+	files := os.DirFS("testdata/double").(fs.ReadFileFS)
 	contents := must.Value(files.ReadFile("v1alpha1.yaml"))(t)
 
 	d := decoder.NewDecoder()

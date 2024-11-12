@@ -139,7 +139,7 @@ metadata:
 	)
 	suite.Require().NoError(err)
 
-	manifest := r.(*k8s.Manifest) //nolint:errcheck,forcetypeassert
+	manifest := r.(*k8s.Manifest) //nolint:forcetypeassert
 
 	suite.Assert().Len(k8sadapter.Manifest(manifest).Objects(), 2)
 	suite.Assert().Equal("ci", k8sadapter.Manifest(manifest).Objects()[0].GetName())

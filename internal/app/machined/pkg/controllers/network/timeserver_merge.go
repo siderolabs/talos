@@ -73,7 +73,7 @@ func (ctrl *TimeServerMergeController) Run(ctx context.Context, r controller.Run
 		var final network.TimeServerSpecSpec
 
 		for _, res := range list.Items {
-			spec := res.(*network.TimeServerSpec) //nolint:errcheck,forcetypeassert
+			spec := res.(*network.TimeServerSpec) //nolint:forcetypeassert
 
 			if final.NTPServers != nil && spec.TypedSpec().ConfigLayer < final.ConfigLayer {
 				// skip this spec, as existing one is higher layer

@@ -194,7 +194,7 @@ func (ctrl *OperatorSpecController) reconcileOperators(ctx context.Context, r co
 	}
 
 	for _, item := range list.Items {
-		linkStatus := item.(*network.LinkStatus) //nolint:errcheck,forcetypeassert
+		linkStatus := item.(*network.LinkStatus) //nolint:forcetypeassert
 
 		linkStatuses[linkStatus.Metadata().ID()] = linkStatus.TypedSpec().OperationalState == nethelpers.OperStateUnknown || linkStatus.TypedSpec().OperationalState == nethelpers.OperStateUp
 	}
@@ -209,7 +209,7 @@ func (ctrl *OperatorSpecController) reconcileOperators(ctx context.Context, r co
 	shouldRun := make(map[string]*network.OperatorSpecSpec)
 
 	for _, item := range list.Items {
-		operatorSpec := item.(*network.OperatorSpec) //nolint:errcheck,forcetypeassert
+		operatorSpec := item.(*network.OperatorSpec) //nolint:forcetypeassert
 
 		up, exists := linkStatuses[operatorSpec.TypedSpec().LinkName]
 

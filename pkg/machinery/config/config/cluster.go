@@ -201,6 +201,8 @@ type DiscoveryRegistries interface {
 }
 
 // KubernetesRegistry describes Kubernetes discovery registry.
+//
+//nolint:iface
 type KubernetesRegistry interface {
 	Enabled() bool
 }

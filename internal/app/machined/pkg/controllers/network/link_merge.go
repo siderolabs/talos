@@ -72,8 +72,8 @@ func (ctrl *LinkMergeController) Run(ctx context.Context, r controller.Runtime, 
 
 		// sort by link name, configuration layer
 		sort.Slice(list.Items, func(i, j int) bool {
-			left := list.Items[i].(*network.LinkSpec)  //nolint:errcheck,forcetypeassert
-			right := list.Items[j].(*network.LinkSpec) //nolint:errcheck,forcetypeassert
+			left := list.Items[i].(*network.LinkSpec)  //nolint:forcetypeassert
+			right := list.Items[j].(*network.LinkSpec) //nolint:forcetypeassert
 
 			if left.TypedSpec().Name < right.TypedSpec().Name {
 				return false
@@ -90,7 +90,7 @@ func (ctrl *LinkMergeController) Run(ctx context.Context, r controller.Runtime, 
 		links := map[string]*network.LinkSpecSpec{}
 
 		for _, res := range list.Items {
-			link := res.(*network.LinkSpec) //nolint:errcheck,forcetypeassert
+			link := res.(*network.LinkSpec) //nolint:forcetypeassert
 			id := network.LinkID(link.TypedSpec().Name)
 
 			existing, ok := links[id]
