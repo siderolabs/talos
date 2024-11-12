@@ -18,6 +18,12 @@ func Pseudo() Points {
 		NewPoint("devtmpfs", "/dev", "devtmpfs", WithFlags(unix.MS_NOSUID), WithData("mode=0755")),
 		NewPoint("proc", "/proc", "proc", WithFlags(unix.MS_NOSUID|unix.MS_NOEXEC|unix.MS_NODEV)),
 		NewPoint("sysfs", "/sys", "sysfs"),
+	}
+}
+
+// PseudoLate returns the mountpoints mounted later in the boot cycle.
+func PseudoLate() Points {
+	return Points{
 		NewPoint("tmpfs", "/run", "tmpfs", WithFlags(unix.MS_NOSUID|unix.MS_NOEXEC|unix.MS_RELATIME), WithData("mode=0755")),
 		NewPoint("tmpfs", "/system", "tmpfs", WithData("mode=0755")),
 		NewPoint("tmpfs", "/tmp", "tmpfs", WithFlags(unix.MS_NOSUID|unix.MS_NOEXEC|unix.MS_NODEV), WithData("size=64M"), WithData("mode=0755")),

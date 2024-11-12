@@ -68,20 +68,9 @@ func (*Sequencer) Initialize(r runtime.Runtime) []runtime.Phase {
 	mode := r.State().Platform().Mode()
 	phases := PhaseList{}
 
-	phases = phases.Append("logMode", LogMode)
-
 	switch mode { //nolint:exhaustive
 	case runtime.ModeContainer:
 		phases = phases.Append(
-			"systemRequirements",
-			SetupSystemDirectory,
-			InitVolumeLifecycle,
-		).Append(
-			"etc",
-			CreateSystemCgroups,
-			CreateOSReleaseFile,
-			SetUserEnvVars,
-		).Append(
 			"machined",
 			StartMachined,
 			StartContainerd,
@@ -93,18 +82,6 @@ func (*Sequencer) Initialize(r runtime.Runtime) []runtime.Phase {
 		phases = phases.Append(
 			"systemRequirements",
 			EnforceKSPPRequirements,
-			SetupSystemDirectory,
-			MountCgroups,
-			SetRLimit,
-			InitVolumeLifecycle,
-		).Append(
-			"integrity",
-			WriteIMAPolicy,
-		).Append(
-			"etc",
-			CreateSystemCgroups,
-			CreateOSReleaseFile,
-			SetUserEnvVars,
 		).Append(
 			"earlyServices",
 			StartUdevd,

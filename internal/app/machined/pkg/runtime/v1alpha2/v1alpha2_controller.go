@@ -67,7 +67,7 @@ func NewController(v1alpha1Runtime runtime.Runtime) (*Controller, error) {
 
 	var err error
 
-	ctrl.logger, err = ctrl.makeLogger("controller-runtime")
+	ctrl.logger, err = ctrl.MakeLogger("controller-runtime")
 	if err != nil {
 		return nil, err
 	}
@@ -82,7 +82,7 @@ func (ctrl *Controller) Run(ctx context.Context, drainer *runtime.Drainer) error
 	// adjust the log level based on machine configuration
 	go ctrl.watchMachineConfig(ctx)
 
-	dnsCacheLogger, err := ctrl.makeLogger("dns-resolve-cache")
+	dnsCacheLogger, err := ctrl.MakeLogger("dns-resolve-cache")
 	if err != nil {
 		return err
 	}
@@ -520,8 +520,9 @@ func (ctrl *Controller) updateLoggingConfig(ctx context.Context, dests []talosco
 	wg.Wait()
 }
 
-func (ctrl *Controller) makeLogger(s string) (*zap.Logger, error) {
-	logWriter, err := ctrl.loggingManager.ServiceLog(s).Writer()
+// MakeLogger creates a logger for a service.
+func (ctrl *Controller) MakeLogger(serviceName string) (*zap.Logger, error) {
+	logWriter, err := ctrl.loggingManager.ServiceLog(serviceName).Writer()
 	if err != nil {
 		return nil, err
 	}
@@ -535,5 +536,5 @@ func (ctrl *Controller) makeLogger(s string) (*zap.Logger, error) {
 			logging.WithoutLogLevels(),
 			logging.WithControllerErrorSuppressor(constants.ConsoleLogErrorSuppressThreshold),
 		),
-	).With(logging.Component(s)), nil
+	).With(logging.Component(serviceName)), nil
 }

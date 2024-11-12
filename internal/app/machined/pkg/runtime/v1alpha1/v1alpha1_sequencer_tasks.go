@@ -22,15 +22,11 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/containerd/cgroups/v3"
-	"github.com/containerd/cgroups/v3/cgroup1"
-	"github.com/containerd/cgroups/v3/cgroup2"
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/dustin/go-humanize"
 	"github.com/hashicorp/go-multierror"
-	"github.com/opencontainers/runtime-spec/specs-go"
 	pprocfs "github.com/prometheus/procfs"
 	"github.com/siderolabs/gen/maps"
 	"github.com/siderolabs/gen/xslices"
@@ -52,7 +48,6 @@ import (
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system/events"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system/services"
-	"github.com/siderolabs/talos/internal/pkg/cgroup"
 	"github.com/siderolabs/talos/internal/pkg/cri"
 	"github.com/siderolabs/talos/internal/pkg/environment"
 	"github.com/siderolabs/talos/internal/pkg/etcd"
@@ -79,7 +74,6 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/resources/k8s"
 	resourceruntime "github.com/siderolabs/talos/pkg/machinery/resources/runtime"
 	resourcev1alpha1 "github.com/siderolabs/talos/pkg/machinery/resources/v1alpha1"
-	"github.com/siderolabs/talos/pkg/machinery/version"
 	"github.com/siderolabs/talos/pkg/minimal"
 )
 
@@ -122,15 +116,6 @@ func WaitForUSB(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
 	}, "waitForUSB"
 }
 
-// LogMode represents the LogMode task.
-func LogMode(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
-	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) error {
-		logger.Printf("running in mode: %s", r.State().Platform().Mode())
-
-		return nil
-	}, "logMode"
-}
-
 // EnforceKSPPRequirements represents the EnforceKSPPRequirements task.
 func EnforceKSPPRequirements(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
@@ -140,333 +125,6 @@ func EnforceKSPPRequirements(runtime.Sequence, any) (runtime.TaskExecutionFunc, 
 
 		return kspp.EnforceKSPPKernelParameters()
 	}, "enforceKSPPRequirements"
-}
-
-// SetupSystemDirectory represents the SetupSystemDirectory task.
-func SetupSystemDirectory(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
-	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
-		for _, p := range []string{constants.SystemEtcPath, constants.SystemVarPath, constants.StateMountPoint} {
-			if err = os.MkdirAll(p, 0o700); err != nil {
-				return err
-			}
-		}
-
-		for _, p := range []string{constants.SystemRunPath} {
-			if err = os.MkdirAll(p, 0o751); err != nil {
-				return err
-			}
-		}
-
-		return nil
-	}, "setupSystemDirectory"
-}
-
-// CreateSystemCgroups represents the CreateSystemCgroups task.
-//
-//nolint:gocyclo
-func CreateSystemCgroups(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
-	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
-		// in container mode cgroups mode depends on cgroups provided by the container runtime
-		if r.State().Platform().Mode() != runtime.ModeContainer {
-			// assert that cgroupsv2 is being used when running not in container mode,
-			// as Talos sets up cgroupsv2 on its own
-			if cgroups.Mode() != cgroups.Unified && !mountv2.ForceGGroupsV1() {
-				return errors.New("cgroupsv2 should be used")
-			}
-		}
-
-		// Initialize cgroups root path.
-		if err = cgroup.InitRoot(); err != nil {
-			return fmt.Errorf("error initializing cgroups root path: %w", err)
-		}
-
-		logger.Printf("using cgroups root: %s", cgroup.Root())
-
-		groups := []struct {
-			name      string
-			resources *cgroup2.Resources
-		}{
-			{
-				name: constants.CgroupInit,
-				resources: &cgroup2.Resources{
-					Memory: &cgroup2.Memory{
-						Min: pointer.To[int64](constants.CgroupInitReservedMemory),
-						Low: pointer.To[int64](constants.CgroupInitReservedMemory * 2),
-					},
-					CPU: &cgroup2.CPU{
-						Weight: pointer.To[uint64](cgroup.MillicoresToCPUWeight(cgroup.MilliCores(constants.CgroupInitMillicores))),
-					},
-				},
-			},
-			{
-				name: constants.CgroupSystem,
-				resources: &cgroup2.Resources{
-					Memory: &cgroup2.Memory{
-						Min: pointer.To[int64](constants.CgroupSystemReservedMemory),
-						Low: pointer.To[int64](constants.CgroupSystemReservedMemory * 2),
-					},
-					CPU: &cgroup2.CPU{
-						Weight: pointer.To[uint64](cgroup.MillicoresToCPUWeight(cgroup.MilliCores(constants.CgroupSystemMillicores))),
-					},
-				},
-			},
-			{
-				name: constants.CgroupSystemRuntime,
-				resources: &cgroup2.Resources{
-					Memory: &cgroup2.Memory{
-						Min: pointer.To[int64](constants.CgroupSystemRuntimeReservedMemory),
-						Low: pointer.To[int64](constants.CgroupSystemRuntimeReservedMemory * 2),
-					},
-					CPU: &cgroup2.CPU{
-						Weight: pointer.To[uint64](cgroup.MillicoresToCPUWeight(cgroup.MilliCores(constants.CgroupSystemRuntimeMillicores))),
-					},
-				},
-			},
-			{
-				name: constants.CgroupUdevd,
-				resources: &cgroup2.Resources{
-					Memory: &cgroup2.Memory{
-						Min: pointer.To[int64](constants.CgroupUdevdReservedMemory),
-						Low: pointer.To[int64](constants.CgroupUdevdReservedMemory * 2),
-					},
-					CPU: &cgroup2.CPU{
-						Weight: pointer.To[uint64](cgroup.MillicoresToCPUWeight(cgroup.MilliCores(constants.CgroupUdevdMillicores))),
-					},
-				},
-			},
-			{
-				name: constants.CgroupPodRuntimeRoot,
-				resources: &cgroup2.Resources{
-					CPU: &cgroup2.CPU{
-						Weight: pointer.To[uint64](cgroup.MillicoresToCPUWeight(cgroup.MilliCores(constants.CgroupPodRuntimeRootMillicores))),
-					},
-				},
-			},
-			{
-				name: constants.CgroupPodRuntime,
-				resources: &cgroup2.Resources{
-					Memory: &cgroup2.Memory{
-						Min: pointer.To[int64](constants.CgroupPodRuntimeReservedMemory),
-						Low: pointer.To[int64](constants.CgroupPodRuntimeReservedMemory * 2),
-					},
-					CPU: &cgroup2.CPU{
-						Weight: pointer.To[uint64](cgroup.MillicoresToCPUWeight(cgroup.MilliCores(constants.CgroupPodRuntimeMillicores))),
-					},
-				},
-			},
-			{
-				name: constants.CgroupKubelet,
-				resources: &cgroup2.Resources{
-					Memory: &cgroup2.Memory{
-						Min: pointer.To[int64](constants.CgroupKubeletReservedMemory),
-						Low: pointer.To[int64](constants.CgroupKubeletReservedMemory * 2),
-					},
-					CPU: &cgroup2.CPU{
-						Weight: pointer.To[uint64](cgroup.MillicoresToCPUWeight(cgroup.MilliCores(constants.CgroupKubeletMillicores))),
-					},
-				},
-			},
-			{
-				name: constants.CgroupDashboard,
-				resources: &cgroup2.Resources{
-					Memory: &cgroup2.Memory{
-						Max: pointer.To[int64](constants.CgroupDashboardMaxMemory),
-					},
-					CPU: &cgroup2.CPU{
-						Weight: pointer.To[uint64](cgroup.MillicoresToCPUWeight(cgroup.MilliCores(constants.CgroupDashboardMillicores))),
-					},
-				},
-			},
-			{
-				name: constants.CgroupApid,
-				resources: &cgroup2.Resources{
-					Memory: &cgroup2.Memory{
-						Min: pointer.To[int64](constants.CgroupApidReservedMemory),
-						Low: pointer.To[int64](constants.CgroupApidReservedMemory * 2),
-						Max: pointer.To[int64](constants.CgroupApidMaxMemory),
-					},
-					CPU: &cgroup2.CPU{
-						Weight: pointer.To[uint64](cgroup.MillicoresToCPUWeight(cgroup.MilliCores(constants.CgroupApidMillicores))),
-					},
-				},
-			},
-			{
-				name: constants.CgroupTrustd,
-				resources: &cgroup2.Resources{
-					Memory: &cgroup2.Memory{
-						Min: pointer.To[int64](constants.CgroupTrustdReservedMemory),
-						Low: pointer.To[int64](constants.CgroupTrustdReservedMemory * 2),
-						Max: pointer.To[int64](constants.CgroupTrustdMaxMemory),
-					},
-					CPU: &cgroup2.CPU{
-						Weight: pointer.To[uint64](cgroup.MillicoresToCPUWeight(cgroup.MilliCores(constants.CgroupTrustdMillicores))),
-					},
-				},
-			},
-		}
-
-		for _, c := range groups {
-			if cgroups.Mode() == cgroups.Unified {
-				resources := c.resources
-
-				if r.State().Platform().Mode() == runtime.ModeContainer {
-					// don't attempt to set resources in container mode, as they might conflict with the parent cgroup tree
-					resources = &cgroup2.Resources{}
-				}
-
-				cg, err := cgroup2.NewManager(constants.CgroupMountPath, cgroup.Path(c.name), resources)
-				if err != nil {
-					return fmt.Errorf("failed to create cgroup: %w", err)
-				}
-
-				if c.name == constants.CgroupInit {
-					if err := cg.AddProc(uint64(os.Getpid())); err != nil {
-						return fmt.Errorf("failed to move init process to cgroup: %w", err)
-					}
-				}
-			} else {
-				cg, err := cgroup1.New(cgroup1.StaticPath(c.name), &specs.LinuxResources{})
-				if err != nil {
-					return fmt.Errorf("failed to create cgroup: %w", err)
-				}
-
-				if c.name == constants.CgroupInit {
-					if err := cg.Add(cgroup1.Process{
-						Pid: os.Getpid(),
-					}); err != nil {
-						return fmt.Errorf("failed to move init process to cgroup: %w", err)
-					}
-				}
-			}
-		}
-
-		return nil
-	}, "CreateSystemCgroups"
-}
-
-// MountCgroups represents the MountCgroups task.
-func MountCgroups(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
-	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) error {
-		_, err := mountv2.CGroupMountPoints().Mount()
-
-		return err
-	}, "mountCgroups"
-}
-
-// SetRLimit represents the SetRLimit task.
-func SetRLimit(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
-	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
-		// TODO(andrewrynhard): Should we read limit from /proc/sys/fs/nr_open?
-		return unix.Setrlimit(unix.RLIMIT_NOFILE, &unix.Rlimit{Cur: 1048576, Max: 1048576})
-	}, "setRLimit"
-}
-
-// See https://www.kernel.org/doc/Documentation/ABI/testing/ima_policy
-var rules = []string{
-	"dont_measure fsmagic=0x9fa0",     // PROC_SUPER_MAGIC
-	"dont_measure fsmagic=0x62656572", // SYSFS_MAGIC
-	"dont_measure fsmagic=0x64626720", // DEBUGFS_MAGIC
-	"dont_measure fsmagic=0x1021994",  // TMPFS_MAGIC
-	"dont_measure fsmagic=0x1cd1",     // DEVPTS_SUPER_MAGIC
-	"dont_measure fsmagic=0x42494e4d", // BINFMTFS_MAGIC
-	"dont_measure fsmagic=0x73636673", // SECURITYFS_MAGIC
-	"dont_measure fsmagic=0xf97cff8c", // SELINUX_MAGIC
-	"dont_measure fsmagic=0x43415d53", // SMACK_MAGIC
-	"dont_measure fsmagic=0x27e0eb",   // CGROUP_SUPER_MAGIC
-	"dont_measure fsmagic=0x63677270", // CGROUP2_SUPER_MAGIC
-	"dont_measure fsmagic=0x6e736673", // NSFS_MAGIC
-	"dont_measure fsmagic=0xde5e81e4", // EFIVARFS_MAGIC
-	"dont_measure fsmagic=0x58465342", // XFS_MAGIC
-	"dont_measure fsmagic=0x794c7630", // OVERLAYFS_SUPER_MAGIC
-	"dont_measure fsmagic=0x9123683e", // BTRFS_SUPER_MAGIC
-	"dont_measure fsmagic=0x72b6",     // JFFS2_SUPER_MAGIC
-	"dont_measure fsmagic=0x4d44",     // MSDOS_SUPER_MAGIC
-	"dont_measure fsmagic=0x2011bab0", // EXFAT_SUPER_MAGIC
-	"dont_measure fsmagic=0x6969",     // NFS_SUPER_MAGIC
-	"dont_measure fsmagic=0x5346544e", // NTFS_SB_MAGIC
-	"dont_measure fsmagic=0x9660",     // ISOFS_SUPER_MAGIC
-	"dont_measure fsmagic=0x15013346", // UDF_SUPER_MAGIC
-	"dont_measure fsmagic=0x52654973", // REISERFS_SUPER_MAGIC
-	"dont_measure fsmagic=0x137d",     // EXT_SUPER_MAGIC
-	"dont_measure fsmagic=0xef51",     // EXT2_OLD_SUPER_MAGIC
-	"dont_measure fsmagic=0xef53",     // EXT2_SUPER_MAGIC / EXT3_SUPER_MAGIC / EXT4_SUPER_MAGIC
-	"dont_measure fsmagic=0x00c36400", // CEPH_SUPER_MAGIC
-	"dont_measure fsmagic=0x65735543", // FUSE_CTL_SUPER_MAGIC
-	"measure func=MMAP_CHECK mask=MAY_EXEC",
-	"measure func=BPRM_CHECK mask=MAY_EXEC",
-	"measure func=FILE_CHECK mask=^MAY_READ euid=0",
-	"measure func=FILE_CHECK mask=^MAY_READ uid=0",
-	"measure func=MODULE_CHECK",
-	"measure func=FIRMWARE_CHECK",
-	"measure func=POLICY_CHECK",
-}
-
-// WriteIMAPolicy represents the WriteIMAPolicy task.
-func WriteIMAPolicy(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
-	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
-		if _, err = os.Stat("/sys/kernel/security/ima/policy"); os.IsNotExist(err) {
-			return fmt.Errorf("policy file does not exist: %w", err)
-		}
-
-		f, err := os.OpenFile("/sys/kernel/security/ima/policy", os.O_APPEND|os.O_WRONLY, 0o644)
-		if err != nil {
-			return err
-		}
-
-		defer f.Close() //nolint:errcheck
-
-		for _, line := range rules {
-			if _, err = f.WriteString(line + "\n"); err != nil {
-				return fmt.Errorf("rule %q is invalid", err)
-			}
-		}
-
-		return nil
-	}, "writeIMAPolicy"
-}
-
-// OSRelease renders a valid /etc/os-release file and writes it to disk. The
-// node's OS Image field is reported by the node from /etc/os-release.
-func OSRelease() (err error) {
-	if err = createBindMount(filepath.Join(constants.SystemEtcPath, "os-release"), "/etc/os-release"); err != nil {
-		return err
-	}
-
-	contents, err := version.OSRelease()
-	if err != nil {
-		return err
-	}
-
-	return os.WriteFile(filepath.Join(constants.SystemEtcPath, "os-release"), contents, 0o644)
-}
-
-// createBindMount creates a common way to create a writable source file with a
-// bind mounted destination. This is most commonly used for well known files
-// under /etc that need to be adjusted during startup.
-func createBindMount(src, dst string) (err error) {
-	var f *os.File
-
-	if f, err = os.OpenFile(src, os.O_WRONLY|os.O_CREATE, 0o644); err != nil {
-		return err
-	}
-
-	if err = f.Close(); err != nil {
-		return err
-	}
-
-	if err = unix.Mount(src, dst, "", unix.MS_BIND, ""); err != nil {
-		return fmt.Errorf("failed to create bind mount for %s: %w", dst, err)
-	}
-
-	return nil
-}
-
-// CreateOSReleaseFile represents the CreateOSReleaseFile task.
-func CreateOSReleaseFile(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
-	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
-		// Create /etc/os-release.
-		return OSRelease()
-	}, "createOSReleaseFile"
 }
 
 // LoadConfig represents the LoadConfig task.
@@ -2426,13 +2084,6 @@ func WaitForCARoots(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
 			}
 		}
 	}, "waitForCARoots"
-}
-
-// InitVolumeLifecycle initializes volume lifecycle resource.
-func InitVolumeLifecycle(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
-	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) error {
-		return r.State().V1Alpha2().Resources().Create(ctx, blockres.NewVolumeLifecycle(blockres.NamespaceName, blockres.VolumeLifecycleID))
-	}, "initVolumeLifecycle"
 }
 
 // TeardownVolumeLifecycle tears down volume lifecycle resource.
