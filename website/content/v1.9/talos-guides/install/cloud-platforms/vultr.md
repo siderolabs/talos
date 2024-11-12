@@ -137,7 +137,7 @@ Once all the cluster nodes are correctly configured, the cluster can be bootstra
 It is important that the `talosctl bootstrap` command be executed only once and against only a single control plane node.
 
 ```bash
-talosctl --talosconfig talosconfig boostrap --endpoints $CONTROL_PLANE_1_ADDRESS --nodes $CONTROL_PLANE_1_ADDRESS
+talosctl --talosconfig talosconfig bootstrap --endpoints $CONTROL_PLANE_1_ADDRESS --nodes $CONTROL_PLANE_1_ADDRESS
 ```
 
 ### Configure Endpoints and Nodes
