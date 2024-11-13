@@ -1,3 +1,92 @@
+## [Talos 1.8.3](https://github.com/siderolabs/talos/releases/tag/v1.8.3) (2024-11-13)
+
+Welcome to the v1.8.3 release of Talos!
+
+Starting with Talos v1.8.0, only standard assets would be published as github release assets. These include:
+
+* `cloud-images.json`
+* `talosctl` binaries
+* `kernel`
+* `initramfs`
+* `metal` iso and disk images
+* `talosctl-cni-bundle`
+
+All other release assets can be downloaded from [Image Factory](https://www.talos.dev/latest/talos-guides/install/boot-assets/#image-factory).
+
+Please try out the release binaries and report any issues at
+https://github.com/siderolabs/talos/issues.
+
+### Component Updates
+
+Linux: 6.6.60
+containerd: 2.0.0
+runc: 1.2.1
+
+Talos is built with Go 1.22.9.
+
+
+### Contributors
+
+* Andrey Smirnov
+* blablu
+* Dmitry Sharshakov
+* Joakim Nohlgård
+* Noel Georgi
+* Remko Molier
+* Sam Stelfox
+
+### Changes
+<details><summary>14 commits</summary>
+<p>
+
+* [`01c9f4584`](https://github.com/siderolabs/talos/commit/01c9f4584ad55c54534782453bef5828bdf4d90e) fix: arch linux search paths and names for QEMU provisioner
+* [`8b5c5f108`](https://github.com/siderolabs/talos/commit/8b5c5f108ece4b4d2b167966ca60d3ec7fdd07c7) chore: fix nil pointer dereference in AWS uploader
+* [`fbf85dd0d`](https://github.com/siderolabs/talos/commit/fbf85dd0dc7049025f557129e8ae50100b106062) fix: install disk matcher error
+* [`ff3fccea9`](https://github.com/siderolabs/talos/commit/ff3fccea997265a8e4c01bd1c97bc4310e391438) feat: add dm-cache dm-cache-smq kernel modules
+* [`6d872e41c`](https://github.com/siderolabs/talos/commit/6d872e41cdeef6c28b844b927ac60c5e213b1f11) feat: allow extra mounts for docker-based `talosctl cluster create`
+* [`8c193c8b1`](https://github.com/siderolabs/talos/commit/8c193c8b171b9770342f0fcdb0d4622dc3b6044f) fix: update permissions for logging directories in /var
+* [`5044a410c`](https://github.com/siderolabs/talos/commit/5044a410cb1584671c933fd5fcc5ce5348dbb9a0) fix: mount /sys/kernel/security conditionally
+* [`83abb6644`](https://github.com/siderolabs/talos/commit/83abb664474cfa417559ec1f93bffc4eddeb18a8) fix: make route normalization keep family
+* [`228a94387`](https://github.com/siderolabs/talos/commit/228a94387529bf11148647703c8573a164939865) fix: do not trim 0 from process SELinux label
+* [`d4a3a2b62`](https://github.com/siderolabs/talos/commit/d4a3a2b627407b68f8d3a3d6658094a4c39fdc55) fix: prevent panic in nocloud platform code
+* [`5c7b02d7e`](https://github.com/siderolabs/talos/commit/5c7b02d7eca7952bb21ccd306268424bbbf1382d) fix: update the CRI sandbox image reference
+* [`f8155c40d`](https://github.com/siderolabs/talos/commit/f8155c40d685237985a9003dd0ba8129a778203b) feat: add parsing of vlanNNNN:ethX style VLAN cmdline args
+* [`ea19f157f`](https://github.com/siderolabs/talos/commit/ea19f157f208775a1c3e54be01c83f891f9cff9c) fix: generation of SecureBoot iso
+* [`fddaa60e2`](https://github.com/siderolabs/talos/commit/fddaa60e29003288560bdca1b6febc54f26ba36b) feat: update Linux, runc, containerd, go
+</p>
+</details>
+
+### Changes from siderolabs/pkgs
+<details><summary>7 commits</summary>
+<p>
+
+* [`9c80a4a`](https://github.com/siderolabs/pkgs/commit/9c80a4a6e937364915b3e96012448e8dc2b0cb0e) feat: update Linux to 6.6.60
+* [`747c6c7`](https://github.com/siderolabs/pkgs/commit/747c6c7aebb0246e29988c7692bc7bdadcf2b189) feat: update containerd to v2.0.0
+* [`87c6526`](https://github.com/siderolabs/pkgs/commit/87c6526e2322dc50b879dec961e656ed78278e2b) feat: enable CONFIG_DM_CACHE
+* [`b4fa648`](https://github.com/siderolabs/pkgs/commit/b4fa6489deadfe2063968297aab177c7f7ee44d0) fix: enable nvme and 2.5gbit ethernet on nanopi-r5s
+* [`079ea13`](https://github.com/siderolabs/pkgs/commit/079ea132f50b7c04390ec8dfcf989e485ab144bc) feat: update Linux to 6.6.59
+* [`e4bc753`](https://github.com/siderolabs/pkgs/commit/e4bc7530ae8a2a23cb74c0edfd195bfc83dd6b66) feat: update runc to v1.2.1
+* [`de3dbf5`](https://github.com/siderolabs/pkgs/commit/de3dbf5f36af331b6aa24def356ae1533a071928) feat: update Go to 1.22.9
+</p>
+</details>
+
+### Changes from siderolabs/tools
+<details><summary>1 commit</summary>
+<p>
+
+* [`653182a`](https://github.com/siderolabs/tools/commit/653182ad047a1258ec7c8818000ef6bff92fd620) feat: update Go to 1.22.9
+</p>
+</details>
+
+### Dependency Changes
+
+* **github.com/docker/cli**        v27.1.1 **_new_**
+* **github.com/docker/docker**     v27.2.0 -> v27.1.1
+* **github.com/siderolabs/pkgs**   v1.8.0-24-ge72b2f4 -> v1.8.0-31-g9c80a4a
+* **github.com/siderolabs/tools**  v1.8.0-2-g7719230 -> v1.8.0-3-g653182a
+
+Previous release can be found at [v1.8.2](https://github.com/siderolabs/talos/releases/tag/v1.8.2)
+
 ## [Talos 1.8.2](https://github.com/siderolabs/talos/releases/tag/v1.8.2) (2024-10-28)
 
 Welcome to the v1.8.2 release of Talos!
