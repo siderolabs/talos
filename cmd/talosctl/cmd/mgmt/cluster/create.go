@@ -164,6 +164,8 @@ var (
 	crashdumpOnFailure        bool
 	skipKubeconfig            bool
 	skipInjectingConfig       bool
+	defaultBootOrder          string
+	pxeBooted                 bool
 	talosVersion              string
 	encryptStatePartition     bool
 	encryptEphemeralPartition bool
@@ -904,6 +906,8 @@ func create(ctx context.Context) error {
 			Disks:                 disks,
 			Mounts:                mountOpts.Value(),
 			SkipInjectingConfig:   skipInjectingConfig,
+			DefaultBootOrder:      defaultBootOrder,
+			PXEBooted:             pxeBooted,
 			ConfigInjectionMethod: configInjectionMethod,
 			BadRTC:                badRTC,
 			ExtraKernelArgs:       extraKernelArgs,
@@ -983,6 +987,8 @@ func create(ctx context.Context) error {
 				Config:                cfg,
 				ConfigInjectionMethod: configInjectionMethod,
 				SkipInjectingConfig:   skipInjectingConfig,
+				DefaultBootOrder:      defaultBootOrder,
+				PXEBooted:             pxeBooted,
 				BadRTC:                badRTC,
 				ExtraKernelArgs:       extraKernelArgs,
 				UUID:                  pointer.To(nodeUUID),
@@ -1301,6 +1307,8 @@ func init() {
 	createCmd.Flags().BoolVar(&crashdumpOnFailure, "crashdump", false, "generate support zip when cluster startup fails")
 	createCmd.Flags().BoolVar(&skipKubeconfig, "skip-kubeconfig", false, "skip merging kubeconfig from the created cluster")
 	createCmd.Flags().BoolVar(&skipInjectingConfig, "skip-injecting-config", false, "skip injecting config from embedded metadata server, write config files to current directory")
+	createCmd.Flags().StringVar(&defaultBootOrder, "default-boot-order", "cn", "default boot order for VMs (QEMU only)")
+	createCmd.Flags().BoolVar(&pxeBooted, "pxe-booted", false, "mark the VM as PXE booted (QEMU only)")
 	createCmd.Flags().BoolVar(&encryptStatePartition, encryptStatePartitionFlag, false, "enable state partition encryption")
 	createCmd.Flags().BoolVar(&encryptEphemeralPartition, encryptEphemeralPartitionFlag, false, "enable ephemeral partition encryption")
 	createCmd.Flags().StringArrayVar(&diskEncryptionKeyTypes, diskEncryptionKeyTypesFlag, []string{"uuid"}, "encryption key types to use for disk encryption (uuid, kms)")

@@ -135,11 +135,6 @@ func (p *provisioner) createNode(state *vm.State, clusterReq provision.ClusterRe
 		return provision.NodeInfo{}, fmt.Errorf("error finding listen address for the API: %w", err)
 	}
 
-	defaultBootOrder := "cn"
-	if nodeReq.DefaultBootOrder != "" {
-		defaultBootOrder = nodeReq.DefaultBootOrder
-	}
-
 	// backwards compatibility, set Driver if not set
 	for i := range nodeReq.Disks {
 		if nodeReq.Disks[i].Driver != "" {
@@ -167,7 +162,7 @@ func (p *provisioner) createNode(state *vm.State, clusterReq provision.ClusterRe
 		MonitorPath:       state.GetRelativePath(fmt.Sprintf("%s.monitor", nodeReq.Name)),
 		EnableKVM:         opts.TargetArch == runtime.GOARCH,
 		BadRTC:            nodeReq.BadRTC,
-		DefaultBootOrder:  defaultBootOrder,
+		DefaultBootOrder:  nodeReq.DefaultBootOrder,
 		BootloaderEnabled: opts.BootloaderEnabled,
 		NodeUUID:          nodeUUID,
 		Config:            nodeConfig,
