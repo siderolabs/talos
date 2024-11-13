@@ -35,6 +35,11 @@ type DeviceSpec struct {
 
 	// Parent (if set) specifies the parent device ID.
 	Parent string `yaml:"parent,omitempty" protobuf:"8"`
+
+	// Secondaries (if set) specifies the secondary device IDs.
+	//
+	// E.g. for a LVM volume secondary is a list of blockdevices that the volume consists of.
+	Secondaries []string `yaml:"secondaries,omitempty" protobuf:"9"`
 }
 
 // NewDevice initializes a BlockDevice resource.

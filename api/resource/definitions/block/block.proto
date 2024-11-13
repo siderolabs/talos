@@ -18,6 +18,7 @@ message DeviceSpec {
   int64 generation = 6;
   string device_path = 7;
   string parent = 8;
+  repeated string secondaries = 9;
 }
 
 // DiscoveredVolumeSpec is the spec for DiscoveredVolumes resource.
@@ -75,6 +76,7 @@ message DiskSpec {
   bool cdrom = 13;
   string dev_path = 14;
   string pretty_size = 15;
+  repeated string secondary_disks = 16;
 }
 
 // EncryptionKey is the spec for volume encryption key.

@@ -42,6 +42,12 @@ type DiskSpec struct {
 	SubSystem  string `yaml:"sub_system,omitempty" protobuf:"10"`
 	Transport  string `yaml:"transport,omitempty" protobuf:"11"`
 	Rotational bool   `yaml:"rotational,omitempty" protobuf:"12"`
+
+	// SecondaryDisks (if set) specifies the secondary disk IDs.
+	//
+	// E.g. if the blockdevice secondary is vda5, the secondary disk will be set as vda.
+	// This allows to map secondaries between disks ignoring the partitions.
+	SecondaryDisks []string `yaml:"secondary_disks,omitempty" protobuf:"16"`
 }
 
 // SetSize sets the size of the disk, including the pretty size.

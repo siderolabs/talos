@@ -204,6 +204,10 @@ func (ctrl *DevicesController) processEvent(ctx context.Context, r controller.Ru
 
 			if dev.TypedSpec().Type == "partition" {
 				dev.TypedSpec().Parent = filepath.Base(filepath.Dir(dev.TypedSpec().DevicePath))
+				dev.TypedSpec().Secondaries = nil
+			} else {
+				dev.TypedSpec().Parent = ""
+				dev.TypedSpec().Secondaries = sysblock.ReadSecondaries(ev.DevicePath)
 			}
 
 			dev.TypedSpec().Generation++

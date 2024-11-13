@@ -12,6 +12,7 @@ import (
 	"path/filepath"
 
 	"github.com/mdlayher/kobject"
+	"github.com/siderolabs/gen/xslices"
 )
 
 // Walk the /sys/block filesystem and gather block device information.
@@ -141,4 +142,16 @@ func readPartitions(path string) ([]*kobject.Event, error) {
 	}
 
 	return result, nil
+}
+
+// ReadSecondaries reads secondary devices for a given device and returns the list.
+func ReadSecondaries(devPath string) []string {
+	entries, err := os.ReadDir(filepath.Join(devPath, "slaves"))
+	if err != nil {
+		return nil
+	}
+
+	return xslices.Map(entries, func(entry os.DirEntry) string {
+		return entry.Name()
+	})
 }

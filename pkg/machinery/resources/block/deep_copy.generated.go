@@ -9,6 +9,10 @@ package block
 // DeepCopy generates a deep copy of DeviceSpec.
 func (o DeviceSpec) DeepCopy() DeviceSpec {
 	var cp DeviceSpec = o
+	if o.Secondaries != nil {
+		cp.Secondaries = make([]string, len(o.Secondaries))
+		copy(cp.Secondaries, o.Secondaries)
+	}
 	return cp
 }
 
@@ -33,6 +37,10 @@ func (o DiscoveryRefreshStatusSpec) DeepCopy() DiscoveryRefreshStatusSpec {
 // DeepCopy generates a deep copy of DiskSpec.
 func (o DiskSpec) DeepCopy() DiskSpec {
 	var cp DiskSpec = o
+	if o.SecondaryDisks != nil {
+		cp.SecondaryDisks = make([]string, len(o.SecondaryDisks))
+		copy(cp.SecondaryDisks, o.SecondaryDisks)
+	}
 	return cp
 }
 

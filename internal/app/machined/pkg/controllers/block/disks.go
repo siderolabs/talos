@@ -11,6 +11,7 @@ import (
 
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/safe"
+	"github.com/siderolabs/gen/xslices"
 	blkdev "github.com/siderolabs/go-blockdevice/v2/block"
 	"go.uber.org/zap"
 
@@ -90,7 +91,7 @@ func (ctrl *DisksController) Run(ctx context.Context, r controller.Runtime, logg
 
 			lastObservedGenerations[device.Metadata().ID()] = device.TypedSpec().Generation
 
-			if err = ctrl.analyzeBlockDevice(ctx, r, logger.With(zap.String("device", device.Metadata().ID())), device, touchedDisks); err != nil {
+			if err = ctrl.analyzeBlockDevice(ctx, r, logger.With(zap.String("device", device.Metadata().ID())), device, touchedDisks, blockdevices); err != nil {
 				return fmt.Errorf("failed to analyze block device: %w", err)
 			}
 		}
@@ -114,7 +115,10 @@ func (ctrl *DisksController) Run(ctx context.Context, r controller.Runtime, logg
 	}
 }
 
-func (ctrl *DisksController) analyzeBlockDevice(ctx context.Context, r controller.Runtime, logger *zap.Logger, device *block.Device, touchedDisks map[string]struct{}) error {
+//nolint:gocyclo
+func (ctrl *DisksController) analyzeBlockDevice(
+	ctx context.Context, r controller.Runtime, logger *zap.Logger, device *block.Device, touchedDisks map[string]struct{}, allBlockdevices safe.List[*block.Device],
+) error {
 	bd, err := blkdev.NewFromPath(filepath.Join("/dev", device.Metadata().ID()))
 	if err != nil {
 		logger.Debug("failed to open blockdevice", zap.Error(err))
@@ -156,6 +160,18 @@ func (ctrl *DisksController) analyzeBlockDevice(ctx context.Context, r controlle
 		logger.Debug("failed to get properties", zap.Error(err))
 	}
 
+	secondaryDisks := xslices.Map(device.TypedSpec().Secondaries, func(devID string) string {
+		if secondary, ok := allBlockdevices.Find(func(dev *block.Device) bool {
+			return dev.Metadata().ID() == devID
+		}); ok {
+			if secondary.TypedSpec().Parent != "" {
+				return secondary.TypedSpec().Parent
+			}
+		}
+
+		return devID
+	})
+
 	touchedDisks[device.Metadata().ID()] = struct{}{}
 
 	return safe.WriterModify(ctx, r, block.NewDisk(block.NamespaceName, device.Metadata().ID()), func(d *block.Disk) error {
@@ -175,6 +191,8 @@ func (ctrl *DisksController) analyzeBlockDevice(ctx context.Context, r controlle
 		d.TypedSpec().SubSystem = props.SubSystem
 		d.TypedSpec().Transport = props.Transport
 		d.TypedSpec().Rotational = props.Rotational
+
+		d.TypedSpec().SecondaryDisks = secondaryDisks
 
 		return nil
 	})

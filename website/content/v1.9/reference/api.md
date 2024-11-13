@@ -805,6 +805,7 @@ DeviceSpec is the spec for devices status.
 | generation | [int64](#int64) |  |  |
 | device_path | [string](#string) |  |  |
 | parent | [string](#string) |  |  |
+| secondaries | [string](#string) | repeated |  |
 
 
 
@@ -912,6 +913,7 @@ DiskSpec is the spec for Disks status.
 | cdrom | [bool](#bool) |  |  |
 | dev_path | [string](#string) |  |  |
 | pretty_size | [string](#string) |  |  |
+| secondary_disks | [string](#string) | repeated |  |
 
 
 

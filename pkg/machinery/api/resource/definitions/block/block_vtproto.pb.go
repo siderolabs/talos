@@ -53,6 +53,15 @@ func (m *DeviceSpec) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 		i -= len(m.unknownFields)
 		copy(dAtA[i:], m.unknownFields)
 	}
+	if len(m.Secondaries) > 0 {
+		for iNdEx := len(m.Secondaries) - 1; iNdEx >= 0; iNdEx-- {
+			i -= len(m.Secondaries[iNdEx])
+			copy(dAtA[i:], m.Secondaries[iNdEx])
+			i = protohelpers.EncodeVarint(dAtA, i, uint64(len(m.Secondaries[iNdEx])))
+			i--
+			dAtA[i] = 0x4a
+		}
+	}
 	if len(m.Parent) > 0 {
 		i -= len(m.Parent)
 		copy(dAtA[i:], m.Parent)
@@ -424,6 +433,17 @@ func (m *DiskSpec) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 	if m.unknownFields != nil {
 		i -= len(m.unknownFields)
 		copy(dAtA[i:], m.unknownFields)
+	}
+	if len(m.SecondaryDisks) > 0 {
+		for iNdEx := len(m.SecondaryDisks) - 1; iNdEx >= 0; iNdEx-- {
+			i -= len(m.SecondaryDisks[iNdEx])
+			copy(dAtA[i:], m.SecondaryDisks[iNdEx])
+			i = protohelpers.EncodeVarint(dAtA, i, uint64(len(m.SecondaryDisks[iNdEx])))
+			i--
+			dAtA[i] = 0x1
+			i--
+			dAtA[i] = 0x82
+		}
 	}
 	if len(m.PrettySize) > 0 {
 		i -= len(m.PrettySize)
@@ -1275,6 +1295,12 @@ func (m *DeviceSpec) SizeVT() (n int) {
 	if l > 0 {
 		n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
 	}
+	if len(m.Secondaries) > 0 {
+		for _, s := range m.Secondaries {
+			l = len(s)
+			n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
+		}
+	}
 	n += len(m.unknownFields)
 	return n
 }
@@ -1463,6 +1489,12 @@ func (m *DiskSpec) SizeVT() (n int) {
 	l = len(m.PrettySize)
 	if l > 0 {
 		n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
+	}
+	if len(m.SecondaryDisks) > 0 {
+		for _, s := range m.SecondaryDisks {
+			l = len(s)
+			n += 2 + l + protohelpers.SizeOfVarint(uint64(l))
+		}
 	}
 	n += len(m.unknownFields)
 	return n
@@ -1985,6 +2017,38 @@ func (m *DeviceSpec) UnmarshalVT(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			m.Parent = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 9:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Secondaries", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return protohelpers.ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return protohelpers.ErrInvalidLength
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return protohelpers.ErrInvalidLength
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Secondaries = append(m.Secondaries, string(dAtA[iNdEx:postIndex]))
 			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
@@ -3244,6 +3308,38 @@ func (m *DiskSpec) UnmarshalVT(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			m.PrettySize = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 16:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field SecondaryDisks", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return protohelpers.ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return protohelpers.ErrInvalidLength
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return protohelpers.ErrInvalidLength
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.SecondaryDisks = append(m.SecondaryDisks, string(dAtA[iNdEx:postIndex]))
 			iNdEx = postIndex
 		default:
 			iNdEx = preIndex

@@ -167,6 +167,13 @@ func (suite *VolumesSuite) TestDisks() {
 					}
 				}
 
+				if strings.HasPrefix(disk.Metadata().ID(), "dm-") {
+					// devicemapper disks should have secondaries
+					suite.Assert().NotEmpty(disk.TypedSpec().SecondaryDisks, "disk: %s", disk.Metadata().ID())
+
+					suite.T().Logf("disk: %s secondaries: %v", disk.Metadata().ID(), disk.TypedSpec().SecondaryDisks)
+				}
+
 				diskNames = append(diskNames, disk.Metadata().ID())
 			}
 
