@@ -213,6 +213,7 @@ talosctl cluster create [flags]
       --with-init-node                           create the cluster with an init node
       --with-json-logs                           enable JSON logs receiver and configure Talos to send logs there
       --with-kubespan                            enable KubeSpan system
+      --with-kvm                                 enable kvm (QEMU provisioner only) (default true)
       --with-network-bandwidth int               specify bandwidth restriction (in kbps) on the bridge interface when creating a qemu cluster
       --with-network-chaos                       enable to use network chaos parameters when creating a qemu cluster
       --with-network-jitter duration             specify jitter on the bridge interface when creating a qemu cluster

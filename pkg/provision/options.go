@@ -79,6 +79,15 @@ func WithTPM2(enabled bool) Option {
 	}
 }
 
+// WithKvm enables or disables KVM with qemu.
+func WithKvm(enabled bool) Option {
+	return func(o *Options) error {
+		o.KvmEnabled = enabled
+
+		return nil
+	}
+}
+
 // WithDebugShell drops into debug shell in initramfs.
 func WithDebugShell(enabled bool) Option {
 	return func(o *Options) error {
@@ -199,6 +208,7 @@ type Options struct {
 	JSONLogsEndpoint string
 
 	SiderolinkEnabled bool
+	KvmEnabled        bool
 }
 
 // DefaultOptions returns default options.

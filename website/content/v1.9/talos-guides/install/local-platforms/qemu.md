@@ -19,9 +19,9 @@ To see a live demo of this writeup, see the video below:
 
 - Linux
 - a kernel with
-  - KVM enabled (`/dev/kvm` must exist)
   - `CONFIG_NET_SCH_NETEM` enabled
   - `CONFIG_NET_SCH_INGRESS` enabled
+  - KVM enabled (`/dev/kvm` must exist) if you wish to use KVM
 - at least `CAP_SYS_ADMIN` and `CAP_NET_ADMIN` capabilities
 - QEMU
 - `bridge`, `static` and `firewall` CNI plugins from the [standard CNI plugins](https://github.com/containernetworking/cni), and `tc-redirect-tap` CNI plugin from the [awslabs tc-redirect-tap](https://github.com/awslabs/tc-redirect-tap) installed to `/opt/cni/bin` (installed automatically by `talosctl`)
@@ -33,7 +33,7 @@ To see a live demo of this writeup, see the video below:
 ### How to get QEMU
 
 Install QEMU with your operating system package manager.
-For example, on Ubuntu for x86:
+For example, on Ubuntu for x86 with kvm:
 
 ```bash
 apt install qemu-system-x86 qemu-kvm

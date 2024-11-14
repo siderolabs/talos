@@ -200,11 +200,14 @@ func generateUEFIPFlashList(uefiSourcePathPrefixes, uefiSourceFiles, uefiVarsFil
 }
 
 // QemuExecutable returns name of qemu executable for the arch.
-func (arch Arch) QemuExecutable() string {
+func (arch Arch) QemuExecutable(kvmEnabled bool) string {
 	binaries := []string{
 		"qemu-system-" + arch.QemuArch(),
-		"qemu-kvm",
-		"/usr/libexec/qemu-kvm",
+	}
+	if kvmEnabled {
+		binaries = append(binaries,
+			"qemu-kvm",
+			"/usr/libexec/qemu-kvm")
 	}
 
 	for _, binary := range binaries {

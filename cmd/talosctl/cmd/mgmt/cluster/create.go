@@ -124,6 +124,7 @@ var (
 	applyConfigEnabled        bool
 	bootloaderEnabled         bool
 	uefiEnabled               bool
+	kvmEnabled                bool
 	tpm2Enabled               bool
 	extraUEFISearchPaths      []string
 	configDebug               bool
@@ -475,6 +476,7 @@ func create(ctx context.Context) error {
 		provision.WithBootlader(bootloaderEnabled),
 		provision.WithUEFI(uefiEnabled),
 		provision.WithTPM2(tpm2Enabled),
+		provision.WithKvm(kvmEnabled),
 		provision.WithDebugShell(debugShellEnabled),
 		provision.WithExtraUEFISearchPaths(extraUEFISearchPaths),
 		provision.WithTargetArch(targetArch),
@@ -1248,6 +1250,7 @@ func init() {
 	createCmd.Flags().BoolVar(&applyConfigEnabled, "with-apply-config", false, "enable apply config when the VM is starting in maintenance mode")
 	createCmd.Flags().BoolVar(&bootloaderEnabled, bootloaderEnabledFlag, true, "enable bootloader to load kernel and initramfs from disk image after install")
 	createCmd.Flags().BoolVar(&uefiEnabled, "with-uefi", true, "enable UEFI on x86_64 architecture")
+	createCmd.Flags().BoolVar(&kvmEnabled, "with-kvm", true, "enable kvm (QEMU provisioner only)")
 	createCmd.Flags().BoolVar(&tpm2Enabled, tpm2EnabledFlag, false, "enable TPM2 emulation support using swtpm")
 	createCmd.Flags().BoolVar(&debugShellEnabled, withDebugShellFlag, false, "drop talos into a maintenance shell on boot, this is for advanced debugging for developers only")
 	createCmd.Flags().MarkHidden("with-debug-shell") //nolint:errcheck

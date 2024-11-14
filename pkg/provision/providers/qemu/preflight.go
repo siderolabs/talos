@@ -64,14 +64,14 @@ func (check *preflightCheckContext) verifyRoot(context.Context) error {
 func (check *preflightCheckContext) checkKVM(context.Context) error {
 	f, err := os.OpenFile("/dev/kvm", os.O_RDWR, 0)
 	if err != nil {
-		return fmt.Errorf("error opening /dev/kvm, please make sure KVM support is enabled in Linux kernel: %w", err)
+		return fmt.Errorf("error opening /dev/kvm, please make sure KVM support is enabled in Linux kernel: %w\nOr disable kvm with --with-kvm=false", err)
 	}
 
 	return f.Close()
 }
 
 func (check *preflightCheckContext) qemuExecutable(context.Context) error {
-	if check.arch.QemuExecutable() == "" {
+	if check.arch.QemuExecutable(check.options.KvmEnabled) == "" {
 		return fmt.Errorf("QEMU executable (qemu-system-%s or qemu-kvm) not found, please install QEMU with package manager", check.arch.QemuArch())
 	}
 

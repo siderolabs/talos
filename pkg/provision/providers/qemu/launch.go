@@ -455,9 +455,9 @@ func launchVM(config *LaunchConfig) error {
 		)
 	}
 
-	fmt.Fprintf(os.Stderr, "starting %s with args:\n%s\n", config.ArchitectureData.QemuExecutable(), strings.Join(args, " "))
+	fmt.Fprintf(os.Stderr, "starting %s with args:\n%s\n", config.ArchitectureData.QemuExecutable(config.EnableKVM), strings.Join(args, " "))
 	cmd := exec.Command(
-		config.ArchitectureData.QemuExecutable(),
+		config.ArchitectureData.QemuExecutable(config.EnableKVM),
 		args...,
 	)
 
