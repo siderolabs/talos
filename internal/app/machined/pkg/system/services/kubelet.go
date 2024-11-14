@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"sync"
 	"time"
 
 	containerdapi "github.com/containerd/containerd/v2/client"
@@ -193,27 +194,7 @@ func (k *Kubelet) Runner(r runtime.Runtime) (runner.Runner, error) {
 
 // HealthFunc implements the HealthcheckedService interface.
 func (k *Kubelet) HealthFunc(runtime.Runtime) health.Check {
-	return func(ctx context.Context) error {
-		req, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:10248/healthz", nil)
-		if err != nil {
-			return err
-		}
-
-		req = req.WithContext(ctx)
-
-		resp, err := http.DefaultClient.Do(req)
-		if err != nil {
-			return err
-		}
-		//nolint:errcheck
-		defer resp.Body.Close()
-
-		if resp.StatusCode != http.StatusOK {
-			return fmt.Errorf("expected HTTP status OK, got %s", resp.Status)
-		}
-
-		return nil
-	}
+	return func(ctx context.Context) error { return simpleHealthCheck(ctx, "http://127.0.0.1:10248/healthz") }
 }
 
 // HealthSettings implements the HealthcheckedService interface.
@@ -246,4 +227,28 @@ func kubeletSeccomp(seccomp *specs.LinuxSeccomp) {
 			Args:   []specs.LinuxSeccompArg{},
 		},
 	)
+}
+
+func simpleHealthCheck(ctx context.Context, url string) error {
+	req, err := http.NewRequest(http.MethodGet, url, nil)
+	if err != nil {
+		return err
+	}
+
+	req = req.WithContext(ctx)
+
+	resp, err := http.DefaultClient.Do(req) //nolint:bodyclose
+	if err != nil {
+		return err
+	}
+
+	bodyCloser := sync.OnceValue(resp.Body.Close)
+
+	defer bodyCloser() //nolint:errcheck
+
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("expected HTTP status OK, got %s", resp.Status)
+	}
+
+	return bodyCloser()
 }

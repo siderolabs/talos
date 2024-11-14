@@ -136,12 +136,13 @@ func Generate(images []string, platform string, insecure bool, imageLayerCachePa
 			return fmt.Errorf("fetching image %q: %w", src, err)
 		}
 
-		filename := tag.TagStr()
-		if filename == "" {
-			filename = rmt.Digest.String()
+		if tag.TagStr() != "" {
+			if err := os.WriteFile(filepath.Join(referenceDir, tag.TagStr()), manifest, 0o644); err != nil {
+				return err
+			}
 		}
 
-		if err := os.WriteFile(filepath.Join(digestDir, filename), manifest, 0o644); err != nil {
+		if err := os.WriteFile(filepath.Join(digestDir, rmt.Digest.String()), manifest, 0o644); err != nil {
 			return err
 		}
 
