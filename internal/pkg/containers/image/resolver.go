@@ -15,6 +15,7 @@ import (
 	"github.com/containerd/containerd/v2/core/remotes"
 	"github.com/containerd/containerd/v2/core/remotes/docker"
 	"github.com/hashicorp/go-cleanhttp"
+	"github.com/siderolabs/gen/xslices"
 
 	"github.com/siderolabs/talos/pkg/httpdefaults"
 	"github.com/siderolabs/talos/pkg/machinery/config/config"
@@ -34,15 +35,15 @@ func RegistryHosts(reg config.Registries) docker.RegistryHosts {
 	return func(host string) ([]docker.RegistryHost, error) {
 		var registries []docker.RegistryHost
 
-		endpoints, overridePath, err := RegistryEndpoints(reg, host)
+		endpoints, err := RegistryEndpoints(reg, host)
 		if err != nil {
 			return nil, err
 		}
 
 		for _, endpoint := range endpoints {
-			u, err := url.Parse(endpoint)
+			u, err := url.Parse(endpoint.Endpoint)
 			if err != nil {
-				return nil, fmt.Errorf("error parsing endpoint %q for host %q: %w", endpoint, host, err)
+				return nil, fmt.Errorf("error parsing endpoint %q for host %q: %w", endpoint.Endpoint, host, err)
 			}
 
 			transport := newTransport()
@@ -62,13 +63,13 @@ func RegistryHosts(reg config.Registries) docker.RegistryHosts {
 			}
 
 			if u.Path == "" {
-				if !overridePath {
+				if !endpoint.OverridePath {
 					u.Path = "/v2"
 				}
 			} else {
 				u.Path = path.Clean(u.Path)
 
-				if !strings.HasSuffix(u.Path, "/v2") && !overridePath {
+				if !strings.HasSuffix(u.Path, "/v2") && !endpoint.OverridePath {
 					u.Path += "/v2"
 				}
 			}
@@ -97,25 +98,56 @@ func RegistryHosts(reg config.Registries) docker.RegistryHosts {
 	}
 }
 
+// EndpointEntry represents a registry endpoint.
+type EndpointEntry struct {
+	Endpoint     string
+	OverridePath bool
+}
+
+// RegistryEndpointEntriesFromConfig returns registry endpoints per host.
+func RegistryEndpointEntriesFromConfig(host string, reg config.RegistryMirrorConfig) ([]EndpointEntry, error) {
+	entries := xslices.Map(reg.Endpoints(), func(endpoint string) EndpointEntry {
+		return EndpointEntry{Endpoint: endpoint, OverridePath: reg.OverridePath()}
+	})
+
+	if reg.SkipFallback() {
+		return entries, nil
+	}
+
+	defaultHost, err := docker.DefaultHost(host)
+	if err != nil {
+		return nil, fmt.Errorf("error getting default host for %q: %w", host, err)
+	}
+
+	entries = append(entries, EndpointEntry{Endpoint: "https://" + defaultHost, OverridePath: false})
+
+	return entries, nil
+}
+
 // RegistryEndpoints returns registry endpoints per host using reg.
-func RegistryEndpoints(reg config.Registries, host string) (endpoints []string, overridePath bool, err error) {
+func RegistryEndpoints(reg config.Registries, host string) (endpoints []EndpointEntry, err error) {
 	// direct hit by host
 	if hostConfig, ok := reg.Mirrors()[host]; ok {
-		return hostConfig.Endpoints(), hostConfig.OverridePath(), nil
+		return RegistryEndpointEntriesFromConfig(host, hostConfig)
 	}
 
 	// '*'
 	if catchAllConfig, ok := reg.Mirrors()["*"]; ok {
-		return catchAllConfig.Endpoints(), catchAllConfig.OverridePath(), nil
+		return RegistryEndpointEntriesFromConfig(host, catchAllConfig)
 	}
 
 	// still no endpoints, use default
 	defaultHost, err := docker.DefaultHost(host)
 	if err != nil {
-		return nil, false, fmt.Errorf("error getting default host for %q: %w", host, err)
+		return nil, fmt.Errorf("error getting default host for %q: %w", host, err)
 	}
 
-	return []string{"https://" + defaultHost}, false, nil
+	return []EndpointEntry{
+		{
+			Endpoint:     "https://" + defaultHost,
+			OverridePath: false,
+		},
+	}, nil
 }
 
 // PrepareAuth returns authentication info in the format expected by containerd.

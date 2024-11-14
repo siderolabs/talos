@@ -1464,6 +1464,11 @@ func (r *RegistryMirrorConfig) OverridePath() bool {
 	return pointer.SafeDeref(r.MirrorOverridePath)
 }
 
+// SkipFallback implements the Registries interface.
+func (r *RegistryMirrorConfig) SkipFallback() bool {
+	return pointer.SafeDeref(r.MirrorSkipFallback)
+}
+
 // Content implements the config.Provider interface.
 func (f *MachineFile) Content() string {
 	return f.FileContent

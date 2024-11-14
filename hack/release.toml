@@ -71,6 +71,18 @@ This command allows you to view the cgroup resource consumption and limits for a
 Talos previously used `eudev` to provide `udevd`, now it uses `systemd-udevd` instead.
 """
 
+    [notes.registry-mirrors]
+        title = "Registry Mirrors"
+        description = """\
+In versions before Talos 1.9, there was a discrepancy between the way Talos itself and CRI plugin resolves registry mirrors:
+Talos will never fall back to the default registry if endpoints are configured, while CRI plugin will.
+
+> Note: Talos Linux pulls images for the `installer`, `kubelet`, `etcd`, while all workload images are pulled by the CRI plugin.
+
+In Talos 1.9 this was fixed, so that by default an upstream registry is used as a fallback in all cases, while new registry mirror
+configuration option `.skipFallback` can be used to disable this behavior both for Talos and CRI plugin.
+"""
+
 [make_deps]
 
     [make_deps.tools]

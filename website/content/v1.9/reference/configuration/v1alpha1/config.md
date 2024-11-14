@@ -2152,6 +2152,7 @@ machine:
 |-------|------|-------------|----------|
 |`endpoints` |[]string |<details><summary>List of endpoints (URLs) for registry mirrors to use.</summary>Endpoint configures HTTP/HTTPS access mode, host name,<br />port and path (if path is not set, it defaults to `/v2`).</details>  | |
 |`overridePath` |bool |<details><summary>Use the exact path specified for the endpoint (don't append /v2/).</summary>This setting is often required for setting up multiple mirrors<br />on a single instance of a registry.</details>  | |
+|`skipFallback` |bool |<details><summary>Skip fallback to the upstream endpoint, for example the mirror configuration</summary>for `docker.io` will not fallback to `registry-1.docker.io`.</details>  | |
 
 
 

@@ -3224,6 +3224,13 @@ func (RegistryMirrorConfig) Doc() *encoder.Doc {
 				Description: "Use the exact path specified for the endpoint (don't append /v2/).\nThis setting is often required for setting up multiple mirrors\non a single instance of a registry.",
 				Comments:    [3]string{"" /* encoder.HeadComment */, "Use the exact path specified for the endpoint (don't append /v2/)." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
+			{
+				Name:        "skipFallback",
+				Type:        "bool",
+				Note:        "",
+				Description: "Skip fallback to the upstream endpoint, for example the mirror configuration\nfor `docker.io` will not fallback to `registry-1.docker.io`.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Skip fallback to the upstream endpoint, for example the mirror configuration" /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
 		},
 	}
 

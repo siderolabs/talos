@@ -3239,6 +3239,13 @@
           "description": "Use the exact path specified for the endpoint (don’t append /v2/).\nThis setting is often required for setting up multiple mirrors\non a single instance of a registry.\n",
           "markdownDescription": "Use the exact path specified for the endpoint (don't append /v2/).\nThis setting is often required for setting up multiple mirrors\non a single instance of a registry.",
           "x-intellij-html-description": "\u003cp\u003eUse the exact path specified for the endpoint (don\u0026rsquo;t append /v2/).\nThis setting is often required for setting up multiple mirrors\non a single instance of a registry.\u003c/p\u003e\n"
+        },
+        "skipFallback": {
+          "type": "boolean",
+          "title": "skipFallback",
+          "description": "Skip fallback to the upstream endpoint, for example the mirror configuration\nfor docker.io will not fallback to registry-1.docker.io.\n",
+          "markdownDescription": "Skip fallback to the upstream endpoint, for example the mirror configuration\nfor `docker.io` will not fallback to `registry-1.docker.io`.",
+          "x-intellij-html-description": "\u003cp\u003eSkip fallback to the upstream endpoint, for example the mirror configuration\nfor \u003ccode\u003edocker.io\u003c/code\u003e will not fallback to \u003ccode\u003eregistry-1.docker.io\u003c/code\u003e.\u003c/p\u003e\n"
         }
       },
       "additionalProperties": false,

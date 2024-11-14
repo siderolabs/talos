@@ -55,8 +55,7 @@ func (suite *ResolverSuite) TestRegistryEndpoints() {
 	type request struct {
 		host string
 
-		expectedEndpoints    []string
-		expectedOverridePath bool
+		expectedEndpoints []image.EndpointEntry
 	}
 
 	for _, tt := range []struct {
@@ -70,20 +69,61 @@ func (suite *ResolverSuite) TestRegistryEndpoints() {
 			config: &mockConfig{},
 			requests: []request{
 				{
-					host:              "docker.io",
-					expectedEndpoints: []string{"https://registry-1.docker.io"},
+					host: "docker.io",
+					expectedEndpoints: []image.EndpointEntry{
+						{
+							Endpoint: "https://registry-1.docker.io",
+						},
+					},
 				},
 				{
-					host:              "quay.io",
-					expectedEndpoints: []string{"https://quay.io"},
+					host: "quay.io",
+					expectedEndpoints: []image.EndpointEntry{
+						{
+							Endpoint: "https://quay.io",
+						},
+					},
 				},
 			},
 		},
 		{
-			name: "config with mirror",
+			name: "config with mirror and no fallback",
 			config: &mockConfig{
 				mirrors: map[string]*v1alpha1.RegistryMirrorConfig{
 					"docker.io": {
+						MirrorEndpoints:    []string{"http://127.0.0.1:5000", "https://some.host"},
+						MirrorSkipFallback: pointer.To(true),
+					},
+				},
+			},
+
+			requests: []request{
+				{
+					host: "docker.io",
+					expectedEndpoints: []image.EndpointEntry{
+						{
+							Endpoint: "http://127.0.0.1:5000",
+						},
+						{
+							Endpoint: "https://some.host",
+						},
+					},
+				},
+				{
+					host: "quay.io",
+					expectedEndpoints: []image.EndpointEntry{
+						{
+							Endpoint: "https://quay.io",
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "config with mirror and fallback",
+			config: &mockConfig{
+				mirrors: map[string]*v1alpha1.RegistryMirrorConfig{
+					"ghcr.io": {
 						MirrorEndpoints: []string{"http://127.0.0.1:5000", "https://some.host"},
 					},
 				},
@@ -91,22 +131,70 @@ func (suite *ResolverSuite) TestRegistryEndpoints() {
 
 			requests: []request{
 				{
-					host:              "docker.io",
-					expectedEndpoints: []string{"http://127.0.0.1:5000", "https://some.host"},
+					host: "ghcr.io",
+					expectedEndpoints: []image.EndpointEntry{
+						{
+							Endpoint: "http://127.0.0.1:5000",
+						},
+						{
+							Endpoint: "https://some.host",
+						},
+						{
+							Endpoint: "https://ghcr.io",
+						},
+					},
 				},
 				{
-					host:              "quay.io",
-					expectedEndpoints: []string{"https://quay.io"},
+					host: "docker.io",
+					expectedEndpoints: []image.EndpointEntry{
+						{
+							Endpoint: "https://registry-1.docker.io",
+						},
+					},
 				},
 			},
 		},
 		{
-			name: "config with catch-all",
+			name: "config with catch-all and no fallback",
 			config: &mockConfig{
 				mirrors: map[string]*v1alpha1.RegistryMirrorConfig{
 					"docker.io": {
-						MirrorEndpoints: []string{"http://127.0.0.1:5000", "https://some.host"},
+						MirrorEndpoints:    []string{"http://127.0.0.1:5000", "https://some.host"},
+						MirrorSkipFallback: pointer.To(true),
 					},
+					"*": {
+						MirrorEndpoints:    []string{"http://127.0.0.1:5001"},
+						MirrorSkipFallback: pointer.To(true),
+					},
+				},
+			},
+
+			requests: []request{
+				{
+					host: "docker.io",
+					expectedEndpoints: []image.EndpointEntry{
+						{
+							Endpoint: "http://127.0.0.1:5000",
+						},
+						{
+							Endpoint: "https://some.host",
+						},
+					},
+				},
+				{
+					host: "quay.io",
+					expectedEndpoints: []image.EndpointEntry{
+						{
+							Endpoint: "http://127.0.0.1:5001",
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "config with catch-all and fallback",
+			config: &mockConfig{
+				mirrors: map[string]*v1alpha1.RegistryMirrorConfig{
 					"*": {
 						MirrorEndpoints: []string{"http://127.0.0.1:5001"},
 					},
@@ -115,12 +203,26 @@ func (suite *ResolverSuite) TestRegistryEndpoints() {
 
 			requests: []request{
 				{
-					host:              "docker.io",
-					expectedEndpoints: []string{"http://127.0.0.1:5000", "https://some.host"},
+					host: "docker.io",
+					expectedEndpoints: []image.EndpointEntry{
+						{
+							Endpoint: "http://127.0.0.1:5001",
+						},
+						{
+							Endpoint: "https://registry-1.docker.io",
+						},
+					},
 				},
 				{
-					host:              "quay.io",
-					expectedEndpoints: []string{"http://127.0.0.1:5001"},
+					host: "quay.io",
+					expectedEndpoints: []image.EndpointEntry{
+						{
+							Endpoint: "http://127.0.0.1:5001",
+						},
+						{
+							Endpoint: "https://quay.io",
+						},
+					},
 				},
 			},
 		},
@@ -131,6 +233,7 @@ func (suite *ResolverSuite) TestRegistryEndpoints() {
 					"docker.io": {
 						MirrorEndpoints:    []string{"https://harbor/v2/registry.docker.io"},
 						MirrorOverridePath: pointer.To(true),
+						MirrorSkipFallback: pointer.To(true),
 					},
 					"ghcr.io": {
 						MirrorEndpoints:    []string{"https://harbor/v2/registry.ghcr.io"},
@@ -141,18 +244,33 @@ func (suite *ResolverSuite) TestRegistryEndpoints() {
 
 			requests: []request{
 				{
-					host:                 "docker.io",
-					expectedEndpoints:    []string{"https://harbor/v2/registry.docker.io"},
-					expectedOverridePath: true,
+					host: "docker.io",
+					expectedEndpoints: []image.EndpointEntry{
+						{
+							Endpoint:     "https://harbor/v2/registry.docker.io",
+							OverridePath: true,
+						},
+					},
 				},
 				{
-					host:                 "ghcr.io",
-					expectedEndpoints:    []string{"https://harbor/v2/registry.ghcr.io"},
-					expectedOverridePath: true,
+					host: "ghcr.io",
+					expectedEndpoints: []image.EndpointEntry{
+						{
+							Endpoint:     "https://harbor/v2/registry.ghcr.io",
+							OverridePath: true,
+						},
+						{
+							Endpoint: "https://ghcr.io",
+						},
+					},
 				},
 				{
-					host:              "quay.io",
-					expectedEndpoints: []string{"https://quay.io"},
+					host: "quay.io",
+					expectedEndpoints: []image.EndpointEntry{
+						{
+							Endpoint: "https://quay.io",
+						},
+					},
 				},
 			},
 		},
@@ -160,11 +278,10 @@ func (suite *ResolverSuite) TestRegistryEndpoints() {
 		suite.Run(tt.name, func() {
 			for _, req := range tt.requests {
 				suite.Run(req.host, func() {
-					endpoints, overridePath, err := image.RegistryEndpoints(tt.config, req.host)
+					endpoints, err := image.RegistryEndpoints(tt.config, req.host)
 
 					suite.Assert().NoError(err)
 					suite.Assert().Equal(req.expectedEndpoints, endpoints)
-					suite.Assert().Equal(req.expectedOverridePath, overridePath)
 				})
 			}
 		})
@@ -223,11 +340,13 @@ func (suite *ResolverSuite) TestRegistryHosts() {
 	cfg := &mockConfig{
 		mirrors: map[string]*v1alpha1.RegistryMirrorConfig{
 			"docker.io": {
-				MirrorEndpoints: []string{"http://127.0.0.1:5000/docker.io", "https://some.host"},
+				MirrorEndpoints:    []string{"http://127.0.0.1:5000/docker.io", "https://some.host"},
+				MirrorSkipFallback: pointer.To(true),
 			},
 			"ghcr.io": {
 				MirrorEndpoints:    []string{"https://harbor/v2/registry.ghcr.io"},
 				MirrorOverridePath: pointer.To(true),
+				MirrorSkipFallback: pointer.To(true),
 			},
 		},
 	}
@@ -254,7 +373,8 @@ func (suite *ResolverSuite) TestRegistryHosts() {
 	cfg = &mockConfig{
 		mirrors: map[string]*v1alpha1.RegistryMirrorConfig{
 			"docker.io": {
-				MirrorEndpoints: []string{"https://some.host:123"},
+				MirrorEndpoints:    []string{"https://some.host:123"},
+				MirrorSkipFallback: pointer.To(true),
 			},
 		},
 		config: map[string]*v1alpha1.RegistryConfig{

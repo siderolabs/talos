@@ -15,6 +15,7 @@ import (
 
 	"github.com/containerd/containerd/v2/core/remotes/docker"
 	"github.com/pelletier/go-toml/v2"
+	"github.com/siderolabs/gen/optional"
 
 	"github.com/siderolabs/talos/pkg/machinery/config/config"
 )
@@ -42,7 +43,7 @@ type HostsFile struct {
 
 // GenerateHosts generates a structure describing contents of the containerd hosts configuration.
 //
-//nolint:gocyclo,cyclop
+//nolint:gocyclo
 func GenerateHosts(cfg config.Registries, basePath string) (*HostsConfig, error) {
 	config := &HostsConfig{
 		Directories: map[string]*HostsDirectory{},
@@ -106,65 +107,41 @@ func GenerateHosts(cfg config.Registries, basePath string) (*HostsConfig, error)
 
 		directory := &HostsDirectory{}
 
-		// toml marshaling doesn't guarantee proper order of map keys, so instead we should marshal
-		// each time and append to the output
+		var hostsConfig HostsConfiguration
 
-		var buf bytes.Buffer
-
-		for i, endpoint := range endpoints.Endpoints() {
-			hostsToml := HostsToml{
-				HostConfigs: map[string]*HostToml{},
-			}
-
+		for _, endpoint := range endpoints.Endpoints() {
 			u, err := url.Parse(endpoint)
 			if err != nil {
 				return nil, fmt.Errorf("error parsing endpoint %q for host %q: %w", endpoint, registryName, err)
 			}
 
-			hostsToml.HostConfigs[endpoint] = &HostToml{
-				Capabilities: []string{"pull", "resolve"}, // TODO: we should make it configurable eventually
-				OverridePath: endpoints.OverridePath(),
+			hostEntry := HostEntry{
+				Host: endpoint,
+				HostToml: HostToml{
+					Capabilities: []string{"pull", "resolve"}, // TODO: we should make it configurable eventually
+					OverridePath: endpoints.OverridePath(),
+				},
 			}
 
-			configureEndpoint(u.Host, directoryName, hostsToml.HostConfigs[endpoint], directory)
+			configureEndpoint(u.Host, directoryName, &hostEntry.HostToml, directory)
 
-			var tomlBuf bytes.Buffer
+			hostsConfig.HostEntries = append(hostsConfig.HostEntries, hostEntry)
+		}
 
-			if err := toml.NewEncoder(&tomlBuf).SetIndentTables(true).Encode(hostsToml); err != nil {
-				return nil, err
-			}
+		if endpoints.SkipFallback() {
+			hostsConfig.DisableFallback()
+		}
 
-			tomlBytes := tomlBuf.Bytes()
-
-			// this is an ugly hack, and neither TOML format nor go-toml library make it easier
-			//
-			// we need to marshal each endpoint in the order they are specified in the config, but go-toml defines
-			// the tree as map[string]interface{} and doesn't guarantee the order of keys
-			//
-			// so we marshal each entry separately and combine the output, which results in something like:
-			//
-			//   [host]
-			//     [host."foo.bar"]
-			//	 [host]
-			//     [host."bar.foo"]
-			//
-			// but this is invalid TOML, as `[host]' is repeated, so we do an ugly hack and remove it below
-			const hostPrefix = "[host]\n"
-
-			if i > 0 {
-				if bytes.HasPrefix(tomlBytes, []byte(hostPrefix)) {
-					tomlBytes = tomlBytes[len(hostPrefix):]
-				}
-			}
-
-			buf.Write(tomlBytes)
+		cfgOut, err := hostsConfig.RenderTOML()
+		if err != nil {
+			return nil, err
 		}
 
 		directory.Files = append(directory.Files,
 			&HostsFile{
 				Name:     "hosts.toml",
 				Mode:     0o600,
-				Contents: buf.Bytes(),
+				Contents: cfgOut,
 			},
 		)
 
@@ -199,17 +176,18 @@ func GenerateHosts(cfg config.Registries, basePath string) (*HostsConfig, error)
 
 		defaultHost = "https://" + defaultHost
 
-		hostsToml := HostsToml{
-			HostConfigs: map[string]*HostToml{
-				defaultHost: {},
-			},
+		rootEntry := HostEntry{
+			Host: defaultHost,
 		}
 
-		configureEndpoint(hostname, directoryName, hostsToml.HostConfigs[defaultHost], directory)
+		configureEndpoint(hostname, directoryName, &rootEntry.HostToml, directory)
 
-		var tomlBuf bytes.Buffer
+		hostsToml := HostsConfiguration{
+			RootEntry: optional.Some(rootEntry),
+		}
 
-		if err = toml.NewEncoder(&tomlBuf).SetIndentTables(true).Encode(hostsToml); err != nil {
+		cfgOut, err := hostsToml.RenderTOML()
+		if err != nil {
 			return nil, err
 		}
 
@@ -217,7 +195,7 @@ func GenerateHosts(cfg config.Registries, basePath string) (*HostsConfig, error)
 			&HostsFile{
 				Name:     "hosts.toml",
 				Mode:     0o600,
-				Contents: tomlBuf.Bytes(),
+				Contents: cfgOut,
 			},
 		)
 
@@ -241,10 +219,106 @@ func hostDirectory(host string) string {
 	return host
 }
 
-// HostsToml describes the contents of the `hosts.toml` file.
-type HostsToml struct {
-	Server      string               `toml:"server,omitempty"`
-	HostConfigs map[string]*HostToml `toml:"host"`
+// HostEntry describes the configuration for a single host.
+type HostEntry struct {
+	Host string
+	HostToml
+}
+
+// HostsConfiguration describes the configuration of `hosts.toml` file in the format not compatible with TOML.
+//
+// The hosts entries should come in order, and go-toml only supports map[string]any, so we need to do some tricks.
+type HostsConfiguration struct {
+	RootEntry optional.Optional[HostEntry] // might be missing
+
+	HostEntries []HostEntry
+}
+
+// DisableFallback disables the fallback to the default host.
+func (hc *HostsConfiguration) DisableFallback() {
+	if len(hc.HostEntries) == 0 {
+		return
+	}
+
+	// push the last entry as the root entry
+	hc.RootEntry = optional.Some(hc.HostEntries[len(hc.HostEntries)-1])
+
+	hc.HostEntries = hc.HostEntries[:len(hc.HostEntries)-1]
+}
+
+// RenderTOML renders the configuration to TOML format.
+func (hc *HostsConfiguration) RenderTOML() ([]byte, error) {
+	var out bytes.Buffer
+
+	// toml marshaling doesn't guarantee proper order of map keys, so instead we should marshal
+	// each time and append to the output
+
+	if rootEntry, ok := hc.RootEntry.Get(); ok {
+		server := HostsTomlServer{
+			Server:   rootEntry.Host,
+			HostToml: rootEntry.HostToml,
+		}
+
+		if err := toml.NewEncoder(&out).SetIndentTables(true).Encode(server); err != nil {
+			return nil, err
+		}
+	}
+
+	for i, entry := range hc.HostEntries {
+		hostEntry := HostsTomlHost{
+			HostConfigs: map[string]HostToml{
+				entry.Host: entry.HostToml,
+			},
+		}
+
+		var tomlBuf bytes.Buffer
+
+		if err := toml.NewEncoder(&tomlBuf).SetIndentTables(true).Encode(hostEntry); err != nil {
+			return nil, err
+		}
+
+		tomlBytes := tomlBuf.Bytes()
+
+		// this is an ugly hack, and neither TOML format nor go-toml library make it easier
+		//
+		// we need to marshal each endpoint in the order they are specified in the config, but go-toml defines
+		// the tree as map[string]interface{} and doesn't guarantee the order of keys
+		//
+		// so we marshal each entry separately and combine the output, which results in something like:
+		//
+		//   [host]
+		//     [host."foo.bar"]
+		//	 [host]
+		//     [host."bar.foo"]
+		//
+		// but this is invalid TOML, as `[host]' is repeated, so we do an ugly hack and remove it below
+		const hostPrefix = "[host]\n"
+
+		if i > 0 {
+			if bytes.HasPrefix(tomlBytes, []byte(hostPrefix)) {
+				tomlBytes = tomlBytes[len(hostPrefix):]
+			}
+		}
+
+		out.Write(tomlBytes)
+	}
+
+	return out.Bytes(), nil
+}
+
+// HostsTomlServer describes only 'server' part of the `hosts.toml` file.
+type HostsTomlServer struct {
+	// top-level entry is used as the last one in the fallback chain.
+	Server   string `toml:"server,omitempty"`
+	HostToml        // embedded, matches the server
+}
+
+// HostsTomlHost describes the `hosts.toml` file entry for hosts.
+//
+// It is supposed to be marshaled as a single-entry map to keep the order correct.
+type HostsTomlHost struct {
+	// Note: this doesn't match the TOML format, but allows use to keep endpoints ordered properly.
+	HostConfigs map[string]HostToml `toml:"host"`
 }
 
 // HostToml is a single entry in `hosts.toml`.

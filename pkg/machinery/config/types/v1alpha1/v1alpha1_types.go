@@ -2057,6 +2057,10 @@ type RegistryMirrorConfig struct {
 	//     This setting is often required for setting up multiple mirrors
 	//     on a single instance of a registry.
 	MirrorOverridePath *bool `yaml:"overridePath,omitempty"`
+	//   description: |
+	//     Skip fallback to the upstream endpoint, for example the mirror configuration
+	//     for `docker.io` will not fallback to `registry-1.docker.io`.
+	MirrorSkipFallback *bool `yaml:"skipFallback,omitempty"`
 }
 
 // RegistryConfig specifies auth & TLS config per registry.

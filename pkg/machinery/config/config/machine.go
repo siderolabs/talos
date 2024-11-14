@@ -366,6 +366,7 @@ type Registries interface {
 type RegistryMirrorConfig interface {
 	Endpoints() []string
 	OverridePath() bool
+	SkipFallback() bool
 }
 
 // RegistryConfig specifies auth & TLS config per registry.
