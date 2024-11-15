@@ -78,6 +78,7 @@ func NewKubeletConfigController() *KubeletConfigController {
 				kubeletConfig.DisableManifestsDirectory = cfgProvider.Machine().Kubelet().DisableManifestsDirectory()
 				kubeletConfig.EnableFSQuotaMonitoring = cfgProvider.Machine().Features().DiskQuotaSupportEnabled()
 				kubeletConfig.CredentialProviderConfig = cfgProvider.Machine().Kubelet().CredentialProviderConfig()
+				kubeletConfig.AllowSchedulingOnControlPlane = cfgProvider.Cluster().ScheduleOnControlPlanes()
 
 				return nil
 			},

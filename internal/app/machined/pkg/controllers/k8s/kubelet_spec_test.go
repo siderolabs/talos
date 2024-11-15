@@ -18,6 +18,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	k8sruntime "k8s.io/apimachinery/pkg/runtime"
 	v1 "k8s.io/component-base/logs/api/v1"
@@ -423,6 +424,12 @@ func TestNewKubeletConfigurationMerge(t *testing.T) {
 			kubeletVersion: compatibility.VersionFromImageRef("ghcr.io/siderolabs/kubelet:v1.29.0"),
 			expectedOverrides: func(kc *kubeletconfig.KubeletConfiguration) {
 				kc.SystemReserved["memory"] = constants.KubeletSystemReservedMemoryControlPlane
+				kc.RegisterWithTaints = []corev1.Taint{
+					{
+						Key:    constants.LabelNodeRoleControlPlane,
+						Effect: corev1.TaintEffectNoSchedule,
+					},
+				}
 			},
 			machineType: machine.TypeControlPlane,
 		},

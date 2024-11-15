@@ -8,6 +8,7 @@ import (
 	"context"
 	"fmt"
 	"net/netip"
+	"slices"
 	"strings"
 	"time"
 
@@ -20,6 +21,7 @@ import (
 	"github.com/siderolabs/go-kubernetes/kubernetes/compatibility"
 	"github.com/siderolabs/go-pointer"
 	"go.uber.org/zap"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	kubeletconfig "k8s.io/kubelet/config/v1beta1"
@@ -320,6 +322,21 @@ func NewKubeletConfiguration(cfgSpec *k8s.KubeletConfigSpec, kubeletVersion comp
 	if cfgSpec.SkipNodeRegistration {
 		config.Authentication.Webhook.Enabled = pointer.To(false)
 		config.Authorization.Mode = kubeletconfig.KubeletAuthorizationModeAlwaysAllow
+	} else if machineType.IsControlPlane() && !cfgSpec.AllowSchedulingOnControlPlane {
+		// register with taint to prevent scheduling on control plane nodes race with NodeApplyController applying the initial taint
+		// NodeApplyController will take ownership of the taint after the first successful apply
+		if slices.IndexFunc(config.RegisterWithTaints, func(t corev1.Taint) bool {
+			return t.Key == constants.LabelNodeRoleControlPlane
+		}) == -1 { // don't add the taint if it's already in the config
+			if cfgSpec.ExtraArgs["register-with-taints"] == "" { // don't clash with taints provided via extraArgs, it is deprecated on kubelet side
+				config.RegisterWithTaints = append(config.RegisterWithTaints,
+					corev1.Taint{
+						Key:    constants.LabelNodeRoleControlPlane,
+						Effect: corev1.TaintEffectNoSchedule,
+					},
+				)
+			}
+		}
 	}
 
 	// fields which can be overridden

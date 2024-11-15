@@ -147,6 +147,7 @@ message KubeletConfigSpec {
   bool disable_manifests_directory = 11;
   bool enable_fs_quota_monitoring = 12;
   google.protobuf.Struct credential_provider_config = 13;
+  bool allow_scheduling_on_control_plane = 14;
 }
 
 // KubeletSpecSpec holds the source of kubelet configuration.

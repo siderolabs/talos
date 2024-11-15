@@ -2693,6 +2693,7 @@ KubeletConfigSpec holds the source of kubelet configuration.
 | disable_manifests_directory | [bool](#bool) |  |  |
 | enable_fs_quota_monitoring | [bool](#bool) |  |  |
 | credential_provider_config | [google.protobuf.Struct](#google.protobuf.Struct) |  |  |
+| allow_scheduling_on_control_plane | [bool](#bool) |  |  |
 
 
 

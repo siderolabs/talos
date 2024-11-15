@@ -27,19 +27,20 @@ type KubeletConfig = typed.Resource[KubeletConfigSpec, KubeletConfigExtension]
 //
 //gotagsrewrite:gen
 type KubeletConfigSpec struct {
-	Image                        string            `yaml:"image" protobuf:"1"`
-	ClusterDNS                   []string          `yaml:"clusterDNS" protobuf:"2"`
-	ClusterDomain                string            `yaml:"clusterDomain" protobuf:"3"`
-	ExtraArgs                    map[string]string `yaml:"extraArgs,omitempty" protobuf:"4"`
-	ExtraMounts                  []specs.Mount     `yaml:"extraMounts,omitempty" protobuf:"5"`
-	ExtraConfig                  map[string]any    `yaml:"extraConfig,omitempty" protobuf:"6"`
-	CloudProviderExternal        bool              `yaml:"cloudProviderExternal" protobuf:"7"`
-	DefaultRuntimeSeccompEnabled bool              `yaml:"defaultRuntimeSeccompEnabled" protobuf:"8"`
-	SkipNodeRegistration         bool              `yaml:"skipNodeRegistration" protobuf:"9"`
-	StaticPodListURL             string            `yaml:"staticPodListURL" protobuf:"10"`
-	DisableManifestsDirectory    bool              `yaml:"disableManifestsDirectory" protobuf:"11"`
-	EnableFSQuotaMonitoring      bool              `yaml:"enableFSQuotaMonitoring" protobuf:"12"`
-	CredentialProviderConfig     map[string]any    `yaml:"credentialProviderConfig,omitempty" protobuf:"13"`
+	Image                         string            `yaml:"image" protobuf:"1"`
+	ClusterDNS                    []string          `yaml:"clusterDNS" protobuf:"2"`
+	ClusterDomain                 string            `yaml:"clusterDomain" protobuf:"3"`
+	ExtraArgs                     map[string]string `yaml:"extraArgs,omitempty" protobuf:"4"`
+	ExtraMounts                   []specs.Mount     `yaml:"extraMounts,omitempty" protobuf:"5"`
+	ExtraConfig                   map[string]any    `yaml:"extraConfig,omitempty" protobuf:"6"`
+	CloudProviderExternal         bool              `yaml:"cloudProviderExternal" protobuf:"7"`
+	DefaultRuntimeSeccompEnabled  bool              `yaml:"defaultRuntimeSeccompEnabled" protobuf:"8"`
+	SkipNodeRegistration          bool              `yaml:"skipNodeRegistration" protobuf:"9"`
+	StaticPodListURL              string            `yaml:"staticPodListURL" protobuf:"10"`
+	DisableManifestsDirectory     bool              `yaml:"disableManifestsDirectory" protobuf:"11"`
+	EnableFSQuotaMonitoring       bool              `yaml:"enableFSQuotaMonitoring" protobuf:"12"`
+	CredentialProviderConfig      map[string]any    `yaml:"credentialProviderConfig,omitempty" protobuf:"13"`
+	AllowSchedulingOnControlPlane bool              `yaml:"allowSchedulingOnControlPlane" protobuf:"14"`
 }
 
 // NewKubeletConfig initializes an empty KubeletConfig resource.
