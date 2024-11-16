@@ -65,27 +65,14 @@
 
 (typeattribute service_exec_f)
 
-(typeattribute system_service_p)
-; (process_t, exec_t)
-(macro system_service_p ((type process_label) (type executable_label))
-    (roletype system_r process_label)
-    (typeattributeset system_service_p process_label)
-    (typeattributeset service_exec_f executable_label)
-    (allow process_label executable_label (file (entrypoint execute execute_no_trans)))
-)
-
-(typeattribute client_service_p)
-; (process_t, exec_t)
-(macro client_service_p ((type process_label) (type executable_label))
-    (roletype client_r process_label)
-    (typeattributeset client_service_p process_label)
-    (typeattributeset service_exec_f executable_label)
-    (allow process_label executable_label (file (entrypoint execute execute_no_trans)))
-)
-
 (typeattribute service_p)
-(typeattributeset service_p system_service_p)
-(typeattributeset service_p client_service_p)
+; (process_t, exec_t)
+(macro service_p ((type process_label) (type executable_label))
+    (roletype system_r process_label)
+    (typeattributeset service_p process_label)
+    (typeattributeset service_exec_f executable_label)
+    (allow process_label executable_label (file (entrypoint execute execute_no_trans)))
+)
 
 (typeattribute system_container_p)
 (macro system_container_p ((type ARG1))
@@ -95,7 +82,7 @@
 
 (typeattribute pod_p)
 (macro pod_p ((type ARG1))
-    (roletype client_r ARG1)
+    (roletype system_r ARG1)
     (typeattributeset pod_p ARG1)
 )
 

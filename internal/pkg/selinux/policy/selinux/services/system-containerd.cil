@@ -7,7 +7,7 @@
 
 ; System containerd
 (type sys_containerd_t)
-(call system_service_p (sys_containerd_t containerd_exec_t))
+(call service_p (sys_containerd_t containerd_exec_t))
 
 ; TODO: label /system
 

@@ -1,6 +1,6 @@
 ; Pod (CRI) containerd
 (type pod_containerd_t)
-(call client_service_p (pod_containerd_t containerd_exec_t))
+(call service_p (pod_containerd_t containerd_exec_t))
 
 ; TODO: label /run
 

@@ -1,2 +1,2 @@
 (type dashboard_t)
-(call system_service_p (dashboard_t init_exec_t))
+(call service_p (dashboard_t init_exec_t))

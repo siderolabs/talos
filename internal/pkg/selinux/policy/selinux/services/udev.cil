@@ -12,7 +12,7 @@
 (filecon "/usr/lib/udev(/.*)?" any udev_exec_t)
 
 (type udev_t)
-(call system_service_p (udev_t udev_exec_t))
+(call service_p (udev_t udev_exec_t))
 
 ; TODO: label /run
 

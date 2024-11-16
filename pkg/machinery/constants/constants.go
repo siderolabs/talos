@@ -811,7 +811,7 @@ const (
 	CgroupPodRuntimeMillicores = 1000
 
 	// SelinuxLabelPodRuntime is the SELinux label for kubernetes containerd runtime processes.
-	SelinuxLabelPodRuntime = "client_u:client_r:pod_containerd_t:s0"
+	SelinuxLabelPodRuntime = "system_u:system_r:pod_containerd_t:s0"
 
 	// CgroupPodRuntimeReservedMemory is the hard memory protection for the cri runtime processes.
 	CgroupPodRuntimeReservedMemory = 196 * 1024 * 1024
@@ -826,13 +826,13 @@ const (
 	CgroupEtcdMillicores = 2000
 
 	// SELinuxLabelEtcd is the SELinux label for etcd process.
-	SELinuxLabelEtcd = "client_u:client_r:etcd_t:s0"
+	SELinuxLabelEtcd = "system_u:system_r:etcd_t:s0"
 
 	// CgroupKubelet is the cgroup name for kubelet process.
 	CgroupKubelet = CgroupPodRuntimeRoot + "/kubelet"
 
 	// SelinuxLabelKubelet is the SELinux label for kubelet process.
-	SelinuxLabelKubelet = "client_u:client_r:kubelet_t:s0"
+	SelinuxLabelKubelet = "system_u:system_r:kubelet_t:s0"
 
 	// CgroupKubeletReservedMemory is the hard memory protection for the kubelet processes.
 	CgroupKubeletReservedMemory = 96 * 1024 * 1024

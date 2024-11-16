@@ -34,7 +34,7 @@
 ; Should not occur unless misconfigured by machined
 (type unconfined_service_t)
 (roletype system_r unconfined_service_t)
-(typeattributeset system_service_p unconfined_service_t)
+(typeattributeset service_p unconfined_service_t)
 
 (type sbin_exec_t)
 (call system_f (sbin_exec_t))
