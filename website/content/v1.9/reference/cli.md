@@ -872,35 +872,6 @@ talosctl dashboard [flags]
 
 * [talosctl](#talosctl)	 - A CLI for out-of-band management of Kubernetes nodes created by Talos
 
-## talosctl disks
-
-Get the list of disks from /sys/block on the machine
-
-```
-talosctl disks [flags]
-```
-
-### Options
-
-```
-  -h, --help       help for disks
-  -i, --insecure   get disks using the insecure (encrypted with no auth) maintenance service
-```
-
-### Options inherited from parent commands
-
-```
-      --cluster string       Cluster to connect to if a proxy endpoint is used.
-      --context string       Context to be used in command
-  -e, --endpoints strings    override default endpoints in Talos configuration
-  -n, --nodes strings        target the specified nodes
-      --talosconfig string   The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
-```
-
-### SEE ALSO
-
-* [talosctl](#talosctl)	 - A CLI for out-of-band management of Kubernetes nodes created by Talos
-
 ## talosctl dmesg
 
 Retrieve kernel logs
@@ -3162,6 +3133,66 @@ talosctl version [flags]
 
 * [talosctl](#talosctl)	 - A CLI for out-of-band management of Kubernetes nodes created by Talos
 
+## talosctl wipe disk
+
+Wipe a block device (disk or partition) which is not used as a volume
+
+### Synopsis
+
+Wipe a block device (disk or partition) which is not used as a volume.
+
+Use device names as arguments, for example: vda or sda5.
+
+```
+talosctl wipe disk <device names>... [flags]
+```
+
+### Options
+
+```
+  -h, --help            help for disk
+      --method string   wipe method to use [FAST ZEROES] (default "FAST")
+```
+
+### Options inherited from parent commands
+
+```
+      --cluster string       Cluster to connect to if a proxy endpoint is used.
+      --context string       Context to be used in command
+  -e, --endpoints strings    override default endpoints in Talos configuration
+  -n, --nodes strings        target the specified nodes
+      --talosconfig string   The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
+```
+
+### SEE ALSO
+
+* [talosctl wipe](#talosctl-wipe)	 - Wipe block device or volumes
+
+## talosctl wipe
+
+Wipe block device or volumes
+
+### Options
+
+```
+  -h, --help   help for wipe
+```
+
+### Options inherited from parent commands
+
+```
+      --cluster string       Cluster to connect to if a proxy endpoint is used.
+      --context string       Context to be used in command
+  -e, --endpoints strings    override default endpoints in Talos configuration
+  -n, --nodes strings        target the specified nodes
+      --talosconfig string   The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
+```
+
+### SEE ALSO
+
+* [talosctl](#talosctl)	 - A CLI for out-of-band management of Kubernetes nodes created by Talos
+* [talosctl wipe disk](#talosctl-wipe-disk)	 - Wipe a block device (disk or partition) which is not used as a volume
+
 ## talosctl
 
 A CLI for out-of-band management of Kubernetes nodes created by Talos
@@ -3189,7 +3220,6 @@ A CLI for out-of-band management of Kubernetes nodes created by Talos
 * [talosctl containers](#talosctl-containers)	 - List containers
 * [talosctl copy](#talosctl-copy)	 - Copy data out from the node
 * [talosctl dashboard](#talosctl-dashboard)	 - Cluster dashboard with node overview, logs and real-time metrics
-* [talosctl disks](#talosctl-disks)	 - Get the list of disks from /sys/block on the machine
 * [talosctl dmesg](#talosctl-dmesg)	 - Retrieve kernel logs
 * [talosctl edit](#talosctl-edit)	 - Edit a resource from the default editor.
 * [talosctl etcd](#talosctl-etcd)	 - Manage etcd
@@ -3227,4 +3257,5 @@ A CLI for out-of-band management of Kubernetes nodes created by Talos
 * [talosctl usage](#talosctl-usage)	 - Retrieve a disk usage
 * [talosctl validate](#talosctl-validate)	 - Validate config
 * [talosctl version](#talosctl-version)	 - Prints the version
+* [talosctl wipe](#talosctl-wipe)	 - Wipe block device or volumes
 

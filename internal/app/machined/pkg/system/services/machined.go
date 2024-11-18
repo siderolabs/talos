@@ -99,7 +99,8 @@ var rules = map[string]role.Set{
 	"/cosi.resource.State/Update":  role.MakeSet(role.Admin),
 	"/cosi.resource.State/Watch":   role.MakeSet(role.Admin, role.Operator, role.Reader),
 
-	"/storage.StorageService/Disks": role.MakeSet(role.Admin, role.Operator, role.Reader),
+	"/storage.StorageService/Disks":           role.MakeSet(role.Admin, role.Operator, role.Reader),
+	"/storage.StorageService/BlockDeviceWipe": role.MakeSet(role.Admin),
 
 	"/time.TimeService/Time":      role.MakeSet(role.Admin, role.Operator, role.Reader),
 	"/time.TimeService/TimeCheck": role.MakeSet(role.Admin, role.Operator, role.Reader),

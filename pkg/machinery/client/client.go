@@ -1002,3 +1002,12 @@ func (c *Client) ImagePull(ctx context.Context, namespace common.ContainerdNames
 
 	return err
 }
+
+// BlockDeviceWipe wipes a block device which is not used as a volume.
+func (c *Client) BlockDeviceWipe(ctx context.Context, req *storageapi.BlockDeviceWipeRequest, callOptions ...grpc.CallOption) error {
+	resp, err := c.StorageClient.BlockDeviceWipe(ctx, req, callOptions...)
+
+	_, err = FilterMessages(resp, err)
+
+	return err
+}

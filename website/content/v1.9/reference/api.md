@@ -493,10 +493,15 @@ description: Talos gRPC API reference.
     - [SecurityService](#securityapi.SecurityService)
   
 - [storage/storage.proto](#storage/storage.proto)
+    - [BlockDeviceWipe](#storage.BlockDeviceWipe)
+    - [BlockDeviceWipeDescriptor](#storage.BlockDeviceWipeDescriptor)
+    - [BlockDeviceWipeRequest](#storage.BlockDeviceWipeRequest)
+    - [BlockDeviceWipeResponse](#storage.BlockDeviceWipeResponse)
     - [Disk](#storage.Disk)
     - [Disks](#storage.Disks)
     - [DisksResponse](#storage.DisksResponse)
   
+    - [BlockDeviceWipeDescriptor.Method](#storage.BlockDeviceWipeDescriptor.Method)
     - [Disk.DiskType](#storage.Disk.DiskType)
   
     - [StorageService](#storage.StorageService)
@@ -8488,6 +8493,74 @@ The security service definition.
 
 
 
+<a name="storage.BlockDeviceWipe"></a>
+
+### BlockDeviceWipe
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| metadata | [common.Metadata](#common.Metadata) |  |  |
+
+
+
+
+
+
+<a name="storage.BlockDeviceWipeDescriptor"></a>
+
+### BlockDeviceWipeDescriptor
+BlockDeviceWipeDescriptor represents a single block device to be wiped.
+
+The device can be either a full disk (e.g. vda) or a partition (vda5).
+The device should not be used in any of active volumes.
+The device should not be used as a secondary (e.g. part of LVM).
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| device | [string](#string) |  | Device name to wipe (e.g. sda or sda5).
+
+The name should be submitted without `/dev/` prefix. |
+| method | [BlockDeviceWipeDescriptor.Method](#storage.BlockDeviceWipeDescriptor.Method) |  | Wipe method to use. |
+| skip_volume_check | [bool](#bool) |  | Skip the volume in use check. |
+
+
+
+
+
+
+<a name="storage.BlockDeviceWipeRequest"></a>
+
+### BlockDeviceWipeRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| devices | [BlockDeviceWipeDescriptor](#storage.BlockDeviceWipeDescriptor) | repeated |  |
+
+
+
+
+
+
+<a name="storage.BlockDeviceWipeResponse"></a>
+
+### BlockDeviceWipeResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| messages | [BlockDeviceWipe](#storage.BlockDeviceWipe) | repeated |  |
+
+
+
+
+
+
 <a name="storage.Disk"></a>
 
 ### Disk
@@ -8548,6 +8621,18 @@ DisksResponse represents the response of the `Disks` RPC.
  <!-- end messages -->
 
 
+<a name="storage.BlockDeviceWipeDescriptor.Method"></a>
+
+### BlockDeviceWipeDescriptor.Method
+
+
+| Name | Number | Description |
+| ---- | ------ | ----------- |
+| FAST | 0 | Fast wipe - wipe only filesystem signatures. |
+| ZEROES | 1 | Zeroes wipe - wipe by overwriting with zeroes (might be slow depending on the disk size and available hardware features). |
+
+
+
 <a name="storage.Disk.DiskType"></a>
 
 ### Disk.DiskType
@@ -8576,6 +8661,9 @@ StorageService represents the storage service.
 | Method Name | Request Type | Response Type | Description |
 | ----------- | ------------ | ------------- | ------------|
 | Disks | [.google.protobuf.Empty](#google.protobuf.Empty) | [DisksResponse](#storage.DisksResponse) |  |
+| BlockDeviceWipe | [BlockDeviceWipeRequest](#storage.BlockDeviceWipeRequest) | [BlockDeviceWipeResponse](#storage.BlockDeviceWipeResponse) | BlockDeviceWipe performs a wipe of the blockdevice (partition or disk).
+
+The method doesn't require a reboot, and it can only wipe blockdevices which are not being used as volumes at the moment. Wiping of volumes requires a different API. |
 
  <!-- end services -->
 

@@ -21,7 +21,8 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	StorageService_Disks_FullMethodName = "/storage.StorageService/Disks"
+	StorageService_Disks_FullMethodName           = "/storage.StorageService/Disks"
+	StorageService_BlockDeviceWipe_FullMethodName = "/storage.StorageService/BlockDeviceWipe"
 )
 
 // StorageServiceClient is the client API for StorageService service.
@@ -31,6 +32,12 @@ const (
 // StorageService represents the storage service.
 type StorageServiceClient interface {
 	Disks(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*DisksResponse, error)
+	// BlockDeviceWipe performs a wipe of the blockdevice (partition or disk).
+	//
+	// The method doesn't require a reboot, and it can only wipe blockdevices which are not
+	// being used as volumes at the moment.
+	// Wiping of volumes requires a different API.
+	BlockDeviceWipe(ctx context.Context, in *BlockDeviceWipeRequest, opts ...grpc.CallOption) (*BlockDeviceWipeResponse, error)
 }
 
 type storageServiceClient struct {
@@ -51,6 +58,16 @@ func (c *storageServiceClient) Disks(ctx context.Context, in *emptypb.Empty, opt
 	return out, nil
 }
 
+func (c *storageServiceClient) BlockDeviceWipe(ctx context.Context, in *BlockDeviceWipeRequest, opts ...grpc.CallOption) (*BlockDeviceWipeResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(BlockDeviceWipeResponse)
+	err := c.cc.Invoke(ctx, StorageService_BlockDeviceWipe_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // StorageServiceServer is the server API for StorageService service.
 // All implementations must embed UnimplementedStorageServiceServer
 // for forward compatibility.
@@ -58,6 +75,12 @@ func (c *storageServiceClient) Disks(ctx context.Context, in *emptypb.Empty, opt
 // StorageService represents the storage service.
 type StorageServiceServer interface {
 	Disks(context.Context, *emptypb.Empty) (*DisksResponse, error)
+	// BlockDeviceWipe performs a wipe of the blockdevice (partition or disk).
+	//
+	// The method doesn't require a reboot, and it can only wipe blockdevices which are not
+	// being used as volumes at the moment.
+	// Wiping of volumes requires a different API.
+	BlockDeviceWipe(context.Context, *BlockDeviceWipeRequest) (*BlockDeviceWipeResponse, error)
 	mustEmbedUnimplementedStorageServiceServer()
 }
 
@@ -70,6 +93,9 @@ type UnimplementedStorageServiceServer struct{}
 
 func (UnimplementedStorageServiceServer) Disks(context.Context, *emptypb.Empty) (*DisksResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Disks not implemented")
+}
+func (UnimplementedStorageServiceServer) BlockDeviceWipe(context.Context, *BlockDeviceWipeRequest) (*BlockDeviceWipeResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method BlockDeviceWipe not implemented")
 }
 func (UnimplementedStorageServiceServer) mustEmbedUnimplementedStorageServiceServer() {}
 func (UnimplementedStorageServiceServer) testEmbeddedByValue()                        {}
@@ -110,6 +136,24 @@ func _StorageService_Disks_Handler(srv interface{}, ctx context.Context, dec fun
 	return interceptor(ctx, in, info, handler)
 }
 
+func _StorageService_BlockDeviceWipe_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(BlockDeviceWipeRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(StorageServiceServer).BlockDeviceWipe(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: StorageService_BlockDeviceWipe_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(StorageServiceServer).BlockDeviceWipe(ctx, req.(*BlockDeviceWipeRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // StorageService_ServiceDesc is the grpc.ServiceDesc for StorageService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -120,6 +164,10 @@ var StorageService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Disks",
 			Handler:    _StorageService_Disks_Handler,
+		},
+		{
+			MethodName: "BlockDeviceWipe",
+			Handler:    _StorageService_BlockDeviceWipe_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

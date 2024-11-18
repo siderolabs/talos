@@ -98,6 +98,18 @@ Talos now supports matching on permanent hardware (MAC) address of the network i
 This is specifically useful to match bond members, as they change their hardware addresses when they become part of the bond.
 """
 
+    [notes.talosctl-disk]
+        title = "talosctl disks"
+        description = """\
+The command `talosctl disks` was removed, please use `talosctl get disks`, `talosctl get systemdisk`, and `talosctl get blockdevices` instead.
+"""
+
+    [notes.talosctl-wipe]
+        title = "talosctl wipe"
+        description = """\
+The new command `talosctl wipe disk` allows to wipe a disk or a partition which is not used as a volume.
+"""
+
 [make_deps]
 
     [make_deps.tools]

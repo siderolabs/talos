@@ -5,138 +5,21 @@
 package talos
 
 import (
-	"context"
-	"fmt"
-	"os"
-	"strings"
-	"text/tabwriter"
+	"errors"
 
-	humanize "github.com/dustin/go-humanize"
 	"github.com/spf13/cobra"
-
-	"github.com/siderolabs/talos/pkg/cli"
-	"github.com/siderolabs/talos/pkg/machinery/client"
 )
 
-var disksCmdFlags struct {
-	insecure bool
-}
-
 var disksCmd = &cobra.Command{
-	Use:   "disks",
-	Short: "Get the list of disks from /sys/block on the machine",
-	Long:  ``,
+	Use:    "disks",
+	Short:  "Get the list of disks from /sys/block on the machine",
+	Long:   ``,
+	Hidden: true,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		if disksCmdFlags.insecure {
-			return WithClientMaintenance(nil, printDisks)
-		}
-
-		return WithClient(printDisks)
+		return errors.New("`talosctl disks` is deprecated, please use `talosctl get disks`, `talosctl get systemdisk`, `talosctl get discoveredvolumes` instead")
 	},
 }
 
-//nolint:gocyclo
-func printDisks(ctx context.Context, c *client.Client) error {
-	response, err := c.Disks(ctx)
-	if err != nil {
-		if response == nil {
-			return fmt.Errorf("error getting disks: %w", err)
-		}
-
-		cli.Warning("%s", err)
-	}
-
-	w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
-	node := ""
-
-	labels := strings.Join(
-		[]string{
-			"DEV",
-			"MODEL",
-			"SERIAL",
-			"TYPE",
-			"UUID",
-			"WWID",
-			"MODALIAS",
-			"NAME",
-			"SIZE",
-			"BUS_PATH",
-			"SUBSYSTEM",
-			"READ_ONLY",
-			"SYSTEM_DISK",
-		}, "\t")
-
-	getWithPlaceholder := func(in string) string {
-		if in == "" {
-			return "-"
-		}
-
-		return in
-	}
-
-	for i, message := range response.Messages {
-		if message.Metadata != nil && message.Metadata.Hostname != "" {
-			node = message.Metadata.Hostname
-		}
-
-		if len(message.Disks) == 0 {
-			continue
-		}
-
-		for j, disk := range message.Disks {
-			if i == 0 && j == 0 {
-				if node != "" {
-					fmt.Fprintln(w, "NODE\t"+labels)
-				} else {
-					fmt.Fprintln(w, labels)
-				}
-			}
-
-			var args []any
-
-			if node != "" {
-				args = append(args, node)
-			}
-
-			isReadonly := ""
-
-			if disk.Readonly {
-				isReadonly = "*"
-			}
-
-			isSystemDisk := ""
-
-			if disk.SystemDisk {
-				isSystemDisk = "*"
-			}
-
-			args = append(args, []any{
-				getWithPlaceholder(disk.DeviceName),
-				getWithPlaceholder(disk.Model),
-				getWithPlaceholder(disk.Serial),
-				disk.Type.String(),
-				getWithPlaceholder(disk.Uuid),
-				getWithPlaceholder(disk.Wwid),
-				getWithPlaceholder(disk.Modalias),
-				getWithPlaceholder(disk.Name),
-				humanize.Bytes(disk.Size),
-				getWithPlaceholder(disk.BusPath),
-				getWithPlaceholder(disk.Subsystem),
-				isReadonly,
-				isSystemDisk,
-			}...)
-
-			pattern := strings.Repeat("%s\t", len(args))
-			pattern = strings.TrimSpace(pattern) + "\n"
-
-			fmt.Fprintf(w, pattern, args...)
-		}
-	}
-
-	return w.Flush()
-}
-
 func init() {
-	disksCmd.Flags().BoolVarP(&disksCmdFlags.insecure, "insecure", "i", false, "get disks using the insecure (encrypted with no auth) maintenance service")
 	addCommand(disksCmd)
 }
