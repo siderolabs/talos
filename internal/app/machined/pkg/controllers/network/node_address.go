@@ -127,9 +127,17 @@ func (ctrl *NodeAddressController) Run(ctx context.Context, r controller.Runtime
 				continue
 			}
 
+			// in IPv6 only environments we want to prefer longer prefixes, in other environments we keep old behavior
+			var isPreferred bool
+			if (value.IsZero(defaultAddress) || defaultAddress.Addr().Is6()) && ip.Addr().Is6() {
+				isPreferred = ip.Bits() > defaultAddress.Bits()
+			} else {
+				isPreferred = ip.Addr().Compare(defaultAddress.Addr()) < 0
+			}
+
 			// set defaultAddress to the smallest IP from the alphabetically first link
 			if addr.Metadata().Owner() == addressStatusControllerName {
-				if value.IsZero(defaultAddress) || addr.TypedSpec().LinkName < defaultAddrLinkName || (addr.TypedSpec().LinkName == defaultAddrLinkName && ip.Addr().Compare(defaultAddress.Addr()) < 0) {
+				if value.IsZero(defaultAddress) || addr.TypedSpec().LinkName < defaultAddrLinkName || (addr.TypedSpec().LinkName == defaultAddrLinkName && isPreferred) {
 					defaultAddress = ip
 					defaultAddrLinkName = addr.TypedSpec().LinkName
 				}

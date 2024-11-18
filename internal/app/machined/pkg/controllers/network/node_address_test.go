@@ -278,6 +278,72 @@ func (suite *NodeAddressSuite) TestFilterOverlappingSubnets() {
 	)
 }
 
+func (suite *NodeAddressSuite) TestDefaultIPv6() {
+	var addressStatusController netctrl.AddressStatusController
+
+	linkEth0 := network.NewLinkStatus(network.NamespaceName, "eth0")
+	linkEth0.TypedSpec().Type = nethelpers.LinkEther
+	linkEth0.TypedSpec().LinkState = true
+	linkEth0.TypedSpec().Index = 1
+	suite.Require().NoError(suite.State().Create(suite.Ctx(), linkEth0))
+
+	linkLo := network.NewLinkStatus(network.NamespaceName, "lo")
+	linkLo.TypedSpec().Type = nethelpers.LinkLoopbck
+	linkLo.TypedSpec().LinkState = true
+	linkLo.TypedSpec().Index = 2
+	suite.Require().NoError(suite.State().Create(suite.Ctx(), linkLo))
+
+	newAddress := func(addr netip.Prefix, scope nethelpers.Scope, flags nethelpers.AddressFlags, link *network.LinkStatus) {
+		addressStatus := network.NewAddressStatus(network.NamespaceName, network.AddressID(link.Metadata().ID(), addr))
+		addressStatus.TypedSpec().Address = addr
+		addressStatus.TypedSpec().LinkName = link.Metadata().ID()
+		addressStatus.TypedSpec().LinkIndex = link.TypedSpec().Index
+		addressStatus.TypedSpec().Scope = scope
+		addressStatus.TypedSpec().Flags = flags
+		suite.Require().NoError(
+			suite.State().Create(
+				suite.Ctx(),
+				addressStatus,
+				state.WithCreateOwner(addressStatusController.Name()),
+			),
+		)
+	}
+
+	for _, a := range []struct {
+		Addr  string
+		Scope nethelpers.Scope
+		Flags nethelpers.AddressFlags
+		Link  *network.LinkStatus
+	}{
+		{"fd01:cafe::5054:ff:fe1f:c7bd/64", nethelpers.ScopeGlobal, nethelpers.AddressFlags(nethelpers.AddressManagementTemp), linkEth0},
+		{"fd01:cafe::f14c:9fa1:8496:557f/128", nethelpers.ScopeGlobal, nethelpers.AddressFlags(nethelpers.AddressPermanent), linkEth0},
+		{"fe80::5054:ff:fe1f:c7bd/64", nethelpers.ScopeLink, nethelpers.AddressFlags(nethelpers.AddressPermanent), linkEth0},
+		{"127.0.0.1/8", nethelpers.ScopeHost, nethelpers.AddressFlags(nethelpers.AddressPermanent), linkLo},
+		{"169.254.116.108/32", nethelpers.ScopeHost, nethelpers.AddressFlags(nethelpers.AddressPermanent), linkLo},
+		{"::1/128", nethelpers.ScopeHost, nethelpers.AddressFlags(nethelpers.AddressPermanent), linkLo},
+	} {
+		newAddress(netip.MustParsePrefix(a.Addr), a.Scope, a.Flags, a.Link)
+	}
+
+	rtestutils.AssertResources(suite.Ctx(), suite.T(), suite.State(),
+		[]resource.ID{
+			network.NodeAddressDefaultID,
+		},
+		func(r *network.NodeAddress, asrt *assert.Assertions) {
+			addrs := r.TypedSpec().Addresses
+
+			//nolint:gocritic
+			switch r.Metadata().ID() {
+			case network.NodeAddressDefaultID:
+				asrt.Equal(
+					ipList("fd01:cafe::f14c:9fa1:8496:557f/128"),
+					addrs,
+				)
+			}
+		},
+	)
+}
+
 //nolint:gocyclo
 func (suite *NodeAddressSuite) TestDefaultAddressChange() {
 	var addressStatusController netctrl.AddressStatusController
