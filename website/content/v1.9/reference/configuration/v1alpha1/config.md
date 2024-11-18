@@ -172,12 +172,12 @@ network:
           #     busPath: 00:* # PCI, USB bus prefix, supports matching by wildcard.
           # # select a device with mac address matching `*:f0:ab` and `virtio` kernel driver.
           # deviceSelector:
-          #     hardwareAddr: '*:f0:ab' # Device hardware address, supports matching by wildcard.
+          #     hardwareAddr: '*:f0:ab' # Device hardware (MAC) address, supports matching by wildcard.
           #     driver: virtio # Kernel driver, supports matching by wildcard.
           # # select a device with bus prefix 00:*, a device with mac address matching `*:f0:ab` and `virtio` kernel driver.
           # deviceSelector:
           #     - busPath: 00:* # PCI, USB bus prefix, supports matching by wildcard.
-          #     - hardwareAddr: '*:f0:ab' # Device hardware address, supports matching by wildcard.
+          #     - hardwareAddr: '*:f0:ab' # Device hardware (MAC) address, supports matching by wildcard.
           #       driver: virtio # Kernel driver, supports matching by wildcard.
 
           # # Bond specific options.
@@ -189,7 +189,7 @@ network:
           #     # Picks a network device using the selector.
           #     deviceSelectors:
           #         - busPath: 00:* # PCI, USB bus prefix, supports matching by wildcard.
-          #         - hardwareAddr: '*:f0:ab' # Device hardware address, supports matching by wildcard.
+          #         - hardwareAddr: '*:f0:ab' # Device hardware (MAC) address, supports matching by wildcard.
           #           driver: virtio # Kernel driver, supports matching by wildcard.
           #     mode: 802.3ad # A bond option.
           #     lacpRate: fast # A bond option.
@@ -747,12 +747,12 @@ machine:
               #     busPath: 00:* # PCI, USB bus prefix, supports matching by wildcard.
               # # select a device with mac address matching `*:f0:ab` and `virtio` kernel driver.
               # deviceSelector:
-              #     hardwareAddr: '*:f0:ab' # Device hardware address, supports matching by wildcard.
+              #     hardwareAddr: '*:f0:ab' # Device hardware (MAC) address, supports matching by wildcard.
               #     driver: virtio # Kernel driver, supports matching by wildcard.
               # # select a device with bus prefix 00:*, a device with mac address matching `*:f0:ab` and `virtio` kernel driver.
               # deviceSelector:
               #     - busPath: 00:* # PCI, USB bus prefix, supports matching by wildcard.
-              #     - hardwareAddr: '*:f0:ab' # Device hardware address, supports matching by wildcard.
+              #     - hardwareAddr: '*:f0:ab' # Device hardware (MAC) address, supports matching by wildcard.
               #       driver: virtio # Kernel driver, supports matching by wildcard.
 
               # # Bond specific options.
@@ -764,7 +764,7 @@ machine:
               #     # Picks a network device using the selector.
               #     deviceSelectors:
               #         - busPath: 00:* # PCI, USB bus prefix, supports matching by wildcard.
-              #         - hardwareAddr: '*:f0:ab' # Device hardware address, supports matching by wildcard.
+              #         - hardwareAddr: '*:f0:ab' # Device hardware (MAC) address, supports matching by wildcard.
               #           driver: virtio # Kernel driver, supports matching by wildcard.
               #     mode: 802.3ad # A bond option.
               #     lacpRate: fast # A bond option.
@@ -862,12 +862,12 @@ interfaces:
       #     busPath: 00:* # PCI, USB bus prefix, supports matching by wildcard.
       # # select a device with mac address matching `*:f0:ab` and `virtio` kernel driver.
       # deviceSelector:
-      #     hardwareAddr: '*:f0:ab' # Device hardware address, supports matching by wildcard.
+      #     hardwareAddr: '*:f0:ab' # Device hardware (MAC) address, supports matching by wildcard.
       #     driver: virtio # Kernel driver, supports matching by wildcard.
       # # select a device with bus prefix 00:*, a device with mac address matching `*:f0:ab` and `virtio` kernel driver.
       # deviceSelector:
       #     - busPath: 00:* # PCI, USB bus prefix, supports matching by wildcard.
-      #     - hardwareAddr: '*:f0:ab' # Device hardware address, supports matching by wildcard.
+      #     - hardwareAddr: '*:f0:ab' # Device hardware (MAC) address, supports matching by wildcard.
       #       driver: virtio # Kernel driver, supports matching by wildcard.
 
       # # Bond specific options.
@@ -879,7 +879,7 @@ interfaces:
       #     # Picks a network device using the selector.
       #     deviceSelectors:
       #         - busPath: 00:* # PCI, USB bus prefix, supports matching by wildcard.
-      #         - hardwareAddr: '*:f0:ab' # Device hardware address, supports matching by wildcard.
+      #         - hardwareAddr: '*:f0:ab' # Device hardware (MAC) address, supports matching by wildcard.
       #           driver: virtio # Kernel driver, supports matching by wildcard.
       #     mode: 802.3ad # A bond option.
       #     lacpRate: fast # A bond option.
@@ -986,12 +986,12 @@ machine:
               #     busPath: 00:* # PCI, USB bus prefix, supports matching by wildcard.
               # # select a device with mac address matching `*:f0:ab` and `virtio` kernel driver.
               # deviceSelector:
-              #     hardwareAddr: '*:f0:ab' # Device hardware address, supports matching by wildcard.
+              #     hardwareAddr: '*:f0:ab' # Device hardware (MAC) address, supports matching by wildcard.
               #     driver: virtio # Kernel driver, supports matching by wildcard.
               # # select a device with bus prefix 00:*, a device with mac address matching `*:f0:ab` and `virtio` kernel driver.
               # deviceSelector:
               #     - busPath: 00:* # PCI, USB bus prefix, supports matching by wildcard.
-              #     - hardwareAddr: '*:f0:ab' # Device hardware address, supports matching by wildcard.
+              #     - hardwareAddr: '*:f0:ab' # Device hardware (MAC) address, supports matching by wildcard.
               #       driver: virtio # Kernel driver, supports matching by wildcard.
 
               # # Bond specific options.
@@ -1003,7 +1003,7 @@ machine:
               #     # Picks a network device using the selector.
               #     deviceSelectors:
               #         - busPath: 00:* # PCI, USB bus prefix, supports matching by wildcard.
-              #         - hardwareAddr: '*:f0:ab' # Device hardware address, supports matching by wildcard.
+              #         - hardwareAddr: '*:f0:ab' # Device hardware (MAC) address, supports matching by wildcard.
               #           driver: virtio # Kernel driver, supports matching by wildcard.
               #     mode: 802.3ad # A bond option.
               #     lacpRate: fast # A bond option.
@@ -1072,7 +1072,7 @@ deviceSelector:
     busPath: 00:* # PCI, USB bus prefix, supports matching by wildcard.
 {{< /highlight >}}{{< highlight yaml >}}
 deviceSelector:
-    hardwareAddr: '*:f0:ab' # Device hardware address, supports matching by wildcard.
+    hardwareAddr: '*:f0:ab' # Device hardware (MAC) address, supports matching by wildcard.
     driver: virtio # Kernel driver, supports matching by wildcard.
 {{< /highlight >}}</details> | |
 |`addresses` |[]string |<details><summary>Assigns static IP addresses to the interface.</summary>An address can be specified either in proper CIDR notation or as a standalone address (netmask of all ones is assumed).</details> <details><summary>Show example(s)</summary>{{< highlight yaml >}}
@@ -1101,7 +1101,7 @@ bond:
     # # select a device with bus prefix 00:*, a device with mac address matching `*:f0:ab` and `virtio` kernel driver.
     # deviceSelectors:
     #     - busPath: 00:* # PCI, USB bus prefix, supports matching by wildcard.
-    #     - hardwareAddr: '*:f0:ab' # Device hardware address, supports matching by wildcard.
+    #     - hardwareAddr: '*:f0:ab' # Device hardware (MAC) address, supports matching by wildcard.
     #       driver: virtio # Kernel driver, supports matching by wildcard.
 {{< /highlight >}}</details> | |
 |`bridge` |<a href="#Config.machine.network.interfaces..bridge">Bridge</a> |Bridge specific options. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
@@ -1179,7 +1179,7 @@ machine:
     network:
         interfaces:
             - deviceSelector:
-                hardwareAddr: '*:f0:ab' # Device hardware address, supports matching by wildcard.
+                hardwareAddr: '*:f0:ab' # Device hardware (MAC) address, supports matching by wildcard.
                 driver: virtio # Kernel driver, supports matching by wildcard.
 {{< /highlight >}}
 
@@ -1189,7 +1189,7 @@ machine:
         interfaces:
             - deviceSelector:
                 - busPath: 00:* # PCI, USB bus prefix, supports matching by wildcard.
-                - hardwareAddr: '*:f0:ab' # Device hardware address, supports matching by wildcard.
+                - hardwareAddr: '*:f0:ab' # Device hardware (MAC) address, supports matching by wildcard.
                   driver: virtio # Kernel driver, supports matching by wildcard.
 {{< /highlight >}}
 
@@ -1197,7 +1197,8 @@ machine:
 | Field | Type | Description | Value(s) |
 |-------|------|-------------|----------|
 |`busPath` |string |PCI, USB bus prefix, supports matching by wildcard.  | |
-|`hardwareAddr` |string |Device hardware address, supports matching by wildcard.  | |
+|`hardwareAddr` |string |Device hardware (MAC) address, supports matching by wildcard.  | |
+|`permanentAddr` |string |<details><summary>Device permanent hardware address, supports matching by wildcard.</summary>The permanent address doesn't change when the link is enslaved to a bond,<br />so it's recommended to use this field for bond members.</details>  | |
 |`pciID` |string |PCI ID (vendor ID, product ID), supports matching by wildcard.  | |
 |`driver` |string |Kernel driver, supports matching by wildcard.  | |
 |`physical` |bool |Select only physical devices.  | |
@@ -1261,7 +1262,7 @@ machine:
                 # # select a device with bus prefix 00:*, a device with mac address matching `*:f0:ab` and `virtio` kernel driver.
                 # deviceSelectors:
                 #     - busPath: 00:* # PCI, USB bus prefix, supports matching by wildcard.
-                #     - hardwareAddr: '*:f0:ab' # Device hardware address, supports matching by wildcard.
+                #     - hardwareAddr: '*:f0:ab' # Device hardware (MAC) address, supports matching by wildcard.
                 #       driver: virtio # Kernel driver, supports matching by wildcard.
 {{< /highlight >}}
 
@@ -1272,7 +1273,7 @@ machine:
 |`deviceSelectors` |<a href="#Config.machine.network.interfaces..bond.deviceSelectors.">[]NetworkDeviceSelector</a> |<details><summary>Picks a network device using the selector.</summary>Mutually exclusive with `interfaces`.<br />Supports partial match using wildcard syntax.</details> <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 deviceSelectors:
     - busPath: 00:* # PCI, USB bus prefix, supports matching by wildcard.
-    - hardwareAddr: '*:f0:ab' # Device hardware address, supports matching by wildcard.
+    - hardwareAddr: '*:f0:ab' # Device hardware (MAC) address, supports matching by wildcard.
       driver: virtio # Kernel driver, supports matching by wildcard.
 {{< /highlight >}}</details> | |
 |`arpIPTarget` |[]string |<details><summary>A bond option.</summary>Please see the official kernel documentation.<br />Not supported at the moment.</details>  | |
@@ -1326,7 +1327,7 @@ machine:
         interfaces:
             - bond:
                 deviceSelectors:
-                    hardwareAddr: '*:f0:ab' # Device hardware address, supports matching by wildcard.
+                    hardwareAddr: '*:f0:ab' # Device hardware (MAC) address, supports matching by wildcard.
                     driver: virtio # Kernel driver, supports matching by wildcard.
 {{< /highlight >}}
 
@@ -1337,7 +1338,7 @@ machine:
             - bond:
                 deviceSelectors:
                     - busPath: 00:* # PCI, USB bus prefix, supports matching by wildcard.
-                    - hardwareAddr: '*:f0:ab' # Device hardware address, supports matching by wildcard.
+                    - hardwareAddr: '*:f0:ab' # Device hardware (MAC) address, supports matching by wildcard.
                       driver: virtio # Kernel driver, supports matching by wildcard.
 {{< /highlight >}}
 
@@ -1345,7 +1346,8 @@ machine:
 | Field | Type | Description | Value(s) |
 |-------|------|-------------|----------|
 |`busPath` |string |PCI, USB bus prefix, supports matching by wildcard.  | |
-|`hardwareAddr` |string |Device hardware address, supports matching by wildcard.  | |
+|`hardwareAddr` |string |Device hardware (MAC) address, supports matching by wildcard.  | |
+|`permanentAddr` |string |<details><summary>Device permanent hardware address, supports matching by wildcard.</summary>The permanent address doesn't change when the link is enslaved to a bond,<br />so it's recommended to use this field for bond members.</details>  | |
 |`pciID` |string |PCI ID (vendor ID, product ID), supports matching by wildcard.  | |
 |`driver` |string |Kernel driver, supports matching by wildcard.  | |
 |`physical` |bool |Select only physical devices.  | |

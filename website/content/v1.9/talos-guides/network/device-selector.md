@@ -34,6 +34,7 @@ The available hardware information used in the selector can be observed in the `
 spec:
   ...
   hardwareAddr: 4e:95:8e:8f:e4:47
+  permanentAddr: 4e:95:8e:8f:e4:47
   busPath: 0000:06:00.0
   driver: alx
   pciID: 1969:E0B1
@@ -43,6 +44,7 @@ The following qualifiers are available:
 
 - `driver` - matches a device by its driver name
 - `hardwareAddr` - matches a device by its hardware address
+- `permanentAddr` - matches a device by its permanent hardware address
 - `busPath` - matches a device by its PCI bus path
 - `pciID` - matches a device by its PCI vendor and device ID
 - `physical` - matches only physical devices (vs. virtual devices, e.g. bonds and VLANs)
@@ -62,8 +64,10 @@ machine:
         bond:
           mode: balance-rr
           deviceSelectors:
-            - hardwareAddr: '00:50:56:8e:8f:e4'
-            - hardwareAddr: '00:50:57:9c:2c:2d'
+            - permanentAddr: '00:50:56:8e:8f:e4'
+            - permanentAddr: '00:50:57:9c:2c:2d'
 ```
 
 In this example, the `bond0` interface will be created and bonded using two devices with the specified hardware addresses.
+For bonding, use `permanentAddr` instead of `hardwareAddr` to match the permanent hardware address of the device, as `hardwareAddr` might change
+as the link becomes part of the bond.

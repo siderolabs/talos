@@ -214,6 +214,7 @@ func (ctrl *DeviceConfigController) selectDevices(selector talosconfig.NetworkDe
 
 		for _, pair := range [][]string{
 			{selector.HardwareAddress(), linkStatusSpec.HardwareAddr.String()},
+			{selector.PermanentAddress(), linkStatusSpec.PermanentAddr.String()},
 			{selector.PCIID(), linkStatusSpec.PCIID},
 			{selector.KernelDriver(), linkStatusSpec.Driver},
 			{selector.Bus(), linkStatusSpec.BusPath},

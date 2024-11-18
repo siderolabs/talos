@@ -2324,8 +2324,13 @@ type KubeSpanFilters struct {
 type NetworkDeviceSelector struct {
 	// description: PCI, USB bus prefix, supports matching by wildcard.
 	NetworkDeviceBus string `yaml:"busPath,omitempty"`
-	// description: Device hardware address, supports matching by wildcard.
+	// description: Device hardware (MAC) address, supports matching by wildcard.
 	NetworkDeviceHardwareAddress string `yaml:"hardwareAddr,omitempty"`
+	// description: |
+	//    Device permanent hardware address, supports matching by wildcard.
+	//    The permanent address doesn't change when the link is enslaved to a bond,
+	//    so it's recommended to use this field for bond members.
+	NetworkDevicePermanentAddress string `yaml:"permanentAddr,omitempty"`
 	// description: PCI ID (vendor ID, product ID), supports matching by wildcard.
 	NetworkDevicePCIID string `yaml:"pciID,omitempty"`
 	// description: Kernel driver, supports matching by wildcard.

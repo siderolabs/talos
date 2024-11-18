@@ -851,6 +851,11 @@ func (s *NetworkDeviceSelector) HardwareAddress() string {
 	return s.NetworkDeviceHardwareAddress
 }
 
+// PermanentAddress implements config.NetworkDeviceSelector interface.
+func (s *NetworkDeviceSelector) PermanentAddress() string {
+	return s.NetworkDevicePermanentAddress
+}
+
 // PCIID implements config.NetworkDeviceSelector interface.
 func (s *NetworkDeviceSelector) PCIID() string {
 	return s.NetworkDevicePCIID

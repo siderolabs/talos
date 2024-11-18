@@ -318,6 +318,7 @@ type KubeSpanFilters interface {
 type NetworkDeviceSelector interface {
 	Bus() string
 	HardwareAddress() string
+	PermanentAddress() string
 	PCIID() string
 	KernelDriver() string
 	Physical() *bool

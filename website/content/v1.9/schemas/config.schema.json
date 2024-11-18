@@ -3008,9 +3008,16 @@
         "hardwareAddr": {
           "type": "string",
           "title": "hardwareAddr",
-          "description": "Device hardware address, supports matching by wildcard.\n",
-          "markdownDescription": "Device hardware address, supports matching by wildcard.",
-          "x-intellij-html-description": "\u003cp\u003eDevice hardware address, supports matching by wildcard.\u003c/p\u003e\n"
+          "description": "Device hardware (MAC) address, supports matching by wildcard.\n",
+          "markdownDescription": "Device hardware (MAC) address, supports matching by wildcard.",
+          "x-intellij-html-description": "\u003cp\u003eDevice hardware (MAC) address, supports matching by wildcard.\u003c/p\u003e\n"
+        },
+        "permanentAddr": {
+          "type": "string",
+          "title": "permanentAddr",
+          "description": "Device permanent hardware address, supports matching by wildcard.\nThe permanent address doesn’t change when the link is enslaved to a bond,\nso it’s recommended to use this field for bond members.\n",
+          "markdownDescription": "Device permanent hardware address, supports matching by wildcard.\nThe permanent address doesn't change when the link is enslaved to a bond,\nso it's recommended to use this field for bond members.",
+          "x-intellij-html-description": "\u003cp\u003eDevice permanent hardware address, supports matching by wildcard.\nThe permanent address doesn\u0026rsquo;t change when the link is enslaved to a bond,\nso it\u0026rsquo;s recommended to use this field for bond members.\u003c/p\u003e\n"
         },
         "pciID": {
           "type": "string",

@@ -3791,8 +3791,15 @@ func (NetworkDeviceSelector) Doc() *encoder.Doc {
 				Name:        "hardwareAddr",
 				Type:        "string",
 				Note:        "",
-				Description: "Device hardware address, supports matching by wildcard.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Device hardware address, supports matching by wildcard." /* encoder.LineComment */, "" /* encoder.FootComment */},
+				Description: "Device hardware (MAC) address, supports matching by wildcard.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Device hardware (MAC) address, supports matching by wildcard." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "permanentAddr",
+				Type:        "string",
+				Note:        "",
+				Description: "Device permanent hardware address, supports matching by wildcard.\nThe permanent address doesn't change when the link is enslaved to a bond,\nso it's recommended to use this field for bond members.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Device permanent hardware address, supports matching by wildcard." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
 			{
 				Name:        "pciID",

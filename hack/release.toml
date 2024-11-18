@@ -83,6 +83,13 @@ In Talos 1.9 this was fixed, so that by default an upstream registry is used as 
 configuration option `.skipFallback` can be used to disable this behavior both for Talos and CRI plugin.
 """
 
+    [notes.device-selectors]
+        title = "Device Selectors"
+        description = """\
+Talos now supports matching on permanent hardware (MAC) address of the network interfaces.
+This is specifically useful to match bond members, as they change their hardware addresses when they become part of the bond.
+"""
+
 [make_deps]
 
     [make_deps.tools]
