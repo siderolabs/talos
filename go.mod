@@ -27,13 +27,8 @@ replace (
 )
 
 // fd-leak related replacements: https://github.com/siderolabs/talos/issues/9412
-replace (
-	// https://github.com/insomniacslk/dhcp/pull/550
-	github.com/insomniacslk/dhcp => github.com/smira/dhcp v0.0.0-20241001122726-31e9ef21c016
-
-	// https://github.com/safchain/ethtool/pull/88
-	github.com/safchain/ethtool => github.com/smira/ethtool v0.0.0-20241001133415-4d519940893f
-)
+// https://github.com/insomniacslk/dhcp/pull/550
+replace github.com/insomniacslk/dhcp => github.com/smira/dhcp v0.0.0-20241001122726-31e9ef21c016
 
 // Kubernetes dependencies sharing the same version.
 require (
@@ -137,7 +132,7 @@ require (
 	github.com/rs/xid v1.6.0
 	github.com/ryanuber/columnize v2.1.2+incompatible
 	github.com/ryanuber/go-glob v1.0.0
-	github.com/safchain/ethtool v0.4.1
+	github.com/safchain/ethtool v0.4.2-0.20241117145548-4e3aff457298
 	github.com/scaleway/scaleway-sdk-go v1.0.0-beta.30
 	github.com/siderolabs/crypto v0.5.0
 	github.com/siderolabs/discovery-api v0.1.5
