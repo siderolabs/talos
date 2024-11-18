@@ -70,6 +70,19 @@ func parseBooleanExpression(expression string, env *cel.Env) (*cel.Ast, error) {
 	return ast, nil
 }
 
+// Merge imlements merge.Mergeable.
+func (expr *Expression) Merge(v any) error {
+	other, ok := v.(Expression)
+	if !ok {
+		return fmt.Errorf("unexpected type for expression merge %T", v)
+	}
+
+	expr.ast = other.ast
+	expr.expression = other.expression
+
+	return nil
+}
+
 // ParseBool parses the expression and asserts the result to boolean.
 //
 // ParseBoolean can be used after unmarshaling the expression from text.
