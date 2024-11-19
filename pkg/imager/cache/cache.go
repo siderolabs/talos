@@ -6,12 +6,14 @@
 package cache
 
 import (
+	"cmp"
 	"crypto/sha256"
 	"fmt"
 	"io"
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/dustin/go-humanize"
@@ -48,7 +50,9 @@ func Generate(images []string, platform string, insecure bool, dest string) erro
 		return fmt.Errorf("creating temporary directory: %w", err)
 	}
 
-	defer os.RemoveAll(tmpDir) //nolint:errcheck
+	removeAll := sync.OnceValue(func() error { return os.RemoveAll(tmpDir) })
+
+	defer removeAll() //nolint:errcheck
 
 	if err := os.MkdirAll(filepath.Join(tmpDir, blobsDir), 0o755); err != nil {
 		return err
@@ -101,11 +105,11 @@ func Generate(images []string, platform string, insecure bool, dest string) erro
 			tag, _ = name.NewTag(base, nameOptions...) //nolint:errcheck
 		}
 
-		if err := os.MkdirAll(referenceDir, 0o755); err != nil {
+		if err = os.MkdirAll(referenceDir, 0o755); err != nil {
 			return err
 		}
 
-		if err := os.MkdirAll(digestDir, 0o755); err != nil {
+		if err = os.MkdirAll(digestDir, 0o755); err != nil {
 			return err
 		}
 
@@ -125,13 +129,12 @@ func Generate(images []string, platform string, insecure bool, dest string) erro
 			return fmt.Errorf("fetching image %q: %w", src, err)
 		}
 
-		if tag.TagStr() != "" {
-			if err := os.WriteFile(filepath.Join(referenceDir, tag.TagStr()), manifest, 0o644); err != nil {
-				return err
-			}
+		filename := tag.TagStr()
+		if filename == "" {
+			filename = rmt.Digest.String()
 		}
 
-		if err := os.WriteFile(filepath.Join(digestDir, rmt.Digest.String()), manifest, 0o644); err != nil {
+		if err := os.WriteFile(filepath.Join(digestDir, filename), manifest, 0o644); err != nil {
 			return err
 		}
 
@@ -174,44 +177,7 @@ func Generate(images []string, platform string, insecure bool, dest string) erro
 		}
 
 		for _, layer := range layers {
-			digest, err := layer.Digest()
-			if err != nil {
-				return fmt.Errorf("getting layer digest: %w", err)
-			}
-
-			blobPath := filepath.Join(tmpDir, blobsDir, digest.String())
-
-			if _, err := os.Stat(blobPath); err == nil {
-				// we already have this blob, skip it
-				continue
-			}
-
-			size, err := layer.Size()
-			if err != nil {
-				return fmt.Errorf("getting layer size: %w", err)
-			}
-
-			fmt.Fprintf(os.Stderr, "> layer %q (size %s)...\n", digest, humanize.Bytes(uint64(size)))
-
-			reader, err := layer.Compressed()
-			if err != nil {
-				return fmt.Errorf("getting layer reader: %w", err)
-			}
-
-			file, err := os.Create(blobPath)
-			if err != nil {
-				return err
-			}
-
-			if _, err := io.Copy(file, reader); err != nil {
-				if err := file.Close(); err != nil {
-					return err
-				}
-
-				return err
-			}
-
-			if err := file.Close(); err != nil {
+			if err = processLayer(layer, tmpDir); err != nil {
 				return err
 			}
 		}
@@ -244,5 +210,52 @@ func Generate(images []string, platform string, insecure bool, dest string) erro
 		return fmt.Errorf("appending artifacts layer: %w", err)
 	}
 
-	return tarball.WriteToFile(dest, nil, newImg)
+	if err := tarball.WriteToFile(dest, nil, newImg); err != nil {
+		return fmt.Errorf("writing tarball: %w", err)
+	}
+
+	return removeAll()
+}
+
+func processLayer(layer v1.Layer, dstDir string) error {
+	digest, err := layer.Digest()
+	if err != nil {
+		return fmt.Errorf("getting layer digest: %w", err)
+	}
+
+	blobPath := filepath.Join(dstDir, blobsDir, digest.String())
+
+	if _, err := os.Stat(blobPath); err == nil {
+		// we already have this blob, skip it
+		return nil
+	}
+
+	size, err := layer.Size()
+	if err != nil {
+		return fmt.Errorf("getting layer size: %w", err)
+	}
+
+	fmt.Fprintf(os.Stderr, "> layer %q (size %s)...\n", digest, humanize.Bytes(uint64(size)))
+
+	reader, err := layer.Compressed()
+	if err != nil {
+		return fmt.Errorf("getting layer reader: %w", err)
+	}
+
+	rdrCloser := sync.OnceValue(reader.Close)
+	defer rdrCloser() //nolint:errcheck
+
+	file, err := os.Create(blobPath)
+	if err != nil {
+		return err
+	}
+
+	fileCloser := sync.OnceValue(file.Close)
+	defer fileCloser() //nolint:errcheck
+
+	if _, err := io.Copy(file, reader); err != nil {
+		return err
+	}
+
+	return cmp.Or(rdrCloser(), fileCloser())
 }
