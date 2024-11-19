@@ -9,6 +9,7 @@ package cli
 import (
 	"regexp"
 	"strings"
+	"testing"
 
 	"github.com/siderolabs/gen/xslices"
 
@@ -65,6 +66,10 @@ func (suite *ImageSuite) TestPull() {
 
 // TestCacheCreate verifies creating a cache tarball.
 func (suite *ImageSuite) TestCacheCreate() {
+	if testing.Short() {
+		suite.T().Skip("skipping in short mode")
+	}
+
 	stdOut, _ := suite.RunCLI([]string{"image", "default"})
 
 	imagesList := strings.Split(strings.Trim(stdOut, "\n"), "\n")
@@ -79,7 +84,7 @@ func (suite *ImageSuite) TestCacheCreate() {
 
 	args = append(args, imagesArgs...)
 
-	suite.RunCLI(args, base.StdoutEmpty())
+	suite.RunCLI(args, base.StdoutEmpty(), base.StderrNotEmpty())
 }
 
 func init() {

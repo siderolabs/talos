@@ -14,6 +14,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/dustin/go-humanize"
 	"github.com/google/go-containerregistry/pkg/authn"
 	"github.com/google/go-containerregistry/pkg/authn/github"
 	"github.com/google/go-containerregistry/pkg/crane"
@@ -80,6 +81,8 @@ func Generate(images []string, platform string, insecure bool, dest string) erro
 	}
 
 	for _, src := range images {
+		fmt.Fprintf(os.Stderr, "fetching image %q\n", src)
+
 		ref, err := name.ParseReference(src, nameOptions...)
 		if err != nil {
 			return fmt.Errorf("parsing reference %q: %w", src, err)
@@ -87,6 +90,16 @@ func Generate(images []string, platform string, insecure bool, dest string) erro
 
 		referenceDir := filepath.Join(tmpDir, manifestsDir, ref.Context().RegistryStr(), ref.Context().RepositoryStr(), "reference")
 		digestDir := filepath.Join(tmpDir, manifestsDir, ref.Context().RegistryStr(), ref.Context().RepositoryStr(), "digest")
+
+		// get the tag from the reference (if it's there)
+		var tag name.Tag
+
+		base, _, ok := strings.Cut(src, "@")
+		if !ok {
+			tag, _ = name.NewTag(src, nameOptions...) //nolint:errcheck
+		} else {
+			tag, _ = name.NewTag(base, nameOptions...) //nolint:errcheck
+		}
 
 		if err := os.MkdirAll(referenceDir, 0o755); err != nil {
 			return err
@@ -112,8 +125,8 @@ func Generate(images []string, platform string, insecure bool, dest string) erro
 			return fmt.Errorf("fetching image %q: %w", src, err)
 		}
 
-		if !strings.HasPrefix(ref.Identifier(), "sha256:") {
-			if err := os.WriteFile(filepath.Join(referenceDir, ref.Identifier()), manifest, 0o644); err != nil {
+		if tag.TagStr() != "" {
+			if err := os.WriteFile(filepath.Join(referenceDir, tag.TagStr()), manifest, 0o644); err != nil {
 				return err
 			}
 		}
@@ -166,12 +179,26 @@ func Generate(images []string, platform string, insecure bool, dest string) erro
 				return fmt.Errorf("getting layer digest: %w", err)
 			}
 
+			blobPath := filepath.Join(tmpDir, blobsDir, digest.String())
+
+			if _, err := os.Stat(blobPath); err == nil {
+				// we already have this blob, skip it
+				continue
+			}
+
+			size, err := layer.Size()
+			if err != nil {
+				return fmt.Errorf("getting layer size: %w", err)
+			}
+
+			fmt.Fprintf(os.Stderr, "> layer %q (size %s)...\n", digest, humanize.Bytes(uint64(size)))
+
 			reader, err := layer.Compressed()
 			if err != nil {
 				return fmt.Errorf("getting layer reader: %w", err)
 			}
 
-			file, err := os.Create(filepath.Join(tmpDir, blobsDir, digest.String()))
+			file, err := os.Create(blobPath)
 			if err != nil {
 				return err
 			}
