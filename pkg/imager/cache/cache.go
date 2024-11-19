@@ -6,6 +6,7 @@
 package cache
 
 import (
+	"crypto/sha256"
 	"fmt"
 	"io"
 	"os"
@@ -84,11 +85,14 @@ func Generate(images []string, platform string, insecure bool, dest string) erro
 			return fmt.Errorf("parsing reference %q: %w", src, err)
 		}
 
-		if err := os.MkdirAll(filepath.Join(tmpDir, manifestsDir, ref.Context().RegistryStr(), ref.Context().RepositoryStr(), "reference"), 0o755); err != nil {
+		referenceDir := filepath.Join(tmpDir, manifestsDir, ref.Context().RegistryStr(), ref.Context().RepositoryStr(), "reference")
+		digestDir := filepath.Join(tmpDir, manifestsDir, ref.Context().RegistryStr(), ref.Context().RepositoryStr(), "digest")
+
+		if err := os.MkdirAll(referenceDir, 0o755); err != nil {
 			return err
 		}
 
-		if err := os.MkdirAll(filepath.Join(tmpDir, manifestsDir, ref.Context().RegistryStr(), ref.Context().RepositoryStr(), "digest"), 0o755); err != nil {
+		if err := os.MkdirAll(digestDir, 0o755); err != nil {
 			return err
 		}
 
@@ -109,12 +113,12 @@ func Generate(images []string, platform string, insecure bool, dest string) erro
 		}
 
 		if !strings.HasPrefix(ref.Identifier(), "sha256:") {
-			if err := os.WriteFile(filepath.Join(tmpDir, manifestsDir, ref.Context().RegistryStr(), ref.Context().RepositoryStr(), "reference", ref.Identifier()), manifest, 0o644); err != nil {
+			if err := os.WriteFile(filepath.Join(referenceDir, ref.Identifier()), manifest, 0o644); err != nil {
 				return err
 			}
 		}
 
-		if err := os.WriteFile(filepath.Join(tmpDir, manifestsDir, ref.Context().RegistryStr(), ref.Context().RepositoryStr(), "digest", rmt.Digest.String()), manifest, 0o644); err != nil {
+		if err := os.WriteFile(filepath.Join(digestDir, rmt.Digest.String()), manifest, 0o644); err != nil {
 			return err
 		}
 
@@ -126,6 +130,34 @@ func Generate(images []string, platform string, insecure bool, dest string) erro
 		layers, err := img.Layers()
 		if err != nil {
 			return fmt.Errorf("getting image layers: %w", err)
+		}
+
+		config, err := img.RawConfigFile()
+		if err != nil {
+			return fmt.Errorf("getting image config: %w", err)
+		}
+
+		platformManifest, err := img.RawManifest()
+		if err != nil {
+			return fmt.Errorf("getting image platform manifest: %w", err)
+		}
+
+		h := sha256.New()
+		if _, err := h.Write(platformManifest); err != nil {
+			return fmt.Errorf("platform manifest hash: %w", err)
+		}
+
+		if err := os.WriteFile(filepath.Join(digestDir, fmt.Sprintf("sha256:%x", h.Sum(nil))), platformManifest, 0o644); err != nil {
+			return err
+		}
+
+		configHash, err := img.ConfigName()
+		if err != nil {
+			return fmt.Errorf("getting image config hash: %w", err)
+		}
+
+		if err := os.WriteFile(filepath.Join(tmpDir, blobsDir, configHash.String()), config, 0o644); err != nil {
+			return err
 		}
 
 		for _, layer := range layers {
