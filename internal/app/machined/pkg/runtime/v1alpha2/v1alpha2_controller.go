@@ -93,7 +93,9 @@ func (ctrl *Controller) Run(ctx context.Context, drainer *runtime.Drainer) error
 		},
 		&block.DiscoveryController{},
 		&block.DisksController{},
-		&block.LVMActivationController{},
+		&block.LVMActivationController{
+			V1Alpha1Mode: ctrl.v1alpha1Runtime.State().Platform().Mode(),
+		},
 		&block.SystemDiskController{},
 		&block.UserDiskConfigController{},
 		&block.VolumeConfigController{
