@@ -27,6 +27,14 @@ preface = """
 Talos is built with Go 1.23.3.
 """
 
+    [notes.drm]
+        title = "Direct Rendering Manager (DRM)"
+        description = """\
+Starting with Talos 1.9, the `i915` and `amdgpu` DRM drivers will be dropped from the Talos squashfs.
+There will be new system extensions named `i915` and `amdgpu` that would contain both the drivers and firmware packaged together.
+Upgrades via Image Factory will automatically include the new extensions if previously `i915-ucode` or `amdgpu-firmware` were used.
+"""
+
     [notes.usernamespaces]
         title = "User Namespaces"
         description = """\

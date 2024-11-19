@@ -26,14 +26,11 @@ kernel/drivers/edac/igen6_edac.ko
 kernel/drivers/edac/sb_edac.ko
 kernel/drivers/edac/skx_edac.ko
 kernel/drivers/edac/x38_edac.ko
-kernel/drivers/gpu/drm/amd/amdgpu/amdgpu.ko
-kernel/drivers/gpu/drm/amd/amdxcp/amdxcp.ko
 kernel/drivers/gpu/drm/display/drm_display_helper.ko
 kernel/drivers/gpu/drm/drm_buddy.ko
 kernel/drivers/gpu/drm/drm_exec.ko
 kernel/drivers/gpu/drm/drm_suballoc_helper.ko
 kernel/drivers/gpu/drm/drm_ttm_helper.ko
-kernel/drivers/gpu/drm/i915/i915.ko
 kernel/drivers/gpu/drm/scheduler/gpu-sched.ko
 kernel/drivers/gpu/drm/ttm/ttm.ko
 kernel/drivers/hid/hid-a4tech.ko
