@@ -52,17 +52,17 @@ func (c *CRI) Client() (*containerd.Client, error) {
 }
 
 // ID implements the Service interface.
-func (c *CRI) ID(r runtime.Runtime) string {
+func (c *CRI) ID(runtime.Runtime) string {
 	return "cri"
 }
 
 // PreFunc implements the Service interface.
-func (c *CRI) PreFunc(ctx context.Context, r runtime.Runtime) error {
+func (c *CRI) PreFunc(context.Context, runtime.Runtime) error {
 	return os.MkdirAll(defaults.DefaultRootDir, os.ModeDir)
 }
 
 // PostFunc implements the Service interface.
-func (c *CRI) PostFunc(r runtime.Runtime, state events.ServiceState) (err error) {
+func (c *CRI) PostFunc(runtime.Runtime, events.ServiceState) (err error) {
 	if c.client != nil {
 		return c.client.Close()
 	}
@@ -76,7 +76,7 @@ func (c *CRI) Condition(r runtime.Runtime) conditions.Condition {
 }
 
 // DependsOn implements the Service interface.
-func (c *CRI) DependsOn(r runtime.Runtime) []string {
+func (c *CRI) DependsOn(runtime.Runtime) []string {
 	return nil
 }
 

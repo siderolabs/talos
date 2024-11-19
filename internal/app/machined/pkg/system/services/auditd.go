@@ -26,27 +26,27 @@ var _ system.HealthcheckedService = (*Auditd)(nil)
 type Auditd struct{}
 
 // ID implements the Service interface.
-func (s *Auditd) ID(r runtime.Runtime) string {
+func (s *Auditd) ID(runtime.Runtime) string {
 	return auditdServiceID
 }
 
 // PreFunc implements the Service interface.
-func (s *Auditd) PreFunc(ctx context.Context, r runtime.Runtime) error {
+func (s *Auditd) PreFunc(context.Context, runtime.Runtime) error {
 	return nil
 }
 
 // PostFunc implements the Service interface.
-func (s *Auditd) PostFunc(r runtime.Runtime, state events.ServiceState) error {
+func (s *Auditd) PostFunc(runtime.Runtime, events.ServiceState) error {
 	return nil
 }
 
 // Condition implements the Service interface.
-func (s *Auditd) Condition(r runtime.Runtime) conditions.Condition {
+func (s *Auditd) Condition(runtime.Runtime) conditions.Condition {
 	return nil
 }
 
 // DependsOn implements the Service interface.
-func (s *Auditd) DependsOn(r runtime.Runtime) []string {
+func (s *Auditd) DependsOn(runtime.Runtime) []string {
 	return nil
 }
 
@@ -56,13 +56,13 @@ func (s *Auditd) Runner(r runtime.Runtime) (runner.Runner, error) {
 }
 
 // HealthFunc implements the HealthcheckedService interface.
-func (s *Auditd) HealthFunc(r runtime.Runtime) health.Check {
+func (s *Auditd) HealthFunc(runtime.Runtime) health.Check {
 	return func(ctx context.Context) error {
 		return nil
 	}
 }
 
 // HealthSettings implements the HealthcheckedService interface.
-func (s *Auditd) HealthSettings(r runtime.Runtime) *health.Settings {
+func (s *Auditd) HealthSettings(runtime.Runtime) *health.Settings {
 	return &health.DefaultSettings
 }

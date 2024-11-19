@@ -514,12 +514,12 @@ func create(ctx context.Context) error {
 		}
 
 		for _, registryMirror := range registryMirrors {
-			components := strings.SplitN(registryMirror, "=", 2)
-			if len(components) != 2 {
+			left, right, ok := strings.Cut(registryMirror, "=")
+			if !ok {
 				return fmt.Errorf("invalid registry mirror spec: %q", registryMirror)
 			}
 
-			genOptions = append(genOptions, generate.WithRegistryMirror(components[0], components[1]))
+			genOptions = append(genOptions, generate.WithRegistryMirror(left, right))
 		}
 
 		for _, registryHost := range registryInsecure {

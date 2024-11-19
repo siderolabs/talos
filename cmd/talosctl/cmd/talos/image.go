@@ -5,7 +5,6 @@
 package talos
 
 import (
-	"bytes"
 	"context"
 	"fmt"
 	"io"
@@ -174,7 +173,7 @@ talosctl images default | talosctl images cache-create --image-cache-path=/tmp/c
 		}
 
 		if imageCacheCreateCmdFlags.images[0] == "-" {
-			var imagesListData bytes.Buffer
+			var imagesListData strings.Builder
 
 			if _, err := io.Copy(&imagesListData, os.Stdin); err != nil {
 				return fmt.Errorf("error reading from stdin: %w", err)

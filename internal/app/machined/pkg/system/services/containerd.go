@@ -50,17 +50,17 @@ func (c *Containerd) Client() (*containerd.Client, error) {
 }
 
 // ID implements the Service interface.
-func (c *Containerd) ID(r runtime.Runtime) string {
+func (c *Containerd) ID(runtime.Runtime) string {
 	return "containerd"
 }
 
 // PreFunc implements the Service interface.
-func (c *Containerd) PreFunc(ctx context.Context, r runtime.Runtime) error {
+func (c *Containerd) PreFunc(context.Context, runtime.Runtime) error {
 	return nil
 }
 
 // PostFunc implements the Service interface.
-func (c *Containerd) PostFunc(r runtime.Runtime, state events.ServiceState) (err error) {
+func (c *Containerd) PostFunc(runtime.Runtime, events.ServiceState) (err error) {
 	if c.client != nil {
 		return c.client.Close()
 	}
@@ -69,12 +69,12 @@ func (c *Containerd) PostFunc(r runtime.Runtime, state events.ServiceState) (err
 }
 
 // Condition implements the Service interface.
-func (c *Containerd) Condition(r runtime.Runtime) conditions.Condition {
+func (c *Containerd) Condition(runtime.Runtime) conditions.Condition {
 	return nil
 }
 
 // DependsOn implements the Service interface.
-func (c *Containerd) DependsOn(r runtime.Runtime) []string {
+func (c *Containerd) DependsOn(runtime.Runtime) []string {
 	return nil
 }
 
