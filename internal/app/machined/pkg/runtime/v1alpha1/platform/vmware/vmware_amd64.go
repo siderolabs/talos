@@ -4,7 +4,6 @@
 
 //go:build amd64
 
-// Package vmware provides the VMware platform implementation.
 package vmware
 
 import (
@@ -26,14 +25,6 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	runtimeres "github.com/siderolabs/talos/pkg/machinery/resources/runtime"
 )
-
-// VMware is the concrete type that implements the platform.Platform interface.
-type VMware struct{}
-
-// Name implements the platform.Platform interface.
-func (v *VMware) Name() string {
-	return "vmware"
-}
 
 // Read and de-base64 a property from `extraConfig`. This is commonly referred to as `guestinfo`.
 func readConfigFromExtraConfig(extraConfig *rpcvmx.Config, key string) ([]byte, error) {
@@ -212,21 +203,6 @@ func (v *VMware) Configuration(context.Context, state.State) ([]byte, error) {
 	}
 
 	return nil, nil
-}
-
-// Mode implements the platform.Platform interface.
-func (v *VMware) Mode() runtime.Mode {
-	return runtime.ModeCloud
-}
-
-// KernelArgs implements the runtime.Platform interface.
-func (v *VMware) KernelArgs(string) procfs.Parameters {
-	return []*procfs.Parameter{
-		procfs.NewParameter(constants.KernelParamConfig).Append(constants.ConfigGuestInfo),
-		procfs.NewParameter("console").Append("tty0").Append("ttyS0"),
-		procfs.NewParameter("earlyprintk").Append("ttyS0,115200"),
-		procfs.NewParameter(constants.KernelParamNetIfnames).Append("0"),
-	}
 }
 
 // Read VMware GuestInfo metadata if available.
