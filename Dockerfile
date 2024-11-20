@@ -14,6 +14,7 @@ ARG PKG_CA_CERTIFICATES
 ARG PKG_CRYPTSETUP
 ARG PKG_CONTAINERD
 ARG PKG_DOSFSTOOLS
+ARG PKG_E2FSPROGS
 ARG PKG_SYSTEMD_UDEVD
 ARG PKG_LIBCAP
 ARG PKG_GRUB
@@ -61,6 +62,9 @@ FROM --platform=arm64 ${PKG_CONTAINERD} AS pkg-containerd-arm64
 
 FROM --platform=amd64 ${PKG_DOSFSTOOLS} AS pkg-dosfstools-amd64
 FROM --platform=arm64 ${PKG_DOSFSTOOLS} AS pkg-dosfstools-arm64
+
+FROM --platform=amd64 ${PKG_E2FSPROGS} AS pkg-e2fsprogs-amd64
+FROM --platform=arm64 ${PKG_E2FSPROGS} AS pkg-e2fsprogs-arm64
 
 FROM --platform=amd64 ${PKG_SYSTEMD_UDEVD} AS pkg-systemd-udevd-amd64
 FROM --platform=arm64 ${PKG_SYSTEMD_UDEVD} AS pkg-systemd-udevd-arm64
@@ -673,6 +677,7 @@ COPY --link --from=pkg-flannel-cni-amd64 / /rootfs
 COPY --link --from=pkg-cryptsetup-amd64 / /rootfs
 COPY --link --from=pkg-containerd-amd64 / /rootfs
 COPY --link --from=pkg-dosfstools-amd64 / /rootfs
+COPY --link --from=pkg-e2fsprogs-amd64 / /rootfs
 COPY --link --from=pkg-systemd-udevd-amd64 / /rootfs
 COPY --link --from=pkg-libcap-amd64 / /rootfs
 COPY --link --from=pkg-iptables-amd64 / /rootfs
@@ -745,6 +750,7 @@ COPY --link --from=pkg-flannel-cni-arm64 / /rootfs
 COPY --link --from=pkg-cryptsetup-arm64 / /rootfs
 COPY --link --from=pkg-containerd-arm64 / /rootfs
 COPY --link --from=pkg-dosfstools-arm64 / /rootfs
+COPY --link --from=pkg-e2fsprogs-arm64 / /rootfs
 COPY --link --from=pkg-systemd-udevd-arm64 / /rootfs
 COPY --link --from=pkg-libcap-arm64 / /rootfs
 COPY --link --from=pkg-iptables-arm64 / /rootfs

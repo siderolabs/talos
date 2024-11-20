@@ -22,7 +22,7 @@ TOOLS ?= ghcr.io/siderolabs/tools:v1.9.0-alpha.0-9-ge061b6f
 DEBUG_TOOLS_SOURCE := scratch
 
 PKGS_PREFIX ?= ghcr.io/siderolabs
-PKGS ?= v1.9.0-alpha.0-40-g567a14a
+PKGS ?= v1.9.0-alpha.0-45-ga463a50
 EXTRAS ?= v1.9.0-alpha.0-2-g78ba66b
 
 KRES_IMAGE ?= ghcr.io/siderolabs/kres:latest
@@ -34,6 +34,7 @@ PKG_APPARMOR ?= $(PKGS_PREFIX)/apparmor:$(PKGS)
 PKG_CRYPTSETUP ?= $(PKGS_PREFIX)/cryptsetup:$(PKGS)
 PKG_CONTAINERD ?= $(PKGS_PREFIX)/containerd:$(PKGS)
 PKG_DOSFSTOOLS ?= $(PKGS_PREFIX)/dosfstools:$(PKGS)
+PKG_E2FSPROGS ?= $(PKGS_PREFIX)/e2fsprogs:$(PKGS)
 PKG_SYSTEMD_UDEVD ?= $(PKGS_PREFIX)/systemd-udevd:$(PKGS)
 PKG_LIBCAP ?= $(PKGS_PREFIX)/libcap:$(PKGS)
 PKG_GRUB ?= $(PKGS_PREFIX)/grub:$(PKGS)
@@ -209,6 +210,7 @@ COMMON_ARGS += --build-arg=PKG_APPARMOR=$(PKG_APPARMOR)
 COMMON_ARGS += --build-arg=PKG_CRYPTSETUP=$(PKG_CRYPTSETUP)
 COMMON_ARGS += --build-arg=PKG_CONTAINERD=$(PKG_CONTAINERD)
 COMMON_ARGS += --build-arg=PKG_DOSFSTOOLS=$(PKG_DOSFSTOOLS)
+COMMON_ARGS += --build-arg=PKG_E2FSPROGS=$(PKG_E2FSPROGS)
 COMMON_ARGS += --build-arg=PKG_SYSTEMD_UDEVD=$(PKG_SYSTEMD_UDEVD)
 COMMON_ARGS += --build-arg=PKG_LIBCAP=$(PKG_LIBCAP)
 COMMON_ARGS += --build-arg=PKG_GRUB=$(PKG_GRUB)
