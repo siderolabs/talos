@@ -6,12 +6,14 @@
 package selinux
 
 import (
+	"bytes"
 	_ "embed"
 	"log"
 	"os"
+	"sync"
 
+	"github.com/pkg/xattr"
 	"github.com/siderolabs/go-procfs/procfs"
-	"golang.org/x/sys/unix"
 
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
@@ -23,7 +25,7 @@ var policy []byte
 // the kernel command line. It returns true if SELinux is enabled,
 // otherwise it returns false. It also ensures we're not in a container.
 // By default SELinux is disabled.
-func IsEnabled() bool {
+var IsEnabled = sync.OnceValue(func() bool {
 	if _, err := os.Stat("/usr/etc/in-container"); err == nil {
 		return false
 	}
@@ -31,11 +33,11 @@ func IsEnabled() bool {
 	val := procfs.ProcCmdline().Get(constants.KernelParamSELinux).First()
 
 	return val != nil && *val == "1"
-}
+})
 
 // IsEnforcing checks if SELinux is enabled and the mode should be enforcing.
 // By default if SELinux is enabled we consider it to be permissive.
-func IsEnforcing() bool {
+var IsEnforcing = sync.OnceValue(func() bool {
 	if !IsEnabled() {
 		return false
 	}
@@ -43,17 +45,28 @@ func IsEnforcing() bool {
 	val := procfs.ProcCmdline().Get(constants.KernelParamSELinuxEnforcing).First()
 
 	return val != nil && *val == "1"
-}
+})
 
-// SetLabel sets label for file or directory, following symlinks
-// It does not perform the operation in case SELinux is disabled or provided label is empty.
+// SetLabel sets label for file, directory or symlink (not following symlinks)
+// It does not perform the operation in case SELinux is disabled, provided label is empty or already set.
 func SetLabel(filename string, label string) error {
 	if label == "" {
 		return nil
 	}
 
 	if IsEnabled() {
-		if err := unix.Lsetxattr(filename, "security.selinux", []byte(label), 0); err != nil {
+		// We use LGet/LSet so that we manipulate label on the exact path, not the symlink target.
+		currentLabel, err := xattr.LGet(filename, "security.selinux")
+		if err != nil {
+			return err
+		}
+
+		// Skip extra FS transactions when labels are okay.
+		if string(bytes.Trim(currentLabel, "\x00\n")) == label {
+			return nil
+		}
+
+		if err := xattr.LSet(filename, "security.selinux", []byte(label)); err != nil {
 			return err
 		}
 	}
