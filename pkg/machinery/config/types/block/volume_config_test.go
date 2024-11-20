@@ -110,7 +110,7 @@ func TestVolumeConfigValidate(t *testing.T) {
 				return c
 			},
 
-			expectedErrors: "only EPHEMERAL volumes are supported",
+			expectedErrors: "only [\"EPHEMERAL\" \"IMAGECACHE\"] volumes are supported",
 		},
 		{
 			name: "invalid disk selector",

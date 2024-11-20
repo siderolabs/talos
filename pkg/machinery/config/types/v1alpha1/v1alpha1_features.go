@@ -57,6 +57,11 @@ func (f *FeaturesConfig) KubePrism() config.KubePrism {
 	return f.KubePrismSupport
 }
 
+// ImageCacheEnabled implements config.Features interface.
+func (f *FeaturesConfig) ImageCacheEnabled() bool {
+	return pointer.SafeDeref(f.ImageCache)
+}
+
 const defaultKubePrismPort = 7445
 
 // Enabled implements [config.KubePrism].

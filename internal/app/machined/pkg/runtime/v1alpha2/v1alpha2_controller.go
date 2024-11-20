@@ -40,6 +40,7 @@ import (
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
 	runtimelogging "github.com/siderolabs/talos/internal/app/machined/pkg/runtime/logging"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system"
+	"github.com/siderolabs/talos/internal/pkg/mount"
 	"github.com/siderolabs/talos/pkg/logging"
 	talosconfig "github.com/siderolabs/talos/pkg/machinery/config/config"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
@@ -130,6 +131,10 @@ func (ctrl *Controller) Run(ctx context.Context, drainer *runtime.Drainer) error
 			ResourceState:  ctrl.v1alpha1Runtime.State().V1Alpha2().Resources(),
 		},
 		&config.MachineTypeController{},
+		&cri.ImageCacheConfigController{
+			V1Alpha1ServiceManager: system.Services(ctrl.v1alpha1Runtime),
+			VolumeMounter:          mount.IdempotentSystemPartitionMounter(ctrl.v1alpha1Runtime),
+		},
 		&cri.SeccompProfileController{},
 		&cri.SeccompProfileFileController{
 			V1Alpha1Mode:             ctrl.v1alpha1Runtime.State().Platform().Mode(),

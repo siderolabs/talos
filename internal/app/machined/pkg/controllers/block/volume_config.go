@@ -209,7 +209,7 @@ func (ctrl *VolumeConfigController) Run(ctx context.Context, r controller.Runtim
 
 func (ctrl *VolumeConfigController) manageEphemeral(config cfg.Config) func(vc *block.VolumeConfig) error {
 	return func(vc *block.VolumeConfig) error {
-		extraVolumeConfig := config.Volumes().ByName(constants.EphemeralPartitionLabel)
+		extraVolumeConfig, _ := config.Volumes().ByName(constants.EphemeralPartitionLabel)
 
 		vc.TypedSpec().Type = block.VolumeTypePartition
 

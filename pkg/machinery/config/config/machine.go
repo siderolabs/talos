@@ -448,6 +448,7 @@ type Features interface {
 	DiskQuotaSupportEnabled() bool
 	HostDNS() HostDNS
 	KubePrism() KubePrism
+	ImageCacheEnabled() bool
 }
 
 // KubernetesTalosAPIAccess describes the Kubernetes Talos API access features.

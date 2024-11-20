@@ -1214,6 +1214,18 @@ const (
 
 	// MetalAgentModeFlagPath is the path to the file indicating if the node is running in Metal Agent mode.
 	MetalAgentModeFlagPath = "/usr/local/etc/is-metal-agent"
+
+	// ImageCachePartitionLabel is the label for the image cache partition.
+	ImageCachePartitionLabel = "IMAGECACHE"
+
+	// ImageCacheISOMountPoint is the mount point for the image cache ISO.
+	ImageCacheISOMountPoint = "/system/imagecache/iso"
+
+	// ImageCacheDiskMountPoint is the mount point for the image cache partition.
+	ImageCacheDiskMountPoint = "/system/imagecache/disk"
+
+	// RegistrydListenAddress is the address to listen on for the registryd service.
+	RegistrydListenAddress = "127.0.0.1:3172"
 )
 
 // See https://linux.die.net/man/3/klogctl

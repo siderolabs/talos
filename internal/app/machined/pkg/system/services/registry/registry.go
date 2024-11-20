@@ -28,6 +28,8 @@ import (
 	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
 	"github.com/siderolabs/gen/xerrors"
 	"go.uber.org/zap"
+
+	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
 
 // NewService creates a new instance of the registry service.
@@ -53,7 +55,7 @@ func (svc *Service) Run(ctx context.Context) error {
 		mux.HandleFunc("GET /"+p+"/{$}", giveOk)
 	}
 
-	server := http.Server{Addr: "127.0.0.1:3172", Handler: mux}
+	server := http.Server{Addr: constants.RegistrydListenAddress, Handler: mux}
 	errCh := make(chan error, 1)
 
 	ctx, cancel := context.WithCancel(ctx)

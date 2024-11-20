@@ -6,6 +6,13 @@ option go_package = "github.com/siderolabs/talos/pkg/machinery/api/resource/defi
 option java_package = "dev.talos.api.resource.definitions.cri";
 
 import "google/protobuf/struct.proto";
+import "resource/definitions/enums/enums.proto";
+
+// ImageCacheConfigSpec represents the ImageCacheConfig.
+message ImageCacheConfigSpec {
+  talos.resource.definitions.enums.CriImageCacheStatus status = 1;
+  repeated string roots = 2;
+}
 
 // SeccompProfileSpec represents the SeccompProfile.
 message SeccompProfileSpec {

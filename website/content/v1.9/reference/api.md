@@ -55,6 +55,7 @@ description: Talos gRPC API reference.
     - [MemberSpec](#talos.resource.definitions.cluster.MemberSpec)
   
 - [resource/definitions/cri/cri.proto](#resource/definitions/cri/cri.proto)
+    - [ImageCacheConfigSpec](#talos.resource.definitions.cri.ImageCacheConfigSpec)
     - [SeccompProfileSpec](#talos.resource.definitions.cri.SeccompProfileSpec)
   
 - [resource/definitions/enums/enums.proto](#resource/definitions/enums/enums.proto)
@@ -63,6 +64,7 @@ description: Talos gRPC API reference.
     - [BlockFilesystemType](#talos.resource.definitions.enums.BlockFilesystemType)
     - [BlockVolumePhase](#talos.resource.definitions.enums.BlockVolumePhase)
     - [BlockVolumeType](#talos.resource.definitions.enums.BlockVolumeType)
+    - [CriImageCacheStatus](#talos.resource.definitions.enums.CriImageCacheStatus)
     - [KubespanPeerState](#talos.resource.definitions.enums.KubespanPeerState)
     - [MachineType](#talos.resource.definitions.enums.MachineType)
     - [NethelpersADSelect](#talos.resource.definitions.enums.NethelpersADSelect)
@@ -1288,6 +1290,22 @@ MemberSpec describes Member state.
 
 
 
+<a name="talos.resource.definitions.cri.ImageCacheConfigSpec"></a>
+
+### ImageCacheConfigSpec
+ImageCacheConfigSpec represents the ImageCacheConfig.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| status | [talos.resource.definitions.enums.CriImageCacheStatus](#talos.resource.definitions.enums.CriImageCacheStatus) |  |  |
+| roots | [string](#string) | repeated |  |
+
+
+
+
+
+
 <a name="talos.resource.definitions.cri.SeccompProfileSpec"></a>
 
 ### SeccompProfileSpec
@@ -1391,6 +1409,20 @@ BlockVolumeType describes volume type.
 | VOLUME_TYPE_PARTITION | 0 |  |
 | VOLUME_TYPE_DISK | 1 |  |
 | VOLUME_TYPE_TMPFS | 2 |  |
+
+
+
+<a name="talos.resource.definitions.enums.CriImageCacheStatus"></a>
+
+### CriImageCacheStatus
+CriImageCacheStatus describes image cache status type.
+
+| Name | Number | Description |
+| ---- | ------ | ----------- |
+| IMAGE_CACHE_STATUS_UNKNOWN | 0 |  |
+| IMAGE_CACHE_STATUS_DISABLED | 1 |  |
+| IMAGE_CACHE_STATUS_PREPARING | 2 |  |
+| IMAGE_CACHE_STATUS_READY | 3 |  |
 
 
 
