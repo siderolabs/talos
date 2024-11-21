@@ -196,10 +196,6 @@ func Generate(images []string, platform string, insecure bool, dest string) erro
 		return fmt.Errorf("walking filesystem: %w", err)
 	}
 
-	for i := range artifacts {
-		artifacts[i].ImageMode = 0o644
-	}
-
 	artifactsLayer, err := filemap.Layer(artifacts)
 	if err != nil {
 		return fmt.Errorf("creating artifacts layer: %w", err)

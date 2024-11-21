@@ -8,6 +8,7 @@ package filemap
 import (
 	"archive/tar"
 	"cmp"
+	"fmt"
 	"io"
 	"os"
 	"path/filepath"
@@ -33,11 +34,16 @@ func Walk(sourceBasePath, imageBasePath string) ([]File, error) {
 			return err
 		}
 
-		if d.IsDir() {
+		rel, err := filepath.Rel(sourceBasePath, path)
+		if err != nil {
+			return err
+		}
+
+		if d.IsDir() && rel == "." {
 			return nil
 		}
 
-		rel, err := filepath.Rel(sourceBasePath, path)
+		statInfo, err := d.Info()
 		if err != nil {
 			return err
 		}
@@ -45,6 +51,7 @@ func Walk(sourceBasePath, imageBasePath string) ([]File, error) {
 		filemap = append(filemap, File{
 			ImagePath:  filepath.Join(imageBasePath, rel),
 			SourcePath: path,
+			ImageMode:  int64(statInfo.Mode().Perm()),
 		})
 
 		return nil
@@ -64,32 +71,31 @@ func build(filemap []File) io.ReadCloser {
 				if err := func(entry File) error {
 					in, err := os.Open(entry.SourcePath)
 					if err != nil {
-						return err
+						return fmt.Errorf("error opening %q: %w", entry.SourcePath, err)
 					}
 
 					defer in.Close() //nolint:errcheck
 
 					st, err := in.Stat()
 					if err != nil {
-						return err
+						return fmt.Errorf("error stating file %s: %w", entry.SourcePath, err)
 					}
 
-					if err = w.WriteHeader(&tar.Header{
-						Name: entry.ImagePath,
-						Size: st.Size(),
-						Mode: entry.ImageMode,
-					}); err != nil {
-						return err
+					if st.IsDir() {
+						if err := handleDir(w, entry.ImagePath, entry.ImageMode); err != nil {
+							return fmt.Errorf("error handling directory %s: %w", entry.SourcePath, err)
+						}
+
+						return in.Close()
 					}
 
-					_, err = io.Copy(w, in)
-					if err != nil {
-						return err
+					if err := handleFile(w, in, entry.ImagePath, entry.ImageMode, st.Size()); err != nil {
+						return fmt.Errorf("error handling file %s: %w", entry.SourcePath, err)
 					}
 
 					return in.Close()
 				}(entry); err != nil {
-					return err
+					return fmt.Errorf("error processing %s: %w", entry.SourcePath, err)
 				}
 			}
 
@@ -98,6 +104,38 @@ func build(filemap []File) io.ReadCloser {
 	}()
 
 	return pr
+}
+
+func handleFile(w *tar.Writer, r io.Reader, path string, mode, size int64) error {
+	header := &tar.Header{
+		Name: path,
+		Mode: mode,
+		Size: size,
+	}
+
+	if err := w.WriteHeader(header); err != nil {
+		return fmt.Errorf("error writing tar header for %s: %w", path, err)
+	}
+
+	if _, err := io.Copy(w, r); err != nil {
+		return fmt.Errorf("error writing tar data for %s: %w", path, err)
+	}
+
+	return nil
+}
+
+func handleDir(w *tar.Writer, path string, mode int64) error {
+	header := &tar.Header{
+		Name:     path,
+		Mode:     mode,
+		Typeflag: tar.TypeDir,
+	}
+
+	if err := w.WriteHeader(header); err != nil {
+		return fmt.Errorf("error writing tar header for %s: %w", path, err)
+	}
+
+	return nil
 }
 
 // Layer creates a layer from a single file map.
