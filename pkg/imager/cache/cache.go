@@ -22,10 +22,11 @@ import (
 	"github.com/google/go-containerregistry/pkg/crane"
 	"github.com/google/go-containerregistry/pkg/name"
 	v1 "github.com/google/go-containerregistry/pkg/v1"
+	"github.com/google/go-containerregistry/pkg/v1/cache"
 	"github.com/google/go-containerregistry/pkg/v1/empty"
+	"github.com/google/go-containerregistry/pkg/v1/layout"
 	"github.com/google/go-containerregistry/pkg/v1/mutate"
 	"github.com/google/go-containerregistry/pkg/v1/remote"
-	"github.com/google/go-containerregistry/pkg/v1/tarball"
 	"github.com/google/go-containerregistry/pkg/v1/types"
 
 	"github.com/siderolabs/talos/pkg/imager/filemap"
@@ -39,7 +40,7 @@ const (
 // Generate generates a cache tarball from the given images.
 //
 //nolint:gocyclo,cyclop
-func Generate(images []string, platform string, insecure bool, dest string) error {
+func Generate(images []string, platform string, insecure bool, imageLayerCachePath, dest string) error {
 	v1Platform, err := v1.ParsePlatform(platform)
 	if err != nil {
 		return fmt.Errorf("parsing platform: %w", err)
@@ -48,6 +49,12 @@ func Generate(images []string, platform string, insecure bool, dest string) erro
 	tmpDir, err := os.MkdirTemp("", "talos-image-cache-gen")
 	if err != nil {
 		return fmt.Errorf("creating temporary directory: %w", err)
+	}
+
+	if imageLayerCachePath != "" {
+		if err := os.MkdirAll(imageLayerCachePath, 0o755); err != nil {
+			return fmt.Errorf("creating image layer cache directory: %w", err)
+		}
 	}
 
 	removeAll := sync.OnceValue(func() error { return os.RemoveAll(tmpDir) })
@@ -143,6 +150,10 @@ func Generate(images []string, platform string, insecure bool, dest string) erro
 			return fmt.Errorf("converting image to index: %w", err)
 		}
 
+		if imageLayerCachePath != "" {
+			img = cache.Image(img, cache.NewFilesystemCache(imageLayerCachePath))
+		}
+
 		layers, err := img.Layers()
 		if err != nil {
 			return fmt.Errorf("getting image layers: %w", err)
@@ -206,8 +217,14 @@ func Generate(images []string, platform string, insecure bool, dest string) erro
 		return fmt.Errorf("appending artifacts layer: %w", err)
 	}
 
-	if err := tarball.WriteToFile(dest, nil, newImg); err != nil {
-		return fmt.Errorf("writing tarball: %w", err)
+	// we can always write an empty index, since dest is always a new empty directory
+	ociLayout, err := layout.Write(dest, empty.Index)
+	if err != nil {
+		return fmt.Errorf("creating layout: %w", err)
+	}
+
+	if err := ociLayout.AppendImage(newImg, layout.WithPlatform(*v1Platform)); err != nil {
+		return fmt.Errorf("appending image: %w", err)
 	}
 
 	return removeAll()

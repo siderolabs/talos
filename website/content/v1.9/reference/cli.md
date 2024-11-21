@@ -1778,11 +1778,11 @@ talosctl health [flags]
 
 ## talosctl image cache-create
 
-Create a cache of images
+Create a cache of images in OCI format into a directory
 
 ### Synopsis
 
-Create a oci tarball of image cache that talos imager can use
+Create a cache of images in OCI format into a directory
 
 ```
 talosctl image cache-create [flags]
@@ -1791,21 +1791,23 @@ talosctl image cache-create [flags]
 ### Examples
 
 ```
-talosctl images cache-create --images=ghcr.io/siderolabs/kubelet:1.32.0-beta.0 --image-cache-path=/tmp/cache.tar
+talosctl images cache-create --images=ghcr.io/siderolabs/kubelet:1.32.0-beta.0 --image-cache-path=/tmp/talos-image-cache
 
 Alternatively, stdin can be piped to the command:
-talosctl images default | talosctl images cache-create --image-cache-path=/tmp/cache.tar --images=-
+talosctl images default | talosctl images cache-create --image-cache-path=/tmp/talos-image-cache --images=-
 
 ```
 
 ### Options
 
 ```
-  -h, --help                      help for cache-create
-      --image-cache-path string   path to save the image cache
-      --images strings            images to cache
-      --insecure                  allow insecure registries
-      --platform string           platform to use for the cache (default "linux/amd64")
+      --force                           force overwrite of existing image cache
+  -h, --help                            help for cache-create
+      --image-cache-path string         directory to save the image cache in OCI format
+      --image-layer-cache-path string   directory to save the image layer cache
+      --images strings                  images to cache
+      --insecure                        allow insecure registries
+      --platform string                 platform to use for the cache (default "linux/amd64")
 ```
 
 ### Options inherited from parent commands
@@ -1934,7 +1936,7 @@ Manage CRI containter images
 ### SEE ALSO
 
 * [talosctl](#talosctl)	 - A CLI for out-of-band management of Kubernetes nodes created by Talos
-* [talosctl image cache-create](#talosctl-image-cache-create)	 - Create a cache of images
+* [talosctl image cache-create](#talosctl-image-cache-create)	 - Create a cache of images in OCI format into a directory
 * [talosctl image default](#talosctl-image-default)	 - List the default images used by Talos
 * [talosctl image list](#talosctl-image-list)	 - List CRI images
 * [talosctl image pull](#talosctl-image-pull)	 - Pull an image into CRI

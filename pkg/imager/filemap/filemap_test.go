@@ -19,6 +19,7 @@ func TestFileMap(t *testing.T) {
 
 	assert.NoError(t, os.MkdirAll(filepath.Join(tempDir, "foo/a/b"), 0o755))
 	assert.NoError(t, os.MkdirAll(filepath.Join(tempDir, "foo/c"), 0o755))
+	assert.NoError(t, os.MkdirAll(filepath.Join(tempDir, "foo/d"), 0o750))
 
 	assert.NoError(t, os.WriteFile(filepath.Join(tempDir, "foo/a/b/normal"), nil, 0o644))
 	assert.NoError(t, os.WriteFile(filepath.Join(tempDir, "foo/c/executable"), []byte("world"), 0o755))
@@ -58,6 +59,11 @@ func TestFileMap(t *testing.T) {
 				ImagePath:  "foo/c/executable",
 				SourcePath: filepath.Join(tempDir, "foo/c/executable"),
 				ImageMode:  0o755,
+			},
+			{
+				ImagePath:  "foo/d",
+				SourcePath: filepath.Join(tempDir, "foo/d"),
+				ImageMode:  0o750,
 			},
 		},
 		artifacts,
