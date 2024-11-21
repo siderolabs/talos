@@ -12,13 +12,13 @@ import (
 	"io"
 	"maps"
 	"path/filepath"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
 
 	"github.com/siderolabs/go-pointer"
 	"github.com/siderolabs/go-procfs/procfs"
-	"golang.org/x/exp/slices"
 
 	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/helpers"
 	"github.com/siderolabs/talos/internal/integration/base"

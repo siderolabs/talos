@@ -89,7 +89,20 @@ func (i *Imager) outISO(ctx context.Context, path string, report *reporter.Repor
 
 	scratchSpace := filepath.Join(i.tempDir, "iso")
 
-	var err error
+	var (
+		err                error
+		zeroContainerAsset profile.ContainerAsset
+	)
+
+	if i.prof.Input.ImageCache != zeroContainerAsset {
+		if err := os.MkdirAll(filepath.Join(scratchSpace, "imagecache"), 0o755); err != nil {
+			return err
+		}
+
+		if err := i.prof.Input.ImageCache.Extract(ctx, filepath.Join(scratchSpace, "imagecache"), i.prof.Arch, printf); err != nil {
+			return err
+		}
+	}
 
 	if i.prof.SecureBootEnabled() {
 		isoOptions := pointer.SafeDeref(i.prof.Output.ISOOptions)

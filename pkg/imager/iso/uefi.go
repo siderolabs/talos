@@ -66,8 +66,6 @@ func CreateUEFI(printf func(string, ...any), options UEFIOptions) error {
 
 	efiBootImg := filepath.Join(options.ScratchDir, "efiboot.img")
 
-	isoRoot := filepath.Join(options.ScratchDir, "isoroot")
-
 	// initial size
 	isoSize := int64(10 * mib)
 
@@ -110,19 +108,19 @@ func CreateUEFI(printf func(string, ...any), options UEFIOptions) error {
 		return err
 	}
 
-	if err := os.MkdirAll(filepath.Join(isoRoot, "EFI/Linux"), 0o755); err != nil {
+	if err := os.MkdirAll(filepath.Join(options.ScratchDir, "EFI/Linux"), 0o755); err != nil {
 		return err
 	}
 
-	if err := os.MkdirAll(filepath.Join(isoRoot, "EFI/BOOT"), 0o755); err != nil {
+	if err := os.MkdirAll(filepath.Join(options.ScratchDir, "EFI/BOOT"), 0o755); err != nil {
 		return err
 	}
 
-	if err := os.MkdirAll(filepath.Join(isoRoot, "EFI/keys"), 0o755); err != nil {
+	if err := os.MkdirAll(filepath.Join(options.ScratchDir, "EFI/keys"), 0o755); err != nil {
 		return err
 	}
 
-	if err := os.MkdirAll(filepath.Join(isoRoot, "loader/keys/auto"), 0o755); err != nil {
+	if err := os.MkdirAll(filepath.Join(options.ScratchDir, "loader/keys/auto"), 0o755); err != nil {
 		return err
 	}
 
@@ -132,36 +130,36 @@ func CreateUEFI(printf func(string, ...any), options UEFIOptions) error {
 		efiBootPath = "EFI/BOOT/BOOTAA64.EFI"
 	}
 
-	if err := copy.File(options.SDBootPath, filepath.Join(isoRoot, efiBootPath)); err != nil {
+	if err := copy.File(options.SDBootPath, filepath.Join(options.ScratchDir, efiBootPath)); err != nil {
 		return err
 	}
 
-	if err := copy.File(options.UKIPath, filepath.Join(isoRoot, fmt.Sprintf("EFI/Linux/Talos-%s.efi", options.Version))); err != nil {
+	if err := copy.File(options.UKIPath, filepath.Join(options.ScratchDir, fmt.Sprintf("EFI/Linux/Talos-%s.efi", options.Version))); err != nil {
 		return err
 	}
 
-	if err := os.WriteFile(filepath.Join(isoRoot, "loader/loader.conf"), loaderConfigOut.Bytes(), 0o644); err != nil {
+	if err := os.WriteFile(filepath.Join(options.ScratchDir, "loader/loader.conf"), loaderConfigOut.Bytes(), 0o644); err != nil {
 		return err
 	}
 
-	if err := copy.File(options.UKISigningCertDerPath, filepath.Join(isoRoot, "EFI/keys/uki-signing-cert.der")); err != nil {
+	if err := copy.File(options.UKISigningCertDerPath, filepath.Join(options.ScratchDir, "EFI/keys/uki-signing-cert.der")); err != nil {
 		return err
 	}
 
 	if options.PlatformKeyPath != "" {
-		if err := copy.File(options.PlatformKeyPath, filepath.Join(isoRoot, "loader/keys/auto", constants.PlatformKeyAsset)); err != nil {
+		if err := copy.File(options.PlatformKeyPath, filepath.Join(options.ScratchDir, "loader/keys/auto", constants.PlatformKeyAsset)); err != nil {
 			return err
 		}
 	}
 
 	if options.KeyExchangeKeyPath != "" {
-		if err := copy.File(options.KeyExchangeKeyPath, filepath.Join(isoRoot, "loader/keys/auto", constants.KeyExchangeKeyAsset)); err != nil {
+		if err := copy.File(options.KeyExchangeKeyPath, filepath.Join(options.ScratchDir, "loader/keys/auto", constants.KeyExchangeKeyAsset)); err != nil {
 			return err
 		}
 	}
 
 	if options.SignatureKeyPath != "" {
-		if err := copy.File(options.SignatureKeyPath, filepath.Join(isoRoot, "loader/keys/auto", constants.SignatureKeyAsset)); err != nil {
+		if err := copy.File(options.SignatureKeyPath, filepath.Join(options.ScratchDir, "loader/keys/auto", constants.SignatureKeyAsset)); err != nil {
 			return err
 		}
 	}
@@ -174,8 +172,8 @@ func CreateUEFI(printf func(string, ...any), options UEFIOptions) error {
 		"-m", // preserve modification time
 		"-i",
 		efiBootImg,
-		filepath.Join(isoRoot, "EFI"),
-		filepath.Join(isoRoot, "loader"),
+		filepath.Join(options.ScratchDir, "EFI"),
+		filepath.Join(options.ScratchDir, "loader"),
 		"::",
 	); err != nil {
 		return err
@@ -197,8 +195,9 @@ func CreateUEFI(printf func(string, ...any), options UEFIOptions) error {
 		"-partition_offset", "16", // support booting from USB
 		"-iso_mbr_part_type", "0x83", // just to have more clear info when doing a fdisk -l
 		"-no-emul-boot",
+		"-m", "efiboot.img", // exclude the EFI boot image from the ISO
 		"-o", options.OutPath,
-		isoRoot,
+		options.ScratchDir,
 	}
 
 	if quirks.New(options.Version).SupportsISOLabel() {
