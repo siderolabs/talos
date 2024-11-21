@@ -25,6 +25,7 @@ const (
 	FilesystemTypeZeroes FileSystemType = "zeroes"
 	FilesystemTypeXFS    FileSystemType = "xfs"
 	FilesystemTypeVFAT   FileSystemType = "vfat"
+	FileSystemTypeExt4   FileSystemType = "ext4"
 )
 
 // Partition default sizes.

@@ -236,6 +236,7 @@ func (i *Imager) outImage(ctx context.Context, path string, report *reporter.Rep
 	return nil
 }
 
+//nolint:gocyclo
 func (i *Imager) buildImage(ctx context.Context, path string, printf func(string, ...any)) error {
 	if err := utils.CreateRawDisk(printf, path, i.prof.Output.ImageOptions.DiskSize); err != nil {
 		return err
@@ -244,8 +245,9 @@ func (i *Imager) buildImage(ctx context.Context, path string, printf func(string
 	printf("attaching loopback device")
 
 	var (
-		loDevice losetup.Device
-		err      error
+		loDevice           losetup.Device
+		err                error
+		zeroContainerAsset profile.ContainerAsset
 	)
 
 	for range 10 {
@@ -311,6 +313,20 @@ func (i *Imager) buildImage(ctx context.Context, path string, printf func(string
 
 	if opts.Board == "" {
 		opts.Board = constants.BoardNone
+	}
+
+	if i.prof.Input.ImageCache != zeroContainerAsset {
+		imageCacheDir := filepath.Join(i.tempDir, "imagecache")
+
+		if err := os.MkdirAll(imageCacheDir, 0o755); err != nil {
+			return err
+		}
+
+		if err := i.prof.Input.ImageCache.Extract(ctx, imageCacheDir, i.prof.Arch, printf); err != nil {
+			return err
+		}
+
+		opts.ImageCachePath = imageCacheDir
 	}
 
 	installer, err := install.NewInstaller(ctx, cmdline, install.ModeImage, opts)

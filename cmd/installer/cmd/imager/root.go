@@ -158,7 +158,13 @@ var rootCmd = &cobra.Command{
 				}
 
 				if cmdFlags.ImageCache != "" {
-					if _, err := name.ParseReference(cmdFlags.ImageCache, name.StrictValidation); err == nil {
+					parseOpts := []name.Option{name.StrictValidation}
+
+					if cmdFlags.Insecure {
+						parseOpts = append(parseOpts, name.Insecure)
+					}
+
+					if _, err := name.ParseReference(cmdFlags.ImageCache, parseOpts...); err == nil {
 						prof.Input.ImageCache = profile.ContainerAsset{
 							ImageRef: cmdFlags.ImageCache,
 						}

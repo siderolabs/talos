@@ -28,14 +28,29 @@ import (
 	"github.com/google/go-containerregistry/pkg/v1/mutate"
 	"github.com/google/go-containerregistry/pkg/v1/remote"
 	"github.com/google/go-containerregistry/pkg/v1/types"
+	"github.com/siderolabs/go-blockdevice/v2/blkid"
+	"github.com/siderolabs/go-copy/copy"
 
+	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/mount"
+	"github.com/siderolabs/talos/internal/pkg/partition"
 	"github.com/siderolabs/talos/pkg/imager/filemap"
+	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
 
 const (
 	blobsDir     = "blob"
 	manifestsDir = "manifests"
 )
+
+// InstallOptions contains the options for installing the cache.
+type InstallOptions struct {
+	// The disk where cache partition is present.
+	CacheDisk string
+	// Source of the cache from where it will be copied.
+	CachePath string
+	// Optional: blkid probe result.
+	BlkidInfo *blkid.Info
+}
 
 // Generate generates a cache tarball from the given images.
 //
@@ -229,6 +244,37 @@ func Generate(images []string, platform string, insecure bool, imageLayerCachePa
 	}
 
 	return removeAll()
+}
+
+// Install installs the cache to the given disk.
+func (i *InstallOptions) Install() error {
+	tempMountDir, err := os.MkdirTemp("", "talos-image-cache-install")
+	if err != nil {
+		return fmt.Errorf("creating temporary directory for talos-image-cache-install: %w", err)
+	}
+
+	defer os.RemoveAll(tempMountDir) //nolint:errcheck
+
+	return mount.PartitionOp(
+		i.CacheDisk,
+		[]mount.Spec{
+			{
+				PartitionLabel: constants.ImageCachePartitionLabel,
+				FilesystemType: partition.FileSystemTypeExt4,
+				MountTarget:    tempMountDir,
+			},
+		},
+		func() error {
+			return copy.Dir(i.CachePath, tempMountDir)
+		},
+		[]blkid.ProbeOption{
+			// installation happens with locked blockdevice
+			blkid.WithSkipLocking(true),
+		},
+		nil,
+		nil,
+		i.BlkidInfo,
+	)
 }
 
 func processLayer(layer v1.Layer, dstDir string) error {
