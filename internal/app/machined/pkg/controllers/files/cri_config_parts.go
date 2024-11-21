@@ -83,6 +83,7 @@ func (ctrl *CRIConfigPartsController) Run(ctx context.Context, r controller.Runt
 
 				spec.Contents = out
 				spec.Mode = 0o600
+				spec.SelinuxLabel = constants.EtcSelinuxLabel
 
 				return nil
 			}); err != nil {

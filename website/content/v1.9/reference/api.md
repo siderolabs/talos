@@ -2213,6 +2213,7 @@ EtcFileSpecSpec describes status of rendered secrets.
 | ----- | ---- | ----- | ----------- |
 | contents | [bytes](#bytes) |  |  |
 | mode | [uint32](#uint32) |  |  |
+| selinux_label | [string](#string) |  |  |
 
 
 

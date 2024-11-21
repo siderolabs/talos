@@ -81,7 +81,6 @@ func (suite *SELinuxSuite) TestFileMountLabels() {
 		constants.SystemPath:          constants.SystemSelinuxLabel,
 		constants.EphemeralMountPoint: constants.EphemeralSelinuxLabel,
 		constants.StateMountPoint:     constants.StateSelinuxLabel,
-		constants.SystemEtcPath:       constants.SystemEtcSelinuxLabel,
 		constants.SystemVarPath:       constants.SystemVarSelinuxLabel,
 		constants.RunPath:             constants.RunSelinuxLabel,
 		"/var/run":                    constants.RunSelinuxLabel,
@@ -102,6 +101,9 @@ func (suite *SELinuxSuite) TestFileMountLabels() {
 		// Directories
 		"/var/lib/containerd": "system_u:object_r:containerd_state_t:s0",
 		"/var/lib/kubelet":    "system_u:object_r:kubelet_state_t:s0",
+		// Mounts and runtime-generated files
+		constants.SystemEtcPath: constants.EtcSelinuxLabel,
+		"/etc":                  constants.EtcSelinuxLabel,
 	}
 
 	// Only running on controlplane
@@ -254,7 +256,6 @@ func (suite *SELinuxSuite) TestProcessLabels() {
 	}
 }
 
-// TODO: test for all machined-created files
 // TODO: test for system and CRI container labels
 // TODO: test labels for unconfined system extensions, pods
 // TODO: test for no avc denials in dmesg

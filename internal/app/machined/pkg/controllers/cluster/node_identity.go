@@ -115,6 +115,7 @@ func (ctrl *NodeIdentityController) Run(ctx context.Context, r controller.Runtim
 
 				r.TypedSpec().Contents, err = clusteradapter.IdentitySpec(&localIdentity).ConvertMachineID()
 				r.TypedSpec().Mode = 0o444
+				r.TypedSpec().SelinuxLabel = constants.EtcSelinuxLabel
 
 				return err
 			}); err != nil {

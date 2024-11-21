@@ -40,7 +40,7 @@ func SetupSystemDirectories(ctx context.Context, log *zap.Logger, rt runtime.Run
 
 		switch path {
 		case constants.SystemEtcPath:
-			label = constants.SystemEtcSelinuxLabel
+			label = constants.EtcSelinuxLabel
 		case constants.SystemVarPath:
 			label = constants.SystemVarSelinuxLabel
 		default: // /system/state is another mount

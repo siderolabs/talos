@@ -27,6 +27,7 @@ import (
 	efiles "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/files"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
 	talosconfig "github.com/siderolabs/talos/pkg/machinery/config"
+	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/resources/config"
 	"github.com/siderolabs/talos/pkg/machinery/resources/files"
 	"github.com/siderolabs/talos/pkg/machinery/resources/network"
@@ -150,6 +151,7 @@ func (ctrl *EtcFileController) Run(ctx context.Context, r controller.Runtime, _ 
 				func(r *files.EtcFileSpec) error {
 					r.TypedSpec().Contents = renderResolvConf(pickNameservers(hostDNSCfg, resolverStatus), hostnameStatusSpec, cfgProvider)
 					r.TypedSpec().Mode = 0o644
+					r.TypedSpec().SelinuxLabel = constants.EtcSelinuxLabel
 
 					return nil
 				}); err != nil {
@@ -173,7 +175,7 @@ func (ctrl *EtcFileController) Run(ctx context.Context, r controller.Runtime, _ 
 				return fmt.Errorf("error creating pod resolv.conf dir: %w", err)
 			}
 
-			err = efiles.UpdateFile(ctrl.PodResolvConfPath, conf, 0o644)
+			err = efiles.UpdateFile(ctrl.PodResolvConfPath, conf, 0o644, constants.EtcSelinuxLabel)
 			if err != nil {
 				return fmt.Errorf("error writing pod resolv.conf: %w", err)
 			}
@@ -184,6 +186,7 @@ func (ctrl *EtcFileController) Run(ctx context.Context, r controller.Runtime, _ 
 				func(r *files.EtcFileSpec) error {
 					r.TypedSpec().Contents, err = ctrl.renderHosts(hostnameStatus.TypedSpec(), nodeAddressStatus.TypedSpec(), cfgProvider)
 					r.TypedSpec().Mode = 0o644
+					r.TypedSpec().SelinuxLabel = constants.EtcSelinuxLabel
 
 					return err
 				}); err != nil {

@@ -723,8 +723,8 @@ const (
 	// SystemEtcPath is the path to the system etc directory.
 	SystemEtcPath = SystemPath + "/etc"
 
-	// SystemEtcSelinuxLabel is the SELinux label for the system etc directory.
-	SystemEtcSelinuxLabel = "system_u:object_r:system_etc_t:s0"
+	// EtcSelinuxLabel is the SELinux label for the /etc and /system/etc directories.
+	EtcSelinuxLabel = "system_u:object_r:etc_t:s0"
 
 	// SystemLibexecPath is the path to the system libexec directory.
 	SystemLibexecPath = SystemPath + "/libexec"

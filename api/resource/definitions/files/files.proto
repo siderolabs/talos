@@ -9,6 +9,7 @@ option java_package = "dev.talos.api.resource.definitions.files";
 message EtcFileSpecSpec {
   bytes contents = 1;
   uint32 mode = 2;
+  string selinux_label = 3;
 }
 
 // EtcFileStatusSpec describes status of rendered secrets.
