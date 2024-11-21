@@ -186,6 +186,7 @@ func NewState() (*State, error) {
 		&network.TimeServerSpec{},
 		&perf.CPU{},
 		&perf.Memory{},
+		&cri.RegistriesConfig{},
 		&runtime.DevicesStatus{},
 		&runtime.Diagnostic{},
 		&runtime.EventSinkConfig{},

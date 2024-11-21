@@ -83,6 +83,7 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/meta"
 	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
 	"github.com/siderolabs/talos/pkg/machinery/resources/block"
+	crires "github.com/siderolabs/talos/pkg/machinery/resources/cri"
 	etcdresource "github.com/siderolabs/talos/pkg/machinery/resources/etcd"
 	"github.com/siderolabs/talos/pkg/machinery/resources/network"
 	timeresource "github.com/siderolabs/talos/pkg/machinery/resources/time"
@@ -482,7 +483,7 @@ func (s *Server) Upgrade(ctx context.Context, in *machine.UpgradeRequest) (*mach
 
 	log.Printf("validating %q", in.GetImage())
 
-	if err := install.PullAndValidateInstallerImage(ctx, s.Controller.Runtime().Config().Machine().Registries(), in.GetImage()); err != nil {
+	if err := install.PullAndValidateInstallerImage(ctx, crires.RegistryBuilder(s.Controller.Runtime().State().V1Alpha2().Resources()), in.GetImage()); err != nil {
 		return nil, fmt.Errorf("error validating installer image %q: %w", in.GetImage(), err)
 	}
 

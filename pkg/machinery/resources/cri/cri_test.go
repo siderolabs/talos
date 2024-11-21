@@ -27,6 +27,7 @@ func TestRegisterResource(t *testing.T) {
 	for _, resource := range []meta.ResourceWithRD{
 		&cri.ImageCacheConfig{},
 		&cri.SeccompProfile{},
+		&cri.RegistriesConfig{},
 	} {
 		assert.NoError(t, resourceRegistry.Register(ctx, resource))
 	}

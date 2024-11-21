@@ -22,7 +22,7 @@ func extractParams(req *http.Request) (params, error) {
 	value := req.PathValue("args")
 
 	parts := strings.Split(path.Clean(value), "/")
-	if len(parts) < 4 {
+	if len(parts) < 3 {
 		return params{}, xerrors.NewTaggedf[notFoundTag]("incorrect args value '%s'", value)
 	}
 

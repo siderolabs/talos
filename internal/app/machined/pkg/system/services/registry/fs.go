@@ -5,27 +5,33 @@
 package registry
 
 import (
-	"errors"
 	"io/fs"
 	"iter"
+	"os"
+	"path/filepath"
 
 	"github.com/hashicorp/go-multierror"
 )
 
-// MultiPathFS is a FS that can be used to combine multiple FSs into one.
+// MultiPathFS is a [fs.FS] that reads from multiple paths sequentially until it finds the file.
 type MultiPathFS struct {
-	fsIt iter.Seq[fs.StatFS]
+	fsIt iter.Seq[string]
 }
 
 // NewMultiPathFS creates a new MultiPathFS. It takes an iterator of FSs which can be used multiple times asynchrously.
-func NewMultiPathFS(it iter.Seq[fs.StatFS]) *MultiPathFS { return &MultiPathFS{fsIt: it} }
+func NewMultiPathFS(it iter.Seq[string]) *MultiPathFS { return &MultiPathFS{fsIt: it} }
 
 // Open opens the named file.
 func (m *MultiPathFS) Open(name string) (fs.File, error) {
 	var multiErr *multierror.Error
 
-	for f := range m.fsIt {
-		r, err := f.Open(name)
+	for root := range m.fsIt {
+		abs, err := filepath.Abs(root)
+		if err != nil {
+			return nil, err
+		}
+
+		r, err := os.Open(filepath.Join(abs, name))
 		if err == nil {
 			return r, nil
 		}
@@ -34,7 +40,7 @@ func (m *MultiPathFS) Open(name string) (fs.File, error) {
 	}
 
 	if multiErr == nil {
-		return nil, errors.New("roots are empty")
+		return nil, os.ErrNotExist
 	}
 
 	return nil, multiErr.ErrorOrNil()
@@ -44,8 +50,13 @@ func (m *MultiPathFS) Open(name string) (fs.File, error) {
 func (m *MultiPathFS) Stat(name string) (fs.FileInfo, error) {
 	var multiErr *multierror.Error
 
-	for f := range m.fsIt {
-		r, err := f.Stat(name)
+	for root := range m.fsIt {
+		abs, err := filepath.Abs(root)
+		if err != nil {
+			return nil, err
+		}
+
+		r, err := os.Stat(filepath.Join(abs, name))
 		if err == nil {
 			return r, nil
 		}
@@ -54,7 +65,7 @@ func (m *MultiPathFS) Stat(name string) (fs.FileInfo, error) {
 	}
 
 	if multiErr == nil {
-		return nil, errors.New("roots are empty")
+		return nil, os.ErrNotExist
 	}
 
 	return nil, multiErr.ErrorOrNil()

@@ -33,6 +33,7 @@ import (
 	"github.com/siderolabs/talos/pkg/conditions"
 	"github.com/siderolabs/talos/pkg/machinery/config/machine"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
+	"github.com/siderolabs/talos/pkg/machinery/resources/cri"
 	"github.com/siderolabs/talos/pkg/machinery/resources/k8s"
 	"github.com/siderolabs/talos/pkg/machinery/resources/network"
 	timeresource "github.com/siderolabs/talos/pkg/machinery/resources/time"
@@ -70,7 +71,7 @@ func (k *Kubelet) PreFunc(ctx context.Context, r runtime.Runtime) error {
 	// Pull the image and unpack it.
 	containerdctx := namespaces.WithNamespace(ctx, constants.SystemContainerdNamespace)
 
-	img, err := image.Pull(containerdctx, r.Config().Machine().Registries(), client, spec.Image, image.WithSkipIfAlreadyPulled())
+	img, err := image.Pull(containerdctx, cri.RegistryBuilder(r.State().V1Alpha2().Resources()), client, spec.Image, image.WithSkipIfAlreadyPulled())
 	if err != nil {
 		return err
 	}

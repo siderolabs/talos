@@ -184,11 +184,11 @@ func (svc *Service) resolveCanonicalRef(p params) (reference.Canonical, error) {
 
 	ntSum, err := hashFile(taggedFile, svc.root)
 	if err != nil {
-		if !errors.Is(err, os.ErrNotExist) {
-			return nil, xerrors.NewTaggedf[internalErrorTag]("failed to hash manifest: %w", err)
+		if errors.Is(err, os.ErrNotExist) {
+			return nil, xerrors.NewTagged[notFoundTag](err)
 		}
 
-		return nil, xerrors.NewTagged[notFoundTag](err)
+		return nil, xerrors.NewTaggedf[internalErrorTag]("failed to hash manifest: %w", err)
 	}
 
 	sha256file := filepath.Join("manifests", namedTagged.Name(), "digest", digest.NewDigestFromBytes(digest.SHA256, ntSum).String())

@@ -70,6 +70,7 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	metamachinery "github.com/siderolabs/talos/pkg/machinery/meta"
 	blockres "github.com/siderolabs/talos/pkg/machinery/resources/block"
+	crires "github.com/siderolabs/talos/pkg/machinery/resources/cri"
 	resourcefiles "github.com/siderolabs/talos/pkg/machinery/resources/files"
 	"github.com/siderolabs/talos/pkg/machinery/resources/k8s"
 	resourceruntime "github.com/siderolabs/talos/pkg/machinery/resources/runtime"
@@ -1513,6 +1514,7 @@ func Upgrade(_ runtime.Sequence, data any) (runtime.TaskExecutionFunc, string) {
 			in.GetImage(),
 			r.Config(),
 			r.ConfigContainer(),
+			crires.RegistryBuilder(r.State().V1Alpha2().Resources()),
 			install.OptionsFromUpgradeRequest(r, in)...,
 		)
 		if err != nil {
@@ -1687,6 +1689,12 @@ func Install(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
 				installerImage = images.DefaultInstallerImage
 			}
 
+			logger.Printf("waiting for the image cache")
+
+			if err = crires.WaitForImageCache(ctx, r.State().V1Alpha2().Resources()); err != nil {
+				return fmt.Errorf("failed to wait for the image cache: %w", err)
+			}
+
 			var disk string
 
 			matchExpr, err := r.Config().Machine().Install().DiskMatchExpression()
@@ -1725,6 +1733,7 @@ func Install(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
 				installerImage,
 				r.Config(),
 				r.ConfigContainer(),
+				crires.RegistryBuilder(r.State().V1Alpha2().Resources()),
 				install.WithForce(true),
 				install.WithZero(r.Config().Machine().Install().Zero()),
 				install.WithExtraKernelArgs(r.Config().Machine().Install().ExtraKernelArgs()),
@@ -1772,6 +1781,12 @@ func Install(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
 				return fmt.Errorf("error unserializing install options: %w", err)
 			}
 
+			logger.Printf("waiting for the image cache")
+
+			if err = crires.WaitForImageCache(ctx, r.State().V1Alpha2().Resources()); err != nil {
+				return fmt.Errorf("failed to wait for the image cache: %w", err)
+			}
+
 			logger.Printf("performing staged upgrade via %q", r.State().Machine().StagedInstallImageRef())
 
 			err = install.RunInstallerContainer(
@@ -1779,6 +1794,7 @@ func Install(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
 				r.State().Machine().StagedInstallImageRef(),
 				r.Config(),
 				r.ConfigContainer(),
+				crires.RegistryBuilder(r.State().V1Alpha2().Resources()),
 				install.WithOptions(options),
 			)
 			if err != nil {

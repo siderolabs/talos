@@ -7,7 +7,6 @@ package main
 import (
 	"context"
 	"fmt"
-	"io/fs"
 	"os"
 	"os/signal"
 	"path/filepath"
@@ -38,9 +37,9 @@ func app() error {
 		return fmt.Errorf("failed to get user home directory: %w", err)
 	}
 
-	it := func(yield func(fs.StatFS) bool) {
+	it := func(yield func(string) bool) {
 		for _, root := range []string{"registry-cache-2", "registry-cache"} {
-			if !yield(os.DirFS(filepath.Join(homeDir, root)).(fs.StatFS)) {
+			if !yield(filepath.Join(homeDir, root)) {
 				return
 			}
 		}

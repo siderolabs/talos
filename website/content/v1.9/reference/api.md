@@ -56,6 +56,13 @@ description: Talos gRPC API reference.
   
 - [resource/definitions/cri/cri.proto](#resource/definitions/cri/cri.proto)
     - [ImageCacheConfigSpec](#talos.resource.definitions.cri.ImageCacheConfigSpec)
+    - [RegistriesConfigSpec](#talos.resource.definitions.cri.RegistriesConfigSpec)
+    - [RegistriesConfigSpec.RegistryConfigEntry](#talos.resource.definitions.cri.RegistriesConfigSpec.RegistryConfigEntry)
+    - [RegistriesConfigSpec.RegistryMirrorsEntry](#talos.resource.definitions.cri.RegistriesConfigSpec.RegistryMirrorsEntry)
+    - [RegistryAuthConfig](#talos.resource.definitions.cri.RegistryAuthConfig)
+    - [RegistryConfig](#talos.resource.definitions.cri.RegistryConfig)
+    - [RegistryMirrorConfig](#talos.resource.definitions.cri.RegistryMirrorConfig)
+    - [RegistryTLSConfig](#talos.resource.definitions.cri.RegistryTLSConfig)
     - [SeccompProfileSpec](#talos.resource.definitions.cri.SeccompProfileSpec)
   
 - [resource/definitions/enums/enums.proto](#resource/definitions/enums/enums.proto)
@@ -1300,6 +1307,122 @@ ImageCacheConfigSpec represents the ImageCacheConfig.
 | ----- | ---- | ----- | ----------- |
 | status | [talos.resource.definitions.enums.CriImageCacheStatus](#talos.resource.definitions.enums.CriImageCacheStatus) |  |  |
 | roots | [string](#string) | repeated |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.cri.RegistriesConfigSpec"></a>
+
+### RegistriesConfigSpec
+RegistriesConfigSpec describes status of rendered secrets.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| registry_mirrors | [RegistriesConfigSpec.RegistryMirrorsEntry](#talos.resource.definitions.cri.RegistriesConfigSpec.RegistryMirrorsEntry) | repeated |  |
+| registry_config | [RegistriesConfigSpec.RegistryConfigEntry](#talos.resource.definitions.cri.RegistriesConfigSpec.RegistryConfigEntry) | repeated |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.cri.RegistriesConfigSpec.RegistryConfigEntry"></a>
+
+### RegistriesConfigSpec.RegistryConfigEntry
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| key | [string](#string) |  |  |
+| value | [RegistryConfig](#talos.resource.definitions.cri.RegistryConfig) |  |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.cri.RegistriesConfigSpec.RegistryMirrorsEntry"></a>
+
+### RegistriesConfigSpec.RegistryMirrorsEntry
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| key | [string](#string) |  |  |
+| value | [RegistryMirrorConfig](#talos.resource.definitions.cri.RegistryMirrorConfig) |  |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.cri.RegistryAuthConfig"></a>
+
+### RegistryAuthConfig
+RegistryAuthConfig specifies authentication configuration for a registry.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| registry_username | [string](#string) |  |  |
+| registry_password | [string](#string) |  |  |
+| registry_auth | [string](#string) |  |  |
+| registry_identity_token | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.cri.RegistryConfig"></a>
+
+### RegistryConfig
+RegistryConfig specifies auth & TLS config per registry.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| registry_tls | [RegistryTLSConfig](#talos.resource.definitions.cri.RegistryTLSConfig) |  |  |
+| registry_auth | [RegistryAuthConfig](#talos.resource.definitions.cri.RegistryAuthConfig) |  |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.cri.RegistryMirrorConfig"></a>
+
+### RegistryMirrorConfig
+RegistryMirrorConfig represents mirror configuration for a registry.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| mirror_endpoints | [string](#string) | repeated |  |
+| mirror_override_path | [bool](#bool) |  |  |
+| mirror_skip_fallback | [bool](#bool) |  |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.cri.RegistryTLSConfig"></a>
+
+### RegistryTLSConfig
+RegistryTLSConfig specifies TLS config for HTTPS registries.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| tls_client_identity | [common.PEMEncodedCertificateAndKey](#common.PEMEncodedCertificateAndKey) |  |  |
+| tlsca | [bytes](#bytes) |  |  |
+| tls_insecure_skip_verify | [bool](#bool) |  |  |
 
 
 

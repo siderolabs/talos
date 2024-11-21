@@ -48,7 +48,7 @@ func NewPuller(client *containerd.Client) (*Puller, error) {
 }
 
 // PullAndMount pulls the system extension images, unpacks them and mounts under well known path (constants.SystemExtensionsPath).
-func (puller *Puller) PullAndMount(ctx context.Context, registryConfig config.Registries, extensions []config.Extension) error {
+func (puller *Puller) PullAndMount(ctx context.Context, registriesBuilder image.RegistriesBuilder, extensions []config.Extension) error {
 	snapshotService := puller.client.SnapshotService(defaults.DefaultSnapshotter)
 
 	for i, ext := range extensions {
@@ -61,7 +61,7 @@ func (puller *Puller) PullAndMount(ctx context.Context, registryConfig config.Re
 
 		var extImg containerd.Image
 
-		extImg, err := image.Pull(ctx, registryConfig, puller.client, extensionImage, image.WithSkipIfAlreadyPulled())
+		extImg, err := image.Pull(ctx, registriesBuilder, puller.client, extensionImage, image.WithSkipIfAlreadyPulled())
 		if err != nil {
 			return err
 		}

@@ -50,6 +50,7 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/meta"
 	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
+	"github.com/siderolabs/talos/pkg/machinery/resources/cri"
 	etcdresource "github.com/siderolabs/talos/pkg/machinery/resources/etcd"
 	"github.com/siderolabs/talos/pkg/machinery/resources/k8s"
 	"github.com/siderolabs/talos/pkg/machinery/resources/network"
@@ -120,7 +121,7 @@ func (e *Etcd) PreFunc(ctx context.Context, r runtime.Runtime) error {
 		return fmt.Errorf("failed to get etcd spec: %w", err)
 	}
 
-	img, err := image.Pull(containerdctx, r.Config().Machine().Registries(), client, spec.TypedSpec().Image, image.WithSkipIfAlreadyPulled())
+	img, err := image.Pull(containerdctx, cri.RegistryBuilder(r.State().V1Alpha2().Resources()), client, spec.TypedSpec().Image, image.WithSkipIfAlreadyPulled())
 	if err != nil {
 		return fmt.Errorf("failed to pull image %q: %w", spec.TypedSpec().Image, err)
 	}

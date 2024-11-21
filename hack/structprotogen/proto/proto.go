@@ -396,6 +396,12 @@ func formatTypeName(fieldTypePkg string, fieldType string, declPkg string) (stri
 		return commoProto, "common.PEMEncodedCertificate"
 	case typeData{"github.com/siderolabs/talos/pkg/machinery/cel", "Expression"}:
 		return "google/api/expr/v1alpha1/checked.proto", "google.api.expr.v1alpha1.CheckedExpr"
+	case typeData{"github.com/siderolabs/talos/pkg/machinery/resources/cri", "RegistryMirrorConfig"}:
+		// This is a hack, but I (Dmitry) don't have enough patience to figure out why we don't support complex maps
+		return "resource/definitions/cri/registry.proto", "talos.resource.definitions.cri.RegistryMirrorConfig"
+	case typeData{"github.com/siderolabs/talos/pkg/machinery/resources/cri", "RegistryConfig"}:
+		// This is a hack, but I (Dmitry) don't have enough patience to figure out why we don't support complex maps
+		return "resource/definitions/cri/registry.proto", "talos.resource.definitions.cri.RegistryConfig"
 	default:
 		return "", ""
 	}

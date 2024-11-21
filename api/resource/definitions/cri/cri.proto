@@ -5,6 +5,7 @@ package talos.resource.definitions.cri;
 option go_package = "github.com/siderolabs/talos/pkg/machinery/api/resource/definitions/cri";
 option java_package = "dev.talos.api.resource.definitions.cri";
 
+import "common/common.proto";
 import "google/protobuf/struct.proto";
 import "resource/definitions/enums/enums.proto";
 
@@ -12,6 +13,40 @@ import "resource/definitions/enums/enums.proto";
 message ImageCacheConfigSpec {
   talos.resource.definitions.enums.CriImageCacheStatus status = 1;
   repeated string roots = 2;
+}
+
+// RegistriesConfigSpec describes status of rendered secrets.
+message RegistriesConfigSpec {
+  map<string, RegistryMirrorConfig> registry_mirrors = 1;
+  map<string, RegistryConfig> registry_config = 2;
+}
+
+// RegistryAuthConfig specifies authentication configuration for a registry.
+message RegistryAuthConfig {
+  string registry_username = 1;
+  string registry_password = 2;
+  string registry_auth = 3;
+  string registry_identity_token = 4;
+}
+
+// RegistryConfig specifies auth & TLS config per registry.
+message RegistryConfig {
+  RegistryTLSConfig registry_tls = 1;
+  RegistryAuthConfig registry_auth = 2;
+}
+
+// RegistryMirrorConfig represents mirror configuration for a registry.
+message RegistryMirrorConfig {
+  repeated string mirror_endpoints = 1;
+  bool mirror_override_path = 2;
+  bool mirror_skip_fallback = 3;
+}
+
+// RegistryTLSConfig specifies TLS config for HTTPS registries.
+message RegistryTLSConfig {
+  common.PEMEncodedCertificateAndKey tls_client_identity = 1;
+  bytes tlsca = 2;
+  bool tls_insecure_skip_verify = 3;
 }
 
 // SeccompProfileSpec represents the SeccompProfile.

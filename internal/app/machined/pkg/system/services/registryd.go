@@ -7,10 +7,10 @@ package services
 import (
 	"context"
 	"io"
-	"io/fs"
 	"os"
 
 	"github.com/cosi-project/runtime/pkg/safe"
+	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
@@ -47,28 +47,33 @@ func (r *registryD) HealthFunc(runtime.Runtime) health.Check {
 }
 
 func (r *registryD) Runner(rt runtime.Runtime) (runner.Runner, error) {
-	it := func(yield func(fs.StatFS) bool) {
-		imageCacheConfig, err := safe.StateGetByID[*cri.ImageCacheConfig](context.Background(), rt.State().V1Alpha2().Resources(), cri.ImageCacheConfigID)
-		if err != nil {
-			// we can't handle it here
-			return
-		}
+	return goroutine.NewRunner(rt, "registryd", func(ctx context.Context, r runtime.Runtime, logOutput io.Writer) error {
+		logger := logging.ZapLogger(
+			logging.NewLogDestination(logOutput, zapcore.DebugLevel, logging.WithColoredLevels()),
+		)
 
-		for _, root := range imageCacheConfig.TypedSpec().Roots {
-			if !yield(os.DirFS(root).(fs.StatFS)) {
+		st := r.State().V1Alpha2().Resources()
+		it := func(yield func(string) bool) {
+			imageCacheConfig, err := safe.StateGetByID[*cri.ImageCacheConfig](ctx, st, cri.ImageCacheConfigID)
+			if err != nil {
+				logger.Error("failed to get image cache config", zap.Error(err))
+
 				return
 			}
-		}
-	}
 
-	return goroutine.NewRunner(rt, "registryd", func(ctx context.Context, r runtime.Runtime, logOutput io.Writer) error {
-		return registry.NewService(
-			registry.NewMultiPathFS(it),
-			logging.ZapLogger(logging.NewLogDestination(
-				logOutput,
-				zapcore.DebugLevel,
-				logging.WithColoredLevels(),
-			)),
-		).Run(ctx)
+			for _, root := range imageCacheConfig.TypedSpec().Roots {
+				if _, err = os.Stat(root); err != nil {
+					logger.Error("failed to stat image cache root", zap.String("root", root), zap.Error(err))
+
+					continue
+				}
+
+				if !yield(root) {
+					return
+				}
+			}
+		}
+
+		return registry.NewService(registry.NewMultiPathFS(it), logger).Run(ctx)
 	}, runner.WithLoggingManager(rt.Logging())), nil
 }

@@ -53,11 +53,14 @@ func WithSkipIfAlreadyPulled() PullOption {
 	}
 }
 
+// RegistriesBuilder is a function that returns registries configuration.
+type RegistriesBuilder = func(context.Context) (config.Registries, error)
+
 // Pull is a convenience function that wraps the containerd image pull func with
 // retry functionality.
 //
 //nolint:gocyclo
-func Pull(ctx context.Context, reg config.Registries, client *containerd.Client, ref string, opt ...PullOption) (img containerd.Image, err error) {
+func Pull(ctx context.Context, registryBuilder RegistriesBuilder, client *containerd.Client, ref string, opt ...PullOption) (img containerd.Image, err error) {
 	var opts PullOptions
 
 	for _, o := range opt {
@@ -96,9 +99,14 @@ func Pull(ctx context.Context, reg config.Registries, client *containerd.Client,
 
 	ctx = log.WithLogger(ctx, containerdLogger.WithField("image", ref))
 
-	resolver := NewResolver(reg)
-
 	err = retry.Exponential(PullTimeout, retry.WithUnits(PullRetryInterval), retry.WithErrorLogging(true)).RetryWithContext(ctx, func(ctx context.Context) error {
+		registriesConfig, err := registryBuilder(ctx)
+		if err != nil {
+			return fmt.Errorf("failed to get configured registries: %w", err)
+		}
+
+		resolver := NewResolver(registriesConfig)
+
 		if img, err = client.Pull(
 			ctx,
 			ref,
