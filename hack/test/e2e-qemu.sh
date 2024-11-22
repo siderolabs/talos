@@ -163,7 +163,7 @@ case "${WITH_TRUSTED_BOOT_ISO:-false}" in
     ;;
   *)
     INSTALLER_IMAGE=${INSTALLER_IMAGE}-amd64-secureboot
-    QEMU_FLAGS+=("--iso-path=_out/metal-amd64-secureboot.iso" "--with-tpm2" "--encrypt-ephemeral" "--encrypt-state" "--disk-encryption-key-types=tpm")
+    QEMU_FLAGS+=("--iso-path=_out/metal-amd64-secureboot.iso" "--encrypt-ephemeral" "--encrypt-state" "--disk-encryption-key-types=tpm")
     ;;
 esac
 
@@ -225,6 +225,7 @@ function create_cluster {
     --with-init-node=false \
     --cni-bundle-url="${ARTIFACTS}/talosctl-cni-bundle-\${ARCH}.tar.gz" \
     --crashdump \
+    --with-tpm2 \
     "${REGISTRY_MIRROR_FLAGS[@]}" \
     "${QEMU_FLAGS[@]}"
 

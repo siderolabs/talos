@@ -26,6 +26,7 @@ function create_cluster {
     --with-apply-config \
     --install-image=${REGISTRY:-ghcr.io}/siderolabs/installer:${TAG} \
     --cni-bundle-url=${ARTIFACTS}/talosctl-cni-bundle-'${ARCH}'.tar.gz \
+    --with-tpm2 \
     "${REGISTRY_MIRROR_FLAGS[@]}"
 
   "${TALOSCTL}" config node "${NODE}"
