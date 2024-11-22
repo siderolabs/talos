@@ -1,0 +1,124 @@
+; Query procfs about self
+(allow any_p self (fs_classes (ro)))
+; All but ptrace, set* will be guarded by transitions
+(allow any_p self (process (
+    dyntransition
+    execheap
+    execmem
+    execstack
+    fork
+    getattr
+    getcap
+    getpgid
+    getsched
+    getsession
+    getrlimit
+    noatsecure
+    rlimitinh
+    setcap
+    setcurrent
+    setexec
+    setfscreate
+    setkeycreate
+    setpgid
+    setrlimit
+    setsched
+    setsockcreate
+    share
+    sigchld
+    siginh
+    sigkill
+    signal
+    signull
+    sigstop
+    transition
+)))
+
+; Pseudo devices
+(allow any_p null_device_t (fs_classes (rw)))
+
+; All caps, except sys_boot and sys_modules
+(allow any_p self (capability (
+    audit_control
+    audit_write
+    chown
+    dac_override
+    dac_read_search
+    fowner
+    fsetid
+    ipc_lock
+    ipc_owner
+    kill
+    lease
+    linux_immutable
+    mknod
+    net_admin
+    net_bind_service
+    net_broadcast
+    net_raw
+    setfcap
+    setgid
+    setpcap
+    setuid
+    sys_admin
+    sys_chroot
+    sys_nice
+    sys_pacct
+    sys_ptrace
+    sys_rawio
+    sys_resource
+    sys_time
+    sys_tty_config
+)))
+(allow any_p self (cap_userns (
+    audit_control
+    audit_write
+    chown
+    dac_override
+    dac_read_search
+    fowner
+    fsetid
+    ipc_lock
+    ipc_owner
+    kill
+    lease
+    linux_immutable
+    mknod
+    net_admin
+    net_bind_service
+    net_broadcast
+    net_raw
+    setfcap
+    setgid
+    setpcap
+    setuid
+    sys_admin
+    sys_chroot
+    sys_nice
+    sys_pacct
+    sys_ptrace
+    sys_rawio
+    sys_resource
+    sys_time
+    sys_tty_config
+)))
+; All but mac_admin, mac_override and syslog
+(allow any_p self (capability2 (
+    audit_read
+    block_suspend
+    bpf
+    checkpoint_restore
+    perfmon
+    wake_alarm
+)))
+(allow any_p self (cap2_userns (
+    audit_read
+    block_suspend
+    bpf
+    checkpoint_restore
+    perfmon
+    wake_alarm
+)))
+
+; Enable (e)BPF for all processes
+(allow any_p self (bpf (map_create map_read map_write prog_load prog_run)))
