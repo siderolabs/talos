@@ -16,6 +16,9 @@
 (allow sys_containerd_t system_container_p (process2 (nnp_transition nosuid_transition)))
 (allow sys_containerd_t system_container_p (process (transition)))
 
+; Access overlayfs parameters
+(allow sys_containerd_t sys_module_t (fs_classes (ro)))
+
 ; Typically a system extension
 ; Possibly a service misconfigured by machined
 (type unconfined_container_t)
