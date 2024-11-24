@@ -791,7 +791,7 @@ func (s *Server) Copy(req *machine.CopyRequest, obj machine.MachineService_CopyS
 
 // List implements the machine.MachineServer interface.
 //
-//nolint:gocyclo
+//nolint:gocyclo,cyclop
 func (s *Server) List(req *machine.ListRequest, obj machine.MachineService_ListServer) error {
 	if req == nil {
 		req = new(machine.ListRequest)
@@ -847,11 +847,25 @@ func (s *Server) List(req *machine.ListRequest, obj machine.MachineService_ListS
 		xattrs := []*machine.Xattr{}
 
 		if req.ReportXattrs {
+			// On filesystems such as devtmpfs and sysfs, xattrs are not supported.
+			// However, we can still get the label from the security.selinux xattr for automatic labels.
+			foundSelinux := false
+
 			if list, err := xattr.List(fi.FullPath); err == nil {
 				for _, attr := range list {
 					if data, err := xattr.Get(fi.FullPath, attr); err == nil {
+						if attr == "security.selinux" {
+							foundSelinux = true
+						}
+
 						xattrs = append(xattrs, &machine.Xattr{Name: attr, Data: data})
 					}
+				}
+			}
+
+			if !foundSelinux {
+				if data, err := xattr.Get(fi.FullPath, "security.selinux"); err == nil {
+					xattrs = append(xattrs, &machine.Xattr{Name: "security.selinux", Data: data})
 				}
 			}
 		}
