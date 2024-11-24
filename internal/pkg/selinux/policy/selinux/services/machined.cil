@@ -49,3 +49,6 @@
 
 ; Access kernel module parameters
 (allow init_t sys_module_t (fs_classes (rw)))
+
+; Configure kubelet
+(allow init_t kubelet_state_t (fs_classes (rw)))
