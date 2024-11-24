@@ -16,7 +16,7 @@
 (call pod_p (pod_t))
 ; TODO: What if container is started not from containerd_state_t?
 (typetransition pod_containerd_t containerd_state_t process pod_t)
-(allow pod_t containerd_state_t (file (entrypoint execute_no_trans)))
+(allow pod_t containerd_state_t (file (entrypoint execute execute_no_trans)))
 
 (type etcd_t)
 (call pod_p (etcd_t))
