@@ -42,3 +42,6 @@
 ; Typically machined executes LVM, cryptsetup and similar utilities
 ; They are short-running, come from the rootfs and do not accept user input, so can be started in init_t domain
 (allow init_t bin_exec_t (file (execute execute_no_trans)))
+
+; Access kernel module parameters
+(allow init_t sys_module_t (fs_classes (rw)))
