@@ -91,3 +91,7 @@
 
 ; Enable (e)BPF for all processes
 (allow any_p self (bpf (map_create map_read map_write prog_load prog_run)))
+
+; Allow init to manage processes
+(allow init_t service_p (fs_classes (rw)))
+(allow init_t service_p (process_classes (full)))

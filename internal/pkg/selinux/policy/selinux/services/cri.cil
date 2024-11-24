@@ -6,8 +6,13 @@
 (call system_socket_f (pod_containerd_socket_t))
 (typetransition pod_containerd_t run_t sock_file pod_containerd_socket_t)
 
+; Transition to pod contexts
 (allow pod_containerd_t pod_p (process2 (nnp_transition nosuid_transition)))
 (allow pod_containerd_t pod_p (process (transition)))
+
+; Manage procfs & processes
+(allow pod_containerd_t pod_p (fs_classes (rw)))
+(allow pod_containerd_t pod_p (process_classes (full)))
 
 ; Access overlayfs parameters
 (allow pod_containerd_t sys_module_t (fs_classes (ro)))
