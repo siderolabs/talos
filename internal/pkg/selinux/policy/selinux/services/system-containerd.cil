@@ -13,8 +13,13 @@
 (call system_socket_f (sys_containerd_socket_t))
 (typetransition sys_containerd_t system_t sock_file sys_containerd_socket_t)
 
+; Transition to system container contexts
 (allow sys_containerd_t system_container_p (process2 (nnp_transition nosuid_transition)))
 (allow sys_containerd_t system_container_p (process (transition)))
+
+; Manage procfs & processes
+(allow sys_containerd_t system_container_p (fs_classes (rw)))
+(allow sys_containerd_t system_container_p (process_classes (full)))
 
 ; Access overlayfs parameters
 (allow sys_containerd_t sys_module_t (fs_classes (ro)))
