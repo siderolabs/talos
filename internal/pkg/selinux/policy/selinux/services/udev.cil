@@ -43,6 +43,7 @@
 (filecon "/usr/bin/modprobe" file (system_u object_r modprobe_exec_t (systemLow systemLow)))
 ; If modprobe is called by machined or kernel do a transition to udev context which has module permissions
 (allow udev_t modprobe_exec_t (file (execute execute_no_trans)))
+(allow udev_t modprobe_exec_t (fs_classes (ro)))
 (typetransition kernel_t modprobe_exec_t process udev_t)
 (typetransition init_t modprobe_exec_t process udev_t)
 
