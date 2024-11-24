@@ -96,3 +96,38 @@
 (classmapping netlink_classes full (netlink_scsitransport_socket (accept append bind connect create getattr getopt ioctl listen lock map name_bind read recvfrom sendto setattr setopt shutdown write)))
 (classmapping netlink_classes full (netlink_rdma_socket (accept append bind connect create getattr getopt ioctl listen lock map name_bind read recvfrom sendto setattr setopt shutdown write)))
 (classmapping netlink_classes full (netlink_crypto_socket (accept append bind connect create getattr getopt ioctl listen lock map name_bind read recvfrom sendto setattr setopt shutdown write)))
+
+; Everything except ptrace
+(classmap process_classes (full))
+(classmapping process_classes full (process (
+    dyntransition
+    execheap
+    execmem
+    execstack
+    fork
+    getattr
+    getcap
+    getpgid
+    getsched
+    getsession
+    getrlimit
+    noatsecure
+    rlimitinh
+    setcap
+    setcurrent
+    setexec
+    setfscreate
+    setkeycreate
+    setpgid
+    setrlimit
+    setsched
+    setsockcreate
+    share
+    sigchld
+    siginh
+    sigkill
+    signal
+    signull
+    sigstop
+    transition
+)))
