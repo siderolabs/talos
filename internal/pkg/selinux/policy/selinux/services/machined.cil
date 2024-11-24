@@ -24,6 +24,7 @@
 
 (allow init_t service_p (process (transition)))
 (allow init_t service_exec_f (file (execute)))
+(allow init_t service_exec_f (fs_classes (ro)))
 
 ; Libraries must also pass the exceutable check to be used
 ; Allow their use by all host services
@@ -31,6 +32,7 @@
 (call system_f (lib_exec_t))
 (filecon "/usr/lib(/.*)?" any (system_u object_r lib_exec_t (systemLow systemLow)))
 (allow service_p lib_exec_t (file (execute)))
+(allow service_p lib_exec_t (fs_classes (ro)))
 
 ; Should not occur unless misconfigured by machined
 (type unconfined_service_t)
@@ -44,6 +46,7 @@
 ; Typically machined executes LVM, cryptsetup and similar utilities
 ; They are short-running, come from the rootfs and do not accept user input, so can be started in init_t domain
 (allow init_t sbin_exec_t (file (execute execute_no_trans)))
+(allow init_t sbin_exec_t (fs_classes (ro)))
 
 ; Access kernel module parameters
 (allow init_t sys_module_t (fs_classes (rw)))
