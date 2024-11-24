@@ -1,38 +1,7 @@
 ; Query procfs about self
 (allow any_p self (fs_classes (ro)))
-; All but ptrace, set* will be guarded by transitions
-(allow any_p self (process (
-    dyntransition
-    execheap
-    execmem
-    execstack
-    fork
-    getattr
-    getcap
-    getpgid
-    getsched
-    getsession
-    getrlimit
-    noatsecure
-    rlimitinh
-    setcap
-    setcurrent
-    setexec
-    setfscreate
-    setkeycreate
-    setpgid
-    setrlimit
-    setsched
-    setsockcreate
-    share
-    sigchld
-    siginh
-    sigkill
-    signal
-    signull
-    sigstop
-    transition
-)))
+; Allow all process actions but ptrace, set* will be guarded by transitions
+(allow any_p self (process_classes (full)))
 
 ; Pseudo devices
 (allow any_p null_device_t (fs_classes (rw)))
