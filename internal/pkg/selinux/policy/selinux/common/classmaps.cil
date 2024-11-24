@@ -41,26 +41,26 @@
     watch
 )))
 (classmapping fs_classes ro (file (
-    append create execmod getattr ioctl lock map mounton open quotaon read rename unlink watch watch_mount watch_reads watch_sb watch_with_perm
+    execmod getattr lock map open read watch watch_mount watch_reads watch_sb watch_with_perm
 )))
 (classmapping fs_classes ro (dir (
-    execmod getattr ioctl lock map open read watch watch_mount watch_reads watch_sb watch_with_perm
+    execmod getattr lock map open read watch watch_mount watch_reads watch_sb watch_with_perm
     search
 )))
 (classmapping fs_classes ro (lnk_file (
-    execmod getattr ioctl lock map open read watch watch_mount watch_reads watch_sb watch_with_perm
+    execmod getattr lock map open read watch watch_mount watch_reads watch_sb watch_with_perm
 )))
 (classmapping fs_classes ro (chr_file (
-    execmod getattr ioctl lock map open read watch watch_mount watch_reads watch_sb watch_with_perm
+    execmod getattr lock map open read watch watch_mount watch_reads watch_sb watch_with_perm
 )))
 (classmapping fs_classes ro (blk_file (
-    execmod getattr ioctl lock map open read watch watch_mount watch_reads watch_sb watch_with_perm
+    execmod getattr lock map open read watch watch_mount watch_reads watch_sb watch_with_perm
 )))
 (classmapping fs_classes ro (sock_file (
-    execmod getattr ioctl lock map open read watch watch_mount watch_reads watch_sb watch_with_perm
+    execmod getattr lock map open read watch watch_mount watch_reads watch_sb watch_with_perm
 )))
 (classmapping fs_classes ro (fifo_file (
-    execmod getattr ioctl lock map open read watch watch_mount watch_reads watch_sb watch_with_perm
+    execmod getattr lock map open read watch watch_mount watch_reads watch_sb watch_with_perm
 )))
 
 ; Netlink socket access
