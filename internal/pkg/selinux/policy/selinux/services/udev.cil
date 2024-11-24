@@ -52,3 +52,6 @@
 (allow udev_t module_t (system (module_load module_request)))
 (allow udev_t self (capability (sys_module)))
 (allow udev_t self (cap_userns (sys_module)))
+
+; udev rules can set module parameters
+(allow udev_t sys_module_t (fs_classes (rw)))
