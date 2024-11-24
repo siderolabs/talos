@@ -25,11 +25,12 @@
 (allow init_t service_p (process (transition)))
 (allow init_t service_exec_f (file (execute)))
 
-; TODO: allow execute for libraries
-; (type lib_exec_t)
-; (call system_f (lib_exec_t))
-; (filecon "/usr/lib/libc.so" file (system_u object_r lib_exec_t (systemLow systemLow)))
-; (allow service_p lib_exec_t (file (execute)))
+; Libraries must also pass the exceutable check to be used
+; Allow their use by all host services
+(type lib_exec_t)
+(call system_f (lib_exec_t))
+(filecon "/usr/lib(/.*)?" any (system_u object_r lib_exec_t (systemLow systemLow)))
+(allow service_p lib_exec_t (file (execute)))
 
 ; Should not occur unless misconfigured by machined
 (type unconfined_service_t)
