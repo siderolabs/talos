@@ -135,7 +135,8 @@ func (r *Runtime) CanApplyImmediate(cfg config.Provider) error {
 	// * .machine.nodeTaints
 	// * .machine.features.kubernetesTalosAPIAccess
 	// * .machine.features.kubePrism
-	// * .machine.features.localDNS
+	// * .machine.features.hostDNS
+	// * .machine.features.imageCache
 	newConfig.ConfigDebug = currentConfig.ConfigDebug
 	newConfig.ClusterConfig = currentConfig.ClusterConfig
 
@@ -163,6 +164,7 @@ func (r *Runtime) CanApplyImmediate(cfg config.Provider) error {
 			newConfig.MachineConfig.MachineFeatures.KubernetesTalosAPIAccessConfig = currentConfig.MachineConfig.MachineFeatures.KubernetesTalosAPIAccessConfig
 			newConfig.MachineConfig.MachineFeatures.KubePrismSupport = currentConfig.MachineConfig.MachineFeatures.KubePrismSupport
 			newConfig.MachineConfig.MachineFeatures.HostDNSSupport = currentConfig.MachineConfig.MachineFeatures.HostDNSSupport
+			newConfig.MachineConfig.MachineFeatures.ImageCache = currentConfig.MachineConfig.MachineFeatures.ImageCache
 		}
 	}
 
