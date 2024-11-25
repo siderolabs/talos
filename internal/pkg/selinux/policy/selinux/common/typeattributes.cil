@@ -36,8 +36,9 @@
     (typeattributeset protected_device_f ARG1)
 )
 
+(typeattributeset common_device_f device_t)
+
 (typeattribute device_f)
-(typeattributeset device_f device_t)
 (typeattributeset device_f common_device_f)
 (typeattributeset device_f protected_device_f)
 
