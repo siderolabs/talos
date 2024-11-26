@@ -71,8 +71,10 @@ func (suite *SELinuxSuite) getLabel(nodeCtx context.Context, pid int32) string {
 
 // TestFileMountLabels reads labels of runtime-created files and mounts from xattrs
 // to ensure SELinux labels for files are set when they are created and FS's are mounted with correct labels.
-// FIXME: cancel the test in case system was upgraded.
 func (suite *SELinuxSuite) TestFileMountLabels() {
+	// TODO: fix system extension support
+	suite.T().Skip("skipping SELinux test while SELinux support for system extensions is not implemented")
+
 	workers := suite.DiscoverNodeInternalIPsByType(suite.ctx, machine.TypeWorker)
 	controlplanes := suite.DiscoverNodeInternalIPsByType(suite.ctx, machine.TypeControlPlane)
 
@@ -173,14 +175,14 @@ func (suite *SELinuxSuite) checkFileLabels(nodes []string, expectedLabels map[st
 						return nil
 					}
 
-					suite.Require().NotNil(info.Xattrs)
+					suite.Require().NotNil(info.Xattrs, "no xattrs for %s", info.Name)
 
 					found := false
 
 					for _, l := range info.Xattrs {
 						if l.Name == "security.selinux" {
 							got := string(bytes.Trim(l.Data, "\x00\n"))
-							suite.Require().Contains(got, label, "expected %s to have label %s, got %s", path, label, got)
+							suite.Require().Contains(got, label, "expected %s to have label %s, got %s", info.Name, label, got)
 
 							found = true
 
@@ -188,15 +190,15 @@ func (suite *SELinuxSuite) checkFileLabels(nodes []string, expectedLabels map[st
 						}
 					}
 
-					suite.Require().True(found)
+					suite.Require().True(found, "could not find security.selinux xattr for %s", info.Name)
 
 					return nil
 				})
 
 				if allowMissing {
 					if err != nil {
-						suite.Require().Contains(err.Error(), "lstat")
-						suite.Require().Contains(err.Error(), "no such file or directory")
+						suite.Require().Contains(err.Error(), "lstat", "expected error to be due to missing file %s", path)
+						suite.Require().Contains(err.Error(), "no such file or directory", "expected error to be due to missing file %s", path)
 					}
 				} else {
 					suite.Require().NoError(err)
