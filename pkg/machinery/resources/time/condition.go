@@ -34,6 +34,7 @@ func (condition *SyncCondition) Wait(ctx context.Context) error {
 	_, err := condition.state.WatchFor(
 		ctx,
 		resource.NewMetadata(v1alpha1.NamespaceName, StatusType, StatusID, resource.VersionUndefined),
+		state.WithEventTypes(state.Created, state.Updated),
 		state.WithCondition(func(r resource.Resource) (bool, error) {
 			return r.(*Status).TypedSpec().Synced, nil
 		}),
