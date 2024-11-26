@@ -37,6 +37,7 @@ machine:
     features:
         rbac: true
         stableHostname: true
+        longPrefixPreference: true
         apidCheckExtKeyUsage: true
         diskQuotaSupport: true
         kubePrism:

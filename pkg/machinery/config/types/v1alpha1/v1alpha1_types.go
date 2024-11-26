@@ -2147,6 +2147,9 @@ type FeaturesConfig struct {
 	//     Enable stable default hostname.
 	StableHostname *bool `yaml:"stableHostname,omitempty"`
 	//   description: |
+	//     Prefers longer prefixes and will sort addresses with longer prefixes first.
+	LongPrefixPreference *bool `yaml:"longPrefixPreference,omitempty"`
+	//   description: |
 	//    Configure Talos API access from Kubernetes pods.
 	//
 	//    This feature is disabled if the feature config is not specified.

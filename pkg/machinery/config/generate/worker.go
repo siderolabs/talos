@@ -17,7 +17,7 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
 
-//nolint:gocyclo
+//nolint:gocyclo,cyclop
 func (in *Input) worker() ([]config.Document, error) {
 	v1alpha1Config := &v1alpha1.Config{
 		ConfigVersion: "v1alpha1",
@@ -70,6 +70,10 @@ func (in *Input) worker() ([]config.Document, error) {
 
 	if in.Options.VersionContract.DiskQuotaSupportEnabled() {
 		machine.MachineFeatures.DiskQuotaSupport = pointer.To(true)
+	}
+
+	if in.Options.VersionContract.LongPrefixPreferenceEnabled() {
+		machine.MachineFeatures.LongPrefixPreference = pointer.To(true)
 	}
 
 	if kubePrismPort, optionSet := in.Options.KubePrismPort.Get(); optionSet { // default to enabled, but if set explicitly, allow it to be disabled

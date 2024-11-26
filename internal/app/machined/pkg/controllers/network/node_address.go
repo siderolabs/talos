@@ -14,10 +14,14 @@ import (
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/safe"
+	"github.com/cosi-project/runtime/pkg/state"
+	"github.com/siderolabs/gen/optional"
 	"github.com/siderolabs/gen/value"
 	"go.uber.org/zap"
 
+	talosconfig "github.com/siderolabs/talos/pkg/machinery/config/config"
 	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
+	"github.com/siderolabs/talos/pkg/machinery/resources/config"
 	"github.com/siderolabs/talos/pkg/machinery/resources/network"
 )
 
@@ -32,6 +36,12 @@ func (ctrl *NodeAddressController) Name() string {
 // Inputs implements controller.Controller interface.
 func (ctrl *NodeAddressController) Inputs() []controller.Input {
 	return []controller.Input{
+		{
+			Namespace: config.NamespaceName,
+			Type:      config.MachineConfigType,
+			ID:        optional.Some(config.V1Alpha1ID),
+			Kind:      controller.InputWeak,
+		},
 		{
 			Namespace: network.NamespaceName,
 			Type:      network.AddressStatusType,
@@ -63,7 +73,7 @@ func (ctrl *NodeAddressController) Outputs() []controller.Output {
 // Run implements controller.Controller interface.
 //
 //nolint:gocyclo,cyclop
-func (ctrl *NodeAddressController) Run(ctx context.Context, r controller.Runtime, _ *zap.Logger) error {
+func (ctrl *NodeAddressController) Run(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
 	var addressStatusController AddressStatusController
 
 	addressStatusControllerName := addressStatusController.Name()
@@ -73,6 +83,17 @@ func (ctrl *NodeAddressController) Run(ctx context.Context, r controller.Runtime
 		case <-ctx.Done():
 			return nil
 		case <-r.EventCh():
+		}
+
+		var cfgProvider talosconfig.Config
+
+		cfg, err := safe.ReaderGetByID[*config.MachineConfig](ctx, r, config.V1Alpha1ID)
+		if err != nil {
+			if !state.IsNotFoundError(err) {
+				return fmt.Errorf("error getting config: %w", err)
+			}
+		} else if cfg.Config().Machine() != nil {
+			cfgProvider = cfg.Config()
 		}
 
 		// fetch link and address status resources
@@ -127,17 +148,9 @@ func (ctrl *NodeAddressController) Run(ctx context.Context, r controller.Runtime
 				continue
 			}
 
-			// in IPv6 only environments we want to prefer longer prefixes, in other environments we keep old behavior
-			var isPreferred bool
-			if (value.IsZero(defaultAddress) || defaultAddress.Addr().Is6()) && ip.Addr().Is6() {
-				isPreferred = ip.Bits() > defaultAddress.Bits()
-			} else {
-				isPreferred = ip.Addr().Compare(defaultAddress.Addr()) < 0
-			}
-
 			// set defaultAddress to the smallest IP from the alphabetically first link
 			if addr.Metadata().Owner() == addressStatusControllerName {
-				if value.IsZero(defaultAddress) || addr.TypedSpec().LinkName < defaultAddrLinkName || (addr.TypedSpec().LinkName == defaultAddrLinkName && isPreferred) {
+				if value.IsZero(defaultAddress) || addr.TypedSpec().LinkName < defaultAddrLinkName || (addr.TypedSpec().LinkName == defaultAddrLinkName && ip.Addr().Compare(defaultAddress.Addr()) < 0) {
 					defaultAddress = ip
 					defaultAddrLinkName = addr.TypedSpec().LinkName
 				}
@@ -165,6 +178,15 @@ func (ctrl *NodeAddressController) Run(ctx context.Context, r controller.Runtime
 		// remove duplicates from current addresses
 		current = deduplicateIPPrefixes(current)
 		routed = deduplicateIPPrefixes(routed)
+
+		// if preference for long prefixes is enabled, we re-sort
+		if cfgProvider != nil && cfgProvider.Machine().Features().LongPrefixPreferenceEnabled() {
+			logger.Debug("long prefix preference enabled")
+			slices.SortFunc(current, compareContainPrefix)
+			slices.SortFunc(routed, compareContainPrefix)
+			// the address with highest preference should be the first address
+			defaultAddress = current[0]
+		}
 
 		touchedIDs := make(map[resource.ID]struct{})
 
@@ -346,4 +368,16 @@ func updateAccumulativeAddresses(ctx context.Context, r controller.Runtime, id r
 	}
 
 	return nil
+}
+
+func compareContainPrefix(a, b netip.Prefix) int {
+	// the list is already sorted alphabetically, so we only need
+	// to test if a or b contains the other
+	if a.Contains(b.Addr()) {
+		return 1
+	} else if b.Contains(a.Addr()) {
+		return -1
+	}
+
+	return 0
 }

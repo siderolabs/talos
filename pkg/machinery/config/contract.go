@@ -169,3 +169,8 @@ func (contract *VersionContract) AddExcludeFromExternalLoadBalancer() bool {
 func (contract *VersionContract) SecureBootEnrollEnforcementSupported() bool {
 	return contract.Greater(TalosVersion1_7)
 }
+
+// LongPrefixPreferenceEnabled returns true starting with Talos 1.8 to default to new address sorting scheme.
+func (contract *VersionContract) LongPrefixPreferenceEnabled() bool {
+	return contract.Greater(TalosVersion1_8)
+}

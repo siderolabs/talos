@@ -57,6 +57,11 @@ func (f *FeaturesConfig) KubePrism() config.KubePrism {
 	return f.KubePrismSupport
 }
 
+// LongPrefixPreferenceEnabled implements config.Features interface.
+func (f *FeaturesConfig) LongPrefixPreferenceEnabled() bool {
+	return pointer.SafeDeref(f.LongPrefixPreference)
+}
+
 const defaultKubePrismPort = 7445
 
 // Enabled implements [config.KubePrism].

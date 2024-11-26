@@ -15,12 +15,16 @@ import (
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/rtestutils"
 	"github.com/cosi-project/runtime/pkg/state"
+	"github.com/siderolabs/go-pointer"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/ctest"
 	netctrl "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/network"
+	"github.com/siderolabs/talos/pkg/machinery/config/container"
+	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
 	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
+	"github.com/siderolabs/talos/pkg/machinery/resources/config"
 	"github.com/siderolabs/talos/pkg/machinery/resources/network"
 	runtimeres "github.com/siderolabs/talos/pkg/machinery/resources/runtime"
 )
@@ -278,8 +282,23 @@ func (suite *NodeAddressSuite) TestFilterOverlappingSubnets() {
 	)
 }
 
-func (suite *NodeAddressSuite) TestDefaultIPv6() {
+func (suite *NodeAddressSuite) TestLongPrefixPreference() {
 	var addressStatusController netctrl.AddressStatusController
+
+	cfg := config.NewMachineConfig(
+		container.NewV1Alpha1(
+			&v1alpha1.Config{
+				ConfigVersion: "v1alpha1",
+				MachineConfig: &v1alpha1.MachineConfig{
+					MachineFeatures: &v1alpha1.FeaturesConfig{
+						LongPrefixPreference: pointer.To(true),
+					},
+				},
+			},
+		),
+	)
+
+	suite.Require().NoError(suite.State().Create(suite.Ctx(), cfg))
 
 	linkEth0 := network.NewLinkStatus(network.NamespaceName, "eth0")
 	linkEth0.TypedSpec().Type = nethelpers.LinkEther
@@ -328,15 +347,26 @@ func (suite *NodeAddressSuite) TestDefaultIPv6() {
 	rtestutils.AssertResources(suite.Ctx(), suite.T(), suite.State(),
 		[]resource.ID{
 			network.NodeAddressDefaultID,
+			network.NodeAddressCurrentID,
+			network.NodeAddressRoutedID,
 		},
 		func(r *network.NodeAddress, asrt *assert.Assertions) {
 			addrs := r.TypedSpec().Addresses
 
-			//nolint:gocritic
 			switch r.Metadata().ID() {
 			case network.NodeAddressDefaultID:
 				asrt.Equal(
 					ipList("fd01:cafe::f14c:9fa1:8496:557f/128"),
+					addrs,
+				)
+			case network.NodeAddressRoutedID:
+				asrt.Equal(
+					ipList("fd01:cafe::f14c:9fa1:8496:557f/128 fd01:cafe::5054:ff:fe1f:c7bd/64"),
+					addrs,
+				)
+			case network.NodeAddressCurrentID:
+				asrt.Equal(
+					ipList("fd01:cafe::f14c:9fa1:8496:557f/128 fd01:cafe::5054:ff:fe1f:c7bd/64"),
 					addrs,
 				)
 			}

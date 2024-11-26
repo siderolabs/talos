@@ -71,6 +71,10 @@ func (in *Input) init() ([]config.Document, error) {
 		machine.MachineFeatures.DiskQuotaSupport = pointer.To(true)
 	}
 
+	if in.Options.VersionContract.LongPrefixPreferenceEnabled() {
+		machine.MachineFeatures.LongPrefixPreference = pointer.To(true)
+	}
+
 	if kubePrismPort, optionSet := in.Options.KubePrismPort.Get(); optionSet { // default to enabled, but if set explicitly, allow it to be disabled
 		if kubePrismPort > 0 {
 			machine.MachineFeatures.KubePrismSupport = &v1alpha1.KubePrism{
