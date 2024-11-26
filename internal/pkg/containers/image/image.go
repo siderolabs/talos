@@ -7,15 +7,18 @@ package image
 import (
 	"context"
 	"fmt"
+	stdlog "log"
 	"os"
 	"time"
 
 	containerd "github.com/containerd/containerd/v2/client"
 	"github.com/containerd/containerd/v2/core/images"
 	"github.com/containerd/errdefs"
+	"github.com/containerd/log"
 	"github.com/distribution/reference"
 	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
 	"github.com/siderolabs/go-retry/retry"
+	"github.com/sirupsen/logrus"
 
 	containerdrunner "github.com/siderolabs/talos/internal/app/machined/pkg/system/runner/containerd"
 	"github.com/siderolabs/talos/pkg/machinery/config/config"
@@ -83,9 +86,19 @@ func Pull(ctx context.Context, reg config.Registries, client *containerd.Client,
 		}
 	}
 
+	containerdLogger := logrus.New()
+	containerdLogger.Out = stdlog.Default().Writer()
+	containerdLogger.Formatter = &logrus.TextFormatter{
+		DisableColors:    true,
+		DisableQuote:     true,
+		DisableTimestamp: true,
+	}
+
+	ctx = log.WithLogger(ctx, containerdLogger.WithField("image", ref))
+
 	resolver := NewResolver(reg)
 
-	err = retry.Exponential(PullTimeout, retry.WithUnits(PullRetryInterval), retry.WithErrorLogging(true)).Retry(func() error {
+	err = retry.Exponential(PullTimeout, retry.WithUnits(PullRetryInterval), retry.WithErrorLogging(true)).RetryWithContext(ctx, func(ctx context.Context) error {
 		if img, err = client.Pull(
 			ctx,
 			ref,
