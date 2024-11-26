@@ -17,12 +17,15 @@ import (
 	"github.com/siderolabs/go-cmd/pkg/cmd"
 	"go.uber.org/zap"
 
+	machineruntime "github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
 	"github.com/siderolabs/talos/pkg/machinery/resources/block"
 	"github.com/siderolabs/talos/pkg/machinery/resources/v1alpha1"
 )
 
 // LVMActivationController activates LVM volumes when they are discovered by the block.DiscoveryController.
 type LVMActivationController struct {
+	V1Alpha1Mode machineruntime.Mode
+
 	seenVolumes  map[string]struct{}
 	activatedVGs map[string]struct{}
 }
@@ -56,7 +59,7 @@ func (ctrl *LVMActivationController) Outputs() []controller.Output {
 
 // Run implements controller.Controller interface.
 //
-//nolint:gocyclo
+//nolint:gocyclo,cyclop
 func (ctrl *LVMActivationController) Run(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
 	if ctrl.seenVolumes == nil {
 		ctrl.seenVolumes = map[string]struct{}{}
@@ -64,6 +67,11 @@ func (ctrl *LVMActivationController) Run(ctx context.Context, r controller.Runti
 
 	if ctrl.activatedVGs == nil {
 		ctrl.activatedVGs = map[string]struct{}{}
+	}
+
+	if ctrl.V1Alpha1Mode.IsAgent() {
+		// in agent mode, we don't want to activate LVMs
+		return nil
 	}
 
 	for {

@@ -27,6 +27,7 @@ import (
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/board"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader"
 	bootloaderoptions "github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/options"
+	"github.com/siderolabs/talos/internal/pkg/cache"
 	"github.com/siderolabs/talos/internal/pkg/meta"
 	"github.com/siderolabs/talos/internal/pkg/partition"
 	"github.com/siderolabs/talos/pkg/imager/overlay/executor"
@@ -56,6 +57,8 @@ type Options struct {
 	OverlayName         string
 	OverlayExtractedDir string
 	ExtraOptions        overlay.ExtraOptions
+
+	ImageCachePath string
 
 	// Options specific for the image creation mode.
 	ImageSecureboot bool
@@ -316,6 +319,18 @@ func (i *Installer) Install(ctx context.Context, mode Mode) (err error) {
 		if err != nil {
 			return fmt.Errorf("failed to create partitions: %w", err)
 		}
+
+		if i.options.ImageCachePath != "" {
+			cacheInstallOptions := cache.InstallOptions{
+				CacheDisk: i.options.Disk,
+				CachePath: i.options.ImageCachePath,
+				BlkidInfo: info,
+			}
+
+			if err = cacheInstallOptions.Install(); err != nil {
+				return fmt.Errorf("failed to install image cache: %w", err)
+			}
+		}
 	}
 
 	if mode == ModeUpgrade {
@@ -493,6 +508,12 @@ func (i *Installer) createPartitions(gptdev gpt.Device, mode Mode, hostTalosVers
 	if legacyImage {
 		partitions = append(partitions,
 			partition.NewPartitionOptions(constants.EphemeralPartitionLabel, false),
+		)
+	}
+
+	if i.options.ImageCachePath != "" {
+		partitions = append(partitions,
+			partition.NewPartitionOptions(constants.ImageCachePartitionLabel, false),
 		)
 	}
 

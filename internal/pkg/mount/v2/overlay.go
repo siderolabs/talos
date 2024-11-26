@@ -14,7 +14,7 @@ import (
 // OverlayMountPoints returns the mountpoints required to boot the system.
 // These mountpoints are used as overlays on top of the read only rootfs.
 func OverlayMountPoints() Points {
-	return xslices.Map(constants.Overlays, func(target string) *Point {
-		return NewVarOverlay([]string{target}, target, WithFlags(unix.MS_I_VERSION))
+	return xslices.Map(constants.Overlays, func(target constants.SELinuxLabeledPath) *Point {
+		return NewVarOverlay([]string{target.Path}, target.Path, WithFlags(unix.MS_I_VERSION), WithSelinuxLabel(target.Label))
 	})
 }

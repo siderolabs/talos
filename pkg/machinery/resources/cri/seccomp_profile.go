@@ -13,8 +13,6 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/proto"
 )
 
-//go:generate deep-copy -type SeccompProfileSpec -header-file ../../../../hack/boilerplate.txt -o deep_copy.generated.go .
-
 // SeccompProfileType is type of SeccompProfile resource.
 const SeccompProfileType = resource.Type("SeccompProfiles.cri.talos.dev")
 

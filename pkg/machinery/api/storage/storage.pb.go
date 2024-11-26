@@ -82,6 +82,54 @@ func (Disk_DiskType) EnumDescriptor() ([]byte, []int) {
 	return file_storage_storage_proto_rawDescGZIP(), []int{0, 0}
 }
 
+type BlockDeviceWipeDescriptor_Method int32
+
+const (
+	// Fast wipe - wipe only filesystem signatures.
+	BlockDeviceWipeDescriptor_FAST BlockDeviceWipeDescriptor_Method = 0
+	// Zeroes wipe - wipe by overwriting with zeroes (might be slow depending on the disk size and available hardware features).
+	BlockDeviceWipeDescriptor_ZEROES BlockDeviceWipeDescriptor_Method = 1
+)
+
+// Enum value maps for BlockDeviceWipeDescriptor_Method.
+var (
+	BlockDeviceWipeDescriptor_Method_name = map[int32]string{
+		0: "FAST",
+		1: "ZEROES",
+	}
+	BlockDeviceWipeDescriptor_Method_value = map[string]int32{
+		"FAST":   0,
+		"ZEROES": 1,
+	}
+)
+
+func (x BlockDeviceWipeDescriptor_Method) Enum() *BlockDeviceWipeDescriptor_Method {
+	p := new(BlockDeviceWipeDescriptor_Method)
+	*p = x
+	return p
+}
+
+func (x BlockDeviceWipeDescriptor_Method) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (BlockDeviceWipeDescriptor_Method) Descriptor() protoreflect.EnumDescriptor {
+	return file_storage_storage_proto_enumTypes[1].Descriptor()
+}
+
+func (BlockDeviceWipeDescriptor_Method) Type() protoreflect.EnumType {
+	return &file_storage_storage_proto_enumTypes[1]
+}
+
+func (x BlockDeviceWipeDescriptor_Method) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use BlockDeviceWipeDescriptor_Method.Descriptor instead.
+func (BlockDeviceWipeDescriptor_Method) EnumDescriptor() ([]byte, []int) {
+	return file_storage_storage_proto_rawDescGZIP(), []int{4, 0}
+}
+
 // Disk represents a disk.
 type Disk struct {
 	state         protoimpl.MessageState
@@ -336,6 +384,212 @@ func (x *DisksResponse) GetMessages() []*Disks {
 	return nil
 }
 
+type BlockDeviceWipeRequest struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Devices []*BlockDeviceWipeDescriptor `protobuf:"bytes,1,rep,name=devices,proto3" json:"devices,omitempty"`
+}
+
+func (x *BlockDeviceWipeRequest) Reset() {
+	*x = BlockDeviceWipeRequest{}
+	mi := &file_storage_storage_proto_msgTypes[3]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *BlockDeviceWipeRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*BlockDeviceWipeRequest) ProtoMessage() {}
+
+func (x *BlockDeviceWipeRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_storage_storage_proto_msgTypes[3]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use BlockDeviceWipeRequest.ProtoReflect.Descriptor instead.
+func (*BlockDeviceWipeRequest) Descriptor() ([]byte, []int) {
+	return file_storage_storage_proto_rawDescGZIP(), []int{3}
+}
+
+func (x *BlockDeviceWipeRequest) GetDevices() []*BlockDeviceWipeDescriptor {
+	if x != nil {
+		return x.Devices
+	}
+	return nil
+}
+
+// BlockDeviceWipeDescriptor represents a single block device to be wiped.
+//
+// The device can be either a full disk (e.g. vda) or a partition (vda5).
+// The device should not be used in any of active volumes.
+// The device should not be used as a secondary (e.g. part of LVM).
+type BlockDeviceWipeDescriptor struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	// Device name to wipe (e.g. sda or sda5).
+	//
+	// The name should be submitted without `/dev/` prefix.
+	Device string `protobuf:"bytes,1,opt,name=device,proto3" json:"device,omitempty"`
+	// Wipe method to use.
+	Method BlockDeviceWipeDescriptor_Method `protobuf:"varint,2,opt,name=method,proto3,enum=storage.BlockDeviceWipeDescriptor_Method" json:"method,omitempty"`
+	// Skip the volume in use check.
+	SkipVolumeCheck bool `protobuf:"varint,3,opt,name=skip_volume_check,json=skipVolumeCheck,proto3" json:"skip_volume_check,omitempty"`
+}
+
+func (x *BlockDeviceWipeDescriptor) Reset() {
+	*x = BlockDeviceWipeDescriptor{}
+	mi := &file_storage_storage_proto_msgTypes[4]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *BlockDeviceWipeDescriptor) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*BlockDeviceWipeDescriptor) ProtoMessage() {}
+
+func (x *BlockDeviceWipeDescriptor) ProtoReflect() protoreflect.Message {
+	mi := &file_storage_storage_proto_msgTypes[4]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use BlockDeviceWipeDescriptor.ProtoReflect.Descriptor instead.
+func (*BlockDeviceWipeDescriptor) Descriptor() ([]byte, []int) {
+	return file_storage_storage_proto_rawDescGZIP(), []int{4}
+}
+
+func (x *BlockDeviceWipeDescriptor) GetDevice() string {
+	if x != nil {
+		return x.Device
+	}
+	return ""
+}
+
+func (x *BlockDeviceWipeDescriptor) GetMethod() BlockDeviceWipeDescriptor_Method {
+	if x != nil {
+		return x.Method
+	}
+	return BlockDeviceWipeDescriptor_FAST
+}
+
+func (x *BlockDeviceWipeDescriptor) GetSkipVolumeCheck() bool {
+	if x != nil {
+		return x.SkipVolumeCheck
+	}
+	return false
+}
+
+type BlockDeviceWipeResponse struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Messages []*BlockDeviceWipe `protobuf:"bytes,1,rep,name=messages,proto3" json:"messages,omitempty"`
+}
+
+func (x *BlockDeviceWipeResponse) Reset() {
+	*x = BlockDeviceWipeResponse{}
+	mi := &file_storage_storage_proto_msgTypes[5]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *BlockDeviceWipeResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*BlockDeviceWipeResponse) ProtoMessage() {}
+
+func (x *BlockDeviceWipeResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_storage_storage_proto_msgTypes[5]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use BlockDeviceWipeResponse.ProtoReflect.Descriptor instead.
+func (*BlockDeviceWipeResponse) Descriptor() ([]byte, []int) {
+	return file_storage_storage_proto_rawDescGZIP(), []int{5}
+}
+
+func (x *BlockDeviceWipeResponse) GetMessages() []*BlockDeviceWipe {
+	if x != nil {
+		return x.Messages
+	}
+	return nil
+}
+
+type BlockDeviceWipe struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Metadata *common.Metadata `protobuf:"bytes,1,opt,name=metadata,proto3" json:"metadata,omitempty"`
+}
+
+func (x *BlockDeviceWipe) Reset() {
+	*x = BlockDeviceWipe{}
+	mi := &file_storage_storage_proto_msgTypes[6]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *BlockDeviceWipe) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*BlockDeviceWipe) ProtoMessage() {}
+
+func (x *BlockDeviceWipe) ProtoReflect() protoreflect.Message {
+	mi := &file_storage_storage_proto_msgTypes[6]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use BlockDeviceWipe.ProtoReflect.Descriptor instead.
+func (*BlockDeviceWipe) Descriptor() ([]byte, []int) {
+	return file_storage_storage_proto_rawDescGZIP(), []int{6}
+}
+
+func (x *BlockDeviceWipe) GetMetadata() *common.Metadata {
+	if x != nil {
+		return x.Metadata
+	}
+	return nil
+}
+
 var File_storage_storage_proto protoreflect.FileDescriptor
 
 var file_storage_storage_proto_rawDesc = []byte{
@@ -380,17 +634,49 @@ var file_storage_storage_proto_rawDesc = []byte{
 	0x6b, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x2a, 0x0a, 0x08, 0x6d, 0x65,
 	0x73, 0x73, 0x61, 0x67, 0x65, 0x73, 0x18, 0x01, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x0e, 0x2e, 0x73,
 	0x74, 0x6f, 0x72, 0x61, 0x67, 0x65, 0x2e, 0x44, 0x69, 0x73, 0x6b, 0x73, 0x52, 0x08, 0x6d, 0x65,
-	0x73, 0x73, 0x61, 0x67, 0x65, 0x73, 0x32, 0x49, 0x0a, 0x0e, 0x53, 0x74, 0x6f, 0x72, 0x61, 0x67,
+	0x73, 0x73, 0x61, 0x67, 0x65, 0x73, 0x22, 0x56, 0x0a, 0x16, 0x42, 0x6c, 0x6f, 0x63, 0x6b, 0x44,
+	0x65, 0x76, 0x69, 0x63, 0x65, 0x57, 0x69, 0x70, 0x65, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74,
+	0x12, 0x3c, 0x0a, 0x07, 0x64, 0x65, 0x76, 0x69, 0x63, 0x65, 0x73, 0x18, 0x01, 0x20, 0x03, 0x28,
+	0x0b, 0x32, 0x22, 0x2e, 0x73, 0x74, 0x6f, 0x72, 0x61, 0x67, 0x65, 0x2e, 0x42, 0x6c, 0x6f, 0x63,
+	0x6b, 0x44, 0x65, 0x76, 0x69, 0x63, 0x65, 0x57, 0x69, 0x70, 0x65, 0x44, 0x65, 0x73, 0x63, 0x72,
+	0x69, 0x70, 0x74, 0x6f, 0x72, 0x52, 0x07, 0x64, 0x65, 0x76, 0x69, 0x63, 0x65, 0x73, 0x22, 0xc2,
+	0x01, 0x0a, 0x19, 0x42, 0x6c, 0x6f, 0x63, 0x6b, 0x44, 0x65, 0x76, 0x69, 0x63, 0x65, 0x57, 0x69,
+	0x70, 0x65, 0x44, 0x65, 0x73, 0x63, 0x72, 0x69, 0x70, 0x74, 0x6f, 0x72, 0x12, 0x16, 0x0a, 0x06,
+	0x64, 0x65, 0x76, 0x69, 0x63, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x06, 0x64, 0x65,
+	0x76, 0x69, 0x63, 0x65, 0x12, 0x41, 0x0a, 0x06, 0x6d, 0x65, 0x74, 0x68, 0x6f, 0x64, 0x18, 0x02,
+	0x20, 0x01, 0x28, 0x0e, 0x32, 0x29, 0x2e, 0x73, 0x74, 0x6f, 0x72, 0x61, 0x67, 0x65, 0x2e, 0x42,
+	0x6c, 0x6f, 0x63, 0x6b, 0x44, 0x65, 0x76, 0x69, 0x63, 0x65, 0x57, 0x69, 0x70, 0x65, 0x44, 0x65,
+	0x73, 0x63, 0x72, 0x69, 0x70, 0x74, 0x6f, 0x72, 0x2e, 0x4d, 0x65, 0x74, 0x68, 0x6f, 0x64, 0x52,
+	0x06, 0x6d, 0x65, 0x74, 0x68, 0x6f, 0x64, 0x12, 0x2a, 0x0a, 0x11, 0x73, 0x6b, 0x69, 0x70, 0x5f,
+	0x76, 0x6f, 0x6c, 0x75, 0x6d, 0x65, 0x5f, 0x63, 0x68, 0x65, 0x63, 0x6b, 0x18, 0x03, 0x20, 0x01,
+	0x28, 0x08, 0x52, 0x0f, 0x73, 0x6b, 0x69, 0x70, 0x56, 0x6f, 0x6c, 0x75, 0x6d, 0x65, 0x43, 0x68,
+	0x65, 0x63, 0x6b, 0x22, 0x1e, 0x0a, 0x06, 0x4d, 0x65, 0x74, 0x68, 0x6f, 0x64, 0x12, 0x08, 0x0a,
+	0x04, 0x46, 0x41, 0x53, 0x54, 0x10, 0x00, 0x12, 0x0a, 0x0a, 0x06, 0x5a, 0x45, 0x52, 0x4f, 0x45,
+	0x53, 0x10, 0x01, 0x22, 0x4f, 0x0a, 0x17, 0x42, 0x6c, 0x6f, 0x63, 0x6b, 0x44, 0x65, 0x76, 0x69,
+	0x63, 0x65, 0x57, 0x69, 0x70, 0x65, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x34,
+	0x0a, 0x08, 0x6d, 0x65, 0x73, 0x73, 0x61, 0x67, 0x65, 0x73, 0x18, 0x01, 0x20, 0x03, 0x28, 0x0b,
+	0x32, 0x18, 0x2e, 0x73, 0x74, 0x6f, 0x72, 0x61, 0x67, 0x65, 0x2e, 0x42, 0x6c, 0x6f, 0x63, 0x6b,
+	0x44, 0x65, 0x76, 0x69, 0x63, 0x65, 0x57, 0x69, 0x70, 0x65, 0x52, 0x08, 0x6d, 0x65, 0x73, 0x73,
+	0x61, 0x67, 0x65, 0x73, 0x22, 0x3f, 0x0a, 0x0f, 0x42, 0x6c, 0x6f, 0x63, 0x6b, 0x44, 0x65, 0x76,
+	0x69, 0x63, 0x65, 0x57, 0x69, 0x70, 0x65, 0x12, 0x2c, 0x0a, 0x08, 0x6d, 0x65, 0x74, 0x61, 0x64,
+	0x61, 0x74, 0x61, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x10, 0x2e, 0x63, 0x6f, 0x6d, 0x6d,
+	0x6f, 0x6e, 0x2e, 0x4d, 0x65, 0x74, 0x61, 0x64, 0x61, 0x74, 0x61, 0x52, 0x08, 0x6d, 0x65, 0x74,
+	0x61, 0x64, 0x61, 0x74, 0x61, 0x32, 0x9f, 0x01, 0x0a, 0x0e, 0x53, 0x74, 0x6f, 0x72, 0x61, 0x67,
 	0x65, 0x53, 0x65, 0x72, 0x76, 0x69, 0x63, 0x65, 0x12, 0x37, 0x0a, 0x05, 0x44, 0x69, 0x73, 0x6b,
 	0x73, 0x12, 0x16, 0x2e, 0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f,
 	0x62, 0x75, 0x66, 0x2e, 0x45, 0x6d, 0x70, 0x74, 0x79, 0x1a, 0x16, 0x2e, 0x73, 0x74, 0x6f, 0x72,
 	0x61, 0x67, 0x65, 0x2e, 0x44, 0x69, 0x73, 0x6b, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73,
-	0x65, 0x42, 0x4e, 0x0a, 0x15, 0x64, 0x65, 0x76, 0x2e, 0x74, 0x61, 0x6c, 0x6f, 0x73, 0x2e, 0x61,
-	0x70, 0x69, 0x2e, 0x73, 0x74, 0x6f, 0x72, 0x61, 0x67, 0x65, 0x5a, 0x35, 0x67, 0x69, 0x74, 0x68,
-	0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x73, 0x69, 0x64, 0x65, 0x72, 0x6f, 0x6c, 0x61, 0x62,
-	0x73, 0x2f, 0x74, 0x61, 0x6c, 0x6f, 0x73, 0x2f, 0x70, 0x6b, 0x67, 0x2f, 0x6d, 0x61, 0x63, 0x68,
-	0x69, 0x6e, 0x65, 0x72, 0x79, 0x2f, 0x61, 0x70, 0x69, 0x2f, 0x73, 0x74, 0x6f, 0x72, 0x61, 0x67,
-	0x65, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
+	0x65, 0x12, 0x54, 0x0a, 0x0f, 0x42, 0x6c, 0x6f, 0x63, 0x6b, 0x44, 0x65, 0x76, 0x69, 0x63, 0x65,
+	0x57, 0x69, 0x70, 0x65, 0x12, 0x1f, 0x2e, 0x73, 0x74, 0x6f, 0x72, 0x61, 0x67, 0x65, 0x2e, 0x42,
+	0x6c, 0x6f, 0x63, 0x6b, 0x44, 0x65, 0x76, 0x69, 0x63, 0x65, 0x57, 0x69, 0x70, 0x65, 0x52, 0x65,
+	0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x20, 0x2e, 0x73, 0x74, 0x6f, 0x72, 0x61, 0x67, 0x65, 0x2e,
+	0x42, 0x6c, 0x6f, 0x63, 0x6b, 0x44, 0x65, 0x76, 0x69, 0x63, 0x65, 0x57, 0x69, 0x70, 0x65, 0x52,
+	0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x42, 0x4e, 0x0a, 0x15, 0x64, 0x65, 0x76, 0x2e, 0x74,
+	0x61, 0x6c, 0x6f, 0x73, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x73, 0x74, 0x6f, 0x72, 0x61, 0x67, 0x65,
+	0x5a, 0x35, 0x67, 0x69, 0x74, 0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x73, 0x69, 0x64,
+	0x65, 0x72, 0x6f, 0x6c, 0x61, 0x62, 0x73, 0x2f, 0x74, 0x61, 0x6c, 0x6f, 0x73, 0x2f, 0x70, 0x6b,
+	0x67, 0x2f, 0x6d, 0x61, 0x63, 0x68, 0x69, 0x6e, 0x65, 0x72, 0x79, 0x2f, 0x61, 0x70, 0x69, 0x2f,
+	0x73, 0x74, 0x6f, 0x72, 0x61, 0x67, 0x65, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
@@ -405,28 +691,39 @@ func file_storage_storage_proto_rawDescGZIP() []byte {
 	return file_storage_storage_proto_rawDescData
 }
 
-var file_storage_storage_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_storage_storage_proto_msgTypes = make([]protoimpl.MessageInfo, 3)
+var file_storage_storage_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
+var file_storage_storage_proto_msgTypes = make([]protoimpl.MessageInfo, 7)
 var file_storage_storage_proto_goTypes = []any{
-	(Disk_DiskType)(0),      // 0: storage.Disk.DiskType
-	(*Disk)(nil),            // 1: storage.Disk
-	(*Disks)(nil),           // 2: storage.Disks
-	(*DisksResponse)(nil),   // 3: storage.DisksResponse
-	(*common.Metadata)(nil), // 4: common.Metadata
-	(*emptypb.Empty)(nil),   // 5: google.protobuf.Empty
+	(Disk_DiskType)(0),                    // 0: storage.Disk.DiskType
+	(BlockDeviceWipeDescriptor_Method)(0), // 1: storage.BlockDeviceWipeDescriptor.Method
+	(*Disk)(nil),                          // 2: storage.Disk
+	(*Disks)(nil),                         // 3: storage.Disks
+	(*DisksResponse)(nil),                 // 4: storage.DisksResponse
+	(*BlockDeviceWipeRequest)(nil),        // 5: storage.BlockDeviceWipeRequest
+	(*BlockDeviceWipeDescriptor)(nil),     // 6: storage.BlockDeviceWipeDescriptor
+	(*BlockDeviceWipeResponse)(nil),       // 7: storage.BlockDeviceWipeResponse
+	(*BlockDeviceWipe)(nil),               // 8: storage.BlockDeviceWipe
+	(*common.Metadata)(nil),               // 9: common.Metadata
+	(*emptypb.Empty)(nil),                 // 10: google.protobuf.Empty
 }
 var file_storage_storage_proto_depIdxs = []int32{
-	0, // 0: storage.Disk.type:type_name -> storage.Disk.DiskType
-	4, // 1: storage.Disks.metadata:type_name -> common.Metadata
-	1, // 2: storage.Disks.disks:type_name -> storage.Disk
-	2, // 3: storage.DisksResponse.messages:type_name -> storage.Disks
-	5, // 4: storage.StorageService.Disks:input_type -> google.protobuf.Empty
-	3, // 5: storage.StorageService.Disks:output_type -> storage.DisksResponse
-	5, // [5:6] is the sub-list for method output_type
-	4, // [4:5] is the sub-list for method input_type
-	4, // [4:4] is the sub-list for extension type_name
-	4, // [4:4] is the sub-list for extension extendee
-	0, // [0:4] is the sub-list for field type_name
+	0,  // 0: storage.Disk.type:type_name -> storage.Disk.DiskType
+	9,  // 1: storage.Disks.metadata:type_name -> common.Metadata
+	2,  // 2: storage.Disks.disks:type_name -> storage.Disk
+	3,  // 3: storage.DisksResponse.messages:type_name -> storage.Disks
+	6,  // 4: storage.BlockDeviceWipeRequest.devices:type_name -> storage.BlockDeviceWipeDescriptor
+	1,  // 5: storage.BlockDeviceWipeDescriptor.method:type_name -> storage.BlockDeviceWipeDescriptor.Method
+	8,  // 6: storage.BlockDeviceWipeResponse.messages:type_name -> storage.BlockDeviceWipe
+	9,  // 7: storage.BlockDeviceWipe.metadata:type_name -> common.Metadata
+	10, // 8: storage.StorageService.Disks:input_type -> google.protobuf.Empty
+	5,  // 9: storage.StorageService.BlockDeviceWipe:input_type -> storage.BlockDeviceWipeRequest
+	4,  // 10: storage.StorageService.Disks:output_type -> storage.DisksResponse
+	7,  // 11: storage.StorageService.BlockDeviceWipe:output_type -> storage.BlockDeviceWipeResponse
+	10, // [10:12] is the sub-list for method output_type
+	8,  // [8:10] is the sub-list for method input_type
+	8,  // [8:8] is the sub-list for extension type_name
+	8,  // [8:8] is the sub-list for extension extendee
+	0,  // [0:8] is the sub-list for field type_name
 }
 
 func init() { file_storage_storage_proto_init() }
@@ -439,8 +736,8 @@ func file_storage_storage_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_storage_storage_proto_rawDesc,
-			NumEnums:      1,
-			NumMessages:   3,
+			NumEnums:      2,
+			NumMessages:   7,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

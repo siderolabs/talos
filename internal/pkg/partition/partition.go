@@ -90,6 +90,13 @@ func NewPartitionOptions(label string, uki bool) Options {
 			PartitionType:  LinuxFilesystemData,
 			Size:           0,
 		}
+	case constants.ImageCachePartitionLabel:
+		return Options{
+			FormatOptions:  *formatOptions,
+			PartitionLabel: label,
+			PartitionType:  LinuxFilesystemData,
+			Size:           0,
+		}
 	default:
 		panic(fmt.Sprintf("unknown partition label %q", label))
 	}

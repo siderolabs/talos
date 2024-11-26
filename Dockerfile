@@ -2,48 +2,49 @@
 
 # Meta args applied to stage base names.
 
-ARG TOOLS
-ARG PKGS
-ARG EXTRAS
-ARG INSTALLER_ARCH
-ARG DEBUG_TOOLS_SOURCE
+ARG TOOLS=scratch
+ARG PKGS=scratch
+ARG EXTRAS=scratch
+ARG INSTALLER_ARCH=scratch
+ARG DEBUG_TOOLS_SOURCE=scratch
 
-ARG PKGS_PREFIX
-ARG PKG_FHS
-ARG PKG_CA_CERTIFICATES
-ARG PKG_CRYPTSETUP
-ARG PKG_CONTAINERD
-ARG PKG_DOSFSTOOLS
-ARG PKG_SYSTEMD_UDEVD
-ARG PKG_LIBCAP
-ARG PKG_GRUB
-ARG PKG_SD_BOOT
-ARG PKG_IPTABLES
-ARG PKG_IPXE
-ARG PKG_LIBINIH
-ARG PKG_LIBJSON_C
-ARG PKG_LIBPOPT
-ARG PKG_LIBSEPOL
-ARG PKG_LIBSELINUX
-ARG PKG_PCRE2
-ARG PKG_LIBURCU
-ARG PKG_OPENSSL
-ARG PKG_LIBSECCOMP
-ARG PKG_LINUX_FIRMWARE
-ARG PKG_LVM2
-ARG PKG_LIBAIO
-ARG PKG_MUSL
-ARG PKG_RUNC
-ARG PKG_XFSPROGS
-ARG PKG_APPARMOR
-ARG PKG_UTIL_LINUX
-ARG PKG_KMOD
-ARG PKG_KERNEL
-ARG PKG_CNI
-ARG PKG_FLANNEL_CNI
-ARG PKG_TALOSCTL_CNI_BUNDLE_INSTALL
+ARG PKGS_PREFIX=scratch
+ARG PKG_FHS=scratch
+ARG PKG_CA_CERTIFICATES=scratch
+ARG PKG_CRYPTSETUP=scratch
+ARG PKG_CONTAINERD=scratch
+ARG PKG_DOSFSTOOLS=scratch
+ARG PKG_E2FSPROGS=scratch
+ARG PKG_SYSTEMD_UDEVD=scratch
+ARG PKG_LIBCAP=scratch
+ARG PKG_GRUB=scratch
+ARG PKG_SD_BOOT=scratch
+ARG PKG_IPTABLES=scratch
+ARG PKG_IPXE=scratch
+ARG PKG_LIBINIH=scratch
+ARG PKG_LIBJSON_C=scratch
+ARG PKG_LIBPOPT=scratch
+ARG PKG_LIBSEPOL=scratch
+ARG PKG_LIBSELINUX=scratch
+ARG PKG_PCRE2=scratch
+ARG PKG_LIBURCU=scratch
+ARG PKG_OPENSSL=scratch
+ARG PKG_LIBSECCOMP=scratch
+ARG PKG_LINUX_FIRMWARE=scratch
+ARG PKG_LVM2=scratch
+ARG PKG_LIBAIO=scratch
+ARG PKG_MUSL=scratch
+ARG PKG_RUNC=scratch
+ARG PKG_XFSPROGS=scratch
+ARG PKG_APPARMOR=scratch
+ARG PKG_UTIL_LINUX=scratch
+ARG PKG_KMOD=scratch
+ARG PKG_KERNEL=scratch
+ARG PKG_CNI=scratch
+ARG PKG_FLANNEL_CNI=scratch
+ARG PKG_TALOSCTL_CNI_BUNDLE_INSTALL=scratch
 
-ARG DEBUG_TOOLS_SOURCE
+ARG DEBUG_TOOLS_SOURCE=scratch
 
 # Resolve package images using ${PKGS} to be used later in COPY --from=.
 
@@ -61,6 +62,9 @@ FROM --platform=arm64 ${PKG_CONTAINERD} AS pkg-containerd-arm64
 
 FROM --platform=amd64 ${PKG_DOSFSTOOLS} AS pkg-dosfstools-amd64
 FROM --platform=arm64 ${PKG_DOSFSTOOLS} AS pkg-dosfstools-arm64
+
+FROM --platform=amd64 ${PKG_E2FSPROGS} AS pkg-e2fsprogs-amd64
+FROM --platform=arm64 ${PKG_E2FSPROGS} AS pkg-e2fsprogs-arm64
 
 FROM --platform=amd64 ${PKG_SYSTEMD_UDEVD} AS pkg-systemd-udevd-amd64
 FROM --platform=arm64 ${PKG_SYSTEMD_UDEVD} AS pkg-systemd-udevd-arm64
@@ -673,6 +677,7 @@ COPY --link --from=pkg-flannel-cni-amd64 / /rootfs
 COPY --link --from=pkg-cryptsetup-amd64 / /rootfs
 COPY --link --from=pkg-containerd-amd64 / /rootfs
 COPY --link --from=pkg-dosfstools-amd64 / /rootfs
+COPY --link --from=pkg-e2fsprogs-amd64 / /rootfs
 COPY --link --from=pkg-systemd-udevd-amd64 / /rootfs
 COPY --link --from=pkg-libcap-amd64 / /rootfs
 COPY --link --from=pkg-iptables-amd64 / /rootfs
@@ -725,7 +730,8 @@ COPY --chmod=0644 hack/nfsmount.conf /rootfs/etc/nfsmount.conf
 COPY --chmod=0644 hack/containerd.toml /rootfs/etc/containerd/config.toml
 COPY --chmod=0644 hack/cri-containerd.toml /rootfs/etc/cri/containerd.toml
 COPY --chmod=0644 hack/cri-plugin.part /rootfs/etc/cri/conf.d/00-base.part
-COPY --chmod=0644 hack/udevd/80-net-name-slot.rules /rootfs/usr/lib/udev/rules.d/
+COPY --chmod=0644 hack/udevd/99-default.link /rootfs/usr/lib/systemd/network/
+COPY --chmod=0644 hack/udevd/90-selinux.rules /rootfs/usr/lib/udev/rules.d/
 COPY --chmod=0644 hack/lvm.conf /rootfs/etc/lvm/lvm.conf
 RUN <<END
     ln -s /usr/share/zoneinfo/Etc/UTC /rootfs/etc/localtime
@@ -745,6 +751,7 @@ COPY --link --from=pkg-flannel-cni-arm64 / /rootfs
 COPY --link --from=pkg-cryptsetup-arm64 / /rootfs
 COPY --link --from=pkg-containerd-arm64 / /rootfs
 COPY --link --from=pkg-dosfstools-arm64 / /rootfs
+COPY --link --from=pkg-e2fsprogs-arm64 / /rootfs
 COPY --link --from=pkg-systemd-udevd-arm64 / /rootfs
 COPY --link --from=pkg-libcap-arm64 / /rootfs
 COPY --link --from=pkg-iptables-arm64 / /rootfs
@@ -797,7 +804,8 @@ COPY --chmod=0644 hack/nfsmount.conf /rootfs/etc/nfsmount.conf
 COPY --chmod=0644 hack/containerd.toml /rootfs/etc/containerd/config.toml
 COPY --chmod=0644 hack/cri-containerd.toml /rootfs/etc/cri/containerd.toml
 COPY --chmod=0644 hack/cri-plugin.part /rootfs/etc/cri/conf.d/00-base.part
-COPY --chmod=0644 hack/udevd/80-net-name-slot.rules /rootfs/usr/lib/udev/rules.d/
+COPY --chmod=0644 hack/udevd/99-default.link /rootfs/usr/lib/systemd/network/
+COPY --chmod=0644 hack/udevd/90-selinux.rules /rootfs/usr/lib/udev/rules.d/
 COPY --chmod=0644 hack/lvm.conf /rootfs/etc/lvm/lvm.conf
 RUN <<END
     ln -s /usr/share/zoneinfo/Etc/UTC /rootfs/etc/localtime
@@ -928,6 +936,7 @@ RUN apk add --no-cache --update --no-scripts \
     binutils-x86_64 \
     cpio \
     dosfstools \
+    e2fsprogs \
     efibootmgr \
     kmod \
     mtools \

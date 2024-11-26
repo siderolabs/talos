@@ -14,7 +14,7 @@ import (
 
 const (
 	// DefaultKernelVersion is the default Linux kernel version.
-	DefaultKernelVersion = "6.6.60-talos"
+	DefaultKernelVersion = "6.6.62-talos"
 
 	// KernelModulesPath is the default path to the kernel modules without the kernel version.
 	KernelModulesPath = "/lib/modules"
@@ -193,6 +193,9 @@ const (
 	// the state path.
 	StateMountPoint = "/system/state"
 
+	// StateSelinuxLabel is the label to be assigned to the state mount.
+	StateSelinuxLabel = "system_u:object_r:system_state_t:s0"
+
 	// BootPartitionLabel is the label of the partition to use for mounting at
 	// the boot path.
 	BootPartitionLabel = "BOOT"
@@ -208,6 +211,12 @@ const (
 	// EphemeralMountPoint is the label of the partition to use for mounting at
 	// the data path.
 	EphemeralMountPoint = "/var"
+
+	// EphemeralSelinuxLabel is the label to be assigned to the ephemeral mount.
+	EphemeralSelinuxLabel = "system_u:object_r:ephemeral_t:s0"
+
+	// OptSELinuxLabel is the SELinux label to be set for /opt overlay mount.
+	OptSELinuxLabel = "system_u:object_r:opt_t:s0"
 
 	// RootMountPoint is the label of the partition to use for mounting at
 	// the root path.
@@ -225,6 +234,12 @@ const (
 
 	// KubernetesConfigBaseDir is the path to the base Kubernetes configuration directory.
 	KubernetesConfigBaseDir = "/etc/kubernetes"
+
+	// KubernetesConfigSELinuxLabel is the SELinux label to be set for the Kubernetes configuration directory overlay mount.
+	KubernetesConfigSELinuxLabel = "system_u:object_r:k8s_conf_t:s0"
+
+	// KubeletPluginsSELinuxLabel is the SELinux label to be set for the Kubernetes plugin directory overlay mount.
+	KubeletPluginsSELinuxLabel = "system_u:object_r:k8s_plugin_t:s0"
 
 	// DefaultCertificatesDir is the path the Kubernetes PKI directory.
 	DefaultCertificatesDir = KubernetesConfigBaseDir + "/" + "pki"
@@ -463,6 +478,9 @@ const (
 	// EtcdDataPath is the path where etcd stores its' data.
 	EtcdDataPath = "/var/lib/etcd"
 
+	// EtcdDataSELinuxLabel is the SELinux label for the etcd data directory.
+	EtcdDataSELinuxLabel = "system_u:object_r:etcd_data_t:s0"
+
 	// EtcdRecoverySnapshotPath is the path where etcd snapshot is uploaded for recovery.
 	EtcdRecoverySnapshotPath = "/var/lib/etcd.snapshot"
 
@@ -681,6 +699,15 @@ const (
 	// and directories.
 	SystemPath = "/system"
 
+	// SystemSelinuxLabel is the SELinux label for runtime system related files and directories.
+	SystemSelinuxLabel = "system_u:object_r:system_t:s0"
+
+	// RunPath is the path to the system run directory.
+	RunPath = "/run"
+
+	// RunSelinuxLabel is the SELinux label for the run directory.
+	RunSelinuxLabel = "system_u:object_r:run_t:s0"
+
 	// VarSystemOverlaysPath is the path where overlay mounts are created.
 	VarSystemOverlaysPath = "/var/system/overlays"
 
@@ -690,8 +717,14 @@ const (
 	// SystemVarPath is the path to the system var directory.
 	SystemVarPath = SystemPath + "/var"
 
+	// SystemVarSelinuxLabel is the SELinux label for the system var directory.
+	SystemVarSelinuxLabel = "system_u:object_r:system_var_t:s0"
+
 	// SystemEtcPath is the path to the system etc directory.
 	SystemEtcPath = SystemPath + "/etc"
+
+	// EtcSelinuxLabel is the SELinux label for the /etc and /system/etc directories.
+	EtcSelinuxLabel = "system_u:object_r:etc_t:s0"
 
 	// SystemLibexecPath is the path to the system libexec directory.
 	SystemLibexecPath = SystemPath + "/libexec"
@@ -854,6 +887,9 @@ const (
 
 	// NoneCNI is the string to indicate that CNI will not be managed by Talos.
 	NoneCNI = "none"
+
+	// CNISELinuxLabel is the SELinux label to be set for CNI configuration overlay mount.
+	CNISELinuxLabel = "system_u:object_r:cni_conf_t:s0"
 
 	// DefaultIPv4PodNet is the IPv4 network to be used for kubernetes Pods.
 	DefaultIPv4PodNet = "10.244.0.0/16"
@@ -1178,6 +1214,18 @@ const (
 
 	// MetalAgentModeFlagPath is the path to the file indicating if the node is running in Metal Agent mode.
 	MetalAgentModeFlagPath = "/usr/local/etc/is-metal-agent"
+
+	// ImageCachePartitionLabel is the label for the image cache partition.
+	ImageCachePartitionLabel = "IMAGECACHE"
+
+	// ImageCacheISOMountPoint is the mount point for the image cache ISO.
+	ImageCacheISOMountPoint = "/system/imagecache/iso"
+
+	// ImageCacheDiskMountPoint is the mount point for the image cache partition.
+	ImageCacheDiskMountPoint = "/system/imagecache/disk"
+
+	// RegistrydListenAddress is the address to listen on for the registryd service.
+	RegistrydListenAddress = "127.0.0.1:3172"
 )
 
 // See https://linux.die.net/man/3/klogctl
@@ -1202,12 +1250,18 @@ const (
 	CodeKey         = "code"
 )
 
+// SELinuxLabeledPath is an object used to describe overlay mounts with SELinux labels applied on creation.
+type SELinuxLabeledPath struct {
+	Path  string
+	Label string
+}
+
 // Overlays is the set of paths to create overlay mounts for.
-var Overlays = []string{
-	"/etc/cni",
-	KubernetesConfigBaseDir,
-	"/usr/libexec/kubernetes",
-	"/opt",
+var Overlays = []SELinuxLabeledPath{
+	{"/etc/cni", CNISELinuxLabel},
+	{KubernetesConfigBaseDir, KubernetesConfigSELinuxLabel},
+	{"/usr/libexec/kubernetes", KubeletPluginsSELinuxLabel},
+	{"/opt", OptSELinuxLabel},
 }
 
 // DefaultDroppedCapabilities is the default set of capabilities to drop.

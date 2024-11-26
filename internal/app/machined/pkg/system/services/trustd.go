@@ -19,7 +19,7 @@ import (
 	"github.com/cosi-project/runtime/api/v1alpha1"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/cosi-project/runtime/pkg/state/protobuf/server"
-	specs "github.com/opencontainers/runtime-spec/specs-go"
+	"github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/siderolabs/go-debug"
 	"google.golang.org/grpc"
 
@@ -48,14 +48,14 @@ type Trustd struct {
 }
 
 // ID implements the Service interface.
-func (t *Trustd) ID(r runtime.Runtime) string {
+func (t *Trustd) ID(runtime.Runtime) string {
 	return "trustd"
 }
 
 // PreFunc implements the Service interface.
 //
 //nolint:gocyclo
-func (t *Trustd) PreFunc(ctx context.Context, r runtime.Runtime) error {
+func (t *Trustd) PreFunc(_ context.Context, r runtime.Runtime) error {
 	// filter apid access to make sure apid can only access its certificates
 	resources := state.Filter(
 		r.State().V1Alpha2().Resources(),
@@ -115,7 +115,7 @@ func (t *Trustd) PreFunc(ctx context.Context, r runtime.Runtime) error {
 }
 
 // PostFunc implements the Service interface.
-func (t *Trustd) PostFunc(r runtime.Runtime, state events.ServiceState) (err error) {
+func (t *Trustd) PostFunc(runtime.Runtime, events.ServiceState) (err error) {
 	t.runtimeServer.Stop()
 
 	return os.RemoveAll(constants.TrustdRuntimeSocketPath)
@@ -130,7 +130,7 @@ func (t *Trustd) Condition(r runtime.Runtime) conditions.Condition {
 }
 
 // DependsOn implements the Service interface.
-func (t *Trustd) DependsOn(r runtime.Runtime) []string {
+func (t *Trustd) DependsOn(runtime.Runtime) []string {
 	return []string{"containerd"}
 }
 

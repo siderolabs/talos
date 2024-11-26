@@ -14,6 +14,7 @@ import (
 	"strings"
 
 	"github.com/dustin/go-humanize"
+	"github.com/google/go-containerregistry/pkg/name"
 	"github.com/siderolabs/gen/xslices"
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v3"
@@ -39,6 +40,7 @@ var cmdFlags struct {
 	MetaValues            install.MetaValues
 	SystemExtensionImages []string
 	BaseInstallerImage    string
+	ImageCache            string
 	OutputPath            string
 	OutputKind            string
 	TarToStdout           bool
@@ -155,8 +157,27 @@ var rootCmd = &cobra.Command{
 					}
 				}
 
+				if cmdFlags.ImageCache != "" {
+					parseOpts := []name.Option{name.StrictValidation}
+
+					if cmdFlags.Insecure {
+						parseOpts = append(parseOpts, name.Insecure)
+					}
+
+					if _, err := name.ParseReference(cmdFlags.ImageCache, parseOpts...); err == nil {
+						prof.Input.ImageCache = profile.ContainerAsset{
+							ImageRef: cmdFlags.ImageCache,
+						}
+					} else {
+						prof.Input.ImageCache = profile.ContainerAsset{
+							OCIPath: cmdFlags.ImageCache,
+						}
+					}
+				}
+
 				if cmdFlags.Insecure {
 					prof.Input.BaseInstaller.ForceInsecure = cmdFlags.Insecure
+					prof.Input.ImageCache.ForceInsecure = cmdFlags.Insecure
 				}
 
 				if cmdFlags.ImageDiskSize != "" {
@@ -223,6 +244,7 @@ func init() {
 	rootCmd.PersistentFlags().StringVar(&cmdFlags.Platform, "platform", "", "The value of "+constants.KernelParamPlatform)
 	rootCmd.PersistentFlags().StringVar(&cmdFlags.Arch, "arch", runtime.GOARCH, "The target architecture")
 	rootCmd.PersistentFlags().StringVar(&cmdFlags.BaseInstallerImage, "base-installer-image", "", "Base installer image to use")
+	rootCmd.PersistentFlags().StringVar(&cmdFlags.ImageCache, "image-cache", "", "Image cache container image or oci path")
 	rootCmd.PersistentFlags().StringVar(&cmdFlags.Board, "board", "", "The value of "+constants.KernelParamBoard)
 	rootCmd.PersistentFlags().BoolVar(&cmdFlags.Insecure, "insecure", false, "Pull assets from insecure registry")
 	rootCmd.PersistentFlags().StringVar(&cmdFlags.ImageDiskSize, "image-disk-size", "", "Set custom disk image size (accepts human readable values, e.g. 6GiB)")

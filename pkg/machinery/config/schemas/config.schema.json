@@ -2070,6 +2070,13 @@
           "description": "Configures host DNS caching resolver.\n",
           "markdownDescription": "Configures host DNS caching resolver.",
           "x-intellij-html-description": "\u003cp\u003eConfigures host DNS caching resolver.\u003c/p\u003e\n"
+        },
+        "imageCache": {
+          "type": "boolean",
+          "title": "imageCache",
+          "description": "Enable Image Cache feature.\n",
+          "markdownDescription": "Enable Image Cache feature.",
+          "x-intellij-html-description": "\u003cp\u003eEnable Image Cache feature.\u003c/p\u003e\n"
         }
       },
       "additionalProperties": false,

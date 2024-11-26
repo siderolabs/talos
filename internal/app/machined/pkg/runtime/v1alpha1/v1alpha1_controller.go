@@ -99,6 +99,11 @@ func (c *Controller) setupLogging() error {
 		return fmt.Errorf("failed to setup logging: %w", err)
 	}
 
+	// Ensure that the logger is initialized and writer returns properly.
+	if err = log.Output(1, "machined logger initialized"); err != nil {
+		return fmt.Errorf("failed on log initialization: %w", err)
+	}
+
 	return nil
 }
 

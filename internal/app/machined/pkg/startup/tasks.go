@@ -17,6 +17,7 @@ import (
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
 	"github.com/siderolabs/talos/internal/pkg/environment"
 	"github.com/siderolabs/talos/internal/pkg/mount/v2"
+	"github.com/siderolabs/talos/internal/pkg/selinux"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/resources/block"
 )
@@ -33,6 +34,21 @@ func SetupSystemDirectories(ctx context.Context, log *zap.Logger, rt runtime.Run
 	for _, path := range []string{constants.SystemEtcPath, constants.SystemVarPath, constants.StateMountPoint} {
 		if err := os.MkdirAll(path, 0o700); err != nil {
 			return fmt.Errorf("setupSystemDirectories: %w", err)
+		}
+
+		var label string
+
+		switch path {
+		case constants.SystemEtcPath:
+			label = constants.EtcSelinuxLabel
+		case constants.SystemVarPath:
+			label = constants.SystemVarSelinuxLabel
+		default: // /system/state is another mount
+			label = ""
+		}
+
+		if err := selinux.SetLabel(path, label); err != nil {
+			return err
 		}
 	}
 

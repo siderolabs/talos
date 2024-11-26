@@ -112,6 +112,7 @@ message LocatorSpec {
 // MountSpec is the spec for volume mount.
 message MountSpec {
   string target_path = 1;
+  string selinux_label = 2;
 }
 
 // PartitionSpec is the spec for volume partitioning.

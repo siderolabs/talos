@@ -9,7 +9,9 @@
 (type sys_containerd_t)
 (call service_p (sys_containerd_t containerd_exec_t))
 
-; TODO: label /system
+(type sys_containerd_socket_t)
+(call system_socket_f (sys_containerd_socket_t))
+(typetransition sys_containerd_t system_t sock_file sys_containerd_socket_t)
 
 (allow sys_containerd_t system_container_p (process2 (nnp_transition nosuid_transition)))
 (allow sys_containerd_t system_container_p (process (transition)))
@@ -22,4 +24,4 @@
 ; Talos installer
 (type installer_t)
 (call system_container_p (installer_t))
-; TODO: label /system/var where it's stored
+(allow installer_t system_var_t (file (entrypoint execute_no_trans)))

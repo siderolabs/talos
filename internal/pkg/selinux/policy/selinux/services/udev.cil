@@ -14,7 +14,25 @@
 (type udev_t)
 (call service_p (udev_t udev_exec_t))
 
-; TODO: label /run
+(type udev_socket_t)
+(call system_socket_f (udev_socket_t))
+(typetransition udev_t run_t sock_file udev_socket_t)
+; udevadm called by machined in its context
+(allow init_t udev_t (unix_stream_socket (connectto)))
+
+; Device subsystems, labeled by udev rules
+; RTC is important for security verification
+(type rtc_device_t)
+(call protected_device_f (rtc_device_t))
+; Could be exposed firmware storage
+(type mtd_device_t)
+(call protected_device_f (mtd_device_t))
+; Could reset the system
+(type wdt_device_t)
+(call protected_device_f (wdt_device_t))
+; Typically client pods must not access TPM
+(type tpm_device_t)
+(call protected_device_f (tpm_device_t))
 
 (type modprobe_exec_t)
 (call system_f (modprobe_exec_t))

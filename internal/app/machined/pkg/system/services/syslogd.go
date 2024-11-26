@@ -26,27 +26,27 @@ var _ system.HealthcheckedService = (*Syslogd)(nil)
 type Syslogd struct{}
 
 // ID implements the Service interface.
-func (s *Syslogd) ID(r runtime.Runtime) string {
+func (s *Syslogd) ID(runtime.Runtime) string {
 	return syslogServiceID
 }
 
 // PreFunc implements the Service interface.
-func (s *Syslogd) PreFunc(ctx context.Context, r runtime.Runtime) error {
+func (s *Syslogd) PreFunc(context.Context, runtime.Runtime) error {
 	return nil
 }
 
 // PostFunc implements the Service interface.
-func (s *Syslogd) PostFunc(r runtime.Runtime, state events.ServiceState) (err error) {
+func (s *Syslogd) PostFunc(runtime.Runtime, events.ServiceState) (err error) {
 	return nil
 }
 
 // Condition implements the Service interface.
-func (s *Syslogd) Condition(r runtime.Runtime) conditions.Condition {
+func (s *Syslogd) Condition(runtime.Runtime) conditions.Condition {
 	return nil
 }
 
 // DependsOn implements the Service interface.
-func (s *Syslogd) DependsOn(r runtime.Runtime) []string {
+func (s *Syslogd) DependsOn(runtime.Runtime) []string {
 	return []string{machinedServiceID}
 }
 

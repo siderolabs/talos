@@ -279,7 +279,8 @@ At this point, Talos will form an `etcd` cluster, and start the Kubernetes contr
 After a few moments, you will be able to download your Kubernetes client configuration and get started:
 
 ```sh
-  talosctl kubeconfig --nodes 192.168.0.2 --endpoints 192.168.0.2
+talosctl kubeconfig --nodes 192.168.0.2 --endpoints 192.168.0.2 \
+  --talosconfig=./talosconfig
 ```
 
 Running this command will add (merge) you new cluster into your local Kubernetes configuration.
@@ -287,13 +288,14 @@ Running this command will add (merge) you new cluster into your local Kubernetes
 If you would prefer the configuration to *not* be merged into your default Kubernetes configuration file, pass in a filename:
 
 ```sh
-  talosctl kubeconfig alternative-kubeconfig --nodes 192.168.0.2 --endpoints 192.168.0.2
+talosctl kubeconfig alternative-kubeconfig --nodes 192.168.0.2 --endpoints 192.168.0.2 \
+  --talosconfig=./talosconfig
 ```
 
 You should now be able to connect to Kubernetes and see your nodes:
 
 ```sh
-  kubectl get nodes
+kubectl get nodes
 ```
 
 And use talosctl to explore your cluster:

@@ -112,6 +112,7 @@ func NewState() (*State, error) {
 		&cluster.Member{},
 		&config.MachineConfig{},
 		&config.MachineType{},
+		&cri.ImageCacheConfig{},
 		&cri.SeccompProfile{},
 		&etcd.Config{},
 		&etcd.PKIStatus{},

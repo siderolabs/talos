@@ -144,7 +144,7 @@ talosctl cluster create [flags]
       --bad-rtc                                  launch VM with bad RTC state (QEMU only)
       --cidr string                              CIDR of the cluster network (IPv4, ULA network for IPv6 is derived in automated way) (default "10.5.0.0/24")
       --cni-bin-path strings                     search path for CNI binaries (VM only) (default [/home/user/.talos/cni/bin])
-      --cni-bundle-url string                    URL to download CNI bundle from (VM only) (default "https://github.com/siderolabs/talos/releases/download/v1.9.0-alpha.2/talosctl-cni-bundle-${ARCH}.tar.gz")
+      --cni-bundle-url string                    URL to download CNI bundle from (VM only) (default "https://github.com/siderolabs/talos/releases/download/v1.9.0-alpha.3/talosctl-cni-bundle-${ARCH}.tar.gz")
       --cni-cache-dir string                     CNI cache directory path (VM only) (default "/home/user/.talos/cni/cache")
       --cni-conf-dir string                      CNI config directory path (VM only) (default "/home/user/.talos/cni/conf.d")
       --config-injection-method string           a method to inject machine config: default is HTTP server, 'metal-iso' to mount an ISO (QEMU only)
@@ -856,35 +856,6 @@ talosctl dashboard [flags]
 ```
   -h, --help                       help for dashboard
   -d, --update-interval duration   interval between updates (default 3s)
-```
-
-### Options inherited from parent commands
-
-```
-      --cluster string       Cluster to connect to if a proxy endpoint is used.
-      --context string       Context to be used in command
-  -e, --endpoints strings    override default endpoints in Talos configuration
-  -n, --nodes strings        target the specified nodes
-      --talosconfig string   The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
-```
-
-### SEE ALSO
-
-* [talosctl](#talosctl)	 - A CLI for out-of-band management of Kubernetes nodes created by Talos
-
-## talosctl disks
-
-Get the list of disks from /sys/block on the machine
-
-```
-talosctl disks [flags]
-```
-
-### Options
-
-```
-  -h, --help       help for disks
-  -i, --insecure   get disks using the insecure (encrypted with no auth) maintenance service
 ```
 
 ### Options inherited from parent commands
@@ -1805,6 +1776,55 @@ talosctl health [flags]
 
 * [talosctl](#talosctl)	 - A CLI for out-of-band management of Kubernetes nodes created by Talos
 
+## talosctl image cache-create
+
+Create a cache of images in OCI format into a directory
+
+### Synopsis
+
+Create a cache of images in OCI format into a directory
+
+```
+talosctl image cache-create [flags]
+```
+
+### Examples
+
+```
+talosctl images cache-create --images=ghcr.io/siderolabs/kubelet:1.32.0-beta.0 --image-cache-path=/tmp/talos-image-cache
+
+Alternatively, stdin can be piped to the command:
+talosctl images default | talosctl images cache-create --image-cache-path=/tmp/talos-image-cache --images=-
+
+```
+
+### Options
+
+```
+      --force                           force overwrite of existing image cache
+  -h, --help                            help for cache-create
+      --image-cache-path string         directory to save the image cache in OCI format
+      --image-layer-cache-path string   directory to save the image layer cache
+      --images strings                  images to cache
+      --insecure                        allow insecure registries
+      --platform string                 platform to use for the cache (default "linux/amd64")
+```
+
+### Options inherited from parent commands
+
+```
+      --cluster string       Cluster to connect to if a proxy endpoint is used.
+      --context string       Context to be used in command
+  -e, --endpoints strings    override default endpoints in Talos configuration
+      --namespace system     namespace to use: system (etcd and kubelet images) or `cri` for all Kubernetes workloads (default "cri")
+  -n, --nodes strings        target the specified nodes
+      --talosconfig string   The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
+```
+
+### SEE ALSO
+
+* [talosctl image](#talosctl-image)	 - Manage CRI containter images
+
 ## talosctl image default
 
 List the default images used by Talos
@@ -1916,6 +1936,7 @@ Manage CRI containter images
 ### SEE ALSO
 
 * [talosctl](#talosctl)	 - A CLI for out-of-band management of Kubernetes nodes created by Talos
+* [talosctl image cache-create](#talosctl-image-cache-create)	 - Create a cache of images in OCI format into a directory
 * [talosctl image default](#talosctl-image-default)	 - List the default images used by Talos
 * [talosctl image list](#talosctl-image-list)	 - List CRI images
 * [talosctl image pull](#talosctl-image-pull)	 - Pull an image into CRI
@@ -2953,7 +2974,7 @@ talosctl upgrade [flags]
       --debug                debug operation from kernel logs. --wait is set to true when this flag is set
   -f, --force                force the upgrade (skip checks on etcd health and members, might lead to data loss)
   -h, --help                 help for upgrade
-  -i, --image string         the container image to use for performing the install (default "ghcr.io/siderolabs/installer:v1.9.0-alpha.2")
+  -i, --image string         the container image to use for performing the install (default "ghcr.io/siderolabs/installer:v1.9.0-alpha.3")
       --insecure             upgrade using the insecure (encrypted with no auth) maintenance service
   -m, --reboot-mode string   select the reboot mode during upgrade. Mode "powercycle" bypasses kexec. Valid values are: ["default" "powercycle"]. (default "default")
   -s, --stage                stage the upgrade to perform it after a reboot
@@ -3114,6 +3135,66 @@ talosctl version [flags]
 
 * [talosctl](#talosctl)	 - A CLI for out-of-band management of Kubernetes nodes created by Talos
 
+## talosctl wipe disk
+
+Wipe a block device (disk or partition) which is not used as a volume
+
+### Synopsis
+
+Wipe a block device (disk or partition) which is not used as a volume.
+
+Use device names as arguments, for example: vda or sda5.
+
+```
+talosctl wipe disk <device names>... [flags]
+```
+
+### Options
+
+```
+  -h, --help            help for disk
+      --method string   wipe method to use [FAST ZEROES] (default "FAST")
+```
+
+### Options inherited from parent commands
+
+```
+      --cluster string       Cluster to connect to if a proxy endpoint is used.
+      --context string       Context to be used in command
+  -e, --endpoints strings    override default endpoints in Talos configuration
+  -n, --nodes strings        target the specified nodes
+      --talosconfig string   The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
+```
+
+### SEE ALSO
+
+* [talosctl wipe](#talosctl-wipe)	 - Wipe block device or volumes
+
+## talosctl wipe
+
+Wipe block device or volumes
+
+### Options
+
+```
+  -h, --help   help for wipe
+```
+
+### Options inherited from parent commands
+
+```
+      --cluster string       Cluster to connect to if a proxy endpoint is used.
+      --context string       Context to be used in command
+  -e, --endpoints strings    override default endpoints in Talos configuration
+  -n, --nodes strings        target the specified nodes
+      --talosconfig string   The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
+```
+
+### SEE ALSO
+
+* [talosctl](#talosctl)	 - A CLI for out-of-band management of Kubernetes nodes created by Talos
+* [talosctl wipe disk](#talosctl-wipe-disk)	 - Wipe a block device (disk or partition) which is not used as a volume
+
 ## talosctl
 
 A CLI for out-of-band management of Kubernetes nodes created by Talos
@@ -3141,7 +3222,6 @@ A CLI for out-of-band management of Kubernetes nodes created by Talos
 * [talosctl containers](#talosctl-containers)	 - List containers
 * [talosctl copy](#talosctl-copy)	 - Copy data out from the node
 * [talosctl dashboard](#talosctl-dashboard)	 - Cluster dashboard with node overview, logs and real-time metrics
-* [talosctl disks](#talosctl-disks)	 - Get the list of disks from /sys/block on the machine
 * [talosctl dmesg](#talosctl-dmesg)	 - Retrieve kernel logs
 * [talosctl edit](#talosctl-edit)	 - Edit a resource from the default editor.
 * [talosctl etcd](#talosctl-etcd)	 - Manage etcd
@@ -3179,4 +3259,5 @@ A CLI for out-of-band management of Kubernetes nodes created by Talos
 * [talosctl usage](#talosctl-usage)	 - Retrieve a disk usage
 * [talosctl validate](#talosctl-validate)	 - Validate config
 * [talosctl version](#talosctl-version)	 - Prints the version
+* [talosctl wipe](#talosctl-wipe)	 - Wipe block device or volumes
 

@@ -24,8 +24,8 @@ func Pseudo() Points {
 // PseudoLate returns the mountpoints mounted later in the boot cycle.
 func PseudoLate() Points {
 	return Points{
-		NewPoint("tmpfs", "/run", "tmpfs", WithFlags(unix.MS_NOSUID|unix.MS_NOEXEC|unix.MS_RELATIME), WithData("mode=0755")),
-		NewPoint("tmpfs", "/system", "tmpfs", WithData("mode=0755")),
+		NewPoint("tmpfs", "/run", "tmpfs", WithFlags(unix.MS_NOSUID|unix.MS_NOEXEC|unix.MS_RELATIME), WithData("mode=0755"), WithSelinuxLabel(constants.RunSelinuxLabel)),
+		NewPoint("tmpfs", "/system", "tmpfs", WithData("mode=0755"), WithSelinuxLabel(constants.SystemSelinuxLabel)),
 		NewPoint("tmpfs", "/tmp", "tmpfs", WithFlags(unix.MS_NOSUID|unix.MS_NOEXEC|unix.MS_NODEV), WithData("size=64M"), WithData("mode=0755")),
 	}
 }

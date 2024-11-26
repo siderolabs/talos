@@ -26,6 +26,27 @@ var (
 	mountpointsMutex sync.RWMutex
 )
 
+// IdempotentSystemPartitionMounter is a temporary workaround for not having proper volume mount controller.
+func IdempotentSystemPartitionMounter(r runtime.Runtime) func(label string, opts ...mountv2.NewPointOption) error {
+	return func(label string, opts ...mountv2.NewPointOption) error {
+		if IsSystemPartitionMounted(label) {
+			return nil
+		}
+
+		return SystemPartitionMount(context.Background(), r, log.Default(), label, opts...)
+	}
+}
+
+// IsSystemPartitionMounted checks if a system partition is mounted by the label.
+func IsSystemPartitionMounted(label string) bool {
+	mountpointsMutex.RLock()
+	defer mountpointsMutex.RUnlock()
+
+	_, ok := unmounters[label]
+
+	return ok
+}
+
 // SystemPartitionMount mounts a system partition by the label.
 func SystemPartitionMount(ctx context.Context, r runtime.Runtime, logger *log.Logger, label string, opts ...mountv2.NewPointOption) (err error) {
 	volumeStatus, err := safe.StateGetByID[*block.VolumeStatus](ctx, r.State().V1Alpha2().Resources(), label)
@@ -41,6 +62,8 @@ func SystemPartitionMount(ctx context.Context, r runtime.Runtime, logger *log.Lo
 	if err != nil {
 		return fmt.Errorf("error getting volume config %q: %w", label, err)
 	}
+
+	opts = append(opts, mountv2.WithSelinuxLabel(volumeConfig.TypedSpec().Mount.SelinuxLabel))
 
 	mountpoint := mountv2.NewPoint(
 		volumeStatus.TypedSpec().MountLocation,

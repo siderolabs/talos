@@ -147,6 +147,8 @@ type EncryptionKey struct {
 type MountSpec struct {
 	// Mount path for the volume.
 	TargetPath string `yaml:"targetPath" protobuf:"1"`
+	// SELinux label for the volume.
+	SelinuxLabel string `yaml:"selinuxLabel" protobuf:"2"`
 }
 
 // NewVolumeConfig initializes a BlockVolumeConfig resource.

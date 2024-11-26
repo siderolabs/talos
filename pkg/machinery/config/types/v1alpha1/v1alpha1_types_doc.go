@@ -3465,6 +3465,13 @@ func (FeaturesConfig) Doc() *encoder.Doc {
 				Description: "Configures host DNS caching resolver.",
 				Comments:    [3]string{"" /* encoder.HeadComment */, "Configures host DNS caching resolver." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
+			{
+				Name:        "imageCache",
+				Type:        "bool",
+				Note:        "",
+				Description: "Enable Image Cache feature.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Enable Image Cache feature." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
 		},
 	}
 

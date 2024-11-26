@@ -449,6 +449,7 @@ type Features interface {
 	HostDNS() HostDNS
 	KubePrism() KubePrism
 	LongPrefixPreferenceEnabled() bool
+	ImageCacheEnabled() bool
 }
 
 // KubernetesTalosAPIAccess describes the Kubernetes Talos API access features.

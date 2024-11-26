@@ -107,6 +107,11 @@ func HandleEncryptionWithHandler(ctx context.Context, logger *zap.Logger, volume
 		return xerrors.NewTaggedf[Retryable]("error opening encrypted volume: %w", err)
 	}
 
+	encryptedPath, err = filepath.EvalSymlinks(encryptedPath)
+	if err != nil {
+		return fmt.Errorf("error resolving symlink: %w", err)
+	}
+
 	volumeContext.Status.Phase = block.VolumePhasePrepared
 	volumeContext.Status.MountLocation = encryptedPath
 	volumeContext.Status.EncryptionProvider = volumeContext.Cfg.TypedSpec().Encryption.Provider

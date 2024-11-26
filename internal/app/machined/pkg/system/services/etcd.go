@@ -23,11 +23,11 @@ import (
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
-	specs "github.com/opencontainers/runtime-spec/specs-go"
+	"github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/siderolabs/gen/xslices"
 	"github.com/siderolabs/go-retry/retry"
 	clientv3 "go.etcd.io/etcd/client/v3"
-	snapshot "go.etcd.io/etcd/etcdutl/v3/snapshot"
+	"go.etcd.io/etcd/etcdutl/v3/snapshot"
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system"
@@ -40,6 +40,7 @@ import (
 	"github.com/siderolabs/talos/internal/pkg/containers/image"
 	"github.com/siderolabs/talos/internal/pkg/environment"
 	"github.com/siderolabs/talos/internal/pkg/etcd"
+	"github.com/siderolabs/talos/internal/pkg/selinux"
 	"github.com/siderolabs/talos/pkg/argsbuilder"
 	"github.com/siderolabs/talos/pkg/conditions"
 	"github.com/siderolabs/talos/pkg/filetree"
@@ -90,6 +91,11 @@ func (e *Etcd) PreFunc(ctx context.Context, r runtime.Runtime) error {
 
 	// Data path might exist after upgrade from previous version of Talos.
 	if err := os.Chmod(constants.EtcdDataPath, 0o700); err != nil {
+		return err
+	}
+
+	// Relabel in case of upgrade from older version or SELinux being disabled and then enabled.
+	if err := selinux.SetLabel(constants.EtcdDataPath, constants.EtcdDataSELinuxLabel); err != nil {
 		return err
 	}
 

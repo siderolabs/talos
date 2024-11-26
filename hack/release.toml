@@ -27,6 +27,14 @@ preface = """
 Talos is built with Go 1.23.3.
 """
 
+    [notes.drm]
+        title = "Direct Rendering Manager (DRM)"
+        description = """\
+Starting with Talos 1.9, the `i915` and `amdgpu` DRM drivers will be dropped from the Talos squashfs.
+There will be new system extensions named `i915` and `amdgpu` that would contain both the drivers and firmware packaged together.
+Upgrades via Image Factory will automatically include the new extensions if previously `i915-ucode` or `amdgpu-firmware` were used.
+"""
+
     [notes.usernamespaces]
         title = "User Namespaces"
         description = """\
@@ -88,6 +96,18 @@ configuration option `.skipFallback` can be used to disable this behavior both f
         description = """\
 Talos now supports matching on permanent hardware (MAC) address of the network interfaces.
 This is specifically useful to match bond members, as they change their hardware addresses when they become part of the bond.
+"""
+
+    [notes.talosctl-disk]
+        title = "talosctl disks"
+        description = """\
+The command `talosctl disks` was removed, please use `talosctl get disks`, `talosctl get systemdisk`, and `talosctl get blockdevices` instead.
+"""
+
+    [notes.talosctl-wipe]
+        title = "talosctl wipe"
+        description = """\
+The new command `talosctl wipe disk` allows to wipe a disk or a partition which is not used as a volume.
 """
 
 [make_deps]

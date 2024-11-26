@@ -124,7 +124,6 @@ linters:
     - gochecknoinits
     - gocognit
     - godox
-    - gomnd
     - gosec
     - ireturn # we return interfaces
     - maintidx

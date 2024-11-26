@@ -60,6 +60,10 @@ func (f *FeaturesConfig) KubePrism() config.KubePrism {
 // LongPrefixPreferenceEnabled implements config.Features interface.
 func (f *FeaturesConfig) LongPrefixPreferenceEnabled() bool {
 	return pointer.SafeDeref(f.LongPrefixPreference)
+
+// ImageCacheEnabled implements config.Features interface.
+func (f *FeaturesConfig) ImageCacheEnabled() bool {
+	return pointer.SafeDeref(f.ImageCache)
 }
 
 const defaultKubePrismPort = 7445

@@ -209,7 +209,7 @@ func (ctrl *VolumeConfigController) Run(ctx context.Context, r controller.Runtim
 
 func (ctrl *VolumeConfigController) manageEphemeral(config cfg.Config) func(vc *block.VolumeConfig) error {
 	return func(vc *block.VolumeConfig) error {
-		extraVolumeConfig := config.Volumes().ByName(constants.EphemeralPartitionLabel)
+		extraVolumeConfig, _ := config.Volumes().ByName(constants.EphemeralPartitionLabel)
 
 		vc.TypedSpec().Type = block.VolumeTypePartition
 
@@ -232,7 +232,8 @@ func (ctrl *VolumeConfigController) manageEphemeral(config cfg.Config) func(vc *
 		}
 
 		vc.TypedSpec().Mount = block.MountSpec{
-			TargetPath: constants.EphemeralMountPoint,
+			TargetPath:   constants.EphemeralMountPoint,
+			SelinuxLabel: constants.EphemeralSelinuxLabel,
 		}
 
 		vc.TypedSpec().Locator = block.LocatorSpec{
@@ -254,7 +255,8 @@ func (ctrl *VolumeConfigController) manageStateConfigPresent(config cfg.Config) 
 	return func(vc *block.VolumeConfig) error {
 		vc.TypedSpec().Type = block.VolumeTypePartition
 		vc.TypedSpec().Mount = block.MountSpec{
-			TargetPath: constants.StateMountPoint,
+			TargetPath:   constants.StateMountPoint,
+			SelinuxLabel: constants.StateSelinuxLabel,
 		}
 
 		vc.TypedSpec().Provisioning = block.ProvisioningSpec{
@@ -293,7 +295,8 @@ func (ctrl *VolumeConfigController) manageStateNoConfig(encryptionMeta *runtime.
 	return func(vc *block.VolumeConfig) error {
 		vc.TypedSpec().Type = block.VolumeTypePartition
 		vc.TypedSpec().Mount = block.MountSpec{
-			TargetPath: constants.StateMountPoint,
+			TargetPath:   constants.StateMountPoint,
+			SelinuxLabel: constants.StateSelinuxLabel,
 		}
 
 		match := labelVolumeMatchAndNonEmpty(constants.StatePartitionLabel)

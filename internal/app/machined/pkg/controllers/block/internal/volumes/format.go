@@ -22,7 +22,7 @@ import (
 
 // Format establishes a filesystem on a block device.
 //
-//nolint:gocyclo
+//nolint:gocyclo,cyclop
 func Format(ctx context.Context, logger *zap.Logger, volumeContext ManagerContext) error {
 	// lock either the parent device or the device itself
 	devPath := volumeContext.Status.ParentLocation
@@ -111,6 +111,16 @@ func Format(ctx context.Context, logger *zap.Logger, volumeContext ManagerContex
 		if err = makefs.XFS(volumeContext.Status.MountLocation, makefsOptions...); err != nil {
 			return fmt.Errorf("error formatting XFS: %w", err)
 		}
+	case block.FilesystemTypeEXT4:
+		var makefsOptions []makefs.Option
+
+		if volumeContext.Cfg.TypedSpec().Provisioning.FilesystemSpec.Label != "" {
+			makefsOptions = append(makefsOptions, makefs.WithLabel(volumeContext.Cfg.TypedSpec().Provisioning.FilesystemSpec.Label))
+		}
+
+		if err = makefs.Ext4(volumeContext.Status.MountLocation, makefsOptions...); err != nil {
+			return fmt.Errorf("error formatting ext4: %w", err)
+		}
 	default:
 		return fmt.Errorf("unsupported filesystem type: %s", volumeContext.Cfg.TypedSpec().Provisioning.FilesystemSpec.Type)
 	}
@@ -146,6 +156,14 @@ func GrowFilesystem(logger *zap.Logger, volumeContext ManagerContext) error {
 
 		if err = makefs.XFSGrow(tmpDir); err != nil {
 			return fmt.Errorf("error growing XFS: %w", err)
+		}
+
+		return nil
+	case block.FilesystemTypeEXT4:
+		logger.Info("growing ext4 filesystem", zap.String("device", volumeContext.Status.MountLocation))
+
+		if err := makefs.Ext4Resize(volumeContext.Status.MountLocation); err != nil {
+			return fmt.Errorf("error growing ext4: %w", err)
 		}
 
 		return nil

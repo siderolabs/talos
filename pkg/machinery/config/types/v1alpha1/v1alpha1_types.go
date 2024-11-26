@@ -2170,6 +2170,9 @@ type FeaturesConfig struct {
 	//   description: |
 	//     Configures host DNS caching resolver.
 	HostDNSSupport *HostDNSConfig `yaml:"hostDNS,omitempty"`
+	//   description: |
+	//     Enable Image Cache feature.
+	ImageCache *bool `yaml:"imageCache,omitempty"`
 }
 
 // KubePrism describes the configuration for the KubePrism load balancer.

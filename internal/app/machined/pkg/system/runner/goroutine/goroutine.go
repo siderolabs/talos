@@ -6,6 +6,7 @@ package goroutine
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	stdlibruntime "runtime"
@@ -77,24 +78,20 @@ func (r *goroutineRunner) wrappedMain() (err error) {
 		}
 	}()
 
-	var w io.WriteCloser
-
-	w, err = r.opts.LoggingManager.ServiceLog(r.id).Writer()
+	w, err := r.opts.LoggingManager.ServiceLog(r.id).Writer()
 	if err != nil {
-		err = fmt.Errorf("service log handler: %w", err)
-
-		return
-	}
-	//nolint:errcheck
-	defer w.Close()
-
-	err = r.main(r.ctx, r.runtime, w)
-	if err == context.Canceled {
-		// clear error if service was aborted
-		err = nil
+		return fmt.Errorf("service log handler: %w", err)
 	}
 
-	return err
+	writerCloser := sync.OnceValue(w.Close)
+
+	defer writerCloser() //nolint:errcheck
+
+	if err = r.main(r.ctx, r.runtime, w); !errors.Is(err, context.Canceled) {
+		return err // return error if it's not context.Canceled (service was not aborted)
+	}
+
+	return writerCloser()
 }
 
 // Stop implements the Runner interface.

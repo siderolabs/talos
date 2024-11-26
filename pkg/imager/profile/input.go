@@ -54,6 +54,8 @@ type Input struct {
 	RPiFirmware FileAsset `yaml:"rpiFirmware,omitempty"`
 	// Base installer image to mutate.
 	BaseInstaller ContainerAsset `yaml:"baseInstaller,omitempty"`
+	// ImageCache is an image cache to inject into the asset.
+	ImageCache ContainerAsset `yaml:"imageCache,omitempty"`
 	// OverlayInstaller is an overlay image to inject into the installer.
 	//
 	// OverlayInstaller architecture should match the output installer architecture.

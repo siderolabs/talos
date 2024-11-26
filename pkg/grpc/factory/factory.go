@@ -257,8 +257,8 @@ func ServerGracefulStop(server *grpc.Server, shutdownCtx context.Context) { //no
 	stopped := make(chan struct{})
 
 	go func() {
+		defer close(stopped)
 		server.GracefulStop()
-		close(stopped)
 	}()
 
 	select {

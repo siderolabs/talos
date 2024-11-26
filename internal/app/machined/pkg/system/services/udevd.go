@@ -34,7 +34,7 @@ type Udevd struct {
 }
 
 // ID implements the Service interface.
-func (c *Udevd) ID(r runtime.Runtime) string {
+func (c *Udevd) ID(runtime.Runtime) string {
 	return "udevd"
 }
 
@@ -52,17 +52,17 @@ func (c *Udevd) PreFunc(ctx context.Context, r runtime.Runtime) error {
 }
 
 // PostFunc implements the Service interface.
-func (c *Udevd) PostFunc(r runtime.Runtime, state events.ServiceState) (err error) {
+func (c *Udevd) PostFunc(runtime.Runtime, events.ServiceState) (err error) {
 	return nil
 }
 
 // Condition implements the Service interface.
-func (c *Udevd) Condition(r runtime.Runtime) conditions.Condition {
+func (c *Udevd) Condition(runtime.Runtime) conditions.Condition {
 	return nil
 }
 
 // DependsOn implements the Service interface.
-func (c *Udevd) DependsOn(r runtime.Runtime) []string {
+func (c *Udevd) DependsOn(runtime.Runtime) []string {
 	return nil
 }
 

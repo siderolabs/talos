@@ -7,7 +7,9 @@ package talos
 import (
 	"context"
 	"fmt"
+	"io"
 	"os"
+	"strings"
 	"text/tabwriter"
 	"time"
 
@@ -15,12 +17,14 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/helpers"
+	"github.com/siderolabs/talos/pkg/imager/cache"
 	"github.com/siderolabs/talos/pkg/images"
 	"github.com/siderolabs/talos/pkg/machinery/api/common"
 	"github.com/siderolabs/talos/pkg/machinery/api/machine"
 	"github.com/siderolabs/talos/pkg/machinery/client"
 	"github.com/siderolabs/talos/pkg/machinery/config/container"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
+	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
 
 type imageCmdFlagsType struct {
@@ -149,6 +153,73 @@ var imageDefaultCmd = &cobra.Command{
 	},
 }
 
+// imageCacheCreate represents the image cache create command.
+var imageCacheCreateCmd = &cobra.Command{
+	Use:   "cache-create",
+	Short: "Create a cache of images in OCI format into a directory",
+	Long:  `Create a cache of images in OCI format into a directory`,
+	Example: fmt.Sprintf(
+		`talosctl images cache-create --images=ghcr.io/siderolabs/kubelet:%s --image-cache-path=/tmp/talos-image-cache
+
+Alternatively, stdin can be piped to the command:
+talosctl images default | talosctl images cache-create --image-cache-path=/tmp/talos-image-cache --images=-
+`,
+		constants.DefaultKubernetesVersion,
+	),
+	Args: cobra.NoArgs,
+	RunE: func(cmd *cobra.Command, args []string) error {
+		if len(imageCacheCreateCmdFlags.images) == 0 {
+			return fmt.Errorf("no images specified")
+		}
+
+		if imageCacheCreateCmdFlags.force {
+			if err := os.RemoveAll(imageCacheCreateCmdFlags.imageCachePath); err != nil {
+				return fmt.Errorf("error removing existing image cache path %s: %w", imageCacheCreateCmdFlags.imageCachePath, err)
+			}
+		}
+
+		if _, err := os.Stat(imageCacheCreateCmdFlags.imageCachePath); err == nil {
+			return fmt.Errorf("image cache path %s already exists, use --force to remove and use the path", imageCacheCreateCmdFlags.imageCachePath)
+		}
+
+		if imageCacheCreateCmdFlags.images[0] == "-" {
+			var imagesListData strings.Builder
+
+			if _, err := io.Copy(&imagesListData, os.Stdin); err != nil {
+				return fmt.Errorf("error reading from stdin: %w", err)
+			}
+
+			imageCacheCreateCmdFlags.images = strings.Split(strings.Trim(imagesListData.String(), "\n"), "\n")
+		}
+
+		err := cache.Generate(
+			imageCacheCreateCmdFlags.images,
+			imageCacheCreateCmdFlags.platform,
+			imageCacheCreateCmdFlags.insecure,
+			imageCacheCreateCmdFlags.imageLayerCachePath,
+			imageCacheCreateCmdFlags.imageCachePath,
+		)
+		if err != nil {
+			return fmt.Errorf("error generating cache: %w", err)
+		}
+
+		return nil
+	},
+}
+
+type imageCacheCreateCmdFlagsType struct {
+	imageCachePath      string
+	imageLayerCachePath string
+	platform            string
+
+	images []string
+
+	insecure bool
+	force    bool
+}
+
+var imageCacheCreateCmdFlags imageCacheCreateCmdFlagsType
+
 func init() {
 	imageCmd.PersistentFlags().StringVar(&imageCmdFlags.namespace, "namespace", "cri", "namespace to use: `system` (etcd and kubelet images) or `cri` for all Kubernetes workloads")
 	addCommand(imageCmd)
@@ -156,4 +227,14 @@ func init() {
 	imageCmd.AddCommand(imageDefaultCmd)
 	imageCmd.AddCommand(imageListCmd)
 	imageCmd.AddCommand(imagePullCmd)
+	imageCmd.AddCommand(imageCacheCreateCmd)
+
+	imageCacheCreateCmd.PersistentFlags().StringVar(&imageCacheCreateCmdFlags.imageCachePath, "image-cache-path", "", "directory to save the image cache in OCI format")
+	imageCacheCreateCmd.MarkPersistentFlagRequired("image-cache-path") //nolint:errcheck
+	imageCacheCreateCmd.PersistentFlags().StringVar(&imageCacheCreateCmdFlags.imageLayerCachePath, "image-layer-cache-path", "", "directory to save the image layer cache")
+	imageCacheCreateCmd.PersistentFlags().StringVar(&imageCacheCreateCmdFlags.platform, "platform", "linux/amd64", "platform to use for the cache")
+	imageCacheCreateCmd.PersistentFlags().StringSliceVar(&imageCacheCreateCmdFlags.images, "images", nil, "images to cache")
+	imageCacheCreateCmd.MarkPersistentFlagRequired("images") //nolint:errcheck
+	imageCacheCreateCmd.PersistentFlags().BoolVar(&imageCacheCreateCmdFlags.insecure, "insecure", false, "allow insecure registries")
+	imageCacheCreateCmd.PersistentFlags().BoolVar(&imageCacheCreateCmdFlags.force, "force", false, "force overwrite of existing image cache")
 }
