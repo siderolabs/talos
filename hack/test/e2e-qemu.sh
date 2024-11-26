@@ -226,7 +226,7 @@ function create_cluster {
     --cni-bundle-url="${ARTIFACTS}/talosctl-cni-bundle-\${ARCH}.tar.gz" \
     --crashdump \
     "${REGISTRY_MIRROR_FLAGS[@]}" \
-    "${QEMU_FLAGS[@]}"
+    "${QEMU_FLAGS[@]}" || (cat ~/.talos/clusters/**/*.log && exit 1) # [TODO]: temporary hack to make it easier to debug things
 
   "${TALOSCTL}" config node 172.20.1.2
 }

@@ -105,6 +105,8 @@ kernel/drivers/net/ethernet/intel/igbvf/igbvf.ko
 kernel/drivers/net/ethernet/intel/igc/igc.ko
 kernel/drivers/net/ethernet/intel/ixgbe/ixgbe.ko
 kernel/drivers/net/ethernet/intel/ixgbevf/ixgbevf.ko
+kernel/drivers/net/ethernet/intel/libeth/libeth.ko
+kernel/drivers/net/ethernet/intel/libie/libie.ko
 kernel/drivers/net/ethernet/marvell/sky2.ko
 kernel/drivers/net/ethernet/mellanox/mlx4/mlx4_core.ko
 kernel/drivers/net/ethernet/mellanox/mlx4/mlx4_en.ko
@@ -128,6 +130,7 @@ kernel/drivers/net/mii.ko
 kernel/drivers/net/usb/r8152.ko
 kernel/drivers/net/vmxnet3/vmxnet3.ko
 kernel/drivers/net/vrf.ko
+kernel/drivers/nvme/common/nvme-auth.ko
 kernel/drivers/nvme/host/nvme-rdma.ko
 kernel/drivers/nvme/host/nvme.ko
 kernel/drivers/nvme/target/nvme-loop.ko

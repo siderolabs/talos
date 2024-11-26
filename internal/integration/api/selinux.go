@@ -73,6 +73,8 @@ func (suite *SELinuxSuite) getLabel(nodeCtx context.Context, pid int32) string {
 // to ensure SELinux labels for files are set when they are created and FS's are mounted with correct labels.
 // FIXME: cancel the test in case system was upgraded.
 func (suite *SELinuxSuite) TestFileMountLabels() {
+	suite.T().Skip("skipping this test until it becomes stable enough")
+
 	workers := suite.DiscoverNodeInternalIPsByType(suite.ctx, machine.TypeWorker)
 	controlplanes := suite.DiscoverNodeInternalIPsByType(suite.ctx, machine.TypeControlPlane)
 

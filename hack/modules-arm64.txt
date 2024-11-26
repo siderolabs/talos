@@ -6,6 +6,12 @@ kernel/crypto/async_tx/async_xor.ko
 kernel/crypto/xor.ko
 kernel/drivers/block/nbd.ko
 kernel/drivers/hwmon/i5k_amb.ko
+kernel/drivers/gpu/drm/drm_buddy.ko
+kernel/drivers/gpu/drm/drm_exec.ko
+kernel/drivers/gpu/drm/drm_suballoc_helper.ko
+kernel/drivers/gpu/drm/drm_ttm_helper.ko
+kernel/drivers/gpu/drm/scheduler/gpu-sched.ko
+kernel/drivers/gpu/drm/ttm/ttm.ko
 kernel/drivers/infiniband/hw/mlx4/mlx4_ib.ko
 kernel/drivers/infiniband/hw/mlx5/mlx5_ib.ko
 kernel/drivers/infiniband/sw/rxe/rdma_rxe.ko
@@ -34,6 +40,7 @@ kernel/drivers/net/ethernet/mellanox/mlxsw/mlxsw_spectrum.ko
 kernel/drivers/net/ethernet/sfc/sfc.ko
 kernel/drivers/net/ethernet/sfc/siena/sfc-siena.ko
 kernel/drivers/net/vrf.ko
+kernel/drivers/nvme/common/nvme-auth.ko
 kernel/drivers/nvme/host/nvme-rdma.ko
 kernel/drivers/nvme/target/nvme-loop.ko
 kernel/drivers/nvme/target/nvmet-fc.ko
