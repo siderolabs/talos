@@ -81,3 +81,19 @@ There are three patches applied:
 * change default `/opt/local-path-provisioner` path to `/var/local-path-provisioner`
 * make `local-path` storage class the default storage class (optional)
 * label the `local-path-storage` namespace as privileged to allow privileged pods to be scheduled there
+
+As for the `hostPath` mounts (see above), this will require the `kubelet` to bind mount the node's folder you chose (eg: `/var/local-path-provisioner`).
+Otherwise, you'll have erratic behavior, especially when using the `subPath` statement in a `volumeMount`, which may lead to data loss and/or data never freed after PV deletion.
+
+```yaml
+machine:
+  kubelet:
+    extraMounts:
+      - destination: /var/local-path-provisioner
+        type: bind
+        source: /var/local-path-provisioner
+        options:
+          - bind
+          - rshared
+          - rw
+```
