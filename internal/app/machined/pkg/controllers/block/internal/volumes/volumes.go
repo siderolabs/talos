@@ -8,6 +8,8 @@ package volumes
 import (
 	"cmp"
 
+	"github.com/siderolabs/gen/optional"
+
 	blockpb "github.com/siderolabs/talos/pkg/machinery/api/resource/definitions/block"
 	"github.com/siderolabs/talos/pkg/machinery/resources/block"
 	"github.com/siderolabs/talos/pkg/machinery/resources/hardware"
@@ -40,7 +42,20 @@ type Retryable struct{}
 // DiskContext captures the context of a disk.
 type DiskContext struct {
 	Disk       *blockpb.DiskSpec
-	SystemDisk bool
+	SystemDisk optional.Optional[bool]
+}
+
+// ToCELContext converts the disk context to CEL contexts.
+func (d *DiskContext) ToCELContext() map[string]any {
+	result := map[string]any{
+		"disk": d.Disk,
+	}
+
+	if val, ok := d.SystemDisk.Get(); ok {
+		result["system_disk"] = val
+	}
+
+	return result
 }
 
 // ManagerContext captures the context of the volume manager.

@@ -96,7 +96,7 @@ var imageListCmd = &cobra.Command{
 
 // imagePullCmd represents the image pull command.
 var imagePullCmd = &cobra.Command{
-	Use:     "pull",
+	Use:     "pull <image>",
 	Aliases: []string{"p"},
 	Short:   "Pull an image into CRI",
 	Long:    ``,
