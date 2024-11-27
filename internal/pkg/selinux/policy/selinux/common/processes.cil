@@ -95,3 +95,7 @@
 ; Allow init to manage processes
 (allow init_t service_p (fs_classes (rw)))
 (allow init_t service_p (process_classes (full)))
+
+; kernel cmdline
+(allow system_p proc_cmdline_t (fs_classes (ro)))
+(allow system_container_p proc_cmdline_t (fs_classes (ro)))
