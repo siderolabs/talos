@@ -99,3 +99,13 @@
 ; kernel cmdline
 (allow system_p proc_cmdline_t (fs_classes (ro)))
 (allow system_container_p proc_cmdline_t (fs_classes (ro)))
+
+; By default, allow any process to access any device except special ones
+(allow any_p common_device_f (fs_classes (rw)))
+; CNI, containerd, many different services read and write sysctl parameters
+(allow any_p proc_sysctl_t (fs_classes (rw)))
+; Unconfined FS and files
+(allow any_p unconfined_f (fs_classes (rw)))
+
+; Own sockets
+(allow any_p self (unix_stream_socket (connectto)))
