@@ -1818,7 +1818,7 @@ talosctl image list [flags]
 Pull an image into CRI
 
 ```
-talosctl image pull [flags]
+talosctl image pull <image> [flags]
 ```
 
 ### Options

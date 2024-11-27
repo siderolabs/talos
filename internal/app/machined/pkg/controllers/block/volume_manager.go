@@ -208,9 +208,15 @@ func (ctrl *VolumeManagerController) Run(ctx context.Context, r controller.Runti
 				return volumes.DiskContext{}, err
 			}
 
+			var optionalSystemDisk optional.Optional[bool]
+
+			if systemDisk != nil {
+				optionalSystemDisk = optional.Some(d.Metadata().ID() == systemDisk.TypedSpec().DiskID)
+			}
+
 			return volumes.DiskContext{
 				Disk:       spec,
-				SystemDisk: systemDisk != nil && d.Metadata().ID() == systemDisk.TypedSpec().DiskID,
+				SystemDisk: optionalSystemDisk,
 			}, nil
 		})
 		if err != nil {

@@ -92,10 +92,7 @@ func LocateAndProvision(ctx context.Context, logger *zap.Logger, volumeContext M
 			continue
 		}
 
-		matches, err := volumeContext.Cfg.TypedSpec().Provisioning.DiskSelector.Match.EvalBool(celenv.DiskLocator(), map[string]any{
-			"disk":        diskCtx.Disk,
-			"system_disk": diskCtx.SystemDisk,
-		})
+		matches, err := volumeContext.Cfg.TypedSpec().Provisioning.DiskSelector.Match.EvalBool(celenv.DiskLocator(), diskCtx.ToCELContext())
 		if err != nil {
 			return fmt.Errorf("error evaluating disk locator: %w", err)
 		}
