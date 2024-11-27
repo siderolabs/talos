@@ -61,3 +61,6 @@
 
 (allow udev_t device_t (fs_classes (relabelfrom)))
 (allow udev_t device_f (fs_classes (rw relabelto)))
+
+; socket and runtime files
+(allow udev_t run_t (fs_classes (rw)))
