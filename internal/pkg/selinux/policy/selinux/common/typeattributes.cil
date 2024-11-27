@@ -96,6 +96,7 @@
 
 (typeattribute system_p)
 (typeattributeset system_p kernel_t)
+(typeattributeset system_p initramfs_t)
 (typeattributeset system_p init_t)
 (typeattributeset system_p service_p)
 
