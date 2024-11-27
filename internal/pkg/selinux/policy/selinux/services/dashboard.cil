@@ -1,2 +1,11 @@
 (type dashboard_t)
 (call service_p (dashboard_t init_exec_t))
+
+; TTY
+(allow dashboard_t device_t (fs_classes (rw)))
+; machine ID and similar
+(allow dashboard_t etc_t (fs_classes (ro)))
+
+; socket
+(allow dashboard_t machine_socket_t (fs_classes (rw)))
+(allow dashboard_t init_t (unix_stream_socket (connectto)))
