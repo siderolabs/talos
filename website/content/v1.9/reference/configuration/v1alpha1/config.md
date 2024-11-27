@@ -2627,7 +2627,7 @@ kubernetesTalosAPIAccess:
 |`diskQuotaSupport` |bool |<details><summary>Enable XFS project quota support for EPHEMERAL partition and user disks.</summary>Also enables kubelet tracking of ephemeral disk usage in the kubelet via quota.</details>  | |
 |`kubePrism` |<a href="#Config.machine.features.kubePrism">KubePrism</a> |<details><summary>KubePrism - local proxy/load balancer on defined port that will distribute</summary>requests to all API servers in the cluster.</details>  | |
 |`hostDNS` |<a href="#Config.machine.features.hostDNS">HostDNSConfig</a> |Configures host DNS caching resolver.  | |
-|`imageCache` |bool |Enable Image Cache feature.  | |
+|`imageCache` |<a href="#Config.machine.features.imageCache">ImageCacheConfig</a> |Enable Image Cache feature.  | |
 
 
 
@@ -2692,6 +2692,22 @@ HostDNSConfig describes the configuration for the host DNS resolver.
 |`enabled` |bool |Enable host DNS caching resolver.  | |
 |`forwardKubeDNSToHost` |bool |<details><summary>Use the host DNS resolver as upstream for Kubernetes CoreDNS pods.</summary><br />When enabled, CoreDNS pods use host DNS server as the upstream DNS (instead of<br />using configured upstream DNS resolvers directly).</details>  | |
 |`resolveMemberNames` |bool |<details><summary>Resolve member hostnames using the host DNS resolver.</summary><br />When enabled, cluster member hostnames and node names are resolved using the host DNS resolver.<br />This requires service discovery to be enabled.</details>  | |
+
+
+
+
+
+
+#### imageCache {#Config.machine.features.imageCache}
+
+ImageCacheConfig describes the configuration for the Image Cache feature.
+
+
+
+
+| Field | Type | Description | Value(s) |
+|-------|------|-------------|----------|
+|`localEnabled` |bool |Enable local image cache.  | |
 
 
 

@@ -2072,7 +2072,7 @@
           "x-intellij-html-description": "\u003cp\u003eConfigures host DNS caching resolver.\u003c/p\u003e\n"
         },
         "imageCache": {
-          "type": "boolean",
+          "$ref": "#/$defs/v1alpha1.ImageCacheConfig",
           "title": "imageCache",
           "description": "Enable Image Cache feature.\n",
           "markdownDescription": "Enable Image Cache feature.",
@@ -2120,6 +2120,19 @@
           "description": "Resolve member hostnames using the host DNS resolver.\n\nWhen enabled, cluster member hostnames and node names are resolved using the host DNS resolver.\nThis requires service discovery to be enabled.\n",
           "markdownDescription": "Resolve member hostnames using the host DNS resolver.\n\nWhen enabled, cluster member hostnames and node names are resolved using the host DNS resolver.\nThis requires service discovery to be enabled.",
           "x-intellij-html-description": "\u003cp\u003eResolve member hostnames using the host DNS resolver.\u003c/p\u003e\n\n\u003cp\u003eWhen enabled, cluster member hostnames and node names are resolved using the host DNS resolver.\nThis requires service discovery to be enabled.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "v1alpha1.ImageCacheConfig": {
+      "properties": {
+        "localEnabled": {
+          "type": "boolean",
+          "title": "localEnabled",
+          "description": "Enable local image cache.\n",
+          "markdownDescription": "Enable local image cache.",
+          "x-intellij-html-description": "\u003cp\u003eEnable local image cache.\u003c/p\u003e\n"
         }
       },
       "additionalProperties": false,

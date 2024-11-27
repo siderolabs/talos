@@ -2169,7 +2169,7 @@ type FeaturesConfig struct {
 	HostDNSSupport *HostDNSConfig `yaml:"hostDNS,omitempty"`
 	//   description: |
 	//     Enable Image Cache feature.
-	ImageCache *bool `yaml:"imageCache,omitempty"`
+	ImageCacheSupport *ImageCacheConfig `yaml:"imageCache,omitempty"`
 }
 
 // KubePrism describes the configuration for the KubePrism load balancer.
@@ -2180,6 +2180,13 @@ type KubePrism struct {
 	//   description: |
 	//     KubePrism port.
 	ServerPort int `yaml:"port,omitempty"`
+}
+
+// ImageCacheConfig describes the configuration for the Image Cache feature.
+type ImageCacheConfig struct {
+	//   description: |
+	//     Enable local image cache.
+	CacheLocalEnabled *bool `yaml:"localEnabled,omitempty"`
 }
 
 // KubernetesTalosAPIAccessConfig describes the configuration for the Talos API access from Kubernetes pods.

@@ -164,7 +164,7 @@ func (r *Runtime) CanApplyImmediate(cfg config.Provider) error {
 			newConfig.MachineConfig.MachineFeatures.KubernetesTalosAPIAccessConfig = currentConfig.MachineConfig.MachineFeatures.KubernetesTalosAPIAccessConfig
 			newConfig.MachineConfig.MachineFeatures.KubePrismSupport = currentConfig.MachineConfig.MachineFeatures.KubePrismSupport
 			newConfig.MachineConfig.MachineFeatures.HostDNSSupport = currentConfig.MachineConfig.MachineFeatures.HostDNSSupport
-			newConfig.MachineConfig.MachineFeatures.ImageCache = currentConfig.MachineConfig.MachineFeatures.ImageCache
+			newConfig.MachineConfig.MachineFeatures.ImageCacheSupport = currentConfig.MachineConfig.MachineFeatures.ImageCacheSupport
 		}
 	}
 

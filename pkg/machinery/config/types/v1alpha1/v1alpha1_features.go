@@ -57,9 +57,13 @@ func (f *FeaturesConfig) KubePrism() config.KubePrism {
 	return f.KubePrismSupport
 }
 
-// ImageCacheEnabled implements config.Features interface.
-func (f *FeaturesConfig) ImageCacheEnabled() bool {
-	return pointer.SafeDeref(f.ImageCache)
+// ImageCache implements config.Features interface.
+func (f *FeaturesConfig) ImageCache() config.ImageCache {
+	if f.ImageCacheSupport == nil {
+		return &ImageCacheConfig{}
+	}
+
+	return f.ImageCacheSupport
 }
 
 const defaultKubePrismPort = 7445
@@ -91,4 +95,9 @@ func (h *HostDNSConfig) ForwardKubeDNSToHost() bool {
 // ResolveMemberNames implements config.HostDNS.
 func (h *HostDNSConfig) ResolveMemberNames() bool {
 	return pointer.SafeDeref(h.HostDNSResolveMemberNames)
+}
+
+// LocalEnabled implements config.ImageCache.
+func (i *ImageCacheConfig) LocalEnabled() bool {
+	return pointer.SafeDeref(i.CacheLocalEnabled)
 }

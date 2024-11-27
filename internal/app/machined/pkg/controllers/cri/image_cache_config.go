@@ -119,7 +119,7 @@ func (ctrl *ImageCacheConfigController) Run(ctx context.Context, r controller.Ru
 		}
 
 		// image cache is disabled
-		imageCacheDisabled := cfg == nil || cfg.Config().Machine() == nil || !cfg.Config().Machine().Features().ImageCacheEnabled()
+		imageCacheDisabled := cfg == nil || cfg.Config().Machine() == nil || !cfg.Config().Machine().Features().ImageCache().LocalEnabled()
 
 		var (
 			status cri.ImageCacheStatus

@@ -1,5 +1,8 @@
 blank_issues_enabled: false
 contact_links:
   - name: Question
+    url: https://github.com/siderolabs/talos/discussions
+    about: Ask a question about Talos Linux.
+  - name: Community
     url: https://taloscommunity.slack.com
-    about: Ask a question. Get your invite by visiting https://slack.dev.talos-systems.io.
+    about: Join the community. Get your invite by visiting https://slack.dev.talos-systems.io.

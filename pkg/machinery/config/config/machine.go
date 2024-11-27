@@ -448,7 +448,7 @@ type Features interface {
 	DiskQuotaSupportEnabled() bool
 	HostDNS() HostDNS
 	KubePrism() KubePrism
-	ImageCacheEnabled() bool
+	ImageCache() ImageCache
 }
 
 // KubernetesTalosAPIAccess describes the Kubernetes Talos API access features.
@@ -469,6 +469,11 @@ type HostDNS interface {
 	Enabled() bool
 	ForwardKubeDNSToHost() bool
 	ResolveMemberNames() bool
+}
+
+// ImageCache describes the image cache configuration.
+type ImageCache interface {
+	LocalEnabled() bool
 }
 
 // UdevConfig describes configuration for udev.

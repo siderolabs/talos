@@ -3467,7 +3467,7 @@ func (FeaturesConfig) Doc() *encoder.Doc {
 			},
 			{
 				Name:        "imageCache",
-				Type:        "bool",
+				Type:        "ImageCacheConfig",
 				Note:        "",
 				Description: "Enable Image Cache feature.",
 				Comments:    [3]string{"" /* encoder.HeadComment */, "Enable Image Cache feature." /* encoder.LineComment */, "" /* encoder.FootComment */},
@@ -3507,6 +3507,31 @@ func (KubePrism) Doc() *encoder.Doc {
 				Note:        "",
 				Description: "KubePrism port.",
 				Comments:    [3]string{"" /* encoder.HeadComment */, "KubePrism port." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
+
+	return doc
+}
+
+func (ImageCacheConfig) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "ImageCacheConfig",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "ImageCacheConfig describes the configuration for the Image Cache feature." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "ImageCacheConfig describes the configuration for the Image Cache feature.",
+		AppearsIn: []encoder.Appearance{
+			{
+				TypeName:  "FeaturesConfig",
+				FieldName: "imageCache",
+			},
+		},
+		Fields: []encoder.Doc{
+			{
+				Name:        "localEnabled",
+				Type:        "bool",
+				Note:        "",
+				Description: "Enable local image cache.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Enable local image cache." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
 		},
 	}
@@ -4193,6 +4218,7 @@ func GetFileDoc() *encoder.FileDoc {
 			SystemDiskEncryptionConfig{}.Doc(),
 			FeaturesConfig{}.Doc(),
 			KubePrism{}.Doc(),
+			ImageCacheConfig{}.Doc(),
 			KubernetesTalosAPIAccessConfig{}.Doc(),
 			HostDNSConfig{}.Doc(),
 			VolumeMountConfig{}.Doc(),
