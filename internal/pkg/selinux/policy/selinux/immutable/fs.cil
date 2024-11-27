@@ -59,6 +59,8 @@
 (type proc_sysctl_t)
 (call filesystem_f (proc_sysctl_t))
 (genfscon proc "/sys" (system_u object_r proc_sysctl_t (systemLow systemLow)))
+; It matches /sys, yet should not have the same context
+(genfscon proc "/sysrq-trigger" procfs_t)
 
 (type securityfs_t)
 (call filesystem_f (securityfs_t))
