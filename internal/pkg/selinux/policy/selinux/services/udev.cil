@@ -59,3 +59,6 @@
 
 ; udev rules can set module parameters
 (allow udev_t sys_module_t (fs_classes (rw)))
+
+(allow udev_t device_t (fs_classes (relabelfrom)))
+(allow udev_t device_f (fs_classes (rw relabelto)))
