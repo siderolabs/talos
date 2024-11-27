@@ -73,6 +73,7 @@
     (roletype system_r process_label)
     (typeattributeset service_p process_label)
     (typeattributeset service_exec_f executable_label)
+    (allow process_label executable_label (fs_classes (ro)))
     (allow process_label executable_label (file (entrypoint execute execute_no_trans)))
 )
 
