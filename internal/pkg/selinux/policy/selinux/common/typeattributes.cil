@@ -42,6 +42,11 @@
 (typeattributeset device_f common_device_f)
 (typeattributeset device_f protected_device_f)
 
+; By default, allow any process to access any device except special ones
+(allow any_p common_device_f (fs_classes (rw)))
+; CNI, containerd, many different services read sysctl parameters
+(allow any_p proc_sysctl_t (fs_classes (ro)))
+
 (typeattribute any_f)
 (typeattributeset any_f filesystem_f)
 (typeattributeset any_f common_f)
