@@ -362,7 +362,6 @@ func (ctrl *ControlPlaneStaticPodController) manageAPIServer(ctx context.Context
 		// Do not accept anonymous requests by default. Otherwise the kube-apiserver will set the request's group to system:unauthenticated exposing endpoints like /version etc.
 		"anonymous-auth":                     "false",
 		"api-audiences":                      cfg.ControlPlaneEndpoint,
-		"authorization-mode":                 "Node,RBAC",
 		"bind-address":                       "0.0.0.0",
 		"client-ca-file":                     filepath.Join(constants.KubernetesAPIServerSecretsDir, "ca.crt"),
 		"enable-admission-plugins":           strings.Join(enabledAdmissionPlugins, ","),
@@ -408,6 +407,10 @@ func (ctrl *ControlPlaneStaticPodController) manageAPIServer(ctx context.Context
 		builder.Set("cloud-provider", cfg.CloudProvider)
 	}
 
+	k8sVersion := compatibility.VersionFromImageRef(cfg.Image)
+
+	handleKubeAPIServerAuthorizationFlags(k8sVersion, builder, cfg.ExtraArgs)
+
 	mergePolicies := argsbuilder.MergePolicies{
 		"enable-admission-plugins": argsbuilder.MergeAdditive,
 		"feature-gates":            argsbuilder.MergeAdditive,
@@ -429,6 +432,7 @@ func (ctrl *ControlPlaneStaticPodController) manageAPIServer(ctx context.Context
 		"service-account-signing-key-file": argsbuilder.MergeDenied,
 		"tls-cert-file":                    argsbuilder.MergeDenied,
 		"tls-private-key-file":             argsbuilder.MergeDenied,
+		"authorization-config":             argsbuilder.MergeDenied,
 	}
 
 	if err := builder.Merge(cfg.ExtraArgs, argsbuilder.WithMergePolicies(mergePolicies)); err != nil {
@@ -466,7 +470,7 @@ func (ctrl *ControlPlaneStaticPodController) manageAPIServer(ctx context.Context
 					"k8s-app":                      k8s.APIServerID,
 					"component":                    k8s.APIServerID,
 					"app.kubernetes.io/name":       k8s.APIServerID,
-					"app.kubernetes.io/version":    compatibility.VersionFromImageRef(cfg.Image).String(),
+					"app.kubernetes.io/version":    k8sVersion.String(),
 					"app.kubernetes.io/component":  "control-plane",
 					"app.kubernetes.io/managed-by": "Talos",
 				},
@@ -913,4 +917,49 @@ func (ctrl *ControlPlaneStaticPodController) manageScheduler(ctx context.Context
 			},
 		})
 	})
+}
+
+func kubeAPIServerExtraArgsHasAuthorizationWebhooFlags(extraArgs map[string]string) bool {
+	return slices.ContainsFunc(maps.Keys(extraArgs), func(arg string) bool {
+		return strings.HasPrefix(arg, "authorization-webhook-")
+	})
+}
+
+func kubeAPIServerExtraArgsHasAuthorizationModeFlag(extraArgs map[string]string) bool {
+	_, ok := extraArgs["authorization-mode"]
+
+	return ok
+}
+
+func handleKubeAPIServerAuthorizationFlags(kubeVersion compatibility.Version, argBuilder argsbuilder.Args, extraArgs map[string]string) {
+	// this handle multiple cases:
+	// 1. user already has set `authorization-mode` flag, we'll just merge our default `authorization-mode` flag
+	if kubeAPIServerExtraArgsHasAuthorizationModeFlag(extraArgs) {
+		argBuilder.Set("authorization-mode", "Node,RBAC")
+
+		return
+	}
+
+	// 2. user has set `authorization-webhook-*` flags, we'll just merge our default `authorization-mode` flag
+	if kubeAPIServerExtraArgsHasAuthorizationWebhooFlags(extraArgs) {
+		argBuilder.Set("authorization-mode", "Node,RBAC")
+
+		return
+	}
+
+	// 3. user has not set `authorization-mode` flag and the kube-apiserver version doesn't support `authorization-config` flag
+	// machine config validation should handle the case where either of `authorization-mode` or `authorization-webhook-*` flags are set
+	// along with `authorizationConfig`
+	if !kubeVersion.KubeAPIServerSupportsAuthorizationConfigFile() {
+		argBuilder.Set("authorization-mode", "Node,RBAC")
+
+		return
+	}
+
+	if !kubeVersion.FeatureFlagStructuredAuthorizationConfigurationEnabledByDefault() {
+		// feature-gates flag can be set multiple times, since it has merge addictive policy
+		argBuilder.Set("feature-gates", "StructuredAuthorizationConfiguration=true")
+	}
+
+	argBuilder.Set("authorization-config", filepath.Join(constants.KubernetesAPIServerConfigDir, "authorization-config.yaml"))
 }

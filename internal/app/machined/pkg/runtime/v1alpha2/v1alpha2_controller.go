@@ -161,6 +161,7 @@ func (ctrl *Controller) Run(ctx context.Context, drainer *runtime.Drainer) error
 		k8s.NewControlPlaneAPIServerController(),
 		k8s.NewControlPlaneAdmissionControlController(),
 		k8s.NewControlPlaneAuditPolicyController(),
+		k8s.NewControlPlaneAuthorizationController(),
 		k8s.NewControlPlaneBootstrapManifestsController(),
 		k8s.NewControlPlaneControllerManagerController(),
 		k8s.NewControlPlaneExtraManifestsController(),

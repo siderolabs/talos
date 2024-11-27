@@ -1126,6 +1126,11 @@ type APIServerConfig struct {
 	//   schema:
 	//     type: object
 	ResourcesConfig *ResourcesConfig `yaml:"resources,omitempty"`
+	//   description: |
+	//     Configure the API server authorization config. Node and RBAC authorizers are always added irrespective of the configuration.
+	//   examples:
+	//     - value: authorizationConfigExample()
+	AuthorizationConfigConfig AuthorizationConfigAuthorizerConfigList `yaml:"authorizationConfig,omitempty"`
 }
 
 // AdmissionPluginConfigList represents the admission plugin configuration list.
@@ -1181,6 +1186,26 @@ type AdmissionPluginConfig struct {
 	//   schema:
 	//     type: object
 	PluginConfiguration Unstructured `yaml:"configuration"`
+}
+
+// AuthorizationConfigAuthorizerConfigList represents the authorization config authorizer configuration list.
+//
+//docgen:alias
+type AuthorizationConfigAuthorizerConfigList []*AuthorizationConfigAuthorizerConfig
+
+// AuthorizationConfigAuthorizerConfig represents the API server authorization config authorizer configuration.
+type AuthorizationConfigAuthorizerConfig struct {
+	//   description: |
+	//     Type is the name of the authorizer. Allowed values are `Node`, `RBAC`, and `Webhook`.
+	AuthorizerType string `yaml:"type"`
+	//   description: |
+	//     Name is used to describe the authorizer.
+	AuthorizerName string `yaml:"name"`
+	//   description: |
+	//     webhook is the configuration for the webhook authorizer.
+	//   schema:
+	//     type: object
+	AuthorizerWebhook Unstructured `yaml:"webhook,omitempty"`
 }
 
 var _ config.ControllerManager = (*ControllerManagerConfig)(nil)

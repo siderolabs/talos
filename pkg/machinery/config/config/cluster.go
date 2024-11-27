@@ -84,12 +84,20 @@ type APIServer interface {
 	AdmissionControl() []AdmissionPlugin
 	AuditPolicy() map[string]any
 	Resources() Resources
+	AuthorizationConfig() []AuthorizationConfigAuthorizer
 }
 
 // AdmissionPlugin defines the API server Admission Plugin configuration.
 type AdmissionPlugin interface {
 	Name() string
 	Configuration() map[string]any
+}
+
+// AuthorizationConfigAuthorizer defines the API server Authorization Authorizer configuration.
+type AuthorizationConfigAuthorizer interface {
+	Type() string
+	Name() string
+	Webhook() map[string]any
 }
 
 // ControllerManager defines the requirements for a config that pertains to controller manager related

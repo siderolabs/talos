@@ -41,6 +41,19 @@ message AuditPolicyConfigSpec {
   google.protobuf.Struct config = 1;
 }
 
+// AuthorizationAuthorizersSpec is a configuration of authorization authorizers.
+message AuthorizationAuthorizersSpec {
+  string type = 1;
+  string name = 2;
+  google.protobuf.Struct webhook = 3;
+}
+
+// AuthorizationConfigSpec is authorization configuration for kube-apiserver.
+message AuthorizationConfigSpec {
+  string image = 1;
+  repeated AuthorizationAuthorizersSpec config = 2;
+}
+
 // BootstrapManifestsConfigSpec is configuration for bootstrap manifests.
 message BootstrapManifestsConfigSpec {
   string server = 1;

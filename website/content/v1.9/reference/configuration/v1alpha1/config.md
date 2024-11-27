@@ -3012,6 +3012,32 @@ apiServer:
     #     kind: Policy
     #     rules:
     #         - level: Metadata
+
+    # # Configure the API server authorization config. Node and RBAC authorizers are always added irrespective of the configuration.
+    # authorizationConfig:
+    #     - type: Webhook # Type is the name of the authorizer. Allowed values are `Node`, `RBAC`, and `Webhook`.
+    #       name: webhook # Name is used to describe the authorizer.
+    #       # webhook is the configuration for the webhook authorizer.
+    #       webhook:
+    #         connectionInfo:
+    #             type: InClusterConfig
+    #         failurePolicy: Deny
+    #         matchConditionSubjectAccessReviewVersion: v1
+    #         matchConditions:
+    #             - expression: has(request.resourceAttributes)
+    #             - expression: '!(\''system:serviceaccounts:kube-system\'' in request.groups)'
+    #         subjectAccessReviewVersion: v1
+    #         timeout: 3s
+    #     - type: Webhook # Type is the name of the authorizer. Allowed values are `Node`, `RBAC`, and `Webhook`.
+    #       name: in-cluster-authorizer # Name is used to describe the authorizer.
+    #       # webhook is the configuration for the webhook authorizer.
+    #       webhook:
+    #         connectionInfo:
+    #             type: InClusterConfig
+    #         failurePolicy: NoOpinion
+    #         matchConditionSubjectAccessReviewVersion: v1
+    #         subjectAccessReviewVersion: v1
+    #         timeout: 3s
 {{< /highlight >}}</details> | |
 |`controllerManager` |<a href="#Config.cluster.controllerManager">ControllerManagerConfig</a> |Controller manager server specific configuration options. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 controllerManager:
@@ -3313,6 +3339,32 @@ cluster:
         #     kind: Policy
         #     rules:
         #         - level: Metadata
+
+        # # Configure the API server authorization config. Node and RBAC authorizers are always added irrespective of the configuration.
+        # authorizationConfig:
+        #     - type: Webhook # Type is the name of the authorizer. Allowed values are `Node`, `RBAC`, and `Webhook`.
+        #       name: webhook # Name is used to describe the authorizer.
+        #       # webhook is the configuration for the webhook authorizer.
+        #       webhook:
+        #         connectionInfo:
+        #             type: InClusterConfig
+        #         failurePolicy: Deny
+        #         matchConditionSubjectAccessReviewVersion: v1
+        #         matchConditions:
+        #             - expression: has(request.resourceAttributes)
+        #             - expression: '!(\''system:serviceaccounts:kube-system\'' in request.groups)'
+        #         subjectAccessReviewVersion: v1
+        #         timeout: 3s
+        #     - type: Webhook # Type is the name of the authorizer. Allowed values are `Node`, `RBAC`, and `Webhook`.
+        #       name: in-cluster-authorizer # Name is used to describe the authorizer.
+        #       # webhook is the configuration for the webhook authorizer.
+        #       webhook:
+        #         connectionInfo:
+        #             type: InClusterConfig
+        #         failurePolicy: NoOpinion
+        #         matchConditionSubjectAccessReviewVersion: v1
+        #         subjectAccessReviewVersion: v1
+        #         timeout: 3s
 {{< /highlight >}}
 
 
@@ -3354,6 +3406,32 @@ auditPolicy:
         - level: Metadata
 {{< /highlight >}}</details> | |
 |`resources` |<a href="#Config.cluster.apiServer.resources">ResourcesConfig</a> |Configure the API server resources.  | |
+|`authorizationConfig` |<a href="#Config.cluster.apiServer.authorizationConfig.">[]AuthorizationConfigAuthorizerConfig</a> |Configure the API server authorization config. Node and RBAC authorizers are always added irrespective of the configuration. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
+authorizationConfig:
+    - type: Webhook # Type is the name of the authorizer. Allowed values are `Node`, `RBAC`, and `Webhook`.
+      name: webhook # Name is used to describe the authorizer.
+      # webhook is the configuration for the webhook authorizer.
+      webhook:
+        connectionInfo:
+            type: InClusterConfig
+        failurePolicy: Deny
+        matchConditionSubjectAccessReviewVersion: v1
+        matchConditions:
+            - expression: has(request.resourceAttributes)
+            - expression: '!(\''system:serviceaccounts:kube-system\'' in request.groups)'
+        subjectAccessReviewVersion: v1
+        timeout: 3s
+    - type: Webhook # Type is the name of the authorizer. Allowed values are `Node`, `RBAC`, and `Webhook`.
+      name: in-cluster-authorizer # Name is used to describe the authorizer.
+      # webhook is the configuration for the webhook authorizer.
+      webhook:
+        connectionInfo:
+            type: InClusterConfig
+        failurePolicy: NoOpinion
+        matchConditionSubjectAccessReviewVersion: v1
+        subjectAccessReviewVersion: v1
+        timeout: 3s
+{{< /highlight >}}</details> | |
 
 
 
@@ -3441,6 +3519,53 @@ limits:
     cpu: 2
     memory: 2500Mi
 {{< /highlight >}}</details> | |
+
+
+
+
+
+
+#### authorizationConfig[] {#Config.cluster.apiServer.authorizationConfig.}
+
+AuthorizationConfigAuthorizerConfig represents the API server authorization config authorizer configuration.
+
+
+
+{{< highlight yaml >}}
+cluster:
+    apiServer:
+        authorizationConfig:
+            - type: Webhook # Type is the name of the authorizer. Allowed values are `Node`, `RBAC`, and `Webhook`.
+              name: webhook # Name is used to describe the authorizer.
+              # webhook is the configuration for the webhook authorizer.
+              webhook:
+                connectionInfo:
+                    type: InClusterConfig
+                failurePolicy: Deny
+                matchConditionSubjectAccessReviewVersion: v1
+                matchConditions:
+                    - expression: has(request.resourceAttributes)
+                    - expression: '!(\''system:serviceaccounts:kube-system\'' in request.groups)'
+                subjectAccessReviewVersion: v1
+                timeout: 3s
+            - type: Webhook # Type is the name of the authorizer. Allowed values are `Node`, `RBAC`, and `Webhook`.
+              name: in-cluster-authorizer # Name is used to describe the authorizer.
+              # webhook is the configuration for the webhook authorizer.
+              webhook:
+                connectionInfo:
+                    type: InClusterConfig
+                failurePolicy: NoOpinion
+                matchConditionSubjectAccessReviewVersion: v1
+                subjectAccessReviewVersion: v1
+                timeout: 3s
+{{< /highlight >}}
+
+
+| Field | Type | Description | Value(s) |
+|-------|------|-------------|----------|
+|`type` |string |Type is the name of the authorizer. Allowed values are `Node`, `RBAC`, and `Webhook`.  | |
+|`name` |string |Name is used to describe the authorizer.  | |
+|`webhook` |Unstructured |webhook is the configuration for the webhook authorizer.  | |
 
 
 

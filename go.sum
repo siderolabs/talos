@@ -168,8 +168,8 @@ github.com/coreos/go-semver v0.3.1 h1:yi21YpKnrx1gt5R+la8n5WgS0kCrsPp33dmEyHReZr
 github.com/coreos/go-semver v0.3.1/go.mod h1:irMmmIw/7yzSRPWryHsK7EYSg09caPQL03VsM8rvUec=
 github.com/coreos/go-systemd/v22 v22.5.0 h1:RrqgGjYQKalulkV8NGVIfkXQf6YYmOyiJKk8iXXhfZs=
 github.com/coreos/go-systemd/v22 v22.5.0/go.mod h1:Y58oyj3AT4RCenI/lSvhwexgC+NSVTIJ3seZv2GcEnc=
-github.com/cosi-project/runtime v0.7.1 h1:cOF2/ljLa0NPQV6/S1RZHcSUXM0UyOlD5F3fwwYSQEg=
-github.com/cosi-project/runtime v0.7.1/go.mod h1:EMLs8a55tJ6zA4UyDbRsTvXBd6UIlNwZfCVGvCyiXK8=
+github.com/cosi-project/runtime v0.7.2 h1:b8/v/YpP75LNYLyP5x0+EdqPWtNn6sfJggGGzkqZ0H4=
+github.com/cosi-project/runtime v0.7.2/go.mod h1:EMLs8a55tJ6zA4UyDbRsTvXBd6UIlNwZfCVGvCyiXK8=
 github.com/cpuguy83/go-md2man/v2 v2.0.2/go.mod h1:tgQtvFlXSQOSOSIRvRPT7W67SCa46tRHOmNcaadrF8o=
 github.com/cpuguy83/go-md2man/v2 v2.0.4/go.mod h1:tgQtvFlXSQOSOSIRvRPT7W67SCa46tRHOmNcaadrF8o=
 github.com/cpuguy83/go-md2man/v2 v2.0.5 h1:ZtcqGrnekaHpVLArFSe4HK5DoKx1T0rq2DwVB0alcyc=
@@ -662,8 +662,8 @@ github.com/siderolabs/go-kmsg v0.1.4 h1:RLAa90O9bWuhA3pXPAYAdrI+kzcqTshZASRA5yso
 github.com/siderolabs/go-kmsg v0.1.4/go.mod h1:BLkt2N2DHT0wsFMz32lMw6vNEZL90c8ZnBjpIUoBb/M=
 github.com/siderolabs/go-kubeconfig v0.1.0 h1:t/2oMWkLSdWHXglKPMz8ySXnx6ZjHckeGY79NaDcBTo=
 github.com/siderolabs/go-kubeconfig v0.1.0/go.mod h1:eM3mO02Td6wYDvdi9zTbMrj1Q4WqEFN8XQ6pNjCUWkI=
-github.com/siderolabs/go-kubernetes v0.2.16 h1:sTvxsqx07zgPZRz2/vXKXRWV304biQ0JMnHckTVWrtg=
-github.com/siderolabs/go-kubernetes v0.2.16/go.mod h1:ElwMMmkNLrSRdAMqOouN9RZbO4G3CM5fJ0F5CBRsGRE=
+github.com/siderolabs/go-kubernetes v0.2.17 h1:xxwDtoPQx032Ot6zAhDyOssfMazZG57gjzDGkpaVJuE=
+github.com/siderolabs/go-kubernetes v0.2.17/go.mod h1:ac3dMOOYWdFvaBUfVvlJoc0ifFVHBdqth1CPsxSFaGA=
 github.com/siderolabs/go-loadbalancer v0.3.4 h1:clxUefcY20djLdHMrh2j3rjVYDwDApXh1us/6cgrgoo=
 github.com/siderolabs/go-loadbalancer v0.3.4/go.mod h1:v0ziDvpArNRSF5LO0PIPQIPIYYHxX/fk+Vlg0wuSIiM=
 github.com/siderolabs/go-pcidb v0.3.0 h1:jR4w1YLNY8Cv1o5jnoQ2Q+pbxcosO2FVFrAAp1RURnw=
@@ -730,8 +730,8 @@ github.com/stretchr/testify v1.7.1/go.mod h1:6Fq8oRcR53rry900zMqJjRRixrwX3KX962/
 github.com/stretchr/testify v1.8.0/go.mod h1:yNjHg4UonilssWZ8iaSj1OCr/vHnekPRkoO+kdMU+MU=
 github.com/stretchr/testify v1.8.1/go.mod h1:w2LPCIKwWwSfY2zedu0+kehJoqGctiVI29o6fzry7u4=
 github.com/stretchr/testify v1.8.2/go.mod h1:w2LPCIKwWwSfY2zedu0+kehJoqGctiVI29o6fzry7u4=
-github.com/stretchr/testify v1.9.0 h1:HtqpIVDClZ4nwg75+f6Lvsy/wHu+3BoSGCbBAcpTsTg=
-github.com/stretchr/testify v1.9.0/go.mod h1:r2ic/lqez/lEtzL7wO/rwa5dbSLXVDPFyf8C91i36aY=
+github.com/stretchr/testify v1.10.0 h1:Xv5erBjTwe/5IxqUQTdXv5kgmIvbHo3QQyRwhJsOfJA=
+github.com/stretchr/testify v1.10.0/go.mod h1:r2ic/lqez/lEtzL7wO/rwa5dbSLXVDPFyf8C91i36aY=
 github.com/syndtr/gocapability v0.0.0-20200815063812-42c35b437635 h1:kdXcSzyDtseVEc4yCz2qF8ZrQvIDBJLl4S1c3GCXmoI=
 github.com/syndtr/gocapability v0.0.0-20200815063812-42c35b437635/go.mod h1:hkRG7XYTFWNJGYcbNJQlaLq0fg1yr4J4t/NcTQtrfww=
 github.com/thejerf/suture/v4 v4.0.5 h1:F1E/4FZwXWqvlWDKEUo6/ndLtxGAUzMmNqkrMknZbAA=

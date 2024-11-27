@@ -636,6 +636,16 @@
           "description": "Configure the API server resources.\n",
           "markdownDescription": "Configure the API server resources.",
           "x-intellij-html-description": "\u003cp\u003eConfigure the API server resources.\u003c/p\u003e\n"
+        },
+        "authorizationConfig": {
+          "items": {
+            "$ref": "#/$defs/v1alpha1.AuthorizationConfigAuthorizerConfig"
+          },
+          "type": "array",
+          "title": "authorizationConfig",
+          "description": "Configure the API server authorization config. Node and RBAC authorizers are always added irrespective of the configuration.\n",
+          "markdownDescription": "Configure the API server authorization config. Node and RBAC authorizers are always added irrespective of the configuration.",
+          "x-intellij-html-description": "\u003cp\u003eConfigure the API server authorization config. Node and RBAC authorizers are always added irrespective of the configuration.\u003c/p\u003e\n"
         }
       },
       "additionalProperties": false,
@@ -670,6 +680,33 @@
           "description": "Configuration is an embedded configuration object to be used as the plugin’s\nconfiguration.\n",
           "markdownDescription": "Configuration is an embedded configuration object to be used as the plugin's\nconfiguration.",
           "x-intellij-html-description": "\u003cp\u003eConfiguration is an embedded configuration object to be used as the plugin\u0026rsquo;s\nconfiguration.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "v1alpha1.AuthorizationConfigAuthorizerConfig": {
+      "properties": {
+        "type": {
+          "type": "string",
+          "title": "type",
+          "description": "Type is the name of the authorizer. Allowed values are Node, RBAC, and Webhook.\n",
+          "markdownDescription": "Type is the name of the authorizer. Allowed values are `Node`, `RBAC`, and `Webhook`.",
+          "x-intellij-html-description": "\u003cp\u003eType is the name of the authorizer. Allowed values are \u003ccode\u003eNode\u003c/code\u003e, \u003ccode\u003eRBAC\u003c/code\u003e, and \u003ccode\u003eWebhook\u003c/code\u003e.\u003c/p\u003e\n"
+        },
+        "name": {
+          "type": "string",
+          "title": "name",
+          "description": "Name is used to describe the authorizer.\n",
+          "markdownDescription": "Name is used to describe the authorizer.",
+          "x-intellij-html-description": "\u003cp\u003eName is used to describe the authorizer.\u003c/p\u003e\n"
+        },
+        "webhook": {
+          "type": "object",
+          "title": "webhook",
+          "description": "webhook is the configuration for the webhook authorizer.\n",
+          "markdownDescription": "webhook is the configuration for the webhook authorizer.",
+          "x-intellij-html-description": "\u003cp\u003ewebhook is the configuration for the webhook authorizer.\u003c/p\u003e\n"
         }
       },
       "additionalProperties": false,

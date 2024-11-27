@@ -748,6 +748,49 @@ func admissionControlConfigExample() []*AdmissionPluginConfig {
 	}
 }
 
+func authorizationConfigExample() []*AuthorizationConfigAuthorizerConfig {
+	return []*AuthorizationConfigAuthorizerConfig{
+		{
+			AuthorizerType: "Webhook",
+			AuthorizerName: "webhook",
+			AuthorizerWebhook: Unstructured{
+				Object: map[string]any{
+					"timeout":                    "3s",
+					"subjectAccessReviewVersion": "v1",
+					"matchConditionSubjectAccessReviewVersion": "v1",
+					"failurePolicy": "Deny",
+					"connectionInfo": map[string]any{
+						"type": "InClusterConfig",
+					},
+					"matchConditions": []map[string]any{
+						{
+							"expression": "has(request.resourceAttributes)",
+						},
+						{
+							"expression": "!(\\'system:serviceaccounts:kube-system\\' in request.groups)",
+						},
+					},
+				},
+			},
+		},
+		{
+			AuthorizerType: "Webhook",
+			AuthorizerName: "in-cluster-authorizer",
+			AuthorizerWebhook: Unstructured{
+				Object: map[string]any{
+					"timeout":                    "3s",
+					"subjectAccessReviewVersion": "v1",
+					"matchConditionSubjectAccessReviewVersion": "v1",
+					"failurePolicy": "NoOpinion",
+					"connectionInfo": map[string]any{
+						"type": "InClusterConfig",
+					},
+				},
+			},
+		},
+	}
+}
+
 func installExtensionsExample() []InstallExtensionConfig {
 	return []InstallExtensionConfig{
 		{

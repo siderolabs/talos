@@ -1449,6 +1449,13 @@ func (APIServerConfig) Doc() *encoder.Doc {
 				Description: "Configure the API server resources.",
 				Comments:    [3]string{"" /* encoder.HeadComment */, "Configure the API server resources." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
+			{
+				Name:        "authorizationConfig",
+				Type:        "[]AuthorizationConfigAuthorizerConfig",
+				Note:        "",
+				Description: "Configure the API server authorization config. Node and RBAC authorizers are always added irrespective of the configuration.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Configure the API server authorization config. Node and RBAC authorizers are always added irrespective of the configuration." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
 		},
 	}
 
@@ -1457,6 +1464,7 @@ func (APIServerConfig) Doc() *encoder.Doc {
 	doc.Fields[0].AddExample("", clusterAPIServerImageExample())
 	doc.Fields[6].AddExample("", admissionControlConfigExample())
 	doc.Fields[7].AddExample("", APIServerDefaultAuditPolicy)
+	doc.Fields[9].AddExample("", authorizationConfigExample())
 
 	return doc
 }
@@ -1491,6 +1499,47 @@ func (AdmissionPluginConfig) Doc() *encoder.Doc {
 	}
 
 	doc.AddExample("", admissionControlConfigExample())
+
+	return doc
+}
+
+func (AuthorizationConfigAuthorizerConfig) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "AuthorizationConfigAuthorizerConfig",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "AuthorizationConfigAuthorizerConfig represents the API server authorization config authorizer configuration." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "AuthorizationConfigAuthorizerConfig represents the API server authorization config authorizer configuration.",
+		AppearsIn: []encoder.Appearance{
+			{
+				TypeName:  "APIServerConfig",
+				FieldName: "authorizationConfig",
+			},
+		},
+		Fields: []encoder.Doc{
+			{
+				Name:        "type",
+				Type:        "string",
+				Note:        "",
+				Description: "Type is the name of the authorizer. Allowed values are `Node`, `RBAC`, and `Webhook`.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Type is the name of the authorizer. Allowed values are `Node`, `RBAC`, and `Webhook`." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "name",
+				Type:        "string",
+				Note:        "",
+				Description: "Name is used to describe the authorizer.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Name is used to describe the authorizer." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "webhook",
+				Type:        "Unstructured",
+				Note:        "",
+				Description: "webhook is the configuration for the webhook authorizer.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "webhook is the configuration for the webhook authorizer." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
+
+	doc.AddExample("", authorizationConfigExample())
 
 	return doc
 }
@@ -4177,6 +4226,7 @@ func GetFileDoc() *encoder.FileDoc {
 			ControlPlaneConfig{}.Doc(),
 			APIServerConfig{}.Doc(),
 			AdmissionPluginConfig{}.Doc(),
+			AuthorizationConfigAuthorizerConfig{}.Doc(),
 			ControllerManagerConfig{}.Doc(),
 			ProxyConfig{}.Doc(),
 			SchedulerConfig{}.Doc(),

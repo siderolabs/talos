@@ -15,6 +15,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
+	"github.com/siderolabs/go-kubernetes/kubernetes/compatibility"
 	"go.uber.org/zap"
 	"k8s.io/apimachinery/pkg/runtime"
 	k8sjson "k8s.io/apimachinery/pkg/runtime/serializer/json"
@@ -50,6 +51,11 @@ func (ctrl *RenderConfigsStaticPodController) Inputs() []controller.Input {
 		},
 		{
 			Namespace: k8s.ControlPlaneNamespaceName,
+			Type:      k8s.AuthorizationConfigType,
+			Kind:      controller.InputWeak,
+		},
+		{
+			Namespace: k8s.ControlPlaneNamespaceName,
 			Type:      k8s.SchedulerConfigType,
 			Kind:      controller.InputWeak,
 		},
@@ -68,7 +74,7 @@ func (ctrl *RenderConfigsStaticPodController) Outputs() []controller.Output {
 
 // Run implements controller.Controller interface.
 //
-//nolint:gocyclo
+//nolint:gocyclo,cyclop
 func (ctrl *RenderConfigsStaticPodController) Run(ctx context.Context, r controller.Runtime, _ *zap.Logger) error {
 	for {
 		select {
@@ -98,6 +104,19 @@ func (ctrl *RenderConfigsStaticPodController) Run(ctx context.Context, r control
 		}
 
 		auditConfig := auditRes.TypedSpec()
+
+		authorizerConfigRes, err := safe.ReaderGetByID[*k8s.AuthorizationConfig](ctx, r, k8s.AuthorizationConfigID)
+		if err != nil {
+			if state.IsNotFoundError(err) {
+				continue
+			}
+
+			return fmt.Errorf("error getting authorization config resource: %w", err)
+		}
+
+		authorizerConfig := authorizerConfigRes.TypedSpec()
+
+		kubeAPIServerVersion := compatibility.VersionFromImageRef(authorizerConfig.Image)
 
 		kubeSchedulerRes, err := safe.ReaderGetByID[*k8s.SchedulerConfig](ctx, r, k8s.SchedulerConfigID)
 		if err != nil {
@@ -146,6 +165,10 @@ func (ctrl *RenderConfigsStaticPodController) Run(ctx context.Context, r control
 					{
 						filename: "auditpolicy.yaml",
 						f:        auditPolicyConfig(auditConfig),
+					},
+					{
+						filename: "authorization-config.yaml",
+						f:        authorizationConfig(authorizerConfig, kubeAPIServerVersion),
 					},
 				},
 			},
@@ -197,7 +220,10 @@ func (ctrl *RenderConfigsStaticPodController) Run(ctx context.Context, r control
 
 		if err = safe.WriterModify(ctx, r, k8s.NewConfigStatus(k8s.ControlPlaneNamespaceName, k8s.ConfigStatusStaticPodID), func(r *k8s.ConfigStatus) error {
 			r.TypedSpec().Ready = true
-			r.TypedSpec().Version = admissionRes.Metadata().Version().String() + auditRes.Metadata().Version().String() + kubeSchedulerRes.Metadata().Version().String()
+			r.TypedSpec().Version = admissionRes.Metadata().Version().String() +
+				auditRes.Metadata().Version().String() +
+				authorizerConfigRes.Metadata().Version().String() +
+				kubeSchedulerRes.Metadata().Version().String()
 
 			return nil
 		}); err != nil {
@@ -259,6 +285,37 @@ func schedulerConfig(spec *k8s.SchedulerConfigSpec) func() (runtime.Object, erro
 		cfg.APIVersion = "kubescheduler.config.k8s.io/v1"
 		cfg.Kind = "KubeSchedulerConfiguration"
 		cfg.ClientConnection.Kubeconfig = filepath.Join(constants.KubernetesSchedulerSecretsDir, "kubeconfig")
+
+		return &cfg, nil
+	}
+}
+
+func authorizationConfig(spec *k8s.AuthorizationConfigSpec, kubeAPIServerVersion compatibility.Version) func() (runtime.Object, error) {
+	return func() (runtime.Object, error) {
+		var cfg apiserverv1.AuthorizationConfiguration
+
+		cfg.APIVersion = kubeAPIServerVersion.KubeAPIServerAuthorizationConfigAPIVersion()
+		cfg.Kind = "AuthorizationConfiguration"
+		cfg.Authorizers = []apiserverv1.AuthorizerConfiguration{}
+
+		for _, authorizer := range spec.Config {
+			authorizerConfig := apiserverv1.AuthorizerConfiguration{
+				Name: authorizer.Name,
+				Type: authorizer.Type,
+			}
+
+			if authorizer.Webhook != nil {
+				var webhookCfg apiserverv1.WebhookConfiguration
+
+				if err := runtime.DefaultUnstructuredConverter.FromUnstructured(authorizer.Webhook, &webhookCfg); err != nil {
+					return nil, fmt.Errorf("error unmarshaling authorizer webhook configuration: %w", err)
+				}
+
+				authorizerConfig.Webhook = &webhookCfg
+			}
+
+			cfg.Authorizers = append(cfg.Authorizers, authorizerConfig)
+		}
 
 		return &cfg, nil
 	}

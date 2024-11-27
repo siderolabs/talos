@@ -27,6 +27,32 @@ preface = """
 Talos is built with Go 1.23.3.
 """
 
+    [notes.machineConfigKubeAPIServer]
+        title = "Kube APIServer Authorization Config"
+        description = """\
+Starting with Talos 1.9, `.cluster.apiServer.authorizationConfig` field supports setting [Kubernetes API server authorization modes](https://kubernetes.io/docs/reference/access-authn-authz/authorization/#using-configuration-file-for-authorization)
+using the `--authorization-config` flag.
+
+The machine config field supports a list of `authorizers`. For eg:
+
+```yaml
+cluster:
+  apiServer:
+    authorizationConfig:
+      - type: Node
+        name: Node
+      - type RBAC
+        name: rbac
+```
+
+For new cluster if the Kubernetes API server supports the `--authorization-config` flag, it'll be used by default instead of the `--authorization-mode` flag.
+By default Talos will always add the `Node` and `  RBAC` authorizers to the list.
+
+When upgrading if either a user-provided `authorization-mode` or `authorization-webhook-*` flag is set via `.cluster.apiServer.extraArgs`, it'll be used instead of the new `AuthorizationConfig`.
+
+Current authorization config can be viewed by running: `talosctl get authorizationconfigs.kubernetes.talos.dev -o yaml`
+"""
+
     [notes.drm]
         title = "Direct Rendering Manager (DRM)"
         description = """\

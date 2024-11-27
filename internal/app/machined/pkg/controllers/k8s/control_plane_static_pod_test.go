@@ -5,24 +5,17 @@
 package k8s_test
 
 import (
-	"context"
 	"fmt"
-	"slices"
+	"path/filepath"
 	"strconv"
 	"strings"
-	"sync"
 	"testing"
 	"time"
 
-	"github.com/cosi-project/runtime/pkg/controller/runtime"
 	"github.com/cosi-project/runtime/pkg/resource"
-	"github.com/cosi-project/runtime/pkg/state"
-	"github.com/cosi-project/runtime/pkg/state/impl/inmem"
-	"github.com/cosi-project/runtime/pkg/state/impl/namespaced"
-	"github.com/siderolabs/gen/xslices"
-	"github.com/siderolabs/go-retry/retry"
+	"github.com/cosi-project/runtime/pkg/resource/rtestutils"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
-	"go.uber.org/zap/zaptest"
 	v1 "k8s.io/api/core/v1"
 	apiresource "k8s.io/apimachinery/pkg/api/resource"
 
@@ -35,68 +28,7 @@ import (
 )
 
 type ControlPlaneStaticPodSuite struct {
-	suite.Suite
-
-	state state.State
-
-	runtime *runtime.Runtime
-	wg      sync.WaitGroup
-
-	ctx       context.Context //nolint:containedctx
-	ctxCancel context.CancelFunc
-}
-
-func (suite *ControlPlaneStaticPodSuite) SetupTest() {
-	suite.ctx, suite.ctxCancel = context.WithTimeout(context.Background(), 3*time.Minute)
-
-	suite.state = state.WrapCore(namespaced.NewState(inmem.Build))
-
-	var err error
-
-	suite.runtime, err = runtime.NewRuntime(suite.state, zaptest.NewLogger(suite.T()))
-	suite.Require().NoError(err)
-
-	suite.Require().NoError(suite.runtime.RegisterController(&k8sctrl.ControlPlaneStaticPodController{}))
-
-	etcdService := v1alpha1.NewService("etcd")
-	etcdService.TypedSpec().Running = true
-	etcdService.TypedSpec().Healthy = true
-
-	suite.Require().NoError(suite.state.Create(suite.ctx, etcdService))
-
-	suite.startRuntime()
-}
-
-func (suite *ControlPlaneStaticPodSuite) State() state.State { return suite.state }
-
-func (suite *ControlPlaneStaticPodSuite) Ctx() context.Context { return suite.ctx }
-
-func (suite *ControlPlaneStaticPodSuite) startRuntime() {
-	suite.wg.Add(1)
-
-	go func() {
-		defer suite.wg.Done()
-
-		suite.Assert().NoError(suite.runtime.Run(suite.ctx))
-	}()
-}
-
-func (suite *ControlPlaneStaticPodSuite) assertControlPlaneStaticPods(manifests []string) error {
-	resources, err := suite.state.List(
-		suite.ctx,
-		resource.NewMetadata(k8s.NamespaceName, k8s.StaticPodType, "", resource.VersionUndefined),
-	)
-	if err != nil {
-		return err
-	}
-
-	ids := xslices.Map(resources.Items, func(r resource.Resource) string { return r.Metadata().ID() })
-
-	if !slices.Equal(manifests, ids) {
-		return retry.ExpectedErrorf("expected %q, got %q", manifests, ids)
-	}
-
-	return nil
+	ctest.DefaultSuite
 }
 
 func (suite *ControlPlaneStaticPodSuite) TestReconcileDefaults() {
@@ -108,47 +40,22 @@ func (suite *ControlPlaneStaticPodSuite) TestReconcileDefaults() {
 	configScheduler := k8s.NewSchedulerConfig()
 	configScheduler.TypedSpec().Enabled = true
 
-	suite.Require().NoError(suite.state.Create(suite.ctx, configStatus))
-	suite.Require().NoError(suite.state.Create(suite.ctx, secretStatus))
-	suite.Require().NoError(suite.state.Create(suite.ctx, configAPIServer))
-	suite.Require().NoError(suite.state.Create(suite.ctx, configControllerManager))
-	suite.Require().NoError(suite.state.Create(suite.ctx, configScheduler))
+	suite.Require().NoError(suite.State().Create(suite.Ctx(), configStatus))
+	suite.Require().NoError(suite.State().Create(suite.Ctx(), secretStatus))
+	suite.Require().NoError(suite.State().Create(suite.Ctx(), configAPIServer))
+	suite.Require().NoError(suite.State().Create(suite.Ctx(), configControllerManager))
+	suite.Require().NoError(suite.State().Create(suite.Ctx(), configScheduler))
 
-	suite.Assert().NoError(
-		retry.Constant(10*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-			func() error {
-				return suite.assertControlPlaneStaticPods(
-					[]string{
-						"kube-apiserver",
-						"kube-controller-manager",
-						"kube-scheduler",
-					},
-				)
-			},
-		),
-	)
-
-	// tear down etcd service
-	suite.Require().NoError(suite.state.Destroy(suite.ctx, v1alpha1.NewService("etcd").Metadata()))
-
-	suite.Assert().NoError(
-		retry.Constant(10*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-			func() error {
-				list, err := suite.state.List(
-					suite.ctx,
-					resource.NewMetadata(k8s.NamespaceName, k8s.StaticPodType, "", resource.VersionUndefined),
-				)
-				if err != nil {
-					return err
-				}
-
-				if len(list.Items) > 0 {
-					return retry.ExpectedErrorf("expected no pods, got %d", len(list.Items))
-				}
-
-				return nil
-			},
-		),
+	rtestutils.AssertResources(
+		suite.Ctx(),
+		suite.T(),
+		suite.State(),
+		[]resource.ID{
+			k8s.APIServerID,
+			k8s.ControllerManagerID,
+			k8s.SchedulerID,
+		},
+		func(*k8s.StaticPod, *assert.Assertions) {},
 	)
 }
 
@@ -172,133 +79,200 @@ func (suite *ControlPlaneStaticPodSuite) TestReconcileExtraMounts() {
 	configScheduler := k8s.NewSchedulerConfig()
 	configScheduler.TypedSpec().Enabled = true
 
-	suite.Require().NoError(suite.state.Create(suite.ctx, configStatus))
-	suite.Require().NoError(suite.state.Create(suite.ctx, secretStatus))
-	suite.Require().NoError(suite.state.Create(suite.ctx, configAPIServer))
-	suite.Require().NoError(suite.state.Create(suite.ctx, configControllerManager))
-	suite.Require().NoError(suite.state.Create(suite.ctx, configScheduler))
+	suite.Require().NoError(suite.State().Create(suite.Ctx(), configStatus))
+	suite.Require().NoError(suite.State().Create(suite.Ctx(), secretStatus))
+	suite.Require().NoError(suite.State().Create(suite.Ctx(), configAPIServer))
+	suite.Require().NoError(suite.State().Create(suite.Ctx(), configControllerManager))
+	suite.Require().NoError(suite.State().Create(suite.Ctx(), configScheduler))
 
-	suite.Assert().NoError(
-		retry.Constant(10*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-			func() error {
-				return suite.assertControlPlaneStaticPods(
-					[]string{
-						"kube-apiserver",
-						"kube-controller-manager",
-						"kube-scheduler",
+	rtestutils.AssertResources(
+		suite.Ctx(),
+		suite.T(),
+		suite.State(),
+		[]resource.ID{
+			k8s.APIServerID,
+			k8s.ControllerManagerID,
+			k8s.SchedulerID,
+		},
+		func(*k8s.StaticPod, *assert.Assertions) {},
+	)
+
+	rtestutils.AssertResource(suite.Ctx(), suite.T(), suite.State(), k8s.APIServerID, func(staticPod *k8s.StaticPod, assert *assert.Assertions) {
+		apiServerPod, err := k8sadapter.StaticPod(staticPod).Pod()
+		suite.Require().NoError(err)
+
+		suite.Assert().Len(apiServerPod.Spec.Volumes, 4)
+		suite.Assert().Len(apiServerPod.Spec.Containers[0].VolumeMounts, 4)
+
+		suite.Assert().Equal([]v1.Volume{
+			{
+				Name: "secrets",
+				VolumeSource: v1.VolumeSource{
+					HostPath: &v1.HostPathVolumeSource{
+						Path: constants.KubernetesAPIServerSecretsDir,
 					},
-				)
-			},
-		),
-	)
-
-	r, err := suite.state.Get(
-		suite.ctx,
-		resource.NewMetadata(k8s.NamespaceName, k8s.StaticPodType, "kube-apiserver", resource.VersionUndefined),
-	)
-	suite.Require().NoError(err)
-
-	apiServerPod, err := k8sadapter.StaticPod(r.(*k8s.StaticPod)).Pod()
-	suite.Require().NoError(err)
-
-	suite.Assert().Len(apiServerPod.Spec.Volumes, 4)
-	suite.Assert().Len(apiServerPod.Spec.Containers[0].VolumeMounts, 4)
-
-	suite.Assert().Equal(
-		v1.Volume{
-			Name: "secrets",
-			VolumeSource: v1.VolumeSource{
-				HostPath: &v1.HostPathVolumeSource{
-					Path: constants.KubernetesAPIServerSecretsDir,
 				},
 			},
-		}, apiServerPod.Spec.Volumes[0],
-	)
-
-	suite.Assert().Equal(
-		v1.Volume{
-			Name: "config",
-			VolumeSource: v1.VolumeSource{
-				HostPath: &v1.HostPathVolumeSource{
-					Path: constants.KubernetesAPIServerConfigDir,
+			{
+				Name: "config",
+				VolumeSource: v1.VolumeSource{
+					HostPath: &v1.HostPathVolumeSource{
+						Path: constants.KubernetesAPIServerConfigDir,
+					},
 				},
 			},
-		}, apiServerPod.Spec.Volumes[1],
-	)
-
-	suite.Assert().Equal(
-		v1.Volume{
-			Name: "audit",
-			VolumeSource: v1.VolumeSource{
-				HostPath: &v1.HostPathVolumeSource{
-					Path: constants.KubernetesAuditLogDir,
+			{
+				Name: "audit",
+				VolumeSource: v1.VolumeSource{
+					HostPath: &v1.HostPathVolumeSource{
+						Path: constants.KubernetesAuditLogDir,
+					},
 				},
 			},
-		}, apiServerPod.Spec.Volumes[2],
-	)
-
-	suite.Assert().Equal(
-		v1.Volume{
-			Name: "foo",
-			VolumeSource: v1.VolumeSource{
-				HostPath: &v1.HostPathVolumeSource{
-					Path: "/var/lib",
+			{
+				Name: "foo",
+				VolumeSource: v1.VolumeSource{
+					HostPath: &v1.HostPathVolumeSource{
+						Path: "/var/lib",
+					},
 				},
 			},
-		}, apiServerPod.Spec.Volumes[3],
-	)
+		},
+			apiServerPod.Spec.Volumes,
+		)
 
-	suite.Assert().Equal(
-		v1.VolumeMount{
-			Name:      "secrets",
-			MountPath: constants.KubernetesAPIServerSecretsDir,
-			ReadOnly:  true,
-		}, apiServerPod.Spec.Containers[0].VolumeMounts[0],
-	)
-
-	suite.Assert().Equal(
-		v1.VolumeMount{
-			Name:      "config",
-			MountPath: constants.KubernetesAPIServerConfigDir,
-			ReadOnly:  true,
-		}, apiServerPod.Spec.Containers[0].VolumeMounts[1],
-	)
-
-	suite.Assert().Equal(
-		v1.VolumeMount{
-			Name:      "audit",
-			MountPath: constants.KubernetesAuditLogDir,
-			ReadOnly:  false,
-		}, apiServerPod.Spec.Containers[0].VolumeMounts[2],
-	)
-
-	suite.Assert().Equal(
-		v1.VolumeMount{
-			Name:      "foo",
-			MountPath: "/var/foo",
-			ReadOnly:  true,
-		}, apiServerPod.Spec.Containers[0].VolumeMounts[3],
-	)
+		suite.Assert().Equal([]v1.VolumeMount{
+			{
+				Name:      "secrets",
+				MountPath: constants.KubernetesAPIServerSecretsDir,
+				ReadOnly:  true,
+			},
+			{
+				Name:      "config",
+				MountPath: constants.KubernetesAPIServerConfigDir,
+				ReadOnly:  true,
+			},
+			{
+				Name:      "audit",
+				MountPath: constants.KubernetesAuditLogDir,
+				ReadOnly:  false,
+			},
+			{
+				Name:      "foo",
+				MountPath: "/var/foo",
+				ReadOnly:  true,
+			},
+		},
+			apiServerPod.Spec.Containers[0].VolumeMounts,
+		)
+	})
 }
 
-func (suite *ControlPlaneStaticPodSuite) TestReconcileExtraArgs() {
+func (suite *ControlPlaneStaticPodSuite) TestReconcileExtraArgsK8s() {
 	tests := []struct {
+		k8sVersion  string
 		args        map[string]string
 		expected    map[string]string
 		expectError bool
 	}{
 		{
+			k8sVersion: "v1.28.0", // authorization-config not supported and `authorization-mode` is not set
+			args: map[string]string{
+				"enable-admission-plugins": "NodeRestriction,PodNodeSelector",
+				"bind-address":             "127.0.0.1",
+				"audit-log-batch-max-size": "2",
+				"feature-gates":            "PodNodeSelector=true",
+			},
+			expected: map[string]string{
+				"enable-admission-plugins": "NodeRestriction,PodNodeSelector",
+				"authorization-mode":       "Node,RBAC",
+				"bind-address":             "127.0.0.1",
+				"audit-log-batch-max-size": "2",
+				"feature-gates":            "PodNodeSelector=true",
+			},
+		},
+		{
+			k8sVersion: "v1.28.0", // authorization-config not supported
 			args: map[string]string{
 				"enable-admission-plugins": "NodeRestriction,PodNodeSelector",
 				"authorization-mode":       "Webhook",
 				"bind-address":             "127.0.0.1",
 				"audit-log-batch-max-size": "2",
+				"feature-gates":            "PodNodeSelector=true",
 			},
 			expected: map[string]string{
 				"enable-admission-plugins": "NodeRestriction,PodNodeSelector",
 				"authorization-mode":       "Node,RBAC,Webhook",
 				"bind-address":             "127.0.0.1",
 				"audit-log-batch-max-size": "2",
+				"feature-gates":            "PodNodeSelector=true",
+			},
+		},
+		{
+			k8sVersion: "v1.29.0", // authorization-config supported, but feature-gates is alpha
+			args: map[string]string{
+				"enable-admission-plugins": "NodeRestriction,PodNodeSelector",
+				"bind-address":             "127.0.0.1",
+				"audit-log-batch-max-size": "2",
+				"feature-gates":            "PodNodeSelector=true",
+			},
+			expected: map[string]string{
+				"enable-admission-plugins": "NodeRestriction,PodNodeSelector",
+				"bind-address":             "127.0.0.1",
+				"audit-log-batch-max-size": "2",
+				"feature-gates":            "StructuredAuthorizationConfiguration=true,PodNodeSelector=true",
+				"authorization-config":     filepath.Join(constants.KubernetesAPIServerConfigDir, "authorization-config.yaml"),
+			},
+		},
+		{
+			k8sVersion: "v1.29.0", // authorization-config supported, but feature-gates is alpha, upgrade scenario where `authorization-mode` is already set
+			args: map[string]string{
+				"enable-admission-plugins": "NodeRestriction,PodNodeSelector",
+				"bind-address":             "127.0.0.1",
+				"audit-log-batch-max-size": "2",
+				"feature-gates":            "PodNodeSelector=true",
+				"authorization-mode":       "Webhook,Node",
+			},
+			expected: map[string]string{
+				"enable-admission-plugins": "NodeRestriction,PodNodeSelector",
+				"bind-address":             "127.0.0.1",
+				"audit-log-batch-max-size": "2",
+				"feature-gates":            "PodNodeSelector=true",
+				"authorization-mode":       "Node,RBAC,Webhook",
+			},
+		},
+		{
+			k8sVersion: "v1.30.0", // authorization-config supported, feature-gates is beta (enabled by default), upgrade scenario where `authorization-webhook-*` is already set
+			args: map[string]string{
+				"enable-admission-plugins":      "NodeRestriction,PodNodeSelector",
+				"bind-address":                  "127.0.0.1",
+				"audit-log-batch-max-size":      "2",
+				"feature-gates":                 "PodNodeSelector=true",
+				"authorization-webhook-version": "v1",
+			},
+			expected: map[string]string{
+				"enable-admission-plugins":      "NodeRestriction,PodNodeSelector",
+				"bind-address":                  "127.0.0.1",
+				"audit-log-batch-max-size":      "2",
+				"feature-gates":                 "PodNodeSelector=true",
+				"authorization-mode":            "Node,RBAC",
+				"authorization-webhook-version": "v1",
+			},
+		},
+		{
+			k8sVersion: "v1.30.0", // authorization-config supported, feature-gates is beta (enabled by default)
+			args: map[string]string{
+				"enable-admission-plugins": "NodeRestriction,PodNodeSelector",
+				"bind-address":             "127.0.0.1",
+				"audit-log-batch-max-size": "2",
+				"feature-gates":            "PodNodeSelector=true",
+			},
+			expected: map[string]string{
+				"enable-admission-plugins": "NodeRestriction,PodNodeSelector",
+				"bind-address":             "127.0.0.1",
+				"audit-log-batch-max-size": "2",
+				"feature-gates":            "PodNodeSelector=true",
+				"authorization-config":     filepath.Join(constants.KubernetesAPIServerConfigDir, "authorization-config.yaml"),
 			},
 		},
 		{
@@ -308,101 +282,71 @@ func (suite *ControlPlaneStaticPodSuite) TestReconcileExtraArgs() {
 			expectError: true,
 		},
 	}
-	for _, test := range tests {
-		configStatus := k8s.NewConfigStatus(k8s.ControlPlaneNamespaceName, k8s.ConfigStatusStaticPodID)
-		secretStatus := k8s.NewSecretsStatus(k8s.ControlPlaneNamespaceName, k8s.StaticPodSecretsStaticPodID)
-		configAPIServer := k8s.NewAPIServerConfig()
 
-		*configAPIServer.TypedSpec() = k8s.APIServerConfigSpec{
-			ExtraArgs: test.args,
+	configStatus := k8s.NewConfigStatus(k8s.ControlPlaneNamespaceName, k8s.ConfigStatusStaticPodID)
+	secretStatus := k8s.NewSecretsStatus(k8s.ControlPlaneNamespaceName, k8s.StaticPodSecretsStaticPodID)
+	configAPIServer := k8s.NewAPIServerConfig()
+
+	suite.Require().NoError(suite.State().Create(suite.Ctx(), configStatus))
+	suite.Require().NoError(suite.State().Create(suite.Ctx(), secretStatus))
+	suite.Require().NoError(suite.State().Create(suite.Ctx(), configAPIServer))
+
+	rtestutils.AssertResource(suite.Ctx(), suite.T(), suite.State(), k8s.APIServerID, func(staticPod *k8s.StaticPod, assert *assert.Assertions) {})
+
+	for _, test := range tests {
+		configAPIServer.TypedSpec().ExtraArgs = test.args
+
+		if test.k8sVersion != "" {
+			configAPIServer.TypedSpec().Image = fmt.Sprintf("k8s.gcr.io/kube-apiserver:%s", test.k8sVersion)
 		}
 
-		suite.Require().NoError(suite.state.Create(suite.ctx, configStatus))
-		suite.Require().NoError(suite.state.Create(suite.ctx, secretStatus))
-		suite.Require().NoError(suite.state.Create(suite.ctx, configAPIServer))
+		oldData := configAPIServer.TypedSpec().ExtraArgs
+
+		suite.Require().NoError(suite.State().Update(suite.Ctx(), configAPIServer))
 
 		if test.expectError {
 			// wait for some time to ensure that controller has picked the input
 			time.Sleep(500 * time.Millisecond)
 
-			_, err := suite.state.Get(
-				suite.ctx,
-				resource.NewMetadata(k8s.NamespaceName, k8s.StaticPodType, "kube-apiserver", resource.VersionUndefined),
-			)
-			suite.Require().Error(err)
+			// if the test expects an error, we should not have updated the extra args
+			suite.Assert().Equal(oldData, configAPIServer.TypedSpec().ExtraArgs)
 
 			continue
 		}
 
-		suite.Assert().NoError(
-			retry.Constant(10*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-				func() error {
-					return suite.assertControlPlaneStaticPods(
-						[]string{
-							"kube-apiserver",
-						},
-					)
-				},
-			),
-		)
+		rtestutils.AssertResource(suite.Ctx(), suite.T(), suite.State(), k8s.APIServerID, func(staticPod *k8s.StaticPod, assert *assert.Assertions) {
+			apiServerPod, err := k8sadapter.StaticPod(staticPod).Pod()
+			suite.Require().NoError(err)
 
-		r, err := suite.state.Get(
-			suite.ctx,
-			resource.NewMetadata(k8s.NamespaceName, k8s.StaticPodType, "kube-apiserver", resource.VersionUndefined),
-		)
-		suite.Require().NoError(err)
+			assert.NotEmpty(apiServerPod.Spec.Containers)
 
-		apiServerPod, err := k8sadapter.StaticPod(r.(*k8s.StaticPod)).Pod()
-		suite.Require().NoError(err)
+			assertArg := func(arg, equals string) {
+				for _, param := range apiServerPod.Spec.Containers[0].Command {
+					if strings.HasPrefix(param, fmt.Sprintf("--%s", arg)) {
+						key, value, ok := strings.Cut(param, "=")
+						assert.True(ok, "expected '=' in %s", param)
 
-		suite.Require().NotEmpty(apiServerPod.Spec.Containers)
-
-		assertArg := func(arg, equals string) {
-			for _, param := range apiServerPod.Spec.Containers[0].Command {
-				if strings.HasPrefix(param, fmt.Sprintf("--%s", arg)) {
-					parts := strings.Split(param, "=")
-
-					suite.Require().Equal(equals, parts[1])
+						assert.Equal("--"+arg, key)
+						assert.Equal(equals, value)
+					}
 				}
 			}
-		}
 
-		for k, v := range test.expected {
-			assertArg(k, v)
-		}
-
-		suite.Require().NoError(suite.state.Destroy(suite.ctx, configStatus.Metadata()))
-		suite.Require().NoError(suite.state.Destroy(suite.ctx, secretStatus.Metadata()))
-		suite.Require().NoError(suite.state.Destroy(suite.ctx, configAPIServer.Metadata()))
-
-		suite.Assert().NoError(
-			retry.Constant(10*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-				func() error {
-					list, err := suite.state.List(
-						suite.ctx,
-						resource.NewMetadata(k8s.NamespaceName, k8s.StaticPodType, "", resource.VersionUndefined),
-					)
-					if err != nil {
-						return err
-					}
-
-					if len(list.Items) > 0 {
-						return retry.ExpectedErrorf("expected no pods, got %d", len(list.Items))
-					}
-
-					return nil
-				},
-			),
-		)
+			for k, v := range test.expected {
+				assertArg(k, v)
+			}
+		})
 	}
 }
 
 func (suite *ControlPlaneStaticPodSuite) TestReconcileEnvironmentVariables() {
 	configStatus := k8s.NewConfigStatus(k8s.ControlPlaneNamespaceName, k8s.ConfigStatusStaticPodID)
 	secretStatus := k8s.NewSecretsStatus(k8s.ControlPlaneNamespaceName, k8s.StaticPodSecretsStaticPodID)
+	configAPIServer := k8s.NewAPIServerConfig()
 
-	suite.Require().NoError(suite.state.Create(suite.ctx, configStatus))
-	suite.Require().NoError(suite.state.Create(suite.ctx, secretStatus))
+	suite.Require().NoError(suite.State().Create(suite.Ctx(), configStatus))
+	suite.Require().NoError(suite.State().Create(suite.Ctx(), secretStatus))
+	suite.Require().NoError(suite.State().Create(suite.Ctx(), configAPIServer))
 
 	tests := []struct {
 		env      map[string]string
@@ -446,61 +390,20 @@ func (suite *ControlPlaneStaticPodSuite) TestReconcileEnvironmentVariables() {
 			},
 		},
 	}
+
+	rtestutils.AssertResource(suite.Ctx(), suite.T(), suite.State(), k8s.APIServerID, func(staticPod *k8s.StaticPod, assert *assert.Assertions) {})
+
 	for _, test := range tests {
-		configAPIServer := k8s.NewAPIServerConfig()
+		configAPIServer.TypedSpec().EnvironmentVariables = test.env
 
-		*configAPIServer.TypedSpec() = k8s.APIServerConfigSpec{
-			EnvironmentVariables: test.env,
-		}
+		suite.Require().NoError(suite.State().Update(suite.Ctx(), configAPIServer))
 
-		suite.Require().NoError(suite.state.Create(suite.ctx, configAPIServer))
+		rtestutils.AssertResource(suite.Ctx(), suite.T(), suite.State(), k8s.APIServerID, func(staticPod *k8s.StaticPod, assert *assert.Assertions) {
+			apiServerPod, err := k8sadapter.StaticPod(staticPod).Pod()
+			suite.Require().NoError(err)
 
-		suite.Assert().NoError(
-			retry.Constant(10*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-				func() error {
-					return suite.assertControlPlaneStaticPods(
-						[]string{
-							"kube-apiserver",
-						},
-					)
-				},
-			),
-		)
-
-		r, err := suite.state.Get(
-			suite.ctx,
-			resource.NewMetadata(k8s.NamespaceName, k8s.StaticPodType, "kube-apiserver", resource.VersionUndefined),
-		)
-		suite.Require().NoError(err)
-
-		apiServerPod, err := k8sadapter.StaticPod(r.(*k8s.StaticPod)).Pod()
-		suite.Require().NoError(err)
-
-		suite.Require().NotEmpty(apiServerPod.Spec.Containers)
-
-		suite.Assert().Equal(test.expected, apiServerPod.Spec.Containers[0].Env)
-
-		suite.Require().NoError(suite.state.Destroy(suite.ctx, configAPIServer.Metadata()))
-
-		suite.Assert().NoError(
-			retry.Constant(10*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-				func() error {
-					list, err := suite.state.List(
-						suite.ctx,
-						resource.NewMetadata(k8s.NamespaceName, k8s.StaticPodType, "", resource.VersionUndefined),
-					)
-					if err != nil {
-						return err
-					}
-
-					if len(list.Items) > 0 {
-						return retry.ExpectedErrorf("expected no pods, got %d", len(list.Items))
-					}
-
-					return nil
-				},
-			),
-		)
+			assert.ElementsMatch(test.expected, apiServerPod.Spec.Containers[0].Env)
+		})
 	}
 }
 
@@ -508,70 +411,36 @@ func (suite *ControlPlaneStaticPodSuite) TestReconcileAdvertisedAddressArg() {
 	configStatus := k8s.NewConfigStatus(k8s.ControlPlaneNamespaceName, k8s.ConfigStatusStaticPodID)
 	secretStatus := k8s.NewSecretsStatus(k8s.ControlPlaneNamespaceName, k8s.StaticPodSecretsStaticPodID)
 
-	suite.Require().NoError(suite.state.Create(suite.ctx, configStatus))
-	suite.Require().NoError(suite.state.Create(suite.ctx, secretStatus))
+	suite.Require().NoError(suite.State().Create(suite.Ctx(), configStatus))
+	suite.Require().NoError(suite.State().Create(suite.Ctx(), secretStatus))
 
 	configAPIServer := k8s.NewAPIServerConfig()
 
-	*configAPIServer.TypedSpec() = k8s.APIServerConfigSpec{
-		AdvertisedAddress: "$(POD_IP)",
-	}
+	configAPIServer.TypedSpec().AdvertisedAddress = "$(POD_IP)"
 
-	suite.Require().NoError(suite.state.Create(suite.ctx, configAPIServer))
+	suite.Require().NoError(suite.State().Create(suite.Ctx(), configAPIServer))
 
-	suite.Assert().NoError(
-		retry.Constant(10*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-			func() error {
-				return suite.assertControlPlaneStaticPods(
-					[]string{
-						"kube-apiserver",
-					},
-				)
-			},
-		),
-	)
+	rtestutils.AssertResource(suite.Ctx(), suite.T(), suite.State(), k8s.APIServerID, func(staticPod *k8s.StaticPod, assert *assert.Assertions) {
+		apiServerPod, err := k8sadapter.StaticPod(staticPod).Pod()
+		suite.Require().NoError(err)
 
-	r, err := suite.state.Get(
-		suite.ctx,
-		resource.NewMetadata(k8s.NamespaceName, k8s.StaticPodType, "kube-apiserver", resource.VersionUndefined),
-	)
-	suite.Require().NoError(err)
+		assert.NotEmpty(apiServerPod.Spec.Containers)
 
-	apiServerPod, err := k8sadapter.StaticPod(r.(*k8s.StaticPod)).Pod()
-	suite.Require().NoError(err)
-
-	suite.Require().NotEmpty(apiServerPod.Spec.Containers)
-
-	suite.Assert().Contains(apiServerPod.Spec.Containers[0].Command, "--advertise-address=$(POD_IP)")
+		assert.Contains(apiServerPod.Spec.Containers[0].Command, "--advertise-address=$(POD_IP)")
+	})
 
 	configAPIServer.TypedSpec().AdvertisedAddress = ""
 
-	suite.Assert().NoError(suite.state.Update(suite.ctx, configAPIServer))
+	suite.Assert().NoError(suite.State().Update(suite.Ctx(), configAPIServer))
 
-	suite.Assert().NoError(
-		retry.Constant(10*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-			func() error {
-				r, err = suite.state.Get(
-					suite.ctx,
-					resource.NewMetadata(k8s.NamespaceName, k8s.StaticPodType, "kube-apiserver", resource.VersionUndefined),
-				)
-				suite.Require().NoError(err)
+	rtestutils.AssertResource(suite.Ctx(), suite.T(), suite.State(), k8s.APIServerID, func(staticPod *k8s.StaticPod, assert *assert.Assertions) {
+		apiServerPod, err := k8sadapter.StaticPod(staticPod).Pod()
+		suite.Require().NoError(err)
 
-				apiServerPod, err = k8sadapter.StaticPod(r.(*k8s.StaticPod)).Pod()
-				suite.Require().NoError(err)
+		assert.NotEmpty(apiServerPod.Spec.Containers)
 
-				for _, arg := range apiServerPod.Spec.Containers[0].Command {
-					if strings.Contains(arg, "--advertise-address=") {
-						return retry.ExpectedErrorf("expected no advertise-address, got %s", arg)
-					}
-				}
-
-				return nil
-			},
-		),
-	)
-
-	suite.Require().NoError(suite.state.Destroy(suite.ctx, configAPIServer.Metadata()))
+		assert.NotContains(apiServerPod.Spec.Containers[0].Command, "--advertise-address")
+	})
 }
 
 func (suite *ControlPlaneStaticPodSuite) TestControlPlaneStaticPodsExceptScheduler() {
@@ -583,44 +452,36 @@ func (suite *ControlPlaneStaticPodSuite) TestControlPlaneStaticPodsExceptSchedul
 	configScheduler := k8s.NewSchedulerConfig()
 	configScheduler.TypedSpec().Enabled = true
 
-	suite.Require().NoError(suite.state.Create(suite.ctx, configStatus))
-	suite.Require().NoError(suite.state.Create(suite.ctx, secretStatus))
-	suite.Require().NoError(suite.state.Create(suite.ctx, configAPIServer))
-	suite.Require().NoError(suite.state.Create(suite.ctx, configControllerManager))
-	suite.Require().NoError(suite.state.Create(suite.ctx, configScheduler))
+	suite.Require().NoError(suite.State().Create(suite.Ctx(), configStatus))
+	suite.Require().NoError(suite.State().Create(suite.Ctx(), secretStatus))
+	suite.Require().NoError(suite.State().Create(suite.Ctx(), configAPIServer))
+	suite.Require().NoError(suite.State().Create(suite.Ctx(), configControllerManager))
+	suite.Require().NoError(suite.State().Create(suite.Ctx(), configScheduler))
 
-	suite.Assert().NoError(
-		retry.Constant(10*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-			func() error {
-				return suite.assertControlPlaneStaticPods(
-					[]string{
-						"kube-apiserver",
-						"kube-controller-manager",
-						"kube-scheduler",
-					},
-				)
-			},
-		),
+	rtestutils.AssertResources(
+		suite.Ctx(),
+		suite.T(),
+		suite.State(),
+		[]resource.ID{
+			k8s.APIServerID,
+			k8s.ControllerManagerID,
+			k8s.SchedulerID,
+		},
+		func(*k8s.StaticPod, *assert.Assertions) {},
 	)
 
-	// flip enabled to disable scheduler
-	ctest.UpdateWithConflicts(suite, configScheduler, func(r *k8s.SchedulerConfig) error {
-		r.TypedSpec().Enabled = false
+	configScheduler.TypedSpec().Enabled = false
+	suite.Require().NoError(suite.State().Update(suite.Ctx(), configScheduler))
 
-		return nil
-	})
-
-	suite.Assert().NoError(
-		retry.Constant(10*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-			func() error {
-				return suite.assertControlPlaneStaticPods(
-					[]string{
-						"kube-apiserver",
-						"kube-controller-manager",
-					},
-				)
-			},
-		),
+	rtestutils.AssertResources(
+		suite.Ctx(),
+		suite.T(),
+		suite.State(),
+		[]resource.ID{
+			k8s.APIServerID,
+			k8s.ControllerManagerID,
+		},
+		func(*k8s.StaticPod, *assert.Assertions) {},
 	)
 }
 
@@ -628,8 +489,17 @@ func (suite *ControlPlaneStaticPodSuite) TestReconcileStaticPodResources() {
 	configStatus := k8s.NewConfigStatus(k8s.ControlPlaneNamespaceName, k8s.ConfigStatusStaticPodID)
 	secretStatus := k8s.NewSecretsStatus(k8s.ControlPlaneNamespaceName, k8s.StaticPodSecretsStaticPodID)
 
-	suite.Require().NoError(suite.state.Create(suite.ctx, configStatus))
-	suite.Require().NoError(suite.state.Create(suite.ctx, secretStatus))
+	configAPIServer := k8s.NewAPIServerConfig()
+	configControllerManager := k8s.NewControllerManagerConfig()
+	configControllerManager.TypedSpec().Enabled = true
+	configScheduler := k8s.NewSchedulerConfig()
+	configScheduler.TypedSpec().Enabled = true
+
+	suite.Require().NoError(suite.State().Create(suite.Ctx(), configStatus))
+	suite.Require().NoError(suite.State().Create(suite.Ctx(), secretStatus))
+	suite.Require().NoError(suite.State().Create(suite.Ctx(), configAPIServer))
+	suite.Require().NoError(suite.State().Create(suite.Ctx(), configControllerManager))
+	suite.Require().NoError(suite.State().Create(suite.Ctx(), configScheduler))
 
 	tests := []struct {
 		resources   k8s.Resources
@@ -678,111 +548,57 @@ func (suite *ControlPlaneStaticPodSuite) TestReconcileStaticPodResources() {
 		},
 	}
 	for _, test := range tests {
-		configAPIServer := k8s.NewAPIServerConfig()
-		configControllerManager := k8s.NewControllerManagerConfig()
-		configControllerManager.TypedSpec().Enabled = true
-		configScheduler := k8s.NewSchedulerConfig()
-		configScheduler.TypedSpec().Enabled = true
-
 		configAPIServer.TypedSpec().Resources = test.resources
 		configControllerManager.TypedSpec().Resources = test.resources
 		configScheduler.TypedSpec().Resources = test.resources
 
-		suite.Require().NoError(suite.state.Create(suite.ctx, configAPIServer))
-		suite.Require().NoError(suite.state.Create(suite.ctx, configControllerManager))
-		suite.Require().NoError(suite.state.Create(suite.ctx, configScheduler))
+		suite.Require().NoError(suite.State().Update(suite.Ctx(), configAPIServer))
+		suite.Require().NoError(suite.State().Update(suite.Ctx(), configControllerManager))
+		suite.Require().NoError(suite.State().Update(suite.Ctx(), configScheduler))
 
-		suite.Assert().NoError(
-			retry.Constant(10*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-				func() error {
-					return suite.assertControlPlaneStaticPods(
-						[]string{
-							"kube-apiserver",
-							"kube-controller-manager",
-							"kube-scheduler",
-						},
-					)
-				},
-			),
-		)
+		rtestutils.AssertResources(
+			suite.Ctx(),
+			suite.T(),
+			suite.State(),
+			[]resource.ID{
+				k8s.APIServerID,
+				k8s.ControllerManagerID,
+				k8s.SchedulerID,
+			},
+			func(staticPod *k8s.StaticPod, assert *assert.Assertions) {
+				pod, err := k8sadapter.StaticPod(staticPod).Pod()
+				suite.Require().NoError(err)
 
-		r, err := suite.state.Get(
-			suite.ctx,
-			resource.NewMetadata(k8s.NamespaceName, k8s.StaticPodType, "kube-apiserver", resource.VersionUndefined),
-		)
-		suite.Require().NoError(err)
+				assert.NotEmpty(pod.Spec.Containers)
 
-		apiServerPod, err := k8sadapter.StaticPod(r.(*k8s.StaticPod)).Pod()
-		suite.Require().NoError(err)
+				assert.Equal(test.expected, pod.Spec.Containers[0].Resources)
 
-		r, err = suite.state.Get(
-			suite.ctx,
-			resource.NewMetadata(k8s.NamespaceName, k8s.StaticPodType, "kube-controller-manager", resource.VersionUndefined),
-		)
-		suite.Require().NoError(err)
-
-		controllerManagerPod, err := k8sadapter.StaticPod(r.(*k8s.StaticPod)).Pod()
-		suite.Require().NoError(err)
-
-		r, err = suite.state.Get(
-			suite.ctx,
-			resource.NewMetadata(k8s.NamespaceName, k8s.StaticPodType, "kube-scheduler", resource.VersionUndefined),
-		)
-		suite.Require().NoError(err)
-
-		schedulerPod, err := k8sadapter.StaticPod(r.(*k8s.StaticPod)).Pod()
-		suite.Require().NoError(err)
-
-		suite.Require().NotEmpty(apiServerPod.Spec.Containers)
-		suite.Require().NotEmpty(controllerManagerPod.Spec.Containers)
-		suite.Require().NotEmpty(schedulerPod.Spec.Containers)
-
-		suite.Assert().Equal(test.expected, apiServerPod.Spec.Containers[0].Resources)
-		suite.Assert().Equal(test.expected, controllerManagerPod.Spec.Containers[0].Resources)
-		suite.Assert().Equal(test.expected, schedulerPod.Spec.Containers[0].Resources)
-
-		if test.expectedEnv.Name != "" {
-			suite.Assert().Contains(apiServerPod.Spec.Containers[0].Env, test.expectedEnv)
-			suite.Assert().Contains(controllerManagerPod.Spec.Containers[0].Env, test.expectedEnv)
-			suite.Assert().Contains(schedulerPod.Spec.Containers[0].Env, test.expectedEnv)
-		}
-
-		suite.Require().NoError(suite.state.Destroy(suite.ctx, configAPIServer.Metadata()))
-		suite.Require().NoError(suite.state.Destroy(suite.ctx, configControllerManager.Metadata()))
-		suite.Require().NoError(suite.state.Destroy(suite.ctx, configScheduler.Metadata()))
-
-		suite.Assert().NoError(
-			retry.Constant(10*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-				func() error {
-					list, err := suite.state.List(
-						suite.ctx,
-						resource.NewMetadata(k8s.NamespaceName, k8s.StaticPodType, "", resource.VersionUndefined),
-					)
-					if err != nil {
-						return err
-					}
-
-					if len(list.Items) > 0 {
-						return retry.ExpectedErrorf("expected no pods, got %d", len(list.Items))
-					}
-
-					return nil
-				},
-			),
+				if test.expectedEnv.Name != "" {
+					assert.Contains(pod.Spec.Containers[0].Env, test.expectedEnv)
+				}
+			},
 		)
 	}
-}
-
-func (suite *ControlPlaneStaticPodSuite) TearDownTest() {
-	suite.T().Log("tear down")
-
-	suite.ctxCancel()
-
-	suite.wg.Wait()
 }
 
 func TestControlPlaneStaticPodSuite(t *testing.T) {
 	t.Parallel()
 
-	suite.Run(t, new(ControlPlaneStaticPodSuite))
+	suite.Run(t, &ControlPlaneStaticPodSuite{
+		DefaultSuite: ctest.DefaultSuite{
+			Timeout: 10 * time.Second,
+			AfterSetup: func(suite *ctest.DefaultSuite) {
+				suite.Require().NoError(suite.Runtime().RegisterController(&k8sctrl.ControlPlaneStaticPodController{}))
+
+				etcdService := v1alpha1.NewService("etcd")
+				etcdService.TypedSpec().Running = true
+				etcdService.TypedSpec().Healthy = true
+
+				suite.Require().NoError(suite.State().Create(suite.Ctx(), etcdService))
+			},
+			AfterTearDown: func(suite *ctest.DefaultSuite) {
+				suite.Require().NoError(suite.State().Destroy(suite.Ctx(), v1alpha1.NewService("etcd").Metadata()))
+			},
+		},
+	})
 }

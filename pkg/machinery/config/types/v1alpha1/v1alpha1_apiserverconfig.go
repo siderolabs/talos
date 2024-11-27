@@ -6,12 +6,14 @@ package v1alpha1
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/siderolabs/gen/xslices"
 	"github.com/siderolabs/go-pointer"
 
 	"github.com/siderolabs/talos/pkg/machinery/config/config"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
+	"github.com/siderolabs/talos/pkg/machinery/resources/k8s"
 )
 
 // APIServerDefaultAuditPolicy is the default kube-apiserver audit policy.
@@ -24,6 +26,18 @@ var APIServerDefaultAuditPolicy = Unstructured{
 				"level": "Metadata",
 			},
 		},
+	},
+}
+
+// APIServerDefaultAuthorizationConfigAuthorizers is the default kube-apiserver authorization authorizers.
+var APIServerDefaultAuthorizationConfigAuthorizers = []k8s.AuthorizationAuthorizersSpec{
+	{
+		Type: "Node",
+		Name: "node",
+	},
+	{
+		Type: "RBAC",
+		Name: "rbac",
 	},
 }
 
@@ -77,10 +91,33 @@ func (a *APIServerConfig) Resources() config.Resources {
 	return a.ResourcesConfig
 }
 
+// AuthorizationConfig implements the config.APIServer interface.
+func (a *APIServerConfig) AuthorizationConfig() []config.AuthorizationConfigAuthorizer {
+	return xslices.Map(a.AuthorizationConfigConfig, func(c *AuthorizationConfigAuthorizerConfig) config.AuthorizationConfigAuthorizer { return c })
+}
+
 // Validate performs config validation.
 func (a *APIServerConfig) Validate() error {
 	if a == nil {
 		return nil
+	}
+
+	if a.AuthorizationConfigConfig != nil {
+		for k := range a.ExtraArgs() {
+			if k == "authorization-mode" {
+				return fmt.Errorf("authorization-mode cannot be used in conjunction with AuthorizationConfig, use eitherr AuthorizationConfig or authorization-mode")
+			}
+
+			if strings.HasPrefix(k, "authorization-webhook-") {
+				return fmt.Errorf("authorization-webhook-* flags cannot be used in conjunction with AuthorizationConfig, use either AuthorizationConfig or authorization-webhook-* flags")
+			}
+		}
+	}
+
+	for _, authorizationConfig := range a.AuthorizationConfigConfig {
+		if err := authorizationConfig.Validate(); err != nil {
+			return fmt.Errorf("apiserver authorization config validation failed: %w", err)
+		}
 	}
 
 	if err := a.ResourcesConfig.Validate(); err != nil {

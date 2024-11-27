@@ -135,6 +135,8 @@ description: Talos gRPC API reference.
     - [AdmissionControlConfigSpec](#talos.resource.definitions.k8s.AdmissionControlConfigSpec)
     - [AdmissionPluginSpec](#talos.resource.definitions.k8s.AdmissionPluginSpec)
     - [AuditPolicyConfigSpec](#talos.resource.definitions.k8s.AuditPolicyConfigSpec)
+    - [AuthorizationAuthorizersSpec](#talos.resource.definitions.k8s.AuthorizationAuthorizersSpec)
+    - [AuthorizationConfigSpec](#talos.resource.definitions.k8s.AuthorizationConfigSpec)
     - [BootstrapManifestsConfigSpec](#talos.resource.definitions.k8s.BootstrapManifestsConfigSpec)
     - [ConfigStatusSpec](#talos.resource.definitions.k8s.ConfigStatusSpec)
     - [ControllerManagerConfigSpec](#talos.resource.definitions.k8s.ControllerManagerConfigSpec)
@@ -2579,6 +2581,39 @@ AuditPolicyConfigSpec is audit policy configuration for kube-apiserver.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | config | [google.protobuf.Struct](#google.protobuf.Struct) |  |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.k8s.AuthorizationAuthorizersSpec"></a>
+
+### AuthorizationAuthorizersSpec
+AuthorizationAuthorizersSpec is a configuration of authorization authorizers.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| type | [string](#string) |  |  |
+| name | [string](#string) |  |  |
+| webhook | [google.protobuf.Struct](#google.protobuf.Struct) |  |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.k8s.AuthorizationConfigSpec"></a>
+
+### AuthorizationConfigSpec
+AuthorizationConfigSpec is authorization configuration for kube-apiserver.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| image | [string](#string) |  |  |
+| config | [AuthorizationAuthorizersSpec](#talos.resource.definitions.k8s.AuthorizationAuthorizersSpec) | repeated |  |
 
 
 

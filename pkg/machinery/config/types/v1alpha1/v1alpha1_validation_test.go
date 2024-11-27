@@ -1796,6 +1796,88 @@ func TestValidate(t *testing.T) {
 			},
 			expectedError: "3 errors occurred:\n\t* apiserver resource validation failed: unsupported pod resource \"invalid1\"\n\t* controller-manager resource validation failed: unsupported pod resource \"invalid2\"\n\t* scheduler resource validation failed: unsupported pod resource \"invalid3\"\n\n", //nolint:lll
 		},
+		{
+			name: "ControlPlaneInvalidAuthorizationConfig",
+			config: &v1alpha1.Config{
+				ConfigVersion: "v1alpha1",
+				MachineConfig: &v1alpha1.MachineConfig{
+					MachineType: "controlplane",
+					MachineCA: &x509.PEMEncodedCertificateAndKey{
+						Crt: []byte("foo"),
+						Key: []byte("bar"),
+					},
+				},
+				ClusterConfig: &v1alpha1.ClusterConfig{
+					ControlPlane: &v1alpha1.ControlPlaneConfig{
+						Endpoint: &v1alpha1.Endpoint{
+							endpointURL,
+						},
+					},
+					APIServerConfig: &v1alpha1.APIServerConfig{
+						AuthorizationConfigConfig: []*v1alpha1.AuthorizationConfigAuthorizerConfig{
+							{
+								AuthorizerName: "foo",
+							},
+						},
+					},
+				},
+			},
+			expectedError: "1 error occurred:\n\t* apiserver authorization config validation failed: authorizer type must be set\n\n",
+		},
+		{
+			name: "ControlPlaneAuthorizationConfigWithAuthorizationModeFlag",
+			config: &v1alpha1.Config{
+				ConfigVersion: "v1alpha1",
+				MachineConfig: &v1alpha1.MachineConfig{
+					MachineType: "controlplane",
+					MachineCA: &x509.PEMEncodedCertificateAndKey{
+						Crt: []byte("foo"),
+						Key: []byte("bar"),
+					},
+				},
+				ClusterConfig: &v1alpha1.ClusterConfig{
+					ControlPlane: &v1alpha1.ControlPlaneConfig{
+						Endpoint: &v1alpha1.Endpoint{
+							endpointURL,
+						},
+					},
+					APIServerConfig: &v1alpha1.APIServerConfig{
+						AuthorizationConfigConfig: []*v1alpha1.AuthorizationConfigAuthorizerConfig{},
+						ExtraArgsConfig: map[string]string{
+							"authorization-mode": "Node",
+						},
+					},
+				},
+			},
+			expectedError: "1 error occurred:\n\t* authorization-mode cannot be used in conjunction with AuthorizationConfig, use eitherr AuthorizationConfig or authorization-mode\n\n",
+		},
+		{
+			name: "ControlPlaneAuthorizationConfigWithAuthorizationWebhook",
+			config: &v1alpha1.Config{
+				ConfigVersion: "v1alpha1",
+				MachineConfig: &v1alpha1.MachineConfig{
+					MachineType: "controlplane",
+					MachineCA: &x509.PEMEncodedCertificateAndKey{
+						Crt: []byte("foo"),
+						Key: []byte("bar"),
+					},
+				},
+				ClusterConfig: &v1alpha1.ClusterConfig{
+					ControlPlane: &v1alpha1.ControlPlaneConfig{
+						Endpoint: &v1alpha1.Endpoint{
+							endpointURL,
+						},
+					},
+					APIServerConfig: &v1alpha1.APIServerConfig{
+						AuthorizationConfigConfig: []*v1alpha1.AuthorizationConfigAuthorizerConfig{},
+						ExtraArgsConfig: map[string]string{
+							"authorization-webhook-version": "v1",
+						},
+					},
+				},
+			},
+			expectedError: "1 error occurred:\n\t* authorization-webhook-* flags cannot be used in conjunction with AuthorizationConfig, use either AuthorizationConfig or authorization-webhook-* flags\n\n",
+		},
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
