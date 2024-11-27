@@ -11,6 +11,9 @@
 
 (type sys_containerd_socket_t)
 (call system_socket_f (sys_containerd_socket_t))
+; Shim sockets
+(typetransition sys_containerd_t run_t sock_file sys_containerd_socket_t)
+; Client socket
 (typetransition sys_containerd_t system_t sock_file sys_containerd_socket_t)
 
 ; Transition to system container contexts
@@ -21,8 +24,24 @@
 (allow sys_containerd_t system_container_p (fs_classes (rw)))
 (allow sys_containerd_t system_container_p (process_classes (full)))
 
+(typeattribute containerd_p)
+(typeattributeset containerd_p sys_containerd_t)
+
 ; Access overlayfs parameters
-(allow sys_containerd_t sys_module_t (fs_classes (ro)))
+(allow containerd_p sys_module_t (fs_classes (ro)))
+
+; manage cgroups & namespaces
+(allow containerd_p cgroup_t (fs_classes (rw)))
+(allow containerd_p nsfs_t (fs_classes (rw)))
+
+; mounts
+(allow containerd_p filesystem_f (filesystem (unmount remount mount)))
+
+; mounton for masking
+(allow containerd_p any_f (fs_classes (mounton)))
+
+; logs
+(allow sys_containerd_t system_t (fs_classes (rw)))
 
 ; Typically a system extension
 ; Possibly a service misconfigured by machined
