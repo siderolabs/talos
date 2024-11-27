@@ -78,7 +78,7 @@ func labelVolumeMatchAndNonEmpty(label string) cel.Expression {
 }
 
 func metaMatch() cel.Expression {
-	return cel.MustExpression(cel.ParseBooleanExpression(fmt.Sprintf("volume.partition_label == '%s' && volume.name in ['', 'talosmeta']", constants.MetaPartitionLabel), celenv.VolumeLocator()))
+	return cel.MustExpression(cel.ParseBooleanExpression(fmt.Sprintf("volume.partition_label == '%s' && volume.name in ['', 'talosmeta'] && volume.size == 1048576u", constants.MetaPartitionLabel), celenv.VolumeLocator())) //nolint:lll
 }
 
 func systemDiskMatch() cel.Expression {

@@ -92,7 +92,7 @@ func (suite *VolumeConfigSuite) TestReconcileDefaults() {
 		locator, err := r.TypedSpec().Locator.Match.MarshalText()
 		asrt.NoError(err)
 
-		asrt.Equal(`volume.partition_label == "META" && volume.name in ["", "talosmeta"]`, string(locator))
+		asrt.Equal(`volume.partition_label == "META" && volume.name in ["", "talosmeta"] && volume.size == 1048576u`, string(locator))
 	})
 	ctest.AssertResource(suite, constants.StatePartitionLabel, func(r *block.VolumeConfig, asrt *assert.Assertions) {
 		asrt.NotEmpty(r.TypedSpec().Provisioning)
