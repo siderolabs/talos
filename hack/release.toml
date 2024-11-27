@@ -42,21 +42,6 @@ Talos Linux now supports running Kubernetes pods with user namespaces enabled.
 Refer to the [documentation](https://www.talos.dev/v1.9/kubernetes-guides/configuration/usernamespace/) for more information.
 """
 
-    [notes.apparmor]
-        title = "AppArmor"
-        description = """\
-Talos Linux starting with v1.9 will ship with SELinux LSM enabled by default.
-If you need to use AppArmor LSM add the following to the machine configuration:
-
-```yaml
-machine:
-  install:
-     extraKernelArgs:
-      - -selinux
-      - lsm=lockdown,capability,yama,apparmor,bpf
-      - apparmor=1
-```
-"""
 
     [notes.auditd]
         title = "Auditd"

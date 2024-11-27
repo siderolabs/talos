@@ -138,7 +138,7 @@ func (q Quirks) SkipDataPartitions() bool {
 }
 
 // minVersionSELinux is the version that enabled SELinux and added respective parameters.
-var minVersionSELinux = semver.MustParse("1.9.0")
+var minVersionSELinux = semver.MustParse("1.10.0")
 
 // SupportsSELinux returns true if the Talos version supports already has console=ttyS0 kernel argument.
 func (q Quirks) SupportsSELinux() bool {

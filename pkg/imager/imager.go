@@ -350,7 +350,7 @@ func (i *Imager) buildCmdline() error {
 	}
 
 	if quirks.New(i.prof.Version).SupportsSELinux() {
-		// Talos 1.9 introduces SELinux in permissive mode
+		// Talos 1.10 introduces SELinux in permissive mode
 		cmdline.Append(constants.KernelParamSELinux, "1")
 	}
 
