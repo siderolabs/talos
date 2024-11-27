@@ -8,7 +8,6 @@
 
 (type init_t)
 (roletype system_r init_t)
-(typetransition kernel_t init_exec_t process init_t)
 (allow init_t init_exec_t (file (execute entrypoint)))
 
 ; System daemon sockets
@@ -55,3 +54,19 @@
 (allow init_t kubelet_state_t (fs_classes (rw)))
 
 (allow udev_t device_f (fs_classes (rw)))
+
+; rootfs.sqsh
+(allow kernel_t rootfs_t (file (read)))
+
+; initramfs init before switching root
+(allow initramfs_t device_t (fs_classes (rw)))
+(allow initramfs_t rootfs_t (fs_classes (ro)))
+(allow initramfs_t self (process_classes (full)))
+(allow kernel_t initramfs_t (fd (use)))
+; Make machined go into proper context
+(allow initramfs_t sbin_exec_t (fs_classes (ro))) ; Find init
+(allow initramfs_t init_exec_t (fs_classes (ro)))
+(allow initramfs_t init_exec_t (file (execute)))
+(typetransition initramfs_t init_exec_t process init_t)
+(allow initramfs_t init_t (process_classes (full)))
+(allow init_t initramfs_t (fd (use)))
