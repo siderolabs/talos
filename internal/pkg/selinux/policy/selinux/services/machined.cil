@@ -52,3 +52,5 @@
 
 ; Configure kubelet
 (allow init_t kubelet_state_t (fs_classes (rw)))
+
+(allow udev_t device_f (fs_classes (rw)))
