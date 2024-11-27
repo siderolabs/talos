@@ -28,8 +28,3 @@
 ; Possibly a service misconfigured by machined
 (type unconfined_container_t)
 (call system_container_p (unconfined_container_t))
-
-; Talos installer
-(type installer_t)
-(call system_container_p (installer_t))
-(allow installer_t system_var_t (file (entrypoint execute_no_trans)))
