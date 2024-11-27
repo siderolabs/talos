@@ -17,6 +17,7 @@ import (
 	"github.com/siderolabs/gen/optional"
 	"go.uber.org/zap"
 
+	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/runtime"
 	v1alpha1runtime "github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
 	"github.com/siderolabs/talos/internal/pkg/ntp"
 	"github.com/siderolabs/talos/pkg/machinery/resources/config"
@@ -39,19 +40,7 @@ func (ctrl *SyncController) Name() string {
 
 // Inputs implements controller.Controller interface.
 func (ctrl *SyncController) Inputs() []controller.Input {
-	return []controller.Input{
-		{
-			Namespace: network.NamespaceName,
-			Type:      network.TimeServerStatusType,
-			ID:        optional.Some(network.TimeServerID),
-			Kind:      controller.InputWeak,
-		},
-		{
-			Namespace: config.NamespaceName,
-			Type:      config.MachineConfigType,
-			ID:        optional.Some(config.V1Alpha1ID),
-		},
-	}
+	return nil
 }
 
 // Outputs implements controller.Controller interface.
@@ -87,6 +76,25 @@ func (ctrl *SyncController) Run(ctx context.Context, r controller.Runtime, logge
 		ctrl.NewNTPSyncer = func(logger *zap.Logger, timeServers []string) NTPSyncer {
 			return ntp.NewSyncer(logger, timeServers)
 		}
+	}
+
+	// wait for udevd to be healthy, which implies that all RTC devices
+	if err := runtime.WaitForDevicesReady(ctx, r,
+		[]controller.Input{
+			{
+				Namespace: network.NamespaceName,
+				Type:      network.TimeServerStatusType,
+				ID:        optional.Some(network.TimeServerID),
+				Kind:      controller.InputWeak,
+			},
+			{
+				Namespace: config.NamespaceName,
+				Type:      config.MachineConfigType,
+				ID:        optional.Some(config.V1Alpha1ID),
+			},
+		},
+	); err != nil {
+		return err
 	}
 
 	var (

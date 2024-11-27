@@ -51,6 +51,7 @@ type Syncer struct {
 	CurrentTime CurrentTimeFunc
 	NTPQuery    QueryFunc
 	AdjustTime  AdjustTimeFunc
+	DisableRTC  bool
 }
 
 // Measurement is a struct containing correction data based on a time request.
@@ -159,14 +160,19 @@ func (syncer *Syncer) isSpike(resp *ntp.Response) bool {
 //
 //nolint:gocyclo,cyclop
 func (syncer *Syncer) Run(ctx context.Context) {
-	RTCClockInitialize.Do(func() {
-		var err error
+	var (
+		rtcClock *rtc.RTC
+		err      error
+	)
 
-		RTCClock, err = rtc.OpenRTC()
+	if !syncer.DisableRTC {
+		rtcClock, err = rtc.OpenRTC()
 		if err != nil {
 			syncer.logger.Error("failure opening RTC, ignored", zap.Error(err))
+		} else {
+			defer rtcClock.Close() //nolint:errcheck
 		}
-	})
+	}
 
 	pollInterval := time.Duration(0)
 
@@ -216,7 +222,7 @@ func (syncer *Syncer) Run(ctx context.Context) {
 		)
 
 		if resp != nil && !spike {
-			err = syncer.adjustTime(resp.ClockOffset, resp.Leap, lastSyncServer, pollInterval)
+			err = syncer.adjustTime(resp.ClockOffset, resp.Leap, lastSyncServer, pollInterval, rtcClock)
 
 			if err == nil {
 				if !syncer.timeSyncNotified {
@@ -415,7 +421,7 @@ func log2i(v uint64) int {
 // adjustTime adds an offset to the current time.
 //
 //nolint:gocyclo
-func (syncer *Syncer) adjustTime(offset time.Duration, leapSecond ntp.LeapIndicator, server string, nextPollInterval time.Duration) error {
+func (syncer *Syncer) adjustTime(offset time.Duration, leapSecond ntp.LeapIndicator, server string, nextPollInterval time.Duration, rtcClock *rtc.RTC) error {
 	var (
 		buf  bytes.Buffer
 		req  unix.Timex
@@ -509,8 +515,8 @@ func (syncer *Syncer) adjustTime(offset time.Duration, leapSecond ntp.LeapIndica
 		}
 
 		if jump {
-			if RTCClock != nil {
-				if rtcErr := RTCClock.Set(time.Now().Add(offset)); rtcErr != nil {
+			if rtcClock != nil {
+				if rtcErr := rtcClock.Set(time.Now().Add(offset)); rtcErr != nil {
 					syncer.logger.Error("error syncing RTC", zap.Error(rtcErr))
 				} else {
 					syncer.logger.Info("synchronized RTC with system clock")

@@ -30,6 +30,7 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/resources/config"
 	"github.com/siderolabs/talos/pkg/machinery/resources/network"
+	runtimeres "github.com/siderolabs/talos/pkg/machinery/resources/runtime"
 	timeresource "github.com/siderolabs/talos/pkg/machinery/resources/time"
 	v1alpha1resource "github.com/siderolabs/talos/pkg/machinery/resources/v1alpha1"
 )
@@ -62,6 +63,11 @@ func (suite *SyncSuite) SetupTest() {
 
 	suite.runtime, err = runtime.NewRuntime(suite.state, zaptest.NewLogger(suite.T()))
 	suite.Require().NoError(err)
+
+	// create fake device ready status
+	deviceStatus := runtimeres.NewDevicesStatus(runtimeres.NamespaceName, runtimeres.DevicesID)
+	deviceStatus.TypedSpec().Ready = true
+	suite.Require().NoError(suite.state.Create(suite.ctx, deviceStatus))
 }
 
 func (suite *SyncSuite) startRuntime() {
