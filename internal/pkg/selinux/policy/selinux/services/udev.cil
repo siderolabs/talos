@@ -41,6 +41,7 @@
 ; Typically client pods must not access TPM
 (type tpm_device_t)
 (call protected_device_f (tpm_device_t))
+; TODO: label and restrict block devices
 
 ; If modprobe is called by machined or kernel do a transition to udev context which has module permissions
 (allow udev_t modprobe_exec_t (file (execute execute_no_trans)))
