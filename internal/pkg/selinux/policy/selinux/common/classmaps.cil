@@ -1,5 +1,5 @@
 ; Access to all file classes
-(classmap fs_classes (relabelfrom relabelto rw ro))
+(classmap fs_classes (relabelfrom relabelto mounton rw ro))
 ; relabelfrom
 (classmapping fs_classes relabelfrom (filesystem (relabelfrom)))
 (classmapping fs_classes relabelfrom (file (relabelfrom)))
@@ -18,6 +18,14 @@
 (classmapping fs_classes relabelto (blk_file (relabelto)))
 (classmapping fs_classes relabelto (sock_file (relabelto)))
 (classmapping fs_classes relabelto (fifo_file (relabelto)))
+; mounton
+(classmapping fs_classes mounton (file (mounton)))
+(classmapping fs_classes mounton (dir (mounton)))
+(classmapping fs_classes mounton (lnk_file (mounton)))
+(classmapping fs_classes mounton (chr_file (mounton)))
+(classmapping fs_classes mounton (blk_file (mounton)))
+(classmapping fs_classes mounton (sock_file (mounton)))
+(classmapping fs_classes mounton (fifo_file (mounton)))
 ; rw is full without SELinux management
 (classmapping fs_classes rw (filesystem (
     associate
