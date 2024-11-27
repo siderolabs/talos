@@ -14,3 +14,4 @@
     setcheckreqprot
     validate_trans
 )))
+(allow any_p selinuxfs_t (fs_classes (ro)))
