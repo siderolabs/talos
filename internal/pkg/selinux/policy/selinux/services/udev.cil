@@ -54,5 +54,8 @@
 (allow udev_t self (capability (sys_module)))
 (allow udev_t self (cap_userns (sys_module)))
 
+; Allow udev to read rules files
+(allow udev_t udev_rules_t (fs_classes (ro)))
+
 ; udev rules can set module parameters
 (allow udev_t sys_module_t (fs_classes (rw)))
