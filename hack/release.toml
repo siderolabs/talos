@@ -28,6 +28,12 @@ preface = """
 Talos is built with Go 1.23.3.
 """
 
+    [notes.cgroupsv1]
+        title = "cgroups version 1"
+        description = """\
+Support for cgroupsv1 is deprecated, and will be removed in Talos 1.10 (for non-container mode).
+"""
+
     [notes.machineConfigKubeAPIServer]
         title = "Kube APIServer Authorization Config"
         description = """\

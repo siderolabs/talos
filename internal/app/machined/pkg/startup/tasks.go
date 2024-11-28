@@ -71,11 +71,13 @@ func InitVolumeLifecycle(ctx context.Context, log *zap.Logger, rt runtime.Runtim
 }
 
 // MountCgroups represents mounts the cgroupfs (only in !container).
-//
-//nolint:dupl
 func MountCgroups(ctx context.Context, log *zap.Logger, rt runtime.Runtime, next NextTaskFunc) error {
 	if rt.State().Platform().Mode().InContainer() {
 		return next()(ctx, log, rt, next)
+	}
+
+	if mount.ForceCGroupsV1() {
+		log.Warn("cgroupsv1 is deprecated and will not be supported in the 1.10 release other than in the container mode")
 	}
 
 	unmounter, err := mount.CGroupMountPoints().Mount()
@@ -93,8 +95,6 @@ func MountCgroups(ctx context.Context, log *zap.Logger, rt runtime.Runtime, next
 }
 
 // MountPseudoLate mounts the late pseudo filesystems (only in !container).
-//
-//nolint:dupl
 func MountPseudoLate(ctx context.Context, log *zap.Logger, rt runtime.Runtime, next NextTaskFunc) error {
 	if rt.State().Platform().Mode().InContainer() {
 		return next()(ctx, log, rt, next)

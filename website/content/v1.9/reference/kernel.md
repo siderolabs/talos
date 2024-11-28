@@ -233,6 +233,8 @@ Valid options are:
 
 #### `talos.unified_cgroup_hierarchy`
 
+> Deprecated: From the 1.10 release it is planned that `cgroupsv1` will only be supported in the container mode.
+
 Talos defaults to always using the unified cgroup hierarchy (`cgroupsv2`), but `cgroupsv1`
 can be forced with `talos.unified_cgroup_hierarchy=0`.
 

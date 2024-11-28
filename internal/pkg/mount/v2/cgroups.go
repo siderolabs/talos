@@ -14,14 +14,14 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
 
-// ForceGGroupsV1 returns the cgroup version to be used (only for !container mode).
-func ForceGGroupsV1() bool {
+// ForceCGroupsV1 returns the cgroup version to be used (only for !container mode).
+func ForceCGroupsV1() bool {
 	return pointer.SafeDeref(procfs.ProcCmdline().Get(constants.KernelParamCGroups).First()) == "0"
 }
 
 // CGroupMountPoints returns the cgroup mount points.
 func CGroupMountPoints() Points {
-	if ForceGGroupsV1() {
+	if ForceCGroupsV1() {
 		return cgroupMountPointsV1()
 	}
 
