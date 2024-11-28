@@ -60,6 +60,34 @@
 (allow init_t pod_containerd_socket_t (sock_file (write)))
 (allow init_t pod_containerd_t (unix_stream_socket (connectto)))
 
+; Allow access to any file for machined, for ls
+(allow init_t any_f (fs_classes (rw)))
+
+; /dev/console
+(allow init_t kernel_t (system (syslog_console syslog_mod syslog_read)))
+(allow init_t self (capability2 (syslog)))
+(allow init_t kernel_t (fd (use)))
+
+; labeling FS
+(allow init_t tmpfs_t (fs_classes (relabelfrom)))
+(allow init_t run_t (dir (relabelto)))
+(allow init_t system_t (dir (relabelto)))
+(allow init_t etc_t (dir (relabelto)))
+
+(allow init_t system_t (fs_classes (relabelfrom)))
+(allow init_t system_var_t (dir (relabelto)))
+(allow init_t etcd_pki_t (dir (relabelto)))
+(allow init_t kube_apiserver_config_t (dir (relabelto)))
+(allow init_t kube_scheduler_config_t (dir (relabelto)))
+(allow init_t kube_apiserver_secret_t (dir (relabelto)))
+(allow init_t kube_controller_manager_secret_t (dir (relabelto)))
+(allow init_t kube_scheduler_secret_t (dir (relabelto)))
+
+(allow init_t trustd_runtime_socket_t (sock_file (relabelto)))
+
+(allow init_t run_t (fs_classes (relabelfrom)))
+(allow init_t apid_runtime_socket_t (sock_file (relabelto)))
+
 ; rootfs.sqsh
 (allow kernel_t rootfs_t (file (read)))
 
