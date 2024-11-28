@@ -1,6 +1,6 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
 #
-# Generated on 2024-11-08T11:46:41Z by kres 1fc767a.
+# Generated on 2024-11-28T13:53:18Z by kres 232fe63.
 
 name: integration-image-factory-cron
 concurrency:
@@ -107,6 +107,7 @@ jobs:
           FACTORY_UPGRADE_SCHEMATIC: cf9b7aab9ed7c365d5384509b4d31c02fdaa06d2b3ac6cc0bc806f28130eff1f
           FACTORY_UPGRADE_VERSION: v1.7.6
           FACTORY_VERSION: v1.7.5
+          GITHUB_STEP_NAME: ${{ github.job}}-factory-1.7-iso
           KUBERNETES_VERSION: 1.30.1
         run: |
           sudo -E make e2e-image-factory
@@ -118,6 +119,7 @@ jobs:
           FACTORY_UPGRADE_SCHEMATIC: cf9b7aab9ed7c365d5384509b4d31c02fdaa06d2b3ac6cc0bc806f28130eff1f
           FACTORY_UPGRADE_VERSION: v1.7.6
           FACTORY_VERSION: v1.7.5
+          GITHUB_STEP_NAME: ${{ github.job}}-factory-1.7-image
           KUBERNETES_VERSION: 1.30.1
         run: |
           sudo -E make e2e-image-factory
@@ -126,6 +128,7 @@ jobs:
           FACTORY_BOOT_METHOD: pxe
           FACTORY_SCHEMATIC: 376567988ad370138ad8b2698212367b8edcb69b5fd68c80be1f2ec7d603b4ba
           FACTORY_VERSION: v1.7.6
+          GITHUB_STEP_NAME: ${{ github.job}}-factory-1.7-pxe
           KUBERNETES_VERSION: 1.30.1
         run: |
           sudo -E make e2e-image-factory
@@ -137,6 +140,7 @@ jobs:
           FACTORY_UPGRADE_SCHEMATIC: 376567988ad370138ad8b2698212367b8edcb69b5fd68c80be1f2ec7d603b4ba
           FACTORY_UPGRADE_VERSION: v1.7.6
           FACTORY_VERSION: v1.7.5
+          GITHUB_STEP_NAME: ${{ github.job}}-factory-1.7-secureboot
           KUBERNETES_VERSION: 1.30.1
         run: |
           sudo -E make e2e-image-factory
@@ -148,6 +152,7 @@ jobs:
           FACTORY_UPGRADE_SCHEMATIC: 376567988ad370138ad8b2698212367b8edcb69b5fd68c80be1f2ec7d603b4ba
           FACTORY_UPGRADE_VERSION: v1.6.1
           FACTORY_VERSION: v1.6.0
+          GITHUB_STEP_NAME: ${{ github.job}}-factory-1.6-secureboot
           KUBERNETES_VERSION: 1.29.0
         run: |
           sudo -E make e2e-image-factory
@@ -159,6 +164,7 @@ jobs:
           FACTORY_UPGRADE_SCHEMATIC: cf9b7aab9ed7c365d5384509b4d31c02fdaa06d2b3ac6cc0bc806f28130eff1f
           FACTORY_UPGRADE_VERSION: v1.6.1
           FACTORY_VERSION: v1.6.0
+          GITHUB_STEP_NAME: ${{ github.job}}-factory-1.6-iso
           KUBERNETES_VERSION: 1.29.0
         run: |
           sudo -E make e2e-image-factory
@@ -170,6 +176,7 @@ jobs:
           FACTORY_UPGRADE_SCHEMATIC: cf9b7aab9ed7c365d5384509b4d31c02fdaa06d2b3ac6cc0bc806f28130eff1f
           FACTORY_UPGRADE_VERSION: v1.5.5
           FACTORY_VERSION: v1.5.5
+          GITHUB_STEP_NAME: ${{ github.job}}-factory-1.5-iso
           KUBERNETES_VERSION: 1.28.5
         run: |
           sudo -E make e2e-image-factory
@@ -179,8 +186,6 @@ jobs:
         with:
           name: talos-logs-integration-image-factory
           path: |-
-            ~/.talos/clusters/**/*.log
-            ~/.talos/clusters/**/support.zip
+            /tmp/logs-*.tar.gz
             /tmp/support-*.zip
-            !~/.talos/clusters/**/swtpm.log
           retention-days: "5"

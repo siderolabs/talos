@@ -7,6 +7,7 @@ source ./hack/test/e2e.sh
 
 PROVISIONER=qemu
 CLUSTER_NAME="e2e-${PROVISIONER}"
+LOG_ARCHIVE_SUFFIX="${GITHUB_STEP_NAME:-e2e-${PROVISIONER}}"
 
 FACTORY_HOSTNAME=${FACTORY_HOSTNAME:-factory.talos.dev}
 PXE_FACTORY_HOSTNAME=${PXE_FACTORY_HOSTNAME:-pxe.factory.talos.dev}
@@ -66,7 +67,11 @@ function create_cluster {
 }
 
 function destroy_cluster() {
-  "${TALOSCTL}" cluster destroy --name "${CLUSTER_NAME}" --provisioner "${PROVISIONER}" --save-support-archive-path=/tmp/support-${CLUSTER_NAME}.zip
+  "${TALOSCTL}" cluster destroy \
+    --name "${CLUSTER_NAME}" \
+    --provisioner "${PROVISIONER}" \
+    --save-cluster-logs-archive-path="/tmp/logs-${LOG_ARCHIVE_SUFFIX}.tar.gz" \
+    --save-support-archive-path="/tmp/support-${LOG_ARCHIVE_SUFFIX}.zip"
 }
 
 trap destroy_cluster SIGINT EXIT

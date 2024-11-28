@@ -60,7 +60,8 @@ func Walk(sourceBasePath, imageBasePath string) ([]File, error) {
 	return filemap, err
 }
 
-func build(filemap []File) io.ReadCloser {
+// Build a tarball from a filemap.
+func Build(filemap []File) io.ReadCloser {
 	pr, pw := io.Pipe()
 
 	go func() {
@@ -148,6 +149,6 @@ func Layer(filemap []File) (v1.Layer, error) {
 
 	// Return a new copy of the buffer each time it's opened.
 	return tarball.LayerFromOpener(func() (io.ReadCloser, error) {
-		return build(filemap), nil
+		return Build(filemap), nil
 	})
 }

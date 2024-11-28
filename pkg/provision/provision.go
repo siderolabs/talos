@@ -7,20 +7,15 @@ package provision
 
 import (
 	"context"
-	"io"
 
 	"github.com/siderolabs/talos/pkg/machinery/config/generate"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
 )
 
 // Provisioner is an interface each provisioner should implement.
-//
-//nolint:interfacebloat
 type Provisioner interface {
 	Create(context.Context, ClusterRequest, ...Option) (Cluster, error)
 	Destroy(context.Context, Cluster, ...Option) error
-
-	CrashDump(context.Context, Cluster, io.Writer)
 
 	Reflect(ctx context.Context, clusterName, stateDirectory string) (Cluster, error)
 

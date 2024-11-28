@@ -233,11 +233,9 @@ spec:
             type: upload
             artifactName: talos-logs-e2e-iso
             disableExecutableListGeneration: true
-            artifactPath: ~/.talos/clusters/**/*.log
+            artifactPath: /tmp/logs-*.tar.gz
             additionalArtifacts:
-              - "~/.talos/clusters/**/support.zip"
               - "/tmp/support-*.zip"
-              - "!~/.talos/clusters/**/swtpm.log"
     - name: e2e-qemu-short
       depends:
         - default
@@ -254,6 +252,7 @@ spec:
         - name: e2e-qemu
           withSudo: true
           environment:
+            GITHUB_STEP_NAME: ${{ github.job}}-e2e-qemu-short
             IMAGE_REGISTRY: registry.dev.siderolabs.io
             SHORT_INTEGRATION_TEST: yes
         - name: save-talos-logs
@@ -263,11 +262,9 @@ spec:
             type: upload
             artifactName: talos-logs-e2e-qemu-short
             disableExecutableListGeneration: true
-            artifactPath: ~/.talos/clusters/**/*.log
+            artifactPath: /tmp/logs-*.tar.gz
             additionalArtifacts:
-              - "~/.talos/clusters/**/support.zip"
               - "/tmp/support-*.zip"
-              - "!~/.talos/clusters/**/swtpm.log"
     - name: e2e-docker-short
       depends:
         - default
@@ -293,11 +290,9 @@ spec:
             type: upload
             artifactName: talos-logs-e2e-docker-short
             disableExecutableListGeneration: true
-            artifactPath: ~/.talos/clusters/**/*.log
+            artifactPath: /tmp/logs-*.tar.gz
             additionalArtifacts:
-              - "~/.talos/clusters/**/support.zip"
               - "/tmp/support-*.zip"
-              - "!~/.talos/clusters/**/swtpm.log"
     - name: integration-qemu
       buildxOptions:
         enabled: true
@@ -348,11 +343,9 @@ spec:
             type: upload
             artifactName: talos-logs-integration-qemu
             disableExecutableListGeneration: true
-            artifactPath: ~/.talos/clusters/**/*.log
+            artifactPath: /tmp/logs-*.tar.gz
             additionalArtifacts:
-              - "~/.talos/clusters/**/support.zip"
               - "/tmp/support-*.zip"
-              - "!~/.talos/clusters/**/swtpm.log"
     - name: integration-conformance
       buildxOptions:
         enabled: true
@@ -391,6 +384,7 @@ spec:
           command: e2e-qemu
           withSudo: true
           environment:
+            GITHUB_STEP_NAME: ${{ github.job}}-conformance-qemu
             QEMU_WORKERS: 2
             QEMU_CPUS: 4
             TEST_MODE: fast-conformance
@@ -402,11 +396,9 @@ spec:
             type: upload
             artifactName: talos-logs-integration-qemu
             disableExecutableListGeneration: true
-            artifactPath: ~/.talos/clusters/**/*.log
+            artifactPath: /tmp/logs-*.tar.gz
             additionalArtifacts:
-              - "~/.talos/clusters/**/support.zip"
               - "/tmp/support-*.zip"
-              - "!~/.talos/clusters/**/swtpm.log"
     - name: integration-trusted-boot
       buildxOptions:
         enabled: true
@@ -464,6 +456,7 @@ spec:
           command: e2e-qemu
           withSudo: true
           environment:
+            GITHUB_STEP_NAME: ${{ github.job}}-integration-trusted-boot
             VIA_MAINTENANCE_MODE: true
             WITH_TRUSTED_BOOT_ISO: true
             EXTRA_TEST_ARGS: -talos.trustedboot
@@ -475,11 +468,9 @@ spec:
             type: upload
             artifactName: talos-logs-integration-trusted-boot
             disableExecutableListGeneration: true
-            artifactPath: ~/.talos/clusters/**/*.log
+            artifactPath: /tmp/logs-*.tar.gz
             additionalArtifacts:
-              - "~/.talos/clusters/**/support.zip"
               - "/tmp/support-*.zip"
-              - "!~/.talos/clusters/**/swtpm.log"
     - name: integration-provision-0
       buildxOptions:
         enabled: true
@@ -528,11 +519,9 @@ spec:
             type: upload
             artifactName: talos-logs-integration-provision-0
             disableExecutableListGeneration: true
-            artifactPath: ~/.talos/clusters/**/*.log
+            artifactPath: /tmp/logs-*.tar.gz
             additionalArtifacts:
-              - "~/.talos/clusters/**/support.zip"
               - "/tmp/support-*.zip"
-              - "!~/.talos/clusters/**/swtpm.log"
     - name: integration-provision-1
       buildxOptions:
         enabled: true
@@ -581,11 +570,9 @@ spec:
             type: upload
             artifactName: talos-logs-integration-provision-1
             disableExecutableListGeneration: true
-            artifactPath: ~/.talos/clusters/**/*.log
+            artifactPath: /tmp/logs-*.tar.gz
             additionalArtifacts:
-              - "~/.talos/clusters/**/support.zip"
               - "/tmp/support-*.zip"
-              - "!~/.talos/clusters/**/swtpm.log"
     - name: integration-provision-2
       buildxOptions:
         enabled: true
@@ -634,11 +621,9 @@ spec:
             type: upload
             artifactName: talos-logs-integration-provision-2
             disableExecutableListGeneration: true
-            artifactPath: ~/.talos/clusters/**/*.log
+            artifactPath: /tmp/logs-*.tar.gz
             additionalArtifacts:
-              - "~/.talos/clusters/**/support.zip"
               - "/tmp/support-*.zip"
-              - "!~/.talos/clusters/**/swtpm.log"
     - name: integration-misc-0
       buildxOptions:
         enabled: true
@@ -678,6 +663,7 @@ spec:
           command: e2e-qemu
           withSudo: true
           environment:
+            GITHUB_STEP_NAME: ${{ github.job}}-e2e-firewall
             SHORT_INTEGRATION_TEST: yes
             WITH_FIREWALL: block
             IMAGE_REGISTRY: registry.dev.siderolabs.io
@@ -685,6 +671,7 @@ spec:
           command: e2e-qemu
           withSudo: true
           environment:
+            GITHUB_STEP_NAME: ${{ github.job}}-e2e-canal-reset
             INTEGRATION_TEST_RUN: TestIntegration/api.ResetSuite/TestResetWithSpec
             CUSTOM_CNI_URL: https://raw.githubusercontent.com/projectcalico/calico/v3.25.0/manifests/canal.yaml
             IMAGE_REGISTRY: registry.dev.siderolabs.io
@@ -692,6 +679,7 @@ spec:
           command: e2e-qemu
           withSudo: true
           environment:
+            GITHUB_STEP_NAME: ${{ github.job}}-e2e-controlplane-port
             SHORT_INTEGRATION_TEST: yes
             WITH_CONTROL_PLANE_PORT: 443
             IMAGE_REGISTRY: registry.dev.siderolabs.io
@@ -702,11 +690,9 @@ spec:
             type: upload
             artifactName: talos-logs-integration-misc-0
             disableExecutableListGeneration: true
-            artifactPath: ~/.talos/clusters/**/*.log
+            artifactPath: /tmp/logs-*.tar.gz
             additionalArtifacts:
-              - "~/.talos/clusters/**/support.zip"
               - "/tmp/support-*.zip"
-              - "!~/.talos/clusters/**/swtpm.log"
     - name: integration-misc-1
       buildxOptions:
         enabled: true
@@ -746,6 +732,7 @@ spec:
           command: e2e-qemu
           withSudo: true
           environment:
+            GITHUB_STEP_NAME: ${{ github.job}}-e2e-no-cluster-discovery
             SHORT_INTEGRATION_TEST: yes
             WITH_CLUSTER_DISCOVERY: false
             IMAGE_REGISTRY: registry.dev.siderolabs.io
@@ -753,6 +740,7 @@ spec:
           command: e2e-qemu
           withSudo: true
           environment:
+            GITHUB_STEP_NAME: ${{ github.job}}-e2e-kubespan
             SHORT_INTEGRATION_TEST: yes
             WITH_CLUSTER_DISCOVERY: true
             WITH_KUBESPAN: true
@@ -761,6 +749,7 @@ spec:
           command: e2e-qemu
           withSudo: true
           environment:
+            GITHUB_STEP_NAME: ${{ github.job}}-e2e-default-hostname
             SHORT_INTEGRATION_TEST: yes
             VIA_MAINTENANCE_MODE: true
             DISABLE_DHCP_HOSTNAME: true
@@ -772,11 +761,9 @@ spec:
             type: upload
             artifactName: talos-logs-integration-misc-1
             disableExecutableListGeneration: true
-            artifactPath: ~/.talos/clusters/**/*.log
+            artifactPath: /tmp/logs-*.tar.gz
             additionalArtifacts:
-              - "~/.talos/clusters/**/support.zip"
               - "/tmp/support-*.zip"
-              - "!~/.talos/clusters/**/swtpm.log"
     - name: integration-misc-2
       buildxOptions:
         enabled: true
@@ -827,6 +814,7 @@ spec:
           command: e2e-qemu
           withSudo: true
           environment:
+            GITHUB_STEP_NAME: ${{ github.job}}-e2e-bios-cgroupsv1
             SHORT_INTEGRATION_TEST: yes
             WITH_UEFI: false
             WITH_CONFIG_PATCH: "@hack/test/patches/cgroupsv1.yaml" #use cgroupsv1
@@ -835,6 +823,7 @@ spec:
           command: e2e-qemu
           withSudo: true
           environment:
+            GITHUB_STEP_NAME: ${{ github.job}}-e2e-disk-image
             SHORT_INTEGRATION_TEST: yes
             USE_DISK_IMAGE: true
             VIA_MAINTENANCE_MODE: true
@@ -847,11 +836,9 @@ spec:
             type: upload
             artifactName: talos-logs-integration-misc-2
             disableExecutableListGeneration: true
-            artifactPath: ~/.talos/clusters/**/*.log
+            artifactPath: /tmp/logs-*.tar.gz
             additionalArtifacts:
-              - "~/.talos/clusters/**/support.zip"
               - "/tmp/support-*.zip"
-              - "!~/.talos/clusters/**/swtpm.log"
     - name: integration-misc-3
       buildxOptions:
         enabled: true
@@ -891,6 +878,7 @@ spec:
           command: e2e-qemu
           withSudo: true
           environment:
+            GITHUB_STEP_NAME: ${{ github.job}}-e2e-network-chaos
             SHORT_INTEGRATION_TEST: yes
             WITH_NETWORK_CHAOS: yes
             IMAGE_REGISTRY: registry.dev.siderolabs.io
@@ -898,6 +886,7 @@ spec:
           command: e2e-qemu
           withSudo: true
           environment:
+            GITHUB_STEP_NAME: ${{ github.job}}-e2e-metal-iso
             SHORT_INTEGRATION_TEST: yes
             WITH_CONFIG_INJECTION_METHOD: "metal-iso"
             IMAGE_REGISTRY: registry.dev.siderolabs.io
@@ -908,11 +897,9 @@ spec:
             type: upload
             artifactName: talos-logs-integration-misc-3
             disableExecutableListGeneration: true
-            artifactPath: ~/.talos/clusters/**/*.log
+            artifactPath: /tmp/logs-*.tar.gz
             additionalArtifacts:
-              - "~/.talos/clusters/**/support.zip"
               - "/tmp/support-*.zip"
-              - "!~/.talos/clusters/**/swtpm.log"
     - name: integration-misc-4
       buildxOptions:
         enabled: true
@@ -952,6 +939,7 @@ spec:
           command: e2e-qemu
           withSudo: true
           environment:
+            GITHUB_STEP_NAME: ${{ github.job}}-e2e-siderolink
             SHORT_INTEGRATION_TEST: yes
             WITH_SIDEROLINK_AGENT: true
             VIA_MAINTENANCE_MODE: true
@@ -960,6 +948,7 @@ spec:
           command: e2e-qemu
           withSudo: true
           environment:
+            GITHUB_STEP_NAME: ${{ github.job}}-e2e-siderolink-tunnel
             SHORT_INTEGRATION_TEST: yes
             WITH_SIDEROLINK_AGENT: tunnel
             VIA_MAINTENANCE_MODE: true
@@ -968,6 +957,7 @@ spec:
           command: e2e-qemu
           withSudo: true
           environment:
+            GITHUB_STEP_NAME: ${{ github.job}}-e2e-siderolink-tls
             SHORT_INTEGRATION_TEST: yes
             WITH_SIDEROLINK_AGENT: wireguard+tls
             VIA_MAINTENANCE_MODE: true
@@ -976,6 +966,7 @@ spec:
           command: e2e-qemu
           withSudo: true
           environment:
+            GITHUB_STEP_NAME: ${{ github.job}}-e2e-apparmor
             SHORT_INTEGRATION_TEST: yes
             WITH_APPARMOR_LSM_ENABLED: yes
             IMAGE_REGISTRY: registry.dev.siderolabs.io
@@ -983,6 +974,7 @@ spec:
           command: e2e-qemu
           withSudo: true
           environment:
+            GITHUB_STEP_NAME: ${{ github.job}}-e2e-k8s-user-namespace
             SHORT_INTEGRATION_TEST: yes
             WITH_CONFIG_PATCH: "@hack/test/patches/usernamespace.yaml"
             IMAGE_REGISTRY: registry.dev.siderolabs.io
@@ -993,11 +985,9 @@ spec:
             type: upload
             artifactName: talos-logs-integration-misc-4
             disableExecutableListGeneration: true
-            artifactPath: ~/.talos/clusters/**/*.log
+            artifactPath: /tmp/logs-*.tar.gz
             additionalArtifacts:
-              - "~/.talos/clusters/**/support.zip"
               - "/tmp/support-*.zip"
-              - "!~/.talos/clusters/**/swtpm.log"
     - name: integration-extensions
       buildxOptions:
         enabled: true
@@ -1063,6 +1053,7 @@ spec:
           command: e2e-qemu
           withSudo: true
           environment:
+            GITHUB_STEP_NAME: ${{ github.job}}-e2e-extensions
             QEMU_MEMORY_WORKERS: 4096
             WITH_CONFIG_PATCH_WORKER: "@_out/installer-extensions-patch.yaml:@hack/test/patches/extensions.yaml:@hack/test/patches/dm-raid-module.yaml"
             QEMU_EXTRA_DISKS: 3
@@ -1076,11 +1067,9 @@ spec:
             type: upload
             artifactName: talos-logs-integration-extensions
             disableExecutableListGeneration: true
-            artifactPath: ~/.talos/clusters/**/*.log
+            artifactPath: /tmp/logs-*.tar.gz
             additionalArtifacts:
-              - "~/.talos/clusters/**/support.zip"
               - "/tmp/support-*.zip"
-              - "!~/.talos/clusters/**/swtpm.log"
     - name: integration-cilium
       buildxOptions:
         enabled: true
@@ -1119,6 +1108,7 @@ spec:
           command: e2e-qemu
           withSudo: true
           environment:
+            GITHUB_STEP_NAME: ${{ github.job}}-e2e-cilium
             SHORT_INTEGRATION_TEST: yes
             WITH_SKIP_K8S_NODE_READINESS_CHECK: yes
             WITH_CUSTOM_CNI: cilium
@@ -1130,6 +1120,7 @@ spec:
           command: e2e-qemu
           withSudo: true
           environment:
+            GITHUB_STEP_NAME: ${{ github.job}}-e2e-cilium-strict
             SHORT_INTEGRATION_TEST: yes
             WITH_SKIP_K8S_NODE_READINESS_CHECK: yes
             WITH_CUSTOM_CNI: cilium
@@ -1142,6 +1133,7 @@ spec:
           command: e2e-qemu
           withSudo: true
           environment:
+            GITHUB_STEP_NAME: ${{ github.job}}-e2e-cilium-strict-kubespan
             SHORT_INTEGRATION_TEST: yes
             WITH_SKIP_K8S_NODE_READINESS_CHECK: yes
             WITH_CUSTOM_CNI: cilium
@@ -1158,11 +1150,9 @@ spec:
             type: upload
             artifactName: talos-logs-integration-cilium
             disableExecutableListGeneration: true
-            artifactPath: ~/.talos/clusters/**/*.log
+            artifactPath: /tmp/logs-*.tar.gz
             additionalArtifacts:
-              - "~/.talos/clusters/**/support.zip"
               - "/tmp/support-*.zip"
-              - "!~/.talos/clusters/**/swtpm.log"
     - name: integration-qemu-encrypted-vip
       buildxOptions:
         enabled: true
@@ -1215,11 +1205,9 @@ spec:
             type: upload
             artifactName: talos-logs-integration-qemu-encrypted-vip
             disableExecutableListGeneration: true
-            artifactPath: ~/.talos/clusters/**/*.log
+            artifactPath: /tmp/logs-*.tar.gz
             additionalArtifacts:
-              - "~/.talos/clusters/**/support.zip"
               - "/tmp/support-*.zip"
-              - "!~/.talos/clusters/**/swtpm.log"
     - name: integration-qemu-race
       buildxOptions:
         enabled: true
@@ -1266,6 +1254,7 @@ spec:
           command: e2e-qemu
           withSudo: true
           environment:
+            GITHUB_STEP_NAME: ${{ github.job}}-e2e-qemu-race
             QEMU_EXTRA_DISKS: "3"
             QEMU_EXTRA_DISKS_SIZE: "10240"
             QEMU_EXTRA_DISKS_DRIVERS: "ide,nvme"
@@ -1279,11 +1268,9 @@ spec:
             type: upload
             artifactName: talos-logs-integration-qemu-race
             disableExecutableListGeneration: true
-            artifactPath: ~/.talos/clusters/**/*.log
+            artifactPath: /tmp/logs-*.tar.gz
             additionalArtifacts:
-              - "~/.talos/clusters/**/support.zip"
               - "/tmp/support-*.zip"
-              - "!~/.talos/clusters/**/swtpm.log"
     - name: integration-qemu-csi-rook-ceph
       buildxOptions:
         enabled: true
@@ -1323,6 +1310,7 @@ spec:
           command: e2e-qemu
           withSudo: true
           environment:
+            GITHUB_STEP_NAME: ${{ github.job}}-e2e-qemu-csi-rook-ceph
             SHORT_INTEGRATION_TEST: yes
             QEMU_WORKERS: 3
             QEMU_CPUS_WORKERS: 6
@@ -1339,11 +1327,9 @@ spec:
             type: upload
             artifactName: talos-logs-integration-qemu-csi-rook-ceph
             disableExecutableListGeneration: true
-            artifactPath: ~/.talos/clusters/**/*.log
+            artifactPath: /tmp/logs-*.tar.gz
             additionalArtifacts:
-              - "~/.talos/clusters/**/support.zip"
               - "/tmp/support-*.zip"
-              - "!~/.talos/clusters/**/swtpm.log"
     - name: integration-qemu-csi-longhorn
       buildxOptions:
         enabled: true
@@ -1408,6 +1394,7 @@ spec:
           command: e2e-qemu
           withSudo: true
           environment:
+            GITHUB_STEP_NAME: ${{ github.job}}-e2e-qemu-csi-longhorn
             SHORT_INTEGRATION_TEST: yes
             QEMU_WORKERS: 3
             WITH_CONFIG_PATCH: "@_out/installer-extensions-patch.yaml:@hack/test/patches/longhorn.yaml"
@@ -1420,11 +1407,9 @@ spec:
             type: upload
             artifactName: talos-logs-integration-qemu-csi-longhorn
             disableExecutableListGeneration: true
-            artifactPath: ~/.talos/clusters/**/*.log
+            artifactPath: /tmp/logs-*.tar.gz
             additionalArtifacts:
-              - "~/.talos/clusters/**/support.zip"
               - "/tmp/support-*.zip"
-              - "!~/.talos/clusters/**/swtpm.log"
     - name: integration-images
       buildxOptions:
         enabled: true
@@ -1581,6 +1566,7 @@ spec:
           command: e2e-image-factory
           withSudo: true
           environment:
+            GITHUB_STEP_NAME: ${{ github.job}}-factory-1.7-iso
             FACTORY_BOOT_METHOD: iso
             FACTORY_VERSION: v1.7.5
             FACTORY_SCHEMATIC: 376567988ad370138ad8b2698212367b8edcb69b5fd68c80be1f2ec7d603b4ba
@@ -1592,6 +1578,7 @@ spec:
           command: e2e-image-factory
           withSudo: true
           environment:
+            GITHUB_STEP_NAME: ${{ github.job}}-factory-1.7-image
             FACTORY_BOOT_METHOD: disk-image
             FACTORY_VERSION: v1.7.5
             FACTORY_SCHEMATIC: 376567988ad370138ad8b2698212367b8edcb69b5fd68c80be1f2ec7d603b4ba
@@ -1603,6 +1590,7 @@ spec:
           command: e2e-image-factory
           withSudo: true
           environment:
+            GITHUB_STEP_NAME: ${{ github.job}}-factory-1.7-pxe
             FACTORY_BOOT_METHOD: pxe
             FACTORY_VERSION: v1.7.6
             FACTORY_SCHEMATIC: 376567988ad370138ad8b2698212367b8edcb69b5fd68c80be1f2ec7d603b4ba
@@ -1611,6 +1599,7 @@ spec:
           command: e2e-image-factory
           withSudo: true
           environment:
+            GITHUB_STEP_NAME: ${{ github.job}}-factory-1.7-secureboot
             FACTORY_BOOT_METHOD: secureboot-iso
             FACTORY_VERSION: v1.7.5
             FACTORY_SCHEMATIC: cf9b7aab9ed7c365d5384509b4d31c02fdaa06d2b3ac6cc0bc806f28130eff1f
@@ -1622,6 +1611,7 @@ spec:
           command: e2e-image-factory
           withSudo: true
           environment:
+            GITHUB_STEP_NAME: ${{ github.job}}-factory-1.6-secureboot
             FACTORY_BOOT_METHOD: secureboot-iso
             FACTORY_VERSION: v1.6.0
             FACTORY_SCHEMATIC: cf9b7aab9ed7c365d5384509b4d31c02fdaa06d2b3ac6cc0bc806f28130eff1f
@@ -1633,6 +1623,7 @@ spec:
           command: e2e-image-factory
           withSudo: true
           environment:
+            GITHUB_STEP_NAME: ${{ github.job}}-factory-1.6-iso
             FACTORY_BOOT_METHOD: iso
             FACTORY_VERSION: v1.6.0
             FACTORY_SCHEMATIC: 376567988ad370138ad8b2698212367b8edcb69b5fd68c80be1f2ec7d603b4ba
@@ -1644,6 +1635,7 @@ spec:
           command: e2e-image-factory
           withSudo: true
           environment:
+            GITHUB_STEP_NAME: ${{ github.job}}-factory-1.5-iso
             FACTORY_BOOT_METHOD: iso
             FACTORY_VERSION: v1.5.5
             FACTORY_SCHEMATIC: 376567988ad370138ad8b2698212367b8edcb69b5fd68c80be1f2ec7d603b4ba
@@ -1658,11 +1650,9 @@ spec:
             type: upload
             artifactName: talos-logs-integration-image-factory
             disableExecutableListGeneration: true
-            artifactPath: ~/.talos/clusters/**/*.log
+            artifactPath: /tmp/logs-*.tar.gz
             additionalArtifacts:
-              - "~/.talos/clusters/**/support.zip"
               - "/tmp/support-*.zip"
-              - "!~/.talos/clusters/**/swtpm.log"
     - name: integration-aws
       buildxOptions:
         enabled: true

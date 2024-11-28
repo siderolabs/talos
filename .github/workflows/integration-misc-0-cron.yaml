@@ -1,6 +1,6 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
 #
-# Generated on 2024-11-08T11:46:41Z by kres 1fc767a.
+# Generated on 2024-11-28T13:53:18Z by kres 232fe63.
 
 name: integration-misc-0-cron
 concurrency:
@@ -80,6 +80,7 @@ jobs:
           make talosctl-cni-bundle
       - name: e2e-firewall
         env:
+          GITHUB_STEP_NAME: ${{ github.job}}-e2e-firewall
           IMAGE_REGISTRY: registry.dev.siderolabs.io
           SHORT_INTEGRATION_TEST: "yes"
           WITH_FIREWALL: block
@@ -88,12 +89,14 @@ jobs:
       - name: e2e-canal-reset
         env:
           CUSTOM_CNI_URL: https://raw.githubusercontent.com/projectcalico/calico/v3.25.0/manifests/canal.yaml
+          GITHUB_STEP_NAME: ${{ github.job}}-e2e-canal-reset
           IMAGE_REGISTRY: registry.dev.siderolabs.io
           INTEGRATION_TEST_RUN: TestIntegration/api.ResetSuite/TestResetWithSpec
         run: |
           sudo -E make e2e-qemu
       - name: e2e-controlplane-port
         env:
+          GITHUB_STEP_NAME: ${{ github.job}}-e2e-controlplane-port
           IMAGE_REGISTRY: registry.dev.siderolabs.io
           SHORT_INTEGRATION_TEST: "yes"
           WITH_CONTROL_PLANE_PORT: "443"
@@ -105,8 +108,6 @@ jobs:
         with:
           name: talos-logs-integration-misc-0
           path: |-
-            ~/.talos/clusters/**/*.log
-            ~/.talos/clusters/**/support.zip
+            /tmp/logs-*.tar.gz
             /tmp/support-*.zip
-            !~/.talos/clusters/**/swtpm.log
           retention-days: "5"

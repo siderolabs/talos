@@ -32,7 +32,11 @@ function create_cluster {
 }
 
 function destroy_cluster() {
-  "${TALOSCTL}" cluster destroy --name "${CLUSTER_NAME}" --provisioner "${PROVISIONER}" --save-support-archive-path=/tmp/support-${CLUSTER_NAME}.zip
+  "${TALOSCTL}" cluster destroy \
+    --name "${CLUSTER_NAME}" \
+    --provisioner "${PROVISIONER}" \
+    --save-cluster-logs-archive-path="/tmp/logs-${CLUSTER_NAME}.tar.gz" \
+    --save-support-archive-path="/tmp/support-${CLUSTER_NAME}.zip"
 }
 
 trap destroy_cluster SIGINT EXIT

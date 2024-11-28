@@ -1,6 +1,6 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
 #
-# Generated on 2024-11-08T11:46:41Z by kres 1fc767a.
+# Generated on 2024-11-28T13:53:18Z by kres 232fe63.
 
 name: integration-misc-4-cron
 concurrency:
@@ -80,6 +80,7 @@ jobs:
           make talosctl-cni-bundle
       - name: e2e-siderolink
         env:
+          GITHUB_STEP_NAME: ${{ github.job}}-e2e-siderolink
           IMAGE_REGISTRY: registry.dev.siderolabs.io
           SHORT_INTEGRATION_TEST: "yes"
           VIA_MAINTENANCE_MODE: "true"
@@ -88,6 +89,7 @@ jobs:
           sudo -E make e2e-qemu
       - name: e2e-siderolink-tunnel
         env:
+          GITHUB_STEP_NAME: ${{ github.job}}-e2e-siderolink-tunnel
           IMAGE_REGISTRY: registry.dev.siderolabs.io
           SHORT_INTEGRATION_TEST: "yes"
           VIA_MAINTENANCE_MODE: "true"
@@ -96,6 +98,7 @@ jobs:
           sudo -E make e2e-qemu
       - name: e2e-siderolink-tls
         env:
+          GITHUB_STEP_NAME: ${{ github.job}}-e2e-siderolink-tls
           IMAGE_REGISTRY: registry.dev.siderolabs.io
           SHORT_INTEGRATION_TEST: "yes"
           VIA_MAINTENANCE_MODE: "true"
@@ -104,6 +107,7 @@ jobs:
           sudo -E make e2e-qemu
       - name: e2e-apparmor
         env:
+          GITHUB_STEP_NAME: ${{ github.job}}-e2e-apparmor
           IMAGE_REGISTRY: registry.dev.siderolabs.io
           SHORT_INTEGRATION_TEST: "yes"
           WITH_APPARMOR_LSM_ENABLED: "yes"
@@ -111,6 +115,7 @@ jobs:
           sudo -E make e2e-qemu
       - name: e2e-k8s-user-namespace
         env:
+          GITHUB_STEP_NAME: ${{ github.job}}-e2e-k8s-user-namespace
           IMAGE_REGISTRY: registry.dev.siderolabs.io
           SHORT_INTEGRATION_TEST: "yes"
           WITH_CONFIG_PATCH: '@hack/test/patches/usernamespace.yaml'
@@ -122,8 +127,6 @@ jobs:
         with:
           name: talos-logs-integration-misc-4
           path: |-
-            ~/.talos/clusters/**/*.log
-            ~/.talos/clusters/**/support.zip
+            /tmp/logs-*.tar.gz
             /tmp/support-*.zip
-            !~/.talos/clusters/**/swtpm.log
           retention-days: "5"

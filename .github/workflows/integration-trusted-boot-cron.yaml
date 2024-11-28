@@ -1,6 +1,6 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
 #
-# Generated on 2024-11-08T11:46:41Z by kres 1fc767a.
+# Generated on 2024-11-28T13:53:18Z by kres 232fe63.
 
 name: integration-trusted-boot-cron
 concurrency:
@@ -103,6 +103,7 @@ jobs:
       - name: integration-trusted-boot
         env:
           EXTRA_TEST_ARGS: -talos.trustedboot
+          GITHUB_STEP_NAME: ${{ github.job}}-integration-trusted-boot
           IMAGE_REGISTRY: registry.dev.siderolabs.io
           VIA_MAINTENANCE_MODE: "true"
           WITH_TRUSTED_BOOT_ISO: "true"
@@ -114,8 +115,6 @@ jobs:
         with:
           name: talos-logs-integration-trusted-boot
           path: |-
-            ~/.talos/clusters/**/*.log
-            ~/.talos/clusters/**/support.zip
+            /tmp/logs-*.tar.gz
             /tmp/support-*.zip
-            !~/.talos/clusters/**/swtpm.log
           retention-days: "5"

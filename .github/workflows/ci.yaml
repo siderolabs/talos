@@ -1,6 +1,6 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
 #
-# Generated on 2024-11-08T11:46:41Z by kres 1fc767a.
+# Generated on 2024-11-28T14:18:12Z by kres 232fe63.
 
 name: default
 concurrency:
@@ -117,7 +117,7 @@ jobs:
         run: |
           make unit-tests-race
       - name: coverage
-        uses: codecov/codecov-action@v4
+        uses: codecov/codecov-action@v5
         with:
           files: _out/coverage.txt
           token: ${{ secrets.CODECOV_TOKEN }}
@@ -215,10 +215,8 @@ jobs:
         with:
           name: talos-logs-e2e-docker-short
           path: |-
-            ~/.talos/clusters/**/*.log
-            ~/.talos/clusters/**/support.zip
+            /tmp/logs-*.tar.gz
             /tmp/support-*.zip
-            !~/.talos/clusters/**/swtpm.log
           retention-days: "5"
   e2e-iso:
     permissions:
@@ -286,10 +284,8 @@ jobs:
         with:
           name: talos-logs-e2e-iso
           path: |-
-            ~/.talos/clusters/**/*.log
-            ~/.talos/clusters/**/support.zip
+            /tmp/logs-*.tar.gz
             /tmp/support-*.zip
-            !~/.talos/clusters/**/swtpm.log
           retention-days: "5"
   e2e-qemu-short:
     permissions:
@@ -348,6 +344,7 @@ jobs:
           make ci-temp-release-tag
       - name: e2e-qemu
         env:
+          GITHUB_STEP_NAME: ${{ github.job}}-e2e-qemu-short
           IMAGE_REGISTRY: registry.dev.siderolabs.io
           SHORT_INTEGRATION_TEST: "yes"
         run: |
@@ -358,10 +355,8 @@ jobs:
         with:
           name: talos-logs-e2e-qemu-short
           path: |-
-            ~/.talos/clusters/**/*.log
-            ~/.talos/clusters/**/support.zip
+            /tmp/logs-*.tar.gz
             /tmp/support-*.zip
-            !~/.talos/clusters/**/swtpm.log
           retention-days: "5"
   integration-aws:
     permissions:
@@ -1017,6 +1012,7 @@ jobs:
           make talosctl-cni-bundle
       - name: e2e-cilium
         env:
+          GITHUB_STEP_NAME: ${{ github.job}}-e2e-cilium
           IMAGE_REGISTRY: registry.dev.siderolabs.io
           QEMU_WORKERS: "2"
           SHORT_INTEGRATION_TEST: "yes"
@@ -1029,6 +1025,7 @@ jobs:
       - name: e2e-cilium-strict
         env:
           CILIUM_INSTALL_TYPE: strict
+          GITHUB_STEP_NAME: ${{ github.job}}-e2e-cilium-strict
           IMAGE_REGISTRY: registry.dev.siderolabs.io
           QEMU_WORKERS: "2"
           SHORT_INTEGRATION_TEST: "yes"
@@ -1041,6 +1038,7 @@ jobs:
       - name: e2e-cilium-strict-kubespan
         env:
           CILIUM_INSTALL_TYPE: strict
+          GITHUB_STEP_NAME: ${{ github.job}}-e2e-cilium-strict-kubespan
           IMAGE_REGISTRY: registry.dev.siderolabs.io
           QEMU_WORKERS: "2"
           SHORT_INTEGRATION_TEST: "yes"
@@ -1057,10 +1055,8 @@ jobs:
         with:
           name: talos-logs-integration-cilium
           path: |-
-            ~/.talos/clusters/**/*.log
-            ~/.talos/clusters/**/support.zip
+            /tmp/logs-*.tar.gz
             /tmp/support-*.zip
-            !~/.talos/clusters/**/swtpm.log
           retention-days: "5"
   integration-cloud-images:
     permissions:
@@ -1229,6 +1225,7 @@ jobs:
           make talosctl-cni-bundle
       - name: conformance-qemu
         env:
+          GITHUB_STEP_NAME: ${{ github.job}}-conformance-qemu
           IMAGE_REGISTRY: registry.dev.siderolabs.io
           QEMU_CPUS: "4"
           QEMU_WORKERS: "2"
@@ -1241,10 +1238,8 @@ jobs:
         with:
           name: talos-logs-integration-qemu
           path: |-
-            ~/.talos/clusters/**/*.log
-            ~/.talos/clusters/**/support.zip
+            /tmp/logs-*.tar.gz
             /tmp/support-*.zip
-            !~/.talos/clusters/**/swtpm.log
           retention-days: "5"
   integration-equinix-metal:
     permissions:
@@ -1470,6 +1465,7 @@ jobs:
       - name: e2e-extensions
         env:
           EXTRA_TEST_ARGS: -talos.extensions.qemu
+          GITHUB_STEP_NAME: ${{ github.job}}-e2e-extensions
           IMAGE_REGISTRY: registry.dev.siderolabs.io
           QEMU_EXTRA_DISKS: "3"
           QEMU_MEMORY_WORKERS: "4096"
@@ -1483,10 +1479,8 @@ jobs:
         with:
           name: talos-logs-integration-extensions
           path: |-
-            ~/.talos/clusters/**/*.log
-            ~/.talos/clusters/**/support.zip
+            /tmp/logs-*.tar.gz
             /tmp/support-*.zip
-            !~/.talos/clusters/**/swtpm.log
           retention-days: "5"
   integration-gcp:
     permissions:
@@ -1721,6 +1715,7 @@ jobs:
           FACTORY_UPGRADE_SCHEMATIC: cf9b7aab9ed7c365d5384509b4d31c02fdaa06d2b3ac6cc0bc806f28130eff1f
           FACTORY_UPGRADE_VERSION: v1.7.6
           FACTORY_VERSION: v1.7.5
+          GITHUB_STEP_NAME: ${{ github.job}}-factory-1.7-iso
           KUBERNETES_VERSION: 1.30.1
         run: |
           sudo -E make e2e-image-factory
@@ -1732,6 +1727,7 @@ jobs:
           FACTORY_UPGRADE_SCHEMATIC: cf9b7aab9ed7c365d5384509b4d31c02fdaa06d2b3ac6cc0bc806f28130eff1f
           FACTORY_UPGRADE_VERSION: v1.7.6
           FACTORY_VERSION: v1.7.5
+          GITHUB_STEP_NAME: ${{ github.job}}-factory-1.7-image
           KUBERNETES_VERSION: 1.30.1
         run: |
           sudo -E make e2e-image-factory
@@ -1740,6 +1736,7 @@ jobs:
           FACTORY_BOOT_METHOD: pxe
           FACTORY_SCHEMATIC: 376567988ad370138ad8b2698212367b8edcb69b5fd68c80be1f2ec7d603b4ba
           FACTORY_VERSION: v1.7.6
+          GITHUB_STEP_NAME: ${{ github.job}}-factory-1.7-pxe
           KUBERNETES_VERSION: 1.30.1
         run: |
           sudo -E make e2e-image-factory
@@ -1751,6 +1748,7 @@ jobs:
           FACTORY_UPGRADE_SCHEMATIC: 376567988ad370138ad8b2698212367b8edcb69b5fd68c80be1f2ec7d603b4ba
           FACTORY_UPGRADE_VERSION: v1.7.6
           FACTORY_VERSION: v1.7.5
+          GITHUB_STEP_NAME: ${{ github.job}}-factory-1.7-secureboot
           KUBERNETES_VERSION: 1.30.1
         run: |
           sudo -E make e2e-image-factory
@@ -1762,6 +1760,7 @@ jobs:
           FACTORY_UPGRADE_SCHEMATIC: 376567988ad370138ad8b2698212367b8edcb69b5fd68c80be1f2ec7d603b4ba
           FACTORY_UPGRADE_VERSION: v1.6.1
           FACTORY_VERSION: v1.6.0
+          GITHUB_STEP_NAME: ${{ github.job}}-factory-1.6-secureboot
           KUBERNETES_VERSION: 1.29.0
         run: |
           sudo -E make e2e-image-factory
@@ -1773,6 +1772,7 @@ jobs:
           FACTORY_UPGRADE_SCHEMATIC: cf9b7aab9ed7c365d5384509b4d31c02fdaa06d2b3ac6cc0bc806f28130eff1f
           FACTORY_UPGRADE_VERSION: v1.6.1
           FACTORY_VERSION: v1.6.0
+          GITHUB_STEP_NAME: ${{ github.job}}-factory-1.6-iso
           KUBERNETES_VERSION: 1.29.0
         run: |
           sudo -E make e2e-image-factory
@@ -1784,6 +1784,7 @@ jobs:
           FACTORY_UPGRADE_SCHEMATIC: cf9b7aab9ed7c365d5384509b4d31c02fdaa06d2b3ac6cc0bc806f28130eff1f
           FACTORY_UPGRADE_VERSION: v1.5.5
           FACTORY_VERSION: v1.5.5
+          GITHUB_STEP_NAME: ${{ github.job}}-factory-1.5-iso
           KUBERNETES_VERSION: 1.28.5
         run: |
           sudo -E make e2e-image-factory
@@ -1793,10 +1794,8 @@ jobs:
         with:
           name: talos-logs-integration-image-factory
           path: |-
-            ~/.talos/clusters/**/*.log
-            ~/.talos/clusters/**/support.zip
+            /tmp/logs-*.tar.gz
             /tmp/support-*.zip
-            !~/.talos/clusters/**/swtpm.log
           retention-days: "5"
   integration-images:
     permissions:
@@ -1960,6 +1959,7 @@ jobs:
           make talosctl-cni-bundle
       - name: e2e-firewall
         env:
+          GITHUB_STEP_NAME: ${{ github.job}}-e2e-firewall
           IMAGE_REGISTRY: registry.dev.siderolabs.io
           SHORT_INTEGRATION_TEST: "yes"
           WITH_FIREWALL: block
@@ -1968,12 +1968,14 @@ jobs:
       - name: e2e-canal-reset
         env:
           CUSTOM_CNI_URL: https://raw.githubusercontent.com/projectcalico/calico/v3.25.0/manifests/canal.yaml
+          GITHUB_STEP_NAME: ${{ github.job}}-e2e-canal-reset
           IMAGE_REGISTRY: registry.dev.siderolabs.io
           INTEGRATION_TEST_RUN: TestIntegration/api.ResetSuite/TestResetWithSpec
         run: |
           sudo -E make e2e-qemu
       - name: e2e-controlplane-port
         env:
+          GITHUB_STEP_NAME: ${{ github.job}}-e2e-controlplane-port
           IMAGE_REGISTRY: registry.dev.siderolabs.io
           SHORT_INTEGRATION_TEST: "yes"
           WITH_CONTROL_PLANE_PORT: "443"
@@ -1985,10 +1987,8 @@ jobs:
         with:
           name: talos-logs-integration-misc-0
           path: |-
-            ~/.talos/clusters/**/*.log
-            ~/.talos/clusters/**/support.zip
+            /tmp/logs-*.tar.gz
             /tmp/support-*.zip
-            !~/.talos/clusters/**/swtpm.log
           retention-days: "5"
   integration-misc-1:
     permissions:
@@ -2069,6 +2069,7 @@ jobs:
           make talosctl-cni-bundle
       - name: e2e-no-cluster-discovery
         env:
+          GITHUB_STEP_NAME: ${{ github.job}}-e2e-no-cluster-discovery
           IMAGE_REGISTRY: registry.dev.siderolabs.io
           SHORT_INTEGRATION_TEST: "yes"
           WITH_CLUSTER_DISCOVERY: "false"
@@ -2076,6 +2077,7 @@ jobs:
           sudo -E make e2e-qemu
       - name: e2e-kubespan
         env:
+          GITHUB_STEP_NAME: ${{ github.job}}-e2e-kubespan
           IMAGE_REGISTRY: registry.dev.siderolabs.io\
           SHORT_INTEGRATION_TEST: "yes"
           WITH_CLUSTER_DISCOVERY: "true"
@@ -2085,6 +2087,7 @@ jobs:
       - name: e2e-default-hostname
         env:
           DISABLE_DHCP_HOSTNAME: "true"
+          GITHUB_STEP_NAME: ${{ github.job}}-e2e-default-hostname
           IMAGE_REGISTRY: registry.dev.siderolabs.io
           SHORT_INTEGRATION_TEST: "yes"
           VIA_MAINTENANCE_MODE: "true"
@@ -2096,10 +2099,8 @@ jobs:
         with:
           name: talos-logs-integration-misc-1
           path: |-
-            ~/.talos/clusters/**/*.log
-            ~/.talos/clusters/**/support.zip
+            /tmp/logs-*.tar.gz
             /tmp/support-*.zip
-            !~/.talos/clusters/**/swtpm.log
           retention-days: "5"
   integration-misc-2:
     permissions:
@@ -2193,6 +2194,7 @@ jobs:
           make images-essential
       - name: e2e-bios-cgroupsv1
         env:
+          GITHUB_STEP_NAME: ${{ github.job}}-e2e-bios-cgroupsv1
           IMAGE_REGISTRY: registry.dev.siderolabs.io
           SHORT_INTEGRATION_TEST: "yes"
           WITH_CONFIG_PATCH: '@hack/test/patches/cgroupsv1.yaml'
@@ -2201,6 +2203,7 @@ jobs:
           sudo -E make e2e-qemu
       - name: e2e-disk-image
         env:
+          GITHUB_STEP_NAME: ${{ github.job}}-e2e-disk-image
           IMAGE_REGISTRY: registry.dev.siderolabs.io
           SHORT_INTEGRATION_TEST: "yes"
           USE_DISK_IMAGE: "true"
@@ -2214,10 +2217,8 @@ jobs:
         with:
           name: talos-logs-integration-misc-2
           path: |-
-            ~/.talos/clusters/**/*.log
-            ~/.talos/clusters/**/support.zip
+            /tmp/logs-*.tar.gz
             /tmp/support-*.zip
-            !~/.talos/clusters/**/swtpm.log
           retention-days: "5"
   integration-misc-3:
     permissions:
@@ -2298,6 +2299,7 @@ jobs:
           make talosctl-cni-bundle
       - name: e2e-network-chaos
         env:
+          GITHUB_STEP_NAME: ${{ github.job}}-e2e-network-chaos
           IMAGE_REGISTRY: registry.dev.siderolabs.io
           SHORT_INTEGRATION_TEST: "yes"
           WITH_NETWORK_CHAOS: "yes"
@@ -2305,6 +2307,7 @@ jobs:
           sudo -E make e2e-qemu
       - name: e2e-metal-iso
         env:
+          GITHUB_STEP_NAME: ${{ github.job}}-e2e-metal-iso
           IMAGE_REGISTRY: registry.dev.siderolabs.io
           SHORT_INTEGRATION_TEST: "yes"
           WITH_CONFIG_INJECTION_METHOD: metal-iso
@@ -2316,10 +2319,8 @@ jobs:
         with:
           name: talos-logs-integration-misc-3
           path: |-
-            ~/.talos/clusters/**/*.log
-            ~/.talos/clusters/**/support.zip
+            /tmp/logs-*.tar.gz
             /tmp/support-*.zip
-            !~/.talos/clusters/**/swtpm.log
           retention-days: "5"
   integration-misc-4:
     permissions:
@@ -2400,6 +2401,7 @@ jobs:
           make talosctl-cni-bundle
       - name: e2e-siderolink
         env:
+          GITHUB_STEP_NAME: ${{ github.job}}-e2e-siderolink
           IMAGE_REGISTRY: registry.dev.siderolabs.io
           SHORT_INTEGRATION_TEST: "yes"
           VIA_MAINTENANCE_MODE: "true"
@@ -2408,6 +2410,7 @@ jobs:
           sudo -E make e2e-qemu
       - name: e2e-siderolink-tunnel
         env:
+          GITHUB_STEP_NAME: ${{ github.job}}-e2e-siderolink-tunnel
           IMAGE_REGISTRY: registry.dev.siderolabs.io
           SHORT_INTEGRATION_TEST: "yes"
           VIA_MAINTENANCE_MODE: "true"
@@ -2416,6 +2419,7 @@ jobs:
           sudo -E make e2e-qemu
       - name: e2e-siderolink-tls
         env:
+          GITHUB_STEP_NAME: ${{ github.job}}-e2e-siderolink-tls
           IMAGE_REGISTRY: registry.dev.siderolabs.io
           SHORT_INTEGRATION_TEST: "yes"
           VIA_MAINTENANCE_MODE: "true"
@@ -2424,6 +2428,7 @@ jobs:
           sudo -E make e2e-qemu
       - name: e2e-apparmor
         env:
+          GITHUB_STEP_NAME: ${{ github.job}}-e2e-apparmor
           IMAGE_REGISTRY: registry.dev.siderolabs.io
           SHORT_INTEGRATION_TEST: "yes"
           WITH_APPARMOR_LSM_ENABLED: "yes"
@@ -2431,6 +2436,7 @@ jobs:
           sudo -E make e2e-qemu
       - name: e2e-k8s-user-namespace
         env:
+          GITHUB_STEP_NAME: ${{ github.job}}-e2e-k8s-user-namespace
           IMAGE_REGISTRY: registry.dev.siderolabs.io
           SHORT_INTEGRATION_TEST: "yes"
           WITH_CONFIG_PATCH: '@hack/test/patches/usernamespace.yaml'
@@ -2442,10 +2448,8 @@ jobs:
         with:
           name: talos-logs-integration-misc-4
           path: |-
-            ~/.talos/clusters/**/*.log
-            ~/.talos/clusters/**/support.zip
+            /tmp/logs-*.tar.gz
             /tmp/support-*.zip
-            !~/.talos/clusters/**/swtpm.log
           retention-days: "5"
   integration-provision-0:
     permissions:
@@ -2539,10 +2543,8 @@ jobs:
         with:
           name: talos-logs-integration-provision-0
           path: |-
-            ~/.talos/clusters/**/*.log
-            ~/.talos/clusters/**/support.zip
+            /tmp/logs-*.tar.gz
             /tmp/support-*.zip
-            !~/.talos/clusters/**/swtpm.log
           retention-days: "5"
   integration-provision-1:
     permissions:
@@ -2636,10 +2638,8 @@ jobs:
         with:
           name: talos-logs-integration-provision-1
           path: |-
-            ~/.talos/clusters/**/*.log
-            ~/.talos/clusters/**/support.zip
+            /tmp/logs-*.tar.gz
             /tmp/support-*.zip
-            !~/.talos/clusters/**/swtpm.log
           retention-days: "5"
   integration-provision-2:
     permissions:
@@ -2733,10 +2733,8 @@ jobs:
         with:
           name: talos-logs-integration-provision-2
           path: |-
-            ~/.talos/clusters/**/*.log
-            ~/.talos/clusters/**/support.zip
+            /tmp/logs-*.tar.gz
             /tmp/support-*.zip
-            !~/.talos/clusters/**/swtpm.log
           retention-days: "5"
   integration-qemu:
     permissions:
@@ -2831,10 +2829,8 @@ jobs:
         with:
           name: talos-logs-integration-qemu
           path: |-
-            ~/.talos/clusters/**/*.log
-            ~/.talos/clusters/**/support.zip
+            /tmp/logs-*.tar.gz
             /tmp/support-*.zip
-            !~/.talos/clusters/**/swtpm.log
           retention-days: "5"
   integration-qemu-csi-longhorn:
     permissions:
@@ -2942,6 +2938,7 @@ jobs:
       - name: e2e-qemu-csi-longhorn
         env:
           EXTRA_TEST_ARGS: -talos.csi=longhorn
+          GITHUB_STEP_NAME: ${{ github.job}}-e2e-qemu-csi-longhorn
           IMAGE_REGISTRY: registry.dev.siderolabs.io
           QEMU_WORKERS: "3"
           SHORT_INTEGRATION_TEST: "yes"
@@ -2954,10 +2951,8 @@ jobs:
         with:
           name: talos-logs-integration-qemu-csi-longhorn
           path: |-
-            ~/.talos/clusters/**/*.log
-            ~/.talos/clusters/**/support.zip
+            /tmp/logs-*.tar.gz
             /tmp/support-*.zip
-            !~/.talos/clusters/**/swtpm.log
           retention-days: "5"
   integration-qemu-csi-rook-ceph:
     permissions:
@@ -3039,6 +3034,7 @@ jobs:
       - name: e2e-qemu-csi-rook-ceph
         env:
           EXTRA_TEST_ARGS: -talos.csi=rook-ceph
+          GITHUB_STEP_NAME: ${{ github.job}}-e2e-qemu-csi-rook-ceph
           IMAGE_REGISTRY: registry.dev.siderolabs.io
           QEMU_CPUS_WORKERS: "6"
           QEMU_EXTRA_DISKS: "1"
@@ -3055,10 +3051,8 @@ jobs:
         with:
           name: talos-logs-integration-qemu-csi-rook-ceph
           path: |-
-            ~/.talos/clusters/**/*.log
-            ~/.talos/clusters/**/support.zip
+            /tmp/logs-*.tar.gz
             /tmp/support-*.zip
-            !~/.talos/clusters/**/swtpm.log
           retention-days: "5"
   integration-qemu-encrypted-vip:
     permissions:
@@ -3155,10 +3149,8 @@ jobs:
         with:
           name: talos-logs-integration-qemu-encrypted-vip
           path: |-
-            ~/.talos/clusters/**/*.log
-            ~/.talos/clusters/**/support.zip
+            /tmp/logs-*.tar.gz
             /tmp/support-*.zip
-            !~/.talos/clusters/**/swtpm.log
           retention-days: "5"
   integration-qemu-race:
     permissions:
@@ -3248,6 +3240,7 @@ jobs:
           make initramfs installer
       - name: e2e-qemu-race
         env:
+          GITHUB_STEP_NAME: ${{ github.job}}-e2e-qemu-race
           IMAGE_REGISTRY: registry.dev.siderolabs.io
           QEMU_EXTRA_DISKS: "3"
           QEMU_EXTRA_DISKS_DRIVERS: ide,nvme
@@ -3262,10 +3255,8 @@ jobs:
         with:
           name: talos-logs-integration-qemu-race
           path: |-
-            ~/.talos/clusters/**/*.log
-            ~/.talos/clusters/**/support.zip
+            /tmp/logs-*.tar.gz
             /tmp/support-*.zip
-            !~/.talos/clusters/**/swtpm.log
           retention-days: "5"
   integration-reproducibility-test:
     permissions:
@@ -3439,6 +3430,7 @@ jobs:
       - name: integration-trusted-boot
         env:
           EXTRA_TEST_ARGS: -talos.trustedboot
+          GITHUB_STEP_NAME: ${{ github.job}}-integration-trusted-boot
           IMAGE_REGISTRY: registry.dev.siderolabs.io
           VIA_MAINTENANCE_MODE: "true"
           WITH_TRUSTED_BOOT_ISO: "true"
@@ -3450,10 +3442,8 @@ jobs:
         with:
           name: talos-logs-integration-trusted-boot
           path: |-
-            ~/.talos/clusters/**/*.log
-            ~/.talos/clusters/**/support.zip
+            /tmp/logs-*.tar.gz
             /tmp/support-*.zip
-            !~/.talos/clusters/**/swtpm.log
           retention-days: "5"
   push:
     permissions:

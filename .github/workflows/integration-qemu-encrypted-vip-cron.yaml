@@ -1,6 +1,6 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
 #
-# Generated on 2024-11-08T11:46:41Z by kres 1fc767a.
+# Generated on 2024-11-28T12:57:52Z by kres 232fe63.
 
 name: integration-qemu-encrypted-vip-cron
 concurrency:
@@ -96,8 +96,6 @@ jobs:
         with:
           name: talos-logs-integration-qemu-encrypted-vip
           path: |-
-            ~/.talos/clusters/**/*.log
-            ~/.talos/clusters/**/support.zip
+            /tmp/logs-*.tar.gz
             /tmp/support-*.zip
-            !~/.talos/clusters/**/swtpm.log
           retention-days: "5"

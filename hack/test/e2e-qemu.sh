@@ -9,6 +9,7 @@ source ./hack/test/e2e.sh
 
 PROVISIONER=qemu
 CLUSTER_NAME="e2e-${PROVISIONER}"
+LOG_ARCHIVE_SUFFIX="${GITHUB_STEP_NAME:-e2e-${PROVISIONER}}"
 
 QEMU_FLAGS=()
 
@@ -224,15 +225,18 @@ function create_cluster {
     --install-image="${INSTALLER_IMAGE}" \
     --with-init-node=false \
     --cni-bundle-url="${ARTIFACTS}/talosctl-cni-bundle-\${ARCH}.tar.gz" \
-    --crashdump \
     "${REGISTRY_MIRROR_FLAGS[@]}" \
-    "${QEMU_FLAGS[@]}" || (cat ~/.talos/clusters/**/*.log && exit 1) # [TODO]: temporary hack to make it easier to debug things
+    "${QEMU_FLAGS[@]}"
 
   "${TALOSCTL}" config node 172.20.1.2
 }
 
 function destroy_cluster() {
-  "${TALOSCTL}" cluster destroy --name "${CLUSTER_NAME}" --provisioner "${PROVISIONER}" --save-support-archive-path=/tmp/support-${CLUSTER_NAME}.zip
+  "${TALOSCTL}" cluster destroy \
+    --name "${CLUSTER_NAME}" \
+    --provisioner "${PROVISIONER}" \
+    --save-cluster-logs-archive-path="/tmp/logs-${LOG_ARCHIVE_SUFFIX}.tar.gz" \
+    --save-support-archive-path="/tmp/support-${LOG_ARCHIVE_SUFFIX}.zip"
 }
 
 trap destroy_cluster SIGINT EXIT

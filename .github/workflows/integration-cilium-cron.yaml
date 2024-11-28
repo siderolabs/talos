@@ -1,6 +1,6 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
 #
-# Generated on 2024-11-08T11:46:41Z by kres 1fc767a.
+# Generated on 2024-11-28T13:53:18Z by kres 232fe63.
 
 name: integration-cilium-cron
 concurrency:
@@ -80,6 +80,7 @@ jobs:
           make talosctl-cni-bundle
       - name: e2e-cilium
         env:
+          GITHUB_STEP_NAME: ${{ github.job}}-e2e-cilium
           IMAGE_REGISTRY: registry.dev.siderolabs.io
           QEMU_WORKERS: "2"
           SHORT_INTEGRATION_TEST: "yes"
@@ -92,6 +93,7 @@ jobs:
       - name: e2e-cilium-strict
         env:
           CILIUM_INSTALL_TYPE: strict
+          GITHUB_STEP_NAME: ${{ github.job}}-e2e-cilium-strict
           IMAGE_REGISTRY: registry.dev.siderolabs.io
           QEMU_WORKERS: "2"
           SHORT_INTEGRATION_TEST: "yes"
@@ -104,6 +106,7 @@ jobs:
       - name: e2e-cilium-strict-kubespan
         env:
           CILIUM_INSTALL_TYPE: strict
+          GITHUB_STEP_NAME: ${{ github.job}}-e2e-cilium-strict-kubespan
           IMAGE_REGISTRY: registry.dev.siderolabs.io
           QEMU_WORKERS: "2"
           SHORT_INTEGRATION_TEST: "yes"
@@ -120,8 +123,6 @@ jobs:
         with:
           name: talos-logs-integration-cilium
           path: |-
-            ~/.talos/clusters/**/*.log
-            ~/.talos/clusters/**/support.zip
+            /tmp/logs-*.tar.gz
             /tmp/support-*.zip
-            !~/.talos/clusters/**/swtpm.log
           retention-days: "5"

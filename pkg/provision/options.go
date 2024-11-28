@@ -142,6 +142,15 @@ func WithSaveSupportArchivePath(path string) Option {
 	}
 }
 
+// WithSaveClusterLogsArchivePath specifies path to save cluster logs archive on destroy.
+func WithSaveClusterLogsArchivePath(path string) Option {
+	return func(o *Options) error {
+		o.SaveClusterLogsArchivePath = path
+
+		return nil
+	}
+}
+
 // WithKMS inits KMS server in the provisioner.
 func WithKMS(endpoint string) Option {
 	return func(o *Options) error {
@@ -190,10 +199,11 @@ type Options struct {
 	ExtraUEFISearchPaths []string
 
 	// Expose ports to worker machines in docker provisioner
-	DockerPorts            []string
-	DockerPortsHostIP      string
-	SaveSupportArchivePath string
-	DeleteStateOnErr       bool
+	DockerPorts                []string
+	DockerPortsHostIP          string
+	SaveSupportArchivePath     string
+	SaveClusterLogsArchivePath string
+	DeleteStateOnErr           bool
 
 	KMSEndpoint      string
 	JSONLogsEndpoint string

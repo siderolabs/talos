@@ -26,26 +26,32 @@ func (p *provisioner) Destroy(ctx context.Context, cluster provision.Cluster, op
 		}
 	}
 
+	stateDirectoryPath, err := cluster.StatePath()
+	if err != nil {
+		return err
+	}
+
 	complete := false
-	deleteStateDirectory := func(shouldDelete bool) error {
+	deleteStateDirectory := func(stateDir string, shouldDelete bool) error {
 		if complete || !shouldDelete {
 			return nil
 		}
 
 		complete = true
 
-		stateDirectoryPath, err := cluster.StatePath()
-		if err != nil {
-			return err
-		}
-
-		return os.RemoveAll(stateDirectoryPath)
+		return os.RemoveAll(stateDir)
 	}
 
-	defer deleteStateDirectory(options.DeleteStateOnErr) //nolint:errcheck
+	defer deleteStateDirectory(stateDirectoryPath, options.DeleteStateOnErr) //nolint:errcheck
+
+	if options.SaveClusterLogsArchivePath != "" {
+		fmt.Fprintf(options.LogWriter, "saving cluster logs archive to %s\n", options.SaveClusterLogsArchivePath)
+
+		cl.SaveClusterLogsArchive(stateDirectoryPath, options.SaveClusterLogsArchivePath)
+	}
 
 	if options.SaveSupportArchivePath != "" {
-		fmt.Fprintln(options.LogWriter, "saving support archive")
+		fmt.Fprintf(options.LogWriter, "saving support archive to %s\n", options.SaveSupportArchivePath)
 
 		cl.Crashdump(ctx, cluster, options.LogWriter, options.SaveSupportArchivePath)
 	}
@@ -103,5 +109,5 @@ func (p *provisioner) Destroy(ctx context.Context, cluster provision.Cluster, op
 
 	fmt.Fprintln(options.LogWriter, "removing state directory")
 
-	return deleteStateDirectory(true)
+	return deleteStateDirectory(stateDirectoryPath, true)
 }
