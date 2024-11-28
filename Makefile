@@ -17,12 +17,12 @@ ZSTD_COMPRESSION_LEVEL ?= 18
 CI_RELEASE_TAG := $(shell git log --oneline --format=%B -n 1 HEAD^2 -- 2>/dev/null | head -n 1 | sed -r "/^release\(.*\)/ s/^release\((.*)\):.*$$/\\1/; t; Q")
 
 ARTIFACTS := _out
-TOOLS ?= ghcr.io/siderolabs/tools:v1.9.0-alpha.0-11-gaa0beaf
+TOOLS ?= ghcr.io/siderolabs/tools:v1.9.0
 
 DEBUG_TOOLS_SOURCE := scratch
 
 PKGS_PREFIX ?= ghcr.io/siderolabs
-PKGS ?= v1.9.0-alpha.0-51-g0272ad4
+PKGS ?= v1.9.0-alpha.0-52-g2abcd4b
 EXTRAS ?= v1.9.0-alpha.0-2-g78ba66b
 
 KRES_IMAGE ?= ghcr.io/siderolabs/kres:latest
@@ -70,13 +70,13 @@ GOIMPORTS_VERSION ?= v0.27.0
 # renovate: datasource=go depName=mvdan.cc/gofumpt
 GOFUMPT_VERSION ?= v0.7.0
 # renovate: datasource=go depName=github.com/golangci/golangci-lint
-GOLANGCILINT_VERSION ?= v1.62.0
+GOLANGCILINT_VERSION ?= v1.62.2
 # renovate: datasource=go depName=golang.org/x/tools
 STRINGER_VERSION ?= v0.27.0
 # renovate: datasource=go depName=github.com/dmarkham/enumer
 ENUMER_VERSION ?= v1.5.10
 # renovate: datasource=go depName=k8s.io/code-generator
-DEEPCOPY_GEN_VERSION ?= v0.31.2
+DEEPCOPY_GEN_VERSION ?= v0.31.3
 # renovate: datasource=go depName=github.com/planetscale/vtprotobuf
 VTPROTOBUF_VERSION ?= v0.6.0
 # renovate: datasource=go depName=github.com/siderolabs/deep-copy
@@ -88,9 +88,9 @@ PROTOTOOL_VERSION ?= v1.10.0
 # renovate: datasource=go depName=github.com/pseudomuto/protoc-gen-doc
 PROTOC_GEN_DOC_VERSION ?= v1.5.1
 # renovate: datasource=npm depName=markdownlint-cli
-MARKDOWNLINTCLI_VERSION ?= 0.42.0
+MARKDOWNLINTCLI_VERSION ?= 0.43.0
 # renovate: datasource=npm depName=textlint
-TEXTLINT_VERSION ?= 14.2.1
+TEXTLINT_VERSION ?= 14.3.0
 # renovate: datasource=npm depName=textlint-filter-rule-comments
 TEXTLINT_FILTER_RULE_COMMENTS_VERSION ?= 1.2.2
 # renovate: datasource=npm depName=textlint-rule-one-sentence-per-line
@@ -105,11 +105,11 @@ INTEGRATION_TEST := integration-test
 INTEGRATION_TEST_DEFAULT_TARGET := $(INTEGRATION_TEST)-$(OPERATING_SYSTEM)
 INTEGRATION_TEST_PROVISION_DEFAULT_TARGET := integration-test-provision-$(OPERATING_SYSTEM)
 # renovate: datasource=github-releases depName=kubernetes/kubernetes
-KUBECTL_VERSION ?= v1.32.0-beta.0
+KUBECTL_VERSION ?= v1.32.0-rc.0
 # renovate: datasource=github-releases depName=kastenhq/kubestr
 KUBESTR_VERSION ?= v0.4.46
 # renovate: datasource=github-releases depName=helm/helm
-HELM_VERSION ?= v3.16.2
+HELM_VERSION ?= v3.16.3
 # renovate: datasource=github-releases depName=cilium/cilium-cli
 CILIUM_CLI_VERSION ?= v0.16.20
 # renovate: datasource=github-releases depName=microsoft/secureboot_objects
