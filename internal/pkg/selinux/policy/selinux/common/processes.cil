@@ -109,6 +109,8 @@
 (allow any_p proc_sysctl_t (fs_classes (rw)))
 ; Unconfined FS and files
 (allow any_p unconfined_f (fs_classes (rw)))
+; Kernel threads can access anything
+(allow kernel_t any_f (fs_classes (rw)))
 
 ; Own sockets
 (allow any_p self (unix_stream_socket (connectto)))
