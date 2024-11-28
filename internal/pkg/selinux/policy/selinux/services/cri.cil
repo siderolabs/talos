@@ -15,6 +15,9 @@
 (allow pod_containerd_t pod_p (fs_classes (rw)))
 (allow pod_containerd_t pod_p (process_classes (full)))
 
+; Shim socket
+(allow pod_containerd_t pod_containerd_socket_t (fs_classes (rw)))
+
 ; Common rules for containerd accessing system
 (typeattributeset containerd_p pod_containerd_t)
 
