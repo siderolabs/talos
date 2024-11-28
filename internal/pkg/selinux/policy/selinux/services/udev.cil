@@ -66,3 +66,6 @@
 
 ; socket and runtime files
 (allow udev_t run_t (fs_classes (rw)))
+
+; manage properties from rules
+(allow udev_t sysfs_t (fs_classes (rw)))
