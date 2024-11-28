@@ -1,5 +1,8 @@
-; Query procfs about self
-(allow any_p self (fs_classes (ro)))
+; Query procfs about self, plus OOM adj and similar writes (controlled by other access control and caps)
+; Also FIFO/socket writes for own stuff
+(allow any_p self (fs_classes (rw)))
+; Read process info
+(allow any_p procfs_t (fs_classes (ro)))
 ; Allow all process actions but ptrace, set* will be guarded by transitions
 (allow any_p self (process_classes (full)))
 
