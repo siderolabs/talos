@@ -24,6 +24,9 @@
 (allow sys_containerd_t system_container_p (fs_classes (rw)))
 (allow sys_containerd_t system_container_p (process_classes (full)))
 
+; Shim sockets
+(allow sys_containerd_t sys_containerd_socket_t (fs_classes (rw)))
+
 (typeattribute containerd_p)
 (typeattributeset containerd_p sys_containerd_t)
 
@@ -39,6 +42,9 @@
 
 ; mounton for masking
 (allow containerd_p any_f (fs_classes (mounton)))
+
+; Shim sockets
+(allow containerd_p self (unix_stream_socket (connectto)))
 
 ; logs
 (allow sys_containerd_t system_t (fs_classes (rw)))
