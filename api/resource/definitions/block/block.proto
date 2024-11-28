@@ -168,5 +168,6 @@ message VolumeStatusSpec {
   string mount_location = 11;
   talos.resource.definitions.enums.BlockEncryptionProviderType encryption_provider = 12;
   string pretty_size = 13;
+  repeated string encryption_failed_syncs = 14;
 }
 

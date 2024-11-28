@@ -85,5 +85,9 @@ func (o VolumeLifecycleSpec) DeepCopy() VolumeLifecycleSpec {
 // DeepCopy generates a deep copy of VolumeStatusSpec.
 func (o VolumeStatusSpec) DeepCopy() VolumeStatusSpec {
 	var cp VolumeStatusSpec = o
+	if o.EncryptionFailedSyncs != nil {
+		cp.EncryptionFailedSyncs = make([]string, len(o.EncryptionFailedSyncs))
+		copy(cp.EncryptionFailedSyncs, o.EncryptionFailedSyncs)
+	}
 	return cp
 }

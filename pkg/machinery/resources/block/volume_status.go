@@ -45,7 +45,8 @@ type VolumeStatusSpec struct {
 	Filesystem FilesystemType `yaml:"filesystem,omitempty" protobuf:"10"`
 
 	// EncryptionProvider is the provider of the encryption.
-	EncryptionProvider EncryptionProviderType `yaml:"encryptionProvider,omitempty" protobuf:"12"`
+	EncryptionProvider    EncryptionProviderType `yaml:"encryptionProvider,omitempty" protobuf:"12"`
+	EncryptionFailedSyncs []string               `yaml:"encryptionFailedSyncs,omitempty" protobuf:"14"`
 
 	ErrorMessage string `yaml:"errorMessage,omitempty" protobuf:"3"`
 }

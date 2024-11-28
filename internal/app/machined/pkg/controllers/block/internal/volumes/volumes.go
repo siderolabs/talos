@@ -7,6 +7,7 @@ package volumes
 
 import (
 	"cmp"
+	"context"
 
 	"github.com/siderolabs/gen/optional"
 
@@ -67,6 +68,6 @@ type ManagerContext struct {
 
 	DevicesReady            bool
 	PreviousWaveProvisioned bool
-	SystemInformation       *hardware.SystemInformation
+	GetSystemInformation    func(context.Context) (*hardware.SystemInformation, error)
 	Lifecycle               *block.VolumeLifecycle
 }

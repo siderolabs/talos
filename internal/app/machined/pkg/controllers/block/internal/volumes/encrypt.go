@@ -17,19 +17,10 @@ import (
 
 	"github.com/siderolabs/talos/internal/pkg/encryption"
 	"github.com/siderolabs/talos/pkg/machinery/resources/block"
-	"github.com/siderolabs/talos/pkg/machinery/resources/hardware"
 )
 
 // HandleEncryption makes sure the encryption for the volumes is handled appropriately.
 func HandleEncryption(ctx context.Context, logger *zap.Logger, volumeContext ManagerContext) error {
-	getSystemInformation := func(ctx context.Context) (*hardware.SystemInformation, error) {
-		if volumeContext.SystemInformation != nil {
-			return volumeContext.SystemInformation, nil
-		}
-
-		return nil, fmt.Errorf("system information not available")
-	}
-
 	switch volumeContext.Cfg.TypedSpec().Encryption.Provider {
 	case block.EncryptionProviderNone:
 		// nothing to do
@@ -41,7 +32,7 @@ func HandleEncryption(ctx context.Context, logger *zap.Logger, volumeContext Man
 	case block.EncryptionProviderLUKS2:
 		encryptionConfig := volumeContext.Cfg.TypedSpec().Encryption
 
-		handler, err := encryption.NewHandler(encryptionConfig, volumeContext.Cfg.Metadata().ID(), getSystemInformation)
+		handler, err := encryption.NewHandler(encryptionConfig, volumeContext.Cfg.Metadata().ID(), volumeContext.GetSystemInformation)
 		if err != nil {
 			return fmt.Errorf("failed to create encryption handler: %w", err)
 		}
@@ -102,7 +93,7 @@ func HandleEncryptionWithHandler(ctx context.Context, logger *zap.Logger, volume
 
 	encryptedName := filepath.Base(volumeContext.Status.Location) + "-encrypted"
 
-	encryptedPath, err := handler.Open(ctx, logger, volumeContext.Status.Location, encryptedName)
+	encryptedPath, failedSyncs, err := handler.Open(ctx, logger, volumeContext.Status.Location, encryptedName)
 	if err != nil {
 		return xerrors.NewTaggedf[Retryable]("error opening encrypted volume: %w", err)
 	}
@@ -115,6 +106,7 @@ func HandleEncryptionWithHandler(ctx context.Context, logger *zap.Logger, volume
 	volumeContext.Status.Phase = block.VolumePhasePrepared
 	volumeContext.Status.MountLocation = encryptedPath
 	volumeContext.Status.EncryptionProvider = volumeContext.Cfg.TypedSpec().Encryption.Provider
+	volumeContext.Status.EncryptionFailedSyncs = failedSyncs
 
 	return nil
 }

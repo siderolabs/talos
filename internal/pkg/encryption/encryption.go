@@ -88,10 +88,10 @@ type Handler struct {
 }
 
 // Open encrypted partition.
-func (h *Handler) Open(ctx context.Context, logger *zap.Logger, devicePath, encryptedName string) (string, error) {
+func (h *Handler) Open(ctx context.Context, logger *zap.Logger, devicePath, encryptedName string) (string, []string, error) {
 	isOpen, path, err := h.encryptionProvider.IsOpen(ctx, devicePath, encryptedName)
 	if err != nil {
-		return "", err
+		return "", nil, err
 	}
 
 	var usedKey *encryption.Key
@@ -108,15 +108,16 @@ func (h *Handler) Open(ctx context.Context, logger *zap.Logger, devicePath, encr
 				return nil, nil, err
 			}
 
+			// try to open with the key, if it fails, tryHandlers will try the next handler
+			path, err = h.encryptionProvider.Open(ctx, devicePath, encryptedName, slotKey)
+			if err != nil {
+				return nil, nil, err
+			}
+
 			return slotKey, slotToken, nil
 		})
 		if err != nil {
-			return "", err
-		}
-
-		path, err = h.encryptionProvider.Open(ctx, devicePath, encryptedName, key)
-		if err != nil {
-			return "", err
+			return "", nil, err
 		}
 
 		logger.Info("opened encrypted device", zap.Int("slot", handler.Slot()), zap.String("type", fmt.Sprintf("%T", handler)))
@@ -124,11 +125,12 @@ func (h *Handler) Open(ctx context.Context, logger *zap.Logger, devicePath, encr
 		usedKey = key
 	}
 
-	if err := h.syncKeys(ctx, logger, devicePath, usedKey); err != nil {
-		return "", err
+	failedSyncs, err := h.syncKeys(ctx, logger, devicePath, usedKey)
+	if err != nil {
+		return "", nil, err
 	}
 
-	return path, nil
+	return path, failedSyncs, nil
 }
 
 // Close encrypted partition.
@@ -177,11 +179,13 @@ func (h *Handler) FormatAndEncrypt(ctx context.Context, logger *zap.Logger, path
 }
 
 //nolint:gocyclo
-func (h *Handler) syncKeys(ctx context.Context, logger *zap.Logger, path string, k *encryption.Key) error {
+func (h *Handler) syncKeys(ctx context.Context, logger *zap.Logger, path string, k *encryption.Key) ([]string, error) {
 	keyslots, err := h.encryptionProvider.ReadKeyslots(path)
 	if err != nil {
-		return err
+		return nil, err
 	}
+
+	var failedSyncs []string
 
 	visited := map[string]bool{}
 
@@ -196,17 +200,21 @@ func (h *Handler) syncKeys(ctx context.Context, logger *zap.Logger, path string,
 		// keyslot exists
 		if _, ok := keyslots.Keyslots[slot]; ok {
 			if err = h.updateKey(ctx, path, k, handler); err != nil {
-				return fmt.Errorf("error updating key slot %s %T: %w", slot, handler, err)
-			}
+				logger.Error("failed to update key", zap.Int("slot", handler.Slot()), zap.String("handler", fmt.Sprintf("%T", handler)), zap.Error(err))
 
-			logger.Info("updated encryption key", zap.Int("slot", handler.Slot()))
+				failedSyncs = append(failedSyncs, fmt.Sprintf("error updating key slot %s %T: %s", slot, handler, err))
+			} else {
+				logger.Info("updated encryption key", zap.Int("slot", handler.Slot()))
+			}
 		} else {
 			// keyslot does not exist so just add the key
 			if err = h.addKey(ctx, path, k, handler); err != nil {
-				return fmt.Errorf("error adding key slot %s %T: %w", slot, handler, err)
-			}
+				logger.Error("failed to add key", zap.Int("slot", handler.Slot()), zap.String("handler", fmt.Sprintf("%T", handler)), zap.Error(err))
 
-			logger.Info("added encryption key", zap.Int("slot", handler.Slot()))
+				failedSyncs = append(failedSyncs, fmt.Sprintf("error adding key slot %s %T: %s", slot, handler, err))
+			} else {
+				logger.Info("added encryption key", zap.Int("slot", handler.Slot()))
+			}
 		}
 	}
 
@@ -215,18 +223,20 @@ func (h *Handler) syncKeys(ctx context.Context, logger *zap.Logger, path string,
 		if !visited[slot] {
 			s, err := strconv.ParseInt(slot, 10, 64)
 			if err != nil {
-				return err
+				return nil, err
 			}
 
 			if err = h.encryptionProvider.RemoveKey(ctx, path, int(s), k); err != nil {
-				return fmt.Errorf("error removing key slot %s: %w", slot, err)
-			}
+				logger.Error("failed to remove key", zap.Int("slot", int(s)), zap.Error(err))
 
-			logger.Info("removed encryption key", zap.Int("slot", k.Slot))
+				failedSyncs = append(failedSyncs, fmt.Sprintf("error removing key slot %s: %s", slot, err))
+			} else {
+				logger.Info("removed encryption key", zap.Int("slot", k.Slot))
+			}
 		}
 	}
 
-	return nil
+	return failedSyncs, nil
 }
 
 func (h *Handler) updateKey(ctx context.Context, path string, existingKey *encryption.Key, handler keys.Handler) error {

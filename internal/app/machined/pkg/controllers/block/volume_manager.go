@@ -6,6 +6,7 @@ package block
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"math"
 	"slices"
@@ -181,11 +182,6 @@ func (ctrl *VolumeManagerController) Run(ctx context.Context, r controller.Runti
 			return fmt.Errorf("error fetching system disk: %w", err)
 		}
 
-		systemInfo, err := safe.ReaderGetByID[*hardware.SystemInformation](ctx, r, hardware.SystemInformationID)
-		if err != nil && !state.IsNotFoundError(err) {
-			return fmt.Errorf("error fetching system information: %w", err)
-		}
-
 		volumeLifecycle, err := safe.ReaderGetByID[*block.VolumeLifecycle](ctx, r, block.VolumeLifecycleID)
 		if err != nil && !state.IsNotFoundError(err) {
 			return fmt.Errorf("error fetching volume lifecycle: %w", err)
@@ -318,8 +314,19 @@ func (ctrl *VolumeManagerController) Run(ctx context.Context, r controller.Runti
 					Disks:                   diskSpecs,
 					DevicesReady:            devicesReady,
 					PreviousWaveProvisioned: vc.TypedSpec().Provisioning.Wave <= fullyProvisionedWave,
-					SystemInformation:       systemInfo,
-					Lifecycle:               volumeLifecycle,
+					GetSystemInformation: func(ctx context.Context) (*hardware.SystemInformation, error) {
+						systemInfo, err := safe.ReaderGetByID[*hardware.SystemInformation](ctx, r, hardware.SystemInformationID)
+						if err != nil && !state.IsNotFoundError(err) {
+							return nil, fmt.Errorf("error fetching system information: %w", err)
+						}
+
+						if systemInfo == nil {
+							return nil, errors.New("system information not available")
+						}
+
+						return systemInfo, nil
+					},
+					Lifecycle: volumeLifecycle,
 				},
 			); err != nil {
 				volumeStatus.PreFailPhase = volumeStatus.Phase

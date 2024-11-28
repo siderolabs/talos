@@ -8,16 +8,20 @@ package api
 
 import (
 	"context"
+	"encoding/json"
 	"net/url"
 	"os"
 	"slices"
 	"testing"
 	"time"
 
+	"github.com/cosi-project/runtime/pkg/resource/rtestutils"
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/siderolabs/gen/ensure"
 	"github.com/siderolabs/go-pointer"
 	"github.com/siderolabs/go-retry/retry"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/protobuf/types/known/durationpb"
 
@@ -30,6 +34,7 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/config/types/runtime"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
+	"github.com/siderolabs/talos/pkg/machinery/resources/block"
 	mc "github.com/siderolabs/talos/pkg/machinery/resources/config"
 )
 
@@ -243,6 +248,8 @@ func (suite *ApplyConfigSuite) TestApplyConfigRotateEncryptionSecrets() {
 
 	suite.WaitForBootDone(suite.ctx)
 
+	suite.T().Logf("testing encryption key rotation on node %s", node)
+
 	existing := cfg.EncryptionKeys[0]
 	slot := existing.Slot() + 1
 
@@ -290,6 +297,10 @@ func (suite *ApplyConfigSuite) TestApplyConfigRotateEncryptionSecrets() {
 
 	for _, keys := range keySets {
 		data := suite.PatchV1Alpha1Config(provider, func(cfg *v1alpha1.Config) {
+			suite.T().Logf("changing encryption keys to %s",
+				toJSONString(suite.T(), keys),
+			)
+
 			cfg.MachineConfig.MachineSystemDiskEncryption.EphemeralPartition.EncryptionKeys = keys
 		})
 
@@ -348,7 +359,22 @@ func (suite *ApplyConfigSuite) TestApplyConfigRotateEncryptionSecrets() {
 		}
 
 		suite.WaitForBootDone(suite.ctx)
+
+		// verify that encryption key sync has no failures
+		rtestutils.AssertAll(nodeCtx, suite.T(), suite.Client.COSI, func(vs *block.VolumeStatus, asrt *assert.Assertions) {
+			suite.Assert().Contains([]block.VolumePhase{block.VolumePhaseReady, block.VolumePhaseMissing}, vs.TypedSpec().Phase)
+			suite.Assert().Empty(vs.TypedSpec().EncryptionFailedSyncs)
+		})
 	}
+}
+
+func toJSONString(t *testing.T, v any) string {
+	t.Helper()
+
+	out, err := json.Marshal(v)
+	require.NoError(t, err)
+
+	return string(out)
 }
 
 // TestApplyNoReboot verifies the apply config API fails if NoReboot mode is requested on a field that can not be applied immediately.

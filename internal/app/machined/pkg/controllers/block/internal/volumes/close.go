@@ -14,19 +14,10 @@ import (
 
 	"github.com/siderolabs/talos/internal/pkg/encryption"
 	"github.com/siderolabs/talos/pkg/machinery/resources/block"
-	"github.com/siderolabs/talos/pkg/machinery/resources/hardware"
 )
 
 // Close the encrypted volumes.
 func Close(ctx context.Context, logger *zap.Logger, volumeContext ManagerContext) error {
-	getSystemInformation := func(ctx context.Context) (*hardware.SystemInformation, error) {
-		if volumeContext.SystemInformation != nil {
-			return volumeContext.SystemInformation, nil
-		}
-
-		return nil, fmt.Errorf("system information not available")
-	}
-
 	switch volumeContext.Cfg.TypedSpec().Encryption.Provider {
 	case block.EncryptionProviderNone:
 		// nothing to do
@@ -36,7 +27,7 @@ func Close(ctx context.Context, logger *zap.Logger, volumeContext ManagerContext
 	case block.EncryptionProviderLUKS2:
 		encryptionConfig := volumeContext.Cfg.TypedSpec().Encryption
 
-		handler, err := encryption.NewHandler(encryptionConfig, volumeContext.Cfg.Metadata().ID(), getSystemInformation)
+		handler, err := encryption.NewHandler(encryptionConfig, volumeContext.Cfg.Metadata().ID(), volumeContext.GetSystemInformation)
 		if err != nil {
 			return fmt.Errorf("failed to create encryption handler: %w", err)
 		}
