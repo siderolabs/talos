@@ -9,9 +9,12 @@ package api
 import (
 	"context"
 	"strings"
+	"testing"
 	"time"
 
 	"github.com/siderolabs/talos/internal/integration/base"
+	"github.com/siderolabs/talos/pkg/machinery/config/machine"
+	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
 )
 
 // CommonSuite verifies some default settings such as ulimits.
@@ -30,7 +33,7 @@ func (suite *CommonSuite) SuiteName() string {
 // SetupTest ...
 func (suite *CommonSuite) SetupTest() {
 	// make sure API calls have timeout
-	suite.ctx, suite.ctxCancel = context.WithTimeout(context.Background(), 10*time.Minute)
+	suite.ctx, suite.ctxCancel = context.WithTimeout(context.Background(), 15*time.Minute)
 }
 
 // TearDownTest ...
@@ -155,6 +158,108 @@ func (suite *CommonSuite) TestDNSResolver() {
 	if suite.T().Failed() {
 		suite.T().FailNow()
 	}
+}
+
+// TestBaseOCISpec verifies that the base OCI spec can be modified.
+func (suite *CommonSuite) TestBaseOCISpec() {
+	if suite.Cluster != nil && suite.Cluster.Provisioner() == "docker" {
+		suite.T().Skip("skipping ulimits test since provisioner is docker")
+	}
+
+	if testing.Short() {
+		suite.T().Skip("skipping test in short mode.")
+	}
+
+	node := suite.RandomDiscoveredNodeInternalIP(machine.TypeWorker)
+
+	k8sNode, err := suite.GetK8sNodeByInternalIP(suite.ctx, node)
+	suite.Require().NoError(err)
+
+	nodeName := k8sNode.Name
+
+	suite.T().Logf("adjusting base OCI specs on %s/%s", node, nodeName)
+
+	suite.AssertRebooted(
+		suite.ctx, node, func(nodeCtx context.Context) error {
+			suite.PatchMachineConfig(nodeCtx, &v1alpha1.Config{
+				MachineConfig: &v1alpha1.MachineConfig{
+					MachineBaseRuntimeSpecOverrides: v1alpha1.Unstructured{
+						Object: map[string]any{
+							"process": map[string]any{
+								"rlimits": []map[string]any{
+									{
+										"type": "RLIMIT_NOFILE",
+										"hard": 1024,
+										"soft": 1024,
+									},
+								},
+							},
+						},
+					},
+				},
+			})
+
+			return nil
+		}, assertRebootedRebootTimeout,
+	)
+
+	suite.ClearConnectionRefused(suite.ctx, node)
+
+	ociUlimits1PodDef, err := suite.NewPod("oci-ulimits-test-1")
+	suite.Require().NoError(err)
+
+	ociUlimits1PodDef = ociUlimits1PodDef.WithNodeName(nodeName)
+
+	suite.Require().NoError(ociUlimits1PodDef.Create(suite.ctx, 5*time.Minute))
+
+	defer func() { suite.Assert().NoError(ociUlimits1PodDef.Delete(suite.ctx)) }()
+
+	stdout, stderr, err := ociUlimits1PodDef.Exec(
+		suite.ctx,
+		"ulimit -n",
+	)
+	suite.Require().NoError(err)
+
+	suite.Require().Equal("", stderr)
+	suite.Require().Equal("1024\n", stdout)
+
+	// delete immediately, as we're going to reboot the node
+	suite.Assert().NoError(ociUlimits1PodDef.Delete(suite.ctx))
+
+	// revert the patch
+	suite.AssertRebooted(
+		suite.ctx, node, func(nodeCtx context.Context) error {
+			suite.PatchMachineConfig(nodeCtx, map[string]any{
+				"machine": map[string]any{
+					"baseRuntimeSpecOverrides": map[string]any{
+						"$patch": "delete",
+					},
+				},
+			})
+
+			return nil
+		}, assertRebootedRebootTimeout,
+	)
+
+	suite.ClearConnectionRefused(suite.ctx, node)
+
+	ociUlimits2PodDef, err := suite.NewPod("oci-ulimits-test-2")
+	suite.Require().NoError(err)
+
+	ociUlimits2PodDef = ociUlimits2PodDef.WithNodeName(nodeName)
+
+	suite.Require().NoError(ociUlimits2PodDef.Create(suite.ctx, 5*time.Minute))
+
+	defer func() { suite.Assert().NoError(ociUlimits2PodDef.Delete(suite.ctx)) }()
+
+	stdout, stderr, err = ociUlimits2PodDef.Exec(
+		suite.ctx,
+		"ulimit -n",
+	)
+	suite.Require().NoError(err)
+
+	suite.Require().Equal("", stderr)
+	suite.Require().Equal("1048576\n", stdout)
 }
 
 func init() {

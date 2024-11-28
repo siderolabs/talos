@@ -1878,6 +1878,39 @@ func TestValidate(t *testing.T) {
 			},
 			expectedError: "1 error occurred:\n\t* authorization-webhook-* flags cannot be used in conjunction with AuthorizationConfig, use either AuthorizationConfig or authorization-webhook-* flags\n\n",
 		},
+		{
+			name: "MachineBaseRuntimeSpecOverrides",
+			config: &v1alpha1.Config{
+				ConfigVersion: "v1alpha1",
+				MachineConfig: &v1alpha1.MachineConfig{
+					MachineType: "controlplane",
+					MachineCA: &x509.PEMEncodedCertificateAndKey{
+						Crt: []byte("foo"),
+						Key: []byte("bar"),
+					},
+					MachineBaseRuntimeSpecOverrides: v1alpha1.Unstructured{
+						Object: map[string]any{
+							"process": map[string]any{
+								"rlimits": []map[string]any{
+									{
+										"type": "RLIMIT_NOFILE",
+										"hard": 1024,
+										"soft": 1024,
+									},
+								},
+							},
+						},
+					},
+				},
+				ClusterConfig: &v1alpha1.ClusterConfig{
+					ControlPlane: &v1alpha1.ControlPlaneConfig{
+						Endpoint: &v1alpha1.Endpoint{
+							endpointURL,
+						},
+					},
+				},
+			},
+		},
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()

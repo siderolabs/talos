@@ -566,6 +566,9 @@ const (
 	// CRICustomizationConfigPart is the path to the CRI generated registry configuration relative to /etc.
 	CRICustomizationConfigPart = "cri/conf.d/20-customization.part"
 
+	// CRIBaseRuntimeSpec is the path to the base runtime spec for the CRI.
+	CRIBaseRuntimeSpec = "cri/conf.d/base-spec.json"
+
 	// TalosConfigEnvVar is the environment variable for setting the Talos configuration file path.
 	TalosConfigEnvVar = "TALOSCONFIG"
 

@@ -816,3 +816,19 @@ func kmsKeyExample() *EncryptionKeyKMS {
 		KMSEndpoint: "https://192.168.88.21:4443",
 	}
 }
+
+func machineBaseRuntimeSpecOverridesExample() Unstructured {
+	return Unstructured{
+		Object: map[string]any{
+			"process": map[string]any{
+				"rlimits": []map[string]any{
+					{
+						"type": "RLIMIT_NOFILE",
+						"hard": 1024,
+						"soft": 1024,
+					},
+				},
+			},
+		},
+	}
+}

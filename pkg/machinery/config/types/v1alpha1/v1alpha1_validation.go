@@ -7,6 +7,7 @@ package v1alpha1
 import (
 	"context"
 	"encoding/base64"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net"
@@ -19,6 +20,7 @@ import (
 
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/hashicorp/go-multierror"
+	"github.com/opencontainers/runtime-spec/specs-go"
 	sideronet "github.com/siderolabs/net"
 
 	"github.com/siderolabs/talos/pkg/machinery/config/config"
@@ -324,6 +326,20 @@ func (c *Config) Validate(mode validation.RuntimeMode, options ...validation.Opt
 
 	if c.ConfigPersist != nil && !*c.ConfigPersist {
 		result = multierror.Append(result, errors.New(".persist should be enabled"))
+	}
+
+	if len(c.Machine().BaseRuntimeSpecOverrides()) > 0 {
+		// try to unmarshal the overrides to ensure they are valid
+		jsonSpec, err := json.Marshal(c.Machine().BaseRuntimeSpecOverrides())
+		if err != nil {
+			result = multierror.Append(result, fmt.Errorf("failed to marshal base runtime spec overrides: %w", err))
+		} else {
+			var ociSpec specs.Spec
+
+			if err := json.Unmarshal(jsonSpec, &ociSpec); err != nil {
+				result = multierror.Append(result, fmt.Errorf("failed to unmarshal base runtime spec overrides: %w", err))
+			}
+		}
 	}
 
 	if opts.Strict {

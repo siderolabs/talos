@@ -128,6 +128,12 @@ The command `talosctl disks` was removed, please use `talosctl get disks`, `talo
 The new command `talosctl wipe disk` allows to wipe a disk or a partition which is not used as a volume.
 """
 
+    [notes.oci-base-spec]
+        title = "OCI Base Runtime Spec"
+        description = """\
+Talos now allows to [modify the OCI base runtime spec for the container runtime](https://www.talos.dev/v1.9/advanced/oci-base-spec/).
+"""
+
 [make_deps]
 
     [make_deps.tools]

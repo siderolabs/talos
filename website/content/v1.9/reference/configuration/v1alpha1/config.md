@@ -422,6 +422,14 @@ seccompProfiles:
       value:
         defaultAction: SCMP_ACT_LOG
 {{< /highlight >}}</details> | |
+|`baseRuntimeSpecOverrides` |Unstructured |<details><summary>Override (patch) settings in the default OCI runtime spec for CRI containers.</summary><br />It can be used to set some default container settings which are not configurable in Kubernetes,<br />for example default ulimits.<br />Note: this change applies to all newly created containers, and it requires a reboot to take effect.</details> <details><summary>Show example(s)</summary>{{< highlight yaml >}}
+baseRuntimeSpecOverrides:
+    process:
+        rlimits:
+            - hard: 1024
+              soft: 1024
+              type: RLIMIT_NOFILE
+{{< /highlight >}}</details> | |
 |`nodeLabels` |map[string]string |<details><summary>Configures the node labels for the machine.</summary><br />Note: In the default Kubernetes configuration, worker nodes are restricted to set<br />labels with some prefixes (see [NodeRestriction](https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/#noderestriction) admission plugin).</details> <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 nodeLabels:
     exampleLabel: exampleLabelValue

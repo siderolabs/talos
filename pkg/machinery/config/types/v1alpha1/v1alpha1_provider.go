@@ -104,6 +104,11 @@ func (m *MachineConfig) NodeTaints() config.NodeTaints {
 	return m.MachineNodeTaints
 }
 
+// BaseRuntimeSpecOverrides implements the config.Provider interface.
+func (m *MachineConfig) BaseRuntimeSpecOverrides() map[string]any {
+	return m.MachineBaseRuntimeSpecOverrides.Object
+}
+
 // Cluster implements the config.Provider interface.
 func (c *Config) Cluster() config.ClusterConfig {
 	if c == nil || c.ClusterConfig == nil {

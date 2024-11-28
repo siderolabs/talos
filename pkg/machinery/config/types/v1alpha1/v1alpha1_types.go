@@ -290,6 +290,18 @@ type MachineConfig struct {
 	//    - value: machineSeccompExample()
 	MachineSeccompProfiles []*MachineSeccompProfile `yaml:"seccompProfiles,omitempty" talos:"omitonlyifnil"`
 	//  description: |
+	//    Override (patch) settings in the default OCI runtime spec for CRI containers.
+	//
+	//    It can be used to set some default container settings which are not configurable in Kubernetes,
+	//    for example default ulimits.
+	//    Note: this change applies to all newly created containers, and it requires a reboot to take effect.
+	//  examples:
+	//    - name: override default open file limit
+	//      value: machineBaseRuntimeSpecOverridesExample()
+	//  schema:
+	//    type: object
+	MachineBaseRuntimeSpecOverrides Unstructured `yaml:"baseRuntimeSpecOverrides,omitempty"`
+	//  description: |
 	//    Configures the node labels for the machine.
 	//
 	//    Note: In the default Kubernetes configuration, worker nodes are restricted to set

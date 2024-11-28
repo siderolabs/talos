@@ -297,7 +297,7 @@ func (apiSuite *APISuite) AssertRebootedNoChecks(ctx context.Context, node strin
 	ctx, ctxCancel := context.WithTimeout(ctx, timeout)
 	defer ctxCancel()
 
-	nodeCtx := client.WithNodes(ctx, node)
+	nodeCtx := client.WithNode(ctx, node)
 
 	var (
 		bootIDBefore string

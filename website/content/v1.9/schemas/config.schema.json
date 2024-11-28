@@ -2829,6 +2829,13 @@
           "markdownDescription": "Configures the seccomp profiles for the machine.",
           "x-intellij-html-description": "\u003cp\u003eConfigures the seccomp profiles for the machine.\u003c/p\u003e\n"
         },
+        "baseRuntimeSpecOverrides": {
+          "type": "object",
+          "title": "baseRuntimeSpecOverrides",
+          "description": "Override (patch) settings in the default OCI runtime spec for CRI containers.\n\nIt can be used to set some default container settings which are not configurable in Kubernetes,\nfor example default ulimits.\nNote: this change applies to all newly created containers, and it requires a reboot to take effect.\n",
+          "markdownDescription": "Override (patch) settings in the default OCI runtime spec for CRI containers.\n\nIt can be used to set some default container settings which are not configurable in Kubernetes,\nfor example default ulimits.\nNote: this change applies to all newly created containers, and it requires a reboot to take effect.",
+          "x-intellij-html-description": "\u003cp\u003eOverride (patch) settings in the default OCI runtime spec for CRI containers.\u003c/p\u003e\n\n\u003cp\u003eIt can be used to set some default container settings which are not configurable in Kubernetes,\nfor example default ulimits.\nNote: this change applies to all newly created containers, and it requires a reboot to take effect.\u003c/p\u003e\n"
+        },
         "nodeLabels": {
           "patternProperties": {
             ".*": {

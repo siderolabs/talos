@@ -45,6 +45,7 @@ type MachineConfig interface {
 	NodeLabels() NodeLabels
 	NodeAnnotations() NodeAnnotations
 	NodeTaints() NodeTaints
+	BaseRuntimeSpecOverrides() map[string]any
 }
 
 // SeccompProfile defines the requirements for a config that pertains to seccomp

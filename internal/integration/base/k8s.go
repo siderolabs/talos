@@ -282,7 +282,14 @@ func (p *pod) Exec(ctx context.Context, command string) (string, string, error) 
 }
 
 func (p *pod) Delete(ctx context.Context) error {
-	return p.suite.Clientset.CoreV1().Pods(p.namespace).Delete(ctx, p.name, metav1.DeleteOptions{})
+	err := p.suite.Clientset.CoreV1().Pods(p.namespace).Delete(ctx, p.name, metav1.DeleteOptions{
+		GracePeriodSeconds: pointer.To[int64](0),
+	})
+	if err != nil && errors.IsNotFound(err) {
+		return nil
+	}
+
+	return err
 }
 
 // NewPrivilegedPod creates a new pod definition with a random suffix
