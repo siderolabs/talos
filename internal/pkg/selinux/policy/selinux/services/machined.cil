@@ -55,6 +55,12 @@
 
 (allow udev_t device_f (fs_classes (rw)))
 
+; Access containerd sockets for running containers
+(allow init_t sys_containerd_socket_t (sock_file (write)))
+(allow init_t sys_containerd_t (unix_stream_socket (connectto)))
+(allow init_t pod_containerd_socket_t (sock_file (write)))
+(allow init_t pod_containerd_t (unix_stream_socket (connectto)))
+
 ; rootfs.sqsh
 (allow kernel_t rootfs_t (file (read)))
 
