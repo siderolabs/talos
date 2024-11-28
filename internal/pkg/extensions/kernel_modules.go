@@ -194,7 +194,7 @@ func extractRootfsFromInitramfs(r io.Reader, rootfsFilePath string) error {
 }
 
 func unsquash(squashfsPath, dest, path string) error {
-	cmd := exec.Command("unsquashfs", "-d", dest, "-f", "-n", squashfsPath, path)
+	cmd := exec.Command("unsquashfs", "-no-xattrs", "-d", dest, "-f", "-n", squashfsPath, path)
 	cmd.Stderr = os.Stderr
 
 	return cmd.Run()
