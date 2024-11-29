@@ -9,14 +9,16 @@ import (
 	"fmt"
 	"net/netip"
 	"slices"
-	"sort"
 
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/safe"
+	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/siderolabs/gen/value"
+	"github.com/siderolabs/gen/xslices"
 	"go.uber.org/zap"
 
+	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/network/internal/addressutil"
 	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
 	"github.com/siderolabs/talos/pkg/machinery/resources/network"
 )
@@ -47,6 +49,11 @@ func (ctrl *NodeAddressController) Inputs() []controller.Input {
 			Type:      network.NodeAddressFilterType,
 			Kind:      controller.InputWeak,
 		},
+		{
+			Namespace: network.NamespaceName,
+			Type:      network.NodeAddressSortAlgorithmType,
+			Kind:      controller.InputWeak,
+		},
 	}
 }
 
@@ -75,8 +82,21 @@ func (ctrl *NodeAddressController) Run(ctx context.Context, r controller.Runtime
 		case <-r.EventCh():
 		}
 
+		// get algorithm to use
+		algoRes, err := safe.ReaderGetByID[*network.NodeAddressSortAlgorithm](ctx, r, network.NodeAddressSortAlgorithmID)
+		if err != nil {
+			if state.IsNotFoundError(err) {
+				// wait for the resource to appear
+				continue
+			}
+
+			return fmt.Errorf("error getting sort algorithm: %w", err)
+		}
+
+		algo := algoRes.TypedSpec().Algorithm
+
 		// fetch link and address status resources
-		links, err := r.List(ctx, resource.NewMetadata(network.NamespaceName, network.LinkStatusType, "", resource.VersionUndefined))
+		links, err := safe.ReaderListAll[*network.LinkStatus](ctx, r)
 		if err != nil {
 			return fmt.Errorf("error listing links: %w", err)
 		}
@@ -84,9 +104,7 @@ func (ctrl *NodeAddressController) Run(ctx context.Context, r controller.Runtime
 		// build "link up" lookup table
 		linksUp := make(map[uint32]struct{})
 
-		for _, r := range links.Items {
-			link := r.(*network.LinkStatus) //nolint:forcetypeassert
-
+		for link := range links.All() {
 			if link.TypedSpec().OperationalState == nethelpers.OperStateUp || link.TypedSpec().OperationalState == nethelpers.OperStateUnknown {
 				// skip physical interfaces without carrier
 				if !link.TypedSpec().Physical() || link.TypedSpec().LinkState {
@@ -96,42 +114,51 @@ func (ctrl *NodeAddressController) Run(ctx context.Context, r controller.Runtime
 		}
 
 		// fetch list of filters
-		filters, err := r.List(ctx, resource.NewMetadata(network.NamespaceName, network.NodeAddressFilterType, "", resource.VersionUndefined))
+		filters, err := safe.ReaderListAll[*network.NodeAddressFilter](ctx, r)
 		if err != nil {
 			return fmt.Errorf("error listing address filters: %w", err)
 		}
 
-		addresses, err := r.List(ctx, resource.NewMetadata(network.NamespaceName, network.AddressStatusType, "", resource.VersionUndefined))
+		addressesList, err := safe.ReaderListAll[*network.AddressStatus](ctx, r)
 		if err != nil {
 			return fmt.Errorf("error listing links: %w", err)
 		}
 
-		var (
-			defaultAddress      netip.Prefix
-			defaultAddrLinkName string
-			current             []netip.Prefix
-			routed              []netip.Prefix
-			accumulative        []netip.Prefix
-		)
+		addresses := safe.ToSlice(addressesList, func(a *network.AddressStatus) *network.AddressStatus { return a })
 
-		for _, r := range addresses.Items {
-			addr := r.(*network.AddressStatus) //nolint:forcetypeassert
+		compareFunc := addressutil.CompareByAlgorithm(algo)
 
+		// filter out addresses which should be ignored
+		addresses = xslices.FilterInPlace(addresses, func(addr *network.AddressStatus) bool {
 			if addr.TypedSpec().Scope >= nethelpers.ScopeLink {
-				continue
+				return false
 			}
 
 			ip := addr.TypedSpec().Address
 
 			if ip.Addr().IsLoopback() || ip.Addr().IsMulticast() || ip.Addr().IsLinkLocalUnicast() {
-				continue
+				return false
 			}
+
+			return true
+		})
+
+		slices.SortFunc(addresses, addressutil.CompareAddressStatuses(compareFunc))
+
+		var (
+			defaultAddress netip.Prefix
+			current        []netip.Prefix
+			routed         []netip.Prefix
+			accumulative   []netip.Prefix
+		)
+
+		for _, addr := range addresses {
+			ip := addr.TypedSpec().Address
 
 			// set defaultAddress to the smallest IP from the alphabetically first link
 			if addr.Metadata().Owner() == addressStatusControllerName {
-				if value.IsZero(defaultAddress) || addr.TypedSpec().LinkName < defaultAddrLinkName || (addr.TypedSpec().LinkName == defaultAddrLinkName && ip.Addr().Compare(defaultAddress.Addr()) < 0) {
+				if value.IsZero(defaultAddress) {
 					defaultAddress = ip
-					defaultAddrLinkName = addr.TypedSpec().LinkName
 				}
 			}
 
@@ -151,12 +178,12 @@ func (ctrl *NodeAddressController) Run(ctx context.Context, r controller.Runtime
 		}
 
 		// sort current addresses
-		sort.Slice(current, func(i, j int) bool { return current[i].Addr().Compare(current[j].Addr()) < 0 })
-		sort.Slice(routed, func(i, j int) bool { return routed[i].Addr().Compare(routed[j].Addr()) < 0 })
+		slices.SortFunc(current, compareFunc)
+		slices.SortFunc(routed, compareFunc)
 
 		// remove duplicates from current addresses
-		current = deduplicateIPPrefixes(current)
-		routed = deduplicateIPPrefixes(routed)
+		current = addressutil.DeduplicateIPPrefixes(current)
+		routed = addressutil.DeduplicateIPPrefixes(routed)
 
 		touchedIDs := make(map[resource.ID]struct{})
 
@@ -169,11 +196,13 @@ func (ctrl *NodeAddressController) Run(ctx context.Context, r controller.Runtime
 				// we should start handing default address updates, but for now we're not ready
 				//
 				// at the same time check that recorded default address is still on the host, if it's not => replace it
-				if len(spec.Addresses) > 0 && slices.ContainsFunc(current, func(addr netip.Prefix) bool { return spec.Addresses[0] == addr }) {
+				// also replace default address on algorithm change
+				if spec.SortAlgorithm == algo && len(spec.Addresses) > 0 && slices.ContainsFunc(current, func(addr netip.Prefix) bool { return spec.Addresses[0] == addr }) {
 					return nil
 				}
 
 				spec.Addresses = []netip.Prefix{defaultAddress}
+				spec.SortAlgorithm = algo
 
 				return nil
 			}); err != nil {
@@ -183,42 +212,42 @@ func (ctrl *NodeAddressController) Run(ctx context.Context, r controller.Runtime
 			touchedIDs[network.NodeAddressDefaultID] = struct{}{}
 		}
 
-		if err = updateCurrentAddresses(ctx, r, network.NodeAddressCurrentID, current); err != nil {
+		if err = ctrl.updateCurrentAddresses(ctx, r, network.NodeAddressCurrentID, current, algo); err != nil {
 			return err
 		}
 
 		touchedIDs[network.NodeAddressCurrentID] = struct{}{}
 
-		if err = updateCurrentAddresses(ctx, r, network.NodeAddressRoutedID, routed); err != nil {
+		if err = ctrl.updateCurrentAddresses(ctx, r, network.NodeAddressRoutedID, routed, algo); err != nil {
 			return err
 		}
 
 		touchedIDs[network.NodeAddressRoutedID] = struct{}{}
 
-		if err = updateAccumulativeAddresses(ctx, r, network.NodeAddressAccumulativeID, accumulative); err != nil {
+		if err = ctrl.updateAccumulativeAddresses(ctx, r, network.NodeAddressAccumulativeID, accumulative, algo); err != nil {
 			return err
 		}
 
 		touchedIDs[network.NodeAddressAccumulativeID] = struct{}{}
 
 		// update filtered resources
-		for _, res := range filters.Items {
-			filterID := res.Metadata().ID()
-			filter := res.(*network.NodeAddressFilter).TypedSpec()
+		for filterRes := range filters.All() {
+			filterID := filterRes.Metadata().ID()
+			filter := filterRes.TypedSpec()
 
-			filteredCurrent := filterIPs(current, filter.IncludeSubnets, filter.ExcludeSubnets)
-			filteredRouted := filterIPs(routed, filter.IncludeSubnets, filter.ExcludeSubnets)
-			filteredAccumulative := filterIPs(accumulative, filter.IncludeSubnets, filter.ExcludeSubnets)
+			filteredCurrent := addressutil.FilterIPs(current, filter.IncludeSubnets, filter.ExcludeSubnets)
+			filteredRouted := addressutil.FilterIPs(routed, filter.IncludeSubnets, filter.ExcludeSubnets)
+			filteredAccumulative := addressutil.FilterIPs(accumulative, filter.IncludeSubnets, filter.ExcludeSubnets)
 
-			if err = updateCurrentAddresses(ctx, r, network.FilteredNodeAddressID(network.NodeAddressCurrentID, filterID), filteredCurrent); err != nil {
+			if err = ctrl.updateCurrentAddresses(ctx, r, network.FilteredNodeAddressID(network.NodeAddressCurrentID, filterID), filteredCurrent, algo); err != nil {
 				return err
 			}
 
-			if err = updateCurrentAddresses(ctx, r, network.FilteredNodeAddressID(network.NodeAddressRoutedID, filterID), filteredRouted); err != nil {
+			if err = ctrl.updateCurrentAddresses(ctx, r, network.FilteredNodeAddressID(network.NodeAddressRoutedID, filterID), filteredRouted, algo); err != nil {
 				return err
 			}
 
-			if err = updateAccumulativeAddresses(ctx, r, network.FilteredNodeAddressID(network.NodeAddressAccumulativeID, filterID), filteredAccumulative); err != nil {
+			if err = ctrl.updateAccumulativeAddresses(ctx, r, network.FilteredNodeAddressID(network.NodeAddressAccumulativeID, filterID), filteredAccumulative, algo); err != nil {
 				return err
 			}
 
@@ -249,62 +278,12 @@ func (ctrl *NodeAddressController) Run(ctx context.Context, r controller.Runtime
 	}
 }
 
-func deduplicateIPPrefixes(current []netip.Prefix) []netip.Prefix {
-	// assumes that current is sorted
-	n := 0
-
-	var prev netip.Prefix
-
-	for _, x := range current {
-		if prev != x {
-			current[n] = x
-			n++
-		}
-
-		prev = x
-	}
-
-	return current[:n]
-}
-
-func filterIPs(addrs []netip.Prefix, includeSubnets, excludeSubnets []netip.Prefix) []netip.Prefix {
-	result := make([]netip.Prefix, 0, len(addrs))
-
-outer:
-	for _, ip := range addrs {
-		if len(includeSubnets) > 0 {
-			matchesAny := false
-
-			for _, subnet := range includeSubnets {
-				if subnet.Contains(ip.Addr()) {
-					matchesAny = true
-
-					break
-				}
-			}
-
-			if !matchesAny {
-				continue outer
-			}
-		}
-
-		for _, subnet := range excludeSubnets {
-			if subnet.Contains(ip.Addr()) {
-				continue outer
-			}
-		}
-
-		result = append(result, ip)
-	}
-
-	return result
-}
-
-func updateCurrentAddresses(ctx context.Context, r controller.Runtime, id resource.ID, current []netip.Prefix) error {
+func (ctrl *NodeAddressController) updateCurrentAddresses(ctx context.Context, r controller.Runtime, id resource.ID, current []netip.Prefix, algo nethelpers.AddressSortAlgorithm) error {
 	if err := safe.WriterModify(ctx, r, network.NewNodeAddress(network.NamespaceName, id), func(r *network.NodeAddress) error {
 		spec := r.TypedSpec()
 
 		spec.Addresses = current
+		spec.SortAlgorithm = algo
 
 		return nil
 	}); err != nil {
@@ -314,7 +293,7 @@ func updateCurrentAddresses(ctx context.Context, r controller.Runtime, id resour
 	return nil
 }
 
-func updateAccumulativeAddresses(ctx context.Context, r controller.Runtime, id resource.ID, accumulative []netip.Prefix) error {
+func (ctrl *NodeAddressController) updateAccumulativeAddresses(ctx context.Context, r controller.Runtime, id resource.ID, accumulative []netip.Prefix, algo nethelpers.AddressSortAlgorithm) error {
 	if err := safe.WriterModify(ctx, r, network.NewNodeAddress(network.NamespaceName, id), func(r *network.NodeAddress) error {
 		spec := r.TypedSpec()
 
@@ -331,6 +310,8 @@ func updateAccumulativeAddresses(ctx context.Context, r controller.Runtime, id r
 			// insert at position i
 			spec.Addresses = slices.Insert(spec.Addresses, pos, ip)
 		}
+
+		spec.SortAlgorithm = algo
 
 		return nil
 	}); err != nil {

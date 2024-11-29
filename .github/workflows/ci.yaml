@@ -1,6 +1,6 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
 #
-# Generated on 2024-12-04T12:34:25Z by kres 232fe63.
+# Generated on 2024-12-04T15:25:22Z by kres 232fe63.
 
 name: default
 concurrency:
@@ -2206,6 +2206,14 @@ jobs:
           USE_DISK_IMAGE: "true"
           VIA_MAINTENANCE_MODE: "true"
           WITH_DISK_ENCRYPTION: "true"
+        run: |
+          sudo -E make e2e-qemu
+      - name: e2e-node-address-v2
+        env:
+          GITHUB_STEP_NAME: ${{ github.job}}-e2e-disk-image
+          IMAGE_REGISTRY: registry.dev.siderolabs.io
+          SHORT_INTEGRATION_TEST: "yes"
+          WITH_CONFIG_PATCH: '@hack/test/patches/node-address-v2.yaml'
         run: |
           sudo -E make e2e-qemu
       - name: save artifacts

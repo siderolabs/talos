@@ -15,6 +15,7 @@ import (
 
 	"github.com/siderolabs/talos/pkg/machinery/cel"
 	"github.com/siderolabs/talos/pkg/machinery/config/machine"
+	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
 )
 
 // MachineConfig defines the requirements for a config that pertains to machine
@@ -451,6 +452,7 @@ type Features interface {
 	HostDNS() HostDNS
 	KubePrism() KubePrism
 	ImageCache() ImageCache
+	NodeAddressSortAlgorithm() nethelpers.AddressSortAlgorithm
 }
 
 // KubernetesTalosAPIAccess describes the Kubernetes Talos API access features.

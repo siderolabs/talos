@@ -2114,6 +2114,13 @@
           "description": "Enable Image Cache feature.\n",
           "markdownDescription": "Enable Image Cache feature.",
           "x-intellij-html-description": "\u003cp\u003eEnable Image Cache feature.\u003c/p\u003e\n"
+        },
+        "nodeAddressSortAlgorithm": {
+          "type": "string",
+          "title": "nodeAddressSortAlgorithm",
+          "description": "Select the node address sort algorithm.\nThe ‘v1’ algorithm sorts addresses by the address itself.\nThe ‘v2’ algorithm prefers more specific prefixes.\nIf unset, defaults to ‘v1’.\n",
+          "markdownDescription": "Select the node address sort algorithm.\nThe 'v1' algorithm sorts addresses by the address itself.\nThe 'v2' algorithm prefers more specific prefixes.\nIf unset, defaults to 'v1'.",
+          "x-intellij-html-description": "\u003cp\u003eSelect the node address sort algorithm.\nThe \u0026lsquo;v1\u0026rsquo; algorithm sorts addresses by the address itself.\nThe \u0026lsquo;v2\u0026rsquo; algorithm prefers more specific prefixes.\nIf unset, defaults to \u0026lsquo;v1\u0026rsquo;.\u003c/p\u003e\n"
         }
       },
       "additionalProperties": false,

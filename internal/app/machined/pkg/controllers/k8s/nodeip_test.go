@@ -99,6 +99,28 @@ func (suite *NodeIPSuite) TestReconcileNoMatch() {
 	})
 }
 
+func (suite *NodeIPSuite) TestReconcileIPv6Denies() {
+	cfg := k8s.NewNodeIPConfig(k8s.NamespaceName, k8s.KubeletID)
+	cfg.TypedSpec().ValidSubnets = []string{"::/0", "!fd01:cafe::f14c:9fa1:8496:557f/128"}
+	suite.Require().NoError(suite.State().Create(suite.Ctx(), cfg))
+
+	addresses := network.NewNodeAddress(
+		network.NamespaceName,
+		network.FilteredNodeAddressID(network.NodeAddressRoutedID, k8s.NodeAddressFilterNoK8s),
+	)
+
+	addresses.TypedSpec().Addresses = []netip.Prefix{
+		netip.MustParsePrefix("fd01:cafe::f14c:9fa1:8496:557f/128"),
+		netip.MustParsePrefix("fd01:cafe::5054:ff:fe1f:c7bd/64"),
+	}
+
+	suite.Require().NoError(suite.State().Create(suite.Ctx(), addresses))
+
+	rtestutils.AssertResources(suite.Ctx(), suite.T(), suite.State(), []resource.ID{k8s.KubeletID}, func(nodeIP *k8s.NodeIP, asrt *assert.Assertions) {
+		asrt.Equal("[fd01:cafe::5054:ff:fe1f:c7bd]", fmt.Sprintf("%s", nodeIP.TypedSpec().Addresses))
+	})
+}
+
 func TestNodeIPSuite(t *testing.T) {
 	t.Parallel()
 
