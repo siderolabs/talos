@@ -530,6 +530,10 @@ const (
 	// We use the same user ID as apid so that the dashboard can write to the machined unix socket.
 	DashboardUserID = ApidUserID
 
+	// DashboardPriority is the priority for the dashboard service.
+	// Higher nice value for the dashboard to give more CPU time to other services when under load.
+	DashboardPriority = 10
+
 	// TrustdPort is the port for the trustd service.
 	TrustdPort = 50001
 

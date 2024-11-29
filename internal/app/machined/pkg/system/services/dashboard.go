@@ -72,6 +72,7 @@ func (d *Dashboard) Runner(r runtime.Runtime) (runner.Runner, error) {
 		runner.WithSelinuxLabel(constants.SelinuxLabelDashboard),
 		runner.WithCgroupPath(constants.CgroupDashboard),
 		runner.WithUID(constants.DashboardUserID),
+		runner.WithPriority(constants.DashboardPriority),
 	),
 		restart.WithType(restart.Forever),
 	), nil

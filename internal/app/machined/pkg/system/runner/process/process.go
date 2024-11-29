@@ -13,9 +13,9 @@ import (
 	"os"
 	"path"
 	"slices"
-	"strings"
 	"syscall"
 	"time"
+	"unsafe"
 
 	"github.com/containerd/cgroups/v3"
 	"github.com/containerd/cgroups/v3/cgroup1"
@@ -104,26 +104,21 @@ type commandWrapper struct {
 }
 
 func dropCaps(droppedCapabilities []string, launcher *cap.Launcher) error {
-	droppedCaps := strings.Join(droppedCapabilities, ",")
-
-	if droppedCaps != "" {
-		caps := strings.Split(droppedCaps, ",")
-		dropCaps := xslices.Map(caps, func(c string) cap.Value {
-			capability, capErr := cap.FromName(c)
-			if capErr != nil {
-				panic(fmt.Errorf("failed to parse capability: %s", capErr))
-			}
-
-			return capability
-		})
-
-		iab := cap.IABGetProc()
-		if err := iab.SetVector(cap.Bound, true, dropCaps...); err != nil {
-			return fmt.Errorf("failed to set capabilities: %w", err)
+	dropCaps := xslices.Map(droppedCapabilities, func(c string) cap.Value {
+		capability, capErr := cap.FromName(c)
+		if capErr != nil {
+			panic(fmt.Errorf("failed to parse capability: %s", capErr))
 		}
 
-		launcher.SetIAB(iab)
+		return capability
+	})
+
+	iab := cap.IABGetProc()
+	if err := iab.SetVector(cap.Bound, true, dropCaps...); err != nil {
+		return fmt.Errorf("failed to set capabilities: %w", err)
 	}
+
+	launcher.SetIAB(iab)
 
 	return nil
 }
@@ -309,7 +304,7 @@ func (p *processRunner) build() (commandWrapper, error) {
 
 // Apply cgroup and OOM score after the process is launched.
 //
-//nolint:gocyclo
+//nolint:gocyclo,cyclop
 func applyProperties(p *processRunner, pid int) error {
 	if p.opts.CgroupPath != "" {
 		path := cgroup.Path(p.opts.CgroupPath)
@@ -351,6 +346,68 @@ func applyProperties(p *processRunner, pid int) error {
 				return fmt.Errorf("failed to change OOMScoreAdj of process %s to %d: %w", p, p.opts.OOMScoreAdj, err)
 			}
 		}
+	}
+
+	if p.opts.Priority != 0 {
+		if err := syscall.Setpriority(syscall.PRIO_PROCESS, pid, p.opts.Priority); err != nil {
+			return fmt.Errorf("failed to set priority of process %s to %d: %w", p, p.opts.Priority, err)
+		}
+	}
+
+	if ioPriority, ioPrioritySet := p.opts.IOPriority.Get(); ioPrioritySet {
+		err := setIOPriority(p, pid, ioPriority)
+		if err != nil {
+			return err
+		}
+	}
+
+	if schedulingPolicy, schedulingPolicySet := p.opts.SchedulingPolicy.Get(); schedulingPolicySet {
+		err := setSchedulingPolicy(p, pid, schedulingPolicy)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func setIOPriority(p *processRunner, pid int, ioPriority runner.IOPriorityParam) error {
+	if ioPriority.Class > runner.IoprioClassIdle {
+		return fmt.Errorf("failed to set IO priority of process %s: class %d is not valid", p, ioPriority.Class)
+	}
+
+	if ioPriority.Priority > 7 {
+		return fmt.Errorf("failed to set IO priority of process %s: priority %d is not valid", p, ioPriority.Priority)
+	}
+
+	classPos := 13 // IOPRIO_CLASS_SHIFT
+	priorityValue := ioPriority.Class<<classPos | ioPriority.Priority
+	sysctlWho := uintptr(1) // IOPRIO_WHO_PROCESS, we don't operate on threads or groups
+
+	ret, _, syscallError := syscall.Syscall(syscall.SYS_IOPRIO_SET, sysctlWho, uintptr(pid), uintptr(priorityValue))
+	if int(ret) == -1 {
+		return fmt.Errorf("failed to set IO priority of process %s to %d: syscall failed with %s", p, priorityValue, syscallError.Error())
+	}
+
+	return nil
+}
+
+func setSchedulingPolicy(p *processRunner, pid int, schedulingPolicy uint) error {
+	if schedulingPolicy > runner.SchedulingPolicyDeadline {
+		return fmt.Errorf("failed to set scheduling policy of process %s: policy %d is not valid", p, schedulingPolicy)
+	}
+
+	options := struct{ Priority int32 }{
+		Priority: int32(0),
+	}
+
+	if _, _, syscallError := syscall.Syscall(
+		syscall.SYS_SCHED_SETSCHEDULER,
+		uintptr(pid),
+		uintptr(schedulingPolicy),
+		uintptr(unsafe.Pointer(&options)),
+	); syscallError != 0 {
+		return fmt.Errorf("failed to set scheduling policy of process %s to %d: syscall failed with %s", p, schedulingPolicy, syscallError.Error())
 	}
 
 	return nil
