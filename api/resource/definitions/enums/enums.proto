@@ -37,6 +37,12 @@ enum NethelpersAddressFlag {
   ADDRESS_STABLE_PRIVACY = 2048;
 }
 
+// NethelpersAddressSortAlgorithm is an internal address sorting algorithm.
+enum NethelpersAddressSortAlgorithm {
+  ADDRESS_SORT_ALGORITHM_V1 = 0;
+  ADDRESS_SORT_ALGORITHM_V2 = 1;
+}
+
 // NethelpersADSelect is ADSelect.
 enum NethelpersADSelect {
   AD_SELECT_STABLE = 0;

@@ -1911,6 +1911,30 @@ func TestValidate(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "MachineFeaturesInvalidAddressSortingAlgorithm",
+			config: &v1alpha1.Config{
+				ConfigVersion: "v1alpha1",
+				MachineConfig: &v1alpha1.MachineConfig{
+					MachineType: "controlplane",
+					MachineCA: &x509.PEMEncodedCertificateAndKey{
+						Crt: []byte("foo"),
+						Key: []byte("bar"),
+					},
+					MachineFeatures: &v1alpha1.FeaturesConfig{
+						FeatureNodeAddressSortAlgorithm: "xyz",
+					},
+				},
+				ClusterConfig: &v1alpha1.ClusterConfig{
+					ControlPlane: &v1alpha1.ControlPlaneConfig{
+						Endpoint: &v1alpha1.Endpoint{
+							endpointURL,
+						},
+					},
+				},
+			},
+			expectedError: "1 error occurred:\n\t* invalid node address sort algorithm: xyz does not belong to AddressSortAlgorithm values\n\n",
+		},
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()

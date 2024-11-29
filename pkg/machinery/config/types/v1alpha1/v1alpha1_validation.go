@@ -324,6 +324,12 @@ func (c *Config) Validate(mode validation.RuntimeMode, options ...validation.Opt
 		}
 	}
 
+	if c.MachineConfig.MachineFeatures != nil && c.MachineConfig.MachineFeatures.FeatureNodeAddressSortAlgorithm != "" {
+		if _, err := nethelpers.AddressSortAlgorithmString(c.MachineConfig.MachineFeatures.FeatureNodeAddressSortAlgorithm); err != nil {
+			result = multierror.Append(result, fmt.Errorf("invalid node address sort algorithm: %w", err))
+		}
+	}
+
 	if c.ConfigPersist != nil && !*c.ConfigPersist {
 		result = multierror.Append(result, errors.New(".persist should be enabled"))
 	}

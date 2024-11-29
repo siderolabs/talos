@@ -163,6 +163,19 @@ options ndots:5
 Talos now supports providing a local [Image Cache](https://www.talos.dev/v1.9/talos-guides/configuration/image-cache/) for container images.
 """
 
+    [notes.node-address-sort]
+        title = "Node Address Sort"
+        description = """\
+Talos supports new experimental address sort algorithm for `NodeAddress` which are used to pick up default addresses for kubelet, etcd, etc.
+
+It can be enabled with the following config patch:
+
+```yaml
+machine:
+  features:
+    nodeAddressSortAlgorithm: v2
+"""
+
 [make_deps]
 
     [make_deps.tools]

@@ -2649,6 +2649,7 @@ kubernetesTalosAPIAccess:
 |`kubePrism` |<a href="#Config.machine.features.kubePrism">KubePrism</a> |<details><summary>KubePrism - local proxy/load balancer on defined port that will distribute</summary>requests to all API servers in the cluster.</details>  | |
 |`hostDNS` |<a href="#Config.machine.features.hostDNS">HostDNSConfig</a> |Configures host DNS caching resolver.  | |
 |`imageCache` |<a href="#Config.machine.features.imageCache">ImageCacheConfig</a> |Enable Image Cache feature.  | |
+|`nodeAddressSortAlgorithm` |string |<details><summary>Select the node address sort algorithm.</summary>The 'v1' algorithm sorts addresses by the address itself.<br />The 'v2' algorithm prefers more specific prefixes.<br />If unset, defaults to 'v1'.</details>  | |
 
 
 

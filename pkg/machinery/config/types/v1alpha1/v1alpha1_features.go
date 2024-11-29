@@ -8,6 +8,7 @@ import (
 	"github.com/siderolabs/go-pointer"
 
 	"github.com/siderolabs/talos/pkg/machinery/config/config"
+	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
 )
 
 // RBACEnabled implements config.Features interface.
@@ -64,6 +65,20 @@ func (f *FeaturesConfig) ImageCache() config.ImageCache {
 	}
 
 	return f.ImageCacheSupport
+}
+
+// NodeAddressSortAlgorithm implements config.Features interface.
+func (f *FeaturesConfig) NodeAddressSortAlgorithm() nethelpers.AddressSortAlgorithm {
+	if f.FeatureNodeAddressSortAlgorithm == "" {
+		return nethelpers.AddressSortAlgorithmV1
+	}
+
+	res, err := nethelpers.AddressSortAlgorithmString(f.FeatureNodeAddressSortAlgorithm)
+	if err != nil {
+		return nethelpers.AddressSortAlgorithmV1
+	}
+
+	return res
 }
 
 const defaultKubePrismPort = 7445

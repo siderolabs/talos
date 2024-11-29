@@ -2212,6 +2212,12 @@ type FeaturesConfig struct {
 	//   description: |
 	//     Enable Image Cache feature.
 	ImageCacheSupport *ImageCacheConfig `yaml:"imageCache,omitempty"`
+	//   description: |
+	//     Select the node address sort algorithm.
+	//     The 'v1' algorithm sorts addresses by the address itself.
+	//     The 'v2' algorithm prefers more specific prefixes.
+	//     If unset, defaults to 'v1'.
+	FeatureNodeAddressSortAlgorithm string `yaml:"nodeAddressSortAlgorithm,omitempty"`
 }
 
 // KubePrism describes the configuration for the KubePrism load balancer.
