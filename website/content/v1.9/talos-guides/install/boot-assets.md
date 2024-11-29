@@ -221,6 +221,7 @@ The base profile can be customized with the additional flags to the imager:
   Default kernel arg can be removed by prefixing the argument with a `-`.
   For example `-console` removes all `console=<value>` arguments, whereas `-console=tty0` removes the `console=tty0` default argument.
 * `--system-extension-image` allows to install a system extension into the image
+* `--image-cache` allows to use a [local image cache]({{< relref "../configuration/image-cache" >}})
 
 ### Extension Image Reference
 

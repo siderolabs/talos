@@ -1763,6 +1763,11 @@ func Install(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
 
 			logger.Println("install successful")
 
+			logger.Printf("waiting for the image cache copy")
+
+			if err = crires.WaitForImageCacheCopy(ctx, r.State().V1Alpha2().Resources()); err != nil {
+				return fmt.Errorf("failed to wait for the image cache: %w", err)
+			}
 		case r.State().Machine().IsInstallStaged():
 			systemDisk, err := blockres.GetSystemDisk(ctx, r.State().V1Alpha2().Resources())
 			if err != nil {

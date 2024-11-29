@@ -155,7 +155,12 @@ search default.svc.cluster.local svc.cluster.local cluster.local my-custom-searc
 nameserver 10.96.0.10
 options ndots:5
 ```
+"""
 
+    [notes.image-cache]
+        title = "Image Cache"
+        description = """\
+Talos now supports providing a local [Image Cache](https://www.talos.dev/v1.9/talos-guides/configuration/image-cache/) for container images.
 """
 
 [make_deps]

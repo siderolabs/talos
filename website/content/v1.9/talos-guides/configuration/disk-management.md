@@ -190,7 +190,7 @@ Each volume goes through different phases during its lifecycle:
 
 ## Machine Configuration
 
-> Note: In Talos Linux 1.8, only `EPHEMERAL` system volume configuration can be managed through the machine configuration.
+> Note: Only `EPHEMERAL` and `IMAGECACHE` system volume configuration can be managed through the machine configuration.
 >
 > Note: The volume configuration in the machine configuration is only applied when the volume has not been provisioned yet.
 > So applying changes after the initial provisioning will not have any effect.

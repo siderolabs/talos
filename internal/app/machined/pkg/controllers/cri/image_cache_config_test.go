@@ -32,6 +32,7 @@ import (
 func (suite *ImageCacheConfigSuite) TestReconcileNoConfig() {
 	ctest.AssertResource(suite, cri.ImageCacheConfigID, func(r *cri.ImageCacheConfig, asrt *assert.Assertions) {
 		asrt.Equal(cri.ImageCacheStatusDisabled, r.TypedSpec().Status)
+		asrt.Equal(cri.ImageCacheCopyStatusSkipped, r.TypedSpec().CopyStatus)
 	})
 }
 
@@ -44,6 +45,7 @@ func (suite *ImageCacheConfigSuite) TestReconcileFeatureNotEnabled() {
 
 	ctest.AssertResource(suite, cri.ImageCacheConfigID, func(r *cri.ImageCacheConfig, asrt *assert.Assertions) {
 		asrt.Equal(cri.ImageCacheStatusDisabled, r.TypedSpec().Status)
+		asrt.Equal(cri.ImageCacheCopyStatusSkipped, r.TypedSpec().CopyStatus)
 	})
 }
 
@@ -69,6 +71,7 @@ func (suite *ImageCacheConfigSuite) TestReconcileFeatureEnabled() {
 
 	ctest.AssertResource(suite, cri.ImageCacheConfigID, func(r *cri.ImageCacheConfig, asrt *assert.Assertions) {
 		asrt.Equal(cri.ImageCacheStatusPreparing, r.TypedSpec().Status)
+		asrt.Equal(cri.ImageCacheCopyStatusUnknown, r.TypedSpec().CopyStatus)
 	})
 
 	suite.Assert().Empty(suite.getMountedVolumes())
@@ -85,6 +88,7 @@ func (suite *ImageCacheConfigSuite) TestReconcileFeatureEnabled() {
 	// one volume is ready, but second one is not (yet)
 	ctest.AssertResource(suite, cri.ImageCacheConfigID, func(r *cri.ImageCacheConfig, asrt *assert.Assertions) {
 		asrt.Equal(cri.ImageCacheStatusPreparing, r.TypedSpec().Status)
+		asrt.Equal(cri.ImageCacheCopyStatusPending, r.TypedSpec().CopyStatus)
 		asrt.Equal([]string{filepath.Join(constants.ImageCacheISOMountPoint, "imagecache")}, r.TypedSpec().Roots)
 	})
 
@@ -97,7 +101,7 @@ func (suite *ImageCacheConfigSuite) TestReconcileFeatureEnabled() {
 	// now both volumes are ready, but service hasn't started yet
 	ctest.AssertResource(suite, cri.ImageCacheConfigID, func(r *cri.ImageCacheConfig, asrt *assert.Assertions) {
 		asrt.Equal(cri.ImageCacheStatusPreparing, r.TypedSpec().Status)
-		asrt.Equal([]string{filepath.Join(constants.ImageCacheISOMountPoint, "imagecache"), constants.ImageCacheDiskMountPoint}, r.TypedSpec().Roots)
+		asrt.Equal([]string{constants.ImageCacheDiskMountPoint, filepath.Join(constants.ImageCacheISOMountPoint, "imagecache")}, r.TypedSpec().Roots)
 	})
 
 	suite.Assert().Equal([]string{crictrl.VolumeImageCacheISO, crictrl.VolumeImageCacheDISK}, suite.getMountedVolumes())
@@ -111,7 +115,8 @@ func (suite *ImageCacheConfigSuite) TestReconcileFeatureEnabled() {
 	// now both volumes are ready, and service is ready, should be ready
 	ctest.AssertResource(suite, cri.ImageCacheConfigID, func(r *cri.ImageCacheConfig, asrt *assert.Assertions) {
 		asrt.Equal(cri.ImageCacheStatusReady, r.TypedSpec().Status)
-		asrt.Equal([]string{filepath.Join(constants.ImageCacheISOMountPoint, "imagecache"), constants.ImageCacheDiskMountPoint}, r.TypedSpec().Roots)
+		asrt.Equal(cri.ImageCacheCopyStatusReady, r.TypedSpec().CopyStatus)
+		asrt.Equal([]string{constants.ImageCacheDiskMountPoint, filepath.Join(constants.ImageCacheISOMountPoint, "imagecache")}, r.TypedSpec().Roots)
 	})
 }
 
@@ -147,6 +152,7 @@ func (suite *ImageCacheConfigSuite) TestReconcileWithImageCacheVolume() {
 
 	ctest.AssertResource(suite, cri.ImageCacheConfigID, func(r *cri.ImageCacheConfig, asrt *assert.Assertions) {
 		asrt.Equal(cri.ImageCacheStatusPreparing, r.TypedSpec().Status)
+		asrt.Equal(cri.ImageCacheCopyStatusUnknown, r.TypedSpec().CopyStatus)
 	})
 
 	// create volume statuses to simulate the volume being ready & missing
@@ -167,6 +173,7 @@ func (suite *ImageCacheConfigSuite) TestReconcileWithImageCacheVolume() {
 	// now both volumes are ready, and service is ready, should be ready
 	ctest.AssertResource(suite, cri.ImageCacheConfigID, func(r *cri.ImageCacheConfig, asrt *assert.Assertions) {
 		asrt.Equal(cri.ImageCacheStatusReady, r.TypedSpec().Status)
+		asrt.Equal(cri.ImageCacheCopyStatusSkipped, r.TypedSpec().CopyStatus)
 		asrt.Equal([]string{constants.ImageCacheDiskMountPoint}, r.TypedSpec().Roots)
 	})
 }
@@ -206,6 +213,7 @@ func TestImageCacheConfigSuite(t *testing.T) {
 				return nil
 			},
 			V1Alpha1ServiceManager: &mockServiceRunner{},
+			DisableCacheCopy:       true,
 		}))
 	}
 

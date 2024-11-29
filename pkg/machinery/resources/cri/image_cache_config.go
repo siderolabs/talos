@@ -26,8 +26,9 @@ const ImageCacheConfigID = "image-cache"
 //
 //gotagsrewrite:gen
 type ImageCacheConfigSpec struct {
-	Status ImageCacheStatus `yaml:"status" protobuf:"1"`
-	Roots  []string         `yaml:"roots" protobuf:"2"`
+	Status     ImageCacheStatus     `yaml:"status" protobuf:"1"`
+	CopyStatus ImageCacheCopyStatus `yaml:"copyStatus" protobuf:"3"`
+	Roots      []string             `yaml:"roots" protobuf:"2"`
 }
 
 // NewImageCacheConfig creates new ImageCacheConfig object.
@@ -51,6 +52,10 @@ func (ImageCacheConfigExtension) ResourceDefinition() meta.ResourceDefinitionSpe
 			{
 				Name:     "Status",
 				JSONPath: "{.status}",
+			},
+			{
+				Name:     "CopyStatus",
+				JSONPath: "{.copyStatus}",
 			},
 			{
 				Name:     "Roots",

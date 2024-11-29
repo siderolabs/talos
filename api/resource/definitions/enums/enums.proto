@@ -404,6 +404,14 @@ enum CriImageCacheStatus {
   IMAGE_CACHE_STATUS_READY = 3;
 }
 
+// CriImageCacheCopyStatus describes image cache copy status type.
+enum CriImageCacheCopyStatus {
+  IMAGE_CACHE_COPY_STATUS_UNKNOWN = 0;
+  IMAGE_CACHE_COPY_STATUS_SKIPPED = 1;
+  IMAGE_CACHE_COPY_STATUS_PENDING = 2;
+  IMAGE_CACHE_COPY_STATUS_READY = 3;
+}
+
 // KubespanPeerState is KubeSpan peer current state.
 enum KubespanPeerState {
   PEER_STATE_UNKNOWN = 0;

@@ -18,7 +18,7 @@ import (
 
 //go:generate deep-copy -type RegistriesConfigSpec -type ImageCacheConfigSpec -type SeccompProfileSpec -header-file ../../../../hack/boilerplate.txt -o deep_copy.generated.go .
 
-//go:generate enumer -type=ImageCacheStatus -linecomment -text
+//go:generate enumer -type=ImageCacheStatus -type=ImageCacheCopyStatus -linecomment -text
 
 // NamespaceName contains resources related to stats.
 const NamespaceName resource.Namespace = "cri"
@@ -48,6 +48,25 @@ func WaitForImageCache(ctx context.Context, st state.State) error {
 			s := imageCacheConfig.TypedSpec().Status
 
 			return s == ImageCacheStatusDisabled || s == ImageCacheStatusReady, nil
+		}),
+	)
+
+	return err
+}
+
+// WaitForImageCacheCopy waits for the image cache copy to be done (or skipped).
+func WaitForImageCacheCopy(ctx context.Context, st state.State) error {
+	_, err := st.WatchFor(ctx, NewImageCacheConfig().Metadata(),
+		state.WithEventTypes(state.Created, state.Updated),
+		state.WithCondition(func(r resource.Resource) (bool, error) {
+			imageCacheConfig, ok := r.(*ImageCacheConfig)
+			if !ok {
+				return false, fmt.Errorf("unexpected resource type: %T", r)
+			}
+
+			s := imageCacheConfig.TypedSpec().CopyStatus
+
+			return s == ImageCacheCopyStatusReady || s == ImageCacheCopyStatusSkipped, nil
 		}),
 	)
 

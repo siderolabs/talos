@@ -13,6 +13,7 @@ import "resource/definitions/enums/enums.proto";
 message ImageCacheConfigSpec {
   talos.resource.definitions.enums.CriImageCacheStatus status = 1;
   repeated string roots = 2;
+  talos.resource.definitions.enums.CriImageCacheCopyStatus copy_status = 3;
 }
 
 // RegistriesConfigSpec describes status of rendered secrets.

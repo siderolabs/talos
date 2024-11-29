@@ -16,3 +16,16 @@ const (
 	ImageCacheStatusPreparing                         // preparing
 	ImageCacheStatusReady                             // ready
 )
+
+// ImageCacheCopyStatus describes image cache copy status type.
+type ImageCacheCopyStatus int
+
+// ImageCacheCopyStatus values.
+//
+//structprotogen:gen_enum
+const (
+	ImageCacheCopyStatusUnknown ImageCacheCopyStatus = iota // unknown
+	ImageCacheCopyStatusSkipped                             // skipped
+	ImageCacheCopyStatusPending                             // copying
+	ImageCacheCopyStatusReady                               // ready
+)

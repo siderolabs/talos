@@ -71,6 +71,7 @@ description: Talos gRPC API reference.
     - [BlockFilesystemType](#talos.resource.definitions.enums.BlockFilesystemType)
     - [BlockVolumePhase](#talos.resource.definitions.enums.BlockVolumePhase)
     - [BlockVolumeType](#talos.resource.definitions.enums.BlockVolumeType)
+    - [CriImageCacheCopyStatus](#talos.resource.definitions.enums.CriImageCacheCopyStatus)
     - [CriImageCacheStatus](#talos.resource.definitions.enums.CriImageCacheStatus)
     - [KubespanPeerState](#talos.resource.definitions.enums.KubespanPeerState)
     - [MachineType](#talos.resource.definitions.enums.MachineType)
@@ -1310,6 +1311,7 @@ ImageCacheConfigSpec represents the ImageCacheConfig.
 | ----- | ---- | ----- | ----------- |
 | status | [talos.resource.definitions.enums.CriImageCacheStatus](#talos.resource.definitions.enums.CriImageCacheStatus) |  |  |
 | roots | [string](#string) | repeated |  |
+| copy_status | [talos.resource.definitions.enums.CriImageCacheCopyStatus](#talos.resource.definitions.enums.CriImageCacheCopyStatus) |  |  |
 
 
 
@@ -1535,6 +1537,20 @@ BlockVolumeType describes volume type.
 | VOLUME_TYPE_PARTITION | 0 |  |
 | VOLUME_TYPE_DISK | 1 |  |
 | VOLUME_TYPE_TMPFS | 2 |  |
+
+
+
+<a name="talos.resource.definitions.enums.CriImageCacheCopyStatus"></a>
+
+### CriImageCacheCopyStatus
+CriImageCacheCopyStatus describes image cache copy status type.
+
+| Name | Number | Description |
+| ---- | ------ | ----------- |
+| IMAGE_CACHE_COPY_STATUS_UNKNOWN | 0 |  |
+| IMAGE_CACHE_COPY_STATUS_SKIPPED | 1 |  |
+| IMAGE_CACHE_COPY_STATUS_PENDING | 2 |  |
+| IMAGE_CACHE_COPY_STATUS_READY | 3 |  |
 
 
 
