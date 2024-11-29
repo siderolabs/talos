@@ -40,6 +40,12 @@ type Args struct {
 	ProcessArgs []string
 }
 
+// IOPriorityParam represents the combination of IO scheduling class and priority.
+type IOPriorityParam struct {
+	Class    uint
+	Priority uint
+}
+
 // Options is the functional options struct.
 type Options struct {
 	// LoggingManager provides service log handling.
@@ -82,6 +88,12 @@ type Options struct {
 	Ctty optional.Optional[int]
 	// UID is the user id of the process.
 	UID uint32
+	// Priority is the niceness value of the process.
+	Priority int
+	// IOPriority is the IO priority value and class of the process.
+	IOPriority optional.Optional[IOPriorityParam]
+	// SchedulingPolicy is the scheduling policy of the process.
+	SchedulingPolicy optional.Optional[uint]
 }
 
 // Option is the functional option func.
@@ -247,5 +259,57 @@ func WithMemoryReservation(limit uint64) oci.SpecOpts {
 		s.Linux.Resources.Memory.Reservation = pointer.To(int64(limit))
 
 		return nil
+	}
+}
+
+// WithPriority sets the priority of the process.
+func WithPriority(priority int) Option {
+	return func(args *Options) {
+		args.Priority = priority
+	}
+}
+
+const (
+	// IoprioClassNone represents IOPRIO_CLASS_NONE.
+	IoprioClassNone = iota
+	// IoprioClassRt represents IOPRIO_CLASS_RT.
+	IoprioClassRt
+	// IoprioClassBe represents IOPRIO_CLASS_BE.
+	IoprioClassBe
+	// IoprioClassIdle represents IOPRIO_CLASS_IDLE.
+	IoprioClassIdle
+)
+
+// WithIOPriority sets the IO priority and class of the process.
+func WithIOPriority(class, priority uint) Option {
+	return func(args *Options) {
+		args.IOPriority = optional.Some(IOPriorityParam{
+			Class:    class,
+			Priority: priority,
+		})
+	}
+}
+
+const (
+	// SchedulingPolicyNormal represents SCHED_NORMAL.
+	SchedulingPolicyNormal = iota
+	// SchedulingPolicyFIFO represents SCHED_FIFO.
+	SchedulingPolicyFIFO
+	// SchedulingPolicyRR represents SCHED_RR.
+	SchedulingPolicyRR
+	// SchedulingPolicyBatch represents SCHED_BATCH.
+	SchedulingPolicyBatch
+	// SchedulingPolicyIsoUnimplemented represents SCHED_ISO.
+	SchedulingPolicyIsoUnimplemented
+	// SchedulingPolicyIdle represents SCHED_IDLE.
+	SchedulingPolicyIdle
+	// SchedulingPolicyDeadline represents SCHED_DEADLINE.
+	SchedulingPolicyDeadline
+)
+
+// WithSchedulingPolicy sets the scheduling policy of the process.
+func WithSchedulingPolicy(policy uint) Option {
+	return func(args *Options) {
+		args.SchedulingPolicy = optional.Some(policy)
 	}
 }
