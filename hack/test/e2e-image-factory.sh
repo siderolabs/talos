@@ -24,7 +24,7 @@ case "${FACTORY_BOOT_METHOD:-iso}" in
     QEMU_FLAGS+=("--ipxe-boot-script=${FACTORY_SCHEME}://${PXE_FACTORY_HOSTNAME}/pxe/${FACTORY_SCHEMATIC}/${FACTORY_VERSION}/metal-amd64")
     ;;
   secureboot-iso)
-    QEMU_FLAGS+=("--iso-path=${FACTORY_SCHEME}://${FACTORY_HOSTNAME}/image/${FACTORY_SCHEMATIC}/${FACTORY_VERSION}/metal-amd64-secureboot.iso" "--with-tpm2" "--encrypt-ephemeral" "--encrypt-state" "--disk-encryption-key-types=tpm")
+    QEMU_FLAGS+=("--iso-path=${FACTORY_SCHEME}://${FACTORY_HOSTNAME}/image/${FACTORY_SCHEMATIC}/${FACTORY_VERSION}/metal-amd64-secureboot.iso" "--encrypt-ephemeral" "--encrypt-state" "--disk-encryption-key-types=tpm")
     INSTALLER_IMAGE_NAME=installer-secureboot
     ;;
 esac
@@ -59,6 +59,7 @@ function create_cluster {
     --with-apply-config \
     --talos-version="${FACTORY_VERSION}" \
     --install-image="${FACTORY_HOSTNAME}/${INSTALLER_IMAGE_NAME}/${FACTORY_SCHEMATIC}:${FACTORY_VERSION}" \
+    --with-tpm2 \
     "${REGISTRY_MIRROR_FLAGS[@]}" \
     "${QEMU_FLAGS[@]}"
 
