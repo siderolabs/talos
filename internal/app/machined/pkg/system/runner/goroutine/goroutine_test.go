@@ -139,6 +139,38 @@ func (suite *GoroutineSuite) TestStop() {
 	suite.Assert().NoError(<-errCh)
 }
 
+func (suite *GoroutineSuite) TestStuckOnStop() {
+	r := goroutine.NewRunner(suite.r, "teststop",
+		func(ctx context.Context, data runtime.Runtime, logger io.Writer) error {
+			// hanging forever
+			select {}
+		},
+		runner.WithLoggingManager(suite.loggingManager),
+		runner.WithGracefulShutdownTimeout(10*time.Millisecond),
+	)
+
+	suite.Assert().NoError(r.Open())
+
+	defer func() { suite.Assert().NoError(r.Close()) }()
+
+	errCh := make(chan error)
+
+	go func() {
+		errCh <- r.Run(MockEventSink)
+	}()
+
+	time.Sleep(20 * time.Millisecond)
+
+	select {
+	case <-errCh:
+		suite.Require().Fail("should not return yet")
+	default:
+	}
+
+	suite.Assert().NoError(r.Stop())
+	suite.Assert().ErrorIs(<-errCh, goroutine.ErrAborted)
+}
+
 func (suite *GoroutineSuite) TestRunLogs() {
 	r := goroutine.NewRunner(suite.r, "logtest",
 		func(ctx context.Context, data runtime.Runtime, logger io.Writer) error {

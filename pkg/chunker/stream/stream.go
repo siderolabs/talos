@@ -9,8 +9,10 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"os"
 
 	"github.com/siderolabs/gen/xslices"
+	"github.com/siderolabs/go-circular"
 
 	"github.com/siderolabs/talos/pkg/chunker"
 )
@@ -61,27 +63,35 @@ func NewChunker(ctx context.Context, source Source, setters ...Option) chunker.C
 }
 
 // Read implements ChunkReader.
+//
+//nolint:gocyclo
 func (c *Stream) Read() <-chan []byte {
 	// Create a buffered channel of length 1.
 	ch := make(chan []byte, 1)
 
 	go func(ch chan []byte) {
 		defer close(ch)
-		//nolint:errcheck
-		defer c.source.Close()
+
+		ctx, cancel := context.WithCancel(c.ctx)
+		defer cancel()
+
+		go func() {
+			<-ctx.Done()
+			c.source.Close() //nolint:errcheck
+		}()
 
 		buf := make([]byte, c.options.Size)
 
 		for {
 			select {
-			case <-c.ctx.Done():
+			case <-ctx.Done():
 				return
 			default:
 			}
 
 			n, err := c.source.Read(buf)
 			if err != nil {
-				if !(errors.Is(err, io.EOF) || errors.Is(err, io.ErrClosedPipe)) {
+				if !(errors.Is(err, io.EOF) || errors.Is(err, io.ErrClosedPipe) || errors.Is(err, os.ErrClosed) || errors.Is(err, circular.ErrClosed)) {
 					fmt.Printf("read error: %s\n", err.Error())
 				}
 
@@ -93,7 +103,7 @@ func (c *Stream) Read() <-chan []byte {
 				b := xslices.CopyN(buf, n)
 
 				select {
-				case <-c.ctx.Done():
+				case <-ctx.Done():
 					return
 				case ch <- b:
 				}

@@ -11,11 +11,15 @@ import (
 	"io"
 	stdlibruntime "runtime"
 	"sync"
+	"time"
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system/events"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system/runner"
 )
+
+// ErrAborted is returned by the service when it's aborted (doesn't stop on timeout).
+var ErrAborted = errors.New("service aborted")
 
 // goroutineRunner is a runner.Runner that runs a service in a goroutine.
 type goroutineRunner struct {
@@ -66,10 +70,32 @@ func (r *goroutineRunner) Run(eventSink events.Recorder) error {
 
 	eventSink(events.StateRunning, "Service started as goroutine")
 
-	return r.wrappedMain()
+	errCh := make(chan error)
+	ctx := r.ctx
+
+	go func() {
+		errCh <- r.wrappedMain(ctx)
+	}()
+
+	select {
+	case <-r.ctx.Done():
+		eventSink(events.StateStopping, "Service stopping")
+	case err := <-errCh:
+		// service finished on its own
+		return err
+	}
+
+	select {
+	case <-time.After(r.opts.GracefulShutdownTimeout * 2):
+		eventSink(events.StateStopping, "Service hasn't stopped gracefully on timeout, aborting")
+
+		return ErrAborted
+	case err := <-errCh:
+		return err
+	}
 }
 
-func (r *goroutineRunner) wrappedMain() (err error) {
+func (r *goroutineRunner) wrappedMain(ctx context.Context) (err error) {
 	defer func() {
 		if r := recover(); r != nil {
 			buf := make([]byte, 8192)
@@ -87,7 +113,7 @@ func (r *goroutineRunner) wrappedMain() (err error) {
 
 	defer writerCloser() //nolint:errcheck
 
-	if err = r.main(r.ctx, r.runtime, w); !errors.Is(err, context.Canceled) {
+	if err = r.main(ctx, r.runtime, w); !errors.Is(err, context.Canceled) {
 		return err // return error if it's not context.Canceled (service was not aborted)
 	}
 

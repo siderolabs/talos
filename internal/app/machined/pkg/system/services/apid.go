@@ -14,6 +14,7 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/containerd/containerd/v2/pkg/cap"
 	"github.com/containerd/containerd/v2/pkg/oci"
@@ -200,6 +201,7 @@ func (o *APID) Runner(r runtime.Runtime) (runner.Runner, error) {
 		runner.WithLoggingManager(r.Logging()),
 		runner.WithContainerdAddress(constants.SystemContainerdAddress),
 		runner.WithEnv(env),
+		runner.WithGracefulShutdownTimeout(15*time.Second),
 		runner.WithCgroupPath(constants.CgroupApid),
 		runner.WithSelinuxLabel(constants.SelinuxLabelApid),
 		runner.WithOCISpecOpts(

@@ -187,7 +187,7 @@ require (
 	golang.org/x/text v0.20.0
 	golang.org/x/time v0.8.0
 	golang.zx2c4.com/wireguard/wgctrl v0.0.0-20230429144221-925a1e7659e6
-	google.golang.org/grpc v1.68.0 // do not update to 1.68.0 until we find a way around https://github.com/grpc/grpc-go/pull/7535
+	google.golang.org/grpc v1.68.0
 	google.golang.org/protobuf v1.35.2
 	gopkg.in/yaml.v3 v3.0.1
 	k8s.io/klog/v2 v2.130.1
