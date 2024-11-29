@@ -128,8 +128,10 @@ func (suite *EtcFileConfigSuite) SetupTest() {
 	suite.hostDNSConfig.TypedSpec().ListenAddresses = []netip.AddrPort{
 		netip.MustParseAddrPort("127.0.0.53:53"),
 		netip.MustParseAddrPort("169.254.116.108:53"),
+		netip.MustParseAddrPort("[fd54:616c:6f73::204f:5320:444e:531]:53"),
 	}
 	suite.hostDNSConfig.TypedSpec().ServiceHostDNSAddress = netip.MustParseAddr("169.254.116.108")
+	suite.hostDNSConfig.TypedSpec().ServiceHostDNSAddressV6 = netip.MustParseAddr("fd54:616c:6f73::204f:5320:444e:531")
 }
 
 func (suite *EtcFileConfigSuite) startRuntime() {
@@ -228,7 +230,7 @@ func (suite *EtcFileConfigSuite) TestComplete() {
 		etcFileContents{
 			hosts:            "127.0.0.1   localhost\n33.11.22.44 foo.example.com foo\n::1         localhost ip6-localhost ip6-loopback\nff02::1     ip6-allnodes\nff02::2     ip6-allrouters\n10.0.0.1    a b\n10.0.0.2    c d\n", //nolint:lll
 			resolvConf:       "nameserver 127.0.0.53\n\nsearch example.com\n",
-			resolvGlobalConf: "nameserver 169.254.116.108\n\nsearch example.com\n",
+			resolvGlobalConf: "nameserver 169.254.116.108\nnameserver fd54:616c:6f73:0:204f:5320:444e:531\n\nsearch example.com\n",
 		},
 	)
 }
@@ -239,7 +241,7 @@ func (suite *EtcFileConfigSuite) TestNoExtraHosts() {
 		etcFileContents{
 			hosts:            "127.0.0.1   localhost\n33.11.22.44 foo.example.com foo\n::1         localhost ip6-localhost ip6-loopback\nff02::1     ip6-allnodes\nff02::2     ip6-allrouters\n",
 			resolvConf:       "nameserver 127.0.0.53\n\nsearch example.com\n",
-			resolvGlobalConf: "nameserver 169.254.116.108\n\nsearch example.com\n",
+			resolvGlobalConf: "nameserver 169.254.116.108\nnameserver fd54:616c:6f73:0:204f:5320:444e:531\n\nsearch example.com\n",
 		},
 	)
 }
@@ -262,7 +264,7 @@ func (suite *EtcFileConfigSuite) TestNoSearchDomain() {
 		etcFileContents{
 			hosts:            "127.0.0.1   localhost\n33.11.22.44 foo.example.com foo\n::1         localhost ip6-localhost ip6-loopback\nff02::1     ip6-allnodes\nff02::2     ip6-allrouters\n",
 			resolvConf:       "nameserver 127.0.0.53\n",
-			resolvGlobalConf: "nameserver 169.254.116.108\n",
+			resolvGlobalConf: "nameserver 169.254.116.108\nnameserver fd54:616c:6f73:0:204f:5320:444e:531\n",
 		},
 	)
 }
@@ -275,7 +277,7 @@ func (suite *EtcFileConfigSuite) TestNoDomainname() {
 		etcFileContents{
 			hosts:            "127.0.0.1   localhost\n33.11.22.44 foo\n::1         localhost ip6-localhost ip6-loopback\nff02::1     ip6-allnodes\nff02::2     ip6-allrouters\n",
 			resolvConf:       "nameserver 127.0.0.53\n",
-			resolvGlobalConf: "nameserver 169.254.116.108\n",
+			resolvGlobalConf: "nameserver 169.254.116.108\nnameserver fd54:616c:6f73:0:204f:5320:444e:531\n",
 		},
 	)
 }
@@ -286,7 +288,7 @@ func (suite *EtcFileConfigSuite) TestOnlyResolvers() {
 		etcFileContents{
 			hosts:            "",
 			resolvConf:       "nameserver 127.0.0.53\n",
-			resolvGlobalConf: "nameserver 169.254.116.108\n",
+			resolvGlobalConf: "nameserver 169.254.116.108\nnameserver fd54:616c:6f73:0:204f:5320:444e:531\n",
 		},
 	)
 }

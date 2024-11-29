@@ -28,6 +28,7 @@ import (
 	"golang.org/x/sys/unix"
 
 	netctrl "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/network"
+	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
 	"github.com/siderolabs/talos/pkg/machinery/resources/network"
 )
@@ -166,6 +167,47 @@ func (suite *AddressSpecSuite) TestLoopback() {
 
 	// torn down address should be removed immediately
 	suite.Assert().NoError(suite.assertNoLinkAddress("lo", "127.11.0.1/32"))
+
+	suite.Require().NoError(suite.state.Destroy(suite.ctx, loopback.Metadata()))
+}
+
+func (suite *AddressSpecSuite) TestIPV6ULA() {
+	loopback := network.NewAddressSpec(network.NamespaceName, "lo/"+constants.HostDNSAddressV6+"/128")
+	*loopback.TypedSpec() = network.AddressSpecSpec{
+		Address:     netip.MustParsePrefix(constants.HostDNSAddressV6 + "/128"),
+		LinkName:    "lo",
+		Family:      nethelpers.FamilyInet6,
+		Scope:       nethelpers.ScopeGlobal,
+		ConfigLayer: network.ConfigDefault,
+		Flags:       nethelpers.AddressFlags(nethelpers.AddressPermanent),
+	}
+
+	for _, res := range []resource.Resource{loopback} {
+		suite.Require().NoError(suite.state.Create(suite.ctx, res), "%v", res.Spec())
+	}
+
+	suite.Assert().NoError(
+		retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
+			func() error {
+				return suite.assertLinkAddress("lo", constants.HostDNSAddressV6+"/128")
+			},
+		),
+	)
+
+	// teardown the address
+	for {
+		ready, err := suite.state.Teardown(suite.ctx, loopback.Metadata())
+		suite.Require().NoError(err)
+
+		if ready {
+			break
+		}
+
+		time.Sleep(100 * time.Millisecond)
+	}
+
+	// torn down address should be removed immediately
+	suite.Assert().NoError(suite.assertNoLinkAddress("lo", constants.HostDNSAddressV6+"/128"))
 
 	suite.Require().NoError(suite.state.Destroy(suite.ctx, loopback.Metadata()))
 }

@@ -92,6 +92,7 @@ func (ctrl *HostDNSConfigController) Run(ctx context.Context, r controller.Runti
 			}
 
 			res.TypedSpec().ServiceHostDNSAddress = netip.Addr{}
+			res.TypedSpec().ServiceHostDNSAddressV6 = netip.Addr{}
 
 			if cfgProvider == nil {
 				res.TypedSpec().Enabled = false
@@ -115,6 +116,17 @@ func (ctrl *HostDNSConfigController) Run(ctx context.Context, r controller.Runti
 
 				res.TypedSpec().ListenAddresses = append(res.TypedSpec().ListenAddresses, netip.AddrPortFrom(parsed, 53))
 				res.TypedSpec().ServiceHostDNSAddress = parsed
+			}
+
+			if slices.ContainsFunc(
+				cfgProvider.Cluster().Network().PodCIDRs(),
+				func(cidr string) bool { return netip.MustParsePrefix(cidr).Addr().Is6() },
+			) {
+				parsed := netip.MustParseAddr(constants.HostDNSAddressV6)
+				newServiceAddrs = append(newServiceAddrs, parsed)
+
+				res.TypedSpec().ListenAddresses = append(res.TypedSpec().ListenAddresses, netip.AddrPortFrom(parsed, 53))
+				res.TypedSpec().ServiceHostDNSAddressV6 = parsed
 			}
 
 			return nil

@@ -114,6 +114,7 @@ message HostDNSConfigSpec {
   repeated common.NetIPPort listen_addresses = 2;
   common.NetIP service_host_dns_address = 3;
   bool resolve_member_names = 4;
+  common.NetIP service_host_dns_address_v6 = 5;
 }
 
 // HostnameSpecSpec describes node hostname.

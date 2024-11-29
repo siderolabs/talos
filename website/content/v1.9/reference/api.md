@@ -3675,6 +3675,7 @@ HostDNSConfigSpec describes host DNS config.
 | listen_addresses | [common.NetIPPort](#common.NetIPPort) | repeated |  |
 | service_host_dns_address | [common.NetIP](#common.NetIP) |  |  |
 | resolve_member_names | [bool](#bool) |  |  |
+| service_host_dns_address_v6 | [common.NetIP](#common.NetIP) |  |  |
 
 
 
