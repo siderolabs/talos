@@ -28,8 +28,9 @@ const ResolverID resource.ID = "resolvers"
 //
 //gotagsrewrite:gen
 type ResolverSpecSpec struct {
-	DNSServers  []netip.Addr `yaml:"dnsServers" protobuf:"1"`
-	ConfigLayer ConfigLayer  `yaml:"layer" protobuf:"2"`
+	DNSServers    []netip.Addr `yaml:"dnsServers" protobuf:"1"`
+	ConfigLayer   ConfigLayer  `yaml:"layer" protobuf:"2"`
+	SearchDomains []string     `yaml:"searchDomains,omitempty" protobuf:"3"`
 }
 
 // NewResolverSpec initializes a ResolverSpec resource.
@@ -49,7 +50,20 @@ func (ResolverSpecExtension) ResourceDefinition() meta.ResourceDefinitionSpec {
 		Type:             ResolverSpecType,
 		Aliases:          []resource.Type{},
 		DefaultNamespace: NamespaceName,
-		PrintColumns:     []meta.PrintColumn{},
+		PrintColumns: []meta.PrintColumn{
+			{
+				Name:     "Layer",
+				JSONPath: "{.layer}",
+			},
+			{
+				Name:     "Resolvers",
+				JSONPath: "{.dnsServers}",
+			},
+			{
+				Name:     "Search Domains",
+				JSONPath: "{.searchDomains}",
+			},
+		},
 	}
 }
 

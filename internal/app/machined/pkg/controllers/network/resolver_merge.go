@@ -83,6 +83,8 @@ func (ctrl *ResolverMergeController) Run(ctx context.Context, r controller.Runti
 		for res := range list.All() {
 			spec := res.TypedSpec()
 
+			final.SearchDomains = slices.Insert(final.SearchDomains, 0, spec.SearchDomains...)
+
 			if spec.ConfigLayer == final.ConfigLayer {
 				// simply append server lists on the same layer
 				final.DNSServers = append(final.DNSServers, spec.DNSServers...)

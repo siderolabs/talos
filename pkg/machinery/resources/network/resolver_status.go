@@ -25,7 +25,8 @@ type ResolverStatus = typed.Resource[ResolverStatusSpec, ResolverStatusExtension
 //
 //gotagsrewrite:gen
 type ResolverStatusSpec struct {
-	DNSServers []netip.Addr `yaml:"dnsServers" protobuf:"1"`
+	DNSServers    []netip.Addr `yaml:"dnsServers" protobuf:"1"`
+	SearchDomains []string     `yaml:"searchDomains" protobuf:"2"`
 }
 
 // NewResolverStatus initializes a ResolverStatus resource.
@@ -49,6 +50,10 @@ func (ResolverStatusExtension) ResourceDefinition() meta.ResourceDefinitionSpec 
 			{
 				Name:     "Resolvers",
 				JSONPath: "{.dnsServers}",
+			},
+			{
+				Name:     "Search Domains",
+				JSONPath: "{.searchDomains}",
 			},
 		},
 	}

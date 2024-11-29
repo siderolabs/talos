@@ -608,6 +608,11 @@ func (n *NetworkConfig) Resolvers() []string {
 	return n.NameServers
 }
 
+// SearchDomains implements the config.Provider interface.
+func (n *NetworkConfig) SearchDomains() []string {
+	return n.Searches
+}
+
 // ExtraHosts implements the config.Provider interface.
 func (n *NetworkConfig) ExtraHosts() []config.ExtraHost {
 	return xslices.Map(n.ExtraHostEntries, func(e *ExtraHost) config.ExtraHost { return e })

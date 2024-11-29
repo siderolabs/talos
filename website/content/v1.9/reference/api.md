@@ -4097,6 +4097,7 @@ ResolverSpecSpec describes DNS resolvers.
 | ----- | ---- | ----- | ----------- |
 | dns_servers | [common.NetIP](#common.NetIP) | repeated |  |
 | config_layer | [talos.resource.definitions.enums.NetworkConfigLayer](#talos.resource.definitions.enums.NetworkConfigLayer) |  |  |
+| search_domains | [string](#string) | repeated |  |
 
 
 
@@ -4112,6 +4113,7 @@ ResolverStatusSpec describes DNS resolvers.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | dns_servers | [common.NetIP](#common.NetIP) | repeated |  |
+| search_domains | [string](#string) | repeated |  |
 
 
 

@@ -249,6 +249,10 @@ network:
     nameservers:
         - 9.8.7.6
         - 8.7.6.5
+    # Used to statically set arbitrary search domains.
+    searchDomains:
+        - example.org
+        - example.com
 
     # # Allows for extra entries to be added to the `/etc/hosts` file
     # extraHostEntries:
@@ -832,6 +836,10 @@ machine:
         nameservers:
             - 9.8.7.6
             - 8.7.6.5
+        # Used to statically set arbitrary search domains.
+        searchDomains:
+            - example.org
+            - example.com
 
         # # Allows for extra entries to be added to the `/etc/hosts` file
         # extraHostEntries:
@@ -948,6 +956,11 @@ interfaces:
 nameservers:
     - 8.8.8.8
     - 1.1.1.1
+{{< /highlight >}}</details> | |
+|`searchDomains` |[]string |Used to statically set arbitrary search domains. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
+searchDomains:
+    - example.org
+    - example.com
 {{< /highlight >}}</details> | |
 |`extraHostEntries` |<a href="#Config.machine.network.extraHostEntries.">[]ExtraHost</a> |Allows for extra entries to be added to the `/etc/hosts` file <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 extraHostEntries:

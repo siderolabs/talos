@@ -140,16 +140,14 @@ func (ctrl *EtcFileController) Run(ctx context.Context, r controller.Runtime, _ 
 			}
 		}
 
-		var hostnameStatusSpec *network.HostnameStatusSpec
-		if hostnameStatus != nil {
-			hostnameStatusSpec = hostnameStatus.TypedSpec()
-		}
-
 		if resolverStatus != nil && hostDNSCfg != nil && !ctrl.V1Alpha1Mode.InContainer() {
 			// in container mode, keep the original resolv.conf to use the resolvers supplied by the container runtime
 			if err = safe.WriterModify(ctx, r, files.NewEtcFileSpec(files.NamespaceName, "resolv.conf"),
 				func(r *files.EtcFileSpec) error {
-					r.TypedSpec().Contents = renderResolvConf(pickNameservers(hostDNSCfg, resolverStatus), hostnameStatusSpec, cfgProvider)
+					r.TypedSpec().Contents = renderResolvConf(
+						pickNameservers(hostDNSCfg, resolverStatus),
+						resolverStatus.TypedSpec().SearchDomains,
+					)
 					r.TypedSpec().Mode = 0o644
 					r.TypedSpec().SelinuxLabel = constants.EtcSelinuxLabel
 
@@ -169,7 +167,7 @@ func (ctrl *EtcFileController) Run(ctx context.Context, r controller.Runtime, _ 
 				dnsServers = resolverStatus.TypedSpec().DNSServers
 			}
 
-			conf := renderResolvConf(slices.All(dnsServers), hostnameStatusSpec, cfgProvider)
+			conf := renderResolvConf(slices.All(dnsServers), resolverStatus.TypedSpec().SearchDomains)
 
 			if err = os.MkdirAll(filepath.Dir(ctrl.PodResolvConfPath), 0o755); err != nil {
 				return fmt.Errorf("error creating pod resolv.conf dir: %w", err)
@@ -209,7 +207,7 @@ func pickNameservers(hostDNSCfg *network.HostDNSConfig, resolverStatus *network.
 	return slices.All(resolverStatus.TypedSpec().DNSServers)
 }
 
-func renderResolvConf(nameservers iter.Seq2[int, netip.Addr], hostnameStatus *network.HostnameStatusSpec, cfgProvider talosconfig.Config) []byte {
+func renderResolvConf(nameservers iter.Seq2[int, netip.Addr], searchDomains []string) []byte {
 	var buf bytes.Buffer
 
 	for i, ns := range nameservers {
@@ -221,13 +219,8 @@ func renderResolvConf(nameservers iter.Seq2[int, netip.Addr], hostnameStatus *ne
 		fmt.Fprintf(&buf, "nameserver %s\n", ns)
 	}
 
-	var disableSearchDomain bool
-	if cfgProvider != nil && cfgProvider.Machine() != nil {
-		disableSearchDomain = cfgProvider.Machine().Network().DisableSearchDomain()
-	}
-
-	if !disableSearchDomain && hostnameStatus != nil && hostnameStatus.Domainname != "" {
-		fmt.Fprintf(&buf, "\nsearch %s\n", hostnameStatus.Domainname)
+	if len(searchDomains) > 0 {
+		fmt.Fprintf(&buf, "\nsearch %s\n", strings.Join(searchDomains, " "))
 	}
 
 	return buf.Bytes()

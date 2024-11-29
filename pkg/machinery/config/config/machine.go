@@ -143,6 +143,7 @@ type MachineScheduler interface {
 type MachineNetwork interface {
 	Hostname() string
 	Resolvers() []string
+	SearchDomains() []string
 	Devices() []Device
 	ExtraHosts() []ExtraHost
 	KubeSpan() KubeSpan

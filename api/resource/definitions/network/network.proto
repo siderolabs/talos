@@ -316,11 +316,13 @@ message ProbeStatusSpec {
 message ResolverSpecSpec {
   repeated common.NetIP dns_servers = 1;
   talos.resource.definitions.enums.NetworkConfigLayer config_layer = 2;
+  repeated string search_domains = 3;
 }
 
 // ResolverStatusSpec describes DNS resolvers.
 message ResolverStatusSpec {
   repeated common.NetIP dns_servers = 1;
+  repeated string search_domains = 2;
 }
 
 // RouteSpecSpec describes the route.

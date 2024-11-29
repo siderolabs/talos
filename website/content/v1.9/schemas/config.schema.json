@@ -3032,6 +3032,16 @@
           "markdownDescription": "Used to statically set the nameservers for the machine.\nDefaults to `1.1.1.1` and `8.8.8.8`",
           "x-intellij-html-description": "\u003cp\u003eUsed to statically set the nameservers for the machine.\nDefaults to \u003ccode\u003e1.1.1.1\u003c/code\u003e and \u003ccode\u003e8.8.8.8\u003c/code\u003e\u003c/p\u003e\n"
         },
+        "searchDomains": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "title": "searchDomains",
+          "description": "Used to statically set arbitrary search domains.\n",
+          "markdownDescription": "Used to statically set arbitrary search domains.",
+          "x-intellij-html-description": "\u003cp\u003eUsed to statically set arbitrary search domains.\u003c/p\u003e\n"
+        },
         "extraHostEntries": {
           "items": {
             "$ref": "#/$defs/v1alpha1.ExtraHost"

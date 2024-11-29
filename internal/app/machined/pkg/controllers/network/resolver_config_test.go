@@ -152,6 +152,7 @@ func (suite *ResolverConfigSuite) TestMachineConfiguration() {
 				MachineConfig: &v1alpha1.MachineConfig{
 					MachineNetwork: &v1alpha1.NetworkConfig{
 						NameServers: []string{"2.2.2.2", "3.3.3.3"},
+						Searches:    []string{"example.com", "example.org"},
 					},
 				},
 				ClusterConfig: &v1alpha1.ClusterConfig{
@@ -177,11 +178,17 @@ func (suite *ResolverConfigSuite) TestMachineConfiguration() {
 					netip.MustParseAddr("3.3.3.3"),
 				}, r.TypedSpec().DNSServers,
 			)
+
+			asrt.Equal(
+				[]string{"example.com", "example.org"},
+				r.TypedSpec().SearchDomains,
+			)
 		},
 	)
 
 	ctest.UpdateWithConflicts(suite, cfg, func(r *config.MachineConfig) error {
 		r.Container().RawV1Alpha1().MachineConfig.MachineNetwork.NameServers = nil
+		r.Container().RawV1Alpha1().MachineConfig.MachineNetwork.Searches = nil
 
 		return nil
 	})

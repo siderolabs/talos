@@ -716,6 +716,11 @@ type NetworkConfig struct {
 	//     - value: '[]string{"8.8.8.8", "1.1.1.1"}'
 	NameServers []string `yaml:"nameservers,omitempty"`
 	//   description: |
+	//     Used to statically set arbitrary search domains.
+	//   examples:
+	//     - value: '[]string{"example.org", "example.com"}'
+	Searches []string `yaml:"searchDomains,omitempty"`
+	//   description: |
 	//     Allows for extra entries to be added to the `/etc/hosts` file
 	//   examples:
 	//     - value: networkConfigExtraHostsExample()

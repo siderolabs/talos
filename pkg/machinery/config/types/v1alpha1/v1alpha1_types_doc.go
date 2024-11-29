@@ -958,6 +958,13 @@ func (NetworkConfig) Doc() *encoder.Doc {
 				Comments:    [3]string{"" /* encoder.HeadComment */, "Used to statically set the nameservers for the machine." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
 			{
+				Name:        "searchDomains",
+				Type:        "[]string",
+				Note:        "",
+				Description: "Used to statically set arbitrary search domains.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Used to statically set arbitrary search domains." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
 				Name:        "extraHostEntries",
 				Type:        "[]ExtraHost",
 				Note:        "",
@@ -991,8 +998,9 @@ func (NetworkConfig) Doc() *encoder.Doc {
 
 	doc.Fields[1].AddExample("", machineNetworkConfigExample().NetworkInterfaces)
 	doc.Fields[2].AddExample("", []string{"8.8.8.8", "1.1.1.1"})
-	doc.Fields[3].AddExample("", networkConfigExtraHostsExample())
-	doc.Fields[4].AddExample("", networkKubeSpanExample())
+	doc.Fields[3].AddExample("", []string{"example.org", "example.com"})
+	doc.Fields[4].AddExample("", networkConfigExtraHostsExample())
+	doc.Fields[5].AddExample("", networkKubeSpanExample())
 
 	return doc
 }

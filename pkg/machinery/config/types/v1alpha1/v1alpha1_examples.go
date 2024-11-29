@@ -162,6 +162,7 @@ func machineNetworkConfigExample() *NetworkConfig {
 			},
 		},
 		NameServers: []string{"9.8.7.6", "8.7.6.5"},
+		Searches:    []string{"example.org", "example.com"},
 	}
 }
 

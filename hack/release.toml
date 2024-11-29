@@ -134,6 +134,30 @@ The new command `talosctl wipe disk` allows to wipe a disk or a partition which 
 Talos now allows to [modify the OCI base runtime spec for the container runtime](https://www.talos.dev/v1.9/advanced/oci-base-spec/).
 """
 
+    [notes.custom-search-domains]
+        title = "Custom search domains for Talos nodes"
+        description = """\
+Talos now allows to supports specifying custom search domains for Talos nodes using
+new config field `machine.network.searchDomains`
+
+For the host it will look something like this:
+
+```
+nameserver 127.0.0.53
+
+search my-custom-search-name.com my-custom-search-name2.com
+```
+
+For the pods it will look something like this:
+
+```
+search default.svc.cluster.local svc.cluster.local cluster.local my-custom-search-name.com my-custom-search-name2.com
+nameserver 10.96.0.10
+options ndots:5
+```
+
+"""
+
 [make_deps]
 
     [make_deps.tools]
