@@ -7,6 +7,7 @@ package types
 
 import (
 	_ "github.com/siderolabs/talos/pkg/machinery/config/types/block"              // import config types to register them
+	_ "github.com/siderolabs/talos/pkg/machinery/config/types/hardware"           // import config types to register them
 	_ "github.com/siderolabs/talos/pkg/machinery/config/types/network"            // import config types to register them
 	_ "github.com/siderolabs/talos/pkg/machinery/config/types/runtime"            // import config types to register them
 	_ "github.com/siderolabs/talos/pkg/machinery/config/types/runtime/extensions" // import config types to register them

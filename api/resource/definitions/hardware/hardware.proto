@@ -29,6 +29,18 @@ message PCIDeviceSpec {
   string product_id = 8;
 }
 
+// PCIDriverRebindConfigSpec describes PCI rebind configuration.
+message PCIDriverRebindConfigSpec {
+  string pciid = 1;
+  string target_driver = 2;
+}
+
+// PCIDriverRebindStatusSpec describes status of rebinded drivers.
+message PCIDriverRebindStatusSpec {
+  string pciid = 1;
+  string target_driver = 2;
+}
+
 // ProcessorSpec represents a single processor.
 message ProcessorSpec {
   string socket = 1;
