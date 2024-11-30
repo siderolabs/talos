@@ -2417,6 +2417,14 @@ jobs:
           WITH_CONFIG_INJECTION_METHOD: metal-iso
         run: |
           sudo -E make e2e-qemu
+      - name: e2e-iommu-pcidriverrebind
+        env:
+          GITHUB_STEP_NAME: ${{ github.job}}-e2e-iommu-pcidriverrebind
+          IMAGE_REGISTRY: registry.dev.siderolabs.io
+          SHORT_INTEGRATION_TEST: "yes"
+          WITH_IOMMU: "yes"
+        run: |
+          sudo -E make e2e-qemu
       - name: save artifacts
         if: always()
         uses: actions/upload-artifact@v4
