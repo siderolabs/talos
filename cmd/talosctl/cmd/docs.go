@@ -21,6 +21,7 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/config/encoder"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/block"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/network"
+	"github.com/siderolabs/talos/pkg/machinery/config/types/pci"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/runtime"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/runtime/extensions"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/security"
@@ -134,6 +135,10 @@ var docsCmd = &cobra.Command{
 				{
 					name:    "block",
 					fileDoc: block.GetFileDoc(),
+				},
+				{
+					name:    "pci",
+					fileDoc: pci.GetFileDoc(),
 				},
 			} {
 				path := filepath.Join(dir, pkg.name)

@@ -40,6 +40,8 @@ func TestRegisterResource(t *testing.T) {
 		&runtime.MetaKey{},
 		&runtime.MetaLoaded{},
 		&runtime.MountStatus{},
+		&runtime.PCIRebindConfig{},
+		&runtime.PCIRebindStatus{},
 		&runtime.PlatformMetadata{},
 		&runtime.SecurityState{},
 		&runtime.UniqueMachineToken{},

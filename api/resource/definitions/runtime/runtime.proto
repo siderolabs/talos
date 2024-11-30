@@ -104,6 +104,21 @@ message MountStatusSpec {
   repeated string encryption_providers = 6;
 }
 
+// PCIRebindConfigSpec describes PCI rebind configuration.
+message PCIRebindConfigSpec {
+  string name = 1;
+  string vendor_device_id = 2;
+  string target_driver = 3;
+}
+
+// PCIRebindStatusSpec describes status of rebinded drivers.
+message PCIRebindStatusSpec {
+  string name = 1;
+  string vendor_device_id = 2;
+  string host_driver = 3;
+  string target_driver = 4;
+}
+
 // PlatformMetadataSpec describes platform metadata properties.
 message PlatformMetadataSpec {
   string platform = 1;

@@ -353,6 +353,58 @@
       "additionalProperties": false,
       "type": "object"
     },
+    "pci.RebindConfigV1Alpha1": {
+      "properties": {
+        "apiVersion": {
+          "enum": [
+            "v1alpha1"
+          ],
+          "title": "apiVersion",
+          "description": "apiVersion is the API version of the resource.\n",
+          "markdownDescription": "apiVersion is the API version of the resource.",
+          "x-intellij-html-description": "\u003cp\u003eapiVersion is the API version of the resource.\u003c/p\u003e\n"
+        },
+        "kind": {
+          "enum": [
+            "PCIRebindConfig"
+          ],
+          "title": "kind",
+          "description": "kind is the kind of the resource.\n",
+          "markdownDescription": "kind is the kind of the resource.",
+          "x-intellij-html-description": "\u003cp\u003ekind is the kind of the resource.\u003c/p\u003e\n"
+        },
+        "name": {
+          "type": "string",
+          "title": "name",
+          "description": "Name of the config document.\n",
+          "markdownDescription": "Name of the config document.",
+          "x-intellij-html-description": "\u003cp\u003eName of the config document.\u003c/p\u003e\n"
+        },
+        "vendorDeviceID": {
+          "type": "string",
+          "title": "vendorDeviceID",
+          "description": "PCI device vendor and device ID.\n",
+          "markdownDescription": "PCI device vendor and device ID.",
+          "x-intellij-html-description": "\u003cp\u003ePCI device vendor and device ID.\u003c/p\u003e\n"
+        },
+        "targetDriver": {
+          "type": "string",
+          "title": "targetDriver",
+          "description": "Target driver to rebind the PCI device to.\n",
+          "markdownDescription": "Target driver to rebind the PCI device to.",
+          "x-intellij-html-description": "\u003cp\u003eTarget driver to rebind the PCI device to.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "apiVersion",
+        "kind",
+        "name",
+        "targetDriver",
+        "vendorDeviceID"
+      ]
+    },
     "runtime.EventSinkV1Alpha1": {
       "properties": {
         "apiVersion": {
@@ -3720,6 +3772,9 @@
     },
     {
       "$ref": "#/$defs/network.RuleConfigV1Alpha1"
+    },
+    {
+      "$ref": "#/$defs/pci.RebindConfigV1Alpha1"
     },
     {
       "$ref": "#/$defs/runtime.EventSinkV1Alpha1"

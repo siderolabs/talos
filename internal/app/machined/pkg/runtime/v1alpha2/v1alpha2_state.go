@@ -206,6 +206,8 @@ func NewState() (*State, error) {
 		&runtime.MetaKey{},
 		&runtime.MetaLoaded{},
 		&runtime.MountStatus{},
+		&runtime.PCIRebindConfig{},
+		&runtime.PCIRebindStatus{},
 		&runtime.PlatformMetadata{},
 		&runtime.SecurityState{},
 		&runtime.UniqueMachineToken{},

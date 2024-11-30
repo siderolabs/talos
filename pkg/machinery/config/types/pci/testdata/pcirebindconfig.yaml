@@ -1,0 +1,5 @@
+apiVersion: v1alpha1
+kind: PCIRebindConfig
+name: ixgbe
+vendorDeviceID: "0000:04:00.00"
+targetDriver: vfio-pci
