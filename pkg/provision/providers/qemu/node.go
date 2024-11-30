@@ -181,6 +181,7 @@ func (p *provisioner) createNode(state *vm.State, clusterReq provision.ClusterRe
 		IPXEBootFileName:  nodeReq.IPXEBootFilename,
 		APIPort:           apiPort,
 		WithDebugShell:    opts.WithDebugShell,
+		IOMMUEnabled:      opts.IOMMUEnabled,
 	}
 
 	if clusterReq.IPXEBootScript != "" {
@@ -217,7 +218,7 @@ func (p *provisioner) createNode(state *vm.State, clusterReq provision.ClusterRe
 		launchConfig.Hostname = nodeReq.Name
 	}
 
-	if !(nodeReq.PXEBooted || launchConfig.IPXEBootFileName != "") {
+	if !nodeReq.PXEBooted && launchConfig.IPXEBootFileName == "" {
 		launchConfig.KernelImagePath = strings.ReplaceAll(clusterReq.KernelPath, constants.ArchVariable, opts.TargetArch)
 		launchConfig.InitrdPath = strings.ReplaceAll(clusterReq.InitramfsPath, constants.ArchVariable, opts.TargetArch)
 		launchConfig.ISOPath = strings.ReplaceAll(clusterReq.ISOPath, constants.ArchVariable, opts.TargetArch)

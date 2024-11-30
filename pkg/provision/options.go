@@ -88,6 +88,15 @@ func WithDebugShell(enabled bool) Option {
 	}
 }
 
+// WithIOMMU enables or disables IOMMU.
+func WithIOMMU(enabled bool) Option {
+	return func(o *Options) error {
+		o.IOMMUEnabled = enabled
+
+		return nil
+	}
+}
+
 // WithExtraUEFISearchPaths configures additional search paths to look for UEFI firmware.
 func WithExtraUEFISearchPaths(extraUEFISearchPaths []string) Option {
 	return func(o *Options) error {
@@ -195,6 +204,8 @@ type Options struct {
 	TPM2Enabled bool
 	// Enable debug shell in the bootloader.
 	WithDebugShell bool
+	// Enable IOMMU for VMs and add a new PCI root controller and network interface.
+	IOMMUEnabled bool
 	// Configure additional search paths to look for UEFI firmware.
 	ExtraUEFISearchPaths []string
 

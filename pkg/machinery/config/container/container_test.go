@@ -18,6 +18,7 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/config/configloader"
 	"github.com/siderolabs/talos/pkg/machinery/config/container"
 	"github.com/siderolabs/talos/pkg/machinery/config/machine"
+	"github.com/siderolabs/talos/pkg/machinery/config/types/hardware"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/runtime/extensions"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/siderolink"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
@@ -49,7 +50,11 @@ func TestNew(t *testing.T) {
 		},
 	}
 
-	cfg, err := container.New(v1alpha1Cfg, sideroLinkCfg, extensionsCfg)
+	pciDriverRebindCfg := hardware.NewPCIDriverRebindConfigV1Alpha1()
+	pciDriverRebindCfg.MetaName = "0000:04:00.00"
+	pciDriverRebindCfg.PCITargetDriver = "vfio-pci"
+
+	cfg, err := container.New(v1alpha1Cfg, sideroLinkCfg, extensionsCfg, pciDriverRebindCfg)
 	require.NoError(t, err)
 
 	assert.False(t, cfg.Readonly())
@@ -58,8 +63,9 @@ func TestNew(t *testing.T) {
 	assert.Equal(t, "topsecret", cfg.Cluster().Secret())
 	assert.Equal(t, "https://siderolink.api/join?jointoken=secret&user=alice", cfg.SideroLink().APIUrl().String())
 	assert.Equal(t, "test-extension", cfg.ExtensionServiceConfigs()[0].Name())
+	assert.Equal(t, "0000:04:00.00", cfg.PCIDriverRebindConfig().PCIDriverRebindConfigs()[0].PCIID())
 	assert.Same(t, v1alpha1Cfg, cfg.RawV1Alpha1())
-	assert.Equal(t, []config.Document{v1alpha1Cfg, sideroLinkCfg, extensionsCfg}, cfg.Documents())
+	assert.Equal(t, []config.Document{v1alpha1Cfg, sideroLinkCfg, extensionsCfg, pciDriverRebindCfg}, cfg.Documents())
 
 	bytes, err := cfg.Bytes()
 	require.NoError(t, err)

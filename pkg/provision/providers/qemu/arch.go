@@ -237,12 +237,17 @@ func (arch Arch) TPMDeviceArgs(socketPath string) []string {
 }
 
 // KVMArgs returns arguments for qemu to enable KVM.
-func (arch Arch) KVMArgs(kvmEnabled bool) []string {
+func (arch Arch) KVMArgs(kvmEnabled bool, iommu bool) []string {
 	if !kvmEnabled {
 		return []string{"-machine", arch.QemuMachine()}
 	}
 
 	machineArg := arch.QemuMachine() + ",accel=kvm"
+
+	// ref: https://wiki.qemu.org/Features/VT-d
+	if iommu {
+		machineArg += ",kernel-irqchip=split"
+	}
 
 	switch arch {
 	case ArchAmd64:

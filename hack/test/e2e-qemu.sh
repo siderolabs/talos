@@ -209,6 +209,14 @@ case "${WITH_CONFIG_INJECTION_METHOD:-default}" in
     ;;
 esac
 
+case "${WITH_IOMMU:-false}" in
+  false)
+    ;;
+  *)
+    QEMU_FLAGS+=("--with-iommu")
+    ;;
+esac
+
 function create_cluster {
   build_registry_mirrors
 

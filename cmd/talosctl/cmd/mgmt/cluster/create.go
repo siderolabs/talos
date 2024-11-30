@@ -89,6 +89,7 @@ const (
 	firewallFlag                 = "with-firewall"
 	tpm2EnabledFlag              = "with-tpm2"
 	withDebugShellFlag           = "with-debug-shell"
+	withIOMMUFlag                = "with-iommu"
 
 	// The following flags are the gen options - the options that are only used in machine configuration (i.e., not during the qemu/docker provisioning).
 	// They are not applicable when no machine configuration is generated, hence mutually exclusive with the --input-dir flag.
@@ -193,6 +194,7 @@ var (
 	withSiderolinkAgent       agentFlag
 	withJSONLogs              bool
 	debugShellEnabled         bool
+	withIOMMU                 bool
 	configInjectionMethodFlag string
 	mountOpts                 opts.MountOpt
 )
@@ -480,6 +482,7 @@ func create(ctx context.Context) error {
 		provision.WithUEFI(uefiEnabled),
 		provision.WithTPM2(tpm2Enabled),
 		provision.WithDebugShell(debugShellEnabled),
+		provision.WithIOMMU(withIOMMU),
 		provision.WithExtraUEFISearchPaths(extraUEFISearchPaths),
 		provision.WithTargetArch(targetArch),
 		provision.WithSiderolinkAgent(withSiderolinkAgent.IsEnabled()),
@@ -1253,6 +1256,7 @@ func init() {
 	createCmd.Flags().BoolVar(&uefiEnabled, "with-uefi", true, "enable UEFI on x86_64 architecture")
 	createCmd.Flags().BoolVar(&tpm2Enabled, tpm2EnabledFlag, false, "enable TPM2 emulation support using swtpm")
 	createCmd.Flags().BoolVar(&debugShellEnabled, withDebugShellFlag, false, "drop talos into a maintenance shell on boot, this is for advanced debugging for developers only")
+	createCmd.Flags().BoolVar(&withIOMMU, withIOMMUFlag, false, "enable IOMMU support, this also add a new PCI root port and an interface attached to it (qemu only)")
 	createCmd.Flags().MarkHidden("with-debug-shell") //nolint:errcheck
 	createCmd.Flags().StringSliceVar(&extraUEFISearchPaths, "extra-uefi-search-paths", []string{}, "additional search paths for UEFI firmware (only applies when UEFI is enabled)")
 	createCmd.Flags().StringSliceVar(&registryMirrors, registryMirrorFlag, []string{}, "list of registry mirrors to use in format: <registry host>=<mirror URL>")

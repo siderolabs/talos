@@ -22,6 +22,12 @@ preface = """
 
 Talos is built with Go 1.23.4.
 """
+    [notes.driver-rebind]
+        title = "Driver Rebind"
+        description = """\
+Talos 1.10 now supports a new machine config document named `PCIDriverRebindConfig` that allows rebinding the driver of a PCI device to a different target driver.
+See the [documentation](https://www.talos.dev/v1.10/reference/configuration/hardware/pcidriverrebindconfig/) for more information.
+"""
 
     [notes.cgroupsv1]
         title = "cgroups v1"

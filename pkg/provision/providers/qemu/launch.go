@@ -60,6 +60,7 @@ type LaunchConfig struct {
 	BadRTC            bool
 	ArchitectureData  Arch
 	WithDebugShell    bool
+	IOMMUEnabled      bool
 
 	// Talos config
 	Config string
@@ -385,7 +386,7 @@ func launchVM(config *LaunchConfig) error {
 		}
 	}
 
-	args = append(args, config.ArchitectureData.KVMArgs(config.EnableKVM)...)
+	args = append(args, config.ArchitectureData.KVMArgs(config.EnableKVM, config.IOMMUEnabled)...)
 
 	pflashArgs := make([]string, 2*len(config.PFlashImages))
 	for i := range config.PFlashImages {
@@ -436,6 +437,16 @@ func launchVM(config *LaunchConfig) error {
 
 		args = append(args,
 			config.ArchitectureData.TPMDeviceArgs(tpm2SocketPath)...,
+		)
+	}
+
+	// ref: https://wiki.qemu.org/Features/VT-d
+	if config.IOMMUEnabled {
+		args = append(args,
+			"-device", "intel-iommu,intremap=on,device-iotlb=on",
+			"-device", "ioh3420,id=pcie.1,chassis=1",
+			"-device", "virtio-net-pci,bus=pcie.1,netdev=net1,disable-legacy=on,disable-modern=off,iommu_platform=on,ats=on",
+			"-netdev", "tap,id=net1,vhostforce=on,script=no,downscript=no",
 		)
 	}
 

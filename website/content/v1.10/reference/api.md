@@ -127,6 +127,8 @@ description: Talos gRPC API reference.
 - [resource/definitions/hardware/hardware.proto](#resource/definitions/hardware/hardware.proto)
     - [MemoryModuleSpec](#talos.resource.definitions.hardware.MemoryModuleSpec)
     - [PCIDeviceSpec](#talos.resource.definitions.hardware.PCIDeviceSpec)
+    - [PCIDriverRebindConfigSpec](#talos.resource.definitions.hardware.PCIDriverRebindConfigSpec)
+    - [PCIDriverRebindStatusSpec](#talos.resource.definitions.hardware.PCIDriverRebindStatusSpec)
     - [ProcessorSpec](#talos.resource.definitions.hardware.ProcessorSpec)
     - [SystemInformationSpec](#talos.resource.definitions.hardware.SystemInformationSpec)
   
@@ -2445,6 +2447,38 @@ PCIDeviceSpec represents a single processor.
 | subclass_id | [string](#string) |  |  |
 | vendor_id | [string](#string) |  |  |
 | product_id | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.hardware.PCIDriverRebindConfigSpec"></a>
+
+### PCIDriverRebindConfigSpec
+PCIDriverRebindConfigSpec describes PCI rebind configuration.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| pciid | [string](#string) |  |  |
+| target_driver | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.hardware.PCIDriverRebindStatusSpec"></a>
+
+### PCIDriverRebindStatusSpec
+PCIDriverRebindStatusSpec describes status of rebinded drivers.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| pciid | [string](#string) |  |  |
+| target_driver | [string](#string) |  |  |
 
 
 

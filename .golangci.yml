@@ -148,6 +148,7 @@ linters:
     - protogetter # too annoying
     - perfsprint
     - recvcheck # too annoying
+    - exportloopref # The linter 'exportloopref' is deprecated (since v1.60.2) due to: Since Go1.22 (loopvar) this linter is no longer relevant. Replaced by copyloopvar.
   disable-all: false
   fast: false
 
