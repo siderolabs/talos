@@ -1,6 +1,6 @@
 ---
 title: VirtualBox
-description: "Creating Talos Kubernetes cluster using VurtualBox VMs."
+description: "Creating Talos Kubernetes cluster using VirtualBox VMs."
 aliases:
   - ../../../local-platforms/virtualbox
 ---
