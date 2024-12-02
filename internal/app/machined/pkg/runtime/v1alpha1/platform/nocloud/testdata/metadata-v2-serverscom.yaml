@@ -1,0 +1,49 @@
+version: 2
+bonds:
+  aggi:
+    interfaces:
+    - int0
+    - int1
+    addresses:
+    - 10.26.98.92/29
+    parameters:
+      mode: 802.3ad
+      lacp-rate: slow
+      mii-monitor-interval: 100
+      up-delay: 200
+      down-delay: 200
+      transmit-hash-policy: layer3+4
+    routes:
+    - to: 10.0.0.0/8
+      via: 10.26.98.91
+    - to: 192.168.0.0/16
+      via: 10.26.98.91
+    - to: 188.42.208.0/21
+      via: 10.26.98.91
+  agge:
+    interfaces:
+    - ext0
+    - ext1
+    addresses:
+    - 188.42.48.188/29
+    parameters:
+      mode: 802.3ad
+      lacp-rate: slow
+      mii-monitor-interval: 100
+      up-delay: 200
+      down-delay: 200
+      transmit-hash-policy: layer3+4
+    gateway4: 188.42.48.187
+ethernets:
+  int0:
+    match:
+      macaddress: 68:05:ca:b8:f1:f8
+  int1:
+    match:
+      macaddress: 68:05:ca:b8:f1:f9
+  ext0:
+    match:
+      macaddress: 3c:ec:ef:e0:45:28
+  ext1:
+    match:
+      macaddress: 3c:ec:ef:e0:45:29
