@@ -37,6 +37,15 @@ const (
 	manifestsDir = "manifests"
 )
 
+// rewriteRegistry name back to workaround https://github.com/google/go-containerregistry/pull/69.
+func rewriteRegistry(registryName, origRef string) string {
+	if registryName == name.DefaultRegistry && !strings.HasPrefix(origRef, name.DefaultRegistry+"/") {
+		return "docker.io"
+	}
+
+	return registryName
+}
+
 // Generate generates a cache tarball from the given images.
 //
 //nolint:gocyclo,cyclop
@@ -65,9 +74,7 @@ func Generate(images []string, platform string, insecure bool, imageLayerCachePa
 		return err
 	}
 
-	nameOptions := []name.Option{
-		name.StrictValidation,
-	}
+	var nameOptions []name.Option
 
 	craneOpts := []crane.Option{
 		crane.WithAuthFromKeychain(
@@ -99,17 +106,17 @@ func Generate(images []string, platform string, insecure bool, imageLayerCachePa
 			return fmt.Errorf("parsing reference %q: %w", src, err)
 		}
 
-		referenceDir := filepath.Join(tmpDir, manifestsDir, ref.Context().RegistryStr(), ref.Context().RepositoryStr(), "reference")
-		digestDir := filepath.Join(tmpDir, manifestsDir, ref.Context().RegistryStr(), ref.Context().RepositoryStr(), "digest")
+		referenceDir := filepath.Join(tmpDir, manifestsDir, rewriteRegistry(ref.Context().RegistryStr(), src), ref.Context().RepositoryStr(), "reference")
+		digestDir := filepath.Join(tmpDir, manifestsDir, rewriteRegistry(ref.Context().RegistryStr(), src), ref.Context().RepositoryStr(), "digest")
 
-		// get the tag from the reference (if it's there)
-		var tag name.Tag
+		// if the reference was parsed as a tag, use it
+		tag, ok := ref.(name.Tag)
 
-		base, _, ok := strings.Cut(src, "@")
 		if !ok {
-			tag, _ = name.NewTag(src, nameOptions...) //nolint:errcheck
-		} else {
-			tag, _ = name.NewTag(base, nameOptions...) //nolint:errcheck
+			if base, _, ok := strings.Cut(src, "@"); ok {
+				// if the reference was a digest, but contained a tag, re-parse it
+				tag, _ = name.NewTag(base, nameOptions...) //nolint:errcheck
+			}
 		}
 
 		if err = os.MkdirAll(referenceDir, 0o755); err != nil {
@@ -121,11 +128,11 @@ func Generate(images []string, platform string, insecure bool, imageLayerCachePa
 		}
 
 		manifest, err := crane.Manifest(
-			src,
+			ref.String(),
 			craneOpts...,
 		)
 		if err != nil {
-			return fmt.Errorf("fetching manifest %q: %w", src, err)
+			return fmt.Errorf("fetching manifest %q: %w", ref.String(), err)
 		}
 
 		rmt, err := remote.Get(
@@ -133,7 +140,7 @@ func Generate(images []string, platform string, insecure bool, imageLayerCachePa
 			remoteOpts...,
 		)
 		if err != nil {
-			return fmt.Errorf("fetching image %q: %w", src, err)
+			return fmt.Errorf("fetching image %q: %w", ref.String(), err)
 		}
 
 		if tag.TagStr() != "" {

@@ -142,6 +142,12 @@ function dump_cluster_state {
 }
 
 function build_registry_mirrors {
+  if [[ "${REGISTRY_MIRROR_FLAGS:-yes}" == "no" ]]; then
+    REGISTRY_MIRROR_FLAGS=()
+
+    return
+  fi
+
   if [[ "${CI:-false}" == "true" ]]; then
     REGISTRY_MIRROR_FLAGS=()
 
@@ -151,9 +157,6 @@ function build_registry_mirrors {
 
       REGISTRY_MIRROR_FLAGS+=("--registry-mirror=${registry}=http://${addr}:5000")
     done
-  else
-    # use the value from the environment, if present
-    REGISTRY_MIRROR_FLAGS=("${REGISTRY_MIRROR_FLAGS:-}")
   fi
 }
 

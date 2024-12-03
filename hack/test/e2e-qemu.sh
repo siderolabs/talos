@@ -131,6 +131,14 @@ case "${WITH_CONFIG_PATCH:-false}" in
     ;;
 esac
 
+case "${WITH_ISO:-false}" in
+  false)
+    ;;
+  *)
+    QEMU_FLAGS+=("--iso-path=${ARTIFACTS}/metal-amd64.iso")
+    ;;
+esac
+
 case "${WITH_CONFIG_PATCH_WORKER:-false}" in
   false)
     ;;
