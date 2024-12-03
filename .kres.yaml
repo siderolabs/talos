@@ -72,6 +72,7 @@ spec:
     - integration-images
     - integration-reproducibility-test
     - integration-cloud-images
+    - integration-image-cache
     - integration-image-factory
     - integration-aws
     - integration-aws-nvidia-oss
@@ -1514,6 +1515,60 @@ spec:
             PLATFORM: linux/amd64,linux/arm64
             IMAGE_REGISTRY: registry.dev.siderolabs.io
         - name: cloud-images
+    - name: integration-image-cache
+      buildxOptions:
+        enabled: true
+      depends:
+        - default
+      runners:
+        - self-hosted
+        - talos
+      triggerLabels:
+        - integration/image-cache
+      steps:
+        - name: download-artifacts
+          conditions:
+            - not-on-schedule
+          artifactStep:
+            type: download
+            artifactName: talos-artifacts
+            artifactPath: _out
+        - name: ci-temp-release-tag
+          conditions:
+            - not-on-schedule
+        - name: uki-certs
+          conditions:
+            - only-on-schedule
+          environment:
+            PLATFORM: linux/amd64
+        - name: image-cache
+          command: cache-create
+          environment:
+            PLATFORM: linux/amd64,linux/arm64
+            IMAGE_REGISTRY: registry.dev.siderolabs.io
+            PUSH: true
+            MORE_IMAGES: "alpine;registry.k8s.io/conformance:v1.32.0-rc.1;registry.k8s.io/e2e-test-images/busybox:1.36.1-1;registry.k8s.io/e2e-test-images/agnhost:2.53;registry.k8s.io/e2e-test-images/httpd:2.4.38-4;registry.k8s.io/e2e-test-images/nonewprivs:1.3;registry.k8s.io/e2e-test-images/jessie-dnsutils:1.7;registry.k8s.io/e2e-test-images/nautilus:1.7;registry.k8s.io/e2e-test-images/sample-apiserver:1.29.2;registry.k8s.io/e2e-test-images/nginx:1.14-4;registry.k8s.io/etcd:3.5.16-0;registry.k8s.io/e2e-test-images/httpd:2.4.39-4"
+        - name: e2e-image-cache
+          command: e2e-qemu
+          withSudo: true
+          environment:
+            GITHUB_STEP_NAME: ${{ github.job}}-e2e-image-cache
+            IMAGE_REGISTRY: registry.dev.siderolabs.io
+            REGISTRY_MIRROR_FLAGS: no
+            SHORT_INTEGRATION_TEST: yes
+            VIA_MAINTENANCE_MODE: true
+            WITH_CONFIG_PATCH: '@hack/test/patches/image-cache.yaml'
+            WITH_ISO: true
+        - name: save-talos-logs
+          conditions:
+            - always
+          artifactStep:
+            type: upload
+            artifactName: talos-logs-integration-image-cache
+            disableExecutableListGeneration: true
+            artifactPath: /tmp/logs-*.tar.gz
+            additionalArtifacts:
+              - "/tmp/support-*.zip"
     - name: integration-image-factory
       buildxOptions:
         enabled: true

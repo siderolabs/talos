@@ -127,6 +127,7 @@ SHORT_INTEGRATION_TEST ?=
 CUSTOM_CNI_URL ?=
 INSTALLER_ARCH ?= all
 IMAGER_ARGS ?=
+MORE_IMAGES ?=
 
 CGO_ENABLED ?= 0
 GO_BUILDFLAGS ?=
@@ -462,6 +463,12 @@ uki-certs: talosctl ## Generate test certificates for SecureBoot/PCR Signing
 	@$(TALOSCTL_EXECUTABLE) gen secureboot uki
 	@$(TALOSCTL_EXECUTABLE) gen secureboot pcr
 	@$(TALOSCTL_EXECUTABLE) gen secureboot database
+
+.PHONY: cache-create
+cache-create: installer imager ## Generate image cache.
+	@( $(TALOSCTL_EXECUTABLE) images default | grep -v 'siderolabs/installer'; echo "$(REGISTRY_AND_USERNAME)/installer:$(IMAGE_TAG)"; echo "$(MORE_IMAGES)" | tr ';' '\n' ) | $(TALOSCTL_EXECUTABLE) images cache-create --image-cache-path=/tmp/cache.tar --images=- --force
+	@crane push /tmp/cache.tar $(REGISTRY_AND_USERNAME)/image-cache:$(IMAGE_TAG)
+	@$(MAKE) image-iso IMAGER_ARGS="--image-cache=$(REGISTRY_AND_USERNAME)/image-cache:$(IMAGE_TAG) --extra-kernel-arg='console=ttyS0'"
 
 # Code Quality
 

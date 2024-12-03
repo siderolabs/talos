@@ -1,0 +1,25 @@
+machine:
+  features:
+    imageCache:
+      localEnabled: true
+  registries:
+    mirrors:
+      "*":
+        skipFallback: true
+        endpoints:
+        - http://172.20.0.251:65000
+      k8s.gcr.io:
+        skipFallback: true
+        endpoints:
+        - http://172.20.0.251:65000
+      registry.k8s.io:
+        skipFallback: true
+        endpoints:
+        - http://172.20.0.251:65000
+---
+apiVersion: v1alpha1
+kind: VolumeConfig
+name: IMAGECACHE
+provisioning:
+  diskSelector:
+    match: 'system_disk'

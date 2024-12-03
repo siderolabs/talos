@@ -47,10 +47,19 @@ func (suite *ImageSuite) TestList() {
 	)
 }
 
+var imageCacheQuery = []string{"get", "imagecacheconfig", "--output", "jsonpath='{.spec.copyStatus}'"}
+
 // TestPull verifies pulling images to the CRI.
 func (suite *ImageSuite) TestPull() {
+	const image = "registry.k8s.io/kube-apiserver:v1.27.0"
+
 	node := suite.RandomDiscoveredNodeInternalIP()
-	image := "registry.k8s.io/kube-apiserver:v1.27.0"
+
+	if stdout, _ := suite.RunCLI(imageCacheQuery); strings.Contains(stdout, "ready") {
+		suite.T().Logf("skipping as the image cache is present")
+
+		return
+	}
 
 	suite.RunCLI([]string{"image", "pull", "--nodes", node, image},
 		base.StdoutEmpty(),
