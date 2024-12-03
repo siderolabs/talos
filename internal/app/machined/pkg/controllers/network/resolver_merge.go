@@ -16,6 +16,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
+	"github.com/siderolabs/gen/xslices"
 	"go.uber.org/zap"
 
 	"github.com/siderolabs/talos/pkg/machinery/resources/network"
@@ -141,31 +142,19 @@ func mergeDNSServers(dst *[]netip.Addr, src []netip.Addr) {
 		return
 	}
 
-	srcHasV4 := len(filterIPFamily(src, true)) > 0
-	srcHasV6 := len(filterIPFamily(src, false)) > 0
-	dstHasV4 := len(filterIPFamily(*dst, true)) > 0
-	dstHasV6 := len(filterIPFamily(*dst, false)) > 0
+	srcHasV4 := slices.IndexFunc(src, netip.Addr.Is4) != -1
+	srcHasV6 := slices.IndexFunc(src, netip.Addr.Is6) != -1
+	dstHasV4 := slices.IndexFunc(*dst, netip.Addr.Is4) != -1
+	dstHasV6 := slices.IndexFunc(*dst, netip.Addr.Is6) != -1
 
 	// if old set has IPv4, and new one doesn't, preserve IPv4
 	// and same vice versa for IPv6
 	switch {
 	case dstHasV4 && !srcHasV4:
-		*dst = slices.Concat(src, filterIPFamily(*dst, true))
+		*dst = slices.Concat(src, xslices.Filter(*dst, netip.Addr.Is4))
 	case dstHasV6 && !srcHasV6:
-		*dst = slices.Concat(src, filterIPFamily(*dst, false))
+		*dst = slices.Concat(src, xslices.Filter(*dst, netip.Addr.Is6))
 	default:
 		*dst = src
 	}
-}
-
-func filterIPFamily(src []netip.Addr, isIPv4 bool) []netip.Addr {
-	var dst []netip.Addr
-
-	for _, addr := range src {
-		if addr.Is4() == isIPv4 {
-			dst = append(dst, addr)
-		}
-	}
-
-	return dst
 }
