@@ -132,6 +132,7 @@ func (suite *UserDiskConfigSuite) TestReconcileUserDisk() {
 		ctest.AssertResource(suite, id, func(r *block.VolumeConfig, asrt *assert.Assertions) {
 			asrt.NotEmpty(r.TypedSpec().Provisioning)
 			asrt.Contains(r.Metadata().Labels().Raw(), block.UserDiskLabel)
+			asrt.GreaterOrEqual(r.TypedSpec().Provisioning.Wave, block.WaveLegacyUserDisks)
 		})
 	}
 
