@@ -42,6 +42,17 @@ message ExtensionServiceConfigStatusSpec {
   string spec_version = 1;
 }
 
+// FSScrubConfigSpec describes configuration of watchdog timer.
+message FSScrubConfigSpec {
+  repeated FilesystemScrubConfig filesystems = 1;
+}
+
+// FilesystemScrubConfig represents mirror configuration for a registry.
+message FilesystemScrubConfig {
+  string mountpoint = 1;
+  google.protobuf.Duration period = 2;
+}
+
 // KernelModuleSpecSpec describes Linux kernel module to load.
 message KernelModuleSpecSpec {
   string name = 1;
