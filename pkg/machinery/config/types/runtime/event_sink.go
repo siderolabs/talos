@@ -98,6 +98,11 @@ func (s *EventSinkV1Alpha1) WatchdogTimer() config.WatchdogTimerConfig {
 	return nil
 }
 
+// FilesystemScrub implements config.RuntimeConfig interface.
+func (s *EventSinkV1Alpha1) FilesystemScrub() []config.FilesystemScrubConfig {
+	return []config.FilesystemScrubConfig{}
+}
+
 // Validate implements config.Validator interface.
 func (s *EventSinkV1Alpha1) Validate(validation.RuntimeMode, ...validation.Option) ([]string, error) {
 	_, _, err := net.SplitHostPort(s.Endpoint)
