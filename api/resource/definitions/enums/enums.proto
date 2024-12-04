@@ -32,6 +32,14 @@ enum RuntimeFIPSState {
   FIPS_STATE_STRICT = 2;
 }
 
+// RuntimeTaskState describes the task state.
+enum RuntimeTaskState {
+  TASK_STATE_CREATED = 0;
+  TASK_STATE_RUNNING = 1;
+  TASK_STATE_STOPPING = 2;
+  TASK_STATE_COMPLETED = 3;
+}
+
 // MachineType represents a machine type.
 enum MachineType {
   // TypeUnknown represents undefined node type, when there is no machine configuration yet.

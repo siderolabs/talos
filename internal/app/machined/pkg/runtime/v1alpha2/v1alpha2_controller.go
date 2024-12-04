@@ -174,6 +174,11 @@ func (ctrl *Controller) Run(ctx context.Context, drainer *runtime.Drainer) error
 		&block.ZswapStatusController{
 			V1Alpha1Mode: ctrl.v1alpha1Runtime.State().Platform().Mode(),
 		},
+		&block.FSScrubConfigController{},
+		&block.FSScrubScheduleController{},
+		&block.FSScrubController{
+			Runtime: ctrl.v1alpha1Runtime,
+		},
 		&cluster.AffiliateMergeController{},
 		cluster.NewConfigController(),
 		&cluster.DiscoveryServiceController{},
@@ -460,6 +465,7 @@ func (ctrl *Controller) Run(ctx context.Context, drainer *runtime.Drainer) error
 		},
 		&runtimecontrollers.UniqueMachineTokenController{},
 		&runtimecontrollers.VersionController{},
+		&runtimecontrollers.TasksController{},
 		&runtimecontrollers.WatchdogTimerConfigController{},
 		&runtimecontrollers.WatchdogTimerController{},
 		&runtimecontrollers.OOMController{

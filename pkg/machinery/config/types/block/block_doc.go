@@ -532,6 +532,47 @@ func (VirtiofsMountSpec) Doc() *encoder.Doc {
 	return doc
 }
 
+func (FilesystemScrubV1Alpha1) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "FilesystemScrubConfig",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "FilesystemScrubConfig is a filesystem scrubbing config document." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "FilesystemScrubConfig is a filesystem scrubbing config document.",
+		Fields: []encoder.Doc{
+			{
+				Type:   "Meta",
+				Inline: true,
+			},
+			{
+				Name:        "name",
+				Type:        "string",
+				Note:        "",
+				Description: "Name of the config document.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Name of the config document." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "mountpoint",
+				Type:        "string",
+				Note:        "",
+				Description: "Mountpoint of the filesystem to be scrubbed.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Mountpoint of the filesystem to be scrubbed." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "period",
+				Type:        "Duration",
+				Note:        "",
+				Description: "Period for running the scrub task for this filesystem.\n\nThe first run is scheduled randomly within this period from the boot time, later ones follow after the full period.\n\nDefault value is 1 week, minimum value is 10 seconds.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Period for running the scrub task for this filesystem." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
+
+	doc.AddExample("", exampleFilesystemScrubV1Alpha1())
+
+	doc.Fields[2].AddExample("", "/var")
+
+	return doc
+}
+
 func (RawVolumeConfigV1Alpha1) Doc() *encoder.Doc {
 	doc := &encoder.Doc{
 		Type:        "RawVolumeConfig",
@@ -960,6 +1001,7 @@ func GetFileDoc() *encoder.FileDoc {
 			ExternalVolumeConfigV1Alpha1{}.Doc(),
 			ExternalMountSpec{}.Doc(),
 			VirtiofsMountSpec{}.Doc(),
+			FilesystemScrubV1Alpha1{}.Doc(),
 			RawVolumeConfigV1Alpha1{}.Doc(),
 			SwapVolumeConfigV1Alpha1{}.Doc(),
 			UserVolumeConfigV1Alpha1{}.Doc(),
