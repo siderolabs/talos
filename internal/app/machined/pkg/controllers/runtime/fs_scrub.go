@@ -83,7 +83,7 @@ func (ctrl *FSScrubController) Run(ctx context.Context, r controller.Runtime, lo
 	defer stopTimers()
 
 	ctrl.schedule = make(map[string]scrubSchedule)
-	ctrl.c = make(chan string)
+	ctrl.c = make(chan string, 5)
 
 	for {
 		select {
