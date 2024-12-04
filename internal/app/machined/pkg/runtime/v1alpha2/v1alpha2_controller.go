@@ -173,6 +173,10 @@ func (ctrl *Controller) Run(ctx context.Context, drainer *runtime.Drainer) error
 		&block.ZswapStatusController{
 			V1Alpha1Mode: ctrl.v1alpha1Runtime.State().Platform().Mode(),
 		},
+		&block.FSScrubConfigController{},
+		&block.FSScrubController{
+			Runtime: ctrl.v1alpha1Runtime,
+		},
 		&cluster.AffiliateMergeController{},
 		cluster.NewConfigController(),
 		&cluster.DiscoveryServiceController{},
