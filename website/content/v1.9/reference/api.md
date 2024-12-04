@@ -264,6 +264,8 @@ description: Talos gRPC API reference.
     - [MetaKeySpec](#talos.resource.definitions.runtime.MetaKeySpec)
     - [MetaLoadedSpec](#talos.resource.definitions.runtime.MetaLoadedSpec)
     - [MountStatusSpec](#talos.resource.definitions.runtime.MountStatusSpec)
+    - [PCIRebindConfigSpec](#talos.resource.definitions.runtime.PCIRebindConfigSpec)
+    - [PCIRebindStatusSpec](#talos.resource.definitions.runtime.PCIRebindStatusSpec)
     - [PlatformMetadataSpec](#talos.resource.definitions.runtime.PlatformMetadataSpec)
     - [SecurityStateSpec](#talos.resource.definitions.runtime.SecurityStateSpec)
     - [UniqueMachineTokenSpec](#talos.resource.definitions.runtime.UniqueMachineTokenSpec)
@@ -4818,6 +4820,41 @@ MountStatusSpec describes status of the defined sysctls.
 | options | [string](#string) | repeated |  |
 | encrypted | [bool](#bool) |  |  |
 | encryption_providers | [string](#string) | repeated |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.runtime.PCIRebindConfigSpec"></a>
+
+### PCIRebindConfigSpec
+PCIRebindConfigSpec describes PCI rebind configuration.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| name | [string](#string) |  |  |
+| vendor_device_id | [string](#string) |  |  |
+| target_driver | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.runtime.PCIRebindStatusSpec"></a>
+
+### PCIRebindStatusSpec
+PCIRebindStatusSpec describes status of rebinded drivers.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| name | [string](#string) |  |  |
+| vendor_device_id | [string](#string) |  |  |
+| host_driver | [string](#string) |  |  |
+| target_driver | [string](#string) |  |  |
 
 
 
