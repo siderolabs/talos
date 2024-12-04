@@ -70,15 +70,6 @@ type FilesystemScrubV1Alpha1 struct {
 	ScrubPeriod time.Duration `yaml:"period,omitempty"`
 }
 
-// DeepCopy implements DeepCopyable.
-func (r FilesystemScrubV1Alpha1) DeepCopy() FilesystemScrubV1Alpha1 {
-	return FilesystemScrubV1Alpha1{
-		Meta:         NewFilesystemScrubV1Alpha1().Meta,
-		FSMountpoint: r.FSMountpoint,
-		ScrubPeriod:  r.ScrubPeriod,
-	}
-}
-
 // NewFilesystemScrubV1Alpha1 creates a new eventsink config document.
 func NewFilesystemScrubV1Alpha1() *FilesystemScrubV1Alpha1 {
 	return &FilesystemScrubV1Alpha1{
@@ -98,7 +89,7 @@ func NewFilesystemScrubV1Alpha1() *FilesystemScrubV1Alpha1 {
 // }
 
 // Clone implements config.Document interface.
-func (s FilesystemScrubV1Alpha1) Clone() config.Document {
+func (s *FilesystemScrubV1Alpha1) Clone() config.Document {
 	return s.DeepCopy()
 }
 

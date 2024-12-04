@@ -105,6 +105,24 @@ func (ctrl *FSScrubController) Run(ctx context.Context, r controller.Runtime, lo
 }
 
 func (ctrl *FSScrubController) updateSchedule(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
+	cfg, err := safe.ReaderGetByID[*runtimeres.FSScrubConfig](ctx, r, runtimeres.FSScrubConfigID)
+	if err != nil {
+		if !state.IsNotFoundError(err) {
+			return fmt.Errorf("error getting scrub config: %w", err)
+		}
+	}
+
+	if cfg == nil {
+		logger.Warn("!!! scrub !!! no config")
+
+		for mountpoint, task := range ctrl.schedule {
+			task.timer.Stop()
+			delete(ctrl.schedule, mountpoint)
+		}
+
+		return nil
+	}
+
 	volumesStatus, err := safe.ReaderListAll[*block.VolumeStatus](ctx, r)
 	if err != nil && !state.IsNotFoundError(err) {
 		return fmt.Errorf("error getting volume status: %w", err)
@@ -135,9 +153,24 @@ func (ctrl *FSScrubController) updateSchedule(ctx context.Context, r controller.
 
 		mountpoint := volumeConfig.TypedSpec().Mount.TargetPath
 
-		if _, ok := ctrl.schedule[mountpoint]; !ok {
-			per := 10 * time.Second
-			firstTimeout := time.Duration(rand.Int64N(int64(per.Seconds()))) * time.Second
+		var period *time.Duration
+
+		for _, fs := range cfg.TypedSpec().Filesystems {
+			if fs.Mountpoint == mountpoint {
+				period = &fs.Period
+			}
+		}
+
+		if period == nil {
+			logger.Warn("!!! scrub !!! not in config", zap.String("mountpoint", mountpoint))
+
+			return nil
+		}
+
+		_, ok := ctrl.schedule[mountpoint]
+
+		if !ok {
+			firstTimeout := time.Duration(rand.Int64N(int64(period.Seconds()))) * time.Second
 			logger.Warn("!!! scrub !!! firstTimeout", zap.Duration("firstTimeout", firstTimeout))
 
 			// When scheduling the first scrub, we use a random time to avoid all scrubs running in a row.
@@ -149,11 +182,22 @@ func (ctrl *FSScrubController) updateSchedule(ctx context.Context, r controller.
 			}
 
 			ctrl.schedule[mountpoint] = scrubSchedule{
-				period: per,
+				period: *period,
 				timer:  time.AfterFunc(firstTimeout, cb),
 			}
 
-			logger.Warn("!!! scrub !!! scheduled", zap.String("path", mountpoint))
+			logger.Warn("!!! scrub !!! scheduled", zap.String("path", mountpoint), zap.Duration("period", *period))
+		} else {
+			// reschedule if period has changed
+			logger.Warn("!!! scrub !!! reschedule", zap.String("path", mountpoint), zap.Duration("period", *period))
+			if ctrl.schedule[mountpoint].period != *period {
+				ctrl.schedule[mountpoint].timer.Stop()
+				ctrl.schedule[mountpoint].timer.Reset(*period)
+				ctrl.schedule[mountpoint] = scrubSchedule{
+					period: *period,
+					timer:  ctrl.schedule[mountpoint].timer,
+				}
+			}
 		}
 	}
 
