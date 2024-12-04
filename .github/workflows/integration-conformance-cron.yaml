@@ -1,6 +1,6 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
 #
-# Generated on 2024-11-28T13:48:17Z by kres 232fe63.
+# Generated on 2024-12-04T11:25:05Z by kres 232fe63.
 
 name: integration-conformance-cron
 concurrency:
@@ -83,7 +83,6 @@ jobs:
           GITHUB_STEP_NAME: ${{ github.job}}-conformance-qemu
           IMAGE_REGISTRY: registry.dev.siderolabs.io
           QEMU_CPUS: "4"
-          QEMU_WORKERS: "2"
           TEST_MODE: fast-conformance
         run: |
           sudo -E make e2e-qemu

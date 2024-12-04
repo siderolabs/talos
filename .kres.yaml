@@ -385,7 +385,6 @@ spec:
           withSudo: true
           environment:
             GITHUB_STEP_NAME: ${{ github.job}}-conformance-qemu
-            QEMU_WORKERS: 2
             QEMU_CPUS: 4
             TEST_MODE: fast-conformance
             IMAGE_REGISTRY: registry.dev.siderolabs.io
@@ -1054,6 +1053,7 @@ spec:
           withSudo: true
           environment:
             GITHUB_STEP_NAME: ${{ github.job}}-e2e-extensions
+            QEMU_WORKERS: 1
             QEMU_MEMORY_WORKERS: 4096
             WITH_CONFIG_PATCH_WORKER: "@_out/installer-extensions-patch.yaml:@hack/test/patches/extensions.yaml:@hack/test/patches/dm-raid-module.yaml"
             QEMU_EXTRA_DISKS: 3
@@ -1113,7 +1113,6 @@ spec:
             WITH_SKIP_K8S_NODE_READINESS_CHECK: yes
             WITH_CUSTOM_CNI: cilium
             WITH_FIREWALL: accept
-            QEMU_WORKERS: 2
             WITH_CONFIG_PATCH: "@hack/test/patches/cilium-no-kubeproxy.yaml"
             IMAGE_REGISTRY: registry.dev.siderolabs.io
         - name: e2e-cilium-strict
@@ -1125,7 +1124,6 @@ spec:
             WITH_SKIP_K8S_NODE_READINESS_CHECK: yes
             WITH_CUSTOM_CNI: cilium
             WITH_FIREWALL: accept
-            QEMU_WORKERS: 2
             CILIUM_INSTALL_TYPE: strict
             WITH_CONFIG_PATCH: "@hack/test/patches/cilium-kubeproxy.yaml"
             IMAGE_REGISTRY: registry.dev.siderolabs.io
@@ -1139,7 +1137,6 @@ spec:
             WITH_CUSTOM_CNI: cilium
             WITH_FIREWALL: accept
             WITH_KUBESPAN: true
-            QEMU_WORKERS: 2
             CILIUM_INSTALL_TYPE: strict
             WITH_CONFIG_PATCH: "@hack/test/patches/cilium-kubeproxy.yaml"
             IMAGE_REGISTRY: registry.dev.siderolabs.io

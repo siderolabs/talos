@@ -1,6 +1,6 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
 #
-# Generated on 2024-11-28T14:18:12Z by kres 232fe63.
+# Generated on 2024-12-04T12:34:25Z by kres 232fe63.
 
 name: default
 concurrency:
@@ -1014,7 +1014,6 @@ jobs:
         env:
           GITHUB_STEP_NAME: ${{ github.job}}-e2e-cilium
           IMAGE_REGISTRY: registry.dev.siderolabs.io
-          QEMU_WORKERS: "2"
           SHORT_INTEGRATION_TEST: "yes"
           WITH_CONFIG_PATCH: '@hack/test/patches/cilium-no-kubeproxy.yaml'
           WITH_CUSTOM_CNI: cilium
@@ -1027,7 +1026,6 @@ jobs:
           CILIUM_INSTALL_TYPE: strict
           GITHUB_STEP_NAME: ${{ github.job}}-e2e-cilium-strict
           IMAGE_REGISTRY: registry.dev.siderolabs.io
-          QEMU_WORKERS: "2"
           SHORT_INTEGRATION_TEST: "yes"
           WITH_CONFIG_PATCH: '@hack/test/patches/cilium-kubeproxy.yaml'
           WITH_CUSTOM_CNI: cilium
@@ -1040,7 +1038,6 @@ jobs:
           CILIUM_INSTALL_TYPE: strict
           GITHUB_STEP_NAME: ${{ github.job}}-e2e-cilium-strict-kubespan
           IMAGE_REGISTRY: registry.dev.siderolabs.io
-          QEMU_WORKERS: "2"
           SHORT_INTEGRATION_TEST: "yes"
           WITH_CONFIG_PATCH: '@hack/test/patches/cilium-kubeproxy.yaml'
           WITH_CUSTOM_CNI: cilium
@@ -1228,7 +1225,6 @@ jobs:
           GITHUB_STEP_NAME: ${{ github.job}}-conformance-qemu
           IMAGE_REGISTRY: registry.dev.siderolabs.io
           QEMU_CPUS: "4"
-          QEMU_WORKERS: "2"
           TEST_MODE: fast-conformance
         run: |
           sudo -E make e2e-qemu
@@ -1469,6 +1465,7 @@ jobs:
           IMAGE_REGISTRY: registry.dev.siderolabs.io
           QEMU_EXTRA_DISKS: "3"
           QEMU_MEMORY_WORKERS: "4096"
+          QEMU_WORKERS: "1"
           SHORT_INTEGRATION_TEST: "yes"
           WITH_CONFIG_PATCH_WORKER: '@_out/installer-extensions-patch.yaml:@hack/test/patches/extensions.yaml:@hack/test/patches/dm-raid-module.yaml'
         run: |
