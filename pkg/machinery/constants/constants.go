@@ -1279,6 +1279,38 @@ var DefaultDroppedCapabilities = map[string]struct{}{
 	"cap_sys_module": {},
 }
 
+// XFSScrubDroppedCapabilities is the set of capabilities to drop for xfs_scrub.
+// All but cap_sys_admin cap_fowner cap_dac_override cap_dac_read_search cap_sys_rawio.
+var XFSScrubDroppedCapabilities = map[string]struct{}{
+	"cap_audit_control":    {},
+	"cap_audit_write":      {},
+	"cap_chown":            {},
+	"cap_fsetid":           {},
+	"cap_ipc_lock":         {},
+	"cap_ipc_owner":        {},
+	"cap_kill":             {},
+	"cap_lease":            {},
+	"cap_linux_immutable":  {},
+	"cap_mknod":            {},
+	"cap_net_admin":        {},
+	"cap_net_bind_service": {},
+	"cap_net_broadcast":    {},
+	"cap_net_raw":          {},
+	"cap_setfcap":          {},
+	"cap_setgid":           {},
+	"cap_setpcap":          {},
+	"cap_setuid":           {},
+	"cap_sys_boot":         {},
+	"cap_sys_chroot":       {},
+	"cap_sys_module":       {},
+	"cap_sys_nice":         {},
+	"cap_sys_pacct":        {},
+	"cap_sys_ptrace":       {},
+	"cap_sys_resource":     {},
+	"cap_sys_time":         {},
+	"cap_sys_tty_config":   {},
+}
+
 // UdevdDroppedCapabilities is the set of capabilities to drop for udevd.
 var UdevdDroppedCapabilities = map[string]struct{}{
 	"cap_sys_boot": {},
