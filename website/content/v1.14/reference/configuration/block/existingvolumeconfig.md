@@ -35,6 +35,7 @@ discovery:
 |`discovery` |<a href="#ExistingVolumeConfig.discovery">VolumeDiscoverySpec</a> |The discovery describes how to find a volume.  | |
 |`mount` |<a href="#ExistingVolumeConfig.mount">ExistingMountSpec</a> |The mount describes additional mount options.  | |
 |`trim` |<a href="#ExistingVolumeConfig.trim">TrimConfig</a> |The trim describes the per-volume filesystem trim (fstrim) configuration.  | |
+|`scrub` |<a href="#ExistingVolumeConfig.scrub">ScrubConfig</a> |The scrub describes the per-volume filesystem scrub configuration.  | |
 
 
 
@@ -107,6 +108,26 @@ It overrides the global FilesystemTrimConfig for the volume.
 |-------|------|-------------|----------|
 |`enabled` |bool |Enable or disable trimming for this volume.<br><br>If not set, trimming is enabled when the global FilesystemTrimConfig is present.  | |
 |`interval` |Duration |The interval at which the volume is trimmed, overriding the global trim interval.  | |
+
+
+
+
+
+
+## scrub {#ExistingVolumeConfig.scrub}
+
+ScrubConfig describes per-volume filesystem scrub configuration.
+
+It overrides the global FilesystemScrubConfig for the volume.
+
+
+
+
+
+| Field | Type | Description | Value(s) |
+|-------|------|-------------|----------|
+|`enabled` |bool |Enable or disable scrubbing for this volume.<br><br>If not set, scrubbing is enabled by default.  | |
+|`interval` |Duration |The interval at which the volume is scrubbed, overriding the global scrub interval.  | |
 
 
 

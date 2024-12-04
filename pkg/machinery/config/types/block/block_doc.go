@@ -327,6 +327,13 @@ func (ExistingVolumeConfigV1Alpha1) Doc() *encoder.Doc {
 				Description: "The trim describes the per-volume filesystem trim (fstrim) configuration.",
 				Comments:    [3]string{"" /* encoder.HeadComment */, "The trim describes the per-volume filesystem trim (fstrim) configuration." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
+			{
+				Name:        "scrub",
+				Type:        "ScrubConfig",
+				Note:        "",
+				Description: "The scrub describes the per-volume filesystem scrub configuration.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "The scrub describes the per-volume filesystem scrub configuration." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
 		},
 	}
 
@@ -565,6 +572,38 @@ func (FilesystemTrimConfigV1Alpha1) Doc() *encoder.Doc {
 	return doc
 }
 
+func (FilesystemScrubConfigV1Alpha1) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "FilesystemScrubConfig",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "FilesystemScrubConfig is a filesystem scrub configuration document." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "FilesystemScrubConfig is a filesystem scrub configuration document.\nFilesystem scrub periodically checks mounted filesystems which support online scrubbing\n(currently XFS, via `xfs_scrub`) for metadata errors.\n\nScrubbing is enabled by default with a interval of one week; this document adjusts the default\ninterval or disables scrubbing globally. Individual volumes can override the global settings\nvia the `scrub` section of the volume configuration.\n\nEach volume is scrubbed at a stable, hash-derived time within the interval, which is different\nfor each volume and each node, so that scrubs are spread out over time.\n",
+		Fields: []encoder.Doc{
+			{
+				Type:   "Meta",
+				Inline: true,
+			},
+			{
+				Name:        "enabled",
+				Type:        "bool",
+				Note:        "",
+				Description: "Enable or disable periodic filesystem scrubbing.\n\nIf not set, scrubbing is enabled by default.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Enable or disable periodic filesystem scrubbing." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "interval",
+				Type:        "Duration",
+				Note:        "",
+				Description: "The interval at which the filesystems are scrubbed.\n\nDefault value is 1 week, minimum value is 10 seconds.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "The interval at which the filesystems are scrubbed." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
+
+	doc.AddExample("", exampleFilesystemScrubConfigV1Alpha1())
+
+	return doc
+}
+
 func (RawVolumeConfigV1Alpha1) Doc() *encoder.Doc {
 	doc := &encoder.Doc{
 		Type:        "RawVolumeConfig",
@@ -600,6 +639,46 @@ func (RawVolumeConfigV1Alpha1) Doc() *encoder.Doc {
 	}
 
 	doc.AddExample("", exampleRawVolumeConfigV1Alpha1())
+
+	return doc
+}
+
+func (ScrubConfig) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "ScrubConfig",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "ScrubConfig describes per-volume filesystem scrub configuration." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "ScrubConfig describes per-volume filesystem scrub configuration.\n\nIt overrides the global FilesystemScrubConfig for the volume.\n",
+		AppearsIn: []encoder.Appearance{
+			{
+				TypeName:  "ExistingVolumeConfigV1Alpha1",
+				FieldName: "scrub",
+			},
+			{
+				TypeName:  "UserVolumeConfigV1Alpha1",
+				FieldName: "scrub",
+			},
+			{
+				TypeName:  "VolumeConfigV1Alpha1",
+				FieldName: "scrub",
+			},
+		},
+		Fields: []encoder.Doc{
+			{
+				Name:        "enabled",
+				Type:        "bool",
+				Note:        "",
+				Description: "Enable or disable scrubbing for this volume.\n\nIf not set, scrubbing is enabled by default.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Enable or disable scrubbing for this volume." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "interval",
+				Type:        "Duration",
+				Note:        "",
+				Description: "The interval at which the volume is scrubbed, overriding the global scrub interval.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "The interval at which the volume is scrubbed, overriding the global scrub interval." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
 
 	return doc
 }
@@ -747,6 +826,13 @@ func (UserVolumeConfigV1Alpha1) Doc() *encoder.Doc {
 				Description: "The trim describes the per-volume filesystem trim (fstrim) configuration.",
 				Comments:    [3]string{"" /* encoder.HeadComment */, "The trim describes the per-volume filesystem trim (fstrim) configuration." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
+			{
+				Name:        "scrub",
+				Type:        "ScrubConfig",
+				Note:        "",
+				Description: "The scrub describes the per-volume filesystem scrub configuration.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "The scrub describes the per-volume filesystem scrub configuration." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
 		},
 	}
 
@@ -872,6 +958,13 @@ func (VolumeConfigV1Alpha1) Doc() *encoder.Doc {
 				Note:        "",
 				Description: "The trim describes the per-volume filesystem trim (fstrim) configuration.",
 				Comments:    [3]string{"" /* encoder.HeadComment */, "The trim describes the per-volume filesystem trim (fstrim) configuration." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "scrub",
+				Type:        "ScrubConfig",
+				Note:        "",
+				Description: "The scrub describes the per-volume filesystem scrub configuration.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "The scrub describes the per-volume filesystem scrub configuration." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
 		},
 	}
@@ -1056,7 +1149,9 @@ func GetFileDoc() *encoder.FileDoc {
 			ExternalMountSpec{}.Doc(),
 			VirtiofsMountSpec{}.Doc(),
 			FilesystemTrimConfigV1Alpha1{}.Doc(),
+			FilesystemScrubConfigV1Alpha1{}.Doc(),
 			RawVolumeConfigV1Alpha1{}.Doc(),
+			ScrubConfig{}.Doc(),
 			SwapVolumeConfigV1Alpha1{}.Doc(),
 			TrimConfig{}.Doc(),
 			UserVolumeConfigV1Alpha1{}.Doc(),

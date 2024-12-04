@@ -74,8 +74,8 @@ type Options struct {
 	OverrideSeccompProfile func(*specs.LinuxSeccomp)
 	// DroppedCapabilities is the list of capabilities to drop.
 	DroppedCapabilities []string
-	// AllowedCapabilities is the list of capabilities to run with, dropping all other
-	// capabilities (additive model, including capabilities introduced by future kernels).
+	// AllowedCapabilities is the list of capabilities to run with,
+	// dropping all other capabilities.
 	//
 	// Mutually exclusive with DroppedCapabilities.
 	AllowedCapabilities []string

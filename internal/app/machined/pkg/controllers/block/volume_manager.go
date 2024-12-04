@@ -359,10 +359,12 @@ func (ctrl *VolumeManagerController) Run(ctx context.Context, r controller.Runti
 				volumeStatuses[vc.Metadata().ID()] = volumeStatus
 			}
 
-			// propagate resolved trim configuration and the encryption discard setting to the status,
-			// so consumers (e.g. the trim schedule controller) don't need to read the volume config.
+			// propagate resolved trim/scrub configuration and the encryption discard setting to the status,
+			// so consumers (e.g. the trim/scrub schedule controllers) don't need to read the volume config.
 			volumeStatus.TypedSpec().TrimEnabled = vc.TypedSpec().TrimEnabled
 			volumeStatus.TypedSpec().TrimInterval = vc.TypedSpec().TrimInterval
+			volumeStatus.TypedSpec().ScrubEnabled = vc.TypedSpec().ScrubEnabled
+			volumeStatus.TypedSpec().ScrubInterval = vc.TypedSpec().ScrubInterval
 			volumeStatus.TypedSpec().EncryptionAllowDiscards = vc.TypedSpec().Encryption.AllowDiscards
 
 			if tearingDown && volumeStatus.Metadata().Phase() != resource.PhaseTearingDown {

@@ -125,7 +125,7 @@ func dropCaps(droppedCapabilities []string, launcher *cap.Launcher) error {
 
 // keepCaps only keeps the allowed capabilities, dropping all others
 // This may break workloads with newer kernel, in case a capability is
-// seaprated into many and new ones need to be allowed
+// separated into many and new ones need to be allowed.
 func keepCaps(allowedCapabilities []string, launcher *cap.Launcher) error {
 	allowed := make(map[cap.Value]struct{}, len(allowedCapabilities))
 
@@ -208,7 +208,7 @@ func beforeExecCallback(pa *syscall.ProcAttr, data any) error {
 	return nil
 }
 
-//nolint:gocyclo
+//nolint:gocyclo,cyclop
 func (p *processRunner) build(extraLogWriter io.Writer) (commandWrapper, error) {
 	wrapper := commandWrapper{}
 

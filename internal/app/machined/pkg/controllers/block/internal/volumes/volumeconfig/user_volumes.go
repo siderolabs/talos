@@ -91,6 +91,7 @@ func UserVolumeTransformer(c configconfig.Config) ([]VolumeResource, error) {
 					ProjectQuotaSupport: userVolumeConfig.Filesystem().ProjectQuotaSupport(),
 				}).
 				WithTrim(c, userVolumeConfig).
+				WithScrub(c, userVolumeConfig).
 				WithConvertEncryptionConfiguration(userVolumeConfig.Encryption()).
 				WriterFunc()
 
@@ -126,6 +127,7 @@ func UserVolumeTransformer(c configconfig.Config) ([]VolumeResource, error) {
 					ProjectQuotaSupport: userVolumeConfig.Filesystem().ProjectQuotaSupport(),
 				}).
 				WithTrim(c, userVolumeConfig).
+				WithScrub(c, userVolumeConfig).
 				WithConvertEncryptionConfiguration(userVolumeConfig.Encryption()).
 				WriterFunc()
 
@@ -210,6 +212,7 @@ func ExistingVolumeTransformer(c configconfig.Config) ([]VolumeResource, error) 
 					GID:          0,
 				}).
 				WithTrim(c, existingVolumeConfig).
+				WithScrub(c, existingVolumeConfig).
 				WriterFunc(),
 			MountTransformFunc: HandleExistingVolumeMountRequest(existingVolumeConfig),
 		})

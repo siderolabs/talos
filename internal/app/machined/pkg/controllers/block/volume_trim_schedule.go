@@ -109,6 +109,7 @@ func (ctrl *VolumeTrimScheduleController) Run(ctx context.Context, r controller.
 
 			var earliestNext time.Time
 
+			//nolint:dupl
 			for volumeStatus := range volumeStatuses.All() {
 				if !trimEligible(volumeStatus.TypedSpec()) {
 					continue
