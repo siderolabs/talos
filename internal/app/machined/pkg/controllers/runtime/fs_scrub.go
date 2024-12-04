@@ -15,6 +15,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/state"
 	"go.uber.org/zap"
 
+	"github.com/siderolabs/gen/optional"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system/events"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system/runner"
@@ -22,6 +23,7 @@ import (
 	"github.com/siderolabs/talos/internal/pkg/environment"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/resources/block"
+	runtimeres "github.com/siderolabs/talos/pkg/machinery/resources/runtime"
 )
 
 type scrubSchedule struct {
@@ -45,6 +47,11 @@ func (ctrl *FSScrubController) Name() string {
 // Inputs implements controller.Controller interface.
 func (ctrl *FSScrubController) Inputs() []controller.Input {
 	return []controller.Input{
+		{
+			Namespace: runtimeres.NamespaceName,
+			Type:      runtimeres.FSScrubConfigType,
+			ID:        optional.Some(runtimeres.FSScrubConfigID),
+		},
 		{
 			Namespace: block.NamespaceName,
 			Type:      block.VolumeStatusType,
