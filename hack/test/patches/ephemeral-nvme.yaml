@@ -28,3 +28,9 @@ apiVersion: v1alpha1
 kind: ZswapConfig
 maxPoolPercent: 25
 shrinkerEnabled: true
+---
+apiVersion: v1alpha1
+kind: VolumeConfig
+name: EPHEMERAL
+scrub:
+  interval: 120s

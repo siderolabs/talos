@@ -176,7 +176,7 @@ func beforeExecCallback(pa *syscall.ProcAttr, data any) error {
 	return nil
 }
 
-//nolint:gocyclo
+//nolint:gocyclo,cyclop
 func (p *processRunner) build(extraLogWriter io.Writer) (commandWrapper, error) {
 	wrapper := commandWrapper{}
 

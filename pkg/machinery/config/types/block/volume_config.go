@@ -89,6 +89,9 @@ type VolumeConfigV1Alpha1 struct {
 	//   description: |
 	//     The trim describes the per-volume filesystem trim (fstrim) configuration.
 	TrimSpec *TrimConfig `yaml:"trim,omitempty"`
+	//   description: |
+	//     The scrub describes the per-volume filesystem scrub configuration.
+	ScrubSpec *ScrubConfig `yaml:"scrub,omitempty"`
 }
 
 // SystemVolumeFilesystemSpec describes how the system volume is formatted.
@@ -265,6 +268,10 @@ func (s *VolumeConfigV1Alpha1) Validate(validation.RuntimeMode, ...validation.Op
 		validationErrors = errors.Join(validationErrors, err)
 	}
 
+	if err := s.ScrubSpec.Validate(); err != nil {
+		validationErrors = errors.Join(validationErrors, err)
+	}
+
 	return warnings, validationErrors
 }
 
@@ -407,6 +414,15 @@ func (s *VolumeConfigV1Alpha1) Trim() config.VolumeTrimConfig {
 	}
 
 	return s.TrimSpec
+}
+
+// Scrub implements config.VolumeConfig interface.
+func (s *VolumeConfigV1Alpha1) Scrub() config.VolumeScrubConfig {
+	if s.ScrubSpec == nil {
+		return nil
+	}
+
+	return s.ScrubSpec
 }
 
 // Validate the provisioning spec.

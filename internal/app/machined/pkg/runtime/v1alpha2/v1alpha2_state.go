@@ -118,6 +118,8 @@ func NewState() (*State, error) {
 		&block.VolumeStatus{},
 		&block.VolumeTrimSchedule{},
 		&block.ZswapStatus{},
+		&block.FSScrubSchedule{},
+		&block.FSScrubStatus{},
 		&cluster.Affiliate{},
 		&cluster.Config{},
 		&cluster.Identity{},

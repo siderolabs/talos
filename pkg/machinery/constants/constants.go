@@ -1479,6 +1479,12 @@ const (
 
 	// Redacted is the replacement for sensitive values.
 	Redacted = "REDACTED"
+
+	// DefaultFilesystemScrubInterval is the default interval for unspecified, but enabled FS scrub configs.
+	DefaultFilesystemScrubInterval = 7 * 24 * time.Hour
+
+	// FilesystemScrubPriority is the priority value for running FS scrubbing processes.
+	FilesystemScrubPriority = 19
 )
 
 // names of variable that can be substituted in the talos.config kernel parameter.
@@ -1509,6 +1515,13 @@ var Overlays = []SELinuxLabeledPath{
 var DefaultDroppedCapabilities = map[string]struct{}{
 	"cap_sys_boot":   {},
 	"cap_sys_module": {},
+}
+
+// XFSScrubCapabilities is the set of capabilities xfs_scrub runs with.
+var XFSScrubCapabilities = []string{
+	// No separate capability, only available within cap_sys_admin:
+	// https://github.com/torvalds/linux/blob/7d0a66e4bb9081d75c82ec4957c50034cb0ea449/fs/xfs/scrub/scrub.c#L808-L809
+	"cap_sys_admin",
 }
 
 // UdevdDroppedCapabilities is the set of capabilities to drop for udevd.

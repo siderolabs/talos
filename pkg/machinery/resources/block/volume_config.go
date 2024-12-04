@@ -54,6 +54,11 @@ type VolumeConfigSpec struct {
 	TrimEnabled bool `yaml:"trimEnabled,omitempty" protobuf:"8"`
 	// TrimInterval is the resolved interval at which the volume should be trimmed.
 	TrimInterval time.Duration `yaml:"trimInterval,omitempty" protobuf:"9"`
+
+	// ScrubEnabled indicates whether the volume filesystem should be scrubbed on a schedule.
+	ScrubEnabled bool `yaml:"scrubEnabled,omitempty" protobuf:"10"`
+	// ScrubInterval is the resolved period at which the volume filesystem should be scrubbed.
+	ScrubInterval time.Duration `yaml:"scrubInterval,omitempty" protobuf:"11"`
 }
 
 // Wave constants.

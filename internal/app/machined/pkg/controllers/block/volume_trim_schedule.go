@@ -109,6 +109,7 @@ func (ctrl *VolumeTrimScheduleController) Run(ctx context.Context, r controller.
 
 			var earliestNext time.Time
 
+			//nolint:dupl
 			for volumeStatus := range volumeStatuses.All() {
 				if !trimEligible(volumeStatus.TypedSpec()) {
 					continue
@@ -119,7 +120,7 @@ func (ctrl *VolumeTrimScheduleController) Run(ctx context.Context, r controller.
 				filesystem := volumeStatus.TypedSpec().Filesystem
 
 				// salt the schedule with the node ID so different nodes trim at different times.
-				nextTrim := block.NextTrimTime(nodeID+"/"+volumeID, interval, now)
+				nextTrim := block.NextScheduledTime(nodeID+"/"+volumeID, interval, now)
 
 				if earliestNext.IsZero() || nextTrim.Before(earliestNext) {
 					earliestNext = nextTrim

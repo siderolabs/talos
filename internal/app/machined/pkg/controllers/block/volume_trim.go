@@ -147,8 +147,8 @@ func (ctrl *VolumeTrimController) Run(ctx context.Context, r controller.Runtime,
 			// runner does not need to recompute the (node-salted) schedule hash itself.
 			anchor := schedule.TypedSpec().NextTrim
 
-			currentSlot := block.TrimSlotBefore(anchor, interval, now)
-			nextSlot := block.TrimSlotAfter(anchor, interval, now)
+			currentSlot := block.ScheduleSlotBefore(anchor, interval, now)
+			nextSlot := block.ScheduleSlotAfter(anchor, interval, now)
 
 			if earliestNext.IsZero() || nextSlot.Before(earliestNext) {
 				earliestNext = nextSlot

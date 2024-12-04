@@ -122,6 +122,7 @@ func (suite *VolumeTrimScheduleSuite) TestEncryptedAllowDiscards() {
 	ctest.AssertNoResource[*block.VolumeTrimSchedule](suite, "encrypted-nodiscards")
 }
 
+//nolint:dupl
 func (suite *VolumeTrimScheduleSuite) TestCleanup() {
 	suite.createIdentity()
 	suite.createVolumeStatus(constants.EphemeralPartitionLabel, nil)

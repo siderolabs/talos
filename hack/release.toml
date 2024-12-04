@@ -29,6 +29,16 @@ CoreDNS: 1.14.6
 Talos is built with Go 1.26.5.
 """
 
+    [notes.xfsscrub]
+        title = "XFS scrub"
+        description = """\
+Talos now supports automatically running background online filesystem maintenance tasks. Currently,
+only XFS using xfs_scrub tool is supported.
+
+This behavior can be enabled globally using a FilesystemScrubConfig document, or on per-volume
+basis using a field in corresponding VolumeConfig documents.
+"""
+
     [notes.xfsallocationgroups]
         title = "XFS Allocation Group Geometry"
         description = """\
