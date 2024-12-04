@@ -7,6 +7,7 @@ package runtime
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/safe"
@@ -51,13 +52,27 @@ func (ctrl *FSScrubConfigController) Outputs() []controller.Output {
 // Run implements controller.Controller interface.
 func (ctrl *FSScrubConfigController) Run(ctx context.Context, r controller.Runtime, _ *zap.Logger) (err error) {
 	for {
+		var filesystems []runtime.FilesystemScrubConfig
+
 		select {
 		case <-ctx.Done():
 			return nil
+		case <-time.After(60 * time.Second):
+			filesystems = append(filesystems, runtime.FilesystemScrubConfig{
+				Mountpoint: "/var",
+				Period:     12 * time.Second,
+			})
+			filesystems = append(filesystems, runtime.FilesystemScrubConfig{
+				Mountpoint: "/system/state",
+				Period:     10 * time.Second,
+			})
+		case <-time.After(120 * time.Second):
+			filesystems = append(filesystems, runtime.FilesystemScrubConfig{
+				Mountpoint: "/var",
+				Period:     16 * time.Second,
+			})
 		case <-r.EventCh():
 		}
-
-		var filesystems []runtime.FilesystemScrubConfig
 
 		cfg, err := safe.ReaderGetByID[*config.MachineConfig](ctx, r, config.V1Alpha1ID)
 		if err != nil && !state.IsNotFoundError(err) {
