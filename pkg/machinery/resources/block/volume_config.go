@@ -45,8 +45,9 @@ type VolumeConfigSpec struct {
 
 // Wave constants.
 const (
-	WaveSystemDisk = -1
-	WaveUserDisks  = 0
+	WaveSystemDisk      = -1
+	WaveUserDisks       = 0
+	WaveLegacyUserDisks = 1000000 // legacy user disks rely on specific order of provisioning
 )
 
 // ProvisioningSpec is the spec for volume provisioning.
