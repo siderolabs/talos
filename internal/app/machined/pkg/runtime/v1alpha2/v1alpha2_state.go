@@ -196,6 +196,7 @@ func NewState() (*State, error) {
 		&runtime.ExtensionServiceConfigStatus{},
 		&runtime.ExtensionStatus{},
 		&runtime.FSScrubConfig{},
+		&runtime.FSScrubStatus{},
 		&runtime.KernelModuleSpec{},
 		&runtime.KernelParamSpec{},
 		&runtime.KernelParamDefaultSpec{},
