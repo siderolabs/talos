@@ -1278,7 +1278,7 @@ var DefaultDroppedCapabilities = map[string]struct{}{
 }
 
 // XFSScrubDroppedCapabilities is the set of capabilities to drop for xfs_scrub.
-// All but cap_sys_admin cap_fowner cap_dac_override cap_dac_read_search cap_sys_rawio
+// All but cap_sys_admin cap_fowner cap_dac_override cap_dac_read_search cap_sys_rawio.
 var XFSScrubDroppedCapabilities = map[string]struct{}{
 	"cap_audit_control":    {},
 	"cap_audit_write":      {},

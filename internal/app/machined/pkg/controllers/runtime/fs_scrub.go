@@ -110,36 +110,62 @@ func (ctrl *FSScrubController) Run(ctx context.Context, r controller.Runtime, lo
 				logger.Error("error running filesystem scrub", zap.Error(err))
 			}
 		case <-r.EventCh():
-			err := ctrl.updateSchedule(ctx, r, logger)
+			err := ctrl.updateSchedule(ctx, r)
 			if err != nil {
 				return err
 			}
 		}
 
-		r.StartTrackingOutputs()
-
-		for _, entry := range ctrl.status {
-			if err := safe.WriterModify(ctx, r, runtimeres.NewFSScrubStatus(entry.id), func(status *runtimeres.FSScrubStatus) error {
-				status.TypedSpec().Mountpoint = entry.mountpoint
-				status.TypedSpec().Period = entry.period
-				status.TypedSpec().Time = entry.time
-				status.TypedSpec().Duration = entry.duration
-				status.TypedSpec().Status = entry.result.Error()
-
-				return nil
-			}); err != nil {
-				return fmt.Errorf("error updating filesystem scrub status: %w", err)
-			}
-		}
-
-		if err := safe.CleanupOutputs[*runtimeres.FSScrubStatus](ctx, r); err != nil {
+		if err := ctrl.reportStatus(ctx, r); err != nil {
 			return err
 		}
 	}
 }
 
+func (ctrl *FSScrubController) reportStatus(ctx context.Context, r controller.Runtime) error {
+	r.StartTrackingOutputs()
+
+	presentStatuses, err := safe.ReaderListAll[*runtimeres.FSScrubStatus](ctx, r)
+	if err != nil && !state.IsNotFoundError(err) {
+		return fmt.Errorf("error getting existing FS scrub statuses: %w", err)
+	}
+
+	for entry := range presentStatuses.All() {
+		if _, ok := ctrl.status[entry.TypedSpec().Mountpoint]; !ok {
+			if err := r.Destroy(ctx, runtimeres.NewFSScrubStatus(entry.Metadata().ID()).Metadata()); err != nil {
+				return fmt.Errorf("error destroying old FS scrub status: %w", err)
+			}
+		}
+	}
+
+	for _, entry := range ctrl.status {
+		if err := safe.WriterModify(ctx, r, runtimeres.NewFSScrubStatus(entry.id), func(status *runtimeres.FSScrubStatus) error {
+			status.TypedSpec().Mountpoint = entry.mountpoint
+			status.TypedSpec().Period = entry.period
+			status.TypedSpec().Time = entry.time
+			status.TypedSpec().Duration = entry.duration
+
+			if entry.result != nil {
+				status.TypedSpec().Status = entry.result.Error()
+			} else {
+				status.TypedSpec().Status = "success"
+			}
+
+			return nil
+		}); err != nil {
+			return fmt.Errorf("error updating filesystem scrub status: %w", err)
+		}
+	}
+
+	if err := safe.CleanupOutputs[*runtimeres.FSScrubStatus](ctx, r); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 //nolint:gocyclo,cyclop
-func (ctrl *FSScrubController) updateSchedule(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
+func (ctrl *FSScrubController) updateSchedule(ctx context.Context, r controller.Runtime) error {
 	volumesStatus, err := safe.ReaderListAll[*block.VolumeStatus](ctx, r)
 	if err != nil && !state.IsNotFoundError(err) {
 		return fmt.Errorf("error getting volume status: %w", err)
@@ -207,8 +233,6 @@ func (ctrl *FSScrubController) updateSchedule(ctx context.Context, r controller.
 		_, ok := ctrl.schedule[mountpoint]
 
 		if period == nil {
-			logger.Warn("!!! scrub !!! not in config, descheduling", zap.String("mountpoint", mountpoint))
-
 			if ok {
 				ctrl.cancelScrub(mountpoint)
 			}
@@ -218,12 +242,10 @@ func (ctrl *FSScrubController) updateSchedule(ctx context.Context, r controller.
 
 		if !ok {
 			firstTimeout := time.Duration(rand.Int64N(int64(period.Seconds()))) * time.Second
-			logger.Warn("!!! scrub !!! firstTimeout", zap.Duration("firstTimeout", firstTimeout))
 
 			// When scheduling the first scrub, we use a random time to avoid all scrubs running in a row.
 			// After the first scrub, we use the period defined in the config.
 			cb := func() {
-				logger.Warn("!!! scrub !!! ding", zap.String("path", mountpoint))
 				ctrl.c <- mountpoint
 				ctrl.schedule[mountpoint].timer.Reset(ctrl.schedule[mountpoint].period)
 			}
@@ -242,12 +264,8 @@ func (ctrl *FSScrubController) updateSchedule(ctx context.Context, r controller.
 				duration:   0,
 				result:     fmt.Errorf("scheduled"),
 			}
-
-			logger.Warn("!!! scrub !!! scheduled", zap.String("path", mountpoint), zap.Duration("period", *period))
 		} else if ctrl.schedule[mountpoint].period != *period {
 			// reschedule if period has changed
-			logger.Warn("!!! scrub !!! reschedule", zap.String("path", mountpoint), zap.Duration("period", *period))
-
 			ctrl.schedule[mountpoint].timer.Stop()
 			ctrl.schedule[mountpoint].timer.Reset(*period)
 			ctrl.schedule[mountpoint] = scrubSchedule{
@@ -259,7 +277,7 @@ func (ctrl *FSScrubController) updateSchedule(ctx context.Context, r controller.
 				id:         item.Metadata().ID(),
 				mountpoint: mountpoint,
 				period:     *period,
-				time:       time.Now().Add(*period),
+				time:       ctrl.status[mountpoint].time,
 				duration:   ctrl.status[mountpoint].duration,
 				result:     ctrl.status[mountpoint].result,
 			}
@@ -304,7 +322,7 @@ func (ctrl *FSScrubController) runScrub(mountpoint string, opts []string) error 
 		mountpoint: mountpoint,
 		period:     ctrl.schedule[mountpoint].period,
 		time:       start,
-		duration:   time.Now().Sub(start),
+		duration:   time.Since(start),
 		result:     err,
 	}
 

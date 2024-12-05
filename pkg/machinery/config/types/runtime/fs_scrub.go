@@ -21,7 +21,6 @@ import (
 const FilesystemScrubKind = "FilesystemScrubConfig"
 
 func init() {
-	fmt.Println("TEST! FilesystemScrubKind: ", FilesystemScrubKind)
 	registry.Register(FilesystemScrubKind, func(version string) config.Document {
 		switch version {
 		case "v1alpha1":

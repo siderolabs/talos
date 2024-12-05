@@ -257,6 +257,7 @@ description: Talos gRPC API reference.
     - [ExtensionServiceConfigSpec](#talos.resource.definitions.runtime.ExtensionServiceConfigSpec)
     - [ExtensionServiceConfigStatusSpec](#talos.resource.definitions.runtime.ExtensionServiceConfigStatusSpec)
     - [FSScrubConfigSpec](#talos.resource.definitions.runtime.FSScrubConfigSpec)
+    - [FSScrubStatusSpec](#talos.resource.definitions.runtime.FSScrubStatusSpec)
     - [KernelModuleSpecSpec](#talos.resource.definitions.runtime.KernelModuleSpecSpec)
     - [KernelParamSpecSpec](#talos.resource.definitions.runtime.KernelParamSpecSpec)
     - [KernelParamStatusSpec](#talos.resource.definitions.runtime.KernelParamStatusSpec)
@@ -4704,6 +4705,25 @@ FSScrubConfigSpec describes configuration of watchdog timer.
 | name | [string](#string) |  |  |
 | mountpoint | [string](#string) |  |  |
 | period | [google.protobuf.Duration](#google.protobuf.Duration) |  |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.runtime.FSScrubStatusSpec"></a>
+
+### FSScrubStatusSpec
+FSScrubStatusSpec describes configuration of watchdog timer.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| mountpoint | [string](#string) |  |  |
+| period | [google.protobuf.Duration](#google.protobuf.Duration) |  |  |
+| time | [google.protobuf.Timestamp](#google.protobuf.Timestamp) |  |  |
+| duration | [google.protobuf.Duration](#google.protobuf.Duration) |  |  |
+| status | [string](#string) |  |  |
 
 
 

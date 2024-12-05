@@ -8,7 +8,6 @@ package runtime
 
 import (
 	"errors"
-	"fmt"
 	"net/url"
 
 	"github.com/siderolabs/gen/ensure"
@@ -23,7 +22,6 @@ import (
 const KmsgLogKind = "KmsgLogConfig"
 
 func init() {
-	fmt.Println("AAAAA! KmsgLogKind: ", KmsgLogKind)
 	registry.Register(KmsgLogKind, func(version string) config.Document {
 		switch version {
 		case "v1alpha1":
