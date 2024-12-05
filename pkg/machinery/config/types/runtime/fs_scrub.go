@@ -21,6 +21,7 @@ import (
 const FilesystemScrubKind = "FilesystemScrubConfig"
 
 func init() {
+	fmt.Println("TEST! FilesystemScrubKind: ", FilesystemScrubKind)
 	registry.Register(FilesystemScrubKind, func(version string) config.Document {
 		switch version {
 		case "v1alpha1":
@@ -34,6 +35,7 @@ func init() {
 // Check interfaces.
 var (
 	_ config.RuntimeConfig = &FilesystemScrubV1Alpha1{}
+	_ config.NamedDocument = &FilesystemScrubV1Alpha1{}
 	_ config.Validator     = &FilesystemScrubV1Alpha1{}
 )
 
@@ -52,6 +54,9 @@ const (
 //	schemaMeta: v1alpha1/FilesystemScrubConfig
 type FilesystemScrubV1Alpha1 struct {
 	meta.Meta `yaml:",inline"`
+	//   description: |
+	//     Name of the config document.
+	MetaName string `yaml:"name"`
 	//   description: |
 	//     Mountpoint of the filesystem to be scrubbed.
 	//   examples:
@@ -80,13 +85,19 @@ func NewFilesystemScrubV1Alpha1() *FilesystemScrubV1Alpha1 {
 	}
 }
 
-// func exampleFilesystemScrubV1Alpha1() *FilesystemScrubV1Alpha1 {
-// 	cfg := NewFilesystemScrubV1Alpha1()
-// 	cfg.FSMountpoint = "/var"
-// 	cfg.ScrubPeriod = 24 * 7 * time.Hour
+func exampleFilesystemScrubV1Alpha1() *FilesystemScrubV1Alpha1 {
+	cfg := NewFilesystemScrubV1Alpha1()
+	cfg.MetaName = "var"
+	cfg.FSMountpoint = "/var"
+	cfg.ScrubPeriod = 24 * 7 * time.Hour
 
-// 	return cfg
-// }
+	return cfg
+}
+
+// Name implements config.NamedDocument interface.
+func (s *FilesystemScrubV1Alpha1) Name() string {
+	return s.MetaName
+}
 
 // Clone implements config.Document interface.
 func (s *FilesystemScrubV1Alpha1) Clone() config.Document {
@@ -113,7 +124,7 @@ func (s *FilesystemScrubV1Alpha1) WatchdogTimer() config.WatchdogTimerConfig {
 	return nil
 }
 
-// FilesystemScrub implements config.RuntimeConfig interface.
+// FilesystemScrub implements config.FilesystemScrubConfig interface.
 func (s *FilesystemScrubV1Alpha1) FilesystemScrub() []config.FilesystemScrubConfig {
 	return []config.FilesystemScrubConfig{s}
 }

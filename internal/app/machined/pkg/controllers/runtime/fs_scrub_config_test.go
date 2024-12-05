@@ -7,7 +7,6 @@ package runtime_test
 import (
 	"testing"
 
-	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/rtestutils"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
@@ -31,13 +30,14 @@ func TestFSScrubConfigSuite(t *testing.T) {
 func (suite *FSScrubConfigSuite) TestFSScrubConfigNone() {
 	suite.Require().NoError(suite.Runtime().RegisterController(&runtimectrls.FSScrubConfigController{}))
 
-	rtestutils.AssertNoResource[*runtime.FSScrubConfig](suite.Ctx(), suite.T(), suite.State(), runtime.FSScrubConfigID)
+	rtestutils.AssertNoResource[*runtime.FSScrubConfig](suite.Ctx(), suite.T(), suite.State(), "")
 }
 
 func (suite *FSScrubConfigSuite) TestFSScrubConfigMachineConfig() {
 	suite.Require().NoError(suite.Runtime().RegisterController(&runtimectrls.FSScrubConfigController{}))
 
 	FSScrubConfig := &runtimecfg.FilesystemScrubV1Alpha1{
+		MetaName:     "fsscrub",
 		FSMountpoint: "/var",
 	}
 
@@ -46,15 +46,15 @@ func (suite *FSScrubConfigSuite) TestFSScrubConfigMachineConfig() {
 
 	suite.Require().NoError(suite.State().Create(suite.Ctx(), config.NewMachineConfig(cfg)))
 
-	rtestutils.AssertResources[*runtime.FSScrubConfig](suite.Ctx(), suite.T(), suite.State(), []resource.ID{runtime.FSScrubConfigID},
+	rtestutils.AssertResource[*runtime.FSScrubConfig](suite.Ctx(), suite.T(), suite.State(), "",
 		func(cfg *runtime.FSScrubConfig, asrt *assert.Assertions) {
 			asrt.Equal(
 				"/var",
-				cfg.TypedSpec().Filesystems[0].Mountpoint,
+				cfg.TypedSpec().Mountpoint,
 			)
 			asrt.Equal(
 				runtimecfg.DefaultScrubPeriod,
-				cfg.TypedSpec().Filesystems[0].Period,
+				cfg.TypedSpec().Period,
 			)
 		})
 }

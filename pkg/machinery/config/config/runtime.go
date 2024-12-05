@@ -25,6 +25,7 @@ type WatchdogTimerConfig interface {
 
 // FilesystemScrubConfig defines the interface to access Talos filesystem scrub configuration.
 type FilesystemScrubConfig interface {
+	Name() string
 	Mountpoint() string
 	Period() time.Duration
 }

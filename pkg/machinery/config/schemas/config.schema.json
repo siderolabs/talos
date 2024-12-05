@@ -408,6 +408,13 @@
           "markdownDescription": "kind is the kind of the resource.",
           "x-intellij-html-description": "\u003cp\u003ekind is the kind of the resource.\u003c/p\u003e\n"
         },
+        "name": {
+          "type": "string",
+          "title": "name",
+          "description": "Name of the config document.\n",
+          "markdownDescription": "Name of the config document.",
+          "x-intellij-html-description": "\u003cp\u003eName of the config document.\u003c/p\u003e\n"
+        },
         "mountpoint": {
           "type": "string",
           "title": "mountpoint",

@@ -7,7 +7,6 @@ package runtime
 import (
 	"context"
 	"fmt"
-	"time"
 
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/safe"
@@ -52,25 +51,9 @@ func (ctrl *FSScrubConfigController) Outputs() []controller.Output {
 // Run implements controller.Controller interface.
 func (ctrl *FSScrubConfigController) Run(ctx context.Context, r controller.Runtime, _ *zap.Logger) (err error) {
 	for {
-		var filesystems []runtime.FilesystemScrubConfig
-
 		select {
 		case <-ctx.Done():
 			return nil
-		case <-time.After(60 * time.Second):
-			filesystems = append(filesystems, runtime.FilesystemScrubConfig{
-				Mountpoint: "/var",
-				Period:     12 * time.Second,
-			})
-			filesystems = append(filesystems, runtime.FilesystemScrubConfig{
-				Mountpoint: "/system/state",
-				Period:     10 * time.Second,
-			})
-		case <-time.After(120 * time.Second):
-			filesystems = append(filesystems, runtime.FilesystemScrubConfig{
-				Mountpoint: "/var",
-				Period:     16 * time.Second,
-			})
 		case <-r.EventCh():
 		}
 
@@ -79,24 +62,19 @@ func (ctrl *FSScrubConfigController) Run(ctx context.Context, r controller.Runti
 			return fmt.Errorf("error getting machine config: %w", err)
 		}
 
-		if cfg != nil {
-			for _, x := range cfg.Config().Runtime().FilesystemScrub() {
-				filesystems = append(filesystems, runtime.FilesystemScrubConfig{
-					Mountpoint: x.Mountpoint(),
-					Period:     x.Period(),
-				})
-			}
-		}
-
 		r.StartTrackingOutputs()
 
-		if len(filesystems) > 0 {
-			if err = safe.WriterModify(ctx, r, runtime.NewFSScrubConfig(), func(cfg *runtime.FSScrubConfig) error {
-				cfg.TypedSpec().Filesystems = filesystems
+		if cfg != nil {
+			for _, conf := range cfg.Config().Runtime().FilesystemScrub() {
+				if err := safe.WriterModify(ctx, r, runtime.NewFSScrubConfig(conf.Name()), func(res *runtime.FSScrubConfig) error {
+					res.TypedSpec().Name = conf.Name()
+					res.TypedSpec().Mountpoint = conf.Mountpoint()
+					res.TypedSpec().Period = conf.Period()
 
-				return nil
-			}); err != nil {
-				return fmt.Errorf("error updating kmsg log config: %w", err)
+					return nil
+				}); err != nil {
+					return fmt.Errorf("error updating filesystem scrub config: %w", err)
+				}
 			}
 		}
 

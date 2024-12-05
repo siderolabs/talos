@@ -15,7 +15,6 @@ import (
 	"github.com/cosi-project/runtime/pkg/state"
 	"go.uber.org/zap"
 
-	"github.com/siderolabs/gen/optional"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system/events"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system/runner"
@@ -50,7 +49,7 @@ func (ctrl *FSScrubController) Inputs() []controller.Input {
 		{
 			Namespace: runtimeres.NamespaceName,
 			Type:      runtimeres.FSScrubConfigType,
-			ID:        optional.Some(runtimeres.FSScrubConfigID),
+			Kind:      controller.InputWeak,
 		},
 		{
 			Namespace: block.NamespaceName,
@@ -91,7 +90,7 @@ func (ctrl *FSScrubController) Run(ctx context.Context, r controller.Runtime, lo
 			return nil
 		case mountpoint := <-ctrl.c:
 			if err := ctrl.runScrub(mountpoint, []string{}); err != nil {
-				logger.Error("!!! scrub !!! error running filesystem scrub", zap.Error(err))
+				logger.Error("error running filesystem scrub", zap.Error(err))
 			}
 
 			continue
@@ -104,70 +103,83 @@ func (ctrl *FSScrubController) Run(ctx context.Context, r controller.Runtime, lo
 	}
 }
 
+//nolint:gocyclo,cyclop
 func (ctrl *FSScrubController) updateSchedule(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
-	cfg, err := safe.ReaderGetByID[*runtimeres.FSScrubConfig](ctx, r, runtimeres.FSScrubConfigID)
-	if err != nil {
-		if !state.IsNotFoundError(err) {
-			return fmt.Errorf("error getting scrub config: %w", err)
-		}
-	}
-
-	if cfg == nil {
-		logger.Warn("!!! scrub !!! no config")
-
-		for mountpoint, task := range ctrl.schedule {
-			task.timer.Stop()
-			delete(ctrl.schedule, mountpoint)
-		}
-
-		return nil
-	}
-
 	volumesStatus, err := safe.ReaderListAll[*block.VolumeStatus](ctx, r)
 	if err != nil && !state.IsNotFoundError(err) {
 		return fmt.Errorf("error getting volume status: %w", err)
 	}
 
-	logger.Warn("!!! scrub !!! reading volume status")
-	for item := range volumesStatus.All() {
+	volumes := volumesStatus.All()
+
+	// Deschedule scrubs for volumes that are no longer mounted.
+	for mountpoint := range ctrl.schedule {
+		isMounted := false
+
+		for item := range volumes {
+			vol := item.TypedSpec()
+
+			volumeConfig, err := safe.ReaderGetByID[*block.VolumeConfig](ctx, r, item.Metadata().ID())
+			if err != nil {
+				return fmt.Errorf("error getting volume config: %w", err)
+			}
+
+			if volumeConfig.TypedSpec().Mount.TargetPath == mountpoint && vol.Phase == block.VolumePhaseReady {
+				isMounted = true
+
+				break
+			}
+		}
+
+		if !isMounted {
+			ctrl.cancelScrub(mountpoint)
+		}
+	}
+
+	cfg, err := safe.ReaderListAll[*runtimeres.FSScrubConfig](ctx, r)
+	if err != nil && !state.IsNotFoundError(err) {
+		if !state.IsNotFoundError(err) {
+			return fmt.Errorf("error getting scrub config: %w", err)
+		}
+	}
+
+	for item := range volumes {
 		vol := item.TypedSpec()
 
-		logger.Warn("!!! scrub !!! volume status", zap.Reflect("volume", vol))
-
 		if vol.Phase != block.VolumePhaseReady {
-			logger.Warn("!!! scrub !!! vol.Phase != block.VolumePhaseReady", zap.Reflect("item", vol))
-
 			continue
 		}
 
 		if vol.Filesystem != block.FilesystemTypeXFS {
-			logger.Warn("!!! scrub !!! vol.Filesystem != block.FilesystemTypeXFS", zap.Reflect("item", vol))
-
 			continue
 		}
 
 		volumeConfig, err := safe.ReaderGetByID[*block.VolumeConfig](ctx, r, item.Metadata().ID())
 		if err != nil {
-			return fmt.Errorf("!!! scrub !!! error getting volume config: %w", err)
+			return fmt.Errorf("error getting volume config: %w", err)
 		}
 
 		mountpoint := volumeConfig.TypedSpec().Mount.TargetPath
 
 		var period *time.Duration
 
-		for _, fs := range cfg.TypedSpec().Filesystems {
-			if fs.Mountpoint == mountpoint {
-				period = &fs.Period
+		for fs := range cfg.All() {
+			if fs.TypedSpec().Mountpoint == mountpoint {
+				period = &fs.TypedSpec().Period
 			}
 		}
 
-		if period == nil {
-			logger.Warn("!!! scrub !!! not in config", zap.String("mountpoint", mountpoint))
-
-			return nil
-		}
-
 		_, ok := ctrl.schedule[mountpoint]
+
+		if period == nil {
+			logger.Warn("!!! scrub !!! not in config, descheduling", zap.String("mountpoint", mountpoint))
+
+			if ok {
+				ctrl.cancelScrub(mountpoint)
+			}
+
+			continue
+		}
 
 		if !ok {
 			firstTimeout := time.Duration(rand.Int64N(int64(period.Seconds()))) * time.Second
@@ -187,21 +199,25 @@ func (ctrl *FSScrubController) updateSchedule(ctx context.Context, r controller.
 			}
 
 			logger.Warn("!!! scrub !!! scheduled", zap.String("path", mountpoint), zap.Duration("period", *period))
-		} else {
+		} else if ctrl.schedule[mountpoint].period != *period {
 			// reschedule if period has changed
 			logger.Warn("!!! scrub !!! reschedule", zap.String("path", mountpoint), zap.Duration("period", *period))
-			if ctrl.schedule[mountpoint].period != *period {
-				ctrl.schedule[mountpoint].timer.Stop()
-				ctrl.schedule[mountpoint].timer.Reset(*period)
-				ctrl.schedule[mountpoint] = scrubSchedule{
-					period: *period,
-					timer:  ctrl.schedule[mountpoint].timer,
-				}
+
+			ctrl.schedule[mountpoint].timer.Stop()
+			ctrl.schedule[mountpoint].timer.Reset(*period)
+			ctrl.schedule[mountpoint] = scrubSchedule{
+				period: *period,
+				timer:  ctrl.schedule[mountpoint].timer,
 			}
 		}
 	}
 
 	return err
+}
+
+func (ctrl *FSScrubController) cancelScrub(mountpoint string) {
+	ctrl.schedule[mountpoint].timer.Stop()
+	delete(ctrl.schedule, mountpoint)
 }
 
 func (ctrl *FSScrubController) runScrub(mountpoint string, opts []string) error {

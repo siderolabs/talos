@@ -21,35 +21,24 @@ const FSScrubConfigType = resource.Type("FSScrubConfigs.runtime.talos.dev")
 // FSScrubConfig resource holds configuration for watchdog timer.
 type FSScrubConfig = typed.Resource[FSScrubConfigSpec, FSScrubConfigExtension]
 
-// FSScrubConfigID is a resource ID for FSScrubConfig.
-const FSScrubConfigID resource.ID = "scrub"
-
 // FilesystemScrubConfig represents mirror configuration for a registry.
 //
 //gotagsrewrite:gen
-type FilesystemScrubConfig struct {
-	Mountpoint string        `yaml:"mountpoint" protobuf:"1"`
-	Period     time.Duration `yaml:"period" protobuf:"2"`
-}
+type FilesystemScrubConfig struct{}
 
 // FSScrubConfigSpec describes configuration of watchdog timer.
 //
 //gotagsrewrite:gen
 type FSScrubConfigSpec struct {
-	Filesystems []FilesystemScrubConfig `yaml:"filesystems,omitempty" protobuf:"1"`
-}
-
-// DeepCopy implements DeepCopyable.
-func (r FSScrubConfigSpec) DeepCopy() FSScrubConfigSpec {
-	return FSScrubConfigSpec{
-		Filesystems: append([]FilesystemScrubConfig{}, r.Filesystems...),
-	}
+	Name       string        `yaml:"name" protobuf:"1"`
+	Mountpoint string        `yaml:"mountpoint" protobuf:"2"`
+	Period     time.Duration `yaml:"period" protobuf:"3"`
 }
 
 // NewFSScrubConfig initializes a FSScrubConfig resource.
-func NewFSScrubConfig() *FSScrubConfig {
+func NewFSScrubConfig(id resource.ID) *FSScrubConfig {
 	return typed.NewResource[FSScrubConfigSpec, FSScrubConfigExtension](
-		resource.NewMetadata(NamespaceName, FSScrubConfigType, FSScrubConfigID, resource.VersionUndefined),
+		resource.NewMetadata(NamespaceName, FSScrubConfigType, id, resource.VersionUndefined),
 		FSScrubConfigSpec{},
 	)
 }
