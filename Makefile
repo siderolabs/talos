@@ -22,7 +22,7 @@ TOOLS ?= ghcr.io/siderolabs/tools:v1.10.0-alpha.0
 DEBUG_TOOLS_SOURCE := scratch
 
 PKGS_PREFIX ?= ghcr.io/siderolabs
-PKGS ?= v1.10.0-alpha.0-3-g71003a3
+PKGS ?= v1.10.0-alpha.0-4-g9cf35be
 EXTRAS ?= v1.9.0
 
 KRES_IMAGE ?= ghcr.io/siderolabs/kres:latest
@@ -43,6 +43,8 @@ PKG_IPTABLES ?= $(PKGS_PREFIX)/iptables:$(PKGS)
 PKG_IPXE ?= $(PKGS_PREFIX)/ipxe:$(PKGS)
 PKG_LIBINIH ?= $(PKGS_PREFIX)/libinih:$(PKGS)
 PKG_LIBJSON_C ?= $(PKGS_PREFIX)/libjson-c:$(PKGS)
+PKG_LIBMNL ?= $(PKGS_PREFIX)/libmnl:$(PKGS)
+PKG_LIBNFTNL ?= $(PKGS_PREFIX)/libnftnl:$(PKGS)
 PKG_LIBPOPT ?= $(PKGS_PREFIX)/libpopt:$(PKGS)
 PKG_LIBSEPOL ?= $(PKGS_PREFIX)/libsepol:$(PKGS)
 PKG_LIBSELINUX ?= $(PKGS_PREFIX)/libselinux:$(PKGS)
@@ -219,6 +221,8 @@ COMMON_ARGS += --build-arg=PKG_IPTABLES=$(PKG_IPTABLES)
 COMMON_ARGS += --build-arg=PKG_IPXE=$(PKG_IPXE)
 COMMON_ARGS += --build-arg=PKG_LIBINIH=$(PKG_LIBINIH)
 COMMON_ARGS += --build-arg=PKG_LIBJSON_C=$(PKG_LIBJSON_C)
+COMMON_ARGS += --build-arg=PKG_LIBMNL=$(PKG_LIBMNL)
+COMMON_ARGS += --build-arg=PKG_LIBNFTNL=$(PKG_LIBNFTNL)
 COMMON_ARGS += --build-arg=PKG_LIBSEPOL=$(PKG_LIBSEPOL)
 COMMON_ARGS += --build-arg=PKG_LIBSELINUX=$(PKG_LIBSELINUX)
 COMMON_ARGS += --build-arg=PKG_PCRE2=$(PKG_PCRE2)
