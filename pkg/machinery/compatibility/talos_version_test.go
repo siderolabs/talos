@@ -327,17 +327,58 @@ func TestTalosUpgradeCompatibility19(t *testing.T) {
 	}
 }
 
+func TestTalosUpgradeCompatibility110(t *testing.T) {
+	for _, tt := range []talosVersionTest{
+		{
+			host:   "1.8.0",
+			target: "1.10.0",
+		},
+		{
+			host:   "1.9.0-alpha.0",
+			target: "1.10.0",
+		},
+		{
+			host:   "1.8.0",
+			target: "1.10.0-alpha.0",
+		},
+		{
+			host:   "1.9.3",
+			target: "1.10.1",
+		},
+		{
+			host:   "1.10.0-beta.0",
+			target: "1.10.0",
+		},
+		{
+			host:   "1.10.5",
+			target: "1.10.3",
+		},
+		{
+			host:          "1.7.0",
+			target:        "1.10.0",
+			expectedError: `host version 1.7.0 is too old to upgrade to Talos 1.10.0`,
+		},
+		{
+			host:          "1.12.0-alpha.0",
+			target:        "1.10.0",
+			expectedError: `host version 1.12.0-alpha.0 is too new to downgrade to Talos 1.10.0`,
+		},
+	} {
+		runTalosVersionTest(t, tt)
+	}
+}
+
 func TestTalosUpgradeCompatibilityUnsupported(t *testing.T) {
 	for _, tt := range []talosVersionTest{
 		{
 			host:          "1.3.0",
-			target:        "1.10.0-alpha.0",
-			expectedError: `upgrades to version 1.10.0-alpha.0 are not supported`,
+			target:        "1.11.0-alpha.0",
+			expectedError: `upgrades to version 1.11.0-alpha.0 are not supported`,
 		},
 		{
 			host:          "1.4.0",
-			target:        "1.11.0-alpha.0",
-			expectedError: `upgrades to version 1.11.0-alpha.0 are not supported`,
+			target:        "1.12.0-alpha.0",
+			expectedError: `upgrades to version 1.12.0-alpha.0 are not supported`,
 		},
 	} {
 		runTalosVersionTest(t, tt)
