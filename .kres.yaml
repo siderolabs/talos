@@ -19,6 +19,7 @@ spec:
 ---
 kind: common.Repository
 spec:
+  conformMaximumOfOneCommit: false
   conformScopes:
     - apid
     - machined
