@@ -28,9 +28,9 @@ machine:
     openebs.io/engine: mayastor
   kubelet:
     extraMounts:
-      - destination: /var/openebs/local
+      - destination: /var/local/openebs
         type: bind
-        source: /var/openebs/local
+        source: /var/local/openebs
         options:
           - rbind
           - rshared
