@@ -69,7 +69,7 @@ func (m *rulesManager) Install() error {
 		Attributes: &rtnetlink.RuleAttributes{
 			FwMark:   pointer.To(m.InternalMark),
 			FwMask:   pointer.To(m.MarkMask),
-			Priority: pointer.To(nextRuleNumber(nc, unix.AF_INET)),
+			Priority: pointer.To(nextRuleNumber(nc, unix.AF_INET6)),
 		},
 	}); err != nil {
 		if !errors.Is(err, os.ErrExist) {
