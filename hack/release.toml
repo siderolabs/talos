@@ -40,7 +40,7 @@ Support for cgroupsv1 is deprecated, and will be removed in Talos 1.10 (for non-
 Starting with Talos 1.9, `.cluster.apiServer.authorizationConfig` field supports setting [Kubernetes API server authorization modes](https://kubernetes.io/docs/reference/access-authn-authz/authorization/#using-configuration-file-for-authorization)
 using the `--authorization-config` flag.
 
-The machine config field supports a list of `authorizers`. For eg:
+The machine config field supports a list of `authorizers`. For instance:
 
 ```yaml
 cluster:
@@ -48,12 +48,12 @@ cluster:
     authorizationConfig:
       - type: Node
         name: Node
-      - type RBAC
+      - type: RBAC
         name: rbac
 ```
 
 For new cluster if the Kubernetes API server supports the `--authorization-config` flag, it'll be used by default instead of the `--authorization-mode` flag.
-By default Talos will always add the `Node` and `  RBAC` authorizers to the list.
+By default Talos will always add the `Node` and `RBAC` authorizers to the list.
 
 When upgrading if either a user-provided `authorization-mode` or `authorization-webhook-*` flag is set via `.cluster.apiServer.extraArgs`, it'll be used instead of the new `AuthorizationConfig`.
 
@@ -79,7 +79,7 @@ Refer to the [documentation](https://www.talos.dev/v1.9/kubernetes-guides/config
     [notes.auditd]
         title = "Auditd"
         description = """\
-Talos Linux now starts a auditd service by default.
+Talos Linux now starts an auditd service by default.
 Logs can be read with `talosctl logs auditd`.
 """
 
