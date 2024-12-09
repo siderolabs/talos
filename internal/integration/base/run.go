@@ -8,13 +8,16 @@ package base
 
 import (
 	"bytes"
+	"errors"
 	"os"
 	"os/exec"
 	"regexp"
 	"strings"
+	"testing"
 
 	"github.com/siderolabs/go-retry/retry"
-	"github.com/stretchr/testify/suite"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 // RunOption configures options for Run.
@@ -115,7 +118,7 @@ func StderrMatchFunc(f MatchFunc) RunOption {
 // runAndWait launches the command and waits for completion.
 //
 // runAndWait doesn't do any assertions on result.
-func runAndWait(suite *suite.Suite, cmd *exec.Cmd) (stdoutBuf, stderrBuf *bytes.Buffer, err error) {
+func runAndWait(t *testing.T, cmd *exec.Cmd) (stdoutBuf, stderrBuf *bytes.Buffer, err error) {
 	var stdout, stderr bytes.Buffer
 
 	cmd.Stdin = nil
@@ -140,9 +143,9 @@ func runAndWait(suite *suite.Suite, cmd *exec.Cmd) (stdoutBuf, stderrBuf *bytes.
 		}
 	}
 
-	suite.T().Logf("Running %q", strings.Join(cmd.Args, " "))
+	t.Logf("Running %q", strings.Join(cmd.Args, " "))
 
-	suite.Require().NoError(cmd.Start())
+	require.NoError(t, cmd.Start())
 
 	err = cmd.Wait()
 
@@ -150,11 +153,13 @@ func runAndWait(suite *suite.Suite, cmd *exec.Cmd) (stdoutBuf, stderrBuf *bytes.
 }
 
 // retryRunAndWait retries runAndWait if the command fails to run.
-func retryRunAndWait(suite *suite.Suite, cmdFunc func() *exec.Cmd, retryer retry.Retryer) (stdoutBuf, stderrBuf *bytes.Buffer, err error) {
+func retryRunAndWait(t *testing.T, cmdFunc func() *exec.Cmd, retryer retry.Retryer) (stdoutBuf, stderrBuf *bytes.Buffer, err error) {
 	err = retryer.Retry(func() error {
-		stdoutBuf, stderrBuf, err = runAndWait(suite, cmdFunc())
+		stdoutBuf, stderrBuf, err = runAndWait(t, cmdFunc())
 
-		if _, ok := err.(*exec.ExitError); ok {
+		var exitError *exec.ExitError
+
+		if errors.As(err, &exitError) {
 			return retry.ExpectedErrorf("command failed, stderr %v: %w", stderrBuf.String(), err)
 		}
 
@@ -167,7 +172,7 @@ func retryRunAndWait(suite *suite.Suite, cmdFunc func() *exec.Cmd, retryer retry
 // run executes command, asserts on its exit status/output, and returns stdout.
 //
 //nolint:gocyclo,nakedret
-func run(suite *suite.Suite, cmdFunc func() *exec.Cmd, options ...RunOption) (stdout, stderr string) {
+func run(t *testing.T, cmdFunc func() *exec.Cmd, options ...RunOption) (stdout, stderr string) {
 	var opts runOptions
 
 	for _, o := range options {
@@ -180,15 +185,16 @@ func run(suite *suite.Suite, cmdFunc func() *exec.Cmd, options ...RunOption) (st
 	)
 
 	if opts.retryer != nil {
-		stdoutBuf, stderrBuf, err = retryRunAndWait(suite, cmdFunc, opts.retryer)
+		stdoutBuf, stderrBuf, err = retryRunAndWait(t, cmdFunc, opts.retryer)
 	} else {
-		stdoutBuf, stderrBuf, err = runAndWait(suite, cmdFunc())
+		stdoutBuf, stderrBuf, err = runAndWait(t, cmdFunc())
 	}
 
 	if err != nil {
 		// check that command failed, not something else happened
-		_, ok := err.(*exec.ExitError)
-		suite.Require().True(ok, "%s", err)
+		var exitError *exec.ExitError
+
+		require.True(t, errors.As(err, &exitError), "%s", err)
 	}
 
 	if stdoutBuf != nil {
@@ -200,45 +206,45 @@ func run(suite *suite.Suite, cmdFunc func() *exec.Cmd, options ...RunOption) (st
 	}
 
 	if opts.shouldFail {
-		suite.Assert().Error(err, "command expected to fail, but did not")
+		assert.Error(t, err, "command expected to fail, but did not")
 	} else {
-		suite.Assert().NoError(err, "command failed, stdout: %q, stderr: %q", stdout, stderr)
+		assert.NoError(t, err, "command failed, stdout: %q, stderr: %q", stdout, stderr)
 	}
 
 	if opts.stdoutEmpty {
-		suite.Assert().Empty(stdout, "stdout should be empty")
+		assert.Empty(t, stdout, "stdout should be empty")
 	} else {
-		suite.Assert().NotEmpty(stdout, "stdout should be not empty")
+		assert.NotEmpty(t, stdout, "stdout should be not empty")
 	}
 
 	if opts.stderrNotEmpty {
-		suite.Assert().NotEmpty(stderr, "stderr should be not empty")
+		assert.NotEmpty(t, stderr, "stderr should be not empty")
 	} else {
-		suite.Assert().Empty(stderr, "stderr should be empty")
+		assert.Empty(t, stderr, "stderr should be empty")
 	}
 
 	for _, rx := range opts.stdoutRegexps {
-		suite.Assert().Regexp(rx, stdout)
+		assert.Regexp(t, rx, stdout)
 	}
 
 	for _, rx := range opts.stderrRegexps {
-		suite.Assert().Regexp(rx, stderr)
+		assert.Regexp(t, rx, stderr)
 	}
 
 	for _, rx := range opts.stdoutNegativeRegexps {
-		suite.Assert().NotRegexp(rx, stdout)
+		assert.NotRegexp(t, rx, stdout)
 	}
 
 	for _, rx := range opts.stderrNegativeRegexps {
-		suite.Assert().NotRegexp(rx, stderr)
+		assert.NotRegexp(t, rx, stderr)
 	}
 
 	for _, f := range opts.stdoutMatchers {
-		suite.Assert().NoError(f(stdout), "stdout match: %q", stdout)
+		assert.NoError(t, f(stdout), "stdout match: %q", stdout)
 	}
 
 	for _, f := range opts.stderrMatchers {
-		suite.Assert().NoError(f(stderr), "stderr match: %q", stderr)
+		assert.NoError(t, f(stderr), "stderr match: %q", stderr)
 	}
 
 	return
