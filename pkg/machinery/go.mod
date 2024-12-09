@@ -9,9 +9,9 @@ replace gopkg.in/yaml.v3 => github.com/unix4ever/yaml v0.0.0-20220527175918-f17b
 require (
 	github.com/blang/semver/v4 v4.0.0
 	github.com/containerd/go-cni v1.1.10
-	github.com/cosi-project/runtime v0.7.2
+	github.com/cosi-project/runtime v0.7.5
 	github.com/dustin/go-humanize v1.0.1
-	github.com/emicklei/dot v1.6.3
+	github.com/emicklei/dot v1.6.4
 	github.com/evanphx/json-patch v5.9.0+incompatible
 	github.com/fatih/color v1.18.0
 	github.com/ghodss/yaml v1.0.0
@@ -24,7 +24,7 @@ require (
 	github.com/planetscale/vtprotobuf v0.6.1-0.20241121165744-79df5c4772f2
 	github.com/ryanuber/go-glob v1.0.0
 	github.com/santhosh-tekuri/jsonschema/v5 v5.3.1
-	github.com/siderolabs/crypto v0.5.0
+	github.com/siderolabs/crypto v0.5.1
 	github.com/siderolabs/gen v0.7.0
 	github.com/siderolabs/go-api-signature v0.3.6
 	github.com/siderolabs/go-blockdevice/v2 v2.0.6
@@ -33,9 +33,9 @@ require (
 	github.com/siderolabs/protoenc v0.2.1
 	github.com/stretchr/testify v1.10.0
 	go.uber.org/zap v1.27.0
-	google.golang.org/genproto/googleapis/api v0.0.0-20241118233622-e639e219e697
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20241118233622-e639e219e697
-	google.golang.org/grpc v1.68.0
+	google.golang.org/genproto/googleapis/api v0.0.0-20241209162323-e6fa225c2576
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20241209162323-e6fa225c2576
+	google.golang.org/grpc v1.68.1
 	google.golang.org/protobuf v1.35.2
 	gopkg.in/yaml.v3 v3.0.1
 )
