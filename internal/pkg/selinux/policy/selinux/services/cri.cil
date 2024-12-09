@@ -4,16 +4,28 @@
 
 (type pod_containerd_socket_t)
 (call system_socket_f (pod_containerd_socket_t))
+; Shim and client sockets
 (typetransition pod_containerd_t run_t sock_file pod_containerd_socket_t)
 
+; Transition to pod contexts
 (allow pod_containerd_t pod_p (process2 (nnp_transition nosuid_transition)))
 (allow pod_containerd_t pod_p (process (transition)))
+
+; Manage procfs & processes
+(allow pod_containerd_t pod_p (fs_classes (rw)))
+(allow pod_containerd_t pod_p (process_classes (full)))
+
+; Shim socket
+(allow pod_containerd_t pod_containerd_socket_t (fs_classes (rw)))
+
+; Common rules for containerd accessing system
+(typeattributeset containerd_p pod_containerd_t)
 
 (type pod_t)
 (call pod_p (pod_t))
 ; TODO: What if container is started not from containerd_state_t?
 (typetransition pod_containerd_t containerd_state_t process pod_t)
-(allow pod_t containerd_state_t (file (entrypoint execute_no_trans)))
+(allow pod_t containerd_state_t (file (entrypoint execute execute_no_trans)))
 
 (type etcd_t)
 (call pod_p (etcd_t))
