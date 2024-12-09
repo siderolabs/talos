@@ -1,0 +1,158 @@
+addresses:
+    - address: 188.42.48.188/29
+      linkName: agge
+      family: inet4
+      scope: global
+      flags: permanent
+      layer: platform
+    - address: 10.26.98.92/29
+      linkName: aggi
+      family: inet4
+      scope: global
+      flags: permanent
+      layer: platform
+links:
+    - name: eno1np0
+      logical: false
+      up: true
+      mtu: 0
+      kind: ""
+      type: netrom
+      masterName: agge
+      layer: platform
+    - name: eno2np1
+      logical: false
+      up: true
+      mtu: 0
+      kind: ""
+      type: netrom
+      masterName: agge
+      slaveIndex: 1
+      layer: platform
+    - name: eth1
+      logical: false
+      up: true
+      mtu: 0
+      kind: ""
+      type: netrom
+      masterName: aggi
+      layer: platform
+    - name: eth2
+      logical: false
+      up: true
+      mtu: 0
+      kind: ""
+      type: netrom
+      masterName: aggi
+      slaveIndex: 1
+      layer: platform
+    - name: agge
+      logical: true
+      up: true
+      mtu: 0
+      kind: bond
+      type: ether
+      bondMaster:
+        mode: 802.3ad
+        xmitHashPolicy: layer3+4
+        lacpRate: slow
+        arpValidate: none
+        arpAllTargets: any
+        primaryReselect: always
+        failOverMac: 0
+        miimon: 100
+        updelay: 200
+        downdelay: 200
+        resendIgmp: 1
+        lpInterval: 1
+        packetsPerSlave: 1
+        numPeerNotif: 1
+        tlbLogicalLb: 1
+        adActorSysPrio: 65535
+      layer: platform
+    - name: aggi
+      logical: true
+      up: true
+      mtu: 0
+      kind: bond
+      type: ether
+      bondMaster:
+        mode: 802.3ad
+        xmitHashPolicy: layer3+4
+        lacpRate: slow
+        arpValidate: none
+        arpAllTargets: any
+        primaryReselect: always
+        failOverMac: 0
+        miimon: 100
+        updelay: 200
+        downdelay: 200
+        resendIgmp: 1
+        lpInterval: 1
+        packetsPerSlave: 1
+        numPeerNotif: 1
+        tlbLogicalLb: 1
+        adActorSysPrio: 65535
+      layer: platform
+routes:
+    - family: inet4
+      dst: ""
+      src: ""
+      gateway: 188.42.48.187
+      outLinkName: agge
+      table: main
+      priority: 1024
+      scope: global
+      type: unicast
+      flags: ""
+      protocol: static
+      layer: platform
+    - family: inet4
+      dst: 10.0.0.0/8
+      src: ""
+      gateway: 10.26.98.91
+      outLinkName: aggi
+      table: main
+      priority: 1024
+      scope: global
+      type: unicast
+      flags: ""
+      protocol: static
+      layer: platform
+    - family: inet4
+      dst: 192.168.0.0/16
+      src: ""
+      gateway: 10.26.98.91
+      outLinkName: aggi
+      table: main
+      priority: 1024
+      scope: global
+      type: unicast
+      flags: ""
+      protocol: static
+      layer: platform
+    - family: inet4
+      dst: 188.42.208.0/21
+      src: ""
+      gateway: 10.26.98.91
+      outLinkName: aggi
+      table: main
+      priority: 1024
+      scope: global
+      type: unicast
+      flags: ""
+      protocol: static
+      layer: platform
+hostnames:
+    - hostname: talos
+      domainname: fqdn
+      layer: platform
+resolvers: []
+timeServers: []
+operators: []
+externalIPs: []
+metadata:
+    platform: nocloud
+    hostname: talos.fqdn
+    instanceId: "0"
+    internalDNS: talos.fqdn

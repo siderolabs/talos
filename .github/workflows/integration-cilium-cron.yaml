@@ -1,6 +1,6 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
 #
-# Generated on 2024-11-28T13:53:18Z by kres 232fe63.
+# Generated on 2024-12-04T11:25:05Z by kres 232fe63.
 
 name: integration-cilium-cron
 concurrency:
@@ -82,7 +82,6 @@ jobs:
         env:
           GITHUB_STEP_NAME: ${{ github.job}}-e2e-cilium
           IMAGE_REGISTRY: registry.dev.siderolabs.io
-          QEMU_WORKERS: "2"
           SHORT_INTEGRATION_TEST: "yes"
           WITH_CONFIG_PATCH: '@hack/test/patches/cilium-no-kubeproxy.yaml'
           WITH_CUSTOM_CNI: cilium
@@ -95,7 +94,6 @@ jobs:
           CILIUM_INSTALL_TYPE: strict
           GITHUB_STEP_NAME: ${{ github.job}}-e2e-cilium-strict
           IMAGE_REGISTRY: registry.dev.siderolabs.io
-          QEMU_WORKERS: "2"
           SHORT_INTEGRATION_TEST: "yes"
           WITH_CONFIG_PATCH: '@hack/test/patches/cilium-kubeproxy.yaml'
           WITH_CUSTOM_CNI: cilium
@@ -108,7 +106,6 @@ jobs:
           CILIUM_INSTALL_TYPE: strict
           GITHUB_STEP_NAME: ${{ github.job}}-e2e-cilium-strict-kubespan
           IMAGE_REGISTRY: registry.dev.siderolabs.io
-          QEMU_WORKERS: "2"
           SHORT_INTEGRATION_TEST: "yes"
           WITH_CONFIG_PATCH: '@hack/test/patches/cilium-kubeproxy.yaml'
           WITH_CUSTOM_CNI: cilium

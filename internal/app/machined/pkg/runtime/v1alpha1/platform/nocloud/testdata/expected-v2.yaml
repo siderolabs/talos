@@ -23,6 +23,12 @@ addresses:
       scope: global
       flags: permanent
       layer: platform
+    - address: 192.34.34.34/32
+      linkName: bond0.4
+      family: inet4
+      scope: global
+      flags: permanent
+      layer: platform
 links:
     - name: eth0
       logical: false
@@ -45,7 +51,6 @@ links:
       kind: ""
       type: netrom
       masterName: bond0
-      slaveIndex: 1
       layer: platform
     - name: eth2
       logical: false
@@ -79,6 +84,17 @@ links:
         numPeerNotif: 1
         tlbLogicalLb: 1
         adActorSysPrio: 65535
+      layer: platform
+    - name: bond0.4
+      logical: true
+      up: true
+      mtu: 1500
+      kind: vlan
+      type: ether
+      parentName: bond0
+      vlan:
+        vlanID: 4
+        vlanProtocol: 802.1q
       layer: platform
 routes:
     - family: inet4

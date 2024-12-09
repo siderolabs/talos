@@ -15,6 +15,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/resource/typed"
 	"github.com/siderolabs/gen/xslices"
 
+	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
 	"github.com/siderolabs/talos/pkg/machinery/proto"
 )
 
@@ -50,7 +51,8 @@ const (
 //
 //gotagsrewrite:gen
 type NodeAddressSpec struct {
-	Addresses []netip.Prefix `yaml:"addresses" protobuf:"1"`
+	Addresses     []netip.Prefix                  `yaml:"addresses" protobuf:"1"`
+	SortAlgorithm nethelpers.AddressSortAlgorithm `yaml:"sortAlgorithm" protobuf:"2"`
 }
 
 // NewNodeAddress initializes a NodeAddress resource.
@@ -74,6 +76,10 @@ func (NodeAddressExtension) ResourceDefinition() meta.ResourceDefinitionSpec {
 			{
 				Name:     "Addresses",
 				JSONPath: `{.addresses}`,
+			},
+			{
+				Name:     "SortAlgorithm",
+				JSONPath: `{.sortAlgorithm}`,
 			},
 		},
 	}

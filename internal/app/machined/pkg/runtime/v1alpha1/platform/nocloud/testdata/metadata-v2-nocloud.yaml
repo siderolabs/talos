@@ -59,3 +59,11 @@ bonds:
         via: 10.10.4.147
       - to: 188.42.208.0/21
         via: 10.10.4.147
+
+vlans:
+  bond0.4:
+    id: 4
+    link: bond0
+    mtu: 1500
+    addresses:
+      - 192.34.34.34/32

@@ -1,6 +1,6 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
 #
-# Generated on 2024-11-28T13:53:18Z by kres 232fe63.
+# Generated on 2024-12-04T12:34:25Z by kres 232fe63.
 
 name: integration-extensions-cron
 concurrency:
@@ -113,6 +113,7 @@ jobs:
           IMAGE_REGISTRY: registry.dev.siderolabs.io
           QEMU_EXTRA_DISKS: "3"
           QEMU_MEMORY_WORKERS: "4096"
+          QEMU_WORKERS: "1"
           SHORT_INTEGRATION_TEST: "yes"
           WITH_CONFIG_PATCH_WORKER: '@_out/installer-extensions-patch.yaml:@hack/test/patches/extensions.yaml:@hack/test/patches/dm-raid-module.yaml'
         run: |

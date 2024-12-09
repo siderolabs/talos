@@ -131,6 +131,14 @@ case "${WITH_CONFIG_PATCH:-false}" in
     ;;
 esac
 
+case "${WITH_ISO:-false}" in
+  false)
+    ;;
+  *)
+    QEMU_FLAGS+=("--iso-path=${ARTIFACTS}/metal-amd64.iso")
+    ;;
+esac
+
 case "${WITH_CONFIG_PATCH_WORKER:-false}" in
   false)
     ;;
@@ -209,7 +217,7 @@ function create_cluster {
     --name="${CLUSTER_NAME}" \
     --kubernetes-version="${KUBERNETES_VERSION}" \
     --controlplanes=3 \
-    --workers="${QEMU_WORKERS:-1}" \
+    --workers="${QEMU_WORKERS:-2}" \
     --disk=15360 \
     --extra-disks="${QEMU_EXTRA_DISKS:-0}" \
     --extra-disks-size="${QEMU_EXTRA_DISKS_SIZE:-5120}" \

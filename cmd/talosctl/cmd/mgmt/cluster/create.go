@@ -1162,6 +1162,8 @@ func parseCPUShare(cpus string) (int64, error) {
 }
 
 func getDisks() ([]*provision.Disk, error) {
+	const GPTAlignment = 2 * 1024 * 1024 // 2 MB
+
 	// should have at least a single primary disk
 	disks := []*provision.Disk{
 		{
@@ -1211,8 +1213,8 @@ func getDisks() ([]*provision.Disk, error) {
 		}
 
 		disks = append(disks, &provision.Disk{
-			// add 1 MB to make extra room for GPT and alignment
-			Size:            diskSize + 2*1024*1024,
+			// add 2 MB per partition to make extra room for GPT and alignment
+			Size:            diskSize + GPTAlignment*uint64(len(diskPartitions)+1),
 			Partitions:      diskPartitions,
 			SkipPreallocate: !clusterDiskPreallocate,
 			Driver:          "ide",

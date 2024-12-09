@@ -14,7 +14,7 @@ import (
 
 const (
 	// DefaultKernelVersion is the default Linux kernel version.
-	DefaultKernelVersion = "6.12.1-talos"
+	DefaultKernelVersion = "6.12.3-talos"
 
 	// KernelModulesPath is the default path to the kernel modules without the kernel version.
 	KernelModulesPath = "/lib/modules"
@@ -390,7 +390,7 @@ const (
 
 	// DefaultKubernetesVersion is the default target version of the control plane.
 	// renovate: datasource=github-releases depName=kubernetes/kubernetes
-	DefaultKubernetesVersion = "1.32.0-rc.0"
+	DefaultKubernetesVersion = "1.32.0-rc.1"
 
 	// SupportedKubernetesVersions is the number of Kubernetes versions supported by Talos starting from DefaultKubernesVersion going backwards.
 	SupportedKubernetesVersions = 6
@@ -529,6 +529,10 @@ const (
 	// DashboardUserID is the user ID for dashboard.
 	// We use the same user ID as apid so that the dashboard can write to the machined unix socket.
 	DashboardUserID = ApidUserID
+
+	// DashboardPriority is the priority for the dashboard service.
+	// Higher nice value for the dashboard to give more CPU time to other services when under load.
+	DashboardPriority = 10
 
 	// TrustdPort is the port for the trustd service.
 	TrustdPort = 50001
@@ -1091,7 +1095,7 @@ const (
 	DBusClientSocketLabel = "system_u:object_r:dbus_client_socket_t:s0"
 
 	// GoVersion is the version of Go compiler this release was built with.
-	GoVersion = "go1.23.3"
+	GoVersion = "go1.23.4"
 
 	// KubernetesTalosAPIServiceName is the name of the Kubernetes service to access Talos API.
 	KubernetesTalosAPIServiceName = "talos"

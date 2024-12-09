@@ -11,6 +11,7 @@ import (
 	"github.com/siderolabs/gen/pair/ordered"
 
 	"github.com/siderolabs/talos/pkg/machinery/api/machine"
+	"github.com/siderolabs/talos/pkg/machinery/compatibility/talos110"
 	"github.com/siderolabs/talos/pkg/machinery/compatibility/talos12"
 	"github.com/siderolabs/talos/pkg/machinery/compatibility/talos13"
 	"github.com/siderolabs/talos/pkg/machinery/compatibility/talos14"
@@ -98,6 +99,9 @@ func (v *TalosVersion) UpgradeableFrom(host *TalosVersion) error {
 	case talos19.MajorMinor: // upgrades to 1.9.x
 		minHostUpgradeVersion, maxHostDowngradeVersion = talos19.MinimumHostUpgradeVersion, talos19.MaximumHostDowngradeVersion
 		deniedHostUpgradeVersions = talos19.DeniedHostUpgradeVersions
+	case talos110.MajorMinor: // upgrades to 1.10.x
+		minHostUpgradeVersion, maxHostDowngradeVersion = talos110.MinimumHostUpgradeVersion, talos110.MaximumHostDowngradeVersion
+		deniedHostUpgradeVersions = talos110.DeniedHostUpgradeVersions
 	default:
 		return fmt.Errorf("upgrades to version %s are not supported", v.version.String())
 	}

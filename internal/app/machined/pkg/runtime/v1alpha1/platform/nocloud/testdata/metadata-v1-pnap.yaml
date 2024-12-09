@@ -1,0 +1,53 @@
+version: 1
+config:
+
+- type: physical
+  name: eno1np0
+  mac_address: "3c:ec:ef:e0:45:28"
+  mtu: 9000
+
+- type: physical
+  name: eno2np1
+  mac_address: "3c:ec:ef:e0:45:29"
+  mtu: 9000
+
+- type: bond
+  name: bond0
+  mac_address: "3c:ec:ef:e0:45:28"
+  mtu: 9000
+  bond_interfaces:
+  - eno1np0
+  - eno2np1
+  params:
+    bond-lacp-rate: fast
+    bond-miimon: 100
+    bond-mode: 802.3ad
+    bond-xmit-hash-policy: layer3+4
+    up-delay: 0
+    down-delay: 0
+
+# public frontend MERGED_FRONTEND vlan 2
+- type: vlan
+  name: bond0.2
+  mtu: 9000
+  vlan_id: 2
+  vlan_link: bond0
+  subnets:
+  - address: 1.2.3.4/29
+    gateway: 1.2.3.5
+    type: static
+
+# private backend vlan 4
+- type: vlan
+  mtu: 9000
+  name: bond0.4
+  vlan_id: 4
+  vlan_link: bond0
+  subnets:
+  - type: static
+    address: 10.0.0.11/24
+
+- type: nameserver
+  address:
+  - 8.8.8.8
+  - 8.8.4.4

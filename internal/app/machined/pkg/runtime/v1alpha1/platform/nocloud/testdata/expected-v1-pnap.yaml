@@ -1,0 +1,105 @@
+addresses:
+    - address: 1.2.3.4/29
+      linkName: bond0.2
+      family: inet4
+      scope: global
+      flags: permanent
+      layer: platform
+    - address: 10.0.0.11/24
+      linkName: bond0.4
+      family: inet4
+      scope: global
+      flags: permanent
+      layer: platform
+links:
+    - name: eno1np0
+      logical: false
+      up: true
+      mtu: 9000
+      kind: ""
+      type: netrom
+      masterName: bond0
+      layer: platform
+    - name: eno2np1
+      logical: false
+      up: true
+      mtu: 9000
+      kind: ""
+      type: netrom
+      masterName: bond0
+      slaveIndex: 1
+      layer: platform
+    - name: bond0
+      logical: true
+      up: true
+      mtu: 9000
+      kind: bond
+      type: ether
+      bondMaster:
+        mode: 802.3ad
+        xmitHashPolicy: layer3+4
+        lacpRate: fast
+        arpValidate: none
+        arpAllTargets: any
+        primaryReselect: always
+        failOverMac: 0
+        miimon: 100
+        resendIgmp: 1
+        lpInterval: 1
+        packetsPerSlave: 1
+        numPeerNotif: 1
+        tlbLogicalLb: 1
+        adActorSysPrio: 65535
+      layer: platform
+    - name: bond0.2
+      logical: true
+      up: true
+      mtu: 9000
+      kind: vlan
+      type: ether
+      parentName: bond0
+      vlan:
+        vlanID: 2
+        vlanProtocol: 802.1q
+      layer: platform
+    - name: bond0.4
+      logical: true
+      up: true
+      mtu: 9000
+      kind: vlan
+      type: ether
+      parentName: bond0
+      vlan:
+        vlanID: 4
+        vlanProtocol: 802.1q
+      layer: platform
+routes:
+    - family: inet4
+      dst: ""
+      src: ""
+      gateway: 1.2.3.5
+      outLinkName: bond0.2
+      table: main
+      priority: 1024
+      scope: global
+      type: unicast
+      flags: ""
+      protocol: static
+      layer: platform
+hostnames:
+    - hostname: talos
+      domainname: fqdn
+      layer: platform
+resolvers:
+    - dnsServers:
+        - 8.8.8.8
+        - 8.8.4.4
+      layer: platform
+timeServers: []
+operators: []
+externalIPs: []
+metadata:
+    platform: nocloud
+    hostname: talos.fqdn
+    instanceId: "0"
+    internalDNS: talos.fqdn

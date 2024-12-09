@@ -17,12 +17,12 @@ ZSTD_COMPRESSION_LEVEL ?= 18
 CI_RELEASE_TAG := $(shell git log --oneline --format=%B -n 1 HEAD^2 -- 2>/dev/null | head -n 1 | sed -r "/^release\(.*\)/ s/^release\((.*)\):.*$$/\\1/; t; Q")
 
 ARTIFACTS := _out
-TOOLS ?= ghcr.io/siderolabs/tools:v1.9.0
+TOOLS ?= ghcr.io/siderolabs/tools:v1.9.0-1-geaad82f
 
 DEBUG_TOOLS_SOURCE := scratch
 
 PKGS_PREFIX ?= ghcr.io/siderolabs
-PKGS ?= v1.9.0-1-gb047e41
+PKGS ?= v1.9.0-5-g5d559d0
 EXTRAS ?= v1.9.0
 
 KRES_IMAGE ?= ghcr.io/siderolabs/kres:latest
@@ -43,6 +43,8 @@ PKG_IPTABLES ?= $(PKGS_PREFIX)/iptables:$(PKGS)
 PKG_IPXE ?= $(PKGS_PREFIX)/ipxe:$(PKGS)
 PKG_LIBINIH ?= $(PKGS_PREFIX)/libinih:$(PKGS)
 PKG_LIBJSON_C ?= $(PKGS_PREFIX)/libjson-c:$(PKGS)
+PKG_LIBMNL ?= $(PKGS_PREFIX)/libmnl:$(PKGS)
+PKG_LIBNFTNL ?= $(PKGS_PREFIX)/libnftnl:$(PKGS)
 PKG_LIBPOPT ?= $(PKGS_PREFIX)/libpopt:$(PKGS)
 PKG_LIBSEPOL ?= $(PKGS_PREFIX)/libsepol:$(PKGS)
 PKG_LIBSELINUX ?= $(PKGS_PREFIX)/libselinux:$(PKGS)
@@ -105,7 +107,7 @@ INTEGRATION_TEST := integration-test
 INTEGRATION_TEST_DEFAULT_TARGET := $(INTEGRATION_TEST)-$(OPERATING_SYSTEM)
 INTEGRATION_TEST_PROVISION_DEFAULT_TARGET := integration-test-provision-$(OPERATING_SYSTEM)
 # renovate: datasource=github-releases depName=kubernetes/kubernetes
-KUBECTL_VERSION ?= v1.32.0-rc.0
+KUBECTL_VERSION ?= v1.32.0-rc.1
 # renovate: datasource=github-releases depName=kastenhq/kubestr
 KUBESTR_VERSION ?= v0.4.46
 # renovate: datasource=github-releases depName=helm/helm
@@ -125,6 +127,7 @@ SHORT_INTEGRATION_TEST ?=
 CUSTOM_CNI_URL ?=
 INSTALLER_ARCH ?= all
 IMAGER_ARGS ?=
+MORE_IMAGES ?=
 
 CGO_ENABLED ?= 0
 GO_BUILDFLAGS ?=
@@ -219,6 +222,8 @@ COMMON_ARGS += --build-arg=PKG_IPTABLES=$(PKG_IPTABLES)
 COMMON_ARGS += --build-arg=PKG_IPXE=$(PKG_IPXE)
 COMMON_ARGS += --build-arg=PKG_LIBINIH=$(PKG_LIBINIH)
 COMMON_ARGS += --build-arg=PKG_LIBJSON_C=$(PKG_LIBJSON_C)
+COMMON_ARGS += --build-arg=PKG_LIBMNL=$(PKG_LIBMNL)
+COMMON_ARGS += --build-arg=PKG_LIBNFTNL=$(PKG_LIBNFTNL)
 COMMON_ARGS += --build-arg=PKG_LIBSEPOL=$(PKG_LIBSEPOL)
 COMMON_ARGS += --build-arg=PKG_LIBSELINUX=$(PKG_LIBSELINUX)
 COMMON_ARGS += --build-arg=PKG_PCRE2=$(PKG_PCRE2)
@@ -458,6 +463,12 @@ uki-certs: talosctl ## Generate test certificates for SecureBoot/PCR Signing
 	@$(TALOSCTL_EXECUTABLE) gen secureboot uki
 	@$(TALOSCTL_EXECUTABLE) gen secureboot pcr
 	@$(TALOSCTL_EXECUTABLE) gen secureboot database
+
+.PHONY: cache-create
+cache-create: installer imager ## Generate image cache.
+	@( $(TALOSCTL_EXECUTABLE) images default | grep -v 'siderolabs/installer'; echo "$(REGISTRY_AND_USERNAME)/installer:$(IMAGE_TAG)"; echo "$(MORE_IMAGES)" | tr ';' '\n' ) | $(TALOSCTL_EXECUTABLE) images cache-create --image-cache-path=/tmp/cache.tar --images=- --force
+	@crane push /tmp/cache.tar $(REGISTRY_AND_USERNAME)/image-cache:$(IMAGE_TAG)
+	@$(MAKE) image-iso IMAGER_ARGS="--image-cache=$(REGISTRY_AND_USERNAME)/image-cache:$(IMAGE_TAG) --extra-kernel-arg='console=ttyS0'"
 
 # Code Quality
 

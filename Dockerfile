@@ -23,6 +23,8 @@ ARG PKG_IPTABLES=scratch
 ARG PKG_IPXE=scratch
 ARG PKG_LIBINIH=scratch
 ARG PKG_LIBJSON_C=scratch
+ARG PKG_LIBMNL=scratch
+ARG PKG_LIBNFTNL=scratch
 ARG PKG_LIBPOPT=scratch
 ARG PKG_LIBSEPOL=scratch
 ARG PKG_LIBSELINUX=scratch
@@ -91,6 +93,12 @@ FROM --platform=arm64 ${PKG_LIBINIH} AS pkg-libinih-arm64
 
 FROM --platform=amd64 ${PKG_LIBJSON_C} AS pkg-libjson-c-amd64
 FROM --platform=arm64 ${PKG_LIBJSON_C} AS pkg-libjson-c-arm64
+
+FROM --platform=amd64 ${PKG_LIBMNL} AS pkg-libmnl-amd64
+FROM --platform=arm64 ${PKG_LIBMNL} AS pkg-libmnl-arm64
+
+FROM --platform=amd64 ${PKG_LIBNFTNL} AS pkg-libnftnl-amd64
+FROM --platform=arm64 ${PKG_LIBNFTNL} AS pkg-libnftnl-arm64
 
 FROM --platform=amd64 ${PKG_LIBPOPT} AS pkg-libpopt-amd64
 FROM --platform=arm64 ${PKG_LIBPOPT} AS pkg-libpopt-arm64
@@ -683,6 +691,8 @@ COPY --link --from=pkg-libcap-amd64 / /rootfs
 COPY --link --from=pkg-iptables-amd64 / /rootfs
 COPY --link --from=pkg-libinih-amd64 / /rootfs
 COPY --link --from=pkg-libjson-c-amd64 / /rootfs
+COPY --link --from=pkg-libmnl-amd64 / /rootfs
+COPY --link --from=pkg-libnftnl-amd64 / /rootfs
 COPY --link --from=pkg-libpopt-amd64 / /rootfs
 COPY --link --from=pkg-liburcu-amd64 / /rootfs
 COPY --link --from=pkg-libsepol-amd64 / /rootfs
@@ -757,6 +767,8 @@ COPY --link --from=pkg-libcap-arm64 / /rootfs
 COPY --link --from=pkg-iptables-arm64 / /rootfs
 COPY --link --from=pkg-libinih-arm64 / /rootfs
 COPY --link --from=pkg-libjson-c-arm64 / /rootfs
+COPY --link --from=pkg-libmnl-arm64 / /rootfs
+COPY --link --from=pkg-libnftnl-arm64 / /rootfs
 COPY --link --from=pkg-libpopt-arm64 / /rootfs
 COPY --link --from=pkg-liburcu-arm64 / /rootfs
 COPY --link --from=pkg-libsepol-arm64 / /rootfs

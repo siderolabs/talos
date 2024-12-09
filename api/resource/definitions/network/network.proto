@@ -274,9 +274,15 @@ message NodeAddressFilterSpec {
   repeated common.NetIPPrefix exclude_subnets = 2;
 }
 
+// NodeAddressSortAlgorithmSpec describes a filter for NodeAddresses.
+message NodeAddressSortAlgorithmSpec {
+  talos.resource.definitions.enums.NethelpersAddressSortAlgorithm algorithm = 1;
+}
+
 // NodeAddressSpec describes a set of node addresses.
 message NodeAddressSpec {
   repeated common.NetIPPrefix addresses = 1;
+  talos.resource.definitions.enums.NethelpersAddressSortAlgorithm sort_algorithm = 2;
 }
 
 // OperatorSpecSpec describes DNS resolvers.

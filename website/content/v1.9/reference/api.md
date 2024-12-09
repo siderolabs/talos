@@ -79,6 +79,7 @@ description: Talos gRPC API reference.
     - [NethelpersARPAllTargets](#talos.resource.definitions.enums.NethelpersARPAllTargets)
     - [NethelpersARPValidate](#talos.resource.definitions.enums.NethelpersARPValidate)
     - [NethelpersAddressFlag](#talos.resource.definitions.enums.NethelpersAddressFlag)
+    - [NethelpersAddressSortAlgorithm](#talos.resource.definitions.enums.NethelpersAddressSortAlgorithm)
     - [NethelpersBondMode](#talos.resource.definitions.enums.NethelpersBondMode)
     - [NethelpersBondXmitHashPolicy](#talos.resource.definitions.enums.NethelpersBondXmitHashPolicy)
     - [NethelpersConntrackState](#talos.resource.definitions.enums.NethelpersConntrackState)
@@ -217,6 +218,7 @@ description: Talos gRPC API reference.
     - [NfTablesPortMatch](#talos.resource.definitions.network.NfTablesPortMatch)
     - [NfTablesRule](#talos.resource.definitions.network.NfTablesRule)
     - [NodeAddressFilterSpec](#talos.resource.definitions.network.NodeAddressFilterSpec)
+    - [NodeAddressSortAlgorithmSpec](#talos.resource.definitions.network.NodeAddressSortAlgorithmSpec)
     - [NodeAddressSpec](#talos.resource.definitions.network.NodeAddressSpec)
     - [OperatorSpecSpec](#talos.resource.definitions.network.OperatorSpecSpec)
     - [PortRange](#talos.resource.definitions.network.PortRange)
@@ -1654,6 +1656,18 @@ NethelpersAddressFlag wraps IFF_* constants.
 | ADDRESS_NO_PREFIX_ROUTE | 512 |  |
 | ADDRESS_MC_AUTO_JOIN | 1024 |  |
 | ADDRESS_STABLE_PRIVACY | 2048 |  |
+
+
+
+<a name="talos.resource.definitions.enums.NethelpersAddressSortAlgorithm"></a>
+
+### NethelpersAddressSortAlgorithm
+NethelpersAddressSortAlgorithm is an internal address sorting algorithm.
+
+| Name | Number | Description |
+| ---- | ------ | ----------- |
+| ADDRESS_SORT_ALGORITHM_V1 | 0 |  |
+| ADDRESS_SORT_ALGORITHM_V2 | 1 |  |
 
 
 
@@ -4015,6 +4029,21 @@ NodeAddressFilterSpec describes a filter for NodeAddresses.
 
 
 
+<a name="talos.resource.definitions.network.NodeAddressSortAlgorithmSpec"></a>
+
+### NodeAddressSortAlgorithmSpec
+NodeAddressSortAlgorithmSpec describes a filter for NodeAddresses.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| algorithm | [talos.resource.definitions.enums.NethelpersAddressSortAlgorithm](#talos.resource.definitions.enums.NethelpersAddressSortAlgorithm) |  |  |
+
+
+
+
+
+
 <a name="talos.resource.definitions.network.NodeAddressSpec"></a>
 
 ### NodeAddressSpec
@@ -4024,6 +4053,7 @@ NodeAddressSpec describes a set of node addresses.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | addresses | [common.NetIPPrefix](#common.NetIPPrefix) | repeated |  |
+| sort_algorithm | [talos.resource.definitions.enums.NethelpersAddressSortAlgorithm](#talos.resource.definitions.enums.NethelpersAddressSortAlgorithm) |  |  |
 
 
 

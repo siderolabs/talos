@@ -244,6 +244,7 @@ func (ctrl *Controller) Run(ctx context.Context, drainer *runtime.Drainer) error
 		&network.NfTablesChainConfigController{},
 		&network.NfTablesChainController{},
 		&network.NodeAddressController{},
+		&network.NodeAddressSortAlgorithmController{},
 		&network.OperatorConfigController{
 			Cmdline: procfs.ProcCmdline(),
 		},

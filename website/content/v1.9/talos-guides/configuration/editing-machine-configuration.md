@@ -54,6 +54,7 @@ The list of config changes allowed to be applied immediately in Talos {{< releas
 * `.machine.features.hostDNS`
 * `.machine.features.imageCache`
 * `.machine.features.kubePrism`
+* `.machine.features.nodeAddressSortAlgorithm`
 
 ### `talosctl apply-config`
 

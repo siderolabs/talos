@@ -3537,6 +3537,13 @@ func (FeaturesConfig) Doc() *encoder.Doc {
 				Description: "Enable Image Cache feature.",
 				Comments:    [3]string{"" /* encoder.HeadComment */, "Enable Image Cache feature." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
+			{
+				Name:        "nodeAddressSortAlgorithm",
+				Type:        "string",
+				Note:        "",
+				Description: "Select the node address sort algorithm.\nThe 'v1' algorithm sorts addresses by the address itself.\nThe 'v2' algorithm prefers more specific prefixes.\nIf unset, defaults to 'v1'.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Select the node address sort algorithm." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
 		},
 	}
 

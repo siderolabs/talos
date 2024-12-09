@@ -175,6 +175,7 @@ func NewState() (*State, error) {
 		&network.NfTablesChain{},
 		&network.NodeAddress{},
 		&network.NodeAddressFilter{},
+		&network.NodeAddressSortAlgorithm{},
 		&network.OperatorSpec{},
 		&network.ProbeSpec{},
 		&network.ProbeStatus{},
