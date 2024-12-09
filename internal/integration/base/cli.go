@@ -14,6 +14,7 @@ import (
 	"path/filepath"
 	"regexp"
 	"strings"
+	"testing"
 	"time"
 
 	"github.com/siderolabs/go-cmd/pkg/cmd"
@@ -100,27 +101,33 @@ func (cliSuite *CLISuite) discoverKubectl() cluster.Info {
 	return nodeInfo
 }
 
-// buildCLICmd builds exec.Cmd from TalosSuite and args.
+// RunCLI runs talosctl binary with the options provided.
+func (cliSuite *CLISuite) RunCLI(args []string, options ...RunOption) (stdout, stderr string) {
+	return run(cliSuite.T(), cliSuite.MakeCMDFn(args), options...)
+}
+
+// MakeCMDFn returns a function that creates a new exec.Cmd with the provided args.
 // TalosSuite flags are added at the beginning so they can be overridden by args.
-func (cliSuite *CLISuite) buildCLICmd(args []string) *exec.Cmd {
+func (cliSuite *CLISuite) MakeCMDFn(args []string) func() *exec.Cmd {
 	if cliSuite.Endpoint != "" {
 		args = append([]string{"--endpoints", cliSuite.Endpoint}, args...)
 	}
 
 	args = append([]string{"--talosconfig", cliSuite.TalosConfig}, args...)
+	path := cliSuite.TalosctlPath
 
-	return exec.Command(cliSuite.TalosctlPath, args...)
+	return func() *exec.Cmd { return exec.Command(path, args...) }
 }
 
 // RunCLI runs talosctl binary with the options provided.
-func (cliSuite *CLISuite) RunCLI(args []string, options ...RunOption) (stdout, stderr string) {
-	return run(&cliSuite.Suite, func() *exec.Cmd { return cliSuite.buildCLICmd(args) }, options...)
+func RunCLI(t *testing.T, f func() *exec.Cmd, options ...RunOption) (stdout, stderr string) {
+	return run(t, f, options...)
 }
 
 // RunAndWaitForMatch retries command until output matches.
 func (cliSuite *CLISuite) RunAndWaitForMatch(args []string, regex *regexp.Regexp, duration time.Duration, options ...retry.Option) {
 	cliSuite.Assert().NoError(retry.Constant(duration, options...).Retry(func() error {
-		stdout, _, err := runAndWait(&cliSuite.Suite, cliSuite.buildCLICmd(args))
+		stdout, _, err := runAndWait(cliSuite.Suite.T(), cliSuite.MakeCMDFn(args)())
 		if err != nil {
 			return err
 		}
