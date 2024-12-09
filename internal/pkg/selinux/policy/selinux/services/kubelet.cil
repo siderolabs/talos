@@ -1,7 +1,7 @@
 (type kubelet_t)
-(call pod_p (kubelet_t))
-; FIXME: insecure as anyone with access to the pod containerd may obtain this domain
-(allow kubelet_t containerd_state_t (file (entrypoint execute_no_trans)))
+(call system_container_p (kubelet_t))
+(allow kubelet_t system_var_t (file (entrypoint execute execute_no_trans)))
+(allow kubelet_t system_var_t (fs_classes (rw)))
 
 (type k8s_conf_t)
 (call filesystem_f (k8s_conf_t))
