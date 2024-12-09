@@ -23,7 +23,7 @@ replace (
 
 	// forked go-yaml that introduces RawYAML interface, which can be used to populate YAML fields using bytes
 	// which are then encoded as a valid YAML blocks with proper indentiation
-	gopkg.in/yaml.v3 => github.com/unix4ever/yaml v0.0.0-20220527175918-f17b0f05cf2c
+	gopkg.in/yaml.v3 => github.com/unix4ever/yaml/v2 v2.4.0
 )
 
 // fd-leak related replacements: https://github.com/siderolabs/talos/issues/9412
@@ -35,7 +35,7 @@ require (
 	k8s.io/api v0.32.0-rc.1
 	k8s.io/apimachinery v0.32.0-rc.1
 	k8s.io/apiserver v0.32.0-rc.1
-	k8s.io/client-go v0.32.0-rc.1
+	k8s.io/client-go v11.0.0+incompatible
 	k8s.io/component-base v0.32.0-rc.1
 	k8s.io/cri-api v0.32.0-rc.1
 	k8s.io/kube-scheduler v0.32.0-rc.1
@@ -141,7 +141,7 @@ require (
 	github.com/siderolabs/discovery-client v0.1.10
 	github.com/siderolabs/gen v0.7.0
 	github.com/siderolabs/go-api-signature v0.3.6
-	github.com/siderolabs/go-blockdevice v0.4.8
+	github.com/siderolabs/go-blockdevice/v2 v2.0.6
 	github.com/siderolabs/go-blockdevice/v2 v2.0.6
 	github.com/siderolabs/go-circular v0.2.1
 	github.com/siderolabs/go-cmd v0.1.3
