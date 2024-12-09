@@ -15,6 +15,7 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/alexflint/go-filemutex"
 	"github.com/containernetworking/cni/libcni"
@@ -428,6 +429,10 @@ func launchVM(config *LaunchConfig) error {
 			return err
 		}
 
+		if err := waitForFileToExist(tpm2SocketPath, 5*time.Second); err != nil {
+			return err
+		}
+
 		args = append(args,
 			config.ArchitectureData.TPMDeviceArgs(tpm2SocketPath)...,
 		)
@@ -564,4 +569,22 @@ func Launch() error {
 			}
 		}
 	})
+}
+
+func waitForFileToExist(path string, timeout time.Duration) error {
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+
+	for {
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		default:
+			if _, err := os.Stat(path); err == nil {
+				return nil
+			}
+		}
+
+		time.Sleep(100 * time.Millisecond)
+	}
 }

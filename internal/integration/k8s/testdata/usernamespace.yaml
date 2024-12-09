@@ -5,6 +5,7 @@ metadata:
   namespace: default
 spec:
   hostUsers: false
+  nodeName: $NODE$
   containers:
   - name: userns
     command: ["/bin/sh", "-c", "--"]

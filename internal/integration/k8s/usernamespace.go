@@ -96,7 +96,13 @@ func (suite *UserNamespaceSuite) TestUserNamespace() {
 		}
 	}
 
-	usernamespacePodManifest := suite.ParseManifests(userNamespacePodSpec)
+	k8sNode, err := suite.GetK8sNodeByInternalIP(ctx, node)
+	suite.Require().NoError(err)
+
+	suite.T().Logf("testing k8s user namespace on node %q (%q)", node, k8sNode.Name)
+
+	// bind the pod to the node
+	usernamespacePodManifest := suite.ParseManifests(bytes.ReplaceAll(userNamespacePodSpec, []byte("$NODE$"), []byte(k8sNode.Name)))
 
 	suite.T().Cleanup(func() {
 		cleanUpCtx, cleanupCancel := context.WithTimeout(context.Background(), time.Minute)
