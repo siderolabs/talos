@@ -283,6 +283,6 @@ pod/disk-wipe created
 $ kubectl wait --timeout=900s --for=jsonpath='{.status.phase}=Succeeded' pod disk-wipe
 pod/disk-wipe condition met
 
-$ kubectl delete pod disk-clean
+$ kubectl delete pod disk-wipe
 pod "disk-wipe" deleted
 ```
