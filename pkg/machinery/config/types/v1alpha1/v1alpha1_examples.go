@@ -610,7 +610,7 @@ func networkDeviceSelectorExamples() []NetworkDeviceSelector {
 		},
 		{
 			NetworkDeviceHardwareAddress: "*:f0:ab",
-			NetworkDeviceKernelDriver:    "virtio",
+			NetworkDeviceKernelDriver:    "virtio_net",
 		},
 	}
 }

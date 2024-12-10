@@ -13,7 +13,7 @@ If you need more information on UpCloud specifics, please see the [official UpCl
 
 The best way to create an image for UpCloud, is to build one using
 [Hashicorp packer](https://www.packer.io/docs/builders/hetzner-cloud), with the
-`upcloud-amd64.raw.xz` image found on the [Talos Releases](https://github.com/siderolabs/talos/releases).
+`upcloud-amd64.raw.xz` image available from the [Image Factory](https://factory.talos.dev/).
 Using the general ISO is also possible, but the UpCloud image has some UpCloud
 specific features implemented, such as the fetching of metadata and user data to configure the nodes.
 
