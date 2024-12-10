@@ -22,7 +22,7 @@ TOOLS ?= ghcr.io/siderolabs/tools:v1.9.0-1-geaad82f
 DEBUG_TOOLS_SOURCE := scratch
 
 PKGS_PREFIX ?= ghcr.io/siderolabs
-PKGS ?= v1.9.0-5-g5d559d0
+PKGS ?= v1.9.0-6-gabba1d8
 EXTRAS ?= v1.9.0
 
 KRES_IMAGE ?= ghcr.io/siderolabs/kres:latest
