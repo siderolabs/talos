@@ -15,7 +15,7 @@ machine:
   network:
     interfaces:
       - deviceSelector:
-          driver: virtio
+          driver: virtio_net
           hardwareAddr: "00:00:*"
         address: 192.168.88.21
 ```

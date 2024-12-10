@@ -29,7 +29,7 @@ export REGION="us-central1"
 
 ### Create the Image
 
-First, download the Google Cloud image from a Talos [release](https://github.com/siderolabs/talos/releases).
+First, download the Google Cloud image from [Image Factory](https://factory.talos.dev/).
 These images are called `gcp-$ARCH.tar.gz`.
 
 #### Upload the Image

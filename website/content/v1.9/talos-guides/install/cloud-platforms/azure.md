@@ -48,7 +48,7 @@ Otherwise, if you would like to upload your own image to Azure and use it to dep
 
 ### Create the Image
 
-First, download the Azure image from a [Talos release](https://github.com/siderolabs/talos/releases).
+First, download the Azure image from [Image Factory](https://factory.talos.dev/).
 Once downloaded, untar with `tar -xvf /path/to/azure-amd64.tar.gz`
 
 #### Upload the VHD

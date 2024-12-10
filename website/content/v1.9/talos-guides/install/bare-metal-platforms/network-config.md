@@ -34,7 +34,7 @@ vlan=eth0.100:eth0
 
 See [kernel parameters reference]({{< relref "../../../reference/kernel" >}}) for more details.
 
-### Platform Network Configuration
+## Platform Network Configuration
 
 Some platforms (e.g. AWS, Google Cloud, etc.) have their own network configuration mechanisms, which can be used to perform the initial network configuration.
 There is no such mechanism for bare-metal platforms, so Talos provides a way to use platform network config on the `metal` platform to submit the initial network configuration.
@@ -64,3 +64,8 @@ docker run --rm -i --privileged ghcr.io/siderolabs/imager:{{< release >}} image 
 ```
 
 The platform network configuration gets merged with other sources of network configuration, the details can be found in the [network resources guide]({{< relref "../../../learn-more/networking-resources.md#configuration-merging" >}}).
+
+## `nocloud` Network Configuration
+
+Some bare-metal providers provide a way to configure network via the `nocloud` data source.
+Talos Linux can automatically pick up this [configuration]({{< relref "../cloud-platforms/nocloud" >}}) when `nocloud` image is used.

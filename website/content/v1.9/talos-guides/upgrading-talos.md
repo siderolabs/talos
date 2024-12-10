@@ -36,7 +36,7 @@ For example, if upgrading from Talos 1.0 to Talos 1.2.4, the recommended upgrade
 
 ## Before Upgrade to {{% release %}}
 
-TBD
+Talos 1.9 replaces `eudev` with `systemd-udev` as the `udevd` provider, which might lead to changes of the predictable network interface names.
 
 ## Video Walkthrough
 
@@ -95,12 +95,14 @@ future.
 
 ## Machine Configuration Changes
 
-* new machine configuration documents: [VolumeConfig]({{< relref "../reference/configuration/block/volumeconfig" >}}), [KubespanEndpointsConfig]({{< relref "../reference/configuration/network/kubespanendpointsconfig" >}}),
-  [TrustedRootsConfig]({{< relref "../reference/configuration/security/trustedrootsconfig" >}})
-* new fields in the [v1alpha1]({{< relref "../reference/configuration/v1alpha1/config" >}}) document:
-  * [`.machine.nodeAnnotations`]({{< relref "../reference/configuration/v1alpha1/config#Config.machine" >}})
-  * [`.machine.systemDiskEncryption.*.keys.tpm.checkSecurebootStatusOnEnroll]({{< relref "../reference/configuration/v1alpha1/config#Config.machine.systemDiskEncryption.ephemeral.keys..tpm" >}})
-  * [`.machine.network.interfaces.bridge.vlan`]({{< relref "../reference/configuration/v1alpha1/config#Config.machine.network.interfaces..bridge.vlan" >}})
+* [`.machine.baseRuntimeSpecOverrides`]({{< relref "../reference/configuration/v1alpha1/config#Config.machine" >}})
+* [`.machine.network.searchDomains`]({{< relref "../reference/configuration/v1alpha1/config#Config.machine.network" >}})
+* [`.machine.network.interfaces.bridgePort`]({{< relref "../reference/configuration/v1alpha1/config#Config.machine.network.interfaces..bridgePort" >}})
+* [`.machine.registry.mirrors.skipFallback`]({{< relref "../reference/configuration/v1alpha1/config/#Config.machine.registries.mirrors.-" >}})
+* [`.machine.features.imageCache`]({{< relref "../reference/configuration/v1alpha1/config/#Config.machine.features.imageCache" >}})
+* [`.machine.features.nodeAddressSortAlgorithm`]({{< relref "../reference/configuration/v1alpha1/config/#Config.machine.features" >}})
+* [`.machine.network.interfaces.bond.deviceSelectors.permanentAddr`]({{< relref "../reference/configuration/v1alpha1/config/#Config.machine.network.interfaces..bond.deviceSelectors." >}})
+* [`.cluster.apiServer.authorizationConfig`]({{< relref "../reference/configuration/v1alpha1/config#Config.cluster.apiServer.authorizationConfig." >}})
 
 ## Upgrade Sequence
 

@@ -1,18 +1,23 @@
 ---
 title: "Nocloud"
-description: "Creating a cluster via the CLI using qemu."
+description: "Configuring Talos networking via the `nocloud` specification."
 aliases:
   - ../../../cloud-platforms/nocloud
 ---
 
 Talos supports [nocloud](https://cloudinit.readthedocs.io/en/latest/reference/datasources/nocloud.html) data source implementation.
 
+On bare-metal, Talos Linux was tested to correctly parse `nocloud` configuration from the following providers:
+
+* [phoenixNAP Bare Metal Cloud](https://phoenixnap.com/)
+* [servers.com](https://www.servers.com/)
+
 There are two ways to configure Talos server with `nocloud` platform:
 
 * via SMBIOS "serial number" option
 * using CDROM or USB-flash filesystem
 
-> Note: This requires the nocloud image which can be found on the Github [Releases](https://github.com/siderolabs/talos/releases) page.
+> Note: This requires the nocloud image which can be downloaded from the [Image Factory](https://factory.talos.dev/).
 
 ### SMBIOS Serial Number
 
