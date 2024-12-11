@@ -1,6 +1,6 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
 #
-# Generated on 2024-10-25T14:37:51Z by kres 6d3cad4.
+# Generated on 2024-12-12T11:04:28Z by kres 8183c20.
 
 name: default
 concurrency:
@@ -117,7 +117,7 @@ jobs:
         run: |
           make unit-tests-race
       - name: coverage
-        uses: codecov/codecov-action@v4
+        uses: codecov/codecov-action@v5
         with:
           files: _out/coverage.txt
           token: ${{ secrets.CODECOV_TOKEN }}
@@ -1962,6 +1962,7 @@ jobs:
         env:
           IMAGE_REGISTRY: registry.dev.siderolabs.io
           SHORT_INTEGRATION_TEST: "yes"
+          WITH_CONFIG_PATCH: '@hack/test/patches/ephemeral-min-max.yaml'
           WITH_CONTROL_PLANE_PORT: "443"
         run: |
           sudo -E make e2e-qemu

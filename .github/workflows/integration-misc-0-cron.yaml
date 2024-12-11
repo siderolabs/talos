@@ -1,6 +1,6 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
 #
-# Generated on 2024-09-09T12:40:13Z by kres 8be5fa7.
+# Generated on 2024-12-12T11:04:28Z by kres 8183c20.
 
 name: integration-misc-0-cron
 concurrency:
@@ -96,6 +96,7 @@ jobs:
         env:
           IMAGE_REGISTRY: registry.dev.siderolabs.io
           SHORT_INTEGRATION_TEST: "yes"
+          WITH_CONFIG_PATCH: '@hack/test/patches/ephemeral-min-max.yaml'
           WITH_CONTROL_PLANE_PORT: "443"
         run: |
           sudo -E make e2e-qemu

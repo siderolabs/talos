@@ -1,6 +1,6 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
 #
-# Generated on 2024-09-05T16:23:55Z by kres b5ca957.
+# Generated on 2024-12-12T11:04:28Z by kres 8183c20.
 
 name: slack-notify
 "on":
@@ -51,11 +51,12 @@ jobs:
         run: |
           echo pull_request_number=$(gh pr view -R ${{ github.repository }} ${{ github.event.workflow_run.head_repository.owner.login }}:${{ github.event.workflow_run.head_branch }} --json number --jq .number) >> $GITHUB_OUTPUT
       - name: Slack Notify
-        uses: slackapi/slack-github-action@v1
+        uses: slackapi/slack-github-action@v2
         with:
-          channel-id: proj-talos-maintainers
+          method: chat.postMessage
           payload: |
             {
+                "channel": "proj-talos-maintainers",
                 "attachments": [
                     {
                         "color": "${{ github.event.workflow_run.conclusion == 'success' && '#2EB886' || github.event.workflow_run.conclusion == 'failure' && '#A30002' || '#FFCC00' }}",
@@ -115,5 +116,4 @@ jobs:
                     }
                 ]
             }
-        env:
-          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+          token: ${{ secrets.SLACK_BOT_TOKEN }}

@@ -672,6 +672,7 @@ spec:
             SHORT_INTEGRATION_TEST: yes
             WITH_CONTROL_PLANE_PORT: 443
             IMAGE_REGISTRY: registry.dev.siderolabs.io
+            WITH_CONFIG_PATCH: "@hack/test/patches/ephemeral-min-max.yaml"
         - name: save-talos-logs
           conditions:
             - always

@@ -7,6 +7,7 @@ package volumes
 
 import (
 	"cmp"
+	"math"
 
 	"github.com/siderolabs/gen/optional"
 
@@ -17,11 +18,29 @@ import (
 
 // CompareVolumeConfigs compares two volume configs in the proposed order of provisioning.
 func CompareVolumeConfigs(a, b *block.VolumeConfig) int {
+	// first, sort by wave, smaller wave first
 	if c := cmp.Compare(a.TypedSpec().Provisioning.Wave, b.TypedSpec().Provisioning.Wave); c != 0 {
 		return c
 	}
 
-	return cmpBool(a.TypedSpec().Provisioning.PartitionSpec.Grow, b.TypedSpec().Provisioning.PartitionSpec.Grow)
+	// prefer partitions which do not grow, as growing partitions may consume space needed by other partitions
+	if c := cmpBool(a.TypedSpec().Provisioning.PartitionSpec.Grow, b.TypedSpec().Provisioning.PartitionSpec.Grow); c != 0 {
+		return c
+	}
+
+	// prefer partitions with smaller sizes first
+	// e.g.: for a disk of size 1GiB, and following config with min-max requested sizes:
+	// 1. 100MiB - 200MiB
+	// 2. 300MiB - 2GiB
+	//
+	// if the order is 2-1, the second partition will grow to full disk size and will leave no space for the first partition,
+	// but if the order is 1-2, partition sizes will 200MiB and 800MiB respectively.
+	//
+	// we compare only max size, as it affects the resulting size of the partition
+	desiredSizeA := cmp.Or(a.TypedSpec().Provisioning.PartitionSpec.MaxSize, math.MaxUint64)
+	desiredSizeB := cmp.Or(b.TypedSpec().Provisioning.PartitionSpec.MaxSize, math.MaxUint64)
+
+	return cmp.Compare(desiredSizeA, desiredSizeB)
 }
 
 func cmpBool(a, b bool) int {
