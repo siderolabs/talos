@@ -15,6 +15,7 @@ import (
 	"github.com/siderolabs/gen/optional"
 	"go.uber.org/zap"
 
+	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/resources/config"
 	"github.com/siderolabs/talos/pkg/machinery/resources/cri"
@@ -54,19 +55,7 @@ func NewRegistriesConfigController() *RegistriesConfigController {
 					mr := cfg.Provider().RawV1Alpha1().MachineConfig.MachineRegistries
 
 					for k, v := range mr.RegistryConfig {
-						spec.RegistryConfig[k] = &cri.RegistryConfig{
-							RegistryTLS: &cri.RegistryTLSConfig{
-								TLSClientIdentity:     v.RegistryTLS.TLSClientIdentity,
-								TLSCA:                 v.RegistryTLS.TLSCA,
-								TLSInsecureSkipVerify: v.RegistryTLS.TLSInsecureSkipVerify,
-							},
-							RegistryAuth: &cri.RegistryAuthConfig{
-								RegistryUsername:      v.RegistryAuth.RegistryUsername,
-								RegistryPassword:      v.RegistryAuth.RegistryPassword,
-								RegistryAuth:          v.RegistryAuth.RegistryAuth,
-								RegistryIdentityToken: v.RegistryAuth.RegistryIdentityToken,
-							},
-						}
+						spec.RegistryConfig[k] = makeRegistryConfig(v)
 					}
 
 					for k, v := range mr.RegistryMirrors {
@@ -115,4 +104,27 @@ func clearInit[M ~map[K]V, K comparable, V any](m M) M {
 	clear(m)
 
 	return m
+}
+
+func makeRegistryConfig(cfg *v1alpha1.RegistryConfig) *cri.RegistryConfig {
+	result := &cri.RegistryConfig{}
+
+	if rtls := cfg.RegistryTLS; rtls != nil {
+		result.RegistryTLS = &cri.RegistryTLSConfig{
+			TLSClientIdentity:     rtls.TLSClientIdentity,
+			TLSCA:                 rtls.TLSCA,
+			TLSInsecureSkipVerify: rtls.TLSInsecureSkipVerify,
+		}
+	}
+
+	if rauth := cfg.RegistryAuth; rauth != nil {
+		result.RegistryAuth = &cri.RegistryAuthConfig{
+			RegistryUsername:      rauth.RegistryUsername,
+			RegistryPassword:      rauth.RegistryPassword,
+			RegistryAuth:          rauth.RegistryAuth,
+			RegistryIdentityToken: rauth.RegistryIdentityToken,
+		}
+	}
+
+	return result
 }
