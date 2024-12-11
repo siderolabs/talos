@@ -87,7 +87,11 @@ func (c *Controller) Reboot() error {
 	c.mu.Lock()
 
 	if c.state == PoweredOff {
+		c.state = PoweredOn
+
 		c.mu.Unlock()
+
+		c.commandsCh <- VMCommandStart
 
 		return nil
 	}
