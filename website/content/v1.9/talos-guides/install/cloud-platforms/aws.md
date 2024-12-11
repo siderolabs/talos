@@ -378,13 +378,17 @@ for INSTANCE in ${CP_INSTANCES[@]}; do
 done
 ```
 
-### Bootstrap `etcd`
+### Export the `talosconfig` file
 
 Export the `talosconfig` file so commands sent to Talos will be authenticated.
 
 ```bash
 export TALOSCONFIG=$(pwd)/talosconfig
+```
 
+### Bootstrap `etcd`
+
+```bash
 WORKER_INSTANCES=( $(aws autoscaling \
     describe-auto-scaling-instances \
     --query 'AutoScalingInstances[?AutoScalingGroupName==`talos-aws-tutorial-worker`].InstanceId' \
