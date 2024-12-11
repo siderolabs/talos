@@ -1,6 +1,6 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
 #
-# Generated on 2024-12-06T17:21:12Z by kres 1ebe796.
+# Generated on 2024-12-11T13:30:10Z by kres 8183c20.
 
 name: default
 concurrency:
@@ -2074,6 +2074,7 @@ jobs:
           GITHUB_STEP_NAME: ${{ github.job}}-e2e-controlplane-port
           IMAGE_REGISTRY: registry.dev.siderolabs.io
           SHORT_INTEGRATION_TEST: "yes"
+          WITH_CONFIG_PATCH: '@hack/test/patches/ephemeral-min-max.yaml'
           WITH_CONTROL_PLANE_PORT: "443"
         run: |
           sudo -E make e2e-qemu
