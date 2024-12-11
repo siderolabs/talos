@@ -50,7 +50,10 @@ func (p *provisioner) Reflect(ctx context.Context, clusterName, stateDirectory s
 			res.clusterInfo.Network.GatewayAddrs = append(res.clusterInfo.Network.GatewayAddrs, addr)
 		}
 
-		mtuStr := network.Options["com.docker.network.driver.mtu"]
+		mtuStr, ok := network.Options["com.docker.network.driver.mtu"]
+		if !ok {
+			mtuStr = network.Options["mtu"] // Use the podman version of the option
+		}
 
 		res.clusterInfo.Network.MTU, err = strconv.Atoi(mtuStr)
 		if err != nil {
