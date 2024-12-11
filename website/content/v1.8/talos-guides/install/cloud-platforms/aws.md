@@ -408,13 +408,13 @@ talosctl config nodes $(aws ec2 describe-instances \
 Bootstrap `etcd`:
 
 ```bash
-talosctl bootstrap
+talosctl --talosconfig talosconfig bootstrap
 ```
 
 You can now watch as your cluster bootstraps, by using
 
 ```bash
-talosctl health
+talosctl --talosconfig talosconfig health
 ```
 
 This command will take a few minutes for the nodes to start etcd, reach quarom and start the Kubernetes control plane.
@@ -422,7 +422,7 @@ This command will take a few minutes for the nodes to start etcd, reach quarom a
 You can also watch the performance of a node, via:
 
 ```bash
-talosctl dashboard
+talosctl --talosconfig talosconfig dashboard
 ```
 
 ### Retrieve the `kubeconfig`
@@ -430,7 +430,7 @@ talosctl dashboard
 When the cluster is healthy you can retrieve the admin `kubeconfig` by running:
 
 ```bash
-talosctl kubeconfig .
+talosctl --talosconfig talosconfig kubeconfig .
 export KUBECONFIG=$(pwd)/kubeconfig
 ```
 
