@@ -30,7 +30,7 @@ func Format(ctx context.Context, logger *zap.Logger, volumeContext ManagerContex
 		devPath = volumeContext.Status.Location
 	}
 
-	dev, err := blockdev.NewFromPath(devPath, blockdev.OpenForWrite())
+	dev, err := blockdev.NewFromPath(devPath)
 	if err != nil {
 		return xerrors.NewTaggedf[Retryable]("error opening disk: %w", err)
 	}

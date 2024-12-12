@@ -63,7 +63,7 @@ func (suite *ImageCacheConfigSuite) TestReconcileFeatureEnabled() {
 	suite.Require().NoError(suite.State().Create(suite.Ctx(), cfg))
 
 	ctest.AssertResource(suite, crictrl.VolumeImageCacheISO, func(r *block.VolumeConfig, asrt *assert.Assertions) {
-		asrt.Equal(`volume.name == "iso9660" && volume.label.startsWith("TALOS_")`, r.TypedSpec().Locator.Match.String())
+		asrt.Equal(`volume.name in ["iso9660", "vfat"] && volume.label.startsWith("TALOS_")`, r.TypedSpec().Locator.Match.String())
 	})
 	ctest.AssertResource(suite, crictrl.VolumeImageCacheDISK, func(r *block.VolumeConfig, asrt *assert.Assertions) {
 		asrt.Equal(`volume.partition_label == "IMAGECACHE"`, r.TypedSpec().Locator.Match.String())
