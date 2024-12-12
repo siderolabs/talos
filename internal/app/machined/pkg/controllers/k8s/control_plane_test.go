@@ -6,6 +6,7 @@ package k8s_test
 
 import (
 	"net/url"
+	"slices"
 	"strings"
 	"testing"
 	"time"
@@ -208,16 +209,18 @@ func (suite *K8sControlPlaneSuite) TestReconcileAdditionalAuthorizationConfigAut
 
 	suite.setupMachine(cfg)
 
-	expectedAuthorizers := append(v1alpha1.APIServerDefaultAuthorizationConfigAuthorizers, k8s.AuthorizationAuthorizersSpec{ //nolint:gocritic
-		Type: "Webhook",
-		Name: "webhook",
-		Webhook: map[string]any{
-			"timeout":                    "3s",
-			"subjectAccessReviewVersion": "v1",
-			"matchConditionSubjectAccessReviewVersion": "v1",
-			"failurePolicy": "NoOpinion",
-			"connectionInfo": map[string]any{
-				"type": "InClusterConfig",
+	expectedAuthorizers := slices.Concat(v1alpha1.APIServerDefaultAuthorizationConfigAuthorizers, []k8s.AuthorizationAuthorizersSpec{
+		{
+			Type: "Webhook",
+			Name: "webhook",
+			Webhook: map[string]any{
+				"timeout":                    "3s",
+				"subjectAccessReviewVersion": "v1",
+				"matchConditionSubjectAccessReviewVersion": "v1",
+				"failurePolicy": "NoOpinion",
+				"connectionInfo": map[string]any{
+					"type": "InClusterConfig",
+				},
 			},
 		},
 	})
@@ -280,16 +283,18 @@ func (suite *K8sControlPlaneSuite) TestReconcileAdditionalAuthorizationConfigAut
 
 	suite.setupMachine(cfg)
 
-	expectedAuthorizers := append(v1alpha1.APIServerDefaultAuthorizationConfigAuthorizers, k8s.AuthorizationAuthorizersSpec{ //nolint:gocritic
-		Type: "Webhook",
-		Name: "webhook",
-		Webhook: map[string]any{
-			"timeout":                    "3s",
-			"subjectAccessReviewVersion": "v1",
-			"matchConditionSubjectAccessReviewVersion": "v1",
-			"failurePolicy": "NoOpinion",
-			"connectionInfo": map[string]any{
-				"type": "InClusterConfig",
+	expectedAuthorizers := slices.Concat(v1alpha1.APIServerDefaultAuthorizationConfigAuthorizers, []k8s.AuthorizationAuthorizersSpec{
+		{
+			Type: "Webhook",
+			Name: "webhook",
+			Webhook: map[string]any{
+				"timeout":                    "3s",
+				"subjectAccessReviewVersion": "v1",
+				"matchConditionSubjectAccessReviewVersion": "v1",
+				"failurePolicy": "NoOpinion",
+				"connectionInfo": map[string]any{
+					"type": "InClusterConfig",
+				},
 			},
 		},
 	})
