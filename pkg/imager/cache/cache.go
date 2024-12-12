@@ -149,7 +149,7 @@ func Generate(images []string, platform string, insecure bool, imageLayerCachePa
 			}
 		}
 
-		if err := os.WriteFile(filepath.Join(digestDir, rmt.Digest.String()), manifest, 0o644); err != nil {
+		if err := os.WriteFile(filepath.Join(digestDir, strings.ReplaceAll(rmt.Digest.String(), "sha256:", "sha256-")), manifest, 0o644); err != nil {
 			return err
 		}
 
@@ -182,7 +182,7 @@ func Generate(images []string, platform string, insecure bool, imageLayerCachePa
 			return fmt.Errorf("platform manifest hash: %w", err)
 		}
 
-		if err := os.WriteFile(filepath.Join(digestDir, fmt.Sprintf("sha256:%x", h.Sum(nil))), platformManifest, 0o644); err != nil {
+		if err := os.WriteFile(filepath.Join(digestDir, fmt.Sprintf("sha256-%x", h.Sum(nil))), platformManifest, 0o644); err != nil {
 			return err
 		}
 
@@ -191,7 +191,7 @@ func Generate(images []string, platform string, insecure bool, imageLayerCachePa
 			return fmt.Errorf("getting image config hash: %w", err)
 		}
 
-		if err := os.WriteFile(filepath.Join(tmpDir, blobsDir, configHash.String()), config, 0o644); err != nil {
+		if err := os.WriteFile(filepath.Join(tmpDir, blobsDir, strings.ReplaceAll(configHash.String(), "sha256:", "sha256-")), config, 0o644); err != nil {
 			return err
 		}
 
@@ -244,7 +244,7 @@ func processLayer(layer v1.Layer, dstDir string) error {
 		return fmt.Errorf("getting layer digest: %w", err)
 	}
 
-	blobPath := filepath.Join(dstDir, blobsDir, digest.String())
+	blobPath := filepath.Join(dstDir, blobsDir, strings.ReplaceAll(digest.String(), "sha256:", "sha256-"))
 
 	if _, err := os.Stat(blobPath); err == nil {
 		// we already have this blob, skip it
