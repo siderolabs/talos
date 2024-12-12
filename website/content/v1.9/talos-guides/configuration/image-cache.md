@@ -36,6 +36,9 @@ There are two supported boot asset types for the Image Cache: ISO and disk image
 
 ### ISO
 
+> Note: ISO image cache only works with iso9660 filesystems.
+> If you copy the ISO image to a USB stick, the image cache will not be available.
+
 In case of ISO, the image cache is bundled with a Talos ISO image, it will be available for the initial install and (if configured) copied to the
 disk during the installation process.
 
@@ -43,7 +46,7 @@ The ISO image can built with the [imager]({{< relref "../install/boot-assets#ima
 
 ```bash
 mkdir -p _out/
-docker run --rm -t -v $PWD/_out:/secureboot:ro -v $PWD/_out:/out -v /dev:/dev --privileged ghcr.io/siderolabs/imager:{{< release >}} iso --image-cache ./image-cache.oci
+docker run --rm -t -v $PWD/_out:/secureboot:ro -v $PWD/_out:/out -v $PWD/image-cache.oci:/image-cache.oci:ro -v /dev:/dev --privileged ghcr.io/siderolabs/imager:{{< release >}} iso --image-cache /image-cache.oci
 ```
 
 > Note: If the image cache was pushed to a container registry, the `--image-cache` flag should point to the image reference.
@@ -57,7 +60,7 @@ The disk image can be built with the [imager]({{< relref "../install/boot-assets
 
 ```bash
 mkdir -p _out/
-docker run --rm -t -v $PWD/_out:/secureboot:ro -v $PWD/_out:/out -v /dev:/dev --privileged ghcr.io/siderolabs/imager:{{< release >}} metal --image-cache ./image-cache.tar
+docker run --rm -t -v $PWD/_out:/secureboot:ro -v $PWD/_out:/out -v $PWD/image-cache.oci:/image-cache.oci:ro -v /dev:/dev --privileged ghcr.io/siderolabs/imager:{{< release >}} metal --image-cache /image-cache.oci
 ```
 
 > Note: If the image cache was pushed to a container registry, the `--image-cache` flag should point to the image reference.
@@ -79,7 +82,7 @@ machine:
 
 Once enabled, Talos Linux will automatically look for the image cache contents either on the disk or in the ISO image.
 
-If the image cache is bundled with the ISO image, the disk volume for the image cache should be configured in the Talos configuration to copy the image cache to the disk during the installation process:
+If the image cache is bundled with the ISO, the disk volume size for the image cache should be configured to copy the image cache to the disk during the installation process:
 
 ```yaml
 apiVersion: v1alpha1
@@ -87,13 +90,14 @@ kind: VolumeConfig
 name: IMAGECACHE
 provisioning:
   diskSelector:
-    match: 'system_disk'
+    match: "system_disk"
   minSize: 2GB
   maxSize: 2GB
 ```
 
-In this example, image cache volume is provisioned on the system disk with a fixed size of 2GB.
+In this example, image cache volume is provisioned on the system disk with a fixed size of 2GB (default is 1GB).
 The size of the volume should be adjusted to fit the image cache.
+You can see the size of your cache by looking at the size of the image-cache.oci folder with `du -sh image-cache.oci`.
 
 If the disk image is used, the `IMAGECACHE` volume doesn't need to be configured, as the image cache volume is already present in the disk image.
 
@@ -120,12 +124,13 @@ The current status of the image cache can be checked via the `ImageCacheConfig` 
 ```yaml
 # talosctl get imagecacheconfig -o yaml
 spec:
-    status: ready
-    copyStatus: ready
-    roots:
-        - /system/imagecache/disk
-        - /system/imagecache/iso/imagecache
+  status: ready
+  copyStatus: ready
+  roots:
+    - /system/imagecache/disk
+    - /system/imagecache/iso/imagecache
 ```
 
 The `status` field indicates the readiness of the image cache, and the `copyStatus` field indicates the readiness of the image cache copy.
 The `roots` field contains the paths to the image cache contents, in this example both on-disk and ISO caches are available.
+Image cache roots are used in order they are listed.
