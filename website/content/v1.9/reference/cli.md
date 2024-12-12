@@ -1824,7 +1824,7 @@ talosctl images default | talosctl images cache-create --image-cache-path=/tmp/t
 
 ### SEE ALSO
 
-* [talosctl image](#talosctl-image)	 - Manage CRI containter images
+* [talosctl image](#talosctl-image)	 - Manage CRI container images
 
 ## talosctl image default
 
@@ -1853,7 +1853,7 @@ talosctl image default [flags]
 
 ### SEE ALSO
 
-* [talosctl image](#talosctl-image)	 - Manage CRI containter images
+* [talosctl image](#talosctl-image)	 - Manage CRI container images
 
 ## talosctl image list
 
@@ -1882,7 +1882,7 @@ talosctl image list [flags]
 
 ### SEE ALSO
 
-* [talosctl image](#talosctl-image)	 - Manage CRI containter images
+* [talosctl image](#talosctl-image)	 - Manage CRI container images
 
 ## talosctl image pull
 
@@ -1911,11 +1911,11 @@ talosctl image pull <image> [flags]
 
 ### SEE ALSO
 
-* [talosctl image](#talosctl-image)	 - Manage CRI containter images
+* [talosctl image](#talosctl-image)	 - Manage CRI container images
 
 ## talosctl image
 
-Manage CRI containter images
+Manage CRI container images
 
 ### Options
 
@@ -3230,7 +3230,7 @@ A CLI for out-of-band management of Kubernetes nodes created by Talos
 * [talosctl gen](#talosctl-gen)	 - Generate CAs, certificates, and private keys
 * [talosctl get](#talosctl-get)	 - Get a specific resource or list of resources (use 'talosctl get rd' to see all available resource types).
 * [talosctl health](#talosctl-health)	 - Check cluster health
-* [talosctl image](#talosctl-image)	 - Manage CRI containter images
+* [talosctl image](#talosctl-image)	 - Manage CRI container images
 * [talosctl inject](#talosctl-inject)	 - Inject Talos API resources into Kubernetes manifests
 * [talosctl inspect](#talosctl-inspect)	 - Inspect internals of Talos
 * [talosctl kubeconfig](#talosctl-kubeconfig)	 - Download the admin kubeconfig from the node
