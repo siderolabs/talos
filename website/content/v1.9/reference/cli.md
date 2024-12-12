@@ -198,6 +198,7 @@ talosctl cluster create [flags]
       --skip-kubeconfig                          skip merging kubeconfig from the created cluster
       --talos-version string                     the desired Talos version to generate config for (if not set, defaults to image version)
       --talosconfig string                       The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
+      --usb-path string                          the USB stick image path to use for the initial boot (VM only)
       --use-vip                                  use a virtual IP for the controlplane endpoint instead of the loadbalancer
       --user-disk strings                        list of disks to create for each VM in format: <mount_point1>:<size1>:<mount_point2>:<size2>
       --vmlinuz-path string                      the compressed kernel image to use (default "_out/vmlinuz-${ARCH}")

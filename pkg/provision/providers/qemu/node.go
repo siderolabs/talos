@@ -221,6 +221,7 @@ func (p *provisioner) createNode(state *vm.State, clusterReq provision.ClusterRe
 		launchConfig.KernelImagePath = strings.ReplaceAll(clusterReq.KernelPath, constants.ArchVariable, opts.TargetArch)
 		launchConfig.InitrdPath = strings.ReplaceAll(clusterReq.InitramfsPath, constants.ArchVariable, opts.TargetArch)
 		launchConfig.ISOPath = strings.ReplaceAll(clusterReq.ISOPath, constants.ArchVariable, opts.TargetArch)
+		launchConfig.USBPath = strings.ReplaceAll(clusterReq.USBPath, constants.ArchVariable, opts.TargetArch)
 	}
 
 	launchConfig.StatePath, err = state.StatePath()

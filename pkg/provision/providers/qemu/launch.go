@@ -47,6 +47,7 @@ type LaunchConfig struct {
 	KernelImagePath   string
 	InitrdPath        string
 	ISOPath           string
+	USBPath           string
 	ExtraISOPath      string
 	PFlashImages      []string
 	KernelArgs        string
@@ -439,12 +440,19 @@ func launchVM(config *LaunchConfig) error {
 	}
 
 	if !diskBootable || !config.BootloaderEnabled {
-		if config.ISOPath != "" {
+		switch {
+		case config.ISOPath != "":
 			args = append(args,
 				"-drive",
 				fmt.Sprintf("file=%s,media=cdrom", config.ISOPath),
 			)
-		} else if config.KernelImagePath != "" {
+		case config.USBPath != "":
+			args = append(args,
+				"-drive", fmt.Sprintf("if=none,id=stick,format=raw,file=%s", config.USBPath),
+				"-device", "nec-usb-xhci,id=xhci",
+				"-device", "usb-storage,bus=xhci.0,drive=stick,removable=on",
+			)
+		case config.KernelImagePath != "":
 			args = append(args,
 				"-kernel", config.KernelImagePath,
 				"-initrd", config.InitrdPath,
