@@ -7,6 +7,7 @@ package k8s
 import (
 	"context"
 	"fmt"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -127,20 +128,24 @@ func NewControlPlaneAuthorizationController() *ControlPlaneAuthorizationControll
 					return nil
 				}
 
+				var authorizers []k8s.AuthorizationAuthorizersSpec
+
 				for _, authorizer := range cfgProvider.Cluster().APIServer().AuthorizationConfig() {
 					// skip Node and RBAC authorizers as we add them by default later on.
 					if authorizer.Type() == "Node" || authorizer.Type() == "RBAC" {
 						continue
 					}
 
-					res.TypedSpec().Config = append(res.TypedSpec().Config, k8s.AuthorizationAuthorizersSpec{
-						Type:    authorizer.Type(),
-						Name:    authorizer.Name(),
-						Webhook: authorizer.Webhook(),
+					authorizers = slices.Concat(authorizers, []k8s.AuthorizationAuthorizersSpec{
+						{
+							Type:    authorizer.Type(),
+							Name:    authorizer.Name(),
+							Webhook: authorizer.Webhook(),
+						},
 					})
 				}
 
-				res.TypedSpec().Config = append(v1alpha1.APIServerDefaultAuthorizationConfigAuthorizers, res.TypedSpec().Config...)
+				res.TypedSpec().Config = slices.Concat(v1alpha1.APIServerDefaultAuthorizationConfigAuthorizers, authorizers)
 
 				return nil
 			},
