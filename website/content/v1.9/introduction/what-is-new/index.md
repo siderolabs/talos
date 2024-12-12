@@ -166,7 +166,7 @@ Support for `cgroupsv1` is deprecated, and will be removed in Talos 1.10 (for no
 * containerd: 2.0.0
 * Flannel: 0.26.1
 * Kubernetes: 1.32.0
-* runc: 1.2.2
+* runc: 1.2.3
 * CoreDNS: 1.12.0
 
 Talos is built with Go 1.23.4.
