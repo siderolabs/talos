@@ -29,6 +29,12 @@ cat images.txt | talosctl images cache-create --image-cache-path ./image-cache.o
 
 The OCI image cache directory might be used directly (`./image-cache.oci`) or pushed itself to a container registry of your choice (e.g. with `crane push`).
 
+Example of pushing the OCI image cache directory to a container registry:
+
+```bash
+crane push ./image-cache.oci my.registry/image-cache:my-cache
+```
+
 ## Building Boot Assets
 
 The image cache is provided to Talos via the boot assets.
@@ -43,11 +49,19 @@ The ISO image can built with the [imager]({{< relref "../install/boot-assets#ima
 
 ```bash
 mkdir -p _out/
-docker run --rm -t -v $PWD/_out:/secureboot:ro -v $PWD/_out:/out -v /dev:/dev --privileged ghcr.io/siderolabs/imager:{{< release >}} iso --image-cache ./image-cache.oci
+docker run --rm -t -v $PWD/_out:/secureboot:ro -v $PWD/_out:/out -v $PWD/image-cache.oci:/image-cache.oci:ro -v /dev:/dev --privileged ghcr.io/siderolabs/imager:{{< release >}} iso --image-cache /image-cache.oci
 ```
 
 > Note: If the image cache was pushed to a container registry, the `--image-cache` flag should point to the image reference.
 > SecureBoot ISO is supported as well.
+
+The ISO image can be utilized in the following ways (which allows both booting Talos and using the image cache):
+
+* Using a physical or virtual CD/DVD drive.
+* Copying the ISO image to a USB drive using `dd`.
+* Copying the contents of the ISO image to a FAT-formatted USB drive with a volume label that starts with `TALOS_`, such as `TALOS_1` (only for UEFI systems).
+
+> Note: Third-party boot loaders, such as Ventoy, are not supported as Talos will not be able to access the image cache.
 
 ### Disk Image
 
@@ -57,14 +71,15 @@ The disk image can be built with the [imager]({{< relref "../install/boot-assets
 
 ```bash
 mkdir -p _out/
-docker run --rm -t -v $PWD/_out:/secureboot:ro -v $PWD/_out:/out -v /dev:/dev --privileged ghcr.io/siderolabs/imager:{{< release >}} metal --image-cache ./image-cache.tar
+docker run --rm -t -v $PWD/_out:/secureboot:ro -v $PWD/_out:/out -v $PWD/image-cache.oci:/image-cache.oci:ro -v /dev:/dev --privileged ghcr.io/siderolabs/imager:{{< release >}} metal --image-cache /image-cache.oci
 ```
 
 > Note: If the image cache was pushed to a container registry, the `--image-cache` flag should point to the image reference.
 
-In case of a disk image, the `IMAGECACHE` partition will occupy all the disk image space (except for the mandatory boot partitions), so the disk image size might need to be adjusted
-accordingly with `--image-disk-size` flag, e.g. `--image-disk-size=4GiB`.
-On boot, Talos will expand the disk image to the full disk size.
+For a disk image, the `IMAGECACHE` partition will use all available space on the disk image (excluding the mandatory boot partitions).
+Therefore, you may need to adjust the disk image size using the `--image-disk-size` flag to ensure the `IMAGECACHE` partition is large enough to accommodate the image cache contents, for example, `--image-disk-size=4GiB`.
+
+Upon boot, Talos will expand the disk image to utilize the full disk size.
 
 ## Configuration
 
@@ -79,7 +94,7 @@ machine:
 
 Once enabled, Talos Linux will automatically look for the image cache contents either on the disk or in the ISO image.
 
-If the image cache is bundled with the ISO image, the disk volume for the image cache should be configured in the Talos configuration to copy the image cache to the disk during the installation process:
+If the image cache is bundled with the ISO, the disk volume size for the image cache should be configured to copy the image cache to the disk during the installation process:
 
 ```yaml
 apiVersion: v1alpha1
@@ -92,8 +107,15 @@ provisioning:
   maxSize: 2GB
 ```
 
+The default settings for the `IMAGECACHE` volume are as follows (note that a configuration should still be provided to enable the image cache volume provisioning):
+
+* `minSize: 500MB`
+* `maxSize: 1GB`
+* `diskSelector: match: system_disk`
+
 In this example, image cache volume is provisioned on the system disk with a fixed size of 2GB.
 The size of the volume should be adjusted to fit the image cache.
+You can see the size of your cache by looking at the size of the image-cache.oci folder with `du -sh image-cache.oci`.
 
 If the disk image is used, the `IMAGECACHE` volume doesn't need to be configured, as the image cache volume is already present in the disk image.
 
@@ -120,12 +142,13 @@ The current status of the image cache can be checked via the `ImageCacheConfig` 
 ```yaml
 # talosctl get imagecacheconfig -o yaml
 spec:
-    status: ready
-    copyStatus: ready
-    roots:
-        - /system/imagecache/disk
-        - /system/imagecache/iso/imagecache
+  status: ready
+  copyStatus: ready
+  roots:
+    - /system/imagecache/disk
+    - /system/imagecache/iso/imagecache
 ```
 
 The `status` field indicates the readiness of the image cache, and the `copyStatus` field indicates the readiness of the image cache copy.
 The `roots` field contains the paths to the image cache contents, in this example both on-disk and ISO caches are available.
+Image cache roots are used in order they are listed.
