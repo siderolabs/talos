@@ -11,6 +11,14 @@
 (filecon "/usr/lib/udev/rules.d(/.*)?" any (system_u object_r udev_rules_t (systemLow systemLow)))
 (filecon "/usr/lib/udev(/.*)?" any udev_exec_t)
 
+(type modprobe_exec_t)
+(call system_f (modprobe_exec_t))
+(filecon "/sbin/modprobe" file (system_u object_r modprobe_exec_t (systemLow systemLow)))
+
+(type module_t)
+(call system_f (module_t))
+(filecon "/lib/modules(/.*)?" any (system_u object_r module_t (systemLow systemLow)))
+
 (type udev_t)
 (call service_p (udev_t udev_exec_t))
 
@@ -33,10 +41,31 @@
 ; Typically client pods must not access TPM
 (type tpm_device_t)
 (call protected_device_f (tpm_device_t))
+; TODO: label and restrict block devices
 
-(type modprobe_exec_t)
-(call system_f (modprobe_exec_t))
-(filecon "/sbin/modprobe" file (system_u object_r modprobe_exec_t (systemLow systemLow)))
+; If modprobe is called by machined or kernel do a transition to udev context which has module permissions
 (allow udev_t modprobe_exec_t (file (execute execute_no_trans)))
+(allow udev_t modprobe_exec_t (fs_classes (ro)))
 (typetransition kernel_t modprobe_exec_t process udev_t)
 (typetransition init_t modprobe_exec_t process udev_t)
+
+(allow kernel_t module_t (system (module_load module_request)))
+(allow udev_t module_t (fs_classes (ro)))
+(allow udev_t module_t (system (module_load module_request)))
+(allow udev_t self (capability (sys_module)))
+(allow udev_t self (cap_userns (sys_module)))
+
+; Allow udev to read rules files
+(allow udev_t udev_rules_t (fs_classes (ro)))
+
+; udev rules can set module parameters
+(allow udev_t sys_module_t (fs_classes (rw)))
+
+(allow udev_t device_t (fs_classes (relabelfrom)))
+(allow udev_t device_f (fs_classes (rw relabelto)))
+
+; socket and runtime files
+(allow udev_t run_t (fs_classes (rw)))
+
+; manage properties from rules
+(allow udev_t sysfs_t (fs_classes (rw)))
