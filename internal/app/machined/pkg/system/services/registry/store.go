@@ -11,6 +11,7 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"strings"
 	"syscall"
 	"time"
 
@@ -101,7 +102,7 @@ func (s *singleFileStore) blobPath(dgst digest.Digest) (string, error) {
 		return "", fmt.Errorf("cannot calculate blob path from invalid digest: %v: %w", err, errdefs.ErrInvalidArgument)
 	}
 
-	return filepath.Join(s.path, dgst.String()), nil
+	return filepath.Join(s.path, strings.ReplaceAll(dgst.String(), "sha256:", "sha256-")), nil
 }
 
 var errUnimplemented = errors.New("unimplemented")

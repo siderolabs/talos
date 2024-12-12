@@ -19,6 +19,7 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 
@@ -191,7 +192,9 @@ func (svc *Service) resolveCanonicalRef(p params) (reference.Canonical, error) {
 		return nil, xerrors.NewTaggedf[internalErrorTag]("failed to hash manifest: %w", err)
 	}
 
-	sha256file := filepath.Join("manifests", namedTagged.Name(), "digest", digest.NewDigestFromBytes(digest.SHA256, ntSum).String())
+	digestString := strings.ReplaceAll(digest.NewDigestFromBytes(digest.SHA256, ntSum).String(), "sha256:", "sha256-")
+
+	sha256file := filepath.Join("manifests", namedTagged.Name(), "digest", digestString)
 
 	sSum, err := hashFile(sha256file, svc.root)
 	if err != nil {

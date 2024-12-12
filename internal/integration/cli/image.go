@@ -12,6 +12,7 @@ import (
 	"testing"
 
 	"github.com/siderolabs/gen/xslices"
+	"github.com/stretchr/testify/assert"
 
 	"github.com/siderolabs/talos/internal/integration/base"
 	"github.com/siderolabs/talos/pkg/machinery/config/machine"
@@ -87,13 +88,15 @@ func (suite *ImageSuite) TestCacheCreate() {
 		return "--images=" + image
 	})
 
-	cacheFile := suite.T().TempDir() + "/cache.tar"
+	cacheDir := suite.T().TempDir()
 
-	args := []string{"image", "cache-create", "--image-cache-path", cacheFile}
+	args := []string{"image", "cache-create", "--image-cache-path", cacheDir}
 
 	args = append(args, imagesArgs...)
 
 	suite.RunCLI(args, base.StdoutEmpty(), base.StderrNotEmpty())
+
+	assert.FileExistsf(suite.T(), cacheDir+"/index.json", "index.json should exist in the image cache directory")
 }
 
 func init() {
