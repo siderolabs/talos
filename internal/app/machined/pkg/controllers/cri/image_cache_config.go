@@ -16,6 +16,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/dustin/go-humanize"
+	"github.com/google/cel-go/common/ast"
 	"github.com/google/cel-go/common/operators"
 	"github.com/google/cel-go/common/types"
 	"github.com/siderolabs/gen/optional"
@@ -198,19 +199,26 @@ func (ctrl *ImageCacheConfigController) Run(ctx context.Context, r controller.Ru
 func (ctrl *ImageCacheConfigController) createVolumeConfigISO(ctx context.Context, r controller.ReaderWriter) error {
 	builder := cel.NewBuilder(celenv.VolumeLocator())
 
-	// volume.name == "iso9660" && volume.label.startsWith("TALOS_")
+	// volume.name in ["iso9660", "vfat"] && volume.label.startsWith("TALOS_")
 	expr := builder.NewCall(
 		builder.NextID(),
 		operators.LogicalAnd,
 		builder.NewCall(
 			builder.NextID(),
-			operators.Equals,
+			operators.In,
 			builder.NewSelect(
 				builder.NextID(),
 				builder.NewIdent(builder.NextID(), "volume"),
 				"name",
 			),
-			builder.NewLiteral(builder.NextID(), types.String("iso9660")),
+			builder.NewList(
+				builder.NextID(),
+				[]ast.Expr{
+					builder.NewLiteral(builder.NextID(), types.String("iso9660")),
+					builder.NewLiteral(builder.NextID(), types.String("vfat")),
+				},
+				nil,
+			),
 		),
 		builder.NewMemberCall(
 			builder.NextID(),

@@ -448,7 +448,7 @@ func launchVM(config *LaunchConfig) error {
 			)
 		case config.USBPath != "":
 			args = append(args,
-				"-drive", fmt.Sprintf("if=none,id=stick,format=raw,file=%s", config.USBPath),
+				"-drive", fmt.Sprintf("if=none,id=stick,format=raw,read-only=on,file=%s", config.USBPath),
 				"-device", "nec-usb-xhci,id=xhci",
 				"-device", "usb-storage,bus=xhci.0,drive=stick,removable=on",
 			)
