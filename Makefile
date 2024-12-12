@@ -17,10 +17,10 @@ ZSTD_COMPRESSION_LEVEL ?= 18
 CI_RELEASE_TAG := $(shell git log --oneline --format=%B -n 1 HEAD^2 -- 2>/dev/null | head -n 1 | sed -r "/^release\(.*\)/ s/^release\((.*)\):.*$$/\\1/; t; Q")
 
 ARTIFACTS := _out
-TOOLS ?= ghcr.io/siderolabs/tools:v1.8.0-3-g653182a
+TOOLS ?= ghcr.io/siderolabs/tools:v1.8.0-4-gadfcf5a
 
 PKGS_PREFIX ?= ghcr.io/siderolabs
-PKGS ?= v1.8.0-31-g9c80a4a
+PKGS ?= v1.8.0-38-g0698d6e
 EXTRAS ?= v1.8.0
 
 KRES_IMAGE ?= ghcr.io/siderolabs/kres:latest
@@ -97,7 +97,7 @@ TALOSCTL_EXECUTABLE := $(PWD)/$(ARTIFACTS)/$(TALOSCTL_DEFAULT_TARGET)-$(ARCH)
 INTEGRATION_TEST_DEFAULT_TARGET := integration-test-$(OPERATING_SYSTEM)
 INTEGRATION_TEST_PROVISION_DEFAULT_TARGET := integration-test-provision-$(OPERATING_SYSTEM)
 # renovate: datasource=github-releases depName=kubernetes/kubernetes
-KUBECTL_VERSION ?= v1.31.2
+KUBECTL_VERSION ?= v1.31.4
 # renovate: datasource=github-releases depName=kastenhq/kubestr
 KUBESTR_VERSION ?= v0.4.46
 # renovate: datasource=github-releases depName=helm/helm
