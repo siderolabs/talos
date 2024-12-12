@@ -78,7 +78,7 @@ variable "arch" {
 
 variable "server_type" {
   type    = string
-  default = "cx11"
+  default = "cx22"
 }
 
 variable "server_location" {
@@ -217,19 +217,19 @@ export IMAGE_ID=<your-image-id>
 
 hcloud server create --name talos-control-plane-1 \
     --image ${IMAGE_ID} \
-    --type cx21 --location hel1 \
+    --type cx22 --location hel1 \
     --label 'type=controlplane' \
     --user-data-from-file controlplane.yaml
 
 hcloud server create --name talos-control-plane-2 \
     --image ${IMAGE_ID} \
-    --type cx21 --location fsn1 \
+    --type cx22 --location fsn1 \
     --label 'type=controlplane' \
     --user-data-from-file controlplane.yaml
 
 hcloud server create --name talos-control-plane-3 \
     --image ${IMAGE_ID} \
-    --type cx21 --location nbg1 \
+    --type cx22 --location nbg1 \
     --label 'type=controlplane' \
     --user-data-from-file controlplane.yaml
 ```
@@ -241,7 +241,7 @@ Create the worker nodes with the following command, repeating (and incrementing 
 ```bash
 hcloud server create --name talos-worker-1 \
     --image ${IMAGE_ID} \
-    --type cx21 --location hel1 \
+    --type cx22 --location hel1 \
     --label 'type=worker' \
     --user-data-from-file worker.yaml
 ```
