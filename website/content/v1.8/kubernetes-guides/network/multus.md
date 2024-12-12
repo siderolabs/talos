@@ -144,7 +144,7 @@ If you would like to use KubeVirt and expose your virtual machine to the outside
 
 ## Notes on using Cilium in combination with Multus
 
-Cilium does not ship the CNI reference plugins, which most multus seutps are expecting (e.g. macvlan).
+Cilium does not ship the CNI reference plugins, which most multus setups are expecting (e.g. macvlan).
 This can be addressed by extending the daemonset with an additional init-container, setting them up, e.g. using the following kustomize strategic-merge patch:
 
 ```yaml
