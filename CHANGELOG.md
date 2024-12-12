@@ -1,3 +1,106 @@
+## [Talos 1.8.4](https://github.com/siderolabs/talos/releases/tag/v1.8.4) (2024-12-12)
+
+Welcome to the v1.8.4 release of Talos!
+
+Starting with Talos v1.8.0, only standard assets would be published as github release assets. These include:
+
+* `cloud-images.json`
+* `talosctl` binaries
+* `kernel`
+* `initramfs`
+* `metal` iso and disk images
+* `talosctl-cni-bundle`
+
+All other release assets can be downloaded from [Image Factory](https://www.talos.dev/latest/talos-guides/install/boot-assets/#image-factory).
+
+Please try out the release binaries and report any issues at
+https://github.com/siderolabs/talos/issues.
+
+### Component Updates
+
+Linux: 6.6.64
+runc: 1.2.3
+Kubernetes: 1.31.4
+etcd: 3.5.17
+
+Talos is built with Go 1.22.10.
+
+
+### Contributors
+
+* Andrey Smirnov
+* Dmitriy Matrenichev
+* Christian Luetke-Stetzkamp
+* Noel Georgi
+* OliviaBarrington
+* Steven Kreitzer
+
+### Changes
+<details><summary>16 commits</summary>
+<p>
+
+* [`1fb38e4c7`](https://github.com/siderolabs/talos/commit/1fb38e4c7552b76a531f7cc01713858b22ced1ff) fix: use mtu network option for podman
+* [`acd9fda42`](https://github.com/siderolabs/talos/commit/acd9fda42222a62b1f3210479f3573cc977f3a34) fix: order volume config by the requested size
+* [`c547557ae`](https://github.com/siderolabs/talos/commit/c547557ae678a04cdca371003b7b914f0cd6373d) fix: install iptables-nft to the host
+* [`94b342bfe`](https://github.com/siderolabs/talos/commit/94b342bfe4888be77b286e31cbef055dc34daa4a) fix: lock provisioning order of user disk partitions
+* [`df8fe4cdd`](https://github.com/siderolabs/talos/commit/df8fe4cdda7efce30f7fca16d15c04ad0798e48d) feat: support vlan/bond in v1, vlan in v2 for nocloud
+* [`3a1727ee1`](https://github.com/siderolabs/talos/commit/3a1727ee15e8dd576f6cc6ec650e913fa2e9449d) fix: don't reset health status if service doesn't support health checks
+* [`7ff796f65`](https://github.com/siderolabs/talos/commit/7ff796f65bd07dcbc97cf429c96200a5b3c0baa4) fix: make `system_disk` condition work properly before install
+* [`379eefdd6`](https://github.com/siderolabs/talos/commit/379eefdd618960a4e1942f8221aa09d84d77de20) fix: nocloud network link matching on MAC addresses
+* [`c87ec03ff`](https://github.com/siderolabs/talos/commit/c87ec03ffa70b43b49eac5fbebeb517b03348458) feat: allow for onlink directive (nocloud)
+* [`aa14ae560`](https://github.com/siderolabs/talos/commit/aa14ae560d573acda460dd69692b0f26e9ff6320) fix: small logrus fixes
+* [`b90863a07`](https://github.com/siderolabs/talos/commit/b90863a07629db5e9e9ae7b1fec95fef8cda0d2e) fix: properly halt installation if Talos already installed
+* [`6d20ade14`](https://github.com/siderolabs/talos/commit/6d20ade145c6e1166df49d39afdf46b0f7a67872) fix: make vmware platform common code build on all arches
+* [`bc2d547f8`](https://github.com/siderolabs/talos/commit/bc2d547f85a1709bd5188a709f25e38b9889b50b) fix: allow CEL expressions config merge
+* [`5188f645e`](https://github.com/siderolabs/talos/commit/5188f645eec9bd56f8a3fff75fa63d31640ad0f5) fix: install on non-empty disk
+* [`6f411ccba`](https://github.com/siderolabs/talos/commit/6f411ccba56d560da6aea59acb3d8be52addb81a) feat: update etcd to v3.5.17
+* [`7f91e3165`](https://github.com/siderolabs/talos/commit/7f91e3165721351107055e77a06cdfc98a9c55ea) feat: update Linux 6.6.64, runc 1.2.3
+</p>
+</details>
+
+### Changes from siderolabs/pkgs
+<details><summary>7 commits</summary>
+<p>
+
+* [`0698d6e`](https://github.com/siderolabs/pkgs/commit/0698d6e7cd4fac7d2a79d80c7306db71bbccd95e) chore: bring in KSPP recommendations
+* [`9ab4a32`](https://github.com/siderolabs/pkgs/commit/9ab4a32bdf1e3de9b7f5e37df88741c091aec7ec) feat: update Linux to 6.6.64
+* [`77d6623`](https://github.com/siderolabs/pkgs/commit/77d662317b165f8bef458293b1b3d7eaa38d422b) feat: update runc to v1.2.3
+* [`1afc88c`](https://github.com/siderolabs/pkgs/commit/1afc88cf04e5744098bb3555c9c49a589130ce60) feat: build host iptables with nftables support
+* [`4c15185`](https://github.com/siderolabs/pkgs/commit/4c15185d140edda06579724b9bf08684305c05cb) feat: update Linux to 6.6.62, runc to 1.2.2
+* [`88cc7d4`](https://github.com/siderolabs/pkgs/commit/88cc7d4fc926542f4a0babe9da6d26b8a5b60152) feat: enable CONFIG_INTEL_HFI_THERMAL + CONFIG_INTEL_TURBO_MAX_3
+* [`77a1abb`](https://github.com/siderolabs/pkgs/commit/77a1abbb83dd07470e8fdf4fc1b019cbb4fcabb2) feat: update Go to 1.22.10
+</p>
+</details>
+
+### Changes from siderolabs/tools
+<details><summary>1 commit</summary>
+<p>
+
+* [`adfcf5a`](https://github.com/siderolabs/tools/commit/adfcf5a44a116e50ff1e6892d203973aa14e06e7) feat: update Go to 1.22.10
+</p>
+</details>
+
+### Dependency Changes
+
+* **github.com/siderolabs/go-blockdevice/v2**  v2.0.3 -> v2.0.4
+* **github.com/siderolabs/pkgs**               v1.8.0-31-g9c80a4a -> v1.8.0-38-g0698d6e
+* **github.com/siderolabs/tools**              v1.8.0-3-g653182a -> v1.8.0-4-gadfcf5a
+* **go.etcd.io/etcd/api/v3**                   v3.5.16 -> v3.5.17
+* **go.etcd.io/etcd/client/pkg/v3**            v3.5.16 -> v3.5.17
+* **go.etcd.io/etcd/client/v3**                v3.5.16 -> v3.5.17
+* **go.etcd.io/etcd/etcdutl/v3**               v3.5.16 -> v3.5.17
+* **k8s.io/api**                               v0.31.2 -> v0.31.4
+* **k8s.io/apiserver**                         v0.31.2 -> v0.31.4
+* **k8s.io/client-go**                         v0.31.2 -> v0.31.4
+* **k8s.io/component-base**                    v0.31.2 -> v0.31.4
+* **k8s.io/kube-scheduler**                    v0.31.2 -> v0.31.4
+* **k8s.io/kubectl**                           v0.31.2 -> v0.31.4
+* **k8s.io/kubelet**                           v0.31.2 -> v0.31.4
+* **k8s.io/pod-security-admission**            v0.31.2 -> v0.31.4
+
+Previous release can be found at [v1.8.3](https://github.com/siderolabs/talos/releases/tag/v1.8.3)
+
+
 ## [Talos 1.8.3](https://github.com/siderolabs/talos/releases/tag/v1.8.3) (2024-11-13)
 
 Welcome to the v1.8.3 release of Talos!
