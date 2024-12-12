@@ -122,6 +122,8 @@ func NewState() (*State, error) {
 		&files.EtcFileStatus{},
 		&hardware.MemoryModule{},
 		&hardware.PCIDevice{},
+		&hardware.PCIDriverRebindConfig{},
+		&hardware.PCIDriverRebindStatus{},
 		&hardware.Processor{},
 		&hardware.SystemInformation{},
 		&k8s.AdmissionControlConfig{},

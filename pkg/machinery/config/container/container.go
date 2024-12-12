@@ -210,6 +210,11 @@ func (container *Container) KubespanConfig() config.KubespanConfig {
 	return config.WrapKubespanConfig(findMatchingDocs[config.KubespanConfig](container.documents)...)
 }
 
+// PCIDriverRebindConfig implements config.Config interface.
+func (container *Container) PCIDriverRebindConfig() config.PCIDriverRebindConfig {
+	return config.WrapPCIDriverRebindConfig(findMatchingDocs[config.PCIDriverRebindConfig](container.documents)...)
+}
+
 // Bytes returns source YAML representation (if available) or does default encoding.
 func (container *Container) Bytes() ([]byte, error) {
 	if !container.readonly {
