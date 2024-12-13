@@ -227,10 +227,10 @@ func (suite *NodeAddressSuite) TestSortAlgorithmV2() {
 	suite.Require().NoError(suite.State().Create(suite.Ctx(), sortAlgorithm))
 
 	for _, addr := range []string{
+		"1.2.3.4/26", // insert default address first, otherwise the test would be flaky, as default address is immutable
 		"10.3.4.1/24",
 		"10.3.4.5/24",
 		"10.3.4.5/32",
-		"1.2.3.4/26",
 		"192.168.35.11/24",
 		"192.168.36.10/24",
 		"127.0.0.1/8",
@@ -269,7 +269,7 @@ func (suite *NodeAddressSuite) TestSortAlgorithmV2() {
 				)
 			case network.NodeAddressAccumulativeID:
 				asrt.Equal(
-					"1.2.3.4/26 10.0.0.2/8 10.3.4.1/24 10.3.4.5/32 192.168.3.7/24 192.168.35.11/24 192.168.36.10/24 fd01:cafe::5054:ff:fe1f:c7bd/64 fd01:cafe::f14c:9fa1:8496:557f/128",
+					"1.2.3.4/26 10.3.4.5/32 10.3.4.1/24 10.3.4.5/24 10.0.0.2/8 192.168.3.7/24 192.168.35.11/24 192.168.36.10/24 fd01:cafe::f14c:9fa1:8496:557f/128 fd01:cafe::5054:ff:fe1f:c7bd/64",
 					stringifyIPs(addrs),
 				)
 			}
