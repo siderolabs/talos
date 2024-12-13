@@ -90,7 +90,7 @@ func (suite *ImageSuite) TestCacheCreate() {
 
 	cacheDir := suite.T().TempDir()
 
-	args := []string{"image", "cache-create", "--image-cache-path", cacheDir}
+	args := []string{"image", "cache-create", "--image-cache-path", cacheDir, "--force"}
 
 	args = append(args, imagesArgs...)
 
