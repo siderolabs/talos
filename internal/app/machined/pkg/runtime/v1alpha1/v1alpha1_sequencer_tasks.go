@@ -162,6 +162,21 @@ func SaveConfig(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
 	}, "saveConfig"
 }
 
+// Sleep represents the Sleep task.
+func Sleep(d time.Duration) func(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
+	return func(_ runtime.Sequence, _ any) (runtime.TaskExecutionFunc, string) {
+		return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) error {
+			select {
+			case <-time.After(d):
+			case <-ctx.Done():
+				return ctx.Err()
+			}
+
+			return nil
+		}, "sleep"
+	}
+}
+
 // MemorySizeCheck represents the MemorySizeCheck task.
 func MemorySizeCheck(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) error {
@@ -1646,7 +1661,7 @@ func MountStatePartition(required bool) func(seq runtime.Sequence, _ any) (runti
 				}
 			}
 
-			return mount.SystemPartitionMount(ctx, r, logger, constants.StatePartitionLabel)
+			return mount.SystemPartitionMount(ctx, r, logger, constants.StatePartitionLabel, !required)
 		}, "mountStatePartition"
 	}
 }
@@ -1665,7 +1680,7 @@ func MountEphemeralPartition(runtime.Sequence, any) (runtime.TaskExecutionFunc, 
 			return err
 		}
 
-		return mount.SystemPartitionMount(ctx, r, logger, constants.EphemeralPartitionLabel,
+		return mount.SystemPartitionMount(ctx, r, logger, constants.EphemeralPartitionLabel, false,
 			mountv2.WithProjectQuota(r.Config().Machine().Features().DiskQuotaSupportEnabled()))
 	}, "mountEphemeralPartition"
 }
