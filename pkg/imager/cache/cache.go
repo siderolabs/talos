@@ -43,6 +43,12 @@ func rewriteRegistry(registryName, origRef string) string {
 		return "docker.io"
 	}
 
+	// convert :port to _port_ to support copying image-cache to vfat filesystems
+	idx := strings.LastIndex(registryName, ":")
+	if idx > 0 {
+		return registryName[:idx] + "_" + registryName[idx+1:] + "_"
+	}
+
 	return registryName
 }
 
