@@ -123,7 +123,9 @@ func (svc *Service) handler(w http.ResponseWriter, req *http.Request) error {
 	if p.isBlob {
 		s = &singleFileStore{root: svc.root, path: "blob"}
 	} else {
-		s = &singleFileStore{root: svc.root, path: filepath.Join("manifests", ref.Name(), "digest")}
+		refName := handleRegistryWithPort(ref, p)
+
+		s = &singleFileStore{root: svc.root, path: filepath.Join("manifests", refName, "digest")}
 	}
 
 	info, err := s.Info(req.Context(), ref.Digest())
@@ -181,7 +183,9 @@ func (svc *Service) resolveCanonicalRef(p params) (reference.Canonical, error) {
 		return nil, xerrors.NewTaggedf[internalErrorTag]("incorrect reference type: %T", ref)
 	}
 
-	taggedFile := filepath.Join("manifests", namedTagged.Name(), "reference", namedTagged.Tag())
+	namedTaggedName := handleRegistryWithPort(namedTagged, p)
+
+	taggedFile := filepath.Join("manifests", namedTaggedName, "reference", namedTagged.Tag())
 
 	ntSum, err := hashFile(taggedFile, svc.root)
 	if err != nil {
@@ -194,7 +198,7 @@ func (svc *Service) resolveCanonicalRef(p params) (reference.Canonical, error) {
 
 	digestString := strings.ReplaceAll(digest.NewDigestFromBytes(digest.SHA256, ntSum).String(), "sha256:", "sha256-")
 
-	sha256file := filepath.Join("manifests", namedTagged.Name(), "digest", digestString)
+	sha256file := filepath.Join("manifests", namedTaggedName, "digest", digestString)
 
 	sSum, err := hashFile(sha256file, svc.root)
 	if err != nil {
@@ -209,6 +213,19 @@ func (svc *Service) resolveCanonicalRef(p params) (reference.Canonical, error) {
 		NamedTagged: namedTagged,
 		digest:      digest.NewDigestFromBytes(digest.SHA256, ntSum),
 	}, nil
+}
+
+func handleRegistryWithPort(namedTagged reference.Named, p params) string {
+	namedTaggedName := namedTagged.Name()
+
+	idx := strings.LastIndex(p.registry, ":")
+	if idx > 0 {
+		path := strings.TrimPrefix(namedTaggedName, p.registry)
+
+		namedTaggedName = p.registry[:idx] + "_" + p.registry[idx+1:] + "_" + path
+	}
+
+	return namedTaggedName
 }
 
 func hashFile(f string, where fs.FS) (_ []byte, returnErr error) {
