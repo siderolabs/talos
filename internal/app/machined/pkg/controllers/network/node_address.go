@@ -224,7 +224,7 @@ func (ctrl *NodeAddressController) Run(ctx context.Context, r controller.Runtime
 
 		touchedIDs[network.NodeAddressRoutedID] = struct{}{}
 
-		if err = ctrl.updateAccumulativeAddresses(ctx, r, network.NodeAddressAccumulativeID, accumulative, algo); err != nil {
+		if err = ctrl.updateAccumulativeAddresses(ctx, r, network.NodeAddressAccumulativeID, accumulative, algo, compareFunc); err != nil {
 			return err
 		}
 
@@ -247,7 +247,7 @@ func (ctrl *NodeAddressController) Run(ctx context.Context, r controller.Runtime
 				return err
 			}
 
-			if err = ctrl.updateAccumulativeAddresses(ctx, r, network.FilteredNodeAddressID(network.NodeAddressAccumulativeID, filterID), filteredAccumulative, algo); err != nil {
+			if err = ctrl.updateAccumulativeAddresses(ctx, r, network.FilteredNodeAddressID(network.NodeAddressAccumulativeID, filterID), filteredAccumulative, algo, compareFunc); err != nil {
 				return err
 			}
 
@@ -293,17 +293,17 @@ func (ctrl *NodeAddressController) updateCurrentAddresses(ctx context.Context, r
 	return nil
 }
 
-func (ctrl *NodeAddressController) updateAccumulativeAddresses(ctx context.Context, r controller.Runtime, id resource.ID, accumulative []netip.Prefix, algo nethelpers.AddressSortAlgorithm) error {
+func (ctrl *NodeAddressController) updateAccumulativeAddresses(
+	ctx context.Context, r controller.Runtime, id resource.ID, accumulative []netip.Prefix, algo nethelpers.AddressSortAlgorithm, compare func(a, b netip.Prefix) int,
+) error {
 	if err := safe.WriterModify(ctx, r, network.NewNodeAddress(network.NamespaceName, id), func(r *network.NodeAddress) error {
 		spec := r.TypedSpec()
 
 		for _, ip := range accumulative {
 			// find insert position using binary search
-			pos, _ := slices.BinarySearchFunc(spec.Addresses, ip.Addr(), func(prefix netip.Prefix, addr netip.Addr) int {
-				return prefix.Addr().Compare(ip.Addr())
-			})
+			pos, _ := slices.BinarySearchFunc(spec.Addresses, ip, compare)
 
-			if pos < len(spec.Addresses) && spec.Addresses[pos].Addr().Compare(ip.Addr()) == 0 {
+			if pos < len(spec.Addresses) && compare(spec.Addresses[pos], ip) == 0 {
 				continue
 			}
 
