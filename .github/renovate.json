@@ -1,56 +1,70 @@
 {
     "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+    "description": "THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.\n\nGenerated on 2024-12-16T16:02:13Z by kres a0f541b.\n\n",
+    "prHeader": "Update Request | Renovate Bot",
     "extends": [
         ":dependencyDashboard",
         ":gitSignOff",
         ":semanticCommitScopeDisabled",
         "schedule:earlyMondays"
     ],
-    "prHeader": "Update Request | Renovate Bot",
-    "regexManagers": [
+    "customManagers": [
         {
+            "customType": "regex",
+            "versioningTemplate": "{{#if versioning}}{{versioning}}{{else}}semver{{/if}}",
             "fileMatch": [
                 "Makefile"
             ],
             "matchStrings": [
                 "# renovate: datasource=(?<datasource>.*?)(?:\\s+extractVersion=(?<extractVersion>.+?))?\\s+depName=(?<depName>.+?)\\s.*_VERSION\\s+\\?=\\s+(?<currentValue>.+)"
-            ],
-            "versioningTemplate": "{{#if versioning}}{{versioning}}{{else}}semver{{/if}}"
+            ]
         },
         {
+            "customType": "regex",
+            "versioningTemplate": "{{#if versioning}}{{versioning}}{{else}}semver{{/if}}",
             "fileMatch": [
                 "pkg/machinery/constants/constants.go"
             ],
             "matchStrings": [
                 "\\/\\/\\s+renovate: datasource=(?<datasource>.*?)(?:\\s+extractVersion=(?<extractVersion>.+?))?(?:\\s+versioning=(?<versioning>.+?))?\\s+depName=(?<depName>.+?)?\\s.*Version\\s+=\\s+\\\"(?<currentValue>.+?)\\\""
-            ],
-            "versioningTemplate": "{{#if versioning}}{{versioning}}{{else}}semver{{/if}}"
+            ]
         },
         {
+            "customType": "regex",
+            "versioningTemplate": "{{#if versioning}}{{versioning}}{{else}}semver{{/if}}",
             "fileMatch": [
                 "internal/integration/k8s/constants.go"
             ],
             "matchStrings": [
                 "\\/\\/\\s+renovate: datasource=(?<datasource>.*?)(?:\\s+extractVersion=(?<extractVersion>.+?))?(?:\\s+versioning=(?<versioning>.+?))?\\s+depName=(?<depName>.+?)?(?:\\s+registryUrl=(?<registryUrl>.+?))?\\s.*Version\\s+=\\s+\\\"(?<currentValue>.+?)\\\""
-            ],
-            "versioningTemplate": "{{#if versioning}}{{versioning}}{{else}}semver{{/if}}"
+            ]
         },
         {
+            "customType": "regex",
+            "depNameTemplate": "docker/dockerfile-upstream",
+            "versioningTemplate": "docker",
             "fileMatch": [
                 "Dockerfile"
             ],
             "matchStrings": [
                 "# syntax = docker\\/dockerfile-upstream:(?<currentValue>.*)"
-            ],
-            "depNameTemplate": "docker/dockerfile-upstream",
-            "datasourceTemplate": "docker",
-            "versioningTemplate": "docker"
+            ]
         }
     ],
     "packageRules": [
         {
+            "groupName": "dependencies",
+            "matchUpdateTypes": [
+                "major",
+                "minor",
+                "patch",
+                "pin",
+                "digest"
+            ]
+        },
+        {
             "enabled": false,
-            "matchDatasources": [
+            "matchDataSources": [
                 "docker"
             ],
             "matchFiles": [
@@ -59,7 +73,7 @@
         },
         {
             "enabled": false,
-            "matchDatasources": [
+            "matchDataSources": [
                 "npm"
             ],
             "matchPaths": [
@@ -67,50 +81,11 @@
             ]
         },
         {
+            "versioning": "regex:^(?<major>\\d+)\\.(?<minor>\\d+)",
             "matchPackageNames": [
                 "golang/go"
-            ],
-            "versioning": "regex:^(?<major>\\d+)\\.(?<minor>\\d+)"
-        },
-        {
-            "matchPackagePatterns": [
-                "*"
-            ],
-            "matchDatasources": [
-                "docker"
-            ],
-            "groupName": "container images"
-        },
-        {
-            "matchPackagePatterns": [
-                "*"
-            ],
-            "matchDatasources": [
-                "go",
-                "golang-version"
-            ],
-            "groupName": "go packages"
-        },
-        {
-            "matchPackagePatterns": [
-                "*"
-            ],
-            "matchDatasources": [
-                "npm"
-            ],
-            "groupName": "node packages"
-        },
-        {
-            "matchPackagePatterns": [
-                "*"
-            ],
-            "matchDatasources": [
-                "git-refs",
-                "git-tags",
-                "github-tags",
-                "github-releases"
-            ],
-            "groupName": "releases"
+            ]
         }
-    ]
+    ],
+    "separateMajorMinor": false
 }

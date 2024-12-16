@@ -2188,3 +2188,47 @@ spec:
             TF_SCRIPT_DIR: _out/contrib
             TF_E2E_TEST_TYPE: equinix-metal
             TF_E2E_ACTION: destroy
+---
+kind: common.Renovate
+spec:
+  customManagers:
+    - customType: regex
+      fileMatch:
+        - Makefile
+      matchStrings:
+        - '# renovate: datasource=(?<datasource>.*?)(?:\s+extractVersion=(?<extractVersion>.+?))?\s+depName=(?<depName>.+?)\s.*_VERSION\s+\?=\s+(?<currentValue>.+)'
+      versioningTemplate: "{{#if versioning}}{{versioning}}{{else}}semver{{/if}}"
+    - customType: regex
+      fileMatch:
+        - pkg/machinery/constants/constants.go
+      matchStrings:
+        - '\/\/\s+renovate: datasource=(?<datasource>.*?)(?:\s+extractVersion=(?<extractVersion>.+?))?(?:\s+versioning=(?<versioning>.+?))?\s+depName=(?<depName>.+?)?\s.*Version\s+=\s+\"(?<currentValue>.+?)\"'
+      versioningTemplate: "{{#if versioning}}{{versioning}}{{else}}semver{{/if}}"
+    - customType: regex
+      fileMatch:
+        - internal/integration/k8s/constants.go
+      matchStrings:
+        - '\/\/\s+renovate: datasource=(?<datasource>.*?)(?:\s+extractVersion=(?<extractVersion>.+?))?(?:\s+versioning=(?<versioning>.+?))?\s+depName=(?<depName>.+?)?(?:\s+registryUrl=(?<registryUrl>.+?))?\s.*Version\s+=\s+\"(?<currentValue>.+?)\"'
+      versioningTemplate: "{{#if versioning}}{{versioning}}{{else}}semver{{/if}}"
+    - customType: regex
+      fileMatch:
+        - Dockerfile
+      matchStrings:
+        - '# syntax = docker\/dockerfile-upstream:(?<currentValue>.*)'
+      depNameTemplate: docker/dockerfile-upstream
+      dataSourceTemplate: docker
+      versioningTemplate: docker
+  packageRules:
+    - enabled: false
+      matchDataSources:
+        - docker
+      matchFiles:
+        - hack/test/libvirt/docker-compose.yaml
+    - enabled: false
+      matchDataSources:
+        - npm
+      matchPaths:
+        - website/
+    - matchPackageNames:
+        - golang/go
+      versioning: 'regex:^(?<major>\d+)\.(?<minor>\d+)'
