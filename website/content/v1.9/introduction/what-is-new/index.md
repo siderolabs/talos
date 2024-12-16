@@ -163,7 +163,7 @@ Support for `cgroupsv1` is deprecated, and will be removed in Talos 1.10 (for no
 ## Component Updates
 
 * Linux: 6.12.4
-* containerd: 2.0.0
+* containerd: 2.0.1
 * Flannel: 0.26.1
 * Kubernetes: 1.32.0
 * runc: 1.2.3
