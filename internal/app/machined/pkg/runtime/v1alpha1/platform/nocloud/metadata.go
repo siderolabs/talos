@@ -531,7 +531,7 @@ func (n *Nocloud) applyNetworkConfigV1(ctx context.Context, config *NetworkConfi
 						macAddress = hostInterface.TypedSpec().HardwareAddr.String()
 					}
 
-					if macAddress == ntwrk.Mac {
+					if strings.EqualFold(macAddress, ntwrk.Mac) {
 						name = hostInterface.Metadata().ID()
 						macAddressMatched = true
 
@@ -795,7 +795,7 @@ func (n *Nocloud) applyNetworkConfigV2(ctx context.Context, config *NetworkConfi
 					macAddress = hostInterface.TypedSpec().HardwareAddr.String()
 				}
 
-				if macAddress == eth.Match.HWAddr {
+				if strings.EqualFold(macAddress, eth.Match.HWAddr) {
 					name = hostInterface.Metadata().ID()
 					macAddressMatched = true
 
