@@ -1,6 +1,6 @@
 {
     "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-    "description": "THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.\n\nGenerated on 2024-12-16T16:02:13Z by kres a0f541b.\n\n",
+    "description": "THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.\n\nGenerated on 2024-12-16T17:19:33Z by kres 318187b.\n\n",
     "prHeader": "Update Request | Renovate Bot",
     "extends": [
         ":dependencyDashboard",
@@ -64,20 +64,8 @@
         },
         {
             "enabled": false,
-            "matchDataSources": [
-                "docker"
-            ],
-            "matchFiles": [
-                "hack/test/libvirt/docker-compose.yaml"
-            ]
-        },
-        {
-            "enabled": false,
-            "matchDataSources": [
-                "npm"
-            ],
-            "matchPaths": [
-                "website/"
+            "matchFileNames": [
+                "website/**"
             ]
         },
         {
