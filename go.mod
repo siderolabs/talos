@@ -61,7 +61,7 @@ require (
 	github.com/cenkalti/backoff/v4 v4.3.0
 	github.com/containerd/cgroups/v3 v3.0.4
 	github.com/containerd/containerd/api v1.8.0
-	github.com/containerd/containerd/v2 v2.0.0
+	github.com/containerd/containerd/v2 v2.0.1
 	github.com/containerd/errdefs v1.0.0
 	github.com/containerd/log v0.1.0
 	github.com/containerd/platforms v1.0.0-rc.0
@@ -234,7 +234,7 @@ require (
 	github.com/containerd/continuity v0.4.4 // indirect
 	github.com/containerd/errdefs/pkg v0.3.0 // indirect
 	github.com/containerd/fifo v1.1.0 // indirect
-	github.com/containerd/go-cni v1.1.10 // indirect
+	github.com/containerd/go-cni v1.1.11 // indirect
 	github.com/containerd/plugin v1.0.0 // indirect
 	github.com/containerd/stargz-snapshotter/estargz v0.14.3 // indirect
 	github.com/containerd/ttrpc v1.2.6 // indirect

@@ -129,8 +129,8 @@ github.com/containerd/cgroups/v3 v3.0.4 h1:2fs7l3P0Qxb1nKWuJNFiwhp2CqiKzho71DQkD
 github.com/containerd/cgroups/v3 v3.0.4/go.mod h1:SA5DLYnXO8pTGYiAHXz94qvLQTKfVM5GEVisn4jpins=
 github.com/containerd/containerd/api v1.8.0 h1:hVTNJKR8fMc/2Tiw60ZRijntNMd1U+JVMyTRdsD2bS0=
 github.com/containerd/containerd/api v1.8.0/go.mod h1:dFv4lt6S20wTu/hMcP4350RL87qPWLVa/OHOwmmdnYc=
-github.com/containerd/containerd/v2 v2.0.0 h1:qLDdFaAykQrIyLiqwQrNLLz95wiC36bAZVwioUwqShM=
-github.com/containerd/containerd/v2 v2.0.0/go.mod h1:j25kDy9P48/ngb1sxWIFfK6GsnqOHoSqo1EpAod20VQ=
+github.com/containerd/containerd/v2 v2.0.1 h1:xqSar9cjkGhfQ2YvanCu7FMLk6+pNCFMCAroM2ALPp0=
+github.com/containerd/containerd/v2 v2.0.1/go.mod h1:A9DyAg+lXTiSBOsBTqQtJL4O3AGaM1aa4UHmVh4uFhM=
 github.com/containerd/continuity v0.4.4 h1:/fNVfTJ7wIl/YPMHjf+5H32uFhl63JucB34PlCpMKII=
 github.com/containerd/continuity v0.4.4/go.mod h1:/lNJvtJKUQStBzpVQ1+rasXO1LAWtUQssk28EZvJ3nE=
 github.com/containerd/errdefs v1.0.0 h1:tg5yIfIlQIrxYtu9ajqY42W3lpS19XqdxRQeEwYG8PI=
@@ -139,8 +139,8 @@ github.com/containerd/errdefs/pkg v0.3.0 h1:9IKJ06FvyNlexW690DXuQNx2KA2cUJXx151X
 github.com/containerd/errdefs/pkg v0.3.0/go.mod h1:NJw6s9HwNuRhnjJhM7pylWwMyAkmCQvQ4GpJHEqRLVk=
 github.com/containerd/fifo v1.1.0 h1:4I2mbh5stb1u6ycIABlBw9zgtlK8viPI9QkQNRQEEmY=
 github.com/containerd/fifo v1.1.0/go.mod h1:bmC4NWMbXlt2EZ0Hc7Fx7QzTFxgPID13eH0Qu+MAb2o=
-github.com/containerd/go-cni v1.1.10 h1:c2U73nld7spSWfiJwSh/8W9DK+/qQwYM2rngIhCyhyg=
-github.com/containerd/go-cni v1.1.10/go.mod h1:/Y/sL8yqYQn1ZG1om1OncJB1W4zN3YmjfP/ShCzG/OY=
+github.com/containerd/go-cni v1.1.11 h1:fWt1K15AmSLsEfa57N+qYw4NeGPiQKYq1pjNGJwV9mc=
+github.com/containerd/go-cni v1.1.11/go.mod h1:/Y/sL8yqYQn1ZG1om1OncJB1W4zN3YmjfP/ShCzG/OY=
 github.com/containerd/log v0.1.0 h1:TCJt7ioM2cr/tfR8GPbGf9/VRAX8D2B4PjzCpfX540I=
 github.com/containerd/log v0.1.0/go.mod h1:VRRf09a7mHDIRezVKTRCrOq78v577GXq3bSa3EhrzVo=
 github.com/containerd/platforms v1.0.0-rc.0 h1:GuHWSKgVVO3POn6nRBB4sH63uPOLa87yuuhsGLWaXAA=
