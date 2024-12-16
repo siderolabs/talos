@@ -346,7 +346,28 @@ func (ctrl *VolumeManagerController) Run(ctx context.Context, r controller.Runti
 			}
 
 			if prevPhase != volumeStatus.Phase || err != nil {
-				volumeLogger.Info("volume status", zap.String("phase", fmt.Sprintf("%s -> %s", prevPhase, volumeStatus.Phase)), zap.Error(err))
+				fields := []zap.Field{
+					zap.String("phase", fmt.Sprintf("%s -> %s", prevPhase, volumeStatus.Phase)),
+					zap.Error(err),
+				}
+
+				if volumeStatus.Location != "" {
+					fields = append(fields, zap.String("location", volumeStatus.Location))
+				}
+
+				if volumeStatus.MountLocation != "" && volumeStatus.MountLocation != volumeStatus.Location {
+					fields = append(fields, zap.String("mountLocation", volumeStatus.MountLocation))
+				}
+
+				if volumeStatus.ParentLocation != "" {
+					fields = append(fields, zap.String("parentLocation", volumeStatus.ParentLocation))
+				}
+
+				if len(volumeStatus.EncryptionFailedSyncs) > 0 {
+					fields = append(fields, zap.Strings("encryptionFailedSyncs", volumeStatus.EncryptionFailedSyncs))
+				}
+
+				volumeLogger.Info("volume status", fields...)
 			}
 
 			allClosed = allClosed && volumeStatus.Phase == block.VolumePhaseClosed
