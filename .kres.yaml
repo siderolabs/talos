@@ -2220,15 +2220,8 @@ spec:
       versioningTemplate: docker
   packageRules:
     - enabled: false
-      matchDataSources:
-        - docker
-      matchFiles:
-        - hack/test/libvirt/docker-compose.yaml
-    - enabled: false
-      matchDataSources:
-        - npm
-      matchPaths:
-        - website/
+      matchFileNames:
+        - "website/**"
     - matchPackageNames:
         - golang/go
       versioning: 'regex:^(?<major>\d+)\.(?<minor>\d+)'
