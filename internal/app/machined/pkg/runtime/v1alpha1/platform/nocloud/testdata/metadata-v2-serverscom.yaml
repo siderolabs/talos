@@ -43,7 +43,7 @@ ethernets:
       macaddress: 68:05:ca:b8:f1:f9
   ext0:
     match:
-      macaddress: 3c:ec:ef:e0:45:28
+      macaddress: 3c:ec:EF:e0:45:28
   ext1:
     match:
-      macaddress: 3c:ec:ef:e0:45:29
+      macaddress: 3c:EC:ef:e0:45:29
