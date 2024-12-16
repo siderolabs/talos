@@ -389,6 +389,11 @@ The above can be combined exchanged with for example Method 3 to host arbitrary 
 - There are some gotchas when using Talos and Cilium on the Google cloud platform when using internal load balancers.
 For more details: [GCP ILB support / support scope local routes to be configured](https://github.com/siderolabs/talos/issues/4109)
 
+- When using Talos `forwardKubeDNSToHost=true` option (which is enabled by default) in combination with cilium `bpf.masquerade=true`.
+There is a known issue that causes `CoreDNS` to not work correctly.
+As a workaround, configuring `forwardKubeDNSToHost=false` resolves the issue.
+For more details see [the discusssion here](https://github.com/siderolabs/talos/pull/9200)
+
 ## Other things to know
 
 - After installing Cilium, `cilium connectivity test` might hang and/or fail with errors similar to
