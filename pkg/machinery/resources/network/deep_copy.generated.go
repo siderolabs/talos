@@ -87,6 +87,10 @@ func (o LinkSpecSpec) DeepCopy() LinkSpecSpec {
 // DeepCopy generates a deep copy of LinkStatusSpec.
 func (o LinkStatusSpec) DeepCopy() LinkStatusSpec {
 	var cp LinkStatusSpec = o
+	if o.AltNames != nil {
+		cp.AltNames = make([]string, len(o.AltNames))
+		copy(cp.AltNames, o.AltNames)
+	}
 	if o.HardwareAddr != nil {
 		cp.HardwareAddr = make([]byte, len(o.HardwareAddr))
 		copy(cp.HardwareAddr, o.HardwareAddr)

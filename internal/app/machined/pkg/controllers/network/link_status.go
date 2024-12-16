@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"net"
 	"os"
+	"slices"
 
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
@@ -17,6 +18,7 @@ import (
 	"github.com/jsimonetti/rtnetlink/v2"
 	"github.com/mdlayher/ethtool"
 	ethtoolioctl "github.com/safchain/ethtool"
+	"github.com/siderolabs/go-pointer"
 	"go.uber.org/zap"
 	"golang.org/x/sys/unix"
 	"golang.zx2c4.com/wireguard/wgctrl"
@@ -225,6 +227,8 @@ func (ctrl *LinkStatusController) reconcile(
 		if err = safe.WriterModify(ctx, r, network.NewLinkStatus(network.NamespaceName, link.Attributes.Name), func(r *network.LinkStatus) error {
 			status := r.TypedSpec()
 
+			status.Alias = pointer.SafeDeref(link.Attributes.Alias)
+			status.AltNames = slices.Clone(link.Attributes.AltNames)
 			status.Index = link.Index
 			status.HardwareAddr = nethelpers.HardwareAddr(link.Attributes.Address)
 			status.PermanentAddr = nethelpers.HardwareAddr(permanentAddr)

@@ -9,6 +9,7 @@ import (
 	"context"
 	"fmt"
 	"math/rand/v2"
+	"net"
 	"net/netip"
 	"os"
 	"sync"
@@ -21,6 +22,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/cosi-project/runtime/pkg/state/impl/inmem"
 	"github.com/cosi-project/runtime/pkg/state/impl/namespaced"
+	"github.com/jsimonetti/rtnetlink/v2"
 	"github.com/siderolabs/gen/xslices"
 	"github.com/siderolabs/go-retry/retry"
 	"github.com/stretchr/testify/require"
@@ -322,6 +324,155 @@ func (suite *LinkSpecSuite) TestVLAN() {
 					[]string{vlanName1}, func(r *network.LinkStatus) error {
 						if r.TypedSpec().VLAN.VID != 42 {
 							return retry.ExpectedErrorf("vlan ID is not 42: %d", r.TypedSpec().VLAN.VID)
+						}
+
+						return nil
+					},
+				)
+			},
+		),
+	)
+
+	// teardown the links
+	for _, r := range []resource.Resource{vlan1, vlan2, dummy} {
+		for {
+			ready, err := suite.state.Teardown(suite.ctx, r.Metadata())
+			suite.Require().NoError(err)
+
+			if ready {
+				break
+			}
+
+			time.Sleep(100 * time.Millisecond)
+		}
+	}
+
+	suite.Assert().NoError(
+		retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
+			func() error {
+				return suite.assertNoInterface(dummyInterface)
+			},
+		),
+	)
+}
+
+//nolint:gocyclo
+func (suite *LinkSpecSuite) TestVLANViaAlias() {
+	dummyInterface := suite.uniqueDummyInterface()
+
+	dummy := network.NewLinkSpec(network.NamespaceName, dummyInterface)
+	*dummy.TypedSpec() = network.LinkSpecSpec{
+		Name:        dummyInterface,
+		Type:        nethelpers.LinkEther,
+		Kind:        "dummy",
+		Up:          true,
+		Logical:     true,
+		ConfigLayer: network.ConfigDefault,
+	}
+
+	suite.Require().NoError(suite.state.Create(suite.ctx, dummy), "%v", dummy.Spec())
+
+	// create dummy interface, and create an alias for it manually
+	suite.Assert().NoError(
+		retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
+			func() error {
+				return suite.assertInterfaces(
+					[]string{dummyInterface}, func(r *network.LinkStatus) error {
+						suite.Assert().Equal("dummy", r.TypedSpec().Kind)
+
+						if r.TypedSpec().OperationalState != nethelpers.OperStateUnknown && r.TypedSpec().OperationalState != nethelpers.OperStateUp {
+							return retry.ExpectedErrorf("link is not up")
+						}
+
+						return nil
+					},
+				)
+			},
+		),
+	)
+
+	conn, err := rtnetlink.Dial(nil)
+	suite.Require().NoError(err)
+
+	defer conn.Close() //nolint:errcheck
+
+	iface, err := net.InterfaceByName(dummyInterface)
+	suite.Require().NoError(err)
+
+	dummyAlias := suite.uniqueDummyInterface()
+
+	suite.Require().NoError(
+		conn.Link.Set(
+			&rtnetlink.LinkMessage{
+				Index: uint32(iface.Index),
+				Attributes: &rtnetlink.LinkAttributes{
+					Alias: &dummyAlias,
+				},
+			},
+		),
+	)
+
+	vlanName1 := fmt.Sprintf("%s.%d", dummyAlias, 2)
+	vlan1 := network.NewLinkSpec(network.NamespaceName, vlanName1)
+	*vlan1.TypedSpec() = network.LinkSpecSpec{
+		Name:        vlanName1,
+		Type:        nethelpers.LinkEther,
+		Kind:        network.LinkKindVLAN,
+		Up:          true,
+		Logical:     true,
+		ParentName:  dummyAlias,
+		ConfigLayer: network.ConfigDefault,
+		VLAN: network.VLANSpec{
+			VID:      2,
+			Protocol: nethelpers.VLANProtocol8021Q,
+		},
+	}
+
+	vlanName2 := fmt.Sprintf("%s.%d", dummyAlias, 4)
+	vlan2 := network.NewLinkSpec(network.NamespaceName, vlanName2)
+	*vlan2.TypedSpec() = network.LinkSpecSpec{
+		Name:        vlanName2,
+		Type:        nethelpers.LinkEther,
+		Kind:        network.LinkKindVLAN,
+		Up:          true,
+		Logical:     true,
+		ParentName:  dummyAlias,
+		ConfigLayer: network.ConfigDefault,
+		VLAN: network.VLANSpec{
+			VID:      4,
+			Protocol: nethelpers.VLANProtocol8021Q,
+		},
+	}
+
+	for _, res := range []resource.Resource{vlan1, vlan2} {
+		suite.Require().NoError(suite.state.Create(suite.ctx, res), "%v", res.Spec())
+	}
+
+	suite.Assert().NoError(
+		retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
+			func() error {
+				return suite.assertInterfaces(
+					[]string{dummyInterface, vlanName1, vlanName2}, func(r *network.LinkStatus) error {
+						switch r.Metadata().ID() {
+						case dummyInterface:
+							suite.Assert().Equal("dummy", r.TypedSpec().Kind)
+
+							if r.TypedSpec().Alias != dummyAlias {
+								return retry.ExpectedErrorf("alias is not %s: %s", dummyAlias, r.TypedSpec().Alias)
+							}
+						case vlanName1, vlanName2:
+							suite.Assert().Equal(network.LinkKindVLAN, r.TypedSpec().Kind)
+							suite.Assert().Equal(nethelpers.VLANProtocol8021Q, r.TypedSpec().VLAN.Protocol)
+
+							if r.Metadata().ID() == vlanName1 {
+								suite.Assert().EqualValues(2, r.TypedSpec().VLAN.VID)
+							} else {
+								suite.Assert().EqualValues(4, r.TypedSpec().VLAN.VID)
+							}
+						}
+
+						if r.TypedSpec().OperationalState != nethelpers.OperStateUnknown && r.TypedSpec().OperationalState != nethelpers.OperStateUp {
+							return retry.ExpectedErrorf("link is not up")
 						}
 
 						return nil

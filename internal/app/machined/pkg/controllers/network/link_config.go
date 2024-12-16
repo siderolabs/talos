@@ -183,27 +183,42 @@ func (ctrl *LinkConfigController) Run(ctx context.Context, r controller.Runtime,
 			return fmt.Errorf("error listing link statuses: %w", err)
 		}
 
+	outer:
 		for _, item := range list.Items {
 			linkStatus := item.(*network.LinkStatus) //nolint:forcetypeassert
 
-			if _, configured := configuredLinks[linkStatus.Metadata().ID()]; !configured {
-				if linkStatus.TypedSpec().Physical() {
-					var ids []string
+			if _, configured := configuredLinks[linkStatus.Metadata().ID()]; configured {
+				continue
+			}
 
-					ids, err = ctrl.apply(ctx, r, []network.LinkSpecSpec{
-						{
-							Name:        linkStatus.Metadata().ID(),
-							Up:          true,
-							ConfigLayer: network.ConfigDefault,
-						},
-					})
-					if err != nil {
-						return fmt.Errorf("error applying default link up: %w", err)
-					}
+			if linkStatus.TypedSpec().Alias != "" {
+				if _, configured := configuredLinks[linkStatus.TypedSpec().Alias]; configured {
+					continue
+				}
+			}
 
-					for _, id := range ids {
-						touchedIDs[id] = struct{}{}
-					}
+			for _, altName := range linkStatus.TypedSpec().AltNames {
+				if _, configured := configuredLinks[altName]; configured {
+					continue outer
+				}
+			}
+
+			if linkStatus.TypedSpec().Physical() {
+				var ids []string
+
+				ids, err = ctrl.apply(ctx, r, []network.LinkSpecSpec{
+					{
+						Name:        linkStatus.Metadata().ID(),
+						Up:          true,
+						ConfigLayer: network.ConfigDefault,
+					},
+				})
+				if err != nil {
+					return fmt.Errorf("error applying default link up: %w", err)
+				}
+
+				for _, id := range ids {
+					touchedIDs[id] = struct{}{}
 				}
 			}
 		}

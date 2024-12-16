@@ -238,6 +238,74 @@ func (suite *AddressSpecSuite) TestDummy() {
 	}
 }
 
+func (suite *AddressSpecSuite) TestDummyAlias() {
+	dummyInterface := suite.uniqueDummyInterface()
+	dummyAlias := suite.uniqueDummyInterface()
+
+	suite.T().Logf("dummyInterface: %s, dummyAlias: %s", dummyInterface, dummyAlias)
+
+	conn, err := rtnetlink.Dial(nil)
+	suite.Require().NoError(err)
+
+	defer conn.Close() //nolint:errcheck
+
+	dummy := network.NewAddressSpec(network.NamespaceName, "dummy/10.0.0.5/8")
+	*dummy.TypedSpec() = network.AddressSpecSpec{
+		Address:     netip.MustParsePrefix("10.0.0.5/8"),
+		LinkName:    dummyAlias, // use alias name instead of the actual interface name
+		Family:      nethelpers.FamilyInet4,
+		Scope:       nethelpers.ScopeGlobal,
+		ConfigLayer: network.ConfigDefault,
+		Flags:       nethelpers.AddressFlags(nethelpers.AddressPermanent),
+	}
+
+	// it's fine to create the address before the interface is actually created
+	for _, res := range []resource.Resource{dummy} {
+		suite.Require().NoError(suite.state.Create(suite.ctx, res), "%v", res.Spec())
+	}
+
+	// create dummy interface
+	suite.Require().NoError(
+		conn.Link.New(
+			&rtnetlink.LinkMessage{
+				Type: unix.ARPHRD_ETHER,
+				Attributes: &rtnetlink.LinkAttributes{
+					Name: dummyInterface,
+					MTU:  1400,
+					Info: &rtnetlink.LinkInfo{
+						Kind: "dummy",
+					},
+				},
+			},
+		),
+	)
+
+	iface, err := net.InterfaceByName(dummyInterface)
+	suite.Require().NoError(err)
+
+	// set alias name
+	suite.Require().NoError(
+		conn.Link.Set(
+			&rtnetlink.LinkMessage{
+				Index: uint32(iface.Index),
+				Attributes: &rtnetlink.LinkAttributes{
+					Alias: &dummyAlias,
+				},
+			},
+		),
+	)
+
+	defer conn.Link.Delete(uint32(iface.Index)) //nolint:errcheck
+
+	suite.Assert().NoError(
+		retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
+			func() error {
+				return suite.assertLinkAddress(dummyInterface, "10.0.0.5/8")
+			},
+		),
+	)
+}
+
 func (suite *AddressSpecSuite) TearDownTest() {
 	suite.T().Log("tear down")
 

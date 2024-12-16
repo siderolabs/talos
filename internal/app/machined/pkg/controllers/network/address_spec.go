@@ -11,12 +11,14 @@ import (
 	"net"
 	"net/netip"
 	"os"
+	"slices"
 
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/jsimonetti/rtnetlink/v2"
 	"github.com/mdlayher/arp"
+	"github.com/siderolabs/go-pointer"
 	"go.uber.org/zap"
 	"go4.org/netipx"
 	"golang.org/x/sys/unix"
@@ -117,8 +119,24 @@ func (ctrl *AddressSpecController) Run(ctx context.Context, r controller.Runtime
 }
 
 func resolveLinkName(links []rtnetlink.LinkMessage, linkName string) uint32 {
+	if linkName == "" {
+		return 0 // should never match
+	}
+
+	// first, lookup by name
 	for _, link := range links {
 		if link.Attributes.Name == linkName {
+			return link.Index
+		}
+	}
+
+	// then, lookup by alias/altname
+	for _, link := range links {
+		if pointer.SafeDeref(link.Attributes.Alias) == linkName {
+			return link.Index
+		}
+
+		if slices.Index(link.Attributes.AltNames, linkName) != -1 {
 			return link.Index
 		}
 	}
