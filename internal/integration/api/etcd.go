@@ -26,7 +26,7 @@ import (
 
 // EtcdSuite ...
 type EtcdSuite struct {
-	base.APISuite
+	base.K8sSuite
 
 	ctx       context.Context //nolint:containedctx
 	ctxCancel context.CancelFunc
@@ -151,6 +151,7 @@ func (suite *EtcdSuite) TestLeaveCluster() {
 
 			return err
 		}, 10*time.Minute,
+		suite.CleanupFailedPods,
 	)
 }
 
@@ -259,6 +260,7 @@ func (suite *EtcdSuite) TestRemoveMember() {
 
 			return err
 		}, 10*time.Minute,
+		suite.CleanupFailedPods,
 	)
 }
 

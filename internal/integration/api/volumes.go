@@ -277,6 +277,7 @@ func (suite *VolumesSuite) TestLVMActivation() {
 		suite.ctx, node, func(nodeCtx context.Context) error {
 			return base.IgnoreGRPCUnavailable(suite.Client.Reboot(nodeCtx))
 		}, 5*time.Minute,
+		suite.CleanupFailedPods,
 	)
 
 	suite.T().Logf("verifying LVM activation %s/%s", node, nodeName)

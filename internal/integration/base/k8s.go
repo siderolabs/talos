@@ -111,6 +111,35 @@ func (k8sSuite *K8sSuite) GetK8sNodeByInternalIP(ctx context.Context, internalIP
 	return nil, fmt.Errorf("node with internal IP %s not found", internalIP)
 }
 
+// CleanupFailedPods deletes all pods in kube-system namespace with the status Failed.
+func (k8sSuite *K8sSuite) CleanupFailedPods(ctx context.Context, internalIP string) {
+	nodeName, err := k8sSuite.GetK8sNodeByInternalIP(ctx, internalIP)
+	if err != nil {
+		k8sSuite.T().Logf("failed to get node by internal IP %s: %v", internalIP, err)
+
+		return
+	}
+
+	pods, err := k8sSuite.Clientset.CoreV1().Pods("kube-system").List(ctx, metav1.ListOptions{
+		FieldSelector: fields.OneTermEqualSelector("spec.nodeName", nodeName.Name).String(),
+	})
+	if err != nil {
+		k8sSuite.T().Logf("failed to list pods in kube-system namespace: %v", err)
+
+		return
+	}
+
+	for _, pod := range pods.Items {
+		if pod.Status.Phase == corev1.PodFailed {
+			if err := k8sSuite.Clientset.CoreV1().Pods("kube-system").Delete(ctx, pod.Name, metav1.DeleteOptions{}); err != nil {
+				k8sSuite.T().Logf("failed to delete pod %s: %v", pod.Name, err)
+			} else {
+				k8sSuite.T().Logf("deleted pod %s", pod.Name)
+			}
+		}
+	}
+}
+
 // WaitForK8sNodeReadinessStatus waits for node to have the given status.
 // It retries until the node with the name is found and matches the expected condition.
 func (k8sSuite *K8sSuite) WaitForK8sNodeReadinessStatus(ctx context.Context, nodeName string, checkFn func(corev1.ConditionStatus) bool) error {
