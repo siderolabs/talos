@@ -2217,7 +2217,7 @@ spec:
       matchStrings:
         - '# syntax = docker\/dockerfile-upstream:(?<currentValue>.*)'
       depNameTemplate: docker/dockerfile-upstream
-      dataSourceTemplate: docker
+      datasourceTemplate: docker
       versioningTemplate: docker
   packageRules:
     - enabled: false
