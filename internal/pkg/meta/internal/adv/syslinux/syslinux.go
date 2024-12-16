@@ -7,6 +7,7 @@ package syslinux
 
 import (
 	"encoding/binary"
+	"fmt"
 	"io"
 
 	"github.com/siderolabs/talos/internal/pkg/meta/internal/adv"
@@ -38,12 +39,12 @@ func NewADV(r io.ReadSeeker) (adv ADV, err error) {
 
 	_, err = r.Seek(-2*AdvSize, io.SeekEnd)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to seek for syslinux adv: %w", err)
 	}
 
 	_, err = io.ReadFull(r, b)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to read syslinux adv: %w", err)
 	}
 
 	adv = b

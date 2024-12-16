@@ -146,6 +146,8 @@ func (meta *Meta) Reload(ctx context.Context) error {
 		defer parentDev.Unlock() //nolint:errcheck
 	}
 
+	meta.opts.printer("META: loading from %s", path)
+
 	f, err := os.Open(path)
 	if err != nil {
 		return err
@@ -160,12 +162,12 @@ func (meta *Meta) Reload(ctx context.Context) error {
 	adv, err := talos.NewADV(f)
 	if adv == nil && err != nil {
 		// if adv is not nil, but err is nil, it might be missing ADV, ignore it
-		return err
+		return fmt.Errorf("failed to load Talos adv: %w", err)
 	}
 
 	legacyAdv, err := syslinux.NewADV(f)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to load syslinux adv: %w", err)
 	}
 
 	// copy values from in-memory to on-disk version
@@ -243,6 +245,8 @@ func (meta *Meta) Flush() error {
 
 		defer parentDev.Unlock() //nolint:errcheck
 	}
+
+	meta.opts.printer("META: saving to %s", path)
 
 	f, err := os.OpenFile(path, os.O_RDWR, 0)
 	if err != nil {
