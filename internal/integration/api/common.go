@@ -201,6 +201,7 @@ func (suite *CommonSuite) TestBaseOCISpec() {
 
 			return nil
 		}, assertRebootedRebootTimeout,
+		suite.CleanupFailedPods,
 	)
 
 	suite.ClearConnectionRefused(suite.ctx, node)
@@ -239,6 +240,7 @@ func (suite *CommonSuite) TestBaseOCISpec() {
 
 			return nil
 		}, assertRebootedRebootTimeout,
+		suite.CleanupFailedPods,
 	)
 
 	suite.ClearConnectionRefused(suite.ctx, node)

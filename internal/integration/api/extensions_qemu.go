@@ -303,6 +303,7 @@ func (suite *ExtensionsSuiteQEMU) TestExtensionsQEMUGuestAgent() {
 
 			return err
 		}, 5*time.Minute,
+		suite.CleanupFailedPods,
 	)
 }
 
@@ -494,6 +495,7 @@ func (suite *ExtensionsSuiteQEMU) TestExtensionsMdADM() {
 		suite.ctx, node, func(nodeCtx context.Context) error {
 			return base.IgnoreGRPCUnavailable(suite.Client.Reboot(nodeCtx))
 		}, 5*time.Minute,
+		suite.CleanupFailedPods,
 	)
 
 	suite.Require().True(suite.mdADMArrayExists(), "expected mdadm array to be present")
@@ -581,6 +583,7 @@ func (suite *ExtensionsSuiteQEMU) TestExtensionsZFS() {
 		suite.ctx, node, func(nodeCtx context.Context) error {
 			return base.IgnoreGRPCUnavailable(suite.Client.Reboot(nodeCtx))
 		}, 5*time.Minute,
+		suite.CleanupFailedPods,
 	)
 
 	suite.Require().True(suite.checkZFSPoolMounted(), "expected zfs pool to be mounted")

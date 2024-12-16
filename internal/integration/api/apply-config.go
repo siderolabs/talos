@@ -128,6 +128,7 @@ func (suite *ApplyConfigSuite) TestApply() {
 
 			return nil
 		}, assertRebootedRebootTimeout,
+		suite.CleanupFailedPods,
 	)
 
 	// Verify configuration change
@@ -319,6 +320,7 @@ func (suite *ApplyConfigSuite) TestApplyConfigRotateEncryptionSecrets() {
 
 				return nil
 			}, assertRebootedRebootTimeout,
+			suite.CleanupFailedPods,
 		)
 
 		suite.ClearConnectionRefused(suite.ctx, node)

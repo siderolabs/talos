@@ -279,10 +279,14 @@ func (apiSuite *APISuite) ReadBootIDWithRetry(ctx context.Context, timeout time.
 // AssertRebooted verifies that node got rebooted as result of running some API call.
 //
 // Verification happens via reading boot_id of the node.
-func (apiSuite *APISuite) AssertRebooted(ctx context.Context, node string, rebootFunc func(nodeCtx context.Context) error, timeout time.Duration) {
+func (apiSuite *APISuite) AssertRebooted(ctx context.Context, node string, rebootFunc func(nodeCtx context.Context) error, timeout time.Duration, extraHooks ...func(context.Context, string)) {
 	apiSuite.AssertRebootedNoChecks(ctx, node, rebootFunc, timeout)
 
 	apiSuite.WaitForBootDone(ctx)
+
+	for _, hook := range extraHooks {
+		hook(ctx, node)
+	}
 
 	if apiSuite.Cluster != nil {
 		// without cluster state we can't do deep checks, but basic reboot test still works
