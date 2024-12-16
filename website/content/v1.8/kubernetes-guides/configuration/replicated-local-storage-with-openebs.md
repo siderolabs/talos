@@ -18,6 +18,11 @@ Refer to the OpenEBS [documentation](https://openebs.io/docs/quickstart-guide/in
 
 ## Preparing the nodes
 
+Depending on the version of OpenEBS, there is a `hostPath` mount with the path `/var/openebs/local` or `/var/local/openebs`.
+This path should be mounted into the `kubelet` to make sure `kubelet` can access the directory.
+
+> Note: Replace the path in the YAML snippet below with the correct path for your OpenEBS version.
+
 Create a machine config patch with the contents below and save as `patch.yaml`
 
 ```yaml
