@@ -15,7 +15,7 @@
     "submodule:update": "cd .. && npm run submodule:update"
   },
   "devDependencies": {
-    "autoprefixer": "^9.5.0",
-    "postcss-cli": "^5.0.1"
+    "autoprefixer": "^10.0.0",
+    "postcss-cli": "^11.0.0"
   }
 }
