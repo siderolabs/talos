@@ -25,6 +25,8 @@ type LinkStatus = typed.Resource[LinkStatusSpec, LinkStatusExtension]
 //gotagsrewrite:gen
 type LinkStatusSpec struct {
 	// Fields coming from rtnetlink API.
+	Alias            string                      `yaml:"alias,omitempty" protobuf:"31"`
+	AltNames         []string                    `yaml:"altNames,omitempty" protobuf:"32"`
 	Index            uint32                      `yaml:"index" protobuf:"1"`
 	Type             nethelpers.LinkType         `yaml:"type" protobuf:"2"`
 	LinkIndex        uint32                      `yaml:"linkIndex" protobuf:"3"`

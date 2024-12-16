@@ -410,10 +410,14 @@ func (suite *LinkConfigSuite) TestDefaultUp() {
 		),
 	)
 
-	for _, link := range []string{"eth0", "eth1", "eth2", "eth3", "eth4"} {
+	for _, link := range []string{"eth5", "eth1", "eth2", "eth3", "eth4"} {
 		linkStatus := network.NewLinkStatus(network.NamespaceName, link)
 		linkStatus.TypedSpec().Type = nethelpers.LinkEther
 		linkStatus.TypedSpec().LinkState = true
+
+		if link == "eth5" {
+			linkStatus.TypedSpec().AltNames = []string{"eth0"}
+		}
 
 		suite.Require().NoError(suite.state.Create(suite.ctx, linkStatus))
 	}

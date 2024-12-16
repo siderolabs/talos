@@ -184,6 +184,8 @@ message LinkStatusSpec {
   BondMasterSpec bond_master = 28;
   WireguardSpec wireguard = 29;
   bytes permanent_addr = 30;
+  string alias = 31;
+  repeated string alt_names = 32;
 }
 
 // NfTablesAddressMatch describes the match on the IP address.

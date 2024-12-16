@@ -8,6 +8,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"slices"
 
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
@@ -159,9 +160,27 @@ func SortBonds(items *safe.List[*network.LinkSpec]) {
 	})
 }
 
-func findLink(links []rtnetlink.LinkMessage, name string) *rtnetlink.LinkMessage {
+func findLink(links []rtnetlink.LinkMessage, name string, allowAliases bool) *rtnetlink.LinkMessage {
+	if name == "" {
+		return nil // should never match
+	}
+
 	for i, link := range links {
 		if link.Attributes.Name == name {
+			return &links[i]
+		}
+	}
+
+	if !allowAliases {
+		return nil
+	}
+
+	for i, link := range links {
+		if pointer.SafeDeref(link.Attributes.Alias) == name {
+			return &links[i]
+		}
+
+		if slices.Index(link.Attributes.AltNames, name) != -1 {
 			return &links[i]
 		}
 	}
@@ -202,7 +221,7 @@ func (ctrl *LinkSpecController) syncLink(ctx context.Context, r controller.Runti
 	case resource.PhaseTearingDown:
 		// TODO: should we bring link down if it's physical and the spec was torn down?
 		if link.TypedSpec().Logical {
-			existing := findLink(*links, link.TypedSpec().Name)
+			existing := findLink(*links, link.TypedSpec().Name, false) // logical links don't have aliases
 
 			if existing != nil {
 				if err := conn.Link.Delete(existing.Index); err != nil {
@@ -226,7 +245,7 @@ func (ctrl *LinkSpecController) syncLink(ctx context.Context, r controller.Runti
 			return fmt.Errorf("error removing finalizer: %w", err)
 		}
 	case resource.PhaseRunning:
-		existing := findLink(*links, link.TypedSpec().Name)
+		existing := findLink(*links, link.TypedSpec().Name, !link.TypedSpec().Logical) // allow aliases for physical links
 
 		var existingRawLinkData []byte
 
@@ -312,7 +331,7 @@ func (ctrl *LinkSpecController) syncLink(ctx context.Context, r controller.Runti
 
 			// VLAN settings should be set on interface creation (parent + VLAN settings)
 			if link.TypedSpec().ParentName != "" {
-				parent := findLink(*links, link.TypedSpec().ParentName)
+				parent := findLink(*links, link.TypedSpec().ParentName, true) // allow aliases for physical links/parents
 				if parent == nil {
 					// parent doesn't exist yet, skip it
 					return nil
@@ -353,7 +372,7 @@ func (ctrl *LinkSpecController) syncLink(ctx context.Context, r controller.Runti
 				return fmt.Errorf("error listing links: %w", err)
 			}
 
-			existing = findLink(*links, link.TypedSpec().Name)
+			existing = findLink(*links, link.TypedSpec().Name, false) // link is created by name
 			if existing == nil {
 				return fmt.Errorf("created link %q not found in the link list", link.TypedSpec().Name)
 			}
@@ -596,7 +615,7 @@ func (ctrl *LinkSpecController) syncLink(ctx context.Context, r controller.Runti
 
 		bondMasterName := link.TypedSpec().BondSlave.MasterName
 		if bondMasterName != "" {
-			if master := findLink(*links, bondMasterName); master != nil {
+			if master := findLink(*links, bondMasterName, false); master != nil { // bond master can't be an alias
 				masterName = bondMasterName
 				masterIndex = master.Index
 			}
@@ -604,7 +623,7 @@ func (ctrl *LinkSpecController) syncLink(ctx context.Context, r controller.Runti
 
 		bridgeMasterName := link.TypedSpec().BridgeSlave.MasterName
 		if bridgeMasterName != "" {
-			if master := findLink(*links, bridgeMasterName); master != nil {
+			if master := findLink(*links, bridgeMasterName, false); master != nil { // bridge master can't be an alias
 				masterName = bridgeMasterName
 				masterIndex = master.Index
 			}
