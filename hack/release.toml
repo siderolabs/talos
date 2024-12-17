@@ -9,7 +9,7 @@ ignore_deps = ["github.com/coredns/coredns"]
 # previous release
 previous = "v1.8.0"
 
-pre_release = true
+pre_release = false
 
 preface = """
 """
