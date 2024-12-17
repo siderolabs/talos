@@ -1,0 +1,21 @@
+imports:
+  - path: talos-ha.jinja
+
+resources:
+  - name: talos-ha
+    type: talos-ha.jinja
+    properties:
+      zone: us-west1-b
+      talosVersion: v0.13.3
+      externalCloudProvider: false
+      controlPlaneNodeCount: 3
+      controlPlaneNodeType: n1-standard-1
+      workerNodeCount: 1
+      workerNodeType: n1-standard-1
+outputs:
+  - name: bucketName
+    value: $(ref.talos-ha.bucketName)
+  - name: serviceAccount
+    value: $(ref.talos-ha.serviceAccount)
+  - name: project
+    value: $(ref.talos-ha.project)

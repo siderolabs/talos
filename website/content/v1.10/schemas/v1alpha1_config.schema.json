@@ -1,0 +1,2931 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://talos.dev/v1.6/schemas/v1alpha1_config.schema.json",
+  "$ref": "#/$defs/Config",
+  "$defs": {
+    "APIServerConfig": {
+      "properties": {
+        "image": {
+          "type": "string",
+          "title": "image",
+          "description": "The container image used in the API server manifest.\n",
+          "markdownDescription": "The container image used in the API server manifest.",
+          "x-intellij-html-description": "\u003cp\u003eThe container image used in the API server manifest.\u003c/p\u003e\n"
+        },
+        "extraArgs": {
+          "patternProperties": {
+            ".*": {
+              "type": "string"
+            }
+          },
+          "type": "object",
+          "title": "extraArgs",
+          "description": "Extra arguments to supply to the API server.\n",
+          "markdownDescription": "Extra arguments to supply to the API server.",
+          "x-intellij-html-description": "\u003cp\u003eExtra arguments to supply to the API server.\u003c/p\u003e\n"
+        },
+        "extraVolumes": {
+          "items": {
+            "$ref": "#/$defs/VolumeMountConfig"
+          },
+          "type": "array",
+          "title": "extraVolumes",
+          "description": "Extra volumes to mount to the API server static pod.\n",
+          "markdownDescription": "Extra volumes to mount to the API server static pod.",
+          "x-intellij-html-description": "\u003cp\u003eExtra volumes to mount to the API server static pod.\u003c/p\u003e\n"
+        },
+        "env": {
+          "patternProperties": {
+            ".*": {
+              "type": "string"
+            }
+          },
+          "type": "object",
+          "title": "env",
+          "description": "The env field allows for the addition of environment variables for the control plane component.\n",
+          "markdownDescription": "The `env` field allows for the addition of environment variables for the control plane component.",
+          "x-intellij-html-description": "\u003cp\u003eThe \u003ccode\u003eenv\u003c/code\u003e field allows for the addition of environment variables for the control plane component.\u003c/p\u003e\n"
+        },
+        "certSANs": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "title": "certSANs",
+          "description": "Extra certificate subject alternative names for the API server’s certificate.\n",
+          "markdownDescription": "Extra certificate subject alternative names for the API server's certificate.",
+          "x-intellij-html-description": "\u003cp\u003eExtra certificate subject alternative names for the API server\u0026rsquo;s certificate.\u003c/p\u003e\n"
+        },
+        "disablePodSecurityPolicy": {
+          "type": "boolean",
+          "title": "disablePodSecurityPolicy",
+          "description": "Disable PodSecurityPolicy in the API server and default manifests.\n",
+          "markdownDescription": "Disable PodSecurityPolicy in the API server and default manifests.",
+          "x-intellij-html-description": "\u003cp\u003eDisable PodSecurityPolicy in the API server and default manifests.\u003c/p\u003e\n"
+        },
+        "admissionControl": {
+          "items": {
+            "$ref": "#/$defs/AdmissionPluginConfig"
+          },
+          "type": "array",
+          "title": "admissionControl",
+          "description": "Configure the API server admission plugins.\n",
+          "markdownDescription": "Configure the API server admission plugins.",
+          "x-intellij-html-description": "\u003cp\u003eConfigure the API server admission plugins.\u003c/p\u003e\n"
+        },
+        "auditPolicy": {
+          "type": "object",
+          "title": "auditPolicy",
+          "description": "Configure the API server audit policy.\n",
+          "markdownDescription": "Configure the API server audit policy.",
+          "x-intellij-html-description": "\u003cp\u003eConfigure the API server audit policy.\u003c/p\u003e\n"
+        },
+        "resources": {
+          "type": "object",
+          "title": "resources",
+          "description": "Configure the API server resources.\n",
+          "markdownDescription": "Configure the API server resources.",
+          "x-intellij-html-description": "\u003cp\u003eConfigure the API server resources.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "AdminKubeconfigConfig": {
+      "properties": {
+        "certLifetime": {
+          "type": "string",
+          "pattern": "^[-+]?(((\\d+(\\.\\d*)?|\\d*(\\.\\d+)+)([nuµm]?s|m|h))|0)+$",
+          "title": "certLifetime",
+          "description": "Admin kubeconfig certificate lifetime (default is 1 year).\nField format accepts any Go time.Duration format (‘1h’ for one hour, ‘10m’ for ten minutes).\n",
+          "markdownDescription": "Admin kubeconfig certificate lifetime (default is 1 year).\nField format accepts any Go time.Duration format ('1h' for one hour, '10m' for ten minutes).",
+          "x-intellij-html-description": "\u003cp\u003eAdmin kubeconfig certificate lifetime (default is 1 year).\nField format accepts any Go time.Duration format (\u0026lsquo;1h\u0026rsquo; for one hour, \u0026lsquo;10m\u0026rsquo; for ten minutes).\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "AdmissionPluginConfig": {
+      "properties": {
+        "name": {
+          "type": "string",
+          "title": "name",
+          "description": "Name is the name of the admission controller.\nIt must match the registered admission plugin name.\n",
+          "markdownDescription": "Name is the name of the admission controller.\nIt must match the registered admission plugin name.",
+          "x-intellij-html-description": "\u003cp\u003eName is the name of the admission controller.\nIt must match the registered admission plugin name.\u003c/p\u003e\n"
+        },
+        "configuration": {
+          "type": "object",
+          "title": "configuration",
+          "description": "Configuration is an embedded configuration object to be used as the plugin’s\nconfiguration.\n",
+          "markdownDescription": "Configuration is an embedded configuration object to be used as the plugin's\nconfiguration.",
+          "x-intellij-html-description": "\u003cp\u003eConfiguration is an embedded configuration object to be used as the plugin\u0026rsquo;s\nconfiguration.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "Bond": {
+      "properties": {
+        "interfaces": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "title": "interfaces",
+          "description": "The interfaces that make up the bond.\n",
+          "markdownDescription": "The interfaces that make up the bond.",
+          "x-intellij-html-description": "\u003cp\u003eThe interfaces that make up the bond.\u003c/p\u003e\n"
+        },
+        "deviceSelectors": {
+          "items": {
+            "$ref": "#/$defs/NetworkDeviceSelector"
+          },
+          "type": "array",
+          "title": "deviceSelectors",
+          "description": "Picks a network device using the selector.\nMutually exclusive with interfaces.\nSupports partial match using wildcard syntax.\n",
+          "markdownDescription": "Picks a network device using the selector.\nMutually exclusive with `interfaces`.\nSupports partial match using wildcard syntax.",
+          "x-intellij-html-description": "\u003cp\u003ePicks a network device using the selector.\nMutually exclusive with \u003ccode\u003einterfaces\u003c/code\u003e.\nSupports partial match using wildcard syntax.\u003c/p\u003e\n"
+        },
+        "arpIPTarget": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "title": "arpIPTarget",
+          "description": "A bond option.\nPlease see the official kernel documentation.\nNot supported at the moment.\n",
+          "markdownDescription": "A bond option.\nPlease see the official kernel documentation.\nNot supported at the moment.",
+          "x-intellij-html-description": "\u003cp\u003eA bond option.\nPlease see the official kernel documentation.\nNot supported at the moment.\u003c/p\u003e\n"
+        },
+        "mode": {
+          "type": "string",
+          "title": "mode",
+          "description": "A bond option.\nPlease see the official kernel documentation.\n",
+          "markdownDescription": "A bond option.\nPlease see the official kernel documentation.",
+          "x-intellij-html-description": "\u003cp\u003eA bond option.\nPlease see the official kernel documentation.\u003c/p\u003e\n"
+        },
+        "xmitHashPolicy": {
+          "type": "string",
+          "title": "xmitHashPolicy",
+          "description": "A bond option.\nPlease see the official kernel documentation.\n",
+          "markdownDescription": "A bond option.\nPlease see the official kernel documentation.",
+          "x-intellij-html-description": "\u003cp\u003eA bond option.\nPlease see the official kernel documentation.\u003c/p\u003e\n"
+        },
+        "lacpRate": {
+          "type": "string",
+          "title": "lacpRate",
+          "description": "A bond option.\nPlease see the official kernel documentation.\n",
+          "markdownDescription": "A bond option.\nPlease see the official kernel documentation.",
+          "x-intellij-html-description": "\u003cp\u003eA bond option.\nPlease see the official kernel documentation.\u003c/p\u003e\n"
+        },
+        "adActorSystem": {
+          "type": "string",
+          "title": "adActorSystem",
+          "description": "A bond option.\nPlease see the official kernel documentation.\nNot supported at the moment.\n",
+          "markdownDescription": "A bond option.\nPlease see the official kernel documentation.\nNot supported at the moment.",
+          "x-intellij-html-description": "\u003cp\u003eA bond option.\nPlease see the official kernel documentation.\nNot supported at the moment.\u003c/p\u003e\n"
+        },
+        "arpValidate": {
+          "type": "string",
+          "title": "arpValidate",
+          "description": "A bond option.\nPlease see the official kernel documentation.\n",
+          "markdownDescription": "A bond option.\nPlease see the official kernel documentation.",
+          "x-intellij-html-description": "\u003cp\u003eA bond option.\nPlease see the official kernel documentation.\u003c/p\u003e\n"
+        },
+        "arpAllTargets": {
+          "type": "string",
+          "title": "arpAllTargets",
+          "description": "A bond option.\nPlease see the official kernel documentation.\n",
+          "markdownDescription": "A bond option.\nPlease see the official kernel documentation.",
+          "x-intellij-html-description": "\u003cp\u003eA bond option.\nPlease see the official kernel documentation.\u003c/p\u003e\n"
+        },
+        "primary": {
+          "type": "string",
+          "title": "primary",
+          "description": "A bond option.\nPlease see the official kernel documentation.\n",
+          "markdownDescription": "A bond option.\nPlease see the official kernel documentation.",
+          "x-intellij-html-description": "\u003cp\u003eA bond option.\nPlease see the official kernel documentation.\u003c/p\u003e\n"
+        },
+        "primaryReselect": {
+          "type": "string",
+          "title": "primaryReselect",
+          "description": "A bond option.\nPlease see the official kernel documentation.\n",
+          "markdownDescription": "A bond option.\nPlease see the official kernel documentation.",
+          "x-intellij-html-description": "\u003cp\u003eA bond option.\nPlease see the official kernel documentation.\u003c/p\u003e\n"
+        },
+        "failOverMac": {
+          "type": "string",
+          "title": "failOverMac",
+          "description": "A bond option.\nPlease see the official kernel documentation.\n",
+          "markdownDescription": "A bond option.\nPlease see the official kernel documentation.",
+          "x-intellij-html-description": "\u003cp\u003eA bond option.\nPlease see the official kernel documentation.\u003c/p\u003e\n"
+        },
+        "adSelect": {
+          "type": "string",
+          "title": "adSelect",
+          "description": "A bond option.\nPlease see the official kernel documentation.\n",
+          "markdownDescription": "A bond option.\nPlease see the official kernel documentation.",
+          "x-intellij-html-description": "\u003cp\u003eA bond option.\nPlease see the official kernel documentation.\u003c/p\u003e\n"
+        },
+        "miimon": {
+          "type": "integer",
+          "title": "miimon",
+          "description": "A bond option.\nPlease see the official kernel documentation.\n",
+          "markdownDescription": "A bond option.\nPlease see the official kernel documentation.",
+          "x-intellij-html-description": "\u003cp\u003eA bond option.\nPlease see the official kernel documentation.\u003c/p\u003e\n"
+        },
+        "updelay": {
+          "type": "integer",
+          "title": "updelay",
+          "description": "A bond option.\nPlease see the official kernel documentation.\n",
+          "markdownDescription": "A bond option.\nPlease see the official kernel documentation.",
+          "x-intellij-html-description": "\u003cp\u003eA bond option.\nPlease see the official kernel documentation.\u003c/p\u003e\n"
+        },
+        "downdelay": {
+          "type": "integer",
+          "title": "downdelay",
+          "description": "A bond option.\nPlease see the official kernel documentation.\n",
+          "markdownDescription": "A bond option.\nPlease see the official kernel documentation.",
+          "x-intellij-html-description": "\u003cp\u003eA bond option.\nPlease see the official kernel documentation.\u003c/p\u003e\n"
+        },
+        "arpInterval": {
+          "type": "integer",
+          "title": "arpInterval",
+          "description": "A bond option.\nPlease see the official kernel documentation.\n",
+          "markdownDescription": "A bond option.\nPlease see the official kernel documentation.",
+          "x-intellij-html-description": "\u003cp\u003eA bond option.\nPlease see the official kernel documentation.\u003c/p\u003e\n"
+        },
+        "resendIgmp": {
+          "type": "integer",
+          "title": "resendIgmp",
+          "description": "A bond option.\nPlease see the official kernel documentation.\n",
+          "markdownDescription": "A bond option.\nPlease see the official kernel documentation.",
+          "x-intellij-html-description": "\u003cp\u003eA bond option.\nPlease see the official kernel documentation.\u003c/p\u003e\n"
+        },
+        "minLinks": {
+          "type": "integer",
+          "title": "minLinks",
+          "description": "A bond option.\nPlease see the official kernel documentation.\n",
+          "markdownDescription": "A bond option.\nPlease see the official kernel documentation.",
+          "x-intellij-html-description": "\u003cp\u003eA bond option.\nPlease see the official kernel documentation.\u003c/p\u003e\n"
+        },
+        "lpInterval": {
+          "type": "integer",
+          "title": "lpInterval",
+          "description": "A bond option.\nPlease see the official kernel documentation.\n",
+          "markdownDescription": "A bond option.\nPlease see the official kernel documentation.",
+          "x-intellij-html-description": "\u003cp\u003eA bond option.\nPlease see the official kernel documentation.\u003c/p\u003e\n"
+        },
+        "packetsPerSlave": {
+          "type": "integer",
+          "title": "packetsPerSlave",
+          "description": "A bond option.\nPlease see the official kernel documentation.\n",
+          "markdownDescription": "A bond option.\nPlease see the official kernel documentation.",
+          "x-intellij-html-description": "\u003cp\u003eA bond option.\nPlease see the official kernel documentation.\u003c/p\u003e\n"
+        },
+        "numPeerNotif": {
+          "type": "integer",
+          "title": "numPeerNotif",
+          "description": "A bond option.\nPlease see the official kernel documentation.\n",
+          "markdownDescription": "A bond option.\nPlease see the official kernel documentation.",
+          "x-intellij-html-description": "\u003cp\u003eA bond option.\nPlease see the official kernel documentation.\u003c/p\u003e\n"
+        },
+        "tlbDynamicLb": {
+          "type": "integer",
+          "title": "tlbDynamicLb",
+          "description": "A bond option.\nPlease see the official kernel documentation.\n",
+          "markdownDescription": "A bond option.\nPlease see the official kernel documentation.",
+          "x-intellij-html-description": "\u003cp\u003eA bond option.\nPlease see the official kernel documentation.\u003c/p\u003e\n"
+        },
+        "allSlavesActive": {
+          "type": "integer",
+          "title": "allSlavesActive",
+          "description": "A bond option.\nPlease see the official kernel documentation.\n",
+          "markdownDescription": "A bond option.\nPlease see the official kernel documentation.",
+          "x-intellij-html-description": "\u003cp\u003eA bond option.\nPlease see the official kernel documentation.\u003c/p\u003e\n"
+        },
+        "useCarrier": {
+          "type": "boolean",
+          "title": "useCarrier",
+          "description": "A bond option.\nPlease see the official kernel documentation.\n",
+          "markdownDescription": "A bond option.\nPlease see the official kernel documentation.",
+          "x-intellij-html-description": "\u003cp\u003eA bond option.\nPlease see the official kernel documentation.\u003c/p\u003e\n"
+        },
+        "adActorSysPrio": {
+          "type": "integer",
+          "title": "adActorSysPrio",
+          "description": "A bond option.\nPlease see the official kernel documentation.\n",
+          "markdownDescription": "A bond option.\nPlease see the official kernel documentation.",
+          "x-intellij-html-description": "\u003cp\u003eA bond option.\nPlease see the official kernel documentation.\u003c/p\u003e\n"
+        },
+        "adUserPortKey": {
+          "type": "integer",
+          "title": "adUserPortKey",
+          "description": "A bond option.\nPlease see the official kernel documentation.\n",
+          "markdownDescription": "A bond option.\nPlease see the official kernel documentation.",
+          "x-intellij-html-description": "\u003cp\u003eA bond option.\nPlease see the official kernel documentation.\u003c/p\u003e\n"
+        },
+        "peerNotifyDelay": {
+          "type": "integer",
+          "title": "peerNotifyDelay",
+          "description": "A bond option.\nPlease see the official kernel documentation.\n",
+          "markdownDescription": "A bond option.\nPlease see the official kernel documentation.",
+          "x-intellij-html-description": "\u003cp\u003eA bond option.\nPlease see the official kernel documentation.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "Bridge": {
+      "properties": {
+        "interfaces": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "title": "interfaces",
+          "description": "The interfaces that make up the bridge.\n",
+          "markdownDescription": "The interfaces that make up the bridge.",
+          "x-intellij-html-description": "\u003cp\u003eThe interfaces that make up the bridge.\u003c/p\u003e\n"
+        },
+        "stp": {
+          "$ref": "#/$defs/STP",
+          "title": "stp",
+          "description": "A bridge option.\nPlease see the official kernel documentation.\n",
+          "markdownDescription": "A bridge option.\nPlease see the official kernel documentation.",
+          "x-intellij-html-description": "\u003cp\u003eA bridge option.\nPlease see the official kernel documentation.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "CNIConfig": {
+      "properties": {
+        "name": {
+          "enum": [
+            "flannel",
+            "custom",
+            "none"
+          ],
+          "title": "name",
+          "description": "Name of CNI to use.\n",
+          "markdownDescription": "Name of CNI to use.",
+          "x-intellij-html-description": "\u003cp\u003eName of CNI to use.\u003c/p\u003e\n"
+        },
+        "urls": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "title": "urls",
+          "description": "URLs containing manifests to apply for the CNI.\nShould be present for “custom”, must be empty for “flannel” and “none”.\n",
+          "markdownDescription": "URLs containing manifests to apply for the CNI.\nShould be present for \"custom\", must be empty for \"flannel\" and \"none\".",
+          "x-intellij-html-description": "\u003cp\u003eURLs containing manifests to apply for the CNI.\nShould be present for \u0026ldquo;custom\u0026rdquo;, must be empty for \u0026ldquo;flannel\u0026rdquo; and \u0026ldquo;none\u0026rdquo;.\u003c/p\u003e\n"
+        },
+        "flannel": {
+          "$ref": "#/$defs/FlannelCNIConfig",
+          "title": "flannel",
+          "description": "description: |\nFlannel configuration options.\n",
+          "markdownDescription": "description: |\nFlannel configuration options.",
+          "x-intellij-html-description": "\u003cp\u003edescription: |\nFlannel configuration options.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "ClusterConfig": {
+      "properties": {
+        "id": {
+          "type": "string",
+          "title": "id",
+          "description": "Globally unique identifier for this cluster (base64 encoded random 32 bytes).\n",
+          "markdownDescription": "Globally unique identifier for this cluster (base64 encoded random 32 bytes).",
+          "x-intellij-html-description": "\u003cp\u003eGlobally unique identifier for this cluster (base64 encoded random 32 bytes).\u003c/p\u003e\n"
+        },
+        "secret": {
+          "type": "string",
+          "title": "secret",
+          "description": "Shared secret of cluster (base64 encoded random 32 bytes).\nThis secret is shared among cluster members but should never be sent over the network.\n",
+          "markdownDescription": "Shared secret of cluster (base64 encoded random 32 bytes).\nThis secret is shared among cluster members but should never be sent over the network.",
+          "x-intellij-html-description": "\u003cp\u003eShared secret of cluster (base64 encoded random 32 bytes).\nThis secret is shared among cluster members but should never be sent over the network.\u003c/p\u003e\n"
+        },
+        "controlPlane": {
+          "$ref": "#/$defs/ControlPlaneConfig",
+          "title": "controlPlane",
+          "description": "Provides control plane specific configuration options.\n",
+          "markdownDescription": "Provides control plane specific configuration options.",
+          "x-intellij-html-description": "\u003cp\u003eProvides control plane specific configuration options.\u003c/p\u003e\n"
+        },
+        "clusterName": {
+          "type": "string",
+          "title": "clusterName",
+          "description": "Configures the cluster’s name.\n",
+          "markdownDescription": "Configures the cluster's name.",
+          "x-intellij-html-description": "\u003cp\u003eConfigures the cluster\u0026rsquo;s name.\u003c/p\u003e\n"
+        },
+        "network": {
+          "$ref": "#/$defs/ClusterNetworkConfig",
+          "title": "network",
+          "description": "Provides cluster specific network configuration options.\n",
+          "markdownDescription": "Provides cluster specific network configuration options.",
+          "x-intellij-html-description": "\u003cp\u003eProvides cluster specific network configuration options.\u003c/p\u003e\n"
+        },
+        "token": {
+          "type": "string",
+          "title": "token",
+          "description": "The bootstrap token used to join the cluster.\n",
+          "markdownDescription": "The [bootstrap token](https://kubernetes.io/docs/reference/access-authn-authz/bootstrap-tokens/) used to join the cluster.",
+          "x-intellij-html-description": "\u003cp\u003eThe \u003ca href=\"https://kubernetes.io/docs/reference/access-authn-authz/bootstrap-tokens/\" target=\"_blank\"\u003ebootstrap token\u003c/a\u003e used to join the cluster.\u003c/p\u003e\n"
+        },
+        "aescbcEncryptionSecret": {
+          "type": "string",
+          "title": "aescbcEncryptionSecret",
+          "description": "A key used for the encryption of secret data at rest.\nEnables encryption with AESCBC.\n",
+          "markdownDescription": "A key used for the [encryption of secret data at rest](https://kubernetes.io/docs/tasks/administer-cluster/encrypt-data/).\nEnables encryption with AESCBC.",
+          "x-intellij-html-description": "\u003cp\u003eA key used for the \u003ca href=\"https://kubernetes.io/docs/tasks/administer-cluster/encrypt-data/\" target=\"_blank\"\u003eencryption of secret data at rest\u003c/a\u003e.\nEnables encryption with AESCBC.\u003c/p\u003e\n"
+        },
+        "secretboxEncryptionSecret": {
+          "type": "string",
+          "title": "secretboxEncryptionSecret",
+          "description": "A key used for the encryption of secret data at rest.\nEnables encryption with secretbox.\nSecretbox has precedence over AESCBC.\n",
+          "markdownDescription": "A key used for the [encryption of secret data at rest](https://kubernetes.io/docs/tasks/administer-cluster/encrypt-data/).\nEnables encryption with secretbox.\nSecretbox has precedence over AESCBC.",
+          "x-intellij-html-description": "\u003cp\u003eA key used for the \u003ca href=\"https://kubernetes.io/docs/tasks/administer-cluster/encrypt-data/\" target=\"_blank\"\u003eencryption of secret data at rest\u003c/a\u003e.\nEnables encryption with secretbox.\nSecretbox has precedence over AESCBC.\u003c/p\u003e\n"
+        },
+        "ca": {
+          "properties": {
+            "crt": {
+              "type": "string"
+            },
+            "key": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false,
+          "type": "object",
+          "title": "ca",
+          "description": "The base64 encoded root certificate authority used by Kubernetes.\n",
+          "markdownDescription": "The base64 encoded root certificate authority used by Kubernetes.",
+          "x-intellij-html-description": "\u003cp\u003eThe base64 encoded root certificate authority used by Kubernetes.\u003c/p\u003e\n"
+        },
+        "aggregatorCA": {
+          "properties": {
+            "crt": {
+              "type": "string"
+            },
+            "key": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false,
+          "type": "object",
+          "title": "aggregatorCA",
+          "description": "The base64 encoded aggregator certificate authority used by Kubernetes for front-proxy certificate generation.\n\nThis CA can be self-signed.\n",
+          "markdownDescription": "The base64 encoded aggregator certificate authority used by Kubernetes for front-proxy certificate generation.\n\nThis CA can be self-signed.",
+          "x-intellij-html-description": "\u003cp\u003eThe base64 encoded aggregator certificate authority used by Kubernetes for front-proxy certificate generation.\u003c/p\u003e\n\n\u003cp\u003eThis CA can be self-signed.\u003c/p\u003e\n"
+        },
+        "serviceAccount": {
+          "properties": {
+            "key": {
+              "additionalProperties": false,
+              "type": "string"
+            }
+          },
+          "additionalProperties": false,
+          "type": "object",
+          "title": "serviceAccount",
+          "description": "The base64 encoded private key for service account token generation.\n",
+          "markdownDescription": "The base64 encoded private key for service account token generation.",
+          "x-intellij-html-description": "\u003cp\u003eThe base64 encoded private key for service account token generation.\u003c/p\u003e\n"
+        },
+        "apiServer": {
+          "$ref": "#/$defs/APIServerConfig",
+          "title": "apiServer",
+          "description": "API server specific configuration options.\n",
+          "markdownDescription": "API server specific configuration options.",
+          "x-intellij-html-description": "\u003cp\u003eAPI server specific configuration options.\u003c/p\u003e\n"
+        },
+        "controllerManager": {
+          "$ref": "#/$defs/ControllerManagerConfig",
+          "title": "controllerManager",
+          "description": "Controller manager server specific configuration options.\n",
+          "markdownDescription": "Controller manager server specific configuration options.",
+          "x-intellij-html-description": "\u003cp\u003eController manager server specific configuration options.\u003c/p\u003e\n"
+        },
+        "proxy": {
+          "$ref": "#/$defs/ProxyConfig",
+          "title": "proxy",
+          "description": "Kube-proxy server-specific configuration options\n",
+          "markdownDescription": "Kube-proxy server-specific configuration options",
+          "x-intellij-html-description": "\u003cp\u003eKube-proxy server-specific configuration options\u003c/p\u003e\n"
+        },
+        "scheduler": {
+          "$ref": "#/$defs/SchedulerConfig",
+          "title": "scheduler",
+          "description": "Scheduler server specific configuration options.\n",
+          "markdownDescription": "Scheduler server specific configuration options.",
+          "x-intellij-html-description": "\u003cp\u003eScheduler server specific configuration options.\u003c/p\u003e\n"
+        },
+        "discovery": {
+          "$ref": "#/$defs/ClusterDiscoveryConfig",
+          "title": "discovery",
+          "description": "Configures cluster member discovery.\n",
+          "markdownDescription": "Configures cluster member discovery.",
+          "x-intellij-html-description": "\u003cp\u003eConfigures cluster member discovery.\u003c/p\u003e\n"
+        },
+        "etcd": {
+          "$ref": "#/$defs/EtcdConfig",
+          "title": "etcd",
+          "description": "Etcd specific configuration options.\n",
+          "markdownDescription": "Etcd specific configuration options.",
+          "x-intellij-html-description": "\u003cp\u003eEtcd specific configuration options.\u003c/p\u003e\n"
+        },
+        "coreDNS": {
+          "$ref": "#/$defs/CoreDNS",
+          "title": "coreDNS",
+          "description": "Core DNS specific configuration options.\n",
+          "markdownDescription": "Core DNS specific configuration options.",
+          "x-intellij-html-description": "\u003cp\u003eCore DNS specific configuration options.\u003c/p\u003e\n"
+        },
+        "externalCloudProvider": {
+          "$ref": "#/$defs/ExternalCloudProviderConfig",
+          "title": "externalCloudProvider",
+          "description": "External cloud provider configuration.\n",
+          "markdownDescription": "External cloud provider configuration.",
+          "x-intellij-html-description": "\u003cp\u003eExternal cloud provider configuration.\u003c/p\u003e\n"
+        },
+        "extraManifests": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "title": "extraManifests",
+          "description": "A list of urls that point to additional manifests.\nThese will get automatically deployed as part of the bootstrap.\n",
+          "markdownDescription": "A list of urls that point to additional manifests.\nThese will get automatically deployed as part of the bootstrap.",
+          "x-intellij-html-description": "\u003cp\u003eA list of urls that point to additional manifests.\nThese will get automatically deployed as part of the bootstrap.\u003c/p\u003e\n"
+        },
+        "extraManifestHeaders": {
+          "patternProperties": {
+            ".*": {
+              "type": "string"
+            }
+          },
+          "type": "object",
+          "title": "extraManifestHeaders",
+          "description": "A map of key value pairs that will be added while fetching the extraManifests.\n",
+          "markdownDescription": "A map of key value pairs that will be added while fetching the extraManifests.",
+          "x-intellij-html-description": "\u003cp\u003eA map of key value pairs that will be added while fetching the extraManifests.\u003c/p\u003e\n"
+        },
+        "inlineManifests": {
+          "items": {
+            "$ref": "#/$defs/ClusterInlineManifest"
+          },
+          "type": "array",
+          "title": "inlineManifests",
+          "description": "A list of inline Kubernetes manifests.\nThese will get automatically deployed as part of the bootstrap.\n",
+          "markdownDescription": "A list of inline Kubernetes manifests.\nThese will get automatically deployed as part of the bootstrap.",
+          "x-intellij-html-description": "\u003cp\u003eA list of inline Kubernetes manifests.\nThese will get automatically deployed as part of the bootstrap.\u003c/p\u003e\n"
+        },
+        "adminKubeconfig": {
+          "$ref": "#/$defs/AdminKubeconfigConfig",
+          "title": "adminKubeconfig",
+          "description": "Settings for admin kubeconfig generation.\nCertificate lifetime can be configured.\n",
+          "markdownDescription": "Settings for admin kubeconfig generation.\nCertificate lifetime can be configured.",
+          "x-intellij-html-description": "\u003cp\u003eSettings for admin kubeconfig generation.\nCertificate lifetime can be configured.\u003c/p\u003e\n"
+        },
+        "allowSchedulingOnControlPlanes": {
+          "type": "boolean",
+          "title": "allowSchedulingOnControlPlanes",
+          "description": "Allows running workload on control-plane nodes.\n",
+          "markdownDescription": "Allows running workload on control-plane nodes.",
+          "x-intellij-html-description": "\u003cp\u003eAllows running workload on control-plane nodes.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "ClusterDiscoveryConfig": {
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "title": "enabled",
+          "description": "Enable the cluster membership discovery feature.\nCluster discovery is based on individual registries which are configured under the registries field.\n",
+          "markdownDescription": "Enable the cluster membership discovery feature.\nCluster discovery is based on individual registries which are configured under the registries field.",
+          "x-intellij-html-description": "\u003cp\u003eEnable the cluster membership discovery feature.\nCluster discovery is based on individual registries which are configured under the registries field.\u003c/p\u003e\n"
+        },
+        "registries": {
+          "$ref": "#/$defs/DiscoveryRegistriesConfig",
+          "title": "registries",
+          "description": "Configure registries used for cluster member discovery.\n",
+          "markdownDescription": "Configure registries used for cluster member discovery.",
+          "x-intellij-html-description": "\u003cp\u003eConfigure registries used for cluster member discovery.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "ClusterInlineManifest": {
+      "properties": {
+        "name": {
+          "type": "string",
+          "title": "name",
+          "description": "Name of the manifest.\nName should be unique.\n",
+          "markdownDescription": "Name of the manifest.\nName should be unique.",
+          "x-intellij-html-description": "\u003cp\u003eName of the manifest.\nName should be unique.\u003c/p\u003e\n"
+        },
+        "contents": {
+          "type": "string",
+          "title": "contents",
+          "description": "Manifest contents as a string.\n",
+          "markdownDescription": "Manifest contents as a string.",
+          "x-intellij-html-description": "\u003cp\u003eManifest contents as a string.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "ClusterNetworkConfig": {
+      "properties": {
+        "cni": {
+          "$ref": "#/$defs/CNIConfig",
+          "title": "cni",
+          "description": "The CNI used.\nComposed of “name” and “urls”.\nThe “name” key supports the following options: “flannel”, “custom”, and “none”.\n“flannel” uses Talos-managed Flannel CNI, and that’s the default option.\n“custom” uses custom manifests that should be provided in “urls”.\n“none” indicates that Talos will not manage any CNI installation.\n",
+          "markdownDescription": "The CNI used.\nComposed of \"name\" and \"urls\".\nThe \"name\" key supports the following options: \"flannel\", \"custom\", and \"none\".\n\"flannel\" uses Talos-managed Flannel CNI, and that's the default option.\n\"custom\" uses custom manifests that should be provided in \"urls\".\n\"none\" indicates that Talos will not manage any CNI installation.",
+          "x-intellij-html-description": "\u003cp\u003eThe CNI used.\nComposed of \u0026ldquo;name\u0026rdquo; and \u0026ldquo;urls\u0026rdquo;.\nThe \u0026ldquo;name\u0026rdquo; key supports the following options: \u0026ldquo;flannel\u0026rdquo;, \u0026ldquo;custom\u0026rdquo;, and \u0026ldquo;none\u0026rdquo;.\n\u0026ldquo;flannel\u0026rdquo; uses Talos-managed Flannel CNI, and that\u0026rsquo;s the default option.\n\u0026ldquo;custom\u0026rdquo; uses custom manifests that should be provided in \u0026ldquo;urls\u0026rdquo;.\n\u0026ldquo;none\u0026rdquo; indicates that Talos will not manage any CNI installation.\u003c/p\u003e\n"
+        },
+        "dnsDomain": {
+          "type": "string",
+          "title": "dnsDomain",
+          "description": "The domain used by Kubernetes DNS.\nThe default is cluster.local\n",
+          "markdownDescription": "The domain used by Kubernetes DNS.\nThe default is `cluster.local`",
+          "x-intellij-html-description": "\u003cp\u003eThe domain used by Kubernetes DNS.\nThe default is \u003ccode\u003ecluster.local\u003c/code\u003e\u003c/p\u003e\n"
+        },
+        "podSubnets": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "title": "podSubnets",
+          "description": "The pod subnet CIDR.\n",
+          "markdownDescription": "The pod subnet CIDR.",
+          "x-intellij-html-description": "\u003cp\u003eThe pod subnet CIDR.\u003c/p\u003e\n"
+        },
+        "serviceSubnets": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "title": "serviceSubnets",
+          "description": "The service subnet CIDR.\n",
+          "markdownDescription": "The service subnet CIDR.",
+          "x-intellij-html-description": "\u003cp\u003eThe service subnet CIDR.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "Config": {
+      "properties": {
+        "version": {
+          "enum": [
+            "v1alpha1"
+          ],
+          "title": "version",
+          "description": "Indicates the schema used to decode the contents.\n",
+          "markdownDescription": "Indicates the schema used to decode the contents.",
+          "x-intellij-html-description": "\u003cp\u003eIndicates the schema used to decode the contents.\u003c/p\u003e\n"
+        },
+        "debug": {
+          "type": "boolean",
+          "title": "debug",
+          "description": "Enable verbose logging to the console.\nAll system containers logs will flow into serial console.\n\nNote: To avoid breaking Talos bootstrap flow enable this option only if serial console can handle high message throughput.\n",
+          "markdownDescription": "Enable verbose logging to the console.\nAll system containers logs will flow into serial console.\n\n**Note:** To avoid breaking Talos bootstrap flow enable this option only if serial console can handle high message throughput.",
+          "x-intellij-html-description": "\u003cp\u003eEnable verbose logging to the console.\nAll system containers logs will flow into serial console.\u003c/p\u003e\n\n\u003cp\u003e\u003cstrong\u003eNote:\u003c/strong\u003e To avoid breaking Talos bootstrap flow enable this option only if serial console can handle high message throughput.\u003c/p\u003e\n"
+        },
+        "machine": {
+          "$ref": "#/$defs/MachineConfig",
+          "title": "machine",
+          "description": "Provides machine specific configuration options.\n",
+          "markdownDescription": "Provides machine specific configuration options.",
+          "x-intellij-html-description": "\u003cp\u003eProvides machine specific configuration options.\u003c/p\u003e\n"
+        },
+        "cluster": {
+          "$ref": "#/$defs/ClusterConfig",
+          "title": "cluster",
+          "description": "Provides cluster specific configuration options.\n",
+          "markdownDescription": "Provides cluster specific configuration options.",
+          "x-intellij-html-description": "\u003cp\u003eProvides cluster specific configuration options.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "ControlPlaneConfig": {
+      "properties": {
+        "endpoint": {
+          "type": "string",
+          "pattern": "^https://",
+          "format": "uri",
+          "title": "endpoint",
+          "description": "Endpoint is the canonical controlplane endpoint, which can be an IP address or a DNS hostname.\nIt is single-valued, and may optionally include a port number.\n",
+          "markdownDescription": "Endpoint is the canonical controlplane endpoint, which can be an IP address or a DNS hostname.\nIt is single-valued, and may optionally include a port number.",
+          "x-intellij-html-description": "\u003cp\u003eEndpoint is the canonical controlplane endpoint, which can be an IP address or a DNS hostname.\nIt is single-valued, and may optionally include a port number.\u003c/p\u003e\n"
+        },
+        "localAPIServerPort": {
+          "type": "integer",
+          "title": "localAPIServerPort",
+          "description": "The port that the API server listens on internally.\nThis may be different than the port portion listed in the endpoint field above.\nThe default is 6443.\n",
+          "markdownDescription": "The port that the API server listens on internally.\nThis may be different than the port portion listed in the endpoint field above.\nThe default is `6443`.",
+          "x-intellij-html-description": "\u003cp\u003eThe port that the API server listens on internally.\nThis may be different than the port portion listed in the endpoint field above.\nThe default is \u003ccode\u003e6443\u003c/code\u003e.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "ControllerManagerConfig": {
+      "properties": {
+        "image": {
+          "type": "string",
+          "title": "image",
+          "description": "The container image used in the controller manager manifest.\n",
+          "markdownDescription": "The container image used in the controller manager manifest.",
+          "x-intellij-html-description": "\u003cp\u003eThe container image used in the controller manager manifest.\u003c/p\u003e\n"
+        },
+        "extraArgs": {
+          "patternProperties": {
+            ".*": {
+              "type": "string"
+            }
+          },
+          "type": "object",
+          "title": "extraArgs",
+          "description": "Extra arguments to supply to the controller manager.\n",
+          "markdownDescription": "Extra arguments to supply to the controller manager.",
+          "x-intellij-html-description": "\u003cp\u003eExtra arguments to supply to the controller manager.\u003c/p\u003e\n"
+        },
+        "extraVolumes": {
+          "items": {
+            "$ref": "#/$defs/VolumeMountConfig"
+          },
+          "type": "array",
+          "title": "extraVolumes",
+          "description": "Extra volumes to mount to the controller manager static pod.\n",
+          "markdownDescription": "Extra volumes to mount to the controller manager static pod.",
+          "x-intellij-html-description": "\u003cp\u003eExtra volumes to mount to the controller manager static pod.\u003c/p\u003e\n"
+        },
+        "env": {
+          "patternProperties": {
+            ".*": {
+              "type": "string"
+            }
+          },
+          "type": "object",
+          "title": "env",
+          "description": "The env field allows for the addition of environment variables for the control plane component.\n",
+          "markdownDescription": "The `env` field allows for the addition of environment variables for the control plane component.",
+          "x-intellij-html-description": "\u003cp\u003eThe \u003ccode\u003eenv\u003c/code\u003e field allows for the addition of environment variables for the control plane component.\u003c/p\u003e\n"
+        },
+        "resources": {
+          "type": "object",
+          "title": "resources",
+          "description": "Configure the controller manager resources.\n",
+          "markdownDescription": "Configure the controller manager resources.",
+          "x-intellij-html-description": "\u003cp\u003eConfigure the controller manager resources.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "CoreDNS": {
+      "properties": {
+        "disabled": {
+          "type": "boolean",
+          "title": "disabled",
+          "description": "Disable coredns deployment on cluster bootstrap.\n",
+          "markdownDescription": "Disable coredns deployment on cluster bootstrap.",
+          "x-intellij-html-description": "\u003cp\u003eDisable coredns deployment on cluster bootstrap.\u003c/p\u003e\n"
+        },
+        "image": {
+          "type": "string",
+          "title": "image",
+          "description": "The image field is an override to the default coredns image.\n",
+          "markdownDescription": "The `image` field is an override to the default coredns image.",
+          "x-intellij-html-description": "\u003cp\u003eThe \u003ccode\u003eimage\u003c/code\u003e field is an override to the default coredns image.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "DHCPOptions": {
+      "properties": {
+        "routeMetric": {
+          "type": "integer",
+          "title": "routeMetric",
+          "description": "The priority of all routes received via DHCP.\n",
+          "markdownDescription": "The priority of all routes received via DHCP.",
+          "x-intellij-html-description": "\u003cp\u003eThe priority of all routes received via DHCP.\u003c/p\u003e\n"
+        },
+        "ipv4": {
+          "type": "boolean",
+          "title": "ipv4",
+          "description": "Enables DHCPv4 protocol for the interface (default is enabled).\n",
+          "markdownDescription": "Enables DHCPv4 protocol for the interface (default is enabled).",
+          "x-intellij-html-description": "\u003cp\u003eEnables DHCPv4 protocol for the interface (default is enabled).\u003c/p\u003e\n"
+        },
+        "ipv6": {
+          "type": "boolean",
+          "title": "ipv6",
+          "description": "Enables DHCPv6 protocol for the interface (default is disabled).\n",
+          "markdownDescription": "Enables DHCPv6 protocol for the interface (default is disabled).",
+          "x-intellij-html-description": "\u003cp\u003eEnables DHCPv6 protocol for the interface (default is disabled).\u003c/p\u003e\n"
+        },
+        "duidv6": {
+          "type": "string",
+          "title": "duidv6",
+          "description": "Set client DUID (hex string).\n",
+          "markdownDescription": "Set client DUID (hex string).",
+          "x-intellij-html-description": "\u003cp\u003eSet client DUID (hex string).\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "Device": {
+      "properties": {
+        "interface": {
+          "type": "string",
+          "title": "interface",
+          "description": "The interface name.\nMutually exclusive with deviceSelector.\n",
+          "markdownDescription": "The interface name.\nMutually exclusive with `deviceSelector`.",
+          "x-intellij-html-description": "\u003cp\u003eThe interface name.\nMutually exclusive with \u003ccode\u003edeviceSelector\u003c/code\u003e.\u003c/p\u003e\n"
+        },
+        "deviceSelector": {
+          "$ref": "#/$defs/NetworkDeviceSelector",
+          "title": "deviceSelector",
+          "description": "Picks a network device using the selector.\nMutually exclusive with interface.\nSupports partial match using wildcard syntax.\n",
+          "markdownDescription": "Picks a network device using the selector.\nMutually exclusive with `interface`.\nSupports partial match using wildcard syntax.",
+          "x-intellij-html-description": "\u003cp\u003ePicks a network device using the selector.\nMutually exclusive with \u003ccode\u003einterface\u003c/code\u003e.\nSupports partial match using wildcard syntax.\u003c/p\u003e\n"
+        },
+        "addresses": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "title": "addresses",
+          "description": "Assigns static IP addresses to the interface.\nAn address can be specified either in proper CIDR notation or as a standalone address (netmask of all ones is assumed).\n",
+          "markdownDescription": "Assigns static IP addresses to the interface.\nAn address can be specified either in proper CIDR notation or as a standalone address (netmask of all ones is assumed).",
+          "x-intellij-html-description": "\u003cp\u003eAssigns static IP addresses to the interface.\nAn address can be specified either in proper CIDR notation or as a standalone address (netmask of all ones is assumed).\u003c/p\u003e\n"
+        },
+        "routes": {
+          "items": {
+            "$ref": "#/$defs/Route"
+          },
+          "type": "array",
+          "title": "routes",
+          "description": "A list of routes associated with the interface.\nIf used in combination with DHCP, these routes will be appended to routes returned by DHCP server.\n",
+          "markdownDescription": "A list of routes associated with the interface.\nIf used in combination with DHCP, these routes will be appended to routes returned by DHCP server.",
+          "x-intellij-html-description": "\u003cp\u003eA list of routes associated with the interface.\nIf used in combination with DHCP, these routes will be appended to routes returned by DHCP server.\u003c/p\u003e\n"
+        },
+        "bond": {
+          "$ref": "#/$defs/Bond",
+          "title": "bond",
+          "description": "Bond specific options.\n",
+          "markdownDescription": "Bond specific options.",
+          "x-intellij-html-description": "\u003cp\u003eBond specific options.\u003c/p\u003e\n"
+        },
+        "bridge": {
+          "$ref": "#/$defs/Bridge",
+          "title": "bridge",
+          "description": "Bridge specific options.\n",
+          "markdownDescription": "Bridge specific options.",
+          "x-intellij-html-description": "\u003cp\u003eBridge specific options.\u003c/p\u003e\n"
+        },
+        "vlans": {
+          "items": {
+            "$ref": "#/$defs/Vlan"
+          },
+          "type": "array",
+          "title": "vlans",
+          "description": "VLAN specific options.\n",
+          "markdownDescription": "VLAN specific options.",
+          "x-intellij-html-description": "\u003cp\u003eVLAN specific options.\u003c/p\u003e\n"
+        },
+        "mtu": {
+          "type": "integer",
+          "title": "mtu",
+          "description": "The interface’s MTU.\nIf used in combination with DHCP, this will override any MTU settings returned from DHCP server.\n",
+          "markdownDescription": "The interface's MTU.\nIf used in combination with DHCP, this will override any MTU settings returned from DHCP server.",
+          "x-intellij-html-description": "\u003cp\u003eThe interface\u0026rsquo;s MTU.\nIf used in combination with DHCP, this will override any MTU settings returned from DHCP server.\u003c/p\u003e\n"
+        },
+        "dhcp": {
+          "type": "boolean",
+          "title": "dhcp",
+          "description": "Indicates if DHCP should be used to configure the interface.\nThe following DHCP options are supported:\n\n\nOptionClasslessStaticRoute\nOptionDomainNameServer\nOptionDNSDomainSearchList\nOptionHostName\n\n",
+          "markdownDescription": "Indicates if DHCP should be used to configure the interface.\nThe following DHCP options are supported:\n\n- `OptionClasslessStaticRoute`\n- `OptionDomainNameServer`\n- `OptionDNSDomainSearchList`\n- `OptionHostName`",
+          "x-intellij-html-description": "\u003cp\u003eIndicates if DHCP should be used to configure the interface.\nThe following DHCP options are supported:\u003c/p\u003e\n\n\u003cul\u003e\n\u003cli\u003e\u003ccode\u003eOptionClasslessStaticRoute\u003c/code\u003e\u003c/li\u003e\n\u003cli\u003e\u003ccode\u003eOptionDomainNameServer\u003c/code\u003e\u003c/li\u003e\n\u003cli\u003e\u003ccode\u003eOptionDNSDomainSearchList\u003c/code\u003e\u003c/li\u003e\n\u003cli\u003e\u003ccode\u003eOptionHostName\u003c/code\u003e\u003c/li\u003e\n\u003c/ul\u003e\n"
+        },
+        "ignore": {
+          "type": "boolean",
+          "title": "ignore",
+          "description": "Indicates if the interface should be ignored (skips configuration).\n",
+          "markdownDescription": "Indicates if the interface should be ignored (skips configuration).",
+          "x-intellij-html-description": "\u003cp\u003eIndicates if the interface should be ignored (skips configuration).\u003c/p\u003e\n"
+        },
+        "dummy": {
+          "type": "boolean",
+          "title": "dummy",
+          "description": "Indicates if the interface is a dummy interface.\ndummy is used to specify that this interface should be a virtual-only, dummy interface.\n",
+          "markdownDescription": "Indicates if the interface is a dummy interface.\n`dummy` is used to specify that this interface should be a virtual-only, dummy interface.",
+          "x-intellij-html-description": "\u003cp\u003eIndicates if the interface is a dummy interface.\n\u003ccode\u003edummy\u003c/code\u003e is used to specify that this interface should be a virtual-only, dummy interface.\u003c/p\u003e\n"
+        },
+        "dhcpOptions": {
+          "$ref": "#/$defs/DHCPOptions",
+          "title": "dhcpOptions",
+          "description": "DHCP specific options.\ndhcp must be set to true for these to take effect.\n",
+          "markdownDescription": "DHCP specific options.\n`dhcp` *must* be set to true for these to take effect.",
+          "x-intellij-html-description": "\u003cp\u003eDHCP specific options.\n\u003ccode\u003edhcp\u003c/code\u003e \u003cem\u003emust\u003c/em\u003e be set to true for these to take effect.\u003c/p\u003e\n"
+        },
+        "wireguard": {
+          "$ref": "#/$defs/DeviceWireguardConfig",
+          "title": "wireguard",
+          "description": "Wireguard specific configuration.\nIncludes things like private key, listen port, peers.\n",
+          "markdownDescription": "Wireguard specific configuration.\nIncludes things like private key, listen port, peers.",
+          "x-intellij-html-description": "\u003cp\u003eWireguard specific configuration.\nIncludes things like private key, listen port, peers.\u003c/p\u003e\n"
+        },
+        "vip": {
+          "$ref": "#/$defs/DeviceVIPConfig",
+          "title": "vip",
+          "description": "Virtual (shared) IP address configuration.\n",
+          "markdownDescription": "Virtual (shared) IP address configuration.",
+          "x-intellij-html-description": "\u003cp\u003eVirtual (shared) IP address configuration.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "DeviceVIPConfig": {
+      "properties": {
+        "ip": {
+          "type": "string",
+          "title": "ip",
+          "description": "Specifies the IP address to be used.\n",
+          "markdownDescription": "Specifies the IP address to be used.",
+          "x-intellij-html-description": "\u003cp\u003eSpecifies the IP address to be used.\u003c/p\u003e\n"
+        },
+        "equinixMetal": {
+          "$ref": "#/$defs/VIPEquinixMetalConfig",
+          "title": "equinixMetal",
+          "description": "Specifies the Equinix Metal API settings to assign VIP to the node.\n",
+          "markdownDescription": "Specifies the Equinix Metal API settings to assign VIP to the node.",
+          "x-intellij-html-description": "\u003cp\u003eSpecifies the Equinix Metal API settings to assign VIP to the node.\u003c/p\u003e\n"
+        },
+        "hcloud": {
+          "$ref": "#/$defs/VIPHCloudConfig",
+          "title": "hcloud",
+          "description": "Specifies the Hetzner Cloud API settings to assign VIP to the node.\n",
+          "markdownDescription": "Specifies the Hetzner Cloud API settings to assign VIP to the node.",
+          "x-intellij-html-description": "\u003cp\u003eSpecifies the Hetzner Cloud API settings to assign VIP to the node.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "DeviceWireguardConfig": {
+      "properties": {
+        "privateKey": {
+          "type": "string",
+          "title": "privateKey",
+          "description": "Specifies a private key configuration (base64 encoded).\nCan be generated by wg genkey.\n",
+          "markdownDescription": "Specifies a private key configuration (base64 encoded).\nCan be generated by `wg genkey`.",
+          "x-intellij-html-description": "\u003cp\u003eSpecifies a private key configuration (base64 encoded).\nCan be generated by \u003ccode\u003ewg genkey\u003c/code\u003e.\u003c/p\u003e\n"
+        },
+        "listenPort": {
+          "type": "integer",
+          "title": "listenPort",
+          "description": "Specifies a device’s listening port.\n",
+          "markdownDescription": "Specifies a device's listening port.",
+          "x-intellij-html-description": "\u003cp\u003eSpecifies a device\u0026rsquo;s listening port.\u003c/p\u003e\n"
+        },
+        "firewallMark": {
+          "type": "integer",
+          "title": "firewallMark",
+          "description": "Specifies a device’s firewall mark.\n",
+          "markdownDescription": "Specifies a device's firewall mark.",
+          "x-intellij-html-description": "\u003cp\u003eSpecifies a device\u0026rsquo;s firewall mark.\u003c/p\u003e\n"
+        },
+        "peers": {
+          "items": {
+            "$ref": "#/$defs/DeviceWireguardPeer"
+          },
+          "type": "array",
+          "title": "peers",
+          "description": "Specifies a list of peer configurations to apply to a device.\n",
+          "markdownDescription": "Specifies a list of peer configurations to apply to a device.",
+          "x-intellij-html-description": "\u003cp\u003eSpecifies a list of peer configurations to apply to a device.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "DeviceWireguardPeer": {
+      "properties": {
+        "publicKey": {
+          "type": "string",
+          "title": "publicKey",
+          "description": "Specifies the public key of this peer.\nCan be extracted from private key by running wg pubkey \u0026lt; private.key \u0026gt; public.key \u0026amp;\u0026amp; cat public.key.\n",
+          "markdownDescription": "Specifies the public key of this peer.\nCan be extracted from private key by running `wg pubkey \u003c private.key \u003e public.key \u0026\u0026 cat public.key`.",
+          "x-intellij-html-description": "\u003cp\u003eSpecifies the public key of this peer.\nCan be extracted from private key by running \u003ccode\u003ewg pubkey \u0026lt; private.key \u0026gt; public.key \u0026amp;\u0026amp; cat public.key\u003c/code\u003e.\u003c/p\u003e\n"
+        },
+        "endpoint": {
+          "type": "string",
+          "title": "endpoint",
+          "description": "Specifies the endpoint of this peer entry.\n",
+          "markdownDescription": "Specifies the endpoint of this peer entry.",
+          "x-intellij-html-description": "\u003cp\u003eSpecifies the endpoint of this peer entry.\u003c/p\u003e\n"
+        },
+        "persistentKeepaliveInterval": {
+          "type": "string",
+          "pattern": "^[-+]?(((\\d+(\\.\\d*)?|\\d*(\\.\\d+)+)([nuµm]?s|m|h))|0)+$",
+          "title": "persistentKeepaliveInterval",
+          "description": "Specifies the persistent keepalive interval for this peer.\nField format accepts any Go time.Duration format (‘1h’ for one hour, ‘10m’ for ten minutes).\n",
+          "markdownDescription": "Specifies the persistent keepalive interval for this peer.\nField format accepts any Go time.Duration format ('1h' for one hour, '10m' for ten minutes).",
+          "x-intellij-html-description": "\u003cp\u003eSpecifies the persistent keepalive interval for this peer.\nField format accepts any Go time.Duration format (\u0026lsquo;1h\u0026rsquo; for one hour, \u0026lsquo;10m\u0026rsquo; for ten minutes).\u003c/p\u003e\n"
+        },
+        "allowedIPs": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "title": "allowedIPs",
+          "description": "AllowedIPs specifies a list of allowed IP addresses in CIDR notation for this peer.\n",
+          "markdownDescription": "AllowedIPs specifies a list of allowed IP addresses in CIDR notation for this peer.",
+          "x-intellij-html-description": "\u003cp\u003eAllowedIPs specifies a list of allowed IP addresses in CIDR notation for this peer.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "DiscoveryRegistriesConfig": {
+      "properties": {
+        "kubernetes": {
+          "$ref": "#/$defs/RegistryKubernetesConfig",
+          "title": "kubernetes",
+          "description": "Kubernetes registry uses Kubernetes API server to discover cluster members and stores additional information\nas annotations on the Node resources.\n",
+          "markdownDescription": "Kubernetes registry uses Kubernetes API server to discover cluster members and stores additional information\nas annotations on the Node resources.",
+          "x-intellij-html-description": "\u003cp\u003eKubernetes registry uses Kubernetes API server to discover cluster members and stores additional information\nas annotations on the Node resources.\u003c/p\u003e\n"
+        },
+        "service": {
+          "$ref": "#/$defs/RegistryServiceConfig",
+          "title": "service",
+          "description": "Service registry is using an external service to push and pull information about cluster members.\n",
+          "markdownDescription": "Service registry is using an external service to push and pull information about cluster members.",
+          "x-intellij-html-description": "\u003cp\u003eService registry is using an external service to push and pull information about cluster members.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "DiskPartition": {
+      "properties": {
+        "size": {
+          "type": "integer",
+          "title": "size",
+          "description": "The size of partition: either bytes or human readable representation. If size: is omitted, the partition is sized to occupy the full disk.\n",
+          "markdownDescription": "The size of partition: either bytes or human readable representation. If `size:` is omitted, the partition is sized to occupy the full disk.",
+          "x-intellij-html-description": "\u003cp\u003eThe size of partition: either bytes or human readable representation. If \u003ccode\u003esize:\u003c/code\u003e is omitted, the partition is sized to occupy the full disk.\u003c/p\u003e\n"
+        },
+        "mountpoint": {
+          "type": "string",
+          "title": "mountpoint",
+          "description": "Where to mount the partition.\n",
+          "markdownDescription": "Where to mount the partition.",
+          "x-intellij-html-description": "\u003cp\u003eWhere to mount the partition.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "EncryptionConfig": {
+      "properties": {
+        "provider": {
+          "type": "string",
+          "title": "provider",
+          "description": "Encryption provider to use for the encryption.\n",
+          "markdownDescription": "Encryption provider to use for the encryption.",
+          "x-intellij-html-description": "\u003cp\u003eEncryption provider to use for the encryption.\u003c/p\u003e\n"
+        },
+        "keys": {
+          "items": {
+            "$ref": "#/$defs/EncryptionKey"
+          },
+          "type": "array",
+          "title": "keys",
+          "description": "Defines the encryption keys generation and storage method.\n",
+          "markdownDescription": "Defines the encryption keys generation and storage method.",
+          "x-intellij-html-description": "\u003cp\u003eDefines the encryption keys generation and storage method.\u003c/p\u003e\n"
+        },
+        "cipher": {
+          "enum": [
+            "aes-xts-plain64",
+            "xchacha12,aes-adiantum-plain64",
+            "xchacha20,aes-adiantum-plain64"
+          ],
+          "title": "cipher",
+          "description": "Cipher kind to use for the encryption. Depends on the encryption provider.\n",
+          "markdownDescription": "Cipher kind to use for the encryption. Depends on the encryption provider.",
+          "x-intellij-html-description": "\u003cp\u003eCipher kind to use for the encryption. Depends on the encryption provider.\u003c/p\u003e\n"
+        },
+        "keySize": {
+          "type": "integer",
+          "title": "keySize",
+          "description": "Defines the encryption key length.\n",
+          "markdownDescription": "Defines the encryption key length.",
+          "x-intellij-html-description": "\u003cp\u003eDefines the encryption key length.\u003c/p\u003e\n"
+        },
+        "blockSize": {
+          "type": "integer",
+          "title": "blockSize",
+          "description": "Defines the encryption sector size.\n",
+          "markdownDescription": "Defines the encryption sector size.",
+          "x-intellij-html-description": "\u003cp\u003eDefines the encryption sector size.\u003c/p\u003e\n"
+        },
+        "options": {
+          "enum": [
+            "no_read_workqueue",
+            "no_write_workqueue",
+            "same_cpu_crypt"
+          ],
+          "title": "options",
+          "description": "Additional –perf parameters for the LUKS2 encryption.\n",
+          "markdownDescription": "Additional --perf parameters for the LUKS2 encryption.",
+          "x-intellij-html-description": "\u003cp\u003eAdditional \u0026ndash;perf parameters for the LUKS2 encryption.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "EncryptionKey": {
+      "properties": {
+        "static": {
+          "$ref": "#/$defs/EncryptionKeyStatic",
+          "title": "static",
+          "description": "Key which value is stored in the configuration file.\n",
+          "markdownDescription": "Key which value is stored in the configuration file.",
+          "x-intellij-html-description": "\u003cp\u003eKey which value is stored in the configuration file.\u003c/p\u003e\n"
+        },
+        "nodeID": {
+          "$ref": "#/$defs/EncryptionKeyNodeID",
+          "title": "nodeID",
+          "description": "Deterministically generated key from the node UUID and PartitionLabel.\n",
+          "markdownDescription": "Deterministically generated key from the node UUID and PartitionLabel.",
+          "x-intellij-html-description": "\u003cp\u003eDeterministically generated key from the node UUID and PartitionLabel.\u003c/p\u003e\n"
+        },
+        "kms": {
+          "$ref": "#/$defs/EncryptionKeyKMS",
+          "title": "kms",
+          "description": "KMS managed encryption key.\n",
+          "markdownDescription": "KMS managed encryption key.",
+          "x-intellij-html-description": "\u003cp\u003eKMS managed encryption key.\u003c/p\u003e\n"
+        },
+        "slot": {
+          "type": "integer",
+          "title": "slot",
+          "description": "Key slot number for LUKS2 encryption.\n",
+          "markdownDescription": "Key slot number for LUKS2 encryption.",
+          "x-intellij-html-description": "\u003cp\u003eKey slot number for LUKS2 encryption.\u003c/p\u003e\n"
+        },
+        "tpm": {
+          "$ref": "#/$defs/EncryptionKeyTPM",
+          "title": "tpm",
+          "description": "Enable TPM based disk encryption.\n",
+          "markdownDescription": "Enable TPM based disk encryption.",
+          "x-intellij-html-description": "\u003cp\u003eEnable TPM based disk encryption.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "EncryptionKeyKMS": {
+      "properties": {
+        "endpoint": {
+          "type": "string",
+          "title": "endpoint",
+          "description": "KMS endpoint to Seal/Unseal the key.\n",
+          "markdownDescription": "KMS endpoint to Seal/Unseal the key.",
+          "x-intellij-html-description": "\u003cp\u003eKMS endpoint to Seal/Unseal the key.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "EncryptionKeyNodeID": {
+      "properties": {},
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "EncryptionKeyStatic": {
+      "properties": {
+        "passphrase": {
+          "type": "string",
+          "title": "passphrase",
+          "description": "Defines the static passphrase value.\n",
+          "markdownDescription": "Defines the static passphrase value.",
+          "x-intellij-html-description": "\u003cp\u003eDefines the static passphrase value.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "EncryptionKeyTPM": {
+      "properties": {},
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "Endpoint": {
+      "properties": {},
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "EtcdConfig": {
+      "properties": {
+        "image": {
+          "type": "string",
+          "title": "image",
+          "description": "The container image used to create the etcd service.\n",
+          "markdownDescription": "The container image used to create the etcd service.",
+          "x-intellij-html-description": "\u003cp\u003eThe container image used to create the etcd service.\u003c/p\u003e\n"
+        },
+        "ca": {
+          "properties": {
+            "crt": {
+              "type": "string"
+            },
+            "key": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false,
+          "type": "object",
+          "title": "ca",
+          "description": "The ca is the root certificate authority of the PKI.\nIt is composed of a base64 encoded crt and key.\n",
+          "markdownDescription": "The `ca` is the root certificate authority of the PKI.\nIt is composed of a base64 encoded `crt` and `key`.",
+          "x-intellij-html-description": "\u003cp\u003eThe \u003ccode\u003eca\u003c/code\u003e is the root certificate authority of the PKI.\nIt is composed of a base64 encoded \u003ccode\u003ecrt\u003c/code\u003e and \u003ccode\u003ekey\u003c/code\u003e.\u003c/p\u003e\n"
+        },
+        "extraArgs": {
+          "patternProperties": {
+            ".*": {
+              "type": "string"
+            }
+          },
+          "type": "object",
+          "title": "extraArgs",
+          "description": "Extra arguments to supply to etcd.\nNote that the following args are not allowed:\n\n\nname\ndata-dir\ninitial-cluster-state\nlisten-peer-urls\nlisten-client-urls\ncert-file\nkey-file\ntrusted-ca-file\npeer-client-cert-auth\npeer-cert-file\npeer-trusted-ca-file\npeer-key-file\n\n",
+          "markdownDescription": "Extra arguments to supply to etcd.\nNote that the following args are not allowed:\n\n- `name`\n- `data-dir`\n- `initial-cluster-state`\n- `listen-peer-urls`\n- `listen-client-urls`\n- `cert-file`\n- `key-file`\n- `trusted-ca-file`\n- `peer-client-cert-auth`\n- `peer-cert-file`\n- `peer-trusted-ca-file`\n- `peer-key-file`",
+          "x-intellij-html-description": "\u003cp\u003eExtra arguments to supply to etcd.\nNote that the following args are not allowed:\u003c/p\u003e\n\n\u003cul\u003e\n\u003cli\u003e\u003ccode\u003ename\u003c/code\u003e\u003c/li\u003e\n\u003cli\u003e\u003ccode\u003edata-dir\u003c/code\u003e\u003c/li\u003e\n\u003cli\u003e\u003ccode\u003einitial-cluster-state\u003c/code\u003e\u003c/li\u003e\n\u003cli\u003e\u003ccode\u003elisten-peer-urls\u003c/code\u003e\u003c/li\u003e\n\u003cli\u003e\u003ccode\u003elisten-client-urls\u003c/code\u003e\u003c/li\u003e\n\u003cli\u003e\u003ccode\u003ecert-file\u003c/code\u003e\u003c/li\u003e\n\u003cli\u003e\u003ccode\u003ekey-file\u003c/code\u003e\u003c/li\u003e\n\u003cli\u003e\u003ccode\u003etrusted-ca-file\u003c/code\u003e\u003c/li\u003e\n\u003cli\u003e\u003ccode\u003epeer-client-cert-auth\u003c/code\u003e\u003c/li\u003e\n\u003cli\u003e\u003ccode\u003epeer-cert-file\u003c/code\u003e\u003c/li\u003e\n\u003cli\u003e\u003ccode\u003epeer-trusted-ca-file\u003c/code\u003e\u003c/li\u003e\n\u003cli\u003e\u003ccode\u003epeer-key-file\u003c/code\u003e\u003c/li\u003e\n\u003c/ul\u003e\n"
+        },
+        "advertisedSubnets": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "title": "advertisedSubnets",
+          "description": "The advertisedSubnets field configures the networks to pick etcd advertised IP from.\n\nIPs can be excluded from the list by using negative match with !, e.g !10.0.0.0/8.\nNegative subnet matches should be specified last to filter out IPs picked by positive matches.\nIf not specified, advertised IP is selected as the first routable address of the node.\n",
+          "markdownDescription": "The `advertisedSubnets` field configures the networks to pick etcd advertised IP from.\n\nIPs can be excluded from the list by using negative match with `!`, e.g `!10.0.0.0/8`.\nNegative subnet matches should be specified last to filter out IPs picked by positive matches.\nIf not specified, advertised IP is selected as the first routable address of the node.",
+          "x-intellij-html-description": "\u003cp\u003eThe \u003ccode\u003eadvertisedSubnets\u003c/code\u003e field configures the networks to pick etcd advertised IP from.\u003c/p\u003e\n\n\u003cp\u003eIPs can be excluded from the list by using negative match with \u003ccode\u003e!\u003c/code\u003e, e.g \u003ccode\u003e!10.0.0.0/8\u003c/code\u003e.\nNegative subnet matches should be specified last to filter out IPs picked by positive matches.\nIf not specified, advertised IP is selected as the first routable address of the node.\u003c/p\u003e\n"
+        },
+        "listenSubnets": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "title": "listenSubnets",
+          "description": "The listenSubnets field configures the networks for the etcd to listen for peer and client connections.\n\nIf listenSubnets is not set, but advertisedSubnets is set, listenSubnets defaults to\nadvertisedSubnets.\n\nIf neither advertisedSubnets nor listenSubnets is set, listenSubnets defaults to listen on all addresses.\n\nIPs can be excluded from the list by using negative match with !, e.g !10.0.0.0/8.\nNegative subnet matches should be specified last to filter out IPs picked by positive matches.\nIf not specified, advertised IP is selected as the first routable address of the node.\n",
+          "markdownDescription": "The `listenSubnets` field configures the networks for the etcd to listen for peer and client connections.\n\nIf `listenSubnets` is not set, but `advertisedSubnets` is set, `listenSubnets` defaults to\n`advertisedSubnets`.\n\nIf neither `advertisedSubnets` nor `listenSubnets` is set, `listenSubnets` defaults to listen on all addresses.\n\nIPs can be excluded from the list by using negative match with `!`, e.g `!10.0.0.0/8`.\nNegative subnet matches should be specified last to filter out IPs picked by positive matches.\nIf not specified, advertised IP is selected as the first routable address of the node.",
+          "x-intellij-html-description": "\u003cp\u003eThe \u003ccode\u003elistenSubnets\u003c/code\u003e field configures the networks for the etcd to listen for peer and client connections.\u003c/p\u003e\n\n\u003cp\u003eIf \u003ccode\u003elistenSubnets\u003c/code\u003e is not set, but \u003ccode\u003eadvertisedSubnets\u003c/code\u003e is set, \u003ccode\u003elistenSubnets\u003c/code\u003e defaults to\n\u003ccode\u003eadvertisedSubnets\u003c/code\u003e.\u003c/p\u003e\n\n\u003cp\u003eIf neither \u003ccode\u003eadvertisedSubnets\u003c/code\u003e nor \u003ccode\u003elistenSubnets\u003c/code\u003e is set, \u003ccode\u003elistenSubnets\u003c/code\u003e defaults to listen on all addresses.\u003c/p\u003e\n\n\u003cp\u003eIPs can be excluded from the list by using negative match with \u003ccode\u003e!\u003c/code\u003e, e.g \u003ccode\u003e!10.0.0.0/8\u003c/code\u003e.\nNegative subnet matches should be specified last to filter out IPs picked by positive matches.\nIf not specified, advertised IP is selected as the first routable address of the node.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "ExternalCloudProviderConfig": {
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "title": "enabled",
+          "description": "Enable external cloud provider.\n",
+          "markdownDescription": "Enable external cloud provider.",
+          "x-intellij-html-description": "\u003cp\u003eEnable external cloud provider.\u003c/p\u003e\n"
+        },
+        "manifests": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "title": "manifests",
+          "description": "A list of urls that point to additional manifests for an external cloud provider.\nThese will get automatically deployed as part of the bootstrap.\n",
+          "markdownDescription": "A list of urls that point to additional manifests for an external cloud provider.\nThese will get automatically deployed as part of the bootstrap.",
+          "x-intellij-html-description": "\u003cp\u003eA list of urls that point to additional manifests for an external cloud provider.\nThese will get automatically deployed as part of the bootstrap.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "ExtraHost": {
+      "properties": {
+        "ip": {
+          "type": "string",
+          "title": "ip",
+          "description": "The IP of the host.\n",
+          "markdownDescription": "The IP of the host.",
+          "x-intellij-html-description": "\u003cp\u003eThe IP of the host.\u003c/p\u003e\n"
+        },
+        "aliases": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "title": "aliases",
+          "description": "The host alias.\n",
+          "markdownDescription": "The host alias.",
+          "x-intellij-html-description": "\u003cp\u003eThe host alias.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "ExtraMount": {
+      "properties": {
+        "destination": {
+          "type": "string",
+          "title": "destination",
+          "description": "Destination is the absolute path where the mount will be placed in the container.\n",
+          "markdownDescription": "Destination is the absolute path where the mount will be placed in the container.",
+          "x-intellij-html-description": "\u003cp\u003eDestination is the absolute path where the mount will be placed in the container.\u003c/p\u003e\n"
+        },
+        "type": {
+          "type": "string",
+          "title": "type",
+          "description": "Type specifies the mount kind.\n",
+          "markdownDescription": "Type specifies the mount kind.",
+          "x-intellij-html-description": "\u003cp\u003eType specifies the mount kind.\u003c/p\u003e\n"
+        },
+        "source": {
+          "type": "string",
+          "title": "source",
+          "description": "Source specifies the source path of the mount.\n",
+          "markdownDescription": "Source specifies the source path of the mount.",
+          "x-intellij-html-description": "\u003cp\u003eSource specifies the source path of the mount.\u003c/p\u003e\n"
+        },
+        "options": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "title": "options",
+          "description": "Options are fstab style mount options.\n",
+          "markdownDescription": "Options are fstab style mount options.",
+          "x-intellij-html-description": "\u003cp\u003eOptions are fstab style mount options.\u003c/p\u003e\n"
+        },
+        "uidMappings": {
+          "items": {
+            "$ref": "#/$defs/LinuxIDMapping"
+          },
+          "type": "array",
+          "title": "uidMappings",
+          "description": "UID/GID mappings used for changing file owners w/o calling chown, fs should support it.\n\nEvery mount point could have its own mapping.\n",
+          "markdownDescription": "UID/GID mappings used for changing file owners w/o calling chown, fs should support it.\n\nEvery mount point could have its own mapping.",
+          "x-intellij-html-description": "\u003cp\u003eUID/GID mappings used for changing file owners w/o calling chown, fs should support it.\u003c/p\u003e\n\n\u003cp\u003eEvery mount point could have its own mapping.\u003c/p\u003e\n"
+        },
+        "gidMappings": {
+          "items": {
+            "$ref": "#/$defs/LinuxIDMapping"
+          },
+          "type": "array",
+          "title": "gidMappings",
+          "description": "UID/GID mappings used for changing file owners w/o calling chown, fs should support it.\n\nEvery mount point could have its own mapping.\n",
+          "markdownDescription": "UID/GID mappings used for changing file owners w/o calling chown, fs should support it.\n\nEvery mount point could have its own mapping.",
+          "x-intellij-html-description": "\u003cp\u003eUID/GID mappings used for changing file owners w/o calling chown, fs should support it.\u003c/p\u003e\n\n\u003cp\u003eEvery mount point could have its own mapping.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "FeaturesConfig": {
+      "properties": {
+        "rbac": {
+          "type": "boolean",
+          "title": "rbac",
+          "description": "Enable role-based access control (RBAC).\n",
+          "markdownDescription": "Enable role-based access control (RBAC).",
+          "x-intellij-html-description": "\u003cp\u003eEnable role-based access control (RBAC).\u003c/p\u003e\n"
+        },
+        "stableHostname": {
+          "type": "boolean",
+          "title": "stableHostname",
+          "description": "Enable stable default hostname.\n",
+          "markdownDescription": "Enable stable default hostname.",
+          "x-intellij-html-description": "\u003cp\u003eEnable stable default hostname.\u003c/p\u003e\n"
+        },
+        "kubernetesTalosAPIAccess": {
+          "$ref": "#/$defs/KubernetesTalosAPIAccessConfig",
+          "title": "kubernetesTalosAPIAccess",
+          "description": "Configure Talos API access from Kubernetes pods.\n\nThis feature is disabled if the feature config is not specified.\n",
+          "markdownDescription": "Configure Talos API access from Kubernetes pods.\n\nThis feature is disabled if the feature config is not specified.",
+          "x-intellij-html-description": "\u003cp\u003eConfigure Talos API access from Kubernetes pods.\u003c/p\u003e\n\n\u003cp\u003eThis feature is disabled if the feature config is not specified.\u003c/p\u003e\n"
+        },
+        "apidCheckExtKeyUsage": {
+          "type": "boolean",
+          "title": "apidCheckExtKeyUsage",
+          "description": "Enable checks for extended key usage of client certificates in apid.\n",
+          "markdownDescription": "Enable checks for extended key usage of client certificates in apid.",
+          "x-intellij-html-description": "\u003cp\u003eEnable checks for extended key usage of client certificates in apid.\u003c/p\u003e\n"
+        },
+        "diskQuotaSupport": {
+          "type": "boolean",
+          "title": "diskQuotaSupport",
+          "description": "Enable XFS project quota support for EPHEMERAL partition and user disks.\nAlso enables kubelet tracking of ephemeral disk usage in the kubelet via quota.\n",
+          "markdownDescription": "Enable XFS project quota support for EPHEMERAL partition and user disks.\nAlso enables kubelet tracking of ephemeral disk usage in the kubelet via quota.",
+          "x-intellij-html-description": "\u003cp\u003eEnable XFS project quota support for EPHEMERAL partition and user disks.\nAlso enables kubelet tracking of ephemeral disk usage in the kubelet via quota.\u003c/p\u003e\n"
+        },
+        "kubePrism": {
+          "$ref": "#/$defs/KubePrism",
+          "title": "kubePrism",
+          "description": "KubePrism - local proxy/load balancer on defined port that will distribute\nrequests to all API servers in the cluster.\n",
+          "markdownDescription": "KubePrism - local proxy/load balancer on defined port that will distribute\nrequests to all API servers in the cluster.",
+          "x-intellij-html-description": "\u003cp\u003eKubePrism - local proxy/load balancer on defined port that will distribute\nrequests to all API servers in the cluster.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "FlannelCNIConfig": {
+      "properties": {
+        "extraArgs": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "title": "extraArgs",
+          "description": "Extra arguments for ‘flanneld’.\n",
+          "markdownDescription": "Extra arguments for 'flanneld'.",
+          "x-intellij-html-description": "\u003cp\u003eExtra arguments for \u0026lsquo;flanneld\u0026rsquo;.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "InstallConfig": {
+      "properties": {
+        "disk": {
+          "type": "string",
+          "title": "disk",
+          "description": "The disk used for installations.\n",
+          "markdownDescription": "The disk used for installations.",
+          "x-intellij-html-description": "\u003cp\u003eThe disk used for installations.\u003c/p\u003e\n"
+        },
+        "diskSelector": {
+          "$ref": "#/$defs/InstallDiskSelector",
+          "title": "diskSelector",
+          "description": "Look up disk using disk attributes like model, size, serial and others.\nAlways has priority over disk.\n",
+          "markdownDescription": "Look up disk using disk attributes like model, size, serial and others.\nAlways has priority over `disk`.",
+          "x-intellij-html-description": "\u003cp\u003eLook up disk using disk attributes like model, size, serial and others.\nAlways has priority over \u003ccode\u003edisk\u003c/code\u003e.\u003c/p\u003e\n"
+        },
+        "extraKernelArgs": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "title": "extraKernelArgs",
+          "description": "Allows for supplying extra kernel args via the bootloader.\nExisting kernel args can be removed by prefixing the argument with a -.\nFor example -console removes all console=\u0026lt;value\u0026gt; arguments, whereas -console=tty0 removes the console=tty0 default argument.\n",
+          "markdownDescription": "Allows for supplying extra kernel args via the bootloader.\nExisting kernel args can be removed by prefixing the argument with a `-`.\nFor example `-console` removes all `console=\u003cvalue\u003e` arguments, whereas `-console=tty0` removes the `console=tty0` default argument.",
+          "x-intellij-html-description": "\u003cp\u003eAllows for supplying extra kernel args via the bootloader.\nExisting kernel args can be removed by prefixing the argument with a \u003ccode\u003e-\u003c/code\u003e.\nFor example \u003ccode\u003e-console\u003c/code\u003e removes all \u003ccode\u003econsole=\u0026lt;value\u0026gt;\u003c/code\u003e arguments, whereas \u003ccode\u003e-console=tty0\u003c/code\u003e removes the \u003ccode\u003econsole=tty0\u003c/code\u003e default argument.\u003c/p\u003e\n"
+        },
+        "image": {
+          "type": "string",
+          "title": "image",
+          "description": "Allows for supplying the image used to perform the installation.\nImage reference for each Talos release can be found on\nGitHub releases page.\n",
+          "markdownDescription": "Allows for supplying the image used to perform the installation.\nImage reference for each Talos release can be found on\n[GitHub releases page](https://github.com/siderolabs/talos/releases).",
+          "x-intellij-html-description": "\u003cp\u003eAllows for supplying the image used to perform the installation.\nImage reference for each Talos release can be found on\n\u003ca href=\"https://github.com/siderolabs/talos/releases\" target=\"_blank\"\u003eGitHub releases page\u003c/a\u003e.\u003c/p\u003e\n"
+        },
+        "extensions": {
+          "items": {
+            "$ref": "#/$defs/InstallExtensionConfig"
+          },
+          "type": "array",
+          "title": "extensions",
+          "description": "Allows for supplying additional system extension images to install on top of base Talos image.\n",
+          "markdownDescription": "Allows for supplying additional system extension images to install on top of base Talos image.",
+          "x-intellij-html-description": "\u003cp\u003eAllows for supplying additional system extension images to install on top of base Talos image.\u003c/p\u003e\n"
+        },
+        "wipe": {
+          "type": "boolean",
+          "title": "wipe",
+          "description": "Indicates if the installation disk should be wiped at installation time.\nDefaults to true.\n",
+          "markdownDescription": "Indicates if the installation disk should be wiped at installation time.\nDefaults to `true`.",
+          "x-intellij-html-description": "\u003cp\u003eIndicates if the installation disk should be wiped at installation time.\nDefaults to \u003ccode\u003etrue\u003c/code\u003e.\u003c/p\u003e\n"
+        },
+        "legacyBIOSSupport": {
+          "type": "boolean",
+          "title": "legacyBIOSSupport",
+          "description": "Indicates if MBR partition should be marked as bootable (active).\nShould be enabled only for the systems with legacy BIOS that doesn’t support GPT partitioning scheme.\n",
+          "markdownDescription": "Indicates if MBR partition should be marked as bootable (active).\nShould be enabled only for the systems with legacy BIOS that doesn't support GPT partitioning scheme.",
+          "x-intellij-html-description": "\u003cp\u003eIndicates if MBR partition should be marked as bootable (active).\nShould be enabled only for the systems with legacy BIOS that doesn\u0026rsquo;t support GPT partitioning scheme.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "InstallDiskSelector": {
+      "properties": {
+        "size": {
+          "type": "string",
+          "title": "size",
+          "description": "Disk size.\n",
+          "markdownDescription": "Disk size.",
+          "x-intellij-html-description": "\u003cp\u003eDisk size.\u003c/p\u003e\n"
+        },
+        "name": {
+          "type": "string",
+          "title": "name",
+          "description": "Disk name /sys/block/\u0026lt;dev\u0026gt;/device/name.\n",
+          "markdownDescription": "Disk name `/sys/block/\u003cdev\u003e/device/name`.",
+          "x-intellij-html-description": "\u003cp\u003eDisk name \u003ccode\u003e/sys/block/\u0026lt;dev\u0026gt;/device/name\u003c/code\u003e.\u003c/p\u003e\n"
+        },
+        "model": {
+          "type": "string",
+          "title": "model",
+          "description": "Disk model /sys/block/\u0026lt;dev\u0026gt;/device/model.\n",
+          "markdownDescription": "Disk model `/sys/block/\u003cdev\u003e/device/model`.",
+          "x-intellij-html-description": "\u003cp\u003eDisk model \u003ccode\u003e/sys/block/\u0026lt;dev\u0026gt;/device/model\u003c/code\u003e.\u003c/p\u003e\n"
+        },
+        "serial": {
+          "type": "string",
+          "title": "serial",
+          "description": "Disk serial number /sys/block/\u0026lt;dev\u0026gt;/serial.\n",
+          "markdownDescription": "Disk serial number `/sys/block/\u003cdev\u003e/serial`.",
+          "x-intellij-html-description": "\u003cp\u003eDisk serial number \u003ccode\u003e/sys/block/\u0026lt;dev\u0026gt;/serial\u003c/code\u003e.\u003c/p\u003e\n"
+        },
+        "modalias": {
+          "type": "string",
+          "title": "modalias",
+          "description": "Disk modalias /sys/block/\u0026lt;dev\u0026gt;/device/modalias.\n",
+          "markdownDescription": "Disk modalias `/sys/block/\u003cdev\u003e/device/modalias`.",
+          "x-intellij-html-description": "\u003cp\u003eDisk modalias \u003ccode\u003e/sys/block/\u0026lt;dev\u0026gt;/device/modalias\u003c/code\u003e.\u003c/p\u003e\n"
+        },
+        "uuid": {
+          "type": "string",
+          "title": "uuid",
+          "description": "Disk UUID /sys/block/\u0026lt;dev\u0026gt;/uuid.\n",
+          "markdownDescription": "Disk UUID `/sys/block/\u003cdev\u003e/uuid`.",
+          "x-intellij-html-description": "\u003cp\u003eDisk UUID \u003ccode\u003e/sys/block/\u0026lt;dev\u0026gt;/uuid\u003c/code\u003e.\u003c/p\u003e\n"
+        },
+        "wwid": {
+          "type": "string",
+          "title": "wwid",
+          "description": "Disk WWID /sys/block/\u0026lt;dev\u0026gt;/wwid.\n",
+          "markdownDescription": "Disk WWID `/sys/block/\u003cdev\u003e/wwid`.",
+          "x-intellij-html-description": "\u003cp\u003eDisk WWID \u003ccode\u003e/sys/block/\u0026lt;dev\u0026gt;/wwid\u003c/code\u003e.\u003c/p\u003e\n"
+        },
+        "type": {
+          "enum": [
+            "ssd",
+            "hdd",
+            "nvme",
+            "sd"
+          ],
+          "title": "type",
+          "description": "Disk Type.\n",
+          "markdownDescription": "Disk Type.",
+          "x-intellij-html-description": "\u003cp\u003eDisk Type.\u003c/p\u003e\n"
+        },
+        "busPath": {
+          "type": "string",
+          "title": "busPath",
+          "description": "Disk bus path.\n",
+          "markdownDescription": "Disk bus path.",
+          "x-intellij-html-description": "\u003cp\u003eDisk bus path.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "InstallExtensionConfig": {
+      "properties": {
+        "image": {
+          "type": "string",
+          "title": "image",
+          "description": "System extension image.\n",
+          "markdownDescription": "System extension image.",
+          "x-intellij-html-description": "\u003cp\u003eSystem extension image.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "KernelConfig": {
+      "properties": {
+        "modules": {
+          "items": {
+            "$ref": "#/$defs/KernelModuleConfig"
+          },
+          "type": "array",
+          "title": "modules",
+          "description": "Kernel modules to load.\n",
+          "markdownDescription": "Kernel modules to load.",
+          "x-intellij-html-description": "\u003cp\u003eKernel modules to load.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "KernelModuleConfig": {
+      "properties": {
+        "name": {
+          "type": "string",
+          "title": "name",
+          "description": "Module name.\n",
+          "markdownDescription": "Module name.",
+          "x-intellij-html-description": "\u003cp\u003eModule name.\u003c/p\u003e\n"
+        },
+        "parameters": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "title": "parameters",
+          "description": "Module parameters, changes applied after reboot.\n",
+          "markdownDescription": "Module parameters, changes applied after reboot.",
+          "x-intellij-html-description": "\u003cp\u003eModule parameters, changes applied after reboot.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "KubePrism": {
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "title": "enabled",
+          "description": "Enable KubePrism support - will start local load balacing proxy.\n",
+          "markdownDescription": "Enable KubePrism support - will start local load balacing proxy.",
+          "x-intellij-html-description": "\u003cp\u003eEnable KubePrism support - will start local load balacing proxy.\u003c/p\u003e\n"
+        },
+        "port": {
+          "type": "integer",
+          "title": "port",
+          "description": "KubePrism port.\n",
+          "markdownDescription": "KubePrism port.",
+          "x-intellij-html-description": "\u003cp\u003eKubePrism port.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "KubeSpanFilters": {
+      "properties": {
+        "endpoints": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "title": "endpoints",
+          "description": "Filter node addresses which will be advertised as KubeSpan endpoints for peer-to-peer Wireguard connections.\n\nBy default, all addresses are advertised, and KubeSpan cycles through all endpoints until it finds one that works.\n\nDefault value: no filtering.\n",
+          "markdownDescription": "Filter node addresses which will be advertised as KubeSpan endpoints for peer-to-peer Wireguard connections.\n\nBy default, all addresses are advertised, and KubeSpan cycles through all endpoints until it finds one that works.\n\nDefault value: no filtering.",
+          "x-intellij-html-description": "\u003cp\u003eFilter node addresses which will be advertised as KubeSpan endpoints for peer-to-peer Wireguard connections.\u003c/p\u003e\n\n\u003cp\u003eBy default, all addresses are advertised, and KubeSpan cycles through all endpoints until it finds one that works.\u003c/p\u003e\n\n\u003cp\u003eDefault value: no filtering.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "KubeletConfig": {
+      "properties": {
+        "image": {
+          "type": "string",
+          "title": "image",
+          "description": "The image field is an optional reference to an alternative kubelet image.\n",
+          "markdownDescription": "The `image` field is an optional reference to an alternative kubelet image.",
+          "x-intellij-html-description": "\u003cp\u003eThe \u003ccode\u003eimage\u003c/code\u003e field is an optional reference to an alternative kubelet image.\u003c/p\u003e\n"
+        },
+        "clusterDNS": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "title": "clusterDNS",
+          "description": "The ClusterDNS field is an optional reference to an alternative kubelet clusterDNS ip list.\n",
+          "markdownDescription": "The `ClusterDNS` field is an optional reference to an alternative kubelet clusterDNS ip list.",
+          "x-intellij-html-description": "\u003cp\u003eThe \u003ccode\u003eClusterDNS\u003c/code\u003e field is an optional reference to an alternative kubelet clusterDNS ip list.\u003c/p\u003e\n"
+        },
+        "extraArgs": {
+          "patternProperties": {
+            ".*": {
+              "type": "string"
+            }
+          },
+          "type": "object",
+          "title": "extraArgs",
+          "description": "The extraArgs field is used to provide additional flags to the kubelet.\n",
+          "markdownDescription": "The `extraArgs` field is used to provide additional flags to the kubelet.",
+          "x-intellij-html-description": "\u003cp\u003eThe \u003ccode\u003eextraArgs\u003c/code\u003e field is used to provide additional flags to the kubelet.\u003c/p\u003e\n"
+        },
+        "extraMounts": {
+          "items": {
+            "$ref": "#/$defs/ExtraMount"
+          },
+          "type": "array",
+          "title": "extraMounts",
+          "description": "The extraMounts field is used to add additional mounts to the kubelet container.\nNote that either bind or rbind are required in the options.\n",
+          "markdownDescription": "The `extraMounts` field is used to add additional mounts to the kubelet container.\nNote that either `bind` or `rbind` are required in the `options`.",
+          "x-intellij-html-description": "\u003cp\u003eThe \u003ccode\u003eextraMounts\u003c/code\u003e field is used to add additional mounts to the kubelet container.\nNote that either \u003ccode\u003ebind\u003c/code\u003e or \u003ccode\u003erbind\u003c/code\u003e are required in the \u003ccode\u003eoptions\u003c/code\u003e.\u003c/p\u003e\n"
+        },
+        "extraConfig": {
+          "type": "object",
+          "title": "extraConfig",
+          "description": "The extraConfig field is used to provide kubelet configuration overrides.\n\nSome fields are not allowed to be overridden: authentication and authorization, cgroups\nconfiguration, ports, etc.\n",
+          "markdownDescription": "The `extraConfig` field is used to provide kubelet configuration overrides.\n\nSome fields are not allowed to be overridden: authentication and authorization, cgroups\nconfiguration, ports, etc.",
+          "x-intellij-html-description": "\u003cp\u003eThe \u003ccode\u003eextraConfig\u003c/code\u003e field is used to provide kubelet configuration overrides.\u003c/p\u003e\n\n\u003cp\u003eSome fields are not allowed to be overridden: authentication and authorization, cgroups\nconfiguration, ports, etc.\u003c/p\u003e\n"
+        },
+        "credentialProviderConfig": {
+          "type": "object",
+          "title": "credentialProviderConfig",
+          "description": "The KubeletCredentialProviderConfig field is used to provide kubelet credential configuration.\n",
+          "markdownDescription": "The `KubeletCredentialProviderConfig` field is used to provide kubelet credential configuration.",
+          "x-intellij-html-description": "\u003cp\u003eThe \u003ccode\u003eKubeletCredentialProviderConfig\u003c/code\u003e field is used to provide kubelet credential configuration.\u003c/p\u003e\n"
+        },
+        "defaultRuntimeSeccompProfileEnabled": {
+          "type": "boolean",
+          "title": "defaultRuntimeSeccompProfileEnabled",
+          "description": "Enable container runtime default Seccomp profile.\n",
+          "markdownDescription": "Enable container runtime default Seccomp profile.",
+          "x-intellij-html-description": "\u003cp\u003eEnable container runtime default Seccomp profile.\u003c/p\u003e\n"
+        },
+        "registerWithFQDN": {
+          "type": "boolean",
+          "title": "registerWithFQDN",
+          "description": "The registerWithFQDN field is used to force kubelet to use the node FQDN for registration.\nThis is required in clouds like AWS.\n",
+          "markdownDescription": "The `registerWithFQDN` field is used to force kubelet to use the node FQDN for registration.\nThis is required in clouds like AWS.",
+          "x-intellij-html-description": "\u003cp\u003eThe \u003ccode\u003eregisterWithFQDN\u003c/code\u003e field is used to force kubelet to use the node FQDN for registration.\nThis is required in clouds like AWS.\u003c/p\u003e\n"
+        },
+        "nodeIP": {
+          "$ref": "#/$defs/KubeletNodeIPConfig",
+          "title": "nodeIP",
+          "description": "The nodeIP field is used to configure --node-ip flag for the kubelet.\nThis is used when a node has multiple addresses to choose from.\n",
+          "markdownDescription": "The `nodeIP` field is used to configure `--node-ip` flag for the kubelet.\nThis is used when a node has multiple addresses to choose from.",
+          "x-intellij-html-description": "\u003cp\u003eThe \u003ccode\u003enodeIP\u003c/code\u003e field is used to configure \u003ccode\u003e--node-ip\u003c/code\u003e flag for the kubelet.\nThis is used when a node has multiple addresses to choose from.\u003c/p\u003e\n"
+        },
+        "skipNodeRegistration": {
+          "type": "boolean",
+          "title": "skipNodeRegistration",
+          "description": "The skipNodeRegistration is used to run the kubelet without registering with the apiserver.\nThis runs kubelet as standalone and only runs static pods.\n",
+          "markdownDescription": "The `skipNodeRegistration` is used to run the kubelet without registering with the apiserver.\nThis runs kubelet as standalone and only runs static pods.",
+          "x-intellij-html-description": "\u003cp\u003eThe \u003ccode\u003eskipNodeRegistration\u003c/code\u003e is used to run the kubelet without registering with the apiserver.\nThis runs kubelet as standalone and only runs static pods.\u003c/p\u003e\n"
+        },
+        "disableManifestsDirectory": {
+          "type": "boolean",
+          "title": "disableManifestsDirectory",
+          "description": "The disableManifestsDirectory field configures the kubelet to get static pod manifests from the /etc/kubernetes/manifests directory.\nIt’s recommended to configure static pods with the “pods” key instead.\n",
+          "markdownDescription": "The `disableManifestsDirectory` field configures the kubelet to get static pod manifests from the /etc/kubernetes/manifests directory.\nIt's recommended to configure static pods with the \"pods\" key instead.",
+          "x-intellij-html-description": "\u003cp\u003eThe \u003ccode\u003edisableManifestsDirectory\u003c/code\u003e field configures the kubelet to get static pod manifests from the /etc/kubernetes/manifests directory.\nIt\u0026rsquo;s recommended to configure static pods with the \u0026ldquo;pods\u0026rdquo; key instead.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "KubeletNodeIPConfig": {
+      "properties": {
+        "validSubnets": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "title": "validSubnets",
+          "description": "The validSubnets field configures the networks to pick kubelet node IP from.\nFor dual stack configuration, there should be two subnets: one for IPv4, another for IPv6.\nIPs can be excluded from the list by using negative match with !, e.g !10.0.0.0/8.\nNegative subnet matches should be specified last to filter out IPs picked by positive matches.\nIf not specified, node IP is picked based on cluster podCIDRs: IPv4/IPv6 address or both.\n",
+          "markdownDescription": "The `validSubnets` field configures the networks to pick kubelet node IP from.\nFor dual stack configuration, there should be two subnets: one for IPv4, another for IPv6.\nIPs can be excluded from the list by using negative match with `!`, e.g `!10.0.0.0/8`.\nNegative subnet matches should be specified last to filter out IPs picked by positive matches.\nIf not specified, node IP is picked based on cluster podCIDRs: IPv4/IPv6 address or both.",
+          "x-intellij-html-description": "\u003cp\u003eThe \u003ccode\u003evalidSubnets\u003c/code\u003e field configures the networks to pick kubelet node IP from.\nFor dual stack configuration, there should be two subnets: one for IPv4, another for IPv6.\nIPs can be excluded from the list by using negative match with \u003ccode\u003e!\u003c/code\u003e, e.g \u003ccode\u003e!10.0.0.0/8\u003c/code\u003e.\nNegative subnet matches should be specified last to filter out IPs picked by positive matches.\nIf not specified, node IP is picked based on cluster podCIDRs: IPv4/IPv6 address or both.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "KubernetesTalosAPIAccessConfig": {
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "title": "enabled",
+          "description": "Enable Talos API access from Kubernetes pods.\n",
+          "markdownDescription": "Enable Talos API access from Kubernetes pods.",
+          "x-intellij-html-description": "\u003cp\u003eEnable Talos API access from Kubernetes pods.\u003c/p\u003e\n"
+        },
+        "allowedRoles": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "title": "allowedRoles",
+          "description": "The list of Talos API roles which can be granted for access from Kubernetes pods.\n\nEmpty list means that no roles can be granted, so access is blocked.\n",
+          "markdownDescription": "The list of Talos API roles which can be granted for access from Kubernetes pods.\n\nEmpty list means that no roles can be granted, so access is blocked.",
+          "x-intellij-html-description": "\u003cp\u003eThe list of Talos API roles which can be granted for access from Kubernetes pods.\u003c/p\u003e\n\n\u003cp\u003eEmpty list means that no roles can be granted, so access is blocked.\u003c/p\u003e\n"
+        },
+        "allowedKubernetesNamespaces": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "title": "allowedKubernetesNamespaces",
+          "description": "The list of Kubernetes namespaces Talos API access is available from.\n",
+          "markdownDescription": "The list of Kubernetes namespaces Talos API access is available from.",
+          "x-intellij-html-description": "\u003cp\u003eThe list of Kubernetes namespaces Talos API access is available from.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "LinuxIDMapping": {
+      "properties": {
+        "containerID": {
+          "type": "integer",
+          "title": "containerID",
+          "description": "ContainerID is the starting UID/GID in the container.\n",
+          "markdownDescription": "ContainerID is the starting UID/GID in the container.",
+          "x-intellij-html-description": "\u003cp\u003eContainerID is the starting UID/GID in the container.\u003c/p\u003e\n"
+        },
+        "hostID": {
+          "type": "integer",
+          "title": "hostID",
+          "description": "HostID is the starting UID/GID on the host to be mapped to ‘ContainerID’.\n",
+          "markdownDescription": "HostID is the starting UID/GID on the host to be mapped to 'ContainerID'.",
+          "x-intellij-html-description": "\u003cp\u003eHostID is the starting UID/GID on the host to be mapped to \u0026lsquo;ContainerID\u0026rsquo;.\u003c/p\u003e\n"
+        },
+        "size": {
+          "type": "integer",
+          "title": "size",
+          "description": "Size is the number of IDs to be mapped.\n",
+          "markdownDescription": "Size is the number of IDs to be mapped.",
+          "x-intellij-html-description": "\u003cp\u003eSize is the number of IDs to be mapped.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "LoggingConfig": {
+      "properties": {
+        "destinations": {
+          "items": {
+            "$ref": "#/$defs/LoggingDestination"
+          },
+          "type": "array",
+          "title": "destinations",
+          "description": "Logging destination.\n",
+          "markdownDescription": "Logging destination.",
+          "x-intellij-html-description": "\u003cp\u003eLogging destination.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "LoggingDestination": {
+      "properties": {
+        "endpoint": {
+          "$ref": "#/$defs/Endpoint",
+          "title": "endpoint",
+          "description": "Where to send logs. Supported protocols are “tcp” and “udp”.\n",
+          "markdownDescription": "Where to send logs. Supported protocols are \"tcp\" and \"udp\".",
+          "x-intellij-html-description": "\u003cp\u003eWhere to send logs. Supported protocols are \u0026ldquo;tcp\u0026rdquo; and \u0026ldquo;udp\u0026rdquo;.\u003c/p\u003e\n"
+        },
+        "format": {
+          "enum": [
+            "json_lines"
+          ],
+          "title": "format",
+          "description": "Logs format.\n",
+          "markdownDescription": "Logs format.",
+          "x-intellij-html-description": "\u003cp\u003eLogs format.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "MachineConfig": {
+      "properties": {
+        "type": {
+          "enum": [
+            "controlplane",
+            "worker"
+          ],
+          "title": "type",
+          "description": "Defines the role of the machine within the cluster.\n\nControl Plane\n\nControl Plane node type designates the node as a control plane member.\nThis means it will host etcd along with the Kubernetes controlplane components such as API Server, Controller Manager, Scheduler.\n\nWorker\n\nWorker node type designates the node as a worker node.\nThis means it will be an available compute node for scheduling workloads.\n\nThis node type was previously known as “join”; that value is still supported but deprecated.\n",
+          "markdownDescription": "Defines the role of the machine within the cluster.\n\n**Control Plane**\n\nControl Plane node type designates the node as a control plane member.\nThis means it will host etcd along with the Kubernetes controlplane components such as API Server, Controller Manager, Scheduler.\n\n**Worker**\n\nWorker node type designates the node as a worker node.\nThis means it will be an available compute node for scheduling workloads.\n\nThis node type was previously known as \"join\"; that value is still supported but deprecated.",
+          "x-intellij-html-description": "\u003cp\u003eDefines the role of the machine within the cluster.\u003c/p\u003e\n\n\u003cp\u003e\u003cstrong\u003eControl Plane\u003c/strong\u003e\u003c/p\u003e\n\n\u003cp\u003eControl Plane node type designates the node as a control plane member.\nThis means it will host etcd along with the Kubernetes controlplane components such as API Server, Controller Manager, Scheduler.\u003c/p\u003e\n\n\u003cp\u003e\u003cstrong\u003eWorker\u003c/strong\u003e\u003c/p\u003e\n\n\u003cp\u003eWorker node type designates the node as a worker node.\nThis means it will be an available compute node for scheduling workloads.\u003c/p\u003e\n\n\u003cp\u003eThis node type was previously known as \u0026ldquo;join\u0026rdquo;; that value is still supported but deprecated.\u003c/p\u003e\n"
+        },
+        "token": {
+          "type": "string",
+          "title": "token",
+          "description": "The token is used by a machine to join the PKI of the cluster.\nUsing this token, a machine will create a certificate signing request (CSR), and request a certificate that will be used as its’ identity.\n",
+          "markdownDescription": "The `token` is used by a machine to join the PKI of the cluster.\nUsing this token, a machine will create a certificate signing request (CSR), and request a certificate that will be used as its' identity.",
+          "x-intellij-html-description": "\u003cp\u003eThe \u003ccode\u003etoken\u003c/code\u003e is used by a machine to join the PKI of the cluster.\nUsing this token, a machine will create a certificate signing request (CSR), and request a certificate that will be used as its\u0026rsquo; identity.\u003c/p\u003e\n"
+        },
+        "ca": {
+          "properties": {
+            "crt": {
+              "type": "string"
+            },
+            "key": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false,
+          "type": "object",
+          "title": "ca",
+          "description": "The root certificate authority of the PKI.\nIt is composed of a base64 encoded crt and key.\n",
+          "markdownDescription": "The root certificate authority of the PKI.\nIt is composed of a base64 encoded `crt` and `key`.",
+          "x-intellij-html-description": "\u003cp\u003eThe root certificate authority of the PKI.\nIt is composed of a base64 encoded \u003ccode\u003ecrt\u003c/code\u003e and \u003ccode\u003ekey\u003c/code\u003e.\u003c/p\u003e\n"
+        },
+        "certSANs": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "title": "certSANs",
+          "description": "Extra certificate subject alternative names for the machine’s certificate.\nBy default, all non-loopback interface IPs are automatically added to the certificate’s SANs.\n",
+          "markdownDescription": "Extra certificate subject alternative names for the machine's certificate.\nBy default, all non-loopback interface IPs are automatically added to the certificate's SANs.",
+          "x-intellij-html-description": "\u003cp\u003eExtra certificate subject alternative names for the machine\u0026rsquo;s certificate.\nBy default, all non-loopback interface IPs are automatically added to the certificate\u0026rsquo;s SANs.\u003c/p\u003e\n"
+        },
+        "controlPlane": {
+          "$ref": "#/$defs/MachineControlPlaneConfig",
+          "title": "controlPlane",
+          "description": "Provides machine specific control plane configuration options.\n",
+          "markdownDescription": "Provides machine specific control plane configuration options.",
+          "x-intellij-html-description": "\u003cp\u003eProvides machine specific control plane configuration options.\u003c/p\u003e\n"
+        },
+        "kubelet": {
+          "$ref": "#/$defs/KubeletConfig",
+          "title": "kubelet",
+          "description": "Used to provide additional options to the kubelet.\n",
+          "markdownDescription": "Used to provide additional options to the kubelet.",
+          "x-intellij-html-description": "\u003cp\u003eUsed to provide additional options to the kubelet.\u003c/p\u003e\n"
+        },
+        "pods": {
+          "items": {
+            "type": "object"
+          },
+          "type": "array",
+          "title": "pods",
+          "description": "Used to provide static pod definitions to be run by the kubelet directly bypassing the kube-apiserver.\n\nStatic pods can be used to run components which should be started before the Kubernetes control plane is up.\nTalos doesn’t validate the pod definition.\nUpdates to this field can be applied without a reboot.\n\nSee https://kubernetes.io/docs/tasks/configure-pod-container/static-pod/.\n",
+          "markdownDescription": "Used to provide static pod definitions to be run by the kubelet directly bypassing the kube-apiserver.\n\nStatic pods can be used to run components which should be started before the Kubernetes control plane is up.\nTalos doesn't validate the pod definition.\nUpdates to this field can be applied without a reboot.\n\nSee https://kubernetes.io/docs/tasks/configure-pod-container/static-pod/.",
+          "x-intellij-html-description": "\u003cp\u003eUsed to provide static pod definitions to be run by the kubelet directly bypassing the kube-apiserver.\u003c/p\u003e\n\n\u003cp\u003eStatic pods can be used to run components which should be started before the Kubernetes control plane is up.\nTalos doesn\u0026rsquo;t validate the pod definition.\nUpdates to this field can be applied without a reboot.\u003c/p\u003e\n\n\u003cp\u003eSee \u003ca href=\"https://kubernetes.io/docs/tasks/configure-pod-container/static-pod/\" target=\"_blank\"\u003ehttps://kubernetes.io/docs/tasks/configure-pod-container/static-pod/\u003c/a\u003e.\u003c/p\u003e\n"
+        },
+        "network": {
+          "$ref": "#/$defs/NetworkConfig",
+          "title": "network",
+          "description": "Provides machine specific network configuration options.\n",
+          "markdownDescription": "Provides machine specific network configuration options.",
+          "x-intellij-html-description": "\u003cp\u003eProvides machine specific network configuration options.\u003c/p\u003e\n"
+        },
+        "disks": {
+          "items": {
+            "$ref": "#/$defs/MachineDisk"
+          },
+          "type": "array",
+          "title": "disks",
+          "description": "Used to partition, format and mount additional disks.\nSince the rootfs is read only with the exception of /var, mounts are only valid if they are under /var.\nNote that the partitioning and formatting is done only once, if and only if no existing XFS partitions are found.\nIf size: is omitted, the partition is sized to occupy the full disk.\n",
+          "markdownDescription": "Used to partition, format and mount additional disks.\nSince the rootfs is read only with the exception of `/var`, mounts are only valid if they are under `/var`.\nNote that the partitioning and formatting is done only once, if and only if no existing XFS partitions are found.\nIf `size:` is omitted, the partition is sized to occupy the full disk.",
+          "x-intellij-html-description": "\u003cp\u003eUsed to partition, format and mount additional disks.\nSince the rootfs is read only with the exception of \u003ccode\u003e/var\u003c/code\u003e, mounts are only valid if they are under \u003ccode\u003e/var\u003c/code\u003e.\nNote that the partitioning and formatting is done only once, if and only if no existing XFS partitions are found.\nIf \u003ccode\u003esize:\u003c/code\u003e is omitted, the partition is sized to occupy the full disk.\u003c/p\u003e\n"
+        },
+        "install": {
+          "$ref": "#/$defs/InstallConfig",
+          "title": "install",
+          "description": "Used to provide instructions for installations.\n\nNote that this configuration section gets silently ignored by Talos images that are considered pre-installed.\nTo make sure Talos installs according to the provided configuration, Talos should be booted with ISO or PXE-booted.\n",
+          "markdownDescription": "Used to provide instructions for installations.\n\nNote that this configuration section gets silently ignored by Talos images that are considered pre-installed.\nTo make sure Talos installs according to the provided configuration, Talos should be booted with ISO or PXE-booted.",
+          "x-intellij-html-description": "\u003cp\u003eUsed to provide instructions for installations.\u003c/p\u003e\n\n\u003cp\u003eNote that this configuration section gets silently ignored by Talos images that are considered pre-installed.\nTo make sure Talos installs according to the provided configuration, Talos should be booted with ISO or PXE-booted.\u003c/p\u003e\n"
+        },
+        "files": {
+          "items": {
+            "$ref": "#/$defs/MachineFile"
+          },
+          "type": "array",
+          "title": "files",
+          "description": "Allows the addition of user specified files.\nThe value of op can be create, overwrite, or append.\nIn the case of create, path must not exist.\nIn the case of overwrite, and append, path must be a valid file.\nIf an op value of append is used, the existing file will be appended.\nNote that the file contents are not required to be base64 encoded.\n",
+          "markdownDescription": "Allows the addition of user specified files.\nThe value of `op` can be `create`, `overwrite`, or `append`.\nIn the case of `create`, `path` must not exist.\nIn the case of `overwrite`, and `append`, `path` must be a valid file.\nIf an `op` value of `append` is used, the existing file will be appended.\nNote that the file contents are not required to be base64 encoded.",
+          "x-intellij-html-description": "\u003cp\u003eAllows the addition of user specified files.\nThe value of \u003ccode\u003eop\u003c/code\u003e can be \u003ccode\u003ecreate\u003c/code\u003e, \u003ccode\u003eoverwrite\u003c/code\u003e, or \u003ccode\u003eappend\u003c/code\u003e.\nIn the case of \u003ccode\u003ecreate\u003c/code\u003e, \u003ccode\u003epath\u003c/code\u003e must not exist.\nIn the case of \u003ccode\u003eoverwrite\u003c/code\u003e, and \u003ccode\u003eappend\u003c/code\u003e, \u003ccode\u003epath\u003c/code\u003e must be a valid file.\nIf an \u003ccode\u003eop\u003c/code\u003e value of \u003ccode\u003eappend\u003c/code\u003e is used, the existing file will be appended.\nNote that the file contents are not required to be base64 encoded.\u003c/p\u003e\n"
+        },
+        "env": {
+          "patternProperties": {
+            ".*": {
+              "type": "string"
+            }
+          },
+          "type": "object",
+          "title": "env",
+          "description": "The env field allows for the addition of environment variables.\nAll environment variables are set on PID 1 in addition to every service.\n",
+          "markdownDescription": "The `env` field allows for the addition of environment variables.\nAll environment variables are set on PID 1 in addition to every service.",
+          "x-intellij-html-description": "\u003cp\u003eThe \u003ccode\u003eenv\u003c/code\u003e field allows for the addition of environment variables.\nAll environment variables are set on PID 1 in addition to every service.\u003c/p\u003e\n"
+        },
+        "time": {
+          "$ref": "#/$defs/TimeConfig",
+          "title": "time",
+          "description": "Used to configure the machine’s time settings.\n",
+          "markdownDescription": "Used to configure the machine's time settings.",
+          "x-intellij-html-description": "\u003cp\u003eUsed to configure the machine\u0026rsquo;s time settings.\u003c/p\u003e\n"
+        },
+        "sysctls": {
+          "patternProperties": {
+            ".*": {
+              "type": "string"
+            }
+          },
+          "type": "object",
+          "title": "sysctls",
+          "description": "Used to configure the machine’s sysctls.\n",
+          "markdownDescription": "Used to configure the machine's sysctls.",
+          "x-intellij-html-description": "\u003cp\u003eUsed to configure the machine\u0026rsquo;s sysctls.\u003c/p\u003e\n"
+        },
+        "sysfs": {
+          "patternProperties": {
+            ".*": {
+              "type": "string"
+            }
+          },
+          "type": "object",
+          "title": "sysfs",
+          "description": "Used to configure the machine’s sysfs.\n",
+          "markdownDescription": "Used to configure the machine's sysfs.",
+          "x-intellij-html-description": "\u003cp\u003eUsed to configure the machine\u0026rsquo;s sysfs.\u003c/p\u003e\n"
+        },
+        "registries": {
+          "$ref": "#/$defs/RegistriesConfig",
+          "title": "registries",
+          "description": "Used to configure the machine’s container image registry mirrors.\n\nAutomatically generates matching CRI configuration for registry mirrors.\n\nThe mirrors section allows to redirect requests for images to a non-default registry,\nwhich might be a local registry or a caching mirror.\n\nThe config section provides a way to authenticate to the registry with TLS client\nidentity, provide registry CA, or authentication information.\nAuthentication information has same meaning with the corresponding field in .docker/config.json.\n\nSee also matching configuration for CRI containerd plugin.\n",
+          "markdownDescription": "Used to configure the machine's container image registry mirrors.\n\nAutomatically generates matching CRI configuration for registry mirrors.\n\nThe `mirrors` section allows to redirect requests for images to a non-default registry,\nwhich might be a local registry or a caching mirror.\n\nThe `config` section provides a way to authenticate to the registry with TLS client\nidentity, provide registry CA, or authentication information.\nAuthentication information has same meaning with the corresponding field in [`.docker/config.json`](https://docs.docker.com/engine/api/v1.41/#section/Authentication).\n\nSee also matching configuration for [CRI containerd plugin](https://github.com/containerd/cri/blob/master/docs/registry.md).",
+          "x-intellij-html-description": "\u003cp\u003eUsed to configure the machine\u0026rsquo;s container image registry mirrors.\u003c/p\u003e\n\n\u003cp\u003eAutomatically generates matching CRI configuration for registry mirrors.\u003c/p\u003e\n\n\u003cp\u003eThe \u003ccode\u003emirrors\u003c/code\u003e section allows to redirect requests for images to a non-default registry,\nwhich might be a local registry or a caching mirror.\u003c/p\u003e\n\n\u003cp\u003eThe \u003ccode\u003econfig\u003c/code\u003e section provides a way to authenticate to the registry with TLS client\nidentity, provide registry CA, or authentication information.\nAuthentication information has same meaning with the corresponding field in \u003ca href=\"https://docs.docker.com/engine/api/v1.41/#section/Authentication\" target=\"_blank\"\u003e\u003ccode\u003e.docker/config.json\u003c/code\u003e\u003c/a\u003e.\u003c/p\u003e\n\n\u003cp\u003eSee also matching configuration for \u003ca href=\"https://github.com/containerd/cri/blob/master/docs/registry.md\" target=\"_blank\"\u003eCRI containerd plugin\u003c/a\u003e.\u003c/p\u003e\n"
+        },
+        "systemDiskEncryption": {
+          "$ref": "#/$defs/SystemDiskEncryptionConfig",
+          "title": "systemDiskEncryption",
+          "description": "Machine system disk encryption configuration.\nDefines each system partition encryption parameters.\n",
+          "markdownDescription": "Machine system disk encryption configuration.\nDefines each system partition encryption parameters.",
+          "x-intellij-html-description": "\u003cp\u003eMachine system disk encryption configuration.\nDefines each system partition encryption parameters.\u003c/p\u003e\n"
+        },
+        "features": {
+          "$ref": "#/$defs/FeaturesConfig",
+          "title": "features",
+          "description": "Features describe individual Talos features that can be switched on or off.\n",
+          "markdownDescription": "Features describe individual Talos features that can be switched on or off.",
+          "x-intellij-html-description": "\u003cp\u003eFeatures describe individual Talos features that can be switched on or off.\u003c/p\u003e\n"
+        },
+        "udev": {
+          "$ref": "#/$defs/UdevConfig",
+          "title": "udev",
+          "description": "Configures the udev system.\n",
+          "markdownDescription": "Configures the udev system.",
+          "x-intellij-html-description": "\u003cp\u003eConfigures the udev system.\u003c/p\u003e\n"
+        },
+        "logging": {
+          "$ref": "#/$defs/LoggingConfig",
+          "title": "logging",
+          "description": "Configures the logging system.\n",
+          "markdownDescription": "Configures the logging system.",
+          "x-intellij-html-description": "\u003cp\u003eConfigures the logging system.\u003c/p\u003e\n"
+        },
+        "kernel": {
+          "$ref": "#/$defs/KernelConfig",
+          "title": "kernel",
+          "description": "Configures the kernel.\n",
+          "markdownDescription": "Configures the kernel.",
+          "x-intellij-html-description": "\u003cp\u003eConfigures the kernel.\u003c/p\u003e\n"
+        },
+        "seccompProfiles": {
+          "items": {
+            "$ref": "#/$defs/MachineSeccompProfile"
+          },
+          "type": "array",
+          "title": "seccompProfiles",
+          "description": "Configures the seccomp profiles for the machine.\n",
+          "markdownDescription": "Configures the seccomp profiles for the machine.",
+          "x-intellij-html-description": "\u003cp\u003eConfigures the seccomp profiles for the machine.\u003c/p\u003e\n"
+        },
+        "nodeLabels": {
+          "patternProperties": {
+            ".*": {
+              "type": "string"
+            }
+          },
+          "type": "object",
+          "title": "nodeLabels",
+          "description": "Configures the node labels for the machine.\n",
+          "markdownDescription": "Configures the node labels for the machine.",
+          "x-intellij-html-description": "\u003cp\u003eConfigures the node labels for the machine.\u003c/p\u003e\n"
+        },
+        "nodeTaints": {
+          "patternProperties": {
+            ".*": {
+              "type": "string"
+            }
+          },
+          "type": "object",
+          "title": "nodeTaints",
+          "description": "Configures the node taints for the machine. Effect is optional.\n",
+          "markdownDescription": "Configures the node taints for the machine. Effect is optional.",
+          "x-intellij-html-description": "\u003cp\u003eConfigures the node taints for the machine. Effect is optional.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "MachineControlPlaneConfig": {
+      "properties": {
+        "controllerManager": {
+          "$ref": "#/$defs/MachineControllerManagerConfig",
+          "title": "controllerManager",
+          "description": "Controller manager machine specific configuration options.\n",
+          "markdownDescription": "Controller manager machine specific configuration options.",
+          "x-intellij-html-description": "\u003cp\u003eController manager machine specific configuration options.\u003c/p\u003e\n"
+        },
+        "scheduler": {
+          "$ref": "#/$defs/MachineSchedulerConfig",
+          "title": "scheduler",
+          "description": "Scheduler machine specific configuration options.\n",
+          "markdownDescription": "Scheduler machine specific configuration options.",
+          "x-intellij-html-description": "\u003cp\u003eScheduler machine specific configuration options.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "MachineControllerManagerConfig": {
+      "properties": {
+        "disabled": {
+          "type": "boolean",
+          "title": "disabled",
+          "description": "Disable kube-controller-manager on the node.\n",
+          "markdownDescription": "Disable kube-controller-manager on the node.",
+          "x-intellij-html-description": "\u003cp\u003eDisable kube-controller-manager on the node.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "MachineDisk": {
+      "properties": {
+        "device": {
+          "type": "string",
+          "title": "device",
+          "description": "The name of the disk to use.\n",
+          "markdownDescription": "The name of the disk to use.",
+          "x-intellij-html-description": "\u003cp\u003eThe name of the disk to use.\u003c/p\u003e\n"
+        },
+        "partitions": {
+          "items": {
+            "$ref": "#/$defs/DiskPartition"
+          },
+          "type": "array",
+          "title": "partitions",
+          "description": "A list of partitions to create on the disk.\n",
+          "markdownDescription": "A list of partitions to create on the disk.",
+          "x-intellij-html-description": "\u003cp\u003eA list of partitions to create on the disk.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "MachineFile": {
+      "properties": {
+        "content": {
+          "type": "string",
+          "title": "content",
+          "description": "The contents of the file.\n",
+          "markdownDescription": "The contents of the file.",
+          "x-intellij-html-description": "\u003cp\u003eThe contents of the file.\u003c/p\u003e\n"
+        },
+        "permissions": {
+          "type": "integer",
+          "title": "permissions",
+          "description": "The file’s permissions in octal.\n",
+          "markdownDescription": "The file's permissions in octal.",
+          "x-intellij-html-description": "\u003cp\u003eThe file\u0026rsquo;s permissions in octal.\u003c/p\u003e\n"
+        },
+        "path": {
+          "type": "string",
+          "title": "path",
+          "description": "The path of the file.\n",
+          "markdownDescription": "The path of the file.",
+          "x-intellij-html-description": "\u003cp\u003eThe path of the file.\u003c/p\u003e\n"
+        },
+        "op": {
+          "enum": [
+            "create",
+            "append",
+            "overwrite"
+          ],
+          "title": "op",
+          "description": "The operation to use\n",
+          "markdownDescription": "The operation to use",
+          "x-intellij-html-description": "\u003cp\u003eThe operation to use\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "MachineSchedulerConfig": {
+      "properties": {
+        "disabled": {
+          "type": "boolean",
+          "title": "disabled",
+          "description": "Disable kube-scheduler on the node.\n",
+          "markdownDescription": "Disable kube-scheduler on the node.",
+          "x-intellij-html-description": "\u003cp\u003eDisable kube-scheduler on the node.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "MachineSeccompProfile": {
+      "properties": {
+        "name": {
+          "type": "string",
+          "title": "name",
+          "description": "The name field is used to provide the file name of the seccomp profile.\n",
+          "markdownDescription": "The `name` field is used to provide the file name of the seccomp profile.",
+          "x-intellij-html-description": "\u003cp\u003eThe \u003ccode\u003ename\u003c/code\u003e field is used to provide the file name of the seccomp profile.\u003c/p\u003e\n"
+        },
+        "value": {
+          "type": "object",
+          "title": "value",
+          "description": "The value field is used to provide the seccomp profile.\n",
+          "markdownDescription": "The `value` field is used to provide the seccomp profile.",
+          "x-intellij-html-description": "\u003cp\u003eThe \u003ccode\u003evalue\u003c/code\u003e field is used to provide the seccomp profile.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "NetworkConfig": {
+      "properties": {
+        "hostname": {
+          "type": "string",
+          "title": "hostname",
+          "description": "Used to statically set the hostname for the machine.\n",
+          "markdownDescription": "Used to statically set the hostname for the machine.",
+          "x-intellij-html-description": "\u003cp\u003eUsed to statically set the hostname for the machine.\u003c/p\u003e\n"
+        },
+        "interfaces": {
+          "items": {
+            "$ref": "#/$defs/Device"
+          },
+          "type": "array",
+          "title": "interfaces",
+          "description": "interfaces is used to define the network interface configuration.\nBy default all network interfaces will attempt a DHCP discovery.\nThis can be further tuned through this configuration parameter.\n",
+          "markdownDescription": "`interfaces` is used to define the network interface configuration.\nBy default all network interfaces will attempt a DHCP discovery.\nThis can be further tuned through this configuration parameter.",
+          "x-intellij-html-description": "\u003cp\u003e\u003ccode\u003einterfaces\u003c/code\u003e is used to define the network interface configuration.\nBy default all network interfaces will attempt a DHCP discovery.\nThis can be further tuned through this configuration parameter.\u003c/p\u003e\n"
+        },
+        "nameservers": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "title": "nameservers",
+          "description": "Used to statically set the nameservers for the machine.\nDefaults to 1.1.1.1 and 8.8.8.8\n",
+          "markdownDescription": "Used to statically set the nameservers for the machine.\nDefaults to `1.1.1.1` and `8.8.8.8`",
+          "x-intellij-html-description": "\u003cp\u003eUsed to statically set the nameservers for the machine.\nDefaults to \u003ccode\u003e1.1.1.1\u003c/code\u003e and \u003ccode\u003e8.8.8.8\u003c/code\u003e\u003c/p\u003e\n"
+        },
+        "extraHostEntries": {
+          "items": {
+            "$ref": "#/$defs/ExtraHost"
+          },
+          "type": "array",
+          "title": "extraHostEntries",
+          "description": "Allows for extra entries to be added to the /etc/hosts file\n",
+          "markdownDescription": "Allows for extra entries to be added to the `/etc/hosts` file",
+          "x-intellij-html-description": "\u003cp\u003eAllows for extra entries to be added to the \u003ccode\u003e/etc/hosts\u003c/code\u003e file\u003c/p\u003e\n"
+        },
+        "kubespan": {
+          "$ref": "#/$defs/NetworkKubeSpan",
+          "title": "kubespan",
+          "description": "Configures KubeSpan feature.\n",
+          "markdownDescription": "Configures KubeSpan feature.",
+          "x-intellij-html-description": "\u003cp\u003eConfigures KubeSpan feature.\u003c/p\u003e\n"
+        },
+        "disableSearchDomain": {
+          "type": "boolean",
+          "title": "disableSearchDomain",
+          "description": "Disable generating a default search domain in /etc/resolv.conf\nbased on the machine hostname.\nDefaults to false.\n",
+          "markdownDescription": "Disable generating a default search domain in /etc/resolv.conf\nbased on the machine hostname.\nDefaults to `false`.",
+          "x-intellij-html-description": "\u003cp\u003eDisable generating a default search domain in /etc/resolv.conf\nbased on the machine hostname.\nDefaults to \u003ccode\u003efalse\u003c/code\u003e.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "NetworkDeviceSelector": {
+      "properties": {
+        "busPath": {
+          "type": "string",
+          "title": "busPath",
+          "description": "PCI, USB bus prefix, supports matching by wildcard.\n",
+          "markdownDescription": "PCI, USB bus prefix, supports matching by wildcard.",
+          "x-intellij-html-description": "\u003cp\u003ePCI, USB bus prefix, supports matching by wildcard.\u003c/p\u003e\n"
+        },
+        "hardwareAddr": {
+          "type": "string",
+          "title": "hardwareAddr",
+          "description": "Device hardware address, supports matching by wildcard.\n",
+          "markdownDescription": "Device hardware address, supports matching by wildcard.",
+          "x-intellij-html-description": "\u003cp\u003eDevice hardware address, supports matching by wildcard.\u003c/p\u003e\n"
+        },
+        "pciID": {
+          "type": "string",
+          "title": "pciID",
+          "description": "PCI ID (vendor ID, product ID), supports matching by wildcard.\n",
+          "markdownDescription": "PCI ID (vendor ID, product ID), supports matching by wildcard.",
+          "x-intellij-html-description": "\u003cp\u003ePCI ID (vendor ID, product ID), supports matching by wildcard.\u003c/p\u003e\n"
+        },
+        "driver": {
+          "type": "string",
+          "title": "driver",
+          "description": "Kernel driver, supports matching by wildcard.\n",
+          "markdownDescription": "Kernel driver, supports matching by wildcard.",
+          "x-intellij-html-description": "\u003cp\u003eKernel driver, supports matching by wildcard.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "NetworkKubeSpan": {
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "title": "enabled",
+          "description": "Enable the KubeSpan feature.\nCluster discovery should be enabled with .cluster.discovery.enabled for KubeSpan to be enabled.\n",
+          "markdownDescription": "Enable the KubeSpan feature.\nCluster discovery should be enabled with .cluster.discovery.enabled for KubeSpan to be enabled.",
+          "x-intellij-html-description": "\u003cp\u003eEnable the KubeSpan feature.\nCluster discovery should be enabled with .cluster.discovery.enabled for KubeSpan to be enabled.\u003c/p\u003e\n"
+        },
+        "advertiseKubernetesNetworks": {
+          "type": "boolean",
+          "title": "advertiseKubernetesNetworks",
+          "description": "Control whether Kubernetes pod CIDRs are announced over KubeSpan from the node.\nIf disabled, CNI handles encapsulating pod-to-pod traffic into some node-to-node tunnel,\nand KubeSpan handles the node-to-node traffic.\nIf enabled, KubeSpan will take over pod-to-pod traffic and send it over KubeSpan directly.\nWhen enabled, KubeSpan should have a way to detect complete pod CIDRs of the node which\nis not always the case with CNIs not relying on Kubernetes for IPAM.\n",
+          "markdownDescription": "Control whether Kubernetes pod CIDRs are announced over KubeSpan from the node.\nIf disabled, CNI handles encapsulating pod-to-pod traffic into some node-to-node tunnel,\nand KubeSpan handles the node-to-node traffic.\nIf enabled, KubeSpan will take over pod-to-pod traffic and send it over KubeSpan directly.\nWhen enabled, KubeSpan should have a way to detect complete pod CIDRs of the node which\nis not always the case with CNIs not relying on Kubernetes for IPAM.",
+          "x-intellij-html-description": "\u003cp\u003eControl whether Kubernetes pod CIDRs are announced over KubeSpan from the node.\nIf disabled, CNI handles encapsulating pod-to-pod traffic into some node-to-node tunnel,\nand KubeSpan handles the node-to-node traffic.\nIf enabled, KubeSpan will take over pod-to-pod traffic and send it over KubeSpan directly.\nWhen enabled, KubeSpan should have a way to detect complete pod CIDRs of the node which\nis not always the case with CNIs not relying on Kubernetes for IPAM.\u003c/p\u003e\n"
+        },
+        "allowDownPeerBypass": {
+          "type": "boolean",
+          "title": "allowDownPeerBypass",
+          "description": "Skip sending traffic via KubeSpan if the peer connection state is not up.\nThis provides configurable choice between connectivity and security: either traffic is always\nforced to go via KubeSpan (even if Wireguard peer connection is not up), or traffic can go directly\nto the peer if Wireguard connection can’t be established.\n",
+          "markdownDescription": "Skip sending traffic via KubeSpan if the peer connection state is not up.\nThis provides configurable choice between connectivity and security: either traffic is always\nforced to go via KubeSpan (even if Wireguard peer connection is not up), or traffic can go directly\nto the peer if Wireguard connection can't be established.",
+          "x-intellij-html-description": "\u003cp\u003eSkip sending traffic via KubeSpan if the peer connection state is not up.\nThis provides configurable choice between connectivity and security: either traffic is always\nforced to go via KubeSpan (even if Wireguard peer connection is not up), or traffic can go directly\nto the peer if Wireguard connection can\u0026rsquo;t be established.\u003c/p\u003e\n"
+        },
+        "harvestExtraEndpoints": {
+          "type": "boolean",
+          "title": "harvestExtraEndpoints",
+          "description": "KubeSpan can collect and publish extra endpoints for each member of the cluster\nbased on Wireguard endpoint information for each peer.\nThis feature is enabled by default to help discover additional endpoints,\nbut with high number of peers (\u0026gt;50) in the KubeSpan network it can cause performance issues.\n",
+          "markdownDescription": "KubeSpan can collect and publish extra endpoints for each member of the cluster\nbased on Wireguard endpoint information for each peer.\nThis feature is enabled by default to help discover additional endpoints,\nbut with high number of peers (\u003e50) in the KubeSpan network it can cause performance issues.",
+          "x-intellij-html-description": "\u003cp\u003eKubeSpan can collect and publish extra endpoints for each member of the cluster\nbased on Wireguard endpoint information for each peer.\nThis feature is enabled by default to help discover additional endpoints,\nbut with high number of peers (\u0026gt;50) in the KubeSpan network it can cause performance issues.\u003c/p\u003e\n"
+        },
+        "mtu": {
+          "type": "integer",
+          "title": "mtu",
+          "description": "KubeSpan link MTU size.\nDefault value is 1420.\n",
+          "markdownDescription": "KubeSpan link MTU size.\nDefault value is 1420.",
+          "x-intellij-html-description": "\u003cp\u003eKubeSpan link MTU size.\nDefault value is 1420.\u003c/p\u003e\n"
+        },
+        "filters": {
+          "$ref": "#/$defs/KubeSpanFilters",
+          "title": "filters",
+          "description": "KubeSpan advanced filtering of network addresses .\n\nSettings in this section are optional, and settings apply only to the node.\n",
+          "markdownDescription": "KubeSpan advanced filtering of network addresses .\n\nSettings in this section are optional, and settings apply only to the node.",
+          "x-intellij-html-description": "\u003cp\u003eKubeSpan advanced filtering of network addresses .\u003c/p\u003e\n\n\u003cp\u003eSettings in this section are optional, and settings apply only to the node.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "ProxyConfig": {
+      "properties": {
+        "disabled": {
+          "type": "boolean",
+          "title": "disabled",
+          "description": "Disable kube-proxy deployment on cluster bootstrap.\n",
+          "markdownDescription": "Disable kube-proxy deployment on cluster bootstrap.",
+          "x-intellij-html-description": "\u003cp\u003eDisable kube-proxy deployment on cluster bootstrap.\u003c/p\u003e\n"
+        },
+        "image": {
+          "type": "string",
+          "title": "image",
+          "description": "The container image used in the kube-proxy manifest.\n",
+          "markdownDescription": "The container image used in the kube-proxy manifest.",
+          "x-intellij-html-description": "\u003cp\u003eThe container image used in the kube-proxy manifest.\u003c/p\u003e\n"
+        },
+        "mode": {
+          "type": "string",
+          "title": "mode",
+          "description": "proxy mode of kube-proxy.\nThe default is ‘iptables’.\n",
+          "markdownDescription": "proxy mode of kube-proxy.\nThe default is 'iptables'.",
+          "x-intellij-html-description": "\u003cp\u003eproxy mode of kube-proxy.\nThe default is \u0026lsquo;iptables\u0026rsquo;.\u003c/p\u003e\n"
+        },
+        "extraArgs": {
+          "patternProperties": {
+            ".*": {
+              "type": "string"
+            }
+          },
+          "type": "object",
+          "title": "extraArgs",
+          "description": "Extra arguments to supply to kube-proxy.\n",
+          "markdownDescription": "Extra arguments to supply to kube-proxy.",
+          "x-intellij-html-description": "\u003cp\u003eExtra arguments to supply to kube-proxy.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "RegistriesConfig": {
+      "properties": {
+        "mirrors": {
+          "patternProperties": {
+            ".*": {
+              "$ref": "#/$defs/RegistryMirrorConfig"
+            }
+          },
+          "type": "object",
+          "title": "mirrors",
+          "description": "Specifies mirror configuration for each registry host namespace.\nThis setting allows to configure local pull-through caching registires,\nair-gapped installations, etc.\n\nFor example, when pulling an image with the reference example.com:123/image:v1,\nthe example.com:123 key will be used to lookup the mirror configuration.\n\nOptionally the * key can be used to configure a fallback mirror.\n\nRegistry name is the first segment of image identifier, with ‘docker.io’\nbeing default one.\n",
+          "markdownDescription": "Specifies mirror configuration for each registry host namespace.\nThis setting allows to configure local pull-through caching registires,\nair-gapped installations, etc.\n\nFor example, when pulling an image with the reference `example.com:123/image:v1`,\nthe `example.com:123` key will be used to lookup the mirror configuration.\n\nOptionally the `*` key can be used to configure a fallback mirror.\n\nRegistry name is the first segment of image identifier, with 'docker.io'\nbeing default one.",
+          "x-intellij-html-description": "\u003cp\u003eSpecifies mirror configuration for each registry host namespace.\nThis setting allows to configure local pull-through caching registires,\nair-gapped installations, etc.\u003c/p\u003e\n\n\u003cp\u003eFor example, when pulling an image with the reference \u003ccode\u003eexample.com:123/image:v1\u003c/code\u003e,\nthe \u003ccode\u003eexample.com:123\u003c/code\u003e key will be used to lookup the mirror configuration.\u003c/p\u003e\n\n\u003cp\u003eOptionally the \u003ccode\u003e*\u003c/code\u003e key can be used to configure a fallback mirror.\u003c/p\u003e\n\n\u003cp\u003eRegistry name is the first segment of image identifier, with \u0026lsquo;docker.io\u0026rsquo;\nbeing default one.\u003c/p\u003e\n"
+        },
+        "config": {
+          "patternProperties": {
+            ".*": {
+              "$ref": "#/$defs/RegistryConfig"
+            }
+          },
+          "type": "object",
+          "title": "config",
+          "description": "Specifies TLS \u0026amp; auth configuration for HTTPS image registries.\nMutual TLS can be enabled with ‘clientIdentity’ option.\n\nThe full hostname and port (if not using a default port 443)\nshould be used as the key.\nThe fallback key * can’t be used for TLS configuration.\n\nTLS configuration can be skipped if registry has trusted\nserver certificate.\n",
+          "markdownDescription": "Specifies TLS \u0026 auth configuration for HTTPS image registries.\nMutual TLS can be enabled with 'clientIdentity' option.\n\nThe full hostname and port (if not using a default port 443)\nshould be used as the key.\nThe fallback key `*` can't be used for TLS configuration.\n\nTLS configuration can be skipped if registry has trusted\nserver certificate.",
+          "x-intellij-html-description": "\u003cp\u003eSpecifies TLS \u0026amp; auth configuration for HTTPS image registries.\nMutual TLS can be enabled with \u0026lsquo;clientIdentity\u0026rsquo; option.\u003c/p\u003e\n\n\u003cp\u003eThe full hostname and port (if not using a default port 443)\nshould be used as the key.\nThe fallback key \u003ccode\u003e*\u003c/code\u003e can\u0026rsquo;t be used for TLS configuration.\u003c/p\u003e\n\n\u003cp\u003eTLS configuration can be skipped if registry has trusted\nserver certificate.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "RegistryAuthConfig": {
+      "properties": {
+        "username": {
+          "type": "string",
+          "title": "username",
+          "description": "Optional registry authentication.\nThe meaning of each field is the same with the corresponding field in .docker/config.json.\n",
+          "markdownDescription": "Optional registry authentication.\nThe meaning of each field is the same with the corresponding field in [`.docker/config.json`](https://docs.docker.com/engine/api/v1.41/#section/Authentication).",
+          "x-intellij-html-description": "\u003cp\u003eOptional registry authentication.\nThe meaning of each field is the same with the corresponding field in \u003ca href=\"https://docs.docker.com/engine/api/v1.41/#section/Authentication\" target=\"_blank\"\u003e\u003ccode\u003e.docker/config.json\u003c/code\u003e\u003c/a\u003e.\u003c/p\u003e\n"
+        },
+        "password": {
+          "type": "string",
+          "title": "password",
+          "description": "Optional registry authentication.\nThe meaning of each field is the same with the corresponding field in .docker/config.json.\n",
+          "markdownDescription": "Optional registry authentication.\nThe meaning of each field is the same with the corresponding field in [`.docker/config.json`](https://docs.docker.com/engine/api/v1.41/#section/Authentication).",
+          "x-intellij-html-description": "\u003cp\u003eOptional registry authentication.\nThe meaning of each field is the same with the corresponding field in \u003ca href=\"https://docs.docker.com/engine/api/v1.41/#section/Authentication\" target=\"_blank\"\u003e\u003ccode\u003e.docker/config.json\u003c/code\u003e\u003c/a\u003e.\u003c/p\u003e\n"
+        },
+        "auth": {
+          "type": "string",
+          "title": "auth",
+          "description": "Optional registry authentication.\nThe meaning of each field is the same with the corresponding field in .docker/config.json.\n",
+          "markdownDescription": "Optional registry authentication.\nThe meaning of each field is the same with the corresponding field in [`.docker/config.json`](https://docs.docker.com/engine/api/v1.41/#section/Authentication).",
+          "x-intellij-html-description": "\u003cp\u003eOptional registry authentication.\nThe meaning of each field is the same with the corresponding field in \u003ca href=\"https://docs.docker.com/engine/api/v1.41/#section/Authentication\" target=\"_blank\"\u003e\u003ccode\u003e.docker/config.json\u003c/code\u003e\u003c/a\u003e.\u003c/p\u003e\n"
+        },
+        "identityToken": {
+          "type": "string",
+          "title": "identityToken",
+          "description": "Optional registry authentication.\nThe meaning of each field is the same with the corresponding field in .docker/config.json.\n",
+          "markdownDescription": "Optional registry authentication.\nThe meaning of each field is the same with the corresponding field in [`.docker/config.json`](https://docs.docker.com/engine/api/v1.41/#section/Authentication).",
+          "x-intellij-html-description": "\u003cp\u003eOptional registry authentication.\nThe meaning of each field is the same with the corresponding field in \u003ca href=\"https://docs.docker.com/engine/api/v1.41/#section/Authentication\" target=\"_blank\"\u003e\u003ccode\u003e.docker/config.json\u003c/code\u003e\u003c/a\u003e.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "RegistryConfig": {
+      "properties": {
+        "tls": {
+          "$ref": "#/$defs/RegistryTLSConfig",
+          "title": "tls",
+          "description": "The TLS configuration for the registry.\n",
+          "markdownDescription": "The TLS configuration for the registry.",
+          "x-intellij-html-description": "\u003cp\u003eThe TLS configuration for the registry.\u003c/p\u003e\n"
+        },
+        "auth": {
+          "$ref": "#/$defs/RegistryAuthConfig",
+          "title": "auth",
+          "description": "The auth configuration for this registry.\nNote: changes to the registry auth will not be picked up by the CRI containerd plugin without a reboot.\n",
+          "markdownDescription": "The auth configuration for this registry.\nNote: changes to the registry auth will not be picked up by the CRI containerd plugin without a reboot.",
+          "x-intellij-html-description": "\u003cp\u003eThe auth configuration for this registry.\nNote: changes to the registry auth will not be picked up by the CRI containerd plugin without a reboot.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "RegistryKubernetesConfig": {
+      "properties": {
+        "disabled": {
+          "type": "boolean",
+          "title": "disabled",
+          "description": "Disable Kubernetes discovery registry.\n",
+          "markdownDescription": "Disable Kubernetes discovery registry.",
+          "x-intellij-html-description": "\u003cp\u003eDisable Kubernetes discovery registry.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "RegistryMirrorConfig": {
+      "properties": {
+        "endpoints": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "title": "endpoints",
+          "description": "List of endpoints (URLs) for registry mirrors to use.\nEndpoint configures HTTP/HTTPS access mode, host name,\nport and path (if path is not set, it defaults to /v2).\n",
+          "markdownDescription": "List of endpoints (URLs) for registry mirrors to use.\nEndpoint configures HTTP/HTTPS access mode, host name,\nport and path (if path is not set, it defaults to `/v2`).",
+          "x-intellij-html-description": "\u003cp\u003eList of endpoints (URLs) for registry mirrors to use.\nEndpoint configures HTTP/HTTPS access mode, host name,\nport and path (if path is not set, it defaults to \u003ccode\u003e/v2\u003c/code\u003e).\u003c/p\u003e\n"
+        },
+        "overridePath": {
+          "type": "boolean",
+          "title": "overridePath",
+          "description": "Use the exact path specified for the endpoint (don’t append /v2/).\nThis setting is often required for setting up multiple mirrors\non a single instance of a registry.\n",
+          "markdownDescription": "Use the exact path specified for the endpoint (don't append /v2/).\nThis setting is often required for setting up multiple mirrors\non a single instance of a registry.",
+          "x-intellij-html-description": "\u003cp\u003eUse the exact path specified for the endpoint (don\u0026rsquo;t append /v2/).\nThis setting is often required for setting up multiple mirrors\non a single instance of a registry.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "RegistryServiceConfig": {
+      "properties": {
+        "disabled": {
+          "type": "boolean",
+          "title": "disabled",
+          "description": "Disable external service discovery registry.\n",
+          "markdownDescription": "Disable external service discovery registry.",
+          "x-intellij-html-description": "\u003cp\u003eDisable external service discovery registry.\u003c/p\u003e\n"
+        },
+        "endpoint": {
+          "type": "string",
+          "title": "endpoint",
+          "description": "External service endpoint.\n",
+          "markdownDescription": "External service endpoint.",
+          "x-intellij-html-description": "\u003cp\u003eExternal service endpoint.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "RegistryTLSConfig": {
+      "properties": {
+        "clientIdentity": {
+          "properties": {
+            "crt": {
+              "type": "string"
+            },
+            "key": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false,
+          "type": "object",
+          "title": "clientIdentity",
+          "description": "Enable mutual TLS authentication with the registry.\nClient certificate and key should be base64-encoded.\n",
+          "markdownDescription": "Enable mutual TLS authentication with the registry.\nClient certificate and key should be base64-encoded.",
+          "x-intellij-html-description": "\u003cp\u003eEnable mutual TLS authentication with the registry.\nClient certificate and key should be base64-encoded.\u003c/p\u003e\n"
+        },
+        "ca": {
+          "type": "string",
+          "title": "ca",
+          "description": "CA registry certificate to add the list of trusted certificates.\nCertificate should be base64-encoded.\n",
+          "markdownDescription": "CA registry certificate to add the list of trusted certificates.\nCertificate should be base64-encoded.",
+          "x-intellij-html-description": "\u003cp\u003eCA registry certificate to add the list of trusted certificates.\nCertificate should be base64-encoded.\u003c/p\u003e\n"
+        },
+        "insecureSkipVerify": {
+          "type": "boolean",
+          "title": "insecureSkipVerify",
+          "description": "Skip TLS server certificate verification (not recommended).\n",
+          "markdownDescription": "Skip TLS server certificate verification (not recommended).",
+          "x-intellij-html-description": "\u003cp\u003eSkip TLS server certificate verification (not recommended).\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "ResourcesConfig": {
+      "properties": {
+        "requests": {
+          "$ref": "#/$defs/Unstructured",
+          "title": "requests",
+          "description": "Requests configures the reserved cpu/memory resources.\n",
+          "markdownDescription": "Requests configures the reserved cpu/memory resources.",
+          "x-intellij-html-description": "\u003cp\u003eRequests configures the reserved cpu/memory resources.\u003c/p\u003e\n"
+        },
+        "limits": {
+          "$ref": "#/$defs/Unstructured",
+          "title": "limits",
+          "description": "Limits configures the maximum cpu/memory resources a container can use.\n",
+          "markdownDescription": "Limits configures the maximum cpu/memory resources a container can use.",
+          "x-intellij-html-description": "\u003cp\u003eLimits configures the maximum cpu/memory resources a container can use.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "Route": {
+      "properties": {
+        "network": {
+          "type": "string",
+          "title": "network",
+          "description": "The route’s network (destination).\n",
+          "markdownDescription": "The route's network (destination).",
+          "x-intellij-html-description": "\u003cp\u003eThe route\u0026rsquo;s network (destination).\u003c/p\u003e\n"
+        },
+        "gateway": {
+          "type": "string",
+          "title": "gateway",
+          "description": "The route’s gateway (if empty, creates link scope route).\n",
+          "markdownDescription": "The route's gateway (if empty, creates link scope route).",
+          "x-intellij-html-description": "\u003cp\u003eThe route\u0026rsquo;s gateway (if empty, creates link scope route).\u003c/p\u003e\n"
+        },
+        "source": {
+          "type": "string",
+          "title": "source",
+          "description": "The route’s source address (optional).\n",
+          "markdownDescription": "The route's source address (optional).",
+          "x-intellij-html-description": "\u003cp\u003eThe route\u0026rsquo;s source address (optional).\u003c/p\u003e\n"
+        },
+        "metric": {
+          "type": "integer",
+          "title": "metric",
+          "description": "The optional metric for the route.\n",
+          "markdownDescription": "The optional metric for the route.",
+          "x-intellij-html-description": "\u003cp\u003eThe optional metric for the route.\u003c/p\u003e\n"
+        },
+        "mtu": {
+          "type": "integer",
+          "title": "mtu",
+          "description": "The optional MTU for the route.\n",
+          "markdownDescription": "The optional MTU for the route.",
+          "x-intellij-html-description": "\u003cp\u003eThe optional MTU for the route.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "STP": {
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "title": "enabled",
+          "description": "Whether Spanning Tree Protocol (STP) is enabled.\n",
+          "markdownDescription": "Whether Spanning Tree Protocol (STP) is enabled.",
+          "x-intellij-html-description": "\u003cp\u003eWhether Spanning Tree Protocol (STP) is enabled.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "SchedulerConfig": {
+      "properties": {
+        "image": {
+          "type": "string",
+          "title": "image",
+          "description": "The container image used in the scheduler manifest.\n",
+          "markdownDescription": "The container image used in the scheduler manifest.",
+          "x-intellij-html-description": "\u003cp\u003eThe container image used in the scheduler manifest.\u003c/p\u003e\n"
+        },
+        "extraArgs": {
+          "patternProperties": {
+            ".*": {
+              "type": "string"
+            }
+          },
+          "type": "object",
+          "title": "extraArgs",
+          "description": "Extra arguments to supply to the scheduler.\n",
+          "markdownDescription": "Extra arguments to supply to the scheduler.",
+          "x-intellij-html-description": "\u003cp\u003eExtra arguments to supply to the scheduler.\u003c/p\u003e\n"
+        },
+        "extraVolumes": {
+          "items": {
+            "$ref": "#/$defs/VolumeMountConfig"
+          },
+          "type": "array",
+          "title": "extraVolumes",
+          "description": "Extra volumes to mount to the scheduler static pod.\n",
+          "markdownDescription": "Extra volumes to mount to the scheduler static pod.",
+          "x-intellij-html-description": "\u003cp\u003eExtra volumes to mount to the scheduler static pod.\u003c/p\u003e\n"
+        },
+        "env": {
+          "patternProperties": {
+            ".*": {
+              "type": "string"
+            }
+          },
+          "type": "object",
+          "title": "env",
+          "description": "The env field allows for the addition of environment variables for the control plane component.\n",
+          "markdownDescription": "The `env` field allows for the addition of environment variables for the control plane component.",
+          "x-intellij-html-description": "\u003cp\u003eThe \u003ccode\u003eenv\u003c/code\u003e field allows for the addition of environment variables for the control plane component.\u003c/p\u003e\n"
+        },
+        "resources": {
+          "type": "object",
+          "title": "resources",
+          "description": "Configure the scheduler resources.\n",
+          "markdownDescription": "Configure the scheduler resources.",
+          "x-intellij-html-description": "\u003cp\u003eConfigure the scheduler resources.\u003c/p\u003e\n"
+        },
+        "config": {
+          "type": "object",
+          "title": "config",
+          "description": "Specify custom kube-scheduler configuration.\n",
+          "markdownDescription": "Specify custom kube-scheduler configuration.",
+          "x-intellij-html-description": "\u003cp\u003eSpecify custom kube-scheduler configuration.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "SystemDiskEncryptionConfig": {
+      "properties": {
+        "state": {
+          "$ref": "#/$defs/EncryptionConfig",
+          "title": "state",
+          "description": "State partition encryption.\n",
+          "markdownDescription": "State partition encryption.",
+          "x-intellij-html-description": "\u003cp\u003eState partition encryption.\u003c/p\u003e\n"
+        },
+        "ephemeral": {
+          "$ref": "#/$defs/EncryptionConfig",
+          "title": "ephemeral",
+          "description": "Ephemeral partition encryption.\n",
+          "markdownDescription": "Ephemeral partition encryption.",
+          "x-intellij-html-description": "\u003cp\u003eEphemeral partition encryption.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "TimeConfig": {
+      "properties": {
+        "disabled": {
+          "type": "boolean",
+          "title": "disabled",
+          "description": "Indicates if the time service is disabled for the machine.\nDefaults to false.\n",
+          "markdownDescription": "Indicates if the time service is disabled for the machine.\nDefaults to `false`.",
+          "x-intellij-html-description": "\u003cp\u003eIndicates if the time service is disabled for the machine.\nDefaults to \u003ccode\u003efalse\u003c/code\u003e.\u003c/p\u003e\n"
+        },
+        "servers": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "title": "servers",
+          "description": "Specifies time (NTP) servers to use for setting the system time.\nDefaults to pool.ntp.org\n",
+          "markdownDescription": "Specifies time (NTP) servers to use for setting the system time.\nDefaults to `pool.ntp.org`",
+          "x-intellij-html-description": "\u003cp\u003eSpecifies time (NTP) servers to use for setting the system time.\nDefaults to \u003ccode\u003epool.ntp.org\u003c/code\u003e\u003c/p\u003e\n"
+        },
+        "bootTimeout": {
+          "type": "string",
+          "pattern": "^[-+]?(((\\d+(\\.\\d*)?|\\d*(\\.\\d+)+)([nuµm]?s|m|h))|0)+$",
+          "title": "bootTimeout",
+          "description": "Specifies the timeout when the node time is considered to be in sync unlocking the boot sequence.\nNTP sync will be still running in the background.\nDefaults to “infinity” (waiting forever for time sync)\n",
+          "markdownDescription": "Specifies the timeout when the node time is considered to be in sync unlocking the boot sequence.\nNTP sync will be still running in the background.\nDefaults to \"infinity\" (waiting forever for time sync)",
+          "x-intellij-html-description": "\u003cp\u003eSpecifies the timeout when the node time is considered to be in sync unlocking the boot sequence.\nNTP sync will be still running in the background.\nDefaults to \u0026ldquo;infinity\u0026rdquo; (waiting forever for time sync)\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "UdevConfig": {
+      "properties": {
+        "rules": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "title": "rules",
+          "description": "List of udev rules to apply to the udev system\n",
+          "markdownDescription": "List of udev rules to apply to the udev system",
+          "x-intellij-html-description": "\u003cp\u003eList of udev rules to apply to the udev system\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "VIPEquinixMetalConfig": {
+      "properties": {
+        "apiToken": {
+          "type": "string",
+          "title": "apiToken",
+          "description": "Specifies the Equinix Metal API Token.\n",
+          "markdownDescription": "Specifies the Equinix Metal API Token.",
+          "x-intellij-html-description": "\u003cp\u003eSpecifies the Equinix Metal API Token.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "VIPHCloudConfig": {
+      "properties": {
+        "apiToken": {
+          "type": "string",
+          "title": "apiToken",
+          "description": "Specifies the Hetzner Cloud API Token.\n",
+          "markdownDescription": "Specifies the Hetzner Cloud API Token.",
+          "x-intellij-html-description": "\u003cp\u003eSpecifies the Hetzner Cloud API Token.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "Vlan": {
+      "properties": {
+        "addresses": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "title": "addresses",
+          "description": "The addresses in CIDR notation or as plain IPs to use.\n",
+          "markdownDescription": "The addresses in CIDR notation or as plain IPs to use.",
+          "x-intellij-html-description": "\u003cp\u003eThe addresses in CIDR notation or as plain IPs to use.\u003c/p\u003e\n"
+        },
+        "routes": {
+          "items": {
+            "$ref": "#/$defs/Route"
+          },
+          "type": "array",
+          "title": "routes",
+          "description": "A list of routes associated with the VLAN.\n",
+          "markdownDescription": "A list of routes associated with the VLAN.",
+          "x-intellij-html-description": "\u003cp\u003eA list of routes associated with the VLAN.\u003c/p\u003e\n"
+        },
+        "dhcp": {
+          "type": "boolean",
+          "title": "dhcp",
+          "description": "Indicates if DHCP should be used.\n",
+          "markdownDescription": "Indicates if DHCP should be used.",
+          "x-intellij-html-description": "\u003cp\u003eIndicates if DHCP should be used.\u003c/p\u003e\n"
+        },
+        "vlanId": {
+          "type": "integer",
+          "title": "vlanId",
+          "description": "The VLAN’s ID.\n",
+          "markdownDescription": "The VLAN's ID.",
+          "x-intellij-html-description": "\u003cp\u003eThe VLAN\u0026rsquo;s ID.\u003c/p\u003e\n"
+        },
+        "mtu": {
+          "type": "integer",
+          "title": "mtu",
+          "description": "The VLAN’s MTU.\n",
+          "markdownDescription": "The VLAN's MTU.",
+          "x-intellij-html-description": "\u003cp\u003eThe VLAN\u0026rsquo;s MTU.\u003c/p\u003e\n"
+        },
+        "vip": {
+          "$ref": "#/$defs/DeviceVIPConfig",
+          "title": "vip",
+          "description": "The VLAN’s virtual IP address configuration.\n",
+          "markdownDescription": "The VLAN's virtual IP address configuration.",
+          "x-intellij-html-description": "\u003cp\u003eThe VLAN\u0026rsquo;s virtual IP address configuration.\u003c/p\u003e\n"
+        },
+        "dhcpOptions": {
+          "$ref": "#/$defs/DHCPOptions",
+          "title": "dhcpOptions",
+          "description": "DHCP specific options.\ndhcp must be set to true for these to take effect.\n",
+          "markdownDescription": "DHCP specific options.\n`dhcp` *must* be set to true for these to take effect.",
+          "x-intellij-html-description": "\u003cp\u003eDHCP specific options.\n\u003ccode\u003edhcp\u003c/code\u003e \u003cem\u003emust\u003c/em\u003e be set to true for these to take effect.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "VolumeMountConfig": {
+      "properties": {
+        "hostPath": {
+          "type": "string",
+          "title": "hostPath",
+          "description": "Path on the host.\n",
+          "markdownDescription": "Path on the host.",
+          "x-intellij-html-description": "\u003cp\u003ePath on the host.\u003c/p\u003e\n"
+        },
+        "mountPath": {
+          "type": "string",
+          "title": "mountPath",
+          "description": "Path in the container.\n",
+          "markdownDescription": "Path in the container.",
+          "x-intellij-html-description": "\u003cp\u003ePath in the container.\u003c/p\u003e\n"
+        },
+        "readonly": {
+          "type": "boolean",
+          "title": "readonly",
+          "description": "Mount the volume read only.\n",
+          "markdownDescription": "Mount the volume read only.",
+          "x-intellij-html-description": "\u003cp\u003eMount the volume read only.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    }
+  }
+}

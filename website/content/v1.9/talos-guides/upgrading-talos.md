@@ -48,8 +48,6 @@ To see a live demo of an upgrade of Talos Linux, see the video below:
 
 There are no specific actions to be taken after an upgrade.
 
-> Note: If you are downgrading from Talos 1.8 to 1.7 while using custom `EPHEMERAL` configuration, it might have unpredictable results.
-
 ## `talosctl upgrade`
 
 To upgrade a Talos node, specify the node's IP address and the

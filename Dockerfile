@@ -1187,10 +1187,10 @@ RUN protoc \
     /protos/time/*.proto
 
 FROM scratch AS docs
-COPY --from=docs-build /tmp/configuration/ /website/content/v1.9/reference/configuration/
-COPY --from=docs-build /tmp/cli.md /website/content/v1.9/reference/
-COPY --from=docs-build /tmp/schemas /website/content/v1.9/schemas/
-COPY --from=proto-docs-build /tmp/api.md /website/content/v1.9/reference/
+COPY --from=docs-build /tmp/configuration/ /website/content/v1.10/reference/configuration/
+COPY --from=docs-build /tmp/cli.md /website/content/v1.10/reference/
+COPY --from=docs-build /tmp/schemas /website/content/v1.10/schemas/
+COPY --from=proto-docs-build /tmp/api.md /website/content/v1.10/reference/
 
 # The talosctl-cni-bundle builds the CNI bundle for talosctl.
 

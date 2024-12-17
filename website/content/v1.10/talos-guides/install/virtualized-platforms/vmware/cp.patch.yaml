@@ -1,0 +1,8 @@
+- op: add
+  path: /machine/network
+  value:
+    interfaces:
+    - interface: eth0
+      dhcp: true
+      vip:
+        ip: <VIP>
