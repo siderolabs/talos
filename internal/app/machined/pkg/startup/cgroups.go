@@ -19,7 +19,6 @@ import (
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
 	"github.com/siderolabs/talos/internal/pkg/cgroup"
-	"github.com/siderolabs/talos/internal/pkg/mount/v2"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
 
@@ -31,7 +30,7 @@ func CreateSystemCgroups(ctx context.Context, log *zap.Logger, rt runtime.Runtim
 	if !rt.State().Platform().Mode().InContainer() {
 		// assert that cgroupsv2 is being used when running not in container mode,
 		// as Talos sets up cgroupsv2 on its own
-		if cgroups.Mode() != cgroups.Unified && !mount.ForceCGroupsV1() {
+		if cgroups.Mode() != cgroups.Unified {
 			return errors.New("cgroupsv2 should be used")
 		}
 	}

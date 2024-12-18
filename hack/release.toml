@@ -23,6 +23,13 @@ preface = """
 Talos is built with Go 1.23.4.
 """
 
+    [notes.cgroupsv1]
+        title = "cgroups v1"
+        description = """\
+Talos Linux no longer supports `cgroupsv1` when running in non-container mode.
+The kernel argument `talos.unified_cgroup_hierarchy` is now ignored.
+"""
+
 [make_deps]
 
     [make_deps.tools]

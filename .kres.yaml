@@ -811,14 +811,13 @@ spec:
           environment:
             PLATFORM: linux/amd64
             IMAGE_REGISTRY: registry.dev.siderolabs.io
-        - name: e2e-bios-cgroupsv1
+        - name: e2e-bios
           command: e2e-qemu
           withSudo: true
           environment:
-            GITHUB_STEP_NAME: ${{ github.job}}-e2e-bios-cgroupsv1
+            GITHUB_STEP_NAME: ${{ github.job}}-e2e-bios
             SHORT_INTEGRATION_TEST: yes
             WITH_UEFI: false
-            WITH_CONFIG_PATCH: "@hack/test/patches/cgroupsv1.yaml" #use cgroupsv1
             IMAGE_REGISTRY: registry.dev.siderolabs.io
         - name: e2e-disk-image
           command: e2e-qemu

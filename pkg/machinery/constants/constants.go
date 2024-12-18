@@ -76,8 +76,7 @@ const (
 	// extra device settle timeout.
 	KernelParamDeviceSettleTime = "talos.device.settle_time"
 
-	// KernelParamCGroups is the kernel parameter name for specifying the
-	// cgroups version to use (default is cgroupsv2, setting this kernel arg to '0' forces cgroupsv1).
+	// KernelParamCGroups is the legacy kernel parameter not supported anymore.
 	KernelParamCGroups = "talos.unified_cgroup_hierarchy"
 
 	// KernelParamDashboardDisabled is the kernel parameter name for disabling the dashboard.

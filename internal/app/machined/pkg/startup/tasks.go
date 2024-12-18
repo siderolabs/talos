@@ -11,6 +11,8 @@ import (
 	"os"
 	"strings"
 
+	"github.com/siderolabs/go-pointer"
+	"github.com/siderolabs/go-procfs/procfs"
 	"go.uber.org/zap"
 	"golang.org/x/sys/unix"
 
@@ -76,8 +78,8 @@ func MountCgroups(ctx context.Context, log *zap.Logger, rt runtime.Runtime, next
 		return next()(ctx, log, rt, next)
 	}
 
-	if mount.ForceCGroupsV1() {
-		log.Warn("cgroupsv1 is deprecated and will not be supported in the 1.10 release other than in the container mode")
+	if pointer.SafeDeref(procfs.ProcCmdline().Get(constants.KernelParamCGroups).First()) == "0" {
+		log.Warn(fmt.Sprintf("kernel argument %v is no longer supported", constants.KernelParamCGroups))
 	}
 
 	unmounter, err := mount.CGroupMountPoints().Mount()

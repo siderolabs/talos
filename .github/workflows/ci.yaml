@@ -1,6 +1,6 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
 #
-# Generated on 2024-12-12T16:40:08Z by kres 8183c20.
+# Generated on 2024-12-18T13:55:17Z by kres b9507d6.
 
 name: default
 concurrency:
@@ -2289,12 +2289,11 @@ jobs:
           PLATFORM: linux/amd64
         run: |
           make images-essential
-      - name: e2e-bios-cgroupsv1
+      - name: e2e-bios
         env:
-          GITHUB_STEP_NAME: ${{ github.job}}-e2e-bios-cgroupsv1
+          GITHUB_STEP_NAME: ${{ github.job}}-e2e-bios
           IMAGE_REGISTRY: registry.dev.siderolabs.io
           SHORT_INTEGRATION_TEST: "yes"
-          WITH_CONFIG_PATCH: '@hack/test/patches/cgroupsv1.yaml'
           WITH_UEFI: "false"
         run: |
           sudo -E make e2e-qemu

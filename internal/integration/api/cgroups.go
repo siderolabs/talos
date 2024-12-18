@@ -12,7 +12,6 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/siderolabs/go-procfs/procfs"
 	"google.golang.org/grpc/codes"
 
 	"github.com/siderolabs/talos/internal/integration/base"
@@ -51,15 +50,6 @@ func (suite *CGroupsSuite) TestCGroupsVersion() {
 	node := suite.RandomDiscoveredNodeInternalIP()
 	ctx := client.WithNode(suite.ctx, node)
 
-	cmdline := suite.ReadCmdline(ctx)
-
-	unified := procfs.NewCmdline(cmdline).Get(constants.KernelParamCGroups).First()
-	cgroupsV1 := false
-
-	if unified != nil && *unified == "0" {
-		cgroupsV1 = true
-	}
-
 	stream, err := suite.Client.MachineClient.List(ctx, &machineapi.ListRequest{Root: constants.CgroupMountPath})
 	suite.Require().NoError(err)
 
@@ -80,47 +70,28 @@ func (suite *CGroupsSuite) TestCGroupsVersion() {
 		names[filepath.Base(info.Name)] = struct{}{}
 	}
 
-	if cgroupsV1 {
-		suite.T().Log("detected cgroups v1")
+	suite.T().Log("detected cgroups v2")
 
-		for _, subpath := range []string{
-			"cpu",
-			"cpuacct",
-			"cpuset",
-			"devices",
-			"freezer",
-			"memory",
-			"net_cls",
-			"net_prio",
-			"perf_event",
-			"pids",
-		} {
-			suite.Assert().Contains(names, subpath)
-		}
-	} else {
-		suite.T().Log("detected cgroups v2")
-
-		for _, subpath := range []string{
-			"cgroup.controllers",
-			"cgroup.max.depth",
-			"cgroup.max.descendants",
-			"cgroup.procs",
-			"cgroup.stat",
-			"cgroup.subtree_control",
-			"cgroup.threads",
-			"cpu.stat",
-			"cpuset.cpus.effective",
-			"cpuset.mems.effective",
-			"init",
-			"io.stat",
-			"kubepods",
-			"memory.numa_stat",
-			"memory.stat",
-			"podruntime",
-			"system",
-		} {
-			suite.Assert().Contains(names, subpath)
-		}
+	for _, subpath := range []string{
+		"cgroup.controllers",
+		"cgroup.max.depth",
+		"cgroup.max.descendants",
+		"cgroup.procs",
+		"cgroup.stat",
+		"cgroup.subtree_control",
+		"cgroup.threads",
+		"cpu.stat",
+		"cpuset.cpus.effective",
+		"cpuset.mems.effective",
+		"init",
+		"io.stat",
+		"kubepods",
+		"memory.numa_stat",
+		"memory.stat",
+		"podruntime",
+		"system",
+	} {
+		suite.Assert().Contains(names, subpath)
 	}
 }
 

@@ -231,15 +231,6 @@ Valid options are:
 * `system` resets system disk.
 * `system:EPHEMERAL,STATE` resets ephemeral and state partitions. Doing this reverts Talos into maintenance mode.
 
-#### `talos.unified_cgroup_hierarchy`
-
-> Deprecated: From the 1.10 release it is planned that `cgroupsv1` will only be supported in the container mode.
-
-Talos defaults to always using the unified cgroup hierarchy (`cgroupsv2`), but `cgroupsv1`
-can be forced with `talos.unified_cgroup_hierarchy=0`.
-
-> Note: `cgroupsv1` is deprecated and it should be used only for compatibility with workloads which don't support `cgroupsv2` yet.
-
 #### `talos.dashboard.disabled`
 
 By default, Talos redirects kernel logs to virtual console `/dev/tty1` and starts the dashboard on `/dev/tty2`,

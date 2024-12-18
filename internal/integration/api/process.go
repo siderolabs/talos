@@ -15,12 +15,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/siderolabs/go-pointer"
-	"github.com/siderolabs/go-procfs/procfs"
-
 	"github.com/siderolabs/talos/internal/integration/base"
 	"github.com/siderolabs/talos/pkg/machinery/client"
-	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
 
 // ProcessSuite ...
@@ -67,17 +63,11 @@ func (suite *ProcessSuite) readProcfs(nodeCtx context.Context, pid int32, proper
 
 // TestProcessCapabilities reads capabilities of processes from procfs
 // and validates system services get necessary capabilities dropped.
-//
-//nolint:gocyclo
 func (suite *ProcessSuite) TestProcessCapabilities() {
 	nodes := suite.DiscoverNodeInternalIPs(suite.ctx)
 
 	for _, node := range nodes {
 		nodeCtx := client.WithNode(suite.ctx, node)
-
-		cmdline := suite.ReadCmdline(nodeCtx)
-
-		cgroupsV1 := pointer.SafeDeref(procfs.NewCmdline(cmdline).Get(constants.KernelParamCGroups).First()) == "0"
 
 		r, err := suite.Client.Processes(nodeCtx)
 		suite.Require().NoError(err)
@@ -98,12 +88,10 @@ func (suite *ProcessSuite) TestProcessCapabilities() {
 						"CapPrm:\t000001ffffbfffff\nCapEff:\t000001ffffbfffff\nCapBnd:\t000001ffffbfffff",
 					)
 
-					if !cgroupsV1 {
-						suite.Require().Equal(
-							suite.readProcfs(nodeCtx, p.Pid, "cgroup"),
-							"0::/system/udevd",
-						)
-					}
+					suite.Require().Equal(
+						suite.readProcfs(nodeCtx, p.Pid, "cgroup"),
+						"0::/system/udevd",
+					)
 
 					suite.Require().Contains(
 						suite.readProcfs(nodeCtx, p.Pid, "environ"),
@@ -122,12 +110,10 @@ func (suite *ProcessSuite) TestProcessCapabilities() {
 						"CapPrm:\t0000000000000000\nCapEff:\t0000000000000000\nCapBnd:\t0000000000000000",
 					)
 
-					if !cgroupsV1 {
-						suite.Require().Equal(
-							suite.readProcfs(nodeCtx, p.Pid, "cgroup"),
-							"0::/system/dashboard",
-						)
-					}
+					suite.Require().Equal(
+						suite.readProcfs(nodeCtx, p.Pid, "cgroup"),
+						"0::/system/dashboard",
+					)
 
 					suite.Require().Equal(
 						suite.readProcfs(nodeCtx, p.Pid, "oom_score_adj"),
@@ -151,24 +137,20 @@ func (suite *ProcessSuite) TestProcessCapabilities() {
 					)
 
 					if strings.Contains(p.Args, "/system/run/containerd") {
-						if !cgroupsV1 {
-							suite.Require().Equal(
-								suite.readProcfs(nodeCtx, p.Pid, "cgroup"),
-								"0::/system/runtime",
-							)
-						}
+						suite.Require().Equal(
+							suite.readProcfs(nodeCtx, p.Pid, "cgroup"),
+							"0::/system/runtime",
+						)
 
 						suite.Require().Equal(
 							suite.readProcfs(nodeCtx, p.Pid, "oom_score_adj"),
 							"-999",
 						)
 					} else {
-						if !cgroupsV1 {
-							suite.Require().Equal(
-								suite.readProcfs(nodeCtx, p.Pid, "cgroup"),
-								"0::/podruntime/runtime",
-							)
-						}
+						suite.Require().Equal(
+							suite.readProcfs(nodeCtx, p.Pid, "cgroup"),
+							"0::/podruntime/runtime",
+						)
 
 						suite.Require().Equal(
 							suite.readProcfs(nodeCtx, p.Pid, "oom_score_adj"),
