@@ -167,6 +167,28 @@ func (suite *CmdlineSuite) TestParse() {
 			},
 		},
 		{
+			name:    "another config",
+			cmdline: "ip=10.105.155.21::10.105.155.30:255.255.255.240:pve1:eth0:off",
+
+			expectedSettings: network.CmdlineNetworking{
+				LinkConfigs: []network.CmdlineLinkConfig{
+					{
+						LinkName: "eth0",
+						Address:  netip.MustParsePrefix("10.105.155.21/28"),
+						Gateway:  netip.MustParseAddr("10.105.155.30"),
+					},
+				},
+				Hostname: "pve1",
+				NetworkLinkSpecs: []netconfig.LinkSpecSpec{
+					{
+						Name:        "eth0",
+						Up:          true,
+						ConfigLayer: netconfig.ConfigCmdline,
+					},
+				},
+			},
+		},
+		{
 			name:    "ipv6",
 			cmdline: "ip=[2001:db8::a]:[2001:db8::b]:[fe80::1]::master1:eth1::[2001:4860:4860::6464]:[2001:4860:4860::64]:[2001:4860:4806::]",
 			expectedSettings: network.CmdlineNetworking{
