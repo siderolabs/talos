@@ -24,6 +24,7 @@ import (
 	v1 "github.com/google/go-containerregistry/pkg/v1"
 	"github.com/google/go-containerregistry/pkg/v1/cache"
 	"github.com/google/go-containerregistry/pkg/v1/empty"
+	"github.com/google/go-containerregistry/pkg/v1/google"
 	"github.com/google/go-containerregistry/pkg/v1/layout"
 	"github.com/google/go-containerregistry/pkg/v1/mutate"
 	"github.com/google/go-containerregistry/pkg/v1/remote"
@@ -87,6 +88,7 @@ func Generate(images []string, platform string, insecure bool, imageLayerCachePa
 			authn.NewMultiKeychain(
 				authn.DefaultKeychain,
 				github.Keychain,
+				google.Keychain,
 			),
 		),
 	}
@@ -95,6 +97,7 @@ func Generate(images []string, platform string, insecure bool, imageLayerCachePa
 		remote.WithAuthFromKeychain(authn.NewMultiKeychain(
 			authn.DefaultKeychain,
 			github.Keychain,
+			google.Keychain,
 		)),
 		remote.WithPlatform(*v1Platform),
 	}
