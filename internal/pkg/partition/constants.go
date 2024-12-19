@@ -33,7 +33,9 @@ const (
 	MiB = 1024 * 1024
 	GiB = 1024 * MiB
 
-	EFISize      = 100 * MiB
+	// The actual minimum size is 65595 × 4 KB(NVME sector size)
+	// = 268677120 bytes = 256.23046875 MB.
+	EFISize      = 260 * MiB
 	BIOSGrubSize = 1 * MiB
 	BootSize     = 1000 * MiB
 	// EFIUKISize is the size of the EFI partition when UKI is enabled.
