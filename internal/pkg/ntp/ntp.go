@@ -299,7 +299,8 @@ func (syncer *Syncer) query(ctx context.Context) (lastSyncServer string, measure
 	return lastSyncServer, measurement, err
 }
 
-func (syncer *Syncer) isPTPDevice(server string) bool {
+// IsPTPDevice checks if a given server string represents a PTP device.
+func IsPTPDevice(server string) bool {
 	return strings.HasPrefix(server, "/dev/")
 }
 
@@ -307,7 +308,7 @@ func (syncer *Syncer) resolveServers(ctx context.Context) ([]string, error) {
 	var serverList []string
 
 	for _, server := range syncer.getTimeServers() {
-		if syncer.isPTPDevice(server) {
+		if IsPTPDevice(server) {
 			serverList = append(serverList, server)
 		} else {
 			ips, err := net.LookupIP(server)
@@ -331,17 +332,41 @@ func (syncer *Syncer) resolveServers(ctx context.Context) ([]string, error) {
 }
 
 func (syncer *Syncer) queryServer(server string) (*Measurement, error) {
-	if syncer.isPTPDevice(server) {
+	if IsPTPDevice(server) {
 		return syncer.queryPTP(server)
 	}
 
 	return syncer.queryNTP(server)
 }
 
-func (syncer *Syncer) queryPTP(server string) (*Measurement, error) {
-	phc, err := os.Open(server)
+func (syncer *Syncer) queryPTP(device string) (*Measurement, error) {
+	ts, err := QueryPTPDevice(device)
 	if err != nil {
 		return nil, err
+	}
+
+	offset := time.Until(time.Unix(ts.Sec, ts.Nsec))
+	syncer.logger.Debug("PTP clock",
+		zap.Duration("clock_offset", offset),
+		zap.Int64("sec", ts.Sec),
+		zap.Int64("nsec", ts.Nsec),
+		zap.String("device", device),
+	)
+
+	meas := &Measurement{
+		ClockOffset: offset,
+		Leap:        0,
+		Spike:       false,
+	}
+
+	return meas, err
+}
+
+// QueryPTPDevice queries PTP device for current time.
+func QueryPTPDevice(device string) (unix.Timespec, error) {
+	phc, err := os.Open(device)
+	if err != nil {
+		return unix.Timespec{}, err
 	}
 
 	defer phc.Close() //nolint:errcheck
@@ -360,24 +385,10 @@ func (syncer *Syncer) queryPTP(server string) (*Measurement, error) {
 
 	err = unix.ClockGettime(clockid, &ts)
 	if err != nil {
-		return nil, err
+		return unix.Timespec{}, err
 	}
 
-	offset := time.Until(time.Unix(ts.Sec, ts.Nsec))
-	syncer.logger.Debug("PTP clock",
-		zap.Duration("clock_offset", offset),
-		zap.Int64("sec", ts.Sec),
-		zap.Int64("nsec", ts.Nsec),
-		zap.String("device", server),
-	)
-
-	meas := &Measurement{
-		ClockOffset: offset,
-		Leap:        0,
-		Spike:       false,
-	}
-
-	return meas, err
+	return ts, err
 }
 
 func (syncer *Syncer) queryNTP(server string) (*Measurement, error) {
