@@ -16,6 +16,7 @@ import (
 	"github.com/google/go-containerregistry/pkg/authn/github"
 	"github.com/google/go-containerregistry/pkg/crane"
 	v1 "github.com/google/go-containerregistry/pkg/v1"
+	"github.com/google/go-containerregistry/pkg/v1/google"
 	"github.com/google/go-containerregistry/pkg/v1/layout"
 	"github.com/siderolabs/gen/value"
 	"golang.org/x/sync/errgroup"
@@ -280,6 +281,7 @@ func (c *ContainerAsset) Pull(ctx context.Context, arch string, printf func(stri
 			authn.NewMultiKeychain(
 				authn.DefaultKeychain,
 				github.Keychain,
+				google.Keychain,
 			),
 		),
 	}
