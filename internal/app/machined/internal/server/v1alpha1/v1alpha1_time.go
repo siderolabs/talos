@@ -9,11 +9,12 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/beevik/ntp"
+	ntpclient "github.com/beevik/ntp"
 	"google.golang.org/grpc"
 	"google.golang.org/protobuf/types/known/emptypb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
+	"github.com/siderolabs/talos/internal/pkg/ntp"
 	timeapi "github.com/siderolabs/talos/pkg/machinery/api/time"
 	"github.com/siderolabs/talos/pkg/machinery/config"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
@@ -51,13 +52,26 @@ func (r *TimeServer) Time(ctx context.Context, in *emptypb.Empty) (reply *timeap
 
 // TimeCheck issues a query to the specified ntp server and displays the results.
 func (r *TimeServer) TimeCheck(ctx context.Context, in *timeapi.TimeRequest) (reply *timeapi.TimeResponse, err error) {
-	rt, err := ntp.Query(in.Server)
-	if err != nil {
-		return nil, fmt.Errorf("error querying NTP server %q: %w", in.Server, err)
-	}
+	var t time.Time
 
-	if err = rt.Validate(); err != nil {
-		return nil, fmt.Errorf("error validating NTP response: %w", err)
+	if ntp.IsPTPDevice(in.Server) {
+		ts, err := ntp.QueryPTPDevice(in.Server)
+		if err != nil {
+			return nil, fmt.Errorf("error querying PTP device %q: %w", in.Server, err)
+		}
+
+		t = time.Unix(ts.Sec, ts.Nsec)
+	} else {
+		rt, err := ntpclient.Query(in.Server)
+		if err != nil {
+			return nil, fmt.Errorf("error querying NTP server %q: %w", in.Server, err)
+		}
+
+		if err = rt.Validate(); err != nil {
+			return nil, fmt.Errorf("error validating NTP response: %w", err)
+		}
+
+		t = rt.Time
 	}
 
 	return &timeapi.TimeResponse{
@@ -65,7 +79,7 @@ func (r *TimeServer) TimeCheck(ctx context.Context, in *timeapi.TimeRequest) (re
 			{
 				Server:     in.Server,
 				Localtime:  timestamppb.New(time.Now()),
-				Remotetime: timestamppb.New(rt.Time),
+				Remotetime: timestamppb.New(t),
 			},
 		},
 	}, nil
