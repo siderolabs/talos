@@ -61,7 +61,7 @@ func (k *Kubelet) PreFunc(ctx context.Context, r runtime.Runtime) error {
 
 	spec := specResource.TypedSpec()
 
-	client, err := containerdapi.New(constants.CRIContainerdAddress)
+	client, err := containerdapi.New(constants.SystemContainerdAddress)
 	if err != nil {
 		return err
 	}
@@ -102,7 +102,7 @@ func (k *Kubelet) Condition(r runtime.Runtime) conditions.Condition {
 
 // DependsOn implements the Service interface.
 func (k *Kubelet) DependsOn(runtime.Runtime) []string {
-	return []string{"cri"}
+	return []string{"containerd"}
 }
 
 // Runner implements the Service interface.
@@ -167,6 +167,7 @@ func (k *Kubelet) Runner(r runtime.Runtime) (runner.Runner, error) {
 		r.Config().Debug() && r.Config().Machine().Type() == machine.TypeWorker, // enable debug logs only for the worker nodes
 		&args,
 		runner.WithLoggingManager(r.Logging()),
+		runner.WithContainerdAddress(constants.SystemContainerdAddress),
 		runner.WithNamespace(constants.SystemContainerdNamespace),
 		runner.WithContainerImage(k.imgRef),
 		runner.WithEnv(environment.Get(r.Config())),

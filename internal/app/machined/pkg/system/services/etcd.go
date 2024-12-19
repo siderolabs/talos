@@ -105,7 +105,7 @@ func (e *Etcd) PreFunc(ctx context.Context, r runtime.Runtime) error {
 		return err
 	}
 
-	client, err := containerdapi.New(constants.CRIContainerdAddress)
+	client, err := containerdapi.New(constants.SystemContainerdAddress)
 	if err != nil {
 		return err
 	}
@@ -181,7 +181,7 @@ func (e *Etcd) Condition(r runtime.Runtime) conditions.Condition {
 
 // DependsOn implements the Service interface.
 func (e *Etcd) DependsOn(runtime.Runtime) []string {
-	return []string{"cri"}
+	return []string{"containerd"}
 }
 
 // Runner implements the Service interface.
@@ -223,6 +223,7 @@ func (e *Etcd) Runner(r runtime.Runtime) (runner.Runner, error) {
 		r.Config().Debug(),
 		&args,
 		runner.WithLoggingManager(r.Logging()),
+		runner.WithContainerdAddress(constants.SystemContainerdAddress),
 		runner.WithNamespace(constants.SystemContainerdNamespace),
 		runner.WithContainerImage(e.imgRef),
 		runner.WithEnv(env),
