@@ -1,5 +1,3 @@
-SUBSYSTEM=="*",SECLABEL{selinux}="system_u:object_r:device_t:s0"
-
 SUBSYSTEM=="rtc",SECLABEL{selinux}="system_u:object_r:rtc_device_t:s0"
 SUBSYSTEM=="mtd",SECLABEL{selinux}="system_u:object_r:mtd_device_t:s0"
 SUBSYSTEM=="tpm",SECLABEL{selinux}="system_u:object_r:tpm_device_t:s0"
