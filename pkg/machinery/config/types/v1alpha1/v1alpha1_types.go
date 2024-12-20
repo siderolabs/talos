@@ -2413,6 +2413,9 @@ type DiscoveryRegistriesConfig struct {
 	// description: |
 	//   Kubernetes registry uses Kubernetes API server to discover cluster members and stores additional information
 	//   as annotations on the Node resources.
+	//
+	//   This feature is deprecated as it is not compatible with Kubernetes 1.32+.
+	//   See https://github.com/siderolabs/talos/issues/9980 for more information.
 	RegistryKubernetes RegistryKubernetesConfig `yaml:"kubernetes"`
 	// description: |
 	//   Service registry is using an external service to push and pull information about cluster members.

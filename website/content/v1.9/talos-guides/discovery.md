@@ -20,6 +20,8 @@ Sidero Labs runs a public external registry service, which is enabled by default
 The Kubernetes registry service is disabled by default.
 The advantage of the external registry service is that it is not dependent on etcd, and thus can inform you of cluster membership even when Kubernetes is down.
 
+> Note: Kubernetes registry is deprecated as it is not compatible with Kubernetes 1.32 and later versions in the default configuration.
+
 ## Video Walkthrough
 
 To see a live demo of Cluster Discovery, see the video below:
@@ -46,6 +48,8 @@ Disabling all registries effectively disables member discovery.
 
 > Note: An enabled discovery service is required for [KubeSpan]({{< relref "../talos-guides/network/kubespan/" >}}) to function correctly.
 
+### Kubernetes Registry
+
 The `Kubernetes` registry uses Kubernetes `Node` resource data and additional Talos annotations:
 
 ```sh
@@ -56,15 +60,21 @@ Annotations:        cluster.talos.dev/node-id: Utoh3O0ZneV0kT2IUBrh7TgdouRcUW2yz
 ...
 ```
 
+> Note: Starting with Kubernetes 1.32, the feature gate `AuthorizeNodeWithSelectors` enables additional authorization for `Node` resource read access via `system:node:*` role.
+> This prevents Talos Kubernetes registry from functioning correctly.
+> The workaround is to disable the feature gate on the API server, but it's not recommended as it disables also other important security protections.
+> For this reason, the Kubernetes registry is deprecated and disabled by default.
+
+### Discovery Service Registry
+
 The `Service` registry by default uses a public external Discovery Service to exchange encrypted information about cluster members.
 
 > Note: Talos supports operations when Discovery Service is disabled, but some features will rely on Kubernetes API availability to discover
 > controlplane endpoints, so in case of a failure disabled Discovery Service makes troubleshooting much harder.
 
-## Discovery Service
-
 Sidero Labs maintains a public discovery service at `https://discovery.talos.dev/` whereby cluster members use a shared key that is globally unique to coordinate basic connection information (i.e. the set of possible "endpoints", or IP:port pairs).
 We call this data "affiliate data."
+This data is encrypted by Talos Linux before being sent to the discovery service, and it can only be decrypted by the cluster members.
 
 > Note: If KubeSpan is enabled the data has the addition of the WireGuard public key.
 
@@ -73,7 +83,7 @@ Each node submits its own data, plus the endpoints it sees from other peers, to 
 The discovery service aggregates the data, deduplicates the endpoints, and sends updates to each connected peer.
 Each peer receives information back from the discovery service, decrypts it and uses it to drive KubeSpan and cluster discovery.
 
-Data is stored in memory only.
+Data is stored in memory only (and snapshotted to disk in encrypted way to facilitate quick recovery on restarts).
 The cluster ID is used as a key to select the affiliates (so that different clusters see different affiliates).
 
 To summarize, the discovery service knows the client version, cluster ID, the number of affiliates, some encrypted data for each affiliate, and a list of encrypted endpoints.

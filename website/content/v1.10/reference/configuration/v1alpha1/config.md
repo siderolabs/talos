@@ -3830,7 +3830,7 @@ DiscoveryRegistriesConfig struct configures cluster membership discovery.
 
 | Field | Type | Description | Value(s) |
 |-------|------|-------------|----------|
-|`kubernetes` |<a href="#Config.cluster.discovery.registries.kubernetes">RegistryKubernetesConfig</a> |<details><summary>Kubernetes registry uses Kubernetes API server to discover cluster members and stores additional information</summary>as annotations on the Node resources.</details>  | |
+|`kubernetes` |<a href="#Config.cluster.discovery.registries.kubernetes">RegistryKubernetesConfig</a> |<details><summary>Kubernetes registry uses Kubernetes API server to discover cluster members and stores additional information</summary>as annotations on the Node resources.<br /><br />This feature is deprecated as it is not compatible with Kubernetes 1.32+.<br />See https://github.com/siderolabs/talos/issues/9980 for more information.</details>  | |
 |`service` |<a href="#Config.cluster.discovery.registries.service">RegistryServiceConfig</a> |Service registry is using an external service to push and pull information about cluster members.  | |
 
 

@@ -3988,7 +3988,7 @@ func (DiscoveryRegistriesConfig) Doc() *encoder.Doc {
 				Name:        "kubernetes",
 				Type:        "RegistryKubernetesConfig",
 				Note:        "",
-				Description: "Kubernetes registry uses Kubernetes API server to discover cluster members and stores additional information\nas annotations on the Node resources.",
+				Description: "Kubernetes registry uses Kubernetes API server to discover cluster members and stores additional information\nas annotations on the Node resources.\n\nThis feature is deprecated as it is not compatible with Kubernetes 1.32+.\nSee https://github.com/siderolabs/talos/issues/9980 for more information.",
 				Comments:    [3]string{"" /* encoder.HeadComment */, "Kubernetes registry uses Kubernetes API server to discover cluster members and stores additional information" /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
 			{
