@@ -193,7 +193,7 @@ This will create several files in the `_out` directory: `controlplane.yaml`, `wo
 > You can check for disks running the following command:
 >
 > ```bash
-> talosctl disks --insecure --nodes $CONTROL_PLANE_IP
+> talosctl get disks --insecure --nodes $CONTROL_PLANE_IP
 > ```
 >
 > Update `controlplane.yaml` and `worker.yaml` config files to point to the correct disk location.

@@ -28,9 +28,9 @@ var bootstrapCmd = &cobra.Command{
 	Use:   "bootstrap",
 	Short: "Bootstrap the etcd cluster on the specified node.",
 	Long: `When Talos cluster is created etcd service on control plane nodes enter the join loop waiting
-to join etcd peers from other control plane nodes. One node should be picked as the boostrap node.
-When boostrap command is issued, the node aborts join process and bootstraps etcd cluster as a single node cluster.
-Other control plane nodes will join etcd cluster once Kubernetes is boostrapped on the bootstrap node.
+to join etcd peers from other control plane nodes. One node should be picked as the bootstrap node.
+When bootstrap command is issued, the node aborts join process and bootstraps etcd cluster as a single node cluster.
+Other control plane nodes will join etcd cluster once Kubernetes is bootstrapped on the bootstrap node.
 
 This command should not be used when "init" type node are used.
 

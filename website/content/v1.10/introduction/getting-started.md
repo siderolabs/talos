@@ -151,11 +151,11 @@ error applying new configuration: rpc error: code = InvalidArgument desc = confi
     * specified install disk does not exist: "/dev/sda"
 ```
 
-You can verify which disks your nodes have by using the `talosctl disks --insecure` command.
+You can verify which disks your nodes have by using the `talosctl get disks --insecure` command.
 
 > Insecure mode is needed at this point as the PKI infrastructure has not yet been set up.
 
-For example, the `talosctl disks` command below shows that the system has a `vda` drive, not an `sda`:
+For example, the `talosctl get disks` command below shows that the system has a `vda` drive, not an `sda`:
 
 ```sh
 $ talosctl -n 192.168.0.2 disks --insecure
