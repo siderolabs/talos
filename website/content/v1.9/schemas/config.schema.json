@@ -1709,9 +1709,9 @@
         "kubernetes": {
           "$ref": "#/$defs/v1alpha1.RegistryKubernetesConfig",
           "title": "kubernetes",
-          "description": "Kubernetes registry uses Kubernetes API server to discover cluster members and stores additional information\nas annotations on the Node resources.\n",
-          "markdownDescription": "Kubernetes registry uses Kubernetes API server to discover cluster members and stores additional information\nas annotations on the Node resources.",
-          "x-intellij-html-description": "\u003cp\u003eKubernetes registry uses Kubernetes API server to discover cluster members and stores additional information\nas annotations on the Node resources.\u003c/p\u003e\n"
+          "description": "Kubernetes registry uses Kubernetes API server to discover cluster members and stores additional information\nas annotations on the Node resources.\n\nThis feature is deprecated as it is not compatible with Kubernetes 1.32+.\nSee https://github.com/siderolabs/talos/issues/9980 for more information.\n",
+          "markdownDescription": "Kubernetes registry uses Kubernetes API server to discover cluster members and stores additional information\nas annotations on the Node resources.\n\nThis feature is deprecated as it is not compatible with Kubernetes 1.32+.\nSee https://github.com/siderolabs/talos/issues/9980 for more information.",
+          "x-intellij-html-description": "\u003cp\u003eKubernetes registry uses Kubernetes API server to discover cluster members and stores additional information\nas annotations on the Node resources.\u003c/p\u003e\n\n\u003cp\u003eThis feature is deprecated as it is not compatible with Kubernetes 1.32+.\nSee \u003ca href=\"https://github.com/siderolabs/talos/issues/9980\" target=\"_blank\"\u003ehttps://github.com/siderolabs/talos/issues/9980\u003c/a\u003e for more information.\u003c/p\u003e\n"
         },
         "service": {
           "$ref": "#/$defs/v1alpha1.RegistryServiceConfig",
