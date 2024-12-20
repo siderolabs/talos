@@ -149,8 +149,6 @@ func (widget *Header) updateNodeAPIData(node string, data *apidata.Node) {
 
 		if numCPUs > 0 {
 			nodeData.cpuFreq = fmt.Sprintf("%dx%s", numCPUs, widget.humanizeCPUFrequency(data.CPUsInfo.GetCpuInfo()[0].GetCpuMhz()))
-		} else {
-			nodeData.cpuFreq = widget.humanizeCPUFrequency(data.CPUsInfo.GetCpuInfo()[0].GetCpuMhz())
 		}
 	}
 
