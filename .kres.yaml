@@ -29,7 +29,7 @@ spec:
     - kernel
     - security
     - ci
-    - ^v1.9
+    - ^v1.10
   licenseChecks:
     - skipPaths:
         - .git/

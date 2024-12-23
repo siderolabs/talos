@@ -223,6 +223,10 @@ func (suite *ProcessSuite) TestStopSigKill() {
 }
 
 func (suite *ProcessSuite) TestPriority() {
+	if os.Geteuid() != 0 {
+		suite.T().Skip("skipping test, need root privileges")
+	}
+
 	pidFile := filepath.Join(suite.tmpDir, "talos-test-pid-prio")
 	//nolint:errcheck
 	_ = os.Remove(pidFile)
@@ -272,6 +276,10 @@ func (suite *ProcessSuite) TestPriority() {
 }
 
 func (suite *ProcessSuite) TestIOPriority() {
+	if os.Geteuid() != 0 {
+		suite.T().Skip("skipping test, need root privileges")
+	}
+
 	pidFile := filepath.Join(suite.tmpDir, "talos-test-pid-ionice")
 	//nolint:errcheck
 	_ = os.Remove(pidFile)
@@ -322,6 +330,10 @@ func (suite *ProcessSuite) TestIOPriority() {
 }
 
 func (suite *ProcessSuite) TestSchedulingPolicy() {
+	if os.Geteuid() != 0 {
+		suite.T().Skip("skipping test, need root privileges")
+	}
+
 	pidFile := filepath.Join(suite.tmpDir, "talos-test-pid-sched")
 	//nolint:errcheck
 	_ = os.Remove(pidFile)

@@ -17,13 +17,8 @@ import (
 
 // TestExt4Reproducibility tests that the ext4 filesystem is reproducible.
 func TestExt4Reproducibility(t *testing.T) {
-	hostname, _ := os.Hostname() //nolint:errcheck
-
-	if hostname == "buildkitsandbox" {
-		t.Skip("test not supported under buildkit as partition devices are not propagated from /dev")
-	}
-
 	t.Setenv("SOURCE_DATE_EPOCH", "1732109929")
+	t.Setenv("PATH", "/usr/bin:/bin:/usr/sbin:/sbin")
 
 	tmpDir := t.TempDir()
 
@@ -33,7 +28,7 @@ func TestExt4Reproducibility(t *testing.T) {
 		t.Fatalf("failed to create file: %v", err)
 	}
 
-	if err := os.Truncate(tempFile, 64*1024); err != nil {
+	if err := os.Truncate(tempFile, 512*1024*1024); err != nil {
 		t.Fatalf("failed to create file: %v", err)
 	}
 
@@ -67,11 +62,7 @@ func TestExt4Reproducibility(t *testing.T) {
 
 // TestExt4Resize tests that the ext4 filesystem can be resized.
 func TestExt4Resize(t *testing.T) {
-	hostname, _ := os.Hostname() //nolint:errcheck
-
-	if hostname == "buildkitsandbox" {
-		t.Skip("test not supported under buildkit as partition devices are not propagated from /dev")
-	}
+	t.Setenv("PATH", "/usr/bin:/bin:/usr/sbin:/sbin")
 
 	tmpDir := t.TempDir()
 
@@ -81,7 +72,7 @@ func TestExt4Resize(t *testing.T) {
 		t.Fatalf("failed to create file: %v", err)
 	}
 
-	if err := os.Truncate(tempFile, 64*1024); err != nil {
+	if err := os.Truncate(tempFile, 64*1024*1024); err != nil {
 		t.Fatalf("failed to create file: %v", err)
 	}
 
@@ -89,7 +80,7 @@ func TestExt4Resize(t *testing.T) {
 		t.Fatalf("failed to create ext4 filesystem: %v", err)
 	}
 
-	if err := os.Truncate(tempFile, 128*1024); err != nil {
+	if err := os.Truncate(tempFile, 128*1024*1024); err != nil {
 		t.Fatalf("failed to resize file: %v", err)
 	}
 
