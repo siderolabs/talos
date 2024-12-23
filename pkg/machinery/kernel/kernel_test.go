@@ -7,10 +7,15 @@ package kernel_test
 import (
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+
+	"github.com/siderolabs/talos/pkg/machinery/imager/quirks"
 	"github.com/siderolabs/talos/pkg/machinery/kernel"
 )
 
 func TestParamPath(t *testing.T) {
+	t.Parallel()
+
 	tests := []struct {
 		name  string
 		param *kernel.Param
@@ -55,9 +60,89 @@ func TestParamPath(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
 			if got := tt.param.Path(); got != tt.want {
 				t.Errorf("Param.Path() = %v, want %v", got, tt.want)
 			}
+		})
+	}
+}
+
+func TestDefaultKernelArgs(t *testing.T) {
+	t.Parallel()
+
+	for _, test := range []struct {
+		name string
+
+		quirks quirks.Quirks
+
+		expected []string
+	}{
+		{
+			name: "latest",
+
+			expected: []string{
+				"init_on_alloc=1",
+				"slab_nomerge=",
+				"pti=on",
+				"consoleblank=0",
+				"nvme_core.io_timeout=4294967295",
+				"printk.devkmsg=on",
+				"ima_template=ima-ng",
+				"ima_appraise=fix",
+				"ima_hash=sha512",
+				"selinux=1",
+			},
+		},
+		{
+			name: "v1.9",
+
+			quirks: quirks.New("v1.9.0"),
+
+			expected: []string{
+				"init_on_alloc=1",
+				"slab_nomerge=",
+				"pti=on",
+				"consoleblank=0",
+				"nvme_core.io_timeout=4294967295",
+				"printk.devkmsg=on",
+				"ima_template=ima-ng",
+				"ima_appraise=fix",
+				"ima_hash=sha512",
+			},
+		},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+
+			assert.Equal(t, test.expected, kernel.DefaultArgs(test.quirks))
+		})
+	}
+}
+
+func TestSecureBootArgs(t *testing.T) {
+	t.Parallel()
+
+	for _, test := range []struct {
+		name string
+
+		quirks quirks.Quirks
+
+		expected []string
+	}{
+		{
+			name: "latest",
+
+			expected: []string{
+				"lockdown=confidentiality",
+			},
+		},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+
+			assert.Equal(t, test.expected, kernel.SecureBootArgs(test.quirks))
 		})
 	}
 }

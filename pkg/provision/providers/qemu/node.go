@@ -71,7 +71,7 @@ func (p *provisioner) createNode(state *vm.State, clusterReq provision.ClusterRe
 
 	cmdline := procfs.NewCmdline("")
 
-	cmdline.SetAll(kernel.DefaultArgs)
+	cmdline.SetAll(kernel.DefaultArgs(nodeReq.Quirks))
 
 	// required to get kernel console
 	cmdline.Append("console", arch.Console())

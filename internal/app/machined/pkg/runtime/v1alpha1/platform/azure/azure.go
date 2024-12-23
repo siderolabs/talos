@@ -28,6 +28,7 @@ import (
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/internal/netutils"
 	"github.com/siderolabs/talos/pkg/download"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
+	"github.com/siderolabs/talos/pkg/machinery/imager/quirks"
 	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
 	"github.com/siderolabs/talos/pkg/machinery/resources/network"
 	runtimeres "github.com/siderolabs/talos/pkg/machinery/resources/runtime"
@@ -216,7 +217,7 @@ func (a *Azure) Mode() runtime.Mode {
 }
 
 // KernelArgs implements the runtime.Platform interface.
-func (a *Azure) KernelArgs(string) procfs.Parameters {
+func (a *Azure) KernelArgs(string, quirks.Quirks) procfs.Parameters {
 	return []*procfs.Parameter{
 		procfs.NewParameter("console").Append("ttyS0,115200n8"),
 		procfs.NewParameter("earlyprintk").Append("ttyS0,115200"),

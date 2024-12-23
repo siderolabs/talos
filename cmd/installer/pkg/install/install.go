@@ -123,10 +123,10 @@ func Install(ctx context.Context, p runtime.Platform, mode Mode, opts *Options) 
 		cmdline.Append(constants.KernelParamConfig, opts.ConfigSource)
 	}
 
-	cmdline.SetAll(p.KernelArgs(opts.Arch).Strings())
+	cmdline.SetAll(p.KernelArgs(opts.Arch, quirks.Quirks{}).Strings())
 
 	// first defaults, then extra kernel args to allow extra kernel args to override defaults
-	if err := cmdline.AppendAll(kernel.DefaultArgs); err != nil {
+	if err := cmdline.AppendAll(kernel.DefaultArgs(quirks.Quirks{})); err != nil {
 		return err
 	}
 

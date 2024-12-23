@@ -10,6 +10,7 @@ import (
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
+	"github.com/siderolabs/talos/pkg/machinery/imager/quirks"
 )
 
 // VMware is the concrete type that implements the platform.Platform interface.
@@ -26,7 +27,7 @@ func (v *VMware) Mode() runtime.Mode {
 }
 
 // KernelArgs implements the runtime.Platform interface.
-func (v *VMware) KernelArgs(arch string) procfs.Parameters {
+func (v *VMware) KernelArgs(arch string, _ quirks.Quirks) procfs.Parameters {
 	switch arch {
 	case "amd64":
 		return []*procfs.Parameter{

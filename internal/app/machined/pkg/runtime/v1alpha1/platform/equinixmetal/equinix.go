@@ -29,6 +29,7 @@ import (
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/internal/netutils"
 	"github.com/siderolabs/talos/pkg/download"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
+	"github.com/siderolabs/talos/pkg/machinery/imager/quirks"
 	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
 	"github.com/siderolabs/talos/pkg/machinery/resources/network"
 	runtimeres "github.com/siderolabs/talos/pkg/machinery/resources/runtime"
@@ -112,7 +113,7 @@ func (p *EquinixMetal) Mode() runtime.Mode {
 }
 
 // KernelArgs implements the runtime.Platform interface.
-func (p *EquinixMetal) KernelArgs(arch string) procfs.Parameters {
+func (p *EquinixMetal) KernelArgs(arch string, _ quirks.Quirks) procfs.Parameters {
 	switch arch {
 	case "amd64":
 		return []*procfs.Parameter{

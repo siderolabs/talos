@@ -32,6 +32,7 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/cel"
 	"github.com/siderolabs/talos/pkg/machinery/cel/celenv"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
+	"github.com/siderolabs/talos/pkg/machinery/imager/quirks"
 	"github.com/siderolabs/talos/pkg/machinery/meta"
 	"github.com/siderolabs/talos/pkg/machinery/resources/block"
 	"github.com/siderolabs/talos/pkg/machinery/resources/hardware"
@@ -195,14 +196,20 @@ func readConfigFromISO(ctx context.Context, r state.State) ([]byte, error) {
 }
 
 // KernelArgs implements the runtime.Platform interface.
-func (m *Metal) KernelArgs(arch string) procfs.Parameters {
+func (m *Metal) KernelArgs(arch string, quirks quirks.Quirks) procfs.Parameters {
 	switch arch {
 	case "amd64":
-		return []*procfs.Parameter{
+		if quirks.SupportsMetalPlatformConsoleTTYS0() {
+			return procfs.Parameters{
+				procfs.NewParameter("console").Append("ttyS0").Append("tty0"),
+			}
+		}
+
+		return procfs.Parameters{
 			procfs.NewParameter("console").Append("tty0"),
 		}
 	case "arm64":
-		return []*procfs.Parameter{
+		return procfs.Parameters{
 			procfs.NewParameter("console").Append("ttyAMA0").Append("tty0"),
 		}
 	default:

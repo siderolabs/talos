@@ -17,6 +17,7 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/config"
 	"github.com/siderolabs/talos/pkg/machinery/config/machine"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
+	"github.com/siderolabs/talos/pkg/machinery/imager/quirks"
 )
 
 // ClusterRequest is the root object describing cluster to be provisioned.
@@ -181,6 +182,8 @@ type NodeRequest struct {
 	Name string
 	IPs  []netip.Addr
 	Type machine.Type
+
+	Quirks quirks.Quirks
 
 	Config                config.Provider
 	ConfigInjectionMethod ConfigInjectionMethod

@@ -28,6 +28,7 @@ import (
 	netctrl "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/network"
 	v1alpha1runtime "github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
+	"github.com/siderolabs/talos/pkg/machinery/imager/quirks"
 	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
 	"github.com/siderolabs/talos/pkg/machinery/resources/network"
 	runtimeres "github.com/siderolabs/talos/pkg/machinery/resources/runtime"
@@ -714,7 +715,7 @@ func (mock *platformMock) Mode() v1alpha1runtime.Mode {
 	return v1alpha1runtime.ModeCloud
 }
 
-func (mock *platformMock) KernelArgs(string) procfs.Parameters {
+func (mock *platformMock) KernelArgs(string, quirks.Quirks) procfs.Parameters {
 	return nil
 }
 

@@ -54,6 +54,7 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/config/types/security"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
+	"github.com/siderolabs/talos/pkg/machinery/imager/quirks"
 	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
 	"github.com/siderolabs/talos/pkg/machinery/version"
 	"github.com/siderolabs/talos/pkg/provision"
@@ -905,6 +906,7 @@ func create(ctx context.Context) error {
 		nodeReq := provision.NodeRequest{
 			Name:                  nodeName(clusterName, "controlplane", i+1, nodeUUID),
 			Type:                  machine.TypeControlPlane,
+			Quirks:                quirks.New(talosVersion),
 			IPs:                   nodeIPs,
 			Memory:                controlPlaneMemory,
 			NanoCPUs:              controlPlaneNanoCPUs,
@@ -983,6 +985,7 @@ func create(ctx context.Context) error {
 				Name:                  nodeName(clusterName, "worker", i, nodeUUID),
 				Type:                  machine.TypeWorker,
 				IPs:                   nodeIPs,
+				Quirks:                quirks.New(talosVersion),
 				Memory:                workerMemory,
 				NanoCPUs:              workerNanoCPUs,
 				Disks:                 disks,
