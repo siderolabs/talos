@@ -365,7 +365,7 @@ digest: sha256:849ace01b9af514d817b05a9c5963a35202e09a4807d12f8a3ea83657c76c863
 Now we can generate the metal image with the following command:
 
 ```shell
-$ docker run --rm -t -v $PWD/_out:/out ghcr.io/siderolabs/imager:{{< release >}} rpi_generic --arch arm64 --system-extension-image ghcr.io/siderolabs/iscsi-tools:v0.1.4@sha256:548b2b121611424f6b1b6cfb72a1669421ffaf2f1560911c324a546c7cee655e --overlay-image ghcr.io/siderolabs/sbc-raspberrypi:v0.1.0@sha256:849ace01b9af514d817b05a9c5963a35202e09a4807d12f8a3ea83657c76c863 --overlay-name=rpi_generic
+$ docker run --rm -t -v $PWD/_out:/out -v /dev:/dev --privileged ghcr.io/siderolabs/imager:{{< release >}} rpi_generic --arch arm64 --system-extension-image ghcr.io/siderolabs/iscsi-tools:v0.1.4@sha256:548b2b121611424f6b1b6cfb72a1669421ffaf2f1560911c324a546c7cee655e --overlay-image ghcr.io/siderolabs/sbc-raspberrypi:v0.1.0@sha256:849ace01b9af514d817b05a9c5963a35202e09a4807d12f8a3ea83657c76c863 --overlay-name=rpi_generic
 profile ready:
 arch: arm64
 platform: metal
