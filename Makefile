@@ -125,8 +125,32 @@ TESTPKGS ?= github.com/siderolabs/talos/...
 RELEASES ?= v1.7.7 v1.8.1
 SHORT_INTEGRATION_TEST ?=
 CUSTOM_CNI_URL ?=
+
 INSTALLER_ARCH ?= all
+INSTALLER_ONLY_PKGS ?= \
+    bash \
+    cpio \
+    efibootmgr \
+    kmod \
+    squashfs-tools \
+    xfsprogs \
+    xz \
+    zstd
+
+IMAGER_EXTRA_PKGS ?= \
+    binutils-aarch64 \
+    binutils-x86_64 \
+    dosfstools \
+    e2fsprogs \
+    mtools \
+    pigz \
+    qemu-img \
+    tar \
+    xorriso
+
+INSTALLER_PKGS ?= $(INSTALLER_ONLY_PKGS) $(IMAGER_EXTRA_PKGS)
 IMAGER_ARGS ?=
+
 MORE_IMAGES ?=
 
 CGO_ENABLED ?= 0
@@ -195,6 +219,7 @@ COMMON_ARGS += --build-arg=SOURCE_DATE_EPOCH=$(SOURCE_DATE_EPOCH)
 COMMON_ARGS += --build-arg=ARTIFACTS=$(ARTIFACTS)
 COMMON_ARGS += --build-arg=TESTPKGS=$(TESTPKGS)
 COMMON_ARGS += --build-arg=INSTALLER_ARCH=$(INSTALLER_ARCH)
+COMMON_ARGS += --build-arg=INSTALLER_PKGS="$(INSTALLER_PKGS)"
 COMMON_ARGS += --build-arg=CGO_ENABLED=$(CGO_ENABLED)
 COMMON_ARGS += --build-arg=GO_BUILDFLAGS="$(GO_BUILDFLAGS)"
 COMMON_ARGS += --build-arg=GO_BUILDFLAGS_TALOSCTL="$(GO_BUILDFLAGS_TALOSCTL)"
@@ -369,7 +394,7 @@ sd-stub: ## Outputs the systemd-stub to the artifact directory.
 
 .PHONY: installer
 installer: ## Builds the container image for the installer and outputs it to the registry.
-	@INSTALLER_ARCH=targetarch  \
+	@INSTALLER_ARCH=targetarch INSTALLER_PKGS="$(INSTALLER_ONLY_PKGS)" \
 		$(MAKE) registry-$@
 
 .PHONY: imager

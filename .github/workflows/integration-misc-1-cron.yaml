@@ -1,6 +1,6 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
 #
-# Generated on 2024-11-28T13:53:18Z by kres 232fe63.
+# Generated on 2024-12-24T15:00:58Z by kres fcff05e.
 
 name: integration-misc-1-cron
 concurrency:
@@ -102,6 +102,16 @@ jobs:
           IMAGE_REGISTRY: registry.dev.siderolabs.io
           SHORT_INTEGRATION_TEST: "yes"
           VIA_MAINTENANCE_MODE: "true"
+        run: |
+          sudo -E make e2e-qemu
+      - name: e2e-min-requirements
+        env:
+          GITHUB_STEP_NAME: ${{ github.job}}-e2e-min-requirements
+          IMAGE_REGISTRY: registry.dev.siderolabs.io
+          QEMU_MEMORY_CONTROLPLANES: "2048"
+          QEMU_MEMORY_WORKERS: "1024"
+          QEMU_SYSTEM_DISK_SIZE: "10240"
+          SHORT_INTEGRATION_TEST: "yes"
         run: |
           sudo -E make e2e-qemu
       - name: save artifacts

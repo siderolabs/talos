@@ -1,6 +1,6 @@
 {
     "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-    "description": "THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.\n\nGenerated on 2024-12-16T18:02:24Z by kres 318187b.\n\n",
+    "description": "THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.",
     "prHeader": "Update Request | Renovate Bot",
     "extends": [
         ":dependencyDashboard",

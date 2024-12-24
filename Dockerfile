@@ -942,25 +942,9 @@ FROM install-artifacts-${INSTALLER_ARCH} AS install-artifacts
 FROM alpine:3.20.3 AS installer-image
 ARG SOURCE_DATE_EPOCH
 ENV SOURCE_DATE_EPOCH=${SOURCE_DATE_EPOCH}
+ARG INSTALLER_PKGS
 RUN apk add --no-cache --update --no-scripts \
-    bash \
-    binutils-aarch64 \
-    binutils-x86_64 \
-    cpio \
-    dosfstools \
-    e2fsprogs \
-    efibootmgr \
-    kmod \
-    mtools \
-    pigz \
-    qemu-img \
-    squashfs-tools \
-    tar \
-    util-linux \
-    xfsprogs \
-    xorriso \
-    xz \
-    zstd
+    ${INSTALLER_PKGS}
 ARG TARGETARCH
 ENV TARGETARCH=${TARGETARCH}
 COPY --from=installer-build /installer /bin/installer
