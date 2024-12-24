@@ -188,7 +188,7 @@ func (ctrl *ResolverConfigController) getDefault(cfg talosconfig.Config, hostnam
 		return spec
 	}
 
-	spec.SearchDomains = []string{hostnameStatus.FQDN()}
+	spec.SearchDomains = []string{hostnameStatus.Domainname}
 
 	return spec
 }
