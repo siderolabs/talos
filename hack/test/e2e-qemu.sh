@@ -192,6 +192,7 @@ case "${WITH_APPARMOR_LSM_ENABLED:-false}" in
 machine:
   install:
     extraKernelArgs:
+      - -selinux
       - lsm=lockdown,capability,yama,apparmor,bpf
       - apparmor=1
 EOF
