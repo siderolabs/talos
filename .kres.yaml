@@ -755,6 +755,16 @@ spec:
             VIA_MAINTENANCE_MODE: true
             DISABLE_DHCP_HOSTNAME: true
             IMAGE_REGISTRY: registry.dev.siderolabs.io
+        - name: e2e-min-requirements
+          command: e2e-qemu
+          withSudo: true
+          environment:
+            GITHUB_STEP_NAME: ${{ github.job}}-e2e-min-requirements
+            SHORT_INTEGRATION_TEST: yes
+            QEMU_MEMORY_WORKERS: 1024
+            QEMU_MEMORY_CONTROLPLANES: 2048
+            QEMU_SYSTEM_DISK_SIZE: 10240
+            IMAGE_REGISTRY: registry.dev.siderolabs.io
         - name: save-talos-logs
           conditions:
             - always

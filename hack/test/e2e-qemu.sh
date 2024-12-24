@@ -226,12 +226,12 @@ function create_cluster {
     --kubernetes-version="${KUBERNETES_VERSION}" \
     --controlplanes=3 \
     --workers="${QEMU_WORKERS:-2}" \
-    --disk=15360 \
+    --disk="${QEMU_SYSTEM_DISK_SIZE:-15360}" \
     --extra-disks="${QEMU_EXTRA_DISKS:-0}" \
     --extra-disks-size="${QEMU_EXTRA_DISKS_SIZE:-5120}" \
     --extra-disks-drivers="${QEMU_EXTRA_DISKS_DRIVERS:-}" \
     --mtu=1430 \
-    --memory=2048 \
+    --memory="${QEMU_MEMORY_CONTROLPLANES:-2048}" \
     --memory-workers="${QEMU_MEMORY_WORKERS:-2048}" \
     --cpus="${QEMU_CPUS:-2}" \
     --cpus-workers="${QEMU_CPUS_WORKERS:-2}" \
