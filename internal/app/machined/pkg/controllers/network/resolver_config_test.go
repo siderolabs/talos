@@ -18,6 +18,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/cosi-project/runtime/pkg/state/impl/inmem"
 	"github.com/cosi-project/runtime/pkg/state/impl/namespaced"
+	"github.com/siderolabs/go-pointer"
 	"github.com/siderolabs/go-procfs/procfs"
 	"github.com/siderolabs/go-retry/retry"
 	"github.com/stretchr/testify/assert"
@@ -107,7 +108,84 @@ func (suite *ResolverConfigSuite) TestDefaults() {
 					netip.MustParseAddr(constants.DefaultSecondaryResolver),
 				}, r.TypedSpec().DNSServers,
 			)
+			asrt.Empty(r.TypedSpec().SearchDomains)
 			asrt.Equal(network.ConfigDefault, r.TypedSpec().ConfigLayer)
+		},
+	)
+}
+
+func (suite *ResolverConfigSuite) TestWithHostnameStatus() {
+	suite.Require().NoError(suite.runtime.RegisterController(&netctrl.ResolverConfigController{}))
+
+	hostnameStatus := network.NewHostnameStatus(network.NamespaceName, network.HostnameID)
+	hostnameStatus.TypedSpec().Hostname = "irrelevant"
+	hostnameStatus.TypedSpec().Domainname = "example.org"
+	suite.Require().NoError(suite.state.Create(suite.ctx, hostnameStatus))
+
+	u, err := url.Parse("https://foo:6443")
+	suite.Require().NoError(err)
+
+	cfg := config.NewMachineConfig(
+		container.NewV1Alpha1(
+			&v1alpha1.Config{
+				ConfigVersion: "v1alpha1",
+				MachineConfig: &v1alpha1.MachineConfig{
+					MachineNetwork: &v1alpha1.NetworkConfig{},
+				},
+				ClusterConfig: &v1alpha1.ClusterConfig{
+					ControlPlane: &v1alpha1.ControlPlaneConfig{
+						Endpoint: &v1alpha1.Endpoint{
+							URL: u,
+						},
+					},
+				},
+			},
+		),
+	)
+
+	suite.Require().NoError(suite.state.Create(suite.ctx, cfg))
+
+	suite.startRuntime()
+
+	suite.assertResolvers(
+		[]string{
+			"default/resolvers",
+		}, func(r *network.ResolverSpec, asrt *assert.Assertions) {
+			asrt.Equal(
+				[]netip.Addr{
+					netip.MustParseAddr(constants.DefaultPrimaryResolver),
+					netip.MustParseAddr(constants.DefaultSecondaryResolver),
+				}, r.TypedSpec().DNSServers,
+			)
+			asrt.Equal([]string{"example.org"}, r.TypedSpec().SearchDomains)
+			asrt.Equal(network.ConfigDefault, r.TypedSpec().ConfigLayer)
+		},
+	)
+
+	// make domain name empty
+	hostnameStatus.TypedSpec().Domainname = ""
+	suite.Require().NoError(suite.state.Update(suite.ctx, hostnameStatus))
+
+	suite.assertResolvers(
+		[]string{
+			"default/resolvers",
+		}, func(r *network.ResolverSpec, asrt *assert.Assertions) {
+			asrt.Empty(r.TypedSpec().SearchDomains)
+		},
+	)
+
+	// bring back domain name, but disable via machine config
+	hostnameStatus.TypedSpec().Domainname = "example.org"
+	suite.Require().NoError(suite.state.Update(suite.ctx, hostnameStatus))
+
+	cfg.Container().RawV1Alpha1().MachineConfig.MachineNetwork.NetworkDisableSearchDomain = pointer.To(true)
+	suite.Require().NoError(suite.state.Update(suite.ctx, cfg))
+
+	suite.assertResolvers(
+		[]string{
+			"default/resolvers",
+		}, func(r *network.ResolverSpec, asrt *assert.Assertions) {
+			asrt.Empty(r.TypedSpec().SearchDomains)
 		},
 	)
 }
@@ -133,6 +211,7 @@ func (suite *ResolverConfigSuite) TestCmdline() {
 					netip.MustParseAddr("10.0.0.2"),
 				}, r.TypedSpec().DNSServers,
 			)
+			asrt.Empty(r.TypedSpec().SearchDomains)
 		},
 	)
 }
