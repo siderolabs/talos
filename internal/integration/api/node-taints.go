@@ -16,8 +16,6 @@ import (
 	"github.com/siderolabs/gen/xslices"
 	"github.com/siderolabs/gen/xtesting/must"
 	v1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/watch"
 
 	"github.com/siderolabs/talos/internal/integration/base"
 	machineapi "github.com/siderolabs/talos/pkg/machinery/api/machine"
@@ -67,13 +65,7 @@ func (suite *NodeTaintsSuite) testUpdate(node string) {
 
 	suite.T().Logf("updating taints on node %q (%q)", node, k8sNode.Name)
 
-	watcher, err := suite.Clientset.CoreV1().Nodes().Watch(suite.ctx, metav1.ListOptions{
-		FieldSelector: metadataKeyName + k8sNode.Name,
-		Watch:         true,
-	})
-	suite.Require().NoError(err)
-
-	defer watcher.Stop()
+	watchCh := suite.SetupNodeInformer(suite.ctx, k8sNode.Name)
 
 	// set two new taints
 	suite.setNodeTaints(node, map[string]string{
@@ -81,7 +73,7 @@ func (suite *NodeTaintsSuite) testUpdate(node string) {
 		"talos.dev/test2": "NoSchedule",
 	})
 
-	suite.waitUntil(watcher, map[string]string{
+	suite.waitUntil(watchCh, map[string]string{
 		constants.LabelNodeRoleControlPlane: "NoSchedule",
 		"talos.dev/test1":                   "value1:NoSchedule",
 		"talos.dev/test2":                   "NoSchedule",
@@ -92,7 +84,7 @@ func (suite *NodeTaintsSuite) testUpdate(node string) {
 		"talos.dev/test1": "value1:NoSchedule",
 	})
 
-	suite.waitUntil(watcher, map[string]string{
+	suite.waitUntil(watchCh, map[string]string{
 		constants.LabelNodeRoleControlPlane: "NoSchedule",
 		"talos.dev/test1":                   "value1:NoSchedule",
 	})
@@ -100,19 +92,16 @@ func (suite *NodeTaintsSuite) testUpdate(node string) {
 	// remove all taints
 	suite.setNodeTaints(node, nil)
 
-	suite.waitUntil(watcher, map[string]string{
+	suite.waitUntil(watchCh, map[string]string{
 		constants.LabelNodeRoleControlPlane: "NoSchedule",
 	})
 }
 
-func (suite *NodeTaintsSuite) waitUntil(watcher watch.Interface, expectedTaints map[string]string) {
+func (suite *NodeTaintsSuite) waitUntil(watchCh <-chan *v1.Node, expectedTaints map[string]string) {
 outer:
 	for {
 		select {
-		case ev := <-watcher.ResultChan():
-			k8sNode, ok := ev.Object.(*v1.Node)
-			suite.Require().Truef(ok, "watch event is not of type v1.Node but was %T", ev.Object)
-
+		case k8sNode := <-watchCh:
 			suite.T().Logf("labels %#v, taints %#v", k8sNode.Labels, k8sNode.Spec.Taints)
 
 			taints := xslices.ToMap(k8sNode.Spec.Taints, func(t v1.Taint) (string, string) {

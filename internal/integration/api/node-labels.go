@@ -12,8 +12,6 @@ import (
 
 	"github.com/siderolabs/go-pointer"
 	v1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/watch"
 
 	"github.com/siderolabs/talos/internal/integration/base"
 	machineapi "github.com/siderolabs/talos/pkg/machinery/api/machine"
@@ -63,8 +61,6 @@ func (suite *NodeLabelsSuite) TestUpdateWorker() {
 	suite.testUpdate(node, false)
 }
 
-const metadataKeyName = "metadata.name="
-
 // testUpdate cycles through a set of node label updates reverting the change in the end.
 func (suite *NodeLabelsSuite) testUpdate(node string, isControlplane bool) {
 	k8sNode, err := suite.GetK8sNodeByInternalIP(suite.ctx, node)
@@ -72,13 +68,7 @@ func (suite *NodeLabelsSuite) testUpdate(node string, isControlplane bool) {
 
 	suite.T().Logf("updating labels on node %q (%q)", node, k8sNode.Name)
 
-	watcher, err := suite.Clientset.CoreV1().Nodes().Watch(suite.ctx, metav1.ListOptions{
-		FieldSelector: metadataKeyName + k8sNode.Name,
-		Watch:         true,
-	})
-	suite.Require().NoError(err)
-
-	defer watcher.Stop()
+	watchCh := suite.SetupNodeInformer(suite.ctx, k8sNode.Name)
 
 	const stdLabelName = "kubernetes.io/hostname"
 
@@ -90,7 +80,7 @@ func (suite *NodeLabelsSuite) testUpdate(node string, isControlplane bool) {
 		"talos.dev/test2": "value2",
 	})
 
-	suite.waitUntil(watcher, map[string]string{
+	suite.waitUntil(watchCh, map[string]string{
 		"talos.dev/test1": "value1",
 		"talos.dev/test2": "value2",
 	}, isControlplane)
@@ -100,7 +90,7 @@ func (suite *NodeLabelsSuite) testUpdate(node string, isControlplane bool) {
 		"talos.dev/test1": "foo",
 	})
 
-	suite.waitUntil(watcher, map[string]string{
+	suite.waitUntil(watchCh, map[string]string{
 		"talos.dev/test1": "foo",
 		"talos.dev/test2": "",
 	}, isControlplane)
@@ -112,7 +102,7 @@ func (suite *NodeLabelsSuite) testUpdate(node string, isControlplane bool) {
 			stdLabelName:      "bar",
 		})
 
-		suite.waitUntil(watcher, map[string]string{
+		suite.waitUntil(watchCh, map[string]string{
 			"talos.dev/test1": "foo2",
 			stdLabelName:      stdLabelValue,
 		}, isControlplane)
@@ -121,7 +111,7 @@ func (suite *NodeLabelsSuite) testUpdate(node string, isControlplane bool) {
 	// remove all Talos Labels
 	suite.setNodeLabels(node, nil)
 
-	suite.waitUntil(watcher, map[string]string{
+	suite.waitUntil(watchCh, map[string]string{
 		"talos.dev/test1": "",
 		"talos.dev/test2": "",
 	}, isControlplane)
@@ -136,34 +126,25 @@ func (suite *NodeLabelsSuite) TestAllowScheduling() {
 
 	suite.T().Logf("updating taints on node %q (%q)", node, k8sNode.Name)
 
-	watcher, err := suite.Clientset.CoreV1().Nodes().Watch(suite.ctx, metav1.ListOptions{
-		FieldSelector: metadataKeyName + k8sNode.Name,
-		Watch:         true,
-	})
-	suite.Require().NoError(err)
+	watchCh := suite.SetupNodeInformer(suite.ctx, k8sNode.Name)
 
-	defer watcher.Stop()
-
-	suite.waitUntil(watcher, nil, true)
+	suite.waitUntil(watchCh, nil, true)
 
 	suite.setAllowScheduling(node, true)
 
-	suite.waitUntil(watcher, nil, false)
+	suite.waitUntil(watchCh, nil, false)
 
 	suite.setAllowScheduling(node, false)
 
-	suite.waitUntil(watcher, nil, true)
+	suite.waitUntil(watchCh, nil, true)
 }
 
 //nolint:gocyclo
-func (suite *NodeLabelsSuite) waitUntil(watcher watch.Interface, expectedLabels map[string]string, taintNoSchedule bool) {
+func (suite *NodeLabelsSuite) waitUntil(watchCh <-chan *v1.Node, expectedLabels map[string]string, taintNoSchedule bool) {
 outer:
 	for {
 		select {
-		case ev := <-watcher.ResultChan():
-			k8sNode, ok := ev.Object.(*v1.Node)
-			suite.Require().Truef(ok, "watch event is not of type v1.Node but was %T", ev.Object)
-
+		case k8sNode := <-watchCh:
 			suite.T().Logf("labels %#v, taints %#v", k8sNode.Labels, k8sNode.Spec.Taints)
 
 			for k, v := range expectedLabels {

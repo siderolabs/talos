@@ -11,8 +11,6 @@ import (
 	"time"
 
 	v1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/watch"
 
 	"github.com/siderolabs/talos/internal/integration/base"
 	machineapi "github.com/siderolabs/talos/pkg/machinery/api/machine"
@@ -68,13 +66,7 @@ func (suite *NodeAnnotationsSuite) testUpdate(node string) {
 
 	suite.T().Logf("updating annotations on node %q (%q)", node, k8sNode.Name)
 
-	watcher, err := suite.Clientset.CoreV1().Nodes().Watch(suite.ctx, metav1.ListOptions{
-		FieldSelector: metadataKeyName + k8sNode.Name,
-		Watch:         true,
-	})
-	suite.Require().NoError(err)
-
-	defer watcher.Stop()
+	watchCh := suite.SetupNodeInformer(suite.ctx, k8sNode.Name)
 
 	// set two new annotation
 	suite.setNodeAnnotations(node, map[string]string{
@@ -82,7 +74,7 @@ func (suite *NodeAnnotationsSuite) testUpdate(node string) {
 		"talos.dev/ann2": "value2",
 	})
 
-	suite.waitUntil(watcher, map[string]string{
+	suite.waitUntil(watchCh, map[string]string{
 		"talos.dev/ann1": "value1",
 		"talos.dev/ann2": "value2",
 	})
@@ -92,7 +84,7 @@ func (suite *NodeAnnotationsSuite) testUpdate(node string) {
 		"talos.dev/ann1": "foo",
 	})
 
-	suite.waitUntil(watcher, map[string]string{
+	suite.waitUntil(watchCh, map[string]string{
 		"talos.dev/ann1": "foo",
 		"talos.dev/ann2": "",
 	})
@@ -100,20 +92,17 @@ func (suite *NodeAnnotationsSuite) testUpdate(node string) {
 	// remove all Talos annoations
 	suite.setNodeAnnotations(node, nil)
 
-	suite.waitUntil(watcher, map[string]string{
+	suite.waitUntil(watchCh, map[string]string{
 		"talos.dev/ann1": "",
 		"talos.dev/ann2": "",
 	})
 }
 
-func (suite *NodeAnnotationsSuite) waitUntil(watcher watch.Interface, expectedAnnotations map[string]string) {
+func (suite *NodeAnnotationsSuite) waitUntil(watchCh <-chan *v1.Node, expectedAnnotations map[string]string) {
 outer:
 	for {
 		select {
-		case ev := <-watcher.ResultChan():
-			k8sNode, ok := ev.Object.(*v1.Node)
-			suite.Require().Truef(ok, "watch event is not of type v1.Node but was %T", ev.Object)
-
+		case k8sNode := <-watchCh:
 			suite.T().Logf("annotations %#v", k8sNode.Annotations)
 
 			for k, v := range expectedAnnotations {
