@@ -171,6 +171,11 @@ func (c *Client) LeaveCluster(ctx context.Context, st state.State) error {
 			return retry.ExpectedError(err)
 		}
 
+		if errors.Is(err, rpctypes.ErrMemberNotFound) {
+			// already removed, nothing to do
+			return nil
+		}
+
 		return err
 	}); err != nil {
 		return err
