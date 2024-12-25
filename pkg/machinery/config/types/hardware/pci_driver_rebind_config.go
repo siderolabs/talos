@@ -51,7 +51,7 @@ type PCIDriverRebindConfigV1Alpha1 struct {
 	//   description: |
 	//     PCI device id
 	//   schemaRequired: true
-	MetaName string `yaml:"pciID"`
+	MetaName string `yaml:"name"`
 	//   description: |
 	//     Target driver to rebind the PCI device to.
 	//   schemaRequired: true

@@ -18,7 +18,7 @@ func (PCIDriverRebindConfigV1Alpha1) Doc() *encoder.Doc {
 		Fields: []encoder.Doc{
 			{},
 			{
-				Name:        "pciID",
+				Name:        "name",
 				Type:        "string",
 				Note:        "",
 				Description: "PCI device id",

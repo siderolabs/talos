@@ -16,14 +16,14 @@ title: PCIDriverRebindConfig
 {{< highlight yaml >}}
 apiVersion: v1alpha1
 kind: PCIDriverRebindConfig
-pciID: 0000:04:00.00 # PCI device id
+name: 0000:04:00.00 # PCI device id
 targetDriver: vfio-pci # Target driver to rebind the PCI device to.
 {{< /highlight >}}
 
 
 | Field | Type | Description | Value(s) |
 |-------|------|-------------|----------|
-|`pciID` |string |PCI device id  | |
+|`name` |string |PCI device id  | |
 |`targetDriver` |string |Target driver to rebind the PCI device to.  | |
 
 

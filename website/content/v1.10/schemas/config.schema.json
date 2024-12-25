@@ -187,9 +187,9 @@
           "markdownDescription": "kind is the kind of the resource.",
           "x-intellij-html-description": "\u003cp\u003ekind is the kind of the resource.\u003c/p\u003e\n"
         },
-        "pciID": {
+        "name": {
           "type": "string",
-          "title": "pciID",
+          "title": "name",
           "description": "PCI device id\n",
           "markdownDescription": "PCI device id",
           "x-intellij-html-description": "\u003cp\u003ePCI device id\u003c/p\u003e\n"
@@ -207,7 +207,7 @@
       "required": [
         "apiVersion",
         "kind",
-        "pciID",
+        "name",
         "targetDriver"
       ]
     },
