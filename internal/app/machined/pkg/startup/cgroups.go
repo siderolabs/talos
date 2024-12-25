@@ -14,6 +14,7 @@ import (
 	"github.com/containerd/cgroups/v3/cgroup1"
 	"github.com/containerd/cgroups/v3/cgroup2"
 	"github.com/opencontainers/runtime-spec/specs-go"
+	"github.com/siderolabs/go-debug"
 	"github.com/siderolabs/go-pointer"
 	"go.uber.org/zap"
 
@@ -21,6 +22,16 @@ import (
 	"github.com/siderolabs/talos/internal/pkg/cgroup"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
+
+func zeroIfRace[T any](v T) T {
+	if debug.RaceEnabled {
+		var zeroT T
+
+		return zeroT
+	}
+
+	return v
+}
 
 // CreateSystemCgroups creates system cgroups.
 //
@@ -130,7 +141,7 @@ func CreateSystemCgroups(ctx context.Context, log *zap.Logger, rt runtime.Runtim
 			name: constants.CgroupDashboard,
 			resources: &cgroup2.Resources{
 				Memory: &cgroup2.Memory{
-					Max: pointer.To[int64](constants.CgroupDashboardMaxMemory),
+					Max: zeroIfRace(pointer.To[int64](constants.CgroupDashboardMaxMemory)),
 				},
 				CPU: &cgroup2.CPU{
 					Weight: pointer.To[uint64](cgroup.MillicoresToCPUWeight(cgroup.MilliCores(constants.CgroupDashboardMillicores))),
@@ -143,7 +154,7 @@ func CreateSystemCgroups(ctx context.Context, log *zap.Logger, rt runtime.Runtim
 				Memory: &cgroup2.Memory{
 					Min: pointer.To[int64](constants.CgroupApidReservedMemory),
 					Low: pointer.To[int64](constants.CgroupApidReservedMemory * 2),
-					Max: pointer.To[int64](constants.CgroupApidMaxMemory),
+					Max: zeroIfRace(pointer.To[int64](constants.CgroupApidMaxMemory)),
 				},
 				CPU: &cgroup2.CPU{
 					Weight: pointer.To[uint64](cgroup.MillicoresToCPUWeight(cgroup.MilliCores(constants.CgroupApidMillicores))),
@@ -156,7 +167,7 @@ func CreateSystemCgroups(ctx context.Context, log *zap.Logger, rt runtime.Runtim
 				Memory: &cgroup2.Memory{
 					Min: pointer.To[int64](constants.CgroupTrustdReservedMemory),
 					Low: pointer.To[int64](constants.CgroupTrustdReservedMemory * 2),
-					Max: pointer.To[int64](constants.CgroupTrustdMaxMemory),
+					Max: zeroIfRace(pointer.To[int64](constants.CgroupTrustdMaxMemory)),
 				},
 				CPU: &cgroup2.CPU{
 					Weight: pointer.To[uint64](cgroup.MillicoresToCPUWeight(cgroup.MilliCores(constants.CgroupTrustdMillicores))),
