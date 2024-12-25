@@ -21,6 +21,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/siderolabs/gen/channel"
 	"github.com/siderolabs/gen/xslices"
 	"github.com/siderolabs/go-pointer"
 	"github.com/siderolabs/go-retry/retry"
@@ -37,6 +38,7 @@ import (
 	"k8s.io/client-go/discovery"
 	"k8s.io/client-go/discovery/cached/memory"
 	"k8s.io/client-go/dynamic"
+	"k8s.io/client-go/informers"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/restmapper"
@@ -803,4 +805,47 @@ func (k8sSuite *K8sSuite) ToUnstructured(obj runtime.Object) unstructured.Unstru
 	u.SetGroupVersionKind(obj.GetObjectKind().GroupVersionKind())
 
 	return u
+}
+
+// SetupNodeInformer sets up a node informer for the given node name.
+func (k8sSuite *K8sSuite) SetupNodeInformer(ctx context.Context, nodeName string) <-chan *corev1.Node {
+	const metadataKeyName = "metadata.name="
+
+	watchCh := make(chan *corev1.Node)
+
+	informerFactory := informers.NewSharedInformerFactoryWithOptions(k8sSuite.Clientset, 30*time.Second, informers.WithTweakListOptions(func(options *metav1.ListOptions) {
+		options.FieldSelector = metadataKeyName + nodeName
+	}))
+
+	nodeInformer := informerFactory.Core().V1().Nodes().Informer()
+	_, err := nodeInformer.AddEventHandler(cache.ResourceEventHandlerFuncs{
+		AddFunc: func(obj any) {
+			node, ok := obj.(*corev1.Node)
+			if !ok {
+				return
+			}
+
+			channel.SendWithContext(ctx, watchCh, node)
+		},
+		UpdateFunc: func(_, obj any) {
+			node, ok := obj.(*corev1.Node)
+			if !ok {
+				return
+			}
+
+			channel.SendWithContext(ctx, watchCh, node)
+		},
+	})
+	k8sSuite.Require().NoError(err)
+
+	informerFactory.Start(ctx.Done())
+	k8sSuite.T().Cleanup(informerFactory.Shutdown)
+
+	result := informerFactory.WaitForCacheSync(ctx.Done())
+
+	for k, v := range result {
+		k8sSuite.Assert().True(v, "informer %q failed to sync", k.String())
+	}
+
+	return watchCh
 }
