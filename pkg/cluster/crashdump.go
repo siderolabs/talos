@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"time"
 
 	"github.com/siderolabs/gen/xslices"
 	"github.com/siderolabs/go-talos-support/support"
@@ -33,6 +34,10 @@ func Crashdump(ctx context.Context, cluster provision.Cluster, logWriter io.Writ
 
 	defer supportFile.Close() //nolint:errcheck
 
+	// limit support bundle generation time
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Minute)
+	defer cancel()
+
 	c, err := client.New(ctx, client.WithDefaultConfig())
 	if err != nil {
 		fmt.Fprintf(logWriter, "error creating crashdump: %s\n", err)
@@ -50,7 +55,8 @@ func Crashdump(ctx context.Context, cluster provision.Cluster, logWriter io.Writ
 		bundle.WithArchiveOutput(supportFile),
 		bundle.WithTalosClient(c),
 		bundle.WithNodes(nodes...),
-		bundle.WithNumWorkers(1),
+		bundle.WithNumWorkers(4),
+		bundle.WithLogOutput(io.Discard),
 	}
 
 	kubeclient, err := getKubernetesClient(ctx, c, controlplane)
