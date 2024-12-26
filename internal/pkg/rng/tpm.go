@@ -12,14 +12,15 @@ import (
 	"time"
 
 	"github.com/google/go-tpm/tpm2"
-	"github.com/google/go-tpm/tpm2/transport"
+
+	"github.com/siderolabs/talos/internal/pkg/tpm"
 )
 
 // TPMSeed seeds the random entropy pool from the TPM.
 //
 //nolint:gocyclo
 func TPMSeed() error {
-	t, err := transport.OpenTPM()
+	t, err := tpm.Open()
 	if err != nil {
 		// if the TPM is not available or not a TPM 2.0, we can skip the PCR extension
 		if os.IsNotExist(err) || strings.Contains(err.Error(), "device is not a TPM 2.0") {

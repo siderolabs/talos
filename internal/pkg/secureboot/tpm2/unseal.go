@@ -15,9 +15,9 @@ import (
 	"fmt"
 
 	"github.com/google/go-tpm/tpm2"
-	"github.com/google/go-tpm/tpm2/transport"
 
 	"github.com/siderolabs/talos/internal/pkg/secureboot"
+	"github.com/siderolabs/talos/internal/pkg/tpm"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
 
@@ -25,7 +25,7 @@ import (
 //
 //nolint:gocyclo,cyclop
 func Unseal(sealed SealedResponse) ([]byte, error) {
-	t, err := transport.OpenTPM()
+	t, err := tpm.Open()
 	if err != nil {
 		return nil, err
 	}

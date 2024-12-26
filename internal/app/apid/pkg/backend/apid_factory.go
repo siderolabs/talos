@@ -63,7 +63,7 @@ func (factory *APIDFactory) Get(target string) (proxy.Backend, error) {
 //
 // This ensures that all connections are closed.
 func (factory *APIDFactory) Flush() {
-	factory.cache.Enumerate(func(key string, backend *APID) bool {
+	factory.cache.Range(func(key string, backend *APID) bool {
 		backend.Close()
 
 		return true

@@ -12,12 +12,13 @@ import (
 	"github.com/google/go-tpm/tpm2/transport"
 
 	"github.com/siderolabs/talos/internal/pkg/secureboot"
+	"github.com/siderolabs/talos/internal/pkg/tpm"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
 
 // Seal seals the key using TPM2.0.
 func Seal(key []byte) (*SealedResponse, error) {
-	t, err := transport.OpenTPM()
+	t, err := tpm.Open()
 	if err != nil {
 		return nil, err
 	}
