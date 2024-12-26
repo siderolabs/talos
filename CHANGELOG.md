@@ -1,3 +1,75 @@
+## [Talos 1.9.1](https://github.com/siderolabs/talos/releases/tag/v1.9.1) (2024-12-26)
+
+Welcome to the v1.9.1 release of Talos!
+
+
+
+Please try out the release binaries and report any issues at
+https://github.com/siderolabs/talos/issues.
+
+### Component Updates
+
+* Linux: 6.12.6
+* CNI plugins: 1.6.1
+
+Talos is built with Go 1.23.4.
+
+
+### Contributors
+
+* Andrey Smirnov
+* Dmitry Sharshakov
+* Noel Georgi
+
+### Changes
+<details><summary>14 commits</summary>
+<p>
+
+* [`e702542d1`](https://github.com/siderolabs/talos/commit/e702542d18407763563e9656635d009744eb3333) fix: ignore member not found error on leave cluster
+* [`2125206f1`](https://github.com/siderolabs/talos/commit/2125206f1c6b9575c29c5c45cf7a75e1a54b9010) test: use node informer instead of raw watch
+* [`73c25ee8d`](https://github.com/siderolabs/talos/commit/73c25ee8d90151edf14c94555d8dd25dfbe8628f) fix: talosctl support and race tests
+* [`edd78441b`](https://github.com/siderolabs/talos/commit/edd78441bf31215daf2e01405c3f0c5366c630f6) fix: update go-blockdevice to v2.0.9
+* [`c1f975c0b`](https://github.com/siderolabs/talos/commit/c1f975c0be0ac94cde12605a61a34c44871a1223) fix: use correct default search domain
+* [`ff91a754f`](https://github.com/siderolabs/talos/commit/ff91a754f687011a08e0fa3c637023e8fe3581bf) fix: reduce installer image
+* [`9cebe5e28`](https://github.com/siderolabs/talos/commit/9cebe5e28ff2ec44c49a213bc9d23e40789470a7) fix: fix `Failed to initialize SELinux labeling handle` udev error
+* [`852cf5ac7`](https://github.com/siderolabs/talos/commit/852cf5ac7ed03bd7640df3837948ae9a92d82c13) feat: bring Linux 6.12.6, CNI plugins 1.6.1
+* [`5f83c83e1`](https://github.com/siderolabs/talos/commit/5f83c83e1ea46e1a36fd48a40100b102fef4e9de) docs: document Kubernetes service registry incompat with K8s 1.32
+* [`3f872860f`](https://github.com/siderolabs/talos/commit/3f872860f9b690fcefee916e835f16a17f917cfa) fix: dashboard crash on CPU data
+* [`f84ba2a9b`](https://github.com/siderolabs/talos/commit/f84ba2a9b131d8fcc9a3a4dfb90b03bad6c7d431) docs: fix several typos
+* [`972044e10`](https://github.com/siderolabs/talos/commit/972044e10e2c86e984f8192cdbd6e445c505419f) chore: support gcr.io auth for cache and image gen
+* [`7908c9382`](https://github.com/siderolabs/talos/commit/7908c9382ff6c32d0ef558c65b7e36de0fb64699) fix: make talosctl time work with PTP time sync
+* [`48cb3a6e6`](https://github.com/siderolabs/talos/commit/48cb3a6e64c0bb6e1e50837c77cf9c0f38a4578b) fix: restore previous disk serial fetching
+</p>
+</details>
+
+### Changes from siderolabs/go-talos-support
+<details><summary>1 commit</summary>
+<p>
+
+* [`0f784bd`](https://github.com/siderolabs/go-talos-support/commit/0f784bd58b320543663679693c817515067f3021) fix: avoid deadlock on context cancel
+</p>
+</details>
+
+### Changes from siderolabs/pkgs
+<details><summary>3 commits</summary>
+<p>
+
+* [`45c4ba4`](https://github.com/siderolabs/pkgs/commit/45c4ba4957b013015a5b1457162b1659a2149712) fix: patch containerd with CNI deadlock fix
+* [`13c5fc6`](https://github.com/siderolabs/pkgs/commit/13c5fc6654be69f93427d3abb40a91b1d7fcc9fd) feat: update Linux to 6.12.6
+* [`6ed389e`](https://github.com/siderolabs/pkgs/commit/6ed389ef038d7e3daf0c1e07ec8098a7c32c667a) feat: update Linux firmware to 20241210
+</p>
+</details>
+
+### Dependency Changes
+
+* **github.com/containernetworking/plugins**   v1.6.0 -> v1.6.1
+* **github.com/opencontainers/runc**           v1.2.2 -> v1.2.3
+* **github.com/siderolabs/go-blockdevice/v2**  v2.0.7 -> v2.0.9
+* **github.com/siderolabs/go-talos-support**   v0.1.1 -> v0.1.2
+* **github.com/siderolabs/pkgs**               v1.9.0-12-g9576b97 -> v1.9.0-15-g45c4ba4
+
+Previous release can be found at [v1.9.0](https://github.com/siderolabs/talos/releases/tag/v1.9.0)
+
 ## [Talos 1.9.0](https://github.com/siderolabs/talos/releases/tag/v1.9.0) (2024-12-17)
 
 Welcome to the v1.9.0 release of Talos!
