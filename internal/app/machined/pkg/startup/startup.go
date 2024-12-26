@@ -46,6 +46,5 @@ func DefaultTasks() []Task {
 		SetEnvironmentVariables,
 		WriteIMAPolicy,
 		CreateSystemCgroups,
-		OSRelease,
 	}
 }

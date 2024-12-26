@@ -48,6 +48,8 @@ ARG PKG_TALOSCTL_CNI_BUNDLE_INSTALL=scratch
 
 ARG DEBUG_TOOLS_SOURCE=scratch
 
+ARG EMBED_TARGET=embed
+
 # Resolve package images using ${PKGS} to be used later in COPY --from=.
 
 FROM ${PKG_FHS} AS pkg-fhs
@@ -285,6 +287,43 @@ RUN --mount=type=cache,target=/.cache go mod verify
 
 # The generate target generates code from protobuf service definitions and machinery config.
 
+FROM build AS embed-generate
+ARG NAME
+ARG SHA
+ARG USERNAME
+ARG REGISTRY
+ARG TAG
+ARG ARTIFACTS
+ARG PKGS
+ARG EXTRAS
+RUN mkdir -p pkg/machinery/gendata/data && \
+    echo -n ${NAME} > pkg/machinery/gendata/data/name && \
+    echo -n ${SHA} > pkg/machinery/gendata/data/sha && \
+    echo -n ${USERNAME} > pkg/machinery/gendata/data/username && \
+    echo -n ${REGISTRY} > pkg/machinery/gendata/data/registry && \
+    echo -n ${EXTRAS} > pkg/machinery/gendata/data/extras && \
+    echo -n ${PKGS} > pkg/machinery/gendata/data/pkgs && \
+    echo -n ${TAG} > pkg/machinery/gendata/data/tag && \
+    echo -n ${ARTIFACTS} > pkg/machinery/gendata/data/artifacts
+
+FROM scratch AS embed
+COPY --from=embed-generate /src/pkg/machinery/gendata/data /pkg/machinery/gendata/data
+
+FROM embed-generate AS embed-abbrev-generate
+ARG ABBREV_TAG
+RUN echo -n "undefined" > pkg/machinery/gendata/data/sha && \
+    echo -n ${ABBREV_TAG} > pkg/machinery/gendata/data/tag
+RUN mkdir -p _out && \
+    echo PKGS=${PKGS} >> _out/talos-metadata && \
+    echo TAG=${TAG} >> _out/talos-metadata && \
+    echo EXTRAS=${EXTRAS} >> _out/talos-metadata
+
+FROM scratch AS embed-abbrev
+COPY --from=embed-abbrev-generate /src/pkg/machinery/gendata/data /pkg/machinery/gendata/data
+COPY --from=embed-abbrev-generate /src/_out/talos-metadata /_out/talos-metadata
+
+FROM ${EMBED_TARGET} AS embed-target
+
 # generate API descriptors
 FROM build AS api-descriptors-build
 WORKDIR /src/api
@@ -308,6 +347,7 @@ COPY --from=proto-format-build /src/api/ /api/
 FROM build-go AS go-generate
 COPY ./pkg ./pkg
 COPY ./hack/boilerplate.txt ./hack/boilerplate.txt
+COPY --from=embed-target / ./
 RUN --mount=type=cache,target=/.cache go generate ./pkg/...
 RUN goimports -w -local github.com/siderolabs/talos ./pkg/
 RUN gofumpt -w ./pkg/
@@ -349,43 +389,6 @@ RUN find /api/resource/definitions/ -type f -name "*.proto" | xargs -I {} /bin/s
 # Goimports and gofumpt generated files to adjust import order
 RUN goimports -w -local github.com/siderolabs/talos /api/
 RUN gofumpt -w /api/
-
-FROM build AS embed-generate
-ARG NAME
-ARG SHA
-ARG USERNAME
-ARG REGISTRY
-ARG TAG
-ARG ARTIFACTS
-ARG PKGS
-ARG EXTRAS
-RUN mkdir -p pkg/machinery/gendata/data && \
-    echo -n ${NAME} > pkg/machinery/gendata/data/name && \
-    echo -n ${SHA} > pkg/machinery/gendata/data/sha && \
-    echo -n ${USERNAME} > pkg/machinery/gendata/data/username && \
-    echo -n ${REGISTRY} > pkg/machinery/gendata/data/registry && \
-    echo -n ${EXTRAS} > pkg/machinery/gendata/data/extras && \
-    echo -n ${PKGS} > pkg/machinery/gendata/data/pkgs && \
-    echo -n ${TAG} > pkg/machinery/gendata/data/tag && \
-    echo -n ${ARTIFACTS} > pkg/machinery/gendata/data/artifacts
-
-FROM scratch AS embed
-COPY --from=embed-generate /src/pkg/machinery/gendata/data /pkg/machinery/gendata/data
-
-FROM embed-generate AS embed-abbrev-generate
-ARG ABBREV_TAG
-RUN echo -n "undefined" > pkg/machinery/gendata/data/sha && \
-    echo -n ${ABBREV_TAG} > pkg/machinery/gendata/data/tag
-RUN mkdir -p _out && \
-    echo PKGS=${PKGS} >> _out/talos-metadata && \
-    echo TAG=${TAG} >> _out/talos-metadata && \
-    echo EXTRAS=${EXTRAS} >> _out/talos-metadata
-COPY --from=pkg-kernel /certs/signing_key.x509 _out/signing_key.x509
-
-FROM scratch AS embed-abbrev
-COPY --from=embed-abbrev-generate /src/pkg/machinery/gendata/data /pkg/machinery/gendata/data
-COPY --from=embed-abbrev-generate /src/_out/talos-metadata /_out/talos-metadata
-COPY --from=embed-abbrev-generate /src/_out/signing_key.x509 /_out/signing_key.x509
 
 FROM tools AS selinux
 COPY ./internal/pkg/selinux/policy/* /selinux/
@@ -430,6 +433,7 @@ COPY --from=go-generate /src/pkg/machinery/config/schemas/ /pkg/machinery/config
 COPY --from=go-generate /src/pkg/machinery/config/types/ /pkg/machinery/config/types/
 COPY --from=go-generate /src/pkg/machinery/nethelpers/ /pkg/machinery/nethelpers/
 COPY --from=go-generate /src/pkg/machinery/extensions/ /pkg/machinery/extensions/
+COPY --from=go-generate /src/pkg/machinery/version/os-release /pkg/machinery/version/os-release
 COPY --from=ipxe-generate / /pkg/provision/providers/vm/internal/ipxe/data/ipxe/
 COPY --from=selinux-generate / /internal/pkg/selinux/
 COPY --from=embed-abbrev / /
@@ -743,9 +747,10 @@ COPY --chmod=0644 hack/cri-plugin.part /rootfs/etc/cri/conf.d/00-base.part
 COPY --chmod=0644 hack/udevd/99-default.link /rootfs/usr/lib/systemd/network/
 COPY --chmod=0644 hack/udevd/90-selinux.rules /rootfs/usr/lib/udev/rules.d/
 COPY --chmod=0644 hack/lvm.conf /rootfs/etc/lvm/lvm.conf
+COPY --chmod=0644 --from=base /src/pkg/machinery/version/os-release /rootfs/etc/os-release
 RUN <<END
     ln -s /usr/share/zoneinfo/Etc/UTC /rootfs/etc/localtime
-    touch /rootfs/etc/{extensions.yaml,resolv.conf,hosts,os-release,machine-id,cri/conf.d/cri.toml,cri/conf.d/01-registries.part,cri/conf.d/20-customization.part,cri/conf.d/base-spec.json,ssl/certs/ca-certificates,selinux/targeted/contexts/files/file_contexts}
+    touch /rootfs/etc/{extensions.yaml,resolv.conf,hosts,machine-id,cri/conf.d/cri.toml,cri/conf.d/01-registries.part,cri/conf.d/20-customization.part,cri/conf.d/base-spec.json,ssl/certs/ca-certificates,selinux/targeted/contexts/files/file_contexts}
     ln -s ca-certificates /rootfs/etc/ssl/certs/ca-certificates.crt
     ln -s /etc/ssl /rootfs/etc/pki
     ln -s /etc/ssl /rootfs/usr/share/ca-certificates
@@ -819,9 +824,10 @@ COPY --chmod=0644 hack/cri-plugin.part /rootfs/etc/cri/conf.d/00-base.part
 COPY --chmod=0644 hack/udevd/99-default.link /rootfs/usr/lib/systemd/network/
 COPY --chmod=0644 hack/udevd/90-selinux.rules /rootfs/usr/lib/udev/rules.d/
 COPY --chmod=0644 hack/lvm.conf /rootfs/etc/lvm/lvm.conf
+COPY --chmod=0644 --from=base /src/pkg/machinery/version/os-release /rootfs/etc/os-release
 RUN <<END
     ln -s /usr/share/zoneinfo/Etc/UTC /rootfs/etc/localtime
-    touch /rootfs/etc/{extensions.yaml,resolv.conf,hosts,os-release,machine-id,cri/conf.d/cri.toml,cri/conf.d/01-registries.part,cri/conf.d/20-customization.part,cri/conf.d/base-spec.json,ssl/certs/ca-certificates,selinux/targeted/contexts/files/file_contexts}
+    touch /rootfs/etc/{extensions.yaml,resolv.conf,hosts,machine-id,cri/conf.d/cri.toml,cri/conf.d/01-registries.part,cri/conf.d/20-customization.part,cri/conf.d/base-spec.json,ssl/certs/ca-certificates,selinux/targeted/contexts/files/file_contexts}
     ln -s /etc/ssl /rootfs/etc/pki
     ln -s ca-certificates /rootfs/etc/ssl/certs/ca-certificates.crt
     ln -s /etc/ssl /rootfs/usr/share/ca-certificates

@@ -20,6 +20,7 @@ ARTIFACTS := _out
 TOOLS ?= ghcr.io/siderolabs/tools:v1.10.0-alpha.0-3-g0393558
 
 DEBUG_TOOLS_SOURCE := scratch
+EMBED_TARGET ?= embed
 
 PKGS_PREFIX ?= ghcr.io/siderolabs
 PKGS ?= v1.10.0-alpha.0-18-ge7eddcf
@@ -199,6 +200,7 @@ COMMON_ARGS += --build-arg=TOOLS=$(TOOLS)
 COMMON_ARGS += --build-arg=DEBUG_TOOLS_SOURCE=$(DEBUG_TOOLS_SOURCE)
 COMMON_ARGS += --build-arg=PKGS=$(PKGS)
 COMMON_ARGS += --build-arg=EXTRAS=$(EXTRAS)
+COMMON_ARGS += --build-arg=EMBED_TARGET=$(EMBED_TARGET)
 COMMON_ARGS += --build-arg=GOFUMPT_VERSION=$(GOFUMPT_VERSION)
 COMMON_ARGS += --build-arg=GOIMPORTS_VERSION=$(GOIMPORTS_VERSION)
 COMMON_ARGS += --build-arg=STRINGER_VERSION=$(STRINGER_VERSION)
@@ -356,7 +358,7 @@ hack-test-%: ## Runs the specified script in ./hack/test with well known environ
 
 .PHONY: generate
 generate: ## Generates code from protobuf service definitions and machinery config.
-	@$(MAKE) local-$@ DEST=./ PLATFORM=linux/amd64
+	@$(MAKE) local-$@ DEST=./ PLATFORM=linux/amd64 EMBED_TARGET=embed-abbrev
 
 .PHONY: docs
 docs: ## Generates the documentation for machine config, and talosctl.
