@@ -14,7 +14,7 @@ spec:
           15D5721F5F5BAF121495363EFE042E3D4085A811,
           CC51116A94490FA6FB3C18EB2401FCAE863A06CA,
           4919F560F0D35F80CF382D76E084A2DF1143C14D,
-          966BC282A680D8BB3E8363E865933E76F0549B0D,
+          11177A43C6E3752E682AC690DBD13117B0A14E93,
           AA5213AF261C1977AF38B03A94B473337258BFD5
 ---
 kind: common.Repository
@@ -79,7 +79,6 @@ spec:
     - integration-aws-nvidia-nonfree
     - integration-azure
     - integration-gcp
-    - integration-equinix-metal
 ---
 kind: common.GHWorkflow
 spec:
@@ -2146,66 +2145,6 @@ spec:
           environment:
             TF_SCRIPT_DIR: _out/contrib
             TF_E2E_TEST_TYPE: gcp
-            TF_E2E_ACTION: destroy
-    - name: integration-equinix-metal
-      buildxOptions:
-        enabled: true
-      sops: true
-      depends:
-        - default
-      runners:
-        - self-hosted
-        - generic # we can use generic here since the tests run against a remote talos cluster
-      crons:
-        - '30 7 * * *'
-      triggerLabels:
-        - integration/equinix-metal
-      steps:
-        - name: download-artifacts
-          conditions:
-            - not-on-schedule
-          artifactStep:
-            type: download
-            artifactName: talos-artifacts
-            artifactPath: _out
-        - name: ci-temp-release-tag
-          conditions:
-            - not-on-schedule
-        - name: build
-          conditions:
-            - only-on-schedule
-          command: talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer imager talos _out/integration-test-linux-amd64
-          environment:
-            PLATFORM: linux/amd64,linux/arm64
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
-            PUSH: true
-        - name: talosctl-cni-bundle
-          conditions:
-            - only-on-schedule
-        - name: e2e-equinix-metal-prepare
-          environment:
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
-        - name: checkout contrib
-          checkoutStep:
-            repository: siderolabs/contrib
-            ref: main
-            path: _out/contrib
-        - name: setup tf
-          terraformStep: true
-        - name: tf apply
-          command: e2e-cloud-tf
-          environment:
-            TF_SCRIPT_DIR: _out/contrib
-            TF_E2E_TEST_TYPE: equinix-metal
-            TF_E2E_ACTION: apply
-        - name: e2e-equinix-metal
-        - name: tf destroy
-          command: e2e-cloud-tf
-          conditions:
-            - always
-          environment:
-            TF_SCRIPT_DIR: _out/contrib
-            TF_E2E_TEST_TYPE: equinix-metal
             TF_E2E_ACTION: destroy
 ---
 kind: common.Renovate
