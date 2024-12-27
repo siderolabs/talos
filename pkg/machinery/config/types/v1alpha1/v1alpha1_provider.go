@@ -1371,7 +1371,7 @@ func (i *InstallConfig) DiskMatchExpression() (*cel.Expression, error) {
 	}
 
 	if selector.BusPath != "" {
-		exprs = append(exprs, patternMatcherExpr(selector.BusPath, "buspath"))
+		exprs = append(exprs, patternMatcherExpr(selector.BusPath, "bus_path"))
 	}
 
 	// exclude readonly disks: !disk.readonly
