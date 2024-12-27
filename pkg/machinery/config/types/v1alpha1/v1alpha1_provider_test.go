@@ -77,6 +77,16 @@ disk.rotational && !disk.readonly && !disk.cdrom`,
 
 			expected: `disk.transport != "" && !disk.rotational && !disk.readonly && !disk.cdrom`,
 		},
+		{
+			name: "bus path",
+
+			selector: v1alpha1.InstallDiskSelector{
+				BusPath: "/pci-0000:00:1f.2/*",
+			},
+
+			expected: `disk.transport != "" && glob("/pci-0000:00:1f.2/*", disk.bus_path) && !disk.readonly &&
+!disk.cdrom`,
+		},
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
