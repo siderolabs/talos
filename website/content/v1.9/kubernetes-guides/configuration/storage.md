@@ -122,7 +122,28 @@ Continue setting up [Mayastor](https://mayastor.gitbook.io/introduction/quicksta
 
 > Note: The Mayastor helm chart uses an init container that checks for the `nvme_tcp` module.
 > It does not mount `/sys` and will not be able to find it.
-> Easiest solution is to disable the init container.
+> Easiest solution is to disable the init container:  
+> ```
+> kubectl -n openebs edit daemonsets.apps openebs-csi-node
+> ```
+> 
+> Then comment out this section:
+> 
+> ```
+> #      initContainers:
+> #      - command:
+> #        - sh
+> #        - -c
+> #        - trap "exit 1" TERM; until $(lsmod | grep nvme_tcp &>/dev/null); do [ -z
+> #          "$WARNED" ] && echo "nvme_tcp module not loaded..."; WARNED=1; sleep 60;
+> #          done;
+> #        image: busybox:latest
+> #        imagePullPolicy: Always
+> #        name: nvme-tcp-probe
+> #        resources: {}
+> #        terminationMessagePath: /dev/termination-log
+> #        terminationMessagePolicy: File
+> ```
 
 ### Piraeus / LINSTOR
 
