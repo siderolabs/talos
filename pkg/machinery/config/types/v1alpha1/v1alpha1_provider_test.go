@@ -35,7 +35,7 @@ func TestInstallDiskSelector(t *testing.T) {
 				},
 			},
 
-			expected: `disk.size <= 262144u && !disk.readonly && !disk.cdrom`,
+			expected: `disk.size <= 262144u && disk.transport != "" && !disk.readonly && !disk.cdrom`,
 		},
 		{
 			name: "size and type",
@@ -49,7 +49,8 @@ func TestInstallDiskSelector(t *testing.T) {
 				Type: v1alpha1.InstallDiskType("nvme"),
 			},
 
-			expected: `disk.size == 1048576u && disk.transport == "nvme" && !disk.readonly && !disk.cdrom`,
+			expected: `disk.size == 1048576u && disk.transport != "" && disk.transport == "nvme" && !disk.readonly &&
+!disk.cdrom`,
 		},
 		{
 			name: "size and type and modalias",
@@ -64,8 +65,8 @@ func TestInstallDiskSelector(t *testing.T) {
 				Modalias: "pci:1234:5678*",
 			},
 
-			expected: `disk.size == 1048576u && glob("pci:1234:5678*", disk.modalias) && disk.rotational &&
-!disk.readonly && !disk.cdrom`,
+			expected: `disk.size == 1048576u && glob("pci:1234:5678*", disk.modalias) && disk.transport != "" &&
+disk.rotational && !disk.readonly && !disk.cdrom`,
 		},
 		{
 			name: "ssd",
