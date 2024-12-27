@@ -1327,6 +1327,20 @@ func (i *InstallConfig) DiskMatchExpression() (*cel.Expression, error) {
 		exprs = append(exprs, patternMatcherExpr(selector.Modalias, "modalias"))
 	}
 
+	// disk.transport != "" (otherwise it might select e.g. DM devices)
+	exprs = append(exprs,
+		builder.NewCall(
+			builder.NextID(),
+			operators.NotEquals,
+			builder.NewSelect(
+				builder.NextID(),
+				builder.NewIdent(builder.NextID(), "disk"),
+				"transport",
+			),
+			builder.NewLiteral(builder.NextID(), types.String("")),
+		),
+	)
+
 	if selector.Type != "" {
 		switch selector.Type {
 		case "nvme": // disk.transport == "nvme"
@@ -1339,18 +1353,8 @@ func (i *InstallConfig) DiskMatchExpression() (*cel.Expression, error) {
 				builder.NewIdent(builder.NextID(), "disk"),
 				"rotational",
 			))
-		case "ssd": // disk.transport != "" && !disk.rotational
+		case "ssd": // !disk.rotational
 			exprs = append(exprs,
-				builder.NewCall(
-					builder.NextID(),
-					operators.NotEquals,
-					builder.NewSelect(
-						builder.NextID(),
-						builder.NewIdent(builder.NextID(), "disk"),
-						"transport",
-					),
-					builder.NewLiteral(builder.NextID(), types.String("")),
-				),
 				builder.NewCall(
 					builder.NextID(),
 					operators.LogicalNot,
