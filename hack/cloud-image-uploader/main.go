@@ -13,8 +13,10 @@ import (
 	"io"
 	"log"
 	"os"
+	"os/signal"
 	"path/filepath"
 	"sync"
+	"syscall"
 
 	"github.com/spf13/pflag"
 	"golang.org/x/sync/errgroup"
@@ -71,7 +73,7 @@ func run() error {
 		log.Fatalf("error seeding rand: %s", err)
 	}
 
-	ctx, cancel := context.WithCancel(context.Background())
+	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer cancel()
 
 	var g *errgroup.Group
@@ -83,7 +85,7 @@ func run() error {
 		case "aws":
 			g.Go(func() error {
 				if len(DefaultOptions.AWSRegions) == 0 {
-					DefaultOptions.AWSRegions, err = GetAWSDefaultRegions()
+					DefaultOptions.AWSRegions, err = GetAWSDefaultRegions(ctx)
 					if err != nil {
 						log.Printf("failed to get a list of enabled AWS regions: %s, ignored", err)
 					}

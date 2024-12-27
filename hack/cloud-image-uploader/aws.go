@@ -11,13 +11,16 @@ import (
 	"os"
 	"time"
 
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/ec2"
-	"github.com/aws/aws-sdk-go/service/s3"
-	"github.com/aws/aws-sdk-go/service/s3/s3manager"
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/feature/s3/manager"
+	"github.com/aws/aws-sdk-go-v2/service/ec2"
+	"github.com/aws/aws-sdk-go-v2/service/ec2/types"
+	"github.com/aws/aws-sdk-go-v2/service/s3"
+	s3types "github.com/aws/aws-sdk-go-v2/service/s3/types"
 	"github.com/google/uuid"
 	"github.com/klauspost/compress/zstd"
+	"github.com/siderolabs/gen/xslices"
 	"github.com/siderolabs/go-pointer"
 	"github.com/siderolabs/go-retry/retry"
 	"golang.org/x/sync/errgroup"
@@ -46,60 +49,59 @@ var denyInsecurePolicyTemplate = `{
 }`
 
 // GetAWSDefaultRegions returns a list of regions which are enabled for this account.
-func GetAWSDefaultRegions() ([]string, error) {
-	sess, err := session.NewSession(&aws.Config{
-		Region: aws.String("us-east-1"),
+func GetAWSDefaultRegions(ctx context.Context) ([]string, error) {
+	cfg, err := config.LoadDefaultConfig(ctx, config.WithRegion("us-east-1"))
+	if err != nil {
+		return nil, fmt.Errorf("failed loading AWS config: %w", err)
+	}
+
+	svc := ec2.NewFromConfig(cfg)
+
+	resp, err := svc.DescribeRegions(ctx, &ec2.DescribeRegionsInput{
+		Filters: []types.Filter{
+			{
+				Name:   pointer.To("opt-in-status"),
+				Values: []string{"opt-in-not-required", "opted-in"},
+			},
+		},
 	})
 	if err != nil {
-		return nil, fmt.Errorf("failed creating AWS session: %w", err)
+		return nil, fmt.Errorf("failed describing regions: %w", err)
 	}
 
-	result, err := ec2.New(sess).DescribeRegions(&ec2.DescribeRegionsInput{})
-	if err != nil {
-		return nil, fmt.Errorf("failed getting list of regions: %w", err)
-	}
-
-	var regions []string
-
-	for _, r := range result.Regions {
-		if r.OptInStatus != nil {
-			if *r.OptInStatus == "opt-in-not-required" || *r.OptInStatus == "opted-in" {
-				regions = append(regions, *r.RegionName)
-			}
-		}
-	}
-
-	return regions, nil
+	return xslices.Map(resp.Regions, func(r types.Region) string {
+		return pointer.SafeDeref(r.RegionName)
+	}), nil
 }
 
 // AWSUploader registers AMI in the AWS.
 type AWSUploader struct {
 	Options Options
 
-	sess    *session.Session
-	ec2svcs map[string]*ec2.EC2
+	cfg     aws.Config
+	ec2svcs map[string]*ec2.Client
 }
 
-var awsArchitectures = map[string]string{
-	"amd64": "x86_64",
-	"arm64": "arm64",
+var awsArchitectures = map[string]types.ArchitectureValues{
+	"amd64": types.ArchitectureValuesX8664,
+	"arm64": types.ArchitectureValuesArm64,
 }
 
 // Upload image and register with AWS.
 func (au *AWSUploader) Upload(ctx context.Context) error {
 	var err error
 
-	au.sess, err = session.NewSession(&aws.Config{
-		Region: aws.String("us-west-2"), // gets overridden in each uploader with specific region
-	})
+	au.cfg, err = config.LoadDefaultConfig(ctx)
 	if err != nil {
-		return fmt.Errorf("failed creating AWS session: %w", err)
+		return fmt.Errorf("failed loading AWS config: %w", err)
 	}
 
-	au.ec2svcs = make(map[string]*ec2.EC2)
+	au.ec2svcs = make(map[string]*ec2.Client)
 
 	for _, region := range au.Options.AWSRegions {
-		au.ec2svcs[region] = ec2.New(au.sess, aws.NewConfig().WithRegion(region))
+		au.ec2svcs[region] = ec2.NewFromConfig(au.cfg, func(o *ec2.Options) {
+			o.Region = region
+		})
 	}
 
 	return au.RegisterAMIs(ctx)
@@ -125,46 +127,113 @@ func (au *AWSUploader) RegisterAMIs(ctx context.Context) error {
 	return g.Wait()
 }
 
-func (au *AWSUploader) registerAMI(ctx context.Context, region string, svc *ec2.EC2) error {
-	s3Svc := s3.New(au.sess, aws.NewConfig().WithRegion(region))
+func cleanupBucket(s3Svc *s3.Client, bucketName string) {
+	// create a detached context, as context might be canceled
+	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
+	defer cancel()
+
+	mpuPaginator := s3.NewListMultipartUploadsPaginator(s3Svc, &s3.ListMultipartUploadsInput{
+		Bucket: pointer.To(bucketName),
+	})
+
+	for mpuPaginator.HasMorePages() {
+		page, err := mpuPaginator.NextPage(ctx)
+		if err != nil {
+			log.Printf("failed listing multipart uploads: %s", err)
+
+			break
+		}
+
+		for _, upload := range page.Uploads {
+			_, err = s3Svc.AbortMultipartUpload(ctx, &s3.AbortMultipartUploadInput{
+				Bucket:   pointer.To(bucketName),
+				Key:      upload.Key,
+				UploadId: upload.UploadId,
+			})
+			if err != nil {
+				log.Printf("failed aborting multipart upload: %s", err)
+			}
+		}
+	}
+
+	objectsPaginator := s3.NewListObjectsV2Paginator(s3Svc, &s3.ListObjectsV2Input{
+		Bucket: pointer.To(bucketName),
+	})
+
+	for objectsPaginator.HasMorePages() {
+		page, err := objectsPaginator.NextPage(ctx)
+		if err != nil {
+			log.Printf("failed listing objects: %s", err)
+
+			break
+		}
+
+		if len(page.Contents) == 0 {
+			break
+		}
+
+		_, err = s3Svc.DeleteObjects(ctx, &s3.DeleteObjectsInput{
+			Bucket: pointer.To(bucketName),
+			Delete: &s3types.Delete{
+				Objects: xslices.Map(page.Contents, func(obj s3types.Object) s3types.ObjectIdentifier {
+					return s3types.ObjectIdentifier{
+						Key: obj.Key,
+					}
+				}),
+			},
+		})
+		if err != nil {
+			log.Printf("failed deleting objects: %s", err)
+		}
+	}
+
+	_, err := s3Svc.DeleteBucket(ctx, &s3.DeleteBucketInput{
+		Bucket: aws.String(bucketName),
+	})
+	if err != nil {
+		log.Printf("failed deleting bucket: %s", err)
+	}
+
+	log.Printf("aws: deleted bucket %q", bucketName)
+}
+
+func (au *AWSUploader) registerAMI(ctx context.Context, region string, svc *ec2.Client) error {
+	s3Svc := s3.NewFromConfig(au.cfg, func(o *s3.Options) {
+		o.Region = region
+	})
 	bucketName := fmt.Sprintf("talos-image-upload-%s", uuid.New())
 
-	_, err := s3Svc.CreateBucketWithContext(ctx, &s3.CreateBucketInput{
-		Bucket: aws.String(bucketName),
+	var createBucketConfiguration *s3types.CreateBucketConfiguration
+
+	if region != "us-east-1" {
+		createBucketConfiguration = &s3types.CreateBucketConfiguration{
+			LocationConstraint: s3types.BucketLocationConstraint(region),
+		}
+	}
+
+	_, err := s3Svc.CreateBucket(ctx, &s3.CreateBucketInput{
+		Bucket:                    pointer.To(bucketName),
+		CreateBucketConfiguration: createBucketConfiguration,
 	})
 	if err != nil {
 		return fmt.Errorf("failed creating S3 bucket: %w", err)
 	}
 
-	err = s3Svc.WaitUntilBucketExistsWithContext(ctx, &s3.HeadBucketInput{
-		Bucket: aws.String(bucketName),
-	})
-	if err != nil {
-		return fmt.Errorf("failed creating S3 bucket: %w", err)
+	if err = s3.NewBucketExistsWaiter(s3Svc).Wait(ctx, &s3.HeadBucketInput{
+		Bucket: pointer.To(bucketName),
+	}, time.Minute); err != nil {
+		return fmt.Errorf("failed waiting for S3 bucket: %w", err)
 	}
 
 	log.Printf("aws: created bucket %q for %s", bucketName, region)
 
 	defer func() {
-		iter := s3manager.NewDeleteListIterator(s3Svc, &s3.ListObjectsInput{
-			Bucket: aws.String(bucketName),
-		})
-
-		if err = s3manager.NewBatchDeleteWithClient(s3Svc).Delete(aws.BackgroundContext(), iter); err != nil {
-			log.Printf("Unable to delete objects from bucket %q, %v", bucketName, err)
-		}
-
-		_, err = s3Svc.DeleteBucket(&s3.DeleteBucketInput{
-			Bucket: aws.String(bucketName),
-		})
-		if err != nil {
-			log.Printf("failed deleting bucket: %s", err)
-		}
+		cleanupBucket(s3Svc, bucketName)
 	}()
 
-	_, err = s3Svc.PutBucketPolicyWithContext(ctx, &s3.PutBucketPolicyInput{
-		Bucket: aws.String(bucketName),
-		Policy: aws.String(fmt.Sprintf(denyInsecurePolicyTemplate, bucketName, bucketName)),
+	_, err = s3Svc.PutBucketPolicy(ctx, &s3.PutBucketPolicyInput{
+		Bucket: pointer.To(bucketName),
+		Policy: pointer.To(fmt.Sprintf(denyInsecurePolicyTemplate, bucketName, bucketName)),
 	})
 	if err != nil {
 		return fmt.Errorf("failed applying S3 bucket policy: %w", err)
@@ -172,7 +241,7 @@ func (au *AWSUploader) registerAMI(ctx context.Context, region string, svc *ec2.
 
 	log.Printf("aws: applied policy to bucket %q", bucketName)
 
-	uploader := s3manager.NewUploaderWithClient(s3Svc)
+	uploader := manager.NewUploader(s3Svc)
 
 	var g errgroup.Group
 
@@ -191,8 +260,8 @@ func (au *AWSUploader) registerAMI(ctx context.Context, region string, svc *ec2.
 }
 
 //nolint:gocyclo
-func (au *AWSUploader) registerAMIArch(ctx context.Context, region string, svc *ec2.EC2, arch, bucketName string, uploader *s3manager.Uploader) error {
-	err := retry.Constant(5*time.Minute, retry.WithUnits(time.Second)).Retry(func() error {
+func (au *AWSUploader) registerAMIArch(ctx context.Context, region string, svc *ec2.Client, arch, bucketName string, uploader *manager.Uploader) error {
+	err := retry.Constant(15*time.Minute, retry.WithUnits(time.Second), retry.WithErrorLogging(true)).RetryWithContext(ctx, func(ctx context.Context) error {
 		source, err := os.Open(au.Options.AWSImage(arch))
 		if err != nil {
 			return err
@@ -205,9 +274,11 @@ func (au *AWSUploader) registerAMIArch(ctx context.Context, region string, svc *
 			return err
 		}
 
-		_, err = uploader.UploadWithContext(ctx, &s3manager.UploadInput{
-			Bucket: aws.String(bucketName),
-			Key:    aws.String(fmt.Sprintf("disk-%s.raw", arch)),
+		defer image.Close()
+
+		_, err = uploader.Upload(ctx, &s3.PutObjectInput{
+			Bucket: pointer.To(bucketName),
+			Key:    pointer.To(fmt.Sprintf("disk-%s.raw", arch)),
 			Body:   image,
 		})
 
@@ -219,13 +290,14 @@ func (au *AWSUploader) registerAMIArch(ctx context.Context, region string, svc *
 
 	log.Printf("aws: import into %s/%s, image uploaded to S3", region, arch)
 
-	resp, err := svc.ImportSnapshotWithContext(ctx, &ec2.ImportSnapshotInput{
-		Description: aws.String(fmt.Sprintf("Talos Image %s %s %s", au.Options.Tag, arch, region)),
-		DiskContainer: &ec2.SnapshotDiskContainer{
-			Format: aws.String("raw"),
-			UserBucket: &ec2.UserBucket{
-				S3Bucket: aws.String(bucketName),
-				S3Key:    aws.String(fmt.Sprintf("disk-%s.raw", arch)),
+	resp, err := svc.ImportSnapshot(ctx, &ec2.ImportSnapshotInput{
+		Description: pointer.To(fmt.Sprintf("Talos Image %s %s %s", au.Options.Tag, arch, region)),
+		DiskContainer: &types.SnapshotDiskContainer{
+			Description: pointer.To(fmt.Sprintf("Talos Image %s %s %s", au.Options.Tag, arch, region)),
+			Format:      pointer.To("raw"),
+			UserBucket: &types.UserBucket{
+				S3Bucket: pointer.To(bucketName),
+				S3Key:    pointer.To(fmt.Sprintf("disk-%s.raw", arch)),
 			},
 		},
 	})
@@ -244,18 +316,14 @@ func (au *AWSUploader) registerAMIArch(ctx context.Context, region string, svc *
 	err = retry.Constant(30*time.Minute, retry.WithUnits(30*time.Second)).Retry(func() error {
 		var status *ec2.DescribeImportSnapshotTasksOutput
 
-		status, err = svc.DescribeImportSnapshotTasksWithContext(ctx, &ec2.DescribeImportSnapshotTasksInput{
-			ImportTaskIds: aws.StringSlice([]string{taskID}),
+		status, err = svc.DescribeImportSnapshotTasks(ctx, &ec2.DescribeImportSnapshotTasksInput{
+			ImportTaskIds: []string{taskID},
 		})
 		if err != nil {
 			return err
 		}
 
 		for _, task := range status.ImportSnapshotTasks {
-			if task == nil {
-				continue
-			}
-
 			if pointer.SafeDeref(task.ImportTaskId) == taskID {
 				if task.SnapshotTaskDetail == nil {
 					continue
@@ -293,11 +361,11 @@ func (au *AWSUploader) registerAMIArch(ctx context.Context, region string, svc *
 		imageName = fmt.Sprintf("%s-%s-%s-%s", au.Options.NamePrefix, au.Options.Tag, region, arch)
 	}
 
-	imageResp, err := svc.DescribeImagesWithContext(ctx, &ec2.DescribeImagesInput{
-		Filters: []*ec2.Filter{
+	imageResp, err := svc.DescribeImages(ctx, &ec2.DescribeImagesInput{
+		Filters: []types.Filter{
 			{
 				Name:   aws.String("name"),
-				Values: aws.StringSlice([]string{imageName}),
+				Values: []string{imageName},
 			},
 		},
 	})
@@ -306,7 +374,7 @@ func (au *AWSUploader) registerAMIArch(ctx context.Context, region string, svc *
 	}
 
 	for _, image := range imageResp.Images {
-		_, err = svc.DeregisterImageWithContext(ctx, &ec2.DeregisterImageInput{
+		_, err = svc.DeregisterImage(ctx, &ec2.DeregisterImageInput{
 			ImageId: image.ImageId,
 		})
 		if err != nil {
@@ -316,26 +384,26 @@ func (au *AWSUploader) registerAMIArch(ctx context.Context, region string, svc *
 		log.Printf("aws: import into %s/%s, deregistered image ID %q", region, arch, *image.ImageId)
 	}
 
-	registerResp, err := svc.RegisterImageWithContext(ctx, &ec2.RegisterImageInput{
+	registerResp, err := svc.RegisterImage(ctx, &ec2.RegisterImageInput{
 		Name: aws.String(imageName),
-		BlockDeviceMappings: []*ec2.BlockDeviceMapping{
+		BlockDeviceMappings: []types.BlockDeviceMapping{
 			{
-				DeviceName:  aws.String("/dev/xvda"),
-				VirtualName: aws.String("talos"),
-				Ebs: &ec2.EbsBlockDevice{
-					DeleteOnTermination: aws.Bool(true),
-					SnapshotId:          aws.String(snapshotID),
-					VolumeSize:          aws.Int64(20),
-					VolumeType:          aws.String("gp2"),
+				DeviceName:  pointer.To("/dev/xvda"),
+				VirtualName: pointer.To("talos"),
+				Ebs: &types.EbsBlockDevice{
+					DeleteOnTermination: pointer.To(true),
+					SnapshotId:          pointer.To(snapshotID),
+					VolumeSize:          pointer.To[int32](20),
+					VolumeType:          types.VolumeTypeGp2,
 				},
 			},
 		},
-		RootDeviceName:     aws.String("/dev/xvda"),
-		VirtualizationType: aws.String("hvm"),
-		EnaSupport:         aws.Bool(true),
-		Description:        aws.String(fmt.Sprintf("Talos AMI %s %s %s", au.Options.Tag, arch, region)),
-		Architecture:       aws.String(awsArchitectures[arch]),
-		ImdsSupport:        aws.String("v2.0"),
+		RootDeviceName:     pointer.To("/dev/xvda"),
+		VirtualizationType: pointer.To("hvm"),
+		EnaSupport:         pointer.To(true),
+		Description:        pointer.To(fmt.Sprintf("Talos AMI %s %s %s", au.Options.Tag, arch, region)),
+		Architecture:       awsArchitectures[arch],
+		ImdsSupport:        types.ImdsSupportValuesV20,
 	})
 	if err != nil {
 		return err
@@ -345,12 +413,12 @@ func (au *AWSUploader) registerAMIArch(ctx context.Context, region string, svc *
 
 	log.Printf("aws: import into %s/%s, registered image ID %q", region, arch, imageID)
 
-	_, err = svc.ModifyImageAttributeWithContext(ctx, &ec2.ModifyImageAttributeInput{
+	_, err = svc.ModifyImageAttribute(ctx, &ec2.ModifyImageAttributeInput{
 		ImageId: aws.String(imageID),
-		LaunchPermission: &ec2.LaunchPermissionModifications{
-			Add: []*ec2.LaunchPermission{
+		LaunchPermission: &types.LaunchPermissionModifications{
+			Add: []types.LaunchPermission{
 				{
-					Group: aws.String("all"),
+					Group: types.PermissionGroupAll,
 				},
 			},
 		},
