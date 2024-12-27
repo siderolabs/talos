@@ -26,7 +26,7 @@ import (
 const (
 	// ExpectedSignatureJSON is pre-calculated signature.
 	//nolint:lll
-	ExpectedSignatureJSON = `{"sha256":[{"pcrs":[11],"pkfp":"58f58f625bd8a8b6681e4b40688cf99b26419b6b2c5f6e14a2c7c67a3b0b1620","pol":"88b9f03a2edc4960894b5fa460169282749aff60d0b491ca71a2bde937f63f28","sig":"JBOKtBN2YAvugIqpPK6aulzCOAscdFojCqkawL9xa43tmhCj2wnfbrskym1QLlozYyiD6/6HpEYB91J71vWtTQTNUiJP910+qvcPkREHUdiPdzBTEDXDklvB9ACXfzcEl1lEhqlYfjJ9nxTmapWjOOL/iV/GgamkAtEwT91HE0ITf6ESedSt0+0T9lft6W10i7nO6WPJfQ2WDAZ6tGZUJLpvf36ZPloxRKXCCGkhtI1FYetT2ZJHgamrm6rGWa+IkOwFBydBjdSg20HDqNPFqzPlXLagx1SxXIPlH9Et+ebiFBRhevgD2GDL52wY3XS88G0AuYAlFrkrmx72wNZ7v/f16srXGOUSLwIzVE10z88nS+TYEUugKtIwrj1h165thMwcQONPSj/tL2OKcmM6jpAtIpApZUYOKip+sS5cKBloqhNbVuu6lzexi7THYWpn+Bzlj5zu7VO6yDLb8FaCxgTdoCiR8/q5yzXa8+LBJX1wfdvktDYGdmO0h/nGQYjOfKCSV2WCZLxIiNPedWkUX7hMIggTaaYiaxwYJHIZNKS0N3H1FGkSSFnYNJFHyW0S7BSi8dF9l0VlgXh6HrwSbMyv1avNQiL/pP7CwyA/dyYdsON6neWFRoYfaKRZdrQRKvH4VhjdB4CGLgxB7Pom8BQc8Vi68sAsKLKsNXY8GSs="}],"sha384":[{"pcrs":[11],"pkfp":"58f58f625bd8a8b6681e4b40688cf99b26419b6b2c5f6e14a2c7c67a3b0b1620","pol":"532380d1bfae365cca029f2e4a57601d528a346bfd9feae1e1f3f994260fb56d","sig":"qKilaBxg/goIw3TXfd+kIMqfA1EOcWngv+iH/xUliHLyxzTVHxx4vF4+wVJUNmS7vj10ffU876cySqyV9S9EFSPn3EEHLKza5n4skf++IZj3UvBXRwXTKKnE+iLDvj3r8maEorOD5J9rlv7nZZ95HESNxy0J2lXa0ik+vGKaKqySkyqFF2xM22M9Ko3iGr2bTSK8faGcorORNe/Hjr3GeJWm66Ea1EJvlIR9HjwDdeY+RMF/WEtSYMVkRM6ZYp/j2epTOTWsjUqYECxcWxjydrXm+Sf1ZDrHGURBDVHxpfTDWfrdpQ33tyappjwSnwH2zVLqThG6DEUqXmvn0/uYnSjLlKjRVuJyMotrcHSymot2oPQ/olfReOUAOkQR2TqiFEN5NeYAEghMDzwyYv1Rr5ahOJPcPMpEPnztUem4+kaAlOW4aAhuKcrgoiNle4G68CE0d3SEL3JvF3pyg9zSqai59vN8dd7Gw3vDYETPsOFWL7UJKb0DCCDCEFBN9kSvRScjjsz18NfJ0C5df7VhJC+P0WukxAPxQPvaK99HnD4JPpa9P0lEqubb+bvzZ+YuR6zblLVEt+4AISt/4Td0F8ylyMaz4+Rj+zm+VCCrNz3zqIjbLMQ/k1v6rRd/Yjre8DyQjSh7vD2eZr0BopUmimv5gGXvCranbHaq2jSXI5w="}],"sha512":[{"pcrs":[11],"pkfp":"58f58f625bd8a8b6681e4b40688cf99b26419b6b2c5f6e14a2c7c67a3b0b1620","pol":"2ea15476710c3d5e2ac70b6cee68a6a7619c91f69cf2d1387ad567f3fb5076fe","sig":"2SuhxgPM5hjb//gqud9Lomsjss/UTHz8B6wpcyUQHCroGHxd7OoDfzUd3nuXOf7BRbzDRiwo/sX4cR1CDDer9R4ut6QpQ6BHjPdcPxnH06BZvNTDubmU3gWJA49vZDD3IBnEWp/cMyGtVVbYuidy790EP+D9nBs247Cx4B1cepVcO3T5UHrrXst7oOt7OvTC+j3tPrGedhuEmRI0g+ms3VBeX4fcTFkqsjJmEI8kEz+otc388o9m/Edd5jxj42nf+Fu3RKH6GaLicQOr8Eat2RfMwfnv6ZxLhlwolwb/56DGgOJ0yuNEUuLvNru60KBXPjpTurUVSvYqL7qxrz7LqOOm+TMOgUjDV481GFwma6RvVOaAxlbPKwFwJSeMGqyhZBCOXRUraFfD0vJNwhB+BCaEmgXpFLjhX7IsUwieLq73vy9zRp4x+/fyhj2rnAfNku04JovBy7PYI/1nfjmdBoSvCyPmLCu5pznU61aMgpm1O1VgNdsSEqCu/pej724WGJ8tMjlhPHDgzsPnKu68m/0K+Kh5oYlP4uy04NtHXsif37bhdLmg09NcPmI7UEl+h1CGLNT2jf9tklvtDqVfzLyXnnbIoJFasO542Xx9RwlvAWYgs95jZIMYSpE+8o+Eg+rMyW7H/ej2M87HfQltv+R2Jb5Fm99D5kmrdnoH1vc="}]}`
+	ExpectedSignatureJSON = `{"sha256":[{"pcrs":[11],"pkfp":"58f58f625bd8a8b6681e4b40688cf99b26419b6b2c5f6e14a2c7c67a3b0b1620","pol":"c0c4f61f8ac39267a7638cde8029b82a0ccd378b2acbfdffb77ee1f0f9d464ec","sig":"zyyb7nNjQP6GyM1Y2TtCo2FbSDSLMYzDIw5sgsm3vWDgWK6bZnItxixA1J9pF8ccqW09VH5kQU3a5xFl1ZsNmZwSUtK1wr9jwITSW4V+G2508gt1X3t0Yq9SXfXo8JNhKhayjtcfLKEIj3NvaCEgEMwcJJWUM/fooWeoXOdlx3JfTLcL1Pog6Hy7o4nDGKGMHsxUf1RNzf2Ro+Z4lXQ1334fqLeoC2ZbQbFyjRuGMin0/QvWZQ0k8FQ6ZooZR/SrJQrUu/ouzrzyEFIOBLfituBjw6fnT40ieZUh9N/bPqrX9jtKT3eBICYoEuY5V67bpF1Ygm+sDarBvR9MYVBY4DSm1iIOtABBUKVaACXxG4dFrEAUydXv62Yd9Kl86DqoBXrQRu+dcBKa1Stw/eGhzzoaXQo4XeutnIj3QOwtOHN1Z/L02gcZdlCcRboGAiTCWs5m642oSJa8jiAKWzpgwsJpSDkHRsmjWewQMBccgDy1j6DiHp4HakgeK2pePWdD/c8pu8unThKigKy/wsH+QMXpzNufkqAq2aWyuempFDn+OdVHGE5htZuSNIa66Vj0sd1guH13K9zxNUN8JguWnk21zInAN1IpbmyxlgRYCEpuE++E5Te4tqskCHUAU4D1iLS8a73SK5wXS7AnMXK7XhQ4FFvJCaOaQiJjC30LnEk="}],"sha384":[{"pcrs":[11],"pkfp":"58f58f625bd8a8b6681e4b40688cf99b26419b6b2c5f6e14a2c7c67a3b0b1620","pol":"e8f6311e36f9ee038df65255ae7c471d1d1f91ce742b98a152be72337f6c937d","sig":"SH9VntNIwbApIoTM9GksYp6fScBkjQ156rEscm9cR6hFcIy8oZeFCzaCxfl122UgNVzXMZDst4S3xF/BjwG1TiUE3SvzlvCwzvAkLVitHzD3Jj/oyy5vIfe7lhrPvSSb5ta3I5DsBE4693OlXDw/hXzoj93i/Cbztqf/N7G354tO2COx8CXu63Yz3DBijdvDN2lIA6AVv5AV+IC0koU8wuKsdOmbHoysDI/JtFi5f2qQP667qjOUJj2FgsLoH//ZvlKTZjIrGsQo9q6iQsxAEdBKdWub8mrexgalH4jzHfFyVxDDeV6+D77xFCAuaT1fVOcGKTncxAvxN2M+wg7XDEVnZm6Itmh+Qh8DKejogHTBVr1ALBzE12hSpvIlYHQ6bNrzORPX/+7eJ3nbnTfYEp9psyFbxV+21U7A7ArwDQLnhosbVFY94YSyQd13bfgWQll013HzcpiTuzg3+qU4DjPc0x764z614+K9kyJQLqhiE0Y82Qhelhu+dJa/DrmOPEXQ6Lt5YG5TPQSHkNq79vPF1JUC1OkMvnFwO10eU2zPbuVKN7mf9S2ERSGEB9oX7pYLf99gNDh+VCII1iP+Jzj7jcAdvt6VK1Cme89kzXWem66eLaDNYIibb18KJ0uArqBt8VBzsX5wUb9sQTo/f2DOPI2AvHrzWziXjUG8cWc="}],"sha512":[{"pcrs":[11],"pkfp":"58f58f625bd8a8b6681e4b40688cf99b26419b6b2c5f6e14a2c7c67a3b0b1620","pol":"207a8217158f9cc521dca50358a593dc61ed9308ef27da9df4ef64d634309160","sig":"NY659iroM9POX2a75p26i8JPXd+/Tsb45Wd/FEmjb1gopY4ygRumFNn/YuOebbhxHq67SMB30Fz5R1ktLJHgiCZotg5BqiUZWKF1zVlze928LTZqS4xxU5eUlZuzFkDyokwuxzvmc1+qFotkP1FMq8LSyDpBpUKby26EOP8cLYuE6PKc3LmhvjTmOUglICyv0JAoPRARDjZEN/f1O2T9HnACYjXZIVuKkBhMyYkuIgP+kGR1ChnHZTvcOkFByZcOUWtX6ChAP+OvDYQ1lbpomTyyKLmBvA935kJCCL1cDv3u5LCCaPfLm7zAVIyOrfELUpt8I3Oe/qIRX7CiP/TzN3IaNPOzU4+rm0vLcM56T5bEfUw4ikQILykQ202hUeH9Zv5Fw/qZI2nU4ToRamtLQd28xKfod9Uq2fbfORybUU5Ab2SbXpcwMu9PUsapFpjf9hrC1jf/G26TJ1mEzhhLPgJ1UlKyFX6ba0urhudR9dr3xLHlh3gw+T1NnZVram1aYBJnOU6lxHcoD+wmop3pqu1S0VOJX9YIGKzZ5jrzJ102cAI58nihASIkaWD7JqisFBCp2jX0ETu6bJLcufLv7ekT+asw2K1C8BxH5INiRkXu1HEPLYhYBceAgEFGROI26Awy08o8axsCt2zSAi2EafnCEt8mIo5E5RDGvRbRsWk="}]}`
 )
 
 type rsaWrapper struct {
@@ -114,7 +114,10 @@ func getSignatureUsingSDMeasure(t *testing.T) string {
 		sdMeasureArgs[i] = fmt.Sprintf("--%s=%s", strings.TrimPrefix(string(section), "."), sectionFile)
 	}
 
-	var signature bytes.Buffer
+	var (
+		signature bytes.Buffer
+		stderr    bytes.Buffer
+	)
 
 	sdCmd := exec.Command(
 		"systemd-measure",
@@ -132,9 +135,13 @@ func getSignatureUsingSDMeasure(t *testing.T) string {
 		)...)
 
 	sdCmd.Stdout = &signature
+	sdCmd.Stderr = &stderr
+
+	t.Log("Running systemd-measure command:", sdCmd.String())
 
 	if err := sdCmd.Run(); err != nil {
-		t.Error(err)
+		t.Log("stderr:", stderr.String())
+		t.Fatalf("systemd-measure failed: %v", err)
 	}
 
 	s := bytes.TrimSpace(signature.Bytes())
