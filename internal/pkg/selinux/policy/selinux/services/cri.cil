@@ -14,6 +14,8 @@
 ; Manage procfs & processes
 (allow pod_containerd_t pod_p (fs_classes (rw)))
 (allow pod_containerd_t pod_p (process_classes (full)))
+(allow pod_p pod_containerd_t (fd (use)))
+(allow pod_p pod_containerd_t (fifo_file (append getattr ioctl map open read rename setattr watch write)))
 
 ; Shim socket
 (allow pod_containerd_t pod_containerd_socket_t (fs_classes (rw)))
