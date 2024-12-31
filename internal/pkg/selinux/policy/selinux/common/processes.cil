@@ -103,6 +103,11 @@
 (allow system_p proc_cmdline_t (fs_classes (ro)))
 (allow system_container_p proc_cmdline_t (fs_classes (ro)))
 
+; These only run binaries from the squashfs so this shouldn't do harm.
+; TODO: eliminate such common permissions
+(allow system_p any_f (fs_classes (ro)))
+(allow system_container_p any_f (fs_classes (ro)))
+
 ; By default, allow any process to access any device except special ones
 (allow any_p common_device_f (fs_classes (rw)))
 ; CNI, containerd, many different services read and write sysctl parameters
