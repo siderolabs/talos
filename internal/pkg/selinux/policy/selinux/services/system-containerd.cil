@@ -23,6 +23,8 @@
 ; Manage procfs & processes
 (allow sys_containerd_t system_container_p (fs_classes (rw)))
 (allow sys_containerd_t system_container_p (process_classes (full)))
+(allow system_container_p sys_containerd_t (fd (use)))
+(allow system_container_p sys_containerd_t (fifo_file (append getattr ioctl map open read rename setattr watch write)))
 
 ; Shim sockets
 (allow sys_containerd_t sys_containerd_socket_t (fs_classes (rw)))
