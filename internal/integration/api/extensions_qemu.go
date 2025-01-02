@@ -594,6 +594,20 @@ func (suite *ExtensionsSuiteQEMU) checkZFSPoolMounted() bool {
 
 	ctx := client.WithNode(suite.ctx, node)
 
+	stream, err := suite.Client.LS(ctx, &machineapi.ListRequest{
+		Root:  "/dev/zvol/tank/vol",
+		Types: []machineapi.ListRequest_Type{machineapi.ListRequest_REGULAR},
+	})
+
+	suite.Require().NoError(err)
+
+	suite.Require().NoError(helpers.ReadGRPCStream(stream, func(info *machineapi.FileInfo, node string, multipleNodes bool) error {
+		suite.Require().Equal("/dev/zvol/tank/vol", info.Name, "expected /dev/zvol/tank/vol to exist")
+		suite.Require().Equal("zd0", info.Link, "expected /dev/zvol/tank/vol to be linked to zd0")
+
+		return nil
+	}))
+
 	disks, err := safe.StateListAll[*block.Disk](ctx, suite.Client.COSI)
 	suite.Require().NoError(err)
 
