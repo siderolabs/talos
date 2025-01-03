@@ -14,12 +14,20 @@ type RuntimeConfig interface {
 	EventsEndpoint() *string
 	KmsgLogURLs() []*url.URL
 	WatchdogTimer() WatchdogTimerConfig
+	FilesystemScrub() []FilesystemScrubConfig
 }
 
 // WatchdogTimerConfig defines the interface to access Talos watchdog timer configuration.
 type WatchdogTimerConfig interface {
 	Device() string
 	Timeout() time.Duration
+}
+
+// FilesystemScrubConfig defines the interface to access Talos filesystem scrub configuration.
+type FilesystemScrubConfig interface {
+	Name() string
+	Mountpoint() string
+	Period() time.Duration
 }
 
 // WrapRuntimeConfigList wraps a list of RuntimeConfig into a single RuntimeConfig aggregating the results.
@@ -44,5 +52,11 @@ func (w runtimeConfigWrapper) KmsgLogURLs() []*url.URL {
 func (w runtimeConfigWrapper) WatchdogTimer() WatchdogTimerConfig {
 	return findFirstValue(w, func(c RuntimeConfig) WatchdogTimerConfig {
 		return c.WatchdogTimer()
+	})
+}
+
+func (w runtimeConfigWrapper) FilesystemScrub() []FilesystemScrubConfig {
+	return aggregateValues(w, func(c RuntimeConfig) []FilesystemScrubConfig {
+		return c.FilesystemScrub()
 	})
 }
