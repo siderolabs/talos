@@ -922,7 +922,7 @@ ARG TARGETARCH
 RUN --mount=type=cache,target=/.cache GOOS=linux GOARCH=${TARGETARCH} go build ${GO_BUILDFLAGS} -ldflags "${GO_LDFLAGS}" -o /installer
 RUN chmod +x /installer
 
-FROM alpine:3.20.3 AS unicode-pf2
+FROM alpine:3.21.0 AS unicode-pf2
 RUN apk add --no-cache --update --no-scripts grub
 
 FROM scratch AS install-artifacts-amd64
@@ -945,7 +945,7 @@ FROM install-artifacts-${TARGETARCH} AS install-artifacts-targetarch
 
 FROM install-artifacts-${INSTALLER_ARCH} AS install-artifacts
 
-FROM alpine:3.20.3 AS installer-image
+FROM alpine:3.21.0 AS installer-image
 ARG SOURCE_DATE_EPOCH
 ENV SOURCE_DATE_EPOCH=${SOURCE_DATE_EPOCH}
 ARG INSTALLER_PKGS

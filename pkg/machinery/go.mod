@@ -4,12 +4,12 @@ go 1.23.3
 
 // forked go-yaml that introduces RawYAML interface, which can be used to populate YAML fields using bytes
 // which are then encoded as a valid YAML blocks with proper indentiation
-replace gopkg.in/yaml.v3 => github.com/unix4ever/yaml v0.0.0-20220527175918-f17b0f05cf2c
+replace gopkg.in/yaml.v3 => github.com/unix4ever/yaml/v2 v2.4.0
 
 require (
 	github.com/blang/semver/v4 v4.0.0
 	github.com/containerd/go-cni v1.1.11
-	github.com/cosi-project/runtime v0.8.1
+	github.com/cosi-project/runtime v0.9.0
 	github.com/dustin/go-humanize v1.0.1
 	github.com/emicklei/dot v1.6.4
 	github.com/evanphx/json-patch v5.9.0+incompatible
@@ -18,12 +18,12 @@ require (
 	github.com/google/cel-go v0.22.1
 	github.com/hashicorp/go-multierror v1.1.1
 	github.com/hexops/gotextdiff v1.0.3
-	github.com/jsimonetti/rtnetlink/v2 v2.0.3-0.20241216183107-2d6e9f8ad3f2
+	github.com/jsimonetti/rtnetlink/v2 6935a578a98f
 	github.com/mdlayher/ethtool v0.2.0
 	github.com/opencontainers/runtime-spec v1.2.0
 	github.com/planetscale/vtprotobuf v0.6.1-0.20241121165744-79df5c4772f2
 	github.com/ryanuber/go-glob v1.0.0
-	github.com/santhosh-tekuri/jsonschema/v5 v5.3.1
+	github.com/santhosh-tekuri/jsonschema/v6 v6.0.1
 	github.com/siderolabs/crypto v0.5.1
 	github.com/siderolabs/gen v0.8.0
 	github.com/siderolabs/go-api-signature v0.3.6
@@ -33,8 +33,8 @@ require (
 	github.com/siderolabs/protoenc v0.2.1
 	github.com/stretchr/testify v1.10.0
 	go.uber.org/zap v1.27.0
-	google.golang.org/genproto/googleapis/api v0.0.0-20241223144023-3abc09e42ca8
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20241223144023-3abc09e42ca8
+	google.golang.org/genproto/googleapis/api 69823020774d
+	google.golang.org/genproto/googleapis/rpc 69823020774d
 	google.golang.org/grpc v1.69.2
 	google.golang.org/protobuf v1.36.1
 	gopkg.in/yaml.v3 v3.0.1

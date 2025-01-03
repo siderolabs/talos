@@ -73,7 +73,7 @@ GOIMPORTS_VERSION ?= v0.28.0
 # renovate: datasource=go depName=mvdan.cc/gofumpt
 GOFUMPT_VERSION ?= v0.7.0
 # renovate: datasource=go depName=github.com/golangci/golangci-lint
-GOLANGCILINT_VERSION ?= v1.62.2
+GOLANGCILINT_VERSION ?= v1.63.3
 # renovate: datasource=go depName=golang.org/x/tools
 STRINGER_VERSION ?= v0.28.0
 # renovate: datasource=go depName=github.com/dmarkham/enumer
@@ -93,13 +93,13 @@ PROTOC_GEN_DOC_VERSION ?= v1.5.1
 # renovate: datasource=npm depName=markdownlint-cli
 MARKDOWNLINTCLI_VERSION ?= 0.43.0
 # renovate: datasource=npm depName=textlint
-TEXTLINT_VERSION ?= 14.4.0
+TEXTLINT_VERSION ?= 14.4.2
 # renovate: datasource=npm depName=textlint-filter-rule-comments
 TEXTLINT_FILTER_RULE_COMMENTS_VERSION ?= 1.2.2
 # renovate: datasource=npm depName=textlint-rule-one-sentence-per-line
 TEXTLINT_RULE_ONE_SENTENCE_PER_LINE_VERSION ?= 2.0.0
 # renovate: datasource=docker depName=klakegg/hugo
-HUGO_VERSION ?= 0.111.3-ext-alpine
+HUGO_VERSION ?= 0.111.3
 OPERATING_SYSTEM := $(shell uname -s | tr "[:upper:]" "[:lower:]")
 ARCH := $(shell uname -m | sed 's/x86_64/amd64/' | sed 's/aarch64/arm64/')
 TALOSCTL_DEFAULT_TARGET := talosctl-$(OPERATING_SYSTEM)
