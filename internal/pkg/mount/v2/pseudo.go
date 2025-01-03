@@ -9,6 +9,7 @@ import (
 
 	"golang.org/x/sys/unix"
 
+	"github.com/siderolabs/talos/internal/pkg/selinux"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
 
@@ -48,8 +49,8 @@ func PseudoSubMountPoints() Points {
 		)
 	}
 
-	if _, err := os.Stat("/sys/fs/selinux"); err == nil {
-		// mount selinuxfs if it exists
+	if selinux.IsEnabled() {
+		// mount selinuxfs if it is enabled, which implies SELinux is the major LSM
 		points = append(points,
 			NewPoint("selinuxfs", "/sys/fs/selinux", "selinuxfs", WithFlags(unix.MS_NOSUID|unix.MS_NOEXEC|unix.MS_RELATIME)),
 		)
