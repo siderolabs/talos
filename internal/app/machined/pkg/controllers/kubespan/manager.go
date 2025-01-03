@@ -378,9 +378,22 @@ func (ctrl *ManagerController) Run(ctx context.Context, r controller.Runtime, lo
 						},
 						Verdict: pointer.To(nethelpers.VerdictAccept),
 					},
+					// Mark packets to be sent over the KubeSpan link.
 					{
 						MatchDestinationAddress: &network.NfTablesAddressMatch{
 							IncludeSubnets: allowedIPsSet.Prefixes(),
+						},
+						SetMark: &network.NfTablesMark{
+							Mask: ^uint32(constants.KubeSpanDefaultFirewallMask),
+							Xor:  constants.KubeSpanDefaultForceFirewallMark,
+						},
+						Verdict: pointer.To(nethelpers.VerdictAccept),
+					},
+					// Mark incoming packets from the KubeSpan link for rp_filter to find the correct routing table.
+					{
+						MatchIIfName: &network.NfTablesIfNameMatch{
+							InterfaceNames: []string{constants.KubeSpanLinkName},
+							Operator:       nethelpers.OperatorEqual,
 						},
 						SetMark: &network.NfTablesMark{
 							Mask: ^uint32(constants.KubeSpanDefaultFirewallMask),
