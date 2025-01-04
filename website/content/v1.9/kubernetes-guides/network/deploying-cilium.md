@@ -10,7 +10,7 @@ aliases:
 This documentation will outline installing Cilium CNI v1.14.0 on Talos in six different ways.
 Adhering to Talos principles we'll deploy Cilium with IPAM mode set to Kubernetes, and using the `cgroupv2` and `bpffs` mount that talos already provides.
 As Talos does not allow loading kernel modules by Kubernetes workloads, `SYS_MODULE` capability needs to be dropped from the Cilium default set of values, this override can be seen in the helm/cilium cli install commands.
-Each method can either install Cilium using kube proxy (default) or without: [Kubernetes Without kube-proxy](https://docs.cilium.io/en/v1.14/network/kubernetes/kubeproxy-free/)
+Each method can either install Cilium using kube proxy (default) or without: [Kubernetes Without kube-proxy](https://docs.cilium.io/en/v1.16/network/kubernetes/kubeproxy-free/)
 
 In this guide we assume that [KubePrism]({{< relref "../configuration/kubeprism" >}}) is enabled and configured to use the port 7445.
 
@@ -57,7 +57,7 @@ talosctl gen config \
 
 > Note: It is recommended to template the cilium manifest using helm and use it as part of Talos machine config, but if you want to install Cilium using the Cilium CLI, you can follow the steps below.
 
-Install the [Cilium CLI](https://docs.cilium.io/en/v1.13/gettingstarted/k8s-install-default/#install-the-cilium-cli) following the steps here.
+Install the [Cilium CLI](https://docs.cilium.io/en/v1.16/gettingstarted/k8s-install-default/#install-the-cilium-cli) following the steps here.
 
 #### With kube-proxy
 
@@ -85,9 +85,29 @@ cilium install \
     --set k8sServicePort=7445
 ```
 
+Or if you want to deploy Cilium with support for Gateway API (requires installing cilium without kube-proxy), install [Gateway API CRDs](https://docs.cilium.io/en/v1.16/network/servicemesh/gateway-api/gateway-api/#prerequisites) and set some extra parameters:
+
+```bash
+cilium install \
+    --set ipam.mode=kubernetes \
+    --set kubeProxyReplacement=true \
+    --set securityContext.capabilities.ciliumAgent="{CHOWN,KILL,NET_ADMIN,NET_RAW,IPC_LOCK,SYS_ADMIN,SYS_RESOURCE,DAC_OVERRIDE,FOWNER,SETGID,SETUID}" \
+    --set securityContext.capabilities.cleanCiliumState="{NET_ADMIN,SYS_ADMIN,SYS_RESOURCE}" \
+    --set cgroup.autoMount.enabled=false \
+    --set cgroup.hostRoot=/sys/fs/cgroup \
+    --set k8sServiceHost=localhost \
+    --set k8sServicePort=7445 \
+    --set gatewayAPI.enabled=true \
+    --set gatewayAPI.enableAlpn=true \
+    --set gatewayAPI.enableAppProtocol=true \
+```
+
+> Note: If you plan to use gRPC and GRPCRoutes with TLS, you must enable ALPN by setting `gatewayAPI.enableAlpn=true`.
+> Since gRPC relies on HTTP/2, ALPN is required to negotiate HTTP/2 support between the client and server.
+
 ### Installation using Helm
 
-Refer to [Installing with Helm](https://docs.cilium.io/en/v1.15/installation/k8s-install-helm/) for more information.
+Refer to [Installing with Helm](https://docs.cilium.io/en/v1.16/installation/k8s-install-helm/) for more information.
 
 First we'll need to add the helm repo for Cilium.
 
@@ -134,6 +154,15 @@ helm install \
     --set cgroup.hostRoot=/sys/fs/cgroup \
     --set k8sServiceHost=localhost \
     --set k8sServicePort=7445
+```
+
+And with GatewayAPI support:
+
+```bash
+...
+    --set=gatewayAPI.enabled=true \
+    --set=gatewayAPI.enableAlpn=true \
+    --set=gatewayAPI.enableAppProtocol=true
 ```
 
 After Cilium is installed the boot process should continue and complete successfully.
