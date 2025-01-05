@@ -635,6 +635,26 @@ func (k8sSuite *K8sSuite) WaitForResource(ctx context.Context, namespace, group,
 	return nil
 }
 
+// GetUnstructuredResource gets the unstructured resource with the given namespace, group, kind, version and name.
+func (k8sSuite *K8sSuite) GetUnstructuredResource(ctx context.Context, namespace, group, kind, version, resourceName string) (*unstructured.Unstructured, error) {
+	mapping, err := k8sSuite.Mapper.RESTMapping(schema.GroupKind{
+		Group: group,
+		Kind:  kind,
+	}, version)
+	if err != nil {
+		return nil, fmt.Errorf("error creating mapping for resource %s/%s/%s", group, kind, version)
+	}
+
+	dr := k8sSuite.DynamicClient.Resource(mapping.Resource).Namespace(namespace)
+
+	result, err := dr.Get(ctx, resourceName, metav1.GetOptions{})
+	if err != nil {
+		return nil, fmt.Errorf("error getting resource %s/%s/%s/%s: %v", group, version, kind, resourceName, err)
+	}
+
+	return result, nil
+}
+
 // RunFIOTest runs the FIO test with the given storage class and size using kubestr.
 func (k8sSuite *K8sSuite) RunFIOTest(ctx context.Context, storageClasss, size string) error {
 	args := []string{
@@ -788,7 +808,7 @@ func (k8sSuite *K8sSuite) DeleteManifests(ctx context.Context, manifests []unstr
 			return event.Type == watch.Deleted, nil
 		})
 
-		k8sSuite.Require().NoError(err, "error waiting for the object to be deleted %s", obj.GetName())
+		k8sSuite.Require().NoError(err, "error waiting for the object to be deleted %s/%s/%s", obj.GetObjectKind().GroupVersionKind(), obj.GetNamespace(), obj.GetName())
 
 		k8sSuite.T().Logf("deleted object %s/%s/%s", obj.GetObjectKind().GroupVersionKind(), obj.GetNamespace(), obj.GetName())
 	}
