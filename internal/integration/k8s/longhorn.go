@@ -7,10 +7,27 @@
 package k8s
 
 import (
+	"bytes"
 	"context"
+	_ "embed"
+	"strings"
+	"testing"
+	"text/template"
 	"time"
 
 	"github.com/siderolabs/talos/internal/integration/base"
+	"github.com/siderolabs/talos/pkg/machinery/config/machine"
+)
+
+var (
+	//go:embed testdata/longhorn-iscsi-volume.yaml
+	longHornISCSIVolumeManifest []byte
+
+	//go:embed testdata/longhorn-volumeattachment.yaml
+	longHornISCSIVolumeAttachmentManifestTemplate []byte
+
+	//go:embed testdata/pod-iscsi-volume.yaml
+	podWithISCSIVolumeTemplate []byte
 )
 
 // LongHornSuite tests deploying Longhorn.
@@ -24,7 +41,11 @@ func (suite *LongHornSuite) SuiteName() string {
 }
 
 // TestDeploy tests deploying Longhorn and running a simple test.
+//
+//nolint:gocyclo
 func (suite *LongHornSuite) TestDeploy() {
+	suite.T().Parallel()
+
 	if suite.Cluster == nil {
 		suite.T().Skip("without full cluster state reaching out to the node IP is not reliable")
 	}
@@ -53,7 +74,117 @@ func (suite *LongHornSuite) TestDeploy() {
 		suite.T().Fatalf("failed to install Longhorn chart: %v", err)
 	}
 
-	suite.Require().NoError(suite.RunFIOTest(ctx, "longhorn", "10G"))
+	suite.T().Run("fio", func(t *testing.T) {
+		t.Parallel()
+
+		suite.Require().NoError(suite.RunFIOTest(ctx, "longhorn", "10G"))
+	})
+
+	suite.T().Run("iscsi", func(t *testing.T) {
+		t.Parallel()
+
+		longHornISCSIVolumeManifestUnstructured := suite.ParseManifests(longHornISCSIVolumeManifest)
+
+		defer func() {
+			cleanUpCtx, cleanupCancel := context.WithTimeout(context.Background(), 2*time.Minute)
+			defer cleanupCancel()
+
+			suite.DeleteManifests(cleanUpCtx, longHornISCSIVolumeManifestUnstructured)
+		}()
+
+		suite.ApplyManifests(ctx, longHornISCSIVolumeManifestUnstructured)
+
+		tmpl, err := template.New("longhorn-iscsi-volumeattachment").Parse(string(longHornISCSIVolumeAttachmentManifestTemplate))
+		suite.Require().NoError(err)
+
+		var longHornISCSIVolumeAttachmentManifest bytes.Buffer
+
+		node := suite.RandomDiscoveredNodeInternalIP(machine.TypeWorker)
+
+		nodeInfo, err := suite.GetK8sNodeByInternalIP(ctx, node)
+		if err != nil {
+			suite.T().Fatalf("failed to get K8s node by internal IP: %v", err)
+		}
+
+		if err := tmpl.Execute(&longHornISCSIVolumeAttachmentManifest, struct {
+			NodeID string
+		}{
+			NodeID: nodeInfo.Name,
+		}); err != nil {
+			suite.T().Fatalf("failed to render Longhorn ISCSI volume manifest: %v", err)
+		}
+
+		longHornISCSIVolumeAttachmentManifestUnstructured := suite.ParseManifests(longHornISCSIVolumeAttachmentManifest.Bytes())
+
+		suite.ApplyManifests(ctx, longHornISCSIVolumeAttachmentManifestUnstructured)
+
+		if err := suite.WaitForResource(ctx, "longhorn-system", "longhorn.io", "Volume", "v1beta2", "iscsi", "{.status.robustness}", "healthy"); err != nil {
+			suite.T().Fatalf("failed to wait for LongHorn Engine to be Ready: %v", err)
+		}
+
+		if err := suite.WaitForResource(ctx, "longhorn-system", "longhorn.io", "Volume", "v1beta2", "iscsi", "{.status.state}", "attached"); err != nil {
+			suite.T().Fatalf("failed to wait for LongHorn Engine to be Ready: %v", err)
+		}
+
+		if err := suite.WaitForResource(ctx, "longhorn-system", "longhorn.io", "Engine", "v1beta2", "iscsi-e-0", "{.status.currentState}", "running"); err != nil {
+			suite.T().Fatalf("failed to wait for LongHorn Engine to be Ready: %v", err)
+		}
+
+		unstructured, err := suite.GetUnstructuredResource(ctx, "longhorn-system", "longhorn.io", "Engine", "v1beta2", "iscsi-e-0")
+		if err != nil {
+			suite.T().Fatalf("failed to get LongHorn Engine resource: %v", err)
+		}
+
+		var endpointData string
+
+		if status, ok := unstructured.Object["status"].(map[string]interface{}); ok {
+			endpointData, ok = status["endpoint"].(string)
+			if !ok {
+				suite.T().Fatalf("failed to get LongHorn Engine endpoint")
+			}
+		}
+
+		tmpl, err = template.New("pod-iscsi-volume").Parse(string(podWithISCSIVolumeTemplate))
+		suite.Require().NoError(err)
+
+		// endpoint is of the form `iscsi://10.244.0.5:3260/iqn.2019-10.io.longhorn:iscsi/1`
+		// trim the iscsi:// prefix
+		endpointData = strings.TrimPrefix(endpointData, "iscsi://")
+		// trim the /1 suffix
+		endpointData = strings.TrimSuffix(endpointData, "/1")
+
+		targetPortal, IQN, ok := strings.Cut(endpointData, "/")
+		if !ok {
+			suite.T().Fatalf("failed to parse endpoint data from %s", endpointData)
+		}
+
+		var podWithISCSIVolume bytes.Buffer
+
+		if err := tmpl.Execute(&podWithISCSIVolume, struct {
+			NodeName     string
+			TargetPortal string
+			IQN          string
+		}{
+			NodeName:     nodeInfo.Name,
+			TargetPortal: targetPortal,
+			IQN:          IQN,
+		}); err != nil {
+			suite.T().Fatalf("failed to render pod with ISCSI volume manifest: %v", err)
+		}
+
+		podWithISCSIVolumeUnstructured := suite.ParseManifests(podWithISCSIVolume.Bytes())
+
+		defer func() {
+			cleanUpCtx, cleanupCancel := context.WithTimeout(context.Background(), time.Minute)
+			defer cleanupCancel()
+
+			suite.DeleteManifests(cleanUpCtx, podWithISCSIVolumeUnstructured)
+		}()
+
+		suite.ApplyManifests(ctx, podWithISCSIVolumeUnstructured)
+
+		suite.Require().NoError(suite.WaitForPodToBeRunning(ctx, 3*time.Minute, "default", "iscsipd"))
+	})
 }
 
 func init() {

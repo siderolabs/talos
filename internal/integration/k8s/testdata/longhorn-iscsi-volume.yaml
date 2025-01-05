@@ -1,0 +1,12 @@
+---
+apiVersion: longhorn.io/v1beta2
+kind: Volume
+metadata:
+  labels:
+    longhornvolume: iscsi
+  name: iscsi
+  namespace: longhorn-system
+spec:
+  frontend: iscsi
+  numberOfReplicas: 1
+  size: "1073741824"

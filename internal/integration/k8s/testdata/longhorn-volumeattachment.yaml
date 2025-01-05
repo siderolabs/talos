@@ -1,0 +1,19 @@
+---
+apiVersion: longhorn.io/v1beta2
+kind: VolumeAttachment
+metadata:
+  labels:
+    longhornvolume: iscsi
+  name: iscsi
+  namespace: longhorn-system
+spec:
+  attachmentTickets:
+    longhorn-ui:
+      generation: 0
+      id: longhorn-ui
+      nodeID: {{ .NodeID }}
+      parameters:
+        disableFrontend: "false"
+        lastAttachedBy: ""
+      type: longhorn-api
+  volume: iscsi

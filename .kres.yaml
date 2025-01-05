@@ -1369,6 +1369,7 @@ spec:
         - '30 3 * * *'
       triggerLabels:
         - integration/qemu-csi
+        - integration/extensions # since iscsi is tested with longhorn
         - integration/qemu-csi-longhorn
       steps:
         - name: download-artifacts
@@ -1417,6 +1418,7 @@ spec:
           environment:
             EXTENSIONS_FILTER_COMMAND: "grep -E 'iscsi-tools|util-linux-tools'"
             IMAGE_REGISTRY: registry.dev.siderolabs.io
+        - name: kubelet-fat-patch
         - name: e2e-qemu-csi-longhorn
           command: e2e-qemu
           withSudo: true
@@ -1424,7 +1426,8 @@ spec:
             GITHUB_STEP_NAME: ${{ github.job}}-e2e-qemu-csi-longhorn
             SHORT_INTEGRATION_TEST: yes
             QEMU_WORKERS: 3
-            WITH_CONFIG_PATCH: "@_out/installer-extensions-patch.yaml:@hack/test/patches/longhorn.yaml"
+            QEMU_MEMORY_WORKERS: 3072
+            WITH_CONFIG_PATCH: "@_out/installer-extensions-patch.yaml:@_out/kubelet-fat-patch.yaml:@hack/test/patches/longhorn.yaml"
             EXTRA_TEST_ARGS: -talos.csi=longhorn
             IMAGE_REGISTRY: registry.dev.siderolabs.io
         - name: save-talos-logs

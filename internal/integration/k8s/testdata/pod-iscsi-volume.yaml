@@ -1,0 +1,24 @@
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: iscsipd
+  namespace: default
+spec:
+  containers:
+  - name: iscsipd-rw
+    image: alpine
+    command: ["/bin/sh", "-c", "--"]
+    args: ["trap : TERM INT; (sleep 1000) & wait"]
+    volumeMounts:
+    - mountPath: "/mnt/iscsipd"
+      name: iscsipd-rw
+  nodeName: {{ .NodeName }}
+  volumes:
+  - name: iscsipd-rw
+    iscsi:
+      targetPortal: {{ .TargetPortal }}
+      iqn: {{ .IQN }}
+      lun: 1
+      fsType: ext4
+      readOnly: false
