@@ -190,13 +190,8 @@ func (in *Input) init() ([]config.Document, error) {
 		ClusterInlineManifests: v1alpha1.ClusterInlineManifests{},
 	}
 
-	if in.Options.AllowSchedulingOnControlPlanes {
-		if in.Options.VersionContract.KubernetesAllowSchedulingOnControlPlanes() {
-			cluster.AllowSchedulingOnControlPlanes = pointer.To(in.Options.AllowSchedulingOnControlPlanes)
-		} else {
-			// backwards compatibility for Talos versions older than 1.2
-			cluster.AllowSchedulingOnMasters = pointer.To(in.Options.AllowSchedulingOnControlPlanes) //nolint:staticcheck
-		}
+	if in.Options.AllowSchedulingOnControlPlanes && in.Options.VersionContract.KubernetesAllowSchedulingOnControlPlanes() {
+		cluster.AllowSchedulingOnControlPlanes = pointer.To(in.Options.AllowSchedulingOnControlPlanes)
 	}
 
 	if in.Options.DiscoveryEnabled != nil {

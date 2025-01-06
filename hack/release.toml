@@ -23,6 +23,13 @@ preface = """
 
 Talos is built with Go 1.23.4.
 """
+    [notes.machineconfig]
+        title = "cluster.allowSchedulingOnMasters"
+        description = """\
+The machine config field item `.cluster.allowSchedulingOnMasters` which has been deprecated since Talos 1.2 has now been removed.
+Use the `.cluster.allowSchedulingOnControlPlanes` field instead.
+"""
+
     [notes.driver-rebind]
         title = "Driver Rebind"
         description = """\

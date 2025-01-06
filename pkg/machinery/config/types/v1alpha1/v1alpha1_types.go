@@ -520,10 +520,6 @@ type ClusterConfig struct {
 	//   examples:
 	//     - value: clusterAdminKubeconfigExample()
 	AdminKubeconfigConfig *AdminKubeconfigConfig `yaml:"adminKubeconfig,omitempty"`
-	// docgen:nodoc
-	//
-	// Deprecated: Use `AllowSchedulingOnControlPlanes` instead.
-	AllowSchedulingOnMasters *bool `yaml:"allowSchedulingOnMasters,omitempty"`
 	//   description: |
 	//     Allows running workload on control-plane nodes.
 	//   values:
