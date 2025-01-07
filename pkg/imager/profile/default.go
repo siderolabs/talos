@@ -31,6 +31,14 @@ var Default = map[string]Profile{
 			OutFormat: OutFormatRaw,
 		},
 	},
+	"iso-uki": {
+		Platform:   constants.PlatformMetal,
+		SecureBoot: pointer.To(false),
+		Output: Output{
+			Kind:      OutKindISOUKI,
+			OutFormat: OutFormatRaw,
+		},
+	},
 	"secureboot-iso": {
 		Platform:   constants.PlatformMetal,
 		SecureBoot: pointer.To(true),
@@ -48,6 +56,18 @@ var Default = map[string]Profile{
 		SecureBoot: pointer.To(false),
 		Output: Output{
 			Kind:      OutKindImage,
+			OutFormat: OutFormatZSTD,
+			ImageOptions: &ImageOptions{
+				DiskSize:   MinRAWDiskSize,
+				DiskFormat: DiskFormatRaw,
+			},
+		},
+	},
+	"metal-uki": {
+		Platform:   constants.PlatformMetal,
+		SecureBoot: pointer.To(false),
+		Output: Output{
+			Kind:      OutKindImageUKI,
 			OutFormat: OutFormatZSTD,
 			ImageOptions: &ImageOptions{
 				DiskSize:   MinRAWDiskSize,

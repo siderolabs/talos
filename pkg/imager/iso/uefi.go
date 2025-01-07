@@ -15,6 +15,7 @@ import (
 	"github.com/siderolabs/go-cmd/pkg/cmd"
 	"github.com/siderolabs/go-copy/copy"
 
+	"github.com/siderolabs/talos/pkg/imager/profile"
 	"github.com/siderolabs/talos/pkg/imager/utils"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/imager/quirks"
@@ -42,6 +43,9 @@ type UEFIOptions struct {
 
 	ScratchDir string
 	OutPath    string
+
+	// Secureboot is a flag to enable secureboot.
+	Secureboot bool
 }
 
 const (
@@ -85,18 +89,6 @@ func CreateUEFI(printf func(string, ...any), options UEFIOptions) error {
 		return err
 	}
 
-	printf("preparing loader.conf")
-
-	var loaderConfigOut bytes.Buffer
-
-	if err := template.Must(template.New("loader.conf").Parse(loaderConfigTemplate)).Execute(&loaderConfigOut, struct {
-		SecureBootEnroll string
-	}{
-		SecureBootEnroll: options.SDBootSecureBootEnrollKeys,
-	}); err != nil {
-		return fmt.Errorf("error rendering loader.conf: %w", err)
-	}
-
 	printf("creating vFAT EFI image")
 
 	fopts := []makefs.Option{
@@ -116,11 +108,7 @@ func CreateUEFI(printf func(string, ...any), options UEFIOptions) error {
 		return err
 	}
 
-	if err := os.MkdirAll(filepath.Join(options.ScratchDir, "EFI/keys"), 0o755); err != nil {
-		return err
-	}
-
-	if err := os.MkdirAll(filepath.Join(options.ScratchDir, "loader/keys/auto"), 0o755); err != nil {
+	if err := os.MkdirAll(filepath.Join(options.ScratchDir, "loader"), 0o755); err != nil {
 		return err
 	}
 
@@ -138,30 +126,59 @@ func CreateUEFI(printf func(string, ...any), options UEFIOptions) error {
 		return err
 	}
 
+	// if creating a non-secureboot image, we don;t want to try to enroll keys
+	sdBootEnrollOption := profile.SDBootEnrollKeysOff.String()
+
+	if options.Secureboot {
+		sdBootEnrollOption = options.SDBootSecureBootEnrollKeys
+
+		if err := os.MkdirAll(filepath.Join(options.ScratchDir, "loader/keys/auto"), 0o755); err != nil {
+			return err
+		}
+
+		if options.UKISigningCertDerPath != "" {
+			if err := os.MkdirAll(filepath.Join(options.ScratchDir, "EFI/keys"), 0o755); err != nil {
+				return err
+			}
+
+			if err := copy.File(options.UKISigningCertDerPath, filepath.Join(options.ScratchDir, "EFI/keys/uki-signing-cert.der")); err != nil {
+				return err
+			}
+		}
+
+		if options.PlatformKeyPath != "" {
+			if err := copy.File(options.PlatformKeyPath, filepath.Join(options.ScratchDir, "loader/keys/auto", constants.PlatformKeyAsset)); err != nil {
+				return err
+			}
+		}
+
+		if options.KeyExchangeKeyPath != "" {
+			if err := copy.File(options.KeyExchangeKeyPath, filepath.Join(options.ScratchDir, "loader/keys/auto", constants.KeyExchangeKeyAsset)); err != nil {
+				return err
+			}
+		}
+
+		if options.SignatureKeyPath != "" {
+			if err := copy.File(options.SignatureKeyPath, filepath.Join(options.ScratchDir, "loader/keys/auto", constants.SignatureKeyAsset)); err != nil {
+				return err
+			}
+		}
+	}
+
+	printf("preparing loader.conf")
+
+	var loaderConfigOut bytes.Buffer
+
+	if err := template.Must(template.New("loader.conf").Parse(loaderConfigTemplate)).Execute(&loaderConfigOut, struct {
+		SecureBootEnroll string
+	}{
+		SecureBootEnroll: sdBootEnrollOption,
+	}); err != nil {
+		return fmt.Errorf("error rendering loader.conf: %w", err)
+	}
+
 	if err := os.WriteFile(filepath.Join(options.ScratchDir, "loader/loader.conf"), loaderConfigOut.Bytes(), 0o644); err != nil {
 		return err
-	}
-
-	if err := copy.File(options.UKISigningCertDerPath, filepath.Join(options.ScratchDir, "EFI/keys/uki-signing-cert.der")); err != nil {
-		return err
-	}
-
-	if options.PlatformKeyPath != "" {
-		if err := copy.File(options.PlatformKeyPath, filepath.Join(options.ScratchDir, "loader/keys/auto", constants.PlatformKeyAsset)); err != nil {
-			return err
-		}
-	}
-
-	if options.KeyExchangeKeyPath != "" {
-		if err := copy.File(options.KeyExchangeKeyPath, filepath.Join(options.ScratchDir, "loader/keys/auto", constants.KeyExchangeKeyAsset)); err != nil {
-			return err
-		}
-	}
-
-	if options.SignatureKeyPath != "" {
-		if err := copy.File(options.SignatureKeyPath, filepath.Join(options.ScratchDir, "loader/keys/auto", constants.SignatureKeyAsset)); err != nil {
-			return err
-		}
 	}
 
 	if _, err := cmd.Run(

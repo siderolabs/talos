@@ -84,15 +84,12 @@ func (i *Imager) outCmdline(path string) error {
 }
 
 //nolint:gocyclo
-func (i *Imager) outISO(ctx context.Context, path string, report *reporter.Reporter) error {
+func (i *Imager) outISOUKI(ctx context.Context, path string, report *reporter.Reporter) error {
 	printf := progressPrintf(report, reporter.Update{Message: "building ISO...", Status: reporter.StatusRunning})
 
 	scratchSpace := filepath.Join(i.tempDir, "iso")
 
-	var (
-		err                error
-		zeroContainerAsset profile.ContainerAsset
-	)
+	var zeroContainerAsset profile.ContainerAsset
 
 	if i.prof.Input.ImageCache != zeroContainerAsset {
 		if err := os.MkdirAll(filepath.Join(scratchSpace, "imagecache"), 0o755); err != nil {
@@ -104,12 +101,27 @@ func (i *Imager) outISO(ctx context.Context, path string, report *reporter.Repor
 		}
 	}
 
+	options := iso.UEFIOptions{
+		UKIPath:    i.ukiPath,
+		SDBootPath: i.sdBootPath,
+
+		Arch:    i.prof.Arch,
+		Version: i.prof.Version,
+
+		ScratchDir: scratchSpace,
+		OutPath:    path,
+
+		Secureboot: i.prof.SecureBootEnabled(),
+	}
+
 	if i.prof.SecureBootEnabled() {
 		isoOptions := pointer.SafeDeref(i.prof.Output.ISOOptions)
 
+		options.SDBootSecureBootEnrollKeys = isoOptions.SDBootEnrollKeys.String()
+
 		var signer pesign.CertificateSigner
 
-		signer, err = i.prof.Input.SecureBoot.SecureBootSigner.GetSigner(ctx)
+		signer, err := i.prof.Input.SecureBoot.SecureBootSigner.GetSigner(ctx)
 		if err != nil {
 			return fmt.Errorf("failed to get SecureBoot signer: %w", err)
 		}
@@ -120,24 +132,7 @@ func (i *Imager) outISO(ctx context.Context, path string, report *reporter.Repor
 			return fmt.Errorf("failed to write uki.der: %w", err)
 		}
 
-		options := iso.UEFIOptions{
-			UKIPath:    i.ukiPath,
-			SDBootPath: i.sdBootPath,
-
-			SDBootSecureBootEnrollKeys: isoOptions.SDBootEnrollKeys.String(),
-
-			UKISigningCertDerPath: derCrtPath,
-
-			PlatformKeyPath:    i.prof.Input.SecureBoot.PlatformKeyPath,
-			KeyExchangeKeyPath: i.prof.Input.SecureBoot.KeyExchangeKeyPath,
-			SignatureKeyPath:   i.prof.Input.SecureBoot.SignatureKeyPath,
-
-			Arch:    i.prof.Arch,
-			Version: i.prof.Version,
-
-			ScratchDir: scratchSpace,
-			OutPath:    path,
-		}
+		options.UKISigningCertDerPath = derCrtPath
 
 		if i.prof.Input.SecureBoot.PlatformKeyPath == "" {
 			report.Report(reporter.Update{Message: "generating SecureBoot database...", Status: reporter.StatusRunning})
@@ -178,21 +173,43 @@ func (i *Imager) outISO(ctx context.Context, path string, report *reporter.Repor
 			options.KeyExchangeKeyPath = i.prof.Input.SecureBoot.KeyExchangeKeyPath
 			options.SignatureKeyPath = i.prof.Input.SecureBoot.SignatureKeyPath
 		}
-
-		err = iso.CreateUEFI(printf, options)
-	} else {
-		err = iso.CreateGRUB(printf, iso.GRUBOptions{
-			KernelPath:    i.prof.Input.Kernel.Path,
-			InitramfsPath: i.initramfsPath,
-			Cmdline:       i.cmdline,
-			Version:       i.prof.Version,
-
-			ScratchDir: scratchSpace,
-			OutPath:    path,
-		})
 	}
 
-	if err != nil {
+	if err := iso.CreateUEFI(printf, options); err != nil {
+		return fmt.Errorf("failed to create UEFI ISO: %w", err)
+	}
+
+	report.Report(reporter.Update{Message: "ISO ready", Status: reporter.StatusSucceeded})
+
+	return nil
+}
+
+func (i *Imager) outISO(ctx context.Context, path string, report *reporter.Reporter) error {
+	printf := progressPrintf(report, reporter.Update{Message: "building legacy ISO...", Status: reporter.StatusRunning})
+
+	scratchSpace := filepath.Join(i.tempDir, "iso")
+
+	var zeroContainerAsset profile.ContainerAsset
+
+	if i.prof.Input.ImageCache != zeroContainerAsset {
+		if err := os.MkdirAll(filepath.Join(scratchSpace, "imagecache"), 0o755); err != nil {
+			return err
+		}
+
+		if err := i.prof.Input.ImageCache.Extract(ctx, filepath.Join(scratchSpace, "imagecache"), i.prof.Arch, printf); err != nil {
+			return err
+		}
+	}
+
+	if err := iso.CreateGRUB(printf, iso.GRUBOptions{
+		KernelPath:    i.prof.Input.Kernel.Path,
+		InitramfsPath: i.initramfsPath,
+		Cmdline:       i.cmdline,
+		Version:       i.prof.Version,
+
+		ScratchDir: scratchSpace,
+		OutPath:    path,
+	}); err != nil {
 		return err
 	}
 

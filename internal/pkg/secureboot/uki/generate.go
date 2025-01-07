@@ -185,10 +185,14 @@ func (builder *Builder) generatePCRPublicKey() error {
 }
 
 func (builder *Builder) generateKernel() error {
-	path := filepath.Join(builder.scratchDir, "kernel")
+	path := builder.KernelPath
 
-	if err := builder.peSigner.Sign(builder.KernelPath, path); err != nil {
-		return err
+	if builder.peSigner != nil {
+		path = filepath.Join(builder.scratchDir, "kernel")
+
+		if err := builder.peSigner.Sign(builder.KernelPath, path); err != nil {
+			return err
+		}
 	}
 
 	builder.sections = append(builder.sections,

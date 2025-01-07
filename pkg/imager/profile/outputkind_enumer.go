@@ -7,11 +7,11 @@ import (
 	"strings"
 )
 
-const _OutputKindName = "unknownisoimageinstallerkernelinitramfsukicmdline"
+const _OutputKindName = "unknownisoimageinstallerkernelinitramfsukicmdlineiso-legacy"
 
-var _OutputKindIndex = [...]uint8{0, 7, 10, 15, 24, 30, 39, 42, 49}
+var _OutputKindIndex = [...]uint8{0, 7, 10, 15, 24, 30, 39, 42, 49, 59}
 
-const _OutputKindLowerName = "unknownisoimageinstallerkernelinitramfsukicmdline"
+const _OutputKindLowerName = "unknownisoimageinstallerkernelinitramfsukicmdlineiso-legacy"
 
 func (i OutputKind) String() string {
 	if i < 0 || i >= OutputKind(len(_OutputKindIndex)-1) {
@@ -32,9 +32,10 @@ func _OutputKindNoOp() {
 	_ = x[OutKindInitramfs-(5)]
 	_ = x[OutKindUKI-(6)]
 	_ = x[OutKindCmdline-(7)]
+	_ = x[OutKindISOUKI-(8)]
 }
 
-var _OutputKindValues = []OutputKind{OutKindUnknown, OutKindISO, OutKindImage, OutKindInstaller, OutKindKernel, OutKindInitramfs, OutKindUKI, OutKindCmdline}
+var _OutputKindValues = []OutputKind{OutKindUnknown, OutKindISO, OutKindImage, OutKindInstaller, OutKindKernel, OutKindInitramfs, OutKindUKI, OutKindCmdline, OutKindISOUKI}
 
 var _OutputKindNameToValueMap = map[string]OutputKind{
 	_OutputKindName[0:7]:        OutKindUnknown,
@@ -53,6 +54,8 @@ var _OutputKindNameToValueMap = map[string]OutputKind{
 	_OutputKindLowerName[39:42]: OutKindUKI,
 	_OutputKindName[42:49]:      OutKindCmdline,
 	_OutputKindLowerName[42:49]: OutKindCmdline,
+	_OutputKindName[49:59]:      OutKindISOUKI,
+	_OutputKindLowerName[49:59]: OutKindISOUKI,
 }
 
 var _OutputKindNames = []string{
@@ -64,6 +67,7 @@ var _OutputKindNames = []string{
 	_OutputKindName[30:39],
 	_OutputKindName[39:42],
 	_OutputKindName[42:49],
+	_OutputKindName[49:59],
 }
 
 // OutputKindString retrieves an enum value from the enum constants string name.

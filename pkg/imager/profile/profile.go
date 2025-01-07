@@ -94,7 +94,7 @@ func (p *Profile) Validate() error {
 	switch p.Output.Kind {
 	case OutKindUnknown:
 		return errors.New("unknown output kind")
-	case OutKindISO:
+	case OutKindISO, OutKindISOUKI:
 		// ISO supports all kinds of customization
 	case OutKindCmdline:
 		// cmdline supports all kinds of customization
@@ -124,9 +124,6 @@ func (p *Profile) Validate() error {
 			return fmt.Errorf("customization of meta partition is not supported for %s output", p.Output.Kind)
 		}
 	case OutKindUKI:
-		if !p.SecureBootEnabled() {
-			return fmt.Errorf("!secureboot is not supported for %s output", p.Output.Kind)
-		}
 	}
 
 	return nil
@@ -153,6 +150,8 @@ func (p *Profile) OutputPath() string {
 		panic("unknown output kind")
 	case OutKindISO:
 		path += ".iso"
+	case OutKindISOUKI:
+		path += "-legacy.iso"
 	case OutKindImage:
 		path += "." + p.Output.ImageOptions.DiskFormat.String()
 	case OutKindInstaller:

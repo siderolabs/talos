@@ -60,6 +60,8 @@ const (
 	OutKindInitramfs                   // initramfs
 	OutKindUKI                         // uki
 	OutKindCmdline                     // cmdline
+	OutKindISOUKI                      // iso-uki
+	OutKindImageUKI                    // image-uki
 )
 
 // OutFormat is output format specification.

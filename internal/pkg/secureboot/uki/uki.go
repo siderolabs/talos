@@ -10,6 +10,8 @@ import (
 	"log"
 	"os"
 
+	"github.com/siderolabs/go-copy/copy"
+
 	"github.com/siderolabs/talos/internal/pkg/secureboot"
 	"github.com/siderolabs/talos/internal/pkg/secureboot/measure"
 	"github.com/siderolabs/talos/internal/pkg/secureboot/pesign"
@@ -67,14 +69,14 @@ type Builder struct {
 	unsignedUKIPath string
 }
 
-// Build the UKI file.
+// BuildSignedUKI builds the signed UKI file.
 //
-// Build process is as follows:
+// BuildSignedUKI process is as follows:
 //   - sign the sd-boot EFI binary, and write it to the OutSdBootPath
 //   - build ephemeral sections (uname, os-release), and other proposed sections
 //   - measure sections, generate signature, and append to the list of sections
 //   - assemble the final UKI file starting from sd-stub and appending generated section.
-func (builder *Builder) Build(printf func(string, ...any)) error {
+func (builder *Builder) BuildSignedUKI(printf func(string, ...any)) error {
 	var err error
 
 	builder.scratchDir, err = os.MkdirTemp("", "talos-uki")
@@ -132,4 +134,59 @@ func (builder *Builder) Build(printf func(string, ...any)) error {
 
 	// sign the UKI file
 	return builder.peSigner.Sign(builder.unsignedUKIPath, builder.OutUKIPath)
+}
+
+// Build the unsigned UKI file.
+//
+// Build process is as follows:
+//   - build ephemeral sections (uname, os-release), and other proposed sections
+//   - assemble the final UKI file starting from sd-stub and appending generated section.
+func (builder *Builder) Build(printf func(string, ...any)) error {
+	var err error
+
+	builder.scratchDir, err = os.MkdirTemp("", "talos-uki")
+	if err != nil {
+		return err
+	}
+
+	defer func() {
+		if err = os.RemoveAll(builder.scratchDir); err != nil {
+			log.Printf("failed to remove scratch dir: %v", err)
+		}
+	}()
+
+	if err := copy.File(builder.SdBootPath, builder.OutSdBootPath); err != nil {
+		return err
+	}
+
+	printf("generating UKI sections")
+
+	// generate and build list of all sections
+	for _, generateSection := range []func() error{
+		builder.generateOSRel,
+		builder.generateCmdline,
+		builder.generateInitrd,
+		builder.generateSplash,
+		builder.generateUname,
+		builder.generateSBAT,
+		// append kernel last to account for decompression
+		builder.generateKernel,
+	} {
+		if err = generateSection(); err != nil {
+			return fmt.Errorf("error generating sections: %w", err)
+		}
+	}
+
+	printf("assembling UKI")
+
+	// assemble the final UKI file
+	if err = builder.assemble(); err != nil {
+		return fmt.Errorf("error assembling UKI: %w", err)
+	}
+
+	if err := copy.File(builder.unsignedUKIPath, builder.OutUKIPath); err != nil {
+		return err
+	}
+
+	return nil
 }

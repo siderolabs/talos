@@ -98,17 +98,17 @@ func (i *Imager) Execute(ctx context.Context, outputPath string, report *reporte
 		return "", err
 	}
 
-	report.Report(reporter.Update{
-		Message: fmt.Sprintf("kernel command line: %s", i.cmdline),
-		Status:  reporter.StatusSucceeded,
-	})
-
-	// 4. Build UKI if Secure Boot is enabled.
-	if i.prof.SecureBootEnabled() {
+	// 4. Build UKI unless the output is a kernel or cmdline.
+	if i.prof.Output.Kind != profile.OutKindKernel && i.prof.Output.Kind != profile.OutKindCmdline {
 		if err = i.buildUKI(ctx, report); err != nil {
 			return "", err
 		}
 	}
+
+	report.Report(reporter.Update{
+		Message: fmt.Sprintf("kernel command line: %s", i.cmdline),
+		Status:  reporter.StatusSucceeded,
+	})
 
 	// 5. Build the output.
 	outputAssetPath = filepath.Join(outputPath, i.prof.OutputPath())
@@ -116,6 +116,8 @@ func (i *Imager) Execute(ctx context.Context, outputPath string, report *reporte
 	switch i.prof.Output.Kind {
 	case profile.OutKindISO:
 		err = i.outISO(ctx, outputAssetPath, report)
+	case profile.OutKindISOUKI:
+		err = i.outISOUKI(ctx, outputAssetPath, report)
 	case profile.OutKindKernel:
 		err = i.outKernel(outputAssetPath, report)
 	case profile.OutKindUKI:
@@ -406,17 +408,12 @@ func (i *Imager) buildCmdline() error {
 func (i *Imager) buildUKI(ctx context.Context, report *reporter.Reporter) error {
 	printf := progressPrintf(report, reporter.Update{Message: "building UKI...", Status: reporter.StatusRunning})
 
-	i.sdBootPath = filepath.Join(i.tempDir, "systemd-boot.efi.signed")
-	i.ukiPath = filepath.Join(i.tempDir, "vmlinuz.efi.signed")
+	i.sdBootPath = filepath.Join(i.tempDir, "systemd-boot.efi")
+	i.ukiPath = filepath.Join(i.tempDir, "vmlinuz.efi")
 
-	pcrSigner, err := i.prof.Input.SecureBoot.PCRSigner.GetSigner(ctx)
-	if err != nil {
-		return fmt.Errorf("failed to get PCR signer: %w", err)
-	}
-
-	securebootSigner, err := i.prof.Input.SecureBoot.SecureBootSigner.GetSigner(ctx)
-	if err != nil {
-		return fmt.Errorf("failed to get SecureBoot signer: %w", err)
+	if i.prof.SecureBootEnabled() {
+		i.sdBootPath = filepath.Join(i.tempDir, "systemd-boot.efi.signed")
+		i.ukiPath = filepath.Join(i.tempDir, "vmlinuz.efi.signed")
 	}
 
 	builder := uki.Builder{
@@ -428,14 +425,32 @@ func (i *Imager) buildUKI(ctx context.Context, report *reporter.Reporter) error 
 		InitrdPath: i.initramfsPath,
 		Cmdline:    i.cmdline,
 
-		SecureBootSigner: securebootSigner,
-		PCRSigner:        pcrSigner,
-
 		OutSdBootPath: i.sdBootPath,
 		OutUKIPath:    i.ukiPath,
 	}
 
-	if err := builder.Build(printf); err != nil {
+	if i.prof.SecureBootEnabled() {
+		pcrSigner, err := i.prof.Input.SecureBoot.PCRSigner.GetSigner(ctx)
+		if err != nil {
+			return fmt.Errorf("failed to get PCR signer: %w", err)
+		}
+
+		securebootSigner, err := i.prof.Input.SecureBoot.SecureBootSigner.GetSigner(ctx)
+		if err != nil {
+			return fmt.Errorf("failed to get SecureBoot signer: %w", err)
+		}
+
+		builder.PCRSigner = pcrSigner
+		builder.SecureBootSigner = securebootSigner
+	}
+
+	buildFunc := builder.Build
+
+	if i.prof.SecureBootEnabled() {
+		buildFunc = builder.BuildSignedUKI
+	}
+
+	if err := buildFunc(printf); err != nil {
 		return err
 	}
 
