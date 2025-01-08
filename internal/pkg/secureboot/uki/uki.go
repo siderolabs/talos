@@ -10,26 +10,13 @@ import (
 	"log"
 	"os"
 
-	"github.com/siderolabs/talos/internal/pkg/secureboot"
 	"github.com/siderolabs/talos/internal/pkg/secureboot/measure"
 	"github.com/siderolabs/talos/internal/pkg/secureboot/pesign"
+	"github.com/siderolabs/talos/internal/pkg/secureboot/uki/internal/pe"
 	"github.com/siderolabs/talos/pkg/imager/utils"
 )
 
-// section is a UKI file section.
-type section struct {
-	// Section name.
-	Name secureboot.Section
-	// Path to the contents of the section.
-	Path string
-	// Should the section be measured to the TPM?
-	Measure bool
-	// Should the section be appended, or is it already in the PE file.
-	Append bool
-	// Size & VMA of the section.
-	Size uint64
-	VMA  uint64
-}
+type section = pe.Section
 
 // Builder is a UKI file builder.
 type Builder struct {

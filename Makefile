@@ -139,8 +139,6 @@ INSTALLER_ONLY_PKGS ?= \
     zstd
 
 IMAGER_EXTRA_PKGS ?= \
-    binutils-aarch64 \
-    binutils-x86_64 \
     dosfstools \
     e2fsprogs \
     mtools \
@@ -460,7 +458,7 @@ secureboot-iso: image-secureboot-iso ## Builds UEFI only ISO which uses UKI and 
 
 .PHONY: secureboot-installer
 secureboot-installer: ## Builds UEFI only installer which uses UKI and push it to the registry.
-	@$(MAKE) image-secureboot-installer IMAGER_ARGS="--base-installer-image $(REGISTRY_AND_USERNAME)/installer:$(IMAGE_TAG)"
+	@$(MAKE) image-secureboot-installer IMAGER_ARGS="--base-installer-image $(REGISTRY_AND_USERNAME)/installer:$(IMAGE_TAG) $(IMAGER_ARGS)"
 	@for platform in $(subst $(,),$(space),$(PLATFORM)); do \
 		arch=$$(basename "$${platform}") && \
 		crane push $(ARTIFACTS)/installer-$${arch}-secureboot.tar $(REGISTRY_AND_USERNAME)/installer:$(IMAGE_TAG)-$${arch}-secureboot ; \
