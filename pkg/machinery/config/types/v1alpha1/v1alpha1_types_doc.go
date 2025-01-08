@@ -527,6 +527,7 @@ func (ClusterConfig) Doc() *encoder.Doc {
 				Description: "Settings for admin kubeconfig generation.\nCertificate lifetime can be configured.",
 				Comments:    [3]string{"" /* encoder.HeadComment */, "Settings for admin kubeconfig generation." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
+			{},
 			{
 				Name:        "allowSchedulingOnControlPlanes",
 				Type:        "bool",
@@ -571,7 +572,7 @@ func (ClusterConfig) Doc() *encoder.Doc {
 	})
 	doc.Fields[22].AddExample("", clusterInlineManifestsExample())
 	doc.Fields[23].AddExample("", clusterAdminKubeconfigExample())
-	doc.Fields[24].AddExample("", true)
+	doc.Fields[25].AddExample("", true)
 
 	return doc
 }

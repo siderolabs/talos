@@ -341,7 +341,11 @@ func (in *ClusterConfig) DeepCopyInto(out *ClusterConfig) {
 		*out = new(AdminKubeconfigConfig)
 		**out = **in
 	}
-
+	if in.AllowSchedulingOnMasters != nil {
+		in, out := &in.AllowSchedulingOnMasters, &out.AllowSchedulingOnMasters
+		*out = new(bool)
+		**out = **in
+	}
 	if in.AllowSchedulingOnControlPlanes != nil {
 		in, out := &in.AllowSchedulingOnControlPlanes, &out.AllowSchedulingOnControlPlanes
 		*out = new(bool)
