@@ -111,12 +111,12 @@ func (d *DHCP4) knownHostname(hostname network.HostnameStatusSpec) bool {
 // be assigned to the associated so that unicast operations can bind successfully.
 func (d *DHCP4) waitForNetworkReady(ctx context.Context) error {
 	// If an IP address has been registered, wait for the address association to be ready
-	if len(d.addresses) > 0 {
+	if addresses := d.AddressSpecs(); len(addresses) > 0 {
 		_, err := d.state.WatchFor(ctx,
 			resource.NewMetadata(
 				network.NamespaceName,
 				network.AddressStatusType,
-				network.AddressID(d.linkName, d.addresses[0].Address),
+				network.AddressID(d.linkName, addresses[0].Address),
 				resource.VersionUndefined,
 			),
 			state.WithPhases(resource.PhaseRunning),
@@ -159,7 +159,7 @@ func (d *DHCP4) Run(ctx context.Context, notifyCh chan<- struct{}) {
 		// Perform a lease request or renewal
 		leaseTime, err := d.requestRenew(ctx, hostname)
 		if err != nil && !errors.Is(err, context.Canceled) {
-			d.logger.Warn("request/renew failed", zap.Error(err), zap.String("link", d.linkName))
+			d.logger.Warn("DHCP request/renew failed", zap.Error(err), zap.String("link", d.linkName))
 		}
 
 		if err == nil {
@@ -235,7 +235,7 @@ func (d *DHCP4) Run(ctx context.Context, notifyCh chan<- struct{}) {
 				d.lease = nil
 
 				d.logger.Debug("restarting DHCP sequence due to hostname change",
-					zap.Strings("dhcp_hostname", xslices.Map(d.hostname, func(spec network.HostnameSpecSpec) string {
+					zap.Strings("dhcp_hostname", xslices.Map(d.HostnameSpecs(), func(spec network.HostnameSpecSpec) string {
 						return spec.Hostname
 					})),
 				)
@@ -532,6 +532,8 @@ func (d *DHCP4) requestRenew(ctx context.Context, hostname network.HostnameStatu
 	//nolint:errcheck
 	defer client.Close()
 
+	addresses := d.AddressSpecs()
+
 	switch {
 	case d.lease != nil && !d.lease.ACK.ServerIPAddr.IsUnspecified():
 		d.logger.Debug("DHCP RENEW", zap.String("link", d.linkName))
@@ -539,6 +541,14 @@ func (d *DHCP4) requestRenew(ctx context.Context, hostname network.HostnameStatu
 	case d.lease != nil && d.lease.Offer != nil:
 		d.logger.Debug("DHCP REQUEST FROM OFFER", zap.String("link", d.linkName))
 		d.lease, err = client.RequestFromOffer(ctx, d.lease.Offer, mods...)
+	case len(addresses) >= 1:
+		previousIPAddress := net.IP(addresses[0].Address.Addr().AsSlice())
+
+		d.logger.Debug("DHCP REQUEST with previous IP", zap.String("link", d.linkName), zap.Stringer("previous_ip", previousIPAddress))
+
+		d.lease, err = client.Request(ctx, dhcpv4.PrependModifiers(mods,
+			dhcpv4.WithOption(dhcpv4.OptRequestedIPAddress(previousIPAddress)),
+		)...)
 	default:
 		d.logger.Debug("DHCP REQUEST", zap.String("link", d.linkName))
 		d.lease, err = client.Request(ctx, mods...)
