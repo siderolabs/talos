@@ -35,6 +35,7 @@ type ClusterRequest struct {
 	InitramfsPath  string
 	ISOPath        string
 	USBPath        string
+	UKIPath        string
 	DiskImagePath  string
 	IPXEBootScript string
 

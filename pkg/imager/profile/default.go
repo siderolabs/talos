@@ -55,6 +55,22 @@ var Default = map[string]Profile{
 			},
 		},
 	},
+	"metal-uki": {
+		Platform:   constants.PlatformMetal,
+		SecureBoot: pointer.To(false),
+		Output: Output{
+			Kind:      OutKindUKI,
+			OutFormat: OutFormatRaw,
+		},
+	},
+	"secureboot-metal-uki": {
+		Platform:   constants.PlatformMetal,
+		SecureBoot: pointer.To(true),
+		Output: Output{
+			Kind:      OutKindUKI,
+			OutFormat: OutFormatRaw,
+		},
+	},
 	"secureboot-metal": {
 		Platform:   constants.PlatformMetal,
 		SecureBoot: pointer.To(true),

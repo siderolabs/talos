@@ -124,9 +124,6 @@ func (p *Profile) Validate() error {
 			return fmt.Errorf("customization of meta partition is not supported for %s output", p.Output.Kind)
 		}
 	case OutKindUKI:
-		if !p.SecureBootEnabled() {
-			return fmt.Errorf("!secureboot is not supported for %s output", p.Output.Kind)
-		}
 	}
 
 	return nil

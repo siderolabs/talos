@@ -209,15 +209,15 @@ func (i *Input) FillDefaults(arch, version string, secureboot bool) {
 		i.BaseInstaller.ImageRef = fmt.Sprintf("%s:%s", images.DefaultInstallerImageRepository, version)
 	}
 
+	if i.SDStub == zeroFileAsset {
+		i.SDStub.Path = fmt.Sprintf(constants.SDStubAssetPath, arch)
+	}
+
+	if i.SDBoot == zeroFileAsset {
+		i.SDBoot.Path = fmt.Sprintf(constants.SDBootAssetPath, arch)
+	}
+
 	if secureboot {
-		if i.SDStub == zeroFileAsset {
-			i.SDStub.Path = fmt.Sprintf(constants.SDStubAssetPath, arch)
-		}
-
-		if i.SDBoot == zeroFileAsset {
-			i.SDBoot.Path = fmt.Sprintf(constants.SDBootAssetPath, arch)
-		}
-
 		if i.SecureBoot == nil {
 			i.SecureBoot = &SecureBootAssets{}
 		}

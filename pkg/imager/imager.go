@@ -103,8 +103,8 @@ func (i *Imager) Execute(ctx context.Context, outputPath string, report *reporte
 		Status:  reporter.StatusSucceeded,
 	})
 
-	// 4. Build UKI if Secure Boot is enabled.
-	if i.prof.SecureBootEnabled() {
+	// 4. Build UKI unless the output is a kernel or cmdline.
+	if i.prof.Output.Kind != profile.OutKindKernel && i.prof.Output.Kind != profile.OutKindCmdline {
 		if err = i.buildUKI(ctx, report); err != nil {
 			return "", err
 		}
@@ -406,18 +406,8 @@ func (i *Imager) buildCmdline() error {
 func (i *Imager) buildUKI(ctx context.Context, report *reporter.Reporter) error {
 	printf := progressPrintf(report, reporter.Update{Message: "building UKI...", Status: reporter.StatusRunning})
 
-	i.sdBootPath = filepath.Join(i.tempDir, "systemd-boot.efi.signed")
-	i.ukiPath = filepath.Join(i.tempDir, "vmlinuz.efi.signed")
-
-	pcrSigner, err := i.prof.Input.SecureBoot.PCRSigner.GetSigner(ctx)
-	if err != nil {
-		return fmt.Errorf("failed to get PCR signer: %w", err)
-	}
-
-	securebootSigner, err := i.prof.Input.SecureBoot.SecureBootSigner.GetSigner(ctx)
-	if err != nil {
-		return fmt.Errorf("failed to get SecureBoot signer: %w", err)
-	}
+	i.sdBootPath = filepath.Join(i.tempDir, "systemd-boot.efi")
+	i.ukiPath = filepath.Join(i.tempDir, "vmlinuz.efi")
 
 	builder := uki.Builder{
 		Arch:       i.prof.Arch,
@@ -428,14 +418,36 @@ func (i *Imager) buildUKI(ctx context.Context, report *reporter.Reporter) error 
 		InitrdPath: i.initramfsPath,
 		Cmdline:    i.cmdline,
 
-		SecureBootSigner: securebootSigner,
-		PCRSigner:        pcrSigner,
-
 		OutSdBootPath: i.sdBootPath,
 		OutUKIPath:    i.ukiPath,
 	}
 
-	if err := builder.Build(printf); err != nil {
+	buildFunc := builder.Build
+
+	if i.prof.SecureBootEnabled() {
+		i.sdBootPath = filepath.Join(i.tempDir, "systemd-boot.efi.signed")
+		i.ukiPath = filepath.Join(i.tempDir, "vmlinuz.efi.signed")
+
+		builder.OutSdBootPath = i.sdBootPath
+		builder.OutUKIPath = i.ukiPath
+
+		pcrSigner, err := i.prof.Input.SecureBoot.PCRSigner.GetSigner(ctx)
+		if err != nil {
+			return fmt.Errorf("failed to get PCR signer: %w", err)
+		}
+
+		securebootSigner, err := i.prof.Input.SecureBoot.SecureBootSigner.GetSigner(ctx)
+		if err != nil {
+			return fmt.Errorf("failed to get SecureBoot signer: %w", err)
+		}
+
+		builder.SecureBootSigner = securebootSigner
+		builder.PCRSigner = pcrSigner
+
+		buildFunc = builder.BuildSigned
+	}
+
+	if err := buildFunc(printf); err != nil {
 		return err
 	}
 

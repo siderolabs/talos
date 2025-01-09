@@ -49,6 +49,7 @@ type LaunchConfig struct {
 	InitrdPath        string
 	ISOPath           string
 	USBPath           string
+	UKIPath           string
 	ExtraISOPath      string
 	PFlashImages      []string
 	KernelArgs        string
@@ -467,6 +468,11 @@ func launchVM(config *LaunchConfig) error {
 				"-drive", fmt.Sprintf("if=none,id=stick,format=raw,read-only=on,file=%s", config.USBPath),
 				"-device", "nec-usb-xhci,id=xhci",
 				"-device", "usb-storage,bus=xhci.0,drive=stick,removable=on",
+			)
+		case config.UKIPath != "":
+			args = append(args,
+				"-kernel", config.UKIPath,
+				"-append", config.KernelArgs,
 			)
 		case config.KernelImagePath != "":
 			args = append(args,

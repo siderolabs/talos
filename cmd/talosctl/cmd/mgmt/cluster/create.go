@@ -122,6 +122,7 @@ var (
 	nodeInitramfsPath         string
 	nodeISOPath               string
 	nodeUSBPath               string
+	nodeUKIPath               string
 	nodeDiskImagePath         string
 	nodeIPXEBootScript        string
 	applyConfigEnabled        bool
@@ -230,6 +231,9 @@ func downloadBootAssets(ctx context.Context) error {
 		},
 		{
 			path: &nodeUSBPath,
+		},
+		{
+			path: &nodeUKIPath,
 		},
 		{
 			path: &nodeDiskImagePath,
@@ -471,6 +475,7 @@ func create(ctx context.Context) error {
 		InitramfsPath:  nodeInitramfsPath,
 		ISOPath:        nodeISOPath,
 		USBPath:        nodeUSBPath,
+		UKIPath:        nodeUKIPath,
 		IPXEBootScript: nodeIPXEBootScript,
 		DiskImagePath:  nodeDiskImagePath,
 
@@ -1255,6 +1260,7 @@ func init() {
 	createCmd.Flags().StringVar(&nodeVmlinuzPath, "vmlinuz-path", helpers.ArtifactPath(constants.KernelAssetWithArch), "the compressed kernel image to use")
 	createCmd.Flags().StringVar(&nodeISOPath, "iso-path", "", "the ISO path to use for the initial boot (VM only)")
 	createCmd.Flags().StringVar(&nodeUSBPath, "usb-path", "", "the USB stick image path to use for the initial boot (VM only)")
+	createCmd.Flags().StringVar(&nodeUKIPath, "uki-path", "", "the UKI image path to use for the initial boot (VM only)")
 	createCmd.Flags().StringVar(&nodeInitramfsPath, "initrd-path", helpers.ArtifactPath(constants.InitramfsAssetWithArch), "initramfs image to use")
 	createCmd.Flags().StringVar(&nodeDiskImagePath, "disk-image-path", "", "disk image to use")
 	createCmd.Flags().StringVar(&nodeIPXEBootScript, "ipxe-boot-script", "", "iPXE boot script (URL) to use")
