@@ -63,3 +63,21 @@ NODE         NAMESPACE   ID                                                     
 172.20.0.5   k8s.io      kube-system/kube-proxy-xp7jq                                    registry.k8s.io/pause:3.8                                  1780   SANDBOX_READY
 172.20.0.5   k8s.io      └─ kube-system/kube-proxy-xp7jq:kube-proxy:84fc77c59e17         registry.k8s.io/kube-proxy:v1.26.0-alpha.3                 1843   CONTAINER_RUNNING
 ```
+
+### Enabling NRI Plugins
+
+By default, Talos disables [NRI](https://github.com/containerd/containerd/blob/main/docs/NRI.md) plugins in `containerd`, as they might have security implications.
+However, if you need to enable them, you can do so by adding the following configuration:
+
+```yaml
+machine:
+  files:
+    - content: |
+        [plugins]
+          [plugins."io.containerd.nri.v1.nri"]
+             disable = false
+      path: /etc/cri/conf.d/20-customization.part
+      op: create
+```
+
+After applying the configuration, the NRI plugins can be deployed, for example plugins from [this repository](https://containers.github.io/nri-plugins/stable/docs/index.html).

@@ -5,3 +5,6 @@ version = 3
 
 [plugins."io.containerd.cri.v1.runtime".containerd.runtimes.runc]
   base_runtime_spec = "/etc/cri/conf.d/base-spec.json"
+
+[plugins."io.containerd.nri.v1.nri"]
+  disable = true

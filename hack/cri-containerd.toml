@@ -1,7 +1,6 @@
 version = 3
 
 disabled_plugins = [
-    "io.containerd.nri.v1.nri",
     "io.containerd.internal.v1.tracing",
     "io.containerd.snapshotter.v1.blockfile",
     "io.containerd.tracing.processor.v1.otlp",
