@@ -158,6 +158,7 @@ talosctl cluster create [flags]
       --custom-cni-url string                    install custom CNI from the URL (Talos cluster)
       --disable-dhcp-hostname                    skip announcing hostname via DHCP (QEMU only)
       --disk int                                 default limit on disk size in MB (each VM) (default 6144)
+      --disk-block-size uint                     disk block size (VM only) (default 512)
       --disk-encryption-key-types stringArray    encryption key types to use for disk encryption (uuid, kms) (default [uuid])
       --disk-image-path string                   disk image to use
       --disk-preallocate                         whether disk space should be preallocated (default true)

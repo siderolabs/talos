@@ -164,6 +164,8 @@ type Disk struct {
 	//
 	// Supported types: "virtio", "ide", "ahci", "scsi", "nvme".
 	Driver string
+	// Block size for the disk, defaults to 512 if not set.
+	BlockSize uint
 }
 
 // ConfigInjectionMethod describes how to inject configuration into the node.
