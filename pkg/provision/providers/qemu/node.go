@@ -137,8 +137,12 @@ func (p *provisioner) createNode(state *vm.State, clusterReq provision.ClusterRe
 		defaultBootOrder = nodeReq.DefaultBootOrder
 	}
 
-	// backwards compatibility, set Driver if not set
+	// backwards compatibility, set Driver/BlockSize if not set
 	for i := range nodeReq.Disks {
+		if nodeReq.Disks[i].BlockSize == 0 {
+			nodeReq.Disks[i].BlockSize = 512
+		}
+
 		if nodeReq.Disks[i].Driver != "" {
 			continue
 		}
@@ -155,6 +159,9 @@ func (p *provisioner) createNode(state *vm.State, clusterReq provision.ClusterRe
 		DiskPaths:        diskPaths,
 		DiskDrivers: xslices.Map(nodeReq.Disks, func(disk *provision.Disk) string {
 			return disk.Driver
+		}),
+		DiskBlockSizes: xslices.Map(nodeReq.Disks, func(disk *provision.Disk) uint {
+			return disk.BlockSize
 		}),
 		VCPUCount:         vcpuCount,
 		MemSize:           memSize,

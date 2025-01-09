@@ -146,6 +146,7 @@ var (
 	workersMemory             int
 	clusterDiskSize           int
 	clusterDiskPreallocate    bool
+	diskBlockSize             uint
 	clusterDisks              []string
 	extraDisks                int
 	extraDiskSize             int
@@ -955,6 +956,7 @@ func create(ctx context.Context) error {
 			Size:            uint64(extraDiskSize) * 1024 * 1024,
 			SkipPreallocate: !clusterDiskPreallocate,
 			Driver:          driver,
+			BlockSize:       diskBlockSize,
 		})
 	}
 
@@ -1181,6 +1183,7 @@ func getDisks() ([]*provision.Disk, error) {
 			Size:            uint64(clusterDiskSize) * 1024 * 1024,
 			SkipPreallocate: !clusterDiskPreallocate,
 			Driver:          "virtio",
+			BlockSize:       diskBlockSize,
 		},
 	}
 
@@ -1229,6 +1232,7 @@ func getDisks() ([]*provision.Disk, error) {
 			Partitions:      diskPartitions,
 			SkipPreallocate: !clusterDiskPreallocate,
 			Driver:          "ide",
+			BlockSize:       diskBlockSize,
 		})
 	}
 
@@ -1281,6 +1285,7 @@ func init() {
 	createCmd.Flags().IntVar(&controlPlaneMemory, "memory", 2048, "the limit on memory usage in MB (each control plane/VM)")
 	createCmd.Flags().IntVar(&workersMemory, "memory-workers", 2048, "the limit on memory usage in MB (each worker/VM)")
 	createCmd.Flags().IntVar(&clusterDiskSize, clusterDiskSizeFlag, 6*1024, "default limit on disk size in MB (each VM)")
+	createCmd.Flags().UintVar(&diskBlockSize, "disk-block-size", 512, "disk block size (VM only)")
 	createCmd.Flags().BoolVar(&clusterDiskPreallocate, clusterDiskPreallocateFlag, true, "whether disk space should be preallocated")
 	createCmd.Flags().StringSliceVar(&clusterDisks, clusterDisksFlag, []string{}, "list of disks to create for each VM in format: <mount_point1>:<size1>:<mount_point2>:<size2>")
 	createCmd.Flags().IntVar(&extraDisks, "extra-disks", 0, "number of extra disks to create for each worker VM")
