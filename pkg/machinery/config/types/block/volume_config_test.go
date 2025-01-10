@@ -184,10 +184,12 @@ func TestVolumeConfigMerge(t *testing.T) {
 	c2.MetaName = constants.EphemeralPartitionLabel
 
 	require.NoError(t, c2.ProvisioningSpec.DiskSelectorSpec.Match.UnmarshalText([]byte(`disk.size > 150`)))
+	require.NoError(t, c2.ProvisioningSpec.ProvisioningMaxSize.UnmarshalText([]byte("2.5TiB")))
 
 	require.NoError(t, merge.Merge(c1, c2))
 
 	assert.Equal(t, c1.ProvisioningSpec.DiskSelectorSpec.Match, c2.ProvisioningSpec.DiskSelectorSpec.Match)
+	assert.Equal(t, c1.ProvisioningSpec.ProvisioningMaxSize, c2.ProvisioningSpec.ProvisioningMaxSize)
 }
 
 type validationMode struct{}

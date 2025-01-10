@@ -6,6 +6,7 @@ package block
 
 import (
 	"encoding"
+	"fmt"
 	"slices"
 	"strconv"
 
@@ -79,4 +80,17 @@ func (bs *ByteSize) UnmarshalText(text []byte) error {
 // IsZero implements yaml.IsZeroer.
 func (bs ByteSize) IsZero() bool {
 	return bs.value == nil && bs.raw == nil
+}
+
+// Merge implements merger interface.
+func (bs *ByteSize) Merge(other any) error {
+	otherBS, ok := other.(ByteSize)
+	if !ok {
+		return fmt.Errorf("cannot merge %T with %T", bs, other)
+	}
+
+	bs.raw = otherBS.raw
+	bs.value = otherBS.value
+
+	return nil
 }
