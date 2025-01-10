@@ -48,7 +48,25 @@ func Ext4(partname string, setters ...Option) error {
 
 // Ext4Resize expands a ext4 filesystem to the maximum possible.
 func Ext4Resize(partname string) error {
-	_, err := cmd.Run("resize2fs", partname)
+	// resizing the filesystem requires a check first
+	if err := Ext4Repair(partname); err != nil {
+		return fmt.Errorf("failed to repair before growing ext4 filesystem: %w", err)
+	}
 
-	return err
+	_, err := cmd.Run("resize2fs", partname)
+	if err != nil {
+		return fmt.Errorf("failed to grow ext4 filesystem: %w", err)
+	}
+
+	return nil
+}
+
+// Ext4Repair repairs a ext4 filesystem.
+func Ext4Repair(partname string) error {
+	_, err := cmd.Run("e2fsck", "-f", "-p", partname)
+	if err != nil {
+		return fmt.Errorf("failed to repair ext4 filesystem: %w", err)
+	}
+
+	return nil
 }

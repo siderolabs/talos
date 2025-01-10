@@ -20,19 +20,21 @@ const (
 // MUST be mounted, or this will fail.
 func XFSGrow(partname string) error {
 	_, err := cmd.Run("xfs_growfs", "-d", partname)
+	if err != nil {
+		return fmt.Errorf("failed to grow XFS filesystem: %w", err)
+	}
 
 	return err
 }
 
 // XFSRepair repairs a XFS filesystem on the specified partition.
-func XFSRepair(partname, fsType string) error {
-	if fsType != FilesystemTypeXFS {
-		return fmt.Errorf("unsupported filesystem type: %s", fsType)
+func XFSRepair(partname string) error {
+	_, err := cmd.Run("xfs_repair", partname)
+	if err != nil {
+		return fmt.Errorf("error repairing XFS filesystem: %w", err)
 	}
 
-	_, err := cmd.Run("xfs_repair", partname)
-
-	return err
+	return nil
 }
 
 // XFS creates a XFS filesystem on the specified partition.
