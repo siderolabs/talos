@@ -12,10 +12,21 @@ import (
 
 // repair a filesystem.
 func (p *Point) repair(printerOptions PrinterOptions) error {
-	printerOptions.Printf("filesystem on %s needs cleaning, running repair", p.source)
+	var repairFunc func(partition string) error
 
-	if err := makefs.XFSRepair(p.source, p.fstype); err != nil {
-		return fmt.Errorf("xfs_repair: %w", err)
+	switch p.fstype {
+	case "ext4":
+		repairFunc = makefs.Ext4Repair
+	case "xfs":
+		repairFunc = makefs.XFSRepair
+	default:
+		return fmt.Errorf("unsupported filesystem type for repair: %s", p.fstype)
+	}
+
+	printerOptions.Printf("filesystem (%s) on %s needs cleaning, running repair", p.fstype, p.source)
+
+	if err := repairFunc(p.source); err != nil {
+		return fmt.Errorf("repair: %w", err)
 	}
 
 	printerOptions.Printf("filesystem successfully repaired on %s", p.source)
