@@ -46,9 +46,9 @@ func WithValidateContents() ValidationOption {
 }
 
 // WithTalosVersion sets the Talos version to validate against.
-func WithTalosVersion(version semver.Version) ValidationOption {
+func WithTalosVersion(version *semver.Version) ValidationOption {
 	return func(o *ValidationOptions) error {
-		o.TalosVersion = &version
+		o.TalosVersion = version
 
 		return nil
 	}
