@@ -15,6 +15,7 @@ import (
 
 	v1alpha1runtime "github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
 	"github.com/siderolabs/talos/pkg/kernel/kspp"
+	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/kernel"
 	"github.com/siderolabs/talos/pkg/machinery/resources/runtime"
 )
@@ -119,6 +120,11 @@ func (ctrl *KernelParamDefaultsController) getKernelParams() []*kernel.Param {
 		{
 			Key:   "proc.sys.net.ipv4.tcp_keepalive_intvl",
 			Value: "60",
+		},
+		// Consider fwmark for rp_filter routing table lookup.
+		{
+			Key:   "proc.sys.net.ipv4.conf." + constants.KubeSpanLinkName + ".src_valid_mark",
+			Value: "1",
 		},
 		{
 			Key:   "proc.sys.kernel.panic",

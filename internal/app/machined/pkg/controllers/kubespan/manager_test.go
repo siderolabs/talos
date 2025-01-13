@@ -244,9 +244,9 @@ func (suite *ManagerSuite) TestReconcile() {
 			asrt.Equal(nethelpers.ChainPriorityFilter, spec.Priority)
 			asrt.Equal(nethelpers.VerdictAccept, spec.Policy)
 
-			asrt.Len(spec.Rules, 2)
+			asrt.Len(spec.Rules, 3)
 
-			if len(spec.Rules) != 2 {
+			if len(spec.Rules) != 3 {
 				return
 			}
 
@@ -276,6 +276,21 @@ func (suite *ManagerSuite) TestReconcile() {
 					Verdict: pointer.To(nethelpers.VerdictAccept),
 				},
 				spec.Rules[1],
+			)
+
+			asrt.Equal(
+				network.NfTablesRule{
+					MatchIIfName: &network.NfTablesIfNameMatch{
+						InterfaceNames: []string{constants.KubeSpanLinkName},
+						Operator:       nethelpers.OperatorEqual,
+					},
+					SetMark: &network.NfTablesMark{
+						Mask: ^uint32(constants.KubeSpanDefaultFirewallMask),
+						Xor:  constants.KubeSpanDefaultForceFirewallMark,
+					},
+					Verdict: pointer.To(nethelpers.VerdictAccept),
+				},
+				spec.Rules[2],
 			)
 		},
 	)
