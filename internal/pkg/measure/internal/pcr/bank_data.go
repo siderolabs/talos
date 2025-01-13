@@ -17,6 +17,7 @@ import (
 
 	"github.com/siderolabs/talos/internal/pkg/secureboot"
 	tpm2internal "github.com/siderolabs/talos/internal/pkg/secureboot/tpm2"
+	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
 
 // RSAKey is the input for the CalculateBankData function.
@@ -30,7 +31,7 @@ type RSAKey interface {
 // This mimics the process happening happening in the TPM when the UKI is being loaded.
 //
 //nolint:gocyclo
-func CalculateBankData(pcrNumber int, alg tpm2.TPMAlgID, sectionData map[secureboot.Section]string, rsaKey RSAKey) ([]tpm2internal.BankData, error) {
+func CalculateBankData(pcrNumber int, alg tpm2.TPMAlgID, sectionData map[string]string, rsaKey RSAKey) ([]tpm2internal.BankData, error) {
 	// get fingerprint of public key
 	pubKeyFingerprint := sha256.Sum256(x509.MarshalPKCS1PublicKey(rsaKey.PublicRSAKey()))
 
@@ -39,7 +40,7 @@ func CalculateBankData(pcrNumber int, alg tpm2.TPMAlgID, sectionData map[secureb
 		return nil, err
 	}
 
-	pcrSelector, err := tpm2internal.CreateSelector([]int{secureboot.UKIPCR})
+	pcrSelector, err := tpm2internal.CreateSelector([]int{constants.UKIPCR})
 	if err != nil {
 		return nil, fmt.Errorf("failed to create PCR selection: %v", err)
 	}
@@ -55,7 +56,7 @@ func CalculateBankData(pcrNumber int, alg tpm2.TPMAlgID, sectionData map[secureb
 
 	hashData := NewDigest(hashAlg)
 
-	for _, section := range secureboot.OrderedSections() {
+	for _, section := range OrderedSections() {
 		if file := sectionData[section]; file != "" {
 			hashData.Extend(append([]byte(section), 0))
 

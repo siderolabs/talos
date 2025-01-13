@@ -10,7 +10,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/siderolabs/talos/internal/pkg/secureboot/uki"
+	"github.com/siderolabs/talos/internal/pkg/uki"
 )
 
 func TestKernelVersion(t *testing.T) {

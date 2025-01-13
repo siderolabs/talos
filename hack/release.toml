@@ -73,6 +73,7 @@ cluster:
 ```
 
 Usage of `authorization-mode` CLI argument will not support this form of customization.
+"""
 
 [make_deps]
 

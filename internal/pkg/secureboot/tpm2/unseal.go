@@ -16,7 +16,6 @@ import (
 
 	"github.com/google/go-tpm/tpm2"
 
-	"github.com/siderolabs/talos/internal/pkg/secureboot"
 	"github.com/siderolabs/talos/internal/pkg/tpm"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
@@ -136,7 +135,7 @@ func Unseal(sealed SealedResponse) ([]byte, error) {
 		}
 	}()
 
-	pcrSelector, err := CreateSelector([]int{secureboot.UKIPCR})
+	pcrSelector, err := CreateSelector([]int{constants.UKIPCR})
 	if err != nil {
 		return nil, err
 	}
@@ -225,7 +224,7 @@ func Unseal(sealed SealedResponse) ([]byte, error) {
 		return nil, fmt.Errorf("failed to execute policy authorize: %w", err)
 	}
 
-	secureBootStatePCRSelector, err := CreateSelector([]int{secureboot.SecureBootStatePCR})
+	secureBootStatePCRSelector, err := CreateSelector([]int{SecureBootStatePCR})
 	if err != nil {
 		return nil, err
 	}

@@ -14,8 +14,7 @@ import (
 	"github.com/google/go-tpm/tpm2"
 	"github.com/stretchr/testify/require"
 
-	"github.com/siderolabs/talos/internal/pkg/secureboot"
-	"github.com/siderolabs/talos/internal/pkg/secureboot/measure/internal/pcr"
+	"github.com/siderolabs/talos/internal/pkg/measure/internal/pcr"
 	tpm2internal "github.com/siderolabs/talos/internal/pkg/secureboot/tpm2"
 )
 
@@ -40,10 +39,10 @@ func TestCalculateBankData(t *testing.T) {
 	require.NoError(t, err)
 
 	bankData, err := pcr.CalculateBankData(15, tpm2.TPMAlgSHA256,
-		map[secureboot.Section]string{
-			secureboot.Initrd: "testdata/a",
-			secureboot.Linux:  "testdata/b",
-			secureboot.DTB:    "testdata/c",
+		map[string]string{
+			".initrd": "testdata/a",
+			".linux":  "testdata/b",
+			".dtb":    "testdata/c",
 		},
 		keyWrapper{key})
 	require.NoError(t, err)

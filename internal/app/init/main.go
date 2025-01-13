@@ -60,8 +60,8 @@ func run() error {
 	}
 
 	// extend PCR 11 with enter-initrd
-	if err := tpm2.PCRExtend(secureboot.UKIPCR, []byte(secureboot.EnterInitrd)); err != nil {
-		return fmt.Errorf("failed to extend PCR %d with enter-initrd: %v", secureboot.UKIPCR, err)
+	if err := tpm2.PCRExtend(constants.UKIPCR, []byte(secureboot.EnterInitrd)); err != nil {
+		return fmt.Errorf("failed to extend PCR %d with enter-initrd: %v", constants.UKIPCR, err)
 	}
 
 	log.Printf("booting Talos %s", version.Tag)

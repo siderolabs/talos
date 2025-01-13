@@ -11,7 +11,6 @@ import (
 	"github.com/google/go-tpm/tpm2"
 	"github.com/google/go-tpm/tpm2/transport"
 
-	"github.com/siderolabs/talos/internal/pkg/secureboot"
 	"github.com/siderolabs/talos/internal/pkg/tpm"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
@@ -112,7 +111,7 @@ func Seal(key []byte) (*SealedResponse, error) {
 }
 
 func calculateSealingPolicyDigest(t transport.TPM) ([]byte, error) {
-	pcrSelector, err := CreateSelector([]int{secureboot.SecureBootStatePCR})
+	pcrSelector, err := CreateSelector([]int{SecureBootStatePCR})
 	if err != nil {
 		return nil, fmt.Errorf("failed to create PCR selection: %v", err)
 	}
@@ -126,7 +125,7 @@ func calculateSealingPolicyDigest(t transport.TPM) ([]byte, error) {
 		},
 	}
 
-	pcrValue, err := ReadPCR(t, secureboot.SecureBootStatePCR)
+	pcrValue, err := ReadPCR(t, SecureBootStatePCR)
 	if err != nil {
 		return nil, err
 	}

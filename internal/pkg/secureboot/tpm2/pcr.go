@@ -16,8 +16,8 @@ import (
 	"github.com/google/go-tpm/tpm2"
 	"github.com/google/go-tpm/tpm2/transport"
 
-	"github.com/siderolabs/talos/internal/pkg/secureboot"
 	"github.com/siderolabs/talos/internal/pkg/tpm"
+	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
 
 // CreateSelector converts PCR  numbers into a bitmask.
@@ -129,21 +129,21 @@ func PolicyPCRDigest(t transport.TPM, policyHandle tpm2.TPMHandle, pcrSelection 
 
 //nolint:gocyclo
 func validatePCRBanks(t transport.TPM) error {
-	pcrValue, err := ReadPCR(t, secureboot.UKIPCR)
+	pcrValue, err := ReadPCR(t, constants.UKIPCR)
 	if err != nil {
 		return fmt.Errorf("failed to read PCR: %w", err)
 	}
 
-	if err = validatePCRNotZeroAndNotFilled(pcrValue, secureboot.UKIPCR); err != nil {
+	if err = validatePCRNotZeroAndNotFilled(pcrValue, constants.UKIPCR); err != nil {
 		return err
 	}
 
-	pcrValue, err = ReadPCR(t, secureboot.SecureBootStatePCR)
+	pcrValue, err = ReadPCR(t, SecureBootStatePCR)
 	if err != nil {
 		return fmt.Errorf("failed to read PCR: %w", err)
 	}
 
-	if err = validatePCRNotZeroAndNotFilled(pcrValue, secureboot.SecureBootStatePCR); err != nil {
+	if err = validatePCRNotZeroAndNotFilled(pcrValue, SecureBootStatePCR); err != nil {
 		return err
 	}
 

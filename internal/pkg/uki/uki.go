@@ -10,11 +10,37 @@ import (
 	"log"
 	"os"
 
-	"github.com/siderolabs/talos/internal/pkg/secureboot/measure"
+	"github.com/siderolabs/talos/internal/pkg/measure"
 	"github.com/siderolabs/talos/internal/pkg/secureboot/pesign"
-	"github.com/siderolabs/talos/internal/pkg/secureboot/uki/internal/pe"
+	"github.com/siderolabs/talos/internal/pkg/uki/internal/pe"
 	"github.com/siderolabs/talos/pkg/imager/utils"
 )
+
+// Section is a name of a PE file section (UEFI binary).
+type Section string
+
+// List of well-known section names.
+const (
+	SectionLinux   Section = ".linux"
+	SectionOSRel   Section = ".osrel"
+	SectionCmdline Section = ".cmdline"
+	SectionInitrd  Section = ".initrd"
+	SectionUcode   Section = ".ucode"
+	SectionSplash  Section = ".splash"
+	SectionDTB     Section = ".dtb"
+	SectionUname   Section = ".uname"
+	SectionSBAT    Section = ".sbat"
+	SectionPCRSig  Section = ".pcrsig"
+	SectionPCRPKey Section = ".pcrpkey"
+	SectionProfile Section = ".profile"
+	SectionDTBAuto Section = ".dtbauto"
+	SectionHWIDS   Section = ".hwids"
+)
+
+// String returns the string representation of the section.
+func (s Section) String() string {
+	return string(s)
+}
 
 type section = pe.Section
 

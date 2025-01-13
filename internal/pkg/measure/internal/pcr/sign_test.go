@@ -14,7 +14,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/siderolabs/talos/internal/pkg/secureboot/measure/internal/pcr"
+	"github.com/siderolabs/talos/internal/pkg/measure/internal/pcr"
 )
 
 func TestSign(t *testing.T) {

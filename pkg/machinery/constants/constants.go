@@ -701,6 +701,9 @@ const (
 	// https://www.mankier.com/7/systemd-stub#Initrd_Resources
 	PCRPublicKey = SDStubDynamicInitrdPath + "/" + "tpm2-pcr-public-key.pem"
 
+	// UKIPCR is the PCR number where systemd-stub measures the UKI.
+	UKIPCR = 11
+
 	// DefaultCertificateValidityDuration is the default duration for a certificate.
 	DefaultCertificateValidityDuration = x509.DefaultCertificateValidityDuration
 

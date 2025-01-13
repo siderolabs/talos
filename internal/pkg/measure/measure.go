@@ -13,13 +13,13 @@ import (
 
 	"github.com/google/go-tpm/tpm2"
 
-	"github.com/siderolabs/talos/internal/pkg/secureboot"
-	"github.com/siderolabs/talos/internal/pkg/secureboot/measure/internal/pcr"
+	"github.com/siderolabs/talos/internal/pkg/measure/internal/pcr"
 	tpm2internal "github.com/siderolabs/talos/internal/pkg/secureboot/tpm2"
+	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
 
 // SectionsData holds a map of Section to file path to the corresponding section.
-type SectionsData map[secureboot.Section]string
+type SectionsData map[string]string
 
 // RSAKey is the input for the CalculateBankData function.
 type RSAKey interface {
@@ -48,7 +48,7 @@ func GenerateSignedPCR(sectionsData SectionsData, rsaKey RSAKey) (*tpm2internal.
 			bankDataSetter: &data.SHA512,
 		},
 	} {
-		bankData, err := pcr.CalculateBankData(secureboot.UKIPCR, algo.alg, sectionsData, rsaKey)
+		bankData, err := pcr.CalculateBankData(constants.UKIPCR, algo.alg, sectionsData, rsaKey)
 		if err != nil {
 			return nil, err
 		}

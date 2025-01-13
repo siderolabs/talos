@@ -5,14 +5,10 @@
 // Package pe handles appending sections to PE files.
 package pe
 
-import (
-	"github.com/siderolabs/talos/internal/pkg/secureboot"
-)
-
 // Section is a UKI file section.
 type Section struct {
 	// Section name.
-	Name secureboot.Section
+	Name string
 	// Path to the contents of the section.
 	Path string
 	// Should the section be measured to the TPM?

@@ -19,8 +19,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/siderolabs/talos/internal/pkg/secureboot"
-	"github.com/siderolabs/talos/internal/pkg/secureboot/measure"
+	"github.com/siderolabs/talos/internal/pkg/measure"
+	"github.com/siderolabs/talos/internal/pkg/measure/internal/pcr"
 )
 
 const (
@@ -70,8 +70,8 @@ func TestMeasureMatchesExpectedOutput(t *testing.T) {
 	sectionsData := measure.SectionsData{}
 
 	// create temporary files with the ordered section name and data as the section name
-	for _, section := range secureboot.OrderedSections() {
-		sectionFile := filepath.Join(tmpDir, string(section))
+	for _, section := range pcr.OrderedSections() {
+		sectionFile := filepath.Join(tmpDir, section)
 
 		if err := os.WriteFile(sectionFile, []byte(section), 0o644); err != nil {
 			t.Fatal(err)
@@ -101,17 +101,17 @@ func TestMeasureMatchesExpectedOutput(t *testing.T) {
 func getSignatureUsingSDMeasure(t *testing.T) string {
 	tmpDir := t.TempDir()
 
-	sdMeasureArgs := make([]string, len(secureboot.OrderedSections()))
+	sdMeasureArgs := make([]string, len(pcr.OrderedSections()))
 
 	// create temporary files with the ordered section name and data as the section name
-	for i, section := range secureboot.OrderedSections() {
-		sectionFile := filepath.Join(tmpDir, string(section))
+	for i, section := range pcr.OrderedSections() {
+		sectionFile := filepath.Join(tmpDir, section)
 
 		if err := os.WriteFile(sectionFile, []byte(section), 0o644); err != nil {
 			t.Error(err)
 		}
 
-		sdMeasureArgs[i] = fmt.Sprintf("--%s=%s", strings.TrimPrefix(string(section), "."), sectionFile)
+		sdMeasureArgs[i] = fmt.Sprintf("--%s=%s", strings.TrimPrefix(section, "."), sectionFile)
 	}
 
 	var (
