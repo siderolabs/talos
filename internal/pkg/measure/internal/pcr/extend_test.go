@@ -10,7 +10,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/siderolabs/talos/internal/pkg/secureboot/measure/internal/pcr"
+	"github.com/siderolabs/talos/internal/pkg/measure/internal/pcr"
 )
 
 func TestExtend(t *testing.T) {

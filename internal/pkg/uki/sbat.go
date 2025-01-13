@@ -7,8 +7,6 @@ package uki
 import (
 	"debug/pe"
 	"errors"
-
-	"github.com/siderolabs/talos/internal/pkg/secureboot"
 )
 
 // GetSBAT returns the SBAT section from the PE file.
@@ -21,7 +19,7 @@ func GetSBAT(path string) ([]byte, error) {
 	defer pefile.Close() //nolint:errcheck
 
 	for _, section := range pefile.Sections {
-		if section.Name == string(secureboot.SBAT) {
+		if section.Name == string(SectionSBAT) {
 			data, err := section.Data()
 			if err != nil {
 				return nil, err

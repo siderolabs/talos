@@ -16,7 +16,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/kms"
 	"github.com/aws/aws-sdk-go-v2/service/kms/types"
 
-	"github.com/siderolabs/talos/internal/pkg/secureboot/measure"
+	"github.com/siderolabs/talos/internal/pkg/measure"
 )
 
 // KeySigner implements measure.RSAKey interface.

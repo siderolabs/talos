@@ -5,50 +5,6 @@
 // Package secureboot contains base definitions for the Secure Boot process.
 package secureboot
 
-// Section is a name of a PE file section (UEFI binary).
-type Section string
-
-// List of well-known section names.
-const (
-	Linux   Section = ".linux"
-	OSRel   Section = ".osrel"
-	CMDLine Section = ".cmdline"
-	Initrd  Section = ".initrd"
-	Ucode   Section = ".ucode"
-	Splash  Section = ".splash"
-	DTB     Section = ".dtb"
-	Uname   Section = ".uname"
-	SBAT    Section = ".sbat"
-	PCRSig  Section = ".pcrsig"
-	PCRPKey Section = ".pcrpkey"
-	Profile Section = ".profile"
-	DTBAuto Section = ".dtbauto"
-	HWIDS   Section = ".hwids"
-)
-
-// OrderedSections returns the sections that are measured into PCR.
-//
-// Derived from https://github.com/systemd/systemd/blob/v257.1/src/fundamental/uki.h#L6
-// .pcrsig section is omitted here since that's what we are calulating here.
-func OrderedSections() []Section {
-	// DO NOT REARRANGE
-	return []Section{
-		Linux,
-		OSRel,
-		CMDLine,
-		Initrd,
-		Ucode,
-		Splash,
-		DTB,
-		Uname,
-		SBAT,
-		PCRPKey,
-		Profile,
-		DTBAuto,
-		HWIDS,
-	}
-}
-
 // Phase is the phase value extended to the PCR.
 type Phase string
 
@@ -95,11 +51,3 @@ func OrderedPhases() []PhaseInfo {
 		},
 	}
 }
-
-const (
-	// UKIPCR is the PCR number where sections except `.pcrsig` are measured.
-	UKIPCR = 11
-	// SecureBootStatePCR is the PCR number where the secure boot state and the signature are measured.
-	// PCR 7 changes when UEFI SecureBoot mode is enabled/disabled, or firmware certificates (PK, KEK, db, dbx, …) are updated.
-	SecureBootStatePCR = 7
-)

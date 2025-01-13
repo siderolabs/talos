@@ -14,8 +14,7 @@ import (
 	talosx509 "github.com/siderolabs/crypto/x509"
 	"github.com/siderolabs/gen/xslices"
 
-	"github.com/siderolabs/talos/internal/pkg/secureboot"
-	"github.com/siderolabs/talos/internal/pkg/secureboot/measure"
+	"github.com/siderolabs/talos/internal/pkg/measure"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/version"
 	"github.com/siderolabs/talos/pkg/splash"
@@ -35,7 +34,7 @@ func (builder *Builder) generateOSRel() error {
 
 	builder.sections = append(builder.sections,
 		section{
-			Name:    secureboot.OSRel,
+			Name:    SectionOSRel.String(),
 			Path:    path,
 			Measure: true,
 			Append:  true,
@@ -54,7 +53,7 @@ func (builder *Builder) generateCmdline() error {
 
 	builder.sections = append(builder.sections,
 		section{
-			Name:    secureboot.CMDLine,
+			Name:    SectionCmdline.String(),
 			Path:    path,
 			Measure: true,
 			Append:  true,
@@ -67,7 +66,7 @@ func (builder *Builder) generateCmdline() error {
 func (builder *Builder) generateInitrd() error {
 	builder.sections = append(builder.sections,
 		section{
-			Name:    secureboot.Initrd,
+			Name:    SectionInitrd.String(),
 			Path:    builder.InitrdPath,
 			Measure: true,
 			Append:  true,
@@ -86,7 +85,7 @@ func (builder *Builder) generateSplash() error {
 
 	builder.sections = append(builder.sections,
 		section{
-			Name:    secureboot.Splash,
+			Name:    SectionSplash.String(),
 			Path:    path,
 			Measure: true,
 			Append:  true,
@@ -122,7 +121,7 @@ func (builder *Builder) generateUname() error {
 
 	builder.sections = append(builder.sections,
 		section{
-			Name:    secureboot.Uname,
+			Name:    SectionUname.String(),
 			Path:    path,
 			Measure: true,
 			Append:  true,
@@ -146,7 +145,7 @@ func (builder *Builder) generateSBAT() error {
 
 	builder.sections = append(builder.sections,
 		section{
-			Name:    secureboot.SBAT,
+			Name:    SectionSBAT.String(),
 			Path:    path,
 			Measure: true,
 		},
@@ -174,7 +173,7 @@ func (builder *Builder) generatePCRPublicKey() error {
 
 	builder.sections = append(builder.sections,
 		section{
-			Name:    secureboot.PCRPKey,
+			Name:    SectionPCRPKey.String(),
 			Path:    path,
 			Append:  true,
 			Measure: true,
@@ -197,7 +196,7 @@ func (builder *Builder) generateKernel() error {
 
 	builder.sections = append(builder.sections,
 		section{
-			Name:    secureboot.Linux,
+			Name:    SectionLinux.String(),
 			Path:    path,
 			Append:  true,
 			Measure: true,
@@ -214,7 +213,7 @@ func (builder *Builder) generatePCRSig() error {
 				return s.Measure
 			},
 		),
-		func(s section) (secureboot.Section, string) {
+		func(s section) (string, string) {
 			return s.Name, s.Path
 		})
 
@@ -236,7 +235,7 @@ func (builder *Builder) generatePCRSig() error {
 
 	builder.sections = append(builder.sections,
 		section{
-			Name:   secureboot.PCRSig,
+			Name:   SectionPCRSig.String(),
 			Path:   path,
 			Append: true,
 		},
