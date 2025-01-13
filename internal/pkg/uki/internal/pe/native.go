@@ -16,7 +16,6 @@ import (
 
 	"github.com/siderolabs/gen/xslices"
 
-	"github.com/siderolabs/talos/internal/pkg/secureboot"
 	"github.com/siderolabs/talos/pkg/imager/utils"
 )
 
@@ -136,7 +135,7 @@ func AssembleNative(srcPath, dstPath string, sections []Section) error {
 
 		newSections = append(newSections, &pe.Section{
 			SectionHeader: pe.SectionHeader{
-				Name:            string(sections[i].Name),
+				Name:            sections[i].Name,
 				VirtualSize:     uint32(sections[i].virtualSize),
 				VirtualAddress:  uint32(sections[i].virtualAddress),
 				Size:            uint32((sections[i].virtualSize + fileAlignment) &^ fileAlignment),
@@ -213,7 +212,7 @@ func AssembleNative(srcPath, dstPath string, sections []Section) error {
 			var sectionData io.ReadCloser
 
 			for _, section := range sections {
-				if section.Append && section.Name == secureboot.Section(name) {
+				if section.Append && section.Name == name {
 					sectionData, err = os.Open(section.Path)
 					if err != nil {
 						return fmt.Errorf("failed to open section data: %w", err)

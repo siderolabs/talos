@@ -20,7 +20,7 @@ import (
 	talosruntime "github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/board"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/platform"
-	"github.com/siderolabs/talos/internal/pkg/secureboot/uki"
+	"github.com/siderolabs/talos/internal/pkg/uki"
 	"github.com/siderolabs/talos/pkg/imager/extensions"
 	"github.com/siderolabs/talos/pkg/imager/overlay/executor"
 	"github.com/siderolabs/talos/pkg/imager/profile"
