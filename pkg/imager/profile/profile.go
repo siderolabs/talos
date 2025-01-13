@@ -100,6 +100,10 @@ func (p *Profile) Validate() error {
 		// cmdline supports all kinds of customization
 	case OutKindImage:
 		// Image supports all kinds of customization
+		if p.Output.ImageOptions == nil {
+			return errors.New("image options are required for image output")
+		}
+
 		if p.Output.ImageOptions.DiskSize == 0 {
 			return errors.New("disk size is required for image output")
 		}

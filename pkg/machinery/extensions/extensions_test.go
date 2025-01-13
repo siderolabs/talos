@@ -27,7 +27,7 @@ func TestLoadValidate(t *testing.T) {
 	assert.NoError(t, ext.Validate(
 		extensions.WithValidateConstraints(),
 		extensions.WithValidateContents(),
-		extensions.WithTalosVersion(version),
+		extensions.WithTalosVersion(&version),
 	))
 }
 
@@ -70,7 +70,7 @@ func TestValidateFailures(t *testing.T) {
 				err = ext.Validate(
 					extensions.WithValidateConstraints(),
 					extensions.WithValidateContents(),
-					extensions.WithTalosVersion(version),
+					extensions.WithTalosVersion(&version),
 				)
 
 				assert.EqualError(t, err, tt.validateError)

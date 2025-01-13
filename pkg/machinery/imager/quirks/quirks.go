@@ -30,8 +30,8 @@ func New(talosVersion string) Quirks {
 var minVersionResetOption = semver.MustParse("1.4.0")
 
 // Version returns the Talos version.
-func (q Quirks) Version() semver.Version {
-	return *q.v
+func (q Quirks) Version() *semver.Version {
+	return q.v
 }
 
 // SupportsResetGRUBOption returns true if the Talos version supports the reset option in GRUB menu (image and ISO).
