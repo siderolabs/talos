@@ -24,6 +24,36 @@ preface = """
 Talos is built with Go 1.23.4.
 """
 
+    [notes.kube-apiserver-authorization-config]
+        title = "kube-apiserver Authorization Config"
+        description = """\
+When using `.cluster.apiServer.authorizationConfig` the user provided order for the authorizers is honoured and `Node` and `RBAC` authorizers are always added to the end if not explicitly specified.
+
+Eg: If user provides only `Webhook` authorizer, the final order will be `Webhook`, `Node`, `RBAC`.
+
+To provide a specific order for `Node` or `RBAC` explicitly, user can provide the authorizer in the order they want.
+
+Eg:
+
+```yaml
+cluster:
+  apiServer:
+    authorizationConfig:
+      - type: Node
+        name: Node
+      - type: Webhook
+        name: Webhook
+        webhook:
+          connectionInfo:
+            type: InClusterConfig
+        ...
+      - type: RBAC
+        name: rbac
+```
+
+Usage of `authorization-mode` CLI argument will not support this form of customization.
+"""
+
 [make_deps]
 
     [make_deps.tools]

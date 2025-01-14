@@ -272,7 +272,7 @@ func (suite *K8sControlPlaneSuite) TestReconcileAdditionalAuthorizationConfigAut
 							},
 							{
 								AuthorizerType: "Node",
-								AuthorizerName: "foo",
+								AuthorizerName: "bar",
 							},
 						},
 					},
@@ -283,7 +283,11 @@ func (suite *K8sControlPlaneSuite) TestReconcileAdditionalAuthorizationConfigAut
 
 	suite.setupMachine(cfg)
 
-	expectedAuthorizers := slices.Concat(v1alpha1.APIServerDefaultAuthorizationConfigAuthorizers, []k8s.AuthorizationAuthorizersSpec{
+	expectedAuthorizers := []k8s.AuthorizationAuthorizersSpec{
+		{
+			Type: "RBAC",
+			Name: "foo",
+		},
 		{
 			Type: "Webhook",
 			Name: "webhook",
@@ -297,7 +301,89 @@ func (suite *K8sControlPlaneSuite) TestReconcileAdditionalAuthorizationConfigAut
 				},
 			},
 		},
-	})
+		{
+			Type: "Node",
+			Name: "bar",
+		},
+	}
+
+	rtestutils.AssertResources(suite.Ctx(), suite.T(), suite.State(), []resource.ID{k8s.AuthorizationConfigID},
+		func(authorizationConfig *k8s.AuthorizationConfig, assert *assert.Assertions) {
+			assert.Equal(expectedAuthorizers, authorizationConfig.TypedSpec().Config)
+		},
+	)
+}
+
+func (suite *K8sControlPlaneSuite) TestReconcileAdditionalAuthorizationConfigAuthorizersWithOnlyNodeSet() {
+	u, err := url.Parse("https://foo:6443")
+	suite.Require().NoError(err)
+
+	cfg := config.NewMachineConfig(
+		container.NewV1Alpha1(
+			&v1alpha1.Config{
+				ConfigVersion: "v1alpha1",
+				MachineConfig: &v1alpha1.MachineConfig{
+					MachineType: "controlplane",
+				},
+				ClusterConfig: &v1alpha1.ClusterConfig{
+					ControlPlane: &v1alpha1.ControlPlaneConfig{
+						Endpoint: &v1alpha1.Endpoint{
+							URL: u,
+						},
+					},
+					APIServerConfig: &v1alpha1.APIServerConfig{
+						AuthorizationConfigConfig: []*v1alpha1.AuthorizationConfigAuthorizerConfig{
+							{
+								AuthorizerType: "Node",
+								AuthorizerName: "foo",
+							},
+							{
+								AuthorizerType: "Webhook",
+								AuthorizerName: "webhook",
+								AuthorizerWebhook: v1alpha1.Unstructured{
+									Object: map[string]any{
+										"timeout":                    "3s",
+										"subjectAccessReviewVersion": "v1",
+										"matchConditionSubjectAccessReviewVersion": "v1",
+										"failurePolicy": "NoOpinion",
+										"connectionInfo": map[string]any{
+											"type": "InClusterConfig",
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		),
+	)
+
+	suite.setupMachine(cfg)
+
+	expectedAuthorizers := []k8s.AuthorizationAuthorizersSpec{
+		{
+			Type: "Node",
+			Name: "foo",
+		},
+		{
+			Type: "RBAC",
+			Name: "rbac",
+		},
+		{
+			Type: "Webhook",
+			Name: "webhook",
+			Webhook: map[string]any{
+				"timeout":                    "3s",
+				"subjectAccessReviewVersion": "v1",
+				"matchConditionSubjectAccessReviewVersion": "v1",
+				"failurePolicy": "NoOpinion",
+				"connectionInfo": map[string]any{
+					"type": "InClusterConfig",
+				},
+			},
+		},
+	}
 
 	rtestutils.AssertResources(suite.Ctx(), suite.T(), suite.State(), []resource.ID{k8s.AuthorizationConfigID},
 		func(authorizationConfig *k8s.AuthorizationConfig, assert *assert.Assertions) {
