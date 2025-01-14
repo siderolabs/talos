@@ -630,10 +630,16 @@ const (
 	RootfsAsset = "rootfs.sqsh"
 
 	// UKIAsset defines a well known name for our UKI filename.
-	UKIAsset = "vmlinuz.efi.signed"
+	UKIAsset = "vmlinuz.efi"
+
+	// SignedUKIAsset defines a well known name for our UKI filename.
+	SignedUKIAsset = "vmlinuz.efi.signed"
 
 	// UKIAssetPath is the path to the UKI in the installer.
 	UKIAssetPath = "/usr/install/%s/" + UKIAsset
+
+	// SignedUKIAssetPath is the path to the UKI in the installer.
+	SignedUKIAssetPath = "/usr/install/%s/" + SignedUKIAsset
 
 	// SDStubAsset defines a well known name for our systemd-stub filename.
 	SDStubAsset = "systemd-stub.efi"

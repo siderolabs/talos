@@ -393,17 +393,10 @@ func (i *Imager) outInstaller(ctx context.Context, path string, report *reporter
 
 	printf("generating artifacts layer")
 
+	ukiPath := strings.TrimLeft(fmt.Sprintf(constants.UKIAssetPath, i.prof.Arch), "/")
+
 	if i.prof.SecureBootEnabled() {
-		artifacts = append(artifacts,
-			filemap.File{
-				ImagePath:  strings.TrimLeft(fmt.Sprintf(constants.UKIAssetPath, i.prof.Arch), "/"),
-				SourcePath: i.ukiPath,
-			},
-			filemap.File{
-				ImagePath:  strings.TrimLeft(fmt.Sprintf(constants.SDBootAssetPath, i.prof.Arch), "/"),
-				SourcePath: i.sdBootPath,
-			},
-		)
+		ukiPath = strings.TrimLeft(fmt.Sprintf(constants.SignedUKIAssetPath, i.prof.Arch), "/")
 	} else {
 		artifacts = append(artifacts,
 			filemap.File{
@@ -416,6 +409,17 @@ func (i *Imager) outInstaller(ctx context.Context, path string, report *reporter
 			},
 		)
 	}
+
+	artifacts = append(artifacts,
+		filemap.File{
+			ImagePath:  strings.TrimLeft(fmt.Sprintf(constants.SDBootAssetPath, i.prof.Arch), "/"),
+			SourcePath: i.sdBootPath,
+		},
+		filemap.File{
+			ImagePath:  ukiPath,
+			SourcePath: i.ukiPath,
+		},
+	)
 
 	if !quirks.New(i.prof.Version).SupportsOverlay() {
 		for _, extraArtifact := range []struct {

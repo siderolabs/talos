@@ -1,6 +1,6 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
 #
-# Generated on 2024-12-26T15:20:08Z by kres fcff05e.
+# Generated on 2025-01-14T13:54:20Z by kres fcff05e.
 
 name: slack-notify
 "on":
@@ -10,6 +10,7 @@ name: slack-notify
       - integration-qemu-cron
       - integration-conformance-cron
       - integration-trusted-boot-cron
+      - integration-uki-cron
       - integration-provision-0-cron
       - integration-provision-1-cron
       - integration-provision-2-cron

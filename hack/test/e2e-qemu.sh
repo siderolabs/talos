@@ -218,6 +218,15 @@ case "${WITH_IOMMU:-false}" in
     ;;
 esac
 
+case "${WITH_UKI:-false}" in
+  false)
+    ;;
+  *)
+    INSTALLER_IMAGE=${INSTALLER_IMAGE}-amd64-uki
+    QEMU_FLAGS+=("--uki-path=_out/metal-amd64-uki.efi")
+    ;;
+esac
+
 function create_cluster {
   build_registry_mirrors
 

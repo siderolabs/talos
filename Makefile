@@ -446,7 +446,7 @@ image-%: ## Builds the specified image. Valid options are aws, azure, digital-oc
 		docker run --rm -t -v /dev:/dev -v $(PWD)/$(ARTIFACTS):/secureboot:ro -v $(PWD)/$(ARTIFACTS):/out -e SOURCE_DATE_EPOCH=$(SOURCE_DATE_EPOCH) --network=host --privileged $(REGISTRY_AND_USERNAME)/imager:$(IMAGE_TAG) $* --arch $$arch $(IMAGER_ARGS) ; \
 	done
 
-images-essential: image-aws image-azure image-gcp image-metal secureboot-installer ## Builds only essential images used in the CI (AWS, GCP, and Metal).
+images-essential: image-aws image-azure image-gcp image-metal image-metal-uki uki-installer secureboot-installer ## Builds only essential images used in the CI (AWS, GCP, and Metal).
 
 images: image-akamai image-aws image-azure image-digital-ocean image-exoscale image-cloudstack image-gcp image-hcloud image-iso image-metal image-nocloud image-opennebula image-openstack image-oracle image-scaleway image-upcloud image-vmware image-vultr ## Builds all known images (AWS, Azure, DigitalOcean, Exoscale, Cloudstack, GCP, HCloud, Metal, NoCloud, OpenNebula, OpenStack, Oracle, Scaleway, UpCloud, Vultr and VMware).
 
@@ -601,6 +601,11 @@ provision-tests-track-%:
 		CUSTOM_CNI_URL=$(CUSTOM_CNI_URL) \
 		REGISTRY=$(IMAGE_REGISTRY) \
 		ARTIFACTS=$(ARTIFACTS)
+
+uki-installer:
+	$(MAKE) image-installer \
+		IMAGER_ARGS="--extra-kernel-arg=console=ttyS0"
+	crane push $(ARTIFACTS)/installer-$${arch}.tar $(REGISTRY_AND_USERNAME)/installer:$(IMAGE_TAG)-$${arch}-uki ; \
 
 installer-with-extensions: $(ARTIFACTS)/extensions/_out/extensions-metadata
 	$(MAKE) image-installer \

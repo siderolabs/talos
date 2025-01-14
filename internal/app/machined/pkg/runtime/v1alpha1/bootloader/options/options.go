@@ -8,6 +8,7 @@ package options
 import (
 	"fmt"
 
+	"github.com/foxboron/go-uefi/efi"
 	"github.com/siderolabs/go-blockdevice/v2/blkid"
 
 	"github.com/siderolabs/talos/pkg/machinery/constants"
@@ -63,6 +64,8 @@ type BootAssets struct {
 }
 
 // FillDefaults fills in default paths to be used when in the context of the installer.
+//
+//nolint:gocyclo
 func (assets *BootAssets) FillDefaults(arch string) {
 	if assets.KernelPath == "" {
 		assets.KernelPath = fmt.Sprintf(constants.KernelAssetPath, arch)
@@ -74,6 +77,10 @@ func (assets *BootAssets) FillDefaults(arch string) {
 
 	if assets.UKIPath == "" {
 		assets.UKIPath = fmt.Sprintf(constants.UKIAssetPath, arch)
+
+		if efi.GetSecureBoot() && !efi.GetSetupMode() {
+			assets.UKIPath = fmt.Sprintf(constants.SignedUKIAssetPath, arch)
+		}
 	}
 
 	if assets.SDBootPath == "" {
