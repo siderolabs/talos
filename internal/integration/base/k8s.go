@@ -51,6 +51,7 @@ import (
 	"k8s.io/kubectl/pkg/scheme"
 
 	taloskubernetes "github.com/siderolabs/talos/pkg/kubernetes"
+	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
 
 // K8sSuite is a base suite for K8s tests.
@@ -813,9 +814,12 @@ func (k8sSuite *K8sSuite) SetupNodeInformer(ctx context.Context, nodeName string
 
 	watchCh := make(chan *corev1.Node)
 
-	informerFactory := informers.NewSharedInformerFactoryWithOptions(k8sSuite.Clientset, 30*time.Second, informers.WithTweakListOptions(func(options *metav1.ListOptions) {
-		options.FieldSelector = metadataKeyName + nodeName
-	}))
+	informerFactory := informers.NewSharedInformerFactoryWithOptions(
+		k8sSuite.Clientset, constants.KubernetesInformerDefaultResyncPeriod,
+		informers.WithTweakListOptions(func(options *metav1.ListOptions) {
+			options.FieldSelector = metadataKeyName + nodeName
+		}),
+	)
 
 	nodeInformer := informerFactory.Core().V1().Nodes().Informer()
 	_, err := nodeInformer.AddEventHandler(cache.ResourceEventHandlerFuncs{

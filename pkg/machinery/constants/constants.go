@@ -1238,6 +1238,9 @@ const (
 
 	// RegistrydListenAddress is the address to listen on for the registryd service.
 	RegistrydListenAddress = "127.0.0.1:3172"
+
+	// KubernetesInformerDefaultResyncPeriod is the default resync period for Kubernetes informers.
+	KubernetesInformerDefaultResyncPeriod = 30 * time.Second
 )
 
 // See https://linux.die.net/man/3/klogctl

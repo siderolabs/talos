@@ -158,9 +158,9 @@ func (ctrl *NodeStatusController) Run(ctx context.Context, r controller.Runtime,
 			var watchCtx context.Context
 			watchCtx, watchCtxCancel = context.WithCancel(ctx) //nolint:govet
 
-			notifyCh, watchErrCh, notifyCloser, err = nodewatcher.Watch(watchCtx)
+			notifyCh, watchErrCh, notifyCloser, err = nodewatcher.Watch(watchCtx, logger)
 			if err != nil {
-				return fmt.Errorf("error setting up registry watcher: %w", err) //nolint:govet
+				return fmt.Errorf("error setting up node watcher: %w", err) //nolint:govet
 			}
 		}
 

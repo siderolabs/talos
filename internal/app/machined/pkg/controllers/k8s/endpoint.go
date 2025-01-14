@@ -269,7 +269,7 @@ func (ctrl *EndpointController) watchKubernetesEndpoint(ctx context.Context, r c
 
 func kubernetesEndpointWatcher(ctx context.Context, logger *zap.Logger, client *kubernetes.Client) (chan *corev1.Endpoints, func(), error) {
 	informerFactory := informers.NewSharedInformerFactoryWithOptions(
-		client.Clientset, 30*time.Second,
+		client.Clientset, constants.KubernetesInformerDefaultResyncPeriod,
 		informers.WithNamespace(corev1.NamespaceDefault),
 		informers.WithTweakListOptions(func(options *v1.ListOptions) {
 			options.FieldSelector = fields.OneTermEqualSelector("metadata.name", "kubernetes").String()
