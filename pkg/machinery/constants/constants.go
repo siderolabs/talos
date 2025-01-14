@@ -80,6 +80,9 @@ const (
 	// cgroups version to use (default is cgroupsv2, setting this kernel arg to '0' forces cgroupsv1).
 	KernelParamCGroups = "talos.unified_cgroup_hierarchy"
 
+	// KernelParamAuditdDisabled is the kernel parameter name for disabling auditd service.
+	KernelParamAuditdDisabled = "talos.auditd.disabled"
+
 	// KernelParamDashboardDisabled is the kernel parameter name for disabling the dashboard.
 	KernelParamDashboardDisabled = "talos.dashboard.disabled"
 

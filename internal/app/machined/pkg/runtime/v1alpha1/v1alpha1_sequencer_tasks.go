@@ -359,7 +359,18 @@ func StartSyslogd(r runtime.Sequence, _ any) (runtime.TaskExecutionFunc, string)
 
 // StartAuditd represents the task to start auditd.
 func StartAuditd(r runtime.Sequence, _ any) (runtime.TaskExecutionFunc, string) {
-	return func(_ context.Context, _ *log.Logger, r runtime.Runtime) error {
+	return func(_ context.Context, logger *log.Logger, r runtime.Runtime) error {
+		if !r.State().Platform().Mode().InContainer() {
+			disabledStr := procfs.ProcCmdline().Get(constants.KernelParamAuditdDisabled).First()
+			disabled, _ := strconv.ParseBool(pointer.SafeDeref(disabledStr)) //nolint:errcheck
+
+			if disabled {
+				logger.Printf("auditd is disabled by kernel parameter %s", constants.KernelParamAuditdDisabled)
+
+				return nil
+			}
+		}
+
 		system.Services(r).LoadAndStart(&services.Auditd{})
 
 		return nil
