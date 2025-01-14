@@ -231,6 +231,11 @@ Valid options are:
 * `system` resets system disk.
 * `system:EPHEMERAL,STATE` resets ephemeral and state partitions. Doing this reverts Talos into maintenance mode.
 
+#### `talos.auditd.disabled`
+
+By default, Talos runs `auditd` service capturing kernel audit events.
+If you set `talos.auditd.disabled=1`, this behavior will be disabled, and you can run your own `auditd` service.
+
 #### `talos.dashboard.disabled`
 
 By default, Talos redirects kernel logs to virtual console `/dev/tty1` and starts the dashboard on `/dev/tty2`,

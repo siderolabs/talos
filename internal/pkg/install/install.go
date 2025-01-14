@@ -182,6 +182,7 @@ func RunInstallerContainer(
 		constants.KernelParamEventsSink,
 		constants.KernelParamLoggingKernel,
 		constants.KernelParamEquinixMetalEvents,
+		constants.KernelParamAuditdDisabled,
 		constants.KernelParamDashboardDisabled,
 		constants.KernelParamNetIfnames,
 	} {

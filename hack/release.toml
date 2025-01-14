@@ -38,6 +38,12 @@ Talos Linux no longer supports `cgroupsv1` when running in non-container mode.
 The kernel argument `talos.unified_cgroup_hierarchy` is now ignored.
 """
 
+    [notes.auditd]
+        title = "auditd"
+        description = """\
+Kernel parameter `talos.auditd.disabled=1` can be used to disable Talos built-in `auditd` service.
+"""
+
 [make_deps]
 
     [make_deps.tools]

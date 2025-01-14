@@ -79,6 +79,9 @@ const (
 	// KernelParamCGroups is the legacy kernel parameter not supported anymore.
 	KernelParamCGroups = "talos.unified_cgroup_hierarchy"
 
+	// KernelParamAuditdDisabled is the kernel parameter name for disabling auditd service.
+	KernelParamAuditdDisabled = "talos.auditd.disabled"
+
 	// KernelParamDashboardDisabled is the kernel parameter name for disabling the dashboard.
 	KernelParamDashboardDisabled = "talos.dashboard.disabled"
 
