@@ -12,7 +12,6 @@ import (
 	"net/netip"
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/siderolabs/gen/value"
 	"github.com/siderolabs/gen/xslices"
@@ -265,7 +264,7 @@ func (r *Kubernetes) List(localNodeName string) ([]*cluster.AffiliateSpec, error
 
 // Watch starts watching Node state and notifies on updates via notify channel.
 func (r *Kubernetes) Watch(ctx context.Context, logger *zap.Logger) (<-chan struct{}, func(), error) {
-	informerFactory := informers.NewSharedInformerFactory(r.client.Clientset, 30*time.Second)
+	informerFactory := informers.NewSharedInformerFactory(r.client.Clientset, constants.KubernetesInformerDefaultResyncPeriod)
 
 	notifyCh := make(chan struct{}, 1)
 

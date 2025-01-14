@@ -9,6 +9,7 @@ import (
 	"context"
 	"fmt"
 
+	"go.uber.org/zap"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
@@ -17,6 +18,7 @@ import (
 	"k8s.io/client-go/tools/cache"
 
 	"github.com/siderolabs/talos/pkg/kubernetes"
+	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
 
 // NodeWatcher defines a NodeWatcher-based node watcher.
@@ -46,10 +48,12 @@ func (r *NodeWatcher) Get() (*corev1.Node, error) {
 }
 
 // Watch starts watching Node state and notifies on updates via notify channel.
-func (r *NodeWatcher) Watch(ctx context.Context) (<-chan struct{}, <-chan error, func(), error) {
+func (r *NodeWatcher) Watch(ctx context.Context, logger *zap.Logger) (<-chan struct{}, <-chan error, func(), error) {
+	logger.Debug("starting node watcher", zap.String("nodename", r.nodename))
+
 	informerFactory := informers.NewSharedInformerFactoryWithOptions(
 		r.client.Clientset,
-		0,
+		constants.KubernetesInformerDefaultResyncPeriod,
 		informers.WithTweakListOptions(
 			func(opts *metav1.ListOptions) {
 				opts.FieldSelector = fields.OneTermEqualSelector(metav1.ObjectNameField, r.nodename).String()
@@ -88,7 +92,11 @@ func (r *NodeWatcher) Watch(ctx context.Context) (<-chan struct{}, <-chan error,
 
 	informerFactory.Start(ctx.Done())
 
+	logger.Debug("waiting for node cache sync")
+
 	informerFactory.WaitForCacheSync(ctx.Done())
+
+	logger.Debug("node cache sync done")
 
 	return notifyCh, watchErrCh, informerFactory.Shutdown, nil
 }
