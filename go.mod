@@ -185,7 +185,7 @@ require (
 	golang.org/x/sys v0.28.0
 	golang.org/x/term v0.27.0
 	golang.org/x/text v0.21.0
-	golang.org/x/time v0.8.0
+	golang.org/x/time v0.9.0
 	golang.zx2c4.com/wireguard/wgctrl v0.0.0-20230429144221-925a1e7659e6
 	google.golang.org/grpc v1.69.2
 	google.golang.org/protobuf v1.36.1
