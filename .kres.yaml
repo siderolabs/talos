@@ -69,6 +69,7 @@ spec:
     - integration-qemu-race
     - integration-qemu-csi-rook-ceph
     - integration-qemu-csi-longhorn
+    - integration-qemu-csi-openebs
     - integration-images
     - integration-reproducibility-test
     - integration-cloud-images
@@ -1431,6 +1432,66 @@ spec:
           artifactStep:
             type: upload
             artifactName: talos-logs-integration-qemu-csi-longhorn
+            disableExecutableListGeneration: true
+            artifactPath: /tmp/logs-*.tar.gz
+            additionalArtifacts:
+              - "/tmp/support-*.zip"
+    - name: integration-qemu-csi-openebs
+      buildxOptions:
+        enabled: true
+      depends:
+        - default
+      runners:
+        - self-hosted
+        - talos
+      crons:
+        - '30 3 * * *'
+      triggerLabels:
+        - integration/qemu-csi
+        - integration/qemu-csi-openebs
+      steps:
+        - name: download-artifacts
+          conditions:
+            - not-on-schedule
+          artifactStep:
+            type: download
+            artifactName: talos-artifacts
+            artifactPath: _out
+        - name: ci-temp-release-tag
+          conditions:
+            - not-on-schedule
+        - name: build
+          conditions:
+            - only-on-schedule
+          command: talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer imager talos _out/integration-test-linux-amd64
+          environment:
+            PLATFORM: linux/amd64
+            IMAGE_REGISTRY: registry.dev.siderolabs.io
+            PUSH: true
+        - name: talosctl-cni-bundle
+          conditions:
+            - only-on-schedule
+        - name: e2e-qemu-csi-openebs
+          command: e2e-qemu
+          withSudo: true
+          environment:
+            GITHUB_STEP_NAME: ${{ github.job}}-e2e-qemu-csi-openebs
+            SHORT_INTEGRATION_TEST: yes
+            QEMU_WORKERS: 3
+            QEMU_CPUS_WORKERS: 4
+            QEMU_MEMORY_WORKERS: 4096
+            QEMU_EXTRA_DISKS: 1
+            QEMU_EXTRA_DISKS_SIZE: 12288
+            WITH_CONFIG_PATCH: "@hack/test/patches/openebs-cp.yaml"
+            WITH_CONFIG_PATCH_WORKER: "@hack/test/patches/openebs.yaml"
+            EXTRA_TEST_ARGS: -talos.csi=openebs
+            IMAGE_REGISTRY: registry.dev.siderolabs.io
+        - name: save-talos-logs
+          conditions:
+            - always
+          artifactStep:
+            type: upload
+            artifactName: talos-logs-integration-qemu-csi-openebs
             disableExecutableListGeneration: true
             artifactPath: /tmp/logs-*.tar.gz
             additionalArtifacts:

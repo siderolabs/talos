@@ -201,8 +201,7 @@ func (suite *VolumesSuite) TestLVMActivation() {
 
 	suite.T().Logf("creating LVM volume group on node %s/%s", node, nodeName)
 
-	userDisks, err := suite.UserDisks(suite.ctx, node)
-	suite.Require().NoError(err)
+	userDisks := suite.UserDisks(suite.ctx, node)
 
 	if len(userDisks) < 2 {
 		suite.T().Skipf("skipping test, not enough user disks available on node %s/%s: %q", node, nodeName, userDisks)

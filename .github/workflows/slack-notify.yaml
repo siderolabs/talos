@@ -1,6 +1,6 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
 #
-# Generated on 2024-12-26T15:20:08Z by kres fcff05e.
+# Generated on 2025-01-15T19:56:36Z by kres 3b3f992.
 
 name: slack-notify
 "on":
@@ -24,6 +24,7 @@ name: slack-notify
       - integration-qemu-race-cron
       - integration-qemu-csi-rook-ceph-cron
       - integration-qemu-csi-longhorn-cron
+      - integration-qemu-csi-openebs-cron
       - integration-images-cron
       - integration-reproducibility-test-cron
       - integration-image-factory-cron

@@ -469,14 +469,12 @@ func (apiSuite *APISuite) ReadConfigFromNode(nodeCtx context.Context) (config.Pr
 	return cfg.Provider(), nil
 }
 
-// UserDisks returns list of user disks on with size greater than sizeGreaterThanGB and not having any partitions present.
-func (apiSuite *APISuite) UserDisks(ctx context.Context, node string) ([]string, error) {
+// UserDisks returns list of user disks not having any partitions present.
+func (apiSuite *APISuite) UserDisks(ctx context.Context, node string) []string {
 	nodeCtx := client.WithNode(ctx, node)
 
 	disks, err := safe.ReaderListAll[*block.Disk](nodeCtx, apiSuite.Client.COSI)
-	if err != nil {
-		return nil, fmt.Errorf("failed to list disks: %w", err)
-	}
+	apiSuite.Require().NoError(err, "failed to list disks")
 
 	var candidateDisks []string //nolint:prealloc
 
@@ -494,16 +492,14 @@ func (apiSuite *APISuite) UserDisks(ctx context.Context, node string) ([]string,
 
 	for _, disk := range candidateDisks {
 		discoveredVolume, err := safe.ReaderGetByID[*block.DiscoveredVolume](nodeCtx, apiSuite.Client.COSI, disk)
-		if err != nil {
-			return nil, fmt.Errorf("failed to get discovered volume: %w", err)
-		}
+		apiSuite.Require().NoError(err, "failed to get discovered volume")
 
 		if discoveredVolume.TypedSpec().Name == "" {
 			availableDisks = append(availableDisks, discoveredVolume.TypedSpec().DevPath)
 		}
 	}
 
-	return availableDisks, nil
+	return availableDisks
 }
 
 // AssertServicesRunning verifies that services are running on the node.

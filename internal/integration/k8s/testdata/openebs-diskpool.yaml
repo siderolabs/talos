@@ -1,0 +1,8 @@
+apiVersion: "openebs.io/v1beta2"
+kind: DiskPool
+metadata:
+  name: pool-{{ .Node }}
+  namespace: openebs
+spec:
+  node: {{ .Node }}
+  disks: ["aio://{{ .Disk }}"]

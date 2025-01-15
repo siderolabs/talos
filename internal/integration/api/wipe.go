@@ -123,8 +123,7 @@ func (suite *WipeSuite) TestWipeFilesystem() {
 
 	suite.T().Logf("creating filesystem on %s/%s", node, nodeName)
 
-	userDisks, err := suite.UserDisks(suite.ctx, node)
-	suite.Require().NoError(err)
+	userDisks := suite.UserDisks(suite.ctx, node)
 
 	if len(userDisks) < 1 {
 		suite.T().Skipf("skipping test, not enough user disks available on node %s/%s: %q", node, nodeName, userDisks)
