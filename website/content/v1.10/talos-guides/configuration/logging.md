@@ -2,7 +2,7 @@
 title: "Logging"
 description: "Dealing with Talos Linux logs."
 aliases:
-  - ../../guiides/logging
+  - ../../guides/logging
 ---
 
 ## Viewing logs

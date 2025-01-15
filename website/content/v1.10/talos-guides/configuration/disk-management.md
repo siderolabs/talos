@@ -1,6 +1,8 @@
 ---
 title: "Disk Management"
 description: "Guide on managing disks"
+aliases:
+  - ../../guides/disk-management
 ---
 
 Talos Linux version 1.8.0 introduces a new backend for managing system and user disks.
