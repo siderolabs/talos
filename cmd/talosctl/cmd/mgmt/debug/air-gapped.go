@@ -30,7 +30,9 @@ import (
 	"golang.org/x/sync/errgroup"
 
 	"github.com/siderolabs/talos/pkg/cli"
+	"github.com/siderolabs/talos/pkg/machinery/config/container"
 	"github.com/siderolabs/talos/pkg/machinery/config/encoder"
+	"github.com/siderolabs/talos/pkg/machinery/config/types/security"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
 )
 
@@ -73,20 +75,12 @@ var airgappedCmd = &cobra.Command{
 }
 
 func generateConfigPatch(caPEM []byte) error {
-	patch := &v1alpha1.Config{
+	patch1 := &v1alpha1.Config{
 		MachineConfig: &v1alpha1.MachineConfig{
 			MachineEnv: map[string]string{
 				"http_proxy":  fmt.Sprintf("http://%s", net.JoinHostPort(airgappedFlags.advertisedAddress.String(), strconv.Itoa(airgappedFlags.proxyPort))),
 				"https_proxy": fmt.Sprintf("http://%s", net.JoinHostPort(airgappedFlags.advertisedAddress.String(), strconv.Itoa(airgappedFlags.proxyPort))),
 				"no_proxy":    fmt.Sprintf("%s/24", airgappedFlags.advertisedAddress.String()),
-			},
-			MachineFiles: []*v1alpha1.MachineFile{
-				{
-					FilePath:        "/etc/ssl/certs/ca-certificates",
-					FileContent:     string(caPEM),
-					FilePermissions: 0o644,
-					FileOp:          "append",
-				},
 			},
 		},
 		ClusterConfig: &v1alpha1.ClusterConfig{
@@ -96,7 +90,16 @@ func generateConfigPatch(caPEM []byte) error {
 		},
 	}
 
-	patchBytes, err := encoder.NewEncoder(patch, encoder.WithComments(encoder.CommentsDisabled)).Encode()
+	patch2 := security.NewTrustedRootsConfigV1Alpha1()
+	patch2.MetaName = "air-gapped-ca"
+	patch2.Certificates = string(caPEM)
+
+	ctr, err := container.New(patch1, patch2)
+	if err != nil {
+		return err
+	}
+
+	patchBytes, err := ctr.EncodeBytes(encoder.WithComments(encoder.CommentsDisabled))
 	if err != nil {
 		return err
 	}

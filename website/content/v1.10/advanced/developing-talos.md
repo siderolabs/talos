@@ -259,22 +259,6 @@ Generated machine configuration patch looks like:
 
 ```yaml
 machine:
-    files:
-        - content: |
-            -----BEGIN CERTIFICATE-----
-            MIIBijCCAS+gAwIBAgIBATAKBggqhkjOPQQDAjAUMRIwEAYDVQQKEwlUZXN0IE9u
-            bHkwHhcNMjIwODA0MTI0MzE0WhcNMjIwODA1MTI0MzE0WjAUMRIwEAYDVQQKEwlU
-            ZXN0IE9ubHkwWTATBgcqhkjOPQIBBggqhkjOPQMBBwNCAAQfOJdaOFSOI1I+EeP1
-            RlMpsDZJaXjFdoo5zYM5VYs3UkLyTAXAmdTi7JodydgLhty0pwLEWG4NUQAEvip6
-            EmzTo3IwcDAOBgNVHQ8BAf8EBAMCBaAwHQYDVR0lBBYwFAYIKwYBBQUHAwEGCCsG
-            AQUFBwMCMA8GA1UdEwEB/wQFMAMBAf8wHQYDVR0OBBYEFCwxL+BjG0pDwaH8QgKW
-            Ex0J2mVXMA8GA1UdEQQIMAaHBKwUAAEwCgYIKoZIzj0EAwIDSQAwRgIhAJoW0z0D
-            JwpjFcgCmj4zT1SbBFhRBUX64PHJpAE8J+LgAiEAvfozZG8Or6hL21+Xuf1x9oh4
-            /4Hx3jozbSjgDyHOLk4=
-            -----END CERTIFICATE-----
-          permissions: 0o644
-          path: /etc/ssl/certs/ca-certificates
-          op: append
     env:
         http_proxy: http://172.20.0.1:8002
         https_proxy: http://172.20.0.1:8002
@@ -282,6 +266,22 @@ machine:
 cluster:
     extraManifests:
         - https://172.20.0.1:8001/debug.yaml
+---
+apiVersion: v1alpha1
+kind: TrustedRootsConfig
+name: air-gapped-ca
+certificates: |
+  -----BEGIN CERTIFICATE-----
+  MIIBiTCCAS+gAwIBAgIBATAKBggqhkjOPQQDAjAUMRIwEAYDVQQKEwlUZXN0IE9u
+  bHkwHhcNMjUwMTE1MTE1OTI3WhcNMjUwMTE2MTE1OTI3WjAUMRIwEAYDVQQKEwlU
+  ZXN0IE9ubHkwWTATBgcqhkjOPQIBBggqhkjOPQMBBwNCAAReznBeEcQFcB/y1yqI
+  HQcP0IWBMvgwGTeaaTBM6rV+AjbnyxgCrXAnmJ0t45Eur27eW9J/1T5tzA6fe24f
+  YyY9o3IwcDAOBgNVHQ8BAf8EBAMCBaAwHQYDVR0lBBYwFAYIKwYBBQUHAwEGCCsG
+  AQUFBwMCMA8GA1UdEwEB/wQFMAMBAf8wHQYDVR0OBBYEFEGBbafXsyzxVhVqfjzy
+  7aBmVvtaMA8GA1UdEQQIMAaHBKwUAAEwCgYIKoZIzj0EAwIDSAAwRQIhAPAFm6Lv
+  1Bw+M55Z1SEDLyILJSS0En5F6n8Q9LyGGT4fAiBi+Fm3wSQcvgGPG9OfokFaXmGp
+  Pa6c4ZrarKO8ZxWigA==
+  -----END CERTIFICATE-----
 ```
 
 The first section appends a self-signed certificate of the HTTPS server to the list of trusted certificates,
