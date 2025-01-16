@@ -1,3 +1,108 @@
+## [Talos 1.9.2](https://github.com/siderolabs/talos/releases/tag/v1.9.2) (2025-01-16)
+
+Welcome to the v1.9.2 release of Talos!
+
+
+
+Please try out the release binaries and report any issues at
+https://github.com/siderolabs/talos/issues.
+
+### auditd
+
+Kernel parameter `talos.auditd.disabled=1` can be used to disable Talos built-in `auditd` service.
+
+
+### kube-apiserver Authorization Config
+
+When using `.cluster.apiServer.authorizationConfig` the user provided order for the authorizers is honoured and `Node` and `RBAC` authorizers are always added to the end if not explicitly specified.
+
+Eg: If user provides only `Webhook` authorizer, the final order will be `Webhook`, `Node`, `RBAC`.
+
+To provide a specific order for `Node` or `RBAC` explicitly, user can provide the authorizer in the order they want.
+
+Eg:
+
+```yaml
+cluster:
+  apiServer:
+    authorizationConfig:
+      - type: Node
+        name: Node
+      - type: Webhook
+        name: Webhook
+        webhook:
+          connectionInfo:
+            type: InClusterConfig
+        ...
+      - type: RBAC
+        name: rbac
+```
+
+Usage of `authorization-mode` CLI argument will not support this form of customization.
+
+
+### Component Updates
+
+* Linux: 6.12.9
+* runc: 1.2.4
+* containerd: 2.0.2
+
+Talos is built with Go 1.23.4.
+
+
+### Contributors
+
+* Andrey Smirnov
+* Dmitry Sharshakov
+* L.J. Hanson
+* Noel Georgi
+* Skyler Mäntysaari
+* TomyLobo
+
+### Changes
+<details><summary>17 commits</summary>
+<p>
+
+* [`207f86320`](https://github.com/siderolabs/talos/commit/207f8632008c5ca3d1d977af356322930b06c560) feat: update containerd to 2.0.2
+* [`582064d9c`](https://github.com/siderolabs/talos/commit/582064d9c258103f01b448ad7cbc1c001f70ab39) fix: add informer resync period for node status watcher
+* [`244fd6e43`](https://github.com/siderolabs/talos/commit/244fd6e4327899458b659f023aa521015d6be443) feat: add a kernel parameter to disable built-in auditd
+* [`28327e001`](https://github.com/siderolabs/talos/commit/28327e001250f5260a09d4c85e853a64e703213c) fix: kube-apiserver authorizers order
+* [`ff9aa806a`](https://github.com/siderolabs/talos/commit/ff9aa806ac6205221b10fe18ca8fe78a5857ca84) fix: a couple of imager panics/crashes
+* [`44e2cc91a`](https://github.com/siderolabs/talos/commit/44e2cc91a62c94042df03590ffc5f8fa43457228) feat: update Linux to 6.12.9
+* [`9fd295b5f`](https://github.com/siderolabs/talos/commit/9fd295b5f6fbb511b76e052426eb77ce339413e0) fix: detect GPT before ZFS
+* [`7b59573de`](https://github.com/siderolabs/talos/commit/7b59573de258550af014f3a16bd4d38f6d007e60) fix: extfs repair and resize
+* [`5f6bfe02a`](https://github.com/siderolabs/talos/commit/5f6bfe02af5f45fe01e6dbf89f02080f7d7e3c84) fix: merge of VolumeConfig documents with sizes
+* [`0c05e1cd3`](https://github.com/siderolabs/talos/commit/0c05e1cd3cf13c292c90e1ab55ff96a1807cc48c) feat: update Linux to 6.12.8
+* [`b61ab0a3d`](https://github.com/siderolabs/talos/commit/b61ab0a3d75ce17f3ade56d45f3f6a37fd66bb9a) fix: partition alignment on disks with 4k sectors
+* [`c4a69d386`](https://github.com/siderolabs/talos/commit/c4a69d3865e4b15967e7a13e4e9cb27d7826a3b7) fix: yet another dashboard panic
+* [`dec3c6e5b`](https://github.com/siderolabs/talos/commit/dec3c6e5b7721bfa7c9702bbc7a8678120186733) fix: disable NRI plugin in a different way
+* [`dfb54c872`](https://github.com/siderolabs/talos/commit/dfb54c872ead81f31f448b767b37d33838f63fd5) fix: request previous IP address in discovery
+* [`6b1fe3df3`](https://github.com/siderolabs/talos/commit/6b1fe3df37a0a971159a41a0dde2fc791a1c7576) fix: mount selinuxfs only when SELinux is enabled
+* [`5e893e1f5`](https://github.com/siderolabs/talos/commit/5e893e1f5a7178734faecbf80b2bfb5d5f7f047a) fix: update field name for bus path disk selector
+* [`9219fc017`](https://github.com/siderolabs/talos/commit/9219fc017f5fcd5835c4f52839749d514ff7d0b4) fix: exclude disks with empty transport for disk selector
+</p>
+</details>
+
+### Changes from siderolabs/pkgs
+<details><summary>6 commits</summary>
+<p>
+
+* [`c1f06e5`](https://github.com/siderolabs/pkgs/commit/c1f06e5c05914e94e49fd967752e9b505cda961a) feat: update containerd to v2.0.2
+* [`ef38c38`](https://github.com/siderolabs/pkgs/commit/ef38c38318f5613f6177a3cae24f426c052306b5) feat: update Linux to 6.12.9
+* [`a7487d6`](https://github.com/siderolabs/pkgs/commit/a7487d61f791381690ccf8492ec4c4fc997f9f16) fix: adjust kernel options around ACPI/PCI/EFI
+* [`376259a`](https://github.com/siderolabs/pkgs/commit/376259a63538838c3103fe89cd5634af42f3885e) feat: update Linux to 6.12.8
+* [`8e435cd`](https://github.com/siderolabs/pkgs/commit/8e435cd8f5cc2a31fb2a474c066278af0d7b88f7) fix: update config-arm64 to add Rasperry Pi watchdog support
+* [`daabb47`](https://github.com/siderolabs/pkgs/commit/daabb47ed5e4154057e061bf0419cfed2d7feb05) fix: dvb was missing I2C_MUX support and si2168 driver
+</p>
+</details>
+
+### Dependency Changes
+
+* **github.com/siderolabs/go-blockdevice/v2**  v2.0.9 -> v2.0.11
+* **github.com/siderolabs/pkgs**               v1.9.0-15-g45c4ba4 -> v1.9.0-21-gc1f06e5
+
+Previous release can be found at [v1.9.1](https://github.com/siderolabs/talos/releases/tag/v1.9.1)
+
 ## [Talos 1.9.1](https://github.com/siderolabs/talos/releases/tag/v1.9.1) (2024-12-26)
 
 Welcome to the v1.9.1 release of Talos!
