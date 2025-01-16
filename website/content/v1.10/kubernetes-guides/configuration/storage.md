@@ -55,20 +55,10 @@ Troubleshooting Ceph can be difficult if you do not understand its architecture.
 There are lots of acronyms and the documentation assumes a fair level of knowledge.
 There are very good tools for inspection and debugging, but this is still frequently seen as a concern.
 
-### Mayastor
+### OpenEBS Mayastor replicated storage
 
 [Mayastor](https://github.com/openebs/Mayastor) is an OpenEBS project built in Rust utilising the modern NVMEoF system.
-(Despite the name, Mayastor does _not_ require you to have NVME drives.)
 It is fast and lean but still cluster-oriented and cloud native.
-Unlike most of the other OpenEBS project, it is _not_ built on the ancient iSCSI system.
-
-Unlike Ceph, Mayastor is _just_ a block store.
-It focuses on block storage and does it well.
-It is much less complicated to set up than Ceph, but you probably wouldn't want to use it for more than a few dozen disks.
-
-Mayastor is new, maybe _too_ new.
-If you're looking for something well-tested and battle-hardened, this is not it.
-However, if you're looking for something lean, future-oriented, and simpler than Ceph, it might be a great choice.
 
 #### Video Walkthrough
 
@@ -79,8 +69,8 @@ To see a live demo of this section, see the video below:
 #### Prep Nodes
 
 Either during initial cluster creation or on running worker nodes, several machine config values should be edited.
-(This information is gathered from the Mayastor [documentation](https://mayastor.gitbook.io/introduction/quickstart/preparing-the-cluster).)
-We need to set the `vm.nr_hugepages` sysctl and add `openebs.io/engine=mayastor` labels to the nodes which are meant to be storage nodes.
+(This information is gathered from the OpenEBS Replicated PV Mayastor [documentation](https://openebs.io/docs/Solutioning/openebs-on-kubernetes-platforms/talos).)
+
 This can be done with `talosctl patch machineconfig` or via config patches during `talosctl gen config`.
 
 Some examples are shown below: modify as needed.
@@ -88,26 +78,47 @@ Some examples are shown below: modify as needed.
 First create a config patch file named `mayastor-patch.yaml` with the following contents:
 
 ```yaml
-- op: add
-  path: /machine/sysctls
-  value:
+machine:
+  sysctls:
     vm.nr_hugepages: "1024"
-- op: add
-  path: /machine/nodeLabels
-  value:
-    openebs.io/engine: mayastor
+  nodeLabels:
+    openebs.io/engine: "mayastor"
+  kubelet:
+    extraMounts:
+      - destination: /var/local
+        type: bind
+        source: /var/local
+        options:
+          - bind
+          - rshared
+          - rw
+```
+
+Create another config patch file named `mayastor-patch-cp.yaml` with the following contents:
+
+```yaml
+cluster:
+  apiServer:
+    admissionControl:
+      - name: PodSecurity
+        configuration:
+          apiVersion: pod-security.admission.config.k8s.io/v1beta1
+          kind: PodSecurityConfiguration
+          exemptions:
+            namespaces:
+              - openebs
 ```
 
 Using gen config
 
 ```bash
-talosctl gen config my-cluster https://mycluster.local:6443 --config-patch @mayastor-patch.yaml
+talosctl gen config my-cluster https://mycluster.local:6443 --config-patch-control-plane=@mayastor-patch-cp.yaml --config-patch-worker @mayastor-patch.yaml
 ```
 
 Patching an existing node
 
 ```bash
-talosctl patch --mode=no-reboot machineconfig -n <node ip> --patch @mayastor-patch.yaml
+talosctl patch machineconfig -n <node ip> --patch @mayastor-patch.yaml
 ```
 
 > Note: If you are adding/updating the `vm.nr_hugepages` on a node which already had the `openebs.io/engine=mayastor` label set, you'd need to restart kubelet so that it picks up the new value, by issuing the following command
@@ -118,11 +129,32 @@ talosctl -n <node ip> service kubelet restart
 
 #### Deploy Mayastor
 
-Continue setting up [Mayastor](https://mayastor.gitbook.io/introduction/quickstart/deploy-mayastor) using the official documentation.
+We need to disable the init container that checks for the `nvme_tcp` module, since Talos has that module built-in.
 
-> Note: The Mayastor helm chart uses an init container that checks for the `nvme_tcp` module.
-> It does not mount `/sys` and will not be able to find it.
-> Easiest solution is to disable the init container.
+Create a helm values file `mayastor-values.yaml` with the following contents:
+
+```yaml
+mayastor:
+  csi:
+    node:
+      initContainers:
+        enabled: false
+```
+
+If you do not need to use the LVM and ZFS engines they can be disabled in the values file:
+
+```yaml
+engines:
+  local:
+    lvm:
+      enabled: false
+    zfs:
+      enabled: false
+```
+
+Continue setting up [Mayastor](https://openebs.io/docs/quickstart-guide/installation#installation-via-helm) using the official documentation, passing the values file.
+
+Follow the Post-Installation from official [documentation](https://openebs.io/docs/quickstart-guide/installation#post-installation-considerations) to either create use Local Storage or Replicated Storage.
 
 ### Piraeus / LINSTOR
 
