@@ -1356,6 +1356,7 @@ spec:
             artifactPath: /tmp/logs-*.tar.gz
             additionalArtifacts:
               - "/tmp/support-*.zip"
+              - "/tmp/fio-*.json"
     - name: integration-qemu-csi-longhorn
       buildxOptions:
         enabled: true
@@ -1436,6 +1437,7 @@ spec:
             artifactPath: /tmp/logs-*.tar.gz
             additionalArtifacts:
               - "/tmp/support-*.zip"
+              - "/tmp/fio-*.json"
     - name: integration-qemu-csi-openebs
       buildxOptions:
         enabled: true
@@ -1496,6 +1498,7 @@ spec:
             artifactPath: /tmp/logs-*.tar.gz
             additionalArtifacts:
               - "/tmp/support-*.zip"
+              - "/tmp/fio-*.json"
     - name: integration-images
       buildxOptions:
         enabled: true

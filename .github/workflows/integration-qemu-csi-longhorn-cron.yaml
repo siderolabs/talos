@@ -1,6 +1,6 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
 #
-# Generated on 2024-11-28T13:53:18Z by kres 232fe63.
+# Generated on 2025-01-16T11:00:37Z by kres 3b3f992.
 
 name: integration-qemu-csi-longhorn-cron
 concurrency:
@@ -122,4 +122,5 @@ jobs:
           path: |-
             /tmp/logs-*.tar.gz
             /tmp/support-*.zip
+            /tmp/fio-*.json
           retention-days: "5"

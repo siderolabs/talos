@@ -639,6 +639,10 @@ func (k8sSuite *K8sSuite) WaitForResource(ctx context.Context, namespace, group,
 // RunFIOTest runs the FIO test with the given storage class and size using kubestr.
 func (k8sSuite *K8sSuite) RunFIOTest(ctx context.Context, storageClasss, size string) error {
 	args := []string{
+		"--outfile",
+		fmt.Sprintf("/tmp/fio-%s.json", storageClasss),
+		"--output",
+		"json",
 		"fio",
 		"--storageclass",
 		storageClasss,

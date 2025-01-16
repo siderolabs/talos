@@ -1,6 +1,6 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
 #
-# Generated on 2025-01-16T04:17:04Z by kres 3b3f992.
+# Generated on 2025-01-16T11:00:37Z by kres 3b3f992.
 
 name: default
 concurrency:
@@ -2959,6 +2959,7 @@ jobs:
           path: |-
             /tmp/logs-*.tar.gz
             /tmp/support-*.zip
+            /tmp/fio-*.json
           retention-days: "5"
   integration-qemu-csi-openebs:
     permissions:
@@ -3060,6 +3061,7 @@ jobs:
           path: |-
             /tmp/logs-*.tar.gz
             /tmp/support-*.zip
+            /tmp/fio-*.json
           retention-days: "5"
   integration-qemu-csi-rook-ceph:
     permissions:
@@ -3160,6 +3162,7 @@ jobs:
           path: |-
             /tmp/logs-*.tar.gz
             /tmp/support-*.zip
+            /tmp/fio-*.json
           retention-days: "5"
   integration-qemu-encrypted-vip:
     permissions:
