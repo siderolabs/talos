@@ -118,7 +118,7 @@ talosctl -n <node ip> service kubelet restart
 
 #### Deploy Mayastor
 
-Continue setting up [Mayastor](https://mayastor.gitbook.io/introduction/quickstart/deploy-mayastor) using the official documentation.
+Continue setting up [Mayastor](https://openebs.io/docs/user-guides/replicated-storage-user-guide/replicated-pv-mayastor/rs-installation) using the official documentation.
 
 > Note: The Mayastor helm chart uses an init container that checks for the `nvme_tcp` module.
 > It does not mount `/sys` and will not be able to find it.
