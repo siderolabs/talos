@@ -125,17 +125,17 @@ func (ctrl *EtcFileController) Run(ctx context.Context, r controller.Runtime, lo
 				if !mountExists {
 					logger.Debug("creating bind mount", zap.String("src", src), zap.String("dst", dst))
 
-					if err = createBindMount(src, dst, spec.TypedSpec().Mode); err != nil {
+					if err = createBindMountFile(src, dst, spec.TypedSpec().Mode); err != nil {
 						return fmt.Errorf("failed to create shadow bind mount %q -> %q: %w", src, dst, err)
 					}
 
 					ctrl.bindMounts[filename] = struct{}{}
 				}
 
-				logger.Debug("writing file contents", zap.String("dst", dst), zap.Stringer("version", spec.Metadata().Version()))
+				logger.Debug("writing file contents", zap.String("src", src), zap.Stringer("version", spec.Metadata().Version()))
 
-				if err = UpdateFile(dst, spec.TypedSpec().Contents, spec.TypedSpec().Mode, spec.TypedSpec().SelinuxLabel); err != nil {
-					return fmt.Errorf("error updating %q: %w", dst, err)
+				if err = UpdateFile(src, spec.TypedSpec().Contents, spec.TypedSpec().Mode, spec.TypedSpec().SelinuxLabel); err != nil {
+					return fmt.Errorf("error updating %q: %w", src, err)
 				}
 
 				if err = safe.WriterModify(ctx, r, files.NewEtcFileStatus(files.NamespaceName, filename), func(r *files.EtcFileStatus) error {
@@ -168,10 +168,10 @@ func (ctrl *EtcFileController) Run(ctx context.Context, r controller.Runtime, lo
 	}
 }
 
-// createBindMount creates a common way to create a writable source file with a
+// createBindMountFile creates a common way to create a writable source file with a
 // bind mounted destination. This is most commonly used for well known files
 // under /etc that need to be adjusted during startup.
-func createBindMount(src, dst string, mode os.FileMode) (err error) {
+func createBindMountFile(src, dst string, mode os.FileMode) (err error) {
 	if err = os.MkdirAll(filepath.Dir(src), 0o755); err != nil {
 		return err
 	}
@@ -186,8 +186,37 @@ func createBindMount(src, dst string, mode os.FileMode) (err error) {
 		return err
 	}
 
-	if err = unix.Mount(src, dst, "", unix.MS_BIND|unix.MS_RDONLY, ""); err != nil {
-		return fmt.Errorf("failed to create bind mount for %s: %w", dst, err)
+	return bindMount(src, dst)
+}
+
+// createBindMountDir creates a common way to create a writable source dir with a
+// bind mounted destination. This is most commonly used for well known directories
+// under /etc that need to be adjusted during startup.
+func createBindMountDir(src, dst string) (err error) {
+	if err = os.MkdirAll(src, 0o755); err != nil {
+		return err
+	}
+
+	return bindMount(src, dst)
+}
+
+// bindMount creates a common way to create a readonly bind mounted destination.
+func bindMount(src, dst string) (err error) {
+	sourceFD, err := unix.OpenTree(unix.AT_FDCWD, src, unix.OPEN_TREE_CLONE|unix.OPEN_TREE_CLOEXEC)
+	if err != nil {
+		return fmt.Errorf("failed to opentree source %s: %w", src, err)
+	}
+
+	defer unix.Close(sourceFD) //nolint:errcheck
+
+	if err := unix.MountSetattr(sourceFD, "", unix.AT_EMPTY_PATH, &unix.MountAttr{
+		Attr_set: unix.MOUNT_ATTR_RDONLY,
+	}); err != nil {
+		return fmt.Errorf("failed to set mount attribute: %w", err)
+	}
+
+	if err := unix.MoveMount(sourceFD, "", unix.AT_FDCWD, dst, unix.MOVE_MOUNT_F_EMPTY_PATH); err != nil {
+		return fmt.Errorf("failed to move mount from %s to %s: %w", src, dst, err)
 	}
 
 	return nil
