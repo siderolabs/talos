@@ -103,8 +103,25 @@ func (i *Imager) Execute(ctx context.Context, outputPath string, report *reporte
 		Status:  reporter.StatusSucceeded,
 	})
 
-	// 4. Build UKI unless the output is a kernel or cmdline.
-	if i.prof.Output.Kind != profile.OutKindKernel && i.prof.Output.Kind != profile.OutKindCmdline {
+	// 4. Build UKI if needed
+	needBuildUKI := quirks.New(i.prof.Version).SupportsUKI()
+
+	switch i.prof.Output.Kind {
+	case profile.OutKindUKI:
+		if !needBuildUKI {
+			return "", fmt.Errorf("UKI output is not supported in this Talos version")
+		}
+	case profile.OutKindISO, profile.OutKindImage, profile.OutKindInstaller:
+		needBuildUKI = needBuildUKI && i.prof.SecureBootEnabled()
+	case profile.OutKindCmdline, profile.OutKindKernel, profile.OutKindInitramfs:
+		needBuildUKI = false
+	case profile.OutKindUnknown:
+		fallthrough
+	default:
+		return "", fmt.Errorf("unknown output kind: %s", i.prof.Output.Kind)
+	}
+
+	if needBuildUKI {
 		if err = i.buildUKI(ctx, report); err != nil {
 			return "", err
 		}

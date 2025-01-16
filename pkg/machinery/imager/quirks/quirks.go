@@ -27,12 +27,12 @@ func New(talosVersion string) Quirks {
 	}}
 }
 
-var minVersionResetOption = semver.MustParse("1.4.0")
-
 // Version returns the Talos version.
 func (q Quirks) Version() *semver.Version {
 	return q.v
 }
+
+var minVersionResetOption = semver.MustParse("1.4.0")
 
 // SupportsResetGRUBOption returns true if the Talos version supports the reset option in GRUB menu (image and ISO).
 func (q Quirks) SupportsResetGRUBOption() bool {
@@ -42,6 +42,18 @@ func (q Quirks) SupportsResetGRUBOption() bool {
 	}
 
 	return q.v.GTE(minVersionResetOption)
+}
+
+var minVersionUKI = semver.MustParse("1.5.0")
+
+// SupportsUKI returns true if the Talos version supports building UKIs.
+func (q Quirks) SupportsUKI() bool {
+	// if the version doesn't parse, we assume it's latest Talos
+	if q.v == nil {
+		return true
+	}
+
+	return q.v.GTE(minVersionUKI)
 }
 
 var minVersionCompressedMETA = semver.MustParse("1.6.3")
