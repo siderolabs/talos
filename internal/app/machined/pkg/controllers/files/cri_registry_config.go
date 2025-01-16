@@ -18,7 +18,6 @@ import (
 	"github.com/siderolabs/gen/optional"
 	"github.com/siderolabs/gen/xslices"
 	"go.uber.org/zap"
-	"golang.org/x/sys/unix"
 
 	"github.com/siderolabs/talos/internal/pkg/containers/cri/containerd"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
@@ -69,13 +68,8 @@ func (ctrl *CRIRegistryConfigController) Run(ctx context.Context, r controller.R
 	// shadow path is writeable, controller is going to update it
 	// base path is read-only, containerd will read from it
 	if !ctrl.bindMountCreated {
-		// create shadow path
-		if err := os.MkdirAll(shadowPath, 0o700); err != nil {
+		if err := createBindMountDir(shadowPath, basePath); err != nil {
 			return err
-		}
-
-		if err := unix.Mount(shadowPath, basePath, "", unix.MS_BIND|unix.MS_RDONLY, ""); err != nil {
-			return fmt.Errorf("failed to create bind mount for %s -> %s: %w", shadowPath, basePath, err)
 		}
 
 		ctrl.bindMountCreated = true
