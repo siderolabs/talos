@@ -7,7 +7,7 @@ match_deps = "^github.com/((talos-systems|siderolabs)/[a-zA-Z0-9-]+)$"
 ignore_deps = ["github.com/coredns/coredns"]
 
 # previous release
-previous = "v1.9.1"
+previous = "v1.9.2"
 
 pre_release = false
 
@@ -18,47 +18,10 @@ preface = """
     [notes.updates]
         title = "Component Updates"
         description = """\
-* Linux: 6.12.9
-* runc: 1.2.4
-* containerd: 2.0.2
+* Linux: 6.12.11
+* Kubernetes: 1.23.1
 
-Talos is built with Go 1.23.4.
-"""
-
-    [notes.kube-apiserver-authorization-config]
-        title = "kube-apiserver Authorization Config"
-        description = """\
-When using `.cluster.apiServer.authorizationConfig` the user provided order for the authorizers is honoured and `Node` and `RBAC` authorizers are always added to the end if not explicitly specified.
-
-Eg: If user provides only `Webhook` authorizer, the final order will be `Webhook`, `Node`, `RBAC`.
-
-To provide a specific order for `Node` or `RBAC` explicitly, user can provide the authorizer in the order they want.
-
-Eg:
-
-```yaml
-cluster:
-  apiServer:
-    authorizationConfig:
-      - type: Node
-        name: Node
-      - type: Webhook
-        name: Webhook
-        webhook:
-          connectionInfo:
-            type: InClusterConfig
-        ...
-      - type: RBAC
-        name: rbac
-```
-
-Usage of `authorization-mode` CLI argument will not support this form of customization.
-"""
-
-    [notes.auditd]
-        title = "auditd"
-        description = """\
-Kernel parameter `talos.auditd.disabled=1` can be used to disable Talos built-in `auditd` service.
+Talos is built with Go 1.23.5.
 """
 
 [make_deps]
