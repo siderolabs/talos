@@ -275,6 +275,9 @@ func (h *Client) waitForPodDeleted(ctx context.Context, p *corev1.Pod) error {
 		switch {
 		case apierrors.IsNotFound(err):
 			return nil
+		case apierrors.IsForbidden(err):
+			// in Kubernetes 1.32+, NodeRestriction plugin won't let us list a pod which is not on our node, including deleted ones
+			return nil
 		case err != nil:
 			if IsRetryableError(err) {
 				return retry.ExpectedError(err)
