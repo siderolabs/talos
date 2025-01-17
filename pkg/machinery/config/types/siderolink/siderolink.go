@@ -57,7 +57,7 @@ type ConfigV1Alpha1 struct {
 	//     SideroLink API URL to connect to.
 	//   examples:
 	//     - value: >
-	//        "https://siderolink.api/join?token=secret"
+	//        "https://siderolink.api/?jointoken=secret"
 	//   schema:
 	//     type: string
 	//     pattern: "^(https|grpc)://"
@@ -76,7 +76,7 @@ func NewConfigV1Alpha1() *ConfigV1Alpha1 {
 
 func exampleConfigV1Alpha1() *ConfigV1Alpha1 {
 	cfg := NewConfigV1Alpha1()
-	cfg.APIUrlConfig.URL = ensure.Value(url.Parse("https://siderolink.api/join?token=secret"))
+	cfg.APIUrlConfig.URL = ensure.Value(url.Parse("https://siderolink.api/jointoken?token=secret"))
 
 	return cfg
 }

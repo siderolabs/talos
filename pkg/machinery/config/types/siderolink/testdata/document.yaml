@@ -1,3 +1,3 @@
 apiVersion: v1alpha1
 kind: SideroLinkConfig
-apiUrl: https://siderolink.api/join?jointoken=secret&user=alice
+apiUrl: https://siderolink.api/?jointoken=secret&user=alice

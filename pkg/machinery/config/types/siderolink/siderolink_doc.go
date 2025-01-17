@@ -28,7 +28,7 @@ func (ConfigV1Alpha1) Doc() *encoder.Doc {
 
 	doc.AddExample("", exampleConfigV1Alpha1())
 
-	doc.Fields[1].AddExample("", "https://siderolink.api/join?token=secret")
+	doc.Fields[1].AddExample("", "https://siderolink.api/?jointoken=secret")
 
 	return doc
 }

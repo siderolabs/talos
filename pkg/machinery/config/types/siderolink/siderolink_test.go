@@ -21,13 +21,13 @@ func TestRedact(t *testing.T) {
 	t.Parallel()
 
 	cfg := siderolink.NewConfigV1Alpha1()
-	cfg.APIUrlConfig.URL = ensure.Value(url.Parse("https://siderolink.api/join?jointoken=secret&user=alice"))
+	cfg.APIUrlConfig.URL = ensure.Value(url.Parse("https://siderolink.api/?jointoken=secret&user=alice"))
 
-	assert.Equal(t, "https://siderolink.api/join?jointoken=secret&user=alice", cfg.SideroLink().APIUrl().String())
+	assert.Equal(t, "https://siderolink.api/?jointoken=secret&user=alice", cfg.SideroLink().APIUrl().String())
 
 	cfg.Redact("REDACTED")
 
-	assert.Equal(t, "https://siderolink.api/join?jointoken=REDACTED&user=alice", cfg.APIUrlConfig.String())
+	assert.Equal(t, "https://siderolink.api/?jointoken=REDACTED&user=alice", cfg.APIUrlConfig.String())
 }
 
 //go:embed testdata/document.yaml
@@ -37,7 +37,7 @@ func TestMarshalStability(t *testing.T) {
 	t.Parallel()
 
 	cfg := siderolink.NewConfigV1Alpha1()
-	cfg.APIUrlConfig.URL = ensure.Value(url.Parse("https://siderolink.api/join?jointoken=secret&user=alice"))
+	cfg.APIUrlConfig.URL = ensure.Value(url.Parse("https://siderolink.api/?jointoken=secret&user=alice"))
 
 	marshaled, err := encoder.NewEncoder(cfg, encoder.WithComments(encoder.CommentsDisabled)).Encode()
 	require.NoError(t, err)
