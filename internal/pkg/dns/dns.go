@@ -77,6 +77,9 @@ func (c *Cache) ServeDNS(wr dns.ResponseWriter, msg *dns.Msg) {
 	}
 }
 
+// Clear clears the cache.
+func (c *Cache) Clear() { c.cache.Clear() }
+
 // clientWrite returns true if the response has been written to the client.
 func clientWrite(rcode int) bool {
 	switch rcode {
