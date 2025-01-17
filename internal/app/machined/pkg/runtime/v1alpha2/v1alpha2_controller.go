@@ -152,6 +152,12 @@ func (ctrl *Controller) Run(ctx context.Context, drainer *runtime.Drainer) error
 			EtcPath:    "/etc",
 			ShadowPath: constants.SystemEtcPath,
 		},
+		&files.IQNController{
+			V1Alpha1Mode: ctrl.v1alpha1Runtime.State().Platform().Mode(),
+		},
+		&files.NQNController{
+			V1Alpha1Mode: ctrl.v1alpha1Runtime.State().Platform().Mode(),
+		},
 		&hardware.PCIDevicesController{
 			V1Alpha1Mode: ctrl.v1alpha1Runtime.State().Platform().Mode(),
 		},

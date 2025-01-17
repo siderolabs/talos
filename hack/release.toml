@@ -76,6 +76,24 @@ cluster:
 Usage of `authorization-mode` CLI argument will not support this form of customization.
 """
 
+    [notes.iscsi-initiator-iqn]
+        title = "iSCSI Initiator"
+        description = """\
+Talos now generates `/etc/iscsi/initiatorname.iscsi` file based on the node identity which is tied to the lifecycle of the node.
+If using `iscsi-tools` extension, starting with Talos 1.10 would have a more deterministic IQN for the initiator node.
+Make sure to update any iSCSI targets to use the new initiator IQN.
+
+The iqn can be read by `talosctl read /etc/iscsi/initiatorname.iscsi`
+"""
+
+    [notes.nvme-nqn]
+        title = "NVMe NQN"
+        description = """\
+Talos now generates `/etc/nvme/hostnqn` and `/etc/nvme/hostid` files based on the node identity which is tied to the lifecycle of the node.
+
+The NQN can be read by `talosctl read /etc/nvme/hostnqn`
+"""
+
 [make_deps]
 
     [make_deps.tools]

@@ -119,7 +119,7 @@ func (ctrl *NodeIdentityController) Run(ctx context.Context, r controller.Runtim
 
 				return err
 			}); err != nil {
-			return fmt.Errorf("error modifying resolv.conf: %w", err)
+			return fmt.Errorf("error modifying machine-id: %w", err)
 		}
 
 		if !ctrl.identityEstablished {
