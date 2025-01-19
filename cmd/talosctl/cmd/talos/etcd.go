@@ -88,6 +88,7 @@ var etcdAlarmListCmd = &cobra.Command{
 	Use:   "list",
 	Short: "List the etcd alarms for the node.",
 	Long:  ``,
+	Args:  cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return WithClient(func(ctx context.Context, c *client.Client) error {
 			response, err := c.EtcdAlarmList(ctx)
@@ -110,6 +111,7 @@ var etcdAlarmDisarmCmd = &cobra.Command{
 	Use:   "disarm",
 	Short: "Disarm the etcd alarms for the node.",
 	Long:  ``,
+	Args:  cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return WithClient(func(ctx context.Context, c *client.Client) error {
 			response, err := c.EtcdAlarmDisarm(ctx)
@@ -133,6 +135,7 @@ var etcdDefragCmd = &cobra.Command{
 	Short: "Defragment etcd database on the node",
 	Long: `Defragmentation is a maintenance operation that releases unused space from the etcd database file.
 Defragmentation is a resource heavy operation and should be performed only when necessary on a single node at a time.`,
+	Args: cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return WithClient(func(ctx context.Context, c *client.Client) error {
 			if err := helpers.FailIfMultiNodes(ctx, "etcd defrag"); err != nil {
@@ -150,6 +153,7 @@ var etcdLeaveCmd = &cobra.Command{
 	Use:   "leave",
 	Short: "Tell nodes to leave etcd cluster",
 	Long:  ``,
+	Args:  cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return WithClient(func(ctx context.Context, c *client.Client) error {
 			if err := helpers.FailIfMultiNodes(ctx, "etcd leave"); err != nil {
@@ -186,6 +190,7 @@ var etcdForfeitLeadershipCmd = &cobra.Command{
 	Use:   "forfeit-leadership",
 	Short: "Tell node to forfeit etcd cluster leadership",
 	Long:  ``,
+	Args:  cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return WithClient(func(ctx context.Context, c *client.Client) error {
 			_, err := c.EtcdForfeitLeadership(ctx, &machine.EtcdForfeitLeadershipRequest{})
@@ -199,6 +204,7 @@ var etcdMemberListCmd = &cobra.Command{
 	Use:   "members",
 	Short: "Get the list of etcd cluster members",
 	Long:  ``,
+	Args:  cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return WithClient(func(ctx context.Context, c *client.Client) error {
 			response, err := c.EtcdMemberList(ctx, &machine.EtcdMemberListRequest{
@@ -258,6 +264,7 @@ var etcdStatusCmd = &cobra.Command{
 	Use:   "status",
 	Short: "Get the status of etcd cluster member",
 	Long:  `Returns the status of etcd member on the node, use multiple nodes to get status of all members.`,
+	Args:  cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return WithClient(func(ctx context.Context, c *client.Client) error {
 			response, err := c.EtcdStatus(ctx)

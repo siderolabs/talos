@@ -106,7 +106,7 @@ It is always recommended to run an odd number of `etcd` members, as with 3 or mo
 Common troubleshooting steps:
 
 - check `etcd` service state with `talosctl -n IP service etcd` for each control plane node
-- check `etcd` membership on each control plane node with `talosctl -n IP etcd member list`
+- check `etcd` membership on each control plane node with `talosctl -n IP etcd members`
 - check `etcd` logs with `talosctl -n IP logs etcd`
 - check `etcd` alarms with `talosctl -n IP etcd alarm list`
 
