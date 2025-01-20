@@ -5,10 +5,13 @@
 package talos
 
 import (
+	"bufio"
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"os"
+	"slices"
 	"strings"
 	"text/tabwriter"
 	"time"
@@ -153,6 +156,88 @@ var imageDefaultCmd = &cobra.Command{
 	},
 }
 
+// imageIntegrationCmd represents the integration image command.
+var imageIntegrationCmd = &cobra.Command{
+	Use:    "integration",
+	Short:  "List the integration images used by k8s in Talos",
+	Args:   cobra.NoArgs,
+	Hidden: true,
+	RunE: func(*cobra.Command, []string) error {
+		if stat, _ := os.Stdin.Stat(); (stat.Mode() & os.ModeCharDevice) != 0 { //nolint:errcheck
+			return errors.New("input must be piped")
+		}
+
+		if imageIntegrationCmdFlags.installerTag == "" {
+			return errors.New("installer tag is required")
+		}
+
+		if imageIntegrationCmdFlags.registryAndUser == "" {
+			return errors.New("registry and user string is required")
+		}
+
+		imgs := images.List(container.NewV1Alpha1(&v1alpha1.Config{
+			MachineConfig: &v1alpha1.MachineConfig{
+				MachineKubelet: &v1alpha1.KubeletConfig{},
+			},
+			ClusterConfig: &v1alpha1.ClusterConfig{
+				EtcdConfig:              &v1alpha1.EtcdConfig{},
+				APIServerConfig:         &v1alpha1.APIServerConfig{},
+				ControllerManagerConfig: &v1alpha1.ControllerManagerConfig{},
+				SchedulerConfig:         &v1alpha1.SchedulerConfig{},
+				CoreDNSConfig:           &v1alpha1.CoreDNS{},
+				ProxyConfig:             &v1alpha1.ProxyConfig{},
+			},
+		}))
+
+		imageNames := []string{
+			imgs.Flannel,
+			imgs.CoreDNS,
+			imgs.Etcd,
+			imgs.KubeAPIServer,
+			imgs.KubeControllerManager,
+			imgs.KubeScheduler,
+			imgs.KubeProxy,
+			imgs.Kubelet,
+			imgs.Pause,
+			imageIntegrationCmdFlags.registryAndUser + "/" +
+				images.DefaultInstallerImageName + ":" +
+				imageIntegrationCmdFlags.installerTag,
+		}
+
+		sc := bufio.NewScanner(os.Stdin)
+
+		for sc.Scan() {
+			switch sc := sc.Text(); {
+			case strings.Contains(sc, "authenticated-"):
+			// skip authenticated images
+			case strings.HasPrefix(sc, "invalid.registry.k8s.io"):
+			// skip invalid images
+			default:
+				imageNames = append(imageNames, sc)
+			}
+		}
+
+		if err := sc.Err(); err != nil {
+			return fmt.Errorf("error reading from stdin: %w", err)
+		}
+
+		slices.Sort(imageNames)
+
+		imageNames = slices.Compact(imageNames)
+
+		for _, img := range imageNames {
+			fmt.Println(img)
+		}
+
+		return nil
+	},
+}
+
+var imageIntegrationCmdFlags struct {
+	installerTag    string
+	registryAndUser string
+}
+
 // imageCacheCreate represents the image cache create command.
 var imageCacheCreateCmd = &cobra.Command{
 	Use:   "cache-create",
@@ -207,7 +292,7 @@ talosctl images default | talosctl images cache-create --image-cache-path=/tmp/t
 	},
 }
 
-type imageCacheCreateCmdFlagsType struct {
+var imageCacheCreateCmdFlags struct {
 	imageCachePath      string
 	imageLayerCachePath string
 	platform            string
@@ -218,8 +303,6 @@ type imageCacheCreateCmdFlagsType struct {
 	force    bool
 }
 
-var imageCacheCreateCmdFlags imageCacheCreateCmdFlagsType
-
 func init() {
 	imageCmd.PersistentFlags().StringVar(&imageCmdFlags.namespace, "namespace", "cri", "namespace to use: `system` (etcd and kubelet images) or `cri` for all Kubernetes workloads")
 	addCommand(imageCmd)
@@ -228,6 +311,7 @@ func init() {
 	imageCmd.AddCommand(imageListCmd)
 	imageCmd.AddCommand(imagePullCmd)
 	imageCmd.AddCommand(imageCacheCreateCmd)
+	imageCmd.AddCommand(imageIntegrationCmd)
 
 	imageCacheCreateCmd.PersistentFlags().StringVar(&imageCacheCreateCmdFlags.imageCachePath, "image-cache-path", "", "directory to save the image cache in OCI format")
 	imageCacheCreateCmd.MarkPersistentFlagRequired("image-cache-path") //nolint:errcheck
@@ -237,4 +321,9 @@ func init() {
 	imageCacheCreateCmd.MarkPersistentFlagRequired("images") //nolint:errcheck
 	imageCacheCreateCmd.PersistentFlags().BoolVar(&imageCacheCreateCmdFlags.insecure, "insecure", false, "allow insecure registries")
 	imageCacheCreateCmd.PersistentFlags().BoolVar(&imageCacheCreateCmdFlags.force, "force", false, "force overwrite of existing image cache")
+
+	imageIntegrationCmd.PersistentFlags().StringVar(&imageIntegrationCmdFlags.installerTag, "installer-tag", "", "tag of the installer image to use")
+	imageIntegrationCmd.MarkPersistentFlagRequired("installer-tag") //nolint:errcheck
+	imageIntegrationCmd.PersistentFlags().StringVar(&imageIntegrationCmdFlags.registryAndUser, "registry-and-user", "", "registry and user to use for the images")
+	imageIntegrationCmd.MarkPersistentFlagRequired("registry-and-user") //nolint:errcheck
 }

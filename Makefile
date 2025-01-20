@@ -150,8 +150,6 @@ IMAGER_EXTRA_PKGS ?= \
 INSTALLER_PKGS ?= $(INSTALLER_ONLY_PKGS) $(IMAGER_EXTRA_PKGS)
 IMAGER_ARGS ?=
 
-MORE_IMAGES ?=
-
 CGO_ENABLED ?= 0
 GO_BUILDFLAGS ?=
 GO_BUILDTAGS ?= tcell_minimal,grpcnotrace
@@ -491,7 +489,9 @@ uki-certs: talosctl ## Generate test certificates for SecureBoot/PCR Signing
 
 .PHONY: cache-create
 cache-create: installer imager ## Generate image cache.
-	@( $(TALOSCTL_EXECUTABLE) images default | grep -v 'siderolabs/installer'; echo "$(REGISTRY_AND_USERNAME)/installer:$(IMAGE_TAG)"; echo "$(MORE_IMAGES)" | tr ';' '\n' ) | $(TALOSCTL_EXECUTABLE) images cache-create --image-cache-path=/tmp/cache.tar --images=- --force
+	@docker run --entrypoint /usr/local/bin/e2e.test registry.k8s.io/conformance:$(KUBECTL_VERSION) --list-images | \
+		$(TALOSCTL_EXECUTABLE) images integration --installer-tag=$(IMAGE_TAG) --registry-and-user=$(REGISTRY_AND_USERNAME) | \
+		$(TALOSCTL_EXECUTABLE) images cache-create --image-cache-path=/tmp/cache.tar --images=- --force
 	@crane push /tmp/cache.tar $(REGISTRY_AND_USERNAME)/image-cache:$(IMAGE_TAG)
 	@$(MAKE) image-iso IMAGER_ARGS="--image-cache=$(REGISTRY_AND_USERNAME)/image-cache:$(IMAGE_TAG) --extra-kernel-arg='console=ttyS0'"
 
