@@ -69,6 +69,7 @@ func (ctrl *NodeStatusController) Run(ctx context.Context, r controller.Runtime,
 		watchErrCh       <-chan error
 		notifyCloser     func()
 		watchErrors      int
+		watchReady       bool
 	)
 
 	closeWatcher := func() {
@@ -82,7 +83,6 @@ func (ctrl *NodeStatusController) Run(ctx context.Context, r controller.Runtime,
 			notifyCloser = nil
 			notifyCh = nil
 			watchErrCh = nil
-			watchErrors = 0
 		}
 
 		if kubernetesClient != nil {
@@ -91,6 +91,8 @@ func (ctrl *NodeStatusController) Run(ctx context.Context, r controller.Runtime,
 			kubernetesClient = nil
 		}
 
+		watchErrors = 0
+		watchReady = false
 		nodewatcher = nil
 	}
 
@@ -103,6 +105,7 @@ func (ctrl *NodeStatusController) Run(ctx context.Context, r controller.Runtime,
 		case <-r.EventCh():
 		case <-notifyCh:
 			watchErrors = 0
+			watchReady = true
 		case watchErr := <-watchErrCh:
 			logger.Error("node watch error", zap.Error(watchErr), zap.Int("error_count", watchErrors))
 
@@ -110,8 +113,6 @@ func (ctrl *NodeStatusController) Run(ctx context.Context, r controller.Runtime,
 
 			if watchErrors >= watchErrorsThreshold {
 				closeWatcher()
-
-				watchErrors = 0
 			} else {
 				// keep waiting
 				continue
@@ -164,6 +165,11 @@ func (ctrl *NodeStatusController) Run(ctx context.Context, r controller.Runtime,
 			}
 		}
 
+		if !watchReady {
+			// node watcher is not ready yet, skip updating output resource
+			continue
+		}
+
 		touchedIDs := make(map[resource.ID]struct{})
 
 		node, err := nodewatcher.Get()
@@ -172,7 +178,7 @@ func (ctrl *NodeStatusController) Run(ctx context.Context, r controller.Runtime,
 		}
 
 		if node != nil {
-			if err = safe.WriterModify[*k8s.NodeStatus](ctx, r, k8s.NewNodeStatus(k8s.NamespaceName, node.Name),
+			if err = safe.WriterModify(ctx, r, k8s.NewNodeStatus(k8s.NamespaceName, node.Name),
 				func(res *k8s.NodeStatus) error {
 					res.TypedSpec().Nodename = node.Name
 					res.TypedSpec().Unschedulable = node.Spec.Unschedulable
