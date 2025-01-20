@@ -25,7 +25,7 @@ Regardless of where you run Talos, the steps to create a Kubernetes cluster are:
 `talosctl` is a CLI tool which interfaces with the Talos API.
 Talos Linux has no SSH access: `talosctl` is the tool you use to interact with the operating system on the machines.
 
-You can download `talosctl` an MacOS and Linux via:
+You can download `talosctl` on MacOS and Linux via:
 
 ```bash
 brew install siderolabs/tap/talosctl
