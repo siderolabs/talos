@@ -92,11 +92,25 @@ func (r *NodeWatcher) Watch(ctx context.Context, logger *zap.Logger) (<-chan str
 
 	informerFactory.Start(ctx.Done())
 
-	logger.Debug("waiting for node cache sync")
+	go func() {
+		logger.Debug("waiting for node cache sync")
 
-	informerFactory.WaitForCacheSync(ctx.Done())
+		result := informerFactory.WaitForCacheSync(ctx.Done())
 
-	logger.Debug("node cache sync done")
+		var synced bool
+
+		// result should contain a single entry
+		for _, v := range result {
+			synced = v
+		}
+
+		logger.Debug("node cache sync done", zap.Bool("synced", synced))
+
+		select {
+		case notifyCh <- struct{}{}:
+		default:
+		}
+	}()
 
 	return notifyCh, watchErrCh, informerFactory.Shutdown, nil
 }
