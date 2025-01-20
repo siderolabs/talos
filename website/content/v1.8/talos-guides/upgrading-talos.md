@@ -65,10 +65,6 @@ as:
       --image ghcr.io/siderolabs/installer:{{< release >}}
 ```
 
-There is an option to this command: `--preserve`, which will explicitly tell Talos to keep ephemeral data intact.
-In most cases, it is correct to let Talos perform its default action of erasing the ephemeral data.
-However, for a single-node control-plane, make sure that `--preserve=true`.
-
 Rarely, an upgrade command will fail due to a process holding a file open on disk.
 In these cases, you can use the `--stage` flag.
 This puts the upgrade artifacts on disk, and adds some metadata to a disk partition that gets checked very early in the boot process, then reboots the node.

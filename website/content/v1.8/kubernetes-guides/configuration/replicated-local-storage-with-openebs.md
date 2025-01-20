@@ -13,9 +13,6 @@ The documentation will follow installing OpenEBS via the offical Helm chart.
 Since Talos is different from standard Operating Systems, the OpenEBS components need a little tweaking after the Helm installation.
 Refer to the OpenEBS [documentation](https://openebs.io/docs/quickstart-guide/installation) if you need further customization.
 
-> NB: Also note that the Talos nodes need to be upgraded with `--preserve` set while running OpenEBS, otherwise you risk losing data.
-> Even though it's possible to recover data from other replicas if the node is wiped during an upgrade, this can require extra operational knowledge to recover, so it's highly recommended to use `--preserve` to avoid data loss.
-
 ## Preparing the nodes
 
 Depending on the version of OpenEBS, there is a `hostPath` mount with the path `/var/openebs/local` or `/var/local/openebs`.

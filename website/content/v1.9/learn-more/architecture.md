@@ -50,7 +50,6 @@ Directories like this are `overlayfs` backed by an XFS file system mounted at `/
 
 The `/var` directory is owned by Kubernetes with the exception of the above `overlayfs` file systems.
 This directory is writable and used by `etcd` (in the case of control plane nodes), the kubelet, and the CRI (containerd).
-Its content survives machine reboots, but it is wiped and lost on machine upgrades and resets, unless the
-`--preserve` option of [`talosctl upgrade`]({{< relref "../reference/cli#talosctl-upgrade" >}}) or the
+Its content survives machine reboots and on machine upgrades, but it is wiped and lost on resets, unless the
 `--system-labels-to-wipe` option of [`talosctl reset`]({{< relref "../reference/cli#talosctl-reset" >}})
 is used.

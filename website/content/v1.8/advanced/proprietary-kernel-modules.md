@@ -61,5 +61,5 @@ aliases:
 3. Deploying to your cluster
 
     ```bash
-    talosctl upgrade --image ghcr.io/your-username/talos-installer:<talos version> --preserve=true
+    talosctl upgrade --image ghcr.io/your-username/talos-installer:<talos version>
     ```
