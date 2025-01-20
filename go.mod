@@ -130,7 +130,7 @@ require (
 	github.com/pkg/xattr v0.4.10
 	github.com/pmorjan/kmod v1.1.1
 	github.com/prometheus/procfs v0.15.1
-	github.com/rivo/tview v0.0.0-20241103174730-c76f7879f592
+	github.com/rivo/tview v0.0.0-20241227133733-17b7edb88c57
 	github.com/rs/xid v1.6.0
 	github.com/ryanuber/columnize v2.1.2+incompatible
 	github.com/ryanuber/go-glob v1.0.0
