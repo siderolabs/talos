@@ -51,7 +51,7 @@ func (suite *ListSuite) TestDepth() {
 
 	if stdout, _ := suite.RunCLI(imageCacheQuery); strings.Contains(stdout, "ready") {
 		// Image cache paths parts are longer
-		maxSeps = 8
+		maxSeps = 9
 	}
 
 	// checks that enough separators are encountered in the output

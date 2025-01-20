@@ -366,9 +366,11 @@ func (ctrl *ImageCacheConfigController) analyzeImageCacheVolumes(ctx context.Con
 			case VolumeImageCacheISO:
 				isoReady = true
 				copySource = root.ValueOr("")
+				logger = logger.With(zap.String("iso_size", volumeStatus.TypedSpec().PrettySize))
 			case VolumeImageCacheDISK:
 				diskReady = true
 				copyTarget = root.ValueOr("")
+				logger = logger.With(zap.String("disk_size", volumeStatus.TypedSpec().PrettySize))
 			}
 		}
 
@@ -378,6 +380,8 @@ func (ctrl *ImageCacheConfigController) analyzeImageCacheVolumes(ctx context.Con
 			roots = append(roots, rootPath)
 		}
 	}
+
+	logger = logger.With(zap.Bool("all_ready", allReady))
 
 	var copyStatus cri.ImageCacheCopyStatus
 
@@ -462,12 +466,8 @@ func (ctrl *ImageCacheConfigController) copyImageCache(ctx context.Context, logg
 	if err := filepath.WalkDir(source, func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return fmt.Errorf("error walking source directory: %w", err)
-		}
-
-		select {
-		case <-ctx.Done():
-			return ctx.Err()
-		default:
+		} else if err = ctx.Err(); err != nil {
+			return err
 		}
 
 		relPath, err := filepath.Rel(source, path)
@@ -537,7 +537,7 @@ func copyFileSafe(src, dst string) error {
 	defer dstFile.Close() //nolint:errcheck
 
 	if _, err = io.Copy(dstFile, srcFile); err != nil {
-		return fmt.Errorf("error copying file: %w", err)
+		return fmt.Errorf("error copying file: %w, source size is %d", err, srcStat.Size())
 	}
 
 	if err = dstFile.Close(); err != nil {

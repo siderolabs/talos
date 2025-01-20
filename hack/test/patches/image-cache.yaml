@@ -23,4 +23,5 @@ name: IMAGECACHE
 provisioning:
   diskSelector:
     match: 'system_disk'
+  maxSize: 3GiB
   grow: true
