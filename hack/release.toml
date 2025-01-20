@@ -23,7 +23,7 @@ preface = """
 * runc: 1.2.4
 * containerd: 2.0.2
 
-Talos is built with Go 1.23.4.
+Talos is built with Go 1.23.5.
 """
 
     [notes.driver-rebind]
