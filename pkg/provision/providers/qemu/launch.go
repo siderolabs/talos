@@ -278,7 +278,7 @@ func withCNI(ctx context.Context, config *LaunchConfig, f func(config *LaunchCon
 }
 
 func checkPartitions(config *LaunchConfig) (bool, error) {
-	info, err := blkid.ProbePath(config.DiskPaths[0])
+	info, err := blkid.ProbePath(config.DiskPaths[0], blkid.WithSectorSize(config.DiskBlockSizes[0]))
 	if err != nil {
 		return false, fmt.Errorf("error probing disk: %w", err)
 	}

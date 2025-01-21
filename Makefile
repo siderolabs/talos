@@ -130,6 +130,7 @@ INSTALLER_ARCH ?= all
 INSTALLER_ONLY_PKGS ?= \
     bash \
     cpio \
+    dosfstools \
     efibootmgr \
     kmod \
     squashfs-tools \
@@ -140,7 +141,6 @@ INSTALLER_ONLY_PKGS ?= \
 IMAGER_EXTRA_PKGS ?= \
     binutils-aarch64 \
     binutils-x86_64 \
-    dosfstools \
     e2fsprogs \
     mtools \
     pigz \
@@ -446,7 +446,7 @@ image-%: ## Builds the specified image. Valid options are aws, azure, digital-oc
 		docker run --rm -t -v /dev:/dev -v $(PWD)/$(ARTIFACTS):/secureboot:ro -v $(PWD)/$(ARTIFACTS):/out -e SOURCE_DATE_EPOCH=$(SOURCE_DATE_EPOCH) --network=host --privileged $(REGISTRY_AND_USERNAME)/imager:$(IMAGE_TAG) $* --arch $$arch $(IMAGER_ARGS) ; \
 	done
 
-images-essential: image-aws image-azure image-gcp image-metal secureboot-installer ## Builds only essential images used in the CI (AWS, GCP, and Metal).
+images-essential: image-aws image-azure image-gcp image-metal secureboot-installer ## Builds only essential images used in the CI (AWS, Azure, GCP, and Metal).
 
 images: image-akamai image-aws image-azure image-digital-ocean image-exoscale image-cloudstack image-gcp image-hcloud image-iso image-metal image-nocloud image-opennebula image-openstack image-oracle image-scaleway image-upcloud image-vmware image-vultr ## Builds all known images (AWS, Azure, DigitalOcean, Exoscale, Cloudstack, GCP, HCloud, Metal, NoCloud, OpenNebula, OpenStack, Oracle, Scaleway, UpCloud, Vultr and VMware).
 
