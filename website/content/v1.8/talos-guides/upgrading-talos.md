@@ -15,9 +15,6 @@ This scheme retains the previous Talos kernel and OS image following each upgrad
 If an upgrade fails to boot, Talos will roll back to the previous version.
 Likewise, Talos may be manually rolled back via API (or `talosctl rollback`), which will update the boot reference and reboot.
 
-Unless explicitly told to `preserve` data, an upgrade will cause the node to wipe the [EPHEMERAL]({{< relref "../learn-more/architecture/#file-system-partitions" >}}) partition, remove itself from the etcd cluster (if it is a controlplane node), and make itself as pristine as is possible.
-(This is the desired behavior except in specialised use cases such as single-node clusters.)
-
 *Note* An upgrade of the Talos Linux OS will not (since v1.0) apply an upgrade to the Kubernetes version by default.
 Kubernetes upgrades should be managed separately per [upgrading kubernetes]({{< relref "../kubernetes-guides/upgrading-kubernetes" >}}).
 
@@ -158,7 +155,6 @@ From the user's standpoint, however, the processes are identical.
 However, since control plane nodes run additional services, such as etcd, there are some extra steps and checks performed on them.
 For instance, Talos will refuse to upgrade a control plane node if that upgrade would cause a loss of quorum for etcd.
 If multiple control plane nodes are asked to upgrade at the same time, Talos will protect the Kubernetes cluster by ensuring only one control plane node actively upgrades at any time, via checking etcd quorum.
-If running a single-node cluster, and you want to force an upgrade despite the loss of quorum, you can set `preserve` to `true`.
 
 **Q.** Can I break my cluster by upgrading everything at once?
 

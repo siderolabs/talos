@@ -6,8 +6,6 @@ description: "Using local storage for Kubernetes workloads."
 Using local storage for Kubernetes workloads implies that the pod will be bound to the node where the local storage is available.
 Local storage is not replicated, so in case of a machine failure contents of the local storage will be lost.
 
-> Note: when using `EPHEMERAL` Talos partition (`/var`), make sure to use `--preserve` set while performing upgrades, otherwise you risk losing data.
-
 ## `hostPath` mounts
 
 The simplest way to use local storage is to use `hostPath` mounts.
