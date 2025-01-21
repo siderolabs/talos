@@ -1346,6 +1346,13 @@ spec:
             WITH_CONFIG_PATCH: "@hack/test/patches/rook-ceph.yaml"
             EXTRA_TEST_ARGS: -talos.csi=rook-ceph
             IMAGE_REGISTRY: registry.dev.siderolabs.io
+        - name: save-fio-benchmark
+          artifactStep:
+            type: upload
+            artifactName: fio-integration-qemu-csi-rook-ceph
+            disableExecutableListGeneration: true
+            artifactPath: /tmp/fio-*.json
+            retentionDays: "180"
         - name: save-talos-logs
           conditions:
             - always
@@ -1356,7 +1363,6 @@ spec:
             artifactPath: /tmp/logs-*.tar.gz
             additionalArtifacts:
               - "/tmp/support-*.zip"
-              - "/tmp/fio-*.json"
     - name: integration-qemu-csi-longhorn
       buildxOptions:
         enabled: true
@@ -1430,6 +1436,13 @@ spec:
             WITH_CONFIG_PATCH: "@_out/installer-extensions-patch.yaml:@_out/kubelet-fat-patch.yaml:@hack/test/patches/longhorn.yaml"
             EXTRA_TEST_ARGS: -talos.csi=longhorn
             IMAGE_REGISTRY: registry.dev.siderolabs.io
+        - name: save-fio-benchmark
+          artifactStep:
+            type: upload
+            artifactName: fio-integration-qemu-csi-longhorn
+            disableExecutableListGeneration: true
+            artifactPath: /tmp/fio-*.json
+            retentionDays: "180"
         - name: save-talos-logs
           conditions:
             - always
@@ -1440,7 +1453,6 @@ spec:
             artifactPath: /tmp/logs-*.tar.gz
             additionalArtifacts:
               - "/tmp/support-*.zip"
-              - "/tmp/fio-*.json"
     - name: integration-qemu-csi-openebs
       buildxOptions:
         enabled: true
@@ -1491,6 +1503,13 @@ spec:
             WITH_CONFIG_PATCH_WORKER: "@hack/test/patches/openebs.yaml"
             EXTRA_TEST_ARGS: -talos.csi=openebs
             IMAGE_REGISTRY: registry.dev.siderolabs.io
+        - name: save-fio-benchmark
+          artifactStep:
+            type: upload
+            artifactName: fio-integration-qemu-csi-openebs
+            disableExecutableListGeneration: true
+            artifactPath: /tmp/fio-*.json
+            retentionDays: "180"
         - name: save-talos-logs
           conditions:
             - always
@@ -1501,7 +1520,6 @@ spec:
             artifactPath: /tmp/logs-*.tar.gz
             additionalArtifacts:
               - "/tmp/support-*.zip"
-              - "/tmp/fio-*.json"
     - name: integration-images
       buildxOptions:
         enabled: true

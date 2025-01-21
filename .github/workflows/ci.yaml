@@ -1,6 +1,6 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
 #
-# Generated on 2025-01-20T16:57:17Z by kres 3b3f992.
+# Generated on 2025-01-21T10:29:14Z by kres 3075de9.
 
 name: default
 concurrency:
@@ -2956,6 +2956,13 @@ jobs:
         run: |
           sudo -E make e2e-qemu
       - name: save artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: fio-integration-qemu-csi-longhorn
+          path: |
+            /tmp/fio-*.json
+          retention-days: "180"
+      - name: save artifacts
         if: always()
         uses: actions/upload-artifact@v4
         with:
@@ -2963,7 +2970,6 @@ jobs:
           path: |-
             /tmp/logs-*.tar.gz
             /tmp/support-*.zip
-            /tmp/fio-*.json
           retention-days: "5"
   integration-qemu-csi-openebs:
     permissions:
@@ -3058,6 +3064,13 @@ jobs:
         run: |
           sudo -E make e2e-qemu
       - name: save artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: fio-integration-qemu-csi-openebs
+          path: |
+            /tmp/fio-*.json
+          retention-days: "180"
+      - name: save artifacts
         if: always()
         uses: actions/upload-artifact@v4
         with:
@@ -3065,7 +3078,6 @@ jobs:
           path: |-
             /tmp/logs-*.tar.gz
             /tmp/support-*.zip
-            /tmp/fio-*.json
           retention-days: "5"
   integration-qemu-csi-rook-ceph:
     permissions:
@@ -3159,6 +3171,13 @@ jobs:
         run: |
           sudo -E make e2e-qemu
       - name: save artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: fio-integration-qemu-csi-rook-ceph
+          path: |
+            /tmp/fio-*.json
+          retention-days: "180"
+      - name: save artifacts
         if: always()
         uses: actions/upload-artifact@v4
         with:
@@ -3166,7 +3185,6 @@ jobs:
           path: |-
             /tmp/logs-*.tar.gz
             /tmp/support-*.zip
-            /tmp/fio-*.json
           retention-days: "5"
   integration-qemu-encrypted-vip:
     permissions:
