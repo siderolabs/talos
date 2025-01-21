@@ -684,6 +684,15 @@ spec:
             WITH_CONTROL_PLANE_PORT: 443
             IMAGE_REGISTRY: registry.dev.siderolabs.io
             WITH_CONFIG_PATCH: "@hack/test/patches/ephemeral-min-max.yaml"
+        - name: e2e-uki-4k
+          command: e2e-qemu
+          withSudo: true
+          environment:
+            GITHUB_STEP_NAME: ${{ github.job}}-e2e-uki-4k
+            SHORT_INTEGRATION_TEST: yes
+            IMAGE_REGISTRY: registry.dev.siderolabs.io
+            WITH_UKI_BOOT: true
+            WITH_4K_DISK: true
         - name: save-talos-logs
           conditions:
             - always

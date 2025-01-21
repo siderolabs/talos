@@ -218,6 +218,24 @@ case "${WITH_IOMMU:-false}" in
     ;;
 esac
 
+case "${WITH_4K_DISK:-false}" in
+  false)
+    ;;
+  *)
+    QEMU_FLAGS+=("--disk-block-size=4096")
+    ;;
+esac
+
+case "${WITH_UKI_BOOT:-false}" in
+  false)
+    ;;
+  *)
+    INSTALLER_IMAGE=${INSTALLER_IMAGE}-amd64-secureboot # we don't use secureboot part here, but this installer contains UKIs
+    QEMU_FLAGS+=("--uki-path=_out/metal-amd64-uki.efi")
+    ;;
+esac
+
+
 function create_cluster {
   build_registry_mirrors
 

@@ -1,6 +1,6 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
 #
-# Generated on 2024-12-11T13:30:10Z by kres 8183c20.
+# Generated on 2025-01-22T14:28:18Z by kres 3075de9.
 
 name: integration-misc-0-cron
 concurrency:
@@ -101,6 +101,15 @@ jobs:
           SHORT_INTEGRATION_TEST: "yes"
           WITH_CONFIG_PATCH: '@hack/test/patches/ephemeral-min-max.yaml'
           WITH_CONTROL_PLANE_PORT: "443"
+        run: |
+          sudo -E make e2e-qemu
+      - name: e2e-uki-4k
+        env:
+          GITHUB_STEP_NAME: ${{ github.job}}-e2e-uki-4k
+          IMAGE_REGISTRY: registry.dev.siderolabs.io
+          SHORT_INTEGRATION_TEST: "yes"
+          WITH_4K_DISK: "true"
+          WITH_UKI_BOOT: "true"
         run: |
           sudo -E make e2e-qemu
       - name: save artifacts
