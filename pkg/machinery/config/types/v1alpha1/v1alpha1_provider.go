@@ -1302,8 +1302,7 @@ func (i *InstallConfig) DiskMatchExpression() (*cel.Expression, error) {
 	}
 
 	if selector.UUID != "" {
-		// not supported
-		return nil, fmt.Errorf("selector on uuid is not supported")
+		exprs = append(exprs, patternMatcherExpr(selector.UUID, "uuid"))
 	}
 
 	if selector.WWID != "" {

@@ -77,6 +77,7 @@ message DiskSpec {
   string dev_path = 14;
   string pretty_size = 15;
   repeated string secondary_disks = 16;
+  string uuid = 17;
 }
 
 // EncryptionKey is the spec for volume encryption key.
