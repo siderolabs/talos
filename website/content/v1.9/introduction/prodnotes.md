@@ -67,13 +67,12 @@ After the machine configurations are generated, you will want to edit the `contr
 
 ```yaml
 machine:
-    network:
-     interfaces:
+  network:
+    interfaces:
       - interface: enp2s0
         dhcp: true
         vip:
           ip: 192.168.0.15
-
 ```
 
 For more information about using a shared IP, see the related

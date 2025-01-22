@@ -31,7 +31,7 @@ You can download `talosctl` on MacOS and Linux via:
 brew install siderolabs/tap/talosctl
 ```
 
-For manually installation and other platform please see the [talosctl installation guide]({{< relref "../talos-guides/install/talosctl.md" >}}).
+For manual installation and other platforms please see the [talosctl installation guide]({{< relref "../talos-guides/install/talosctl.md" >}}).
 
 > Note: If you boot systems off the ISO, Talos on the ISO image runs in RAM and acts as an installer.
 > The version of `talosctl` that is used to create the machine configurations controls the version of Talos Linux that is installed on the machines - NOT the image that the machines are initially booted off.

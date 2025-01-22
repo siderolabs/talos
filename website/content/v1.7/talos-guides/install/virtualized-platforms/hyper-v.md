@@ -38,7 +38,7 @@ Use the following command to create 2 worker nodes:
 New-TalosVM -VMNamePrefix talos-worker -CPUCount 4 -StartupMemory 8GB -SwitchName LAB -TalosISOPath C:\ISO\metal-amd64.iso -NumberOfVMs 2 -VMDestinationBasePath 'D:\Virtual Machines\Test VMs\Talos' -StorageVHDSize 50GB
 ```
 
-This will create two VMs: `talos-worker01` and `talos-wworker02` and attach an additional VHD of 50GB for storage (which in my case will be passed to Mayastor).
+This will create two VMs: `talos-worker01` and `talos-worker02` and attach an additional VHD of 50GB for storage (which in my case will be passed to Mayastor).
 
 ## Pushing Config to the Nodes
 

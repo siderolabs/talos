@@ -32,7 +32,7 @@ You can download `talosctl` on MacOS and Linux via:
 brew install siderolabs/tap/talosctl
 ```
 
-For manually installation and other platform please see the [talosctl installation guide]({{< relref "../talosctl.md" >}}).
+For manual installation and other platforms please see the [talosctl installation guide]({{< relref "../talosctl.md" >}}).
 
 ### Download ISO Image
 

@@ -95,3 +95,7 @@ machine:
           - rshared
           - rw
 ```
+
+To test the Local Path Provisioner, you can refer to the [Usage section of the official guide](https://github.com/rancher/local-path-provisioner?tab=readme-ov-file#usage).
+
+You can check that directories for PVCs are created on the node's filesystem with the `talosctl ls /var/local-path-provisioner` command.
