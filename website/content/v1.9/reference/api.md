@@ -933,6 +933,7 @@ DiskSpec is the spec for Disks status.
 | dev_path | [string](#string) |  |  |
 | pretty_size | [string](#string) |  |  |
 | secondary_disks | [string](#string) | repeated |  |
+| uuid | [string](#string) |  |  |
 
 
 

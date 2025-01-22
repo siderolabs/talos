@@ -87,6 +87,15 @@ disk.rotational && !disk.readonly && !disk.cdrom`,
 			expected: `disk.transport != "" && glob("/pci-0000:00:1f.2/*", disk.bus_path) && !disk.readonly &&
 !disk.cdrom`,
 		},
+		{
+			name: "uuid",
+
+			selector: v1alpha1.InstallDiskSelector{
+				UUID: "0000-0001-*",
+			},
+
+			expected: `glob("0000-0001-*", disk.uuid) && disk.transport != "" && !disk.readonly && !disk.cdrom`,
+		},
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()

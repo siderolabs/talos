@@ -75,6 +75,7 @@ func (s *Server) Disks(ctx context.Context, in *emptypb.Empty) (reply *storage.D
 			Serial:     d.TypedSpec().Serial,
 			Modalias:   d.TypedSpec().Modalias,
 			Wwid:       d.TypedSpec().WWID,
+			Uuid:       d.TypedSpec().UUID,
 			Type:       diskType,
 			BusPath:    d.TypedSpec().BusPath,
 			SystemDisk: systemDisk != nil && d.Metadata().ID() == systemDisk.TypedSpec().DiskID,

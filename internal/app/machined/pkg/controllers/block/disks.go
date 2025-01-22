@@ -187,6 +187,7 @@ func (ctrl *DisksController) analyzeBlockDevice(
 		d.TypedSpec().Serial = props.Serial
 		d.TypedSpec().Modalias = props.Modalias
 		d.TypedSpec().WWID = props.WWID
+		d.TypedSpec().UUID = props.UUID
 		d.TypedSpec().BusPath = props.BusPath
 		d.TypedSpec().SubSystem = props.SubSystem
 		d.TypedSpec().Transport = props.Transport
