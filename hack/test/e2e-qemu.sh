@@ -139,6 +139,18 @@ case "${WITH_ISO:-false}" in
     ;;
 esac
 
+case "${WITH_CONFIG_PATCH_CONTROLPLANE:-false}" in
+  false)
+    ;;
+  *)
+    [[ ! ${WITH_CONFIG_PATCH_CONTROLPLANE} =~ ^@ ]] && echo "WITH_CONFIG_PATCH_CONTROLPLANE variable should start with @" && exit 1
+
+    for i in ${WITH_CONFIG_PATCH_CONTROLPLANE//:/ }; do
+      QEMU_FLAGS+=("--config-patch-control-plane=${i}")
+    done
+    ;;
+esac
+
 case "${WITH_CONFIG_PATCH_WORKER:-false}" in
   false)
     ;;

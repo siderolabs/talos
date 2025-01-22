@@ -1,6 +1,6 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
 #
-# Generated on 2025-01-21T10:29:14Z by kres 3075de9.
+# Generated on 2025-01-22T14:23:24Z by kres 3075de9.
 
 name: integration-qemu-csi-openebs-cron
 concurrency:
@@ -89,7 +89,7 @@ jobs:
           QEMU_MEMORY_WORKERS: "4096"
           QEMU_WORKERS: "3"
           SHORT_INTEGRATION_TEST: "yes"
-          WITH_CONFIG_PATCH: '@hack/test/patches/openebs-cp.yaml'
+          WITH_CONFIG_PATCH_CONTROLPLANE: '@hack/test/patches/openebs-cp.yaml'
           WITH_CONFIG_PATCH_WORKER: '@hack/test/patches/openebs.yaml'
         run: |
           sudo -E make e2e-qemu

@@ -1,0 +1,10 @@
+---
+spec:
+  disks:
+    nvme:
+      allowScheduling: true
+      evictionRequested: false
+      path: /dev/nvme0n1
+      storageReserved: 0
+      tags: []
+      diskType: block

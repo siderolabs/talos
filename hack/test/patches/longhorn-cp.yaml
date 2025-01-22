@@ -6,4 +6,4 @@ cluster:
         configuration:
           exemptions:
             namespaces:
-              - openebs
+              - longhorn-system

@@ -33,6 +33,7 @@ import (
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/yaml"
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/discovery"
@@ -588,7 +589,7 @@ func (k8sSuite *K8sSuite) WaitForResource(ctx context.Context, namespace, group,
 		}
 
 		if !exists {
-			return true, fmt.Errorf("resource %s/%s/%s/%s not found", group, version, kind, resourceName)
+			return true, errors.NewNotFound(mapping.Resource.GroupResource(), resourceName)
 		}
 
 		return false, nil
@@ -657,15 +658,15 @@ func (k8sSuite *K8sSuite) GetUnstructuredResource(ctx context.Context, namespace
 }
 
 // RunFIOTest runs the FIO test with the given storage class and size using kubestr.
-func (k8sSuite *K8sSuite) RunFIOTest(ctx context.Context, storageClasss, size string) error {
+func (k8sSuite *K8sSuite) RunFIOTest(ctx context.Context, storageClass, size string) error {
 	args := []string{
 		"--outfile",
-		fmt.Sprintf("/tmp/fio-%s.json", storageClasss),
+		fmt.Sprintf("/tmp/fio-%s.json", storageClass),
 		"--output",
 		"json",
 		"fio",
 		"--storageclass",
-		storageClasss,
+		storageClass,
 		"--size",
 		size,
 	}
@@ -819,6 +820,24 @@ func (k8sSuite *K8sSuite) DeleteManifests(ctx context.Context, manifests []unstr
 
 		k8sSuite.T().Logf("deleted object %s/%s/%s", obj.GetObjectKind().GroupVersionKind(), obj.GetNamespace(), obj.GetName())
 	}
+}
+
+// PatchK8sObject patches the kubernetes object with the given namespace, group, kind, version and name.
+func (k8sSuite *K8sSuite) PatchK8sObject(ctx context.Context, namespace, group, kind, version, resourceName string, patchBytes []byte) {
+	patchBytes, err := yaml.ToJSON(patchBytes)
+	k8sSuite.Require().NoError(err, "error converting patch to JSON")
+
+	mapping, err := k8sSuite.Mapper.RESTMapping(schema.GroupKind{
+		Group: group,
+		Kind:  kind,
+	}, version)
+
+	k8sSuite.Require().NoError(err, "error creating mapping for resource %s/%s/%s", group, kind, version)
+
+	dr := k8sSuite.DynamicClient.Resource(mapping.Resource).Namespace(namespace)
+
+	_, err = dr.Patch(ctx, resourceName, types.MergePatchType, patchBytes, metav1.PatchOptions{})
+	k8sSuite.Require().NoError(err, "error patching resource %s/%s/%s/%s", group, version, kind, resourceName)
 }
 
 // ToUnstructured converts the given runtime.Object to unstructured.Unstructured.
