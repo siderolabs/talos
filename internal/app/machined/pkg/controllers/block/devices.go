@@ -15,6 +15,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
 	"go.uber.org/zap"
+	"golang.org/x/sys/unix"
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/block/internal/inotify"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/block/internal/kobject"
@@ -217,7 +218,7 @@ func (ctrl *DevicesController) processEvent(ctx context.Context, r controller.Ru
 			return fmt.Errorf("failed to modify device %q: %w", id, err)
 		}
 
-		if err := inotifyWatcher.Add(devPath); err != nil {
+		if err := inotifyWatcher.Add(devPath, unix.IN_CLOSE_WRITE); err != nil {
 			return fmt.Errorf("failed to add inotify watch for %q: %w", devPath, err)
 		}
 	case kobject.ActionRemove:

@@ -210,7 +210,7 @@ func (w *Watcher) Run() (<-chan string, <-chan error) {
 				}
 
 				// Send the events that are not ignored on the events channel
-				if mask&unix.IN_IGNORED == 0 && mask&unix.IN_CLOSE_WRITE != 0 {
+				if mask&unix.IN_IGNORED == 0 && mask&^uint32(unix.IN_DELETE_SELF) != 0 {
 					eventCh <- name
 				}
 
@@ -224,8 +224,8 @@ func (w *Watcher) Run() (<-chan string, <-chan error) {
 }
 
 // Add a watch to the inotify watcher.
-func (w *Watcher) Add(name string) error {
-	var flags uint32 = unix.IN_CLOSE_WRITE | unix.IN_DELETE_SELF
+func (w *Watcher) Add(name string, flags uint32) error {
+	flags |= unix.IN_DELETE_SELF
 
 	return w.watches.updatePath(name, func(existing *watch) (*watch, error) {
 		if existing != nil {

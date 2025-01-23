@@ -100,6 +100,7 @@ func NewState() (*State, error) {
 		&block.DiscoveryRefreshRequest{},
 		&block.DiscoveryRefreshStatus{},
 		&block.Disk{},
+		&block.Symlink{},
 		&block.SystemDisk{},
 		&block.UserDiskConfigStatus{},
 		&block.VolumeConfig{},

@@ -9,13 +9,19 @@ package api
 import (
 	"context"
 	"fmt"
+	"path/filepath"
+	"slices"
 	"strings"
 	"testing"
 	"time"
 
+	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/safe"
+	"github.com/cosi-project/runtime/pkg/state"
+	"github.com/google/uuid"
 
 	"github.com/siderolabs/talos/internal/integration/base"
+	"github.com/siderolabs/talos/pkg/machinery/api/storage"
 	"github.com/siderolabs/talos/pkg/machinery/client"
 	"github.com/siderolabs/talos/pkg/machinery/config/machine"
 	"github.com/siderolabs/talos/pkg/machinery/resources/block"
@@ -155,6 +161,7 @@ func (suite *VolumesSuite) TestDisks() {
 					suite.Assert().NotEmpty(disk.TypedSpec().Size, "disk: %s", disk.Metadata().ID())
 				}
 
+				suite.Assert().NotEmpty(disk.TypedSpec().Symlinks, "disk: %s", disk.Metadata().ID())
 				suite.Assert().NotEmpty(disk.TypedSpec().IOSize, "disk: %s", disk.Metadata().ID())
 				suite.Assert().NotEmpty(disk.TypedSpec().SectorSize, "disk: %s", disk.Metadata().ID())
 
@@ -303,6 +310,91 @@ func (suite *VolumesSuite) lvmVolumeExists(node string) bool {
 	// we test with creating a volume group with two logical volumes
 	// one mirrored and one not, so we expect to see at least 6 volumes
 	return lvmVolumeCount >= 6
+}
+
+// TestSymlinks that Talos can update disk symlinks on the fly.
+func (suite *VolumesSuite) TestSymlinks() {
+	if testing.Short() {
+		suite.T().Skip("skipping test in short mode.")
+	}
+
+	if suite.Cluster == nil || suite.Cluster.Provisioner() != base.ProvisionerQEMU {
+		suite.T().Skip("skipping test for non-qemu provisioner")
+	}
+
+	node := suite.RandomDiscoveredNodeInternalIP(machine.TypeWorker)
+
+	k8sNode, err := suite.GetK8sNodeByInternalIP(suite.ctx, node)
+	suite.Require().NoError(err)
+
+	nodeName := k8sNode.Name
+
+	userDisks := suite.UserDisks(suite.ctx, node)
+
+	if len(userDisks) < 1 {
+		suite.T().Skipf("skipping test, not enough user disks available on node %s/%s: %q", node, nodeName, userDisks)
+	}
+
+	userDisk := userDisks[0]
+	userDiskName := filepath.Base(userDisk)
+
+	suite.T().Logf("performing a symlink test %s on %s/%s", userDisk, node, nodeName)
+
+	podDef, err := suite.NewPrivilegedPod("xfs-format")
+	suite.Require().NoError(err)
+
+	podDef = podDef.WithNodeName(nodeName)
+
+	suite.Require().NoError(podDef.Create(suite.ctx, 5*time.Minute))
+
+	defer podDef.Delete(suite.ctx) //nolint:errcheck
+
+	fsUUID := uuid.New().String()
+
+	_, _, err = podDef.Exec(
+		suite.ctx,
+		fmt.Sprintf("nsenter --mount=/proc/1/ns/mnt -- mkfs.xfs -m uuid=%s %s", fsUUID, userDisk),
+	)
+	suite.Require().NoError(err)
+
+	expectedSymlink := "/dev/disk/by-uuid/" + fsUUID
+
+	// Talos should report a symlink to the disk via FS UUID
+	_, err = suite.Client.COSI.WatchFor(client.WithNode(suite.ctx, node), block.NewDisk(block.NamespaceName, userDiskName).Metadata(),
+		state.WithCondition(func(r resource.Resource) (bool, error) {
+			disk, ok := r.(*block.Disk)
+			if !ok {
+				return false, fmt.Errorf("unexpected resource type: %T", r)
+			}
+
+			return slices.Index(disk.TypedSpec().Symlinks, expectedSymlink) != -1, nil
+		}),
+	)
+	suite.Require().NoError(err)
+
+	suite.T().Logf("wiping user disk %s on %s/%s", userDisk, node, nodeName)
+
+	suite.Require().NoError(suite.Client.BlockDeviceWipe(client.WithNode(suite.ctx, node), &storage.BlockDeviceWipeRequest{
+		Devices: []*storage.BlockDeviceWipeDescriptor{
+			{
+				Device: userDiskName,
+				Method: storage.BlockDeviceWipeDescriptor_FAST,
+			},
+		},
+	}))
+
+	// Talos should remove a symlink to the disk
+	_, err = suite.Client.COSI.WatchFor(client.WithNode(suite.ctx, node), block.NewDisk(block.NamespaceName, userDiskName).Metadata(),
+		state.WithCondition(func(r resource.Resource) (bool, error) {
+			disk, ok := r.(*block.Disk)
+			if !ok {
+				return false, fmt.Errorf("unexpected resource type: %T", r)
+			}
+
+			return slices.Index(disk.TypedSpec().Symlinks, expectedSymlink) == -1, nil
+		}),
+	)
+	suite.Require().NoError(err)
 }
 
 func init() {

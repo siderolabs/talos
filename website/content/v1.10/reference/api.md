@@ -40,6 +40,7 @@ description: Talos gRPC API reference.
     - [MountSpec](#talos.resource.definitions.block.MountSpec)
     - [PartitionSpec](#talos.resource.definitions.block.PartitionSpec)
     - [ProvisioningSpec](#talos.resource.definitions.block.ProvisioningSpec)
+    - [SymlinkSpec](#talos.resource.definitions.block.SymlinkSpec)
     - [SystemDiskSpec](#talos.resource.definitions.block.SystemDiskSpec)
     - [UserDiskConfigStatusSpec](#talos.resource.definitions.block.UserDiskConfigStatusSpec)
     - [VolumeConfigSpec](#talos.resource.definitions.block.VolumeConfigSpec)
@@ -936,6 +937,7 @@ DiskSpec is the spec for Disks status.
 | pretty_size | [string](#string) |  |  |
 | secondary_disks | [string](#string) | repeated |  |
 | uuid | [string](#string) |  |  |
+| symlinks | [string](#string) | repeated |  |
 
 
 
@@ -1059,6 +1061,21 @@ ProvisioningSpec is the spec for volume provisioning.
 | partition_spec | [PartitionSpec](#talos.resource.definitions.block.PartitionSpec) |  |  |
 | wave | [int64](#int64) |  |  |
 | filesystem_spec | [FilesystemSpec](#talos.resource.definitions.block.FilesystemSpec) |  |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.block.SymlinkSpec"></a>
+
+### SymlinkSpec
+SymlinkSpec is the spec for Symlinks resource.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| paths | [string](#string) | repeated |  |
 
 
 

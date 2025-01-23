@@ -97,6 +97,7 @@ func (ctrl *Controller) Run(ctx context.Context, drainer *runtime.Drainer) error
 		&block.LVMActivationController{
 			V1Alpha1Mode: ctrl.v1alpha1Runtime.State().Platform().Mode(),
 		},
+		&block.SymlinksController{},
 		&block.SystemDiskController{},
 		&block.UserDiskConfigController{},
 		&block.VolumeConfigController{

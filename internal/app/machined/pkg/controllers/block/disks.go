@@ -11,6 +11,7 @@ import (
 
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/safe"
+	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/siderolabs/gen/xslices"
 	blkdev "github.com/siderolabs/go-blockdevice/v2/block"
 	"go.uber.org/zap"
@@ -32,6 +33,11 @@ func (ctrl *DisksController) Inputs() []controller.Input {
 		{
 			Namespace: block.NamespaceName,
 			Type:      block.DeviceType,
+			Kind:      controller.InputWeak,
+		},
+		{
+			Namespace: block.NamespaceName,
+			Type:      block.SymlinkType,
 			Kind:      controller.InputWeak,
 		},
 	}
@@ -82,8 +88,13 @@ func (ctrl *DisksController) Run(ctx context.Context, r controller.Runtime, logg
 				continue
 			}
 
+			// always update symlinks, but skip if the disk hasn't been created yet
+			if err = ctrl.updateSymlinks(ctx, r, device); err != nil {
+				return err
+			}
+
 			if lastObserved, ok := lastObservedGenerations[device.Metadata().ID()]; ok && device.TypedSpec().Generation == lastObserved {
-				// ignore disks which have some generation as before (don't query them once again)
+				// ignore disks which have same generation as before (don't query them once again)
 				touchedDisks[device.Metadata().ID()] = struct{}{}
 
 				continue
@@ -113,6 +124,33 @@ func (ctrl *DisksController) Run(ctx context.Context, r controller.Runtime, logg
 			delete(lastObservedGenerations, disk.Metadata().ID())
 		}
 	}
+}
+
+func (ctrl *DisksController) updateSymlinks(ctx context.Context, r controller.Runtime, device *block.Device) error {
+	symlinks, err := safe.ReaderGetByID[*block.Symlink](ctx, r, device.Metadata().ID())
+	if err != nil {
+		if state.IsNotFoundError(err) {
+			return nil
+		}
+
+		return err
+	}
+
+	_, err = safe.ReaderGetByID[*block.Disk](ctx, r, device.Metadata().ID())
+	if err != nil {
+		if state.IsNotFoundError(err) {
+			// don't create disk entries even if we have symlinks, let analyze handle it
+			return nil
+		}
+
+		return err
+	}
+
+	return safe.WriterModify(ctx, r, block.NewDisk(block.NamespaceName, device.Metadata().ID()), func(d *block.Disk) error {
+		d.TypedSpec().Symlinks = symlinks.TypedSpec().Paths
+
+		return nil
+	})
 }
 
 //nolint:gocyclo
@@ -172,6 +210,11 @@ func (ctrl *DisksController) analyzeBlockDevice(
 		return devID
 	})
 
+	symlinks, err := safe.ReaderGetByID[*block.Symlink](ctx, r, device.Metadata().ID())
+	if err != nil && !state.IsNotFoundError(err) {
+		return err
+	}
+
 	touchedDisks[device.Metadata().ID()] = struct{}{}
 
 	return safe.WriterModify(ctx, r, block.NewDisk(block.NamespaceName, device.Metadata().ID()), func(d *block.Disk) error {
@@ -194,6 +237,12 @@ func (ctrl *DisksController) analyzeBlockDevice(
 		d.TypedSpec().Rotational = props.Rotational
 
 		d.TypedSpec().SecondaryDisks = secondaryDisks
+
+		if symlinks != nil {
+			d.TypedSpec().Symlinks = symlinks.TypedSpec().Paths
+		} else {
+			d.TypedSpec().Symlinks = nil
+		}
 
 		return nil
 	})

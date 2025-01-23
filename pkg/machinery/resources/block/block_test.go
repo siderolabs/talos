@@ -30,6 +30,7 @@ func TestRegisterResource(t *testing.T) {
 		&block.DiscoveryRefreshStatus{},
 		&block.DiscoveredVolume{},
 		&block.Disk{},
+		&block.Symlink{},
 		&block.SystemDisk{},
 		&block.UserDiskConfigStatus{},
 		&block.VolumeConfig{},

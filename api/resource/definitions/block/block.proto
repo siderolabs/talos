@@ -78,6 +78,7 @@ message DiskSpec {
   string pretty_size = 15;
   repeated string secondary_disks = 16;
   string uuid = 17;
+  repeated string symlinks = 18;
 }
 
 // EncryptionKey is the spec for volume encryption key.
@@ -131,6 +132,11 @@ message ProvisioningSpec {
   PartitionSpec partition_spec = 2;
   int64 wave = 3;
   FilesystemSpec filesystem_spec = 4;
+}
+
+// SymlinkSpec is the spec for Symlinks resource.
+message SymlinkSpec {
+  repeated string paths = 1;
 }
 
 // SystemDiskSpec is the spec for SystemDisks resource.

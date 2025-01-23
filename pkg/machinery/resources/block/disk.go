@@ -49,6 +49,8 @@ type DiskSpec struct {
 	// E.g. if the blockdevice secondary is vda5, the secondary disk will be set as vda.
 	// This allows to map secondaries between disks ignoring the partitions.
 	SecondaryDisks []string `yaml:"secondary_disks,omitempty" protobuf:"16"`
+
+	Symlinks []string `yaml:"symlinks,omitempty" protobuf:"18"`
 }
 
 // SetSize sets the size of the disk, including the pretty size.
