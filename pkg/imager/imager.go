@@ -111,8 +111,10 @@ func (i *Imager) Execute(ctx context.Context, outputPath string, report *reporte
 		if !needBuildUKI {
 			return "", fmt.Errorf("UKI output is not supported in this Talos version")
 		}
-	case profile.OutKindISO, profile.OutKindImage, profile.OutKindInstaller:
+	case profile.OutKindISO, profile.OutKindImage:
 		needBuildUKI = needBuildUKI && i.prof.SecureBootEnabled()
+	case profile.OutKindInstaller:
+		needBuildUKI = needBuildUKI || quirks.New(i.prof.Version).UseSDBootForUEFI()
 	case profile.OutKindCmdline, profile.OutKindKernel, profile.OutKindInitramfs:
 		needBuildUKI = false
 	case profile.OutKindUnknown:

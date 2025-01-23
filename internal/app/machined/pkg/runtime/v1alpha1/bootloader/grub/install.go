@@ -6,6 +6,7 @@ package grub
 
 import (
 	"fmt"
+	"os"
 	"path/filepath"
 	"runtime"
 	"strings"
@@ -16,6 +17,7 @@ import (
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/mount"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/options"
 	"github.com/siderolabs/talos/internal/pkg/partition"
+	"github.com/siderolabs/talos/internal/pkg/uki"
 	"github.com/siderolabs/talos/pkg/imager/utils"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
@@ -68,18 +70,43 @@ func (c *Config) install(opts options.InstallOptions) (*options.InstallResult, e
 		return nil, err
 	}
 
-	if err := utils.CopyFiles(
-		opts.Printf,
-		utils.SourceDestination(
-			opts.BootAssets.KernelPath,
-			filepath.Join(opts.MountPrefix, constants.BootMountPoint, string(c.Default), constants.KernelAsset),
-		),
-		utils.SourceDestination(
-			opts.BootAssets.InitramfsPath,
-			filepath.Join(opts.MountPrefix, constants.BootMountPoint, string(c.Default), constants.InitramfsAsset),
-		),
-	); err != nil {
-		return nil, err
+	// if we have a kernel path, assume that the kernel and initramfs are available
+	if _, err := os.Stat(opts.BootAssets.KernelPath); err == nil {
+		if err := utils.CopyFiles(
+			opts.Printf,
+			utils.SourceDestination(
+				opts.BootAssets.KernelPath,
+				filepath.Join(opts.MountPrefix, constants.BootMountPoint, string(c.Default), constants.KernelAsset),
+			),
+			utils.SourceDestination(
+				opts.BootAssets.InitramfsPath,
+				filepath.Join(opts.MountPrefix, constants.BootMountPoint, string(c.Default), constants.InitramfsAsset),
+			),
+		); err != nil {
+			return nil, err
+		}
+	} else {
+		// if the kernel path does not exist, assume that the kernel and initramfs are in the UKI
+		assetInfo, err := uki.Extract(opts.BootAssets.UKIPath)
+		if err != nil {
+			return nil, err
+		}
+
+		defer assetInfo.Close() //nolint:errcheck
+
+		if err := utils.CopyReader(
+			opts.Printf,
+			utils.ReaderDestination(
+				assetInfo.Kernel,
+				filepath.Join(opts.MountPrefix, constants.BootMountPoint, string(c.Default), constants.KernelAsset),
+			),
+			utils.ReaderDestination(
+				assetInfo.Initrd,
+				filepath.Join(opts.MountPrefix, constants.BootMountPoint, string(c.Default), constants.InitramfsAsset),
+			),
+		); err != nil {
+			return nil, err
+		}
 	}
 
 	if err := c.Put(c.Default, opts.Cmdline, opts.Version); err != nil {

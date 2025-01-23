@@ -198,3 +198,8 @@ func (builder *Builder) BuildSigned(printf func(string, ...any)) error {
 	// sign the UKI file
 	return builder.peSigner.Sign(builder.unsignedUKIPath, builder.OutUKIPath)
 }
+
+// Extract extracts the kernel, initrd, and cmdline from the UKI file.
+func Extract(ukiPath string) (asset pe.AssetInfo, err error) {
+	return pe.Extract(ukiPath)
+}

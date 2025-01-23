@@ -393,15 +393,23 @@ func (i *Imager) outInstaller(ctx context.Context, path string, report *reporter
 
 	printf("generating artifacts layer")
 
-	if i.prof.SecureBootEnabled() {
+	ukiPath := strings.TrimLeft(fmt.Sprintf(constants.UKIAssetPath, i.prof.Arch), "/")
+
+	quirks := quirks.New(i.prof.Version)
+
+	if i.prof.SecureBootEnabled() && !quirks.UseSDBootForUEFI() {
+		ukiPath += ".signed" // support for older secureboot installers
+	}
+
+	if quirks.UseSDBootForUEFI() {
 		artifacts = append(artifacts,
-			filemap.File{
-				ImagePath:  strings.TrimLeft(fmt.Sprintf(constants.UKIAssetPath, i.prof.Arch), "/"),
-				SourcePath: i.ukiPath,
-			},
 			filemap.File{
 				ImagePath:  strings.TrimLeft(fmt.Sprintf(constants.SDBootAssetPath, i.prof.Arch), "/"),
 				SourcePath: i.sdBootPath,
+			},
+			filemap.File{
+				ImagePath:  ukiPath,
+				SourcePath: i.ukiPath,
 			},
 		)
 	} else {
@@ -417,7 +425,7 @@ func (i *Imager) outInstaller(ctx context.Context, path string, report *reporter
 		)
 	}
 
-	if !quirks.New(i.prof.Version).SupportsOverlay() {
+	if !quirks.SupportsOverlay() {
 		for _, extraArtifact := range []struct {
 			sourcePath string
 			imagePath  string

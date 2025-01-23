@@ -161,3 +161,16 @@ func (q Quirks) SupportsSELinux() bool {
 
 	return q.v.GTE(minVersionSELinux)
 }
+
+// minVersionUseSDBootOnly is the version that supports only SDBoot for UEFI.
+var minTalosVersionUseSDBootOnly = semver.MustParse("1.10.0")
+
+// UseSDBootForUEFI returns true if the Talos version supports only SDBoot for UEFI.
+func (q Quirks) UseSDBootForUEFI() bool {
+	// if the version doesn't parse, we assume it's latest Talos
+	if q.v == nil {
+		return false
+	}
+
+	return q.v.GTE(minTalosVersionUseSDBootOnly)
+}

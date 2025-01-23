@@ -630,7 +630,7 @@ const (
 	RootfsAsset = "rootfs.sqsh"
 
 	// UKIAsset defines a well known name for our UKI filename.
-	UKIAsset = "vmlinuz.efi.signed"
+	UKIAsset = "vmlinuz.efi"
 
 	// UKIAssetPath is the path to the UKI in the installer.
 	UKIAssetPath = "/usr/install/%s/" + UKIAsset
