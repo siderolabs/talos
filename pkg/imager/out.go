@@ -83,7 +83,7 @@ func (i *Imager) outCmdline(path string) error {
 	return os.WriteFile(path, []byte(i.cmdline), 0o644)
 }
 
-//nolint:gocyclo
+//nolint:gocyclo,cyclop
 func (i *Imager) outISO(ctx context.Context, path string, report *reporter.Reporter) error {
 	printf := progressPrintf(report, reporter.Update{Message: "building ISO...", Status: reporter.StatusRunning})
 
@@ -104,7 +104,10 @@ func (i *Imager) outISO(ctx context.Context, path string, report *reporter.Repor
 		}
 	}
 
-	if i.prof.SecureBootEnabled() {
+	var generator iso.Generator
+
+	switch {
+	case i.prof.SecureBootEnabled():
 		isoOptions := pointer.SafeDeref(i.prof.Output.ISOOptions)
 
 		var signer pesign.CertificateSigner
@@ -120,7 +123,7 @@ func (i *Imager) outISO(ctx context.Context, path string, report *reporter.Repor
 			return fmt.Errorf("failed to write uki.der: %w", err)
 		}
 
-		options := iso.UEFIOptions{
+		options := iso.Options{
 			UKIPath:    i.ukiPath,
 			SDBootPath: i.sdBootPath,
 
@@ -179,20 +182,52 @@ func (i *Imager) outISO(ctx context.Context, path string, report *reporter.Repor
 			options.SignatureKeyPath = i.prof.Input.SecureBoot.SignatureKeyPath
 		}
 
-		err = iso.CreateUEFI(printf, options)
-	} else {
-		err = iso.CreateGRUB(printf, iso.GRUBOptions{
+		generator, err = options.CreateUEFI(printf)
+		if err != nil {
+			return err
+		}
+	case quirks.New(i.prof.Version).UseSDBootForUEFI():
+		options := iso.Options{
 			KernelPath:    i.prof.Input.Kernel.Path,
 			InitramfsPath: i.initramfsPath,
 			Cmdline:       i.cmdline,
-			Version:       i.prof.Version,
+
+			UKIPath:    i.ukiPath,
+			SDBootPath: i.sdBootPath,
+
+			SDBootSecureBootEnrollKeys: "off",
+
+			Arch:    i.prof.Arch,
+			Version: i.prof.Version,
 
 			ScratchDir: scratchSpace,
 			OutPath:    path,
-		})
+		}
+
+		generator, err = options.CreateHybrid(printf)
+		if err != nil {
+			return err
+		}
+	default:
+		options := iso.Options{
+			KernelPath:    i.prof.Input.Kernel.Path,
+			InitramfsPath: i.initramfsPath,
+			Cmdline:       i.cmdline,
+
+			Arch:    i.prof.Arch,
+			Version: i.prof.Version,
+
+			ScratchDir: scratchSpace,
+			OutPath:    path,
+		}
+
+		generator, err = options.CreateGRUB(printf)
+		if err != nil {
+			return err
+		}
 	}
 
-	if err != nil {
+	if err := generator.Generate(); err != nil {
 		return err
 	}
 

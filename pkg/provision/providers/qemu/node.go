@@ -132,7 +132,7 @@ func (p *provisioner) createNode(state *vm.State, clusterReq provision.ClusterRe
 		return provision.NodeInfo{}, fmt.Errorf("error finding listen address for the API: %w", err)
 	}
 
-	defaultBootOrder := "cn"
+	defaultBootOrder := "cd"
 	if nodeReq.DefaultBootOrder != "" {
 		defaultBootOrder = nodeReq.DefaultBootOrder
 	}

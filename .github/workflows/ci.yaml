@@ -1,6 +1,6 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
 #
-# Generated on 2025-01-22T17:37:55Z by kres 3075de9.
+# Generated on 2025-01-24T14:30:35Z by kres 3075de9.
 
 name: default
 concurrency:
@@ -2196,6 +2196,16 @@ jobs:
           GITHUB_STEP_NAME: ${{ github.job}}-e2e-bios
           IMAGE_REGISTRY: registry.dev.siderolabs.io
           SHORT_INTEGRATION_TEST: "yes"
+          WITH_UEFI: "false"
+        run: |
+          sudo -E make e2e-qemu
+      - name: e2e-bios-iso
+        env:
+          GITHUB_STEP_NAME: ${{ github.job}}-e2e-bios-iso
+          IMAGE_REGISTRY: registry.dev.siderolabs.io
+          SHORT_INTEGRATION_TEST: "yes"
+          VIA_MAINTENANCE_MODE: "true"
+          WITH_ISO: "true"
           WITH_UEFI: "false"
         run: |
           sudo -E make e2e-qemu

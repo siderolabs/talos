@@ -94,6 +94,12 @@ Talos now generates `/etc/nvme/hostnqn` and `/etc/nvme/hostid` files based on th
 The NQN can be read by `talosctl read /etc/nvme/hostnqn`
 """
 
+    [notes.iso]
+        title = "ISO"
+        description = """\
+Talos starting with 1.10 will have ISO's that will use GRUB only for legacy BIOS and systemd-boot for modern UEFI systems.
+"""
+
 [make_deps]
 
     [make_deps.tools]

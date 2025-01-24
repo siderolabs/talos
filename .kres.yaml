@@ -838,6 +838,16 @@ spec:
             SHORT_INTEGRATION_TEST: yes
             WITH_UEFI: false
             IMAGE_REGISTRY: registry.dev.siderolabs.io
+        - name: e2e-bios-iso
+          command: e2e-qemu
+          withSudo: true
+          environment:
+            GITHUB_STEP_NAME: ${{ github.job}}-e2e-bios-iso
+            SHORT_INTEGRATION_TEST: yes
+            WITH_UEFI: false
+            VIA_MAINTENANCE_MODE: true
+            WITH_ISO: true
+            IMAGE_REGISTRY: registry.dev.siderolabs.io
         - name: e2e-disk-image
           command: e2e-qemu
           withSudo: true

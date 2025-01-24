@@ -17,7 +17,6 @@ import (
 
 	"github.com/siderolabs/talos/pkg/imager/utils"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
-	"github.com/siderolabs/talos/pkg/machinery/imager/quirks"
 	"github.com/siderolabs/talos/pkg/makefs"
 )
 
@@ -57,9 +56,9 @@ var loaderConfigTemplate string
 // The ISO created supports only booting in UEFI mode, and supports SecureBoot.
 //
 //nolint:gocyclo,cyclop
-func CreateUEFI(printf func(string, ...any), options UEFIOptions) error {
+func (options Options) CreateUEFI(printf func(string, ...any)) (Generator, error) {
 	if err := os.MkdirAll(options.ScratchDir, 0o755); err != nil {
-		return err
+		return nil, err
 	}
 
 	printf("preparing raw image")
@@ -75,14 +74,14 @@ func CreateUEFI(printf func(string, ...any), options UEFIOptions) error {
 	} {
 		st, err := os.Stat(path)
 		if err != nil {
-			return err
+			return nil, err
 		}
 
 		isoSize += (st.Size() + mib - 1) / mib * mib
 	}
 
 	if err := utils.CreateRawDisk(printf, efiBootImg, isoSize); err != nil {
-		return err
+		return nil, err
 	}
 
 	printf("preparing loader.conf")
@@ -94,7 +93,7 @@ func CreateUEFI(printf func(string, ...any), options UEFIOptions) error {
 	}{
 		SecureBootEnroll: options.SDBootSecureBootEnrollKeys,
 	}); err != nil {
-		return fmt.Errorf("error rendering loader.conf: %w", err)
+		return nil, fmt.Errorf("error rendering loader.conf: %w", err)
 	}
 
 	printf("creating vFAT EFI image")
@@ -105,23 +104,19 @@ func CreateUEFI(printf func(string, ...any), options UEFIOptions) error {
 	}
 
 	if err := makefs.VFAT(efiBootImg, fopts...); err != nil {
-		return err
+		return nil, err
 	}
 
 	if err := os.MkdirAll(filepath.Join(options.ScratchDir, "EFI/Linux"), 0o755); err != nil {
-		return err
+		return nil, err
 	}
 
 	if err := os.MkdirAll(filepath.Join(options.ScratchDir, "EFI/BOOT"), 0o755); err != nil {
-		return err
+		return nil, err
 	}
 
-	if err := os.MkdirAll(filepath.Join(options.ScratchDir, "EFI/keys"), 0o755); err != nil {
-		return err
-	}
-
-	if err := os.MkdirAll(filepath.Join(options.ScratchDir, "loader/keys/auto"), 0o755); err != nil {
-		return err
+	if err := os.MkdirAll(filepath.Join(options.ScratchDir, "loader"), 0o755); err != nil {
+		return nil, err
 	}
 
 	efiBootPath := "EFI/BOOT/BOOTX64.EFI"
@@ -131,36 +126,48 @@ func CreateUEFI(printf func(string, ...any), options UEFIOptions) error {
 	}
 
 	if err := copy.File(options.SDBootPath, filepath.Join(options.ScratchDir, efiBootPath)); err != nil {
-		return err
+		return nil, err
 	}
 
 	if err := copy.File(options.UKIPath, filepath.Join(options.ScratchDir, fmt.Sprintf("EFI/Linux/Talos-%s.efi", options.Version))); err != nil {
-		return err
+		return nil, err
 	}
 
 	if err := os.WriteFile(filepath.Join(options.ScratchDir, "loader/loader.conf"), loaderConfigOut.Bytes(), 0o644); err != nil {
-		return err
+		return nil, err
 	}
 
-	if err := copy.File(options.UKISigningCertDerPath, filepath.Join(options.ScratchDir, "EFI/keys/uki-signing-cert.der")); err != nil {
-		return err
+	if options.UKISigningCertDerPath != "" {
+		if err := os.MkdirAll(filepath.Join(options.ScratchDir, "EFI/keys"), 0o755); err != nil {
+			return nil, err
+		}
+
+		if err := copy.File(options.UKISigningCertDerPath, filepath.Join(options.ScratchDir, "EFI/keys/uki-signing-cert.der")); err != nil {
+			return nil, err
+		}
+	}
+
+	if options.PlatformKeyPath != "" || options.KeyExchangeKeyPath != "" || options.SignatureKeyPath != "" {
+		if err := os.MkdirAll(filepath.Join(options.ScratchDir, "loader/keys/auto"), 0o755); err != nil {
+			return nil, err
+		}
 	}
 
 	if options.PlatformKeyPath != "" {
 		if err := copy.File(options.PlatformKeyPath, filepath.Join(options.ScratchDir, "loader/keys/auto", constants.PlatformKeyAsset)); err != nil {
-			return err
+			return nil, err
 		}
 	}
 
 	if options.KeyExchangeKeyPath != "" {
 		if err := copy.File(options.KeyExchangeKeyPath, filepath.Join(options.ScratchDir, "loader/keys/auto", constants.KeyExchangeKeyAsset)); err != nil {
-			return err
+			return nil, err
 		}
 	}
 
 	if options.SignatureKeyPath != "" {
 		if err := copy.File(options.SignatureKeyPath, filepath.Join(options.ScratchDir, "loader/keys/auto", constants.SignatureKeyAsset)); err != nil {
-			return err
+			return nil, err
 		}
 	}
 
@@ -176,42 +183,31 @@ func CreateUEFI(printf func(string, ...any), options UEFIOptions) error {
 		filepath.Join(options.ScratchDir, "loader"),
 		"::",
 	); err != nil {
-		return err
+		return nil, err
 	}
 
 	// fixup directory timestamps recursively
 	if err := utils.TouchFiles(printf, options.ScratchDir); err != nil {
-		return err
+		return nil, err
 	}
 
 	printf("creating ISO image")
 
-	// ref: https://askubuntu.com/questions/1110651/how-to-produce-an-iso-image-that-boots-only-on-uefi/1111760#1111760
-	args := []string{
-		"-e", "--interval:appended_partition_2:all::", // use appended partition 2 for EFI
-		"-append_partition", "2", "0xef", efiBootImg,
-		"-partition_cyl_align", // pad partition to cylinder boundary
-		"all",
-		"-partition_offset", "16", // support booting from USB
-		"-iso_mbr_part_type", "0x83", // just to have more clear info when doing a fdisk -l
-		"-no-emul-boot",
-		"-m", "efiboot.img", // exclude the EFI boot image from the ISO
-		"-o", options.OutPath,
-		options.ScratchDir,
-	}
-
-	if quirks.New(options.Version).SupportsISOLabel() {
-		label := Label(options.Version, true)
-
-		args = append(args,
-			"-volid", VolumeID(label),
-			"-volset", label,
-		)
-	}
-
-	if _, err := cmd.Run("xorrisofs", args...); err != nil {
-		return err
-	}
-
-	return nil
+	return &ExecutorOptions{
+		Command: "xorrisofs",
+		Version: options.Version,
+		Arguments: []string{
+			"-e", "--interval:appended_partition_2:all::", // use appended partition 2 for EFI
+			"-append_partition", "2", "0xef", efiBootImg,
+			"-partition_cyl_align", // pad partition to cylinder boundary
+			"all",
+			"-partition_offset", "16", // support booting from USB
+			"-iso_mbr_part_type", "0x83", // just to have more clear info when doing a fdisk -l
+			"-no-emul-boot",
+			"-m", "efiboot.img", // exclude the EFI boot image from the ISO
+			"-o", options.OutPath,
+			options.ScratchDir,
+			"--",
+		},
+	}, nil
 }

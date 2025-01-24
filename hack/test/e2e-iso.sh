@@ -9,6 +9,8 @@ CLUSTER_NAME=e2e-iso
 
 NODE="172.20.2.2"
 
+INSTALLER_IMAGE=${INSTALLER_IMAGE}-amd64-secureboot # we don't use secureboot part here, but this installer contains UKIs
+
 function create_cluster {
   build_registry_mirrors
 
@@ -24,7 +26,7 @@ function create_cluster {
     --cpus=2.0 \
     --cidr=172.20.2.0/24 \
     --with-apply-config \
-    --install-image=${REGISTRY:-ghcr.io}/siderolabs/installer:${TAG} \
+    --install-image="${INSTALLER_IMAGE}" \
     --cni-bundle-url=${ARTIFACTS}/talosctl-cni-bundle-'${ARCH}'.tar.gz \
     "${REGISTRY_MIRROR_FLAGS[@]}"
 

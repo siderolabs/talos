@@ -7,30 +7,14 @@ package iso
 import (
 	"bytes"
 	_ "embed"
-	"fmt"
 	"os"
 	"path/filepath"
 	"text/template"
-	"time"
-
-	"github.com/siderolabs/go-cmd/pkg/cmd"
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/grub"
 	"github.com/siderolabs/talos/pkg/imager/utils"
 	"github.com/siderolabs/talos/pkg/machinery/imager/quirks"
 )
-
-// GRUBOptions described the input for the CreateGRUB function.
-type GRUBOptions struct {
-	KernelPath    string
-	InitramfsPath string
-	Cmdline       string
-	Version       string
-
-	ScratchDir string
-
-	OutPath string
-}
 
 //go:embed grub.cfg
 var grubCfgTemplate string
@@ -38,13 +22,13 @@ var grubCfgTemplate string
 // CreateGRUB creates a GRUB-based ISO image.
 //
 // This iso supports both BIOS and UEFI booting.
-func CreateGRUB(printf func(string, ...any), options GRUBOptions) error {
+func (options Options) CreateGRUB(printf func(string, ...any)) (Generator, error) {
 	if err := utils.CopyFiles(
 		printf,
 		utils.SourceDestination(options.KernelPath, filepath.Join(options.ScratchDir, "boot", "vmlinuz")),
 		utils.SourceDestination(options.InitramfsPath, filepath.Join(options.ScratchDir, "boot", "initramfs.xz")),
 	); err != nil {
-		return err
+		return nil, err
 	}
 
 	printf("creating grub.cfg")
@@ -57,7 +41,7 @@ func CreateGRUB(printf func(string, ...any), options GRUBOptions) error {
 		}).
 		Parse(grubCfgTemplate)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	if err = tmpl.Execute(&grubCfg, struct {
@@ -67,64 +51,34 @@ func CreateGRUB(printf func(string, ...any), options GRUBOptions) error {
 		Cmdline:        options.Cmdline,
 		AddResetOption: quirks.New(options.Version).SupportsResetGRUBOption(),
 	}); err != nil {
-		return err
+		return nil, err
 	}
 
 	cfgPath := filepath.Join(options.ScratchDir, "boot/grub/grub.cfg")
 
 	if err = os.MkdirAll(filepath.Dir(cfgPath), 0o755); err != nil {
-		return err
+		return nil, err
 	}
 
 	if err = os.WriteFile(cfgPath, grubCfg.Bytes(), 0o666); err != nil {
-		return err
+		return nil, err
 	}
 
 	if err = utils.TouchFiles(printf, options.ScratchDir); err != nil {
-		return err
+		return nil, err
 	}
 
 	printf("creating ISO image")
 
-	return grubMkrescue(options)
-}
-
-func grubMkrescue(options GRUBOptions) error {
-	args := []string{
-		"--compress=xz",
-		"--output=" + options.OutPath,
-		"--verbose",
-		options.ScratchDir,
-		"--",
-	}
-
-	if epoch, ok, err := utils.SourceDateEpoch(); err != nil {
-		return err
-	} else if ok {
-		// set EFI FAT image serial number
-		if err := os.Setenv("GRUB_FAT_SERIAL_NUMBER", fmt.Sprintf("%x", uint32(epoch))); err != nil {
-			return err
-		}
-
-		args = append(args,
-			"-volume_date", "all_file_dates", fmt.Sprintf("=%d", epoch),
-			"-volume_date", "uuid", time.Unix(epoch, 0).Format("2006010215040500"),
-		)
-	}
-
-	if quirks.New(options.Version).SupportsISOLabel() {
-		label := Label(options.Version, false)
-
-		args = append(args,
-			"-volid", VolumeID(label),
-			"-volset-id", label,
-		)
-	}
-
-	_, err := cmd.Run("grub-mkrescue", args...)
-	if err != nil {
-		return fmt.Errorf("failed to create ISO: %w", err)
-	}
-
-	return nil
+	return &ExecutorOptions{
+		Command: "grub-mkrescue",
+		Version: options.Version,
+		Arguments: []string{
+			"--compress=xz",
+			"--output=" + options.OutPath,
+			"--verbose",
+			options.ScratchDir,
+			"--",
+		},
+	}, nil
 }

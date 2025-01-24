@@ -135,6 +135,7 @@ case "${WITH_ISO:-false}" in
   false)
     ;;
   *)
+    INSTALLER_IMAGE=${INSTALLER_IMAGE}-amd64-secureboot # we don't use secureboot part here, but this installer contains UKIs
     QEMU_FLAGS+=("--iso-path=${ARTIFACTS}/metal-amd64.iso")
     ;;
 esac
