@@ -52,7 +52,7 @@ func (suite *AddressMergeSuite) SetupTest() {
 	suite.runtime, err = runtime.NewRuntime(suite.state, zaptest.NewLogger(suite.T()))
 	suite.Require().NoError(err)
 
-	suite.Require().NoError(suite.runtime.RegisterController(&netctrl.AddressMergeController{}))
+	suite.Require().NoError(suite.runtime.RegisterController(netctrl.NewAddressMergeController()))
 
 	suite.startRuntime()
 }
@@ -152,7 +152,7 @@ func (suite *AddressMergeSuite) TestMerge() {
 	suite.assertAddresses(
 		[]string{
 			"lo/127.0.0.1/8",
-			"eth0/10.0.0.35/32",
+			"eth0/10.0.0.1/8",
 		}, func(*network.AddressSpec, *assert.Assertions) {},
 	)
 	suite.Assert().NoError(

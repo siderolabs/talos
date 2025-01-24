@@ -46,7 +46,7 @@ func (suite *HostnameMergeSuite) SetupTest() {
 	suite.runtime, err = runtime.NewRuntime(suite.state, zaptest.NewLogger(suite.T()))
 	suite.Require().NoError(err)
 
-	suite.Require().NoError(suite.runtime.RegisterController(&netctrl.HostnameMergeController{}))
+	suite.Require().NoError(suite.runtime.RegisterController(netctrl.NewHostnameMergeController()))
 
 	suite.startRuntime()
 }

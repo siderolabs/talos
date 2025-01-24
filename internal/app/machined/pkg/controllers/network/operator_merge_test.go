@@ -47,7 +47,7 @@ func (suite *OperatorMergeSuite) SetupTest() {
 	suite.runtime, err = runtime.NewRuntime(suite.state, zaptest.NewLogger(suite.T()))
 	suite.Require().NoError(err)
 
-	suite.Require().NoError(suite.runtime.RegisterController(&netctrl.OperatorMergeController{}))
+	suite.Require().NoError(suite.runtime.RegisterController(netctrl.NewOperatorMergeController()))
 
 	suite.startRuntime()
 }

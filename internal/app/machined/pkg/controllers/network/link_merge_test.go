@@ -49,7 +49,7 @@ func (suite *LinkMergeSuite) SetupTest() {
 	suite.runtime, err = runtime.NewRuntime(suite.state, zaptest.NewLogger(suite.T()))
 	suite.Require().NoError(err)
 
-	suite.Require().NoError(suite.runtime.RegisterController(&netctrl.LinkMergeController{}))
+	suite.Require().NoError(suite.runtime.RegisterController(netctrl.NewLinkMergeController()))
 
 	suite.startRuntime()
 }
@@ -333,6 +333,10 @@ func (suite *LinkMergeSuite) TestMergeWireguard() {
 			)
 			asrt.Equal(1234, r.TypedSpec().Wireguard.ListenPort)
 			asrt.Len(r.TypedSpec().Wireguard.Peers, 2)
+
+			if len(r.TypedSpec().Wireguard.Peers) != 2 {
+				return
+			}
 
 			asrt.Equal(
 				network.WireguardPeer{

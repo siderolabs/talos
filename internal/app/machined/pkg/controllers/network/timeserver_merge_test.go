@@ -47,7 +47,7 @@ func (suite *TimeServerMergeSuite) SetupTest() {
 	suite.runtime, err = runtime.NewRuntime(suite.state, zaptest.NewLogger(suite.T()))
 	suite.Require().NoError(err)
 
-	suite.Require().NoError(suite.runtime.RegisterController(&netctrl.TimeServerMergeController{}))
+	suite.Require().NoError(suite.runtime.RegisterController(netctrl.NewTimeServerMergeController()))
 
 	suite.startRuntime()
 }

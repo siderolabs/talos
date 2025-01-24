@@ -49,7 +49,7 @@ func (suite *ResolverMergeSuite) SetupTest() {
 	suite.runtime, err = runtime.NewRuntime(suite.state, zaptest.NewLogger(suite.T()))
 	suite.Require().NoError(err)
 
-	suite.Require().NoError(suite.runtime.RegisterController(&netctrl.ResolverMergeController{}))
+	suite.Require().NoError(suite.runtime.RegisterController(netctrl.NewResolverMergeController()))
 
 	suite.startRuntime()
 }

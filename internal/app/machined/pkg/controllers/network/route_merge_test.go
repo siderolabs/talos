@@ -49,7 +49,7 @@ func (suite *RouteMergeSuite) SetupTest() {
 	suite.runtime, err = runtime.NewRuntime(suite.state, zaptest.NewLogger(suite.T()))
 	suite.Require().NoError(err)
 
-	suite.Require().NoError(suite.runtime.RegisterController(&netctrl.RouteMergeController{}))
+	suite.Require().NoError(suite.runtime.RegisterController(netctrl.NewRouteMergeController()))
 
 	suite.startRuntime()
 }

@@ -224,7 +224,7 @@ func (ctrl *Controller) Run(ctx context.Context, drainer *runtime.Drainer) error
 		&network.AddressEventController{
 			V1Alpha1Events: ctrl.v1alpha1Runtime.Events(),
 		},
-		&network.AddressMergeController{},
+		network.NewAddressMergeController(),
 		&network.AddressSpecController{},
 		&network.AddressStatusController{},
 		&network.DeviceConfigController{},
@@ -242,14 +242,14 @@ func (ctrl *Controller) Run(ctx context.Context, drainer *runtime.Drainer) error
 		&network.HostnameConfigController{
 			Cmdline: procfs.ProcCmdline(),
 		},
-		&network.HostnameMergeController{},
+		network.NewHostnameMergeController(),
 		&network.HostnameSpecController{
 			V1Alpha1Mode: ctrl.v1alpha1Runtime.State().Platform().Mode(),
 		},
 		&network.LinkConfigController{
 			Cmdline: procfs.ProcCmdline(),
 		},
-		&network.LinkMergeController{},
+		network.NewLinkMergeController(),
 		&network.LinkSpecController{},
 		&network.LinkStatusController{},
 		&network.NfTablesChainConfigController{},
@@ -259,7 +259,7 @@ func (ctrl *Controller) Run(ctx context.Context, drainer *runtime.Drainer) error
 		&network.OperatorConfigController{
 			Cmdline: procfs.ProcCmdline(),
 		},
-		&network.OperatorMergeController{},
+		network.NewOperatorMergeController(),
 		&network.OperatorSpecController{
 			V1alpha1Platform: ctrl.v1alpha1Runtime.State().Platform(),
 			State:            ctrl.v1alpha1Runtime.State().V1Alpha2().Resources(),
@@ -275,12 +275,12 @@ func (ctrl *Controller) Run(ctx context.Context, drainer *runtime.Drainer) error
 		&network.ResolverConfigController{
 			Cmdline: procfs.ProcCmdline(),
 		},
-		&network.ResolverMergeController{},
+		network.NewResolverMergeController(),
 		&network.ResolverSpecController{},
 		&network.RouteConfigController{
 			Cmdline: procfs.ProcCmdline(),
 		},
-		&network.RouteMergeController{},
+		network.NewRouteMergeController(),
 		&network.RouteSpecController{},
 		&network.RouteStatusController{},
 		&network.StatusController{
@@ -289,7 +289,7 @@ func (ctrl *Controller) Run(ctx context.Context, drainer *runtime.Drainer) error
 		&network.TimeServerConfigController{
 			Cmdline: procfs.ProcCmdline(),
 		},
-		&network.TimeServerMergeController{},
+		network.NewTimeServerMergeController(),
 		&network.TimeServerSpecController{},
 		&perf.StatsController{},
 		cri.NewRegistriesConfigController(),
