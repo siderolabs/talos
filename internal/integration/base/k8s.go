@@ -637,6 +637,18 @@ func (k8sSuite *K8sSuite) WaitForResource(ctx context.Context, namespace, group,
 	return nil
 }
 
+// WaitForResourceToBeAvailable waits for the resource with the given namespace, group, kind, version and name to be available.
+func (k8sSuite *K8sSuite) WaitForResourceToBeAvailable(ctx context.Context, duration time.Duration, namespace, group, kind, version, resourceName string) error {
+	return retry.Constant(duration).Retry(func() error {
+		_, err := k8sSuite.GetUnstructuredResource(ctx, namespace, group, kind, version, resourceName)
+		if errors.IsNotFound(err) {
+			return retry.ExpectedError(err)
+		}
+
+		return err
+	})
+}
+
 // GetUnstructuredResource gets the unstructured resource with the given namespace, group, kind, version and name.
 func (k8sSuite *K8sSuite) GetUnstructuredResource(ctx context.Context, namespace, group, kind, version, resourceName string) (*unstructured.Unstructured, error) {
 	mapping, err := k8sSuite.Mapper.RESTMapping(schema.GroupKind{

@@ -97,6 +97,8 @@ func (suite *LongHornSuite) TestDeploy() {
 		k8sNode, err := suite.GetK8sNodeByInternalIP(ctx, node)
 		suite.Require().NoError(err)
 
+		suite.Require().NoError(suite.WaitForResourceToBeAvailable(ctx, 2*time.Minute, "longhorn-system", "longhorn.io", "Node", "v1beta2", k8sNode.Name))
+
 		suite.Require().NoError(suite.WaitForResource(ctx, "longhorn-system", "longhorn.io", "Node", "v1beta2", k8sNode.Name, "{.status.diskStatus.*.conditions[?(@.type==\"Ready\")].status}", "True"))
 		suite.Require().NoError(suite.WaitForResource(ctx, "longhorn-system", "longhorn.io", "Node", "v1beta2", k8sNode.Name, "{.status.diskStatus.*.conditions[?(@.type==\"Schedulable\")].status}", "True"))
 
