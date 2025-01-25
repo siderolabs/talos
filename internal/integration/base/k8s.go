@@ -640,8 +640,20 @@ func (k8sSuite *K8sSuite) WaitForResource(ctx context.Context, namespace, group,
 // WaitForResourceToBeAvailable waits for the resource with the given namespace, group, kind, version and name to be available.
 func (k8sSuite *K8sSuite) WaitForResourceToBeAvailable(ctx context.Context, duration time.Duration, namespace, group, kind, version, resourceName string) error {
 	return retry.Constant(duration).Retry(func() error {
-		_, err := k8sSuite.GetUnstructuredResource(ctx, namespace, group, kind, version, resourceName)
+		mapping, err := k8sSuite.Mapper.RESTMapping(schema.GroupKind{
+			Group: group,
+			Kind:  kind,
+		}, version)
+		if err != nil {
+			return fmt.Errorf("error creating mapping for resource %s/%s/%s", group, kind, version)
+		}
+
+		dr := k8sSuite.DynamicClient.Resource(mapping.Resource).Namespace(namespace)
+
+		_, err = dr.Get(ctx, resourceName, metav1.GetOptions{})
 		if errors.IsNotFound(err) {
+			k8sSuite.T().Logf("resource %s/%s/%s/%s not found, retrying", group, version, kind, resourceName)
+
 			return retry.ExpectedError(err)
 		}
 
