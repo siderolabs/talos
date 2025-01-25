@@ -93,6 +93,7 @@ That can be done by updating Talos Linux machine configuration:
 
 ```yaml
 machine:
+    network:
       interfaces:
       - interface: br0
         addresses:
