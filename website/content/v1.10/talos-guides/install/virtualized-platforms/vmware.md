@@ -15,6 +15,13 @@ We will use the `govc` cli which can be downloaded [here](https://github.com/vmw
 This guide will use the virtual IP ("VIP") functionality that is built into Talos in order to provide a stable, known IP for the Kubernetes control plane.
 This simply means the user should pick an IP on their "VM Network" to designate for this purpose and keep it handy for future steps.
 
+The Talos OVA image uses the `vmx-15` hardware version, this requires a minimum of **ESXi 6.7U2**.
+To check your version of ESXi refer to the following Broadcom
+[KB article](https://knowledge.broadcom.com/external/article/316595/build-numbers-and-versions-of-vmware-esx.html).
+
+More information regarding virtual machine hardware versions can be found in the following Broadcom
+[KB article](https://knowledge.broadcom.com/external/article/315655/virtual-machine-hardware-versions.html).
+
 ## Create the Machine Configuration Files
 
 ### Generating Base Configurations
