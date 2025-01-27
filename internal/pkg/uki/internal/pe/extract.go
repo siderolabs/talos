@@ -33,13 +33,16 @@ func Extract(ukiPath string) (assetInfo AssetInfo, err error) {
 	assetInfo.fileCloser = peFile
 
 	for _, section := range peFile.Sections {
+		// read upto section.VirtualSize bytes
+		sectionReader := io.NewSectionReader(section, 0, int64(section.VirtualSize))
+
 		switch section.Name {
 		case ".initrd":
-			assetInfo.Initrd = section.Open()
+			assetInfo.Initrd = sectionReader
 		case ".cmdline":
-			assetInfo.Cmdline = section.Open()
+			assetInfo.Cmdline = sectionReader
 		case ".linux":
-			assetInfo.Kernel = section.Open()
+			assetInfo.Kernel = sectionReader
 		}
 	}
 
