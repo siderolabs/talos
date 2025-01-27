@@ -216,5 +216,16 @@ func SBCs() []SBC {
 
 			MinVersion: semver.MustParse("1.9.0-beta.0"),
 		},
+		{
+			Name: "orangepi-5",
+
+			OverlayName:  "orangepi-5",
+			OverlayImage: "siderolabs/sbc-rockchip",
+
+			Label:         "Orange Pi 5",
+			Documentation: "/talos-guides/install/single-board-computers/orangepi_5/",
+
+			MinVersion: semver.MustParse("1.9.2"),
+		},
 	}
 }
