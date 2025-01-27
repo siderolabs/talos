@@ -17,9 +17,9 @@ type fileCloser interface {
 
 // AssetInfo contains the kernel, initrd, and cmdline from a PE file.
 type AssetInfo struct {
-	Kernel  io.ReadSeeker
-	Initrd  io.ReadSeeker
-	Cmdline io.ReadSeeker
+	Kernel  io.Reader
+	Initrd  io.Reader
+	Cmdline io.Reader
 	fileCloser
 }
 

@@ -11,11 +11,9 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
 	"log"
 	"os"
 	"path/filepath"
-	goruntime "runtime"
 	"slices"
 	"strconv"
 	"strings"
@@ -26,11 +24,11 @@ import (
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/dustin/go-humanize"
+	"github.com/foxboron/go-uefi/efi"
 	"github.com/hashicorp/go-multierror"
 	pprocfs "github.com/prometheus/procfs"
 	"github.com/siderolabs/gen/maps"
 	"github.com/siderolabs/gen/xslices"
-	"github.com/siderolabs/go-blockdevice/v2/blkid"
 	"github.com/siderolabs/go-blockdevice/v2/block"
 	"github.com/siderolabs/go-cmd/pkg/cmd"
 	"github.com/siderolabs/go-cmd/pkg/cmd/proc"
@@ -42,7 +40,7 @@ import (
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/emergency"
-	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/grub"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/options"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/platform"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system"
@@ -59,7 +57,6 @@ import (
 	"github.com/siderolabs/talos/internal/pkg/secureboot"
 	"github.com/siderolabs/talos/internal/pkg/secureboot/tpm2"
 	"github.com/siderolabs/talos/internal/pkg/selinux"
-	"github.com/siderolabs/talos/internal/pkg/zboot"
 	"github.com/siderolabs/talos/pkg/conditions"
 	"github.com/siderolabs/talos/pkg/images"
 	"github.com/siderolabs/talos/pkg/kernel/kspp"
@@ -1865,8 +1862,6 @@ func Install(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
 }
 
 // KexecPrepare loads next boot kernel via kexec_file_load.
-//
-//nolint:gocyclo
 func KexecPrepare(_ runtime.Sequence, data any) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) error {
 		if req, ok := data.(*machineapi.RebootRequest); ok {
@@ -1875,6 +1870,12 @@ func KexecPrepare(_ runtime.Sequence, data any) (runtime.TaskExecutionFunc, stri
 
 				return nil
 			}
+		}
+
+		if efi.GetSecureBoot() {
+			log.Print("kexec skipped as secure boot is enabled")
+
+			return nil
 		}
 
 		systemDisk, err := blockres.GetSystemDisk(ctx, r.State().V1Alpha2().Resources())
@@ -1901,81 +1902,12 @@ func KexecPrepare(_ runtime.Sequence, data any) (runtime.TaskExecutionFunc, stri
 
 		defer dev.Unlock() //nolint:errcheck
 
-		_, err = grub.ProbeWithCallback(systemDisk.DevPath,
-			options.ProbeOptions{
-				BlockProbeOptions: []blkid.ProbeOption{blkid.WithSkipLocking(true)},
-			},
-			func(conf *grub.Config) error {
-				defaultEntry, ok := conf.Entries[conf.Default]
-				if !ok {
-					return nil
-				}
+		bootloaderInfo, err := bootloader.Probe(systemDisk.DevPath, options.ProbeOptions{})
+		if err != nil {
+			return fmt.Errorf("failed to probe system disk: %w", err)
+		}
 
-				kernelPath := filepath.Join(constants.BootMountPoint, defaultEntry.Linux)
-				initrdPath := filepath.Join(constants.BootMountPoint, defaultEntry.Initrd)
-
-				kernel, err := os.Open(kernelPath)
-				if err != nil {
-					return err
-				}
-
-				defer kernel.Close() //nolint:errcheck
-
-				fd := int(kernel.Fd())
-
-				// on arm64 we need to extract the kernel from the zboot image if it's compressed
-				if goruntime.GOARCH == "arm64" {
-					var fileCloser io.Closer
-
-					fd, fileCloser, err = zboot.Extract(kernel)
-					if err != nil {
-						return err
-					}
-
-					defer func() {
-						if fileCloser != nil {
-							fileCloser.Close() //nolint:errcheck
-						}
-					}()
-				}
-
-				initrd, err := os.Open(initrdPath)
-				if err != nil {
-					return err
-				}
-
-				defer initrd.Close() //nolint:errcheck
-
-				cmdline := strings.TrimSpace(defaultEntry.Cmdline)
-
-				if err = unix.KexecFileLoad(fd, int(initrd.Fd()), cmdline, 0); err != nil {
-					switch {
-					case errors.Is(err, unix.ENOSYS):
-						log.Printf("kexec support is disabled in the kernel")
-
-						return nil
-					case errors.Is(err, unix.EPERM):
-						log.Printf("kexec support is disabled via sysctl")
-
-						return nil
-					case errors.Is(err, unix.EBUSY):
-						log.Printf("kexec is busy")
-
-						return nil
-					default:
-						return fmt.Errorf("error loading kernel for kexec: %w", err)
-					}
-				}
-
-				log.Printf("prepared kexec environment kernel=%q initrd=%q cmdline=%q", kernelPath, initrdPath, cmdline)
-
-				r.State().Machine().KexecPrepared(true)
-
-				return nil
-			},
-		)
-
-		return err
+		return bootloaderInfo.KexecLoad(r, systemDisk.DevPath)
 	}, "kexecPrepare"
 }
 

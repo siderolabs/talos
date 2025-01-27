@@ -8,6 +8,7 @@ package bootloader
 import (
 	"os"
 
+	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/grub"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/options"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/sdboot"
@@ -27,6 +28,9 @@ type Bootloader interface {
 	Revert(disk string) error
 	// RequiredPartitions returns the required partitions for the bootloader.
 	RequiredPartitions() []partition.Options
+
+	// KexecLoad does a kexec_file_load using the current entry of the bootloader.
+	KexecLoad(r runtime.Runtime, disk string) error
 }
 
 // Probe checks if any supported bootloaders are installed.

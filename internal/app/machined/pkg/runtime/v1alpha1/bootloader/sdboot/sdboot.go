@@ -8,6 +8,7 @@ package sdboot
 import (
 	"errors"
 	"fmt"
+	"io"
 	"log"
 	"os"
 	"path/filepath"
@@ -16,11 +17,15 @@ import (
 	"github.com/ecks/uefi/efi/efivario"
 	"github.com/siderolabs/gen/xerrors"
 	"github.com/siderolabs/go-blockdevice/v2/blkid"
+	"golang.org/x/sys/unix"
 
+	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/kexec"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/mount"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/options"
 	mountv2 "github.com/siderolabs/talos/internal/pkg/mount/v2"
 	"github.com/siderolabs/talos/internal/pkg/partition"
+	"github.com/siderolabs/talos/internal/pkg/uki"
 	"github.com/siderolabs/talos/pkg/imager/utils"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
@@ -52,10 +57,10 @@ func New() *Config {
 	return &Config{}
 }
 
-// Probe for existing sd-boot bootloader.
+// ProbeWithCallback probes the sd-boot bootloader, and calls the callback function with the Config.
 //
 //nolint:gocyclo
-func Probe(disk string, options options.ProbeOptions) (*Config, error) {
+func ProbeWithCallback(disk string, options options.ProbeOptions, callback func(*Config) error) (*Config, error) {
 	// if not UEFI boot, nothing to do
 	if !isUEFIBoot() {
 		return nil, nil
@@ -137,6 +142,12 @@ func Probe(disk string, options options.ProbeOptions) (*Config, error) {
 
 			for _, file := range files {
 				if strings.EqualFold(filepath.Base(file), bootedEntry) {
+					if callback != nil {
+						return callback(&Config{
+							Default: bootedEntry,
+						})
+					}
+
 					return nil
 				}
 			}
@@ -158,6 +169,75 @@ func Probe(disk string, options options.ProbeOptions) (*Config, error) {
 	return &Config{
 		Default: bootedEntry,
 	}, nil
+}
+
+// Probe for existing sd-boot bootloader.
+func Probe(disk string, options options.ProbeOptions) (*Config, error) {
+	return ProbeWithCallback(disk, options, nil)
+}
+
+// KexecLoad does a kexec using the bootloader config.
+func (c *Config) KexecLoad(r runtime.Runtime, disk string) error {
+	_, err := ProbeWithCallback(disk, options.ProbeOptions{}, func(conf *Config) error {
+		var kernelFd int
+
+		assetInfo, err := uki.Extract(filepath.Join(constants.EFIMountPoint, "EFI", "Linux", conf.Default))
+		if err != nil {
+			return fmt.Errorf("failed to extract kernel and initrd from uki: %w", err)
+		}
+
+		defer assetInfo.Close() //nolint:errcheck
+
+		kernelFd, err = unix.MemfdCreate("vmlinux", 0)
+		if err != nil {
+			return fmt.Errorf("memfdCreate: %v", err)
+		}
+
+		kernelMemfd := os.NewFile(uintptr(kernelFd), "vmlinux")
+
+		defer kernelMemfd.Close() //nolint:errcheck
+
+		if _, err := io.Copy(kernelMemfd, assetInfo.Kernel); err != nil {
+			return fmt.Errorf("failed to read kernel from uki: %w", err)
+		}
+
+		if _, err = kernelMemfd.Seek(0, io.SeekStart); err != nil {
+			return fmt.Errorf("failed to seek kernel: %w", err)
+		}
+
+		initrdFd, err := unix.MemfdCreate("initrd", 0)
+		if err != nil {
+			return fmt.Errorf("memfdCreate: %v", err)
+		}
+
+		initrdMemfd := os.NewFile(uintptr(initrdFd), "initrd")
+
+		defer initrdMemfd.Close() //nolint:errcheck
+
+		if _, err := io.Copy(initrdMemfd, assetInfo.Initrd); err != nil {
+			return fmt.Errorf("failed to read initrd from uki: %w", err)
+		}
+
+		if _, err = initrdMemfd.Seek(0, io.SeekStart); err != nil {
+			return fmt.Errorf("failed to seek initrd: %w", err)
+		}
+
+		var cmdline strings.Builder
+
+		if _, err := io.Copy(&cmdline, assetInfo.Cmdline); err != nil {
+			return fmt.Errorf("failed to read cmdline from uki: %w", err)
+		}
+
+		if err := kexec.Load(r, kernelMemfd, initrdFd, cmdline.String()); err != nil {
+			return fmt.Errorf("failed to load kernel for kexec: %w", err)
+		}
+
+		log.Printf("prepared kexec environment with kernel and initrd extracted from uki, cmdline=%q", cmdline.String())
+
+		return nil
+	})
+
+	return err
 }
 
 // RequiredPartitions returns the list of partitions required by the bootloader.
