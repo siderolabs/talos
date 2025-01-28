@@ -1,3 +1,90 @@
+## [Talos 1.9.3](https://github.com/siderolabs/talos/releases/tag/v1.9.3) (2025-01-28)
+
+Welcome to the v1.9.3 release of Talos!
+
+
+
+Please try out the release binaries and report any issues at
+https://github.com/siderolabs/talos/issues.
+
+### Component Updates
+
+* Linux: 6.12.11
+* Kubernetes: 1.23.1
+* etcd: 3.5.18
+
+Talos is built with Go 1.23.5.
+
+
+### Contributors
+
+* Andrey Smirnov
+* Dmitriy Matrenichev
+* Noel Georgi
+
+### Changes
+<details><summary>11 commits</summary>
+<p>
+
+* [`41dd59300`](https://github.com/siderolabs/talos/commit/41dd59300ffff10bc1b4b667eba6e7060ec9ea8e) test: bump timeout on rotate CA test
+* [`1abeaa33a`](https://github.com/siderolabs/talos/commit/1abeaa33ab69aa61ea54af36ffabb0da79502368) feat: update Linux to 6.2.11
+* [`2894507f5`](https://github.com/siderolabs/talos/commit/2894507f5de3387016649df1a4133b22defd100c) feat: update etcd to 3.5.18
+* [`e3bd08b0a`](https://github.com/siderolabs/talos/commit/e3bd08b0a1aba0c1d02a507357ca7d1377dd7152) fix: bring back disk UUID
+* [`8fadd042d`](https://github.com/siderolabs/talos/commit/8fadd042d2ee295353ecbfacad45e9419c921e65) fix: disks with 4k sector size and systemd-boot
+* [`b854ea97f`](https://github.com/siderolabs/talos/commit/b854ea97f937d0235c4446a7d35e325295fc2821) fix: abort node watch on hostname change
+* [`5c7b3ec80`](https://github.com/siderolabs/talos/commit/5c7b3ec80c073a0d64165be44e0ede07a388ae8b) chore: update Go to 1.23.5
+* [`f72a155c8`](https://github.com/siderolabs/talos/commit/f72a155c8cc4f542c443a5607090c8cfc117da48) fix: ignore forbidden error when waiting for pod eviction
+* [`9587d86e0`](https://github.com/siderolabs/talos/commit/9587d86e0e471921832998d0151d8c62a8aa7c39) chore: clear cache after updating upstreams
+* [`885cb4cb0`](https://github.com/siderolabs/talos/commit/885cb4cb0eb208b2c57d8f5d7aa646f605876773) fix: make etc binds read-only
+* [`508cc7bd0`](https://github.com/siderolabs/talos/commit/508cc7bd09cfcb90f12d33e4df29a7fca7d501ae) feat: update Kubernetes to 1.32.1
+</p>
+</details>
+
+### Changes from siderolabs/pkgs
+<details><summary>4 commits</summary>
+<p>
+
+* [`2250843`](https://github.com/siderolabs/pkgs/commit/2250843e93b1f5e008338d34936591fd8df44b23) feat: update Linux to 6.12.11
+* [`0f48ede`](https://github.com/siderolabs/pkgs/commit/0f48edeebbed6eff761ee46582f83710126df34b) feat: bump NVIDIA driver versions
+* [`164563f`](https://github.com/siderolabs/pkgs/commit/164563f1904a67a732263f360af64f01d0d28091) feat: update Linux to 6.2.10
+* [`17c292f`](https://github.com/siderolabs/pkgs/commit/17c292fcb749dd7ccc3a8725c8834fb2d809e89d) feat: update Go to 1.23.5
+</p>
+</details>
+
+### Changes from siderolabs/tools
+<details><summary>1 commit</summary>
+<p>
+
+* [`bf2085e`](https://github.com/siderolabs/tools/commit/bf2085ef09e68d656b765c9a94e21534bff19b29) feat: update Go to 1.23.5
+</p>
+</details>
+
+### Dependency Changes
+
+* **github.com/containerd/containerd/v2**      v2.0.1 -> v2.0.2
+* **github.com/containerd/platforms**          v1.0.0-rc.0 -> v1.0.0-rc.1
+* **github.com/opencontainers/runc**           v1.2.3 -> v1.2.4
+* **github.com/siderolabs/go-blockdevice/v2**  v2.0.11 -> v2.0.13
+* **github.com/siderolabs/pkgs**               v1.9.0-21-gc1f06e5 -> v1.9.0-25-g2250843
+* **github.com/siderolabs/tools**              v1.9.0-1-geaad82f -> v1.9.0-2-gbf2085e
+* **go.etcd.io/etcd/api/v3**                   v3.5.17 -> v3.5.18
+* **go.etcd.io/etcd/client/pkg/v3**            v3.5.17 -> v3.5.18
+* **go.etcd.io/etcd/client/v3**                v3.5.17 -> v3.5.18
+* **go.etcd.io/etcd/etcdutl/v3**               v3.5.17 -> v3.5.18
+* **golang.org/x/net**                         v0.32.0 -> v0.34.0
+* **golang.org/x/sys**                         v0.28.0 -> v0.29.0
+* **golang.org/x/term**                        v0.27.0 -> v0.28.0
+* **k8s.io/api**                               v0.32.0 -> v0.32.1
+* **k8s.io/apiserver**                         v0.32.0 -> v0.32.1
+* **k8s.io/client-go**                         v0.32.0 -> v0.32.1
+* **k8s.io/component-base**                    v0.32.0 -> v0.32.1
+* **k8s.io/kube-scheduler**                    v0.32.0 -> v0.32.1
+* **k8s.io/kubectl**                           v0.32.0 -> v0.32.1
+* **k8s.io/kubelet**                           v0.32.0 -> v0.32.1
+* **k8s.io/pod-security-admission**            v0.32.0 -> v0.32.1
+
+Previous release can be found at [v1.9.2](https://github.com/siderolabs/talos/releases/tag/v1.9.2)
+
 ## [Talos 1.9.2](https://github.com/siderolabs/talos/releases/tag/v1.9.2) (2025-01-16)
 
 Welcome to the v1.9.2 release of Talos!
