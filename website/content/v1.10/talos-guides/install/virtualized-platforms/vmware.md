@@ -39,10 +39,10 @@ It's contents should look like the following:
   path: /machine/network
   value:
     interfaces:
-    - interface: eth0
-      dhcp: true
-      vip:
-        ip: <VIP>
+      - interface: eth0
+        dhcp: true
+        vip:
+          ip: <VIP>
 ```
 
 With the patch in hand, generate machine configs with:
@@ -64,6 +64,19 @@ $ talosctl validate --config controlplane.yaml --mode cloud
 controlplane.yaml is valid for cloud mode
 $ talosctl validate --config worker.yaml --mode cloud
 worker.yaml is valid for cloud mode
+```
+
+> Note: Using VMXNET network interfaces in VMware will cause the default [Flannel CNI](https://github.com/flannel-io/flannel) backend (vxlan) to not work between nodes.
+> To avoid this problem it is recommended to use Intel e1000 network interfaces or apply the patch below to use the host [gateway backend](https://github.com/flannel-io/flannel/blob/master/Documentation/backends.md).
+
+If you apply the patch you can save this to a separate file (e.g. cni-patch.yaml) and apply it via `talosctl`.
+
+```yaml
+cluster:
+  network:
+    cni:
+      extraArgs:
+        - --flannel-backend=host-gw
 ```
 
 ## Set Environment Variables
