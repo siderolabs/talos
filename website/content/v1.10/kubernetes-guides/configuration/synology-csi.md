@@ -16,7 +16,7 @@ This guide assumes a very basic familiarity with iSCSI terminology (LUN, iSCSI t
 ## Prerequisites
 
 * Synology NAS running DSM 7.0 or above
-* Provisioned Talos cluster running Kubernetes v1.20 or above
+* Provisioned Talos cluster running Kubernetes v1.20 or above with `siderolabs/iscsi-tools` extension installed
 * (Optional) Both [Volume Snapshot CRDs](https://github.com/kubernetes-csi/external-snapshotter/tree/v4.0.0/client/config/crd) and the [common snapshot controller](https://github.com/kubernetes-csi/external-snapshotter/tree/v4.0.0/deploy/kubernetes/snapshot-controller) must be installed in your Kubernetes cluster if you want to use the **Snapshot** feature
 
 ## Setting up the Synology user account
