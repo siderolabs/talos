@@ -1,6 +1,6 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
 #
-# Generated on 2025-01-24T14:30:35Z by kres 3075de9.
+# Generated on 2025-01-28T16:44:01Z by kres 987bf4d.
 
 name: default
 concurrency:
@@ -2070,6 +2070,7 @@ jobs:
           IMAGE_REGISTRY: registry.dev.siderolabs.io\
           SHORT_INTEGRATION_TEST: "yes"
           WITH_CLUSTER_DISCOVERY: "true"
+          WITH_CONFIG_PATCH: '@hack/test/patches/kubespan-rp_filter.yaml'
           WITH_KUBESPAN: "true"
         run: |
           sudo -E make e2e-qemu

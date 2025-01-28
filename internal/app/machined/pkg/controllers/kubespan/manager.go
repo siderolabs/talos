@@ -27,10 +27,12 @@ import (
 
 	kubespanadapter "github.com/siderolabs/talos/internal/app/machined/pkg/adapters/kubespan"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
+	"github.com/siderolabs/talos/pkg/machinery/kernel"
 	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
 	"github.com/siderolabs/talos/pkg/machinery/resources/config"
 	"github.com/siderolabs/talos/pkg/machinery/resources/kubespan"
 	"github.com/siderolabs/talos/pkg/machinery/resources/network"
+	"github.com/siderolabs/talos/pkg/machinery/resources/runtime"
 )
 
 // DefaultPeerReconcileInterval is interval between peer status reconciliation on timer.
@@ -107,6 +109,10 @@ func (ctrl *ManagerController) Outputs() []controller.Output {
 		{
 			Type: kubespan.PeerStatusType,
 			Kind: controller.OutputExclusive,
+		},
+		{
+			Type: runtime.KernelParamSpecType,
+			Kind: controller.OutputShared,
 		},
 	}
 }
@@ -371,6 +377,7 @@ func (ctrl *ManagerController) Run(ctx context.Context, r controller.Runtime, lo
 				spec.Policy = nethelpers.VerdictAccept
 
 				spec.Rules = []network.NfTablesRule{
+					// Accept outgoing WireGuard packets.
 					{
 						MatchMark: &network.NfTablesMark{
 							Mask:  constants.KubeSpanDefaultFirewallMask,
@@ -378,9 +385,39 @@ func (ctrl *ManagerController) Run(ctx context.Context, r controller.Runtime, lo
 						},
 						Verdict: pointer.To(nethelpers.VerdictAccept),
 					},
+					// Mark packets to be sent over the KubeSpan link.
 					{
 						MatchDestinationAddress: &network.NfTablesAddressMatch{
 							IncludeSubnets: allowedIPsSet.Prefixes(),
+						},
+						SetMark: &network.NfTablesMark{
+							Mask: ^uint32(constants.KubeSpanDefaultFirewallMask),
+							Xor:  constants.KubeSpanDefaultForceFirewallMark,
+						},
+						Verdict: pointer.To(nethelpers.VerdictAccept),
+					},
+					// Remove KubeSpan mark from packets not sent to KubeSpan peers or received from them.
+					// This is typically the case when deencapsulated VXLAN packets retain envelope's fwmark, thus causing a routing loop.
+					{
+						MatchSourceAddress: &network.NfTablesAddressMatch{
+							Invert:         true,
+							IncludeSubnets: allowedIPsSet.Prefixes(),
+						},
+						MatchMark: &network.NfTablesMark{
+							Mask:  constants.KubeSpanDefaultForceFirewallMark,
+							Value: constants.KubeSpanDefaultForceFirewallMark,
+						},
+						SetMark: &network.NfTablesMark{
+							Mask: 0xffffffff,
+							Xor:  constants.KubeSpanDefaultForceFirewallMark,
+						},
+						Verdict: pointer.To(nethelpers.VerdictAccept),
+					},
+					// Mark incoming packets from the KubeSpan link for rp_filter to find the correct routing table.
+					{
+						MatchIIfName: &network.NfTablesIfNameMatch{
+							InterfaceNames: []string{constants.KubeSpanLinkName},
+							Operator:       nethelpers.OperatorEqual,
 						},
 						SetMark: &network.NfTablesMark{
 							Mask: ^uint32(constants.KubeSpanDefaultFirewallMask),
@@ -554,6 +591,17 @@ func (ctrl *ManagerController) Run(ctx context.Context, r controller.Runtime, lo
 			return fmt.Errorf("error modifying link spec: %w", err)
 		}
 
+		if err = safe.WriterModify(ctx, r, runtime.NewKernelParamSpec(
+			runtime.NamespaceName,
+			kernel.Sysctl+".net.ipv4.conf."+constants.KubeSpanLinkName+".src_valid_mark",
+		), func(res *runtime.KernelParamSpec) error {
+			res.TypedSpec().Value = "1"
+
+			return nil
+		}); err != nil {
+			return err
+		}
+
 		if rulesMgr == nil {
 			rulesMgr = ctrl.RulesManagerFactory(constants.KubeSpanDefaultRoutingTable, constants.KubeSpanDefaultForceFirewallMark, constants.KubeSpanDefaultFirewallMask)
 
@@ -590,6 +638,10 @@ func (ctrl *ManagerController) cleanup(ctx context.Context, r controller.Runtime
 		{
 			namespace: kubespan.NamespaceName,
 			typ:       kubespan.PeerStatusType,
+		},
+		{
+			namespace: runtime.NamespaceName,
+			typ:       runtime.KernelParamSpecType,
 		},
 	} {
 		// list keys for cleanup

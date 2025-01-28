@@ -25,6 +25,7 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/resources/config"
 	"github.com/siderolabs/talos/pkg/machinery/resources/kubespan"
 	"github.com/siderolabs/talos/pkg/machinery/resources/network"
+	"github.com/siderolabs/talos/pkg/machinery/resources/runtime"
 )
 
 type ManagerSuite struct {
@@ -40,6 +41,10 @@ func (suite *ManagerSuite) TestDisabled() {
 	suite.Require().NoError(suite.State().Create(suite.Ctx(), cfg))
 
 	ctest.AssertNoResource[*network.NfTablesChain](suite, "kubespan_outgoing")
+	ctest.AssertNoResource[*runtime.KernelParamSpec](
+		suite,
+		"proc.sys.net.ipv4.conf.kubespan.src_valid_mark",
+	)
 }
 
 type mockWireguardClient struct {
@@ -244,9 +249,9 @@ func (suite *ManagerSuite) TestReconcile() {
 			asrt.Equal(nethelpers.ChainPriorityFilter, spec.Priority)
 			asrt.Equal(nethelpers.VerdictAccept, spec.Policy)
 
-			asrt.Len(spec.Rules, 2)
+			asrt.Len(spec.Rules, 3)
 
-			if len(spec.Rules) != 2 {
+			if len(spec.Rules) != 3 {
 				return
 			}
 
@@ -276,6 +281,21 @@ func (suite *ManagerSuite) TestReconcile() {
 					Verdict: pointer.To(nethelpers.VerdictAccept),
 				},
 				spec.Rules[1],
+			)
+
+			asrt.Equal(
+				network.NfTablesRule{
+					MatchIIfName: &network.NfTablesIfNameMatch{
+						InterfaceNames: []string{constants.KubeSpanLinkName},
+						Operator:       nethelpers.OperatorEqual,
+					},
+					SetMark: &network.NfTablesMark{
+						Mask: ^uint32(constants.KubeSpanDefaultFirewallMask),
+						Xor:  constants.KubeSpanDefaultForceFirewallMark,
+					},
+					Verdict: pointer.To(nethelpers.VerdictAccept),
+				},
+				spec.Rules[2],
 			)
 		},
 	)
@@ -358,6 +378,14 @@ func (suite *ManagerSuite) TestReconcile() {
 		},
 	)
 
+	ctest.AssertResource(
+		suite,
+		"proc.sys.net.ipv4.conf.kubespan.src_valid_mark",
+		func(res *runtime.KernelParamSpec, asrt *assert.Assertions) {
+			asrt.Equal(res.TypedSpec().Value, "1")
+		},
+	)
+
 	// update config and disable wireguard, everything should be cleaned up
 	cfg.TypedSpec().Enabled = false
 	suite.Require().NoError(suite.State().Update(suite.Ctx(), cfg))
@@ -370,6 +398,10 @@ func (suite *ManagerSuite) TestReconcile() {
 	ctest.AssertNoResource[*network.NfTablesChain](
 		suite,
 		"kubespan_prerouting",
+	)
+	ctest.AssertNoResource[*runtime.KernelParamSpec](
+		suite,
+		"proc.sys.net.ipv4.conf.kubespan.src_valid_mark",
 	)
 }
 
