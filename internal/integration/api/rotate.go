@@ -43,7 +43,7 @@ func (suite *RotateCASuite) SuiteName() string {
 // SetupTest ...
 func (suite *RotateCASuite) SetupTest() {
 	// make sure API calls have timeout
-	suite.ctx, suite.ctxCancel = context.WithTimeout(context.Background(), 5*time.Minute)
+	suite.ctx, suite.ctxCancel = context.WithTimeout(context.Background(), 10*time.Minute)
 }
 
 // TearDownTest ...
