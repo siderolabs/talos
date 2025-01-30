@@ -18,7 +18,9 @@ import (
 	"github.com/siderolabs/talos/internal/pkg/uki/internal/pe"
 )
 
-func TestAssembleNative(t *testing.T) {
+func assertToolsPresent(t *testing.T) {
+	t.Helper()
+
 	for _, tool := range []string{
 		"objcopy",
 		"objdump",
@@ -29,6 +31,10 @@ func TestAssembleNative(t *testing.T) {
 			t.Skipf("missing tool: %s", tool)
 		}
 	}
+}
+
+func TestAssembleNative(t *testing.T) {
+	assertToolsPresent(t)
 
 	t.Setenv("SOURCE_DATE_EPOCH", "1609459200")
 
@@ -131,4 +137,43 @@ func extractSection(t *testing.T, path, section string) string {
 	output = bytes.ReplaceAll(output, []byte(path), []byte("uki.bin"))
 
 	return string(output)
+}
+
+func TestMultipleSections(t *testing.T) {
+	assertToolsPresent(t)
+
+	tmpDir := t.TempDir()
+
+	unamePath := filepath.Join(tmpDir, "uname")
+	require.NoError(t, os.WriteFile(unamePath, []byte("Talos-helloworld"), 0o644))
+
+	unameNewPath := filepath.Join(tmpDir, "uname-new")
+	require.NoError(t, os.WriteFile(unameNewPath, []byte("Talos-foobar"), 0o644))
+
+	outNative := filepath.Join(tmpDir, "uki-native.bin")
+
+	sections := func() []pe.Section {
+		return []pe.Section{
+			{
+				Name: ".text",
+			},
+			{
+				Name:   ".uname",
+				Append: true,
+				Path:   unamePath,
+			},
+			{
+				Name:   ".uname",
+				Append: true,
+				Path:   unameNewPath,
+			},
+		}
+	}
+
+	require.NoError(t, pe.AssembleNative("testdata/sd-stub-amd64.efi", outNative, sections()))
+
+	sectionContents := extractSection(t, outNative, ".uname")
+
+	assert.Contains(t, sectionContents, "Talos-helloworld")
+	assert.Contains(t, sectionContents, "Talos-foobar")
 }

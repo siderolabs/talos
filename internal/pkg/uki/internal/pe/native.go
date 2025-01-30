@@ -11,7 +11,6 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"slices"
 	"time"
 
 	"github.com/siderolabs/gen/xslices"
@@ -112,7 +111,16 @@ func AssembleNative(srcPath, dstPath string, sections []Section) error {
 	newHeader.MinorLinkerVersion = 0
 	newHeader.CheckSum = 0
 
-	newSections := slices.Clone(peFile.Sections)
+	type peSectionWithPath struct {
+		pe.Section
+		SourcePath string
+	}
+
+	newSections := xslices.Map(peFile.Sections, func(section *pe.Section) *peSectionWithPath {
+		return &peSectionWithPath{
+			Section: *section,
+		}
+	})
 
 	// calculate sections size and VMA
 	for i := range sections {
@@ -133,14 +141,17 @@ func AssembleNative(srcPath, dstPath string, sections []Section) error {
 
 		newFileHeader.NumberOfSections++
 
-		newSections = append(newSections, &pe.Section{
-			SectionHeader: pe.SectionHeader{
-				Name:            sections[i].Name,
-				VirtualSize:     uint32(sections[i].virtualSize),
-				VirtualAddress:  uint32(sections[i].virtualAddress),
-				Size:            uint32((sections[i].virtualSize + fileAlignment) &^ fileAlignment),
-				Characteristics: pe.IMAGE_SCN_CNT_INITIALIZED_DATA | pe.IMAGE_SCN_MEM_READ,
+		newSections = append(newSections, &peSectionWithPath{
+			Section: pe.Section{
+				SectionHeader: pe.SectionHeader{
+					Name:            sections[i].Name,
+					VirtualSize:     uint32(sections[i].virtualSize),
+					VirtualAddress:  uint32(sections[i].virtualAddress),
+					Size:            uint32((sections[i].virtualSize + fileAlignment) &^ fileAlignment),
+					Characteristics: pe.IMAGE_SCN_CNT_INITIALIZED_DATA | pe.IMAGE_SCN_MEM_READ,
+				},
 			},
+			SourcePath: sections[i].Path,
 		})
 	}
 
@@ -174,7 +185,7 @@ func AssembleNative(srcPath, dstPath string, sections []Section) error {
 	}
 
 	// 3. Section headers
-	rawSections := xslices.Map(newSections, func(section *pe.Section) pe.SectionHeader32 {
+	rawSections := xslices.Map(newSections, func(section *peSectionWithPath) pe.SectionHeader32 {
 		var rawName [8]byte
 
 		copy(rawName[:], section.Name)
@@ -206,22 +217,19 @@ func AssembleNative(srcPath, dstPath string, sections []Section) error {
 	// 4. Section data
 	for i, rawSection := range rawSections {
 		name := newSections[i].Name
+		sourcePath := newSections[i].SourcePath
 
-		if err := func(rawSection pe.SectionHeader32, name string) error {
+		if err := func(rawSection pe.SectionHeader32, name, sourcePath string) error {
 			// the section might come either from the input PE file or from a separate file
 			var sectionData io.ReadCloser
 
-			for _, section := range sections {
-				if section.Append && section.Name == name {
-					sectionData, err = os.Open(section.Path)
-					if err != nil {
-						return fmt.Errorf("failed to open section data: %w", err)
-					}
-
-					defer sectionData.Close() //nolint: errcheck
-
-					break
+			if sourcePath != "" {
+				sectionData, err = os.Open(sourcePath)
+				if err != nil {
+					return fmt.Errorf("failed to open section data: %w", err)
 				}
+
+				defer sectionData.Close() //nolint: errcheck
 			}
 
 			if sectionData == nil {
@@ -260,7 +268,7 @@ func AssembleNative(srcPath, dstPath string, sections []Section) error {
 			}
 
 			return nil
-		}(rawSection, name); err != nil {
+		}(rawSection, name, sourcePath); err != nil {
 			return fmt.Errorf("failed to write section data %s: %w", name, err)
 		}
 	}
