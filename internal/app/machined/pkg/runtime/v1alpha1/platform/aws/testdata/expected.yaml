@@ -6,7 +6,11 @@ hostnames:
       domainname: ""
       layer: platform
 resolvers: []
-timeServers: []
+timeServers:
+    - timeServers:
+        - 169.254.169.123
+        - fd00:ec2::123
+      layer: platform
 operators: []
 externalIPs:
     - 1.2.3.4

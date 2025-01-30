@@ -49,7 +49,21 @@ func NewAWS() (*AWS, error) {
 
 // ParseMetadata converts AWS platform metadata into platform network config.
 func (a *AWS) ParseMetadata(metadata *MetadataConfig) (*runtime.PlatformNetworkConfig, error) {
-	networkConfig := &runtime.PlatformNetworkConfig{}
+	networkConfig := &runtime.PlatformNetworkConfig{
+		TimeServers: []network.TimeServerSpecSpec{
+			{
+				NTPServers: []string{
+					// See https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/configure-ec2-ntp.html
+					//
+					// Include both IPv4 & IPv6 addresses for the NTP servers, Talos would lock to one of them (whichever works),
+					// but it would be compatible with v4-only and v6-only deployments.
+					"169.254.169.123",
+					"fd00:ec2::123",
+				},
+				ConfigLayer: network.ConfigPlatform,
+			},
+		},
+	}
 
 	if metadata.Hostname != "" {
 		hostnameSpec := network.HostnameSpecSpec{
