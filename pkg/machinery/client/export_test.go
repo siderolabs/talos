@@ -6,6 +6,7 @@ package client
 
 import (
 	"crypto/tls"
+	"io"
 
 	clientconfig "github.com/siderolabs/talos/pkg/machinery/client/config"
 )
@@ -16,4 +17,10 @@ func ReduceURLsToAddresses(endpoints []string) []string {
 
 func BuildTLSConfig(configContext *clientconfig.Context) (*tls.Config, error) {
 	return buildTLSConfig(configContext)
+}
+
+func SetClientFinalizer(fn func(io.Closer) error) (old func(io.Closer) error) {
+	old, clientFinalizer = clientFinalizer, fn
+
+	return old
 }
