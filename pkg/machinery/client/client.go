@@ -13,7 +13,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"runtime"
 	"time"
 
 	cosiv1alpha1 "github.com/cosi-project/runtime/api/v1alpha1"
@@ -174,16 +173,11 @@ func New(_ context.Context, opts ...OptionFunc) (c *Client, err error) {
 	c.Inspect = &InspectClient{c.InspectClient}
 	c.COSI = state.WrapCore(client.NewAdapter(cosiv1alpha1.NewStateClient(c.conn)))
 
-	// Just like Go team does in their os.File internals, lets ensure that we always close the connection.
-	runtime.SetFinalizer(c.conn, clientFinalizer)
-
 	return c, nil
 }
 
 // Close shuts down client protocol.
 func (c *Client) Close() error {
-	runtime.SetFinalizer(c.conn, nil) // remove so it doesn't get closed twice
-
 	return c.conn.Close()
 }
 
@@ -1017,5 +1011,3 @@ func (c *Client) BlockDeviceWipe(ctx context.Context, req *storageapi.BlockDevic
 
 	return err
 }
-
-var clientFinalizer = io.Closer.Close
