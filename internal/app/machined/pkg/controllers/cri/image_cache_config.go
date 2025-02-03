@@ -184,6 +184,8 @@ func (ctrl *ImageCacheConfigController) Run(ctx context.Context, r controller.Ru
 			}
 		}
 
+		logger.Debug("image cache status", zap.String("status", status.String()), zap.String("copy_status", copyStatus.String()))
+
 		if err = safe.WriterModify(ctx, r, cri.NewImageCacheConfig(), func(cfg *cri.ImageCacheConfig) error {
 			cfg.TypedSpec().Status = status
 			cfg.TypedSpec().CopyStatus = copyStatus
@@ -349,9 +351,11 @@ func (ctrl *ImageCacheConfigController) analyzeImageCacheVolumes(ctx context.Con
 	roots := make([]string, 0, len(volumeIDs))
 
 	var (
-		allReady, isoReady, diskReady bool
-		copySource, copyTarget        string
+		isoReady, diskReady    bool
+		copySource, copyTarget string
 	)
+
+	allReady := true
 
 	// analyze volume statuses, and build the roots
 	for _, volumeStatus := range volumeStatuses {

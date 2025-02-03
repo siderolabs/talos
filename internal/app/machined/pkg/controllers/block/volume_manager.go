@@ -285,6 +285,11 @@ func (ctrl *VolumeManagerController) Run(ctx context.Context, r controller.Runti
 
 		fullyProvisionedWave := math.MaxInt
 		allClosed := true
+		minWave := math.MinInt
+
+		if len(volumeConfigs) > 0 {
+			minWave = volumeConfigs[0].TypedSpec().Provisioning.Wave
+		}
 
 		for _, vc := range volumeConfigs {
 			// abort on context cancel, as each volume processing might take a while
@@ -341,7 +346,8 @@ func (ctrl *VolumeManagerController) Run(ctx context.Context, r controller.Runti
 				volumeStatus.PreFailPhase = block.VolumePhase(0)
 			}
 
-			if volumeStatus.Phase != block.VolumePhaseReady {
+			// if the wave we're working on is a minimum wave, let's not push the limit further, as minWave can be processed (partially)
+			if volumeStatus.Phase != block.VolumePhaseReady && vc.TypedSpec().Provisioning.Wave != minWave {
 				fullyProvisionedWave = vc.TypedSpec().Provisioning.Wave - 1
 			}
 
