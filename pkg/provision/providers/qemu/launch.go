@@ -406,7 +406,7 @@ func launchVM(config *LaunchConfig) error {
 	if config.ExtraISOPath != "" {
 		args = append(args,
 			"-drive",
-			fmt.Sprintf("file=%s,media=cdrom", config.ExtraISOPath),
+			fmt.Sprintf("id=cdrom1,file=%s,media=cdrom", config.ExtraISOPath),
 		)
 	}
 
@@ -462,7 +462,7 @@ func launchVM(config *LaunchConfig) error {
 		case config.ISOPath != "":
 			args = append(args,
 				"-drive",
-				fmt.Sprintf("file=%s,media=cdrom", config.ISOPath),
+				fmt.Sprintf("id=cdrom0,file=%s,media=cdrom", config.ISOPath),
 			)
 		case config.USBPath != "":
 			args = append(args,
