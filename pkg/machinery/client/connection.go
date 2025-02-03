@@ -28,7 +28,7 @@ import (
 
 // Conn returns underlying client connection.
 func (c *Client) Conn() *grpc.ClientConn {
-	return c.conn.ClientConn
+	return c.conn.conn
 }
 
 // getConn creates new gRPC connection.
