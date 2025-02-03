@@ -8,7 +8,6 @@ import (
 	"context"
 	"fmt"
 	stdlog "log"
-	"os"
 	"time"
 
 	containerd "github.com/containerd/containerd/v2/client"
@@ -20,22 +19,13 @@ import (
 	"github.com/siderolabs/go-retry/retry"
 	"github.com/sirupsen/logrus"
 
-	containerdrunner "github.com/siderolabs/talos/internal/app/machined/pkg/system/runner/containerd"
 	"github.com/siderolabs/talos/pkg/machinery/config/config"
-	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
 
 // Image pull retry settings.
 const (
 	PullTimeout       = 20 * time.Minute
 	PullRetryInterval = 5 * time.Second
-)
-
-// Image import retry settings.
-const (
-	ImportTimeout       = 5 * time.Minute
-	ImportRetryInterval = 5 * time.Second
-	ImportRetryJitter   = time.Second
 )
 
 // PullOption is an option for Pull function.
@@ -179,24 +169,4 @@ func createAlias(ctx context.Context, client *containerd.Client, name string, de
 	_, err = client.ImageService().Update(ctx, img, "target")
 
 	return err
-}
-
-// Import is a convenience function that wraps containerd image import with retries.
-func Import(ctx context.Context, imagePath, indexName string) error {
-	importer := containerdrunner.NewImporter(constants.SystemContainerdNamespace, containerdrunner.WithContainerdAddress(constants.SystemContainerdAddress))
-
-	return retry.Exponential(ImportTimeout, retry.WithUnits(ImportRetryInterval), retry.WithJitter(ImportRetryJitter), retry.WithErrorLogging(true)).Retry(func() error {
-		err := retry.ExpectedError(importer.Import(ctx, &containerdrunner.ImportRequest{
-			Path: imagePath,
-			Options: []containerd.ImportOpt{
-				containerd.WithIndexName(indexName),
-			},
-		}))
-
-		if err != nil && os.IsNotExist(err) {
-			return err
-		}
-
-		return retry.ExpectedError(err)
-	})
 }
