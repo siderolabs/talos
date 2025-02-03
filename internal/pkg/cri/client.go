@@ -6,6 +6,7 @@ package cri
 
 import (
 	"fmt"
+	"runtime/pprof"
 	"time"
 
 	"google.golang.org/grpc"
@@ -14,6 +15,8 @@ import (
 
 	"github.com/siderolabs/talos/pkg/grpc/dialer"
 )
+
+var newClientPprof = pprof.NewProfile("internal/pkg/cri.NewClient")
 
 // Client is a lightweight implementation of CRI client.
 type Client struct {
@@ -38,14 +41,20 @@ func NewClient(endpoint string, _ time.Duration) (*Client, error) {
 		return nil, fmt.Errorf("error connecting to CRI: %w", err)
 	}
 
-	return &Client{
+	res := &Client{
 		conn:          conn,
 		runtimeClient: runtimeapi.NewRuntimeServiceClient(conn),
 		imagesClient:  runtimeapi.NewImageServiceClient(conn),
-	}, nil
+	}
+
+	newClientPprof.Add(res, 1)
+
+	return res, nil
 }
 
 // Close connection.
 func (c *Client) Close() error {
+	newClientPprof.Remove(c)
+
 	return c.conn.Close()
 }

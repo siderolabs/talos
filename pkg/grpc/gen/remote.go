@@ -8,6 +8,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"runtime/pprof"
 	"strings"
 	"time"
 
@@ -20,6 +21,8 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/client/resolver"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
+
+var remoteGeneratorPprof = pprof.NewProfile("pkg/grpc/gen.RemoteGenerator")
 
 // RemoteGenerator represents the OS identity generator.
 type RemoteGenerator struct {
@@ -36,6 +39,8 @@ func NewRemoteGenerator(token string, endpoints []string, acceptedCAs []*x509.PE
 	endpoints = resolver.EnsureEndpointsHavePorts(endpoints, constants.TrustdPort)
 
 	g = &RemoteGenerator{}
+
+	remoteGeneratorPprof.Add(g, 1)
 
 	conn, err := basic.NewConnection(fmt.Sprintf("%s:///%s", resolver.RoundRobinResolverScheme, strings.Join(endpoints, ",")), basic.NewTokenCredentials(token), acceptedCAs)
 	if err != nil {
@@ -87,5 +92,7 @@ func (g *RemoteGenerator) IdentityContext(ctx context.Context, csr *x509.Certifi
 
 // Close closes the gRPC client connection.
 func (g *RemoteGenerator) Close() error {
+	remoteGeneratorPprof.Remove(g)
+
 	return g.conn.Close()
 }

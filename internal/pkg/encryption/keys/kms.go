@@ -57,6 +57,8 @@ func (h *KMSKeyHandler) NewKey(ctx context.Context) (*encryption.Key, token.Toke
 		return nil, nil, fmt.Errorf("error dialing KMS endpoint %q: %w", h.kmsEndpoint, err)
 	}
 
+	defer conn.Close() //nolint:errcheck
+
 	client := kms.NewKMSServiceClient(conn)
 
 	key := make([]byte, 32)
@@ -101,6 +103,8 @@ func (h *KMSKeyHandler) GetKey(ctx context.Context, t token.Token) (*encryption.
 	if err != nil {
 		return nil, fmt.Errorf("error dialing KMS endpoint %q: %w", h.kmsEndpoint, err)
 	}
+
+	defer conn.Close() //nolint:errcheck
 
 	client := kms.NewKMSServiceClient(conn)
 

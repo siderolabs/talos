@@ -6,10 +6,13 @@ package client
 
 import (
 	"context"
+	"runtime/pprof"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
 )
+
+var grpcConnPprof = pprof.NewProfile("machinery/client/grpc.grpcConn")
 
 type grpcConnectionWrapper struct {
 	*grpc.ClientConn
@@ -18,10 +21,14 @@ type grpcConnectionWrapper struct {
 }
 
 func newGRPCConnectionWrapper(clusterName string, conn *grpc.ClientConn) *grpcConnectionWrapper {
-	return &grpcConnectionWrapper{
+	res := &grpcConnectionWrapper{
 		ClientConn:  conn,
 		clusterName: clusterName,
 	}
+
+	grpcConnPprof.Add(res, 1)
+
+	return res
 }
 
 // Invoke performs a unary RPC and returns after the response is received
@@ -33,6 +40,13 @@ func (c *grpcConnectionWrapper) Invoke(ctx context.Context, method string, args 
 // NewStream begins a streaming RPC.
 func (c *grpcConnectionWrapper) NewStream(ctx context.Context, desc *grpc.StreamDesc, method string, opts ...grpc.CallOption) (grpc.ClientStream, error) {
 	return c.ClientConn.NewStream(c.appendMetadata(ctx), desc, method, opts...)
+}
+
+// Close closes the connection.
+func (c *grpcConnectionWrapper) Close() error {
+	grpcConnPprof.Remove(c)
+
+	return c.ClientConn.Close()
 }
 
 func (c *grpcConnectionWrapper) appendMetadata(ctx context.Context) context.Context {

@@ -74,6 +74,7 @@ func (suite *TimedSuite) TestTime() {
 		grpc.WithContextDialer(dialer.DialUnix()),
 	)
 	suite.Require().NoError(err)
+	suite.T().Cleanup(func() { conn.Close() }) //nolint:errcheck
 
 	nClient := timeapi.NewTimeServiceClient(conn)
 	reply, err := nClient.Time(context.Background(), &emptypb.Empty{})
@@ -108,6 +109,7 @@ func (suite *TimedSuite) TestTimeCheck() {
 		grpc.WithContextDialer(dialer.DialUnix()),
 	)
 	suite.Require().NoError(err)
+	suite.T().Cleanup(func() { conn.Close() }) //nolint:errcheck
 
 	nClient := timeapi.NewTimeServiceClient(conn)
 	reply, err := nClient.TimeCheck(context.Background(), &timeapi.TimeRequest{Server: testServer})
