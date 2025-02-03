@@ -436,7 +436,7 @@ func (i *Imager) outInstaller(ctx context.Context, path string, report *reporter
 		ukiPath += ".signed" // support for older secureboot installers
 	}
 
-	if quirks.UseSDBootForUEFI() {
+	if quirks.UseSDBootForUEFI() || i.prof.SecureBootEnabled() {
 		artifacts = append(artifacts,
 			filemap.File{
 				ImagePath:  strings.TrimLeft(fmt.Sprintf(constants.SDBootAssetPath, i.prof.Arch), "/"),
