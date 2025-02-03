@@ -206,6 +206,7 @@ FROM --platform=${BUILDPLATFORM} $TOOLS AS tools
 ENV PATH=/toolchain/bin:/toolchain/go/bin
 ENV LD_LIBRARY_PATH=/toolchain/lib
 ENV GOTOOLCHAIN=local
+ENV CGO_ENABLED=0
 RUN ["/toolchain/bin/mkdir", "/bin", "/tmp"]
 RUN ["/toolchain/bin/ln", "-svf", "/toolchain/bin/bash", "/bin/sh"]
 RUN ["/toolchain/bin/ln", "-svf", "/toolchain/etc/ssl", "/etc/ssl"]
