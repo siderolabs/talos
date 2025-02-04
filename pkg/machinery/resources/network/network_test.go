@@ -29,6 +29,8 @@ func TestRegisterResource(t *testing.T) {
 		&network.AddressSpec{},
 		&network.HardwareAddr{},
 		&network.DNSUpstream{},
+		&network.EthernetSpec{},
+		&network.EthernetStatus{},
 		&network.HostDNSConfig{},
 		&network.HostnameStatus{},
 		&network.HostnameSpec{},

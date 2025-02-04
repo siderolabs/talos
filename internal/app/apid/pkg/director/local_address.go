@@ -51,7 +51,7 @@ func (p *localAddressProvider) watch(evCh <-chan state.Event) {
 		switch ev.Type {
 		case state.Created, state.Updated:
 			// expected
-		case state.Destroyed, state.Bootstrapped, state.Errored:
+		case state.Destroyed, state.Bootstrapped, state.Errored, state.Noop:
 			// shouldn't happen, ignore
 			continue
 		}

@@ -203,6 +203,10 @@ description: Talos gRPC API reference.
     - [DHCP4OperatorSpec](#talos.resource.definitions.network.DHCP4OperatorSpec)
     - [DHCP6OperatorSpec](#talos.resource.definitions.network.DHCP6OperatorSpec)
     - [DNSResolveCacheSpec](#talos.resource.definitions.network.DNSResolveCacheSpec)
+    - [EthernetRingsSpec](#talos.resource.definitions.network.EthernetRingsSpec)
+    - [EthernetRingsStatus](#talos.resource.definitions.network.EthernetRingsStatus)
+    - [EthernetSpecSpec](#talos.resource.definitions.network.EthernetSpecSpec)
+    - [EthernetStatusSpec](#talos.resource.definitions.network.EthernetStatusSpec)
     - [HardwareAddrSpec](#talos.resource.definitions.network.HardwareAddrSpec)
     - [HostDNSConfigSpec](#talos.resource.definitions.network.HostDNSConfigSpec)
     - [HostnameSpecSpec](#talos.resource.definitions.network.HostnameSpecSpec)
@@ -3723,6 +3727,95 @@ DNSResolveCacheSpec describes DNS servers status.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | status | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.network.EthernetRingsSpec"></a>
+
+### EthernetRingsSpec
+EthernetRingsSpec describes config of Ethernet rings.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| rx | [uint32](#uint32) |  |  |
+| rx_mini | [uint32](#uint32) |  |  |
+| rx_jumbo | [uint32](#uint32) |  |  |
+| tx | [uint32](#uint32) |  |  |
+| rx_buf_len | [uint32](#uint32) |  |  |
+| cqe_size | [uint32](#uint32) |  |  |
+| tx_push | [bool](#bool) |  |  |
+| rx_push | [bool](#bool) |  |  |
+| tx_push_buf_len | [uint32](#uint32) |  |  |
+| tcp_data_split | [bool](#bool) |  |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.network.EthernetRingsStatus"></a>
+
+### EthernetRingsStatus
+EthernetRingsStatus describes status of Ethernet rings.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| rx_max | [uint32](#uint32) |  |  |
+| rx_mini_max | [uint32](#uint32) |  |  |
+| rx_jumbo_max | [uint32](#uint32) |  |  |
+| tx_max | [uint32](#uint32) |  |  |
+| tx_push_buf_len_max | [uint32](#uint32) |  |  |
+| rx | [uint32](#uint32) |  |  |
+| rx_mini | [uint32](#uint32) |  |  |
+| rx_jumbo | [uint32](#uint32) |  |  |
+| tx | [uint32](#uint32) |  |  |
+| rx_buf_len | [uint32](#uint32) |  |  |
+| cqe_size | [uint32](#uint32) |  |  |
+| tx_push | [bool](#bool) |  |  |
+| rx_push | [bool](#bool) |  |  |
+| tx_push_buf_len | [uint32](#uint32) |  |  |
+| tcp_data_split | [bool](#bool) |  |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.network.EthernetSpecSpec"></a>
+
+### EthernetSpecSpec
+EthernetSpecSpec describes config of Ethernet link.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| rings | [EthernetRingsSpec](#talos.resource.definitions.network.EthernetRingsSpec) |  |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.network.EthernetStatusSpec"></a>
+
+### EthernetStatusSpec
+EthernetStatusSpec describes status of rendered secrets.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| link_state | [bool](#bool) |  |  |
+| speed_megabits | [int64](#int64) |  |  |
+| port | [talos.resource.definitions.enums.NethelpersPort](#talos.resource.definitions.enums.NethelpersPort) |  |  |
+| duplex | [talos.resource.definitions.enums.NethelpersDuplex](#talos.resource.definitions.enums.NethelpersDuplex) |  |  |
+| our_modes | [string](#string) | repeated |  |
+| peer_modes | [string](#string) | repeated |  |
+| rings | [EthernetRingsStatus](#talos.resource.definitions.network.EthernetRingsStatus) |  |  |
 
 
 

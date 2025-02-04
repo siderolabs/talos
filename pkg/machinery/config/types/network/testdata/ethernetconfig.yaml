@@ -1,0 +1,5 @@
+apiVersion: v1alpha1
+kind: EthernetConfig
+name: enp0s1
+rings:
+    rx: 16

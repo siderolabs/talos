@@ -105,9 +105,9 @@ linters-settings:
       - golang.zx2c4.com/wireguard
       - golang.zx2c4.com/wireguard/wgctrl
       - cloud.google.com/go
+      - github.com/mdlayher/ethtool
       # fd-leak related replacements: https://github.com/siderolabs/talos/issues/9412
       - github.com/insomniacslk/dhcp
-      - github.com/safchain/ethtool
     retract-allow-no-explanation: false
     exclude-forbidden: false
 

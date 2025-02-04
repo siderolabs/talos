@@ -102,6 +102,55 @@ message DNSResolveCacheSpec {
   string status = 1;
 }
 
+// EthernetRingsSpec describes config of Ethernet rings.
+message EthernetRingsSpec {
+  uint32 rx = 1;
+  uint32 rx_mini = 2;
+  uint32 rx_jumbo = 3;
+  uint32 tx = 4;
+  uint32 rx_buf_len = 5;
+  uint32 cqe_size = 6;
+  bool tx_push = 7;
+  bool rx_push = 8;
+  uint32 tx_push_buf_len = 9;
+  bool tcp_data_split = 10;
+}
+
+// EthernetRingsStatus describes status of Ethernet rings.
+message EthernetRingsStatus {
+  uint32 rx_max = 1;
+  uint32 rx_mini_max = 2;
+  uint32 rx_jumbo_max = 3;
+  uint32 tx_max = 4;
+  uint32 tx_push_buf_len_max = 5;
+  uint32 rx = 6;
+  uint32 rx_mini = 7;
+  uint32 rx_jumbo = 8;
+  uint32 tx = 9;
+  uint32 rx_buf_len = 10;
+  uint32 cqe_size = 11;
+  bool tx_push = 12;
+  bool rx_push = 13;
+  uint32 tx_push_buf_len = 14;
+  bool tcp_data_split = 15;
+}
+
+// EthernetSpecSpec describes config of Ethernet link.
+message EthernetSpecSpec {
+  EthernetRingsSpec rings = 1;
+}
+
+// EthernetStatusSpec describes status of rendered secrets.
+message EthernetStatusSpec {
+  bool link_state = 1;
+  int64 speed_megabits = 2;
+  talos.resource.definitions.enums.NethelpersPort port = 3;
+  talos.resource.definitions.enums.NethelpersDuplex duplex = 4;
+  repeated string our_modes = 5;
+  repeated string peer_modes = 6;
+  EthernetRingsStatus rings = 7;
+}
+
 // HardwareAddrSpec describes spec for the link.
 message HardwareAddrSpec {
   string name = 1;

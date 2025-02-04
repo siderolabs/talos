@@ -37,6 +37,123 @@ func (DefaultActionConfigV1Alpha1) Doc() *encoder.Doc {
 	return doc
 }
 
+func (EthernetConfigV1Alpha1) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "EthernetConfig",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "EthernetConfig is a config document to configure Ethernet interfaces." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "EthernetConfig is a config document to configure Ethernet interfaces.",
+		Fields: []encoder.Doc{
+			{},
+			{
+				Name:        "name",
+				Type:        "string",
+				Note:        "",
+				Description: "Name of the link (interface).",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Name of the link (interface)." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "rings",
+				Type:        "EthernetRingsConfig",
+				Note:        "",
+				Description: "Configuration for Ethernet link rings.\n\nThis is similar to `ethtool -G` command.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Configuration for Ethernet link rings." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
+
+	doc.AddExample("", exampleEthernetConfigV1Alpha1())
+
+	return doc
+}
+
+func (EthernetRingsConfig) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "EthernetRingsConfig",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "EthernetRingsConfig is a configuration for Ethernet link rings." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "EthernetRingsConfig is a configuration for Ethernet link rings.",
+		AppearsIn: []encoder.Appearance{
+			{
+				TypeName:  "EthernetConfigV1Alpha1",
+				FieldName: "rings",
+			},
+		},
+		Fields: []encoder.Doc{
+			{
+				Name:        "rx",
+				Type:        "uint32",
+				Note:        "",
+				Description: "Number of RX rings.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Number of RX rings." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "tx",
+				Type:        "uint32",
+				Note:        "",
+				Description: "Number of TX rings.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Number of TX rings." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "rx-mini",
+				Type:        "uint32",
+				Note:        "",
+				Description: "Number of RX mini rings.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Number of RX mini rings." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "rx-jumbo",
+				Type:        "uint32",
+				Note:        "",
+				Description: "Number of RX jumbo rings.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Number of RX jumbo rings." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "rx-buf-len",
+				Type:        "uint32",
+				Note:        "",
+				Description: "RX buffer length.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "RX buffer length." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "cqe-size",
+				Type:        "uint32",
+				Note:        "",
+				Description: "CQE size.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "CQE size." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "tx-push",
+				Type:        "bool",
+				Note:        "",
+				Description: "TX push enabled.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "TX push enabled." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "rx-push",
+				Type:        "bool",
+				Note:        "",
+				Description: "RX push enabled.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "RX push enabled." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "tx-push-buf-len",
+				Type:        "uint32",
+				Note:        "",
+				Description: "TX push buffer length.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "TX push buffer length." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "tcp-data-split",
+				Type:        "bool",
+				Note:        "",
+				Description: "TCP data split enabled.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "TCP data split enabled." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
+
+	return doc
+}
+
 func (KubespanEndpointsConfigV1Alpha1) Doc() *encoder.Doc {
 	doc := &encoder.Doc{
 		Type:        "KubeSpanEndpointsConfig",
@@ -178,6 +295,8 @@ func GetFileDoc() *encoder.FileDoc {
 		Description: "Package network provides network machine configuration documents.\n",
 		Structs: []*encoder.Doc{
 			DefaultActionConfigV1Alpha1{}.Doc(),
+			EthernetConfigV1Alpha1{}.Doc(),
+			EthernetRingsConfig{}.Doc(),
 			KubespanEndpointsConfigV1Alpha1{}.Doc(),
 			RuleConfigV1Alpha1{}.Doc(),
 			RulePortSelector{}.Doc(),

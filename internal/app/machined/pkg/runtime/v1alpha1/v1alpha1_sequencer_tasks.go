@@ -2061,7 +2061,7 @@ func WaitForCARoots(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
 				switch e.Type {
 				case state.Errored:
 					return e.Error
-				case state.Bootstrapped, state.Destroyed: // ignore
+				case state.Bootstrapped, state.Destroyed, state.Noop: // ignore
 				case state.Created, state.Updated:
 					switch res := e.Resource.(type) {
 					case *resourcefiles.EtcFileSpec:

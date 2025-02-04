@@ -1,6 +1,6 @@
 module github.com/siderolabs/structprotogen
 
-go 1.23.3
+go 1.23.5
 
 require (
 	github.com/fatih/structtag v1.2.0

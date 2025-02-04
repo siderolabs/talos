@@ -102,6 +102,13 @@ The NQN can be read by `talosctl read /etc/nvme/hostnqn`
 Talos starting with 1.10 will have ISO's that will use GRUB only for legacy BIOS and systemd-boot for modern UEFI systems.
 """
 
+    [notes.ethernet]
+        title = "Ethernet"
+        description = """\
+Talos now provides `ethtool`-style Ethernet low-level configuration via `network/EthernetConfig` documents.
+Current status of the interface can be read by `talosctl get ethernetstatus`.
+"""
+
 [make_deps]
 
     [make_deps.tools]

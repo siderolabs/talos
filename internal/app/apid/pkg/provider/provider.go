@@ -51,7 +51,7 @@ func NewTLSConfig(ctx context.Context, resources state.State) (*TLSConfig, error
 		switch event.Type {
 		case state.Created, state.Updated:
 			// expected
-		case state.Destroyed, state.Bootstrapped:
+		case state.Destroyed, state.Bootstrapped, state.Noop:
 			// ignore, we'll get another event
 			continue
 		case state.Errored:
@@ -85,7 +85,7 @@ func (tlsConfig *TLSConfig) Watch(ctx context.Context, onUpdate func()) error {
 		switch event.Type {
 		case state.Created, state.Updated:
 			// expected
-		case state.Destroyed, state.Bootstrapped:
+		case state.Destroyed, state.Bootstrapped, state.Noop:
 			// ignore, we'll get another event
 			continue
 		case state.Errored:

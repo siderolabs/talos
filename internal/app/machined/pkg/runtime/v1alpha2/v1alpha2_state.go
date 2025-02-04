@@ -168,6 +168,8 @@ func NewState() (*State, error) {
 		&network.DeviceConfigSpec{},
 		&network.DNSResolveCache{},
 		&network.DNSUpstream{},
+		&network.EthernetSpec{},
+		&network.EthernetStatus{},
 		&network.HardwareAddr{},
 		&network.HostDNSConfig{},
 		&network.HostnameStatus{},

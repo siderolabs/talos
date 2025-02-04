@@ -215,6 +215,11 @@ func (container *Container) PCIDriverRebindConfig() config.PCIDriverRebindConfig
 	return config.WrapPCIDriverRebindConfig(findMatchingDocs[config.PCIDriverRebindConfig](container.documents)...)
 }
 
+// EthernetConfigs implements config.Config interface.
+func (container *Container) EthernetConfigs() []config.EthernetConfig {
+	return findMatchingDocs[config.EthernetConfig](container.documents)
+}
+
 // Bytes returns source YAML representation (if available) or does default encoding.
 func (container *Container) Bytes() ([]byte, error) {
 	if !container.readonly {

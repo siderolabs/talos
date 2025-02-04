@@ -152,7 +152,7 @@ func (source *Source) runResourceWatch(ctx context.Context, node string) error {
 			switch event.Type {
 			case state.Errored:
 				return fmt.Errorf("watch failed: %w", event.Error)
-			case state.Bootstrapped:
+			case state.Bootstrapped, state.Noop:
 				// ignored
 			case state.Created, state.Updated:
 				if !channel.SendWithContext(ctx, source.ch, Data{

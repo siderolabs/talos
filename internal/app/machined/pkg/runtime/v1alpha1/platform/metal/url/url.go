@@ -77,7 +77,7 @@ func PopulateVariables(ctx context.Context, downloadURL string, st state.State, 
 		switch ev.Type {
 		case state.Errored:
 			return "", fmt.Errorf("error watching variables: %w", ev.Error)
-		case state.Bootstrapped:
+		case state.Bootstrapped, state.Noop:
 			// ignored
 		case state.Created, state.Updated, state.Destroyed:
 			anyHandled := false

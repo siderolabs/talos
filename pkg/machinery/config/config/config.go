@@ -18,4 +18,5 @@ type Config interface { //nolint:interfacebloat
 	Volumes() VolumesConfig
 	KubespanConfig() KubespanConfig
 	PCIDriverRebindConfig() PCIDriverRebindConfig
+	EthernetConfigs() []EthernetConfig
 }

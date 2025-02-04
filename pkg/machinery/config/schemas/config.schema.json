@@ -249,6 +249,125 @@
         "kind"
       ]
     },
+    "network.EthernetConfigV1Alpha1": {
+      "properties": {
+        "apiVersion": {
+          "enum": [
+            "v1alpha1"
+          ],
+          "title": "apiVersion",
+          "description": "apiVersion is the API version of the resource.\n",
+          "markdownDescription": "apiVersion is the API version of the resource.",
+          "x-intellij-html-description": "\u003cp\u003eapiVersion is the API version of the resource.\u003c/p\u003e\n"
+        },
+        "kind": {
+          "enum": [
+            "EthernetConfig"
+          ],
+          "title": "kind",
+          "description": "kind is the kind of the resource.\n",
+          "markdownDescription": "kind is the kind of the resource.",
+          "x-intellij-html-description": "\u003cp\u003ekind is the kind of the resource.\u003c/p\u003e\n"
+        },
+        "name": {
+          "type": "string",
+          "title": "name",
+          "description": "Name of the link (interface).\n",
+          "markdownDescription": "Name of the link (interface).",
+          "x-intellij-html-description": "\u003cp\u003eName of the link (interface).\u003c/p\u003e\n"
+        },
+        "rings": {
+          "$ref": "#/$defs/network.EthernetRingsConfig",
+          "title": "rings",
+          "description": "Configuration for Ethernet link rings.\n\nThis is similar to ethtool -G command.\n",
+          "markdownDescription": "Configuration for Ethernet link rings.\n\nThis is similar to `ethtool -G` command.",
+          "x-intellij-html-description": "\u003cp\u003eConfiguration for Ethernet link rings.\u003c/p\u003e\n\n\u003cp\u003eThis is similar to \u003ccode\u003eethtool -G\u003c/code\u003e command.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "apiVersion",
+        "kind",
+        "name"
+      ]
+    },
+    "network.EthernetRingsConfig": {
+      "properties": {
+        "rx": {
+          "type": "integer",
+          "title": "rx",
+          "description": "Number of RX rings.\n",
+          "markdownDescription": "Number of RX rings.",
+          "x-intellij-html-description": "\u003cp\u003eNumber of RX rings.\u003c/p\u003e\n"
+        },
+        "tx": {
+          "type": "integer",
+          "title": "tx",
+          "description": "Number of TX rings.\n",
+          "markdownDescription": "Number of TX rings.",
+          "x-intellij-html-description": "\u003cp\u003eNumber of TX rings.\u003c/p\u003e\n"
+        },
+        "rx-mini": {
+          "type": "integer",
+          "title": "rx-mini",
+          "description": "Number of RX mini rings.\n",
+          "markdownDescription": "Number of RX mini rings.",
+          "x-intellij-html-description": "\u003cp\u003eNumber of RX mini rings.\u003c/p\u003e\n"
+        },
+        "rx-jumbo": {
+          "type": "integer",
+          "title": "rx-jumbo",
+          "description": "Number of RX jumbo rings.\n",
+          "markdownDescription": "Number of RX jumbo rings.",
+          "x-intellij-html-description": "\u003cp\u003eNumber of RX jumbo rings.\u003c/p\u003e\n"
+        },
+        "rx-buf-len": {
+          "type": "integer",
+          "title": "rx-buf-len",
+          "description": "RX buffer length.\n",
+          "markdownDescription": "RX buffer length.",
+          "x-intellij-html-description": "\u003cp\u003eRX buffer length.\u003c/p\u003e\n"
+        },
+        "cqe-size": {
+          "type": "integer",
+          "title": "cqe-size",
+          "description": "CQE size.\n",
+          "markdownDescription": "CQE size.",
+          "x-intellij-html-description": "\u003cp\u003eCQE size.\u003c/p\u003e\n"
+        },
+        "tx-push": {
+          "type": "boolean",
+          "title": "tx-push",
+          "description": "TX push enabled.\n",
+          "markdownDescription": "TX push enabled.",
+          "x-intellij-html-description": "\u003cp\u003eTX push enabled.\u003c/p\u003e\n"
+        },
+        "rx-push": {
+          "type": "boolean",
+          "title": "rx-push",
+          "description": "RX push enabled.\n",
+          "markdownDescription": "RX push enabled.",
+          "x-intellij-html-description": "\u003cp\u003eRX push enabled.\u003c/p\u003e\n"
+        },
+        "tx-push-buf-len": {
+          "type": "integer",
+          "title": "tx-push-buf-len",
+          "description": "TX push buffer length.\n",
+          "markdownDescription": "TX push buffer length.",
+          "x-intellij-html-description": "\u003cp\u003eTX push buffer length.\u003c/p\u003e\n"
+        },
+        "tcp-data-split": {
+          "type": "boolean",
+          "title": "tcp-data-split",
+          "description": "TCP data split enabled.\n",
+          "markdownDescription": "TCP data split enabled.",
+          "x-intellij-html-description": "\u003cp\u003eTCP data split enabled.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
     "network.IngressRule": {
       "properties": {
         "subnet": {
@@ -3768,6 +3887,9 @@
     },
     {
       "$ref": "#/$defs/network.DefaultActionConfigV1Alpha1"
+    },
+    {
+      "$ref": "#/$defs/network.EthernetConfigV1Alpha1"
     },
     {
       "$ref": "#/$defs/network.KubespanEndpointsConfigV1Alpha1"

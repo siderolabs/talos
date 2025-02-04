@@ -64,3 +64,23 @@ func (w networkRuleConfigWrapper) Rules() []NetworkRule {
 		},
 	)
 }
+
+// EthernetConfig defines a network interface configuration.
+type EthernetConfig interface {
+	NamedDocument
+	Rings() EthernetRingsConfig
+}
+
+// EthernetRingsConfig defines a configuration for Ethernet link rings.
+type EthernetRingsConfig struct {
+	RX           *uint32
+	TX           *uint32
+	RXMini       *uint32
+	RXJumbo      *uint32
+	RXBufLen     *uint32
+	CQESize      *uint32
+	TXPush       *bool
+	RXPush       *bool
+	TXPushBufLen *uint32
+	TCPDataSplit *bool
+}

@@ -237,6 +237,9 @@ func (ctrl *Controller) Run(ctx context.Context, drainer *runtime.Drainer) error
 			PodResolvConfPath: constants.PodResolvConfPath,
 			V1Alpha1Mode:      ctrl.v1alpha1Runtime.State().Platform().Mode(),
 		},
+		&network.EthernetConfigController{},
+		&network.EthernetSpecController{},
+		&network.EthernetStatusController{},
 		&network.HardwareAddrController{},
 		&network.HostDNSConfigController{},
 		&network.HostnameConfigController{

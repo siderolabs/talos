@@ -257,7 +257,7 @@ func (m *Metal) NetworkConfiguration(ctx context.Context, st state.State, ch cha
 		switch event.Type {
 		case state.Errored:
 			return fmt.Errorf("watch failed: %w", event.Error)
-		case state.Bootstrapped:
+		case state.Bootstrapped, state.Noop:
 			// ignored, should not happen
 		case state.Created, state.Updated:
 			switch r := event.Resource.(type) {

@@ -79,7 +79,7 @@ func AllNodesBootedAssertion(ctx context.Context, cluster ClusterInfo) error {
 				}
 
 				nodeStages[ev.node] = machineStatus.TypedSpec().Stage
-			case state.Destroyed, state.Bootstrapped:
+			case state.Destroyed, state.Bootstrapped, state.Noop:
 				// nothing
 			case state.Errored:
 				return fmt.Errorf("error watching machine %s status: %w", ev.node, ev.event.Error)

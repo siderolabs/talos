@@ -92,7 +92,7 @@ func (table *Table) WriteResource(node string, r resource.Resource, event state.
 			label = "-"
 		case state.Updated:
 			label = " "
-		case state.Bootstrapped, state.Errored:
+		case state.Bootstrapped, state.Errored, state.Noop:
 			return nil
 		}
 
