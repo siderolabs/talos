@@ -30,7 +30,6 @@ import (
 	"github.com/siderolabs/go-blockdevice/v2/blkid"
 	sideronet "github.com/siderolabs/net"
 
-	"github.com/siderolabs/talos/pkg/provision"
 	"github.com/siderolabs/talos/pkg/provision/internal/cniutils"
 	"github.com/siderolabs/talos/pkg/provision/providers/vm"
 )
@@ -70,7 +69,7 @@ type LaunchConfig struct {
 	// Network
 	BridgeName        string
 	NetworkConfig     *libcni.NetworkConfigList
-	CNI               provision.CNIConfig
+	CNI               vm.CNIConfig
 	IPs               []netip.Addr
 	CIDRs             []netip.Prefix
 	NoMasqueradeCIDRs []netip.Prefix
@@ -393,7 +392,7 @@ func launchVM(config *LaunchConfig) error {
 		}
 	}
 
-	args = append(args, config.ArchitectureData.KVMArgs(config.EnableKVM, config.IOMMUEnabled)...)
+	args = append(args, config.ArchitectureData.getMachineArgs(config.EnableKVM, config.IOMMUEnabled)...)
 
 	pflashArgs := make([]string, 2*len(config.PFlashImages))
 	for i := range config.PFlashImages {

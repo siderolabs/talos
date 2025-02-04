@@ -12,13 +12,11 @@ import (
 	"github.com/docker/docker/api/types/filters"
 	"github.com/docker/docker/api/types/network"
 	"github.com/hashicorp/go-multierror"
-
-	"github.com/siderolabs/talos/pkg/provision"
 )
 
 // createNetwork will take a network request and check if a network with the same name + cidr exists.
 // If so, it simply returns without error and assumes we will re-use that network. Otherwise it will create a new one.
-func (p *provisioner) createNetwork(ctx context.Context, req provision.NetworkRequest) error {
+func (p *Provisioner) createNetwork(ctx context.Context, req NetworkRequest) error {
 	existingNet, err := p.listNetworks(ctx, req.Name)
 	if err != nil {
 		return err
@@ -56,7 +54,7 @@ func (p *provisioner) createNetwork(ctx context.Context, req provision.NetworkRe
 	return err
 }
 
-func (p *provisioner) listNetworks(ctx context.Context, name string) ([]network.Inspect, error) {
+func (p *Provisioner) listNetworks(ctx context.Context, name string) ([]network.Inspect, error) {
 	filters := filters.NewArgs()
 	filters.Add("label", "talos.owned=true")
 	filters.Add("label", "talos.cluster.name="+name)
@@ -68,7 +66,7 @@ func (p *provisioner) listNetworks(ctx context.Context, name string) ([]network.
 	return p.client.NetworkList(ctx, options)
 }
 
-func (p *provisioner) destroyNetwork(ctx context.Context, name string) error {
+func (p *Provisioner) destroyNetwork(ctx context.Context, name string) error {
 	networks, err := p.listNetworks(ctx, name)
 	if err != nil {
 		return err

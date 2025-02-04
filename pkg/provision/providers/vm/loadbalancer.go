@@ -13,8 +13,6 @@ import (
 	"syscall"
 
 	"github.com/siderolabs/gen/xslices"
-
-	"github.com/siderolabs/talos/pkg/provision"
 )
 
 const (
@@ -23,7 +21,7 @@ const (
 )
 
 // CreateLoadBalancer creates load balancer.
-func (p *Provisioner) CreateLoadBalancer(state *State, clusterReq provision.ClusterRequest) error {
+func (p *Provisioner) CreateLoadBalancer(state *State, clusterReq ClusterRequest, controlPlaneIPs []string) error {
 	pidPath := state.GetRelativePath(lbPid)
 
 	logFile, err := os.OpenFile(state.GetRelativePath(lbLog), os.O_APPEND|os.O_CREATE|os.O_RDWR, 0o666)
@@ -33,7 +31,6 @@ func (p *Provisioner) CreateLoadBalancer(state *State, clusterReq provision.Clus
 
 	defer logFile.Close() //nolint:errcheck
 
-	controlPlaneIPs := xslices.Map(clusterReq.Nodes.ControlPlaneNodes(), func(req provision.NodeRequest) string { return req.IPs[0].String() })
 	ports := xslices.Map(clusterReq.Network.LoadBalancerPorts, strconv.Itoa)
 
 	args := []string{

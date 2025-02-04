@@ -9,12 +9,15 @@ import (
 	"crypto/tls"
 	"fmt"
 	"io"
+	"net/netip"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/siderolabs/go-retry/retry"
 
 	machineapi "github.com/siderolabs/talos/pkg/machinery/api/machine"
 	"github.com/siderolabs/talos/pkg/machinery/client"
+	"github.com/siderolabs/talos/pkg/machinery/config"
 	"github.com/siderolabs/talos/pkg/provision"
 )
 
@@ -24,16 +27,30 @@ type ApplyConfigClient struct {
 	Info
 }
 
-// ApplyConfig on the node via the API using insecure mode.
-func (s *APIBootstrapper) ApplyConfig(ctx context.Context, nodes []provision.NodeRequest, sl provision.SiderolinkRequest, out io.Writer) error {
+// NodeAddress is the address of the node.
+type NodeAddress struct {
+	IP   netip.Addr
+	UUID *uuid.UUID
+}
+
+// NodeApplyConfig is the config to be applied to the node.
+type NodeApplyConfig struct {
+	NodeAddress NodeAddress
+	Config      config.Provider
+}
+
+// ApplyConfig on the node via the API using insecure mode. If UUID is set attempts to apply via SideroLink.
+func (s *APIBootstrapper) ApplyConfig(ctx context.Context, nodes []NodeApplyConfig, sl *provision.SiderolinkRequest, out io.Writer) error {
 	for _, node := range nodes {
 		configureNode := func() error {
-			ep := node.IPs[0].String()
+			ep := node.NodeAddress.IP.String()
 
-			if addr, ok := sl.GetAddr(node.UUID); ok {
-				fmt.Fprintln(out, "using SideroLink node address for 'with-apply-config'", node.UUID, "=", addr.String())
+			if sl != nil {
+				if addr, ok := sl.GetAddr(node.NodeAddress.UUID); ok {
+					fmt.Fprintln(out, "using SideroLink node address for 'with-apply-config'", node.NodeAddress.UUID, "=", addr.String())
 
-				ep = addr.String()
+					ep = addr.String()
+				}
 			}
 
 			c, err := client.New(ctx, client.WithTLSConfig(&tls.Config{

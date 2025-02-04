@@ -220,6 +220,7 @@ type Options struct {
 	JSONLogsEndpoint string
 
 	SiderolinkEnabled bool
+	UseKvm            bool
 }
 
 // DefaultOptions returns default options.

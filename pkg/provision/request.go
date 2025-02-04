@@ -8,93 +8,41 @@ import (
 	"errors"
 	"net/netip"
 	"slices"
-	"time"
 
-	mounttypes "github.com/docker/docker/api/types/mount"
 	"github.com/google/uuid"
-	"github.com/siderolabs/go-procfs/procfs"
 
 	"github.com/siderolabs/talos/pkg/machinery/config"
 	"github.com/siderolabs/talos/pkg/machinery/config/machine"
-	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
-	"github.com/siderolabs/talos/pkg/machinery/imager/quirks"
 )
 
-// ClusterRequest is the root object describing cluster to be provisioned.
-type ClusterRequest struct {
+// ClusterRequestBase is the base options common across providers for the cluster to be created.
+type ClusterRequestBase struct {
 	Name string
 
-	Network NetworkRequest
-	Nodes   NodeRequests
-
-	// Docker specific parameters.
-	Image string
-
-	// Boot options (QEMU).
-	KernelPath     string
-	InitramfsPath  string
-	ISOPath        string
-	USBPath        string
-	UKIPath        string
-	DiskImagePath  string
-	IPXEBootScript string
-
-	// Encryption
-	KMSEndpoint string
+	Network       NetworkRequestBase
+	Workers       BaseNodeRequests
+	Controlplanes BaseNodeRequests
 
 	// Path to talosctl executable to re-execute itself as needed.
 	SelfExecutable string
 
 	// Path to root of state directory (~/.talos/clusters by default).
 	StateDirectory string
-
-	SiderolinkRequest SiderolinkRequest
 }
 
-// CNIConfig describes CNI part of NetworkRequest.
-type CNIConfig struct {
-	BinPath  []string
-	ConfDir  string
-	CacheDir string
-
-	BundleURL string
+// NetworkRequestBase describes cluster network parameters common across OSs and providers.
+type NetworkRequestBase struct {
+	CIDRs        []netip.Prefix
+	Name         string
+	MTU          int
+	GatewayAddrs []netip.Addr
 }
 
-// NetworkRequest describes cluster network.
-type NetworkRequest struct {
-	Name              string
-	CIDRs             []netip.Prefix
-	NoMasqueradeCIDRs []netip.Prefix
-	GatewayAddrs      []netip.Addr
-	MTU               int
-	Nameservers       []netip.Addr
-
-	LoadBalancerPorts []int
-
-	// CNI-specific parameters.
-	CNI CNIConfig
-
-	// DHCP options
-	DHCPSkipHostname bool
-
-	// Docker-specific parameters.
-	DockerDisableIPv6 bool
-
-	// Network chaos parameters.
-	NetworkChaos  bool
-	Jitter        time.Duration
-	Latency       time.Duration
-	PacketLoss    float64
-	PacketReorder float64
-	PacketCorrupt float64
-	Bandwidth     int
-}
-
-// NodeRequests is a list of NodeRequest.
-type NodeRequests []NodeRequest
+// BaseNodeRequests is a list of NodeRequest.
+type BaseNodeRequests []NodeRequestBase
 
 // FindInitNode looks up init node, it returns an error if no init node is present or if it's duplicate.
-func (reqs NodeRequests) FindInitNode() (req NodeRequest, err error) {
+func (reqs BaseNodeRequests) FindInitNode() (req NodeRequestBase, err error) {
 	found := false
 
 	for i := range reqs {
@@ -122,7 +70,7 @@ func (reqs NodeRequests) FindInitNode() (req NodeRequest, err error) {
 }
 
 // ControlPlaneNodes returns subset of nodes which are Init/ControlPlane type.
-func (reqs NodeRequests) ControlPlaneNodes() (nodes []NodeRequest) {
+func (reqs BaseNodeRequests) ControlPlaneNodes() (nodes []NodeRequestBase) {
 	for i := range reqs {
 		if reqs[i].Type == machine.TypeInit || reqs[i].Type == machine.TypeControlPlane {
 			nodes = append(nodes, reqs[i])
@@ -133,7 +81,7 @@ func (reqs NodeRequests) ControlPlaneNodes() (nodes []NodeRequest) {
 }
 
 // WorkerNodes returns subset of nodes which are Init/ControlPlane type.
-func (reqs NodeRequests) WorkerNodes() (nodes []NodeRequest) {
+func (reqs BaseNodeRequests) WorkerNodes() (nodes []NodeRequestBase) {
 	for i := range reqs {
 		if reqs[i].Type == machine.TypeWorker {
 			nodes = append(nodes, reqs[i])
@@ -143,91 +91,22 @@ func (reqs NodeRequests) WorkerNodes() (nodes []NodeRequest) {
 	return
 }
 
-// PXENodes returns subset of nodes which are PXE booted.
-func (reqs NodeRequests) PXENodes() (nodes []NodeRequest) {
-	for i := range reqs {
-		if reqs[i].PXEBooted {
-			nodes = append(nodes, reqs[i])
-		}
-	}
+// NodeRequestBase describes a request for a node.
+type NodeRequestBase struct {
+	Name  string
+	Type  machine.Type
+	Index int
 
-	return
-}
-
-// Disk represents a disk size and name in NodeRequest.
-type Disk struct {
-	// Size in bytes.
-	Size uint64
-	// Whether to skip preallocating the disk space.
-	SkipPreallocate bool
-	// Partitions represents the list of partitions.
-	Partitions []*v1alpha1.DiskPartition
-	// Driver for the disk.
-	//
-	// Supported types: "virtio", "ide", "ahci", "scsi", "nvme".
-	Driver string
-	// Block size for the disk, defaults to 512 if not set.
-	BlockSize uint
-}
-
-// ConfigInjectionMethod describes how to inject configuration into the node.
-type ConfigInjectionMethod int
-
-const (
-	// ConfigInjectionMethodHTTP injects configuration via HTTP.
-	ConfigInjectionMethodHTTP ConfigInjectionMethod = iota
-	// ConfigInjectionMethodMetalISO injects configuration via Metal ISO.
-	ConfigInjectionMethodMetalISO
-)
-
-// NodeRequest describes a request for a node.
-type NodeRequest struct {
-	Name string
-	IPs  []netip.Addr
-	Type machine.Type
-
-	Quirks quirks.Quirks
-
-	Config                config.Provider
-	ConfigInjectionMethod ConfigInjectionMethod
+	Config config.Provider
 
 	// Share of CPUs, in 1e-9 fractions
 	NanoCPUs int64
 	// Memory limit in bytes
 	Memory int64
-	// Disks (volumes), if applicable (VM only)
-	Disks []*Disk
-	// Mounts (containers only)
-	Mounts []mounttypes.Mount
-	// Ports
-	Ports []string
+
 	// SkipInjectingConfig disables reading configuration from http server
 	SkipInjectingConfig bool
-	// DefaultBootOrder overrides default boot order "cn" (disk, then network boot).
-	//
-	// BootOrder can be forced to be "nc" (PXE boot) via the API in QEMU provisioner.
-	DefaultBootOrder string
-
-	// ExtraKernelArgs passes additional kernel args
-	// to the initial boot from initramfs and vmlinuz.
-	//
-	// This doesn't apply to boots from ISO or from the disk image.
-	ExtraKernelArgs *procfs.Cmdline
-
-	// UUID allows to specify the UUID of the node (VMs only).
-	//
-	// If not specified, a random UUID will be generated.
-	UUID *uuid.UUID
-
-	// Testing features
-
-	// BadRTC resets RTC to well known time in the past (QEMU provisioner).
-	BadRTC bool
-
-	// PXE-booted VMs
-	PXEBooted        bool
-	TFTPServer       string
-	IPXEBootFilename string
+	IPs                 []netip.Addr
 }
 
 // SiderolinkRequest describes a request for SideroLink agent.

@@ -11,8 +11,6 @@ import (
 	"os/exec"
 	"strconv"
 	"syscall"
-
-	"github.com/siderolabs/talos/pkg/provision"
 )
 
 const (
@@ -23,7 +21,7 @@ const (
 )
 
 // CreateSiderolinkAgent creates siderlink agent.
-func (p *Provisioner) CreateSiderolinkAgent(state *State, clusterReq provision.ClusterRequest) error {
+func (p *Provisioner) CreateSiderolinkAgent(state *State, clusterReq ClusterRequest) error {
 	pidPath := state.GetRelativePath(siderolinkAgentPid)
 
 	logFile, err := os.OpenFile(state.GetRelativePath(siderolinkAgentLog), os.O_APPEND|os.O_CREATE|os.O_RDWR, 0o666)

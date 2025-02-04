@@ -13,7 +13,7 @@ import (
 )
 
 //nolint:gocyclo
-func (p *provisioner) createPFlashImages(state *vm.State, nodeName string, pflashSpec []PFlash) ([]string, error) {
+func (p *Provisioner) createPFlashImages(state *vm.State, nodeName string, pflashSpec []PFlash) ([]string, error) {
 	var images []string
 
 	for i, pflash := range pflashSpec {

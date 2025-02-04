@@ -16,7 +16,7 @@ import (
 	"github.com/siderolabs/talos/pkg/provision"
 )
 
-func (p *provisioner) ensureImageExists(ctx context.Context, containerImage string, options *provision.Options) error {
+func (p *Provisioner) ensureImageExists(ctx context.Context, containerImage string, options *provision.Options) error {
 	// In order to pull an image, the reference must be in canonical
 	// format (e.g. domain/repo/image:tag).
 	ref, err := reference.ParseNormalizedNamed(containerImage)

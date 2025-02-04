@@ -20,9 +20,10 @@ import (
 
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/provision"
+	"github.com/siderolabs/talos/pkg/provision/providers/vm"
 )
 
-func (p *provisioner) preflightChecks(ctx context.Context, request provision.ClusterRequest, options provision.Options, arch Arch) error {
+func (p *Provisioner) preflightChecks(ctx context.Context, request vm.ClusterRequest, options provision.Options, arch Arch) error {
 	checkContext := preflightCheckContext{
 		request: request,
 		options: options,
@@ -31,7 +32,6 @@ func (p *provisioner) preflightChecks(ctx context.Context, request provision.Clu
 
 	for _, check := range []func(ctx context.Context) error{
 		checkContext.verifyRoot,
-		checkContext.checkKVM,
 		checkContext.qemuExecutable,
 		checkContext.checkFlashImages,
 		checkContext.swtpmExecutable,
@@ -48,7 +48,7 @@ func (p *provisioner) preflightChecks(ctx context.Context, request provision.Clu
 }
 
 type preflightCheckContext struct {
-	request provision.ClusterRequest
+	request vm.ClusterRequest
 	options provision.Options
 	arch    Arch
 }
@@ -59,15 +59,6 @@ func (check *preflightCheckContext) verifyRoot(context.Context) error {
 	}
 
 	return nil
-}
-
-func (check *preflightCheckContext) checkKVM(context.Context) error {
-	f, err := os.OpenFile("/dev/kvm", os.O_RDWR, 0)
-	if err != nil {
-		return fmt.Errorf("error opening /dev/kvm, please make sure KVM support is enabled in Linux kernel: %w", err)
-	}
-
-	return f.Close()
 }
 
 func (check *preflightCheckContext) qemuExecutable(context.Context) error {

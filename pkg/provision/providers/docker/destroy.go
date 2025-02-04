@@ -21,7 +21,7 @@ import (
 // Destroy Talos cluster as set of Docker nodes.
 //
 // Only cluster.Info().ClusterName and cluster.Info().Network.Name is being used.
-func (p *provisioner) Destroy(ctx context.Context, cluster provision.Cluster, opts ...provision.Option) error {
+func (p *Provisioner) Destroy(ctx context.Context, cluster provision.Cluster, opts ...provision.Option) error {
 	options := provision.DefaultOptions()
 
 	for _, opt := range opts {
@@ -73,7 +73,7 @@ func (p *provisioner) Destroy(ctx context.Context, cluster provision.Cluster, op
 	return deleteStateDirectory(stateDirectoryPath, true)
 }
 
-func (p *provisioner) saveContainerLogs(ctx context.Context, cluster provision.Cluster, logsArchivePath string) {
+func (p *Provisioner) saveContainerLogs(ctx context.Context, cluster provision.Cluster, logsArchivePath string) {
 	containers, err := p.listNodes(ctx, cluster.Info().ClusterName)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "error listing containers: %s\n", err)

@@ -23,8 +23,6 @@ import (
 	"github.com/insomniacslk/dhcp/iana"
 	"github.com/siderolabs/gen/xslices"
 	"golang.org/x/sync/errgroup"
-
-	"github.com/siderolabs/talos/pkg/provision"
 )
 
 //nolint:gocyclo
@@ -271,7 +269,7 @@ const (
 )
 
 // CreateDHCPd creates DHCPd.
-func (p *Provisioner) CreateDHCPd(state *State, clusterReq provision.ClusterRequest) error {
+func (p *Provisioner) CreateDHCPd(state *State, clusterReq ClusterRequest) error {
 	pidPath := state.GetRelativePath(dhcpPid)
 
 	logFile, err := os.OpenFile(state.GetRelativePath(dhcpLog), os.O_APPEND|os.O_CREATE|os.O_RDWR, 0o666)

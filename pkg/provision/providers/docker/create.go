@@ -10,12 +10,13 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/siderolabs/talos/pkg/machinery/constants"
+	"github.com/siderolabs/gen/xslices"
+
 	"github.com/siderolabs/talos/pkg/provision"
 )
 
 // Create Talos cluster as a set of docker containers on docker network.
-func (p *provisioner) Create(ctx context.Context, request provision.ClusterRequest, opts ...provision.Option) (provision.Cluster, error) {
+func (p *Provisioner) Create(ctx context.Context, request ClusterRequest, opts ...provision.Option) (provision.Cluster, error) {
 	var err error
 
 	options := provision.DefaultOptions()
@@ -48,7 +49,8 @@ func (p *provisioner) Create(ctx context.Context, request provision.ClusterReque
 
 	fmt.Fprintln(options.LogWriter, "creating controlplane nodes")
 
-	if nodeInfo, err = p.createNodes(ctx, request, request.Nodes.ControlPlaneNodes(), &options, true); err != nil {
+	controlplanes := xslices.Filter(request.Nodes, func(n NodeRequest) bool { return n.Type.IsControlPlane() })
+	if nodeInfo, err = p.createNodes(ctx, request, controlplanes, &options, true); err != nil {
 		return nil, err
 	}
 
@@ -56,7 +58,8 @@ func (p *provisioner) Create(ctx context.Context, request provision.ClusterReque
 
 	var workerNodeInfo []provision.NodeInfo
 
-	if workerNodeInfo, err = p.createNodes(ctx, request, request.Nodes.WorkerNodes(), &options, false); err != nil {
+	workers := xslices.Filter(request.Nodes, func(n NodeRequest) bool { return !n.Type.IsControlPlane() })
+	if workerNodeInfo, err = p.createNodes(ctx, request, workers, &options, false); err != nil {
 		return nil, err
 	}
 
@@ -72,7 +75,7 @@ func (p *provisioner) Create(ctx context.Context, request provision.ClusterReque
 				MTU:          request.Network.MTU,
 			},
 			Nodes:              nodeInfo,
-			KubernetesEndpoint: p.GetExternalKubernetesControlPlaneEndpoint(request.Network, constants.DefaultControlPlanePort),
+			KubernetesEndpoint: p.getExternalKubernetesControlPlaneEndpoint(request.Network.NetworkRequestBase),
 		},
 		statePath: statePath,
 	}

@@ -14,16 +14,15 @@ import (
 
 // Provisioner is an interface each provisioner should implement.
 type Provisioner interface {
-	Create(context.Context, ClusterRequest, ...Option) (Cluster, error)
 	Destroy(context.Context, Cluster, ...Option) error
 
 	Reflect(ctx context.Context, clusterName, stateDirectory string) (Cluster, error)
 
-	GenOptions(NetworkRequest) []generate.Option
+	GenOptions(NetworkRequestBase) []generate.Option
 
-	GetInClusterKubernetesControlPlaneEndpoint(req NetworkRequest, controlPlanePort int) string
-	GetExternalKubernetesControlPlaneEndpoint(req NetworkRequest, controlPlanePort int) string
-	GetTalosAPIEndpoints(NetworkRequest) []string
+	GetInClusterKubernetesControlPlaneEndpoint(req NetworkRequestBase, controlPlanePort int) string
+	GetExternalKubernetesControlPlaneEndpoint(req NetworkRequestBase, controlPlanePort int) string
+	GetTalosAPIEndpoints(NetworkRequestBase) []string
 
 	GetFirstInterface() v1alpha1.IfaceSelector
 

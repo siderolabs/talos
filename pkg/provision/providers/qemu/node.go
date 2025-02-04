@@ -31,7 +31,7 @@ import (
 )
 
 //nolint:gocyclo,cyclop
-func (p *provisioner) createNode(state *vm.State, clusterReq provision.ClusterRequest, nodeReq provision.NodeRequest, opts *provision.Options) (provision.NodeInfo, error) {
+func (p *Provisioner) createNode(state *vm.State, clusterReq vm.ClusterRequest, nodeReq vm.NodeRequest, opts *provision.Options) (provision.NodeInfo, error) {
 	arch := Arch(opts.TargetArch)
 	pidPath := state.GetRelativePath(fmt.Sprintf("%s.pid", nodeReq.Name))
 
@@ -110,9 +110,9 @@ func (p *provisioner) createNode(state *vm.State, clusterReq provision.ClusterRe
 		}
 
 		switch nodeReq.ConfigInjectionMethod {
-		case provision.ConfigInjectionMethodHTTP:
+		case vm.ConfigInjectionMethodHTTP:
 			cmdline.Append("talos.config", "{TALOS_CONFIG_URL}") // to be patched by launcher
-		case provision.ConfigInjectionMethodMetalISO:
+		case vm.ConfigInjectionMethodMetalISO:
 			cmdline.Append("talos.config", "metal-iso")
 
 			extraISOPath, err = p.createMetalConfigISO(state, nodeReq.Name, nodeConfig)
@@ -157,10 +157,10 @@ func (p *provisioner) createNode(state *vm.State, clusterReq provision.ClusterRe
 	launchConfig := LaunchConfig{
 		ArchitectureData: arch,
 		DiskPaths:        diskPaths,
-		DiskDrivers: xslices.Map(nodeReq.Disks, func(disk *provision.Disk) string {
+		DiskDrivers: xslices.Map(nodeReq.Disks, func(disk *vm.Disk) string {
 			return disk.Driver
 		}),
-		DiskBlockSizes: xslices.Map(nodeReq.Disks, func(disk *provision.Disk) uint {
+		DiskBlockSizes: xslices.Map(nodeReq.Disks, func(disk *vm.Disk) uint {
 			return disk.BlockSize
 		}),
 		VCPUCount:         vcpuCount,
@@ -169,7 +169,7 @@ func (p *provisioner) createNode(state *vm.State, clusterReq provision.ClusterRe
 		ExtraISOPath:      extraISOPath,
 		PFlashImages:      pflashImages,
 		MonitorPath:       state.GetRelativePath(fmt.Sprintf("%s.monitor", nodeReq.Name)),
-		EnableKVM:         opts.TargetArch == runtime.GOARCH,
+		EnableKVM:         opts.TargetArch == runtime.GOARCH && opts.UseKvm,
 		BadRTC:            nodeReq.BadRTC,
 		DefaultBootOrder:  defaultBootOrder,
 		BootloaderEnabled: opts.BootloaderEnabled,
@@ -274,12 +274,12 @@ func (p *provisioner) createNode(state *vm.State, clusterReq provision.ClusterRe
 	return nodeInfo, nil
 }
 
-func (p *provisioner) createNodes(state *vm.State, clusterReq provision.ClusterRequest, nodeReqs []provision.NodeRequest, opts *provision.Options) ([]provision.NodeInfo, error) {
+func (p *Provisioner) createNodes(state *vm.State, clusterReq vm.ClusterRequest, nodeReqs []vm.NodeRequest, opts *provision.Options) ([]provision.NodeInfo, error) {
 	errCh := make(chan error)
 	nodeCh := make(chan provision.NodeInfo, len(nodeReqs))
 
 	for _, nodeReq := range nodeReqs {
-		go func(nodeReq provision.NodeRequest) {
+		go func(nodeReq vm.NodeRequest) {
 			nodeInfo, err := p.createNode(state, clusterReq, nodeReq, opts)
 			if err == nil {
 				nodeCh <- nodeInfo
@@ -306,7 +306,7 @@ func (p *provisioner) createNodes(state *vm.State, clusterReq provision.ClusterR
 	return nodesInfo, multiErr.ErrorOrNil()
 }
 
-func (p *provisioner) findBridgeListenPort(clusterReq provision.ClusterRequest) (int, error) {
+func (p *Provisioner) findBridgeListenPort(clusterReq vm.ClusterRequest) (int, error) {
 	l, err := net.Listen("tcp", net.JoinHostPort(clusterReq.Network.GatewayAddrs[0].String(), "0"))
 	if err != nil {
 		return 0, err
@@ -317,7 +317,7 @@ func (p *provisioner) findBridgeListenPort(clusterReq provision.ClusterRequest) 
 	return port, l.Close()
 }
 
-func (p *provisioner) populateSystemDisk(disks []string, clusterReq provision.ClusterRequest) error {
+func (p *Provisioner) populateSystemDisk(disks []string, clusterReq vm.ClusterRequest) error {
 	if len(disks) > 0 && clusterReq.DiskImagePath != "" {
 		disk, err := os.OpenFile(disks[0], os.O_RDWR, 0o755)
 		if err != nil {
@@ -339,7 +339,7 @@ func (p *provisioner) populateSystemDisk(disks []string, clusterReq provision.Cl
 	return nil
 }
 
-func (p *provisioner) createMetalConfigISO(state *vm.State, nodeName, config string) (string, error) {
+func (p *Provisioner) createMetalConfigISO(state *vm.State, nodeName, config string) (string, error) {
 	isoPath := state.GetRelativePath(nodeName + "-metal-config.iso")
 
 	tmpDir, err := os.MkdirTemp("", "talos-metal-config-iso")

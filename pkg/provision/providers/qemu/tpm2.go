@@ -15,7 +15,7 @@ import (
 	"github.com/siderolabs/talos/pkg/provision/providers/vm"
 )
 
-func (p *provisioner) createVirtualTPM2State(state *vm.State, nodeName string) (tpm2Config, error) {
+func (p *Provisioner) createVirtualTPM2State(state *vm.State, nodeName string) (tpm2Config, error) {
 	tpm2StateDir := state.GetRelativePath(fmt.Sprintf("%s-tpm2", nodeName))
 
 	if err := os.MkdirAll(tpm2StateDir, 0o755); err != nil {
@@ -28,7 +28,7 @@ func (p *provisioner) createVirtualTPM2State(state *vm.State, nodeName string) (
 	}, nil
 }
 
-func (p *provisioner) destroyVirtualTPM2s(cluster provision.ClusterInfo) error {
+func (p *Provisioner) destroyVirtualTPM2s(cluster provision.ClusterInfo) error {
 	errCh := make(chan error)
 
 	nodes := append([]provision.NodeInfo{}, cluster.Nodes...)
@@ -58,6 +58,6 @@ func (p *provisioner) destroyVirtualTPM2s(cluster provision.ClusterInfo) error {
 	return multiErr.ErrorOrNil()
 }
 
-func (p *provisioner) destroyVirtualTPM2(pid string) error {
+func (p *Provisioner) destroyVirtualTPM2(pid string) error {
 	return vm.StopProcessByPidfile(pid)
 }

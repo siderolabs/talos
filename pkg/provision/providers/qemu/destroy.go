@@ -17,7 +17,7 @@ import (
 // Destroy Talos cluster as set of qemu VMs.
 //
 //nolint:gocyclo
-func (p *provisioner) Destroy(ctx context.Context, cluster provision.Cluster, opts ...provision.Option) error {
+func (p *Provisioner) Destroy(ctx context.Context, cluster provision.Cluster, opts ...provision.Option) error {
 	options := provision.DefaultOptions()
 
 	for _, opt := range opts {

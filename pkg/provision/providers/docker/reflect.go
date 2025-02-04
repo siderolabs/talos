@@ -16,8 +16,10 @@ import (
 	"github.com/siderolabs/talos/pkg/provision"
 )
 
+// Reflect reflects the cluster
+//
 //nolint:gocyclo
-func (p *provisioner) Reflect(ctx context.Context, clusterName, stateDirectory string) (provision.Cluster, error) {
+func (p *Provisioner) Reflect(ctx context.Context, clusterName, stateDirectory string) (provision.Cluster, error) {
 	res := &result{
 		clusterInfo: provision.ClusterInfo{
 			ClusterName: clusterName,

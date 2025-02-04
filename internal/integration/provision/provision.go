@@ -47,6 +47,7 @@ import (
 	"github.com/siderolabs/talos/pkg/provision"
 	"github.com/siderolabs/talos/pkg/provision/access"
 	"github.com/siderolabs/talos/pkg/provision/providers/qemu"
+	"github.com/siderolabs/talos/pkg/provision/providers/vm"
 )
 
 var allSuites []suite.TestingSuite
@@ -456,16 +457,22 @@ func (suite *BaseSuite) setupCluster(options clusterOptions) {
 
 	suite.T().Logf("initializing provisioner with cluster name %q, state directory %q", options.ClusterName, suite.stateDir)
 
-	request := provision.ClusterRequest{
-		Name: options.ClusterName,
+	request := vm.ClusterRequest{
+		ClusterRequestBase: provision.ClusterRequestBase{
+			Name:           options.ClusterName,
+			SelfExecutable: suite.TalosctlPath,
+			StateDirectory: suite.stateDir,
+		},
 
-		Network: provision.NetworkRequest{
-			Name:         options.ClusterName,
-			CIDRs:        []netip.Prefix{cidr},
-			GatewayAddrs: []netip.Addr{gatewayIP},
-			MTU:          DefaultSettings.MTU,
-			Nameservers:  defaultNameservers,
-			CNI: provision.CNIConfig{
+		Network: vm.NetworkRequest{
+			NetworkRequestBase: provision.NetworkRequestBase{
+				Name:         options.ClusterName,
+				CIDRs:        []netip.Prefix{cidr},
+				GatewayAddrs: []netip.Addr{gatewayIP},
+			},
+			MTU:         DefaultSettings.MTU,
+			Nameservers: defaultNameservers,
+			CNI: vm.CNIConfig{
 				BinPath:  []string{filepath.Join(suite.cniDir, "bin")},
 				ConfDir:  filepath.Join(suite.cniDir, "conf.d"),
 				CacheDir: filepath.Join(suite.cniDir, "cache"),
@@ -476,14 +483,11 @@ func (suite *BaseSuite) setupCluster(options clusterOptions) {
 
 		KernelPath:    options.SourceKernelPath,
 		InitramfsPath: options.SourceInitramfsPath,
-
-		SelfExecutable: suite.TalosctlPath,
-		StateDirectory: suite.stateDir,
 	}
 
-	suite.controlPlaneEndpoint = suite.provisioner.GetExternalKubernetesControlPlaneEndpoint(request.Network, constants.DefaultControlPlanePort)
+	suite.controlPlaneEndpoint = suite.provisioner.GetExternalKubernetesControlPlaneEndpoint(request.Network.NetworkRequestBase, constants.DefaultControlPlanePort)
 
-	genOptions := suite.provisioner.GenOptions(request.Network)
+	genOptions := suite.provisioner.GenOptions(request.Network.NetworkRequestBase)
 
 	for _, registryMirror := range DefaultSettings.RegistryMirrors {
 		parts := strings.Split(registryMirror, "=")
@@ -559,18 +563,20 @@ func (suite *BaseSuite) setupCluster(options clusterOptions) {
 	for i := range options.ControlplaneNodes {
 		request.Nodes = append(
 			request.Nodes,
-			provision.NodeRequest{
-				Name:     fmt.Sprintf("control-plane-%d", i+1),
-				Type:     machine.TypeControlPlane,
-				IPs:      []netip.Addr{ips[i]},
-				Memory:   DefaultSettings.MemMB * 1024 * 1024,
-				NanoCPUs: DefaultSettings.CPUs * 1000 * 1000 * 1000,
-				Disks: []*provision.Disk{
+			vm.NodeRequest{
+				NodeRequestBase: provision.NodeRequestBase{
+					Name:     fmt.Sprintf("control-plane-%d", i+1),
+					Type:     machine.TypeControlPlane,
+					IPs:      []netip.Addr{ips[i]},
+					Memory:   DefaultSettings.MemMB * 1024 * 1024,
+					NanoCPUs: DefaultSettings.CPUs * 1000 * 1000 * 1000,
+					Config:   suite.configBundle.ControlPlane(),
+				},
+				Disks: []*vm.Disk{
 					{
 						Size: DefaultSettings.DiskGB * 1024 * 1024 * 1024,
 					},
 				},
-				Config: suite.configBundle.ControlPlane(),
 			},
 		)
 	}
@@ -578,23 +584,28 @@ func (suite *BaseSuite) setupCluster(options clusterOptions) {
 	for i := 1; i <= options.WorkerNodes; i++ {
 		request.Nodes = append(
 			request.Nodes,
-			provision.NodeRequest{
-				Name:     fmt.Sprintf("worker-%d", i),
-				Type:     machine.TypeWorker,
-				IPs:      []netip.Addr{ips[options.ControlplaneNodes+i-1]},
-				Memory:   DefaultSettings.MemMB * 1024 * 1024,
-				NanoCPUs: DefaultSettings.CPUs * 1000 * 1000 * 1000,
-				Disks: []*provision.Disk{
+			vm.NodeRequest{
+				NodeRequestBase: provision.NodeRequestBase{
+					Name:     fmt.Sprintf("worker-%d", i),
+					Type:     machine.TypeWorker,
+					IPs:      []netip.Addr{ips[options.ControlplaneNodes+i-1]},
+					Memory:   DefaultSettings.MemMB * 1024 * 1024,
+					NanoCPUs: DefaultSettings.CPUs * 1000 * 1000 * 1000,
+					Config:   suite.configBundle.Worker(),
+				},
+				Disks: []*vm.Disk{
 					{
 						Size: DefaultSettings.DiskGB * 1024 * 1024 * 1024,
 					},
 				},
-				Config: suite.configBundle.Worker(),
 			},
 		)
 	}
 
-	suite.Cluster, err = suite.provisioner.Create(
+	vmProvisioner, err := qemu.NewQemuProvisioner(suite.ctx)
+	suite.Require().NoError(err)
+
+	suite.Cluster, err = vmProvisioner.Create(
 		suite.ctx, request,
 		provision.WithBootlader(true),
 		provision.WithUEFI(true),

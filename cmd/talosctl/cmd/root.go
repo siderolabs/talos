@@ -16,6 +16,7 @@ import (
 
 	"github.com/siderolabs/talos/cmd/talosctl/cmd/common"
 	"github.com/siderolabs/talos/cmd/talosctl/cmd/mgmt"
+	_ "github.com/siderolabs/talos/cmd/talosctl/cmd/mgmt/cluster/create" // import to get the command registered via the init() function.
 	"github.com/siderolabs/talos/cmd/talosctl/cmd/talos"
 	"github.com/siderolabs/talos/pkg/cli"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
