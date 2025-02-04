@@ -23,6 +23,7 @@ preface = """
 * runc: 1.2.4
 * containerd: 2.0.2
 * etcd: 3.5.18
+* Flannel: 0.26.4
 
 Talos is built with Go 1.23.5.
 """
