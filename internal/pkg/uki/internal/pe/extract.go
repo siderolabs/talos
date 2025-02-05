@@ -32,30 +32,22 @@ func Extract(ukiPath string) (assetInfo AssetInfo, err error) {
 
 	assetInfo.fileCloser = peFile
 
-	for _, section := range peFile.Sections {
-		// read upto section.VirtualSize bytes
-		sectionReader := io.NewSectionReader(section, 0, int64(section.VirtualSize))
+	sectionMap := map[string]*io.Reader{
+		".initrd":  &assetInfo.Initrd,
+		".cmdline": &assetInfo.Cmdline,
+		".linux":   &assetInfo.Kernel,
+	}
 
-		switch section.Name {
-		case ".initrd":
-			assetInfo.Initrd = sectionReader
-		case ".cmdline":
-			assetInfo.Cmdline = sectionReader
-		case ".linux":
-			assetInfo.Kernel = sectionReader
+	for _, section := range peFile.Sections {
+		if reader, exists := sectionMap[section.Name]; exists && *reader == nil {
+			*reader = io.NewSectionReader(section, 0, int64(section.VirtualSize))
 		}
 	}
 
-	if assetInfo.Kernel == nil {
-		return assetInfo, fmt.Errorf("kernel not found in PE file")
-	}
-
-	if assetInfo.Initrd == nil {
-		return assetInfo, fmt.Errorf("initrd not found in PE file")
-	}
-
-	if assetInfo.Cmdline == nil {
-		return assetInfo, fmt.Errorf("cmdline not found in PE file")
+	for name, reader := range sectionMap {
+		if *reader == nil {
+			return assetInfo, fmt.Errorf("%s not found in PE file", name)
+		}
 	}
 
 	return assetInfo, nil

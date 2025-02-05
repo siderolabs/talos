@@ -23,7 +23,7 @@ func TestUKIExtract(t *testing.T) {
 
 	destFile := filepath.Join(destDir, "vmlinuz.efi")
 
-	for _, section := range []string{"linux", "initrd", "cmdline"} {
+	for _, section := range []string{"linux", "initrd", "cmdline", "profile-default", "profile-reset", "cmdline-reset"} {
 		assert.NoError(t, os.WriteFile(filepath.Join(destDir, section), []byte(section), 0o644))
 	}
 
@@ -43,6 +43,24 @@ func TestUKIExtract(t *testing.T) {
 		{
 			Name:    ".cmdline",
 			Path:    filepath.Join(destDir, "cmdline"),
+			Measure: false,
+			Append:  true,
+		},
+		{
+			Name:    ".profile",
+			Path:    filepath.Join(destDir, "profile-default"),
+			Measure: false,
+			Append:  true,
+		},
+		{
+			Name:    ".profile",
+			Path:    filepath.Join(destDir, "profile-reset"),
+			Measure: false,
+			Append:  true,
+		},
+		{
+			Name:    ".cmdline",
+			Path:    filepath.Join(destDir, "cmdline-reset"),
 			Measure: false,
 			Append:  true,
 		},

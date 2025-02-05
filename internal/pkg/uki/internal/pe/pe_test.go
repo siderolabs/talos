@@ -145,10 +145,10 @@ func TestMultipleSections(t *testing.T) {
 	tmpDir := t.TempDir()
 
 	unamePath := filepath.Join(tmpDir, "uname")
-	require.NoError(t, os.WriteFile(unamePath, []byte("Talos-helloworld"), 0o644))
+	require.NoError(t, os.WriteFile(unamePath, []byte("Talos"), 0o644))
 
 	unameNewPath := filepath.Join(tmpDir, "uname-new")
-	require.NoError(t, os.WriteFile(unameNewPath, []byte("Talos-foobar"), 0o644))
+	require.NoError(t, os.WriteFile(unameNewPath, []byte("Talos-new"), 0o644))
 
 	outNative := filepath.Join(tmpDir, "uki-native.bin")
 
@@ -174,6 +174,6 @@ func TestMultipleSections(t *testing.T) {
 
 	sectionContents := extractSection(t, outNative, ".uname")
 
-	assert.Contains(t, sectionContents, "Talos-helloworld")
-	assert.Contains(t, sectionContents, "Talos-foobar")
+	assert.Contains(t, sectionContents, "Talos")
+	assert.Contains(t, sectionContents, "Talos-new")
 }
