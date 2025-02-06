@@ -1,7 +1,4 @@
-#!/toolchain/bin/bash
-
-export PATH=/toolchain/bin
-
+#!/bin/bash
 PREFIX="${1}"
 
 function remove_symlinks() {
@@ -25,16 +22,17 @@ find ${PREFIX} -type f -name \*.la -delete
 find ${PREFIX} -type f \( -name \*.static -o -name \*.o \) -delete
 # Strip debug symbols from all libraries and binaries.
 find ${PREFIX}/{lib,usr/lib} -type f \( -name \*.so* -a ! -name \*dbg \) -exec strip --strip-unneeded {} ';' || true
-find ${PREFIX}/{bin,sbin,usr/bin,usr/sbin} -type f -exec strip --strip-all {} ';' || true
+find ${PREFIX}/usr/bin -type f -exec strip --strip-all {} ';' || true
 
 # Remove header files, man files, and any other non-runtime dependencies.
-rm -rf ${PREFIX}/{lib,usr/lib}/pkgconfig/ \
+rm -rf ${PREFIX}/usr/lib/pkgconfig/ \
        ${PREFIX}/{include,usr/include}/* \
        ${PREFIX}/{share,usr/share}/* \
        ${PREFIX}/usr/lib/cmake \
-       ${PREFIX}/lib/gconv/ \
+       ${PREFIX}/usr/lib/gconv/ \
        ${PREFIX}/usr/libexec/getconf \
        ${PREFIX}/var/db
 
 # Remove contents of /usr/bin except for udevadm
-find ${PREFIX}/usr/bin \( -type f -o -type l \) ! -name udevadm -delete
+# TODO: do not install these files in the first place.
+# find ${PREFIX}/usr/bin \( -type f -o -type l \) ! -name udevadm -delete

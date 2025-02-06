@@ -1,9 +1,8 @@
 (type udev_exec_t)
 (call system_f (udev_exec_t))
 (context udev_exec_t (system_u object_r udev_exec_t (systemLow systemLow)))
-(filecon "/sbin/systemd-udevd" file udev_exec_t)
+(filecon "/usr/bin/systemd-udevd" file udev_exec_t)
 (filecon "/usr/bin/udevadm" file udev_exec_t)
-(filecon "/sbin/udevadm" symlink udev_exec_t)
 
 ; Do not reorder: label non-executable rules files as executable
 (type udev_rules_t)
@@ -36,7 +35,7 @@
 
 (type modprobe_exec_t)
 (call system_f (modprobe_exec_t))
-(filecon "/sbin/modprobe" file (system_u object_r modprobe_exec_t (systemLow systemLow)))
+(filecon "/usr/bin/modprobe" file (system_u object_r modprobe_exec_t (systemLow systemLow)))
 (allow udev_t modprobe_exec_t (file (execute execute_no_trans)))
 (typetransition kernel_t modprobe_exec_t process udev_t)
 (typetransition init_t modprobe_exec_t process udev_t)

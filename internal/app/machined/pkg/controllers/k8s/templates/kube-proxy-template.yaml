@@ -57,7 +57,7 @@ spec:
       volumes:
         - name: lib-modules
           hostPath:
-            path: /lib/modules
+            path: /usr/lib/modules
         - name: ssl-certs-host
           hostPath:
             path: /etc/ssl/certs

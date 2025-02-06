@@ -1,10 +1,10 @@
 (type init_exec_t)
 (call system_f (init_exec_t))
 (context init_exec_t (system_u object_r init_exec_t (systemLow systemLow)))
-(filecon "/sbin/init" file init_exec_t)
-(filecon "/sbin/poweroff" any init_exec_t)
-(filecon "/sbin/shutdown" any init_exec_t)
-(filecon "/sbin/dashboard" any init_exec_t)
+(filecon "/usr/bin/init" file init_exec_t)
+(filecon "/usr/bin/poweroff" any init_exec_t)
+(filecon "/usr/bin/shutdown" any init_exec_t)
+(filecon "/usr/bin/dashboard" any init_exec_t)
 
 (type init_t)
 (roletype system_r init_t)
@@ -36,10 +36,9 @@
 (roletype system_r unconfined_service_t)
 (typeattributeset service_p unconfined_service_t)
 
-(type sbin_exec_t)
-(call system_f (sbin_exec_t))
-(filecon "/sbin(/.*)?" any (system_u object_r sbin_exec_t (systemLow systemLow)))
-(filecon "/usr/sbin(/.*)?" any (system_u object_r sbin_exec_t (systemLow systemLow)))
+(type bin_exec_t)
+(call system_f (bin_exec_t))
+(filecon "/usr/bin(/.*)?" any (system_u object_r bin_exec_t (systemLow systemLow)))
 ; Typically machined executes LVM, cryptsetup and similar utilities
 ; They are short-running, come from the rootfs and do not accept user input, so can be started in init_t domain
-(allow init_t sbin_exec_t (file (execute execute_no_trans)))
+(allow init_t bin_exec_t (file (execute execute_no_trans)))

@@ -22,11 +22,12 @@ import (
 
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/extensions"
+	"github.com/siderolabs/talos/pkg/machinery/imager/quirks"
 )
 
 // ProvidesKernelModules returns true if the extension provides kernel modules.
-func (ext *Extension) ProvidesKernelModules() bool {
-	if _, err := os.Stat(ext.KernelModuleDirectory()); os.IsNotExist(err) {
+func (ext *Extension) ProvidesKernelModules(quirks quirks.Quirks) bool {
+	if _, err := os.Stat(ext.KernelModuleDirectory(quirks)); os.IsNotExist(err) {
 		return false
 	}
 
@@ -34,8 +35,8 @@ func (ext *Extension) ProvidesKernelModules() bool {
 }
 
 // KernelModuleDirectory returns the path to the kernel modules directory.
-func (ext *Extension) KernelModuleDirectory() string {
-	return filepath.Join(ext.RootfsPath(), constants.KernelModulesPath)
+func (ext *Extension) KernelModuleDirectory(quirks quirks.Quirks) string {
+	return filepath.Join(ext.RootfsPath(), quirks.KernelModulesPath())
 }
 
 func autoDecompress(r io.Reader) (io.Reader, error) {
@@ -58,7 +59,12 @@ func autoDecompress(r io.Reader) (io.Reader, error) {
 // GenerateKernelModuleDependencyTreeExtension generates a kernel module dependency tree extension.
 //
 //nolint:gocyclo
-func GenerateKernelModuleDependencyTreeExtension(extensionPathsWithKernelModules []string, initramfsPath, scratchPath string, printFunc func(format string, v ...any)) (*Extension, error) {
+func GenerateKernelModuleDependencyTreeExtension(
+	extensionPathsWithKernelModules []string,
+	initramfsPath, scratchPath string,
+	quirks quirks.Quirks,
+	printFunc func(format string, v ...any),
+) (*Extension, error) {
 	printFunc("preparing to run depmod to generate kernel modules dependency tree")
 
 	tempDir, err := os.MkdirTemp("", "ext-modules")
@@ -90,16 +96,18 @@ func GenerateKernelModuleDependencyTreeExtension(extensionPathsWithKernelModules
 		return nil, fmt.Errorf("error extacting cpio: %w", err)
 	}
 
-	// extract /lib/modules from the squashfs under a temporary root to run depmod on it
+	kernelModulesPath := quirks.KernelModulesPath()
+
+	// extract /usr/lib/modules from the squashfs under a temporary root to run depmod on it
 	tempLibModules := filepath.Join(tempDir, "modules")
 
-	if err = unsquash(tempRootfsFile, tempLibModules, constants.KernelModulesPath); err != nil {
+	if err = unsquash(tempRootfsFile, tempLibModules, kernelModulesPath); err != nil {
 		return nil, fmt.Errorf("error running unsquashfs: %w", err)
 	}
 
-	rootfsKernelModulesPath := filepath.Join(tempLibModules, constants.KernelModulesPath)
+	rootfsKernelModulesPath := filepath.Join(tempLibModules, kernelModulesPath)
 
-	// under the /lib/modules there should be the only path which is the kernel version
+	// under the /usr/lib/modules there should be the only path which is the kernel version
 	contents, err := os.ReadDir(rootfsKernelModulesPath)
 	if err != nil {
 		return nil, err
@@ -120,7 +128,7 @@ func GenerateKernelModuleDependencyTreeExtension(extensionPathsWithKernelModules
 
 	printFunc("running depmod to generate kernel modules dependency tree")
 
-	if err = depmod(tempLibModules, kernelVersionPath); err != nil {
+	if err = depmod(rootfsKernelModulesPath, kernelVersionPath); err != nil {
 		return nil, fmt.Errorf("error running depmod: %w", err)
 	}
 
@@ -132,7 +140,7 @@ func GenerateKernelModuleDependencyTreeExtension(extensionPathsWithKernelModules
 		return nil, err
 	}
 
-	kernelModulesDepenencyTreeDirectory := filepath.Join(kernelModulesDependencyTreeStagingDir, constants.KernelModulesPath, kernelVersionPath)
+	kernelModulesDepenencyTreeDirectory := filepath.Join(kernelModulesDependencyTreeStagingDir, kernelModulesPath, kernelVersionPath)
 
 	if err := os.MkdirAll(kernelModulesDepenencyTreeDirectory, 0o755); err != nil {
 		return nil, err
@@ -201,7 +209,8 @@ func unsquash(squashfsPath, dest, path string) error {
 }
 
 func depmod(baseDir, kernelVersionPath string) error {
-	baseDir = strings.TrimSuffix(baseDir, constants.KernelModulesPath)
+	// Do not trim /usr, because it is needed for depmod
+	baseDir = strings.TrimSuffix(baseDir, "/lib/modules")
 
 	cmd := exec.Command("depmod", "--all", "--basedir", baseDir, "--config", "/etc/modules.d/10-extra-modules.conf", kernelVersionPath)
 	cmd.Stderr = os.Stderr

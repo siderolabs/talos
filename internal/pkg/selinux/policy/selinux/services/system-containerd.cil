@@ -1,9 +1,9 @@
 (type containerd_exec_t)
 (call system_f (containerd_exec_t))
 (context containerd_exec_t (system_u object_r containerd_exec_t (systemLow systemLow)))
-(filecon "/bin/containerd" any containerd_exec_t)
-(filecon "/bin/containerd-shim-runc-v2" any containerd_exec_t)
-(filecon "/bin/runc" any containerd_exec_t)
+(filecon "/usr/bin/containerd" any containerd_exec_t)
+(filecon "/usr/bin/containerd-shim-runc-v2" any containerd_exec_t)
+(filecon "/usr/bin/runc" any containerd_exec_t)
 
 ; System containerd
 (type sys_containerd_t)

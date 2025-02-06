@@ -1,6 +1,6 @@
 module github.com/siderolabs/cloud-image-uploader
 
-go 1.23.5
+go 1.23.6
 
 require (
 	cloud.google.com/go/storage v1.49.0

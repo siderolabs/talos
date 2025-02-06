@@ -44,7 +44,7 @@ ARG PKG_KMOD=scratch
 ARG PKG_KERNEL=scratch
 ARG PKG_CNI=scratch
 ARG PKG_FLANNEL_CNI=scratch
-ARG PKG_TALOSCTL_CNI_BUNDLE_INSTALL=scratch
+ARG PKG_TALOSCTL_CNI_BUNDLE=scratch
 
 ARG DEBUG_TOOLS_SOURCE=scratch
 
@@ -164,18 +164,18 @@ FROM scratch AS pkg-debug-tools-scratch-amd64
 FROM scratch AS pkg-debug-tools-scratch-arm64
 
 FROM scratch AS pkg-debug-tools-bash-minimal-amd64
-COPY --from=tools-amd64 /toolchain/bin/bash /toolchain/bin/bash
-COPY --from=tools-amd64 /toolchain/lib/ld-musl-x86_64.so.1 /toolchain/toolchain/lib/ld-musl-x86_64.so.1
-COPY --from=tools-amd64 /toolchain/bin/cat /toolchain/bin/cat
-COPY --from=tools-amd64 /toolchain/bin/ls /toolchain/bin/ls
-COPY --from=tools-amd64 /toolchain/bin/tee /toolchain/bin/tee
+COPY --from=tools-amd64 /usr/bin/bash /bin/bash
+COPY --from=tools-amd64 /usr/lib/ld-musl-x86_64.so.1 /lib/ld-musl-x86_64.so.1
+COPY --from=tools-amd64 /usr/bin/cat /bin/cat
+COPY --from=tools-amd64 /usr/bin/ls /bin/ls
+COPY --from=tools-amd64 /usr/bin/tee /bin/tee
 
 FROM scratch AS pkg-debug-tools-bash-minimal-arm64
-COPY --from=tools-arm64 /toolchain/bin/bash /toolchain/bin/bash
-COPY --from=tools-arm64 /toolchain/lib/ld-musl-aarch64.so.1 /toolchain/toolchain/lib/ld-musl-aarch64.so.1
-COPY --from=tools-arm64 /toolchain/bin/cat /toolchain/bin/cat
-COPY --from=tools-arm64 /toolchain/bin/ls /toolchain/bin/ls
-COPY --from=tools-arm64 /toolchain/bin/tee /toolchain/bin/tee
+COPY --from=tools-arm64 /usr/bin/bash /bin/bash
+COPY --from=tools-arm64 /usr/lib/ld-musl-aarch64.so.1 /lib/ld-musl-aarch64.so.1
+COPY --from=tools-arm64 /usr/bin/cat /bin/cat
+COPY --from=tools-arm64 /usr/bin/ls /bin/ls
+COPY --from=tools-arm64 /usr/bin/tee /bin/tee
 
 FROM pkg-debug-tools-${DEBUG_TOOLS_SOURCE}-amd64 AS pkg-debug-tools-amd64
 FROM pkg-debug-tools-${DEBUG_TOOLS_SOURCE}-arm64 AS pkg-debug-tools-arm64
@@ -198,72 +198,67 @@ COPY --from=pkg-cni-arm64 /opt/cni/bin/portmap /opt/cni/bin/portmap
 
 # Resolve package images using ${EXTRAS} to be used later in COPY --from=.
 
-FROM ${PKG_TALOSCTL_CNI_BUNDLE_INSTALL} AS extras-talosctl-cni-bundle-install
+FROM ${PKG_TALOSCTL_CNI_BUNDLE} AS extras-talosctl-cni-bundle
 
 # The tools target provides base toolchain for the build.
 
 FROM --platform=${BUILDPLATFORM} $TOOLS AS tools
-ENV PATH=/toolchain/bin:/toolchain/go/bin
-ENV LD_LIBRARY_PATH=/toolchain/lib
 ENV GOTOOLCHAIN=local
 ENV CGO_ENABLED=0
-RUN ["/toolchain/bin/mkdir", "/bin", "/tmp"]
-RUN ["/toolchain/bin/ln", "-svf", "/toolchain/bin/bash", "/bin/sh"]
-RUN ["/toolchain/bin/ln", "-svf", "/toolchain/etc/ssl", "/etc/ssl"]
+SHELL ["/bin/bash", "-c"]
 ARG GOLANGCILINT_VERSION
 RUN --mount=type=cache,target=/.cache go install github.com/golangci/golangci-lint/cmd/golangci-lint@${GOLANGCILINT_VERSION} \
-	&& mv /go/bin/golangci-lint /toolchain/go/bin/golangci-lint
+	&& mv /root/go/bin/golangci-lint /usr/bin/golangci-lint
 ARG GOIMPORTS_VERSION
 RUN --mount=type=cache,target=/.cache go install golang.org/x/tools/cmd/goimports@${GOIMPORTS_VERSION} \
-    && mv /go/bin/goimports /toolchain/go/bin/goimports
+    && mv /root/go/bin/goimports /usr/bin/goimports
 ARG GOFUMPT_VERSION
 RUN --mount=type=cache,target=/.cache go install mvdan.cc/gofumpt@${GOFUMPT_VERSION} \
-    && mv /go/bin/gofumpt /toolchain/go/bin/gofumpt
+    && mv /root/go/bin/gofumpt /usr/bin/gofumpt
 ARG DEEPCOPY_VERSION
 RUN --mount=type=cache,target=/.cache go install github.com/siderolabs/deep-copy@${DEEPCOPY_VERSION} \
-    && mv /go/bin/deep-copy /toolchain/go/bin/deep-copy
+    && mv /root/go/bin/deep-copy /usr/bin/deep-copy
 ARG STRINGER_VERSION
 RUN --mount=type=cache,target=/.cache go install golang.org/x/tools/cmd/stringer@${STRINGER_VERSION} \
-    && mv /go/bin/stringer /toolchain/go/bin/stringer
+    && mv /root/go/bin/stringer /usr/bin/stringer
 ARG ENUMER_VERSION
 RUN --mount=type=cache,target=/.cache go install github.com/dmarkham/enumer@${ENUMER_VERSION} \
-    && mv /go/bin/enumer /toolchain/go/bin/enumer
+    && mv /root/go/bin/enumer /usr/bin/enumer
 ARG DEEPCOPY_GEN_VERSION
 RUN --mount=type=cache,target=/.cache go install k8s.io/code-generator/cmd/deepcopy-gen@${DEEPCOPY_GEN_VERSION} \
-    && mv /go/bin/deepcopy-gen /toolchain/go/bin/deepcopy-gen
+    && mv /root/go/bin/deepcopy-gen /usr/bin/deepcopy-gen
 ARG VTPROTOBUF_VERSION
 RUN --mount=type=cache,target=/.cache go install github.com/planetscale/vtprotobuf/cmd/protoc-gen-go-vtproto@${VTPROTOBUF_VERSION} \
-    && mv /go/bin/protoc-gen-go-vtproto /toolchain/go/bin/protoc-gen-go-vtproto
+    && mv /root/go/bin/protoc-gen-go-vtproto /usr/bin/protoc-gen-go-vtproto
 ARG IMPORTVET_VERSION
 RUN --mount=type=cache,target=/.cache go install github.com/siderolabs/importvet/cmd/importvet@${IMPORTVET_VERSION} \
-    && mv /go/bin/importvet /toolchain/go/bin/importvet
+    && mv /root/go/bin/importvet /usr/bin/importvet
 RUN --mount=type=cache,target=/.cache go install golang.org/x/vuln/cmd/govulncheck@latest \
-    && mv /go/bin/govulncheck /toolchain/go/bin/govulncheck
+    && mv /root/go/bin/govulncheck /usr/bin/govulncheck
 ARG PROTOTOOL_VERSION
 RUN --mount=type=cache,target=/.cache go install github.com/uber/prototool/cmd/prototool@${PROTOTOOL_VERSION} \
-    && mv /go/bin/prototool /toolchain/go/bin/prototool
+    && mv /root/go/bin/prototool /usr/bin/prototool
 ARG PROTOC_GEN_DOC_VERSION
 RUN --mount=type=cache,target=/.cache go install github.com/pseudomuto/protoc-gen-doc/cmd/protoc-gen-doc@${PROTOC_GEN_DOC_VERSION} \
-    && mv /go/bin/protoc-gen-doc /toolchain/go/bin/protoc-gen-doc
+    && mv /root/go/bin/protoc-gen-doc /usr/bin/protoc-gen-doc
 COPY ./hack/docgen /go/src/github.com/siderolabs/talos-hack-docgen
 RUN --mount=type=cache,target=/.cache cd /go/src/github.com/siderolabs/talos-hack-docgen \
     && go build -o docgen . \
-    && mv docgen /toolchain/go/bin/
+    && mv docgen /usr/bin/
 COPY ./hack/gotagsrewrite /go/src/github.com/siderolabs/gotagsrewrite
 RUN --mount=type=cache,target=/.cache cd /go/src/github.com/siderolabs/gotagsrewrite \
     && go build -o gotagsrewrite . \
-    && mv gotagsrewrite /toolchain/go/bin/
+    && mv gotagsrewrite /usr/bin/
 COPY ./hack/structprotogen /go/src/github.com/siderolabs/structprotogen
 RUN --mount=type=cache,target=/.cache cd /go/src/github.com/siderolabs/structprotogen \
     && go build -o structprotogen . \
-    && mv structprotogen /toolchain/go/bin/
+    && mv structprotogen /usr/bin/
 
 # The build target creates a container that will be used to build Talos source
 # code.
 
 FROM --platform=${BUILDPLATFORM} tools AS build
-SHELL ["/toolchain/bin/bash", "-c"]
-ENV PATH=/toolchain/bin:/toolchain/go/bin
+SHELL ["/bin/bash", "-c"]
 ENV GO111MODULE=on
 ENV GOPROXY=https://proxy.golang.org
 ARG CGO_ENABLED
@@ -329,8 +324,8 @@ FROM ${EMBED_TARGET} AS embed-target
 FROM build AS api-descriptors-build
 WORKDIR /src/api
 COPY api .
-RUN --mount=type=cache,target=/.cache prototool format --overwrite --protoc-bin-path=/toolchain/bin/protoc --protoc-wkt-path=/toolchain/include
-RUN --mount=type=cache,target=/.cache prototool break descriptor-set --output-path=api.descriptors --protoc-bin-path=/toolchain/bin/protoc --protoc-wkt-path=/toolchain/include
+RUN --mount=type=cache,target=/.cache prototool format --overwrite --protoc-bin-path=/usr/bin/protoc --protoc-wkt-path=/usr/include
+RUN --mount=type=cache,target=/.cache prototool break descriptor-set --output-path=api.descriptors --protoc-bin-path=/usr/bin/protoc --protoc-wkt-path=/usr/include
 
 FROM --platform=${BUILDPLATFORM} scratch AS api-descriptors
 COPY --from=api-descriptors-build /src/api/api.descriptors /api/api.descriptors
@@ -339,7 +334,7 @@ COPY --from=api-descriptors-build /src/api/api.descriptors /api/api.descriptors
 FROM build AS proto-format-build
 WORKDIR /src/api
 COPY api .
-RUN --mount=type=cache,target=/.cache prototool format --overwrite --protoc-bin-path=/toolchain/bin/protoc --protoc-wkt-path=/toolchain/include
+RUN --mount=type=cache,target=/.cache prototool format --overwrite --protoc-bin-path=/usr/bin/protoc --protoc-wkt-path=/usr/include
 
 FROM --platform=${BUILDPLATFORM} scratch AS fmt-protobuf
 COPY --from=proto-format-build /src/api/ /api/
@@ -386,7 +381,7 @@ RUN protoc -I/api -I/api/vendor/ --go_out=paths=source_relative:/api --go-grpc_o
 COPY ./api/inspect/inspect.proto /api/inspect/inspect.proto
 RUN protoc -I/api -I/api/vendor/ --go_out=paths=source_relative:/api --go-grpc_out=paths=source_relative:/api --go-vtproto_out=paths=source_relative:/api --go-vtproto_opt=features=marshal+unmarshal+size inspect/inspect.proto
 COPY --from=gen-proto-go /api/resource/definitions/ /api/resource/definitions/
-RUN find /api/resource/definitions/ -type f -name "*.proto" | xargs -I {} /bin/sh -c 'protoc -I/api -I/api/vendor/ --go_out=paths=source_relative:/api --go-grpc_out=paths=source_relative:/api --go-vtproto_out=paths=source_relative:/api --go-vtproto_opt=features=marshal+unmarshal+size {} && mkdir -p /api/resource/definitions_go/$(basename {} .proto) && mv /api/resource/definitions/$(basename {} .proto)/*.go /api/resource/definitions_go/$(basename {} .proto)'
+RUN find /api/resource/definitions/ -type f -name "*.proto" | xargs -I {} /bin/bash -c 'protoc -I/api -I/api/vendor/ --go_out=paths=source_relative:/api --go-grpc_out=paths=source_relative:/api --go-vtproto_out=paths=source_relative:/api --go-vtproto_opt=features=marshal+unmarshal+size {} && mkdir -p /api/resource/definitions_go/$(basename {} .proto) && mv /api/resource/definitions/$(basename {} .proto)/*.go /api/resource/definitions_go/$(basename {} .proto)'
 # Goimports and gofumpt generated files to adjust import order
 RUN goimports -w -local github.com/siderolabs/talos /api/
 RUN gofumpt -w /api/
@@ -650,36 +645,36 @@ COPY --from=pkg-sd-boot /*.efi.stub /sd-stub-${TARGETARCH}.efi
 FROM tools AS depmod-amd64
 WORKDIR /staging
 COPY hack/modules-amd64.txt .
-COPY --from=pkg-kernel-amd64 /lib/modules lib/modules
+COPY --from=pkg-kernel-amd64 /usr/lib/modules usr/lib/modules
 RUN <<EOF
 set -euo pipefail
 
-KERNEL_VERSION=$(ls lib/modules)
+KERNEL_VERSION=$(ls usr/lib/modules)
 
-xargs -a modules-amd64.txt -I {} install -D lib/modules/${KERNEL_VERSION}/{} /build/lib/modules/${KERNEL_VERSION}/{}
+xargs -a modules-amd64.txt -I {} install -D usr/lib/modules/${KERNEL_VERSION}/{} /build/usr/lib/modules/${KERNEL_VERSION}/{}
 
-depmod -b /build ${KERNEL_VERSION}
+depmod -b /build/usr ${KERNEL_VERSION}
 EOF
 
 FROM scratch AS modules-amd64
-COPY --from=depmod-amd64 /build/lib/modules /lib/modules
+COPY --from=depmod-amd64 /build/usr/lib/modules /usr/lib/modules
 
 FROM tools AS depmod-arm64
 WORKDIR /staging
 COPY hack/modules-arm64.txt .
-COPY --from=pkg-kernel-arm64 /lib/modules lib/modules
+COPY --from=pkg-kernel-arm64 /usr/lib/modules usr/lib/modules
 RUN <<EOF
 set -euo pipefail
 
-KERNEL_VERSION=$(ls lib/modules)
+KERNEL_VERSION=$(ls usr/lib/modules)
 
-xargs -a modules-arm64.txt -I {} install -D lib/modules/${KERNEL_VERSION}/{} /build/lib/modules/${KERNEL_VERSION}/{}
+xargs -a modules-arm64.txt -I {} install -D usr/lib/modules/${KERNEL_VERSION}/{} /build/usr/lib/modules/${KERNEL_VERSION}/{}
 
-depmod -b /build ${KERNEL_VERSION}
+depmod -b /build/usr ${KERNEL_VERSION}
 EOF
 
 FROM scratch AS modules-arm64
-COPY --from=depmod-arm64 /build/lib/modules /lib/modules
+COPY --from=depmod-arm64 /build/usr/lib/modules /usr/lib/modules
 
 # The rootfs target provides the Talos rootfs.
 FROM build AS rootfs-base-amd64
@@ -710,33 +705,42 @@ COPY --link --from=pkg-libaio-amd64 / /rootfs
 COPY --link --from=pkg-musl-amd64 / /rootfs
 COPY --link --from=pkg-runc-amd64 / /rootfs
 COPY --link --from=pkg-xfsprogs-amd64 / /rootfs
-COPY --link --from=pkg-util-linux-amd64 /lib/libblkid.* /rootfs/lib/
-COPY --link --from=pkg-util-linux-amd64 /lib/libuuid.* /rootfs/lib/
-COPY --link --from=pkg-util-linux-amd64 /lib/libmount.* /rootfs/lib/
-COPY --link --from=pkg-kmod-amd64 /usr/lib/libkmod.* /rootfs/lib/
-COPY --link --from=pkg-kmod-amd64 /usr/bin/kmod /rootfs/sbin/modprobe
-COPY --link --from=modules-amd64 /lib/modules /rootfs/lib/modules
-COPY --link --from=machined-build-amd64 /machined /rootfs/sbin/init
+COPY --link --from=pkg-util-linux-amd64 /usr/lib/libblkid.* /rootfs/usr/lib/
+COPY --link --from=pkg-util-linux-amd64 /usr/lib/libuuid.* /rootfs/usr/lib/
+COPY --link --from=pkg-util-linux-amd64 /usr/lib/libmount.* /rootfs/usr/lib/
+COPY --link --from=pkg-kmod-amd64 /usr/lib/libkmod.* /rootfs/usr/lib/
+COPY --link --from=pkg-kmod-amd64 /usr/bin/kmod /rootfs/usr/bin/modprobe
+COPY --link --from=modules-amd64 /usr/lib/modules /rootfs/usr/lib/modules
+COPY --link --from=machined-build-amd64 /machined /rootfs/usr/bin/init
+RUN <<END
+    # move everything from /usr/sbin to /usr/bin and symlink
+    # TODO: make FHS and other packages already install everything to /usr/bin
+    # udevadm is a recursive symlink
+    rm /rootfs/usr/sbin/udevadm
+    mv /rootfs/usr/sbin/* /rootfs/usr/bin/
+    rmdir /rootfs/usr/sbin/
+    ln -s bin /rootfs/usr/sbin
+END
 
 # this is a no-op as it copies from a scratch image when WITH_DEBUG_SHELL is not set
 COPY --link --from=pkg-debug-tools-amd64 * /rootfs/
 
 RUN <<END
     # the orderly_poweroff call by the kernel will call '/sbin/poweroff'
-    ln /rootfs/sbin/init /rootfs/sbin/poweroff
-    chmod +x /rootfs/sbin/poweroff
+    ln /rootfs/usr/bin/init /rootfs/usr/bin/poweroff
+    chmod +x /rootfs/usr/bin/poweroff
     # some extensions like qemu-guest agent will call '/sbin/shutdown'
-    ln /rootfs/sbin/init /rootfs/sbin/shutdown
-    chmod +x /rootfs/sbin/shutdown
-    ln /rootfs/sbin/init /rootfs/sbin/dashboard
-    chmod +x /rootfs/sbin/dashboard
+    ln /rootfs/usr/bin/init /rootfs/usr/bin/shutdown
+    chmod +x /rootfs/usr/bin/shutdown
+    ln /rootfs/usr/bin/init /rootfs/usr/bin/dashboard
+    chmod +x /rootfs/usr/bin/dashboard
 END
 # NB: We run the cleanup step before creating extra directories, files, and
 # symlinks to avoid accidentally cleaning them up.
-COPY ./hack/cleanup.sh /toolchain/bin/cleanup.sh
+COPY ./hack/cleanup.sh /usr/bin/cleanup.sh
 RUN <<END
     cleanup.sh /rootfs
-    mkdir -pv /rootfs/{boot/EFI,etc/{iscsi,nvme,cri/conf.d/hosts},lib/firmware,usr/etc,usr/local/share,usr/share/zoneinfo/Etc,mnt,system,opt,.extra}
+    mkdir -pv /rootfs/{boot/EFI,etc/{iscsi,nvme,cri/conf.d/hosts},usr/lib/firmware,usr/etc,usr/local/share,usr/share/zoneinfo/Etc,mnt,system,opt,.extra}
     mkdir -pv /rootfs/{etc/kubernetes/manifests,etc/cni/net.d,etc/ssl/certs,usr/libexec/kubernetes,/usr/local/lib/kubelet/credentialproviders,etc/selinux/targeted/contexts/files}
     mkdir -pv /rootfs/opt/{containerd/bin,containerd/lib}
 END
@@ -787,33 +791,42 @@ COPY --link --from=pkg-libaio-arm64 / /rootfs
 COPY --link --from=pkg-musl-arm64 / /rootfs
 COPY --link --from=pkg-runc-arm64 / /rootfs
 COPY --link --from=pkg-xfsprogs-arm64 / /rootfs
-COPY --link --from=pkg-util-linux-arm64 /lib/libblkid.* /rootfs/lib/
-COPY --link --from=pkg-util-linux-arm64 /lib/libuuid.* /rootfs/lib/
-COPY --link --from=pkg-util-linux-arm64 /lib/libmount.* /rootfs/lib/
-COPY --link --from=pkg-kmod-arm64 /usr/lib/libkmod.* /rootfs/lib/
-COPY --link --from=pkg-kmod-arm64 /usr/bin/kmod /rootfs/sbin/modprobe
-COPY --link --from=modules-arm64 /lib/modules /rootfs/lib/modules
-COPY --link --from=machined-build-arm64 /machined /rootfs/sbin/init
+COPY --link --from=pkg-util-linux-arm64 /usr/lib/libblkid.* /rootfs/usr/lib/
+COPY --link --from=pkg-util-linux-arm64 /usr/lib/libuuid.* /rootfs/usr/lib/
+COPY --link --from=pkg-util-linux-arm64 /usr/lib/libmount.* /rootfs/usr/lib/
+COPY --link --from=pkg-kmod-arm64 /usr/lib/libkmod.* /rootfs/usr/lib/
+COPY --link --from=pkg-kmod-arm64 /usr/bin/kmod /rootfs/usr/bin/modprobe
+COPY --link --from=modules-arm64 /usr/lib/modules /rootfs/usr/lib/modules
+COPY --link --from=machined-build-arm64 /machined /rootfs/usr/bin/init
+RUN <<END
+    # move everything from /usr/sbin to /usr/bin and symlink
+    # TODO: make FHS and other packages already install everything to /usr/bin
+    # udevadm is a recursive symlink
+    rm /rootfs/usr/sbin/udevadm
+    mv /rootfs/usr/sbin/* /rootfs/usr/bin/
+    rmdir /rootfs/usr/sbin/
+    ln -s bin /rootfs/usr/sbin
+END
 
 # this is a no-op as it copies from a scratch image when WITH_DEBUG_SHELL is not set
 COPY --link --from=pkg-debug-tools-arm64 * /rootfs/
 
 RUN <<END
     # the orderly_poweroff call by the kernel will call '/sbin/poweroff'
-    ln /rootfs/sbin/init /rootfs/sbin/poweroff
-    chmod +x /rootfs/sbin/poweroff
+    ln /rootfs/usr/bin/init /rootfs/usr/bin/poweroff
+    chmod +x /rootfs/usr/bin/poweroff
     # some extensions like qemu-guest agent will call '/sbin/shutdown'
-    ln /rootfs/sbin/init /rootfs/sbin/shutdown
-    chmod +x /rootfs/sbin/shutdown
-    ln /rootfs/sbin/init /rootfs/sbin/dashboard
-    chmod +x /rootfs/sbin/dashboard
+    ln /rootfs/usr/bin/init /rootfs/usr/bin/shutdown
+    chmod +x /rootfs/usr/bin/shutdown
+    ln /rootfs/usr/bin/init /rootfs/usr/bin/dashboard
+    chmod +x /rootfs/usr/bin/dashboard
 END
 # NB: We run the cleanup step before creating extra directories, files, and
 # symlinks to avoid accidentally cleaning them up.
-COPY ./hack/cleanup.sh /toolchain/bin/cleanup.sh
+COPY ./hack/cleanup.sh /usr/bin/cleanup.sh
 RUN <<END
     cleanup.sh /rootfs
-    mkdir -pv /rootfs/{boot/EFI,etc/{iscsi,nvme,cri/conf.d/hosts},lib/firmware,usr/etc,usr/local/share,usr/share/zoneinfo/Etc,mnt,system,opt,.extra}
+    mkdir -pv /rootfs/{boot/EFI,etc/{iscsi,nvme,cri/conf.d/hosts},usr/lib/firmware,usr/etc,usr/local/share,usr/share/zoneinfo/Etc,mnt,system,opt,.extra}
     mkdir -pv /rootfs/{etc/kubernetes/manifests,etc/cni/net.d,etc/ssl/certs,usr/libexec/kubernetes,/usr/local/lib/kubelet/credentialproviders,etc/selinux/targeted/contexts/files}
     mkdir -pv /rootfs/opt/{containerd/bin,containerd/lib}
 END
@@ -838,7 +851,7 @@ END
 
 FROM rootfs-base-${TARGETARCH} AS rootfs-base
 RUN echo "true" > /rootfs/usr/etc/in-container
-RUN rm -rf /rootfs/lib/modules/*
+RUN rm -rf /rootfs/usr/lib/modules/*
 RUN find /rootfs -print0 \
     | xargs -0r touch --no-dereference --date="@${SOURCE_DATE_EPOCH}"
 
@@ -848,7 +861,6 @@ RUN find /rootfs -print0 \
     | xargs -0r touch --no-dereference --date="@${SOURCE_DATE_EPOCH}"
 COPY --from=selinux-generate /policy/file_contexts /file_contexts
 COPY ./hack/labeled-squashfs.sh /
-ENV SHELL=/toolchain/bin/bash
 RUN fakeroot /labeled-squashfs.sh /rootfs /rootfs.sqsh /file_contexts ${ZSTD_COMPRESSION_LEVEL}
 
 FROM rootfs-base-amd64 AS rootfs-squashfs-amd64
@@ -857,7 +869,6 @@ RUN find /rootfs -print0 \
     | xargs -0r touch --no-dereference --date="@${SOURCE_DATE_EPOCH}"
 COPY --from=selinux-generate /policy/file_contexts /file_contexts
 COPY ./hack/labeled-squashfs.sh /
-ENV SHELL=/toolchain/bin/bash
 RUN fakeroot /labeled-squashfs.sh /rootfs /rootfs.sqsh /file_contexts ${ZSTD_COMPRESSION_LEVEL}
 
 FROM scratch AS squashfs-arm64
@@ -1005,7 +1016,12 @@ FROM --platform=${BUILDPLATFORM} iso-${TARGETARCH} AS iso
 
 # The test target performs tests on the source code.
 FROM base AS unit-tests-runner
-RUN unlink /etc/ssl
+RUN <<END
+    # TODO: do this in tools/pkgs
+    mv /usr/sbin/* /usr/bin/
+    rmdir /usr/sbin/
+    ln -s bin /usr/sbin
+END
 COPY --from=rootfs / /
 COPY --from=pkg-ca-certificates / /
 ARG TESTPKGS
@@ -1020,7 +1036,12 @@ COPY --from=unit-tests-runner /src/coverage.txt /coverage.txt
 # The unit-tests-race target performs tests with race detector.
 
 FROM base AS unit-tests-race
-RUN unlink /etc/ssl
+RUN <<END
+    # TODO: do this in tools/pkgs
+    mv /usr/sbin/* /usr/bin/
+    rmdir /usr/sbin/
+    ln -s bin /usr/sbin
+END
 COPY --from=rootfs / /
 COPY --from=pkg-ca-certificates / /
 ARG TESTPKGS
@@ -1106,8 +1127,8 @@ RUN --mount=type=cache,target=/.cache importvet github.com/siderolabs/talos/...
 FROM base AS lint-protobuf
 WORKDIR /src/api
 COPY api .
-RUN --mount=type=cache,target=/.cache prototool lint --protoc-bin-path=/toolchain/bin/protoc --protoc-wkt-path=/toolchain/include
-RUN --mount=type=cache,target=/.cache prototool break check --descriptor-set-path=api.descriptors --protoc-bin-path=/toolchain/bin/protoc --protoc-wkt-path=/toolchain/include
+RUN --mount=type=cache,target=/.cache prototool lint --protoc-bin-path=/usr/bin/protoc --protoc-wkt-path=/usr/include
+RUN --mount=type=cache,target=/.cache prototool break check --descriptor-set-path=api.descriptors --protoc-bin-path=/usr/bin/protoc --protoc-wkt-path=/usr/include
 
 # The markdownlint target performs linting on Markdown files.
 
@@ -1187,13 +1208,13 @@ COPY --from=proto-docs-build /tmp/api.md /website/content/v1.10/reference/
 
 FROM scratch AS talosctl-cni-bundle
 ARG TARGETARCH
-COPY --from=extras-talosctl-cni-bundle-install /opt/cni/bin/ /talosctl-cni-bundle-${TARGETARCH}/
+COPY --from=extras-talosctl-cni-bundle /opt/cni/bin/ /talosctl-cni-bundle-${TARGETARCH}/
 
 # The go-mod-outdated target lists all outdated modules.
 
 FROM base AS go-mod-outdated
 RUN --mount=type=cache,target=/.cache go install github.com/psampaz/go-mod-outdated@latest \
-    && mv /go/bin/go-mod-outdated /toolchain/go/bin/go-mod-outdated
+    && mv /root/go/bin/go-mod-outdated /usr/bin/go-mod-outdated
 COPY ./hack/cloud-image-uploader ./hack/cloud-image-uploader
 COPY ./hack/docgen ./hack/docgen
 COPY ./hack/gotagsrewrite ./hack/gotagsrewrite

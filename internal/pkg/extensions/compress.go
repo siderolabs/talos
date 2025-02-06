@@ -12,7 +12,6 @@ import (
 	"os/exec"
 	"path/filepath"
 
-	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/imager/quirks"
 )
 
@@ -23,16 +22,24 @@ import (
 // We need to repackage the ucode blobs matching the glob into the destination concatenating
 // them all together.
 // The resulting blobs should be placed into uncompressed cpio archive prepended to the normal (compressed) initramfs.
-var earlyCPUUcode = []struct {
+func earlyCPUUcode(quirks quirks.Quirks) []struct {
 	glob, dst string
-}{
-	{"/lib/firmware/intel-ucode/*", "kernel/x86/microcode/GenuineIntel.bin"},
-	{"/lib/firmware/amd-ucode/microcode_amd*.bin", "kernel/x86/microcode/AuthenticAMD.bin"},
+} {
+	fwPath := quirks.FirmwarePath()
+
+	return []struct {
+		glob, dst string
+	}{
+		{fwPath + "/intel-ucode/*", "kernel/x86/microcode/GenuineIntel.bin"},
+		{fwPath + "/amd-ucode/microcode_amd*.bin", "kernel/x86/microcode/AuthenticAMD.bin"},
+	}
 }
 
 // List of paths to be moved to the future initramfs.
-var initramfsPaths = []string{
-	constants.FirmwarePath,
+func initramfsPaths(quirks quirks.Quirks) []string {
+	return []string{
+		quirks.FirmwarePath(),
+	}
 }
 
 // Compress builds the squashfs image in the specified destination folder.
@@ -40,11 +47,11 @@ var initramfsPaths = []string{
 // Components which should be placed to the initramfs are moved to the initramfsPath.
 // Ucode components are moved into a separate designated location.
 func (ext *Extension) Compress(squashPath, initramfsPath string, quirks quirks.Quirks) (string, error) {
-	if err := ext.handleUcode(initramfsPath); err != nil {
+	if err := ext.handleUcode(initramfsPath, quirks); err != nil {
 		return "", err
 	}
 
-	for _, path := range initramfsPaths {
+	for _, path := range initramfsPaths(quirks) {
 		if _, err := os.Stat(filepath.Join(ext.RootfsPath(), path)); err == nil {
 			if err = moveFiles(filepath.Join(ext.RootfsPath(), path), filepath.Join(initramfsPath, path)); err != nil {
 				return "", err
@@ -87,8 +94,8 @@ func appendBlob(dst io.Writer, srcPath string) error {
 	return os.Remove(srcPath)
 }
 
-func (ext *Extension) handleUcode(initramfsPath string) error {
-	for _, ucode := range earlyCPUUcode {
+func (ext *Extension) handleUcode(initramfsPath string, quirks quirks.Quirks) error {
+	for _, ucode := range earlyCPUUcode(quirks) {
 		matches, err := filepath.Glob(filepath.Join(ext.RootfsPath(), ucode.glob))
 		if err != nil {
 			return err

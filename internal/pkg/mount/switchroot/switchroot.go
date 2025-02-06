@@ -20,12 +20,13 @@ import (
 	"github.com/siderolabs/talos/internal/pkg/secureboot/tpm2"
 	"github.com/siderolabs/talos/internal/pkg/selinux"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
+	"github.com/siderolabs/talos/pkg/machinery/imager/quirks"
 )
 
 // Paths preserved in the initramfs.
 var preservedPaths = map[string]struct{}{
 	constants.ExtensionsConfigFile:    {},
-	constants.FirmwarePath:            {},
+	quirks.New("").FirmwarePath():     {},
 	constants.SDStubDynamicInitrdPath: {},
 }
 

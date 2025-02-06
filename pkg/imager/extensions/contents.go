@@ -13,14 +13,15 @@ import (
 	"strings"
 
 	"github.com/siderolabs/talos/internal/pkg/extensions"
+	"github.com/siderolabs/talos/pkg/machinery/imager/quirks"
 )
 
-func findExtensionsWithKernelModules(extensions []*extensions.Extension) []string {
+func findExtensionsWithKernelModules(extensions []*extensions.Extension, quirks quirks.Quirks) []string {
 	var modulesPath []string
 
 	for _, ext := range extensions {
-		if ext.ProvidesKernelModules() {
-			modulesPath = append(modulesPath, ext.KernelModuleDirectory())
+		if ext.ProvidesKernelModules(quirks) {
+			modulesPath = append(modulesPath, ext.KernelModuleDirectory(quirks))
 		}
 	}
 

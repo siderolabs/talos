@@ -538,7 +538,7 @@ func (apiSuite *APISuite) AssertExpectedModules(ctx context.Context, node string
 
 	apiSuite.Require().NoError(scanner.Err())
 
-	fileReader, err = apiSuite.Client.Read(nodeCtx, fmt.Sprintf("/lib/modules/%s/modules.dep", constants.DefaultKernelVersion))
+	fileReader, err = apiSuite.Client.Read(nodeCtx, fmt.Sprintf("/usr/lib/modules/%s/modules.dep", constants.DefaultKernelVersion))
 	apiSuite.Require().NoError(err)
 
 	defer func() {

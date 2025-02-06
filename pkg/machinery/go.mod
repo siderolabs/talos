@@ -1,6 +1,6 @@
 module github.com/siderolabs/talos/pkg/machinery
 
-go 1.23.5
+go 1.23.6
 
 replace (
 	// forked ethtool introduces missing APIs

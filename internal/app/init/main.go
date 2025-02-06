@@ -28,6 +28,7 @@ import (
 	"github.com/siderolabs/talos/internal/pkg/secureboot/tpm2"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/extensions"
+	"github.com/siderolabs/talos/pkg/machinery/imager/quirks"
 	"github.com/siderolabs/talos/pkg/machinery/version"
 )
 
@@ -73,7 +74,7 @@ func run() error {
 		return err
 	}
 
-	// Bind mount the lib/firmware if needed.
+	// Bind mount the usr/lib/firmware if needed.
 	if err := bindMountFirmware(); err != nil {
 		return err
 	}
@@ -199,7 +200,8 @@ func mountRootFS() error {
 }
 
 func bindMountFirmware() error {
-	if _, err := os.Stat(constants.FirmwarePath); err != nil {
+	firmwarePath := quirks.New("").FirmwarePath()
+	if _, err := os.Stat(firmwarePath); err != nil {
 		if os.IsNotExist(err) {
 			return nil
 		}
@@ -207,9 +209,9 @@ func bindMountFirmware() error {
 		return err
 	}
 
-	log.Printf("bind mounting %s", constants.FirmwarePath)
+	log.Printf("bind mounting %s", firmwarePath)
 
-	return unix.Mount(constants.FirmwarePath, filepath.Join(constants.NewRoot, constants.FirmwarePath), "", unix.MS_BIND|unix.MS_RDONLY, "")
+	return unix.Mount(firmwarePath, filepath.Join(constants.NewRoot, firmwarePath), "", unix.MS_BIND|unix.MS_RDONLY, "")
 }
 
 func bindMountExtra() error {

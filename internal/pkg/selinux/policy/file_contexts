@@ -1,9 +1,8 @@
 /etc(/.*)?	system_u:object_r:etc_t:s0
 /opt(/.*)?	system_u:object_r:opt_t:s0
-/sbin(/.*)?	system_u:object_r:sbin_exec_t:s0
 /etc/cni(/.*)?	system_u:object_r:cni_conf_t:s0
 /opt/cni(/.*)?	system_u:object_r:cni_plugin_t:s0
-/usr/sbin(/.*)?	system_u:object_r:sbin_exec_t:s0
+/usr/bin(/.*)?	system_u:object_r:bin_exec_t:s0
 /usr/lib/udev(/.*)?	system_u:object_r:udev_exec_t:s0
 /etc/kubernetes(/.*)?	system_u:object_r:k8s_conf_t:s0
 /opt/containerd(/.*)?	system_u:object_r:containerd_plugin_t:s0
@@ -11,14 +10,13 @@
 /usr/lib/udev/rules.d(/.*)?	system_u:object_r:udev_rules_t:s0
 /usr/libexec/kubernetes(/.*)?	system_u:object_r:k8s_plugin_t:s0
 /	system_u:object_r:rootfs_t:s0
-/bin/runc	system_u:object_r:containerd_exec_t:s0
-/sbin/init	--	system_u:object_r:init_exec_t:s0
-/sbin/udevadm	-l	system_u:object_r:udev_exec_t:s0
-/sbin/poweroff	system_u:object_r:init_exec_t:s0
-/sbin/shutdown	system_u:object_r:init_exec_t:s0
-/sbin/modprobe	--	system_u:object_r:modprobe_exec_t:s0
-/bin/containerd	system_u:object_r:containerd_exec_t:s0
-/sbin/dashboard	system_u:object_r:init_exec_t:s0
+/usr/bin/runc	system_u:object_r:containerd_exec_t:s0
+/usr/bin/init	--	system_u:object_r:init_exec_t:s0
 /usr/bin/udevadm	--	system_u:object_r:udev_exec_t:s0
-/sbin/systemd-udevd	--	system_u:object_r:udev_exec_t:s0
-/bin/containerd-shim-runc-v2	system_u:object_r:containerd_exec_t:s0
+/usr/bin/poweroff	system_u:object_r:init_exec_t:s0
+/usr/bin/shutdown	system_u:object_r:init_exec_t:s0
+/usr/bin/modprobe	--	system_u:object_r:modprobe_exec_t:s0
+/usr/bin/dashboard	system_u:object_r:init_exec_t:s0
+/usr/bin/containerd	system_u:object_r:containerd_exec_t:s0
+/usr/bin/systemd-udevd	--	system_u:object_r:udev_exec_t:s0
+/usr/bin/containerd-shim-runc-v2	system_u:object_r:containerd_exec_t:s0

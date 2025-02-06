@@ -53,7 +53,7 @@ func (builder *Builder) Build() error {
 		return err
 	}
 
-	extensionPathsWithKernelModules := findExtensionsWithKernelModules(extensionsList)
+	extensionPathsWithKernelModules := findExtensionsWithKernelModules(extensionsList, builder.Quirks)
 
 	if len(extensionPathsWithKernelModules) > 0 {
 		var scratchPath string
@@ -66,7 +66,7 @@ func (builder *Builder) Build() error {
 
 		defer os.RemoveAll(scratchPath) //nolint:errcheck
 
-		kernelModuleDepExtension, genErr := extensions.GenerateKernelModuleDependencyTreeExtension(extensionPathsWithKernelModules, builder.InitramfsPath, scratchPath, builder.Printf)
+		kernelModuleDepExtension, genErr := extensions.GenerateKernelModuleDependencyTreeExtension(extensionPathsWithKernelModules, builder.InitramfsPath, scratchPath, builder.Quirks, builder.Printf)
 		if genErr != nil {
 			return genErr
 		}

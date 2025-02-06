@@ -34,5 +34,5 @@ func TestCompress(t *testing.T) {
 	assert.NoError(t, err)
 
 	assert.FileExists(t, squashFile)
-	assert.FileExists(t, filepath.Join(initramfsDest, "lib", "firmware", "amd", "cpu"))
+	assert.FileExists(t, filepath.Join(initramfsDest, "usr", "lib", "firmware", "amd", "cpu"))
 }

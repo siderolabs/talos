@@ -174,3 +174,26 @@ func (q Quirks) UseSDBootForUEFI() bool {
 
 	return q.v.GTE(minTalosVersionUseSDBootOnly)
 }
+
+// minTalosVersionUsrMerge is the version that has /lib and /bin symlinked into /usr.
+var minTalosVersionUsrMerge = semver.MustParse("1.10.0")
+
+// KernelModulesPath returns kernel module storage path for the given Talos version.
+func (q Quirks) KernelModulesPath() string {
+	// if the version doesn't parse, we assume it's latest Talos
+	if q.v == nil || q.v.GTE(minTalosVersionUsrMerge) {
+		return "/usr/lib/modules"
+	}
+
+	return "/lib/modules"
+}
+
+// FirmwarePath returns firmware storage path for the given Talos version.
+func (q Quirks) FirmwarePath() string {
+	// if the version doesn't parse, we assume it's latest Talos
+	if q.v == nil || q.v.GTE(minTalosVersionUsrMerge) {
+		return "/usr/lib/firmware"
+	}
+
+	return "/lib/firmware"
+}

@@ -17,14 +17,14 @@ ZSTD_COMPRESSION_LEVEL ?= 18
 CI_RELEASE_TAG := $(shell git log --oneline --format=%B -n 1 HEAD^2 -- 2>/dev/null | head -n 1 | sed -r "/^release\(.*\)/ s/^release\((.*)\):.*$$/\\1/; t; Q")
 
 ARTIFACTS := _out
-TOOLS ?= ghcr.io/siderolabs/tools:v1.10.0-alpha.0-7-g7200845
+TOOLS ?= ghcr.io/siderolabs/tools:v1.10.0-alpha.0-10-g9db33dd
 
 DEBUG_TOOLS_SOURCE := scratch
 EMBED_TARGET ?= embed
 
 PKGS_PREFIX ?= ghcr.io/siderolabs
-PKGS ?= v1.10.0-alpha.0-34-g5763e3e
-EXTRAS ?= v1.10.0-alpha.0-2-gf4a110f
+PKGS ?= v1.10.0-alpha.0-35-g85f8901
+EXTRAS ?= v1.10.0-alpha.0-3-g4102a78
 
 KRES_IMAGE ?= ghcr.io/siderolabs/kres:latest
 CONFORMANCE_IMAGE ?= ghcr.io/siderolabs/conform:latest
@@ -64,7 +64,7 @@ PKG_KMOD ?= $(PKGS_PREFIX)/kmod:$(PKGS)
 PKG_CNI ?= $(PKGS_PREFIX)/cni:$(PKGS)
 PKG_FLANNEL_CNI ?= $(PKGS_PREFIX)/flannel-cni:$(PKGS)
 PKG_KERNEL ?= $(PKGS_PREFIX)/kernel:$(PKGS)
-PKG_TALOSCTL_CNI_BUNDLE_INSTALL ?= $(PKGS_PREFIX)/talosctl-cni-bundle-install:$(EXTRAS)
+PKG_TALOSCTL_CNI_BUNDLE ?= $(PKGS_PREFIX)/talosctl-cni-bundle:$(EXTRAS)
 
 # renovate: datasource=github-tags depName=golang/go
 GO_VERSION ?= 1.23
@@ -267,7 +267,7 @@ COMMON_ARGS += --build-arg=PKG_RASPBERYPI_FIRMWARE=$(PKG_RASPBERYPI_FIRMWARE)
 COMMON_ARGS += --build-arg=PKG_CNI=$(PKG_CNI)
 COMMON_ARGS += --build-arg=PKG_FLANNEL_CNI=$(PKG_FLANNEL_CNI)
 COMMON_ARGS += --build-arg=PKG_KERNEL=$(PKG_KERNEL)
-COMMON_ARGS += --build-arg=PKG_TALOSCTL_CNI_BUNDLE_INSTALL=$(PKG_TALOSCTL_CNI_BUNDLE_INSTALL)
+COMMON_ARGS += --build-arg=PKG_TALOSCTL_CNI_BUNDLE=$(PKG_TALOSCTL_CNI_BUNDLE)
 COMMON_ARGS += --build-arg=ABBREV_TAG=$(ABBREV_TAG)
 COMMON_ARGS += --build-arg=ZSTD_COMPRESSION_LEVEL=$(ZSTD_COMPRESSION_LEVEL)
 COMMON_ARGS += --build-arg=MICROSOFT_SECUREBOOT_RELEASE=$(MICROSOFT_SECUREBOOT_RELEASE)

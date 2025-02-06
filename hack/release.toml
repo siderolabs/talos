@@ -25,7 +25,7 @@ preface = """
 * etcd: 3.5.18
 * Flannel: 0.26.4
 
-Talos is built with Go 1.23.5.
+Talos is built with Go 1.23.6.
 """
 
     [notes.driver-rebind]
@@ -107,6 +107,16 @@ Talos starting with 1.10 will have ISO's that will use GRUB only for legacy BIOS
         description = """\
 Talos now provides `ethtool`-style Ethernet low-level configuration via `network/EthernetConfig` documents.
 Current status of the interface can be read by `talosctl get ethernetstatus`.
+"""
+
+    [notes.toolchain]
+        title = "Fully bootstrapped builds"
+        description = """\
+Talos 1.10 is built with a toolchain based on [[Stageˣ]](https://stagex.tools/), which is a project building fully bootstrapped software.
+This change increases reproducibility, auditability and security of Talos builds.
+
+This also changes Talos root filesystem structure for unified /usr, with other directories symlinking to /usr/bin and /usr/lib.
+System extensions must move their directories accordingly for 1.10.
 """
 
 [make_deps]

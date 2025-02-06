@@ -129,7 +129,7 @@ func (k *Kubelet) Runner(r runtime.Runtime) (runner.Runner, error) {
 		{Type: "bind", Destination: "/dev", Source: "/dev", Options: []string{"rbind", "rshared", "rw"}},
 		{Type: "sysfs", Destination: "/sys", Source: "/sys", Options: []string{"bind", "ro"}},
 		{Type: "bind", Destination: constants.CgroupMountPath, Source: constants.CgroupMountPath, Options: []string{"rbind", "rshared", "rw"}},
-		{Type: "bind", Destination: "/lib/modules", Source: "/lib/modules", Options: []string{"bind", "ro"}},
+		{Type: "bind", Destination: "/lib/modules", Source: "/usr/lib/modules", Options: []string{"bind", "ro"}},
 		{Type: "bind", Destination: "/etc/kubernetes", Source: "/etc/kubernetes", Options: []string{"bind", "rshared", "rw"}},
 		{Type: "bind", Destination: constants.KubeletCredentialProviderBinDir, Source: constants.KubeletCredentialProviderBinDir, Options: []string{"bind", "ro"}},
 		{Type: "bind", Destination: "/etc/nfsmount.conf", Source: "/etc/nfsmount.conf", Options: []string{"bind", "ro"}},

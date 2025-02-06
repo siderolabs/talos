@@ -16,9 +16,6 @@ const (
 	// DefaultKernelVersion is the default Linux kernel version.
 	DefaultKernelVersion = "6.12.11-talos"
 
-	// KernelModulesPath is the default path to the kernel modules without the kernel version.
-	KernelModulesPath = "/lib/modules"
-
 	// KernelParamConfig is the kernel parameter name for specifying the URL.
 	// to the config.
 	KernelParamConfig = "talos.config"
@@ -229,7 +226,7 @@ const (
 	ISOFilesystemLabel = "TALOS"
 
 	// PATH defines all locations where executables are stored.
-	PATH = "/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bin:" + cni.DefaultCNIDir
+	PATH = "/usr/bin:/usr/local/sbin:/usr/local/bin:" + cni.DefaultCNIDir
 
 	// KubernetesDefaultCertificateValidityDuration specifies default certificate duration for Kubernetes generated certificates.
 	KubernetesDefaultCertificateValidityDuration = time.Hour * 24 * 365
@@ -1073,9 +1070,6 @@ const (
 	// PlatformNetworkConfigFilename is the filename to cache platform network configuration reboots.
 	PlatformNetworkConfigFilename = "platform-network.yaml"
 
-	// FirmwarePath is the path to the standard Linux firmware location.
-	FirmwarePath = "/lib/firmware"
-
 	// ExtensionServiceConfigPath is the directory path which contains  configuration files of extension services.
 	//
 	// See pkg/machinery/extensions/services for the file format.
@@ -1100,7 +1094,7 @@ const (
 	DBusClientSocketLabel = "system_u:object_r:dbus_client_socket_t:s0"
 
 	// GoVersion is the version of Go compiler this release was built with.
-	GoVersion = "go1.23.5"
+	GoVersion = "go1.23.6"
 
 	// KubernetesTalosAPIServiceName is the name of the Kubernetes service to access Talos API.
 	KubernetesTalosAPIServiceName = "talos"

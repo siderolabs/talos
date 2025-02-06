@@ -60,7 +60,7 @@ func (suite *ProcessSuite) TearDownSuite() {
 func (suite *ProcessSuite) TestRunSuccess() {
 	r := process.NewRunner(false, &runner.Args{
 		ID:          "test",
-		ProcessArgs: []string{"/bin/sh", "-c", "exit 0"},
+		ProcessArgs: []string{"/bin/bash", "-c", "exit 0"},
 	}, runner.WithLoggingManager(suite.loggingManager))
 
 	suite.Assert().NoError(r.Open())
@@ -75,7 +75,7 @@ func (suite *ProcessSuite) TestRunSuccess() {
 func (suite *ProcessSuite) TestRunLogs() {
 	r := process.NewRunner(false, &runner.Args{
 		ID:          "logtest",
-		ProcessArgs: []string{"/bin/sh", "-c", "echo -n \"Test 1\nTest 2\n\""},
+		ProcessArgs: []string{"/bin/bash", "-c", "echo -n \"Test 1\nTest 2\n\""},
 	}, runner.WithLoggingManager(suite.loggingManager))
 
 	suite.Assert().NoError(r.Open())
@@ -103,7 +103,7 @@ func (suite *ProcessSuite) TestRunRestartFailed() {
 
 	r := restart.New(process.NewRunner(false, &runner.Args{
 		ID:          "restarter",
-		ProcessArgs: []string{"/bin/sh", "-c", "echo \"ran\"; test -f " + testFile},
+		ProcessArgs: []string{"/bin/bash", "-c", "echo \"ran\"; test -f " + testFile},
 	}, runner.WithLoggingManager(suite.loggingManager)), restart.WithType(restart.UntilSuccess), restart.WithRestartInterval(time.Millisecond))
 
 	suite.Assert().NoError(r.Open())
@@ -156,7 +156,7 @@ func (suite *ProcessSuite) TestStopFailingAndRestarting() {
 
 	r := restart.New(process.NewRunner(false, &runner.Args{
 		ID:          "endless",
-		ProcessArgs: []string{"/bin/sh", "-c", "test -f " + testFile},
+		ProcessArgs: []string{"/bin/bash", "-c", "test -f " + testFile},
 	}, runner.WithLoggingManager(suite.loggingManager)), restart.WithType(restart.Forever), restart.WithRestartInterval(5*time.Millisecond))
 
 	suite.Assert().NoError(r.Open())
@@ -200,7 +200,7 @@ func (suite *ProcessSuite) TestStopFailingAndRestarting() {
 func (suite *ProcessSuite) TestStopSigKill() {
 	r := process.NewRunner(false, &runner.Args{
 		ID:          "nokill",
-		ProcessArgs: []string{"/bin/sh", "-c", "trap -- '' SIGTERM; while :; do :; done"},
+		ProcessArgs: []string{"/bin/bash", "-c", "trap -- '' SIGTERM; while :; do :; done"},
 	},
 		runner.WithLoggingManager(suite.loggingManager),
 		runner.WithGracefulShutdownTimeout(10*time.Millisecond),
@@ -240,7 +240,7 @@ func (suite *ProcessSuite) TestPriority() {
 
 	r := process.NewRunner(false, &runner.Args{
 		ID:          "nokill",
-		ProcessArgs: []string{"/bin/sh", "-c", "echo $BASHPID >> " + pidFile + "; trap -- '' SIGTERM; while :; do :; done"},
+		ProcessArgs: []string{"/bin/bash", "-c", "echo $BASHPID >> " + pidFile + "; trap -- '' SIGTERM; while :; do :; done"},
 	},
 		runner.WithLoggingManager(suite.loggingManager),
 		runner.WithGracefulShutdownTimeout(10*time.Millisecond),
@@ -294,7 +294,7 @@ func (suite *ProcessSuite) TestIOPriority() {
 
 	r := process.NewRunner(false, &runner.Args{
 		ID:          "nokill",
-		ProcessArgs: []string{"/bin/sh", "-c", "echo $BASHPID >> " + pidFile + "; trap -- '' SIGTERM; while :; do :; done"},
+		ProcessArgs: []string{"/bin/bash", "-c", "echo $BASHPID >> " + pidFile + "; trap -- '' SIGTERM; while :; do :; done"},
 	},
 		runner.WithLoggingManager(suite.loggingManager),
 		runner.WithGracefulShutdownTimeout(10*time.Millisecond),
@@ -347,7 +347,7 @@ func (suite *ProcessSuite) TestSchedulingPolicy() {
 
 	r := process.NewRunner(false, &runner.Args{
 		ID:          "nokill",
-		ProcessArgs: []string{"/bin/sh", "-c", "echo $BASHPID >> " + pidFile + "; trap -- '' SIGTERM; while :; do :; done"},
+		ProcessArgs: []string{"/bin/bash", "-c", "echo $BASHPID >> " + pidFile + "; trap -- '' SIGTERM; while :; do :; done"},
 	},
 		runner.WithLoggingManager(suite.loggingManager),
 		runner.WithGracefulShutdownTimeout(10*time.Millisecond),
