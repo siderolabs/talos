@@ -6,8 +6,9 @@ package mgmt
 
 import (
 	"fmt"
+	"slices"
 
-	"github.com/siderolabs/gen/xslices"
+	"github.com/siderolabs/gen/xiter"
 	"github.com/siderolabs/go-loadbalancer/loadbalancer"
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
@@ -22,7 +23,6 @@ var loadbalancerLaunchCmdFlags struct {
 	apidOnlyInitNode bool
 }
 
-// loadbalancerLaunchCmd represents the loadbalancer-launch command.
 var loadbalancerLaunchCmd = &cobra.Command{
 	Use:    "loadbalancer-launch",
 	Short:  "Internal command used by QEMU provisioner",
@@ -33,11 +33,15 @@ var loadbalancerLaunchCmd = &cobra.Command{
 		lb := loadbalancer.TCP{Logger: makeLogger()}
 
 		for _, port := range loadbalancerLaunchCmdFlags.ports {
-			upstreams := xslices.Map(loadbalancerLaunchCmdFlags.upstreams, func(upstream string) string {
-				return fmt.Sprintf("%s:%d", upstream, port)
-			})
-
-			if err := lb.AddRoute(fmt.Sprintf("%s:%d", loadbalancerLaunchCmdFlags.addr, port), upstreams); err != nil {
+			if err := lb.AddRoute(
+				fmt.Sprintf("%s:%d", loadbalancerLaunchCmdFlags.addr, port),
+				xiter.Map(
+					func(upstream string) string {
+						return fmt.Sprintf("%s:%d", upstream, port)
+					},
+					slices.Values(loadbalancerLaunchCmdFlags.upstreams),
+				),
+			); err != nil {
 				return err
 			}
 		}
