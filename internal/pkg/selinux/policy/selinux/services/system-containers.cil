@@ -17,3 +17,17 @@
 (call system_socket_f (trustd_runtime_socket_t))
 (allow trustd_t trustd_runtime_socket_t (sock_file (write)))
 (allow trustd_t trustd_runtime_socket_t (sock_file (relabelto)))
+
+(type etcd_t)
+(call system_container_p (etcd_t))
+(allow etcd_t system_var_t (file (entrypoint execute execute_no_trans)))
+(allow etcd_t system_var_t (fs_classes (rw)))
+
+(type etcd_pki_t)
+(call protected_f (etcd_pki_t))
+(allow etcd_pki_t tmpfs_t (filesystem (associate)))
+(allow etcd_t etcd_pki_t (fs_classes (ro)))
+
+(type etcd_data_t)
+(call protected_f (etcd_data_t))
+(allow etcd_t etcd_data_t (fs_classes (rw)))
