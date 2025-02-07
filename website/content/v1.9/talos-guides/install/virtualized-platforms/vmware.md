@@ -75,8 +75,9 @@ If you apply the patch you can save this to a separate file (e.g. cni-patch.yaml
 cluster:
   network:
     cni:
-      extraArgs:
-        - --flannel-backend=host-gw
+      flannel:
+         extraArgs:
+           - --flannel-backend=host-gw
 ```
 
 ## Set Environment Variables
