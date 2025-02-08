@@ -81,6 +81,26 @@ type Builder struct {
 	unsignedUKIPath string
 }
 
+// Profile is a UKI Profile.
+// For now only cmdline is supported.
+type Profile struct {
+	ID    string
+	Title string
+
+	Cmdline string
+}
+
+// String returns the string representation of the profile that gets adds to the `.profile` section.
+func (p Profile) String() string {
+	s := fmt.Sprintf("ID=%s", p.ID)
+
+	if p.Title != "" {
+		s += fmt.Sprintf("\nTITLE=%s", p.Title)
+	}
+
+	return s
+}
+
 // Build the unsigned UKI file.
 //
 // Build process is as follows:
@@ -108,14 +128,14 @@ func (builder *Builder) Build(printf func(string, ...any)) error {
 
 	// generate and build list of all sections
 	for _, generateSection := range []func() error{
+		builder.generateSBAT,
 		builder.generateOSRel,
 		builder.generateCmdline,
-		builder.generateInitrd,
-		builder.generateSplash,
 		builder.generateUname,
-		builder.generateSBAT,
-		// append kernel last to account for decompression
+		builder.generateSplash,
 		builder.generateKernel,
+		builder.generateInitrd,
+		builder.generateProfiles,
 	} {
 		if err = generateSection(); err != nil {
 			return fmt.Errorf("error generating sections: %w", err)
@@ -169,16 +189,15 @@ func (builder *Builder) BuildSigned(printf func(string, ...any)) error {
 
 	// generate and build list of all sections
 	for _, generateSection := range []func() error{
+		builder.generateSBAT,
 		builder.generateOSRel,
 		builder.generateCmdline,
-		builder.generateInitrd,
-		builder.generateSplash,
 		builder.generateUname,
-		builder.generateSBAT,
+		builder.generateSplash,
 		builder.generatePCRPublicKey,
-		// append kernel last to account for decompression
 		builder.generateKernel,
-		// measure sections last
+		builder.generateInitrd,
+		builder.generateProfiles,
 		builder.generatePCRSig,
 	} {
 		if err = generateSection(); err != nil {

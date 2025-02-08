@@ -18,15 +18,13 @@ func GetSBAT(path string) ([]byte, error) {
 
 	defer pefile.Close() //nolint:errcheck
 
-	for _, section := range pefile.Sections {
-		if section.Name == string(SectionSBAT) {
-			data, err := section.Data()
-			if err != nil {
-				return nil, err
-			}
-
-			return data[:section.VirtualSize], nil
+	if sectionData := pefile.Section(SectionSBAT.String()); sectionData != nil {
+		data, err := sectionData.Data()
+		if err != nil {
+			return nil, err
 		}
+
+		return data[:sectionData.VirtualSize], nil
 	}
 
 	return nil, errors.New("could not find SBAT section")

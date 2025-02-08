@@ -177,6 +177,8 @@ func Probe(disk string, options options.ProbeOptions) (*Config, error) {
 }
 
 // KexecLoad does a kexec using the bootloader config.
+//
+//nolint:gocyclo
 func (c *Config) KexecLoad(r runtime.Runtime, disk string) error {
 	_, err := ProbeWithCallback(disk, options.ProbeOptions{}, func(conf *Config) error {
 		var kernelFd int
@@ -186,7 +188,11 @@ func (c *Config) KexecLoad(r runtime.Runtime, disk string) error {
 			return fmt.Errorf("failed to extract kernel and initrd from uki: %w", err)
 		}
 
-		defer assetInfo.Close() //nolint:errcheck
+		defer func() {
+			if assetInfo.Closer != nil {
+				assetInfo.Close() //nolint:errcheck
+			}
+		}()
 
 		kernelFd, err = unix.MemfdCreate("vmlinux", 0)
 		if err != nil {

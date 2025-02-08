@@ -8,14 +8,17 @@ import (
 	"crypto/x509"
 	"encoding/json"
 	"encoding/pem"
+	"fmt"
 	"os"
 	"path/filepath"
+	"slices"
 
 	talosx509 "github.com/siderolabs/crypto/x509"
 	"github.com/siderolabs/gen/xslices"
 
 	"github.com/siderolabs/talos/internal/pkg/measure"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
+	"github.com/siderolabs/talos/pkg/machinery/imager/quirks"
 	"github.com/siderolabs/talos/pkg/machinery/version"
 	"github.com/siderolabs/talos/pkg/splash"
 )
@@ -183,6 +186,63 @@ func (builder *Builder) generatePCRPublicKey() error {
 	return nil
 }
 
+func (builder *Builder) generateProfiles() error {
+	if !quirks.New(builder.Version).SupportsUKIProfiles() {
+		return nil
+	}
+
+	for _, profile := range []Profile{
+		{
+			ID: "main",
+		},
+		{
+			ID:    "reset-maintenance",
+			Title: "Reset to maintenance mode",
+
+			Cmdline: builder.Cmdline + " talos.experimental.wipe=system:EPHEMERAL,STATE",
+		},
+		{
+			ID:      "reset",
+			Title:   "Reset system disk",
+			Cmdline: builder.Cmdline + " talos.experimental.wipe=system",
+		},
+	} {
+		path := filepath.Join(builder.scratchDir, fmt.Sprintf("profile-%s", profile.ID))
+
+		if err := os.WriteFile(path, []byte(profile.String()), 0o600); err != nil {
+			return err
+		}
+
+		builder.sections = append(builder.sections,
+			section{
+				Name:    SectionProfile.String(),
+				Path:    path,
+				Append:  true,
+				Measure: true,
+			},
+		)
+
+		if profile.Cmdline != "" {
+			path = filepath.Join(builder.scratchDir, fmt.Sprintf("profile-%s-cmdline", profile.ID))
+
+			if err := os.WriteFile(path, []byte(profile.Cmdline), 0o600); err != nil {
+				return err
+			}
+
+			builder.sections = append(builder.sections,
+				section{
+					Name:    SectionCmdline.String(),
+					Path:    path,
+					Append:  true,
+					Measure: true,
+				},
+			)
+		}
+	}
+
+	return nil
+}
+
 func (builder *Builder) generateKernel() error {
 	path := builder.KernelPath
 
@@ -206,18 +266,61 @@ func (builder *Builder) generateKernel() error {
 	return nil
 }
 
-func (builder *Builder) generatePCRSig() error {
-	sectionsData := xslices.ToMap(
-		xslices.Filter(builder.sections,
-			func(s section) bool {
-				return s.Measure
-			},
-		),
-		func(s section) (string, string) {
-			return s.Name, s.Path
-		})
+type profileIndex struct {
+	Start int
+	End   int
+}
 
-	pcrData, err := measure.GenerateSignedPCR(sectionsData, builder.PCRSigner)
+func (builder *Builder) generatePCRSig() error {
+	toMeasure := xslices.Filter(builder.sections, func(s section) bool {
+		return s.Measure
+	})
+
+	if quirks.New(builder.Version).SupportsUKIProfiles() {
+		profileIndexes := []profileIndex{}
+
+		var previousProfileIndex int
+
+		for i, s := range toMeasure {
+			if s.Name == SectionProfile.String() {
+				if previousProfileIndex != 0 {
+					profileIndexes[len(profileIndexes)-1].End = i
+				}
+
+				profileIndexes = append(profileIndexes, profileIndex{Start: i})
+				previousProfileIndex = i
+			}
+		}
+
+		if previousProfileIndex != 0 {
+			profileIndexes[len(profileIndexes)-1].End = len(toMeasure)
+		}
+
+		for i, profileIndex := range profileIndexes {
+			profileData := xslices.ToMap(
+				slices.Concat(toMeasure[:profileIndexes[0].Start], toMeasure[profileIndex.Start:profileIndex.End]),
+				func(s section) (string, string) {
+					return s.Name, s.Path
+				},
+			)
+
+			if err := builder.writePCRSignature(profileData, fmt.Sprintf("pcrpsig-%d", i), profileIndex.End+i); err != nil {
+				return err
+			}
+		}
+
+		return nil
+	}
+
+	sectionData := xslices.ToMap(toMeasure, func(s section) (string, string) {
+		return s.Name, s.Path
+	})
+
+	return builder.writePCRSignature(sectionData, "pcrpsig", len(builder.sections))
+}
+
+func (builder *Builder) writePCRSignature(data map[string]string, filename string, insertIndex int) error {
+	pcrData, err := measure.GenerateSignedPCR(data, builder.PCRSigner)
 	if err != nil {
 		return err
 	}
@@ -227,19 +330,17 @@ func (builder *Builder) generatePCRSig() error {
 		return err
 	}
 
-	path := filepath.Join(builder.scratchDir, "pcrpsig")
+	path := filepath.Join(builder.scratchDir, filename)
 
 	if err = os.WriteFile(path, pcrSignatureData, 0o600); err != nil {
 		return err
 	}
 
-	builder.sections = append(builder.sections,
-		section{
-			Name:   SectionPCRSig.String(),
-			Path:   path,
-			Append: true,
-		},
-	)
+	builder.sections = slices.Insert(builder.sections, insertIndex, section{
+		Name:   SectionPCRSig.String(),
+		Path:   path,
+		Append: true,
+	})
 
 	return nil
 }

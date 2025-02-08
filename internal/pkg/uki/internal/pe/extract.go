@@ -10,17 +10,12 @@ import (
 	"io"
 )
 
-// fileCloser is an interface that wraps the Close method.
-type fileCloser interface {
-	Close() error
-}
-
 // AssetInfo contains the kernel, initrd, and cmdline from a PE file.
 type AssetInfo struct {
 	Kernel  io.Reader
 	Initrd  io.Reader
 	Cmdline io.Reader
-	fileCloser
+	io.Closer
 }
 
 // Extract extracts the kernel, initrd, and cmdline from a PE file.
@@ -30,7 +25,7 @@ func Extract(ukiPath string) (assetInfo AssetInfo, err error) {
 		return assetInfo, fmt.Errorf("failed to open PE file: %w", err)
 	}
 
-	assetInfo.fileCloser = peFile
+	assetInfo.Closer = peFile
 
 	sectionMap := map[string]*io.Reader{
 		".initrd":  &assetInfo.Initrd,
@@ -40,7 +35,7 @@ func Extract(ukiPath string) (assetInfo AssetInfo, err error) {
 
 	for _, section := range peFile.Sections {
 		if reader, exists := sectionMap[section.Name]; exists && *reader == nil {
-			*reader = io.NewSectionReader(section, 0, int64(section.VirtualSize))
+			*reader = io.LimitReader(section.Open(), int64(section.VirtualSize))
 		}
 	}
 

@@ -69,9 +69,9 @@ func TestAssembleNative(t *testing.T) {
 		}
 	}
 
-	require.NoError(t, pe.AssembleNative("testdata/sd-stub-amd64.efi", outNative, sections()))
+	require.NoError(t, pe.AssembleNative("testdata/linuxx64.efi.stub", outNative, sections()))
 
-	require.NoError(t, pe.AssembleObjcopy("testdata/sd-stub-amd64.efi", outObjcopy, sections()))
+	require.NoError(t, pe.AssembleObjcopy("testdata/linuxx64.efi.stub", outObjcopy, sections()))
 
 	headersNative := dumpHeaders(t, outNative)
 	headersObjcopy := dumpHeaders(t, outObjcopy)
@@ -170,7 +170,7 @@ func TestMultipleSections(t *testing.T) {
 		}
 	}
 
-	require.NoError(t, pe.AssembleNative("testdata/sd-stub-amd64.efi", outNative, sections()))
+	require.NoError(t, pe.AssembleNative("testdata/linuxx64.efi.stub", outNative, sections()))
 
 	sectionContents := extractSection(t, outNative, ".uname")
 

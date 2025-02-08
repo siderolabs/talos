@@ -92,7 +92,11 @@ func (c *Config) install(opts options.InstallOptions) (*options.InstallResult, e
 			return nil, err
 		}
 
-		defer assetInfo.Close() //nolint:errcheck
+		defer func() {
+			if assetInfo.Closer != nil {
+				assetInfo.Close() //nolint:errcheck
+			}
+		}()
 
 		if err := utils.CopyReader(
 			opts.Printf,

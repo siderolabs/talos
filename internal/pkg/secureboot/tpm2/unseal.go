@@ -180,7 +180,7 @@ func Unseal(sealed SealedResponse) ([]byte, error) {
 	}
 
 	if signature == "" {
-		return nil, errors.New("signature not found")
+		return nil, errors.New("no signatures matching PCR SHA256 digest found in signature JSON")
 	}
 
 	signatureDecoded, err := base64.StdEncoding.DecodeString(signature)

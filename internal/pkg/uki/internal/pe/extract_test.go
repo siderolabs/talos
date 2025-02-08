@@ -17,7 +17,7 @@ import (
 )
 
 func TestUKIExtract(t *testing.T) {
-	srcFile := "testdata/sd-stub-amd64.efi"
+	srcFile := "testdata/linuxx64.efi.stub"
 
 	destDir := t.TempDir()
 

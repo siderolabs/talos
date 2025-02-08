@@ -197,3 +197,16 @@ func (q Quirks) FirmwarePath() string {
 
 	return "/lib/firmware"
 }
+
+// minTalosVersionUKIProfiles is the version that supports UKI profiles.
+var minTalosVersionUKIProfiles = semver.MustParse("1.10.0")
+
+// SupportsUKIProfiles returns true if the Talos version supports UKI profiles.
+func (q Quirks) SupportsUKIProfiles() bool {
+	// if the version doesn't parse, we assume it's latest Talos
+	if q.v == nil {
+		return true
+	}
+
+	return q.v.GTE(minTalosVersionUKIProfiles)
+}

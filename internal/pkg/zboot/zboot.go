@@ -16,13 +16,8 @@ import (
 	"golang.org/x/sys/unix"
 )
 
-// fileCloser is an interface that wraps the Close method.
-type fileCloser interface {
-	Close() error
-}
-
 // Extract extracts the kernel from a Zboot image and returns a file descriptor of the extracted kernel.
-func Extract(kernel *os.File) (int, fileCloser, error) {
+func Extract(kernel *os.File) (int, io.Closer, error) {
 	// https://git.kernel.org/pub/scm/utils/kernel/kexec/kexec-tools.git/tree/include/kexec-pe-zboot.h
 	var peZbootheaderData [28]byte
 
