@@ -94,7 +94,7 @@ network:
         peers:
           allowedIPs:
             - 192.168.88.0/24
-          endpoint: 209.202.254.14.8172
+          endpoint: 209.202.254.14:8172
           publicKey: ABCDEF...
 ...
 ```
