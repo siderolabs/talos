@@ -52,6 +52,13 @@ func (EthernetConfigV1Alpha1) Doc() *encoder.Doc {
 				Comments:    [3]string{"" /* encoder.HeadComment */, "Name of the link (interface)." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
 			{
+				Name:        "features",
+				Type:        "map[string]bool",
+				Note:        "",
+				Description: "Configuration for Ethernet features.\n\nSet of features available and whether they can be enabled or disabled is driver specific.\nUse `talosctl get ethernetstatus <link> -o yaml` to get the list of available features and\ntheir current status.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Configuration for Ethernet features." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
 				Name:        "rings",
 				Type:        "EthernetRingsConfig",
 				Note:        "",

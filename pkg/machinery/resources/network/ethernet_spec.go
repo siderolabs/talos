@@ -23,7 +23,8 @@ type EthernetSpec = typed.Resource[EthernetSpecSpec, EthernetSpecExtension]
 //
 //gotagsrewrite:gen
 type EthernetSpecSpec struct {
-	Rings EthernetRingsSpec `yaml:"rings,omitempty" protobuf:"1"`
+	Rings    EthernetRingsSpec `yaml:"rings,omitempty" protobuf:"1"`
+	Features map[string]bool   `yaml:"features,omitempty" protobuf:"2"`
 }
 
 // EthernetRingsSpec describes config of Ethernet rings.

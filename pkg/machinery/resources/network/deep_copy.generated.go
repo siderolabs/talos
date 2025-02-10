@@ -73,6 +73,12 @@ func (o EthernetSpecSpec) DeepCopy() EthernetSpecSpec {
 		cp.Rings.TCPDataSplit = new(bool)
 		*cp.Rings.TCPDataSplit = *o.Rings.TCPDataSplit
 	}
+	if o.Features != nil {
+		cp.Features = make(map[string]bool, len(o.Features))
+		for k2, v2 := range o.Features {
+			cp.Features[k2] = v2
+		}
+	}
 	return cp
 }
 
@@ -154,6 +160,10 @@ func (o EthernetStatusSpec) DeepCopy() EthernetStatusSpec {
 			cp.Rings.TCPDataSplit = new(bool)
 			*cp.Rings.TCPDataSplit = *o.Rings.TCPDataSplit
 		}
+	}
+	if o.Features != nil {
+		cp.Features = make([]EthernetFeatureStatus, len(o.Features))
+		copy(cp.Features, o.Features)
 	}
 	return cp
 }

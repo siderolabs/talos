@@ -17,6 +17,9 @@ title: EthernetConfig
 apiVersion: v1alpha1
 kind: EthernetConfig
 name: enp0s2 # Name of the link (interface).
+# Configuration for Ethernet features.
+features:
+    tx-tcp-segmentation: false
 # Configuration for Ethernet link rings.
 rings:
     rx: 256 # Number of RX rings.
@@ -26,6 +29,7 @@ rings:
 | Field | Type | Description | Value(s) |
 |-------|------|-------------|----------|
 |`name` |string |Name of the link (interface).  | |
+|`features` |map[string]bool |<details><summary>Configuration for Ethernet features.</summary><br />Set of features available and whether they can be enabled or disabled is driver specific.<br />Use `talosctl get ethernetstatus <link> -o yaml` to get the list of available features and<br />their current status.</details>  | |
 |`rings` |<a href="#EthernetConfig.rings">EthernetRingsConfig</a> |<details><summary>Configuration for Ethernet link rings.</summary><br />This is similar to `ethtool -G` command.</details>  | |
 
 

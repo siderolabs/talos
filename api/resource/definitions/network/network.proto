@@ -102,6 +102,12 @@ message DNSResolveCacheSpec {
   string status = 1;
 }
 
+// EthernetFeatureStatus describes status of Ethernet features.
+message EthernetFeatureStatus {
+  string name = 1;
+  string status = 2;
+}
+
 // EthernetRingsSpec describes config of Ethernet rings.
 message EthernetRingsSpec {
   uint32 rx = 1;
@@ -138,6 +144,7 @@ message EthernetRingsStatus {
 // EthernetSpecSpec describes config of Ethernet link.
 message EthernetSpecSpec {
   EthernetRingsSpec rings = 1;
+  map<string, bool> features = 2;
 }
 
 // EthernetStatusSpec describes status of rendered secrets.
@@ -149,6 +156,7 @@ message EthernetStatusSpec {
   repeated string our_modes = 5;
   repeated string peer_modes = 6;
   EthernetRingsStatus rings = 7;
+  repeated EthernetFeatureStatus features = 8;
 }
 
 // HardwareAddrSpec describes spec for the link.

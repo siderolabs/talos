@@ -7,11 +7,14 @@ package network
 //docgen:jsonschema
 
 import (
+	"errors"
+
 	"github.com/siderolabs/go-pointer"
 
 	"github.com/siderolabs/talos/pkg/machinery/config/config"
 	"github.com/siderolabs/talos/pkg/machinery/config/internal/registry"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/meta"
+	"github.com/siderolabs/talos/pkg/machinery/config/validation"
 )
 
 // EthernetKind is a Ethernet config document kind.
@@ -32,6 +35,7 @@ func init() {
 var (
 	_ config.EthernetConfig = &EthernetConfigV1Alpha1{}
 	_ config.NamedDocument  = &EthernetConfigV1Alpha1{}
+	_ config.Validator      = &EthernetConfigV1Alpha1{}
 )
 
 // EthernetConfigV1Alpha1 is a config document to configure Ethernet interfaces.
@@ -47,6 +51,13 @@ type EthernetConfigV1Alpha1 struct {
 	//     Name of the link (interface).
 	//   schemaRequired: true
 	MetaName string `yaml:"name"`
+	//   description: |
+	//     Configuration for Ethernet features.
+	//
+	//     Set of features available and whether they can be enabled or disabled is driver specific.
+	//     Use `talosctl get ethernetstatus <link> -o yaml` to get the list of available features and
+	//     their current status.
+	FeaturesConfig map[string]bool `yaml:"features,omitempty"`
 	//   description: |
 	//     Configuration for Ethernet link rings.
 	//
@@ -104,6 +115,9 @@ func exampleEthernetConfigV1Alpha1() *EthernetConfigV1Alpha1 {
 	cfg.RingsConfig = &EthernetRingsConfig{
 		RX: pointer.To[uint32](256),
 	}
+	cfg.FeaturesConfig = map[string]bool{
+		"tx-tcp-segmentation": false,
+	}
 
 	return cfg
 }
@@ -121,4 +135,18 @@ func (s *EthernetConfigV1Alpha1) Name() string {
 // Rings implements config.EthernetConfig interface.
 func (s *EthernetConfigV1Alpha1) Rings() config.EthernetRingsConfig {
 	return config.EthernetRingsConfig(pointer.SafeDeref(s.RingsConfig))
+}
+
+// Features implements config.EthernetConfig interface.
+func (s *EthernetConfigV1Alpha1) Features() map[string]bool {
+	return s.FeaturesConfig
+}
+
+// Validate implements config.Validator interface.
+func (s *EthernetConfigV1Alpha1) Validate(validation.RuntimeMode, ...validation.Option) ([]string, error) {
+	if s.MetaName == "" {
+		return nil, errors.New("name is required")
+	}
+
+	return nil, nil
 }

@@ -9,6 +9,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/resource/meta"
 	"github.com/cosi-project/runtime/pkg/resource/protobuf"
 	"github.com/cosi-project/runtime/pkg/resource/typed"
+	"gopkg.in/yaml.v3"
 
 	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
 	"github.com/siderolabs/talos/pkg/machinery/proto"
@@ -24,13 +25,39 @@ type EthernetStatus = typed.Resource[EthernetStatusSpec, EthernetStatusExtension
 //
 //gotagsrewrite:gen
 type EthernetStatusSpec struct {
-	LinkState     *bool                `yaml:"linkState,omitempty" protobuf:"1"`
-	SpeedMegabits int                  `yaml:"speedMbit,omitempty" protobuf:"2"`
-	Port          nethelpers.Port      `yaml:"port" protobuf:"3"`
-	Duplex        nethelpers.Duplex    `yaml:"duplex" protobuf:"4"`
-	OurModes      []string             `yaml:"ourModes,omitempty" protobuf:"5"`
-	PeerModes     []string             `yaml:"peerModes,omitempty" protobuf:"6"`
-	Rings         *EthernetRingsStatus `yaml:"rings,omitempty" protobuf:"7"`
+	LinkState     *bool                     `yaml:"linkState,omitempty" protobuf:"1"`
+	SpeedMegabits int                       `yaml:"speedMbit,omitempty" protobuf:"2"`
+	Port          nethelpers.Port           `yaml:"port" protobuf:"3"`
+	Duplex        nethelpers.Duplex         `yaml:"duplex" protobuf:"4"`
+	OurModes      []string                  `yaml:"ourModes,omitempty" protobuf:"5"`
+	PeerModes     []string                  `yaml:"peerModes,omitempty" protobuf:"6"`
+	Rings         *EthernetRingsStatus      `yaml:"rings,omitempty" protobuf:"7"`
+	Features      EthernetFeatureStatusList `yaml:"features,omitempty" protobuf:"8"`
+}
+
+// EthernetFeatureStatusList is a list of EthernetFeatureStatus.
+type EthernetFeatureStatusList []EthernetFeatureStatus
+
+// MarshalYAML implements yaml.Marshaler interface.
+func (l EthernetFeatureStatusList) MarshalYAML() (any, error) {
+	// marshal into a custom dict for easier reading
+	// we use this to preserve the order of Features which is important for the user
+	node := &yaml.Node{
+		Kind:    yaml.MappingNode,
+		Content: make([]*yaml.Node, 0, len(l)*2),
+	}
+
+	for _, f := range l {
+		node.Content = append(node.Content, &yaml.Node{
+			Kind:  yaml.ScalarNode,
+			Value: f.Name,
+		}, &yaml.Node{
+			Kind:  yaml.ScalarNode,
+			Value: f.Status,
+		})
+	}
+
+	return node, nil
 }
 
 // EthernetRingsStatus describes status of Ethernet rings.
@@ -55,6 +82,14 @@ type EthernetRingsStatus struct {
 	RXPush       *bool   `yaml:"rx-push,omitempty" protobuf:"13"`
 	TXPushBufLen *uint32 `yaml:"tx-push-buf-len,omitempty" protobuf:"14"`
 	TCPDataSplit *bool   `yaml:"tcp-data-split,omitempty" protobuf:"15"`
+}
+
+// EthernetFeatureStatus describes status of Ethernet features.
+//
+//gotagsrewrite:gen
+type EthernetFeatureStatus struct {
+	Name   string `yaml:"name" protobuf:"1"`
+	Status string `yaml:"status" protobuf:"2"`
 }
 
 // NewEthernetStatus initializes a EthernetStatus resource.

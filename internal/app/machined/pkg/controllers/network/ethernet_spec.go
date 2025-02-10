@@ -29,13 +29,7 @@ func (ctrl *EthernetSpecController) Name() string {
 
 // Inputs implements controller.Controller interface.
 func (ctrl *EthernetSpecController) Inputs() []controller.Input {
-	return []controller.Input{
-		{
-			Namespace: network.NamespaceName,
-			Type:      network.EthernetSpecType,
-			Kind:      controller.InputWeak,
-		},
-	}
+	return nil
 }
 
 // Outputs implements controller.Controller interface.
@@ -128,6 +122,19 @@ func (ctrl *EthernetSpecController) apply(
 			TCPDataSplit: optionalFromPtr(ringSpec.TCPDataSplit),
 		}); err != nil {
 			return fmt.Errorf("error updating rings: %w", err)
+		}
+	}
+
+	featureSpec := spec.TypedSpec().Features
+
+	if len(featureSpec) > 0 {
+		if err := ethClient.SetFeatures(
+			ethtool.Interface{
+				Name: spec.Metadata().ID(),
+			},
+			featureSpec,
+		); err != nil {
+			return fmt.Errorf("error updating features: %w", err)
 		}
 	}
 

@@ -28,6 +28,9 @@ func TestEthernetConfigMarshalStability(t *testing.T) {
 	cfg.RingsConfig = &network.EthernetRingsConfig{
 		RX: pointer.To[uint32](16),
 	}
+	cfg.FeaturesConfig = map[string]bool{
+		"tx-checksum-ipv4": true,
+	}
 
 	marshaled, err := encoder.NewEncoder(cfg, encoder.WithComments(encoder.CommentsDisabled)).Encode()
 	require.NoError(t, err)
@@ -52,8 +55,60 @@ func TestEthernetConfigUnmarshal(t *testing.T) {
 			MetaKind:       network.EthernetKind,
 		},
 		MetaName: "enp0s1",
+		FeaturesConfig: map[string]bool{
+			"tx-checksum-ipv4": true,
+		},
 		RingsConfig: &network.EthernetRingsConfig{
 			RX: pointer.To[uint32](16),
 		},
 	}, docs[0])
+}
+
+func TestEthernetValidate(t *testing.T) {
+	t.Parallel()
+
+	for _, test := range []struct {
+		name string
+		cfg  func() *network.EthernetConfigV1Alpha1
+
+		expectedError    string
+		expectedWarnings []string
+	}{
+		{
+			name: "empty",
+			cfg: func() *network.EthernetConfigV1Alpha1 {
+				return network.NewEthernetConfigV1Alpha1("")
+			},
+
+			expectedError: "name is required",
+		},
+		{
+			name: "valid",
+			cfg: func() *network.EthernetConfigV1Alpha1 {
+				cfg := network.NewEthernetConfigV1Alpha1("enp0s1")
+				cfg.FeaturesConfig = map[string]bool{
+					"tx-checksum-ipv4": true,
+				}
+				cfg.RingsConfig = &network.EthernetRingsConfig{
+					RX: pointer.To[uint32](16),
+				}
+
+				return cfg
+			},
+		},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+
+			warnings, err := test.cfg().Validate(validationMode{})
+
+			assert.Equal(t, test.expectedWarnings, warnings)
+
+			if test.expectedError != "" {
+				assert.EqualError(t, err, test.expectedError)
+			} else {
+				assert.NoError(t, err)
+			}
+		})
+	}
 }

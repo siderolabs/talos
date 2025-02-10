@@ -29,6 +29,12 @@ func (o *KubespanEndpointsConfigV1Alpha1) DeepCopy() *KubespanEndpointsConfigV1A
 // DeepCopy generates a deep copy of *EthernetConfigV1Alpha1.
 func (o *EthernetConfigV1Alpha1) DeepCopy() *EthernetConfigV1Alpha1 {
 	var cp EthernetConfigV1Alpha1 = *o
+	if o.FeaturesConfig != nil {
+		cp.FeaturesConfig = make(map[string]bool, len(o.FeaturesConfig))
+		for k2, v2 := range o.FeaturesConfig {
+			cp.FeaturesConfig[k2] = v2
+		}
+	}
 	if o.RingsConfig != nil {
 		cp.RingsConfig = new(EthernetRingsConfig)
 		*cp.RingsConfig = *o.RingsConfig

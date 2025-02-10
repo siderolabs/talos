@@ -237,11 +237,7 @@ func TypeInfo(t types.Type) TypeInfoData {
 		}
 
 		if underlying, ok := t.Underlying().(*types.Slice); ok {
-			if underlying, ok := underlying.Elem().(*types.Basic); ok {
-				return makeSliceType(makeType[Basic]("", underlying.Name()))
-			}
-
-			panic(fmt.Sprintf("unsupported named slice type %s", t.String()))
+			return makeSliceType(TypeInfo(underlying.Elem()))
 		}
 
 		return makeType[Complex](t.Obj().Pkg().Path(), t.Obj().Name())

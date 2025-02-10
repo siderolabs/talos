@@ -54,7 +54,7 @@ func (ctrl *EthernetStatusController) Run(ctx context.Context, r controller.Runt
 			{
 				Namespace: network.NamespaceName,
 				Type:      network.LinkSpecType,
-				Kind:      controller.InputStrong,
+				Kind:      controller.InputWeak,
 			},
 		},
 	); err != nil {
@@ -135,6 +135,11 @@ func (ctrl *EthernetStatusController) reconcile(
 			lgger.Warn("error getting rings", zap.Error(err))
 		}
 
+		features, err := ethClient.Features(iface)
+		if err != nil && !errors.Is(err, os.ErrNotExist) {
+			lgger.Warn("error getting features", zap.Error(err))
+		}
+
 		if err := safe.WriterModify(ctx, r, network.NewEthernetStatus(network.NamespaceName, iface.Name), func(res *network.EthernetStatus) error {
 			res.TypedSpec().Port = nethelpers.Port(linkInfo.Port)
 
@@ -172,6 +177,17 @@ func (ctrl *EthernetStatusController) reconcile(
 					TXPushBufLen:    rings.TXPushBufLen.Ptr(),
 					TCPDataSplit:    rings.TCPDataSplit.Ptr(),
 				}
+			}
+
+			if features == nil {
+				res.TypedSpec().Features = nil
+			} else {
+				res.TypedSpec().Features = xslices.Map(features, func(f ethtool.FeatureInfo) network.EthernetFeatureStatus {
+					return network.EthernetFeatureStatus{
+						Name:   f.Name,
+						Status: f.State() + f.Suffix(),
+					}
+				})
 			}
 
 			return nil

@@ -69,6 +69,7 @@ func (w networkRuleConfigWrapper) Rules() []NetworkRule {
 type EthernetConfig interface {
 	NamedDocument
 	Rings() EthernetRingsConfig
+	Features() map[string]bool
 }
 
 // EthernetRingsConfig defines a configuration for Ethernet link rings.

@@ -276,6 +276,18 @@
           "markdownDescription": "Name of the link (interface).",
           "x-intellij-html-description": "\u003cp\u003eName of the link (interface).\u003c/p\u003e\n"
         },
+        "features": {
+          "patternProperties": {
+            ".*": {
+              "type": "boolean"
+            }
+          },
+          "type": "object",
+          "title": "features",
+          "description": "Configuration for Ethernet features.\n\nSet of features available and whether they can be enabled or disabled is driver specific.\nUse talosctl get ethernetstatus \u0026lt;link\u0026gt; -o yaml to get the list of available features and\ntheir current status.\n",
+          "markdownDescription": "Configuration for Ethernet features.\n\nSet of features available and whether they can be enabled or disabled is driver specific.\nUse `talosctl get ethernetstatus \u003clink\u003e -o yaml` to get the list of available features and\ntheir current status.",
+          "x-intellij-html-description": "\u003cp\u003eConfiguration for Ethernet features.\u003c/p\u003e\n\n\u003cp\u003eSet of features available and whether they can be enabled or disabled is driver specific.\nUse \u003ccode\u003etalosctl get ethernetstatus \u0026lt;link\u0026gt; -o yaml\u003c/code\u003e to get the list of available features and\ntheir current status.\u003c/p\u003e\n"
+        },
         "rings": {
           "$ref": "#/$defs/network.EthernetRingsConfig",
           "title": "rings",
