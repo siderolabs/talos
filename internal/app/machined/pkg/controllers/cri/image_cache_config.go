@@ -399,7 +399,7 @@ func (ctrl *ImageCacheConfigController) analyzeImageCacheVolumes(ctx context.Con
 	case ctrl.cacheCopyDone:
 		// if the copy has already been done, we don't need to do it again
 		copyStatus = cri.ImageCacheCopyStatusReady
-	case isoReady && diskReady:
+	case isoReady && diskReady && copySource != "" && copyTarget != "":
 		// ready to copy
 		if err := ctrl.copyImageCache(ctx, logger, copySource, copyTarget); err != nil {
 			return nil, fmt.Errorf("error copying image cache: %w", err)
@@ -420,7 +420,7 @@ func (ctrl *ImageCacheConfigController) analyzeImageCacheVolumes(ctx context.Con
 
 func (ctrl *ImageCacheConfigController) getImageCacheRoot(ctx context.Context, r controller.Reader, volumeStatus *block.VolumeStatus, mountReadyOnly bool) (optional.Optional[string], bool, error) {
 	switch volumeStatus.TypedSpec().Phase { //nolint:exhaustive
-	case block.VolumePhaseMissing:
+	case block.VolumePhaseMissing, block.VolumePhaseFailed, block.VolumePhaseWaiting:
 		// image cache is missing
 		return optional.None[string](), true, nil
 	case block.VolumePhaseReady:

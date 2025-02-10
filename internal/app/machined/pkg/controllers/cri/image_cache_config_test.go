@@ -120,6 +120,41 @@ func (suite *ImageCacheConfigSuite) TestReconcileFeatureEnabled() {
 	})
 }
 
+func (suite *ImageCacheConfigSuite) TestReconcileJustDiskVolume() {
+	cfg := config.NewMachineConfig(container.NewV1Alpha1(&v1alpha1.Config{
+		MachineConfig: &v1alpha1.MachineConfig{
+			MachineFeatures: &v1alpha1.FeaturesConfig{
+				ImageCacheSupport: &v1alpha1.ImageCacheConfig{
+					CacheLocalEnabled: pointer.To(true),
+				},
+			},
+		},
+	}))
+
+	suite.Require().NoError(suite.State().Create(suite.Ctx(), cfg))
+
+	ctest.AssertResource(suite, cri.ImageCacheConfigID, func(r *cri.ImageCacheConfig, asrt *assert.Assertions) {
+		asrt.Equal(cri.ImageCacheStatusPreparing, r.TypedSpec().Status)
+		asrt.Equal(cri.ImageCacheCopyStatusUnknown, r.TypedSpec().CopyStatus)
+	})
+
+	// create volume statuses to simulate the volume being ready/not
+	vs1 := block.NewVolumeStatus(block.NamespaceName, crictrl.VolumeImageCacheISO)
+	vs1.TypedSpec().Phase = block.VolumePhaseMissing
+	suite.Require().NoError(suite.State().Create(suite.Ctx(), vs1))
+
+	vs2 := block.NewVolumeStatus(block.NamespaceName, crictrl.VolumeImageCacheDISK)
+	vs2.TypedSpec().Phase = block.VolumePhaseWaiting
+	suite.Require().NoError(suite.State().Create(suite.Ctx(), vs2))
+
+	// ISO is missing, but disk volume is not ready yet
+	ctest.AssertResource(suite, cri.ImageCacheConfigID, func(r *cri.ImageCacheConfig, asrt *assert.Assertions) {
+		asrt.Equal(cri.ImageCacheStatusDisabled, r.TypedSpec().Status)
+		asrt.Equal(cri.ImageCacheCopyStatusSkipped, r.TypedSpec().CopyStatus)
+		asrt.Empty(r.TypedSpec().Roots)
+	})
+}
+
 func (suite *ImageCacheConfigSuite) TestReconcileWithImageCacheVolume() {
 	v1alpha1Cfg := &v1alpha1.Config{
 		MachineConfig: &v1alpha1.MachineConfig{
