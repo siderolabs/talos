@@ -23,7 +23,7 @@ DEBUG_TOOLS_SOURCE := scratch
 EMBED_TARGET ?= embed
 
 PKGS_PREFIX ?= ghcr.io/siderolabs
-PKGS ?= v1.10.0-alpha.0-35-g85f8901
+PKGS ?= v1.10.0-alpha.0-36-g117a1d6
 EXTRAS ?= v1.10.0-alpha.0-3-g4102a78
 
 KRES_IMAGE ?= ghcr.io/siderolabs/kres:latest
