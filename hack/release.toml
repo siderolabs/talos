@@ -22,7 +22,7 @@ preface = """
 * Kubernetes: 1.23.1
 * etcd: 3.5.18
 
-Talos is built with Go 1.23.5.
+Talos is built with Go 1.23.6.
 """
 
 [make_deps]
