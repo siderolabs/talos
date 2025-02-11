@@ -118,8 +118,13 @@ func (h *Handler) ServeDNS(ctx context.Context, wrt dns.ResponseWriter, msg *dns
 	defer h.mx.RUnlock()
 
 	req := request.Request{W: wrt, Req: msg}
-
-	h.logger.Debug("dns request", zap.Stringer("data", msg))
+	logger := h.logger.With(
+		zap.Stringer("data", msg),
+		zap.String("proto", req.Proto()),
+		zap.String("question", req.QName()),
+		zap.Stringer("local_addr", wrt.LocalAddr()),
+		zap.Stringer("remote_addr", wrt.RemoteAddr()),
+	)
 
 	var (
 		called bool
@@ -130,6 +135,8 @@ func (h *Handler) ServeDNS(ctx context.Context, wrt dns.ResponseWriter, msg *dns
 	for ups := range h.dests {
 		called = true
 		opts := proxy.Options{}
+
+		logger.Debug("making dns request", zap.String("upstream", ups.Addr()))
 
 		for {
 			resp, err = ups.Connect(ctx, req, opts)
@@ -168,7 +175,7 @@ func (h *Handler) ServeDNS(ctx context.Context, wrt dns.ResponseWriter, msg *dns
 	}
 
 	if !req.Match(resp) {
-		h.logger.Warn("dns response didn't match", zap.Stringer("data", resp))
+		logger.Warn("dns response didn't match", zap.Stringer("data", resp))
 
 		return dns.RcodeFormatError, nil
 	}
@@ -176,10 +183,10 @@ func (h *Handler) ServeDNS(ctx context.Context, wrt dns.ResponseWriter, msg *dns
 	err = wrt.WriteMsg(resp)
 	if err != nil {
 		// We can't do much here, but at least log the error.
-		h.logger.Warn("error writing dns response", zap.Error(err))
+		logger.Warn("error writing dns response", zap.Error(err))
 	}
 
-	h.logger.Debug("dns response", zap.Stringer("data", resp))
+	logger.Debug("dns response", zap.Stringer("data", resp))
 
 	return dns.RcodeSuccess, nil
 }
