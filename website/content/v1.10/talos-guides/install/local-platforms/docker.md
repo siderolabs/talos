@@ -34,7 +34,7 @@ Further, when running on a Mac in docker, due to networking limitations, VIPs ar
 Creating a local cluster is as simple as:
 
 ```bash
-talosctl cluster create
+talosctl cluster create docker
 ```
 
 Once the above finishes successfully, your `talosconfig` (`~/.talos/config`)  and `kubeconfig` (`~/.kube/config`) will be configured to point to the new cluster.
