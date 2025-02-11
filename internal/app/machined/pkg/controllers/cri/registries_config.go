@@ -9,7 +9,6 @@ import (
 	"fmt"
 
 	"github.com/cosi-project/runtime/pkg/controller"
-	"github.com/cosi-project/runtime/pkg/controller/generic/transform"
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/siderolabs/gen/optional"
@@ -22,78 +21,111 @@ import (
 )
 
 // RegistriesConfigController watches v1alpha1.Config, updates registry.RegistriesConfig.
-type RegistriesConfigController = transform.Controller[*config.MachineConfig, *cri.RegistriesConfig]
+type RegistriesConfigController struct{}
 
-// NewRegistriesConfigController creates new config controller.
+// Name implements controller.Controller interface.
+func (ctrl *RegistriesConfigController) Name() string {
+	return "cri.RegistriesConfigController"
+}
+
+// Inputs implements controller.Controller interface.
+func (ctrl *RegistriesConfigController) Inputs() []controller.Input {
+	return []controller.Input{
+		{
+			Namespace: config.NamespaceName,
+			Type:      config.MachineConfigType,
+			ID:        optional.Some(config.V1Alpha1ID),
+			Kind:      controller.InputWeak,
+		},
+		{
+			Namespace: cri.NamespaceName,
+			Type:      cri.ImageCacheConfigType,
+			Kind:      controller.InputWeak,
+		},
+	}
+}
+
+// Outputs implements controller.Controller interface.
+func (ctrl *RegistriesConfigController) Outputs() []controller.Output {
+	return []controller.Output{
+		{
+			Type: cri.RegistriesConfigType,
+			Kind: controller.OutputExclusive,
+		},
+	}
+}
+
+// Run implements controller.Controller interface.
 //
 //nolint:gocyclo
-func NewRegistriesConfigController() *RegistriesConfigController {
-	return transform.NewController(
-		transform.Settings[*config.MachineConfig, *cri.RegistriesConfig]{
-			Name: "cri.RegistriesConfigController",
-			MapMetadataOptionalFunc: func(cfg *config.MachineConfig) optional.Optional[*cri.RegistriesConfig] {
-				if cfg.Metadata().ID() != config.V1Alpha1ID {
-					return optional.None[*cri.RegistriesConfig]()
+func (ctrl *RegistriesConfigController) Run(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
+	for {
+		select {
+		case <-ctx.Done():
+			return nil
+		case <-r.EventCh():
+		}
+
+		r.StartTrackingOutputs()
+
+		cfg, err := safe.ReaderGetByID[*config.MachineConfig](ctx, r, config.V1Alpha1ID)
+		if err != nil && !state.IsNotFoundError(err) {
+			return fmt.Errorf("failed to get machine config: %w", err)
+		}
+
+		imageCacheConfig, err := safe.ReaderGetByID[*cri.ImageCacheConfig](ctx, r, cri.ImageCacheConfigID)
+		if err != nil && !state.IsNotFoundError(err) {
+			return fmt.Errorf("failed to get image cache config: %w", err)
+		}
+
+		if err := safe.WriterModify(ctx, r, cri.NewRegistriesConfig(), func(res *cri.RegistriesConfig) error {
+			spec := res.TypedSpec()
+
+			spec.RegistryConfig = clearInit(spec.RegistryConfig)
+			spec.RegistryMirrors = clearInit(spec.RegistryMirrors)
+
+			if cfg != nil && cfg.Config().Machine() != nil {
+				// This is breaking our interface abstraction, but we need to get the underlying types for protobuf
+				// encoding to work correctly.
+				mr := cfg.Provider().RawV1Alpha1().MachineConfig.MachineRegistries
+
+				for k, v := range mr.RegistryConfig {
+					spec.RegistryConfig[k] = makeRegistryConfig(v)
 				}
 
-				return optional.Some(cri.NewRegistriesConfig())
-			},
-			TransformFunc: func(ctx context.Context, r controller.Reader, logger *zap.Logger, cfg *config.MachineConfig, res *cri.RegistriesConfig) error {
-				imageCacheConfig, err := safe.ReaderGetByID[*cri.ImageCacheConfig](ctx, r, cri.ImageCacheConfigID)
-				if err != nil && !state.IsNotFoundError(err) {
-					return fmt.Errorf("failed to get image cache config: %w", err)
-				}
-
-				spec := res.TypedSpec()
-
-				spec.RegistryConfig = clearInit(spec.RegistryConfig)
-				spec.RegistryMirrors = clearInit(spec.RegistryMirrors)
-
-				if cfg != nil && cfg.Config().Machine() != nil {
-					// This is breaking our interface abstraction, but we need to get the underlying types for protobuf
-					// encoding to work correctly.
-					mr := cfg.Provider().RawV1Alpha1().MachineConfig.MachineRegistries
-
-					for k, v := range mr.RegistryConfig {
-						spec.RegistryConfig[k] = makeRegistryConfig(v)
-					}
-
-					for k, v := range mr.RegistryMirrors {
-						spec.RegistryMirrors[k] = &cri.RegistryMirrorConfig{
-							MirrorEndpoints:    v.MirrorEndpoints,
-							MirrorOverridePath: v.MirrorOverridePath,
-							MirrorSkipFallback: v.MirrorSkipFallback,
-						}
+				for k, v := range mr.RegistryMirrors {
+					spec.RegistryMirrors[k] = &cri.RegistryMirrorConfig{
+						MirrorEndpoints:    v.MirrorEndpoints,
+						MirrorOverridePath: v.MirrorOverridePath,
+						MirrorSkipFallback: v.MirrorSkipFallback,
 					}
 				}
+			}
 
-				if imageCacheConfig != nil && imageCacheConfig.TypedSpec().Status == cri.ImageCacheStatusReady {
-					// if the '*' was configured, we just use it, otherwise create it so that we can inject the registryd
-					if _, hasStar := spec.RegistryMirrors["*"]; !hasStar {
-						spec.RegistryMirrors["*"] = &cri.RegistryMirrorConfig{}
-					}
-
-					// inject the registryd mirror endpoint as the first one for all registries
-					for registry := range spec.RegistryMirrors {
-						spec.RegistryMirrors[registry].MirrorEndpoints = append(
-							[]string{"http://" + constants.RegistrydListenAddress},
-							spec.RegistryMirrors[registry].MirrorEndpoints...,
-						)
-					}
+			if imageCacheConfig != nil && imageCacheConfig.TypedSpec().Status == cri.ImageCacheStatusReady {
+				// if the '*' was configured, we just use it, otherwise create it so that we can inject the registryd
+				if _, hasStar := spec.RegistryMirrors["*"]; !hasStar {
+					spec.RegistryMirrors["*"] = &cri.RegistryMirrorConfig{}
 				}
 
-				return nil
-			},
-		},
-		transform.WithExtraInputs(
-			controller.Input{
-				Namespace: cri.NamespaceName,
-				Type:      cri.ImageCacheConfigType,
-				ID:        optional.Some(cri.ImageCacheConfigID),
-				Kind:      controller.InputWeak,
-			},
-		),
-	)
+				// inject the registryd mirror endpoint as the first one for all registries
+				for registry := range spec.RegistryMirrors {
+					spec.RegistryMirrors[registry].MirrorEndpoints = append(
+						[]string{"http://" + constants.RegistrydListenAddress},
+						spec.RegistryMirrors[registry].MirrorEndpoints...,
+					)
+				}
+			}
+
+			return nil
+		}); err != nil {
+			return fmt.Errorf("failed to write registries config: %w", err)
+		}
+
+		if err := safe.CleanupOutputs[*cri.RegistriesConfig](ctx, r); err != nil {
+			return fmt.Errorf("failed to clean up outputs: %w", err)
+		}
+	}
 }
 
 func clearInit[M ~map[K]V, K comparable, V any](m M) M {

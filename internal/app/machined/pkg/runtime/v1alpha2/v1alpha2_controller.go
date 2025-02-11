@@ -135,6 +135,7 @@ func (ctrl *Controller) Run(ctx context.Context, drainer *runtime.Drainer) error
 			V1Alpha1ServiceManager: system.Services(ctrl.v1alpha1Runtime),
 			VolumeMounter:          mount.IdempotentSystemPartitionMounter(ctrl.v1alpha1Runtime),
 		},
+		&cri.RegistriesConfigController{},
 		&cri.SeccompProfileController{},
 		&cri.SeccompProfileFileController{
 			V1Alpha1Mode:             ctrl.v1alpha1Runtime.State().Platform().Mode(),
@@ -281,7 +282,6 @@ func (ctrl *Controller) Run(ctx context.Context, drainer *runtime.Drainer) error
 		&network.TimeServerMergeController{},
 		&network.TimeServerSpecController{},
 		&perf.StatsController{},
-		cri.NewRegistriesConfigController(),
 		&runtimecontrollers.CRIImageGCController{},
 		&runtimecontrollers.DevicesStatusController{
 			V1Alpha1Mode: ctrl.v1alpha1Runtime.State().Platform().Mode(),
