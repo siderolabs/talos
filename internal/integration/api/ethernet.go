@@ -192,6 +192,10 @@ func (suite *EthernetSuite) TestEthernetConfig() {
 		// remove the config document
 		suite.RemoveMachineConfigDocuments(nodeCtx, cfgDocument.MetaKind)
 	})
+
+	suite.Run("Channels", func() {
+		suite.T().Skip("channels are not supported by the current QEMU version")
+	})
 }
 
 func init() {

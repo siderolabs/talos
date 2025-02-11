@@ -23,8 +23,9 @@ type EthernetSpec = typed.Resource[EthernetSpecSpec, EthernetSpecExtension]
 //
 //gotagsrewrite:gen
 type EthernetSpecSpec struct {
-	Rings    EthernetRingsSpec `yaml:"rings,omitempty" protobuf:"1"`
-	Features map[string]bool   `yaml:"features,omitempty" protobuf:"2"`
+	Rings    EthernetRingsSpec    `yaml:"rings,omitempty" protobuf:"1"`
+	Features map[string]bool      `yaml:"features,omitempty" protobuf:"2"`
+	Channels EthernetChannelsSpec `yaml:"channels,omitempty" protobuf:"3"`
 }
 
 // EthernetRingsSpec describes config of Ethernet rings.
@@ -41,6 +42,16 @@ type EthernetRingsSpec struct {
 	RXPush       *bool   `yaml:"rx-push,omitempty" protobuf:"8"`
 	TXPushBufLen *uint32 `yaml:"tx-push-buf-len,omitempty" protobuf:"9"`
 	TCPDataSplit *bool   `yaml:"tcp-data-split,omitempty" protobuf:"10"`
+}
+
+// EthernetChannelsSpec describes config of Ethernet channels.
+//
+//gotagsrewrite:gen
+type EthernetChannelsSpec struct {
+	RX       *uint32 `yaml:"rx,omitempty" protobuf:"1"`
+	TX       *uint32 `yaml:"tx,omitempty" protobuf:"2"`
+	Other    *uint32 `yaml:"other,omitempty" protobuf:"3"`
+	Combined *uint32 `yaml:"combined,omitempty" protobuf:"4"`
 }
 
 // NewEthernetSpec initializes a EthernetSpec resource.

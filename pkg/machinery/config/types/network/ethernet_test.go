@@ -31,6 +31,9 @@ func TestEthernetConfigMarshalStability(t *testing.T) {
 	cfg.FeaturesConfig = map[string]bool{
 		"tx-checksum-ipv4": true,
 	}
+	cfg.ChannelsConfig = &network.EthernetChannelsConfig{
+		Combined: pointer.To[uint32](1),
+	}
 
 	marshaled, err := encoder.NewEncoder(cfg, encoder.WithComments(encoder.CommentsDisabled)).Encode()
 	require.NoError(t, err)
@@ -60,6 +63,9 @@ func TestEthernetConfigUnmarshal(t *testing.T) {
 		},
 		RingsConfig: &network.EthernetRingsConfig{
 			RX: pointer.To[uint32](16),
+		},
+		ChannelsConfig: &network.EthernetChannelsConfig{
+			Combined: pointer.To[uint32](1),
 		},
 	}, docs[0])
 }

@@ -79,6 +79,22 @@ func (o EthernetSpecSpec) DeepCopy() EthernetSpecSpec {
 			cp.Features[k2] = v2
 		}
 	}
+	if o.Channels.RX != nil {
+		cp.Channels.RX = new(uint32)
+		*cp.Channels.RX = *o.Channels.RX
+	}
+	if o.Channels.TX != nil {
+		cp.Channels.TX = new(uint32)
+		*cp.Channels.TX = *o.Channels.TX
+	}
+	if o.Channels.Other != nil {
+		cp.Channels.Other = new(uint32)
+		*cp.Channels.Other = *o.Channels.Other
+	}
+	if o.Channels.Combined != nil {
+		cp.Channels.Combined = new(uint32)
+		*cp.Channels.Combined = *o.Channels.Combined
+	}
 	return cp
 }
 
@@ -164,6 +180,42 @@ func (o EthernetStatusSpec) DeepCopy() EthernetStatusSpec {
 	if o.Features != nil {
 		cp.Features = make([]EthernetFeatureStatus, len(o.Features))
 		copy(cp.Features, o.Features)
+	}
+	if o.Channels != nil {
+		cp.Channels = new(EthernetChannelsStatus)
+		*cp.Channels = *o.Channels
+		if o.Channels.RXMax != nil {
+			cp.Channels.RXMax = new(uint32)
+			*cp.Channels.RXMax = *o.Channels.RXMax
+		}
+		if o.Channels.TXMax != nil {
+			cp.Channels.TXMax = new(uint32)
+			*cp.Channels.TXMax = *o.Channels.TXMax
+		}
+		if o.Channels.OtherMax != nil {
+			cp.Channels.OtherMax = new(uint32)
+			*cp.Channels.OtherMax = *o.Channels.OtherMax
+		}
+		if o.Channels.CombinedMax != nil {
+			cp.Channels.CombinedMax = new(uint32)
+			*cp.Channels.CombinedMax = *o.Channels.CombinedMax
+		}
+		if o.Channels.RX != nil {
+			cp.Channels.RX = new(uint32)
+			*cp.Channels.RX = *o.Channels.RX
+		}
+		if o.Channels.TX != nil {
+			cp.Channels.TX = new(uint32)
+			*cp.Channels.TX = *o.Channels.TX
+		}
+		if o.Channels.Other != nil {
+			cp.Channels.Other = new(uint32)
+			*cp.Channels.Other = *o.Channels.Other
+		}
+		if o.Channels.Combined != nil {
+			cp.Channels.Combined = new(uint32)
+			*cp.Channels.Combined = *o.Channels.Combined
+		}
 	}
 	return cp
 }

@@ -69,6 +69,7 @@ func (w networkRuleConfigWrapper) Rules() []NetworkRule {
 type EthernetConfig interface {
 	NamedDocument
 	Rings() EthernetRingsConfig
+	Channels() EthernetChannelsConfig
 	Features() map[string]bool
 }
 
@@ -84,4 +85,12 @@ type EthernetRingsConfig struct {
 	RXPush       *bool
 	TXPushBufLen *uint32
 	TCPDataSplit *bool
+}
+
+// EthernetChannelsConfig defines a configuration for Ethernet link channels.
+type EthernetChannelsConfig struct {
+	RX       *uint32
+	TX       *uint32
+	Other    *uint32
+	Combined *uint32
 }

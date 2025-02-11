@@ -5,3 +5,5 @@ features:
     tx-checksum-ipv4: true
 rings:
     rx: 16
+channels:
+    combined: 1

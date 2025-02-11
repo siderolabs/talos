@@ -4,7 +4,7 @@ go 1.23.6
 
 replace (
 	// forked ethtool introduces missing APIs
-	github.com/mdlayher/ethtool => github.com/siderolabs/ethtool v0.0.0-20250210102225-e965e7b89f83
+	github.com/mdlayher/ethtool => github.com/siderolabs/ethtool v0.3.0
 
 	// forked go-yaml that introduces RawYAML interface, which can be used to populate YAML fields using bytes
 	// which are then encoded as a valid YAML blocks with proper indentiation

@@ -79,6 +79,26 @@ func (o *EthernetConfigV1Alpha1) DeepCopy() *EthernetConfigV1Alpha1 {
 			*cp.RingsConfig.TCPDataSplit = *o.RingsConfig.TCPDataSplit
 		}
 	}
+	if o.ChannelsConfig != nil {
+		cp.ChannelsConfig = new(EthernetChannelsConfig)
+		*cp.ChannelsConfig = *o.ChannelsConfig
+		if o.ChannelsConfig.RX != nil {
+			cp.ChannelsConfig.RX = new(uint32)
+			*cp.ChannelsConfig.RX = *o.ChannelsConfig.RX
+		}
+		if o.ChannelsConfig.TX != nil {
+			cp.ChannelsConfig.TX = new(uint32)
+			*cp.ChannelsConfig.TX = *o.ChannelsConfig.TX
+		}
+		if o.ChannelsConfig.Other != nil {
+			cp.ChannelsConfig.Other = new(uint32)
+			*cp.ChannelsConfig.Other = *o.ChannelsConfig.Other
+		}
+		if o.ChannelsConfig.Combined != nil {
+			cp.ChannelsConfig.Combined = new(uint32)
+			*cp.ChannelsConfig.Combined = *o.ChannelsConfig.Combined
+		}
+	}
 	return &cp
 }
 

@@ -33,6 +33,7 @@ type EthernetStatusSpec struct {
 	PeerModes     []string                  `yaml:"peerModes,omitempty" protobuf:"6"`
 	Rings         *EthernetRingsStatus      `yaml:"rings,omitempty" protobuf:"7"`
 	Features      EthernetFeatureStatusList `yaml:"features,omitempty" protobuf:"8"`
+	Channels      *EthernetChannelsStatus   `yaml:"channels,omitempty" protobuf:"9"`
 }
 
 // EthernetFeatureStatusList is a list of EthernetFeatureStatus.
@@ -82,6 +83,23 @@ type EthernetRingsStatus struct {
 	RXPush       *bool   `yaml:"rx-push,omitempty" protobuf:"13"`
 	TXPushBufLen *uint32 `yaml:"tx-push-buf-len,omitempty" protobuf:"14"`
 	TCPDataSplit *bool   `yaml:"tcp-data-split,omitempty" protobuf:"15"`
+}
+
+// EthernetChannelsStatus describes status of Ethernet channels.
+//
+//gotagsrewrite:gen
+type EthernetChannelsStatus struct {
+	// Read-only settings.
+	RXMax       *uint32 `yaml:"rx-max,omitempty" protobuf:"1"`
+	TXMax       *uint32 `yaml:"tx-max,omitempty" protobuf:"2"`
+	OtherMax    *uint32 `yaml:"other-max,omitempty" protobuf:"3"`
+	CombinedMax *uint32 `yaml:"combined-max,omitempty" protobuf:"4"`
+
+	// Current settings (read-write).
+	RX       *uint32 `yaml:"rx,omitempty" protobuf:"5"`
+	TX       *uint32 `yaml:"tx,omitempty" protobuf:"6"`
+	Other    *uint32 `yaml:"other,omitempty" protobuf:"7"`
+	Combined *uint32 `yaml:"combined,omitempty" protobuf:"8"`
 }
 
 // EthernetFeatureStatus describes status of Ethernet features.

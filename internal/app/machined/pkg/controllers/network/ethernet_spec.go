@@ -13,6 +13,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/mdlayher/ethtool"
 	"github.com/siderolabs/gen/optional"
+	"github.com/siderolabs/gen/value"
 	"go.uber.org/zap"
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/runtime"
@@ -103,9 +104,7 @@ func (ctrl *EthernetSpecController) apply(
 ) error {
 	ringSpec := spec.TypedSpec().Rings
 
-	var zeroRingSpec network.EthernetRingsSpec
-
-	if ringSpec != zeroRingSpec {
+	if !value.IsZero(ringSpec) {
 		if err := ethClient.SetRings(ethtool.Rings{
 			Interface: ethtool.Interface{
 				Name: spec.Metadata().ID(),
@@ -135,6 +134,22 @@ func (ctrl *EthernetSpecController) apply(
 			featureSpec,
 		); err != nil {
 			return fmt.Errorf("error updating features: %w", err)
+		}
+	}
+
+	channelsSpec := spec.TypedSpec().Channels
+
+	if !value.IsZero(channelsSpec) {
+		if err := ethClient.SetChannels(ethtool.Channels{
+			Interface: ethtool.Interface{
+				Name: spec.Metadata().ID(),
+			},
+			RXCount:       optionalFromPtr(channelsSpec.RX),
+			TXCount:       optionalFromPtr(channelsSpec.TX),
+			OtherCount:    optionalFromPtr(channelsSpec.Other),
+			CombinedCount: optionalFromPtr(channelsSpec.Combined),
+		}); err != nil {
+			return fmt.Errorf("error updating channels: %w", err)
 		}
 	}
 

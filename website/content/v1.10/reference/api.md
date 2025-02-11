@@ -207,6 +207,8 @@ description: Talos gRPC API reference.
     - [DHCP4OperatorSpec](#talos.resource.definitions.network.DHCP4OperatorSpec)
     - [DHCP6OperatorSpec](#talos.resource.definitions.network.DHCP6OperatorSpec)
     - [DNSResolveCacheSpec](#talos.resource.definitions.network.DNSResolveCacheSpec)
+    - [EthernetChannelsSpec](#talos.resource.definitions.network.EthernetChannelsSpec)
+    - [EthernetChannelsStatus](#talos.resource.definitions.network.EthernetChannelsStatus)
     - [EthernetFeatureStatus](#talos.resource.definitions.network.EthernetFeatureStatus)
     - [EthernetRingsSpec](#talos.resource.definitions.network.EthernetRingsSpec)
     - [EthernetRingsStatus](#talos.resource.definitions.network.EthernetRingsStatus)
@@ -3814,6 +3816,46 @@ DNSResolveCacheSpec describes DNS servers status.
 
 
 
+<a name="talos.resource.definitions.network.EthernetChannelsSpec"></a>
+
+### EthernetChannelsSpec
+EthernetChannelsSpec describes config of Ethernet channels.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| rx | [uint32](#uint32) |  |  |
+| tx | [uint32](#uint32) |  |  |
+| other | [uint32](#uint32) |  |  |
+| combined | [uint32](#uint32) |  |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.network.EthernetChannelsStatus"></a>
+
+### EthernetChannelsStatus
+EthernetChannelsStatus describes status of Ethernet channels.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| rx_max | [uint32](#uint32) |  |  |
+| tx_max | [uint32](#uint32) |  |  |
+| other_max | [uint32](#uint32) |  |  |
+| combined_max | [uint32](#uint32) |  |  |
+| rx | [uint32](#uint32) |  |  |
+| tx | [uint32](#uint32) |  |  |
+| other | [uint32](#uint32) |  |  |
+| combined | [uint32](#uint32) |  |  |
+
+
+
+
+
+
 <a name="talos.resource.definitions.network.EthernetFeatureStatus"></a>
 
 ### EthernetFeatureStatus
@@ -3893,6 +3935,7 @@ EthernetSpecSpec describes config of Ethernet link.
 | ----- | ---- | ----- | ----------- |
 | rings | [EthernetRingsSpec](#talos.resource.definitions.network.EthernetRingsSpec) |  |  |
 | features | [EthernetSpecSpec.FeaturesEntry](#talos.resource.definitions.network.EthernetSpecSpec.FeaturesEntry) | repeated |  |
+| channels | [EthernetChannelsSpec](#talos.resource.definitions.network.EthernetChannelsSpec) |  |  |
 
 
 
@@ -3931,6 +3974,7 @@ EthernetStatusSpec describes status of rendered secrets.
 | peer_modes | [string](#string) | repeated |  |
 | rings | [EthernetRingsStatus](#talos.resource.definitions.network.EthernetRingsStatus) |  |  |
 | features | [EthernetFeatureStatus](#talos.resource.definitions.network.EthernetFeatureStatus) | repeated |  |
+| channels | [EthernetChannelsStatus](#talos.resource.definitions.network.EthernetChannelsStatus) |  |  |
 
 
 

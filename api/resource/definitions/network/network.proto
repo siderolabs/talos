@@ -102,6 +102,26 @@ message DNSResolveCacheSpec {
   string status = 1;
 }
 
+// EthernetChannelsSpec describes config of Ethernet channels.
+message EthernetChannelsSpec {
+  uint32 rx = 1;
+  uint32 tx = 2;
+  uint32 other = 3;
+  uint32 combined = 4;
+}
+
+// EthernetChannelsStatus describes status of Ethernet channels.
+message EthernetChannelsStatus {
+  uint32 rx_max = 1;
+  uint32 tx_max = 2;
+  uint32 other_max = 3;
+  uint32 combined_max = 4;
+  uint32 rx = 5;
+  uint32 tx = 6;
+  uint32 other = 7;
+  uint32 combined = 8;
+}
+
 // EthernetFeatureStatus describes status of Ethernet features.
 message EthernetFeatureStatus {
   string name = 1;
@@ -145,6 +165,7 @@ message EthernetRingsStatus {
 message EthernetSpecSpec {
   EthernetRingsSpec rings = 1;
   map<string, bool> features = 2;
+  EthernetChannelsSpec channels = 3;
 }
 
 // EthernetStatusSpec describes status of rendered secrets.
@@ -157,6 +178,7 @@ message EthernetStatusSpec {
   repeated string peer_modes = 6;
   EthernetRingsStatus rings = 7;
   repeated EthernetFeatureStatus features = 8;
+  EthernetChannelsStatus channels = 9;
 }
 
 // HardwareAddrSpec describes spec for the link.

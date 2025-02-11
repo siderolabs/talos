@@ -23,6 +23,9 @@ features:
 # Configuration for Ethernet link rings.
 rings:
     rx: 256 # Number of RX rings.
+# Configuration for Ethernet link channels.
+channels:
+    rx: 4 # Number of RX channels.
 {{< /highlight >}}
 
 
@@ -31,6 +34,7 @@ rings:
 |`name` |string |Name of the link (interface).  | |
 |`features` |map[string]bool |<details><summary>Configuration for Ethernet features.</summary><br />Set of features available and whether they can be enabled or disabled is driver specific.<br />Use `talosctl get ethernetstatus <link> -o yaml` to get the list of available features and<br />their current status.</details>  | |
 |`rings` |<a href="#EthernetConfig.rings">EthernetRingsConfig</a> |<details><summary>Configuration for Ethernet link rings.</summary><br />This is similar to `ethtool -G` command.</details>  | |
+|`channels` |<a href="#EthernetConfig.channels">EthernetChannelsConfig</a> |<details><summary>Configuration for Ethernet link channels.</summary><br />This is similar to `ethtool -L` command.</details>  | |
 
 
 
@@ -54,6 +58,25 @@ EthernetRingsConfig is a configuration for Ethernet link rings.
 |`rx-push` |bool |RX push enabled.  | |
 |`tx-push-buf-len` |uint32 |TX push buffer length.  | |
 |`tcp-data-split` |bool |TCP data split enabled.  | |
+
+
+
+
+
+
+## channels {#EthernetConfig.channels}
+
+EthernetChannelsConfig is a configuration for Ethernet link channels.
+
+
+
+
+| Field | Type | Description | Value(s) |
+|-------|------|-------------|----------|
+|`rx` |uint32 |Number of RX channels.  | |
+|`tx` |uint32 |Number of TX channels.  | |
+|`other` |uint32 |Number of other channels.  | |
+|`combined` |uint32 |Number of combined channels.  | |
 
 
 

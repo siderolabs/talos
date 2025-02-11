@@ -81,6 +81,7 @@ func (ctrl *EthernetConfigController) apply(ctx context.Context, r controller.Ru
 	for _, cfg := range configs {
 		if err := safe.WriterModify(ctx, r, network.NewEthernetSpec(network.NamespaceName, cfg.Name()), func(spec *network.EthernetSpec) error {
 			spec.TypedSpec().Rings = network.EthernetRingsSpec(cfg.Rings())
+			spec.TypedSpec().Channels = network.EthernetChannelsSpec(cfg.Channels())
 			spec.TypedSpec().Features = cfg.Features()
 
 			return nil

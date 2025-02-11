@@ -65,6 +65,13 @@ func (EthernetConfigV1Alpha1) Doc() *encoder.Doc {
 				Description: "Configuration for Ethernet link rings.\n\nThis is similar to `ethtool -G` command.",
 				Comments:    [3]string{"" /* encoder.HeadComment */, "Configuration for Ethernet link rings." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
+			{
+				Name:        "channels",
+				Type:        "EthernetChannelsConfig",
+				Note:        "",
+				Description: "Configuration for Ethernet link channels.\n\nThis is similar to `ethtool -L` command.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Configuration for Ethernet link channels." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
 		},
 	}
 
@@ -154,6 +161,52 @@ func (EthernetRingsConfig) Doc() *encoder.Doc {
 				Note:        "",
 				Description: "TCP data split enabled.",
 				Comments:    [3]string{"" /* encoder.HeadComment */, "TCP data split enabled." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
+
+	return doc
+}
+
+func (EthernetChannelsConfig) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "EthernetChannelsConfig",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "EthernetChannelsConfig is a configuration for Ethernet link channels." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "EthernetChannelsConfig is a configuration for Ethernet link channels.",
+		AppearsIn: []encoder.Appearance{
+			{
+				TypeName:  "EthernetConfigV1Alpha1",
+				FieldName: "channels",
+			},
+		},
+		Fields: []encoder.Doc{
+			{
+				Name:        "rx",
+				Type:        "uint32",
+				Note:        "",
+				Description: "Number of RX channels.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Number of RX channels." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "tx",
+				Type:        "uint32",
+				Note:        "",
+				Description: "Number of TX channels.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Number of TX channels." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "other",
+				Type:        "uint32",
+				Note:        "",
+				Description: "Number of other channels.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Number of other channels." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "combined",
+				Type:        "uint32",
+				Note:        "",
+				Description: "Number of combined channels.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Number of combined channels." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
 		},
 	}
@@ -304,6 +357,7 @@ func GetFileDoc() *encoder.FileDoc {
 			DefaultActionConfigV1Alpha1{}.Doc(),
 			EthernetConfigV1Alpha1{}.Doc(),
 			EthernetRingsConfig{}.Doc(),
+			EthernetChannelsConfig{}.Doc(),
 			KubespanEndpointsConfigV1Alpha1{}.Doc(),
 			RuleConfigV1Alpha1{}.Doc(),
 			RulePortSelector{}.Doc(),

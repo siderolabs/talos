@@ -140,6 +140,11 @@ func (ctrl *EthernetStatusController) reconcile(
 			lgger.Warn("error getting features", zap.Error(err))
 		}
 
+		channels, err := ethClient.Channels(iface)
+		if err != nil && !errors.Is(err, os.ErrNotExist) {
+			lgger.Warn("error getting channels", zap.Error(err))
+		}
+
 		if err := safe.WriterModify(ctx, r, network.NewEthernetStatus(network.NamespaceName, iface.Name), func(res *network.EthernetStatus) error {
 			res.TypedSpec().Port = nethelpers.Port(linkInfo.Port)
 
@@ -188,6 +193,22 @@ func (ctrl *EthernetStatusController) reconcile(
 						Status: f.State() + f.Suffix(),
 					}
 				})
+			}
+
+			if channels == nil {
+				res.TypedSpec().Channels = nil
+			} else {
+				res.TypedSpec().Channels = &network.EthernetChannelsStatus{
+					RXMax:       channels.RXMax.Ptr(),
+					TXMax:       channels.TXMax.Ptr(),
+					OtherMax:    channels.OtherMax.Ptr(),
+					CombinedMax: channels.CombinedMax.Ptr(),
+
+					RX:       channels.RXCount.Ptr(),
+					TX:       channels.TXCount.Ptr(),
+					Other:    channels.OtherCount.Ptr(),
+					Combined: channels.CombinedCount.Ptr(),
+				}
 			}
 
 			return nil

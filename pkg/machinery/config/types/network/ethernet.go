@@ -63,6 +63,11 @@ type EthernetConfigV1Alpha1 struct {
 	//
 	//     This is similar to `ethtool -G` command.
 	RingsConfig *EthernetRingsConfig `yaml:"rings,omitempty"`
+	//   description: |
+	//     Configuration for Ethernet link channels.
+	//
+	//     This is similar to `ethtool -L` command.
+	ChannelsConfig *EthernetChannelsConfig `yaml:"channels,omitempty"`
 }
 
 // EthernetRingsConfig is a configuration for Ethernet link rings.
@@ -99,6 +104,22 @@ type EthernetRingsConfig struct {
 	TCPDataSplit *bool `yaml:"tcp-data-split,omitempty"`
 }
 
+// EthernetChannelsConfig is a configuration for Ethernet link channels.
+type EthernetChannelsConfig struct {
+	//   description: |
+	//     Number of RX channels.
+	RX *uint32 `yaml:"rx,omitempty"`
+	//   description: |
+	//     Number of TX channels.
+	TX *uint32 `yaml:"tx,omitempty"`
+	//   description: |
+	//     Number of other channels.
+	Other *uint32 `yaml:"other,omitempty"`
+	//   description: |
+	//     Number of combined channels.
+	Combined *uint32 `yaml:"combined,omitempty"`
+}
+
 // NewEthernetConfigV1Alpha1 creates a new EthernetConfig config document.
 func NewEthernetConfigV1Alpha1(name string) *EthernetConfigV1Alpha1 {
 	return &EthernetConfigV1Alpha1{
@@ -118,6 +139,9 @@ func exampleEthernetConfigV1Alpha1() *EthernetConfigV1Alpha1 {
 	cfg.FeaturesConfig = map[string]bool{
 		"tx-tcp-segmentation": false,
 	}
+	cfg.ChannelsConfig = &EthernetChannelsConfig{
+		RX: pointer.To[uint32](4),
+	}
 
 	return cfg
 }
@@ -135,6 +159,11 @@ func (s *EthernetConfigV1Alpha1) Name() string {
 // Rings implements config.EthernetConfig interface.
 func (s *EthernetConfigV1Alpha1) Rings() config.EthernetRingsConfig {
 	return config.EthernetRingsConfig(pointer.SafeDeref(s.RingsConfig))
+}
+
+// Channels implements config.EthernetConfig interface.
+func (s *EthernetConfigV1Alpha1) Channels() config.EthernetChannelsConfig {
+	return config.EthernetChannelsConfig(pointer.SafeDeref(s.ChannelsConfig))
 }
 
 // Features implements config.EthernetConfig interface.
