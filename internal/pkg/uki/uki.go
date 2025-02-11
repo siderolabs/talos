@@ -66,6 +66,8 @@ type Builder struct {
 	SecureBootSigner pesign.CertificateSigner
 	// PCR signer.
 	PCRSigner measure.RSAKey
+	// Profiles to include in the UKI.
+	Profiles []Profile
 
 	// Output options:
 	//

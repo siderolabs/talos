@@ -25,6 +25,7 @@ import (
 	"github.com/siderolabs/talos/internal/pkg/measure"
 	"github.com/siderolabs/talos/internal/pkg/uki"
 	"github.com/siderolabs/talos/pkg/machinery/config/generate/secrets"
+	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/imager/quirks"
 	"github.com/siderolabs/talos/pkg/machinery/version"
 	"github.com/siderolabs/talos/pkg/splash"
@@ -166,6 +167,20 @@ func TestBuildUKI(t *testing.T) {
 	sdStubPath := "internal/pe/testdata/linuxx64.efi.stub"
 	addonStubPath := "internal/pe/testdata/addonx64.efi.stub"
 
+	ukiProfiles := []uki.Profile{
+		{
+			ID:    "reset-maintenance",
+			Title: "Reset to maintenance mode",
+
+			Cmdline: cmdline + fmt.Sprintf(" %s=system:EPHEMERAL,STATE", constants.KernelParamWipe),
+		},
+		{
+			ID:      "reset",
+			Title:   "Reset system disk",
+			Cmdline: cmdline + fmt.Sprintf(" %s=system", constants.KernelParamWipe),
+		},
+	}
+
 	for _, talosVersion := range []string{"1.9.0", "1.10.0"} {
 		ukiUnsigned := filepath.Join(tempDir, fmt.Sprintf("uki-%s.efi", talosVersion))
 		ukiSigned := filepath.Join(tempDir, fmt.Sprintf("uki-%s-signed.efi", talosVersion))
@@ -180,6 +195,7 @@ func TestBuildUKI(t *testing.T) {
 			KernelPath: kernel,
 			InitrdPath: initrd,
 			Cmdline:    cmdline,
+			Profiles:   ukiProfiles,
 
 			OutSdBootPath: sdBootSigned,
 			OutUKIPath:    ukiUnsigned,
@@ -197,6 +213,7 @@ func TestBuildUKI(t *testing.T) {
 			Cmdline:          cmdline,
 			SecureBootSigner: &certificateProvider{signingKey},
 			PCRSigner:        rsaKey,
+			Profiles:         ukiProfiles,
 
 			OutSdBootPath: sdBootSigned,
 			OutUKIPath:    ukiSigned,
@@ -286,7 +303,7 @@ func TestBuildUKI(t *testing.T) {
 					"--profile",
 					"ID=reset-maintenance\nTITLE=Reset to maintenance mode",
 					"--cmdline",
-					cmdline + " talos.experimental.wipe=system:EPHEMERAL,STATE",
+					cmdline + fmt.Sprintf(" %s=system:EPHEMERAL,STATE", constants.KernelParamWipe),
 					"--output",
 					resetMaintenanceProfile,
 				}...,
@@ -308,7 +325,7 @@ func TestBuildUKI(t *testing.T) {
 					"--profile",
 					"ID=reset\nTITLE=Reset system disk",
 					"--cmdline",
-					cmdline + " talos.experimental.wipe=system",
+					cmdline + fmt.Sprintf(" %s=system", constants.KernelParamWipe),
 					"--output",
 					resetProfile,
 				}...,

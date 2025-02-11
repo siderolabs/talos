@@ -186,27 +186,26 @@ func (builder *Builder) generatePCRPublicKey() error {
 	return nil
 }
 
+func defaultProfiles() []Profile {
+	return []Profile{
+		{
+			ID: "main",
+		},
+	}
+}
+
 func (builder *Builder) generateProfiles() error {
 	if !quirks.New(builder.Version).SupportsUKIProfiles() {
 		return nil
 	}
 
-	for _, profile := range []Profile{
-		{
-			ID: "main",
-		},
-		{
-			ID:    "reset-maintenance",
-			Title: "Reset to maintenance mode",
+	if slices.ContainsFunc(builder.Profiles, func(p Profile) bool {
+		return p.ID == "main"
+	}) {
+		return fmt.Errorf("profile with ID 'main' is reserved")
+	}
 
-			Cmdline: builder.Cmdline + " talos.experimental.wipe=system:EPHEMERAL,STATE",
-		},
-		{
-			ID:      "reset",
-			Title:   "Reset system disk",
-			Cmdline: builder.Cmdline + " talos.experimental.wipe=system",
-		},
-	} {
+	for _, profile := range slices.Concat(defaultProfiles(), builder.Profiles) {
 		path := filepath.Join(builder.scratchDir, fmt.Sprintf("profile-%s", profile.ID))
 
 		if err := os.WriteFile(path, []byte(profile.String()), 0o600); err != nil {
