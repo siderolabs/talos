@@ -48,6 +48,13 @@
 (allow etcd_pki_t tmpfs_t (filesystem (associate)))
 (allow etcd_t etcd_pki_t (fs_classes (ro)))
 
+(type etcd_data_t)
+(call protected_f (etcd_data_t))
+(allow etcd_t etcd_data_t (fs_classes (rw)))
+
+; Allow etcd to read transparent huge pages props
+(allow etcd_t sysfs_t (fs_classes (ro)))
+
 (type cni_conf_t)
 (call filesystem_f (cni_conf_t))
 (filecon "/etc/cni(/.*)?" any (system_u object_r cni_conf_t (systemLow systemLow)))
@@ -59,10 +66,6 @@
 (type containerd_plugin_t)
 (call filesystem_f (containerd_plugin_t))
 (filecon "/opt/containerd(/.*)?" any (system_u object_r containerd_plugin_t (systemLow systemLow)))
-
-(type etcd_data_t)
-(call protected_f (etcd_data_t))
-(allow etcd_t etcd_data_t (fs_classes (rw)))
 
 (type containerd_state_t)
 (call common_f (containerd_state_t))
