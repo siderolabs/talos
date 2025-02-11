@@ -109,7 +109,7 @@ func outputDiff(w io.Writer, u gotextdiff.Unified, noColor bool) {
 			cyan.Fprintf(w, " +%d", hunk.ToLine) //nolint:errcheck
 		}
 
-		cyan.Printf(" @@\n") //nolint:errcheck
+		cyan.Fprintf(w, " @@\n") //nolint:errcheck
 
 		for _, l := range hunk.Lines {
 			switch l.Kind { //nolint:exhaustive
