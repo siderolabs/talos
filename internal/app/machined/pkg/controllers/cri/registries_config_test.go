@@ -242,11 +242,7 @@ func (suite *ConfigSuite) TestRegistryTLS() {
 	})
 }
 
-func (suite *ConfigSuite) TestRegistryNoMachineConfig() {
-	cfg := config.NewMachineConfig(container.NewV1Alpha1(nil))
-
-	suite.Require().NoError(suite.State().Create(suite.Ctx(), cfg))
-
+func (suite *ConfigSuite) TestRegistryImageCacheNoConfig() {
 	ic := crires.NewImageCacheConfig()
 	ic.TypedSpec().Roots = []string{"/imagecache"}
 	ic.TypedSpec().Status = crires.ImageCacheStatusReady
@@ -267,6 +263,16 @@ func (suite *ConfigSuite) TestRegistryNoMachineConfig() {
 	})
 }
 
+func (suite *ConfigSuite) TestRegistryNoConfig() {
+	ctest.AssertResource(suite, crires.RegistriesConfigID, func(r *crires.RegistriesConfig, a *assert.Assertions) {
+		spec := r.TypedSpec()
+
+		a.Empty(
+			spec.RegistryMirrors,
+		)
+	})
+}
+
 func TestConfigSuite(t *testing.T) {
 	t.Parallel()
 
@@ -274,7 +280,7 @@ func TestConfigSuite(t *testing.T) {
 		DefaultSuite: ctest.DefaultSuite{
 			Timeout: 5 * time.Second,
 			AfterSetup: func(s *ctest.DefaultSuite) {
-				s.Require().NoError(s.Runtime().RegisterController(cri.NewRegistriesConfigController()))
+				s.Require().NoError(s.Runtime().RegisterController(&cri.RegistriesConfigController{}))
 			},
 		},
 	})
