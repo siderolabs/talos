@@ -220,19 +220,26 @@ func preBootSequenceCheckNames() []string {
 
 // PreBootSequenceChecks returns a set of Talos cluster readiness checks which are run before boot sequence.
 func PreBootSequenceChecks() []ClusterCheck {
-	names := preBootSequenceCheckNames()
-	checks := make([]ClusterCheck, len(names))
-	for i, name := range names {
-		checks[i] = getCheck(name)
-	}
-	return checks
+	return PreBootSequenceChecksFiltered(nil)
 }
 
 // PreBootSequenceChecksFiltered returns a filtered version of the PreBootSequenceChecks,
 // removing any checks whose names appear in the provided 'skips' list.
 func PreBootSequenceChecksFiltered(skips []string) []ClusterCheck {
+	checkNames := []string{
+		CheckEtcdHealthy,
+		CheckEtcdConsistent,
+		CheckEtcdControlPlane,
+		CheckApidReady,
+		CheckAllNodesMemorySizes,
+		CheckAllNodesDiskSizes,
+		CheckNoDiagnostics,
+		CheckKubeletHealthy,
+		CheckAllNodesBootSequenceFinished,
+	}
+
 	var filtered []ClusterCheck
-	for _, name := range preBootSequenceCheckNames() {
+	for _, name := range checkNames {
 		if slices.Contains(skips, name) {
 			continue
 		}
