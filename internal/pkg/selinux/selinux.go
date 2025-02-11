@@ -10,6 +10,7 @@ import (
 	_ "embed"
 	"log"
 	"os"
+	"path/filepath"
 	"sync"
 
 	"github.com/pkg/xattr"
@@ -50,28 +51,38 @@ var IsEnforcing = sync.OnceValue(func() bool {
 // SetLabel sets label for file, directory or symlink (not following symlinks)
 // It does not perform the operation in case SELinux is disabled, provided label is empty or already set.
 func SetLabel(filename string, label string) error {
-	if label == "" {
+	if label == "" || !IsEnabled() {
 		return nil
 	}
 
-	if IsEnabled() {
-		// We use LGet/LSet so that we manipulate label on the exact path, not the symlink target.
-		currentLabel, err := xattr.LGet(filename, "security.selinux")
-		if err != nil {
-			return err
-		}
+	// We use LGet/LSet so that we manipulate label on the exact path, not the symlink target.
+	currentLabel, err := xattr.LGet(filename, "security.selinux")
+	if err != nil {
+		return err
+	}
 
-		// Skip extra FS transactions when labels are okay.
-		if string(bytes.Trim(currentLabel, "\x00\n")) == label {
-			return nil
-		}
+	// Skip extra FS transactions when labels are okay.
+	if string(bytes.Trim(currentLabel, "\x00\n")) == label {
+		return nil
+	}
 
-		if err := xattr.LSet(filename, "security.selinux", []byte(label)); err != nil {
-			return err
-		}
+	if err := xattr.LSet(filename, "security.selinux", []byte(label)); err != nil {
+		return err
 	}
 
 	return nil
+}
+
+// SetLabelRecursive sets label for directory and its content recursively.
+// It does not perform the operation in case SELinux is disabled, provided label is empty or already set.
+func SetLabelRecursive(dir string, label string) error {
+	if label == "" || !IsEnabled() {
+		return nil
+	}
+
+	return filepath.Walk(dir, func(path string, _ os.FileInfo, err error) error {
+		return SetLabel(path, label)
+	})
 }
 
 // Init initializes SELinux based on the configured mode.
