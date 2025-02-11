@@ -60,13 +60,13 @@ func TestDiffString(t *testing.T) {
 			name:   "new doc",
 			oldCfg: []config.Document{v1alpha1Cfg},
 			newCfg: []config.Document{v1alpha1Cfg, siderolinkConfig},
-			want:   "--- a\n+++ b\n@@ -4,3 +4,7     token: foo\n     certSANs: []\n cluster: null\n+---\n+apiVersion: v1alpha1\n+kind: SideroLinkConfig\n+apiUrl: https://example.com\n",
+			want:   "--- a\n+++ b\n@@ -4,3 +4,7 @@\n     token: foo\n     certSANs: []\n cluster: null\n+---\n+apiVersion: v1alpha1\n+kind: SideroLinkConfig\n+apiUrl: https://example.com\n",
 		},
 		{
 			name:   "updated field",
 			oldCfg: []config.Document{v1alpha1Cfg, siderolinkConfig},
 			newCfg: []config.Document{v1alpha1CfgOther, siderolinkConfig},
-			want:   "--- a\n+++ b\n@@ -1,6 +1,6 version: v1alpha1\n machine:\n-    type: controlplane\n+    type: worker\n     token: foo\n     certSANs: []\n cluster: null\n",
+			want:   "--- a\n+++ b\n@@ -1,6 +1,6 @@\n version: v1alpha1\n machine:\n-    type: controlplane\n+    type: worker\n     token: foo\n     certSANs: []\n cluster: null\n",
 		},
 	} {
 		t.Run(test.name, func(t *testing.T) {
