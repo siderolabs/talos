@@ -119,3 +119,6 @@
 
 ; Own sockets
 (allow any_p self (unix_stream_socket (connectto)))
+
+; allow reading cgroup info
+(allow pod_p cgroup_t (fs_classes (ro)))
