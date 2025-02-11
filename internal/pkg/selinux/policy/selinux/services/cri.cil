@@ -11,11 +11,17 @@
 (allow pod_containerd_t pod_p (process2 (nnp_transition nosuid_transition)))
 (allow pod_containerd_t pod_p (process (transition)))
 
+; Containerd storage
+(allow pod_containerd_t containerd_state_t (fs_classes (rw)))
+(allow pod_containerd_t containerd_state_t (file (entrypoint execute execute_no_trans)))
+
 ; Manage procfs & processes
 (allow pod_containerd_t pod_p (fs_classes (rw)))
 (allow pod_containerd_t pod_p (process_classes (full)))
 (allow pod_p pod_containerd_t (fd (use)))
 (allow pod_p pod_containerd_t (fifo_file (append getattr ioctl map open read rename setattr watch write)))
+
+(allow pod_containerd_t self (key (view read write search link setattr create)))
 
 ; Shim socket
 (allow pod_containerd_t pod_containerd_socket_t (fs_classes (rw)))
@@ -27,7 +33,10 @@
 (call pod_p (pod_t))
 ; TODO: What if container is started not from containerd_state_t?
 (typetransition pod_containerd_t containerd_state_t process pod_t)
-(allow pod_t containerd_state_t (file (entrypoint execute execute_no_trans)))
+(allow pod_p containerd_state_t (fs_classes (rw)))
+(allow pod_p containerd_state_t (file (entrypoint execute execute_no_trans)))
+; allow configuring CNI
+(allow pod_p cni_conf_t (fs_classes (rw)))
 
 (type etcd_t)
 (call pod_p (etcd_t))
@@ -73,6 +82,15 @@
 (type kube_scheduler_secret_t)
 (call protected_f (kube_scheduler_secret_t))
 (allow kube_scheduler_secret_t tmpfs_t (filesystem (associate)))
+
+; Allow kubernetes pods to access their configuration and secrets
+; FIXME: insecure as anyone with access to the pod containerd may obtain these domains
+; TODO: label static pods with the correct domains
+(allow pod_p kube_apiserver_config_t (fs_classes (ro)))
+(allow pod_p kube_apiserver_secret_t (fs_classes (ro)))
+(allow pod_p kube_controller_manager_secret_t (fs_classes (ro)))
+(allow pod_p kube_scheduler_config_t (fs_classes (ro)))
+(allow pod_p kube_scheduler_secret_t (fs_classes (ro)))
 
 (typeattribute kube_secret_f)
 (typeattributeset kube_secret_f kube_apiserver_config_t)
