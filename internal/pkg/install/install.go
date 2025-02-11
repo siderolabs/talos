@@ -6,12 +6,14 @@ package install
 
 import (
 	"bytes"
+	"cmp"
 	"context"
 	"fmt"
 	"io"
 	"log"
 	"os"
 	"strconv"
+	"sync"
 
 	containerd "github.com/containerd/containerd/v2/client"
 	"github.com/containerd/containerd/v2/pkg/cio"
@@ -62,22 +64,22 @@ func RunInstallerContainer(
 		extensionsConfig = cfg.Machine().Install().Extensions()
 	}
 
-	ctx, cancel := context.WithCancel(context.Background())
+	ctx, cancel := context.WithCancel(namespaces.WithNamespace(context.Background(), constants.SystemContainerdNamespace))
 	defer cancel()
-
-	ctx = namespaces.WithNamespace(ctx, constants.SystemContainerdNamespace)
 
 	client, err := containerd.New(constants.SystemContainerdAddress)
 	if err != nil {
 		return err
 	}
 
-	defer client.Close() //nolint:errcheck
+	clientClose := wrapOnErr(client.Close, "failed to close containerd client")
 
-	var done func(context.Context) error
+	defer logError(clientClose)
 
-	ctx, done, err = client.WithLease(ctx)
-	defer done(ctx) //nolint:errcheck
+	ctx, done, err := client.WithLease(ctx)
+	clientDone := wrapOnErr(func() error { return done(ctx) }, "failed to release containerd lease")
+
+	defer logError(clientDone)
 
 	var img containerd.Image
 
@@ -89,15 +91,18 @@ func RunInstallerContainer(
 		log.Printf("pulling %q", ref)
 
 		img, err = image.Pull(ctx, registryBuilder, client, ref)
+		if err == nil {
+			log.Printf("pulled %q", ref)
+		}
 	}
 
 	if err != nil {
-		return err
+		return fmt.Errorf("error pulling %q: %w", ref, err)
 	}
 
 	puller, err := extensions.NewPuller(client)
 	if err != nil {
-		return err
+		return fmt.Errorf("error creating system extensions puller: %w", err)
 	}
 
 	if extensionsConfig != nil {
@@ -113,9 +118,8 @@ func RunInstallerContainer(
 	}()
 
 	// See if there's previous container/snapshot to clean up
-	var oldcontainer containerd.Container
-
-	if oldcontainer, err = client.LoadContainer(ctx, containerID); err == nil {
+	oldcontainer, err := client.LoadContainer(ctx, containerID)
+	if err == nil {
 		if err = oldcontainer.Delete(ctx, containerd.WithSnapshotCleanup); err != nil {
 			return fmt.Errorf("error deleting old container instance: %w", err)
 		}
@@ -158,19 +162,15 @@ func RunInstallerContainer(
 		config = *c
 	}
 
-	upgrade := strconv.FormatBool(options.Upgrade)
-	force := strconv.FormatBool(options.Force)
-	zero := strconv.FormatBool(options.Zero)
-
 	args := []string{
 		"/bin/installer",
 		"install",
 		"--disk=" + disk,
 		"--platform=" + platform,
 		"--config=" + config,
-		"--upgrade=" + upgrade,
-		"--force=" + force,
-		"--zero=" + zero,
+		"--upgrade=" + strconv.FormatBool(options.Upgrade),
+		"--force=" + strconv.FormatBool(options.Force),
+		"--zero=" + strconv.FormatBool(options.Zero),
 	}
 
 	for _, arg := range options.ExtraKernelArgs {
@@ -223,17 +223,24 @@ func RunInstallerContainer(
 
 	container, err := client.NewContainer(ctx, containerID, containerOpts...)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to create %q container: %w", containerID, err)
 	}
 
-	defer container.Delete(ctx, containerd.WithSnapshotCleanup) //nolint:errcheck
+	containerClose := wrapOnErr(
+		func() error { return container.Delete(ctx, containerd.WithSnapshotCleanup) },
+		"failed to delete container",
+	)
+
+	defer logError(containerClose)
 
 	f, err := os.OpenFile("/dev/kmsg", os.O_RDWR|unix.O_CLOEXEC|unix.O_NONBLOCK|unix.O_NOCTTY, 0o666)
 	if err != nil {
 		return fmt.Errorf("failed to open /dev/kmsg: %w", err)
 	}
-	//nolint:errcheck
-	defer f.Close()
+
+	fClose := wrapOnErr(f.Close, "failed to close /dev/kmsg")
+
+	defer logError(fClose)
 
 	w := &kmsg.Writer{KmsgWriter: f}
 
@@ -260,14 +267,19 @@ func RunInstallerContainer(
 
 	t, err := container.NewTask(ctx, creator)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to create %q task: %w", containerID, err)
 	}
 
 	if r != nil {
 		go r.WaitAndClose(ctx, t)
 	}
 
-	defer t.Delete(ctx) //nolint:errcheck
+	tDelete := wrapOnErr(
+		func() error { return takeErr(t.Delete(ctx)) },
+		"failed to delete task",
+	)
+
+	defer logError(tDelete)
 
 	if err = t.Start(ctx); err != nil {
 		return fmt.Errorf("failed to start %q task: %w", "upgrade", err)
@@ -278,14 +290,11 @@ func RunInstallerContainer(
 		return fmt.Errorf("failed waiting for %q task: %w", "upgrade", err)
 	}
 
-	status := <-statusC
-
-	code := status.ExitCode()
-	if code != 0 {
+	if code := (<-statusC).ExitCode(); code != 0 {
 		return fmt.Errorf("task %q failed: exit code %d", "upgrade", code)
 	}
 
-	return nil
+	return cmp.Or(tDelete(), fClose(), containerClose(), clientDone(), clientClose())
 }
 
 // OptionsFromUpgradeRequest builds installer options from upgrade request.
@@ -302,3 +311,29 @@ func OptionsFromUpgradeRequest(r runtime.Runtime, in *machineapi.UpgradeRequest)
 
 	return opts
 }
+
+func wrapOnErr(fn func() error, msg string) func() error {
+	var once sync.Once
+
+	return func() error {
+		var err error
+
+		// Return error only once
+		once.Do(func() {
+			err = fn()
+			if err != nil {
+				err = fmt.Errorf("%s: %w", msg, err)
+			}
+		})
+
+		return err
+	}
+}
+
+func logError(clientClose func() error) {
+	if err := clientClose(); err != nil {
+		log.Output(2, err.Error()) //nolint:errcheck
+	}
+}
+
+func takeErr[T any](_ T, e error) error { return e }

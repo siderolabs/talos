@@ -33,7 +33,9 @@ func PullAndValidateInstallerImage(ctx context.Context, registryBuilder image.Re
 		return err
 	}
 
-	defer client.Close() //nolint:errcheck
+	clientClose := wrapOnErr(client.Close, "error closing containerd client")
+
+	defer logError(clientClose)
 
 	img, err := image.Pull(containerdctx, registryBuilder, client, ref, image.WithSkipIfAlreadyPulled())
 	if err != nil {
@@ -75,16 +77,24 @@ func PullAndValidateInstallerImage(ctx context.Context, registryBuilder image.Re
 		return err
 	}
 
-	//nolint:errcheck
-	defer container.Delete(containerdctx, containerd.WithSnapshotCleanup)
+	containerDelete := wrapOnErr(
+		func() error { return container.Delete(containerdctx, containerd.WithSnapshotCleanup) },
+		"error deleting container",
+	)
+
+	defer logError(containerDelete)
 
 	task, err := container.NewTask(containerdctx, cio.NullIO)
 	if err != nil {
 		return err
 	}
 
-	//nolint:errcheck
-	defer task.Delete(containerdctx)
+	taskDelete := wrapOnErr(
+		func() error { return takeErr(task.Delete(containerdctx)) },
+		"error deleting task",
+	)
+
+	defer logError(taskDelete)
 
 	exitStatusC, err := task.Wait(containerdctx)
 	if err != nil {
@@ -95,14 +105,12 @@ func PullAndValidateInstallerImage(ctx context.Context, registryBuilder image.Re
 		return err
 	}
 
-	status := <-exitStatusC
+	code, _, err := (<-exitStatusC).Result()
 
-	code, _, err := status.Result()
-	if err != nil {
+	switch {
+	case err != nil:
 		return err
-	}
-
-	if code != 0 {
+	case code != 0:
 		return errors.New("installer help returned non-zero exit. assuming invalid installer")
 	}
 
