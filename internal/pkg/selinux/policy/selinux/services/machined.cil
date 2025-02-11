@@ -19,6 +19,9 @@
 (call system_socket_f (dbus_client_socket_t))
 
 (allow init_t service_p (process (transition)))
+; Manage processes
+(allow init_t any_p (fs_classes (rw)))
+(allow init_t any_p (process_classes (full)))
 (allow init_t service_exec_f (file (execute)))
 (allow init_t service_exec_f (fs_classes (ro)))
 
