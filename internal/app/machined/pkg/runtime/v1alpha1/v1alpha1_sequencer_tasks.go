@@ -561,20 +561,24 @@ func SetupVarDirectory(runtime.Sequence, any) (runtime.TaskExecutionFunc, string
 			SELinuxLabel string
 		}{
 			{
-				Path: "/var/log",
-				Mode: 0o755,
+				Path:         "/var/log",
+				Mode:         0o755,
+				SELinuxLabel: "system_u:object_r:var_log_t:s0",
 			},
 			{
-				Path: "/var/log/audit",
-				Mode: 0o700,
+				Path:         "/var/log/audit",
+				Mode:         0o700,
+				SELinuxLabel: "system_u:object_r:audit_log_t:s0",
 			},
 			{
-				Path: "/var/log/containers",
-				Mode: 0o755,
+				Path:         "/var/log/containers",
+				Mode:         0o755,
+				SELinuxLabel: "system_u:object_r:containers_log_t:s0",
 			},
 			{
-				Path: "/var/log/pods",
-				Mode: 0o755,
+				Path:         "/var/log/pods",
+				Mode:         0o755,
+				SELinuxLabel: "system_u:object_r:pods_log_t:s0",
 			},
 			{
 				Path:         "/var/lib/containerd",
@@ -587,18 +591,21 @@ func SetupVarDirectory(runtime.Sequence, any) (runtime.TaskExecutionFunc, string
 				SELinuxLabel: "system_u:object_r:kubelet_state_t:s0",
 			},
 			{
-				Path: "/var/run/lock",
-				Mode: 0o755,
+				Path:         "/var/run/lock",
+				Mode:         0o755,
+				SELinuxLabel: "system_u:object_r:var_lock_t:s0",
 			},
 			{
-				Path: constants.SeccompProfilesDirectory,
-				Mode: 0o700,
+				Path:         constants.SeccompProfilesDirectory,
+				Mode:         0o700,
+				SELinuxLabel: "system_u:object_r:seccomp_profile_t:s0",
 			},
 			{
-				Path: constants.KubernetesAuditLogDir,
-				Mode: 0o700,
-				UID:  constants.KubernetesAPIServerRunUser,
-				GID:  constants.KubernetesAPIServerRunGroup,
+				Path:         constants.KubernetesAuditLogDir,
+				Mode:         0o700,
+				UID:          constants.KubernetesAPIServerRunUser,
+				GID:          constants.KubernetesAPIServerRunGroup,
+				SELinuxLabel: "system_u:object_r:kube_log_t:s0",
 			},
 		} {
 			if err := os.MkdirAll(dir.Path, dir.Mode); err != nil {
@@ -609,7 +616,7 @@ func SetupVarDirectory(runtime.Sequence, any) (runtime.TaskExecutionFunc, string
 				return err
 			}
 
-			if err := selinux.SetLabel(dir.Path, dir.SELinuxLabel); err != nil {
+			if err := selinux.SetLabelRecursive(dir.Path, dir.SELinuxLabel); err != nil {
 				return err
 			}
 
