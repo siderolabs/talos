@@ -24,6 +24,12 @@ preface = """
 Talos is built with Go 1.23.6.
 """
 
+    [notes.ingress-firewall]
+        title = "Ingress Firewall"
+        description = """\
+Talos Ingress Firewall now filters access to Kubernetes NodePort services correctly.
+"""
+
 [make_deps]
 
     [make_deps.tools]

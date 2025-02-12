@@ -83,7 +83,7 @@ func (ctrl *NfTablesChainConfigController) Run(ctx context.Context, r controller
 
 					spec.Type = nethelpers.ChainTypeFilter
 					spec.Hook = nethelpers.ChainHookInput
-					spec.Priority = nethelpers.ChainPriorityFilter
+					spec.Priority = nethelpers.ChainPriorityMangle + 10
 					spec.Policy = nethelpers.VerdictAccept
 
 					// preamble

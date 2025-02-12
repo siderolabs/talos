@@ -87,7 +87,7 @@ func (suite *NfTablesChainConfigTestSuite) TestDefaultAccept() {
 		spec := chain.TypedSpec()
 
 		asrt.Equal(nethelpers.ChainTypeFilter, spec.Type)
-		asrt.Equal(nethelpers.ChainPriorityFilter, spec.Priority)
+		asrt.Equal(nethelpers.ChainPriorityMangle+10, spec.Priority)
 		asrt.Equal(nethelpers.ChainHookInput, spec.Hook)
 		asrt.Equal(nethelpers.VerdictAccept, spec.Policy)
 
@@ -165,7 +165,7 @@ func (suite *NfTablesChainConfigTestSuite) TestDefaultBlock() {
 		spec := chain.TypedSpec()
 
 		asrt.Equal(nethelpers.ChainTypeFilter, spec.Type)
-		asrt.Equal(nethelpers.ChainPriorityFilter, spec.Priority)
+		asrt.Equal(nethelpers.ChainPriorityMangle+10, spec.Priority)
 		asrt.Equal(nethelpers.ChainHookInput, spec.Hook)
 		asrt.Equal(nethelpers.VerdictDrop, spec.Policy)
 
