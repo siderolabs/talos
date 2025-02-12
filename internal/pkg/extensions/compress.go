@@ -69,7 +69,25 @@ func (ext *Extension) Compress(squashPath, initramfsPath string, quirks quirks.Q
 		compressArgs = []string{"-comp", "xz", "-Xdict-size", "100%"}
 	}
 
-	cmd := exec.Command("mksquashfs", append([]string{ext.RootfsPath(), squashPath, "-all-root", "-noappend", "-no-progress"}, compressArgs...)...)
+	cmd := exec.Command(
+		"mksquashfs",
+		append(
+			[]string{
+				ext.RootfsPath(),
+				squashPath,
+				"-all-root",
+				"-noappend",
+				"-no-progress",
+				// Ignore labels reported by host and set our own
+				"-xattrs-exclude",
+				"security.selinux",
+				// TODO: use setfiles for labeling various extension parts differently
+				"-xattrs-add",
+				"security.selinux=0tsystem_u:object_r:system_extension_t:s0\\000",
+			},
+			compressArgs...,
+		)...,
+	)
 	cmd.Stderr = os.Stderr
 
 	return squashPath, cmd.Run()
