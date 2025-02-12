@@ -29,7 +29,11 @@
 ; Allow their use by all host services
 (type lib_t)
 (call system_f (lib_t))
-(filecon "/usr/lib(/.*)?" any (system_u object_r lib_t (systemLow systemLow)))
+(context lib_t (system_u object_r lib_t (systemLow systemLow)))
+(filecon "/usr/lib(/.*)?" any lib_t)
+(filecon "/usr/lib64" any lib_t)
+(filecon "/lib" any lib_t)
+(filecon "/lib64" any lib_t)
 (allow service_p lib_t (file (execute)))
 (allow service_p lib_t (fs_classes (ro)))
 
@@ -40,7 +44,11 @@
 
 (type bin_exec_t)
 (call system_f (bin_exec_t))
-(filecon "/usr/bin(/.*)?" any (system_u object_r bin_exec_t (systemLow systemLow)))
+(context bin_exec_t (system_u object_r bin_exec_t (systemLow systemLow)))
+(filecon "/usr/bin(/.*)?" any bin_exec_t)
+(filecon "/usr/sbin" any bin_exec_t)
+(filecon "/bin" any bin_exec_t)
+(filecon "/sbin" any bin_exec_t)
 ; Typically machined executes LVM, cryptsetup and similar utilities
 ; They are short-running, come from the rootfs and do not accept user input, so can be started in init_t domain
 (allow init_t bin_exec_t (file (execute execute_no_trans)))
