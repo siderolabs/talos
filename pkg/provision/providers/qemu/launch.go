@@ -334,8 +334,8 @@ func launchVM(config *LaunchConfig) error {
 	}
 
 	var (
-		scsiAttached, ahciAttached, nvmeAttached bool
-		ahciBus                                  int
+		scsiAttached, ahciAttached, nvmeAttached, megaraidAttached bool
+		ahciBus                                                    int
 	)
 
 	for i, disk := range config.DiskPaths {
@@ -384,6 +384,18 @@ func launchVM(config *LaunchConfig) error {
 			args = append(args,
 				"-drive", fmt.Sprintf("id=nvme%d,format=raw,if=none,file=%s,discard=unmap,aio=native,cache=none", i, disk),
 				"-device", fmt.Sprintf("nvme-ns,drive=nvme%d,logical_block_size=%d,physical_block_size=%d", i, blockSize, blockSize),
+			)
+		case "megaraid":
+			if !megaraidAttached {
+				args = append(args,
+					"-device", "megasas-gen2,id=scsi1")
+
+				megaraidAttached = true
+			}
+
+			args = append(args,
+				"-drive", fmt.Sprintf("id=scsi%d,format=raw,if=none,file=%s,discard=unmap,aio=native,cache=none", i, disk),
+				"-device", fmt.Sprintf("scsi-hd,drive=scsi%d,bus=scsi1.0,channel=0,scsi-id=%d,lun=0,logical_block_size=%d,physical_block_size=%d", i, i, blockSize, blockSize),
 			)
 		default:
 			return fmt.Errorf("unsupported disk driver %q", driver)

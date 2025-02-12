@@ -171,7 +171,7 @@ talosctl cluster create [flags]
   -p, --exposed-ports string                     Comma-separated list of ports/protocols to expose on init node. Ex -p <hostPort>:<containerPort>/<protocol (tcp or udp)> (Docker provisioner only)
       --extra-boot-kernel-args string            add extra kernel args to the initial boot from vmlinuz and initramfs (QEMU only)
       --extra-disks int                          number of extra disks to create for each worker VM
-      --extra-disks-drivers strings              driver for each extra disk (virtio, ide, ahci, scsi, nvme)
+      --extra-disks-drivers strings              driver for each extra disk (virtio, ide, ahci, scsi, nvme, megaraid)
       --extra-disks-size int                     default limit on disk size in MB (each VM) (default 5120)
       --extra-uefi-search-paths strings          additional search paths for UEFI firmware (only applies when UEFI is enabled)
   -h, --help                                     help for create

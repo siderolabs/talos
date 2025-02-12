@@ -162,7 +162,7 @@ type Disk struct {
 	Partitions []*v1alpha1.DiskPartition
 	// Driver for the disk.
 	//
-	// Supported types: "virtio", "ide", "ahci", "scsi", "nvme".
+	// Supported types: "virtio", "ide", "ahci", "scsi", "nvme", "megaraid".
 	Driver string
 	// Block size for the disk, defaults to 512 if not set.
 	BlockSize uint
