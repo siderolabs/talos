@@ -86,13 +86,17 @@ The endpoint should be formatted like:
 When Talos boots without a configuration, such as when booting off the Talos ISO, it
 enters maintenance mode and waits for a configuration to be provided.
 
-> A configuration can be passed in on boot via kernel parameters or metadata servers.
-> See [Production Notes]({{< relref "prodnotes#configure-talos" >}}).
+> NOTE: Talos initially loads the OS to RAM, and only installs to disk after the configuration is applied.
+> If you reboot the machine before applying machine config, make sure your boot media is still present.
 
 Unlike traditional Linux, Talos Linux is _not_ configured by SSHing to the server and issuing commands.
 Instead, the entire state of the machine is defined by a `machine config` file which is passed to the server.
 This allows machines to be managed in a declarative way, and lends itself to GitOps and modern operations paradigms.
+
 The state of a machine is completely defined by, and can be reproduced from, the machine configuration file.
+
+> A configuration can be passed in on boot via kernel parameters or metadata servers.
+> See [Production Notes]({{< relref "prodnotes#configure-talos" >}}).
 
 To generate the machine configurations for a cluster, run this command on the workstation where you installed `talosctl`:
 
@@ -158,7 +162,7 @@ You can verify which disks your nodes have by using the `talosctl get disks --in
 For example, the `talosctl get disks` command below shows that the system has a `vda` drive, not an `sda`:
 
 ```sh
-$ talosctl -n 192.168.0.2 disks --insecure
+$ talosctl -n 192.168.0.2 get disks --insecure
 DEV        MODEL   SERIAL   TYPE   UUID   WWID  MODALIAS                    NAME   SIZE    BUS_PATH
 /dev/vda   -       -        HDD    -      -      virtio:d00000002v00001AF4   -      69 GB   /pci0000:00/0000:00:06.0/virtio2/
 ```
