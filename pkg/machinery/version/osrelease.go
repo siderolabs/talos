@@ -4,7 +4,7 @@
 
 package version
 
-//go:generate go run ./gen.go
+//go:generate env CGO_ENABLED=0 go run ./gen.go
 
 import (
 	"bytes"
