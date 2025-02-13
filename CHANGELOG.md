@@ -1,3 +1,77 @@
+## [Talos 1.9.4](https://github.com/siderolabs/talos/releases/tag/v1.9.4) (2025-02-13)
+
+Welcome to the v1.9.4 release of Talos!
+
+
+
+Please try out the release binaries and report any issues at
+https://github.com/siderolabs/talos/issues.
+
+### Ingress Firewall
+
+Talos Ingress Firewall now filters access to Kubernetes NodePort services correctly.
+
+
+### Component Updates
+
+* Linux: 6.12.13
+* Flannel: 0.26.4
+* Kubernetes: 1.32.2
+
+Talos is built with Go 1.23.6.
+
+
+### Contributors
+
+* Andrey Smirnov
+* Dmitry Sharshakov
+* Dmitriy Matrenichev
+* Mathspy
+
+### Changes
+<details><summary>12 commits</summary>
+<p>
+
+* [`81164efd7`](https://github.com/siderolabs/talos/commit/81164efd7804535a15e968688072fdd6a8a292eb) chore: fix spurious generate failures
+* [`7639cf7ef`](https://github.com/siderolabs/talos/commit/7639cf7efb85d741f75e0e9783c84e23a040f0df) fix: path for ca-certificates
+* [`9afdaf47b`](https://github.com/siderolabs/talos/commit/9afdaf47bcc42595e4939ddc514bc59cfc15e748) feat: update Kubernetes to 1.32.2
+* [`e3bfb238f`](https://github.com/siderolabs/talos/commit/e3bfb238fef27dfb047d1568981be7b026306e25) fix: make ingress firewall filter traffic to nodeports
+* [`6d0db5185`](https://github.com/siderolabs/talos/commit/6d0db5185fa82c5c8c7443498393bf6b75723a18) fix: blockdevice transport detection
+* [`39d608a1c`](https://github.com/siderolabs/talos/commit/39d608a1ca4da9aa077c110fb0e0998e3ef0cc7d) chore: provide more logging for dns requests
+* [`2ca0d5993`](https://github.com/siderolabs/talos/commit/2ca0d5993d149e2b7409b2b06dab5919dde42079) fix: fix diff printing
+* [`c8a7a2c68`](https://github.com/siderolabs/talos/commit/c8a7a2c68e835b725472e60ebfdd59346203b58b) fix: ignore errors to stop pods
+* [`cfc43b0ac`](https://github.com/siderolabs/talos/commit/cfc43b0aca707087eb32a72e30c16f592687c43c) fix: handle empty registry config
+* [`a3aa099c3`](https://github.com/siderolabs/talos/commit/a3aa099c358376feccb699ef1418ddfde4fa339f) feat: update Flannel to 0.26.4
+* [`3612fbfd7`](https://github.com/siderolabs/talos/commit/3612fbfd78a5ff0874c3ad405c9e626afe0edff3) feat: update Linux to 6.12.13
+* [`a320b9907`](https://github.com/siderolabs/talos/commit/a320b99072d6266b20bfcffdb5aa134f9e994604) chore: bump Go to 1.23.6
+</p>
+</details>
+
+### Changes from siderolabs/pkgs
+<details><summary>2 commits</summary>
+<p>
+
+* [`27017e0`](https://github.com/siderolabs/pkgs/commit/27017e062d460f9c8a586769472dc10cb6d76af1) feat: update Linux to 6.12.13
+* [`bf4206c`](https://github.com/siderolabs/pkgs/commit/bf4206cb5de8fa3b199cd99c7ba7ce12d7493f0c) feat: update Go to 1.23.6
+</p>
+</details>
+
+### Changes from siderolabs/tools
+<details><summary>1 commit</summary>
+<p>
+
+* [`b2ede52`](https://github.com/siderolabs/tools/commit/b2ede52c4137ceaebc2b2a2a6c882e0d30a8824a) feat: update Go to 1.23.6
+</p>
+</details>
+
+### Dependency Changes
+
+* **github.com/siderolabs/go-blockdevice/v2**  v2.0.13 -> v2.0.14
+* **github.com/siderolabs/pkgs**               v1.9.0-25-g2250843 -> v1.9.0-27-g27017e0
+* **github.com/siderolabs/tools**              v1.9.0-2-gbf2085e -> v1.9.0-3-gb2ede52
+
+Previous release can be found at [v1.9.3](https://github.com/siderolabs/talos/releases/tag/v1.9.3)
+
 ## [Talos 1.9.3](https://github.com/siderolabs/talos/releases/tag/v1.9.3) (2025-01-28)
 
 Welcome to the v1.9.3 release of Talos!

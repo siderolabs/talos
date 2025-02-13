@@ -163,7 +163,7 @@ require (
 	github.com/siderolabs/net v0.4.0
 	github.com/siderolabs/proto-codec v0.1.1
 	github.com/siderolabs/siderolink v0.3.11
-	github.com/siderolabs/talos/pkg/machinery v1.9.3
+	github.com/siderolabs/talos/pkg/machinery v1.9.4
 	github.com/sirupsen/logrus v1.9.3
 	github.com/spf13/cobra v1.8.1
 	github.com/spf13/pflag v1.0.5
