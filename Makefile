@@ -425,7 +425,7 @@ talosctl-darwin-arm64:
 talosctl-freebsd-amd64:
 	@$(MAKE) local-talosctl-freebsd-amd64 DEST=$(ARTIFACTS) PUSH=false NAME=Client
 
-taloscl-freebsd-arm64:
+talosctl-freebsd-arm64:
 	@$(MAKE) local-talosctl-freebsd-arm64 DEST=$(ARTIFACTS) PUSH=false NAME=Client
 
 talosctl-windows-amd64:
