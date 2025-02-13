@@ -5,4 +5,4 @@
 // Package flannel provides flannel default manifest.
 package flannel
 
-//go:generate go run ./gen.go
+//go:generate env CGO_ENABLED=0 go run ./gen.go
