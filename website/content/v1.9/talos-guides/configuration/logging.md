@@ -2,7 +2,7 @@
 title: "Logging"
 description: "Dealing with Talos Linux logs."
 aliases:
-  - ../../guiides/logging
+  - ../../guides/logging
 ---
 
 ## Viewing logs
@@ -104,6 +104,9 @@ machine:
 ```
 
 The specified `extraTags` are added to every message sent to the destination verbatim.
+
+> `syslog` is considered a service in Talos, and so messages/logs sent to syslog (e.g., by system extensions) are considered
+> service logs and will be sent to any configured remote receivers without further configuration.
 
 ### Kernel logs
 
@@ -332,7 +335,7 @@ helm repo add fluent https://fluent.github.io/helm-charts
 helm upgrade -i --namespace=kube-system -f fluentd-bit.yaml fluent-bit fluent/fluent-bit
 ```
 
-Now  we need to find the service IP.
+Now we need to find the service IP.
 
 ```shell
 $ kubectl -n kube-system get svc -l app.kubernetes.io/name=fluent-bit
