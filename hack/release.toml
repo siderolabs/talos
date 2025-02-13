@@ -20,6 +20,7 @@ preface = """
         description = """\
 * Linux: 6.12.13
 * Flannel: 0.26.4
+* Kubernetes: 1.32.2
 
 Talos is built with Go 1.23.6.
 """
