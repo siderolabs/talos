@@ -1055,7 +1055,7 @@ MountSpec is the spec for volume mount.
 | ----- | ---- | ----- | ----------- |
 | target_path | [string](#string) |  |  |
 | selinux_label | [string](#string) |  |  |
-| options | [string](#string) | repeated |  |
+| project_quota_support | [bool](#bool) |  |  |
 
 
 
@@ -1075,6 +1075,7 @@ MountStatusSpec is the spec for MountStatus.
 | source | [string](#string) |  |  |
 | filesystem | [talos.resource.definitions.enums.BlockFilesystemType](#talos.resource.definitions.enums.BlockFilesystemType) |  |  |
 | read_only | [bool](#bool) |  |  |
+| project_quota_support | [bool](#bool) |  |  |
 
 
 
