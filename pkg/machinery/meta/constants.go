@@ -27,4 +27,6 @@ const (
 	UUIDOverride
 	// UniqueMachineToken store the unique token for this machine. It's useful because UUID may repeat or be filled with zeros.
 	UniqueMachineToken
+	// DiskImageBootloader stores the bootloader used for the disk image, this key is wiped on first boot.
+	DiskImageBootloader
 )

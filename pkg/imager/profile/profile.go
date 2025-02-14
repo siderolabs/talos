@@ -13,13 +13,12 @@ import (
 	"github.com/siderolabs/go-pointer"
 	"gopkg.in/yaml.v3"
 
-	"github.com/siderolabs/talos/pkg/machinery/meta"
 	"github.com/siderolabs/talos/pkg/machinery/overlay"
 )
 
 //go:generate deep-copy -type Profile -type SecureBootAssets -header-file ../../../hack/boilerplate.txt -o deep_copy.generated.go .
 
-//go:generate enumer -type OutputKind,OutFormat,DiskFormat,SDBootEnrollKeys -linecomment -text
+//go:generate enumer -type OutputKind,OutFormat,DiskFormat,SDBootEnrollKeys,DiskImageBootloader -linecomment -text
 
 // Profile describes image generation result.
 type Profile struct {
@@ -54,14 +53,6 @@ type OverlayOptions struct {
 	Image ContainerAsset `yaml:"image"`
 	// Options for the overlay.
 	overlay.ExtraOptions `yaml:"options,omitempty"`
-}
-
-// CustomizationProfile describes customizations that can be applied to the image.
-type CustomizationProfile struct {
-	// ExtraKernelArgs is a list of extra kernel arguments.
-	ExtraKernelArgs []string `yaml:"extraKernelArgs,omitempty"`
-	// MetaContents is a list of META partition contents.
-	MetaContents meta.Values `yaml:"metaContents,omitempty"`
 }
 
 // SecureBootEnabled derefences SecureBoot.

@@ -61,11 +61,12 @@ type Options struct {
 	ImageCachePath string
 
 	// Options specific for the image creation mode.
-	ImageSecureboot bool
-	Version         string
-	BootAssets      bootloaderoptions.BootAssets
-	Printf          func(string, ...any)
-	MountPrefix     string
+	ImageSecureboot     bool
+	DiskImageBootloader string
+	Version             string
+	BootAssets          bootloaderoptions.BootAssets
+	Printf              func(string, ...any)
+	MountPrefix         string
 }
 
 // Mode is the install mode.
@@ -285,7 +286,10 @@ func (i *Installer) Install(ctx context.Context, mode Mode) (err error) {
 	switch mode {
 	case ModeImage:
 		// on image creation, we don't care about disk contents
-		bootlder = bootloader.New(i.options.ImageSecureboot, i.options.Version)
+		bootlder, err = bootloader.New(i.options.DiskImageBootloader, i.options.Version, i.options.Arch)
+		if err != nil {
+			return fmt.Errorf("failed to create bootloader: %w", err)
+		}
 	case ModeInstall:
 		if !i.options.Zero && !i.options.Force {
 			// verify that the disk is either empty or has an empty GPT partition table, otherwise fail the install

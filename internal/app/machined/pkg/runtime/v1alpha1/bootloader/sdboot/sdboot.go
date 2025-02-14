@@ -6,6 +6,7 @@
 package sdboot
 
 import (
+	_ "embed"
 	"errors"
 	"fmt"
 	"io"
@@ -29,6 +30,11 @@ import (
 	"github.com/siderolabs/talos/pkg/imager/utils"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
+
+// LoaderConfBytes is the content of the loader.conf file.
+//
+//go:embed loader.conf
+var LoaderConfBytes []byte
 
 // Config describe sd-boot state.
 type Config struct {
@@ -301,6 +307,20 @@ func (c *Config) install(opts options.InstallOptions) (*options.InstallResult, e
 		sdbootFilename = "BOOTAA64.efi"
 	default:
 		return nil, fmt.Errorf("unsupported architecture: %s", opts.Arch)
+	}
+
+	if _, err := os.Stat(filepath.Join(opts.MountPrefix, constants.EFIMountPoint, "loader", "loader.conf")); err != nil {
+		if os.IsNotExist(err) {
+			if err := os.MkdirAll(filepath.Join(opts.MountPrefix, constants.EFIMountPoint, "loader"), 0o755); err != nil {
+				return nil, err
+			}
+
+			if err := os.WriteFile(filepath.Join(opts.MountPrefix, constants.EFIMountPoint, "loader", "loader.conf"), LoaderConfBytes, 0o644); err != nil {
+				return nil, err
+			}
+		} else {
+			return nil, err
+		}
 	}
 
 	// list existing UKIs, and clean up all but the current one (used to boot)

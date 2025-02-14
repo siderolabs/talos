@@ -1,0 +1,24 @@
+arch: amd64
+platform: metal
+secureboot: true
+version: 1.10.0
+input:
+  kernel:
+    path: /usr/install/amd64/vmlinuz
+  initramfs:
+    path: /usr/install/amd64/initramfs.xz
+  sdStub:
+    path: /usr/install/amd64/systemd-stub.efi
+  sdBoot:
+    path: /usr/install/amd64/systemd-boot.efi
+  baseInstaller:
+    imageRef: ghcr.io/siderolabs/installer:1.10.0
+  secureboot:
+    secureBootSigner:
+      keyPath: /secureboot/uki-signing-key.pem
+      certPath: /secureboot/uki-signing-cert.pem
+    pcrSigner:
+      keyPath: /secureboot/pcr-signing-key.pem
+output:
+  kind: installer
+  outFormat: raw

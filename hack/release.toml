@@ -103,6 +103,29 @@ The NQN can be read by `talosctl read /etc/nvme/hostnqn`
 Talos starting with 1.10 will have ISO's that will use GRUB only for legacy BIOS and systemd-boot for modern UEFI systems.
 """
 
+    [notes.disk-image]
+        title = "Disk Image"
+        description = """\
+Talos starting with 1.10 will have disk images that will use GRUB only for legacy BIOS and systemd-boot for modern UEFI systems.
+On first boot Talos determines the boot method and will wipe the unused bootloader.
+
+Secureboot disk-images will be sd-boot only.
+
+For ARM64 imager will still generate GRUB bootloader for Talos < 1.10 and for Talos >= 1.10 all ARM64 boot assets will use systemd-boot.
+
+Imager supports overwriting bootloader when generating a disk image via the Imager profile `output` option.
+
+Eg:
+
+```yaml
+output:
+  kind: image
+  imageOptions:
+    bootloader: sd-boot # supported options are sd-boot, grub, dual-boot
+```
+
+"""
+
     [notes.ethernet]
         title = "Ethernet"
         description = """\
