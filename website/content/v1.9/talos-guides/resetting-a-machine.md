@@ -22,7 +22,7 @@ There are a couple of flags as part of this command:
 Flags:
       --graceful                        if true, attempt to cordon/drain node and leave etcd (if applicable) (default true)
       --reboot                          if true, reboot the node after resetting instead of shutting down
-      --system-labels-to-wipe strings   if set, just wipe selected system disk partitions by label but keep other partitions intact keep other partitions intact
+      --system-labels-to-wipe strings   if set, just wipe selected system disk partitions by label but keep other partitions intact
 ```
 
 The `graceful` flag is especially important when considering HA vs. non-HA Talos clusters.
