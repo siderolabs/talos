@@ -248,8 +248,8 @@ func (n *Nocloud) acquireConfig(ctx context.Context, r state.State) (metadataNet
 	}
 
 	var (
-		metaBaseURL, hostname string
-		networkSource         bool
+		metaBaseURL, hostname, instanceID string
+		networkSource                     bool
 	)
 
 	options := strings.Split(s.SystemInformation.SerialNumber, ";")
@@ -274,6 +274,9 @@ func (n *Nocloud) acquireConfig(ctx context.Context, r state.State) (metadataNet
 				}
 			case "h":
 				hostname = parts[1]
+
+			case "i":
+				instanceID = parts[1]
 			}
 		}
 	}
@@ -294,6 +297,10 @@ func (n *Nocloud) acquireConfig(ctx context.Context, r state.State) (metadataNet
 
 	if hostname != "" {
 		metadata.Hostname = hostname
+	}
+
+	if instanceID != "" {
+		metadata.InstanceID = instanceID
 	}
 
 	// Some providers may provide the hostname via user-data instead of meta-data (e.g. Proxmox VE)
