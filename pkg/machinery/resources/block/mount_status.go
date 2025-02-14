@@ -28,7 +28,8 @@ type MountStatusSpec struct {
 	Target     string           `yaml:"target" protobuf:"2"`
 	Filesystem FilesystemType   `yaml:"filesystem" protobuf:"4"`
 
-	ReadOnly bool `yaml:"read_only" protobuf:"5"`
+	ReadOnly            bool `yaml:"readOnly" protobuf:"5"`
+	ProjectQuotaSupport bool `yaml:"projectQuotaSupport" protobuf:"6"`
 }
 
 // NewMountStatus initializes a MountStatus resource.

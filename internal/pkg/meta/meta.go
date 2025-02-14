@@ -108,6 +108,11 @@ func (meta *Meta) getPath(ctx context.Context) (string, string, error) {
 		return "", "", err
 	}
 
+	// add our own finalizer for the META volume to ensure it never gets removed, even in the late stages of the reboot
+	if err = meta.state.AddFinalizer(ctx, metaStatus.Metadata(), constants.MetaPartitionLabel); err != nil {
+		return "", "", err
+	}
+
 	if metaStatus.TypedSpec().Phase == block.VolumePhaseMissing {
 		return "", "", os.ErrNotExist
 	}
