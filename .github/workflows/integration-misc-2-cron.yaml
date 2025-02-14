@@ -1,6 +1,6 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
 #
-# Generated on 2025-02-15T06:21:12Z by kres 8a48729.
+# Generated on 2025-02-15T07:52:36Z by kres 8a48729.
 
 name: integration-misc-2-cron
 concurrency:
@@ -123,6 +123,17 @@ jobs:
           USE_DISK_IMAGE: "true"
           VIA_MAINTENANCE_MODE: "true"
           WITH_DISK_ENCRYPTION: "true"
+        run: |
+          sudo -E make e2e-qemu
+      - name: e2e-disk-image-bios
+        env:
+          GITHUB_STEP_NAME: ${{ github.job}}-e2e-disk-image-bios
+          IMAGE_REGISTRY: registry.dev.siderolabs.io
+          SHORT_INTEGRATION_TEST: "yes"
+          USE_DISK_IMAGE: "true"
+          VIA_MAINTENANCE_MODE: "true"
+          WITH_DISK_ENCRYPTION: "true"
+          WITH_UEFI: "false"
         run: |
           sudo -E make e2e-qemu
       - name: e2e-node-address-v2

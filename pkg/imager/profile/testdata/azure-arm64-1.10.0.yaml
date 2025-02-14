@@ -1,0 +1,23 @@
+arch: arm64
+platform: azure
+secureboot: false
+version: 1.10.0
+input:
+  kernel:
+    path: /usr/install/arm64/vmlinuz
+  initramfs:
+    path: /usr/install/arm64/initramfs.xz
+  sdStub:
+    path: /usr/install/arm64/systemd-stub.efi
+  sdBoot:
+    path: /usr/install/arm64/systemd-boot.efi
+  baseInstaller:
+    imageRef: ghcr.io/siderolabs/installer:1.10.0
+output:
+  kind: image
+  imageOptions:
+    diskSize: 8589934592
+    diskFormat: vhd
+    diskFormatOptions: subformat=fixed,force_size
+    bootloader: sd-boot
+  outFormat: .zst
