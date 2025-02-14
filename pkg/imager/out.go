@@ -325,8 +325,9 @@ func (i *Imager) buildImage(ctx context.Context, path string, printf func(string
 		Board:      i.prof.Board,
 		MetaValues: install.FromMeta(i.prof.Customization.MetaContents),
 
-		ImageSecureboot: i.prof.SecureBootEnabled(),
-		Version:         i.prof.Version,
+		ImageSecureboot:     i.prof.SecureBootEnabled(),
+		DiskImageBootloader: i.prof.Output.ImageOptions.Bootloader.String(),
+		Version:             i.prof.Version,
 		BootAssets: options.BootAssets{
 			KernelPath:      i.prof.Input.Kernel.Path,
 			InitramfsPath:   i.initramfsPath,

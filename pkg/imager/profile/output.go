@@ -4,6 +4,11 @@
 
 package profile
 
+import (
+	"github.com/siderolabs/talos/internal/pkg/partition"
+	"github.com/siderolabs/talos/pkg/machinery/imager/quirks"
+)
+
 // Output describes image generation result.
 type Output struct {
 	// Kind of the output:
@@ -37,6 +42,9 @@ type ImageOptions struct {
 	DiskFormat DiskFormat `yaml:"diskFormat,omitempty"`
 	// DiskFormatOptions are additional options for the disk format
 	DiskFormatOptions string `yaml:"diskFormatOptions,omitempty"`
+	// Bootloader is the bootloader to use for the disk image.
+	// If not set, it defaults to dual-boot.
+	Bootloader DiskImageBootloader `yaml:"bootloader"`
 }
 
 // ISOOptions describes options for the 'iso' output.
@@ -97,3 +105,45 @@ const (
 	SDBootEnrollKeysForce                          // force
 	SDBootEnrollKeysOff                            // off
 )
+
+// DiskImageBootloader is a bootloader for the disk image.
+type DiskImageBootloader int
+
+const (
+	// DiskImageBootloaderDualBoot is the dual-boot bootloader
+	// using sd-boot for UEFI and GRUB for BIOS.
+	DiskImageBootloaderDualBoot DiskImageBootloader = iota // dual-boot
+	// DiskImageBootloaderSDBoot is the sd-boot bootloader.
+	DiskImageBootloaderSDBoot // sd-boot
+	// DiskImageBootloaderGrub is the GRUB bootloader.
+	DiskImageBootloaderGrub // grub
+)
+
+// FillDefaults fills default values for the output.
+func (o *Output) FillDefaults(version string, secureboot bool) {
+	if o.Kind == OutKindImage {
+		if o.ImageOptions == nil {
+			o.ImageOptions = &ImageOptions{}
+		}
+
+		if o.ImageOptions.Bootloader > 0 {
+			return
+		}
+
+		if secureboot {
+			o.ImageOptions.Bootloader = DiskImageBootloaderSDBoot
+
+			return
+		}
+
+		if !quirks.New(version).UseSDBootForUEFI() {
+			o.ImageOptions.Bootloader = DiskImageBootloaderGrub
+
+			return
+		}
+
+		// Default to dual-boot.
+		o.ImageOptions.Bootloader = DiskImageBootloaderDualBoot
+		o.ImageOptions.DiskSize += partition.BIOSGrubSize + partition.BootSize
+	}
+}

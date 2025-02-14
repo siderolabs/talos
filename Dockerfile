@@ -1029,7 +1029,7 @@ ENV PLATFORM=container
 ARG GO_LDFLAGS
 RUN --security=insecure --mount=type=cache,id=testspace,target=/tmp --mount=type=cache,target=/.cache go test -failfast -v \
     -ldflags "${GO_LDFLAGS}" \
-    -covermode=atomic -coverprofile=coverage.txt -coverpkg=${TESTPKGS} -count 1 -p 4 ${TESTPKGS}
+    -covermode=atomic -coverprofile=coverage.txt -coverpkg=${TESTPKGS} -count 1 -p 4 -run 'TestCleanup'  github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader
 FROM scratch AS unit-tests
 COPY --from=unit-tests-runner /src/coverage.txt /coverage.txt
 

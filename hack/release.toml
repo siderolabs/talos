@@ -103,6 +103,15 @@ The NQN can be read by `talosctl read /etc/nvme/hostnqn`
 Talos starting with 1.10 will have ISO's that will use GRUB only for legacy BIOS and systemd-boot for modern UEFI systems.
 """
 
+    [notes.disk-image]
+        title = "Disk Image"
+        description = """\
+Talos starting with 1.10 will have disk images that will use GRUB only for legacy BIOS and systemd-boot for modern UEFI systems.
+Once first boot Talos determines the boot method and will wipe the un-used bootloader.
+
+Secureboot disk-images will be sd-boot only.
+"""
+
     [notes.ethernet]
         title = "Ethernet"
         description = """\

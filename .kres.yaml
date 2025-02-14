@@ -858,6 +858,17 @@ spec:
             VIA_MAINTENANCE_MODE: true
             WITH_DISK_ENCRYPTION: true
             IMAGE_REGISTRY: registry.dev.siderolabs.io
+        - name: e2e-disk-image-bios
+          command: e2e-qemu
+          withSudo: true
+          environment:
+            GITHUB_STEP_NAME: ${{ github.job}}-e2e-disk-image-bios
+            SHORT_INTEGRATION_TEST: yes
+            USE_DISK_IMAGE: true
+            VIA_MAINTENANCE_MODE: true
+            WITH_DISK_ENCRYPTION: true
+            WITH_UEFI: false
+            IMAGE_REGISTRY: registry.dev.siderolabs.io
         - name: e2e-node-address-v2
           command: e2e-qemu
           withSudo: true

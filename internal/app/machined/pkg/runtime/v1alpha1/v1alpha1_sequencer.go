@@ -12,9 +12,11 @@ import (
 	"github.com/siderolabs/go-procfs/procfs"
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
+	"github.com/siderolabs/talos/pkg/imager/profile"
 	machineapi "github.com/siderolabs/talos/pkg/machinery/api/machine"
 	"github.com/siderolabs/talos/pkg/machinery/config/machine"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
+	"github.com/siderolabs/talos/pkg/machinery/meta"
 )
 
 // Sequencer implements the sequencer interface.
@@ -96,6 +98,17 @@ func (*Sequencer) Initialize(r runtime.Runtime) []runtime.Phase {
 		).Append(
 			"meta",
 			ReloadMeta,
+		).AppendWithDeferredCheck(
+			func() bool {
+				val, ok := r.State().Machine().Meta().ReadTag(meta.DiskImageBootloader)
+				if !ok {
+					return false
+				}
+
+				return r.State().Machine().Installed() && val == profile.DiskImageBootloaderDualBoot.String()
+			},
+			"cleanupBootloader",
+			CleanupBootloader,
 		).AppendWithDeferredCheck(
 			func() bool {
 				if mode == runtime.ModeMetalAgent {
