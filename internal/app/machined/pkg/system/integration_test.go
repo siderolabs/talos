@@ -70,6 +70,10 @@ func (TestService) DependsOn(runtime.Runtime) []string {
 	return nil
 }
 
+func (TestService) Volumes() []string {
+	return nil
+}
+
 func TestRestartService(t *testing.T) {
 	deadline, ok := t.Deadline()
 	if !ok {

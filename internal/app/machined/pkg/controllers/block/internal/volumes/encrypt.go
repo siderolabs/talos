@@ -8,6 +8,7 @@ import (
 	"context"
 	"fmt"
 	"path/filepath"
+	"slices"
 	"time"
 
 	"github.com/siderolabs/gen/xerrors"
@@ -27,6 +28,8 @@ func HandleEncryption(ctx context.Context, logger *zap.Logger, volumeContext Man
 		volumeContext.Status.Phase = block.VolumePhasePrepared
 		volumeContext.Status.MountLocation = volumeContext.Status.Location
 		volumeContext.Status.EncryptionProvider = block.EncryptionProviderNone
+		volumeContext.Status.EncryptionFailedSyncs = nil
+		volumeContext.Status.ConfiguredEncryptionKeys = nil
 
 		return nil
 	case block.EncryptionProviderLUKS2:
@@ -46,6 +49,8 @@ func HandleEncryption(ctx context.Context, logger *zap.Logger, volumeContext Man
 const encryptionTimeout = time.Minute
 
 // HandleEncryptionWithHandler makes sure the encryption for the volumes is handled appropriately.
+//
+//nolint:gocyclo
 func HandleEncryptionWithHandler(ctx context.Context, logger *zap.Logger, volumeContext ManagerContext, handler *encryption.Handler) error {
 	ctx, cancel := context.WithTimeout(ctx, encryptionTimeout)
 	defer cancel()
@@ -107,6 +112,18 @@ func HandleEncryptionWithHandler(ctx context.Context, logger *zap.Logger, volume
 	volumeContext.Status.MountLocation = encryptedPath
 	volumeContext.Status.EncryptionProvider = volumeContext.Cfg.TypedSpec().Encryption.Provider
 	volumeContext.Status.EncryptionFailedSyncs = failedSyncs
+
+	volumeContext.Status.ConfiguredEncryptionKeys = nil
+
+	for _, key := range volumeContext.Cfg.TypedSpec().Encryption.Keys {
+		provider := key.Type.String()
+
+		if slices.Index(volumeContext.Status.ConfiguredEncryptionKeys, provider) == -1 {
+			volumeContext.Status.ConfiguredEncryptionKeys = append(volumeContext.Status.ConfiguredEncryptionKeys, provider)
+		}
+	}
+
+	slices.Sort(volumeContext.Status.ConfiguredEncryptionKeys)
 
 	return nil
 }
