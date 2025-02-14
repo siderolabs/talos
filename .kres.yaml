@@ -754,6 +754,7 @@ spec:
             SHORT_INTEGRATION_TEST: yes
             WITH_CLUSTER_DISCOVERY: true
             WITH_KUBESPAN: true
+            WITH_CONFIG_PATCH: "@hack/test/patches/kubespan-rp_filter.yaml"
             IMAGE_REGISTRY: registry.dev.siderolabs.io\
         - name: e2e-default-hostname
           command: e2e-qemu
