@@ -50,6 +50,11 @@ func (d *Dashboard) DependsOn(_ runtime.Runtime) []string {
 	return []string{machinedServiceID}
 }
 
+// Volumes implements the Service interface.
+func (d *Dashboard) Volumes() []string {
+	return nil
+}
+
 // Runner implements the Service interface.
 func (d *Dashboard) Runner(r runtime.Runtime) (runner.Runner, error) {
 	tty := fmt.Sprintf("/dev/tty%d", constants.DashboardTTY)

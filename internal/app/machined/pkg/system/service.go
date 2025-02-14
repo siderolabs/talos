@@ -29,6 +29,8 @@ type Service interface {
 	Condition(runtime.Runtime) conditions.Condition
 	// DependsOn returns list of service IDs this service depends on.
 	DependsOn(runtime.Runtime) []string
+	// Volumes returns a list of volume IDs the service needs.
+	Volumes() []string
 }
 
 // HealthcheckedService is a service which provides health check.

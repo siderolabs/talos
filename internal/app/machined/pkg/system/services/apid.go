@@ -134,6 +134,11 @@ func (o *APID) DependsOn(runtime.Runtime) []string {
 	return []string{"containerd"}
 }
 
+// Volumes implements the Service interface.
+func (o *APID) Volumes() []string {
+	return nil
+}
+
 // Runner implements the Service interface.
 func (o *APID) Runner(r runtime.Runtime) (runner.Runner, error) {
 	// Ensure socket dir exists

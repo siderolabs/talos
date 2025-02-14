@@ -80,6 +80,11 @@ func (c *CRI) DependsOn(runtime.Runtime) []string {
 	return nil
 }
 
+// Volumes implements the Service interface.
+func (c *CRI) Volumes() []string {
+	return []string{constants.EphemeralPartitionLabel}
+}
+
 // Runner implements the Service interface.
 func (c *CRI) Runner(r runtime.Runtime) (runner.Runner, error) {
 	// Set the process arguments.
