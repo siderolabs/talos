@@ -14,7 +14,7 @@ replace (
 require (
 	github.com/blang/semver/v4 v4.0.0
 	github.com/containerd/go-cni v1.1.12
-	github.com/cosi-project/runtime v0.10.0
+	github.com/cosi-project/runtime v0.10.1
 	github.com/dustin/go-humanize v1.0.1
 	github.com/emicklei/dot v1.7.0
 	github.com/evanphx/json-patch v5.9.11+incompatible
@@ -56,8 +56,8 @@ require (
 	github.com/containernetworking/cni v1.2.3 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/gertd/go-pluralize v0.2.1 // indirect
-	github.com/google/go-cmp v0.6.0 // indirect
-	github.com/grpc-ecosystem/grpc-gateway/v2 v2.26.1 // indirect
+	github.com/google/go-cmp v0.7.0 // indirect
+	github.com/grpc-ecosystem/grpc-gateway/v2 v2.26.2 // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/josharian/native v1.1.0 // indirect
 	github.com/mattn/go-colorable v0.1.14 // indirect

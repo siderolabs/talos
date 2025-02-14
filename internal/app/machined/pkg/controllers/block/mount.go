@@ -196,10 +196,10 @@ func (ctrl *MountController) Run(ctx context.Context, r controller.Runtime, logg
 				if !ok {
 					var opts []mount.NewPointOption
 
-					// [TODO]: need to support more mount options:
-					// * proj quota (static)
-
-					opts = append(opts, mount.WithSelinuxLabel(volumeStatus.TypedSpec().MountSpec.SelinuxLabel))
+					opts = append(opts,
+						mount.WithProjectQuota(volumeStatus.TypedSpec().MountSpec.ProjectQuotaSupport),
+						mount.WithSelinuxLabel(volumeStatus.TypedSpec().MountSpec.SelinuxLabel),
+					)
 
 					if mountRequest.TypedSpec().ReadOnly {
 						opts = append(opts, mount.WithReadonly())
@@ -251,7 +251,9 @@ func (ctrl *MountController) Run(ctx context.Context, r controller.Runtime, logg
 						mountStatus.TypedSpec().Source = mountSource
 						mountStatus.TypedSpec().Target = mountTarget
 						mountStatus.TypedSpec().Filesystem = mountFilesystem
+						mountStatus.TypedSpec().EncryptionProvider = volumeStatus.TypedSpec().EncryptionProvider
 						mountStatus.TypedSpec().ReadOnly = mountRequest.TypedSpec().ReadOnly
+						mountStatus.TypedSpec().ProjectQuotaSupport = volumeStatus.TypedSpec().MountSpec.ProjectQuotaSupport
 
 						return nil
 					},

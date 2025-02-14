@@ -124,7 +124,7 @@ message MountRequestSpec {
 message MountSpec {
   string target_path = 1;
   string selinux_label = 2;
-  repeated string options = 3;
+  bool project_quota_support = 3;
 }
 
 // MountStatusSpec is the spec for MountStatus.
@@ -134,6 +134,8 @@ message MountStatusSpec {
   string source = 3;
   talos.resource.definitions.enums.BlockFilesystemType filesystem = 4;
   bool read_only = 5;
+  bool project_quota_support = 6;
+  talos.resource.definitions.enums.BlockEncryptionProviderType encryption_provider = 7;
 }
 
 // PartitionSpec is the spec for volume partitioning.
@@ -211,5 +213,7 @@ message VolumeStatusSpec {
   string pretty_size = 13;
   repeated string encryption_failed_syncs = 14;
   MountSpec mount_spec = 15;
+  talos.resource.definitions.enums.BlockVolumeType type = 16;
+  repeated string configured_encryption_keys = 17;
 }
 

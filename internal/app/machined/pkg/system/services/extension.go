@@ -112,6 +112,11 @@ func (svc *Extension) DependsOn(r runtime.Runtime) []string {
 	return deps
 }
 
+// Volumes implements the Service interface.
+func (svc *Extension) Volumes() []string {
+	return nil
+}
+
 func (svc *Extension) getOCIOptions(envVars []string, mounts []specs.Mount) []oci.SpecOpts {
 	ociOpts := []oci.SpecOpts{
 		oci.WithRootFSPath(filepath.Join(constants.ExtensionServiceRootfsPath, svc.Spec.Name)),

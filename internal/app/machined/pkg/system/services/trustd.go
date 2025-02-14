@@ -135,6 +135,11 @@ func (t *Trustd) DependsOn(runtime.Runtime) []string {
 	return []string{"containerd"}
 }
 
+// Volumes implements the Service interface.
+func (t *Trustd) Volumes() []string {
+	return nil
+}
+
 // Runner implements the Service interface.
 func (t *Trustd) Runner(r runtime.Runtime) (runner.Runner, error) {
 	// Set the process arguments.

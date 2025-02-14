@@ -108,10 +108,6 @@ func (o VolumeConfigSpec) DeepCopy() VolumeConfigSpec {
 		cp.Encryption.PerfOptions = make([]string, len(o.Encryption.PerfOptions))
 		copy(cp.Encryption.PerfOptions, o.Encryption.PerfOptions)
 	}
-	if o.Mount.Options != nil {
-		cp.Mount.Options = make([]string, len(o.Mount.Options))
-		copy(cp.Mount.Options, o.Mount.Options)
-	}
 	return cp
 }
 
@@ -140,9 +136,9 @@ func (o VolumeStatusSpec) DeepCopy() VolumeStatusSpec {
 		cp.EncryptionFailedSyncs = make([]string, len(o.EncryptionFailedSyncs))
 		copy(cp.EncryptionFailedSyncs, o.EncryptionFailedSyncs)
 	}
-	if o.MountSpec.Options != nil {
-		cp.MountSpec.Options = make([]string, len(o.MountSpec.Options))
-		copy(cp.MountSpec.Options, o.MountSpec.Options)
+	if o.ConfiguredEncryptionKeys != nil {
+		cp.ConfiguredEncryptionKeys = make([]string, len(o.ConfiguredEncryptionKeys))
+		copy(cp.ConfiguredEncryptionKeys, o.ConfiguredEncryptionKeys)
 	}
 	return cp
 }

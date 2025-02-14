@@ -924,14 +924,15 @@ func (m *MountSpec) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 		i -= len(m.unknownFields)
 		copy(dAtA[i:], m.unknownFields)
 	}
-	if len(m.Options) > 0 {
-		for iNdEx := len(m.Options) - 1; iNdEx >= 0; iNdEx-- {
-			i -= len(m.Options[iNdEx])
-			copy(dAtA[i:], m.Options[iNdEx])
-			i = protohelpers.EncodeVarint(dAtA, i, uint64(len(m.Options[iNdEx])))
-			i--
-			dAtA[i] = 0x1a
+	if m.ProjectQuotaSupport {
+		i--
+		if m.ProjectQuotaSupport {
+			dAtA[i] = 1
+		} else {
+			dAtA[i] = 0
 		}
+		i--
+		dAtA[i] = 0x18
 	}
 	if len(m.SelinuxLabel) > 0 {
 		i -= len(m.SelinuxLabel)
@@ -979,6 +980,21 @@ func (m *MountStatusSpec) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 	if m.unknownFields != nil {
 		i -= len(m.unknownFields)
 		copy(dAtA[i:], m.unknownFields)
+	}
+	if m.EncryptionProvider != 0 {
+		i = protohelpers.EncodeVarint(dAtA, i, uint64(m.EncryptionProvider))
+		i--
+		dAtA[i] = 0x38
+	}
+	if m.ProjectQuotaSupport {
+		i--
+		if m.ProjectQuotaSupport {
+			dAtA[i] = 1
+		} else {
+			dAtA[i] = 0
+		}
+		i--
+		dAtA[i] = 0x30
 	}
 	if m.ReadOnly {
 		i--
@@ -1525,6 +1541,24 @@ func (m *VolumeStatusSpec) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 		i -= len(m.unknownFields)
 		copy(dAtA[i:], m.unknownFields)
 	}
+	if len(m.ConfiguredEncryptionKeys) > 0 {
+		for iNdEx := len(m.ConfiguredEncryptionKeys) - 1; iNdEx >= 0; iNdEx-- {
+			i -= len(m.ConfiguredEncryptionKeys[iNdEx])
+			copy(dAtA[i:], m.ConfiguredEncryptionKeys[iNdEx])
+			i = protohelpers.EncodeVarint(dAtA, i, uint64(len(m.ConfiguredEncryptionKeys[iNdEx])))
+			i--
+			dAtA[i] = 0x1
+			i--
+			dAtA[i] = 0x8a
+		}
+	}
+	if m.Type != 0 {
+		i = protohelpers.EncodeVarint(dAtA, i, uint64(m.Type))
+		i--
+		dAtA[i] = 0x1
+		i--
+		dAtA[i] = 0x80
+	}
 	if m.MountSpec != nil {
 		size, err := m.MountSpec.MarshalToSizedBufferVT(dAtA[:i])
 		if err != nil {
@@ -2021,11 +2055,8 @@ func (m *MountSpec) SizeVT() (n int) {
 	if l > 0 {
 		n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
 	}
-	if len(m.Options) > 0 {
-		for _, s := range m.Options {
-			l = len(s)
-			n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
-		}
+	if m.ProjectQuotaSupport {
+		n += 2
 	}
 	n += len(m.unknownFields)
 	return n
@@ -2054,6 +2085,12 @@ func (m *MountStatusSpec) SizeVT() (n int) {
 	}
 	if m.ReadOnly {
 		n += 2
+	}
+	if m.ProjectQuotaSupport {
+		n += 2
+	}
+	if m.EncryptionProvider != 0 {
+		n += 1 + protohelpers.SizeOfVarint(uint64(m.EncryptionProvider))
 	}
 	n += len(m.unknownFields)
 	return n
@@ -2298,6 +2335,15 @@ func (m *VolumeStatusSpec) SizeVT() (n int) {
 	if m.MountSpec != nil {
 		l = m.MountSpec.SizeVT()
 		n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
+	}
+	if m.Type != 0 {
+		n += 2 + protohelpers.SizeOfVarint(uint64(m.Type))
+	}
+	if len(m.ConfiguredEncryptionKeys) > 0 {
+		for _, s := range m.ConfiguredEncryptionKeys {
+			l = len(s)
+			n += 2 + l + protohelpers.SizeOfVarint(uint64(l))
+		}
 	}
 	n += len(m.unknownFields)
 	return n
@@ -4816,10 +4862,10 @@ func (m *MountSpec) UnmarshalVT(dAtA []byte) error {
 			m.SelinuxLabel = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
 		case 3:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Options", wireType)
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field ProjectQuotaSupport", wireType)
 			}
-			var stringLen uint64
+			var v int
 			for shift := uint(0); ; shift += 7 {
 				if shift >= 64 {
 					return protohelpers.ErrIntOverflow
@@ -4829,24 +4875,12 @@ func (m *MountSpec) UnmarshalVT(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
+				v |= int(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}
 			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return protohelpers.ErrInvalidLength
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return protohelpers.ErrInvalidLength
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.Options = append(m.Options, string(dAtA[iNdEx:postIndex]))
-			iNdEx = postIndex
+			m.ProjectQuotaSupport = bool(v != 0)
 		default:
 			iNdEx = preIndex
 			skippy, err := protohelpers.Skip(dAtA[iNdEx:])
@@ -5037,6 +5071,45 @@ func (m *MountStatusSpec) UnmarshalVT(dAtA []byte) error {
 				}
 			}
 			m.ReadOnly = bool(v != 0)
+		case 6:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field ProjectQuotaSupport", wireType)
+			}
+			var v int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return protohelpers.ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				v |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			m.ProjectQuotaSupport = bool(v != 0)
+		case 7:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field EncryptionProvider", wireType)
+			}
+			m.EncryptionProvider = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return protohelpers.ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.EncryptionProvider |= enums.BlockEncryptionProviderType(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
 		default:
 			iNdEx = preIndex
 			skippy, err := protohelpers.Skip(dAtA[iNdEx:])
@@ -6661,6 +6734,57 @@ func (m *VolumeStatusSpec) UnmarshalVT(dAtA []byte) error {
 			if err := m.MountSpec.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
+			iNdEx = postIndex
+		case 16:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Type", wireType)
+			}
+			m.Type = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return protohelpers.ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.Type |= enums.BlockVolumeType(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 17:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field ConfiguredEncryptionKeys", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return protohelpers.ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return protohelpers.ErrInvalidLength
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return protohelpers.ErrInvalidLength
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.ConfiguredEncryptionKeys = append(m.ConfiguredEncryptionKeys, string(dAtA[iNdEx:postIndex]))
 			iNdEx = postIndex
 		default:
 			iNdEx = preIndex

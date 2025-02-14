@@ -232,8 +232,9 @@ func (ctrl *VolumeConfigController) manageEphemeral(config cfg.Config) func(vc *
 		}
 
 		vc.TypedSpec().Mount = block.MountSpec{
-			TargetPath:   constants.EphemeralMountPoint,
-			SelinuxLabel: constants.EphemeralSelinuxLabel,
+			TargetPath:          constants.EphemeralMountPoint,
+			SelinuxLabel:        constants.EphemeralSelinuxLabel,
+			ProjectQuotaSupport: config.Machine().Features().DiskQuotaSupportEnabled(),
 		}
 
 		vc.TypedSpec().Locator = block.LocatorSpec{

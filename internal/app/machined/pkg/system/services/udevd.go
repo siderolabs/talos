@@ -66,6 +66,11 @@ func (c *Udevd) DependsOn(runtime.Runtime) []string {
 	return nil
 }
 
+// Volumes implements the Service interface.
+func (c *Udevd) Volumes() []string {
+	return nil
+}
+
 // Runner implements the Service interface.
 func (c *Udevd) Runner(r runtime.Runtime) (runner.Runner, error) {
 	// Set the process arguments.

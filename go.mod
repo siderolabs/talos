@@ -73,7 +73,7 @@ require (
 	github.com/containernetworking/plugins v1.6.2
 	github.com/coredns/coredns v1.11.3
 	github.com/coreos/go-iptables v0.8.0
-	github.com/cosi-project/runtime v0.10.0
+	github.com/cosi-project/runtime v0.10.1
 	github.com/distribution/reference v0.6.0
 	github.com/docker/cli v28.0.1+incompatible
 	github.com/docker/docker v28.0.1+incompatible
@@ -272,13 +272,13 @@ require (
 	github.com/golang/protobuf v1.5.4 // indirect
 	github.com/google/btree v1.1.3 // indirect
 	github.com/google/gnostic-models v0.6.9 // indirect
-	github.com/google/go-cmp v0.6.0 // indirect
+	github.com/google/go-cmp v0.7.0 // indirect
 	github.com/google/gofuzz v1.2.0 // indirect
 	github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510 // indirect
 	github.com/gorilla/websocket v1.5.3 // indirect
 	github.com/gosuri/uilive v0.0.4 // indirect
 	github.com/gregjones/httpcache v0.0.0-20190611155906-901d90724c79 // indirect
-	github.com/grpc-ecosystem/grpc-gateway/v2 v2.26.1 // indirect
+	github.com/grpc-ecosystem/grpc-gateway/v2 v2.26.2 // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/hashicorp/go-safetemp v1.0.0 // indirect
 	github.com/hashicorp/go-version v1.6.0 // indirect

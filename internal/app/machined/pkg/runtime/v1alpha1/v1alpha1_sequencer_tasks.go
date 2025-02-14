@@ -27,7 +27,6 @@ import (
 	"github.com/foxboron/go-uefi/efi"
 	"github.com/hashicorp/go-multierror"
 	pprocfs "github.com/prometheus/procfs"
-	"github.com/siderolabs/gen/maps"
 	"github.com/siderolabs/gen/xslices"
 	"github.com/siderolabs/go-blockdevice/v2/block"
 	"github.com/siderolabs/go-cmd/pkg/cmd"
@@ -1257,12 +1256,21 @@ func ResetSystemDiskPartitions(seq runtime.Sequence, _ any) (runtime.TaskExecuti
 	}
 
 	if *wipeStr == "system" {
-		resetSystemDisk, _ := ResetSystemDisk(seq, nil)
-
 		return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) error {
+			systemDiskPaths, err := blockres.GetSystemDiskPaths(ctx, r.State().V1Alpha2().Resources())
+			if err != nil {
+				return err
+			}
+
+			targets := targets{
+				systemDiskPaths: systemDiskPaths,
+			}
+
 			logger.Printf("resetting system disks")
 
-			err := resetSystemDisk(ctx, logger, r)
+			resetSystemDisk, _ := ResetSystemDisk(seq, targets)
+
+			err = resetSystemDisk(ctx, logger, r)
 			if err != nil {
 				logger.Printf("resetting system disks failed")
 
@@ -1302,45 +1310,14 @@ func ResetSystemDiskPartitions(seq runtime.Sequence, _ any) (runtime.TaskExecuti
 // ResetSystemDisk represents the task to reset the system disk.
 //
 //nolint:gocyclo
-func ResetSystemDisk(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
+func ResetSystemDisk(_ runtime.Sequence, data any) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) error {
-		systemDisks := map[string]struct{}{}
-
-		// fetch system disk (where Talos is installed)
-		systemDisk, err := blockres.GetSystemDisk(ctx, r.State().V1Alpha2().Resources())
-		if err != nil {
-			return err
+		in, ok := data.(SystemDiskTargets)
+		if !ok {
+			return errors.New("unexpected runtime data")
 		}
 
-		if systemDisk != nil {
-			systemDisks[systemDisk.DevPath] = struct{}{}
-		}
-
-		// fetch additional system volumes (which might be on the same or other disks)
-		for _, volumeID := range []string{constants.StatePartitionLabel, constants.EphemeralPartitionLabel} {
-			volumeStatus, err := safe.ReaderGetByID[*blockres.VolumeStatus](ctx, r.State().V1Alpha2().Resources(), volumeID)
-			if err != nil {
-				if state.IsNotFoundError(err) {
-					continue
-				}
-
-				return err
-			}
-
-			if volumeStatus.TypedSpec().ParentLocation != "" {
-				systemDisks[volumeStatus.TypedSpec().ParentLocation] = struct{}{}
-			} else if volumeStatus.TypedSpec().Location != "" {
-				systemDisks[volumeStatus.TypedSpec().Location] = struct{}{}
-			}
-		}
-
-		if len(systemDisks) == 0 {
-			return nil
-		}
-
-		systemDiskPaths := maps.Keys(systemDisks)
-
-		for _, systemDiskPath := range systemDiskPaths {
+		for _, systemDiskPath := range in.GetSystemDiskPaths() {
 			if err := func(devPath string) error {
 				logger.Printf("wiping system disk %s", devPath)
 
@@ -1350,7 +1327,7 @@ func ResetSystemDisk(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) 
 				}
 
 				if err = dev.RetryLockWithTimeout(ctx, true, time.Minute); err != nil {
-					return fmt.Errorf("failed to lock device %s: %w", systemDisk.DevPath, err)
+					return fmt.Errorf("failed to lock device %s: %w", devPath, err)
 				}
 
 				defer dev.Close() //nolint:errcheck
@@ -1408,10 +1385,17 @@ func ResetUserDisks(_ runtime.Sequence, data any) (runtime.TaskExecutionFunc, st
 
 type targets struct {
 	systemDiskTargets []*partition.VolumeWipeTarget
+	systemDiskPaths   []string
 }
+
+var _ SystemDiskTargets = targets{}
 
 func (opt targets) GetSystemDiskTargets() []runtime.PartitionTarget {
 	return xslices.Map(opt.systemDiskTargets, func(t *partition.VolumeWipeTarget) runtime.PartitionTarget { return t })
+}
+
+func (opt targets) GetSystemDiskPaths() []string {
+	return opt.systemDiskPaths
 }
 
 func (opt targets) String() string {
@@ -1464,6 +1448,7 @@ func parseTargets(ctx context.Context, r runtime.Runtime, wipeStr string) (Syste
 // It's a subset of [runtime.ResetOptions].
 type SystemDiskTargets interface {
 	GetSystemDiskTargets() []runtime.PartitionTarget
+	GetSystemDiskPaths() []string
 	fmt.Stringer
 }
 
@@ -1713,19 +1698,46 @@ func UnmountStatePartition(runtime.Sequence, any) (runtime.TaskExecutionFunc, st
 // MountEphemeralPartition mounts the ephemeral partition.
 func MountEphemeralPartition(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) error {
-		if _, err := waitForVolumeReady(ctx, r, constants.EphemeralPartitionLabel); err != nil {
-			return err
+		mountRequest := blockres.NewVolumeMountRequest(blockres.NamespaceName, constants.EphemeralPartitionLabel)
+		mountRequest.TypedSpec().VolumeID = constants.EphemeralPartitionLabel
+		mountRequest.TypedSpec().Requester = "sequencer"
+
+		if err := r.State().V1Alpha2().Resources().Create(ctx, mountRequest); err != nil {
+			return fmt.Errorf("failed to create EPHEMERAL mount request: %w", err)
 		}
 
-		return mount.SystemPartitionMount(ctx, r, logger, constants.EphemeralPartitionLabel, false,
-			mountv2.WithProjectQuota(r.Config().Machine().Features().DiskQuotaSupportEnabled()))
+		if _, err := r.State().V1Alpha2().Resources().WatchFor(
+			ctx,
+			blockres.NewVolumeMountStatus(blockres.NamespaceName, constants.EphemeralPartitionLabel).Metadata(),
+			state.WithEventTypes(state.Created, state.Updated),
+		); err != nil {
+			return fmt.Errorf("failed to wait for EPHEMERAL to be mounted: %w", err)
+		}
+
+		return nil
 	}, "mountEphemeralPartition"
 }
 
 // UnmountEphemeralPartition unmounts the ephemeral partition.
 func UnmountEphemeralPartition(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
-	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
-		return mount.SystemPartitionUnmount(r, logger, constants.EphemeralPartitionLabel)
+	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) error {
+		mountRequest := blockres.NewVolumeMountRequest(blockres.NamespaceName, constants.EphemeralPartitionLabel).Metadata()
+
+		_, err := r.State().V1Alpha2().Resources().Teardown(ctx, mountRequest)
+		if err != nil {
+			if state.IsNotFoundError(err) {
+				return nil
+			}
+
+			return fmt.Errorf("failed to teardown EPHEMERAL mount request: %w", err)
+		}
+
+		_, err = r.State().V1Alpha2().Resources().WatchFor(ctx, mountRequest, state.WithFinalizerEmpty())
+		if err != nil {
+			return fmt.Errorf("failed to wait for EPHEMERAL teardown: %w", err)
+		}
+
+		return r.State().V1Alpha2().Resources().Destroy(ctx, mountRequest)
 	}, "unmountEphemeralPartition"
 }
 
