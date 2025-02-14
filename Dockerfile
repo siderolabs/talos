@@ -222,7 +222,7 @@ ARG STRINGER_VERSION
 RUN --mount=type=cache,target=/.cache go install golang.org/x/tools/cmd/stringer@${STRINGER_VERSION} \
     && mv /root/go/bin/stringer /usr/bin/stringer
 ARG ENUMER_VERSION
-RUN --mount=type=cache,target=/.cache go install github.com/dmarkham/enumer@${ENUMER_VERSION} \
+RUN --mount=type=cache,target=/.cache go install github.com/dsseng/enumer@${ENUMER_VERSION} \
     && mv /root/go/bin/enumer /usr/bin/enumer
 ARG DEEPCOPY_GEN_VERSION
 RUN --mount=type=cache,target=/.cache go install k8s.io/code-generator/cmd/deepcopy-gen@${DEEPCOPY_GEN_VERSION} \
@@ -712,15 +712,6 @@ COPY --link --from=pkg-kmod-amd64 /usr/lib/libkmod.* /rootfs/usr/lib/
 COPY --link --from=pkg-kmod-amd64 /usr/bin/kmod /rootfs/usr/bin/modprobe
 COPY --link --from=modules-amd64 /usr/lib/modules /rootfs/usr/lib/modules
 COPY --link --from=machined-build-amd64 /machined /rootfs/usr/bin/init
-RUN <<END
-    # move everything from /usr/sbin to /usr/bin and symlink
-    # TODO: make FHS and other packages already install everything to /usr/bin
-    # udevadm is a recursive symlink
-    rm /rootfs/usr/sbin/udevadm
-    mv /rootfs/usr/sbin/* /rootfs/usr/bin/
-    rmdir /rootfs/usr/sbin/
-    ln -s bin /rootfs/usr/sbin
-END
 
 # this is a no-op as it copies from a scratch image when WITH_DEBUG_SHELL is not set
 COPY --link --from=pkg-debug-tools-amd64 * /rootfs/
@@ -798,15 +789,6 @@ COPY --link --from=pkg-kmod-arm64 /usr/lib/libkmod.* /rootfs/usr/lib/
 COPY --link --from=pkg-kmod-arm64 /usr/bin/kmod /rootfs/usr/bin/modprobe
 COPY --link --from=modules-arm64 /usr/lib/modules /rootfs/usr/lib/modules
 COPY --link --from=machined-build-arm64 /machined /rootfs/usr/bin/init
-RUN <<END
-    # move everything from /usr/sbin to /usr/bin and symlink
-    # TODO: make FHS and other packages already install everything to /usr/bin
-    # udevadm is a recursive symlink
-    rm /rootfs/usr/sbin/udevadm
-    mv /rootfs/usr/sbin/* /rootfs/usr/bin/
-    rmdir /rootfs/usr/sbin/
-    ln -s bin /rootfs/usr/sbin
-END
 
 # this is a no-op as it copies from a scratch image when WITH_DEBUG_SHELL is not set
 COPY --link --from=pkg-debug-tools-arm64 * /rootfs/
@@ -1016,12 +998,6 @@ FROM --platform=${BUILDPLATFORM} iso-${TARGETARCH} AS iso
 
 # The test target performs tests on the source code.
 FROM base AS unit-tests-runner
-RUN <<END
-    # TODO: do this in tools/pkgs
-    mv /usr/sbin/* /usr/bin/
-    rmdir /usr/sbin/
-    ln -s bin /usr/sbin
-END
 COPY --from=rootfs / /
 COPY --from=pkg-ca-certificates / /
 ARG TESTPKGS
@@ -1036,12 +1012,6 @@ COPY --from=unit-tests-runner /src/coverage.txt /coverage.txt
 # The unit-tests-race target performs tests with race detector.
 
 FROM base AS unit-tests-race
-RUN <<END
-    # TODO: do this in tools/pkgs
-    mv /usr/sbin/* /usr/bin/
-    rmdir /usr/sbin/
-    ln -s bin /usr/sbin
-END
 COPY --from=rootfs / /
 COPY --from=pkg-ca-certificates / /
 ARG TESTPKGS

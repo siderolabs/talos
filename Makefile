@@ -17,13 +17,13 @@ ZSTD_COMPRESSION_LEVEL ?= 18
 CI_RELEASE_TAG := $(shell git log --oneline --format=%B -n 1 HEAD^2 -- 2>/dev/null | head -n 1 | sed -r "/^release\(.*\)/ s/^release\((.*)\):.*$$/\\1/; t; Q")
 
 ARTIFACTS := _out
-TOOLS ?= ghcr.io/siderolabs/tools:v1.10.0-alpha.0-10-g9db33dd
+TOOLS ?= ghcr.io/siderolabs/tools:v1.10.0-alpha.0-14-g46be459
 
 DEBUG_TOOLS_SOURCE := scratch
 EMBED_TARGET ?= embed
 
 PKGS_PREFIX ?= ghcr.io/siderolabs
-PKGS ?= v1.10.0-alpha.0-36-g117a1d6
+PKGS ?= v1.10.0-alpha.0-38-g76a0316
 EXTRAS ?= v1.10.0-alpha.0-3-g4102a78
 
 KRES_IMAGE ?= ghcr.io/siderolabs/kres:latest
@@ -67,7 +67,7 @@ PKG_KERNEL ?= $(PKGS_PREFIX)/kernel:$(PKGS)
 PKG_TALOSCTL_CNI_BUNDLE ?= $(PKGS_PREFIX)/talosctl-cni-bundle:$(EXTRAS)
 
 # renovate: datasource=github-tags depName=golang/go
-GO_VERSION ?= 1.23
+GO_VERSION ?= 1.24
 # renovate: datasource=go depName=golang.org/x/tools
 GOIMPORTS_VERSION ?= v0.28.0
 # renovate: datasource=go depName=mvdan.cc/gofumpt
@@ -77,7 +77,8 @@ GOLANGCILINT_VERSION ?= v1.62.2
 # renovate: datasource=go depName=golang.org/x/tools
 STRINGER_VERSION ?= v0.28.0
 # renovate: datasource=go depName=github.com/dmarkham/enumer
-ENUMER_VERSION ?= v1.5.10
+# FIXME: https://github.com/dmarkham/enumer/issues/105
+ENUMER_VERSION ?= v1.5.11-0.20250217145611-d1015c2bde3f
 # renovate: datasource=go depName=k8s.io/code-generator
 DEEPCOPY_GEN_VERSION ?= v0.32.0
 # renovate: datasource=go depName=github.com/planetscale/vtprotobuf
