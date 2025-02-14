@@ -127,7 +127,7 @@ func (versions *k8sVersions) gatherVersions(ctx context.Context, client *client.
 	}
 
 	if kubeletSpec != nil {
-		versions.kubelet, err = kubernetesVersionFromImageRef(kubeletSpec.TypedSpec().Image)
+		versions.kubelet, err = KubernetesVersionFromImageRef(kubeletSpec.TypedSpec().Image)
 		if err != nil {
 			return fmt.Errorf("error parsing kubelet version: %w", err)
 		}
@@ -139,7 +139,7 @@ func (versions *k8sVersions) gatherVersions(ctx context.Context, client *client.
 	}
 
 	if apiServerSpec != nil {
-		versions.apiServer, err = kubernetesVersionFromImageRef(apiServerSpec.TypedSpec().Image)
+		versions.apiServer, err = KubernetesVersionFromImageRef(apiServerSpec.TypedSpec().Image)
 		if err != nil {
 			return fmt.Errorf("error parsing API server version: %w", err)
 		}
@@ -151,7 +151,7 @@ func (versions *k8sVersions) gatherVersions(ctx context.Context, client *client.
 	}
 
 	if schedulerSpec != nil {
-		versions.scheduler, err = kubernetesVersionFromImageRef(schedulerSpec.TypedSpec().Image)
+		versions.scheduler, err = KubernetesVersionFromImageRef(schedulerSpec.TypedSpec().Image)
 		if err != nil {
 			return fmt.Errorf("error parsing scheduler version: %w", err)
 		}
@@ -163,7 +163,7 @@ func (versions *k8sVersions) gatherVersions(ctx context.Context, client *client.
 	}
 
 	if controllerManagerSpec != nil {
-		versions.controllerManager, err = kubernetesVersionFromImageRef(controllerManagerSpec.TypedSpec().Image)
+		versions.controllerManager, err = KubernetesVersionFromImageRef(controllerManagerSpec.TypedSpec().Image)
 		if err != nil {
 			return fmt.Errorf("error parsing controller manager version: %w", err)
 		}
@@ -252,13 +252,20 @@ func (checks *PreflightChecks) kubernetesVersion(ctx context.Context) error {
 	return versions.checkCompatibility(checks.installerTalosVersion)
 }
 
-func kubernetesVersionFromImageRef(ref string) (*compatibility.KubernetesVersion, error) {
+// KubernetesVersionFromImageRef parses the Kubernetes version from the image reference.
+func KubernetesVersionFromImageRef(ref string) (*compatibility.KubernetesVersion, error) {
 	idx := strings.LastIndex(ref, ":v")
 	if idx == -1 {
 		return nil, fmt.Errorf("invalid image reference: %q", ref)
 	}
 
-	return compatibility.ParseKubernetesVersion(ref[idx+2:])
+	versionPart := ref[idx+2:]
+
+	if shaIndex := strings.Index(versionPart, "@"); shaIndex != -1 {
+		versionPart = versionPart[:shaIndex]
+	}
+
+	return compatibility.ParseKubernetesVersion(versionPart)
 }
 
 func unpack[T any](s []T) T {
