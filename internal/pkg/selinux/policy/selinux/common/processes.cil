@@ -122,3 +122,7 @@
 
 ; allow reading cgroup info
 (allow pod_p cgroup_t (fs_classes (ro)))
+
+; DEBUG: transitions
+(auditallow any_p any_p (process (dyntransition fork transition setcurrent setexec setfscreate setkeycreate)))
+(auditallow any_p any_p (process2 (nnp_transition nosuid_transition)))
