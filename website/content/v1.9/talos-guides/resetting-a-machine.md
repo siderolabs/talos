@@ -35,8 +35,8 @@ In this case, reset should be used with `--graceful=false` to skip performing ch
 
 ## Kernel Parameter
 
-Another way to reset a machine is to specify `talos.experimental.wipe=system` kernel parameter.
-If the machine got stuck in the boot loop and you access to the console you can use GRUB to specify this kernel argument.
+Another way to reset a machine is to specify `talos.experimental.wipe=system` kernel parameter.  
+If the machine got stuck in the boot loop and you have access to the console you can use GRUB to specify this kernel argument.  
 Then when Talos boots for the next time it will reset system disk and reboot.
 
 Next steps can be to install Talos either using PXE boot or by mounting an ISO.
