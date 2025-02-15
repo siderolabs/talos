@@ -1,6 +1,6 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
 #
-# Generated on 2025-01-22T14:28:18Z by kres 3075de9.
+# Generated on 2025-02-15T06:21:12Z by kres 8a48729.
 
 name: integration-misc-0-cron
 concurrency:
@@ -78,6 +78,13 @@ jobs:
         if: github.event_name == 'schedule'
         run: |
           make talosctl-cni-bundle
+      - name: image-metal-uki
+        if: github.event_name == 'schedule'
+        env:
+          IMAGE_REGISTRY: registry.dev.siderolabs.io
+          PLATFORM: linux/amd64
+        run: |
+          make image-metal-uki
       - name: e2e-firewall
         env:
           GITHUB_STEP_NAME: ${{ github.job}}-e2e-firewall

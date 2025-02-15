@@ -659,6 +659,12 @@ spec:
         - name: talosctl-cni-bundle
           conditions:
             - only-on-schedule
+        - name: image-metal-uki # needed for e2e-uki-4k
+          conditions:
+            - only-on-schedule
+          environment:
+            PLATFORM: linux/amd64
+            IMAGE_REGISTRY: registry.dev.siderolabs.io
         - name: e2e-firewall
           command: e2e-qemu
           withSudo: true
@@ -824,6 +830,12 @@ spec:
         - name: talosctl-cni-bundle
           conditions:
             - only-on-schedule
+        - name: iso # needed for e2e-bios-iso
+          conditions:
+            - only-on-schedule
+          command: iso
+          environment:
+            IMAGE_REGISTRY: registry.dev.siderolabs.io
         - name: images-essential
           conditions:
             - only-on-schedule
