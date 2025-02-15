@@ -355,6 +355,10 @@ func (ctrl *Controller) Run(ctx context.Context, drainer *runtime.Drainer) error
 		runtimecontrollers.NewUniqueMachineTokenController(),
 		&runtimecontrollers.WatchdogTimerConfigController{},
 		&runtimecontrollers.WatchdogTimerController{},
+		&runtimecontrollers.FSScrubConfigController{},
+		&runtimecontrollers.FSScrubController{
+			Runtime: ctrl.v1alpha1Runtime,
+		},
 		&secrets.APICertSANsController{},
 		&secrets.APIController{},
 		&secrets.EtcdController{},
