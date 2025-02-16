@@ -34,8 +34,8 @@
 (filecon "/usr/lib64" any lib_t)
 (filecon "/lib" any lib_t)
 (filecon "/lib64" any lib_t)
-(allow service_p lib_t (file (execute)))
-(allow service_p lib_t (fs_classes (ro)))
+(allow system_p lib_t (file (execute)))
+(allow system_p lib_t (fs_classes (ro)))
 
 ; Should not occur unless misconfigured by machined
 (type unconfined_service_t)
@@ -75,6 +75,9 @@
 (allow init_t kernel_t (system (syslog_console syslog_mod syslog_read)))
 (allow init_t self (capability2 (syslog)))
 (allow init_t kernel_t (fd (use)))
+
+; reboot & kexec
+(allow init_t self (capability (sys_boot)))
 
 ; labeling FS
 (allow init_t any_f (fs_classes (relabelfrom relabelto)))
