@@ -9,6 +9,8 @@
 (call system_f (udev_rules_t))
 (filecon "/usr/lib/udev/rules.d(/.*)?" any (system_u object_r udev_rules_t (systemLow systemLow)))
 (filecon "/usr/lib/udev(/.*)?" any udev_exec_t)
+; Some rules are on tmpfs
+(allow udev_rules_t tmpfs_t (filesystem (associate)))
 
 (type module_t)
 (call system_f (module_t))
