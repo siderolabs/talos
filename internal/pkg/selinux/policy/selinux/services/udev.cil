@@ -23,7 +23,10 @@
 
 (type udev_socket_t)
 (call system_socket_f (udev_socket_t))
-(typetransition udev_t run_t sock_file udev_socket_t)
+(typeattribute not_udev_socket_t)
+(typeattributeset not_udev_socket_t (not udev_socket_t))
+(typetransition udev_t not_udev_socket_t sock_file udev_socket_t)
+
 ; udevadm called by machined in its context
 (allow init_t udev_exec_t (file (execute_no_trans)))
 (allow init_t udev_t (unix_stream_socket (connectto)))
@@ -68,7 +71,17 @@
 (allow udev_t device_f (fs_classes (rw relabelto)))
 
 ; socket and runtime files
-(allow udev_t run_t (fs_classes (rw)))
+(type udev_run_t)
+(call system_f (udev_run_t))
+
+(typetransition udev_t run_t file udev_run_t)
+(typetransition udev_t run_t dir udev_run_t)
+(typetransition udev_t run_t lnk_file udev_run_t)
+(typetransition udev_t run_t chr_file udev_run_t)
+(typetransition udev_t run_t blk_file udev_run_t)
+(typetransition udev_t run_t fifo_file udev_run_t)
+
+(allow udev_t udev_run_t (fs_classes (rw)))
 (allow udev_t udev_socket_t (fs_classes (rw)))
 
 ; manage properties from rules

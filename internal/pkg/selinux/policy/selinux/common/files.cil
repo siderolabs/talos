@@ -3,6 +3,14 @@
 (call filesystem_f (system_t))
 (allow system_t tmpfs_t (filesystem (associate)))
 
+(type system_run_t)
+(call system_f (system_run_t))
+(allow system_run_t tmpfs_t (filesystem (associate)))
+
+(type system_run_containerd_t)
+(call system_f (system_run_containerd_t))
+(allow system_run_containerd_t tmpfs_t (filesystem (associate)))
+
 (type etc_t)
 (call system_f (etc_t))
 (allow etc_t fs_t (filesystem (associate)))
