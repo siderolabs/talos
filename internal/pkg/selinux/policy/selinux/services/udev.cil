@@ -58,7 +58,7 @@
 (allow udev_t self (cap_userns (sys_module)))
 
 ; Allow udev to read rules files
-(allow udev_t udev_rules_t (fs_classes (ro)))
+(allow udev_t udev_rules_t (fs_classes (ro ioctl)))
 
 ; udev rules can set module parameters
 (allow udev_t sys_module_t (fs_classes (rw)))
@@ -68,6 +68,12 @@
 
 ; socket and runtime files
 (allow udev_t run_t (fs_classes (rw)))
+(allow udev_t udev_socket_t (fs_classes (rw)))
 
 ; manage properties from rules
 (allow udev_t sysfs_t (fs_classes (rw)))
+
+; Container detection
+(allow udev_t init_t (fs_classes (ro ioctl)))
+; exec-invoke manages memory.pressure
+(allow udev_t cgroup_t (fs_classes (rw ioctl)))

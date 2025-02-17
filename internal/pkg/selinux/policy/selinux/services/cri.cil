@@ -21,7 +21,7 @@
 (allow pod_p pod_containerd_t (fd (use)))
 (allow pod_p pod_containerd_t (fifo_file (append getattr ioctl map open read rename setattr watch write)))
 
-(allow pod_containerd_t self (key (view read write search link setattr create)))
+(allow pod_containerd_t pod_p (key (view read write search link setattr create)))
 
 ; Shim socket
 (allow pod_containerd_t pod_containerd_socket_t (fs_classes (rw)))
@@ -35,6 +35,7 @@
 (typetransition pod_containerd_t containerd_state_t process pod_t)
 (allow pod_p containerd_state_t (fs_classes (rw)))
 (allow pod_p containerd_state_t (file (entrypoint execute execute_no_trans)))
+
 ; allow configuring CNI
 (allow pod_p cni_conf_t (fs_classes (rw)))
 
@@ -104,6 +105,7 @@
 (call protected_f (pods_log_t))
 (type var_lock_t)
 (call protected_f (var_lock_t))
+(allow var_lock_t tmpfs_t (filesystem (associate)))
 (type seccomp_profile_t)
 (call protected_f (seccomp_profile_t))
 (type kube_log_t)
