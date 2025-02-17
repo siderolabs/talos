@@ -1,5 +1,13 @@
 ; Access to all file classes
-(classmap fs_classes (relabelfrom relabelto mounton rw ro))
+(classmap fs_classes (ioctl relabelfrom relabelto mounton rw ro))
+; ioctl
+(classmapping fs_classes ioctl (file (ioctl)))
+(classmapping fs_classes ioctl (dir (ioctl)))
+(classmapping fs_classes ioctl (lnk_file (ioctl)))
+(classmapping fs_classes ioctl (chr_file (ioctl)))
+(classmapping fs_classes ioctl (blk_file (ioctl)))
+(classmapping fs_classes ioctl (sock_file (ioctl)))
+(classmapping fs_classes ioctl (fifo_file (ioctl)))
 ; relabelfrom
 (classmapping fs_classes relabelfrom (filesystem (relabelfrom)))
 (classmapping fs_classes relabelfrom (file (relabelfrom)))
