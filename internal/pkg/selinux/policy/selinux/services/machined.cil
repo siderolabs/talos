@@ -24,6 +24,7 @@
 (allow init_t any_p (process_classes (full)))
 (allow init_t service_exec_f (file (execute)))
 (allow init_t service_exec_f (fs_classes (ro)))
+(allow init_t service_p (key (view read write search link setattr create)))
 
 ; Libraries must also pass the exceutable check to be used
 ; Allow their use by all host services
