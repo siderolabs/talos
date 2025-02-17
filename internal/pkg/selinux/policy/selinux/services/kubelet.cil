@@ -34,7 +34,8 @@
 (allow kubelet_t kubelet_state_t (fs_classes (rw)))
 
 ; Some mounts
-(allow kubelet_t run_t (fs_classes (rw)))
+; TODO: specify
+; (allow kubelet_t run_t (fs_classes (rw)))
 
 ; Communication with init via pipes and sockets
 (allow kubelet_t init_t (fd (use)))

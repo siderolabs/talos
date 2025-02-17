@@ -547,6 +547,13 @@ func SetupSharedFilesystems(runtime.Sequence, any) (runtime.TaskExecutionFunc, s
 	}, "setupSharedFilesystems"
 }
 
+type createDirectory struct {
+	Path         string
+	Mode         os.FileMode
+	UID, GID     int
+	SELinuxLabel string
+}
+
 // SetupVarDirectory represents the SetupVarDirectory task.
 func SetupVarDirectory(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) error {
@@ -554,12 +561,7 @@ func SetupVarDirectory(runtime.Sequence, any) (runtime.TaskExecutionFunc, string
 			return err
 		}
 
-		for _, dir := range []struct {
-			Path         string
-			Mode         os.FileMode
-			UID, GID     int
-			SELinuxLabel string
-		}{
+		for _, dir := range []createDirectory{
 			{
 				Path:         "/var/log",
 				Mode:         0o755,
@@ -655,6 +657,44 @@ func setupVarRun(logger *log.Logger) error {
 	}
 
 	return nil
+}
+
+// SetupSystemDirectory represents the SetupSystemDirectory task.
+func SetupSystemDirectory(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
+	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) error {
+		for _, dir := range []createDirectory{
+			{
+				Path:         "/system/run",
+				Mode:         0o751,
+				SELinuxLabel: "system_u:object_r:system_run_t:s0",
+			},
+			{
+				Path:         "/system/run/containerd",
+				Mode:         0o711,
+				SELinuxLabel: "system_u:object_r:system_run_containerd_t:s0",
+			},
+		} {
+			if err := os.MkdirAll(dir.Path, dir.Mode); err != nil {
+				return err
+			}
+
+			if err := os.Chmod(dir.Path, dir.Mode); err != nil {
+				return err
+			}
+
+			if err := selinux.SetLabel(dir.Path, dir.SELinuxLabel); err != nil {
+				return err
+			}
+
+			if dir.UID != 0 || dir.GID != 0 {
+				if err := os.Chown(dir.Path, dir.UID, dir.GID); err != nil {
+					return err
+				}
+			}
+		}
+
+		return nil
+	}, "setupSystemDirectory"
 }
 
 // MountUserDisks represents the MountUserDisks task.
