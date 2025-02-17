@@ -26,6 +26,8 @@
 (allow system_container_p sys_containerd_t (fd (use)))
 (allow system_container_p sys_containerd_t (fifo_file (append getattr ioctl map open read rename setattr watch write)))
 
+(allow sys_containerd_t system_container_p (key (view read write search link setattr create)))
+
 ; Shim sockets
 (allow sys_containerd_t sys_containerd_socket_t (fs_classes (rw)))
 
@@ -48,5 +50,5 @@
 ; Shim sockets
 (allow containerd_p self (unix_stream_socket (connectto)))
 
-; logs
-(allow sys_containerd_t system_t (fs_classes (rw)))
+; Manage keys
+(allow containerd_p self (key (view read write search link setattr create)))

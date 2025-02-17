@@ -1,3 +1,6 @@
+(allow sys_containerd_t init_exec_t (file (execute)))
+(allow sys_containerd_t init_exec_t (fs_classes (ro)))
+
 ; apid
 (type apid_t)
 (call system_container_p (apid_t))
@@ -25,6 +28,8 @@
 (type trustd_runtime_socket_t)
 (call system_socket_f (trustd_runtime_socket_t))
 (allow trustd_t trustd_runtime_socket_t (sock_file (write)))
+; Trustd socket is created and owned by machined
+(allow trustd_t init_t (unix_stream_socket (connectto)))
 
 ; Talos installer
 (type installer_t)
