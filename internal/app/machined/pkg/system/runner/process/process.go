@@ -26,8 +26,6 @@ import (
 	"github.com/siderolabs/go-cmd/pkg/cmd/proc/reaper"
 	"kernel.org/pub/linux/libs/security/libcap/cap"
 
-	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
-	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/platform"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system/events"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system/runner"
 	"github.com/siderolabs/talos/internal/pkg/cgroup"
@@ -165,6 +163,18 @@ func beforeExecCallback(pa *syscall.ProcAttr, data any) error {
 			if err != nil {
 				log.Fatalf("%s", err)
 			}
+			err = os.WriteFile("/proc/thread-self/attr/fscreate", []byte(wrapper.selinuxLabel), 0o777)
+			if err != nil {
+				log.Fatalf("%s", err)
+			}
+			err = os.WriteFile("/proc/thread-self/attr/keycreate", []byte(wrapper.selinuxLabel), 0o777)
+			if err != nil {
+				log.Fatalf("%s", err)
+			}
+			err = os.WriteFile("/proc/thread-self/attr/sockcreate", []byte(wrapper.selinuxLabel), 0o777)
+			if err != nil {
+				log.Fatalf("%s", err)
+			}
 		} else {
 			err := os.WriteFile("/proc/thread-self/attr/exec", []byte(constants.SelinuxLabelUnconfinedService), 0o777)
 			if err != nil {
@@ -284,10 +294,11 @@ func (p *processRunner) build() (commandWrapper, error) {
 
 	cgroupFdSupported := false
 
-	platform, err := platform.CurrentPlatform()
-	if err == nil {
-		cgroupFdSupported = platform.Mode() != runtime.ModeContainer
-	}
+	// FIXME: clone3 disabled temporarily for SELinux
+	// platform, err := platform.CurrentPlatform()
+	// if err == nil {
+	// 	cgroupFdSupported = platform.Mode() != runtime.ModeContainer
+	// }
 
 	// cgroupfd is more reliable, use it when possible
 	if cgroups.Mode() == cgroups.Unified && cgroupFdSupported && p.opts.UID == 0 {
