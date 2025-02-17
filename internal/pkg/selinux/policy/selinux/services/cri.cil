@@ -5,7 +5,9 @@
 (type pod_containerd_socket_t)
 (call system_socket_f (pod_containerd_socket_t))
 ; Shim and client sockets
-(typetransition pod_containerd_t run_t sock_file pod_containerd_socket_t)
+(typeattribute not_pod_containerd_socket_t)
+(typeattributeset not_pod_containerd_socket_t (not pod_containerd_socket_t))
+(typetransition pod_containerd_t not_pod_containerd_socket_t sock_file pod_containerd_socket_t)
 
 ; Transition to pod contexts
 (allow pod_containerd_t pod_p (process2 (nnp_transition nosuid_transition)))
@@ -31,8 +33,9 @@
 
 (type pod_t)
 (call pod_p (pod_t))
-; TODO: What if container is started not from containerd_state_t?
-(typetransition pod_containerd_t containerd_state_t process pod_t)
+(typeattribute not_pod_t)
+(typeattributeset not_pod_t (not pod_t))
+(typetransition pod_containerd_t not_pod_t process pod_t)
 (allow pod_p containerd_state_t (fs_classes (rw)))
 (allow pod_p containerd_state_t (file (entrypoint execute execute_no_trans)))
 

@@ -241,6 +241,9 @@ func (*Sequencer) Boot(r runtime.Runtime) []runtime.Phase {
 	).Append(
 		"var",
 		SetupVarDirectory,
+	).Append(
+		"system",
+		SetupSystemDirectory,
 	).AppendWhen(
 		r.State().Platform().Mode() != runtime.ModeContainer,
 		"overlay",
