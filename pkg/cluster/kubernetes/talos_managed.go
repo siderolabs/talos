@@ -14,6 +14,7 @@ import (
 
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/state"
+	"github.com/google/go-containerregistry/pkg/name"
 	"github.com/siderolabs/gen/channel"
 	"github.com/siderolabs/gen/xiter"
 	"github.com/siderolabs/go-kubernetes/kubernetes/manifests"
@@ -42,10 +43,43 @@ type UpgradeProvider interface {
 	cluster.K8sProvider
 }
 
+// ValidateImageReference validates if the provided string is a valid Docker image reference.
+func ValidateImageReference(ref string) error {
+	_, err := name.ParseReference(ref)
+	if err != nil {
+		return fmt.Errorf("invalid image reference: %w", err)
+	}
+
+	return nil
+}
+
+// Validate checks all image references in the upgrade options.
+func (options *UpgradeOptions) Validate() error {
+	images := map[string]string{
+		"kubelet":            options.KubeletImage,
+		"apiserver":          options.APIServerImage,
+		"controller-manager": options.ControllerManagerImage,
+		"scheduler":          options.SchedulerImage,
+		"proxy":              options.ProxyImage,
+	}
+
+	for name, image := range images {
+		if err := ValidateImageReference(image); err != nil {
+			return fmt.Errorf("%s: %w", name, err)
+		}
+	}
+
+	return nil
+}
+
 // Upgrade the Kubernetes control plane components, manifests, kubelets.
 //
 //nolint:gocyclo
 func Upgrade(ctx context.Context, cluster UpgradeProvider, options UpgradeOptions) error {
+	if err := options.Validate(); err != nil {
+		return fmt.Errorf("invalid upgrade options: %w", err)
+	}
+
 	if !options.Path.IsSupported() {
 		return fmt.Errorf("unsupported upgrade path %s (from %q to %q)", options.Path, options.Path.FromVersion(), options.Path.ToVersion())
 	}
