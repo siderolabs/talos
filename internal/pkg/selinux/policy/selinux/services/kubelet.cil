@@ -1,7 +1,7 @@
 (type kubelet_t)
 (call pod_p (kubelet_t))
 ; FIXME: insecure as anyone with access to the pod containerd may obtain this domain
-(allow kubelet_t containerd_state_t (file (entrypoint execute_no_trans)))
+(allow kubelet_t containerd_state_t (file (entrypoint execute execute_no_trans)))
 
 (type k8s_conf_t)
 (call filesystem_f (k8s_conf_t))
@@ -14,3 +14,41 @@
 (type kubelet_state_t)
 (call system_f (kubelet_state_t))
 (allow init_t kubelet_state_t (fs_classes (rw)))
+
+; FIXME: insecure as anyone with access to the pod containerd may obtain this domain
+; TODO: Secure kubelet launch labeling
+
+; Manage processes & cgroups
+(allow kubelet_t cgroup_t (fs_classes (rw)))
+(allow kubelet_t any_p (fs_classes (ro)))
+
+; D-Bus for notifying kubelet of system power events
+(allow kubelet_t dbus_client_socket_t (fs_classes (rw)))
+
+; Kubelet reads many attrs
+(allow kubelet_t any_f (fs_classes (getattr)))
+
+; Config and state access
+(allow kubelet_t etc_t (fs_classes (ro)))
+(allow kubelet_t k8s_conf_t (fs_classes (ro)))
+(allow kubelet_t kubelet_state_t (fs_classes (rw)))
+
+; Some mounts
+(allow kubelet_t run_t (fs_classes (rw)))
+
+; Communication with init via pipes and sockets
+(allow kubelet_t init_t (fd (use)))
+(allow kubelet_t init_t (fifo_file (write)))
+(allow kubelet_t init_t (unix_stream_socket (connectto)))
+
+; Run pods
+(allow kubelet_t pod_containerd_socket_t (fs_classes (rw)))
+(allow kubelet_t pod_containerd_t (unix_stream_socket (connectto)))
+
+; Miscelaneous admin permissions
+(allow kubelet_t securityfs_t (fs_classes (ro)))
+(allow kubelet_t self (capability2 (syslog)))
+(allow kubelet_t kernel_t (system (syslog_read)))
+
+; Manage system configuration
+(allow kubelet_t sysfs_t (fs_classes (rw)))
