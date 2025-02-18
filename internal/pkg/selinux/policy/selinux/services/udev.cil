@@ -55,6 +55,15 @@
 (typetransition kernel_t modprobe_exec_t process udev_t)
 (typetransition init_t modprobe_exec_t process udev_t)
 
+(allow udev_t kernel_t (fd (use)))
+(allow udev_t modprobe_exec_t (file (entrypoint)))
+
+(allow kernel_t modprobe_exec_t (file (execute)))
+(allow kernel_t udev_t (process (all))) ; including transition
+
+(allow init_t modprobe_exec_t (file (execute)))
+(allow init_t udev_t (process (all))) ; including transition
+
 (allow kernel_t module_t (system (module_load module_request)))
 (allow udev_t module_t (fs_classes (ro)))
 (allow udev_t module_t (system (module_load module_request)))
