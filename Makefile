@@ -77,8 +77,7 @@ GOLANGCILINT_VERSION ?= v1.62.2
 # renovate: datasource=go depName=golang.org/x/tools
 STRINGER_VERSION ?= v0.28.0
 # renovate: datasource=go depName=github.com/dmarkham/enumer
-# FIXME: https://github.com/dmarkham/enumer/issues/105
-ENUMER_VERSION ?= v1.5.11-0.20250217145611-d1015c2bde3f
+ENUMER_VERSION ?= v1.5.11
 # renovate: datasource=go depName=k8s.io/code-generator
 DEEPCOPY_GEN_VERSION ?= v0.32.0
 # renovate: datasource=go depName=github.com/planetscale/vtprotobuf

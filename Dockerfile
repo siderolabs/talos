@@ -222,7 +222,7 @@ ARG STRINGER_VERSION
 RUN --mount=type=cache,target=/.cache go install golang.org/x/tools/cmd/stringer@${STRINGER_VERSION} \
     && mv /root/go/bin/stringer /usr/bin/stringer
 ARG ENUMER_VERSION
-RUN --mount=type=cache,target=/.cache go install github.com/dsseng/enumer@${ENUMER_VERSION} \
+RUN --mount=type=cache,target=/.cache go install github.com/dmarkham/enumer@${ENUMER_VERSION} \
     && mv /root/go/bin/enumer /usr/bin/enumer
 ARG DEEPCOPY_GEN_VERSION
 RUN --mount=type=cache,target=/.cache go install k8s.io/code-generator/cmd/deepcopy-gen@${DEEPCOPY_GEN_VERSION} \
