@@ -11,6 +11,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"slices"
 	"sync"
 
 	"github.com/pkg/xattr"
@@ -50,7 +51,7 @@ var IsEnforcing = sync.OnceValue(func() bool {
 
 // SetLabel sets label for file, directory or symlink (not following symlinks)
 // It does not perform the operation in case SELinux is disabled, provided label is empty or already set.
-func SetLabel(filename string, label string) error {
+func SetLabel(filename string, label string, excludeLabels ...string) error {
 	if label == "" || !IsEnabled() {
 		return nil
 	}
@@ -66,6 +67,11 @@ func SetLabel(filename string, label string) error {
 		return nil
 	}
 
+	// Skip setting label if it's in excludeLabels.
+	if currentLabel != nil && slices.Contains(excludeLabels, string(bytes.Trim(currentLabel, "\x00\n"))) {
+		return nil
+	}
+
 	if err := xattr.LSet(filename, "security.selinux", []byte(label)); err != nil {
 		return err
 	}
@@ -75,13 +81,13 @@ func SetLabel(filename string, label string) error {
 
 // SetLabelRecursive sets label for directory and its content recursively.
 // It does not perform the operation in case SELinux is disabled, provided label is empty or already set.
-func SetLabelRecursive(dir string, label string) error {
+func SetLabelRecursive(dir string, label string, excludeLabels ...string) error {
 	if label == "" || !IsEnabled() {
 		return nil
 	}
 
 	return filepath.Walk(dir, func(path string, _ os.FileInfo, err error) error {
-		return SetLabel(path, label)
+		return SetLabel(path, label, excludeLabels...)
 	})
 }
 
