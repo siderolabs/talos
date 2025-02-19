@@ -9,6 +9,19 @@
 (typeattributeset not_pod_containerd_socket_t (not pod_containerd_socket_t))
 (typetransition pod_containerd_t not_pod_containerd_socket_t sock_file pod_containerd_socket_t)
 
+(type pod_containerd_run_t)
+(call system_f (pod_containerd_run_t))
+(allow pod_containerd_run_t tmpfs_t (filesystem (associate)))
+
+(typetransition pod_containerd_t run_t file pod_containerd_run_t)
+(typetransition pod_containerd_t run_t dir pod_containerd_run_t)
+(typetransition pod_containerd_t run_t lnk_file pod_containerd_run_t)
+(typetransition pod_containerd_t run_t chr_file pod_containerd_run_t)
+(typetransition pod_containerd_t run_t blk_file pod_containerd_run_t)
+(typetransition pod_containerd_t run_t fifo_file pod_containerd_run_t)
+
+(allow pod_containerd_t pod_containerd_run_t (fs_classes (rw)))
+
 ; Transition to pod contexts
 (allow pod_containerd_t pod_p (process2 (nnp_transition nosuid_transition)))
 (allow pod_containerd_t pod_p (process (transition)))
@@ -41,6 +54,9 @@
 
 ; allow configuring CNI
 (allow pod_p cni_conf_t (fs_classes (rw)))
+
+; CNI plugins access netns
+(allow pod_t nsfs_t (fs_classes (rw)))
 
 (type etcd_t)
 (call pod_p (etcd_t))
@@ -130,3 +146,6 @@
 ; FIXME: insecure as anyone with access to the pod containerd may obtain these domains
 ; TODO: label static pods with the correct domains
 (allow pod_p log_f (fs_classes (rw)))
+
+(type cni_state_t)
+(call protected_f (cni_state_t))
