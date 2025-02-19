@@ -261,6 +261,9 @@ func structToSchema(pkg string, st *Struct) *jsonschema.Schema {
 
 	schema.Properties = properties
 	schema.Required = requiredFields
+	if st.Text.Description != "" {
+		schema.Description = st.Text.Description
+	}
 
 	return &schema
 }

@@ -13,7 +13,8 @@
         }
       },
       "additionalProperties": false,
-      "type": "object"
+      "type": "object",
+      "description": "DiskSelector selects a disk for the volume."
     },
     "block.ProvisioningSpec": {
       "properties": {
@@ -47,7 +48,8 @@
         }
       },
       "additionalProperties": false,
-      "type": "object"
+      "type": "object",
+      "description": "ProvisioningSpec describes how the volume is provisioned."
     },
     "block.VolumeConfigV1Alpha1": {
       "properties": {
@@ -89,7 +91,8 @@
       "required": [
         "apiVersion",
         "kind"
-      ]
+      ],
+      "description": "VolumeConfig is a volume configuration document."
     },
     "extensions.ConfigFile": {
       "properties": {
@@ -109,7 +112,8 @@
         }
       },
       "additionalProperties": false,
-      "type": "object"
+      "type": "object",
+      "description": "ConfigFile is a config file for extension services."
     },
     "extensions.ServiceConfigV1Alpha1": {
       "properties": {
@@ -165,7 +169,8 @@
         "apiVersion",
         "kind",
         "name"
-      ]
+      ],
+      "description": "ExtensionServiceConfig is a extensionserviceconfig document."
     },
     "hardware.PCIDriverRebindConfigV1Alpha1": {
       "properties": {
@@ -209,7 +214,8 @@
         "kind",
         "name",
         "targetDriver"
-      ]
+      ],
+      "description": "PCIDriverRebindConfig allows to configure PCI driver rebinds."
     },
     "network.DefaultActionConfigV1Alpha1": {
       "properties": {
@@ -247,7 +253,8 @@
       "required": [
         "apiVersion",
         "kind"
-      ]
+      ],
+      "description": "NetworkDefaultActionConfig is a ingress firewall default action configuration document."
     },
     "network.EthernetChannelsConfig": {
       "properties": {
@@ -281,7 +288,8 @@
         }
       },
       "additionalProperties": false,
-      "type": "object"
+      "type": "object",
+      "description": "EthernetChannelsConfig is a configuration for Ethernet link channels."
     },
     "network.EthernetConfigV1Alpha1": {
       "properties": {
@@ -343,7 +351,8 @@
         "apiVersion",
         "kind",
         "name"
-      ]
+      ],
+      "description": "EthernetConfig is a config document to configure Ethernet interfaces."
     },
     "network.EthernetRingsConfig": {
       "properties": {
@@ -419,7 +428,8 @@
         }
       },
       "additionalProperties": false,
-      "type": "object"
+      "type": "object",
+      "description": "EthernetRingsConfig is a configuration for Ethernet link rings."
     },
     "network.IngressRule": {
       "properties": {
@@ -441,7 +451,8 @@
         }
       },
       "additionalProperties": false,
-      "type": "object"
+      "type": "object",
+      "description": "IngressRule is a ingress rule."
     },
     "network.KubespanEndpointsConfigV1Alpha1": {
       "properties": {
@@ -479,7 +490,8 @@
       "required": [
         "apiVersion",
         "kind"
-      ]
+      ],
+      "description": "KubeSpanEndpointsConfig is a config document to configure KubeSpan endpoints."
     },
     "network.RuleConfigV1Alpha1": {
       "properties": {
@@ -532,7 +544,8 @@
         "apiVersion",
         "kind",
         "name"
-      ]
+      ],
+      "description": "NetworkRuleConfig is a network firewall rule config document."
     },
     "network.RulePortSelector": {
       "properties": {
@@ -567,7 +580,8 @@
         }
       },
       "additionalProperties": false,
-      "type": "object"
+      "type": "object",
+      "description": "RulePortSelector is a port selector for the network rule."
     },
     "runtime.EventSinkV1Alpha1": {
       "properties": {
@@ -602,7 +616,8 @@
       "required": [
         "apiVersion",
         "kind"
-      ]
+      ],
+      "description": "EventSinkConfig is a event sink config document."
     },
     "runtime.KmsgLogV1Alpha1": {
       "properties": {
@@ -645,7 +660,8 @@
       "required": [
         "apiVersion",
         "kind"
-      ]
+      ],
+      "description": "KmsgLogConfig is a event sink config document."
     },
     "runtime.WatchdogTimerV1Alpha1": {
       "properties": {
@@ -688,7 +704,8 @@
       "required": [
         "apiVersion",
         "kind"
-      ]
+      ],
+      "description": "WatchdogTimerConfig is a watchdog timer config document."
     },
     "security.TrustedRootsConfigV1Alpha1": {
       "properties": {
@@ -731,7 +748,8 @@
         "apiVersion",
         "kind",
         "name"
-      ]
+      ],
+      "description": "TrustedRootsConfig allows to configure additional trusted CA roots."
     },
     "siderolink.ConfigV1Alpha1": {
       "properties": {
@@ -767,7 +785,8 @@
       "required": [
         "apiVersion",
         "kind"
-      ]
+      ],
+      "description": "SideroLinkConfig is a SideroLink connection machine configuration document."
     },
     "v1alpha1.APIServerConfig": {
       "properties": {
@@ -865,7 +884,8 @@
         }
       },
       "additionalProperties": false,
-      "type": "object"
+      "type": "object",
+      "description": "APIServerConfig represents the kube apiserver configuration options."
     },
     "v1alpha1.AdminKubeconfigConfig": {
       "properties": {
@@ -879,7 +899,8 @@
         }
       },
       "additionalProperties": false,
-      "type": "object"
+      "type": "object",
+      "description": "AdminKubeconfigConfig contains admin kubeconfig settings."
     },
     "v1alpha1.AdmissionPluginConfig": {
       "properties": {
@@ -899,7 +920,8 @@
         }
       },
       "additionalProperties": false,
-      "type": "object"
+      "type": "object",
+      "description": "AdmissionPluginConfig represents the API server admission plugin configuration."
     },
     "v1alpha1.AuthorizationConfigAuthorizerConfig": {
       "properties": {
@@ -926,7 +948,8 @@
         }
       },
       "additionalProperties": false,
-      "type": "object"
+      "type": "object",
+      "description": "AuthorizationConfigAuthorizerConfig represents the API server authorization config authorizer configuration."
     },
     "v1alpha1.Bond": {
       "properties": {
@@ -1137,7 +1160,8 @@
         }
       },
       "additionalProperties": false,
-      "type": "object"
+      "type": "object",
+      "description": "Bond contains the various options for configuring a bonded interface."
     },
     "v1alpha1.Bridge": {
       "properties": {
@@ -1167,7 +1191,8 @@
         }
       },
       "additionalProperties": false,
-      "type": "object"
+      "type": "object",
+      "description": "Bridge contains the various options for configuring a bridge interface."
     },
     "v1alpha1.BridgePort": {
       "properties": {
@@ -1180,7 +1205,8 @@
         }
       },
       "additionalProperties": false,
-      "type": "object"
+      "type": "object",
+      "description": "BridgePort contains settings for assigning a link to a bridge interface."
     },
     "v1alpha1.BridgeVLAN": {
       "properties": {
@@ -1193,7 +1219,8 @@
         }
       },
       "additionalProperties": false,
-      "type": "object"
+      "type": "object",
+      "description": "BridgeVLAN contains the various options for configuring the VLAN properties of a bridge interface."
     },
     "v1alpha1.CNIConfig": {
       "properties": {
@@ -1227,7 +1254,8 @@
         }
       },
       "additionalProperties": false,
-      "type": "object"
+      "type": "object",
+      "description": "CNIConfig represents the CNI configuration options."
     },
     "v1alpha1.ClusterConfig": {
       "properties": {
@@ -1450,7 +1478,8 @@
         }
       },
       "additionalProperties": false,
-      "type": "object"
+      "type": "object",
+      "description": "ClusterConfig represents the cluster-wide config values."
     },
     "v1alpha1.ClusterDiscoveryConfig": {
       "properties": {
@@ -1470,7 +1499,8 @@
         }
       },
       "additionalProperties": false,
-      "type": "object"
+      "type": "object",
+      "description": "ClusterDiscoveryConfig struct configures cluster membership discovery."
     },
     "v1alpha1.ClusterInlineManifest": {
       "properties": {
@@ -1490,7 +1520,8 @@
         }
       },
       "additionalProperties": false,
-      "type": "object"
+      "type": "object",
+      "description": "ClusterInlineManifest struct describes inline bootstrap manifests for the user."
     },
     "v1alpha1.ClusterNetworkConfig": {
       "properties": {
@@ -1530,7 +1561,8 @@
         }
       },
       "additionalProperties": false,
-      "type": "object"
+      "type": "object",
+      "description": "ClusterNetworkConfig represents kube networking configuration options."
     },
     "v1alpha1.Config": {
       "properties": {
@@ -1566,7 +1598,8 @@
         }
       },
       "additionalProperties": false,
-      "type": "object"
+      "type": "object",
+      "description": "Config defines the v1alpha1.Config Talos machine configuration document."
     },
     "v1alpha1.ControlPlaneConfig": {
       "properties": {
@@ -1588,7 +1621,8 @@
         }
       },
       "additionalProperties": false,
-      "type": "object"
+      "type": "object",
+      "description": "ControlPlaneConfig represents the control plane configuration options."
     },
     "v1alpha1.ControllerManagerConfig": {
       "properties": {
@@ -1642,7 +1676,8 @@
         }
       },
       "additionalProperties": false,
-      "type": "object"
+      "type": "object",
+      "description": "ControllerManagerConfig represents the kube controller manager configuration options."
     },
     "v1alpha1.CoreDNS": {
       "properties": {
@@ -1662,7 +1697,8 @@
         }
       },
       "additionalProperties": false,
-      "type": "object"
+      "type": "object",
+      "description": "CoreDNS represents the CoreDNS config values."
     },
     "v1alpha1.DHCPOptions": {
       "properties": {
@@ -1696,7 +1732,8 @@
         }
       },
       "additionalProperties": false,
-      "type": "object"
+      "type": "object",
+      "description": "DHCPOptions contains options for configuring the DHCP settings for a given interface."
     },
     "v1alpha1.Device": {
       "properties": {
@@ -1816,7 +1853,8 @@
         }
       },
       "additionalProperties": false,
-      "type": "object"
+      "type": "object",
+      "description": "Device represents a network interface."
     },
     "v1alpha1.DeviceVIPConfig": {
       "properties": {
@@ -1843,7 +1881,8 @@
         }
       },
       "additionalProperties": false,
-      "type": "object"
+      "type": "object",
+      "description": "DeviceVIPConfig contains settings for configuring a Virtual Shared IP on an interface."
     },
     "v1alpha1.DeviceWireguardConfig": {
       "properties": {
@@ -1880,7 +1919,8 @@
         }
       },
       "additionalProperties": false,
-      "type": "object"
+      "type": "object",
+      "description": "DeviceWireguardConfig contains settings for configuring Wireguard network interface."
     },
     "v1alpha1.DeviceWireguardPeer": {
       "properties": {
@@ -1918,7 +1958,8 @@
         }
       },
       "additionalProperties": false,
-      "type": "object"
+      "type": "object",
+      "description": "DeviceWireguardPeer a WireGuard device peer configuration."
     },
     "v1alpha1.DiscoveryRegistriesConfig": {
       "properties": {
@@ -1938,7 +1979,8 @@
         }
       },
       "additionalProperties": false,
-      "type": "object"
+      "type": "object",
+      "description": "DiscoveryRegistriesConfig struct configures cluster membership discovery."
     },
     "v1alpha1.DiskPartition": {
       "properties": {
@@ -1958,7 +2000,8 @@
         }
       },
       "additionalProperties": false,
-      "type": "object"
+      "type": "object",
+      "description": "DiskPartition represents the options for a disk partition."
     },
     "v1alpha1.EncryptionConfig": {
       "properties": {
@@ -2017,7 +2060,8 @@
         }
       },
       "additionalProperties": false,
-      "type": "object"
+      "type": "object",
+      "description": "EncryptionConfig represents partition encryption settings."
     },
     "v1alpha1.EncryptionKey": {
       "properties": {
@@ -2058,7 +2102,8 @@
         }
       },
       "additionalProperties": false,
-      "type": "object"
+      "type": "object",
+      "description": "EncryptionKey represents configuration for disk encryption key."
     },
     "v1alpha1.EncryptionKeyKMS": {
       "properties": {
@@ -2071,12 +2116,14 @@
         }
       },
       "additionalProperties": false,
-      "type": "object"
+      "type": "object",
+      "description": "EncryptionKeyKMS represents a key that is generated and then sealed/unsealed by the KMS server."
     },
     "v1alpha1.EncryptionKeyNodeID": {
       "properties": {},
       "additionalProperties": false,
-      "type": "object"
+      "type": "object",
+      "description": "EncryptionKeyNodeID represents deterministically generated key from the node UUID and PartitionLabel."
     },
     "v1alpha1.EncryptionKeyStatic": {
       "properties": {
@@ -2089,7 +2136,8 @@
         }
       },
       "additionalProperties": false,
-      "type": "object"
+      "type": "object",
+      "description": "EncryptionKeyStatic represents throw away key type."
     },
     "v1alpha1.EncryptionKeyTPM": {
       "properties": {
@@ -2102,12 +2150,14 @@
         }
       },
       "additionalProperties": false,
-      "type": "object"
+      "type": "object",
+      "description": "EncryptionKeyTPM represents a key that is generated and then sealed/unsealed by the TPM."
     },
     "v1alpha1.Endpoint": {
       "properties": {},
       "additionalProperties": false,
-      "type": "object"
+      "type": "object",
+      "description": "Endpoint represents the endpoint URL parsed out of the machine config."
     },
     "v1alpha1.EtcdConfig": {
       "properties": {
@@ -2168,7 +2218,8 @@
         }
       },
       "additionalProperties": false,
-      "type": "object"
+      "type": "object",
+      "description": "EtcdConfig represents the etcd configuration options."
     },
     "v1alpha1.ExternalCloudProviderConfig": {
       "properties": {
@@ -2191,7 +2242,8 @@
         }
       },
       "additionalProperties": false,
-      "type": "object"
+      "type": "object",
+      "description": "ExternalCloudProviderConfig contains external cloud provider configuration."
     },
     "v1alpha1.ExtraHost": {
       "properties": {
@@ -2214,7 +2266,8 @@
         }
       },
       "additionalProperties": false,
-      "type": "object"
+      "type": "object",
+      "description": "ExtraHost represents a host entry in /etc/hosts."
     },
     "v1alpha1.ExtraMount": {
       "properties": {
@@ -2271,7 +2324,8 @@
         }
       },
       "additionalProperties": false,
-      "type": "object"
+      "type": "object",
+      "description": "ExtraMount wraps OCI Mount specification."
     },
     "v1alpha1.FeaturesConfig": {
       "properties": {
@@ -2340,7 +2394,8 @@
         }
       },
       "additionalProperties": false,
-      "type": "object"
+      "type": "object",
+      "description": "FeaturesConfig describes individual Talos features that can be switched on or off."
     },
     "v1alpha1.FlannelCNIConfig": {
       "properties": {
@@ -2356,7 +2411,8 @@
         }
       },
       "additionalProperties": false,
-      "type": "object"
+      "type": "object",
+      "description": "FlannelCNIConfig represents the Flannel CNI configuration options."
     },
     "v1alpha1.HostDNSConfig": {
       "properties": {
@@ -2383,7 +2439,8 @@
         }
       },
       "additionalProperties": false,
-      "type": "object"
+      "type": "object",
+      "description": "HostDNSConfig describes the configuration for the host DNS resolver."
     },
     "v1alpha1.ImageCacheConfig": {
       "properties": {
@@ -2396,7 +2453,8 @@
         }
       },
       "additionalProperties": false,
-      "type": "object"
+      "type": "object",
+      "description": "ImageCacheConfig describes the configuration for the Image Cache feature."
     },
     "v1alpha1.InstallConfig": {
       "properties": {
@@ -2457,7 +2515,8 @@
         }
       },
       "additionalProperties": false,
-      "type": "object"
+      "type": "object",
+      "description": "InstallConfig represents the installation options for preparing a node."
     },
     "v1alpha1.InstallDiskSelector": {
       "properties": {
@@ -2531,7 +2590,8 @@
         }
       },
       "additionalProperties": false,
-      "type": "object"
+      "type": "object",
+      "description": "InstallDiskSelector represents a disk query parameters for the install disk lookup."
     },
     "v1alpha1.InstallExtensionConfig": {
       "properties": {
@@ -2544,7 +2604,8 @@
         }
       },
       "additionalProperties": false,
-      "type": "object"
+      "type": "object",
+      "description": "InstallExtensionConfig represents a configuration for a system extension."
     },
     "v1alpha1.KernelConfig": {
       "properties": {
@@ -2560,7 +2621,8 @@
         }
       },
       "additionalProperties": false,
-      "type": "object"
+      "type": "object",
+      "description": "KernelConfig struct configures Talos Linux kernel."
     },
     "v1alpha1.KernelModuleConfig": {
       "properties": {
@@ -2583,7 +2645,8 @@
         }
       },
       "additionalProperties": false,
-      "type": "object"
+      "type": "object",
+      "description": "KernelModuleConfig struct configures Linux kernel modules to load."
     },
     "v1alpha1.KubePrism": {
       "properties": {
@@ -2603,7 +2666,8 @@
         }
       },
       "additionalProperties": false,
-      "type": "object"
+      "type": "object",
+      "description": "KubePrism describes the configuration for the KubePrism load balancer."
     },
     "v1alpha1.KubeSpanFilters": {
       "properties": {
@@ -2619,7 +2683,8 @@
         }
       },
       "additionalProperties": false,
-      "type": "object"
+      "type": "object",
+      "description": "KubeSpanFilters struct describes KubeSpan advanced network addresses filtering."
     },
     "v1alpha1.KubeletConfig": {
       "properties": {
@@ -2713,7 +2778,8 @@
         }
       },
       "additionalProperties": false,
-      "type": "object"
+      "type": "object",
+      "description": "KubeletConfig represents the kubelet config values."
     },
     "v1alpha1.KubeletNodeIPConfig": {
       "properties": {
@@ -2729,7 +2795,8 @@
         }
       },
       "additionalProperties": false,
-      "type": "object"
+      "type": "object",
+      "description": "KubeletNodeIPConfig represents the kubelet node IP configuration."
     },
     "v1alpha1.KubernetesTalosAPIAccessConfig": {
       "properties": {
@@ -2762,7 +2829,8 @@
         }
       },
       "additionalProperties": false,
-      "type": "object"
+      "type": "object",
+      "description": "KubernetesTalosAPIAccessConfig describes the configuration for the Talos API access from Kubernetes pods."
     },
     "v1alpha1.LinuxIDMapping": {
       "properties": {
@@ -2789,7 +2857,8 @@
         }
       },
       "additionalProperties": false,
-      "type": "object"
+      "type": "object",
+      "description": "LinuxIDMapping represents the Linux ID mapping."
     },
     "v1alpha1.LoggingConfig": {
       "properties": {
@@ -2805,7 +2874,8 @@
         }
       },
       "additionalProperties": false,
-      "type": "object"
+      "type": "object",
+      "description": "LoggingConfig struct configures Talos logging."
     },
     "v1alpha1.LoggingDestination": {
       "properties": {
@@ -2839,7 +2909,8 @@
         }
       },
       "additionalProperties": false,
-      "type": "object"
+      "type": "object",
+      "description": "LoggingDestination struct configures Talos logging destination."
     },
     "v1alpha1.MachineConfig": {
       "properties": {
@@ -3097,7 +3168,8 @@
         }
       },
       "additionalProperties": false,
-      "type": "object"
+      "type": "object",
+      "description": "MachineConfig represents the machine-specific config values."
     },
     "v1alpha1.MachineControlPlaneConfig": {
       "properties": {
@@ -3117,7 +3189,8 @@
         }
       },
       "additionalProperties": false,
-      "type": "object"
+      "type": "object",
+      "description": "MachineControlPlaneConfig machine specific configuration options."
     },
     "v1alpha1.MachineControllerManagerConfig": {
       "properties": {
@@ -3130,7 +3203,8 @@
         }
       },
       "additionalProperties": false,
-      "type": "object"
+      "type": "object",
+      "description": "MachineControllerManagerConfig represents the machine specific ControllerManager config values."
     },
     "v1alpha1.MachineDisk": {
       "properties": {
@@ -3153,7 +3227,8 @@
         }
       },
       "additionalProperties": false,
-      "type": "object"
+      "type": "object",
+      "description": "MachineDisk represents the options available for partitioning, formatting, and\\nmounting extra disks.\\n"
     },
     "v1alpha1.MachineFile": {
       "properties": {
@@ -3191,7 +3266,8 @@
         }
       },
       "additionalProperties": false,
-      "type": "object"
+      "type": "object",
+      "description": "MachineFile represents a file to write to disk."
     },
     "v1alpha1.MachineSchedulerConfig": {
       "properties": {
@@ -3204,7 +3280,8 @@
         }
       },
       "additionalProperties": false,
-      "type": "object"
+      "type": "object",
+      "description": "MachineSchedulerConfig represents the machine specific Scheduler config values."
     },
     "v1alpha1.MachineSeccompProfile": {
       "properties": {
@@ -3224,7 +3301,8 @@
         }
       },
       "additionalProperties": false,
-      "type": "object"
+      "type": "object",
+      "description": "MachineSeccompProfile defines seccomp profiles for the machine."
     },
     "v1alpha1.NetworkConfig": {
       "properties": {
@@ -3291,7 +3369,8 @@
         }
       },
       "additionalProperties": false,
-      "type": "object"
+      "type": "object",
+      "description": "NetworkConfig represents the machine's networking config values."
     },
     "v1alpha1.NetworkDeviceSelector": {
       "properties": {
@@ -3339,7 +3418,8 @@
         }
       },
       "additionalProperties": false,
-      "type": "object"
+      "type": "object",
+      "description": "NetworkDeviceSelector struct describes network device selector."
     },
     "v1alpha1.NetworkKubeSpan": {
       "properties": {
@@ -3387,7 +3467,8 @@
         }
       },
       "additionalProperties": false,
-      "type": "object"
+      "type": "object",
+      "description": "NetworkKubeSpan struct describes KubeSpan configuration."
     },
     "v1alpha1.ProxyConfig": {
       "properties": {
@@ -3426,7 +3507,8 @@
         }
       },
       "additionalProperties": false,
-      "type": "object"
+      "type": "object",
+      "description": "ProxyConfig represents the kube proxy configuration options."
     },
     "v1alpha1.RegistriesConfig": {
       "properties": {
@@ -3456,7 +3538,8 @@
         }
       },
       "additionalProperties": false,
-      "type": "object"
+      "type": "object",
+      "description": "RegistriesConfig represents the image pull options."
     },
     "v1alpha1.RegistryAuthConfig": {
       "properties": {
@@ -3490,7 +3573,8 @@
         }
       },
       "additionalProperties": false,
-      "type": "object"
+      "type": "object",
+      "description": "RegistryAuthConfig specifies authentication configuration for a registry."
     },
     "v1alpha1.RegistryConfig": {
       "properties": {
@@ -3510,7 +3594,8 @@
         }
       },
       "additionalProperties": false,
-      "type": "object"
+      "type": "object",
+      "description": "RegistryConfig specifies auth \u0026 TLS config per registry."
     },
     "v1alpha1.RegistryKubernetesConfig": {
       "properties": {
@@ -3523,7 +3608,8 @@
         }
       },
       "additionalProperties": false,
-      "type": "object"
+      "type": "object",
+      "description": "RegistryKubernetesConfig struct configures Kubernetes discovery registry."
     },
     "v1alpha1.RegistryMirrorConfig": {
       "properties": {
@@ -3553,7 +3639,8 @@
         }
       },
       "additionalProperties": false,
-      "type": "object"
+      "type": "object",
+      "description": "RegistryMirrorConfig represents mirror configuration for a registry."
     },
     "v1alpha1.RegistryServiceConfig": {
       "properties": {
@@ -3573,7 +3660,8 @@
         }
       },
       "additionalProperties": false,
-      "type": "object"
+      "type": "object",
+      "description": "RegistryServiceConfig struct configures Kubernetes discovery registry."
     },
     "v1alpha1.RegistryTLSConfig": {
       "properties": {
@@ -3609,7 +3697,8 @@
         }
       },
       "additionalProperties": false,
-      "type": "object"
+      "type": "object",
+      "description": "RegistryTLSConfig specifies TLS config for HTTPS registries."
     },
     "v1alpha1.ResourcesConfig": {
       "properties": {
@@ -3629,7 +3718,8 @@
         }
       },
       "additionalProperties": false,
-      "type": "object"
+      "type": "object",
+      "description": "ResourcesConfig represents the pod resources."
     },
     "v1alpha1.Route": {
       "properties": {
@@ -3670,7 +3760,8 @@
         }
       },
       "additionalProperties": false,
-      "type": "object"
+      "type": "object",
+      "description": "Route represents a network route."
     },
     "v1alpha1.STP": {
       "properties": {
@@ -3683,7 +3774,8 @@
         }
       },
       "additionalProperties": false,
-      "type": "object"
+      "type": "object",
+      "description": "STP contains the various options for configuring the STP properties of a bridge interface."
     },
     "v1alpha1.SchedulerConfig": {
       "properties": {
@@ -3744,7 +3836,8 @@
         }
       },
       "additionalProperties": false,
-      "type": "object"
+      "type": "object",
+      "description": "SchedulerConfig represents the kube scheduler configuration options."
     },
     "v1alpha1.SystemDiskEncryptionConfig": {
       "properties": {
@@ -3764,7 +3857,8 @@
         }
       },
       "additionalProperties": false,
-      "type": "object"
+      "type": "object",
+      "description": "SystemDiskEncryptionConfig specifies system disk partitions encryption settings."
     },
     "v1alpha1.TimeConfig": {
       "properties": {
@@ -3795,7 +3889,8 @@
         }
       },
       "additionalProperties": false,
-      "type": "object"
+      "type": "object",
+      "description": "TimeConfig represents the options for configuring time on a machine."
     },
     "v1alpha1.UdevConfig": {
       "properties": {
@@ -3811,7 +3906,8 @@
         }
       },
       "additionalProperties": false,
-      "type": "object"
+      "type": "object",
+      "description": "UdevConfig describes how the udev system should be configured."
     },
     "v1alpha1.VIPEquinixMetalConfig": {
       "properties": {
@@ -3824,7 +3920,8 @@
         }
       },
       "additionalProperties": false,
-      "type": "object"
+      "type": "object",
+      "description": "VIPEquinixMetalConfig contains settings for Equinix Metal VIP management."
     },
     "v1alpha1.VIPHCloudConfig": {
       "properties": {
@@ -3837,7 +3934,8 @@
         }
       },
       "additionalProperties": false,
-      "type": "object"
+      "type": "object",
+      "description": "VIPHCloudConfig contains settings for Hetzner Cloud VIP management."
     },
     "v1alpha1.Vlan": {
       "properties": {
@@ -3898,7 +3996,8 @@
         }
       },
       "additionalProperties": false,
-      "type": "object"
+      "type": "object",
+      "description": "Vlan represents vlan settings for a device."
     },
     "v1alpha1.VolumeMountConfig": {
       "properties": {
@@ -3925,7 +4024,8 @@
         }
       },
       "additionalProperties": false,
-      "type": "object"
+      "type": "object",
+      "description": "VolumeMountConfig struct describes extra volume mount for the static pods."
     }
   },
   "oneOf": [
