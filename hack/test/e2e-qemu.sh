@@ -2,8 +2,6 @@
 
 set -eou pipefail
 
-export USER_DISKS_MOUNTS="/var/lib/extra,/var/lib/p1,/var/lib/p2"
-
 # shellcheck source=/dev/null
 source ./hack/test/e2e.sh
 
@@ -248,6 +246,15 @@ case "${WITH_UKI_BOOT:-false}" in
     ;;
 esac
 
+case "${WITH_USER_DISK:-false}" in
+  false)
+    ;;
+  *)
+    QEMU_FLAGS+=("--user-disk=/var/lib/extra:350MB")
+    QEMU_FLAGS+=("--user-disk=/var/lib/p1:350MB:/var/lib/p2:350MB")
+    ;;
+esac
+
 
 function create_cluster {
   build_registry_mirrors
@@ -268,8 +275,6 @@ function create_cluster {
     --cpus="${QEMU_CPUS:-2}" \
     --cpus-workers="${QEMU_CPUS_WORKERS:-2}" \
     --cidr=172.20.1.0/24 \
-    --user-disk=/var/lib/extra:350MB \
-    --user-disk=/var/lib/p1:350MB:/var/lib/p2:350MB \
     --install-image="${INSTALLER_IMAGE}" \
     --with-init-node=false \
     --cni-bundle-url="${ARTIFACTS}/talosctl-cni-bundle-\${ARCH}.tar.gz" \

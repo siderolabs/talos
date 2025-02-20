@@ -42,6 +42,7 @@ import (
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/emergency"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/options"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/sdboot"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/platform"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system/events"
@@ -1676,6 +1677,30 @@ func MountStatePartition(required bool) func(seq runtime.Sequence, _ any) (runti
 			return mount.SystemPartitionMount(ctx, r, logger, constants.StatePartitionLabel, !required)
 		}, "mountStatePartition"
 	}
+}
+
+// CleanupBootloader cleans up the ununsed bootloader if booted from a disk image with both bootloaders present.
+func CleanupBootloader(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
+	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) error {
+		systemDisk, err := blockres.GetSystemDisk(ctx, r.State().V1Alpha2().Resources())
+		if err != nil {
+			return err
+		}
+
+		if systemDisk == nil {
+			return nil // no system disk, we can't do anything
+		}
+
+		if err := bootloader.CleanupBootloader(systemDisk.DevPath, sdboot.IsBootedUsingSDBoot()); err != nil {
+			return err
+		}
+
+		if _, err := r.State().Machine().Meta().DeleteTag(ctx, metamachinery.DiskImageBootloader); err != nil {
+			return fmt.Errorf("failed to delete tag %q: %w", metamachinery.DiskImageBootloader, err)
+		}
+
+		return r.State().Machine().Meta().Flush()
+	}, "cleanupBootloader"
 }
 
 // UnmountStatePartition unmounts the system partition.
