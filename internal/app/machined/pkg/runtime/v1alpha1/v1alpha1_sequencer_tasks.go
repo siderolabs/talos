@@ -1688,19 +1688,43 @@ func UnmountStatePartition(runtime.Sequence, any) (runtime.TaskExecutionFunc, st
 // MountEphemeralPartition mounts the ephemeral partition.
 func MountEphemeralPartition(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) error {
-		if _, err := waitForVolumeReady(ctx, r, constants.EphemeralPartitionLabel); err != nil {
-			return err
+		mountRequest := blockres.NewVolumeMountRequest(blockres.NamespaceName, constants.EphemeralPartitionLabel)
+		mountRequest.TypedSpec().VolumeID = constants.EphemeralPartitionLabel
+		mountRequest.TypedSpec().Requester = "sequencer"
+		// [TODO]: project quota support
+
+		if err := r.State().V1Alpha2().Resources().Create(ctx, mountRequest); err != nil {
+			return fmt.Errorf("failed to create EPHEMERAL mount request: %w", err)
 		}
 
-		return mount.SystemPartitionMount(ctx, r, logger, constants.EphemeralPartitionLabel, false,
-			mountv2.WithProjectQuota(r.Config().Machine().Features().DiskQuotaSupportEnabled()))
+		if _, err := r.State().V1Alpha2().Resources().WatchFor(ctx, blockres.NewVolumeMountStatus(blockres.NamespaceName, constants.EphemeralPartitionLabel).Metadata(), state.WithEventTypes(state.Created, state.Updated)); err != nil {
+			return fmt.Errorf("failed to wait for EPHEMERAL to be mounted: %w", err)
+		}
+
+		return nil
 	}, "mountEphemeralPartition"
 }
 
 // UnmountEphemeralPartition unmounts the ephemeral partition.
 func UnmountEphemeralPartition(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
-	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
-		return mount.SystemPartitionUnmount(r, logger, constants.EphemeralPartitionLabel)
+	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) error {
+		mountRequest := blockres.NewVolumeMountRequest(blockres.NamespaceName, constants.EphemeralPartitionLabel).Metadata()
+
+		_, err := r.State().V1Alpha2().Resources().Teardown(ctx, mountRequest)
+		if err != nil {
+			if state.IsNotFoundError(err) {
+				return nil
+			}
+
+			return fmt.Errorf("failed to teardown EPHEMERAL mount request: %w", err)
+		}
+
+		_, err = r.State().V1Alpha2().Resources().WatchFor(ctx, mountRequest, state.WithFinalizerEmpty())
+		if err != nil {
+			return fmt.Errorf("failed to wait for EPHEMERAL teardown: %w", err)
+		}
+
+		return r.State().V1Alpha2().Resources().Destroy(ctx, mountRequest)
 	}, "unmountEphemeralPartition"
 }
 
