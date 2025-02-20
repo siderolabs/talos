@@ -10,12 +10,15 @@ Bear in mind that this is a destructive action for the given machine.
 Doing this means removing the machine from Kubernetes, `etcd` (if applicable), and clears any data on the machine that would normally persist a reboot.
 
 ## CLI
+The API command for doing this is `talosctl reset`.  
+```sh
+talosctl reset -n <node_ip> -e <endpoint_ip_to_be_reset> --talosconfig=./talosconfig
+```
 
 > WARNING: Running a `talosctl reset` on cloud VM's might result in the VM being unable to boot as this wipes the entire disk.
 It might be more useful to just wipe the [STATE]({{< relref "../learn-more/architecture/#file-system-partitions" >}}) and [EPHEMERAL]({{< relref "../learn-more/architecture/#file-system-partitions" >}}) partitions on a cloud VM if not booting via `iPXE`.
 `talosctl reset --system-labels-to-wipe STATE --system-labels-to-wipe EPHEMERAL`
 
-The API command for doing this is `talosctl reset`.
 There are a couple of flags as part of this command:
 
 ```bash
@@ -32,8 +35,8 @@ In this case, reset should be used with `--graceful=false` to skip performing ch
 
 ## Kernel Parameter
 
-Another way to reset a machine is to specify `talos.experimental.wipe=system` kernel parameter.
-If the machine got stuck in the boot loop and you access to the console you can use GRUB to specify this kernel argument.
+Another way to reset a machine is to specify `talos.experimental.wipe=system` kernel parameter.  
+If the machine got stuck in the boot loop and you have access to the console you can use GRUB to specify this kernel argument.  
 Then when Talos boots for the next time it will reset system disk and reboot.
 
 Next steps can be to install Talos either using PXE boot or by mounting an ISO.
