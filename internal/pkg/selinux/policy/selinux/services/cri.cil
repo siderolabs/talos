@@ -48,7 +48,7 @@
 (call pod_p (pod_t))
 (typeattribute not_containerd_exec_t)
 (typeattributeset not_containerd_exec_t (not containerd_exec_t))
-(typetransition pod_containerd_t not_containerd_exec_t process pod_t)
+(typetransition pod_containerd_t containerd_state_t process pod_t)
 (allow pod_p containerd_state_t (fs_classes (rw)))
 (allow pod_p containerd_state_t (file (entrypoint execute execute_no_trans)))
 
