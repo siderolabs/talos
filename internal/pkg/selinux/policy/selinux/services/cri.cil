@@ -5,6 +5,7 @@
 (type pod_containerd_socket_t)
 (call system_socket_f (pod_containerd_socket_t))
 ; Shim and client sockets
+(allow pod_containerd_t run_t (dir (write add_name)))
 (typeattribute not_pod_containerd_socket_t)
 (typeattributeset not_pod_containerd_socket_t (not pod_containerd_socket_t))
 (typetransition pod_containerd_t not_pod_containerd_socket_t sock_file pod_containerd_socket_t)
@@ -35,6 +36,18 @@
 (allow pod_containerd_t pod_p (process_classes (full)))
 (allow pod_p pod_containerd_t (fd (use)))
 (allow pod_p pod_containerd_t (fifo_file (append getattr ioctl map open read rename setattr watch write)))
+
+; CNI
+(allow pod_containerd_t cni_plugin_t (file (execute_no_trans execute)))
+(allow pod_containerd_t cni_plugin_t (fs_classes (ro)))
+; iptables used by CNI
+(allow pod_containerd_t bin_exec_t (file (execute_no_trans execute)))
+(allow pod_containerd_t bin_exec_t (fs_classes (ro)))
+(allow pod_p cni_conf_t (fs_classes (rw)))
+(allow pod_containerd_t cni_state_t (fs_classes (rw)))
+
+; Logs
+(allow pod_containerd_t pods_log_t (fs_classes (rw)))
 
 (allow pod_containerd_t pod_p (key (view read write search link setattr create)))
 
