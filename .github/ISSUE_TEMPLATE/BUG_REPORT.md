@@ -15,5 +15,5 @@ assignees: ""
 ### Environment
 
 - Talos version: [`talosctl version --nodes <problematic nodes>`]
-- Kubernetes version: [`kubectl version --short`]
+- Kubernetes version: [`kubectl version`]
 - Platform:

@@ -81,9 +81,9 @@ func (widget *Header) OnResourceDataChange(data resourcedata.Data) {
 
 // OnAPIDataChange implements the APIDataListener interface.
 func (widget *Header) OnAPIDataChange(node string, data *apidata.Data) {
-	nodeAPIData := data.Nodes[node]
-
-	widget.updateNodeAPIData(node, nodeAPIData)
+	for node, nodeData := range data.Nodes {
+		widget.updateNodeAPIData(node, nodeData)
+	}
 
 	if node == widget.selectedNode {
 		widget.redraw()
@@ -132,16 +132,16 @@ func (widget *Header) updateNodeAPIData(node string, data *apidata.Node) {
 	nodeData.cpuUsagePercent = fmt.Sprintf("%.1f%%", data.CPUUsageByName("usage")*100.0)
 	nodeData.memUsagePercent = fmt.Sprintf("%.1f%%", data.MemUsage()*100.0)
 
-	if data.Hostname != nil {
-		nodeData.hostname = data.Hostname.GetHostname()
-	}
-
 	if data.Version != nil {
 		nodeData.version = data.Version.GetVersion().GetTag()
+	} else {
+		nodeData.version = notAvailable
 	}
 
-	if data.SystemStat != nil {
+	if data.SystemStat != nil && data.SystemStat.BootTime != 0 {
 		nodeData.uptime = time.Since(time.Unix(int64(data.SystemStat.GetBootTime()), 0)).Round(time.Second).String()
+	} else {
+		nodeData.uptime = notAvailable
 	}
 
 	if data.CPUsInfo != nil {
@@ -150,6 +150,8 @@ func (widget *Header) updateNodeAPIData(node string, data *apidata.Node) {
 		if numCPUs > 0 {
 			nodeData.cpuFreq = fmt.Sprintf("%dx%s", numCPUs, widget.humanizeCPUFrequency(data.CPUsInfo.GetCpuInfo()[0].GetCpuMhz()))
 		}
+	} else {
+		nodeData.cpuFreq = notAvailable
 	}
 
 	if data.CPUsFreqStats != nil && data.CPUsFreqStats.CpuFreqStats != nil {
@@ -183,14 +185,20 @@ func (widget *Header) updateNodeAPIData(node string, data *apidata.Node) {
 
 			nodeData.cpuFreq += fmt.Sprintf("%dx%s", uniqMhz[mhz], widget.humanizeCPUFrequency(float64(mhz)/1000.0))
 		}
+	} else {
+		nodeData.cpuFreq = notAvailable
 	}
 
 	if data.Processes != nil {
 		nodeData.numProcesses = strconv.Itoa(len(data.Processes.GetProcesses()))
+	} else {
+		nodeData.numProcesses = notAvailable
 	}
 
 	if data.Memory != nil {
 		nodeData.totalMem = humanize.IBytes(data.Memory.GetMeminfo().GetMemtotal() << 10)
+	} else {
+		nodeData.totalMem = notAvailable
 	}
 }
 

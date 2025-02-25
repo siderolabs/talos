@@ -14,6 +14,7 @@ import (
 
 	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/helpers"
 	"github.com/siderolabs/talos/internal/pkg/dashboard/resolver"
+	"github.com/siderolabs/talos/pkg/machinery/api/machine"
 	"github.com/siderolabs/talos/pkg/machinery/client"
 )
 
@@ -85,7 +86,30 @@ func (source *Source) run(dataCh chan<- *Data) {
 	}
 }
 
-//nolint:gocyclo,cyclop
+type protoMsg[T any] interface {
+	GetMessages() []T
+}
+
+func unpack[T helpers.Message](source *Source, nodes map[string]*Node, resultLock *sync.Mutex, resp protoMsg[T], setter func(node *Node, value T)) {
+	resultLock.Lock()
+	defer resultLock.Unlock()
+
+	for _, msg := range resp.GetMessages() {
+		node := source.node(msg)
+
+		if _, ok := nodes[node]; !ok {
+			nodes[node] = &Node{}
+		}
+
+		if msg.GetMetadata().GetError() != "" {
+			continue
+		}
+
+		setter(nodes[node], msg)
+	}
+}
+
+//nolint:gocyclo
 func (source *Source) gather() *Data {
 	result := &Data{
 		Timestamp: time.Now(),
@@ -101,18 +125,9 @@ func (source *Source) gather() *Data {
 				return err
 			}
 
-			resultLock.Lock()
-			defer resultLock.Unlock()
-
-			for _, msg := range resp.GetMessages() {
-				node := source.node(msg)
-
-				if _, ok := result.Nodes[node]; !ok {
-					result.Nodes[node] = &Node{}
-				}
-
-				result.Nodes[node].LoadAvg = msg
-			}
+			unpack(source, result.Nodes, &resultLock, resp, func(node *Node, value *machine.LoadAvg) {
+				node.LoadAvg = value
+			})
 
 			return nil
 		},
@@ -122,18 +137,9 @@ func (source *Source) gather() *Data {
 				return err
 			}
 
-			resultLock.Lock()
-			defer resultLock.Unlock()
-
-			for _, msg := range resp.GetMessages() {
-				node := source.node(msg)
-
-				if _, ok := result.Nodes[node]; !ok {
-					result.Nodes[node] = &Node{}
-				}
-
-				result.Nodes[node].Version = msg
-			}
+			unpack(source, result.Nodes, &resultLock, resp, func(node *Node, value *machine.Version) {
+				node.Version = value
+			})
 
 			return nil
 		},
@@ -143,18 +149,9 @@ func (source *Source) gather() *Data {
 				return err
 			}
 
-			resultLock.Lock()
-			defer resultLock.Unlock()
-
-			for _, msg := range resp.GetMessages() {
-				node := source.node(msg)
-
-				if _, ok := result.Nodes[node]; !ok {
-					result.Nodes[node] = &Node{}
-				}
-
-				result.Nodes[node].Memory = msg
-			}
+			unpack(source, result.Nodes, &resultLock, resp, func(node *Node, value *machine.Memory) {
+				node.Memory = value
+			})
 
 			return nil
 		},
@@ -164,18 +161,9 @@ func (source *Source) gather() *Data {
 				return err
 			}
 
-			resultLock.Lock()
-			defer resultLock.Unlock()
-
-			for _, msg := range resp.GetMessages() {
-				node := source.node(msg)
-
-				if _, ok := result.Nodes[node]; !ok {
-					result.Nodes[node] = &Node{}
-				}
-
-				result.Nodes[node].SystemStat = msg
-			}
+			unpack(source, result.Nodes, &resultLock, resp, func(node *Node, value *machine.SystemStat) {
+				node.SystemStat = value
+			})
 
 			return nil
 		},
@@ -185,18 +173,9 @@ func (source *Source) gather() *Data {
 				return err
 			}
 
-			resultLock.Lock()
-			defer resultLock.Unlock()
-
-			for _, msg := range resp.GetMessages() {
-				node := source.node(msg)
-
-				if _, ok := result.Nodes[node]; !ok {
-					result.Nodes[node] = &Node{}
-				}
-
-				result.Nodes[node].CPUsFreqStats = msg
-			}
+			unpack(source, result.Nodes, &resultLock, resp, func(node *Node, value *machine.CPUsFreqStats) {
+				node.CPUsFreqStats = value
+			})
 
 			return nil
 		},
@@ -206,18 +185,9 @@ func (source *Source) gather() *Data {
 				return err
 			}
 
-			resultLock.Lock()
-			defer resultLock.Unlock()
-
-			for _, msg := range resp.GetMessages() {
-				node := source.node(msg)
-
-				if _, ok := result.Nodes[node]; !ok {
-					result.Nodes[node] = &Node{}
-				}
-
-				result.Nodes[node].CPUsInfo = msg
-			}
+			unpack(source, result.Nodes, &resultLock, resp, func(node *Node, value *machine.CPUsInfo) {
+				node.CPUsInfo = value
+			})
 
 			return nil
 		},
@@ -227,18 +197,9 @@ func (source *Source) gather() *Data {
 				return err
 			}
 
-			resultLock.Lock()
-			defer resultLock.Unlock()
-
-			for _, msg := range resp.GetMessages() {
-				node := source.node(msg)
-
-				if _, ok := result.Nodes[node]; !ok {
-					result.Nodes[node] = &Node{}
-				}
-
-				result.Nodes[node].NetDevStats = msg
-			}
+			unpack(source, result.Nodes, &resultLock, resp, func(node *Node, value *machine.NetworkDeviceStats) {
+				node.NetDevStats = value
+			})
 
 			return nil
 		},
@@ -248,18 +209,9 @@ func (source *Source) gather() *Data {
 				return err
 			}
 
-			resultLock.Lock()
-			defer resultLock.Unlock()
-
-			for _, msg := range resp.GetMessages() {
-				node := source.node(msg)
-
-				if _, ok := result.Nodes[node]; !ok {
-					result.Nodes[node] = &Node{}
-				}
-
-				result.Nodes[node].DiskStats = msg
-			}
+			unpack(source, result.Nodes, &resultLock, resp, func(node *Node, value *machine.DiskStats) {
+				node.DiskStats = value
+			})
 
 			return nil
 		},
@@ -269,18 +221,9 @@ func (source *Source) gather() *Data {
 				return err
 			}
 
-			resultLock.Lock()
-			defer resultLock.Unlock()
-
-			for _, msg := range resp.GetMessages() {
-				node := source.node(msg)
-
-				if _, ok := result.Nodes[node]; !ok {
-					result.Nodes[node] = &Node{}
-				}
-
-				result.Nodes[node].Processes = msg
-			}
+			unpack(source, result.Nodes, &resultLock, resp, func(node *Node, value *machine.Process) {
+				node.Processes = value
+			})
 
 			return nil
 		},
@@ -290,18 +233,9 @@ func (source *Source) gather() *Data {
 				return err
 			}
 
-			resultLock.Lock()
-			defer resultLock.Unlock()
-
-			for _, msg := range resp.GetMessages() {
-				node := source.node(msg)
-
-				if _, ok := result.Nodes[node]; !ok {
-					result.Nodes[node] = &Node{}
-				}
-
-				result.Nodes[node].ServiceList = msg
-			}
+			unpack(source, result.Nodes, &resultLock, resp, func(node *Node, value *machine.ServiceList) {
+				node.ServiceList = value
+			})
 
 			return nil
 		},
