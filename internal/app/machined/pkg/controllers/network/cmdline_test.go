@@ -7,24 +7,24 @@ package network_test
 import (
 	"cmp"
 	"fmt"
+	"iter"
 	"net"
 	"net/netip"
 	"slices"
 	"testing"
 
 	"github.com/siderolabs/go-procfs/procfs"
-	"github.com/stretchr/testify/suite"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/network"
 	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
 	netconfig "github.com/siderolabs/talos/pkg/machinery/resources/network"
 )
 
-type CmdlineSuite struct {
-	suite.Suite
-}
+func TestCmdlineParse(t *testing.T) {
+	t.Parallel()
 
-func (suite *CmdlineSuite) TestParse() {
 	ifaces, _ := net.Interfaces() //nolint:errcheck // ignoring error here as ifaces will be empty
 
 	slices.SortFunc(ifaces, func(a, b net.Interface) int { return cmp.Compare(a.Name, b.Name) })
@@ -44,7 +44,7 @@ func (suite *CmdlineSuite) TestParse() {
 	defaultBondSettings := network.CmdlineNetworking{
 		NetworkLinkSpecs: []netconfig.LinkSpecSpec{
 			{
-				Name:        "bond0",
+				Name:        "bond1",
 				Kind:        "bond",
 				Type:        nethelpers.LinkEther,
 				Logical:     true,
@@ -66,7 +66,7 @@ func (suite *CmdlineSuite) TestParse() {
 				Logical:     false,
 				ConfigLayer: netconfig.ConfigCmdline,
 				BondSlave: netconfig.BondSlave{
-					MasterName: "bond0",
+					MasterName: "bond1",
 					SlaveIndex: 0,
 				},
 			},
@@ -76,7 +76,7 @@ func (suite *CmdlineSuite) TestParse() {
 				Logical:     false,
 				ConfigLayer: netconfig.ConfigCmdline,
 				BondSlave: netconfig.BondSlave{
-					MasterName: "bond0",
+					MasterName: "bond1",
 					SlaveIndex: 1,
 				},
 			},
@@ -140,7 +140,22 @@ func (suite *CmdlineSuite) TestParse() {
 			name:    "no iface by mac address",
 			cmdline: "ip=172.20.0.2::172.20.0.1:255.255.255.0::enx001122aabbcc",
 
-			expectedError: "cmdline device parse failure: interface by MAC not found enx001122aabbcc",
+			expectedSettings: network.CmdlineNetworking{
+				LinkConfigs: []network.CmdlineLinkConfig{
+					{
+						Address:  netip.MustParsePrefix("172.20.0.2/24"),
+						Gateway:  netip.MustParseAddr("172.20.0.1"),
+						LinkName: "enx001122aabbcc",
+					},
+				},
+				NetworkLinkSpecs: []netconfig.LinkSpecSpec{
+					{
+						Name:        "enx001122aabbcc",
+						Up:          true,
+						ConfigLayer: netconfig.ConfigCmdline,
+					},
+				},
+			},
 		},
 		{
 			name:    "complete",
@@ -293,20 +308,20 @@ func (suite *CmdlineSuite) TestParse() {
 		},
 		{
 			name:    "ignore interfaces",
-			cmdline: "talos.network.interface.ignore=eth2 talos.network.interface.ignore=eth3",
+			cmdline: "talos.network.interface.ignore=eth2 talos.network.interface.ignore=eth3 talos.network.interface.ignore=enxa",
 
 			expectedSettings: network.CmdlineNetworking{
-				IgnoreInterfaces: []string{"eth2", "eth3"},
+				IgnoreInterfaces: []string{"eth2", "eth3", "eth31"},
 			},
 		},
 		{
 			name:             "bond with no interfaces and no options set",
-			cmdline:          "bond=bond0",
+			cmdline:          "bond=bond1",
 			expectedSettings: defaultBondSettings,
 		},
 		{
 			name:             "bond with no interfaces and empty options set",
-			cmdline:          "bond=bond0:::",
+			cmdline:          "bond=bond1:::",
 			expectedSettings: defaultBondSettings,
 		},
 		{
@@ -314,22 +329,7 @@ func (suite *CmdlineSuite) TestParse() {
 			cmdline: "bond=bond1:eth3,eth4",
 			expectedSettings: network.CmdlineNetworking{
 				NetworkLinkSpecs: []netconfig.LinkSpecSpec{
-					{
-						Name:        "bond1",
-						Kind:        "bond",
-						Type:        nethelpers.LinkEther,
-						Logical:     true,
-						Up:          true,
-						ConfigLayer: netconfig.ConfigCmdline,
-						BondMaster: netconfig.BondMasterSpec{
-							ResendIGMP:      1,
-							LPInterval:      1,
-							PacketsPerSlave: 1,
-							NumPeerNotif:    1,
-							TLBDynamicLB:    1,
-							UseCarrier:      true,
-						},
-					},
+					defaultBondSettings.NetworkLinkSpecs[0],
 					{
 						Name:        "eth3",
 						Up:          true,
@@ -342,6 +342,35 @@ func (suite *CmdlineSuite) TestParse() {
 					},
 					{
 						Name:        "eth4",
+						Up:          true,
+						Logical:     false,
+						ConfigLayer: netconfig.ConfigCmdline,
+						BondSlave: netconfig.BondSlave{
+							MasterName: "bond1",
+							SlaveIndex: 1,
+						},
+					},
+				},
+			},
+		},
+		{
+			name:    "bond with aliased interfaces",
+			cmdline: "bond=bond1:enxa,enxb",
+			expectedSettings: network.CmdlineNetworking{
+				NetworkLinkSpecs: []netconfig.LinkSpecSpec{
+					defaultBondSettings.NetworkLinkSpecs[0],
+					{
+						Name:        "eth31",
+						Up:          true,
+						Logical:     false,
+						ConfigLayer: netconfig.ConfigCmdline,
+						BondSlave: netconfig.BondSlave{
+							MasterName: "bond1",
+							SlaveIndex: 0,
+						},
+					},
+					{
+						Name:        "eth32",
 						Up:          true,
 						Logical:     false,
 						ConfigLayer: netconfig.ConfigCmdline,
@@ -499,6 +528,27 @@ func (suite *CmdlineSuite) TestParse() {
 			},
 		},
 		{
+			name:    "vlan configuration with alias link name",
+			cmdline: "vlan=vlan4095:enxa",
+			expectedSettings: network.CmdlineNetworking{
+				NetworkLinkSpecs: []netconfig.LinkSpecSpec{
+					{
+						Name:        "enxa.4095",
+						Logical:     true,
+						Up:          true,
+						Kind:        netconfig.LinkKindVLAN,
+						Type:        nethelpers.LinkEther,
+						ParentName:  "eth31",
+						ConfigLayer: netconfig.ConfigCmdline,
+						VLAN: netconfig.VLANSpec{
+							VID:      4095,
+							Protocol: nethelpers.VLANProtocol8021Q,
+						},
+					},
+				},
+			},
+		},
+		{
 			name:          "vlan configuration with invalid vlan ID 4096",
 			cmdline:       "vlan=eth1.4096:eth1",
 			expectedError: fmt.Sprintf("invalid vlanID=%d, must be in the range 1..4095: %s", 4096, "eth1.4096:eth1"),
@@ -548,21 +598,31 @@ func (suite *CmdlineSuite) TestParse() {
 			},
 		},
 	} {
-		suite.Run(test.name, func() {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+
 			cmdline := procfs.NewCmdline(test.cmdline)
 
-			settings, err := network.ParseCmdlineNetwork(cmdline)
+			link1 := netconfig.NewLinkStatus(netconfig.NamespaceName, "eth31")
+			link1.TypedSpec().Alias = "enxa"
+			link2 := netconfig.NewLinkStatus(netconfig.NamespaceName, "eth32")
+			link2.TypedSpec().Alias = "enxb"
+
+			settings, err := network.ParseCmdlineNetwork(
+				cmdline,
+				netconfig.NewLinkResolver(
+					func() iter.Seq[*netconfig.LinkStatus] {
+						return slices.Values([]*netconfig.LinkStatus{link1, link2})
+					},
+				),
+			)
 
 			if test.expectedError != "" {
-				suite.Assert().EqualError(err, test.expectedError)
+				assert.EqualError(t, err, test.expectedError)
 			} else {
-				suite.Assert().NoError(err)
-				suite.Assert().Equal(test.expectedSettings, settings)
+				require.NoError(t, err)
+				assert.Equal(t, test.expectedSettings, settings)
 			}
 		})
 	}
-}
-
-func TestCmdlineSuite(t *testing.T) {
-	suite.Run(t, new(CmdlineSuite))
 }

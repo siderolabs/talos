@@ -10,7 +10,6 @@ import (
 	"net/netip"
 	"slices"
 	"strings"
-	"sync"
 	"testing"
 	"time"
 
@@ -19,9 +18,9 @@ import (
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/miekg/dns"
 	"github.com/siderolabs/gen/xslices"
-	"github.com/siderolabs/gen/xtesting/must"
 	"github.com/siderolabs/go-retry/retry"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 	"go.uber.org/zap/zaptest"
 
@@ -46,7 +45,7 @@ func expectedDNSRunners(port string) []resource.ID {
 
 func (suite *DNSServer) TestResolving() {
 	dnsSlice := []string{"8.8.8.8", "1.1.1.1"}
-	port := must.Value(getDynamicPort())(suite.T())
+	port := getDynamicPort(suite.T())
 
 	cfg := network.NewHostDNSConfig(network.HostDNSConfigID)
 	cfg.TypedSpec().Enabled = true
@@ -104,7 +103,7 @@ func (suite *DNSServer) TestResolving() {
 
 func (suite *DNSServer) TestSetupStartStop() {
 	dnsSlice := []string{"8.8.8.8", "1.1.1.1"}
-	port := must.Value(getDynamicPort())(suite.T())
+	port := getDynamicPort(suite.T())
 
 	resolverSpec := network.NewResolverStatus(network.NamespaceName, network.ResolverID)
 	resolverSpec.TypedSpec().DNSServers = xslices.Map(dnsSlice, netip.MustParseAddr)
@@ -148,7 +147,7 @@ func (suite *DNSServer) TestSetupStartStop() {
 }
 
 func (suite *DNSServer) TestResolveMembers() {
-	port := must.Value(getDynamicPort())(suite.T())
+	port := getDynamicPort(suite.T())
 
 	const (
 		id  = "talos-default-controlplane-1"
@@ -264,22 +263,20 @@ func TestDNSServer(t *testing.T) {
 	})
 }
 
-func getDynamicPort() (string, error) {
+func getDynamicPort(t *testing.T) string {
+	t.Helper()
+
 	l, err := net.Listen("tcp", "127.0.0.1:0")
-	if err != nil {
-		return "", err
-	}
+	require.NoError(t, err)
 
-	closeOnce := sync.OnceValue(l.Close)
+	addr := l.Addr().String()
 
-	defer closeOnce() //nolint:errcheck
+	require.NoError(t, l.Close())
 
-	_, port, err := net.SplitHostPort(l.Addr().String())
-	if err != nil {
-		return "", err
-	}
+	_, port, err := net.SplitHostPort(addr)
+	require.NoError(t, err)
 
-	return port, closeOnce()
+	return port
 }
 
 func makeAddrs(port string) []netip.AddrPort {
@@ -293,7 +290,7 @@ type DNSUpstreams struct {
 }
 
 func (suite *DNSUpstreams) TestOrder() {
-	port := must.Value(getDynamicPort())(suite.T())
+	port := getDynamicPort(suite.T())
 
 	cfg := network.NewHostDNSConfig(network.HostDNSConfigID)
 	cfg.TypedSpec().Enabled = true

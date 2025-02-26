@@ -5,23 +5,17 @@
 package network_test
 
 import (
-	"context"
 	"net/netip"
 	"net/url"
-	"sync"
 	"testing"
 	"time"
 
-	"github.com/cosi-project/runtime/pkg/controller/runtime"
 	"github.com/cosi-project/runtime/pkg/resource/rtestutils"
-	"github.com/cosi-project/runtime/pkg/state"
-	"github.com/cosi-project/runtime/pkg/state/impl/inmem"
-	"github.com/cosi-project/runtime/pkg/state/impl/namespaced"
 	"github.com/siderolabs/go-pointer"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
-	"go.uber.org/zap/zaptest"
 
+	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/ctest"
 	netctrl "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/network"
 	"github.com/siderolabs/talos/pkg/machinery/config/container"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
@@ -30,51 +24,35 @@ import (
 )
 
 type OperatorVIPConfigSuite struct {
-	suite.Suite
-
-	state state.State
-
-	runtime *runtime.Runtime
-	wg      sync.WaitGroup
-
-	ctx       context.Context //nolint:containedctx
-	ctxCancel context.CancelFunc
-}
-
-func (suite *OperatorVIPConfigSuite) SetupTest() {
-	suite.ctx, suite.ctxCancel = context.WithTimeout(context.Background(), 3*time.Minute)
-
-	suite.state = state.WrapCore(namespaced.NewState(inmem.Build))
-
-	var err error
-
-	suite.runtime, err = runtime.NewRuntime(suite.state, zaptest.NewLogger(suite.T()))
-	suite.Require().NoError(err)
-
-	suite.Require().NoError(suite.runtime.RegisterController(&netctrl.DeviceConfigController{}))
-}
-
-func (suite *OperatorVIPConfigSuite) startRuntime() {
-	suite.wg.Add(1)
-
-	go func() {
-		defer suite.wg.Done()
-
-		suite.Assert().NoError(suite.runtime.Run(suite.ctx))
-	}()
+	ctest.DefaultSuite
 }
 
 func (suite *OperatorVIPConfigSuite) assertOperators(
 	requiredIDs []string,
 	check func(*network.OperatorSpec, *assert.Assertions),
 ) {
-	assertResources(suite.ctx, suite.T(), suite.state, requiredIDs, check, rtestutils.WithNamespace(network.ConfigNamespaceName))
+	ctest.AssertResources(suite, requiredIDs, check, rtestutils.WithNamespace(network.ConfigNamespaceName))
 }
 
 func (suite *OperatorVIPConfigSuite) TestMachineConfigurationVIP() {
-	suite.Require().NoError(suite.runtime.RegisterController(&netctrl.OperatorVIPConfigController{}))
+	for _, link := range []struct {
+		name    string
+		aliases []string
+	}{
+		{
+			name:    "eth5",
+			aliases: []string{"enxa"},
+		},
+		{
+			name:    "eth6",
+			aliases: []string{"enxb"},
+		},
+	} {
+		status := network.NewLinkStatus(network.NamespaceName, link.name)
+		status.TypedSpec().AltNames = link.aliases
 
-	suite.startRuntime()
+		suite.Create(status)
+	}
 
 	u, err := url.Parse("https://foo:6443")
 	suite.Require().NoError(err)
@@ -112,6 +90,13 @@ func (suite *OperatorVIPConfigSuite) TestMachineConfigurationVIP() {
 									},
 								},
 							},
+							{
+								DeviceInterface: "enxa",
+								DeviceDHCP:      pointer.To(true),
+								DeviceVIPConfig: &v1alpha1.DeviceVIPConfig{
+									SharedIP: "2.3.4.5",
+								},
+							},
 						},
 					},
 				},
@@ -126,13 +111,14 @@ func (suite *OperatorVIPConfigSuite) TestMachineConfigurationVIP() {
 		),
 	)
 
-	suite.Require().NoError(suite.state.Create(suite.ctx, cfg))
+	suite.Create(cfg)
 
 	suite.assertOperators(
 		[]string{
 			"configuration/vip/eth1",
 			"configuration/vip/eth2",
 			"configuration/vip/eth3.26",
+			"configuration/vip/eth5",
 		}, func(r *network.OperatorSpec, asrt *assert.Assertions) {
 			asrt.Equal(network.OperatorVIP, r.TypedSpec().Operator)
 			asrt.True(r.TypedSpec().RequireUp)
@@ -140,6 +126,9 @@ func (suite *OperatorVIPConfigSuite) TestMachineConfigurationVIP() {
 			switch r.Metadata().ID() {
 			case "configuration/vip/eth1":
 				asrt.Equal("eth1", r.TypedSpec().LinkName)
+				asrt.EqualValues(netip.MustParseAddr("2.3.4.5"), r.TypedSpec().VIP.IP)
+			case "configuration/vip/eth5":
+				asrt.Equal("eth5", r.TypedSpec().LinkName)
 				asrt.EqualValues(netip.MustParseAddr("2.3.4.5"), r.TypedSpec().VIP.IP)
 			case "configuration/vip/eth2":
 				asrt.Equal("eth2", r.TypedSpec().LinkName)
@@ -155,14 +144,16 @@ func (suite *OperatorVIPConfigSuite) TestMachineConfigurationVIP() {
 	)
 }
 
-func (suite *OperatorVIPConfigSuite) TearDownTest() {
-	suite.T().Log("tear down")
-
-	suite.ctxCancel()
-
-	suite.wg.Wait()
-}
-
 func TestOperatorVIPConfigSuite(t *testing.T) {
-	suite.Run(t, new(OperatorVIPConfigSuite))
+	t.Parallel()
+
+	suite.Run(t, &OperatorVIPConfigSuite{
+		DefaultSuite: ctest.DefaultSuite{
+			Timeout: 5 * time.Second,
+			AfterSetup: func(s *ctest.DefaultSuite) {
+				s.Require().NoError(s.Runtime().RegisterController(&netctrl.DeviceConfigController{}))
+				s.Require().NoError(s.Runtime().RegisterController(&netctrl.OperatorVIPConfigController{}))
+			},
+		},
+	})
 }

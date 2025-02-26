@@ -230,7 +230,7 @@ func (ctrl *HostnameConfigController) parseCmdline(logger *zap.Logger) (spec net
 		return
 	}
 
-	settings, err := ParseCmdlineNetwork(ctrl.Cmdline)
+	settings, err := ParseCmdlineNetwork(ctrl.Cmdline, network.NewEmptyLinkResolver())
 	if err != nil {
 		logger.Warn("ignoring error", zap.Error(err))
 

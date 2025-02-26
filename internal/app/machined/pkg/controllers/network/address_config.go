@@ -205,7 +205,7 @@ func (ctrl *AddressConfigController) parseCmdline(logger *zap.Logger) (addresses
 		return
 	}
 
-	settings, err := ParseCmdlineNetwork(ctrl.Cmdline)
+	settings, err := ParseCmdlineNetwork(ctrl.Cmdline, network.NewEmptyLinkResolver())
 	if err != nil {
 		logger.Info("ignoring cmdline parse failure", zap.Error(err))
 

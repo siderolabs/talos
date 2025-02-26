@@ -181,7 +181,7 @@ func (ctrl *RouteConfigController) parseCmdline(logger *zap.Logger) (routes []ne
 		return
 	}
 
-	settings, err := ParseCmdlineNetwork(ctrl.Cmdline)
+	settings, err := ParseCmdlineNetwork(ctrl.Cmdline, network.NewEmptyLinkResolver())
 	if err != nil {
 		logger.Info("ignoring error", zap.Error(err))
 

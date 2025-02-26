@@ -81,38 +81,7 @@ func (ctrl *OperatorConfigController) Run(ctx context.Context, r controller.Runt
 			return fmt.Errorf("error listing link statuses: %w", err)
 		}
 
-		// build an alias/altname map and a list of all interfaces
-		linkAliasMap := map[string]string{}
-
-		for linkStatus := range linkStatuses.All() {
-			if linkStatus.TypedSpec().Alias != "" {
-				linkAliasMap[linkStatus.TypedSpec().Alias] = linkStatus.Metadata().ID()
-			}
-
-			for _, altName := range linkStatus.TypedSpec().AltNames {
-				linkAliasMap[altName] = linkStatus.Metadata().ID()
-			}
-		}
-
-		// direct names override aliases
-		for linkStatus := range linkStatuses.All() {
-			linkAliasMap[linkStatus.Metadata().ID()] = linkStatus.Metadata().ID()
-		}
-
-		lookupLinkName := func(linkName string) string {
-			if alias, ok := linkAliasMap[linkName]; ok {
-				return alias
-			}
-
-			return linkName
-		}
-
-		items, err := r.List(ctx, resource.NewMetadata(network.NamespaceName, network.DeviceConfigSpecType, "", resource.VersionUndefined))
-		if err != nil {
-			if !state.IsNotFoundError(err) {
-				return fmt.Errorf("error getting config: %w", err)
-			}
-		}
+		linkNameResolver := network.NewLinkResolver(linkStatuses.All)
 
 		var (
 			specs      []network.OperatorSpecSpec
@@ -124,7 +93,7 @@ func (ctrl *OperatorConfigController) Run(ctx context.Context, r controller.Runt
 		if ctrl.Cmdline != nil {
 			var settings CmdlineNetworking
 
-			settings, err = ParseCmdlineNetwork(ctrl.Cmdline)
+			settings, err = ParseCmdlineNetwork(ctrl.Cmdline, linkNameResolver)
 			if err != nil {
 				logger.Warn("ignored cmdline parse failure", zap.Error(err))
 			}
@@ -140,13 +109,20 @@ func (ctrl *OperatorConfigController) Run(ctx context.Context, r controller.Runt
 
 				specs = append(specs, network.OperatorSpecSpec{
 					Operator:  network.OperatorDHCP4,
-					LinkName:  lookupLinkName(linkConfig.LinkName),
+					LinkName:  linkNameResolver.Resolve(linkConfig.LinkName),
 					RequireUp: true,
 					DHCP4: network.DHCP4OperatorSpec{
 						RouteMetric: network.DefaultRouteMetric,
 					},
 					ConfigLayer: network.ConfigCmdline,
 				})
+			}
+		}
+
+		items, err := r.List(ctx, resource.NewMetadata(network.NamespaceName, network.DeviceConfigSpecType, "", resource.VersionUndefined))
+		if err != nil {
+			if !state.IsNotFoundError(err) {
+				return fmt.Errorf("error getting config: %w", err)
 			}
 		}
 
@@ -158,10 +134,10 @@ func (ctrl *OperatorConfigController) Run(ctx context.Context, r controller.Runt
 		if len(devices) > 0 {
 			for _, device := range devices {
 				if device.Ignore() {
-					ignoredInterfaces[device.Interface()] = struct{}{}
+					ignoredInterfaces[linkNameResolver.Resolve(device.Interface())] = struct{}{}
 				}
 
-				if _, ignore := ignoredInterfaces[device.Interface()]; ignore {
+				if _, ignore := ignoredInterfaces[linkNameResolver.Resolve(device.Interface())]; ignore {
 					continue
 				}
 
@@ -173,7 +149,7 @@ func (ctrl *OperatorConfigController) Run(ctx context.Context, r controller.Runt
 
 					specs = append(specs, network.OperatorSpecSpec{
 						Operator:  network.OperatorDHCP4,
-						LinkName:  lookupLinkName(device.Interface()),
+						LinkName:  linkNameResolver.Resolve(device.Interface()),
 						RequireUp: true,
 						DHCP4: network.DHCP4OperatorSpec{
 							RouteMetric: routeMetric,
@@ -190,7 +166,7 @@ func (ctrl *OperatorConfigController) Run(ctx context.Context, r controller.Runt
 
 					specs = append(specs, network.OperatorSpecSpec{
 						Operator:  network.OperatorDHCP6,
-						LinkName:  lookupLinkName(device.Interface()),
+						LinkName:  linkNameResolver.Resolve(device.Interface()),
 						RequireUp: true,
 						DHCP6: network.DHCP6OperatorSpec{
 							RouteMetric: routeMetric,
@@ -243,13 +219,13 @@ func (ctrl *OperatorConfigController) Run(ctx context.Context, r controller.Runt
 		// any link which has any configuration derived from the machine configuration or platform configuration should be ignored
 		configuredInterfaces := map[string]struct{}{}
 
-		list, err := r.List(ctx, resource.NewMetadata(network.ConfigNamespaceName, network.LinkSpecType, "", resource.VersionUndefined))
+		linkSpecs, err := safe.ReaderList[*network.LinkSpec](ctx, r, resource.NewMetadata(network.ConfigNamespaceName, network.LinkSpecType, "", resource.VersionUndefined))
 		if err != nil {
 			return fmt.Errorf("error listing link specs: %w", err)
 		}
 
-		for _, item := range list.Items {
-			linkSpec := item.(*network.LinkSpec).TypedSpec()
+		for link := range linkSpecs.All() {
+			linkSpec := link.TypedSpec()
 
 			switch linkSpec.ConfigLayer {
 			case network.ConfigDefault:
@@ -258,7 +234,7 @@ func (ctrl *OperatorConfigController) Run(ctx context.Context, r controller.Runt
 				// specs produced by operators, ignore
 			case network.ConfigCmdline, network.ConfigMachineConfiguration, network.ConfigPlatform:
 				// interface is configured explicitly, don't run default dhcp4
-				configuredInterfaces[lookupLinkName(linkSpec.Name)] = struct{}{}
+				configuredInterfaces[linkNameResolver.Resolve(linkSpec.Name)] = struct{}{}
 			}
 		}
 
@@ -294,12 +270,12 @@ func (ctrl *OperatorConfigController) Run(ctx context.Context, r controller.Runt
 		}
 
 		// list specs for cleanup
-		list, err = r.List(ctx, resource.NewMetadata(network.ConfigNamespaceName, network.OperatorSpecType, "", resource.VersionUndefined))
+		operators, err := safe.ReaderList[*network.OperatorSpec](ctx, r, resource.NewMetadata(network.ConfigNamespaceName, network.OperatorSpecType, "", resource.VersionUndefined))
 		if err != nil {
 			return fmt.Errorf("error listing resources: %w", err)
 		}
 
-		for _, res := range list.Items {
+		for res := range operators.All() {
 			if res.Metadata().Owner() != ctrl.Name() {
 				// skip specs created by other controllers
 				continue

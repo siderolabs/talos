@@ -92,6 +92,13 @@ func (ctrl *LinkConfigController) Run(ctx context.Context, r controller.Runtime,
 			}
 		}
 
+		linkStatuses, err := safe.ReaderListAll[*network.LinkStatus](ctx, r)
+		if err != nil {
+			return fmt.Errorf("error listing link statuses: %w", err)
+		}
+
+		linkNameResolver := network.NewLinkResolver(linkStatuses.All)
+
 		// bring up loopback interface
 		{
 			var ids []string
@@ -113,7 +120,7 @@ func (ctrl *LinkConfigController) Run(ctx context.Context, r controller.Runtime,
 		}
 
 		// parse kernel cmdline for the interface name
-		cmdlineLinks, cmdlineIgnored := ctrl.parseCmdline(logger)
+		cmdlineLinks, cmdlineIgnored := ctrl.parseCmdline(logger, linkNameResolver)
 		for _, cmdlineLink := range cmdlineLinks {
 			if cmdlineLink.Name != "" {
 				if _, ignored := ignoredInterfaces[cmdlineLink.Name]; !ignored {
@@ -133,7 +140,7 @@ func (ctrl *LinkConfigController) Run(ctx context.Context, r controller.Runtime,
 
 		// parse machine configuration for link specs
 		if len(devices) > 0 {
-			links := ctrl.processDevicesConfiguration(logger, devices)
+			links := ctrl.processDevicesConfiguration(logger, devices, linkNameResolver)
 
 			var ids []string
 
@@ -178,27 +185,10 @@ func (ctrl *LinkConfigController) Run(ctx context.Context, r controller.Runtime,
 			}
 		}
 
-		list, err := r.List(ctx, resource.NewMetadata(network.NamespaceName, network.LinkStatusType, "", resource.VersionUndefined))
-		if err != nil {
-			return fmt.Errorf("error listing link statuses: %w", err)
-		}
-
 	outer:
-		for _, item := range list.Items {
-			linkStatus := item.(*network.LinkStatus) //nolint:forcetypeassert
-
-			if _, configured := configuredLinks[linkStatus.Metadata().ID()]; configured {
-				continue
-			}
-
-			if linkStatus.TypedSpec().Alias != "" {
-				if _, configured := configuredLinks[linkStatus.TypedSpec().Alias]; configured {
-					continue
-				}
-			}
-
-			for _, altName := range linkStatus.TypedSpec().AltNames {
-				if _, configured := configuredLinks[altName]; configured {
+		for linkStatus := range linkStatuses.All() {
+			for linkAlias := range network.AllLinkNames(linkStatus) {
+				if _, configured := configuredLinks[linkAlias]; configured {
 					continue outer
 				}
 			}
@@ -223,13 +213,13 @@ func (ctrl *LinkConfigController) Run(ctx context.Context, r controller.Runtime,
 			}
 		}
 
-		// list links for cleanup
-		list, err = r.List(ctx, resource.NewMetadata(network.ConfigNamespaceName, network.LinkSpecType, "", resource.VersionUndefined))
+		// list link specs for cleanup
+		linkSpecs, err := safe.ReaderList[*network.LinkSpec](ctx, r, resource.NewMetadata(network.ConfigNamespaceName, network.LinkSpecType, "", resource.VersionUndefined))
 		if err != nil {
 			return fmt.Errorf("error listing resources: %w", err)
 		}
 
-		for _, res := range list.Items {
+		for res := range linkSpecs.All() {
 			if res.Metadata().Owner() != ctrl.Name() {
 				// skip specs created by other controllers
 				continue
@@ -271,12 +261,12 @@ func (ctrl *LinkConfigController) apply(ctx context.Context, r controller.Runtim
 	return ids, nil
 }
 
-func (ctrl *LinkConfigController) parseCmdline(logger *zap.Logger) ([]network.LinkSpecSpec, []string) {
+func (ctrl *LinkConfigController) parseCmdline(logger *zap.Logger, linkNameResolver *network.LinkResolver) ([]network.LinkSpecSpec, []string) {
 	if ctrl.Cmdline == nil {
 		return []network.LinkSpecSpec{}, nil
 	}
 
-	settings, err := ParseCmdlineNetwork(ctrl.Cmdline)
+	settings, err := ParseCmdlineNetwork(ctrl.Cmdline, linkNameResolver)
 	if err != nil {
 		logger.Info("ignoring error", zap.Error(err))
 
@@ -287,7 +277,7 @@ func (ctrl *LinkConfigController) parseCmdline(logger *zap.Logger) ([]network.Li
 }
 
 //nolint:gocyclo,cyclop
-func (ctrl *LinkConfigController) processDevicesConfiguration(logger *zap.Logger, devices []talosconfig.Device) []network.LinkSpecSpec {
+func (ctrl *LinkConfigController) processDevicesConfiguration(logger *zap.Logger, devices []talosconfig.Device, linkNameResolver *network.LinkResolver) []network.LinkSpecSpec {
 	// scan for the bonds or bridges
 	bondedLinks := map[string]ordered.Pair[string, int]{} // mapping physical interface -> bond interface
 	bridgedLinks := map[string]string{}                   // mapping physical interface -> bridge interface
@@ -297,50 +287,58 @@ func (ctrl *LinkConfigController) processDevicesConfiguration(logger *zap.Logger
 			continue
 		}
 
+		deviceInterface := linkNameResolver.Resolve(device.Interface())
+
 		if device.Bond() != nil {
 			for idx, linkName := range device.Bond().Interfaces() {
-				if bondData, exists := bondedLinks[linkName]; exists && bondData.F1 != device.Interface() {
+				linkName = linkNameResolver.Resolve(linkName)
+
+				if bondData, exists := bondedLinks[linkName]; exists && bondData.F1 != deviceInterface {
 					logger.Sugar().Warnf("link %q is included in both bonds %q and %q", linkName,
-						bondData.F1, device.Interface())
+						bondData.F1, deviceInterface)
 				}
 
 				if bridgeName, exists := bridgedLinks[linkName]; exists {
 					logger.Sugar().Warnf("link %q is included in both bond %q and bridge %q", linkName,
-						bridgeName, device.Interface())
+						bridgeName, deviceInterface)
 				}
 
-				bondedLinks[linkName] = ordered.MakePair(device.Interface(), idx)
+				bondedLinks[linkName] = ordered.MakePair(deviceInterface, idx)
 			}
 		}
 
 		if device.Bridge() != nil {
 			for _, linkName := range device.Bridge().Interfaces() {
-				if bridgeName, exists := bridgedLinks[linkName]; exists && bridgeName != device.Interface() {
+				linkName = linkNameResolver.Resolve(linkName)
+
+				if bridgeName, exists := bridgedLinks[linkName]; exists && bridgeName != deviceInterface {
 					logger.Sugar().Warnf("link %q is included in both bridges %q and %q", linkName,
-						bridgeName, device.Interface())
+						bridgeName, deviceInterface)
 				}
 
 				if bondData, exists := bondedLinks[linkName]; exists {
 					logger.Sugar().Warnf("link %q is included in both bond %q and bridge %q", linkName,
-						bondData.F1, device.Interface())
+						bondData.F1, deviceInterface)
 				}
 
-				bridgedLinks[linkName] = device.Interface()
+				bridgedLinks[linkName] = deviceInterface
 			}
 		}
 
 		if device.BridgePort() != nil {
-			if bridgeName, exists := bridgedLinks[device.Interface()]; exists && bridgeName != device.BridgePort().Master() {
-				logger.Sugar().Warnf("link %q is included in both bridges %q and %q", device.Interface(),
-					bridgeName, device.BridgePort().Master())
+			bridgePortMaster := linkNameResolver.Resolve(device.BridgePort().Master())
+
+			if bridgeName, exists := bridgedLinks[deviceInterface]; exists && bridgeName != bridgePortMaster {
+				logger.Sugar().Warnf("link %q is included in both bridges %q and %q", deviceInterface,
+					bridgeName, bridgePortMaster)
 			}
 
-			if bondData, exists := bondedLinks[device.Interface()]; exists {
-				logger.Sugar().Warnf("link %q is included into both bond %q and bridge %q", device.Interface(),
-					bondData.F1, device.BridgePort().Master())
+			if bondData, exists := bondedLinks[deviceInterface]; exists {
+				logger.Sugar().Warnf("link %q is included into both bond %q and bridge %q", deviceInterface,
+					bondData.F1, bridgePortMaster)
 			}
 
-			bridgedLinks[device.Interface()] = device.BridgePort().Master()
+			bridgedLinks[deviceInterface] = bridgePortMaster
 		}
 	}
 
@@ -351,50 +349,51 @@ func (ctrl *LinkConfigController) processDevicesConfiguration(logger *zap.Logger
 			continue
 		}
 
-		if _, exists := linkMap[device.Interface()]; !exists {
-			linkMap[device.Interface()] = &network.LinkSpecSpec{
-				Name:        device.Interface(),
+		deviceInterface := linkNameResolver.Resolve(device.Interface())
+
+		if _, exists := linkMap[deviceInterface]; !exists {
+			linkMap[deviceInterface] = &network.LinkSpecSpec{
+				Name:        deviceInterface,
 				Up:          true,
 				ConfigLayer: network.ConfigMachineConfiguration,
 			}
 		}
 
 		if device.MTU() != 0 {
-			linkMap[device.Interface()].MTU = uint32(device.MTU())
+			linkMap[deviceInterface].MTU = uint32(device.MTU())
 		}
 
 		if device.Bond() != nil {
-			if err := SetBondMaster(linkMap[device.Interface()], device.Bond()); err != nil {
+			if err := SetBondMaster(linkMap[deviceInterface], device.Bond()); err != nil {
 				logger.Error("error parsing bond config", zap.Error(err))
 			}
 		}
 
 		if device.Bridge() != nil {
-			if err := SetBridgeMaster(linkMap[device.Interface()], device.Bridge()); err != nil {
+			if err := SetBridgeMaster(linkMap[deviceInterface], device.Bridge()); err != nil {
 				logger.Error("error parsing bridge config", zap.Error(err))
 			}
 		}
 
 		if device.WireguardConfig() != nil {
-			if err := wireguardLink(linkMap[device.Interface()], device.WireguardConfig()); err != nil {
+			if err := wireguardLink(linkMap[deviceInterface], device.WireguardConfig()); err != nil {
 				logger.Error("error parsing wireguard config", zap.Error(err))
 			}
 		}
 
 		if device.Dummy() {
-			dummyLink(linkMap[device.Interface()])
+			dummyLink(linkMap[deviceInterface])
 		}
 
 		for _, vlan := range device.Vlans() {
-			vlanName := nethelpers.VLANLinkName(device.Interface(), vlan.ID())
+			vlanName := nethelpers.VLANLinkName(device.Interface(), vlan.ID()) // [NOTE]: VLAN uses the original interface name (before resolving aliases)
 
 			linkMap[vlanName] = &network.LinkSpecSpec{
-				Name:        device.Interface(),
 				Up:          true,
 				ConfigLayer: network.ConfigMachineConfiguration,
 			}
 
-			vlanLink(linkMap[vlanName], device.Interface(), vlan)
+			vlanLink(linkMap[vlanName], vlanName, deviceInterface, vlan)
 		}
 	}
 
@@ -430,8 +429,8 @@ type vlaner interface {
 	MTU() uint32
 }
 
-func vlanLink(link *network.LinkSpecSpec, linkName string, vlan vlaner) {
-	link.Name = nethelpers.VLANLinkName(linkName, vlan.ID())
+func vlanLink(link *network.LinkSpecSpec, vlanName, linkName string, vlan vlaner) {
+	link.Name = vlanName
 	link.Logical = true
 	link.Up = true
 	link.MTU = vlan.MTU()
