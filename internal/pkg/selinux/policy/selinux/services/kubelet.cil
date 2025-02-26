@@ -43,7 +43,7 @@
 ; (allow kubelet_t run_t (fs_classes (rw)))
 
 ; Communication with init via pipes and sockets
-(allow kubelet_t init_t (fd (use)))
+; (allow kubelet_t init_t (fd (use)))
 (allow kubelet_t init_t (fifo_file (write)))
 (allow kubelet_t init_t (unix_stream_socket (connectto)))
 
@@ -55,8 +55,6 @@
 (allow kubelet_t securityfs_t (fs_classes (ro)))
 (allow kubelet_t self (capability2 (syslog)))
 (allow kubelet_t kernel_t (system (syslog_read)))
-(allow kubelet_t run_t (fs_classes (rw)))
-(allow kubelet_t pod_containerd_run_t (fs_classes (ro)))
 
 ; Manage system configuration
 (allow kubelet_t sysfs_t (fs_classes (rw)))
