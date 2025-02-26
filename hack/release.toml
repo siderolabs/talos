@@ -18,9 +18,9 @@ preface = """
     [notes.updates]
         title = "Component Updates"
         description = """\
-* Linux: 6.12.13
+* Linux: 6.12.16
 * CNI plugins: 1.6.2
-* runc: 1.2.4
+* runc: 1.2.5
 * containerd: 2.0.2
 * etcd: 3.5.18
 * Flannel: 0.26.4
