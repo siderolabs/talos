@@ -37,4 +37,5 @@
 ; Talos installer
 (type installer_t)
 (call system_container_p (installer_t))
+(allow sys_containerd_t system_var_t (file (execute)))
 (allow installer_t system_var_t (file (entrypoint execute_no_trans)))

@@ -5,6 +5,9 @@
 (allow any_p procfs_t (fs_classes (ro)))
 ; Allow all process actions but ptrace, set* will be guarded by transitions
 (allow any_p self (process_classes (full)))
+; Read various parameters like hugepages
+(allow any_p sysfs_t (fs_classes (ro)))
+(allow any_p proc_cmdline_t (fs_classes (ro)))
 
 ; Pseudo devices
 (allow any_p null_device_t (fs_classes (rw)))

@@ -35,7 +35,7 @@
 
 ; Config and state access
 (allow kubelet_t etc_t (fs_classes (ro)))
-(allow kubelet_t k8s_conf_t (fs_classes (ro)))
+(allow kubelet_t k8s_conf_t (fs_classes (rw)))
 (allow kubelet_t kubelet_state_t (fs_classes (rw)))
 
 ; Some mounts
@@ -55,6 +55,15 @@
 (allow kubelet_t securityfs_t (fs_classes (ro)))
 (allow kubelet_t self (capability2 (syslog)))
 (allow kubelet_t kernel_t (system (syslog_read)))
+(allow kubelet_t run_t (fs_classes (rw)))
+(allow kubelet_t pod_containerd_run_t (fs_classes (ro)))
 
 ; Manage system configuration
 (allow kubelet_t sysfs_t (fs_classes (rw)))
+
+; CNI config written by kubelet
+; FIXME: label more precisely?
+(allow pod_t kubelet_state_t (fs_classes (ro)))
+
+(allow kubelet_t k8s_plugin_t (fs_classes (rw)))
+(allow kubelet_t k8s_plugin_t (file (entrypoint execute execute_no_trans)))
