@@ -1,6 +1,6 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
 #
-# Generated on 2024-09-09T13:58:35Z by kres 8be5fa7.
+# Generated on 2025-02-26T15:23:43Z by kres 1281806.
 
 name: integration-aws-nvidia-nonfree-cron
 concurrency:
@@ -89,7 +89,7 @@ jobs:
           PLATFORM: linux/amd64
           PUSH: "true"
         run: |
-          make talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer imager talos _out/integration-test-linux-amd64
+          make talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
       - name: talosctl-cni-bundle
         if: github.event_name == 'schedule'
         run: |

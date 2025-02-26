@@ -417,6 +417,14 @@ func (i *Imager) outInstaller(ctx context.Context, path string, report *reporter
 	newInstallerImg := mutate.MediaType(empty.Image, types.OCIManifestSchema1)
 	newInstallerImg = mutate.ConfigMediaType(newInstallerImg, types.OCIConfigJSON)
 
+	newInstallerImg, err = mutate.ConfigFile(newInstallerImg, &v1.ConfigFile{
+		Architecture: i.prof.Arch,
+		OS:           "linux",
+	})
+	if err != nil {
+		return fmt.Errorf("failed to set image architecture: %w", err)
+	}
+
 	newInstallerImg, err = mutate.Config(newInstallerImg, config)
 	if err != nil {
 		return fmt.Errorf("failed to set config: %w", err)

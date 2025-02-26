@@ -12,7 +12,7 @@ input:
   sdBoot:
     path: /usr/install/arm64/systemd-boot.efi
   baseInstaller:
-    imageRef: ghcr.io/siderolabs/installer:1.10.0
+    imageRef: ghcr.io/siderolabs/installer-base:1.10.0
   secureboot:
     secureBootSigner:
       keyPath: /secureboot/uki-signing-key.pem

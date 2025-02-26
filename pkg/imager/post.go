@@ -7,6 +7,7 @@ package imager
 import (
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
 
 	"github.com/siderolabs/go-cmd/pkg/cmd"
@@ -14,6 +15,7 @@ import (
 	"github.com/siderolabs/talos/pkg/reporter"
 )
 
+//nolint:gocyclo
 func (i *Imager) postProcessTar(filename string, report *reporter.Reporter) (string, error) {
 	report.Report(reporter.Update{Message: "processing .tar.gz", Status: reporter.StatusRunning})
 
@@ -26,7 +28,61 @@ func (i *Imager) postProcessTar(filename string, report *reporter.Reporter) (str
 
 	outPath := filename + ".tar.gz"
 
-	if _, err := cmd.Run("tar", "-cvf", outPath, "-C", dir, "--sparse", "--use-compress-program=pigz -6", src); err != nil {
+	pipeR, pipeW, err := os.Pipe()
+	if err != nil {
+		return "", err
+	}
+
+	cmd1 := exec.Command("tar", "-cvf", "-", "-C", dir, "--sparse", src)
+
+	cmd1.Stdout = pipeW
+	cmd1.Stderr = os.Stderr
+
+	if err := cmd1.Start(); err != nil {
+		return "", err
+	}
+
+	if err = pipeW.Close(); err != nil {
+		return "", err
+	}
+
+	destination, err := os.OpenFile(outPath, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0o644)
+	if err != nil {
+		return "", err
+	}
+
+	defer destination.Close() //nolint:errcheck
+
+	cmd2 := exec.Command("pigz", "-6", "-f", "-")
+	cmd2.Stdin = pipeR
+	cmd2.Stdout = destination
+	cmd2.Stderr = os.Stderr
+
+	if err := cmd2.Start(); err != nil {
+		return "", err
+	}
+
+	if err = pipeR.Close(); err != nil {
+		return "", err
+	}
+
+	errCh := make(chan error, 1)
+
+	go func() {
+		errCh <- cmd1.Wait()
+	}()
+
+	go func() {
+		errCh <- cmd2.Wait()
+	}()
+
+	for range 2 {
+		if err = <-errCh; err != nil {
+			return "", err
+		}
+	}
+
+	if err := destination.Sync(); err != nil {
 		return "", err
 	}
 

@@ -5,7 +5,6 @@
 package profile
 
 import (
-	"github.com/siderolabs/talos/internal/pkg/partition"
 	"github.com/siderolabs/talos/pkg/machinery/imager/quirks"
 )
 
@@ -154,6 +153,7 @@ func (o *Output) FillDefaults(arch, version string, secureboot bool) {
 
 		// Default to dual-boot.
 		o.ImageOptions.Bootloader = DiskImageBootloaderDualBoot
-		o.ImageOptions.DiskSize += partition.BIOSGrubSize + partition.BootSize
+		// add extra space for BIOS and BOOT partitions
+		o.ImageOptions.DiskSize += 1*1024*1024 + 1000*1024*1024
 	}
 }

@@ -12,7 +12,7 @@ input:
   sdBoot:
     path: /usr/install/amd64/systemd-boot.efi
   baseInstaller:
-    imageRef: ghcr.io/siderolabs/installer:1.10.0
+    imageRef: ghcr.io/siderolabs/installer-base:1.10.0
 output:
   kind: installer
   outFormat: raw

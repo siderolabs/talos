@@ -102,7 +102,7 @@ spec:
             PLATFORM: linux/amd64
         - name: check-dirty
         - name: build
-          command: talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer imager talos _out/integration-test-linux-amd64
+          command: talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
           environment:
             PLATFORM: linux/amd64,linux/arm64
             IMAGE_REGISTRY: registry.dev.siderolabs.io
@@ -116,6 +116,7 @@ spec:
         - name: images-essential
           environment:
             PLATFORM: linux/amd64,linux/arm64
+            IMAGER_ARGS: "--extra-kernel-arg=console=ttyS0"
             IMAGE_REGISTRY: registry.dev.siderolabs.io
         - name: unit-tests
         - name: unit-tests-race
@@ -142,7 +143,7 @@ spec:
         - not-on-tag
       steps:
         - name: build
-          command: talosctl-all kernel sd-boot sd-stub initramfs installer imager talos
+          command: talosctl-all kernel sd-boot sd-stub initramfs installer-base imager talos
           environment:
             PLATFORM: linux/amd64,linux/arm64
         - name: release-notes
@@ -168,7 +169,7 @@ spec:
         - only-on-tag
       steps:
         - name: build
-          command: talosctl-all kernel sd-boot sd-stub initramfs installer imager talos talosctl-cni-bundle
+          command: talosctl-all kernel sd-boot sd-stub initramfs installer-base imager talos talosctl-cni-bundle
           environment:
             PLATFORM: linux/amd64,linux/arm64
         - name: release-notes
@@ -320,7 +321,7 @@ spec:
         - name: build
           conditions:
             - only-on-schedule
-          command: talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer imager talos _out/integration-test-linux-amd64
+          command: talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
           environment:
             PLATFORM: linux/amd64
             IMAGE_REGISTRY: registry.dev.siderolabs.io
@@ -375,7 +376,7 @@ spec:
         - name: build
           conditions:
             - only-on-schedule
-          command: talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer imager talos _out/integration-test-linux-amd64
+          command: talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
           environment:
             PLATFORM: linux/amd64
             IMAGE_REGISTRY: registry.dev.siderolabs.io
@@ -432,7 +433,7 @@ spec:
         - name: build
           conditions:
             - only-on-schedule
-          command: talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer imager talos _out/integration-test-linux-amd64
+          command: talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
           environment:
             PLATFORM: linux/amd64
             IMAGE_REGISTRY: registry.dev.siderolabs.io
@@ -500,7 +501,7 @@ spec:
         - name: build
           conditions:
             - only-on-schedule
-          command: talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer imager talos _out/integration-test-linux-amd64
+          command: talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
           environment:
             PLATFORM: linux/amd64
             IMAGE_REGISTRY: registry.dev.siderolabs.io
@@ -551,7 +552,7 @@ spec:
         - name: build
           conditions:
             - only-on-schedule
-          command: talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer imager talos _out/integration-test-linux-amd64
+          command: talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
           environment:
             PLATFORM: linux/amd64
             IMAGE_REGISTRY: registry.dev.siderolabs.io
@@ -602,7 +603,7 @@ spec:
         - name: build
           conditions:
             - only-on-schedule
-          command: talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer imager talos _out/integration-test-linux-amd64
+          command: talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
           environment:
             PLATFORM: linux/amd64
             IMAGE_REGISTRY: registry.dev.siderolabs.io
@@ -653,7 +654,7 @@ spec:
         - name: build
           conditions:
             - only-on-schedule
-          command: talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer imager talos _out/integration-test-linux-amd64
+          command: talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
           environment:
             PLATFORM: linux/amd64
             IMAGE_REGISTRY: registry.dev.siderolabs.io
@@ -738,7 +739,7 @@ spec:
         - name: build
           conditions:
             - only-on-schedule
-          command: talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer imager talos _out/integration-test-linux-amd64
+          command: talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
           environment:
             PLATFORM: linux/amd64
             IMAGE_REGISTRY: registry.dev.siderolabs.io
@@ -824,7 +825,7 @@ spec:
         - name: build
           conditions:
             - only-on-schedule
-          command: talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer imager talos _out/integration-test-linux-amd64
+          command: talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
           environment:
             PLATFORM: linux/amd64
             IMAGE_REGISTRY: registry.dev.siderolabs.io
@@ -928,7 +929,7 @@ spec:
         - name: build
           conditions:
             - only-on-schedule
-          command: talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer imager talos _out/integration-test-linux-amd64
+          command: talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
           environment:
             PLATFORM: linux/amd64
             IMAGE_REGISTRY: registry.dev.siderolabs.io
@@ -997,7 +998,7 @@ spec:
         - name: build
           conditions:
             - only-on-schedule
-          command: talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer imager talos _out/integration-test-linux-amd64
+          command: talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
           environment:
             PLATFORM: linux/amd64
             IMAGE_REGISTRY: registry.dev.siderolabs.io
@@ -1087,7 +1088,7 @@ spec:
         - name: build
           conditions:
             - only-on-schedule
-          command: talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer imager talos _out/integration-test-linux-amd64
+          command: talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
           environment:
             PLATFORM: linux/amd64
             IMAGE_REGISTRY: registry.dev.siderolabs.io
@@ -1167,7 +1168,7 @@ spec:
         - name: build
           conditions:
             - only-on-schedule
-          command: talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer imager talos _out/integration-test-linux-amd64
+          command: talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
           environment:
             PLATFORM: linux/amd64
             IMAGE_REGISTRY: registry.dev.siderolabs.io
@@ -1247,7 +1248,7 @@ spec:
         - name: build
           conditions:
             - only-on-schedule
-          command: talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer imager talos _out/integration-test-linux-amd64
+          command: talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
           environment:
             PLATFORM: linux/amd64
             IMAGE_REGISTRY: registry.dev.siderolabs.io
@@ -1302,7 +1303,7 @@ spec:
         - name: build
           conditions:
             - only-on-schedule
-          command: talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer imager talos _out/integration-test-linux-amd64
+          command: talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
           environment:
             PLATFORM: linux/amd64
             IMAGE_REGISTRY: registry.dev.siderolabs.io
@@ -1311,7 +1312,7 @@ spec:
           conditions:
             - only-on-schedule
         - name: build-race
-          command: initramfs installer
+          command: initramfs installer-base
           environment:
             PUSH: true
             TAG_SUFFIX: -race
@@ -1368,7 +1369,7 @@ spec:
         - name: build
           conditions:
             - only-on-schedule
-          command: talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer imager talos _out/integration-test-linux-amd64
+          command: talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
           environment:
             PLATFORM: linux/amd64
             IMAGE_REGISTRY: registry.dev.siderolabs.io
@@ -1438,7 +1439,7 @@ spec:
         - name: build
           conditions:
             - only-on-schedule
-          command: talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer imager talos _out/integration-test-linux-amd64
+          command: talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
           environment:
             PLATFORM: linux/amd64
             IMAGE_REGISTRY: registry.dev.siderolabs.io
@@ -1528,7 +1529,7 @@ spec:
         - name: build
           conditions:
             - only-on-schedule
-          command: talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer imager talos _out/integration-test-linux-amd64
+          command: talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
           environment:
             PLATFORM: linux/amd64
             IMAGE_REGISTRY: registry.dev.siderolabs.io
@@ -1594,7 +1595,7 @@ spec:
         - name: build
           conditions:
             - only-on-schedule
-          command: talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer imager talos _out/integration-test-linux-amd64
+          command: talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
           environment:
             PLATFORM: linux/amd64
             IMAGE_REGISTRY: registry.dev.siderolabs.io
@@ -1657,7 +1658,7 @@ spec:
         - name: build
           conditions:
             - only-on-schedule
-          command: talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer imager talos _out/integration-test-linux-amd64
+          command: talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
           environment:
             PLATFORM: linux/amd64
             IMAGE_REGISTRY: registry.dev.siderolabs.io
@@ -1751,7 +1752,7 @@ spec:
         - name: build
           conditions:
             - only-on-schedule
-          command: talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer imager talos _out/integration-test-linux-amd64
+          command: talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
           environment:
             PLATFORM: linux/amd64,linux/arm64
             IMAGE_REGISTRY: registry.dev.siderolabs.io
@@ -1896,7 +1897,7 @@ spec:
         - name: build
           conditions:
             - only-on-schedule
-          command: talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer imager talos _out/integration-test-linux-amd64
+          command: talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
           environment:
             PLATFORM: linux/amd64
             IMAGE_REGISTRY: registry.dev.siderolabs.io
@@ -1971,7 +1972,7 @@ spec:
         - name: build
           conditions:
             - only-on-schedule
-          command: talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer imager talos _out/integration-test-linux-amd64
+          command: talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
           environment:
             PLATFORM: linux/amd64
             IMAGE_REGISTRY: registry.dev.siderolabs.io
@@ -2068,7 +2069,7 @@ spec:
         - name: build
           conditions:
             - only-on-schedule
-          command: talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer imager talos _out/integration-test-linux-amd64
+          command: talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
           environment:
             PLATFORM: linux/amd64
             IMAGE_REGISTRY: registry.dev.siderolabs.io
@@ -2162,7 +2163,7 @@ spec:
         - name: build
           conditions:
             - only-on-schedule
-          command: talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer imager talos _out/integration-test-linux-amd64
+          command: talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
           environment:
             PLATFORM: linux/amd64
             IMAGE_REGISTRY: registry.dev.siderolabs.io
@@ -2241,7 +2242,7 @@ spec:
         - name: build
           conditions:
             - only-on-schedule
-          command: talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer imager talos _out/integration-test-linux-amd64
+          command: talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
           environment:
             PLATFORM: linux/amd64
             IMAGE_REGISTRY: registry.dev.siderolabs.io

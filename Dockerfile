@@ -9,42 +9,59 @@ ARG INSTALLER_ARCH=scratch
 ARG DEBUG_TOOLS_SOURCE=scratch
 
 ARG PKGS_PREFIX=scratch
-ARG PKG_FHS=scratch
+ARG TOOLS_PREFIX=scratch
+
+ARG PKG_APPARMOR=scratch
 ARG PKG_CA_CERTIFICATES=scratch
-ARG PKG_CRYPTSETUP=scratch
+ARG PKG_CNI=scratch
 ARG PKG_CONTAINERD=scratch
+ARG PKG_CPIO=scratch
+ARG PKG_CRYPTSETUP=scratch
 ARG PKG_DOSFSTOOLS=scratch
 ARG PKG_E2FSPROGS=scratch
-ARG PKG_SYSTEMD_UDEVD=scratch
-ARG PKG_LIBCAP=scratch
+ARG PKG_FHS=scratch
+ARG PKG_FLANNEL_CNI=scratch
+ARG PKG_GLIB=scratch
 ARG PKG_GRUB=scratch
-ARG PKG_SD_BOOT=scratch
 ARG PKG_IPTABLES=scratch
 ARG PKG_IPXE=scratch
+ARG PKG_KERNEL=scratch
+ARG PKG_KMOD=scratch
+ARG PKG_LIBAIO=scratch
+ARG PKG_LIBATTR=scratch
+ARG PKG_LIBBURN=scratch
+ARG PKG_LIBCAP=scratch
 ARG PKG_LIBINIH=scratch
+ARG PKG_LIBISOBURN=scratch
+ARG PKG_LIBISOFS=scratch
 ARG PKG_LIBJSON_C=scratch
+ARG PKG_LIBLZMA=scratch
 ARG PKG_LIBMNL=scratch
 ARG PKG_LIBNFTNL=scratch
 ARG PKG_LIBPOPT=scratch
-ARG PKG_LIBSEPOL=scratch
-ARG PKG_LIBSELINUX=scratch
-ARG PKG_PCRE2=scratch
-ARG PKG_LIBURCU=scratch
-ARG PKG_OPENSSL=scratch
 ARG PKG_LIBSECCOMP=scratch
+ARG PKG_LIBSELINUX=scratch
+ARG PKG_LIBSEPOL=scratch
+ARG PKG_LIBURCU=scratch
 ARG PKG_LINUX_FIRMWARE=scratch
 ARG PKG_LVM2=scratch
-ARG PKG_LIBAIO=scratch
+ARG PKG_MTOOLS=scratch
 ARG PKG_MUSL=scratch
+ARG PKG_OPENSSL=scratch
+ARG PKG_PCRE2=scratch
+ARG PKG_PIGZ=scratch
+ARG PKG_QEMU_TOOLS=scratch
 ARG PKG_RUNC=scratch
-ARG PKG_XFSPROGS=scratch
-ARG PKG_APPARMOR=scratch
-ARG PKG_UTIL_LINUX=scratch
-ARG PKG_KMOD=scratch
-ARG PKG_KERNEL=scratch
-ARG PKG_CNI=scratch
-ARG PKG_FLANNEL_CNI=scratch
+ARG PKG_SD_BOOT=scratch
+ARG PKG_SQUASHFS_TOOLS=scratch
+ARG PKG_SYSTEMD_UDEVD=scratch
 ARG PKG_TALOSCTL_CNI_BUNDLE=scratch
+ARG PKG_TAR=scratch
+ARG PKG_UTIL_LINUX=scratch
+ARG PKG_XFSPROGS=scratch
+ARG PKG_XZ=scratch
+ARG PKG_ZLIB=scratch
+ARG PKG_ZSTD=scratch
 
 ARG DEBUG_TOOLS_SOURCE=scratch
 
@@ -89,6 +106,9 @@ FROM --platform=arm64 ${PKG_IPTABLES} AS pkg-iptables-arm64
 
 FROM --platform=amd64 ${PKG_IPXE} AS pkg-ipxe-amd64
 FROM --platform=arm64 ${PKG_IPXE} AS pkg-ipxe-arm64
+
+FROM --platform=amd64 ${PKG_LIBATTR} AS pkg-libattr-amd64
+FROM --platform=arm64 ${PKG_LIBATTR} AS pkg-libattr-arm64
 
 FROM --platform=amd64 ${PKG_LIBINIH} AS pkg-libinih-amd64
 FROM --platform=arm64 ${PKG_LIBINIH} AS pkg-libinih-arm64
@@ -157,6 +177,31 @@ FROM ${PKG_KERNEL} AS pkg-kernel
 FROM --platform=amd64 ${PKG_KERNEL} AS pkg-kernel-amd64
 FROM --platform=arm64 ${PKG_KERNEL} AS pkg-kernel-arm64
 
+FROM ${PKG_CPIO} AS pkg-cpio
+FROM ${PKG_DOSFSTOOLS} AS pkg-dosfstools
+FROM ${PKG_E2FSPROGS} AS pkg-e2fsprogs
+FROM ${PKG_GLIB} AS pkg-glib
+FROM ${PKG_KMOD} AS pkg-kmod
+FROM ${PKG_LIBATTR} AS pkg-libattr
+FROM ${PKG_LIBBURN} AS pkg-libburn
+FROM ${PKG_LIBINIH} AS pkg-libinih
+FROM ${PKG_LIBISOBURN} AS pkg-libisoburn
+FROM ${PKG_LIBISOFS} AS pkg-libisofs
+FROM ${PKG_LIBLZMA} AS pkg-liblzma
+FROM ${PKG_LIBURCU} AS pkg-liburcu
+FROM ${PKG_MTOOLS} AS pkg-mtools
+FROM ${PKG_MUSL} AS pkg-musl
+FROM ${PKG_OPENSSL} AS pkg-openssl
+FROM ${PKG_PCRE2} AS pkg-pcre2
+FROM ${PKG_PIGZ} AS pkg-pigz
+FROM ${PKG_QEMU_TOOLS} AS pkg-qemu-tools
+FROM ${PKG_SQUASHFS_TOOLS} AS pkg-squashfs-tools
+FROM ${PKG_TAR} AS pkg-tar
+FROM ${PKG_XFSPROGS} AS pkg-xfsprogs
+FROM ${PKG_XZ} AS pkg-xz
+FROM ${PKG_ZLIB} AS pkg-zlib
+FROM ${PKG_ZSTD} AS pkg-zstd
+
 FROM --platform=amd64 ${TOOLS} AS tools-amd64
 FROM --platform=arm64 ${TOOLS} AS tools-arm64
 
@@ -202,7 +247,7 @@ FROM ${PKG_TALOSCTL_CNI_BUNDLE} AS extras-talosctl-cni-bundle
 
 # The tools target provides base toolchain for the build.
 
-FROM --platform=${BUILDPLATFORM} $TOOLS AS tools
+FROM --platform=${BUILDPLATFORM} ${TOOLS_PREFIX}:${TOOLS} AS tools
 ENV GOTOOLCHAIN=local
 ENV CGO_ENABLED=0
 SHELL ["/bin/bash", "-c"]
@@ -291,6 +336,7 @@ ARG REGISTRY
 ARG TAG
 ARG ARTIFACTS
 ARG PKGS
+ARG TOOLS
 ARG EXTRAS
 RUN mkdir -p pkg/machinery/gendata/data && \
     echo -n ${NAME} > pkg/machinery/gendata/data/name && \
@@ -299,6 +345,7 @@ RUN mkdir -p pkg/machinery/gendata/data && \
     echo -n ${REGISTRY} > pkg/machinery/gendata/data/registry && \
     echo -n ${EXTRAS} > pkg/machinery/gendata/data/extras && \
     echo -n ${PKGS} > pkg/machinery/gendata/data/pkgs && \
+    echo -n ${TOOLS} > pkg/machinery/gendata/data/tools && \
     echo -n ${TAG} > pkg/machinery/gendata/data/tag && \
     echo -n ${ARTIFACTS} > pkg/machinery/gendata/data/artifacts
 
@@ -311,6 +358,7 @@ RUN echo -n "undefined" > pkg/machinery/gendata/data/sha && \
     echo -n ${ABBREV_TAG} > pkg/machinery/gendata/data/tag
 RUN mkdir -p _out && \
     echo PKGS=${PKGS} >> _out/talos-metadata && \
+    echo TOOLS=${TOOLS} >> _out/talos-metadata && \
     echo TAG=${TAG} >> _out/talos-metadata && \
     echo EXTRAS=${EXTRAS} >> _out/talos-metadata
 
@@ -684,6 +732,7 @@ COPY --link --from=pkg-e2fsprogs-amd64 / /rootfs
 COPY --link --from=pkg-systemd-udevd-amd64 / /rootfs
 COPY --link --from=pkg-libcap-amd64 / /rootfs
 COPY --link --from=pkg-iptables-amd64 / /rootfs
+COPY --link --from=pkg-libattr-amd64 / /rootfs
 COPY --link --from=pkg-libinih-amd64 / /rootfs
 COPY --link --from=pkg-libjson-c-amd64 / /rootfs
 COPY --link --from=pkg-libmnl-amd64 / /rootfs
@@ -761,6 +810,7 @@ COPY --link --from=pkg-e2fsprogs-arm64 / /rootfs
 COPY --link --from=pkg-systemd-udevd-arm64 / /rootfs
 COPY --link --from=pkg-libcap-arm64 / /rootfs
 COPY --link --from=pkg-iptables-arm64 / /rootfs
+COPY --link --from=pkg-libattr-arm64 / /rootfs
 COPY --link --from=pkg-libinih-arm64 / /rootfs
 COPY --link --from=pkg-libjson-c-arm64 / /rootfs
 COPY --link --from=pkg-libmnl-arm64 / /rootfs
@@ -911,9 +961,6 @@ ARG TARGETARCH
 RUN --mount=type=cache,target=/.cache GOOS=linux GOARCH=${TARGETARCH} go build ${GO_BUILDFLAGS} -ldflags "${GO_LDFLAGS}" -o /installer
 RUN chmod +x /installer
 
-FROM alpine:3.20.3 AS unicode-pf2
-RUN apk add --no-cache --update --no-scripts grub
-
 FROM scratch AS install-artifacts-amd64
 COPY --from=pkg-kernel-amd64 /boot/vmlinuz /usr/install/amd64/vmlinuz
 COPY --from=initramfs-archive-amd64 /initramfs.xz /usr/install/amd64/initramfs.xz
@@ -934,37 +981,67 @@ FROM install-artifacts-${TARGETARCH} AS install-artifacts-targetarch
 
 FROM install-artifacts-${INSTALLER_ARCH} AS install-artifacts
 
-FROM alpine:3.20.3 AS installer-image
-ARG SOURCE_DATE_EPOCH
-ENV SOURCE_DATE_EPOCH=${SOURCE_DATE_EPOCH}
-ARG INSTALLER_PKGS
-RUN apk add --no-cache --update --no-scripts \
-    ${INSTALLER_PKGS}
+FROM tools AS installer-image-gen
+COPY --from=installer-build /installer /rootfs/usr/bin/installer
+RUN ln -s installer /rootfs/usr/bin/imager
+
+FROM scratch AS installer-base-image
 ARG TARGETARCH
 ENV TARGETARCH=${TARGETARCH}
-COPY --from=installer-build /installer /bin/installer
-COPY --chmod=0644 hack/extra-modules.conf /etc/modules.d/10-extra-modules.conf
-COPY --from=pkg-grub / /
-COPY --from=pkg-grub-arm64 /usr/lib/grub /usr/lib/grub
-COPY --from=pkg-grub-amd64 /usr/lib/grub /usr/lib/grub
-COPY --from=unicode-pf2 /usr/share/grub/unicode.pf2 /usr/share/grub/unicode.pf2
-RUN ln /bin/installer /bin/imager
-RUN find /bin /etc /lib /usr /sbin | grep -Ev '/etc/hosts|/etc/resolv.conf' \
-    | xargs -r touch --date="@${SOURCE_DATE_EPOCH}" --no-dereference
+COPY --link --from=pkg-fhs / /
+COPY --link --from=pkg-ca-certificates / /
+COPY --link --from=pkg-musl / /
 
-FROM scratch AS installer-image-squashed
-COPY --from=installer-image / /
+COPY --link --from=pkg-cpio / /
+COPY --link --from=pkg-dosfstools / /
+COPY --link --from=pkg-grub / /
+COPY --link --from=pkg-grub-amd64 /usr/lib/grub /usr/lib/grub
+COPY --link --from=pkg-grub-arm64 /usr/lib/grub /usr/lib/grub
+COPY --link --from=pkg-kmod / /
+COPY --link --from=pkg-libattr / /
+COPY --link --from=pkg-libinih / /
+COPY --link --from=pkg-liblzma / /
+COPY --link --from=pkg-liburcu / /
+COPY --link --from=pkg-openssl / /
+COPY --link --from=pkg-xfsprogs / /
+COPY --link --from=installer-image-gen /rootfs /
+
+FROM scratch AS installer-base-image-squashed
+COPY --from=installer-base-image / /
+
+FROM installer-base-image-squashed AS installer-base
 ARG TAG
 ENV VERSION=${TAG}
 LABEL "alpha.talos.dev/version"="${VERSION}"
 LABEL org.opencontainers.image.source=https://github.com/siderolabs/talos
 ENTRYPOINT ["/bin/installer"]
 
-FROM installer-image-squashed AS installer
+FROM installer-base-image-squashed AS imager-image
+COPY --link --from=pkg-e2fsprogs / /
+COPY --link --from=pkg-glib / /
+COPY --link --from=pkg-libburn / /
+COPY --link --from=pkg-libisoburn / /
+COPY --link --from=pkg-libisofs / /
+COPY --link --from=pkg-mtools / /
+COPY --link --from=pkg-pcre2 / /
+COPY --link --from=pkg-pigz / /
+COPY --link --from=pkg-qemu-tools / /
+COPY --link --from=pkg-squashfs-tools / /
+COPY --link --from=pkg-tar / /
+COPY --link --from=pkg-xz / /
+COPY --link --from=pkg-zlib / /
+COPY --link --from=pkg-zstd / /
+COPY --chmod=0644 hack/extra-modules.conf /etc/modules.d/10-extra-modules.conf
 COPY --from=install-artifacts / /
 
-FROM installer-image-squashed AS imager
-COPY --from=install-artifacts / /
+FROM scratch AS imager-image-squashed
+COPY --from=imager-image / /
+
+FROM imager-image-squashed AS imager
+ARG TAG
+ENV VERSION=${TAG}
+LABEL "alpha.talos.dev/version"="${VERSION}"
+LABEL org.opencontainers.image.source=https://github.com/siderolabs/talos
 ENTRYPOINT ["/bin/imager"]
 
 FROM imager AS iso-amd64-build
