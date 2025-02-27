@@ -159,6 +159,19 @@ func beforeExecCallback(pa *syscall.ProcAttr, data any) error {
 	// process threads leading to loss of the domain transition
 	if selinux.IsEnabled() {
 		if wrapper.selinuxLabel != "" {
+			fmt.Println("Setting SELinux label to", wrapper.selinuxLabel)
+			str, _ := os.ReadFile("/proc/thread-self/attr/exec")
+			fmt.Println("Current exec is ", string(str))
+			str, _ = os.ReadFile("/proc/thread-self/attr/fscreate")
+			fmt.Println("Current fscreate is ", string(str))
+			str, _ = os.ReadFile("/proc/thread-self/attr/keycreate")
+			fmt.Println("Current keycreate is ", string(str))
+			str, _ = os.ReadFile("/proc/thread-self/attr/sockcreate")
+			fmt.Println("Current sockcreate is ", string(str))
+			str, _ = os.ReadFile("/proc/thread-self/attr/current")
+			fmt.Println("Current is ", string(str))
+			str, _ = os.ReadFile("/proc/thread-self/attr/prev")
+			fmt.Println("Prev is ", string(str))
 			err := os.WriteFile("/proc/thread-self/attr/exec", []byte(wrapper.selinuxLabel), 0o777)
 			if err != nil {
 				log.Fatalf("%s", err)
@@ -175,6 +188,18 @@ func beforeExecCallback(pa *syscall.ProcAttr, data any) error {
 			if err != nil {
 				log.Fatalf("%s", err)
 			}
+			str, _ = os.ReadFile("/proc/thread-self/attr/exec")
+			fmt.Println("New exec is ", string(str))
+			str, _ = os.ReadFile("/proc/thread-self/attr/fscreate")
+			fmt.Println("New fscreate is ", string(str))
+			str, _ = os.ReadFile("/proc/thread-self/attr/keycreate")
+			fmt.Println("New keycreate is ", string(str))
+			str, _ = os.ReadFile("/proc/thread-self/attr/sockcreate")
+			fmt.Println("New sockcreate is ", string(str))
+			str, _ = os.ReadFile("/proc/thread-self/attr/current")
+			fmt.Println("New current is ", string(str))
+			str, _ = os.ReadFile("/proc/thread-self/attr/prev")
+			fmt.Println("New prev is ", string(str))
 		} else {
 			err := os.WriteFile("/proc/thread-self/attr/exec", []byte(constants.SelinuxLabelUnconfinedService), 0o777)
 			if err != nil {
