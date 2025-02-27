@@ -75,7 +75,11 @@ func (suite *NfTablesChainConfigTestSuite) injectConfig(block bool) {
 	cfg, err := container.New(configs...)
 	suite.Require().NoError(err)
 
-	suite.Require().NoError(suite.State().Create(suite.Ctx(), config.NewMachineConfig(cfg)))
+	suite.Create(config.NewMachineConfig(cfg))
+
+	nodeAddresses := network.NewNodeAddress(network.NamespaceName, network.NodeAddressRoutedID)
+	nodeAddresses.TypedSpec().Addresses = []netip.Prefix{netip.MustParsePrefix("10.3.4.5/24")}
+	suite.Create(nodeAddresses)
 }
 
 func (suite *NfTablesChainConfigTestSuite) TestDefaultAccept() {
@@ -131,6 +135,98 @@ func (suite *NfTablesChainConfigTestSuite) TestDefaultAccept() {
 					Verdict:     pointer.To(nethelpers.VerdictDrop),
 				},
 				{
+					MatchSourceAddress: &network.NfTablesAddressMatch{
+						IncludeSubnets: []netip.Prefix{
+							netip.MustParsePrefix("0.0.0.0/0"),
+						},
+						Invert: true,
+					},
+					MatchLayer4: &network.NfTablesLayer4Match{
+						Protocol: nethelpers.ProtocolTCP,
+						MatchDestinationPort: &network.NfTablesPortMatch{
+							Ranges: []network.PortRange{
+								{
+									Lo: 50000,
+									Hi: 50000,
+								},
+							},
+						},
+					},
+					AnonCounter: true,
+					Verdict:     pointer.To(nethelpers.VerdictDrop),
+				},
+			},
+			spec.Rules)
+	})
+
+	ctest.AssertResource(suite, netctrl.PreroutingChainName, func(chain *network.NfTablesChain, asrt *assert.Assertions) {
+		spec := chain.TypedSpec()
+
+		asrt.Equal(nethelpers.ChainTypeFilter, spec.Type)
+		asrt.Equal(nethelpers.ChainPriorityNATDest-10, spec.Priority)
+		asrt.Equal(nethelpers.ChainHookPrerouting, spec.Hook)
+		asrt.Equal(nethelpers.VerdictAccept, spec.Policy)
+
+		asrt.Equal(
+			[]network.NfTablesRule{
+				{
+					MatchIIfName: &network.NfTablesIfNameMatch{
+						InterfaceNames: []string{
+							"lo",
+							constants.SideroLinkName,
+							constants.KubeSpanLinkName,
+						},
+						Operator: nethelpers.OperatorEqual,
+					},
+					AnonCounter: true,
+					Verdict:     pointer.To(nethelpers.VerdictAccept),
+				},
+				{
+					MatchDestinationAddress: &network.NfTablesAddressMatch{
+						IncludeSubnets: []netip.Prefix{
+							netip.MustParsePrefix("10.3.4.5/32"),
+						},
+						Invert: true,
+					},
+					AnonCounter: true,
+					Verdict:     pointer.To(nethelpers.VerdictAccept),
+				},
+				{
+					MatchConntrackState: &network.NfTablesConntrackStateMatch{
+						States: []nethelpers.ConntrackState{
+							nethelpers.ConntrackStateNew,
+						},
+					},
+					MatchSourceAddress: &network.NfTablesAddressMatch{
+						IncludeSubnets: []netip.Prefix{
+							netip.MustParsePrefix("10.0.0.0/8"),
+							netip.MustParsePrefix("192.168.0.0/16"),
+						},
+						ExcludeSubnets: []netip.Prefix{
+							netip.MustParsePrefix("10.3.0.0/16"),
+						},
+						Invert: true,
+					},
+					MatchLayer4: &network.NfTablesLayer4Match{
+						Protocol: nethelpers.ProtocolTCP,
+						MatchDestinationPort: &network.NfTablesPortMatch{
+							Ranges: []network.PortRange{
+								{
+									Lo: 10250,
+									Hi: 10250,
+								},
+							},
+						},
+					},
+					AnonCounter: true,
+					Verdict:     pointer.To(nethelpers.VerdictDrop),
+				},
+				{
+					MatchConntrackState: &network.NfTablesConntrackStateMatch{
+						States: []nethelpers.ConntrackState{
+							nethelpers.ConntrackStateNew,
+						},
+					},
 					MatchSourceAddress: &network.NfTablesAddressMatch{
 						IncludeSubnets: []netip.Prefix{
 							netip.MustParsePrefix("0.0.0.0/0"),
@@ -269,9 +365,125 @@ func (suite *NfTablesChainConfigTestSuite) TestDefaultBlock() {
 			},
 			spec.Rules)
 	})
+
+	ctest.AssertResource(suite, netctrl.PreroutingChainName, func(chain *network.NfTablesChain, asrt *assert.Assertions) {
+		spec := chain.TypedSpec()
+
+		asrt.Equal(nethelpers.ChainTypeFilter, spec.Type)
+		asrt.Equal(nethelpers.ChainPriorityNATDest-10, spec.Priority)
+		asrt.Equal(nethelpers.ChainHookPrerouting, spec.Hook)
+		asrt.Equal(nethelpers.VerdictAccept, spec.Policy)
+
+		asrt.Equal(
+			[]network.NfTablesRule{
+				{
+					MatchIIfName: &network.NfTablesIfNameMatch{
+						InterfaceNames: []string{
+							"lo",
+							constants.SideroLinkName,
+							constants.KubeSpanLinkName,
+						},
+						Operator: nethelpers.OperatorEqual,
+					},
+					AnonCounter: true,
+					Verdict:     pointer.To(nethelpers.VerdictAccept),
+				},
+				{
+					MatchDestinationAddress: &network.NfTablesAddressMatch{
+						IncludeSubnets: []netip.Prefix{
+							netip.MustParsePrefix("10.3.4.5/32"),
+						},
+						Invert: true,
+					},
+					AnonCounter: true,
+					Verdict:     pointer.To(nethelpers.VerdictAccept),
+				},
+				{
+					MatchConntrackState: &network.NfTablesConntrackStateMatch{
+						States: []nethelpers.ConntrackState{
+							nethelpers.ConntrackStateNew,
+						},
+					},
+					MatchSourceAddress: &network.NfTablesAddressMatch{
+						IncludeSubnets: []netip.Prefix{
+							netip.MustParsePrefix("10.0.0.0/8"),
+							netip.MustParsePrefix("192.168.0.0/16"),
+						},
+						ExcludeSubnets: []netip.Prefix{
+							netip.MustParsePrefix("10.3.0.0/16"),
+						},
+					},
+					MatchLayer4: &network.NfTablesLayer4Match{
+						Protocol: nethelpers.ProtocolTCP,
+						MatchDestinationPort: &network.NfTablesPortMatch{
+							Ranges: []network.PortRange{
+								{
+									Lo: 10250,
+									Hi: 10250,
+								},
+							},
+						},
+					},
+					AnonCounter: true,
+					Verdict:     pointer.To(nethelpers.VerdictAccept),
+				},
+				{
+					MatchConntrackState: &network.NfTablesConntrackStateMatch{
+						States: []nethelpers.ConntrackState{
+							nethelpers.ConntrackStateNew,
+						},
+					},
+					MatchSourceAddress: &network.NfTablesAddressMatch{
+						IncludeSubnets: []netip.Prefix{
+							netip.MustParsePrefix("0.0.0.0/0"),
+						},
+					},
+					MatchLayer4: &network.NfTablesLayer4Match{
+						Protocol: nethelpers.ProtocolTCP,
+						MatchDestinationPort: &network.NfTablesPortMatch{
+							Ranges: []network.PortRange{
+								{
+									Lo: 50000,
+									Hi: 50000,
+								},
+							},
+						},
+					},
+					AnonCounter: true,
+					Verdict:     pointer.To(nethelpers.VerdictAccept),
+				},
+				{
+					MatchConntrackState: &network.NfTablesConntrackStateMatch{
+						States: []nethelpers.ConntrackState{
+							nethelpers.ConntrackStateNew,
+						},
+					},
+					MatchLayer4: &network.NfTablesLayer4Match{
+						Protocol: nethelpers.ProtocolTCP,
+					},
+					AnonCounter: true,
+					Verdict:     pointer.To(nethelpers.VerdictDrop),
+				},
+				{
+					MatchConntrackState: &network.NfTablesConntrackStateMatch{
+						States: []nethelpers.ConntrackState{
+							nethelpers.ConntrackStateNew,
+						},
+					},
+					MatchLayer4: &network.NfTablesLayer4Match{
+						Protocol: nethelpers.ProtocolUDP,
+					},
+					AnonCounter: true,
+					Verdict:     pointer.To(nethelpers.VerdictDrop),
+				},
+			},
+			spec.Rules)
+	})
 }
 
 func TestNfTablesChainConfig(t *testing.T) {
+	t.Parallel()
+
 	suite.Run(t, &NfTablesChainConfigTestSuite{
 		DefaultSuite: ctest.DefaultSuite{
 			Timeout: 5 * time.Second,
