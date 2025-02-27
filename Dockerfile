@@ -444,16 +444,11 @@ FROM build-go AS base
 COPY ./cmd ./cmd
 COPY ./pkg ./pkg
 COPY ./internal ./internal
-COPY --from=generate /pkg/flannel/ ./pkg/flannel/
-COPY --from=generate /pkg/imager/ ./pkg/imager/
-COPY --from=generate /pkg/machinery/ ./pkg/machinery/
-COPY --from=generate /internal/app/machined/pkg/controllers/secrets/data/ ./internal/app/machined/pkg/controllers/secrets/data/
-COPY --from=generate /internal/pkg/secureboot/database/certs/ ./internal/pkg/secureboot/database/certs/
-COPY --from=generate /internal/pkg/selinux/ ./internal/pkg/selinux/
 COPY --from=embed / ./
 RUN --mount=type=cache,target=/.cache go list all >/dev/null
 WORKDIR /src/pkg/machinery
 RUN --mount=type=cache,target=/.cache go list all >/dev/null
+RUN --mount=type=cache,target=/.cache go generate -v ./version
 WORKDIR /src
 
 # The vulncheck target runs the vulnerability check tool.
