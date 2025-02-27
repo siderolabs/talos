@@ -191,14 +191,16 @@ func runHTTPServer(ctx context.Context, certPEM, keyPEM []byte) error {
 }
 
 func handleTunneling(w http.ResponseWriter, r *http.Request) {
-	dst, err := net.DialTimeout("tcp", r.Host, 10*time.Second)
+	addr := r.URL.Host
+
+	dstConn, err := net.DialTimeout("tcp", addr, 10*time.Second)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusServiceUnavailable)
 
 		return
 	}
 
-	w.WriteHeader(http.StatusOK)
+	dst := dstConn.(*net.TCPConn)
 
 	hijacker, ok := w.(http.Hijacker)
 	if !ok {
@@ -214,15 +216,35 @@ func handleTunneling(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	go transfer(dst, clientConn)
-	go transfer(clientConn, dst)
+	src := clientConn.(*net.TCPConn)
+
+	src.Write([]byte("HTTP/1.0 200 Connection established\r\n\r\n")) //nolint:errcheck
+
+	log.Printf("HTTP CONNECT: tunneling to %s", addr)
+
+	defer dst.Close() //nolint:errcheck
+	defer src.Close() //nolint:errcheck
+
+	var eg errgroup.Group
+
+	eg.Go(func() error { return transfer(dst, src, "src -> dst: "+addr) })
+	eg.Go(func() error { return transfer(src, dst, "dst -> src: "+addr) })
+
+	if err = eg.Wait(); err != nil {
+		log.Printf("HTTP CONNECT: tunneling to %s: failed %v", addr, err)
+	}
 }
 
-func transfer(destination io.WriteCloser, source io.ReadCloser) {
-	defer destination.Close() //nolint:errcheck
-	defer source.Close()      //nolint:errcheck
+func transfer(destination *net.TCPConn, source *net.TCPConn, label string) error {
+	defer destination.CloseWrite() //nolint:errcheck
+	defer source.CloseRead()       //nolint:errcheck
 
-	io.Copy(destination, source) //nolint:errcheck
+	n, err := io.Copy(destination, source)
+	if err != nil {
+		return fmt.Errorf("transfer failed %s (%d bytes copied): %w", label, n, err)
+	}
+
+	return nil
 }
 
 func handleHTTP(w http.ResponseWriter, req *http.Request) {
