@@ -47,6 +47,7 @@ ARG PKG_LINUX_FIRMWARE=scratch
 ARG PKG_LVM2=scratch
 ARG PKG_MTOOLS=scratch
 ARG PKG_MUSL=scratch
+ARG PKG_NFSD=scratch
 ARG PKG_OPENSSL=scratch
 ARG PKG_PCRE2=scratch
 ARG PKG_PIGZ=scratch
@@ -133,6 +134,9 @@ FROM --platform=arm64 ${PKG_LIBSEPOL} AS pkg-libsepol-arm64
 
 FROM --platform=amd64 ${PKG_LIBSELINUX} AS pkg-libselinux-amd64
 FROM --platform=arm64 ${PKG_LIBSELINUX} AS pkg-libselinux-arm64
+
+FROM --platform=amd64 ${PKG_NFSD} AS pkg-nfsd-amd64
+FROM --platform=arm64 ${PKG_NFSD} AS pkg-nfsd-arm64
 
 FROM --platform=amd64 ${PKG_PCRE2} AS pkg-pcre2-amd64
 FROM --platform=arm64 ${PKG_PCRE2} AS pkg-pcre2-arm64
@@ -747,6 +751,7 @@ COPY --link --from=pkg-libseccomp-amd64 / /rootfs
 COPY --link --from=pkg-lvm2-amd64 / /rootfs
 COPY --link --from=pkg-libaio-amd64 / /rootfs
 COPY --link --from=pkg-musl-amd64 / /rootfs
+COPY --link --from=pkg-nfsd-amd64 / /rootfs
 COPY --link --from=pkg-runc-amd64 / /rootfs
 COPY --link --from=pkg-xfsprogs-amd64 / /rootfs
 COPY --link --from=pkg-util-linux-amd64 /usr/lib/libblkid.* /rootfs/usr/lib/
@@ -825,6 +830,7 @@ COPY --link --from=pkg-libseccomp-arm64 / /rootfs
 COPY --link --from=pkg-lvm2-arm64 / /rootfs
 COPY --link --from=pkg-libaio-arm64 / /rootfs
 COPY --link --from=pkg-musl-arm64 / /rootfs
+COPY --link --from=pkg-nfsd-arm64 / /rootfs
 COPY --link --from=pkg-runc-arm64 / /rootfs
 COPY --link --from=pkg-xfsprogs-arm64 / /rootfs
 COPY --link --from=pkg-util-linux-arm64 /usr/lib/libblkid.* /rootfs/usr/lib/
