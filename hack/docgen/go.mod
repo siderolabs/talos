@@ -7,8 +7,8 @@ go 1.24.0
 replace gopkg.in/yaml.v3 => github.com/unix4ever/yaml v0.0.0-20220527175918-f17b0f05cf2c
 
 require (
-	github.com/gomarkdown/markdown v0.0.0-20241205020045-f7e15b2f3e62
-	github.com/invopop/jsonschema v0.12.0
+	github.com/gomarkdown/markdown v0.0.0-20250207164621-7a1f277a159e
+	github.com/invopop/jsonschema v0.13.0
 	github.com/microcosm-cc/bluemonday v1.0.27
 	github.com/santhosh-tekuri/jsonschema/v5 v5.3.1
 	github.com/siderolabs/gen v0.8.0

@@ -5,7 +5,6 @@
 package vip_test
 
 import (
-	"context"
 	"os"
 	"testing"
 
@@ -57,12 +56,12 @@ func TestEquinixMetalHandler(t *testing.T) {
 	})
 
 	// not graceful
-	require.NoError(t, handler1.Acquire(context.Background()))
-	require.NoError(t, handler2.Acquire(context.Background()))
+	require.NoError(t, handler1.Acquire(t.Context()))
+	require.NoError(t, handler2.Acquire(t.Context()))
 
 	// graceful
-	require.NoError(t, handler1.Acquire(context.Background()))
-	require.NoError(t, handler1.Release(context.Background()))
-	require.NoError(t, handler2.Acquire(context.Background()))
-	require.NoError(t, handler2.Release(context.Background()))
+	require.NoError(t, handler1.Acquire(t.Context()))
+	require.NoError(t, handler1.Release(t.Context()))
+	require.NoError(t, handler2.Acquire(t.Context()))
+	require.NoError(t, handler2.Release(t.Context()))
 }

@@ -30,7 +30,7 @@ func (t *mockTrigger) Get() int64 {
 func TestRateLimitedTrigger(t *testing.T) {
 	mock := &mockTrigger{}
 
-	ctx, cancel := context.WithCancel(context.Background())
+	ctx, cancel := context.WithCancel(t.Context())
 	t.Cleanup(cancel)
 
 	trigger := watch.NewRateLimitedTrigger(ctx, mock, 10, 5)

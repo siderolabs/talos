@@ -77,7 +77,7 @@ func TestRegistry(t *testing.T) {
 
 	wg.Add(1)
 
-	ctx, cancel := context.WithCancelCause(context.Background())
+	ctx, cancel := context.WithCancelCause(t.Context())
 	defer cancel(nil)
 
 	go func() {

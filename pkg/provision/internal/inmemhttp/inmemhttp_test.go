@@ -5,7 +5,6 @@
 package inmemhttp_test
 
 import (
-	"context"
 	"fmt"
 	"io"
 	"net/http"
@@ -25,7 +24,7 @@ func TestServer(t *testing.T) {
 	assert.NoError(t, srv.AddFile("test.txt", contents))
 
 	srv.Serve()
-	defer srv.Shutdown(context.Background()) //nolint:errcheck
+	defer srv.Shutdown(t.Context()) //nolint:errcheck
 
 	resp, err := http.Get(fmt.Sprintf("http://%s/test.txt", srv.GetAddr())) //nolint:noctx
 	assert.NoError(t, err)
@@ -57,5 +56,5 @@ func TestServer(t *testing.T) {
 
 	assert.NoError(t, resp.Body.Close())
 
-	assert.NoError(t, srv.Shutdown(context.Background()))
+	assert.NoError(t, srv.Shutdown(t.Context()))
 }

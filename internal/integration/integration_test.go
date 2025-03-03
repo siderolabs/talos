@@ -8,7 +8,6 @@
 package integration_test
 
 import (
-	"context"
 	"flag"
 	"fmt"
 	"path/filepath"
@@ -73,7 +72,7 @@ func TestIntegration(t *testing.T) {
 
 	if provisionerName != "" {
 		// use provisioned cluster state as discovery source
-		ctx := context.Background()
+		ctx := t.Context()
 
 		provisioner, err = providers.Factory(ctx, provisionerName)
 		if err != nil {

@@ -137,7 +137,7 @@ func TestSenderJSONLines(t *testing.T) { //nolint:tparallel
 	udpEndpoint := lisUDP.LocalAddr().String()
 	tcpEndpoint := lisTCP.Addr().String()
 
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	ctx, cancel := context.WithTimeout(t.Context(), 10*time.Second)
 	t.Cleanup(cancel)
 
 	sendCh := make(chan []byte, 32)

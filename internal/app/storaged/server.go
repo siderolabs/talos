@@ -255,11 +255,12 @@ func (s *Server) wipeDevice(deviceName string, method storage.BlockDeviceWipeDes
 	case storage.BlockDeviceWipeDescriptor_ZEROES:
 		log.Printf("wiping block device %q with zeroes", deviceName)
 
-		if method, err := bd.Wipe(); err != nil {
+		method, err := bd.Wipe()
+		if err != nil {
 			return status.Errorf(codes.Internal, "failed to wipe block device %q: %v", deviceName, err)
-		} else {
-			log.Printf("block device %q wiped with method %q", deviceName, method)
 		}
+
+		log.Printf("block device %q wiped with method %q", deviceName, method)
 	case storage.BlockDeviceWipeDescriptor_FAST:
 		log.Printf("wiping block device %q with fast method", deviceName)
 

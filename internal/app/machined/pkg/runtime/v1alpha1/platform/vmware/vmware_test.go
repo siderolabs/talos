@@ -5,7 +5,6 @@
 package vmware_test
 
 import (
-	"context"
 	_ "embed"
 	"fmt"
 	"testing"
@@ -53,7 +52,7 @@ func TestApplyNetworkConfigV2a(t *testing.T) {
 		},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
-			ctx := context.Background()
+			ctx := t.Context()
 			st := state.WrapCore(namespaced.NewState(inmem.Build))
 
 			eth1 := network.NewLinkStatus(network.NamespaceName, "eth1")
