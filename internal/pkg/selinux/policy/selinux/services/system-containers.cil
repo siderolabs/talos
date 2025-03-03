@@ -49,3 +49,7 @@
 ; Talk to machined
 (allow installer_t machine_socket_t (sock_file (write)))
 (allow installer_t init_t (unix_stream_socket (connectto)))
+
+; pf-2-proto-262-type-1
+(allow apid_t kernel_t (system (module_request)))
+(allow trustd_t kernel_t (system (module_request)))
