@@ -708,7 +708,7 @@ sign-images: ## Run cosign to sign all images built by this Makefile.
 .PHONY: reproducibility-test
 reproducibility-test:
 	@$(MAKE) reproducibility-test-local-initramfs
-	@$(MAKE) reproducibility-test-docker-installer INSTALLER_ARCH=targetarch PLATFORM=linux/amd64
+	@$(MAKE) reproducibility-test-docker-installer-base INSTALLER_ARCH=targetarch PLATFORM=linux/amd64
 	@$(MAKE) reproducibility-test-docker-talos reproducibility-test-docker-imager reproducibility-test-docker-talosctl PLATFORM=linux/amd64
 
 reproducibility-test-docker-%:
