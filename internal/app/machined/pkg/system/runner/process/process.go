@@ -26,8 +26,6 @@ import (
 	"github.com/siderolabs/go-cmd/pkg/cmd/proc/reaper"
 	"kernel.org/pub/linux/libs/security/libcap/cap"
 
-	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
-	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/platform"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system/events"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system/runner"
 	"github.com/siderolabs/talos/internal/pkg/cgroup"
@@ -161,10 +159,47 @@ func beforeExecCallback(pa *syscall.ProcAttr, data any) error {
 	// process threads leading to loss of the domain transition
 	if selinux.IsEnabled() {
 		if wrapper.selinuxLabel != "" {
+			fmt.Println("Setting SELinux label to", wrapper.selinuxLabel)
+			str, _ := os.ReadFile("/proc/thread-self/attr/exec")
+			fmt.Println("Current exec is ", string(str))
+			str, _ = os.ReadFile("/proc/thread-self/attr/fscreate")
+			fmt.Println("Current fscreate is ", string(str))
+			str, _ = os.ReadFile("/proc/thread-self/attr/keycreate")
+			fmt.Println("Current keycreate is ", string(str))
+			str, _ = os.ReadFile("/proc/thread-self/attr/sockcreate")
+			fmt.Println("Current sockcreate is ", string(str))
+			str, _ = os.ReadFile("/proc/thread-self/attr/current")
+			fmt.Println("Current is ", string(str))
+			str, _ = os.ReadFile("/proc/thread-self/attr/prev")
+			fmt.Println("Prev is ", string(str))
 			err := os.WriteFile("/proc/thread-self/attr/exec", []byte(wrapper.selinuxLabel), 0o777)
 			if err != nil {
 				log.Fatalf("%s", err)
 			}
+			err = os.WriteFile("/proc/thread-self/attr/fscreate", []byte(wrapper.selinuxLabel), 0o777)
+			if err != nil {
+				log.Fatalf("%s", err)
+			}
+			err = os.WriteFile("/proc/thread-self/attr/keycreate", []byte(wrapper.selinuxLabel), 0o777)
+			if err != nil {
+				log.Fatalf("%s", err)
+			}
+			err = os.WriteFile("/proc/thread-self/attr/sockcreate", []byte(wrapper.selinuxLabel), 0o777)
+			if err != nil {
+				log.Fatalf("%s", err)
+			}
+			str, _ = os.ReadFile("/proc/thread-self/attr/exec")
+			fmt.Println("New exec is ", string(str))
+			str, _ = os.ReadFile("/proc/thread-self/attr/fscreate")
+			fmt.Println("New fscreate is ", string(str))
+			str, _ = os.ReadFile("/proc/thread-self/attr/keycreate")
+			fmt.Println("New keycreate is ", string(str))
+			str, _ = os.ReadFile("/proc/thread-self/attr/sockcreate")
+			fmt.Println("New sockcreate is ", string(str))
+			str, _ = os.ReadFile("/proc/thread-self/attr/current")
+			fmt.Println("New current is ", string(str))
+			str, _ = os.ReadFile("/proc/thread-self/attr/prev")
+			fmt.Println("New prev is ", string(str))
 		} else {
 			err := os.WriteFile("/proc/thread-self/attr/exec", []byte(constants.SelinuxLabelUnconfinedService), 0o777)
 			if err != nil {
@@ -284,10 +319,11 @@ func (p *processRunner) build() (commandWrapper, error) {
 
 	cgroupFdSupported := false
 
-	platform, err := platform.CurrentPlatform()
-	if err == nil {
-		cgroupFdSupported = platform.Mode() != runtime.ModeContainer
-	}
+	// FIXME: clone3 disabled temporarily for SELinux
+	// platform, err := platform.CurrentPlatform()
+	// if err == nil {
+	// 	cgroupFdSupported = platform.Mode() != runtime.ModeContainer
+	// }
 
 	// cgroupfd is more reliable, use it when possible
 	if cgroups.Mode() == cgroups.Unified && cgroupFdSupported && p.opts.UID == 0 {
