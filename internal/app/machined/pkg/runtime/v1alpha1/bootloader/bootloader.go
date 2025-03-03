@@ -67,7 +67,7 @@ func Probe(disk string, options options.ProbeOptions) (Bootloader, error) {
 
 // NewAuto returns a new bootloader based on auto-detection.
 func NewAuto() Bootloader {
-	if sdboot.IsBootedUsingSDBoot() {
+	if sdboot.IsUEFIBoot() {
 		return sdboot.New()
 	}
 
