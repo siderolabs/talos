@@ -5,7 +5,6 @@
 package backend_test
 
 import (
-	"context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -23,7 +22,7 @@ func TestLocalGetConnection(t *testing.T) {
 
 	md1 := metadata.New(nil)
 	md1.Set("key", "value1", "value2")
-	ctx1 := metadata.NewIncomingContext(authz.ContextWithRoles(context.Background(), role.MakeSet(role.Admin)), md1)
+	ctx1 := metadata.NewIncomingContext(authz.ContextWithRoles(t.Context(), role.MakeSet(role.Admin)), md1)
 
 	outCtx1, conn1, err1 := l.GetConnection(ctx1, "")
 	assert.NoError(t, err1)
@@ -55,7 +54,7 @@ func TestLocalGetConnection(t *testing.T) {
 
 		md3 := metadata.New(nil)
 		md3.Set("key", "value3", "value4")
-		ctx3 := metadata.NewIncomingContext(authz.ContextWithRoles(context.Background(), role.MakeSet(role.Reader)), md3)
+		ctx3 := metadata.NewIncomingContext(authz.ContextWithRoles(t.Context(), role.MakeSet(role.Reader)), md3)
 
 		outCtx3, conn3, err3 := l.GetConnection(ctx3, "")
 		assert.NoError(t, err3)

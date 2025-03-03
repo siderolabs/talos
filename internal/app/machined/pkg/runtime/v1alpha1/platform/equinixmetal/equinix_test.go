@@ -5,7 +5,6 @@
 package equinixmetal_test
 
 import (
-	"context"
 	_ "embed"
 	"encoding/json"
 	"fmt"
@@ -42,7 +41,7 @@ func TestParseMetadata(t *testing.T) {
 
 	require.NoError(t, json.Unmarshal(rawMetadata, &m))
 
-	ctx := context.Background()
+	ctx := t.Context()
 
 	st := state.WrapCore(namespaced.NewState(inmem.Build))
 
@@ -70,7 +69,7 @@ func TestParseMetadata2Bonds(t *testing.T) {
 
 	require.NoError(t, json.Unmarshal(rawMetadata2Bonds, &m))
 
-	ctx := context.Background()
+	ctx := t.Context()
 
 	st := state.WrapCore(namespaced.NewState(inmem.Build))
 

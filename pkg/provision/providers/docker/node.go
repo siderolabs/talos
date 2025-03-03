@@ -14,7 +14,6 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/filters"
 	"github.com/docker/docker/api/types/mount"
@@ -243,7 +242,7 @@ func (p *provisioner) createNode(ctx context.Context, clusterReq provision.Clust
 	return nodeInfo, nil
 }
 
-func (p *provisioner) listNodes(ctx context.Context, clusterName string) ([]types.Container, error) {
+func (p *provisioner) listNodes(ctx context.Context, clusterName string) ([]container.Summary, error) {
 	filters := filters.NewArgs()
 	filters.Add("label", "talos.owned=true")
 	filters.Add("label", "talos.cluster.name="+clusterName)
@@ -260,7 +259,7 @@ func (p *provisioner) destroyNodes(ctx context.Context, clusterName string, opti
 	errCh := make(chan error)
 
 	for _, ctr := range containers {
-		go func(ctr types.Container) {
+		go func(ctr container.Summary) {
 			fmt.Fprintln(options.LogWriter, "destroying node", ctr.Names[0][1:])
 
 			errCh <- p.client.ContainerRemove(ctx, ctr.ID, container.RemoveOptions{RemoveVolumes: true, Force: true})

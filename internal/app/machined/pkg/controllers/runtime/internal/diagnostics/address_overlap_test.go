@@ -29,7 +29,7 @@ import (
 func TestAddressOverlapCheck(t *testing.T) {
 	t.Parallel()
 
-	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
+	ctx, cancel := context.WithTimeout(t.Context(), time.Minute)
 	t.Cleanup(cancel)
 
 	for _, test := range []struct {

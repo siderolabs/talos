@@ -33,7 +33,7 @@ func TestPollingCondition(t *testing.T) {
 			return nil
 		}, time.Second, time.Millisecond)
 
-		err := cond.Wait(context.Background())
+		err := cond.Wait(t.Context())
 		assert.NoError(t, err)
 		assert.Equal(t, "Test condition: OK", cond.String())
 		assert.Equal(t, 2, calls)
@@ -54,7 +54,7 @@ func TestPollingCondition(t *testing.T) {
 			return conditions.ErrSkipAssertion
 		}, time.Second, time.Millisecond)
 
-		err := cond.Wait(context.Background())
+		err := cond.Wait(t.Context())
 		assert.NoError(t, err)
 		assert.Equal(t, "Test condition: SKIP", cond.String())
 		assert.Equal(t, 2, calls)
@@ -71,7 +71,7 @@ func TestPollingCondition(t *testing.T) {
 			return errors.New("failed")
 		}, time.Second, 750*time.Millisecond)
 
-		err := cond.Wait(context.Background())
+		err := cond.Wait(t.Context())
 		assert.Equal(t, context.DeadlineExceeded, err)
 		assert.Equal(t, "Test condition: failed", cond.String())
 		assert.Equal(t, 2, calls)

@@ -28,7 +28,7 @@ import (
 )
 
 func TestCertificate(t *testing.T) {
-	ctx, cancel := context.WithCancel(context.Background())
+	ctx, cancel := context.WithCancel(t.Context())
 	defer cancel()
 
 	resources := state.WrapCore(namespaced.NewState(inmem.Build))

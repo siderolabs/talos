@@ -6,7 +6,6 @@
 package meta_test
 
 import (
-	"context"
 	"os"
 	"path/filepath"
 	"testing"
@@ -39,7 +38,7 @@ func setupTest(t *testing.T) (*meta.Meta, string, state.State) {
 
 	st := state.WrapCore(namespaced.NewState(inmem.Build))
 
-	m, err := meta.New(context.Background(), st, meta.WithFixedPath(path))
+	m, err := meta.New(t.Context(), st, meta.WithFixedPath(path))
 	require.NoError(t, err)
 
 	return m, path, st
@@ -50,7 +49,7 @@ func TestFlow(t *testing.T) {
 
 	m, path, st := setupTest(t)
 
-	ctx := context.Background()
+	ctx := t.Context()
 
 	ok, err := m.SetTag(ctx, metaconsts.Upgrade, "1.2.3")
 	require.NoError(t, err)

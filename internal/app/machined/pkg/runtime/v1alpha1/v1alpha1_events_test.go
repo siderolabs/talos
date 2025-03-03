@@ -6,7 +6,6 @@
 package v1alpha1
 
 import (
-	"context"
 	"fmt"
 	"strconv"
 	"sync"
@@ -101,7 +100,7 @@ func TestEvents_Publish(t *testing.T) {
 
 						atomic.AddUint32(&got, 1)
 
-						_ = l.Wait(context.Background()) //nolint:errcheck
+						_ = l.Wait(t.Context()) //nolint:errcheck
 					}
 				}); err != nil {
 					t.Errorf("Watch error %s", err)
@@ -111,9 +110,9 @@ func TestEvents_Publish(t *testing.T) {
 			l := rate.NewLimiter(500, tt.cap/2)
 
 			for i := range tt.messages {
-				_ = l.Wait(context.Background()) //nolint:errcheck
+				_ = l.Wait(t.Context()) //nolint:errcheck
 
-				e.Publish(context.Background(), &machine.SequenceEvent{
+				e.Publish(t.Context(), &machine.SequenceEvent{
 					Sequence: strconv.Itoa(i),
 				})
 			}
@@ -187,7 +186,7 @@ func TestEvents_WatchOptionsTailEvents(t *testing.T) {
 	e := NewEvents(100, 10)
 
 	for i := range 200 {
-		e.Publish(context.Background(), &machine.SequenceEvent{
+		e.Publish(t.Context(), &machine.SequenceEvent{
 			Sequence: strconv.Itoa(i),
 		})
 	}
@@ -204,7 +203,7 @@ func TestEvents_WatchOptionsTailEvents(t *testing.T) {
 	e = NewEvents(100, 10)
 
 	for i := range 30 {
-		e.Publish(context.Background(), &machine.SequenceEvent{
+		e.Publish(t.Context(), &machine.SequenceEvent{
 			Sequence: strconv.Itoa(i),
 		})
 	}
@@ -220,7 +219,7 @@ func TestEvents_WatchOptionsTailSeconds(t *testing.T) {
 	e := NewEvents(100, 10)
 
 	for i := range 20 {
-		e.Publish(context.Background(), &machine.SequenceEvent{
+		e.Publish(t.Context(), &machine.SequenceEvent{
 			Sequence: strconv.Itoa(i),
 		})
 	}
@@ -229,7 +228,7 @@ func TestEvents_WatchOptionsTailSeconds(t *testing.T) {
 	time.Sleep(3 * time.Second)
 
 	for i := 20; i < 30; i++ {
-		e.Publish(context.Background(), &machine.SequenceEvent{
+		e.Publish(t.Context(), &machine.SequenceEvent{
 			Sequence: strconv.Itoa(i),
 		})
 	}
@@ -243,7 +242,7 @@ func TestEvents_WatchOptionsTailID(t *testing.T) {
 	e := NewEvents(100, 10)
 
 	for i := range 20 {
-		e.Publish(context.Background(), &machine.SequenceEvent{
+		e.Publish(t.Context(), &machine.SequenceEvent{
 			Sequence: strconv.Itoa(i),
 		})
 	}
@@ -297,7 +296,7 @@ func BenchmarkPublish(bb *testing.B) {
 			b.ResetTimer()
 
 			for range b.N {
-				e.Publish(context.Background(), &ev)
+				e.Publish(bb.Context(), &ev)
 			}
 
 			wg.Wait()

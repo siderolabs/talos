@@ -170,15 +170,15 @@ func (suite *NTPSuite) fakeQuery(host string) (resp *beevikntp.Response, err err
 				ClockOffset:   2 * time.Millisecond,
 				RTT:           time.Millisecond / 2,
 			}, nil
-		} else {
-			return &beevikntp.Response{ // normal response
-				Stratum:       1,
-				Time:          suite.systemClock,
-				ReferenceTime: suite.systemClock,
-				ClockOffset:   time.Millisecond,
-				RTT:           time.Millisecond / 2,
-			}, nil
 		}
+
+		return &beevikntp.Response{ // normal response
+			Stratum:       1,
+			Time:          suite.systemClock,
+			ReferenceTime: suite.systemClock,
+			ClockOffset:   time.Millisecond,
+			RTT:           time.Millisecond / 2,
+		}, nil
 	default:
 		return nil, fmt.Errorf("unknown host %q", host)
 	}
