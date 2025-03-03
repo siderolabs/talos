@@ -43,14 +43,14 @@ type upgradeSpec struct {
 const (
 	// These versions should be kept in sync with Makefile variable RELEASES.
 	previousRelease = "v1.8.4"
-	stableRelease   = "v1.9.0" // or soon-to-be-stable
+	stableRelease   = "v1.9.4" // or soon-to-be-stable
 	// The current version (the one being built on CI) is DefaultSettings.CurrentVersion.
 
 	// Command to find Kubernetes version for past releases:
 	//
 	//  git show ${TAG}:pkg/machinery/constants/constants.go | grep KubernetesVersion
 	previousK8sVersion = "1.31.4" // constants.DefaultKubernetesVersion in the previousRelease
-	stableK8sVersion   = "1.32.0" // constants.DefaultKubernetesVersion in the stableRelease
+	stableK8sVersion   = "1.32.2" // constants.DefaultKubernetesVersion in the stableRelease
 	currentK8sVersion  = constants.DefaultKubernetesVersion
 )
 
