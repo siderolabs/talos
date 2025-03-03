@@ -98,7 +98,11 @@
 (typetransition initramfs_t init_exec_t process init_t)
 (allow initramfs_t init_t (process_classes (full)))
 (allow init_t initramfs_t (fd (use)))
+(roleallow object_r system_r)
 
 ; Direct child processes
 (allow system_p init_t (fd (use)))
 (allow system_p init_t (fifo_file (append getattr ioctl map open read rename setattr watch write)))
+
+; pf-2-proto-262-type-1
+(allow init_t kernel_t (system (module_request)))
