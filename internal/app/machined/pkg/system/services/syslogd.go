@@ -50,6 +50,11 @@ func (s *Syslogd) DependsOn(runtime.Runtime) []string {
 	return []string{machinedServiceID}
 }
 
+// Volumes implements the Service interface.
+func (s *Syslogd) Volumes() []string {
+	return nil
+}
+
 // Runner implements the Service interface.
 func (s *Syslogd) Runner(r runtime.Runtime) (runner.Runner, error) {
 	return goroutine.NewRunner(r, syslogServiceID, syslogd.Main, runner.WithLoggingManager(r.Logging())), nil

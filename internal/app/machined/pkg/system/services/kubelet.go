@@ -105,6 +105,11 @@ func (k *Kubelet) DependsOn(runtime.Runtime) []string {
 	return []string{"cri"}
 }
 
+// Volumes implements the Service interface.
+func (k *Kubelet) Volumes() []string {
+	return nil
+}
+
 // Runner implements the Service interface.
 func (k *Kubelet) Runner(r runtime.Runtime) (runner.Runner, error) {
 	specResource, err := safe.ReaderGet[*k8s.KubeletSpec](

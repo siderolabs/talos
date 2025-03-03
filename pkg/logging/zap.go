@@ -138,9 +138,9 @@ func ZapLogger(dests ...*LogDestination) *zap.Logger {
 			dest.level,
 		)
 
-		if dest.suppressThreshold > 0 {
-			core = NewControllerErrorSuppressor(core, dest.suppressThreshold)
-		}
+		// if dest.suppressThreshold > 0 {
+		// 	core = NewControllerErrorSuppressor(core, dest.suppressThreshold)
+		// }
 
 		return core
 	})
