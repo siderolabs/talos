@@ -388,7 +388,7 @@ func (*Sequencer) Shutdown(r runtime.Runtime, in *machineapi.ShutdownRequest) []
 	skipNodeRegistration := r.Config() != nil && r.Config().Machine() != nil && r.Config().Machine().Kubelet().SkipNodeRegistration()
 
 	phases := PhaseList{}.Append(
-		"storeShudown",
+		"storeShutdown",
 		StoreShutdownEmergency,
 	).AppendWhen(
 		!in.GetForce() && !skipNodeRegistration,

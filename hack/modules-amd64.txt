@@ -149,6 +149,7 @@ kernel/drivers/scsi/megaraid/megaraid_sas.ko
 kernel/drivers/scsi/mpi3mr/mpi3mr.ko
 kernel/drivers/scsi/mpt3sas/mpt3sas.ko
 kernel/drivers/scsi/qedf/qedf.ko
+kernel/drivers/scsi/qla2xxx/qla2xxx.ko
 kernel/drivers/scsi/smartpqi/smartpqi.ko
 kernel/drivers/scsi/vmw_pvscsi.ko
 kernel/drivers/uio/uio_pci_generic.ko
