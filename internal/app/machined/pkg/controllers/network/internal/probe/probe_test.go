@@ -43,7 +43,7 @@ func TestProbeHTTP(t *testing.T) {
 		},
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	ctx, cancel := context.WithTimeout(t.Context(), 3*time.Second)
 	t.Cleanup(cancel)
 
 	notifyCh := make(chan probe.Notification)
@@ -105,7 +105,7 @@ func TestProbeConsecutiveFailures(t *testing.T) {
 		Clock: mockClock,
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	ctx, cancel := context.WithTimeout(t.Context(), 3*time.Second)
 	t.Cleanup(cancel)
 
 	notifyCh := make(chan probe.Notification)

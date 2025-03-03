@@ -101,9 +101,7 @@ func TestWrite(t *testing.T) {
 
 	version.Name = "Test"
 
-	tempFile, _ := os.CreateTemp("", "talos-test-grub-*.cfg")
-
-	t.Cleanup(func() { require.NoError(t, os.Remove(tempFile.Name())) })
+	tempFile, _ := os.CreateTemp(t.TempDir(), "talos-test-grub-*.cfg")
 
 	config := grub.NewConfig()
 	require.NoError(t, config.Put(grub.BootA, "cmdline A", "v0.0.1"))
@@ -125,9 +123,7 @@ func TestWriteNoReset(t *testing.T) {
 
 	version.Name = "TestOld"
 
-	tempFile, _ := os.CreateTemp("", "talos-test-grub-*.cfg")
-
-	t.Cleanup(func() { require.NoError(t, os.Remove(tempFile.Name())) })
+	tempFile, _ := os.CreateTemp(t.TempDir(), "talos-test-grub-*.cfg")
 
 	config := grub.NewConfig()
 	config.AddResetOption = false

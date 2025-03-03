@@ -256,7 +256,7 @@ func downloadBootAssets(ctx context.Context) error {
 
 		cacheDir := filepath.Join(defaultStateDir, "cache")
 
-		if os.MkdirAll(cacheDir, 0o755) != nil {
+		if err = os.MkdirAll(cacheDir, 0o755); err != nil {
 			return err
 		}
 

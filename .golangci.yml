@@ -31,7 +31,6 @@ output:
       path: stdout
   print-issued-lines: true
   print-linter-name: true
-  uniq-by-line: true
   sort-results: true
 
 # all available settings of specific linters
@@ -148,11 +147,11 @@ linters:
     - protogetter # too annoying
     - perfsprint
     - recvcheck # too annoying
-    - exportloopref # The linter 'exportloopref' is deprecated (since v1.60.2) due to: Since Go1.22 (loopvar) this linter is no longer relevant. Replaced by copyloopvar.
   disable-all: false
   fast: false
 
 issues:
+  uniq-by-line: true
   # List of regexps of issue texts to exclude, empty list by default.
   # But independently from this option we use default exclude patterns,
   # it can be disabled by `exclude-use-default: false`. To list all

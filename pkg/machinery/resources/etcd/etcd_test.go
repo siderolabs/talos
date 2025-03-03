@@ -5,7 +5,6 @@
 package etcd_test
 
 import (
-	"context"
 	"testing"
 
 	"github.com/cosi-project/runtime/pkg/resource/meta"
@@ -20,7 +19,7 @@ import (
 )
 
 func TestRegisterResource(t *testing.T) {
-	ctx := context.TODO()
+	ctx := t.Context()
 
 	resources := state.WrapCore(namespaced.NewState(inmem.Build))
 	resourceRegistry := registry.NewResourceRegistry(resources)

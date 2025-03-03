@@ -76,7 +76,7 @@ func TestRestartService(t *testing.T) {
 		deadline = time.Now().Add(15 * time.Second)
 	}
 
-	ctx, cancel := context.WithDeadline(context.Background(), deadline)
+	ctx, cancel := context.WithDeadline(t.Context(), deadline)
 	defer cancel()
 
 	services := system.NewServices(nil)

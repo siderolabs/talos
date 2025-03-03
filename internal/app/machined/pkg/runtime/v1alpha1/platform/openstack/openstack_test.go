@@ -5,7 +5,6 @@
 package openstack_test
 
 import (
-	"context"
 	_ "embed"
 	"encoding/json"
 	"net/netip"
@@ -43,7 +42,7 @@ func TestParseMetadata(t *testing.T) {
 
 	require.NoError(t, json.Unmarshal(rawNetwork, &n))
 
-	ctx := context.Background()
+	ctx := t.Context()
 
 	st := state.WrapCore(namespaced.NewState(inmem.Build))
 

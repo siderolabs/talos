@@ -24,7 +24,7 @@ EMBED_TARGET ?= embed
 TOOLS_PREFIX ?= ghcr.io/siderolabs/tools
 TOOLS ?= v1.10.0-alpha.0-18-gfcee25b
 PKGS_PREFIX ?= ghcr.io/siderolabs
-PKGS ?= v1.10.0-alpha.0-48-g40241af
+PKGS ?= v1.10.0-alpha.0-49-g347ad26
 EXTRAS ?= v1.10.0-alpha.0-3-g4102a78
 
 KRES_IMAGE ?= ghcr.io/siderolabs/kres:latest
@@ -85,17 +85,17 @@ PKG_ZSTD ?= $(PKGS_PREFIX)/zstd:$(PKGS)
 # renovate: datasource=github-tags depName=golang/go
 GO_VERSION ?= 1.24
 # renovate: datasource=go depName=golang.org/x/tools
-GOIMPORTS_VERSION ?= v0.28.0
+GOIMPORTS_VERSION ?= v0.30.0
 # renovate: datasource=go depName=mvdan.cc/gofumpt
 GOFUMPT_VERSION ?= v0.7.0
 # renovate: datasource=go depName=github.com/golangci/golangci-lint
-GOLANGCILINT_VERSION ?= v1.62.2
+GOLANGCILINT_VERSION ?= v1.64.6
 # renovate: datasource=go depName=golang.org/x/tools
-STRINGER_VERSION ?= v0.28.0
+STRINGER_VERSION ?= v0.30.0
 # renovate: datasource=go depName=github.com/dmarkham/enumer
 ENUMER_VERSION ?= v1.5.11
 # renovate: datasource=go depName=k8s.io/code-generator
-DEEPCOPY_GEN_VERSION ?= v0.32.0
+DEEPCOPY_GEN_VERSION ?= v0.32.2
 # renovate: datasource=go depName=github.com/planetscale/vtprotobuf
 VTPROTOBUF_VERSION ?= v0.6.0
 # renovate: datasource=go depName=github.com/siderolabs/deep-copy
@@ -107,9 +107,9 @@ PROTOTOOL_VERSION ?= v1.10.0
 # renovate: datasource=go depName=github.com/pseudomuto/protoc-gen-doc
 PROTOC_GEN_DOC_VERSION ?= v1.5.1
 # renovate: datasource=npm depName=markdownlint-cli
-MARKDOWNLINTCLI_VERSION ?= 0.43.0
+MARKDOWNLINTCLI_VERSION ?= 0.44.0
 # renovate: datasource=npm depName=textlint
-TEXTLINT_VERSION ?= 14.4.0
+TEXTLINT_VERSION ?= 14.4.2
 # renovate: datasource=npm depName=textlint-filter-rule-comments
 TEXTLINT_FILTER_RULE_COMMENTS_VERSION ?= 1.2.2
 # renovate: datasource=npm depName=textlint-rule-one-sentence-per-line
@@ -126,11 +126,11 @@ INTEGRATION_TEST_PROVISION_DEFAULT_TARGET := integration-test-provision-$(OPERAT
 # renovate: datasource=github-releases depName=kubernetes/kubernetes
 KUBECTL_VERSION ?= v1.33.0-alpha.2
 # renovate: datasource=github-releases depName=kastenhq/kubestr
-KUBESTR_VERSION ?= v0.4.47
+KUBESTR_VERSION ?= v0.4.48
 # renovate: datasource=github-releases depName=helm/helm
-HELM_VERSION ?= v3.16.4
+HELM_VERSION ?= v3.17.1
 # renovate: datasource=github-releases depName=cilium/cilium-cli
-CILIUM_CLI_VERSION ?= v0.16.22
+CILIUM_CLI_VERSION ?= v0.18.0
 # renovate: datasource=github-releases depName=microsoft/secureboot_objects
 MICROSOFT_SECUREBOOT_RELEASE ?= v1.1.3
 

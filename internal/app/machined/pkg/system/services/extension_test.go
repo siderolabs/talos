@@ -5,7 +5,6 @@
 package services_test
 
 import (
-	"context"
 	"os"
 	"testing"
 
@@ -41,7 +40,7 @@ func TestGetOCIOptions(t *testing.T) {
 			return nil, err
 		}
 
-		return oci.GenerateSpec(namespaces.WithNamespace(context.Background(), "testNamespace"), &mockClient, &containers.Container{}, ociOpts...)
+		return oci.GenerateSpec(namespaces.WithNamespace(t.Context(), "testNamespace"), &mockClient, &containers.Container{}, ociOpts...)
 	}
 
 	t.Run("default configurations are cleared away if user passes empty arrays for MaskedPaths and ReadonlyPaths", func(t *testing.T) {

@@ -5,7 +5,6 @@
 package runtime_test
 
 import (
-	"context"
 	"os"
 	"path/filepath"
 	"testing"
@@ -52,7 +51,7 @@ func TestUpgradeFallbackControllerSuite(t *testing.T) {
 
 	st := state.WrapCore(namespaced.NewState(inmem.Build))
 
-	m, err := meta.New(context.Background(), st, meta.WithFixedPath(path))
+	m, err := meta.New(t.Context(), st, meta.WithFixedPath(path))
 	require.NoError(t, err)
 
 	suite.Run(t, &DropUpgradeFallbackControllerSuite{

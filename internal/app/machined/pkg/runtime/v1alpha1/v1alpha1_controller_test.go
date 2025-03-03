@@ -173,7 +173,7 @@ func TestRun(t *testing.T) {
 				priorityLock: NewPriorityLock[runtime.Sequence](),
 			}
 
-			ctx, cancel := context.WithTimeout(context.Background(), time.Millisecond*200)
+			ctx, cancel := context.WithTimeout(t.Context(), time.Millisecond*200)
 			defer cancel()
 
 			eg.Go(func() error {

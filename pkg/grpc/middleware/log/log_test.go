@@ -5,7 +5,6 @@
 package log_test
 
 import (
-	"context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -36,7 +35,7 @@ func TestExtractMetadata(t *testing.T) {
 			expected: "foo=bar;token=<hidden>",
 		},
 	} {
-		ctx := context.Background()
+		ctx := t.Context()
 		ctx = metadata.NewIncomingContext(ctx, test.md)
 
 		assert.Equal(t, test.expected, log.ExtractMetadata(ctx), test.name)

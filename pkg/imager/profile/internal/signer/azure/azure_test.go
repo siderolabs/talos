@@ -5,7 +5,6 @@
 package azure_test
 
 import (
-	"context"
 	"crypto/sha256"
 	"os"
 	"testing"
@@ -22,7 +21,7 @@ func TestIntegration(t *testing.T) {
 		}
 	}
 
-	signer, err := azure.NewPCRSigner(context.TODO(), os.Getenv("AZURE_VAULT_URL"), os.Getenv("AZURE_KEY_ID"), "")
+	signer, err := azure.NewPCRSigner(t.Context(), os.Getenv("AZURE_VAULT_URL"), os.Getenv("AZURE_KEY_ID"), "")
 	require.NoError(t, err)
 
 	digest := sha256.Sum256(nil)
@@ -30,7 +29,7 @@ func TestIntegration(t *testing.T) {
 	_, err = signer.Sign(nil, digest[:], nil)
 	require.NoError(t, err)
 
-	sbSigner, err := azure.NewSecureBootSigner(context.TODO(), os.Getenv("AZURE_VAULT_URL"), os.Getenv("AZURE_CERT_ID"), "")
+	sbSigner, err := azure.NewSecureBootSigner(t.Context(), os.Getenv("AZURE_VAULT_URL"), os.Getenv("AZURE_CERT_ID"), "")
 	require.NoError(t, err)
 
 	_, err = sbSigner.Signer().Sign(nil, digest[:], nil)
