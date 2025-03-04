@@ -1312,7 +1312,7 @@ spec:
           conditions:
             - only-on-schedule
         - name: build-race
-          command: initramfs installer-base
+          command: initramfs installer-base imager installer
           environment:
             PUSH: true
             TAG_SUFFIX: -race
@@ -1478,6 +1478,7 @@ spec:
             SHORT_INTEGRATION_TEST: yes
             QEMU_WORKERS: 3
             QEMU_MEMORY_WORKERS: 4096
+            QEMU_SYSTEM_DISK_SIZE: 20480
             QEMU_EXTRA_DISKS: 1
             QEMU_EXTRA_DISKS_SIZE: 12288
             QEMU_EXTRA_DISKS_DRIVERS: nvme

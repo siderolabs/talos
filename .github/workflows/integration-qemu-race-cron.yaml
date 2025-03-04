@@ -1,6 +1,6 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
 #
-# Generated on 2025-02-26T15:23:43Z by kres 1281806.
+# Generated on 2025-03-04T13:59:07Z by kres 1281806.
 
 name: integration-qemu-race-cron
 concurrency:
@@ -86,7 +86,7 @@ jobs:
           TAG_SUFFIX: -race
           WITH_RACE: "1"
         run: |
-          make initramfs installer-base
+          make initramfs installer-base imager installer
       - name: e2e-qemu-race
         env:
           GITHUB_STEP_NAME: ${{ github.job}}-e2e-qemu-race
