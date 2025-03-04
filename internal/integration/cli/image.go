@@ -48,7 +48,7 @@ func (suite *ImageSuite) TestList() {
 	)
 }
 
-var imageCacheQuery = []string{"get", "imagecacheconfig", "--output", "jsonpath='{.spec.copyStatus}'"}
+var imageCacheQuery = []string{"get", "imagecacheconfig", "--output", "jsonpath='{.spec.status}'"}
 
 // TestPull verifies pulling images to the CRI.
 func (suite *ImageSuite) TestPull() {
