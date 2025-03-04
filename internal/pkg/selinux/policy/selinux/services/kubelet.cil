@@ -38,9 +38,9 @@
 (allow kubelet_t k8s_conf_t (fs_classes (rw)))
 (allow kubelet_t kubelet_state_t (fs_classes (rw)))
 
-; Some mounts
-; TODO: specify
-; (allow kubelet_t run_t (fs_classes (rw)))
+; Some mount/umount calls, xtables lock
+; TODO: label more precisely?
+(allow kubelet_t run_t (fs_classes (rw)))
 
 ; Communication with init via pipes and sockets
 ; (allow kubelet_t init_t (fd (use)))
@@ -65,3 +65,6 @@
 
 (allow kubelet_t k8s_plugin_t (fs_classes (rw)))
 (allow kubelet_t k8s_plugin_t (file (entrypoint execute execute_no_trans)))
+
+; kubelet sends sigkill to pod processes
+(allow kubelet_t pod_p (process_classes (signal)))
