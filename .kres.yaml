@@ -1676,6 +1676,8 @@ spec:
       runners:
         - self-hosted
         - talos
+      crons:
+        - '30 2 * * *'
       triggerLabels:
         - integration/image-cache
       steps:
