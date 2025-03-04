@@ -29,6 +29,8 @@
 
 (allow sys_containerd_t system_t (fs_classes (rw)))
 (allow sys_containerd_t system_var_t (fs_classes (rw)))
+(allow sys_containerd_t run_t (fs_classes (rw)))
+(allow sys_containerd_t system_var_t (fs_classes (relabelto relabelfrom)))
 (allow sys_containerd_t sys_containerd_run_t (fs_classes (rw)))
 (allow sys_containerd_t pod_containerd_run_t (fs_classes (rw))) ; shim sockets
 

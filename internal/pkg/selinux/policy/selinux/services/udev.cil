@@ -104,3 +104,9 @@
 ; exec-invoke managed stuff
 (allow udev_t cgroup_t (fs_classes (rw ioctl)))
 (allow udev_t kernel_t (key (search)))
+
+; dmsetup
+; TODO: label more specifically?
+(allow udev_t bin_exec_t (file (execute execute_no_trans)))
+(allow udev_t kernel_t (system (ipc_info)))
+(allow udev_t init_t (sem (all)))

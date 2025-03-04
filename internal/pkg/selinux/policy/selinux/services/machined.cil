@@ -106,3 +106,13 @@
 
 ; pf-2-proto-262-type-1
 (allow init_t kernel_t (system (module_request)))
+
+; cryptsetup
+(allow init_t self (sem (associate create destroy getattr read setattr unix_read unix_write write)))
+(allow init_t kernel_t (key (search)))
+(allow init_t self (key (all)))
+(allow init_t kernel_t (system (ipc_info)))
+
+; Modules loaded via machined
+(allow init_t module_t (system (module_load)))
+(allow init_t self (capability (sys_module)))
