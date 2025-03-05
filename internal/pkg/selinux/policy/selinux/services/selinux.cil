@@ -1,4 +1,4 @@
-(allow kernel_t security_t (security (setbool setsecparam)))
+(allow initramfs_t security_t (security (setbool setsecparam)))
 (allow init_t security_t (security (setbool setsecparam)))
 ; Policy is loaded by initramfs init and mustn't be modified
 ; The only way to set mode to permissive is setting enforcing=0 in kernel cmdline
@@ -14,3 +14,4 @@
     setcheckreqprot
     validate_trans
 )))
+(allow any_p selinuxfs_t (fs_classes (ro)))
