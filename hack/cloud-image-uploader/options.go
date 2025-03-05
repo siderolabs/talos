@@ -30,7 +30,7 @@ type Options struct {
 var DefaultOptions = Options{
 	ArtifactsPath: "_out/",
 	Architectures: []string{"amd64", "arm64"},
-	TargetClouds:  []string{"aws", "azure"},
+	TargetClouds:  []string{"aws"},
 }
 
 // AWSImage returns path to AWS pre-built image.
