@@ -26,7 +26,7 @@ preface = """
 * Flannel: 0.26.4
 * Kubernetes: 1.33.0-alpha.2
 
-Talos is built with Go 1.24.0.
+Talos is built with Go 1.24.1.
 """
 
     [notes.driver-rebind]
