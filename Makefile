@@ -115,7 +115,7 @@ TEXTLINT_FILTER_RULE_COMMENTS_VERSION ?= 1.2.2
 # renovate: datasource=npm depName=textlint-rule-one-sentence-per-line
 TEXTLINT_RULE_ONE_SENTENCE_PER_LINE_VERSION ?= 2.0.0
 # renovate: datasource=docker depName=klakegg/hugo
-HUGO_VERSION ?= 0.111.3-ext-alpine
+HUGO_VERSION ?= 0.111.3
 OPERATING_SYSTEM := $(shell uname -s | tr "[:upper:]" "[:lower:]")
 ARCH := $(shell uname -m | sed 's/x86_64/amd64/' | sed 's/aarch64/arm64/')
 TALOSCTL_DEFAULT_TARGET := talosctl-$(OPERATING_SYSTEM)
@@ -124,7 +124,7 @@ INTEGRATION_TEST := integration-test
 INTEGRATION_TEST_DEFAULT_TARGET := $(INTEGRATION_TEST)-$(OPERATING_SYSTEM)
 INTEGRATION_TEST_PROVISION_DEFAULT_TARGET := integration-test-provision-$(OPERATING_SYSTEM)
 # renovate: datasource=github-releases depName=kubernetes/kubernetes
-KUBECTL_VERSION ?= v1.33.0-alpha.2
+KUBECTL_VERSION ?= v1.33.0-alpha.3
 # renovate: datasource=github-releases depName=kastenhq/kubestr
 KUBESTR_VERSION ?= v0.4.48
 # renovate: datasource=github-releases depName=helm/helm

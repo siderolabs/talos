@@ -13,7 +13,7 @@ const (
 	RookCephHelmChartVersion = "v1.16.4"
 	// LongHornHelmChartVersion is the version of the Longhorn Helm chart to use.
 	// renovate: datasource=helm versioning=helm depName=longhorn registryUrl=https://charts.longhorn.io
-	LongHornHelmChartVersion = "v1.8.0"
+	LongHornHelmChartVersion = "1.8.1"
 	// OpenEBSChartVersion is the version of the OpenEBS Helm chart to use.
 	// renovate: datasource=helm versioning=helm depName=openebs registryUrl=https://openebs.github.io/openebs
 	OpenEBSChartVersion = "v4.2.0"
