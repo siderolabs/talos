@@ -220,6 +220,7 @@ talosctl apply-config --insecure --nodes $CONTROL_PLANE_IP --file _out/controlpl
 
 You should now see some action in the Proxmox console for this VM.
 Talos will be installed to disk, the VM will reboot, and then Talos will configure the Kubernetes control plane on this VM.
+The VM will remain in stage `Booting` until the bootstrap is completed in a later step.
 
 > Note: This process can be repeated multiple times to create an HA control plane.
 
