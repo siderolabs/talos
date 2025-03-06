@@ -124,4 +124,26 @@
 (allow any_p self (unix_stream_socket (connectto)))
 
 ; allow reading cgroup info
-(allow pod_p cgroup_t (fs_classes (ro)))
+(allow any_p cgroup_t (fs_classes (ro)))
+
+; cilium-agent
+(allow any_p self (perf_event (all)))
+(allow any_p bpf_t (fs_classes (rw)))
+
+; fio
+(allow any_p self (shm (all)))
+
+; /run/flannel
+(allow any_p pod_containerd_run_t (fs_classes (rw)))
+
+; Mayastor
+(allow any_p hugetlbfs_t (fs_classes (rw)))
+
+; ceph-osd accesses io_uring
+(allow any_p self (anon_inode (map read write create)))
+
+; cilium lock, socket and misc runtime files
+(allow any_p run_t (fs_classes (rw)))
+
+; time data, LVM config
+(allow any_p etc_t (fs_classes (ro)))

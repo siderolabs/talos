@@ -18,6 +18,7 @@
 (type kubelet_state_t)
 (call system_f (kubelet_state_t))
 (allow init_t kubelet_state_t (fs_classes (rw)))
+(allow pod_containerd_t kubelet_state_t (fs_classes (rw)))
 
 ; FIXME: insecure as anyone with access to the pod containerd may obtain this domain
 ; TODO: Secure kubelet launch labeling
@@ -29,8 +30,8 @@
 ; D-Bus for notifying kubelet of system power events
 (allow kubelet_t dbus_client_socket_t (fs_classes (rw)))
 
-; Kubelet reads many attrs
-(allow kubelet_t fs_t (filesystem (getattr)))
+; Kubelet reads many attrs, handles mounts
+(allow kubelet_t fs_t (filesystem (getattr remount)))
 (allow kubelet_t any_f (fs_classes (getattr)))
 
 ; Config and state access
@@ -68,3 +69,12 @@
 
 ; kubelet sends sigkill to pod processes
 (allow kubelet_t pod_p (process_classes (signal)))
+
+; Used when Mayastor/OpenEBS is enabled
+(allow kubelet_t hugetlbfs_t (fs_classes (rw)))
+
+; /registration/rook-ceph.cephfs.csi.ceph.com-reg.sock and similar when using Rook-Ceph
+(allow kubelet_t pod_t (unix_stream_socket (connectto)))
+
+; local-path-provisioner
+(allow kubelet_t ephemeral_t (fs_classes (rw)))

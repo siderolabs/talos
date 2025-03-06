@@ -25,6 +25,7 @@
 (call filesystem_f (sysfs_t))
 (type sys_module_t)
 (call filesystem_f (sys_module_t))
+(allow sys_module_t sysfs_t (filesystem (associate)))
 
 (genfscon sysfs "/" (system_u object_r sysfs_t (systemLow systemLow)))
 (genfscon sysfs "/module" (system_u object_r sys_module_t (systemLow systemLow)))
