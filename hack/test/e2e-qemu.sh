@@ -41,12 +41,6 @@ case "${WITH_VIRTUAL_IP:-false}" in
     ;;
 esac
 
-case "${WITH_JSON_LOGS:-false}" in
-  true)
-    QEMU_FLAGS+=("--with-json-logs")
-    ;;
-esac
-
 case "${WITH_CLUSTER_DISCOVERY:-true}" in
   false)
     QEMU_FLAGS+=("--with-cluster-discovery=false" "--kubeprism-port=0") # disable both KubePrism and cluster discovery
@@ -275,6 +269,7 @@ function create_cluster {
     --cidr=172.20.1.0/24 \
     --install-image="${INSTALLER_IMAGE}" \
     --with-init-node=false \
+    --with-json-logs=true \
     --cni-bundle-url="${ARTIFACTS}/talosctl-cni-bundle-\${ARCH}.tar.gz" \
     "${REGISTRY_MIRROR_FLAGS[@]}" \
     "${QEMU_FLAGS[@]}"
