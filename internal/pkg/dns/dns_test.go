@@ -128,9 +128,9 @@ func TestGC_NOGC(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			m := dns.NewManager(&testReader{}, func(e suture.Event) { t.Log("dns-runners event:", e) }, zaptest.NewLogger(t))
 
-			m.ServeBackground(t.Context())
-			m.ServeBackground(t.Context())
-			require.Panics(t, func() { m.ServeBackground(context.Background()) }) //nolint:usetesting // need background context to trigger panic
+			m.ServeBackground(context.Background())                         //nolint:usetesting
+			m.ServeBackground(context.Background())                         //nolint:usetesting
+			require.Panics(t, func() { m.ServeBackground(context.TODO()) }) //nolint:usetesting
 
 			for _, err := range m.RunAll(slices.Values([]dns.AddressPair{
 				{Network: "udp", Addr: netip.MustParseAddrPort("127.0.0.1:10700")},
@@ -172,7 +172,7 @@ func newManager(t *testing.T, nameservers ...string) func() {
 		return p
 	})
 
-	ctx, cancel := context.WithCancel(t.Context())
+	ctx, cancel := context.WithCancel(context.Background()) //nolint:usetesting
 	t.Cleanup(cancel)
 
 	m.SetUpstreams(slices.Values(pxs))
