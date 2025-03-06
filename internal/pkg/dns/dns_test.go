@@ -9,7 +9,6 @@ import (
 	"iter"
 	"net"
 	"net/netip"
-	"runtime"
 	"slices"
 	"strings"
 	"testing"
@@ -22,6 +21,7 @@ import (
 	"github.com/siderolabs/gen/xtesting/check"
 	"github.com/stretchr/testify/require"
 	"github.com/thejerf/suture/v4"
+	"go.uber.org/goleak"
 	"go.uber.org/zap/zaptest"
 
 	"github.com/siderolabs/talos/internal/pkg/dns"
@@ -29,6 +29,8 @@ import (
 )
 
 func TestDNS(t *testing.T) {
+	goleak.VerifyNone(t)
+
 	tests := []struct {
 		name         string
 		hostname     string
@@ -102,6 +104,8 @@ func TestDNS(t *testing.T) {
 }
 
 func TestDNSEmptyDestinations(t *testing.T) {
+	goleak.VerifyNone(t)
+
 	stop := newManager(t)
 	defer stop()
 
@@ -118,42 +122,35 @@ func TestDNSEmptyDestinations(t *testing.T) {
 	stop()
 }
 
-func TestGC_NOGC(t *testing.T) {
-	tests := map[string]bool{
-		"ClearAll":    false,
-		"No ClearAll": true,
+func Test_ServeBackground(t *testing.T) {
+	goleak.VerifyNone(t)
+
+	m := dns.NewManager(&testReader{}, func(e suture.Event) { t.Log("dns-runners event:", e) }, zaptest.NewLogger(t))
+
+	m.ServeBackground(t.Context())
+
+	// should not panic since ServeBackground is called with the same context
+	m.ServeBackground(t.Context())
+
+	// should panic since ServeBackground is called with a different context
+	require.Panics(t, func() { m.ServeBackground(context.TODO()) }) //nolint:usetesting
+
+	for _, err := range m.RunAll(slices.Values([]dns.AddressPair{
+		{Network: "udp", Addr: netip.MustParseAddrPort("127.0.0.1:10700")},
+		{Network: "udp", Addr: netip.MustParseAddrPort("127.0.0.1:10701")},
+	}), false) {
+		require.NoError(t, err)
 	}
 
-	for name, f := range tests {
-		t.Run(name, func(t *testing.T) {
-			m := dns.NewManager(&testReader{}, func(e suture.Event) { t.Log("dns-runners event:", e) }, zaptest.NewLogger(t))
-
-			m.ServeBackground(context.Background())                         //nolint:usetesting
-			m.ServeBackground(context.Background())                         //nolint:usetesting
-			require.Panics(t, func() { m.ServeBackground(context.TODO()) }) //nolint:usetesting
-
-			for _, err := range m.RunAll(slices.Values([]dns.AddressPair{
-				{Network: "udp", Addr: netip.MustParseAddrPort("127.0.0.1:10700")},
-				{Network: "udp", Addr: netip.MustParseAddrPort("127.0.0.1:10701")},
-			}), false) {
-				require.NoError(t, err)
-			}
-
-			require.NoError(t, m.ClearAll(f))
-
-			m = nil
-
-			for range 100 {
-				runtime.GC()
-			}
-		})
-	}
+	require.NoError(t, m.ClearAll(false))
 }
 
 func newManager(t *testing.T, nameservers ...string) func() {
-	m := dns.NewManager(&testReader{}, func(e suture.Event) {
-		t.Log("dns-runners event:", e)
-	}, zaptest.NewLogger(t))
+	m := dns.NewManager(
+		&testReader{},
+		func(e suture.Event) { t.Log("dns-runners event:", e) },
+		zaptest.NewLogger(t),
+	)
 
 	m.AllowNodeResolving(true)
 
@@ -167,9 +164,13 @@ func newManager(t *testing.T, nameservers ...string) func() {
 		p := proxy.NewProxy(ns, net.JoinHostPort(ns, "53"), "dns")
 		p.Start(500 * time.Millisecond)
 
-		t.Cleanup(p.Stop)
-
 		return p
+	})
+
+	t.Cleanup(func() {
+		for _, p := range pxs {
+			p.Close() // We had to manually add this method to the coredns Proxy type.
+		}
 	})
 
 	ctx, cancel := context.WithCancel(context.Background()) //nolint:usetesting

@@ -150,15 +150,21 @@ func existingConnections(ctx context.Context, r controller.Runtime) (func(*netwo
 			return
 		}
 
+		defer func(c *network.DNSConn) {
+			if c != nil {
+				c.Close()
+			}
+		}(spec.Conn)
+
 		if conn, ok := existingConn[remoteAddr]; ok {
-			spec.Conn = conn
+			spec.Conn = conn.NewRef()
 
 			l.Debug("reusing existing upstream connection", zap.String("addr", remoteAddr))
 
 			return
 		}
 
-		spec.Conn = network.NewDNSConn(proxy.NewProxy(remoteHost, remoteAddr, "dns"), l)
+		spec.Conn = network.NewDNSConn(proxy.NewProxy(remoteHost, remoteAddr, "dns"))
 
 		l.Debug("created new upstream connection", zap.String("addr", remoteAddr))
 
@@ -177,14 +183,20 @@ func cleanupUpstream(ctx context.Context, r controller.Runtime, touchedIDs map[r
 	for val := range list.All() {
 		md := val.Metadata()
 
-		if _, ok := touchedIDs[md.ID()]; !ok {
-			if err = r.Destroy(ctx, md); err != nil {
-				l.Error("error destroying upstream", zap.Error(err), zap.String("id", md.ID()))
-
-				return
-			}
-
-			l.Debug("destroyed dns upstream", zap.String("addr", md.ID()))
+		if _, ok := touchedIDs[md.ID()]; ok {
+			continue
 		}
+
+		if conn := val.TypedSpec().Value.Conn; conn != nil {
+			conn.Close()
+		}
+
+		if err = r.Destroy(ctx, md); err != nil {
+			l.Error("error destroying upstream", zap.Error(err), zap.String("id", md.ID()))
+
+			return
+		}
+
+		l.Debug("destroyed dns upstream", zap.String("addr", md.ID()))
 	}
 }

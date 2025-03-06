@@ -9,13 +9,11 @@ import (
 	"errors"
 	"io"
 	"net"
-	"strings"
 	"time"
 
 	"github.com/miekg/dns"
 	"go.uber.org/zap"
-
-	"github.com/siderolabs/talos/internal/app/machined/pkg/xcontext"
+	"golang.org/x/sync/errgroup"
 )
 
 // RunnerOptions is a [Runner] options.
@@ -52,18 +50,17 @@ type Runner struct {
 	logger *zap.Logger
 }
 
-// Serve starts the DNS server.
+// Serve starts the DNS server. Implements [suture.Service] interface.
 func (r *Runner) Serve(ctx context.Context) error {
-	detach := xcontext.AfterFuncSync(ctx, r.close)
-	defer func() {
-		if !detach() {
-			return
-		}
+	eg, ctx := errgroup.WithContext(ctx)
 
-		r.close()
-	}()
+	eg.Go(r.srv.ActivateAndServe)
 
-	return r.srv.ActivateAndServe()
+	<-ctx.Done()
+
+	r.close()
+
+	return eg.Wait()
 }
 
 func (r *Runner) close() {
@@ -75,34 +72,24 @@ func (r *Runner) close() {
 		l = l.With(zap.String("net", "udp"), zap.String("local_addr", r.srv.PacketConn.LocalAddr().String()))
 	}
 
-	for {
-		err := r.srv.Shutdown()
-		if err != nil {
-			if strings.Contains(err.Error(), "server not started") {
-				// There a possible scenario where `go func()` not yet reached `ActivateAndServe` and yielded CPU
-				// time to another goroutine and then this closure reached `Shutdown`. In that case
-				// `dns.Server.ActivateAndServe` will actually start after `Shutdown` and this closure will block forever
-				// because `go func()` will never exit and close `done` channel.
-				continue
-			}
+	closer := io.Closer(r.srv.Listener)
+	if closer == nil {
+		closer = r.srv.PacketConn
+	}
 
-			l.Error("error shutting down dns server", zap.Error(err))
+	if closer != nil {
+		if err := closer.Close(); err != nil {
+			l.Error("error closing dns server listener", zap.Error(err))
+		} else {
+			l.Debug("dns server listener closed")
 		}
+	}
 
-		closer := io.Closer(r.srv.Listener)
-		if closer == nil {
-			closer = r.srv.PacketConn
-		}
+	sCtx, sCancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer sCancel()
 
-		if closer != nil {
-			err = closer.Close()
-			if err != nil && !errors.Is(err, net.ErrClosed) {
-				l.Error("error closing dns server listener", zap.Error(err))
-			} else {
-				l.Debug("dns server listener closed")
-			}
-		}
-
-		break
+	err := r.srv.ShutdownContext(sCtx)
+	if err != nil && !errors.Is(err, net.ErrClosed) {
+		l.Error("error shutting down dns server", zap.Error(err))
 	}
 }
