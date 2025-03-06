@@ -1160,7 +1160,7 @@ const (
 	DashboardTTY = 2
 
 	// FlannelVersion is the version of flannel to use.
-	FlannelVersion = "v0.26.4"
+	FlannelVersion = "v0.26.5"
 
 	// PlatformMetal is the name of the metal platform.
 	PlatformMetal = "metal"
