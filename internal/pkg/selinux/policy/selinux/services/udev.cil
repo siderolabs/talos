@@ -69,6 +69,8 @@
 (allow udev_t module_t (system (module_load module_request)))
 (allow udev_t self (capability (sys_module)))
 (allow udev_t self (cap_userns (sys_module)))
+(allow udev_t kernel_t (system (module_load module_request)))
+(allow kernel_t self (system (module_request)))
 
 ; Allow udev to read rules files
 (allow udev_t udev_rules_t (fs_classes (ro ioctl)))

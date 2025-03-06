@@ -5,7 +5,7 @@
 (type pod_containerd_socket_t)
 (call system_socket_f (pod_containerd_socket_t))
 ; Shim and client sockets
-(allow pod_containerd_t run_t (dir (write add_name)))
+(allow pod_containerd_t run_t (fs_classes (rw)))
 (typeattribute not_pod_containerd_socket_t)
 (typeattributeset not_pod_containerd_socket_t (not pod_containerd_socket_t))
 (typetransition pod_containerd_t not_pod_containerd_socket_t sock_file pod_containerd_socket_t)
@@ -54,6 +54,14 @@
 
 ; Shim socket
 (allow pod_containerd_t pod_containerd_socket_t (fs_classes (rw)))
+
+; local-path-provisioner
+(allow pod_containerd_t ephemeral_t (fs_classes (rw)))
+
+; userns tests cause this
+; TODO: why is ptrace needed?
+(allow pod_containerd_t self (process (ptrace)))
+(allow pod_containerd_t self (user_namespace (create)))
 
 ; Common rules for containerd accessing system
 (typeattributeset containerd_p pod_containerd_t)
@@ -160,6 +168,3 @@
 
 (type cni_state_t)
 (call protected_f (cni_state_t))
-
-; /run/flannel
-(allow pod_t pod_containerd_run_t (fs_classes (rw)))
