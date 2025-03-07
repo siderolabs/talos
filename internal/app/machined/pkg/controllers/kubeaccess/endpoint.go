@@ -148,10 +148,10 @@ func (ctrl *EndpointController) updateTalosEndpoints(ctx context.Context, logger
 			return fmt.Errorf("error getting endpoints: %w", err)
 		}
 
-		var newEndpoints *corev1.Endpoints
+		var newEndpoints *corev1.Endpoints //nolint:staticcheck
 
 		if apierrors.IsNotFound(err) {
-			newEndpoints = &corev1.Endpoints{
+			newEndpoints = &corev1.Endpoints{ //nolint:staticcheck
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      constants.KubernetesTalosAPIServiceName,
 					Namespace: constants.KubernetesTalosAPIServiceNamespace,
@@ -165,7 +165,7 @@ func (ctrl *EndpointController) updateTalosEndpoints(ctx context.Context, logger
 			newEndpoints = oldEndpoints.DeepCopy()
 		}
 
-		newEndpoints.Subsets = []corev1.EndpointSubset{
+		newEndpoints.Subsets = []corev1.EndpointSubset{ //nolint:staticcheck
 			{
 				Ports: []corev1.EndpointPort{
 					{

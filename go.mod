@@ -35,16 +35,16 @@ replace github.com/insomniacslk/dhcp => github.com/smira/dhcp v0.0.0-20241001122
 
 // Kubernetes dependencies sharing the same version.
 require (
-	k8s.io/api v0.33.0-alpha.2
-	k8s.io/apimachinery v0.33.0-alpha.2
-	k8s.io/apiserver v0.33.0-alpha.2
-	k8s.io/client-go v0.33.0-alpha.2
-	k8s.io/component-base v0.33.0-alpha.2
-	k8s.io/cri-api v0.33.0-alpha.2
-	k8s.io/kube-scheduler v0.33.0-alpha.2
-	k8s.io/kubectl v0.33.0-alpha.2
-	k8s.io/kubelet v0.33.0-alpha.2
-	k8s.io/pod-security-admission v0.33.0-alpha.2
+	k8s.io/api v0.33.0-alpha.3
+	k8s.io/apimachinery v0.33.0-alpha.3
+	k8s.io/apiserver v0.33.0-alpha.3
+	k8s.io/client-go v0.33.0-alpha.3
+	k8s.io/component-base v0.33.0-alpha.3
+	k8s.io/cri-api v0.33.0-alpha.3
+	k8s.io/kube-scheduler v0.33.0-alpha.3
+	k8s.io/kubectl v0.33.0-alpha.3
+	k8s.io/kubelet v0.33.0-alpha.3
+	k8s.io/pod-security-admission v0.33.0-alpha.3
 )
 
 require (
@@ -152,7 +152,7 @@ require (
 	github.com/siderolabs/go-debug v0.5.0
 	github.com/siderolabs/go-kmsg v0.1.4
 	github.com/siderolabs/go-kubeconfig v0.1.0
-	github.com/siderolabs/go-kubernetes v0.2.18
+	github.com/siderolabs/go-kubernetes v0.2.19
 	github.com/siderolabs/go-loadbalancer v0.4.0
 	github.com/siderolabs/go-pcidb v0.3.0
 	github.com/siderolabs/go-pointer v1.0.0
@@ -274,7 +274,7 @@ require (
 	github.com/google/go-cmp v0.6.0 // indirect
 	github.com/google/gofuzz v1.2.0 // indirect
 	github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510 // indirect
-	github.com/gorilla/websocket v1.5.1 // indirect
+	github.com/gorilla/websocket v1.5.3 // indirect
 	github.com/gosuri/uilive v0.0.4 // indirect
 	github.com/gregjones/httpcache v0.0.0-20190611155906-901d90724c79 // indirect
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.26.1 // indirect
@@ -349,7 +349,7 @@ require (
 	go.etcd.io/etcd/server/v3 v3.5.18 // indirect
 	go.opencensus.io v0.24.0 // indirect
 	go.opentelemetry.io/auto/sdk v1.1.0 // indirect
-	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.56.0 // indirect
+	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.58.0 // indirect
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.58.0 // indirect
 	go.opentelemetry.io/otel v1.33.0 // indirect
 	go.opentelemetry.io/otel/metric v1.33.0 // indirect
@@ -366,7 +366,7 @@ require (
 	gopkg.in/evanphx/json-patch.v4 v4.12.0 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
-	k8s.io/cli-runtime v0.33.0-alpha.2 // indirect
+	k8s.io/cli-runtime v0.33.0-alpha.3 // indirect
 	k8s.io/kube-openapi v0.0.0-20241212222426-2c72e554b1e7 // indirect
 	k8s.io/utils v0.0.0-20241104100929-3ea5e8cea738 // indirect
 	kernel.org/pub/linux/libs/security/libcap/psx v1.2.73 // indirect

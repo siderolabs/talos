@@ -143,7 +143,7 @@ func (ctrl *KubeletSpecController) Run(ctx context.Context, r controller.Runtime
 			args["kubeconfig"] = constants.KubeletKubeconfig
 		}
 
-		if cfgSpec.CloudProviderExternal {
+		if cfgSpec.CloudProviderExternal && !kubeletVersion.CloudProviderFlagRemoved() {
 			args["cloud-provider"] = "external"
 		}
 
