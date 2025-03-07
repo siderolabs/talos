@@ -1697,6 +1697,10 @@ spec:
             - only-on-schedule
           environment:
             PLATFORM: linux/amd64
+        - name: build
+          conditions:
+            - only-on-schedule
+          command: talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager
         - name: image-cache
           command: cache-create
           environment:
