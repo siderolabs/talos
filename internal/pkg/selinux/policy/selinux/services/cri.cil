@@ -57,11 +57,15 @@
 
 ; local-path-provisioner
 (allow pod_containerd_t ephemeral_t (fs_classes (rw)))
+(allow pod_t ephemeral_t (fs_classes (rw)))
 
 ; userns tests cause this
 ; TODO: why is ptrace needed?
 (allow pod_containerd_t self (process (ptrace)))
 (allow pod_containerd_t self (user_namespace (create)))
+
+; cilium
+(allow pod_containerd_t pod_t (unix_stream_socket (connectto)))
 
 ; Common rules for containerd accessing system
 (typeattributeset containerd_p pod_containerd_t)

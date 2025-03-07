@@ -48,6 +48,9 @@
 (allow installer_t unlabeled_t (fs_classes (rw)))
 (allow installer_t fs_t (filesystem (unmount mount)))
 
+; efibootmgr used for installing in UEFI mode
+(allow installer_t efivarfs_t (fs_classes (rw)))
+
 ; Talk to machined
 (allow installer_t machine_socket_t (sock_file (write)))
 (allow installer_t init_t (unix_stream_socket (connectto)))
