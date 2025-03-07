@@ -208,50 +208,50 @@ RUN ["/toolchain/bin/mkdir", "/bin", "/tmp"]
 RUN ["/toolchain/bin/ln", "-svf", "/toolchain/bin/bash", "/bin/sh"]
 RUN ["/toolchain/bin/ln", "-svf", "/toolchain/etc/ssl", "/etc/ssl"]
 ARG GOLANGCILINT_VERSION
-RUN --mount=type=cache,target=/.cache go install github.com/golangci/golangci-lint/cmd/golangci-lint@${GOLANGCILINT_VERSION} \
+RUN --mount=type=cache,target=/.cache,id=talos/.cache go install github.com/golangci/golangci-lint/cmd/golangci-lint@${GOLANGCILINT_VERSION} \
 	&& mv /go/bin/golangci-lint /toolchain/go/bin/golangci-lint
 ARG GOIMPORTS_VERSION
-RUN --mount=type=cache,target=/.cache go install golang.org/x/tools/cmd/goimports@${GOIMPORTS_VERSION} \
+RUN --mount=type=cache,target=/.cache,id=talos/.cache go install golang.org/x/tools/cmd/goimports@${GOIMPORTS_VERSION} \
     && mv /go/bin/goimports /toolchain/go/bin/goimports
 ARG GOFUMPT_VERSION
-RUN --mount=type=cache,target=/.cache go install mvdan.cc/gofumpt@${GOFUMPT_VERSION} \
+RUN --mount=type=cache,target=/.cache,id=talos/.cache go install mvdan.cc/gofumpt@${GOFUMPT_VERSION} \
     && mv /go/bin/gofumpt /toolchain/go/bin/gofumpt
 ARG DEEPCOPY_VERSION
-RUN --mount=type=cache,target=/.cache go install github.com/siderolabs/deep-copy@${DEEPCOPY_VERSION} \
+RUN --mount=type=cache,target=/.cache,id=talos/.cache go install github.com/siderolabs/deep-copy@${DEEPCOPY_VERSION} \
     && mv /go/bin/deep-copy /toolchain/go/bin/deep-copy
 ARG STRINGER_VERSION
-RUN --mount=type=cache,target=/.cache go install golang.org/x/tools/cmd/stringer@${STRINGER_VERSION} \
+RUN --mount=type=cache,target=/.cache,id=talos/.cache go install golang.org/x/tools/cmd/stringer@${STRINGER_VERSION} \
     && mv /go/bin/stringer /toolchain/go/bin/stringer
 ARG ENUMER_VERSION
-RUN --mount=type=cache,target=/.cache go install github.com/dmarkham/enumer@${ENUMER_VERSION} \
+RUN --mount=type=cache,target=/.cache,id=talos/.cache go install github.com/dmarkham/enumer@${ENUMER_VERSION} \
     && mv /go/bin/enumer /toolchain/go/bin/enumer
 ARG DEEPCOPY_GEN_VERSION
-RUN --mount=type=cache,target=/.cache go install k8s.io/code-generator/cmd/deepcopy-gen@${DEEPCOPY_GEN_VERSION} \
+RUN --mount=type=cache,target=/.cache,id=talos/.cache go install k8s.io/code-generator/cmd/deepcopy-gen@${DEEPCOPY_GEN_VERSION} \
     && mv /go/bin/deepcopy-gen /toolchain/go/bin/deepcopy-gen
 ARG VTPROTOBUF_VERSION
-RUN --mount=type=cache,target=/.cache go install github.com/planetscale/vtprotobuf/cmd/protoc-gen-go-vtproto@${VTPROTOBUF_VERSION} \
+RUN --mount=type=cache,target=/.cache,id=talos/.cache go install github.com/planetscale/vtprotobuf/cmd/protoc-gen-go-vtproto@${VTPROTOBUF_VERSION} \
     && mv /go/bin/protoc-gen-go-vtproto /toolchain/go/bin/protoc-gen-go-vtproto
 ARG IMPORTVET_VERSION
-RUN --mount=type=cache,target=/.cache go install github.com/siderolabs/importvet/cmd/importvet@${IMPORTVET_VERSION} \
+RUN --mount=type=cache,target=/.cache,id=talos/.cache go install github.com/siderolabs/importvet/cmd/importvet@${IMPORTVET_VERSION} \
     && mv /go/bin/importvet /toolchain/go/bin/importvet
-RUN --mount=type=cache,target=/.cache go install golang.org/x/vuln/cmd/govulncheck@latest \
+RUN --mount=type=cache,target=/.cache,id=talos/.cache go install golang.org/x/vuln/cmd/govulncheck@latest \
     && mv /go/bin/govulncheck /toolchain/go/bin/govulncheck
 ARG PROTOTOOL_VERSION
-RUN --mount=type=cache,target=/.cache go install github.com/uber/prototool/cmd/prototool@${PROTOTOOL_VERSION} \
+RUN --mount=type=cache,target=/.cache,id=talos/.cache go install github.com/uber/prototool/cmd/prototool@${PROTOTOOL_VERSION} \
     && mv /go/bin/prototool /toolchain/go/bin/prototool
 ARG PROTOC_GEN_DOC_VERSION
-RUN --mount=type=cache,target=/.cache go install github.com/pseudomuto/protoc-gen-doc/cmd/protoc-gen-doc@${PROTOC_GEN_DOC_VERSION} \
+RUN --mount=type=cache,target=/.cache,id=talos/.cache go install github.com/pseudomuto/protoc-gen-doc/cmd/protoc-gen-doc@${PROTOC_GEN_DOC_VERSION} \
     && mv /go/bin/protoc-gen-doc /toolchain/go/bin/protoc-gen-doc
 COPY ./hack/docgen /go/src/github.com/siderolabs/talos-hack-docgen
-RUN --mount=type=cache,target=/.cache cd /go/src/github.com/siderolabs/talos-hack-docgen \
+RUN --mount=type=cache,target=/.cache,id=talos/.cache cd /go/src/github.com/siderolabs/talos-hack-docgen \
     && go build -o docgen . \
     && mv docgen /toolchain/go/bin/
 COPY ./hack/gotagsrewrite /go/src/github.com/siderolabs/gotagsrewrite
-RUN --mount=type=cache,target=/.cache cd /go/src/github.com/siderolabs/gotagsrewrite \
+RUN --mount=type=cache,target=/.cache,id=talos/.cache cd /go/src/github.com/siderolabs/gotagsrewrite \
     && go build -o gotagsrewrite . \
     && mv gotagsrewrite /toolchain/go/bin/
 COPY ./hack/structprotogen /go/src/github.com/siderolabs/structprotogen
-RUN --mount=type=cache,target=/.cache cd /go/src/github.com/siderolabs/structprotogen \
+RUN --mount=type=cache,target=/.cache,id=talos/.cache cd /go/src/github.com/siderolabs/structprotogen \
     && go build -o structprotogen . \
     && mv structprotogen /toolchain/go/bin/
 
@@ -278,10 +278,10 @@ FROM build AS build-go
 COPY ./go.mod ./go.sum ./
 COPY ./pkg/machinery/go.mod ./pkg/machinery/go.sum ./pkg/machinery/
 WORKDIR /src/pkg/machinery
-RUN --mount=type=cache,target=/.cache go mod download
+RUN --mount=type=cache,target=/.cache,id=talos/.cache go mod download
 WORKDIR /src
-RUN --mount=type=cache,target=/.cache go mod download
-RUN --mount=type=cache,target=/.cache go mod verify
+RUN --mount=type=cache,target=/.cache,id=talos/.cache go mod download
+RUN --mount=type=cache,target=/.cache,id=talos/.cache go mod verify
 
 # The generate target generates code from protobuf service definitions and machinery config.
 
@@ -289,8 +289,8 @@ RUN --mount=type=cache,target=/.cache go mod verify
 FROM build AS api-descriptors-build
 WORKDIR /src/api
 COPY api .
-RUN --mount=type=cache,target=/.cache prototool format --overwrite --protoc-bin-path=/toolchain/bin/protoc --protoc-wkt-path=/toolchain/include
-RUN --mount=type=cache,target=/.cache prototool break descriptor-set --output-path=api.descriptors --protoc-bin-path=/toolchain/bin/protoc --protoc-wkt-path=/toolchain/include
+RUN --mount=type=cache,target=/.cache,id=talos/.cache prototool format --overwrite --protoc-bin-path=/toolchain/bin/protoc --protoc-wkt-path=/toolchain/include
+RUN --mount=type=cache,target=/.cache,id=talos/.cache prototool break descriptor-set --output-path=api.descriptors --protoc-bin-path=/toolchain/bin/protoc --protoc-wkt-path=/toolchain/include
 
 FROM --platform=${BUILDPLATFORM} scratch AS api-descriptors
 COPY --from=api-descriptors-build /src/api/api.descriptors /api/api.descriptors
@@ -299,8 +299,7 @@ COPY --from=api-descriptors-build /src/api/api.descriptors /api/api.descriptors
 FROM build AS proto-format-build
 WORKDIR /src/api
 COPY api .
-RUN --mount=type=cache,target=/.cache prototool format --overwrite --protoc-bin-path=/toolchain/bin/protoc --protoc-wkt-path=/toolchain/include
-
+RUN --mount=type=cache,target=/.cache,id=talos/.cache prototool format --overwrite --protoc-bin-path=/toolchain/bin/protoc --protoc-wkt-path=/toolchain/include
 FROM --platform=${BUILDPLATFORM} scratch AS fmt-protobuf
 COPY --from=proto-format-build /src/api/ /api/
 
@@ -308,15 +307,14 @@ COPY --from=proto-format-build /src/api/ /api/
 FROM build-go AS go-generate
 COPY ./pkg ./pkg
 COPY ./hack/boilerplate.txt ./hack/boilerplate.txt
-RUN --mount=type=cache,target=/.cache go generate ./pkg/...
+RUN --mount=type=cache,target=/.cache,id=talos/.cache go generate ./pkg/...
 RUN goimports -w -local github.com/siderolabs/talos ./pkg/
 RUN gofumpt -w ./pkg/
 WORKDIR /src/pkg/machinery
-RUN --mount=type=cache,target=/.cache go generate ./...
+RUN --mount=type=cache,target=/.cache,id=talos/.cache go generate ./...
 RUN gotagsrewrite .
 RUN goimports -w -local github.com/siderolabs/talos ./
 RUN gofumpt -w ./
-
 FROM go-generate AS gen-proto-go
 WORKDIR /src/
 RUN --mount=type=cache,target=/.cache structprotogen github.com/siderolabs/talos/pkg/machinery/... /api/resource/definitions/
@@ -451,15 +449,15 @@ COPY --from=generate /internal/app/machined/pkg/controllers/secrets/data/ ./inte
 COPY --from=generate /internal/pkg/secureboot/database/certs/ ./internal/pkg/secureboot/database/certs/
 COPY --from=generate /internal/pkg/selinux/ ./internal/pkg/selinux/
 COPY --from=embed / ./
-RUN --mount=type=cache,target=/.cache go list all >/dev/null
+RUN --mount=type=cache,target=/.cache,id=talos/.cache go list all >/dev/null
 WORKDIR /src/pkg/machinery
-RUN --mount=type=cache,target=/.cache go list all >/dev/null
+RUN --mount=type=cache,target=/.cache,id=talos/.cache go list all >/dev/null
 WORKDIR /src
 
 # The vulncheck target runs the vulnerability check tool.
 
 FROM base AS lint-vulncheck
-RUN --mount=type=cache,target=/.cache govulncheck ./...
+RUN --mount=type=cache,target=/.cache,id=talos/.cache govulncheck ./...
 
 # The init target builds the init binary.
 
@@ -467,7 +465,7 @@ FROM base AS init-build-amd64
 WORKDIR /src/internal/app/init
 ARG GO_BUILDFLAGS
 ARG GO_LDFLAGS
-RUN --mount=type=cache,target=/.cache GOOS=linux GOARCH=amd64 GOAMD64=v1 go build ${GO_BUILDFLAGS} -ldflags "${GO_LDFLAGS}" -o /init
+RUN --mount=type=cache,target=/.cache,id=talos/.cache GOOS=linux GOARCH=amd64 GOAMD64=v1 go build ${GO_BUILDFLAGS} -ldflags "${GO_LDFLAGS}" -o /init
 RUN chmod +x /init
 
 FROM base AS init-build-arm64
@@ -489,14 +487,14 @@ WORKDIR /src/internal/app/machined
 ARG GO_BUILDFLAGS
 ARG GO_LDFLAGS
 ARG GOAMD64
-RUN --mount=type=cache,target=/.cache GOOS=linux GOARCH=amd64 GOAMD64=${GOAMD64} go build ${GO_BUILDFLAGS} -ldflags "${GO_LDFLAGS}" -o /machined
+RUN --mount=type=cache,target=/.cache,id=talos/.cache GOOS=linux GOARCH=amd64 GOAMD64=${GOAMD64} go build ${GO_BUILDFLAGS} -ldflags "${GO_LDFLAGS}" -o /machined
 RUN chmod +x /machined
 
 FROM base AS machined-build-arm64
 WORKDIR /src/internal/app/machined
 ARG GO_BUILDFLAGS
 ARG GO_LDFLAGS
-RUN --mount=type=cache,target=/.cache GOOS=linux GOARCH=arm64 go build ${GO_BUILDFLAGS} -ldflags "${GO_LDFLAGS}" -o /machined
+RUN --mount=type=cache,target=/.cache,id=talos/.cache GOOS=linux GOARCH=arm64 go build ${GO_BUILDFLAGS} -ldflags "${GO_LDFLAGS}" -o /machined
 RUN chmod +x /machined
 
 FROM machined-build-${TARGETARCH} AS machined-build
@@ -511,7 +509,7 @@ WORKDIR /src/cmd/talosctl
 ARG GO_BUILDFLAGS_TALOSCTL
 ARG GO_LDFLAGS
 ARG GOAMD64
-RUN --mount=type=cache,target=/.cache GOOS=linux GOARCH=amd64 GOAMD64=${GOAMD64} go build ${GO_BUILDFLAGS_TALOSCTL} -ldflags "${GO_LDFLAGS}" -o /talosctl-linux-amd64
+RUN --mount=type=cache,target=/.cache,id=talos/.cache GOOS=linux GOARCH=amd64 GOAMD64=${GOAMD64} go build ${GO_BUILDFLAGS_TALOSCTL} -ldflags "${GO_LDFLAGS}" -o /talosctl-linux-amd64
 RUN chmod +x /talosctl-linux-amd64
 RUN touch --date="@${SOURCE_DATE_EPOCH}" /talosctl-linux-amd64
 
@@ -519,7 +517,7 @@ FROM base AS talosctl-linux-arm64-build
 WORKDIR /src/cmd/talosctl
 ARG GO_BUILDFLAGS_TALOSCTL
 ARG GO_LDFLAGS
-RUN --mount=type=cache,target=/.cache GOOS=linux GOARCH=arm64 go build ${GO_BUILDFLAGS_TALOSCTL} -ldflags "${GO_LDFLAGS}" -o /talosctl-linux-arm64
+RUN --mount=type=cache,target=/.cache,id=talos/.cache GOOS=linux GOARCH=arm64 go build ${GO_BUILDFLAGS_TALOSCTL} -ldflags "${GO_LDFLAGS}" -o /talosctl-linux-arm64
 RUN chmod +x /talosctl-linux-arm64
 RUN touch --date="@${SOURCE_DATE_EPOCH}" /talosctl-linux-arm64
 
@@ -527,7 +525,7 @@ FROM base AS talosctl-linux-armv7-build
 WORKDIR /src/cmd/talosctl
 ARG GO_BUILDFLAGS_TALOSCTL
 ARG GO_LDFLAGS
-RUN --mount=type=cache,target=/.cache GOOS=linux GOARCH=arm GOARM=7 go build ${GO_BUILDFLAGS_TALOSCTL} -ldflags "${GO_LDFLAGS}" -o /talosctl-linux-armv7
+RUN --mount=type=cache,target=/.cache,id=talos/.cache GOOS=linux GOARCH=arm GOARM=7 go build ${GO_BUILDFLAGS_TALOSCTL} -ldflags "${GO_LDFLAGS}" -o /talosctl-linux-armv7
 RUN chmod +x /talosctl-linux-armv7
 RUN touch --date="@${SOURCE_DATE_EPOCH}" /talosctl-linux-armv7
 
@@ -536,7 +534,7 @@ WORKDIR /src/cmd/talosctl
 ARG GO_BUILDFLAGS_TALOSCTL
 ARG GO_LDFLAGS
 ARG GOAMD64
-RUN --mount=type=cache,target=/.cache GOOS=darwin GOARCH=amd64 GOAMD64=${GOAMD64} go build ${GO_BUILDFLAGS_TALOSCTL} -ldflags "${GO_LDFLAGS}" -o /talosctl-darwin-amd64
+RUN --mount=type=cache,target=/.cache,id=talos/.cache GOOS=darwin GOARCH=amd64 GOAMD64=${GOAMD64} go build ${GO_BUILDFLAGS_TALOSCTL} -ldflags "${GO_LDFLAGS}" -o /talosctl-darwin-amd64
 RUN chmod +x /talosctl-darwin-amd64
 RUN touch --date="@${SOURCE_DATE_EPOCH}" /talosctl-darwin-amd64
 
@@ -544,7 +542,7 @@ FROM base AS talosctl-darwin-arm64-build
 WORKDIR /src/cmd/talosctl
 ARG GO_BUILDFLAGS_TALOSCTL
 ARG GO_LDFLAGS
-RUN --mount=type=cache,target=/.cache GOOS=darwin GOARCH=arm64 go build ${GO_BUILDFLAGS_TALOSCTL} -ldflags "${GO_LDFLAGS}" -o /talosctl-darwin-arm64
+RUN --mount=type=cache,target=/.cache,id=talos/.cache GOOS=darwin GOARCH=arm64 go build ${GO_BUILDFLAGS_TALOSCTL} -ldflags "${GO_LDFLAGS}" -o /talosctl-darwin-arm64
 RUN chmod +x /talosctl-darwin-arm64
 RUN touch --date="@${SOURCE_DATE_EPOCH}" talosctl-darwin-arm64
 
@@ -553,14 +551,14 @@ WORKDIR /src/cmd/talosctl
 ARG GO_BUILDFLAGS_TALOSCTL
 ARG GO_LDFLAGS
 ARG GOAMD64
-RUN --mount=type=cache,target=/.cache GOOS=windows GOARCH=amd64 GOAMD64=${GOAMD64} go build ${GO_BUILDFLAGS_TALOSCTL} -ldflags "${GO_LDFLAGS}" -o /talosctl-windows-amd64.exe
+RUN --mount=type=cache,target=/.cache,id=talos/.cache GOOS=windows GOARCH=amd64 GOAMD64=${GOAMD64} go build ${GO_BUILDFLAGS_TALOSCTL} -ldflags "${GO_LDFLAGS}" -o /talosctl-windows-amd64.exe
 RUN touch --date="@${SOURCE_DATE_EPOCH}" /talosctl-windows-amd64.exe
 
 FROM base AS talosctl-windows-arm64-build
 WORKDIR /src/cmd/talosctl
 ARG GO_BUILDFLAGS_TALOSCTL
 ARG GO_LDFLAGS
-RUN --mount=type=cache,target=/.cache GOOS=windows GOARCH=arm64 go build ${GO_BUILDFLAGS_TALOSCTL} -ldflags "${GO_LDFLAGS}" -o /talosctl-windows-arm64.exe
+RUN --mount=type=cache,target=/.cache,id=talos/.cache GOOS=windows GOARCH=arm64 go build ${GO_BUILDFLAGS_TALOSCTL} -ldflags "${GO_LDFLAGS}" -o /talosctl-windows-arm64.exe
 RUN touch --date="@${SOURCE_DATE_EPOCH}" /talosctl-windows-arm64.exe
 
 FROM base AS talosctl-freebsd-amd64-build
@@ -568,14 +566,14 @@ WORKDIR /src/cmd/talosctl
 ARG GO_BUILDFLAGS_TALOSCTL
 ARG GO_LDFLAGS
 ARG GOAMD64
-RUN --mount=type=cache,target=/.cache GOOS=freebsd GOARCH=amd64 GOAMD64=${GOAMD64} go build ${GO_BUILDFLAGS_TALOSCTL} -ldflags "${GO_LDFLAGS}" -o /talosctl-freebsd-amd64
+RUN --mount=type=cache,target=/.cache,id=talos/.cache GOOS=freebsd GOARCH=amd64 GOAMD64=${GOAMD64} go build ${GO_BUILDFLAGS_TALOSCTL} -ldflags "${GO_LDFLAGS}" -o /talosctl-freebsd-amd64
 RUN touch --date="@${SOURCE_DATE_EPOCH}" /talosctl-freebsd-amd64
 
 FROM base AS talosctl-freebsd-arm64-build
 WORKDIR /src/cmd/talosctl
 ARG GO_BUILDFLAGS_TALOSCTL
 ARG GO_LDFLAGS
-RUN --mount=type=cache,target=/.cache GOOS=freebsd GOARCH=arm64 go build ${GO_BUILDFLAGS_TALOSCTL} -ldflags "${GO_LDFLAGS}" -o /talosctl-freebsd-arm64
+RUN --mount=type=cache,target=/.cache,id=talos/.cache GOOS=freebsd GOARCH=arm64 go build ${GO_BUILDFLAGS_TALOSCTL} -ldflags "${GO_LDFLAGS}" -o /talosctl-freebsd-arm64
 RUN touch --date="@${SOURCE_DATE_EPOCH}" /talosctl-freebsd-arm64
 
 FROM scratch AS talosctl-linux-amd64
@@ -913,7 +911,7 @@ ARG GO_BUILDFLAGS
 ARG GO_LDFLAGS
 WORKDIR /src/cmd/installer
 ARG TARGETARCH
-RUN --mount=type=cache,target=/.cache GOOS=linux GOARCH=${TARGETARCH} go build ${GO_BUILDFLAGS} -ldflags "${GO_LDFLAGS}" -o /installer
+RUN --mount=type=cache,target=/.cache,id=talos/.cache GOOS=linux GOARCH=${TARGETARCH} go build ${GO_BUILDFLAGS} -ldflags "${GO_LDFLAGS}" -o /installer
 RUN chmod +x /installer
 
 FROM alpine:3.20.3 AS unicode-pf2
@@ -1004,7 +1002,7 @@ COPY --from=pkg-ca-certificates / /
 ARG TESTPKGS
 ENV PLATFORM=container
 ARG GO_LDFLAGS
-RUN --security=insecure --mount=type=cache,id=testspace,target=/tmp --mount=type=cache,target=/.cache go test -failfast -v \
+RUN --security=insecure --mount=type=cache,id=testspace,target=/tmp --mount=type=cache,target=/.cache,id=talos/.cache go test -failfast -v \
     -ldflags "${GO_LDFLAGS}" \
     -covermode=atomic -coverprofile=coverage.txt -coverpkg=${TESTPKGS} -count 1 -p 4 ${TESTPKGS}
 FROM scratch AS unit-tests
@@ -1020,7 +1018,7 @@ ARG TESTPKGS
 ENV PLATFORM=container
 ENV CGO_ENABLED=1
 ARG GO_LDFLAGS
-RUN --security=insecure --mount=type=cache,id=testspace,target=/tmp --mount=type=cache,target=/.cache go test -v \
+RUN --security=insecure --mount=type=cache,id=testspace,target=/tmp --mount=type=cache,target=/.cache,id=talos/.cache go test -v \
     -ldflags "${GO_LDFLAGS}" \
     -race -count 1 -p 4 ${TESTPKGS}
 
@@ -1030,7 +1028,7 @@ FROM base AS integration-test-linux-amd64-build
 ARG GO_BUILDFLAGS
 ARG GO_LDFLAGS
 ARG GOAMD64
-RUN --mount=type=cache,target=/.cache GOOS=linux GOARCH=amd64 GOAMD64=${GOAMD64} go test -v -c ${GO_BUILDFLAGS} \
+RUN --mount=type=cache,target=/.cache,id=talos/.cache GOOS=linux GOARCH=amd64 GOAMD64=${GOAMD64} go test -v -c ${GO_BUILDFLAGS} \
     -ldflags "${GO_LDFLAGS}" \
     -tags integration,integration_api,integration_cli,integration_k8s \
     ./internal/integration
@@ -1041,7 +1039,7 @@ COPY --from=integration-test-linux-amd64-build /src/integration.test /integratio
 FROM base AS integration-test-linux-arm64-build
 ARG GO_BUILDFLAGS
 ARG GO_LDFLAGS
-RUN --mount=type=cache,target=/.cache GOOS=linux GOARCH=arm64 go test -v -c ${GO_BUILDFLAGS} \
+RUN --mount=type=cache,target=/.cache,id=talos/.cache GOOS=linux GOARCH=arm64 go test -v -c ${GO_BUILDFLAGS} \
     -ldflags "${GO_LDFLAGS}" \
     -tags integration,integration_api,integration_cli,integration_k8s \
     ./internal/integration
@@ -1057,7 +1055,7 @@ FROM base AS integration-test-provision-linux-build
 ARG GO_BUILDFLAGS
 ARG GO_LDFLAGS
 ARG GOAMD64
-RUN --mount=type=cache,target=/.cache GOOS=linux GOARCH=amd64 GOAMD64=${GOAMD64} go test -v -c ${GO_BUILDFLAGS} \
+RUN --mount=type=cache,target=/.cache,id=talos/.cache GOOS=linux GOARCH=amd64 GOAMD64=${GOAMD64} go test -v -c ${GO_BUILDFLAGS} \
     -ldflags "${GO_LDFLAGS}" \
     -tags integration,integration_provision \
     ./internal/integration
@@ -1072,9 +1070,9 @@ ARG GO_LDFLAGS
 ARG GOAMD64
 WORKDIR /src/module-sig-verify
 COPY ./hack/module-sig-verify/go.mod ./hack/module-sig-verify/go.sum ./
-RUN --mount=type=cache,target=/.cache go mod download
+RUN --mount=type=cache,target=/.cache,id=talos/.cache go mod download
 COPY ./hack/module-sig-verify/main.go .
-RUN --mount=type=cache,target=/.cache GOOS=linux GOARCH=amd64 GOAMD64=${GOAMD64} go build -o module-sig-verify .
+RUN --mount=type=cache,target=/.cache,id=talos/.cache GOOS=linux GOARCH=amd64 GOAMD64=${GOAMD64} go build -o module-sig-verify .
 
 FROM scratch AS module-sig-verify-linux
 COPY --from=module-sig-verify-linux-build /src/module-sig-verify/module-sig-verify /module-sig-verify-linux-amd64
@@ -1085,22 +1083,22 @@ COPY .golangci.yml .
 ENV GOGC=50
 ENV GOLANGCI_LINT_CACHE=/.cache/lint
 RUN golangci-lint config verify --config .golangci.yml
-RUN --mount=type=cache,target=/.cache golangci-lint run --config .golangci.yml
+RUN --mount=type=cache,target=/.cache,id=talos/.cache,sharing=locked golangci-lint run --config .golangci.yml
 WORKDIR /src/pkg/machinery
-RUN --mount=type=cache,target=/.cache golangci-lint run --config ../../.golangci.yml
+RUN --mount=type=cache,target=/.cache,id=talos/.cache,sharing=locked golangci-lint run --config ../../.golangci.yml
 COPY ./hack/cloud-image-uploader /src/hack/cloud-image-uploader
 WORKDIR /src/hack/cloud-image-uploader
-RUN --mount=type=cache,target=/.cache golangci-lint run --config ../../.golangci.yml
+RUN --mount=type=cache,target=/.cache,id=talos/.cache,sharing=locked golangci-lint run --config ../../.golangci.yml
 WORKDIR /src
-RUN --mount=type=cache,target=/.cache importvet github.com/siderolabs/talos/...
+RUN --mount=type=cache,target=/.cache,id=talos/.cache importvet github.com/siderolabs/talos/...
 
 # The protolint target performs linting on protobuf files.
 
 FROM base AS lint-protobuf
 WORKDIR /src/api
 COPY api .
-RUN --mount=type=cache,target=/.cache prototool lint --protoc-bin-path=/toolchain/bin/protoc --protoc-wkt-path=/toolchain/include
-RUN --mount=type=cache,target=/.cache prototool break check --descriptor-set-path=api.descriptors --protoc-bin-path=/toolchain/bin/protoc --protoc-wkt-path=/toolchain/include
+RUN --mount=type=cache,target=/.cache,id=talos/.cache prototool lint --protoc-bin-path=/toolchain/bin/protoc --protoc-wkt-path=/toolchain/include
+RUN --mount=type=cache,target=/.cache,id=talos/.cache prototool break check --descriptor-set-path=api.descriptors --protoc-bin-path=/toolchain/bin/protoc --protoc-wkt-path=/toolchain/include
 
 # The markdownlint target performs linting on Markdown files.
 
@@ -1134,7 +1132,6 @@ RUN find . \
     -not -path './website/themes/**' \
     -print0 \
     | xargs -0 bun run --bun textlint
-
 # The docs target generates documentation.
 
 FROM base AS docs-build
@@ -1185,7 +1182,7 @@ COPY --from=extras-talosctl-cni-bundle-install /opt/cni/bin/ /talosctl-cni-bundl
 # The go-mod-outdated target lists all outdated modules.
 
 FROM base AS go-mod-outdated
-RUN --mount=type=cache,target=/.cache go install github.com/psampaz/go-mod-outdated@latest \
+RUN --mount=type=cache,target=/.cache,id=talos/.cache go install github.com/psampaz/go-mod-outdated@latest \
     && mv /go/bin/go-mod-outdated /toolchain/go/bin/go-mod-outdated
 COPY ./hack/cloud-image-uploader ./hack/cloud-image-uploader
 COPY ./hack/docgen ./hack/docgen
@@ -1193,7 +1190,7 @@ COPY ./hack/gotagsrewrite ./hack/gotagsrewrite
 COPY ./hack/module-sig-verify ./hack/module-sig-verify
 COPY ./hack/structprotogen ./hack/structprotogen
 # fail always to get the output back
-RUN --mount=type=cache,target=/.cache <<EOF
+RUN --mount=type=cache,target=/.cache,id=talos/.cache <<EOF
     for project in pkg/machinery . hack/cloud-image-uploader hack/docgen hack/gotagsrewrite hack/module-sig-verify hack/structprotogen; do
         echo -e "\n>>>> ${project}:" && \
         (cd "${project}" && go list -u -m -json all | go-mod-outdated -update -direct)
