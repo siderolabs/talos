@@ -74,8 +74,10 @@ data:
       "EnableIPv4": false,
       {{- end }}
       "Backend": {
-        "Type": "vxlan",
+        "Type": "{{ .BackendType }}"
+        {{- if eq .BackendType "vxlan" }},
         "Port": 4789
+        {{- end }}
       }
     }
 ---
