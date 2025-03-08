@@ -78,6 +78,11 @@ func (c *Containerd) DependsOn(runtime.Runtime) []string {
 	return nil
 }
 
+// Volumes implements the Service interface.
+func (c *Containerd) Volumes() []string {
+	return nil
+}
+
 // Runner implements the Service interface.
 func (c *Containerd) Runner(r runtime.Runtime) (runner.Runner, error) {
 	// Set the process arguments.

@@ -124,7 +124,7 @@ message MountRequestSpec {
 message MountSpec {
   string target_path = 1;
   string selinux_label = 2;
-  repeated string options = 3;
+  bool project_quota_support = 3;
 }
 
 // MountStatusSpec is the spec for MountStatus.
@@ -134,6 +134,7 @@ message MountStatusSpec {
   string source = 3;
   talos.resource.definitions.enums.BlockFilesystemType filesystem = 4;
   bool read_only = 5;
+  bool project_quota_support = 6;
 }
 
 // PartitionSpec is the spec for volume partitioning.
