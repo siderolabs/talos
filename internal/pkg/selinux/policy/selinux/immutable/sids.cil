@@ -60,8 +60,12 @@
 
 (sid any_socket)
 (sidcontext any_socket (system_u object_r unlabeled_t (systemLow systemLow)))
+
+(type initramfs_t)
+(roletype system_r initramfs_t)
 (sid init)
-(sidcontext init (system_u object_r unlabeled_t (systemLow systemLow)))
+(sidcontext init (system_u system_r initramfs_t (systemLow systemLow)))
+
 (sid file_labels)
 (sidcontext file_labels (system_u object_r unlabeled_t (systemLow systemLow)))
 (sid file)
