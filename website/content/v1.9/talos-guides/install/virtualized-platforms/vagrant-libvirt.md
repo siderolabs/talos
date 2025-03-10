@@ -180,7 +180,22 @@ Generate a machine configuration:
 talosctl gen config my-cluster https://192.168.121.100:6443 --install-disk /dev/vda
 ```
 
-Edit `controlplane.yaml` to add the virtual IP you picked to a network interface under `.machine.network.interfaces`, for example:
+Check your network interface name, e.g. `eth0` or `enp1s0`:
+```bash
+talosctl -n 192.168.121.203 get addresses --insecure
+```
+
+Sample output:
+```text
+NODE   NAMESPACE   TYPE            ID                                                VERSION   ADDRESS                                    LINK
+       network     AddressStatus   eth0/192.168.121.203/24                           1         192.168.121.203/24                         eth0
+       network     AddressStatus   eth0/2001:xxxx:xxxx:xxxx:xxxx:xx:xxxx:xxxx/64     1         2001:xxxx:xxxx:xxxx:xxxx:xx:xxxx:xxxx/64   eth0
+       network     AddressStatus   eth0/fe80::xxxx:xx:xxxx:xxxx/64                   2         fe80::xxxx:xx:xxxx:xxxx/64                 eth0
+       network     AddressStatus   lo/127.0.0.1/8                                    1         127.0.0.1/8                                lo
+       network     AddressStatus   lo/::1/128                                        1         ::1/128                                    lo
+```
+
+Edit `controlplane.yaml` to add the virtual IP you picked to your network interface under `.machine.network.interfaces`, for example:
 
 ```yaml
 machine:
