@@ -60,9 +60,9 @@
 ; Manage system configuration
 (allow kubelet_t sysfs_t (fs_classes (rw)))
 
-; CNI config written by kubelet
-; FIXME: label more precisely?
-(allow pod_t kubelet_state_t (fs_classes (ro)))
+; ; CNI config written by kubelet
+; ; FIXME: label more precisely?
+; (allow pod_t kubelet_state_t (fs_classes (ro)))
 
 (allow kubelet_t k8s_plugin_t (fs_classes (rw)))
 (allow kubelet_t k8s_plugin_t (file (entrypoint execute execute_no_trans)))
@@ -70,11 +70,11 @@
 ; kubelet sends sigkill to pod processes
 (allow kubelet_t pod_p (process_classes (signal)))
 
-; Used when Mayastor/OpenEBS is enabled
-(allow kubelet_t hugetlbfs_t (fs_classes (rw)))
+; ; Used when Mayastor/OpenEBS is enabled
+; (allow kubelet_t hugetlbfs_t (fs_classes (rw)))
 
-; /registration/rook-ceph.cephfs.csi.ceph.com-reg.sock and similar when using Rook-Ceph
-(allow kubelet_t pod_t (unix_stream_socket (connectto)))
+; ; /registration/rook-ceph.cephfs.csi.ceph.com-reg.sock and similar when using Rook-Ceph
+; (allow kubelet_t pod_t (unix_stream_socket (connectto)))
 
 ; local-path-provisioner
 (allow kubelet_t ephemeral_t (fs_classes (rw)))
