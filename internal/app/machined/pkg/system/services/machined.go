@@ -227,6 +227,11 @@ func (m *Machined) DependsOn(runtime.Runtime) []string {
 	return nil
 }
 
+// Volumes implements the Service interface.
+func (m *Machined) Volumes() []string {
+	return nil
+}
+
 // Runner implements the Service interface.
 func (m *Machined) Runner(r runtime.Runtime) (runner.Runner, error) {
 	svc := &machinedService{m.Controller}

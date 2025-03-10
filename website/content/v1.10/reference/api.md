@@ -1055,7 +1055,7 @@ MountSpec is the spec for volume mount.
 | ----- | ---- | ----- | ----------- |
 | target_path | [string](#string) |  |  |
 | selinux_label | [string](#string) |  |  |
-| options | [string](#string) | repeated |  |
+| project_quota_support | [bool](#bool) |  |  |
 
 
 
@@ -1075,6 +1075,8 @@ MountStatusSpec is the spec for MountStatus.
 | source | [string](#string) |  |  |
 | filesystem | [talos.resource.definitions.enums.BlockFilesystemType](#talos.resource.definitions.enums.BlockFilesystemType) |  |  |
 | read_only | [bool](#bool) |  |  |
+| project_quota_support | [bool](#bool) |  |  |
+| encryption_provider | [talos.resource.definitions.enums.BlockEncryptionProviderType](#talos.resource.definitions.enums.BlockEncryptionProviderType) |  |  |
 
 
 
@@ -1242,6 +1244,8 @@ VolumeStatusSpec is the spec for VolumeStatus resource.
 | pretty_size | [string](#string) |  |  |
 | encryption_failed_syncs | [string](#string) | repeated |  |
 | mount_spec | [MountSpec](#talos.resource.definitions.block.MountSpec) |  |  |
+| type | [talos.resource.definitions.enums.BlockVolumeType](#talos.resource.definitions.enums.BlockVolumeType) |  |  |
+| configured_encryption_keys | [string](#string) | repeated |  |
 
 
 

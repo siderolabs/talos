@@ -23,9 +23,9 @@ type VolumeMountRequest = typed.Resource[VolumeMountRequestSpec, VolumeMountRequ
 //
 //gotagsrewrite:gen
 type VolumeMountRequestSpec struct {
-	VolumeID string `yaml:"volume_id" protobuf:"1"`
+	VolumeID string `yaml:"volumeID" protobuf:"1"`
 
-	ReadOnly bool `yaml:"read_only" protobuf:"3"`
+	ReadOnly bool `yaml:"readOnly" protobuf:"3"`
 
 	Requester string `yaml:"requester" protobuf:"2"`
 }
@@ -50,7 +50,7 @@ func (VolumeMountRequestExtension) ResourceDefinition() meta.ResourceDefinitionS
 		PrintColumns: []meta.PrintColumn{
 			{
 				Name:     "Volume ID",
-				JSONPath: `{.volume_id}`,
+				JSONPath: `{.volumeID}`,
 			},
 			{
 				Name:     "Requester",
