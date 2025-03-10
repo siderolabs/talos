@@ -41,8 +41,10 @@ case "${WITH_VIRTUAL_IP:-false}" in
     ;;
 esac
 
-case "${WITH_JSON_LOGS:-false}" in
-  true)
+case "${WITH_JSON_LOGS:-true}" in
+  false)
+    ;;
+  *)
     QEMU_FLAGS+=("--with-json-logs")
     ;;
 esac

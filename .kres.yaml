@@ -337,7 +337,6 @@ spec:
             QEMU_EXTRA_DISKS_SIZE: "10240"
             QEMU_EXTRA_DISKS_DRIVERS: "ide,nvme"
             WITH_CONFIG_PATCH_WORKER: "@hack/test/patches/ephemeral-nvme.yaml:@hack/test/patches/dm-raid-module.yaml"
-            WITH_JSON_LOGS: "true"
             WITH_USER_DISK: "true"
             USER_DISKS_MOUNTS: "/var/lib/extra,/var/lib/p1,/var/lib/p2"
         - name: save-talos-logs
@@ -873,6 +872,7 @@ spec:
             VIA_MAINTENANCE_MODE: true
             WITH_DISK_ENCRYPTION: true
             IMAGE_REGISTRY: registry.dev.siderolabs.io
+            WITH_JSON_LOGS: "false" # test this path as well
         - name: e2e-disk-image-bios
           command: e2e-qemu
           withSudo: true

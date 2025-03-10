@@ -44,12 +44,6 @@ func (p *provisioner) Destroy(ctx context.Context, cluster provision.Cluster, op
 
 	defer deleteStateDirectory(stateDirectoryPath, options.DeleteStateOnErr) //nolint:errcheck
 
-	if options.SaveClusterLogsArchivePath != "" {
-		fmt.Fprintf(options.LogWriter, "saving cluster logs archive to %s\n", options.SaveClusterLogsArchivePath)
-
-		cl.SaveClusterLogsArchive(stateDirectoryPath, options.SaveClusterLogsArchivePath)
-	}
-
 	if options.SaveSupportArchivePath != "" {
 		fmt.Fprintf(options.LogWriter, "saving support archive to %s\n", options.SaveSupportArchivePath)
 
@@ -89,12 +83,6 @@ func (p *provisioner) Destroy(ctx context.Context, cluster provision.Cluster, op
 		return err
 	}
 
-	fmt.Fprintln(options.LogWriter, "removing json logs")
-
-	if err := p.DestroyJSONLogs(state); err != nil {
-		return err
-	}
-
 	fmt.Fprintln(options.LogWriter, "removing network")
 
 	if err := p.DestroyNetwork(state); err != nil {
@@ -108,6 +96,18 @@ func (p *provisioner) Destroy(ctx context.Context, cluster provision.Cluster, op
 	}
 
 	fmt.Fprintln(options.LogWriter, "removing state directory")
+
+	if options.SaveClusterLogsArchivePath != "" {
+		fmt.Fprintf(options.LogWriter, "saving cluster logs archive to %s\n", options.SaveClusterLogsArchivePath)
+
+		cl.SaveClusterLogsArchive(stateDirectoryPath, options.SaveClusterLogsArchivePath)
+	}
+
+	fmt.Fprintln(options.LogWriter, "removing json logs")
+
+	if err := p.DestroyJSONLogs(state); err != nil {
+		return err
+	}
 
 	return deleteStateDirectory(stateDirectoryPath, true)
 }

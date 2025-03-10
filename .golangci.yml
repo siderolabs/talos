@@ -147,6 +147,8 @@ linters:
     - protogetter # too annoying
     - perfsprint
     - recvcheck # too annoying
+    - nolintlint # cache issues https://github.com/golangci/golangci-lint/issues/3476
+    - tenv # deprecated
   disable-all: false
   fast: false
 

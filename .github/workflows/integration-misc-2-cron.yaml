@@ -1,6 +1,6 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
 #
-# Generated on 2025-02-26T15:23:43Z by kres 1281806.
+# Generated on 2025-03-10T14:45:43Z by kres ef4356e.
 
 name: integration-misc-2-cron
 concurrency:
@@ -123,6 +123,7 @@ jobs:
           USE_DISK_IMAGE: "true"
           VIA_MAINTENANCE_MODE: "true"
           WITH_DISK_ENCRYPTION: "true"
+          WITH_JSON_LOGS: "false"
         run: |
           sudo -E make e2e-qemu
       - name: e2e-disk-image-bios
