@@ -44,7 +44,7 @@
 ; iptables used by CNI
 (allow pod_containerd_t bin_exec_t (file (execute_no_trans execute)))
 (allow pod_containerd_t bin_exec_t (fs_classes (ro)))
-(allow pod_p cni_conf_t (fs_classes (rw)))
+; (allow pod_p cni_conf_t (fs_classes (rw)))
 (allow pod_containerd_t cni_state_t (fs_classes (rw)))
 
 ; Logs
@@ -61,11 +61,11 @@
 
 ; userns tests cause this
 ; TODO: why is ptrace needed?
-(allow pod_containerd_t self (process (ptrace)))
-(allow pod_containerd_t self (user_namespace (create)))
+; (allow pod_containerd_t self (process (ptrace)))
+; (allow pod_containerd_t self (user_namespace (create)))
 
-; cilium
-(allow pod_containerd_t pod_t (unix_stream_socket (connectto)))
+; ; cilium
+; (allow pod_containerd_t pod_t (unix_stream_socket (connectto)))
 
 ; Common rules for containerd accessing system
 (typeattributeset containerd_p pod_containerd_t)
@@ -78,11 +78,11 @@
 (allow pod_p containerd_state_t (fs_classes (rw)))
 (allow pod_p containerd_state_t (file (entrypoint execute execute_no_trans)))
 
-; allow configuring CNI
-(allow pod_p cni_conf_t (fs_classes (rw)))
+; ; allow configuring CNI
+; (allow pod_p cni_conf_t (fs_classes (rw)))
 
-; CNI plugins access netns
-(allow pod_t nsfs_t (fs_classes (rw)))
+; ; CNI plugins access netns
+; (allow pod_t nsfs_t (fs_classes (rw)))
 
 (type etcd_t)
 (call pod_p (etcd_t))
