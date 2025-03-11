@@ -1,6 +1,6 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
 #
-# Generated on 2025-03-07T13:42:22Z by kres d88db2f.
+# Generated on 2025-03-11T13:55:38Z by kres ec5ec04.
 
 name: integration-image-cache-cron
 concurrency:
@@ -74,6 +74,10 @@ jobs:
           make uki-certs
       - name: build
         if: github.event_name == 'schedule'
+        env:
+          IMAGE_REGISTRY: registry.dev.siderolabs.io
+          PLATFORM: linux/amd64,linux/arm64
+          PUSH: "true"
         run: |
           make talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager
       - name: image-cache

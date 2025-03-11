@@ -1,6 +1,6 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
 #
-# Generated on 2025-02-26T15:23:43Z by kres 1281806.
+# Generated on 2025-03-11T14:06:53Z by kres ec5ec04.
 
 name: integration-aws-nvidia-nonfree-cron
 concurrency:
@@ -151,6 +151,7 @@ jobs:
         if: always()
         env:
           TF_E2E_ACTION: destroy
+          TF_E2E_REFRESH_ON_DESTROY: "false"
           TF_E2E_TEST_TYPE: aws
           TF_SCRIPT_DIR: _out/contrib
         run: |

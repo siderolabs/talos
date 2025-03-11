@@ -1701,6 +1701,10 @@ spec:
           conditions:
             - only-on-schedule
           command: talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager
+          environment:
+            PLATFORM: linux/amd64,linux/arm64
+            IMAGE_REGISTRY: registry.dev.siderolabs.io
+            PUSH: true
         - name: image-cache
           command: cache-create
           environment:
@@ -1944,6 +1948,7 @@ spec:
             TF_SCRIPT_DIR: _out/contrib
             TF_E2E_TEST_TYPE: aws
             TF_E2E_ACTION: destroy
+            TF_E2E_REFRESH_ON_DESTROY: false
     - name: integration-aws-nvidia-oss
       buildxOptions:
         enabled: true
@@ -2041,6 +2046,7 @@ spec:
             TF_SCRIPT_DIR: _out/contrib
             TF_E2E_TEST_TYPE: aws
             TF_E2E_ACTION: destroy
+            TF_E2E_REFRESH_ON_DESTROY: false
     - name: integration-aws-nvidia-nonfree
       buildxOptions:
         enabled: true
@@ -2138,6 +2144,7 @@ spec:
             TF_SCRIPT_DIR: _out/contrib
             TF_E2E_TEST_TYPE: aws
             TF_E2E_ACTION: destroy
+            TF_E2E_REFRESH_ON_DESTROY: false
     - name: integration-azure
       buildxOptions:
         enabled: true
@@ -2213,6 +2220,7 @@ spec:
             TF_SCRIPT_DIR: _out/contrib
             TF_E2E_TEST_TYPE: azure
             TF_E2E_ACTION: destroy
+            TF_E2E_REFRESH_ON_DESTROY: false
             ARM_SUBSCRIPTION_ID: ${{ env.AZURE_SUBSCRIPTION_ID }}
             ARM_CLIENT_ID: ${{ env.AZURE_CLIENT_ID }}
             ARM_CLIENT_SECRET: ${{ env.AZURE_CLIENT_SECRET }}
@@ -2286,6 +2294,7 @@ spec:
             TF_SCRIPT_DIR: _out/contrib
             TF_E2E_TEST_TYPE: gcp
             TF_E2E_ACTION: destroy
+            TF_E2E_REFRESH_ON_DESTROY: false
 ---
 kind: common.Renovate
 spec:

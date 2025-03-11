@@ -1,6 +1,6 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
 #
-# Generated on 2025-02-26T15:23:43Z by kres 1281806.
+# Generated on 2025-03-11T14:06:53Z by kres ec5ec04.
 
 name: integration-azure-cron
 concurrency:
@@ -134,6 +134,7 @@ jobs:
           ARM_SUBSCRIPTION_ID: ${{ env.AZURE_SUBSCRIPTION_ID }}
           ARM_TENANT_ID: ${{ env.AZURE_TENANT_ID }}
           TF_E2E_ACTION: destroy
+          TF_E2E_REFRESH_ON_DESTROY: "false"
           TF_E2E_TEST_TYPE: azure
           TF_SCRIPT_DIR: _out/contrib
         run: |

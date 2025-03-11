@@ -1,6 +1,6 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
 #
-# Generated on 2025-03-10T14:45:43Z by kres ef4356e.
+# Generated on 2025-03-11T14:06:53Z by kres ec5ec04.
 
 name: default
 concurrency:
@@ -485,6 +485,7 @@ jobs:
         if: always()
         env:
           TF_E2E_ACTION: destroy
+          TF_E2E_REFRESH_ON_DESTROY: "false"
           TF_E2E_TEST_TYPE: aws
           TF_SCRIPT_DIR: _out/contrib
         run: |
@@ -639,6 +640,7 @@ jobs:
         if: always()
         env:
           TF_E2E_ACTION: destroy
+          TF_E2E_REFRESH_ON_DESTROY: "false"
           TF_E2E_TEST_TYPE: aws
           TF_SCRIPT_DIR: _out/contrib
         run: |
@@ -793,6 +795,7 @@ jobs:
         if: always()
         env:
           TF_E2E_ACTION: destroy
+          TF_E2E_REFRESH_ON_DESTROY: "false"
           TF_E2E_TEST_TYPE: aws
           TF_SCRIPT_DIR: _out/contrib
         run: |
@@ -930,6 +933,7 @@ jobs:
           ARM_SUBSCRIPTION_ID: ${{ env.AZURE_SUBSCRIPTION_ID }}
           ARM_TENANT_ID: ${{ env.AZURE_TENANT_ID }}
           TF_E2E_ACTION: destroy
+          TF_E2E_REFRESH_ON_DESTROY: "false"
           TF_E2E_TEST_TYPE: azure
           TF_SCRIPT_DIR: _out/contrib
         run: |
@@ -1487,6 +1491,7 @@ jobs:
         if: always()
         env:
           TF_E2E_ACTION: destroy
+          TF_E2E_REFRESH_ON_DESTROY: "false"
           TF_E2E_TEST_TYPE: gcp
           TF_SCRIPT_DIR: _out/contrib
         run: |
@@ -1564,6 +1569,10 @@ jobs:
           make uki-certs
       - name: build
         if: github.event_name == 'schedule'
+        env:
+          IMAGE_REGISTRY: registry.dev.siderolabs.io
+          PLATFORM: linux/amd64,linux/arm64
+          PUSH: "true"
         run: |
           make talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager
       - name: image-cache
