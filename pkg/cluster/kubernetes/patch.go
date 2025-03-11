@@ -26,7 +26,7 @@ func patchNodeConfig(ctx context.Context, cluster UpgradeProvider, node string, 
 
 	ctx = client.WithNode(ctx, node)
 
-	mc, err := safe.StateGetByID[*config.MachineConfig](ctx, c.COSI, config.V1Alpha1ID)
+	mc, err := safe.StateGetByID[*config.MachineConfig](ctx, c.COSI, config.ActiveID)
 	if err != nil {
 		return fmt.Errorf("error fetching config resource: %w", err)
 	}

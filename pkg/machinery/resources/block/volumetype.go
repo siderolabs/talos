@@ -14,4 +14,5 @@ const (
 	VolumeTypePartition VolumeType = iota // partition
 	VolumeTypeDisk                        // disk
 	VolumeTypeTmpfs                       // tmpfs
+	VolumeTypeDirectory                   // directory
 )

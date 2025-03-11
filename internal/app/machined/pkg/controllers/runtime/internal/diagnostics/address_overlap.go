@@ -41,7 +41,7 @@ func AddressOverlapCheck(ctx context.Context, r controller.Reader, logger *zap.L
 		return nil, fmt.Errorf("error reading host minus k8s addresses: %w", err)
 	}
 
-	cfg, err := safe.ReaderGetByID[*config.MachineConfig](ctx, r, config.V1Alpha1ID)
+	cfg, err := safe.ReaderGetByID[*config.MachineConfig](ctx, r, config.ActiveID)
 	if err != nil {
 		if state.IsNotFoundError(err) {
 			return nil, nil

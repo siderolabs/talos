@@ -44,7 +44,7 @@ func TestNodeLabelsSuite(t *testing.T) {
 }
 
 func (suite *NodeLabelsSuite) updateMachineConfig(machineType machine.Type, labels map[string]string) {
-	cfg, err := safe.StateGetByID[*config.MachineConfig](suite.Ctx(), suite.State(), config.V1Alpha1ID)
+	cfg, err := safe.StateGetByID[*config.MachineConfig](suite.Ctx(), suite.State(), config.ActiveID)
 	if err != nil && !state.IsNotFoundError(err) {
 		suite.Require().NoError(err)
 	}

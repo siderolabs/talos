@@ -400,6 +400,7 @@ enum BlockVolumeType {
   VOLUME_TYPE_PARTITION = 0;
   VOLUME_TYPE_DISK = 1;
   VOLUME_TYPE_TMPFS = 2;
+  VOLUME_TYPE_DIRECTORY = 3;
 }
 
 // CriImageCacheStatus describes image cache status type.

@@ -486,8 +486,8 @@ const (
 	// EtcdUserID is the user ID for the etcd process.
 	EtcdUserID = 60
 
-	// ConfigPath is the path to the downloaded config.
-	ConfigPath = StateMountPoint + "/config.yaml"
+	// ConfigFilename is the filename of the saved config in STATE partition.
+	ConfigFilename = "config.yaml"
 
 	// ConfigTryTimeout is the timeout of the config apply in try mode.
 	ConfigTryTimeout = time.Minute

@@ -55,8 +55,8 @@ peer: 1EsxUygZo8/URWs18tqB5FW2cLVlaTA+lUisKIf8nh4=
 It is also possible to use generated configuration as a reference by pulling generated config files using:
 
 ```bash
-talosctl read -n 10.5.0.2 /system/state/config.yaml > controlplane.yaml
-talosctl read -n 10.5.0.3 /system/state/config.yaml > worker.yaml
+talosctl get mc v1alpha1 -o jsonpath='{.spec}' -n 10.5.0.2 > controlplane.yaml
+talosctl get mc v1alpha1 -o jsonpath='{.spec}' -n 10.5.0.3 > worker.yaml
 ```
 
 ### Manual Configuration

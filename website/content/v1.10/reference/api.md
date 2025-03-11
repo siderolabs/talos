@@ -1056,6 +1056,7 @@ MountSpec is the spec for volume mount.
 | target_path | [string](#string) |  |  |
 | selinux_label | [string](#string) |  |  |
 | project_quota_support | [bool](#bool) |  |  |
+| parent_id | [string](#string) |  |  |
 
 
 
@@ -1160,6 +1161,7 @@ UserDiskConfigStatusSpec is the spec for UserDiskConfigStatus resource.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | ready | [bool](#bool) |  |  |
+| torn_down | [bool](#bool) |  |  |
 
 
 
@@ -1650,6 +1652,7 @@ BlockVolumeType describes volume type.
 | VOLUME_TYPE_PARTITION | 0 |  |
 | VOLUME_TYPE_DISK | 1 |  |
 | VOLUME_TYPE_TMPFS | 2 |  |
+| VOLUME_TYPE_DIRECTORY | 3 |  |
 
 
 

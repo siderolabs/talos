@@ -115,9 +115,7 @@ func (ctrl *Controller) Run(ctx context.Context, drainer *runtime.Drainer) error
 		&cluster.KubernetesPushController{},
 		&cluster.LocalAffiliateController{},
 		&cluster.MemberController{},
-		&cluster.NodeIdentityController{
-			V1Alpha1Mode: ctrl.v1alpha1Runtime.State().Platform().Mode(),
-		},
+		&cluster.NodeIdentityController{},
 		&config.AcquireController{
 			PlatformConfiguration: &platformConfigurator{
 				platform: ctrl.v1alpha1Runtime.State().Platform(),
@@ -134,6 +132,7 @@ func (ctrl *Controller) Run(ctx context.Context, drainer *runtime.Drainer) error
 			ResourceState:  ctrl.v1alpha1Runtime.State().V1Alpha2().Resources(),
 		},
 		&config.MachineTypeController{},
+		&config.PersistenceController{},
 		&cri.ImageCacheConfigController{
 			V1Alpha1ServiceManager: system.Services(ctrl.v1alpha1Runtime),
 		},
@@ -436,7 +435,7 @@ func (ctrl *Controller) watchMachineConfig(ctx context.Context) {
 
 	if err := ctrl.v1alpha1Runtime.State().V1Alpha2().Resources().Watch(
 		ctx,
-		resource.NewMetadata(configresource.NamespaceName, configresource.MachineConfigType, configresource.V1Alpha1ID, resource.VersionUndefined),
+		resource.NewMetadata(configresource.NamespaceName, configresource.MachineConfigType, configresource.ActiveID, resource.VersionUndefined),
 		watchCh,
 	); err != nil {
 		ctrl.logger.Warn("error watching machine configuration", zap.Error(err))

@@ -420,31 +420,31 @@ talosctl-image: ## Builds the talosctl container image and outputs it to the reg
 	@$(MAKE) registry-talosctl
 
 talosctl-all:
-	@$(MAKE) local-talosctl-all DEST=$(ARTIFACTS) PUSH=false NAME=Client
+	@$(MAKE) local-talosctl-all DEST=$(ARTIFACTS) PUSH=false
 
 talosctl-linux-amd64:
-	@$(MAKE) local-talosctl-linux-amd64 DEST=$(ARTIFACTS) PUSH=false NAME=Client
+	@$(MAKE) local-talosctl-linux-amd64 DEST=$(ARTIFACTS) PUSH=false
 
 talosctl-linux-arm64:
-	@$(MAKE) local-talosctl-linux-arm64 DEST=$(ARTIFACTS) PUSH=false NAME=Client
+	@$(MAKE) local-talosctl-linux-arm64 DEST=$(ARTIFACTS) PUSH=false
 
 talosctl-darwin-amd64:
-	@$(MAKE) local-talosctl-darwin-amd64 DEST=$(ARTIFACTS) PUSH=false NAME=Client
+	@$(MAKE) local-talosctl-darwin-amd64 DEST=$(ARTIFACTS) PUSH=false
 
 talosctl-darwin-arm64:
-	@$(MAKE) local-talosctl-darwin-arm64 DEST=$(ARTIFACTS) PUSH=false NAME=Client
+	@$(MAKE) local-talosctl-darwin-arm64 DEST=$(ARTIFACTS) PUSH=false
 
 talosctl-freebsd-amd64:
-	@$(MAKE) local-talosctl-freebsd-amd64 DEST=$(ARTIFACTS) PUSH=false NAME=Client
+	@$(MAKE) local-talosctl-freebsd-amd64 DEST=$(ARTIFACTS) PUSH=false
 
 talosctl-freebsd-arm64:
-	@$(MAKE) local-talosctl-freebsd-arm64 DEST=$(ARTIFACTS) PUSH=false NAME=Client
+	@$(MAKE) local-talosctl-freebsd-arm64 DEST=$(ARTIFACTS) PUSH=false
 
 talosctl-windows-amd64:
-	@$(MAKE) local-talosctl-windows-amd64 DEST=$(ARTIFACTS) PUSH=false NAME=Client
+	@$(MAKE) local-talosctl-windows-amd64 DEST=$(ARTIFACTS) PUSH=false
 
 talosctl-windows-arm64:
-	@$(MAKE) local-talosctl-windows-arm64 DEST=$(ARTIFACTS) PUSH=false NAME=Client
+	@$(MAKE) local-talosctl-windows-arm64 DEST=$(ARTIFACTS) PUSH=false
 
 talosctl:
 	@$(MAKE) local-talosctl-targetarch DEST=$(ARTIFACTS)
@@ -561,16 +561,16 @@ unit-tests-race: ## Performs unit tests with race detection enabled.
 	@$(MAKE) target-$@ TARGET_ARGS="--allow security.insecure" PLATFORM=linux/amd64
 
 $(ARTIFACTS)/$(INTEGRATION_TEST_DEFAULT_TARGET)-amd64:
-	@$(MAKE) local-$(INTEGRATION_TEST_DEFAULT_TARGET)-amd64 DEST=$(ARTIFACTS) PLATFORM=linux/amd64 WITH_RACE=true NAME=Client PUSH=false
+	@$(MAKE) local-$(INTEGRATION_TEST_DEFAULT_TARGET)-amd64 DEST=$(ARTIFACTS) PLATFORM=linux/amd64 WITH_RACE=true PUSH=false
 
 $(ARTIFACTS)/$(INTEGRATION_TEST_DEFAULT_TARGET)-arm64:
-	@$(MAKE) local-$(INTEGRATION_TEST_DEFAULT_TARGET)-arm64 DEST=$(ARTIFACTS) PLATFORM=linux/arm64 WITH_RACE=true NAME=Client PUSH=false
+	@$(MAKE) local-$(INTEGRATION_TEST_DEFAULT_TARGET)-arm64 DEST=$(ARTIFACTS) PLATFORM=linux/arm64 WITH_RACE=true PUSH=false
 
 $(ARTIFACTS)/$(INTEGRATION_TEST):
 	@$(MAKE) local-$(INTEGRATION_TEST)-targetarch DEST=$(ARTIFACTS)
 
 $(ARTIFACTS)/$(INTEGRATION_TEST_PROVISION_DEFAULT_TARGET)-amd64:
-	@$(MAKE) local-$(INTEGRATION_TEST_PROVISION_DEFAULT_TARGET) DEST=$(ARTIFACTS) PLATFORM=linux/amd64 WITH_RACE=true NAME=Client
+	@$(MAKE) local-$(INTEGRATION_TEST_PROVISION_DEFAULT_TARGET) DEST=$(ARTIFACTS) PLATFORM=linux/amd64 WITH_RACE=true
 
 $(ARTIFACTS)/kubectl:
 	@mkdir -p $(ARTIFACTS)

@@ -25,7 +25,7 @@ func NewConfigController() *ConfigController {
 		transform.Settings[*config.MachineConfig, *kubespan.Config]{
 			Name: "kubespan.ConfigController",
 			MapMetadataOptionalFunc: func(cfg *config.MachineConfig) optional.Optional[*kubespan.Config] {
-				if cfg.Metadata().ID() != config.V1Alpha1ID {
+				if cfg.Metadata().ID() != config.ActiveID {
 					return optional.None[*kubespan.Config]()
 				}
 

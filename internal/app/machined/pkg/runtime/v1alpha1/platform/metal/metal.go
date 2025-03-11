@@ -180,7 +180,7 @@ func readConfigFromISO(ctx context.Context, r state.State) ([]byte, error) {
 
 	defer unmounter() //nolint:errcheck
 
-	b, err := os.ReadFile(filepath.Join(mnt, filepath.Base(constants.ConfigPath)))
+	b, err := os.ReadFile(filepath.Join(mnt, constants.ConfigFilename))
 	if err != nil {
 		return nil, fmt.Errorf("read config: %w", err)
 	}

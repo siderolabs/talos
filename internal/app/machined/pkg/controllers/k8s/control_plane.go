@@ -39,7 +39,7 @@ import (
 // * machine is controlplane one.
 func controlplaneMapFunc[Output generic.ResourceWithRD](output Output) func(cfg *config.MachineConfig) optional.Optional[Output] {
 	return func(cfg *config.MachineConfig) optional.Optional[Output] {
-		if cfg.Metadata().ID() != config.V1Alpha1ID {
+		if cfg.Metadata().ID() != config.ActiveID {
 			return optional.None[Output]()
 		}
 

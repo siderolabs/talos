@@ -90,7 +90,7 @@ func (ctrl *SyncController) Run(ctx context.Context, r controller.Runtime, logge
 			{
 				Namespace: config.NamespaceName,
 				Type:      config.MachineConfigType,
-				ID:        optional.Some(config.V1Alpha1ID),
+				ID:        optional.Some(config.ActiveID),
 			},
 		},
 	); err != nil {
@@ -156,7 +156,7 @@ func (ctrl *SyncController) Run(ctx context.Context, r controller.Runtime, logge
 
 		timeServers := timeServersStatus.TypedSpec().NTPServers
 
-		cfg, err := safe.ReaderGetByID[*config.MachineConfig](ctx, r, config.V1Alpha1ID)
+		cfg, err := safe.ReaderGetByID[*config.MachineConfig](ctx, r, config.ActiveID)
 		if err != nil {
 			if !state.IsNotFoundError(err) {
 				return fmt.Errorf("error getting config: %w", err)

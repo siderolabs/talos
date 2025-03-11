@@ -246,17 +246,6 @@ func (s *Server) ApplyConfiguration(ctx context.Context, in *machine.ApplyConfig
 
 	log.Printf("apply config request: mode %s", strings.ToLower(mode))
 
-	cfg, err := cfgProvider.Bytes()
-	if err != nil {
-		return nil, err
-	}
-
-	if in.Mode != machine.ApplyConfigurationRequest_TRY {
-		if err := os.WriteFile(constants.ConfigPath, cfg, 0o600); err != nil {
-			return nil, err
-		}
-	}
-
 	//nolint:exhaustive
 	switch in.Mode {
 	// --mode=try
@@ -272,16 +261,29 @@ func (s *Server) ApplyConfiguration(ctx context.Context, in *machine.ApplyConfig
 			return nil, err
 		}
 
-		fallthrough
+		if err := s.Controller.Runtime().SetConfig(cfgProvider); err != nil {
+			return nil, err
+		}
 	// --mode=no-reboot
 	case machine.ApplyConfigurationRequest_NO_REBOOT:
+		if err := s.Controller.Runtime().SetPersistedConfig(cfgProvider); err != nil {
+			return nil, err
+		}
+
 		if err := s.Controller.Runtime().SetConfig(cfgProvider); err != nil {
 			return nil, err
 		}
 	// --mode=staged
 	case machine.ApplyConfigurationRequest_STAGED:
+		if err := s.Controller.Runtime().SetPersistedConfig(cfgProvider); err != nil {
+			return nil, err
+		}
 	// --mode=reboot
 	case machine.ApplyConfigurationRequest_REBOOT:
+		if err := s.Controller.Runtime().SetPersistedConfig(cfgProvider); err != nil {
+			return nil, err
+		}
+
 		go func() {
 			if err := s.Controller.Run(context.Background(), runtime.SequenceReboot, nil, runtime.WithTakeover()); err != nil {
 				if !runtime.IsRebootError(err) {
@@ -323,7 +325,7 @@ func (s *Server) GenerateConfiguration(ctx context.Context, in *machine.Generate
 		return nil, errors.New("config can't be generated on worker nodes")
 	}
 
-	return configuration.Generate(ctx, in)
+	return configuration.Generate(ctx, s.Controller.Runtime().State().V1Alpha2().Resources(), in)
 }
 
 // Reboot implements the machine.MachineServer interface.

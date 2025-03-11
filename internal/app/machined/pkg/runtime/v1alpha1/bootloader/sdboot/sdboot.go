@@ -86,8 +86,6 @@ func ProbeWithCallback(disk string, options options.ProbeOptions, callback func(
 		return nil, err
 	}
 
-	log.Printf("booted entry: %q", bootedEntry)
-
 	config := &Config{}
 
 	// read /boot/EFI and find if sd-boot is already being used

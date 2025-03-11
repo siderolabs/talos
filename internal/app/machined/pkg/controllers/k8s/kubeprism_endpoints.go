@@ -30,7 +30,7 @@ func NewKubePrismEndpointsController() *KubePrismEndpointsController {
 		transform.Settings[*config.MachineConfig, *k8s.KubePrismEndpoints]{
 			Name: "k8s.KubePrismEndpointsController",
 			MapMetadataOptionalFunc: func(cfg *config.MachineConfig) optional.Optional[*k8s.KubePrismEndpoints] {
-				if cfg.Metadata().ID() != config.V1Alpha1ID {
+				if cfg.Metadata().ID() != config.ActiveID {
 					return optional.None[*k8s.KubePrismEndpoints]()
 				}
 

@@ -25,7 +25,7 @@ func NewInfoController() *InfoController {
 		transform.Settings[*config.MachineConfig, *cluster.Info]{
 			Name: "cluster.InfoController",
 			MapMetadataOptionalFunc: func(cfg *config.MachineConfig) optional.Optional[*cluster.Info] {
-				if cfg.Metadata().ID() != config.V1Alpha1ID {
+				if cfg.Metadata().ID() != config.ActiveID {
 					return optional.None[*cluster.Info]()
 				}
 

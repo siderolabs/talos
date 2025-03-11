@@ -260,6 +260,21 @@ func (ctrl *VolumeManagerController) Run(ctx context.Context, r controller.Runti
 			}
 		}
 
+		volumeLifecycleTearingDown := volumeLifecycle.Metadata().Phase() == resource.PhaseTearingDown
+
+		if volumeLifecycleTearingDown {
+			for _, fin := range *volumeLifecycle.Metadata().Finalizers() {
+				if fin == ctrl.Name() {
+					continue
+				}
+
+				// if there are finalizers other than us, we don't start global teardown
+				volumeLifecycleTearingDown = false
+
+				break
+			}
+		}
+
 		volumeConfigs := safe.ToSlice(volumeConfigList, identity)
 
 		// re-sort volume configs by provisioning wave
@@ -282,7 +297,7 @@ func (ctrl *VolumeManagerController) Run(ctx context.Context, r controller.Runti
 			// figure out if we are tearing down this volume or building it
 			tearingDown := (volumeStatus != nil && volumeStatus.Metadata().Phase() == resource.PhaseTearingDown) || // we started tearing down the volume, so finish doing so
 				vc.Metadata().Phase() == resource.PhaseTearingDown || // volume config is being torn down
-				volumeLifecycle.Metadata().Phase() == resource.PhaseTearingDown // global volume lifecycle requires all volumes to be torn down
+				volumeLifecycleTearingDown // global volume lifecycle requires all volumes to be torn down
 
 			// volume status doesn't exist yet, figure out what to do
 			if volumeStatus == nil {

@@ -18,6 +18,7 @@ import (
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/ctest"
 	"github.com/siderolabs/talos/pkg/machinery/config/container"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
+	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/resources/block"
 	"github.com/siderolabs/talos/pkg/machinery/resources/config"
 )
@@ -133,10 +134,65 @@ func (suite *UserDiskConfigSuite) TestReconcileUserDisk() {
 			asrt.NotEmpty(r.TypedSpec().Provisioning)
 			asrt.Contains(r.Metadata().Labels().Raw(), block.UserDiskLabel)
 			asrt.GreaterOrEqual(r.TypedSpec().Provisioning.Wave, block.WaveLegacyUserDisks)
+			asrt.Equal(constants.EphemeralPartitionLabel, r.TypedSpec().Mount.ParentID)
+			asrt.NotContains(r.TypedSpec().Mount.TargetPath, "/") // path should become relative
 		})
 	}
 
+	// .. and a volume mount request
+	for _, id := range []string{disk1 + "-1", disk1 + "-2", disk2 + "-1"} {
+		ctest.AssertResource(suite, id, func(r *block.VolumeMountRequest, asrt *assert.Assertions) {
+			asrt.Equal(id, r.TypedSpec().VolumeID)
+		})
+	}
+
+	// the status should not be ready (yet)
+	ctest.AssertResource(suite, block.UserDiskConfigStatusID, func(r *block.UserDiskConfigStatus, asrt *assert.Assertions) {
+		asrt.False(r.TypedSpec().Ready)
+	})
+
+	// now emulate that the mount requests are fulfilled
+	for _, id := range []string{disk1 + "-1", disk1 + "-2", disk2 + "-1"} {
+		volumeMountStatus := block.NewVolumeMountStatus(block.NamespaceName, id)
+		suite.Create(volumeMountStatus)
+
+		suite.AddFinalizer(block.NewVolumeMountRequest(block.NamespaceName, id).Metadata(), "test")
+	}
+
+	// the controller should put a finalizer on the mount status
+	for _, id := range []string{disk1 + "-1", disk1 + "-2", disk2 + "-1"} {
+		ctest.AssertResource(suite, id, func(r *block.VolumeMountStatus, asrt *assert.Assertions) {
+			asrt.True(r.Metadata().Finalizers().Has((&blockctrls.UserDiskConfigController{}).Name()))
+		})
+	}
+
+	// now everything should be ready
 	ctest.AssertResource(suite, block.UserDiskConfigStatusID, func(r *block.UserDiskConfigStatus, asrt *assert.Assertions) {
 		asrt.True(r.TypedSpec().Ready)
+		asrt.False(r.TypedSpec().TornDown)
 	})
+
+	// start tearing down volume mount status
+	for _, id := range []string{disk1 + "-1", disk1 + "-2", disk2 + "-1"} {
+		_, err := suite.State().Teardown(suite.Ctx(), block.NewVolumeMountStatus(block.NamespaceName, id).Metadata())
+		suite.Require().NoError(err)
+	}
+
+	// back to not ready
+	ctest.AssertResource(suite, block.UserDiskConfigStatusID, func(r *block.UserDiskConfigStatus, asrt *assert.Assertions) {
+		asrt.False(r.TypedSpec().Ready)
+		asrt.False(r.TypedSpec().TornDown)
+	})
+
+	// the finalizers on mount statuses should be removed
+	for _, id := range []string{disk1 + "-1", disk1 + "-2", disk2 + "-1"} {
+		ctest.AssertResource(suite, id, func(r *block.VolumeMountStatus, asrt *assert.Assertions) {
+			asrt.True(r.Metadata().Finalizers().Empty())
+		})
+	}
+
+	// remove the finalizer from the mount request
+	for _, id := range []string{disk1 + "-1", disk1 + "-2", disk2 + "-1"} {
+		suite.RemoveFinalizer(block.NewVolumeMountRequest(block.NamespaceName, id).Metadata(), "test")
+	}
 }

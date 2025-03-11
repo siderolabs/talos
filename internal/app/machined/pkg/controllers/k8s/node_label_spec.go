@@ -35,7 +35,7 @@ func (ctrl *NodeLabelSpecController) Inputs() []controller.Input {
 		{
 			Namespace: config.NamespaceName,
 			Type:      config.MachineConfigType,
-			ID:        optional.Some(config.V1Alpha1ID),
+			ID:        optional.Some(config.ActiveID),
 			Kind:      controller.InputWeak,
 		},
 		{
@@ -67,7 +67,7 @@ func (ctrl *NodeLabelSpecController) Run(ctx context.Context, r controller.Runti
 		case <-r.EventCh():
 		}
 
-		cfg, err := safe.ReaderGetByID[*config.MachineConfig](ctx, r, config.V1Alpha1ID)
+		cfg, err := safe.ReaderGetByID[*config.MachineConfig](ctx, r, config.ActiveID)
 		if err != nil && !state.IsNotFoundError(err) {
 			return fmt.Errorf("error getting config: %w", err)
 		}

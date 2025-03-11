@@ -501,7 +501,7 @@ func (suite *ApplyConfigSuite) TestApplyTry() {
 	nodeCtx := client.WithNode(suite.ctx, node)
 
 	getMachineConfig := func(ctx context.Context) (*mc.MachineConfig, error) {
-		cfg, err := safe.StateGetByID[*mc.MachineConfig](ctx, suite.Client.COSI, mc.V1Alpha1ID)
+		cfg, err := safe.StateGetByID[*mc.MachineConfig](ctx, suite.Client.COSI, mc.ActiveID)
 		if err != nil {
 			return nil, err
 		}

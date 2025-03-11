@@ -31,7 +31,7 @@ func NewKubeletConfigController() *KubeletConfigController {
 		transform.Settings[*config.MachineConfig, *k8s.KubeletConfig]{
 			Name: "k8s.KubeletConfigController",
 			MapMetadataOptionalFunc: func(cfg *config.MachineConfig) optional.Optional[*k8s.KubeletConfig] {
-				if cfg.Metadata().ID() != config.V1Alpha1ID {
+				if cfg.Metadata().ID() != config.ActiveID {
 					return optional.None[*k8s.KubeletConfig]()
 				}
 

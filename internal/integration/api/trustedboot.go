@@ -14,11 +14,13 @@ import (
 	"time"
 
 	"github.com/cosi-project/runtime/pkg/resource"
-	"github.com/cosi-project/runtime/pkg/safe"
-	"github.com/cosi-project/runtime/pkg/state"
+	"github.com/cosi-project/runtime/pkg/resource/rtestutils"
+	"github.com/stretchr/testify/assert"
 
 	"github.com/siderolabs/talos/internal/integration/base"
 	"github.com/siderolabs/talos/pkg/machinery/client"
+	"github.com/siderolabs/talos/pkg/machinery/constants"
+	"github.com/siderolabs/talos/pkg/machinery/resources/block"
 	runtimeres "github.com/siderolabs/talos/pkg/machinery/resources/runtime"
 )
 
@@ -58,35 +60,19 @@ func (suite *TrustedBootSuite) TestTrustedBootState() {
 	node := suite.RandomDiscoveredNodeInternalIP()
 	ctx := client.WithNode(suite.ctx, node)
 
-	securityResource, err := safe.StateWatchFor[*runtimeres.SecurityState](
-		ctx,
-		suite.Client.COSI,
-		runtimeres.NewSecurityStateSpec(runtimeres.NamespaceName).Metadata(),
-		state.WithEventTypes(state.Created, state.Updated),
+	rtestutils.AssertResources(ctx, suite.T(), suite.Client.COSI, []resource.ID{runtimeres.SecurityStateID},
+		func(r *runtimeres.SecurityState, asrt *assert.Assertions) {
+			asrt.True(r.TypedSpec().SecureBoot)
+		},
 	)
-	suite.Require().NoError(err)
 
-	suite.Require().True(securityResource.TypedSpec().SecureBoot)
-
-	stateResource, err := safe.StateWatchFor[*runtimeres.MountStatus](
-		ctx,
-		suite.Client.COSI,
-		runtimeres.NewMountStatus(runtimeres.NamespaceName, resource.ID("STATE")).Metadata(),
-		state.WithEventTypes(state.Created, state.Updated),
+	rtestutils.AssertResources(ctx, suite.T(), suite.Client.COSI,
+		[]resource.ID{constants.StatePartitionLabel, constants.EphemeralPartitionLabel},
+		func(r *block.VolumeStatus, asrt *assert.Assertions) {
+			asrt.Equal(block.VolumePhaseReady, r.TypedSpec().Phase)
+			asrt.Equal(block.EncryptionProviderLUKS2, r.TypedSpec().EncryptionProvider)
+		},
 	)
-	suite.Require().NoError(err)
-
-	suite.Require().True(stateResource.TypedSpec().Encrypted)
-
-	ephemeralResource, err := safe.StateWatchFor[*runtimeres.MountStatus](
-		ctx,
-		suite.Client.COSI,
-		runtimeres.NewMountStatus(runtimeres.NamespaceName, resource.ID("EPHEMERAL")).Metadata(),
-		state.WithEventTypes(state.Created, state.Updated),
-	)
-	suite.Require().NoError(err)
-
-	suite.Require().True(ephemeralResource.TypedSpec().Encrypted)
 
 	dmesgStream, err := suite.Client.Dmesg(
 		suite.ctx,

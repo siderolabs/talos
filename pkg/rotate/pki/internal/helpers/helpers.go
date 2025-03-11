@@ -132,7 +132,7 @@ func PatchNodeConfigWithKubeletRestart(ctx context.Context, c *client.Client, no
 func patchNodeConfigInternal(ctx context.Context, c *client.Client, node string, encoderOpt encoder.Option, patchFunc func(config *v1alpha1.Config) error) error {
 	ctx = client.WithNode(ctx, node)
 
-	mc, err := safe.StateGetByID[*configres.MachineConfig](ctx, c.COSI, configres.V1Alpha1ID)
+	mc, err := safe.StateGetByID[*configres.MachineConfig](ctx, c.COSI, configres.ActiveID)
 	if err != nil {
 		return fmt.Errorf("error fetching config resource: %w", err)
 	}
