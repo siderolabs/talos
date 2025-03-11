@@ -314,7 +314,7 @@ cluster:
     #       apiVersion: v1
     #       kind: Namespace
     #       metadata:
-    #       	name: ci
+    #         name: ci
 
 
     # # Core DNS specific configuration options.

@@ -357,7 +357,7 @@ cluster:
     #         apiVersion: v1
     #         kind: Namespace
     #         metadata:
-    #         	name: ci
+    #           name: ci
 
     # # Settings for admin kubeconfig generation.
     # adminKubeconfig:
