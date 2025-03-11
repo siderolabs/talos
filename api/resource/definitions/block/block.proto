@@ -125,6 +125,7 @@ message MountSpec {
   string target_path = 1;
   string selinux_label = 2;
   bool project_quota_support = 3;
+  string parent_id = 4;
 }
 
 // MountStatusSpec is the spec for MountStatus.
@@ -169,6 +170,7 @@ message SystemDiskSpec {
 // UserDiskConfigStatusSpec is the spec for UserDiskConfigStatus resource.
 message UserDiskConfigStatusSpec {
   bool ready = 1;
+  bool torn_down = 2;
 }
 
 // VolumeConfigSpec is the spec for VolumeConfig resource.

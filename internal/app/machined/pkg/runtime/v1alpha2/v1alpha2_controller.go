@@ -115,9 +115,7 @@ func (ctrl *Controller) Run(ctx context.Context, drainer *runtime.Drainer) error
 		&cluster.KubernetesPushController{},
 		&cluster.LocalAffiliateController{},
 		&cluster.MemberController{},
-		&cluster.NodeIdentityController{
-			V1Alpha1Mode: ctrl.v1alpha1Runtime.State().Platform().Mode(),
-		},
+		&cluster.NodeIdentityController{},
 		&config.AcquireController{
 			PlatformConfiguration: &platformConfigurator{
 				platform: ctrl.v1alpha1Runtime.State().Platform(),

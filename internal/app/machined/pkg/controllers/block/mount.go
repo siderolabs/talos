@@ -7,6 +7,7 @@ package block
 import (
 	"context"
 	"fmt"
+	"path/filepath"
 
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
@@ -51,7 +52,7 @@ func (ctrl *MountController) Inputs() []controller.Input {
 		{
 			Namespace: block.NamespaceName,
 			Type:      block.MountStatusType,
-			Kind:      controller.InputDestroyReady,
+			Kind:      controller.InputStrong,
 		},
 	}
 }
@@ -125,12 +126,20 @@ func (ctrl *MountController) Run(ctx context.Context, r controller.Runtime, logg
 			mountStatus := mountStatusMap[mountRequest.Metadata().ID()]
 			mountStatusTearingDown := mountStatus != nil && mountStatus.Metadata().Phase() == resource.PhaseTearingDown
 
-			if volumeNotReady || mountRequestTearingDown || mountStatusTearingDown {
+			mountHasParent := mountRequest.TypedSpec().ParentMountID != ""
+			mountParentStatus := mountStatusMap[mountRequest.TypedSpec().ParentMountID] // this might be nil
+			mountParentReady := !mountHasParent || (mountParentStatus != nil && mountParentStatus.Metadata().Phase() == resource.PhaseRunning)
+			mountParentTearingDown := mountHasParent && mountParentStatus != nil && mountParentStatus.Metadata().Phase() == resource.PhaseTearingDown
+
+			parentFinalizerName := ctrl.Name() + "-" + mountRequest.Metadata().ID()
+
+			if volumeNotReady || mountRequestTearingDown || mountStatusTearingDown || mountParentTearingDown {
 				// we should tear down the mount in the following sequence:
 				// 1. tear down & destroy MountStatus
 				// 2. perform actual unmount
 				// 3. remove finalizer from VolumeStatus
-				// 4. remove finalizer from MountRequest
+				// 4. remove finalizer from parent MountStatus (if any)
+				// 5. remove finalizer from MountRequest
 				mountStatusTornDown, err := ctrl.tearDownMountStatus(ctx, r, logger, mountRequest)
 				if err != nil {
 					return fmt.Errorf("error tearing down mount status %q: %w", mountRequest.Metadata().ID(), err)
@@ -161,6 +170,12 @@ func (ctrl *MountController) Run(ctx context.Context, r controller.Runtime, logg
 					}
 				}
 
+				if mountParentStatus != nil && mountParentStatus.Metadata().Finalizers().Has(parentFinalizerName) {
+					if err = r.RemoveFinalizer(ctx, mountParentStatus.Metadata(), parentFinalizerName); err != nil {
+						return fmt.Errorf("failed to remove finalizer from parent mount status %q: %w", mountParentStatus.Metadata().ID(), err)
+					}
+				}
+
 				if mountRequest.Metadata().Finalizers().Has(ctrl.Name()) {
 					if err = r.RemoveFinalizer(ctx, mountRequest.Metadata(), ctrl.Name()); err != nil {
 						return fmt.Errorf("failed to remove finalizer from mount request %q: %w", mountRequest.Metadata().ID(), err)
@@ -168,15 +183,22 @@ func (ctrl *MountController) Run(ctx context.Context, r controller.Runtime, logg
 				}
 			}
 
-			if !(volumeNotReady || mountRequestTearingDown) {
+			if !(volumeNotReady || mountRequestTearingDown) && mountParentReady {
 				// we should perform mount operation in the following sequence:
 				// 1. add finalizer on MountRequest
-				// 2. add finalizer on VolumeStatus
-				// 3. perform actual mount
-				// 4. create MountStatus
+				// 2. add finalizer on parent MountStatus (if any)
+				// 3. add finalizer on VolumeStatus
+				// 4. perform actual mount
+				// 5. create MountStatus
 				if !mountRequest.Metadata().Finalizers().Has(ctrl.Name()) {
 					if err = r.AddFinalizer(ctx, mountRequest.Metadata(), ctrl.Name()); err != nil {
 						return fmt.Errorf("failed to add finalizer to mount request %q: %w", mountRequest.Metadata().ID(), err)
+					}
+				}
+
+				if mountHasParent && !mountParentStatus.Metadata().Finalizers().Has(parentFinalizerName) {
+					if err = r.AddFinalizer(ctx, mountParentStatus.Metadata(), parentFinalizerName); err != nil {
+						return fmt.Errorf("failed to add finalizer to parent mount status %q: %w", mountParentStatus.Metadata().ID(), err)
 					}
 				}
 
@@ -189,6 +211,11 @@ func (ctrl *MountController) Run(ctx context.Context, r controller.Runtime, logg
 				mountSource := volumeStatus.TypedSpec().MountLocation
 				mountTarget := volumeStatus.TypedSpec().MountSpec.TargetPath
 				mountFilesystem := volumeStatus.TypedSpec().Filesystem
+
+				if mountHasParent {
+					// mount target is a path within the parent mount
+					mountTarget = filepath.Join(mountParentStatus.TypedSpec().Target, mountTarget)
+				}
 
 				mountCtx, ok := ctrl.activeMounts[mountRequest.Metadata().ID()]
 
