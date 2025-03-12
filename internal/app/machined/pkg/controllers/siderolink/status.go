@@ -19,6 +19,7 @@ import (
 	"go.uber.org/zap"
 	"golang.zx2c4.com/wireguard/wgctrl"
 
+	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/resources/config"
 	"github.com/siderolabs/talos/pkg/machinery/resources/siderolink"
 )
@@ -51,6 +52,12 @@ func (ctrl *StatusController) Inputs() []controller.Input {
 			Namespace: config.NamespaceName,
 			Type:      siderolink.ConfigType,
 			ID:        optional.Some(siderolink.ConfigID),
+			Kind:      controller.InputWeak,
+		},
+		{
+			Namespace: config.NamespaceName,
+			Type:      siderolink.TunnelType,
+			ID:        optional.Some(siderolink.TunnelID),
 			Kind:      controller.InputWeak,
 		},
 	}
@@ -110,6 +117,7 @@ func (ctrl *StatusController) Run(ctx context.Context, r controller.Runtime, _ *
 	}
 }
 
+//nolint:gocyclo
 func (ctrl *StatusController) reconcileStatus(ctx context.Context, r controller.Runtime, wgClient WireguardClient) (err error) {
 	cfg, err := safe.ReaderGetByID[*siderolink.Config](ctx, r, siderolink.ConfigID)
 	if err != nil {
@@ -124,12 +132,22 @@ func (ctrl *StatusController) reconcileStatus(ctx context.Context, r controller.
 		return nil
 	}
 
+	tunnelConfig, err := safe.ReaderGetByID[*siderolink.Tunnel](ctx, r, siderolink.TunnelID)
+	if err != nil && !state.IsNotFoundError(err) {
+		return err
+	}
+
+	linkName := constants.SideroLinkName
+	if tunnelConfig != nil {
+		linkName = constants.SideroLinkTunnelName
+	}
+
 	host, _, err := net.SplitHostPort(cfg.TypedSpec().Host)
 	if err != nil {
 		host = cfg.TypedSpec().Host
 	}
 
-	down, err := peerDown(wgClient)
+	down, err := peerDown(wgClient, linkName)
 	if err != nil {
 		if !errors.Is(err, os.ErrNotExist) {
 			return err
@@ -141,6 +159,8 @@ func (ctrl *StatusController) reconcileStatus(ctx context.Context, r controller.
 	if err = safe.WriterModify(ctx, r, siderolink.NewStatus(), func(status *siderolink.Status) error {
 		status.TypedSpec().Host = host
 		status.TypedSpec().Connected = !down
+		status.TypedSpec().LinkName = linkName
+		status.TypedSpec().GRPCTunnel = tunnelConfig != nil
 
 		return nil
 	}); err != nil {

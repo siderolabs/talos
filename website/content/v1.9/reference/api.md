@@ -5237,6 +5237,8 @@ StatusSpec describes Siderolink status.
 | ----- | ---- | ----- | ----------- |
 | host | [string](#string) |  |  |
 | connected | [bool](#bool) |  |  |
+| link_name | [string](#string) |  |  |
+| grpc_tunnel | [bool](#bool) |  |  |
 
 
 
