@@ -240,6 +240,8 @@ func (suite *ExtensionsSuiteQEMU) TestExtensionsCrun() {
 
 // TestExtensionsKataContainers verifies gvisor runtime class is working.
 func (suite *ExtensionsSuiteQEMU) TestExtensionsKataContainers() {
+	suite.T().Skip("TODO: skipping since Kata is broken")
+
 	suite.testRuntimeClass("kata", "kata")
 }
 

@@ -274,6 +274,7 @@ func (p *pod) Exec(ctx context.Context, command string) (string, string, error) 
 	}
 	req := p.suite.Clientset.CoreV1().RESTClient().Post().Resource("pods").Name(p.name).
 		Namespace(p.namespace).SubResource("exec")
+
 	option := &corev1.PodExecOptions{
 		Command: cmd,
 		Stdin:   false,
@@ -287,14 +288,14 @@ func (p *pod) Exec(ctx context.Context, command string) (string, string, error) 
 		scheme.ParameterCodec,
 	)
 
-	exec, err := remotecommand.NewSPDYExecutor(p.suite.RestConfig, "POST", req.URL())
+	websocketExec, err := remotecommand.NewWebSocketExecutor(p.suite.RestConfig, "GET", req.URL().String())
 	if err != nil {
 		return "", "", err
 	}
 
 	var stdout, stderr strings.Builder
 
-	err = exec.StreamWithContext(ctx, remotecommand.StreamOptions{
+	err = websocketExec.StreamWithContext(ctx, remotecommand.StreamOptions{
 		Stdout: &stdout,
 		Stderr: &stderr,
 	})
