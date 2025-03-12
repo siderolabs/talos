@@ -134,12 +134,16 @@ func (ctrl *ManagerController) Run(ctx context.Context, r controller.Runtime, lo
 	ticker := time.NewTicker(30 * time.Second)
 	defer ticker.Stop()
 
+	// default name, actual name is set based on the provision API response:
+	// whether we use the Wireguard tunnel over gRPC or not
+	linkName := constants.SideroLinkName
+
 	for {
 		select {
 		case <-ctx.Done():
 			return nil
 		case <-ticker.C:
-			reconnect, err := peerDown(wgClient)
+			reconnect, err := peerDown(wgClient, linkName)
 			if err != nil {
 				if errors.Is(err, os.ErrNotExist) {
 					// no Wireguard device, so no need to reconnect
@@ -169,6 +173,14 @@ func (ctrl *ManagerController) Run(ctx context.Context, r controller.Runtime, lo
 			ctrl.pd = provision.ValueOrZero()
 		}
 
+		useWgTunnel := ctrl.pd.grpcPeerAddrPort != ""
+
+		if useWgTunnel {
+			linkName = constants.SideroLinkTunnelName
+		} else {
+			linkName = constants.SideroLinkName
+		}
+
 		serverAddress, err := netip.ParseAddr(ctrl.pd.ServerAddress)
 		if err != nil {
 			return fmt.Errorf("error parsing server address: %w", err)
@@ -179,8 +191,8 @@ func (ctrl *ManagerController) Run(ctx context.Context, r controller.Runtime, lo
 			return fmt.Errorf("error parsing node address: %w", err)
 		}
 
-		linkSpec := network.NewLinkSpec(network.ConfigNamespaceName, network.LayeredID(network.ConfigOperator, network.LinkID(constants.SideroLinkName)))
-		addressSpec := network.NewAddressSpec(network.ConfigNamespaceName, network.LayeredID(network.ConfigOperator, network.AddressID(constants.SideroLinkName, nodeAddress)))
+		linkSpec := network.NewLinkSpec(network.ConfigNamespaceName, network.LayeredID(network.ConfigOperator, network.LinkID(linkName)))
+		addressSpec := network.NewAddressSpec(network.ConfigNamespaceName, network.LayeredID(network.ConfigOperator, network.AddressID(linkName, nodeAddress)))
 
 		// Rotate through the endpoints.
 		ep, ok := ctrl.pd.TakeEndpoint()
@@ -199,11 +211,20 @@ func (ctrl *ManagerController) Run(ctx context.Context, r controller.Runtime, lo
 				spec := res.TypedSpec()
 
 				spec.ConfigLayer = network.ConfigOperator
-				spec.Name = constants.SideroLinkName
+				spec.Name = linkName
 				spec.Type = nethelpers.LinkNone
 				spec.Kind = "wireguard"
+
+				// if using wg-tunnel, the actual link will be created in the userspace
+				// as a tunnel device
+				// if using native, we create a native kernel wireguard interface
+				if useWgTunnel {
+					spec.Logical = false // the controller does not create the link
+				} else {
+					spec.Logical = true // allow controller to create the link
+				}
+
 				spec.Up = true
-				spec.Logical = ctrl.pd.grpcPeerAddrPort == ""
 				spec.MTU = wireguard.LinkMTU
 
 				spec.Wireguard = network.WireguardSpec{
@@ -236,7 +257,7 @@ func (ctrl *ManagerController) Run(ctx context.Context, r controller.Runtime, lo
 				spec.Address = nodeAddress
 				spec.Family = nethelpers.FamilyInet6
 				spec.Flags = nethelpers.AddressFlags(nethelpers.AddressPermanent)
-				spec.LinkName = constants.SideroLinkName
+				spec.LinkName = linkName
 				spec.Scope = nethelpers.ScopeGlobal
 
 				return nil
@@ -255,7 +276,7 @@ func (ctrl *ManagerController) Run(ctx context.Context, r controller.Runtime, lo
 			if err = safe.WriterModify(ctx, r, siderolink.NewTunnel(),
 				func(tunnel *siderolink.Tunnel) error {
 					tunnel.TypedSpec().APIEndpoint = ctrl.pd.apiEndpont
-					tunnel.TypedSpec().LinkName = constants.SideroLinkName
+					tunnel.TypedSpec().LinkName = linkName
 					tunnel.TypedSpec().MTU = wireguard.LinkMTU
 					tunnel.TypedSpec().NodeAddress = ourAddr
 

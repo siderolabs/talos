@@ -1064,6 +1064,9 @@ const (
 	// SideroLinkName is the interface name for SideroLink.
 	SideroLinkName = "siderolink"
 
+	// SideroLinkTunnelName is the tunnel name for SideroLink in tunnel (Wireguard-over-GRPC) mode.
+	SideroLinkTunnelName = "siderolinktun"
+
 	// SideroLinkDefaultPeerKeepalive is the interval at which Wireguard Peer Keepalives should be sent.
 	SideroLinkDefaultPeerKeepalive = 25 * time.Second
 
