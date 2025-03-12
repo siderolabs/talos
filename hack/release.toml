@@ -7,7 +7,7 @@ match_deps = "^github.com/((talos-systems|siderolabs)/[a-zA-Z0-9-]+)$"
 ignore_deps = ["github.com/coredns/coredns"]
 
 # previous release
-previous = "v1.9.3"
+previous = "v1.9.4"
 
 pre_release = false
 
@@ -18,17 +18,11 @@ preface = """
     [notes.updates]
         title = "Component Updates"
         description = """\
-* Linux: 6.12.13
-* Flannel: 0.26.4
-* Kubernetes: 1.32.2
+* Linux: 6.12.18
+* containerd: 2.0.3
+* runc: 1.2.5
 
-Talos is built with Go 1.23.6.
-"""
-
-    [notes.ingress-firewall]
-        title = "Ingress Firewall"
-        description = """\
-Talos Ingress Firewall now filters access to Kubernetes NodePort services correctly.
+Talos is built with Go 1.23.7.
 """
 
 [make_deps]
