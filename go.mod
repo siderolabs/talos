@@ -35,16 +35,16 @@ replace github.com/insomniacslk/dhcp => github.com/smira/dhcp v0.0.0-20241001122
 
 // Kubernetes dependencies sharing the same version.
 require (
-	k8s.io/api v0.33.0-alpha.3
-	k8s.io/apimachinery v0.33.0-alpha.3
-	k8s.io/apiserver v0.33.0-alpha.3
-	k8s.io/client-go v0.33.0-alpha.3
-	k8s.io/component-base v0.33.0-alpha.3
-	k8s.io/cri-api v0.33.0-alpha.3
-	k8s.io/kube-scheduler v0.33.0-alpha.3
-	k8s.io/kubectl v0.33.0-alpha.3
-	k8s.io/kubelet v0.33.0-alpha.3
-	k8s.io/pod-security-admission v0.33.0-alpha.3
+	k8s.io/api v0.33.0-beta.0
+	k8s.io/apimachinery v0.33.0-beta.0
+	k8s.io/apiserver v0.33.0-beta.0
+	k8s.io/client-go v0.33.0-beta.0
+	k8s.io/component-base v0.33.0-beta.0
+	k8s.io/cri-api v0.33.0-beta.0
+	k8s.io/kube-scheduler v0.33.0-beta.0
+	k8s.io/kubectl v0.33.0-beta.0
+	k8s.io/kubelet v0.33.0-beta.0
+	k8s.io/pod-security-admission v0.33.0-beta.0
 )
 
 require (
@@ -273,7 +273,6 @@ require (
 	github.com/google/btree v1.1.3 // indirect
 	github.com/google/gnostic-models v0.6.9 // indirect
 	github.com/google/go-cmp v0.7.0 // indirect
-	github.com/google/gofuzz v1.2.0 // indirect
 	github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510 // indirect
 	github.com/gorilla/websocket v1.5.3 // indirect
 	github.com/gosuri/uilive v0.0.4 // indirect
@@ -326,7 +325,7 @@ require (
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/planetscale/vtprotobuf v0.6.1-0.20241121165744-79df5c4772f2 // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
-	github.com/prometheus/client_golang v1.20.5 // indirect
+	github.com/prometheus/client_golang v1.22.0-rc.0 // indirect
 	github.com/prometheus/client_model v0.6.1 // indirect
 	github.com/prometheus/common v0.62.0 // indirect
 	github.com/rivo/uniseg v0.4.7 // indirect
@@ -367,8 +366,8 @@ require (
 	gopkg.in/evanphx/json-patch.v4 v4.12.0 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
-	k8s.io/cli-runtime v0.33.0-alpha.3 // indirect
-	k8s.io/kube-openapi v0.0.0-20241212222426-2c72e554b1e7 // indirect
+	k8s.io/cli-runtime v0.33.0-beta.0 // indirect
+	k8s.io/kube-openapi v0.0.0-20250304201544-e5f78fe3ede9 // indirect
 	k8s.io/utils v0.0.0-20241104100929-3ea5e8cea738 // indirect
 	kernel.org/pub/linux/libs/security/libcap/psx v1.2.73 // indirect
 	rsc.io/qr v0.2.0 // indirect
@@ -376,7 +375,8 @@ require (
 	sigs.k8s.io/knftables v0.0.18 // indirect
 	sigs.k8s.io/kustomize/api v0.19.0 // indirect
 	sigs.k8s.io/kustomize/kyaml v0.19.0 // indirect
-	sigs.k8s.io/structured-merge-diff/v4 v4.4.2 // indirect
+	sigs.k8s.io/randfill v1.0.0 // indirect
+	sigs.k8s.io/structured-merge-diff/v4 v4.6.0 // indirect
 )
 
 exclude github.com/containerd/containerd v1.7.0
