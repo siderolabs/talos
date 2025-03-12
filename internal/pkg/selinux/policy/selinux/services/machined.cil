@@ -116,3 +116,7 @@
 ; Modules loaded via machined
 (allow init_t module_t (system (module_load)))
 (allow init_t self (capability (sys_module)))
+
+(allow init_t apid_t (unix_stream_socket (connectto)))
+; CNI
+(allow init_t pod_containerd_t (fd (use)))

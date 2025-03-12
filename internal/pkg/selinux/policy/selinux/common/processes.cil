@@ -133,8 +133,8 @@
 ; fio
 (allow any_p self (shm (all)))
 
-; ; /run/flannel
-; (allow any_p pod_containerd_run_t (fs_classes (rw)))
+; /run/flannel, created by containerd
+(allow any_p pod_containerd_run_t (fs_classes (rw)))
 
 ; Mayastor
 (allow any_p hugetlbfs_t (fs_classes (rw)))

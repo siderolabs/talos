@@ -44,9 +44,11 @@
 (allow kubelet_t run_t (fs_classes (rw)))
 
 ; Communication with init via pipes and sockets
-; (allow kubelet_t init_t (fd (use)))
+(allow kubelet_t init_t (fd (use)))
 (allow kubelet_t init_t (fifo_file (write)))
 (allow kubelet_t init_t (unix_stream_socket (connectto)))
+; net-pf-2-proto-262-type-1
+(allow kubelet_t kernel_t (system (module_request)))
 
 ; Run pods
 (allow kubelet_t pod_containerd_socket_t (fs_classes (rw)))

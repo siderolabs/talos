@@ -59,13 +59,17 @@
 (allow pod_containerd_t ephemeral_t (fs_classes (rw)))
 (allow pod_t ephemeral_t (fs_classes (rw)))
 
-; userns tests cause this
-; TODO: why is ptrace needed?
-; (allow pod_containerd_t self (process (ptrace)))
-; (allow pod_containerd_t self (user_namespace (create)))
+; userns mode
+; https://github.com/containerd/containerd/blob/9b552d441582d71b7fd322c0b9f2c7c23b26b729/pkg/sys/unshare_linux.go#L59
+; https://github.com/containerd/containerd/blob/9b552d441582d71b7fd322c0b9f2c7c23b26b729/core/mount/mount_idmapped_utils_linux.go#L51
+(allow pod_containerd_t self (process (ptrace)))
+(allow pod_containerd_t self (user_namespace (create)))
 
 ; ; cilium
 ; (allow pod_containerd_t pod_t (unix_stream_socket (connectto)))
+
+; pkg/flannel
+(allow pod_t cni_conf_t (fs_classes (rw)))
 
 ; Common rules for containerd accessing system
 (typeattributeset containerd_p pod_containerd_t)
