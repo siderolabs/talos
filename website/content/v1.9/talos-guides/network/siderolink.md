@@ -3,34 +3,37 @@ title: "SideroLink"
 description: "Point-to-point management overlay Wireguard network."
 ---
 
-SideroLink provides a secure point-to-point management overlay network for Talos clusters.
-Each Talos machine configured to use SideroLink will establish a secure Wireguard connection to the SideroLink API server.
-SideroLink provides overlay network using ULA IPv6 addresses allowing to manage Talos Linux machines even if direct access to machine IP addresses is not possible.
-SideroLink is a foundation building block of [Sidero Omni](https://www.siderolabs.com/platform/saas-for-kubernetes/).
+SideroLink offers a secure point-to-point management overlay network for Talos clusters using Wireguard.
+Each Talos machine configured with SideroLink establishes a secure Wireguard connection to the SideroLink API server.
+This overlay network utilizes ULA IPv6 addresses, enabling the management of Talos Linux machines even when direct access to their IP addresses is not feasible.
+SideroLink is a fundamental component of [Sidero Omni](https://www.siderolabs.com/platform/saas-for-kubernetes/).
 
 ## Configuration
 
-SideroLink is configured by providing the SideroLink API server address, either via kernel command line argument `siderolink.api` or as a [config document]({{< relref "../../reference/configuration/siderolink/siderolinkconfig" >}}).
+To configure SideroLink, provide the SideroLink API server address either via the kernel command line argument `siderolink.api` or as a [config document]({{< relref "../../reference/configuration/siderolink/siderolinkconfig" >}}).
 
-SideroLink API URL: `https://siderolink.api/?jointoken=token&grpc_tunnel=true`.
-If URL scheme is `grpc://`, the connection will be established without TLS, otherwise, the connection will be established with TLS.
-If specified, join token `token` will be sent to the SideroLink server.
-If `grpc_tunnel` is set to `true`, the Wireguard traffic will be tunneled over the same SideroLink API gRPC connection instead of using plain UDP.
+The SideroLink API URL format is: `https://siderolink.api/?jointoken=token&grpc_tunnel=true`.
+
+- If the URL scheme is `grpc://`, the connection will be established without TLS; otherwise, it will use TLS.
+- The join token `token`, if specified, will be sent to the SideroLink server.
+- Setting `grpc_tunnel` to `true` sends a hint to tunnel Wireguard traffic over the same SideroLink API gRPC connection instead of using plain UDP.
+  This is useful in environments where UDP traffic is restricted but adds significant overhead to SideroLink communication, enable this only if necessary.
+  Note that the SideroLink API server might ignore this hint, and the connection might use gRPC tunneling regardless of the setting.
 
 ## Connection Flow
 
-1. Talos Linux creates an ephemeral Wireguard key.
-2. Talos Linux establishes a gRPC connection to the SideroLink API server, sends its own Wireguard public key, join token and other connection settings.
-3. If the join token is valid, the SideroLink API server sends back the Wireguard public key of the SideroLink API server, and two overlay IPv6 addresses: machine address and SideroLink server address.
-4. Talos Linux configured Wireguard interface with the received settings.
-5. Talos Linux monitors status of the Wireguard connection and re-establishes the connection if needed.
+1. Talos Linux generates an ephemeral Wireguard key.
+2. Talos Linux establishes a gRPC connection to the SideroLink API server, sending its Wireguard public key, join token, and other connection settings.
+3. If the join token is valid, the SideroLink API server responds with its Wireguard public key and two overlay IPv6 addresses: one for the machine and one for the SideroLink server.
+4. Talos Linux configures the Wireguard interface with the received settings.
+5. Talos Linux monitors the Wireguard connection status and re-establishes the connection if necessary.
 
 ## Operations with SideroLink
 
-When SideroLink is configured, Talos maintenance mode API listens only on the SideroLink network.
-Maintenance mode API over SideroLink allows operations which are not generally available over the public network: getting Talos version, getting sensitive resources, etc.
+When SideroLink is configured, the Talos maintenance mode API listens exclusively on the SideroLink network.
+This allows operations not generally available over the public network, such as retrieving the Talos version and accessing sensitive resources.
 
-Talos Linux always provides Talos API over SideroLink, and automatically allows access over SideroLink even if the [Ingress Firewall]({{< relref "./ingress-firewall" >}}) is enabled.
-Wireguard connections should be still allowed by the Ingress Firewall.
+Talos Linux always provides the Talos API over SideroLink and automatically permits access over SideroLink even if the [Ingress Firewall]({{< relref "./ingress-firewall" >}}) is enabled.
+However, Wireguard connections must still be allowed by the Ingress Firewall.
 
-SideroLink only allows point-to-point connections between Talos machines and the SideroLink management server, two Talos machines cannot communicate directly over SideroLink.
+SideroLink only supports point-to-point connections between Talos machines and the SideroLink management server; direct communication between two Talos machines over SideroLink is not possible.
