@@ -1,3 +1,109 @@
+## [Talos 1.9.5](https://github.com/siderolabs/talos/releases/tag/v1.9.5) (2025-03-12)
+
+Welcome to the v1.9.5 release of Talos!
+
+
+
+Please try out the release binaries and report any issues at
+https://github.com/siderolabs/talos/issues.
+
+### Component Updates
+
+* Linux: 6.12.18
+* containerd: 2.0.3
+* runc: 1.2.5
+* Kubernetes: 1.32.3
+* etcd: 3.5.19
+
+Talos is built with Go 1.23.7.
+
+
+### Contributors
+
+* Andrey Smirnov
+* Dmitriy Matrenichev
+* Dmitry Sharshakov
+* Robin Elfrink
+* Serge Logvinov
+
+### Changes
+<details><summary>11 commits</summary>
+<p>
+
+* [`dd629ad5f`](https://github.com/siderolabs/talos/commit/dd629ad5f5a41f1950591a01eefd3f62f052f0ff) chore: fix the mount cache ids in the Dockerfile
+* [`456516f0b`](https://github.com/siderolabs/talos/commit/456516f0b443b34ba74c121439492b0a836d7ce7) feat: update Flannel to 0.26.5
+* [`82f3a8c51`](https://github.com/siderolabs/talos/commit/82f3a8c51386ee0dfe0ab0a9bdb4da6467026586) feat: update etcd to 3.5.19
+* [`46ab576e4`](https://github.com/siderolabs/talos/commit/46ab576e4787b3dfb13fbd00a1607cbcc0ca5593) feat: add support for qla2xx
+* [`7f8923452`](https://github.com/siderolabs/talos/commit/7f8923452365bb62c2b1bca7fedbef3e25764473) fix: handle dynamic HTTP proxy settings for discovery client
+* [`9a293327a`](https://github.com/siderolabs/talos/commit/9a293327a00a62f5fe7c0a9488f0f4ebd106662f) fix: multiple fixes for dashboard/no data
+* [`9d3a2c8df`](https://github.com/siderolabs/talos/commit/9d3a2c8dfd093589bd3718a863e0354fc5e53c7c) fix: ignore digest part of images when checking version
+* [`93180bffe`](https://github.com/siderolabs/talos/commit/93180bffe7a9b80e527789e66d6cc8affcdecf09) feat: support noclooud instance-id from dmi
+* [`76832c237`](https://github.com/siderolabs/talos/commit/76832c237c46e55bfd1ab1724b86db1e0928cd01) chore: disable azure upload
+* [`d4986d957`](https://github.com/siderolabs/talos/commit/d4986d957bbd2313cf418dc35f659271b180ad67) feat: update default Kubernetes to 1.32.3
+* [`1fe0c2f1b`](https://github.com/siderolabs/talos/commit/1fe0c2f1b5bfcb94ee9754e502ca2fc38213a210) feat: update Go, Linux, containerd, runc
+</p>
+</details>
+
+### Changes from siderolabs/discovery-api
+<details><summary>1 commit</summary>
+<p>
+
+* [`64513a6`](https://github.com/siderolabs/discovery-api/commit/64513a6c4fb31c6a043159d5caea1d153ea133a4) feat: rekres, regenerate proto files
+</p>
+</details>
+
+### Changes from siderolabs/discovery-client
+<details><summary>1 commit</summary>
+<p>
+
+* [`b3632c4`](https://github.com/siderolabs/discovery-client/commit/b3632c4a8cd96ae36337e83308ef447361b51537) feat: support extra dial options in the client
+</p>
+</details>
+
+### Changes from siderolabs/gen
+<details><summary>1 commit</summary>
+<p>
+
+* [`5ae3afe`](https://github.com/siderolabs/gen/commit/5ae3afee65490ca9f4bd32ea41803ab3a17cad7e) chore: update hashtriemap implementation from the latest upstream
+</p>
+</details>
+
+### Changes from siderolabs/pkgs
+<details><summary>9 commits</summary>
+<p>
+
+* [`792f5ca`](https://github.com/siderolabs/pkgs/commit/792f5ca0589d58c7c07b42cef634236ee83477dc) feat: update Linux firmware to 20250211
+* [`142de09`](https://github.com/siderolabs/pkgs/commit/142de0937807237de2c4b81a02b34a9b7cef1e4e) feat: update runc to 1.2.5
+* [`b39f244`](https://github.com/siderolabs/pkgs/commit/b39f244abbd0b732bccc3ca32708a50b2cd1961f) feat: update Linux to 6.12.18
+* [`9a21d6c`](https://github.com/siderolabs/pkgs/commit/9a21d6cc9d58f4be7f5e5f16d2b148b27ca417d1) fix: backport MGLRU patch from Linux 6.13
+* [`1565250`](https://github.com/siderolabs/pkgs/commit/15652502c163d0b76270db8ef18d95ef0a227c16) feat: update Linux 6.12.17, containerd 2.0.3
+* [`fc5e81d`](https://github.com/siderolabs/pkgs/commit/fc5e81d169a75f3f59eb126a4eaeec7eaa53625c) feat: enable qla2xxx module
+* [`3ff0ab6`](https://github.com/siderolabs/pkgs/commit/3ff0ab6232cdb30889c5a0da75a4d0b4ad902869) fix: patch Linux with blackhole patch
+* [`b4060f8`](https://github.com/siderolabs/pkgs/commit/b4060f8b4b6a675883a2c730a2a2b42928bb928a) feat: update Go to 1.23.7
+* [`3349185`](https://github.com/siderolabs/pkgs/commit/3349185202185d70400b53abf029349f90666643) fix: patch musl to mitigate CVE-2025-26519
+</p>
+</details>
+
+### Changes from siderolabs/tools
+<details><summary>1 commit</summary>
+<p>
+
+* [`17d43b2`](https://github.com/siderolabs/tools/commit/17d43b210510e84862aff3b88c94b6ac46933e2b) feat: update Go to 1.23.7
+</p>
+</details>
+
+### Dependency Changes
+
+* **github.com/siderolabs/discovery-api**     v0.1.5 -> v0.1.6
+* **github.com/siderolabs/discovery-client**  v0.1.10 -> v0.1.11
+* **github.com/siderolabs/gen**               v0.7.0 -> v0.8.0
+* **github.com/siderolabs/pkgs**              v1.9.0-27-g27017e0 -> v1.9.0-36-g792f5ca
+* **github.com/siderolabs/tools**             v1.9.0-3-gb2ede52 -> v1.9.0-4-g17d43b2
+* **google.golang.org/grpc**                  v1.68.1 -> v1.70.0
+* **google.golang.org/protobuf**              v1.35.2 -> v1.36.5
+
+Previous release can be found at [v1.9.4](https://github.com/siderolabs/talos/releases/tag/v1.9.4)
+
 ## [Talos 1.9.4](https://github.com/siderolabs/talos/releases/tag/v1.9.4) (2025-02-13)
 
 Welcome to the v1.9.4 release of Talos!
