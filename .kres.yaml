@@ -388,7 +388,8 @@ spec:
           withSudo: true
           environment:
             GITHUB_STEP_NAME: ${{ github.job}}-conformance-qemu
-            QEMU_CPUS: 4
+            QEMU_CPUS_WORKERS: 6
+            QEMU_MEMORY_WORKERS: 4096
             TEST_MODE: fast-conformance
             IMAGE_REGISTRY: registry.dev.siderolabs.io
         - name: save-talos-logs

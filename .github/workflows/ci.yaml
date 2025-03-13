@@ -1,6 +1,6 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
 #
-# Generated on 2025-03-13T09:44:11Z by kres ec5ec04.
+# Generated on 2025-03-13T14:46:47Z by kres ec5ec04.
 
 name: default
 concurrency:
@@ -1229,7 +1229,8 @@ jobs:
         env:
           GITHUB_STEP_NAME: ${{ github.job}}-conformance-qemu
           IMAGE_REGISTRY: registry.dev.siderolabs.io
-          QEMU_CPUS: "4"
+          QEMU_CPUS_WORKERS: "6"
+          QEMU_MEMORY_WORKERS: "4096"
           TEST_MODE: fast-conformance
         run: |
           sudo -E make e2e-qemu
