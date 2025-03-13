@@ -112,5 +112,11 @@ func Init() error {
 
 	log.Println("selinux: policy loaded")
 
+	if err := os.WriteFile("/sys/fs/selinux/enforce", []byte("1"), 0o777); err != nil {
+		return err
+	}
+
+	log.Println("selinux: enforced")
+
 	return nil
 }
