@@ -29,6 +29,10 @@
 
 (allow sys_containerd_t system_t (fs_classes (rw)))
 (allow sys_containerd_t system_var_t (fs_classes (rw)))
+; failed to create task: \"apid\": failed to create shim task: OCI runtime create failed: unable to retrieve
+; OCI runtime error (open /system/run/containerd/io.containerd.runtime.v2.task/system/apid/log.json:
+; no such file or directory): runc did not terminate successfully
+(allow sys_containerd_t system_run_t (fs_classes (rw)))
 (allow sys_containerd_t run_t (fs_classes (rw)))
 (allow sys_containerd_t system_var_t (fs_classes (relabelto relabelfrom)))
 (allow sys_containerd_t sys_containerd_run_t (fs_classes (rw)))

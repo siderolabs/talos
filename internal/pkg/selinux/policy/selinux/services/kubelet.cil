@@ -61,7 +61,7 @@
 (allow kubelet_t sysfs_t (fs_classes (rw)))
 
 ; CNI config, /etc/hosts written by kubelet
-(allow pod_t kubelet_state_t (fs_classes (ro)))
+(allow pod_p kubelet_state_t (fs_classes (ro)))
 
 (allow kubelet_t k8s_plugin_t (fs_classes (rw)))
 (allow kubelet_t k8s_plugin_t (file (entrypoint execute execute_no_trans)))
@@ -73,7 +73,7 @@
 ; (allow kubelet_t hugetlbfs_t (fs_classes (rw)))
 
 ; ; /registration/rook-ceph.cephfs.csi.ceph.com-reg.sock and similar when using Rook-Ceph
-; (allow kubelet_t pod_t (unix_stream_socket (connectto)))
+; (allow kubelet_t pod_p (unix_stream_socket (connectto)))
 
 ; local-path-provisioner
 (allow kubelet_t ephemeral_t (fs_classes (rw)))

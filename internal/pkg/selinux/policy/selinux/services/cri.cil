@@ -55,41 +55,7 @@
 ; Shim socket
 (allow pod_containerd_t pod_containerd_socket_t (fs_classes (rw)))
 
-; local-path-provisioner
-(allow pod_containerd_t ephemeral_t (fs_classes (rw)))
-(allow pod_t ephemeral_t (fs_classes (rw)))
-
-; userns mode
-; https://github.com/containerd/containerd/blob/9b552d441582d71b7fd322c0b9f2c7c23b26b729/pkg/sys/unshare_linux.go#L59
-; https://github.com/containerd/containerd/blob/9b552d441582d71b7fd322c0b9f2c7c23b26b729/core/mount/mount_idmapped_utils_linux.go#L51
-(allow pod_containerd_t self (process (ptrace)))
-(allow pod_containerd_t self (user_namespace (create)))
-
-; ; cilium
-; (allow pod_containerd_t pod_t (unix_stream_socket (connectto)))
-
-; pkg/flannel
-(allow pod_t cni_conf_t (fs_classes (rw)))
-
-; Common rules for containerd accessing system
-(typeattributeset containerd_p pod_containerd_t)
-
-(type pod_t)
-(call pod_p (pod_t))
-(typeattribute not_containerd_exec_t)
-(typeattributeset not_containerd_exec_t (not containerd_exec_t))
-(typetransition pod_containerd_t containerd_state_t process pod_t)
-(allow pod_p containerd_state_t (fs_classes (rw)))
-(allow pod_p containerd_state_t (file (entrypoint execute execute_no_trans)))
-
-; ; allow configuring CNI
-; (allow pod_p cni_conf_t (fs_classes (rw)))
-
-; ; CNI plugins access netns
-; (allow pod_t nsfs_t (fs_classes (rw)))
-
-; Flannel calls modprobe
-(allow pod_t module_t (fs_classes (ro)))
+; System containers, not k8s pods
 
 (type etcd_t)
 (call pod_p (etcd_t))
@@ -179,3 +145,62 @@
 
 (type cni_state_t)
 (call protected_f (cni_state_t))
+
+; All pods
+
+; local-path-provisioner
+(allow pod_containerd_t ephemeral_t (fs_classes (rw)))
+(allow pod_p ephemeral_t (fs_classes (rw)))
+
+; userns mode
+; https://github.com/containerd/containerd/blob/9b552d441582d71b7fd322c0b9f2c7c23b26b729/pkg/sys/unshare_linux.go#L59
+; https://github.com/containerd/containerd/blob/9b552d441582d71b7fd322c0b9f2c7c23b26b729/core/mount/mount_idmapped_utils_linux.go#L51
+(allow pod_containerd_t self (process (ptrace)))
+(allow pod_containerd_t self (user_namespace (create)))
+
+; ; cilium
+; (allow pod_containerd_t pod_p (unix_stream_socket (connectto)))
+
+; pkg/flannel
+(allow pod_p cni_conf_t (fs_classes (rw)))
+
+; Common rules for containerd accessing system
+(typeattributeset containerd_p pod_containerd_t)
+
+(type pod_t)
+(call pod_p (pod_t))
+(typeattribute not_containerd_exec_t)
+(typeattributeset not_containerd_exec_t (not containerd_exec_t))
+(typetransition pod_containerd_t containerd_state_t process pod_t)
+(allow pod_p containerd_state_t (fs_classes (rw)))
+(allow pod_p containerd_state_t (file (entrypoint execute execute_no_trans)))
+
+; ; allow configuring CNI
+; (allow pod_p cni_conf_t (fs_classes (rw)))
+
+; ; CNI plugins access netns
+; (allow pod_p nsfs_t (fs_classes (rw)))
+
+; Flannel calls modprobe
+(allow pod_p module_t (fs_classes (ro)))
+
+; emptyDir volumes, used e.g. by hydrophone cts
+; TODO: label
+(allow pod_p kubelet_state_t (fs_classes (rw)))
+
+; nsenter checks pid1's procfs
+(allow pod_p init_t (dir (search)))
+
+; getattr, unmount called by containers and should be guarded by their mount namespaces
+(allow pod_p fs_t (filesystem (
+    ; associate
+    getattr
+    mount
+    quotaget
+    quotamod
+    ; relabelfrom
+    ; relabelto
+    remount
+    unmount
+    watch
+)))
