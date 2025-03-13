@@ -164,3 +164,11 @@
 ; (auditallow any_f_any_p any_f_any_p (process (dyntransition fork ptrace setcurrent setexec setfscreate setkeycreate transition)))
 ; (auditallow any_f_any_p any_f_any_p (process2 (nnp_transition nosuid_transition)))
 ; (auditallow any_f_any_p any_f_any_p (file (entrypoint execute execute_no_trans)))
+
+; HACK: this happens in a process cloned from containerd for running CNI:
+; [   77.042515] audit: type=1400 audit(1741862615.446:4227): avc:  granted  { execute } for  pid=3136 comm="containerd" name="loopback" dev="loop0" ino=68 scontext=system_u:system_r:init_t:s0 tcontext=system_u:object_r:cni_plugin_t:s0 tclass=file
+; [   77.043500] audit: type=1400 audit(1741862615.446:4227): avc:  granted  { execute } for  pid=3136 comm="containerd" name="loopback" dev="overlay" ino=68 scontext=system_u:system_r:pod_containerd_t:s0 tcontext=system_u:object_r:cni_plugin_t:s0 tclass=file
+; [   77.044528] audit: type=1400 audit(1741862615.446:4227): avc:  granted  { execute_no_trans } for  pid=3136 comm="containerd" path="/opt/cni/bin/loopback" dev="overlay" ino=68 scontext=system_u:system_r:pod_containerd_t:s0 tcontext=system_u:object_r:cni_plugin_t:s0 tclass=file
+; [   77.045739] audit: type=1400 audit(1741862615.446:4227): avc:  granted  { execute } for  pid=3136 comm="loopback" path="/opt/cni/bin/loopback" dev="overlay" ino=68 scontext=system_u:system_r:pod_containerd_t:s0 tcontext=system_u:object_r:cni_plugin_t:s0 tclass=file
+; This is being researched as a kernel bug since a process gains init_t context without the policy allowing it.
+(allow init_t cni_plugin_t (file (execute)))
