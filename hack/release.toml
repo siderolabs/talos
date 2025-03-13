@@ -163,6 +163,13 @@ To build a [boot asset](https://www.talos.dev/v1.10/talos-guides/install/boot-as
 This means kernel arguments not part of the UKI will not be preserved across updates and a proper installer image generated via Imager Factory or Imager is required.
 """
 
+    [notes.extensions]
+        title = "Machine Install Extensions"
+        description = """\
+`.machine.install.extensions` will have no effect starting from Talos 1.10, the machine config document field is still kept so upgrades from older versions are possible.
+Use [Boot Assets](https://www.talos.dev/v1.10/talos-guides/install/boot-assets/) instead.
+"""
+
 [make_deps]
 
     [make_deps.tools]

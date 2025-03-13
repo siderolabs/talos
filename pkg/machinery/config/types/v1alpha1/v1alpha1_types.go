@@ -823,10 +823,9 @@ type InstallConfig struct {
 	//   examples:
 	//     - value: '"ghcr.io/siderolabs/installer:latest"'
 	InstallImage string `yaml:"image,omitempty"`
-	//   description: |
-	//     Allows for supplying additional system extension images to install on top of base Talos image.
-	//   examples:
-	//     - value: installExtensionsExample()
+	// docgen:nodoc
+	//
+	// Deprecated: Use custom `InstallImage` instead.
 	InstallExtensions []InstallExtensionConfig `yaml:"extensions,omitempty"`
 	// docgen:nodoc
 	//
@@ -948,6 +947,8 @@ type InstallDiskSelector struct {
 }
 
 // InstallExtensionConfig represents a configuration for a system extension.
+//
+// docgen:nodoc
 type InstallExtensionConfig struct {
 	//   description: System extension image.
 	ExtensionImage string `yaml:"image"`

@@ -738,9 +738,6 @@ const (
 	// SystemLibexecPath is the path to the system libexec directory.
 	SystemLibexecPath = SystemPath + "/libexec"
 
-	// SystemExtensionsPath is the path to the system extensions directory.
-	SystemExtensionsPath = SystemPath + "/extensions"
-
 	// SystemOverlaysPath is the path to the system overlay directory.
 	SystemOverlaysPath = SystemPath + "/overlays"
 

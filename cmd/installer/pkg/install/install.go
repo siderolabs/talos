@@ -2,6 +2,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+// Package install provides the installation routine.
 package install
 
 import (
@@ -245,11 +246,6 @@ func (i *Installer) Install(ctx context.Context, mode Mode) (err error) {
 	}
 
 	if err = i.runPreflightChecks(mode); err != nil {
-		return err
-	}
-
-	// prepare extensions if legacy machine.install.extensions is present
-	if err = i.installExtensions(); err != nil {
 		return err
 	}
 

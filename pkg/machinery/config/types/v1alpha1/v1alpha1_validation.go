@@ -950,6 +950,8 @@ func (e *EtcdConfig) Validate() error {
 // RuntimeValidate validates the config in runtime context.
 //
 // In runtime context, resource state is available.
+//
+//nolint:gocyclo
 func (c *Config) RuntimeValidate(ctx context.Context, st state.State, mode validation.RuntimeMode, opt ...validation.Option) ([]string, error) {
 	var (
 		warnings []string
@@ -978,6 +980,10 @@ func (c *Config) RuntimeValidate(ctx context.Context, st state.State, mode valid
 			if len(c.MachineConfig.Install().ExtraKernelArgs()) > 0 {
 				warnings = append(warnings, "extra kernel arguments are not supported when booting using SDBoot")
 			}
+		}
+
+		if len(c.MachineConfig.Install().Extensions()) > 0 {
+			warnings = append(warnings, ".machine.install.extensions is deprecated, please see https://www.talos.dev/latest/talos-guides/install/boot-assets/")
 		}
 	}
 

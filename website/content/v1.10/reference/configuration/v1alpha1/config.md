@@ -54,10 +54,6 @@ machine:
         #     size: 4GB # Disk size.
         #     model: WDC* # Disk model `/sys/block/<dev>/device/model`.
         #     busPath: /pci0000:00/0000:00:17.0/ata1/host0/target0:0:0/0:0:0:0 # Disk bus path.
-
-        # # Allows for supplying additional system extension images to install on top of base Talos image.
-        # extensions:
-        #     - image: ghcr.io/siderolabs/gvisor:20220117.0-v1.0.0 # System extension image.
 {{< /highlight >}}
 
 
@@ -295,10 +291,6 @@ install:
     #     size: 4GB # Disk size.
     #     model: WDC* # Disk model `/sys/block/<dev>/device/model`.
     #     busPath: /pci0000:00/0000:00:17.0/ata1/host0/target0:0:0/0:0:0:0 # Disk bus path.
-
-    # # Allows for supplying additional system extension images to install on top of base Talos image.
-    # extensions:
-    #     - image: ghcr.io/siderolabs/gvisor:20220117.0-v1.0.0 # System extension image.
 {{< /highlight >}}</details> | |
 |`files` |<a href="#Config.machine.files.">[]MachineFile</a> |<details><summary>Allows the addition of user specified files.</summary>The value of `op` can be `create`, `overwrite`, or `append`.<br />In the case of `create`, `path` must not exist.<br />In the case of `overwrite`, and `append`, `path` must be a valid file.<br />If an `op` value of `append` is used, the existing file will be appended.<br />Note that the file contents are not required to be base64 encoded.</details> <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 files:
@@ -1923,10 +1915,6 @@ machine:
         #     size: 4GB # Disk size.
         #     model: WDC* # Disk model `/sys/block/<dev>/device/model`.
         #     busPath: /pci0000:00/0000:00:17.0/ata1/host0/target0:0:0/0:0:0:0 # Disk bus path.
-
-        # # Allows for supplying additional system extension images to install on top of base Talos image.
-        # extensions:
-        #     - image: ghcr.io/siderolabs/gvisor:20220117.0-v1.0.0 # System extension image.
 {{< /highlight >}}
 
 
@@ -1953,10 +1941,6 @@ extraKernelArgs:
 {{< /highlight >}}</details> | |
 |`image` |string |<details><summary>Allows for supplying the image used to perform the installation.</summary>Image reference for each Talos release can be found on<br />[GitHub releases page](https://github.com/siderolabs/talos/releases).</details> <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 image: ghcr.io/siderolabs/installer:latest
-{{< /highlight >}}</details> | |
-|`extensions` |<a href="#Config.machine.install.extensions.">[]InstallExtensionConfig</a> |Allows for supplying additional system extension images to install on top of base Talos image. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
-extensions:
-    - image: ghcr.io/siderolabs/gvisor:20220117.0-v1.0.0 # System extension image.
 {{< /highlight >}}</details> | |
 |`wipe` |bool |<details><summary>Indicates if the installation disk should be wiped at installation time.</summary>Defaults to `true`.</details>  |`true`<br />`yes`<br />`false`<br />`no`<br /> |
 |`legacyBIOSSupport` |bool |<details><summary>Indicates if MBR partition should be marked as bootable (active).</summary>Should be enabled only for the systems with legacy BIOS that doesn't support GPT partitioning scheme.</details>  | |
@@ -2004,29 +1988,6 @@ busPath: /pci0000:00/0000:00:17.0/ata1/host0/target0:0:0/0:0:0:0
 {{< /highlight >}}{{< highlight yaml >}}
 busPath: /pci0000:00/*
 {{< /highlight >}}</details> | |
-
-
-
-
-
-
-#### extensions[] {#Config.machine.install.extensions.}
-
-InstallExtensionConfig represents a configuration for a system extension.
-
-
-
-{{< highlight yaml >}}
-machine:
-    install:
-        extensions:
-            - image: ghcr.io/siderolabs/gvisor:20220117.0-v1.0.0 # System extension image.
-{{< /highlight >}}
-
-
-| Field | Type | Description | Value(s) |
-|-------|------|-------------|----------|
-|`image` |string |System extension image.  | |
 
 
 

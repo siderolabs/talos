@@ -992,7 +992,6 @@ COPY --link --from=pkg-fhs / /
 COPY --link --from=pkg-ca-certificates / /
 COPY --link --from=pkg-musl / /
 
-COPY --link --from=pkg-cpio / /
 COPY --link --from=pkg-dosfstools / /
 COPY --link --from=pkg-grub / /
 COPY --link --from=pkg-grub-amd64 /usr/lib/grub /usr/lib/grub
@@ -1017,6 +1016,7 @@ LABEL org.opencontainers.image.source=https://github.com/siderolabs/talos
 ENTRYPOINT ["/bin/installer"]
 
 FROM installer-base-image-squashed AS imager-image
+COPY --link --from=pkg-cpio / /
 COPY --link --from=pkg-e2fsprogs / /
 COPY --link --from=pkg-glib / /
 COPY --link --from=pkg-libburn / /

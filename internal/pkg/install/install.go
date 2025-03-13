@@ -28,11 +28,9 @@ import (
 	"github.com/siderolabs/talos/internal/pkg/capability"
 	"github.com/siderolabs/talos/internal/pkg/containers/image"
 	"github.com/siderolabs/talos/internal/pkg/environment"
-	"github.com/siderolabs/talos/internal/pkg/extensions"
 	"github.com/siderolabs/talos/internal/pkg/selinux"
 	machineapi "github.com/siderolabs/talos/pkg/machinery/api/machine"
 	configcore "github.com/siderolabs/talos/pkg/machinery/config"
-	"github.com/siderolabs/talos/pkg/machinery/config/config"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
 
@@ -54,12 +52,6 @@ func RunInstallerContainer(
 		if err := opt(&options); err != nil {
 			return err
 		}
-	}
-
-	var extensionsConfig []config.Extension
-
-	if cfg != nil && cfg.Machine() != nil {
-		extensionsConfig = cfg.Machine().Install().Extensions()
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -95,23 +87,6 @@ func RunInstallerContainer(
 		return err
 	}
 
-	puller, err := extensions.NewPuller(client)
-	if err != nil {
-		return err
-	}
-
-	if extensionsConfig != nil {
-		if err = puller.PullAndMount(ctx, registryBuilder, extensionsConfig); err != nil {
-			return err
-		}
-	}
-
-	defer func() {
-		if err = puller.Cleanup(ctx); err != nil {
-			log.Printf("error cleaning up pulled system extensions: %s", err)
-		}
-	}()
-
 	// See if there's previous container/snapshot to clean up
 	var oldcontainer containerd.Container
 
@@ -127,7 +102,6 @@ func RunInstallerContainer(
 
 	mounts := []specs.Mount{
 		{Type: "bind", Destination: "/dev", Source: "/dev", Options: []string{"rbind", "rshared", "rw"}},
-		{Type: "bind", Destination: constants.SystemExtensionsPath, Source: constants.SystemExtensionsPath, Options: []string{"rbind", "rshared", "ro"}},
 	}
 
 	// mount the machined socket into the container for upgrade pre-checks if the socket exists

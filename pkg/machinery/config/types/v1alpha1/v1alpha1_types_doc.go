@@ -1045,13 +1045,7 @@ func (InstallConfig) Doc() *encoder.Doc {
 				Description: "Allows for supplying the image used to perform the installation.\nImage reference for each Talos release can be found on\n[GitHub releases page](https://github.com/siderolabs/talos/releases).",
 				Comments:    [3]string{"" /* encoder.HeadComment */, "Allows for supplying the image used to perform the installation." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
-			{
-				Name:        "extensions",
-				Type:        "[]InstallExtensionConfig",
-				Note:        "",
-				Description: "Allows for supplying additional system extension images to install on top of base Talos image.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Allows for supplying additional system extension images to install on top of base Talos image." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
+			{},
 			{},
 			{
 				Name:        "wipe",
@@ -1083,7 +1077,6 @@ func (InstallConfig) Doc() *encoder.Doc {
 	doc.Fields[1].AddExample("", machineInstallDiskSelectorExample())
 	doc.Fields[2].AddExample("", []string{"talos.platform=metal", "reboot=k"})
 	doc.Fields[3].AddExample("", "ghcr.io/siderolabs/installer:latest")
-	doc.Fields[4].AddExample("", installExtensionsExample())
 
 	return doc
 }
@@ -1179,33 +1172,6 @@ func (InstallDiskSelector) Doc() *encoder.Doc {
 	doc.Fields[0].AddExample("Select a disk which size is less or equal than 2TB.", machineInstallDiskSizeMatcherExamples2())
 	doc.Fields[8].AddExample("", "/pci0000:00/0000:00:17.0/ata1/host0/target0:0:0/0:0:0:0")
 	doc.Fields[8].AddExample("", "/pci0000:00/*")
-
-	return doc
-}
-
-func (InstallExtensionConfig) Doc() *encoder.Doc {
-	doc := &encoder.Doc{
-		Type:        "InstallExtensionConfig",
-		Comments:    [3]string{"" /* encoder.HeadComment */, "InstallExtensionConfig represents a configuration for a system extension." /* encoder.LineComment */, "" /* encoder.FootComment */},
-		Description: "InstallExtensionConfig represents a configuration for a system extension.",
-		AppearsIn: []encoder.Appearance{
-			{
-				TypeName:  "InstallConfig",
-				FieldName: "extensions",
-			},
-		},
-		Fields: []encoder.Doc{
-			{
-				Name:        "image",
-				Type:        "string",
-				Note:        "",
-				Description: "System extension image.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "System extension image." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-		},
-	}
-
-	doc.AddExample("", installExtensionsExample())
 
 	return doc
 }
@@ -4241,7 +4207,6 @@ func GetFileDoc() *encoder.FileDoc {
 			NetworkConfig{}.Doc(),
 			InstallConfig{}.Doc(),
 			InstallDiskSelector{}.Doc(),
-			InstallExtensionConfig{}.Doc(),
 			TimeConfig{}.Doc(),
 			RegistriesConfig{}.Doc(),
 			CoreDNS{}.Doc(),
