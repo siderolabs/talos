@@ -4,8 +4,6 @@
 
 package runtime
 
-//docgen:jsonschema
-
 import (
 	"fmt"
 	"net"
@@ -41,19 +39,11 @@ var (
 
 // EventSinkV1Alpha1 is a event sink config document.
 //
-//	examples:
-//	  - value: exampleEventSinkV1Alpha1()
-//	alias: EventSinkConfig
-//	schemaRoot: true
-//	schemaMeta: v1alpha1/EventSinkConfig
+//docgen:version=v1alpha1
 type EventSinkV1Alpha1 struct {
 	meta.Meta `yaml:",inline"`
-	//   description: |
-	//     The endpoint for the event sink as 'host:port'.
-	//   examples:
-	//     - value: >
-	//        "10.3.7.3:2810"
-	Endpoint string `yaml:"endpoint"`
+	// The endpoint for the event sink as 'host:port'.
+	Endpoint string `yaml:"endpoint" docgen:"{'in':'1.7'}"`
 }
 
 // NewEventSinkV1Alpha1 creates a new eventsink config document.

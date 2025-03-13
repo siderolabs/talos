@@ -4,8 +4,6 @@
 
 package network
 
-//docgen:jsonschema
-
 import (
 	"github.com/siderolabs/talos/pkg/machinery/config/config"
 	"github.com/siderolabs/talos/pkg/machinery/config/internal/registry"
@@ -35,19 +33,11 @@ var (
 
 // DefaultActionConfigV1Alpha1 is a ingress firewall default action configuration document.
 //
-//	examples:
-//	  - value: exampleDefaultActionConfigV1Alpha1()
-//	alias: NetworkDefaultActionConfig
-//	schemaRoot: true
-//	schemaMeta: v1alpha1/NetworkDefaultActionConfig
+//docgen:version=v1alpha1
 type DefaultActionConfigV1Alpha1 struct {
 	meta.Meta `yaml:",inline"`
-	//   description: |
-	//     Default action for all not explicitly configured ingress traffic: accept or block.
-	//   values:
-	//     - "accept"
-	//     - "block"
-	Ingress nethelpers.DefaultAction `yaml:"ingress"`
+	// The default action for all configured ingress traffic not explicitly defined.
+	Ingress nethelpers.DefaultAction `yaml:"ingress" docgen:"{'in':'1.7','values':['accept','block']}"`
 }
 
 // NewDefaultActionConfigV1Alpha1 creates a new DefaultActionConfig config document.
