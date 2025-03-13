@@ -812,6 +812,7 @@ type InstallConfig struct {
 	//     Allows for supplying extra kernel args via the bootloader.
 	//     Existing kernel args can be removed by prefixing the argument with a `-`.
 	//     For example `-console` removes all `console=<value>` arguments, whereas `-console=tty0` removes the `console=tty0` default argument.
+	//     If Talos is using systemd-boot as a bootloader (default for UEFI) this setting will be ignored.
 	//   examples:
 	//     - value: '[]string{"talos.platform=metal", "reboot=k"}'
 	InstallExtraKernelArgs []string `yaml:"extraKernelArgs,omitempty"`

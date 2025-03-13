@@ -12,6 +12,7 @@ import (
 	"fmt"
 	"net"
 	"net/url"
+	"os"
 	"reflect"
 	"regexp"
 	"strconv"
@@ -969,6 +970,13 @@ func (c *Config) RuntimeValidate(ctx context.Context, st state.State, mode valid
 				if len(matchedDisks) == 0 {
 					result = multierror.Append(result, fmt.Errorf("no disks matched the expression: %s", diskExpr))
 				}
+			}
+		}
+
+		// if booted using sd-boot, extra kernel arguments are not supported
+		if _, err := os.Stat("/sys/firmware/efi/efivars/StubInfo-4a67b082-0a4c-41cf-b6c7-440b29bb8c4f"); err == nil {
+			if len(c.MachineConfig.Install().ExtraKernelArgs()) > 0 {
+				warnings = append(warnings, "extra kernel arguments are not supported when booting using SDBoot")
 			}
 		}
 	}

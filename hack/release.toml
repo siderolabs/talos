@@ -149,6 +149,20 @@ System extensions must move their directories accordingly for 1.10.
 Talos Ingress Firewall now filters access to Kubernetes NodePort services correctly.
 """
 
+    [notes.extraKernelArgs]
+        title = "Extra Kernel Args"
+        description = """\
+Talos 1.10 on fresh install on UEFI systems will now use systemd-boot and UKIs (Unified Kernel Images)[https://uapi-group.org/specifications/specs/unified_kernel_image/].
+This means the kernel command line arguments are part of the UKI and cannot be modified without an upgrade to a new UKI.
+
+Upgrades to Talos 1.10 will preseve the existing bootloader (GRUB for non-secureboot) and sd-boot for Secureboot and this change will have no effect.
+
+To build a [boot asset](https://www.talos.dev/v1.10/talos-guides/install/boot-assets/) with extra kernel arguments whether an `installer` or a boot image use either [Image Factory](https://www.talos.dev/v1.10/talos-guides/install/boot-assets/#image-factory) or
+[Imager](https://www.talos.dev/v1.10/talos-guides/install/boot-assets/#imager).
+
+This means kernel arguments not part of the UKI will not be preserved across updates and a proper installer image generated via Imager Factory or Imager is required.
+"""
+
 [make_deps]
 
     [make_deps.tools]

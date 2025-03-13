@@ -1705,6 +1705,9 @@ spec:
             PLATFORM: linux/amd64,linux/arm64
             IMAGE_REGISTRY: registry.dev.siderolabs.io
             PUSH: true
+        - name: talosctl-cni-bundle
+          conditions:
+            - only-on-schedule
         - name: image-cache
           command: cache-create
           environment:

@@ -1946,7 +1946,7 @@ diskSelector:
     # busPath: /pci0000:00/0000:00:17.0/ata1/host0/target0:0:0/0:0:0:0
     # busPath: /pci0000:00/*
 {{< /highlight >}}</details> | |
-|`extraKernelArgs` |[]string |<details><summary>Allows for supplying extra kernel args via the bootloader.</summary>Existing kernel args can be removed by prefixing the argument with a `-`.<br />For example `-console` removes all `console=<value>` arguments, whereas `-console=tty0` removes the `console=tty0` default argument.</details> <details><summary>Show example(s)</summary>{{< highlight yaml >}}
+|`extraKernelArgs` |[]string |<details><summary>Allows for supplying extra kernel args via the bootloader.</summary>Existing kernel args can be removed by prefixing the argument with a `-`.<br />For example `-console` removes all `console=<value>` arguments, whereas `-console=tty0` removes the `console=tty0` default argument.<br />If Talos is using systemd-boot as a bootloader (default for UEFI) this setting will be ignored.</details> <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 extraKernelArgs:
     - talos.platform=metal
     - reboot=k

@@ -1035,7 +1035,7 @@ func (InstallConfig) Doc() *encoder.Doc {
 				Name:        "extraKernelArgs",
 				Type:        "[]string",
 				Note:        "",
-				Description: "Allows for supplying extra kernel args via the bootloader.\nExisting kernel args can be removed by prefixing the argument with a `-`.\nFor example `-console` removes all `console=<value>` arguments, whereas `-console=tty0` removes the `console=tty0` default argument.",
+				Description: "Allows for supplying extra kernel args via the bootloader.\nExisting kernel args can be removed by prefixing the argument with a `-`.\nFor example `-console` removes all `console=<value>` arguments, whereas `-console=tty0` removes the `console=tty0` default argument.\nIf Talos is using systemd-boot as a bootloader (default for UEFI) this setting will be ignored.",
 				Comments:    [3]string{"" /* encoder.HeadComment */, "Allows for supplying extra kernel args via the bootloader." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
 			{
