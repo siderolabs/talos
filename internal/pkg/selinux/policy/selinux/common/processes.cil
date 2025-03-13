@@ -155,3 +155,12 @@
 ; ; pods also run CNI, LVM and other host binaries
 ; (allow any_p bin_exec_t (fs_classes (ro)))
 ; (allow pod_p bin_exec_t (file (execute execute_no_trans)))
+
+; pf-2-proto-262-type-1
+; refpolicy allows it for spc_t
+(allow any_p kernel_t (system (module_request)))
+
+; debug transitions:
+; (auditallow any_f_any_p any_f_any_p (process (dyntransition fork ptrace setcurrent setexec setfscreate setkeycreate transition)))
+; (auditallow any_f_any_p any_f_any_p (process2 (nnp_transition nosuid_transition)))
+; (auditallow any_f_any_p any_f_any_p (file (entrypoint execute execute_no_trans)))

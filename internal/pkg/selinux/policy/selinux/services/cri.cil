@@ -88,6 +88,9 @@
 ; ; CNI plugins access netns
 ; (allow pod_t nsfs_t (fs_classes (rw)))
 
+; Flannel calls modprobe
+(allow pod_t module_t (fs_classes (ro)))
+
 (type etcd_t)
 (call pod_p (etcd_t))
 ; FIXME: insecure as anyone with access to the pod containerd may obtain this domain
