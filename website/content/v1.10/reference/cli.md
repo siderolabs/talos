@@ -2081,8 +2081,10 @@ Download the admin kubeconfig from the node
 ### Synopsis
 
 Download the admin kubeconfig from the node.
-If merge flag is defined, config will be merged with ~/.kube/config or [local-path] if specified.
-Otherwise kubeconfig will be written to PWD or [local-path] if specified.
+If merge flag is true, config will be merged with ~/.kube/config or [local-path] if specified.
+Otherwise, kubeconfig will be written to PWD or [local-path] if specified.
+
+If merge flag is false and [local-path] is "-", config will be written to stdout.
 
 ```
 talosctl kubeconfig [local-path] [flags]
