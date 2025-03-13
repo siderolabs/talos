@@ -106,11 +106,9 @@ func receiveEvents(ctx context.Context, client *libaudit.AuditClient, logWriter 
 		default:
 		}
 
-		// Messages from 1100-2999 are valid audit messages:
-		// However, only select AVC for SELinux development
-		if rawEvent.Type != auparse.AUDIT_USER_AVC &&
-			rawEvent.Type != auparse.AUDIT_AVC &&
-			rawEvent.Type != auparse.AUDIT_AVC_PATH {
+		// Messages from 1100-2999 are valid audit messages.
+		if rawEvent.Type < auparse.AUDIT_USER_AUTH ||
+			rawEvent.Type > auparse.AUDIT_LAST_USER_MSG2 {
 			continue
 		}
 
