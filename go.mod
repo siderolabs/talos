@@ -152,7 +152,7 @@ require (
 	github.com/siderolabs/go-debug v0.5.0
 	github.com/siderolabs/go-kmsg v0.1.4
 	github.com/siderolabs/go-kubeconfig v0.1.0
-	github.com/siderolabs/go-kubernetes v0.2.19
+	github.com/siderolabs/go-kubernetes v0.2.20
 	github.com/siderolabs/go-loadbalancer v0.4.0
 	github.com/siderolabs/go-pcidb v0.3.0
 	github.com/siderolabs/go-pointer v1.0.0
@@ -186,7 +186,7 @@ require (
 	golang.org/x/net v0.36.0
 	golang.org/x/oauth2 v0.27.0
 	golang.org/x/sync v0.11.0
-	golang.org/x/sys v0.30.0
+	golang.org/x/sys v0.31.0
 	golang.org/x/term v0.29.0
 	golang.org/x/text v0.22.0
 	golang.org/x/time v0.10.0
