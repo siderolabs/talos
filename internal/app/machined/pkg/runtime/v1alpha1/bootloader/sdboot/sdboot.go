@@ -65,11 +65,28 @@ func New() *Config {
 }
 
 // ProbeWithCallback probes the sd-boot bootloader, and calls the callback function with the Config.
+//
+//nolint:gocyclo
 func ProbeWithCallback(disk string, options options.ProbeOptions, callback func(*Config) error) (*Config, error) {
 	// if not UEFI boot, nothing to do
 	if !IsUEFIBoot() {
 		return nil, nil
 	}
+
+	// here we need to read the EFI vars to see if we have any defaults
+	// and populate config accordingly
+	// https://www.freedesktop.org/software/systemd/man/systemd-boot.html#LoaderEntryDefault
+	// this should be set on install/upgrades
+	efiCtx := efivario.NewDefaultContext()
+
+	bootedEntry, err := ReadVariable(efiCtx, LoaderEntrySelectedName)
+	if err != nil {
+		return nil, err
+	}
+
+	log.Printf("booted entry: %q", bootedEntry)
+
+	config := &Config{}
 
 	// read /boot/EFI and find if sd-boot is already being used
 	// this is to make sure sd-boot from Talos is being used and not sd-boot from another distro
@@ -93,6 +110,28 @@ func ProbeWithCallback(disk string, options options.ProbeOptions, callback func(
 				return fmt.Errorf("no boot*.efi files found in %q", filepath.Join(constants.EFIMountPoint, "EFI", "boot"))
 			}
 
+			// list existing UKIs, and check if the current one is present
+			ukiFiles, err := filepath.Glob(filepath.Join(constants.EFIMountPoint, "EFI", "Linux", "Talos-*.efi"))
+			if err != nil {
+				return err
+			}
+
+			for _, ukiFile := range ukiFiles {
+				if strings.EqualFold(filepath.Base(ukiFile), bootedEntry) {
+					config.Default = bootedEntry
+				}
+			}
+
+			// here we handle a case when we boot of just kernel+initrd/uki and we don't have a booted entry
+			if bootedEntry == "" && len(ukiFiles) == 1 {
+				// we have only one UKI, so we can assume it's the default
+				config.Default = filepath.Base(ukiFiles[0])
+			}
+
+			if callback != nil {
+				return callback(config)
+			}
+
 			return nil
 		},
 		options.BlockProbeOptions,
@@ -111,7 +150,7 @@ func ProbeWithCallback(disk string, options options.ProbeOptions, callback func(
 		return nil, err
 	}
 
-	return &Config{}, nil
+	return config, nil
 }
 
 // Probe for existing sd-boot bootloader.
@@ -355,26 +394,13 @@ func (c *Config) Revert(disk string) error {
 }
 
 func (c *Config) revert() error {
-	// read current entry from EFI variables
-	efiCtx := efivario.NewDefaultContext()
-
-	// if we can't read the current entry, we can't revert
-	bootedEntry, err := ReadVariable(efiCtx, LoaderEntrySelectedName)
-	if err != nil {
-		return fmt.Errorf("failed to read current UKI, cannot revert: %w", err)
-	}
-
-	if bootedEntry == "" {
-		return errors.New("no UKI selected, nothing to revert")
-	}
-
 	files, err := filepath.Glob(filepath.Join(constants.EFIMountPoint, "EFI", "Linux", "Talos-*.efi"))
 	if err != nil {
 		return err
 	}
 
 	for _, file := range files {
-		if strings.EqualFold(filepath.Base(file), bootedEntry) {
+		if strings.EqualFold(filepath.Base(file), c.Default) {
 			continue
 		}
 

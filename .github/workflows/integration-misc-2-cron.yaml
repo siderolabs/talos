@@ -1,6 +1,6 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
 #
-# Generated on 2025-03-10T14:45:43Z by kres ef4356e.
+# Generated on 2025-03-14T10:24:50Z by kres ec5ec04.
 
 name: integration-misc-2-cron
 concurrency:
@@ -88,6 +88,7 @@ jobs:
         if: github.event_name == 'schedule'
         env:
           IMAGE_REGISTRY: registry.dev.siderolabs.io
+          IMAGER_ARGS: --extra-kernel-arg=console=ttyS0
         run: |
           make iso
       - name: images-essential

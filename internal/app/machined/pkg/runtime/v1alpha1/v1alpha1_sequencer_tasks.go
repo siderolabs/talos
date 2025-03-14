@@ -1925,6 +1925,8 @@ func KexecPrepare(_ runtime.Sequence, data any) (runtime.TaskExecutionFunc, stri
 		}
 
 		if systemDisk == nil {
+			log.Print("kexec skipped as system disk is not found")
+
 			return nil // no system disk, no kexec
 		}
 

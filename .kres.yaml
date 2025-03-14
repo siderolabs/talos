@@ -112,6 +112,7 @@ spec:
         - name: iso
           command: iso secureboot-iso
           environment:
+            IMAGER_ARGS: "--extra-kernel-arg=console=ttyS0"
             IMAGE_REGISTRY: registry.dev.siderolabs.io
         - name: images-essential
           environment:
@@ -194,6 +195,8 @@ spec:
               - initramfs-arm64.xz
               - metal-amd64.iso
               - metal-arm64.iso
+              - metal-amd64-uki.efi
+              - metal-arm64-uki.efi
               - metal-amd64.raw.zst
               - metal-arm64.raw.zst
               - talosctl-cni-bundle-amd64.tar.gz
@@ -838,6 +841,7 @@ spec:
             - only-on-schedule
           command: iso
           environment:
+            IMAGER_ARGS: "--extra-kernel-arg=console=ttyS0"
             IMAGE_REGISTRY: registry.dev.siderolabs.io
         - name: images-essential
           conditions:
