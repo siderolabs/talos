@@ -152,6 +152,8 @@ type MountSpec struct {
 	SelinuxLabel string `yaml:"selinuxLabel" protobuf:"2"`
 	// Enable project quota (xfs) for the volume.
 	ProjectQuotaSupport bool `yaml:"projectQuotaSupport" protobuf:"3"`
+	// Parent mount request ID.
+	ParentID string `yaml:"parentId,omitempty" protobuf:"4"`
 }
 
 // NewVolumeConfig initializes a BlockVolumeConfig resource.

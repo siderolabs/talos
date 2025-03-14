@@ -33,6 +33,7 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/config/configloader"
 	"github.com/siderolabs/talos/pkg/machinery/config/validation"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
+	"github.com/siderolabs/talos/pkg/machinery/resources/block"
 	configresource "github.com/siderolabs/talos/pkg/machinery/resources/config"
 	"github.com/siderolabs/talos/pkg/machinery/resources/runtime"
 	"github.com/siderolabs/talos/pkg/machinery/resources/v1alpha1"
@@ -98,6 +99,22 @@ func (ctrl *AcquireController) Inputs() []controller.Input {
 			Type:      runtime.MaintenanceServiceRequestType,
 			Kind:      controller.InputDestroyReady,
 		},
+		{
+			Namespace: block.NamespaceName,
+			Type:      block.VolumeStatusType,
+			ID:        optional.Some(constants.StatePartitionLabel),
+			Kind:      controller.InputWeak,
+		},
+		{
+			Namespace: block.NamespaceName,
+			Type:      block.VolumeMountRequestType,
+			Kind:      controller.InputDestroyReady,
+		},
+		{
+			Namespace: block.NamespaceName,
+			Type:      block.VolumeMountStatusType,
+			Kind:      controller.InputDestroyReady,
+		},
 	}
 }
 
@@ -111,6 +128,10 @@ func (ctrl *AcquireController) Outputs() []controller.Output {
 		{
 			Type: runtime.MaintenanceServiceRequestType,
 			Kind: controller.OutputExclusive,
+		},
+		{
+			Type: block.VolumeMountRequestType,
+			Kind: controller.OutputShared,
 		},
 	}
 }
@@ -240,6 +261,7 @@ func (validationModeDiskConfig) String() string {
 
 // loadFromDisk is a helper function for stateDisk.
 func (ctrl *AcquireController) loadFromDisk(logger *zap.Logger) (config.Provider, error) {
+	// check if the STATE is missing/available first, if it's missing, we skip the step
 	logger.Debug("loading config from STATE", zap.String("path", ctrl.ConfigPath))
 
 	_, err := os.Stat(ctrl.ConfigPath)

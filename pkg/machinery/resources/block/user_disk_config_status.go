@@ -26,7 +26,8 @@ const UserDiskConfigStatusID = "user-disks"
 //
 //gotagsrewrite:gen
 type UserDiskConfigStatusSpec struct {
-	Ready bool `yaml:"ready" protobuf:"1"`
+	Ready    bool `yaml:"ready" protobuf:"1"`
+	TornDown bool `yaml:"tornDown" protobuf:"2"`
 }
 
 // NewUserDiskConfigStatus initializes a UserDiskConfigStatus resource.

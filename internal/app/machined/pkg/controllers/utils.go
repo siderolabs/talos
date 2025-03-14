@@ -15,7 +15,7 @@ import (
 )
 
 // LoadOrNewFromFile either loads value from file.yaml or generates new values and saves as file.yaml.
-func LoadOrNewFromFile(path string, empty any, generate func(any) error) error {
+func LoadOrNewFromFile[T any](path string, empty T, generate func(T) error) error {
 	f, err := os.OpenFile(path, os.O_RDONLY, 0)
 	if err != nil && !os.IsNotExist(err) {
 		return fmt.Errorf("error reading state file: %w", err)

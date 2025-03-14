@@ -10,11 +10,9 @@ import (
 	"time"
 
 	"github.com/cosi-project/runtime/pkg/controller/runtime"
-	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/cosi-project/runtime/pkg/state/impl/inmem"
 	"github.com/cosi-project/runtime/pkg/state/impl/namespaced"
-	"github.com/siderolabs/go-retry/retry"
 	"github.com/stretchr/testify/suite"
 	"go.uber.org/zap/zaptest"
 )
@@ -50,21 +48,6 @@ func (suite *ClusterSuite) startRuntime() {
 
 		suite.Assert().NoError(suite.runtime.Run(suite.ctx))
 	}()
-}
-
-func (suite *ClusterSuite) assertResource(md resource.Metadata, check func(res resource.Resource) error) func() error {
-	return func() error {
-		r, err := suite.state.Get(suite.ctx, md)
-		if err != nil {
-			if state.IsNotFoundError(err) {
-				return retry.ExpectedError(err)
-			}
-
-			return err
-		}
-
-		return check(r)
-	}
 }
 
 func (suite *ClusterSuite) TearDownTest() {

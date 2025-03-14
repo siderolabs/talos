@@ -51,7 +51,6 @@ import (
 	"github.com/siderolabs/talos/internal/pkg/etcd"
 	"github.com/siderolabs/talos/internal/pkg/install"
 	"github.com/siderolabs/talos/internal/pkg/logind"
-	"github.com/siderolabs/talos/internal/pkg/mount"
 	mountv2 "github.com/siderolabs/talos/internal/pkg/mount/v2"
 	"github.com/siderolabs/talos/internal/pkg/partition"
 	"github.com/siderolabs/talos/internal/pkg/secureboot"
@@ -143,20 +142,6 @@ func LoadConfig(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
 		// clean up request to make sure controller doesn't work after this point
 		return r.State().V1Alpha2().Resources().Destroy(ctx, request.Metadata())
 	}, "loadConfig"
-}
-
-// SaveConfig represents the SaveConfig task.
-func SaveConfig(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
-	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
-		var b []byte
-
-		b, err = r.ConfigContainer().Bytes()
-		if err != nil {
-			return err
-		}
-
-		return os.WriteFile(constants.ConfigPath, b, 0o600)
-	}, "saveConfig"
 }
 
 // Sleep represents the Sleep task.
@@ -661,46 +646,6 @@ func MountUserDisks(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
 				return r.(*blockres.UserDiskConfigStatus).TypedSpec().Ready, nil
 			}),
 		)
-		if err != nil {
-			return err
-		}
-
-		// fetch user disk volume configs
-		volumeConfigs, err := safe.StateListAll[*blockres.VolumeConfig](ctx, r.State().V1Alpha2().Resources(), state.WithLabelQuery(resource.LabelExists(blockres.UserDiskLabel)))
-		if err != nil {
-			return err
-		}
-
-		if volumeConfigs.Len() == 0 {
-			// no user disks
-			return nil
-		}
-
-		var mountpoints mountv2.Points
-
-		// wait for volume statuses to be ready
-		for volumeConfig := range volumeConfigs.All() {
-			volumeStatus, err := safe.StateWatchFor[*blockres.VolumeStatus](ctx,
-				r.State().V1Alpha2().Resources(),
-				blockres.NewVolumeStatus(volumeConfig.Metadata().Namespace(), volumeConfig.Metadata().ID()).Metadata(),
-				state.WithEventTypes(state.Created, state.Updated),
-				state.WithCondition(func(r resource.Resource) (bool, error) {
-					return r.(*blockres.VolumeStatus).TypedSpec().Phase == blockres.VolumePhaseReady, nil
-				}),
-			)
-			if err != nil {
-				return fmt.Errorf("failed to watch for volume status %s: %w", volumeConfig.Metadata().ID(), err)
-			}
-
-			mountpoints = append(mountpoints, mountv2.NewPoint(
-				volumeStatus.TypedSpec().MountLocation,
-				volumeConfig.TypedSpec().Mount.TargetPath,
-				volumeStatus.TypedSpec().Filesystem.String(),
-				mountv2.WithSelinuxLabel(volumeConfig.TypedSpec().Mount.SelinuxLabel),
-			))
-		}
-
-		_, err = mountpoints.Mount(mountv2.WithMountPrinter(logger.Printf))
 
 		return err
 	}, "mountUserDisks"
@@ -902,47 +847,6 @@ func UnmountOverlayFilesystems(runtime.Sequence, any) (runtime.TaskExecutionFunc
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
 		return mountv2.OverlayMountPoints().Unmount()
 	}, "unmountOverlayFilesystems"
-}
-
-// UnmountUserDisks represents the UnmountUserDisks task.
-func UnmountUserDisks(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
-	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) error {
-		// fetch user disk volume configs
-		volumeConfigs, err := safe.StateListAll[*blockres.VolumeConfig](ctx, r.State().V1Alpha2().Resources(), state.WithLabelQuery(resource.LabelExists(blockres.UserDiskLabel)))
-		if err != nil {
-			return err
-		}
-
-		if volumeConfigs.Len() == 0 {
-			// no user disks
-			return nil
-		}
-
-		var mountpoints mountv2.Points
-
-		for volumeConfig := range volumeConfigs.All() {
-			volumeStatus, err := safe.StateGetByID[*blockres.VolumeStatus](
-				ctx,
-				r.State().V1Alpha2().Resources(),
-				volumeConfig.Metadata().ID(),
-			)
-			if err != nil {
-				continue
-			}
-
-			if volumeStatus.TypedSpec().Phase != blockres.VolumePhaseReady {
-				continue
-			}
-
-			mountpoints = append(mountpoints, mountv2.NewPoint(
-				volumeStatus.TypedSpec().MountLocation,
-				volumeConfig.TypedSpec().Mount.TargetPath,
-				volumeStatus.TypedSpec().Filesystem.String(),
-			))
-		}
-
-		return mountpoints.Unmount()
-	}, "unmountUserDisks"
 }
 
 // UnmountPodMounts represents the UnmountPodMounts task.
@@ -1638,32 +1542,6 @@ func haltIfInstalled(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) 
 	}, "haltIfInstalled"
 }
 
-// MountStatePartition mounts the system partition.
-func MountStatePartition(required bool) func(seq runtime.Sequence, _ any) (runtime.TaskExecutionFunc, string) {
-	return func(seq runtime.Sequence, _ any) (runtime.TaskExecutionFunc, string) {
-		return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) error {
-			if required {
-				if _, err := waitForVolumeReady(ctx, r, constants.StatePartitionLabel); err != nil {
-					return err
-				}
-			} else {
-				volumeStatus, err := waitForVolumeReadyOrMissing(ctx, r, constants.StatePartitionLabel)
-				if err != nil {
-					return err
-				}
-
-				if volumeStatus.TypedSpec().Phase == blockres.VolumePhaseMissing {
-					logger.Print("STATE volume is missing")
-
-					return nil
-				}
-			}
-
-			return mount.SystemPartitionMount(ctx, r, logger, constants.StatePartitionLabel, !required)
-		}, "mountStatePartition"
-	}
-}
-
 // CleanupBootloader cleans up the ununsed bootloader if booted from a disk image with both bootloaders present.
 func CleanupBootloader(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) error {
@@ -1686,13 +1564,6 @@ func CleanupBootloader(runtime.Sequence, any) (runtime.TaskExecutionFunc, string
 
 		return r.State().Machine().Meta().Flush()
 	}, "cleanupBootloader"
-}
-
-// UnmountStatePartition unmounts the system partition.
-func UnmountStatePartition(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
-	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) error {
-		return mount.SystemPartitionUnmount(r, logger, constants.StatePartitionLabel)
-	}, "unmountStatePartition"
 }
 
 // MountEphemeralPartition mounts the ephemeral partition.
@@ -2207,8 +2078,4 @@ func logError(err error, logger *log.Logger) error {
 
 func waitForVolumeReady(ctx context.Context, r runtime.Runtime, volumeID string) (*blockres.VolumeStatus, error) {
 	return blockres.WaitForVolumePhase(ctx, r.State().V1Alpha2().Resources(), volumeID, blockres.VolumePhaseReady)
-}
-
-func waitForVolumeReadyOrMissing(ctx context.Context, r runtime.Runtime, volumeID string) (*blockres.VolumeStatus, error) {
-	return blockres.WaitForVolumePhase(ctx, r.State().V1Alpha2().Resources(), volumeID, blockres.VolumePhaseReady, blockres.VolumePhaseMissing)
 }
