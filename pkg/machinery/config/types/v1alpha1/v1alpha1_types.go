@@ -1403,7 +1403,7 @@ type ClusterNetworkConfig struct {
 	//     The domain used by Kubernetes DNS.
 	//     The default is `cluster.local`
 	//   examples:
-	//     - value: '"cluser.local"'
+	//     - value: '"cluster.local"'
 	DNSDomain string `yaml:"dnsDomain"`
 	//   description: |
 	//     The pod subnet CIDR.

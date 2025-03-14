@@ -3214,7 +3214,7 @@ cni:
         - https://docs.projectcalico.org/archive/v3.20/manifests/canal.yaml
 {{< /highlight >}}</details> | |
 |`dnsDomain` |string |<details><summary>The domain used by Kubernetes DNS.</summary>The default is `cluster.local`</details> <details><summary>Show example(s)</summary>{{< highlight yaml >}}
-dnsDomain: cluser.local
+dnsDomain: cluster.local
 {{< /highlight >}}</details> | |
 |`podSubnets` |[]string |The pod subnet CIDR. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 podSubnets:

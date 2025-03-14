@@ -1804,7 +1804,7 @@ func (ClusterNetworkConfig) Doc() *encoder.Doc {
 	doc.AddExample("Configuring with flannel CNI and setting up subnets.", clusterNetworkExample())
 
 	doc.Fields[0].AddExample("", clusterCustomCNIExample())
-	doc.Fields[1].AddExample("", "cluser.local")
+	doc.Fields[1].AddExample("", "cluster.local")
 	doc.Fields[2].AddExample("", []string{"10.244.0.0/16"})
 	doc.Fields[3].AddExample("", []string{"10.96.0.0/12"})
 
