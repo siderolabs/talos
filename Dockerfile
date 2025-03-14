@@ -202,8 +202,8 @@ FROM ${PKG_XZ} AS pkg-xz
 FROM ${PKG_ZLIB} AS pkg-zlib
 FROM ${PKG_ZSTD} AS pkg-zstd
 
-FROM --platform=amd64 ${TOOLS} AS tools-amd64
-FROM --platform=arm64 ${TOOLS} AS tools-arm64
+FROM --platform=amd64 ${TOOLS_PREFIX}:${TOOLS} AS tools-amd64
+FROM --platform=arm64 ${TOOLS_PREFIX}:${TOOLS} AS tools-arm64
 
 FROM scratch AS pkg-debug-tools-scratch-amd64
 FROM scratch AS pkg-debug-tools-scratch-arm64
