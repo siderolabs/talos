@@ -159,33 +159,8 @@
 (allow pod_containerd_t self (user_namespace (create)))
 
 ; Manage pseudo-terminals for containers, Kubernetes Conformance needs this
-(allow pod_containerd_t devpts_t (chr_file (
-    append
-    audit_access
-    create
-    execmod
-    execute
-    getattr
-    ioctl
-    link
-    lock
-    map
-    mounton
-    open
-    quotaon
-    read
-    relabelfrom
-    relabelto
-    rename
-    setattr
-    unlink
-    watch
-    watch_mount
-    watch_reads
-    watch_sb
-    watch_with_perm
-    write
-)))
+(allow pod_containerd_t devpts_t (chr_file (all)))
+(allow pod_t devpts_t (chr_file (all)))
 
 ; ; cilium
 ; (allow pod_containerd_t pod_p (unix_stream_socket (connectto)))
