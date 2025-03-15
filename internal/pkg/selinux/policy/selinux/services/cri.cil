@@ -211,3 +211,8 @@
 
 ; Calico and basically any CNI installing plugins
 (allow pod_t cni_plugin_t (fs_classes (rw)))
+; `install` also seems to test the plugin
+(allow pod_t cni_plugin_t (file (execute)))
+
+; TinK is an example of what needs this. Docker in a pod will also require this.
+(allow pod_p cgroup_t (fs_classes (rw)))
