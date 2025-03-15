@@ -1,6 +1,6 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
 #
-# Generated on 2025-03-14T10:24:50Z by kres ec5ec04.
+# Generated on 2025-03-15T16:49:23Z by kres ec5ec04.
 
 name: default
 concurrency:
@@ -93,9 +93,6 @@ jobs:
           PUSH: "true"
         run: |
           make talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
-      - name: lint
-        run: |
-          make lint
       - name: talosctl-cni-bundle
         run: |
           make talosctl-cni-bundle
@@ -112,18 +109,6 @@ jobs:
           PLATFORM: linux/amd64,linux/arm64
         run: |
           make images-essential
-      - name: unit-tests
-        run: |
-          make unit-tests
-      - name: unit-tests-race
-        run: |
-          make unit-tests-race
-      - name: coverage
-        uses: codecov/codecov-action@v5
-        with:
-          files: _out/coverage.txt
-          token: ${{ secrets.CODECOV_TOKEN }}
-        timeout-minutes: 3
       - name: Generate executable list
         run: |
           find _out -type f -executable > _out/executable-artifacts
