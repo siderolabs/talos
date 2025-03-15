@@ -188,8 +188,8 @@
 ; TODO: label
 (allow pod_p kubelet_state_t (fs_classes (rw)))
 
-; nsenter checks pid1's procfs
-(allow pod_p init_t (dir (search)))
+; nsenter (e.g. used in our tests) checks pid1's procfs
+(allow pod_p init_t (fs_classes (ro)))
 
 ; getattr, unmount called by containers and should be guarded by their mount namespaces
 (allow pod_p fs_t (filesystem (
@@ -204,3 +204,6 @@
     unmount
     watch
 )))
+
+; Calico and basically any CNI installing plugins
+(allow pod_t cni_plugin_t (fs_classes (rw)))
