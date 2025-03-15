@@ -1,0 +1,174 @@
+; Query procfs about self, plus OOM adj and similar writes (controlled by other access control and caps)
+; Also FIFO/socket writes for own stuff
+(allow any_p self (fs_classes (rw)))
+; Read process info
+(allow any_p procfs_t (fs_classes (ro)))
+; Allow all process actions but ptrace, set* will be guarded by transitions
+(allow any_p self (process_classes (full)))
+; Read various parameters like hugepages
+(allow any_p sysfs_t (fs_classes (ro)))
+(allow any_p proc_cmdline_t (fs_classes (ro)))
+
+; Pseudo devices
+(allow any_p null_device_t (fs_classes (rw)))
+
+; All caps, except sys_boot and sys_modules
+(allow any_p self (capability (
+    audit_control
+    audit_write
+    chown
+    dac_override
+    dac_read_search
+    fowner
+    fsetid
+    ipc_lock
+    ipc_owner
+    kill
+    lease
+    linux_immutable
+    mknod
+    net_admin
+    net_bind_service
+    net_broadcast
+    net_raw
+    setfcap
+    setgid
+    setpcap
+    setuid
+    sys_admin
+    sys_chroot
+    sys_nice
+    sys_pacct
+    sys_ptrace
+    sys_rawio
+    sys_resource
+    sys_time
+    sys_tty_config
+)))
+(allow any_p self (cap_userns (
+    audit_control
+    audit_write
+    chown
+    dac_override
+    dac_read_search
+    fowner
+    fsetid
+    ipc_lock
+    ipc_owner
+    kill
+    lease
+    linux_immutable
+    mknod
+    net_admin
+    net_bind_service
+    net_broadcast
+    net_raw
+    setfcap
+    setgid
+    setpcap
+    setuid
+    sys_admin
+    sys_chroot
+    sys_nice
+    sys_pacct
+    sys_ptrace
+    sys_rawio
+    sys_resource
+    sys_time
+    sys_tty_config
+)))
+; All but mac_admin, mac_override and syslog
+(allow any_p self (capability2 (
+    audit_read
+    block_suspend
+    bpf
+    checkpoint_restore
+    perfmon
+    wake_alarm
+)))
+(allow any_p self (cap2_userns (
+    audit_read
+    block_suspend
+    bpf
+    checkpoint_restore
+    perfmon
+    wake_alarm
+)))
+
+; Enable (e)BPF for all processes
+(allow any_p self (bpf (map_create map_read map_write prog_load prog_run)))
+
+; Allow init to manage processes
+(allow init_t service_p (fs_classes (rw)))
+(allow init_t service_p (process_classes (full)))
+
+; kernel cmdline
+(allow system_p proc_cmdline_t (fs_classes (ro)))
+(allow system_container_p proc_cmdline_t (fs_classes (ro)))
+
+; These only run binaries from the squashfs so this shouldn't do harm.
+; TODO: eliminate such common permissions
+(allow system_p any_f (fs_classes (ro)))
+(allow system_container_p any_f (fs_classes (ro)))
+
+; By default, allow any process to access any device except special ones
+(allow any_p common_device_f (fs_classes (rw)))
+; CNI, containerd, many different services read and write sysctl parameters
+(allow any_p proc_sysctl_t (fs_classes (rw)))
+; Unconfined FS and files
+(allow any_p unconfined_f (fs_classes (rw)))
+; Kernel threads can access anything
+(allow kernel_t any_f (fs_classes (rw)))
+
+; Own sockets
+(allow any_p self (unix_stream_socket (connectto)))
+
+; allow reading cgroup info
+(allow any_p cgroup_t (fs_classes (ro)))
+
+; ; cilium-agent
+; (allow any_p self (perf_event (all)))
+; (allow any_p bpf_t (fs_classes (rw)))
+
+; fio
+(allow any_p self (shm (all)))
+
+; /run/flannel, created by containerd
+(allow any_p pod_containerd_run_t (fs_classes (rw)))
+
+; Mayastor
+(allow any_p hugetlbfs_t (fs_classes (rw)))
+
+; ceph-osd accesses io_uring
+(allow any_p self (anon_inode (map read write create)))
+
+; ; cilium lock, socket and misc runtime files
+; (allow any_p run_t (fs_classes (rw)))
+
+; time data, LVM config
+(allow any_p etc_t (fs_classes (ro)))
+
+; ; OpenEBS manages volumes, ceph
+; (allow any_p sysfs_t (fs_classes (rw)))
+; (allow any_p udev_run_t (fs_classes (ro ioctl)))
+
+; ; pods also run CNI, LVM and other host binaries
+; (allow any_p bin_exec_t (fs_classes (ro)))
+; (allow pod_p bin_exec_t (file (execute execute_no_trans)))
+
+; pf-2-proto-262-type-1
+; refpolicy allows it for spc_t
+(allow any_p kernel_t (system (module_request)))
+
+; debug transitions:
+; (auditallow any_f_any_p any_f_any_p (process (dyntransition fork ptrace setcurrent setexec setfscreate setkeycreate transition)))
+; (auditallow any_f_any_p any_f_any_p (process2 (nnp_transition nosuid_transition)))
+; (auditallow any_f_any_p any_f_any_p (file (entrypoint execute execute_no_trans)))
+
+; HACK: this happens in a process cloned from containerd for running CNI:
+; [   77.042515] audit: type=1400 audit(1741862615.446:4227): avc:  granted  { execute } for  pid=3136 comm="containerd" name="loopback" dev="loop0" ino=68 scontext=system_u:system_r:init_t:s0 tcontext=system_u:object_r:cni_plugin_t:s0 tclass=file
+; [   77.043500] audit: type=1400 audit(1741862615.446:4227): avc:  granted  { execute } for  pid=3136 comm="containerd" name="loopback" dev="overlay" ino=68 scontext=system_u:system_r:pod_containerd_t:s0 tcontext=system_u:object_r:cni_plugin_t:s0 tclass=file
+; [   77.044528] audit: type=1400 audit(1741862615.446:4227): avc:  granted  { execute_no_trans } for  pid=3136 comm="containerd" path="/opt/cni/bin/loopback" dev="overlay" ino=68 scontext=system_u:system_r:pod_containerd_t:s0 tcontext=system_u:object_r:cni_plugin_t:s0 tclass=file
+; [   77.045739] audit: type=1400 audit(1741862615.446:4227): avc:  granted  { execute } for  pid=3136 comm="loopback" path="/opt/cni/bin/loopback" dev="overlay" ino=68 scontext=system_u:system_r:pod_containerd_t:s0 tcontext=system_u:object_r:cni_plugin_t:s0 tclass=file
+; This is being researched as a kernel bug since a process gains init_t context without the policy allowing it.
+(allow init_t cni_plugin_t (file (execute)))

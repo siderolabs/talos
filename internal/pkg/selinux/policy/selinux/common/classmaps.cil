@@ -1,39 +1,48 @@
 ; Access to all file classes
-(classmap fs_classes (full rw ro))
-(classmapping fs_classes full (filesystem (
-    associate
-    getattr
-    mount
-    quotaget
-    quotamod
-    relabelfrom
-    relabelto
-    remount
-    unmount
-    watch
-)))
-(classmapping fs_classes full (file (
-    append create execmod execute getattr ioctl link lock map mounton open quotaon read relabelfrom relabelto rename setattr unlink watch watch_mount watch_reads watch_sb watch_with_perm write
-)))
-(classmapping fs_classes full (dir (
-    append create execmod execute getattr ioctl link lock map mounton open quotaon read relabelfrom relabelto rename setattr unlink watch watch_mount watch_reads watch_sb watch_with_perm write
-    add_name remove_name reparent rmdir search
-)))
-(classmapping fs_classes full (lnk_file (
-    append create execmod execute getattr ioctl link lock map mounton open quotaon read relabelfrom relabelto rename setattr unlink watch watch_mount watch_reads watch_sb watch_with_perm write
-)))
-(classmapping fs_classes full (chr_file (
-    append create execmod execute getattr ioctl link lock map mounton open quotaon read relabelfrom relabelto rename setattr unlink watch watch_mount watch_reads watch_sb watch_with_perm write
-)))
-(classmapping fs_classes full (blk_file (
-    append create execmod execute getattr ioctl link lock map mounton open quotaon read relabelfrom relabelto rename setattr unlink watch watch_mount watch_reads watch_sb watch_with_perm write
-)))
-(classmapping fs_classes full (sock_file (
-    append create execmod execute getattr ioctl link lock map mounton open quotaon read relabelfrom relabelto rename setattr unlink watch watch_mount watch_reads watch_sb watch_with_perm write
-)))
-(classmapping fs_classes full (fifo_file (
-    append create execmod execute getattr ioctl link lock map mounton open quotaon read relabelfrom relabelto rename setattr unlink watch watch_mount watch_reads watch_sb watch_with_perm write
-)))
+(classmap fs_classes (getattr ioctl relabelfrom relabelto mounton rw ro))
+; getattr
+(classmapping fs_classes relabelfrom (filesystem (getattr)))
+(classmapping fs_classes getattr (file (getattr)))
+(classmapping fs_classes getattr (dir (getattr)))
+(classmapping fs_classes getattr (lnk_file (getattr)))
+(classmapping fs_classes getattr (chr_file (getattr)))
+(classmapping fs_classes getattr (blk_file (getattr)))
+(classmapping fs_classes getattr (sock_file (getattr)))
+(classmapping fs_classes getattr (fifo_file (getattr)))
+; ioctl
+(classmapping fs_classes ioctl (file (ioctl)))
+(classmapping fs_classes ioctl (dir (ioctl)))
+(classmapping fs_classes ioctl (lnk_file (ioctl)))
+(classmapping fs_classes ioctl (chr_file (ioctl)))
+(classmapping fs_classes ioctl (blk_file (ioctl)))
+(classmapping fs_classes ioctl (sock_file (ioctl)))
+(classmapping fs_classes ioctl (fifo_file (ioctl)))
+; relabelfrom
+(classmapping fs_classes relabelfrom (filesystem (relabelfrom)))
+(classmapping fs_classes relabelfrom (file (relabelfrom)))
+(classmapping fs_classes relabelfrom (dir (relabelfrom)))
+(classmapping fs_classes relabelfrom (lnk_file (relabelfrom)))
+(classmapping fs_classes relabelfrom (chr_file (relabelfrom)))
+(classmapping fs_classes relabelfrom (blk_file (relabelfrom)))
+(classmapping fs_classes relabelfrom (sock_file (relabelfrom)))
+(classmapping fs_classes relabelfrom (fifo_file (relabelfrom)))
+; relabelto
+(classmapping fs_classes relabelto (filesystem (relabelto)))
+(classmapping fs_classes relabelto (file (relabelto)))
+(classmapping fs_classes relabelto (dir (relabelto)))
+(classmapping fs_classes relabelto (lnk_file (relabelto)))
+(classmapping fs_classes relabelto (chr_file (relabelto)))
+(classmapping fs_classes relabelto (blk_file (relabelto)))
+(classmapping fs_classes relabelto (sock_file (relabelto)))
+(classmapping fs_classes relabelto (fifo_file (relabelto)))
+; mounton
+(classmapping fs_classes mounton (file (mounton)))
+(classmapping fs_classes mounton (dir (mounton)))
+(classmapping fs_classes mounton (lnk_file (mounton)))
+(classmapping fs_classes mounton (chr_file (mounton)))
+(classmapping fs_classes mounton (blk_file (mounton)))
+(classmapping fs_classes mounton (sock_file (mounton)))
+(classmapping fs_classes mounton (fifo_file (mounton)))
 ; rw is full without SELinux management
 (classmapping fs_classes rw (filesystem (
     associate
@@ -46,26 +55,26 @@
     watch
 )))
 (classmapping fs_classes rw (file (
-    append create execmod execute getattr ioctl link lock map mounton open quotaon read rename setattr unlink watch watch_mount watch_reads watch_sb watch_with_perm write
+    append create execmod getattr ioctl link lock map mounton open quotaon read rename setattr unlink watch watch_mount watch_reads watch_sb watch_with_perm write
 )))
 (classmapping fs_classes rw (dir (
-    append create execmod execute getattr ioctl link lock map mounton open quotaon read rename setattr unlink watch watch_mount watch_reads watch_sb watch_with_perm write
+    append create execmod getattr ioctl link lock map mounton open quotaon read rename setattr unlink watch watch_mount watch_reads watch_sb watch_with_perm write
     add_name remove_name reparent rmdir search
 )))
 (classmapping fs_classes rw (lnk_file (
-    append create execmod execute getattr ioctl link lock map mounton open quotaon read rename setattr unlink watch watch_mount watch_reads watch_sb watch_with_perm write
+    append create execmod getattr ioctl link lock map mounton open quotaon read rename setattr unlink watch watch_mount watch_reads watch_sb watch_with_perm write
 )))
 (classmapping fs_classes rw (chr_file (
-    append create execmod execute getattr ioctl link lock map mounton open quotaon read rename setattr unlink watch watch_mount watch_reads watch_sb watch_with_perm write
+    append create execmod getattr ioctl link lock map mounton open quotaon read rename setattr unlink watch watch_mount watch_reads watch_sb watch_with_perm write
 )))
 (classmapping fs_classes rw (blk_file (
-    append create execmod execute getattr ioctl link lock map mounton open quotaon read rename setattr unlink watch watch_mount watch_reads watch_sb watch_with_perm write
+    append create execmod getattr ioctl link lock map mounton open quotaon read rename setattr unlink watch watch_mount watch_reads watch_sb watch_with_perm write
 )))
 (classmapping fs_classes rw (sock_file (
-    append create execmod execute getattr ioctl link lock map mounton open quotaon read rename setattr unlink watch watch_mount watch_reads watch_sb watch_with_perm write
+    append create execmod getattr ioctl link lock map mounton open quotaon read rename setattr unlink watch watch_mount watch_reads watch_sb watch_with_perm write
 )))
 (classmapping fs_classes rw (fifo_file (
-    append create execmod execute getattr ioctl link lock map mounton open quotaon read rename setattr unlink watch watch_mount watch_reads watch_sb watch_with_perm write
+    append create execmod getattr ioctl link lock map mounton open quotaon read rename setattr unlink watch watch_mount watch_reads watch_sb watch_with_perm write
 )))
 ; ro is rw without write and configure
 (classmapping fs_classes ro (filesystem (
@@ -75,26 +84,26 @@
     watch
 )))
 (classmapping fs_classes ro (file (
-    append create execmod execute getattr ioctl lock map mounton open quotaon read rename unlink watch watch_mount watch_reads watch_sb watch_with_perm
+    execmod getattr lock map open read watch watch_mount watch_reads watch_sb watch_with_perm
 )))
 (classmapping fs_classes ro (dir (
-    execmod execute getattr ioctl lock map open read watch watch_mount watch_reads watch_sb watch_with_perm
+    execmod getattr lock map open read watch watch_mount watch_reads watch_sb watch_with_perm
     search
 )))
 (classmapping fs_classes ro (lnk_file (
-    execmod execute getattr ioctl lock map open read watch watch_mount watch_reads watch_sb watch_with_perm
+    execmod getattr lock map open read watch watch_mount watch_reads watch_sb watch_with_perm
 )))
 (classmapping fs_classes ro (chr_file (
-    execmod execute getattr ioctl lock map open read watch watch_mount watch_reads watch_sb watch_with_perm
+    execmod getattr lock map open read watch watch_mount watch_reads watch_sb watch_with_perm
 )))
 (classmapping fs_classes ro (blk_file (
-    execmod execute getattr ioctl lock map open read watch watch_mount watch_reads watch_sb watch_with_perm
+    execmod getattr lock map open read watch watch_mount watch_reads watch_sb watch_with_perm
 )))
 (classmapping fs_classes ro (sock_file (
-    execmod execute getattr ioctl lock map open read watch watch_mount watch_reads watch_sb watch_with_perm
+    execmod getattr lock map open read watch watch_mount watch_reads watch_sb watch_with_perm
 )))
 (classmapping fs_classes ro (fifo_file (
-    execmod execute getattr ioctl lock map open read watch watch_mount watch_reads watch_sb watch_with_perm
+    execmod getattr lock map open read watch watch_mount watch_reads watch_sb watch_with_perm
 )))
 
 ; Netlink socket access
@@ -130,3 +139,46 @@
 (classmapping netlink_classes full (netlink_scsitransport_socket (accept append bind connect create getattr getopt ioctl listen lock map name_bind read recvfrom sendto setattr setopt shutdown write)))
 (classmapping netlink_classes full (netlink_rdma_socket (accept append bind connect create getattr getopt ioctl listen lock map name_bind read recvfrom sendto setattr setopt shutdown write)))
 (classmapping netlink_classes full (netlink_crypto_socket (accept append bind connect create getattr getopt ioctl listen lock map name_bind read recvfrom sendto setattr setopt shutdown write)))
+
+; Everything except ptrace
+(classmap process_classes (full signal))
+(classmapping process_classes full (process (
+    dyntransition
+    execheap
+    execmem
+    execstack
+    fork
+    getattr
+    getcap
+    getpgid
+    getsched
+    getsession
+    getrlimit
+    noatsecure
+    rlimitinh
+    setcap
+    setcurrent
+    setexec
+    setfscreate
+    setkeycreate
+    setpgid
+    setrlimit
+    setsched
+    setsockcreate
+    share
+    sigchld
+    siginh
+    sigkill
+    signal
+    signull
+    sigstop
+    transition
+)))
+(classmapping process_classes signal (process (
+    sigchld
+    siginh
+    sigkill
+    signal
+    signull
+    sigstop
+)))

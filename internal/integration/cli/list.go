@@ -95,9 +95,9 @@ func runAndCheck(t *testing.T, expectedSeparators int, cmdFn func() *exec.Cmd, f
 			t,
 			actualSeparators,
 			expectedSeparators,
-			"too many separators, flags: %s\nlines:\n%s",
+			"too many separators, flags: %s\nline:\n%s",
 			strings.Join(flags, " "),
-			stdout,
+			line,
 		) {
 			return
 		}

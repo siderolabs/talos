@@ -1,0 +1,24 @@
+; Unlabeled container: typically a system extension
+; Possibly a service misconfigured by machined
+(type unconfined_container_t)
+(call system_container_p (unconfined_container_t))
+; Files from sysext rootfs
+(type system_extension_t)
+(call system_f (system_extension_t))
+
+(allow any_p system_extension_t (fs_classes (ro)))
+
+; Modules
+(allow kernel_t system_extension_t (system (module_load module_request)))
+(allow udev_t system_extension_t (fs_classes (ro)))
+(allow udev_t system_extension_t (system (module_load module_request)))
+
+; Executables run in containers, libraries
+(allow sys_containerd_t system_extension_t (file (entrypoint execute execute_no_trans)))
+(allow unconfined_container_t system_extension_t (file (entrypoint execute execute_no_trans)))
+
+; Allow udev to execute rules' helpers
+(allow udev_t system_extension_t (file (execute execute_no_trans)))
+
+; Extensions might want to use ptrace on their processes
+(allow unconfined_container_t self (process (ptrace)))

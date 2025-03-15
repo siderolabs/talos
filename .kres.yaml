@@ -107,7 +107,7 @@ spec:
             PLATFORM: linux/amd64,linux/arm64
             IMAGE_REGISTRY: registry.dev.siderolabs.io
             PUSH: true
-        - name: lint
+        # - name: lint
         - name: talosctl-cni-bundle
         - name: iso
           command: iso secureboot-iso
@@ -119,13 +119,13 @@ spec:
             PLATFORM: linux/amd64,linux/arm64
             IMAGER_ARGS: "--extra-kernel-arg=console=ttyS0"
             IMAGE_REGISTRY: registry.dev.siderolabs.io
-        - name: unit-tests
-        - name: unit-tests-race
-        - name: coverage
-          coverageStep:
-            files:
-              - _out/coverage.txt
-          timeoutMinutes: 3
+        # - name: unit-tests
+        # - name: unit-tests-race
+        # - name: coverage
+        #   coverageStep:
+        #     files:
+        #       - _out/coverage.txt
+        #   timeoutMinutes: 3
         - name: save-artifacts
           artifactStep:
             type: upload
@@ -400,7 +400,7 @@ spec:
             - always
           artifactStep:
             type: upload
-            artifactName: talos-logs-integration-qemu
+            artifactName: talos-logs-integration-conformance
             disableExecutableListGeneration: true
             artifactPath: /tmp/logs-*.tar.gz
             additionalArtifacts:

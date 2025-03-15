@@ -1,15 +1,79 @@
 (type kubelet_t)
 (call pod_p (kubelet_t))
 ; FIXME: insecure as anyone with access to the pod containerd may obtain this domain
-(allow kubelet_t containerd_state_t (file (entrypoint execute_no_trans)))
+(allow kubelet_t containerd_state_t (file (entrypoint execute execute_no_trans)))
 
 (type k8s_conf_t)
-(call filesystem_f (k8s_conf_t))
+(call system_f (k8s_conf_t))
 (filecon "/etc/kubernetes(/.*)?" any (system_u object_r k8s_conf_t (systemLow systemLow)))
 
 (type k8s_plugin_t)
-(call filesystem_f (k8s_plugin_t))
+(call system_f (k8s_plugin_t))
 (filecon "/usr/libexec/kubernetes(/.*)?" any (system_u object_r k8s_plugin_t (systemLow systemLow)))
+
+(type k8s_credentialproviders_t)
+(call system_f (k8s_credentialproviders_t))
+(filecon "/usr/local/lib/kubelet/credentialproviders(/.*)?" any (system_u object_r k8s_credentialproviders_t (systemLow systemLow)))
 
 (type kubelet_state_t)
 (call system_f (kubelet_state_t))
+(allow init_t kubelet_state_t (fs_classes (rw)))
+(allow pod_containerd_t kubelet_state_t (fs_classes (rw)))
+
+; FIXME: insecure as anyone with access to the pod containerd may obtain this domain
+; TODO: Secure kubelet launch labeling
+
+; Manage processes & cgroups
+(allow kubelet_t cgroup_t (fs_classes (rw)))
+(allow kubelet_t any_p (fs_classes (ro)))
+
+; D-Bus for notifying kubelet of system power events
+(allow kubelet_t dbus_client_socket_t (fs_classes (rw)))
+
+; Kubelet reads many attrs, handles mounts
+(allow kubelet_t fs_t (filesystem (getattr remount)))
+(allow kubelet_t any_f (fs_classes (getattr)))
+
+; Config and state access
+(allow kubelet_t etc_t (fs_classes (ro)))
+(allow kubelet_t k8s_conf_t (fs_classes (rw)))
+(allow kubelet_t kubelet_state_t (fs_classes (rw)))
+
+; Some mount/umount calls, xtables lock
+; TODO: label more precisely?
+(allow kubelet_t run_t (fs_classes (rw)))
+
+; Communication with init via pipes and sockets
+(allow kubelet_t init_t (fd (use)))
+(allow kubelet_t init_t (fifo_file (write)))
+(allow kubelet_t init_t (unix_stream_socket (connectto)))
+
+; Run pods
+(allow kubelet_t pod_containerd_socket_t (fs_classes (rw)))
+(allow kubelet_t pod_containerd_t (unix_stream_socket (connectto)))
+
+; Miscelaneous admin permissions
+(allow kubelet_t securityfs_t (fs_classes (ro)))
+(allow kubelet_t self (capability2 (syslog)))
+(allow kubelet_t kernel_t (system (syslog_read)))
+
+; Manage system configuration
+(allow kubelet_t sysfs_t (fs_classes (rw)))
+
+; CNI config, /etc/hosts written by kubelet
+(allow pod_p kubelet_state_t (fs_classes (ro)))
+
+(allow kubelet_t k8s_plugin_t (fs_classes (rw)))
+(allow kubelet_t k8s_plugin_t (file (entrypoint execute execute_no_trans)))
+
+; kubelet sends sigkill to pod processes
+(allow kubelet_t pod_p (process_classes (signal)))
+
+; ; Used when Mayastor/OpenEBS is enabled
+; (allow kubelet_t hugetlbfs_t (fs_classes (rw)))
+
+; ; /registration/rook-ceph.cephfs.csi.ceph.com-reg.sock and similar when using Rook-Ceph
+; (allow kubelet_t pod_p (unix_stream_socket (connectto)))
+
+; local-path-provisioner
+(allow kubelet_t ephemeral_t (fs_classes (rw)))
