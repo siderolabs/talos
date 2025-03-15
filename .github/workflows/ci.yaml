@@ -1,6 +1,6 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
 #
-# Generated on 2025-03-14T10:24:50Z by kres ec5ec04.
+# Generated on 2025-03-17T14:17:07Z by kres ec5ec04.
 
 name: default
 concurrency:
@@ -1239,7 +1239,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: talos-logs-integration-qemu
+          name: talos-logs-integration-conformance
           path: |-
             /tmp/logs-*.tar.gz
             /tmp/support-*.zip
