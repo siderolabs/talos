@@ -210,7 +210,7 @@ func (n *Nocloud) configFromCD(ctx context.Context, r state.State) (metaConfig [
 
 	metaConfig, err = os.ReadFile(filepath.Join(mnt, configMetaDataPath))
 	if err != nil {
-		log.Printf("failed to read %s", configMetaDataPath)
+		log.Printf("failed to read %s: %s", configMetaDataPath, err)
 
 		metaConfig = nil
 	}
@@ -219,7 +219,7 @@ func (n *Nocloud) configFromCD(ctx context.Context, r state.State) (metaConfig [
 
 	networkConfig, err = os.ReadFile(filepath.Join(mnt, configNetworkConfigPath))
 	if err != nil {
-		log.Printf("failed to read %s", configNetworkConfigPath)
+		log.Printf("failed to read %s: %s", configNetworkConfigPath, err)
 
 		networkConfig = nil
 	}
@@ -228,7 +228,7 @@ func (n *Nocloud) configFromCD(ctx context.Context, r state.State) (metaConfig [
 
 	machineConfig, err = os.ReadFile(filepath.Join(mnt, configUserDataPath))
 	if err != nil {
-		log.Printf("failed to read %s", configUserDataPath)
+		log.Printf("failed to read %s: %s", configUserDataPath, err)
 
 		machineConfig = nil
 	}
@@ -237,7 +237,11 @@ func (n *Nocloud) configFromCD(ctx context.Context, r state.State) (metaConfig [
 		return nil, nil, nil, fmt.Errorf("failed to unmount: %w", err)
 	}
 
-	return metaConfig, networkConfig, machineConfig, nil
+	if machineConfig == nil {
+		err = errors.ErrNoConfigSource
+	}
+
+	return metaConfig, networkConfig, machineConfig, err
 }
 
 //nolint:gocyclo
