@@ -51,8 +51,11 @@ func (suite *ListSuite) TestDepth() {
 
 	if stdout, _ := suite.RunCLI(imageCacheQuery); strings.Contains(stdout, "ready") {
 		// Image cache paths parts are longer
-		maxSeps = 8
+		maxSeps = 9
 	}
+
+	stdout, _ := suite.RunCLI([]string{"get", "imagecacheconfig", "--output", "yaml"})
+	suite.T().Logf("imagecacheconfig:\n%s", stdout)
 
 	// checks that enough separators are encountered in the output
 	for _, test := range []struct {
