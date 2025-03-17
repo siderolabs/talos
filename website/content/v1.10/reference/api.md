@@ -8100,6 +8100,7 @@ rpc rollback
 | network | [string](#string) |  |  |
 | gateway | [string](#string) |  |  |
 | metric | [uint32](#uint32) |  |  |
+| table | [string](#string) |  |  |
 
 
 

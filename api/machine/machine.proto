@@ -1115,6 +1115,7 @@ message RouteConfig {
   string network = 1;
   string gateway = 2;
   uint32 metric = 3;
+  string table = 4;
 }
 
 message DHCPOptionsConfig {

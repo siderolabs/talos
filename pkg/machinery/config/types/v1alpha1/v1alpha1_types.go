@@ -2085,6 +2085,8 @@ type Route struct {
 	RouteMetric uint32 `yaml:"metric,omitempty"`
 	//   description: The optional MTU for the route.
 	RouteMTU uint32 `yaml:"mtu,omitempty"`
+	//   description: The optional table for the route.
+	RouteTable string `yaml:"table,omitempty"`
 }
 
 // RegistryMirrorConfig represents mirror configuration for a registry.

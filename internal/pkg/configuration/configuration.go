@@ -63,6 +63,7 @@ func Generate(ctx context.Context, in *machine.GenerateConfigurationRequest) (re
 								RouteNetwork: route.Network,
 								RouteGateway: route.Gateway,
 								RouteMetric:  route.Metric,
+								RouteTable:   route.Table,
 							}
 						}),
 					}

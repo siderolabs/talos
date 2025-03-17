@@ -8264,6 +8264,13 @@ func (m *RouteConfig) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 		i -= len(m.unknownFields)
 		copy(dAtA[i:], m.unknownFields)
 	}
+	if len(m.Table) > 0 {
+		i -= len(m.Table)
+		copy(dAtA[i:], m.Table)
+		i = protohelpers.EncodeVarint(dAtA, i, uint64(len(m.Table)))
+		i--
+		dAtA[i] = 0x22
+	}
 	if m.Metric != 0 {
 		i = protohelpers.EncodeVarint(dAtA, i, uint64(m.Metric))
 		i--
@@ -13639,6 +13646,10 @@ func (m *RouteConfig) SizeVT() (n int) {
 	}
 	if m.Metric != 0 {
 		n += 1 + protohelpers.SizeOfVarint(uint64(m.Metric))
+	}
+	l = len(m.Table)
+	if l > 0 {
+		n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
 	}
 	n += len(m.unknownFields)
 	return n
@@ -33014,6 +33025,38 @@ func (m *RouteConfig) UnmarshalVT(dAtA []byte) error {
 					break
 				}
 			}
+		case 4:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Table", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return protohelpers.ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return protohelpers.ErrInvalidLength
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return protohelpers.ErrInvalidLength
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Table = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
 			skippy, err := protohelpers.Skip(dAtA[iNdEx:])

@@ -906,6 +906,11 @@ func (r *Route) MTU() uint32 {
 	return r.RouteMTU
 }
 
+// Table implements the MachineNetwork interface.
+func (r *Route) Table() string {
+	return r.RouteTable
+}
+
 // Interfaces implements the MachineNetwork interface.
 func (b *Bond) Interfaces() []string {
 	if b == nil {

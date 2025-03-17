@@ -3255,6 +3255,13 @@ func (Route) Doc() *encoder.Doc {
 				Description: "The optional MTU for the route.",
 				Comments:    [3]string{"" /* encoder.HeadComment */, "The optional MTU for the route." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
+			{
+				Name:        "table",
+				Type:        "string",
+				Note:        "",
+				Description: "The optional table for the route.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "The optional table for the route." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
 		},
 	}
 

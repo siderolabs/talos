@@ -669,6 +669,61 @@ func (suite *RouteSpecSuite) TestLinkLocalRouteAlias() {
 	suite.Require().NoError(suite.state.Destroy(suite.ctx, ll.Metadata()))
 }
 
+func (suite *RouteSpecSuite) TestRouteTable() {
+	def := network.NewRouteSpec(network.NamespaceName, "table")
+	*def.TypedSpec() = network.RouteSpecSpec{
+		Family:      nethelpers.FamilyInet4,
+		Destination: netip.Prefix{},
+		Gateway:     netip.MustParseAddr("127.0.11.2"),
+		Scope:       nethelpers.ScopeGlobal,
+		Table:       100,
+		OutLinkName: "lo",
+		Protocol:    nethelpers.ProtocolStatic,
+		Type:        nethelpers.TypeUnicast,
+		Priority:    1048576,
+		ConfigLayer: network.ConfigMachineConfiguration,
+	}
+
+	for _, res := range []resource.Resource{def} {
+		suite.Require().NoError(suite.state.Create(suite.ctx, res), "%v", res.Spec())
+	}
+
+	suite.Assert().NoError(
+		retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
+			func() error {
+				return suite.assertRoute(
+					netip.Prefix{}, netip.MustParseAddr("127.0.11.2"), func(route rtnetlink.RouteMessage) error {
+						suite.Assert().Nil(route.Attributes.Dst)
+						suite.Assert().EqualValues(1048576, route.Attributes.Priority)
+						suite.Assert().EqualValues(100, route.Attributes.Table)
+						// make sure not extra route metric attributes are set
+						suite.Assert().Empty(route.Attributes.Metrics)
+
+						return nil
+					},
+				)
+			},
+		),
+	)
+
+	// teardown the route
+	for {
+		ready, err := suite.state.Teardown(suite.ctx, def.Metadata())
+		suite.Require().NoError(err)
+
+		if ready {
+			break
+		}
+
+		time.Sleep(100 * time.Millisecond)
+	}
+
+	// torn down route should be removed immediately
+	suite.Assert().NoError(suite.assertNoRoute(netip.Prefix{}, netip.MustParseAddr("127.0.11.2")))
+
+	suite.Require().NoError(suite.state.Destroy(suite.ctx, def.Metadata()))
+}
+
 func (suite *RouteSpecSuite) TearDownTest() {
 	suite.T().Log("tear down")
 

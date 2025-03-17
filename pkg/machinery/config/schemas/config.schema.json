@@ -3757,6 +3757,13 @@
           "description": "The optional MTU for the route.\n",
           "markdownDescription": "The optional MTU for the route.",
           "x-intellij-html-description": "\u003cp\u003eThe optional MTU for the route.\u003c/p\u003e\n"
+        },
+        "table": {
+          "type": "string",
+          "title": "table",
+          "description": "The optional table for the route.\n",
+          "markdownDescription": "The optional table for the route.",
+          "x-intellij-html-description": "\u003cp\u003eThe optional table for the route.\u003c/p\u003e\n"
         }
       },
       "additionalProperties": false,

@@ -75,6 +75,10 @@ func (RouteStatusExtension) ResourceDefinition() meta.ResourceDefinitionSpec {
 				Name:     "Metric",
 				JSONPath: `{.priority}`,
 			},
+			{
+				Name:     "Table",
+				JSONPath: `{.table}`,
+			},
 		},
 	}
 }

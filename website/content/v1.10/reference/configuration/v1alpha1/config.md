@@ -1254,6 +1254,7 @@ machine:
 |`source` |string |The route's source address (optional).  | |
 |`metric` |uint32 |The optional metric for the route.  | |
 |`mtu` |uint32 |The optional MTU for the route.  | |
+|`table` |string |The optional table for the route.  | |
 
 
 
@@ -1514,6 +1515,7 @@ machine:
 |`source` |string |The route's source address (optional).  | |
 |`metric` |uint32 |The optional metric for the route.  | |
 |`mtu` |uint32 |The optional MTU for the route.  | |
+|`table` |string |The optional table for the route.  | |
 
 
 

@@ -8,6 +8,7 @@ import (
 	"context"
 	"fmt"
 	"net/netip"
+	"strconv"
 
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
@@ -279,7 +280,26 @@ func (ctrl *RouteConfigController) processDevicesConfiguration(logger *zap.Logge
 			route.Family = nethelpers.FamilyInet4
 		}
 
-		route.Table = nethelpers.TableMain
+		routeTable := in.Table()
+		if routeTable == "" {
+			route.Table = nethelpers.TableMain
+		} else {
+			switch routeTable {
+			case "default":
+				route.Table = nethelpers.TableDefault
+			case "main":
+				route.Table = nethelpers.TableMain
+			case "local":
+				route.Table = nethelpers.TableLocal
+			default:
+				tableId, err := strconv.ParseUint(routeTable, 10, 32)
+				if err != nil {
+					return route, fmt.Errorf("error parsing route table id: %w", err)
+				}
+				route.Table = nethelpers.RoutingTable(uint32(tableId))
+			}
+		}
+
 		route.Protocol = nethelpers.ProtocolStatic
 		route.OutLinkName = linkName
 		route.ConfigLayer = network.ConfigMachineConfiguration
