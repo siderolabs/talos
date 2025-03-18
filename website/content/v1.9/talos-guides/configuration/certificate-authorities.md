@@ -7,7 +7,7 @@ aliases:
 
 ## Appending the Certificate Authority
 
-Append additional certificate authorities to the system's trusted certificate store by [patching]({{< relref "./patching" >}}) the machine configuration with the following
+Append additional certificate authorities to the system's trusted certificate store (located in the `STATE` partition) by [patching]({{< relref "./patching" >}}) the machine configuration with the following
 [document]({{< relref "../../reference/configuration/security/trustedrootsconfig" >}}):
 
 ```yaml

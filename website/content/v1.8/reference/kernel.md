@@ -158,6 +158,8 @@ One such example is to provide [a custom CA certificate]({{<  relref "../talos-g
 cat config.yaml | zstd --compress --ultra -22 | base64 -w 0
 ```
 
+Note that this cannot be used to provide a CA certificate for KMS decryption of the `STATE` partition, as this happens before parsing of this parameter.
+
 #### `talos.platform`
 
 The platform name on which Talos will run.
