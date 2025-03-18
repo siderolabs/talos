@@ -23,3 +23,6 @@ certificates: |-
 Multiple documents can be appended, and multiple CA certificates might be present in each configuration document.
 
 This configuration can be also applied in maintenance mode.
+
+Please note that if the `STATE` partition is encrypted, the CA certificates will be only be loaded after the partition is unlocked.
+So the encryption method should allow unlocking the partition without the need for a CA certificate.

@@ -158,6 +158,8 @@ One such example is to provide [a custom CA certificate]({{<  relref "../talos-g
 cat config.yaml | zstd --compress --ultra -22 | base64 -w 0
 ```
 
+Please note that configuration from this argument is only loaded if the configuration hasn't been yet saved to `STATE` partition.
+
 #### `talos.platform`
 
 The platform name on which Talos will run.
