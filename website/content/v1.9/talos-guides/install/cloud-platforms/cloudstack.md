@@ -128,6 +128,24 @@ $ cmk create loadbalancerrule algorithm=roundrobin name="k8s-api" privateport=64
 }
 ```
 
+> Note 2: For this example an additional "loadbalancerrule" is needed to enable the communication between `talosctl` and the VM. 
+
+```bash
+$ cmk create loadbalancerrule algorithm=roundrobin name="talos-api" privateport=50000 publicport=50000 openfirewall=true publicipid=${PUBLIC_IPADDRESS_ID} cidrlist=0.0.0.0/0
+{
+  "loadbalancer": {
+    ...
+    "name": "talos-api",
+    "networkid": "143ed8f1-3cc5-4ba2-8717-457ad993cf25",
+    "privateport": "50000",
+    "publicip": "10.0.0.102",
+    "publicipid": "1901d946-3797-48aa-a113-8fb730b0770a",
+    "publicport": "50000",
+    ...
+  }
+}
+```
+
 ### Create the Talos Configuration Files
 
 Finally it's time to generate the Talos configuration files, using the Public IP address assigned to the loadbalancer.
@@ -147,8 +165,10 @@ Make any adjustments to the `controlplane.yaml` and/or `worker.yaml` as you like
 
 Next we will create the actual VM and supply the `controlplane.yaml` as base64 encoded `userdata`.
 
+> Note: Depending on the underlying OS, you would need to change the right newline character to remove (e.g., for macOS `... | tr -d '\n\r'`
+
 ```bash
-$ cmk deploy virtualmachine zoneid=${ZONE_ID} templateid=${IMAGE_ID} serviceofferingid=${SERVICEOFFERING_ID} networkIds=${NETWORK_ID} name=talosdemo  usersdata=$(base64 controlplane.yaml | tr -d '\n')
+$ cmk deploy virtualmachine zoneid=${ZONE_ID} templateid=${IMAGE_ID} serviceofferingid=${SERVICEOFFERING_ID} networkIds=${NETWORK_ID} name=talosdemo userdata=$(base64 controlplane.yaml | tr -d '\n')
 {
   "virtualmachine": {
     "account": "admin",
@@ -172,26 +192,28 @@ $ cmk list virtualmachines | jq -r '.virtualmachine[] | [.id, .ipaddress, .name]
 545099fc-ec2d-4f32-915d-b0c821cfb634  10.1.1.97   srv04
 d37aeca4-7d1f-45cd-9a4d-97fdbf535aa1  10.1.1.243  talosdemo
 $ export VM_ID=d37aeca4-7d1f-45cd-9a4d-97fdbf535aa1
-$ export VM_IP=10.1.1.243
 ```
 
-#### Get Load Balancer ID
+#### Get Load Balancer IDs
 
-Obtain the ID of the `loadbalancerrule` we created earlier.
+Obtain the IDs of the `loadbalancerrules` we created earlier.
 
 ```bash
 $ cmk list loadbalancerrules | jq -r '.loadbalancerrule[]| [.id, .publicip, .name] | @tsv' | sort -k2
 ede6b711-b6bc-4ade-9e48-4b3f5aa59934  10.0.0.102  k8s-api
+fcf6ed39-44d9-469e-bbc0-1b44d2b5b303  10.0.0.102  talos-api
 1bad3c46-96fa-4f50-a4fc-9a46a54bc350  10.0.0.197  ac0b5d98cf6a24d55a4fb2f9e240c473-tcp-443
-$ export LB_RULE_ID=ede6b711-b6bc-4ade-9e48-4b3f5aa59934
+$ export LB_RULE_K8S_API_ID=ede6b711-b6bc-4ade-9e48-4b3f5aa59934
+$ export LB_RULE_TALOS_API_ID=fcf6ed39-44d9-469e-bbc0-1b44d2b5b303
 ```
 
 #### Assign Talos VM to Load Balancer
 
-With the ID of the VM and the load balancer, we can assign the VM to the `loadbalancerrule`, making the K8S API endpoint available via the Load Balancer
+With the ID of the VM and the load balancers, we can assign the VM to the `loadbalancerrules`, making the K8S and the Talos API endpoint available via the Load Balancer
 
 ```bash
-cmk assigntoloadbalancerrule id=${LB_RULE_ID} virtualmachineids=${VM_ID}
+cmk assigntoloadbalancerrule id=${LB_RULE_K8S_API_ID} virtualmachineids=${VM_ID}
+cmk assigntoloadbalancerrule id=${LB_RULE_TALOS_API_ID} virtualmachineids=${VM_ID}
 ```
 
 ### Bootstrap Etcd
@@ -203,13 +225,18 @@ Configure `talosctl` with IP addresses of the control plane node's IP address.
 Set the `endpoints` and `nodes`:
 
 ```bash
-talosctl --talosconfig talosconfig config endpoint ${VM_IP}
-talosctl --talosconfig talosconfig config node ${VM_IP}
+talosctl --talosconfig talosconfig config endpoint ${PUBLIC_IPADDRESS}
+talosctl --talosconfig talosconfig config node ${PUBLIC_IPADDRESS}
 ```
 
 Next, bootstrap `etcd`:
 
+> Note: `talosctl` tries to lookup the configuration in the directory `~/.talos/config`, even if the flag 
+> `--talosconfig` is set. To be on the safe side, create an environment variable `TALOSCONFIG` containing the path
+> to the generated configuration file:
+
 ```bash
+export TALOSCONFIG=$(pwd)/talosconfig
 talosctl --talosconfig talosconfig bootstrap
 ```
 
