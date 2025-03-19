@@ -231,12 +231,7 @@ talosctl --talosconfig talosconfig config node ${PUBLIC_IPADDRESS}
 
 Next, bootstrap `etcd`:
 
-> Note: `talosctl` tries to lookup the configuration in the directory `~/.talos/config`, even if the flag 
-> `--talosconfig` is set. To be on the safe side, create an environment variable `TALOSCONFIG` containing the path
-> to the generated configuration file:
-
 ```bash
-export TALOSCONFIG=$(pwd)/talosconfig
 talosctl --talosconfig talosconfig bootstrap
 ```
 
