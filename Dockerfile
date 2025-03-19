@@ -726,7 +726,7 @@ COPY --link --from=pkg-apparmor-amd64 / /rootfs
 COPY --link --from=pkg-cni-stripped-amd64 / /rootfs
 COPY --link --from=pkg-flannel-cni-amd64 / /rootfs
 COPY --link --from=pkg-cryptsetup-amd64 / /rootfs
-COPY --link --from=pkg-containerd-amd64 / /rootfs
+COPY --link --exclude=usr/bin/ctr --from=pkg-containerd-amd64 / /rootfs
 COPY --link --from=pkg-dosfstools-amd64 / /rootfs
 COPY --link --from=pkg-e2fsprogs-amd64 / /rootfs
 COPY --link --from=pkg-systemd-udevd-amd64 / /rootfs
@@ -804,7 +804,7 @@ COPY --link --from=pkg-apparmor-arm64 / /rootfs
 COPY --link --from=pkg-cni-stripped-arm64 / /rootfs
 COPY --link --from=pkg-flannel-cni-arm64 / /rootfs
 COPY --link --from=pkg-cryptsetup-arm64 / /rootfs
-COPY --link --from=pkg-containerd-arm64 / /rootfs
+COPY --link --exclude=usr/bin/ctr --from=pkg-containerd-arm64 / /rootfs
 COPY --link --from=pkg-dosfstools-arm64 / /rootfs
 COPY --link --from=pkg-e2fsprogs-arm64 / /rootfs
 COPY --link --from=pkg-systemd-udevd-arm64 / /rootfs
@@ -990,18 +990,14 @@ ARG TARGETARCH
 ENV TARGETARCH=${TARGETARCH}
 COPY --link --from=pkg-fhs / /
 COPY --link --from=pkg-ca-certificates / /
-COPY --link --from=pkg-musl / /
+COPY --link --exclude=usr/include --from=pkg-musl / /
 
 COPY --link --from=pkg-dosfstools / /
-COPY --link --from=pkg-grub / /
-COPY --link --from=pkg-grub-amd64 /usr/lib/grub /usr/lib/grub
-COPY --link --from=pkg-grub-arm64 /usr/lib/grub /usr/lib/grub
-COPY --link --from=pkg-kmod / /
-COPY --link --from=pkg-libattr / /
-COPY --link --from=pkg-libinih / /
-COPY --link --from=pkg-liblzma / /
-COPY --link --from=pkg-liburcu / /
-COPY --link --from=pkg-openssl / /
+COPY --link --exclude=etc/bash_completion.d --from=pkg-grub / /
+COPY --link --exclude=usr/include --exclude=usr/lib/pkgconfig --from=pkg-libattr / /
+COPY --link --exclude=usr/include --exclude=usr/lib/pkgconfig --from=pkg-libinih / /
+COPY --link --exclude=usr/include --exclude=usr/lib/pkgconfig --from=pkg-liblzma / /
+COPY --link --exclude=usr/include --exclude=usr/lib/pkgconfig --from=pkg-liburcu / /
 COPY --link --from=pkg-xfsprogs / /
 COPY --link --from=installer-image-gen /rootfs /
 
@@ -1017,20 +1013,24 @@ ENTRYPOINT ["/bin/installer"]
 
 FROM installer-base-image-squashed AS imager-image
 COPY --link --from=pkg-cpio / /
-COPY --link --from=pkg-e2fsprogs / /
-COPY --link --from=pkg-glib / /
-COPY --link --from=pkg-libburn / /
-COPY --link --from=pkg-libisoburn / /
-COPY --link --from=pkg-libisofs / /
+COPY --link --exclude=usr/lib/pkgconfig --from=pkg-e2fsprogs / /
+COPY --link --exclude=usr/include --exclude=usr/lib/pkgconfig --from=pkg-glib / /
+COPY --link --from=pkg-grub-amd64 /usr/lib/grub /usr/lib/grub
+COPY --link --from=pkg-grub-arm64 /usr/lib/grub /usr/lib/grub
+COPY --link --exclude=usr/include --exclude=usr/lib/pkgconfig --exclude=usr/share/pkgconfig --exclude=usr/share/bash-completion --from=pkg-kmod / /
+COPY --link --exclude=usr/include --exclude=usr/lib/pkgconfig --from=pkg-libburn / /
+COPY --link --exclude=usr/include --exclude=usr/lib/pkgconfig --from=pkg-libisoburn / /
+COPY --link --exclude=usr/include --exclude=usr/lib/pkgconfig --from=pkg-libisofs / /
 COPY --link --from=pkg-mtools / /
-COPY --link --from=pkg-pcre2 / /
+COPY --link --exclude=usr/include --exclude=usr/lib/pkgconfig --exclude=usr/lib/cmake --from=pkg-openssl / /
+COPY --link --exclude=usr/include --exclude=usr/lib/pkgconfig --from=pkg-pcre2 / /
 COPY --link --from=pkg-pigz / /
 COPY --link --from=pkg-qemu-tools / /
 COPY --link --from=pkg-squashfs-tools / /
 COPY --link --from=pkg-tar / /
-COPY --link --from=pkg-xz / /
-COPY --link --from=pkg-zlib / /
-COPY --link --from=pkg-zstd / /
+COPY --link --exclude=usr/include --exclude=usr/lib/pkgconfig --from=pkg-xz / /
+COPY --link --exclude=usr/include --exclude=usr/lib/pkgconfig --from=pkg-zlib / /
+COPY --link --exclude=usr/include --exclude=usr/lib/pkgconfig --from=pkg-zstd / /
 COPY --chmod=0644 hack/extra-modules.conf /etc/modules.d/10-extra-modules.conf
 COPY --from=install-artifacts / /
 
