@@ -16,6 +16,7 @@ import (
 	"strings"
 
 	"github.com/ecks/uefi/efi/efivario"
+	"github.com/foxboron/go-uefi/efi"
 	"github.com/siderolabs/gen/xerrors"
 	"github.com/siderolabs/go-blockdevice/v2/blkid"
 	"golang.org/x/sys/unix"
@@ -26,6 +27,7 @@ import (
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/options"
 	mountv2 "github.com/siderolabs/talos/internal/pkg/mount/v2"
 	"github.com/siderolabs/talos/internal/pkg/partition"
+	smbiosinternal "github.com/siderolabs/talos/internal/pkg/smbios"
 	"github.com/siderolabs/talos/internal/pkg/uki"
 	"github.com/siderolabs/talos/pkg/imager/utils"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
@@ -214,6 +216,25 @@ func (c *Config) KexecLoad(r runtime.Runtime, disk string) error {
 
 		if _, err := io.Copy(&cmdline, assetInfo.Cmdline); err != nil {
 			return fmt.Errorf("failed to read cmdline from uki: %w", err)
+		}
+
+		if !efi.GetSecureBoot() {
+			smbiosInfo, err := smbiosinternal.GetSMBIOSInfo()
+			if err == nil {
+				for _, structure := range smbiosInfo.Structures {
+					if structure.Header.Type != 11 {
+						continue
+					}
+
+					const kernelCmdlineExtra = "io.systemd.stub.kernel-cmdline-extra="
+
+					for _, s := range structure.Strings {
+						if strings.HasPrefix(s, kernelCmdlineExtra) {
+							cmdline.WriteString(" " + s[len(kernelCmdlineExtra):])
+						}
+					}
+				}
+			}
 		}
 
 		if err := kexec.Load(r, kernelMemfd, initrdFd, cmdline.String()); err != nil {
