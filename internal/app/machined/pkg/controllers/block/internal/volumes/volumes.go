@@ -82,6 +82,8 @@ func (d *DiskContext) ToCELContext() map[string]any {
 type ManagerContext struct {
 	Cfg               *block.VolumeConfig
 	Status            *block.VolumeStatusSpec
+	ParentStatus      *block.VolumeStatus
+	ParentFinalizer   string
 	DiscoveredVolumes []*blockpb.DiscoveredVolumeSpec
 	Disks             []DiskContext
 

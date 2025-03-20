@@ -126,6 +126,10 @@ message MountSpec {
   string selinux_label = 2;
   bool project_quota_support = 3;
   string parent_id = 4;
+  uint32 file_mode = 5;
+  int64 uid = 6;
+  int64 gid = 7;
+  bool recursive_relabel = 8;
 }
 
 // MountStatusSpec is the spec for MountStatus.
@@ -156,6 +160,12 @@ message ProvisioningSpec {
   FilesystemSpec filesystem_spec = 4;
 }
 
+// SymlinkProvisioningSpec is the spec for volume symlink.
+message SymlinkProvisioningSpec {
+  string symlink_target_path = 1;
+  bool force = 2;
+}
+
 // SymlinkSpec is the spec for Symlinks resource.
 message SymlinkSpec {
   repeated string paths = 1;
@@ -181,6 +191,7 @@ message VolumeConfigSpec {
   LocatorSpec locator = 4;
   MountSpec mount = 5;
   EncryptionSpec encryption = 6;
+  SymlinkProvisioningSpec symlink = 7;
 }
 
 // VolumeMountRequestSpec is the spec for VolumeMountRequest.
@@ -217,5 +228,7 @@ message VolumeStatusSpec {
   MountSpec mount_spec = 15;
   talos.resource.definitions.enums.BlockVolumeType type = 16;
   repeated string configured_encryption_keys = 17;
+  SymlinkProvisioningSpec symlink_spec = 18;
+  string parent_id = 19;
 }
 

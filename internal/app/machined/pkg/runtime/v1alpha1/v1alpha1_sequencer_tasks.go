@@ -509,15 +509,6 @@ func StopAllServices(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) 
 	}, "stopAllServices"
 }
 
-// MountOverlayFilesystems represents the MountOverlayFilesystems task.
-func MountOverlayFilesystems(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
-	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
-		_, err = mountv2.OverlayMountPoints().Mount()
-
-		return err
-	}, "mountOverlayFilesystems"
-}
-
 // SetupSharedFilesystems represents the SetupSharedFilesystems task.
 func SetupSharedFilesystems(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
@@ -530,132 +521,6 @@ func SetupSharedFilesystems(runtime.Sequence, any) (runtime.TaskExecutionFunc, s
 
 		return nil
 	}, "setupSharedFilesystems"
-}
-
-// CreateDirectory is a structure describing properties of a directory to be initialized.
-type CreateDirectory struct {
-	Path          string
-	Mode          os.FileMode
-	UID, GID      int
-	SELinuxLabel  string
-	ExcludeLabels []string
-}
-
-// InitializeDirectoryStructure creates directories and sets security options on them.
-func InitializeDirectoryStructure(directories []CreateDirectory) error {
-	for _, dir := range directories {
-		if err := os.MkdirAll(dir.Path, dir.Mode); err != nil {
-			return err
-		}
-
-		if err := os.Chmod(dir.Path, dir.Mode); err != nil {
-			return err
-		}
-
-		if err := selinux.SetLabelRecursive(dir.Path, dir.SELinuxLabel, dir.ExcludeLabels...); err != nil {
-			return err
-		}
-
-		if dir.UID != 0 || dir.GID != 0 {
-			if err := os.Chown(dir.Path, dir.UID, dir.GID); err != nil {
-				return err
-			}
-		}
-	}
-
-	return nil
-}
-
-// SetupVarDirectory represents the SetupVarDirectory task.
-func SetupVarDirectory(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
-	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) error {
-		if err := setupVarRun(logger); err != nil {
-			return err
-		}
-
-		directoryConfigurations := []CreateDirectory{
-			{
-				Path:         "/var/log",
-				Mode:         0o755,
-				SELinuxLabel: "system_u:object_r:var_log_t:s0",
-			},
-			{
-				Path:         "/var/log/audit",
-				Mode:         0o700,
-				SELinuxLabel: "system_u:object_r:audit_log_t:s0",
-			},
-			{
-				Path:         "/var/log/containers",
-				Mode:         0o755,
-				SELinuxLabel: "system_u:object_r:containers_log_t:s0",
-			},
-			{
-				Path:         "/var/log/pods",
-				Mode:         0o755,
-				SELinuxLabel: "system_u:object_r:pods_log_t:s0",
-			},
-			{
-				Path:         "/var/lib/containerd",
-				Mode:         0o000,
-				SELinuxLabel: "system_u:object_r:containerd_state_t:s0",
-			},
-			{
-				Path:         "/var/lib/kubelet",
-				Mode:         0o700,
-				SELinuxLabel: "system_u:object_r:kubelet_state_t:s0",
-			},
-			{
-				Path:         "/var/lib/cni",
-				Mode:         0o700,
-				SELinuxLabel: "system_u:object_r:cni_state_t:s0",
-			},
-			{
-				Path:         "/var/run/lock",
-				Mode:         0o755,
-				SELinuxLabel: "system_u:object_r:var_lock_t:s0",
-			},
-			{
-				Path:         constants.SeccompProfilesDirectory,
-				Mode:         0o700,
-				SELinuxLabel: "system_u:object_r:seccomp_profile_t:s0",
-			},
-			{
-				Path:         constants.KubernetesAuditLogDir,
-				Mode:         0o700,
-				UID:          constants.KubernetesAPIServerRunUser,
-				GID:          constants.KubernetesAPIServerRunGroup,
-				SELinuxLabel: "system_u:object_r:kube_log_t:s0",
-			},
-		}
-
-		return InitializeDirectoryStructure(directoryConfigurations)
-	}, "setupVarDirectory"
-}
-
-func setupVarRun(logger *log.Logger) error {
-	// handle '/var/run' - if that exists after an upgrade, and is a directory, clean it up
-	// if it doesn't exist, create as a symlink to '/run'
-	runSt, err := os.Lstat("/var/run")
-	if err == nil && runSt.IsDir() {
-		// old Talos versions had '/var/run' as a directory, clean it up on boot
-		entries, err := os.ReadDir("/var/run")
-		if err != nil {
-			return fmt.Errorf("failed to read /var/run: %w", err)
-		}
-
-		for _, e := range entries {
-			if err = os.RemoveAll(filepath.Join("/var/run", e.Name())); err != nil {
-				logger.Printf("failed to remove %s: %s", e.Name(), err)
-			}
-		}
-	} else if err != nil && os.IsNotExist(err) {
-		// '/var/run' doesn't exist, create as a symlink to '/run'
-		if err = os.Symlink("/run", "/var/run"); err != nil {
-			return fmt.Errorf("failed to create /var/run symlink: %w", err)
-		}
-	}
-
-	return nil
 }
 
 // MountUserDisks represents the MountUserDisks task.
@@ -865,13 +730,6 @@ func existsAndIsFile(p string) (err error) {
 	return nil
 }
 
-// UnmountOverlayFilesystems represents the UnmountOverlayFilesystems task.
-func UnmountOverlayFilesystems(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
-	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
-		return mountv2.OverlayMountPoints().Unmount()
-	}, "unmountOverlayFilesystems"
-}
-
 // UnmountPodMounts represents the UnmountPodMounts task.
 func UnmountPodMounts(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
@@ -910,18 +768,24 @@ func UnmountPodMounts(runtime.Sequence, any) (runtime.TaskExecutionFunc, string)
 }
 
 // UnmountSystemDiskBindMounts represents the UnmountSystemDiskBindMounts task.
+//
+//nolint:gocyclo
 func UnmountSystemDiskBindMounts(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
-		systemDisk, err := blockres.GetSystemDisk(ctx, r.State().V1Alpha2().Resources())
-		if err != nil {
+		ephemeralStatus, err := safe.StateGetByID[*blockres.VolumeStatus](ctx, r.State().V1Alpha2().Resources(), constants.EphemeralPartitionLabel)
+		if err != nil && !state.IsNotFoundError(err) {
 			return err
 		}
 
-		if systemDisk == nil {
+		if ephemeralStatus == nil {
 			return nil
 		}
 
-		devname := systemDisk.DevPath
+		devname := ephemeralStatus.TypedSpec().MountLocation
+
+		if devname == "" {
+			return nil
+		}
 
 		f, err := os.Open("/proc/mounts")
 		if err != nil {
@@ -938,18 +802,19 @@ func UnmountSystemDiskBindMounts(runtime.Sequence, any) (runtime.TaskExecutionFu
 				continue
 			}
 
-			device := strings.ReplaceAll(fields[0], "/dev/mapper", "/dev")
-			mountpoint := fields[1]
+			device, mountpoint := fields[0], fields[1]
 
-			if strings.HasPrefix(device, devname) && device != devname {
-				logger.Printf("unmounting %s\n", mountpoint)
+			if device != devname || mountpoint == constants.EphemeralMountPoint {
+				continue
+			}
 
-				if err = mountv2.SafeUnmount(ctx, logger.Printf, mountpoint); err != nil {
-					if errors.Is(err, syscall.EINVAL) {
-						log.Printf("ignoring unmount error %s: %v", mountpoint, err)
-					} else {
-						return fmt.Errorf("error unmounting %s: %w", mountpoint, err)
-					}
+			logger.Printf("unmounting %s\n", mountpoint)
+
+			if err = mountv2.SafeUnmount(ctx, logger.Printf, mountpoint); err != nil {
+				if errors.Is(err, syscall.EINVAL) {
+					log.Printf("ignoring unmount error %s: %v", mountpoint, err)
+				} else {
+					return fmt.Errorf("error unmounting %s: %w", mountpoint, err)
 				}
 			}
 		}
@@ -1617,21 +1482,16 @@ func UnmountEphemeralPartition(runtime.Sequence, any) (runtime.TaskExecutionFunc
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) error {
 		mountRequest := blockres.NewVolumeMountRequest(blockres.NamespaceName, constants.EphemeralPartitionLabel).Metadata()
 
-		_, err := r.State().V1Alpha2().Resources().Teardown(ctx, mountRequest)
+		err := r.State().V1Alpha2().Resources().Destroy(ctx, mountRequest)
 		if err != nil {
 			if state.IsNotFoundError(err) {
 				return nil
 			}
 
-			return fmt.Errorf("failed to teardown EPHEMERAL mount request: %w", err)
+			return fmt.Errorf("failed to destroy EPHEMERAL mount request: %w", err)
 		}
 
-		_, err = r.State().V1Alpha2().Resources().WatchFor(ctx, mountRequest, state.WithFinalizerEmpty())
-		if err != nil {
-			return fmt.Errorf("failed to wait for EPHEMERAL teardown: %w", err)
-		}
-
-		return r.State().V1Alpha2().Resources().Destroy(ctx, mountRequest)
+		return nil
 	}, "unmountEphemeralPartition"
 }
 

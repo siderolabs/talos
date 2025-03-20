@@ -27,7 +27,8 @@ type VolumeStatusSpec struct {
 	Phase        VolumePhase `yaml:"phase" protobuf:"1"`
 	PreFailPhase VolumePhase `yaml:"preFailPhase,omitempty" protobuf:"6"`
 
-	Type VolumeType `yaml:"type" protobuf:"16"`
+	Type     VolumeType `yaml:"type" protobuf:"16"`
+	ParentID string     `yaml:"parentID,omitempty" protobuf:"19"`
 
 	// Location is the path to the block device (raw).
 	Location string `yaml:"location,omitempty" protobuf:"2"`
@@ -55,6 +56,9 @@ type VolumeStatusSpec struct {
 
 	// MountSpec is the mount specification.
 	MountSpec MountSpec `yaml:"mountSpec,omitempty" protobuf:"15"`
+
+	// Symlink is the symlink specification.
+	SymlinkSpec SymlinkProvisioningSpec `yaml:"symlink,omitempty" protobuf:"18"`
 
 	ErrorMessage string `yaml:"errorMessage,omitempty" protobuf:"3"`
 }

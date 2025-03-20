@@ -44,20 +44,9 @@ func (svcrunner *ServiceRunner) deleteVolumeMountRequest(ctx context.Context, re
 	}
 
 	for _, requestID := range requestIDs {
-		_, err := st.Teardown(ctx, block.NewVolumeMountRequest(block.NamespaceName, requestID).Metadata())
+		err := st.Destroy(ctx, block.NewVolumeMountRequest(block.NamespaceName, requestID).Metadata())
 		if err != nil {
-			return fmt.Errorf("failed to teardown mount request %q: %w", requestID, err)
-		}
-	}
-
-	for _, requestID := range requestIDs {
-		_, err := st.WatchFor(ctx, block.NewVolumeMountRequest(block.NamespaceName, requestID).Metadata(), state.WithFinalizerEmpty())
-		if err != nil {
-			return fmt.Errorf("failed to wait for teardown of mount request %q: %w", requestID, err)
-		}
-
-		if err = st.Destroy(ctx, block.NewVolumeMountRequest(block.NamespaceName, requestID).Metadata()); err != nil {
-			return fmt.Errorf("failed to destroy mount request %q: %w", requestID, err)
+			return fmt.Errorf("failed to destroy volume mount request %q: %w", requestID, err)
 		}
 	}
 

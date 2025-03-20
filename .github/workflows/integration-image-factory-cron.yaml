@@ -1,6 +1,6 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
 #
-# Generated on 2025-02-26T15:23:43Z by kres 1281806.
+# Generated on 2025-04-01T08:14:24Z by kres d903dae.
 
 name: integration-image-factory-cron
 concurrency:
@@ -84,21 +84,6 @@ jobs:
         if: github.event_name == 'schedule'
         run: |
           make talosctl-cni-bundle
-      - name: iso
-        if: github.event_name == 'schedule'
-        env:
-          IMAGE_REGISTRY: registry.dev.siderolabs.io
-          IMAGER_ARGS: --extra-kernel-arg=console=ttyS0
-        run: |
-          make iso secureboot-iso
-      - name: images-essential
-        if: github.event_name == 'schedule'
-        env:
-          IMAGE_REGISTRY: registry.dev.siderolabs.io
-          IMAGER_ARGS: --extra-kernel-arg=console=ttyS0
-          PLATFORM: linux/amd64
-        run: |
-          make images-essential
       - name: factory-1.7-iso
         env:
           FACTORY_BOOT_METHOD: iso

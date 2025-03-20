@@ -1,6 +1,6 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
 #
-# Generated on 2025-03-24T09:55:56Z by kres ec5ec04.
+# Generated on 2025-04-01T08:14:24Z by kres d903dae.
 
 name: integration-trusted-boot-enforcing-cron
 concurrency:
@@ -76,7 +76,7 @@ jobs:
         if: github.event_name == 'schedule'
         env:
           IMAGE_REGISTRY: registry.dev.siderolabs.io
-          PLATFORM: linux/amd64
+          PLATFORM: linux/amd64,linux/arm64
           PUSH: "true"
         run: |
           make talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
@@ -90,15 +90,15 @@ jobs:
           IMAGER_ARGS: --extra-kernel-arg=console=ttyS0 --extra-kernel-arg=enforcing=1
           PLATFORM: linux/amd64,linux/arm64
           PUSH: "true"
-          TAG_SUFFIX: -enforcing
+          TAG_SUFFIX_OUT: -enforcing
         run: |
-          make imager installer-base installer images-essential
+          make images-essential
       - name: secureboot-iso
         if: github.event_name == 'schedule'
         env:
           IMAGE_REGISTRY: registry.dev.siderolabs.io
-          IMAGER_ARGS: --extra-kernel-arg=console=ttyS0
-          PLATFORM: linux/amd64
+          IMAGER_ARGS: --extra-kernel-arg=console=ttyS0 --extra-kernel-arg=enforcing=1
+          PLATFORM: linux/amd64,linux/arm64
         run: |
           make secureboot-iso
       - name: integration-trusted-boot
@@ -106,7 +106,7 @@ jobs:
           EXTRA_TEST_ARGS: -talos.trustedboot -talos.enforcing
           GITHUB_STEP_NAME: ${{ github.job}}-integration-trusted-boot
           IMAGE_REGISTRY: registry.dev.siderolabs.io
-          TAG_SUFFIX: -enforcing
+          TAG_SUFFIX_IN: -enforcing
           VIA_MAINTENANCE_MODE: "true"
           WITH_TRUSTED_BOOT_ISO: "true"
         run: |

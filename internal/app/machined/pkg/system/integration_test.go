@@ -70,7 +70,7 @@ func (TestService) DependsOn(runtime.Runtime) []string {
 	return nil
 }
 
-func (TestService) Volumes() []string {
+func (TestService) Volumes(runtime.Runtime) []string {
 	return nil
 }
 

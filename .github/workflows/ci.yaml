@@ -1,6 +1,6 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
 #
-# Generated on 2025-03-24T14:29:42Z by kres 921213e.
+# Generated on 2025-04-01T10:44:44Z by kres d903dae.
 
 name: default
 concurrency:
@@ -441,7 +441,7 @@ jobs:
         if: github.event_name == 'schedule'
         env:
           IMAGE_REGISTRY: registry.dev.siderolabs.io
-          PLATFORM: linux/amd64
+          PLATFORM: linux/amd64,linux/arm64
           PUSH: "true"
         run: |
           make talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
@@ -453,7 +453,7 @@ jobs:
         if: github.event_name == 'schedule'
         env:
           IMAGE_REGISTRY: registry.dev.siderolabs.io
-          PLATFORM: linux/amd64
+          PLATFORM: linux/amd64,linux/arm64
         run: |
           make images-essential
       - name: e2e-aws-prepare
@@ -576,7 +576,7 @@ jobs:
         if: github.event_name == 'schedule'
         env:
           IMAGE_REGISTRY: registry.dev.siderolabs.io
-          PLATFORM: linux/amd64
+          PLATFORM: linux/amd64,linux/arm64
           PUSH: "true"
         run: |
           make talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
@@ -588,7 +588,7 @@ jobs:
         if: github.event_name == 'schedule'
         env:
           IMAGE_REGISTRY: registry.dev.siderolabs.io
-          PLATFORM: linux/amd64
+          PLATFORM: linux/amd64,linux/arm64
         run: |
           make images-essential
       - name: checkout extensions
@@ -731,7 +731,7 @@ jobs:
         if: github.event_name == 'schedule'
         env:
           IMAGE_REGISTRY: registry.dev.siderolabs.io
-          PLATFORM: linux/amd64
+          PLATFORM: linux/amd64,linux/arm64
           PUSH: "true"
         run: |
           make talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
@@ -743,7 +743,7 @@ jobs:
         if: github.event_name == 'schedule'
         env:
           IMAGE_REGISTRY: registry.dev.siderolabs.io
-          PLATFORM: linux/amd64
+          PLATFORM: linux/amd64,linux/arm64
         run: |
           make images-essential
       - name: checkout extensions
@@ -870,7 +870,7 @@ jobs:
         if: github.event_name == 'schedule'
         env:
           IMAGE_REGISTRY: registry.dev.siderolabs.io
-          PLATFORM: linux/amd64
+          PLATFORM: linux/amd64,linux/arm64
           PUSH: "true"
         run: |
           make talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
@@ -998,7 +998,7 @@ jobs:
         if: github.event_name == 'schedule'
         env:
           IMAGE_REGISTRY: registry.dev.siderolabs.io
-          PLATFORM: linux/amd64
+          PLATFORM: linux/amd64,linux/arm64
           PUSH: "true"
         run: |
           make talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
@@ -1080,7 +1080,7 @@ jobs:
         if: github.event_name == 'schedule'
         env:
           IMAGE_REGISTRY: registry.dev.siderolabs.io
-          PLATFORM: linux/amd64
+          PLATFORM: linux/amd64,linux/arm64
           PUSH: "true"
         run: |
           make talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
@@ -1175,10 +1175,8 @@ jobs:
         if: github.event_name == 'schedule'
         env:
           IMAGE_REGISTRY: registry.dev.siderolabs.io
-          IMAGER_ARGS: --extra-kernel-arg=enforcing=1
-          PLATFORM: linux/amd64
+          PLATFORM: linux/amd64,linux/arm64
           PUSH: "true"
-          TAG_SUFFIX: -enforcing
         run: |
           make talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
       - name: talosctl-cni-bundle
@@ -1191,9 +1189,9 @@ jobs:
           IMAGER_ARGS: --extra-kernel-arg=console=ttyS0 --extra-kernel-arg=enforcing=1
           PLATFORM: linux/amd64,linux/arm64
           PUSH: "true"
-          TAG_SUFFIX: -enforcing
+          TAG_SUFFIX_OUT: -enforcing
         run: |
-          make imager installer-base installer images-essential
+          make images-essential
       - name: conformance-qemu
         env:
           EXTRA_TEST_ARGS: -talos.enforcing
@@ -1201,7 +1199,7 @@ jobs:
           IMAGE_REGISTRY: registry.dev.siderolabs.io
           QEMU_CPUS_WORKERS: "6"
           QEMU_MEMORY_WORKERS: "4096"
-          TAG_SUFFIX: -enforcing
+          TAG_SUFFIX_IN: -enforcing
           TEST_MODE: fast-conformance
         run: |
           sudo -E make e2e-qemu
@@ -1287,7 +1285,7 @@ jobs:
         if: github.event_name == 'schedule'
         env:
           IMAGE_REGISTRY: registry.dev.siderolabs.io
-          PLATFORM: linux/amd64
+          PLATFORM: linux/amd64,linux/arm64
           PUSH: "true"
         run: |
           make talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
@@ -1421,7 +1419,7 @@ jobs:
         if: github.event_name == 'schedule'
         env:
           IMAGE_REGISTRY: registry.dev.siderolabs.io
-          PLATFORM: linux/amd64
+          PLATFORM: linux/amd64,linux/arm64
           PUSH: "true"
         run: |
           make talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
@@ -1433,7 +1431,7 @@ jobs:
         if: github.event_name == 'schedule'
         env:
           IMAGE_REGISTRY: registry.dev.siderolabs.io
-          PLATFORM: linux/amd64
+          PLATFORM: linux/amd64,linux/arm64
         run: |
           make images-essential
       - name: e2e-gcp-prepare
@@ -1661,21 +1659,6 @@ jobs:
         if: github.event_name == 'schedule'
         run: |
           make talosctl-cni-bundle
-      - name: iso
-        if: github.event_name == 'schedule'
-        env:
-          IMAGE_REGISTRY: registry.dev.siderolabs.io
-          IMAGER_ARGS: --extra-kernel-arg=console=ttyS0
-        run: |
-          make iso secureboot-iso
-      - name: images-essential
-        if: github.event_name == 'schedule'
-        env:
-          IMAGE_REGISTRY: registry.dev.siderolabs.io
-          IMAGER_ARGS: --extra-kernel-arg=console=ttyS0
-          PLATFORM: linux/amd64
-        run: |
-          make images-essential
       - name: factory-1.7-iso
         env:
           FACTORY_BOOT_METHOD: iso
@@ -1835,7 +1818,7 @@ jobs:
         if: github.event_name == 'schedule'
         env:
           IMAGE_REGISTRY: registry.dev.siderolabs.io
-          PLATFORM: linux/amd64
+          PLATFORM: linux/amd64,linux/arm64
           PUSH: "true"
         run: |
           make talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
@@ -1918,7 +1901,7 @@ jobs:
         if: github.event_name == 'schedule'
         env:
           IMAGE_REGISTRY: registry.dev.siderolabs.io
-          PLATFORM: linux/amd64
+          PLATFORM: linux/amd64,linux/arm64
           PUSH: "true"
         run: |
           make talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
@@ -1930,7 +1913,7 @@ jobs:
         if: github.event_name == 'schedule'
         env:
           IMAGE_REGISTRY: registry.dev.siderolabs.io
-          PLATFORM: linux/amd64
+          PLATFORM: linux/amd64,linux/arm64
         run: |
           make image-metal-uki
       - name: e2e-firewall
@@ -2045,7 +2028,7 @@ jobs:
         if: github.event_name == 'schedule'
         env:
           IMAGE_REGISTRY: registry.dev.siderolabs.io
-          PLATFORM: linux/amd64
+          PLATFORM: linux/amd64,linux/arm64
           PUSH: "true"
         run: |
           make talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
@@ -2167,10 +2150,8 @@ jobs:
         if: github.event_name == 'schedule'
         env:
           IMAGE_REGISTRY: registry.dev.siderolabs.io
-          IMAGER_ARGS: --extra-kernel-arg=enforcing=1
-          PLATFORM: linux/amd64
+          PLATFORM: linux/amd64,linux/arm64
           PUSH: "true"
-          TAG_SUFFIX: -enforcing
         run: |
           make talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
       - name: talosctl-cni-bundle
@@ -2183,16 +2164,16 @@ jobs:
           IMAGER_ARGS: --extra-kernel-arg=console=ttyS0 --extra-kernel-arg=enforcing=1
           PLATFORM: linux/amd64,linux/arm64
           PUSH: "true"
-          TAG_SUFFIX: -enforcing
+          TAG_SUFFIX_OUT: -enforcing
         run: |
-          make imager installer-base installer images-essential
+          make images-essential
       - name: e2e-no-cluster-discovery
         env:
           EXTRA_TEST_ARGS: -talos.enforcing
           GITHUB_STEP_NAME: ${{ github.job}}-e2e-no-cluster-discovery
           IMAGE_REGISTRY: registry.dev.siderolabs.io
           SHORT_INTEGRATION_TEST: "yes"
-          TAG_SUFFIX: -enforcing
+          TAG_SUFFIX_IN: -enforcing
           WITH_CLUSTER_DISCOVERY: "false"
         run: |
           sudo -E make e2e-qemu
@@ -2202,7 +2183,7 @@ jobs:
           GITHUB_STEP_NAME: ${{ github.job}}-e2e-kubespan
           IMAGE_REGISTRY: registry.dev.siderolabs.io
           SHORT_INTEGRATION_TEST: "yes"
-          TAG_SUFFIX: -enforcing
+          TAG_SUFFIX_IN: -enforcing
           WITH_CLUSTER_DISCOVERY: "true"
           WITH_KUBESPAN: "true"
         run: |
@@ -2214,7 +2195,7 @@ jobs:
           GITHUB_STEP_NAME: ${{ github.job}}-e2e-default-hostname
           IMAGE_REGISTRY: registry.dev.siderolabs.io
           SHORT_INTEGRATION_TEST: "yes"
-          TAG_SUFFIX: -enforcing
+          TAG_SUFFIX_IN: -enforcing
           VIA_MAINTENANCE_MODE: "true"
         run: |
           sudo -E make e2e-qemu
@@ -2227,7 +2208,7 @@ jobs:
           QEMU_MEMORY_WORKERS: "1024"
           QEMU_SYSTEM_DISK_SIZE: "10240"
           SHORT_INTEGRATION_TEST: "yes"
-          TAG_SUFFIX: -enforcing
+          TAG_SUFFIX_IN: -enforcing
         run: |
           sudo -E make e2e-qemu
       - name: save artifacts
@@ -2314,7 +2295,7 @@ jobs:
         if: github.event_name == 'schedule'
         env:
           IMAGE_REGISTRY: registry.dev.siderolabs.io
-          PLATFORM: linux/amd64
+          PLATFORM: linux/amd64,linux/arm64
           PUSH: "true"
         run: |
           make talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
@@ -2333,7 +2314,7 @@ jobs:
         if: github.event_name == 'schedule'
         env:
           IMAGE_REGISTRY: registry.dev.siderolabs.io
-          PLATFORM: linux/amd64
+          PLATFORM: linux/amd64,linux/arm64
         run: |
           make images-essential
       - name: e2e-bios
@@ -2462,7 +2443,7 @@ jobs:
         if: github.event_name == 'schedule'
         env:
           IMAGE_REGISTRY: registry.dev.siderolabs.io
-          PLATFORM: linux/amd64
+          PLATFORM: linux/amd64,linux/arm64
           PUSH: "true"
         run: |
           make talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
@@ -2572,10 +2553,8 @@ jobs:
         if: github.event_name == 'schedule'
         env:
           IMAGE_REGISTRY: registry.dev.siderolabs.io
-          IMAGER_ARGS: --extra-kernel-arg=enforcing=1
-          PLATFORM: linux/amd64
+          PLATFORM: linux/amd64,linux/arm64
           PUSH: "true"
-          TAG_SUFFIX: -enforcing
         run: |
           make talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
       - name: talosctl-cni-bundle
@@ -2588,16 +2567,16 @@ jobs:
           IMAGER_ARGS: --extra-kernel-arg=console=ttyS0 --extra-kernel-arg=enforcing=1
           PLATFORM: linux/amd64,linux/arm64
           PUSH: "true"
-          TAG_SUFFIX: -enforcing
+          TAG_SUFFIX_OUT: -enforcing
         run: |
-          make imager installer-base installer images-essential
+          make images-essential
       - name: e2e-network-chaos
         env:
           EXTRA_TEST_ARGS: -talos.enforcing
           GITHUB_STEP_NAME: ${{ github.job}}-e2e-network-chaos
           IMAGE_REGISTRY: registry.dev.siderolabs.io
           SHORT_INTEGRATION_TEST: "yes"
-          TAG_SUFFIX: -enforcing
+          TAG_SUFFIX_IN: -enforcing
           WITH_NETWORK_CHAOS: "yes"
         run: |
           sudo -E make e2e-qemu
@@ -2607,7 +2586,7 @@ jobs:
           GITHUB_STEP_NAME: ${{ github.job}}-e2e-metal-iso
           IMAGE_REGISTRY: registry.dev.siderolabs.io
           SHORT_INTEGRATION_TEST: "yes"
-          TAG_SUFFIX: -enforcing
+          TAG_SUFFIX_IN: -enforcing
           WITH_CONFIG_INJECTION_METHOD: metal-iso
         run: |
           sudo -E make e2e-qemu
@@ -2617,7 +2596,7 @@ jobs:
           GITHUB_STEP_NAME: ${{ github.job}}-e2e-iommu-pcidriverrebind
           IMAGE_REGISTRY: registry.dev.siderolabs.io
           SHORT_INTEGRATION_TEST: "yes"
-          TAG_SUFFIX: -enforcing
+          TAG_SUFFIX_IN: -enforcing
           WITH_IOMMU: "yes"
         run: |
           sudo -E make e2e-qemu
@@ -2699,7 +2678,7 @@ jobs:
         if: github.event_name == 'schedule'
         env:
           IMAGE_REGISTRY: registry.dev.siderolabs.io
-          PLATFORM: linux/amd64
+          PLATFORM: linux/amd64,linux/arm64
           PUSH: "true"
         run: |
           make talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
@@ -2828,10 +2807,8 @@ jobs:
         if: github.event_name == 'schedule'
         env:
           IMAGE_REGISTRY: registry.dev.siderolabs.io
-          IMAGER_ARGS: --extra-kernel-arg=enforcing=1
-          PLATFORM: linux/amd64
+          PLATFORM: linux/amd64,linux/arm64
           PUSH: "true"
-          TAG_SUFFIX: -enforcing
         run: |
           make talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
       - name: talosctl-cni-bundle
@@ -2844,16 +2821,16 @@ jobs:
           IMAGER_ARGS: --extra-kernel-arg=console=ttyS0 --extra-kernel-arg=enforcing=1
           PLATFORM: linux/amd64,linux/arm64
           PUSH: "true"
-          TAG_SUFFIX: -enforcing
+          TAG_SUFFIX_OUT: -enforcing
         run: |
-          make imager installer-base installer images-essential
+          make images-essential
       - name: e2e-siderolink
         env:
           EXTRA_TEST_ARGS: -talos.enforcing
           GITHUB_STEP_NAME: ${{ github.job}}-e2e-siderolink
           IMAGE_REGISTRY: registry.dev.siderolabs.io
           SHORT_INTEGRATION_TEST: "yes"
-          TAG_SUFFIX: -enforcing
+          TAG_SUFFIX_IN: -enforcing
           VIA_MAINTENANCE_MODE: "true"
           WITH_SIDEROLINK_AGENT: "true"
         run: |
@@ -2864,7 +2841,7 @@ jobs:
           GITHUB_STEP_NAME: ${{ github.job}}-e2e-siderolink-tunnel
           IMAGE_REGISTRY: registry.dev.siderolabs.io
           SHORT_INTEGRATION_TEST: "yes"
-          TAG_SUFFIX: -enforcing
+          TAG_SUFFIX_IN: -enforcing
           VIA_MAINTENANCE_MODE: "true"
           WITH_SIDEROLINK_AGENT: tunnel
         run: |
@@ -2875,7 +2852,7 @@ jobs:
           GITHUB_STEP_NAME: ${{ github.job}}-e2e-siderolink-tls
           IMAGE_REGISTRY: registry.dev.siderolabs.io
           SHORT_INTEGRATION_TEST: "yes"
-          TAG_SUFFIX: -enforcing
+          TAG_SUFFIX_IN: -enforcing
           VIA_MAINTENANCE_MODE: "true"
           WITH_SIDEROLINK_AGENT: wireguard+tls
         run: |
@@ -2894,7 +2871,7 @@ jobs:
           GITHUB_STEP_NAME: ${{ github.job}}-e2e-k8s-user-namespace
           IMAGE_REGISTRY: registry.dev.siderolabs.io
           SHORT_INTEGRATION_TEST: "yes"
-          TAG_SUFFIX: -enforcing
+          TAG_SUFFIX_IN: -enforcing
           WITH_CONFIG_PATCH: '@hack/test/patches/usernamespace.yaml'
         run: |
           sudo -E make e2e-qemu
@@ -2976,7 +2953,7 @@ jobs:
         if: github.event_name == 'schedule'
         env:
           IMAGE_REGISTRY: registry.dev.siderolabs.io
-          PLATFORM: linux/amd64
+          PLATFORM: linux/amd64,linux/arm64
           PUSH: "true"
         run: |
           make talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
@@ -3071,7 +3048,7 @@ jobs:
         if: github.event_name == 'schedule'
         env:
           IMAGE_REGISTRY: registry.dev.siderolabs.io
-          PLATFORM: linux/amd64
+          PLATFORM: linux/amd64,linux/arm64
           PUSH: "true"
         run: |
           make talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
@@ -3166,7 +3143,7 @@ jobs:
         if: github.event_name == 'schedule'
         env:
           IMAGE_REGISTRY: registry.dev.siderolabs.io
-          PLATFORM: linux/amd64
+          PLATFORM: linux/amd64,linux/arm64
           PUSH: "true"
         run: |
           make talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
@@ -3261,7 +3238,7 @@ jobs:
         if: github.event_name == 'schedule'
         env:
           IMAGE_REGISTRY: registry.dev.siderolabs.io
-          PLATFORM: linux/amd64
+          PLATFORM: linux/amd64,linux/arm64
           PUSH: "true"
         run: |
           make talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
@@ -3362,7 +3339,7 @@ jobs:
         if: github.event_name == 'schedule'
         env:
           IMAGE_REGISTRY: registry.dev.siderolabs.io
-          PLATFORM: linux/amd64
+          PLATFORM: linux/amd64,linux/arm64
           PUSH: "true"
         run: |
           make talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
@@ -3496,7 +3473,7 @@ jobs:
         if: github.event_name == 'schedule'
         env:
           IMAGE_REGISTRY: registry.dev.siderolabs.io
-          PLATFORM: linux/amd64
+          PLATFORM: linux/amd64,linux/arm64
           PUSH: "true"
         run: |
           make talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
@@ -3604,7 +3581,7 @@ jobs:
         if: github.event_name == 'schedule'
         env:
           IMAGE_REGISTRY: registry.dev.siderolabs.io
-          PLATFORM: linux/amd64
+          PLATFORM: linux/amd64,linux/arm64
           PUSH: "true"
         run: |
           make talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
@@ -3711,7 +3688,7 @@ jobs:
         if: github.event_name == 'schedule'
         env:
           IMAGE_REGISTRY: registry.dev.siderolabs.io
-          PLATFORM: linux/amd64
+          PLATFORM: linux/amd64,linux/arm64
           PUSH: "true"
         run: |
           make talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
@@ -3809,25 +3786,23 @@ jobs:
         if: github.event_name == 'schedule'
         env:
           IMAGE_REGISTRY: registry.dev.siderolabs.io
-          IMAGER_ARGS: --extra-kernel-arg=enforcing=1
-          PLATFORM: linux/amd64
+          PLATFORM: linux/amd64,linux/arm64
           PUSH: "true"
-          TAG_SUFFIX: -enforcing
         run: |
           make talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
+      - name: talosctl-cni-bundle
+        if: github.event_name == 'schedule'
+        run: |
+          make talosctl-cni-bundle
       - name: images-essential-enforcing
         env:
           IMAGE_REGISTRY: registry.dev.siderolabs.io
           IMAGER_ARGS: --extra-kernel-arg=console=ttyS0 --extra-kernel-arg=enforcing=1
           PLATFORM: linux/amd64,linux/arm64
           PUSH: "true"
-          TAG_SUFFIX: -enforcing
+          TAG_SUFFIX_OUT: -enforcing
         run: |
           make images-essential
-      - name: talosctl-cni-bundle
-        if: github.event_name == 'schedule'
-        run: |
-          make talosctl-cni-bundle
       - name: e2e-qemu
         env:
           EXTRA_TEST_ARGS: -talos.enforcing
@@ -3835,7 +3810,7 @@ jobs:
           QEMU_EXTRA_DISKS: "3"
           QEMU_EXTRA_DISKS_DRIVERS: ide,nvme
           QEMU_EXTRA_DISKS_SIZE: "10240"
-          TAG_SUFFIX: -enforcing
+          TAG_SUFFIX_IN: -enforcing
           USER_DISKS_MOUNTS: /var/lib/extra,/var/lib/p1,/var/lib/p2
           WITH_CONFIG_PATCH_WORKER: '@hack/test/patches/ephemeral-nvme.yaml:@hack/test/patches/dm-raid-module.yaml'
           WITH_USER_DISK: "true"
@@ -3919,7 +3894,7 @@ jobs:
         if: github.event_name == 'schedule'
         env:
           IMAGE_REGISTRY: registry.dev.siderolabs.io
-          PLATFORM: linux/amd64
+          PLATFORM: linux/amd64,linux/arm64
           PUSH: "true"
         run: |
           make talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
@@ -4103,7 +4078,7 @@ jobs:
         if: github.event_name == 'schedule'
         env:
           IMAGE_REGISTRY: registry.dev.siderolabs.io
-          PLATFORM: linux/amd64
+          PLATFORM: linux/amd64,linux/arm64
           PUSH: "true"
         run: |
           make talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
@@ -4116,7 +4091,7 @@ jobs:
         env:
           IMAGE_REGISTRY: registry.dev.siderolabs.io
           IMAGER_ARGS: --extra-kernel-arg=console=ttyS0
-          PLATFORM: linux/amd64
+          PLATFORM: linux/amd64,linux/arm64
         run: |
           make images-essential
       - name: secureboot-iso
@@ -4124,7 +4099,7 @@ jobs:
         env:
           IMAGE_REGISTRY: registry.dev.siderolabs.io
           IMAGER_ARGS: --extra-kernel-arg=console=ttyS0
-          PLATFORM: linux/amd64
+          PLATFORM: linux/amd64,linux/arm64
         run: |
           make secureboot-iso
       - name: integration-trusted-boot
@@ -4220,7 +4195,7 @@ jobs:
         if: github.event_name == 'schedule'
         env:
           IMAGE_REGISTRY: registry.dev.siderolabs.io
-          PLATFORM: linux/amd64
+          PLATFORM: linux/amd64,linux/arm64
           PUSH: "true"
         run: |
           make talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
@@ -4234,15 +4209,15 @@ jobs:
           IMAGER_ARGS: --extra-kernel-arg=console=ttyS0 --extra-kernel-arg=enforcing=1
           PLATFORM: linux/amd64,linux/arm64
           PUSH: "true"
-          TAG_SUFFIX: -enforcing
+          TAG_SUFFIX_OUT: -enforcing
         run: |
-          make imager installer-base installer images-essential
+          make images-essential
       - name: secureboot-iso
         if: github.event_name == 'schedule'
         env:
           IMAGE_REGISTRY: registry.dev.siderolabs.io
-          IMAGER_ARGS: --extra-kernel-arg=console=ttyS0
-          PLATFORM: linux/amd64
+          IMAGER_ARGS: --extra-kernel-arg=console=ttyS0 --extra-kernel-arg=enforcing=1
+          PLATFORM: linux/amd64,linux/arm64
         run: |
           make secureboot-iso
       - name: integration-trusted-boot
@@ -4250,7 +4225,7 @@ jobs:
           EXTRA_TEST_ARGS: -talos.trustedboot -talos.enforcing
           GITHUB_STEP_NAME: ${{ github.job}}-integration-trusted-boot
           IMAGE_REGISTRY: registry.dev.siderolabs.io
-          TAG_SUFFIX: -enforcing
+          TAG_SUFFIX_IN: -enforcing
           VIA_MAINTENANCE_MODE: "true"
           WITH_TRUSTED_BOOT_ISO: "true"
         run: |

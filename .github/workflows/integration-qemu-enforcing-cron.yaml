@@ -1,6 +1,6 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
 #
-# Generated on 2025-03-24T09:55:56Z by kres ec5ec04.
+# Generated on 2025-04-01T08:14:24Z by kres d903dae.
 
 name: integration-qemu-enforcing-cron
 concurrency:
@@ -70,25 +70,23 @@ jobs:
         if: github.event_name == 'schedule'
         env:
           IMAGE_REGISTRY: registry.dev.siderolabs.io
-          IMAGER_ARGS: --extra-kernel-arg=enforcing=1
-          PLATFORM: linux/amd64
+          PLATFORM: linux/amd64,linux/arm64
           PUSH: "true"
-          TAG_SUFFIX: -enforcing
         run: |
           make talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
+      - name: talosctl-cni-bundle
+        if: github.event_name == 'schedule'
+        run: |
+          make talosctl-cni-bundle
       - name: images-essential-enforcing
         env:
           IMAGE_REGISTRY: registry.dev.siderolabs.io
           IMAGER_ARGS: --extra-kernel-arg=console=ttyS0 --extra-kernel-arg=enforcing=1
           PLATFORM: linux/amd64,linux/arm64
           PUSH: "true"
-          TAG_SUFFIX: -enforcing
+          TAG_SUFFIX_OUT: -enforcing
         run: |
           make images-essential
-      - name: talosctl-cni-bundle
-        if: github.event_name == 'schedule'
-        run: |
-          make talosctl-cni-bundle
       - name: e2e-qemu
         env:
           EXTRA_TEST_ARGS: -talos.enforcing
@@ -96,7 +94,7 @@ jobs:
           QEMU_EXTRA_DISKS: "3"
           QEMU_EXTRA_DISKS_DRIVERS: ide,nvme
           QEMU_EXTRA_DISKS_SIZE: "10240"
-          TAG_SUFFIX: -enforcing
+          TAG_SUFFIX_IN: -enforcing
           USER_DISKS_MOUNTS: /var/lib/extra,/var/lib/p1,/var/lib/p2
           WITH_CONFIG_PATCH_WORKER: '@hack/test/patches/ephemeral-nvme.yaml:@hack/test/patches/dm-raid-module.yaml'
           WITH_USER_DISK: "true"

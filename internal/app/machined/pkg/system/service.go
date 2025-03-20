@@ -30,7 +30,7 @@ type Service interface {
 	// DependsOn returns list of service IDs this service depends on.
 	DependsOn(runtime.Runtime) []string
 	// Volumes returns a list of volume IDs the service needs.
-	Volumes() []string
+	Volumes(runtime.Runtime) []string
 }
 
 // HealthcheckedService is a service which provides health check.

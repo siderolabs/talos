@@ -51,7 +51,7 @@ func (s *Syslogd) DependsOn(runtime.Runtime) []string {
 }
 
 // Volumes implements the Service interface.
-func (s *Syslogd) Volumes() []string {
+func (s *Syslogd) Volumes(runtime.Runtime) []string {
 	return nil
 }
 

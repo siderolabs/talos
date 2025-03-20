@@ -51,7 +51,7 @@ func (s *Auditd) DependsOn(runtime.Runtime) []string {
 }
 
 // Volumes implements the Service interface.
-func (s *Auditd) Volumes() []string {
+func (s *Auditd) Volumes(runtime.Runtime) []string {
 	return nil
 }
 

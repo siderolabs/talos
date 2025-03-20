@@ -22,6 +22,7 @@ import (
 	"github.com/siderolabs/gen/xslices"
 	"github.com/siderolabs/go-pointer"
 	"github.com/siderolabs/go-retry/retry"
+	"github.com/stretchr/testify/assert"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -203,7 +204,11 @@ func (suite *TinkSuite) TestDeploy() {
 
 	suite.T().Log("bootstrapping")
 
-	suite.Require().NoError(talosClient.Bootstrap(ctx, &machineapi.BootstrapRequest{}))
+	suite.Require().EventuallyWithT(func(collect *assert.CollectT) {
+		asrt := assert.New(collect)
+
+		asrt.NoError(talosClient.Bootstrap(ctx, &machineapi.BootstrapRequest{}))
+	}, time.Minute, 100*time.Millisecond)
 
 	clusterAccess := &tinkClusterAccess{
 		KubernetesClient: cluster.KubernetesClient{

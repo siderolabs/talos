@@ -135,7 +135,7 @@ func (o *APID) DependsOn(runtime.Runtime) []string {
 }
 
 // Volumes implements the Service interface.
-func (o *APID) Volumes() []string {
+func (o *APID) Volumes(runtime.Runtime) []string {
 	return nil
 }
 

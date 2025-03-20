@@ -113,7 +113,7 @@ func (svc *Extension) DependsOn(r runtime.Runtime) []string {
 }
 
 // Volumes implements the Service interface.
-func (svc *Extension) Volumes() []string {
+func (svc *Extension) Volumes(runtime.Runtime) []string {
 	return nil
 }
 

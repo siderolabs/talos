@@ -51,7 +51,7 @@ func (d *Dashboard) DependsOn(_ runtime.Runtime) []string {
 }
 
 // Volumes implements the Service interface.
-func (d *Dashboard) Volumes() []string {
+func (d *Dashboard) Volumes(runtime.Runtime) []string {
 	return nil
 }
 

@@ -79,7 +79,7 @@ func (c *Containerd) DependsOn(runtime.Runtime) []string {
 }
 
 // Volumes implements the Service interface.
-func (c *Containerd) Volumes() []string {
+func (c *Containerd) Volumes(runtime.Runtime) []string {
 	return nil
 }
 

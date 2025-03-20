@@ -1,6 +1,6 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
 #
-# Generated on 2025-03-24T09:55:56Z by kres ec5ec04.
+# Generated on 2025-04-01T08:14:24Z by kres d903dae.
 
 name: integration-conformance-enforcing-cron
 concurrency:
@@ -70,10 +70,8 @@ jobs:
         if: github.event_name == 'schedule'
         env:
           IMAGE_REGISTRY: registry.dev.siderolabs.io
-          IMAGER_ARGS: --extra-kernel-arg=enforcing=1
-          PLATFORM: linux/amd64
+          PLATFORM: linux/amd64,linux/arm64
           PUSH: "true"
-          TAG_SUFFIX: -enforcing
         run: |
           make talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
       - name: talosctl-cni-bundle
@@ -86,9 +84,9 @@ jobs:
           IMAGER_ARGS: --extra-kernel-arg=console=ttyS0 --extra-kernel-arg=enforcing=1
           PLATFORM: linux/amd64,linux/arm64
           PUSH: "true"
-          TAG_SUFFIX: -enforcing
+          TAG_SUFFIX_OUT: -enforcing
         run: |
-          make imager installer-base installer images-essential
+          make images-essential
       - name: conformance-qemu
         env:
           EXTRA_TEST_ARGS: -talos.enforcing
@@ -96,7 +94,7 @@ jobs:
           IMAGE_REGISTRY: registry.dev.siderolabs.io
           QEMU_CPUS_WORKERS: "6"
           QEMU_MEMORY_WORKERS: "4096"
-          TAG_SUFFIX: -enforcing
+          TAG_SUFFIX_IN: -enforcing
           TEST_MODE: fast-conformance
         run: |
           sudo -E make e2e-qemu

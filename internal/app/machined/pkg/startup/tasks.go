@@ -17,7 +17,6 @@ import (
 	"golang.org/x/sys/unix"
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
-	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1"
 	"github.com/siderolabs/talos/internal/pkg/environment"
 	"github.com/siderolabs/talos/internal/pkg/mount/v2"
 	"github.com/siderolabs/talos/internal/pkg/selinux"
@@ -34,61 +33,27 @@ func LogMode(ctx context.Context, log *zap.Logger, rt runtime.Runtime, next Next
 
 // SetupSystemDirectories creates system default directories.
 func SetupSystemDirectories(ctx context.Context, log *zap.Logger, rt runtime.Runtime, next NextTaskFunc) error {
-	for _, path := range []string{constants.SystemEtcPath, constants.SystemVarPath, constants.StateMountPoint} {
-		if err := os.MkdirAll(path, 0o700); err != nil {
+	for _, dir := range []struct {
+		path  string
+		perm  os.FileMode
+		label string
+	}{
+		{constants.SystemEtcPath, 0o700, constants.EtcSelinuxLabel},
+		{constants.SystemVarPath, 0o700, constants.SystemVarSelinuxLabel},
+		{constants.StateMountPoint, 0o700, ""},
+		{constants.SystemRunPath, 0o751, "system_u:object_r:system_run_t:s0"},
+		{"/system/run/containerd", 0o711, "system_u:object_r:sys_containerd_run_t:s0"},
+		{"/run/containerd", 0o711, "system_u:object_r:pod_containerd_run_t:s0"},
+	} {
+		if err := os.MkdirAll(dir.path, dir.perm); err != nil {
 			return fmt.Errorf("setupSystemDirectories: %w", err)
 		}
 
-		var label string
-
-		switch path {
-		case constants.SystemEtcPath:
-			label = constants.EtcSelinuxLabel
-		case constants.SystemVarPath:
-			label = constants.SystemVarSelinuxLabel
-		default: // /system/state is another mount
-			label = ""
+		if dir.label != "" {
+			if err := selinux.SetLabel(dir.path, dir.label); err != nil {
+				return fmt.Errorf("setupSystemDirectories: %w", err)
+			}
 		}
-
-		if err := selinux.SetLabel(path, label); err != nil {
-			return err
-		}
-	}
-
-	for _, path := range []string{constants.SystemRunPath} {
-		if err := os.MkdirAll(path, 0o751); err != nil {
-			return fmt.Errorf("setupSystemDirectories: %w", err)
-		}
-	}
-
-	return next()(ctx, log, rt, next)
-}
-
-// SetupSystemSubdirectories creates and configures subdirectories under /system.
-func SetupSystemSubdirectories(ctx context.Context, log *zap.Logger, rt runtime.Runtime, next NextTaskFunc) error {
-	directoryConfigurations := []v1alpha1.CreateDirectory{
-		{
-			Path:         "/system/run",
-			Mode:         0o751,
-			SELinuxLabel: "system_u:object_r:system_run_t:s0",
-		},
-		{
-			Path:          "/system/run/containerd",
-			Mode:          0o711,
-			SELinuxLabel:  "system_u:object_r:sys_containerd_run_t:s0",
-			ExcludeLabels: []string{"system_u:object_r:sys_containerd_socket_t:s0"},
-		},
-		{
-			Path:          "/run/containerd",
-			Mode:          0o711,
-			SELinuxLabel:  "system_u:object_r:pod_containerd_run_t:s0",
-			ExcludeLabels: []string{"system_u:object_r:pod_containerd_socket_t:s0"},
-		},
-	}
-
-	err := v1alpha1.InitializeDirectoryStructure(directoryConfigurations)
-	if err != nil {
-		return err
 	}
 
 	return next()(ctx, log, rt, next)

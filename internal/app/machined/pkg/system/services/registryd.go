@@ -39,7 +39,7 @@ func (r *registryD) PreFunc(context.Context, runtime.Runtime) error      { retur
 func (r *registryD) PostFunc(runtime.Runtime, events.ServiceState) error { return nil }
 func (r *registryD) Condition(runtime.Runtime) conditions.Condition      { return nil }
 func (r *registryD) DependsOn(runtime.Runtime) []string                  { return nil }
-func (r *registryD) Volumes() []string                                   { return nil }
+func (r *registryD) Volumes(runtime.Runtime) []string                    { return nil }
 
 func (r *registryD) HealthFunc(runtime.Runtime) health.Check {
 	return func(ctx context.Context) error {

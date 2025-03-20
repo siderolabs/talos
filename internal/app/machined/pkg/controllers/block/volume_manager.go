@@ -49,7 +49,7 @@ func (ctrl *VolumeManagerController) Inputs() []controller.Input {
 		{
 			Namespace: block.NamespaceName,
 			Type:      block.VolumeStatusType,
-			Kind:      controller.InputDestroyReady,
+			Kind:      controller.InputStrong,
 		},
 		{
 			Namespace: block.NamespaceName,
@@ -294,14 +294,31 @@ func (ctrl *VolumeManagerController) Run(ctx context.Context, r controller.Runti
 			volumeStatus := volumeStatuses[vc.Metadata().ID()]
 			volumeLogger := logger.With(zap.String("volume", vc.Metadata().ID()))
 
+			var volumeParentStatus *block.VolumeStatus
+
+			if vc.TypedSpec().ParentID != "" {
+				volumeParentStatus = volumeStatuses[vc.TypedSpec().ParentID]
+			}
+
+			parentFinalizer := ctrl.Name() + "-" + vc.Metadata().ID()
+
 			// figure out if we are tearing down this volume or building it
 			tearingDown := (volumeStatus != nil && volumeStatus.Metadata().Phase() == resource.PhaseTearingDown) || // we started tearing down the volume, so finish doing so
 				vc.Metadata().Phase() == resource.PhaseTearingDown || // volume config is being torn down
+				volumeParentStatus != nil && volumeParentStatus.Metadata().Phase() == resource.PhaseTearingDown || // parent volume is being torn down
 				volumeLifecycleTearingDown // global volume lifecycle requires all volumes to be torn down
 
 			// volume status doesn't exist yet, figure out what to do
 			if volumeStatus == nil {
 				if tearingDown {
+					if volumeParentStatus != nil {
+						if volumeParentStatus.Metadata().Finalizers().Has(parentFinalizer) {
+							if err = r.RemoveFinalizer(ctx, volumeParentStatus.Metadata(), parentFinalizer); err != nil {
+								return fmt.Errorf("error removing finalizer from parent volume configuration: %w", err)
+							}
+						}
+					}
+
 					// happy case, we don't need to progress this volume
 					if vc.Metadata().Finalizers().Has(ctrl.Name()) {
 						if err = r.RemoveFinalizer(ctx, vc.Metadata(), ctrl.Name()); err != nil {
@@ -316,6 +333,7 @@ func (ctrl *VolumeManagerController) Run(ctx context.Context, r controller.Runti
 				volumeStatus = block.NewVolumeStatus(block.NamespaceName, vc.Metadata().ID())
 				volumeStatus.TypedSpec().Phase = block.VolumePhaseWaiting
 				volumeStatus.TypedSpec().Type = vc.TypedSpec().Type
+				volumeStatus.TypedSpec().ParentID = vc.TypedSpec().ParentID
 				volumeStatuses[vc.Metadata().ID()] = volumeStatus
 			}
 
@@ -331,12 +349,15 @@ func (ctrl *VolumeManagerController) Run(ctx context.Context, r controller.Runti
 
 			prevPhase := volumeStatus.TypedSpec().Phase
 
-			if err = ctrl.processVolumeConfig(
+			if err = ctrl.progressVolumeConfig(
 				ctx,
 				volumeLogger,
+				r,
 				volumes.ManagerContext{
 					Cfg:                     vc,
 					Status:                  volumeStatus.TypedSpec(),
+					ParentStatus:            volumeParentStatus,
+					ParentFinalizer:         parentFinalizer,
 					DiscoveredVolumes:       discoveredVolumesSpecs,
 					Disks:                   diskSpecs,
 					DevicesReady:            devicesReady,
@@ -373,34 +394,53 @@ func (ctrl *VolumeManagerController) Run(ctx context.Context, r controller.Runti
 			}
 
 			if prevPhase != volumeStatus.TypedSpec().Phase || err != nil {
-				fields := []zap.Field{
-					zap.String("phase", fmt.Sprintf("%s -> %s", prevPhase, volumeStatus.TypedSpec().Phase)),
-					zap.Error(err),
-				}
+				suppressVolumeLogs := slices.Contains(
+					[]block.VolumeType{
+						block.VolumeTypeDirectory,
+						block.VolumeTypeOverlay,
+						block.VolumeTypeSymlink,
+					},
+					volumeStatus.TypedSpec().Type,
+				)
 
-				if volumeStatus.TypedSpec().Location != "" {
-					fields = append(fields, zap.String("location", volumeStatus.TypedSpec().Location))
-				}
+				if !suppressVolumeLogs {
+					fields := []zap.Field{
+						zap.String("phase", fmt.Sprintf("%s -> %s", prevPhase, volumeStatus.TypedSpec().Phase)),
+						zap.Error(err),
+					}
 
-				if volumeStatus.TypedSpec().MountLocation != "" && volumeStatus.TypedSpec().MountLocation != volumeStatus.TypedSpec().Location {
-					fields = append(fields, zap.String("mountLocation", volumeStatus.TypedSpec().MountLocation))
-				}
+					if volumeStatus.TypedSpec().Location != "" {
+						fields = append(fields, zap.String("location", volumeStatus.TypedSpec().Location))
+					}
 
-				if volumeStatus.TypedSpec().ParentLocation != "" {
-					fields = append(fields, zap.String("parentLocation", volumeStatus.TypedSpec().ParentLocation))
-				}
+					if volumeStatus.TypedSpec().MountLocation != "" && volumeStatus.TypedSpec().MountLocation != volumeStatus.TypedSpec().Location {
+						fields = append(fields, zap.String("mountLocation", volumeStatus.TypedSpec().MountLocation))
+					}
 
-				if len(volumeStatus.TypedSpec().EncryptionFailedSyncs) > 0 {
-					fields = append(fields, zap.Strings("encryptionFailedSyncs", volumeStatus.TypedSpec().EncryptionFailedSyncs))
-				}
+					if volumeStatus.TypedSpec().ParentLocation != "" {
+						fields = append(fields, zap.String("parentLocation", volumeStatus.TypedSpec().ParentLocation))
+					}
 
-				volumeLogger.Info("volume status", fields...)
+					if len(volumeStatus.TypedSpec().EncryptionFailedSyncs) > 0 {
+						fields = append(fields, zap.Strings("encryptionFailedSyncs", volumeStatus.TypedSpec().EncryptionFailedSyncs))
+					}
+
+					volumeLogger.Info("volume status", fields...)
+				}
 			}
 
 			// when closing, ignore META volume, we want it to stay longer, so no problem if is not closed yet
 			allClosed = allClosed && (volumeStatus.TypedSpec().Phase == block.VolumePhaseClosed || vc.Metadata().ID() == constants.MetaPartitionLabel)
 
 			if shouldCloseVolume && volumeStatus.TypedSpec().Phase == block.VolumePhaseClosed {
+				if volumeParentStatus != nil {
+					if volumeParentStatus.Metadata().Finalizers().Has(parentFinalizer) {
+						if err = r.RemoveFinalizer(ctx, volumeParentStatus.Metadata(), parentFinalizer); err != nil {
+							return fmt.Errorf("error removing finalizer from parent volume configuration: %w", err)
+						}
+					}
+				}
+
 				// we can destroy the volume status now
 				if err = r.Destroy(ctx, volumeStatus.Metadata()); err != nil {
 					return fmt.Errorf("error destroying volume status: %w", err)
@@ -428,6 +468,25 @@ func (ctrl *VolumeManagerController) Run(ctx context.Context, r controller.Runti
 			}
 		}
 	}
+}
+
+func (ctrl *VolumeManagerController) progressVolumeConfig(ctx context.Context, logger *zap.Logger, r controller.Runtime, volumeContext volumes.ManagerContext) error {
+	if !volumeContext.ShouldCloseVolume {
+		if volumeContext.Cfg.TypedSpec().ParentID != "" {
+			if volumeContext.ParentStatus == nil {
+				// not ready yet
+				return nil
+			}
+
+			if !volumeContext.ParentStatus.Metadata().Finalizers().Has(volumeContext.ParentFinalizer) {
+				if err := r.AddFinalizer(ctx, volumeContext.ParentStatus.Metadata(), volumeContext.ParentFinalizer); err != nil {
+					return fmt.Errorf("error adding finalizer to parent volume configuration: %w", err)
+				}
+			}
+		}
+	}
+
+	return ctrl.processVolumeConfig(ctx, logger, volumeContext)
 }
 
 // processVolumeConfig implements the volume configuration automata.

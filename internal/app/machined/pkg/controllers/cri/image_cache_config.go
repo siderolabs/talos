@@ -82,6 +82,11 @@ func (ctrl *ImageCacheConfigController) Inputs() []controller.Input {
 			Type:      block.VolumeMountStatusType,
 			Kind:      controller.InputStrong,
 		},
+		{
+			Namespace: block.NamespaceName,
+			Type:      block.VolumeMountRequestType,
+			Kind:      controller.InputDestroyReady,
+		},
 	}
 }
 
@@ -252,7 +257,12 @@ func (ctrl *ImageCacheConfigController) createVolumeConfigISO(ctx context.Contex
 		volumeCfg.TypedSpec().Locator = block.LocatorSpec{
 			Match: *boolExpr,
 		}
-		volumeCfg.TypedSpec().Mount.TargetPath = constants.ImageCacheISOMountPoint
+		volumeCfg.TypedSpec().Mount = block.MountSpec{
+			TargetPath: constants.ImageCacheISOMountPoint,
+			FileMode:   0o700,
+			UID:        0,
+			GID:        0,
+		}
 
 		return nil
 	})
@@ -305,7 +315,12 @@ func (ctrl *ImageCacheConfigController) createVolumeConfigDisk(ctx context.Conte
 			volumeCfg.TypedSpec().Provisioning.FilesystemSpec.Type = block.FilesystemTypeEXT4
 		}
 
-		volumeCfg.TypedSpec().Mount.TargetPath = constants.ImageCacheDiskMountPoint
+		volumeCfg.TypedSpec().Mount = block.MountSpec{
+			TargetPath: constants.ImageCacheDiskMountPoint,
+			FileMode:   0o700,
+			UID:        0,
+			GID:        0,
+		}
 
 		return nil
 	})

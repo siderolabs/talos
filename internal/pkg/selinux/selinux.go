@@ -49,6 +49,25 @@ var IsEnforcing = sync.OnceValue(func() bool {
 	return val != nil && *val == "1"
 })
 
+// GetLabel gets label for file, directory or symlink (not following symlinks)
+// It does not perform the operation in case SELinux is disabled.
+func GetLabel(filename string) (string, error) {
+	if !IsEnabled() {
+		return "", nil
+	}
+
+	label, err := xattr.LGet(filename, "security.selinux")
+	if err != nil {
+		return "", err
+	}
+
+	if label == nil {
+		return "", nil
+	}
+
+	return string(bytes.Trim(label, "\x00\n")), nil
+}
+
 // SetLabel sets label for file, directory or symlink (not following symlinks)
 // It does not perform the operation in case SELinux is disabled, provided label is empty or already set.
 func SetLabel(filename string, label string, excludeLabels ...string) error {
@@ -56,22 +75,22 @@ func SetLabel(filename string, label string, excludeLabels ...string) error {
 		return nil
 	}
 
-	// We use LGet/LSet so that we manipulate label on the exact path, not the symlink target.
-	currentLabel, err := xattr.LGet(filename, "security.selinux")
+	currentLabel, err := GetLabel(filename)
 	if err != nil {
 		return err
 	}
 
 	// Skip extra FS transactions when labels are okay.
-	if string(bytes.Trim(currentLabel, "\x00\n")) == label {
+	if currentLabel == label {
 		return nil
 	}
 
 	// Skip setting label if it's in excludeLabels.
-	if currentLabel != nil && slices.Contains(excludeLabels, string(bytes.Trim(currentLabel, "\x00\n"))) {
+	if currentLabel != "" && slices.Contains(excludeLabels, currentLabel) {
 		return nil
 	}
 
+	// We use LGet/LSet so that we manipulate label on the exact path, not the symlink target.
 	if err := xattr.LSet(filename, "security.selinux", []byte(label)); err != nil {
 		return err
 	}

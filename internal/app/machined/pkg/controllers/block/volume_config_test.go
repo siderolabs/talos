@@ -10,6 +10,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/cosi-project/runtime/pkg/resource"
+	"github.com/siderolabs/gen/xslices"
 	"github.com/siderolabs/go-pointer"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
@@ -120,6 +122,30 @@ func (suite *VolumeConfigSuite) TestReconcileDefaults() {
 
 		asrt.Equal(constants.EphemeralMountPoint, r.TypedSpec().Mount.TargetPath)
 	})
+
+	ctest.AssertResources(suite, []resource.ID{
+		"/var/log",
+		"/var/log/audit",
+		"/var/log/containers",
+		"/var/log/pods",
+		constants.EtcdDataVolumeID,
+		"/var/lib/containerd",
+		"/var/lib/kubelet",
+		"/var/lib/cni",
+		constants.SeccompProfilesDirectory,
+		constants.KubernetesAuditLogDir,
+		"/var/run/lock",
+	}, func(r *block.VolumeConfig, asrt *assert.Assertions) {
+		asrt.Equal(block.VolumeTypeDirectory, r.TypedSpec().Type)
+	})
+
+	ctest.AssertResources(suite,
+		xslices.Map(constants.Overlays, func(target constants.SELinuxLabeledPath) resource.ID {
+			return target.Path
+		}),
+		func(r *block.VolumeConfig, asrt *assert.Assertions) {
+			asrt.Equal(block.VolumeTypeOverlay, r.TypedSpec().Type)
+		})
 }
 
 func (suite *VolumeConfigSuite) TestReconcileEncryptedSTATE() {

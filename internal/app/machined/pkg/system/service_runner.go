@@ -219,7 +219,7 @@ func (svcrunner *ServiceRunner) Run(notifyChannels ...chan<- struct{}) error {
 		condition = conditions.WaitForAll(serviceDependencies, condition)
 	}
 
-	if volumeIDs := svcrunner.service.Volumes(); len(volumeIDs) > 0 && !svcrunner.runtime.State().Platform().Mode().InContainer() {
+	if volumeIDs := svcrunner.service.Volumes(svcrunner.runtime); len(volumeIDs) > 0 {
 		// create volume mount request for each volume requested
 		volumeRequestIDs := make([]string, 0, len(volumeIDs))
 
@@ -241,8 +241,11 @@ func (svcrunner *ServiceRunner) Run(notifyChannels ...chan<- struct{}) error {
 
 		// cleanup volume mounts
 		defer func() {
-			if err := svcrunner.deleteVolumeMountRequest(ctx, volumeRequestIDs); err != nil {
-				svcrunner.UpdateState(ctx, events.StateFailed, "Failed to clean up volumes: %v", err)
+			cleanupCtx, cleanupCancel := context.WithTimeout(context.Background(), 10*time.Second)
+			defer cleanupCancel()
+
+			if err := svcrunner.deleteVolumeMountRequest(cleanupCtx, volumeRequestIDs); err != nil {
+				svcrunner.UpdateState(cleanupCtx, events.StateFailed, "Failed to clean up volumes: %v", err)
 			}
 		}()
 	}
