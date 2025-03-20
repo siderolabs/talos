@@ -126,6 +126,9 @@ message MountSpec {
   string selinux_label = 2;
   bool project_quota_support = 3;
   string parent_id = 4;
+  uint32 file_mode = 5;
+  int64 uid = 6;
+  int64 gid = 7;
 }
 
 // MountStatusSpec is the spec for MountStatus.

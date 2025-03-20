@@ -1057,6 +1057,9 @@ MountSpec is the spec for volume mount.
 | selinux_label | [string](#string) |  |  |
 | project_quota_support | [bool](#bool) |  |  |
 | parent_id | [string](#string) |  |  |
+| file_mode | [uint32](#uint32) |  |  |
+| uid | [int64](#int64) |  |  |
+| gid | [int64](#int64) |  |  |
 
 
 

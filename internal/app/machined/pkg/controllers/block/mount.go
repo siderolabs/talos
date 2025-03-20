@@ -7,6 +7,7 @@ package block
 import (
 	"context"
 	"fmt"
+	"os"
 	"path/filepath"
 
 	"github.com/cosi-project/runtime/pkg/controller"
@@ -17,6 +18,7 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/siderolabs/talos/internal/pkg/mount/v2"
+	"github.com/siderolabs/talos/internal/pkg/selinux"
 	"github.com/siderolabs/talos/pkg/machinery/resources/block"
 )
 
@@ -149,8 +151,10 @@ func (ctrl *MountController) Run(ctx context.Context, r controller.Runtime, logg
 					continue
 				}
 
-				if err = ctrl.handleUnmountOperation(logger, mountRequest, volumeStatus); err != nil {
-					return err
+				if volumeStatus != nil {
+					if err = ctrl.handleUnmountOperation(logger, mountRequest, volumeStatus); err != nil {
+						return err
+					}
 				}
 
 				if volumeStatus != nil && volumeStatus.Metadata().Finalizers().Has(ctrl.Name()) {
@@ -201,12 +205,13 @@ func (ctrl *MountController) Run(ctx context.Context, r controller.Runtime, logg
 				mountTarget := volumeStatus.TypedSpec().MountSpec.TargetPath
 				mountFilesystem := volumeStatus.TypedSpec().Filesystem
 
+				rootPath := "/"
+
 				if mountHasParent {
-					// mount target is a path within the parent mount
-					mountTarget = filepath.Join(mountParentStatus.TypedSpec().Target, mountTarget)
+					rootPath = mountParentStatus.TypedSpec().Target
 				}
 
-				if err = ctrl.handleMountOperation(logger, mountSource, mountTarget, mountFilesystem, mountRequest, volumeStatus); err != nil {
+				if err = ctrl.handleMountOperation(logger, rootPath, mountSource, mountTarget, mountFilesystem, mountRequest, volumeStatus); err != nil {
 					return err
 				}
 
@@ -215,7 +220,7 @@ func (ctrl *MountController) Run(ctx context.Context, r controller.Runtime, logg
 					func(mountStatus *block.MountStatus) error {
 						mountStatus.TypedSpec().Spec = *mountRequest.TypedSpec()
 						mountStatus.TypedSpec().Source = mountSource
-						mountStatus.TypedSpec().Target = mountTarget
+						mountStatus.TypedSpec().Target = filepath.Join(rootPath, mountTarget)
 						mountStatus.TypedSpec().Filesystem = mountFilesystem
 						mountStatus.TypedSpec().EncryptionProvider = volumeStatus.TypedSpec().EncryptionProvider
 						mountStatus.TypedSpec().ReadOnly = mountRequest.TypedSpec().ReadOnly
@@ -262,6 +267,7 @@ func (ctrl *MountController) tearDownMountStatus(ctx context.Context, r controll
 
 func (ctrl *MountController) handleMountOperation(
 	logger *zap.Logger,
+	rootPath string,
 	mountSource, mountTarget string,
 	mountFilesystem block.FilesystemType,
 	mountRequest *block.MountRequest,
@@ -269,24 +275,48 @@ func (ctrl *MountController) handleMountOperation(
 ) error {
 	switch volumeStatus.TypedSpec().Type {
 	case block.VolumeTypeDirectory:
-		return ctrl.handleDirectoryMountOperation(mountTarget, volumeStatus)
+		return ctrl.handleDirectoryMountOperation(rootPath, mountTarget, volumeStatus)
 	case block.VolumeTypeTmpfs:
 		return fmt.Errorf("not implemented yet")
 	case block.VolumeTypeDisk, block.VolumeTypePartition:
-		return ctrl.handleDiskMountOperation(logger, mountSource, mountTarget, mountFilesystem, mountRequest, volumeStatus)
+		return ctrl.handleDiskMountOperation(logger, mountSource, filepath.Join(rootPath, mountTarget), mountFilesystem, mountRequest, volumeStatus)
 	default:
 		return fmt.Errorf("unsupported volume type %q", volumeStatus.TypedSpec().Type)
 	}
 }
 
 func (ctrl *MountController) handleDirectoryMountOperation(
-	_ string,
-	_ *block.VolumeStatus,
+	rootPath string,
+	target string,
+	volumeStatus *block.VolumeStatus,
 ) error {
-	// [TODO]: implement me
-	//  - create directory if missing
-	//  - set SELinux label if needed
-	//  - set uid:gid if needed
+	targetPath := filepath.Join(rootPath, target)
+
+	if err := os.Mkdir(targetPath, volumeStatus.TypedSpec().MountSpec.FileMode); err != nil {
+		if !os.IsExist(err) {
+			return fmt.Errorf("failed to create target path: %w", err)
+		}
+	}
+
+	return ctrl.updateTargetSettings(targetPath, volumeStatus.TypedSpec().MountSpec)
+}
+
+func (ctrl *MountController) updateTargetSettings(
+	targetPath string,
+	mountSpec block.MountSpec,
+) error {
+	if err := os.Chmod(targetPath, mountSpec.FileMode); err != nil {
+		return fmt.Errorf("failed to chmod %q: %w", targetPath, err)
+	}
+
+	if err := os.Chown(targetPath, mountSpec.UID, mountSpec.GID); err != nil {
+		return fmt.Errorf("failed to chown %q: %w", targetPath, err)
+	}
+
+	if err := selinux.SetLabel(targetPath, mountSpec.SelinuxLabel); err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -322,6 +352,12 @@ func (ctrl *MountController) handleDiskMountOperation(
 		unmounter, err := mountpoint.Mount(mount.WithMountPrinter(logger.Sugar().Infof))
 		if err != nil {
 			return fmt.Errorf("failed to mount %q: %w", mountRequest.Metadata().ID(), err)
+		}
+
+		if err = ctrl.updateTargetSettings(mountTarget, volumeStatus.TypedSpec().MountSpec); err != nil {
+			unmounter() //nolint:errcheck
+
+			return fmt.Errorf("failed to update target settings %q: %w", mountRequest.Metadata().ID(), err)
 		}
 
 		logger.Info("volume mount",

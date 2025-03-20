@@ -373,28 +373,30 @@ func (ctrl *VolumeManagerController) Run(ctx context.Context, r controller.Runti
 			}
 
 			if prevPhase != volumeStatus.TypedSpec().Phase || err != nil {
-				fields := []zap.Field{
-					zap.String("phase", fmt.Sprintf("%s -> %s", prevPhase, volumeStatus.TypedSpec().Phase)),
-					zap.Error(err),
-				}
+				if volumeStatus.TypedSpec().Type != block.VolumeTypeDirectory {
+					fields := []zap.Field{
+						zap.String("phase", fmt.Sprintf("%s -> %s", prevPhase, volumeStatus.TypedSpec().Phase)),
+						zap.Error(err),
+					}
 
-				if volumeStatus.TypedSpec().Location != "" {
-					fields = append(fields, zap.String("location", volumeStatus.TypedSpec().Location))
-				}
+					if volumeStatus.TypedSpec().Location != "" {
+						fields = append(fields, zap.String("location", volumeStatus.TypedSpec().Location))
+					}
 
-				if volumeStatus.TypedSpec().MountLocation != "" && volumeStatus.TypedSpec().MountLocation != volumeStatus.TypedSpec().Location {
-					fields = append(fields, zap.String("mountLocation", volumeStatus.TypedSpec().MountLocation))
-				}
+					if volumeStatus.TypedSpec().MountLocation != "" && volumeStatus.TypedSpec().MountLocation != volumeStatus.TypedSpec().Location {
+						fields = append(fields, zap.String("mountLocation", volumeStatus.TypedSpec().MountLocation))
+					}
 
-				if volumeStatus.TypedSpec().ParentLocation != "" {
-					fields = append(fields, zap.String("parentLocation", volumeStatus.TypedSpec().ParentLocation))
-				}
+					if volumeStatus.TypedSpec().ParentLocation != "" {
+						fields = append(fields, zap.String("parentLocation", volumeStatus.TypedSpec().ParentLocation))
+					}
 
-				if len(volumeStatus.TypedSpec().EncryptionFailedSyncs) > 0 {
-					fields = append(fields, zap.Strings("encryptionFailedSyncs", volumeStatus.TypedSpec().EncryptionFailedSyncs))
-				}
+					if len(volumeStatus.TypedSpec().EncryptionFailedSyncs) > 0 {
+						fields = append(fields, zap.Strings("encryptionFailedSyncs", volumeStatus.TypedSpec().EncryptionFailedSyncs))
+					}
 
-				volumeLogger.Info("volume status", fields...)
+					volumeLogger.Info("volume status", fields...)
+				}
 			}
 
 			// when closing, ignore META volume, we want it to stay longer, so no problem if is not closed yet

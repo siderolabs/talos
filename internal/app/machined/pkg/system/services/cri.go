@@ -82,7 +82,11 @@ func (c *CRI) DependsOn(runtime.Runtime) []string {
 
 // Volumes implements the Service interface.
 func (c *CRI) Volumes() []string {
-	return []string{constants.EphemeralPartitionLabel}
+	return []string{
+		"/var/lib",
+		"/var/lib/cni",
+		"/var/lib/containerd",
+	}
 }
 
 // Runner implements the Service interface.

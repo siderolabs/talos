@@ -924,6 +924,21 @@ func (m *MountSpec) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 		i -= len(m.unknownFields)
 		copy(dAtA[i:], m.unknownFields)
 	}
+	if m.Gid != 0 {
+		i = protohelpers.EncodeVarint(dAtA, i, uint64(m.Gid))
+		i--
+		dAtA[i] = 0x38
+	}
+	if m.Uid != 0 {
+		i = protohelpers.EncodeVarint(dAtA, i, uint64(m.Uid))
+		i--
+		dAtA[i] = 0x30
+	}
+	if m.FileMode != 0 {
+		i = protohelpers.EncodeVarint(dAtA, i, uint64(m.FileMode))
+		i--
+		dAtA[i] = 0x28
+	}
 	if len(m.ParentId) > 0 {
 		i -= len(m.ParentId)
 		copy(dAtA[i:], m.ParentId)
@@ -2078,6 +2093,15 @@ func (m *MountSpec) SizeVT() (n int) {
 	l = len(m.ParentId)
 	if l > 0 {
 		n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
+	}
+	if m.FileMode != 0 {
+		n += 1 + protohelpers.SizeOfVarint(uint64(m.FileMode))
+	}
+	if m.Uid != 0 {
+		n += 1 + protohelpers.SizeOfVarint(uint64(m.Uid))
+	}
+	if m.Gid != 0 {
+		n += 1 + protohelpers.SizeOfVarint(uint64(m.Gid))
 	}
 	n += len(m.unknownFields)
 	return n
@@ -4937,6 +4961,63 @@ func (m *MountSpec) UnmarshalVT(dAtA []byte) error {
 			}
 			m.ParentId = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
+		case 5:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field FileMode", wireType)
+			}
+			m.FileMode = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return protohelpers.ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.FileMode |= uint32(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 6:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Uid", wireType)
+			}
+			m.Uid = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return protohelpers.ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.Uid |= int64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 7:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Gid", wireType)
+			}
+			m.Gid = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return protohelpers.ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.Gid |= int64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
 		default:
 			iNdEx = preIndex
 			skippy, err := protohelpers.Skip(dAtA[iNdEx:])
