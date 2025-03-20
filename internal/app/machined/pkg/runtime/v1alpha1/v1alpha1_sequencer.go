@@ -217,17 +217,9 @@ func (*Sequencer) Boot(r runtime.Runtime) []runtime.Phase {
 		r.State().Platform().Mode() == runtime.ModeContainer,
 		"sharedFilesystems",
 		SetupSharedFilesystems,
-	).AppendWhen(
-		r.State().Platform().Mode() != runtime.ModeContainer,
+	).Append(
 		"ephemeral",
 		MountEphemeralPartition,
-	).Append(
-		"var",
-		SetupVarDirectory,
-	).AppendWhen(
-		r.State().Platform().Mode() != runtime.ModeContainer,
-		"overlay",
-		MountOverlayFilesystems,
 	).AppendWhen(
 		r.State().Platform().Mode() != runtime.ModeContainer,
 		"udevSetup",
@@ -455,7 +447,6 @@ func (*Sequencer) Upgrade(r runtime.Runtime, in *machineapi.UpgradeRequest) []ru
 			StopServicesEphemeral,
 		).Append(
 			"unmount",
-			UnmountOverlayFilesystems,
 			UnmountPodMounts,
 		).Append(
 			"unmountBind",
@@ -503,7 +494,6 @@ func stopAllPhaselist(r runtime.Runtime, enableKexec bool) PhaseList {
 			StopServicesEphemeral,
 		).Append(
 			"umount",
-			UnmountOverlayFilesystems,
 			UnmountPodMounts,
 		).Append(
 			"unmountBind",

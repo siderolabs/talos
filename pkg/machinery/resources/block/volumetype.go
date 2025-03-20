@@ -15,4 +15,6 @@ const (
 	VolumeTypeDisk                        // disk
 	VolumeTypeTmpfs                       // tmpfs
 	VolumeTypeDirectory                   // directory
+	VolumeTypeSymlink                     // symlink
+	VolumeTypeOverlay                     // overlay
 )

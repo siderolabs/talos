@@ -106,8 +106,18 @@ func (k *Kubelet) DependsOn(runtime.Runtime) []string {
 }
 
 // Volumes implements the Service interface.
-func (k *Kubelet) Volumes() []string {
-	return nil
+func (k *Kubelet) Volumes(runtime.Runtime) []string {
+	return []string{
+		"/var/lib",
+		"/var/lib/kubelet",
+		"/var/log",
+		"/var/log/audit",
+		"/var/log/containers",
+		"/var/log/pods",
+		"/var/lib/kubelet/seccomp",
+		constants.SeccompProfilesDirectory,
+		constants.KubernetesAuditLogDir,
+	}
 }
 
 // Runner implements the Service interface.
@@ -236,12 +246,10 @@ func kubeletSeccomp(seccomp *specs.LinuxSeccomp) {
 }
 
 func simpleHealthCheck(ctx context.Context, url string) error {
-	req, err := http.NewRequest(http.MethodGet, url, nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 	if err != nil {
 		return err
 	}
-
-	req = req.WithContext(ctx)
 
 	resp, err := http.DefaultClient.Do(req) //nolint:bodyclose
 	if err != nil {

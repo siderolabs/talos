@@ -25,10 +25,11 @@ import (
 //nolint:gocyclo,cyclop
 func LocateAndProvision(ctx context.Context, logger *zap.Logger, volumeContext ManagerContext) error {
 	volumeContext.Status.MountSpec = volumeContext.Cfg.TypedSpec().Mount
+	volumeContext.Status.SymlinkSpec = volumeContext.Cfg.TypedSpec().Symlink
 	volumeType := volumeContext.Cfg.TypedSpec().Type
 
 	switch volumeType {
-	case block.VolumeTypeTmpfs, block.VolumeTypeDirectory:
+	case block.VolumeTypeTmpfs, block.VolumeTypeDirectory, block.VolumeTypeSymlink, block.VolumeTypeOverlay:
 		// tmpfs & directory volumes are always ready
 		volumeContext.Status.Phase = block.VolumePhaseReady
 

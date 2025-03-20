@@ -42,6 +42,7 @@ description: Talos gRPC API reference.
     - [MountStatusSpec](#talos.resource.definitions.block.MountStatusSpec)
     - [PartitionSpec](#talos.resource.definitions.block.PartitionSpec)
     - [ProvisioningSpec](#talos.resource.definitions.block.ProvisioningSpec)
+    - [SymlinkProvisioningSpec](#talos.resource.definitions.block.SymlinkProvisioningSpec)
     - [SymlinkSpec](#talos.resource.definitions.block.SymlinkSpec)
     - [SystemDiskSpec](#talos.resource.definitions.block.SystemDiskSpec)
     - [UserDiskConfigStatusSpec](#talos.resource.definitions.block.UserDiskConfigStatusSpec)
@@ -1058,6 +1059,10 @@ MountSpec is the spec for volume mount.
 | selinux_label | [string](#string) |  |  |
 | project_quota_support | [bool](#bool) |  |  |
 | parent_id | [string](#string) |  |  |
+| file_mode | [uint32](#uint32) |  |  |
+| uid | [int64](#int64) |  |  |
+| gid | [int64](#int64) |  |  |
+| recursive_relabel | [bool](#bool) |  |  |
 
 
 
@@ -1116,6 +1121,22 @@ ProvisioningSpec is the spec for volume provisioning.
 | partition_spec | [PartitionSpec](#talos.resource.definitions.block.PartitionSpec) |  |  |
 | wave | [int64](#int64) |  |  |
 | filesystem_spec | [FilesystemSpec](#talos.resource.definitions.block.FilesystemSpec) |  |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.block.SymlinkProvisioningSpec"></a>
+
+### SymlinkProvisioningSpec
+SymlinkProvisioningSpec is the spec for volume symlink.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| symlink_target_path | [string](#string) |  |  |
+| force | [bool](#bool) |  |  |
 
 
 
@@ -1183,6 +1204,7 @@ VolumeConfigSpec is the spec for VolumeConfig resource.
 | locator | [LocatorSpec](#talos.resource.definitions.block.LocatorSpec) |  |  |
 | mount | [MountSpec](#talos.resource.definitions.block.MountSpec) |  |  |
 | encryption | [EncryptionSpec](#talos.resource.definitions.block.EncryptionSpec) |  |  |
+| symlink | [SymlinkProvisioningSpec](#talos.resource.definitions.block.SymlinkProvisioningSpec) |  |  |
 
 
 
@@ -1249,6 +1271,8 @@ VolumeStatusSpec is the spec for VolumeStatus resource.
 | mount_spec | [MountSpec](#talos.resource.definitions.block.MountSpec) |  |  |
 | type | [talos.resource.definitions.enums.BlockVolumeType](#talos.resource.definitions.enums.BlockVolumeType) |  |  |
 | configured_encryption_keys | [string](#string) | repeated |  |
+| symlink_spec | [SymlinkProvisioningSpec](#talos.resource.definitions.block.SymlinkProvisioningSpec) |  |  |
+| parent_id | [string](#string) |  |  |
 
 
 
@@ -1654,6 +1678,8 @@ BlockVolumeType describes volume type.
 | VOLUME_TYPE_DISK | 1 |  |
 | VOLUME_TYPE_TMPFS | 2 |  |
 | VOLUME_TYPE_DIRECTORY | 3 |  |
+| VOLUME_TYPE_SYMLINK | 4 |  |
+| VOLUME_TYPE_OVERLAY | 5 |  |
 
 
 

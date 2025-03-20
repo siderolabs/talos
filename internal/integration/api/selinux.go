@@ -76,8 +76,6 @@ func (suite *SELinuxSuite) getLabel(nodeCtx context.Context, pid int32) string {
 // to ensure SELinux labels for files are set when they are created and FS's are mounted with correct labels.
 // FIXME: cancel the test in case system was upgraded.
 func (suite *SELinuxSuite) TestFileMountLabels() {
-	suite.T().Skip("skipping this test until it becomes stable enough")
-
 	workers := suite.DiscoverNodeInternalIPsByType(suite.ctx, machine.TypeWorker)
 	controlplanes := suite.DiscoverNodeInternalIPsByType(suite.ctx, machine.TypeControlPlane)
 
@@ -88,6 +86,9 @@ func (suite *SELinuxSuite) TestFileMountLabels() {
 		constants.StateMountPoint:     constants.StateSelinuxLabel,
 		constants.SystemVarPath:       constants.SystemVarSelinuxLabel,
 		constants.RunPath:             constants.RunSelinuxLabel,
+		"/run/containerd":             "system_u:object_r:pod_containerd_run_t:s0",
+		"/run/lock":                   "system_u:object_r:var_lock_t:s0",
+		constants.SystemRunPath:       "system_u:object_r:system_run_t:s0",
 		"/var/run":                    constants.RunSelinuxLabel,
 		// Runtime files
 		constants.APIRuntimeSocketPath:  constants.APIRuntimeSocketLabel,
@@ -104,8 +105,15 @@ func (suite *SELinuxSuite) TestFileMountLabels() {
 		"/opt/cni":                        "system_u:object_r:cni_plugin_t:s0",
 		"/opt/containerd":                 "system_u:object_r:containerd_plugin_t:s0",
 		// Directories
-		"/var/lib/containerd": "system_u:object_r:containerd_state_t:s0",
-		"/var/lib/kubelet":    "system_u:object_r:kubelet_state_t:s0",
+		"/var/lib/containerd":           "system_u:object_r:containerd_state_t:s0",
+		"/var/lib/cni":                  "system_u:object_r:cni_state_t:s0",
+		"/var/lib/kubelet":              "system_u:object_r:kubelet_state_t:s0",
+		"/var/lib/kubelet/seccomp":      "system_u:object_r:seccomp_profile_t:s0",
+		"/var/log":                      "system_u:object_r:var_log_t:s0",
+		"/var/log/audit":                "system_u:object_r:audit_log_t:s0",
+		constants.KubernetesAuditLogDir: "system_u:object_r:kube_log_t:s0",
+		"/var/log/containers":           "system_u:object_r:containers_log_t:s0",
+		"/var/log/pods":                 "system_u:object_r:pods_log_t:s0",
 		// Mounts and runtime-generated files
 		constants.SystemEtcPath: constants.EtcSelinuxLabel,
 		"/etc":                  constants.EtcSelinuxLabel,
@@ -157,55 +165,62 @@ func (suite *SELinuxSuite) checkFileLabels(nodes []string, expectedLabels map[st
 			suite.T().Skip("skipping SELinux test since SELinux is disabled")
 		}
 
-		// We should check both folders and their contents for proper labels
-		for _, dir := range []bool{true, false} {
-			for path, label := range expectedLabels {
-				req := &machineapi.ListRequest{
-					Root:         path,
-					ReportXattrs: true,
-				}
-				if dir {
-					req.Types = []machineapi.ListRequest_Type{machineapi.ListRequest_DIRECTORY}
-				}
+		for path, label := range expectedLabels {
+			req := &machineapi.ListRequest{
+				Root:         path,
+				ReportXattrs: true,
+			}
 
-				stream, err := suite.Client.LS(nodeCtx, req)
+			stream, err := suite.Client.LS(nodeCtx, req)
 
-				suite.Require().NoError(err)
+			suite.Require().NoError(err)
 
-				err = helpers.ReadGRPCStream(stream, func(info *machineapi.FileInfo, node string, multipleNodes bool) error {
-					// E.g. /var/lib should inherit /var label, while /var/run is a new mountpoint
-					if slices.Contains(paths, info.Name) && info.Name != path {
-						return nil
-					}
-
-					suite.Require().NotNil(info.Xattrs)
-
-					found := false
-
-					for _, l := range info.Xattrs {
-						if l.Name == "security.selinux" {
-							got := string(bytes.Trim(l.Data, "\x00\n"))
-							suite.Require().Contains(got, label, "expected %s to have label %s, got %s", path, label, got)
-
-							found = true
-
-							break
-						}
-					}
-
-					suite.Require().True(found)
-
+			err = helpers.ReadGRPCStream(stream, func(info *machineapi.FileInfo, node string, multipleNodes bool) error {
+				// E.g. /var/lib should inherit /var label, while /var/run is a new mountpoint
+				if slices.Contains(paths, info.Name) && info.Name != path {
 					return nil
-				})
-
-				if allowMissing {
-					if err != nil {
-						suite.Require().Contains(err.Error(), "lstat")
-						suite.Require().Contains(err.Error(), "no such file or directory")
-					}
-				} else {
-					suite.Require().NoError(err)
 				}
+
+				if slices.Contains(
+					[]string{
+						constants.RunPath,
+						constants.SystemRunPath,
+						"/run/containerd",
+						"/var/run",
+						"/var/log/containers",
+					},
+					path,
+				) && info.Name != path {
+					return nil
+				}
+
+				suite.Require().NotNil(info.Xattrs)
+
+				found := false
+
+				for _, l := range info.Xattrs {
+					if l.Name == "security.selinux" {
+						got := string(bytes.Trim(l.Data, "\x00\n"))
+						suite.Require().Contains(got, label, "expected %s to have label %s, got %s (checking %s)", info.Name, label, got, path)
+
+						found = true
+
+						break
+					}
+				}
+
+				suite.Require().True(found)
+
+				return nil
+			})
+
+			if allowMissing {
+				if err != nil {
+					suite.Require().Contains(err.Error(), "lstat")
+					suite.Require().Contains(err.Error(), "no such file or directory")
+				}
+			} else {
+				suite.Require().NoError(err)
 			}
 		}
 	}
