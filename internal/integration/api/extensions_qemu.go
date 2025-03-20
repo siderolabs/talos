@@ -24,6 +24,7 @@ import (
 	"github.com/siderolabs/go-pointer"
 	corev1 "k8s.io/api/core/v1"
 	nodev1 "k8s.io/api/node/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/helpers"
@@ -240,8 +241,6 @@ func (suite *ExtensionsSuiteQEMU) TestExtensionsCrun() {
 
 // TestExtensionsKataContainers verifies gvisor runtime class is working.
 func (suite *ExtensionsSuiteQEMU) TestExtensionsKataContainers() {
-	suite.T().Skip("TODO: skipping since Kata is broken")
-
 	suite.testRuntimeClass("kata", "kata")
 }
 
@@ -254,9 +253,14 @@ func (suite *ExtensionsSuiteQEMU) testRuntimeClass(runtimeClassName, handlerName
 		},
 		Handler: handlerName,
 	}, metav1.CreateOptions{})
-	defer suite.Clientset.NodeV1().RuntimeClasses().Delete(suite.ctx, runtimeClassName, metav1.DeleteOptions{}) //nolint:errcheck
+	if apierrors.IsAlreadyExists(err) {
+		// ignore if the runtime class already exists
+		err = nil
+	}
 
 	suite.Require().NoError(err)
+
+	defer suite.Clientset.NodeV1().RuntimeClasses().Delete(suite.ctx, runtimeClassName, metav1.DeleteOptions{}) //nolint:errcheck
 
 	_, err = suite.Clientset.CoreV1().Pods("default").Create(suite.ctx, &corev1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
@@ -272,9 +276,9 @@ func (suite *ExtensionsSuiteQEMU) testRuntimeClass(runtimeClassName, handlerName
 			},
 		},
 	}, metav1.CreateOptions{})
-	defer suite.Clientset.CoreV1().Pods("default").Delete(suite.ctx, testName, metav1.DeleteOptions{}) //nolint:errcheck
-
 	suite.Require().NoError(err)
+
+	defer suite.Clientset.CoreV1().Pods("default").Delete(suite.ctx, testName, metav1.DeleteOptions{}) //nolint:errcheck
 
 	// wait for the pod to be ready
 	suite.Require().NoError(suite.WaitForPodToBeRunning(suite.ctx, 5*time.Minute, "default", testName))
