@@ -4,15 +4,12 @@ description: "Enabling in-cluster highly-available controlplane endpoint."
 ---
 
 Kubernetes pods running in CNI mode can use the `kubernetes.default.svc` service endpoint to access the Kubernetes API server,
-while pods running in host networking mode can only use the external cluster endpoint to access the Kubernetes API server.
+however pods running in host networking mode can only use the external cluster endpoint to access the Kubernetes API server.
 
-Kubernetes controlplane components run in host networking mode, and it is critical for them to be able to access the Kubernetes API server,
-same as CNI components (when CNI requires access to Kubernetes API).
+Because Kubernetes controlplane and CNI components run in host networking mode, they can only use the external cluster endpoint to access the Kubernetes API server.
+If the external cluster endpoint is unavailable (due to misconfiguration, network issues, etc), this will cause issues in the cluster: pods will not be scheduled, service IPs stop working, etc.
 
-The external cluster endpoint might be unavailable due to misconfiguration or network issues, or it might have higher latency than the internal endpoint.
-A failure to access the Kubernetes API server might cause a series of issues in the cluster: pods are not scheduled, service IPs stop working, etc.
-
-KubePrism feature solves this problem by enabling in-cluster highly-available controlplane endpoint on every node in the cluster.
+KubePrism solves this problem by enabling an in-cluster highly-available controlplane endpoint on every node in the cluster.
 
 ## Video Walkthrough
 
@@ -22,7 +19,17 @@ To see a live demo of this writeup, see the video below:
 
 ## Enabling KubePrism
 
-As of Talos 1.6, KubePrism is enabled by default with port 7445.
+> As of Talos 1.6, KubePrism is enabled by default with port 7445.
+
+To enable KubePrism, apply the following machine config patch either during the machine config generation, or to a running cluster (the patch should be applied to all nodes):
+
+```yaml
+machine:
+  features:
+    kubePrism:
+      enabled: true
+      port: 7445
+```
 
 > Note: the `port` specified should be available on every node in the cluster.
 
