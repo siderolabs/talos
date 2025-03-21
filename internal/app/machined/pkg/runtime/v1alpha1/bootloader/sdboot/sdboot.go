@@ -77,16 +77,18 @@ func ProbeWithCallback(disk string, options options.ProbeOptions, callback func(
 
 	// here we need to read the EFI vars to see if we have any defaults
 	// and populate config accordingly
-	// https://www.freedesktop.org/software/systemd/man/systemd-boot.html#LoaderEntryDefault
-	// this should be set on install/upgrades
+	// https://www.freedesktop.org/software/systemd/man/latest/systemd-boot.html#LoaderEntryDefault
+	// this is set by systemd-boot.
 	efiCtx := efivario.NewDefaultContext()
 
-	bootedEntry, err := ReadVariable(efiCtx, LoaderEntrySelectedName)
+	// first we start by checking if we have a Default entry
+	// this is set by installer
+	bootedEntry, err := ReadVariable(efiCtx, LoaderEntryDefaultName)
 	if err != nil {
 		return nil, err
 	}
 
-	config := &Config{}
+	var sdbootConf *Config
 
 	// read /boot/EFI and find if sd-boot is already being used
 	// this is to make sure sd-boot from Talos is being used and not sd-boot from another distro
@@ -116,20 +118,24 @@ func ProbeWithCallback(disk string, options options.ProbeOptions, callback func(
 				return err
 			}
 
-			for _, ukiFile := range ukiFiles {
-				if strings.EqualFold(filepath.Base(ukiFile), bootedEntry) {
-					config.Default = bootedEntry
+			// here we handle a case when we boot of just kernel+initrd/uki/iso and we don't have a booted entry
+			// then we know we're booted of UKI
+			if bootedEntry == "" && len(ukiFiles) == 1 {
+				sdbootConf = &Config{
+					Default: filepath.Base(ukiFiles[0]),
 				}
 			}
 
-			// here we handle a case when we boot of just kernel+initrd/uki and we don't have a booted entry
-			if bootedEntry == "" && len(ukiFiles) == 1 {
-				// we have only one UKI, so we can assume it's the default
-				config.Default = filepath.Base(ukiFiles[0])
+			for _, ukiFile := range ukiFiles {
+				if strings.EqualFold(filepath.Base(ukiFile), bootedEntry) {
+					sdbootConf = &Config{
+						Default: bootedEntry,
+					}
+				}
 			}
 
-			if callback != nil {
-				return callback(config)
+			if sdbootConf != nil && callback != nil {
+				return callback(sdbootConf)
 			}
 
 			return nil
@@ -150,7 +156,7 @@ func ProbeWithCallback(disk string, options options.ProbeOptions, callback func(
 		return nil, err
 	}
 
-	return config, nil
+	return sdbootConf, nil
 }
 
 // Probe for existing sd-boot bootloader.

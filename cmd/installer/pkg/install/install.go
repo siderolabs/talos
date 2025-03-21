@@ -240,8 +240,6 @@ func (i *Installer) Install(ctx context.Context, mode Mode) (err error) {
 	}
 
 	if mode == ModeUpgrade {
-		errataArm64ZBoot()
-
 		i.errataNetIfnames(hostTalosVersion)
 	}
 
