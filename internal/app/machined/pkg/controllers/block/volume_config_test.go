@@ -10,6 +10,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/siderolabs/go-pointer"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
@@ -119,6 +120,20 @@ func (suite *VolumeConfigSuite) TestReconcileDefaults() {
 		asrt.EqualValues(partition.EphemeralMinSize, r.TypedSpec().Provisioning.PartitionSpec.MinSize)
 
 		asrt.Equal(constants.EphemeralMountPoint, r.TypedSpec().Mount.TargetPath)
+	})
+
+	ctest.AssertResources(suite, []resource.ID{
+		"/var/log",
+		"/var/log/audit",
+		"/var/log/containers",
+		"/var/log/pods",
+		"/var/lib/containerd",
+		"/var/lib/kubelet",
+		"/var/lib/cni",
+		constants.SeccompProfilesDirectory,
+		constants.KubernetesAuditLogDir,
+	}, func(r *block.VolumeConfig, asrt *assert.Assertions) {
+		asrt.Equal(block.VolumeTypeDirectory, r.TypedSpec().Type)
 	})
 }
 

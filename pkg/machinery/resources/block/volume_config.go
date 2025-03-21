@@ -5,6 +5,8 @@
 package block
 
 import (
+	"os"
+
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/meta"
 	"github.com/cosi-project/runtime/pkg/resource/protobuf"
@@ -154,6 +156,12 @@ type MountSpec struct {
 	ProjectQuotaSupport bool `yaml:"projectQuotaSupport" protobuf:"3"`
 	// Parent mount request ID.
 	ParentID string `yaml:"parentId,omitempty" protobuf:"4"`
+	// FileMode is the file mode for the mount target.
+	FileMode os.FileMode `yaml:"fileMode,omitempty" protobuf:"5"`
+	// UID is the user ID for the mount target.
+	UID int `yaml:"uid,omitempty" protobuf:"6"`
+	// GID is the group ID for the mount target.
+	GID int `yaml:"gid,omitempty" protobuf:"7"`
 }
 
 // NewVolumeConfig initializes a BlockVolumeConfig resource.

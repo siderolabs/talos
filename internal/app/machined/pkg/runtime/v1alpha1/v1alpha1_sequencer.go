@@ -217,13 +217,9 @@ func (*Sequencer) Boot(r runtime.Runtime) []runtime.Phase {
 		r.State().Platform().Mode() == runtime.ModeContainer,
 		"sharedFilesystems",
 		SetupSharedFilesystems,
-	).AppendWhen(
-		r.State().Platform().Mode() != runtime.ModeContainer,
+	).Append(
 		"ephemeral",
 		MountEphemeralPartition,
-	).Append(
-		"var",
-		SetupVarDirectory,
 	).AppendWhen(
 		r.State().Platform().Mode() != runtime.ModeContainer,
 		"overlay",

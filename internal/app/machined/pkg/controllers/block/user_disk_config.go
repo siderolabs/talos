@@ -216,10 +216,13 @@ func (ctrl *UserDiskConfigController) processUserDiskPartition(
 				targetPath = strings.TrimPrefix(targetPath, "/var/")
 			}
 
-			// TODO: label user disks
 			vc.TypedSpec().Mount = block.MountSpec{
-				TargetPath: targetPath,
-				ParentID:   parentID,
+				TargetPath:   targetPath,
+				ParentID:     parentID,
+				SelinuxLabel: constants.EphemeralSelinuxLabel,
+				FileMode:     0o755,
+				UID:          0,
+				GID:          0,
 			}
 
 			return nil
