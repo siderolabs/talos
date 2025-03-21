@@ -43,6 +43,21 @@ Running pods will remain running but new pods and deployments will give you the 
 ': StdinData: {"capabilities":{"portMappings":true},"clusterNetwork":"/host/etc/cni/net.d/10-flannel.conflist","cniVersion":"0.3.1","logLevel":"verbose","logToStderr":true,"name":"multus-cni-network","type":"multus-shim"}
 ```
 
+As of March 21, 2025, Multus has a [bug](https://github.com/k8snetworkplumbingwg/multus-cni/issues/1221) in the `install-multus-binary` container that can be lead to race problems after a node reboot.
+To prevent this issue, it is necessary to patch this container.
+Set the following command to the `install-multus-binary` container.
+
+```yaml
+      initContainers:
+        - name: install-multus-binary
+          command:
+            - "/usr/src/multus-cni/bin/install_multus"
+            - "-d"
+            - "/host/opt/cni/bin"
+            - "-t"
+            - "thick"
+```
+
 ### Creating your `NetworkAttachmentDefinition`
 
 The `NetworkAttachmentDefinition` configuration is used to define your bridge where your second pod interface needs to be attached to.
@@ -145,6 +160,8 @@ If you would like to use KubeVirt and expose your virtual machine to the outside
 
 ## Notes on using Cilium in combination with Multus
 
+### CNI reference plugins
+
 Cilium does not ship the CNI reference plugins, which most multus setups are expecting (e.g. macvlan).
 This can be addressed by extending the daemonset with an additional init-container, setting them up, e.g. using the following kustomize strategic-merge patch:
 
@@ -169,6 +186,13 @@ spec:
           mountPropagation: Bidirectional
           name: cnibin
 ```
+
+### Exclusive CNI
+
+By default, Cilium is an exclusive CNI, meaning it removes other CNI configuration files.
+However, when using Multus, this behavior needs to be disabled.
+To do so, set the Helm variable `cni.exclusive=false`.
+For more information, refer to the [Cilium documentation](https://docs.cilium.io/en/stable/network/kubernetes/configuration/#adjusting-cni-configuration).
 
 ## Notes on ARM64 nodes
 
