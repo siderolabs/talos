@@ -36,6 +36,7 @@ var allSuites []suite.TestingSuite
 var (
 	failFast         bool
 	trustedBoot      bool
+	selinuxEnforcing bool
 	extensionsQEMU   bool
 	extensionsNvidia bool
 
@@ -109,6 +110,7 @@ func TestIntegration(t *testing.T) {
 				ExtensionsQEMU:   extensionsQEMU,
 				ExtensionsNvidia: extensionsNvidia,
 				TrustedBoot:      trustedBoot,
+				SelinuxEnforcing: selinuxEnforcing,
 				TalosImage:       talosImage,
 				CSITestName:      csiTestName,
 				CSITestTimeout:   csiTestTimeout,
@@ -142,6 +144,7 @@ func init() {
 
 	flag.BoolVar(&failFast, "talos.failfast", false, "fail the test run on the first failed test")
 	flag.BoolVar(&trustedBoot, "talos.trustedboot", false, "enable tests for trusted boot mode")
+	flag.BoolVar(&selinuxEnforcing, "talos.enforcing", false, "enable tests for SELinux enforcing mode")
 	flag.BoolVar(&extensionsQEMU, "talos.extensions.qemu", false, "enable tests for qemu extensions")
 	flag.BoolVar(&extensionsNvidia, "talos.extensions.nvidia", false, "enable tests for nvidia extensions")
 

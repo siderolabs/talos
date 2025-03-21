@@ -8,3 +8,5 @@
 (policycap cgroup_seclabel)
 (policycap nnp_nosuid_transition)
 (policycap ioctl_skip_cloexec)
+(policycap userspace_initial_context)
+(policycap genfs_seclabel_symlinks)

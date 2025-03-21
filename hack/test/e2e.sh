@@ -73,7 +73,7 @@ function run_talos_integration_test {
     -talos.provisioner "${PROVISIONER}" \
     -talos.name "${CLUSTER_NAME}" \
     -talos.image "${REGISTRY}/siderolabs/talos" \
-    "${EXTRA_TEST_ARGS[@]}" \
+    ${EXTRA_TEST_ARGS:-} \
     "${TEST_RUN[@]}" \
     "${TEST_SHORT[@]}"
 }
@@ -104,7 +104,7 @@ function run_talos_integration_test_docker {
     -talos.provisioner "${PROVISIONER}" \
     -talos.name "${CLUSTER_NAME}" \
     -talos.image "${REGISTRY}/siderolabs/talos" \
-    "${EXTRA_TEST_ARGS[@]}" \
+    ${EXTRA_TEST_ARGS:-} \
     "${TEST_RUN[@]}" \
     "${TEST_SHORT[@]}"
 }

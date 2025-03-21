@@ -11,17 +11,78 @@
 
 (type sys_containerd_socket_t)
 (call system_socket_f (sys_containerd_socket_t))
+; Shim sockets
+(typetransition sys_containerd_t run_t sock_file sys_containerd_socket_t)
+; Client socket
 (typetransition sys_containerd_t system_t sock_file sys_containerd_socket_t)
 
+(type sys_containerd_run_t)
+(call system_f (sys_containerd_run_t))
+(allow sys_containerd_run_t tmpfs_t (filesystem (associate)))
+
+(typetransition sys_containerd_t run_t file sys_containerd_run_t)
+(typetransition sys_containerd_t run_t dir sys_containerd_run_t)
+(typetransition sys_containerd_t run_t lnk_file sys_containerd_run_t)
+(typetransition sys_containerd_t run_t chr_file sys_containerd_run_t)
+(typetransition sys_containerd_t run_t blk_file sys_containerd_run_t)
+(typetransition sys_containerd_t run_t fifo_file sys_containerd_run_t)
+
+(allow sys_containerd_t system_t (fs_classes (rw)))
+(allow sys_containerd_t system_var_t (fs_classes (rw)))
+; failed to create task: \"apid\": failed to create shim task: OCI runtime create failed: unable to retrieve
+; OCI runtime error (open /system/run/containerd/io.containerd.runtime.v2.task/system/apid/log.json:
+; no such file or directory): runc did not terminate successfully
+(allow sys_containerd_t system_run_t (fs_classes (rw)))
+(allow sys_containerd_t run_t (fs_classes (rw)))
+(allow sys_containerd_t system_var_t (fs_classes (relabelto relabelfrom)))
+(allow sys_containerd_t sys_containerd_run_t (fs_classes (rw)))
+(allow sys_containerd_t pod_containerd_run_t (fs_classes (rw))) ; shim sockets
+
+; Transition to system container contexts
 (allow sys_containerd_t system_container_p (process2 (nnp_transition nosuid_transition)))
 (allow sys_containerd_t system_container_p (process (transition)))
+
+; Manage procfs & processes
+(allow sys_containerd_t system_container_p (fs_classes (rw)))
+(allow sys_containerd_t system_container_p (process_classes (full)))
+(allow system_container_p sys_containerd_t (fd (use)))
+(allow system_container_p sys_containerd_t (fifo_file (append getattr ioctl map open read rename setattr watch write)))
+
+(allow sys_containerd_t system_container_p (key (view read write search link setattr create)))
+
+; Shim sockets
+(allow sys_containerd_t sys_containerd_socket_t (fs_classes (rw)))
+
+(typeattribute containerd_p)
+(typeattributeset containerd_p sys_containerd_t)
+
+; Access overlayfs parameters
+(allow containerd_p sys_module_t (fs_classes (ro)))
+
+; manage cgroups & namespaces
+(allow containerd_p cgroup_t (fs_classes (rw)))
+(allow containerd_p nsfs_t (fs_classes (rw)))
+
+; mounts
+(allow containerd_p filesystem_f (filesystem (unmount remount mount)))
+
+; mounton for masking
+(allow containerd_p any_f (fs_classes (mounton)))
+
+; Shim sockets
+(allow containerd_p self (unix_stream_socket (connectto)))
+
+; logs
+(allow sys_containerd_t system_t (fs_classes (rw)))
 
 ; Typically a system extension
 ; Possibly a service misconfigured by machined
 (type unconfined_container_t)
 (call system_container_p (unconfined_container_t))
 
-; Talos installer
-(type installer_t)
-(call system_container_p (installer_t))
-(allow installer_t system_var_t (file (entrypoint execute_no_trans)))
+; logs
+(allow sys_containerd_t system_t (fs_classes (rw)))
+
+; Manage keys
+(allow containerd_p self (key (view read write search link setattr create)))
+

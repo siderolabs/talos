@@ -9,14 +9,26 @@
 (call system_f (udev_rules_t))
 (filecon "/usr/lib/udev/rules.d(/.*)?" any (system_u object_r udev_rules_t (systemLow systemLow)))
 (filecon "/usr/lib/udev(/.*)?" any udev_exec_t)
+; Some rules are on tmpfs
+(allow udev_rules_t tmpfs_t (filesystem (associate)))
+(allow udev_t lib_t (fs_classes (ioctl)))
+
+(type module_t)
+(call system_f (module_t))
+(filecon "/usr/lib/modules(/.*)?" any (system_u object_r module_t (systemLow systemLow)))
+(filecon "/lib/modules" any (system_u object_r module_t (systemLow systemLow)))
 
 (type udev_t)
 (call service_p (udev_t udev_exec_t))
 
 (type udev_socket_t)
 (call system_socket_f (udev_socket_t))
-(typetransition udev_t run_t sock_file udev_socket_t)
+(typeattribute not_udev_socket_t)
+(typeattributeset not_udev_socket_t (not udev_socket_t))
+(typetransition udev_t not_udev_socket_t sock_file udev_socket_t)
+
 ; udevadm called by machined in its context
+(allow init_t udev_exec_t (file (execute_no_trans)))
 (allow init_t udev_t (unix_stream_socket (connectto)))
 
 ; Device subsystems, labeled by udev rules
@@ -32,10 +44,71 @@
 ; Typically client pods must not access TPM
 (type tpm_device_t)
 (call protected_device_f (tpm_device_t))
+; TODO: label and restrict block devices
 
 (type modprobe_exec_t)
 (call system_f (modprobe_exec_t))
 (filecon "/usr/bin/modprobe" file (system_u object_r modprobe_exec_t (systemLow systemLow)))
+; If modprobe is called by machined or kernel do a transition to udev context which has module permissions
 (allow udev_t modprobe_exec_t (file (execute execute_no_trans)))
+(allow udev_t modprobe_exec_t (fs_classes (ro)))
 (typetransition kernel_t modprobe_exec_t process udev_t)
 (typetransition init_t modprobe_exec_t process udev_t)
+
+(allow udev_t kernel_t (fd (use)))
+(allow udev_t modprobe_exec_t (file (entrypoint)))
+
+(allow kernel_t modprobe_exec_t (file (execute)))
+(allow kernel_t udev_t (process (all))) ; including transition
+
+(allow init_t modprobe_exec_t (file (execute)))
+(allow init_t udev_t (process (all))) ; including transition
+
+(allow kernel_t module_t (system (module_load module_request)))
+(allow udev_t module_t (fs_classes (ro)))
+(allow udev_t module_t (system (module_load module_request)))
+(allow udev_t self (capability (sys_module)))
+(allow udev_t self (cap_userns (sys_module)))
+(allow udev_t kernel_t (system (module_load module_request)))
+(allow kernel_t self (system (module_request)))
+
+; Allow udev to read rules files
+(allow udev_t udev_rules_t (fs_classes (ro ioctl)))
+
+; udev rules can set module parameters
+(allow udev_t sys_module_t (fs_classes (rw)))
+
+(allow udev_t device_t (fs_classes (relabelfrom)))
+(allow udev_t device_f (fs_classes (rw relabelto)))
+
+; socket and runtime files
+(type udev_run_t)
+(call system_f (udev_run_t))
+(allow udev_run_t tmpfs_t (filesystem (associate)))
+
+(typetransition udev_t run_t file udev_run_t)
+(typetransition udev_t run_t dir udev_run_t)
+(typetransition udev_t run_t lnk_file udev_run_t)
+(typetransition udev_t run_t chr_file udev_run_t)
+(typetransition udev_t run_t blk_file udev_run_t)
+(typetransition udev_t run_t fifo_file udev_run_t)
+
+(allow udev_t run_t (dir (add_name write))) ; before transition
+(allow udev_t udev_run_t (fs_classes (rw)))
+(allow udev_t udev_socket_t (fs_classes (rw)))
+
+; manage properties from rules
+(allow udev_t sysfs_t (fs_classes (rw)))
+
+; Container detection
+(allow udev_t init_t (fs_classes (ro ioctl)))
+
+; exec-invoke managed stuff
+(allow udev_t cgroup_t (fs_classes (rw ioctl)))
+(allow udev_t kernel_t (key (search)))
+
+; dmsetup
+; TODO: label more specifically?
+(allow udev_t bin_exec_t (file (execute execute_no_trans)))
+(allow udev_t kernel_t (system (ipc_info)))
+(allow udev_t any_p (sem (all)))

@@ -8,28 +8,35 @@
 
 (type init_t)
 (roletype system_r init_t)
-(typetransition kernel_t init_exec_t process init_t)
 (allow init_t init_exec_t (file (execute entrypoint)))
 
 ; System daemon sockets
 (type machine_socket_t)
 (call system_socket_f (machine_socket_t))
-(allow init_t machine_socket_t (sock_file (relabelto)))
 (type dbus_service_socket_t)
 (call system_socket_f (dbus_service_socket_t))
-(allow init_t dbus_service_socket_t (sock_file (relabelto)))
 (type dbus_client_socket_t)
 (call system_socket_f (dbus_client_socket_t))
-(allow init_t dbus_client_socket_t (sock_file (relabelto)))
 
 (allow init_t service_p (process (transition)))
+; Manage processes
+(allow init_t any_p (fs_classes (rw)))
+(allow init_t any_p (process_classes (full)))
 (allow init_t service_exec_f (file (execute)))
+(allow init_t service_exec_f (fs_classes (ro)))
+(allow init_t service_p (key (view read write search link setattr create)))
 
-; TODO: allow execute for libraries
-; (type lib_exec_t)
-; (call system_f (lib_exec_t))
-; (filecon "/usr/lib/libc.so" file (system_u object_r lib_exec_t (systemLow systemLow)))
-; (allow service_p lib_exec_t (file (execute)))
+; Libraries must also pass the exceutable check to be used
+; Allow their use by all host services
+(type lib_t)
+(call system_f (lib_t))
+(context lib_t (system_u object_r lib_t (systemLow systemLow)))
+(filecon "/usr/lib(/.*)?" any lib_t)
+(filecon "/usr/lib64" any lib_t)
+(filecon "/lib" any lib_t)
+(filecon "/lib64" any lib_t)
+(allow system_p lib_t (file (execute)))
+(allow system_p lib_t (fs_classes (ro)))
 
 ; Should not occur unless misconfigured by machined
 (type unconfined_service_t)
@@ -38,7 +45,74 @@
 
 (type bin_exec_t)
 (call system_f (bin_exec_t))
-(filecon "/usr/bin(/.*)?" any (system_u object_r bin_exec_t (systemLow systemLow)))
+(context bin_exec_t (system_u object_r bin_exec_t (systemLow systemLow)))
+(filecon "/usr/bin(/.*)?" any bin_exec_t)
+(filecon "/usr/sbin" any bin_exec_t)
+(filecon "/bin" any bin_exec_t)
+(filecon "/sbin" any bin_exec_t)
 ; Typically machined executes LVM, cryptsetup and similar utilities
 ; They are short-running, come from the rootfs and do not accept user input, so can be started in init_t domain
 (allow init_t bin_exec_t (file (execute execute_no_trans)))
+(allow init_t bin_exec_t (fs_classes (ro)))
+
+; Access kernel module parameters
+(allow init_t sys_module_t (fs_classes (rw)))
+
+; Configure kubelet
+(allow init_t kubelet_state_t (fs_classes (rw)))
+
+(allow udev_t device_f (fs_classes (rw)))
+
+; Access containerd sockets for running containers
+(allow init_t sys_containerd_socket_t (sock_file (write)))
+(allow init_t sys_containerd_t (unix_stream_socket (connectto)))
+(allow init_t pod_containerd_socket_t (sock_file (write)))
+(allow init_t pod_containerd_t (unix_stream_socket (connectto)))
+
+; Allow access to any file for machined, for ls
+(allow init_t any_f (fs_classes (rw)))
+
+; /dev/console
+(allow init_t kernel_t (system (syslog_console syslog_mod syslog_read)))
+(allow init_t self (capability2 (syslog)))
+(allow init_t kernel_t (fd (use)))
+
+; reboot & kexec
+(allow init_t self (capability (sys_boot)))
+
+; labeling FS
+(allow init_t any_f (fs_classes (relabelfrom relabelto)))
+
+; rootfs.sqsh
+(allow kernel_t rootfs_t (file (read)))
+
+; initramfs init before switching root
+(allow initramfs_t device_t (fs_classes (rw)))
+(allow initramfs_t rootfs_t (fs_classes (ro)))
+(allow initramfs_t self (process_classes (full)))
+(allow kernel_t initramfs_t (fd (use)))
+; Make machined go into proper context
+(allow initramfs_t bin_exec_t (fs_classes (ro))) ; Find init
+(allow initramfs_t init_exec_t (fs_classes (ro)))
+(allow initramfs_t init_exec_t (file (execute)))
+(typetransition initramfs_t init_exec_t process init_t)
+(allow initramfs_t init_t (process_classes (full)))
+(allow init_t initramfs_t (fd (use)))
+
+; Direct child processes
+(allow system_p init_t (fd (use)))
+(allow system_p init_t (fifo_file (append getattr ioctl map open read rename setattr watch write)))
+
+; cryptsetup
+(allow init_t self (sem (associate create destroy getattr read setattr unix_read unix_write write)))
+(allow init_t kernel_t (key (search)))
+(allow init_t self (key (all)))
+(allow init_t kernel_t (system (ipc_info)))
+
+; Modules loaded via machined
+(allow init_t module_t (system (module_load)))
+(allow init_t self (capability (sys_module)))
+
+(allow init_t apid_t (unix_stream_socket (connectto)))
+; CNI
+(allow init_t pod_containerd_t (fd (use)))

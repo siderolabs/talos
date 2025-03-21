@@ -979,6 +979,11 @@ func (m *SecurityStateSpec) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 		i -= len(m.unknownFields)
 		copy(dAtA[i:], m.unknownFields)
 	}
+	if m.SeLinuxState != 0 {
+		i = protohelpers.EncodeVarint(dAtA, i, uint64(m.SeLinuxState))
+		i--
+		dAtA[i] = 0x20
+	}
 	if len(m.PcrSigningKeyFingerprint) > 0 {
 		i -= len(m.PcrSigningKeyFingerprint)
 		copy(dAtA[i:], m.PcrSigningKeyFingerprint)
@@ -1575,6 +1580,9 @@ func (m *SecurityStateSpec) SizeVT() (n int) {
 	l = len(m.PcrSigningKeyFingerprint)
 	if l > 0 {
 		n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
+	}
+	if m.SeLinuxState != 0 {
+		n += 1 + protohelpers.SizeOfVarint(uint64(m.SeLinuxState))
 	}
 	n += len(m.unknownFields)
 	return n
@@ -3875,6 +3883,25 @@ func (m *SecurityStateSpec) UnmarshalVT(dAtA []byte) error {
 			}
 			m.PcrSigningKeyFingerprint = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
+		case 4:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field SeLinuxState", wireType)
+			}
+			m.SeLinuxState = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return protohelpers.ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.SeLinuxState |= enums.RuntimeSELinuxState(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
 		default:
 			iNdEx = preIndex
 			skippy, err := protohelpers.Skip(dAtA[iNdEx:])

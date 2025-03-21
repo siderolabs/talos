@@ -532,6 +532,40 @@ func SetupSharedFilesystems(runtime.Sequence, any) (runtime.TaskExecutionFunc, s
 	}, "setupSharedFilesystems"
 }
 
+// CreateDirectory is a structure describing properties of a directory to be initialized.
+type CreateDirectory struct {
+	Path          string
+	Mode          os.FileMode
+	UID, GID      int
+	SELinuxLabel  string
+	ExcludeLabels []string
+}
+
+// InitializeDirectoryStructure creates directories and sets security options on them.
+func InitializeDirectoryStructure(directories []CreateDirectory) error {
+	for _, dir := range directories {
+		if err := os.MkdirAll(dir.Path, dir.Mode); err != nil {
+			return err
+		}
+
+		if err := os.Chmod(dir.Path, dir.Mode); err != nil {
+			return err
+		}
+
+		if err := selinux.SetLabelRecursive(dir.Path, dir.SELinuxLabel, dir.ExcludeLabels...); err != nil {
+			return err
+		}
+
+		if dir.UID != 0 || dir.GID != 0 {
+			if err := os.Chown(dir.Path, dir.UID, dir.GID); err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
+}
+
 // SetupVarDirectory represents the SetupVarDirectory task.
 func SetupVarDirectory(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) error {
@@ -539,27 +573,26 @@ func SetupVarDirectory(runtime.Sequence, any) (runtime.TaskExecutionFunc, string
 			return err
 		}
 
-		for _, dir := range []struct {
-			Path         string
-			Mode         os.FileMode
-			UID, GID     int
-			SELinuxLabel string
-		}{
+		directoryConfigurations := []CreateDirectory{
 			{
-				Path: "/var/log",
-				Mode: 0o755,
+				Path:         "/var/log",
+				Mode:         0o755,
+				SELinuxLabel: "system_u:object_r:var_log_t:s0",
 			},
 			{
-				Path: "/var/log/audit",
-				Mode: 0o700,
+				Path:         "/var/log/audit",
+				Mode:         0o700,
+				SELinuxLabel: "system_u:object_r:audit_log_t:s0",
 			},
 			{
-				Path: "/var/log/containers",
-				Mode: 0o755,
+				Path:         "/var/log/containers",
+				Mode:         0o755,
+				SELinuxLabel: "system_u:object_r:containers_log_t:s0",
 			},
 			{
-				Path: "/var/log/pods",
-				Mode: 0o755,
+				Path:         "/var/log/pods",
+				Mode:         0o755,
+				SELinuxLabel: "system_u:object_r:pods_log_t:s0",
 			},
 			{
 				Path:         "/var/lib/containerd",
@@ -572,40 +605,30 @@ func SetupVarDirectory(runtime.Sequence, any) (runtime.TaskExecutionFunc, string
 				SELinuxLabel: "system_u:object_r:kubelet_state_t:s0",
 			},
 			{
-				Path: "/var/run/lock",
-				Mode: 0o755,
+				Path:         "/var/lib/cni",
+				Mode:         0o700,
+				SELinuxLabel: "system_u:object_r:cni_state_t:s0",
 			},
 			{
-				Path: constants.SeccompProfilesDirectory,
-				Mode: 0o700,
+				Path:         "/var/run/lock",
+				Mode:         0o755,
+				SELinuxLabel: "system_u:object_r:var_lock_t:s0",
 			},
 			{
-				Path: constants.KubernetesAuditLogDir,
-				Mode: 0o700,
-				UID:  constants.KubernetesAPIServerRunUser,
-				GID:  constants.KubernetesAPIServerRunGroup,
+				Path:         constants.SeccompProfilesDirectory,
+				Mode:         0o700,
+				SELinuxLabel: "system_u:object_r:seccomp_profile_t:s0",
 			},
-		} {
-			if err := os.MkdirAll(dir.Path, dir.Mode); err != nil {
-				return err
-			}
-
-			if err := os.Chmod(dir.Path, dir.Mode); err != nil {
-				return err
-			}
-
-			if err := selinux.SetLabel(dir.Path, dir.SELinuxLabel); err != nil {
-				return err
-			}
-
-			if dir.UID != 0 || dir.GID != 0 {
-				if err := os.Chown(dir.Path, dir.UID, dir.GID); err != nil {
-					return err
-				}
-			}
+			{
+				Path:         constants.KubernetesAuditLogDir,
+				Mode:         0o700,
+				UID:          constants.KubernetesAPIServerRunUser,
+				GID:          constants.KubernetesAPIServerRunGroup,
+				SELinuxLabel: "system_u:object_r:kube_log_t:s0",
+			},
 		}
 
-		return nil
+		return InitializeDirectoryStructure(directoryConfigurations)
 	}, "setupVarDirectory"
 }
 

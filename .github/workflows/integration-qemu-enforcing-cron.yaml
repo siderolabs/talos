@@ -2,7 +2,7 @@
 #
 # Generated on 2025-03-21T15:51:32Z by kres ec5ec04.
 
-name: integration-qemu-encrypted-vip-cron
+name: integration-qemu-enforcing-cron
 concurrency:
   group: ${{ github.head_ref || github.run_id }}
   cancel-in-progress: true
@@ -70,8 +70,10 @@ jobs:
         if: github.event_name == 'schedule'
         env:
           IMAGE_REGISTRY: registry.dev.siderolabs.io
+          IMAGER_ARGS: --extra-kernel-arg=enforcing=1
           PLATFORM: linux/amd64
           PUSH: "true"
+          TAG_SUFFIX: -enforcing
         run: |
           make talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
       - name: talosctl-cni-bundle
@@ -80,21 +82,22 @@ jobs:
           make talosctl-cni-bundle
       - name: e2e-qemu
         env:
+          EXTRA_TEST_ARGS: -talos.enforcing
           IMAGE_REGISTRY: registry.dev.siderolabs.io
           QEMU_EXTRA_DISKS: "3"
           QEMU_EXTRA_DISKS_DRIVERS: ide,nvme
           QEMU_EXTRA_DISKS_SIZE: "10240"
+          TAG_SUFFIX: -enforcing
+          USER_DISKS_MOUNTS: /var/lib/extra,/var/lib/p1,/var/lib/p2
           WITH_CONFIG_PATCH_WORKER: '@hack/test/patches/ephemeral-nvme.yaml:@hack/test/patches/dm-raid-module.yaml'
-          WITH_DISK_ENCRYPTION: "true"
-          WITH_KUBESPAN: "true"
-          WITH_VIRTUAL_IP: "true"
+          WITH_USER_DISK: "true"
         run: |
           sudo -E make e2e-qemu
       - name: save artifacts
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: talos-logs-integration-qemu-encrypted-vip
+          name: talos-logs-integration-qemu-enforcing
           path: |-
             /tmp/logs-*.tar.gz
             /tmp/support-*.zip

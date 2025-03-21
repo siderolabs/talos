@@ -2,7 +2,7 @@
 #
 # Generated on 2025-03-21T15:51:32Z by kres ec5ec04.
 
-name: integration-qemu-encrypted-vip-cron
+name: integration-trusted-boot-enforcing-cron
 concurrency:
   group: ${{ github.head_ref || github.run_id }}
   cancel-in-progress: true
@@ -66,6 +66,12 @@ jobs:
         if: github.event_name != 'schedule'
         run: |
           make ci-temp-release-tag
+      - name: uki-certs
+        if: github.event_name == 'schedule'
+        env:
+          PLATFORM: linux/amd64
+        run: |
+          make uki-certs
       - name: build
         if: github.event_name == 'schedule'
         env:
@@ -78,23 +84,39 @@ jobs:
         if: github.event_name == 'schedule'
         run: |
           make talosctl-cni-bundle
-      - name: e2e-qemu
+      - name: images-essential-enforcing
+        if: github.event_name == 'schedule'
         env:
           IMAGE_REGISTRY: registry.dev.siderolabs.io
-          QEMU_EXTRA_DISKS: "3"
-          QEMU_EXTRA_DISKS_DRIVERS: ide,nvme
-          QEMU_EXTRA_DISKS_SIZE: "10240"
-          WITH_CONFIG_PATCH_WORKER: '@hack/test/patches/ephemeral-nvme.yaml:@hack/test/patches/dm-raid-module.yaml'
-          WITH_DISK_ENCRYPTION: "true"
-          WITH_KUBESPAN: "true"
-          WITH_VIRTUAL_IP: "true"
+          IMAGER_ARGS: --extra-kernel-arg=console=ttyS0 --extra-kernel-arg=enforcing=1
+          PLATFORM: linux/amd64,linux/arm64
+          PUSH: "true"
+          TAG_SUFFIX: -enforcing
+        run: |
+          make imager installer-base installer images-essential
+      - name: secureboot-iso
+        if: github.event_name == 'schedule'
+        env:
+          IMAGE_REGISTRY: registry.dev.siderolabs.io
+          IMAGER_ARGS: --extra-kernel-arg=console=ttyS0
+          PLATFORM: linux/amd64
+        run: |
+          make secureboot-iso
+      - name: integration-trusted-boot
+        env:
+          EXTRA_TEST_ARGS: -talos.trustedboot -talos.enforcing
+          GITHUB_STEP_NAME: ${{ github.job}}-integration-trusted-boot
+          IMAGE_REGISTRY: registry.dev.siderolabs.io
+          TAG_SUFFIX: -enforcing
+          VIA_MAINTENANCE_MODE: "true"
+          WITH_TRUSTED_BOOT_ISO: "true"
         run: |
           sudo -E make e2e-qemu
       - name: save artifacts
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: talos-logs-integration-qemu-encrypted-vip
+          name: talos-logs-integration-trusted-boot-enforcing
           path: |-
             /tmp/logs-*.tar.gz
             /tmp/support-*.zip

@@ -53,18 +53,24 @@ spec:
     - e2e-qemu-short
     - e2e-docker-short
     - integration-qemu
+    - integration-qemu-enforcing
     - integration-trusted-boot
+    - integration-trusted-boot-enforcing
     - integration-provision-0
     - integration-provision-1
     - integration-provision-2
     - integration-misc-0
     - integration-misc-1
+    - integration-misc-1-enforcing
     - integration-misc-2
     - integration-misc-3
+    - integration-misc-3-enforcing
     - integration-misc-4
+    - integration-misc-4-enforcing
     - integration-extensions
     - integration-cilium
     - integration-conformance
+    - integration-conformance-enforcing
     - integration-qemu-encrypted-vip
     - integration-qemu-race
     - integration-qemu-csi-rook-ceph
@@ -119,6 +125,14 @@ spec:
             PLATFORM: linux/amd64,linux/arm64
             IMAGER_ARGS: "--extra-kernel-arg=console=ttyS0"
             IMAGE_REGISTRY: registry.dev.siderolabs.io
+        - name: images-essential-enforcing
+          command: imager installer-base installer images-essential
+          environment:
+            PLATFORM: linux/amd64,linux/arm64
+            IMAGER_ARGS: "--extra-kernel-arg=console=ttyS0 --extra-kernel-arg=enforcing=1"
+            TAG_SUFFIX: -enforcing
+            IMAGE_REGISTRY: registry.dev.siderolabs.io
+            PUSH: true
         - name: unit-tests
         - name: unit-tests-race
         - name: coverage
@@ -352,6 +366,64 @@ spec:
             artifactPath: /tmp/logs-*.tar.gz
             additionalArtifacts:
               - "/tmp/support-*.zip"
+    - name: integration-qemu-enforcing
+      buildxOptions:
+        enabled: true
+      depends:
+        - default
+      runners:
+        - self-hosted
+        - talos
+      crons:
+        - '30 3 * * *'
+      triggerLabels:
+        - integration/qemu-enforcing
+      steps:
+        - name: download-artifacts
+          conditions:
+            - not-on-schedule
+          artifactStep:
+            type: download
+            artifactName: talos-artifacts
+            artifactPath: _out
+        - name: ci-temp-release-tag
+          conditions:
+            - not-on-schedule
+        - name: build
+          conditions:
+            - only-on-schedule
+          command: talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
+          environment:
+            PLATFORM: linux/amd64
+            IMAGER_ARGS: "--extra-kernel-arg=enforcing=1"
+            TAG_SUFFIX: -enforcing
+            IMAGE_REGISTRY: registry.dev.siderolabs.io
+            PUSH: true
+        - name: talosctl-cni-bundle
+          conditions:
+            - only-on-schedule
+        - name: e2e-qemu
+          withSudo: true
+          environment:
+            TAG_SUFFIX: -enforcing
+            EXTRA_TEST_ARGS: -talos.enforcing
+            IMAGE_REGISTRY: registry.dev.siderolabs.io
+            QEMU_EXTRA_DISKS: "3"
+            QEMU_EXTRA_DISKS_SIZE: "10240"
+            QEMU_EXTRA_DISKS_DRIVERS: "ide,nvme"
+            WITH_CONFIG_PATCH_WORKER: "@hack/test/patches/ephemeral-nvme.yaml:@hack/test/patches/dm-raid-module.yaml"
+            WITH_USER_DISK: "true"
+            USER_DISKS_MOUNTS: "/var/lib/extra,/var/lib/p1,/var/lib/p2"
+        - name: save-talos-logs
+          conditions:
+            - always
+          artifactStep:
+            type: upload
+            artifactName: talos-logs-integration-qemu-enforcing
+            disableExecutableListGeneration: true
+            artifactPath: /tmp/logs-*.tar.gz
+            additionalArtifacts:
+              - "/tmp/support-*.zip"
     - name: integration-conformance
       buildxOptions:
         enabled: true
@@ -401,6 +473,63 @@ spec:
           artifactStep:
             type: upload
             artifactName: talos-logs-integration-conformance
+            disableExecutableListGeneration: true
+            artifactPath: /tmp/logs-*.tar.gz
+            additionalArtifacts:
+              - "/tmp/support-*.zip"
+    - name: integration-conformance-enforcing
+      buildxOptions:
+        enabled: true
+      depends:
+        - default
+      runners:
+        - self-hosted
+        - talos
+      crons:
+        - '30 4 * * *'
+      triggerLabels:
+        - integration/conformance-enforcing
+      steps:
+        - name: download-artifacts
+          conditions:
+            - not-on-schedule
+          artifactStep:
+            type: download
+            artifactName: talos-artifacts
+            artifactPath: _out
+        - name: ci-temp-release-tag
+          conditions:
+            - not-on-schedule
+        - name: build
+          conditions:
+            - only-on-schedule
+          command: talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
+          environment:
+            PLATFORM: linux/amd64
+            IMAGER_ARGS: "--extra-kernel-arg=enforcing=1"
+            TAG_SUFFIX: -enforcing
+            IMAGE_REGISTRY: registry.dev.siderolabs.io
+            PUSH: true
+        - name: talosctl-cni-bundle
+          conditions:
+            - only-on-schedule
+        - name: conformance-qemu
+          command: e2e-qemu
+          withSudo: true
+          environment:
+            GITHUB_STEP_NAME: ${{ github.job}}-conformance-qemu
+            QEMU_CPUS_WORKERS: 6
+            QEMU_MEMORY_WORKERS: 4096
+            TEST_MODE: fast-conformance
+            TAG_SUFFIX: -enforcing
+            EXTRA_TEST_ARGS: -talos.enforcing
+            IMAGE_REGISTRY: registry.dev.siderolabs.io
+        - name: save-talos-logs
+          conditions:
+            - always
+          artifactStep:
+            type: upload
+            artifactName: talos-logs-integration-conformance-enforcing
             disableExecutableListGeneration: true
             artifactPath: /tmp/logs-*.tar.gz
             additionalArtifacts:
@@ -465,7 +594,7 @@ spec:
             GITHUB_STEP_NAME: ${{ github.job}}-integration-trusted-boot
             VIA_MAINTENANCE_MODE: true
             WITH_TRUSTED_BOOT_ISO: true
-            EXTRA_TEST_ARGS: -talos.trustedboot
+            EXTRA_TEST_ARGS: "-talos.trustedboot"
             IMAGE_REGISTRY: registry.dev.siderolabs.io
         - name: save-talos-logs
           conditions:
@@ -473,6 +602,82 @@ spec:
           artifactStep:
             type: upload
             artifactName: talos-logs-integration-trusted-boot
+            disableExecutableListGeneration: true
+            artifactPath: /tmp/logs-*.tar.gz
+            additionalArtifacts:
+              - "/tmp/support-*.zip"
+    - name: integration-trusted-boot-enforcing
+      buildxOptions:
+        enabled: true
+      depends:
+        - default
+      runners:
+        - self-hosted
+        - talos
+      crons:
+        - '30 3 * * *'
+      triggerLabels:
+        - integration/trusted-boot-enforcing
+      steps:
+        - name: download-artifacts
+          conditions:
+            - not-on-schedule
+          artifactStep:
+            type: download
+            artifactName: talos-artifacts
+            artifactPath: _out
+        - name: ci-temp-release-tag
+          conditions:
+            - not-on-schedule
+        - name: uki-certs
+          conditions:
+            - only-on-schedule
+          environment:
+            PLATFORM: linux/amd64
+        - name: build
+          conditions:
+            - only-on-schedule
+          command: talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
+          environment:
+            PLATFORM: linux/amd64
+            IMAGE_REGISTRY: registry.dev.siderolabs.io
+            PUSH: true
+        - name: talosctl-cni-bundle
+          conditions:
+            - only-on-schedule
+        - name: images-essential-enforcing
+          conditions:
+            - only-on-schedule
+          command: imager installer-base installer images-essential
+          environment:
+            PLATFORM: linux/amd64,linux/arm64
+            IMAGER_ARGS: "--extra-kernel-arg=console=ttyS0 --extra-kernel-arg=enforcing=1"
+            TAG_SUFFIX: -enforcing
+            IMAGE_REGISTRY: registry.dev.siderolabs.io
+            PUSH: true
+        - name: secureboot-iso
+          conditions:
+            - only-on-schedule
+          environment:
+            PLATFORM: linux/amd64
+            IMAGER_ARGS: "--extra-kernel-arg=console=ttyS0"
+            IMAGE_REGISTRY: registry.dev.siderolabs.io
+        - name: integration-trusted-boot
+          command: e2e-qemu
+          withSudo: true
+          environment:
+            GITHUB_STEP_NAME: ${{ github.job}}-integration-trusted-boot
+            VIA_MAINTENANCE_MODE: true
+            WITH_TRUSTED_BOOT_ISO: true
+            TAG_SUFFIX: -enforcing
+            EXTRA_TEST_ARGS: "-talos.trustedboot -talos.enforcing"
+            IMAGE_REGISTRY: registry.dev.siderolabs.io
+        - name: save-talos-logs
+          conditions:
+            - always
+          artifactStep:
+            type: upload
+            artifactName: talos-logs-integration-trusted-boot-enforcing
             disableExecutableListGeneration: true
             artifactPath: /tmp/logs-*.tar.gz
             additionalArtifacts:
@@ -765,8 +970,8 @@ spec:
             GITHUB_STEP_NAME: ${{ github.job}}-e2e-kubespan
             SHORT_INTEGRATION_TEST: yes
             WITH_CLUSTER_DISCOVERY: true
-            WITH_KUBESPAN: true
-            IMAGE_REGISTRY: registry.dev.siderolabs.io\
+            WITH_KUBESPAN: "true"
+            IMAGE_REGISTRY: registry.dev.siderolabs.io
         - name: e2e-default-hostname
           command: e2e-qemu
           withSudo: true
@@ -792,6 +997,97 @@ spec:
           artifactStep:
             type: upload
             artifactName: talos-logs-integration-misc-1
+            disableExecutableListGeneration: true
+            artifactPath: /tmp/logs-*.tar.gz
+            additionalArtifacts:
+              - "/tmp/support-*.zip"
+    - name: integration-misc-1-enforcing
+      buildxOptions:
+        enabled: true
+      depends:
+        - default
+      runners:
+        - self-hosted
+        - talos
+      crons:
+        - '30 5 * * *'
+      triggerLabels:
+        - integration/misc-enforcing
+        - integration/misc-1-enforcing
+      steps:
+        - name: download-artifacts
+          conditions:
+            - not-on-schedule
+          artifactStep:
+            type: download
+            artifactName: talos-artifacts
+            artifactPath: _out
+        - name: ci-temp-release-tag
+          conditions:
+            - not-on-schedule
+        - name: build
+          conditions:
+            - only-on-schedule
+          command: talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
+          environment:
+            PLATFORM: linux/amd64
+            IMAGER_ARGS: "--extra-kernel-arg=enforcing=1"
+            TAG_SUFFIX: -enforcing
+            IMAGE_REGISTRY: registry.dev.siderolabs.io
+            PUSH: true
+        - name: talosctl-cni-bundle
+          conditions:
+            - only-on-schedule
+        - name: e2e-no-cluster-discovery
+          command: e2e-qemu
+          withSudo: true
+          environment:
+            GITHUB_STEP_NAME: ${{ github.job}}-e2e-no-cluster-discovery
+            SHORT_INTEGRATION_TEST: yes
+            WITH_CLUSTER_DISCOVERY: false
+            TAG_SUFFIX: -enforcing
+            EXTRA_TEST_ARGS: -talos.enforcing
+            IMAGE_REGISTRY: registry.dev.siderolabs.io
+        - name: e2e-kubespan
+          command: e2e-qemu
+          withSudo: true
+          environment:
+            GITHUB_STEP_NAME: ${{ github.job}}-e2e-kubespan
+            SHORT_INTEGRATION_TEST: yes
+            WITH_CLUSTER_DISCOVERY: true
+            WITH_KUBESPAN: true
+            TAG_SUFFIX: -enforcing
+            EXTRA_TEST_ARGS: -talos.enforcing
+            IMAGE_REGISTRY: registry.dev.siderolabs.io
+        - name: e2e-default-hostname
+          command: e2e-qemu
+          withSudo: true
+          environment:
+            GITHUB_STEP_NAME: ${{ github.job}}-e2e-default-hostname
+            SHORT_INTEGRATION_TEST: yes
+            VIA_MAINTENANCE_MODE: true
+            DISABLE_DHCP_HOSTNAME: true
+            TAG_SUFFIX: -enforcing
+            EXTRA_TEST_ARGS: -talos.enforcing
+            IMAGE_REGISTRY: registry.dev.siderolabs.io
+        - name: e2e-min-requirements
+          command: e2e-qemu
+          withSudo: true
+          environment:
+            GITHUB_STEP_NAME: ${{ github.job}}-e2e-min-requirements
+            SHORT_INTEGRATION_TEST: yes
+            QEMU_MEMORY_WORKERS: 1024
+            QEMU_MEMORY_CONTROLPLANES: 2048
+            QEMU_SYSTEM_DISK_SIZE: 10240
+            TAG_SUFFIX: -enforcing
+            EXTRA_TEST_ARGS: -talos.enforcing
+            IMAGE_REGISTRY: registry.dev.siderolabs.io
+        - name: save-talos-logs
+          conditions:
+            - always
+          artifactStep:
+            type: upload
+            artifactName: talos-logs-integration-misc-1-enforcing
             disableExecutableListGeneration: true
             artifactPath: /tmp/logs-*.tar.gz
             additionalArtifacts:
@@ -976,6 +1272,83 @@ spec:
             artifactPath: /tmp/logs-*.tar.gz
             additionalArtifacts:
               - "/tmp/support-*.zip"
+    - name: integration-misc-3-enforcing
+      buildxOptions:
+        enabled: true
+      depends:
+        - default
+      runners:
+        - self-hosted
+        - talos
+      crons:
+        - '30 5 * * *'
+      triggerLabels:
+        - integration/misc-enforcing
+        - integration/misc-3-enforcing
+      steps:
+        - name: download-artifacts
+          conditions:
+            - not-on-schedule
+          artifactStep:
+            type: download
+            artifactName: talos-artifacts
+            artifactPath: _out
+        - name: ci-temp-release-tag
+          conditions:
+            - not-on-schedule
+        - name: build
+          conditions:
+            - only-on-schedule
+          command: talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
+          environment:
+            PLATFORM: linux/amd64
+            IMAGER_ARGS: "--extra-kernel-arg=enforcing=1"
+            TAG_SUFFIX: -enforcing
+            IMAGE_REGISTRY: registry.dev.siderolabs.io
+            PUSH: true
+        - name: talosctl-cni-bundle
+          conditions:
+            - only-on-schedule
+        - name: e2e-network-chaos
+          command: e2e-qemu
+          withSudo: true
+          environment:
+            GITHUB_STEP_NAME: ${{ github.job}}-e2e-network-chaos
+            SHORT_INTEGRATION_TEST: yes
+            WITH_NETWORK_CHAOS: yes
+            TAG_SUFFIX: -enforcing
+            EXTRA_TEST_ARGS: -talos.enforcing
+            IMAGE_REGISTRY: registry.dev.siderolabs.io
+        - name: e2e-metal-iso
+          command: e2e-qemu
+          withSudo: true
+          environment:
+            GITHUB_STEP_NAME: ${{ github.job}}-e2e-metal-iso
+            SHORT_INTEGRATION_TEST: yes
+            WITH_CONFIG_INJECTION_METHOD: "metal-iso"
+            TAG_SUFFIX: -enforcing
+            EXTRA_TEST_ARGS: -talos.enforcing
+            IMAGE_REGISTRY: registry.dev.siderolabs.io
+        - name: e2e-iommu-pcidriverrebind
+          command: e2e-qemu
+          withSudo: true
+          environment:
+            GITHUB_STEP_NAME: ${{ github.job}}-e2e-iommu-pcidriverrebind
+            SHORT_INTEGRATION_TEST: yes
+            WITH_IOMMU: yes
+            TAG_SUFFIX: -enforcing
+            EXTRA_TEST_ARGS: -talos.enforcing
+            IMAGE_REGISTRY: registry.dev.siderolabs.io
+        - name: save-talos-logs
+          conditions:
+            - always
+          artifactStep:
+            type: upload
+            artifactName: talos-logs-integration-misc-3-enforcing
+            disableExecutableListGeneration: true
+            artifactPath: /tmp/logs-*.tar.gz
+            additionalArtifacts:
+              - "/tmp/support-*.zip"
     - name: integration-misc-4
       buildxOptions:
         enabled: true
@@ -1060,6 +1433,104 @@ spec:
           artifactStep:
             type: upload
             artifactName: talos-logs-integration-misc-4
+            disableExecutableListGeneration: true
+            artifactPath: /tmp/logs-*.tar.gz
+            additionalArtifacts:
+              - "/tmp/support-*.zip"
+    - name: integration-misc-4-enforcing
+      buildxOptions:
+        enabled: true
+      depends:
+        - default
+      runners:
+        - self-hosted
+        - talos
+      crons:
+        - '30 5 * * *'
+      triggerLabels:
+        - integration/misc-enforcing
+        - integration/misc-4-enforcing
+      steps:
+        - name: download-artifacts
+          conditions:
+            - not-on-schedule
+          artifactStep:
+            type: download
+            artifactName: talos-artifacts
+            artifactPath: _out
+        - name: ci-temp-release-tag
+          conditions:
+            - not-on-schedule
+        - name: build
+          conditions:
+            - only-on-schedule
+          command: talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
+          environment:
+            PLATFORM: linux/amd64
+            IMAGER_ARGS: "--extra-kernel-arg=enforcing=1"
+            TAG_SUFFIX: -enforcing
+            IMAGE_REGISTRY: registry.dev.siderolabs.io
+            PUSH: true
+        - name: talosctl-cni-bundle
+          conditions:
+            - only-on-schedule
+        - name: e2e-siderolink
+          command: e2e-qemu
+          withSudo: true
+          environment:
+            GITHUB_STEP_NAME: ${{ github.job}}-e2e-siderolink
+            SHORT_INTEGRATION_TEST: yes
+            WITH_SIDEROLINK_AGENT: true
+            VIA_MAINTENANCE_MODE: true
+            TAG_SUFFIX: -enforcing
+            EXTRA_TEST_ARGS: -talos.enforcing
+            IMAGE_REGISTRY: registry.dev.siderolabs.io
+        - name: e2e-siderolink-tunnel
+          command: e2e-qemu
+          withSudo: true
+          environment:
+            GITHUB_STEP_NAME: ${{ github.job}}-e2e-siderolink-tunnel
+            SHORT_INTEGRATION_TEST: yes
+            WITH_SIDEROLINK_AGENT: tunnel
+            VIA_MAINTENANCE_MODE: true
+            TAG_SUFFIX: -enforcing
+            EXTRA_TEST_ARGS: -talos.enforcing
+            IMAGE_REGISTRY: registry.dev.siderolabs.io
+        - name: e2e-siderolink-tls
+          command: e2e-qemu
+          withSudo: true
+          environment:
+            GITHUB_STEP_NAME: ${{ github.job}}-e2e-siderolink-tls
+            SHORT_INTEGRATION_TEST: yes
+            WITH_SIDEROLINK_AGENT: wireguard+tls
+            VIA_MAINTENANCE_MODE: true
+            TAG_SUFFIX: -enforcing
+            EXTRA_TEST_ARGS: -talos.enforcing
+            IMAGE_REGISTRY: registry.dev.siderolabs.io
+        - name: e2e-apparmor
+          command: e2e-qemu
+          withSudo: true
+          environment:
+            GITHUB_STEP_NAME: ${{ github.job}}-e2e-apparmor
+            SHORT_INTEGRATION_TEST: yes
+            WITH_APPARMOR_LSM_ENABLED: yes
+            IMAGE_REGISTRY: registry.dev.siderolabs.io
+        - name: e2e-k8s-user-namespace
+          command: e2e-qemu
+          withSudo: true
+          environment:
+            GITHUB_STEP_NAME: ${{ github.job}}-e2e-k8s-user-namespace
+            SHORT_INTEGRATION_TEST: yes
+            WITH_CONFIG_PATCH: "@hack/test/patches/usernamespace.yaml"
+            TAG_SUFFIX: -enforcing
+            EXTRA_TEST_ARGS: -talos.enforcing
+            IMAGE_REGISTRY: registry.dev.siderolabs.io
+        - name: save-talos-logs
+          conditions:
+            - always
+          artifactStep:
+            type: upload
+            artifactName: talos-logs-integration-misc-4-enforcing
             disableExecutableListGeneration: true
             artifactPath: /tmp/logs-*.tar.gz
             additionalArtifacts:

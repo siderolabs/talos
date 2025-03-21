@@ -17,8 +17,10 @@ import (
 	"strings"
 	"time"
 
+	"github.com/cosi-project/runtime/pkg/resource/rtestutils"
 	"github.com/siderolabs/go-pointer"
 	"github.com/siderolabs/go-procfs/procfs"
+	"github.com/stretchr/testify/assert"
 
 	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/helpers"
 	"github.com/siderolabs/talos/internal/integration/base"
@@ -26,6 +28,7 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/client"
 	"github.com/siderolabs/talos/pkg/machinery/config/machine"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
+	runtimeres "github.com/siderolabs/talos/pkg/machinery/resources/runtime"
 )
 
 // SELinuxSuite ...
@@ -277,6 +280,33 @@ func (suite *SELinuxSuite) TestProcessLabels() {
 				}
 			}
 		}
+	}
+}
+
+// TestSecurityState validates SecurityState in accordance to -talos.enforcing.
+func (suite *SELinuxSuite) TestSecurityState() {
+	for _, node := range suite.DiscoverNodeInternalIPs(suite.ctx) {
+		nodeCtx := client.WithNode(suite.ctx, node)
+		cmdline := suite.ReadCmdline(nodeCtx)
+
+		seLinuxEnabled := pointer.SafeDeref(procfs.NewCmdline(cmdline).Get(constants.KernelParamSELinux).First()) != ""
+		if !seLinuxEnabled {
+			continue
+		}
+
+		rtestutils.AssertResource(
+			nodeCtx,
+			suite.T(),
+			suite.Client.COSI,
+			runtimeres.SecurityStateID,
+			func(state *runtimeres.SecurityState, asrt *assert.Assertions) {
+				if suite.SelinuxEnforcing {
+					asrt.Equal(runtimeres.SELinuxStateEnforcing, state.TypedSpec().SELinuxState)
+				} else {
+					asrt.Equal(runtimeres.SELinuxStatePermissive, state.TypedSpec().SELinuxState)
+				}
+			},
+		)
 	}
 }
 

@@ -48,6 +48,8 @@ type TalosSuite struct {
 	ExtensionsNvidia bool
 	// TrustedBoot tells if the cluster is secure booted and disks are encrypted
 	TrustedBoot bool
+	// SelinuxEnforcing tells if the cluster is booted with the image with selinux enforcement enabled
+	SelinuxEnforcing bool
 	// TalosImage is the image name for 'talos' container.
 	TalosImage string
 	// CSITestName is the name of the CSI test to run

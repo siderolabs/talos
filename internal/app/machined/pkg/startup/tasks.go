@@ -17,6 +17,7 @@ import (
 	"golang.org/x/sys/unix"
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1"
 	"github.com/siderolabs/talos/internal/pkg/environment"
 	"github.com/siderolabs/talos/internal/pkg/mount/v2"
 	"github.com/siderolabs/talos/internal/pkg/selinux"
@@ -58,6 +59,36 @@ func SetupSystemDirectories(ctx context.Context, log *zap.Logger, rt runtime.Run
 		if err := os.MkdirAll(path, 0o751); err != nil {
 			return fmt.Errorf("setupSystemDirectories: %w", err)
 		}
+	}
+
+	return next()(ctx, log, rt, next)
+}
+
+// SetupSystemSubdirectories creates and configures subdirectories under /system.
+func SetupSystemSubdirectories(ctx context.Context, log *zap.Logger, rt runtime.Runtime, next NextTaskFunc) error {
+	directoryConfigurations := []v1alpha1.CreateDirectory{
+		{
+			Path:         "/system/run",
+			Mode:         0o751,
+			SELinuxLabel: "system_u:object_r:system_run_t:s0",
+		},
+		{
+			Path:          "/system/run/containerd",
+			Mode:          0o711,
+			SELinuxLabel:  "system_u:object_r:sys_containerd_run_t:s0",
+			ExcludeLabels: []string{"system_u:object_r:sys_containerd_socket_t:s0"},
+		},
+		{
+			Path:          "/run/containerd",
+			Mode:          0o711,
+			SELinuxLabel:  "system_u:object_r:pod_containerd_run_t:s0",
+			ExcludeLabels: []string{"system_u:object_r:pod_containerd_socket_t:s0"},
+		},
+	}
+
+	err := v1alpha1.InitializeDirectoryStructure(directoryConfigurations)
+	if err != nil {
+		return err
 	}
 
 	return next()(ctx, log, rt, next)

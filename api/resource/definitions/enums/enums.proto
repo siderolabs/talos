@@ -455,3 +455,10 @@ enum RuntimeMachineStage {
   MACHINE_STAGE_UPGRADING = 8;
 }
 
+// RuntimeSELinuxState describes the current SELinux status.
+enum RuntimeSELinuxState {
+  SE_LINUX_STATE_DISABLED = 0;
+  SE_LINUX_STATE_PERMISSIVE = 1;
+  SE_LINUX_STATE_ENFORCING = 2;
+}
+

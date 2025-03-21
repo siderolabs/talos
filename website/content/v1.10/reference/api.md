@@ -110,6 +110,7 @@ description: Talos gRPC API reference.
     - [NetworkConfigLayer](#talos.resource.definitions.enums.NetworkConfigLayer)
     - [NetworkOperator](#talos.resource.definitions.enums.NetworkOperator)
     - [RuntimeMachineStage](#talos.resource.definitions.enums.RuntimeMachineStage)
+    - [RuntimeSELinuxState](#talos.resource.definitions.enums.RuntimeSELinuxState)
   
 - [resource/definitions/etcd/etcd.proto](#resource/definitions/etcd/etcd.proto)
     - [ConfigSpec](#talos.resource.definitions.etcd.ConfigSpec)
@@ -2255,6 +2256,19 @@ RuntimeMachineStage describes the stage of the machine boot/run process.
 | MACHINE_STAGE_SHUTTING_DOWN | 6 |  |
 | MACHINE_STAGE_RESETTING | 7 |  |
 | MACHINE_STAGE_UPGRADING | 8 |  |
+
+
+
+<a name="talos.resource.definitions.enums.RuntimeSELinuxState"></a>
+
+### RuntimeSELinuxState
+RuntimeSELinuxState describes the current SELinux status.
+
+| Name | Number | Description |
+| ---- | ------ | ----------- |
+| SE_LINUX_STATE_DISABLED | 0 |  |
+| SE_LINUX_STATE_PERMISSIVE | 1 |  |
+| SE_LINUX_STATE_ENFORCING | 2 |  |
 
 
  <!-- end enums -->
@@ -5202,6 +5216,7 @@ SecurityStateSpec describes the security state resource properties.
 | secure_boot | [bool](#bool) |  |  |
 | uki_signing_key_fingerprint | [string](#string) |  |  |
 | pcr_signing_key_fingerprint | [string](#string) |  |  |
+| se_linux_state | [talos.resource.definitions.enums.RuntimeSELinuxState](#talos.resource.definitions.enums.RuntimeSELinuxState) |  |  |
 
 
 

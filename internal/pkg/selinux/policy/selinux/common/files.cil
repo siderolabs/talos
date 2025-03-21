@@ -3,6 +3,18 @@
 (call filesystem_f (system_t))
 (allow system_t tmpfs_t (filesystem (associate)))
 
+(type system_run_t)
+(call system_f (system_run_t))
+(allow system_run_t tmpfs_t (filesystem (associate)))
+
+(type system_run_containerd_t)
+(call system_f (system_run_containerd_t))
+(allow system_run_containerd_t tmpfs_t (filesystem (associate)))
+
+(type run_containerd_t)
+(call system_f (run_containerd_t))
+(allow run_containerd_t tmpfs_t (filesystem (associate)))
+
 (type etc_t)
 (call system_f (etc_t))
 (allow etc_t fs_t (filesystem (associate)))
@@ -28,3 +40,7 @@
 (type opt_t)
 (call filesystem_f (opt_t))
 (filecon "/opt(/.*)?" any (system_u object_r opt_t (systemLow systemLow)))
+
+(type usr_t)
+(call system_f (usr_t))
+(filecon "/usr(/.*)?" any (system_u object_r usr_t (systemLow systemLow)))

@@ -22,13 +22,28 @@ const SecurityStateID = resource.ID("securitystate")
 // SecurityState is the security state resource.
 type SecurityState = typed.Resource[SecurityStateSpec, SecurityStateExtension]
 
+//go:generate enumer -type=SELinuxState -linecomment -text
+
+// SELinuxState describes the current SELinux status.
+type SELinuxState int
+
+// SELinux state.
+//
+//structprotogen:gen_enum
+const (
+	SELinuxStateDisabled   SELinuxState = iota // disabled
+	SELinuxStatePermissive                     // enabled, permissive
+	SELinuxStateEnforcing                      // enabled, enforcing
+)
+
 // SecurityStateSpec describes the security state resource properties.
 //
 //gotagsrewrite:gen
 type SecurityStateSpec struct {
-	SecureBoot               bool   `yaml:"secureBoot" protobuf:"1"`
-	UKISigningKeyFingerprint string `yaml:"ukiSigningKeyFingerprint,omitempty" protobuf:"2"`
-	PCRSigningKeyFingerprint string `yaml:"pcrSigningKeyFingerprint,omitempty" protobuf:"3"`
+	SecureBoot               bool         `yaml:"secureBoot" protobuf:"1"`
+	UKISigningKeyFingerprint string       `yaml:"ukiSigningKeyFingerprint,omitempty" protobuf:"2"`
+	PCRSigningKeyFingerprint string       `yaml:"pcrSigningKeyFingerprint,omitempty" protobuf:"3"`
+	SELinuxState             SELinuxState `yaml:"selinuxState,omitempty" protobuf:"4"`
 }
 
 // NewSecurityStateSpec initializes a security state resource.
@@ -59,6 +74,10 @@ func (SecurityStateExtension) ResourceDefinition() meta.ResourceDefinitionSpec {
 			{
 				Name:     "PCRSigningKeyFingerprint",
 				JSONPath: `{.pcrSigningKeyFingerprint}`,
+			},
+			{
+				Name:     "SELinuxState",
+				JSONPath: `{.selinuxState}`,
 			},
 		},
 	}
