@@ -61,6 +61,11 @@ func errataArm64ZBoot() {
 		return
 	}
 
+	if bytes.Contains(contents, []byte("CONFIG_EFI_ZBOOT=y")) {
+		// nothing to do
+		return
+	}
+
 	log.Printf("disabling kexec due to upgrade to the compressed kernel")
 
 	if err = pkgkernel.WriteParam(&kernel.Param{
