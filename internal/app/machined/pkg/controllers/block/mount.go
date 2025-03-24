@@ -149,8 +149,10 @@ func (ctrl *MountController) Run(ctx context.Context, r controller.Runtime, logg
 					continue
 				}
 
-				if err = ctrl.handleUnmountOperation(logger, mountRequest, volumeStatus); err != nil {
-					return err
+				if volumeStatus != nil {
+					if err = ctrl.handleUnmountOperation(logger, mountRequest, volumeStatus); err != nil {
+						return err
+					}
 				}
 
 				if volumeStatus != nil && volumeStatus.Metadata().Finalizers().Has(ctrl.Name()) {

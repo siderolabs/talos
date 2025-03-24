@@ -1,6 +1,6 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
 #
-# Generated on 2025-03-21T15:51:32Z by kres ec5ec04.
+# Generated on 2025-03-24T09:55:56Z by kres ec5ec04.
 
 name: integration-misc-4-enforcing-cron
 concurrency:
@@ -80,6 +80,15 @@ jobs:
         if: github.event_name == 'schedule'
         run: |
           make talosctl-cni-bundle
+      - name: images-essential-enforcing
+        env:
+          IMAGE_REGISTRY: registry.dev.siderolabs.io
+          IMAGER_ARGS: --extra-kernel-arg=console=ttyS0 --extra-kernel-arg=enforcing=1
+          PLATFORM: linux/amd64,linux/arm64
+          PUSH: "true"
+          TAG_SUFFIX: -enforcing
+        run: |
+          make imager installer-base installer images-essential
       - name: e2e-siderolink
         env:
           EXTRA_TEST_ARGS: -talos.enforcing

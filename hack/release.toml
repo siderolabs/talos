@@ -22,7 +22,7 @@ preface = """
 * CNI plugins: 1.6.2
 * runc: 1.2.6
 * containerd: 2.0.4
-* etcd: 3.5.19
+* etcd: 3.5.20
 * Flannel: 0.26.4
 * Kubernetes: 1.33.0-beta.0
 

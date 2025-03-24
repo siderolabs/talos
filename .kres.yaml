@@ -125,14 +125,6 @@ spec:
             PLATFORM: linux/amd64,linux/arm64
             IMAGER_ARGS: "--extra-kernel-arg=console=ttyS0"
             IMAGE_REGISTRY: registry.dev.siderolabs.io
-        - name: images-essential-enforcing
-          command: imager installer-base installer images-essential
-          environment:
-            PLATFORM: linux/amd64,linux/arm64
-            IMAGER_ARGS: "--extra-kernel-arg=console=ttyS0 --extra-kernel-arg=enforcing=1"
-            TAG_SUFFIX: -enforcing
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
-            PUSH: true
         - name: unit-tests
         - name: unit-tests-race
         - name: coverage
@@ -399,6 +391,14 @@ spec:
             TAG_SUFFIX: -enforcing
             IMAGE_REGISTRY: registry.dev.siderolabs.io
             PUSH: true
+        - name: images-essential-enforcing
+          command: images-essential
+          environment:
+            PLATFORM: linux/amd64,linux/arm64
+            IMAGER_ARGS: "--extra-kernel-arg=console=ttyS0 --extra-kernel-arg=enforcing=1"
+            TAG_SUFFIX: -enforcing
+            IMAGE_REGISTRY: registry.dev.siderolabs.io
+            PUSH: true
         - name: talosctl-cni-bundle
           conditions:
             - only-on-schedule
@@ -513,6 +513,14 @@ spec:
         - name: talosctl-cni-bundle
           conditions:
             - only-on-schedule
+        - name: images-essential-enforcing
+          command: imager installer-base installer images-essential
+          environment:
+            PLATFORM: linux/amd64,linux/arm64
+            IMAGER_ARGS: "--extra-kernel-arg=console=ttyS0 --extra-kernel-arg=enforcing=1"
+            TAG_SUFFIX: -enforcing
+            IMAGE_REGISTRY: registry.dev.siderolabs.io
+            PUSH: true
         - name: conformance-qemu
           command: e2e-qemu
           withSudo: true
@@ -646,8 +654,6 @@ spec:
           conditions:
             - only-on-schedule
         - name: images-essential-enforcing
-          conditions:
-            - only-on-schedule
           command: imager installer-base installer images-essential
           environment:
             PLATFORM: linux/amd64,linux/arm64
@@ -1038,6 +1044,14 @@ spec:
         - name: talosctl-cni-bundle
           conditions:
             - only-on-schedule
+        - name: images-essential-enforcing
+          command: imager installer-base installer images-essential
+          environment:
+            PLATFORM: linux/amd64,linux/arm64
+            IMAGER_ARGS: "--extra-kernel-arg=console=ttyS0 --extra-kernel-arg=enforcing=1"
+            TAG_SUFFIX: -enforcing
+            IMAGE_REGISTRY: registry.dev.siderolabs.io
+            PUSH: true
         - name: e2e-no-cluster-discovery
           command: e2e-qemu
           withSudo: true
@@ -1309,6 +1323,14 @@ spec:
         - name: talosctl-cni-bundle
           conditions:
             - only-on-schedule
+        - name: images-essential-enforcing
+          command: imager installer-base installer images-essential
+          environment:
+            PLATFORM: linux/amd64,linux/arm64
+            IMAGER_ARGS: "--extra-kernel-arg=console=ttyS0 --extra-kernel-arg=enforcing=1"
+            TAG_SUFFIX: -enforcing
+            IMAGE_REGISTRY: registry.dev.siderolabs.io
+            PUSH: true
         - name: e2e-network-chaos
           command: e2e-qemu
           withSudo: true
@@ -1474,6 +1496,14 @@ spec:
         - name: talosctl-cni-bundle
           conditions:
             - only-on-schedule
+        - name: images-essential-enforcing
+          command: imager installer-base installer images-essential
+          environment:
+            PLATFORM: linux/amd64,linux/arm64
+            IMAGER_ARGS: "--extra-kernel-arg=console=ttyS0 --extra-kernel-arg=enforcing=1"
+            TAG_SUFFIX: -enforcing
+            IMAGE_REGISTRY: registry.dev.siderolabs.io
+            PUSH: true
         - name: e2e-siderolink
           command: e2e-qemu
           withSudo: true
