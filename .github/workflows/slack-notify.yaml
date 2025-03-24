@@ -1,6 +1,6 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
 #
-# Generated on 2025-03-21T15:51:32Z by kres ec5ec04.
+# Generated on 2025-03-24T14:29:42Z by kres 921213e.
 
 name: slack-notify
 "on":
@@ -38,7 +38,6 @@ name: slack-notify
       - integration-aws-cron
       - integration-aws-nvidia-oss-cron
       - integration-aws-nvidia-nonfree-cron
-      - integration-azure-cron
       - integration-gcp-cron
     types:
       - completed

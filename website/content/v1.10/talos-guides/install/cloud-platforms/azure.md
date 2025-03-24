@@ -36,16 +36,6 @@ export CONNECTION=$(az storage account show-connection-string \
                     -o tsv)
 ```
 
-### Choose an Image
-
-There are two methods of deployment in this tutorial.
-
-If you would like to use the official Talos image uploaded to Azure Community Galleries by SideroLabs, you may skip ahead to setting up your network infrastructure.
-
-- [Network Infrastructure](#network-infrastructure)
-
-Otherwise, if you would like to upload your own image to Azure and use it to deploy Talos, continue to [Creating an Image](#create-the-image).
-
 ### Create the Image
 
 First, download the Azure image from [Image Factory](https://factory.talos.dev/).
@@ -221,11 +211,6 @@ Azure allows you to pass Talos machine configuration to the virtual machine at b
 `user-data` or `custom-data` methods.
 
 Talos supports only `custom-data` method, machine configuration is available to the VM only on the first boot.
-
-Use the steps below depending on whether you have manually uploaded a Talos image or if you are using the Community Gallery image.
-
-- [Manual Image Upload](#manual-image-upload)
-- [Azure Community Gallery Image](#azure-community-gallery-image)
 
 #### Manual Image Upload
 

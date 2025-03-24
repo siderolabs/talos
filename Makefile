@@ -457,7 +457,7 @@ image-%: ## Builds the specified image. Valid options are aws, azure, digital-oc
 	done
 
 .PHONY: images-essential
-images-essential: image-aws image-azure image-gcp image-metal image-metal-uki installer secureboot-installer ## Builds only essential images used in the CI (AWS, Azure, GCP, and Metal).
+images-essential: image-aws image-gcp image-metal image-metal-uki installer secureboot-installer ## Builds only essential images used in the CI (AWS, Azure, GCP, and Metal).
 
 .PHONY: images
 images: image-akamai image-aws image-azure image-digital-ocean image-exoscale image-cloudstack image-gcp image-hcloud image-iso image-metal image-metal-uki image-nocloud image-opennebula image-openstack image-oracle image-scaleway image-upcloud image-vmware image-vultr ## Builds all known images (AWS, Azure, DigitalOcean, Exoscale, Cloudstack, GCP, HCloud, Metal, NoCloud, OpenNebula, OpenStack, Oracle, Scaleway, UpCloud, Vultr and VMware).
