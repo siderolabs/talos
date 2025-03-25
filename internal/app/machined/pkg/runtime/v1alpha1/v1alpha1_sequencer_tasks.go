@@ -27,7 +27,6 @@ import (
 	"github.com/foxboron/go-uefi/efi"
 	"github.com/hashicorp/go-multierror"
 	pprocfs "github.com/prometheus/procfs"
-	"github.com/siderolabs/gen/maps"
 	"github.com/siderolabs/gen/xslices"
 	"github.com/siderolabs/go-blockdevice/v2/block"
 	"github.com/siderolabs/go-cmd/pkg/cmd"
@@ -42,6 +41,7 @@ import (
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/emergency"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/options"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/sdboot"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/platform"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system/events"
@@ -51,7 +51,6 @@ import (
 	"github.com/siderolabs/talos/internal/pkg/etcd"
 	"github.com/siderolabs/talos/internal/pkg/install"
 	"github.com/siderolabs/talos/internal/pkg/logind"
-	"github.com/siderolabs/talos/internal/pkg/mount"
 	mountv2 "github.com/siderolabs/talos/internal/pkg/mount/v2"
 	"github.com/siderolabs/talos/internal/pkg/partition"
 	"github.com/siderolabs/talos/internal/pkg/secureboot"
@@ -143,20 +142,6 @@ func LoadConfig(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
 		// clean up request to make sure controller doesn't work after this point
 		return r.State().V1Alpha2().Resources().Destroy(ctx, request.Metadata())
 	}, "loadConfig"
-}
-
-// SaveConfig represents the SaveConfig task.
-func SaveConfig(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
-	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
-		var b []byte
-
-		b, err = r.ConfigContainer().Bytes()
-		if err != nil {
-			return err
-		}
-
-		return os.WriteFile(constants.ConfigPath, b, 0o600)
-	}, "saveConfig"
 }
 
 // Sleep represents the Sleep task.
@@ -547,6 +532,40 @@ func SetupSharedFilesystems(runtime.Sequence, any) (runtime.TaskExecutionFunc, s
 	}, "setupSharedFilesystems"
 }
 
+// CreateDirectory is a structure describing properties of a directory to be initialized.
+type CreateDirectory struct {
+	Path          string
+	Mode          os.FileMode
+	UID, GID      int
+	SELinuxLabel  string
+	ExcludeLabels []string
+}
+
+// InitializeDirectoryStructure creates directories and sets security options on them.
+func InitializeDirectoryStructure(directories []CreateDirectory) error {
+	for _, dir := range directories {
+		if err := os.MkdirAll(dir.Path, dir.Mode); err != nil {
+			return err
+		}
+
+		if err := os.Chmod(dir.Path, dir.Mode); err != nil {
+			return err
+		}
+
+		if err := selinux.SetLabelRecursive(dir.Path, dir.SELinuxLabel, dir.ExcludeLabels...); err != nil {
+			return err
+		}
+
+		if dir.UID != 0 || dir.GID != 0 {
+			if err := os.Chown(dir.Path, dir.UID, dir.GID); err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
+}
+
 // SetupVarDirectory represents the SetupVarDirectory task.
 func SetupVarDirectory(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) error {
@@ -554,27 +573,26 @@ func SetupVarDirectory(runtime.Sequence, any) (runtime.TaskExecutionFunc, string
 			return err
 		}
 
-		for _, dir := range []struct {
-			Path         string
-			Mode         os.FileMode
-			UID, GID     int
-			SELinuxLabel string
-		}{
+		directoryConfigurations := []CreateDirectory{
 			{
-				Path: "/var/log",
-				Mode: 0o755,
+				Path:         "/var/log",
+				Mode:         0o755,
+				SELinuxLabel: "system_u:object_r:var_log_t:s0",
 			},
 			{
-				Path: "/var/log/audit",
-				Mode: 0o700,
+				Path:         "/var/log/audit",
+				Mode:         0o700,
+				SELinuxLabel: "system_u:object_r:audit_log_t:s0",
 			},
 			{
-				Path: "/var/log/containers",
-				Mode: 0o755,
+				Path:         "/var/log/containers",
+				Mode:         0o755,
+				SELinuxLabel: "system_u:object_r:containers_log_t:s0",
 			},
 			{
-				Path: "/var/log/pods",
-				Mode: 0o755,
+				Path:         "/var/log/pods",
+				Mode:         0o755,
+				SELinuxLabel: "system_u:object_r:pods_log_t:s0",
 			},
 			{
 				Path:         "/var/lib/containerd",
@@ -587,40 +605,30 @@ func SetupVarDirectory(runtime.Sequence, any) (runtime.TaskExecutionFunc, string
 				SELinuxLabel: "system_u:object_r:kubelet_state_t:s0",
 			},
 			{
-				Path: "/var/run/lock",
-				Mode: 0o755,
+				Path:         "/var/lib/cni",
+				Mode:         0o700,
+				SELinuxLabel: "system_u:object_r:cni_state_t:s0",
 			},
 			{
-				Path: constants.SeccompProfilesDirectory,
-				Mode: 0o700,
+				Path:         "/var/run/lock",
+				Mode:         0o755,
+				SELinuxLabel: "system_u:object_r:var_lock_t:s0",
 			},
 			{
-				Path: constants.KubernetesAuditLogDir,
-				Mode: 0o700,
-				UID:  constants.KubernetesAPIServerRunUser,
-				GID:  constants.KubernetesAPIServerRunGroup,
+				Path:         constants.SeccompProfilesDirectory,
+				Mode:         0o700,
+				SELinuxLabel: "system_u:object_r:seccomp_profile_t:s0",
 			},
-		} {
-			if err := os.MkdirAll(dir.Path, dir.Mode); err != nil {
-				return err
-			}
-
-			if err := os.Chmod(dir.Path, dir.Mode); err != nil {
-				return err
-			}
-
-			if err := selinux.SetLabel(dir.Path, dir.SELinuxLabel); err != nil {
-				return err
-			}
-
-			if dir.UID != 0 || dir.GID != 0 {
-				if err := os.Chown(dir.Path, dir.UID, dir.GID); err != nil {
-					return err
-				}
-			}
+			{
+				Path:         constants.KubernetesAuditLogDir,
+				Mode:         0o700,
+				UID:          constants.KubernetesAPIServerRunUser,
+				GID:          constants.KubernetesAPIServerRunGroup,
+				SELinuxLabel: "system_u:object_r:kube_log_t:s0",
+			},
 		}
 
-		return nil
+		return InitializeDirectoryStructure(directoryConfigurations)
 	}, "setupVarDirectory"
 }
 
@@ -661,46 +669,6 @@ func MountUserDisks(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
 				return r.(*blockres.UserDiskConfigStatus).TypedSpec().Ready, nil
 			}),
 		)
-		if err != nil {
-			return err
-		}
-
-		// fetch user disk volume configs
-		volumeConfigs, err := safe.StateListAll[*blockres.VolumeConfig](ctx, r.State().V1Alpha2().Resources(), state.WithLabelQuery(resource.LabelExists(blockres.UserDiskLabel)))
-		if err != nil {
-			return err
-		}
-
-		if volumeConfigs.Len() == 0 {
-			// no user disks
-			return nil
-		}
-
-		var mountpoints mountv2.Points
-
-		// wait for volume statuses to be ready
-		for volumeConfig := range volumeConfigs.All() {
-			volumeStatus, err := safe.StateWatchFor[*blockres.VolumeStatus](ctx,
-				r.State().V1Alpha2().Resources(),
-				blockres.NewVolumeStatus(volumeConfig.Metadata().Namespace(), volumeConfig.Metadata().ID()).Metadata(),
-				state.WithEventTypes(state.Created, state.Updated),
-				state.WithCondition(func(r resource.Resource) (bool, error) {
-					return r.(*blockres.VolumeStatus).TypedSpec().Phase == blockres.VolumePhaseReady, nil
-				}),
-			)
-			if err != nil {
-				return fmt.Errorf("failed to watch for volume status %s: %w", volumeConfig.Metadata().ID(), err)
-			}
-
-			mountpoints = append(mountpoints, mountv2.NewPoint(
-				volumeStatus.TypedSpec().MountLocation,
-				volumeConfig.TypedSpec().Mount.TargetPath,
-				volumeStatus.TypedSpec().Filesystem.String(),
-				mountv2.WithSelinuxLabel(volumeConfig.TypedSpec().Mount.SelinuxLabel),
-			))
-		}
-
-		_, err = mountpoints.Mount(mountv2.WithMountPrinter(logger.Printf))
 
 		return err
 	}, "mountUserDisks"
@@ -902,47 +870,6 @@ func UnmountOverlayFilesystems(runtime.Sequence, any) (runtime.TaskExecutionFunc
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
 		return mountv2.OverlayMountPoints().Unmount()
 	}, "unmountOverlayFilesystems"
-}
-
-// UnmountUserDisks represents the UnmountUserDisks task.
-func UnmountUserDisks(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
-	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) error {
-		// fetch user disk volume configs
-		volumeConfigs, err := safe.StateListAll[*blockres.VolumeConfig](ctx, r.State().V1Alpha2().Resources(), state.WithLabelQuery(resource.LabelExists(blockres.UserDiskLabel)))
-		if err != nil {
-			return err
-		}
-
-		if volumeConfigs.Len() == 0 {
-			// no user disks
-			return nil
-		}
-
-		var mountpoints mountv2.Points
-
-		for volumeConfig := range volumeConfigs.All() {
-			volumeStatus, err := safe.StateGetByID[*blockres.VolumeStatus](
-				ctx,
-				r.State().V1Alpha2().Resources(),
-				volumeConfig.Metadata().ID(),
-			)
-			if err != nil {
-				continue
-			}
-
-			if volumeStatus.TypedSpec().Phase != blockres.VolumePhaseReady {
-				continue
-			}
-
-			mountpoints = append(mountpoints, mountv2.NewPoint(
-				volumeStatus.TypedSpec().MountLocation,
-				volumeConfig.TypedSpec().Mount.TargetPath,
-				volumeStatus.TypedSpec().Filesystem.String(),
-			))
-		}
-
-		return mountpoints.Unmount()
-	}, "unmountUserDisks"
 }
 
 // UnmountPodMounts represents the UnmountPodMounts task.
@@ -1256,12 +1183,21 @@ func ResetSystemDiskPartitions(seq runtime.Sequence, _ any) (runtime.TaskExecuti
 	}
 
 	if *wipeStr == "system" {
-		resetSystemDisk, _ := ResetSystemDisk(seq, nil)
-
 		return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) error {
+			systemDiskPaths, err := blockres.GetSystemDiskPaths(ctx, r.State().V1Alpha2().Resources())
+			if err != nil {
+				return err
+			}
+
+			targets := targets{
+				systemDiskPaths: systemDiskPaths,
+			}
+
 			logger.Printf("resetting system disks")
 
-			err := resetSystemDisk(ctx, logger, r)
+			resetSystemDisk, _ := ResetSystemDisk(seq, targets)
+
+			err = resetSystemDisk(ctx, logger, r)
 			if err != nil {
 				logger.Printf("resetting system disks failed")
 
@@ -1301,45 +1237,14 @@ func ResetSystemDiskPartitions(seq runtime.Sequence, _ any) (runtime.TaskExecuti
 // ResetSystemDisk represents the task to reset the system disk.
 //
 //nolint:gocyclo
-func ResetSystemDisk(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
+func ResetSystemDisk(_ runtime.Sequence, data any) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) error {
-		systemDisks := map[string]struct{}{}
-
-		// fetch system disk (where Talos is installed)
-		systemDisk, err := blockres.GetSystemDisk(ctx, r.State().V1Alpha2().Resources())
-		if err != nil {
-			return err
+		in, ok := data.(SystemDiskTargets)
+		if !ok {
+			return errors.New("unexpected runtime data")
 		}
 
-		if systemDisk != nil {
-			systemDisks[systemDisk.DevPath] = struct{}{}
-		}
-
-		// fetch additional system volumes (which might be on the same or other disks)
-		for _, volumeID := range []string{constants.StatePartitionLabel, constants.EphemeralPartitionLabel} {
-			volumeStatus, err := safe.ReaderGetByID[*blockres.VolumeStatus](ctx, r.State().V1Alpha2().Resources(), volumeID)
-			if err != nil {
-				if state.IsNotFoundError(err) {
-					continue
-				}
-
-				return err
-			}
-
-			if volumeStatus.TypedSpec().ParentLocation != "" {
-				systemDisks[volumeStatus.TypedSpec().ParentLocation] = struct{}{}
-			} else if volumeStatus.TypedSpec().Location != "" {
-				systemDisks[volumeStatus.TypedSpec().Location] = struct{}{}
-			}
-		}
-
-		if len(systemDisks) == 0 {
-			return nil
-		}
-
-		systemDiskPaths := maps.Keys(systemDisks)
-
-		for _, systemDiskPath := range systemDiskPaths {
+		for _, systemDiskPath := range in.GetSystemDiskPaths() {
 			if err := func(devPath string) error {
 				logger.Printf("wiping system disk %s", devPath)
 
@@ -1349,7 +1254,7 @@ func ResetSystemDisk(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) 
 				}
 
 				if err = dev.RetryLockWithTimeout(ctx, true, time.Minute); err != nil {
-					return fmt.Errorf("failed to lock device %s: %w", systemDisk.DevPath, err)
+					return fmt.Errorf("failed to lock device %s: %w", devPath, err)
 				}
 
 				defer dev.Close() //nolint:errcheck
@@ -1407,10 +1312,17 @@ func ResetUserDisks(_ runtime.Sequence, data any) (runtime.TaskExecutionFunc, st
 
 type targets struct {
 	systemDiskTargets []*partition.VolumeWipeTarget
+	systemDiskPaths   []string
 }
+
+var _ SystemDiskTargets = targets{}
 
 func (opt targets) GetSystemDiskTargets() []runtime.PartitionTarget {
 	return xslices.Map(opt.systemDiskTargets, func(t *partition.VolumeWipeTarget) runtime.PartitionTarget { return t })
+}
+
+func (opt targets) GetSystemDiskPaths() []string {
+	return opt.systemDiskPaths
 }
 
 func (opt targets) String() string {
@@ -1463,6 +1375,7 @@ func parseTargets(ctx context.Context, r runtime.Runtime, wipeStr string) (Syste
 // It's a subset of [runtime.ResetOptions].
 type SystemDiskTargets interface {
 	GetSystemDiskTargets() []runtime.PartitionTarget
+	GetSystemDiskPaths() []string
 	fmt.Stringer
 }
 
@@ -1652,55 +1565,73 @@ func haltIfInstalled(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) 
 	}, "haltIfInstalled"
 }
 
-// MountStatePartition mounts the system partition.
-func MountStatePartition(required bool) func(seq runtime.Sequence, _ any) (runtime.TaskExecutionFunc, string) {
-	return func(seq runtime.Sequence, _ any) (runtime.TaskExecutionFunc, string) {
-		return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) error {
-			if required {
-				if _, err := waitForVolumeReady(ctx, r, constants.StatePartitionLabel); err != nil {
-					return err
-				}
-			} else {
-				volumeStatus, err := waitForVolumeReadyOrMissing(ctx, r, constants.StatePartitionLabel)
-				if err != nil {
-					return err
-				}
-
-				if volumeStatus.TypedSpec().Phase == blockres.VolumePhaseMissing {
-					logger.Print("STATE volume is missing")
-
-					return nil
-				}
-			}
-
-			return mount.SystemPartitionMount(ctx, r, logger, constants.StatePartitionLabel, !required)
-		}, "mountStatePartition"
-	}
-}
-
-// UnmountStatePartition unmounts the system partition.
-func UnmountStatePartition(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
+// CleanupBootloader cleans up the ununsed bootloader if booted from a disk image with both bootloaders present.
+func CleanupBootloader(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) error {
-		return mount.SystemPartitionUnmount(r, logger, constants.StatePartitionLabel)
-	}, "unmountStatePartition"
+		systemDisk, err := blockres.GetSystemDisk(ctx, r.State().V1Alpha2().Resources())
+		if err != nil {
+			return err
+		}
+
+		if systemDisk == nil {
+			return nil // no system disk, we can't do anything
+		}
+
+		if err := bootloader.CleanupBootloader(systemDisk.DevPath, sdboot.IsBootedUsingSDBoot()); err != nil {
+			return err
+		}
+
+		if _, err := r.State().Machine().Meta().DeleteTag(ctx, metamachinery.DiskImageBootloader); err != nil {
+			return fmt.Errorf("failed to delete tag %q: %w", metamachinery.DiskImageBootloader, err)
+		}
+
+		return r.State().Machine().Meta().Flush()
+	}, "cleanupBootloader"
 }
 
 // MountEphemeralPartition mounts the ephemeral partition.
 func MountEphemeralPartition(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) error {
-		if _, err := waitForVolumeReady(ctx, r, constants.EphemeralPartitionLabel); err != nil {
-			return err
+		mountRequest := blockres.NewVolumeMountRequest(blockres.NamespaceName, constants.EphemeralPartitionLabel)
+		mountRequest.TypedSpec().VolumeID = constants.EphemeralPartitionLabel
+		mountRequest.TypedSpec().Requester = "sequencer"
+
+		if err := r.State().V1Alpha2().Resources().Create(ctx, mountRequest); err != nil {
+			return fmt.Errorf("failed to create EPHEMERAL mount request: %w", err)
 		}
 
-		return mount.SystemPartitionMount(ctx, r, logger, constants.EphemeralPartitionLabel, false,
-			mountv2.WithProjectQuota(r.Config().Machine().Features().DiskQuotaSupportEnabled()))
+		if _, err := r.State().V1Alpha2().Resources().WatchFor(
+			ctx,
+			blockres.NewVolumeMountStatus(blockres.NamespaceName, constants.EphemeralPartitionLabel).Metadata(),
+			state.WithEventTypes(state.Created, state.Updated),
+		); err != nil {
+			return fmt.Errorf("failed to wait for EPHEMERAL to be mounted: %w", err)
+		}
+
+		return nil
 	}, "mountEphemeralPartition"
 }
 
 // UnmountEphemeralPartition unmounts the ephemeral partition.
 func UnmountEphemeralPartition(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
-	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
-		return mount.SystemPartitionUnmount(r, logger, constants.EphemeralPartitionLabel)
+	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) error {
+		mountRequest := blockres.NewVolumeMountRequest(blockres.NamespaceName, constants.EphemeralPartitionLabel).Metadata()
+
+		_, err := r.State().V1Alpha2().Resources().Teardown(ctx, mountRequest)
+		if err != nil {
+			if state.IsNotFoundError(err) {
+				return nil
+			}
+
+			return fmt.Errorf("failed to teardown EPHEMERAL mount request: %w", err)
+		}
+
+		_, err = r.State().V1Alpha2().Resources().WatchFor(ctx, mountRequest, state.WithFinalizerEmpty())
+		if err != nil {
+			return fmt.Errorf("failed to wait for EPHEMERAL teardown: %w", err)
+		}
+
+		return r.State().V1Alpha2().Resources().Destroy(ctx, mountRequest)
 	}, "unmountEphemeralPartition"
 }
 
@@ -1888,6 +1819,8 @@ func KexecPrepare(_ runtime.Sequence, data any) (runtime.TaskExecutionFunc, stri
 		}
 
 		if systemDisk == nil {
+			log.Print("kexec skipped as system disk is not found")
+
 			return nil // no system disk, no kexec
 		}
 
@@ -2168,8 +2101,4 @@ func logError(err error, logger *log.Logger) error {
 
 func waitForVolumeReady(ctx context.Context, r runtime.Runtime, volumeID string) (*blockres.VolumeStatus, error) {
 	return blockres.WaitForVolumePhase(ctx, r.State().V1Alpha2().Resources(), volumeID, blockres.VolumePhaseReady)
-}
-
-func waitForVolumeReadyOrMissing(ctx context.Context, r runtime.Runtime, volumeID string) (*blockres.VolumeStatus, error) {
-	return blockres.WaitForVolumePhase(ctx, r.State().V1Alpha2().Resources(), volumeID, blockres.VolumePhaseReady, blockres.VolumePhaseMissing)
 }

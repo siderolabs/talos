@@ -207,6 +207,10 @@ func (i *Input) FillDefaults(arch, version string, secureboot bool) {
 
 	if i.BaseInstaller == zeroContainerAsset {
 		i.BaseInstaller.ImageRef = fmt.Sprintf("%s:%s", images.DefaultInstallerImageRepository, version)
+
+		if quirks.New(version).SupportsUnifiedInstaller() {
+			i.BaseInstaller.ImageRef = fmt.Sprintf("%s-base:%s", images.DefaultInstallerImageRepository, version)
+		}
 	}
 
 	if i.SDStub == zeroFileAsset {

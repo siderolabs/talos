@@ -1,6 +1,6 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
 #
-# Generated on 2024-12-24T15:00:58Z by kres fcff05e.
+# Generated on 2025-03-21T16:23:54Z by kres ec5ec04.
 
 name: integration-misc-1-cron
 concurrency:
@@ -73,7 +73,7 @@ jobs:
           PLATFORM: linux/amd64
           PUSH: "true"
         run: |
-          make talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer imager talos _out/integration-test-linux-amd64
+          make talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
       - name: talosctl-cni-bundle
         if: github.event_name == 'schedule'
         run: |
@@ -89,7 +89,7 @@ jobs:
       - name: e2e-kubespan
         env:
           GITHUB_STEP_NAME: ${{ github.job}}-e2e-kubespan
-          IMAGE_REGISTRY: registry.dev.siderolabs.io\
+          IMAGE_REGISTRY: registry.dev.siderolabs.io
           SHORT_INTEGRATION_TEST: "yes"
           WITH_CLUSTER_DISCOVERY: "true"
           WITH_KUBESPAN: "true"

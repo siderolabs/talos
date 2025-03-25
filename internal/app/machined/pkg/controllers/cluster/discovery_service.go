@@ -23,7 +23,9 @@ import (
 	"github.com/siderolabs/gen/optional"
 	"github.com/siderolabs/gen/xslices"
 	"go.uber.org/zap"
+	"google.golang.org/grpc"
 
+	"github.com/siderolabs/talos/pkg/grpc/dialer"
 	"github.com/siderolabs/talos/pkg/httpdefaults"
 	"github.com/siderolabs/talos/pkg/machinery/config/machine"
 	"github.com/siderolabs/talos/pkg/machinery/proto"
@@ -243,6 +245,9 @@ func (ctrl *DiscoveryServiceController) Run(ctx context.Context, r controller.Ru
 				ClientVersion: version.Tag,
 				TLSConfig: &tls.Config{
 					RootCAs: httpdefaults.RootCAs(),
+				},
+				DialOptions: []grpc.DialOption{
+					grpc.WithContextDialer(dialer.DynamicProxyDialer),
 				},
 			})
 			if err != nil {

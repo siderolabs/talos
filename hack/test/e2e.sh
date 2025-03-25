@@ -33,7 +33,7 @@ export TALOS_VERSION
 # Kubernetes
 
 export KUBECONFIG="${TMP}/kubeconfig"
-export KUBERNETES_VERSION=${KUBERNETES_VERSION:-1.32.2}
+export KUBERNETES_VERSION=${KUBERNETES_VERSION:-1.33.0-beta.0}
 
 export NAME_PREFIX="talos-e2e-${SHA}-${PLATFORM}"
 export TIMEOUT=1200
@@ -73,7 +73,7 @@ function run_talos_integration_test {
     -talos.provisioner "${PROVISIONER}" \
     -talos.name "${CLUSTER_NAME}" \
     -talos.image "${REGISTRY}/siderolabs/talos" \
-    "${EXTRA_TEST_ARGS[@]}" \
+    ${EXTRA_TEST_ARGS:-} \
     "${TEST_RUN[@]}" \
     "${TEST_SHORT[@]}"
 }
@@ -104,7 +104,7 @@ function run_talos_integration_test_docker {
     -talos.provisioner "${PROVISIONER}" \
     -talos.name "${CLUSTER_NAME}" \
     -talos.image "${REGISTRY}/siderolabs/talos" \
-    "${EXTRA_TEST_ARGS[@]}" \
+    ${EXTRA_TEST_ARGS:-} \
     "${TEST_RUN[@]}" \
     "${TEST_SHORT[@]}"
 }

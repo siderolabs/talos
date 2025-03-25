@@ -20,6 +20,8 @@ message ConfigSpec {
 message StatusSpec {
   string host = 1;
   bool connected = 2;
+  string link_name = 3;
+  bool grpc_tunnel = 4;
 }
 
 // TunnelSpec describes Siderolink GRPC Tunnel configuration.

@@ -27,6 +27,8 @@ type VolumeStatusSpec struct {
 	Phase        VolumePhase `yaml:"phase" protobuf:"1"`
 	PreFailPhase VolumePhase `yaml:"preFailPhase,omitempty" protobuf:"6"`
 
+	Type VolumeType `yaml:"type" protobuf:"16"`
+
 	// Location is the path to the block device (raw).
 	Location string `yaml:"location,omitempty" protobuf:"2"`
 	// MountLocation is the location to be mounted, might be different from location.
@@ -44,9 +46,12 @@ type VolumeStatusSpec struct {
 	// Filesystem is the filesystem type.
 	Filesystem FilesystemType `yaml:"filesystem,omitempty" protobuf:"10"`
 
-	// EncryptionProvider is the provider of the encryption.
-	EncryptionProvider    EncryptionProviderType `yaml:"encryptionProvider,omitempty" protobuf:"12"`
-	EncryptionFailedSyncs []string               `yaml:"encryptionFailedSyncs,omitempty" protobuf:"14"`
+	// EncryptionProvider is the provider of the encryption which was used to unlock the volume.
+	EncryptionProvider EncryptionProviderType `yaml:"encryptionProvider,omitempty" protobuf:"12"`
+	// EncryptionFailedSyncs is the list of failed syncs for the volume (per key/provider)/
+	EncryptionFailedSyncs []string `yaml:"encryptionFailedSyncs,omitempty" protobuf:"14"`
+	// ConfiguredEncryptionKeys is the list of configured encryption keys for the volume.
+	ConfiguredEncryptionKeys []string `yaml:"configuredEncryptionKeys,omitempty" protobuf:"17"`
 
 	// MountSpec is the mount specification.
 	MountSpec MountSpec `yaml:"mountSpec,omitempty" protobuf:"15"`
@@ -78,6 +83,10 @@ func (VolumeStatusExtension) ResourceDefinition() meta.ResourceDefinitionSpec {
 		Aliases:          []resource.Type{},
 		DefaultNamespace: NamespaceName,
 		PrintColumns: []meta.PrintColumn{
+			{
+				Name:     "Type",
+				JSONPath: `{.type}`,
+			},
 			{
 				Name:     "Phase",
 				JSONPath: `{.phase}`,

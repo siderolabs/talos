@@ -47,7 +47,7 @@ func (ctrl *VolumeConfigController) Inputs() []controller.Input {
 		{
 			Namespace: config.NamespaceName,
 			Type:      config.MachineConfigType,
-			ID:        optional.Some(config.V1Alpha1ID),
+			ID:        optional.Some(config.ActiveID),
 			Kind:      controller.InputWeak,
 		},
 		{
@@ -141,7 +141,7 @@ func (ctrl *VolumeConfigController) Run(ctx context.Context, r controller.Runtim
 		}
 
 		// load config if present
-		cfg, err := safe.ReaderGetByID[*config.MachineConfig](ctx, r, config.V1Alpha1ID)
+		cfg, err := safe.ReaderGetByID[*config.MachineConfig](ctx, r, config.ActiveID)
 		if err != nil && !state.IsNotFoundError(err) {
 			return fmt.Errorf("error fetching machine configuration")
 		}
@@ -207,7 +207,20 @@ func (ctrl *VolumeConfigController) Run(ctx context.Context, r controller.Runtim
 	}
 }
 
+func (ctrl *VolumeConfigController) manageEphemeralInContainer(vc *block.VolumeConfig) error {
+	vc.TypedSpec().Type = block.VolumeTypeDirectory
+	vc.TypedSpec().Mount = block.MountSpec{
+		TargetPath: constants.EphemeralMountPoint,
+	}
+
+	return nil
+}
+
 func (ctrl *VolumeConfigController) manageEphemeral(config cfg.Config) func(vc *block.VolumeConfig) error {
+	if ctrl.V1Alpha1Mode.InContainer() {
+		return ctrl.manageEphemeralInContainer
+	}
+
 	return func(vc *block.VolumeConfig) error {
 		extraVolumeConfig, _ := config.Volumes().ByName(constants.EphemeralPartitionLabel)
 
@@ -232,8 +245,9 @@ func (ctrl *VolumeConfigController) manageEphemeral(config cfg.Config) func(vc *
 		}
 
 		vc.TypedSpec().Mount = block.MountSpec{
-			TargetPath:   constants.EphemeralMountPoint,
-			SelinuxLabel: constants.EphemeralSelinuxLabel,
+			TargetPath:          constants.EphemeralMountPoint,
+			SelinuxLabel:        constants.EphemeralSelinuxLabel,
+			ProjectQuotaSupport: config.Machine().Features().DiskQuotaSupportEnabled(),
 		}
 
 		vc.TypedSpec().Locator = block.LocatorSpec{
@@ -251,7 +265,20 @@ func (ctrl *VolumeConfigController) manageEphemeral(config cfg.Config) func(vc *
 	}
 }
 
+func (ctrl *VolumeConfigController) manageStateInContainer(vc *block.VolumeConfig) error {
+	vc.TypedSpec().Type = block.VolumeTypeDirectory
+	vc.TypedSpec().Mount = block.MountSpec{
+		TargetPath: constants.StateMountPoint,
+	}
+
+	return nil
+}
+
 func (ctrl *VolumeConfigController) manageStateConfigPresent(config cfg.Config) func(vc *block.VolumeConfig) error {
+	if ctrl.V1Alpha1Mode.InContainer() {
+		return ctrl.manageStateInContainer
+	}
+
 	return func(vc *block.VolumeConfig) error {
 		vc.TypedSpec().Type = block.VolumeTypePartition
 		vc.TypedSpec().Mount = block.MountSpec{
@@ -292,6 +319,10 @@ func (ctrl *VolumeConfigController) manageStateConfigPresent(config cfg.Config) 
 }
 
 func (ctrl *VolumeConfigController) manageStateNoConfig(encryptionMeta *runtime.MetaKey) func(vc *block.VolumeConfig) error {
+	if ctrl.V1Alpha1Mode.InContainer() {
+		return ctrl.manageStateInContainer
+	}
+
 	return func(vc *block.VolumeConfig) error {
 		vc.TypedSpec().Type = block.VolumeTypePartition
 		vc.TypedSpec().Mount = block.MountSpec{

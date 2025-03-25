@@ -10,7 +10,6 @@ import (
 	"fmt"
 	"iter"
 	"net/netip"
-	"runtime"
 	"slices"
 	"strings"
 	"time"
@@ -54,9 +53,6 @@ func NewManager(mr MemberReader, hook suture.EventHook, logger *zap.Logger) *Man
 		logger:      logger,
 		runners:     map[AddressPair]suture.ServiceToken{},
 	}
-
-	// If we lost ref to the manager. Ensure finalizer is called and all upstreams are collected.
-	runtime.SetFinalizer(m, (*Manager).finalize)
 
 	return m
 }
@@ -189,20 +185,6 @@ func (m *Manager) clearAll() iter.Seq2[AddressPair, error] {
 
 			delete(m.runners, runData)
 		}
-	}
-}
-
-func (m *Manager) finalize() {
-	for data, err := range m.clearAll() {
-		if err != nil {
-			m.logger.Error("error stopping dns runner", zap.Error(err))
-		}
-
-		m.logger.Info(
-			"dns runner stopped from finalizer!",
-			zap.String("address", data.Addr.String()),
-			zap.String("network", data.Network),
-		)
 	}
 }
 

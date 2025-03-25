@@ -184,6 +184,11 @@ func (e *Etcd) DependsOn(runtime.Runtime) []string {
 	return []string{"cri"}
 }
 
+// Volumes implements the Service interface.
+func (e *Etcd) Volumes() []string {
+	return nil
+}
+
 // Runner implements the Service interface.
 func (e *Etcd) Runner(r runtime.Runtime) (runner.Runner, error) {
 	// Set the process arguments.

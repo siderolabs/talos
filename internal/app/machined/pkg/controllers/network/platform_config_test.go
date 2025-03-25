@@ -11,206 +11,77 @@ import (
 	"net/netip"
 	"os"
 	"path/filepath"
-	"sync"
 	"testing"
 	"time"
 
-	"github.com/cosi-project/runtime/pkg/controller/runtime"
 	"github.com/cosi-project/runtime/pkg/resource"
+	"github.com/cosi-project/runtime/pkg/resource/rtestutils"
 	"github.com/cosi-project/runtime/pkg/state"
-	"github.com/cosi-project/runtime/pkg/state/impl/inmem"
-	"github.com/cosi-project/runtime/pkg/state/impl/namespaced"
 	"github.com/siderolabs/go-procfs/procfs"
-	"github.com/siderolabs/go-retry/retry"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
-	"go.uber.org/zap/zaptest"
 
+	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/ctest"
 	netctrl "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/network"
 	v1alpha1runtime "github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/imager/quirks"
 	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
+	"github.com/siderolabs/talos/pkg/machinery/resources/block"
 	"github.com/siderolabs/talos/pkg/machinery/resources/network"
 	runtimeres "github.com/siderolabs/talos/pkg/machinery/resources/runtime"
-	"github.com/siderolabs/talos/pkg/machinery/resources/v1alpha1"
 )
 
 type PlatformConfigSuite struct {
-	suite.Suite
-
-	state state.State
-
-	statePath string
-
-	runtime *runtime.Runtime
-	wg      sync.WaitGroup
-
-	ctx       context.Context //nolint:containedctx
-	ctxCancel context.CancelFunc
-}
-
-func (suite *PlatformConfigSuite) SetupTest() {
-	suite.ctx, suite.ctxCancel = context.WithTimeout(context.Background(), 3*time.Minute)
-
-	suite.state = state.WrapCore(namespaced.NewState(inmem.Build))
-
-	var err error
-
-	suite.runtime, err = runtime.NewRuntime(suite.state, zaptest.NewLogger(suite.T()))
-	suite.Require().NoError(err)
-
-	suite.statePath = suite.T().TempDir()
-}
-
-func (suite *PlatformConfigSuite) startRuntime() {
-	suite.wg.Add(1)
-
-	go func() {
-		defer suite.wg.Done()
-
-		suite.Assert().NoError(suite.runtime.Run(suite.ctx))
-	}()
-}
-
-func (suite *PlatformConfigSuite) assertResources(
-	resourceNamespace resource.Namespace,
-	resourceType resource.Type,
-	requiredIDs []string,
-	check func(resource.Resource) error,
-) error {
-	missingIDs := make(map[string]struct{}, len(requiredIDs))
-
-	for _, id := range requiredIDs {
-		missingIDs[id] = struct{}{}
-	}
-
-	resources, err := suite.state.List(
-		suite.ctx,
-		resource.NewMetadata(resourceNamespace, resourceType, "", resource.VersionUndefined),
-	)
-	if err != nil {
-		return err
-	}
-
-	for _, res := range resources.Items {
-		if _, ok := missingIDs[res.Metadata().ID()]; ok {
-			if err = check(res); err != nil {
-				return retry.ExpectedError(err)
-			}
-		}
-
-		delete(missingIDs, res.Metadata().ID())
-	}
-
-	if len(missingIDs) > 0 {
-		return retry.ExpectedErrorf("some resources are missing: %q", missingIDs)
-	}
-
-	return nil
-}
-
-func (suite *PlatformConfigSuite) assertNoResource(resourceType resource.Type, id string) error {
-	resources, err := suite.state.List(
-		suite.ctx,
-		resource.NewMetadata(network.ConfigNamespaceName, resourceType, "", resource.VersionUndefined),
-	)
-	if err != nil {
-		return err
-	}
-
-	for _, res := range resources.Items {
-		if res.Metadata().ID() == id {
-			return retry.ExpectedErrorf("spec %q is still there", id)
-		}
-	}
-
-	return nil
+	ctest.DefaultSuite
 }
 
 func (suite *PlatformConfigSuite) TestNoPlatform() {
-	suite.Require().NoError(suite.runtime.RegisterController(&netctrl.PlatformConfigController{}))
+	suite.Require().NoError(suite.Runtime().RegisterController(&netctrl.PlatformConfigController{}))
 
-	suite.startRuntime()
-
-	suite.Assert().NoError(
-		retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-			func() error {
-				return suite.assertNoResource(network.HostnameSpecType, "platform/hostname")
-			},
-		),
-	)
+	ctest.AssertNoResource[*network.HostnameSpec](suite, "platform/hostname", rtestutils.WithNamespace(network.ConfigNamespaceName))
 }
 
 func (suite *PlatformConfigSuite) TestPlatformMockHostname() {
 	suite.Require().NoError(
-		suite.runtime.RegisterController(
+		suite.Runtime().RegisterController(
 			&netctrl.PlatformConfigController{
 				V1alpha1Platform: &platformMock{hostname: []byte("talos-e2e-897b4e49-gcp-controlplane-jvcnl.c.talos-testbed.internal")},
-				StatePath:        suite.statePath,
 			},
 		),
 	)
 
-	suite.startRuntime()
+	ctest.AssertResource(suite, "platform/hostname", func(hostname *network.HostnameSpec, asrt *assert.Assertions) {
+		spec := hostname.TypedSpec()
 
-	suite.Assert().NoError(
-		retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-			func() error {
-				return suite.assertResources(
-					network.ConfigNamespaceName, network.HostnameSpecType, []string{
-						"platform/hostname",
-					}, func(r resource.Resource) error {
-						spec := r.(*network.HostnameSpec).TypedSpec()
-
-						suite.Assert().Equal("talos-e2e-897b4e49-gcp-controlplane-jvcnl", spec.Hostname)
-						suite.Assert().Equal("c.talos-testbed.internal", spec.Domainname)
-						suite.Assert().Equal(network.ConfigPlatform, spec.ConfigLayer)
-
-						return nil
-					},
-				)
-			},
-		),
-	)
+		asrt.Equal("talos-e2e-897b4e49-gcp-controlplane-jvcnl", spec.Hostname)
+		asrt.Equal("c.talos-testbed.internal", spec.Domainname)
+		asrt.Equal(network.ConfigPlatform, spec.ConfigLayer)
+	}, rtestutils.WithNamespace(network.ConfigNamespaceName))
 }
 
 func (suite *PlatformConfigSuite) TestPlatformMockHostnameNoDomain() {
 	suite.Require().NoError(
-		suite.runtime.RegisterController(
+		suite.Runtime().RegisterController(
 			&netctrl.PlatformConfigController{
 				V1alpha1Platform: &platformMock{hostname: []byte("talos-e2e-897b4e49-gcp-controlplane-jvcnl")},
-				StatePath:        suite.statePath,
-				PlatformState:    suite.state,
+				PlatformState:    suite.State(),
 			},
 		),
 	)
 
-	suite.startRuntime()
+	ctest.AssertResource(suite, "platform/hostname", func(hostname *network.HostnameSpec, asrt *assert.Assertions) {
+		spec := hostname.TypedSpec()
 
-	suite.Assert().NoError(
-		retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-			func() error {
-				return suite.assertResources(
-					network.ConfigNamespaceName, network.HostnameSpecType, []string{
-						"platform/hostname",
-					}, func(r resource.Resource) error {
-						spec := r.(*network.HostnameSpec).TypedSpec()
-
-						suite.Assert().Equal("talos-e2e-897b4e49-gcp-controlplane-jvcnl", spec.Hostname)
-						suite.Assert().Equal("", spec.Domainname)
-						suite.Assert().Equal(network.ConfigPlatform, spec.ConfigLayer)
-
-						return nil
-					},
-				)
-			},
-		),
-	)
+		asrt.Equal("talos-e2e-897b4e49-gcp-controlplane-jvcnl", spec.Hostname)
+		asrt.Equal("", spec.Domainname)
+		asrt.Equal(network.ConfigPlatform, spec.ConfigLayer)
+	}, rtestutils.WithNamespace(network.ConfigNamespaceName))
 }
 
 func (suite *PlatformConfigSuite) TestPlatformMockAddresses() {
 	suite.Require().NoError(
-		suite.runtime.RegisterController(
+		suite.Runtime().RegisterController(
 			&netctrl.PlatformConfigController{
 				V1alpha1Platform: &platformMock{
 					addresses: []netip.Prefix{
@@ -218,259 +89,168 @@ func (suite *PlatformConfigSuite) TestPlatformMockAddresses() {
 						netip.MustParsePrefix("2001:fd::3/64"),
 					},
 				},
-				StatePath:     suite.statePath,
-				PlatformState: suite.state,
+				PlatformState: suite.State(),
 			},
 		),
 	)
 
-	suite.startRuntime()
+	ctest.AssertResources(suite, []string{
+		"platform/eth0/192.168.1.24/24",
+		"platform/eth0/2001:fd::3/64",
+	}, func(r *network.AddressSpec, asrt *assert.Assertions) {
+		spec := r.TypedSpec()
 
-	suite.Assert().NoError(
-		retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-			func() error {
-				return suite.assertResources(
-					network.ConfigNamespaceName, network.AddressSpecType, []string{
-						"platform/eth0/192.168.1.24/24",
-						"platform/eth0/2001:fd::3/64",
-					}, func(r resource.Resource) error {
-						spec := r.(*network.AddressSpec).TypedSpec()
+		switch r.Metadata().ID() {
+		case "platform/eth0/192.168.1.24/24":
+			asrt.Equal(nethelpers.FamilyInet4, spec.Family)
+			asrt.Equal("192.168.1.24/24", spec.Address.String())
+		case "platform/eth0/2001:fd::3/64":
+			asrt.Equal(nethelpers.FamilyInet6, spec.Family)
+			asrt.Equal("2001:fd::3/64", spec.Address.String())
+		}
 
-						switch r.Metadata().ID() {
-						case "platform/eth0/192.168.1.24/24":
-							suite.Assert().Equal(nethelpers.FamilyInet4, spec.Family)
-							suite.Assert().Equal("192.168.1.24/24", spec.Address.String())
-						case "platform/eth0/2001:fd::3/64":
-							suite.Assert().Equal(nethelpers.FamilyInet6, spec.Family)
-							suite.Assert().Equal("2001:fd::3/64", spec.Address.String())
-						}
-
-						suite.Assert().Equal(network.ConfigPlatform, spec.ConfigLayer)
-
-						return nil
-					},
-				)
-			},
-		),
-	)
+		asrt.Equal(network.ConfigPlatform, spec.ConfigLayer)
+	}, rtestutils.WithNamespace(network.ConfigNamespaceName))
 }
 
 func (suite *PlatformConfigSuite) TestPlatformMockLinks() {
 	suite.Require().NoError(
-		suite.runtime.RegisterController(
+		suite.Runtime().RegisterController(
 			&netctrl.PlatformConfigController{
 				V1alpha1Platform: &platformMock{
 					linksUp: []string{"eth0", "eth1"},
 				},
-				StatePath:     suite.statePath,
-				PlatformState: suite.state,
+				PlatformState: suite.State(),
 			},
 		),
 	)
 
-	suite.startRuntime()
+	ctest.AssertResources(suite, []string{
+		"platform/eth0",
+		"platform/eth1",
+	}, func(r *network.LinkSpec, asrt *assert.Assertions) {
+		spec := r.TypedSpec()
 
-	suite.Assert().NoError(
-		retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-			func() error {
-				return suite.assertResources(
-					network.ConfigNamespaceName, network.LinkSpecType, []string{
-						"platform/eth0",
-						"platform/eth1",
-					}, func(r resource.Resource) error {
-						spec := r.(*network.LinkSpec).TypedSpec()
-
-						suite.Assert().True(spec.Up)
-						suite.Assert().Equal(network.ConfigPlatform, spec.ConfigLayer)
-
-						return nil
-					},
-				)
-			},
-		),
-	)
+		asrt.True(spec.Up)
+		asrt.Equal(network.ConfigPlatform, spec.ConfigLayer)
+	}, rtestutils.WithNamespace(network.ConfigNamespaceName))
 }
 
 func (suite *PlatformConfigSuite) TestPlatformMockRoutes() {
 	suite.Require().NoError(
-		suite.runtime.RegisterController(
+		suite.Runtime().RegisterController(
 			&netctrl.PlatformConfigController{
 				V1alpha1Platform: &platformMock{
 					defaultRoutes: []netip.Addr{netip.MustParseAddr("10.0.0.1")},
 				},
-				StatePath:     suite.statePath,
-				PlatformState: suite.state,
+				PlatformState: suite.State(),
 			},
 		),
 	)
 
-	suite.startRuntime()
+	ctest.AssertResources(suite, []string{
+		"platform/inet4/10.0.0.1//1024",
+	}, func(r *network.RouteSpec, asrt *assert.Assertions) {
+		spec := r.TypedSpec()
 
-	suite.Assert().NoError(
-		retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-			func() error {
-				return suite.assertResources(
-					network.ConfigNamespaceName, network.RouteSpecType, []string{
-						"platform/inet4/10.0.0.1//1024",
-					}, func(r resource.Resource) error {
-						spec := r.(*network.RouteSpec).TypedSpec()
-
-						suite.Assert().Equal("10.0.0.1", spec.Gateway.String())
-						suite.Assert().Equal(network.ConfigPlatform, spec.ConfigLayer)
-
-						return nil
-					},
-				)
-			},
-		),
-	)
+		asrt.Equal("10.0.0.1", spec.Gateway.String())
+		asrt.Equal(network.ConfigPlatform, spec.ConfigLayer)
+	}, rtestutils.WithNamespace(network.ConfigNamespaceName))
 }
 
 func (suite *PlatformConfigSuite) TestPlatformMockOperators() {
 	suite.Require().NoError(
-		suite.runtime.RegisterController(
+		suite.Runtime().RegisterController(
 			&netctrl.PlatformConfigController{
 				V1alpha1Platform: &platformMock{
 					dhcp4Links: []string{"eth1", "eth2"},
 				},
-				StatePath:     suite.statePath,
-				PlatformState: suite.state,
+				PlatformState: suite.State(),
 			},
 		),
 	)
 
-	suite.startRuntime()
+	ctest.AssertResources(suite, []string{
+		"platform/dhcp4/eth1",
+		"platform/dhcp4/eth2",
+	}, func(r *network.OperatorSpec, asrt *assert.Assertions) {
+		spec := r.TypedSpec()
 
-	suite.Assert().NoError(
-		retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-			func() error {
-				return suite.assertResources(
-					network.ConfigNamespaceName, network.OperatorSpecType, []string{
-						"platform/dhcp4/eth1",
-						"platform/dhcp4/eth2",
-					}, func(r resource.Resource) error {
-						spec := r.(*network.OperatorSpec).TypedSpec()
-
-						suite.Assert().Equal(network.OperatorDHCP4, spec.Operator)
-						suite.Assert().Equal(network.ConfigPlatform, spec.ConfigLayer)
-
-						return nil
-					},
-				)
-			},
-		),
-	)
+		asrt.Equal(network.OperatorDHCP4, spec.Operator)
+		asrt.Equal(network.ConfigPlatform, spec.ConfigLayer)
+	}, rtestutils.WithNamespace(network.ConfigNamespaceName))
 }
 
 func (suite *PlatformConfigSuite) TestPlatformMockResolvers() {
 	suite.Require().NoError(
-		suite.runtime.RegisterController(
+		suite.Runtime().RegisterController(
 			&netctrl.PlatformConfigController{
 				V1alpha1Platform: &platformMock{
 					resolvers: []netip.Addr{netip.MustParseAddr("1.1.1.1")},
 				},
-				StatePath:     suite.statePath,
-				PlatformState: suite.state,
+				PlatformState: suite.State(),
 			},
 		),
 	)
 
-	suite.startRuntime()
+	ctest.AssertResources(suite, []string{
+		"platform/resolvers",
+	}, func(r *network.ResolverSpec, asrt *assert.Assertions) {
+		spec := r.TypedSpec()
 
-	suite.Assert().NoError(
-		retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-			func() error {
-				return suite.assertResources(
-					network.ConfigNamespaceName, network.ResolverSpecType, []string{
-						"platform/resolvers",
-					}, func(r resource.Resource) error {
-						spec := r.(*network.ResolverSpec).TypedSpec()
-
-						suite.Assert().Equal("[1.1.1.1]", fmt.Sprintf("%s", spec.DNSServers))
-						suite.Assert().Equal(network.ConfigPlatform, spec.ConfigLayer)
-
-						return nil
-					},
-				)
-			},
-		),
-	)
+		asrt.Equal("[1.1.1.1]", fmt.Sprintf("%s", spec.DNSServers))
+		asrt.Equal(network.ConfigPlatform, spec.ConfigLayer)
+	}, rtestutils.WithNamespace(network.ConfigNamespaceName))
 }
 
 func (suite *PlatformConfigSuite) TestPlatformMockTimeServers() {
 	suite.Require().NoError(
-		suite.runtime.RegisterController(
+		suite.Runtime().RegisterController(
 			&netctrl.PlatformConfigController{
 				V1alpha1Platform: &platformMock{
 					timeServers: []string{"pool.ntp.org"},
 				},
-				StatePath:     suite.statePath,
-				PlatformState: suite.state,
+				PlatformState: suite.State(),
 			},
 		),
 	)
 
-	suite.startRuntime()
+	ctest.AssertResources(suite, []string{
+		"platform/timeservers",
+	}, func(r *network.TimeServerSpec, asrt *assert.Assertions) {
+		spec := r.TypedSpec()
 
-	suite.Assert().NoError(
-		retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-			func() error {
-				return suite.assertResources(
-					network.ConfigNamespaceName, network.TimeServerSpecType, []string{
-						"platform/timeservers",
-					}, func(r resource.Resource) error {
-						spec := r.(*network.TimeServerSpec).TypedSpec()
-
-						suite.Assert().Equal("[pool.ntp.org]", fmt.Sprintf("%s", spec.NTPServers))
-						suite.Assert().Equal(network.ConfigPlatform, spec.ConfigLayer)
-
-						return nil
-					},
-				)
-			},
-		),
-	)
+		asrt.Equal("[pool.ntp.org]", fmt.Sprintf("%s", spec.NTPServers))
+		asrt.Equal(network.ConfigPlatform, spec.ConfigLayer)
+	}, rtestutils.WithNamespace(network.ConfigNamespaceName))
 }
 
 func (suite *PlatformConfigSuite) TestPlatformMockProbes() {
 	suite.Require().NoError(
-		suite.runtime.RegisterController(
+		suite.Runtime().RegisterController(
 			&netctrl.PlatformConfigController{
 				V1alpha1Platform: &platformMock{
 					tcpProbes: []string{"example.com:80", "example.com:443"},
 				},
-				StatePath:     suite.statePath,
-				PlatformState: suite.state,
+				PlatformState: suite.State(),
 			},
 		),
 	)
 
-	suite.startRuntime()
+	ctest.AssertResources(suite, []string{
+		"tcp:example.com:80",
+		"tcp:example.com:443",
+	}, func(r *network.ProbeSpec, asrt *assert.Assertions) {
+		spec := r.TypedSpec()
 
-	suite.Assert().NoError(
-		retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-			func() error {
-				return suite.assertResources(
-					network.NamespaceName, network.ProbeSpecType, []string{
-						"tcp:example.com:80",
-						"tcp:example.com:443",
-					}, func(r resource.Resource) error {
-						spec := r.(*network.ProbeSpec).TypedSpec()
-
-						suite.Assert().Equal(time.Second, spec.Interval)
-						suite.Assert().Equal(network.ConfigPlatform, spec.ConfigLayer)
-
-						return nil
-					},
-				)
-			},
-		),
-	)
+		asrt.Equal(time.Second, spec.Interval)
+		asrt.Equal(network.ConfigPlatform, spec.ConfigLayer)
+	})
 }
 
 func (suite *PlatformConfigSuite) TestPlatformMockExternalIPs() {
 	suite.Require().NoError(
-		suite.runtime.RegisterController(
+		suite.Runtime().RegisterController(
 			&netctrl.PlatformConfigController{
 				V1alpha1Platform: &platformMock{
 					externalIPs: []netip.Addr{
@@ -478,44 +258,31 @@ func (suite *PlatformConfigSuite) TestPlatformMockExternalIPs() {
 						netip.MustParseAddr("2001:470:6d:30e:96f4:4219:5733:b860"),
 					},
 				},
-				StatePath:     suite.statePath,
-				PlatformState: suite.state,
+				PlatformState: suite.State(),
 			},
 		),
 	)
 
-	suite.startRuntime()
+	ctest.AssertResources(suite, []string{
+		"external/10.3.4.5/32",
+		"external/2001:470:6d:30e:96f4:4219:5733:b860/128",
+	}, func(r *network.AddressStatus, asrt *assert.Assertions) {
+		spec := r.TypedSpec()
 
-	suite.Assert().NoError(
-		retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-			func() error {
-				return suite.assertResources(
-					network.NamespaceName, network.AddressStatusType, []string{
-						"external/10.3.4.5/32",
-						"external/2001:470:6d:30e:96f4:4219:5733:b860/128",
-					}, func(r resource.Resource) error {
-						spec := r.(*network.AddressStatus).TypedSpec()
+		asrt.Equal("external", spec.LinkName)
+		asrt.Equal(nethelpers.ScopeGlobal, spec.Scope)
 
-						suite.Assert().Equal("external", spec.LinkName)
-						suite.Assert().Equal(nethelpers.ScopeGlobal, spec.Scope)
-
-						if r.Metadata().ID() == "external/10.3.4.5/32" {
-							suite.Assert().Equal(nethelpers.FamilyInet4, spec.Family)
-						} else {
-							suite.Assert().Equal(nethelpers.FamilyInet6, spec.Family)
-						}
-
-						return nil
-					},
-				)
-			},
-		),
-	)
+		if r.Metadata().ID() == "external/10.3.4.5/32" {
+			asrt.Equal(nethelpers.FamilyInet4, spec.Family)
+		} else {
+			asrt.Equal(nethelpers.FamilyInet6, spec.Family)
+		}
+	})
 }
 
 func (suite *PlatformConfigSuite) TestPlatformMockMetadata() {
 	suite.Require().NoError(
-		suite.runtime.RegisterController(
+		suite.Runtime().RegisterController(
 			&netctrl.PlatformConfigController{
 				V1alpha1Platform: &platformMock{
 					metadata: &runtimeres.PlatformMetadataSpec{
@@ -523,39 +290,23 @@ func (suite *PlatformConfigSuite) TestPlatformMockMetadata() {
 						Zone:     "mock-zone",
 					},
 				},
-				StatePath:     suite.statePath,
-				PlatformState: suite.state,
+				PlatformState: suite.State(),
 			},
 		),
 	)
 
-	suite.startRuntime()
-
-	suite.Assert().NoError(
-		retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-			func() error {
-				return suite.assertResources(
-					runtimeres.NamespaceName, runtimeres.PlatformMetadataType, []string{
-						runtimeres.PlatformMetadataID,
-					}, func(r resource.Resource) error {
-						spec := r.(*runtimeres.PlatformMetadata).TypedSpec()
-
-						suite.Assert().Equal("mock", spec.Platform)
-						suite.Assert().Equal("mock-zone", spec.Zone)
-
-						return nil
-					},
-				)
-			},
-		),
-	)
+	ctest.AssertResource(suite, runtimeres.PlatformMetadataID,
+		func(r *runtimeres.PlatformMetadata, asrt *assert.Assertions) {
+			asrt.Equal("mock", r.TypedSpec().Platform)
+			asrt.Equal("mock-zone", r.TypedSpec().Zone)
+		})
 }
 
 const sampleStoredConfig = "addresses: []\nlinks: []\nroutes: []\nhostnames:\n    - hostname: talos-e2e-897b4e49-gcp-controlplane-jvcnl\n      domainname: \"\"\n      layer: default\nresolvers: []\ntimeServers: []\noperators: []\nexternalIPs:\n    - 10.3.4.5\n    - 2001:470:6d:30e:96f4:4219:5733:b860\n" //nolint:lll
 
 func (suite *PlatformConfigSuite) TestStoreConfig() {
 	suite.Require().NoError(
-		suite.runtime.RegisterController(
+		suite.Runtime().RegisterController(
 			&netctrl.PlatformConfigController{
 				V1alpha1Platform: &platformMock{
 					hostname: []byte("talos-e2e-897b4e49-gcp-controlplane-jvcnl"),
@@ -564,122 +315,110 @@ func (suite *PlatformConfigSuite) TestStoreConfig() {
 						netip.MustParseAddr("2001:470:6d:30e:96f4:4219:5733:b860"),
 					},
 				},
-				StatePath:     suite.statePath,
-				PlatformState: suite.state,
+				PlatformState: suite.State(),
 			},
 		),
 	)
 
-	suite.startRuntime()
+	statePath := suite.T().TempDir()
+	mountID := (&netctrl.PlatformConfigController{}).Name() + "-" + constants.StatePartitionLabel
 
-	stateMount := runtimeres.NewMountStatus(v1alpha1.NamespaceName, constants.StatePartitionLabel)
+	ctest.AssertResource(suite, mountID, func(mountRequest *block.VolumeMountRequest, asrt *assert.Assertions) {
+		asrt.Equal(constants.StatePartitionLabel, mountRequest.TypedSpec().VolumeID)
+	})
 
-	suite.Assert().NoError(suite.state.Create(suite.ctx, stateMount))
+	volumeMountStatus := block.NewVolumeMountStatus(block.NamespaceName, mountID)
+	volumeMountStatus.TypedSpec().Target = statePath
+	suite.Create(volumeMountStatus)
 
-	suite.Assert().NoError(
-		retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-			func() error {
-				contents, err := os.ReadFile(filepath.Join(suite.statePath, constants.PlatformNetworkConfigFilename))
-				if err != nil {
-					if os.IsNotExist(err) {
-						return retry.ExpectedError(err)
-					}
+	suite.EventuallyWithT(func(collect *assert.CollectT) {
+		asrt := assert.New(collect)
 
-					return err
-				}
+		contents, err := os.ReadFile(filepath.Join(statePath, constants.PlatformNetworkConfigFilename))
+		asrt.NoError(err)
 
-				suite.Assert().Equal(sampleStoredConfig, string(contents))
+		asrt.Equal(sampleStoredConfig, string(contents))
+	}, time.Second, 10*time.Millisecond)
 
-				return nil
-			},
-		),
-	)
+	ctest.AssertResources(suite, []resource.ID{volumeMountStatus.Metadata().ID()}, func(vms *block.VolumeMountStatus, asrt *assert.Assertions) {
+		asrt.True(vms.Metadata().Finalizers().Empty())
+	})
+
+	suite.Destroy(volumeMountStatus)
+
+	ctest.AssertNoResource[*block.VolumeMountRequest](suite, mountID)
 }
 
 func (suite *PlatformConfigSuite) TestLoadConfig() {
 	suite.Require().NoError(
-		suite.runtime.RegisterController(
+		suite.Runtime().RegisterController(
 			&netctrl.PlatformConfigController{
 				V1alpha1Platform: &platformMock{
 					noData: true,
 				},
-				StatePath:     suite.statePath,
-				PlatformState: suite.state,
+				PlatformState: suite.State(),
 			},
 		),
 	)
 
-	suite.startRuntime()
+	statePath := suite.T().TempDir()
+	mountID := (&netctrl.PlatformConfigController{}).Name() + "-" + constants.StatePartitionLabel
 
 	suite.Require().NoError(
 		os.WriteFile(
-			filepath.Join(suite.statePath, constants.PlatformNetworkConfigFilename),
+			filepath.Join(statePath, constants.PlatformNetworkConfigFilename),
 			[]byte(sampleStoredConfig),
 			0o400,
 		),
 	)
 
-	stateMount := runtimeres.NewMountStatus(v1alpha1.NamespaceName, constants.StatePartitionLabel)
+	ctest.AssertResource(suite, mountID, func(mountRequest *block.VolumeMountRequest, asrt *assert.Assertions) {
+		asrt.Equal(constants.StatePartitionLabel, mountRequest.TypedSpec().VolumeID)
+	})
 
-	suite.Assert().NoError(suite.state.Create(suite.ctx, stateMount))
+	volumeMountStatus := block.NewVolumeMountStatus(block.NamespaceName, mountID)
+	volumeMountStatus.TypedSpec().Target = statePath
+	suite.Create(volumeMountStatus)
 
 	// controller should pick up cached network configuration
-	suite.Assert().NoError(
-		retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-			func() error {
-				return suite.assertResources(
-					network.NamespaceName, network.AddressStatusType, []string{
-						"external/10.3.4.5/32",
-						"external/2001:470:6d:30e:96f4:4219:5733:b860/128",
-					}, func(r resource.Resource) error {
-						spec := r.(*network.AddressStatus).TypedSpec()
+	ctest.AssertResources(suite, []string{
+		"external/10.3.4.5/32",
+		"external/2001:470:6d:30e:96f4:4219:5733:b860/128",
+	}, func(r *network.AddressStatus, asrt *assert.Assertions) {
+		spec := r.TypedSpec()
 
-						suite.Assert().Equal("external", spec.LinkName)
-						suite.Assert().Equal(nethelpers.ScopeGlobal, spec.Scope)
+		asrt.Equal("external", spec.LinkName)
+		asrt.Equal(nethelpers.ScopeGlobal, spec.Scope)
 
-						if r.Metadata().ID() == "external/10.3.4.5/32" {
-							suite.Assert().Equal(nethelpers.FamilyInet4, spec.Family)
-						} else {
-							suite.Assert().Equal(nethelpers.FamilyInet6, spec.Family)
-						}
+		if r.Metadata().ID() == "external/10.3.4.5/32" {
+			asrt.Equal(nethelpers.FamilyInet4, spec.Family)
+		} else {
+			asrt.Equal(nethelpers.FamilyInet6, spec.Family)
+		}
+	})
 
-						return nil
-					},
-				)
-			},
-		),
-	)
+	ctest.AssertResources(suite, []string{
+		"platform/hostname",
+	}, func(r *network.HostnameSpec, asrt *assert.Assertions) {
+		spec := r.TypedSpec()
 
-	suite.Assert().NoError(
-		retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-			func() error {
-				return suite.assertResources(
-					network.ConfigNamespaceName, network.HostnameSpecType, []string{
-						"platform/hostname",
-					}, func(r resource.Resource) error {
-						spec := r.(*network.HostnameSpec).TypedSpec()
+		asrt.Equal("talos-e2e-897b4e49-gcp-controlplane-jvcnl", spec.Hostname)
+		asrt.Equal("", spec.Domainname)
+		asrt.Equal(network.ConfigPlatform, spec.ConfigLayer)
+	}, rtestutils.WithNamespace(network.ConfigNamespaceName))
 
-						suite.Assert().Equal("talos-e2e-897b4e49-gcp-controlplane-jvcnl", spec.Hostname)
-						suite.Assert().Equal("", spec.Domainname)
-						suite.Assert().Equal(network.ConfigPlatform, spec.ConfigLayer)
+	ctest.AssertResources(suite, []resource.ID{volumeMountStatus.Metadata().ID()}, func(vms *block.VolumeMountStatus, asrt *assert.Assertions) {
+		asrt.True(vms.Metadata().Finalizers().Empty())
+	})
 
-						return nil
-					},
-				)
-			},
-		),
-	)
-}
+	suite.Destroy(volumeMountStatus)
 
-func (suite *PlatformConfigSuite) TearDownTest() {
-	suite.T().Log("tear down")
-
-	suite.ctxCancel()
-
-	suite.wg.Wait()
+	ctest.AssertNoResource[*block.VolumeMountRequest](suite, mountID)
 }
 
 func TestPlatformConfigSuite(t *testing.T) {
+	t.Parallel()
+
 	suite.Run(t, new(PlatformConfigSuite))
 }
 

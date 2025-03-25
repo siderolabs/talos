@@ -99,7 +99,6 @@ type Install interface {
 	ExtraKernelArgs() []string
 	Zero() bool
 	LegacyBIOSSupport() bool
-	WithBootloader() bool
 }
 
 // Extension defines the system extension.

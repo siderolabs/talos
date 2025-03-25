@@ -1,6 +1,6 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
 #
-# Generated on 2024-12-25T15:13:54Z by kres fcff05e.
+# Generated on 2025-03-04T13:59:07Z by kres 1281806.
 
 name: integration-qemu-race-cron
 concurrency:
@@ -73,7 +73,7 @@ jobs:
           PLATFORM: linux/amd64
           PUSH: "true"
         run: |
-          make talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer imager talos _out/integration-test-linux-amd64
+          make talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
       - name: talosctl-cni-bundle
         if: github.event_name == 'schedule'
         run: |
@@ -86,7 +86,7 @@ jobs:
           TAG_SUFFIX: -race
           WITH_RACE: "1"
         run: |
-          make initramfs installer
+          make initramfs installer-base imager installer
       - name: e2e-qemu-race
         env:
           GITHUB_STEP_NAME: ${{ github.job}}-e2e-qemu-race

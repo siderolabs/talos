@@ -21,7 +21,7 @@ import (
 )
 
 func TestCondition(t *testing.T) {
-	ctx, ctxCancel := context.WithTimeout(context.Background(), time.Second)
+	ctx, ctxCancel := context.WithTimeout(t.Context(), time.Second)
 	t.Cleanup(ctxCancel)
 
 	t.Parallel()

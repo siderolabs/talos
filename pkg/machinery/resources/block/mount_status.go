@@ -23,12 +23,14 @@ type MountStatus = typed.Resource[MountStatusSpec, MountStatusExtension]
 //
 //gotagsrewrite:gen
 type MountStatusSpec struct {
-	Spec       MountRequestSpec `yaml:"spec" protobuf:"1"`
-	Source     string           `yaml:"source" protobuf:"3"`
-	Target     string           `yaml:"target" protobuf:"2"`
-	Filesystem FilesystemType   `yaml:"filesystem" protobuf:"4"`
+	Spec               MountRequestSpec       `yaml:"spec" protobuf:"1"`
+	Source             string                 `yaml:"source" protobuf:"3"`
+	Target             string                 `yaml:"target" protobuf:"2"`
+	Filesystem         FilesystemType         `yaml:"filesystem" protobuf:"4"`
+	EncryptionProvider EncryptionProviderType `yaml:"encryptionProvider,omitempty" protobuf:"7"`
 
-	ReadOnly bool `yaml:"read_only" protobuf:"5"`
+	ReadOnly            bool `yaml:"readOnly" protobuf:"5"`
+	ProjectQuotaSupport bool `yaml:"projectQuotaSupport" protobuf:"6"`
 }
 
 // NewMountStatus initializes a MountStatus resource.
@@ -62,8 +64,8 @@ func (MountStatusExtension) ResourceDefinition() meta.ResourceDefinitionSpec {
 				JSONPath: `{.filesystem}`,
 			},
 			{
-				Name:     "Parent",
-				JSONPath: `{.spec.mount_parent_id}`,
+				Name:     "Volume",
+				JSONPath: `{.spec.volumeID}`,
 			},
 		},
 	}

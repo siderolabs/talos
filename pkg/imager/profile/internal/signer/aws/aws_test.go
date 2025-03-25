@@ -5,7 +5,6 @@
 package aws_test
 
 import (
-	"context"
 	"crypto/sha256"
 	"os"
 	"testing"
@@ -22,7 +21,7 @@ func TestIntegration(t *testing.T) {
 		}
 	}
 
-	signer, err := aws.NewPCRSigner(context.TODO(), os.Getenv("AWS_KMS_KEY_ID"), os.Getenv("AWS_REGION"))
+	signer, err := aws.NewPCRSigner(t.Context(), os.Getenv("AWS_KMS_KEY_ID"), os.Getenv("AWS_REGION"))
 	require.NoError(t, err)
 
 	digest := sha256.Sum256(nil)
@@ -30,7 +29,7 @@ func TestIntegration(t *testing.T) {
 	_, err = signer.Sign(nil, digest[:], nil)
 	require.NoError(t, err)
 
-	sbSigner, err := aws.NewSecureBootSigner(context.TODO(), os.Getenv("AWS_KMS_KEY_ID"), os.Getenv("AWS_REGION"), os.Getenv("AWS_CERT_PATH"))
+	sbSigner, err := aws.NewSecureBootSigner(t.Context(), os.Getenv("AWS_KMS_KEY_ID"), os.Getenv("AWS_REGION"), os.Getenv("AWS_CERT_PATH"))
 	require.NoError(t, err)
 
 	_, err = sbSigner.Signer().Sign(nil, digest[:], nil)

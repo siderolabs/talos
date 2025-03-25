@@ -13,7 +13,9 @@ import (
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
+	"github.com/siderolabs/gen/maps"
 
+	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/resources/v1alpha1"
 )
 
@@ -64,4 +66,41 @@ func GetSystemDisk(ctx context.Context, st state.State) (*SystemDiskSpec, error)
 	}
 
 	return systemDisk.TypedSpec(), nil
+}
+
+// GetSystemDiskPaths returns the path(s) of system disk and STATE/EPHEMERAL partitions.
+//
+// This is a legacy method to map old concept of system disk wipe into new volume subsystem.
+func GetSystemDiskPaths(ctx context.Context, st state.State) ([]string, error) {
+	systemDisks := map[string]struct{}{}
+
+	// fetch system disk (where Talos is installed)
+	systemDisk, err := GetSystemDisk(ctx, st)
+	if err != nil {
+		return nil, err
+	}
+
+	if systemDisk != nil {
+		systemDisks[systemDisk.DevPath] = struct{}{}
+	}
+
+	// fetch additional system volumes (which might be on the same or other disks)
+	for _, volumeID := range []string{constants.StatePartitionLabel, constants.EphemeralPartitionLabel} {
+		volumeStatus, err := safe.ReaderGetByID[*VolumeStatus](ctx, st, volumeID)
+		if err != nil {
+			if state.IsNotFoundError(err) {
+				continue
+			}
+
+			return nil, err
+		}
+
+		if volumeStatus.TypedSpec().ParentLocation != "" {
+			systemDisks[volumeStatus.TypedSpec().ParentLocation] = struct{}{}
+		} else if volumeStatus.TypedSpec().Location != "" {
+			systemDisks[volumeStatus.TypedSpec().Location] = struct{}{}
+		}
+	}
+
+	return maps.Keys(systemDisks), nil
 }

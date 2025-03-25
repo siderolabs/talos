@@ -83,11 +83,11 @@ func (suite *LongHornSuite) TestDeploy() {
 
 	longhornV2StorageClassunstructured := suite.ParseManifests(longhornV2StorageClassManifest)
 
+	suite.ApplyManifests(ctx, longhornV2StorageClassunstructured)
+
 	suite.T().Cleanup(func() {
 		suite.DeleteManifests(ctx, longhornV2StorageClassunstructured)
 	})
-
-	suite.ApplyManifests(ctx, longhornV2StorageClassunstructured)
 
 	nodes := suite.DiscoverNodeInternalIPsByType(ctx, machine.TypeWorker)
 

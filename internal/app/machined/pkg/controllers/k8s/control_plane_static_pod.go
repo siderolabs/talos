@@ -403,11 +403,11 @@ func (ctrl *ControlPlaneStaticPodController) manageAPIServer(ctx context.Context
 		builder.Set("advertise-address", cfg.AdvertisedAddress)
 	}
 
-	if cfg.CloudProvider != "" {
+	k8sVersion := compatibility.VersionFromImageRef(cfg.Image)
+
+	if cfg.CloudProvider != "" && !k8sVersion.CloudProviderFlagRemoved() {
 		builder.Set("cloud-provider", cfg.CloudProvider)
 	}
-
-	k8sVersion := compatibility.VersionFromImageRef(cfg.Image)
 
 	handleKubeAPIServerAuthorizationFlags(k8sVersion, builder, cfg.ExtraArgs)
 
@@ -598,7 +598,9 @@ func (ctrl *ControlPlaneStaticPodController) manageControllerManager(ctx context
 		"tls-min-version":                  "VersionTLS13",
 	}
 
-	if cfg.CloudProvider != "" {
+	k8sVersion := compatibility.VersionFromImageRef(cfg.Image)
+
+	if cfg.CloudProvider != "" && !k8sVersion.CloudProviderFlagRemoved() {
 		builder.Set("cloud-provider", cfg.CloudProvider)
 	}
 

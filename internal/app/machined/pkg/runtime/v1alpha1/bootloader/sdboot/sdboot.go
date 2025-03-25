@@ -6,6 +6,7 @@
 package sdboot
 
 import (
+	_ "embed"
 	"errors"
 	"fmt"
 	"io"
@@ -15,6 +16,7 @@ import (
 	"strings"
 
 	"github.com/ecks/uefi/efi/efivario"
+	"github.com/foxboron/go-uefi/efi"
 	"github.com/siderolabs/gen/xerrors"
 	"github.com/siderolabs/go-blockdevice/v2/blkid"
 	"golang.org/x/sys/unix"
@@ -25,10 +27,16 @@ import (
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/options"
 	mountv2 "github.com/siderolabs/talos/internal/pkg/mount/v2"
 	"github.com/siderolabs/talos/internal/pkg/partition"
+	smbiosinternal "github.com/siderolabs/talos/internal/pkg/smbios"
 	"github.com/siderolabs/talos/internal/pkg/uki"
 	"github.com/siderolabs/talos/pkg/imager/utils"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
+
+// LoaderConfBytes is the content of the loader.conf file.
+//
+//go:embed loader.conf
+var LoaderConfBytes []byte
 
 // Config describe sd-boot state.
 type Config struct {
@@ -36,7 +44,8 @@ type Config struct {
 	Fallback string
 }
 
-func isUEFIBoot() bool {
+// IsUEFIBoot returns true if the system is booted using UEFI.
+func IsUEFIBoot() bool {
 	// https://renenyffenegger.ch/notes/Linux/fhs/sys/firmware/efi/index
 	_, err := os.Stat("/sys/firmware/efi")
 
@@ -62,13 +71,22 @@ func New() *Config {
 //nolint:gocyclo
 func ProbeWithCallback(disk string, options options.ProbeOptions, callback func(*Config) error) (*Config, error) {
 	// if not UEFI boot, nothing to do
-	if !isUEFIBoot() {
+	if !IsUEFIBoot() {
 		return nil, nil
 	}
 
-	if !IsBootedUsingSDBoot() {
-		return nil, nil
+	// here we need to read the EFI vars to see if we have any defaults
+	// and populate config accordingly
+	// https://www.freedesktop.org/software/systemd/man/systemd-boot.html#LoaderEntryDefault
+	// this should be set on install/upgrades
+	efiCtx := efivario.NewDefaultContext()
+
+	bootedEntry, err := ReadVariable(efiCtx, LoaderEntrySelectedName)
+	if err != nil {
+		return nil, err
 	}
+
+	config := &Config{}
 
 	// read /boot/EFI and find if sd-boot is already being used
 	// this is to make sure sd-boot from Talos is being used and not sd-boot from another distro
@@ -92,6 +110,28 @@ func ProbeWithCallback(disk string, options options.ProbeOptions, callback func(
 				return fmt.Errorf("no boot*.efi files found in %q", filepath.Join(constants.EFIMountPoint, "EFI", "boot"))
 			}
 
+			// list existing UKIs, and check if the current one is present
+			ukiFiles, err := filepath.Glob(filepath.Join(constants.EFIMountPoint, "EFI", "Linux", "Talos-*.efi"))
+			if err != nil {
+				return err
+			}
+
+			for _, ukiFile := range ukiFiles {
+				if strings.EqualFold(filepath.Base(ukiFile), bootedEntry) {
+					config.Default = bootedEntry
+				}
+			}
+
+			// here we handle a case when we boot of just kernel+initrd/uki and we don't have a booted entry
+			if bootedEntry == "" && len(ukiFiles) == 1 {
+				// we have only one UKI, so we can assume it's the default
+				config.Default = filepath.Base(ukiFiles[0])
+			}
+
+			if callback != nil {
+				return callback(config)
+			}
+
 			return nil
 		},
 		options.BlockProbeOptions,
@@ -110,65 +150,7 @@ func ProbeWithCallback(disk string, options options.ProbeOptions, callback func(
 		return nil, err
 	}
 
-	// here we need to read the EFI vars to see if we have any defaults
-	// and populate config accordingly
-	// https://www.freedesktop.org/software/systemd/man/systemd-boot.html#LoaderEntryDefault
-	// this should be set on install/upgrades
-
-	efiCtx := efivario.NewDefaultContext()
-
-	bootedEntry, err := ReadVariable(efiCtx, LoaderEntrySelectedName)
-	if err != nil {
-		return nil, err
-	}
-
-	log.Printf("booted entry: %q", bootedEntry)
-
-	if opErr := mount.PartitionOp(
-		disk,
-		[]mount.Spec{
-			{
-				PartitionLabel: constants.EFIPartitionLabel,
-				FilesystemType: partition.FilesystemTypeVFAT,
-				MountTarget:    constants.EFIMountPoint,
-			},
-		},
-		func() error {
-			// list existing UKIs, and check if the current one is present
-			files, err := filepath.Glob(filepath.Join(constants.EFIMountPoint, "EFI", "Linux", "Talos-*.efi"))
-			if err != nil {
-				return err
-			}
-
-			for _, file := range files {
-				if strings.EqualFold(filepath.Base(file), bootedEntry) {
-					if callback != nil {
-						return callback(&Config{
-							Default: bootedEntry,
-						})
-					}
-
-					return nil
-				}
-			}
-
-			return fmt.Errorf("booted entry %q not found", bootedEntry)
-		},
-		options.BlockProbeOptions,
-		[]mountv2.NewPointOption{
-			mountv2.WithReadonly(),
-		},
-		[]mountv2.OperationOption{
-			mountv2.WithSkipIfMounted(),
-		},
-		nil,
-	); opErr != nil {
-		return nil, opErr
-	}
-
-	return &Config{
-		Default: bootedEntry,
-	}, nil
+	return config, nil
 }
 
 // Probe for existing sd-boot bootloader.
@@ -232,6 +214,25 @@ func (c *Config) KexecLoad(r runtime.Runtime, disk string) error {
 
 		if _, err := io.Copy(&cmdline, assetInfo.Cmdline); err != nil {
 			return fmt.Errorf("failed to read cmdline from uki: %w", err)
+		}
+
+		if !efi.GetSecureBoot() {
+			smbiosInfo, err := smbiosinternal.GetSMBIOSInfo()
+			if err == nil {
+				for _, structure := range smbiosInfo.Structures {
+					if structure.Header.Type != 11 {
+						continue
+					}
+
+					const kernelCmdlineExtra = "io.systemd.stub.kernel-cmdline-extra="
+
+					for _, s := range structure.Strings {
+						if strings.HasPrefix(s, kernelCmdlineExtra) {
+							cmdline.WriteString(" " + s[len(kernelCmdlineExtra):])
+						}
+					}
+				}
+			}
 		}
 
 		if err := kexec.Load(r, kernelMemfd, initrdFd, cmdline.String()); err != nil {
@@ -301,6 +302,20 @@ func (c *Config) install(opts options.InstallOptions) (*options.InstallResult, e
 		sdbootFilename = "BOOTAA64.efi"
 	default:
 		return nil, fmt.Errorf("unsupported architecture: %s", opts.Arch)
+	}
+
+	if _, err := os.Stat(filepath.Join(opts.MountPrefix, constants.EFIMountPoint, "loader", "loader.conf")); err != nil {
+		if os.IsNotExist(err) {
+			if err := os.MkdirAll(filepath.Join(opts.MountPrefix, constants.EFIMountPoint, "loader"), 0o755); err != nil {
+				return nil, err
+			}
+
+			if err := os.WriteFile(filepath.Join(opts.MountPrefix, constants.EFIMountPoint, "loader", "loader.conf"), LoaderConfBytes, 0o644); err != nil {
+				return nil, err
+			}
+		} else {
+			return nil, err
+		}
 	}
 
 	// list existing UKIs, and clean up all but the current one (used to boot)
@@ -398,7 +413,6 @@ func (c *Config) Revert(disk string) error {
 }
 
 func (c *Config) revert() error {
-	// use c.Default as the current entry, list other UKIs, find the one which is not c.Default, and update EFI var
 	files, err := filepath.Glob(filepath.Join(constants.EFIMountPoint, "EFI", "Linux", "Talos-*.efi"))
 	if err != nil {
 		return err

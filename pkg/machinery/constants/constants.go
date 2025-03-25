@@ -14,7 +14,7 @@ import (
 
 const (
 	// DefaultKernelVersion is the default Linux kernel version.
-	DefaultKernelVersion = "6.12.13-talos"
+	DefaultKernelVersion = "6.12.19-talos"
 
 	// KernelParamConfig is the kernel parameter name for specifying the URL.
 	// to the config.
@@ -389,7 +389,7 @@ const (
 
 	// DefaultKubernetesVersion is the default target version of the control plane.
 	// renovate: datasource=github-releases depName=kubernetes/kubernetes
-	DefaultKubernetesVersion = "1.32.2"
+	DefaultKubernetesVersion = "1.33.0-beta.0"
 
 	// SupportedKubernetesVersions is the number of Kubernetes versions supported by Talos starting from DefaultKubernesVersion going backwards.
 	SupportedKubernetesVersions = 6
@@ -451,7 +451,7 @@ const (
 
 	// DefaultEtcdVersion is the default target version of etcd.
 	// renovate: datasource=github-releases depName=etcd-io/etcd
-	DefaultEtcdVersion = "v3.5.18"
+	DefaultEtcdVersion = "v3.5.20"
 
 	// EtcdRootTalosKey is the root etcd key for Talos-specific storage.
 	EtcdRootTalosKey = "talos:v1"
@@ -486,8 +486,8 @@ const (
 	// EtcdUserID is the user ID for the etcd process.
 	EtcdUserID = 60
 
-	// ConfigPath is the path to the downloaded config.
-	ConfigPath = StateMountPoint + "/config.yaml"
+	// ConfigFilename is the filename of the saved config in STATE partition.
+	ConfigFilename = "config.yaml"
 
 	// ConfigTryTimeout is the timeout of the config apply in try mode.
 	ConfigTryTimeout = time.Minute
@@ -540,7 +540,7 @@ const (
 	TrustdUserID = 51
 
 	// DefaultContainerdVersion is the default container runtime version.
-	DefaultContainerdVersion = "2.0.2"
+	DefaultContainerdVersion = "2.0.4"
 
 	// SystemContainerdNamespace is the Containerd namespace for Talos services.
 	SystemContainerdNamespace = "system"
@@ -737,9 +737,6 @@ const (
 
 	// SystemLibexecPath is the path to the system libexec directory.
 	SystemLibexecPath = SystemPath + "/libexec"
-
-	// SystemExtensionsPath is the path to the system extensions directory.
-	SystemExtensionsPath = SystemPath + "/extensions"
 
 	// SystemOverlaysPath is the path to the system overlay directory.
 	SystemOverlaysPath = SystemPath + "/overlays"
@@ -1064,6 +1061,9 @@ const (
 	// SideroLinkName is the interface name for SideroLink.
 	SideroLinkName = "siderolink"
 
+	// SideroLinkTunnelName is the tunnel name for SideroLink in tunnel (Wireguard-over-GRPC) mode.
+	SideroLinkTunnelName = "siderolinktun"
+
 	// SideroLinkDefaultPeerKeepalive is the interval at which Wireguard Peer Keepalives should be sent.
 	SideroLinkDefaultPeerKeepalive = 25 * time.Second
 
@@ -1094,7 +1094,7 @@ const (
 	DBusClientSocketLabel = "system_u:object_r:dbus_client_socket_t:s0"
 
 	// GoVersion is the version of Go compiler this release was built with.
-	GoVersion = "go1.24.0"
+	GoVersion = "go1.24.1"
 
 	// KubernetesTalosAPIServiceName is the name of the Kubernetes service to access Talos API.
 	KubernetesTalosAPIServiceName = "talos"
@@ -1160,7 +1160,7 @@ const (
 	DashboardTTY = 2
 
 	// FlannelVersion is the version of flannel to use.
-	FlannelVersion = "v0.26.4"
+	FlannelVersion = "v0.26.5"
 
 	// PlatformMetal is the name of the metal platform.
 	PlatformMetal = "metal"

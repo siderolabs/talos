@@ -13,7 +13,6 @@ import (
 // Node represents data gathered from a single node.
 type Node struct {
 	// These fields are directly API responses.
-	Hostname      *machine.Hostname
 	LoadAvg       *machine.LoadAvg
 	Version       *machine.Version
 	Memory        *machine.Memory

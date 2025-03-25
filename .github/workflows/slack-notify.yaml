@@ -1,6 +1,6 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
 #
-# Generated on 2025-01-15T19:56:36Z by kres 3b3f992.
+# Generated on 2025-03-24T14:29:42Z by kres 921213e.
 
 name: slack-notify
 "on":
@@ -8,16 +8,22 @@ name: slack-notify
     workflows:
       - default
       - integration-qemu-cron
+      - integration-qemu-enforcing-cron
       - integration-conformance-cron
+      - integration-conformance-enforcing-cron
       - integration-trusted-boot-cron
+      - integration-trusted-boot-enforcing-cron
       - integration-provision-0-cron
       - integration-provision-1-cron
       - integration-provision-2-cron
       - integration-misc-0-cron
       - integration-misc-1-cron
+      - integration-misc-1-enforcing-cron
       - integration-misc-2-cron
       - integration-misc-3-cron
+      - integration-misc-3-enforcing-cron
       - integration-misc-4-cron
+      - integration-misc-4-enforcing-cron
       - integration-extensions-cron
       - integration-cilium-cron
       - integration-qemu-encrypted-vip-cron
@@ -27,11 +33,11 @@ name: slack-notify
       - integration-qemu-csi-openebs-cron
       - integration-images-cron
       - integration-reproducibility-test-cron
+      - integration-image-cache-cron
       - integration-image-factory-cron
       - integration-aws-cron
       - integration-aws-nvidia-oss-cron
       - integration-aws-nvidia-nonfree-cron
-      - integration-azure-cron
       - integration-gcp-cron
     types:
       - completed

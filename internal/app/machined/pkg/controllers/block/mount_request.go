@@ -112,6 +112,7 @@ func (ctrl *MountRequestController) Run(ctx context.Context, r controller.Runtim
 			desiredMountRequest.Requesters = append(desiredMountRequest.Requesters, volumeMountRequest.TypedSpec().Requester)
 			desiredMountRequest.RequesterIDs = append(desiredMountRequest.RequesterIDs, volumeMountRequest.Metadata().ID())
 			desiredMountRequest.ReadOnly = desiredMountRequest.ReadOnly && volumeMountRequest.TypedSpec().ReadOnly // read-only if all requesters are read-only
+			desiredMountRequest.ParentMountID = volumeStatus.TypedSpec().MountSpec.ParentID
 		}
 
 		// list and figure out what to do with existing mount requests

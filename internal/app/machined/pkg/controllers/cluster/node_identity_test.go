@@ -8,110 +8,90 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
-	"time"
 
 	"github.com/cosi-project/runtime/pkg/resource"
-	"github.com/cosi-project/runtime/pkg/state"
-	"github.com/siderolabs/go-retry/retry"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 
 	clusterctrl "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/cluster"
-	v1alpha1runtime "github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/ctest"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
+	"github.com/siderolabs/talos/pkg/machinery/resources/block"
 	"github.com/siderolabs/talos/pkg/machinery/resources/cluster"
 	"github.com/siderolabs/talos/pkg/machinery/resources/files"
-	runtimeres "github.com/siderolabs/talos/pkg/machinery/resources/runtime"
-	"github.com/siderolabs/talos/pkg/machinery/resources/v1alpha1"
 )
 
 type NodeIdentitySuite struct {
-	ClusterSuite
-
-	statePath string
-}
-
-func (suite *NodeIdentitySuite) TestContainerMode() {
-	suite.statePath = suite.T().TempDir()
-	suite.startRuntime()
-
-	suite.Require().NoError(suite.runtime.RegisterController(&clusterctrl.NodeIdentityController{
-		StatePath:    suite.statePath,
-		V1Alpha1Mode: v1alpha1runtime.ModeContainer,
-	}))
-
-	suite.Assert().NoError(retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-		suite.assertResource(*cluster.NewIdentity(cluster.NamespaceName, cluster.LocalIdentity).Metadata(), func(_ resource.Resource) error {
-			return nil
-		}),
-	))
+	ctest.DefaultSuite
 }
 
 func (suite *NodeIdentitySuite) TestDefault() {
-	suite.statePath = suite.T().TempDir()
-	suite.startRuntime()
+	statePath := suite.T().TempDir()
+	mountID := (&clusterctrl.NodeIdentityController{}).Name() + "-" + constants.StatePartitionLabel
 
-	suite.Require().NoError(suite.runtime.RegisterController(&clusterctrl.NodeIdentityController{
-		StatePath:    suite.statePath,
-		V1Alpha1Mode: v1alpha1runtime.ModeMetal,
-	}))
+	ctest.AssertResource(suite, mountID, func(mountRequest *block.VolumeMountRequest, asrt *assert.Assertions) {
+		asrt.Equal(constants.StatePartitionLabel, mountRequest.TypedSpec().VolumeID)
+	})
 
-	time.Sleep(500 * time.Millisecond)
+	ctest.AssertNoResource[*cluster.Identity](suite, cluster.LocalIdentity)
 
-	_, err := suite.state.Get(suite.ctx, cluster.NewIdentity(cluster.NamespaceName, cluster.LocalIdentity).Metadata())
-	suite.Assert().True(state.IsNotFoundError(err))
+	volumeMountStatus := block.NewVolumeMountStatus(block.NamespaceName, mountID)
+	volumeMountStatus.TypedSpec().Target = statePath
+	suite.Create(volumeMountStatus)
 
-	stateMount := runtimeres.NewMountStatus(v1alpha1.NamespaceName, constants.StatePartitionLabel)
+	ctest.AssertResource(suite, cluster.LocalIdentity, func(*cluster.Identity, *assert.Assertions) {})
+	ctest.AssertResource(suite, "machine-id", func(*files.EtcFileSpec, *assert.Assertions) {})
 
-	suite.Assert().NoError(suite.state.Create(suite.ctx, stateMount))
+	ctest.AssertResources(suite, []resource.ID{volumeMountStatus.Metadata().ID()}, func(vms *block.VolumeMountStatus, asrt *assert.Assertions) {
+		asrt.True(vms.Metadata().Finalizers().Empty())
+	})
 
-	suite.Assert().NoError(retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-		suite.assertResource(*cluster.NewIdentity(cluster.NamespaceName, cluster.LocalIdentity).Metadata(), func(_ resource.Resource) error {
-			return nil
-		}),
-	))
+	suite.Destroy(volumeMountStatus)
 
-	suite.Assert().NoError(retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-		suite.assertResource(*files.NewEtcFileSpec(files.NamespaceName, "machine-id").Metadata(), func(_ resource.Resource) error {
-			return nil
-		}),
-	))
+	ctest.AssertNoResource[*block.VolumeMountRequest](suite, mountID)
 }
 
 func (suite *NodeIdentitySuite) TestLoad() {
-	suite.statePath = suite.T().TempDir()
-	suite.startRuntime()
+	statePath := suite.T().TempDir()
+	mountID := (&clusterctrl.NodeIdentityController{}).Name() + "-" + constants.StatePartitionLabel
 
-	suite.Require().NoError(suite.runtime.RegisterController(&clusterctrl.NodeIdentityController{
-		StatePath:    suite.statePath,
-		V1Alpha1Mode: v1alpha1runtime.ModeMetal,
-	}))
+	ctest.AssertResource(suite, mountID, func(mountRequest *block.VolumeMountRequest, asrt *assert.Assertions) {
+		asrt.Equal(constants.StatePartitionLabel, mountRequest.TypedSpec().VolumeID)
+	})
 
 	// using verbatim data here to make sure nodeId representation is supported in future version fo Talos
-	suite.Require().NoError(os.WriteFile(filepath.Join(suite.statePath, constants.NodeIdentityFilename), []byte("nodeId: gvqfS27LxD58lPlASmpaueeRVzuof16iXoieRgEvBWaE\n"), 0o600))
+	suite.Require().NoError(os.WriteFile(filepath.Join(statePath, constants.NodeIdentityFilename), []byte("nodeId: gvqfS27LxD58lPlASmpaueeRVzuof16iXoieRgEvBWaE\n"), 0o600))
 
-	stateMount := runtimeres.NewMountStatus(v1alpha1.NamespaceName, constants.StatePartitionLabel)
+	ctest.AssertNoResource[*cluster.Identity](suite, cluster.LocalIdentity)
 
-	suite.Assert().NoError(suite.state.Create(suite.ctx, stateMount))
+	volumeMountStatus := block.NewVolumeMountStatus(block.NamespaceName, mountID)
+	volumeMountStatus.TypedSpec().Target = statePath
+	suite.Create(volumeMountStatus)
 
-	suite.Assert().NoError(retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-		suite.assertResource(*cluster.NewIdentity(cluster.NamespaceName, cluster.LocalIdentity).Metadata(), func(r resource.Resource) error {
-			suite.Assert().Equal("gvqfS27LxD58lPlASmpaueeRVzuof16iXoieRgEvBWaE", r.(*cluster.Identity).TypedSpec().NodeID)
+	ctest.AssertResource(suite, cluster.LocalIdentity, func(identity *cluster.Identity, asrt *assert.Assertions) {
+		asrt.Equal("gvqfS27LxD58lPlASmpaueeRVzuof16iXoieRgEvBWaE", identity.TypedSpec().NodeID)
+	})
+	ctest.AssertResource(suite, "machine-id", func(f *files.EtcFileSpec, asrt *assert.Assertions) {
+		asrt.Equal("8d2c0de2408fa2a178bad7f45d9aa8fb", string(f.TypedSpec().Contents))
+	})
 
-			return nil
-		}),
-	))
+	ctest.AssertResources(suite, []resource.ID{volumeMountStatus.Metadata().ID()}, func(vms *block.VolumeMountStatus, asrt *assert.Assertions) {
+		asrt.True(vms.Metadata().Finalizers().Empty())
+	})
 
-	suite.Assert().NoError(retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-		suite.assertResource(*files.NewEtcFileSpec(files.NamespaceName, "machine-id").Metadata(), func(r resource.Resource) error {
-			suite.Assert().Equal("8d2c0de2408fa2a178bad7f45d9aa8fb", string(r.(*files.EtcFileSpec).TypedSpec().Contents))
+	suite.Destroy(volumeMountStatus)
 
-			return nil
-		}),
-	))
+	ctest.AssertNoResource[*block.VolumeMountRequest](suite, mountID)
 }
 
 func TestNodeIdentitySuite(t *testing.T) {
 	t.Parallel()
 
-	suite.Run(t, new(NodeIdentitySuite))
+	suite.Run(t, &NodeIdentitySuite{
+		DefaultSuite: ctest.DefaultSuite{
+			AfterSetup: func(suite *ctest.DefaultSuite) {
+				suite.Require().NoError(suite.Runtime().RegisterController(&clusterctrl.NodeIdentityController{}))
+			},
+		},
+	})
 }

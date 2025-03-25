@@ -31,6 +31,10 @@ type StatusSpec struct {
 	Host string `yaml:"host" protobuf:"1"`
 	// Connected is the status of the Siderolink GRPC connection.
 	Connected bool `yaml:"connected" protobuf:"2"`
+	// LinkName is the name of the interface used for the Siderolink tunnel.
+	LinkName string `yaml:"linkName" protobuf:"3"`
+	// GRPCTunnel is true if the Wireguard-over-GRPC tunnel is being used.
+	GRPCTunnel bool `yaml:"grpcTunnel" protobuf:"4"`
 }
 
 // NewStatus initializes a Status resource.

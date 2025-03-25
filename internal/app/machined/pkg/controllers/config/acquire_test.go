@@ -42,6 +42,7 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/config/types/siderolink"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/proto"
+	"github.com/siderolabs/talos/pkg/machinery/resources/block"
 	configresource "github.com/siderolabs/talos/pkg/machinery/resources/config"
 	"github.com/siderolabs/talos/pkg/machinery/resources/runtime"
 	"github.com/siderolabs/talos/pkg/machinery/resources/v1alpha1"
@@ -50,7 +51,6 @@ import (
 type AcquireSuite struct {
 	ctest.DefaultSuite
 
-	configPath     string
 	platformConfig *platformConfigMock
 	platformEvent  *platformEventMock
 	configSetter   *configSetterMock
@@ -95,11 +95,18 @@ func (p *platformEventMock) getEvents() []platform.Event {
 }
 
 type configSetterMock struct {
-	cfgCh chan config.Provider
+	cfgCh          chan config.Provider
+	persistedCfgCh chan config.Provider
 }
 
 func (c *configSetterMock) SetConfig(cfg config.Provider) error {
 	c.cfgCh <- cfg
+
+	return nil
+}
+
+func (c *configSetterMock) SetPersistedConfig(cfg config.Provider) error {
+	c.persistedCfgCh <- cfg
 
 	return nil
 }
@@ -157,14 +164,13 @@ func TestAcquireSuite(t *testing.T) {
 	}
 
 	s.DefaultSuite.AfterSetup = func(*ctest.DefaultSuite) {
-		tmpDir := s.T().TempDir()
-		s.configPath = filepath.Join(tmpDir, "config.yaml")
 		s.platformConfig = &platformConfigMock{
 			err: errors.ErrNoConfigSource,
 		}
 		s.platformEvent = &platformEventMock{}
 		s.configSetter = &configSetterMock{
-			cfgCh: make(chan config.Provider, 1),
+			cfgCh:          make(chan config.Provider, 1),
+			persistedCfgCh: make(chan config.Provider, 1),
 		}
 		s.eventPublisher = &eventPublisherMock{}
 		s.cmdline = &cmdlineGetterMock{
@@ -198,7 +204,6 @@ func TestAcquireSuite(t *testing.T) {
 			CmdlineGetter:         s.cmdline.Getter(),
 			EventPublisher:        s.eventPublisher,
 			ValidationMode:        validationModeMock{},
-			ConfigPath:            s.configPath,
 			ResourceState:         s.State(),
 		}))
 	}
@@ -210,19 +215,40 @@ func (suite *AcquireSuite) triggerAcquire() {
 	suite.Require().NoError(suite.State().Create(suite.Ctx(), v1alpha1.NewAcquireConfigSpec()))
 }
 
-func (suite *AcquireSuite) waitForConfig() config.Provider {
-	var cfg config.Provider
+func (suite *AcquireSuite) waitForConfig(shouldPersist bool) config.Provider {
+	var (
+		appliedConfig   config.Provider
+		persistedConfig config.Provider
+	)
 
-	select {
-	case cfg = <-suite.configSetter.cfgCh:
-	case <-suite.Ctx().Done():
-		suite.Require().Fail("timed out waiting for config")
+	for {
+		select {
+		case cfg := <-suite.configSetter.cfgCh:
+			suite.Require().Nil(appliedConfig)
+
+			appliedConfig = cfg
+		case cfg := <-suite.configSetter.persistedCfgCh:
+			suite.Require().Nil(persistedConfig)
+			suite.Require().True(shouldPersist)
+
+			persistedConfig = cfg
+		case <-suite.Ctx().Done():
+			suite.Require().Fail("timed out waiting for config: applied %v persisted %v", appliedConfig, persistedConfig)
+		}
+
+		if appliedConfig != nil && (persistedConfig != nil || !shouldPersist) {
+			break
+		}
+	}
+
+	if persistedConfig != nil {
+		suite.Assert().Same(persistedConfig, appliedConfig)
 	}
 
 	status := v1alpha1.NewAcquireConfigStatus()
 	rtestutils.AssertResources(suite.Ctx(), suite.T(), suite.State(), []resource.ID{status.Metadata().ID()}, func(*v1alpha1.AcquireConfigStatus, *assert.Assertions) {})
 
-	return cfg
+	return appliedConfig
 }
 
 func (suite *AcquireSuite) injectViaMaintenance(cfg []byte) {
@@ -238,12 +264,45 @@ func (suite *AcquireSuite) injectViaMaintenance(cfg []byte) {
 	suite.Require().NoError(err)
 }
 
+func (suite *AcquireSuite) noStateVolume() {
+	volumeStatus := block.NewVolumeStatus(block.NamespaceName, constants.StatePartitionLabel)
+	volumeStatus.TypedSpec().Phase = block.VolumePhaseMissing
+	suite.Create(volumeStatus)
+}
+
+func (suite *AcquireSuite) presentStateVolume() {
+	volumeStatus := block.NewVolumeStatus(block.NamespaceName, constants.StatePartitionLabel)
+	volumeStatus.TypedSpec().Phase = block.VolumePhaseReady
+	suite.Create(volumeStatus)
+}
+
+func (suite *AcquireSuite) injectViaDisk(cfg []byte, wait bool) {
+	statePath := suite.T().TempDir()
+	mountID := (&configctrl.AcquireController{}).Name() + "-" + constants.StatePartitionLabel
+
+	ctest.AssertResource(suite, mountID, func(mountRequest *block.VolumeMountRequest, asrt *assert.Assertions) {
+		asrt.Equal(constants.StatePartitionLabel, mountRequest.TypedSpec().VolumeID)
+	})
+
+	suite.Require().NoError(os.WriteFile(filepath.Join(statePath, constants.ConfigFilename), cfg, 0o644))
+
+	volumeMountStatus := block.NewVolumeMountStatus(block.NamespaceName, mountID)
+	volumeMountStatus.TypedSpec().Target = statePath
+	suite.Create(volumeMountStatus)
+
+	if wait {
+		ctest.AssertNoResource[*block.VolumeMountRequest](suite, mountID)
+	}
+}
+
 func (suite *AcquireSuite) TestFromDisk() {
-	suite.Require().NoError(os.WriteFile(suite.configPath, suite.completeMachineConfig, 0o644))
+	suite.presentStateVolume()
 
 	suite.triggerAcquire()
 
-	cfg := suite.waitForConfig()
+	suite.injectViaDisk(suite.completeMachineConfig, true)
+
+	cfg := suite.waitForConfig(false)
 	suite.Require().Equal(cfg.Cluster().Name(), suite.clusterName)
 
 	suite.Assert().Empty(suite.eventPublisher.getEvents())
@@ -259,9 +318,11 @@ func (suite *AcquireSuite) TestFromDisk() {
 }
 
 func (suite *AcquireSuite) TestFromDiskFailure() {
-	suite.Require().NoError(os.WriteFile(suite.configPath, append([]byte("aaa"), suite.completeMachineConfig...), 0o644))
+	suite.presentStateVolume()
 
 	suite.triggerAcquire()
+
+	suite.injectViaDisk(slices.Concat([]byte("aaa"), suite.completeMachineConfig), false)
 
 	suite.AssertWithin(time.Second, 10*time.Millisecond, func() error {
 		if len(suite.platformEvent.getEvents()) == 0 || len(suite.eventPublisher.getEvents()) == 0 {
@@ -282,14 +343,18 @@ func (suite *AcquireSuite) TestFromDiskFailure() {
 }
 
 func (suite *AcquireSuite) TestFromDiskToMaintenance() {
-	suite.Require().NoError(os.WriteFile(suite.configPath, suite.partialMachineConfig, 0o644))
+	suite.presentStateVolume()
 
 	suite.triggerAcquire()
+
+	suite.injectViaDisk(suite.partialMachineConfig, true)
 
 	var cfg config.Provider
 
 	select {
 	case cfg = <-suite.configSetter.cfgCh:
+	case <-suite.configSetter.persistedCfgCh:
+		suite.Require().Fail("should not persist")
 	case <-suite.Ctx().Done():
 		suite.Require().Fail("timed out waiting for config")
 	}
@@ -298,7 +363,7 @@ func (suite *AcquireSuite) TestFromDiskToMaintenance() {
 
 	suite.injectViaMaintenance(suite.completeMachineConfig)
 
-	cfg = suite.waitForConfig()
+	cfg = suite.waitForConfig(true)
 	suite.Require().Equal(cfg.Cluster().Name(), suite.clusterName)
 
 	suite.Assert().Equal(
@@ -330,12 +395,13 @@ func (suite *AcquireSuite) TestFromDiskToMaintenance() {
 }
 
 func (suite *AcquireSuite) TestFromPlatform() {
+	suite.noStateVolume()
 	suite.platformConfig.configuration = suite.completeMachineConfig
 	suite.platformConfig.err = nil
 
 	suite.triggerAcquire()
 
-	cfg := suite.waitForConfig()
+	cfg := suite.waitForConfig(true)
 	suite.Require().Equal(cfg.Cluster().Name(), suite.clusterName)
 
 	suite.Assert().Empty(suite.eventPublisher.getEvents())
@@ -351,6 +417,7 @@ func (suite *AcquireSuite) TestFromPlatform() {
 }
 
 func (suite *AcquireSuite) TestFromPlatformFailure() {
+	suite.noStateVolume()
 	suite.platformConfig.err = stderrors.New("mock error")
 
 	suite.triggerAcquire()
@@ -384,9 +451,10 @@ func (suite *AcquireSuite) TestFromPlatformGzip() {
 	suite.platformConfig.configuration = buf.Bytes()
 	suite.platformConfig.err = nil
 
+	suite.noStateVolume()
 	suite.triggerAcquire()
 
-	cfg := suite.waitForConfig()
+	cfg := suite.waitForConfig(true)
 	suite.Require().Equal(cfg.Cluster().Name(), suite.clusterName)
 
 	suite.Assert().Empty(suite.eventPublisher.getEvents())
@@ -405,6 +473,7 @@ func (suite *AcquireSuite) TestFromPlatformToMaintenance() {
 	suite.platformConfig.configuration = suite.partialMachineConfig
 	suite.platformConfig.err = nil
 
+	suite.noStateVolume()
 	suite.triggerAcquire()
 
 	var cfg config.Provider
@@ -415,11 +484,17 @@ func (suite *AcquireSuite) TestFromPlatformToMaintenance() {
 		suite.Require().Fail("timed out waiting for config")
 	}
 
+	select {
+	case <-suite.configSetter.persistedCfgCh:
+	case <-suite.Ctx().Done():
+		suite.Require().Fail("timed out waiting for persisted config")
+	}
+
 	suite.Require().Equal(cfg.SideroLink().APIUrl().Host, "siderolink.api")
 
 	suite.injectViaMaintenance(suite.completeMachineConfig)
 
-	cfg = suite.waitForConfig()
+	cfg = suite.waitForConfig(true)
 	suite.Require().Equal(cfg.Cluster().Name(), suite.clusterName)
 
 	suite.Assert().Equal(
@@ -465,6 +540,7 @@ func (suite *AcquireSuite) TestFromCmdlineToMaintenance() {
 
 	suite.cmdline.cmdline = procfs.NewCmdline(fmt.Sprintf("%s=%s", constants.KernelParamConfigInline, cfgEncoded))
 
+	suite.noStateVolume()
 	suite.triggerAcquire()
 
 	var cfg config.Provider
@@ -475,11 +551,17 @@ func (suite *AcquireSuite) TestFromCmdlineToMaintenance() {
 		suite.Require().Fail("timed out waiting for config")
 	}
 
+	select {
+	case <-suite.configSetter.persistedCfgCh:
+	case <-suite.Ctx().Done():
+		suite.Require().Fail("timed out waiting for persisted config")
+	}
+
 	suite.Require().Equal(cfg.SideroLink().APIUrl().Host, "siderolink.api")
 
 	suite.injectViaMaintenance(suite.completeMachineConfig)
 
-	cfg = suite.waitForConfig()
+	cfg = suite.waitForConfig(true)
 	suite.Require().Equal(cfg.Cluster().Name(), suite.clusterName)
 
 	suite.Assert().Equal(
@@ -511,11 +593,12 @@ func (suite *AcquireSuite) TestFromCmdlineToMaintenance() {
 }
 
 func (suite *AcquireSuite) TestFromMaintenance() {
+	suite.noStateVolume()
 	suite.triggerAcquire()
 
 	suite.injectViaMaintenance(suite.completeMachineConfig)
 
-	cfg := suite.waitForConfig()
+	cfg := suite.waitForConfig(true)
 	suite.Require().Equal(cfg.Cluster().Name(), suite.clusterName)
 
 	suite.Assert().Equal(

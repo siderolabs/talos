@@ -25,7 +25,7 @@ func TestIntegration(t *testing.T) {
 	broker, err := logind.NewBroker(socketPathService, socketPathClient)
 	require.NoError(t, err)
 
-	ctx, cancel := context.WithCancel(context.Background())
+	ctx, cancel := context.WithCancel(t.Context())
 	defer cancel()
 
 	errCh := make(chan error, 1)

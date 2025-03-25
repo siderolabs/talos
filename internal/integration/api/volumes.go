@@ -191,6 +191,10 @@ func (suite *VolumesSuite) TestDisks() {
 
 // TestLVMActivation verifies that LVM volume group is activated after reboot.
 func (suite *VolumesSuite) TestLVMActivation() {
+	if suite.SelinuxEnforcing {
+		suite.T().Skip("skipping tests with nsenter in SELinux enforcing mode")
+	}
+
 	if testing.Short() {
 		suite.T().Skip("skipping test in short mode.")
 	}
@@ -314,6 +318,10 @@ func (suite *VolumesSuite) lvmVolumeExists(node string) bool {
 
 // TestSymlinks that Talos can update disk symlinks on the fly.
 func (suite *VolumesSuite) TestSymlinks() {
+	if suite.SelinuxEnforcing {
+		suite.T().Skip("skipping tests with nsenter in SELinux enforcing mode")
+	}
+
 	if testing.Short() {
 		suite.T().Skip("skipping test in short mode.")
 	}

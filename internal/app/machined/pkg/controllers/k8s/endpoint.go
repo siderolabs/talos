@@ -194,7 +194,7 @@ func (ctrl *EndpointController) watchEndpointsOnControlPlane(ctx context.Context
 	}
 }
 
-func (ctrl *EndpointController) updateEndpointsResource(ctx context.Context, r controller.Runtime, logger *zap.Logger, endpoints *corev1.Endpoints) error {
+func (ctrl *EndpointController) updateEndpointsResource(ctx context.Context, r controller.Runtime, logger *zap.Logger, endpoints *corev1.Endpoints) error { //nolint:staticcheck
 	var addrs []netip.Addr
 
 	for _, endpoint := range endpoints.Subsets {
@@ -267,7 +267,7 @@ func (ctrl *EndpointController) watchKubernetesEndpoint(ctx context.Context, r c
 	}
 }
 
-func kubernetesEndpointWatcher(ctx context.Context, logger *zap.Logger, client *kubernetes.Client) (chan *corev1.Endpoints, func(), error) {
+func kubernetesEndpointWatcher(ctx context.Context, logger *zap.Logger, client *kubernetes.Client) (chan *corev1.Endpoints, func(), error) { //nolint:staticcheck
 	informerFactory := informers.NewSharedInformerFactoryWithOptions(
 		client.Clientset, constants.KubernetesInformerDefaultResyncPeriod,
 		informers.WithNamespace(corev1.NamespaceDefault),
@@ -276,7 +276,7 @@ func kubernetesEndpointWatcher(ctx context.Context, logger *zap.Logger, client *
 		}),
 	)
 
-	notifyCh := make(chan *corev1.Endpoints, 1)
+	notifyCh := make(chan *corev1.Endpoints, 1) //nolint:staticcheck
 
 	informer := informerFactory.Core().V1().Endpoints().Informer()
 
@@ -287,9 +287,9 @@ func kubernetesEndpointWatcher(ctx context.Context, logger *zap.Logger, client *
 	}
 
 	if _, err := informer.AddEventHandler(cache.ResourceEventHandlerFuncs{
-		AddFunc:    func(obj any) { notifyCh <- obj.(*corev1.Endpoints) },
-		DeleteFunc: func(_ any) { notifyCh <- &corev1.Endpoints{} },
-		UpdateFunc: func(_, obj any) { notifyCh <- obj.(*corev1.Endpoints) },
+		AddFunc:    func(obj any) { notifyCh <- obj.(*corev1.Endpoints) },    //nolint:staticcheck
+		DeleteFunc: func(_ any) { notifyCh <- &corev1.Endpoints{} },          //nolint:staticcheck
+		UpdateFunc: func(_, obj any) { notifyCh <- obj.(*corev1.Endpoints) }, //nolint:staticcheck
 	}); err != nil {
 		return nil, nil, fmt.Errorf("error adding watch event handler: %w", err)
 	}

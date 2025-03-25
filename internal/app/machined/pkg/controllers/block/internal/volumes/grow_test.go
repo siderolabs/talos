@@ -130,7 +130,7 @@ func TestGrow(t *testing.T) {
 		},
 	} {
 		t.Run(test.name, func(t *testing.T) {
-			ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+			ctx, cancel := context.WithTimeout(t.Context(), 30*time.Second)
 			t.Cleanup(cancel)
 
 			logger := zaptest.NewLogger(t)

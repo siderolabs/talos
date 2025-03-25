@@ -149,7 +149,7 @@ func TestDownload(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
 
-			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+			ctx, cancel := context.WithTimeout(t.Context(), 5*time.Second)
 			defer cancel()
 
 			b, err := download.Download(ctx, srv.URL+test.path, test.opts...)

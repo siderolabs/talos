@@ -812,6 +812,7 @@ type InstallConfig struct {
 	//     Allows for supplying extra kernel args via the bootloader.
 	//     Existing kernel args can be removed by prefixing the argument with a `-`.
 	//     For example `-console` removes all `console=<value>` arguments, whereas `-console=tty0` removes the `console=tty0` default argument.
+	//     If Talos is using systemd-boot as a bootloader (default for UEFI) this setting will be ignored.
 	//   examples:
 	//     - value: '[]string{"talos.platform=metal", "reboot=k"}'
 	InstallExtraKernelArgs []string `yaml:"extraKernelArgs,omitempty"`
@@ -822,10 +823,9 @@ type InstallConfig struct {
 	//   examples:
 	//     - value: '"ghcr.io/siderolabs/installer:latest"'
 	InstallImage string `yaml:"image,omitempty"`
-	//   description: |
-	//     Allows for supplying additional system extension images to install on top of base Talos image.
-	//   examples:
-	//     - value: installExtensionsExample()
+	// docgen:nodoc
+	//
+	// Deprecated: Use custom `InstallImage` instead.
 	InstallExtensions []InstallExtensionConfig `yaml:"extensions,omitempty"`
 	// docgen:nodoc
 	//
@@ -947,6 +947,8 @@ type InstallDiskSelector struct {
 }
 
 // InstallExtensionConfig represents a configuration for a system extension.
+//
+// docgen:nodoc
 type InstallExtensionConfig struct {
 	//   description: System extension image.
 	ExtensionImage string `yaml:"image"`
@@ -1401,7 +1403,7 @@ type ClusterNetworkConfig struct {
 	//     The domain used by Kubernetes DNS.
 	//     The default is `cluster.local`
 	//   examples:
-	//     - value: '"cluser.local"'
+	//     - value: '"cluster.local"'
 	DNSDomain string `yaml:"dnsDomain"`
 	//   description: |
 	//     The pod subnet CIDR.

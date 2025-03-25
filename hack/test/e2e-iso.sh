@@ -9,8 +9,6 @@ CLUSTER_NAME=e2e-iso
 
 NODE="172.20.2.2"
 
-INSTALLER_IMAGE=${INSTALLER_IMAGE}-amd64-secureboot # we don't use secureboot part here, but this installer contains UKIs
-
 function create_cluster {
   build_registry_mirrors
 

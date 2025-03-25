@@ -238,6 +238,10 @@ func (mock mockController) SetConfig(config.Provider) error {
 	return nil
 }
 
+func (mock mockController) SetPersistedConfig(config.Provider) error {
+	return nil
+}
+
 func (mock mockController) CanApplyImmediate(config.Provider) error {
 	return nil
 }
@@ -294,6 +298,10 @@ func (mock mockState) ResourceRegistry() *registry.ResourceRegistry {
 	return nil
 }
 
-func (mock mockState) SetConfig(config.Provider) error {
+func (mock mockState) GetConfig(context.Context) (config.Provider, error) {
+	return nil, nil
+}
+
+func (mock mockState) SetConfig(context.Context, string, config.Provider) error {
 	return nil
 }

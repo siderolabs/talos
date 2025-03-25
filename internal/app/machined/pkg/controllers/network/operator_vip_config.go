@@ -42,6 +42,11 @@ func (ctrl *OperatorVIPConfigController) Inputs() []controller.Input {
 			Type:      network.DeviceConfigSpecType,
 			Kind:      controller.InputWeak,
 		},
+		{
+			Namespace: network.NamespaceName,
+			Type:      network.LinkStatusType,
+			Kind:      controller.InputWeak,
+		},
 	}
 }
 
@@ -79,12 +84,19 @@ func (ctrl *OperatorVIPConfigController) Run(ctx context.Context, r controller.R
 			return item.(*network.DeviceConfigSpec).TypedSpec().Device
 		})
 
+		linkStatuses, err := safe.ReaderListAll[*network.LinkStatus](ctx, r)
+		if err != nil {
+			return fmt.Errorf("error listing link statuses: %w", err)
+		}
+
+		linkNameResolver := network.NewLinkResolver(linkStatuses.All)
+
 		ignoredInterfaces := map[string]struct{}{}
 
 		if ctrl.Cmdline != nil {
 			var settings CmdlineNetworking
 
-			settings, err = ParseCmdlineNetwork(ctrl.Cmdline)
+			settings, err = ParseCmdlineNetwork(ctrl.Cmdline, linkNameResolver)
 			if err != nil {
 				logger.Warn("ignored cmdline parse failure", zap.Error(err))
 			}
@@ -103,15 +115,15 @@ func (ctrl *OperatorVIPConfigController) Run(ctx context.Context, r controller.R
 		if len(devices) > 0 {
 			for _, device := range devices {
 				if device.Ignore() {
-					ignoredInterfaces[device.Interface()] = struct{}{}
+					ignoredInterfaces[linkNameResolver.Resolve(device.Interface())] = struct{}{}
 				}
 
-				if _, ignore := ignoredInterfaces[device.Interface()]; ignore {
+				if _, ignore := ignoredInterfaces[linkNameResolver.Resolve(device.Interface())]; ignore {
 					continue
 				}
 
 				if device.VIPConfig() != nil {
-					if spec, specErr := handleVIP(ctx, device.VIPConfig(), device.Interface(), logger); specErr != nil {
+					if spec, specErr := handleVIP(ctx, device.VIPConfig(), linkNameResolver.Resolve(device.Interface()), logger); specErr != nil {
 						specErrors = multierror.Append(specErrors, specErr)
 					} else {
 						specs = append(specs, spec)

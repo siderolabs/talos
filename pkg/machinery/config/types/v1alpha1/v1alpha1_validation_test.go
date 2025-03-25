@@ -260,9 +260,6 @@ func TestValidate(t *testing.T) {
 							{
 								ExtensionImage: "ghcr.io/siderolabs/gvisor:v0.1.0",
 							},
-							{
-								ExtensionImage: "ghcr.io/siderolabs/gvisor:v0.1.0",
-							},
 						},
 					},
 				},
@@ -278,7 +275,6 @@ func TestValidate(t *testing.T) {
 			expectedWarnings: []string{
 				".machine.install.extensions is deprecated, please see https://www.talos.dev/latest/talos-guides/install/boot-assets/",
 			},
-			expectedError: "1 error occurred:\n\t* duplicate system extension \"ghcr.io/siderolabs/gvisor:v0.1.0\"\n\n",
 		},
 		{
 			name: "ExternalCloudProviderEnabled",

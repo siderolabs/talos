@@ -150,7 +150,7 @@ In YAML/JSON output, field `event` is added to the resource representation to de
 Getting machine config:
 
 ```bash
-$ talosctl get machineconfig -o yaml
+$ talosctl get machineconfig v1alpha1 -o yaml
 node: 172.20.0.2
 metadata:
     namespace: config

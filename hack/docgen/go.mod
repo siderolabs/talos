@@ -7,8 +7,8 @@ go 1.24.0
 replace gopkg.in/yaml.v3 => github.com/unix4ever/yaml v0.0.0-20220527175918-f17b0f05cf2c
 
 require (
-	github.com/gomarkdown/markdown v0.0.0-20241205020045-f7e15b2f3e62
-	github.com/invopop/jsonschema v0.12.0
+	github.com/gomarkdown/markdown v0.0.0-20250311123330-531bef5e742b
+	github.com/invopop/jsonschema v0.13.0
 	github.com/microcosm-cc/bluemonday v1.0.27
 	github.com/santhosh-tekuri/jsonschema/v5 v5.3.1
 	github.com/siderolabs/gen v0.8.0
@@ -25,6 +25,6 @@ require (
 	github.com/gorilla/css v1.0.1 // indirect
 	github.com/mailru/easyjson v0.7.7 // indirect
 	golang.org/x/mod v0.20.0 // indirect
-	golang.org/x/net v0.30.0 // indirect
+	golang.org/x/net v0.36.0 // indirect
 	golang.org/x/tools v0.24.0 // indirect
 )

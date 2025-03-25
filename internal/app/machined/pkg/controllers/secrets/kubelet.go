@@ -29,7 +29,7 @@ func NewKubeletController() *KubeletController {
 		transform.Settings[*config.MachineConfig, *secrets.Kubelet]{
 			Name: "secrets.KubeletController",
 			MapMetadataOptionalFunc: func(cfg *config.MachineConfig) optional.Optional[*secrets.Kubelet] {
-				if cfg.Metadata().ID() != config.V1Alpha1ID {
+				if cfg.Metadata().ID() != config.ActiveID {
 					return optional.None[*secrets.Kubelet]()
 				}
 

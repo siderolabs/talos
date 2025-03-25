@@ -111,9 +111,7 @@ func (i *Imager) Execute(ctx context.Context, outputPath string, report *reporte
 		if !needBuildUKI {
 			return "", fmt.Errorf("UKI output is not supported in this Talos version")
 		}
-	case profile.OutKindImage:
-		needBuildUKI = needBuildUKI && i.prof.SecureBootEnabled()
-	case profile.OutKindISO, profile.OutKindInstaller:
+	case profile.OutKindISO, profile.OutKindInstaller, profile.OutKindImage:
 		needBuildUKI = needBuildUKI || quirks.New(i.prof.Version).UseSDBootForUEFI()
 	case profile.OutKindCmdline, profile.OutKindKernel, profile.OutKindInitramfs:
 		needBuildUKI = false
@@ -266,11 +264,12 @@ func (i *Imager) handleProf() error {
 		i.prof.Version = version.Tag
 	}
 
+	i.prof.Input.FillDefaults(i.prof.Arch, i.prof.Version, i.prof.SecureBootEnabled())
+	i.prof.Output.FillDefaults(i.prof.Arch, i.prof.Version, i.prof.SecureBootEnabled())
+
 	if err := i.prof.Validate(); err != nil {
 		return fmt.Errorf("profile is invalid: %w", err)
 	}
-
-	i.prof.Input.FillDefaults(i.prof.Arch, i.prof.Version, i.prof.SecureBootEnabled())
 
 	return nil
 }

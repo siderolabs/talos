@@ -106,7 +106,7 @@ func TestDeviceAuthFlow(t *testing.T) {
 	}))
 	t.Cleanup(ts.Close)
 
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	ctx, cancel := context.WithTimeout(t.Context(), 5*time.Second)
 	t.Cleanup(cancel)
 
 	cfg.DeviceAuthURL = ts.URL + "/device/code"

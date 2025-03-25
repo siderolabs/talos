@@ -36,8 +36,9 @@
     (typeattributeset protected_device_f ARG1)
 )
 
+(typeattributeset common_device_f device_t)
+
 (typeattribute device_f)
-(typeattributeset device_f device_t)
 (typeattributeset device_f common_device_f)
 (typeattributeset device_f protected_device_f)
 
@@ -72,6 +73,7 @@
     (roletype system_r process_label)
     (typeattributeset service_p process_label)
     (typeattributeset service_exec_f executable_label)
+    (allow process_label executable_label (fs_classes (ro)))
     (allow process_label executable_label (file (entrypoint execute execute_no_trans)))
 )
 
@@ -89,6 +91,7 @@
 
 (typeattribute system_p)
 (typeattributeset system_p kernel_t)
+(typeattributeset system_p initramfs_t)
 (typeattributeset system_p init_t)
 (typeattributeset system_p service_p)
 

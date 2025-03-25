@@ -35,11 +35,11 @@ description: "Table of supported Talos Linux versions and respective platforms."
 
 * Metal
 * AWS
-* Azure
 * GCP
 
 ### Tier 2
 
+* Azure
 * Digital Ocean
 * OpenStack
 * VMWare

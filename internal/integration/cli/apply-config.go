@@ -43,7 +43,7 @@ machine:
 
 	suite.Require().NoError(os.WriteFile(patchPath, []byte(patch), 0o777))
 
-	data, _ := suite.RunCLI([]string{"read", "--nodes", node, "/system/state/config.yaml"})
+	data, _ := suite.RunCLI([]string{"get", "--nodes", node, "mc", "v1alpha1", "-o", "jsonpath={.spec}"})
 
 	configPath := filepath.Join(suite.T().TempDir(), "config.yaml")
 

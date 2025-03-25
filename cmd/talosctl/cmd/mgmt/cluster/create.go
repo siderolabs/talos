@@ -45,13 +45,15 @@ import (
 	clientconfig "github.com/siderolabs/talos/pkg/machinery/client/config"
 	"github.com/siderolabs/talos/pkg/machinery/config"
 	"github.com/siderolabs/talos/pkg/machinery/config/bundle"
-	"github.com/siderolabs/talos/pkg/machinery/config/configloader"
+	configbase "github.com/siderolabs/talos/pkg/machinery/config/config"
 	"github.com/siderolabs/talos/pkg/machinery/config/configpatcher"
 	"github.com/siderolabs/talos/pkg/machinery/config/container"
 	"github.com/siderolabs/talos/pkg/machinery/config/encoder"
 	"github.com/siderolabs/talos/pkg/machinery/config/generate"
 	"github.com/siderolabs/talos/pkg/machinery/config/machine"
+	"github.com/siderolabs/talos/pkg/machinery/config/types/runtime"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/security"
+	"github.com/siderolabs/talos/pkg/machinery/config/types/siderolink"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/imager/quirks"
@@ -256,7 +258,7 @@ func downloadBootAssets(ctx context.Context) error {
 
 		cacheDir := filepath.Join(defaultStateDir, "cache")
 
-		if os.MkdirAll(cacheDir, 0o755) != nil {
+		if err = os.MkdirAll(cacheDir, 0o755); err != nil {
 			return err
 		}
 
@@ -795,14 +797,7 @@ func create(ctx context.Context) error {
 		}
 	}
 
-	if trustedRootsConfig := slb.TrustedRootsConfig(); trustedRootsConfig != nil {
-		trustedRootsPatch, err := configloader.NewFromBytes(trustedRootsConfig)
-		if err != nil {
-			return fmt.Errorf("error loading trusted roots config: %w", err)
-		}
-
-		configBundleOpts = append(configBundleOpts, bundle.WithPatch([]configpatcher.Patch{configpatcher.NewStrategicMergePatch(trustedRootsPatch)}))
-	}
+	configBundleOpts = append(configBundleOpts, bundle.WithPatch(slb.ConfigPatches(withSiderolinkAgent.IsTunnel())))
 
 	if withJSONLogs {
 		const port = 4003
@@ -1483,22 +1478,74 @@ func (slb *siderolinkBuilder) SiderolinkRequest() provision.SiderolinkRequest {
 	}
 }
 
-// TrustedRootsConfig returns the trusted roots config for the current builder.
-func (slb *siderolinkBuilder) TrustedRootsConfig() []byte {
-	if slb == nil || slb.apiCert == nil {
+// ConfigPatches returns the config patches for the current builder.
+func (slb *siderolinkBuilder) ConfigPatches(tunnel bool) []configpatcher.Patch {
+	cfg := slb.ConfigDocument(tunnel)
+	if cfg == nil {
 		return nil
 	}
 
-	trustedRootsConfig := security.NewTrustedRootsConfigV1Alpha1()
-	trustedRootsConfig.MetaName = "siderolink-ca"
-	trustedRootsConfig.Certificates = string(slb.apiCert)
+	return []configpatcher.Patch{configpatcher.NewStrategicMergePatch(cfg)}
+}
 
-	marshaled, err := encoder.NewEncoder(trustedRootsConfig, encoder.WithComments(encoder.CommentsDisabled)).Encode()
-	if err != nil {
-		panic(fmt.Sprintf("failed to marshal trusted roots config: %s", err))
+// ConfigDocument returns the config document for the current builder.
+func (slb *siderolinkBuilder) ConfigDocument(tunnel bool) config.Provider {
+	if slb == nil {
+		return nil
 	}
 
-	return marshaled
+	scheme := "grpc://"
+
+	if slb.apiCert != nil {
+		scheme = "https://"
+	}
+
+	apiLink := scheme + net.JoinHostPort(slb.wgHost, strconv.Itoa(slb.apiPort)) + "?jointoken=foo"
+
+	if tunnel {
+		apiLink += "&grpc_tunnel=true"
+	}
+
+	apiURL, err := url.Parse(apiLink)
+	if err != nil {
+		panic(fmt.Sprintf("failed to parse API URL: %s", err))
+	}
+
+	sdlConfig := siderolink.NewConfigV1Alpha1()
+	sdlConfig.APIUrlConfig.URL = apiURL
+
+	eventsConfig := runtime.NewEventSinkV1Alpha1()
+	eventsConfig.Endpoint = net.JoinHostPort(slb.nodeIPv6Addr, strconv.Itoa(slb.sinkPort))
+
+	logURL, err := url.Parse("tcp://" + net.JoinHostPort(slb.nodeIPv6Addr, strconv.Itoa(slb.logPort)))
+	if err != nil {
+		panic(fmt.Sprintf("failed to parse log URL: %s", err))
+	}
+
+	logConfig := runtime.NewKmsgLogV1Alpha1()
+	logConfig.MetaName = "siderolink"
+	logConfig.KmsgLogURL.URL = logURL
+
+	documents := []configbase.Document{
+		sdlConfig,
+		eventsConfig,
+		logConfig,
+	}
+
+	if slb.apiCert != nil {
+		trustedRootsConfig := security.NewTrustedRootsConfigV1Alpha1()
+		trustedRootsConfig.MetaName = "siderolink-ca"
+		trustedRootsConfig.Certificates = string(slb.apiCert)
+
+		documents = append(documents, trustedRootsConfig)
+	}
+
+	ctr, err := container.New(documents...)
+	if err != nil {
+		panic(fmt.Sprintf("failed to create container for Siderolink config: %s", err))
+	}
+
+	return ctr
 }
 
 // SetKernelArgs sets the kernel arguments for the current builder. It is safe to call this method on a nil pointer.
@@ -1511,41 +1558,28 @@ func (slb *siderolinkBuilder) SetKernelArgs(extraKernelArgs *procfs.Cmdline, tun
 		extraKernelArgs.Get("talos.logging.kernel") != nil:
 		return errors.New("siderolink kernel arguments are already set, cannot run with --with-siderolink")
 	default:
-		scheme := "grpc://"
-
-		if slb.apiCert != nil {
-			scheme = "https://"
+		marshaled, err := slb.ConfigDocument(tunnel).EncodeBytes(encoder.WithComments(encoder.CommentsDisabled))
+		if err != nil {
+			panic(fmt.Sprintf("failed to marshal trusted roots config: %s", err))
 		}
 
-		apiLink := scheme + net.JoinHostPort(slb.wgHost, strconv.Itoa(slb.apiPort)) + "?jointoken=foo"
+		var buf bytes.Buffer
 
-		if tunnel {
-			apiLink += "&grpc_tunnel=true"
+		zencoder, err := zstd.NewWriter(&buf)
+		if err != nil {
+			return fmt.Errorf("failed to create zstd encoder: %w", err)
 		}
 
-		extraKernelArgs.Append("siderolink.api", apiLink)
-		extraKernelArgs.Append("talos.events.sink", net.JoinHostPort(slb.nodeIPv6Addr, strconv.Itoa(slb.sinkPort)))
-		extraKernelArgs.Append("talos.logging.kernel", "tcp://"+net.JoinHostPort(slb.nodeIPv6Addr, strconv.Itoa(slb.logPort)))
-
-		if trustedRootsConfig := slb.TrustedRootsConfig(); trustedRootsConfig != nil {
-			var buf bytes.Buffer
-
-			zencoder, err := zstd.NewWriter(&buf)
-			if err != nil {
-				return fmt.Errorf("failed to create zstd encoder: %w", err)
-			}
-
-			_, err = zencoder.Write(trustedRootsConfig)
-			if err != nil {
-				return fmt.Errorf("failed to write zstd data: %w", err)
-			}
-
-			if err = zencoder.Close(); err != nil {
-				return fmt.Errorf("failed to close zstd encoder: %w", err)
-			}
-
-			extraKernelArgs.Append(constants.KernelParamConfigInline, base64.StdEncoding.EncodeToString(buf.Bytes()))
+		_, err = zencoder.Write(marshaled)
+		if err != nil {
+			return fmt.Errorf("failed to write zstd data: %w", err)
 		}
+
+		if err = zencoder.Close(); err != nil {
+			return fmt.Errorf("failed to close zstd encoder: %w", err)
+		}
+
+		extraKernelArgs.Append(constants.KernelParamConfigInline, base64.StdEncoding.EncodeToString(buf.Bytes()))
 
 		return nil
 	}

@@ -5,15 +5,14 @@
 package network
 
 import (
-	"runtime"
 	"strconv"
+	"sync/atomic"
 	"time"
 
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/handle"
 	"github.com/cosi-project/runtime/pkg/resource/meta"
 	"github.com/cosi-project/runtime/pkg/resource/typed"
-	"go.uber.org/zap"
 )
 
 // DNSUpstreamType is type of DNSUpstream resource.
@@ -76,12 +75,13 @@ type Proxy interface {
 	Addr() string
 	Fails() uint32
 	Healthcheck()
-	Stop()
+	Close()
 	Start(time.Duration)
 }
 
 // DNSConn is a wrapper around a Proxy.
 type DNSConn struct {
+	counter atomic.Int64
 	// Proxy is essentially a *proxy.Proxy interface. It's here because we don't want machinery to depend on coredns.
 	// We could use a generic struct here, but without generic aliases the usage would look ugly.
 	// Once generic aliases are here, redo the type above as `type DNSUpstream[P Proxy] = typed.Resource[...]`.
@@ -89,22 +89,14 @@ type DNSConn struct {
 }
 
 // NewDNSConn initializes a new DNSConn.
-func NewDNSConn(proxy Proxy, l *zap.Logger) *DNSConn {
+func NewDNSConn(proxy Proxy) *DNSConn {
 	proxy.Start(500 * time.Millisecond)
 
-	conn := &DNSConn{proxy: proxy}
+	res := &DNSConn{proxy: proxy}
 
-	// Set the finalizer to stop the proxy when the DNSConn is garbage collected. Since the proxy already uses a finalizer
-	// to stop the actual connections, this will not carry any noticeable performance overhead.
-	//
-	// TODO: replace with runtime.AddCleanup once https://github.com/golang/go/issues/67535 lands
-	runtime.SetFinalizer(conn, func(conn *DNSConn) {
-		conn.proxy.Stop()
+	res.counter.Add(1)
 
-		l.Info("dns connection garbage collected", zap.String("addr", conn.proxy.Addr()))
-	})
-
-	return conn
+	return res
 }
 
 // Addr returns the address of the DNSConn.
@@ -118,3 +110,17 @@ func (u *DNSConn) Proxy() Proxy { return u.proxy }
 
 // Healthcheck kicks of a round of health checks for this DNSConn.
 func (u *DNSConn) Healthcheck() { u.proxy.Healthcheck() }
+
+// Close stops the DNSConn.
+func (u *DNSConn) Close() {
+	if u.counter.Add(-1) == 0 {
+		u.proxy.Close()
+	}
+}
+
+// NewRef returns a new reference to the DNSConn.
+func (u *DNSConn) NewRef() *DNSConn {
+	u.counter.Add(1)
+
+	return u
+}

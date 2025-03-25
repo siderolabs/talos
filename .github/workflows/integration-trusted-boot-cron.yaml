@@ -1,6 +1,6 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
 #
-# Generated on 2024-11-28T13:53:18Z by kres 232fe63.
+# Generated on 2025-03-21T15:51:32Z by kres ec5ec04.
 
 name: integration-trusted-boot-cron
 concurrency:
@@ -79,7 +79,7 @@ jobs:
           PLATFORM: linux/amd64
           PUSH: "true"
         run: |
-          make talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer imager talos _out/integration-test-linux-amd64
+          make talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
       - name: talosctl-cni-bundle
         if: github.event_name == 'schedule'
         run: |

@@ -38,6 +38,7 @@ Talos Linux supports four encryption methods, which can be combined together for
 > It uses the hardware characteristics of the machine in order to decrypt the data, so drives that have been removed, or recycled from a cloud environment or attached to a different virtual machine, will maintain their protection and encryption.
 >
 > Note: When using KMS encryption for `STATE` partition the network configuration can't be provided via the machine configuration, as KMS requires network connectivity before `STATE` partition is unlocked.
+> Also custom CA certificates cannot be used for the KMS server, as these are stored in the `STATE` partition as well.
 
 ## Configuration
 

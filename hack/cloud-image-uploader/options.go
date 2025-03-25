@@ -19,28 +19,18 @@ type Options struct {
 
 	// AWS options.
 	AWSRegions []string
-
-	// Azure options.
-	AzureRegions     []string
-	AzureGalleryName string
-	AzurePreRelease  string
 }
 
 // DefaultOptions used throughout the cli.
 var DefaultOptions = Options{
 	ArtifactsPath: "_out/",
 	Architectures: []string{"amd64", "arm64"},
-	TargetClouds:  []string{"aws", "azure"},
+	TargetClouds:  []string{"aws"},
 }
 
 // AWSImage returns path to AWS pre-built image.
 func (o *Options) AWSImage(architecture string) string {
 	return filepath.Join(o.ArtifactsPath, fmt.Sprintf("aws-%s.raw.zst", architecture))
-}
-
-// AzureImage returns path to AWS pre-built image.
-func (o *Options) AzureImage(architecture string) string {
-	return filepath.Join(o.ArtifactsPath, fmt.Sprintf("azure-%s.vhd.zst", architecture))
 }
 
 // GCPImage returns path to GCP pre-built image.

@@ -461,7 +461,7 @@ func (apiSuite *APISuite) HashKubeletCert(ctx context.Context, node string) (str
 
 // ReadConfigFromNode reads machine configuration from the node.
 func (apiSuite *APISuite) ReadConfigFromNode(nodeCtx context.Context) (config.Provider, error) {
-	cfg, err := safe.StateGetByID[*configres.MachineConfig](nodeCtx, apiSuite.Client.COSI, configres.V1Alpha1ID)
+	cfg, err := safe.StateGetByID[*configres.MachineConfig](nodeCtx, apiSuite.Client.COSI, configres.ActiveID)
 	if err != nil {
 		return nil, fmt.Errorf("error fetching machine config resource: %w", err)
 	}

@@ -63,8 +63,8 @@ func (TunnelExtension) ResourceDefinition() meta.ResourceDefinitionSpec {
 				JSONPath: `{.apiEndpoint}`,
 			},
 			{
-				Name:     "Interface name",
-				JSONPath: `{.ifaceName}`,
+				Name:     "Link name",
+				JSONPath: `{.linkName}`,
 			},
 			{
 				Name:     "MTU",

@@ -18,11 +18,17 @@ import (
 // MachineConfigType is type of Service resource.
 const MachineConfigType = resource.Type("MachineConfigs.config.talos.dev")
 
-// V1Alpha1ID is the ID of V1Alpha1 resource (singleton).
-const V1Alpha1ID = resource.ID("v1alpha1")
+// ActiveID is the ID of active (applied to the running OS) machine configuration.
+const ActiveID = resource.ID("v1alpha1")
 
 // MaintenanceID is the ID of the config submitted in the maintenance mode.
 const MaintenanceID = resource.ID("maintenance")
+
+// PersistentID is the ID of the config saved to the persistent storage.
+//
+// Note: PersistentID might be ahead of the "current" ID if the config was submitted in e.g. "staged" mode.
+// Note: PersistentID might be behind the "current" ID if the config was submitted in e.g. "try" mode.
+const PersistentID = resource.ID("persistent")
 
 // MachineConfig resource holds v1alpha Talos configuration.
 type MachineConfig struct {
@@ -41,7 +47,7 @@ func (s *v1alpha1Spec) MarshalYAMLBytes() ([]byte, error) {
 
 // NewMachineConfig initializes a V1Alpha1 resource.
 func NewMachineConfig(spec config.Provider) *MachineConfig {
-	return NewMachineConfigWithID(spec, V1Alpha1ID)
+	return NewMachineConfigWithID(spec, ActiveID)
 }
 
 // NewMachineConfigWithID initializes a MachineConfig resource.

@@ -27,7 +27,7 @@ func TestPriorityLock(t *testing.T) {
 	require := require.New(t)
 
 	lock := v1alpha1.NewPriorityLock[testSequenceNumber]()
-	ctx := context.Background()
+	ctx := t.Context()
 
 	ctx1, err := lock.Lock(ctx, time.Second, 2)
 	require.NoError(err)
@@ -75,7 +75,7 @@ func TestPriorityLockSequential(t *testing.T) {
 	require := require.New(t)
 
 	lock := v1alpha1.NewPriorityLock[testSequenceNumber]()
-	ctx := context.Background()
+	ctx := t.Context()
 
 	_, err := lock.Lock(ctx, time.Second, 2)
 	require.NoError(err)
@@ -94,7 +94,7 @@ func TestPriorityLockConcurrent(t *testing.T) {
 
 	lock := v1alpha1.NewPriorityLock[testSequenceNumber]()
 
-	globalCtx, globalCtxCancel := context.WithCancel(context.Background())
+	globalCtx, globalCtxCancel := context.WithCancel(t.Context())
 	defer globalCtxCancel()
 
 	var eg errgroup.Group

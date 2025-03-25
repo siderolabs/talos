@@ -112,6 +112,11 @@ func (svc *Extension) DependsOn(r runtime.Runtime) []string {
 	return deps
 }
 
+// Volumes implements the Service interface.
+func (svc *Extension) Volumes() []string {
+	return nil
+}
+
 func (svc *Extension) getOCIOptions(envVars []string, mounts []specs.Mount) []oci.SpecOpts {
 	ociOpts := []oci.SpecOpts{
 		oci.WithRootFSPath(filepath.Join(constants.ExtensionServiceRootfsPath, svc.Spec.Name)),
@@ -167,6 +172,13 @@ func (svc *Extension) Runner(r runtime.Runtime) (runner.Runner, error) {
 	}
 
 	mounts := append([]specs.Mount{}, svc.Spec.Container.Mounts...)
+
+	if _, err := os.Stat("/usr/etc/in-container"); err == nil {
+		mounts = append(
+			mounts,
+			specs.Mount{Type: "bind", Destination: "/usr/etc/in-container", Source: "/usr/etc/in-container", Options: []string{"bind", "ro"}},
+		)
+	}
 
 	envVars, err := svc.parseEnvironment()
 	if err != nil {

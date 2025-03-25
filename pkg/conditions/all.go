@@ -77,10 +77,17 @@ func (a *all) String() string {
 }
 
 // WaitForAll creates a condition which waits for all the conditions to be successful.
+//
+// If the condition is nil, it is ignored.
+// WaitForAll(nil) return nil.
 func WaitForAll(conditions ...Condition) Condition {
 	res := &all{}
 
 	for _, c := range conditions {
+		if c == nil {
+			continue
+		}
+
 		if multi, ok := c.(*all); ok {
 			// flatten lists
 			res.conditions = append(res.conditions, multi.conditions...)

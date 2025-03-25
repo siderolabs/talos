@@ -74,7 +74,7 @@ func setup(ctx context.Context, t *testing.T, st state.State, mockUUID, mockSeri
 func TestRepopulateOnRetry(t *testing.T) {
 	st := state.WrapCore(namespaced.NewState(inmem.Build))
 
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	ctx, cancel := context.WithTimeout(t.Context(), 5*time.Second)
 	defer cancel()
 
 	nCalls := 0

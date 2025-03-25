@@ -134,7 +134,14 @@ func (o *APID) DependsOn(runtime.Runtime) []string {
 	return []string{"containerd"}
 }
 
+// Volumes implements the Service interface.
+func (o *APID) Volumes() []string {
+	return nil
+}
+
 // Runner implements the Service interface.
+//
+//nolint:gocyclo
 func (o *APID) Runner(r runtime.Runtime) (runner.Runner, error) {
 	// Ensure socket dir exists
 	if err := os.MkdirAll(filepath.Dir(constants.APISocketPath), 0o750); err != nil {
@@ -167,6 +174,13 @@ func (o *APID) Runner(r runtime.Runtime) (runner.Runner, error) {
 		{Type: "bind", Destination: "/etc/ssl", Source: "/etc/ssl", Options: []string{"bind", "ro"}},
 		{Type: "bind", Destination: filepath.Dir(constants.MachineSocketPath), Source: filepath.Dir(constants.MachineSocketPath), Options: []string{"rbind", "ro"}},
 		{Type: "bind", Destination: filepath.Dir(constants.APISocketPath), Source: filepath.Dir(constants.APISocketPath), Options: []string{"rbind", "rw"}},
+	}
+
+	if _, err := os.Stat("/usr/etc/in-container"); err == nil {
+		mounts = append(
+			mounts,
+			specs.Mount{Type: "bind", Destination: "/usr/etc/in-container", Source: "/usr/etc/in-container", Options: []string{"bind", "ro"}},
+		)
 	}
 
 	env := []string{

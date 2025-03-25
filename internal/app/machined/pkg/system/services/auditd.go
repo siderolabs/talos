@@ -50,6 +50,11 @@ func (s *Auditd) DependsOn(runtime.Runtime) []string {
 	return nil
 }
 
+// Volumes implements the Service interface.
+func (s *Auditd) Volumes() []string {
+	return nil
+}
+
 // Runner implements the Service interface.
 func (s *Auditd) Runner(r runtime.Runtime) (runner.Runner, error) {
 	return goroutine.NewRunner(r, auditdServiceID, auditd.Main, runner.WithLoggingManager(r.Logging())), nil

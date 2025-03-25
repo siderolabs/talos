@@ -149,7 +149,7 @@ func (s *Server) GenerateConfiguration(ctx context.Context, in *machine.Generate
 		return nil, errors.New("join config can't be generated in the maintenance mode")
 	}
 
-	return configuration.Generate(ctx, in)
+	return configuration.Generate(ctx, s.controller.Runtime().State().V1Alpha2().Resources(), in)
 }
 
 // GenerateClientConfiguration implements the [machine.MachineServiceServer] interface.

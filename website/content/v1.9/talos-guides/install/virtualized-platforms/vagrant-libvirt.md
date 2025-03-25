@@ -160,7 +160,7 @@ Our control plane nodes have the IPs: `192.168.121.203`, `192.168.121.119`, `192
 Now you should be able to interact with Talos nodes that are in maintenance mode:
 
 ```bash
-talosctl -n 192.168.121.203 disks --insecure
+talosctl -n 192.168.121.203 get disks --insecure
 ```
 
 Sample output:
@@ -186,7 +186,8 @@ Edit `controlplane.yaml` to add the virtual IP you picked to a network interface
 machine:
   network:
     interfaces:
-      - interface: eth0
+      - deviceSelector:
+          physical: true # should select any hardware network device, if you have just one, it will be selected
         dhcp: true
         vip:
           ip: 192.168.121.100

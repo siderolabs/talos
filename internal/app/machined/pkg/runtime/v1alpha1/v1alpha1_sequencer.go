@@ -6,15 +6,16 @@ package v1alpha1
 
 import (
 	"strconv"
-	"time"
 
 	"github.com/siderolabs/go-pointer"
 	"github.com/siderolabs/go-procfs/procfs"
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
+	"github.com/siderolabs/talos/pkg/imager/profile"
 	machineapi "github.com/siderolabs/talos/pkg/machinery/api/machine"
 	"github.com/siderolabs/talos/pkg/machinery/config/machine"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
+	"github.com/siderolabs/talos/pkg/machinery/meta"
 )
 
 // Sequencer implements the sequencer interface.
@@ -98,6 +99,17 @@ func (*Sequencer) Initialize(r runtime.Runtime) []runtime.Phase {
 			ReloadMeta,
 		).AppendWithDeferredCheck(
 			func() bool {
+				val, ok := r.State().Machine().Meta().ReadTag(meta.DiskImageBootloader)
+				if !ok {
+					return false
+				}
+
+				return r.State().Machine().Installed() && val == profile.DiskImageBootloaderDualBoot.String()
+			},
+			"cleanupBootloader",
+			CleanupBootloader,
+		).AppendWithDeferredCheck(
+			func() bool {
 				if mode == runtime.ModeMetalAgent {
 					return false
 				}
@@ -126,21 +138,9 @@ func (*Sequencer) Initialize(r runtime.Runtime) []runtime.Phase {
 			},
 			"haltIfInstalled",
 			haltIfInstalled,
-		).AppendWithDeferredCheck(
-			func() bool {
-				return r.State().Machine().Installed()
-			},
-			"mountSystem",
-			MountStatePartition(false),
 		).Append(
 			"config",
 			LoadConfig,
-		).AppendWithDeferredCheck(
-			func() bool {
-				return r.State().Machine().Installed()
-			},
-			"unmountSystem",
-			UnmountStatePartition,
 		)
 	}
 
@@ -172,16 +172,6 @@ func (*Sequencer) Install(r runtime.Runtime) []runtime.Phase {
 				"saveStateEncryptionConfig",
 				SaveStateEncryptionConfig,
 			).Append(
-				"mountState",
-				MountStatePartition(true),
-			).Append(
-				"saveConfig",
-				SaveConfig,
-				Sleep(time.Second),
-			).Append(
-				"unmountState",
-				UnmountStatePartition,
-			).Append(
 				"volumeFinalize",
 				TeardownVolumeLifecycle,
 			).Append(
@@ -210,13 +200,6 @@ func (*Sequencer) Boot(r runtime.Runtime) []runtime.Phase {
 		r.State().Platform().Mode() != runtime.ModeContainer,
 		"saveStateEncryptionConfig",
 		SaveStateEncryptionConfig,
-	).AppendWhen(
-		r.State().Platform().Mode() != runtime.ModeContainer,
-		"mountState",
-		MountStatePartition(true),
-	).Append(
-		"saveConfig",
-		SaveConfig,
 	).Append(
 		"memorySizeCheck",
 		MemorySizeCheck,
@@ -375,7 +358,7 @@ func (*Sequencer) Shutdown(r runtime.Runtime, in *machineapi.ShutdownRequest) []
 	skipNodeRegistration := r.Config() != nil && r.Config().Machine() != nil && r.Config().Machine().Kubelet().SkipNodeRegistration()
 
 	phases := PhaseList{}.Append(
-		"storeShudown",
+		"storeShutdown",
 		StoreShutdownEmergency,
 	).AppendWhen(
 		!in.GetForce() && !skipNodeRegistration,
@@ -471,9 +454,6 @@ func (*Sequencer) Upgrade(r runtime.Runtime, in *machineapi.UpgradeRequest) []ru
 			"stopServices",
 			StopServicesEphemeral,
 		).Append(
-			"unmountUser",
-			UnmountUserDisks,
-		).Append(
 			"unmount",
 			UnmountOverlayFilesystems,
 			UnmountPodMounts,
@@ -483,7 +463,6 @@ func (*Sequencer) Upgrade(r runtime.Runtime, in *machineapi.UpgradeRequest) []ru
 		).Append(
 			"unmountSystem",
 			UnmountEphemeralPartition,
-			UnmountStatePartition,
 		).Append(
 			"volumeFinalize",
 			TeardownVolumeLifecycle,
@@ -523,9 +502,6 @@ func stopAllPhaselist(r runtime.Runtime, enableKexec bool) PhaseList {
 			"stopServices",
 			StopServicesEphemeral,
 		).Append(
-			"unmountUser",
-			UnmountUserDisks,
-		).Append(
 			"umount",
 			UnmountOverlayFilesystems,
 			UnmountPodMounts,
@@ -535,7 +511,6 @@ func stopAllPhaselist(r runtime.Runtime, enableKexec bool) PhaseList {
 		).Append(
 			"unmountSystem",
 			UnmountEphemeralPartition,
-			UnmountStatePartition,
 		).Append(
 			"volumeFinalize",
 			TeardownVolumeLifecycle,

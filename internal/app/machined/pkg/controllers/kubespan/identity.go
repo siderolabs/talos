@@ -11,25 +11,25 @@ import (
 	"path/filepath"
 
 	"github.com/cosi-project/runtime/pkg/controller"
-	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/siderolabs/gen/optional"
 	"go.uber.org/zap"
 
 	kubespanadapter "github.com/siderolabs/talos/internal/app/machined/pkg/adapters/kubespan"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/automaton"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/automaton/blockautomaton"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
+	"github.com/siderolabs/talos/pkg/machinery/resources/block"
 	"github.com/siderolabs/talos/pkg/machinery/resources/config"
 	"github.com/siderolabs/talos/pkg/machinery/resources/kubespan"
 	"github.com/siderolabs/talos/pkg/machinery/resources/network"
-	runtimeres "github.com/siderolabs/talos/pkg/machinery/resources/runtime"
-	"github.com/siderolabs/talos/pkg/machinery/resources/v1alpha1"
 )
 
 // IdentityController watches KubeSpan configuration, updates KubeSpan Identity.
 type IdentityController struct {
-	StatePath string
+	stateMachine blockautomaton.VolumeMounterAutomaton
 }
 
 // Name implements controller.Controller interface.
@@ -53,10 +53,14 @@ func (ctrl *IdentityController) Inputs() []controller.Input {
 			Kind:      controller.InputWeak,
 		},
 		{
-			Namespace: v1alpha1.NamespaceName,
-			Type:      runtimeres.MountStatusType,
-			ID:        optional.Some(constants.StatePartitionLabel),
-			Kind:      controller.InputWeak,
+			Namespace: block.NamespaceName,
+			Type:      block.VolumeMountStatusType,
+			Kind:      controller.InputStrong,
+		},
+		{
+			Namespace: block.NamespaceName,
+			Type:      block.VolumeMountRequestType,
+			Kind:      controller.InputDestroyReady,
 		},
 	}
 }
@@ -68,89 +72,90 @@ func (ctrl *IdentityController) Outputs() []controller.Output {
 			Type: kubespan.IdentityType,
 			Kind: controller.OutputExclusive,
 		},
+		{
+			Type: block.VolumeMountRequestType,
+			Kind: controller.OutputShared,
+		},
 	}
 }
 
 // Run implements controller.Controller interface.
 //
 //nolint:gocyclo,cyclop
-func (ctrl *IdentityController) Run(ctx context.Context, r controller.Runtime, _ *zap.Logger) error {
-	if ctrl.StatePath == "" {
-		ctrl.StatePath = constants.StateMountPoint
-	}
-
+func (ctrl *IdentityController) Run(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
 	for {
 		select {
 		case <-ctx.Done():
 			return nil
 		case <-r.EventCh():
-			if _, err := r.Get(ctx, resource.NewMetadata(v1alpha1.NamespaceName, runtimeres.MountStatusType, constants.StatePartitionLabel, resource.VersionUndefined)); err != nil {
-				if state.IsNotFoundError(err) {
-					// wait for STATE to be mounted
-					continue
-				}
+		}
 
-				return fmt.Errorf("error reading mount status: %w", err)
+		cfg, err := safe.ReaderGetByID[*kubespan.Config](ctx, r, kubespan.ConfigID)
+		if err != nil && !state.IsNotFoundError(err) {
+			return fmt.Errorf("error getting kubespan configuration: %w", err)
+		}
+
+		firstMAC, err := safe.ReaderGetByID[*network.HardwareAddr](ctx, r, network.FirstHardwareAddr)
+		if err != nil && !state.IsNotFoundError(err) {
+			return fmt.Errorf("error getting first MAC address: %w", err)
+		}
+
+		_, err = safe.ReaderGetByID[*kubespan.Identity](ctx, r, kubespan.LocalIdentity)
+		alreadyHasIdentity := err == nil
+
+		if cfg != nil && firstMAC != nil && cfg.TypedSpec().Enabled {
+			if ctrl.stateMachine == nil && !alreadyHasIdentity {
+				ctrl.stateMachine = blockautomaton.NewVolumeMounter(ctrl.Name(), constants.StatePartitionLabel, ctrl.establishIdentity(cfg, firstMAC))
 			}
-
-			cfg, err := safe.ReaderGet[*kubespan.Config](ctx, r, resource.NewMetadata(config.NamespaceName, kubespan.ConfigType, kubespan.ConfigID, resource.VersionUndefined))
-			if err != nil && !state.IsNotFoundError(err) {
-				return fmt.Errorf("error getting kubespan configuration: %w", err)
+		} else if alreadyHasIdentity {
+			if err = r.Destroy(ctx, kubespan.NewIdentity(kubespan.NamespaceName, kubespan.LocalIdentity).Metadata()); err != nil {
+				return fmt.Errorf("error cleaning up identity: %w", err)
 			}
+		}
 
-			firstMAC, err := safe.ReaderGet[*network.HardwareAddr](ctx, r, resource.NewMetadata(network.NamespaceName, network.HardwareAddrType, network.FirstHardwareAddr, resource.VersionUndefined))
-			if err != nil && !state.IsNotFoundError(err) {
-				return fmt.Errorf("error getting first MAC address: %w", err)
-			}
-
-			touchedIDs := make(map[resource.ID]struct{})
-
-			if cfg != nil && firstMAC != nil && cfg.TypedSpec().Enabled {
-				var localIdentity kubespan.IdentitySpec
-
-				if err = controllers.LoadOrNewFromFile(filepath.Join(ctrl.StatePath, constants.KubeSpanIdentityFilename), &localIdentity, func(v any) error {
-					return kubespanadapter.IdentitySpec(v.(*kubespan.IdentitySpec)).GenerateKey()
-				}); err != nil {
-					return fmt.Errorf("error caching kubespan identity: %w", err)
-				}
-
-				kubespanCfg := cfg.TypedSpec()
-				mac := firstMAC.TypedSpec()
-
-				if err = kubespanadapter.IdentitySpec(&localIdentity).UpdateAddress(kubespanCfg.ClusterID, net.HardwareAddr(mac.HardwareAddr)); err != nil {
-					return fmt.Errorf("error updating KubeSpan address: %w", err)
-				}
-
-				if err = safe.WriterModify(ctx, r, kubespan.NewIdentity(kubespan.NamespaceName, kubespan.LocalIdentity), func(res *kubespan.Identity) error {
-					*res.TypedSpec() = localIdentity
+		if ctrl.stateMachine != nil {
+			if err := ctrl.stateMachine.Run(ctx, r, logger,
+				automaton.WithAfterFunc(func() error {
+					ctrl.stateMachine = nil
 
 					return nil
-				}); err != nil {
-					return err
-				}
-
-				touchedIDs[kubespan.LocalIdentity] = struct{}{}
-			}
-
-			// list keys for cleanup
-			list, err := r.List(ctx, resource.NewMetadata(kubespan.NamespaceName, kubespan.IdentityType, "", resource.VersionUndefined))
-			if err != nil {
-				return fmt.Errorf("error listing resources: %w", err)
-			}
-
-			for _, res := range list.Items {
-				if res.Metadata().Owner() != ctrl.Name() {
-					continue
-				}
-
-				if _, ok := touchedIDs[res.Metadata().ID()]; !ok {
-					if err = r.Destroy(ctx, res.Metadata()); err != nil {
-						return fmt.Errorf("error cleaning up specs: %w", err)
-					}
-				}
+				}),
+			); err != nil {
+				return fmt.Errorf("error running volume mounter machine: %w", err)
 			}
 		}
 
 		r.ResetRestartBackoff()
+	}
+}
+
+func (ctrl *IdentityController) establishIdentity(
+	cfg *kubespan.Config, firstMAC *network.HardwareAddr,
+) func(
+	ctx context.Context, r controller.ReaderWriter, logger *zap.Logger, mountStatus *block.VolumeMountStatus,
+) error {
+	return func(ctx context.Context, r controller.ReaderWriter, logger *zap.Logger, mountStatus *block.VolumeMountStatus) error {
+		rootPath := mountStatus.TypedSpec().Target
+
+		var localIdentity kubespan.IdentitySpec
+
+		if err := controllers.LoadOrNewFromFile(filepath.Join(rootPath, constants.KubeSpanIdentityFilename), &localIdentity, func(v *kubespan.IdentitySpec) error {
+			return kubespanadapter.IdentitySpec(v).GenerateKey()
+		}); err != nil {
+			return fmt.Errorf("error caching kubespan identity: %w", err)
+		}
+
+		kubespanCfg := cfg.TypedSpec()
+		mac := firstMAC.TypedSpec()
+
+		if err := kubespanadapter.IdentitySpec(&localIdentity).UpdateAddress(kubespanCfg.ClusterID, net.HardwareAddr(mac.HardwareAddr)); err != nil {
+			return fmt.Errorf("error updating KubeSpan address: %w", err)
+		}
+
+		return safe.WriterModify(ctx, r, kubespan.NewIdentity(kubespan.NamespaceName, kubespan.LocalIdentity), func(res *kubespan.Identity) error {
+			*res.TypedSpec() = localIdentity
+
+			return nil
+		})
 	}
 }

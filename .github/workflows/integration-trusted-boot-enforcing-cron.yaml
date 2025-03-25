@@ -1,0 +1,122 @@
+# THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
+#
+# Generated on 2025-03-24T09:55:56Z by kres ec5ec04.
+
+name: integration-trusted-boot-enforcing-cron
+concurrency:
+  group: ${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+"on":
+  schedule:
+    - cron: 30 3 * * *
+jobs:
+  default:
+    runs-on:
+      - self-hosted
+      - talos
+    steps:
+      - name: gather-system-info
+        id: system-info
+        uses: kenchan0130/actions-system-info@v1.3.0
+        continue-on-error: true
+      - name: print-system-info
+        run: |
+          MEMORY_GB=$((${{ steps.system-info.outputs.totalmem }}/1024/1024/1024))
+
+          OUTPUTS=(
+            "CPU Core: ${{ steps.system-info.outputs.cpu-core }}"
+            "CPU Model: ${{ steps.system-info.outputs.cpu-model }}"
+            "Hostname: ${{ steps.system-info.outputs.hostname }}"
+            "NodeName: ${NODE_NAME}"
+            "Kernel release: ${{ steps.system-info.outputs.kernel-release }}"
+            "Kernel version: ${{ steps.system-info.outputs.kernel-version }}"
+            "Name: ${{ steps.system-info.outputs.name }}"
+            "Platform: ${{ steps.system-info.outputs.platform }}"
+            "Release: ${{ steps.system-info.outputs.release }}"
+            "Total memory: ${MEMORY_GB} GB"
+          )
+
+          for OUTPUT in "${OUTPUTS[@]}";do
+            echo "${OUTPUT}"
+          done
+        continue-on-error: true
+      - name: checkout
+        uses: actions/checkout@v4
+      - name: Unshallow
+        run: |
+          git fetch --prune --unshallow
+      - name: Set up Docker Buildx
+        id: setup-buildx
+        uses: docker/setup-buildx-action@v3
+        with:
+          driver: remote
+          endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
+        timeout-minutes: 10
+      - name: Download artifacts
+        if: github.event_name != 'schedule'
+        uses: actions/download-artifact@v4
+        with:
+          name: talos-artifacts
+          path: _out
+      - name: Fix artifact permissions
+        if: github.event_name != 'schedule'
+        run: |
+          xargs -a _out/executable-artifacts -I {} chmod +x {}
+      - name: ci-temp-release-tag
+        if: github.event_name != 'schedule'
+        run: |
+          make ci-temp-release-tag
+      - name: uki-certs
+        if: github.event_name == 'schedule'
+        env:
+          PLATFORM: linux/amd64
+        run: |
+          make uki-certs
+      - name: build
+        if: github.event_name == 'schedule'
+        env:
+          IMAGE_REGISTRY: registry.dev.siderolabs.io
+          PLATFORM: linux/amd64
+          PUSH: "true"
+        run: |
+          make talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
+      - name: talosctl-cni-bundle
+        if: github.event_name == 'schedule'
+        run: |
+          make talosctl-cni-bundle
+      - name: images-essential-enforcing
+        env:
+          IMAGE_REGISTRY: registry.dev.siderolabs.io
+          IMAGER_ARGS: --extra-kernel-arg=console=ttyS0 --extra-kernel-arg=enforcing=1
+          PLATFORM: linux/amd64,linux/arm64
+          PUSH: "true"
+          TAG_SUFFIX: -enforcing
+        run: |
+          make imager installer-base installer images-essential
+      - name: secureboot-iso
+        if: github.event_name == 'schedule'
+        env:
+          IMAGE_REGISTRY: registry.dev.siderolabs.io
+          IMAGER_ARGS: --extra-kernel-arg=console=ttyS0
+          PLATFORM: linux/amd64
+        run: |
+          make secureboot-iso
+      - name: integration-trusted-boot
+        env:
+          EXTRA_TEST_ARGS: -talos.trustedboot -talos.enforcing
+          GITHUB_STEP_NAME: ${{ github.job}}-integration-trusted-boot
+          IMAGE_REGISTRY: registry.dev.siderolabs.io
+          TAG_SUFFIX: -enforcing
+          VIA_MAINTENANCE_MODE: "true"
+          WITH_TRUSTED_BOOT_ISO: "true"
+        run: |
+          sudo -E make e2e-qemu
+      - name: save artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: talos-logs-integration-trusted-boot-enforcing
+          path: |-
+            /tmp/logs-*.tar.gz
+            /tmp/support-*.zip
+          retention-days: "5"

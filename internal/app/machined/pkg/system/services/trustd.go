@@ -135,6 +135,11 @@ func (t *Trustd) DependsOn(runtime.Runtime) []string {
 	return []string{"containerd"}
 }
 
+// Volumes implements the Service interface.
+func (t *Trustd) Volumes() []string {
+	return nil
+}
+
 // Runner implements the Service interface.
 func (t *Trustd) Runner(r runtime.Runtime) (runner.Runner, error) {
 	// Set the process arguments.
@@ -146,6 +151,13 @@ func (t *Trustd) Runner(r runtime.Runtime) (runner.Runner, error) {
 	// Set the mounts.
 	mounts := []specs.Mount{
 		{Type: "bind", Destination: filepath.Dir(constants.TrustdRuntimeSocketPath), Source: filepath.Dir(constants.TrustdRuntimeSocketPath), Options: []string{"rbind", "ro"}},
+	}
+
+	if _, err := os.Stat("/usr/etc/in-container"); err == nil {
+		mounts = append(
+			mounts,
+			specs.Mount{Type: "bind", Destination: "/usr/etc/in-container", Source: "/usr/etc/in-container", Options: []string{"bind", "ro"}},
+		)
 	}
 
 	env := environment.Get(r.Config())

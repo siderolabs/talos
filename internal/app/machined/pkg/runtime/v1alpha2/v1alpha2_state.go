@@ -8,6 +8,7 @@ import (
 	"context"
 
 	"github.com/cosi-project/runtime/pkg/resource/meta"
+	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/cosi-project/runtime/pkg/state/impl/inmem"
 	"github.com/cosi-project/runtime/pkg/state/impl/namespaced"
@@ -265,10 +266,23 @@ func (s *State) ResourceRegistry() *registry.ResourceRegistry {
 	return s.resourceRegistry
 }
 
+// GetConfig implements runtime.V1alpha2State interface.
+func (s *State) GetConfig(ctx context.Context) (talosconfig.Provider, error) {
+	cfg, err := safe.ReaderGetByID[*config.MachineConfig](ctx, s.resources, config.ActiveID)
+	if err != nil {
+		if state.IsNotFoundError(err) {
+			return nil, nil
+		}
+
+		return nil, err
+	}
+
+	return cfg.Provider(), nil
+}
+
 // SetConfig implements runtime.V1alpha2State interface.
-func (s *State) SetConfig(cfg talosconfig.Provider) error {
-	cfgResource := config.NewMachineConfig(cfg)
-	ctx := context.TODO()
+func (s *State) SetConfig(ctx context.Context, id string, cfg talosconfig.Provider) error {
+	cfgResource := config.NewMachineConfigWithID(cfg, id)
 
 	oldCfg, err := s.resources.Get(ctx, cfgResource.Metadata())
 	if err != nil {

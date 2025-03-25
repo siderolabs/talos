@@ -110,6 +110,7 @@ description: Talos gRPC API reference.
     - [NetworkConfigLayer](#talos.resource.definitions.enums.NetworkConfigLayer)
     - [NetworkOperator](#talos.resource.definitions.enums.NetworkOperator)
     - [RuntimeMachineStage](#talos.resource.definitions.enums.RuntimeMachineStage)
+    - [RuntimeSELinuxState](#talos.resource.definitions.enums.RuntimeSELinuxState)
   
 - [resource/definitions/etcd/etcd.proto](#resource/definitions/etcd/etcd.proto)
     - [ConfigSpec](#talos.resource.definitions.etcd.ConfigSpec)
@@ -1055,7 +1056,8 @@ MountSpec is the spec for volume mount.
 | ----- | ---- | ----- | ----------- |
 | target_path | [string](#string) |  |  |
 | selinux_label | [string](#string) |  |  |
-| options | [string](#string) | repeated |  |
+| project_quota_support | [bool](#bool) |  |  |
+| parent_id | [string](#string) |  |  |
 
 
 
@@ -1075,6 +1077,8 @@ MountStatusSpec is the spec for MountStatus.
 | source | [string](#string) |  |  |
 | filesystem | [talos.resource.definitions.enums.BlockFilesystemType](#talos.resource.definitions.enums.BlockFilesystemType) |  |  |
 | read_only | [bool](#bool) |  |  |
+| project_quota_support | [bool](#bool) |  |  |
+| encryption_provider | [talos.resource.definitions.enums.BlockEncryptionProviderType](#talos.resource.definitions.enums.BlockEncryptionProviderType) |  |  |
 
 
 
@@ -1158,6 +1162,7 @@ UserDiskConfigStatusSpec is the spec for UserDiskConfigStatus resource.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | ready | [bool](#bool) |  |  |
+| torn_down | [bool](#bool) |  |  |
 
 
 
@@ -1242,6 +1247,8 @@ VolumeStatusSpec is the spec for VolumeStatus resource.
 | pretty_size | [string](#string) |  |  |
 | encryption_failed_syncs | [string](#string) | repeated |  |
 | mount_spec | [MountSpec](#talos.resource.definitions.block.MountSpec) |  |  |
+| type | [talos.resource.definitions.enums.BlockVolumeType](#talos.resource.definitions.enums.BlockVolumeType) |  |  |
+| configured_encryption_keys | [string](#string) | repeated |  |
 
 
 
@@ -1646,6 +1653,7 @@ BlockVolumeType describes volume type.
 | VOLUME_TYPE_PARTITION | 0 |  |
 | VOLUME_TYPE_DISK | 1 |  |
 | VOLUME_TYPE_TMPFS | 2 |  |
+| VOLUME_TYPE_DIRECTORY | 3 |  |
 
 
 
@@ -2248,6 +2256,19 @@ RuntimeMachineStage describes the stage of the machine boot/run process.
 | MACHINE_STAGE_SHUTTING_DOWN | 6 |  |
 | MACHINE_STAGE_RESETTING | 7 |  |
 | MACHINE_STAGE_UPGRADING | 8 |  |
+
+
+
+<a name="talos.resource.definitions.enums.RuntimeSELinuxState"></a>
+
+### RuntimeSELinuxState
+RuntimeSELinuxState describes the current SELinux status.
+
+| Name | Number | Description |
+| ---- | ------ | ----------- |
+| SE_LINUX_STATE_DISABLED | 0 |  |
+| SE_LINUX_STATE_PERMISSIVE | 1 |  |
+| SE_LINUX_STATE_ENFORCING | 2 |  |
 
 
  <!-- end enums -->
@@ -5195,6 +5216,7 @@ SecurityStateSpec describes the security state resource properties.
 | secure_boot | [bool](#bool) |  |  |
 | uki_signing_key_fingerprint | [string](#string) |  |  |
 | pcr_signing_key_fingerprint | [string](#string) |  |  |
+| se_linux_state | [talos.resource.definitions.enums.RuntimeSELinuxState](#talos.resource.definitions.enums.RuntimeSELinuxState) |  |  |
 
 
 
@@ -5540,6 +5562,8 @@ StatusSpec describes Siderolink status.
 | ----- | ---- | ----- | ----------- |
 | host | [string](#string) |  |  |
 | connected | [bool](#bool) |  |  |
+| link_name | [string](#string) |  |  |
+| grpc_tunnel | [bool](#bool) |  |  |
 
 
 

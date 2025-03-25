@@ -173,8 +173,6 @@ func (suite *TalosconfigSuite) TestNew() {
 	} {
 		name := strings.Join(tt.args, "_")
 		suite.Run(name, func() {
-			suite.T().Parallel()
-
 			for _, config := range []string{readerConfig, operatorConfig} {
 				args := append([]string{"--nodes", node}, tt.args...)
 				suite.RunCLI(args, tt.opts...)
@@ -230,8 +228,6 @@ func (suite *TalosconfigSuite) TestNew() {
 	} {
 		name := strings.Join(tt.args, "_")
 		suite.Run(name, func() {
-			suite.T().Parallel()
-
 			args := append([]string{"--nodes", node}, tt.args...)
 			suite.RunCLI(args, tt.adminOpts...)
 
@@ -266,8 +262,6 @@ func (suite *TalosconfigSuite) TestNew() {
 	} {
 		name := strings.Join(tt.args, "_")
 		suite.Run(name, func() {
-			suite.T().Parallel()
-
 			args := append([]string{"--nodes", node}, tt.args...)
 			suite.RunCLI(args, tt.privOpts...)
 
@@ -312,8 +306,6 @@ func (suite *TalosconfigSuite) TestNew() {
 	} {
 		name := strings.Join(tt.args, "_")
 		suite.Run(name, func() {
-			suite.T().Parallel()
-
 			args := append([]string{"--nodes", node, "--talosconfig", readerConfig}, tt.args...)
 			suite.RunCLI(args, tt.readerOpts...)
 		})

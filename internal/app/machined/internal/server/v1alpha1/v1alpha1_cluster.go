@@ -176,7 +176,7 @@ func buildClusterInfo(ctx context.Context,
 	for i, node := range nodeList.Items {
 		nodeInfo, err2 := k8sNodeToNodeInfo(&node)
 		if err2 != nil {
-			return nil, err
+			return nil, err2
 		}
 
 		if isControlPlaneNode(&node) {

@@ -23,13 +23,13 @@ type MountRequest = typed.Resource[MountRequestSpec, MountRequestExtension]
 //
 //gotagsrewrite:gen
 type MountRequestSpec struct {
-	VolumeID string `yaml:"volume_id" protobuf:"1"`
+	VolumeID string `yaml:"volumeID" protobuf:"1"`
 
-	ParentMountID string `yaml:"parent_id" protobuf:"2"`
-	ReadOnly      bool   `yaml:"read_only" protobuf:"5"`
+	ParentMountID string `yaml:"parentID" protobuf:"2"`
+	ReadOnly      bool   `yaml:"readOnly" protobuf:"5"`
 
 	Requesters   []string `yaml:"requesters" protobuf:"3"`
-	RequesterIDs []string `yaml:"requester_ids" protobuf:"4"`
+	RequesterIDs []string `yaml:"requesterIDs" protobuf:"4"`
 }
 
 // NewMountRequest initializes a MountRequest resource.
@@ -51,20 +51,16 @@ func (MountRequestExtension) ResourceDefinition() meta.ResourceDefinitionSpec {
 		DefaultNamespace: NamespaceName,
 		PrintColumns: []meta.PrintColumn{
 			{
-				Name:     "Source",
-				JSONPath: `{.source}`,
-			},
-			{
-				Name:     "Target",
-				JSONPath: `{.target}`,
-			},
-			{
-				Name:     "FSType",
-				JSONPath: `{.fs_type}`,
+				Name:     "Volume",
+				JSONPath: `{.volumeID}`,
 			},
 			{
 				Name:     "Parent",
-				JSONPath: `{.parent_id}`,
+				JSONPath: `{.ParentID}`,
+			},
+			{
+				Name:     "Requesters",
+				JSONPath: `{.requesters}`,
 			},
 		},
 	}

@@ -64,7 +64,6 @@ func run() error {
 	pflag.StringVar(&DefaultOptions.NamePrefix, "name-prefix", DefaultOptions.NamePrefix, "prefix for the name of the uploaded image")
 
 	pflag.StringSliceVar(&DefaultOptions.AWSRegions, "aws-regions", DefaultOptions.AWSRegions, "list of AWS regions to upload to")
-	pflag.StringSliceVar(&DefaultOptions.AzureRegions, "azure-regions", DefaultOptions.AzureRegions, "list of Azure regions to upload to")
 
 	pflag.Parse()
 
@@ -96,14 +95,6 @@ func run() error {
 				}
 
 				return aws.Upload(ctx)
-			})
-		case "azure":
-			g.Go(func() error {
-				azure := AzureUploader{
-					Options: DefaultOptions,
-				}
-
-				return azure.AzureGalleryUpload(ctx)
 			})
 		case "gcp":
 			g.Go(func() error {

@@ -23,7 +23,12 @@
 
 (type sysfs_t)
 (call filesystem_f (sysfs_t))
+(type sys_module_t)
+(call filesystem_f (sys_module_t))
+(allow sys_module_t sysfs_t (filesystem (associate)))
+
 (genfscon sysfs "/" (system_u object_r sysfs_t (systemLow systemLow)))
+(genfscon sysfs "/module" (system_u object_r sys_module_t (systemLow systemLow)))
 
 (type bpf_t)
 (call filesystem_f (bpf_t))
@@ -48,9 +53,15 @@
 (genfscon proc "/" procfs_t)
 (genfscon proc "/sysvipc" procfs_t)
 
+(type proc_cmdline_t)
+(call filesystem_f (proc_cmdline_t))
+(genfscon proc "/cmdline" (system_u object_r proc_cmdline_t (systemLow systemLow)))
+
 (type proc_sysctl_t)
 (call filesystem_f (proc_sysctl_t))
 (genfscon proc "/sys" (system_u object_r proc_sysctl_t (systemLow systemLow)))
+; It matches /sys, yet should not have the same context
+(genfscon proc "/sysrq-trigger" procfs_t)
 
 (type securityfs_t)
 (call filesystem_f (securityfs_t))

@@ -2,6 +2,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+// Package install provides the installation routine.
 package install
 
 import (
@@ -61,11 +62,12 @@ type Options struct {
 	ImageCachePath string
 
 	// Options specific for the image creation mode.
-	ImageSecureboot bool
-	Version         string
-	BootAssets      bootloaderoptions.BootAssets
-	Printf          func(string, ...any)
-	MountPrefix     string
+	ImageSecureboot     bool
+	DiskImageBootloader string
+	Version             string
+	BootAssets          bootloaderoptions.BootAssets
+	Printf              func(string, ...any)
+	MountPrefix         string
 }
 
 // Mode is the install mode.
@@ -247,11 +249,6 @@ func (i *Installer) Install(ctx context.Context, mode Mode) (err error) {
 		return err
 	}
 
-	// prepare extensions if legacy machine.install.extensions is present
-	if err = i.installExtensions(); err != nil {
-		return err
-	}
-
 	// open and lock the blockdevice for the installation disk for the whole duration of the installer
 	bd, err := block.NewFromPath(i.options.Disk, block.OpenForWrite())
 	if err != nil {
@@ -285,7 +282,10 @@ func (i *Installer) Install(ctx context.Context, mode Mode) (err error) {
 	switch mode {
 	case ModeImage:
 		// on image creation, we don't care about disk contents
-		bootlder = bootloader.New(i.options.ImageSecureboot, i.options.Version)
+		bootlder, err = bootloader.New(i.options.DiskImageBootloader, i.options.Version, i.options.Arch)
+		if err != nil {
+			return fmt.Errorf("failed to create bootloader: %w", err)
+		}
 	case ModeInstall:
 		if !i.options.Zero && !i.options.Force {
 			// verify that the disk is either empty or has an empty GPT partition table, otherwise fail the install

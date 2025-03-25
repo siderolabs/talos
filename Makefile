@@ -17,69 +17,85 @@ ZSTD_COMPRESSION_LEVEL ?= 18
 CI_RELEASE_TAG := $(shell git log --oneline --format=%B -n 1 HEAD^2 -- 2>/dev/null | head -n 1 | sed -r "/^release\(.*\)/ s/^release\((.*)\):.*$$/\\1/; t; Q")
 
 ARTIFACTS := _out
-TOOLS ?= ghcr.io/siderolabs/tools:v1.10.0-alpha.0-14-g46be459
 
 DEBUG_TOOLS_SOURCE := scratch
 EMBED_TARGET ?= embed
 
+TOOLS_PREFIX ?= ghcr.io/siderolabs/tools
+TOOLS ?= v1.10.0-alpha.0-23-g6d456ca
 PKGS_PREFIX ?= ghcr.io/siderolabs
-PKGS ?= v1.10.0-alpha.0-38-g76a0316
-EXTRAS ?= v1.10.0-alpha.0-3-g4102a78
+PKGS ?= v1.10.0-alpha.0-68-g55d99ea
+EXTRAS ?= v1.10.0-alpha.0-4-gc201b87
 
 KRES_IMAGE ?= ghcr.io/siderolabs/kres:latest
 CONFORMANCE_IMAGE ?= ghcr.io/siderolabs/conform:latest
 
-PKG_FHS ?= $(PKGS_PREFIX)/fhs:$(PKGS)
-PKG_CA_CERTIFICATES ?= $(PKGS_PREFIX)/ca-certificates:$(PKGS)
 PKG_APPARMOR ?= $(PKGS_PREFIX)/apparmor:$(PKGS)
-PKG_CRYPTSETUP ?= $(PKGS_PREFIX)/cryptsetup:$(PKGS)
+PKG_CA_CERTIFICATES ?= $(PKGS_PREFIX)/ca-certificates:$(PKGS)
+PKG_CNI ?= $(PKGS_PREFIX)/cni:$(PKGS)
 PKG_CONTAINERD ?= $(PKGS_PREFIX)/containerd:$(PKGS)
+PKG_CPIO ?= $(PKGS_PREFIX)/cpio:$(PKGS)
+PKG_CRYPTSETUP ?= $(PKGS_PREFIX)/cryptsetup:$(PKGS)
 PKG_DOSFSTOOLS ?= $(PKGS_PREFIX)/dosfstools:$(PKGS)
 PKG_E2FSPROGS ?= $(PKGS_PREFIX)/e2fsprogs:$(PKGS)
-PKG_SYSTEMD_UDEVD ?= $(PKGS_PREFIX)/systemd-udevd:$(PKGS)
-PKG_LIBCAP ?= $(PKGS_PREFIX)/libcap:$(PKGS)
+PKG_FHS ?= $(PKGS_PREFIX)/fhs:$(PKGS)
+PKG_FLANNEL_CNI ?= $(PKGS_PREFIX)/flannel-cni:$(PKGS)
+PKG_GLIB ?= $(PKGS_PREFIX)/glib:$(PKGS)
 PKG_GRUB ?= $(PKGS_PREFIX)/grub:$(PKGS)
-PKG_SD_BOOT ?= $(PKGS_PREFIX)/sd-boot:$(PKGS)
 PKG_IPTABLES ?= $(PKGS_PREFIX)/iptables:$(PKGS)
 PKG_IPXE ?= $(PKGS_PREFIX)/ipxe:$(PKGS)
+PKG_KERNEL ?= $(PKGS_PREFIX)/kernel:$(PKGS)
+PKG_KMOD ?= $(PKGS_PREFIX)/kmod:$(PKGS)
+PKG_LIBAIO ?= $(PKGS_PREFIX)/libaio:$(PKGS)
+PKG_LIBATTR ?= $(PKGS_PREFIX)/libattr:$(PKGS)
+PKG_LIBBURN ?= $(PKGS_PREFIX)/libburn:$(PKGS)
+PKG_LIBCAP ?= $(PKGS_PREFIX)/libcap:$(PKGS)
 PKG_LIBINIH ?= $(PKGS_PREFIX)/libinih:$(PKGS)
+PKG_LIBISOBURN ?= $(PKGS_PREFIX)/libisoburn:$(PKGS)
+PKG_LIBISOFS ?= $(PKGS_PREFIX)/libisofs:$(PKGS)
 PKG_LIBJSON_C ?= $(PKGS_PREFIX)/libjson-c:$(PKGS)
+PKG_LIBLZMA ?= $(PKGS_PREFIX)/liblzma:$(PKGS)
 PKG_LIBMNL ?= $(PKGS_PREFIX)/libmnl:$(PKGS)
 PKG_LIBNFTNL ?= $(PKGS_PREFIX)/libnftnl:$(PKGS)
 PKG_LIBPOPT ?= $(PKGS_PREFIX)/libpopt:$(PKGS)
-PKG_LIBSEPOL ?= $(PKGS_PREFIX)/libsepol:$(PKGS)
-PKG_LIBSELINUX ?= $(PKGS_PREFIX)/libselinux:$(PKGS)
-PKG_PCRE2 ?= $(PKGS_PREFIX)/pcre2:$(PKGS)
-PKG_LIBURCU ?= $(PKGS_PREFIX)/liburcu:$(PKGS)
-PKG_OPENSSL ?= $(PKGS_PREFIX)/openssl:$(PKGS)
 PKG_LIBSECCOMP ?= $(PKGS_PREFIX)/libseccomp:$(PKGS)
+PKG_LIBSELINUX ?= $(PKGS_PREFIX)/libselinux:$(PKGS)
+PKG_LIBSEPOL ?= $(PKGS_PREFIX)/libsepol:$(PKGS)
+PKG_LIBURCU ?= $(PKGS_PREFIX)/liburcu:$(PKGS)
 PKG_LINUX_FIRMWARE ?= $(PKGS_PREFIX)/linux-firmware:$(PKGS)
 PKG_LVM2 ?= $(PKGS_PREFIX)/lvm2:$(PKGS)
-PKG_LIBAIO ?= $(PKGS_PREFIX)/libaio:$(PKGS)
+PKG_MTOOLS ?= $(PKGS_PREFIX)/mtools:$(PKGS)
 PKG_MUSL ?= $(PKGS_PREFIX)/musl:$(PKGS)
+PKG_OPENSSL ?= $(PKGS_PREFIX)/openssl:$(PKGS)
+PKG_PCRE2 ?= $(PKGS_PREFIX)/pcre2:$(PKGS)
+PKG_PIGZ ?= $(PKGS_PREFIX)/pigz:$(PKGS)
+PKG_QEMU_TOOLS ?= $(PKGS_PREFIX)/qemu-tools:$(PKGS)
 PKG_RUNC ?= $(PKGS_PREFIX)/runc:$(PKGS)
-PKG_XFSPROGS ?= $(PKGS_PREFIX)/xfsprogs:$(PKGS)
-PKG_UTIL_LINUX ?= $(PKGS_PREFIX)/util-linux:$(PKGS)
-PKG_KMOD ?= $(PKGS_PREFIX)/kmod:$(PKGS)
-PKG_CNI ?= $(PKGS_PREFIX)/cni:$(PKGS)
-PKG_FLANNEL_CNI ?= $(PKGS_PREFIX)/flannel-cni:$(PKGS)
-PKG_KERNEL ?= $(PKGS_PREFIX)/kernel:$(PKGS)
+PKG_SD_BOOT ?= $(PKGS_PREFIX)/sd-boot:$(PKGS)
+PKG_SQUASHFS_TOOLS ?= $(PKGS_PREFIX)/squashfs-tools:$(PKGS)
+PKG_SYSTEMD_UDEVD ?= $(PKGS_PREFIX)/systemd-udevd:$(PKGS)
 PKG_TALOSCTL_CNI_BUNDLE ?= $(PKGS_PREFIX)/talosctl-cni-bundle:$(EXTRAS)
+PKG_TAR ?= $(PKGS_PREFIX)/tar:$(PKGS)
+PKG_UTIL_LINUX ?= $(PKGS_PREFIX)/util-linux:$(PKGS)
+PKG_XFSPROGS ?= $(PKGS_PREFIX)/xfsprogs:$(PKGS)
+PKG_XZ ?= $(PKGS_PREFIX)/xz:$(PKGS)
+PKG_ZLIB ?= $(PKGS_PREFIX)/zlib:$(PKGS)
+PKG_ZSTD ?= $(PKGS_PREFIX)/zstd:$(PKGS)
 
 # renovate: datasource=github-tags depName=golang/go
 GO_VERSION ?= 1.24
 # renovate: datasource=go depName=golang.org/x/tools
-GOIMPORTS_VERSION ?= v0.28.0
+GOIMPORTS_VERSION ?= v0.31.0
 # renovate: datasource=go depName=mvdan.cc/gofumpt
 GOFUMPT_VERSION ?= v0.7.0
 # renovate: datasource=go depName=github.com/golangci/golangci-lint
-GOLANGCILINT_VERSION ?= v1.62.2
+GOLANGCILINT_VERSION ?= v1.64.8
 # renovate: datasource=go depName=golang.org/x/tools
-STRINGER_VERSION ?= v0.28.0
+STRINGER_VERSION ?= v0.31.0
 # renovate: datasource=go depName=github.com/dmarkham/enumer
 ENUMER_VERSION ?= v1.5.11
 # renovate: datasource=go depName=k8s.io/code-generator
-DEEPCOPY_GEN_VERSION ?= v0.32.0
+DEEPCOPY_GEN_VERSION ?= v0.32.3
 # renovate: datasource=go depName=github.com/planetscale/vtprotobuf
 VTPROTOBUF_VERSION ?= v0.6.0
 # renovate: datasource=go depName=github.com/siderolabs/deep-copy
@@ -91,9 +107,9 @@ PROTOTOOL_VERSION ?= v1.10.0
 # renovate: datasource=go depName=github.com/pseudomuto/protoc-gen-doc
 PROTOC_GEN_DOC_VERSION ?= v1.5.1
 # renovate: datasource=npm depName=markdownlint-cli
-MARKDOWNLINTCLI_VERSION ?= 0.43.0
+MARKDOWNLINTCLI_VERSION ?= 0.44.0
 # renovate: datasource=npm depName=textlint
-TEXTLINT_VERSION ?= 14.4.0
+TEXTLINT_VERSION ?= 14.5.0
 # renovate: datasource=npm depName=textlint-filter-rule-comments
 TEXTLINT_FILTER_RULE_COMMENTS_VERSION ?= 1.2.2
 # renovate: datasource=npm depName=textlint-rule-one-sentence-per-line
@@ -108,13 +124,13 @@ INTEGRATION_TEST := integration-test
 INTEGRATION_TEST_DEFAULT_TARGET := $(INTEGRATION_TEST)-$(OPERATING_SYSTEM)
 INTEGRATION_TEST_PROVISION_DEFAULT_TARGET := integration-test-provision-$(OPERATING_SYSTEM)
 # renovate: datasource=github-releases depName=kubernetes/kubernetes
-KUBECTL_VERSION ?= v1.32.2
+KUBECTL_VERSION ?= v1.33.0-beta.0
 # renovate: datasource=github-releases depName=kastenhq/kubestr
-KUBESTR_VERSION ?= v0.4.47
+KUBESTR_VERSION ?= v0.4.48
 # renovate: datasource=github-releases depName=helm/helm
-HELM_VERSION ?= v3.16.4
+HELM_VERSION ?= v3.17.2
 # renovate: datasource=github-releases depName=cilium/cilium-cli
-CILIUM_CLI_VERSION ?= v0.16.22
+CILIUM_CLI_VERSION ?= v0.18.2
 # renovate: datasource=github-releases depName=microsoft/secureboot_objects
 MICROSOFT_SECUREBOOT_RELEASE ?= v1.1.3
 
@@ -123,31 +139,12 @@ KUBESTR_URL ?= https://github.com/kastenhq/kubestr/releases/download/$(KUBESTR_V
 HELM_URL ?= https://get.helm.sh/helm-$(HELM_VERSION)-linux-amd64.tar.gz
 CILIUM_CLI_URL ?= https://github.com/cilium/cilium-cli/releases/download/$(CILIUM_CLI_VERSION)/cilium-$(OPERATING_SYSTEM)-amd64.tar.gz
 TESTPKGS ?= github.com/siderolabs/talos/...
-RELEASES ?= v1.8.4 v1.9.0
+RELEASES ?= v1.8.4 v1.9.4
 SHORT_INTEGRATION_TEST ?=
 CUSTOM_CNI_URL ?=
 
 INSTALLER_ARCH ?= all
-INSTALLER_ONLY_PKGS ?= \
-    bash \
-    cpio \
-    dosfstools \
-    efibootmgr \
-    kmod \
-    squashfs-tools \
-    xfsprogs \
-    xz \
-    zstd
 
-IMAGER_EXTRA_PKGS ?= \
-    e2fsprogs \
-    mtools \
-    pigz \
-    qemu-img \
-    tar \
-    xorriso
-
-INSTALLER_PKGS ?= $(INSTALLER_ONLY_PKGS) $(IMAGER_EXTRA_PKGS)
 IMAGER_ARGS ?=
 
 CGO_ENABLED ?= 0
@@ -192,89 +189,105 @@ COMMON_ARGS := --file=Dockerfile
 COMMON_ARGS += --progress=$(PROGRESS)
 COMMON_ARGS += --platform=$(PLATFORM)
 COMMON_ARGS += --push=$(PUSH)
-COMMON_ARGS += --build-arg=TOOLS=$(TOOLS)
-COMMON_ARGS += --build-arg=DEBUG_TOOLS_SOURCE=$(DEBUG_TOOLS_SOURCE)
-COMMON_ARGS += --build-arg=PKGS=$(PKGS)
-COMMON_ARGS += --build-arg=EXTRAS=$(EXTRAS)
-COMMON_ARGS += --build-arg=EMBED_TARGET=$(EMBED_TARGET)
-COMMON_ARGS += --build-arg=GOFUMPT_VERSION=$(GOFUMPT_VERSION)
-COMMON_ARGS += --build-arg=GOIMPORTS_VERSION=$(GOIMPORTS_VERSION)
-COMMON_ARGS += --build-arg=STRINGER_VERSION=$(STRINGER_VERSION)
-COMMON_ARGS += --build-arg=ENUMER_VERSION=$(ENUMER_VERSION)
-COMMON_ARGS += --build-arg=DEEPCOPY_GEN_VERSION=$(DEEPCOPY_GEN_VERSION)
-COMMON_ARGS += --build-arg=VTPROTOBUF_VERSION=$(VTPROTOBUF_VERSION)
-COMMON_ARGS += --build-arg=IMPORTVET_VERSION=$(IMPORTVET_VERSION)
-COMMON_ARGS += --build-arg=PROTOTOOL_VERSION=$(PROTOTOOL_VERSION)
-COMMON_ARGS += --build-arg=PROTOC_GEN_DOC_VERSION=$(PROTOC_GEN_DOC_VERSION)
-COMMON_ARGS += --build-arg=GOLANGCILINT_VERSION=$(GOLANGCILINT_VERSION)
-COMMON_ARGS += --build-arg=DEEPCOPY_VERSION=$(DEEPCOPY_VERSION)
-COMMON_ARGS += --build-arg=MARKDOWNLINTCLI_VERSION=$(MARKDOWNLINTCLI_VERSION)
-COMMON_ARGS += --build-arg=TEXTLINT_VERSION=$(TEXTLINT_VERSION)
-COMMON_ARGS += --build-arg=TEXTLINT_FILTER_RULE_COMMENTS_VERSION=$(TEXTLINT_FILTER_RULE_COMMENTS_VERSION)
-COMMON_ARGS += --build-arg=TEXTLINT_RULE_ONE_SENTENCE_PER_LINE_VERSION=$(TEXTLINT_RULE_ONE_SENTENCE_PER_LINE_VERSION)
-COMMON_ARGS += --build-arg=TAG=$(TAG)
-COMMON_ARGS += --build-arg=SOURCE_DATE_EPOCH=$(SOURCE_DATE_EPOCH)
+
+COMMON_ARGS += --build-arg=ABBREV_TAG=$(ABBREV_TAG)
 COMMON_ARGS += --build-arg=ARTIFACTS=$(ARTIFACTS)
-COMMON_ARGS += --build-arg=TESTPKGS=$(TESTPKGS)
-COMMON_ARGS += --build-arg=INSTALLER_ARCH=$(INSTALLER_ARCH)
-COMMON_ARGS += --build-arg=INSTALLER_PKGS="$(INSTALLER_PKGS)"
 COMMON_ARGS += --build-arg=CGO_ENABLED=$(CGO_ENABLED)
-COMMON_ARGS += --build-arg=GO_BUILDFLAGS="$(GO_BUILDFLAGS)"
+COMMON_ARGS += --build-arg=DEBUG_TOOLS_SOURCE=$(DEBUG_TOOLS_SOURCE)
+COMMON_ARGS += --build-arg=DEEPCOPY_GEN_VERSION=$(DEEPCOPY_GEN_VERSION)
+COMMON_ARGS += --build-arg=DEEPCOPY_VERSION=$(DEEPCOPY_VERSION)
+COMMON_ARGS += --build-arg=EMBED_TARGET=$(EMBED_TARGET)
+COMMON_ARGS += --build-arg=ENUMER_VERSION=$(ENUMER_VERSION)
+COMMON_ARGS += --build-arg=EXTRAS=$(EXTRAS)
 COMMON_ARGS += --build-arg=GO_BUILDFLAGS_TALOSCTL="$(GO_BUILDFLAGS_TALOSCTL)"
+COMMON_ARGS += --build-arg=GO_BUILDFLAGS="$(GO_BUILDFLAGS)"
 COMMON_ARGS += --build-arg=GO_LDFLAGS="$(GO_LDFLAGS)"
 COMMON_ARGS += --build-arg=GOAMD64="$(GOAMD64)"
+COMMON_ARGS += --build-arg=GOFUMPT_VERSION=$(GOFUMPT_VERSION)
+COMMON_ARGS += --build-arg=GOIMPORTS_VERSION=$(GOIMPORTS_VERSION)
+COMMON_ARGS += --build-arg=GOLANGCILINT_VERSION=$(GOLANGCILINT_VERSION)
 COMMON_ARGS += --build-arg=http_proxy=$(http_proxy)
 COMMON_ARGS += --build-arg=https_proxy=$(https_proxy)
+COMMON_ARGS += --build-arg=IMPORTVET_VERSION=$(IMPORTVET_VERSION)
+COMMON_ARGS += --build-arg=INSTALLER_ARCH=$(INSTALLER_ARCH)
+COMMON_ARGS += --build-arg=MARKDOWNLINTCLI_VERSION=$(MARKDOWNLINTCLI_VERSION)
+COMMON_ARGS += --build-arg=MICROSOFT_SECUREBOOT_RELEASE=$(MICROSOFT_SECUREBOOT_RELEASE)
 COMMON_ARGS += --build-arg=NAME=$(NAME)
-COMMON_ARGS += --build-arg=SHA=$(SHA)
-COMMON_ARGS += --build-arg=USERNAME=$(USERNAME)
-COMMON_ARGS += --build-arg=REGISTRY=$(REGISTRY)
-COMMON_ARGS += --build-arg=PKGS_PREFIX=$(PKGS_PREFIX)
-COMMON_ARGS += --build-arg=PKG_FHS=$(PKG_FHS)
-COMMON_ARGS += --build-arg=PKG_CA_CERTIFICATES=$(PKG_CA_CERTIFICATES)
 COMMON_ARGS += --build-arg=PKG_APPARMOR=$(PKG_APPARMOR)
-COMMON_ARGS += --build-arg=PKG_CRYPTSETUP=$(PKG_CRYPTSETUP)
+COMMON_ARGS += --build-arg=PKG_CA_CERTIFICATES=$(PKG_CA_CERTIFICATES)
+COMMON_ARGS += --build-arg=PKG_CNI=$(PKG_CNI)
 COMMON_ARGS += --build-arg=PKG_CONTAINERD=$(PKG_CONTAINERD)
+COMMON_ARGS += --build-arg=PKG_CPIO=$(PKG_CPIO)
+COMMON_ARGS += --build-arg=PKG_CRYPTSETUP=$(PKG_CRYPTSETUP)
 COMMON_ARGS += --build-arg=PKG_DOSFSTOOLS=$(PKG_DOSFSTOOLS)
 COMMON_ARGS += --build-arg=PKG_E2FSPROGS=$(PKG_E2FSPROGS)
-COMMON_ARGS += --build-arg=PKG_SYSTEMD_UDEVD=$(PKG_SYSTEMD_UDEVD)
-COMMON_ARGS += --build-arg=PKG_LIBCAP=$(PKG_LIBCAP)
+COMMON_ARGS += --build-arg=PKG_FHS=$(PKG_FHS)
+COMMON_ARGS += --build-arg=PKG_FLANNEL_CNI=$(PKG_FLANNEL_CNI)
+COMMON_ARGS += --build-arg=PKG_GLIB=$(PKG_GLIB)
 COMMON_ARGS += --build-arg=PKG_GRUB=$(PKG_GRUB)
-COMMON_ARGS += --build-arg=PKG_SD_BOOT=$(PKG_SD_BOOT)
 COMMON_ARGS += --build-arg=PKG_IPTABLES=$(PKG_IPTABLES)
 COMMON_ARGS += --build-arg=PKG_IPXE=$(PKG_IPXE)
+COMMON_ARGS += --build-arg=PKG_KERNEL=$(PKG_KERNEL)
+COMMON_ARGS += --build-arg=PKG_KMOD=$(PKG_KMOD)
+COMMON_ARGS += --build-arg=PKG_LIBAIO=$(PKG_LIBAIO)
+COMMON_ARGS += --build-arg=PKG_LIBATTR=$(PKG_LIBATTR)
+COMMON_ARGS += --build-arg=PKG_LIBBURN=$(PKG_LIBBURN)
+COMMON_ARGS += --build-arg=PKG_LIBCAP=$(PKG_LIBCAP)
 COMMON_ARGS += --build-arg=PKG_LIBINIH=$(PKG_LIBINIH)
+COMMON_ARGS += --build-arg=PKG_LIBISOBURN=$(PKG_LIBISOBURN)
+COMMON_ARGS += --build-arg=PKG_LIBISOFS=$(PKG_LIBISOFS)
 COMMON_ARGS += --build-arg=PKG_LIBJSON_C=$(PKG_LIBJSON_C)
+COMMON_ARGS += --build-arg=PKG_LIBLZMA=$(PKG_LIBLZMA)
 COMMON_ARGS += --build-arg=PKG_LIBMNL=$(PKG_LIBMNL)
 COMMON_ARGS += --build-arg=PKG_LIBNFTNL=$(PKG_LIBNFTNL)
-COMMON_ARGS += --build-arg=PKG_LIBSEPOL=$(PKG_LIBSEPOL)
-COMMON_ARGS += --build-arg=PKG_LIBSELINUX=$(PKG_LIBSELINUX)
-COMMON_ARGS += --build-arg=PKG_PCRE2=$(PKG_PCRE2)
 COMMON_ARGS += --build-arg=PKG_LIBPOPT=$(PKG_LIBPOPT)
-COMMON_ARGS += --build-arg=PKG_LIBURCU=$(PKG_LIBURCU)
-COMMON_ARGS += --build-arg=PKG_OPENSSL=$(PKG_OPENSSL)
 COMMON_ARGS += --build-arg=PKG_LIBSECCOMP=$(PKG_LIBSECCOMP)
+COMMON_ARGS += --build-arg=PKG_LIBSELINUX=$(PKG_LIBSELINUX)
+COMMON_ARGS += --build-arg=PKG_LIBSEPOL=$(PKG_LIBSEPOL)
+COMMON_ARGS += --build-arg=PKG_LIBURCU=$(PKG_LIBURCU)
 COMMON_ARGS += --build-arg=PKG_LINUX_FIRMWARE=$(PKG_LINUX_FIRMWARE)
 COMMON_ARGS += --build-arg=PKG_LVM2=$(PKG_LVM2)
-COMMON_ARGS += --build-arg=PKG_LIBAIO=$(PKG_LIBAIO)
+COMMON_ARGS += --build-arg=PKG_MTOOLS=$(PKG_MTOOLS)
 COMMON_ARGS += --build-arg=PKG_MUSL=$(PKG_MUSL)
-COMMON_ARGS += --build-arg=PKG_RUNC=$(PKG_RUNC)
-COMMON_ARGS += --build-arg=PKG_XFSPROGS=$(PKG_XFSPROGS)
-COMMON_ARGS += --build-arg=PKG_UTIL_LINUX=$(PKG_UTIL_LINUX)
-COMMON_ARGS += --build-arg=PKG_KMOD=$(PKG_KMOD)
-COMMON_ARGS += --build-arg=PKG_U_BOOT=$(PKG_U_BOOT)
+COMMON_ARGS += --build-arg=PKG_OPENSSL=$(PKG_OPENSSL)
+COMMON_ARGS += --build-arg=PKG_PCRE2=$(PKG_PCRE2)
+COMMON_ARGS += --build-arg=PKG_PIGZ=$(PKG_PIGZ)
+COMMON_ARGS += --build-arg=PKG_QEMU_TOOLS=$(PKG_QEMU_TOOLS)
 COMMON_ARGS += --build-arg=PKG_RASPBERYPI_FIRMWARE=$(PKG_RASPBERYPI_FIRMWARE)
-COMMON_ARGS += --build-arg=PKG_CNI=$(PKG_CNI)
-COMMON_ARGS += --build-arg=PKG_FLANNEL_CNI=$(PKG_FLANNEL_CNI)
-COMMON_ARGS += --build-arg=PKG_KERNEL=$(PKG_KERNEL)
+COMMON_ARGS += --build-arg=PKG_RUNC=$(PKG_RUNC)
+COMMON_ARGS += --build-arg=PKG_SD_BOOT=$(PKG_SD_BOOT)
+COMMON_ARGS += --build-arg=PKG_SQUASHFS_TOOLS=$(PKG_SQUASHFS_TOOLS)
+COMMON_ARGS += --build-arg=PKG_SYSTEMD_UDEVD=$(PKG_SYSTEMD_UDEVD)
 COMMON_ARGS += --build-arg=PKG_TALOSCTL_CNI_BUNDLE=$(PKG_TALOSCTL_CNI_BUNDLE)
-COMMON_ARGS += --build-arg=ABBREV_TAG=$(ABBREV_TAG)
+COMMON_ARGS += --build-arg=PKG_TAR=$(PKG_TAR)
+COMMON_ARGS += --build-arg=PKG_U_BOOT=$(PKG_U_BOOT)
+COMMON_ARGS += --build-arg=PKG_UTIL_LINUX=$(PKG_UTIL_LINUX)
+COMMON_ARGS += --build-arg=PKG_XFSPROGS=$(PKG_XFSPROGS)
+COMMON_ARGS += --build-arg=PKG_XZ=$(PKG_XZ)
+COMMON_ARGS += --build-arg=PKG_ZLIB=$(PKG_ZLIB)
+COMMON_ARGS += --build-arg=PKG_ZSTD=$(PKG_ZSTD)
+COMMON_ARGS += --build-arg=PKGS_PREFIX=$(PKGS_PREFIX)
+COMMON_ARGS += --build-arg=PKGS=$(PKGS)
+COMMON_ARGS += --build-arg=PROTOC_GEN_DOC_VERSION=$(PROTOC_GEN_DOC_VERSION)
+COMMON_ARGS += --build-arg=PROTOTOOL_VERSION=$(PROTOTOOL_VERSION)
+COMMON_ARGS += --build-arg=REGISTRY=$(REGISTRY)
+COMMON_ARGS += --build-arg=SHA=$(SHA)
+COMMON_ARGS += --build-arg=SOURCE_DATE_EPOCH=$(SOURCE_DATE_EPOCH)
+COMMON_ARGS += --build-arg=STRINGER_VERSION=$(STRINGER_VERSION)
+COMMON_ARGS += --build-arg=TAG=$(TAG)
+COMMON_ARGS += --build-arg=TESTPKGS=$(TESTPKGS)
+COMMON_ARGS += --build-arg=TEXTLINT_FILTER_RULE_COMMENTS_VERSION=$(TEXTLINT_FILTER_RULE_COMMENTS_VERSION)
+COMMON_ARGS += --build-arg=TEXTLINT_RULE_ONE_SENTENCE_PER_LINE_VERSION=$(TEXTLINT_RULE_ONE_SENTENCE_PER_LINE_VERSION)
+COMMON_ARGS += --build-arg=TEXTLINT_VERSION=$(TEXTLINT_VERSION)
+COMMON_ARGS += --build-arg=TOOLS_PREFIX=$(TOOLS_PREFIX)
+COMMON_ARGS += --build-arg=TOOLS=$(TOOLS)
+COMMON_ARGS += --build-arg=USERNAME=$(USERNAME)
+COMMON_ARGS += --build-arg=VTPROTOBUF_VERSION=$(VTPROTOBUF_VERSION)
 COMMON_ARGS += --build-arg=ZSTD_COMPRESSION_LEVEL=$(ZSTD_COMPRESSION_LEVEL)
-COMMON_ARGS += --build-arg=MICROSOFT_SECUREBOOT_RELEASE=$(MICROSOFT_SECUREBOOT_RELEASE)
 
 CI_ARGS ?=
 
-EXTENSIONS_FILTER_COMMAND ?= grep -vE 'tailscale|xen-guest-agent|nvidia|vmtoolsd-guest-agent|metal-agent|cloudflared'
+EXTENSIONS_FILTER_COMMAND ?= grep -vE 'tailscale|xen-guest-agent|nvidia|vmtoolsd-guest-agent|metal-agent|cloudflared|zerotier'
 
 all: initramfs kernel installer imager talosctl talosctl-image talos
 
@@ -390,10 +403,9 @@ sd-boot: ## Outputs the systemd-boot to the artifact directory.
 sd-stub: ## Outputs the systemd-stub to the artifact directory.
 	@$(MAKE) local-$@ DEST=$(ARTIFACTS) PUSH=false
 
-.PHONY: installer
-installer: ## Builds the container image for the installer and outputs it to the registry.
-	@INSTALLER_ARCH=targetarch INSTALLER_PKGS="$(INSTALLER_ONLY_PKGS)" \
-		$(MAKE) registry-$@
+.PHONY: installer-base
+installer-base: ## Builds the container image for the installer-base and outputs it to the registry.
+	@$(MAKE) registry-$@
 
 .PHONY: imager
 imager: ## Builds the container image for the imager and outputs it to the registry.
@@ -408,31 +420,31 @@ talosctl-image: ## Builds the talosctl container image and outputs it to the reg
 	@$(MAKE) registry-talosctl
 
 talosctl-all:
-	@$(MAKE) local-talosctl-all DEST=$(ARTIFACTS) PUSH=false NAME=Client
+	@$(MAKE) local-talosctl-all DEST=$(ARTIFACTS) PUSH=false
 
 talosctl-linux-amd64:
-	@$(MAKE) local-talosctl-linux-amd64 DEST=$(ARTIFACTS) PUSH=false NAME=Client
+	@$(MAKE) local-talosctl-linux-amd64 DEST=$(ARTIFACTS) PUSH=false
 
 talosctl-linux-arm64:
-	@$(MAKE) local-talosctl-linux-arm64 DEST=$(ARTIFACTS) PUSH=false NAME=Client
+	@$(MAKE) local-talosctl-linux-arm64 DEST=$(ARTIFACTS) PUSH=false
 
 talosctl-darwin-amd64:
-	@$(MAKE) local-talosctl-darwin-amd64 DEST=$(ARTIFACTS) PUSH=false NAME=Client
+	@$(MAKE) local-talosctl-darwin-amd64 DEST=$(ARTIFACTS) PUSH=false
 
 talosctl-darwin-arm64:
-	@$(MAKE) local-talosctl-darwin-arm64 DEST=$(ARTIFACTS) PUSH=false NAME=Client
+	@$(MAKE) local-talosctl-darwin-arm64 DEST=$(ARTIFACTS) PUSH=false
 
 talosctl-freebsd-amd64:
-	@$(MAKE) local-talosctl-freebsd-amd64 DEST=$(ARTIFACTS) PUSH=false NAME=Client
+	@$(MAKE) local-talosctl-freebsd-amd64 DEST=$(ARTIFACTS) PUSH=false
 
 talosctl-freebsd-arm64:
-	@$(MAKE) local-talosctl-freebsd-arm64 DEST=$(ARTIFACTS) PUSH=false NAME=Client
+	@$(MAKE) local-talosctl-freebsd-arm64 DEST=$(ARTIFACTS) PUSH=false
 
 talosctl-windows-amd64:
-	@$(MAKE) local-talosctl-windows-amd64 DEST=$(ARTIFACTS) PUSH=false NAME=Client
+	@$(MAKE) local-talosctl-windows-amd64 DEST=$(ARTIFACTS) PUSH=false
 
 talosctl-windows-arm64:
-	@$(MAKE) local-talosctl-windows-arm64 DEST=$(ARTIFACTS) PUSH=false NAME=Client
+	@$(MAKE) local-talosctl-windows-arm64 DEST=$(ARTIFACTS) PUSH=false
 
 talosctl:
 	@$(MAKE) local-talosctl-targetarch DEST=$(ARTIFACTS)
@@ -444,8 +456,10 @@ image-%: ## Builds the specified image. Valid options are aws, azure, digital-oc
 		docker run --rm -t -v /dev:/dev -v $(PWD)/$(ARTIFACTS):/secureboot:ro -v $(PWD)/$(ARTIFACTS):/out -e SOURCE_DATE_EPOCH=$(SOURCE_DATE_EPOCH) --network=host --privileged $(REGISTRY_AND_USERNAME)/imager:$(IMAGE_TAG) $* --arch $$arch $(IMAGER_ARGS) ; \
 	done
 
-images-essential: image-aws image-azure image-gcp image-metal image-metal-uki secureboot-installer ## Builds only essential images used in the CI (AWS, Azure, GCP, and Metal).
+.PHONY: images-essential
+images-essential: image-aws image-gcp image-metal image-metal-uki installer secureboot-installer ## Builds only essential images used in the CI (AWS, Azure, GCP, and Metal).
 
+.PHONY: images
 images: image-akamai image-aws image-azure image-digital-ocean image-exoscale image-cloudstack image-gcp image-hcloud image-iso image-metal image-metal-uki image-nocloud image-opennebula image-openstack image-oracle image-scaleway image-upcloud image-vmware image-vultr ## Builds all known images (AWS, Azure, DigitalOcean, Exoscale, Cloudstack, GCP, HCloud, Metal, NoCloud, OpenNebula, OpenStack, Oracle, Scaleway, UpCloud, Vultr and VMware).
 
 .PHONY: iso
@@ -454,9 +468,24 @@ iso: image-iso ## Builds the ISO and outputs it to the artifact directory.
 .PHONY: secureboot-iso
 secureboot-iso: image-secureboot-iso ## Builds UEFI only ISO which uses UKI and outputs it to the artifact directory.
 
+IMAGES_LIST :=
+
+.PHONY: installer
+installer: ## Builds the installer and outputs it to the artifact directory.
+	@$(MAKE) image-installer IMAGER_ARGS="--base-installer-image $(REGISTRY_AND_USERNAME)/installer-base:$(IMAGE_TAG) $(IMAGER_ARGS)"
+
+	@crane_args=""
+	@for platform in $(subst $(,),$(space),$(PLATFORM)); do \
+		arch=$$(basename "$${platform}") && \
+		image=$$(crane push $(ARTIFACTS)/installer-$${arch}.tar $(REGISTRY_AND_USERNAME)/installer:$(IMAGE_TAG)-$${arch}) && \
+		crane_args="$${crane_args} -m $${image}" ; \
+	done; \
+	crane index append -t "${REGISTRY_AND_USERNAME}/installer:${IMAGE_TAG}" $${crane_args}
+
+
 .PHONY: secureboot-installer
 secureboot-installer: ## Builds UEFI only installer which uses UKI and push it to the registry.
-	@$(MAKE) image-secureboot-installer IMAGER_ARGS="--base-installer-image $(REGISTRY_AND_USERNAME)/installer:$(IMAGE_TAG) --extra-kernel-arg=console=ttyS0 $(IMAGER_ARGS)"
+	@$(MAKE) image-secureboot-installer IMAGER_ARGS="--base-installer-image $(REGISTRY_AND_USERNAME)/installer-base:$(IMAGE_TAG) $(IMAGER_ARGS)"
 	@for platform in $(subst $(,),$(space),$(PLATFORM)); do \
 		arch=$$(basename "$${platform}") && \
 		crane push $(ARTIFACTS)/installer-$${arch}-secureboot.tar $(REGISTRY_AND_USERNAME)/installer:$(IMAGE_TAG)-$${arch}-secureboot ; \
@@ -490,7 +519,7 @@ uki-certs: talosctl ## Generate test certificates for SecureBoot/PCR Signing
 .PHONY: cache-create
 cache-create: installer imager ## Generate image cache.
 	@docker run --entrypoint /usr/local/bin/e2e.test registry.k8s.io/conformance:$(KUBECTL_VERSION) --list-images | \
-		$(TALOSCTL_EXECUTABLE) images integration --installer-tag=$(IMAGE_TAG)-amd64-secureboot --registry-and-user=$(REGISTRY_AND_USERNAME) | \
+		$(TALOSCTL_EXECUTABLE) images integration --installer-tag=$(IMAGE_TAG) --registry-and-user=$(REGISTRY_AND_USERNAME) | \
 		$(TALOSCTL_EXECUTABLE) images cache-create --image-cache-path=/tmp/cache.tar --images=- --force
 	@crane push /tmp/cache.tar $(REGISTRY_AND_USERNAME)/image-cache:$(IMAGE_TAG)
 	@$(MAKE) image-iso IMAGER_ARGS="--image-cache=$(REGISTRY_AND_USERNAME)/image-cache:$(IMAGE_TAG) --extra-kernel-arg='console=ttyS0'"
@@ -532,16 +561,16 @@ unit-tests-race: ## Performs unit tests with race detection enabled.
 	@$(MAKE) target-$@ TARGET_ARGS="--allow security.insecure" PLATFORM=linux/amd64
 
 $(ARTIFACTS)/$(INTEGRATION_TEST_DEFAULT_TARGET)-amd64:
-	@$(MAKE) local-$(INTEGRATION_TEST_DEFAULT_TARGET)-amd64 DEST=$(ARTIFACTS) PLATFORM=linux/amd64 WITH_RACE=true NAME=Client PUSH=false
+	@$(MAKE) local-$(INTEGRATION_TEST_DEFAULT_TARGET)-amd64 DEST=$(ARTIFACTS) PLATFORM=linux/amd64 WITH_RACE=true PUSH=false
 
 $(ARTIFACTS)/$(INTEGRATION_TEST_DEFAULT_TARGET)-arm64:
-	@$(MAKE) local-$(INTEGRATION_TEST_DEFAULT_TARGET)-arm64 DEST=$(ARTIFACTS) PLATFORM=linux/arm64 WITH_RACE=true NAME=Client PUSH=false
+	@$(MAKE) local-$(INTEGRATION_TEST_DEFAULT_TARGET)-arm64 DEST=$(ARTIFACTS) PLATFORM=linux/arm64 WITH_RACE=true PUSH=false
 
 $(ARTIFACTS)/$(INTEGRATION_TEST):
 	@$(MAKE) local-$(INTEGRATION_TEST)-targetarch DEST=$(ARTIFACTS)
 
 $(ARTIFACTS)/$(INTEGRATION_TEST_PROVISION_DEFAULT_TARGET)-amd64:
-	@$(MAKE) local-$(INTEGRATION_TEST_PROVISION_DEFAULT_TARGET) DEST=$(ARTIFACTS) PLATFORM=linux/amd64 WITH_RACE=true NAME=Client
+	@$(MAKE) local-$(INTEGRATION_TEST_PROVISION_DEFAULT_TARGET) DEST=$(ARTIFACTS) PLATFORM=linux/amd64 WITH_RACE=true
 
 $(ARTIFACTS)/kubectl:
 	@mkdir -p $(ARTIFACTS)
@@ -604,7 +633,7 @@ provision-tests-track-%:
 
 installer-with-extensions: $(ARTIFACTS)/extensions/_out/extensions-metadata
 	$(MAKE) image-installer \
-		IMAGER_ARGS="--base-installer-image=$(REGISTRY_AND_USERNAME)/installer:$(IMAGE_TAG) $(shell cat $(ARTIFACTS)/extensions/_out/extensions-metadata | $(EXTENSIONS_FILTER_COMMAND) | xargs -n 1 echo --system-extension-image)"
+		IMAGER_ARGS="--base-installer-image=$(REGISTRY_AND_USERNAME)/installer-base:$(IMAGE_TAG) $(shell cat $(ARTIFACTS)/extensions/_out/extensions-metadata | $(EXTENSIONS_FILTER_COMMAND) | xargs -n 1 echo --system-extension-image)"
 	crane push $(ARTIFACTS)/installer-amd64.tar $(REGISTRY_AND_USERNAME)/installer:$(IMAGE_TAG)-amd64-extensions
 	INSTALLER_IMAGE_EXTENSIONS="$(REGISTRY_AND_USERNAME)/installer:$(IMAGE_TAG)-amd64-extensions" yq eval -n '.machine.install.image = strenv(INSTALLER_IMAGE_EXTENSIONS)' > $(ARTIFACTS)/installer-extensions-patch.yaml
 
@@ -651,8 +680,9 @@ release-notes:
 	ARTIFACTS=$(ARTIFACTS) ./hack/release.sh $@ $(ARTIFACTS)/RELEASE_NOTES.md $(TAG)
 
 push: ## Pushes the installer, imager, talos and talosctl images to the configured container registry with the generated tag.
-	@$(MAKE) installer PUSH=true
+	@$(MAKE) installer-base PUSH=true
 	@$(MAKE) imager PUSH=true
+	@$(MAKE) installer PUSH=true
 	@$(MAKE) talos PUSH=true
 	@$(MAKE) talosctl-image PUSH=true
 
@@ -665,7 +695,7 @@ clean: ## Cleans up all artifacts.
 
 .PHONY: image-list
 image-list: ## Prints a list of all images built by this Makefile with digests.
-	@echo -n installer talos imager talosctl | xargs -d ' ' -I{} sh -c 'echo $(REGISTRY_AND_USERNAME)/{}:$(IMAGE_TAG)' | xargs -I{} sh -c 'echo {}@$$(crane digest {})'
+	@echo -n installer installer-base talos imager talosctl | xargs -d ' ' -I{} sh -c 'echo $(REGISTRY_AND_USERNAME)/{}:$(IMAGE_TAG)' | xargs -I{} sh -c 'echo {}@$$(crane digest {})'
 
 .PHONY: sign-images
 sign-images: ## Run cosign to sign all images built by this Makefile.
@@ -678,7 +708,7 @@ sign-images: ## Run cosign to sign all images built by this Makefile.
 .PHONY: reproducibility-test
 reproducibility-test:
 	@$(MAKE) reproducibility-test-local-initramfs
-	@$(MAKE) reproducibility-test-docker-installer INSTALLER_ARCH=targetarch PLATFORM=linux/amd64
+	@$(MAKE) reproducibility-test-docker-installer-base INSTALLER_ARCH=targetarch PLATFORM=linux/amd64
 	@$(MAKE) reproducibility-test-docker-talos reproducibility-test-docker-imager reproducibility-test-docker-talosctl PLATFORM=linux/amd64
 
 reproducibility-test-docker-%:

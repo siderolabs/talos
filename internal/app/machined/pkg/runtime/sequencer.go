@@ -132,6 +132,7 @@ type ResetOptions interface {
 	GetMode() machine.ResetRequest_WipeMode
 	GetUserDisksToWipe() []string
 	GetSystemDiskTargets() []PartitionTarget
+	GetSystemDiskPaths() []string
 }
 
 // PartitionTarget provides interface to the disk partition.

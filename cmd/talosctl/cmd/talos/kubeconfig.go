@@ -21,6 +21,8 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/client"
 )
 
+const stdoutOutput = "-"
+
 var kubeconfigFlags struct {
 	force            bool
 	forceContextName string
@@ -32,8 +34,10 @@ var kubeconfigCmd = &cobra.Command{
 	Use:   "kubeconfig [local-path]",
 	Short: "Download the admin kubeconfig from the node",
 	Long: `Download the admin kubeconfig from the node.
-If merge flag is defined, config will be merged with ~/.kube/config or [local-path] if specified.
-Otherwise kubeconfig will be written to PWD or [local-path] if specified.`,
+If merge flag is true, config will be merged with ~/.kube/config or [local-path] if specified.
+Otherwise, kubeconfig will be written to PWD or [local-path] if specified.
+
+If merge flag is false and [local-path] is "-", config will be written to stdout.`,
 	Args: cobra.MaximumNArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return WithClient(func(ctx context.Context, c *client.Client) error {
@@ -105,6 +109,12 @@ Otherwise kubeconfig will be written to PWD or [local-path] if specified.`,
 
 			if kubeconfigFlags.merge {
 				return extractAndMerge(data, localPath)
+			}
+
+			if localPath == stdoutOutput {
+				_, err = os.Stdout.Write(data)
+
+				return err
 			}
 
 			return os.WriteFile(localPath, data, 0o600)

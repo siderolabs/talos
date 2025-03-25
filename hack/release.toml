@@ -18,15 +18,15 @@ preface = """
     [notes.updates]
         title = "Component Updates"
         description = """\
-* Linux: 6.12.13
+* Linux: 6.12.19
 * CNI plugins: 1.6.2
-* runc: 1.2.4
-* containerd: 2.0.2
-* etcd: 3.5.18
+* runc: 1.2.6
+* containerd: 2.0.4
+* etcd: 3.5.20
 * Flannel: 0.26.4
-* Kubernetes: 1.32.2
+* Kubernetes: 1.33.0-beta.0
 
-Talos is built with Go 1.24.0.
+Talos is built with Go 1.24.1.
 """
 
     [notes.driver-rebind]
@@ -103,6 +103,29 @@ The NQN can be read by `talosctl read /etc/nvme/hostnqn`
 Talos starting with 1.10 will have ISO's that will use GRUB only for legacy BIOS and systemd-boot for modern UEFI systems.
 """
 
+    [notes.disk-image]
+        title = "Disk Image"
+        description = """\
+Talos starting with 1.10 will have disk images that will use GRUB only for legacy BIOS and systemd-boot for modern UEFI systems.
+On first boot Talos determines the boot method and will wipe the unused bootloader.
+
+Secureboot disk-images will be sd-boot only.
+
+For ARM64 imager will still generate GRUB bootloader for Talos < 1.10 and for Talos >= 1.10 all ARM64 boot assets will use systemd-boot.
+
+Imager supports overwriting bootloader when generating a disk image via the Imager profile `output` option.
+
+Eg:
+
+```yaml
+output:
+  kind: image
+  imageOptions:
+    bootloader: sd-boot # supported options are sd-boot, grub, dual-boot
+```
+
+"""
+
     [notes.ethernet]
         title = "Ethernet"
         description = """\
@@ -124,6 +147,27 @@ System extensions must move their directories accordingly for 1.10.
         title = "Ingress Firewall"
         description = """\
 Talos Ingress Firewall now filters access to Kubernetes NodePort services correctly.
+"""
+
+    [notes.extraKernelArgs]
+        title = "Extra Kernel Args"
+        description = """\
+Talos 1.10 on fresh install on UEFI systems will now use systemd-boot and UKIs (Unified Kernel Images)[https://uapi-group.org/specifications/specs/unified_kernel_image/].
+This means the kernel command line arguments are part of the UKI and cannot be modified without an upgrade to a new UKI.
+
+Upgrades to Talos 1.10 will preseve the existing bootloader (GRUB for non-secureboot) and sd-boot for Secureboot and this change will have no effect.
+
+To build a [boot asset](https://www.talos.dev/v1.10/talos-guides/install/boot-assets/) with extra kernel arguments whether an `installer` or a boot image use either [Image Factory](https://www.talos.dev/v1.10/talos-guides/install/boot-assets/#image-factory) or
+[Imager](https://www.talos.dev/v1.10/talos-guides/install/boot-assets/#imager).
+
+This means kernel arguments not part of the UKI will not be preserved across updates and a proper installer image generated via Imager Factory or Imager is required.
+"""
+
+    [notes.extensions]
+        title = "Machine Install Extensions"
+        description = """\
+`.machine.install.extensions` will have no effect starting from Talos 1.10, the machine config document field is still kept so upgrades from older versions are possible.
+Use [Boot Assets](https://www.talos.dev/v1.10/talos-guides/install/boot-assets/) instead.
 """
 
 [make_deps]

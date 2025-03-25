@@ -319,7 +319,7 @@ func CloudPlatforms() []Platform {
 			Description: "Runs on UpCloud virtual machines",
 
 			Architectures:   []Arch{ArchAmd64},
-			Documentation:   "/talos-guides/install/cloud-platforms/ucloud/",
+			Documentation:   "/talos-guides/install/cloud-platforms/upcloud/",
 			DiskImageSuffix: "raw.xz",
 			BootMethods: []BootMethod{
 				BootMethodDiskImage,

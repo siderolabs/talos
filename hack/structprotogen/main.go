@@ -25,7 +25,7 @@ import (
 var rootCmd = &cobra.Command{
 	Use:     "structprotogen path dest",
 	Short:   "This CLI is used to generate proto files from Go structs into one proto file",
-	Example: "gotagsrewrite github.com/siderolabs/talos/pkg/machinery/resources/... ./api/resource/definitions",
+	Example: "structprotogen github.com/siderolabs/talos/pkg/machinery/resources/... ./api/resource/definitions",
 	Args:    cobra.ExactArgs(2),
 	Version: "v1.0.0",
 	RunE: func(cmd *cobra.Command, args []string) error {

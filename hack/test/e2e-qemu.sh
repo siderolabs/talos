@@ -2,8 +2,6 @@
 
 set -eou pipefail
 
-export USER_DISKS_MOUNTS="/var/lib/extra,/var/lib/p1,/var/lib/p2"
-
 # shellcheck source=/dev/null
 source ./hack/test/e2e.sh
 
@@ -43,8 +41,10 @@ case "${WITH_VIRTUAL_IP:-false}" in
     ;;
 esac
 
-case "${WITH_JSON_LOGS:-false}" in
-  true)
+case "${WITH_JSON_LOGS:-true}" in
+  false)
+    ;;
+  *)
     QEMU_FLAGS+=("--with-json-logs")
     ;;
 esac
@@ -135,7 +135,6 @@ case "${WITH_ISO:-false}" in
   false)
     ;;
   *)
-    INSTALLER_IMAGE=${INSTALLER_IMAGE}-amd64-secureboot # we don't use secureboot part here, but this installer contains UKIs
     QEMU_FLAGS+=("--iso-path=${ARTIFACTS}/metal-amd64.iso")
     ;;
 esac
@@ -243,8 +242,16 @@ case "${WITH_UKI_BOOT:-false}" in
   false)
     ;;
   *)
-    INSTALLER_IMAGE=${INSTALLER_IMAGE}-amd64-secureboot # we don't use secureboot part here, but this installer contains UKIs
     QEMU_FLAGS+=("--uki-path=_out/metal-amd64-uki.efi")
+    ;;
+esac
+
+case "${WITH_USER_DISK:-false}" in
+  false)
+    ;;
+  *)
+    QEMU_FLAGS+=("--user-disk=/var/lib/extra:350MB")
+    QEMU_FLAGS+=("--user-disk=/var/lib/p1:350MB:/var/lib/p2:350MB")
     ;;
 esac
 
@@ -268,8 +275,6 @@ function create_cluster {
     --cpus="${QEMU_CPUS:-2}" \
     --cpus-workers="${QEMU_CPUS_WORKERS:-2}" \
     --cidr=172.20.1.0/24 \
-    --user-disk=/var/lib/extra:350MB \
-    --user-disk=/var/lib/p1:350MB:/var/lib/p2:350MB \
     --install-image="${INSTALLER_IMAGE}" \
     --with-init-node=false \
     --cni-bundle-url="${ARTIFACTS}/talosctl-cni-bundle-\${ARCH}.tar.gz" \

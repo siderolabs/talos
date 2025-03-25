@@ -210,3 +210,15 @@ func (q Quirks) SupportsUKIProfiles() bool {
 
 	return q.v.GTE(minTalosVersionUKIProfiles)
 }
+
+var minTalosVersionUnifiedInstaller = semver.MustParse("1.10.0")
+
+// SupportsUnifiedInstaller returns true if the Talos version supports unified installer.
+func (q Quirks) SupportsUnifiedInstaller() bool {
+	// if the version doesn't parse, we assume it's latest Talos
+	if q.v == nil {
+		return true
+	}
+
+	return q.v.GTE(minTalosVersionUnifiedInstaller)
+}

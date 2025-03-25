@@ -11,7 +11,6 @@ import (
 	"log"
 	"reflect"
 	"sync"
-	"sync/atomic"
 	"time"
 
 	"github.com/cosi-project/runtime/pkg/resource"
@@ -23,13 +22,13 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/config"
 	"github.com/siderolabs/talos/pkg/machinery/config/configdiff"
 	"github.com/siderolabs/talos/pkg/machinery/config/container"
+	machineconfig "github.com/siderolabs/talos/pkg/machinery/resources/config"
 	"github.com/siderolabs/talos/pkg/machinery/resources/hardware"
 	"github.com/siderolabs/talos/pkg/machinery/resources/k8s"
 )
 
 // Runtime implements the Runtime interface.
 type Runtime struct {
-	c atomicInterface[config.Provider]
 	s runtime.State
 	e runtime.EventStream
 	l runtime.LoggingManager
@@ -47,19 +46,40 @@ func NewRuntime(s runtime.State, e runtime.EventStream, l runtime.LoggingManager
 	}
 }
 
+func (r *Runtime) configProvider() config.Provider {
+	cfg, err := r.s.V1Alpha2().GetConfig(context.TODO())
+	if err != nil {
+		panic(err)
+	}
+
+	return cfg
+}
+
 // Config implements the Runtime interface.
 func (r *Runtime) Config() config.Config {
-	return r.c.Load()
+	cfg := r.configProvider()
+
+	if cfg == nil {
+		return nil
+	}
+
+	return cfg
 }
 
 // ConfigContainer implements the Runtime interface.
 func (r *Runtime) ConfigContainer() config.Container {
-	return r.c.Load()
+	cfg := r.configProvider()
+
+	if cfg == nil {
+		return nil
+	}
+
+	return cfg
 }
 
 // RollbackToConfigAfter implements the Runtime interface.
 func (r *Runtime) RollbackToConfigAfter(timeout time.Duration) error {
-	cfgProvider := r.c.Load()
+	cfgProvider := r.configProvider()
 
 	r.CancelConfigRollbackTimeout()
 
@@ -87,14 +107,17 @@ func (r *Runtime) CancelConfigRollbackTimeout() {
 
 // SetConfig implements the Runtime interface.
 func (r *Runtime) SetConfig(cfg config.Provider) error {
-	r.c.Store(cfg)
+	return r.s.V1Alpha2().SetConfig(context.TODO(), machineconfig.ActiveID, cfg)
+}
 
-	return r.s.V1Alpha2().SetConfig(cfg)
+// SetPersistedConfig implements the Runtime interface.
+func (r *Runtime) SetPersistedConfig(cfg config.Provider) error {
+	return r.s.V1Alpha2().SetConfig(context.TODO(), machineconfig.PersistentID, cfg)
 }
 
 // CanApplyImmediate implements the Runtime interface.
 func (r *Runtime) CanApplyImmediate(cfg config.Provider) error {
-	cfgProv := r.c.Load()
+	cfgProv := r.configProvider()
 	if cfgProv == nil {
 		return errors.New("no current config")
 	}
@@ -228,20 +251,3 @@ func (r *Runtime) IsBootstrapAllowed() bool {
 func (r *Runtime) GetSystemInformation(ctx context.Context) (*hardware.SystemInformation, error) {
 	return safe.StateGet[*hardware.SystemInformation](ctx, r.State().V1Alpha2().Resources(), hardware.NewSystemInformation(hardware.SystemInformationID).Metadata())
 }
-
-// atomicInterface is a typed wrapper around atomic.Value. It's only useful for storing the interfaces, because
-// you don't need another layer of indirection (unlike atomic.Pointer[T]) to load the value. For concrete types
-// please use atomic.Pointer.
-type atomicInterface[T any] struct{ v atomic.Value }
-
-func (a *atomicInterface[T]) Load() T {
-	if val := a.v.Load(); val != nil {
-		return val.(T) //nolint:forcetypeassert
-	}
-
-	var zero T
-
-	return zero
-}
-
-func (a *atomicInterface[T]) Store(v T) { a.v.Store(v) }

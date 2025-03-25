@@ -4,16 +4,58 @@
 
 (type pod_containerd_socket_t)
 (call system_socket_f (pod_containerd_socket_t))
-(typetransition pod_containerd_t run_t sock_file pod_containerd_socket_t)
+; Shim and client sockets
+(allow pod_containerd_t run_t (fs_classes (rw)))
+(typeattribute not_pod_containerd_socket_t)
+(typeattributeset not_pod_containerd_socket_t (not pod_containerd_socket_t))
+(typetransition pod_containerd_t not_pod_containerd_socket_t sock_file pod_containerd_socket_t)
 
+(type pod_containerd_run_t)
+(call system_f (pod_containerd_run_t))
+(allow pod_containerd_run_t tmpfs_t (filesystem (associate)))
+
+(typetransition pod_containerd_t run_t file pod_containerd_run_t)
+(typetransition pod_containerd_t run_t dir pod_containerd_run_t)
+(typetransition pod_containerd_t run_t lnk_file pod_containerd_run_t)
+(typetransition pod_containerd_t run_t chr_file pod_containerd_run_t)
+(typetransition pod_containerd_t run_t blk_file pod_containerd_run_t)
+(typetransition pod_containerd_t run_t fifo_file pod_containerd_run_t)
+
+(allow pod_containerd_t pod_containerd_run_t (fs_classes (rw)))
+
+; Transition to pod contexts
 (allow pod_containerd_t pod_p (process2 (nnp_transition nosuid_transition)))
 (allow pod_containerd_t pod_p (process (transition)))
 
-(type pod_t)
-(call pod_p (pod_t))
-; TODO: What if container is started not from containerd_state_t?
-(typetransition pod_containerd_t containerd_state_t process pod_t)
-(allow pod_t containerd_state_t (file (entrypoint execute_no_trans)))
+; Containerd storage
+(allow pod_containerd_t containerd_state_t (fs_classes (rw)))
+(allow pod_containerd_t containerd_state_t (file (entrypoint execute execute_no_trans)))
+(allow pod_containerd_t containerd_state_t (fs_classes (relabelto relabelfrom)))
+
+; Manage procfs & processes
+(allow pod_containerd_t pod_p (fs_classes (rw)))
+(allow pod_containerd_t pod_p (process_classes (full)))
+(allow pod_p pod_containerd_t (fd (use)))
+(allow pod_p pod_containerd_t (fifo_file (append getattr ioctl map open read rename setattr watch write)))
+
+; CNI
+(allow pod_containerd_t cni_plugin_t (file (execute_no_trans execute)))
+(allow pod_containerd_t cni_plugin_t (fs_classes (ro)))
+; iptables used by CNI
+(allow pod_containerd_t bin_exec_t (file (execute_no_trans execute)))
+(allow pod_containerd_t bin_exec_t (fs_classes (ro)))
+; (allow pod_p cni_conf_t (fs_classes (rw)))
+(allow pod_containerd_t cni_state_t (fs_classes (rw)))
+
+; Logs
+(allow pod_containerd_t pods_log_t (fs_classes (rw)))
+
+(allow pod_containerd_t pod_p (key (view read write search link setattr create)))
+
+; Shim socket
+(allow pod_containerd_t pod_containerd_socket_t (fs_classes (rw)))
+
+; System containers, not k8s pods
 
 (type etcd_t)
 (call pod_p (etcd_t))
@@ -24,6 +66,10 @@
 (call protected_f (etcd_pki_t))
 (allow etcd_pki_t tmpfs_t (filesystem (associate)))
 (allow etcd_t etcd_pki_t (fs_classes (ro)))
+
+(type etcd_data_t)
+(call protected_f (etcd_data_t))
+(allow etcd_t etcd_data_t (fs_classes (rw)))
 
 (type cni_conf_t)
 (call filesystem_f (cni_conf_t))
@@ -36,10 +82,6 @@
 (type containerd_plugin_t)
 (call filesystem_f (containerd_plugin_t))
 (filecon "/opt/containerd(/.*)?" any (system_u object_r containerd_plugin_t (systemLow systemLow)))
-
-(type etcd_data_t)
-(call protected_f (etcd_data_t))
-(allow etcd_t etcd_data_t (fs_classes (rw)))
 
 (type containerd_state_t)
 (call common_f (containerd_state_t))
@@ -66,3 +108,132 @@
 (typeattributeset kube_secret_f kube_apiserver_secret_t)
 (typeattributeset kube_secret_f kube_controller_manager_secret_t)
 (typeattributeset kube_secret_f kube_scheduler_secret_t)
+
+; Allow kubernetes pods to access their configuration and secrets
+; FIXME: insecure as anyone with access to the pod containerd may obtain these domains
+; TODO: label static pods with the correct domains
+(allow pod_p kube_secret_f (fs_classes (ro)))
+
+(type var_log_t)
+(call protected_f (var_log_t))
+(type audit_log_t)
+(call protected_f (audit_log_t))
+(type containers_log_t)
+(call protected_f (containers_log_t))
+(type pods_log_t)
+(call protected_f (pods_log_t))
+(type var_lock_t)
+(call protected_f (var_lock_t))
+(allow var_lock_t tmpfs_t (filesystem (associate)))
+(type seccomp_profile_t)
+(call protected_f (seccomp_profile_t))
+(type kube_log_t)
+(call protected_f (kube_log_t))
+
+(typeattribute log_f)
+(typeattributeset log_f var_log_t)
+(typeattributeset log_f audit_log_t)
+(typeattributeset log_f containers_log_t)
+(typeattributeset log_f pods_log_t)
+(typeattributeset log_f var_lock_t)
+(typeattributeset log_f seccomp_profile_t)
+(typeattributeset log_f kube_log_t)
+
+; FIXME: insecure as anyone with access to the pod containerd may obtain these domains
+; TODO: label static pods with the correct domains
+(allow pod_p log_f (fs_classes (rw)))
+
+(type cni_state_t)
+(call protected_f (cni_state_t))
+
+; All pods
+
+; local-path-provisioner
+(allow pod_containerd_t ephemeral_t (fs_classes (rw)))
+(allow pod_p ephemeral_t (fs_classes (rw)))
+
+; userns mode
+; https://github.com/containerd/containerd/blob/9b552d441582d71b7fd322c0b9f2c7c23b26b729/pkg/sys/unshare_linux.go#L59
+; https://github.com/containerd/containerd/blob/9b552d441582d71b7fd322c0b9f2c7c23b26b729/core/mount/mount_idmapped_utils_linux.go#L51
+(allow pod_containerd_t self (process (ptrace)))
+(allow pod_containerd_t self (user_namespace (create)))
+
+; Manage pseudo-terminals for containers, Kubernetes Conformance needs this
+(allow pod_containerd_t devpts_t (fs_classes (rw)))
+(allow pod_p devpts_t (fs_classes (rw)))
+
+; ; cilium
+; (allow pod_containerd_t pod_p (unix_stream_socket (connectto)))
+
+; pkg/flannel
+(allow pod_p cni_conf_t (fs_classes (rw)))
+
+; Common rules for containerd accessing system
+(typeattributeset containerd_p pod_containerd_t)
+
+(type pod_t)
+(call pod_p (pod_t))
+(typeattribute not_containerd_exec_t)
+(typeattributeset not_containerd_exec_t (not containerd_exec_t))
+(typetransition pod_containerd_t containerd_state_t process pod_t)
+(allow pod_p containerd_state_t (fs_classes (rw)))
+(allow pod_p containerd_state_t (file (entrypoint execute execute_no_trans)))
+
+; ; allow configuring CNI
+; (allow pod_p cni_conf_t (fs_classes (rw)))
+
+; ; CNI plugins access netns
+; (allow pod_p nsfs_t (fs_classes (rw)))
+
+; Flannel calls modprobe
+(allow pod_p module_t (fs_classes (ro)))
+
+; emptyDir volumes, used e.g. by hydrophone cts
+; TODO: label
+(allow pod_p kubelet_state_t (fs_classes (rw)))
+
+; getattr, unmount called by containers and should be guarded by their mount namespaces
+(allow pod_p fs_t (filesystem (
+    ; associate
+    getattr
+    mount
+    quotaget
+    quotamod
+    ; relabelfrom
+    ; relabelto
+    remount
+    unmount
+    watch
+)))
+
+; Calico and basically any CNI installing plugins
+(allow pod_t cni_plugin_t (fs_classes (rw)))
+; `install` also seems to test the plugin
+(allow pod_t cni_plugin_t (file (execute execute_no_trans)))
+
+; TinK is an example of what needs this. Docker in a pod will also require this.
+(allow pod_p cgroup_t (fs_classes (rw)))
+(allow pod_p nsfs_t (fs_classes (ro)))
+(allow pod_p self (key (all)))
+(allow pod_p self (capability2 (syslog)))
+(allow pod_p procfs_t (filesystem (mount remount unmount)))
+(allow pod_p kernel_t (system (syslog_read)))
+; Mainly ephemeral, but basically run anything without transitioning
+(allow pod_p any_f (file (execute execute_no_trans)))
+; /sys/firmware
+(allow pod_p sysfs_t (filesystem (mount remount unmount)))
+(allow pod_p sysfs_t (fs_classes (mounton)))
+; TinK
+(allow pod_p sysfs_t (filesystem (mount remount unmount)))
+(allow pod_p nsfs_t (filesystem (mount remount unmount)))
+(allow pod_p devpts_t (filesystem (mount remount unmount)))
+; /proc/bus
+(allow pod_p procfs_t (filesystem (mount remount unmount)))
+(allow pod_p procfs_t (fs_classes (mounton)))
+; module params (used e.g. by containerd)
+(allow pod_p sys_module_t (fs_classes (ro)))
+
+; TinK
+; [  110.873621] audit: type=1400 audit(1742647858.928:213): avc:  denied  { relabelfrom } for  pid=4732 comm="containerd" name="etc" dev="vda4" ino=122484 scontext=system_u:system_r:pod_t:s0 tcontext=system_u:object_r:ephemeral_t:s0 tclass=dir permissive=1
+; [  110.875762] audit: type=1400 audit(1742647858.928:213): avc:  denied  { relabelto } for  pid=4732 comm="containerd" name="etc" dev="vda4" ino=122484 scontext=system_u:system_r:pod_t:s0 tcontext=system_u:object_r:ephemeral_t:s0 tclass=dir permissive=1
+(allow pod_p ephemeral_t (fs_classes (relabelfrom relabelto)))

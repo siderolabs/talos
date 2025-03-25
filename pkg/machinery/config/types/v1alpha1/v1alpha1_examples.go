@@ -792,14 +792,6 @@ func authorizationConfigExample() []*AuthorizationConfigAuthorizerConfig {
 	}
 }
 
-func installExtensionsExample() []InstallExtensionConfig {
-	return []InstallExtensionConfig{
-		{
-			ExtensionImage: "ghcr.io/siderolabs/gvisor:20220117.0-v1.0.0",
-		},
-	}
-}
-
 func kubernetesTalosAPIAccessConfigExample() *KubernetesTalosAPIAccessConfig {
 	return &KubernetesTalosAPIAccessConfig{
 		AccessEnabled: pointer.To(true),

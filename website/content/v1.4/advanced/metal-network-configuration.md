@@ -139,7 +139,7 @@ In this guide we will briefly cover the most common examples of the network conf
 
 The addresses configured are usually routable IP addresses assigned to the machine, so
 the `scope:` should be set to `global` and `flags:` to `permanent`.
-Additionally, `family:` should be set to either `inet4` or `init6` depending on the address family.
+Additionally, `family:` should be set to either `inet4` or `inet6` depending on the address family.
 
 The `linkName:` property should match the name of the link the address is assigned to, it might be a physical link,
 e.g. `en9sp0`, or the name of a logical link, e.g. `bond0`, created in the `links:` section.
@@ -283,7 +283,7 @@ The route most important fields are:
 - `outLinkName:` defines the name of the link the route is associated with
 - `src:` sets the source address for the route (optional)
 
-Additionally, `family:` should be set to either `inet4` or `init6` depending on the address family.
+Additionally, `family:` should be set to either `inet4` or `inet6` depending on the address family.
 
 Example, IPv6 default gateway:
 

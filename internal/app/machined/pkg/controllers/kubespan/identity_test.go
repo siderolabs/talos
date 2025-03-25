@@ -8,80 +8,79 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
-	"time"
 
 	"github.com/cosi-project/runtime/pkg/resource"
-	"github.com/siderolabs/go-retry/retry"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
 
+	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/ctest"
 	kubespanctrl "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/kubespan"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
+	"github.com/siderolabs/talos/pkg/machinery/resources/block"
 	"github.com/siderolabs/talos/pkg/machinery/resources/config"
 	"github.com/siderolabs/talos/pkg/machinery/resources/kubespan"
 	"github.com/siderolabs/talos/pkg/machinery/resources/network"
-	runtimeres "github.com/siderolabs/talos/pkg/machinery/resources/runtime"
-	"github.com/siderolabs/talos/pkg/machinery/resources/v1alpha1"
 )
 
 type IdentitySuite struct {
-	KubeSpanSuite
-
-	statePath string
+	ctest.DefaultSuite
 }
 
 func (suite *IdentitySuite) TestGenerate() {
-	suite.statePath = suite.T().TempDir()
-
-	suite.Require().NoError(suite.runtime.RegisterController(&kubespanctrl.IdentityController{
-		StatePath: suite.statePath,
-	}))
-
-	suite.startRuntime()
-
-	stateMount := runtimeres.NewMountStatus(v1alpha1.NamespaceName, constants.StatePartitionLabel)
-
-	suite.Assert().NoError(suite.state.Create(suite.ctx, stateMount))
-
 	cfg := kubespan.NewConfig(config.NamespaceName, kubespan.ConfigID)
 	cfg.TypedSpec().Enabled = true
 	cfg.TypedSpec().ClusterID = "8XuV9TZHW08DOk3bVxQjH9ih_TBKjnh-j44tsCLSBzo="
 
-	suite.Require().NoError(suite.state.Create(suite.ctx, cfg))
+	suite.Create(cfg)
 
 	firstMac := network.NewHardwareAddr(network.NamespaceName, network.FirstHardwareAddr)
 	mac, err := net.ParseMAC("ea:71:1b:b2:cc:ee")
 	suite.Require().NoError(err)
 
 	firstMac.TypedSpec().HardwareAddr = nethelpers.HardwareAddr(mac)
+	suite.Create(firstMac)
 
-	suite.Require().NoError(suite.state.Create(suite.ctx, firstMac))
+	statePath := suite.T().TempDir()
+	mountID := (&kubespanctrl.IdentityController{}).Name() + "-" + constants.StatePartitionLabel
 
-	specMD := resource.NewMetadata(kubespan.NamespaceName, kubespan.IdentityType, kubespan.LocalIdentity, resource.VersionUndefined)
+	ctest.AssertResource(suite, mountID, func(mountRequest *block.VolumeMountRequest, asrt *assert.Assertions) {
+		asrt.Equal(constants.StatePartitionLabel, mountRequest.TypedSpec().VolumeID)
+	})
 
-	suite.Assert().NoError(retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-		suite.assertResource(
-			specMD,
-			func(res resource.Resource) error {
-				spec := res.(*kubespan.Identity).TypedSpec()
+	ctest.AssertNoResource[*kubespan.Identity](suite, kubespan.LocalIdentity)
 
-				_, err := wgtypes.ParseKey(spec.PrivateKey)
-				suite.Assert().NoError(err)
+	volumeMountStatus := block.NewVolumeMountStatus(block.NamespaceName, mountID)
+	volumeMountStatus.TypedSpec().Target = statePath
+	suite.Create(volumeMountStatus)
 
-				_, err = wgtypes.ParseKey(spec.PublicKey)
-				suite.Assert().NoError(err)
+	ctest.AssertResource(suite, kubespan.LocalIdentity, func(identity *kubespan.Identity, asrt *assert.Assertions) {
+		spec := identity.TypedSpec()
 
-				suite.Assert().Equal("fd7f:175a:b97c:5602:e871:1bff:feb2:ccee/128", spec.Address.String())
-				suite.Assert().Equal("fd7f:175a:b97c:5602::/64", spec.Subnet.String())
+		_, err := wgtypes.ParseKey(spec.PrivateKey)
+		asrt.NoError(err)
 
-				return nil
-			},
-		),
-	))
+		_, err = wgtypes.ParseKey(spec.PublicKey)
+		asrt.NoError(err)
+
+		asrt.Equal("fd7f:175a:b97c:5602:e871:1bff:feb2:ccee/128", spec.Address.String())
+		asrt.Equal("fd7f:175a:b97c:5602::/64", spec.Subnet.String())
+	})
+
+	ctest.AssertResources(suite, []resource.ID{volumeMountStatus.Metadata().ID()}, func(vms *block.VolumeMountStatus, asrt *assert.Assertions) {
+		asrt.True(vms.Metadata().Finalizers().Empty())
+	})
+
+	suite.Destroy(volumeMountStatus)
+
+	ctest.AssertNoResource[*block.VolumeMountRequest](suite, mountID)
 }
 
 func (suite *IdentitySuite) TestLoad() {
+	statePath := suite.T().TempDir()
+	mountID := (&kubespanctrl.IdentityController{}).Name() + "-" + constants.StatePartitionLabel
+
 	// using verbatim data here to make sure nodeId representation is supported in future version of Talos
 	const identityYaml = `address: ""
 subnet: ""
@@ -89,55 +88,57 @@ privateKey: sF45u5ePau58WeeCUY3T8D9foEKaQ8Opx4cGC8g4XE4=
 publicKey: Oak2fBEWngBhwslBxDVgnRNHXs88OAp4kjroSX0uqUE=
 `
 
-	suite.statePath = suite.T().TempDir()
-
-	suite.Require().NoError(suite.runtime.RegisterController(&kubespanctrl.IdentityController{
-		StatePath: suite.statePath,
-	}))
-
-	suite.startRuntime()
-
-	suite.Require().NoError(os.WriteFile(filepath.Join(suite.statePath, constants.KubeSpanIdentityFilename), []byte(identityYaml), 0o600))
-
-	stateMount := runtimeres.NewMountStatus(v1alpha1.NamespaceName, constants.StatePartitionLabel)
-
-	suite.Assert().NoError(suite.state.Create(suite.ctx, stateMount))
+	suite.Require().NoError(os.WriteFile(filepath.Join(statePath, constants.KubeSpanIdentityFilename), []byte(identityYaml), 0o600))
 
 	cfg := kubespan.NewConfig(config.NamespaceName, kubespan.ConfigID)
 	cfg.TypedSpec().Enabled = true
 	cfg.TypedSpec().ClusterID = "8XuV9TZHW08DOk3bVxQjH9ih_TBKjnh-j44tsCLSBzo="
 
-	suite.Require().NoError(suite.state.Create(suite.ctx, cfg))
+	suite.Create(cfg)
 
 	firstMac := network.NewHardwareAddr(network.NamespaceName, network.FirstHardwareAddr)
 	mac, err := net.ParseMAC("ea:71:1b:b2:cc:ee")
 	suite.Require().NoError(err)
 
 	firstMac.TypedSpec().HardwareAddr = nethelpers.HardwareAddr(mac)
+	suite.Create(firstMac)
 
-	suite.Require().NoError(suite.state.Create(suite.ctx, firstMac))
+	ctest.AssertResource(suite, mountID, func(mountRequest *block.VolumeMountRequest, asrt *assert.Assertions) {
+		asrt.Equal(constants.StatePartitionLabel, mountRequest.TypedSpec().VolumeID)
+	})
 
-	specMD := resource.NewMetadata(kubespan.NamespaceName, kubespan.IdentityType, kubespan.LocalIdentity, resource.VersionUndefined)
+	ctest.AssertNoResource[*kubespan.Identity](suite, kubespan.LocalIdentity)
 
-	suite.Assert().NoError(retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-		suite.assertResource(
-			specMD,
-			func(res resource.Resource) error {
-				spec := res.(*kubespan.Identity).TypedSpec()
+	volumeMountStatus := block.NewVolumeMountStatus(block.NamespaceName, mountID)
+	volumeMountStatus.TypedSpec().Target = statePath
+	suite.Create(volumeMountStatus)
 
-				suite.Assert().Equal("sF45u5ePau58WeeCUY3T8D9foEKaQ8Opx4cGC8g4XE4=", spec.PrivateKey)
-				suite.Assert().Equal("Oak2fBEWngBhwslBxDVgnRNHXs88OAp4kjroSX0uqUE=", spec.PublicKey)
-				suite.Assert().Equal("fd7f:175a:b97c:5602:e871:1bff:feb2:ccee/128", spec.Address.String())
-				suite.Assert().Equal("fd7f:175a:b97c:5602::/64", spec.Subnet.String())
+	ctest.AssertResource(suite, kubespan.LocalIdentity, func(identity *kubespan.Identity, asrt *assert.Assertions) {
+		spec := identity.TypedSpec()
 
-				return nil
-			},
-		),
-	))
+		asrt.Equal("sF45u5ePau58WeeCUY3T8D9foEKaQ8Opx4cGC8g4XE4=", spec.PrivateKey)
+		asrt.Equal("Oak2fBEWngBhwslBxDVgnRNHXs88OAp4kjroSX0uqUE=", spec.PublicKey)
+		asrt.Equal("fd7f:175a:b97c:5602:e871:1bff:feb2:ccee/128", spec.Address.String())
+		asrt.Equal("fd7f:175a:b97c:5602::/64", spec.Subnet.String())
+	})
+
+	ctest.AssertResources(suite, []resource.ID{volumeMountStatus.Metadata().ID()}, func(vms *block.VolumeMountStatus, asrt *assert.Assertions) {
+		asrt.True(vms.Metadata().Finalizers().Empty())
+	})
+
+	suite.Destroy(volumeMountStatus)
+
+	ctest.AssertNoResource[*block.VolumeMountRequest](suite, mountID)
 }
 
 func TestIdentitySuite(t *testing.T) {
 	t.Parallel()
 
-	suite.Run(t, new(IdentitySuite))
+	suite.Run(t, &IdentitySuite{
+		DefaultSuite: ctest.DefaultSuite{
+			AfterSetup: func(suite *ctest.DefaultSuite) {
+				suite.Require().NoError(suite.Runtime().RegisterController(&kubespanctrl.IdentityController{}))
+			},
+		},
+	})
 }

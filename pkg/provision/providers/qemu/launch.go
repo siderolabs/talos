@@ -87,6 +87,10 @@ type LaunchConfig struct {
 	// API
 	APIPort int
 
+	// sd-stub
+	sdStubExtraCmdline       string
+	sdStubExtraCmdlineConfig string
+
 	// filled by CNI invocation
 	tapName string
 	vmMAC   string
@@ -319,7 +323,6 @@ func launchVM(config *LaunchConfig) error {
 		"-no-reboot",
 		"-boot", fmt.Sprintf("order=%s,reboot-timeout=5000", bootOrder),
 		"-smbios", fmt.Sprintf("type=1,uuid=%s", config.NodeUUID),
-		"-smbios", "type=11,value=io.systemd.stub.kernel-cmdline-extra=console=ttyS0",
 		"-chardev", fmt.Sprintf("socket,path=%s/%s.sock,server=on,wait=off,id=qga0", config.StatePath, config.Hostname),
 		"-device", "virtio-serial",
 		"-device", "virtserialport,chardev=qga0,name=org.qemu.guest_agent.0",
@@ -487,14 +490,20 @@ func launchVM(config *LaunchConfig) error {
 				"-kernel", config.UKIPath,
 				"-append", config.KernelArgs,
 			)
+			config.sdStubExtraCmdline += config.sdStubExtraCmdlineConfig
 		case config.KernelImagePath != "":
 			args = append(args,
 				"-kernel", config.KernelImagePath,
 				"-initrd", config.InitrdPath,
 				"-append", config.KernelArgs,
 			)
+			config.sdStubExtraCmdline += config.sdStubExtraCmdlineConfig
 		}
 	}
+
+	args = append(args,
+		"-smbios", fmt.Sprintf("type=11,value=io.systemd.stub.kernel-cmdline-extra=%s", config.sdStubExtraCmdline),
+	)
 
 	if config.BadRTC {
 		args = append(args,
@@ -592,7 +601,12 @@ func Launch() error {
 	defer httpServer.Shutdown(ctx) //nolint:errcheck
 
 	// patch kernel args
-	config.KernelArgs = strings.ReplaceAll(config.KernelArgs, "{TALOS_CONFIG_URL}", fmt.Sprintf("http://%s/config.yaml", httpServer.GetAddr()))
+	config.sdStubExtraCmdline = "console=ttyS0"
+
+	if strings.Contains(config.KernelArgs, "{TALOS_CONFIG_URL}") {
+		config.KernelArgs = strings.ReplaceAll(config.KernelArgs, "{TALOS_CONFIG_URL}", fmt.Sprintf("http://%s/config.yaml", httpServer.GetAddr()))
+		config.sdStubExtraCmdlineConfig = fmt.Sprintf(" talos.config=http://%s/config.yaml", httpServer.GetAddr())
+	}
 
 	return withCNI(ctx, &config, func(config *LaunchConfig) error {
 		for {

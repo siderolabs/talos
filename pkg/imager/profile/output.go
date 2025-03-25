@@ -4,6 +4,10 @@
 
 package profile
 
+import (
+	"github.com/siderolabs/talos/pkg/machinery/imager/quirks"
+)
+
 // Output describes image generation result.
 type Output struct {
 	// Kind of the output:
@@ -37,6 +41,9 @@ type ImageOptions struct {
 	DiskFormat DiskFormat `yaml:"diskFormat,omitempty"`
 	// DiskFormatOptions are additional options for the disk format
 	DiskFormatOptions string `yaml:"diskFormatOptions,omitempty"`
+	// Bootloader is the bootloader to use for the disk image.
+	// If not set, it defaults to dual-boot.
+	Bootloader DiskImageBootloader `yaml:"bootloader"`
 }
 
 // ISOOptions describes options for the 'iso' output.
@@ -97,3 +104,56 @@ const (
 	SDBootEnrollKeysForce                          // force
 	SDBootEnrollKeysOff                            // off
 )
+
+// DiskImageBootloader is a bootloader for the disk image.
+type DiskImageBootloader int
+
+const (
+	// DiskImageBootloaderDualBoot is the dual-boot bootloader
+	// using sd-boot for UEFI and GRUB for BIOS.
+	DiskImageBootloaderDualBoot DiskImageBootloader = iota // dual-boot
+	// DiskImageBootloaderSDBoot is the sd-boot bootloader.
+	DiskImageBootloaderSDBoot // sd-boot
+	// DiskImageBootloaderGrub is the GRUB bootloader.
+	DiskImageBootloaderGrub // grub
+)
+
+// FillDefaults fills default values for the output.
+func (o *Output) FillDefaults(arch, version string, secureboot bool) {
+	if o.Kind == OutKindImage {
+		if o.ImageOptions == nil {
+			o.ImageOptions = &ImageOptions{}
+		}
+
+		// allow user to override bootloader
+		if o.ImageOptions.Bootloader != DiskImageBootloaderDualBoot {
+			return
+		}
+
+		if secureboot {
+			o.ImageOptions.Bootloader = DiskImageBootloaderSDBoot
+
+			return
+		}
+
+		useSDBoot := quirks.New(version).UseSDBootForUEFI()
+
+		// for arm64, we always use sd-boot
+		if arch == "arm64" && useSDBoot {
+			o.ImageOptions.Bootloader = DiskImageBootloaderSDBoot
+
+			return
+		}
+
+		if !useSDBoot {
+			o.ImageOptions.Bootloader = DiskImageBootloaderGrub
+
+			return
+		}
+
+		// Default to dual-boot.
+		o.ImageOptions.Bootloader = DiskImageBootloaderDualBoot
+		// add extra space for BIOS and BOOT partitions
+		o.ImageOptions.DiskSize += 1*1024*1024 + 1000*1024*1024
+	}
+}

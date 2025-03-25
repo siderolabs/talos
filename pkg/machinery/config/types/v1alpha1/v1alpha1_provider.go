@@ -1423,15 +1423,6 @@ func (i *InstallConfig) LegacyBIOSSupport() bool {
 	return pointer.SafeDeref(i.InstallLegacyBIOSSupport)
 }
 
-// WithBootloader implements the config.Provider interface.
-func (i *InstallConfig) WithBootloader() bool {
-	if i.InstallBootloader == nil {
-		return true
-	}
-
-	return *i.InstallBootloader
-}
-
 // Image implements the config.Provider interface.
 func (i InstallExtensionConfig) Image() string {
 	return i.ExtensionImage

@@ -54,10 +54,6 @@ machine:
         #     size: 4GB # Disk size.
         #     model: WDC* # Disk model `/sys/block/<dev>/device/model`.
         #     busPath: /pci0000:00/0000:00:17.0/ata1/host0/target0:0:0/0:0:0:0 # Disk bus path.
-
-        # # Allows for supplying additional system extension images to install on top of base Talos image.
-        # extensions:
-        #     - image: ghcr.io/siderolabs/gvisor:20220117.0-v1.0.0 # System extension image.
 {{< /highlight >}}
 
 
@@ -90,7 +86,7 @@ controlPlane:
 {{< /highlight >}}</details> | |
 |`kubelet` |<a href="#Config.machine.kubelet">KubeletConfig</a> |Used to provide additional options to the kubelet. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 kubelet:
-    image: ghcr.io/siderolabs/kubelet:v1.32.2 # The `image` field is an optional reference to an alternative kubelet image.
+    image: ghcr.io/siderolabs/kubelet:v1.33.0-beta.0 # The `image` field is an optional reference to an alternative kubelet image.
     # The `extraArgs` field is used to provide additional flags to the kubelet.
     extraArgs:
         feature-gates: ServerSideApply=true
@@ -295,10 +291,6 @@ install:
     #     size: 4GB # Disk size.
     #     model: WDC* # Disk model `/sys/block/<dev>/device/model`.
     #     busPath: /pci0000:00/0000:00:17.0/ata1/host0/target0:0:0/0:0:0:0 # Disk bus path.
-
-    # # Allows for supplying additional system extension images to install on top of base Talos image.
-    # extensions:
-    #     - image: ghcr.io/siderolabs/gvisor:20220117.0-v1.0.0 # System extension image.
 {{< /highlight >}}</details> | |
 |`files` |<a href="#Config.machine.files.">[]MachineFile</a> |<details><summary>Allows the addition of user specified files.</summary>The value of `op` can be `create`, `overwrite`, or `append`.<br />In the case of `create`, `path` must not exist.<br />In the case of `overwrite`, and `append`, `path` must be a valid file.<br />If an `op` value of `append` is used, the existing file will be appended.<br />Note that the file contents are not required to be base64 encoded.</details> <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 files:
@@ -519,7 +511,7 @@ KubeletConfig represents the kubelet config values.
 {{< highlight yaml >}}
 machine:
     kubelet:
-        image: ghcr.io/siderolabs/kubelet:v1.32.2 # The `image` field is an optional reference to an alternative kubelet image.
+        image: ghcr.io/siderolabs/kubelet:v1.33.0-beta.0 # The `image` field is an optional reference to an alternative kubelet image.
         # The `extraArgs` field is used to provide additional flags to the kubelet.
         extraArgs:
             feature-gates: ServerSideApply=true
@@ -572,7 +564,7 @@ machine:
 | Field | Type | Description | Value(s) |
 |-------|------|-------------|----------|
 |`image` |string |The `image` field is an optional reference to an alternative kubelet image. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
-image: ghcr.io/siderolabs/kubelet:v1.32.2
+image: ghcr.io/siderolabs/kubelet:v1.33.0-beta.0
 {{< /highlight >}}</details> | |
 |`clusterDNS` |[]string |The `ClusterDNS` field is an optional reference to an alternative kubelet clusterDNS ip list. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 clusterDNS:
@@ -1923,10 +1915,6 @@ machine:
         #     size: 4GB # Disk size.
         #     model: WDC* # Disk model `/sys/block/<dev>/device/model`.
         #     busPath: /pci0000:00/0000:00:17.0/ata1/host0/target0:0:0/0:0:0:0 # Disk bus path.
-
-        # # Allows for supplying additional system extension images to install on top of base Talos image.
-        # extensions:
-        #     - image: ghcr.io/siderolabs/gvisor:20220117.0-v1.0.0 # System extension image.
 {{< /highlight >}}
 
 
@@ -1946,17 +1934,13 @@ diskSelector:
     # busPath: /pci0000:00/0000:00:17.0/ata1/host0/target0:0:0/0:0:0:0
     # busPath: /pci0000:00/*
 {{< /highlight >}}</details> | |
-|`extraKernelArgs` |[]string |<details><summary>Allows for supplying extra kernel args via the bootloader.</summary>Existing kernel args can be removed by prefixing the argument with a `-`.<br />For example `-console` removes all `console=<value>` arguments, whereas `-console=tty0` removes the `console=tty0` default argument.</details> <details><summary>Show example(s)</summary>{{< highlight yaml >}}
+|`extraKernelArgs` |[]string |<details><summary>Allows for supplying extra kernel args via the bootloader.</summary>Existing kernel args can be removed by prefixing the argument with a `-`.<br />For example `-console` removes all `console=<value>` arguments, whereas `-console=tty0` removes the `console=tty0` default argument.<br />If Talos is using systemd-boot as a bootloader (default for UEFI) this setting will be ignored.</details> <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 extraKernelArgs:
     - talos.platform=metal
     - reboot=k
 {{< /highlight >}}</details> | |
 |`image` |string |<details><summary>Allows for supplying the image used to perform the installation.</summary>Image reference for each Talos release can be found on<br />[GitHub releases page](https://github.com/siderolabs/talos/releases).</details> <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 image: ghcr.io/siderolabs/installer:latest
-{{< /highlight >}}</details> | |
-|`extensions` |<a href="#Config.machine.install.extensions.">[]InstallExtensionConfig</a> |Allows for supplying additional system extension images to install on top of base Talos image. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
-extensions:
-    - image: ghcr.io/siderolabs/gvisor:20220117.0-v1.0.0 # System extension image.
 {{< /highlight >}}</details> | |
 |`wipe` |bool |<details><summary>Indicates if the installation disk should be wiped at installation time.</summary>Defaults to `true`.</details>  |`true`<br />`yes`<br />`false`<br />`no`<br /> |
 |`legacyBIOSSupport` |bool |<details><summary>Indicates if MBR partition should be marked as bootable (active).</summary>Should be enabled only for the systems with legacy BIOS that doesn't support GPT partitioning scheme.</details>  | |
@@ -2004,29 +1988,6 @@ busPath: /pci0000:00/0000:00:17.0/ata1/host0/target0:0:0/0:0:0:0
 {{< /highlight >}}{{< highlight yaml >}}
 busPath: /pci0000:00/*
 {{< /highlight >}}</details> | |
-
-
-
-
-
-
-#### extensions[] {#Config.machine.install.extensions.}
-
-InstallExtensionConfig represents a configuration for a system extension.
-
-
-
-{{< highlight yaml >}}
-machine:
-    install:
-        extensions:
-            - image: ghcr.io/siderolabs/gvisor:20220117.0-v1.0.0 # System extension image.
-{{< /highlight >}}
-
-
-| Field | Type | Description | Value(s) |
-|-------|------|-------------|----------|
-|`image` |string |System extension image.  | |
 
 
 
@@ -2998,7 +2959,7 @@ serviceAccount:
 {{< /highlight >}}</details> | |
 |`apiServer` |<a href="#Config.cluster.apiServer">APIServerConfig</a> |API server specific configuration options. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 apiServer:
-    image: registry.k8s.io/kube-apiserver:v1.32.2 # The container image used in the API server manifest.
+    image: registry.k8s.io/kube-apiserver:v1.33.0-beta.0 # The container image used in the API server manifest.
     # Extra arguments to supply to the API server.
     extraArgs:
         feature-gates: ServerSideApply=true
@@ -3063,14 +3024,14 @@ apiServer:
 {{< /highlight >}}</details> | |
 |`controllerManager` |<a href="#Config.cluster.controllerManager">ControllerManagerConfig</a> |Controller manager server specific configuration options. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 controllerManager:
-    image: registry.k8s.io/kube-controller-manager:v1.32.2 # The container image used in the controller manager manifest.
+    image: registry.k8s.io/kube-controller-manager:v1.33.0-beta.0 # The container image used in the controller manager manifest.
     # Extra arguments to supply to the controller manager.
     extraArgs:
         feature-gates: ServerSideApply=true
 {{< /highlight >}}</details> | |
 |`proxy` |<a href="#Config.cluster.proxy">ProxyConfig</a> |Kube-proxy server-specific configuration options <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 proxy:
-    image: registry.k8s.io/kube-proxy:v1.32.2 # The container image used in the kube-proxy manifest.
+    image: registry.k8s.io/kube-proxy:v1.33.0-beta.0 # The container image used in the kube-proxy manifest.
     mode: ipvs # proxy mode of kube-proxy.
     # Extra arguments to supply to kube-proxy.
     extraArgs:
@@ -3081,7 +3042,7 @@ proxy:
 {{< /highlight >}}</details> | |
 |`scheduler` |<a href="#Config.cluster.scheduler">SchedulerConfig</a> |Scheduler server specific configuration options. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 scheduler:
-    image: registry.k8s.io/kube-scheduler:v1.32.2 # The container image used in the scheduler manifest.
+    image: registry.k8s.io/kube-scheduler:v1.33.0-beta.0 # The container image used in the scheduler manifest.
     # Extra arguments to supply to the scheduler.
     extraArgs:
         feature-gates: AllBeta=true
@@ -3099,7 +3060,7 @@ discovery:
 {{< /highlight >}}</details> | |
 |`etcd` |<a href="#Config.cluster.etcd">EtcdConfig</a> |Etcd specific configuration options. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 etcd:
-    image: gcr.io/etcd-development/etcd:v3.5.18 # The container image used to create the etcd service.
+    image: gcr.io/etcd-development/etcd:v3.5.20 # The container image used to create the etcd service.
     # The `ca` is the root certificate authority of the PKI.
     ca:
         crt: LS0tIEVYQU1QTEUgQ0VSVElGSUNBVEUgLS0t
@@ -3253,7 +3214,7 @@ cni:
         - https://docs.projectcalico.org/archive/v3.20/manifests/canal.yaml
 {{< /highlight >}}</details> | |
 |`dnsDomain` |string |<details><summary>The domain used by Kubernetes DNS.</summary>The default is `cluster.local`</details> <details><summary>Show example(s)</summary>{{< highlight yaml >}}
-dnsDomain: cluser.local
+dnsDomain: cluster.local
 {{< /highlight >}}</details> | |
 |`podSubnets` |[]string |The pod subnet CIDR. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 podSubnets:
@@ -3325,7 +3286,7 @@ APIServerConfig represents the kube apiserver configuration options.
 {{< highlight yaml >}}
 cluster:
     apiServer:
-        image: registry.k8s.io/kube-apiserver:v1.32.2 # The container image used in the API server manifest.
+        image: registry.k8s.io/kube-apiserver:v1.33.0-beta.0 # The container image used in the API server manifest.
         # Extra arguments to supply to the API server.
         extraArgs:
             feature-gates: ServerSideApply=true
@@ -3393,7 +3354,7 @@ cluster:
 | Field | Type | Description | Value(s) |
 |-------|------|-------------|----------|
 |`image` |string |The container image used in the API server manifest. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
-image: registry.k8s.io/kube-apiserver:v1.32.2
+image: registry.k8s.io/kube-apiserver:v1.33.0-beta.0
 {{< /highlight >}}</details> | |
 |`extraArgs` |map[string]string |Extra arguments to supply to the API server.  | |
 |`extraVolumes` |<a href="#Config.cluster.apiServer.extraVolumes.">[]VolumeMountConfig</a> |Extra volumes to mount to the API server static pod.  | |
@@ -3605,7 +3566,7 @@ ControllerManagerConfig represents the kube controller manager configuration opt
 {{< highlight yaml >}}
 cluster:
     controllerManager:
-        image: registry.k8s.io/kube-controller-manager:v1.32.2 # The container image used in the controller manager manifest.
+        image: registry.k8s.io/kube-controller-manager:v1.33.0-beta.0 # The container image used in the controller manager manifest.
         # Extra arguments to supply to the controller manager.
         extraArgs:
             feature-gates: ServerSideApply=true
@@ -3615,7 +3576,7 @@ cluster:
 | Field | Type | Description | Value(s) |
 |-------|------|-------------|----------|
 |`image` |string |The container image used in the controller manager manifest. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
-image: registry.k8s.io/kube-controller-manager:v1.32.2
+image: registry.k8s.io/kube-controller-manager:v1.33.0-beta.0
 {{< /highlight >}}</details> | |
 |`extraArgs` |map[string]string |Extra arguments to supply to the controller manager.  | |
 |`extraVolumes` |<a href="#Config.cluster.controllerManager.extraVolumes.">[]VolumeMountConfig</a> |Extra volumes to mount to the controller manager static pod.  | |
@@ -3685,7 +3646,7 @@ ProxyConfig represents the kube proxy configuration options.
 {{< highlight yaml >}}
 cluster:
     proxy:
-        image: registry.k8s.io/kube-proxy:v1.32.2 # The container image used in the kube-proxy manifest.
+        image: registry.k8s.io/kube-proxy:v1.33.0-beta.0 # The container image used in the kube-proxy manifest.
         mode: ipvs # proxy mode of kube-proxy.
         # Extra arguments to supply to kube-proxy.
         extraArgs:
@@ -3702,7 +3663,7 @@ cluster:
 disabled: false
 {{< /highlight >}}</details> | |
 |`image` |string |The container image used in the kube-proxy manifest. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
-image: registry.k8s.io/kube-proxy:v1.32.2
+image: registry.k8s.io/kube-proxy:v1.33.0-beta.0
 {{< /highlight >}}</details> | |
 |`mode` |string |<details><summary>proxy mode of kube-proxy.</summary>The default is 'iptables'.</details>  | |
 |`extraArgs` |map[string]string |Extra arguments to supply to kube-proxy.  | |
@@ -3721,7 +3682,7 @@ SchedulerConfig represents the kube scheduler configuration options.
 {{< highlight yaml >}}
 cluster:
     scheduler:
-        image: registry.k8s.io/kube-scheduler:v1.32.2 # The container image used in the scheduler manifest.
+        image: registry.k8s.io/kube-scheduler:v1.33.0-beta.0 # The container image used in the scheduler manifest.
         # Extra arguments to supply to the scheduler.
         extraArgs:
             feature-gates: AllBeta=true
@@ -3731,7 +3692,7 @@ cluster:
 | Field | Type | Description | Value(s) |
 |-------|------|-------------|----------|
 |`image` |string |The container image used in the scheduler manifest. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
-image: registry.k8s.io/kube-scheduler:v1.32.2
+image: registry.k8s.io/kube-scheduler:v1.33.0-beta.0
 {{< /highlight >}}</details> | |
 |`extraArgs` |map[string]string |Extra arguments to supply to the scheduler.  | |
 |`extraVolumes` |<a href="#Config.cluster.scheduler.extraVolumes.">[]VolumeMountConfig</a> |Extra volumes to mount to the scheduler static pod.  | |
@@ -3884,7 +3845,7 @@ EtcdConfig represents the etcd configuration options.
 {{< highlight yaml >}}
 cluster:
     etcd:
-        image: gcr.io/etcd-development/etcd:v3.5.18 # The container image used to create the etcd service.
+        image: gcr.io/etcd-development/etcd:v3.5.20 # The container image used to create the etcd service.
         # The `ca` is the root certificate authority of the PKI.
         ca:
             crt: LS0tIEVYQU1QTEUgQ0VSVElGSUNBVEUgLS0t
@@ -3902,7 +3863,7 @@ cluster:
 | Field | Type | Description | Value(s) |
 |-------|------|-------------|----------|
 |`image` |string |The container image used to create the etcd service. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
-image: gcr.io/etcd-development/etcd:v3.5.18
+image: gcr.io/etcd-development/etcd:v3.5.20
 {{< /highlight >}}</details> | |
 |`ca` |PEMEncodedCertificateAndKey |<details><summary>The `ca` is the root certificate authority of the PKI.</summary>It is composed of a base64 encoded `crt` and `key`.</details> <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 ca:

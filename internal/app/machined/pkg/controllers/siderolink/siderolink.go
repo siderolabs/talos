@@ -11,8 +11,6 @@ import (
 
 	"github.com/siderolabs/siderolink/pkg/wireguard"
 	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
-
-	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
 
 // WireguardClient allows mocking Wireguard client.
@@ -21,8 +19,8 @@ type WireguardClient interface {
 	Close() error
 }
 
-func peerDown(wgClient WireguardClient) (bool, error) {
-	wgDevice, err := wgClient.Device(constants.SideroLinkName)
+func peerDown(wgClient WireguardClient, linkName string) (bool, error) {
+	wgDevice, err := wgClient.Device(linkName)
 	if err != nil {
 		return false, fmt.Errorf("error reading Wireguard device: %w", err)
 	}

@@ -13,6 +13,7 @@ import (
 	randv2 "math/rand/v2"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"time"
 
@@ -40,6 +41,7 @@ import (
 	"github.com/siderolabs/talos/pkg/imager/utils"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/imager/quirks"
+	"github.com/siderolabs/talos/pkg/machinery/meta"
 	"github.com/siderolabs/talos/pkg/reporter"
 )
 
@@ -318,15 +320,28 @@ func (i *Imager) buildImage(ctx context.Context, path string, printf func(string
 
 	scratchSpace := filepath.Join(i.tempDir, "image")
 
+	metaContents := slices.Clone(i.prof.Customization.MetaContents)
+
+	if i.prof.Arch == "amd64" && !i.prof.SecureBootEnabled() && quirks.New(i.prof.Version).UseSDBootForUEFI() {
+		// allow overriding the bootloader if provided
+		if i.prof.Output.ImageOptions.Bootloader == profile.DiskImageBootloaderDualBoot {
+			metaContents = append(metaContents, meta.Value{
+				Key:   meta.DiskImageBootloader,
+				Value: profile.DiskImageBootloaderDualBoot.String(),
+			})
+		}
+	}
+
 	opts := &install.Options{
 		Disk:       loDevice.Path(),
 		Platform:   i.prof.Platform,
 		Arch:       i.prof.Arch,
 		Board:      i.prof.Board,
-		MetaValues: install.FromMeta(i.prof.Customization.MetaContents),
+		MetaValues: install.FromMeta(metaContents),
 
-		ImageSecureboot: i.prof.SecureBootEnabled(),
-		Version:         i.prof.Version,
+		ImageSecureboot:     i.prof.SecureBootEnabled(),
+		DiskImageBootloader: i.prof.Output.ImageOptions.Bootloader.String(),
+		Version:             i.prof.Version,
 		BootAssets: options.BootAssets{
 			KernelPath:      i.prof.Input.Kernel.Path,
 			InitramfsPath:   i.initramfsPath,
@@ -401,6 +416,14 @@ func (i *Imager) outInstaller(ctx context.Context, path string, report *reporter
 
 	newInstallerImg := mutate.MediaType(empty.Image, types.OCIManifestSchema1)
 	newInstallerImg = mutate.ConfigMediaType(newInstallerImg, types.OCIConfigJSON)
+
+	newInstallerImg, err = mutate.ConfigFile(newInstallerImg, &v1.ConfigFile{
+		Architecture: i.prof.Arch,
+		OS:           "linux",
+	})
+	if err != nil {
+		return fmt.Errorf("failed to set image architecture: %w", err)
+	}
 
 	newInstallerImg, err = mutate.Config(newInstallerImg, config)
 	if err != nil {

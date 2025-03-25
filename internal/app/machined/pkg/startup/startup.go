@@ -40,6 +40,7 @@ func DefaultTasks() []Task {
 		LogMode,
 		MountPseudoLate,
 		SetupSystemDirectories,
+		SetupSystemSubdirectories,
 		InitVolumeLifecycle,
 		MountCgroups,
 		SetRLimit,

@@ -12,6 +12,7 @@ import (
 	"fmt"
 	"net"
 	"net/url"
+	"os"
 	"reflect"
 	"regexp"
 	"strconv"
@@ -949,6 +950,8 @@ func (e *EtcdConfig) Validate() error {
 // RuntimeValidate validates the config in runtime context.
 //
 // In runtime context, resource state is available.
+//
+//nolint:gocyclo
 func (c *Config) RuntimeValidate(ctx context.Context, st state.State, mode validation.RuntimeMode, opt ...validation.Option) ([]string, error) {
 	var (
 		warnings []string
@@ -970,6 +973,17 @@ func (c *Config) RuntimeValidate(ctx context.Context, st state.State, mode valid
 					result = multierror.Append(result, fmt.Errorf("no disks matched the expression: %s", diskExpr))
 				}
 			}
+		}
+
+		// if booted using sd-boot, extra kernel arguments are not supported
+		if _, err := os.Stat("/sys/firmware/efi/efivars/StubInfo-4a67b082-0a4c-41cf-b6c7-440b29bb8c4f"); err == nil {
+			if len(c.MachineConfig.Install().ExtraKernelArgs()) > 0 {
+				warnings = append(warnings, "extra kernel arguments are not supported when booting using SDBoot")
+			}
+		}
+
+		if len(c.MachineConfig.Install().Extensions()) > 0 {
+			warnings = append(warnings, ".machine.install.extensions is deprecated, please see https://www.talos.dev/latest/talos-guides/install/boot-assets/")
 		}
 	}
 

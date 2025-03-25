@@ -2,30 +2,22 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-//nolint:dupl,goconst
+//nolint:goconst
 package network_test
 
 import (
-	"context"
 	"net/netip"
 	"net/url"
-	"sync"
 	"testing"
 	"time"
 
-	"github.com/cosi-project/runtime/pkg/controller/runtime"
-	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/rtestutils"
-	"github.com/cosi-project/runtime/pkg/state"
-	"github.com/cosi-project/runtime/pkg/state/impl/inmem"
-	"github.com/cosi-project/runtime/pkg/state/impl/namespaced"
 	"github.com/siderolabs/go-pointer"
 	"github.com/siderolabs/go-procfs/procfs"
-	"github.com/siderolabs/go-retry/retry"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
-	"go.uber.org/zap/zaptest"
 
+	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/ctest"
 	netctrl "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/network"
 	"github.com/siderolabs/talos/pkg/machinery/config/container"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
@@ -35,73 +27,21 @@ import (
 )
 
 type LinkConfigSuite struct {
-	suite.Suite
-
-	state state.State
-
-	runtime *runtime.Runtime
-	wg      sync.WaitGroup
-
-	ctx       context.Context //nolint:containedctx
-	ctxCancel context.CancelFunc
-}
-
-func (suite *LinkConfigSuite) SetupTest() {
-	suite.ctx, suite.ctxCancel = context.WithTimeout(context.Background(), 3*time.Minute)
-
-	suite.state = state.WrapCore(namespaced.NewState(inmem.Build))
-
-	var err error
-
-	suite.runtime, err = runtime.NewRuntime(suite.state, zaptest.NewLogger(suite.T()))
-	suite.Require().NoError(err)
-
-	suite.Require().NoError(suite.runtime.RegisterController(&netctrl.DeviceConfigController{}))
-}
-
-func (suite *LinkConfigSuite) startRuntime() {
-	suite.wg.Add(1)
-
-	go func() {
-		defer suite.wg.Done()
-
-		suite.Assert().NoError(suite.runtime.Run(suite.ctx))
-	}()
+	ctest.DefaultSuite
 }
 
 func (suite *LinkConfigSuite) assertLinks(requiredIDs []string, check func(*network.LinkSpec, *assert.Assertions)) {
-	assertResources(suite.ctx, suite.T(), suite.state, requiredIDs, check, rtestutils.WithNamespace(network.ConfigNamespaceName))
+	ctest.AssertResources(suite, requiredIDs, check, rtestutils.WithNamespace(network.ConfigNamespaceName))
 }
 
-func (suite *LinkConfigSuite) assertNoLinks(unexpectedIDs []string) error {
-	unexpIDs := make(map[string]struct{}, len(unexpectedIDs))
-
+func (suite *LinkConfigSuite) assertNoLinks(unexpectedIDs []string) {
 	for _, id := range unexpectedIDs {
-		unexpIDs[id] = struct{}{}
+		ctest.AssertNoResource[*network.LinkSpec](suite, id, rtestutils.WithNamespace(network.ConfigNamespaceName))
 	}
-
-	resources, err := suite.state.List(
-		suite.ctx,
-		resource.NewMetadata(network.ConfigNamespaceName, network.LinkSpecType, "", resource.VersionUndefined),
-	)
-	if err != nil {
-		return err
-	}
-
-	for _, res := range resources.Items {
-		_, unexpected := unexpIDs[res.Metadata().ID()]
-		if unexpected {
-			return retry.ExpectedErrorf("unexpected ID %q", res.Metadata().ID())
-		}
-	}
-
-	return nil
 }
 
 func (suite *LinkConfigSuite) TestLoopback() {
-	suite.Require().NoError(suite.runtime.RegisterController(&netctrl.LinkConfigController{}))
-
-	suite.startRuntime()
+	suite.Require().NoError(suite.Runtime().RegisterController(&netctrl.LinkConfigController{}))
 
 	suite.assertLinks(
 		[]string{
@@ -117,14 +57,12 @@ func (suite *LinkConfigSuite) TestLoopback() {
 
 func (suite *LinkConfigSuite) TestCmdline() {
 	suite.Require().NoError(
-		suite.runtime.RegisterController(
+		suite.Runtime().RegisterController(
 			&netctrl.LinkConfigController{
 				Cmdline: procfs.NewCmdline("ip=172.20.0.2::172.20.0.1:255.255.255.0::eth1:::::"),
 			},
 		),
 	)
-
-	suite.startRuntime()
 
 	suite.assertLinks(
 		[]string{
@@ -142,9 +80,7 @@ func (suite *LinkConfigSuite) TestCmdline() {
 func (suite *LinkConfigSuite) TestMachineConfiguration() {
 	const kernelDriver = "somekerneldriver"
 
-	suite.Require().NoError(suite.runtime.RegisterController(&netctrl.LinkConfigController{}))
-
-	suite.startRuntime()
+	suite.Require().NoError(suite.Runtime().RegisterController(&netctrl.LinkConfigController{}))
 
 	u, err := url.Parse("https://foo:6443")
 	suite.Require().NoError(err)
@@ -278,13 +214,13 @@ func (suite *LinkConfigSuite) TestMachineConfiguration() {
 		),
 	)
 
-	suite.Require().NoError(suite.state.Create(suite.ctx, cfg))
+	suite.Create(cfg)
 
 	for _, name := range []string{"eth6", "eth7"} {
 		status := network.NewLinkStatus(network.NamespaceName, name)
 		status.TypedSpec().Driver = kernelDriver
 
-		suite.Require().NoError(suite.state.Create(suite.ctx, status))
+		suite.Create(status)
 	}
 
 	suite.assertLinks(
@@ -401,9 +337,130 @@ func (suite *LinkConfigSuite) TestMachineConfiguration() {
 	)
 }
 
+func (suite *LinkConfigSuite) TestMachineConfigurationWithAliases() {
+	suite.Require().NoError(suite.Runtime().RegisterController(&netctrl.LinkConfigController{}))
+
+	u, err := url.Parse("https://foo:6443")
+	suite.Require().NoError(err)
+
+	cfg := config.NewMachineConfig(
+		container.NewV1Alpha1(
+			&v1alpha1.Config{
+				ConfigVersion: "v1alpha1",
+				MachineConfig: &v1alpha1.MachineConfig{
+					MachineNetwork: &v1alpha1.NetworkConfig{
+						NetworkInterfaces: []*v1alpha1.Device{
+							{
+								DeviceInterface: "enx0123",
+								DeviceVlans: []*v1alpha1.Vlan{
+									{
+										VlanID:  24,
+										VlanMTU: 1000,
+									},
+								},
+							},
+							{
+								DeviceInterface: "enx0123",
+								DeviceMTU:       9001,
+							},
+							{
+								DeviceIgnore:    pointer.To(true),
+								DeviceInterface: "enx0456",
+							},
+							{
+								DeviceInterface: "bond0",
+								DeviceBond: &v1alpha1.Bond{
+									BondInterfaces: []string{"enxa", "enxb"},
+									BondMode:       "balance-xor",
+								},
+							},
+						},
+					},
+				},
+				ClusterConfig: &v1alpha1.ClusterConfig{
+					ControlPlane: &v1alpha1.ControlPlaneConfig{
+						Endpoint: &v1alpha1.Endpoint{
+							URL: u,
+						},
+					},
+				},
+			},
+		),
+	)
+
+	suite.Create(cfg)
+
+	for _, link := range []struct {
+		name    string
+		aliases []string
+	}{
+		{
+			name:    "eth0",
+			aliases: []string{"enx0123"},
+		},
+		{
+			name:    "eth1",
+			aliases: []string{"enx0456"},
+		},
+		{
+			name:    "eth2",
+			aliases: []string{"enxa"},
+		},
+		{
+			name:    "eth3",
+			aliases: []string{"enxb"},
+		},
+	} {
+		status := network.NewLinkStatus(network.NamespaceName, link.name)
+		status.TypedSpec().AltNames = link.aliases
+
+		suite.Create(status)
+	}
+
+	suite.assertLinks(
+		[]string{
+			"configuration/eth0",
+			"configuration/enx0123.24",
+			"configuration/eth2",
+			"configuration/eth3",
+			"configuration/bond0",
+		}, func(r *network.LinkSpec, asrt *assert.Assertions) {
+			asrt.Equal(network.ConfigMachineConfiguration, r.TypedSpec().ConfigLayer)
+
+			switch r.TypedSpec().Name {
+			case "eth0":
+				asrt.True(r.TypedSpec().Up)
+				asrt.False(r.TypedSpec().Logical)
+				asrt.EqualValues(9001, r.TypedSpec().MTU)
+			case "eth2", "eth3":
+				asrt.True(r.TypedSpec().Up)
+				asrt.False(r.TypedSpec().Logical)
+				asrt.Equal("bond0", r.TypedSpec().BondSlave.MasterName)
+			case "eth0.24":
+				asrt.True(r.TypedSpec().Up)
+				asrt.True(r.TypedSpec().Logical)
+				asrt.Equal(nethelpers.LinkEther, r.TypedSpec().Type)
+				asrt.Equal(network.LinkKindVLAN, r.TypedSpec().Kind)
+				asrt.Equal("eth0", r.TypedSpec().ParentName)
+				asrt.Equal(nethelpers.VLANProtocol8021Q, r.TypedSpec().VLAN.Protocol)
+
+				asrt.EqualValues(24, r.TypedSpec().VLAN.VID)
+				asrt.EqualValues(1000, r.TypedSpec().MTU)
+			case "bond0":
+				asrt.True(r.TypedSpec().Up)
+				asrt.True(r.TypedSpec().Logical)
+				asrt.Equal(nethelpers.LinkEther, r.TypedSpec().Type)
+				asrt.Equal(network.LinkKindBond, r.TypedSpec().Kind)
+				asrt.Equal(nethelpers.BondModeXOR, r.TypedSpec().BondMaster.Mode)
+				asrt.True(r.TypedSpec().BondMaster.UseCarrier)
+			}
+		},
+	)
+}
+
 func (suite *LinkConfigSuite) TestDefaultUp() {
 	suite.Require().NoError(
-		suite.runtime.RegisterController(
+		suite.Runtime().RegisterController(
 			&netctrl.LinkConfigController{
 				Cmdline: procfs.NewCmdline("talos.network.interface.ignore=eth2"),
 			},
@@ -419,7 +476,7 @@ func (suite *LinkConfigSuite) TestDefaultUp() {
 			linkStatus.TypedSpec().AltNames = []string{"eth0"}
 		}
 
-		suite.Require().NoError(suite.state.Create(suite.ctx, linkStatus))
+		suite.Create(linkStatus)
 	}
 
 	u, err := url.Parse("https://foo:6443")
@@ -472,9 +529,7 @@ func (suite *LinkConfigSuite) TestDefaultUp() {
 		),
 	)
 
-	suite.Require().NoError(suite.state.Create(suite.ctx, cfg))
-
-	suite.startRuntime()
+	suite.Create(cfg)
 
 	suite.assertLinks(
 		[]string{
@@ -485,30 +540,25 @@ func (suite *LinkConfigSuite) TestDefaultUp() {
 		},
 	)
 
-	suite.Assert().NoError(
-		retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-			func() error {
-				return suite.assertNoLinks(
-					[]string{
-						"default/eth0",
-						"default/eth2",
-						"default/eth3",
-						"default/eth4",
-					},
-				)
-			},
-		),
+	suite.assertNoLinks(
+		[]string{
+			"default/eth0",
+			"default/eth2",
+			"default/eth3",
+			"default/eth4",
+		},
 	)
 }
 
-func (suite *LinkConfigSuite) TearDownTest() {
-	suite.T().Log("tear down")
-
-	suite.ctxCancel()
-
-	suite.wg.Wait()
-}
-
 func TestLinkConfigSuite(t *testing.T) {
-	suite.Run(t, new(LinkConfigSuite))
+	t.Parallel()
+
+	suite.Run(t, &LinkConfigSuite{
+		DefaultSuite: ctest.DefaultSuite{
+			Timeout: 5 * time.Second,
+			AfterSetup: func(s *ctest.DefaultSuite) {
+				s.Require().NoError(s.Runtime().RegisterController(&netctrl.DeviceConfigController{}))
+			},
+		},
+	})
 }

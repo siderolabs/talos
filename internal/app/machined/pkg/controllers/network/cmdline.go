@@ -15,6 +15,8 @@ import (
 	"strings"
 
 	"github.com/siderolabs/gen/pair/ordered"
+	"github.com/siderolabs/gen/xslices"
+	"github.com/siderolabs/go-pointer"
 	"github.com/siderolabs/go-procfs/procfs"
 
 	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
@@ -39,30 +41,6 @@ type CmdlineLinkConfig struct {
 	Address  netip.Prefix
 	Gateway  netip.Addr
 	DHCP     bool
-}
-
-func (linkConfig *CmdlineLinkConfig) resolveLinkName() error {
-	if !strings.HasPrefix(linkConfig.LinkName, "enx") {
-		return nil
-	}
-
-	ifaces, _ := net.Interfaces() //nolint:errcheck // ignoring error here as ifaces will be empty
-	mac := strings.ToLower(strings.TrimPrefix(linkConfig.LinkName, "enx"))
-
-	for _, iface := range ifaces {
-		ifaceMAC := strings.ReplaceAll(iface.HardwareAddr.String(), ":", "")
-		if ifaceMAC == mac {
-			linkConfig.LinkName = iface.Name
-
-			return nil
-		}
-	}
-
-	if strings.HasPrefix(linkConfig.LinkName, "enx") {
-		return fmt.Errorf("cmdline device parse failure: interface by MAC not found %s", linkConfig.LinkName)
-	}
-
-	return nil
 }
 
 // splitIPArgument splits the `ip=` kernel argument honoring the IPv6 addresses in square brackets.
@@ -98,7 +76,7 @@ const autoconfDHCP = "dhcp"
 // ParseCmdlineNetwork parses `ip=` and Talos specific kernel cmdline argument producing all the available configuration options.
 //
 //nolint:gocyclo,cyclop
-func ParseCmdlineNetwork(cmdline *procfs.Cmdline) (CmdlineNetworking, error) {
+func ParseCmdlineNetwork(cmdline *procfs.Cmdline, linkNameResolver *network.LinkResolver) (CmdlineNetworking, error) {
 	var (
 		settings      CmdlineNetworking
 		err           error
@@ -113,7 +91,7 @@ func ParseCmdlineNetwork(cmdline *procfs.Cmdline) (CmdlineNetworking, error) {
 
 	ignoreInterfaces := cmdline.Get(constants.KernelParamNetworkInterfaceIgnore)
 	for i := 0; ignoreInterfaces.Get(i) != nil; i++ {
-		settings.IgnoreInterfaces = append(settings.IgnoreInterfaces, *ignoreInterfaces.Get(i))
+		settings.IgnoreInterfaces = append(settings.IgnoreInterfaces, linkNameResolver.Resolve(*ignoreInterfaces.Get(i)))
 	}
 
 	// standard ip=
@@ -135,12 +113,8 @@ func ParseCmdlineNetwork(cmdline *procfs.Cmdline) (CmdlineNetworking, error) {
 		case len(fields) == 2 && fields[1] == autoconfDHCP:
 			// ip=<device>:dhcp
 			linkConfig := CmdlineLinkConfig{
-				LinkName: fields[0],
+				LinkName: linkNameResolver.Resolve(fields[0]),
 				DHCP:     true,
-			}
-
-			if err = linkConfig.resolveLinkName(); err != nil {
-				return settings, err
 			}
 
 			linkSpecSpecs = append(linkSpecSpecs, network.LinkSpecSpec{
@@ -196,7 +170,7 @@ func ParseCmdlineNetwork(cmdline *procfs.Cmdline) (CmdlineNetworking, error) {
 						settings.Hostname = fields[4]
 					}
 				case 5:
-					linkConfig.LinkName = fields[5]
+					linkConfig.LinkName = linkNameResolver.Resolve(fields[5])
 				case 6:
 					if fields[6] == autoconfDHCP {
 						linkConfig.DHCP = true
@@ -220,11 +194,6 @@ func ParseCmdlineNetwork(cmdline *procfs.Cmdline) (CmdlineNetworking, error) {
 
 					settings.NTPAddresses = append(settings.NTPAddresses, ntpIP)
 				}
-			}
-
-			// resolve enx* (with MAC address) to the actual interface name
-			if err = linkConfig.resolveLinkName(); err != nil {
-				return settings, err
 			}
 
 			// if interface name is not set, pick the first non-loopback interface
@@ -297,6 +266,9 @@ func ParseCmdlineNetwork(cmdline *procfs.Cmdline) (CmdlineNetworking, error) {
 			}
 		}
 
+		// resolve bond slave names via aliases as needed
+		bondSlaves = xslices.Map(bondSlaves, linkNameResolver.Resolve)
+
 		bondLinkSpec := network.LinkSpecSpec{
 			Name:        bondName,
 			Up:          true,
@@ -328,6 +300,7 @@ func ParseCmdlineNetwork(cmdline *procfs.Cmdline) (CmdlineNetworking, error) {
 			linkSpecSpecs = append(linkSpecSpecs, slaveLinkSpec)
 		}
 	}
+
 	// dracut vlan=<vlanname>:<phydevice>
 	vlanSettings := cmdline.Get(constants.KernelParamVlan).First()
 	if vlanSettings != nil {
@@ -361,11 +334,13 @@ func ParseCmdlineNetwork(cmdline *procfs.Cmdline) (CmdlineNetworking, error) {
 
 		vlanName = nethelpers.VLANLinkName(phyDevice, uint16(vlanID))
 
+		phyDevice = linkNameResolver.Resolve(phyDevice)
+
 		linkSpecUpdated := false
 
 		for i, linkSpec := range linkSpecSpecs {
 			if linkSpec.Name == vlanName {
-				vlanLink(&linkSpecSpecs[i], phyDevice, vlanSpec)
+				vlanLink(&linkSpecSpecs[i], vlanName, phyDevice, vlanSpec)
 
 				linkSpecUpdated = true
 
@@ -380,7 +355,7 @@ func ParseCmdlineNetwork(cmdline *procfs.Cmdline) (CmdlineNetworking, error) {
 				ConfigLayer: network.ConfigCmdline,
 			}
 
-			vlanLink(&linkSpec, phyDevice, vlanSpec)
+			vlanLink(&linkSpec, vlanName, phyDevice, vlanSpec)
 
 			linkSpecSpecs = append(linkSpecSpecs, linkSpec)
 		}
@@ -509,8 +484,7 @@ func parseBondOptions(options string) (v1alpha1.Bond, error) {
 			}
 
 			if useCarrier == 1 {
-				val := []bool{true}
-				bond.BondUseCarrier = &val[0]
+				bond.BondUseCarrier = pointer.To(true)
 			}
 		default:
 			return bond, fmt.Errorf("unknown bond option: %s", optionPair[0])

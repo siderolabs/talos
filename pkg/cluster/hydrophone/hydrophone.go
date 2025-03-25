@@ -27,6 +27,7 @@ import (
 // Options for the tests.
 type Options struct {
 	RunTests []string
+	Skip     string
 	Parallel bool
 
 	RunTimeout    time.Duration
@@ -61,6 +62,7 @@ func FastConformance(ctx context.Context, cluster cluster.K8sProvider) error {
 	optionsList := []Options{
 		{
 			RunTests: []string{`\[Conformance\]`},
+			Skip:     `\[Serial\]`,
 			Parallel: true,
 
 			RunTimeout:    time.Hour,
@@ -141,6 +143,8 @@ func Run(ctx context.Context, cluster cluster.K8sProvider, options *Options) err
 	if options.Parallel {
 		config.Parallel = 4
 	}
+
+	config.Skip = options.Skip
 
 	clientset, err := cluster.K8sClient(ctx)
 	if err != nil {

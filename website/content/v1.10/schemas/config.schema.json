@@ -2478,9 +2478,9 @@
           },
           "type": "array",
           "title": "extraKernelArgs",
-          "description": "Allows for supplying extra kernel args via the bootloader.\nExisting kernel args can be removed by prefixing the argument with a -.\nFor example -console removes all console=\u0026lt;value\u0026gt; arguments, whereas -console=tty0 removes the console=tty0 default argument.\n",
-          "markdownDescription": "Allows for supplying extra kernel args via the bootloader.\nExisting kernel args can be removed by prefixing the argument with a `-`.\nFor example `-console` removes all `console=\u003cvalue\u003e` arguments, whereas `-console=tty0` removes the `console=tty0` default argument.",
-          "x-intellij-html-description": "\u003cp\u003eAllows for supplying extra kernel args via the bootloader.\nExisting kernel args can be removed by prefixing the argument with a \u003ccode\u003e-\u003c/code\u003e.\nFor example \u003ccode\u003e-console\u003c/code\u003e removes all \u003ccode\u003econsole=\u0026lt;value\u0026gt;\u003c/code\u003e arguments, whereas \u003ccode\u003e-console=tty0\u003c/code\u003e removes the \u003ccode\u003econsole=tty0\u003c/code\u003e default argument.\u003c/p\u003e\n"
+          "description": "Allows for supplying extra kernel args via the bootloader.\nExisting kernel args can be removed by prefixing the argument with a -.\nFor example -console removes all console=\u0026lt;value\u0026gt; arguments, whereas -console=tty0 removes the console=tty0 default argument.\nIf Talos is using systemd-boot as a bootloader (default for UEFI) this setting will be ignored.\n",
+          "markdownDescription": "Allows for supplying extra kernel args via the bootloader.\nExisting kernel args can be removed by prefixing the argument with a `-`.\nFor example `-console` removes all `console=\u003cvalue\u003e` arguments, whereas `-console=tty0` removes the `console=tty0` default argument.\nIf Talos is using systemd-boot as a bootloader (default for UEFI) this setting will be ignored.",
+          "x-intellij-html-description": "\u003cp\u003eAllows for supplying extra kernel args via the bootloader.\nExisting kernel args can be removed by prefixing the argument with a \u003ccode\u003e-\u003c/code\u003e.\nFor example \u003ccode\u003e-console\u003c/code\u003e removes all \u003ccode\u003econsole=\u0026lt;value\u0026gt;\u003c/code\u003e arguments, whereas \u003ccode\u003e-console=tty0\u003c/code\u003e removes the \u003ccode\u003econsole=tty0\u003c/code\u003e default argument.\nIf Talos is using systemd-boot as a bootloader (default for UEFI) this setting will be ignored.\u003c/p\u003e\n"
         },
         "image": {
           "type": "string",
@@ -2488,16 +2488,6 @@
           "description": "Allows for supplying the image used to perform the installation.\nImage reference for each Talos release can be found on\nGitHub releases page.\n",
           "markdownDescription": "Allows for supplying the image used to perform the installation.\nImage reference for each Talos release can be found on\n[GitHub releases page](https://github.com/siderolabs/talos/releases).",
           "x-intellij-html-description": "\u003cp\u003eAllows for supplying the image used to perform the installation.\nImage reference for each Talos release can be found on\n\u003ca href=\"https://github.com/siderolabs/talos/releases\" target=\"_blank\"\u003eGitHub releases page\u003c/a\u003e.\u003c/p\u003e\n"
-        },
-        "extensions": {
-          "items": {
-            "$ref": "#/$defs/v1alpha1.InstallExtensionConfig"
-          },
-          "type": "array",
-          "title": "extensions",
-          "description": "Allows for supplying additional system extension images to install on top of base Talos image.\n",
-          "markdownDescription": "Allows for supplying additional system extension images to install on top of base Talos image.",
-          "x-intellij-html-description": "\u003cp\u003eAllows for supplying additional system extension images to install on top of base Talos image.\u003c/p\u003e\n"
         },
         "wipe": {
           "type": "boolean",
@@ -2592,20 +2582,6 @@
       "additionalProperties": false,
       "type": "object",
       "description": "InstallDiskSelector represents a disk query parameters for the install disk lookup."
-    },
-    "v1alpha1.InstallExtensionConfig": {
-      "properties": {
-        "image": {
-          "type": "string",
-          "title": "image",
-          "description": "System extension image.\n",
-          "markdownDescription": "System extension image.",
-          "x-intellij-html-description": "\u003cp\u003eSystem extension image.\u003c/p\u003e\n"
-        }
-      },
-      "additionalProperties": false,
-      "type": "object",
-      "description": "InstallExtensionConfig represents a configuration for a system extension."
     },
     "v1alpha1.KernelConfig": {
       "properties": {

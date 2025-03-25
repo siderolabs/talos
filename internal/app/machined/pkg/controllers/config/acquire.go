@@ -14,6 +14,7 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"path/filepath"
 	"slices"
 	"strings"
 
@@ -25,6 +26,8 @@ import (
 	"github.com/siderolabs/go-procfs/procfs"
 	"go.uber.org/zap"
 
+	"github.com/siderolabs/talos/internal/app/machined/pkg/automaton"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/automaton/blockautomaton"
 	talosruntime "github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/platform"
 	platformerrors "github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/errors"
@@ -33,6 +36,7 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/config/configloader"
 	"github.com/siderolabs/talos/pkg/machinery/config/validation"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
+	"github.com/siderolabs/talos/pkg/machinery/resources/block"
 	configresource "github.com/siderolabs/talos/pkg/machinery/resources/config"
 	"github.com/siderolabs/talos/pkg/machinery/resources/runtime"
 	"github.com/siderolabs/talos/pkg/machinery/resources/v1alpha1"
@@ -52,6 +56,7 @@ type PlatformEventer interface {
 // Setter sets the current machine config.
 type Setter interface {
 	SetConfig(config.Provider) error
+	SetPersistedConfig(config.Provider) error
 }
 
 // ModeGetter gets the current runtime mode.
@@ -68,10 +73,11 @@ type AcquireController struct {
 	ConfigSetter          Setter
 	EventPublisher        talosruntime.Publisher
 	ValidationMode        validation.RuntimeMode
-	ConfigPath            string
 	ResourceState         state.State
 
 	configSourcesUsed []string
+	stateMachine      blockautomaton.VolumeMounterAutomaton
+	diskConfig        config.Provider
 }
 
 // Name implements controller.Controller interface.
@@ -98,6 +104,22 @@ func (ctrl *AcquireController) Inputs() []controller.Input {
 			Type:      runtime.MaintenanceServiceRequestType,
 			Kind:      controller.InputDestroyReady,
 		},
+		{
+			Namespace: block.NamespaceName,
+			Type:      block.VolumeStatusType,
+			ID:        optional.Some(constants.StatePartitionLabel),
+			Kind:      controller.InputWeak,
+		},
+		{
+			Namespace: block.NamespaceName,
+			Type:      block.VolumeMountRequestType,
+			Kind:      controller.InputDestroyReady,
+		},
+		{
+			Namespace: block.NamespaceName,
+			Type:      block.VolumeMountStatusType,
+			Kind:      controller.InputStrong,
+		},
 	}
 }
 
@@ -112,6 +134,10 @@ func (ctrl *AcquireController) Outputs() []controller.Output {
 			Type: runtime.MaintenanceServiceRequestType,
 			Kind: controller.OutputExclusive,
 		},
+		{
+			Type: block.VolumeMountRequestType,
+			Kind: controller.OutputShared,
+		},
 	}
 }
 
@@ -122,10 +148,6 @@ type stateMachineFunc func(context.Context, controller.Runtime, *zap.Logger) (st
 //
 //nolint:gocyclo
 func (ctrl *AcquireController) Run(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
-	if ctrl.ConfigPath == "" {
-		ctrl.ConfigPath = constants.ConfigPath
-	}
-
 	// start always with loading config from disk
 	var currentState stateMachineFunc = ctrl.stateDisk
 
@@ -175,6 +197,13 @@ func (ctrl *AcquireController) Run(ctx context.Context, r controller.Runtime, lo
 				if err = ctrl.ConfigSetter.SetConfig(cfg); err != nil {
 					return fmt.Errorf("failed to set config: %w", err)
 				}
+
+				if !(len(ctrl.configSourcesUsed) == 1 && ctrl.configSourcesUsed[0] == "state") {
+					// if the only source is state, we do not need to persist it
+					if err = ctrl.ConfigSetter.SetPersistedConfig(cfg); err != nil {
+						return fmt.Errorf("failed to set persisted config: %w", err)
+					}
+				}
 			}
 
 			if newState == nil {
@@ -196,10 +225,37 @@ func (ctrl *AcquireController) Run(ctx context.Context, r controller.Runtime, lo
 //	--> platform: no config found on disk, proceed to platform
 //	--> maintenanceEnter: config found on disk, but it's incomplete, proceed to maintenance
 //	--> done: config found on disk, and it's complete
+//
+//nolint:gocyclo
 func (ctrl *AcquireController) stateDisk(ctx context.Context, r controller.Runtime, logger *zap.Logger) (stateMachineFunc, config.Provider, error) {
-	cfg, err := ctrl.loadFromDisk(logger)
+	// check if the STATE is missing/available first, if it's missing, we skip the step
+	stateVolumeStatus, err := safe.ReaderGetByID[*block.VolumeStatus](ctx, r, constants.StatePartitionLabel)
+	if err != nil && !state.IsNotFoundError(err) {
+		return nil, nil, fmt.Errorf("failed observing STATE volume status: %w", err)
+	}
+
+	switch {
+	case stateVolumeStatus == nil:
+		// wait for the status to be available
+		return nil, nil, nil
+	case stateVolumeStatus.TypedSpec().Phase == block.VolumePhaseMissing:
+		// STATE is missing, proceed to platform
+		return ctrl.statePlatform, nil, nil
+	case stateVolumeStatus.TypedSpec().Phase == block.VolumePhaseReady:
+		// STATE is ready, proceed to to the action
+	default:
+		// wait for the definitive status
+		return nil, nil, nil
+	}
+
+	cfg, done, err := ctrl.loadFromDisk(ctx, r, logger)
 	if err != nil {
 		return nil, nil, err
+	}
+
+	if !done {
+		// wait for the state machine to finish
+		return nil, nil, nil
 	}
 
 	if cfg != nil {
@@ -239,35 +295,65 @@ func (validationModeDiskConfig) String() string {
 }
 
 // loadFromDisk is a helper function for stateDisk.
-func (ctrl *AcquireController) loadFromDisk(logger *zap.Logger) (config.Provider, error) {
-	logger.Debug("loading config from STATE", zap.String("path", ctrl.ConfigPath))
+func (ctrl *AcquireController) loadFromDisk(ctx context.Context, r controller.ReaderWriter, logger *zap.Logger) (config.Provider, bool, error) {
+	if ctrl.stateMachine == nil {
+		ctrl.stateMachine = blockautomaton.NewVolumeMounter(ctrl.Name(), constants.StatePartitionLabel, ctrl.loadConfigFromDisk,
+			blockautomaton.WithReadOnly(true),
+		)
+	}
 
-	_, err := os.Stat(ctrl.ConfigPath)
+	if err := ctrl.stateMachine.Run(ctx, r, logger,
+		automaton.WithAfterFunc(func() error {
+			ctrl.stateMachine = nil
+
+			return nil
+		}),
+	); err != nil {
+		return nil, false, err
+	}
+
+	if ctrl.stateMachine == nil {
+		// state machine finished
+		return ctrl.diskConfig, true, nil
+	}
+
+	return nil, false, nil
+}
+
+func (ctrl *AcquireController) loadConfigFromDisk(ctx context.Context, r controller.ReaderWriter, logger *zap.Logger, mountStatus *block.VolumeMountStatus) error {
+	configPath := filepath.Join(mountStatus.TypedSpec().Target, constants.ConfigFilename)
+
+	logger.Debug("loading config from STATE", zap.String("path", configPath))
+
+	_, err := os.Stat(configPath)
 	if err != nil {
 		if os.IsNotExist(err) {
 			// no saved machine config
-			return nil, nil
+			return nil
 		}
 
-		return nil, fmt.Errorf("failed to stat %s: %w", ctrl.ConfigPath, err)
+		return fmt.Errorf("failed to stat %s: %w", configPath, err)
 	}
 
-	cfg, err := configloader.NewFromFile(ctrl.ConfigPath)
+	cfg, err := configloader.NewFromFile(configPath)
 	if err != nil {
-		return nil, fmt.Errorf("failed to load config from STATE: %w", err)
+		return fmt.Errorf("failed to load config from STATE: %w", err)
 	}
 
 	// if the STATE partition is present & contains machine config, Talos is already installed
 	warnings, err := cfg.Validate(validationModeDiskConfig{})
 	if err != nil {
-		return nil, fmt.Errorf("failed to validate on-disk config: %w", err)
+		return fmt.Errorf("failed to validate on-disk config: %w", err)
 	}
 
 	for _, warning := range warnings {
 		logger.Warn("config validation warning", zap.String("warning", warning))
 	}
 
-	return cfg, nil
+	// we can't return the value directly
+	ctrl.diskConfig = cfg
+
+	return nil
 }
 
 // statePlatform acquires machine configuration from the platform source.
@@ -460,7 +546,7 @@ func (ctrl *AcquireController) loadFromCmdline(ctx context.Context, logger *zap.
 //
 // Transitions:
 //
-//	--> maintenance: run the maintenance service
+//	--> stateMaintenance: run the maintenance service
 func (ctrl *AcquireController) stateMaintenanceEnter(ctx context.Context, r controller.Runtime, logger *zap.Logger) (stateMachineFunc, config.Provider, error) {
 	logger.Info("entering maintenance service")
 

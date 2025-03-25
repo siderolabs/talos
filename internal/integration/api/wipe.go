@@ -106,6 +106,10 @@ func (suite *WipeSuite) TestWipeBlockDeviceInvalid() {
 
 // TestWipeFilesystem verifies that the filesystem can be wiped.
 func (suite *WipeSuite) TestWipeFilesystem() {
+	if suite.SelinuxEnforcing {
+		suite.T().Skip("skipping tests with nsenter in SELinux enforcing mode")
+	}
+
 	if testing.Short() {
 		suite.T().Skip("skipping test in short mode.")
 	}

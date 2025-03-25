@@ -49,7 +49,7 @@ func (suite *ListSuite) TestDepth() {
 	// In plain terms, it's the maximum depth of the directory tree
 	maxSeps := 5
 
-	if stdout, _ := suite.RunCLI(imageCacheQuery); strings.Contains(stdout, "ready") {
+	if stdout, _ := suite.RunCLI([]string{"get", "imagecacheconfig", "--nodes", node, "--output", "yaml"}); strings.Contains(stdout, "ready") {
 		// Image cache paths parts are longer
 		maxSeps = 9
 	}

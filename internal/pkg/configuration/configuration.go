@@ -13,23 +13,24 @@ import (
 	"os"
 	"time"
 
+	"github.com/cosi-project/runtime/pkg/safe"
+	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/siderolabs/gen/xslices"
 	"github.com/siderolabs/go-pointer"
 
 	"github.com/siderolabs/talos/pkg/machinery/api/machine"
 	"github.com/siderolabs/talos/pkg/machinery/config"
-	"github.com/siderolabs/talos/pkg/machinery/config/configloader"
 	"github.com/siderolabs/talos/pkg/machinery/config/generate"
 	"github.com/siderolabs/talos/pkg/machinery/config/generate/secrets"
 	v1alpha1machine "github.com/siderolabs/talos/pkg/machinery/config/machine"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
-	"github.com/siderolabs/talos/pkg/machinery/constants"
+	machineconfig "github.com/siderolabs/talos/pkg/machinery/resources/config"
 )
 
 // Generate config for GenerateConfiguration grpc.
 //
 //nolint:gocyclo,cyclop
-func Generate(ctx context.Context, in *machine.GenerateConfigurationRequest) (reply *machine.GenerateConfigurationResponse, err error) {
+func Generate(ctx context.Context, st state.State, in *machine.GenerateConfigurationRequest) (reply *machine.GenerateConfigurationResponse, err error) {
 	var c config.Provider
 
 	if in.MachineConfig == nil || in.ClusterConfig == nil || in.ClusterConfig.ControlPlane == nil {
@@ -113,7 +114,10 @@ func Generate(ctx context.Context, in *machine.GenerateConfigurationRequest) (re
 			secretsBundle *secrets.Bundle
 		)
 
-		baseConfig, err = configloader.NewFromFile(constants.ConfigPath)
+		cfgResource, err := safe.StateGetByID[*machineconfig.MachineConfig](ctx, st, machineconfig.ActiveID)
+		if cfgResource != nil {
+			baseConfig = cfgResource.Provider()
+		}
 
 		clock := secrets.NewFixedClock(time.Now())
 

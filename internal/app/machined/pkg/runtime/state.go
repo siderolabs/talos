@@ -61,7 +61,8 @@ type V1Alpha2State interface {
 	NamespaceRegistry() *registry.NamespaceRegistry
 	ResourceRegistry() *registry.ResourceRegistry
 
-	SetConfig(configcore.Provider) error
+	GetConfig(context.Context) (configcore.Provider, error)
+	SetConfig(context.Context, string, configcore.Provider) error
 }
 
 // DBusState defines the D-Bus logind mock.

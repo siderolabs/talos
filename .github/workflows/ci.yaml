@@ -1,6 +1,6 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
 #
-# Generated on 2025-02-15T06:21:12Z by kres 8a48729.
+# Generated on 2025-03-24T14:29:42Z by kres 921213e.
 
 name: default
 concurrency:
@@ -92,7 +92,7 @@ jobs:
           PLATFORM: linux/amd64,linux/arm64
           PUSH: "true"
         run: |
-          make talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer imager talos _out/integration-test-linux-amd64
+          make talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
       - name: lint
         run: |
           make lint
@@ -102,11 +102,13 @@ jobs:
       - name: iso
         env:
           IMAGE_REGISTRY: registry.dev.siderolabs.io
+          IMAGER_ARGS: --extra-kernel-arg=console=ttyS0
         run: |
           make iso secureboot-iso
       - name: images-essential
         env:
           IMAGE_REGISTRY: registry.dev.siderolabs.io
+          IMAGER_ARGS: --extra-kernel-arg=console=ttyS0
           PLATFORM: linux/amd64,linux/arm64
         run: |
           make images-essential
@@ -442,7 +444,7 @@ jobs:
           PLATFORM: linux/amd64
           PUSH: "true"
         run: |
-          make talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer imager talos _out/integration-test-linux-amd64
+          make talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
       - name: talosctl-cni-bundle
         if: github.event_name == 'schedule'
         run: |
@@ -484,6 +486,7 @@ jobs:
         if: always()
         env:
           TF_E2E_ACTION: destroy
+          TF_E2E_REFRESH_ON_DESTROY: "false"
           TF_E2E_TEST_TYPE: aws
           TF_SCRIPT_DIR: _out/contrib
         run: |
@@ -576,7 +579,7 @@ jobs:
           PLATFORM: linux/amd64
           PUSH: "true"
         run: |
-          make talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer imager talos _out/integration-test-linux-amd64
+          make talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
       - name: talosctl-cni-bundle
         if: github.event_name == 'schedule'
         run: |
@@ -638,6 +641,7 @@ jobs:
         if: always()
         env:
           TF_E2E_ACTION: destroy
+          TF_E2E_REFRESH_ON_DESTROY: "false"
           TF_E2E_TEST_TYPE: aws
           TF_SCRIPT_DIR: _out/contrib
         run: |
@@ -730,7 +734,7 @@ jobs:
           PLATFORM: linux/amd64
           PUSH: "true"
         run: |
-          make talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer imager talos _out/integration-test-linux-amd64
+          make talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
       - name: talosctl-cni-bundle
         if: github.event_name == 'schedule'
         run: |
@@ -792,144 +796,8 @@ jobs:
         if: always()
         env:
           TF_E2E_ACTION: destroy
+          TF_E2E_REFRESH_ON_DESTROY: "false"
           TF_E2E_TEST_TYPE: aws
-          TF_SCRIPT_DIR: _out/contrib
-        run: |
-          make e2e-cloud-tf
-  integration-azure:
-    permissions:
-      actions: read
-      contents: write
-      issues: read
-      packages: write
-      pull-requests: read
-    runs-on:
-      - self-hosted
-      - generic
-    if: contains(fromJSON(needs.default.outputs.labels), 'integration/azure')
-    needs:
-      - default
-    steps:
-      - name: gather-system-info
-        id: system-info
-        uses: kenchan0130/actions-system-info@v1.3.0
-        continue-on-error: true
-      - name: print-system-info
-        run: |
-          MEMORY_GB=$((${{ steps.system-info.outputs.totalmem }}/1024/1024/1024))
-
-          OUTPUTS=(
-            "CPU Core: ${{ steps.system-info.outputs.cpu-core }}"
-            "CPU Model: ${{ steps.system-info.outputs.cpu-model }}"
-            "Hostname: ${{ steps.system-info.outputs.hostname }}"
-            "NodeName: ${NODE_NAME}"
-            "Kernel release: ${{ steps.system-info.outputs.kernel-release }}"
-            "Kernel version: ${{ steps.system-info.outputs.kernel-version }}"
-            "Name: ${{ steps.system-info.outputs.name }}"
-            "Platform: ${{ steps.system-info.outputs.platform }}"
-            "Release: ${{ steps.system-info.outputs.release }}"
-            "Total memory: ${MEMORY_GB} GB"
-          )
-
-          for OUTPUT in "${OUTPUTS[@]}";do
-            echo "${OUTPUT}"
-          done
-        continue-on-error: true
-      - name: checkout
-        uses: actions/checkout@v4
-      - name: Unshallow
-        run: |
-          git fetch --prune --unshallow
-      - name: Set up Docker Buildx
-        id: setup-buildx
-        uses: docker/setup-buildx-action@v3
-        with:
-          driver: remote
-          endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
-        timeout-minutes: 10
-      - name: Mask secrets
-        run: |
-          echo "$(sops -d .secrets.yaml | yq -e '.secrets | to_entries[] | "::add-mask::" + .value')"
-      - name: Set secrets for job
-        run: |
-          sops -d .secrets.yaml | yq -e '.secrets | to_entries[] | .key + "=" + .value' >> "$GITHUB_ENV"
-      - name: Download artifacts
-        if: github.event_name != 'schedule'
-        uses: actions/download-artifact@v4
-        with:
-          name: talos-artifacts
-          path: _out
-      - name: Fix artifact permissions
-        if: github.event_name != 'schedule'
-        run: |
-          xargs -a _out/executable-artifacts -I {} chmod +x {}
-      - name: ci-temp-release-tag
-        if: github.event_name != 'schedule'
-        run: |
-          make ci-temp-release-tag
-      - name: uki-certs
-        if: github.event_name == 'schedule'
-        env:
-          PLATFORM: linux/amd64
-        run: |
-          make uki-certs
-      - name: build
-        if: github.event_name == 'schedule'
-        env:
-          IMAGE_REGISTRY: registry.dev.siderolabs.io
-          PLATFORM: linux/amd64
-          PUSH: "true"
-        run: |
-          make talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer imager talos _out/integration-test-linux-amd64
-      - name: talosctl-cni-bundle
-        if: github.event_name == 'schedule'
-        run: |
-          make talosctl-cni-bundle
-      - name: images-essential
-        if: github.event_name == 'schedule'
-        env:
-          IMAGE_REGISTRY: registry.dev.siderolabs.io
-          PLATFORM: linux/amd64
-        run: |
-          make images-essential
-      - name: e2e-azure-prepare
-        env:
-          IMAGE_REGISTRY: registry.dev.siderolabs.io
-        run: |
-          make e2e-azure-prepare
-      - name: checkout contrib
-        uses: actions/checkout@v4
-        with:
-          path: _out/contrib
-          ref: main
-          repository: siderolabs/contrib
-      - name: setup tf
-        uses: hashicorp/setup-terraform@v3
-        with:
-          terraform_wrapper: "false"
-      - name: tf apply
-        env:
-          ARM_CLIENT_ID: ${{ env.AZURE_CLIENT_ID }}
-          ARM_CLIENT_SECRET: ${{ env.AZURE_CLIENT_SECRET }}
-          ARM_SUBSCRIPTION_ID: ${{ env.AZURE_SUBSCRIPTION_ID }}
-          ARM_TENANT_ID: ${{ env.AZURE_TENANT_ID }}
-          TF_E2E_ACTION: apply
-          TF_E2E_TEST_TYPE: azure
-          TF_SCRIPT_DIR: _out/contrib
-        run: |
-          make e2e-cloud-tf
-      - name: e2e-azure
-        run: |
-          make e2e-azure
-      - name: tf destroy
-        if: always()
-        env:
-          ARM_CLIENT_ID: ${{ env.AZURE_CLIENT_ID }}
-          ARM_CLIENT_SECRET: ${{ env.AZURE_CLIENT_SECRET }}
-          ARM_SUBSCRIPTION_ID: ${{ env.AZURE_SUBSCRIPTION_ID }}
-          ARM_TENANT_ID: ${{ env.AZURE_TENANT_ID }}
-          TF_E2E_ACTION: destroy
-          TF_E2E_TEST_TYPE: azure
           TF_SCRIPT_DIR: _out/contrib
         run: |
           make e2e-cloud-tf
@@ -1005,7 +873,7 @@ jobs:
           PLATFORM: linux/amd64
           PUSH: "true"
         run: |
-          make talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer imager talos _out/integration-test-linux-amd64
+          make talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
       - name: talosctl-cni-bundle
         if: github.event_name == 'schedule'
         run: |
@@ -1133,7 +1001,7 @@ jobs:
           PLATFORM: linux/amd64
           PUSH: "true"
         run: |
-          make talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer imager talos _out/integration-test-linux-amd64
+          make talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
       - name: images
         env:
           IMAGE_REGISTRY: registry.dev.siderolabs.io
@@ -1215,7 +1083,7 @@ jobs:
           PLATFORM: linux/amd64
           PUSH: "true"
         run: |
-          make talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer imager talos _out/integration-test-linux-amd64
+          make talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
       - name: talosctl-cni-bundle
         if: github.event_name == 'schedule'
         run: |
@@ -1224,7 +1092,8 @@ jobs:
         env:
           GITHUB_STEP_NAME: ${{ github.job}}-conformance-qemu
           IMAGE_REGISTRY: registry.dev.siderolabs.io
-          QEMU_CPUS: "4"
+          QEMU_CPUS_WORKERS: "6"
+          QEMU_MEMORY_WORKERS: "4096"
           TEST_MODE: fast-conformance
         run: |
           sudo -E make e2e-qemu
@@ -1232,7 +1101,115 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: talos-logs-integration-qemu
+          name: talos-logs-integration-conformance
+          path: |-
+            /tmp/logs-*.tar.gz
+            /tmp/support-*.zip
+          retention-days: "5"
+  integration-conformance-enforcing:
+    permissions:
+      actions: read
+      contents: write
+      issues: read
+      packages: write
+      pull-requests: read
+    runs-on:
+      - self-hosted
+      - talos
+    if: contains(fromJSON(needs.default.outputs.labels), 'integration/conformance-enforcing')
+    needs:
+      - default
+    steps:
+      - name: gather-system-info
+        id: system-info
+        uses: kenchan0130/actions-system-info@v1.3.0
+        continue-on-error: true
+      - name: print-system-info
+        run: |
+          MEMORY_GB=$((${{ steps.system-info.outputs.totalmem }}/1024/1024/1024))
+
+          OUTPUTS=(
+            "CPU Core: ${{ steps.system-info.outputs.cpu-core }}"
+            "CPU Model: ${{ steps.system-info.outputs.cpu-model }}"
+            "Hostname: ${{ steps.system-info.outputs.hostname }}"
+            "NodeName: ${NODE_NAME}"
+            "Kernel release: ${{ steps.system-info.outputs.kernel-release }}"
+            "Kernel version: ${{ steps.system-info.outputs.kernel-version }}"
+            "Name: ${{ steps.system-info.outputs.name }}"
+            "Platform: ${{ steps.system-info.outputs.platform }}"
+            "Release: ${{ steps.system-info.outputs.release }}"
+            "Total memory: ${MEMORY_GB} GB"
+          )
+
+          for OUTPUT in "${OUTPUTS[@]}";do
+            echo "${OUTPUT}"
+          done
+        continue-on-error: true
+      - name: checkout
+        uses: actions/checkout@v4
+      - name: Unshallow
+        run: |
+          git fetch --prune --unshallow
+      - name: Set up Docker Buildx
+        id: setup-buildx
+        uses: docker/setup-buildx-action@v3
+        with:
+          driver: remote
+          endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
+        timeout-minutes: 10
+      - name: Download artifacts
+        if: github.event_name != 'schedule'
+        uses: actions/download-artifact@v4
+        with:
+          name: talos-artifacts
+          path: _out
+      - name: Fix artifact permissions
+        if: github.event_name != 'schedule'
+        run: |
+          xargs -a _out/executable-artifacts -I {} chmod +x {}
+      - name: ci-temp-release-tag
+        if: github.event_name != 'schedule'
+        run: |
+          make ci-temp-release-tag
+      - name: build
+        if: github.event_name == 'schedule'
+        env:
+          IMAGE_REGISTRY: registry.dev.siderolabs.io
+          IMAGER_ARGS: --extra-kernel-arg=enforcing=1
+          PLATFORM: linux/amd64
+          PUSH: "true"
+          TAG_SUFFIX: -enforcing
+        run: |
+          make talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
+      - name: talosctl-cni-bundle
+        if: github.event_name == 'schedule'
+        run: |
+          make talosctl-cni-bundle
+      - name: images-essential-enforcing
+        env:
+          IMAGE_REGISTRY: registry.dev.siderolabs.io
+          IMAGER_ARGS: --extra-kernel-arg=console=ttyS0 --extra-kernel-arg=enforcing=1
+          PLATFORM: linux/amd64,linux/arm64
+          PUSH: "true"
+          TAG_SUFFIX: -enforcing
+        run: |
+          make imager installer-base installer images-essential
+      - name: conformance-qemu
+        env:
+          EXTRA_TEST_ARGS: -talos.enforcing
+          GITHUB_STEP_NAME: ${{ github.job}}-conformance-qemu
+          IMAGE_REGISTRY: registry.dev.siderolabs.io
+          QEMU_CPUS_WORKERS: "6"
+          QEMU_MEMORY_WORKERS: "4096"
+          TAG_SUFFIX: -enforcing
+          TEST_MODE: fast-conformance
+        run: |
+          sudo -E make e2e-qemu
+      - name: save artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: talos-logs-integration-conformance-enforcing
           path: |-
             /tmp/logs-*.tar.gz
             /tmp/support-*.zip
@@ -1313,7 +1290,7 @@ jobs:
           PLATFORM: linux/amd64
           PUSH: "true"
         run: |
-          make talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer imager talos _out/integration-test-linux-amd64
+          make talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
       - name: talosctl-cni-bundle
         if: github.event_name == 'schedule'
         run: |
@@ -1447,7 +1424,7 @@ jobs:
           PLATFORM: linux/amd64
           PUSH: "true"
         run: |
-          make talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer imager talos _out/integration-test-linux-amd64
+          make talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
       - name: talosctl-cni-bundle
         if: github.event_name == 'schedule'
         run: |
@@ -1486,6 +1463,7 @@ jobs:
         if: always()
         env:
           TF_E2E_ACTION: destroy
+          TF_E2E_REFRESH_ON_DESTROY: "false"
           TF_E2E_TEST_TYPE: gcp
           TF_SCRIPT_DIR: _out/contrib
         run: |
@@ -1561,6 +1539,18 @@ jobs:
           PLATFORM: linux/amd64
         run: |
           make uki-certs
+      - name: build
+        if: github.event_name == 'schedule'
+        env:
+          IMAGE_REGISTRY: registry.dev.siderolabs.io
+          PLATFORM: linux/amd64,linux/arm64
+          PUSH: "true"
+        run: |
+          make talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager
+      - name: talosctl-cni-bundle
+        if: github.event_name == 'schedule'
+        run: |
+          make talosctl-cni-bundle
       - name: image-cache
         env:
           IMAGE_REGISTRY: registry.dev.siderolabs.io
@@ -1666,7 +1656,7 @@ jobs:
           PLATFORM: linux/amd64,linux/arm64
           PUSH: "true"
         run: |
-          make talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer imager talos _out/integration-test-linux-amd64
+          make talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
       - name: talosctl-cni-bundle
         if: github.event_name == 'schedule'
         run: |
@@ -1848,7 +1838,7 @@ jobs:
           PLATFORM: linux/amd64
           PUSH: "true"
         run: |
-          make talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer imager talos _out/integration-test-linux-amd64
+          make talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
       - name: talosctl-cni-bundle
         if: github.event_name == 'schedule'
         run: |
@@ -1931,7 +1921,7 @@ jobs:
           PLATFORM: linux/amd64
           PUSH: "true"
         run: |
-          make talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer imager talos _out/integration-test-linux-amd64
+          make talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
       - name: talosctl-cni-bundle
         if: github.event_name == 'schedule'
         run: |
@@ -2058,7 +2048,7 @@ jobs:
           PLATFORM: linux/amd64
           PUSH: "true"
         run: |
-          make talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer imager talos _out/integration-test-linux-amd64
+          make talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
       - name: talosctl-cni-bundle
         if: github.event_name == 'schedule'
         run: |
@@ -2074,7 +2064,7 @@ jobs:
       - name: e2e-kubespan
         env:
           GITHUB_STEP_NAME: ${{ github.job}}-e2e-kubespan
-          IMAGE_REGISTRY: registry.dev.siderolabs.io\
+          IMAGE_REGISTRY: registry.dev.siderolabs.io
           SHORT_INTEGRATION_TEST: "yes"
           WITH_CLUSTER_DISCOVERY: "true"
           WITH_KUBESPAN: "true"
@@ -2104,6 +2094,147 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: talos-logs-integration-misc-1
+          path: |-
+            /tmp/logs-*.tar.gz
+            /tmp/support-*.zip
+          retention-days: "5"
+  integration-misc-1-enforcing:
+    permissions:
+      actions: read
+      contents: write
+      issues: read
+      packages: write
+      pull-requests: read
+    runs-on:
+      - self-hosted
+      - talos
+    if: contains(fromJSON(needs.default.outputs.labels), 'integration/misc-enforcing') || contains(fromJSON(needs.default.outputs.labels), 'integration/misc-1-enforcing')
+    needs:
+      - default
+    steps:
+      - name: gather-system-info
+        id: system-info
+        uses: kenchan0130/actions-system-info@v1.3.0
+        continue-on-error: true
+      - name: print-system-info
+        run: |
+          MEMORY_GB=$((${{ steps.system-info.outputs.totalmem }}/1024/1024/1024))
+
+          OUTPUTS=(
+            "CPU Core: ${{ steps.system-info.outputs.cpu-core }}"
+            "CPU Model: ${{ steps.system-info.outputs.cpu-model }}"
+            "Hostname: ${{ steps.system-info.outputs.hostname }}"
+            "NodeName: ${NODE_NAME}"
+            "Kernel release: ${{ steps.system-info.outputs.kernel-release }}"
+            "Kernel version: ${{ steps.system-info.outputs.kernel-version }}"
+            "Name: ${{ steps.system-info.outputs.name }}"
+            "Platform: ${{ steps.system-info.outputs.platform }}"
+            "Release: ${{ steps.system-info.outputs.release }}"
+            "Total memory: ${MEMORY_GB} GB"
+          )
+
+          for OUTPUT in "${OUTPUTS[@]}";do
+            echo "${OUTPUT}"
+          done
+        continue-on-error: true
+      - name: checkout
+        uses: actions/checkout@v4
+      - name: Unshallow
+        run: |
+          git fetch --prune --unshallow
+      - name: Set up Docker Buildx
+        id: setup-buildx
+        uses: docker/setup-buildx-action@v3
+        with:
+          driver: remote
+          endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
+        timeout-minutes: 10
+      - name: Download artifacts
+        if: github.event_name != 'schedule'
+        uses: actions/download-artifact@v4
+        with:
+          name: talos-artifacts
+          path: _out
+      - name: Fix artifact permissions
+        if: github.event_name != 'schedule'
+        run: |
+          xargs -a _out/executable-artifacts -I {} chmod +x {}
+      - name: ci-temp-release-tag
+        if: github.event_name != 'schedule'
+        run: |
+          make ci-temp-release-tag
+      - name: build
+        if: github.event_name == 'schedule'
+        env:
+          IMAGE_REGISTRY: registry.dev.siderolabs.io
+          IMAGER_ARGS: --extra-kernel-arg=enforcing=1
+          PLATFORM: linux/amd64
+          PUSH: "true"
+          TAG_SUFFIX: -enforcing
+        run: |
+          make talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
+      - name: talosctl-cni-bundle
+        if: github.event_name == 'schedule'
+        run: |
+          make talosctl-cni-bundle
+      - name: images-essential-enforcing
+        env:
+          IMAGE_REGISTRY: registry.dev.siderolabs.io
+          IMAGER_ARGS: --extra-kernel-arg=console=ttyS0 --extra-kernel-arg=enforcing=1
+          PLATFORM: linux/amd64,linux/arm64
+          PUSH: "true"
+          TAG_SUFFIX: -enforcing
+        run: |
+          make imager installer-base installer images-essential
+      - name: e2e-no-cluster-discovery
+        env:
+          EXTRA_TEST_ARGS: -talos.enforcing
+          GITHUB_STEP_NAME: ${{ github.job}}-e2e-no-cluster-discovery
+          IMAGE_REGISTRY: registry.dev.siderolabs.io
+          SHORT_INTEGRATION_TEST: "yes"
+          TAG_SUFFIX: -enforcing
+          WITH_CLUSTER_DISCOVERY: "false"
+        run: |
+          sudo -E make e2e-qemu
+      - name: e2e-kubespan
+        env:
+          EXTRA_TEST_ARGS: -talos.enforcing
+          GITHUB_STEP_NAME: ${{ github.job}}-e2e-kubespan
+          IMAGE_REGISTRY: registry.dev.siderolabs.io
+          SHORT_INTEGRATION_TEST: "yes"
+          TAG_SUFFIX: -enforcing
+          WITH_CLUSTER_DISCOVERY: "true"
+          WITH_KUBESPAN: "true"
+        run: |
+          sudo -E make e2e-qemu
+      - name: e2e-default-hostname
+        env:
+          DISABLE_DHCP_HOSTNAME: "true"
+          EXTRA_TEST_ARGS: -talos.enforcing
+          GITHUB_STEP_NAME: ${{ github.job}}-e2e-default-hostname
+          IMAGE_REGISTRY: registry.dev.siderolabs.io
+          SHORT_INTEGRATION_TEST: "yes"
+          TAG_SUFFIX: -enforcing
+          VIA_MAINTENANCE_MODE: "true"
+        run: |
+          sudo -E make e2e-qemu
+      - name: e2e-min-requirements
+        env:
+          EXTRA_TEST_ARGS: -talos.enforcing
+          GITHUB_STEP_NAME: ${{ github.job}}-e2e-min-requirements
+          IMAGE_REGISTRY: registry.dev.siderolabs.io
+          QEMU_MEMORY_CONTROLPLANES: "2048"
+          QEMU_MEMORY_WORKERS: "1024"
+          QEMU_SYSTEM_DISK_SIZE: "10240"
+          SHORT_INTEGRATION_TEST: "yes"
+          TAG_SUFFIX: -enforcing
+        run: |
+          sudo -E make e2e-qemu
+      - name: save artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: talos-logs-integration-misc-1-enforcing
           path: |-
             /tmp/logs-*.tar.gz
             /tmp/support-*.zip
@@ -2186,7 +2317,7 @@ jobs:
           PLATFORM: linux/amd64
           PUSH: "true"
         run: |
-          make talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer imager talos _out/integration-test-linux-amd64
+          make talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
       - name: talosctl-cni-bundle
         if: github.event_name == 'schedule'
         run: |
@@ -2195,6 +2326,7 @@ jobs:
         if: github.event_name == 'schedule'
         env:
           IMAGE_REGISTRY: registry.dev.siderolabs.io
+          IMAGER_ARGS: --extra-kernel-arg=console=ttyS0
         run: |
           make iso
       - name: images-essential
@@ -2230,6 +2362,18 @@ jobs:
           USE_DISK_IMAGE: "true"
           VIA_MAINTENANCE_MODE: "true"
           WITH_DISK_ENCRYPTION: "true"
+          WITH_JSON_LOGS: "false"
+        run: |
+          sudo -E make e2e-qemu
+      - name: e2e-disk-image-bios
+        env:
+          GITHUB_STEP_NAME: ${{ github.job}}-e2e-disk-image-bios
+          IMAGE_REGISTRY: registry.dev.siderolabs.io
+          SHORT_INTEGRATION_TEST: "yes"
+          USE_DISK_IMAGE: "true"
+          VIA_MAINTENANCE_MODE: "true"
+          WITH_DISK_ENCRYPTION: "true"
+          WITH_UEFI: "false"
         run: |
           sudo -E make e2e-qemu
       - name: e2e-node-address-v2
@@ -2321,7 +2465,7 @@ jobs:
           PLATFORM: linux/amd64
           PUSH: "true"
         run: |
-          make talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer imager talos _out/integration-test-linux-amd64
+          make talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
       - name: talosctl-cni-bundle
         if: github.event_name == 'schedule'
         run: |
@@ -2355,6 +2499,133 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: talos-logs-integration-misc-3
+          path: |-
+            /tmp/logs-*.tar.gz
+            /tmp/support-*.zip
+          retention-days: "5"
+  integration-misc-3-enforcing:
+    permissions:
+      actions: read
+      contents: write
+      issues: read
+      packages: write
+      pull-requests: read
+    runs-on:
+      - self-hosted
+      - talos
+    if: contains(fromJSON(needs.default.outputs.labels), 'integration/misc-enforcing') || contains(fromJSON(needs.default.outputs.labels), 'integration/misc-3-enforcing')
+    needs:
+      - default
+    steps:
+      - name: gather-system-info
+        id: system-info
+        uses: kenchan0130/actions-system-info@v1.3.0
+        continue-on-error: true
+      - name: print-system-info
+        run: |
+          MEMORY_GB=$((${{ steps.system-info.outputs.totalmem }}/1024/1024/1024))
+
+          OUTPUTS=(
+            "CPU Core: ${{ steps.system-info.outputs.cpu-core }}"
+            "CPU Model: ${{ steps.system-info.outputs.cpu-model }}"
+            "Hostname: ${{ steps.system-info.outputs.hostname }}"
+            "NodeName: ${NODE_NAME}"
+            "Kernel release: ${{ steps.system-info.outputs.kernel-release }}"
+            "Kernel version: ${{ steps.system-info.outputs.kernel-version }}"
+            "Name: ${{ steps.system-info.outputs.name }}"
+            "Platform: ${{ steps.system-info.outputs.platform }}"
+            "Release: ${{ steps.system-info.outputs.release }}"
+            "Total memory: ${MEMORY_GB} GB"
+          )
+
+          for OUTPUT in "${OUTPUTS[@]}";do
+            echo "${OUTPUT}"
+          done
+        continue-on-error: true
+      - name: checkout
+        uses: actions/checkout@v4
+      - name: Unshallow
+        run: |
+          git fetch --prune --unshallow
+      - name: Set up Docker Buildx
+        id: setup-buildx
+        uses: docker/setup-buildx-action@v3
+        with:
+          driver: remote
+          endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
+        timeout-minutes: 10
+      - name: Download artifacts
+        if: github.event_name != 'schedule'
+        uses: actions/download-artifact@v4
+        with:
+          name: talos-artifacts
+          path: _out
+      - name: Fix artifact permissions
+        if: github.event_name != 'schedule'
+        run: |
+          xargs -a _out/executable-artifacts -I {} chmod +x {}
+      - name: ci-temp-release-tag
+        if: github.event_name != 'schedule'
+        run: |
+          make ci-temp-release-tag
+      - name: build
+        if: github.event_name == 'schedule'
+        env:
+          IMAGE_REGISTRY: registry.dev.siderolabs.io
+          IMAGER_ARGS: --extra-kernel-arg=enforcing=1
+          PLATFORM: linux/amd64
+          PUSH: "true"
+          TAG_SUFFIX: -enforcing
+        run: |
+          make talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
+      - name: talosctl-cni-bundle
+        if: github.event_name == 'schedule'
+        run: |
+          make talosctl-cni-bundle
+      - name: images-essential-enforcing
+        env:
+          IMAGE_REGISTRY: registry.dev.siderolabs.io
+          IMAGER_ARGS: --extra-kernel-arg=console=ttyS0 --extra-kernel-arg=enforcing=1
+          PLATFORM: linux/amd64,linux/arm64
+          PUSH: "true"
+          TAG_SUFFIX: -enforcing
+        run: |
+          make imager installer-base installer images-essential
+      - name: e2e-network-chaos
+        env:
+          EXTRA_TEST_ARGS: -talos.enforcing
+          GITHUB_STEP_NAME: ${{ github.job}}-e2e-network-chaos
+          IMAGE_REGISTRY: registry.dev.siderolabs.io
+          SHORT_INTEGRATION_TEST: "yes"
+          TAG_SUFFIX: -enforcing
+          WITH_NETWORK_CHAOS: "yes"
+        run: |
+          sudo -E make e2e-qemu
+      - name: e2e-metal-iso
+        env:
+          EXTRA_TEST_ARGS: -talos.enforcing
+          GITHUB_STEP_NAME: ${{ github.job}}-e2e-metal-iso
+          IMAGE_REGISTRY: registry.dev.siderolabs.io
+          SHORT_INTEGRATION_TEST: "yes"
+          TAG_SUFFIX: -enforcing
+          WITH_CONFIG_INJECTION_METHOD: metal-iso
+        run: |
+          sudo -E make e2e-qemu
+      - name: e2e-iommu-pcidriverrebind
+        env:
+          EXTRA_TEST_ARGS: -talos.enforcing
+          GITHUB_STEP_NAME: ${{ github.job}}-e2e-iommu-pcidriverrebind
+          IMAGE_REGISTRY: registry.dev.siderolabs.io
+          SHORT_INTEGRATION_TEST: "yes"
+          TAG_SUFFIX: -enforcing
+          WITH_IOMMU: "yes"
+        run: |
+          sudo -E make e2e-qemu
+      - name: save artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: talos-logs-integration-misc-3-enforcing
           path: |-
             /tmp/logs-*.tar.gz
             /tmp/support-*.zip
@@ -2431,7 +2702,7 @@ jobs:
           PLATFORM: linux/amd64
           PUSH: "true"
         run: |
-          make talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer imager talos _out/integration-test-linux-amd64
+          make talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
       - name: talosctl-cni-bundle
         if: github.event_name == 'schedule'
         run: |
@@ -2484,6 +2755,154 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: talos-logs-integration-misc-4
+          path: |-
+            /tmp/logs-*.tar.gz
+            /tmp/support-*.zip
+          retention-days: "5"
+  integration-misc-4-enforcing:
+    permissions:
+      actions: read
+      contents: write
+      issues: read
+      packages: write
+      pull-requests: read
+    runs-on:
+      - self-hosted
+      - talos
+    if: contains(fromJSON(needs.default.outputs.labels), 'integration/misc-enforcing') || contains(fromJSON(needs.default.outputs.labels), 'integration/misc-4-enforcing')
+    needs:
+      - default
+    steps:
+      - name: gather-system-info
+        id: system-info
+        uses: kenchan0130/actions-system-info@v1.3.0
+        continue-on-error: true
+      - name: print-system-info
+        run: |
+          MEMORY_GB=$((${{ steps.system-info.outputs.totalmem }}/1024/1024/1024))
+
+          OUTPUTS=(
+            "CPU Core: ${{ steps.system-info.outputs.cpu-core }}"
+            "CPU Model: ${{ steps.system-info.outputs.cpu-model }}"
+            "Hostname: ${{ steps.system-info.outputs.hostname }}"
+            "NodeName: ${NODE_NAME}"
+            "Kernel release: ${{ steps.system-info.outputs.kernel-release }}"
+            "Kernel version: ${{ steps.system-info.outputs.kernel-version }}"
+            "Name: ${{ steps.system-info.outputs.name }}"
+            "Platform: ${{ steps.system-info.outputs.platform }}"
+            "Release: ${{ steps.system-info.outputs.release }}"
+            "Total memory: ${MEMORY_GB} GB"
+          )
+
+          for OUTPUT in "${OUTPUTS[@]}";do
+            echo "${OUTPUT}"
+          done
+        continue-on-error: true
+      - name: checkout
+        uses: actions/checkout@v4
+      - name: Unshallow
+        run: |
+          git fetch --prune --unshallow
+      - name: Set up Docker Buildx
+        id: setup-buildx
+        uses: docker/setup-buildx-action@v3
+        with:
+          driver: remote
+          endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
+        timeout-minutes: 10
+      - name: Download artifacts
+        if: github.event_name != 'schedule'
+        uses: actions/download-artifact@v4
+        with:
+          name: talos-artifacts
+          path: _out
+      - name: Fix artifact permissions
+        if: github.event_name != 'schedule'
+        run: |
+          xargs -a _out/executable-artifacts -I {} chmod +x {}
+      - name: ci-temp-release-tag
+        if: github.event_name != 'schedule'
+        run: |
+          make ci-temp-release-tag
+      - name: build
+        if: github.event_name == 'schedule'
+        env:
+          IMAGE_REGISTRY: registry.dev.siderolabs.io
+          IMAGER_ARGS: --extra-kernel-arg=enforcing=1
+          PLATFORM: linux/amd64
+          PUSH: "true"
+          TAG_SUFFIX: -enforcing
+        run: |
+          make talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
+      - name: talosctl-cni-bundle
+        if: github.event_name == 'schedule'
+        run: |
+          make talosctl-cni-bundle
+      - name: images-essential-enforcing
+        env:
+          IMAGE_REGISTRY: registry.dev.siderolabs.io
+          IMAGER_ARGS: --extra-kernel-arg=console=ttyS0 --extra-kernel-arg=enforcing=1
+          PLATFORM: linux/amd64,linux/arm64
+          PUSH: "true"
+          TAG_SUFFIX: -enforcing
+        run: |
+          make imager installer-base installer images-essential
+      - name: e2e-siderolink
+        env:
+          EXTRA_TEST_ARGS: -talos.enforcing
+          GITHUB_STEP_NAME: ${{ github.job}}-e2e-siderolink
+          IMAGE_REGISTRY: registry.dev.siderolabs.io
+          SHORT_INTEGRATION_TEST: "yes"
+          TAG_SUFFIX: -enforcing
+          VIA_MAINTENANCE_MODE: "true"
+          WITH_SIDEROLINK_AGENT: "true"
+        run: |
+          sudo -E make e2e-qemu
+      - name: e2e-siderolink-tunnel
+        env:
+          EXTRA_TEST_ARGS: -talos.enforcing
+          GITHUB_STEP_NAME: ${{ github.job}}-e2e-siderolink-tunnel
+          IMAGE_REGISTRY: registry.dev.siderolabs.io
+          SHORT_INTEGRATION_TEST: "yes"
+          TAG_SUFFIX: -enforcing
+          VIA_MAINTENANCE_MODE: "true"
+          WITH_SIDEROLINK_AGENT: tunnel
+        run: |
+          sudo -E make e2e-qemu
+      - name: e2e-siderolink-tls
+        env:
+          EXTRA_TEST_ARGS: -talos.enforcing
+          GITHUB_STEP_NAME: ${{ github.job}}-e2e-siderolink-tls
+          IMAGE_REGISTRY: registry.dev.siderolabs.io
+          SHORT_INTEGRATION_TEST: "yes"
+          TAG_SUFFIX: -enforcing
+          VIA_MAINTENANCE_MODE: "true"
+          WITH_SIDEROLINK_AGENT: wireguard+tls
+        run: |
+          sudo -E make e2e-qemu
+      - name: e2e-apparmor
+        env:
+          GITHUB_STEP_NAME: ${{ github.job}}-e2e-apparmor
+          IMAGE_REGISTRY: registry.dev.siderolabs.io
+          SHORT_INTEGRATION_TEST: "yes"
+          WITH_APPARMOR_LSM_ENABLED: "yes"
+        run: |
+          sudo -E make e2e-qemu
+      - name: e2e-k8s-user-namespace
+        env:
+          EXTRA_TEST_ARGS: -talos.enforcing
+          GITHUB_STEP_NAME: ${{ github.job}}-e2e-k8s-user-namespace
+          IMAGE_REGISTRY: registry.dev.siderolabs.io
+          SHORT_INTEGRATION_TEST: "yes"
+          TAG_SUFFIX: -enforcing
+          WITH_CONFIG_PATCH: '@hack/test/patches/usernamespace.yaml'
+        run: |
+          sudo -E make e2e-qemu
+      - name: save artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: talos-logs-integration-misc-4-enforcing
           path: |-
             /tmp/logs-*.tar.gz
             /tmp/support-*.zip
@@ -2560,7 +2979,7 @@ jobs:
           PLATFORM: linux/amd64
           PUSH: "true"
         run: |
-          make talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer imager talos _out/integration-test-linux-amd64
+          make talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
       - name: talosctl-cni-bundle
         if: github.event_name == 'schedule'
         run: |
@@ -2655,7 +3074,7 @@ jobs:
           PLATFORM: linux/amd64
           PUSH: "true"
         run: |
-          make talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer imager talos _out/integration-test-linux-amd64
+          make talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
       - name: talosctl-cni-bundle
         if: github.event_name == 'schedule'
         run: |
@@ -2750,7 +3169,7 @@ jobs:
           PLATFORM: linux/amd64
           PUSH: "true"
         run: |
-          make talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer imager talos _out/integration-test-linux-amd64
+          make talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
       - name: talosctl-cni-bundle
         if: github.event_name == 'schedule'
         run: |
@@ -2845,7 +3264,7 @@ jobs:
           PLATFORM: linux/amd64
           PUSH: "true"
         run: |
-          make talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer imager talos _out/integration-test-linux-amd64
+          make talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
       - name: talosctl-cni-bundle
         if: github.event_name == 'schedule'
         run: |
@@ -2856,8 +3275,9 @@ jobs:
           QEMU_EXTRA_DISKS: "3"
           QEMU_EXTRA_DISKS_DRIVERS: ide,nvme
           QEMU_EXTRA_DISKS_SIZE: "10240"
+          USER_DISKS_MOUNTS: /var/lib/extra,/var/lib/p1,/var/lib/p2
           WITH_CONFIG_PATCH_WORKER: '@hack/test/patches/ephemeral-nvme.yaml:@hack/test/patches/dm-raid-module.yaml'
-          WITH_JSON_LOGS: "true"
+          WITH_USER_DISK: "true"
         run: |
           sudo -E make e2e-qemu
       - name: save artifacts
@@ -2945,7 +3365,7 @@ jobs:
           PLATFORM: linux/amd64
           PUSH: "true"
         run: |
-          make talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer imager talos _out/integration-test-linux-amd64
+          make talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
       - name: talosctl-cni-bundle
         if: github.event_name == 'schedule'
         run: |
@@ -2984,6 +3404,7 @@ jobs:
           QEMU_EXTRA_DISKS_DRIVERS: nvme
           QEMU_EXTRA_DISKS_SIZE: "12288"
           QEMU_MEMORY_WORKERS: "4096"
+          QEMU_SYSTEM_DISK_SIZE: "20480"
           QEMU_WORKERS: "3"
           SHORT_INTEGRATION_TEST: "yes"
           WITH_CONFIG_PATCH_CONTROLPLANE: '@hack/test/patches/longhorn-cp.yaml'
@@ -3078,7 +3499,7 @@ jobs:
           PLATFORM: linux/amd64
           PUSH: "true"
         run: |
-          make talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer imager talos _out/integration-test-linux-amd64
+          make talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
       - name: talosctl-cni-bundle
         if: github.event_name == 'schedule'
         run: |
@@ -3186,7 +3607,7 @@ jobs:
           PLATFORM: linux/amd64
           PUSH: "true"
         run: |
-          make talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer imager talos _out/integration-test-linux-amd64
+          make talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
       - name: talosctl-cni-bundle
         if: github.event_name == 'schedule'
         run: |
@@ -3293,7 +3714,7 @@ jobs:
           PLATFORM: linux/amd64
           PUSH: "true"
         run: |
-          make talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer imager talos _out/integration-test-linux-amd64
+          make talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
       - name: talosctl-cni-bundle
         if: github.event_name == 'schedule'
         run: |
@@ -3315,6 +3736,116 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: talos-logs-integration-qemu-encrypted-vip
+          path: |-
+            /tmp/logs-*.tar.gz
+            /tmp/support-*.zip
+          retention-days: "5"
+  integration-qemu-enforcing:
+    permissions:
+      actions: read
+      contents: write
+      issues: read
+      packages: write
+      pull-requests: read
+    runs-on:
+      - self-hosted
+      - talos
+    if: contains(fromJSON(needs.default.outputs.labels), 'integration/qemu-enforcing')
+    needs:
+      - default
+    steps:
+      - name: gather-system-info
+        id: system-info
+        uses: kenchan0130/actions-system-info@v1.3.0
+        continue-on-error: true
+      - name: print-system-info
+        run: |
+          MEMORY_GB=$((${{ steps.system-info.outputs.totalmem }}/1024/1024/1024))
+
+          OUTPUTS=(
+            "CPU Core: ${{ steps.system-info.outputs.cpu-core }}"
+            "CPU Model: ${{ steps.system-info.outputs.cpu-model }}"
+            "Hostname: ${{ steps.system-info.outputs.hostname }}"
+            "NodeName: ${NODE_NAME}"
+            "Kernel release: ${{ steps.system-info.outputs.kernel-release }}"
+            "Kernel version: ${{ steps.system-info.outputs.kernel-version }}"
+            "Name: ${{ steps.system-info.outputs.name }}"
+            "Platform: ${{ steps.system-info.outputs.platform }}"
+            "Release: ${{ steps.system-info.outputs.release }}"
+            "Total memory: ${MEMORY_GB} GB"
+          )
+
+          for OUTPUT in "${OUTPUTS[@]}";do
+            echo "${OUTPUT}"
+          done
+        continue-on-error: true
+      - name: checkout
+        uses: actions/checkout@v4
+      - name: Unshallow
+        run: |
+          git fetch --prune --unshallow
+      - name: Set up Docker Buildx
+        id: setup-buildx
+        uses: docker/setup-buildx-action@v3
+        with:
+          driver: remote
+          endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
+        timeout-minutes: 10
+      - name: Download artifacts
+        if: github.event_name != 'schedule'
+        uses: actions/download-artifact@v4
+        with:
+          name: talos-artifacts
+          path: _out
+      - name: Fix artifact permissions
+        if: github.event_name != 'schedule'
+        run: |
+          xargs -a _out/executable-artifacts -I {} chmod +x {}
+      - name: ci-temp-release-tag
+        if: github.event_name != 'schedule'
+        run: |
+          make ci-temp-release-tag
+      - name: build
+        if: github.event_name == 'schedule'
+        env:
+          IMAGE_REGISTRY: registry.dev.siderolabs.io
+          IMAGER_ARGS: --extra-kernel-arg=enforcing=1
+          PLATFORM: linux/amd64
+          PUSH: "true"
+          TAG_SUFFIX: -enforcing
+        run: |
+          make talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
+      - name: images-essential-enforcing
+        env:
+          IMAGE_REGISTRY: registry.dev.siderolabs.io
+          IMAGER_ARGS: --extra-kernel-arg=console=ttyS0 --extra-kernel-arg=enforcing=1
+          PLATFORM: linux/amd64,linux/arm64
+          PUSH: "true"
+          TAG_SUFFIX: -enforcing
+        run: |
+          make images-essential
+      - name: talosctl-cni-bundle
+        if: github.event_name == 'schedule'
+        run: |
+          make talosctl-cni-bundle
+      - name: e2e-qemu
+        env:
+          EXTRA_TEST_ARGS: -talos.enforcing
+          IMAGE_REGISTRY: registry.dev.siderolabs.io
+          QEMU_EXTRA_DISKS: "3"
+          QEMU_EXTRA_DISKS_DRIVERS: ide,nvme
+          QEMU_EXTRA_DISKS_SIZE: "10240"
+          TAG_SUFFIX: -enforcing
+          USER_DISKS_MOUNTS: /var/lib/extra,/var/lib/p1,/var/lib/p2
+          WITH_CONFIG_PATCH_WORKER: '@hack/test/patches/ephemeral-nvme.yaml:@hack/test/patches/dm-raid-module.yaml'
+          WITH_USER_DISK: "true"
+        run: |
+          sudo -E make e2e-qemu
+      - name: save artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: talos-logs-integration-qemu-enforcing
           path: |-
             /tmp/logs-*.tar.gz
             /tmp/support-*.zip
@@ -3391,7 +3922,7 @@ jobs:
           PLATFORM: linux/amd64
           PUSH: "true"
         run: |
-          make talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer imager talos _out/integration-test-linux-amd64
+          make talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
       - name: talosctl-cni-bundle
         if: github.event_name == 'schedule'
         run: |
@@ -3404,7 +3935,7 @@ jobs:
           TAG_SUFFIX: -race
           WITH_RACE: "1"
         run: |
-          make initramfs installer
+          make initramfs installer-base imager installer
       - name: e2e-qemu-race
         env:
           GITHUB_STEP_NAME: ${{ github.job}}-e2e-qemu-race
@@ -3575,7 +4106,7 @@ jobs:
           PLATFORM: linux/amd64
           PUSH: "true"
         run: |
-          make talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer imager talos _out/integration-test-linux-amd64
+          make talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
       - name: talosctl-cni-bundle
         if: github.event_name == 'schedule'
         run: |
@@ -3610,6 +4141,125 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: talos-logs-integration-trusted-boot
+          path: |-
+            /tmp/logs-*.tar.gz
+            /tmp/support-*.zip
+          retention-days: "5"
+  integration-trusted-boot-enforcing:
+    permissions:
+      actions: read
+      contents: write
+      issues: read
+      packages: write
+      pull-requests: read
+    runs-on:
+      - self-hosted
+      - talos
+    if: contains(fromJSON(needs.default.outputs.labels), 'integration/trusted-boot-enforcing')
+    needs:
+      - default
+    steps:
+      - name: gather-system-info
+        id: system-info
+        uses: kenchan0130/actions-system-info@v1.3.0
+        continue-on-error: true
+      - name: print-system-info
+        run: |
+          MEMORY_GB=$((${{ steps.system-info.outputs.totalmem }}/1024/1024/1024))
+
+          OUTPUTS=(
+            "CPU Core: ${{ steps.system-info.outputs.cpu-core }}"
+            "CPU Model: ${{ steps.system-info.outputs.cpu-model }}"
+            "Hostname: ${{ steps.system-info.outputs.hostname }}"
+            "NodeName: ${NODE_NAME}"
+            "Kernel release: ${{ steps.system-info.outputs.kernel-release }}"
+            "Kernel version: ${{ steps.system-info.outputs.kernel-version }}"
+            "Name: ${{ steps.system-info.outputs.name }}"
+            "Platform: ${{ steps.system-info.outputs.platform }}"
+            "Release: ${{ steps.system-info.outputs.release }}"
+            "Total memory: ${MEMORY_GB} GB"
+          )
+
+          for OUTPUT in "${OUTPUTS[@]}";do
+            echo "${OUTPUT}"
+          done
+        continue-on-error: true
+      - name: checkout
+        uses: actions/checkout@v4
+      - name: Unshallow
+        run: |
+          git fetch --prune --unshallow
+      - name: Set up Docker Buildx
+        id: setup-buildx
+        uses: docker/setup-buildx-action@v3
+        with:
+          driver: remote
+          endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
+        timeout-minutes: 10
+      - name: Download artifacts
+        if: github.event_name != 'schedule'
+        uses: actions/download-artifact@v4
+        with:
+          name: talos-artifacts
+          path: _out
+      - name: Fix artifact permissions
+        if: github.event_name != 'schedule'
+        run: |
+          xargs -a _out/executable-artifacts -I {} chmod +x {}
+      - name: ci-temp-release-tag
+        if: github.event_name != 'schedule'
+        run: |
+          make ci-temp-release-tag
+      - name: uki-certs
+        if: github.event_name == 'schedule'
+        env:
+          PLATFORM: linux/amd64
+        run: |
+          make uki-certs
+      - name: build
+        if: github.event_name == 'schedule'
+        env:
+          IMAGE_REGISTRY: registry.dev.siderolabs.io
+          PLATFORM: linux/amd64
+          PUSH: "true"
+        run: |
+          make talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
+      - name: talosctl-cni-bundle
+        if: github.event_name == 'schedule'
+        run: |
+          make talosctl-cni-bundle
+      - name: images-essential-enforcing
+        env:
+          IMAGE_REGISTRY: registry.dev.siderolabs.io
+          IMAGER_ARGS: --extra-kernel-arg=console=ttyS0 --extra-kernel-arg=enforcing=1
+          PLATFORM: linux/amd64,linux/arm64
+          PUSH: "true"
+          TAG_SUFFIX: -enforcing
+        run: |
+          make imager installer-base installer images-essential
+      - name: secureboot-iso
+        if: github.event_name == 'schedule'
+        env:
+          IMAGE_REGISTRY: registry.dev.siderolabs.io
+          IMAGER_ARGS: --extra-kernel-arg=console=ttyS0
+          PLATFORM: linux/amd64
+        run: |
+          make secureboot-iso
+      - name: integration-trusted-boot
+        env:
+          EXTRA_TEST_ARGS: -talos.trustedboot -talos.enforcing
+          GITHUB_STEP_NAME: ${{ github.job}}-integration-trusted-boot
+          IMAGE_REGISTRY: registry.dev.siderolabs.io
+          TAG_SUFFIX: -enforcing
+          VIA_MAINTENANCE_MODE: "true"
+          WITH_TRUSTED_BOOT_ISO: "true"
+        run: |
+          sudo -E make e2e-qemu
+      - name: save artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: talos-logs-integration-trusted-boot-enforcing
           path: |-
             /tmp/logs-*.tar.gz
             /tmp/support-*.zip
@@ -3667,7 +4317,7 @@ jobs:
         env:
           PLATFORM: linux/amd64,linux/arm64
         run: |
-          make talosctl-all kernel sd-boot sd-stub initramfs installer imager talos
+          make talosctl-all kernel sd-boot sd-stub initramfs installer-base imager talos
       - name: release-notes
         run: |
           make release-notes
@@ -3747,7 +4397,7 @@ jobs:
         env:
           PLATFORM: linux/amd64,linux/arm64
         run: |
-          make talosctl-all kernel sd-boot sd-stub initramfs installer imager talos talosctl-cni-bundle
+          make talosctl-all kernel sd-boot sd-stub initramfs installer-base imager talos talosctl-cni-bundle
       - name: release-notes
         run: |
           make release-notes
@@ -3775,8 +4425,8 @@ jobs:
       - name: Generate Checksums
         run: |
           cd _out
-          sha256sum cloud-images.json initramfs-amd64.xz initramfs-arm64.xz metal-amd64.iso metal-arm64.iso metal-amd64.raw.zst metal-arm64.raw.zst talosctl-cni-bundle-amd64.tar.gz talosctl-cni-bundle-arm64.tar.gz talosctl-darwin-amd64 talosctl-darwin-arm64 talosctl-freebsd-amd64 talosctl-freebsd-arm64 talosctl-linux-amd64 talosctl-linux-arm64 talosctl-linux-armv7 talosctl-windows-amd64.exe talosctl-windows-arm64.exe vmlinuz-amd64 vmlinuz-arm64 > sha256sum.txt
-          sha512sum cloud-images.json initramfs-amd64.xz initramfs-arm64.xz metal-amd64.iso metal-arm64.iso metal-amd64.raw.zst metal-arm64.raw.zst talosctl-cni-bundle-amd64.tar.gz talosctl-cni-bundle-arm64.tar.gz talosctl-darwin-amd64 talosctl-darwin-arm64 talosctl-freebsd-amd64 talosctl-freebsd-arm64 talosctl-linux-amd64 talosctl-linux-arm64 talosctl-linux-armv7 talosctl-windows-amd64.exe talosctl-windows-arm64.exe vmlinuz-amd64 vmlinuz-arm64 > sha512sum.txt
+          sha256sum cloud-images.json initramfs-amd64.xz initramfs-arm64.xz metal-amd64.iso metal-arm64.iso metal-amd64-uki.efi metal-arm64-uki.efi metal-amd64.raw.zst metal-arm64.raw.zst talosctl-cni-bundle-amd64.tar.gz talosctl-cni-bundle-arm64.tar.gz talosctl-darwin-amd64 talosctl-darwin-arm64 talosctl-freebsd-amd64 talosctl-freebsd-arm64 talosctl-linux-amd64 talosctl-linux-arm64 talosctl-linux-armv7 talosctl-windows-amd64.exe talosctl-windows-arm64.exe vmlinuz-amd64 vmlinuz-arm64 > sha256sum.txt
+          sha512sum cloud-images.json initramfs-amd64.xz initramfs-arm64.xz metal-amd64.iso metal-arm64.iso metal-amd64-uki.efi metal-arm64-uki.efi metal-amd64.raw.zst metal-arm64.raw.zst talosctl-cni-bundle-amd64.tar.gz talosctl-cni-bundle-arm64.tar.gz talosctl-darwin-amd64 talosctl-darwin-arm64 talosctl-freebsd-amd64 talosctl-freebsd-arm64 talosctl-linux-amd64 talosctl-linux-arm64 talosctl-linux-armv7 talosctl-windows-amd64.exe talosctl-windows-arm64.exe vmlinuz-amd64 vmlinuz-arm64 > sha512sum.txt
       - name: release
         uses: crazy-max/ghaction-github-release@v2
         with:
@@ -3788,6 +4438,8 @@ jobs:
             _out/initramfs-arm64.xz
             _out/metal-amd64.iso
             _out/metal-arm64.iso
+            _out/metal-amd64-uki.efi
+            _out/metal-arm64-uki.efi
             _out/metal-amd64.raw.zst
             _out/metal-arm64.raw.zst
             _out/talosctl-cni-bundle-amd64.tar.gz

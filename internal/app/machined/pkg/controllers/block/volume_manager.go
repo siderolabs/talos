@@ -23,6 +23,7 @@ import (
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/block/internal/volumes"
 	blockpb "github.com/siderolabs/talos/pkg/machinery/api/resource/definitions/block"
+	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/proto"
 	"github.com/siderolabs/talos/pkg/machinery/resources/block"
 	"github.com/siderolabs/talos/pkg/machinery/resources/hardware"
@@ -44,6 +45,11 @@ func (ctrl *VolumeManagerController) Inputs() []controller.Input {
 			Namespace: block.NamespaceName,
 			Type:      block.VolumeConfigType,
 			Kind:      controller.InputStrong,
+		},
+		{
+			Namespace: block.NamespaceName,
+			Type:      block.VolumeStatusType,
+			Kind:      controller.InputDestroyReady,
 		},
 		{
 			Namespace: block.NamespaceName,
@@ -230,17 +236,15 @@ func (ctrl *VolumeManagerController) Run(ctx context.Context, r controller.Runti
 			return fmt.Errorf("error fetching volume statuses: %w", err)
 		}
 
-		volumeConfigIDs := xslices.ToSet(safe.ToSlice(volumeConfigList, func(vc *block.VolumeConfig) resource.ID { return vc.Metadata().ID() }))
-
 		volumeStatuses := xslices.ToMap(
 			safe.ToSlice(volumeStatusList, func(vs *block.VolumeStatus) *block.VolumeStatus { return vs }),
-			func(vs *block.VolumeStatus) (resource.ID, *block.VolumeStatusSpec) {
-				return vs.Metadata().ID(), vs.TypedSpec()
+			func(vs *block.VolumeStatus) (resource.ID, *block.VolumeStatus) {
+				return vs.Metadata().ID(), vs
 			},
 		)
 
 		if volumeStatuses == nil {
-			volumeStatuses = map[resource.ID]*block.VolumeStatusSpec{}
+			volumeStatuses = map[resource.ID]*block.VolumeStatus{}
 		}
 
 		// ensure all volume configs have our finalizers
@@ -249,36 +253,29 @@ func (ctrl *VolumeManagerController) Run(ctx context.Context, r controller.Runti
 				continue
 			}
 
-			if vc.Metadata().Finalizers().Has(ctrl.Name()) {
-				continue
-			}
-
-			if err = r.AddFinalizer(ctx, vc.Metadata(), ctrl.Name()); err != nil {
-				return fmt.Errorf("error adding finalizer to volume configuration: %w", err)
-			}
-		}
-
-		// remove statuses for volume configs that no longer exist
-		for id := range volumeStatuses {
-			if _, exists := volumeConfigIDs[id]; !exists {
-				delete(volumeStatuses, id)
-
-				if err := r.Destroy(ctx, block.NewVolumeStatus(block.NamespaceName, id).Metadata()); err != nil {
-					return fmt.Errorf("error destroying volume status: %w", err)
+			if !vc.Metadata().Finalizers().Has(ctrl.Name()) {
+				if err = r.AddFinalizer(ctx, vc.Metadata(), ctrl.Name()); err != nil {
+					return fmt.Errorf("error adding finalizer to volume configuration: %w", err)
 				}
 			}
 		}
 
-		// fill in statuses for volume configs that don't have a status yet
-		for id := range volumeConfigIDs {
-			if _, exists := volumeStatuses[id]; !exists {
-				volumeStatuses[id] = &block.VolumeStatusSpec{
-					Phase: block.VolumePhaseWaiting,
+		volumeLifecycleTearingDown := volumeLifecycle.Metadata().Phase() == resource.PhaseTearingDown
+
+		if volumeLifecycleTearingDown {
+			for _, fin := range *volumeLifecycle.Metadata().Finalizers() {
+				if fin == ctrl.Name() {
+					continue
 				}
+
+				// if there are finalizers other than us, we don't start global teardown
+				volumeLifecycleTearingDown = false
+
+				break
 			}
 		}
 
-		volumeConfigs := safe.ToSlice(volumeConfigList, func(vc *block.VolumeConfig) *block.VolumeConfig { return vc })
+		volumeConfigs := safe.ToSlice(volumeConfigList, identity)
 
 		// re-sort volume configs by provisioning wave
 		slices.SortStableFunc(volumeConfigs, volumes.CompareVolumeConfigs)
@@ -297,19 +294,49 @@ func (ctrl *VolumeManagerController) Run(ctx context.Context, r controller.Runti
 			volumeStatus := volumeStatuses[vc.Metadata().ID()]
 			volumeLogger := logger.With(zap.String("volume", vc.Metadata().ID()))
 
-			if vc.Metadata().Phase() != resource.PhaseRunning {
-				// [TODO]: handle me later
-				continue
+			// figure out if we are tearing down this volume or building it
+			tearingDown := (volumeStatus != nil && volumeStatus.Metadata().Phase() == resource.PhaseTearingDown) || // we started tearing down the volume, so finish doing so
+				vc.Metadata().Phase() == resource.PhaseTearingDown || // volume config is being torn down
+				volumeLifecycleTearingDown // global volume lifecycle requires all volumes to be torn down
+
+			// volume status doesn't exist yet, figure out what to do
+			if volumeStatus == nil {
+				if tearingDown {
+					// happy case, we don't need to progress this volume
+					if vc.Metadata().Finalizers().Has(ctrl.Name()) {
+						if err = r.RemoveFinalizer(ctx, vc.Metadata(), ctrl.Name()); err != nil {
+							return fmt.Errorf("error removing finalizer from volume configuration: %w", err)
+						}
+					}
+
+					continue
+				}
+
+				// create a stub volume status
+				volumeStatus = block.NewVolumeStatus(block.NamespaceName, vc.Metadata().ID())
+				volumeStatus.TypedSpec().Phase = block.VolumePhaseWaiting
+				volumeStatus.TypedSpec().Type = vc.TypedSpec().Type
+				volumeStatuses[vc.Metadata().ID()] = volumeStatus
 			}
 
-			prevPhase := volumeStatus.Phase
+			if tearingDown && volumeStatus.Metadata().Phase() != resource.PhaseTearingDown {
+				// volume status is not yet in the tearing down phase, so move it there
+				_, err = r.Teardown(ctx, volumeStatus.Metadata())
+				if err != nil {
+					return fmt.Errorf("error tearing down volume status: %w", err)
+				}
+			}
+
+			shouldCloseVolume := tearingDown && volumeStatus.Metadata().Finalizers().Empty() // we can start closing volume as soon as all finalizers are gone, so the volume is not e.g. mounted
+
+			prevPhase := volumeStatus.TypedSpec().Phase
 
 			if err = ctrl.processVolumeConfig(
 				ctx,
 				volumeLogger,
 				volumes.ManagerContext{
 					Cfg:                     vc,
-					Status:                  volumeStatus,
+					Status:                  volumeStatus.TypedSpec(),
 					DiscoveredVolumes:       discoveredVolumesSpecs,
 					Disks:                   diskSpecs,
 					DevicesReady:            devicesReady,
@@ -326,60 +353,70 @@ func (ctrl *VolumeManagerController) Run(ctx context.Context, r controller.Runti
 
 						return systemInfo, nil
 					},
-					Lifecycle: volumeLifecycle,
+					ShouldCloseVolume: shouldCloseVolume,
 				},
 			); err != nil {
-				volumeStatus.PreFailPhase = volumeStatus.Phase
-				volumeStatus.Phase = block.VolumePhaseFailed
-				volumeStatus.ErrorMessage = err.Error()
+				volumeStatus.TypedSpec().PreFailPhase = volumeStatus.TypedSpec().Phase
+				volumeStatus.TypedSpec().Phase = block.VolumePhaseFailed
+				volumeStatus.TypedSpec().ErrorMessage = err.Error()
 
 				if xerrors.TagIs[volumes.Retryable](err) {
 					shouldRetry = true
 				}
 			} else {
-				volumeStatus.ErrorMessage = ""
-				volumeStatus.PreFailPhase = block.VolumePhase(0)
+				volumeStatus.TypedSpec().ErrorMessage = ""
+				volumeStatus.TypedSpec().PreFailPhase = block.VolumePhase(0)
 			}
 
-			if volumeStatus.Phase != block.VolumePhaseReady {
+			if volumeStatus.TypedSpec().Phase != block.VolumePhaseReady {
 				fullyProvisionedWave = vc.TypedSpec().Provisioning.Wave - 1
 			}
 
-			if prevPhase != volumeStatus.Phase || err != nil {
+			if prevPhase != volumeStatus.TypedSpec().Phase || err != nil {
 				fields := []zap.Field{
-					zap.String("phase", fmt.Sprintf("%s -> %s", prevPhase, volumeStatus.Phase)),
+					zap.String("phase", fmt.Sprintf("%s -> %s", prevPhase, volumeStatus.TypedSpec().Phase)),
 					zap.Error(err),
 				}
 
-				if volumeStatus.Location != "" {
-					fields = append(fields, zap.String("location", volumeStatus.Location))
+				if volumeStatus.TypedSpec().Location != "" {
+					fields = append(fields, zap.String("location", volumeStatus.TypedSpec().Location))
 				}
 
-				if volumeStatus.MountLocation != "" && volumeStatus.MountLocation != volumeStatus.Location {
-					fields = append(fields, zap.String("mountLocation", volumeStatus.MountLocation))
+				if volumeStatus.TypedSpec().MountLocation != "" && volumeStatus.TypedSpec().MountLocation != volumeStatus.TypedSpec().Location {
+					fields = append(fields, zap.String("mountLocation", volumeStatus.TypedSpec().MountLocation))
 				}
 
-				if volumeStatus.ParentLocation != "" {
-					fields = append(fields, zap.String("parentLocation", volumeStatus.ParentLocation))
+				if volumeStatus.TypedSpec().ParentLocation != "" {
+					fields = append(fields, zap.String("parentLocation", volumeStatus.TypedSpec().ParentLocation))
 				}
 
-				if len(volumeStatus.EncryptionFailedSyncs) > 0 {
-					fields = append(fields, zap.Strings("encryptionFailedSyncs", volumeStatus.EncryptionFailedSyncs))
+				if len(volumeStatus.TypedSpec().EncryptionFailedSyncs) > 0 {
+					fields = append(fields, zap.Strings("encryptionFailedSyncs", volumeStatus.TypedSpec().EncryptionFailedSyncs))
 				}
 
 				volumeLogger.Info("volume status", fields...)
 			}
 
-			allClosed = allClosed && volumeStatus.Phase == block.VolumePhaseClosed
+			// when closing, ignore META volume, we want it to stay longer, so no problem if is not closed yet
+			allClosed = allClosed && (volumeStatus.TypedSpec().Phase == block.VolumePhaseClosed || vc.Metadata().ID() == constants.MetaPartitionLabel)
+
+			if shouldCloseVolume && volumeStatus.TypedSpec().Phase == block.VolumePhaseClosed {
+				// we can destroy the volume status now
+				if err = r.Destroy(ctx, volumeStatus.Metadata()); err != nil {
+					return fmt.Errorf("error destroying volume status: %w", err)
+				}
+
+				delete(volumeStatuses, volumeStatus.Metadata().ID())
+			}
 		}
 
 		// update statuses
-		for id, spec := range volumeStatuses {
+		for id, newVs := range volumeStatuses {
 			if err = safe.WriterModify(ctx, r, block.NewVolumeStatus(block.NamespaceName, id), func(vs *block.VolumeStatus) error {
-				*vs.TypedSpec() = *spec
+				*vs.TypedSpec() = *newVs.TypedSpec()
 
 				return nil
-			}); err != nil {
+			}, controller.WithExpectedPhaseAny()); err != nil {
 				return fmt.Errorf("error updating volume status: %w", err)
 			}
 		}
@@ -410,10 +447,8 @@ func (ctrl *VolumeManagerController) Run(ctx context.Context, r controller.Runti
 func (ctrl *VolumeManagerController) processVolumeConfig(ctx context.Context, logger *zap.Logger, volumeContext volumes.ManagerContext) error {
 	prevPhase := volumeContext.Status.Phase
 
-	closingPhase := volumeContext.Lifecycle.Metadata().Phase() == resource.PhaseTearingDown
-
 	for {
-		if !closingPhase {
+		if !volumeContext.ShouldCloseVolume {
 			// normal state machine
 			switch volumeContext.Status.Phase {
 			case block.VolumePhaseReady:

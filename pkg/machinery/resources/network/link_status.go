@@ -5,6 +5,8 @@
 package network
 
 import (
+	"iter"
+
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/meta"
 	"github.com/cosi-project/runtime/pkg/resource/protobuf"
@@ -64,6 +66,38 @@ type LinkStatusSpec struct {
 // Physical checks if the link is physical ethernet.
 func (s LinkStatusSpec) Physical() bool {
 	return s.Type == nethelpers.LinkEther && s.Kind == ""
+}
+
+// AllLinkNames returns all link names, including name, alias and altnames.
+func AllLinkNames(link *LinkStatus) iter.Seq[string] {
+	return func(yield func(string) bool) {
+		if !yield(link.Metadata().ID()) {
+			return
+		}
+
+		for alias := range AllLinkAliases(link) {
+			if !yield(alias) {
+				return
+			}
+		}
+	}
+}
+
+// AllLinkAliases returns all link aliases (altnames and alias).
+func AllLinkAliases(link *LinkStatus) iter.Seq[string] {
+	return func(yield func(string) bool) {
+		if link.TypedSpec().Alias != "" {
+			if !yield(link.TypedSpec().Alias) {
+				return
+			}
+		}
+
+		for _, altName := range link.TypedSpec().AltNames {
+			if !yield(altName) {
+				return
+			}
+		}
+	}
 }
 
 // NewLinkStatus initializes a LinkStatus resource.

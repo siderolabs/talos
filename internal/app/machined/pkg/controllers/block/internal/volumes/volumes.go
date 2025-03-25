@@ -88,5 +88,5 @@ type ManagerContext struct {
 	DevicesReady            bool
 	PreviousWaveProvisioned bool
 	GetSystemInformation    func(context.Context) (*hardware.SystemInformation, error)
-	Lifecycle               *block.VolumeLifecycle
+	ShouldCloseVolume       bool
 }
