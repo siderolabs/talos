@@ -42,7 +42,7 @@ This can be done in the machine config of your node:
 ```yaml
 machine:
       interfaces:
-      - interface: br0
+      - interface: et0 # This must be changed to your matching interface name
         addresses:
           - 10.99.101.9/24
         bridge:
@@ -50,6 +50,8 @@ machine:
             enabled: true
           interfaces:
               - eth0 # This must be changed to your matching interface name
+        bridgePort:
+          master: br0
         routes:
             - network: 0.0.0.0/0 # The route's network (destination).
               gateway: 10.99.101.254 # The route's gateway (if empty, creates link scope route).
