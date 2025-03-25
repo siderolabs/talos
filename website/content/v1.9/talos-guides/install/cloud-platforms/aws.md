@@ -421,7 +421,7 @@ You can now watch as your cluster bootstraps, by using
 talosctl health
 ```
 
-This command will take a few minutes for the nodes to start etcd, reach quarom and start the Kubernetes control plane.
+This command will take a few minutes for the nodes to start etcd, reach quorum and start the Kubernetes control plane.
 
 You can also watch the performance of a node, via:
 
