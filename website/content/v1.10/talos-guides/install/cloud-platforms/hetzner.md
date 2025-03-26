@@ -310,8 +310,8 @@ First of all, we need to patch the Talos machine configuration used by each node
 ```yaml
 # patch.yaml
 cluster:
-    externalCloudProvider:
-        enabled: true
+  externalCloudProvider:
+    enabled: true
 ```
 
 Then run the following command:
