@@ -283,7 +283,7 @@ spec:
     spec:
       containers:
         - name: kube-proxy
-          image: registry.k8s.io/kube-proxy:v{{< k8s_release >}}
+          image: registry.k8s.io/kube-proxy:v{{< k8s_prev_release >}}
       tolerations:
         - ...
 ```

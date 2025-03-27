@@ -278,7 +278,7 @@ spec:
     spec:
       containers:
         - name: kube-proxy
-          image: k8s.gcr.io/kube-proxy:v{{< k8s_release >}}
+          image: k8s.gcr.io/kube-proxy:v{{< k8s_prev_release >}}
       tolerations:
         - ...
 ```
