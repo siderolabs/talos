@@ -171,6 +171,7 @@ func runHTTPServer(ctx context.Context, certPEM, keyPEM []byte) error {
 
 	tlsConfig := &tls.Config{
 		Certificates: []tls.Certificate{certificate},
+                MinVersion: 12
 	}
 
 	subFs, err := fs.Sub(httpFs, "httproot")

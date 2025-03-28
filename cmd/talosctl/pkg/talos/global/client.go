@@ -108,6 +108,7 @@ func (c *Args) WithClientMaintenance(enforceFingerprints []string, action func(c
 		context.Background(), func(ctx context.Context) error {
 			tlsConfig := &tls.Config{
 				InsecureSkipVerify: true,
+                                MinVersion: 12
 			}
 
 			if len(enforceFingerprints) > 0 {

@@ -83,6 +83,7 @@ func run(ctx context.Context) error {
 
 		apiTLSConfig = &tls.Config{
 			Certificates: []tls.Certificate{apiCert},
+                        MinVersion: 12
 		}
 	}
 
