@@ -136,7 +136,7 @@ func (t *Trustd) DependsOn(runtime.Runtime) []string {
 }
 
 // Volumes implements the Service interface.
-func (t *Trustd) Volumes() []string {
+func (t *Trustd) Volumes(runtime.Runtime) []string {
 	return nil
 }
 

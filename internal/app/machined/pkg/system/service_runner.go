@@ -219,7 +219,7 @@ func (svcrunner *ServiceRunner) Run(notifyChannels ...chan<- struct{}) error {
 		condition = conditions.WaitForAll(serviceDependencies, condition)
 	}
 
-	if volumeIDs := svcrunner.service.Volumes(); len(volumeIDs) > 0 && !svcrunner.runtime.State().Platform().Mode().InContainer() {
+	if volumeIDs := svcrunner.service.Volumes(svcrunner.runtime); len(volumeIDs) > 0 {
 		// create volume mount request for each volume requested
 		volumeRequestIDs := make([]string, 0, len(volumeIDs))
 

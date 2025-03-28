@@ -67,7 +67,7 @@ func (c *Udevd) DependsOn(runtime.Runtime) []string {
 }
 
 // Volumes implements the Service interface.
-func (c *Udevd) Volumes() []string {
+func (c *Udevd) Volumes(runtime.Runtime) []string {
 	return nil
 }
 

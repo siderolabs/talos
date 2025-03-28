@@ -477,6 +477,9 @@ const (
 	// EtcdDataPath is the path where etcd stores its' data.
 	EtcdDataPath = "/var/lib/etcd"
 
+	// EtcdDataVolumeID is the ID of the etcd data volume.
+	EtcdDataVolumeID = "ETCD"
+
 	// EtcdDataSELinuxLabel is the SELinux label for the etcd data directory.
 	EtcdDataSELinuxLabel = "system_u:object_r:etcd_data_t:s0"
 

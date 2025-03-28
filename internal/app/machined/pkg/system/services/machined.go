@@ -228,7 +228,7 @@ func (m *Machined) DependsOn(runtime.Runtime) []string {
 }
 
 // Volumes implements the Service interface.
-func (m *Machined) Volumes() []string {
+func (m *Machined) Volumes(runtime.Runtime) []string {
 	return nil
 }
 
