@@ -4,7 +4,7 @@ go 1.24.0
 
 replace (
 	// see e.g. https://github.com/grpc/grpc-go/issues/6696
-	cloud.google.com/go => cloud.google.com/go v0.100.2
+	cloud.google.com/go => cloud.google.com/go v0.120.0
 
 	// forked coredns so we don't carry caddy and other stuff into the Talos
 	github.com/coredns/coredns => github.com/siderolabs/coredns v1.12.51
@@ -13,7 +13,7 @@ replace (
 	github.com/mdlayher/ethtool => github.com/siderolabs/ethtool v0.3.0
 
 	// see https://github.com/mdlayher/kobject/pull/5
-	github.com/mdlayher/kobject => github.com/smira/kobject v0.0.0-20240304111826-49c8d4613389
+	github.com/mdlayher/kobject => github.com/smira/kobject 19ca17470d7d
 
 	// Use nested module.
 	github.com/siderolabs/talos/pkg/machinery => ./pkg/machinery
@@ -26,19 +26,19 @@ replace (
 
 	// forked go-yaml that introduces RawYAML interface, which can be used to populate YAML fields using bytes
 	// which are then encoded as a valid YAML blocks with proper indentiation
-	gopkg.in/yaml.v3 => github.com/unix4ever/yaml v0.0.0-20220527175918-f17b0f05cf2c
+	gopkg.in/yaml.v3 => github.com/unix4ever/yaml/v2 v2.4.0
 )
 
 // fd-leak related replacements: https://github.com/siderolabs/talos/issues/9412
 // https://github.com/insomniacslk/dhcp/pull/550
-replace github.com/insomniacslk/dhcp => github.com/smira/dhcp v0.0.0-20241001122726-31e9ef21c016
+replace github.com/insomniacslk/dhcp => github.com/smira/dhcp 7d93572ebe8e
 
 // Kubernetes dependencies sharing the same version.
 require (
 	k8s.io/api v0.33.0-beta.0
 	k8s.io/apimachinery v0.33.0-beta.0
 	k8s.io/apiserver v0.33.0-beta.0
-	k8s.io/client-go v0.33.0-beta.0
+	k8s.io/client-go v11.0.0+incompatible
 	k8s.io/component-base v0.33.0-beta.0
 	k8s.io/cri-api v0.33.0-beta.0
 	k8s.io/kube-scheduler v0.33.0-beta.0
@@ -54,14 +54,14 @@ require (
 	github.com/Azure/azure-sdk-for-go/sdk/security/keyvault/azcertificates v1.3.1
 	github.com/Azure/azure-sdk-for-go/sdk/security/keyvault/azkeys v1.3.1
 	github.com/alexflint/go-filemutex v1.3.0
-	github.com/aws/aws-sdk-go-v2/config v1.29.9
+	github.com/aws/aws-sdk-go-v2/config v1.29.12
 	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.16.30
 	github.com/aws/aws-sdk-go-v2/service/kms v1.38.1
 	github.com/aws/smithy-go v1.22.3
 	github.com/beevik/ntp v1.4.3
 	github.com/benbjohnson/clock v1.3.5 // project archived on 2023-05-18
 	github.com/blang/semver/v4 v4.0.0
-	github.com/cenkalti/backoff/v4 v4.3.0
+	github.com/cenkalti/backoff/v5 v5.0.2
 	github.com/containerd/cgroups/v3 v3.0.5
 	github.com/containerd/containerd/api v1.8.0
 	github.com/containerd/containerd/v2 v2.0.4
@@ -71,12 +71,12 @@ require (
 	github.com/containerd/typeurl/v2 v2.2.3
 	github.com/containernetworking/cni v1.2.3
 	github.com/containernetworking/plugins v1.6.2
-	github.com/coredns/coredns v1.11.3
+	github.com/coredns/coredns v1.12.0
 	github.com/coreos/go-iptables v0.8.0
 	github.com/cosi-project/runtime v0.10.1
 	github.com/distribution/reference v0.6.0
-	github.com/docker/cli v28.0.2+incompatible
-	github.com/docker/docker v28.0.2+incompatible
+	github.com/docker/cli v28.0.4+incompatible
+	github.com/docker/docker v28.0.4+incompatible
 	github.com/docker/go-connections v0.5.0
 	github.com/dustin/go-humanize v1.0.1
 	github.com/ecks/uefi v0.0.0-20221116212947-caef65d070eb
@@ -104,10 +104,10 @@ require (
 	github.com/hashicorp/go-envparse v0.1.0
 	github.com/hashicorp/go-getter/v2 v2.2.3
 	github.com/hashicorp/go-multierror v1.1.1
-	github.com/hetznercloud/hcloud-go/v2 v2.20.1
+	github.com/hetznercloud/hcloud-go/v2 v2.21.0
 	github.com/insomniacslk/dhcp v0.0.0-20250109001534-8abf58130905
 	github.com/jeromer/syslogparser v1.1.0
-	github.com/jsimonetti/rtnetlink/v2 v2.0.3-0.20241216183107-2d6e9f8ad3f2
+	github.com/jsimonetti/rtnetlink/v2 1ac6950fae89
 	github.com/jxskiss/base62 v1.1.0
 	github.com/klauspost/compress v1.18.0
 	github.com/klauspost/cpuid/v2 v2.2.10
@@ -132,18 +132,18 @@ require (
 	github.com/pkg/xattr v0.4.10
 	github.com/pmorjan/kmod v1.1.1
 	github.com/prometheus/procfs v0.16.0
-	github.com/rivo/tview v0.0.0-20250322200051-73a5bd7d6839
+	github.com/rivo/tview 7b72abf45814
 	github.com/rs/xid v1.6.0
 	github.com/ryanuber/columnize v2.1.2+incompatible
 	github.com/ryanuber/go-glob v1.0.0
 	github.com/safchain/ethtool v0.5.10
-	github.com/scaleway/scaleway-sdk-go v1.0.0-beta.32
+	github.com/scaleway/scaleway-sdk-go v1.0.0-beta.33
 	github.com/siderolabs/crypto v0.5.1
 	github.com/siderolabs/discovery-api v0.1.6
 	github.com/siderolabs/discovery-client v0.1.11
 	github.com/siderolabs/gen v0.8.0
 	github.com/siderolabs/go-api-signature v0.3.6
-	github.com/siderolabs/go-blockdevice v0.4.8
+	github.com/siderolabs/go-blockdevice/v2 v2.0.16
 	github.com/siderolabs/go-blockdevice/v2 v2.0.16
 	github.com/siderolabs/go-circular v0.2.2
 	github.com/siderolabs/go-cmd v0.1.3
@@ -191,11 +191,11 @@ require (
 	golang.org/x/time v0.11.0
 	golang.zx2c4.com/wireguard/wgctrl v0.0.0-20241231184526-a9ab2273dd10
 	google.golang.org/grpc v1.71.0
-	google.golang.org/protobuf v1.36.5
+	google.golang.org/protobuf v1.36.6
 	gopkg.in/yaml.v3 v3.0.1
 	k8s.io/klog/v2 v2.130.1
 	kernel.org/pub/linux/libs/security/libcap/cap v1.2.75
-	sigs.k8s.io/hydrophone v0.6.1-0.20240718103601-b92baf7e0b04
+	sigs.k8s.io/hydrophone 79cc33a77881
 	sigs.k8s.io/yaml v1.4.0
 )
 
