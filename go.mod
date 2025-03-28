@@ -175,14 +175,14 @@ require (
 	github.com/ulikunitz/xz v0.5.12
 	github.com/vmware/vmw-guestinfo v0.0.0-20220317130741-510905f0efa3
 	github.com/vultr/metadata v1.1.0
-	go.etcd.io/etcd/api/v3 v3.5.20
-	go.etcd.io/etcd/client/pkg/v3 v3.5.20
-	go.etcd.io/etcd/client/v3 v3.5.20
-	go.etcd.io/etcd/etcdutl/v3 v3.5.20
+	go.etcd.io/etcd/api/v3 v3.5.21
+	go.etcd.io/etcd/client/pkg/v3 v3.5.21
+	go.etcd.io/etcd/client/v3 v3.5.21
+	go.etcd.io/etcd/etcdutl/v3 v3.5.21
 	go.uber.org/goleak v1.3.0
 	go.uber.org/zap v1.27.0
 	go4.org/netipx v0.0.0-20231129151722-fdeea329fbba
-	golang.org/x/net v0.37.0
+	golang.org/x/net v0.38.0
 	golang.org/x/oauth2 v0.28.0
 	golang.org/x/sync v0.12.0
 	golang.org/x/sys v0.31.0
@@ -264,7 +264,7 @@ require (
 	github.com/go-openapi/swag v0.23.0 // indirect
 	github.com/go-resty/resty/v2 v2.15.3 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
-	github.com/golang-jwt/jwt/v4 v4.5.1 // indirect
+	github.com/golang-jwt/jwt/v4 v4.5.2 // indirect
 	github.com/golang-jwt/jwt/v5 v5.2.1 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/golang/protobuf v1.5.4 // indirect
@@ -341,10 +341,10 @@ require (
 	github.com/xiang90/probing v0.0.0-20221125231312-a49e3df8f510 // indirect
 	github.com/xlab/treeprint v1.2.0 // indirect
 	go.etcd.io/bbolt v1.4.0 // indirect
-	go.etcd.io/etcd/client/v2 v2.305.20 // indirect
-	go.etcd.io/etcd/pkg/v3 v3.5.20 // indirect
-	go.etcd.io/etcd/raft/v3 v3.5.20 // indirect
-	go.etcd.io/etcd/server/v3 v3.5.20 // indirect
+	go.etcd.io/etcd/client/v2 v2.305.21 // indirect
+	go.etcd.io/etcd/pkg/v3 v3.5.21 // indirect
+	go.etcd.io/etcd/raft/v3 v3.5.21 // indirect
+	go.etcd.io/etcd/server/v3 v3.5.21 // indirect
 	go.opencensus.io v0.24.0 // indirect
 	go.opentelemetry.io/auto/sdk v1.1.0 // indirect
 	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.58.0 // indirect
