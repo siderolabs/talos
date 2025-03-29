@@ -64,6 +64,24 @@ NODE         NAMESPACE   ID                                                     
 172.20.0.5   k8s.io      └─ kube-system/kube-proxy-xp7jq:kube-proxy:84fc77c59e17         registry.k8s.io/kube-proxy:v1.26.0-alpha.3                 1843   CONTAINER_RUNNING
 ```
 
+### Set CDI plugin Spec Dirs to writable directories
+
+By default Containerd configures CDI to read discovered hardware devices from `["/etc/cdi", "/var/run/cdi"]`.
+Since /etc is not writable in Talos, CDI does not work for Dynamic Resource Allocation out of the box.
+To be able to use CDI and DRA modify the cdi spec dirs to writable locations like so:
+
+```yaml
+machine:
+  files:
+  - path: /etc/cri/conf.d/20-customization.part
+    op: create
+    content: |
+      [plugins."io.containerd.cri.v1.runtime"]
+        cdi_spec_dirs = ["/var/cdi/static", "/var/cdi/dynamic"]
+```
+
+Also change the cdi spec dirs configuration in your Dynamic Resource Allocation driver, since it needs to place the discovered hardware device specs in these folders.
+
 ### Enabling NRI Plugins
 
 By default, Talos disables [NRI](https://github.com/containerd/containerd/blob/main/docs/NRI.md) plugins in `containerd`, as they might have security implications.
