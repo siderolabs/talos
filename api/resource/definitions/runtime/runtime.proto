@@ -7,6 +7,7 @@ option java_package = "dev.talos.api.resource.definitions.runtime";
 
 import "common/common.proto";
 import "google/protobuf/duration.proto";
+import "google/protobuf/timestamp.proto";
 import "resource/definitions/enums/enums.proto";
 
 // DevicesStatusSpec is the spec for devices status.
@@ -40,6 +41,22 @@ message ExtensionServiceConfigSpec {
 // ExtensionServiceConfigStatusSpec describes status of rendered extensions service config files.
 message ExtensionServiceConfigStatusSpec {
   string spec_version = 1;
+}
+
+// FSScrubConfigSpec describes configuration of watchdog timer.
+message FSScrubConfigSpec {
+  string name = 1;
+  string mountpoint = 2;
+  google.protobuf.Duration period = 3;
+}
+
+// FSScrubStatusSpec describes configuration of watchdog timer.
+message FSScrubStatusSpec {
+  string mountpoint = 1;
+  google.protobuf.Duration period = 2;
+  google.protobuf.Timestamp time = 3;
+  google.protobuf.Duration duration = 4;
+  string status = 5;
 }
 
 // KernelModuleSpecSpec describes Linux kernel module to load.
