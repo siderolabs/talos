@@ -2,7 +2,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-package runtime
+package block
 
 //docgen:jsonschema
 
@@ -33,9 +33,9 @@ func init() {
 
 // Check interfaces.
 var (
-	_ config.RuntimeConfig = &FilesystemScrubV1Alpha1{}
-	_ config.NamedDocument = &FilesystemScrubV1Alpha1{}
-	_ config.Validator     = &FilesystemScrubV1Alpha1{}
+	_ config.FilesystemScrubConfig = &FilesystemScrubV1Alpha1{}
+	_ config.NamedDocument         = &FilesystemScrubV1Alpha1{}
+	_ config.Validator             = &FilesystemScrubV1Alpha1{}
 )
 
 // Timeout constants.

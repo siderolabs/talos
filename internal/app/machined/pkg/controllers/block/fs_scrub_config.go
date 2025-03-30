@@ -2,7 +2,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-package runtime
+package block
 
 import (
 	"context"
@@ -14,8 +14,8 @@ import (
 	"github.com/siderolabs/gen/optional"
 	"go.uber.org/zap"
 
+	"github.com/siderolabs/talos/pkg/machinery/resources/block"
 	"github.com/siderolabs/talos/pkg/machinery/resources/config"
-	"github.com/siderolabs/talos/pkg/machinery/resources/runtime"
 )
 
 // FSScrubConfigController generates configuration for watchdog timers.
@@ -23,7 +23,7 @@ type FSScrubConfigController struct{}
 
 // Name implements controller.Controller interface.
 func (ctrl *FSScrubConfigController) Name() string {
-	return "runtime.FSScrubConfigController"
+	return "block.FSScrubConfigController"
 }
 
 // Inputs implements controller.Controller interface.
@@ -32,7 +32,7 @@ func (ctrl *FSScrubConfigController) Inputs() []controller.Input {
 		{
 			Namespace: config.NamespaceName,
 			Type:      config.MachineConfigType,
-			ID:        optional.Some(config.V1Alpha1ID),
+			ID:        optional.Some(config.ActiveID),
 			Kind:      controller.InputWeak,
 		},
 	}
@@ -42,7 +42,7 @@ func (ctrl *FSScrubConfigController) Inputs() []controller.Input {
 func (ctrl *FSScrubConfigController) Outputs() []controller.Output {
 	return []controller.Output{
 		{
-			Type: runtime.FSScrubConfigType,
+			Type: block.FSScrubConfigType,
 			Kind: controller.OutputExclusive,
 		},
 	}
@@ -57,7 +57,7 @@ func (ctrl *FSScrubConfigController) Run(ctx context.Context, r controller.Runti
 		case <-r.EventCh():
 		}
 
-		cfg, err := safe.ReaderGetByID[*config.MachineConfig](ctx, r, config.V1Alpha1ID)
+		cfg, err := safe.ReaderGetByID[*config.MachineConfig](ctx, r, config.ActiveID)
 		if err != nil && !state.IsNotFoundError(err) {
 			return fmt.Errorf("error getting machine config: %w", err)
 		}
@@ -66,7 +66,7 @@ func (ctrl *FSScrubConfigController) Run(ctx context.Context, r controller.Runti
 
 		if cfg != nil {
 			for _, conf := range cfg.Config().Runtime().FilesystemScrub() {
-				if err := safe.WriterModify(ctx, r, runtime.NewFSScrubConfig(conf.Name()), func(res *runtime.FSScrubConfig) error {
+				if err := safe.WriterModify(ctx, r, block.NewFSScrubConfig(conf.Name()), func(res *block.FSScrubConfig) error {
 					res.TypedSpec().Name = conf.Name()
 					res.TypedSpec().Mountpoint = conf.Mountpoint()
 					res.TypedSpec().Period = conf.Period()
@@ -78,7 +78,7 @@ func (ctrl *FSScrubConfigController) Run(ctx context.Context, r controller.Runti
 			}
 		}
 
-		if err = safe.CleanupOutputs[*runtime.FSScrubConfig](ctx, r); err != nil {
+		if err = safe.CleanupOutputs[*block.FSScrubConfig](ctx, r); err != nil {
 			return err
 		}
 	}

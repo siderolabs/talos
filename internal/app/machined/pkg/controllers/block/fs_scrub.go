@@ -2,7 +2,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-package runtime
+package block
 
 import (
 	"context"
@@ -22,7 +22,6 @@ import (
 	"github.com/siderolabs/talos/internal/pkg/environment"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/resources/block"
-	runtimeres "github.com/siderolabs/talos/pkg/machinery/resources/runtime"
 )
 
 type scrubSchedule struct {
@@ -51,15 +50,15 @@ type FSScrubController struct {
 
 // Name implements controller.Controller interface.
 func (ctrl *FSScrubController) Name() string {
-	return "runtime.FSScrubController"
+	return "block.FSScrubController"
 }
 
 // Inputs implements controller.Controller interface.
 func (ctrl *FSScrubController) Inputs() []controller.Input {
 	return []controller.Input{
 		{
-			Namespace: runtimeres.NamespaceName,
-			Type:      runtimeres.FSScrubConfigType,
+			Namespace: block.NamespaceName,
+			Type:      block.FSScrubConfigType,
 			Kind:      controller.InputWeak,
 		},
 		{
@@ -79,7 +78,7 @@ func (ctrl *FSScrubController) Inputs() []controller.Input {
 func (ctrl *FSScrubController) Outputs() []controller.Output {
 	return []controller.Output{
 		{
-			Type: runtimeres.FSScrubStatusType,
+			Type: block.FSScrubStatusType,
 			Kind: controller.OutputExclusive,
 		},
 	}
@@ -125,21 +124,21 @@ func (ctrl *FSScrubController) Run(ctx context.Context, r controller.Runtime, lo
 func (ctrl *FSScrubController) reportStatus(ctx context.Context, r controller.Runtime) error {
 	r.StartTrackingOutputs()
 
-	presentStatuses, err := safe.ReaderListAll[*runtimeres.FSScrubStatus](ctx, r)
+	presentStatuses, err := safe.ReaderListAll[*block.FSScrubStatus](ctx, r)
 	if err != nil && !state.IsNotFoundError(err) {
 		return fmt.Errorf("error getting existing FS scrub statuses: %w", err)
 	}
 
 	for entry := range presentStatuses.All() {
 		if _, ok := ctrl.status[entry.TypedSpec().Mountpoint]; !ok {
-			if err := r.Destroy(ctx, runtimeres.NewFSScrubStatus(entry.Metadata().ID()).Metadata()); err != nil {
+			if err := r.Destroy(ctx, block.NewFSScrubStatus(entry.Metadata().ID()).Metadata()); err != nil {
 				return fmt.Errorf("error destroying old FS scrub status: %w", err)
 			}
 		}
 	}
 
 	for _, entry := range ctrl.status {
-		if err := safe.WriterModify(ctx, r, runtimeres.NewFSScrubStatus(entry.id), func(status *runtimeres.FSScrubStatus) error {
+		if err := safe.WriterModify(ctx, r, block.NewFSScrubStatus(entry.id), func(status *block.FSScrubStatus) error {
 			status.TypedSpec().Mountpoint = entry.mountpoint
 			status.TypedSpec().Period = entry.period
 			status.TypedSpec().Time = entry.time
@@ -157,7 +156,7 @@ func (ctrl *FSScrubController) reportStatus(ctx context.Context, r controller.Ru
 		}
 	}
 
-	if err := safe.CleanupOutputs[*runtimeres.FSScrubStatus](ctx, r); err != nil {
+	if err := safe.CleanupOutputs[*block.FSScrubStatus](ctx, r); err != nil {
 		return err
 	}
 
@@ -197,7 +196,7 @@ func (ctrl *FSScrubController) updateSchedule(ctx context.Context, r controller.
 		}
 	}
 
-	cfg, err := safe.ReaderListAll[*runtimeres.FSScrubConfig](ctx, r)
+	cfg, err := safe.ReaderListAll[*block.FSScrubConfig](ctx, r)
 	if err != nil && !state.IsNotFoundError(err) {
 		if !state.IsNotFoundError(err) {
 			return fmt.Errorf("error getting scrub config: %w", err)
@@ -299,7 +298,7 @@ func (ctrl *FSScrubController) runScrub(mountpoint string, opts []string) error 
 	args = append(args, mountpoint)
 
 	r := process.NewRunner(
-		false,
+		true,
 		&runner.Args{
 			ID:          "fs_scrub",
 			ProcessArgs: args,

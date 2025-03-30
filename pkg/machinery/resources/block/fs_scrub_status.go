@@ -2,7 +2,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-package runtime
+package block
 
 import (
 	"time"
@@ -16,7 +16,7 @@ import (
 )
 
 // FSScrubStatusType is type of FSScrubStatus resource.
-const FSScrubStatusType = resource.Type("FSScrubStatuses.runtime.talos.dev")
+const FSScrubStatusType = resource.Type("FSScrubStatuses.block.talos.dev")
 
 // FSScrubStatus resource holds status of watchdog timer.
 type FSScrubStatus = typed.Resource[FSScrubStatusSpec, FSScrubStatusExtension]

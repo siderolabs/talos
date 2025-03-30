@@ -2,7 +2,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-package runtime_test
+package block_test
 
 import (
 	"testing"
@@ -11,12 +11,12 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 
+	blockctrls "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/block"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/ctest"
-	runtimectrls "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/runtime"
 	"github.com/siderolabs/talos/pkg/machinery/config/container"
-	runtimecfg "github.com/siderolabs/talos/pkg/machinery/config/types/runtime"
+	blockcfg "github.com/siderolabs/talos/pkg/machinery/config/types/block"
+	"github.com/siderolabs/talos/pkg/machinery/resources/block"
 	"github.com/siderolabs/talos/pkg/machinery/resources/config"
-	"github.com/siderolabs/talos/pkg/machinery/resources/runtime"
 )
 
 type FSScrubConfigSuite struct {
@@ -28,15 +28,15 @@ func TestFSScrubConfigSuite(t *testing.T) {
 }
 
 func (suite *FSScrubConfigSuite) TestFSScrubConfigNone() {
-	suite.Require().NoError(suite.Runtime().RegisterController(&runtimectrls.FSScrubConfigController{}))
+	suite.Require().NoError(suite.Runtime().RegisterController(&blockctrls.FSScrubConfigController{}))
 
-	rtestutils.AssertNoResource[*runtime.FSScrubConfig](suite.Ctx(), suite.T(), suite.State(), "")
+	rtestutils.AssertNoResource[*block.FSScrubConfig](suite.Ctx(), suite.T(), suite.State(), "")
 }
 
 func (suite *FSScrubConfigSuite) TestFSScrubConfigMachineConfig() {
-	suite.Require().NoError(suite.Runtime().RegisterController(&runtimectrls.FSScrubConfigController{}))
+	suite.Require().NoError(suite.Runtime().RegisterController(&blockctrls.FSScrubConfigController{}))
 
-	FSScrubConfig := &runtimecfg.FilesystemScrubV1Alpha1{
+	FSScrubConfig := &blockcfg.FilesystemScrubV1Alpha1{
 		MetaName:     "fsscrub",
 		FSMountpoint: "/var",
 	}
@@ -46,14 +46,14 @@ func (suite *FSScrubConfigSuite) TestFSScrubConfigMachineConfig() {
 
 	suite.Require().NoError(suite.State().Create(suite.Ctx(), config.NewMachineConfig(cfg)))
 
-	rtestutils.AssertResource[*runtime.FSScrubConfig](suite.Ctx(), suite.T(), suite.State(), "",
-		func(cfg *runtime.FSScrubConfig, asrt *assert.Assertions) {
+	rtestutils.AssertResource[*block.FSScrubConfig](suite.Ctx(), suite.T(), suite.State(), "",
+		func(cfg *block.FSScrubConfig, asrt *assert.Assertions) {
 			asrt.Equal(
 				"/var",
 				cfg.TypedSpec().Mountpoint,
 			)
 			asrt.Equal(
-				runtimecfg.DefaultScrubPeriod,
+				blockcfg.DefaultScrubPeriod,
 				cfg.TypedSpec().Period,
 			)
 		})

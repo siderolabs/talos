@@ -2,7 +2,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-package runtime
+package block
 
 import (
 	"time"
@@ -16,7 +16,7 @@ import (
 )
 
 // FSScrubConfigType is type of FSScrubConfig resource.
-const FSScrubConfigType = resource.Type("FSScrubConfigs.runtime.talos.dev")
+const FSScrubConfigType = resource.Type("FSScrubConfigs.block.talos.dev")
 
 // FSScrubConfig resource holds configuration for watchdog timer.
 type FSScrubConfig = typed.Resource[FSScrubConfigSpec, FSScrubConfigExtension]
