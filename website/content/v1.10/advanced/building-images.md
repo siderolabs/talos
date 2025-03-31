@@ -75,14 +75,15 @@ The image can be pushed to any registry you have access to, but the access crede
 Building and pushing the image can be done with:
 
 ```bash
-make installer PUSH=true IMAGE_REGISTRY=docker.io USERNAME=<username> # ghcr.io/siderolabs/installer
+make installer-base PUSH=true IMAGE_REGISTRY=docker.io USERNAME=<username> # ghcr.io/siderolabs/installer-base
 make imager PUSH=true IMAGE_REGISTRY=docker.io USERNAME=<username> # ghcr.io/siderolabs/imager
+make installer IMAGE_REGISTRY=docker.io USERNAME=<username> # ghcr.io/siderolabs/installer
 ```
 
 The [local registry]({{< relref "developing-talos" >}}) running on `127.0.0.1:5005` can be used as well to avoid pushing/pulling over the network:
 
 ```bash
-make installer PUSH=true REGISTRY=127.0.0.1:5005
+make installer REGISTRY=127.0.0.1:5005
 ```
 
 When building `imager` container, by default Talos will include the boot assets for both `amd64` and `arm64` architectures, if building only for single architecture, specify `INSTALLER_ARCH` variable:

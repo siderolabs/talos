@@ -44,12 +44,14 @@ docker run -d -p 5005:5000 \
 Try to build and push to local registry an installer image:
 
 ```bash
-make installer IMAGE_REGISTRY=127.0.0.1:5005 PUSH=true
+make installer-base IMAGE_REGISTRY=127.0.0.1:5005 PUSH=true
+make imager IMAGE_REGISTRY=127.0.0.1:5005 PUSH=true
+make installer IMAGE_REGISTRY=127.0.0.1:5005
 ```
 
 Record the image name output in the step above.
 
-> Note: it is also possible to force a stable image tag by using `TAG` variable: `make installer IMAGE_REGISTRY=127.0.0.1:5005 TAG=v1.0.0-alpha.1 PUSH=true`.
+> Note: it is also possible to force a stable image tag by using `TAG` variable: `make installer-base IMAGE_REGISTRY=127.0.0.1:5005 TAG=v1.0.0-alpha.1 PUSH=true`.
 
 ## Running Talos cluster
 
@@ -322,7 +324,9 @@ make release-artifacts
 Build and push an installer image for the development version of Talos:
 
 ```bash
-make installer IMAGE_REGISTRY=127.0.0.1:5005 PUSH=true
+make installer-base IMAGE_REGISTRY=127.0.0.1:5005 PUSH=true
+make imager IMAGE_REGISTRY=127.0.0.1:5005 PUSH=true
+make installer IMAGE_REGISTRY=127.0.0.1:5005
 ```
 
 Run the tests (the tests will create the cluster on the older version of Talos, perform an upgrade, and verify that the cluster is still functional):
