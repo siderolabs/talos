@@ -115,8 +115,8 @@ func Generate(images []string, platform string, insecure bool, imageLayerCachePa
 			return fmt.Errorf("parsing reference %q: %w", src, err)
 		}
 
-		referenceDir := filepath.Join(tmpDir, manifestsDir, rewriteRegistry(ref.Context().RegistryStr(), src), ref.Context().RepositoryStr(), "reference")
-		digestDir := filepath.Join(tmpDir, manifestsDir, rewriteRegistry(ref.Context().RegistryStr(), src), ref.Context().RepositoryStr(), "digest")
+		referenceDir := filepath.Join(tmpDir, manifestsDir, rewriteRegistry(ref.Context().RegistryStr(), src), filepath.FromSlash(ref.Context().RepositoryStr()), "reference")
+		digestDir := filepath.Join(tmpDir, manifestsDir, rewriteRegistry(ref.Context().RegistryStr(), src), filepath.FromSlash(ref.Context().RepositoryStr()), "digest")
 
 		// if the reference was parsed as a tag, use it
 		tag, ok := ref.(name.Tag)

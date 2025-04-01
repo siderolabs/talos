@@ -1795,7 +1795,7 @@ talosctl image cache-create [flags]
 ### Examples
 
 ```
-talosctl images cache-create --images=ghcr.io/siderolabs/kubelet:1.33.0-beta.0 --image-cache-path=/tmp/talos-image-cache
+talosctl images cache-create --images=ghcr.io/siderolabs/kubelet:v1.33.0-beta.0 --image-cache-path=/tmp/talos-image-cache
 
 Alternatively, stdin can be piped to the command:
 talosctl images default | talosctl images cache-create --image-cache-path=/tmp/talos-image-cache --images=-
