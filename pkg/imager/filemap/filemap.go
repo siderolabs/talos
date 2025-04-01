@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	stdpath "path"
 	"path/filepath"
 	"slices"
 
@@ -49,7 +50,7 @@ func Walk(sourceBasePath, imageBasePath string) ([]File, error) {
 		}
 
 		filemap = append(filemap, File{
-			ImagePath:  filepath.Join(imageBasePath, rel),
+			ImagePath:  stdpath.Join(imageBasePath, filepath.ToSlash(rel)),
 			SourcePath: path,
 			ImageMode:  int64(statInfo.Mode().Perm()),
 		})
