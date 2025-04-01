@@ -222,3 +222,22 @@ func (q Quirks) SupportsUnifiedInstaller() bool {
 
 	return q.v.GTE(minTalosVersionUnifiedInstaller)
 }
+
+// XFSMkfsConfig returns the mkfs.xfs config for the given Talos version.
+func (q Quirks) XFSMkfsConfig() string {
+	switch version := q.v; {
+	// if the version doesn't parse, we assume it's latest Talos
+	// update when we have a new LTS config
+	case version == nil:
+		return "/usr/share/xfsprogs/mkfs/lts_6.12.conf"
+	// add new version once we have a new LTS config
+	case version.GTE(semver.MustParse("1.10.0")):
+		return "/usr/share/xfsprogs/mkfs/lts_6.12.conf"
+	case version.GTE(semver.MustParse("1.8.0")) && version.LT(semver.MustParse("1.10.0")):
+		return "/usr/share/xfsprogs/mkfs/lts_6.6.conf"
+	case version.GTE(semver.MustParse("1.5.0")) && version.LT(semver.MustParse("1.8.0")):
+		return "/usr/share/xfsprogs/mkfs/lts_6.1.conf"
+	default:
+		return "/usr/share/xfsprogs/mkfs/lts_6.1.conf"
+	}
+}

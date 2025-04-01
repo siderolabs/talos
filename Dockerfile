@@ -729,9 +729,9 @@ COPY --link --from=pkg-cryptsetup-amd64 / /rootfs
 COPY --link --exclude=usr/bin/ctr --from=pkg-containerd-amd64 / /rootfs
 COPY --link --from=pkg-dosfstools-amd64 / /rootfs
 COPY --link --from=pkg-e2fsprogs-amd64 / /rootfs
-COPY --link --from=pkg-systemd-udevd-amd64 / /rootfs
+COPY --link --exclude=usr/share --from=pkg-systemd-udevd-amd64 / /rootfs
 COPY --link --from=pkg-libcap-amd64 / /rootfs
-COPY --link --from=pkg-iptables-amd64 / /rootfs
+COPY --link --exclude=usr/share --from=pkg-iptables-amd64 / /rootfs
 COPY --link --from=pkg-libattr-amd64 / /rootfs
 COPY --link --from=pkg-libinih-amd64 / /rootfs
 COPY --link --from=pkg-libjson-c-amd64 / /rootfs
@@ -807,9 +807,9 @@ COPY --link --from=pkg-cryptsetup-arm64 / /rootfs
 COPY --link --exclude=usr/bin/ctr --from=pkg-containerd-arm64 / /rootfs
 COPY --link --from=pkg-dosfstools-arm64 / /rootfs
 COPY --link --from=pkg-e2fsprogs-arm64 / /rootfs
-COPY --link --from=pkg-systemd-udevd-arm64 / /rootfs
+COPY --link --exclude=usr/share --from=pkg-systemd-udevd-arm64 / /rootfs
 COPY --link --from=pkg-libcap-arm64 / /rootfs
-COPY --link --from=pkg-iptables-arm64 / /rootfs
+COPY --link --exclude=usr/share --from=pkg-iptables-arm64 / /rootfs
 COPY --link --from=pkg-libattr-arm64 / /rootfs
 COPY --link --from=pkg-libinih-arm64 / /rootfs
 COPY --link --from=pkg-libjson-c-arm64 / /rootfs

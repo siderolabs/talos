@@ -540,7 +540,7 @@ func (i *Installer) createPartitions(gptdev gpt.Device, mode Mode, hostTalosVers
 	for idx, p := range partitions {
 		devName := partitioning.DevName(i.options.Disk, uint(idx+1))
 
-		if err = partition.Format(devName, &p.FormatOptions, i.options.Printf); err != nil {
+		if err = partition.Format(devName, &p.FormatOptions, i.options.Version, i.options.Printf); err != nil {
 			return nil, fmt.Errorf("failed to format partition %s: %w", devName, err)
 		}
 	}

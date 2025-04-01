@@ -11,6 +11,7 @@ import (
 	"github.com/siderolabs/go-blockdevice/v2/block"
 
 	"github.com/siderolabs/talos/pkg/machinery/constants"
+	"github.com/siderolabs/talos/pkg/machinery/imager/quirks"
 	"github.com/siderolabs/talos/pkg/makefs"
 )
 
@@ -28,7 +29,7 @@ func NewFormatOptions(label string) *FormatOptions {
 }
 
 // Format zeroes the device and formats it using filesystem type provided.
-func Format(devname string, t *FormatOptions, printf func(string, ...any)) error {
+func Format(devname string, t *FormatOptions, talosVersion string, printf func(string, ...any)) error {
 	opts := []makefs.Option{makefs.WithForce(t.Force), makefs.WithLabel(t.Label)}
 
 	if t.UnsupportedFSOption {
@@ -45,6 +46,8 @@ func Format(devname string, t *FormatOptions, printf func(string, ...any)) error
 	case FilesystemTypeVFAT:
 		return makefs.VFAT(devname, opts...)
 	case FilesystemTypeXFS:
+		opts = append(opts, makefs.WithConfigFile(quirks.New(talosVersion).XFSMkfsConfig()))
+
 		return makefs.XFS(devname, opts...)
 	case FileSystemTypeExt4:
 		return makefs.Ext4(devname, opts...)

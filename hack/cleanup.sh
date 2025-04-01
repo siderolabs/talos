@@ -27,7 +27,7 @@ find ${PREFIX}/usr/bin -type f -exec strip --strip-all {} ';' || true
 # Remove header files, man files, and any other non-runtime dependencies.
 rm -rf ${PREFIX}/usr/lib/pkgconfig/ \
        ${PREFIX}/{include,usr/include}/* \
-       ${PREFIX}/{share,usr/share}/* \
+       ${PREFIX}/share/* \
        ${PREFIX}/usr/lib/cmake \
        ${PREFIX}/usr/lib/gconv/ \
        ${PREFIX}/usr/libexec/getconf \

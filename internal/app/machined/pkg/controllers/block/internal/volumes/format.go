@@ -16,6 +16,7 @@ import (
 	"go.uber.org/zap"
 
 	mountv2 "github.com/siderolabs/talos/internal/pkg/mount/v2"
+	"github.com/siderolabs/talos/pkg/machinery/imager/quirks"
 	"github.com/siderolabs/talos/pkg/machinery/resources/block"
 	"github.com/siderolabs/talos/pkg/makefs"
 )
@@ -107,6 +108,8 @@ func Format(ctx context.Context, logger *zap.Logger, volumeContext ManagerContex
 		if volumeContext.Cfg.TypedSpec().Provisioning.FilesystemSpec.Label != "" {
 			makefsOptions = append(makefsOptions, makefs.WithLabel(volumeContext.Cfg.TypedSpec().Provisioning.FilesystemSpec.Label))
 		}
+
+		makefsOptions = append(makefsOptions, makefs.WithConfigFile(quirks.New("").XFSMkfsConfig()))
 
 		if err = makefs.XFS(volumeContext.Status.MountLocation, makefsOptions...); err != nil {
 			return fmt.Errorf("error formatting XFS: %w", err)

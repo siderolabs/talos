@@ -131,3 +131,47 @@ func TestSupportsZstd(t *testing.T) {
 		})
 	}
 }
+
+func TestXFSMkfsConfigFile(t *testing.T) {
+	for _, test := range []struct {
+		version string
+
+		expected string
+	}{
+		{
+			version:  "1.5.0",
+			expected: "/usr/share/xfsprogs/mkfs/lts_6.1.conf",
+		},
+		{
+			version:  "1.6.2",
+			expected: "/usr/share/xfsprogs/mkfs/lts_6.1.conf",
+		},
+		{
+			version:  "1.7.0",
+			expected: "/usr/share/xfsprogs/mkfs/lts_6.1.conf",
+		},
+
+		{
+			version:  "1.8.1",
+			expected: "/usr/share/xfsprogs/mkfs/lts_6.6.conf",
+		},
+		{
+			version:  "1.9.3",
+			expected: "/usr/share/xfsprogs/mkfs/lts_6.6.conf",
+		},
+		{
+			version:  "1.10.0",
+			expected: "/usr/share/xfsprogs/mkfs/lts_6.12.conf",
+		},
+		{
+			expected: "/usr/share/xfsprogs/mkfs/lts_6.12.conf",
+		},
+		{
+			expected: "/usr/share/xfsprogs/mkfs/lts_6.12.conf",
+		},
+	} {
+		t.Run(test.version, func(t *testing.T) {
+			assert.Equal(t, test.expected, quirks.New(test.version).XFSMkfsConfig())
+		})
+	}
+}

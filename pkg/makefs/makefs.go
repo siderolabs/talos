@@ -11,6 +11,7 @@ type Option func(*Options)
 // Options for makefs.
 type Options struct {
 	Label               string
+	ConfigFile          string
 	Force               bool
 	Reproducible        bool
 	UnsupportedFSOption bool
@@ -42,6 +43,13 @@ func WithReproducible(reproducible bool) Option {
 func WithUnsupportedFSOption(unsupported bool) Option {
 	return func(o *Options) {
 		o.UnsupportedFSOption = unsupported
+	}
+}
+
+// WithConfigFile sets the config file for the filesystem to be created.
+func WithConfigFile(configFile string) Option {
+	return func(o *Options) {
+		o.ConfigFile = configFile
 	}
 }
 
