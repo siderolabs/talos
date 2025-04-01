@@ -111,6 +111,8 @@ func NewState() (*State, error) {
 		&block.VolumeMountRequest{},
 		&block.VolumeMountStatus{},
 		&block.VolumeStatus{},
+		&block.FSScrubConfig{},
+		&block.FSScrubStatus{},
 		&cluster.Affiliate{},
 		&cluster.Config{},
 		&cluster.Identity{},

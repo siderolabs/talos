@@ -113,6 +113,11 @@ func (s *WatchdogTimerV1Alpha1) WatchdogTimer() config.WatchdogTimerConfig {
 	return s
 }
 
+// FilesystemScrub implements config.RuntimeConfig interface.
+func (s *WatchdogTimerV1Alpha1) FilesystemScrub() []config.FilesystemScrubConfig {
+	return []config.FilesystemScrubConfig{}
+}
+
 // Device implements config.WatchdogTimerConfig interface.
 func (s *WatchdogTimerV1Alpha1) Device() string {
 	return s.WatchdogDevice

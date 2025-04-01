@@ -106,6 +106,10 @@ func (ctrl *Controller) Run(ctx context.Context, drainer *runtime.Drainer) error
 			V1Alpha1Mode: ctrl.v1alpha1Runtime.State().Platform().Mode(),
 		},
 		&block.VolumeManagerController{},
+		&block.FSScrubConfigController{},
+		&block.FSScrubController{
+			Runtime: ctrl.v1alpha1Runtime,
+		},
 		&cluster.AffiliateMergeController{},
 		cluster.NewConfigController(),
 		&cluster.DiscoveryServiceController{},

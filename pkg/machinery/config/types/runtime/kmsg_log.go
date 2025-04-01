@@ -113,6 +113,11 @@ func (s *KmsgLogV1Alpha1) WatchdogTimer() config.WatchdogTimerConfig {
 	return nil
 }
 
+// FilesystemScrub implements config.RuntimeConfig interface.
+func (s *KmsgLogV1Alpha1) FilesystemScrub() []config.FilesystemScrubConfig {
+	return []config.FilesystemScrubConfig{}
+}
+
 // Validate implements config.Validator interface.
 func (s *KmsgLogV1Alpha1) Validate(validation.RuntimeMode, ...validation.Option) ([]string, error) {
 	if s.MetaName == "" {

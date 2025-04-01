@@ -35,6 +35,8 @@ description: Talos gRPC API reference.
     - [DiskSpec](#talos.resource.definitions.block.DiskSpec)
     - [EncryptionKey](#talos.resource.definitions.block.EncryptionKey)
     - [EncryptionSpec](#talos.resource.definitions.block.EncryptionSpec)
+    - [FSScrubConfigSpec](#talos.resource.definitions.block.FSScrubConfigSpec)
+    - [FSScrubStatusSpec](#talos.resource.definitions.block.FSScrubStatusSpec)
     - [FilesystemSpec](#talos.resource.definitions.block.FilesystemSpec)
     - [LocatorSpec](#talos.resource.definitions.block.LocatorSpec)
     - [MountRequestSpec](#talos.resource.definitions.block.MountRequestSpec)
@@ -990,6 +992,42 @@ EncryptionSpec is the spec for volume encryption.
 | key_size | [uint64](#uint64) |  |  |
 | block_size | [uint64](#uint64) |  |  |
 | perf_options | [string](#string) | repeated |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.block.FSScrubConfigSpec"></a>
+
+### FSScrubConfigSpec
+FSScrubConfigSpec describes configuration of watchdog timer.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| name | [string](#string) |  |  |
+| mountpoint | [string](#string) |  |  |
+| period | [google.protobuf.Duration](#google.protobuf.Duration) |  |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.block.FSScrubStatusSpec"></a>
+
+### FSScrubStatusSpec
+FSScrubStatusSpec describes configuration of watchdog timer.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| mountpoint | [string](#string) |  |  |
+| period | [google.protobuf.Duration](#google.protobuf.Duration) |  |  |
+| time | [google.protobuf.Timestamp](#google.protobuf.Timestamp) |  |  |
+| duration | [google.protobuf.Duration](#google.protobuf.Duration) |  |  |
+| status | [string](#string) |  |  |
 
 
 
