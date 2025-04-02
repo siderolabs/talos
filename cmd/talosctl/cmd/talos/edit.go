@@ -77,11 +77,9 @@ func editFn(c *client.Client) func(context.Context, string, resource.Resource, e
 				w = crlf.NewCRLFWriter(w)
 			}
 
-			_, err := w.Write([]byte(
-				fmt.Sprintf(
-					"# Editing %s/%s at node %s\n", mc.Metadata().Type(), id, node,
-				),
-			))
+			_, err := fmt.Fprintf(w,
+				"# Editing %s/%s at node %s\n", mc.Metadata().Type(), id, node,
+			)
 			if err != nil {
 				return err
 			}

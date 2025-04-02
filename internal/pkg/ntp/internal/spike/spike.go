@@ -74,7 +74,8 @@ func (d *Detector) IsSpike(sample Sample) bool {
 	var j float64
 
 	for i := range d.samples {
-		j += math.Pow(d.samples[i].Offset-d.samples[indexMin].Offset, 2)
+		offsetDiff := d.samples[i].Offset - d.samples[indexMin].Offset
+		j += offsetDiff * offsetDiff
 	}
 
 	d.samplesJitter = math.Sqrt(j / (float64(len(d.samples)) - 1))

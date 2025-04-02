@@ -252,7 +252,7 @@ ENV GOTOOLCHAIN=local
 ENV CGO_ENABLED=0
 SHELL ["/bin/bash", "-c"]
 ARG GOLANGCILINT_VERSION
-RUN --mount=type=cache,target=/.cache,id=talos/.cache go install github.com/golangci/golangci-lint/cmd/golangci-lint@${GOLANGCILINT_VERSION} \
+RUN --mount=type=cache,target=/.cache,id=talos/.cache go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@${GOLANGCILINT_VERSION} \
 	&& mv /root/go/bin/golangci-lint /usr/bin/golangci-lint
 ARG GOIMPORTS_VERSION
 RUN --mount=type=cache,target=/.cache,id=talos/.cache go install golang.org/x/tools/cmd/goimports@${GOIMPORTS_VERSION} \

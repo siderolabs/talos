@@ -114,10 +114,10 @@ func (suite *RouteSpecSuite) assertRoute(
 		}
 	}
 
-	switch {
-	case matching == 1:
+	switch matching {
+	case 1:
 		return nil
-	case matching == 0:
+	case 0:
 		return retry.ExpectedErrorf("route to %s via %s not found", destination, gateway)
 	default:
 		return retry.ExpectedErrorf("route to %s via %s found %d matches", destination, gateway, matching)

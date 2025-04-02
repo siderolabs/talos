@@ -79,15 +79,15 @@ func HandleEncryptionWithHandler(ctx context.Context, logger *zap.Logger, volume
 		return xerrors.NewTaggedf[Retryable]("error probing disk: %w", err)
 	}
 
-	switch {
-	case info.Name == "":
+	switch info.Name {
+	case "":
 		// no filesystem, encrypt
 		logger.Info("formatting and encrypting volume")
 
 		if err = handler.FormatAndEncrypt(ctx, logger, volumeContext.Status.Location); err != nil {
 			return xerrors.NewTaggedf[Retryable]("error formatting and encrypting volume: %w", err)
 		}
-	case info.Name == "luks":
+	case "luks":
 		// already encrypted
 	default:
 		// mismatch

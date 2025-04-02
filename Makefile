@@ -25,10 +25,10 @@ DEBUG_TOOLS_SOURCE := scratch
 EMBED_TARGET ?= embed
 
 TOOLS_PREFIX ?= ghcr.io/siderolabs/tools
-TOOLS ?= v1.10.0-alpha.0-23-g6d456ca
+TOOLS ?= v1.10.0-alpha.0-24-g4f2036e
 PKGS_PREFIX ?= ghcr.io/siderolabs
-PKGS ?= v1.10.0-alpha.0-72-g7d7323b
-EXTRAS ?= v1.10.0-alpha.0-4-gc201b87
+PKGS ?= v1.10.0-alpha.0-74-ga09be59
+EXTRAS ?= v1.10.0-alpha.0-6-gca5b638
 
 KRES_IMAGE ?= ghcr.io/siderolabs/kres:latest
 CONFORMANCE_IMAGE ?= ghcr.io/siderolabs/conform:latest
@@ -92,7 +92,7 @@ GOIMPORTS_VERSION ?= v0.31.0
 # renovate: datasource=go depName=mvdan.cc/gofumpt
 GOFUMPT_VERSION ?= v0.7.0
 # renovate: datasource=go depName=github.com/golangci/golangci-lint
-GOLANGCILINT_VERSION ?= v1.64.8
+GOLANGCILINT_VERSION ?= v2.0.2
 # renovate: datasource=go depName=golang.org/x/tools
 STRINGER_VERSION ?= v0.31.0
 # renovate: datasource=go depName=github.com/dmarkham/enumer
@@ -112,7 +112,7 @@ PROTOC_GEN_DOC_VERSION ?= v1.5.1
 # renovate: datasource=npm depName=markdownlint-cli
 MARKDOWNLINTCLI_VERSION ?= 0.44.0
 # renovate: datasource=npm depName=textlint
-TEXTLINT_VERSION ?= 14.5.0
+TEXTLINT_VERSION ?= 14.6.0
 # renovate: datasource=npm depName=textlint-filter-rule-comments
 TEXTLINT_FILTER_RULE_COMMENTS_VERSION ?= 1.2.2
 # renovate: datasource=npm depName=textlint-rule-one-sentence-per-line

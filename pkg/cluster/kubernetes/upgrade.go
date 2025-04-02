@@ -45,7 +45,7 @@ type UpgradeOptions struct {
 // Log writes the line to logger or to stdout if no logger was provided.
 func (options *UpgradeOptions) Log(line string, args ...any) {
 	if options.LogOutput != nil {
-		options.LogOutput.Write([]byte(fmt.Sprintf(line, args...))) //nolint:errcheck
+		fmt.Fprintf(options.LogOutput, line, args...) //nolint:errcheck
 
 		return
 	}

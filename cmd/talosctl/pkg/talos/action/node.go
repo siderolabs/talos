@@ -42,7 +42,7 @@ func (a *nodeTracker) tailDebugLogs() error {
 			}
 
 			return helpers.ReadGRPCStream(stream, func(data *common.Data, _ string, _ bool) error {
-				_, err := a.dmesg.Write([]byte(fmt.Sprintf("%s: %s", a.node, data.GetBytes())))
+				_, err := fmt.Fprintf(a.dmesg, "%s: %s", a.node, data.GetBytes())
 
 				return err
 			})

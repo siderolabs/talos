@@ -204,7 +204,8 @@ func k8sNodeToNodeInfo(node *corev1.Node) (*cluster.NodeInfo, error) {
 	ips := make([]netip.Addr, 0, len(node.Status.Addresses))
 
 	for _, address := range node.Status.Addresses {
-		if address.Type == corev1.NodeInternalIP {
+		switch address.Type { //nolint:exhaustive
+		case corev1.NodeInternalIP:
 			ip, err := netip.ParseAddr(address.Address)
 			if err != nil {
 				return nil, err
@@ -212,7 +213,7 @@ func k8sNodeToNodeInfo(node *corev1.Node) (*cluster.NodeInfo, error) {
 
 			internalIP = ip
 			ips = append(ips, ip)
-		} else if address.Type == corev1.NodeExternalIP {
+		case corev1.NodeExternalIP:
 			ip, err := netip.ParseAddr(address.Address)
 			if err != nil {
 				return nil, err

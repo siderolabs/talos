@@ -48,14 +48,15 @@ func K8sAllNodesReportedAssertion(ctx context.Context, cl ClusterInfo) error {
 		var ips []netip.Addr
 
 		for _, nodeAddress := range node.Status.Addresses {
-			if nodeAddress.Type == v1.NodeInternalIP {
+			switch nodeAddress.Type { //nolint:exhaustive
+			case v1.NodeInternalIP:
 				internalIP, err = netip.ParseAddr(nodeAddress.Address)
 				if err != nil {
 					return err
 				}
 
 				ips = append(ips, internalIP)
-			} else if nodeAddress.Type == v1.NodeExternalIP {
+			case v1.NodeExternalIP:
 				externalIP, err := netip.ParseAddr(nodeAddress.Address)
 				if err != nil {
 					return err
@@ -102,14 +103,15 @@ func K8sFullControlPlaneAssertion(ctx context.Context, cl ClusterInfo) error {
 				var ips []netip.Addr
 
 				for _, nodeAddress := range node.Status.Addresses {
-					if nodeAddress.Type == v1.NodeInternalIP {
+					switch nodeAddress.Type { //nolint:exhaustive
+					case v1.NodeInternalIP:
 						internalIP, err = netip.ParseAddr(nodeAddress.Address)
 						if err != nil {
 							return err
 						}
 
 						ips = append(ips, internalIP)
-					} else if nodeAddress.Type == v1.NodeExternalIP {
+					case v1.NodeExternalIP:
 						externalIP, err2 := netip.ParseAddr(nodeAddress.Address)
 						if err2 != nil {
 							return err2

@@ -55,20 +55,9 @@ func (w *TermUIWrapper) convertStyle(style termui.Style) tcell.Style {
 	fgColor := w.convertColor(style.Fg)
 	bgColor := w.convertColor(style.Bg)
 
-	bold := false
-	if style.Modifier&termui.ModifierBold != 0 {
-		bold = true
-	}
-
-	underline := false
-	if style.Modifier&termui.ModifierUnderline != 0 {
-		underline = true
-	}
-
-	reverse := false
-	if style.Modifier&termui.ModifierReverse != 0 {
-		reverse = true
-	}
+	bold := style.Modifier&termui.ModifierBold != 0
+	underline := style.Modifier&termui.ModifierUnderline != 0
+	reverse := style.Modifier&termui.ModifierReverse != 0
 
 	return tcell.StyleDefault.Foreground(fgColor).Background(bgColor).Bold(bold).Underline(underline).Reverse(reverse)
 }

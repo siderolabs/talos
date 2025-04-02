@@ -1,120 +1,28 @@
-# This file contains all available configuration options
-# with their default values.
-
-# options for analysis running
+version: "2"
 run:
-  # default concurrency is a available CPU number
-  # concurrency: 4
-
-  # timeout for analysis, e.g. 30s, 5m, default is 1m
-  timeout: 10m
-
-  # exit code when at least one issue was found, default is 1
-  issues-exit-code: 1
-
-  # include test files or not, default is true
-  tests: true
-
-  # list of build tags, all linters use it. Default is empty list.
   build-tags:
     - integration
     - integration_api
     - integration_cli
     - integration_k8s
     - integration_provision
-
-# output configuration options
+  issues-exit-code: 1
+  tests: true
 output:
-  # colored-line-number|line-number|json|tab|checkstyle, default is "colored-line-number"
   formats:
-    - format: line-number
+    text:
       path: stdout
-  print-issued-lines: true
-  print-linter-name: true
-  sort-results: true
-
-# all available settings of specific linters
-linters-settings:
-  errcheck:
-    # report about not checking of errors in type assetions: `a := b.(MyStruct)`;
-    # default is false: such cases aren't reported by default.
-    check-type-assertions: false # we have forcetypeassert linter for it
-
-    # report about assignment of errors to blank identifier: `num, _ := strconv.Atoi(numStr)`;
-    # default is false: such cases aren't reported by default.
-    check-blank: true
-
-    exclude-functions:
-      - fmt.Fprintln
-      - fmt.Fprintf
-      - fmt.Fprint
-  govet: { }
-  gocyclo:
-    # minimal code complexity to report, 30 by default (but we recommend 10-20)
-    min-complexity: 10
-  dupl:
-    # tokens count to trigger issue, 150 by default
-    threshold: 100
-  goconst:
-    # minimal length of string constant, 3 by default
-    min-len: 3
-    # minimal occurrences count to trigger, 3 by default
-    min-occurrences: 3
-  misspell:
-    # Correct spellings using locale preferences for US or UK.
-    # Default is to use a neutral variety of English.
-    # Setting locale to US will correct the British spelling of 'colour' to 'color'.
-    locale: US
-  lll:
-    # max line length, lines longer will be reported. Default is 120.
-    # '\t' is counted as 1 character by default, and can be changed with the tab-width option
-    line-length: 200
-    # tab width in spaces. Default to 1.
-    tab-width: 1
-  nolintlint:
-    allow-unused: false
-    allow-no-explanation: []
-    require-explanation: false
-    require-specific: true
-  unused:
-    local-variables-are-used: false
-  prealloc:
-    # XXX: we don't recommend using this linter before doing performance profiling.
-    # For most programs usage of prealloc will be a premature optimization.
-
-    # Report preallocation suggestions only on simple loops that have no returns/breaks/continues/gotos in them.
-    # True by default.
-    simple: true
-    range-loops: true # Report preallocation suggestions on range loops, true by default
-    for-loops: false # Report preallocation suggestions on for loops, false by default
-  gci:
-    sections:
-      - standard # Captures all standard packages if they do not match another section.
-      - default # Contains all imports that could not be matched to another section type.
-      - prefix(github.com/siderolabs/talos) # Groups all imports with the specified Prefix.
-  cyclop:
-    # the maximal code complexity to report
-    max-complexity: 20
-  gomoddirectives:
-    replace-local: true
-    replace-allow-list:
-      - gopkg.in/yaml.v3
-      - github.com/coredns/coredns
-      - github.com/mdlayher/kobject
-      - golang.zx2c4.com/wireguard
-      - golang.zx2c4.com/wireguard/wgctrl
-      - cloud.google.com/go
-      - github.com/mdlayher/ethtool
-      # fd-leak related replacements: https://github.com/siderolabs/talos/issues/9412
-      - github.com/insomniacslk/dhcp
-    retract-allow-no-explanation: false
-    exclude-forbidden: false
-
+      print-linter-name: true
+      print-issued-lines: true
+      colors: false
 linters:
-  enable-all: true
+  default: all
   disable:
-    - errorlint
+    - contextcheck
+    - depguard
+    - dupword
     - err113
+    - errorlint
     - exhaustruct
     - forbidigo
     - forcetypeassert
@@ -124,313 +32,352 @@ linters:
     - gocognit
     - godox
     - gosec
-    - ireturn # we return interfaces
+    - inamedparam
+    - ireturn
     - maintidx
     - mnd
+    - musttag
+    - nakedret
     - nestif
-    - nilnil # we return "nil, nil"
+    - nilnil
+    - nolintlint
     - nonamedreturns
     - paralleltest
-    - promlinter # https://github.com/golangci/golangci-lint/issues/2222
-    - tagliatelle # we have many different conventions
-    - thelper
-    - varnamelen # too annoying
-    - wrapcheck
-    - contextcheck # enable once golangci-lint 1.50.1 or 1.51 lands
-    - dupword # too annoying
-    - musttag # too annoying
-    - nakedret # too annoying
-    - depguard
-    - tagalign # too annoying
-    - testifylint # too annoying
-    - inamedparam # too annoying
-    - protogetter # too annoying
     - perfsprint
-    - recvcheck # too annoying
-    - nolintlint # cache issues https://github.com/golangci/golangci-lint/issues/3476
-    - tenv # deprecated
-  disable-all: false
-  fast: false
-
+    - promlinter
+    - protogetter
+    - recvcheck
+    - tagalign
+    - tagliatelle
+    - testifylint
+    - thelper
+    - varnamelen
+    - wrapcheck
+  settings:
+    cyclop:
+      max-complexity: 20
+    dupl:
+      threshold: 100
+    errcheck:
+      check-type-assertions: false
+      check-blank: true
+      exclude-functions:
+        - fmt.Fprintln
+        - fmt.Fprintf
+        - fmt.Fprint
+    goconst:
+      min-len: 3
+      min-occurrences: 3
+    gocyclo:
+      min-complexity: 10
+    gomoddirectives:
+      replace-allow-list:
+        - gopkg.in/yaml.v3
+        - github.com/coredns/coredns
+        - github.com/mdlayher/kobject
+        - golang.zx2c4.com/wireguard
+        - golang.zx2c4.com/wireguard/wgctrl
+        - cloud.google.com/go
+        - github.com/mdlayher/ethtool
+        - github.com/insomniacslk/dhcp
+      replace-local: true
+      exclude-forbidden: false
+      retract-allow-no-explanation: false
+    lll:
+      line-length: 200
+      tab-width: 1
+    misspell:
+      locale: US
+    nolintlint:
+      require-explanation: false
+      require-specific: true
+      allow-unused: false
+    prealloc:
+      simple: true
+      range-loops: true
+      for-loops: false
+    staticcheck:
+      checks: ["all", "-ST1000", "-ST1003", "-ST1016", "-ST1020", "-ST1021", "-ST1022", "-QF1001", "-QF1008"]
+    unused:
+      local-variables-are-used: false
+  exclusions:
+    generated: lax
+    rules:
+      - linters:
+          - dupl
+        path: cmd/talosctl/cmd
+      - linters:
+          - dupl
+        path: internal/app/machined/internal/phase
+      - linters:
+          - dupl
+        path: internal/app/machined/pkg/system/services
+      - linters:
+          - revive
+        path: cmd/talosctl/cmd/mgmt
+        text: should have a package comment
+      - linters:
+          - revive
+        path: cmd/talosctl/cmd/mgmt/inject
+        text: should have a package comment
+      - linters:
+          - revive
+        path: cmd/talosctl/cmd/talos
+        text: should have a package comment
+      - linters:
+          - revive
+        path: cmd/talosctl/pkg/talos/action
+        text: should have a package comment
+      - linters:
+          - revive
+        path: cmd/talosctl/pkg/talos/global
+        text: should have a package comment
+      - linters:
+          - revive
+        path: cmd/talosctl/pkg/talos/helpers
+        text: should have a package comment
+      - linters:
+          - revive
+        path: internal/app/machined/pkg/controllers/cri
+        text: should have a package comment
+      - linters:
+          - revive
+        path: internal/app/machined/pkg/controllers/kubeaccess/serviceaccount
+        text: should have a package comment
+      - linters:
+          - revive
+        path: internal/app/machined/pkg/controllers/perf
+        text: should have a package comment
+      - linters:
+          - revive
+        path: internal/app/machined/pkg/system/events
+        text: should have a package comment
+      - linters:
+          - revive
+        path: internal/app/machined/pkg/system/health
+        text: should have a package comment
+      - linters:
+          - revive
+        path: internal/app/machined/pkg/system/runner/containerd
+        text: should have a package comment
+      - linters:
+          - revive
+        path: internal/app/machined/pkg/system/runner/goroutine
+        text: should have a package comment
+      - linters:
+          - revive
+        path: internal/app/machined/pkg/system/runner/process
+        text: should have a package comment
+      - linters:
+          - revive
+        path: internal/app/machined/pkg/system/runner/restart
+        text: should have a package comment
+      - linters:
+          - revive
+        path: internal/app/machined/pkg/system
+        text: should have a package comment
+      - linters:
+          - revive
+        path: internal/app/maintenance
+        text: should have a package comment
+      - linters:
+          - revive
+        path: internal/app/maintenance/server
+        text: should have a package comment
+      - linters:
+          - revive
+        path: internal/app/poweroff
+        text: should have a package comment
+      - linters:
+          - revive
+        path: internal/app/trustd/internal/reg
+        text: should have a package comment
+      - linters:
+          - revive
+        path: internal/app/trustd
+        text: should have a package comment
+      - linters:
+          - revive
+        path: internal/pkg/containers/image
+        text: should have a package comment
+      - linters:
+          - revive
+        path: internal/pkg/etcd
+        text: should have a package comment
+      - linters:
+          - revive
+        path: internal/pkg/install
+        text: should have a package comment
+      - linters:
+          - revive
+        path: internal/pkg/mount
+        text: should have a package comment
+      - linters:
+          - revive
+        path: internal/pkg/mount/switchroot
+        text: should have a package comment
+      - linters:
+          - revive
+        path: internal/pkg/tui/components
+        text: should have a package comment
+      - linters:
+          - revive
+        path: pkg/argsbuilder
+        text: should have a package comment
+      - linters:
+          - revive
+        path: pkg/chunker
+        text: should have a package comment
+      - linters:
+          - revive
+        path: pkg/chunker/file
+        text: should have a package comment
+      - linters:
+          - revive
+        path: pkg/chunker/stream
+        text: should have a package comment
+      - linters:
+          - revive
+        path: pkg/download
+        text: should have a package comment
+      - linters:
+          - revive
+        path: pkg/grpc/dialer
+        text: should have a package comment
+      - linters:
+          - revive
+        path: pkg/grpc/factory
+        text: should have a package comment
+      - linters:
+          - revive
+        path: pkg/grpc/gen
+        text: should have a package comment
+      - linters:
+          - revive
+        path: pkg/grpc/middleware/auth/basic
+        text: should have a package comment
+      - linters:
+          - revive
+        path: pkg/grpc/middleware/authz
+        text: should have a package comment
+      - linters:
+          - revive
+        path: pkg/kubernetes
+        text: should have a package comment
+      - linters:
+          - revive
+        path: pkg/kubernetes/inject
+        text: should have a package comment
+      - linters:
+          - revive
+        path: pkg/provision/providers
+        text: should have a package comment
+      - linters:
+          - revive
+        path: pkg/provision/providers/qemu
+        text: should have a package comment
+      - linters:
+          - revive
+        path: config/encoder
+        text: should have a package comment
+      - linters:
+          - revive
+        path: resources/kubespan
+        text: should have a package comment
+      - linters:
+          - revive
+        path: client/config
+        text: should have a package comment
+      - linters:
+          - revive
+        path: config/merge
+        text: should have a package comment
+      - linters:
+          - revive
+        path: config/types/v1alpha1/bundle
+        text: should have a package comment
+      - linters:
+          - revive
+        path: resources/cri
+        text: should have a package comment
+      - linters:
+          - revive
+        path: resources/runtime
+        text: should have a package comment
+      - linters:
+          - revive
+        path: kernel
+        text: should have a package comment
+      - linters:
+          - revive
+        path: constants
+        text: should have a package comment
+      - linters:
+          - revive
+        path: resources/perf
+        text: should have a package comment
+      - linters:
+          - revive
+        path: resources/cluster
+        text: should have a package comment
+      - linters:
+          - revive
+        path: role
+        text: should have a package comment
+      - linters:
+          - revive
+        path: resources/hardware
+        text: should have a package comment
+      - linters:
+          - revive
+        path: config/decoder
+        text: should have a package comment
+      - linters:
+          - revive
+        path: config/internal/cis
+        text: should have a package comment
+      - linters:
+          - revive
+        path: config/types/v1alpha1/machine
+        text: should have a package comment
+      - linters:
+          - dupl
+        path: config/types/v1alpha1
+      - linters:
+          - unused
+        path: specs-go/config.go
+      - path: (.+)\.go$
+        text: package comment should be of the form "Package services ..."
+      - path: (.+)\.go$
+        text: ^ST1000
+      - path: (.+)\.go$
+        text: parameter '\w+' seems to be unused, consider removing or renaming it as _
+    paths:
+      - .*\\.pb\\.go$
+      - third_party$
+      - builtin$
+      - examples$
 issues:
-  uniq-by-line: true
-  # List of regexps of issue texts to exclude, empty list by default.
-  # But independently from this option we use default exclude patterns,
-  # it can be disabled by `exclude-use-default: false`. To list all
-  # excluded by default patterns execute `golangci-lint run --help`
-  exclude:
-    - package comment should be of the form "Package services ..." # revive
-    - ^ST1000 # ST1000: at least one file in a package should have a package comment (stylecheck)
-    - parameter '\w+' seems to be unused, consider removing or renaming it as _ # noisy check, especially when the usage is an interface implementation
-
-  exclude-files:
-    - .*\\.pb\\.go$
-
-  exclude-rules:
-    - path: cmd/talosctl/cmd
-      linters:
-        - dupl
-    - path: internal/app/machined/internal/phase
-      linters:
-        - dupl
-    - path: internal/app/machined/pkg/system/services
-      linters:
-        - dupl
-    - path: cmd/talosctl/cmd/mgmt
-      text: "should have a package comment"
-      linters:
-        - revive
-    - path: cmd/talosctl/cmd/mgmt/inject
-      text: "should have a package comment"
-      linters:
-        - revive
-    - path: cmd/talosctl/cmd/talos
-      text: "should have a package comment"
-      linters:
-        - revive
-    - path: cmd/talosctl/pkg/talos/action
-      text: "should have a package comment"
-      linters:
-        - revive
-    - path: cmd/talosctl/pkg/talos/global
-      text: "should have a package comment"
-      linters:
-        - revive
-    - path: cmd/talosctl/pkg/talos/helpers
-      text: "should have a package comment"
-      linters:
-        - revive
-    - path: internal/app/machined/pkg/controllers/cri
-      text: "should have a package comment"
-      linters:
-        - revive
-    - path: internal/app/machined/pkg/controllers/kubeaccess/serviceaccount
-      text: "should have a package comment"
-      linters:
-        - revive
-    - path: internal/app/machined/pkg/controllers/perf
-      text: "should have a package comment"
-      linters:
-        - revive
-    - path: internal/app/machined/pkg/system/events
-      text: "should have a package comment"
-      linters:
-        - revive
-    - path: internal/app/machined/pkg/system/health
-      text: "should have a package comment"
-      linters:
-        - revive
-    - path: internal/app/machined/pkg/system/runner/containerd
-      text: "should have a package comment"
-      linters:
-        - revive
-    - path: internal/app/machined/pkg/system/runner/goroutine
-      text: "should have a package comment"
-      linters:
-        - revive
-    - path: internal/app/machined/pkg/system/runner/process
-      text: "should have a package comment"
-      linters:
-        - revive
-    - path: internal/app/machined/pkg/system/runner/restart
-      text: "should have a package comment"
-      linters:
-        - revive
-    - path: internal/app/machined/pkg/system
-      text: "should have a package comment"
-      linters:
-        - revive
-    - path: internal/app/maintenance
-      text: "should have a package comment"
-      linters:
-        - revive
-    - path: internal/app/maintenance/server
-      text: "should have a package comment"
-      linters:
-        - revive
-    - path: internal/app/poweroff
-      text: "should have a package comment"
-      linters:
-        - revive
-    - path: internal/app/trustd/internal/reg
-      text: "should have a package comment"
-      linters:
-        - revive
-    - path: internal/app/trustd
-      text: "should have a package comment"
-      linters:
-        - revive
-    - path: internal/pkg/containers/image
-      text: "should have a package comment"
-      linters:
-        - revive
-    - path: internal/pkg/etcd
-      text: "should have a package comment"
-      linters:
-        - revive
-    - path: internal/pkg/install
-      text: "should have a package comment"
-      linters:
-        - revive
-    - path: internal/pkg/mount
-      text: "should have a package comment"
-      linters:
-        - revive
-    - path: internal/pkg/mount/switchroot
-      text: "should have a package comment"
-      linters:
-        - revive
-    - path: internal/pkg/tui/components
-      text: "should have a package comment"
-      linters:
-        - revive
-    - path: pkg/argsbuilder
-      text: "should have a package comment"
-      linters:
-        - revive
-    - path: pkg/chunker
-      text: "should have a package comment"
-      linters:
-        - revive
-    - path: pkg/chunker/file
-      text: "should have a package comment"
-      linters:
-        - revive
-    - path: pkg/chunker/stream
-      text: "should have a package comment"
-      linters:
-        - revive
-    - path: pkg/download
-      text: "should have a package comment"
-      linters:
-        - revive
-    - path: pkg/grpc/dialer
-      text: "should have a package comment"
-      linters:
-        - revive
-    - path: pkg/grpc/factory
-      text: "should have a package comment"
-      linters:
-        - revive
-    - path: pkg/grpc/gen
-      text: "should have a package comment"
-      linters:
-        - revive
-    - path: pkg/grpc/middleware/auth/basic
-      text: "should have a package comment"
-      linters:
-        - revive
-    - path: pkg/grpc/middleware/authz
-      text: "should have a package comment"
-      linters:
-        - revive
-    - path: pkg/kubernetes
-      text: "should have a package comment"
-      linters:
-        - revive
-    - path: pkg/kubernetes/inject
-      text: "should have a package comment"
-      linters:
-        - revive
-    - path: pkg/provision/providers
-      text: "should have a package comment"
-      linters:
-        - revive
-    - path: pkg/provision/providers/qemu
-      text: "should have a package comment"
-      linters:
-        - revive
-    - path: config/encoder
-      text: "should have a package comment"
-      linters:
-        - revive
-    - path: resources/kubespan
-      text: "should have a package comment"
-      linters:
-        - revive
-    - path: client/config
-      text: "should have a package comment"
-      linters:
-        - revive
-    - path: config/merge
-      text: "should have a package comment"
-      linters:
-        - revive
-    - path: config/types/v1alpha1/bundle
-      text: "should have a package comment"
-      linters:
-        - revive
-    - path: resources/cri
-      text: "should have a package comment"
-      linters:
-        - revive
-    - path: resources/runtime
-      text: "should have a package comment"
-      linters:
-        - revive
-    - path: kernel
-      text: "should have a package comment"
-      linters:
-        - revive
-    - path: constants
-      text: "should have a package comment"
-      linters:
-        - revive
-    - path: resources/perf
-      text: "should have a package comment"
-      linters:
-        - revive
-    - path: resources/cluster
-      text: "should have a package comment"
-      linters:
-        - revive
-    - path: role
-      text: "should have a package comment"
-      linters:
-        - revive
-    - path: resources/hardware
-      text: "should have a package comment"
-      linters:
-        - revive
-    - path: config/decoder
-      text: "should have a package comment"
-      linters:
-        - revive
-    - path: config/internal/cis
-      text: "should have a package comment"
-      linters:
-        - revive
-    - path: config/types/v1alpha1/machine
-      text: "should have a package comment"
-      linters:
-        - revive
-
-    # pkg/machinery module
-    - path: config/types/v1alpha1
-      linters:
-        - dupl # some interfaces and implementation are nearly identical (e.g. APIServer, ControllerManager, and Scheduler)
-
-    # unused going into opencontainers repo (?)
-    - path: specs-go/config.go
-      linters:
-        - unused
-
-  # Independently from option `exclude` we use default exclude patterns,
-  # it can be disabled by this option. To list all
-  # excluded by default patterns execute `golangci-lint run --help`.
-  # Default value for this option is true.
-  exclude-use-default: false
-
-  # Maximum issues count per one linter. Set to 0 to disable. Default is 50.
   max-issues-per-linter: 0
-
-  # Maximum count of issues with the same text. Set to 0 to disable. Default is 3.
   max-same-issues: 0
-
-  # Show only new issues: if there are unstaged changes or untracked files,
-  # only those changes are analyzed, else only changes in HEAD~ are analyzed.
-  # It's a super-useful option for integration of golangci-lint into existing
-  # large codebase. It's not practical to fix all existing issues at the moment
-  # of integration: much better don't allow issues in new code.
-  # Default is false.
+  uniq-by-line: true
   new: false
+formatters:
+  enable:
+    - gci
+    - gofmt
+    - gofumpt
+    - goimports
+  settings:
+    gci:
+      sections:
+        - standard
+        - default
+        - prefix(github.com/siderolabs/talos)
+  exclusions:
+    generated: lax
+    paths:
+      - .*\\.pb\\.go$
+      - third_party$
+      - builtin$
+      - examples$

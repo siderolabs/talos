@@ -99,9 +99,8 @@ func (widget *Diagnostics) redraw() {
 	widget.info.Clear()
 
 	for _, warning := range widget.perNodeWarnings[widget.selectedNode] {
-		widget.info.Write([]byte(fmt.Sprintf("■ (%s) [red]%s[-]\n", //nolint:errcheck
+		fmt.Fprintf(widget.info, "■ (%s) [red]%s[-]\n", //nolint:errcheck
 			tview.Escape(warning.TypedSpec().DocumentationURL(warning.Metadata().ID())),
-			tview.Escape(warning.TypedSpec().Message))),
-		)
+			tview.Escape(warning.TypedSpec().Message))
 	}
 }
