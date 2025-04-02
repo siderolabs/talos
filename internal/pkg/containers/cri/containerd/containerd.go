@@ -7,8 +7,11 @@ package containerd
 
 import (
 	"bytes"
+	"maps"
 	"path/filepath"
+	"slices"
 
+	"github.com/containerd/containerd/v2/core/remotes/docker"
 	"github.com/pelletier/go-toml/v2"
 
 	"github.com/siderolabs/talos/pkg/machinery/config/config"
@@ -24,7 +27,9 @@ func GenerateCRIConfig(r config.Registries) ([]byte, error) {
 	ctrdCfg.Plugins.CRI.Registry.ConfigPath = filepath.Join(constants.CRIConfdPath, "hosts")
 	ctrdCfg.Plugins.CRI.Registry.Configs = make(map[string]RegistryConfig)
 
-	for registryHost, hostConfig := range r.Config() {
+	for _, registryHost := range slices.Sorted(maps.Keys(r.Config())) {
+		hostConfig := r.Config()[registryHost]
+
 		if hostConfig.Auth() != nil {
 			cfg := RegistryConfig{}
 			cfg.Auth = &AuthConfig{
@@ -33,7 +38,10 @@ func GenerateCRIConfig(r config.Registries) ([]byte, error) {
 				Auth:          hostConfig.Auth().Auth(),
 				IdentityToken: hostConfig.Auth().IdentityToken(),
 			}
-			ctrdCfg.Plugins.CRI.Registry.Configs[registryHost] = cfg
+
+			configHost, _ := docker.DefaultHost(registryHost) //nolint:errcheck // doesn't return an error
+
+			ctrdCfg.Plugins.CRI.Registry.Configs[configHost] = cfg
 		}
 	}
 
