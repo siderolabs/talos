@@ -1,6 +1,6 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
 #
-# Generated on 2025-04-01T08:14:24Z by kres d903dae.
+# Generated on 2025-04-02T11:11:10Z by kres d903dae.
 
 name: integration-misc-4-enforcing-cron
 concurrency:
@@ -74,6 +74,12 @@ jobs:
           PUSH: "true"
         run: |
           make talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
+      - name: uki-certs
+        if: github.event_name == 'schedule'
+        env:
+          PLATFORM: linux/amd64
+        run: |
+          make uki-certs
       - name: talosctl-cni-bundle
         if: github.event_name == 'schedule'
         run: |
@@ -95,6 +101,7 @@ jobs:
           SHORT_INTEGRATION_TEST: "yes"
           TAG_SUFFIX_IN: -enforcing
           VIA_MAINTENANCE_MODE: "true"
+          WITH_ENFORCING: "true"
           WITH_SIDEROLINK_AGENT: "true"
         run: |
           sudo -E make e2e-qemu
@@ -106,6 +113,7 @@ jobs:
           SHORT_INTEGRATION_TEST: "yes"
           TAG_SUFFIX_IN: -enforcing
           VIA_MAINTENANCE_MODE: "true"
+          WITH_ENFORCING: "true"
           WITH_SIDEROLINK_AGENT: tunnel
         run: |
           sudo -E make e2e-qemu
@@ -117,6 +125,7 @@ jobs:
           SHORT_INTEGRATION_TEST: "yes"
           TAG_SUFFIX_IN: -enforcing
           VIA_MAINTENANCE_MODE: "true"
+          WITH_ENFORCING: "true"
           WITH_SIDEROLINK_AGENT: wireguard+tls
         run: |
           sudo -E make e2e-qemu
@@ -136,6 +145,7 @@ jobs:
           SHORT_INTEGRATION_TEST: "yes"
           TAG_SUFFIX_IN: -enforcing
           WITH_CONFIG_PATCH: '@hack/test/patches/usernamespace.yaml'
+          WITH_ENFORCING: "true"
         run: |
           sudo -E make e2e-qemu
       - name: save artifacts

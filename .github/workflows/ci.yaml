@@ -1,6 +1,6 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
 #
-# Generated on 2025-04-01T10:44:44Z by kres d903dae.
+# Generated on 2025-04-02T11:11:10Z by kres d903dae.
 
 name: default
 concurrency:
@@ -1179,6 +1179,12 @@ jobs:
           PUSH: "true"
         run: |
           make talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
+      - name: uki-certs
+        if: github.event_name == 'schedule'
+        env:
+          PLATFORM: linux/amd64
+        run: |
+          make uki-certs
       - name: talosctl-cni-bundle
         if: github.event_name == 'schedule'
         run: |
@@ -1201,6 +1207,7 @@ jobs:
           QEMU_MEMORY_WORKERS: "4096"
           TAG_SUFFIX_IN: -enforcing
           TEST_MODE: fast-conformance
+          WITH_ENFORCING: "true"
         run: |
           sudo -E make e2e-qemu
       - name: save artifacts
@@ -2154,6 +2161,12 @@ jobs:
           PUSH: "true"
         run: |
           make talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
+      - name: uki-certs
+        if: github.event_name == 'schedule'
+        env:
+          PLATFORM: linux/amd64
+        run: |
+          make uki-certs
       - name: talosctl-cni-bundle
         if: github.event_name == 'schedule'
         run: |
@@ -2175,6 +2188,7 @@ jobs:
           SHORT_INTEGRATION_TEST: "yes"
           TAG_SUFFIX_IN: -enforcing
           WITH_CLUSTER_DISCOVERY: "false"
+          WITH_ENFORCING: "true"
         run: |
           sudo -E make e2e-qemu
       - name: e2e-kubespan
@@ -2185,6 +2199,7 @@ jobs:
           SHORT_INTEGRATION_TEST: "yes"
           TAG_SUFFIX_IN: -enforcing
           WITH_CLUSTER_DISCOVERY: "true"
+          WITH_ENFORCING: "true"
           WITH_KUBESPAN: "true"
         run: |
           sudo -E make e2e-qemu
@@ -2197,6 +2212,7 @@ jobs:
           SHORT_INTEGRATION_TEST: "yes"
           TAG_SUFFIX_IN: -enforcing
           VIA_MAINTENANCE_MODE: "true"
+          WITH_ENFORCING: "true"
         run: |
           sudo -E make e2e-qemu
       - name: e2e-min-requirements
@@ -2209,6 +2225,7 @@ jobs:
           QEMU_SYSTEM_DISK_SIZE: "10240"
           SHORT_INTEGRATION_TEST: "yes"
           TAG_SUFFIX_IN: -enforcing
+          WITH_ENFORCING: "true"
         run: |
           sudo -E make e2e-qemu
       - name: save artifacts
@@ -2557,6 +2574,12 @@ jobs:
           PUSH: "true"
         run: |
           make talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
+      - name: uki-certs
+        if: github.event_name == 'schedule'
+        env:
+          PLATFORM: linux/amd64
+        run: |
+          make uki-certs
       - name: talosctl-cni-bundle
         if: github.event_name == 'schedule'
         run: |
@@ -2577,6 +2600,7 @@ jobs:
           IMAGE_REGISTRY: registry.dev.siderolabs.io
           SHORT_INTEGRATION_TEST: "yes"
           TAG_SUFFIX_IN: -enforcing
+          WITH_ENFORCING: "true"
           WITH_NETWORK_CHAOS: "yes"
         run: |
           sudo -E make e2e-qemu
@@ -2588,6 +2612,7 @@ jobs:
           SHORT_INTEGRATION_TEST: "yes"
           TAG_SUFFIX_IN: -enforcing
           WITH_CONFIG_INJECTION_METHOD: metal-iso
+          WITH_ENFORCING: "true"
         run: |
           sudo -E make e2e-qemu
       - name: e2e-iommu-pcidriverrebind
@@ -2597,6 +2622,7 @@ jobs:
           IMAGE_REGISTRY: registry.dev.siderolabs.io
           SHORT_INTEGRATION_TEST: "yes"
           TAG_SUFFIX_IN: -enforcing
+          WITH_ENFORCING: "true"
           WITH_IOMMU: "yes"
         run: |
           sudo -E make e2e-qemu
@@ -2811,6 +2837,12 @@ jobs:
           PUSH: "true"
         run: |
           make talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
+      - name: uki-certs
+        if: github.event_name == 'schedule'
+        env:
+          PLATFORM: linux/amd64
+        run: |
+          make uki-certs
       - name: talosctl-cni-bundle
         if: github.event_name == 'schedule'
         run: |
@@ -2832,6 +2864,7 @@ jobs:
           SHORT_INTEGRATION_TEST: "yes"
           TAG_SUFFIX_IN: -enforcing
           VIA_MAINTENANCE_MODE: "true"
+          WITH_ENFORCING: "true"
           WITH_SIDEROLINK_AGENT: "true"
         run: |
           sudo -E make e2e-qemu
@@ -2843,6 +2876,7 @@ jobs:
           SHORT_INTEGRATION_TEST: "yes"
           TAG_SUFFIX_IN: -enforcing
           VIA_MAINTENANCE_MODE: "true"
+          WITH_ENFORCING: "true"
           WITH_SIDEROLINK_AGENT: tunnel
         run: |
           sudo -E make e2e-qemu
@@ -2854,6 +2888,7 @@ jobs:
           SHORT_INTEGRATION_TEST: "yes"
           TAG_SUFFIX_IN: -enforcing
           VIA_MAINTENANCE_MODE: "true"
+          WITH_ENFORCING: "true"
           WITH_SIDEROLINK_AGENT: wireguard+tls
         run: |
           sudo -E make e2e-qemu
@@ -2873,6 +2908,7 @@ jobs:
           SHORT_INTEGRATION_TEST: "yes"
           TAG_SUFFIX_IN: -enforcing
           WITH_CONFIG_PATCH: '@hack/test/patches/usernamespace.yaml'
+          WITH_ENFORCING: "true"
         run: |
           sudo -E make e2e-qemu
       - name: save artifacts
@@ -3790,6 +3826,12 @@ jobs:
           PUSH: "true"
         run: |
           make talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
+      - name: uki-certs
+        if: github.event_name == 'schedule'
+        env:
+          PLATFORM: linux/amd64
+        run: |
+          make uki-certs
       - name: talosctl-cni-bundle
         if: github.event_name == 'schedule'
         run: |
@@ -3813,6 +3855,7 @@ jobs:
           TAG_SUFFIX_IN: -enforcing
           USER_DISKS_MOUNTS: /var/lib/extra,/var/lib/p1,/var/lib/p2
           WITH_CONFIG_PATCH_WORKER: '@hack/test/patches/ephemeral-nvme.yaml:@hack/test/patches/dm-raid-module.yaml'
+          WITH_ENFORCING: "true"
           WITH_USER_DISK: "true"
         run: |
           sudo -E make e2e-qemu
@@ -4227,6 +4270,7 @@ jobs:
           IMAGE_REGISTRY: registry.dev.siderolabs.io
           TAG_SUFFIX_IN: -enforcing
           VIA_MAINTENANCE_MODE: "true"
+          WITH_ENFORCING: "true"
           WITH_TRUSTED_BOOT_ISO: "true"
         run: |
           sudo -E make e2e-qemu

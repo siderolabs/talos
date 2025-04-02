@@ -388,6 +388,11 @@ spec:
             PLATFORM: linux/amd64,linux/arm64
             IMAGE_REGISTRY: registry.dev.siderolabs.io
             PUSH: true
+        - name: uki-certs
+          environment:
+            PLATFORM: linux/amd64
+          conditions:
+            - only-on-schedule
         - name: talosctl-cni-bundle
           conditions:
             - only-on-schedule
@@ -410,6 +415,7 @@ spec:
             QEMU_EXTRA_DISKS_DRIVERS: "ide,nvme"
             WITH_CONFIG_PATCH_WORKER: "@hack/test/patches/ephemeral-nvme.yaml:@hack/test/patches/dm-raid-module.yaml"
             WITH_USER_DISK: "true"
+            WITH_ENFORCING: true
             USER_DISKS_MOUNTS: "/var/lib/extra,/var/lib/p1,/var/lib/p2"
         - name: save-talos-logs
           conditions:
@@ -505,6 +511,11 @@ spec:
             PLATFORM: linux/amd64,linux/arm64
             IMAGE_REGISTRY: registry.dev.siderolabs.io
             PUSH: true
+        - name: uki-certs
+          environment:
+            PLATFORM: linux/amd64
+          conditions:
+            - only-on-schedule
         - name: talosctl-cni-bundle
           conditions:
             - only-on-schedule
@@ -525,6 +536,7 @@ spec:
             QEMU_MEMORY_WORKERS: 4096
             TEST_MODE: fast-conformance
             TAG_SUFFIX_IN: -enforcing
+            WITH_ENFORCING: true
             EXTRA_TEST_ARGS: -talos.enforcing
             IMAGE_REGISTRY: registry.dev.siderolabs.io
         - name: save-talos-logs
@@ -671,6 +683,7 @@ spec:
             VIA_MAINTENANCE_MODE: true
             WITH_TRUSTED_BOOT_ISO: true
             TAG_SUFFIX_IN: -enforcing
+            WITH_ENFORCING: true
             EXTRA_TEST_ARGS: "-talos.trustedboot -talos.enforcing"
             IMAGE_REGISTRY: registry.dev.siderolabs.io
         - name: save-talos-logs
@@ -1034,6 +1047,11 @@ spec:
             PLATFORM: linux/amd64,linux/arm64
             IMAGE_REGISTRY: registry.dev.siderolabs.io
             PUSH: true
+        - name: uki-certs
+          environment:
+            PLATFORM: linux/amd64
+          conditions:
+            - only-on-schedule
         - name: talosctl-cni-bundle
           conditions:
             - only-on-schedule
@@ -1054,6 +1072,7 @@ spec:
             WITH_CLUSTER_DISCOVERY: false
             TAG_SUFFIX_IN: -enforcing
             EXTRA_TEST_ARGS: -talos.enforcing
+            WITH_ENFORCING: true
             IMAGE_REGISTRY: registry.dev.siderolabs.io
         - name: e2e-kubespan
           command: e2e-qemu
@@ -1065,6 +1084,7 @@ spec:
             WITH_KUBESPAN: true
             TAG_SUFFIX_IN: -enforcing
             EXTRA_TEST_ARGS: -talos.enforcing
+            WITH_ENFORCING: true
             IMAGE_REGISTRY: registry.dev.siderolabs.io
         - name: e2e-default-hostname
           command: e2e-qemu
@@ -1076,6 +1096,7 @@ spec:
             DISABLE_DHCP_HOSTNAME: true
             TAG_SUFFIX_IN: -enforcing
             EXTRA_TEST_ARGS: -talos.enforcing
+            WITH_ENFORCING: true
             IMAGE_REGISTRY: registry.dev.siderolabs.io
         - name: e2e-min-requirements
           command: e2e-qemu
@@ -1088,6 +1109,7 @@ spec:
             QEMU_SYSTEM_DISK_SIZE: 10240
             TAG_SUFFIX_IN: -enforcing
             EXTRA_TEST_ARGS: -talos.enforcing
+            WITH_ENFORCING: true
             IMAGE_REGISTRY: registry.dev.siderolabs.io
         - name: save-talos-logs
           conditions:
@@ -1311,6 +1333,11 @@ spec:
             PLATFORM: linux/amd64,linux/arm64
             IMAGE_REGISTRY: registry.dev.siderolabs.io
             PUSH: true
+        - name: uki-certs
+          environment:
+            PLATFORM: linux/amd64
+          conditions:
+            - only-on-schedule
         - name: talosctl-cni-bundle
           conditions:
             - only-on-schedule
@@ -1331,6 +1358,7 @@ spec:
             WITH_NETWORK_CHAOS: yes
             TAG_SUFFIX_IN: -enforcing
             EXTRA_TEST_ARGS: -talos.enforcing
+            WITH_ENFORCING: true
             IMAGE_REGISTRY: registry.dev.siderolabs.io
         - name: e2e-metal-iso
           command: e2e-qemu
@@ -1341,6 +1369,7 @@ spec:
             WITH_CONFIG_INJECTION_METHOD: "metal-iso"
             TAG_SUFFIX_IN: -enforcing
             EXTRA_TEST_ARGS: -talos.enforcing
+            WITH_ENFORCING: true
             IMAGE_REGISTRY: registry.dev.siderolabs.io
         - name: e2e-iommu-pcidriverrebind
           command: e2e-qemu
@@ -1351,6 +1380,7 @@ spec:
             WITH_IOMMU: yes
             TAG_SUFFIX_IN: -enforcing
             EXTRA_TEST_ARGS: -talos.enforcing
+            WITH_ENFORCING: true
             IMAGE_REGISTRY: registry.dev.siderolabs.io
         - name: save-talos-logs
           conditions:
@@ -1482,6 +1512,11 @@ spec:
             PLATFORM: linux/amd64,linux/arm64
             IMAGE_REGISTRY: registry.dev.siderolabs.io
             PUSH: true
+        - name: uki-certs
+          environment:
+            PLATFORM: linux/amd64
+          conditions:
+            - only-on-schedule
         - name: talosctl-cni-bundle
           conditions:
             - only-on-schedule
@@ -1502,6 +1537,7 @@ spec:
             WITH_SIDEROLINK_AGENT: true
             VIA_MAINTENANCE_MODE: true
             TAG_SUFFIX_IN: -enforcing
+            WITH_ENFORCING: true
             EXTRA_TEST_ARGS: -talos.enforcing
             IMAGE_REGISTRY: registry.dev.siderolabs.io
         - name: e2e-siderolink-tunnel
@@ -1513,6 +1549,7 @@ spec:
             WITH_SIDEROLINK_AGENT: tunnel
             VIA_MAINTENANCE_MODE: true
             TAG_SUFFIX_IN: -enforcing
+            WITH_ENFORCING: true
             EXTRA_TEST_ARGS: -talos.enforcing
             IMAGE_REGISTRY: registry.dev.siderolabs.io
         - name: e2e-siderolink-tls
@@ -1524,6 +1561,7 @@ spec:
             WITH_SIDEROLINK_AGENT: wireguard+tls
             VIA_MAINTENANCE_MODE: true
             TAG_SUFFIX_IN: -enforcing
+            WITH_ENFORCING: true
             EXTRA_TEST_ARGS: -talos.enforcing
             IMAGE_REGISTRY: registry.dev.siderolabs.io
         - name: e2e-apparmor
@@ -1542,6 +1580,7 @@ spec:
             SHORT_INTEGRATION_TEST: yes
             WITH_CONFIG_PATCH: "@hack/test/patches/usernamespace.yaml"
             TAG_SUFFIX_IN: -enforcing
+            WITH_ENFORCING: true
             EXTRA_TEST_ARGS: -talos.enforcing
             IMAGE_REGISTRY: registry.dev.siderolabs.io
         - name: save-talos-logs

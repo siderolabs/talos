@@ -255,6 +255,13 @@ case "${WITH_USER_DISK:-false}" in
     ;;
 esac
 
+case "${WITH_ENFORCING:-false}" in
+  false)
+    ;;
+  *)
+    QEMU_FLAGS+=("--extra-boot-kernel-args=enforcing=1")
+    ;;
+esac
 
 function create_cluster {
   build_registry_mirrors

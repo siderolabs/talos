@@ -1,6 +1,6 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
 #
-# Generated on 2025-04-01T08:14:24Z by kres d903dae.
+# Generated on 2025-04-02T11:11:10Z by kres d903dae.
 
 name: integration-trusted-boot-enforcing-cron
 concurrency:
@@ -108,6 +108,7 @@ jobs:
           IMAGE_REGISTRY: registry.dev.siderolabs.io
           TAG_SUFFIX_IN: -enforcing
           VIA_MAINTENANCE_MODE: "true"
+          WITH_ENFORCING: "true"
           WITH_TRUSTED_BOOT_ISO: "true"
         run: |
           sudo -E make e2e-qemu
