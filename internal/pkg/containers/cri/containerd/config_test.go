@@ -75,6 +75,12 @@ func (suite *ConfigSuite) TestGenerateRegistriesConfig() {
 					},
 				},
 			},
+			"docker.io": {
+				RegistryAuth: &v1alpha1.RegistryAuthConfig{
+					RegistryUsername: "root",
+					RegistryPassword: "topsecret",
+				},
+			},
 		},
 	}
 

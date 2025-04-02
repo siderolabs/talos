@@ -4,6 +4,13 @@
       config_path = '/etc/cri/conf.d/hosts'
 
       [plugins.'io.containerd.cri.v1.images'.registry.configs]
+        [plugins.'io.containerd.cri.v1.images'.registry.configs.'registry-1.docker.io']
+          [plugins.'io.containerd.cri.v1.images'.registry.configs.'registry-1.docker.io'.auth]
+            username = 'root'
+            password = 'topsecret'
+            auth = ''
+            identitytoken = ''
+
         [plugins.'io.containerd.cri.v1.images'.registry.configs.'some.host:123']
           [plugins.'io.containerd.cri.v1.images'.registry.configs.'some.host:123'.auth]
             username = 'root'
