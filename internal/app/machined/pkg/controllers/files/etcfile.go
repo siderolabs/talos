@@ -18,6 +18,7 @@ import (
 	"go.uber.org/zap"
 	"golang.org/x/sys/unix"
 
+	"github.com/siderolabs/talos/internal/pkg/mount/v2"
 	"github.com/siderolabs/talos/internal/pkg/selinux"
 	"github.com/siderolabs/talos/pkg/machinery/resources/files"
 )
@@ -186,7 +187,7 @@ func createBindMountFile(src, dst string, mode os.FileMode) (err error) {
 		return err
 	}
 
-	return bindMount(src, dst)
+	return mount.BindReadonly(src, dst)
 }
 
 // createBindMountDir creates a common way to create a writable source dir with a
@@ -197,29 +198,7 @@ func createBindMountDir(src, dst string) (err error) {
 		return err
 	}
 
-	return bindMount(src, dst)
-}
-
-// bindMount creates a common way to create a readonly bind mounted destination.
-func bindMount(src, dst string) (err error) {
-	sourceFD, err := unix.OpenTree(unix.AT_FDCWD, src, unix.OPEN_TREE_CLONE|unix.OPEN_TREE_CLOEXEC)
-	if err != nil {
-		return fmt.Errorf("failed to opentree source %s: %w", src, err)
-	}
-
-	defer unix.Close(sourceFD) //nolint:errcheck
-
-	if err := unix.MountSetattr(sourceFD, "", unix.AT_EMPTY_PATH, &unix.MountAttr{
-		Attr_set: unix.MOUNT_ATTR_RDONLY,
-	}); err != nil {
-		return fmt.Errorf("failed to set mount attribute: %w", err)
-	}
-
-	if err := unix.MoveMount(sourceFD, "", unix.AT_FDCWD, dst, unix.MOVE_MOUNT_F_EMPTY_PATH); err != nil {
-		return fmt.Errorf("failed to move mount from %s to %s: %w", src, dst, err)
-	}
-
-	return nil
+	return mount.BindReadonly(src, dst)
 }
 
 // UpdateFile is like `os.WriteFile`, but it will only update the file if the

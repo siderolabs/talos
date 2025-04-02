@@ -196,7 +196,7 @@ func mountRootFS() error {
 		return err
 	}
 
-	return unix.Mount(constants.ExtensionsConfigFile, filepath.Join(constants.NewRoot, constants.ExtensionsRuntimeConfigFile), "", unix.MS_BIND|unix.MS_RDONLY, "")
+	return mount.BindReadonly(constants.ExtensionsConfigFile, filepath.Join(constants.NewRoot, constants.ExtensionsRuntimeConfigFile))
 }
 
 func bindMountFirmware() error {
@@ -211,7 +211,7 @@ func bindMountFirmware() error {
 
 	log.Printf("bind mounting %s", firmwarePath)
 
-	return unix.Mount(firmwarePath, filepath.Join(constants.NewRoot, firmwarePath), "", unix.MS_BIND|unix.MS_RDONLY, "")
+	return mount.BindReadonly(firmwarePath, filepath.Join(constants.NewRoot, firmwarePath))
 }
 
 func bindMountExtra() error {
@@ -225,7 +225,7 @@ func bindMountExtra() error {
 
 	log.Printf("bind mounting %s", constants.SDStubDynamicInitrdPath)
 
-	return unix.Mount(constants.SDStubDynamicInitrdPath, filepath.Join(constants.NewRoot, constants.SDStubDynamicInitrdPath), "", unix.MS_BIND|unix.MS_RDONLY, "")
+	return mount.BindReadonly(constants.SDStubDynamicInitrdPath, filepath.Join(constants.NewRoot, constants.SDStubDynamicInitrdPath))
 }
 
 func cpuInfo() {
