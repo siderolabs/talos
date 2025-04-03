@@ -9157,6 +9157,7 @@ The device should not be used as a secondary (e.g. part of LVM).
 The name should be submitted without `/dev/` prefix. |
 | method | [BlockDeviceWipeDescriptor.Method](#storage.BlockDeviceWipeDescriptor.Method) |  | Wipe method to use. |
 | skip_volume_check | [bool](#bool) |  | Skip the volume in use check. |
+| drop_partition | [bool](#bool) |  | Drop the partition (only applies if the device is a partition). |
 
 
 

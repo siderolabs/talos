@@ -13,8 +13,8 @@ import (
 func (VolumeConfigV1Alpha1) Doc() *encoder.Doc {
 	doc := &encoder.Doc{
 		Type:        "VolumeConfig",
-		Comments:    [3]string{"" /* encoder.HeadComment */, "VolumeConfig is a volume configuration document." /* encoder.LineComment */, "" /* encoder.FootComment */},
-		Description: "VolumeConfig is a volume configuration document.",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "VolumeConfig is a system volume configuration document." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "VolumeConfig is a system volume configuration document.\nNote: at the moment, only `EPHEMERAL` and `IMAGE-CACHE` system volumes are supported.\n",
 		Fields: []encoder.Doc{
 			{},
 			{
@@ -47,6 +47,10 @@ func (ProvisioningSpec) Doc() *encoder.Doc {
 		AppearsIn: []encoder.Appearance{
 			{
 				TypeName:  "VolumeConfigV1Alpha1",
+				FieldName: "provisioning",
+			},
+			{
+				TypeName:  "UserVolumeConfigV1Alpha1",
 				FieldName: "provisioning",
 			},
 		},
@@ -116,6 +120,71 @@ func (DiskSelector) Doc() *encoder.Doc {
 	return doc
 }
 
+func (UserVolumeConfigV1Alpha1) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "UserVolumeConfig",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "UserVolumeConfig is a user volume configuration document." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "UserVolumeConfig is a user volume configuration document.\nUser volume is automatically allocated as a partition on the specified disk\nand mounted under `/var/mnt/<name>`.\nThe partition label is automatically generated as `u-<name>`.\n",
+		Fields: []encoder.Doc{
+			{},
+			{
+				Name:        "name",
+				Type:        "string",
+				Note:        "",
+				Description: "Name of the volume.\n\nName might be between 1 and 34 characters long and can only contain:\nlowercase and uppercase ASCII letters, digits, and hyphens.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Name of the volume." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "provisioning",
+				Type:        "ProvisioningSpec",
+				Note:        "",
+				Description: "The provisioning describes how the volume is provisioned.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "The provisioning describes how the volume is provisioned." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "filesystem",
+				Type:        "FilesystemSpec",
+				Note:        "",
+				Description: "The filesystem describes how the volume is formatted.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "The filesystem describes how the volume is formatted." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
+
+	doc.AddExample("", exampleUserVolumeConfigV1Alpha1())
+
+	return doc
+}
+
+func (FilesystemSpec) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "FilesystemSpec",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "FilesystemSpec configures the filesystem for the volume." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "FilesystemSpec configures the filesystem for the volume.",
+		AppearsIn: []encoder.Appearance{
+			{
+				TypeName:  "UserVolumeConfigV1Alpha1",
+				FieldName: "filesystem",
+			},
+		},
+		Fields: []encoder.Doc{
+			{
+				Name:        "type",
+				Type:        "FilesystemType",
+				Note:        "",
+				Description: "Filesystem type. Default is `xfs`.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Filesystem type. Default is `xfs`." /* encoder.LineComment */, "" /* encoder.FootComment */},
+				Values: []string{
+					"ext4",
+					"xfs",
+				},
+			},
+		},
+	}
+
+	return doc
+}
+
 // GetFileDoc returns documentation for the file block_doc.go.
 func GetFileDoc() *encoder.FileDoc {
 	return &encoder.FileDoc{
@@ -125,6 +194,8 @@ func GetFileDoc() *encoder.FileDoc {
 			VolumeConfigV1Alpha1{}.Doc(),
 			ProvisioningSpec{}.Doc(),
 			DiskSelector{}.Doc(),
+			UserVolumeConfigV1Alpha1{}.Doc(),
+			FilesystemSpec{}.Doc(),
 		},
 	}
 }

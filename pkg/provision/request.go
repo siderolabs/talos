@@ -16,7 +16,6 @@ import (
 
 	"github.com/siderolabs/talos/pkg/machinery/config"
 	"github.com/siderolabs/talos/pkg/machinery/config/machine"
-	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
 	"github.com/siderolabs/talos/pkg/machinery/imager/quirks"
 )
 
@@ -160,8 +159,6 @@ type Disk struct {
 	Size uint64
 	// Whether to skip preallocating the disk space.
 	SkipPreallocate bool
-	// Partitions represents the list of partitions.
-	Partitions []*v1alpha1.DiskPartition
 	// Driver for the disk.
 	//
 	// Supported types: "virtio", "ide", "ahci", "scsi", "nvme", "megaraid".

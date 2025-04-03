@@ -35,7 +35,7 @@ func (suite *MountsSuite) TestUserDisksMounted() {
 	paths := os.Getenv("USER_DISKS_MOUNTS")
 
 	if paths == "" {
-		return
+		suite.T().Skip("USER_DISKS_MOUNTS is not set")
 	}
 
 	for _, path := range strings.Split(paths, ",") {

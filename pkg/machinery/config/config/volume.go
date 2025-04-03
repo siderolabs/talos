@@ -8,6 +8,7 @@ import (
 	"github.com/siderolabs/gen/optional"
 
 	"github.com/siderolabs/talos/pkg/machinery/cel"
+	"github.com/siderolabs/talos/pkg/machinery/resources/block"
 )
 
 // VolumesConfig defines the interface to access volume configuration.
@@ -73,4 +74,23 @@ func (emptyVolumeConfig) MinSize() optional.Optional[uint64] {
 
 func (emptyVolumeConfig) MaxSize() optional.Optional[uint64] {
 	return optional.None[uint64]()
+}
+
+// UserVolumesConfig defines the interface to access user volume configurations.
+type UserVolumesConfig interface {
+	UserVolumes() []UserVolumeConfig
+}
+
+// UserVolumeConfig defines the interface to access user volume configuration.
+type UserVolumeConfig interface {
+	NamedDocument
+	UserVolumeConfigSignal()
+	Provisioning() VolumeProvisioningConfig
+	Filesystem() FilesystemConfig
+}
+
+// FilesystemConfig defines the interface to access filesystem configuration.
+type FilesystemConfig interface {
+	// Type returns the filesystem type.
+	Type() block.FilesystemType
 }

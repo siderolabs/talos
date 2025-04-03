@@ -29,6 +29,9 @@ const NamespaceName resource.Namespace = v1alpha1.NamespaceName
 // UserDiskLabel is the label for user disks.
 const UserDiskLabel = "talos.dev/user-disk"
 
+// UserVolumeLabel is the label for user volumes.
+const UserVolumeLabel = "talos.dev/user-volume"
+
 // PlatformLabel is the label for platform volumes.
 const PlatformLabel = "talos.dev/platform"
 

@@ -175,14 +175,9 @@ type MachineConfig struct {
 	//     - name: Network definition example.
 	//       value: machineNetworkConfigExample()
 	MachineNetwork *NetworkConfig `yaml:"network,omitempty"`
-	//   description: |
-	//     Used to partition, format and mount additional disks.
-	//     Since the rootfs is read only with the exception of `/var`, mounts are only valid if they are under `/var`.
-	//     Note that the partitioning and formatting is done only once, if and only if no existing XFS partitions are found.
-	//     If `size:` is omitted, the partition is sized to occupy the full disk.
-	//   examples:
-	//     - name: MachineDisks list example.
-	//       value: machineDisksExample()
+	// docgen:nodoc
+	//
+	// Deprecated: Use 'UserVolumeConfig' instead.
 	MachineDisks []*MachineDisk `yaml:"disks,omitempty"` // Note: `size` is in units of bytes.
 	//   description: |
 	//     Used to provide instructions for installations.
@@ -1484,6 +1479,8 @@ type AdminKubeconfigConfig struct {
 
 // MachineDisk represents the options available for partitioning, formatting, and
 // mounting extra disks.
+//
+// docgen:nodoc
 type MachineDisk struct {
 	//   description: The name of the disk to use.
 	DeviceName string `yaml:"device,omitempty"`
@@ -1492,6 +1489,8 @@ type MachineDisk struct {
 }
 
 // DiskSize partition size in bytes.
+//
+// docgen:nodoc
 type DiskSize uint64
 
 // MarshalYAML write as human readable string.
@@ -1528,6 +1527,8 @@ func (ds *DiskSize) UnmarshalYAML(unmarshal func(any) error) error {
 }
 
 // DiskPartition represents the options for a disk partition.
+//
+// docgen:nodoc
 type DiskPartition struct {
 	//   description: >
 	//     The size of partition: either bytes or human readable representation. If `size:`

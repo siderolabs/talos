@@ -11,6 +11,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/block/internal/sysblock"
+	"github.com/siderolabs/talos/pkg/machinery/resources/block"
 )
 
 func TestWalk(t *testing.T) {
@@ -30,9 +31,9 @@ func TestWalk(t *testing.T) {
 		require.NotEmpty(t, event.Action)
 
 		switch event.Values["DEVTYPE"] {
-		case "partition":
+		case block.DeviceTypePartition:
 			partitions++
-		case "disk":
+		case block.DeviceTypeDisk:
 			disks++
 		}
 	}

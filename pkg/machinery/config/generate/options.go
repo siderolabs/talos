@@ -184,6 +184,8 @@ func WithClusterCNIConfig(config *v1alpha1.CNIConfig) Option {
 }
 
 // WithUserDisks generates user partitions config.
+//
+// Deprecated: use block.UserVolumeConfig instead.
 func WithUserDisks(disks []*v1alpha1.MachineDisk) Option {
 	return func(o *Options) error {
 		o.MachineDisks = disks

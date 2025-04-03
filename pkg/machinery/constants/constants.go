@@ -1238,6 +1238,17 @@ const (
 
 	// KubernetesInformerDefaultResyncPeriod is the default resync period for Kubernetes informers.
 	KubernetesInformerDefaultResyncPeriod = 30 * time.Second
+
+	// UserVolumeMountPoint is the path to the volume mount point for the user volumes.
+	UserVolumeMountPoint = "/var/mnt"
+
+	// UserVolumePrefix is the prefix for the user volumes.
+	UserVolumePrefix = "u-"
+
+	// PartitionLabelLength is the length of the partition label.
+	//
+	// See https://en.wikipedia.org/wiki/GUID_Partition_Table#Partition_entries_(LBA_2%E2%80%9333)
+	PartitionLabelLength = 36
 )
 
 // See https://linux.die.net/man/3/klogctl

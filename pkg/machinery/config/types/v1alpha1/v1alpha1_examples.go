@@ -166,19 +166,6 @@ func machineNetworkConfigExample() *NetworkConfig {
 	}
 }
 
-func machineDisksExample() []*MachineDisk {
-	return []*MachineDisk{
-		{
-			DeviceName: "/dev/sdb",
-			DiskPartitions: []*DiskPartition{
-				{
-					DiskMountPoint: "/var/mnt/extra",
-				},
-			},
-		},
-	}
-}
-
 func machineInstallExample() *InstallConfig {
 	return &InstallConfig{
 		InstallDisk:            "/dev/sda",

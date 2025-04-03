@@ -202,7 +202,7 @@ talosctl cluster create [flags]
       --uki-path string                          the UKI image path to use for the initial boot (VM only)
       --usb-path string                          the USB stick image path to use for the initial boot (VM only)
       --use-vip                                  use a virtual IP for the controlplane endpoint instead of the loadbalancer
-      --user-disk strings                        list of disks to create for each VM in format: <mount_point1>:<size1>:<mount_point2>:<size2>
+      --user-volumes strings                     list of user volumes to create for each VM in format: <name1>:<size1>:<name2>:<size2>
       --vmlinuz-path string                      the compressed kernel image to use (default "_out/vmlinuz-${ARCH}")
       --wait                                     wait for the cluster to be ready before returning (default true)
       --wait-timeout duration                    timeout to wait for the cluster to be ready (default 20m0s)
@@ -3158,8 +3158,9 @@ talosctl wipe disk <device names>... [flags]
 ### Options
 
 ```
-  -h, --help            help for disk
-      --method string   wipe method to use [FAST ZEROES] (default "FAST")
+      --drop-partition   drop partition after wipe (if applicable)
+  -h, --help             help for disk
+      --method string    wipe method to use [FAST ZEROES] (default "FAST")
 ```
 
 ### Options inherited from parent commands

@@ -479,7 +479,7 @@ func (apiSuite *APISuite) UserDisks(ctx context.Context, node string) []string {
 	var candidateDisks []string //nolint:prealloc
 
 	for disk := range disks.All() {
-		// skip CD-ROM, readonly and disks witho	for iteratorut transport (this is usually lvms, md, zfs devices etc)
+		// skip CD-ROM, readonly and disks without transport (this is usually lvms, md, zfs devices etc)
 		// also skip iscsi disks (these are created in tests)
 		if disk.TypedSpec().Readonly || disk.TypedSpec().CDROM || disk.TypedSpec().Transport == "" || disk.TypedSpec().Transport == "iscsi" {
 			continue
@@ -610,6 +610,24 @@ func (apiSuite *APISuite) RemoveMachineConfigDocuments(nodeCtx context.Context, 
 	apiSuite.UpdateMachineConfig(nodeCtx, func(cfg config.Provider) (config.Provider, error) {
 		return container.New(xslices.Filter(cfg.Documents(), func(doc configconfig.Document) bool {
 			return slices.Index(docTypes, doc.Kind()) == -1
+		})...)
+	})
+}
+
+// RemoveMachineConfigDocumentsByName removes machine configuration documents of specified type and names from the node.
+func (apiSuite *APISuite) RemoveMachineConfigDocumentsByName(nodeCtx context.Context, docType string, names ...string) {
+	apiSuite.UpdateMachineConfig(nodeCtx, func(cfg config.Provider) (config.Provider, error) {
+		return container.New(xslices.Filter(cfg.Documents(), func(doc configconfig.Document) bool {
+			if doc.Kind() != docType {
+				return true
+			}
+
+			namedDoc, ok := doc.(configconfig.NamedDocument)
+			if !ok {
+				return true
+			}
+
+			return slices.Index(names, namedDoc.Name()) == -1
 		})...)
 	})
 }

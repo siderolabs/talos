@@ -117,6 +117,7 @@ func (k *Kubelet) Volumes(runtime.Runtime) []string {
 		"/var/lib/kubelet/seccomp",
 		constants.SeccompProfilesDirectory,
 		constants.KubernetesAuditLogDir,
+		constants.UserVolumeMountPoint,
 	}
 }
 
@@ -158,6 +159,7 @@ func (k *Kubelet) Runner(r runtime.Runtime) (runner.Runner, error) {
 		{Type: "bind", Destination: "/var/lib/kubelet", Source: "/var/lib/kubelet", Options: []string{"rbind", "rshared", "rw"}},
 		{Type: "bind", Destination: "/var/log/containers", Source: "/var/log/containers", Options: []string{"rbind", "rshared", "rw"}},
 		{Type: "bind", Destination: "/var/log/pods", Source: "/var/log/pods", Options: []string{"rbind", "rshared", "rw"}},
+		{Type: "bind", Destination: constants.UserVolumeMountPoint, Source: constants.UserVolumeMountPoint, Options: []string{"rbind", "rshared", "ro"}},
 	}
 
 	if _, err := os.Stat("/sys/kernel/security"); err == nil {

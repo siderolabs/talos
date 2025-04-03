@@ -60,6 +60,10 @@ func editFn(c *client.Client) func(context.Context, string, resource.Resource, e
 
 		id := mc.Metadata().ID()
 
+		if id != config.ActiveID {
+			return nil
+		}
+
 		body, err := yaml.Marshal(mc.Spec())
 		if err != nil {
 			return err

@@ -23,12 +23,12 @@ import (
 	"time"
 
 	"github.com/docker/cli/opts"
-	"github.com/dustin/go-humanize"
 	"github.com/google/uuid"
 	"github.com/hashicorp/go-getter/v2"
 	"github.com/klauspost/compress/zstd"
 	"github.com/siderolabs/crypto/x509"
 	"github.com/siderolabs/gen/maps"
+	"github.com/siderolabs/gen/xslices"
 	"github.com/siderolabs/go-blockdevice/v2/encryption"
 	"github.com/siderolabs/go-kubeconfig"
 	"github.com/siderolabs/go-pointer"
@@ -42,6 +42,8 @@ import (
 	"github.com/siderolabs/talos/pkg/cli"
 	"github.com/siderolabs/talos/pkg/cluster/check"
 	"github.com/siderolabs/talos/pkg/images"
+	"github.com/siderolabs/talos/pkg/machinery/cel"
+	"github.com/siderolabs/talos/pkg/machinery/cel/celenv"
 	clientconfig "github.com/siderolabs/talos/pkg/machinery/client/config"
 	"github.com/siderolabs/talos/pkg/machinery/config"
 	"github.com/siderolabs/talos/pkg/machinery/config/bundle"
@@ -51,6 +53,7 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/config/encoder"
 	"github.com/siderolabs/talos/pkg/machinery/config/generate"
 	"github.com/siderolabs/talos/pkg/machinery/config/machine"
+	"github.com/siderolabs/talos/pkg/machinery/config/types/block"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/runtime"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/security"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/siderolink"
@@ -84,7 +87,7 @@ const (
 	networkNoMasqueradeCIDRsFlag = "no-masquerade-cidrs"
 	nameserversFlag              = "nameservers"
 	clusterDiskPreallocateFlag   = "disk-preallocate"
-	clusterDisksFlag             = "user-disk"
+	clusterUserVolumesFlag       = "user-volumes"
 	clusterDiskSizeFlag          = "disk"
 	useVIPFlag                   = "use-vip"
 	bootloaderEnabledFlag        = "with-bootloader"
@@ -150,7 +153,7 @@ var (
 	clusterDiskSize           int
 	clusterDiskPreallocate    bool
 	diskBlockSize             uint
-	clusterDisks              []string
+	clusterUserVolumes        []string
 	extraDisks                int
 	extraDiskSize             int
 	extraDisksDrivers         []string
@@ -514,7 +517,7 @@ func create(ctx context.Context) error {
 		provisionOptions = append(provisionOptions, provision.WithDockerPorts(portList))
 	}
 
-	disks, err := getDisks()
+	disks, userVolumePatches, err := getDisks(provisioner)
 	if err != nil {
 		return err
 	}
@@ -549,19 +552,6 @@ func create(ctx context.Context) error {
 				CNIName: constants.CustomCNI,
 				CNIUrls: []string{customCNIUrl},
 			}))
-		}
-
-		if len(disks) > 1 {
-			// convert provision disks to machine disks
-			machineDisks := make([]*v1alpha1.MachineDisk, len(disks)-1)
-			for i, disk := range disks[1:] {
-				machineDisks[i] = &v1alpha1.MachineDisk{
-					DeviceName:     provisioner.UserDiskName(i + 1),
-					DiskPartitions: disk.Partitions,
-				}
-			}
-
-			genOptions = append(genOptions, generate.WithUserDisks(machineDisks))
 		}
 
 		if talosVersion == "" {
@@ -740,6 +730,7 @@ func create(ctx context.Context) error {
 					KubeVersion: strings.TrimPrefix(kubernetesVersion, "v"),
 					GenOptions:  genOptions,
 				}),
+			bundle.WithPatch(userVolumePatches),
 		)
 	}
 
@@ -1174,7 +1165,7 @@ func parseCPUShare(cpus string) (int64, error) {
 	return nano.Num().Int64(), nil
 }
 
-func getDisks() ([]*provision.Disk, error) {
+func getDisks(provisioner provision.Provisioner) ([]*provision.Disk, []configpatcher.Patch, error) {
 	const GPTAlignment = 2 * 1024 * 1024 // 2 MB
 
 	// should have at least a single primary disk
@@ -1187,56 +1178,55 @@ func getDisks() ([]*provision.Disk, error) {
 		},
 	}
 
-	for _, disk := range clusterDisks {
+	var userVolumes []*block.UserVolumeConfigV1Alpha1
+
+	for diskID, disk := range clusterUserVolumes {
 		var (
-			partitions     = strings.Split(disk, ":")
-			diskPartitions = make([]*v1alpha1.DiskPartition, len(partitions)/2)
-			diskSize       uint64
+			volumes  = strings.Split(disk, ":")
+			diskSize uint64
 		)
 
-		if len(partitions)%2 != 0 {
-			return nil, errors.New("failed to parse malformed partition definitions")
+		if len(volumes)%2 != 0 {
+			return nil, nil, errors.New("failed to parse malformed volume definitions")
 		}
 
-		partitionIndex := 0
+		for j := 0; j < len(volumes); j += 2 {
+			volumeName := volumes[j]
+			volumeSize := volumes[j+1]
 
-		for j := 0; j < len(partitions); j += 2 {
-			partitionPath := partitions[j]
-
-			if !strings.HasPrefix(partitionPath, "/var") {
-				return nil, errors.New("user disk partitions can only be mounted into /var folder")
+			userVolume := block.NewUserVolumeConfigV1Alpha1()
+			userVolume.MetaName = volumeName
+			userVolume.ProvisioningSpec = block.ProvisioningSpec{
+				DiskSelectorSpec: block.DiskSelector{
+					Match: cel.MustExpression(cel.ParseBooleanExpression(fmt.Sprintf("'%s' in disk.symlinks", provisioner.UserDiskName(diskID+1)), celenv.DiskLocator())),
+				},
+				ProvisioningMinSize: block.MustByteSize(volumeSize),
+				ProvisioningMaxSize: block.MustByteSize(volumeSize),
 			}
 
-			value, e := strconv.ParseInt(partitions[j+1], 10, 0)
-			partitionSize := uint64(value)
-
-			if e != nil {
-				partitionSize, e = humanize.ParseBytes(partitions[j+1])
-
-				if e != nil {
-					return nil, errors.New("failed to parse partition size")
-				}
-			}
-
-			diskPartitions[partitionIndex] = &v1alpha1.DiskPartition{
-				DiskSize:       v1alpha1.DiskSize(partitionSize),
-				DiskMountPoint: partitionPath,
-			}
-			diskSize += partitionSize
-			partitionIndex++
+			userVolumes = append(userVolumes, userVolume)
+			diskSize += userVolume.ProvisioningSpec.ProvisioningMaxSize.Value()
 		}
 
 		disks = append(disks, &provision.Disk{
 			// add 2 MB per partition to make extra room for GPT and alignment
-			Size:            diskSize + GPTAlignment*uint64(len(diskPartitions)+1),
-			Partitions:      diskPartitions,
+			Size:            diskSize + GPTAlignment*uint64(len(volumes)/2+1),
 			SkipPreallocate: !clusterDiskPreallocate,
 			Driver:          "ide",
 			BlockSize:       diskBlockSize,
 		})
 	}
 
-	return disks, nil
+	if len(userVolumes) > 0 {
+		ctr, err := container.New(xslices.Map(userVolumes, func(u *block.UserVolumeConfigV1Alpha1) configbase.Document { return u })...)
+		if err != nil {
+			return nil, nil, fmt.Errorf("failed to create user volumes container: %w", err)
+		}
+
+		return disks, []configpatcher.Patch{configpatcher.NewStrategicMergePatch(ctr)}, err
+	}
+
+	return disks, nil, nil
 }
 
 func init() {
@@ -1288,7 +1278,7 @@ func init() {
 	createCmd.Flags().IntVar(&clusterDiskSize, clusterDiskSizeFlag, 6*1024, "default limit on disk size in MB (each VM)")
 	createCmd.Flags().UintVar(&diskBlockSize, "disk-block-size", 512, "disk block size (VM only)")
 	createCmd.Flags().BoolVar(&clusterDiskPreallocate, clusterDiskPreallocateFlag, true, "whether disk space should be preallocated")
-	createCmd.Flags().StringSliceVar(&clusterDisks, clusterDisksFlag, []string{}, "list of disks to create for each VM in format: <mount_point1>:<size1>:<mount_point2>:<size2>")
+	createCmd.Flags().StringSliceVar(&clusterUserVolumes, clusterUserVolumesFlag, []string{}, "list of user volumes to create for each VM in format: <name1>:<size1>:<name2>:<size2>")
 	createCmd.Flags().IntVar(&extraDisks, "extra-disks", 0, "number of extra disks to create for each worker VM")
 	createCmd.Flags().StringSliceVar(&extraDisksDrivers, "extra-disks-drivers", nil, "driver for each extra disk (virtio, ide, ahci, scsi, nvme, megaraid)")
 	createCmd.Flags().IntVar(&extraDiskSize, "extra-disks-size", 5*1024, "default limit on disk size in MB (each VM)")

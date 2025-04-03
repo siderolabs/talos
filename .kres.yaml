@@ -346,7 +346,7 @@ spec:
             QEMU_EXTRA_DISKS_DRIVERS: "ide,nvme"
             WITH_CONFIG_PATCH_WORKER: "@hack/test/patches/ephemeral-nvme.yaml:@hack/test/patches/dm-raid-module.yaml"
             WITH_USER_DISK: "true"
-            USER_DISKS_MOUNTS: "/var/lib/extra,/var/lib/p1,/var/lib/p2"
+            USER_DISKS_MOUNTS: "/var/mnt/extra,/var/mnt/p1,/var/mnt/p2"
         - name: save-talos-logs
           conditions:
             - always
@@ -416,7 +416,7 @@ spec:
             WITH_CONFIG_PATCH_WORKER: "@hack/test/patches/ephemeral-nvme.yaml:@hack/test/patches/dm-raid-module.yaml"
             WITH_USER_DISK: "true"
             WITH_ENFORCING: true
-            USER_DISKS_MOUNTS: "/var/lib/extra,/var/lib/p1,/var/lib/p2"
+            USER_DISKS_MOUNTS: "/var/mnt/extra,/var/mnt/p1,/var/mnt/p2"
         - name: save-talos-logs
           conditions:
             - always

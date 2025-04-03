@@ -42,6 +42,12 @@ type DeviceSpec struct {
 	Secondaries []string `yaml:"secondaries,omitempty" protobuf:"9"`
 }
 
+// DeviceType constants.
+const (
+	DeviceTypeDisk      = "disk"
+	DeviceTypePartition = "partition"
+)
+
 // NewDevice initializes a BlockDevice resource.
 func NewDevice(namespace resource.Namespace, id resource.ID) *Device {
 	return typed.NewResource[DeviceSpec, DeviceExtension](

@@ -144,13 +144,7 @@ func (MachineConfig) Doc() *encoder.Doc {
 				Description: "Provides machine specific network configuration options.",
 				Comments:    [3]string{"" /* encoder.HeadComment */, "Provides machine specific network configuration options." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
-			{
-				Name:        "disks",
-				Type:        "[]MachineDisk",
-				Note:        "Note: `size` is in units of bytes.\n",
-				Description: "Used to partition, format and mount additional disks.\nSince the rootfs is read only with the exception of `/var`, mounts are only valid if they are under `/var`.\nNote that the partitioning and formatting is done only once, if and only if no existing XFS partitions are found.\nIf `size:` is omitted, the partition is sized to occupy the full disk.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Used to partition, format and mount additional disks." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
+			{},
 			{
 				Name:        "install",
 				Type:        "InstallConfig",
@@ -289,7 +283,6 @@ func (MachineConfig) Doc() *encoder.Doc {
 	doc.Fields[6].AddExample("Kubelet definition example.", machineKubeletExample())
 	doc.Fields[7].AddExample("nginx static pod.", machinePodsExample())
 	doc.Fields[8].AddExample("Network definition example.", machineNetworkConfigExample())
-	doc.Fields[9].AddExample("MachineDisks list example.", machineDisksExample())
 	doc.Fields[10].AddExample("MachineInstall config usage example.", machineInstallExample())
 	doc.Fields[11].AddExample("MachineFiles usage example.", machineFilesExample())
 	doc.Fields[12].AddExample("Environment variables definition examples.", machineEnvExamples0())
@@ -1952,75 +1945,6 @@ func (AdminKubeconfigConfig) Doc() *encoder.Doc {
 	}
 
 	doc.AddExample("", clusterAdminKubeconfigExample())
-
-	return doc
-}
-
-func (MachineDisk) Doc() *encoder.Doc {
-	doc := &encoder.Doc{
-		Type:        "MachineDisk",
-		Comments:    [3]string{"" /* encoder.HeadComment */, "MachineDisk represents the options available for partitioning, formatting, and" /* encoder.LineComment */, "" /* encoder.FootComment */},
-		Description: "MachineDisk represents the options available for partitioning, formatting, and\nmounting extra disks.\n",
-		AppearsIn: []encoder.Appearance{
-			{
-				TypeName:  "MachineConfig",
-				FieldName: "disks",
-			},
-		},
-		Fields: []encoder.Doc{
-			{
-				Name:        "device",
-				Type:        "string",
-				Note:        "",
-				Description: "The name of the disk to use.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "The name of the disk to use." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-			{
-				Name:        "partitions",
-				Type:        "[]DiskPartition",
-				Note:        "",
-				Description: "A list of partitions to create on the disk.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "A list of partitions to create on the disk." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-		},
-	}
-
-	doc.AddExample("MachineDisks list example.", machineDisksExample())
-
-	return doc
-}
-
-func (DiskPartition) Doc() *encoder.Doc {
-	doc := &encoder.Doc{
-		Type:        "DiskPartition",
-		Comments:    [3]string{"" /* encoder.HeadComment */, "DiskPartition represents the options for a disk partition." /* encoder.LineComment */, "" /* encoder.FootComment */},
-		Description: "DiskPartition represents the options for a disk partition.",
-		AppearsIn: []encoder.Appearance{
-			{
-				TypeName:  "MachineDisk",
-				FieldName: "partitions",
-			},
-		},
-		Fields: []encoder.Doc{
-			{
-				Name:        "size",
-				Type:        "DiskSize",
-				Note:        "",
-				Description: "The size of partition: either bytes or human readable representation. If `size:` is omitted, the partition is sized to occupy the full disk.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "The size of partition: either bytes or human readable representation. If `size:` is omitted, the partition is sized to occupy the full disk." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-			{
-				Name:        "mountpoint",
-				Type:        "string",
-				Note:        "",
-				Description: "Where to mount the partition.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Where to mount the partition." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-		},
-	}
-
-	doc.Fields[0].AddExample("Human readable representation.", DiskSize(100000000))
-	doc.Fields[0].AddExample("Precise value in bytes.", 1024*1024*1024)
 
 	return doc
 }
@@ -4224,8 +4148,6 @@ func GetFileDoc() *encoder.FileDoc {
 			FlannelCNIConfig{}.Doc(),
 			ExternalCloudProviderConfig{}.Doc(),
 			AdminKubeconfigConfig{}.Doc(),
-			MachineDisk{}.Doc(),
-			DiskPartition{}.Doc(),
 			EncryptionConfig{}.Doc(),
 			EncryptionKey{}.Doc(),
 			EncryptionKeyStatic{}.Doc(),

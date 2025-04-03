@@ -43,10 +43,10 @@ var (
 	_ config.Validator     = &VolumeConfigV1Alpha1{}
 )
 
-// VolumeConfigV1Alpha1 is a volume configuration document.
+// VolumeConfigV1Alpha1 is a system volume configuration document.
 //
-// Note: at the moment, only EPHEMERAL volumes are supported.
-//
+//	description: |
+//	  Note: at the moment, only `EPHEMERAL` and `IMAGE-CACHE` system volumes are supported.
 //	examples:
 //	  - value: exampleVolumeConfigEphemeralV1Alpha1()
 //	alias: VolumeConfig
@@ -158,26 +158,35 @@ func (s *VolumeConfigV1Alpha1) Validate(validation.RuntimeMode, ...validation.Op
 		return nil, fmt.Errorf("only %q volumes are supported", allowedVolumes)
 	}
 
-	var validationErrors error
-
-	if !s.ProvisioningSpec.DiskSelectorSpec.Match.IsZero() {
-		if err := s.ProvisioningSpec.DiskSelectorSpec.Match.ParseBool(celenv.DiskLocator()); err != nil {
-			validationErrors = errors.Join(validationErrors, fmt.Errorf("disk selector is invalid: %w", err))
-		}
-	}
-
-	if !s.ProvisioningSpec.ProvisioningMinSize.IsZero() && !s.ProvisioningSpec.ProvisioningMaxSize.IsZero() {
-		if s.ProvisioningSpec.ProvisioningMinSize.Value() > s.ProvisioningSpec.ProvisioningMaxSize.Value() {
-			validationErrors = errors.Join(validationErrors, errors.New("min size is greater than max size"))
-		}
-	}
-
-	return nil, validationErrors
+	return s.ProvisioningSpec.Validate(false)
 }
 
 // Provisioning implements config.VolumeConfig interface.
 func (s *VolumeConfigV1Alpha1) Provisioning() config.VolumeProvisioningConfig {
 	return s.ProvisioningSpec
+}
+
+// Validate the provisioning spec.
+func (s ProvisioningSpec) Validate(required bool) ([]string, error) {
+	var validationErrors error
+
+	if !s.DiskSelectorSpec.Match.IsZero() {
+		if err := s.DiskSelectorSpec.Match.ParseBool(celenv.DiskLocator()); err != nil {
+			validationErrors = errors.Join(validationErrors, fmt.Errorf("disk selector is invalid: %w", err))
+		}
+	} else if required {
+		validationErrors = errors.Join(validationErrors, errors.New("disk selector is required"))
+	}
+
+	if !s.ProvisioningMinSize.IsZero() && !s.ProvisioningMaxSize.IsZero() {
+		if s.ProvisioningMinSize.Value() > s.ProvisioningMaxSize.Value() {
+			validationErrors = errors.Join(validationErrors, errors.New("min size is greater than max size"))
+		}
+	} else if required && s.ProvisioningMinSize.IsZero() && s.ProvisioningMaxSize.IsZero() {
+		validationErrors = errors.Join(validationErrors, errors.New("min size or max size is required"))
+	}
+
+	return nil, validationErrors
 }
 
 // DiskSelector implements config.VolumeProvisioningConfig interface.

@@ -235,6 +235,8 @@ type podInfo interface {
 	Name() string
 	WithNodeName(nodeName string) podInfo
 	WithQuiet(quiet bool) podInfo
+	WithNamespace(namespace string) podInfo
+	WithHostVolumeMount(hostPath, mountPath string) podInfo
 	Create(ctx context.Context, waitTimeout time.Duration) error
 	Delete(ctx context.Context) error
 	Exec(ctx context.Context, command string) (string, string, error)
@@ -261,6 +263,33 @@ func (p *pod) WithNodeName(nodeName string) podInfo {
 
 func (p *pod) WithQuiet(quiet bool) podInfo {
 	p.quiet = quiet
+
+	return p
+}
+
+func (p *pod) WithNamespace(namespace string) podInfo {
+	p.namespace = namespace
+
+	return p
+}
+
+func (p *pod) WithHostVolumeMount(hostPath, mountPath string) podInfo {
+	name := filepath.Base(hostPath)
+
+	p.pod.Spec.Volumes = append(p.pod.Spec.Volumes, corev1.Volume{
+		Name: name,
+		VolumeSource: corev1.VolumeSource{
+			HostPath: &corev1.HostPathVolumeSource{
+				Path: hostPath,
+				Type: pointer.To(corev1.HostPathDirectoryOrCreate),
+			},
+		},
+	})
+
+	p.pod.Spec.Containers[0].VolumeMounts = append(p.pod.Spec.Containers[0].VolumeMounts, corev1.VolumeMount{
+		Name:      name,
+		MountPath: mountPath,
+	})
 
 	return p
 }

@@ -93,6 +93,8 @@ message BlockDeviceWipeDescriptor {
   Method method = 2;
   // Skip the volume in use check.
   bool skip_volume_check = 3;
+  // Drop the partition (only applies if the device is a partition).
+  bool drop_partition = 4;
 }
 
 message BlockDeviceWipeResponse {

@@ -34,7 +34,7 @@ func TestCompareVolumeConfigs(t *testing.T) {
 			},
 			b: &block.VolumeConfigSpec{
 				Provisioning: block.ProvisioningSpec{
-					Wave: block.WaveUserDisks,
+					Wave: block.WaveUserVolumes,
 				},
 			},
 

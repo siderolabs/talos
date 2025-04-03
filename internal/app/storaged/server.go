@@ -18,6 +18,7 @@ import (
 	"github.com/siderolabs/gen/xslices"
 	"github.com/siderolabs/go-blockdevice/v2/blkid"
 	blockdev "github.com/siderolabs/go-blockdevice/v2/block"
+	"github.com/siderolabs/go-blockdevice/v2/partitioning/gpt"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/emptypb"
@@ -115,7 +116,7 @@ func (s *Server) BlockDeviceWipe(ctx context.Context, req *storage.BlockDeviceWi
 
 	// perform the actual wipe
 	for _, deviceRequest := range req.GetDevices() {
-		if err := s.wipeDevice(deviceRequest.GetDevice(), deviceRequest.GetMethod()); err != nil {
+		if err := s.wipeDevice(deviceRequest.GetDevice(), deviceRequest.GetMethod(), deviceRequest.GetDropPartition()); err != nil {
 			return nil, err
 		}
 	}
@@ -146,8 +147,8 @@ func (s *Server) validateDeviceForWipe(ctx context.Context, deviceName string, s
 	deviceType := blockdevice.TypedSpec().Type
 
 	switch deviceType {
-	case "disk": // supported
-	case "partition": // supported
+	case block.DeviceTypeDisk: // supported
+	case block.DeviceTypePartition: // supported
 		parent = blockdevice.TypedSpec().Parent
 	default:
 		return status.Errorf(codes.InvalidArgument, "blockdevice %q is of unsupported type %q", deviceName, deviceType)
@@ -176,7 +177,7 @@ func (s *Server) validateDeviceForWipe(ctx context.Context, deviceName string, s
 
 	// secondaries check
 	switch deviceType {
-	case "disk": // for disks, check secondaries even if the partition is used as secondary (track via Disk resource)
+	case block.DeviceTypeDisk: // for disks, check secondaries even if the partition is used as secondary (track via Disk resource)
 		disks, err := safe.StateListAll[*block.Disk](ctx, st)
 		if err != nil {
 			return err
@@ -187,7 +188,7 @@ func (s *Server) validateDeviceForWipe(ctx context.Context, deviceName string, s
 				return status.Errorf(codes.FailedPrecondition, "blockdevice %q is in use by disk %q", deviceName, disk.Metadata().ID())
 			}
 		}
-	case "partition": // for partitions, check secondaries only if the partition is used as a secondary
+	case block.DeviceTypePartition: // for partitions, check secondaries only if the partition is used as a secondary
 		blockdevices, err := safe.StateListAll[*block.Device](ctx, st)
 		if err != nil {
 			return err
@@ -234,10 +235,41 @@ func (s *Server) validateDeviceForWipe(ctx context.Context, deviceName string, s
 	return nil
 }
 
+func (s *Server) findParentDevice(deviceName string) (string, int, error) {
+	st := s.Controller.Runtime().State().V1Alpha2().Resources()
+
+	blockdevice, err := safe.StateGetByID[*block.Device](context.Background(), st, deviceName)
+	if err != nil {
+		return "", 0, err
+	}
+
+	if blockdevice.TypedSpec().Type == block.DeviceTypePartition {
+		return blockdevice.TypedSpec().Parent, blockdevice.TypedSpec().PartitionNumber, nil
+	}
+
+	return "", 0, nil
+}
+
 // wipeDevice wipes the block device with the given method.
 //
-//nolint:gocyclo
-func (s *Server) wipeDevice(deviceName string, method storage.BlockDeviceWipeDescriptor_Method) error {
+//nolint:gocyclo,cyclop
+func (s *Server) wipeDevice(deviceName string, method storage.BlockDeviceWipeDescriptor_Method, dropPartition bool) error {
+	parentName, partitionNumber, err := s.findParentDevice(deviceName)
+	if err != nil {
+		return err
+	}
+
+	var parentBd *blockdev.Device
+
+	if parentName != "" {
+		parentBd, err = blockdev.NewFromPath(filepath.Join("/dev", parentName), blockdev.OpenForWrite())
+		if err != nil {
+			return status.Errorf(codes.Internal, "failed to open block device %q: %v", parentName, err)
+		}
+
+		defer parentBd.Close() //nolint:errcheck
+	}
+
 	bd, err := blockdev.NewFromPath(filepath.Join("/dev", deviceName), blockdev.OpenForWrite())
 	if err != nil {
 		return status.Errorf(codes.Internal, "failed to open block device %q: %v", deviceName, err)
@@ -245,11 +277,24 @@ func (s *Server) wipeDevice(deviceName string, method storage.BlockDeviceWipeDes
 
 	defer bd.Close() //nolint:errcheck
 
-	if err = bd.Lock(true); err != nil {
-		return status.Errorf(codes.Internal, "failed to lock block device %q: %v", deviceName, err)
-	}
+	// lock the parent device always (if available)
+	if parentBd != nil {
+		log.Printf("locking parent block device %q", parentName)
 
-	defer bd.Unlock() //nolint:errcheck
+		if err = parentBd.Lock(true); err != nil {
+			return status.Errorf(codes.Internal, "failed to lock parent block device %q: %v", parentName, err)
+		}
+
+		defer parentBd.Unlock() //nolint:errcheck
+	} else {
+		log.Printf("locking block device %q", deviceName)
+
+		if err = bd.Lock(true); err != nil {
+			return status.Errorf(codes.Internal, "failed to lock block device %q: %v", deviceName, err)
+		}
+
+		defer bd.Unlock() //nolint:errcheck
+	}
 
 	switch method {
 	case storage.BlockDeviceWipeDescriptor_ZEROES:
@@ -292,6 +337,33 @@ func (s *Server) wipeDevice(deviceName string, method storage.BlockDeviceWipeDes
 		}
 	default:
 		return status.Errorf(codes.InvalidArgument, "unsupported wipe method %s", method)
+	}
+
+	if dropPartition && parentBd != nil && partitionNumber != 0 {
+		// first, close the blockdevice, otherwise the partition table cannot be modified
+		if err = bd.Close(); err != nil {
+			return status.Errorf(codes.Internal, "failed to close block device %q: %v", deviceName, err)
+		}
+
+		gptdev, err := gpt.DeviceFromBlockDevice(parentBd)
+		if err != nil {
+			return status.Errorf(codes.Internal, "failed to get GPT device: %v", err)
+		}
+
+		pt, err := gpt.Read(gptdev)
+		if err != nil {
+			return status.Errorf(codes.Internal, "failed to read GPT table: %v", err)
+		}
+
+		if err = pt.DeletePartition(partitionNumber - 1); err != nil {
+			return status.Errorf(codes.Internal, "failed to delete partition: %v", err)
+		}
+
+		if err = pt.Write(); err != nil {
+			return status.Errorf(codes.Internal, "failed to write GPT table: %v", err)
+		}
+
+		log.Printf("deleted partition %d from block device %q", partitionNumber, parentName)
 	}
 
 	return nil

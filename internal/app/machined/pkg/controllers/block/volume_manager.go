@@ -14,6 +14,7 @@ import (
 
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
+	"github.com/cosi-project/runtime/pkg/resource/kvutils"
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/siderolabs/gen/optional"
@@ -331,9 +332,15 @@ func (ctrl *VolumeManagerController) Run(ctx context.Context, r controller.Runti
 
 				// create a stub volume status
 				volumeStatus = block.NewVolumeStatus(block.NamespaceName, vc.Metadata().ID())
+
+				for k, v := range vc.Metadata().Labels().Raw() {
+					volumeStatus.Metadata().Labels().Set(k, v)
+				}
+
 				volumeStatus.TypedSpec().Phase = block.VolumePhaseWaiting
 				volumeStatus.TypedSpec().Type = vc.TypedSpec().Type
 				volumeStatus.TypedSpec().ParentID = vc.TypedSpec().ParentID
+
 				volumeStatuses[vc.Metadata().ID()] = volumeStatus
 			}
 
@@ -453,6 +460,12 @@ func (ctrl *VolumeManagerController) Run(ctx context.Context, r controller.Runti
 		// update statuses
 		for id, newVs := range volumeStatuses {
 			if err = safe.WriterModify(ctx, r, block.NewVolumeStatus(block.NamespaceName, id), func(vs *block.VolumeStatus) error {
+				vs.Metadata().Labels().Do(func(temp kvutils.TempKV) {
+					for k, v := range newVs.Metadata().Labels().Raw() {
+						temp.Set(k, v)
+					}
+				})
+
 				*vs.TypedSpec() = *newVs.TypedSpec()
 
 				return nil

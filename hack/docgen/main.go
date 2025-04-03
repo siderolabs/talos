@@ -285,10 +285,18 @@ func parseComment(comment []byte) *Text {
 		// take only the first line from the Description for the comment
 		text.Comment = lines[0]
 
+		oldDescription := text.Description
+
 		// try to parse everything except for the first line as yaml
 		if err = yaml.Unmarshal([]byte(strings.Join(lines[1:], "\n")), text); err == nil {
 			// if parsed, remove it from the description
-			text.Description = text.Comment
+			if text.Description != oldDescription {
+				// something got parsed
+				text.Description = text.Comment + "\n" + text.Description
+			} else {
+				// nothing got parsed
+				text.Description = text.Comment
+			}
 		}
 	} else {
 		text.Description = strings.TrimSpace(text.Description)

@@ -77,7 +77,7 @@ func (ctrl *DisksController) Run(ctx context.Context, r controller.Runtime, logg
 		touchedDisks := map[string]struct{}{}
 
 		for device := range blockdevices.All() {
-			if device.TypedSpec().Type != "disk" {
+			if device.TypedSpec().Type != block.DeviceTypeDisk {
 				continue
 			}
 

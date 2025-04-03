@@ -262,20 +262,6 @@ network:
     # kubespan:
     #     enabled: true # Enable the KubeSpan feature.
 {{< /highlight >}}</details> | |
-|`disks` |<a href="#Config.machine.disks.">[]MachineDisk</a> |<details><summary>Used to partition, format and mount additional disks.</summary>Since the rootfs is read only with the exception of `/var`, mounts are only valid if they are under `/var`.<br />Note that the partitioning and formatting is done only once, if and only if no existing XFS partitions are found.<br />If `size:` is omitted, the partition is sized to occupy the full disk.</details> <details><summary>Show example(s)</summary>{{< highlight yaml >}}
-disks:
-    - device: /dev/sdb # The name of the disk to use.
-      # A list of partitions to create on the disk.
-      partitions:
-        - mountpoint: /var/mnt/extra # Where to mount the partition.
-
-          # # The size of partition: either bytes or human readable representation. If `size:` is omitted, the partition is sized to occupy the full disk.
-
-          # # Human readable representation.
-          # size: 100 MB
-          # # Precise value in bytes.
-          # size: 1073741824
-{{< /highlight >}}</details> | |
 |`install` |<a href="#Config.machine.install">InstallConfig</a> |<details><summary>Used to provide instructions for installations.</summary><br />Note that this configuration section gets silently ignored by Talos images that are considered pre-installed.<br />To make sure Talos installs according to the provided configuration, Talos should be booted with ISO or PXE-booted.</details> <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 install:
     disk: /dev/sda # The disk used for installations.
@@ -1829,62 +1815,6 @@ endpoints:
 {{< /highlight >}}</details> | |
 
 
-
-
-
-
-
-
-
-
-### disks[] {#Config.machine.disks.}
-
-MachineDisk represents the options available for partitioning, formatting, and
-mounting extra disks.
-
-
-
-
-{{< highlight yaml >}}
-machine:
-    disks:
-        - device: /dev/sdb # The name of the disk to use.
-          # A list of partitions to create on the disk.
-          partitions:
-            - mountpoint: /var/mnt/extra # Where to mount the partition.
-
-              # # The size of partition: either bytes or human readable representation. If `size:` is omitted, the partition is sized to occupy the full disk.
-
-              # # Human readable representation.
-              # size: 100 MB
-              # # Precise value in bytes.
-              # size: 1073741824
-{{< /highlight >}}
-
-
-| Field | Type | Description | Value(s) |
-|-------|------|-------------|----------|
-|`device` |string |The name of the disk to use.  | |
-|`partitions` |<a href="#Config.machine.disks..partitions.">[]DiskPartition</a> |A list of partitions to create on the disk.  | |
-
-
-
-
-#### partitions[] {#Config.machine.disks..partitions.}
-
-DiskPartition represents the options for a disk partition.
-
-
-
-
-| Field | Type | Description | Value(s) |
-|-------|------|-------------|----------|
-|`size` |DiskSize |The size of partition: either bytes or human readable representation. If `size:` is omitted, the partition is sized to occupy the full disk. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
-size: 100 MB
-{{< /highlight >}}{{< highlight yaml >}}
-size: 1073741824
-{{< /highlight >}}</details> | |
-|`mountpoint` |string |Where to mount the partition.  | |
 
 
 

@@ -335,6 +335,16 @@ func (m *BlockDeviceWipeDescriptor) MarshalToSizedBufferVT(dAtA []byte) (int, er
 		i -= len(m.unknownFields)
 		copy(dAtA[i:], m.unknownFields)
 	}
+	if m.DropPartition {
+		i--
+		if m.DropPartition {
+			dAtA[i] = 1
+		} else {
+			dAtA[i] = 0
+		}
+		i--
+		dAtA[i] = 0x20
+	}
 	if m.SkipVolumeCheck {
 		i--
 		if m.SkipVolumeCheck {
@@ -590,6 +600,9 @@ func (m *BlockDeviceWipeDescriptor) SizeVT() (n int) {
 		n += 1 + protohelpers.SizeOfVarint(uint64(m.Method))
 	}
 	if m.SkipVolumeCheck {
+		n += 2
+	}
+	if m.DropPartition {
 		n += 2
 	}
 	n += len(m.unknownFields)
@@ -1448,6 +1461,26 @@ func (m *BlockDeviceWipeDescriptor) UnmarshalVT(dAtA []byte) error {
 				}
 			}
 			m.SkipVolumeCheck = bool(v != 0)
+		case 4:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field DropPartition", wireType)
+			}
+			var v int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return protohelpers.ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				v |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			m.DropPartition = bool(v != 0)
 		default:
 			iNdEx = preIndex
 			skippy, err := protohelpers.Skip(dAtA[iNdEx:])

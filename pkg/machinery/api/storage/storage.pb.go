@@ -441,8 +441,10 @@ type BlockDeviceWipeDescriptor struct {
 	Method BlockDeviceWipeDescriptor_Method `protobuf:"varint,2,opt,name=method,proto3,enum=storage.BlockDeviceWipeDescriptor_Method" json:"method,omitempty"`
 	// Skip the volume in use check.
 	SkipVolumeCheck bool `protobuf:"varint,3,opt,name=skip_volume_check,json=skipVolumeCheck,proto3" json:"skip_volume_check,omitempty"`
-	unknownFields   protoimpl.UnknownFields
-	sizeCache       protoimpl.SizeCache
+	// Drop the partition (only applies if the device is a partition).
+	DropPartition bool `protobuf:"varint,4,opt,name=drop_partition,json=dropPartition,proto3" json:"drop_partition,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *BlockDeviceWipeDescriptor) Reset() {
@@ -492,6 +494,13 @@ func (x *BlockDeviceWipeDescriptor) GetMethod() BlockDeviceWipeDescriptor_Method
 func (x *BlockDeviceWipeDescriptor) GetSkipVolumeCheck() bool {
 	if x != nil {
 		return x.SkipVolumeCheck
+	}
+	return false
+}
+
+func (x *BlockDeviceWipeDescriptor) GetDropPartition() bool {
+	if x != nil {
+		return x.DropPartition
 	}
 	return false
 }
@@ -619,11 +628,12 @@ const file_storage_storage_proto_rawDesc = "" +
 	"\rDisksResponse\x12*\n" +
 	"\bmessages\x18\x01 \x03(\v2\x0e.storage.DisksR\bmessages\"V\n" +
 	"\x16BlockDeviceWipeRequest\x12<\n" +
-	"\adevices\x18\x01 \x03(\v2\".storage.BlockDeviceWipeDescriptorR\adevices\"\xc2\x01\n" +
+	"\adevices\x18\x01 \x03(\v2\".storage.BlockDeviceWipeDescriptorR\adevices\"\xe9\x01\n" +
 	"\x19BlockDeviceWipeDescriptor\x12\x16\n" +
 	"\x06device\x18\x01 \x01(\tR\x06device\x12A\n" +
 	"\x06method\x18\x02 \x01(\x0e2).storage.BlockDeviceWipeDescriptor.MethodR\x06method\x12*\n" +
-	"\x11skip_volume_check\x18\x03 \x01(\bR\x0fskipVolumeCheck\"\x1e\n" +
+	"\x11skip_volume_check\x18\x03 \x01(\bR\x0fskipVolumeCheck\x12%\n" +
+	"\x0edrop_partition\x18\x04 \x01(\bR\rdropPartition\"\x1e\n" +
 	"\x06Method\x12\b\n" +
 	"\x04FAST\x10\x00\x12\n" +
 	"\n" +

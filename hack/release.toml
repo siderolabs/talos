@@ -170,6 +170,14 @@ This means kernel arguments not part of the UKI will not be preserved across upd
 Use [Boot Assets](https://www.talos.dev/v1.10/talos-guides/install/boot-assets/) instead.
 """
 
+    [notes.user-volumes]
+        title = "User Volumes"
+        description = """\
+Talos now supports [user disk volumes](https://www.talos.dev/v1.10/talos-guides/configuration/disk-management/#user-volumes) via the `UserVolumeConfig` machine config document.
+
+The old `.machine.disks` field is deprecated, but still supported for backwards compatibility.
+"""
+
 [make_deps]
 
     [make_deps.tools]

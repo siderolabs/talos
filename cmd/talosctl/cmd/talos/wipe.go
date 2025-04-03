@@ -25,6 +25,7 @@ var wipeCmd = &cobra.Command{
 var wipeDiskCmdFlags struct {
 	wipeMethod      string
 	skipVolumeCheck bool
+	dropPartition   bool
 }
 
 // wipeDiskCmd represents the wipe disk command.
@@ -48,6 +49,7 @@ Use device names as arguments, for example: vda or sda5.`,
 						Device:          devName,
 						Method:          storage.BlockDeviceWipeDescriptor_Method(method),
 						SkipVolumeCheck: wipeDiskCmdFlags.skipVolumeCheck,
+						DropPartition:   wipeDiskCmdFlags.dropPartition,
 					}
 				}),
 			})
@@ -72,6 +74,7 @@ func init() {
 
 	wipeDiskCmd.Flags().StringVar(&wipeDiskCmdFlags.wipeMethod, "method", wipeMethodValues()[0], fmt.Sprintf("wipe method to use %s", wipeMethodValues()))
 	wipeDiskCmd.Flags().BoolVar(&wipeDiskCmdFlags.skipVolumeCheck, "skip-volume-check", false, "skip volume check")
+	wipeDiskCmd.Flags().BoolVar(&wipeDiskCmdFlags.dropPartition, "drop-partition", false, "drop partition after wipe (if applicable)")
 	wipeDiskCmd.Flags().MarkHidden("skip-volume-check") //nolint:errcheck
 
 	wipeCmd.AddCommand(wipeDiskCmd)

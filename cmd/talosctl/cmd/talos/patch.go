@@ -45,6 +45,10 @@ func patchFn(c *client.Client, patches []configpatcher.Patch) func(context.Conte
 			return fmt.Errorf("%s: unsupported resource type: %s", node, mc.Metadata().Type())
 		}
 
+		if mc.Metadata().ID() != config.ActiveID {
+			return nil
+		}
+
 		body, err := yaml.Marshal(mc.Spec())
 		if err != nil {
 			return err

@@ -51,7 +51,7 @@ type VolumeConfigSpec struct {
 // Wave constants.
 const (
 	WaveSystemDisk      = -1
-	WaveUserDisks       = 0
+	WaveUserVolumes     = 0
 	WaveLegacyUserDisks = 1000000 // legacy user disks rely on specific order of provisioning
 )
 

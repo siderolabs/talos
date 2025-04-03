@@ -250,8 +250,8 @@ case "${WITH_USER_DISK:-false}" in
   false)
     ;;
   *)
-    QEMU_FLAGS+=("--user-disk=/var/lib/extra:350MB")
-    QEMU_FLAGS+=("--user-disk=/var/lib/p1:350MB:/var/lib/p2:350MB")
+    QEMU_FLAGS+=("--user-volumes=extra:350MB")
+    QEMU_FLAGS+=("--user-volumes=p1:350MB:p2:350MB")
     ;;
 esac
 
