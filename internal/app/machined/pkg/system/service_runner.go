@@ -184,6 +184,11 @@ func (svcrunner *ServiceRunner) waitFor(ctx context.Context, condition condition
 // ErrSkip is returned by Run when service is skipped.
 var ErrSkip = errors.New("service skipped")
 
+type volumeRequest struct {
+	volumeID  string
+	requestID string
+}
+
 // Run initializes the service and runs it.
 //
 // Run returns an error when a service stops.
@@ -221,7 +226,7 @@ func (svcrunner *ServiceRunner) Run(notifyChannels ...chan<- struct{}) error {
 
 	if volumeIDs := svcrunner.service.Volumes(svcrunner.runtime); len(volumeIDs) > 0 {
 		// create volume mount request for each volume requested
-		volumeRequestIDs := make([]string, 0, len(volumeIDs))
+		volumeRequests := make([]volumeRequest, 0, len(volumeIDs))
 
 		for _, volumeID := range volumeIDs {
 			requestID, err := svcrunner.createVolumeMountRequest(ctx, volumeID)
@@ -229,12 +234,12 @@ func (svcrunner *ServiceRunner) Run(notifyChannels ...chan<- struct{}) error {
 				return err
 			}
 
-			volumeRequestIDs = append(volumeRequestIDs, requestID)
+			volumeRequests = append(volumeRequests, volumeRequest{volumeID: volumeID, requestID: requestID})
 		}
 
 		// the condition will wait for volume mount statuses, and put a finalizer on it
-		volumeConditions := xslices.Map(volumeRequestIDs, func(requestID string) conditions.Condition {
-			return WaitForVolumeToBeMounted(svcrunner.runtime.State().V1Alpha2().Resources(), requestID)
+		volumeConditions := xslices.Map(volumeRequests, func(request volumeRequest) conditions.Condition {
+			return WaitForVolumeToBeMounted(svcrunner.runtime.State().V1Alpha2().Resources(), request.requestID, request.volumeID)
 		})
 
 		condition = conditions.WaitForAll(conditions.WaitForAll(volumeConditions...), condition)
@@ -244,7 +249,7 @@ func (svcrunner *ServiceRunner) Run(notifyChannels ...chan<- struct{}) error {
 			cleanupCtx, cleanupCancel := context.WithTimeout(context.Background(), 10*time.Second)
 			defer cleanupCancel()
 
-			if err := svcrunner.deleteVolumeMountRequest(cleanupCtx, volumeRequestIDs); err != nil {
+			if err := svcrunner.deleteVolumeMountRequest(cleanupCtx, volumeRequests); err != nil {
 				svcrunner.UpdateState(cleanupCtx, events.StateFailed, "Failed to clean up volumes: %v", err)
 			}
 		}()

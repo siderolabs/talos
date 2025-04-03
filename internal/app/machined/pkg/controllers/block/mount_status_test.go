@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/cosi-project/runtime/pkg/resource"
+	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 
@@ -87,4 +88,47 @@ func (suite *MountStatusSuite) TestReconcile() {
 	})
 
 	suite.Destroy(mountStatus1)
+}
+
+func (suite *MountStatusSuite) TestReconcileRequesterGoingOut() {
+	mountStatus1 := block.NewMountStatus(block.NamespaceName, "volume1")
+	mountStatus1.TypedSpec().Spec = block.MountRequestSpec{
+		VolumeID:     "volume1",
+		Requesters:   []string{"requester1", "requester2"},
+		RequesterIDs: []string{"requester1/volume1", "requester2/volume1"},
+	}
+	mountStatus1.TypedSpec().Target = "/target"
+	suite.Create(mountStatus1)
+
+	// mount status is exploded into volume mount statuses
+	ctest.AssertResources(suite,
+		[]resource.ID{"requester1/volume1", "requester2/volume1"},
+		func(vms *block.VolumeMountStatus, asrt *assert.Assertions) {
+			asrt.Equal("volume1", vms.Metadata().Labels().Raw()["mount-status-id"])
+			asrt.Equal("volume1", vms.TypedSpec().VolumeID)
+			asrt.Equal("/target", vms.TypedSpec().Target)
+		},
+	)
+
+	// put a finalizer on volume mount status
+	suite.AddFinalizer(block.NewVolumeMountStatus(block.NamespaceName, "requester1/volume1").Metadata(), "test-finalizer")
+
+	// update the mount status, as if requester1 is no longer mounting it
+	mountStatus1, err := safe.StateGetByID[*block.MountStatus](suite.Ctx(), suite.State(), mountStatus1.Metadata().ID())
+	suite.Require().NoError(err)
+
+	mountStatus1.TypedSpec().Spec.Requesters = []string{"requester2"}
+	mountStatus1.TypedSpec().Spec.RequesterIDs = []string{"requester2/volume1"}
+	suite.Update(mountStatus1)
+
+	// volume mount status with finalizer should be tearing down
+	ctest.AssertResource(suite, "requester1/volume1", func(vms *block.VolumeMountStatus, asrt *assert.Assertions) {
+		asrt.Equal(resource.PhaseTearingDown, vms.Metadata().Phase())
+	})
+
+	// remove finalizer from volume mount status
+	suite.RemoveFinalizer(block.NewVolumeMountStatus(block.NamespaceName, "requester1/volume1").Metadata(), "test-finalizer")
+
+	// volume mount status should be destroyed
+	ctest.AssertNoResource[*block.VolumeMountStatus](suite, "requester1/volume1")
 }

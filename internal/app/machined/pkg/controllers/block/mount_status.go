@@ -7,6 +7,7 @@ package block
 import (
 	"context"
 	"fmt"
+	"slices"
 
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
@@ -53,7 +54,7 @@ func (ctrl *MountStatusController) Outputs() []controller.Output {
 
 // Run implements controller.Controller interface.
 //
-//nolint:gocyclo
+//nolint:gocyclo,cyclop
 func (ctrl *MountStatusController) Run(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
 	for {
 		select {
@@ -94,6 +95,30 @@ func (ctrl *MountStatusController) Run(ctx context.Context, r controller.Runtime
 						},
 					); err != nil {
 						return fmt.Errorf("failed to create volume mount status %q: %w", requestID, err)
+					}
+				}
+
+				// now clean up volume mount statuses that do match any existing requesters
+				volumeMountStatuses, err := safe.ReaderListAll[*block.VolumeMountStatus](ctx, r, state.WithLabelQuery(resource.LabelEqual("mount-status-id", mountStatus.Metadata().ID())))
+				if err != nil {
+					return fmt.Errorf("failed to read volume mount statuses for mount status %q: %w", mountStatus.Metadata().ID(), err)
+				}
+
+				for volumeMountStatus := range volumeMountStatuses.All() {
+					if slices.Contains(mountStatus.TypedSpec().Spec.RequesterIDs, volumeMountStatus.Metadata().ID()) {
+						// still active
+						continue
+					}
+
+					okToDestroy, err := r.Teardown(ctx, volumeMountStatus.Metadata())
+					if err != nil {
+						return fmt.Errorf("failed to teardown volume mount status %q: %w", volumeMountStatus.Metadata().ID(), err)
+					}
+
+					if okToDestroy {
+						if err = r.Destroy(ctx, volumeMountStatus.Metadata()); err != nil {
+							return fmt.Errorf("failed to destroy volume mount status %q: %w", volumeMountStatus.Metadata().ID(), err)
+						}
 					}
 				}
 			case resource.PhaseTearingDown:
