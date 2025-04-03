@@ -1238,6 +1238,9 @@ const (
 
 	// KubernetesInformerDefaultResyncPeriod is the default resync period for Kubernetes informers.
 	KubernetesInformerDefaultResyncPeriod = 30 * time.Second
+
+	// UserVolumeMountPoint is the path to the volume mount point for the user volumes.
+	UserVolumeMountPoint = "/var/mnt"
 )
 
 // See https://linux.die.net/man/3/klogctl

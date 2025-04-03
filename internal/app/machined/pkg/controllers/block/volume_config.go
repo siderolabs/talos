@@ -492,6 +492,12 @@ func (ctrl *VolumeConfigController) manageStandardVolumes(ctx context.Context, r
 			Recursive:    true,
 			SELinuxLabel: "system_u:object_r:seccomp_profile_t:s0",
 		},
+		// /var/mnt
+		{
+			Path:         constants.UserVolumeMountPoint,
+			Mode:         0o755,
+			SELinuxLabel: constants.EphemeralSelinuxLabel,
+		},
 		// /var/run
 		{
 			Path:         "/var/run/lock",

@@ -49,6 +49,10 @@ func (ProvisioningSpec) Doc() *encoder.Doc {
 				TypeName:  "VolumeConfigV1Alpha1",
 				FieldName: "provisioning",
 			},
+			{
+				TypeName:  "UserVolumeConfigV1Alpha1",
+				FieldName: "provisioning",
+			},
 		},
 		Fields: []encoder.Doc{
 			{
@@ -116,6 +120,35 @@ func (DiskSelector) Doc() *encoder.Doc {
 	return doc
 }
 
+func (UserVolumeConfigV1Alpha1) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "UserVolumeConfig",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "UserVolumeConfig is a user volume configuration document." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "UserVolumeConfig is a user volume configuration document.",
+		Fields: []encoder.Doc{
+			{},
+			{
+				Name:        "name",
+				Type:        "string",
+				Note:        "",
+				Description: "Name of the volume.\n\nName might be between 1 and 36 characters long and can only contain:\nlowercase and uppercase ASCII letters, digits, and hyphens.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Name of the volume." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "provisioning",
+				Type:        "ProvisioningSpec",
+				Note:        "",
+				Description: "The provisioning describes how the volume is provisioned.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "The provisioning describes how the volume is provisioned." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
+
+	doc.AddExample("", exampleUserVolumeConfigV1Alpha1())
+
+	return doc
+}
+
 // GetFileDoc returns documentation for the file block_doc.go.
 func GetFileDoc() *encoder.FileDoc {
 	return &encoder.FileDoc{
@@ -125,6 +158,7 @@ func GetFileDoc() *encoder.FileDoc {
 			VolumeConfigV1Alpha1{}.Doc(),
 			ProvisioningSpec{}.Doc(),
 			DiskSelector{}.Doc(),
+			UserVolumeConfigV1Alpha1{}.Doc(),
 		},
 	}
 }
