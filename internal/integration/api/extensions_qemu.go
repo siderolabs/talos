@@ -117,6 +117,7 @@ func (suite *ExtensionsSuiteQEMU) TestExtensionsExpectedModules() {
 		"cxgb4":           "cxgb4.ko",
 		"cxgb4vf":         "cxgb4vf.ko",
 		"drbd":            "drbd.ko",
+		"ena":             "ena.ko",
 		"gasket":          "gasket.ko",
 		"net1080":         "net1080.ko",
 		"option":          "option.ko",
@@ -126,6 +127,7 @@ func (suite *ExtensionsSuiteQEMU) TestExtensionsExpectedModules() {
 		"thunderbolt_net": "thunderbolt_net.ko",
 		"usb_wwan":        "usb_wwan.ko",
 		"usbnet":          "usbnet.ko",
+		"xdma":            "xdma.ko",
 		"zaurus":          "zaurus.ko",
 		"zfs":             "zfs.ko",
 	}

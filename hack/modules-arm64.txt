@@ -30,6 +30,7 @@ kernel/drivers/md/dm-round-robin.ko
 kernel/drivers/md/dm-thin-pool.ko
 kernel/drivers/md/persistent-data/dm-persistent-data.ko
 kernel/drivers/md/raid456.ko
+kernel/drivers/net/ethernet/amazon/ena/ena.ko
 kernel/drivers/net/ethernet/atheros/alx/alx.ko
 kernel/drivers/net/ethernet/google/gve/gve.ko
 kernel/drivers/net/ethernet/mellanox/mlx4/mlx4_core.ko

@@ -84,6 +84,7 @@ kernel/drivers/mmc/host/sdhci-pci.ko
 kernel/drivers/mmc/host/sdhci-pltfm.ko
 kernel/drivers/mmc/host/sdhci-xenon-driver.ko
 kernel/drivers/mmc/host/sdhci_f_sdh30.ko
+kernel/drivers/net/ethernet/amazon/ena/ena.ko
 kernel/drivers/net/ethernet/aquantia/atlantic/atlantic.ko
 kernel/drivers/net/ethernet/atheros/alx/alx.ko
 kernel/drivers/net/ethernet/broadcom/bnx2.ko
