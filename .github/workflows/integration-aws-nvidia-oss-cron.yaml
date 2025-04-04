@@ -1,6 +1,6 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
 #
-# Generated on 2025-04-01T08:14:24Z by kres d903dae.
+# Generated on 2025-04-04T11:30:51Z by kres d903dae.
 
 name: integration-aws-nvidia-oss-cron
 concurrency:
@@ -8,7 +8,7 @@ concurrency:
   cancel-in-progress: true
 "on":
   schedule:
-    - cron: 30 7 * * *
+    - cron: 30 5 * * *
 jobs:
   default:
     runs-on:

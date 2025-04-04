@@ -2482,7 +2482,7 @@ spec:
         - self-hosted
         - generic # we can use generic here since the tests run against a remote talos cluster
       crons:
-        - '30 7 * * *'
+        - '30 5 * * *'
       triggerLabels:
         - integration/aws-nvidia-oss
       steps:
