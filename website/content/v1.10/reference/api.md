@@ -284,6 +284,7 @@ description: Talos gRPC API reference.
     - [MetaLoadedSpec](#talos.resource.definitions.runtime.MetaLoadedSpec)
     - [MountStatusSpec](#talos.resource.definitions.runtime.MountStatusSpec)
     - [PlatformMetadataSpec](#talos.resource.definitions.runtime.PlatformMetadataSpec)
+    - [PlatformMetadataSpec.TagsEntry](#talos.resource.definitions.runtime.PlatformMetadataSpec.TagsEntry)
     - [SecurityStateSpec](#talos.resource.definitions.runtime.SecurityStateSpec)
     - [UniqueMachineTokenSpec](#talos.resource.definitions.runtime.UniqueMachineTokenSpec)
     - [UnmetCondition](#talos.resource.definitions.runtime.UnmetCondition)
@@ -5225,6 +5226,23 @@ PlatformMetadataSpec describes platform metadata properties.
 | spot | [bool](#bool) |  |  |
 | internal_dns | [string](#string) |  |  |
 | external_dns | [string](#string) |  |  |
+| tags | [PlatformMetadataSpec.TagsEntry](#talos.resource.definitions.runtime.PlatformMetadataSpec.TagsEntry) | repeated |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.runtime.PlatformMetadataSpec.TagsEntry"></a>
+
+### PlatformMetadataSpec.TagsEntry
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| key | [string](#string) |  |  |
+| value | [string](#string) |  |  |
 
 
 

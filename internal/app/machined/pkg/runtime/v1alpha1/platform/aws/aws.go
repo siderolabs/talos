@@ -93,6 +93,16 @@ func (a *AWS) ParseMetadata(metadata *MetadataConfig) (*runtime.PlatformNetworkC
 		}
 	}
 
+	var tags map[string]string
+
+	if len(metadata.Tags) > 0 {
+		tags = make(map[string]string, len(metadata.Tags))
+
+		for _, tag := range metadata.Tags {
+			tags[tag] = ""
+		}
+	}
+
 	networkConfig.Metadata = &runtimeres.PlatformMetadataSpec{
 		Platform:     a.Name(),
 		Hostname:     metadata.Hostname,
@@ -104,6 +114,7 @@ func (a *AWS) ParseMetadata(metadata *MetadataConfig) (*runtime.PlatformNetworkC
 		Spot:         metadata.InstanceLifeCycle == "spot",
 		InternalDNS:  metadata.InternalDNS,
 		ExternalDNS:  metadata.ExternalDNS,
+		Tags:         tags,
 	}
 
 	return networkConfig, nil
