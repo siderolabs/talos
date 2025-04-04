@@ -36,6 +36,7 @@ description: Talos gRPC API reference.
     - [EncryptionKey](#talos.resource.definitions.block.EncryptionKey)
     - [EncryptionSpec](#talos.resource.definitions.block.EncryptionSpec)
     - [FSScrubConfigSpec](#talos.resource.definitions.block.FSScrubConfigSpec)
+    - [FSScrubScheduleSpec](#talos.resource.definitions.block.FSScrubScheduleSpec)
     - [FSScrubStatusSpec](#talos.resource.definitions.block.FSScrubStatusSpec)
     - [FilesystemSpec](#talos.resource.definitions.block.FilesystemSpec)
     - [LocatorSpec](#talos.resource.definitions.block.LocatorSpec)
@@ -1015,10 +1016,27 @@ FSScrubConfigSpec describes configuration of watchdog timer.
 
 
 
+<a name="talos.resource.definitions.block.FSScrubScheduleSpec"></a>
+
+### FSScrubScheduleSpec
+FSScrubScheduleSpec describes scheduled filesystem scrubbing jobs.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| mountpoint | [string](#string) |  |  |
+| period | [google.protobuf.Duration](#google.protobuf.Duration) |  |  |
+| start_time | [google.protobuf.Timestamp](#google.protobuf.Timestamp) |  |  |
+
+
+
+
+
+
 <a name="talos.resource.definitions.block.FSScrubStatusSpec"></a>
 
 ### FSScrubStatusSpec
-FSScrubStatusSpec describes configuration of watchdog timer.
+FSScrubStatusSpec describes status of filesystem scrub jobs.
 
 
 | Field | Type | Label | Description |
