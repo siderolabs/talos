@@ -109,7 +109,14 @@ message FSScrubConfigSpec {
   google.protobuf.Duration period = 3;
 }
 
-// FSScrubStatusSpec describes configuration of watchdog timer.
+// FSScrubScheduleSpec describes scheduled filesystem scrubbing jobs.
+message FSScrubScheduleSpec {
+  string mountpoint = 1;
+  google.protobuf.Duration period = 2;
+  google.protobuf.Timestamp start_time = 3;
+}
+
+// FSScrubStatusSpec describes status of filesystem scrub jobs.
 message FSScrubStatusSpec {
   string mountpoint = 1;
   google.protobuf.Duration period = 2;

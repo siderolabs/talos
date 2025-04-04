@@ -107,6 +107,7 @@ func (ctrl *Controller) Run(ctx context.Context, drainer *runtime.Drainer) error
 		},
 		&block.VolumeManagerController{},
 		&block.FSScrubConfigController{},
+		&block.FSScrubScheduleController{},
 		&block.FSScrubController{
 			Runtime: ctrl.v1alpha1Runtime,
 		},
