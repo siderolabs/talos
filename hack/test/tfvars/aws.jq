@@ -28,7 +28,7 @@
         }
     ] end),
     "extra_tags": {
-        "Cluster Name": .cluster_name,
+        "ClusterName": .cluster_name,
         "Project": "talos-e2e-ci",
         "Environment": "ci"
     }

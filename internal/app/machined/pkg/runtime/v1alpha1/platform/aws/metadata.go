@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strings"
 
 	"github.com/aws/aws-sdk-go-v2/feature/ec2/imds"
 	smithyhttp "github.com/aws/smithy-go/transport/http"
@@ -17,16 +18,17 @@ import (
 
 // MetadataConfig represents a metadata AWS instance.
 type MetadataConfig struct {
-	Hostname          string `json:"hostname,omitempty"`
-	InstanceID        string `json:"instance-id,omitempty"`
-	InstanceType      string `json:"instance-type,omitempty"`
-	InstanceLifeCycle string `json:"instance-life-cycle,omitempty"`
-	PublicIPv4        string `json:"public-ipv4,omitempty"`
-	PublicIPv6        string `json:"ipv6,omitempty"`
-	InternalDNS       string `json:"local-hostname,omitempty"`
-	ExternalDNS       string `json:"public-hostname,omitempty"`
-	Region            string `json:"region,omitempty"`
-	Zone              string `json:"zone,omitempty"`
+	Hostname          string            `json:"hostname,omitempty"`
+	InstanceID        string            `json:"instance-id,omitempty"`
+	InstanceType      string            `json:"instance-type,omitempty"`
+	InstanceLifeCycle string            `json:"instance-life-cycle,omitempty"`
+	PublicIPv4        string            `json:"public-ipv4,omitempty"`
+	PublicIPv6        string            `json:"ipv6,omitempty"`
+	InternalDNS       string            `json:"local-hostname,omitempty"`
+	ExternalDNS       string            `json:"public-hostname,omitempty"`
+	Region            string            `json:"region,omitempty"`
+	Zone              string            `json:"zone,omitempty"`
+	Tags              map[string]string `json:"tags,omitempty"`
 }
 
 //nolint:gocyclo
@@ -94,6 +96,16 @@ func (a *AWS) getMetadata(ctx context.Context) (*MetadataConfig, error) {
 
 	if metadata.Zone, err = getMetadataKey("placement/availability-zone"); err != nil {
 		return nil, err
+	}
+
+	if tags, err := getMetadataKey("tags/instance"); err == nil {
+		metadata.Tags = make(map[string]string)
+
+		for _, key := range strings.Fields(tags) {
+			if value, err := getMetadataKey("tags/instance/" + key); err == nil {
+				metadata.Tags[key] = value
+			}
+		}
 	}
 
 	return &metadata, nil

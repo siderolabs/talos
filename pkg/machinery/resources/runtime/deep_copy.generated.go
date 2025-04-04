@@ -150,6 +150,12 @@ func (o MountStatusSpec) DeepCopy() MountStatusSpec {
 // DeepCopy generates a deep copy of PlatformMetadataSpec.
 func (o PlatformMetadataSpec) DeepCopy() PlatformMetadataSpec {
 	var cp PlatformMetadataSpec = o
+	if o.Tags != nil {
+		cp.Tags = make(map[string]string, len(o.Tags))
+		for k2, v2 := range o.Tags {
+			cp.Tags[k2] = v2
+		}
+	}
 	return cp
 }
 

@@ -879,6 +879,7 @@ type PlatformMetadataSpec struct {
 	Spot          bool                   `protobuf:"varint,8,opt,name=spot,proto3" json:"spot,omitempty"`
 	InternalDns   string                 `protobuf:"bytes,9,opt,name=internal_dns,json=internalDns,proto3" json:"internal_dns,omitempty"`
 	ExternalDns   string                 `protobuf:"bytes,10,opt,name=external_dns,json=externalDns,proto3" json:"external_dns,omitempty"`
+	Tags          map[string]string      `protobuf:"bytes,11,rep,name=tags,proto3" json:"tags,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -981,6 +982,13 @@ func (x *PlatformMetadataSpec) GetExternalDns() string {
 		return x.ExternalDns
 	}
 	return ""
+}
+
+func (x *PlatformMetadataSpec) GetTags() map[string]string {
+	if x != nil {
+		return x.Tags
+	}
+	return nil
 }
 
 // SecurityStateSpec describes the security state resource properties.
@@ -1326,7 +1334,7 @@ const file_resource_definitions_runtime_runtime_proto_rawDesc = "" +
 	"\x0ffilesystem_type\x18\x03 \x01(\tR\x0efilesystemType\x12\x18\n" +
 	"\aoptions\x18\x04 \x03(\tR\aoptions\x12\x1c\n" +
 	"\tencrypted\x18\x05 \x01(\bR\tencrypted\x121\n" +
-	"\x14encryption_providers\x18\x06 \x03(\tR\x13encryptionProviders\"\xbb\x02\n" +
+	"\x14encryption_providers\x18\x06 \x03(\tR\x13encryptionProviders\"\xcc\x03\n" +
 	"\x14PlatformMetadataSpec\x12\x1a\n" +
 	"\bplatform\x18\x01 \x01(\tR\bplatform\x12\x1a\n" +
 	"\bhostname\x18\x02 \x01(\tR\bhostname\x12\x16\n" +
@@ -1340,7 +1348,11 @@ const file_resource_definitions_runtime_runtime_proto_rawDesc = "" +
 	"\x04spot\x18\b \x01(\bR\x04spot\x12!\n" +
 	"\finternal_dns\x18\t \x01(\tR\vinternalDns\x12!\n" +
 	"\fexternal_dns\x18\n" +
-	" \x01(\tR\vexternalDns\"\xb7\x02\n" +
+	" \x01(\tR\vexternalDns\x12V\n" +
+	"\x04tags\x18\v \x03(\v2B.talos.resource.definitions.runtime.PlatformMetadataSpec.TagsEntryR\x04tags\x1a7\n" +
+	"\tTagsEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\xb7\x02\n" +
 	"\x11SecurityStateSpec\x12\x1f\n" +
 	"\vsecure_boot\x18\x01 \x01(\bR\n" +
 	"secureBoot\x12=\n" +
@@ -1374,7 +1386,7 @@ func file_resource_definitions_runtime_runtime_proto_rawDescGZIP() []byte {
 	return file_resource_definitions_runtime_runtime_proto_rawDescData
 }
 
-var file_resource_definitions_runtime_runtime_proto_msgTypes = make([]protoimpl.MessageInfo, 22)
+var file_resource_definitions_runtime_runtime_proto_msgTypes = make([]protoimpl.MessageInfo, 23)
 var file_resource_definitions_runtime_runtime_proto_goTypes = []any{
 	(*DevicesStatusSpec)(nil),                // 0: talos.resource.definitions.runtime.DevicesStatusSpec
 	(*DiagnosticSpec)(nil),                   // 1: talos.resource.definitions.runtime.DiagnosticSpec
@@ -1398,28 +1410,30 @@ var file_resource_definitions_runtime_runtime_proto_goTypes = []any{
 	(*UnmetCondition)(nil),                   // 19: talos.resource.definitions.runtime.UnmetCondition
 	(*WatchdogTimerConfigSpec)(nil),          // 20: talos.resource.definitions.runtime.WatchdogTimerConfigSpec
 	(*WatchdogTimerStatusSpec)(nil),          // 21: talos.resource.definitions.runtime.WatchdogTimerStatusSpec
-	(*common.URL)(nil),                       // 22: common.URL
-	(enums.RuntimeMachineStage)(0),           // 23: talos.resource.definitions.enums.RuntimeMachineStage
-	(*common.NetIP)(nil),                     // 24: common.NetIP
-	(enums.RuntimeSELinuxState)(0),           // 25: talos.resource.definitions.enums.RuntimeSELinuxState
-	(*durationpb.Duration)(nil),              // 26: google.protobuf.Duration
+	nil,                                      // 22: talos.resource.definitions.runtime.PlatformMetadataSpec.TagsEntry
+	(*common.URL)(nil),                       // 23: common.URL
+	(enums.RuntimeMachineStage)(0),           // 24: talos.resource.definitions.enums.RuntimeMachineStage
+	(*common.NetIP)(nil),                     // 25: common.NetIP
+	(enums.RuntimeSELinuxState)(0),           // 26: talos.resource.definitions.enums.RuntimeSELinuxState
+	(*durationpb.Duration)(nil),              // 27: google.protobuf.Duration
 }
 var file_resource_definitions_runtime_runtime_proto_depIdxs = []int32{
 	3,  // 0: talos.resource.definitions.runtime.ExtensionServiceConfigSpec.files:type_name -> talos.resource.definitions.runtime.ExtensionServiceConfigFile
-	22, // 1: talos.resource.definitions.runtime.KmsgLogConfigSpec.destinations:type_name -> common.URL
-	23, // 2: talos.resource.definitions.runtime.MachineStatusSpec.stage:type_name -> talos.resource.definitions.enums.RuntimeMachineStage
+	23, // 1: talos.resource.definitions.runtime.KmsgLogConfigSpec.destinations:type_name -> common.URL
+	24, // 2: talos.resource.definitions.runtime.MachineStatusSpec.stage:type_name -> talos.resource.definitions.enums.RuntimeMachineStage
 	11, // 3: talos.resource.definitions.runtime.MachineStatusSpec.status:type_name -> talos.resource.definitions.runtime.MachineStatusStatus
 	19, // 4: talos.resource.definitions.runtime.MachineStatusStatus.unmet_conditions:type_name -> talos.resource.definitions.runtime.UnmetCondition
-	24, // 5: talos.resource.definitions.runtime.MaintenanceServiceConfigSpec.reachable_addresses:type_name -> common.NetIP
-	25, // 6: talos.resource.definitions.runtime.SecurityStateSpec.se_linux_state:type_name -> talos.resource.definitions.enums.RuntimeSELinuxState
-	26, // 7: talos.resource.definitions.runtime.WatchdogTimerConfigSpec.timeout:type_name -> google.protobuf.Duration
-	26, // 8: talos.resource.definitions.runtime.WatchdogTimerStatusSpec.timeout:type_name -> google.protobuf.Duration
-	26, // 9: talos.resource.definitions.runtime.WatchdogTimerStatusSpec.feed_interval:type_name -> google.protobuf.Duration
-	10, // [10:10] is the sub-list for method output_type
-	10, // [10:10] is the sub-list for method input_type
-	10, // [10:10] is the sub-list for extension type_name
-	10, // [10:10] is the sub-list for extension extendee
-	0,  // [0:10] is the sub-list for field type_name
+	25, // 5: talos.resource.definitions.runtime.MaintenanceServiceConfigSpec.reachable_addresses:type_name -> common.NetIP
+	22, // 6: talos.resource.definitions.runtime.PlatformMetadataSpec.tags:type_name -> talos.resource.definitions.runtime.PlatformMetadataSpec.TagsEntry
+	26, // 7: talos.resource.definitions.runtime.SecurityStateSpec.se_linux_state:type_name -> talos.resource.definitions.enums.RuntimeSELinuxState
+	27, // 8: talos.resource.definitions.runtime.WatchdogTimerConfigSpec.timeout:type_name -> google.protobuf.Duration
+	27, // 9: talos.resource.definitions.runtime.WatchdogTimerStatusSpec.timeout:type_name -> google.protobuf.Duration
+	27, // 10: talos.resource.definitions.runtime.WatchdogTimerStatusSpec.feed_interval:type_name -> google.protobuf.Duration
+	11, // [11:11] is the sub-list for method output_type
+	11, // [11:11] is the sub-list for method input_type
+	11, // [11:11] is the sub-list for extension type_name
+	11, // [11:11] is the sub-list for extension extendee
+	0,  // [0:11] is the sub-list for field type_name
 }
 
 func init() { file_resource_definitions_runtime_runtime_proto_init() }
@@ -1433,7 +1447,7 @@ func file_resource_definitions_runtime_runtime_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_resource_definitions_runtime_runtime_proto_rawDesc), len(file_resource_definitions_runtime_runtime_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   22,
+			NumMessages:   23,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

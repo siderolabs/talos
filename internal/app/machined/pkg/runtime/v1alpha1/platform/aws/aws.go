@@ -104,6 +104,7 @@ func (a *AWS) ParseMetadata(metadata *MetadataConfig) (*runtime.PlatformNetworkC
 		Spot:         metadata.InstanceLifeCycle == "spot",
 		InternalDNS:  metadata.InternalDNS,
 		ExternalDNS:  metadata.ExternalDNS,
+		Tags:         metadata.Tags,
 	}
 
 	return networkConfig, nil
