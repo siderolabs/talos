@@ -990,6 +990,7 @@ type SecurityStateSpec struct {
 	UkiSigningKeyFingerprint string                    `protobuf:"bytes,2,opt,name=uki_signing_key_fingerprint,json=ukiSigningKeyFingerprint,proto3" json:"uki_signing_key_fingerprint,omitempty"`
 	PcrSigningKeyFingerprint string                    `protobuf:"bytes,3,opt,name=pcr_signing_key_fingerprint,json=pcrSigningKeyFingerprint,proto3" json:"pcr_signing_key_fingerprint,omitempty"`
 	SeLinuxState             enums.RuntimeSELinuxState `protobuf:"varint,4,opt,name=se_linux_state,json=seLinuxState,proto3,enum=talos.resource.definitions.enums.RuntimeSELinuxState" json:"se_linux_state,omitempty"`
+	BootedWithUki            bool                      `protobuf:"varint,5,opt,name=booted_with_uki,json=bootedWithUki,proto3" json:"booted_with_uki,omitempty"`
 	unknownFields            protoimpl.UnknownFields
 	sizeCache                protoimpl.SizeCache
 }
@@ -1050,6 +1051,13 @@ func (x *SecurityStateSpec) GetSeLinuxState() enums.RuntimeSELinuxState {
 		return x.SeLinuxState
 	}
 	return enums.RuntimeSELinuxState(0)
+}
+
+func (x *SecurityStateSpec) GetBootedWithUki() bool {
+	if x != nil {
+		return x.BootedWithUki
+	}
+	return false
 }
 
 // UniqueMachineTokenSpec is the spec for the machine unique token. Token can be empty if machine wasn't assigned any.
@@ -1332,13 +1340,14 @@ const file_resource_definitions_runtime_runtime_proto_rawDesc = "" +
 	"\x04spot\x18\b \x01(\bR\x04spot\x12!\n" +
 	"\finternal_dns\x18\t \x01(\tR\vinternalDns\x12!\n" +
 	"\fexternal_dns\x18\n" +
-	" \x01(\tR\vexternalDns\"\x8f\x02\n" +
+	" \x01(\tR\vexternalDns\"\xb7\x02\n" +
 	"\x11SecurityStateSpec\x12\x1f\n" +
 	"\vsecure_boot\x18\x01 \x01(\bR\n" +
 	"secureBoot\x12=\n" +
 	"\x1buki_signing_key_fingerprint\x18\x02 \x01(\tR\x18ukiSigningKeyFingerprint\x12=\n" +
 	"\x1bpcr_signing_key_fingerprint\x18\x03 \x01(\tR\x18pcrSigningKeyFingerprint\x12[\n" +
-	"\x0ese_linux_state\x18\x04 \x01(\x0e25.talos.resource.definitions.enums.RuntimeSELinuxStateR\fseLinuxState\".\n" +
+	"\x0ese_linux_state\x18\x04 \x01(\x0e25.talos.resource.definitions.enums.RuntimeSELinuxStateR\fseLinuxState\x12&\n" +
+	"\x0fbooted_with_uki\x18\x05 \x01(\bR\rbootedWithUki\".\n" +
 	"\x16UniqueMachineTokenSpec\x12\x14\n" +
 	"\x05token\x18\x01 \x01(\tR\x05token\"<\n" +
 	"\x0eUnmetCondition\x12\x12\n" +

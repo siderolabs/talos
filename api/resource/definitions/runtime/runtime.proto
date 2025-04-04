@@ -124,6 +124,7 @@ message SecurityStateSpec {
   string uki_signing_key_fingerprint = 2;
   string pcr_signing_key_fingerprint = 3;
   talos.resource.definitions.enums.RuntimeSELinuxState se_linux_state = 4;
+  bool booted_with_uki = 5;
 }
 
 // UniqueMachineTokenSpec is the spec for the machine unique token. Token can be empty if machine wasn't assigned any.

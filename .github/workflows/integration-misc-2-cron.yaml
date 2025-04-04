@@ -1,6 +1,6 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
 #
-# Generated on 2025-04-01T08:14:24Z by kres d903dae.
+# Generated on 2025-04-04T12:28:10Z by kres d903dae.
 
 name: integration-misc-2-cron
 concurrency:
@@ -100,6 +100,7 @@ jobs:
           make images-essential
       - name: e2e-bios
         env:
+          EXTRA_TEST_ARGS: -talos.verifyukibooted=false
           GITHUB_STEP_NAME: ${{ github.job}}-e2e-bios
           IMAGE_REGISTRY: registry.dev.siderolabs.io
           SHORT_INTEGRATION_TEST: "yes"
@@ -108,6 +109,7 @@ jobs:
           sudo -E make e2e-qemu
       - name: e2e-bios-iso
         env:
+          EXTRA_TEST_ARGS: -talos.verifyukibooted=false
           GITHUB_STEP_NAME: ${{ github.job}}-e2e-bios-iso
           IMAGE_REGISTRY: registry.dev.siderolabs.io
           SHORT_INTEGRATION_TEST: "yes"
@@ -129,6 +131,7 @@ jobs:
           sudo -E make e2e-qemu
       - name: e2e-disk-image-bios
         env:
+          EXTRA_TEST_ARGS: -talos.verifyukibooted=false
           GITHUB_STEP_NAME: ${{ github.job}}-e2e-disk-image-bios
           IMAGE_REGISTRY: registry.dev.siderolabs.io
           SHORT_INTEGRATION_TEST: "yes"

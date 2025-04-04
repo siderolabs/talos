@@ -39,6 +39,7 @@ var (
 	selinuxEnforcing bool
 	extensionsQEMU   bool
 	extensionsNvidia bool
+	verifyUKIBooted  bool
 
 	talosConfig       string
 	endpoint          string
@@ -111,6 +112,7 @@ func TestIntegration(t *testing.T) {
 				ExtensionsNvidia: extensionsNvidia,
 				TrustedBoot:      trustedBoot,
 				SelinuxEnforcing: selinuxEnforcing,
+				VerifyUKIBooted:  verifyUKIBooted,
 				TalosImage:       talosImage,
 				CSITestName:      csiTestName,
 				CSITestTimeout:   csiTestTimeout,
@@ -147,6 +149,7 @@ func init() {
 	flag.BoolVar(&selinuxEnforcing, "talos.enforcing", false, "enable tests for SELinux enforcing mode")
 	flag.BoolVar(&extensionsQEMU, "talos.extensions.qemu", false, "enable tests for qemu extensions")
 	flag.BoolVar(&extensionsNvidia, "talos.extensions.nvidia", false, "enable tests for nvidia extensions")
+	flag.BoolVar(&verifyUKIBooted, "talos.verifyukibooted", true, "enable tests for verifying that Talos was booted using a UKI")
 
 	flag.StringVar(
 		&talosConfig,

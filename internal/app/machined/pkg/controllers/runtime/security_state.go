@@ -19,10 +19,12 @@ import (
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
+	"github.com/ecks/uefi/efi/efivario"
 	"github.com/foxboron/go-uefi/efi"
 	"go.uber.org/zap"
 
 	machineruntime "github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/sdboot"
 	"github.com/siderolabs/talos/internal/pkg/selinux"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	runtimeres "github.com/siderolabs/talos/pkg/machinery/resources/runtime"
@@ -83,6 +85,7 @@ func (ctrl *SecurityStateController) Run(ctx context.Context, r controller.Runti
 
 		var (
 			secureBootState          bool
+			bootedWithUKI            bool
 			pcrSigningKeyFingerprint string
 		)
 
@@ -90,6 +93,13 @@ func (ctrl *SecurityStateController) Run(ctx context.Context, r controller.Runti
 		if ctrl.V1Alpha1Mode != machineruntime.ModeContainer {
 			if efi.GetSecureBoot() && !efi.GetSetupMode() {
 				secureBootState = true
+			}
+
+			defaultEntry, err := sdboot.ReadVariable(efivario.NewDefaultContext(), sdboot.LoaderEntryDefaultName)
+			if err == nil {
+				if strings.HasPrefix(defaultEntry, "Talos-") {
+					bootedWithUKI = true
+				}
 			}
 
 			if pcrPublicKeyData, err := os.ReadFile(constants.PCRPublicKey); err == nil {
@@ -115,6 +125,7 @@ func (ctrl *SecurityStateController) Run(ctx context.Context, r controller.Runti
 			state.TypedSpec().SecureBoot = secureBootState
 			state.TypedSpec().PCRSigningKeyFingerprint = pcrSigningKeyFingerprint
 			state.TypedSpec().SELinuxState = selinuxState
+			state.TypedSpec().BootedWithUKI = bootedWithUKI
 
 			return nil
 		}); err != nil {

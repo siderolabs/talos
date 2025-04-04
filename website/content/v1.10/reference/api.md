@@ -5243,6 +5243,7 @@ SecurityStateSpec describes the security state resource properties.
 | uki_signing_key_fingerprint | [string](#string) |  |  |
 | pcr_signing_key_fingerprint | [string](#string) |  |  |
 | se_linux_state | [talos.resource.definitions.enums.RuntimeSELinuxState](#talos.resource.definitions.enums.RuntimeSELinuxState) |  |  |
+| booted_with_uki | [bool](#bool) |  |  |
 
 
 

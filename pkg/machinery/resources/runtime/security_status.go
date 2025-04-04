@@ -44,6 +44,7 @@ type SecurityStateSpec struct {
 	UKISigningKeyFingerprint string       `yaml:"ukiSigningKeyFingerprint,omitempty" protobuf:"2"`
 	PCRSigningKeyFingerprint string       `yaml:"pcrSigningKeyFingerprint,omitempty" protobuf:"3"`
 	SELinuxState             SELinuxState `yaml:"selinuxState,omitempty" protobuf:"4"`
+	BootedWithUKI            bool         `yaml:"bootedWithUKI,omitempty" protobuf:"5"`
 }
 
 // NewSecurityStateSpec initializes a security state resource.

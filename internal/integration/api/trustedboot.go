@@ -26,7 +26,7 @@ import (
 
 // TrustedBootSuite verifies Talos is securebooted.
 type TrustedBootSuite struct {
-	base.K8sSuite
+	base.APISuite
 
 	ctx       context.Context //nolint:containedctx
 	ctxCancel context.CancelFunc

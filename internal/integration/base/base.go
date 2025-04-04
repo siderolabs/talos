@@ -50,6 +50,8 @@ type TalosSuite struct {
 	TrustedBoot bool
 	// SelinuxEnforcing tells if the cluster is booted with the image with selinux enforcement enabled
 	SelinuxEnforcing bool
+	// VerifyUKIBooted runs tests to verify Talos is booted from a UKI
+	VerifyUKIBooted bool
 	// TalosImage is the image name for 'talos' container.
 	TalosImage string
 	// CSITestName is the name of the CSI test to run
