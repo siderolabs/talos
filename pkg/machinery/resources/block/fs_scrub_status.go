@@ -21,7 +21,7 @@ const FSScrubStatusType = resource.Type("FSScrubStatuses.block.talos.dev")
 // FSScrubStatus resource holds status of watchdog timer.
 type FSScrubStatus = typed.Resource[FSScrubStatusSpec, FSScrubStatusExtension]
 
-// FSScrubStatusSpec describes configuration of watchdog timer.
+// FSScrubStatusSpec describes status of filesystem scrub jobs.
 //
 //gotagsrewrite:gen
 type FSScrubStatusSpec struct {
