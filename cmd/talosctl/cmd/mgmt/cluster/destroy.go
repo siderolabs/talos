@@ -32,14 +32,14 @@ var destroyCmd = &cobra.Command{
 }
 
 func destroy(ctx context.Context) error {
-	provisioner, err := providers.Factory(ctx, provisionerName)
+	provisioner, err := providers.Factory(ctx, Flags.ProvisionerName)
 	if err != nil {
 		return err
 	}
 
 	defer provisioner.Close() //nolint:errcheck
 
-	cluster, err := provisioner.Reflect(ctx, clusterName, stateDir)
+	cluster, err := provisioner.Reflect(ctx, Flags.ClusterName, Flags.StateDir)
 	if err != nil {
 		return err
 	}
