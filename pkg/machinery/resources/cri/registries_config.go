@@ -10,6 +10,8 @@ import (
 	"github.com/cosi-project/runtime/pkg/resource/protobuf"
 	"github.com/cosi-project/runtime/pkg/resource/typed"
 	"github.com/siderolabs/crypto/x509"
+	"github.com/siderolabs/gen/xslices"
+	"github.com/siderolabs/go-pointer"
 
 	config2 "github.com/siderolabs/talos/pkg/machinery/config/config"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
@@ -38,7 +40,7 @@ func (r RegistriesConfigSpec) Mirrors() map[string]config2.RegistryMirrorConfig 
 	mirrors := make(map[string]config2.RegistryMirrorConfig, len(r.RegistryMirrors))
 
 	for k, v := range r.RegistryMirrors {
-		mirrors[k] = (*v1alpha1.RegistryMirrorConfig)(v)
+		mirrors[k] = v
 	}
 
 	return mirrors
@@ -59,9 +61,38 @@ func (r RegistriesConfigSpec) Config() map[string]config2.RegistryConfig {
 //
 //gotagsrewrite:gen
 type RegistryMirrorConfig struct {
-	MirrorEndpoints    []string `yaml:"endpoints" protobuf:"1"`
-	MirrorOverridePath *bool    `yaml:"overridePath,omitempty" protobuf:"2"`
-	MirrorSkipFallback *bool    `yaml:"skipFallback,omitempty" protobuf:"3"`
+	MirrorEndpoints    []RegistryEndpointConfig `yaml:"endpoints" protobuf:"1"`
+	MirrorSkipFallback *bool                    `yaml:"skipFallback,omitempty" protobuf:"3"`
+}
+
+// SkipFallback implements the Registries interface.
+func (r *RegistryMirrorConfig) SkipFallback() bool {
+	return pointer.SafeDeref(r.MirrorSkipFallback)
+}
+
+// Endpoints implements the Registries interface.
+func (r *RegistryMirrorConfig) Endpoints() []config2.RegistryEndpointConfig {
+	return xslices.Map(r.MirrorEndpoints, func(endpoint RegistryEndpointConfig) config2.RegistryEndpointConfig {
+		return endpoint
+	})
+}
+
+// RegistryEndpointConfig represents a single registry endpoint.
+//
+//gotagsrewrite:gen
+type RegistryEndpointConfig struct {
+	EndpointEndpoint     string `yaml:"endpoint" protobuf:"1"`
+	EndpointOverridePath bool   `yaml:"overridePath" protobuf:"2"`
+}
+
+// Endpoint implements the Registries interface.
+func (r RegistryEndpointConfig) Endpoint() string {
+	return r.EndpointEndpoint
+}
+
+// OverridePath implements the Registries interface.
+func (r RegistryEndpointConfig) OverridePath() bool {
+	return r.EndpointOverridePath
 }
 
 // RegistryConfig specifies auth & TLS config per registry.

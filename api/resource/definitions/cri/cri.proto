@@ -36,10 +36,15 @@ message RegistryConfig {
   RegistryAuthConfig registry_auth = 2;
 }
 
+// RegistryEndpointConfig represents a single registry endpoint.
+message RegistryEndpointConfig {
+  string endpoint_endpoint = 1;
+  bool endpoint_override_path = 2;
+}
+
 // RegistryMirrorConfig represents mirror configuration for a registry.
 message RegistryMirrorConfig {
-  repeated string mirror_endpoints = 1;
-  bool mirror_override_path = 2;
+  repeated RegistryEndpointConfig mirror_endpoints = 1;
   bool mirror_skip_fallback = 3;
 }
 

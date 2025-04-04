@@ -106,8 +106,8 @@ type EndpointEntry struct {
 
 // RegistryEndpointEntriesFromConfig returns registry endpoints per host.
 func RegistryEndpointEntriesFromConfig(host string, reg config.RegistryMirrorConfig) ([]EndpointEntry, error) {
-	entries := xslices.Map(reg.Endpoints(), func(endpoint string) EndpointEntry {
-		return EndpointEntry{Endpoint: endpoint, OverridePath: reg.OverridePath()}
+	entries := xslices.Map(reg.Endpoints(), func(endpoint config.RegistryEndpointConfig) EndpointEntry {
+		return EndpointEntry{Endpoint: endpoint.Endpoint(), OverridePath: endpoint.OverridePath()}
 	})
 
 	if reg.SkipFallback() {

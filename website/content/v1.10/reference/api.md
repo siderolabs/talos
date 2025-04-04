@@ -67,6 +67,7 @@ description: Talos gRPC API reference.
     - [RegistriesConfigSpec.RegistryMirrorsEntry](#talos.resource.definitions.cri.RegistriesConfigSpec.RegistryMirrorsEntry)
     - [RegistryAuthConfig](#talos.resource.definitions.cri.RegistryAuthConfig)
     - [RegistryConfig](#talos.resource.definitions.cri.RegistryConfig)
+    - [RegistryEndpointConfig](#talos.resource.definitions.cri.RegistryEndpointConfig)
     - [RegistryMirrorConfig](#talos.resource.definitions.cri.RegistryMirrorConfig)
     - [RegistryTLSConfig](#talos.resource.definitions.cri.RegistryTLSConfig)
     - [SeccompProfileSpec](#talos.resource.definitions.cri.SeccompProfileSpec)
@@ -1540,6 +1541,22 @@ RegistryConfig specifies auth & TLS config per registry.
 
 
 
+<a name="talos.resource.definitions.cri.RegistryEndpointConfig"></a>
+
+### RegistryEndpointConfig
+RegistryEndpointConfig represents a single registry endpoint.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| endpoint_endpoint | [string](#string) |  |  |
+| endpoint_override_path | [bool](#bool) |  |  |
+
+
+
+
+
+
 <a name="talos.resource.definitions.cri.RegistryMirrorConfig"></a>
 
 ### RegistryMirrorConfig
@@ -1548,8 +1565,7 @@ RegistryMirrorConfig represents mirror configuration for a registry.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| mirror_endpoints | [string](#string) | repeated |  |
-| mirror_override_path | [bool](#bool) |  |  |
+| mirror_endpoints | [RegistryEndpointConfig](#talos.resource.definitions.cri.RegistryEndpointConfig) | repeated |  |
 | mirror_skip_fallback | [bool](#bool) |  |  |
 
 

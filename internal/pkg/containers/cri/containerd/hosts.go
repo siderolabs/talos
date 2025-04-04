@@ -110,16 +110,16 @@ func GenerateHosts(cfg config.Registries, basePath string) (*HostsConfig, error)
 		var hostsConfig HostsConfiguration
 
 		for _, endpoint := range endpoints.Endpoints() {
-			u, err := url.Parse(endpoint)
+			u, err := url.Parse(endpoint.Endpoint())
 			if err != nil {
 				return nil, fmt.Errorf("error parsing endpoint %q for host %q: %w", endpoint, registryName, err)
 			}
 
 			hostEntry := HostEntry{
-				Host: endpoint,
+				Host: endpoint.Endpoint(),
 				HostToml: HostToml{
 					Capabilities: []string{"pull", "resolve"}, // TODO: we should make it configurable eventually
-					OverridePath: endpoints.OverridePath(),
+					OverridePath: endpoint.OverridePath(),
 				},
 			}
 
