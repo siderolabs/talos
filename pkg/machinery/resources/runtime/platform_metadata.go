@@ -26,16 +26,17 @@ type PlatformMetadata = typed.Resource[PlatformMetadataSpec, PlatformMetadataExt
 //
 //gotagsrewrite:gen
 type PlatformMetadataSpec struct {
-	Platform     string `yaml:"platform,omitempty" protobuf:"1"`
-	Hostname     string `yaml:"hostname,omitempty" protobuf:"2"`
-	Region       string `yaml:"region,omitempty" protobuf:"3"`
-	Zone         string `yaml:"zone,omitempty" protobuf:"4"`
-	InstanceType string `yaml:"instanceType,omitempty" protobuf:"5"`
-	InstanceID   string `yaml:"instanceId,omitempty" protobuf:"6"`
-	ProviderID   string `yaml:"providerId,omitempty" protobuf:"7"`
-	Spot         bool   `yaml:"spot,omitempty" protobuf:"8"`
-	InternalDNS  string `yaml:"internalDNS,omitempty" protobuf:"9"`
-	ExternalDNS  string `yaml:"externalDNS,omitempty" protobuf:"10"`
+	Platform     string            `yaml:"platform,omitempty" protobuf:"1"`
+	Hostname     string            `yaml:"hostname,omitempty" protobuf:"2"`
+	Region       string            `yaml:"region,omitempty" protobuf:"3"`
+	Zone         string            `yaml:"zone,omitempty" protobuf:"4"`
+	InstanceType string            `yaml:"instanceType,omitempty" protobuf:"5"`
+	InstanceID   string            `yaml:"instanceId,omitempty" protobuf:"6"`
+	ProviderID   string            `yaml:"providerId,omitempty" protobuf:"7"`
+	Spot         bool              `yaml:"spot,omitempty" protobuf:"8"`
+	InternalDNS  string            `yaml:"internalDNS,omitempty" protobuf:"9"`
+	ExternalDNS  string            `yaml:"externalDNS,omitempty" protobuf:"10"`
+	Tags         map[string]string `yaml:"tags,omitempty" protobuf:"11"`
 }
 
 // NewPlatformMetadataSpec initializes a MetadataSpec resource.

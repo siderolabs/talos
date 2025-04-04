@@ -116,6 +116,7 @@ message PlatformMetadataSpec {
   bool spot = 8;
   string internal_dns = 9;
   string external_dns = 10;
+  map<string, string> tags = 11;
 }
 
 // SecurityStateSpec describes the security state resource properties.
