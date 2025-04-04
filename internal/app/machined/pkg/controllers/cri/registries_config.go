@@ -12,6 +12,8 @@ import (
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/siderolabs/gen/optional"
+	"github.com/siderolabs/gen/xslices"
+	"github.com/siderolabs/go-pointer"
 	"go.uber.org/zap"
 
 	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
@@ -95,8 +97,15 @@ func (ctrl *RegistriesConfigController) Run(ctx context.Context, r controller.Ru
 
 				for k, v := range mr.RegistryMirrors {
 					spec.RegistryMirrors[k] = &cri.RegistryMirrorConfig{
-						MirrorEndpoints:    v.MirrorEndpoints,
-						MirrorOverridePath: v.MirrorOverridePath,
+						MirrorEndpoints: xslices.Map(
+							v.MirrorEndpoints,
+							func(endpoint string) cri.RegistryEndpointConfig {
+								return cri.RegistryEndpointConfig{
+									EndpointEndpoint:     endpoint,
+									EndpointOverridePath: pointer.SafeDeref(v.MirrorOverridePath),
+								}
+							},
+						),
 						MirrorSkipFallback: v.MirrorSkipFallback,
 					}
 				}
@@ -111,7 +120,7 @@ func (ctrl *RegistriesConfigController) Run(ctx context.Context, r controller.Ru
 				// inject the registryd mirror endpoint as the first one for all registries
 				for registry := range spec.RegistryMirrors {
 					spec.RegistryMirrors[registry].MirrorEndpoints = append(
-						[]string{"http://" + constants.RegistrydListenAddress},
+						[]cri.RegistryEndpointConfig{{EndpointEndpoint: "http://" + constants.RegistrydListenAddress}},
 						spec.RegistryMirrors[registry].MirrorEndpoints...,
 					)
 				}

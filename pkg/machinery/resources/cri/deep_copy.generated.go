@@ -17,12 +17,8 @@ func (o RegistriesConfigSpec) DeepCopy() RegistriesConfigSpec {
 				cp_RegistryMirrors_v2 = new(RegistryMirrorConfig)
 				*cp_RegistryMirrors_v2 = *v2
 				if v2.MirrorEndpoints != nil {
-					cp_RegistryMirrors_v2.MirrorEndpoints = make([]string, len(v2.MirrorEndpoints))
+					cp_RegistryMirrors_v2.MirrorEndpoints = make([]RegistryEndpointConfig, len(v2.MirrorEndpoints))
 					copy(cp_RegistryMirrors_v2.MirrorEndpoints, v2.MirrorEndpoints)
-				}
-				if v2.MirrorOverridePath != nil {
-					cp_RegistryMirrors_v2.MirrorOverridePath = new(bool)
-					*cp_RegistryMirrors_v2.MirrorOverridePath = *v2.MirrorOverridePath
 				}
 				if v2.MirrorSkipFallback != nil {
 					cp_RegistryMirrors_v2.MirrorSkipFallback = new(bool)
