@@ -1,0 +1,6 @@
+apiVersion: v1alpha1
+kind: UserVolumeConfig
+name: ceph-data
+provisioning:
+    diskSelector:
+        match: disk.transport == "nvme" && !system_disk

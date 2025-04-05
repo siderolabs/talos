@@ -51,6 +51,49 @@
       "type": "object",
       "description": "ProvisioningSpec describes how the volume is provisioned."
     },
+    "block.UserVolumeConfigV1Alpha1": {
+      "properties": {
+        "apiVersion": {
+          "enum": [
+            "v1alpha1"
+          ],
+          "title": "apiVersion",
+          "description": "apiVersion is the API version of the resource.\n",
+          "markdownDescription": "apiVersion is the API version of the resource.",
+          "x-intellij-html-description": "\u003cp\u003eapiVersion is the API version of the resource.\u003c/p\u003e\n"
+        },
+        "kind": {
+          "enum": [
+            "UserVolumeConfig"
+          ],
+          "title": "kind",
+          "description": "kind is the kind of the resource.\n",
+          "markdownDescription": "kind is the kind of the resource.",
+          "x-intellij-html-description": "\u003cp\u003ekind is the kind of the resource.\u003c/p\u003e\n"
+        },
+        "name": {
+          "type": "string",
+          "title": "name",
+          "description": "Name of the volume.\n\nName might be between 1 and 36 characters long and can only contain:\nlowercase and uppercase ASCII letters, digits, and hyphens.\n",
+          "markdownDescription": "Name of the volume.\n\nName might be between 1 and 36 characters long and can only contain:\nlowercase and uppercase ASCII letters, digits, and hyphens.",
+          "x-intellij-html-description": "\u003cp\u003eName of the volume.\u003c/p\u003e\n\n\u003cp\u003eName might be between 1 and 36 characters long and can only contain:\nlowercase and uppercase ASCII letters, digits, and hyphens.\u003c/p\u003e\n"
+        },
+        "provisioning": {
+          "$ref": "#/$defs/block.ProvisioningSpec",
+          "title": "provisioning",
+          "description": "The provisioning describes how the volume is provisioned.\n",
+          "markdownDescription": "The provisioning describes how the volume is provisioned.",
+          "x-intellij-html-description": "\u003cp\u003eThe provisioning describes how the volume is provisioned.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "apiVersion",
+        "kind"
+      ],
+      "description": "UserVolumeConfig is a user volume configuration document."
+    },
     "block.VolumeConfigV1Alpha1": {
       "properties": {
         "apiVersion": {
@@ -4005,6 +4048,9 @@
     }
   },
   "oneOf": [
+    {
+      "$ref": "#/$defs/block.UserVolumeConfigV1Alpha1"
+    },
     {
       "$ref": "#/$defs/block.VolumeConfigV1Alpha1"
     },

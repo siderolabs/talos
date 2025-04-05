@@ -74,3 +74,9 @@ func (emptyVolumeConfig) MinSize() optional.Optional[uint64] {
 func (emptyVolumeConfig) MaxSize() optional.Optional[uint64] {
 	return optional.None[uint64]()
 }
+
+// UserVolumeConfig defines the interface to access user volume configuration.
+type UserVolumeConfig interface {
+	NamedDocument
+	Provisioning() VolumeProvisioningConfig
+}
