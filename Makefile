@@ -118,7 +118,7 @@ TEXTLINT_FILTER_RULE_COMMENTS_VERSION ?= 1.2.2
 # renovate: datasource=npm depName=textlint-rule-one-sentence-per-line
 TEXTLINT_RULE_ONE_SENTENCE_PER_LINE_VERSION ?= 2.0.0
 # renovate: datasource=docker depName=klakegg/hugo
-HUGO_VERSION ?= 0.111.3-ext-alpine
+HUGO_VERSION ?= 0.111.3
 OPERATING_SYSTEM := $(shell uname -s | tr "[:upper:]" "[:lower:]")
 ARCH := $(shell uname -m | sed 's/x86_64/amd64/' | sed 's/aarch64/arm64/')
 TALOSCTL_DEFAULT_TARGET := talosctl-$(OPERATING_SYSTEM)
@@ -133,7 +133,7 @@ KUBESTR_VERSION ?= v0.4.48
 # renovate: datasource=github-releases depName=helm/helm
 HELM_VERSION ?= v3.17.2
 # renovate: datasource=github-releases depName=cilium/cilium-cli
-CILIUM_CLI_VERSION ?= v0.18.2
+CILIUM_CLI_VERSION ?= v0.18.3
 # renovate: datasource=github-releases depName=microsoft/secureboot_objects
 MICROSOFT_SECUREBOOT_RELEASE ?= v1.1.3
 
