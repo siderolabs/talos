@@ -32,7 +32,10 @@ func (suite *ConfigSuite) TestRegistry() {
 			MachineType: "controlplane",
 			MachineRegistries: v1alpha1.RegistriesConfig{
 				RegistryMirrors: map[string]*v1alpha1.RegistryMirrorConfig{
-					"docker.io": {MirrorEndpoints: []string{"https://mirror.io"}},
+					"docker.io": {
+						MirrorEndpoints:    []string{"https://mirror.io"},
+						MirrorOverridePath: pointer.To(true),
+					},
 				},
 			},
 		},
@@ -45,7 +48,14 @@ func (suite *ConfigSuite) TestRegistry() {
 
 		a.Equal(
 			map[string]*crires.RegistryMirrorConfig{
-				"docker.io": {MirrorEndpoints: []string{"https://mirror.io"}},
+				"docker.io": {
+					MirrorEndpoints: []crires.RegistryEndpointConfig{
+						{
+							EndpointEndpoint:     "https://mirror.io",
+							EndpointOverridePath: true,
+						},
+					},
+				},
 			},
 			spec.RegistryMirrors,
 		)
@@ -62,13 +72,24 @@ func (suite *ConfigSuite) TestRegistry() {
 
 		a.Equal(
 			map[string]*crires.RegistryMirrorConfig{
-				"*": {MirrorEndpoints: []string{
-					"http://" + constants.RegistrydListenAddress,
-				}},
-				"docker.io": {MirrorEndpoints: []string{
-					"http://" + constants.RegistrydListenAddress,
-					"https://mirror.io",
-				}},
+				"*": {
+					MirrorEndpoints: []crires.RegistryEndpointConfig{
+						{
+							EndpointEndpoint: "http://" + constants.RegistrydListenAddress,
+						},
+					},
+				},
+				"docker.io": {
+					MirrorEndpoints: []crires.RegistryEndpointConfig{
+						{
+							EndpointEndpoint: "http://" + constants.RegistrydListenAddress,
+						},
+						{
+							EndpointEndpoint:     "https://mirror.io",
+							EndpointOverridePath: true,
+						},
+					},
+				},
 			},
 			spec.RegistryMirrors,
 		)
@@ -105,7 +126,7 @@ func (suite *ConfigSuite) TestRegistryAuth() {
 
 		a.Equal(
 			map[string]*crires.RegistryMirrorConfig{
-				"docker.io": {MirrorEndpoints: []string{"https://mirror.io"}},
+				"docker.io": {MirrorEndpoints: []crires.RegistryEndpointConfig{{EndpointEndpoint: "https://mirror.io"}}},
 			},
 			spec.RegistryMirrors,
 		)
@@ -136,12 +157,12 @@ func (suite *ConfigSuite) TestRegistryAuth() {
 
 		a.Equal(
 			map[string]*crires.RegistryMirrorConfig{
-				"*": {MirrorEndpoints: []string{
-					"http://" + constants.RegistrydListenAddress,
+				"*": {MirrorEndpoints: []crires.RegistryEndpointConfig{
+					{EndpointEndpoint: "http://" + constants.RegistrydListenAddress},
 				}},
-				"docker.io": {MirrorEndpoints: []string{
-					"http://" + constants.RegistrydListenAddress,
-					"https://mirror.io",
+				"docker.io": {MirrorEndpoints: []crires.RegistryEndpointConfig{
+					{EndpointEndpoint: "http://" + constants.RegistrydListenAddress},
+					{EndpointEndpoint: "https://mirror.io"},
 				}},
 			},
 			spec.RegistryMirrors,
@@ -190,7 +211,7 @@ func (suite *ConfigSuite) TestRegistryTLS() {
 
 		a.Equal(
 			map[string]*crires.RegistryMirrorConfig{
-				"docker.io": {MirrorEndpoints: []string{"https://mirror.io"}},
+				"docker.io": {MirrorEndpoints: []crires.RegistryEndpointConfig{{EndpointEndpoint: "https://mirror.io"}}},
 			},
 			spec.RegistryMirrors,
 		)
@@ -218,12 +239,12 @@ func (suite *ConfigSuite) TestRegistryTLS() {
 
 		a.Equal(
 			map[string]*crires.RegistryMirrorConfig{
-				"*": {MirrorEndpoints: []string{
-					"http://" + constants.RegistrydListenAddress,
+				"*": {MirrorEndpoints: []crires.RegistryEndpointConfig{
+					{EndpointEndpoint: "http://" + constants.RegistrydListenAddress},
 				}},
-				"docker.io": {MirrorEndpoints: []string{
-					"http://" + constants.RegistrydListenAddress,
-					"https://mirror.io",
+				"docker.io": {MirrorEndpoints: []crires.RegistryEndpointConfig{
+					{EndpointEndpoint: "http://" + constants.RegistrydListenAddress},
+					{EndpointEndpoint: "https://mirror.io"},
 				}},
 			},
 			spec.RegistryMirrors,
@@ -254,8 +275,8 @@ func (suite *ConfigSuite) TestRegistryImageCacheNoConfig() {
 
 		a.Equal(
 			map[string]*crires.RegistryMirrorConfig{
-				"*": {MirrorEndpoints: []string{
-					"http://" + constants.RegistrydListenAddress,
+				"*": {MirrorEndpoints: []crires.RegistryEndpointConfig{
+					{EndpointEndpoint: "http://" + constants.RegistrydListenAddress},
 				}},
 			},
 			spec.RegistryMirrors,

@@ -471,6 +471,19 @@ func (k *KubeletNodeIPConfig) ValidSubnets() []string {
 	return k.KubeletNodeIPValidSubnets
 }
 
+type registryEndpointWrapper struct {
+	endpoint     string
+	overridePath bool
+}
+
+func (wrapper *registryEndpointWrapper) Endpoint() string {
+	return wrapper.endpoint
+}
+
+func (wrapper *registryEndpointWrapper) OverridePath() bool {
+	return wrapper.overridePath
+}
+
 // Mirrors implements the Registries interface.
 func (r *RegistriesConfig) Mirrors() map[string]config.RegistryMirrorConfig {
 	mirrors := make(map[string]config.RegistryMirrorConfig, len(r.RegistryMirrors))
@@ -1463,14 +1476,14 @@ func (a *AdminKubeconfigConfig) CertOrganization() string {
 	return constants.KubernetesAdminCertOrganization
 }
 
-// Endpoints implements the config.Provider interface.
-func (r *RegistryMirrorConfig) Endpoints() []string {
-	return r.MirrorEndpoints
-}
-
-// OverridePath implements the Registries interface.
-func (r *RegistryMirrorConfig) OverridePath() bool {
-	return pointer.SafeDeref(r.MirrorOverridePath)
+// Endpoints implements the Registries interface.
+func (r *RegistryMirrorConfig) Endpoints() []config.RegistryEndpointConfig {
+	return xslices.Map(r.MirrorEndpoints, func(e string) config.RegistryEndpointConfig {
+		return &registryEndpointWrapper{
+			endpoint:     e,
+			overridePath: pointer.SafeDeref(r.MirrorOverridePath),
+		}
+	})
 }
 
 // SkipFallback implements the Registries interface.
