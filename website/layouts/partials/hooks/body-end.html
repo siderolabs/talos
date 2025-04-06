@@ -3,10 +3,16 @@
     <script src="/js/clipboard.js"></script>
 {{ end }}
 
-{{ $currentVersion := index (split .Page.File.Dir "/" ) 0 }}
+{{ $currentVersion := index (split .Page.Path "/" ) 0 }}
 {{ $currentVersionDir := $currentVersion | printf "/%s"}}
 
 <script src="https://cdn.jsdelivr.net/npm/@docsearch/js@3"></script>
+<script>
+  const navEl = document.getElementsByTagName("nav")
+  const searchDivEl = document.createElement("div")
+  searchDivEl.id = "algolia-search"
+  navEl.item(0).children[0].appendChild(searchDivEl)
+</script>
 
 <!--
 this targets the facets of algolia search to only return the version you're actively looking at

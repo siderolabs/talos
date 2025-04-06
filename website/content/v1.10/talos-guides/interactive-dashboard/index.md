@@ -59,7 +59,7 @@ Monitor screen provides live view of the machine resource usage: CPU, memory, di
 Interactive Dashboard Network Config Screen
 {{< /imgproc >}}
 
-Network config screen provides editing capabilities for the `metal` [platform network configuration]({{< relref "../install/bare-metal-platforms/network-config" >}}).
+Network config screen provides editing capabilities for the `metal` [platform network configuration]({{< relref "install/bare-metal-platforms/network-config" >}}).
 
 The screen is split into three sections:
 

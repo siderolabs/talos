@@ -4,7 +4,7 @@ weight: 50
 description: "List of new and shiny features in Talos Linux."
 ---
 
-See also [upgrade notes]({{< relref "../../talos-guides/upgrading-talos/">}}) for important changes.
+See also [upgrade notes]({{< relref "../talos-guides/upgrading-talos">}}) for important changes.
 
 ## Important Changes
 
@@ -17,22 +17,22 @@ See also [upgrade notes]({{< relref "../../talos-guides/upgrading-talos/">}}) fo
 
 ### CA Rotation
 
-Talos Linux now supports [rotating the root CA certificate and key]({{< relref "../../advanced/ca-rotation" >}}) for Talos API and Kubernetes API.
+Talos Linux now supports [rotating the root CA certificate and key]({{< relref "../../advanced/ca-rotation.md" >}}) for Talos API and Kubernetes API.
 
 ## Networking
 
 ### Device Selectors
 
-Talos Linux now supports `physical: true` qualifier for [device selectors]({{< relref "../../talos-guides/network/device-selector" >}}), it selects non-virtual network interfaces (i.e. `en0` is selected, while `bond0` is not).
+Talos Linux now supports `physical: true` qualifier for [device selectors]({{< relref "../../talos-guides/network/device-selector.md" >}}), it selects non-virtual network interfaces (i.e. `en0` is selected, while `bond0` is not).
 
 ### DNS Caching
 
-Talos Linux now provides a [caching DNS resolver]({{< relref "../../talos-guides/network/host-dns" >}}) for host workloads (including host networking pods).
+Talos Linux now provides a [caching DNS resolver]({{< relref "../../talos-guides/network/host-dns.md" >}}) for host workloads (including host networking pods).
 Host DNS resolver is enabled by default for clusters created with Talos 1.7.
 
 ### Time Sync
 
-Default [NTP server]({{< relref "../../talos-guides/configuration/time-sync" >}}) was updated to be `time.cloudflare.com` instead of `pool.ntp.org`.
+Default [NTP server]({{< relref "../../talos-guides/configuration/time-sync.md" >}}) was updated to be `time.cloudflare.com` instead of `pool.ntp.org`.
 Default server is only used if the user does not specify any NTP servers in the configuration.
 
 Talos Linux can now sync to PTP devices (e.g. provided by the hypervisor) skipping the network time servers.
@@ -47,7 +47,7 @@ machine:
 
 ### SideroLink HTTP Proxy
 
-[SideroLink]({{< relref "../../talos-guides/network/siderolink" >}}) connections can now proxy Wireguard UDP packet over existing HTTP/2 SideroLink API connection (for networks where UDP protocol is filtered, but HTTP is allowed).
+[SideroLink]({{< relref "../../talos-guides/network/siderolink.md" >}}) connections can now proxy Wireguard UDP packet over existing HTTP/2 SideroLink API connection (for networks where UDP protocol is filtered, but HTTP is allowed).
 
 ## Kubernetes
 
@@ -69,19 +69,19 @@ to update to use `iptables-nft`.
 
 Talos Linux now supports:
 
-* [OpenNebula](https://opennebula.io/) platform ([Talos platform `opennebula`]({{< relref "../../talos-guides/install/virtualized-platforms/opennebula" >}}))
-* [Akamai Connected Cloud](https://www.linode.com/) provider ([Talos platform `akamai`]({{< relref "../../talos-guides/install/cloud-platforms/akamai" >}}))
+* [OpenNebula](https://opennebula.io/) platform ([Talos platform `opennebula`]({{< relref "../../talos-guides/install/virtualized-platforms/opennebula.md" >}}))
+* [Akamai Connected Cloud](https://www.linode.com/) provider ([Talos platform `akamai`]({{< relref "../../talos-guides/install/cloud-platforms/akamai.md" >}}))
 
 ### Containers (`docker`)
 
-The `talosctl cluster create` command now can create [multiple Talos clusters on the same machine]({{< relref "../../talos-guides/install/local-platforms/docker" >}}).
+The `talosctl cluster create` command now can create [multiple Talos clusters on the same machine]({{< relref "../../talos-guides/install/local-platforms/docker.md" >}}).
 The Kubernetes and Talos APIs are mapped to a random port on the host machine.
 
 Talos Linux now uses provided DNS resolver when running inside a container.
 
 ### Talos-in-Kubernetes
 
-Talos Linux now supports running Talos inside [Kubernetes as a pod]({{< relref "../../talos-guides/install/cloud-platforms/kubernetes" >}}): e.g. to run controlplane nodes inside existing Kubernetes cluster.
+Talos Linux now supports running Talos inside [Kubernetes as a pod]({{< relref "../../talos-guides/install/cloud-platforms/kubernetes.md" >}}): e.g. to run controlplane nodes inside existing Kubernetes cluster.
 
 ## SBC
 
@@ -90,7 +90,7 @@ There will not be any more SBC specific release assets as part of Talos release.
 
 The default Talos `installer` image will stop working for SBC's and will fail the upgrade, if used, starting from Talos v1.7.0.
 
-The SBC's images and installers can be generated on the fly using [Image Factory](https://factory.talos.dev) or using [imager]({{< relref "../../talos-guides/install/boot-assets">}}) for custom images.
+The SBC's images and installers can be generated on the fly using [Image Factory](https://factory.talos.dev) or using [imager]({{< relref "../../talos-guides/install/boot-assets.md">}}) for custom images.
 The list of official SBC's images supported by Image Factory can be found in the [overlays](https://github.com/siderolabs/overlays/) repository.
 
 In order to upgrade an SBC running Talos 1.6 to Talos 1.7, generate an `installer` image with an SBC overlay and use it to upgrade the cluster.
@@ -115,9 +115,9 @@ environment:
   - UPS_NAME=ups
 ```
 
-For documentation, see [Extension Services Config Files]({{< relref "../../reference/configuration/extensions/extensionserviceconfig" >}}).
+For documentation, see [Extension Services Config Files]({{< relref "../../reference/configuration/extensions/extensionserviceconfig.md" >}}).
 
-> **Note**: The use of `environmentFile` in extension service [spec]({{< relref "../../advanced/extension-services">}}) is now deprecated and will be removed in a future release of Talos,
+> **Note**: The use of `environmentFile` in extension service [spec]({{< relref "../../advanced/extension-services.md">}}) is now deprecated and will be removed in a future release of Talos,
 > use `ExtensionServiceConfig` instead.
 
 ### New Extensions
@@ -135,7 +135,7 @@ Talos Linux in version v1.7 introduces new [extensions](https://github.com/sider
 
 ### Additional Tags
 
-Talos Linux now supports setting [extra tags]({{< relref "../../talos-guides/configuration/logging" >}}) when sending logs in JSON format:
+Talos Linux now supports setting [extra tags]({{< relref "../../talos-guides/configuration/logging.md" >}}) when sending logs in JSON format:
 
 ```yaml
 machine:
@@ -159,12 +159,12 @@ This is mostly implemented for extension services that log to syslog.
 
 ### Kubernetes Upgrade
 
-The [command]({{< relref "../../kubernetes-guides/upgrading-kubernetes" >}}) `talosctl upgrade-k8s` now supports specifying custom image references for Kubernetes components via `--*-image` flags.
+The [command]({{< relref "../../kubernetes-guides/upgrading-kubernetes.md" >}}) `talosctl upgrade-k8s` now supports specifying custom image references for Kubernetes components via `--*-image` flags.
 The default behavior is unchanged, and the flags are optional.
 
 ### KubeSpan
 
-Talos Linux disables by default a [KubeSpan]({{< relref "../../talos-guides/network/kubespan" >}}) feature to harvest additional endpoints from KubeSpan members.
+Talos Linux disables by default a [KubeSpan]({{< relref "../../talos-guides/network/kubespan.md" >}}) feature to harvest additional endpoints from KubeSpan members.
 This feature turned out to be less helpful than expected and caused unnecessary performance issues.
 
 Previous behavior can be restored with:
@@ -178,7 +178,7 @@ machine:
 
 ### Secure Boot ISO
 
-Talos Linux now provides a way to configure systemd-boot ISO 'secure-boot-enroll' option while [generating]({{< relref "../../talos-guides/install/boot-assets" >}}) a SecureBoot ISO image:
+Talos Linux now provides a way to configure systemd-boot ISO 'secure-boot-enroll' option while [generating]({{< relref "../../talos-guides/install/boot-assets.md" >}}) a SecureBoot ISO image:
 
 ```yaml
 output:
@@ -190,10 +190,10 @@ output:
 
 ### Hardware Watchdog Timers
 
-Talos Linux now supports [hardware watchdog timers]({{< relref "../../advanced/watchdog" >}}) configuration.
+Talos Linux now supports [hardware watchdog timers]({{< relref "../../advanced/watchdog.md" >}}) configuration.
 If enabled, and the machine becomes unresponsive, the hardware watchdog will reset the machine.
 
-The watchdog can be enabled with the following [configuration document]({{< relref "../../reference/configuration/runtime/watchdogtimerconfig" >}}):
+The watchdog can be enabled with the following [configuration document]({{< relref "../../reference/configuration/runtime/watchdogtimerconfig.md" >}}):
 
 ```yaml
 apiVersion: v1alpha1

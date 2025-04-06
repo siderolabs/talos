@@ -4,7 +4,7 @@ weight: 50
 description: "List of new and shiny features in Talos Linux."
 ---
 
-See also [upgrade notes]({{< relref "../../talos-guides/upgrading-talos/">}}) for important changes.
+See also [upgrade notes]({{< relref "../talos-guides/upgrading-talos">}}) for important changes.
 
 ## Important Changes
 
@@ -26,7 +26,7 @@ The `systemd-udevd` might change the names of network interfaces with predictabl
 
 ## Image Cache
 
-Talos now supports providing a local [Image Cache]({{< relref "../../talos-guides/configuration/image-cache" >}}) for container images.
+Talos now supports providing a local [Image Cache]({{< relref "../../talos-guides/configuration/image-cache.md" >}}) for container images.
 
 The Image Cache feature can be used to avoid downloading the required images over the network, which can be useful in air-gapped or weak connectivity environments.
 
@@ -35,7 +35,7 @@ The Image Cache feature can be used to avoid downloading the required images ove
 ### Custom DNS Search Domains
 
 Talos now allows to supports specifying custom search domains for Talos nodes using
-new machine configuration field [`.machine.network.searchDomains`]({{< relref "../../reference/configuration/v1alpha1/config/#Config.machine.network" >}}).
+new machine configuration field [`.machine.network.searchDomains`]({{< relref "../../reference/configuration/v1alpha1/config.md#Config.machine.network" >}}).
 
 For the host the `/etc/resolve.conf` would look like:
 
@@ -55,7 +55,7 @@ options ndots:5
 
 ### Device Selectors
 
-Talos now supports matching on [permanent hardware (MAC) address]({{< relref "../../reference/configuration/v1alpha1/config/#Config.machine.network.interfaces..bond.deviceSelectors." >}}) of the network interfaces.
+Talos now supports matching on [permanent hardware (MAC) address]({{< relref "../../reference/configuration/v1alpha1/config.md#Config.machine.network.interfaces..bond.deviceSelectors." >}}) of the network interfaces.
 This is specifically useful to match bond members, as they change their hardware addresses when they become part of the bond.
 
 ### Node Address Ordering
@@ -75,7 +75,7 @@ The new algorithm prefers more specific prefixes, which is specifically useful f
 ## Control Groups Analysis
 
 The `talosctl cgroups` command has been added to the `talosctl` tool.
-This command allows you to view the [cgroup resource consumption and limits]({{< relref "../../advanced/cgroups-analysis" >}}) for a machine, e.g.
+This command allows you to view the [cgroup resource consumption and limits]({{< relref "../../advanced/cgroups-analysis.md" >}}) for a machine, e.g.
 `talosctl cgroups --preset memory`.
 
 ## Kubernetes
@@ -108,13 +108,13 @@ Current authorization config can be viewed by running: `talosctl get authorizati
 ### User Namespaces
 
 Talos Linux now supports running Kubernetes pods with user namespaces enabled.
-Please refer to the [documentation]({{< relref "../../kubernetes-guides/configuration/usernamespace" >}}) for more information.
+Please refer to the [documentation]({{< relref "../../kubernetes-guides/configuration/usernamespace.md" >}}) for more information.
 
 ## Containers
 
 ### OCI Base Runtime Spec
 
-Talos now allows to [modify the OCI base runtime spec for the container runtime]({{< relref "../../advanced/oci-base-spec" >}}).
+Talos now allows to [modify the OCI base runtime spec for the container runtime]({{< relref "../../advanced/oci-base-spec.md" >}}).
 
 ### Registry Mirrors
 
@@ -124,7 +124,7 @@ Talos will never fall back to the default registry if endpoints are configured, 
 > Note: Talos Linux pulls images for the `installer`, `kubelet`, `etcd`, while all workload images are pulled by the CRI plugin.
 
 In Talos 1.9 this was fixed, so that by default an upstream registry is used as a fallback in all cases, while new registry mirror
-[configuration option]({{< relref "../../reference/configuration/v1alpha1/config/#Config.machine.registries.mirrors.-" >}}) `.skipFallback` can be used to disable this behavior both for Talos and CRI plugin.
+[configuration option]({{< relref "../../reference/configuration/v1alpha1/config.md#Config.machine.registries.mirrors.-" >}}) `.skipFallback` can be used to disable this behavior both for Talos and CRI plugin.
 
 ## Miscellaneous
 
@@ -145,7 +145,7 @@ The new command `talosctl wipe disk` allows to wipe a disk or a partition which 
 
 ### Turing RK1
 
-Talos now supports the [Turning RK1]({{< relref "../../talos-guides/install/single-board-computers/turing_rk1" >}}) SOM.
+Talos now supports the [Turning RK1]({{< relref "../../talos-guides/install/single-board-computers/turing_rk1.md" >}}) SOM.
 
 ### `nocloud`
 

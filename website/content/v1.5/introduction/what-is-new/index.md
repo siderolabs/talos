@@ -4,7 +4,7 @@ weight: 50
 description: "List of new and shiny features in Talos Linux."
 ---
 
-See also [upgrade notes]({{< relref "../../talos-guides/upgrading-talos/">}}) for important changes.
+See also [upgrade notes]({{< relref "../talos-guides/upgrading-talos">}}) for important changes.
 
 ## Predictable Network Interface Names
 
@@ -25,19 +25,19 @@ This change doesn't affect "cloud" platforms, like AWS, as Talos automatically a
 
 ## SecureBoot
 
-Talos now supports booting on UEFI systems in [SecureBoot]({{< relref "../../talos-guides/install/bare-metal-platforms/secureboot" >}}) mode.
+Talos now supports booting on UEFI systems in [SecureBoot]({{< relref "../../talos-guides/install/bare-metal-platforms/secureboot.md" >}}) mode.
 When combined with TPM-based disk encryption, this provides Trusted Boot experience.
 
 ## Boot Assets Generation
 
-Talos provides [a new unified way]({{< relref "../../talos-guides/install/boot-assets" >}}) to generate various boot assets, including ISOs, disk images, PXE boot files, installer container images etc., which can be
+Talos provides [a new unified way]({{< relref "../../talos-guides/install/boot-assets.md" >}}) to generate various boot assets, including ISOs, disk images, PXE boot files, installer container images etc., which can be
 further customized with system extensions, extra kernel arguments.
 
 ## Kubernetes
 
 ### KubePrism - Kubernetes API Server In-Cluster Load Balancer
 
-Talos now supports configuring the [KubePrism]({{< relref "../../kubernetes-guides/configuration/kubeprism">}}) - Kubernetes API Server in-cluster load balancer with machine config
+Talos now supports configuring the [KubePrism]({{< relref "../../kubernetes-guides/configuration/kubeprism.md">}}) - Kubernetes API Server in-cluster load balancer with machine config
 `features.kubePrism.port` and `features.kubePrism.enabled` fields.
 
 If enabled, KubePrism binds to `localhost` and runs on the same port on every machine in the cluster.
@@ -66,18 +66,18 @@ On the first mount of a volume, the quota information will be recalculated, whic
 ### Installing System Extensions
 
 The way to install system extensions on the machine using `machine.install.extensions` machine configuration option is now deprecated,
-please use instead [the boot asset generation process]({{< relref "../../talos-guides/install/boot-assets" >}}) to create an image with system extension pre-installed.
+please use instead [the boot asset generation process]({{< relref "../../talos-guides/install/boot-assets.md" >}}) to create an image with system extension pre-installed.
 
 ### Extension Services
 
-Talos now supports setting `environmentFile` for an [extension service container spec]({{< relref "../../advanced/extension-services/#container" >}}).
+Talos now supports setting `environmentFile` for an [extension service container spec]({{< relref "../../advanced/extension-services.md#container" >}}).
 The extension waits for the file to be present before starting the service.
 
 ## Disk Encryption
 
 ### TPM-based Disk Encryption
 
-Talos now supports encrypting `STATE`/`EPHEMERAL` with [keys bound to a TPM device]({{< relref "../../talos-guides/install/bare-metal-platforms/secureboot" >}}).
+Talos now supports encrypting `STATE`/`EPHEMERAL` with [keys bound to a TPM device]({{< relref "../../talos-guides/install/bare-metal-platforms/secureboot.md" >}}).
 The TPM device must be TPM2.0 compatible.
 This type of disk encryption should be used when booting Talos in SecureBoot mode.
 

@@ -20,6 +20,7 @@
 
 .td-page-meta {
     a {
+        text-decoration: none;
         display: block;
         font-weight: $font-weight-medium;
     }
@@ -28,6 +29,7 @@
 .td-toc {
 
     a {
+        text-decoration: none;
         display: block;
         font-weight: $font-weight-light;
         padding-bottom: .25rem;

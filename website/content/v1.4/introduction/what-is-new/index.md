@@ -4,11 +4,11 @@ weight: 50
 description: "List of new and shiny features in Talos Linux."
 ---
 
-See also [upgrade notes]({{< relref "../../talos-guides/upgrading-talos/">}}) for important changes.
+See also [upgrade notes]({{< relref "../talos-guides/upgrading-talos">}}) for important changes.
 
 ## Interactive Dashboard
 
-Talos now starts a text-based [UI dashboard]({{< relref "../../talos-guides/interactive-dashboard" >}}) on virtual console `/dev/tty2` and switches to it by default upon boot.
+Talos now starts a text-based [UI dashboard]({{< relref "../talos-guides/interactive-dashboard" >}}) on virtual console `/dev/tty2` and switches to it by default upon boot.
 Kernel logs remain available on `/dev/tty1`.
 
 To switch between virtual TTYs, use the `Alt+F1` and `Alt+F2` keys.
@@ -98,7 +98,7 @@ These APIs are available via new `talosctl etcd` sub-commands:
 * `talosctl etcd defrag`
 * `talosctl etcd status`
 
-See also [etcd maintenance guide]({{< relref "../../advanced/etcd-maintenance " >}}).
+See also [etcd maintenance guide]({{< relref "../../advanced/etcd-maintenance.md" >}}).
 
 ### `talosctl containers`
 

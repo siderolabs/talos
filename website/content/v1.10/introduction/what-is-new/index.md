@@ -4,6 +4,6 @@ weight: 50
 description: "List of new and shiny features in Talos Linux."
 ---
 
-See also [upgrade notes]({{< relref "../../talos-guides/upgrading-talos/">}}) for important changes.
+See also [upgrade notes]({{< relref "../talos-guides/upgrading-talos" >}}) for important changes.
 
 TBD

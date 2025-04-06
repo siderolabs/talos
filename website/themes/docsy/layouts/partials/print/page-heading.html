@@ -1,9 +1,0 @@
-{{/* Use the title and description of the first page to begin the document */}}
-
-{{ $tpl := printf "print/page-heading-%s.html" .Page.Type }}
-{{ if templates.Exists (printf "partials/%s" $tpl) }}
-  {{ partial $tpl . }}
-{{ else -}}
-<h1 class="title">{{ .Title }}</h1>
-{{ with .Page.Params.description }}<div class="lead">{{ . | markdownify }}</div>{{ end }}
-{{ end }}

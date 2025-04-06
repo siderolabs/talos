@@ -63,6 +63,8 @@
     }
 
     a {
+        text-decoration: none;
+
         &:hover {
             color: $secondary;
             text-decoration: none;

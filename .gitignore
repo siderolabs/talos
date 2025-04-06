@@ -34,7 +34,6 @@ sha512sum.txt
 .netlify
 
 *.lock
-package-lock.json
 node_modules
 website/resources
 website/public

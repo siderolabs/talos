@@ -4,7 +4,7 @@ weight: 50
 description: "List of new and shiny features in Talos Linux."
 ---
 
-See also [upgrade notes]({{< relref "../../talos-guides/upgrading-talos/">}}) for important changes.
+See also [upgrade notes]({{< relref "../talos-guides/upgrading-talos">}}) for important changes.
 
 ## Important Changes
 
@@ -20,30 +20,30 @@ These include:
 * `metal` iso and disk images
 * `talosctl-cni-bundle`
 
-All other release assets can be downloaded from [Image Factory]({{< relref "../../talos-guides/install/boot-assets#image-factory" >}}).
+All other release assets can be downloaded from [Image Factory]({{< relref "../../talos-guides/install/boot-assets.md#image-factory" >}}).
 
 ### Serial Console for `metal` Platform
 
 Starting from Talos 1.8, the `console=ttyS0` kernel argument is no longer included by default in the metal images and installer.
 If you are running Talos virtualized in QEMU (e.g., Proxmox), you can add this as an extra kernel argument if needed.
-You can refer to the [Image Factory or Imager documentation]({{< relref "../../talos-guides/install/boot-assets" >}}) for instructions on how to do this.
+You can refer to the [Image Factory or Imager documentation]({{< relref "../../talos-guides/install/boot-assets.md" >}}) for instructions on how to do this.
 This change addresses issues such as slow boot or lack of console output on bare metal hardware without a serial console.
 
 ### Accessing `/dev/net/tun` in Kubernetes Pods
 
 Talos Linux includes `runc` 1.2, which [no longer](https://github.com/opencontainers/runc/pull/3468) exposes `/dev/net/tun` devices by default in containers.
-If you require access to `/dev/net/tun` in your Kubernetes pods (such as when running Tailscale as a pod), you can use [device plugins]({{< relref "../../kubernetes-guides/configuration/device-plugins" >}}) to expose `/dev/net/tun` to the pod.
+If you require access to `/dev/net/tun` in your Kubernetes pods (such as when running Tailscale as a pod), you can use [device plugins]({{< relref "../../kubernetes-guides/configuration/device-plugins.md" >}}) to expose `/dev/net/tun` to the pod.
 
 ## Disk Management
 
 The disk management backend has been rewritten to support more complex configurations, but the existing configuration should continue to work as before.
 
-The detailed information about the new disk management subsystem can be found in the [disk management guide]({{< relref "../../talos-guides/configuration/disk-management" >}}).
+The detailed information about the new disk management subsystem can be found in the [disk management guide]({{< relref "../../talos-guides/configuration/disk-management.md" >}}).
 
 ### `EPHEMERAL` Volume
 
 Talos Linux introduces support for configuring the `EPHEMERAL` volume (`/var`): location (disk), minimum and maximum size, etc.
-You can find more information about the configuration in the [disk management guide]({{< relref "../../talos-guides/configuration/disk-management#machine-configuration" >}}).
+You can find more information about the configuration in the [disk management guide]({{< relref "../../talos-guides/configuration/disk-management.md#machine-configuration" >}}).
 
 ### Upgrades
 
@@ -159,28 +159,28 @@ Talos Linux now can optionally include well-known UEFI (Microsoft) SecureBoot ke
 
 ### Custom Trusted Roots
 
-Talos Linux now supports adding [custom trusted roots]({{< relref "../../talos-guides/configuration/certificate-authorities" >}}) (CA certificates) via
-a [`TrustedRootsConfig`]({{< relref "../../reference/configuration/security/trustedrootsconfig" >}}) configuration document.
+Talos Linux now supports adding [custom trusted roots]({{< relref "../../talos-guides/configuration/certificate-authorities.md" >}}) (CA certificates) via
+a [`TrustedRootsConfig`]({{< relref "../../reference/configuration/security/trustedrootsconfig.md" >}}) configuration document.
 
 ## Networking
 
 ### Bridge
 
-Talos Linux now support configuring [`vlan_filtering`]({{< relref "../../reference/configuration/v1alpha1/config#Config.machine.network.interfaces..bridge.vlan" >}}) for bridge interfaces.
+Talos Linux now support configuring [`vlan_filtering`]({{< relref "../../reference/configuration/v1alpha1/config.md#Config.machine.network.interfaces..bridge.vlan" >}}) for bridge interfaces.
 
 ### KubeSpan
 
-Extra announced endpoints can be added using the [`KubespanEndpointsConfig` document]({{< relref "../../talos-guides/network/kubespan#configuration" >}}).
+Extra announced endpoints can be added using the [`KubespanEndpointsConfig` document]({{< relref "../../talos-guides/network/kubespan.md#configuration" >}}).
 
 ## Machine Configuration
 
 ### Machine Configuration via Kernel Command Line
 
-Talos Linux supports supplying zstd-compressed, base64-encoded machine configuration small documents via the [kernel command line parameter]({{< relref "../../reference/kernel" >}}) `talos.config.inline`.
+Talos Linux supports supplying zstd-compressed, base64-encoded machine configuration small documents via the [kernel command line parameter]({{< relref "../../reference/kernel.md" >}}) `talos.config.inline`.
 
 ### Strategic Merge Patches with `$patch: delete`
 
-Talos Linux now supports removing parts of the machine configuration by [patching]({{< relref "../../talos-guides/configuration/patching#strategic-merge-patches" >}}) using the `$patch: delete` syntax similar to the Kubernetes strategic merge patch.
+Talos Linux now supports removing parts of the machine configuration by [patching]({{< relref "../../talos-guides/configuration/patching.md#strategic-merge-patches" >}}) using the `$patch: delete` syntax similar to the Kubernetes strategic merge patch.
 
 ## Miscellaneous
 
@@ -197,7 +197,7 @@ This can be also explicitly enabled by setting `talos.halt_if_installed=1` in ke
 
 ### Platform Support
 
-Talos Linux now supports [Apache CloudStack platform]({{< relref "../../talos-guides/install/cloud-platforms/cloudstack" >}}).
+Talos Linux now supports [Apache CloudStack platform]({{< relref "../../talos-guides/install/cloud-platforms/cloudstack.md" >}}).
 
 ### ZSTD Compression
 

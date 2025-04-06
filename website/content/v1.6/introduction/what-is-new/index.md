@@ -4,7 +4,7 @@ weight: 50
 description: "List of new and shiny features in Talos Linux."
 ---
 
-See also [upgrade notes]({{< relref "../../talos-guides/upgrading-talos/">}}) for important changes.
+See also [upgrade notes]({{< relref "../talos-guides/upgrading-talos">}}) for important changes.
 
 ## Breaking Changes
 
@@ -12,8 +12,8 @@ See also [upgrade notes]({{< relref "../../talos-guides/upgrading-talos/">}}) fo
 
 Starting with Talos 1.6, Linux firmware is not included in the default initramfs.
 
-Users that need Linux firmware can pull them as an extension during install time using the [Image Factory]({{< relref "../../learn-more/image-factory" >}}) service.
-If the initial boot requires firmware, a [custom ISO can be built]({{< relref "../../talos-guides/install/boot-assets" >}}) with the firmware included using the Image Factory service or using the `imager`.
+Users that need Linux firmware can pull them as an extension during install time using the [Image Factory]({{< relref "../../learn-more/image-factory.md" >}}) service.
+If the initial boot requires firmware, a [custom ISO can be built]({{< relref "../../talos-guides/install/boot-assets.md" >}}) with the firmware included using the Image Factory service or using the `imager`.
 This also ensures that the linux-firmware is not tied to a specific Talos version.
 
 The list of firmware packages which were removed from the default `initramfs` and are now available as extensions:
@@ -23,7 +23,7 @@ The list of firmware packages which were removed from the default `initramfs` an
 
 ### Network Device Selectors
 
-Previously, [network device selectors]({{< relref "../../talos-guides/network/device-selector" >}}) only matched the first link, now the configuration is applied to all matching links.
+Previously, [network device selectors]({{< relref "../../talos-guides/network/device-selector.md" >}}) only matched the first link, now the configuration is applied to all matching links.
 
 ### `talosctl images` command
 
@@ -37,18 +37,18 @@ The option `.persist` deprecated in Talos 1.5 was removed, the machine configura
 
 ### Kubernetes `n-5` Version Support
 
-Talos Linux starting with version 1.6 supports the latest Kubernetes `n-5` versions, for release 1.6.0 this means [support]({{< relref "../support-matrix" >}}) for Kubernetes versions 1.24-1.29.
+Talos Linux starting with version 1.6 supports the latest Kubernetes `n-5` versions, for release 1.6.0 this means [support]({{< relref "../support-matrix.md" >}}) for Kubernetes versions 1.24-1.29.
 This allows users to make it easier to upgrade to new Talos Linux versions without having to upgrade Kubernetes at the same time.
 
 > See [Kubernetes release support](https://kubernetes.io/releases/) for the list of supported versions by Kubernetes project.
 
 ### OAuth2 Machine Config Flow
 
-Talos Linux when running on the `metal` platform can be configured to authenticate the machine configuration download using [OAuth2 device flow]({{< relref "../../advanced/machine-config-oauth" >}}).
+Talos Linux when running on the `metal` platform can be configured to authenticate the machine configuration download using [OAuth2 device flow]({{< relref "../../advanced/machine-config-oauth.md" >}}).
 
 ### Ingress Firewall
 
-Talos Linux now supports configuring the [ingress firewall rules]({{< relref "../../talos-guides/network/ingress-firewall" >}}).
+Talos Linux now supports configuring the [ingress firewall rules]({{< relref "../../talos-guides/network/ingress-firewall.md" >}}).
 
 ## Improvements
 
@@ -107,7 +107,7 @@ Talos System Extensions can be used to install the credential binaries.
 
 ### KubePrism
 
-[KubePrism]({{< relref "../../kubernetes-guides/configuration/kubeprism" >}}) is enabled by default on port 7445.
+[KubePrism]({{< relref "../../kubernetes-guides/configuration/kubeprism.md" >}}) is enabled by default on port 7445.
 
 ### Sysctl
 

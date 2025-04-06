@@ -18,7 +18,7 @@ Refer to the OpenEBS Jiva [documentation](https://github.com/openebs/jiva-operat
 
 ## Preparing the nodes
 
-Create the [boot assets]({{< relref "../../talos-guides/install/boot-assets" >}}) which includes the `iscsi-tools` system extensions (or create a custom installer and perform a machine upgrade if Talos is already installed).
+Create the [boot assets]({{< relref "../../talos-guides/install/boot-assets.md" >}}) which includes the `iscsi-tools` system extensions (or create a custom installer and perform a machine upgrade if Talos is already installed).
 
 Create a machine config patch with the contents below and save as `patch.yaml`
 

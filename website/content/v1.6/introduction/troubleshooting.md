@@ -16,7 +16,7 @@ This guide is structured so that it can be followed step-by-step, skip sections 
 ## Network Configuration
 
 As Talos Linux is an API-based operating system, it is important to have networking configured so that the API can be accessed.
-Some information can be gathered from the [Interactive Dashboard]({{< relref "../talos-guides/interactive-dashboard " >}}) which is available on the machine console.
+Some information can be gathered from the [Interactive Dashboard]({{< relref "../talos-guides/interactive-dashboard" >}}) which is available on the machine console.
 
 When running in the cloud the networking should be configured automatically.
 Whereas when running on bare-metal it may need more specific configuration, see [networking `metal` configuration guide]({{< relref "../talos-guides/install/bare-metal-platforms/network-config" >}}).
@@ -126,7 +126,7 @@ Check that all control plane nodes are reported in `talosctl get members` output
 
 ### `etcd` Reports and Alarm
 
-See [etcd maintenance]({{< relref "../advanced/etcd-maintenance" >}}) guide.
+See [etcd maintenance]({{< relref "../advanced/etcd-maintenance.md" >}}) guide.
 
 ### `etcd` Quorum is Lost
 
