@@ -404,6 +404,7 @@ func (au *AWSUploader) registerAMIArch(ctx context.Context, region string, svc *
 		Description:        pointer.To(fmt.Sprintf("Talos AMI %s %s %s", au.Options.Tag, arch, region)),
 		Architecture:       awsArchitectures[arch],
 		ImdsSupport:        types.ImdsSupportValuesV20,
+		BootMode:           types.BootModeValuesUefiPreferred,
 	})
 	if err != nil {
 		return err

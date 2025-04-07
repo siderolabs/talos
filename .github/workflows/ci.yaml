@@ -1,6 +1,6 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
 #
-# Generated on 2025-04-08T03:31:36Z by kres d903dae.
+# Generated on 2025-04-08T07:58:05Z by kres d903dae.
 
 name: default
 concurrency:
@@ -1448,8 +1448,8 @@ jobs:
         uses: actions/checkout@v4
         with:
           path: _out/contrib
-          ref: feat/enable-gcp-uefi
-          repository: frezbo/contrib
+          ref: main
+          repository: siderolabs/contrib
       - name: setup tf
         uses: hashicorp/setup-terraform@v3
         with:
