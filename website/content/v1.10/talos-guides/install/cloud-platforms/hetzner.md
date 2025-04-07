@@ -211,7 +211,7 @@ created talosconfig
 Generating the config without examples and docs is necessary because otherwise you can easily exceed the 32 kb limit on uploadable userdata (see [issue 8805](https://github.com/siderolabs/talos/issues/8805)).
 
 At this point, you can modify the generated configs to your liking.
-Optionally, you can specify `--config-patch` with RFC6902 jsonpatches which will be applied during the config generation.
+Optionally, you can specify [machine configuration patches]({{< relref "../../configuration/patching/#configuration-patching-with-talosctl-cli" >}}) which will be applied during the config generation.
 
 #### Validate the Configuration Files
 

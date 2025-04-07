@@ -150,7 +150,7 @@ At this point, you can modify the generated configs to your liking.
 Depending on the Kubernetes version you want to run, you might need to select a different Talos version, as not all versions are compatible.
  You can find the support matrix [here]({{< relref "../../../introduction/support-matrix" >}}).
 
-Optionally, you can specify `--config-patch` with RFC6902 jsonpatch or yamlpatch
+Optionally, you can specify [machine configuration patches]({{< relref "../../configuration/patching/#configuration-patching-with-talosctl-cli" >}})
 which will be applied during the config generation.
 
 #### Validate the Configuration Files

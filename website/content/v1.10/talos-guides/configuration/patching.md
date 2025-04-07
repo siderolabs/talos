@@ -378,7 +378,11 @@ The format of the patch (JSON patch or strategic merge patch) is detected automa
 Talos machine configuration can be patched at the moment of generation with `talosctl gen config`:
 
 ```shell
-talosctl gen config test-cluster https://172.20.0.1:6443 --config-patch @all.yaml --config-patch-control-plane @cp.yaml --config-patch-worker @worker.yaml
+talosctl gen config test-cluster https://172.20.0.1:6443 \
+  --config-patch '[{"op": "add", "path": "/machine/certSANs", "value": ["10.0.0.10"]}]' \
+  --config-patch @all.yaml \
+  --config-patch-control-plane @cp.yaml \
+  --config-patch-worker @worker.yaml
 ```
 
 Generated machine configuration can also be patched after the fact with `talosctl machineconfig patch`
