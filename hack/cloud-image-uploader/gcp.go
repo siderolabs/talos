@@ -253,11 +253,15 @@ func (u *GCPUploder) insertImage(imageName, arch string) (operationID, imageLink
 			{
 				Type: "VIRTIO_SCSI_MULTIQUEUE",
 			},
+			{
+				Type: "UEFI_COMPATIBLE",
+			},
 		},
 		Name: imageName,
 		RawDisk: &compute.ImageRawDisk{
 			Source: u.imagePath,
 		},
+		ShieldedInstanceInitialState: &compute.InitialStateConfig{},
 	}).Do()
 	if err != nil {
 		return "", "", fmt.Errorf("gcp: failed to insert image: %w", err)

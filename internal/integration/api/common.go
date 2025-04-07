@@ -62,7 +62,7 @@ func (suite *CommonSuite) TestVirtioModulesLoaded() {
 
 // TestCommonDefaults verifies that the default ulimits are set.
 func (suite *CommonSuite) TestCommonDefaults() {
-	if suite.Cluster != nil && suite.Cluster.Provisioner() == "docker" {
+	if suite.Cluster != nil && suite.Cluster.Provisioner() == base.ProvisionerDocker {
 		suite.T().Skip("skipping ulimits test since provisioner is docker")
 	}
 
@@ -162,7 +162,7 @@ func (suite *CommonSuite) TestDNSResolver() {
 
 // TestBaseOCISpec verifies that the base OCI spec can be modified.
 func (suite *CommonSuite) TestBaseOCISpec() {
-	if suite.Cluster != nil && suite.Cluster.Provisioner() == "docker" {
+	if suite.Cluster != nil && suite.Cluster.Provisioner() == base.ProvisionerDocker {
 		suite.T().Skip("skipping ulimits test since provisioner is docker")
 	}
 

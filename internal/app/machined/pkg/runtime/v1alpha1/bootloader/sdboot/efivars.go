@@ -30,6 +30,8 @@ const (
 	LoaderEntryDefaultName  = "LoaderEntryDefault"
 	LoaderEntrySelectedName = "LoaderEntrySelected"
 	LoaderConfigTimeoutName = "LoaderConfigTimeout"
+
+	StubImageIdentifierName = "StubImageIdentifier"
 )
 
 // ReadVariable reads a SystemdBoot EFI variable.

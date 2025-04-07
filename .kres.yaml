@@ -2720,8 +2720,8 @@ spec:
         - name: e2e-gcp-prepare
         - name: checkout contrib
           checkoutStep:
-            repository: siderolabs/contrib
-            ref: main
+            repository: frezbo/contrib
+            ref: feat/enable-gcp-uefi
             path: _out/contrib
         - name: setup tf
           terraformStep: true

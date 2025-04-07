@@ -5,6 +5,7 @@
 package talos
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
@@ -16,7 +17,6 @@ import (
 
 	humanize "github.com/dustin/go-humanize"
 	"github.com/spf13/cobra"
-	"golang.org/x/sys/unix"
 
 	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/helpers"
 	machineapi "github.com/siderolabs/talos/pkg/machinery/api/machine"
@@ -154,7 +154,7 @@ var lsCmd = &cobra.Command{
 				if info.Xattrs != nil {
 					for _, l := range info.Xattrs {
 						if l.Name == "security.selinux" {
-							label = unix.ByteSliceToString(l.Data)
+							label = string(bytes.Trim(l.Data, "\x00\n"))
 
 							break
 						}

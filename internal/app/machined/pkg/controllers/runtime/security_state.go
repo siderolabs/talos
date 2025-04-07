@@ -14,6 +14,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/cosi-project/runtime/pkg/controller"
@@ -95,10 +96,23 @@ func (ctrl *SecurityStateController) Run(ctx context.Context, r controller.Runti
 				secureBootState = true
 			}
 
-			defaultEntry, err := sdboot.ReadVariable(efivario.NewDefaultContext(), sdboot.LoaderEntryDefaultName)
+			efiVarCtx := efivario.NewDefaultContext()
+
+			defaultEntry, err := sdboot.ReadVariable(efiVarCtx, sdboot.LoaderEntryDefaultName)
 			if err == nil {
 				if strings.HasPrefix(defaultEntry, "Talos-") {
 					bootedWithUKI = true
+				}
+			}
+
+			// if defaultEntry is empty in the case when we booted off a disk image when installer never runs, we can rely on the
+			// stub image identifier to determine if we booted with UKI
+			if defaultEntry == "" {
+				stubImageIdentifier, err := sdboot.ReadVariable(efiVarCtx, sdboot.StubImageIdentifierName)
+				if err == nil {
+					if strings.HasPrefix(filepath.Base(strings.ReplaceAll(stubImageIdentifier, "\\", "/")), "Talos-") {
+						bootedWithUKI = true
+					}
 				}
 			}
 

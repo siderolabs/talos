@@ -88,7 +88,7 @@ func TestIntegration(t *testing.T) {
 			t.Error("error reflecting cluster via provisioner", err)
 		}
 
-		if k8sEndpoint == "" && provisionerName == "docker" {
+		if k8sEndpoint == "" && provisionerName == base.ProvisionerDocker {
 			k8sEndpoint = cluster.Info().KubernetesEndpoint
 		}
 	}

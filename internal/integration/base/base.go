@@ -18,6 +18,8 @@ import (
 const (
 	// ProvisionerQEMU is the name of the QEMU provisioner.
 	ProvisionerQEMU = "qemu"
+	// ProvisionerDocker is the name of the Docker provisioner.
+	ProvisionerDocker = "docker"
 )
 
 // TalosSuite defines most common settings for integration test suites.

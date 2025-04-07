@@ -34,8 +34,8 @@ func (suite *UKISuite) SuiteName() string {
 
 // SetupTest sets up the test.
 func (suite *UKISuite) SetupTest() {
-	if suite.Cluster.Provisioner() != base.ProvisionerQEMU {
-		suite.T().Skip("skipping uki booted test since not using qemu provisioner")
+	if suite.Cluster != nil && suite.Cluster.Provisioner() == base.ProvisionerDocker {
+		suite.T().Skip("skipping uki booted test since docker provisioner does not support UKI")
 	}
 
 	if !suite.VerifyUKIBooted {
