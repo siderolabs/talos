@@ -178,6 +178,12 @@ Talos now supports [user disk volumes](https://www.talos.dev/v1.10/talos-guides/
 The old `.machine.disks` field is deprecated, but still supported for backwards compatibility.
 """
 
+    [notes.selinux]
+        title = "SELinux"
+        description = """\
+Talos now supports enabling SELinux enforcing mode, see [SELinux](https://www.talos.dev/v1.10/advanced/selinux/) for more details.
+"""
+
 [make_deps]
 
     [make_deps.tools]
