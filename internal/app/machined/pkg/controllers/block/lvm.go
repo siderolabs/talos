@@ -18,6 +18,7 @@ import (
 	"go.uber.org/zap"
 
 	machineruntime "github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
+	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/resources/block"
 	"github.com/siderolabs/talos/pkg/machinery/resources/v1alpha1"
 )
@@ -41,6 +42,12 @@ func (ctrl *LVMActivationController) Inputs() []controller.Input {
 		{
 			Namespace: block.NamespaceName,
 			Type:      block.DiscoveredVolumeType,
+			Kind:      controller.InputWeak,
+		},
+		{
+			Namespace: block.NamespaceName,
+			Type:      block.VolumeStatusType,
+			ID:        optional.Some(constants.MetaPartitionLabel),
 			Kind:      controller.InputWeak,
 		},
 		{
@@ -92,8 +99,25 @@ func (ctrl *LVMActivationController) Run(ctx context.Context, r controller.Runti
 			continue
 		}
 
-		if !(udevdService.TypedSpec().Running && udevdService.TypedSpec().Healthy) {
+		if !udevdService.TypedSpec().Running || !udevdService.TypedSpec().Healthy {
 			logger.Debug("waiting for udevd service to be running and healthy")
+
+			continue
+		}
+
+		meta, err := safe.ReaderGetByID[*block.VolumeStatus](ctx, r, constants.MetaPartitionLabel)
+		if err != nil && !state.IsNotFoundError(err) {
+			return fmt.Errorf("failed to get meta partition info: %w", err)
+		}
+
+		if meta == nil {
+			logger.Debug("meta partition not registered yet")
+
+			continue
+		}
+
+		if meta.TypedSpec().Phase != block.VolumePhaseReady {
+			logger.Debug("meta partition not ready yet")
 
 			continue
 		}
