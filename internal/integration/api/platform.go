@@ -59,7 +59,7 @@ func (suite *PlatformSuite) TestPlatformMetadata() {
 
 		suite.T().Logf("platform metadata:\n%s", string(yml))
 
-		if md.TypedSpec().Platform == "aws" {
+		if md.TypedSpec().Platform == "aws" || md.TypedSpec().Platform == "gcp" {
 			asrt.NotEmpty(md.TypedSpec().Tags)
 		}
 	})

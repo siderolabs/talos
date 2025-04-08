@@ -55,3 +55,6 @@ metadata:
     instanceType: n1-standard-1
     instanceId: "0"
     providerId: gce://123/us-central1-a/my-server
+    tags:
+        tag1: ""
+        tag2: ""

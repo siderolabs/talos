@@ -20,13 +20,14 @@ const (
 
 // MetadataConfig holds meta info.
 type MetadataConfig struct {
-	ProjectID    string `json:"project-id"`
-	Name         string `json:"name,omitempty"`
-	Hostname     string `json:"hostname,omitempty"`
-	Zone         string `json:"zone,omitempty"`
-	InstanceType string `json:"machine-type"`
-	InstanceID   string `json:"id"`
-	Preempted    string `json:"preempted"`
+	ProjectID    string   `json:"project-id"`
+	Name         string   `json:"name,omitempty"`
+	Hostname     string   `json:"hostname,omitempty"`
+	Zone         string   `json:"zone,omitempty"`
+	InstanceType string   `json:"machine-type"`
+	InstanceID   string   `json:"id"`
+	Preempted    string   `json:"preempted"`
+	Tags         []string `json:"tags,omitempty"`
 }
 
 // NetworkInterfaceConfig holds network meta info.
@@ -76,6 +77,11 @@ func (g *GCP) getMetadata(ctx context.Context) (*MetadataConfig, error) {
 	}
 
 	meta.Preempted, err = metadata.GetWithContext(ctx, "instance/scheduling/preemptible")
+	if err != nil {
+		return nil, err
+	}
+
+	meta.Tags, err = metadata.InstanceTagsWithContext(ctx)
 	if err != nil {
 		return nil, err
 	}

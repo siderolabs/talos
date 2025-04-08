@@ -147,6 +147,16 @@ func (g *GCP) ParseMetadata(metadata *MetadataConfig, interfaces []NetworkInterf
 
 	preempted, _ := strconv.ParseBool(metadata.Preempted) //nolint:errcheck
 
+	var tags map[string]string
+
+	if len(metadata.Tags) > 0 {
+		tags = make(map[string]string, len(metadata.Tags))
+
+		for _, tag := range metadata.Tags {
+			tags[tag] = ""
+		}
+	}
+
 	networkConfig.Metadata = &runtimeres.PlatformMetadataSpec{
 		Platform:     g.Name(),
 		Hostname:     metadata.Hostname,
@@ -156,6 +166,7 @@ func (g *GCP) ParseMetadata(metadata *MetadataConfig, interfaces []NetworkInterf
 		InstanceID:   metadata.InstanceID,
 		ProviderID:   fmt.Sprintf("gce://%s/%s/%s", metadata.ProjectID, metadata.Zone, metadata.Name),
 		Spot:         preempted,
+		Tags:         tags,
 	}
 
 	return networkConfig, nil
