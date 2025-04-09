@@ -7,6 +7,8 @@ Talos Linux Ingress Firewall is a simple and effective way to limit network acce
 services (e.g. `apid` and `kubelet`), and any additional workloads that may be running on the host.
 Talos Linux Ingress Firewall doesn't affect the traffic between the Kubernetes pods/services, please use CNI Network Policies for that.
 
+> Note: If you use another tool that provides node level network filtering (e.g. [Cilium Host Firewall](https://cilium.io/use-cases/host-firewall/)) it may take precedence in the nftables chain and bypass OS level rules.
+
 ## Configuration
 
 Ingress rules are configured as extra documents [NetworkDefaultActionConfig]({{< relref "../../reference/configuration/network/networkdefaultactionconfig.md" >}}) and
