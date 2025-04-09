@@ -30,6 +30,7 @@ var rotateCACmdFlags struct {
 	dryRun           bool
 	rotateTalos      bool
 	rotateKubernetes bool
+	rsa              bool
 }
 
 // rotateCACmd represents the rotate-ca command.
@@ -70,7 +71,7 @@ func rotateCA(ctx context.Context, c *client.Client) error {
 		return err
 	}
 
-	newBundle, err := secrets.NewBundle(secrets.NewFixedClock(time.Now()), config.TalosVersionCurrent)
+	newBundle, err := secrets.NewBundle(secrets.NewFixedClock(time.Now()), rotateCACmdFlags.rsa, config.TalosVersionCurrent)
 	if err != nil {
 		return fmt.Errorf("error generating new Talos CA: %w", err)
 	}
@@ -184,4 +185,5 @@ func init() {
 	rotateCACmd.Flags().BoolVarP(&rotateCACmdFlags.dryRun, "dry-run", "", true, "dry-run mode (no changes to the cluster)")
 	rotateCACmd.Flags().BoolVarP(&rotateCACmdFlags.rotateTalos, "talos", "", true, "rotate Talos API CA")
 	rotateCACmd.Flags().BoolVarP(&rotateCACmdFlags.rotateKubernetes, "kubernetes", "", true, "rotate Kubernetes API CA")
+	rotateCACmd.Flags().BoolVarP(&rotateCACmdFlags.rsa, "rsa", "", false, "generate RSA keys instead of Ed25519 for the Talos API CA")
 }

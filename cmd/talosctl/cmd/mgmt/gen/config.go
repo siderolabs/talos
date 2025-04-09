@@ -76,6 +76,7 @@ var genConfigCmdFlags struct {
 	withClusterDiscovery    bool
 	withKubeSpan            bool
 	withSecrets             string
+	rsa                     bool
 }
 
 // NewConfigCmd builds the config generation subcommand with the given name.
@@ -130,6 +131,7 @@ func GenerateConfigBundle(genOptions []generate.Option,
 	configPatch []string,
 	configPatchControlPlane []string,
 	configPatchWorker []string,
+	rsa bool,
 ) (*bundle.Bundle, error) {
 	configBundleOpts := []bundle.Option{
 		bundle.WithInputOptions(
@@ -138,6 +140,7 @@ func GenerateConfigBundle(genOptions []generate.Option,
 				Endpoint:    endpoint,
 				KubeVersion: strings.TrimPrefix(kubernetesVersion, "v"),
 				GenOptions:  genOptions,
+				Rsa:         rsa,
 			},
 		),
 	}
@@ -250,7 +253,8 @@ func writeConfig(args []string) error {
 		genConfigCmdFlags.kubernetesVersion,
 		genConfigCmdFlags.configPatch,
 		genConfigCmdFlags.configPatchControlPlane,
-		genConfigCmdFlags.configPatchWorker)
+		genConfigCmdFlags.configPatchWorker,
+		genConfigCmdFlags.rsa)
 	if err != nil {
 		return err
 	}
@@ -445,6 +449,7 @@ func init() {
 	genConfigCmd.Flags().BoolVarP(&genConfigCmdFlags.withClusterDiscovery, "with-cluster-discovery", "", true, "enable cluster discovery feature")
 	genConfigCmd.Flags().BoolVarP(&genConfigCmdFlags.withKubeSpan, "with-kubespan", "", false, "enable KubeSpan feature")
 	genConfigCmd.Flags().StringVar(&genConfigCmdFlags.withSecrets, "with-secrets", "", "use a secrets file generated using 'gen secrets'")
+	genConfigCmd.Flags().BoolVar(&genConfigCmdFlags.rsa, "rsa", false, "generate RSA keys instead of Ed25519 for the Talos API CA")
 
 	genConfigCmd.Flags().StringSliceVarP(&genConfigCmdFlags.outputTypes, "output-types", "t", allOutputTypes, fmt.Sprintf("types of outputs to be generated. valid types are: %q", allOutputTypes))
 	genConfigCmd.Flags().StringVarP(&genConfigCmdFlags.output, "output", "o", "",

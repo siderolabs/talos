@@ -52,11 +52,15 @@ func NewAggregatorCA(currentTime time.Time, contract *config.VersionContract) (c
 }
 
 // NewTalosCA generates a CA for the Talos PKI.
-func NewTalosCA(currentTime time.Time) (ca *x509.CertificateAuthority, err error) {
+func NewTalosCA(currentTime time.Time, rsa bool) (ca *x509.CertificateAuthority, err error) {
 	opts := []x509.Option{
 		x509.Organization("talos"),
 		x509.NotAfter(currentTime.Add(CAValidityTime)),
 		x509.NotBefore(currentTime),
+	}
+
+	if rsa {
+		opts = append(opts, x509.SignatureAlgorithm(stdx509.SHA256WithRSA))
 	}
 
 	return x509.NewSelfSignedCertificateAuthority(opts...)

@@ -60,7 +60,7 @@ func (in *Input) GetAPIServerSANs() []string {
 }
 
 // NewInput prepares a new Input struct to perform machine config generation.
-func NewInput(clustername, endpoint, kubernetesVersion string, opts ...Option) (*Input, error) {
+func NewInput(clustername, endpoint, kubernetesVersion string, rsa bool, opts ...Option) (*Input, error) {
 	input := &Input{}
 	input.Options = DefaultOptions()
 
@@ -83,7 +83,7 @@ func NewInput(clustername, endpoint, kubernetesVersion string, opts ...Option) (
 	if input.Options.SecretsBundle == nil {
 		var err error
 
-		input.Options.SecretsBundle, err = secrets.NewBundle(secrets.NewFixedClock(time.Now()), input.Options.VersionContract)
+		input.Options.SecretsBundle, err = secrets.NewBundle(secrets.NewFixedClock(time.Now()), rsa, input.Options.VersionContract)
 		if err != nil {
 			return nil, err
 		}
