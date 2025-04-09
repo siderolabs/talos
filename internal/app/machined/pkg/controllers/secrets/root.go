@@ -6,6 +6,7 @@ package secrets
 
 import (
 	"context"
+	stdlibx509 "crypto/x509"
 	"errors"
 	"fmt"
 	"net/netip"
@@ -165,6 +166,15 @@ func NewRootOSController() *RootOSController {
 					osSecrets.AcceptedCAs = append(osSecrets.AcceptedCAs, &x509.PEMEncodedCertificate{
 						Crt: osSecrets.IssuingCA.Crt,
 					})
+
+					issuingCert, err := osSecrets.IssuingCA.GetCert()
+					if err != nil {
+						return err
+					}
+
+					if issuingCert.PublicKeyAlgorithm == stdlibx509.RSA {
+						osSecrets.Rsa = true
+					}
 
 					if len(osSecrets.IssuingCA.Key) == 0 {
 						// drop incomplete issuing CA, as the machine config for workers contains just the cert
