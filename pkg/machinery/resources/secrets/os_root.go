@@ -33,6 +33,7 @@ type OSRootSpec struct {
 	AcceptedCAs     []*x509.PEMEncodedCertificate     `yaml:"acceptedCAs" protobuf:"5"`
 	CertSANIPs      []netip.Addr                      `yaml:"certSANIPs" protobuf:"2"`
 	CertSANDNSNames []string                          `yaml:"certSANDNSNames" protobuf:"3"`
+	Algorithm       int                               `yaml:"algorithm" protobuf:"6"`
 
 	Token string `yaml:"token" protobuf:"4"`
 }

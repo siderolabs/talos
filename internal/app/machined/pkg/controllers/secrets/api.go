@@ -349,6 +349,27 @@ func (ctrl *APIController) generateControlPlane(ctx context.Context, r controlle
 	return nil
 }
 
+func generateCsrAndIdentity(algorithm stdlibx509.SignatureAlgorithm, certSANs *secrets.CertSANSpec) (
+	*x509.CertificateSigningRequest, *x509.PEMEncodedCertificateAndKey, error,
+) {
+	opts := []x509.Option{
+		x509.IPAddresses(certSANs.StdIPs()),
+		x509.DNSNames(certSANs.DNSNames),
+		x509.CommonName(certSANs.FQDN),
+	}
+
+	switch algorithm { //nolint:exhaustive
+	case stdlibx509.SHA512WithRSA, stdlibx509.SHA256WithRSA, stdlibx509.SHA384WithRSA:
+		return x509.NewRSACSRAndIdentity(opts...)
+	case stdlibx509.ECDSAWithSHA256, stdlibx509.ECDSAWithSHA384, stdlibx509.ECDSAWithSHA512:
+		return x509.NewECDSACSRAndIdentity(opts...)
+	case stdlibx509.PureEd25519, stdlibx509.UnknownSignatureAlgorithm:
+		return x509.NewEd25519CSRAndIdentity(opts...)
+	default:
+		return nil, nil, fmt.Errorf("unsupported signature algorithm: %s", algorithm.String())
+	}
+}
+
 func (ctrl *APIController) generateWorker(ctx context.Context, r controller.Runtime, logger *zap.Logger,
 	rootSpec *secrets.OSRootSpec, endpointsStr []string, certSANs *secrets.CertSANSpec,
 ) error {
@@ -359,11 +380,7 @@ func (ctrl *APIController) generateWorker(ctx context.Context, r controller.Runt
 
 	defer remoteGen.Close() //nolint:errcheck
 
-	serverCSR, serverCert, err := x509.NewEd25519CSRAndIdentity(
-		x509.IPAddresses(certSANs.StdIPs()),
-		x509.DNSNames(certSANs.DNSNames),
-		x509.CommonName(certSANs.FQDN),
-	)
+	serverCSR, serverCert, err := generateCsrAndIdentity(stdlibx509.SignatureAlgorithm(rootSpec.Algorithm), certSANs)
 	if err != nil {
 		return fmt.Errorf("failed to generate API server CSR: %w", err)
 	}
