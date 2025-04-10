@@ -31,20 +31,44 @@ const (
 func (c *Config) Install(opts options.InstallOptions) (*options.InstallResult, error) {
 	var installResult *options.InstallResult
 
+	mountSpecs := []mount.Spec{
+		{
+			PartitionLabel: constants.BootPartitionLabel,
+			FilesystemType: partition.FilesystemTypeXFS,
+			MountTarget:    filepath.Join(opts.MountPrefix, constants.BootMountPoint),
+		},
+	}
+
+	efiMountSpec := mount.Spec{
+		PartitionLabel: constants.EFIPartitionLabel,
+		FilesystemType: partition.FilesystemTypeVFAT,
+		MountTarget:    constants.EFIMountPoint,
+	}
+
+	// check if the EFI partition is present
+	if err := mount.PartitionOp(
+		opts.BootDisk,
+		[]mount.Spec{efiMountSpec},
+		func() error {
+			return nil
+		},
+		[]blkid.ProbeOption{
+			blkid.WithSkipLocking(true),
+		},
+		nil,
+		nil,
+		opts.BlkidInfo,
+	); err == nil {
+		c.installEFI = true
+	}
+
+	if c.installEFI {
+		mountSpecs = append(mountSpecs, efiMountSpec)
+	}
+
 	err := mount.PartitionOp(
 		opts.BootDisk,
-		[]mount.Spec{
-			{
-				PartitionLabel: constants.BootPartitionLabel,
-				FilesystemType: partition.FilesystemTypeXFS,
-				MountTarget:    filepath.Join(opts.MountPrefix, constants.BootMountPoint),
-			},
-			{
-				PartitionLabel: constants.EFIPartitionLabel,
-				FilesystemType: partition.FilesystemTypeVFAT,
-				MountTarget:    filepath.Join(opts.MountPrefix, constants.EFIMountPoint),
-			},
-		},
+		mountSpecs,
 		func() error {
 			var installErr error
 
@@ -64,7 +88,7 @@ func (c *Config) Install(opts options.InstallOptions) (*options.InstallResult, e
 	return installResult, err
 }
 
-//nolint:gocyclo
+//nolint:gocyclo,cyclop
 func (c *Config) install(opts options.InstallOptions) (*options.InstallResult, error) {
 	if err := c.flip(); err != nil {
 		return nil, err
@@ -138,8 +162,11 @@ func (c *Config) install(opts options.InstallOptions) (*options.InstallResult, e
 	for _, platform := range platforms {
 		args := []string{
 			"--boot-directory=" + filepath.Join(opts.MountPrefix, constants.BootMountPoint),
-			"--efi-directory=" + filepath.Join(opts.MountPrefix, constants.EFIMountPoint),
 			"--removable",
+		}
+
+		if c.installEFI {
+			args = append(args, "--efi-directory="+filepath.Join(opts.MountPrefix, constants.EFIMountPoint))
 		}
 
 		if opts.ImageMode {
