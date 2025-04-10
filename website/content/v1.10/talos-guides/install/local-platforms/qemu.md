@@ -78,7 +78,7 @@ mkdir -p ~/.talos/clusters
 Create the cluster:
 
 ```bash
-sudo --preserve-env=HOME talosctl cluster create --provisioner qemu
+sudo --preserve-env=HOME talosctl cluster create qemu
 ```
 
 Before the first cluster is created, `talosctl` will download the CNI bundle for the VM provisioning and install it to `~/.talos/cni` directory.
