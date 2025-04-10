@@ -68,7 +68,7 @@ func (ImageCacheConfigExtension) ResourceDefinition() meta.ResourceDefinitionSpe
 func init() {
 	proto.RegisterDefaultTypes()
 
-	err := protobuf.RegisterDynamic[ImageCacheConfigSpec](ImageCacheConfigType, &ImageCacheConfig{})
+	err := protobuf.RegisterDynamic(ImageCacheConfigType, &ImageCacheConfig{})
 	if err != nil {
 		panic(err)
 	}

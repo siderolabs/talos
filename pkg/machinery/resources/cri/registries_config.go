@@ -164,7 +164,7 @@ func (RegistriesConfigExtension) ResourceDefinition() meta.ResourceDefinitionSpe
 func init() {
 	proto.RegisterDefaultTypes()
 
-	err := protobuf.RegisterDynamic[RegistriesConfigSpec](RegistriesConfigType, &RegistriesConfig{})
+	err := protobuf.RegisterDynamic(RegistriesConfigType, &RegistriesConfig{})
 	if err != nil {
 		panic(err)
 	}

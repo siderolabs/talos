@@ -10,11 +10,14 @@ import (
 	"context"
 	"time"
 
+	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/siderolabs/go-retry/retry"
 
 	"github.com/siderolabs/talos/internal/integration/base"
 	"github.com/siderolabs/talos/pkg/machinery/api/machine"
 	"github.com/siderolabs/talos/pkg/machinery/client"
+	configmachine "github.com/siderolabs/talos/pkg/machinery/config/machine"
+	"github.com/siderolabs/talos/pkg/machinery/resources/runtime"
 )
 
 // VersionSuite verifies version API.
@@ -47,6 +50,15 @@ func (suite *VersionSuite) TearDownTest() {
 func (suite *VersionSuite) TestExpectedVersionMaster() {
 	v, err := suite.Client.Version(suite.ctx)
 	suite.Require().NoError(err)
+
+	node := suite.RandomDiscoveredNodeInternalIP(configmachine.TypeControlPlane)
+
+	clientCtx := client.WithNode(suite.ctx, node)
+	version, err := safe.StateGetByID[*runtime.Version](clientCtx, suite.Client.COSI, "version")
+	suite.Require().NoError(err)
+	suite.Require().NotNil(version)
+
+	suite.Assert().Equal(v.Messages[0].Version.Tag, version.TypedSpec().Version)
 
 	suite.Assert().Equal(suite.Version, v.Messages[0].Version.Tag)
 	suite.Assert().Equal(suite.GoVersion, v.Messages[0].Version.GoVersion)

@@ -220,6 +220,7 @@ func NewState() (*State, error) {
 		&runtime.PlatformMetadata{},
 		&runtime.SecurityState{},
 		&runtime.UniqueMachineToken{},
+		&runtime.Version{},
 		&runtime.WatchdogTimerConfig{},
 		&runtime.WatchdogTimerStatus{},
 		&secrets.API{},

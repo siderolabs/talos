@@ -51,7 +51,7 @@ func (SeccompProfileExtension) ResourceDefinition() meta.ResourceDefinitionSpec 
 func init() {
 	proto.RegisterDefaultTypes()
 
-	err := protobuf.RegisterDynamic[SeccompProfileSpec](SeccompProfileType, &SeccompProfile{})
+	err := protobuf.RegisterDynamic(SeccompProfileType, &SeccompProfile{})
 	if err != nil {
 		panic(err)
 	}
