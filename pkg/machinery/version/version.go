@@ -29,8 +29,6 @@ var (
 	Built string
 	// PkgsVersion is set at build time.
 	PkgsVersion = gendata.VersionPkgs
-	// ExtrasVersion is set at build time.
-	ExtrasVersion = gendata.VersionExtras
 )
 
 const versionTemplate = `	Tag:         {{ .Tag }}
