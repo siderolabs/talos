@@ -27,8 +27,7 @@ EMBED_TARGET ?= embed
 TOOLS_PREFIX ?= ghcr.io/siderolabs/tools
 TOOLS ?= v1.10.0-alpha.0-24-g4f2036e
 PKGS_PREFIX ?= ghcr.io/siderolabs
-PKGS ?= v1.10.0-alpha.0-77-ge331e59
-EXTRAS ?= v1.10.0-alpha.0-6-gca5b638
+PKGS ?= v1.10.0-alpha.0-80-g0486742
 
 KRES_IMAGE ?= ghcr.io/siderolabs/kres:latest
 CONFORMANCE_IMAGE ?= ghcr.io/siderolabs/conform:latest
@@ -77,7 +76,7 @@ PKG_RUNC ?= $(PKGS_PREFIX)/runc:$(PKGS)
 PKG_SD_BOOT ?= $(PKGS_PREFIX)/sd-boot:$(PKGS)
 PKG_SQUASHFS_TOOLS ?= $(PKGS_PREFIX)/squashfs-tools:$(PKGS)
 PKG_SYSTEMD_UDEVD ?= $(PKGS_PREFIX)/systemd-udevd:$(PKGS)
-PKG_TALOSCTL_CNI_BUNDLE ?= $(PKGS_PREFIX)/talosctl-cni-bundle:$(EXTRAS)
+PKG_TALOSCTL_CNI_BUNDLE ?= $(PKGS_PREFIX)/talosctl-cni-bundle:$(PKGS)
 PKG_TAR ?= $(PKGS_PREFIX)/tar:$(PKGS)
 PKG_UTIL_LINUX ?= $(PKGS_PREFIX)/util-linux:$(PKGS)
 PKG_XFSPROGS ?= $(PKGS_PREFIX)/xfsprogs:$(PKGS)
@@ -201,7 +200,6 @@ COMMON_ARGS += --build-arg=DEEPCOPY_GEN_VERSION=$(DEEPCOPY_GEN_VERSION)
 COMMON_ARGS += --build-arg=DEEPCOPY_VERSION=$(DEEPCOPY_VERSION)
 COMMON_ARGS += --build-arg=EMBED_TARGET=$(EMBED_TARGET)
 COMMON_ARGS += --build-arg=ENUMER_VERSION=$(ENUMER_VERSION)
-COMMON_ARGS += --build-arg=EXTRAS=$(EXTRAS)
 COMMON_ARGS += --build-arg=GO_BUILDFLAGS_TALOSCTL="$(GO_BUILDFLAGS_TALOSCTL)"
 COMMON_ARGS += --build-arg=GO_BUILDFLAGS="$(GO_BUILDFLAGS)"
 COMMON_ARGS += --build-arg=GO_LDFLAGS="$(GO_LDFLAGS)"
