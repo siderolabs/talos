@@ -18,7 +18,8 @@ type Options struct {
 	TargetClouds  []string
 
 	// AWS options.
-	AWSRegions []string
+	AWSRegions   []string
+	AWSForceBIOS bool
 }
 
 // DefaultOptions used throughout the cli.

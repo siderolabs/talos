@@ -64,6 +64,7 @@ func run() error {
 	pflag.StringVar(&DefaultOptions.NamePrefix, "name-prefix", DefaultOptions.NamePrefix, "prefix for the name of the uploaded image")
 
 	pflag.StringSliceVar(&DefaultOptions.AWSRegions, "aws-regions", DefaultOptions.AWSRegions, "list of AWS regions to upload to")
+	pflag.BoolVar(&DefaultOptions.AWSForceBIOS, "aws-force-bios", DefaultOptions.AWSForceBIOS, "force BIOS boot mode for AWS images")
 
 	pflag.Parse()
 

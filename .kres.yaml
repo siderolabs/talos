@@ -2562,8 +2562,7 @@ spec:
         - name: e2e-aws-nvidia-oss
           command: e2e-aws
           environment:
-            TEST_NUM_NODES: 4
-            EXTRA_TEST_ARGS: -talos.extensions.nvidia
+            EXTRA_TEST_ARGS: "-talos.extensions.nvidia -talos.verifyukibooted=false"
         - name: tf destroy
           command: e2e-cloud-tf
           conditions:
@@ -2660,7 +2659,6 @@ spec:
         - name: e2e-aws-nvidia-nonfree
           command: e2e-aws
           environment:
-            TEST_NUM_NODES: 4
             EXTRA_TEST_ARGS: -talos.extensions.nvidia
         - name: tf destroy
           command: e2e-cloud-tf

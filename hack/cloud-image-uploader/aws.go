@@ -384,7 +384,7 @@ func (au *AWSUploader) registerAMIArch(ctx context.Context, region string, svc *
 		log.Printf("aws: import into %s/%s, deregistered image ID %q", region, arch, *image.ImageId)
 	}
 
-	registerResp, err := svc.RegisterImage(ctx, &ec2.RegisterImageInput{
+	registerReq := &ec2.RegisterImageInput{
 		Name: aws.String(imageName),
 		BlockDeviceMappings: []types.BlockDeviceMapping{
 			{
@@ -404,8 +404,13 @@ func (au *AWSUploader) registerAMIArch(ctx context.Context, region string, svc *
 		Description:        pointer.To(fmt.Sprintf("Talos AMI %s %s %s", au.Options.Tag, arch, region)),
 		Architecture:       awsArchitectures[arch],
 		ImdsSupport:        types.ImdsSupportValuesV20,
-		BootMode:           types.BootModeValuesUefiPreferred,
-	})
+	}
+
+	if !au.Options.AWSForceBIOS {
+		registerReq.BootMode = types.BootModeValuesUefiPreferred
+	}
+
+	registerResp, err := svc.RegisterImage(ctx, registerReq)
 	if err != nil {
 		return err
 	}
