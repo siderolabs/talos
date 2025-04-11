@@ -172,3 +172,7 @@
 ; [   77.045739] audit: type=1400 audit(1741862615.446:4227): avc:  granted  { execute } for  pid=3136 comm="loopback" path="/opt/cni/bin/loopback" dev="overlay" ino=68 scontext=system_u:system_r:pod_containerd_t:s0 tcontext=system_u:object_r:cni_plugin_t:s0 tclass=file
 ; This is being researched as a kernel bug since a process gains init_t context without the policy allowing it.
 (allow init_t cni_plugin_t (file (execute)))
+
+; Let ls and other path walking work, esp. for tests
+(allow any_p any_f (dir (search)))
+(allow any_p any_f (fs_classes (getattr)))

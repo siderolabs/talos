@@ -234,6 +234,7 @@ func (k8sSuite *K8sSuite) WaitForEventExists(ctx context.Context, ns string, che
 type podInfo interface {
 	Name() string
 	WithNodeName(nodeName string) podInfo
+	WithQuiet(quiet bool) podInfo
 	Create(ctx context.Context, waitTimeout time.Duration) error
 	Delete(ctx context.Context) error
 	Exec(ctx context.Context, command string) (string, string, error)
@@ -243,6 +244,7 @@ type pod struct {
 	name      string
 	namespace string
 	pod       *corev1.Pod
+	quiet     bool
 
 	suite *K8sSuite
 }
@@ -253,6 +255,12 @@ func (p *pod) Name() string {
 
 func (p *pod) WithNodeName(nodeName string) podInfo {
 	p.pod.Spec.NodeName = nodeName
+
+	return p
+}
+
+func (p *pod) WithQuiet(quiet bool) podInfo {
+	p.quiet = quiet
 
 	return p
 }
@@ -299,7 +307,7 @@ func (p *pod) Exec(ctx context.Context, command string) (string, string, error) 
 		Stdout: &stdout,
 		Stderr: &stderr,
 	})
-	if err != nil {
+	if err != nil && !p.quiet {
 		p.suite.T().Logf(
 			"error executing command in pod %s/%s: %v\n\ncommand %q stdout:\n%s\n\ncommand %q stderr:\n%s",
 			p.namespace,
@@ -367,6 +375,10 @@ func (k8sSuite *K8sSuite) NewPrivilegedPod(name string) (podInfo, error) {
 								Name:      "dev",
 								MountPath: "/dev",
 							},
+							{
+								Name:      "host",
+								MountPath: "/host",
+							},
 						},
 					},
 				},
@@ -376,6 +388,14 @@ func (k8sSuite *K8sSuite) NewPrivilegedPod(name string) (podInfo, error) {
 						VolumeSource: corev1.VolumeSource{
 							HostPath: &corev1.HostPathVolumeSource{
 								Path: "/dev",
+							},
+						},
+					},
+					{
+						Name: "host",
+						VolumeSource: corev1.VolumeSource{
+							HostPath: &corev1.HostPathVolumeSource{
+								Path: "/",
 							},
 						},
 					},

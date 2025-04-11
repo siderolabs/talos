@@ -29,12 +29,13 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/client"
 	"github.com/siderolabs/talos/pkg/machinery/config/machine"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
+	"github.com/siderolabs/talos/pkg/machinery/resources/block"
 	runtimeres "github.com/siderolabs/talos/pkg/machinery/resources/runtime"
 )
 
 // SELinuxSuite ...
 type SELinuxSuite struct {
-	base.APISuite
+	base.K8sSuite
 
 	ctx       context.Context //nolint:containedctx
 	ctxCancel context.CancelFunc
@@ -336,7 +337,124 @@ func (suite *SELinuxSuite) TestSecurityState() {
 // TODO: test for system and CRI container labels
 // TODO: test labels for unconfined system extensions, pods
 // TODO: test for no avc denials in dmesg
-// TODO: start a pod and ensure access to restricted resources is denied
+
+// TestNoPtrace confirms ptracing system processes is prohibited in enforcing mode.
+func (suite *SELinuxSuite) TestNoPtrace() {
+	if !suite.SelinuxEnforcing {
+		suite.T().Skip("skipping SELinux negative tests in permissive mode")
+	}
+
+	podDef, err := suite.NewPrivilegedPod("pid1-ptrace-test")
+	suite.Require().NoError(err)
+
+	podDef = podDef.WithQuiet(true)
+
+	suite.Require().NoError(podDef.Create(suite.ctx, 5*time.Minute))
+
+	defer podDef.Delete(suite.ctx) //nolint:errcheck
+
+	_, stderr, err := podDef.Exec(
+		suite.ctx,
+		"apk add --update strace",
+	)
+
+	suite.Assert().NoError(err)
+	suite.Assert().Empty(stderr, "stderr: %s", stderr)
+
+	// if attached, timeout
+	ctx, cancel := context.WithTimeout(suite.ctx, time.Second*5)
+	defer cancel()
+
+	_, stderr, err = podDef.Exec(
+		ctx,
+		"strace -p 1",
+	)
+
+	// in case of successful attach it will be context.DeadlineExceeded
+	suite.Require().Error(err)
+	suite.Assert().ErrorContains(err, "command terminated with exit code 1")
+	// strace first tests ptrace against itself, which we also deny currently
+	suite.Assert().Contains(stderr, "strace: test_ptrace_get_syscall_info: PTRACE_TRACEME: Permission denied")
+	suite.Assert().Contains(stderr, "strace: attach: ptrace(PTRACE_ATTACH, 1): Permission denied")
+	suite.Assert().NotContains(stderr, "attached")
+}
+
+// TestNoMachineSocketAccess confirms pods cannot reach machined socket (not apid, but unsecured one).
+func (suite *SELinuxSuite) TestNoMachineSocketAccess() {
+	if !suite.SelinuxEnforcing {
+		suite.T().Skip("skipping SELinux negative tests in permissive mode")
+	}
+
+	podDef, err := suite.NewPrivilegedPod("pid1-socket-test")
+	suite.Require().NoError(err)
+
+	podDef = podDef.WithQuiet(true)
+
+	suite.Require().NoError(podDef.Create(suite.ctx, 5*time.Minute))
+
+	defer podDef.Delete(suite.ctx) //nolint:errcheck
+
+	_, stderr, err := podDef.Exec(
+		suite.ctx,
+		"apk add --update socat",
+	)
+
+	suite.Assert().NoError(err)
+	suite.Assert().Empty(stderr, "stderr: %s", stderr)
+
+	// if attached, timeout
+	ctx, cancel := context.WithTimeout(suite.ctx, time.Second*5)
+	defer cancel()
+
+	_, stderr, err = podDef.Exec(
+		ctx,
+		"socat - UNIX-CONNECT:/host/system/run/machined/machine.sock",
+	)
+
+	// in case of successful attach it will be context.DeadlineExceeded
+	suite.Require().Error(err)
+	suite.Assert().ErrorContains(err, "command terminated with exit code 1")
+	suite.Assert().Contains(stderr, "Permission denied")
+}
+
+// TestNoStateAccess verifies mounting STATE does not allow /system/state/config.yaml access.
+func (suite *SELinuxSuite) TestNoStateAccess() {
+	if !suite.SelinuxEnforcing {
+		suite.T().Skip("skipping SELinux negative tests in permissive mode")
+	}
+
+	node := suite.RandomDiscoveredNodeInternalIP()
+	nodeCtx := client.WithNode(suite.ctx, node)
+
+	state, err := safe.StateGetByID[*block.VolumeStatus](nodeCtx, suite.Client.COSI, "STATE")
+	suite.Assert().NoError(err)
+
+	podDef, err := suite.NewPrivilegedPod("system-state-test")
+	suite.Require().NoError(err)
+
+	podDef = podDef.WithQuiet(true)
+
+	suite.Require().NoError(podDef.Create(suite.ctx, 5*time.Minute))
+
+	defer podDef.Delete(suite.ctx) //nolint:errcheck
+
+	_, stderr, err := podDef.Exec(
+		suite.ctx,
+		"mount "+state.TypedSpec().MountLocation+" /mnt",
+	)
+
+	suite.Assert().NoError(err)
+	suite.Assert().Empty(stderr, "stderr: %s", stderr)
+
+	_, stderr, err = podDef.Exec(
+		suite.ctx,
+		"cat /mnt/config.yaml",
+	)
+
+	suite.Require().Error(err)
+	suite.Assert().ErrorContains(err, "command terminated with exit code 1")
+	suite.Assert().Contains(stderr, "cat: can't open '/mnt/config.yaml': Permission denied")
+}
 
 func init() {
 	allSuites = append(allSuites, new(SELinuxSuite))
