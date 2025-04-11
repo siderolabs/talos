@@ -339,3 +339,109 @@ sudo --preserve-env=HOME _out/integration-test-provision-linux-amd64 \
     -talos.provision.registry-mirror 127.0.0.1:5005=http://172.20.0.1:5005,docker.io=http://172.20.0.1:5000,registry.k8s.io=http://172.20.0.1:5001,quay.io=http://172.20.0.1:5002,gcr.io=http://172.20.0.1:5003,ghcr.io=http://172.20.0.1:5004 \
     -talos.provision.cidr 172.20.0.0/24
 ```
+
+## SELinux policy debugging and development
+
+Here are some tips about how Talos SELinux policy is built, which should mainly help developers troubleshoot denials and assess policy rules for security against different threats.
+
+### Obtaining and processing denial logs
+
+If SELinux has blocked some event from happening, it will log it to the audit log.
+If the mode is permissive, the only implication of would be a denial message, so permissive mode is useful for prototyping the policy.
+You can check the logs with:
+
+`talosctl --nodes 172.20.0.2 logs auditd > audit.log`
+
+The obtained logs can be processed with `audit2allow` to obtain a CIL code that would allow the denied event to happen, alongside an explanation of the denial.
+For this we use SELinux userspace utilities, which can be ran in a container for cases you use a Linux system without SELinux or another OS.
+Some of the useful commands are:
+
+```bash
+audit2why -p ./internal/pkg/selinux/policy/policy.33 -i audit.log
+audit2allow -C -e -p ./internal/pkg/selinux/policy/policy.33 -i audit.log
+```
+
+However, please do not consider the output of `audit2allow` as a final modification for the policy.
+It is a good starting point to understand the denial, but the generated code should be reviewed and correctly reformulated once confirmed to be needed and not caused by mislabeling.
+
+### Iterating on the policy
+
+`make generate` generates the compiled SELinux files.
+However, if you want to iterate on the policy rapidly, you might want to consider only rebuilding the policy during the testing:
+
+```bash
+make local-selinux-generate DEST=./internal/pkg/selinux PLATFORM=linux/amd64 PROGRESS=plain
+```
+
+### Debugging locally with many denials happening
+
+Sometimes, e.g. during a major refactor, the policy can be broken and many denials can happen.
+This can cause the audit ring buffer to fill up, losing some messages.
+These are some kernel cmdline parameters that redirect the audit logs to the console, which is saved to your development cluster directory:
+
+`talos.auditd.disabled=1 audit=1 audit_backlog_limit=65535 debug=1 sysctl.kernel.printk_ratelimit=0 sysctl.kernel.printk_delay=0 sysctl.kernel.printk_ratelimit_burst=10000`
+
+### SELinux policy structure
+
+The SELinux policy is built using the CIL language.
+The CIL files are located in `internal/pkg/selinux/policy/selinux` and are compiled into a binary format (e.g. `33` for the current kernel policy format version) using the `secilc` tool from Talos tools bundle.
+The policy is embedded into the initramfs init and loaded early in the boot process.
+
+For understanding and modifying the policy, [CIL language reference](https://github.com/SELinuxProject/selinux-notebook/blob/dfabf5f1bcdc72e440c1f7010e39ae3ce9f0c364/src/notebook-examples/selinux-policy/cil/CIL_Reference_Guide.pdf) is a recommended starting point to get familiar with the language.
+[Object Classes and Permissions](https://github.com/SELinuxProject/selinux-notebook/blob/dfabf5f1bcdc72e440c1f7010e39ae3ce9f0c364/src/object_classes_permissions.md) is another helpful document, listing all SELinux entities and the meaning of all the permissions.
+
+The policy directory contains the following main subdirectories:
+
+- `immutable`: contains the preamble parts, mostly listing SELinux SIDs, classes, policy capabilities and roles, not expected to change frequently.
+- `common`: abstractions and common rules, which are used by the other parts of the policy or by all objects of some kind.:
+  - classmaps: contains class maps, which are a SELinux concept for easily configuring the same list of permissions on a list of classes.
+  Our policy frequently uses `fs_classes` classmap for enabling a group of file operations on all types of files.
+  - files: labels for common system files, stored on squashfs.
+  Mostly used for generalized labels not related to a particular service.
+  - network: rules that allow basically any network activity, as Talos does not currently use SELinux features like IPsec labeling for network security.
+  - typeattributes: this file contains typeattributes, which are a SELinux concept for grouping types together to have the same rules applied to all of them.
+  This file also contains macros used to assign objects into typeattributes.
+  When such a macro exists its use is recommended over using the typeattribute directly, as it allows for grepping for the macro call.
+  - processes: common rules, applied to all processes or typeattribute of processes.
+  We only add rules that apply widely here, with more specific rules being added to the service policy files.
+- `services`: policy files for each service.
+These files contain the definitions and rules that are specific to the service, like allowing access to its configuration files or communicating over sockets.
+Some specific parts not being a service in the Talos terms are:
+  - `selinux` - selinuxfs rules protecting SELinux settings from modifications after the OS has started.
+  - `system-containerd` - a containerd instance used for `apid` and similar services internal to Talos.
+  - `system-containers` - `apid`, `trustd`, `etcd` and other system services, running in system containerd instance.
+
+#### classmaps overview
+
+- `fs_classes` - contains file classes and their permissions, used for file operations.
+  - `rw` - all operations, except SELinux label management.
+  - `ro` - read-only operations.
+  - others - just a class permission applied to all supported file classes.
+- `netlink_classes (full)` - full (except security labels) access to all netlink socket classes.
+- `process_classes` - helpers to allow a wide range of process operations.
+  - `full` - all operations, except ptrace (considered to be a rare requirement, so should be added specifically where needed).
+  - `signal` - send any signal to the target process.
+
+#### typeattributes overview
+
+- Processes:
+  - `service_p` - system services.
+  - `system_container_p` - containerized system services.
+  - `pod_p` - Kubernetes pods.
+  - `system_p` - kernel, init, system services (not containerized).
+  - `any_p` - any process registered with the SELinux.
+  - Service-specific types and typeattributes in service policy files.
+- Files:
+  - `common_f` - world-rw files, which can be accessed by any process.
+  - `protected_f` - mostly files used by specific services, not accessible by other processes (except e.g. machined)
+  - `system_f` - files and directories used by the system services, also generally to be specified by precise type and not typeattribute.
+  - `system_socket_f` - sockets used for communication between system services, not accessible by workload processes.
+  - `device_f`:
+    - `common_device_f` - devices not considered protected like GPUs.
+    - `protected_device_f` - protected devices like TPM, watchdog timers.
+  - `any_f` - any file registered with the SELinux.
+  - `filesystem_f` - filesystems, generally used for allowing mount operations.
+  - `service_exec_f` - system service executable files.
+  - Service-specific types and typeattributes in service policy files.
+- General:
+  - `any_f_any_p` - any file or any process, the widest typeattribute.
