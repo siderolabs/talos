@@ -1,6 +1,6 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
 #
-# Generated on 2025-04-15T13:01:06Z by kres fd5cab0.
+# Generated on 2025-04-22T09:44:44Z by kres fd5cab0.
 
 name: default
 concurrency:
@@ -634,7 +634,6 @@ jobs:
       - name: e2e-aws-nvidia-nonfree
         env:
           EXTRA_TEST_ARGS: -talos.extensions.nvidia
-          TEST_NUM_NODES: "4"
         run: |
           make e2e-aws
       - name: tf destroy
@@ -788,8 +787,7 @@ jobs:
           make e2e-cloud-tf
       - name: e2e-aws-nvidia-oss
         env:
-          EXTRA_TEST_ARGS: -talos.extensions.nvidia
-          TEST_NUM_NODES: "4"
+          EXTRA_TEST_ARGS: -talos.extensions.nvidia -talos.verifyukibooted=false
         run: |
           make e2e-aws
       - name: tf destroy

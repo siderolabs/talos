@@ -53,6 +53,8 @@ func (suite *ExtensionsSuiteNVIDIA) TearDownTest() {
 }
 
 // TestExtensionsNVIDIA verifies that a cuda workload can be run.
+//
+//nolint:gocyclo
 func (suite *ExtensionsSuiteNVIDIA) TestExtensionsNVIDIA() {
 	expectedModulesModDep := map[string]string{
 		"nvidia":         "nvidia.ko",
@@ -126,6 +128,14 @@ func (suite *ExtensionsSuiteNVIDIA) TestExtensionsNVIDIA() {
 				return retry.ExpectedErrorf("error getting pod: %s", listErr)
 			}
 
+			for _, pod := range podList.Items {
+				if pod.Status.Phase == corev1.PodFailed {
+					logData := suite.getPodLogs("default", pod.Name)
+
+					suite.T().Logf("pod %s logs:\n%s", pod.Name, logData)
+				}
+			}
+
 			if len(podList.Items) != 1 {
 				return retry.ExpectedErrorf("expected 1 pod, got %d", len(podList.Items))
 			}
@@ -147,17 +157,23 @@ func (suite *ExtensionsSuiteNVIDIA) TestExtensionsNVIDIA() {
 	suite.Require().Len(podList.Items, 1)
 
 	for _, pod := range podList.Items {
-		res := suite.Clientset.CoreV1().Pods("default").GetLogs(pod.Name, &corev1.PodLogOptions{})
-		stream, err := res.Stream(suite.ctx)
-		suite.Require().NoError(err)
+		logData := suite.getPodLogs("default", pod.Name)
 
-		defer stream.Close() //nolint:errcheck
-
-		logData, err := io.ReadAll(stream)
-		suite.Require().NoError(err)
-
-		suite.Require().Contains(string(logData), "Test PASSED")
+		suite.Require().Contains(logData, "Test PASSED")
 	}
+}
+
+func (suite *ExtensionsSuiteNVIDIA) getPodLogs(namespace, name string) string {
+	res := suite.Clientset.CoreV1().Pods(namespace).GetLogs(name, &corev1.PodLogOptions{})
+	stream, err := res.Stream(suite.ctx)
+	suite.Require().NoError(err)
+
+	defer stream.Close() //nolint:errcheck
+
+	logData, err := io.ReadAll(stream)
+	suite.Require().NoError(err)
+
+	return string(logData)
 }
 
 func (suite *ExtensionsSuiteNVIDIA) getNVIDIANodes(labelQuery string) []string {

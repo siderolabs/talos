@@ -37,7 +37,6 @@ export KUBERNETES_VERSION=${KUBERNETES_VERSION:-1.33.0-rc.0}
 
 export NAME_PREFIX="talos-e2e-${SHA}-${PLATFORM}"
 export TIMEOUT=1200
-export NUM_NODES=${TEST_NUM_NODES:-6}
 
 # default values, overridden by talosctl cluster create tests
 PROVISIONER=
