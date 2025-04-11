@@ -23,9 +23,6 @@ var (
 	// VersionPkgs declares variable used by version package.
 	//go:embed data/pkgs
 	VersionPkgs string
-	// VersionExtras declares variable used by version package.
-	//go:embed data/extras
-	VersionExtras string
 	// ImagesUsername declares variable used by images package.
 	//go:embed data/username
 	ImagesUsername string

@@ -4,7 +4,6 @@
 
 ARG TOOLS=scratch
 ARG PKGS=scratch
-ARG EXTRAS=scratch
 ARG INSTALLER_ARCH=scratch
 ARG DEBUG_TOOLS_SOURCE=scratch
 
@@ -241,9 +240,7 @@ COPY --from=pkg-cni-arm64 /opt/cni/bin/host-local /opt/cni/bin/host-local
 COPY --from=pkg-cni-arm64 /opt/cni/bin/loopback /opt/cni/bin/loopback
 COPY --from=pkg-cni-arm64 /opt/cni/bin/portmap /opt/cni/bin/portmap
 
-# Resolve package images using ${EXTRAS} to be used later in COPY --from=.
-
-FROM ${PKG_TALOSCTL_CNI_BUNDLE} AS extras-talosctl-cni-bundle
+FROM ${PKG_TALOSCTL_CNI_BUNDLE} AS pkgs-talosctl-cni-bundle
 
 # The tools target provides base toolchain for the build.
 
@@ -337,13 +334,11 @@ ARG TAG
 ARG ARTIFACTS
 ARG PKGS
 ARG TOOLS
-ARG EXTRAS
 RUN mkdir -p pkg/machinery/gendata/data && \
     echo -n ${NAME} > pkg/machinery/gendata/data/name && \
     echo -n ${SHA} > pkg/machinery/gendata/data/sha && \
     echo -n ${USERNAME} > pkg/machinery/gendata/data/username && \
     echo -n ${REGISTRY} > pkg/machinery/gendata/data/registry && \
-    echo -n ${EXTRAS} > pkg/machinery/gendata/data/extras && \
     echo -n ${PKGS} > pkg/machinery/gendata/data/pkgs && \
     echo -n ${TOOLS} > pkg/machinery/gendata/data/tools && \
     echo -n ${TAG} > pkg/machinery/gendata/data/tag && \
@@ -359,8 +354,7 @@ RUN echo -n "undefined" > pkg/machinery/gendata/data/sha && \
 RUN mkdir -p _out && \
     echo PKGS=${PKGS} >> _out/talos-metadata && \
     echo TOOLS=${TOOLS} >> _out/talos-metadata && \
-    echo TAG=${TAG} >> _out/talos-metadata && \
-    echo EXTRAS=${EXTRAS} >> _out/talos-metadata
+    echo TAG=${TAG} >> _out/talos-metadata
 
 FROM scratch AS embed-abbrev
 COPY --from=embed-abbrev-generate /src/pkg/machinery/gendata/data /pkg/machinery/gendata/data
@@ -1250,7 +1244,7 @@ COPY --from=proto-docs-build /tmp/api.md /website/content/v1.10/reference/
 
 FROM scratch AS talosctl-cni-bundle
 ARG TARGETARCH
-COPY --from=extras-talosctl-cni-bundle /opt/cni/bin/ /talosctl-cni-bundle-${TARGETARCH}/
+COPY --from=pkgs-talosctl-cni-bundle /opt/cni/bin/ /talosctl-cni-bundle-${TARGETARCH}/
 
 # The go-mod-outdated target lists all outdated modules.
 
