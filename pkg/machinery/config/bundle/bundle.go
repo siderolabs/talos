@@ -115,6 +115,7 @@ func NewBundle(opts ...Option) (*Bundle, error) {
 		options.InputOptions.ClusterName,
 		options.InputOptions.Endpoint,
 		options.InputOptions.KubeVersion,
+		options.InputOptions.Rsa,
 		options.InputOptions.GenOptions...,
 	)
 	if err != nil {

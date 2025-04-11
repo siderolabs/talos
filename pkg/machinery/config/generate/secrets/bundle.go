@@ -21,12 +21,12 @@ import (
 )
 
 // NewBundle creates secrets bundle generating all secrets.
-func NewBundle(clock Clock, versionContract *config.VersionContract) (*Bundle, error) {
+func NewBundle(clock Clock, rsa bool, versionContract *config.VersionContract) (*Bundle, error) {
 	bundle := &Bundle{
 		Clock: clock,
 	}
 
-	err := bundle.populate(versionContract)
+	err := bundle.populate(rsa, versionContract)
 	if err != nil {
 		return nil, err
 	}
@@ -140,7 +140,7 @@ func NewBundleFromKubernetesPKI(pkiDir, bootstrapToken string, versionContract *
 		},
 	}
 
-	err = bundle.populate(versionContract)
+	err = bundle.populate(false, versionContract)
 	if err != nil {
 		return nil, err
 	}
@@ -191,7 +191,7 @@ func NewBundleFromConfig(clock Clock, c config.Config) *Bundle {
 // populate fills all the missing fields in the secrets bundle.
 //
 //nolint:gocyclo,cyclop
-func (bundle *Bundle) populate(versionContract *config.VersionContract) error {
+func (bundle *Bundle) populate(rsa bool, versionContract *config.VersionContract) error {
 	if bundle.Clock == nil {
 		bundle.Clock = NewClock()
 	}
@@ -259,7 +259,7 @@ func (bundle *Bundle) populate(versionContract *config.VersionContract) error {
 	}
 
 	if bundle.Certs.OS == nil {
-		talosCA, err := NewTalosCA(bundle.Clock.Now())
+		talosCA, err := NewTalosCA(bundle.Clock.Now(), rsa)
 		if err != nil {
 			return err
 		}

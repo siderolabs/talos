@@ -345,11 +345,23 @@ func (ctrl *APIController) generateWorker(ctx context.Context, r controller.Runt
 
 	defer remoteGen.Close() //nolint:errcheck
 
-	serverCSR, serverCert, err := x509.NewEd25519CSRAndIdentity(
-		x509.IPAddresses(certSANs.StdIPs()),
-		x509.DNSNames(certSANs.DNSNames),
-		x509.CommonName(certSANs.FQDN),
-	)
+	var serverCSR *x509.CertificateSigningRequest
+	var serverCert *x509.PEMEncodedCertificateAndKey
+
+	if rootSpec.Rsa {
+		serverCSR, serverCert, err = x509.NewRSACSRAndIdentity(
+			x509.IPAddresses(certSANs.StdIPs()),
+			x509.DNSNames(certSANs.DNSNames),
+			x509.CommonName(certSANs.FQDN),
+		)
+	} else {
+		serverCSR, serverCert, err = x509.NewEd25519CSRAndIdentity(
+			x509.IPAddresses(certSANs.StdIPs()),
+			x509.DNSNames(certSANs.DNSNames),
+			x509.CommonName(certSANs.FQDN),
+		)
+	}
+
 	if err != nil {
 		return fmt.Errorf("failed to generate API server CSR: %w", err)
 	}

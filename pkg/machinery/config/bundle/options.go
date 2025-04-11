@@ -17,6 +17,7 @@ type InputOptions struct {
 	ClusterName string
 	Endpoint    string
 	KubeVersion string
+	Rsa         bool
 	GenOptions  []generate.Option
 }
 

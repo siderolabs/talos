@@ -23,6 +23,7 @@ var genSecretsCmdFlags struct {
 	fromKubernetesPki        string
 	fromControlplaneConfig   string
 	kubernetesBootstrapToken string
+	rsa                      bool
 }
 
 // genSecretsCmd represents the `gen secrets` command.
@@ -60,6 +61,7 @@ var genSecretsCmd = &cobra.Command{
 			secretsBundle = secrets.NewBundleFromConfig(secrets.NewFixedClock(time.Now()), cfg)
 		default:
 			secretsBundle, err = secrets.NewBundle(secrets.NewFixedClock(time.Now()),
+				genSecretsCmdFlags.rsa,
 				versionContract,
 			)
 		}
@@ -91,6 +93,7 @@ func init() {
 	genSecretsCmd.Flags().StringVar(&genSecretsCmdFlags.fromControlplaneConfig, "from-controlplane-config", "", "use the provided controlplane Talos machine configuration as input")
 	genSecretsCmd.Flags().StringVarP(&genSecretsCmdFlags.fromKubernetesPki, "from-kubernetes-pki", "p", "", "use a Kubernetes PKI directory (e.g. /etc/kubernetes/pki) as input")
 	genSecretsCmd.Flags().StringVarP(&genSecretsCmdFlags.kubernetesBootstrapToken, "kubernetes-bootstrap-token", "t", "", "use the provided bootstrap token as input")
+	genSecretsCmd.Flags().BoolVarP(&genSecretsCmdFlags.rsa, "rsa", "", false, "generate RSA keys instead of Ed25519 for the Talos API CA")
 
 	Cmd.AddCommand(genSecretsCmd)
 }

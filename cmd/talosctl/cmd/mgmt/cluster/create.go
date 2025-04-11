@@ -205,6 +205,7 @@ var (
 	withIOMMU                 bool
 	configInjectionMethodFlag string
 	mountOpts                 opts.MountOpt
+	rsa                       bool
 )
 
 // createCmd represents the cluster up command.
@@ -729,6 +730,7 @@ func create(ctx context.Context) error {
 					Endpoint:    inClusterEndpoint,
 					KubeVersion: strings.TrimPrefix(kubernetesVersion, "v"),
 					GenOptions:  genOptions,
+					Rsa:         rsa,
 				}),
 			bundle.WithPatch(userVolumePatches),
 		)
@@ -1338,6 +1340,7 @@ func init() {
 	createCmd.Flags().BoolVar(&withJSONLogs, "with-json-logs", false, "enable JSON logs receiver and configure Talos to send logs there")
 	createCmd.Flags().StringVar(&configInjectionMethodFlag, "config-injection-method", "", "a method to inject machine config: default is HTTP server, 'metal-iso' to mount an ISO (QEMU only)")
 	createCmd.Flags().Var(&mountOpts, "mount", "attach a mount to the container (Docker only)")
+	createCmd.Flags().BoolVar(&rsa, "rsa", false, "generate RSA keys instead of Ed25519 for the Talos API CA")
 
 	createCmd.MarkFlagsMutuallyExclusive(inputDirFlag, nodeInstallImageFlag)
 	createCmd.MarkFlagsMutuallyExclusive(inputDirFlag, configDebugFlag)

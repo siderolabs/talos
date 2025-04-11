@@ -127,7 +127,7 @@ func Generate(ctx context.Context, st state.State, in *machine.GenerateConfigura
 
 		switch {
 		case os.IsNotExist(err):
-			secretsBundle, err = secrets.NewBundle(clock, config.TalosVersionCurrent)
+			secretsBundle, err = secrets.NewBundle(clock, false, config.TalosVersionCurrent)
 			if err != nil {
 				return nil, err
 			}
@@ -143,6 +143,7 @@ func Generate(ctx context.Context, st state.State, in *machine.GenerateConfigura
 			in.ClusterConfig.Name,
 			in.ClusterConfig.ControlPlane.Endpoint,
 			in.MachineConfig.KubernetesVersion,
+			false,
 			options...,
 		)
 		if err != nil {
