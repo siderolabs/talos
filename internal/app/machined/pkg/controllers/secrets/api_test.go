@@ -30,28 +30,8 @@ import (
 )
 
 func TestAPISuite(t *testing.T) {
-	ca, err := x509.NewSelfSignedCertificateAuthority(
-		x509.Organization("talos"),
-	)
-	if err != nil {
-		t.Errorf("failed to create certificate authority: %v", err)
-	}
-
 	suite.Run(t, &APISuite{
-		ca: *ca,
-		DefaultSuite: ctest.DefaultSuite{
-			AfterSetup: func(suite *ctest.DefaultSuite) {
-				suite.Require().NoError(suite.Runtime().RegisterController(&secretsctrl.APIController{
-					NewRemoteGenerator: func(token string, endpoints []string, acceptedCAs []*x509.PEMEncodedCertificate) (secretsctrl.CertificateGenerator, error) {
-						g, err := gen.NewLocalGenerator(ca.KeyPEM, ca.CrtPEM)
-						if err != nil {
-							return nil, err
-						}
-						return mockGenerator{g: g}, nil
-					},
-				}))
-			},
-		},
+		DefaultSuite: ctest.DefaultSuite{},
 	})
 }
 
@@ -69,19 +49,91 @@ func (t mockGenerator) Close() error {
 
 type APISuite struct {
 	ctest.DefaultSuite
-	ca x509.CertificateAuthority
 }
 
-func (suite *APISuite) TestReconcileControlPlane() {
+func (suite *APISuite) TestReconcileControlPlanePureEd25519() {
+	suite.testReconcileControlPlaneWithAlgo(stdlibx509.PureEd25519)
+}
+
+func (suite *APISuite) TestReconcileControlPlaneECDSAWithSHA256() {
+	suite.testReconcileControlPlaneWithAlgo(stdlibx509.ECDSAWithSHA256)
+}
+
+func (suite *APISuite) TestReconcileControlPlaneECDSAWithSHA384() {
+	suite.testReconcileControlPlaneWithAlgo(stdlibx509.ECDSAWithSHA384)
+}
+
+func (suite *APISuite) TestReconcileControlPlaneECDSAWithSHA512() {
+	suite.testReconcileControlPlaneWithAlgo(stdlibx509.ECDSAWithSHA512)
+}
+
+func (suite *APISuite) TestReconcileControlPlaneSHA256WithRSA() {
+	suite.testReconcileControlPlaneWithAlgo(stdlibx509.SHA256WithRSA)
+}
+
+func (suite *APISuite) TestReconcileControlPlaneSHA384WithRSA() {
+	suite.testReconcileControlPlaneWithAlgo(stdlibx509.SHA384WithRSA)
+}
+
+func (suite *APISuite) TestReconcileControlPlaneSHA512WithRSA() {
+	suite.testReconcileControlPlaneWithAlgo(stdlibx509.SHA512WithRSA)
+}
+
+func (suite *APISuite) TestReconcileWorkerPureEd25519() {
+	suite.testReconcileWorkerWithAlgo(stdlibx509.PureEd25519)
+}
+
+func (suite *APISuite) TestReconcileWorkerECDSAWithSHA256() {
+	suite.testReconcileWorkerWithAlgo(stdlibx509.ECDSAWithSHA256)
+}
+
+func (suite *APISuite) TestReconcileWorkerECDSAWithSHA384() {
+	suite.testReconcileWorkerWithAlgo(stdlibx509.ECDSAWithSHA384)
+}
+
+func (suite *APISuite) TestReconcileWorkerECDSAWithSHA512() {
+	suite.testReconcileWorkerWithAlgo(stdlibx509.ECDSAWithSHA512)
+}
+
+func (suite *APISuite) TestReconcileWorkerSHA256WithRSA() {
+	suite.testReconcileWorkerWithAlgo(stdlibx509.SHA256WithRSA)
+}
+
+func (suite *APISuite) TestReconcileWorkerSHA384WithRSA() {
+	suite.testReconcileWorkerWithAlgo(stdlibx509.SHA384WithRSA)
+}
+
+func (suite *APISuite) TestReconcileWorkerSHA512WithRSA() {
+	suite.testReconcileWorkerWithAlgo(stdlibx509.SHA512WithRSA)
+}
+
+func (suite *APISuite) testReconcileControlPlaneWithAlgo(algorithm stdlibx509.SignatureAlgorithm) {
+	talosCA, err := x509.NewSelfSignedCertificateAuthority(
+		x509.Organization("talos"),
+		x509.SignatureAlgorithm(algorithm),
+	)
+	suite.Require().NoError(err)
+
+	suite.Require().NoError(suite.Runtime().RegisterController(&secretsctrl.APIController{
+		NewRemoteGenerator: func(token string, endpoints []string, acceptedCAs []*x509.PEMEncodedCertificate) (secretsctrl.CertificateGenerator, error) {
+			g, err := gen.NewLocalGenerator(talosCA.KeyPEM, talosCA.CrtPEM)
+			if err != nil {
+				return nil, err
+			}
+
+			return mockGenerator{g: g}, nil
+		},
+	}))
+
 	rootSecrets := secrets.NewOSRoot(secrets.OSRootID)
 
 	rootSecrets.TypedSpec().IssuingCA = &x509.PEMEncodedCertificateAndKey{
-		Crt: suite.ca.CrtPEM,
-		Key: suite.ca.KeyPEM,
+		Crt: talosCA.CrtPEM,
+		Key: talosCA.KeyPEM,
 	}
 	rootSecrets.TypedSpec().AcceptedCAs = []*x509.PEMEncodedCertificate{
 		{
-			Crt: suite.ca.CrtPEM,
+			Crt: talosCA.CrtPEM,
 		},
 	}
 	rootSecrets.TypedSpec().CertSANDNSNames = []string{"example.com"}
@@ -134,7 +186,7 @@ func (suite *APISuite) TestReconcileControlPlane() {
 		suite.Assert().Equal(
 			[]*x509.PEMEncodedCertificate{
 				{
-					Crt: suite.ca.CrtPEM,
+					Crt: talosCA.CrtPEM,
 				},
 			},
 			apiCerts.AcceptedCAs,
@@ -174,12 +226,29 @@ func (suite *APISuite) TestReconcileControlPlane() {
 	})
 }
 
-func (suite *APISuite) TestReconcileWorker() {
+func (suite *APISuite) testReconcileWorkerWithAlgo(algorithm stdlibx509.SignatureAlgorithm) {
+	talosCA, err := x509.NewSelfSignedCertificateAuthority(
+		x509.Organization("talos"),
+		x509.SignatureAlgorithm(algorithm),
+	)
+	suite.Require().NoError(err)
+
+	suite.Require().NoError(suite.Runtime().RegisterController(&secretsctrl.APIController{
+		NewRemoteGenerator: func(token string, endpoints []string, acceptedCAs []*x509.PEMEncodedCertificate) (secretsctrl.CertificateGenerator, error) {
+			g, err := gen.NewLocalGenerator(talosCA.KeyPEM, talosCA.CrtPEM)
+			if err != nil {
+				return nil, err
+			}
+
+			return mockGenerator{g: g}, nil
+		},
+	}))
+
 	rootSecrets := secrets.NewOSRoot(secrets.OSRootID)
 
 	rootSecrets.TypedSpec().AcceptedCAs = []*x509.PEMEncodedCertificate{
 		{
-			Crt: suite.ca.CrtPEM,
+			Crt: talosCA.CrtPEM,
 		},
 	}
 
@@ -242,7 +311,7 @@ func (suite *APISuite) TestReconcileWorker() {
 		suite.Assert().Equal(
 			[]*x509.PEMEncodedCertificate{
 				{
-					Crt: suite.ca.CrtPEM,
+					Crt: talosCA.CrtPEM,
 				},
 			},
 			apiCerts.AcceptedCAs,
