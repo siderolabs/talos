@@ -23,7 +23,7 @@ const EthernetKind = "EthernetConfig"
 func init() {
 	registry.Register(EthernetKind, func(version string) config.Document {
 		switch version {
-		case "v1alpha1":
+		case "v1alpha1": //nolint:goconst
 			return &EthernetConfigV1Alpha1{}
 		default:
 			return nil

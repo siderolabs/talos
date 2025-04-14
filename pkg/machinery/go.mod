@@ -4,7 +4,7 @@ go 1.24.0
 
 replace (
 	// forked ethtool introduces missing APIs
-	github.com/mdlayher/ethtool => github.com/siderolabs/ethtool v0.3.0
+	github.com/mdlayher/ethtool => github.com/siderolabs/ethtool v0.4.0-sidero
 
 	// forked go-yaml that introduces RawYAML interface, which can be used to populate YAML fields using bytes
 	// which are then encoded as a valid YAML blocks with proper indentiation
@@ -24,7 +24,7 @@ require (
 	github.com/hashicorp/go-multierror v1.1.1
 	github.com/hexops/gotextdiff v1.0.3
 	github.com/jsimonetti/rtnetlink/v2 v2.0.3-0.20241216183107-2d6e9f8ad3f2
-	github.com/mdlayher/ethtool v0.2.0
+	github.com/mdlayher/ethtool v0.4.0
 	github.com/opencontainers/runtime-spec v1.2.1
 	github.com/planetscale/vtprotobuf v0.6.1-0.20241121165744-79df5c4772f2
 	github.com/ryanuber/go-glob v1.0.0
@@ -37,8 +37,8 @@ require (
 	github.com/siderolabs/net v0.4.0
 	github.com/siderolabs/protoenc v0.2.2
 	github.com/stretchr/testify v1.10.0
-	google.golang.org/genproto/googleapis/api v0.0.0-20250324211829-b45e905df463
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20250324211829-b45e905df463
+	google.golang.org/genproto/googleapis/api v0.0.0-20250409194420-de1ac958c67a
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20250409194420-de1ac958c67a
 	google.golang.org/grpc v1.71.1
 	google.golang.org/protobuf v1.36.6
 	gopkg.in/yaml.v3 v3.0.1
@@ -77,7 +77,7 @@ require (
 	golang.org/x/exp v0.0.0-20250128182459-e0ece0dbea4c // indirect
 	golang.org/x/net v0.37.0 // indirect
 	golang.org/x/sync v0.12.0 // indirect
-	golang.org/x/sys v0.31.0 // indirect
+	golang.org/x/sys v0.32.0 // indirect
 	golang.org/x/text v0.23.0 // indirect
 	golang.org/x/time v0.10.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect

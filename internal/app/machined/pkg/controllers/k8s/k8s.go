@@ -9,6 +9,9 @@ import (
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 )
 
+// CloudProviderExternal is a constant for the external cloud provider.
+const CloudProviderExternal = "external"
+
 func init() {
 	// ugly hack, but it doesn't look like there's better API
 	// cut out error handler which logs error to standard logger

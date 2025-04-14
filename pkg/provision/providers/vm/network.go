@@ -61,7 +61,7 @@ func (p *Provisioner) CreateNetwork(ctx context.Context, state *State, network p
 		return fmt.Errorf("error templating bridge CNI config: %w", err)
 	}
 
-	bridgeConfig, err := libcni.ConfFromBytes(buf.Bytes())
+	bridgeConfig, err := libcni.NetworkPluginConfFromBytes(buf.Bytes())
 	if err != nil {
 		return fmt.Errorf("error parsing bridge CNI config: %w", err)
 	}

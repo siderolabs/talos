@@ -23,7 +23,7 @@ const WatchdogTimerKind = "WatchdogTimerConfig"
 func init() {
 	registry.Register(WatchdogTimerKind, func(version string) config.Document {
 		switch version {
-		case "v1alpha1":
+		case "v1alpha1": //nolint:goconst
 			return &WatchdogTimerV1Alpha1{}
 		default:
 			return nil

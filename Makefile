@@ -25,9 +25,9 @@ DEBUG_TOOLS_SOURCE := scratch
 EMBED_TARGET ?= embed
 
 TOOLS_PREFIX ?= ghcr.io/siderolabs/tools
-TOOLS ?= v1.10.0-alpha.0-24-g4f2036e
+TOOLS ?= v1.10.0
 PKGS_PREFIX ?= ghcr.io/siderolabs
-PKGS ?= v1.10.0-alpha.0-80-g0486742
+PKGS ?= v1.10.0
 
 KRES_IMAGE ?= ghcr.io/siderolabs/kres:latest
 CONFORMANCE_IMAGE ?= ghcr.io/siderolabs/conform:latest
@@ -87,13 +87,13 @@ PKG_ZSTD ?= $(PKGS_PREFIX)/zstd:$(PKGS)
 # renovate: datasource=github-tags depName=golang/go
 GO_VERSION ?= 1.24
 # renovate: datasource=go depName=golang.org/x/tools
-GOIMPORTS_VERSION ?= v0.31.0
+GOIMPORTS_VERSION ?= v0.32.0
 # renovate: datasource=go depName=mvdan.cc/gofumpt
-GOFUMPT_VERSION ?= v0.7.0
+GOFUMPT_VERSION ?= v0.8.0
 # renovate: datasource=go depName=github.com/golangci/golangci-lint
-GOLANGCILINT_VERSION ?= v2.0.2
+GOLANGCILINT_VERSION ?= v2.1.1
 # renovate: datasource=go depName=golang.org/x/tools
-STRINGER_VERSION ?= v0.31.0
+STRINGER_VERSION ?= v0.32.0
 # renovate: datasource=go depName=github.com/dmarkham/enumer
 ENUMER_VERSION ?= v1.5.11
 # renovate: datasource=go depName=k8s.io/code-generator
@@ -130,9 +130,9 @@ KUBECTL_VERSION ?= v1.33.0-rc.0
 # renovate: datasource=github-releases depName=kastenhq/kubestr
 KUBESTR_VERSION ?= v0.4.48
 # renovate: datasource=github-releases depName=helm/helm
-HELM_VERSION ?= v3.17.2
+HELM_VERSION ?= v3.17.3
 # renovate: datasource=github-releases depName=cilium/cilium-cli
-CILIUM_CLI_VERSION ?= v0.18.2
+CILIUM_CLI_VERSION ?= v0.18.3
 # renovate: datasource=github-releases depName=microsoft/secureboot_objects
 MICROSOFT_SECUREBOOT_RELEASE ?= v1.1.3
 

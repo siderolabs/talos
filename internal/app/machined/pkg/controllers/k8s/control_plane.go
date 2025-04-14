@@ -180,7 +180,7 @@ func NewControlPlaneAPIServerController() *ControlPlaneAPIServerController {
 
 				var cloudProvider string
 				if cfgProvider.Cluster().ExternalCloudProvider().Enabled() {
-					cloudProvider = "external" //nolint:goconst
+					cloudProvider = CloudProviderExternal
 				}
 
 				advertisedAddress := "$(POD_IP)"
@@ -224,7 +224,7 @@ func NewControlPlaneControllerManagerController() *ControlPlaneControllerManager
 				var cloudProvider string
 
 				if cfgProvider.Cluster().ExternalCloudProvider().Enabled() {
-					cloudProvider = "external"
+					cloudProvider = CloudProviderExternal
 				}
 
 				*res.TypedSpec() = k8s.ControllerManagerConfigSpec{

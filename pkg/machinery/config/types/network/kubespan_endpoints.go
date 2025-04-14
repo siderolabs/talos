@@ -21,7 +21,7 @@ const KubespanEndpointsKind = "KubeSpanEndpointsConfig"
 func init() {
 	registry.Register(KubespanEndpointsKind, func(version string) config.Document {
 		switch version {
-		case "v1alpha1":
+		case "v1alpha1": //nolint:goconst
 			return &KubespanEndpointsConfigV1Alpha1{}
 		default:
 			return nil

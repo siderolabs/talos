@@ -768,13 +768,13 @@ func (suite *K8sControlPlaneSuite) TestReconcileExternalCloudProvider() {
 		func(apiServer *k8s.APIServerConfig, assert *assert.Assertions) {
 			apiServerCfg := apiServer.TypedSpec()
 
-			assert.Equal("external", apiServerCfg.CloudProvider)
+			assert.Equal(k8sctrl.CloudProviderExternal, apiServerCfg.CloudProvider)
 		},
 	)
 
 	rtestutils.AssertResources(suite.Ctx(), suite.T(), suite.State(), []resource.ID{k8s.ControllerManagerConfigID},
 		func(controllerManager *k8s.ControllerManagerConfig, assert *assert.Assertions) {
-			assert.Equal("external", controllerManager.TypedSpec().CloudProvider)
+			assert.Equal(k8sctrl.CloudProviderExternal, controllerManager.TypedSpec().CloudProvider)
 		},
 	)
 

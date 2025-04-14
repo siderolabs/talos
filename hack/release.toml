@@ -25,6 +25,7 @@ preface = """
 * etcd: 3.5.20
 * Flannel: 0.26.6
 * Kubernetes: 1.33.0-rc.0
+* CoreDNS: 1.12.1
 
 Talos is built with Go 1.24.2.
 """
