@@ -32,7 +32,7 @@ Once installed, you can run Theila by simply running it.
 <!-- markdownlint-disable MD022 -->
 <!-- markdownlint-disable MD025 -->
 
-{{< tabpane lang="bash" >}}
+{{< tabpane lang="bash" right=true >}}
 {{< tab header="Binary" >}}
 # address and port are not required and default to the values shown
 theila --address 127.0.0.1 --port 8080
