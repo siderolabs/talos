@@ -1,6 +1,6 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
 #
-# Generated on 2025-04-01T08:14:24Z by kres d903dae.
+# Generated on 2025-04-15T13:01:06Z by kres fd5cab0.
 
 name: integration-aws-nvidia-nonfree-cron
 concurrency:
@@ -105,7 +105,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           path: _out/extensions
-          ref: main
+          ref: release-1.10
           repository: siderolabs/extensions
       - name: set variables
         run: |
