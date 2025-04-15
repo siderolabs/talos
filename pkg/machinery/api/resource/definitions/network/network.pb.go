@@ -36,6 +36,7 @@ type AddressSpecSpec struct {
 	Flags           uint32                   `protobuf:"varint,5,opt,name=flags,proto3" json:"flags,omitempty"`
 	AnnounceWithArp bool                     `protobuf:"varint,6,opt,name=announce_with_arp,json=announceWithArp,proto3" json:"announce_with_arp,omitempty"`
 	ConfigLayer     enums.NetworkConfigLayer `protobuf:"varint,7,opt,name=config_layer,json=configLayer,proto3,enum=talos.resource.definitions.enums.NetworkConfigLayer" json:"config_layer,omitempty"`
+	Priority        uint32                   `protobuf:"varint,8,opt,name=priority,proto3" json:"priority,omitempty"`
 	unknownFields   protoimpl.UnknownFields
 	sizeCache       protoimpl.SizeCache
 }
@@ -119,6 +120,13 @@ func (x *AddressSpecSpec) GetConfigLayer() enums.NetworkConfigLayer {
 	return enums.NetworkConfigLayer(0)
 }
 
+func (x *AddressSpecSpec) GetPriority() uint32 {
+	if x != nil {
+		return x.Priority
+	}
+	return 0
+}
+
 // AddressStatusSpec describes status of rendered secrets.
 type AddressStatusSpec struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
@@ -132,6 +140,7 @@ type AddressStatusSpec struct {
 	Family        enums.NethelpersFamily `protobuf:"varint,8,opt,name=family,proto3,enum=talos.resource.definitions.enums.NethelpersFamily" json:"family,omitempty"`
 	Scope         enums.NethelpersScope  `protobuf:"varint,9,opt,name=scope,proto3,enum=talos.resource.definitions.enums.NethelpersScope" json:"scope,omitempty"`
 	Flags         uint32                 `protobuf:"varint,10,opt,name=flags,proto3" json:"flags,omitempty"`
+	Priority      uint32                 `protobuf:"varint,11,opt,name=priority,proto3" json:"priority,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -232,6 +241,13 @@ func (x *AddressStatusSpec) GetScope() enums.NethelpersScope {
 func (x *AddressStatusSpec) GetFlags() uint32 {
 	if x != nil {
 		return x.Flags
+	}
+	return 0
+}
+
+func (x *AddressStatusSpec) GetPriority() uint32 {
+	if x != nil {
+		return x.Priority
 	}
 	return 0
 }
@@ -4330,7 +4346,7 @@ var File_resource_definitions_network_network_proto protoreflect.FileDescriptor
 
 const file_resource_definitions_network_network_proto_rawDesc = "" +
 	"\n" +
-	"*resource/definitions/network/network.proto\x12\"talos.resource.definitions.network\x1a\x13common/common.proto\x1a\x1egoogle/protobuf/duration.proto\x1a&resource/definitions/enums/enums.proto\"\x8d\x03\n" +
+	"*resource/definitions/network/network.proto\x12\"talos.resource.definitions.network\x1a\x13common/common.proto\x1a\x1egoogle/protobuf/duration.proto\x1a&resource/definitions/enums/enums.proto\"\xa9\x03\n" +
 	"\x0fAddressSpecSpec\x12-\n" +
 	"\aaddress\x18\x01 \x01(\v2\x13.common.NetIPPrefixR\aaddress\x12\x1b\n" +
 	"\tlink_name\x18\x02 \x01(\tR\blinkName\x12J\n" +
@@ -4338,7 +4354,8 @@ const file_resource_definitions_network_network_proto_rawDesc = "" +
 	"\x05scope\x18\x04 \x01(\x0e21.talos.resource.definitions.enums.NethelpersScopeR\x05scope\x12\x14\n" +
 	"\x05flags\x18\x05 \x01(\rR\x05flags\x12*\n" +
 	"\x11announce_with_arp\x18\x06 \x01(\bR\x0fannounceWithArp\x12W\n" +
-	"\fconfig_layer\x18\a \x01(\x0e24.talos.resource.definitions.enums.NetworkConfigLayerR\vconfigLayer\"\xd1\x03\n" +
+	"\fconfig_layer\x18\a \x01(\x0e24.talos.resource.definitions.enums.NetworkConfigLayerR\vconfigLayer\x12\x1a\n" +
+	"\bpriority\x18\b \x01(\rR\bpriority\"\xed\x03\n" +
 	"\x11AddressStatusSpec\x12-\n" +
 	"\aaddress\x18\x01 \x01(\v2\x13.common.NetIPPrefixR\aaddress\x12#\n" +
 	"\x05local\x18\x02 \x01(\v2\r.common.NetIPR\x05local\x12+\n" +
@@ -4351,7 +4368,8 @@ const file_resource_definitions_network_network_proto_rawDesc = "" +
 	"\x06family\x18\b \x01(\x0e22.talos.resource.definitions.enums.NethelpersFamilyR\x06family\x12G\n" +
 	"\x05scope\x18\t \x01(\x0e21.talos.resource.definitions.enums.NethelpersScopeR\x05scope\x12\x14\n" +
 	"\x05flags\x18\n" +
-	" \x01(\rR\x05flags\"\xa4\n" +
+	" \x01(\rR\x05flags\x12\x1a\n" +
+	"\bpriority\x18\v \x01(\rR\bpriority\"\xa4\n" +
 	"\n" +
 	"\x0eBondMasterSpec\x12H\n" +
 	"\x04mode\x18\x01 \x01(\x0e24.talos.resource.definitions.enums.NethelpersBondModeR\x04mode\x12_\n" +

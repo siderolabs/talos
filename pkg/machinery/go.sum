@@ -16,8 +16,8 @@ github.com/brianvoe/gofakeit/v6 v6.28.0 h1:Xib46XXuQfmlLS2EXRuJpqcw8St6qSZz75OUo
 github.com/brianvoe/gofakeit/v6 v6.28.0/go.mod h1:Xj58BMSnFqcn/fAQeSK+/PLtC5kSb7FJIq4JyGa8vEs=
 github.com/cenkalti/backoff/v4 v4.3.0 h1:MyRJ/UdXutAwSAT+s3wNd7MfTIcy71VQueUuFK343L8=
 github.com/cenkalti/backoff/v4 v4.3.0/go.mod h1:Y3VNntkOUPxTVeUxJ/G5vcM//AlwfmyYozVcomhLiZE=
-github.com/cilium/ebpf v0.12.3 h1:8ht6F9MquybnY97at+VDZb3eQQr8ev79RueWeVaEcG4=
-github.com/cilium/ebpf v0.12.3/go.mod h1:TctK1ivibvI3znr66ljgi4hqOT8EYQjz1KWBfb1UVgM=
+github.com/cilium/ebpf v0.17.3 h1:FnP4r16PWYSE4ux6zN+//jMcW4nMVRvuTLVTvCjyyjg=
+github.com/cilium/ebpf v0.17.3/go.mod h1:G5EDHij8yiLzaqn0WjyfJHvRa+3aDlReIaLVRMvOyJk=
 github.com/cloudflare/circl v1.6.0 h1:cr5JKic4HI+LkINy2lg3W2jF8sHCVTBncJr5gIIq7qk=
 github.com/cloudflare/circl v1.6.0/go.mod h1:uddAzsPgqdMAYatqJ0lsjX1oECcQLIlRpzZh3pJrofs=
 github.com/containerd/go-cni v1.1.12 h1:wm/5VD/i255hjM4uIZjBRiEQ7y98W9ACy/mHeLi4+94=
@@ -69,8 +69,8 @@ github.com/hexops/gotextdiff v1.0.3 h1:gitA9+qJrrTCsiCl7+kh75nPqQt1cx4ZkudSTLoUq
 github.com/hexops/gotextdiff v1.0.3/go.mod h1:pSWU5MAI3yDq+fZBTazCSJysOMbxWL1BSow5/V2vxeg=
 github.com/josharian/native v1.1.0 h1:uuaP0hAbW7Y4l0ZRQ6C9zfb7Mg1mbFKry/xzDAfmtLA=
 github.com/josharian/native v1.1.0/go.mod h1:7X/raswPFr05uY3HiLlYeyQntB6OO7E/d2Cu7qoaN2w=
-github.com/jsimonetti/rtnetlink/v2 v2.0.3-0.20241216183107-2d6e9f8ad3f2 h1:4pspWog/mjnfv+B3rjEUfCoFL80T7J8ojK9ay8ApPCM=
-github.com/jsimonetti/rtnetlink/v2 v2.0.3-0.20241216183107-2d6e9f8ad3f2/go.mod h1:7MoNYNbb3UaDHtF8udiJo/RH6VsTKP1pqKLUTVCvToE=
+github.com/jsimonetti/rtnetlink/v2 v2.0.3 h1:Jcp7GTnTPepoUAJ9+LhTa7ZiebvNS56T1GtlEUaPNFE=
+github.com/jsimonetti/rtnetlink/v2 v2.0.3/go.mod h1:atIkksp/9fqtf6rpAw45JnttnP2gtuH9X88WPfWfS9A=
 github.com/kr/pretty v0.3.1 h1:flRD4NNwYAUpkphVc1HcthR4KEIFJ65n8Mw5qdRn3LE=
 github.com/kr/pretty v0.3.1/go.mod h1:hoEshYVHaxMs3cyo3Yncou5ZscifuDolrwPKZanG3xk=
 github.com/kr/text v0.2.0 h1:5Nx0Ya0ZqY2ygV366QzturHI13Jq95ApcVaJBhpS+AY=

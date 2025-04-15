@@ -3702,6 +3702,7 @@ AddressSpecSpec describes status of rendered secrets.
 | flags | [uint32](#uint32) |  |  |
 | announce_with_arp | [bool](#bool) |  |  |
 | config_layer | [talos.resource.definitions.enums.NetworkConfigLayer](#talos.resource.definitions.enums.NetworkConfigLayer) |  |  |
+| priority | [uint32](#uint32) |  |  |
 
 
 
@@ -3726,6 +3727,7 @@ AddressStatusSpec describes status of rendered secrets.
 | family | [talos.resource.definitions.enums.NethelpersFamily](#talos.resource.definitions.enums.NethelpersFamily) |  |  |
 | scope | [talos.resource.definitions.enums.NethelpersScope](#talos.resource.definitions.enums.NethelpersScope) |  |  |
 | flags | [uint32](#uint32) |  |  |
+| priority | [uint32](#uint32) |  |  |
 
 
 

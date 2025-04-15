@@ -112,6 +112,7 @@ func (ctrl *AddressStatusController) Run(ctx context.Context, r controller.Runti
 				status.Family = nethelpers.Family(addr.Family)
 				status.Scope = nethelpers.Scope(addr.Scope)
 				status.Flags = nethelpers.AddressFlags(addr.Attributes.Flags)
+				status.Priority = addr.Attributes.Priority
 
 				return nil
 			}); err != nil {

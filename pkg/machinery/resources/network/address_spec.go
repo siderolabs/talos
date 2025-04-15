@@ -34,6 +34,7 @@ type AddressSpecSpec struct {
 	Scope           nethelpers.Scope        `yaml:"scope" protobuf:"4"`
 	Flags           nethelpers.AddressFlags `yaml:"flags" protobuf:"5"`
 	AnnounceWithARP bool                    `yaml:"announceWithARP,omitempty" protobuf:"6"`
+	Priority        uint32                  `yaml:"priority,omitempty" protobuf:"8"`
 	ConfigLayer     ConfigLayer             `yaml:"layer" protobuf:"7"`
 }
 
