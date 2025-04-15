@@ -8,6 +8,7 @@ import (
 	"net/netip"
 	"os"
 	"os/exec"
+	"slices"
 	"strings"
 	"testing"
 	"time"
@@ -33,23 +34,24 @@ func (s *NfTablesChainSuite) nftOutput() string {
 	return string(out)
 }
 
-func (s *NfTablesChainSuite) checkNftOutput(expected string) {
+func (s *NfTablesChainSuite) checkNftOutput(expected ...string) {
 	s.T().Helper()
 
 	var prevOutput string
 
 	s.Eventually(func() bool {
 		output := s.nftOutput()
+		matches := slices.Contains(expected, strings.TrimSpace(output))
 
 		if output != prevOutput {
-			if strings.TrimSpace(output) != expected {
+			if !matches {
 				s.T().Logf("nft list table inet talos-test:\n%s", output)
 			}
 
 			prevOutput = output
 		}
 
-		return strings.TrimSpace(output) == expected
+		return matches
 	}, 5*time.Second, 100*time.Millisecond)
 }
 
@@ -351,11 +353,18 @@ func (s *NfTablesChainSuite) TestClampMSS() {
 
 	s.Require().NoError(s.State().Create(s.Ctx(), chain))
 
+	// several versions here for different version of `nft` CLI decoding the rules
 	s.checkNftOutput(`table inet talos-test {
 	chain test1 {
 		type filter hook input priority filter; policy accept;
 		meta nfproto ipv4 tcp flags syn / syn,rst tcp option maxseg size > 1380 tcp option maxseg size set 1380
 		meta nfproto ipv6 tcp flags syn / syn,rst tcp option maxseg size > 1360 tcp option maxseg size set 1360
+	}
+}`, `table inet talos-test {
+	chain test1 {
+		type filter hook input priority filter; policy accept;
+		meta nfproto ipv4 tcp flags & (syn | rst) == syn tcp option maxseg size > 1380 tcp option maxseg size set 1380
+		meta nfproto ipv6 tcp flags & (syn | rst) == syn tcp option maxseg size > 1360 tcp option maxseg size set 1360
 	}
 }`)
 }

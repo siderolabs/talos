@@ -36,6 +36,7 @@ type AddressStatusSpec struct {
 	Family    nethelpers.Family       `yaml:"family" protobuf:"8"`
 	Scope     nethelpers.Scope        `yaml:"scope" protobuf:"9"`
 	Flags     nethelpers.AddressFlags `yaml:"flags" protobuf:"10"`
+	Priority  uint32                  `yaml:"priority" protobuf:"11"`
 }
 
 // NewAddressStatus initializes a AddressStatus resource.

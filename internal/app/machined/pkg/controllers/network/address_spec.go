@@ -207,7 +207,7 @@ func (ctrl *AddressSpecController) syncAddress(ctx context.Context, r controller
 
 			// check if existing matches the spec: if it does, skip update
 			if existing.Scope == uint8(address.TypedSpec().Scope) && existing.Flags == uint8(address.TypedSpec().Flags) &&
-				existing.Attributes.Flags == uint32(address.TypedSpec().Flags) {
+				existing.Attributes.Flags == uint32(address.TypedSpec().Flags) && existing.Attributes.Priority == address.TypedSpec().Priority {
 				return nil
 			}
 
@@ -218,6 +218,8 @@ func (ctrl *AddressSpecController) syncAddress(ctx context.Context, r controller
 				zap.Stringer("new_scope", address.TypedSpec().Scope),
 				zap.Stringer("old_flags", nethelpers.AddressFlags(existing.Attributes.Flags)),
 				zap.Stringer("new_flags", address.TypedSpec().Flags),
+				zap.Uint32("old_priority", existing.Attributes.Priority),
+				zap.Uint32("new_priority", address.TypedSpec().Priority),
 			)
 
 			// delete address to get new one assigned below
@@ -240,6 +242,7 @@ func (ctrl *AddressSpecController) syncAddress(ctx context.Context, r controller
 				Local:     address.TypedSpec().Address.Addr().AsSlice(),
 				Broadcast: broadcastAddr(address.TypedSpec().Address),
 				Flags:     uint32(address.TypedSpec().Flags),
+				Priority:  address.TypedSpec().Priority,
 			},
 		}); err != nil {
 			// ignore EEXIST error

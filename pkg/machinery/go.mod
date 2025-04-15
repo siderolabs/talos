@@ -23,7 +23,7 @@ require (
 	github.com/google/cel-go v0.24.1
 	github.com/hashicorp/go-multierror v1.1.1
 	github.com/hexops/gotextdiff v1.0.3
-	github.com/jsimonetti/rtnetlink/v2 v2.0.3-0.20241216183107-2d6e9f8ad3f2
+	github.com/jsimonetti/rtnetlink/v2 v2.0.3
 	github.com/mdlayher/ethtool v0.4.0
 	github.com/opencontainers/runtime-spec v1.2.1
 	github.com/planetscale/vtprotobuf v0.6.1-0.20241121165744-79df5c4772f2
