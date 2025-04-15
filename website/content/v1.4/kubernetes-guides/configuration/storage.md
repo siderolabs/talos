@@ -136,7 +136,7 @@ There is already a how-to for Talos: [Link](https://github.com/piraeusdatastore/
 <!-- markdownlint-disable MD032 -->
 <!-- markdownlint-disable MD025 -->
 
-{{< tabpane lang="yaml" >}}
+{{< tabpane lang="yaml" right=true >}}
 {{< tab header="Strategic merge patch" >}}
 machine:
   install:

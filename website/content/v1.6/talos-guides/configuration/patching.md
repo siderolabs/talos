@@ -104,7 +104,7 @@ The goal is to add a virtual IP `192.168.10.50` to the `eth0` interface and add 
 <!-- markdownlint-disable MD032 -->
 <!-- markdownlint-disable MD025 -->
 
-{{< tabpane lang="yaml" >}}
+{{< tabpane lang="yaml" right=true >}}
 {{< tab header="Strategic merge patch" >}}
 machine:
   network:
@@ -160,7 +160,7 @@ cluster:
 
 The goal is to update pod and service subnets and disable default CNI (Flannel).
 
-{{< tabpane lang="yaml" >}}
+{{< tabpane lang="yaml" right=true >}}
 {{< tab header="Strategic merge patch" >}}
 cluster:
   network:
@@ -213,7 +213,7 @@ machine:
 
 The goal is to set the `kubelet` node IP to come from the subnet `192.168.10.0/24`.
 
-{{< tabpane lang="yaml" >}}
+{{< tabpane lang="yaml" right=true >}}
 {{< tab header="Strategic merge patch" >}}
 machine:
   kubelet:
@@ -268,7 +268,7 @@ cluster:
 
 The goal is to add an exemption for the namespace `rook-ceph`.
 
-{{< tabpane lang="yaml" >}}
+{{< tabpane lang="yaml" right=true >}}
 {{< tab header="Strategic merge patch" >}}
 cluster:
   apiServer:
