@@ -51,6 +51,16 @@ func SBCs() []SBC {
 			Documentation: "/talos-guides/install/single-board-computers/rpi_generic/",
 		},
 		{
+			Name: "revpi_generic",
+
+			OverlayName:  "revpi_generic",
+			OverlayImage: "siderolabs/sbc-raspberrypi",
+
+			Label: "Revolution Pi Series",
+
+			MinVersion: semver.MustParse("1.10.0-beta.0"),
+		},
+		{
 			Name: "bananapi_m64",
 
 			BoardName: "bananapi_m64",
@@ -162,6 +172,17 @@ func SBCs() []SBC {
 			MinVersion: semver.MustParse("1.8.0-alpha.1"),
 		},
 		{
+			Name: "rock5a",
+
+			OverlayName:  "rock5a",
+			OverlayImage: "siderolabs/sbc-rockchip",
+
+			Label:         "Radxa ROCK 5A",
+			Documentation: "/talos-guides/install/single-board-computers/rock5b/",
+
+			MinVersion: semver.MustParse("1.10.0-beta.0"),
+		},
+		{
 			Name: "rock5b",
 
 			OverlayName:  "rock5b",
@@ -226,6 +247,26 @@ func SBCs() []SBC {
 			Documentation: "/talos-guides/install/single-board-computers/orangepi_5/",
 
 			MinVersion: semver.MustParse("1.9.2"),
+		},
+		{
+			Name: "orangepi-5-plus",
+
+			OverlayName:  "orangepi-5-plus",
+			OverlayImage: "siderolabs/sbc-rockchip",
+
+			Label: "Orange Pi 5 Plus",
+
+			MinVersion: semver.MustParse("1.10.0-beta.0"),
+		},
+		{
+			Name: "rockpro64",
+
+			OverlayName:  "rockpro64",
+			OverlayImage: "siderolabs/sbc-rockchip",
+
+			Label: "Pine64 RockPro64",
+
+			MinVersion: semver.MustParse("1.10.0-beta.0"),
 		},
 	}
 }
