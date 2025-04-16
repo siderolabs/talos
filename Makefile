@@ -379,7 +379,9 @@ docs: ## Generates the documentation for machine config, and talosctl.
 .PHONY: docs-preview
 docs-preview: ## Starts a local preview of the documentation using Hugo in docker
 	@docker run --rm --interactive --tty \
-	--volume $(PWD):/src --workdir /src/website \
+	--volume $(PWD):/src \
+	--volume $(HOME)/.cache/hugo_cache:/tmp/hugo_cache \
+	--workdir /src/website \
 	--publish 1313:1313 \
 	hugomods/hugo:$(HUGO_VERSION) \
 	server
