@@ -45,9 +45,10 @@ type MountStatusExtension struct{}
 // ResourceDefinition implements meta.ResourceDefinitionProvider interface.
 func (MountStatusExtension) ResourceDefinition() meta.ResourceDefinitionSpec {
 	return meta.ResourceDefinitionSpec{
-		Type:             MountStatusType,
-		Aliases:          []resource.Type{"mounts"},
-		DefaultNamespace: NamespaceName,
+		Type:                 MountStatusType,
+		Aliases:              []resource.Type{"mounts"},
+		DefaultNamespace:     NamespaceName,
+		SkipAutomaticAliases: true,
 		PrintColumns: []meta.PrintColumn{
 			{
 				Name:     "Source",
