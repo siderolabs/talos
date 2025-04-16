@@ -35,16 +35,16 @@ replace github.com/insomniacslk/dhcp => github.com/smira/dhcp v0.0.0-20241001122
 
 // Kubernetes dependencies sharing the same version.
 require (
-	k8s.io/api v0.33.0-rc.0
-	k8s.io/apimachinery v0.33.0-rc.0
-	k8s.io/apiserver v0.33.0-rc.0
-	k8s.io/client-go v0.33.0-rc.0
-	k8s.io/component-base v0.33.0-rc.0
-	k8s.io/cri-api v0.33.0-rc.0
-	k8s.io/kube-scheduler v0.33.0-rc.0
-	k8s.io/kubectl v0.33.0-rc.0
-	k8s.io/kubelet v0.33.0-rc.0
-	k8s.io/pod-security-admission v0.33.0-rc.0
+	k8s.io/api v0.33.0-rc.1
+	k8s.io/apimachinery v0.33.0-rc.1
+	k8s.io/apiserver v0.33.0-rc.1
+	k8s.io/client-go v0.33.0-rc.1
+	k8s.io/component-base v0.33.0-rc.1
+	k8s.io/cri-api v0.33.0-rc.1
+	k8s.io/kube-scheduler v0.33.0-rc.1
+	k8s.io/kubectl v0.33.0-rc.1
+	k8s.io/kubelet v0.33.0-rc.1
+	k8s.io/pod-security-admission v0.33.0-rc.1
 )
 
 require (
@@ -323,7 +323,7 @@ require (
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/planetscale/vtprotobuf v0.6.1-0.20241121165744-79df5c4772f2 // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
-	github.com/prometheus/client_golang v1.22.0-rc.0 // indirect
+	github.com/prometheus/client_golang v1.22.0 // indirect
 	github.com/prometheus/client_model v0.6.1 // indirect
 	github.com/prometheus/common v0.63.0 // indirect
 	github.com/rivo/uniseg v0.4.7 // indirect
@@ -364,7 +364,7 @@ require (
 	gopkg.in/evanphx/json-patch.v4 v4.12.0 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
-	k8s.io/cli-runtime v0.33.0-rc.0 // indirect
+	k8s.io/cli-runtime v0.33.0-rc.1 // indirect
 	k8s.io/kube-openapi v0.0.0-20250318190949-c8a335a9a2ff // indirect
 	k8s.io/utils v0.0.0-20241104100929-3ea5e8cea738 // indirect
 	kernel.org/pub/linux/libs/security/libcap/psx v1.2.76 // indirect
