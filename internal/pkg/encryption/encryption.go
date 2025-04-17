@@ -29,7 +29,7 @@ import (
 const keyHandlerTimeout = time.Second * 10
 
 // NewHandler creates new Handler.
-func NewHandler(encryptionConfig block.EncryptionSpec, volumeID string, getSystemInformation helpers.SystemInformationGetter) (*Handler, error) {
+func NewHandler(encryptionConfig block.EncryptionSpec, volumeID string, getSystemInformation helpers.SystemInformationGetter, tpmLocker helpers.TPMLockFunc) (*Handler, error) {
 	cipher, err := luks.ParseCipherKind(encryptionConfig.Cipher)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse cipher kind: %w", err)
@@ -58,7 +58,11 @@ func NewHandler(encryptionConfig block.EncryptionSpec, volumeID string, getSyste
 	keyHandlers := make([]keys.Handler, 0, len(encryptionConfig.Keys))
 
 	for _, cfg := range encryptionConfig.Keys {
-		handler, err := keys.NewHandler(cfg, keys.WithVolumeID(volumeID), keys.WithSystemInformationGetter(getSystemInformation))
+		handler, err := keys.NewHandler(cfg,
+			keys.WithVolumeID(volumeID),
+			keys.WithSystemInformationGetter(getSystemInformation),
+			keys.WithTPMLocker(tpmLocker),
+		)
 		if err != nil {
 			return nil, err
 		}

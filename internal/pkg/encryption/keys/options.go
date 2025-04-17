@@ -13,6 +13,7 @@ type KeyOption func(o *KeyOptions) error
 type KeyOptions struct {
 	VolumeID             string
 	GetSystemInformation helpers.SystemInformationGetter
+	TPMLocker            helpers.TPMLockFunc
 }
 
 // WithVolumeID passes the partition label to the key handler.
@@ -28,6 +29,15 @@ func WithVolumeID(label string) KeyOption {
 func WithSystemInformationGetter(getter helpers.SystemInformationGetter) KeyOption {
 	return func(o *KeyOptions) error {
 		o.GetSystemInformation = getter
+
+		return nil
+	}
+}
+
+// WithTPMLocker passes the TPM locker to the key handler.
+func WithTPMLocker(locker helpers.TPMLockFunc) KeyOption {
+	return func(o *KeyOptions) error {
+		o.TPMLocker = locker
 
 		return nil
 	}
