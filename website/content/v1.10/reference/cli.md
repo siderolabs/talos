@@ -167,6 +167,7 @@ talosctl cluster create [flags]
       --docker-host-ip string                    Host IP to forward exposed ports to (Docker provisioner only) (default "0.0.0.0")
       --encrypt-ephemeral                        enable ephemeral partition encryption
       --encrypt-state                            enable state partition encryption
+      --encrypt-user-volumes                     enable ephemeral partition encryption
       --endpoint string                          use endpoint instead of provider defaults
   -p, --exposed-ports string                     Comma-separated list of ports/protocols to expose on init node. Ex -p <hostPort>:<containerPort>/<protocol (tcp or udp)> (Docker provisioner only)
       --extra-boot-kernel-args string            add extra kernel args to the initial boot from vmlinuz and initramfs (QEMU only)

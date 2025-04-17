@@ -225,6 +225,8 @@ provisioning:
     match: disk.transport == 'nvme' && !system_disk
 ```
 
+> Note: Currently, encryption for `EPHEMERAL` and `STATE` volumes is configured using [another config document]({{< relref "../../reference/configuration/v1alpha1/config#Config.machine.systemDiskEncryption" >}}).
+
 ### `IMAGECACHE` Volume
 
 This system volume is not provisioned by default, and it only gets created if the [Image Cache]({{< relref "image-cache" >}}) feature is enabled.
@@ -244,6 +246,8 @@ The volume name must be unique across all user volumes, and it should be between
 
 The volume label is derived from the volume name as `u-<volume-name>`, and it is used to identify the volume on the disk after initial provisioning.
 The volume mount location is `/var/mnt/<volume-name>`, and it gets automatically propagated into the `kubelet` container to provide additional features like `subPath` mounts.
+
+Disk encryption can be optionally enabled for user volumes.
 
 ### Creating User Volumes
 
