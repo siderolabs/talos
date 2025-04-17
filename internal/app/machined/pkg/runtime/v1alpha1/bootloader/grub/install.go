@@ -42,7 +42,7 @@ func (c *Config) Install(opts options.InstallOptions) (*options.InstallResult, e
 	efiMountSpec := mount.Spec{
 		PartitionLabel: constants.EFIPartitionLabel,
 		FilesystemType: partition.FilesystemTypeVFAT,
-		MountTarget:    constants.EFIMountPoint,
+		MountTarget:    filepath.Join(opts.MountPrefix, constants.EFIMountPoint),
 	}
 
 	// check if the EFI partition is present
