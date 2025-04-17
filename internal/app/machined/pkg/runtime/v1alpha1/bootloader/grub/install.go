@@ -149,7 +149,11 @@ func (c *Config) install(opts options.InstallOptions) (*options.InstallResult, e
 
 	switch opts.Arch {
 	case amd64:
-		platforms = []string{"x86_64-efi", "i386-pc"}
+		if c.installEFI {
+			platforms = append(platforms, "x86_64-efi")
+		}
+
+		platforms = append(platforms, "i386-pc")
 	case arm64:
 		platforms = []string{"arm64-efi"}
 	}
