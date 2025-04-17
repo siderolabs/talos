@@ -232,9 +232,6 @@ func (*Sequencer) Boot(r runtime.Runtime) []runtime.Phase {
 		"userSetup",
 		pauseOnFailure(WriteUserFiles, constants.FailurePauseTimeout),
 	).Append(
-		"extendPCRStartAll",
-		ExtendPCRStartAll,
-	).Append(
 		"startEverything",
 		StartAllServices,
 	)

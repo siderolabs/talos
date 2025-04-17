@@ -35,7 +35,7 @@ func HandleEncryption(ctx context.Context, logger *zap.Logger, volumeContext Man
 	case block.EncryptionProviderLUKS2:
 		encryptionConfig := volumeContext.Cfg.TypedSpec().Encryption
 
-		handler, err := encryption.NewHandler(encryptionConfig, volumeContext.Cfg.Metadata().ID(), volumeContext.GetSystemInformation)
+		handler, err := encryption.NewHandler(encryptionConfig, volumeContext.Cfg.Metadata().ID(), volumeContext.GetSystemInformation, volumeContext.TPMLocker)
 		if err != nil {
 			return fmt.Errorf("failed to create encryption handler: %w", err)
 		}

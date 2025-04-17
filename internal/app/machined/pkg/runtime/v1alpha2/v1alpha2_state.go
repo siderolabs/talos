@@ -130,6 +130,7 @@ func NewState() (*State, error) {
 		&hardware.PCIDevice{},
 		&hardware.PCIDriverRebindConfig{},
 		&hardware.PCIDriverRebindStatus{},
+		&hardware.PCRStatus{},
 		&hardware.Processor{},
 		&hardware.SystemInformation{},
 		&k8s.AdmissionControlConfig{},

@@ -8,7 +8,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/resource"
 )
 
-//go:generate deep-copy -type MemoryModuleSpec -type PCIDeviceSpec -type PCIDriverRebindConfigSpec -type PCIDriverRebindStatusSpec -type ProcessorSpec -type SystemInformationSpec -header-file ../../../../hack/boilerplate.txt -o deep_copy.generated.go .
+//go:generate deep-copy -type MemoryModuleSpec -type PCIDeviceSpec -type PCIDriverRebindConfigSpec -type PCIDriverRebindStatusSpec -type PCRStatusSpec -type ProcessorSpec -type SystemInformationSpec -header-file ../../../../hack/boilerplate.txt -o deep_copy.generated.go .
 
 // NamespaceName contains resources related to hardware as a whole.
 const NamespaceName resource.Namespace = "hardware"

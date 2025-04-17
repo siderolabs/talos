@@ -91,6 +91,11 @@ func (ctrl *VolumeManagerController) Inputs() []controller.Input {
 			ID:        optional.Some(block.VolumeLifecycleID),
 			Kind:      controller.InputStrong,
 		},
+		{
+			Namespace: hardware.NamespaceName,
+			Type:      hardware.PCRStatusType,
+			Kind:      controller.InputStrong,
+		},
 	}
 }
 
@@ -381,6 +386,7 @@ func (ctrl *VolumeManagerController) Run(ctx context.Context, r controller.Runti
 
 						return systemInfo, nil
 					},
+					TPMLocker:         hardware.LockPCRStatus(r, constants.UKIPCR, vc.Metadata().ID()),
 					ShouldCloseVolume: shouldCloseVolume,
 				},
 			); err != nil {
