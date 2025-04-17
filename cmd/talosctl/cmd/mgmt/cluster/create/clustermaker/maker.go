@@ -35,6 +35,8 @@ import (
 	"github.com/siderolabs/talos/pkg/provision/access"
 )
 
+var _ ClusterMaker = &clusterMaker{}
+
 type clusterMaker struct {
 	// input fields
 	options      Options
@@ -211,10 +213,6 @@ func (cm *clusterMaker) init(input Input) error {
 	}
 
 	if err := cm.createPartialClusterRequest(); err != nil {
-		return err
-	}
-
-	if err := cm.createNodeRequests(); err != nil {
 		return err
 	}
 
@@ -447,7 +445,15 @@ func (cm *clusterMaker) createPartialClusterRequest() error {
 		return err
 	}
 
-	return cm.initNetworkParams()
+	if err := cm.initNetworkParams(); err != nil {
+		return err
+	}
+
+	if err := cm.createNodeRequests(); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (cm *clusterMaker) createNodeRequests() error {

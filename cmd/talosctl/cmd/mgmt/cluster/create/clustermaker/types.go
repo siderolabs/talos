@@ -29,8 +29,11 @@ type ClusterMaker interface {
 	GetVersionContract() *config.VersionContract
 	GetCIDR4() netip.Prefix
 
+	// AddGenOps can be optionally used to add additional generate options.
 	AddGenOps(opts ...generate.Option)
+	// AddProvisionOps can be optionally used to add additional provision options.
 	AddProvisionOps(opts ...provision.Option)
+	// AddCfgBundleOpts can be optionally used to add additional config budnle options.
 	AddCfgBundleOpts(opts ...bundle.Option)
 
 	// SetInClusterEndpoint can be optionally used to override the in cluster endpoint.
@@ -39,10 +42,12 @@ type ClusterMaker interface {
 	// CreateCluster finalizes the clusterRequest by rendering and applying configs,
 	// after which it creates the cluster via the provisioner.
 	CreateCluster(ctx context.Context, request PartialClusterRequest) error
+
+	// PostCreate waits for cluster to be ready and applies configs.
 	PostCreate(ctx context.Context) error
 }
 
-// Options to make a cluster.
+// Common cluster creation options across providers.
 type Options struct {
 	// RootOps are the options from the root cluster command
 	RootOps                   *cluster.CmdOps

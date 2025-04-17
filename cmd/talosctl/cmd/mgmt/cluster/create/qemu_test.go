@@ -5,12 +5,17 @@
 package create //nolint:testpackage
 
 import (
+	"bytes"
 	"context"
+	"encoding/base64"
+	"io"
 	"net/netip"
 	"strings"
 	"testing"
 	"time"
 
+	"github.com/klauspost/compress/zstd"
+	"github.com/siderolabs/go-procfs/procfs"
 	sideronet "github.com/siderolabs/net"
 	"github.com/stretchr/testify/assert"
 
@@ -225,9 +230,22 @@ func TestWithSiderolinkAgentOption(t *testing.T) {
 	provisionOpts, err := cm.getProvisionOpts()
 	assert.NoError(t, err)
 
-	assert.Contains(t, cm.finalReq.Nodes[0].ExtraKernelArgs.String(), "siderolink.api=grpc://10.50.0.0")
-	assert.Contains(t, cm.finalReq.Nodes[3].ExtraKernelArgs.String(), "siderolink.api=grpc://10.50.0.0")
+	assert.Contains(t, getKernelArgs(t, cm.finalReq.Nodes[0].ExtraKernelArgs), "apiUrl: grpc://10.50.0.0")
+	assert.Contains(t, getKernelArgs(t, cm.finalReq.Nodes[3].ExtraKernelArgs), "apiUrl: grpc://10.50.0.0")
 	assert.True(t, provisionOpts.SiderolinkEnabled)
+}
+
+func getKernelArgs(t *testing.T, extraKernelArgs *procfs.Cmdline) string {
+	first := extraKernelArgs.Parameters[0].First()
+	extraKernelArgsDecoded, err := base64.StdEncoding.DecodeString(*first)
+	assert.NoError(t, err)
+	zr, err := zstd.NewReader(bytes.NewReader([]byte(extraKernelArgsDecoded)))
+	defer zr.Close()
+	assert.NoError(t, err)
+
+	extraKernelArgsStr, err := io.ReadAll(zr)
+	assert.NoError(t, err)
+	return string(extraKernelArgsStr)
 }
 
 func TestWithUUIDHostnames(t *testing.T) {

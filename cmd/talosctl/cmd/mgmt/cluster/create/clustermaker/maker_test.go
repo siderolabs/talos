@@ -106,6 +106,40 @@ func bundleApply(t *testing.T, opts ...bundle.Option) bundle.Options {
 
 const testTalosVersion = "1.1"
 
+func addFieldTest(testName string, fieldNames []string, test func(t *testing.T)) {
+	testedFields = append(testedFields, fieldNames...)
+	name := fmt.Sprintf("Test%sField", fieldNames[0])
+
+	if testName != "" {
+		name = testName
+	}
+
+	if len(fieldNames) > 1 && testName == "" {
+		panic("no test name specified with multiple fields tested")
+	}
+
+	fieldTests = append(fieldTests, fieldTest{fieldNames, test, name})
+}
+
+var fieldTests []fieldTest
+
+type fieldTest = struct {
+	fieldNames []string
+	test       func(t *testing.T)
+	name       string
+}
+
+var testedFields = []string{}
+
+func getFinalizedClusterMaker(t *testing.T, input Options) clusterMaker {
+	cm, err := newClusterMaker(Input{input, testProvisioner{}, testTalosVersion})
+	assert.NoError(t, err)
+	err = cm.finalizeRequest()
+	assert.NoError(t, err)
+
+	return cm
+}
+
 func init() {
 	addFieldTest("TestCriticalOptions",
 		n(&tf, &tf.Workers, &tf.Controlplanes, &tf.NetworkCIDR, &tf.NetworkMTU, &tf.WorkersCpus, &tf.ControlPlaneCpus,
@@ -370,18 +404,11 @@ func init() {
 		input.InputDir = dir
 		cm = getFinalizedClusterMaker(t, input)
 
-		assert.EqualValues(t, "https://test.mirror", cm.request.Nodes.WorkerNodes()[0].Config.RawV1Alpha1().MachineConfig.Registries().Mirrors()["test.test"].Endpoints()[0])
-		assert.EqualValues(t, "https://test.mirror", cm.request.Nodes.ControlPlaneNodes()[0].Config.RawV1Alpha1().MachineConfig.Registries().Mirrors()["test.test"].Endpoints()[0])
+		assert.EqualValues(t, "https://test.mirror",
+			cm.request.Nodes.WorkerNodes()[0].Config.RawV1Alpha1().MachineConfig.Registries().Mirrors()["test.test"].Endpoints()[0].Endpoint())
+		assert.EqualValues(t, "https://test.mirror",
+			cm.request.Nodes.ControlPlaneNodes()[0].Config.RawV1Alpha1().MachineConfig.Registries().Mirrors()["test.test"].Endpoints()[0].Endpoint())
 	})
-}
-
-func getFinalizedClusterMaker(t *testing.T, input Options) clusterMaker {
-	cm, err := newClusterMaker(Input{input, testProvisioner{}, testTalosVersion})
-	assert.NoError(t, err)
-	err = cm.finalizeRequest()
-	assert.NoError(t, err)
-
-	return cm
 }
 
 func getGenOpts(t *testing.T, input Options) generate.Options {
@@ -394,31 +421,6 @@ func getGenOpts(t *testing.T, input Options) generate.Options {
 
 	return result.Options
 }
-
-func addFieldTest(testName string, fieldNames []string, test func(t *testing.T)) {
-	testedFields = append(testedFields, fieldNames...)
-	name := fmt.Sprintf("Test%sField", fieldNames[0])
-
-	if testName != "" {
-		name = testName
-	}
-
-	if len(fieldNames) > 1 && testName == "" {
-		panic("no test name specified with multiple fields tested")
-	}
-
-	fieldTests = append(fieldTests, fieldTest{fieldNames, test, name})
-}
-
-var fieldTests []fieldTest
-
-type fieldTest = struct {
-	fieldNames []string
-	test       func(t *testing.T)
-	name       string
-}
-
-var testedFields = []string{}
 
 func TestAllOptionFields(t *testing.T) {
 	for _, fieldTest := range fieldTests {
