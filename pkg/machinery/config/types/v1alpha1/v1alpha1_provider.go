@@ -19,7 +19,6 @@ import (
 	"github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/siderolabs/crypto/x509"
 	"github.com/siderolabs/gen/xslices"
-	"github.com/siderolabs/go-blockdevice/v2/encryption"
 	"github.com/siderolabs/go-pointer"
 
 	"github.com/siderolabs/talos/pkg/machinery/cel"
@@ -27,6 +26,7 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/config/config"
 	"github.com/siderolabs/talos/pkg/machinery/config/machine"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
+	"github.com/siderolabs/talos/pkg/machinery/resources/block"
 )
 
 // Verify interfaces.
@@ -1532,12 +1532,15 @@ func (p *DiskPartition) MountPoint() string {
 }
 
 // Provider implements the config.Provider interface.
-func (e *EncryptionConfig) Provider() string {
+func (e *EncryptionConfig) Provider() block.EncryptionProviderType {
 	if e.EncryptionProvider == "" {
-		return encryption.LUKS2
+		return block.EncryptionProviderLUKS2
 	}
 
-	return e.EncryptionProvider
+	// the provider is validated in the machine config validation
+	provider, _ := block.EncryptionProviderTypeString(e.EncryptionProvider) //nolint:errcheck
+
+	return provider
 }
 
 // Cipher implements the config.Provider interface.
@@ -1646,7 +1649,7 @@ func (e *EncryptionKeyKMS) String() string {
 }
 
 // Get implements the config.Provider interface.
-func (e *SystemDiskEncryptionConfig) Get(label string) config.Encryption {
+func (e *SystemDiskEncryptionConfig) Get(label string) config.EncryptionConfig {
 	switch label {
 	case constants.StatePartitionLabel:
 		if e.StatePartition == nil {

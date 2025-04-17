@@ -16,6 +16,158 @@
       "type": "object",
       "description": "DiskSelector selects a disk for the volume."
     },
+    "block.EncryptionKey": {
+      "properties": {
+        "slot": {
+          "type": "integer",
+          "title": "slot",
+          "description": "Key slot number for LUKS2 encryption.\n",
+          "markdownDescription": "Key slot number for LUKS2 encryption.",
+          "x-intellij-html-description": "\u003cp\u003eKey slot number for LUKS2 encryption.\u003c/p\u003e\n"
+        },
+        "static": {
+          "$ref": "#/$defs/block.EncryptionKeyStatic",
+          "title": "static",
+          "description": "Key which value is stored in the configuration file.\n",
+          "markdownDescription": "Key which value is stored in the configuration file.",
+          "x-intellij-html-description": "\u003cp\u003eKey which value is stored in the configuration file.\u003c/p\u003e\n"
+        },
+        "nodeID": {
+          "$ref": "#/$defs/block.EncryptionKeyNodeID",
+          "title": "nodeID",
+          "description": "Deterministically generated key from the node UUID and PartitionLabel.\n",
+          "markdownDescription": "Deterministically generated key from the node UUID and PartitionLabel.",
+          "x-intellij-html-description": "\u003cp\u003eDeterministically generated key from the node UUID and PartitionLabel.\u003c/p\u003e\n"
+        },
+        "kms": {
+          "$ref": "#/$defs/block.EncryptionKeyKMS",
+          "title": "kms",
+          "description": "KMS managed encryption key.\n",
+          "markdownDescription": "KMS managed encryption key.",
+          "x-intellij-html-description": "\u003cp\u003eKMS managed encryption key.\u003c/p\u003e\n"
+        },
+        "tpm": {
+          "$ref": "#/$defs/block.EncryptionKeyTPM",
+          "title": "tpm",
+          "description": "Enable TPM based disk encryption.\n",
+          "markdownDescription": "Enable TPM based disk encryption.",
+          "x-intellij-html-description": "\u003cp\u003eEnable TPM based disk encryption.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "description": "EncryptionKey represents configuration for disk encryption key."
+    },
+    "block.EncryptionKeyKMS": {
+      "properties": {
+        "endpoint": {
+          "type": "string",
+          "title": "endpoint",
+          "description": "KMS endpoint to Seal/Unseal the key.\n",
+          "markdownDescription": "KMS endpoint to Seal/Unseal the key.",
+          "x-intellij-html-description": "\u003cp\u003eKMS endpoint to Seal/Unseal the key.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "description": "EncryptionKeyKMS represents a key that is generated and then sealed/unsealed by the KMS server."
+    },
+    "block.EncryptionKeyNodeID": {
+      "properties": {},
+      "additionalProperties": false,
+      "type": "object",
+      "description": "EncryptionKeyNodeID represents deterministically generated key from the node UUID and PartitionLabel."
+    },
+    "block.EncryptionKeyStatic": {
+      "properties": {
+        "passphrase": {
+          "type": "string",
+          "title": "passphrase",
+          "description": "Defines the static passphrase value.\n",
+          "markdownDescription": "Defines the static passphrase value.",
+          "x-intellij-html-description": "\u003cp\u003eDefines the static passphrase value.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "description": "EncryptionKeyStatic represents throw away key type."
+    },
+    "block.EncryptionKeyTPM": {
+      "properties": {
+        "checkSecurebootStatusOnEnroll": {
+          "type": "boolean",
+          "title": "checkSecurebootStatusOnEnroll",
+          "description": "Check that Secureboot is enabled in the EFI firmware.\nIf Secureboot is not enabled, the enrollment of the key will fail. As the TPM key is anyways bound to the value of PCR 7, changing Secureboot status or configuration after the initial enrollment will make the key unusable.\n",
+          "markdownDescription": "Check that Secureboot is enabled in the EFI firmware.\nIf Secureboot is not enabled, the enrollment of the key will fail. As the TPM key is anyways bound to the value of PCR 7, changing Secureboot status or configuration after the initial enrollment will make the key unusable.",
+          "x-intellij-html-description": "\u003cp\u003eCheck that Secureboot is enabled in the EFI firmware.\nIf Secureboot is not enabled, the enrollment of the key will fail. As the TPM key is anyways bound to the value of PCR 7, changing Secureboot status or configuration after the initial enrollment will make the key unusable.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "description": "EncryptionKeyTPM represents a key that is generated and then sealed/unsealed by the TPM."
+    },
+    "block.EncryptionSpec": {
+      "properties": {
+        "provider": {
+          "enum": [
+            "luks2"
+          ],
+          "title": "provider",
+          "description": "Encryption provider to use for the encryption.\n",
+          "markdownDescription": "Encryption provider to use for the encryption.",
+          "x-intellij-html-description": "\u003cp\u003eEncryption provider to use for the encryption.\u003c/p\u003e\n"
+        },
+        "keys": {
+          "items": {
+            "$ref": "#/$defs/block.EncryptionKey"
+          },
+          "type": "array",
+          "title": "keys",
+          "description": "Defines the encryption keys generation and storage method.\n",
+          "markdownDescription": "Defines the encryption keys generation and storage method.",
+          "x-intellij-html-description": "\u003cp\u003eDefines the encryption keys generation and storage method.\u003c/p\u003e\n"
+        },
+        "cipher": {
+          "enum": [
+            "aes-xts-plain64",
+            "xchacha12,aes-adiantum-plain64",
+            "xchacha20,aes-adiantum-plain64"
+          ],
+          "title": "cipher",
+          "description": "Cipher to use for the encryption. Depends on the encryption provider.\n",
+          "markdownDescription": "Cipher to use for the encryption. Depends on the encryption provider.",
+          "x-intellij-html-description": "\u003cp\u003eCipher to use for the encryption. Depends on the encryption provider.\u003c/p\u003e\n"
+        },
+        "keySize": {
+          "type": "integer",
+          "title": "keySize",
+          "description": "Defines the encryption key length.\n",
+          "markdownDescription": "Defines the encryption key length.",
+          "x-intellij-html-description": "\u003cp\u003eDefines the encryption key length.\u003c/p\u003e\n"
+        },
+        "blockSize": {
+          "type": "integer",
+          "title": "blockSize",
+          "description": "Defines the encryption sector size.\n",
+          "markdownDescription": "Defines the encryption sector size.",
+          "x-intellij-html-description": "\u003cp\u003eDefines the encryption sector size.\u003c/p\u003e\n"
+        },
+        "options": {
+          "enum": [
+            "no_read_workqueue",
+            "no_write_workqueue",
+            "same_cpu_crypt"
+          ],
+          "title": "options",
+          "description": "Additional –perf parameters for the LUKS2 encryption.\n",
+          "markdownDescription": "Additional --perf parameters for the LUKS2 encryption.",
+          "x-intellij-html-description": "\u003cp\u003eAdditional \u0026ndash;perf parameters for the LUKS2 encryption.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "description": "EncryptionSpec represents volume encryption settings."
+    },
     "block.FilesystemSpec": {
       "properties": {
         "type": {
@@ -108,6 +260,13 @@
           "description": "The filesystem describes how the volume is formatted.\n",
           "markdownDescription": "The filesystem describes how the volume is formatted.",
           "x-intellij-html-description": "\u003cp\u003eThe filesystem describes how the volume is formatted.\u003c/p\u003e\n"
+        },
+        "encryption": {
+          "$ref": "#/$defs/block.EncryptionSpec",
+          "title": "encryption",
+          "description": "The encryption describes how the volume is encrypted.\n",
+          "markdownDescription": "The encryption describes how the volume is encrypted.",
+          "x-intellij-html-description": "\u003cp\u003eThe encryption describes how the volume is encrypted.\u003c/p\u003e\n"
         }
       },
       "additionalProperties": false,

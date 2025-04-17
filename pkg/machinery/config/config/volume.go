@@ -87,6 +87,7 @@ type UserVolumeConfig interface {
 	UserVolumeConfigSignal()
 	Provisioning() VolumeProvisioningConfig
 	Filesystem() FilesystemConfig
+	Encryption() EncryptionConfig
 }
 
 // FilesystemConfig defines the interface to access filesystem configuration.

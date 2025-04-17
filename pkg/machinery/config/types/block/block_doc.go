@@ -10,6 +10,232 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/config/encoder"
 )
 
+func (EncryptionSpec) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "EncryptionSpec",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "EncryptionSpec represents volume encryption settings." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "EncryptionSpec represents volume encryption settings.",
+		AppearsIn: []encoder.Appearance{
+			{
+				TypeName:  "UserVolumeConfigV1Alpha1",
+				FieldName: "encryption",
+			},
+		},
+		Fields: []encoder.Doc{
+			{
+				Name:        "provider",
+				Type:        "EncryptionProviderType",
+				Note:        "",
+				Description: "Encryption provider to use for the encryption.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Encryption provider to use for the encryption." /* encoder.LineComment */, "" /* encoder.FootComment */},
+				Values: []string{
+					"luks2",
+				},
+			},
+			{
+				Name:        "keys",
+				Type:        "[]EncryptionKey",
+				Note:        "",
+				Description: "Defines the encryption keys generation and storage method.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Defines the encryption keys generation and storage method." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "cipher",
+				Type:        "string",
+				Note:        "",
+				Description: "Cipher to use for the encryption. Depends on the encryption provider.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Cipher to use for the encryption. Depends on the encryption provider." /* encoder.LineComment */, "" /* encoder.FootComment */},
+				Values: []string{
+					"aes-xts-plain64",
+					"xchacha12,aes-adiantum-plain64",
+					"xchacha20,aes-adiantum-plain64",
+				},
+			},
+			{
+				Name:        "keySize",
+				Type:        "uint",
+				Note:        "",
+				Description: "Defines the encryption key length.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Defines the encryption key length." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "blockSize",
+				Type:        "uint64",
+				Note:        "",
+				Description: "Defines the encryption sector size.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Defines the encryption sector size." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "options",
+				Type:        "[]string",
+				Note:        "",
+				Description: "Additional --perf parameters for the LUKS2 encryption.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Additional --perf parameters for the LUKS2 encryption." /* encoder.LineComment */, "" /* encoder.FootComment */},
+				Values: []string{
+					"no_read_workqueue",
+					"no_write_workqueue",
+					"same_cpu_crypt",
+				},
+			},
+		},
+	}
+
+	doc.AddExample("", exampleEncryptionSpec())
+
+	doc.Fields[2].AddExample("", "aes-xts-plain64")
+	doc.Fields[4].AddExample("", 4096)
+	doc.Fields[5].AddExample("", []string{"no_read_workqueue", "no_write_workqueue"})
+
+	return doc
+}
+
+func (EncryptionKey) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "EncryptionKey",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "EncryptionKey represents configuration for disk encryption key." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "EncryptionKey represents configuration for disk encryption key.",
+		AppearsIn: []encoder.Appearance{
+			{
+				TypeName:  "EncryptionSpec",
+				FieldName: "keys",
+			},
+		},
+		Fields: []encoder.Doc{
+			{
+				Name:        "slot",
+				Type:        "int",
+				Note:        "",
+				Description: "Key slot number for LUKS2 encryption.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Key slot number for LUKS2 encryption." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "static",
+				Type:        "EncryptionKeyStatic",
+				Note:        "",
+				Description: "Key which value is stored in the configuration file.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Key which value is stored in the configuration file." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "nodeID",
+				Type:        "EncryptionKeyNodeID",
+				Note:        "",
+				Description: "Deterministically generated key from the node UUID and PartitionLabel.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Deterministically generated key from the node UUID and PartitionLabel." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "kms",
+				Type:        "EncryptionKeyKMS",
+				Note:        "",
+				Description: "KMS managed encryption key.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "KMS managed encryption key." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "tpm",
+				Type:        "EncryptionKeyTPM",
+				Note:        "",
+				Description: "Enable TPM based disk encryption.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Enable TPM based disk encryption." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
+
+	return doc
+}
+
+func (EncryptionKeyStatic) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "EncryptionKeyStatic",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "EncryptionKeyStatic represents throw away key type." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "EncryptionKeyStatic represents throw away key type.",
+		AppearsIn: []encoder.Appearance{
+			{
+				TypeName:  "EncryptionKey",
+				FieldName: "static",
+			},
+		},
+		Fields: []encoder.Doc{
+			{
+				Name:        "passphrase",
+				Type:        "string",
+				Note:        "",
+				Description: "Defines the static passphrase value.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Defines the static passphrase value." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
+
+	return doc
+}
+
+func (EncryptionKeyKMS) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "EncryptionKeyKMS",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "EncryptionKeyKMS represents a key that is generated and then sealed/unsealed by the KMS server." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "EncryptionKeyKMS represents a key that is generated and then sealed/unsealed by the KMS server.",
+		AppearsIn: []encoder.Appearance{
+			{
+				TypeName:  "EncryptionKey",
+				FieldName: "kms",
+			},
+		},
+		Fields: []encoder.Doc{
+			{
+				Name:        "endpoint",
+				Type:        "string",
+				Note:        "",
+				Description: "KMS endpoint to Seal/Unseal the key.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "KMS endpoint to Seal/Unseal the key." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
+
+	doc.AddExample("", exampleKMSKey())
+
+	return doc
+}
+
+func (EncryptionKeyTPM) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "EncryptionKeyTPM",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "EncryptionKeyTPM represents a key that is generated and then sealed/unsealed by the TPM." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "EncryptionKeyTPM represents a key that is generated and then sealed/unsealed by the TPM.",
+		AppearsIn: []encoder.Appearance{
+			{
+				TypeName:  "EncryptionKey",
+				FieldName: "tpm",
+			},
+		},
+		Fields: []encoder.Doc{
+			{
+				Name:        "checkSecurebootStatusOnEnroll",
+				Type:        "bool",
+				Note:        "",
+				Description: "Check that Secureboot is enabled in the EFI firmware.\nIf Secureboot is not enabled, the enrollment of the key will fail. As the TPM key is anyways bound to the value of PCR 7, changing Secureboot status or configuration after the initial enrollment will make the key unusable.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Check that Secureboot is enabled in the EFI firmware." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
+
+	return doc
+}
+
+func (EncryptionKeyNodeID) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "EncryptionKeyNodeID",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "EncryptionKeyNodeID represents deterministically generated key from the node UUID and PartitionLabel." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "EncryptionKeyNodeID represents deterministically generated key from the node UUID and PartitionLabel.",
+		AppearsIn: []encoder.Appearance{
+			{
+				TypeName:  "EncryptionKey",
+				FieldName: "nodeID",
+			},
+		},
+		Fields: []encoder.Doc{},
+	}
+
+	return doc
+}
+
 func (VolumeConfigV1Alpha1) Doc() *encoder.Doc {
 	doc := &encoder.Doc{
 		Type:        "VolumeConfig",
@@ -148,6 +374,13 @@ func (UserVolumeConfigV1Alpha1) Doc() *encoder.Doc {
 				Description: "The filesystem describes how the volume is formatted.",
 				Comments:    [3]string{"" /* encoder.HeadComment */, "The filesystem describes how the volume is formatted." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
+			{
+				Name:        "encryption",
+				Type:        "EncryptionSpec",
+				Note:        "",
+				Description: "The encryption describes how the volume is encrypted.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "The encryption describes how the volume is encrypted." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
 		},
 	}
 
@@ -191,6 +424,12 @@ func GetFileDoc() *encoder.FileDoc {
 		Name:        "block",
 		Description: "Package block provides block device and volume configuration documents.\n",
 		Structs: []*encoder.Doc{
+			EncryptionSpec{}.Doc(),
+			EncryptionKey{}.Doc(),
+			EncryptionKeyStatic{}.Doc(),
+			EncryptionKeyKMS{}.Doc(),
+			EncryptionKeyTPM{}.Doc(),
+			EncryptionKeyNodeID{}.Doc(),
 			VolumeConfigV1Alpha1{}.Doc(),
 			ProvisioningSpec{}.Doc(),
 			DiskSelector{}.Doc(),
