@@ -44,6 +44,33 @@ func TestUserVolumeConfigMarshalUnmarshal(t *testing.T) {
 				return c
 			},
 		},
+		{
+			name:     "encrypted",
+			filename: "uservolumeconfig_encrypted.yaml",
+			cfg: func(t *testing.T) *block.UserVolumeConfigV1Alpha1 {
+				c := block.NewUserVolumeConfigV1Alpha1()
+				c.MetaName = "secret-store"
+
+				require.NoError(t, c.ProvisioningSpec.DiskSelectorSpec.Match.UnmarshalText([]byte(`!system_disk`)))
+				c.ProvisioningSpec.ProvisioningMinSize = block.MustByteSize("10GiB")
+				c.EncryptionSpec.EncryptionProvider = blockres.EncryptionProviderLUKS2
+				c.EncryptionSpec.EncryptionCipher = "aes-xts-plain64"
+				c.EncryptionSpec.EncryptionKeys = []block.EncryptionKey{
+					{
+						KeySlot: 0,
+						KeyTPM:  &block.EncryptionKeyTPM{},
+					},
+					{
+						KeySlot: 1,
+						KeyStatic: &block.EncryptionKeyStatic{
+							KeyData: "topsecret",
+						},
+					},
+				}
+
+				return c
+			},
+		},
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
@@ -176,6 +203,72 @@ func TestUserVolumeConfigValidate(t *testing.T) {
 			expectedErrors: "unsupported filesystem type: iso9660",
 		},
 		{
+			name: "no encryption provider",
+
+			cfg: func(t *testing.T) *block.UserVolumeConfigV1Alpha1 {
+				c := block.NewUserVolumeConfigV1Alpha1()
+				c.MetaName = constants.EphemeralPartitionLabel
+
+				require.NoError(t, c.ProvisioningSpec.DiskSelectorSpec.Match.UnmarshalText([]byte(`system_disk`)))
+				c.ProvisioningSpec.ProvisioningMinSize = block.MustByteSize("10GiB")
+				c.EncryptionSpec.EncryptionKeys = []block.EncryptionKey{
+					{
+						KeySlot: 0,
+						KeyTPM:  &block.EncryptionKeyTPM{},
+					},
+				}
+
+				return c
+			},
+
+			expectedErrors: "unsupported encryption provider: none",
+		},
+		{
+			name: "no encryption keys",
+
+			cfg: func(t *testing.T) *block.UserVolumeConfigV1Alpha1 {
+				c := block.NewUserVolumeConfigV1Alpha1()
+				c.MetaName = constants.EphemeralPartitionLabel
+
+				require.NoError(t, c.ProvisioningSpec.DiskSelectorSpec.Match.UnmarshalText([]byte(`system_disk`)))
+				c.ProvisioningSpec.ProvisioningMinSize = block.MustByteSize("10GiB")
+				c.EncryptionSpec.EncryptionProvider = blockres.EncryptionProviderLUKS2
+
+				return c
+			},
+
+			expectedErrors: "encryption keys are required",
+		},
+		{
+			name: "invalid encryption key slots",
+
+			cfg: func(t *testing.T) *block.UserVolumeConfigV1Alpha1 {
+				c := block.NewUserVolumeConfigV1Alpha1()
+				c.MetaName = constants.EphemeralPartitionLabel
+
+				require.NoError(t, c.ProvisioningSpec.DiskSelectorSpec.Match.UnmarshalText([]byte(`system_disk`)))
+				c.ProvisioningSpec.ProvisioningMinSize = block.MustByteSize("10GiB")
+				c.EncryptionSpec.EncryptionProvider = blockres.EncryptionProviderLUKS2
+				c.EncryptionSpec.EncryptionKeys = []block.EncryptionKey{
+					{
+						KeySlot: 1,
+						KeyTPM:  &block.EncryptionKeyTPM{},
+					},
+					{
+						KeySlot: 0,
+					},
+					{
+						KeySlot: 1,
+						KeyTPM:  &block.EncryptionKeyTPM{},
+					},
+				}
+
+				return c
+			},
+
+			expectedErrors: "at least one encryption key type must be specified for slot 0\nduplicate key slot 1",
+		},
+		{
 			name: "valid",
 
 			cfg: func(t *testing.T) *block.UserVolumeConfigV1Alpha1 {
@@ -186,6 +279,27 @@ func TestUserVolumeConfigValidate(t *testing.T) {
 				c.ProvisioningSpec.ProvisioningMaxSize = block.MustByteSize("2.5TiB")
 				c.ProvisioningSpec.ProvisioningMinSize = block.MustByteSize("10GiB")
 				c.FilesystemSpec.FilesystemType = blockres.FilesystemTypeEXT4
+
+				return c
+			},
+		},
+		{
+			name: "valid encrypted",
+
+			cfg: func(t *testing.T) *block.UserVolumeConfigV1Alpha1 {
+				c := block.NewUserVolumeConfigV1Alpha1()
+				c.MetaName = constants.EphemeralPartitionLabel
+
+				require.NoError(t, c.ProvisioningSpec.DiskSelectorSpec.Match.UnmarshalText([]byte(`system_disk`)))
+				c.ProvisioningSpec.ProvisioningMinSize = block.MustByteSize("10GiB")
+				c.EncryptionSpec.EncryptionProvider = blockres.EncryptionProviderLUKS2
+				c.EncryptionSpec.EncryptionCipher = "aes-xts-plain64"
+				c.EncryptionSpec.EncryptionKeys = []block.EncryptionKey{
+					{
+						KeySlot: 0,
+						KeyTPM:  &block.EncryptionKeyTPM{},
+					},
+				}
 
 				return c
 			},

@@ -115,7 +115,7 @@ case "${WITH_DISK_ENCRYPTION:-false}" in
   false)
     ;;
   *)
-    QEMU_FLAGS+=("--encrypt-ephemeral" "--encrypt-state" "--disk-encryption-key-types=kms")
+    QEMU_FLAGS+=("--encrypt-ephemeral" "--encrypt-state" "--encrypt-user-volumes" "--disk-encryption-key-types=kms")
     ;;
 esac
 
@@ -184,7 +184,7 @@ case "${WITH_TRUSTED_BOOT_ISO:-false}" in
     ;;
   *)
     INSTALLER_IMAGE=${INSTALLER_IMAGE}-amd64-secureboot
-    QEMU_FLAGS+=("--iso-path=_out/metal-amd64-secureboot.iso" "--with-tpm2" "--encrypt-ephemeral" "--encrypt-state" "--disk-encryption-key-types=tpm")
+    QEMU_FLAGS+=("--iso-path=_out/metal-amd64-secureboot.iso" "--with-tpm2" "--encrypt-ephemeral" "--encrypt-state" "--encrypt-user-volumes" "--disk-encryption-key-types=tpm")
     ;;
 esac
 

@@ -16,6 +16,7 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/cel"
 	"github.com/siderolabs/talos/pkg/machinery/config/machine"
 	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
+	"github.com/siderolabs/talos/pkg/machinery/resources/block"
 )
 
 // MachineConfig defines the requirements for a config that pertains to machine
@@ -431,9 +432,9 @@ type EncryptionKeyTPM interface {
 	String() string
 }
 
-// Encryption defines settings for the partition encryption.
-type Encryption interface {
-	Provider() string
+// EncryptionConfig defines settings for the partition encryption.
+type EncryptionConfig interface {
+	Provider() block.EncryptionProviderType
 	Cipher() string
 	KeySize() uint
 	BlockSize() uint64
@@ -443,7 +444,7 @@ type Encryption interface {
 
 // SystemDiskEncryption accumulates settings for all system partitions encryption.
 type SystemDiskEncryption interface {
-	Get(label string) Encryption
+	Get(label string) EncryptionConfig
 }
 
 // Features describe individual Talos features that can be switched on or off.
