@@ -90,5 +90,6 @@ type ManagerContext struct {
 	DevicesReady            bool
 	PreviousWaveProvisioned bool
 	GetSystemInformation    func(context.Context) (*hardware.SystemInformation, error)
+	TPMLocker               func(context.Context, func() error) error
 	ShouldCloseVolume       bool
 }
