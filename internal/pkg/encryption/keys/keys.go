@@ -48,7 +48,11 @@ func NewHandler(cfg block.EncryptionKey, options ...KeyOption) (Handler, error) 
 
 		return NewKMSKeyHandler(key, cfg.KMSEndpoint, opts.GetSystemInformation)
 	case block.EncryptionKeyTPM:
-		return NewTPMKeyHandler(key, cfg.TPMCheckSecurebootStatusOnEnroll)
+		if opts.TPMLocker == nil {
+			return nil, fmt.Errorf("failed to create TPM key handler at slot %d: no TPM lock function", cfg.Slot)
+		}
+
+		return NewTPMKeyHandler(key, cfg.TPMCheckSecurebootStatusOnEnroll, opts.TPMLocker)
 	default:
 		return nil, fmt.Errorf("unsupported key type: %s", cfg.Type)
 	}

@@ -11,11 +11,13 @@ import (
 	"time"
 
 	"github.com/cosi-project/runtime/pkg/resource"
+	"github.com/cosi-project/runtime/pkg/resource/rtestutils"
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/google/uuid"
 
 	"github.com/siderolabs/talos/internal/integration/base"
 	"github.com/siderolabs/talos/pkg/machinery/client"
+	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/resources/hardware"
 )
 
@@ -79,6 +81,14 @@ func (suite *HardwareSuite) TestHardwareInfo() {
 
 		suite.Assert().NotEmpty(items.Items, "resource type %s is not populated", resourceType)
 	}
+}
+
+// TestPCRStatus tests that the PCR was correctly extended.
+func (suite *HardwareSuite) TestPCRStatus() {
+	node := suite.RandomDiscoveredNodeInternalIP()
+	ctx := client.WithNode(suite.ctx, node)
+
+	rtestutils.AssertNoResource[*hardware.PCRStatus](ctx, suite.T(), suite.Client.COSI, hardware.NewPCCRStatus(constants.UKIPCR).Metadata().ID())
 }
 
 func init() {

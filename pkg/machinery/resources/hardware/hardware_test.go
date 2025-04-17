@@ -26,6 +26,9 @@ func TestRegisterResource(t *testing.T) {
 	for _, resource := range []meta.ResourceWithRD{
 		&hardware.MemoryModule{},
 		&hardware.PCIDevice{},
+		&hardware.PCIDriverRebindConfig{},
+		&hardware.PCIDriverRebindStatus{},
+		&hardware.PCRStatus{},
 		&hardware.Processor{},
 		&hardware.SystemInformation{},
 	} {

@@ -13,3 +13,6 @@ import (
 
 // SystemInformationGetter defines the closure which can be used in key handlers to get the node UUID.
 type SystemInformationGetter func(context.Context) (*hardware.SystemInformation, error)
+
+// TPMLockFunc is a function that ensures that the TPM is locked and PCR state is as expected.
+type TPMLockFunc func(context.Context, func() error) error
