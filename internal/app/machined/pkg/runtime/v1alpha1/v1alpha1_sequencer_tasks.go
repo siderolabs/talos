@@ -310,10 +310,6 @@ func WriteUdevRules(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
 // StartMachined represents the task to start machined.
 func StartMachined(_ runtime.Sequence, _ any) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) error {
-		if err := tpm2.PCRExtend(constants.UKIPCR, []byte(secureboot.EnterMachined)); err != nil {
-			return err
-		}
-
 		svc := &services.Machined{}
 
 		id := svc.ID(r)

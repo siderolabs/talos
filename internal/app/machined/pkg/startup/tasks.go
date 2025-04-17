@@ -19,6 +19,8 @@ import (
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
 	"github.com/siderolabs/talos/internal/pkg/environment"
 	"github.com/siderolabs/talos/internal/pkg/mount/v2"
+	"github.com/siderolabs/talos/internal/pkg/secureboot"
+	"github.com/siderolabs/talos/internal/pkg/secureboot/tpm2"
 	"github.com/siderolabs/talos/internal/pkg/selinux"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/resources/block"
@@ -141,6 +143,15 @@ func SetEnvironmentVariables(ctx context.Context, log *zap.Logger, rt runtime.Ru
 				return fmt.Errorf("error setting %s: %w", val, err)
 			}
 		}
+	}
+
+	return next()(ctx, log, rt, next)
+}
+
+// ExtendPCR extend the PCRs before entering the main running mode.
+func ExtendPCR(ctx context.Context, log *zap.Logger, rt runtime.Runtime, next NextTaskFunc) error {
+	if err := tpm2.PCRExtend(constants.UKIPCR, []byte(secureboot.EnterMachined)); err != nil {
+		return err
 	}
 
 	return next()(ctx, log, rt, next)

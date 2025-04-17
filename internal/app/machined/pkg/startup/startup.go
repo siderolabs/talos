@@ -46,5 +46,6 @@ func DefaultTasks() []Task {
 		SetEnvironmentVariables,
 		WriteIMAPolicy,
 		CreateSystemCgroups,
+		ExtendPCR,
 	}
 }
