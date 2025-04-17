@@ -15,7 +15,6 @@ import (
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/siderolabs/gen/optional"
-	"github.com/siderolabs/go-blockdevice/v2/encryption"
 	"go.uber.org/zap"
 
 	machinedruntime "github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
@@ -87,20 +86,14 @@ func systemDiskMatch() cel.Expression {
 	return cel.MustExpression(cel.ParseBooleanExpression("system_disk", celenv.DiskLocator()))
 }
 
-func (ctrl *VolumeConfigController) convertEncryption(in cfg.Encryption, out *block.VolumeConfigSpec) error {
+func convertEncryptionConfiguration(in cfg.EncryptionConfig, out *block.VolumeConfigSpec) error {
 	if in == nil {
 		out.Encryption = block.EncryptionSpec{}
 
 		return nil
 	}
 
-	switch in.Provider() {
-	case encryption.LUKS2:
-		out.Encryption.Provider = block.EncryptionProviderLUKS2
-	default:
-		return fmt.Errorf("unsupported encryption provider: %s", in.Provider())
-	}
-
+	out.Encryption.Provider = in.Provider()
 	out.Encryption.Cipher = in.Cipher()
 	out.Encryption.KeySize = in.KeySize()
 	out.Encryption.BlockSize = in.BlockSize()
@@ -271,7 +264,7 @@ func (ctrl *VolumeConfigController) manageEphemeral(config cfg.Config) func(vc *
 			Match: labelVolumeMatch(constants.EphemeralPartitionLabel),
 		}
 
-		if err := ctrl.convertEncryption(
+		if err := convertEncryptionConfiguration(
 			config.Machine().SystemDiskEncryption().Get(constants.EphemeralPartitionLabel),
 			vc.TypedSpec(),
 		); err != nil {
@@ -331,7 +324,7 @@ func (ctrl *VolumeConfigController) manageStateConfigPresent(config cfg.Config) 
 			Match: labelVolumeMatch(constants.StatePartitionLabel),
 		}
 
-		if err := ctrl.convertEncryption(
+		if err := convertEncryptionConfiguration(
 			config.Machine().SystemDiskEncryption().Get(constants.StatePartitionLabel),
 			vc.TypedSpec(),
 		); err != nil {
@@ -374,7 +367,7 @@ func (ctrl *VolumeConfigController) manageStateNoConfig(encryptionMeta *runtime.
 				return fmt.Errorf("error unmarshalling state encryption meta key: %w", err)
 			}
 
-			if err := ctrl.convertEncryption(
+			if err := convertEncryptionConfiguration(
 				encryptionFromMeta,
 				vc.TypedSpec(),
 			); err != nil {
