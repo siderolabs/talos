@@ -1,10 +1,5 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@docsearch/css@3"/>
 
-<!--- https://aaronluna.dev/blog/add-copy-button-to-code-blocks-hugo-chroma/ -->
-{{ if (findRE "<pre" .Content 1) }}
-    <link rel="stylesheet" href="/css/clipboard.css">
-{{ end }}
-
 <!--- https://developers.google.com/search/docs/advanced/crawling/consolidate-duplicate-urls?hl=en#rel-canonical-link-method -->
 {{ if .Section }}
   {{ $latest_version := .Site.Params.url_latest_version }}
