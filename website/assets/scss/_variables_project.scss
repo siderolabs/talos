@@ -12,8 +12,8 @@ $primary: #281D49;
 $secondary: #F92A20;
 
 $link-color: $secondary;
-$border-color: $gray-300 !default;
+$link-color-dark: mix(white, $secondary, 20);
 
-$td-sidebar-tree-root-color: $primary !default;
-$td-sidebar-bg-color: rgba($primary, 0.03) !default;
-$td-sidebar-border-color: $border-color !default;
+$border-color: $gray-300 !default;
+$bs-bg-color-dark: #212529;
+
