@@ -4,7 +4,7 @@ go 1.24.0
 
 replace (
 	// see e.g. https://github.com/grpc/grpc-go/issues/6696
-	cloud.google.com/go => cloud.google.com/go v0.100.2
+	cloud.google.com/go => cloud.google.com/go v0.120.1
 
 	// forked coredns so we don't carry caddy and other stuff into the Talos
 	github.com/coredns/coredns => github.com/siderolabs/coredns v1.12.52
@@ -13,7 +13,7 @@ replace (
 	github.com/mdlayher/ethtool => github.com/siderolabs/ethtool v0.4.0-sidero
 
 	// see https://github.com/mdlayher/kobject/pull/5
-	github.com/mdlayher/kobject => github.com/smira/kobject v0.0.0-20240304111826-49c8d4613389
+	github.com/mdlayher/kobject => github.com/smira/kobject 19ca17470d7d
 
 	// Use nested module.
 	github.com/siderolabs/talos/pkg/machinery => ./pkg/machinery
@@ -26,19 +26,19 @@ replace (
 
 	// forked go-yaml that introduces RawYAML interface, which can be used to populate YAML fields using bytes
 	// which are then encoded as a valid YAML blocks with proper indentiation
-	gopkg.in/yaml.v3 => github.com/unix4ever/yaml v0.0.0-20220527175918-f17b0f05cf2c
+	gopkg.in/yaml.v3 => github.com/unix4ever/yaml/v2 v2.4.0
 )
 
 // fd-leak related replacements: https://github.com/siderolabs/talos/issues/9412
 // https://github.com/insomniacslk/dhcp/pull/550
-replace github.com/insomniacslk/dhcp => github.com/smira/dhcp v0.0.0-20241001122726-31e9ef21c016
+replace github.com/insomniacslk/dhcp => github.com/smira/dhcp 7d93572ebe8e
 
 // Kubernetes dependencies sharing the same version.
 require (
 	k8s.io/api v0.33.0-rc.1
 	k8s.io/apimachinery v0.33.0-rc.1
 	k8s.io/apiserver v0.33.0-rc.1
-	k8s.io/client-go v0.33.0-rc.1
+	k8s.io/client-go v11.0.0+incompatible
 	k8s.io/component-base v0.33.0-rc.1
 	k8s.io/cri-api v0.33.0-rc.1
 	k8s.io/kube-scheduler v0.33.0-rc.1
@@ -61,10 +61,10 @@ require (
 	github.com/beevik/ntp v1.4.3
 	github.com/benbjohnson/clock v1.3.5 // project archived on 2023-05-18
 	github.com/blang/semver/v4 v4.0.0
-	github.com/cenkalti/backoff/v4 v4.3.0
+	github.com/cenkalti/backoff/v5 v5.0.2
 	github.com/containerd/cgroups/v3 v3.0.5
 	github.com/containerd/containerd/api v1.8.0
-	github.com/containerd/containerd/v2 v2.0.4
+	github.com/containerd/containerd/v2 v2.0.5
 	github.com/containerd/errdefs v1.0.0
 	github.com/containerd/log v0.1.0
 	github.com/containerd/platforms v1.0.0-rc.1
@@ -75,8 +75,8 @@ require (
 	github.com/coreos/go-iptables v0.8.0
 	github.com/cosi-project/runtime v0.10.2
 	github.com/distribution/reference v0.6.0
-	github.com/docker/cli v28.0.4+incompatible
-	github.com/docker/docker v28.0.4+incompatible
+	github.com/docker/cli v28.1.1+incompatible
+	github.com/docker/docker v28.1.1+incompatible
 	github.com/docker/go-connections v0.5.0
 	github.com/dustin/go-humanize v1.0.1
 	github.com/ecks/uefi v0.0.0-20221116212947-caef65d070eb
@@ -105,7 +105,7 @@ require (
 	github.com/hashicorp/go-getter/v2 v2.2.3
 	github.com/hashicorp/go-multierror v1.1.1
 	github.com/hetznercloud/hcloud-go/v2 v2.21.0
-	github.com/insomniacslk/dhcp v0.0.0-20250109001534-8abf58130905
+	github.com/insomniacslk/dhcp 5f8cf70e8c5f
 	github.com/jeromer/syslogparser v1.1.0
 	github.com/jsimonetti/rtnetlink/v2 v2.0.3
 	github.com/jxskiss/base62 v1.1.0
@@ -143,7 +143,7 @@ require (
 	github.com/siderolabs/discovery-client v0.1.11
 	github.com/siderolabs/gen v0.8.0
 	github.com/siderolabs/go-api-signature v0.3.6
-	github.com/siderolabs/go-blockdevice v0.4.8
+	github.com/siderolabs/go-blockdevice/v2 v2.0.16
 	github.com/siderolabs/go-blockdevice/v2 v2.0.16
 	github.com/siderolabs/go-circular v0.2.2
 	github.com/siderolabs/go-cmd v0.1.3
@@ -165,7 +165,7 @@ require (
 	github.com/siderolabs/net v0.4.0
 	github.com/siderolabs/proto-codec v0.1.2
 	github.com/siderolabs/siderolink v0.3.13
-	github.com/siderolabs/talos/pkg/machinery v1.10.0-alpha.3
+	github.com/siderolabs/talos/pkg/machinery v1.10.0-beta.0
 	github.com/sirupsen/logrus v1.9.3
 	github.com/spf13/cobra v1.9.1
 	github.com/spf13/pflag v1.0.6
@@ -195,7 +195,7 @@ require (
 	gopkg.in/yaml.v3 v3.0.1
 	k8s.io/klog/v2 v2.130.1
 	kernel.org/pub/linux/libs/security/libcap/cap v1.2.76
-	sigs.k8s.io/hydrophone v0.6.1-0.20240718103601-b92baf7e0b04
+	sigs.k8s.io/hydrophone 378d956e941b
 	sigs.k8s.io/yaml v1.4.0
 )
 

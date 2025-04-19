@@ -91,7 +91,7 @@ GOIMPORTS_VERSION ?= v0.32.0
 # renovate: datasource=go depName=mvdan.cc/gofumpt
 GOFUMPT_VERSION ?= v0.8.0
 # renovate: datasource=go depName=github.com/golangci/golangci-lint
-GOLANGCILINT_VERSION ?= v2.1.1
+GOLANGCILINT_VERSION ?= v2.1.2
 # renovate: datasource=go depName=golang.org/x/tools
 STRINGER_VERSION ?= v0.32.0
 # renovate: datasource=go depName=github.com/dmarkham/enumer
@@ -128,7 +128,7 @@ INTEGRATION_TEST_PROVISION_DEFAULT_TARGET := integration-test-provision-$(OPERAT
 # renovate: datasource=github-releases depName=kubernetes/kubernetes
 KUBECTL_VERSION ?= v1.33.0-rc.1
 # renovate: datasource=github-releases depName=kastenhq/kubestr
-KUBESTR_VERSION ?= v0.4.48
+KUBESTR_VERSION ?= v0.4.49
 # renovate: datasource=github-releases depName=helm/helm
 HELM_VERSION ?= v3.17.3
 # renovate: datasource=github-releases depName=cilium/cilium-cli
