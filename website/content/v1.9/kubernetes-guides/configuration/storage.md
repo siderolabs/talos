@@ -89,7 +89,7 @@ machine:
         type: bind
         source: /var/local
         options:
-          - bind
+          - rbind
           - rshared
           - rw
 ```
