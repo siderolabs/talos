@@ -97,7 +97,6 @@ Call to virConnectOpen failed: Failed to connect socket to '/var/run/libvirt/lib
 > ```bash
 > sudo apt install -y libvirt-dev qemu-kvm libvirt-clients libvirt-daemon-system bridge-utils
 > ```
->
 
 ## Bring up the nodes
 
