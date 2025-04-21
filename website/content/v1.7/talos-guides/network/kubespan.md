@@ -59,6 +59,12 @@ This can be worked-around by assigning a non-Anchor private IP:
 Then restarting flannel:
 `kubectl delete pods -n kube-system -l k8s-app=flannel`
 
+#### Host Port Limitations
+
+As mentioned in Network Requirements, Kubespan uses **UDP port 51820** to carry all KubeSpan encrypted traffic.
+For clusters that make heavy use of host ports for Kubernetes pods, care should be taken to ensure that this port is not given to these pods.
+Failure to do so can result in a pod being assigned the 51820 port and conflicting with Kubespan traffic.
+
 ## Enabling
 
 ### Creating a New Cluster
