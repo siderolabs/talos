@@ -23,22 +23,30 @@ We will also configure a virtual IP address on Talos to achieve high-availabilit
 
 ## Preparing the environment
 
-First, we download the latest `metal-amd64.iso` ISO from GitHub releases into the `/tmp` directory.
+First, we create a parent dir named `vagrant`, inside of this, create theses two directories, what we are going to work with:
 
 ```bash
-wget --timestamping curl https://factory.talos.dev/image/376567988ad370138ad8b2698212367b8edcb69b5fd68c80be1f2ec7d603b4ba/{{< release >}}/metal-amd64.iso -O /tmp/metal-amd64.iso
+mkdir -p vagrant/_out vagrant/iso
+```
+
+Then, we download the latest `metal-amd64.iso` ISO from GitHub releases into the `iso/` directory.
+
+```bash
+wget --timestamping curl https://factory.talos.dev/image/376567988ad370138ad8b2698212367b8edcb69b5fd68c80be1f2ec7d603b4ba/{{< release >}}/metal-amd64.iso -O iso/metal-amd64.iso
 ```
 
 Create a `Vagrantfile` with the following contents:
 
 ```ruby
 Vagrant.configure("2") do |config|
+
+  current_dir = File.expand_path(File.dirname(File.realpath(__FILE__)))
+
   config.vm.define "control-plane-node-1" do |vm|
     vm.vm.provider :libvirt do |domain|
       domain.cpus = 2
       domain.memory = 2048
-      domain.serial :type => "file", :source => {:path => "/tmp/control-plane-node-1.log"}
-      domain.storage :file, :device => :cdrom, :path => "/tmp/metal-amd64.iso"
+      domain.storage :file, :device => :cdrom, :path => current_dir + "/iso/metal-amd64.iso"
       domain.storage :file, :size => '4G', :type => 'raw'
       domain.boot 'hd'
       domain.boot 'cdrom'
@@ -49,8 +57,7 @@ Vagrant.configure("2") do |config|
     vm.vm.provider :libvirt do |domain|
       domain.cpus = 2
       domain.memory = 2048
-      domain.serial :type => "file", :source => {:path => "/tmp/control-plane-node-2.log"}
-      domain.storage :file, :device => :cdrom, :path => "/tmp/metal-amd64.iso"
+      domain.storage :file, :device => :cdrom, :path => current_dir + "/iso/metal-amd64.iso"
       domain.storage :file, :size => '4G', :type => 'raw'
       domain.boot 'hd'
       domain.boot 'cdrom'
@@ -61,8 +68,7 @@ Vagrant.configure("2") do |config|
     vm.vm.provider :libvirt do |domain|
       domain.cpus = 2
       domain.memory = 2048
-      domain.serial :type => "file", :source => {:path => "/tmp/control-plane-node-3.log"}
-      domain.storage :file, :device => :cdrom, :path => "/tmp/metal-amd64.iso"
+      domain.storage :file, :device => :cdrom, :path => current_dir + "/iso/metal-amd64.iso"
       domain.storage :file, :size => '4G', :type => 'raw'
       domain.boot 'hd'
       domain.boot 'cdrom'
@@ -73,14 +79,25 @@ Vagrant.configure("2") do |config|
     vm.vm.provider :libvirt do |domain|
       domain.cpus = 1
       domain.memory = 1024
-      domain.serial :type => "file", :source => {:path => "/tmp/worker-node-1.log"}
-      domain.storage :file, :device => :cdrom, :path => "/tmp/metal-amd64.iso"
+      domain.storage :file, :device => :cdrom, :path => current_dir + "/iso/metal-amd64.iso"
       domain.storage :file, :size => '4G', :type => 'raw'
       domain.boot 'hd'
       domain.boot 'cdrom'
     end
   end
 end
+```
+
+## Install Libvirt on Linux
+
+```bash
+sudo apt install -y libvirt-dev qemu-kvm libvirt-clients libvirt-daemon-system bridge-utils virt-manager
+```
+
+## Install Vagrant Libvirt Plugin
+
+```bash
+vagrant plugin install vagrant-libvirt
 ```
 
 ## Bring up the nodes
@@ -155,6 +172,8 @@ virsh domifaddr vagrant_control-plane-node-3
  vnet3      52:54:00:03:45:10    ipv4         192.168.121.125/24
 ```
 
+> Note: We working on the control plane node no. 1. (In this example: 192.168.121.203)
+
 Our control plane nodes have the IPs: `192.168.121.203`, `192.168.121.119`, `192.168.121.125` and the worker node has the IP `192.168.121.69`.
 
 Now you should be able to interact with Talos nodes that are in maintenance mode:
@@ -177,7 +196,7 @@ Pick an endpoint IP in the `vagrant-libvirt` subnet but not used by any nodes, f
 Generate a machine configuration:
 
 ```bash
-talosctl gen config my-cluster https://192.168.121.100:6443 --install-disk /dev/vda
+talosctl gen config my-cluster https://192.168.121.100:6443 --install-disk /dev/vda --output-dir _out
 ```
 
 Edit `controlplane.yaml` to add the virtual IP you picked to a network interface under `.machine.network.interfaces`, for example:
@@ -199,16 +218,14 @@ Apply the configuration to the initial control plane node:
 talosctl -n 192.168.121.203 apply-config --insecure --file controlplane.yaml
 ```
 
-You can tail the logs of the node:
+You can check the status with virt-manager GUI tool:
 
-```bash
-sudo tail -f /tmp/control-plane-node-1.log
-```
+<img src="/images/vagrant-libvirt-guide/check-vm.png" width="500px">
 
 Set up your shell to use the generated talosconfig and configure its endpoints (use the IPs of the control plane nodes):
 
 ```bash
-export TALOSCONFIG=$(realpath ./talosconfig)
+export TALOSCONFIG="_out/talosconfig"
 talosctl config endpoint 192.168.121.203 192.168.121.119 192.168.121.125
 ```
 
@@ -253,7 +270,7 @@ talosctl -n 192.168.121.203 kubeconfig ./kubeconfig
 List the nodes in the cluster:
 
 ```bash
-kubectl --kubeconfig ./kubeconfig get node -owide
+kubectl --kubeconfig ./kubeconfig get node -o wide
 ```
 
 You will see an output similar to:
@@ -279,5 +296,5 @@ vagrant destroy -f
 And remove the ISO image you downloaded:
 
 ```bash
-sudo rm -f /tmp/metal-amd64.iso
+sudo rm -f iso/metal-amd64.iso
 ```
