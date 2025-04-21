@@ -389,7 +389,7 @@ const (
 
 	// DefaultKubernetesVersion is the default target version of the control plane.
 	// renovate: datasource=github-releases depName=kubernetes/kubernetes
-	DefaultKubernetesVersion = "1.33.0-rc.0"
+	DefaultKubernetesVersion = "1.33.0-rc.1"
 
 	// SupportedKubernetesVersions is the number of Kubernetes versions supported by Talos starting from DefaultKubernesVersion going backwards.
 	SupportedKubernetesVersions = 6
@@ -1163,7 +1163,7 @@ const (
 	DashboardTTY = 2
 
 	// FlannelVersion is the version of flannel to use.
-	FlannelVersion = "v0.26.6"
+	FlannelVersion = "v0.26.7"
 
 	// PlatformMetal is the name of the metal platform.
 	PlatformMetal = "metal"

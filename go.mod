@@ -35,16 +35,16 @@ replace github.com/insomniacslk/dhcp => github.com/smira/dhcp v0.0.0-20241001122
 
 // Kubernetes dependencies sharing the same version.
 require (
-	k8s.io/api v0.33.0-rc.0
-	k8s.io/apimachinery v0.33.0-rc.0
-	k8s.io/apiserver v0.33.0-rc.0
-	k8s.io/client-go v0.33.0-rc.0
-	k8s.io/component-base v0.33.0-rc.0
-	k8s.io/cri-api v0.33.0-rc.0
-	k8s.io/kube-scheduler v0.33.0-rc.0
-	k8s.io/kubectl v0.33.0-rc.0
-	k8s.io/kubelet v0.33.0-rc.0
-	k8s.io/pod-security-admission v0.33.0-rc.0
+	k8s.io/api v0.33.0-rc.1
+	k8s.io/apimachinery v0.33.0-rc.1
+	k8s.io/apiserver v0.33.0-rc.1
+	k8s.io/client-go v0.33.0-rc.1
+	k8s.io/component-base v0.33.0-rc.1
+	k8s.io/cri-api v0.33.0-rc.1
+	k8s.io/kube-scheduler v0.33.0-rc.1
+	k8s.io/kubectl v0.33.0-rc.1
+	k8s.io/kubelet v0.33.0-rc.1
+	k8s.io/pod-security-admission v0.33.0-rc.1
 )
 
 require (
@@ -73,7 +73,7 @@ require (
 	github.com/containernetworking/plugins v1.6.2
 	github.com/coredns/coredns v1.12.1
 	github.com/coreos/go-iptables v0.8.0
-	github.com/cosi-project/runtime v0.10.1
+	github.com/cosi-project/runtime v0.10.2
 	github.com/distribution/reference v0.6.0
 	github.com/docker/cli v28.0.4+incompatible
 	github.com/docker/docker v28.0.4+incompatible
@@ -107,7 +107,7 @@ require (
 	github.com/hetznercloud/hcloud-go/v2 v2.21.0
 	github.com/insomniacslk/dhcp v0.0.0-20250109001534-8abf58130905
 	github.com/jeromer/syslogparser v1.1.0
-	github.com/jsimonetti/rtnetlink/v2 v2.0.3-0.20241216183107-2d6e9f8ad3f2
+	github.com/jsimonetti/rtnetlink/v2 v2.0.3
 	github.com/jxskiss/base62 v1.1.0
 	github.com/klauspost/compress v1.18.0
 	github.com/klauspost/cpuid/v2 v2.2.10
@@ -232,7 +232,7 @@ require (
 	github.com/bgentry/go-netrc v0.0.0-20140422174119-9fd32a8b3d3d // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/chai2010/gettext-go v1.0.2 // indirect
-	github.com/cilium/ebpf v0.16.0 // indirect
+	github.com/cilium/ebpf v0.17.3 // indirect
 	github.com/cloudflare/circl v1.6.0 // indirect
 	github.com/containerd/continuity v0.4.4 // indirect
 	github.com/containerd/errdefs/pkg v0.3.0 // indirect
@@ -275,7 +275,7 @@ require (
 	github.com/gorilla/websocket v1.5.4-0.20250319132907-e064f32e3674 // indirect
 	github.com/gosuri/uilive v0.0.4 // indirect
 	github.com/gregjones/httpcache v0.0.0-20190611155906-901d90724c79 // indirect
-	github.com/grpc-ecosystem/grpc-gateway/v2 v2.26.2 // indirect
+	github.com/grpc-ecosystem/grpc-gateway/v2 v2.26.3 // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/hashicorp/go-safetemp v1.0.0 // indirect
 	github.com/hashicorp/go-version v1.6.0 // indirect
@@ -323,7 +323,7 @@ require (
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/planetscale/vtprotobuf v0.6.1-0.20241121165744-79df5c4772f2 // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
-	github.com/prometheus/client_golang v1.22.0-rc.0 // indirect
+	github.com/prometheus/client_golang v1.22.0 // indirect
 	github.com/prometheus/client_model v0.6.1 // indirect
 	github.com/prometheus/common v0.63.0 // indirect
 	github.com/rivo/uniseg v0.4.7 // indirect
@@ -364,7 +364,7 @@ require (
 	gopkg.in/evanphx/json-patch.v4 v4.12.0 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
-	k8s.io/cli-runtime v0.33.0-rc.0 // indirect
+	k8s.io/cli-runtime v0.33.0-rc.1 // indirect
 	k8s.io/kube-openapi v0.0.0-20250318190949-c8a335a9a2ff // indirect
 	k8s.io/utils v0.0.0-20241104100929-3ea5e8cea738 // indirect
 	kernel.org/pub/linux/libs/security/libcap/psx v1.2.76 // indirect

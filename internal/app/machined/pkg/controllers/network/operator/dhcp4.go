@@ -311,6 +311,7 @@ func (d *DHCP4) parseNetworkConfigFromAck(ack *dhcpv4.DHCPv4, useHostname bool) 
 			Family:      nethelpers.FamilyInet4,
 			Scope:       nethelpers.ScopeGlobal,
 			Flags:       nethelpers.AddressFlags(nethelpers.AddressPermanent),
+			Priority:    d.routeMetric,
 			ConfigLayer: network.ConfigOperator,
 		},
 	}

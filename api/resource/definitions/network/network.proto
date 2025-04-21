@@ -18,6 +18,7 @@ message AddressSpecSpec {
   uint32 flags = 5;
   bool announce_with_arp = 6;
   talos.resource.definitions.enums.NetworkConfigLayer config_layer = 7;
+  uint32 priority = 8;
 }
 
 // AddressStatusSpec describes status of rendered secrets.
@@ -32,6 +33,7 @@ message AddressStatusSpec {
   talos.resource.definitions.enums.NethelpersFamily family = 8;
   talos.resource.definitions.enums.NethelpersScope scope = 9;
   uint32 flags = 10;
+  uint32 priority = 11;
 }
 
 // BondMasterSpec describes bond settings if Kind == "bond".

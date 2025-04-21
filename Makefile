@@ -126,7 +126,7 @@ INTEGRATION_TEST := integration-test
 INTEGRATION_TEST_DEFAULT_TARGET := $(INTEGRATION_TEST)-$(OPERATING_SYSTEM)
 INTEGRATION_TEST_PROVISION_DEFAULT_TARGET := integration-test-provision-$(OPERATING_SYSTEM)
 # renovate: datasource=github-releases depName=kubernetes/kubernetes
-KUBECTL_VERSION ?= v1.33.0-rc.0
+KUBECTL_VERSION ?= v1.33.0-rc.1
 # renovate: datasource=github-releases depName=kastenhq/kubestr
 KUBESTR_VERSION ?= v0.4.48
 # renovate: datasource=github-releases depName=helm/helm
@@ -379,7 +379,9 @@ docs: ## Generates the documentation for machine config, and talosctl.
 .PHONY: docs-preview
 docs-preview: ## Starts a local preview of the documentation using Hugo in docker
 	@docker run --rm --interactive --tty \
-	--volume $(PWD):/src --workdir /src/website \
+	--volume $(PWD):/src \
+	--volume $(HOME)/.cache/hugo_cache:/tmp/hugo_cache \
+	--workdir /src/website \
 	--publish 1313:1313 \
 	hugomods/hugo:$(HUGO_VERSION) \
 	server

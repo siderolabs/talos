@@ -1,9 +1,4 @@
-<!--- https://aaronluna.dev/blog/add-copy-button-to-code-blocks-hugo-chroma/ -->
-{{ if (findRE "<pre" .Content 1) }}
-    <script src="/js/clipboard.js"></script>
-{{ end }}
-
-{{ $currentVersion := index (split .Page.Path "/" ) 0 }}
+{{ $currentVersion := index (split .Page.Path "/" ) 1 }}
 {{ $currentVersionDir := $currentVersion | printf "/%s"}}
 
 <script src="https://cdn.jsdelivr.net/npm/@docsearch/js@3"></script>
