@@ -60,8 +60,6 @@ Supply a name for this VM, and specify the Type and Version:
 
 <img src="/images/vbox-guide/vm-name.png" width="500px">
 
-> Note: Make sure type is set as `Linux / Other Linux (64-bit)`.
-
 Edit the memory to supply at least 2GB of RAM for the VM:
 
 <img src="/images/vbox-guide/vm-memory.png" width="500px">
@@ -122,12 +120,6 @@ You should now see some action in the VirtualBox console for this VM.
 Talos will be installed to disk, the VM will reboot, and then Talos will configure the Kubernetes control plane on this VM.
 
 > Note: This process can be repeated multiple times to create an HA control plane.
->
-> Note: If you encounter the following error in the console:
->
-> `Talos is already installed to disk but booted from another media and talos.halt_if_installed kernel parameter set. Please reboot from another disk.`
->
-> Simply remove the ISO image from the VM and restart it.
 
 ## Create Worker Node
 
