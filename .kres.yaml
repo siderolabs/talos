@@ -85,6 +85,7 @@ spec:
     - integration-aws-nvidia-oss
     - integration-aws-nvidia-nonfree
     - integration-gcp
+  conformMaximumOfOneCommit: false
 ---
 kind: common.GHWorkflow
 spec:
