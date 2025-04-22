@@ -201,8 +201,8 @@ func (p *processRunner) build() (commandWrapper, error) {
 	}
 
 	var writer io.Writer
-	if p.debug { // TODO: wrap it into LoggingManager
-		writer = io.MultiWriter(w, os.Stdout)
+	if p.debug {
+		writer = io.MultiWriter(w, log.Writer())
 	} else {
 		writer = w
 	}
