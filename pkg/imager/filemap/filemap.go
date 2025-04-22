@@ -17,6 +17,7 @@ import (
 
 	v1 "github.com/google/go-containerregistry/pkg/v1"
 	"github.com/google/go-containerregistry/pkg/v1/tarball"
+	"github.com/google/go-containerregistry/pkg/v1/types"
 )
 
 // File is a path -> file content map representing a file system.
@@ -151,5 +152,5 @@ func Layer(filemap []File) (v1.Layer, error) {
 	// Return a new copy of the buffer each time it's opened.
 	return tarball.LayerFromOpener(func() (io.ReadCloser, error) {
 		return Build(filemap), nil
-	})
+	}, tarball.WithMediaType(types.OCILayer))
 }
