@@ -33,7 +33,7 @@ For example, if upgrading from Talos 1.0 to Talos 1.2.4, the recommended upgrade
 
 ## Before Upgrade to {{% release %}}
 
-TBD
+There are no specific actions to be taken before an upgrade.
 
 ## Video Walkthrough
 
@@ -86,7 +86,16 @@ future.
 
 ## Machine Configuration Changes
 
-TBD
+* new configuration documents:
+  * [UserVolumeConfig]({{< relref "../reference/configuration/block/uservolumeconfig" >}})
+  * [PCIDriverRebindConfig]({{< relref "../reference/configuration/hardware/pcidriverrebindconfig" >}})
+  * [EthernetConfig]({{< relref "../reference/configuration/network/ethernetconfig" >}})
+* deprecations:
+  * `.machine.install.extensions` is ignored now, see [Boot Assets]({{< relref "./install/boot-assets" >}}) for alternative
+  * `.machine.disks` is deprecated, use [User Volumes]({{< relref "./configuration/disk-management#user-volumes" >}}) instead
+* change in behavior:
+  * when using `systemd-boot` as a bootloader (default for new clusters created with Talos 1.10+ on UEFI platforms), the `.machine.install.extraKernelArgs` is ignored,
+    use upgrade to change kernel arguments
 
 ## Upgrade Sequence
 

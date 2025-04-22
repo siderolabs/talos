@@ -80,19 +80,19 @@ The `installer` image will be produced by the Image Factory as well:
 # Talos machine configuration patch
 machine:
   install:
-    image: factory.talos.dev/installer/b8e8fbbe1b520989e6c52c8dc8303070cb42095997e76e812fa8892393e1d176:{{< release >}}
+    image: factory.talos.dev/metal-installer/b8e8fbbe1b520989e6c52c8dc8303070cb42095997e76e812fa8892393e1d176:{{< release >}}
 ```
 
 Once installed, the machine can be upgraded to a new version of Talos by referencing new installer image:
 
 ```shell
-talosctl upgrade --image factory.talos.dev/installer/b8e8fbbe1b520989e6c52c8dc8303070cb42095997e76e812fa8892393e1d176:<new_version>
+talosctl upgrade --image factory.talos.dev/metal-installer/b8e8fbbe1b520989e6c52c8dc8303070cb42095997e76e812fa8892393e1d176:<new_version>
 ```
 
 Same way upgrade process can be used to transition to a new set of system extensions: generate new schematic with the new set of system extensions, and upgrade the machine to the new schematic ID:
 
 ```shell
-talosctl upgrade --image factory.talos.dev/installer/<new_schematic_id>:{{< release >}}
+talosctl upgrade --image factory.talos.dev/metal-installer/<new_schematic_id>:{{< release >}}
 ```
 
 ### Example: Raspberry Pi generic with Image Factory
@@ -134,13 +134,13 @@ Now we can download the metal arm64 image:
 Once installed, the machine can be upgraded to a new version of Talos by referencing new installer image:
 
 ```shell
-talosctl upgrade --image factory.talos.dev/installer/0db665edfda21c70194e7ca660955425d16cec2aa58ff031e2abf72b7c328585:<new_version>
+talosctl upgrade --image factory.talos.dev/metal-installer/0db665edfda21c70194e7ca660955425d16cec2aa58ff031e2abf72b7c328585:<new_version>
 ```
 
 Same way upgrade process can be used to transition to a new set of system extensions: generate new schematic with the new set of system extensions, and upgrade the machine to the new schematic ID:
 
 ```shell
-talosctl upgrade --image factory.talos.dev/installer/<new_schematic_id>:{{< release >}}
+talosctl upgrade --image factory.talos.dev/metal-installer/<new_schematic_id>:{{< release >}}
 ```
 
 ### Example: AWS with Image Factory
@@ -179,9 +179,9 @@ Once the AWS VM is created from the AMI, it can be upgraded to a different Talos
 
 ```shell
 # upgrade to a new Talos version
-talosctl upgrade --image factory.talos.dev/installer/d9ff89777e246792e7642abd3220a616afb4e49822382e4213a2e528ab826fe5:<new_version>
+talosctl upgrade --image factory.talos.dev/aws-installer/d9ff89777e246792e7642abd3220a616afb4e49822382e4213a2e528ab826fe5:<new_version>
 # upgrade to a new schematic
-talosctl upgrade --image factory.talos.dev/installer/<new_schematic_id>:{{< release >}}
+talosctl upgrade --image factory.talos.dev/aws-installer/<new_schematic_id>:{{< release >}}
 ```
 
 ## Imager
@@ -326,7 +326,7 @@ Now the `_out/kernel-amd64` and `_out/initramfs-amd64` contain the customized Ta
 As the next step, we should generate a custom `installer` image which contains all required system extensions (kernel args can't be specified with the installer image, but they are set in the machine configuration):
 
 ```shell
-$ docker run --rm -t -v $PWD/_out:/out ghcr.io/siderolabs/imager:{{< release >}} installer --system-extension-image ghcr.io/siderolabs/gvisor:20231214.0-{{< release >}}@sha256:548b2b121611424f6b1b6cfb72a1669421ffaf2f1560911c324a546c7cee655e --system-extension-image ghcr.io/siderolabs/intel-ucode:20231114@sha256:ea564094402b12a51045173c7523f276180d16af9c38755a894cf355d72c249d
+$ docker run --rm -t -v $PWD/_out:/out ghcr.io/siderolabs/imager:{{< release >}} installer --platform=metal --system-extension-image ghcr.io/siderolabs/gvisor:20231214.0-{{< release >}}@sha256:548b2b121611424f6b1b6cfb72a1669421ffaf2f1560911c324a546c7cee655e --system-extension-image ghcr.io/siderolabs/intel-ucode:20231114@sha256:ea564094402b12a51045173c7523f276180d16af9c38755a894cf355d72c249d
 ...
 output asset path: /out/metal-amd64-installer.tar
 ```
@@ -443,6 +443,7 @@ compression done: /out/aws-amd64.raw.xz
 Now the `_out/aws-amd64.raw.xz` contains the customized Talos AWS disk image which can be uploaded as an AMI to the [AWS]({{< relref "../install/cloud-platforms/aws" >}}).
 
 If the AWS machine is later going to be upgraded to a new version of Talos (or a new set of system extensions), generate a customized `installer` image following the steps above, and upgrade Talos to that `installer` image.
+Make sure to use `--platform=aws` argument to the `imager` to generate AWS-specific installer.
 
 ### Example: Assets with system extensions from image tarballs with Imager
 
