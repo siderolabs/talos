@@ -572,12 +572,11 @@ func WithUpgradeGRPCCallOptions(opts ...grpc.CallOption) UpgradeOption {
 }
 
 // Upgrade initiates a Talos upgrade and implements the proto.MachineServiceClient interface.
-func (c *Client) Upgrade(ctx context.Context, image string, preserve, stage, force bool, callOptions ...grpc.CallOption) (*machineapi.UpgradeResponse, error) {
+func (c *Client) Upgrade(ctx context.Context, image string, stage, force bool, callOptions ...grpc.CallOption) (*machineapi.UpgradeResponse, error) {
 	return c.UpgradeWithOptions(
 		ctx,
 		WithUpgradeImage(image),
 		WithUpgradeRebootMode(machineapi.UpgradeRequest_DEFAULT),
-		WithUpgradePreserve(preserve),
 		WithUpgradeStage(stage),
 		WithUpgradeForce(force),
 		WithUpgradeGRPCCallOptions(callOptions...),

@@ -266,7 +266,6 @@ func (suite *BaseSuite) readVersion(nodeCtx context.Context, client *talosclient
 
 type upgradeOptions struct {
 	TargetInstallerImage string
-	UpgradePreserve      bool
 	UpgradeStage         bool
 	TargetVersion        string
 }
@@ -290,7 +289,6 @@ func (suite *BaseSuite) upgradeNode(client *talosclient.Client, node provision.N
 			resp, err = client.Upgrade(
 				nodeCtx,
 				options.TargetInstallerImage,
-				options.UpgradePreserve,
 				options.UpgradeStage,
 				false,
 			)
@@ -429,6 +427,7 @@ type clusterOptions struct {
 	SourceK8sVersion     string
 
 	WithEncryption bool
+	WithBios       bool
 }
 
 // setupCluster provisions source clusters and waits for health.
@@ -597,7 +596,7 @@ func (suite *BaseSuite) setupCluster(options clusterOptions) {
 	suite.Cluster, err = suite.provisioner.Create(
 		suite.ctx, request,
 		provision.WithBootlader(true),
-		provision.WithUEFI(true),
+		provision.WithUEFI(!options.WithBios),
 		provision.WithTalosConfig(suite.configBundle.TalosConfig()),
 	)
 	suite.Require().NoError(err)

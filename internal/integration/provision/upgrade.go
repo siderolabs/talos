@@ -35,9 +35,9 @@ type upgradeSpec struct {
 	ControlplaneNodes int
 	WorkerNodes       int
 
-	UpgradePreserve bool
-	UpgradeStage    bool
-	WithEncryption  bool
+	UpgradeStage   bool
+	WithEncryption bool
+	WithBios       bool
 }
 
 const (
@@ -133,29 +133,33 @@ func upgradeCurrentToCurrent() upgradeSpec {
 	}
 }
 
-// upgradeStableToCurrentPreserve upgrades from the stable Talos release to the current version for single-node cluster with preserve.
-func upgradeStableToCurrentPreserve() upgradeSpec {
+// upgradeCurrentToCurrentBios upgrades the current version to itself without UEFI.
+func upgradeCurrentToCurrentBios() upgradeSpec {
+	installerImage := fmt.Sprintf(
+		"%s/%s:%s",
+		DefaultSettings.TargetInstallImageRegistry,
+		images.DefaultInstallerImageName,
+		DefaultSettings.CurrentVersion,
+	)
+
 	return upgradeSpec{
-		ShortName: fmt.Sprintf("prsrv-%s-%s", stableRelease, DefaultSettings.CurrentVersion),
+		ShortName: fmt.Sprintf("%s-same-ver-bios", DefaultSettings.CurrentVersion),
 
-		SourceKernelPath:     helpers.ArtifactPath(filepath.Join(trimVersion(stableRelease), constants.KernelAsset)),
-		SourceInitramfsPath:  helpers.ArtifactPath(filepath.Join(trimVersion(stableRelease), constants.InitramfsAsset)),
-		SourceInstallerImage: fmt.Sprintf("%s:%s", "ghcr.io/siderolabs/installer", stableRelease),
-		SourceVersion:        stableRelease,
-		SourceK8sVersion:     stableK8sVersion,
+		SourceKernelPath:     helpers.ArtifactPath(constants.KernelAssetWithArch),
+		SourceInitramfsPath:  helpers.ArtifactPath(constants.InitramfsAssetWithArch),
+		SourceInstallerImage: installerImage,
+		SourceVersion:        DefaultSettings.CurrentVersion,
+		SourceK8sVersion:     currentK8sVersion,
 
-		TargetInstallerImage: fmt.Sprintf(
-			"%s/%s:%s",
-			DefaultSettings.TargetInstallImageRegistry,
-			images.DefaultInstallerImageName,
-			DefaultSettings.CurrentVersion,
-		),
-		TargetVersion:    DefaultSettings.CurrentVersion,
-		TargetK8sVersion: currentK8sVersion,
+		TargetInstallerImage: installerImage,
+		TargetVersion:        DefaultSettings.CurrentVersion,
+		TargetK8sVersion:     currentK8sVersion,
 
-		ControlplaneNodes: 1,
-		WorkerNodes:       0,
-		UpgradePreserve:   true,
+		ControlplaneNodes: DefaultSettings.ControlplaneNodes,
+		WorkerNodes:       DefaultSettings.WorkerNodes,
+
+		WithEncryption: true,
+		WithBios:       true,
 	}
 }
 
@@ -181,7 +185,6 @@ func upgradeStableToCurrentPreserveStage() upgradeSpec {
 
 		ControlplaneNodes: 1,
 		WorkerNodes:       0,
-		UpgradePreserve:   true,
 		UpgradeStage:      true,
 	}
 }
@@ -231,6 +234,7 @@ func (suite *UpgradeSuite) TestRolling() {
 		SourceK8sVersion:     suite.spec.SourceK8sVersion,
 
 		WithEncryption: suite.spec.WithEncryption,
+		WithBios:       suite.spec.WithBios,
 	})
 
 	client, err := suite.clusterAccess.Client()
@@ -241,7 +245,6 @@ func (suite *UpgradeSuite) TestRolling() {
 
 	options := upgradeOptions{
 		TargetInstallerImage: suite.spec.TargetInstallerImage,
-		UpgradePreserve:      suite.spec.UpgradePreserve,
 		UpgradeStage:         suite.spec.UpgradeStage,
 		TargetVersion:        suite.spec.TargetVersion,
 	}
@@ -285,7 +288,7 @@ func init() {
 		&UpgradeSuite{specGen: upgradePreviousToStable, track: 0},
 		&UpgradeSuite{specGen: upgradeStableToCurrent, track: 1},
 		&UpgradeSuite{specGen: upgradeCurrentToCurrent, track: 2},
-		&UpgradeSuite{specGen: upgradeStableToCurrentPreserve, track: 0},
+		&UpgradeSuite{specGen: upgradeCurrentToCurrentBios, track: 0},
 		&UpgradeSuite{specGen: upgradeStableToCurrentPreserveStage, track: 1},
 	)
 }
