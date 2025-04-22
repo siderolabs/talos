@@ -9,7 +9,7 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"os"
+	"log"
 	"syscall"
 	"time"
 
@@ -173,7 +173,7 @@ func (c *containerdRunner) Run(eventSink events.Recorder) error {
 	var w io.Writer = logW
 
 	if c.logToConsole {
-		w = io.MultiWriter(w, os.Stdout)
+		w = io.MultiWriter(w, log.Writer())
 	}
 
 	r, err := c.StdinReader()
