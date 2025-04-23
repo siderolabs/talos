@@ -7,8 +7,10 @@ aliases:
 
 ## Upload image
 
-Hetzner Cloud does not support uploading custom images.
-You can email their support to get a Talos ISO uploaded by following [issues:3599](https://github.com/siderolabs/talos/issues/3599#issuecomment-841172018) or you can prepare image snapshot by yourself.
+**NOTE:** Hetzner Cloud provides Talos as Public ISO with the schematic id `ce4c980550dd2ab1b17bbf2b08801c7eb59418eafe8f279833297925d67c7515` (Hetzner + qemu-guest-agent) since 2025-04-23.
+Minor updates of the ISO will be provided by Hetzner Cloud on a best effort.
+
+If you need an ISO with a different schematic id, please email the support team to get a Talos ISO uploaded by following [issues:3599](https://github.com/siderolabs/talos/issues/3599#issuecomment-841172018) or you can prepare image snapshot by yourself.
 
 There are three options to upload your own.
 
