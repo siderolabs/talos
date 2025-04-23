@@ -355,15 +355,11 @@ func (suite *ExtensionsSuiteQEMU) TestExtensionsHelloWorldService() {
 
 // TestExtensionsGvisor verifies gvisor runtime class is working.
 func (suite *ExtensionsSuiteQEMU) TestExtensionsGvisor() {
-	suite.T().Skip("skipping until https://github.com/siderolabs/extensions/issues/417 is addressed.")
-
 	suite.testRuntimeClass("gvisor", "runsc")
 }
 
 // TestExtensionsGvisorKVM verifies gvisor runtime class with kvm platform is working.
 func (suite *ExtensionsSuiteQEMU) TestExtensionsGvisorKVM() {
-	suite.T().Skip("skipping until https://github.com/siderolabs/extensions/issues/417 is addressed.")
-
 	suite.testRuntimeClass("gvisor-kvm", "runsc-kvm")
 }
 
