@@ -13,7 +13,6 @@ import (
 
 	"github.com/miekg/dns"
 	"go.uber.org/zap"
-	"golang.org/x/sync/errgroup"
 )
 
 // RunnerOptions is a [Runner] options.
@@ -52,15 +51,26 @@ type Runner struct {
 
 // Serve starts the DNS server. Implements [suture.Service] interface.
 func (r *Runner) Serve(ctx context.Context) error {
-	eg, ctx := errgroup.WithContext(ctx)
+	errCh := make(chan error)
 
-	eg.Go(r.srv.ActivateAndServe)
+	go func() {
+		errCh <- r.srv.ActivateAndServe()
+	}()
 
-	<-ctx.Done()
+	select {
+	case err := <-errCh:
+		return err
+	case <-ctx.Done():
+	}
 
 	r.close()
 
-	return eg.Wait()
+	select {
+	case err := <-errCh:
+		return err
+	case <-time.After(time.Second):
+		return errors.New("timeout waiting for server to close")
+	}
 }
 
 func (r *Runner) close() {
