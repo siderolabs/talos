@@ -32,6 +32,7 @@ type PCIDeviceSpec struct {
 	SubclassID string `yaml:"subclass_id" protobuf:"6"`
 	VendorID   string `yaml:"vendor_id" protobuf:"7"`
 	ProductID  string `yaml:"product_id" protobuf:"8"`
+	Driver     string `yaml:"driver,omitempty" protobuf:"9"`
 }
 
 // NewPCIDeviceInfo initializes a PCIDeviceInfo resource.
@@ -78,7 +79,7 @@ func (PCIDeviceExtension) ResourceDefinition() meta.ResourceDefinitionSpec {
 func init() {
 	proto.RegisterDefaultTypes()
 
-	err := protobuf.RegisterDynamic[PCIDeviceSpec](PCIDeviceType, &PCIDevice{})
+	err := protobuf.RegisterDynamic(PCIDeviceType, &PCIDevice{})
 	if err != nil {
 		panic(err)
 	}

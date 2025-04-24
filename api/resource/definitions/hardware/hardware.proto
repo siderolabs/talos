@@ -27,6 +27,7 @@ message PCIDeviceSpec {
   string subclass_id = 6;
   string vendor_id = 7;
   string product_id = 8;
+  string driver = 9;
 }
 
 // PCIDriverRebindConfigSpec describes PCI rebind configuration.
