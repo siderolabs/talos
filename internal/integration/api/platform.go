@@ -8,6 +8,7 @@ package api
 
 import (
 	"context"
+	"net/netip"
 	"time"
 
 	"github.com/cosi-project/runtime/pkg/resource"
@@ -15,8 +16,11 @@ import (
 	"github.com/stretchr/testify/assert"
 	"gopkg.in/yaml.v3"
 
+	v1alpha1runtime "github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
 	"github.com/siderolabs/talos/internal/integration/base"
 	"github.com/siderolabs/talos/pkg/machinery/client"
+	"github.com/siderolabs/talos/pkg/machinery/meta"
+	"github.com/siderolabs/talos/pkg/machinery/resources/network"
 	"github.com/siderolabs/talos/pkg/machinery/resources/runtime"
 )
 
@@ -63,6 +67,40 @@ func (suite *PlatformSuite) TestPlatformMetadata() {
 			asrt.NotEmpty(md.TypedSpec().Tags)
 		}
 	})
+}
+
+// TestMetalPlatformMetadata verifies platform metadata for metal platform.
+func (suite *PlatformSuite) TestMetalPlatformMetadata() {
+	if suite.Cluster == nil || suite.Cluster.Provisioner() != base.ProvisionerQEMU {
+		suite.T().Skip("skipping platform metal test since provisioner is not qemu")
+	}
+
+	node := suite.RandomDiscoveredNodeInternalIP()
+	ctx := client.WithNode(suite.ctx, node)
+
+	suite.T().Logf("verifying metal platform network config on node %s", node)
+
+	// fake external IP attached to the machine
+	const externalIP = "1.2.3.4"
+
+	platformNetworkConfig := v1alpha1runtime.PlatformNetworkConfig{
+		ExternalIPs: []netip.Addr{
+			netip.MustParseAddr(externalIP),
+		},
+	}
+
+	platformNetworkConfigMarshaled, err := yaml.Marshal(platformNetworkConfig)
+	suite.Require().NoError(err)
+
+	suite.Require().NoError(suite.Client.MetaWrite(ctx, meta.MetalNetworkPlatformConfig, platformNetworkConfigMarshaled))
+
+	// address should appear on the node
+	rtestutils.AssertResource(ctx, suite.T(), suite.Client.COSI, "external/"+externalIP+"/32", func(*network.AddressStatus, *assert.Assertions) {})
+
+	suite.Require().NoError(suite.Client.MetaDelete(ctx, meta.MetalNetworkPlatformConfig))
+
+	// address should be removed
+	rtestutils.AssertNoResource[*network.AddressStatus](ctx, suite.T(), suite.Client.COSI, "external/"+externalIP)
 }
 
 func init() {

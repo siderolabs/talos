@@ -168,7 +168,7 @@ func (ctrl *PlatformConfigController) Run(ctx context.Context, r controller.Runt
 		}
 
 		// prefer live network config over cached config always
-		if activeNetworkConfig == nil {
+		if networkConfig != nil {
 			activeNetworkConfig = networkConfig
 		}
 
