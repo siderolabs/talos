@@ -2616,6 +2616,7 @@ PCIDeviceSpec represents a single processor.
 | subclass_id | [string](#string) |  |  |
 | vendor_id | [string](#string) |  |  |
 | product_id | [string](#string) |  |  |
+| driver | [string](#string) |  |  |
 
 
 
