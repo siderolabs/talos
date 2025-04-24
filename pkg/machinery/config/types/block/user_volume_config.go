@@ -69,6 +69,9 @@ type UserVolumeConfigV1Alpha1 struct {
 	//   description: |
 	//     The filesystem describes how the volume is formatted.
 	FilesystemSpec FilesystemSpec `yaml:"filesystem,omitempty"`
+	//   description: |
+	//     The encryption describes how the volume is encrypted.
+	EncryptionSpec EncryptionSpec `yaml:"encryption,omitempty"`
 }
 
 // NewUserVolumeConfigV1Alpha1 creates a new user volume config document.
@@ -92,6 +95,21 @@ func exampleUserVolumeConfigV1Alpha1() *UserVolumeConfigV1Alpha1 {
 	}
 	cfg.FilesystemSpec = FilesystemSpec{
 		FilesystemType: block.FilesystemTypeXFS,
+	}
+	cfg.EncryptionSpec = EncryptionSpec{
+		EncryptionProvider: block.EncryptionProviderLUKS2,
+		EncryptionKeys: []EncryptionKey{
+			{
+				KeySlot: 0,
+				KeyTPM:  &EncryptionKeyTPM{},
+			},
+			{
+				KeySlot: 1,
+				KeyStatic: &EncryptionKeyStatic{
+					KeyData: "topsecret",
+				},
+			},
+		},
 	}
 
 	return cfg
@@ -150,6 +168,10 @@ func (s *UserVolumeConfigV1Alpha1) Validate(validation.RuntimeMode, ...validatio
 	warnings = append(warnings, extraWarnings...)
 	validationErrors = errors.Join(validationErrors, extraErrors)
 
+	extraWarnings, extraErrors = s.EncryptionSpec.Validate()
+	warnings = append(warnings, extraWarnings...)
+	validationErrors = errors.Join(validationErrors, extraErrors)
+
 	return warnings, validationErrors
 }
 
@@ -164,6 +186,15 @@ func (s *UserVolumeConfigV1Alpha1) Provisioning() config.VolumeProvisioningConfi
 // Filesystem implements config.UserVolumeConfig interface.
 func (s *UserVolumeConfigV1Alpha1) Filesystem() config.FilesystemConfig {
 	return s.FilesystemSpec
+}
+
+// Encryption implements config.UserVolumeConfig interface.
+func (s *UserVolumeConfigV1Alpha1) Encryption() config.EncryptionConfig {
+	if s.EncryptionSpec.EncryptionProvider == block.EncryptionProviderNone {
+		return nil
+	}
+
+	return s.EncryptionSpec
 }
 
 // FilesystemSpec configures the filesystem for the volume.

@@ -61,6 +61,7 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/imager/quirks"
 	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
+	blockres "github.com/siderolabs/talos/pkg/machinery/resources/block"
 	"github.com/siderolabs/talos/pkg/machinery/version"
 	"github.com/siderolabs/talos/pkg/provision"
 	"github.com/siderolabs/talos/pkg/provision/access"
@@ -110,6 +111,7 @@ const (
 	talosVersionFlag              = "talos-version"
 	encryptStatePartitionFlag     = "encrypt-state"
 	encryptEphemeralPartitionFlag = "encrypt-ephemeral"
+	encryptUserVolumeFlag         = "encrypt-user-volumes"
 	enableKubeSpanFlag            = "with-kubespan"
 	forceEndpointFlag             = "endpoint"
 	kubePrismFlag                 = "kubeprism-port"
@@ -176,6 +178,7 @@ var (
 	talosVersion              string
 	encryptStatePartition     bool
 	encryptEphemeralPartition bool
+	encryptUserVolumes        bool
 	useVIP                    bool
 	enableKubeSpan            bool
 	enableClusterDiscovery    bool
@@ -312,6 +315,58 @@ func downloadBootAssets(ctx context.Context) error {
 	}
 
 	return nil
+}
+
+func getEncryptionKeys(cidr4 netip.Prefix, versionContract *config.VersionContract, provisionOptions *[]provision.Option) ([]*v1alpha1.EncryptionKey, error) {
+	var keys []*v1alpha1.EncryptionKey
+
+	for i, key := range diskEncryptionKeyTypes {
+		switch key {
+		case "uuid":
+			keys = append(keys, &v1alpha1.EncryptionKey{
+				KeyNodeID: &v1alpha1.EncryptionKeyNodeID{},
+				KeySlot:   i,
+			})
+		case "kms":
+			var ip netip.Addr
+
+			// get bridge IP
+			ip, err := sideronet.NthIPInNetwork(cidr4, 1)
+			if err != nil {
+				return nil, err
+			}
+
+			const port = 4050
+
+			keys = append(keys, &v1alpha1.EncryptionKey{
+				KeyKMS: &v1alpha1.EncryptionKeyKMS{
+					KMSEndpoint: "grpc://" + nethelpers.JoinHostPort(ip.String(), port),
+				},
+				KeySlot: i,
+			})
+
+			*provisionOptions = append(*provisionOptions, provision.WithKMS(nethelpers.JoinHostPort("0.0.0.0", port)))
+		case "tpm":
+			keyTPM := &v1alpha1.EncryptionKeyTPM{}
+
+			if versionContract.SecureBootEnrollEnforcementSupported() {
+				keyTPM.TPMCheckSecurebootStatusOnEnroll = pointer.To(true)
+			}
+
+			keys = append(keys, &v1alpha1.EncryptionKey{
+				KeyTPM:  keyTPM,
+				KeySlot: i,
+			})
+		default:
+			return nil, fmt.Errorf("unknown key type %q", key)
+		}
+	}
+
+	if len(keys) == 0 {
+		return nil, errors.New("no disk encryption key types enabled")
+	}
+
+	return keys, nil
 }
 
 //nolint:gocyclo,cyclop
@@ -517,9 +572,14 @@ func create(ctx context.Context) error {
 		provisionOptions = append(provisionOptions, provision.WithDockerPorts(portList))
 	}
 
-	disks, userVolumePatches, err := getDisks(provisioner)
-	if err != nil {
-		return err
+	// should have at least a single primary disk
+	disks := []*provision.Disk{
+		{
+			Size:            uint64(clusterDiskSize) * 1024 * 1024,
+			SkipPreallocate: !clusterDiskPreallocate,
+			Driver:          "virtio",
+			BlockSize:       diskBlockSize,
+		},
 	}
 
 	if inputDir != "" {
@@ -577,55 +637,19 @@ func create(ctx context.Context) error {
 			genOptions = append(genOptions, generate.WithVersionContract(versionContract))
 		}
 
+		extraDisks, userVolumePatches, err := getDisks(provisioner, cidr4, versionContract, &provisionOptions)
+		if err != nil {
+			return err
+		}
+
+		disks = slices.Concat(disks, extraDisks)
+
 		if encryptStatePartition || encryptEphemeralPartition {
 			diskEncryptionConfig := &v1alpha1.SystemDiskEncryptionConfig{}
 
-			var keys []*v1alpha1.EncryptionKey
-
-			for i, key := range diskEncryptionKeyTypes {
-				switch key {
-				case "uuid":
-					keys = append(keys, &v1alpha1.EncryptionKey{
-						KeyNodeID: &v1alpha1.EncryptionKeyNodeID{},
-						KeySlot:   i,
-					})
-				case "kms":
-					var ip netip.Addr
-
-					// get bridge IP
-					ip, err = sideronet.NthIPInNetwork(cidr4, 1)
-					if err != nil {
-						return err
-					}
-
-					const port = 4050
-
-					keys = append(keys, &v1alpha1.EncryptionKey{
-						KeyKMS: &v1alpha1.EncryptionKeyKMS{
-							KMSEndpoint: "grpc://" + nethelpers.JoinHostPort(ip.String(), port),
-						},
-						KeySlot: i,
-					})
-
-					provisionOptions = append(provisionOptions, provision.WithKMS(nethelpers.JoinHostPort("0.0.0.0", port)))
-				case "tpm":
-					keyTPM := &v1alpha1.EncryptionKeyTPM{}
-
-					if versionContract.SecureBootEnrollEnforcementSupported() {
-						keyTPM.TPMCheckSecurebootStatusOnEnroll = pointer.To(true)
-					}
-
-					keys = append(keys, &v1alpha1.EncryptionKey{
-						KeyTPM:  keyTPM,
-						KeySlot: i,
-					})
-				default:
-					return fmt.Errorf("unknown key type %q", key)
-				}
-			}
-
-			if len(keys) == 0 {
-				return errors.New("no disk encryption key types enabled")
+			keys, err := getEncryptionKeys(cidr4, versionContract, &provisionOptions)
+			if err != nil {
+				return err
 			}
 
 			if encryptStatePartition {
@@ -1165,20 +1189,53 @@ func parseCPUShare(cpus string) (int64, error) {
 	return nano.Num().Int64(), nil
 }
 
-func getDisks(provisioner provision.Provisioner) ([]*provision.Disk, []configpatcher.Patch, error) {
+//nolint:gocyclo
+func getDisks(provisioner provision.Provisioner, cidr4 netip.Prefix, versionContract *config.VersionContract, provisionOptions *[]provision.Option) ([]*provision.Disk, []configpatcher.Patch, error) {
 	const GPTAlignment = 2 * 1024 * 1024 // 2 MB
 
-	// should have at least a single primary disk
-	disks := []*provision.Disk{
-		{
-			Size:            uint64(clusterDiskSize) * 1024 * 1024,
-			SkipPreallocate: !clusterDiskPreallocate,
-			Driver:          "virtio",
-			BlockSize:       diskBlockSize,
-		},
+	var (
+		userVolumes    []*block.UserVolumeConfigV1Alpha1
+		encryptionSpec block.EncryptionSpec
+	)
+
+	if encryptUserVolumes {
+		encryptionSpec.EncryptionProvider = blockres.EncryptionProviderLUKS2
+
+		keys, err := getEncryptionKeys(
+			cidr4,
+			versionContract,
+			provisionOptions,
+		)
+		if err != nil {
+			return nil, nil, err
+		}
+
+		encryptionSpec.EncryptionKeys = xslices.Map(keys, func(k *v1alpha1.EncryptionKey) block.EncryptionKey {
+			r := block.EncryptionKey{
+				KeySlot: k.KeySlot,
+			}
+
+			if k.KeyKMS != nil {
+				r.KeyKMS = pointer.To(block.EncryptionKeyKMS(*k.KeyKMS))
+			}
+
+			if k.KeyTPM != nil {
+				r.KeyTPM = pointer.To(block.EncryptionKeyTPM(*k.KeyTPM))
+			}
+
+			if k.KeyNodeID != nil {
+				r.KeyNodeID = pointer.To(block.EncryptionKeyNodeID(*k.KeyNodeID))
+			}
+
+			if k.KeyStatic != nil {
+				r.KeyStatic = pointer.To(block.EncryptionKeyStatic(*k.KeyStatic))
+			}
+
+			return r
+		})
 	}
 
-	var userVolumes []*block.UserVolumeConfigV1Alpha1
+	disks := make([]*provision.Disk, 0, len(clusterUserVolumes))
 
 	for diskID, disk := range clusterUserVolumes {
 		var (
@@ -1203,6 +1260,7 @@ func getDisks(provisioner provision.Provisioner) ([]*provision.Disk, []configpat
 				ProvisioningMinSize: block.MustByteSize(volumeSize),
 				ProvisioningMaxSize: block.MustByteSize(volumeSize),
 			}
+			userVolume.EncryptionSpec = encryptionSpec
 
 			userVolumes = append(userVolumes, userVolume)
 			diskSize += userVolume.ProvisioningSpec.ProvisioningMaxSize.Value()
@@ -1308,6 +1366,7 @@ func init() {
 	createCmd.Flags().BoolVar(&skipInjectingConfig, "skip-injecting-config", false, "skip injecting config from embedded metadata server, write config files to current directory")
 	createCmd.Flags().BoolVar(&encryptStatePartition, encryptStatePartitionFlag, false, "enable state partition encryption")
 	createCmd.Flags().BoolVar(&encryptEphemeralPartition, encryptEphemeralPartitionFlag, false, "enable ephemeral partition encryption")
+	createCmd.Flags().BoolVar(&encryptUserVolumes, encryptUserVolumeFlag, false, "enable ephemeral partition encryption")
 	createCmd.Flags().StringArrayVar(&diskEncryptionKeyTypes, diskEncryptionKeyTypesFlag, []string{"uuid"}, "encryption key types to use for disk encryption (uuid, kms)")
 	createCmd.Flags().StringVar(&talosVersion, talosVersionFlag, "", "the desired Talos version to generate config for (if not set, defaults to image version)")
 	createCmd.Flags().BoolVar(&useVIP, useVIPFlag, false, "use a virtual IP for the controlplane endpoint instead of the loadbalancer")
@@ -1349,6 +1408,7 @@ func init() {
 	createCmd.MarkFlagsMutuallyExclusive(inputDirFlag, talosVersionFlag)
 	createCmd.MarkFlagsMutuallyExclusive(inputDirFlag, encryptStatePartitionFlag)
 	createCmd.MarkFlagsMutuallyExclusive(inputDirFlag, encryptEphemeralPartitionFlag)
+	createCmd.MarkFlagsMutuallyExclusive(inputDirFlag, encryptUserVolumeFlag)
 	createCmd.MarkFlagsMutuallyExclusive(inputDirFlag, enableKubeSpanFlag)
 	createCmd.MarkFlagsMutuallyExclusive(inputDirFlag, forceEndpointFlag)
 	createCmd.MarkFlagsMutuallyExclusive(inputDirFlag, kubePrismFlag)

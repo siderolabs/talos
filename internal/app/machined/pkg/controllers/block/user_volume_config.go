@@ -168,6 +168,10 @@ func (ctrl *UserVolumeConfigController) Run(ctx context.Context, r controller.Ru
 						GID:          0,
 					}
 
+					if err := convertEncryptionConfiguration(userVolumeConfig.Encryption(), v.TypedSpec()); err != nil {
+						return fmt.Errorf("error apply encryption configuration: %w", err)
+					}
+
 					return nil
 				},
 			); err != nil {
