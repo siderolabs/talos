@@ -134,6 +134,7 @@ type PCIDeviceSpec struct {
 	SubclassId    string                 `protobuf:"bytes,6,opt,name=subclass_id,json=subclassId,proto3" json:"subclass_id,omitempty"`
 	VendorId      string                 `protobuf:"bytes,7,opt,name=vendor_id,json=vendorId,proto3" json:"vendor_id,omitempty"`
 	ProductId     string                 `protobuf:"bytes,8,opt,name=product_id,json=productId,proto3" json:"product_id,omitempty"`
+	Driver        string                 `protobuf:"bytes,9,opt,name=driver,proto3" json:"driver,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -220,6 +221,13 @@ func (x *PCIDeviceSpec) GetVendorId() string {
 func (x *PCIDeviceSpec) GetProductId() string {
 	if x != nil {
 		return x.ProductId
+	}
+	return ""
+}
+
+func (x *PCIDeviceSpec) GetDriver() string {
+	if x != nil {
+		return x.Driver
 	}
 	return ""
 }
@@ -569,7 +577,7 @@ const file_resource_definitions_hardware_hardware_proto_rawDesc = "" +
 	"\fmanufacturer\x18\x05 \x01(\tR\fmanufacturer\x12#\n" +
 	"\rserial_number\x18\x06 \x01(\tR\fserialNumber\x12\x1b\n" +
 	"\tasset_tag\x18\a \x01(\tR\bassetTag\x12!\n" +
-	"\fproduct_name\x18\b \x01(\tR\vproductName\"\xeb\x01\n" +
+	"\fproduct_name\x18\b \x01(\tR\vproductName\"\x83\x02\n" +
 	"\rPCIDeviceSpec\x12\x14\n" +
 	"\x05class\x18\x01 \x01(\tR\x05class\x12\x1a\n" +
 	"\bsubclass\x18\x02 \x01(\tR\bsubclass\x12\x16\n" +
@@ -580,7 +588,8 @@ const file_resource_definitions_hardware_hardware_proto_rawDesc = "" +
 	"subclassId\x12\x1b\n" +
 	"\tvendor_id\x18\a \x01(\tR\bvendorId\x12\x1d\n" +
 	"\n" +
-	"product_id\x18\b \x01(\tR\tproductId\"V\n" +
+	"product_id\x18\b \x01(\tR\tproductId\x12\x16\n" +
+	"\x06driver\x18\t \x01(\tR\x06driver\"V\n" +
 	"\x19PCIDriverRebindConfigSpec\x12\x14\n" +
 	"\x05pciid\x18\x01 \x01(\tR\x05pciid\x12#\n" +
 	"\rtarget_driver\x18\x02 \x01(\tR\ftargetDriver\"V\n" +
