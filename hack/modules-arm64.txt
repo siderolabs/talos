@@ -24,6 +24,7 @@ kernel/drivers/infiniband/hw/mlx5/mlx5_ib.ko
 kernel/drivers/infiniband/sw/rxe/rdma_rxe.ko
 kernel/drivers/irqchip/irq-imx-mu-msi.ko
 kernel/drivers/mailbox/bcm-flexrm-mailbox.ko
+kernel/drivers/md/bcache/bcache.ko
 kernel/drivers/md/dm-bio-prison.ko
 kernel/drivers/md/dm-cache-smq.ko
 kernel/drivers/md/dm-cache.ko
