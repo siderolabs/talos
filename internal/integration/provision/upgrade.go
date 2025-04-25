@@ -22,6 +22,7 @@ type upgradeSpec struct {
 
 	SourceKernelPath     string
 	SourceInitramfsPath  string
+	SourceDiskImagePath  string
 	SourceInstallerImage string
 	SourceVersion        string
 	SourceK8sVersion     string
@@ -35,9 +36,10 @@ type upgradeSpec struct {
 	ControlplaneNodes int
 	WorkerNodes       int
 
-	UpgradeStage   bool
-	WithEncryption bool
-	WithBios       bool
+	UpgradeStage    bool
+	WithEncryption  bool
+	WithBios        bool
+	WithApplyConfig bool
 }
 
 const (
@@ -145,8 +147,7 @@ func upgradeCurrentToCurrentBios() upgradeSpec {
 	return upgradeSpec{
 		ShortName: fmt.Sprintf("%s-same-ver-bios", DefaultSettings.CurrentVersion),
 
-		SourceKernelPath:     helpers.ArtifactPath(constants.KernelAssetWithArch),
-		SourceInitramfsPath:  helpers.ArtifactPath(constants.InitramfsAssetWithArch),
+		SourceDiskImagePath:  helpers.ArtifactPath("metal-amd64.raw"),
 		SourceInstallerImage: installerImage,
 		SourceVersion:        DefaultSettings.CurrentVersion,
 		SourceK8sVersion:     currentK8sVersion,
@@ -158,8 +159,9 @@ func upgradeCurrentToCurrentBios() upgradeSpec {
 		ControlplaneNodes: DefaultSettings.ControlplaneNodes,
 		WorkerNodes:       DefaultSettings.WorkerNodes,
 
-		WithEncryption: true,
-		WithBios:       true,
+		WithEncryption:  true,
+		WithBios:        true,
+		WithApplyConfig: true,
 	}
 }
 
@@ -229,12 +231,14 @@ func (suite *UpgradeSuite) TestRolling() {
 
 		SourceKernelPath:     suite.spec.SourceKernelPath,
 		SourceInitramfsPath:  suite.spec.SourceInitramfsPath,
+		SourceDiskImagePath:  suite.spec.SourceDiskImagePath,
 		SourceInstallerImage: suite.spec.SourceInstallerImage,
 		SourceVersion:        suite.spec.SourceVersion,
 		SourceK8sVersion:     suite.spec.SourceK8sVersion,
 
-		WithEncryption: suite.spec.WithEncryption,
-		WithBios:       suite.spec.WithBios,
+		WithEncryption:  suite.spec.WithEncryption,
+		WithBios:        suite.spec.WithBios,
+		WithApplyConfig: suite.spec.WithApplyConfig,
 	})
 
 	client, err := suite.clusterAccess.Client()
