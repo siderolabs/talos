@@ -9,4 +9,5 @@ import "net/url"
 // SideroLinkConfig defines the interface to access SideroLink configuration.
 type SideroLinkConfig interface {
 	APIUrl() *url.URL
+	UniqueToken() string
 }
