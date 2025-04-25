@@ -1004,6 +1004,13 @@
           "description": "SideroLink API URL to connect to.\n",
           "markdownDescription": "SideroLink API URL to connect to.",
           "x-intellij-html-description": "\u003cp\u003eSideroLink API URL to connect to.\u003c/p\u003e\n"
+        },
+        "uniqueToken": {
+          "type": "string",
+          "title": "uniqueToken",
+          "description": "SideroLink unique token to use for the connection (optional).\n\nThis value is overridden with META key UniqueMachineToken.\n",
+          "markdownDescription": "SideroLink unique token to use for the connection (optional).\n\nThis value is overridden with META key UniqueMachineToken.",
+          "x-intellij-html-description": "\u003cp\u003eSideroLink unique token to use for the connection (optional).\u003c/p\u003e\n\n\u003cp\u003eThis value is overridden with META key UniqueMachineToken.\u003c/p\u003e\n"
         }
       },
       "additionalProperties": false,

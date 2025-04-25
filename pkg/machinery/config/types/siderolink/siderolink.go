@@ -62,6 +62,11 @@ type ConfigV1Alpha1 struct {
 	//     type: string
 	//     pattern: "^(https|grpc)://"
 	APIUrlConfig meta.URL `yaml:"apiUrl"`
+	//   description: |
+	//     SideroLink unique token to use for the connection (optional).
+	//
+	//     This value is overridden with META key UniqueMachineToken.
+	UniqueTokenConfig string `yaml:"uniqueToken,omitempty"`
 }
 
 // NewConfigV1Alpha1 creates a new siderolink config document.
@@ -110,6 +115,15 @@ func (s *ConfigV1Alpha1) APIUrl() *url.URL {
 	}
 
 	return s.APIUrlConfig.URL
+}
+
+// UniqueToken implements config.SideroLink interface.
+func (s *ConfigV1Alpha1) UniqueToken() string {
+	if s == nil {
+		return ""
+	}
+
+	return s.UniqueTokenConfig
 }
 
 // Validate implements config.Validator interface.
