@@ -16,12 +16,20 @@ func (ConfigV1Alpha1) Doc() *encoder.Doc {
 		Comments:    [3]string{"" /* encoder.HeadComment */, "SideroLinkConfig is a SideroLink connection machine configuration document." /* encoder.LineComment */, "" /* encoder.FootComment */},
 		Description: "SideroLinkConfig is a SideroLink connection machine configuration document.",
 		Fields: []encoder.Doc{
-			{}, {
+			{},
+			{
 				Name:        "apiUrl",
 				Type:        "URL",
 				Note:        "",
 				Description: "SideroLink API URL to connect to.",
 				Comments:    [3]string{"" /* encoder.HeadComment */, "SideroLink API URL to connect to." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "uniqueToken",
+				Type:        "string",
+				Note:        "",
+				Description: "SideroLink unique token to use for the connection (optional).\n\nThis value is overridden with META key UniqueMachineToken.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "SideroLink unique token to use for the connection (optional)." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
 		},
 	}
