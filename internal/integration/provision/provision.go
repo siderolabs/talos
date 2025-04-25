@@ -422,15 +422,19 @@ type clusterOptions struct {
 
 	SourceKernelPath     string
 	SourceInitramfsPath  string
+	SourceDiskImagePath  string
 	SourceInstallerImage string
 	SourceVersion        string
 	SourceK8sVersion     string
 
-	WithEncryption bool
-	WithBios       bool
+	WithEncryption  bool
+	WithBios        bool
+	WithApplyConfig bool
 }
 
 // setupCluster provisions source clusters and waits for health.
+//
+//nolint:gocyclo
 func (suite *BaseSuite) setupCluster(options clusterOptions) {
 	defaultStateDir, err := clientconfig.GetTalosDirectory()
 	suite.Require().NoError(err)
@@ -473,11 +477,15 @@ func (suite *BaseSuite) setupCluster(options clusterOptions) {
 			},
 		},
 
-		KernelPath:    options.SourceKernelPath,
-		InitramfsPath: options.SourceInitramfsPath,
-
 		SelfExecutable: suite.TalosctlPath,
 		StateDirectory: suite.stateDir,
+	}
+
+	if options.SourceDiskImagePath != "" {
+		request.DiskImagePath = options.SourceDiskImagePath
+	} else {
+		request.KernelPath = options.SourceKernelPath
+		request.InitramfsPath = options.SourceInitramfsPath
 	}
 
 	suite.controlPlaneEndpoint = suite.provisioner.GetExternalKubernetesControlPlaneEndpoint(request.Network, constants.DefaultControlPlanePort)
@@ -593,13 +601,26 @@ func (suite *BaseSuite) setupCluster(options clusterOptions) {
 		)
 	}
 
-	suite.Cluster, err = suite.provisioner.Create(
-		suite.ctx, request,
+	provisionerOptions := []provision.Option{
 		provision.WithBootlader(true),
 		provision.WithUEFI(!options.WithBios),
 		provision.WithTalosConfig(suite.configBundle.TalosConfig()),
+	}
+
+	suite.Cluster, err = suite.provisioner.Create(
+		suite.ctx, request,
+		provisionerOptions...,
 	)
 	suite.Require().NoError(err)
+
+	if options.WithApplyConfig {
+		clusterAccess := access.NewAdapter(suite.Cluster, provisionerOptions...)
+		defer clusterAccess.Close() //nolint:errcheck
+
+		if err := clusterAccess.ApplyConfig(suite.ctx, request.Nodes, request.SiderolinkRequest, os.Stderr); err != nil {
+			suite.FailNow("failed to apply config", err.Error())
+		}
+	}
 
 	c, err := clientconfig.Open("")
 	suite.Require().NoError(err)

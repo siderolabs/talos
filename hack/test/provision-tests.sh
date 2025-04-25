@@ -39,6 +39,8 @@ case "${CUSTOM_CNI_URL:-false}" in
     ;;
 esac
 
+zstd -d < _out/metal-amd64.raw.zst > _out/metal-amd64.raw
+
 "${INTEGRATION_TEST}" -test.v \
   -talos.talosctlpath "${TALOSCTL}" \
   -talos.provision.mtu 1430  \
