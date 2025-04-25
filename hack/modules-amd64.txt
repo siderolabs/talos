@@ -63,6 +63,7 @@ kernel/drivers/i2c/i2c-smbus.ko
 kernel/drivers/infiniband/hw/mlx4/mlx4_ib.ko
 kernel/drivers/infiniband/hw/mlx5/mlx5_ib.ko
 kernel/drivers/infiniband/sw/rxe/rdma_rxe.ko
+kernel/drivers/md/bcache/bcache.ko
 kernel/drivers/md/dm-bio-prison.ko
 kernel/drivers/md/dm-cache-smq.ko
 kernel/drivers/md/dm-cache.ko
@@ -187,6 +188,7 @@ kernel/drivers/watchdog/sp5100_tco.ko
 kernel/drivers/watchdog/watchdog.ko
 kernel/drivers/watchdog/wdat_wdt.ko
 kernel/drivers/watchdog/xen_wdt.ko
+kernel/lib/crc64.ko
 kernel/lib/objagg.ko
 kernel/lib/parman.ko
 kernel/lib/raid6/raid6_pq.ko
