@@ -160,6 +160,7 @@ FROM --platform=arm64 ${PKG_RUNC} AS pkg-runc-arm64
 FROM --platform=amd64 ${PKG_XFSPROGS} AS pkg-xfsprogs-amd64
 FROM --platform=arm64 ${PKG_XFSPROGS} AS pkg-xfsprogs-arm64
 
+FROM ${PKG_UTIL_LINUX} AS pkg-util-linux
 FROM --platform=amd64 ${PKG_UTIL_LINUX} AS pkg-util-linux-amd64
 FROM --platform=arm64 ${PKG_UTIL_LINUX} AS pkg-util-linux-arm64
 
@@ -984,14 +985,14 @@ ARG TARGETARCH
 ENV TARGETARCH=${TARGETARCH}
 COPY --link --from=pkg-fhs / /
 COPY --link --from=pkg-ca-certificates / /
-COPY --link --exclude=usr/include --from=pkg-musl / /
+COPY --link --exclude=**/*.a --exclude=**/*.la --exclude=usr/include --from=pkg-musl / /
 
 COPY --link --from=pkg-dosfstools / /
 COPY --link --exclude=etc/bash_completion.d --from=pkg-grub / /
-COPY --link --exclude=usr/include --exclude=usr/lib/pkgconfig --from=pkg-libattr / /
-COPY --link --exclude=usr/include --exclude=usr/lib/pkgconfig --from=pkg-libinih / /
-COPY --link --exclude=usr/include --exclude=usr/lib/pkgconfig --from=pkg-liblzma / /
-COPY --link --exclude=usr/include --exclude=usr/lib/pkgconfig --from=pkg-liburcu / /
+COPY --link --exclude=**/*.a --exclude=**/*.la  --exclude=usr/include --exclude=usr/lib/pkgconfig --from=pkg-libattr / /
+COPY --link --exclude=**/*.a --exclude=**/*.la  --exclude=usr/include --exclude=usr/lib/pkgconfig --from=pkg-libinih / /
+COPY --link --exclude=**/*.a --exclude=**/*.la  --exclude=usr/include --exclude=usr/lib/pkgconfig --from=pkg-liblzma / /
+COPY --link --exclude=**/*.a --exclude=**/*.la  --exclude=usr/include --exclude=usr/lib/pkgconfig --from=pkg-liburcu / /
 COPY --link --from=pkg-xfsprogs / /
 COPY --link --from=installer-image-gen /rootfs /
 
@@ -1007,24 +1008,26 @@ ENTRYPOINT ["/bin/installer"]
 
 FROM installer-base-image-squashed AS imager-image
 COPY --link --from=pkg-cpio / /
-COPY --link --exclude=usr/lib/pkgconfig --from=pkg-e2fsprogs / /
-COPY --link --exclude=usr/include --exclude=usr/lib/pkgconfig --from=pkg-glib / /
+COPY --link --exclude=**/*.a --exclude=**/*.la  --exclude=usr/lib/pkgconfig --from=pkg-e2fsprogs / /
+COPY --link --exclude=**/*.a --exclude=**/*.la --exclude=usr/include --exclude=usr/lib/pkgconfig --from=pkg-glib / /
 COPY --link --from=pkg-grub-amd64 /usr/lib/grub /usr/lib/grub
 COPY --link --from=pkg-grub-arm64 /usr/lib/grub /usr/lib/grub
 COPY --link --exclude=usr/include --exclude=usr/lib/pkgconfig --exclude=usr/share/pkgconfig --exclude=usr/share/bash-completion --from=pkg-kmod / /
-COPY --link --exclude=usr/include --exclude=usr/lib/pkgconfig --from=pkg-libburn / /
-COPY --link --exclude=usr/include --exclude=usr/lib/pkgconfig --from=pkg-libisoburn / /
-COPY --link --exclude=usr/include --exclude=usr/lib/pkgconfig --from=pkg-libisofs / /
+COPY --link --exclude=**/*.a --exclude=**/*.la  --exclude=usr/include --exclude=usr/lib/pkgconfig --from=pkg-libburn / /
+COPY --link --exclude=**/*.a --exclude=**/*.la  --exclude=usr/include --exclude=usr/lib/pkgconfig --from=pkg-libisoburn / /
+COPY --link --exclude=**/*.a --exclude=**/*.la  --exclude=usr/include --exclude=usr/lib/pkgconfig --from=pkg-libisofs / /
 COPY --link --from=pkg-mtools / /
-COPY --link --exclude=usr/include --exclude=usr/lib/pkgconfig --exclude=usr/lib/cmake --from=pkg-openssl / /
-COPY --link --exclude=usr/include --exclude=usr/lib/pkgconfig --from=pkg-pcre2 / /
+COPY --link --exclude=**/*.a --exclude=**/*.la  --exclude=usr/include --exclude=usr/lib/pkgconfig --exclude=usr/lib/cmake --from=pkg-openssl / /
+COPY --link --exclude=**/*.a --exclude=**/*.la  --exclude=usr/include --exclude=usr/lib/pkgconfig --from=pkg-pcre2 / /
 COPY --link --from=pkg-pigz / /
 COPY --link --from=pkg-qemu-tools / /
 COPY --link --from=pkg-squashfs-tools / /
 COPY --link --from=pkg-tar / /
-COPY --link --exclude=usr/include --exclude=usr/lib/pkgconfig --from=pkg-xz / /
-COPY --link --exclude=usr/include --exclude=usr/lib/pkgconfig --from=pkg-zlib / /
-COPY --link --exclude=usr/include --exclude=usr/lib/pkgconfig --from=pkg-zstd / /
+COPY --link --exclude=**/*.a --exclude=*.a --from=pkg-util-linux /usr/lib/libblkid.* /usr/lib/
+COPY --link --exclude=**/*.a --exclude=*.a --from=pkg-util-linux-amd64 /usr/lib/libuuid.* /usr/lib/
+COPY --link --exclude=**/*.a --exclude=**/*.la  --exclude=usr/include --exclude=usr/lib/pkgconfig --from=pkg-xz / /
+COPY --link --exclude=**/*.a --exclude=**/*.la  --exclude=usr/include --exclude=usr/lib/pkgconfig --from=pkg-zlib / /
+COPY --link --exclude=**/*.a --exclude=**/*.la  --exclude=usr/include --exclude=usr/lib/pkgconfig --from=pkg-zstd / /
 COPY --chmod=0644 hack/extra-modules.conf /etc/modules.d/10-extra-modules.conf
 COPY --from=install-artifacts / /
 
