@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/cosi-project/runtime/pkg/resource"
+	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/google/go-containerregistry/pkg/name"
 	"github.com/siderolabs/gen/channel"
@@ -182,12 +183,18 @@ func prePullImages(ctx context.Context, talosClient *client.Client, options Upgr
 		return nil
 	}
 
-	imageRef := fmt.Sprintf("%s:v%s", options.KubeletImage, options.Path.ToVersion())
-
 	for node := range xiter.Concat(slices.Values(options.controlPlaneNodes), slices.Values(options.workerNodes)) {
+		kubeletSpec, err := safe.StateGet[*k8s.KubeletSpec](client.WithNode(ctx, node), talosClient.COSI, resource.NewMetadata(k8s.NamespaceName, k8s.KubeletSpecType, kubelet, resource.VersionUndefined))
+		if err != nil {
+			return fmt.Errorf("error fetching kubelet spec on node %s: %w", node, err)
+		}
+
+		imageSuffix := extractKubeletVersionSuffix(kubeletSpec.TypedSpec().Image)
+		imageRef := fmt.Sprintf("%s:v%s%s", options.KubeletImage, options.Path.ToVersion(), imageSuffix)
+
 		options.Log(" > %q: pre-pulling %s", node, imageRef)
 
-		err := talosClient.ImagePull(client.WithNode(ctx, node), common.ContainerdNamespace_NS_SYSTEM, imageRef)
+		err = talosClient.ImagePull(client.WithNode(ctx, node), common.ContainerdNamespace_NS_SYSTEM, imageRef)
 		if err != nil {
 			if status.Code(err) == codes.Unimplemented {
 				options.Log(" < %q: not implemented, skipping", node)
@@ -377,15 +384,10 @@ func upgradeStaticPodPatcher(options UpgradeOptions, service string, configResou
 		}
 
 		logUpdate := func(oldImage string) {
-			parts := strings.Split(oldImage, ":")
-			version := options.Path.FromVersion()
+			_, version, _ := strings.Cut(oldImage, ":")
 
-			if oldImage == "" {
+			if version == "" {
 				version = options.Path.FromVersion()
-			}
-
-			if len(parts) > 1 {
-				version = parts[1]
 			}
 
 			options.Log(" > update %s: %s -> %s", service, version, options.Path.ToVersion())
