@@ -211,12 +211,22 @@ func DiskSizeCheck(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
 			return nil
 		}
 
-		ephemeralStatus, err := waitForVolumeReady(ctx, r, constants.EphemeralPartitionLabel)
+		volumeStatus, err := r.State().V1Alpha2().Resources().WatchFor(ctx,
+			blockres.NewVolumeStatus(blockres.NamespaceName, constants.EphemeralPartitionLabel).Metadata(),
+			state.WithCondition(func(r resource.Resource) (bool, error) {
+				volumeStatus, ok := r.(*blockres.VolumeStatus)
+				if !ok {
+					return false, nil
+				}
+
+				return volumeStatus.TypedSpec().Size > 0, nil
+			}),
+		)
 		if err != nil {
-			return err
+			return fmt.Errorf("error waiting for volume %q to be discovered: %w", constants.EphemeralPartitionLabel, err)
 		}
 
-		diskSize := ephemeralStatus.TypedSpec().Size
+		diskSize := volumeStatus.(*blockres.VolumeStatus).TypedSpec().Size
 
 		if minimum := minimal.DiskSize(); diskSize < minimum {
 			logger.Println("WARNING: disk size is less than recommended")
