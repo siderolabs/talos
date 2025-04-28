@@ -193,6 +193,10 @@ func (ctrl *FSScrubScheduleController) updateSchedule(ctx context.Context, r con
 			continue
 		}
 
+		if _, ok := ctrl.schedule[mountpoint]; ok && ctrl.schedule[mountpoint].period == *period {
+			continue
+		}
+
 		firstTimeout := time.Duration(rand.Int64N(int64(period.Seconds()))) * time.Second
 
 		ctrl.schedule[mountpoint] = ScrubSchedule{

@@ -24,6 +24,12 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/resources/block"
 )
 
+// VolumeStatus -[ScheduleController]-> ScrubSchedule -[ScrubRunController]-> Task -[TaskController]-> Result
+//                                                          |
+//                                                          |
+//                                                          v
+//                                                          ScrubSummaryStatus
+
 type scrubSchedule struct {
 	mountpoint string
 	period     time.Duration
@@ -58,17 +64,12 @@ func (ctrl *FSScrubController) Inputs() []controller.Input {
 	return []controller.Input{
 		{
 			Namespace: block.NamespaceName,
-			Type:      block.FSScrubConfigType,
+			Type:      block.FSScrubScheduleType,
 			Kind:      controller.InputWeak,
 		},
 		{
 			Namespace: block.NamespaceName,
-			Type:      block.VolumeStatusType,
-			Kind:      controller.InputWeak,
-		},
-		{
-			Namespace: block.NamespaceName,
-			Type:      block.VolumeConfigType,
+			Type:      block.MountStatusType,
 			Kind:      controller.InputWeak,
 		},
 	}
@@ -105,11 +106,11 @@ func (ctrl *FSScrubController) Run(ctx context.Context, r controller.Runtime, lo
 		case <-ctx.Done():
 			return nil
 		case mountpoint := <-ctrl.c:
-			if err := ctrl.runScrub(mountpoint, []string{}); err != nil {
+			if err := ctrl.runScrub(ctx, mountpoint, []string{}, r); err != nil {
 				logger.Error("error running filesystem scrub", zap.Error(err))
 			}
 		case <-r.EventCh():
-			err := ctrl.updateSchedule(ctx, r)
+			err := ctrl.updateSchedule(ctx, r, logger)
 			if err != nil {
 				return err
 			}
@@ -164,122 +165,70 @@ func (ctrl *FSScrubController) reportStatus(ctx context.Context, r controller.Ru
 }
 
 //nolint:gocyclo,cyclop
-func (ctrl *FSScrubController) updateSchedule(ctx context.Context, r controller.Runtime) error {
-	volumesStatus, err := safe.ReaderListAll[*block.VolumeStatus](ctx, r)
+func (ctrl *FSScrubController) updateSchedule(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
+	cfg, err := safe.ReaderListAll[*block.FSScrubSchedule](ctx, r)
 	if err != nil && !state.IsNotFoundError(err) {
-		return fmt.Errorf("error getting volume status: %w", err)
+		if !state.IsNotFoundError(err) {
+			return fmt.Errorf("error getting scrub schedule: %w", err)
+		}
 	}
 
-	volumes := volumesStatus.All()
-
-	// Deschedule scrubs for volumes that are no longer mounted.
+	// Cancel the timers once the schedule is removed.
 	for mountpoint := range ctrl.schedule {
-		isMounted := false
+		isScheduled := false
 
-		for item := range volumes {
-			vol := item.TypedSpec()
+		for item := range cfg.All() {
+			scheduledTask := item.TypedSpec()
 
-			volumeConfig, err := safe.ReaderGetByID[*block.VolumeConfig](ctx, r, item.Metadata().ID())
-			if err != nil {
-				return fmt.Errorf("error getting volume config: %w", err)
-			}
-
-			if volumeConfig.TypedSpec().Mount.TargetPath == mountpoint && vol.Phase == block.VolumePhaseReady {
-				isMounted = true
+			if scheduledTask.Mountpoint == mountpoint && scheduledTask.Period == ctrl.schedule[mountpoint].period {
+				isScheduled = true
 
 				break
 			}
 		}
 
-		if !isMounted {
+		if !isScheduled {
 			ctrl.cancelScrub(mountpoint)
 		}
 	}
 
-	cfg, err := safe.ReaderListAll[*block.FSScrubConfig](ctx, r)
-	if err != nil && !state.IsNotFoundError(err) {
-		if !state.IsNotFoundError(err) {
-			return fmt.Errorf("error getting scrub config: %w", err)
-		}
-	}
-
-	for item := range volumes {
-		vol := item.TypedSpec()
-
-		if vol.Phase != block.VolumePhaseReady {
-			continue
-		}
-
-		if vol.Filesystem != block.FilesystemTypeXFS {
-			continue
-		}
-
-		volumeConfig, err := safe.ReaderGetByID[*block.VolumeConfig](ctx, r, item.Metadata().ID())
-		if err != nil {
-			return fmt.Errorf("error getting volume config: %w", err)
-		}
-
-		mountpoint := volumeConfig.TypedSpec().Mount.TargetPath
-
-		var period *time.Duration
-
-		for fs := range cfg.All() {
-			if fs.TypedSpec().Mountpoint == mountpoint {
-				period = &fs.TypedSpec().Period
-			}
-		}
+	for item := range cfg.All() {
+		scheduledTask := item.TypedSpec()
+		mountpoint := scheduledTask.Mountpoint
+		period := scheduledTask.Period
 
 		_, ok := ctrl.schedule[mountpoint]
 
-		if period == nil {
-			if ok {
-				ctrl.cancelScrub(mountpoint)
-			}
-
-			continue
+		if ok {
+			ctrl.schedule[mountpoint].timer.Stop()
 		}
 
-		if !ok {
-			firstTimeout := time.Duration(rand.Int64N(int64(period.Seconds()))) * time.Second
+		firstTimeout := time.Until(scheduledTask.StartTime)
+		if firstTimeout < 0 {
+			logger.Warn("scrub schedule start time is in the past, using random timeout", zap.String("mountpoint", mountpoint))
+			firstTimeout = time.Duration(rand.Int64N(int64(period.Seconds()))) * time.Second
+		}
 
-			// When scheduling the first scrub, we use a random time to avoid all scrubs running in a row.
-			// After the first scrub, we use the period defined in the config.
-			cb := func() {
-				ctrl.c <- mountpoint
-				ctrl.schedule[mountpoint].timer.Reset(ctrl.schedule[mountpoint].period)
-			}
+		// When scheduling the first scrub, we use a random time to avoid all scrubs running in a row.
+		// After the first scrub, we use the period defined in the config.
+		cb := func() {
+			ctrl.c <- mountpoint
+			ctrl.schedule[mountpoint].timer.Reset(ctrl.schedule[mountpoint].period)
+		}
 
-			ctrl.schedule[mountpoint] = scrubSchedule{
-				mountpoint: mountpoint,
-				period:     *period,
-				timer:      time.AfterFunc(firstTimeout, cb),
-			}
+		ctrl.schedule[mountpoint] = scrubSchedule{
+			mountpoint: mountpoint,
+			period:     period,
+			timer:      time.AfterFunc(firstTimeout, cb),
+		}
 
-			ctrl.status[mountpoint] = scrubStatus{
-				id:         item.Metadata().ID(),
-				mountpoint: mountpoint,
-				period:     *period,
-				time:       time.Now().Add(firstTimeout),
-				duration:   0,
-				result:     fmt.Errorf("scheduled"),
-			}
-		} else if ctrl.schedule[mountpoint].period != *period {
-			// reschedule if period has changed
-			ctrl.schedule[mountpoint].timer.Stop()
-			ctrl.schedule[mountpoint].timer.Reset(*period)
-			ctrl.schedule[mountpoint] = scrubSchedule{
-				period: *period,
-				timer:  ctrl.schedule[mountpoint].timer,
-			}
-
-			ctrl.status[mountpoint] = scrubStatus{
-				id:         item.Metadata().ID(),
-				mountpoint: mountpoint,
-				period:     *period,
-				time:       ctrl.status[mountpoint].time,
-				duration:   ctrl.status[mountpoint].duration,
-				result:     ctrl.status[mountpoint].result,
-			}
+		ctrl.status[mountpoint] = scrubStatus{
+			id:         item.Metadata().ID(),
+			mountpoint: mountpoint,
+			period:     period,
+			time:       time.Now().Add(firstTimeout),
+			duration:   0,
+			result:     fmt.Errorf("scheduled"),
 		}
 	}
 
@@ -288,16 +237,19 @@ func (ctrl *FSScrubController) updateSchedule(ctx context.Context, r controller.
 
 func (ctrl *FSScrubController) cancelScrub(mountpoint string) {
 	ctrl.schedule[mountpoint].timer.Stop()
+
+	// TODO: stop the process if it's running
+
 	delete(ctrl.schedule, mountpoint)
 	delete(ctrl.status, mountpoint)
 }
 
-func (ctrl *FSScrubController) runScrub(mountpoint string, opts []string) error {
+func (ctrl *FSScrubController) runScrub(ctx context.Context, mountpoint string, opts []string, r controller.Runtime) error {
 	args := []string{"/usr/sbin/xfs_scrub", "-T", "-v"}
 	args = append(args, opts...)
 	args = append(args, mountpoint)
 
-	r := process.NewRunner(
+	runner := process.NewRunner(
 		true,
 		&runner.Args{
 			ID:          "fs_scrub",
@@ -305,7 +257,6 @@ func (ctrl *FSScrubController) runScrub(mountpoint string, opts []string) error 
 		},
 		runner.WithLoggingManager(ctrl.Runtime.Logging()),
 		runner.WithEnv(environment.Get(ctrl.Runtime.Config())),
-		runner.WithOOMScoreAdj(-999),
 		runner.WithDroppedCapabilities(constants.XFSScrubDroppedCapabilities),
 		runner.WithPriority(19),
 		runner.WithIOPriority(runner.IoprioClassIdle, 7),
@@ -314,7 +265,20 @@ func (ctrl *FSScrubController) runScrub(mountpoint string, opts []string) error 
 
 	start := time.Now()
 
-	err := r.Run(func(s events.ServiceState, msg string, args ...any) {})
+	// mountStatuses, err := safe.ReaderListAll[*block.MountStatus](ctx, r)
+	// if err != nil && !state.IsNotFoundError(err) {
+	// 	return fmt.Errorf("error getting mount statuses to obtain finalizers: %w", err)
+	// }
+
+	// for entry := range mountStatuses.All() {
+	// 	if entry.TypedSpec().Mountpoint == mountpoint {
+	// 		if err := r.AddFinalizer(ctx, entry.Metadata(), ctrl.Name()); err != nil {
+	// 			return fmt.Errorf("error adding finalizer: %w", err)
+	// 		}
+	// 	}
+	// }
+
+	err := runner.Run(func(s events.ServiceState, msg string, args ...any) {})
 
 	ctrl.status[mountpoint] = scrubStatus{
 		id:         ctrl.status[mountpoint].id,
