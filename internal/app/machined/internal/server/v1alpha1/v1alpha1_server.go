@@ -644,8 +644,8 @@ func (s *Server) Reset(ctx context.Context, in *machine.ResetRequest) (reply *ma
 				return nil, fmt.Errorf("failed to get volume status with label %q: %w", spec.Label, err)
 			}
 
-			if volumeStatus.TypedSpec().Phase != block.VolumePhaseReady {
-				return nil, fmt.Errorf("failed to reset: volume %q is not ready", spec.Label)
+			if volumeStatus.TypedSpec().Location == "" {
+				return nil, fmt.Errorf("failed to reset: volume %q is not located", spec.Label)
 			}
 
 			target := partition.VolumeWipeTargetFromVolumeStatus(volumeStatus)
