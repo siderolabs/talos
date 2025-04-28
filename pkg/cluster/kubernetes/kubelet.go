@@ -167,6 +167,16 @@ func upgradeKubeletOnNode(ctx context.Context, cluster UpgradeProvider, options 
 	return nil
 }
 
+func extractKubeletVersionSuffix(imageRef string) string {
+	for _, suffix := range []string{"-fat", "-slim"} {
+		if strings.HasSuffix(imageRef, suffix) {
+			return suffix
+		}
+	}
+
+	return ""
+}
+
 func upgradeKubeletPatcher(
 	options UpgradeOptions,
 	kubeletSpec *k8s.KubeletSpec,
@@ -181,25 +191,25 @@ func upgradeKubeletPatcher(
 		}
 
 		oldImage := kubeletSpec.TypedSpec().Image
+		oldSuffix := extractKubeletVersionSuffix(oldImage)
+		newVersion := options.Path.ToVersion() + oldSuffix
 
 		logUpdate := func(oldImage string) {
-			parts := strings.Split(oldImage, ":")
-			version := options.Path.FromVersion()
-
-			if len(parts) > 1 {
-				version = parts[1]
+			_, version, _ := strings.Cut(oldImage, ":")
+			if version == "" {
+				version = options.Path.FromVersion()
 			}
 
 			version = strings.TrimLeft(version, "v")
 
-			options.Log(" > update %s: %s -> %s", kubelet, version, options.Path.ToVersion())
+			options.Log(" > update %s: %s -> %s", kubelet, version, newVersion)
 
 			if options.DryRun {
 				options.Log(" > skipped in dry-run")
 			}
 		}
 
-		image := fmt.Sprintf("%s:v%s", options.KubeletImage, options.Path.ToVersion())
+		image := fmt.Sprintf("%s:v%s", options.KubeletImage, newVersion)
 
 		if oldImage == image {
 			return errUpdateSkipped
