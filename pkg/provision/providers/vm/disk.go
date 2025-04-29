@@ -8,7 +8,8 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	"syscall"
+
+	"github.com/detailyang/go-fallocate"
 
 	"github.com/siderolabs/talos/pkg/provision"
 )
@@ -46,7 +47,7 @@ func (p *Provisioner) CreateDisks(state *State, nodeReq provision.NodeRequest) (
 		}
 
 		if !disk.SkipPreallocate {
-			if err = syscall.Fallocate(int(diskF.Fd()), 0, 0, int64(diskSize)); err != nil {
+			if err = fallocate.Fallocate(diskF, 0, int64(disk.Size)); err != nil {
 				fmt.Fprintf(os.Stderr, "WARNING: failed to preallocate disk space for %q (size %d): %s", diskPath, diskSize, err)
 			}
 		}

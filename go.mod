@@ -31,7 +31,7 @@ replace (
 
 // fd-leak related replacements: https://github.com/siderolabs/talos/issues/9412
 // https://github.com/insomniacslk/dhcp/pull/550
-replace github.com/insomniacslk/dhcp => github.com/smira/dhcp v0.0.0-20241001122726-31e9ef21c016
+replace github.com/insomniacslk/dhcp => github.com/smira/dhcp v0.0.0-20250407153013-99942baa5d59
 
 // Kubernetes dependencies sharing the same version.
 require (
@@ -74,6 +74,7 @@ require (
 	github.com/coredns/coredns v1.12.1
 	github.com/coreos/go-iptables v0.8.0
 	github.com/cosi-project/runtime v0.10.2
+	github.com/detailyang/go-fallocate v0.0.0-20180908115635-432fa640bd2e
 	github.com/distribution/reference v0.6.0
 	github.com/docker/cli v28.0.4+incompatible
 	github.com/docker/docker v28.0.4+incompatible
