@@ -70,7 +70,7 @@ func (ctrl *FSScrubController) Inputs() []controller.Input {
 		{
 			Namespace: block.NamespaceName,
 			Type:      block.MountStatusType,
-			Kind:      controller.InputWeak,
+			Kind:      controller.InputStrong,
 		},
 	}
 }
@@ -106,7 +106,7 @@ func (ctrl *FSScrubController) Run(ctx context.Context, r controller.Runtime, lo
 		case <-ctx.Done():
 			return nil
 		case mountpoint := <-ctrl.c:
-			if err := ctrl.runScrub(ctx, mountpoint, []string{}, r); err != nil {
+			if err := ctrl.runScrub(ctx, mountpoint, []string{}, r, logger); err != nil {
 				logger.Error("error running filesystem scrub", zap.Error(err))
 			}
 		case <-r.EventCh():
@@ -244,7 +244,7 @@ func (ctrl *FSScrubController) cancelScrub(mountpoint string) {
 	delete(ctrl.status, mountpoint)
 }
 
-func (ctrl *FSScrubController) runScrub(ctx context.Context, mountpoint string, opts []string, r controller.Runtime) error {
+func (ctrl *FSScrubController) runScrub(ctx context.Context, mountpoint string, opts []string, r controller.Runtime, logger *zap.Logger) error {
 	args := []string{"/usr/sbin/xfs_scrub", "-T", "-v"}
 	args = append(args, opts...)
 	args = append(args, mountpoint)
@@ -265,20 +265,34 @@ func (ctrl *FSScrubController) runScrub(ctx context.Context, mountpoint string, 
 
 	start := time.Now()
 
-	// mountStatuses, err := safe.ReaderListAll[*block.MountStatus](ctx, r)
-	// if err != nil && !state.IsNotFoundError(err) {
-	// 	return fmt.Errorf("error getting mount statuses to obtain finalizers: %w", err)
-	// }
+	mountStatuses, err := safe.ReaderListAll[*block.MountStatus](ctx, r)
+	if err != nil && !state.IsNotFoundError(err) {
+		return fmt.Errorf("error getting mount statuses to obtain finalizers: %w", err)
+	}
 
-	// for entry := range mountStatuses.All() {
-	// 	if entry.TypedSpec().Mountpoint == mountpoint {
-	// 		if err := r.AddFinalizer(ctx, entry.Metadata(), ctrl.Name()); err != nil {
-	// 			return fmt.Errorf("error adding finalizer: %w", err)
-	// 		}
-	// 	}
-	// }
+	var mountStatus *block.MountStatus
+	for entry := range mountStatuses.All() {
+		if entry.TypedSpec().Target == mountpoint {
+			mountStatus = entry
+			break
+		}
+	}
 
-	err := runner.Run(func(s events.ServiceState, msg string, args ...any) {})
+	if mountStatus != nil {
+		if err := r.AddFinalizer(ctx, mountStatus.Metadata(), ctrl.Name()); err != nil {
+			return fmt.Errorf("error adding finalizer: %w", err)
+		}
+		fmt.Println("added finalizer to mount status", zap.String("mountpoint", mountpoint), zap.String("finalizer", ctrl.Name()))
+	}
+
+	err = runner.Run(func(s events.ServiceState, msg string, args ...any) {})
+
+	if mountStatus != nil {
+		if err := r.RemoveFinalizer(ctx, mountStatus.Metadata(), ctrl.Name()); err != nil {
+			return fmt.Errorf("error removing finalizer: %w", err)
+		}
+		fmt.Println("removed finalizer from mount status", zap.String("mountpoint", mountpoint), zap.String("finalizer", ctrl.Name()))
+	}
 
 	ctrl.status[mountpoint] = scrubStatus{
 		id:         ctrl.status[mountpoint].id,
