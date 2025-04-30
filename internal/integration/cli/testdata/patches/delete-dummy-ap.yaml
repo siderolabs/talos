@@ -1,0 +1,6 @@
+---
+machine:
+  network:
+    interfaces:
+      - interface: dummy-ap-patch
+        $patch: delete

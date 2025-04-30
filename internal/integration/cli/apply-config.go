@@ -7,7 +7,7 @@
 package cli
 
 import (
-	"fmt"
+	_ "embed"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -28,28 +28,27 @@ func (suite *ApplyConfigSuite) SuiteName() string {
 	return "cli.ApplyConfigSuite"
 }
 
+//go:embed testdata/patches/dummy-ap.yaml
+var dummyAPPatch []byte
+
+//go:embed testdata/patches/delete-dummy-ap.yaml
+var deleteDummyAPPatch []byte
+
 // TestApplyWithPatch verifies that .
 func (suite *ApplyConfigSuite) TestApplyWithPatch() {
-	patch := `---
-machine:
-  network:
-    interfaces:
-      - interface: dummy-ap-patch
-        dummy: true`
+	tmpDir := suite.T().TempDir()
 
 	node := suite.RandomDiscoveredNodeInternalIP()
 
-	patchPath := filepath.Join(suite.T().TempDir(), "patch.yaml")
-
-	suite.Require().NoError(os.WriteFile(patchPath, []byte(patch), 0o777))
-
 	data, _ := suite.RunCLI([]string{"get", "--nodes", node, "mc", "v1alpha1", "-o", "jsonpath={.spec}"})
 
-	configPath := filepath.Join(suite.T().TempDir(), "config.yaml")
-
+	configPath := filepath.Join(tmpDir, "config.yaml")
 	suite.Require().NoError(os.WriteFile(configPath, []byte(data), 0o777))
 
-	suite.RunCLI([]string{"apply-config", "--nodes", node, "--config-patch", fmt.Sprintf("@%s", patchPath), "-f", configPath},
+	patchPath := filepath.Join(tmpDir, "patch.yaml")
+	suite.Require().NoError(os.WriteFile(patchPath, dummyAPPatch, 0o777))
+
+	suite.RunCLI([]string{"apply-config", "--nodes", node, "--config-patch", "@" + patchPath, "-f", configPath},
 		base.StdoutEmpty(),
 		base.StderrNotEmpty(),
 		base.StderrShouldMatch(regexp.MustCompile("Applied configuration without a reboot")),
@@ -57,6 +56,23 @@ machine:
 
 	suite.RunCLI([]string{"get", "--nodes", node, "links"},
 		base.StdoutShouldMatch(regexp.MustCompile("dummy-ap-patch")),
+		base.WithRetry(retry.Constant(15*time.Second, retry.WithUnits(time.Second))),
+	)
+
+	// now delete the dummy-ap-patch
+	data, _ = suite.RunCLI([]string{"get", "--nodes", node, "mc", "v1alpha1", "-o", "jsonpath={.spec}"})
+	suite.Require().NoError(os.WriteFile(configPath, []byte(data), 0o777))
+
+	suite.Require().NoError(os.WriteFile(patchPath, deleteDummyAPPatch, 0o777))
+
+	suite.RunCLI([]string{"apply-config", "--nodes", node, "--config-patch", "@" + patchPath, "-f", configPath},
+		base.StdoutEmpty(),
+		base.StderrNotEmpty(),
+		base.StderrShouldMatch(regexp.MustCompile("Applied configuration without a reboot")),
+	)
+
+	suite.RunCLI([]string{"get", "--nodes", node, "links"},
+		base.StdoutShouldNotMatch(regexp.MustCompile("dummy-ap-patch")),
 		base.WithRetry(retry.Constant(15*time.Second, retry.WithUnits(time.Second))),
 	)
 }
