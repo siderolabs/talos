@@ -8,7 +8,6 @@ package api
 
 import (
 	"context"
-	"net/netip"
 	"time"
 
 	"github.com/cosi-project/runtime/pkg/resource"
@@ -20,6 +19,7 @@ import (
 	"github.com/siderolabs/talos/internal/integration/base"
 	"github.com/siderolabs/talos/pkg/machinery/client"
 	"github.com/siderolabs/talos/pkg/machinery/meta"
+	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
 	"github.com/siderolabs/talos/pkg/machinery/resources/network"
 	"github.com/siderolabs/talos/pkg/machinery/resources/runtime"
 )
@@ -80,12 +80,18 @@ func (suite *PlatformSuite) TestMetalPlatformMetadata() {
 
 	suite.T().Logf("verifying metal platform network config on node %s", node)
 
-	// fake external IP attached to the machine
-	const externalIP = "1.2.3.4"
+	const linkName = "dummy-platform"
 
 	platformNetworkConfig := v1alpha1runtime.PlatformNetworkConfig{
-		ExternalIPs: []netip.Addr{
-			netip.MustParseAddr(externalIP),
+		Links: []network.LinkSpecSpec{
+			{
+				Name:    linkName,
+				Logical: true,
+				Up:      false,
+				MTU:     1500,
+				Type:    nethelpers.LinkEther,
+				Kind:    "dummy",
+			},
 		},
 	}
 
@@ -94,13 +100,13 @@ func (suite *PlatformSuite) TestMetalPlatformMetadata() {
 
 	suite.Require().NoError(suite.Client.MetaWrite(ctx, meta.MetalNetworkPlatformConfig, platformNetworkConfigMarshaled))
 
-	// address should appear on the node
-	rtestutils.AssertResource(ctx, suite.T(), suite.Client.COSI, "external/"+externalIP+"/32", func(*network.AddressStatus, *assert.Assertions) {})
+	// link should appear on the node
+	rtestutils.AssertResource(ctx, suite.T(), suite.Client.COSI, linkName, func(*network.LinkStatus, *assert.Assertions) {})
 
 	suite.Require().NoError(suite.Client.MetaDelete(ctx, meta.MetalNetworkPlatformConfig))
 
 	// address should be removed
-	rtestutils.AssertNoResource[*network.AddressStatus](ctx, suite.T(), suite.Client.COSI, "external/"+externalIP)
+	rtestutils.AssertNoResource[*network.LinkStatus](ctx, suite.T(), suite.Client.COSI, linkName)
 }
 
 func init() {
