@@ -152,3 +152,9 @@ spec:
 The `status` field indicates the readiness of the image cache, and the `copyStatus` field indicates the readiness of the image cache copy.
 The `roots` field contains the paths to the image cache contents, in this example both on-disk and ISO caches are available.
 Image cache roots are used in order they are listed.
+
+You can get logs from the registry to see if images are being "hit" (a.k.a. cached) or "missed" (a.k.a. pulled from upstream).
+
+```bash
+talosctl logs registryd
+```
