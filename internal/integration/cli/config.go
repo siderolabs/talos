@@ -249,7 +249,7 @@ func (suite *TalosconfigSuite) TestNew() {
 		nonprivOpts []base.RunOption
 	}{
 		{
-			args: []string{"etcd", "alarm", "list"},
+			args: []string{"etcd", "alarm", "disarm"},
 			privOpts: []base.RunOption{
 				base.StdoutEmpty(),
 			},
