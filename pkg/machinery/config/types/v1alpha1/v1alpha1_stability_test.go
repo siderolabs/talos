@@ -43,6 +43,7 @@ func TestConfigEncodingStability(t *testing.T) {
 		config.TalosVersion1_8,
 		config.TalosVersion1_9,
 		config.TalosVersion1_10,
+		config.TalosVersion1_11,
 	}
 
 	currentVersion := ensure.Value(semver.ParseTolerant(gendata.VersionTag))

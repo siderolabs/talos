@@ -25,6 +25,7 @@ type VersionContract struct {
 // Well-known Talos version contracts.
 var (
 	TalosVersionCurrent = (*VersionContract)(nil)
+	TalosVersion1_11    = &VersionContract{1, 11}
 	TalosVersion1_10    = &VersionContract{1, 10}
 	TalosVersion1_9     = &VersionContract{1, 9}
 	TalosVersion1_8     = &VersionContract{1, 8}

@@ -141,7 +141,7 @@ KUBESTR_URL ?= https://github.com/kastenhq/kubestr/releases/download/$(KUBESTR_V
 HELM_URL ?= https://get.helm.sh/helm-$(HELM_VERSION)-linux-amd64.tar.gz
 CILIUM_CLI_URL ?= https://github.com/cilium/cilium-cli/releases/download/$(CILIUM_CLI_VERSION)/cilium-$(OPERATING_SYSTEM)-amd64.tar.gz
 TESTPKGS ?= github.com/siderolabs/talos/...
-RELEASES ?= v1.8.4 v1.9.4
+RELEASES ?= v1.9.5 v1.10.0
 SHORT_INTEGRATION_TEST ?=
 CUSTOM_CNI_URL ?=
 
