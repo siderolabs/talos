@@ -35,22 +35,23 @@ var showCmd = &cobra.Command{
 }
 
 func show(ctx context.Context) error {
-	provisioner, err := providers.Factory(ctx, provisionerName)
+	provisioner, err := providers.Factory(ctx, Flags.ProvisionerName)
 	if err != nil {
 		return err
 	}
 
 	defer provisioner.Close() //nolint:errcheck
 
-	cluster, err := provisioner.Reflect(ctx, clusterName, stateDir)
+	cluster, err := provisioner.Reflect(ctx, Flags.ClusterName, Flags.StateDir)
 	if err != nil {
 		return err
 	}
 
-	return showCluster(cluster)
+	return ShowCluster(cluster)
 }
 
-func showCluster(cluster provision.Cluster) error {
+// ShowCluster prints the details about the cluster to the terminal.
+func ShowCluster(cluster provision.Cluster) error {
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
 	fmt.Fprintf(w, "PROVISIONER\t%s\n", cluster.Provisioner())
 	fmt.Fprintf(w, "NAME\t%s\n", cluster.Info().ClusterName)

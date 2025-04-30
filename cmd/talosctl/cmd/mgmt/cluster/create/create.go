@@ -2,7 +2,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-package cluster
+package create
 
 import (
 	"bytes"
@@ -37,6 +37,7 @@ import (
 	"github.com/spf13/cobra"
 	"k8s.io/client-go/tools/clientcmd"
 
+	clustercmd "github.com/siderolabs/talos/cmd/talosctl/cmd/mgmt/cluster"
 	"github.com/siderolabs/talos/cmd/talosctl/cmd/mgmt/cluster/internal/firewallpatch"
 	"github.com/siderolabs/talos/cmd/talosctl/pkg/mgmt/helpers"
 	"github.com/siderolabs/talos/pkg/cli"
@@ -69,8 +70,6 @@ import (
 )
 
 const (
-	docker = "docker"
-
 	// gatewayOffset is the offset from the network address of the IP address of the network gateway.
 	gatewayOffset = 1
 
@@ -216,7 +215,9 @@ var createCmd = &cobra.Command{
 	Short: "Creates a local docker-based or QEMU-based kubernetes cluster",
 	Args:  cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		return cli.WithContext(context.Background(), create)
+		return cli.WithContext(context.Background(), func(ctx context.Context) error {
+			return create(ctx, clustercmd.Flags)
+		})
 	},
 }
 
@@ -370,7 +371,7 @@ func getEncryptionKeys(cidr4 netip.Prefix, versionContract *config.VersionContra
 }
 
 //nolint:gocyclo,cyclop
-func create(ctx context.Context) error {
+func create(ctx context.Context, rootOps clustercmd.CmdOps) error {
 	if err := downloadBootAssets(ctx); err != nil {
 		return err
 	}
@@ -493,19 +494,23 @@ func create(ctx context.Context) error {
 		}
 	}
 
-	provisioner, err := providers.Factory(ctx, provisionerName)
+	provisioner, err := providers.Factory(ctx, rootOps.ProvisionerName)
 	if err != nil {
 		return err
+	}
+
+	if rootOps.ProvisionerName == providers.DockerProviderName && !bootloaderEnabled {
+		return errors.New("docker provisioner requires bootloader to be enabled")
 	}
 
 	defer provisioner.Close() //nolint:errcheck
 
 	// Craft cluster and node requests
 	request := provision.ClusterRequest{
-		Name: clusterName,
+		Name: rootOps.ClusterName,
 
 		Network: provision.NetworkRequest{
-			Name:              clusterName,
+			Name:              rootOps.ClusterName,
 			CIDRs:             cidrs,
 			NoMasqueradeCIDRs: noMasqueradeCIDRs,
 			GatewayAddrs:      gatewayIPs,
@@ -540,7 +545,7 @@ func create(ctx context.Context) error {
 		DiskImagePath:  nodeDiskImagePath,
 
 		SelfExecutable: os.Args[0],
-		StateDirectory: stateDir,
+		StateDirectory: rootOps.StateDir,
 	}
 
 	provisionOptions := []provision.Option{
@@ -558,13 +563,13 @@ func create(ctx context.Context) error {
 	var configBundleOpts []bundle.Option
 
 	if debugShellEnabled {
-		if provisionerName != "qemu" {
+		if rootOps.ProvisionerName != "qemu" {
 			return errors.New("debug shell only supported with qemu provisioner")
 		}
 	}
 
 	if ports != "" {
-		if provisionerName != docker {
+		if rootOps.ProvisionerName != providers.DockerProviderName {
 			return errors.New("exposed-ports flag only supported with docker provisioner")
 		}
 
@@ -615,7 +620,7 @@ func create(ctx context.Context) error {
 		}
 
 		if talosVersion == "" {
-			if provisionerName == docker {
+			if rootOps.ProvisionerName == providers.DockerProviderName {
 				parts := strings.Split(nodeImage, ":")
 
 				talosVersion = parts[len(parts)-1]
@@ -749,7 +754,7 @@ func create(ctx context.Context) error {
 		configBundleOpts = append(configBundleOpts,
 			bundle.WithInputOptions(
 				&bundle.InputOptions{
-					ClusterName: clusterName,
+					ClusterName: rootOps.ClusterName,
 					Endpoint:    inClusterEndpoint,
 					KubeVersion: strings.TrimPrefix(kubernetesVersion, "v"),
 					GenOptions:  genOptions,
@@ -920,7 +925,7 @@ func create(ctx context.Context) error {
 		}
 
 		nodeReq := provision.NodeRequest{
-			Name:                  nodeName(clusterName, "controlplane", i+1, nodeUUID),
+			Name:                  nodeName(rootOps.ClusterName, "controlplane", i+1, nodeUUID),
 			Type:                  machine.TypeControlPlane,
 			Quirks:                quirks.New(talosVersion),
 			IPs:                   nodeIPs,
@@ -999,7 +1004,7 @@ func create(ctx context.Context) error {
 
 		request.Nodes = append(request.Nodes,
 			provision.NodeRequest{
-				Name:                  nodeName(clusterName, "worker", i, nodeUUID),
+				Name:                  nodeName(rootOps.ClusterName, "worker", i, nodeUUID),
 				Type:                  machine.TypeWorker,
 				IPs:                   nodeIPs,
 				Quirks:                quirks.New(talosVersion),
@@ -1032,7 +1037,7 @@ func create(ctx context.Context) error {
 				return nil
 			}
 
-			fmt.Printf("socat - UNIX-CONNECT:%s\n", filepath.Join(talosDir, "clusters", clusterName, node.Name+".serial"))
+			fmt.Printf("socat - UNIX-CONNECT:%s\n", filepath.Join(talosDir, "clusters", rootOps.ClusterName, node.Name+".serial"))
 		}
 
 		return nil
@@ -1062,7 +1067,7 @@ func create(ctx context.Context) error {
 		return err
 	}
 
-	return showCluster(cluster)
+	return clustercmd.ShowCluster(cluster)
 }
 
 func nodeName(clusterName, role string, index int, uuid uuid.UUID) string {
@@ -1347,9 +1352,9 @@ func init() {
 	createCmd.Flags().StringVar(&forceEndpoint, forceEndpointFlag, "", "use endpoint instead of provider defaults")
 	createCmd.Flags().StringVar(&kubernetesVersion, "kubernetes-version", constants.DefaultKubernetesVersion, "desired kubernetes version to run")
 	createCmd.Flags().StringVarP(&inputDir, inputDirFlag, "i", "", "location of pre-generated config files")
-	createCmd.Flags().StringSliceVar(&cniBinPath, "cni-bin-path", []string{filepath.Join(defaultCNIDir, "bin")}, "search path for CNI binaries (VM only)")
-	createCmd.Flags().StringVar(&cniConfDir, "cni-conf-dir", filepath.Join(defaultCNIDir, "conf.d"), "CNI config directory path (VM only)")
-	createCmd.Flags().StringVar(&cniCacheDir, "cni-cache-dir", filepath.Join(defaultCNIDir, "cache"), "CNI cache directory path (VM only)")
+	createCmd.Flags().StringSliceVar(&cniBinPath, "cni-bin-path", []string{filepath.Join(clustercmd.DefaultCNIDir, "bin")}, "search path for CNI binaries (VM only)")
+	createCmd.Flags().StringVar(&cniConfDir, "cni-conf-dir", filepath.Join(clustercmd.DefaultCNIDir, "conf.d"), "CNI config directory path (VM only)")
+	createCmd.Flags().StringVar(&cniCacheDir, "cni-cache-dir", filepath.Join(clustercmd.DefaultCNIDir, "cache"), "CNI cache directory path (VM only)")
 	createCmd.Flags().StringVar(&cniBundleURL, "cni-bundle-url", fmt.Sprintf("https://github.com/%s/talos/releases/download/%s/talosctl-cni-bundle-%s.tar.gz",
 		images.Username, version.Trim(version.Tag), constants.ArchVariable), "URL to download CNI bundle from (VM only)")
 	createCmd.Flags().StringVarP(&ports,
@@ -1414,7 +1419,7 @@ func init() {
 	createCmd.MarkFlagsMutuallyExclusive(inputDirFlag, kubePrismFlag)
 	createCmd.MarkFlagsMutuallyExclusive(inputDirFlag, diskEncryptionKeyTypesFlag)
 
-	Cmd.AddCommand(createCmd)
+	clustercmd.Cmd.AddCommand(createCmd)
 }
 
 func newSiderolinkBuilder(wgHost string, useTLS bool) (*siderolinkBuilder, error) {

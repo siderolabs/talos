@@ -2,19 +2,18 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-//go:build !linux
-
-package cluster
+package create
 
 import (
-	"errors"
 	"net/netip"
+
+	"github.com/siderolabs/siderolink/pkg/wireguard"
 )
 
 func generateRandomNodeAddr(prefix netip.Prefix) (netip.Prefix, error) {
-	return netip.Prefix{}, nil
+	return wireguard.GenerateRandomNodeAddr(prefix)
 }
 
 func networkPrefix(prefix string) (netip.Prefix, error) {
-	return netip.Prefix{}, errors.New("unsupported platform")
+	return wireguard.NetworkPrefix(prefix), nil
 }

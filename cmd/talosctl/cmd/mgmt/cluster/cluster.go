@@ -6,45 +6,50 @@
 package cluster
 
 import (
-	"errors"
 	"path/filepath"
 
 	"github.com/spf13/cobra"
 
 	clientconfig "github.com/siderolabs/talos/pkg/machinery/client/config"
+	"github.com/siderolabs/talos/pkg/provision/providers"
+)
+
+const (
+	// ProvisionerFlag is the flag with which the provisioner is configured.
+	ProvisionerFlag = "provisioner"
 )
 
 // Cmd represents the cluster command.
 var Cmd = &cobra.Command{
 	Use:   "cluster",
 	Short: "A collection of commands for managing local docker-based or QEMU-based clusters",
-	Long:  ``,
-	PersistentPreRunE: func(*cobra.Command, []string) error {
-		if provisionerName == docker && !bootloaderEnabled {
-			return errors.New("docker provisioner requires bootloader to be enabled")
-		}
-
-		return nil
-	},
 }
 
-var (
-	provisionerName string
-	stateDir        string
-	clusterName     string
+// CmdOps are the options for the cluster command.
+type CmdOps struct {
+	ProvisionerName string
+	StateDir        string
+	ClusterName     string
+}
 
-	defaultStateDir string
-	defaultCNIDir   string
+// Flags are the flags of the cluster command.
+var Flags CmdOps
+
+var (
+	// DefaultStateDir is the default location of the cluster related file state.
+	DefaultStateDir string
+	// DefaultCNIDir is the default location of the CNI binaries.
+	DefaultCNIDir string
 )
 
 func init() {
 	talosDir, err := clientconfig.GetTalosDirectory()
 	if err == nil {
-		defaultStateDir = filepath.Join(talosDir, "clusters")
-		defaultCNIDir = filepath.Join(talosDir, "cni")
+		DefaultStateDir = filepath.Join(talosDir, "clusters")
+		DefaultCNIDir = filepath.Join(talosDir, "cni")
 	}
 
-	Cmd.PersistentFlags().StringVar(&provisionerName, "provisioner", docker, "Talos cluster provisioner to use")
-	Cmd.PersistentFlags().StringVar(&stateDir, "state", defaultStateDir, "directory path to store cluster state")
-	Cmd.PersistentFlags().StringVar(&clusterName, "name", "talos-default", "the name of the cluster")
+	Cmd.PersistentFlags().StringVar(&Flags.ProvisionerName, "provisioner", providers.DockerProviderName, "Talos cluster provisioner to use")
+	Cmd.PersistentFlags().StringVar(&Flags.StateDir, "state", DefaultStateDir, "directory path to store cluster state")
+	Cmd.PersistentFlags().StringVar(&Flags.ClusterName, "name", "talos-default", "the name of the cluster")
 }
