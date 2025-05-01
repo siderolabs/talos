@@ -245,6 +245,8 @@ func downloadBootAssets(ctx context.Context) error {
 		},
 		{
 			path: &nodeDiskImagePath,
+			// we disable extracting the compressed image since we handle zstd for disk images
+			disableArchive: true,
 		},
 	} {
 		if *downloadableImage.path == "" {

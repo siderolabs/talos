@@ -732,6 +732,13 @@ spec:
         - name: talosctl-cni-bundle
           conditions:
             - only-on-schedule
+        - name: images-essential
+          conditions:
+            - only-on-schedule
+          environment:
+            PLATFORM: linux/amd64,linux/arm64
+            IMAGER_ARGS: "--extra-kernel-arg=console=ttyS0"
+            IMAGE_REGISTRY: registry.dev.siderolabs.io
         - name: provision-tests-prepare
         - name: provision-tests-track-0
           withSudo: true
