@@ -147,7 +147,7 @@ func upgradeCurrentToCurrentBios() upgradeSpec {
 	return upgradeSpec{
 		ShortName: fmt.Sprintf("%s-same-ver-bios", DefaultSettings.CurrentVersion),
 
-		SourceDiskImagePath:  helpers.ArtifactPath("metal-amd64.raw"),
+		SourceDiskImagePath:  helpers.ArtifactPath("metal-amd64.raw.zst"),
 		SourceInstallerImage: installerImage,
 		SourceVersion:        DefaultSettings.CurrentVersion,
 		SourceK8sVersion:     currentK8sVersion,

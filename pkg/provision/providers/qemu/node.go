@@ -19,6 +19,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/hashicorp/go-multierror"
+	"github.com/klauspost/compress/zstd"
 	"github.com/siderolabs/gen/xslices"
 	"github.com/siderolabs/go-cmd/pkg/cmd"
 	"github.com/siderolabs/go-procfs/procfs"
@@ -317,24 +318,45 @@ func (p *provisioner) findBridgeListenPort(clusterReq provision.ClusterRequest) 
 
 func (p *provisioner) populateSystemDisk(disks []string, clusterReq provision.ClusterRequest) error {
 	if len(disks) > 0 && clusterReq.DiskImagePath != "" {
-		disk, err := os.OpenFile(disks[0], os.O_RDWR, 0o755)
+		if err := p.handleOptionalZSTDDiskImage(disks[0], clusterReq.DiskImagePath); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (p *provisioner) handleOptionalZSTDDiskImage(provisionerDisk, diskImagePath string) error {
+	image, err := os.Open(diskImagePath)
+	if err != nil {
+		return err
+	}
+
+	defer image.Close() //nolint:errcheck
+
+	disk, err := os.OpenFile(provisionerDisk, os.O_RDWR, 0o755)
+	if err != nil {
+		return err
+	}
+
+	defer disk.Close() //nolint:errcheck
+
+	if strings.HasSuffix(diskImagePath, ".zst") {
+		zstdReader, err := zstd.NewReader(image)
 		if err != nil {
 			return err
 		}
-		defer disk.Close() //nolint:errcheck
 
-		image, err := os.Open(clusterReq.DiskImagePath)
-		if err != nil {
-			return err
-		}
-		defer image.Close() //nolint:errcheck
+		defer zstdReader.Close() //nolint:errcheck
 
-		_, err = io.Copy(disk, image)
+		_, err = io.Copy(disk, zstdReader)
 
 		return err
 	}
 
-	return nil
+	_, err = io.Copy(disk, image)
+
+	return err
 }
 
 func (p *provisioner) createMetalConfigISO(state *vm.State, nodeName, config string) (string, error) {
