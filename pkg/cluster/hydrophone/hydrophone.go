@@ -174,7 +174,7 @@ func Run(ctx context.Context, cluster cluster.K8sProvider, options *Options) err
 	fmt.Printf("running conformance tests version %s\n", options.KubernetesVersion)
 	fmt.Printf("running tests: %s\n", strings.Join(options.RunTests, "|"))
 
-	if err := testRunner.Deploy(ctx, strings.Join(options.RunTests, "|"), verboseGinkgo, config.StartupTimeout); err != nil {
+	if err := testRunner.Deploy(ctx, strings.Join(options.RunTests, "|"), "", verboseGinkgo, config.StartupTimeout); err != nil {
 		return fmt.Errorf("failed to deploy tests: %w", err)
 	}
 
