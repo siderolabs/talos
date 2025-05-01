@@ -27,8 +27,8 @@ func (p *provisioner) Create(ctx context.Context, request provision.ClusterReque
 	}
 
 	arch := Arch(options.TargetArch)
-	if !arch.Valid() {
-		return nil, fmt.Errorf("unsupported arch: %q", options.TargetArch)
+	if err := arch.Valid(); err != nil {
+		return nil, err
 	}
 
 	if err := p.preflightChecks(ctx, request, options, arch); err != nil {

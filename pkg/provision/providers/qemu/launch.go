@@ -44,7 +44,6 @@ type LaunchConfig struct {
 	KernelArgs        string
 	MonitorPath       string
 	DefaultBootOrder  string
-	EnableKVM         bool
 	BootloaderEnabled bool
 	TPM2Config        tpm2Config
 	NodeUUID          uuid.UUID
@@ -213,7 +212,7 @@ func launchVM(config *LaunchConfig) error {
 		}
 	}
 
-	args = append(args, config.ArchitectureData.KVMArgs(config.EnableKVM, config.IOMMUEnabled)...)
+	args = append(args, config.ArchitectureData.getMachineArgs(config.IOMMUEnabled)...)
 
 	pflashArgs := make([]string, 2*len(config.PFlashImages))
 	for i := range config.PFlashImages {

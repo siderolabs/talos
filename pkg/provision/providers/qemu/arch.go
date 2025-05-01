@@ -5,9 +5,11 @@
 package qemu
 
 import (
+	"errors"
 	"fmt"
 	"os/exec"
 	"path/filepath"
+	"runtime"
 	"slices"
 )
 
@@ -20,13 +22,19 @@ const (
 	ArchArm64 Arch = "arm64"
 )
 
-// Valid checks whether the architecture is supported.
-func (arch Arch) Valid() bool {
+// Valid returns an error if the architecture is not supported.
+func (arch Arch) Valid() error {
 	switch arch {
-	case ArchAmd64, ArchArm64:
-		return true
+	case ArchArm64:
+		return nil
+	case ArchAmd64:
+		if runtime.GOOS == "darwin" {
+			return errors.New("only arm emulation is supported on darwin")
+		}
+
+		return nil
 	default:
-		return false
+		return fmt.Errorf("unsupported arch: %q", arch)
 	}
 }
 
@@ -83,6 +91,7 @@ func (arch Arch) PFlash(uefiEnabled bool, extraUEFISearchPaths []string) []PFlas
 			"/usr/share/OVMF",
 			"/usr/share/edk2/aarch64",      // Fedora
 			"/usr/share/edk2/experimental", // Fedora
+			"/opt/homebrew/share/qemu",     // Darwin
 		}
 
 		// Secure boot enabled firmware files
@@ -96,12 +105,14 @@ func (arch Arch) PFlash(uefiEnabled bool, extraUEFISearchPaths []string) []PFlas
 			"AAVMF_CODE.fd",
 			"QEMU_EFI.fd",
 			"OVMF.stateless.fd",
+			"edk2-aarch64-code.fd",
 		}
 
 		// Empty vars files
 		uefiVarsFiles := []string{
 			"AAVMF_VARS.fd",
 			"QEMU_VARS.fd",
+			"edk2-arm-vars.fd",
 		}
 
 		// Append extra search paths
@@ -236,28 +247,20 @@ func (arch Arch) TPMDeviceArgs(socketPath string) []string {
 	}
 }
 
-// KVMArgs returns arguments for qemu to enable KVM.
-func (arch Arch) KVMArgs(kvmEnabled bool, iommu bool) []string {
-	if !kvmEnabled {
-		return []string{"-machine", arch.QemuMachine()}
+func (arch Arch) getMachineArgs(iommu bool) []string {
+	args := arch.QemuMachine()
+	if arch.acceleratorAvailable() {
+		args += ",accel=" + accelerator
 	}
-
-	machineArg := arch.QemuMachine() + ",accel=kvm"
 
 	// ref: https://wiki.qemu.org/Features/VT-d
 	if iommu {
-		machineArg += ",kernel-irqchip=split"
+		args += ",kernel-irqchip=split"
 	}
 
-	switch arch {
-	case ArchAmd64:
-		machineArg += ",smm=on"
-
-		return []string{"-machine", machineArg}
-	case ArchArm64:
-		// smm is not supported on aarch64
-		return []string{"-machine", machineArg}
-	default:
-		panic("unsupported architecture")
+	if arch == ArchAmd64 {
+		args += ",smm=on"
 	}
+
+	return []string{"-machine", args}
 }
