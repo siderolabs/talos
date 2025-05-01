@@ -242,6 +242,11 @@ func (suite *ExtensionsSuiteQEMU) TestExtensionsKataContainers() {
 	suite.testRuntimeClass("kata", "kata")
 }
 
+// TestExtensionsYouki verifies youki runtime class is working.
+func (suite *ExtensionsSuiteQEMU) TestExtensionsYouki() {
+	suite.testRuntimeClass("youki", "youki")
+}
+
 func (suite *ExtensionsSuiteQEMU) testRuntimeClass(runtimeClassName, handlerName string) {
 	testName := "nginx-" + runtimeClassName
 
