@@ -16,13 +16,11 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
-	stdruntime "runtime"
 	"slices"
 	"strconv"
 	"strings"
 	"time"
 
-	"github.com/docker/cli/opts"
 	"github.com/google/uuid"
 	"github.com/hashicorp/go-getter/v2"
 	"github.com/klauspost/compress/zstd"
@@ -34,15 +32,12 @@ import (
 	"github.com/siderolabs/go-pointer"
 	"github.com/siderolabs/go-procfs/procfs"
 	sideronet "github.com/siderolabs/net"
-	"github.com/spf13/cobra"
 	"k8s.io/client-go/tools/clientcmd"
 
 	clustercmd "github.com/siderolabs/talos/cmd/talosctl/cmd/mgmt/cluster"
 	"github.com/siderolabs/talos/cmd/talosctl/cmd/mgmt/cluster/internal/firewallpatch"
 	"github.com/siderolabs/talos/cmd/talosctl/pkg/mgmt/helpers"
-	"github.com/siderolabs/talos/pkg/cli"
 	"github.com/siderolabs/talos/pkg/cluster/check"
-	"github.com/siderolabs/talos/pkg/images"
 	"github.com/siderolabs/talos/pkg/machinery/cel"
 	"github.com/siderolabs/talos/pkg/machinery/cel/celenv"
 	clientconfig "github.com/siderolabs/talos/pkg/machinery/client/config"
@@ -63,7 +58,6 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/imager/quirks"
 	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
 	blockres "github.com/siderolabs/talos/pkg/machinery/resources/block"
-	"github.com/siderolabs/talos/pkg/machinery/version"
 	"github.com/siderolabs/talos/pkg/provision"
 	"github.com/siderolabs/talos/pkg/provision/access"
 	"github.com/siderolabs/talos/pkg/provision/providers"
@@ -78,174 +72,33 @@ const (
 
 	// vipOffset is the offset from the network address of the CIDR to use for allocating the Virtual (shared) IP address, if enabled.
 	vipOffset = 50
-
-	inputDirFlag                 = "input-dir"
-	networkIPv4Flag              = "ipv4"
-	networkIPv6Flag              = "ipv6"
-	networkMTUFlag               = "mtu"
-	networkCIDRFlag              = "cidr"
-	networkNoMasqueradeCIDRsFlag = "no-masquerade-cidrs"
-	nameserversFlag              = "nameservers"
-	clusterDiskPreallocateFlag   = "disk-preallocate"
-	clusterUserVolumesFlag       = "user-volumes"
-	clusterDiskSizeFlag          = "disk"
-	useVIPFlag                   = "use-vip"
-	bootloaderEnabledFlag        = "with-bootloader"
-	controlPlanePortFlag         = "control-plane-port"
-	firewallFlag                 = "with-firewall"
-	tpm2EnabledFlag              = "with-tpm2"
-	withDebugShellFlag           = "with-debug-shell"
-	withIOMMUFlag                = "with-iommu"
-
-	// The following flags are the gen options - the options that are only used in machine configuration (i.e., not during the qemu/docker provisioning).
-	// They are not applicable when no machine configuration is generated, hence mutually exclusive with the --input-dir flag.
-
-	nodeInstallImageFlag          = "install-image"
-	configDebugFlag               = "with-debug"
-	dnsDomainFlag                 = "dns-domain"
-	withClusterDiscoveryFlag      = "with-cluster-discovery"
-	registryMirrorFlag            = "registry-mirror"
-	registryInsecureFlag          = "registry-insecure-skip-verify"
-	customCNIUrlFlag              = "custom-cni-url"
-	talosVersionFlag              = "talos-version"
-	encryptStatePartitionFlag     = "encrypt-state"
-	encryptEphemeralPartitionFlag = "encrypt-ephemeral"
-	encryptUserVolumeFlag         = "encrypt-user-volumes"
-	enableKubeSpanFlag            = "with-kubespan"
-	forceEndpointFlag             = "endpoint"
-	kubePrismFlag                 = "kubeprism-port"
-	diskEncryptionKeyTypesFlag    = "disk-encryption-key-types"
 )
-
-var (
-	talosconfig               string
-	nodeImage                 string
-	nodeInstallImage          string
-	registryMirrors           []string
-	registryInsecure          []string
-	kubernetesVersion         string
-	nodeVmlinuzPath           string
-	nodeInitramfsPath         string
-	nodeISOPath               string
-	nodeUSBPath               string
-	nodeUKIPath               string
-	nodeDiskImagePath         string
-	nodeIPXEBootScript        string
-	applyConfigEnabled        bool
-	bootloaderEnabled         bool
-	uefiEnabled               bool
-	tpm2Enabled               bool
-	extraUEFISearchPaths      []string
-	configDebug               bool
-	networkCIDR               string
-	networkNoMasqueradeCIDRs  []string
-	networkMTU                int
-	networkIPv4               bool
-	networkIPv6               bool
-	wireguardCIDR             string
-	nameservers               []string
-	dnsDomain                 string
-	workers                   int
-	controlplanes             int
-	controlPlaneCpus          string
-	workersCpus               string
-	controlPlaneMemory        int
-	workersMemory             int
-	clusterDiskSize           int
-	clusterDiskPreallocate    bool
-	diskBlockSize             uint
-	clusterUserVolumes        []string
-	extraDisks                int
-	extraDiskSize             int
-	extraDisksDrivers         []string
-	targetArch                string
-	clusterWait               bool
-	clusterWaitTimeout        time.Duration
-	forceInitNodeAsEndpoint   bool
-	forceEndpoint             string
-	inputDir                  string
-	cniBinPath                []string
-	cniConfDir                string
-	cniCacheDir               string
-	cniBundleURL              string
-	ports                     string
-	dockerHostIP              string
-	withInitNode              bool
-	customCNIUrl              string
-	skipKubeconfig            bool
-	skipInjectingConfig       bool
-	talosVersion              string
-	encryptStatePartition     bool
-	encryptEphemeralPartition bool
-	encryptUserVolumes        bool
-	useVIP                    bool
-	enableKubeSpan            bool
-	enableClusterDiscovery    bool
-	configPatch               []string
-	configPatchControlPlane   []string
-	configPatchWorker         []string
-	badRTC                    bool
-	extraBootKernelArgs       string
-	dockerDisableIPv6         bool
-	controlPlanePort          int
-	kubePrismPort             int
-	dhcpSkipHostname          bool
-	skipK8sNodeReadinessCheck bool
-	networkChaos              bool
-	jitter                    time.Duration
-	latency                   time.Duration
-	packetLoss                float64
-	packetReorder             float64
-	packetCorrupt             float64
-	bandwidth                 int
-	diskEncryptionKeyTypes    []string
-	withFirewall              string
-	withUUIDHostnames         bool
-	withSiderolinkAgent       agentFlag
-	withJSONLogs              bool
-	debugShellEnabled         bool
-	withIOMMU                 bool
-	configInjectionMethodFlag string
-	mountOpts                 opts.MountOpt
-)
-
-// createCmd represents the cluster up command.
-var createCmd = &cobra.Command{
-	Use:   "create",
-	Short: "Creates a local docker-based or QEMU-based kubernetes cluster",
-	Args:  cobra.NoArgs,
-	RunE: func(cmd *cobra.Command, args []string) error {
-		return cli.WithContext(context.Background(), func(ctx context.Context) error {
-			return create(ctx, clustercmd.Flags)
-		})
-	},
-}
 
 //nolint:gocyclo
-func downloadBootAssets(ctx context.Context) error {
+func downloadBootAssets(ctx context.Context, qOps qemuOps) error {
 	// download & cache images if provides as URLs
 	for _, downloadableImage := range []struct {
 		path           *string
 		disableArchive bool
 	}{
 		{
-			path: &nodeVmlinuzPath,
+			path: &qOps.nodeVmlinuzPath,
 		},
 		{
-			path:           &nodeInitramfsPath,
+			path:           &qOps.nodeInitramfsPath,
 			disableArchive: true,
 		},
 		{
-			path: &nodeISOPath,
+			path: &qOps.nodeISOPath,
 		},
 		{
-			path: &nodeUSBPath,
+			path: &qOps.nodeUSBPath,
 		},
 		{
-			path: &nodeUKIPath,
+			path: &qOps.nodeUKIPath,
 		},
 		{
-			path: &nodeDiskImagePath,
+			path: &qOps.nodeDiskImagePath,
 			// we disable extracting the compressed image since we handle zstd for disk images
 			disableArchive: true,
 		},
@@ -320,7 +173,9 @@ func downloadBootAssets(ctx context.Context) error {
 	return nil
 }
 
-func getEncryptionKeys(cidr4 netip.Prefix, versionContract *config.VersionContract, provisionOptions *[]provision.Option) ([]*v1alpha1.EncryptionKey, error) {
+func getEncryptionKeys(cidr4 netip.Prefix, versionContract *config.VersionContract, provisionOptions *[]provision.Option, diskEncryptionKeyTypes []string) (
+	[]*v1alpha1.EncryptionKey, error,
+) {
 	var keys []*v1alpha1.EncryptionKey
 
 	for i, key := range diskEncryptionKeyTypes {
@@ -373,32 +228,40 @@ func getEncryptionKeys(cidr4 netip.Prefix, versionContract *config.VersionContra
 }
 
 //nolint:gocyclo,cyclop
-func create(ctx context.Context, rootOps clustercmd.CmdOps) error {
-	if err := downloadBootAssets(ctx); err != nil {
+func create(ctx context.Context, ops createOps) error {
+	rootOps := ops.common.rootOps
+	// common options
+	cOps := ops.common
+	// qemu options
+	qOps := ops.qemu
+	// docker options
+	dockerOps := ops.docker
+
+	if err := downloadBootAssets(ctx, qOps); err != nil {
 		return err
 	}
 
-	if controlplanes < 1 {
+	if cOps.controlplanes < 1 {
 		return errors.New("number of controlplanes can't be less than 1")
 	}
 
-	controlPlaneNanoCPUs, err := parseCPUShare(controlPlaneCpus)
+	controlPlaneNanoCPUs, err := parseCPUShare(cOps.controlPlaneCpus)
 	if err != nil {
 		return fmt.Errorf("error parsing --cpus: %s", err)
 	}
 
-	workerNanoCPUs, err := parseCPUShare(workersCpus)
+	workerNanoCPUs, err := parseCPUShare(cOps.workersCpus)
 	if err != nil {
 		return fmt.Errorf("error parsing --cpus-workers: %s", err)
 	}
 
-	controlPlaneMemory := int64(controlPlaneMemory) * 1024 * 1024
-	workerMemory := int64(workersMemory) * 1024 * 1024
+	controlPlaneMemory := int64(cOps.controlPlaneMemory) * 1024 * 1024
+	workerMemory := int64(cOps.workersMemory) * 1024 * 1024
 
 	// Validate CIDR range and allocate IPs
 	fmt.Fprintln(os.Stderr, "validating CIDR and reserving IPs")
 
-	cidr4, err := netip.ParsePrefix(networkCIDR)
+	cidr4, err := netip.ParsePrefix(cOps.networkCIDR)
 	if err != nil {
 		return fmt.Errorf("error validating cidr block: %w", err)
 	}
@@ -420,11 +283,11 @@ func create(ctx context.Context, rootOps clustercmd.CmdOps) error {
 
 	var cidrs []netip.Prefix
 
-	if networkIPv4 {
+	if cOps.networkIPv4 {
 		cidrs = append(cidrs, cidr4)
 	}
 
-	if networkIPv6 {
+	if cOps.networkIPv6 {
 		cidrs = append(cidrs, cidr6)
 	}
 
@@ -446,7 +309,7 @@ func create(ctx context.Context, rootOps clustercmd.CmdOps) error {
 	ips := make([][]netip.Addr, len(cidrs))
 
 	for j := range cidrs {
-		ips[j] = make([]netip.Addr, controlplanes+workers)
+		ips[j] = make([]netip.Addr, cOps.controlplanes+cOps.workers)
 
 		for i := range ips[j] {
 			ips[j][i], err = sideronet.NthIPInNetwork(cidrs[j], nodesOffset+i)
@@ -456,9 +319,9 @@ func create(ctx context.Context, rootOps clustercmd.CmdOps) error {
 		}
 	}
 
-	noMasqueradeCIDRs := make([]netip.Prefix, 0, len(networkNoMasqueradeCIDRs))
+	noMasqueradeCIDRs := make([]netip.Prefix, 0, len(qOps.networkNoMasqueradeCIDRs))
 
-	for _, cidr := range networkNoMasqueradeCIDRs {
+	for _, cidr := range qOps.networkNoMasqueradeCIDRs {
 		var parsedCIDR netip.Prefix
 
 		parsedCIDR, err = netip.ParsePrefix(cidr)
@@ -470,19 +333,19 @@ func create(ctx context.Context, rootOps clustercmd.CmdOps) error {
 	}
 
 	// Parse nameservers
-	nameserverIPs := make([]netip.Addr, len(nameservers))
+	nameserverIPs := make([]netip.Addr, len(qOps.nameservers))
 
 	for i := range nameserverIPs {
-		nameserverIPs[i], err = netip.ParseAddr(nameservers[i])
+		nameserverIPs[i], err = netip.ParseAddr(qOps.nameservers[i])
 		if err != nil {
-			return fmt.Errorf("failed parsing nameserver IP %q: %w", nameservers[i], err)
+			return fmt.Errorf("failed parsing nameserver IP %q: %w", qOps.nameservers[i], err)
 		}
 	}
 
 	// Virtual (shared) IP at the vipOffset IP in range, ex. 192.168.0.50
 	var vip netip.Addr
 
-	if useVIP {
+	if qOps.useVIP {
 		vip, err = sideronet.NthIPInNetwork(cidrs[0], vipOffset)
 		if err != nil {
 			return err
@@ -490,8 +353,8 @@ func create(ctx context.Context, rootOps clustercmd.CmdOps) error {
 	}
 
 	// Validate network chaos flags
-	if !networkChaos {
-		if jitter != 0 || latency != 0 || packetLoss != 0 || packetReorder != 0 || packetCorrupt != 0 || bandwidth != 0 {
+	if !qOps.networkChaos {
+		if qOps.jitter != 0 || qOps.latency != 0 || qOps.packetLoss != 0 || qOps.packetReorder != 0 || qOps.packetCorrupt != 0 || qOps.bandwidth != 0 {
 			return errors.New("network chaos flags can only be used with --with-network-chaos")
 		}
 	}
@@ -501,7 +364,7 @@ func create(ctx context.Context, rootOps clustercmd.CmdOps) error {
 		return err
 	}
 
-	if rootOps.ProvisionerName == providers.DockerProviderName && !bootloaderEnabled {
+	if rootOps.ProvisionerName == providers.DockerProviderName && !qOps.bootloaderEnabled {
 		return errors.New("docker provisioner requires bootloader to be enabled")
 	}
 
@@ -516,90 +379,90 @@ func create(ctx context.Context, rootOps clustercmd.CmdOps) error {
 			CIDRs:             cidrs,
 			NoMasqueradeCIDRs: noMasqueradeCIDRs,
 			GatewayAddrs:      gatewayIPs,
-			MTU:               networkMTU,
+			MTU:               cOps.networkMTU,
 			Nameservers:       nameserverIPs,
-			LoadBalancerPorts: []int{controlPlanePort},
+			LoadBalancerPorts: []int{cOps.controlPlanePort},
 			CNI: provision.CNIConfig{
-				BinPath:  cniBinPath,
-				ConfDir:  cniConfDir,
-				CacheDir: cniCacheDir,
+				BinPath:  qOps.cniBinPath,
+				ConfDir:  qOps.cniConfDir,
+				CacheDir: qOps.cniCacheDir,
 
-				BundleURL: cniBundleURL,
+				BundleURL: qOps.cniBundleURL,
 			},
-			DHCPSkipHostname:  dhcpSkipHostname,
-			DockerDisableIPv6: dockerDisableIPv6,
-			NetworkChaos:      networkChaos,
-			Jitter:            jitter,
-			Latency:           latency,
-			PacketLoss:        packetLoss,
-			PacketReorder:     packetReorder,
-			PacketCorrupt:     packetCorrupt,
-			Bandwidth:         bandwidth,
+			DHCPSkipHostname:  qOps.dhcpSkipHostname,
+			DockerDisableIPv6: dockerOps.dockerDisableIPv6,
+			NetworkChaos:      qOps.networkChaos,
+			Jitter:            qOps.jitter,
+			Latency:           qOps.latency,
+			PacketLoss:        qOps.packetLoss,
+			PacketReorder:     qOps.packetReorder,
+			PacketCorrupt:     qOps.packetCorrupt,
+			Bandwidth:         qOps.bandwidth,
 		},
 
-		Image:          nodeImage,
-		KernelPath:     nodeVmlinuzPath,
-		InitramfsPath:  nodeInitramfsPath,
-		ISOPath:        nodeISOPath,
-		USBPath:        nodeUSBPath,
-		UKIPath:        nodeUKIPath,
-		IPXEBootScript: nodeIPXEBootScript,
-		DiskImagePath:  nodeDiskImagePath,
+		Image:          dockerOps.nodeImage,
+		KernelPath:     qOps.nodeVmlinuzPath,
+		InitramfsPath:  qOps.nodeInitramfsPath,
+		ISOPath:        qOps.nodeISOPath,
+		USBPath:        qOps.nodeUSBPath,
+		UKIPath:        qOps.nodeUKIPath,
+		IPXEBootScript: qOps.nodeIPXEBootScript,
+		DiskImagePath:  qOps.nodeDiskImagePath,
 
 		SelfExecutable: os.Args[0],
 		StateDirectory: rootOps.StateDir,
 	}
 
 	provisionOptions := []provision.Option{
-		provision.WithDockerPortsHostIP(dockerHostIP),
-		provision.WithBootlader(bootloaderEnabled),
-		provision.WithUEFI(uefiEnabled),
-		provision.WithTPM2(tpm2Enabled),
-		provision.WithDebugShell(debugShellEnabled),
-		provision.WithIOMMU(withIOMMU),
-		provision.WithExtraUEFISearchPaths(extraUEFISearchPaths),
-		provision.WithTargetArch(targetArch),
-		provision.WithSiderolinkAgent(withSiderolinkAgent.IsEnabled()),
+		provision.WithDockerPortsHostIP(dockerOps.dockerHostIP),
+		provision.WithBootlader(qOps.bootloaderEnabled),
+		provision.WithUEFI(qOps.uefiEnabled),
+		provision.WithTPM2(qOps.tpm2Enabled),
+		provision.WithDebugShell(qOps.debugShellEnabled),
+		provision.WithIOMMU(qOps.withIOMMU),
+		provision.WithExtraUEFISearchPaths(qOps.extraUEFISearchPaths),
+		provision.WithTargetArch(qOps.targetArch),
+		provision.WithSiderolinkAgent(qOps.withSiderolinkAgent.IsEnabled()),
 	}
 
 	var configBundleOpts []bundle.Option
 
-	if debugShellEnabled {
+	if qOps.debugShellEnabled {
 		if rootOps.ProvisionerName != "qemu" {
 			return errors.New("debug shell only supported with qemu provisioner")
 		}
 	}
 
-	if ports != "" {
+	if dockerOps.ports != "" {
 		if rootOps.ProvisionerName != providers.DockerProviderName {
 			return errors.New("exposed-ports flag only supported with docker provisioner")
 		}
 
-		portList := strings.Split(ports, ",")
+		portList := strings.Split(dockerOps.ports, ",")
 		provisionOptions = append(provisionOptions, provision.WithDockerPorts(portList))
 	}
 
 	// should have at least a single primary disk
 	disks := []*provision.Disk{
 		{
-			Size:            uint64(clusterDiskSize) * 1024 * 1024,
-			SkipPreallocate: !clusterDiskPreallocate,
+			Size:            uint64(qOps.clusterDiskSize) * 1024 * 1024,
+			SkipPreallocate: !qOps.clusterDiskPreallocate,
 			Driver:          "virtio",
-			BlockSize:       diskBlockSize,
+			BlockSize:       qOps.diskBlockSize,
 		},
 	}
 
-	if inputDir != "" {
-		configBundleOpts = append(configBundleOpts, bundle.WithExistingConfigs(inputDir))
+	if cOps.inputDir != "" {
+		configBundleOpts = append(configBundleOpts, bundle.WithExistingConfigs(cOps.inputDir))
 	} else {
 		genOptions := []generate.Option{
-			generate.WithInstallImage(nodeInstallImage),
-			generate.WithDebug(configDebug),
-			generate.WithDNSDomain(dnsDomain),
-			generate.WithClusterDiscovery(enableClusterDiscovery),
+			generate.WithInstallImage(qOps.nodeInstallImage),
+			generate.WithDebug(cOps.configDebug),
+			generate.WithDNSDomain(cOps.dnsDomain),
+			generate.WithClusterDiscovery(cOps.enableClusterDiscovery),
 		}
 
-		for _, registryMirror := range registryMirrors {
+		for _, registryMirror := range cOps.registryMirrors {
 			left, right, ok := strings.Cut(registryMirror, "=")
 			if !ok {
 				return fmt.Errorf("invalid registry mirror spec: %q", registryMirror)
@@ -608,65 +471,65 @@ func create(ctx context.Context, rootOps clustercmd.CmdOps) error {
 			genOptions = append(genOptions, generate.WithRegistryMirror(left, right))
 		}
 
-		for _, registryHost := range registryInsecure {
+		for _, registryHost := range cOps.registryInsecure {
 			genOptions = append(genOptions, generate.WithRegistryInsecureSkipVerify(registryHost))
 		}
 
 		genOptions = append(genOptions, provisioner.GenOptions(request.Network)...)
 
-		if customCNIUrl != "" {
+		if cOps.customCNIUrl != "" {
 			genOptions = append(genOptions, generate.WithClusterCNIConfig(&v1alpha1.CNIConfig{
 				CNIName: constants.CustomCNI,
-				CNIUrls: []string{customCNIUrl},
+				CNIUrls: []string{cOps.customCNIUrl},
 			}))
 		}
 
-		if talosVersion == "" {
+		if cOps.talosVersion == "" {
 			if rootOps.ProvisionerName == providers.DockerProviderName {
-				parts := strings.Split(nodeImage, ":")
+				parts := strings.Split(dockerOps.nodeImage, ":")
 
-				talosVersion = parts[len(parts)-1]
+				cOps.talosVersion = parts[len(parts)-1]
 			} else {
-				parts := strings.Split(nodeInstallImage, ":")
+				parts := strings.Split(qOps.nodeInstallImage, ":")
 
-				talosVersion = parts[len(parts)-1]
+				cOps.talosVersion = parts[len(parts)-1]
 			}
 		}
 
 		var versionContract *config.VersionContract
 
-		if talosVersion != "latest" {
-			versionContract, err = config.ParseContractFromVersion(talosVersion)
+		if cOps.talosVersion != "latest" {
+			versionContract, err = config.ParseContractFromVersion(cOps.talosVersion)
 			if err != nil {
-				return fmt.Errorf("error parsing Talos version %q: %w", talosVersion, err)
+				return fmt.Errorf("error parsing Talos version %q: %w", cOps.talosVersion, err)
 			}
 
 			genOptions = append(genOptions, generate.WithVersionContract(versionContract))
 		}
 
-		extraDisks, userVolumePatches, err := getDisks(provisioner, cidr4, versionContract, &provisionOptions)
+		extraDisks, userVolumePatches, err := getDisks(provisioner, cidr4, versionContract, &provisionOptions, qOps)
 		if err != nil {
 			return err
 		}
 
 		disks = slices.Concat(disks, extraDisks)
 
-		if encryptStatePartition || encryptEphemeralPartition {
+		if qOps.encryptStatePartition || qOps.encryptEphemeralPartition {
 			diskEncryptionConfig := &v1alpha1.SystemDiskEncryptionConfig{}
 
-			keys, err := getEncryptionKeys(cidr4, versionContract, &provisionOptions)
+			keys, err := getEncryptionKeys(cidr4, versionContract, &provisionOptions, qOps.diskEncryptionKeyTypes)
 			if err != nil {
 				return err
 			}
 
-			if encryptStatePartition {
+			if qOps.encryptStatePartition {
 				diskEncryptionConfig.StatePartition = &v1alpha1.EncryptionConfig{
 					EncryptionProvider: encryption.LUKS2,
 					EncryptionKeys:     keys,
 				}
 			}
 
-			if encryptEphemeralPartition {
+			if qOps.encryptEphemeralPartition {
 				diskEncryptionConfig.EphemeralPartition = &v1alpha1.EncryptionConfig{
 					EncryptionProvider: encryption.LUKS2,
 					EncryptionKeys:     keys,
@@ -676,7 +539,7 @@ func create(ctx context.Context, rootOps clustercmd.CmdOps) error {
 			genOptions = append(genOptions, generate.WithSystemDiskEncryption(diskEncryptionConfig))
 		}
 
-		if useVIP {
+		if qOps.useVIP {
 			genOptions = append(genOptions,
 				generate.WithNetworkOptions(
 					v1alpha1.WithNetworkInterfaceVirtualIP(provisioner.GetFirstInterface(), vip.String()),
@@ -684,7 +547,7 @@ func create(ctx context.Context, rootOps clustercmd.CmdOps) error {
 			)
 		}
 
-		if enableKubeSpan {
+		if cOps.enableKubeSpan {
 			genOptions = append(genOptions,
 				generate.WithNetworkOptions(
 					v1alpha1.WithKubeSpan(),
@@ -692,7 +555,7 @@ func create(ctx context.Context, rootOps clustercmd.CmdOps) error {
 			)
 		}
 
-		if !bootloaderEnabled {
+		if !qOps.bootloaderEnabled {
 			// disable kexec, as this would effectively use the bootloader
 			genOptions = append(genOptions,
 				generate.WithSysctls(map[string]string{
@@ -701,22 +564,22 @@ func create(ctx context.Context, rootOps clustercmd.CmdOps) error {
 			)
 		}
 
-		if controlPlanePort != constants.DefaultControlPlanePort {
+		if cOps.controlPlanePort != constants.DefaultControlPlanePort {
 			genOptions = append(genOptions,
-				generate.WithLocalAPIServerPort(controlPlanePort),
+				generate.WithLocalAPIServerPort(cOps.controlPlanePort),
 			)
 		}
 
-		if kubePrismPort != constants.DefaultKubePrismPort {
+		if cOps.kubePrismPort != constants.DefaultKubePrismPort {
 			genOptions = append(genOptions,
-				generate.WithKubePrismPort(kubePrismPort),
+				generate.WithKubePrismPort(cOps.kubePrismPort),
 			)
 		}
 
-		externalKubernetesEndpoint := provisioner.GetExternalKubernetesControlPlaneEndpoint(request.Network, controlPlanePort)
+		externalKubernetesEndpoint := provisioner.GetExternalKubernetesControlPlaneEndpoint(request.Network, cOps.controlPlanePort)
 
-		if useVIP {
-			externalKubernetesEndpoint = "https://" + nethelpers.JoinHostPort(vip.String(), controlPlanePort)
+		if qOps.useVIP {
+			externalKubernetesEndpoint = "https://" + nethelpers.JoinHostPort(vip.String(), cOps.controlPlanePort)
 		}
 
 		provisionOptions = append(provisionOptions, provision.WithKubernetesEndpoint(externalKubernetesEndpoint))
@@ -724,11 +587,11 @@ func create(ctx context.Context, rootOps clustercmd.CmdOps) error {
 		endpointList := provisioner.GetTalosAPIEndpoints(request.Network)
 
 		switch {
-		case forceEndpoint != "":
+		case cOps.forceEndpoint != "":
 			// using non-default endpoints, provision additional cert SANs and fix endpoint list
-			endpointList = []string{forceEndpoint}
+			endpointList = []string{cOps.forceEndpoint}
 			genOptions = append(genOptions, generate.WithAdditionalSubjectAltNames(endpointList))
-		case forceInitNodeAsEndpoint:
+		case cOps.forceInitNodeAsEndpoint:
 			endpointList = []string{ips[0][0].String()}
 		case len(endpointList) > 0:
 			for _, endpointHostPort := range endpointList {
@@ -741,15 +604,15 @@ func create(ctx context.Context, rootOps clustercmd.CmdOps) error {
 			}
 		case endpointList == nil:
 			// use control plane nodes as endpoints, client-side load-balancing
-			for i := range controlplanes {
+			for i := range cOps.controlplanes {
 				endpointList = append(endpointList, ips[0][i].String())
 			}
 		}
 
-		inClusterEndpoint := provisioner.GetInClusterKubernetesControlPlaneEndpoint(request.Network, controlPlanePort)
+		inClusterEndpoint := provisioner.GetInClusterKubernetesControlPlaneEndpoint(request.Network, cOps.controlPlanePort)
 
-		if useVIP {
-			inClusterEndpoint = "https://" + nethelpers.JoinHostPort(vip.String(), controlPlanePort)
+		if qOps.useVIP {
+			inClusterEndpoint = "https://" + nethelpers.JoinHostPort(vip.String(), cOps.controlPlanePort)
 		}
 
 		genOptions = append(genOptions, generate.WithEndpointList(endpointList))
@@ -758,7 +621,7 @@ func create(ctx context.Context, rootOps clustercmd.CmdOps) error {
 				&bundle.InputOptions{
 					ClusterName: rootOps.ClusterName,
 					Endpoint:    inClusterEndpoint,
-					KubeVersion: strings.TrimPrefix(kubernetesVersion, "v"),
+					KubeVersion: strings.TrimPrefix(cOps.kubernetesVersion, "v"),
 					GenOptions:  genOptions,
 				}),
 			bundle.WithPatch(userVolumePatches),
@@ -778,22 +641,22 @@ func create(ctx context.Context, rootOps clustercmd.CmdOps) error {
 		return nil
 	}
 
-	if err = addConfigPatch(configPatch, bundle.WithPatch); err != nil {
+	if err = addConfigPatch(cOps.configPatch, bundle.WithPatch); err != nil {
 		return err
 	}
 
-	if err = addConfigPatch(configPatchControlPlane, bundle.WithPatchControlPlane); err != nil {
+	if err = addConfigPatch(cOps.configPatchControlPlane, bundle.WithPatchControlPlane); err != nil {
 		return err
 	}
 
-	if err = addConfigPatch(configPatchWorker, bundle.WithPatchWorker); err != nil {
+	if err = addConfigPatch(cOps.configPatchWorker, bundle.WithPatchWorker); err != nil {
 		return err
 	}
 
-	if withFirewall != "" {
+	if qOps.withFirewall != "" {
 		var defaultAction nethelpers.DefaultAction
 
-		defaultAction, err = nethelpers.DefaultActionString(withFirewall)
+		defaultAction, err = nethelpers.DefaultActionString(qOps.withFirewall)
 		if err != nil {
 			return err
 		}
@@ -801,7 +664,7 @@ func create(ctx context.Context, rootOps clustercmd.CmdOps) error {
 		var controlplaneIPs []netip.Addr
 
 		for i := range ips {
-			controlplaneIPs = append(controlplaneIPs, ips[i][:controlplanes]...)
+			controlplaneIPs = append(controlplaneIPs, ips[i][:cOps.controlplanes]...)
 		}
 
 		configBundleOpts = append(configBundleOpts,
@@ -812,16 +675,16 @@ func create(ctx context.Context, rootOps clustercmd.CmdOps) error {
 
 	var slb *siderolinkBuilder
 
-	if withSiderolinkAgent.IsEnabled() {
-		slb, err = newSiderolinkBuilder(gatewayIPs[0].String(), withSiderolinkAgent.IsTLS())
+	if qOps.withSiderolinkAgent.IsEnabled() {
+		slb, err = newSiderolinkBuilder(gatewayIPs[0].String(), qOps.withSiderolinkAgent.IsTLS())
 		if err != nil {
 			return err
 		}
 	}
 
-	configBundleOpts = append(configBundleOpts, bundle.WithPatch(slb.ConfigPatches(withSiderolinkAgent.IsTunnel())))
+	configBundleOpts = append(configBundleOpts, bundle.WithPatch(slb.ConfigPatches(qOps.withSiderolinkAgent.IsTunnel())))
 
-	if withJSONLogs {
+	if cOps.withJSONLogs {
 		const port = 4003
 
 		provisionOptions = append(provisionOptions, provision.WithJSONLogs(nethelpers.JoinHostPort(gatewayIPs[0].String(), port)))
@@ -855,19 +718,19 @@ func create(ctx context.Context, rootOps clustercmd.CmdOps) error {
 
 	bundleTalosconfig := configBundle.TalosConfig()
 	if bundleTalosconfig == nil {
-		if clusterWait {
+		if cOps.clusterWait {
 			return errors.New("no talosconfig in the config bundle: cannot wait for cluster")
 		}
 
-		if applyConfigEnabled {
+		if cOps.applyConfigEnabled {
 			return errors.New("no talosconfig in the config bundle: cannot apply config")
 		}
 	}
 
-	if skipInjectingConfig {
+	if cOps.skipInjectingConfig {
 		types := []machine.Type{machine.TypeControlPlane, machine.TypeWorker}
 
-		if withInitNode {
+		if cOps.withInitNode {
 			types = slices.Insert(types, 0, machine.TypeInit)
 		}
 
@@ -878,8 +741,8 @@ func create(ctx context.Context, rootOps clustercmd.CmdOps) error {
 
 	// Wireguard configuration.
 	var wireguardConfigBundle *helpers.WireguardConfigBundle
-	if wireguardCIDR != "" {
-		wireguardConfigBundle, err = helpers.NewWireguardConfigBundle(ips[0], wireguardCIDR, 51111, controlplanes)
+	if cOps.wireguardCIDR != "" {
+		wireguardConfigBundle, err = helpers.NewWireguardConfigBundle(ips[0], cOps.wireguardCIDR, 51111, cOps.controlplanes)
 		if err != nil {
 			return err
 		}
@@ -887,11 +750,11 @@ func create(ctx context.Context, rootOps clustercmd.CmdOps) error {
 
 	var extraKernelArgs *procfs.Cmdline
 
-	if extraBootKernelArgs != "" || withSiderolinkAgent.IsEnabled() {
-		extraKernelArgs = procfs.NewCmdline(extraBootKernelArgs)
+	if qOps.extraBootKernelArgs != "" || qOps.withSiderolinkAgent.IsEnabled() {
+		extraKernelArgs = procfs.NewCmdline(qOps.extraBootKernelArgs)
 	}
 
-	err = slb.SetKernelArgs(extraKernelArgs, withSiderolinkAgent.IsTunnel())
+	err = slb.SetKernelArgs(extraKernelArgs, qOps.withSiderolinkAgent.IsTunnel())
 	if err != nil {
 		return err
 	}
@@ -901,7 +764,7 @@ func create(ctx context.Context, rootOps clustercmd.CmdOps) error {
 
 	var configInjectionMethod provision.ConfigInjectionMethod
 
-	switch configInjectionMethodFlag {
+	switch qOps.configInjectionMethodFlagVal {
 	case "", "default", "http":
 		configInjectionMethod = provision.ConfigInjectionMethodHTTP
 	case "metal-iso":
@@ -911,7 +774,7 @@ func create(ctx context.Context, rootOps clustercmd.CmdOps) error {
 	}
 
 	// Create the controlplane nodes.
-	for i := range controlplanes {
+	for i := range cOps.controlplanes {
 		var cfg config.Provider
 
 		nodeIPs := make([]netip.Addr, len(cidrs))
@@ -927,22 +790,22 @@ func create(ctx context.Context, rootOps clustercmd.CmdOps) error {
 		}
 
 		nodeReq := provision.NodeRequest{
-			Name:                  nodeName(rootOps.ClusterName, "controlplane", i+1, nodeUUID),
+			Name:                  nodeName(rootOps.ClusterName, "controlplane", i+1, nodeUUID, qOps),
 			Type:                  machine.TypeControlPlane,
-			Quirks:                quirks.New(talosVersion),
+			Quirks:                quirks.New(cOps.talosVersion),
 			IPs:                   nodeIPs,
 			Memory:                controlPlaneMemory,
 			NanoCPUs:              controlPlaneNanoCPUs,
 			Disks:                 disks,
-			Mounts:                mountOpts.Value(),
-			SkipInjectingConfig:   skipInjectingConfig,
+			Mounts:                dockerOps.mountOpts.Value(),
+			SkipInjectingConfig:   cOps.skipInjectingConfig,
 			ConfigInjectionMethod: configInjectionMethod,
-			BadRTC:                badRTC,
+			BadRTC:                qOps.badRTC,
 			ExtraKernelArgs:       extraKernelArgs,
 			UUID:                  pointer.To(nodeUUID),
 		}
 
-		if withInitNode && i == 0 {
+		if cOps.withInitNode && i == 0 {
 			cfg = configBundle.Init()
 			nodeReq.Type = machine.TypeInit
 		} else {
@@ -962,32 +825,32 @@ func create(ctx context.Context, rootOps clustercmd.CmdOps) error {
 	}
 
 	// append extra disks
-	for i := range extraDisks {
+	for i := range qOps.extraDisks {
 		driver := "ide"
 
 		// ide driver is not supported on arm64
-		if targetArch == "arm64" {
+		if qOps.targetArch == "arm64" {
 			driver = "virtio"
 		}
 
-		if i < len(extraDisksDrivers) {
-			driver = extraDisksDrivers[i]
+		if i < len(qOps.extraDisksDrivers) {
+			driver = qOps.extraDisksDrivers[i]
 		}
 
 		disks = append(disks, &provision.Disk{
-			Size:            uint64(extraDiskSize) * 1024 * 1024,
-			SkipPreallocate: !clusterDiskPreallocate,
+			Size:            uint64(qOps.extraDiskSize) * 1024 * 1024,
+			SkipPreallocate: !qOps.clusterDiskPreallocate,
 			Driver:          driver,
-			BlockSize:       diskBlockSize,
+			BlockSize:       qOps.diskBlockSize,
 		})
 	}
 
-	for i := 1; i <= workers; i++ {
+	for i := 1; i <= cOps.workers; i++ {
 		cfg := configBundle.Worker()
 
 		nodeIPs := make([]netip.Addr, len(cidrs))
 		for j := range nodeIPs {
-			nodeIPs[j] = ips[j][controlplanes+i-1]
+			nodeIPs[j] = ips[j][cOps.controlplanes+i-1]
 		}
 
 		if wireguardConfigBundle != nil {
@@ -1006,18 +869,18 @@ func create(ctx context.Context, rootOps clustercmd.CmdOps) error {
 
 		request.Nodes = append(request.Nodes,
 			provision.NodeRequest{
-				Name:                  nodeName(rootOps.ClusterName, "worker", i, nodeUUID),
+				Name:                  nodeName(rootOps.ClusterName, "worker", i, nodeUUID, qOps),
 				Type:                  machine.TypeWorker,
 				IPs:                   nodeIPs,
-				Quirks:                quirks.New(talosVersion),
+				Quirks:                quirks.New(cOps.talosVersion),
 				Memory:                workerMemory,
 				NanoCPUs:              workerNanoCPUs,
 				Disks:                 disks,
-				Mounts:                mountOpts.Value(),
+				Mounts:                dockerOps.mountOpts.Value(),
 				Config:                cfg,
 				ConfigInjectionMethod: configInjectionMethod,
-				SkipInjectingConfig:   skipInjectingConfig,
-				BadRTC:                badRTC,
+				SkipInjectingConfig:   cOps.skipInjectingConfig,
+				BadRTC:                qOps.badRTC,
 				ExtraKernelArgs:       extraKernelArgs,
 				UUID:                  pointer.To(nodeUUID),
 			})
@@ -1030,7 +893,7 @@ func create(ctx context.Context, rootOps clustercmd.CmdOps) error {
 		return err
 	}
 
-	if debugShellEnabled {
+	if qOps.debugShellEnabled {
 		fmt.Println("You can now connect to debug shell on any node using these commands:")
 
 		for _, node := range request.Nodes {
@@ -1051,53 +914,53 @@ func create(ctx context.Context, rootOps clustercmd.CmdOps) error {
 	}
 
 	// Create and save the talosctl configuration file.
-	if err = saveConfig(bundleTalosconfig); err != nil {
+	if err = saveConfig(bundleTalosconfig, cOps.talosconfig); err != nil {
 		return err
 	}
 
 	clusterAccess := access.NewAdapter(cluster, provisionOptions...)
 	defer clusterAccess.Close() //nolint:errcheck
 
-	if applyConfigEnabled {
+	if cOps.applyConfigEnabled {
 		err = clusterAccess.ApplyConfig(ctx, request.Nodes, request.SiderolinkRequest, os.Stdout)
 		if err != nil {
 			return err
 		}
 	}
 
-	if err = postCreate(ctx, clusterAccess); err != nil {
+	if err = postCreate(ctx, clusterAccess, cOps); err != nil {
 		return err
 	}
 
 	return clustercmd.ShowCluster(cluster)
 }
 
-func nodeName(clusterName, role string, index int, uuid uuid.UUID) string {
-	if withUUIDHostnames {
+func nodeName(clusterName, role string, index int, uuid uuid.UUID, qOps qemuOps) string {
+	if qOps.withUUIDHostnames {
 		return fmt.Sprintf("machine-%s", uuid)
 	}
 
 	return fmt.Sprintf("%s-%s-%d", clusterName, role, index)
 }
 
-func postCreate(ctx context.Context, clusterAccess *access.Adapter) error {
-	if !withInitNode {
+func postCreate(ctx context.Context, clusterAccess *access.Adapter, cOps commonOps) error {
+	if !cOps.withInitNode {
 		if err := clusterAccess.Bootstrap(ctx, os.Stdout); err != nil {
 			return fmt.Errorf("bootstrap error: %w", err)
 		}
 	}
 
-	if !clusterWait {
+	if !cOps.clusterWait {
 		return nil
 	}
 
 	// Run cluster readiness checks
-	checkCtx, checkCtxCancel := context.WithTimeout(ctx, clusterWaitTimeout)
+	checkCtx, checkCtxCancel := context.WithTimeout(ctx, cOps.clusterWaitTimeout)
 	defer checkCtxCancel()
 
 	checks := check.DefaultClusterChecks()
 
-	if skipK8sNodeReadinessCheck {
+	if cOps.skipK8sNodeReadinessCheck {
 		checks = slices.Concat(check.PreBootSequenceChecks(), check.K8sComponentsReadinessChecks())
 	}
 
@@ -1107,7 +970,7 @@ func postCreate(ctx context.Context, clusterAccess *access.Adapter) error {
 		return err
 	}
 
-	if !skipKubeconfig {
+	if !cOps.skipKubeconfig {
 		if err := mergeKubeconfig(ctx, clusterAccess); err != nil {
 			return err
 		}
@@ -1116,8 +979,8 @@ func postCreate(ctx context.Context, clusterAccess *access.Adapter) error {
 	return nil
 }
 
-func saveConfig(talosConfigObj *clientconfig.Config) (err error) {
-	c, err := clientconfig.Open(talosconfig)
+func saveConfig(talosConfigObj *clientconfig.Config, talosconfigPath string) (err error) {
+	c, err := clientconfig.Open(talosconfigPath)
 	if err != nil {
 		return fmt.Errorf("error opening talos config: %w", err)
 	}
@@ -1127,7 +990,7 @@ func saveConfig(talosConfigObj *clientconfig.Config) (err error) {
 		fmt.Fprintf(os.Stderr, "renamed talosconfig context %s\n", rename.String())
 	}
 
-	return c.Save(talosconfig)
+	return c.Save(talosconfigPath)
 }
 
 func mergeKubeconfig(ctx context.Context, clusterAccess *access.Adapter) error {
@@ -1197,7 +1060,13 @@ func parseCPUShare(cpus string) (int64, error) {
 }
 
 //nolint:gocyclo
-func getDisks(provisioner provision.Provisioner, cidr4 netip.Prefix, versionContract *config.VersionContract, provisionOptions *[]provision.Option) ([]*provision.Disk, []configpatcher.Patch, error) {
+func getDisks(
+	provisioner provision.Provisioner,
+	cidr4 netip.Prefix,
+	versionContract *config.VersionContract,
+	provisionOptions *[]provision.Option,
+	qOps qemuOps,
+) ([]*provision.Disk, []configpatcher.Patch, error) {
 	const GPTAlignment = 2 * 1024 * 1024 // 2 MB
 
 	var (
@@ -1205,13 +1074,14 @@ func getDisks(provisioner provision.Provisioner, cidr4 netip.Prefix, versionCont
 		encryptionSpec block.EncryptionSpec
 	)
 
-	if encryptUserVolumes {
+	if qOps.encryptUserVolumes {
 		encryptionSpec.EncryptionProvider = blockres.EncryptionProviderLUKS2
 
 		keys, err := getEncryptionKeys(
 			cidr4,
 			versionContract,
 			provisionOptions,
+			qOps.diskEncryptionKeyTypes,
 		)
 		if err != nil {
 			return nil, nil, err
@@ -1242,9 +1112,9 @@ func getDisks(provisioner provision.Provisioner, cidr4 netip.Prefix, versionCont
 		})
 	}
 
-	disks := make([]*provision.Disk, 0, len(clusterUserVolumes))
+	disks := make([]*provision.Disk, 0, len(qOps.clusterUserVolumes))
 
-	for diskID, disk := range clusterUserVolumes {
+	for diskID, disk := range qOps.clusterUserVolumes {
 		var (
 			volumes  = strings.Split(disk, ":")
 			diskSize uint64
@@ -1276,9 +1146,9 @@ func getDisks(provisioner provision.Provisioner, cidr4 netip.Prefix, versionCont
 		disks = append(disks, &provision.Disk{
 			// add 2 MB per partition to make extra room for GPT and alignment
 			Size:            diskSize + GPTAlignment*uint64(len(volumes)/2+1),
-			SkipPreallocate: !clusterDiskPreallocate,
+			SkipPreallocate: !qOps.clusterDiskPreallocate,
 			Driver:          "ide",
-			BlockSize:       diskBlockSize,
+			BlockSize:       qOps.diskBlockSize,
 		})
 	}
 
@@ -1292,136 +1162,6 @@ func getDisks(provisioner provision.Provisioner, cidr4 netip.Prefix, versionCont
 	}
 
 	return disks, nil, nil
-}
-
-func init() {
-	createCmd.Flags().StringVar(
-		&talosconfig,
-		"talosconfig",
-		"",
-		fmt.Sprintf("The path to the Talos configuration file. Defaults to '%s' env variable if set, otherwise '%s' and '%s' in order.",
-			constants.TalosConfigEnvVar,
-			filepath.Join("$HOME", constants.TalosDir, constants.TalosconfigFilename),
-			filepath.Join(constants.ServiceAccountMountPath, constants.TalosconfigFilename),
-		),
-	)
-	createCmd.Flags().StringVar(&nodeImage, "image", helpers.DefaultImage(images.DefaultTalosImageRepository), "the image to use")
-	createCmd.Flags().StringVar(&nodeInstallImage, nodeInstallImageFlag, helpers.DefaultImage(images.DefaultInstallerImageRepository), "the installer image to use")
-	createCmd.Flags().StringVar(&nodeVmlinuzPath, "vmlinuz-path", helpers.ArtifactPath(constants.KernelAssetWithArch), "the compressed kernel image to use")
-	createCmd.Flags().StringVar(&nodeISOPath, "iso-path", "", "the ISO path to use for the initial boot (VM only)")
-	createCmd.Flags().StringVar(&nodeUSBPath, "usb-path", "", "the USB stick image path to use for the initial boot (VM only)")
-	createCmd.Flags().StringVar(&nodeUKIPath, "uki-path", "", "the UKI image path to use for the initial boot (VM only)")
-	createCmd.Flags().StringVar(&nodeInitramfsPath, "initrd-path", helpers.ArtifactPath(constants.InitramfsAssetWithArch), "initramfs image to use")
-	createCmd.Flags().StringVar(&nodeDiskImagePath, "disk-image-path", "", "disk image to use")
-	createCmd.Flags().StringVar(&nodeIPXEBootScript, "ipxe-boot-script", "", "iPXE boot script (URL) to use")
-	createCmd.Flags().BoolVar(&applyConfigEnabled, "with-apply-config", false, "enable apply config when the VM is starting in maintenance mode")
-	createCmd.Flags().BoolVar(&bootloaderEnabled, bootloaderEnabledFlag, true, "enable bootloader to load kernel and initramfs from disk image after install")
-	createCmd.Flags().BoolVar(&uefiEnabled, "with-uefi", true, "enable UEFI on x86_64 architecture")
-	createCmd.Flags().BoolVar(&tpm2Enabled, tpm2EnabledFlag, false, "enable TPM2 emulation support using swtpm")
-	createCmd.Flags().BoolVar(&debugShellEnabled, withDebugShellFlag, false, "drop talos into a maintenance shell on boot, this is for advanced debugging for developers only")
-	createCmd.Flags().BoolVar(&withIOMMU, withIOMMUFlag, false, "enable IOMMU support, this also add a new PCI root port and an interface attached to it (qemu only)")
-	createCmd.Flags().MarkHidden("with-debug-shell") //nolint:errcheck
-	createCmd.Flags().StringSliceVar(&extraUEFISearchPaths, "extra-uefi-search-paths", []string{}, "additional search paths for UEFI firmware (only applies when UEFI is enabled)")
-	createCmd.Flags().StringSliceVar(&registryMirrors, registryMirrorFlag, []string{}, "list of registry mirrors to use in format: <registry host>=<mirror URL>")
-	createCmd.Flags().StringSliceVar(&registryInsecure, registryInsecureFlag, []string{}, "list of registry hostnames to skip TLS verification for")
-	createCmd.Flags().BoolVar(&configDebug, configDebugFlag, false, "enable debug in Talos config to send service logs to the console")
-	createCmd.Flags().IntVar(&networkMTU, networkMTUFlag, 1500, "MTU of the cluster network")
-	createCmd.Flags().StringVar(&networkCIDR, networkCIDRFlag, "10.5.0.0/24", "CIDR of the cluster network (IPv4, ULA network for IPv6 is derived in automated way)")
-	createCmd.Flags().StringSliceVar(&networkNoMasqueradeCIDRs, networkNoMasqueradeCIDRsFlag, []string{}, "list of CIDRs to exclude from NAT (QEMU provisioner only)")
-	createCmd.Flags().BoolVar(&networkIPv4, networkIPv4Flag, true, "enable IPv4 network in the cluster")
-	createCmd.Flags().BoolVar(&networkIPv6, networkIPv6Flag, false, "enable IPv6 network in the cluster (QEMU provisioner only)")
-	createCmd.Flags().StringVar(&wireguardCIDR, "wireguard-cidr", "", "CIDR of the wireguard network")
-	createCmd.Flags().StringSliceVar(&nameservers, nameserversFlag, []string{"8.8.8.8", "1.1.1.1", "2001:4860:4860::8888", "2606:4700:4700::1111"}, "list of nameservers to use")
-	createCmd.Flags().IntVar(&workers, "workers", 1, "the number of workers to create")
-	createCmd.Flags().IntVar(&controlplanes, "masters", 1, "the number of masters to create")
-	createCmd.Flags().MarkDeprecated("masters", "use --controlplanes instead") //nolint:errcheck
-	createCmd.Flags().IntVar(&controlplanes, "controlplanes", 1, "the number of controlplanes to create")
-	createCmd.Flags().StringVar(&controlPlaneCpus, "cpus", "2.0", "the share of CPUs as fraction (each control plane/VM)")
-	createCmd.Flags().StringVar(&workersCpus, "cpus-workers", "2.0", "the share of CPUs as fraction (each worker/VM)")
-	createCmd.Flags().IntVar(&controlPlaneMemory, "memory", 2048, "the limit on memory usage in MB (each control plane/VM)")
-	createCmd.Flags().IntVar(&workersMemory, "memory-workers", 2048, "the limit on memory usage in MB (each worker/VM)")
-	createCmd.Flags().IntVar(&clusterDiskSize, clusterDiskSizeFlag, 6*1024, "default limit on disk size in MB (each VM)")
-	createCmd.Flags().UintVar(&diskBlockSize, "disk-block-size", 512, "disk block size (VM only)")
-	createCmd.Flags().BoolVar(&clusterDiskPreallocate, clusterDiskPreallocateFlag, true, "whether disk space should be preallocated")
-	createCmd.Flags().StringSliceVar(&clusterUserVolumes, clusterUserVolumesFlag, []string{}, "list of user volumes to create for each VM in format: <name1>:<size1>:<name2>:<size2>")
-	createCmd.Flags().IntVar(&extraDisks, "extra-disks", 0, "number of extra disks to create for each worker VM")
-	createCmd.Flags().StringSliceVar(&extraDisksDrivers, "extra-disks-drivers", nil, "driver for each extra disk (virtio, ide, ahci, scsi, nvme, megaraid)")
-	createCmd.Flags().IntVar(&extraDiskSize, "extra-disks-size", 5*1024, "default limit on disk size in MB (each VM)")
-	createCmd.Flags().StringVar(&targetArch, "arch", stdruntime.GOARCH, "cluster architecture")
-	createCmd.Flags().BoolVar(&clusterWait, "wait", true, "wait for the cluster to be ready before returning")
-	createCmd.Flags().DurationVar(&clusterWaitTimeout, "wait-timeout", 20*time.Minute, "timeout to wait for the cluster to be ready")
-	createCmd.Flags().BoolVar(&forceInitNodeAsEndpoint, "init-node-as-endpoint", false, "use init node as endpoint instead of any load balancer endpoint")
-	createCmd.Flags().StringVar(&forceEndpoint, forceEndpointFlag, "", "use endpoint instead of provider defaults")
-	createCmd.Flags().StringVar(&kubernetesVersion, "kubernetes-version", constants.DefaultKubernetesVersion, "desired kubernetes version to run")
-	createCmd.Flags().StringVarP(&inputDir, inputDirFlag, "i", "", "location of pre-generated config files")
-	createCmd.Flags().StringSliceVar(&cniBinPath, "cni-bin-path", []string{filepath.Join(clustercmd.DefaultCNIDir, "bin")}, "search path for CNI binaries (VM only)")
-	createCmd.Flags().StringVar(&cniConfDir, "cni-conf-dir", filepath.Join(clustercmd.DefaultCNIDir, "conf.d"), "CNI config directory path (VM only)")
-	createCmd.Flags().StringVar(&cniCacheDir, "cni-cache-dir", filepath.Join(clustercmd.DefaultCNIDir, "cache"), "CNI cache directory path (VM only)")
-	createCmd.Flags().StringVar(&cniBundleURL, "cni-bundle-url", fmt.Sprintf("https://github.com/%s/talos/releases/download/%s/talosctl-cni-bundle-%s.tar.gz",
-		images.Username, version.Trim(version.Tag), constants.ArchVariable), "URL to download CNI bundle from (VM only)")
-	createCmd.Flags().StringVarP(&ports,
-		"exposed-ports",
-		"p",
-		"",
-		"Comma-separated list of ports/protocols to expose on init node. Ex -p <hostPort>:<containerPort>/<protocol (tcp or udp)> (Docker provisioner only)",
-	)
-	createCmd.Flags().StringVar(&dockerHostIP, "docker-host-ip", "0.0.0.0", "Host IP to forward exposed ports to (Docker provisioner only)")
-	createCmd.Flags().BoolVar(&withInitNode, "with-init-node", false, "create the cluster with an init node")
-	createCmd.Flags().StringVar(&customCNIUrl, customCNIUrlFlag, "", "install custom CNI from the URL (Talos cluster)")
-	createCmd.Flags().StringVar(&dnsDomain, dnsDomainFlag, "cluster.local", "the dns domain to use for cluster")
-	createCmd.Flags().BoolVar(&skipKubeconfig, "skip-kubeconfig", false, "skip merging kubeconfig from the created cluster")
-	createCmd.Flags().BoolVar(&skipInjectingConfig, "skip-injecting-config", false, "skip injecting config from embedded metadata server, write config files to current directory")
-	createCmd.Flags().BoolVar(&encryptStatePartition, encryptStatePartitionFlag, false, "enable state partition encryption")
-	createCmd.Flags().BoolVar(&encryptEphemeralPartition, encryptEphemeralPartitionFlag, false, "enable ephemeral partition encryption")
-	createCmd.Flags().BoolVar(&encryptUserVolumes, encryptUserVolumeFlag, false, "enable ephemeral partition encryption")
-	createCmd.Flags().StringArrayVar(&diskEncryptionKeyTypes, diskEncryptionKeyTypesFlag, []string{"uuid"}, "encryption key types to use for disk encryption (uuid, kms)")
-	createCmd.Flags().StringVar(&talosVersion, talosVersionFlag, "", "the desired Talos version to generate config for (if not set, defaults to image version)")
-	createCmd.Flags().BoolVar(&useVIP, useVIPFlag, false, "use a virtual IP for the controlplane endpoint instead of the loadbalancer")
-	createCmd.Flags().BoolVar(&enableClusterDiscovery, withClusterDiscoveryFlag, true, "enable cluster discovery")
-	createCmd.Flags().BoolVar(&enableKubeSpan, enableKubeSpanFlag, false, "enable KubeSpan system")
-	createCmd.Flags().StringArrayVar(&configPatch, "config-patch", nil, "patch generated machineconfigs (applied to all node types), use @file to read a patch from file")
-	createCmd.Flags().StringArrayVar(&configPatchControlPlane, "config-patch-control-plane", nil, "patch generated machineconfigs (applied to 'init' and 'controlplane' types)")
-	createCmd.Flags().StringArrayVar(&configPatchWorker, "config-patch-worker", nil, "patch generated machineconfigs (applied to 'worker' type)")
-	createCmd.Flags().BoolVar(&badRTC, "bad-rtc", false, "launch VM with bad RTC state (QEMU only)")
-	createCmd.Flags().StringVar(&extraBootKernelArgs, "extra-boot-kernel-args", "", "add extra kernel args to the initial boot from vmlinuz and initramfs (QEMU only)")
-	createCmd.Flags().BoolVar(&dockerDisableIPv6, "docker-disable-ipv6", false, "skip enabling IPv6 in containers (Docker only)")
-	createCmd.Flags().IntVar(&controlPlanePort, controlPlanePortFlag, constants.DefaultControlPlanePort, "control plane port (load balancer and local API port, QEMU only)")
-	createCmd.Flags().IntVar(&kubePrismPort, kubePrismFlag, constants.DefaultKubePrismPort, "KubePrism port (set to 0 to disable)")
-	createCmd.Flags().BoolVar(&dhcpSkipHostname, "disable-dhcp-hostname", false, "skip announcing hostname via DHCP (QEMU only)")
-	createCmd.Flags().BoolVar(&skipK8sNodeReadinessCheck, "skip-k8s-node-readiness-check", false, "skip k8s node readiness checks")
-	createCmd.Flags().BoolVar(&networkChaos, "with-network-chaos", false, "enable to use network chaos parameters when creating a qemu cluster")
-	createCmd.Flags().DurationVar(&jitter, "with-network-jitter", 0, "specify jitter on the bridge interface when creating a qemu cluster")
-	createCmd.Flags().DurationVar(&latency, "with-network-latency", 0, "specify latency on the bridge interface when creating a qemu cluster")
-	createCmd.Flags().Float64Var(&packetLoss, "with-network-packet-loss", 0.0, "specify percent of packet loss on the bridge interface when creating a qemu cluster. e.g. 50% = 0.50 (default: 0.0)")
-	createCmd.Flags().Float64Var(&packetReorder, "with-network-packet-reorder", 0.0,
-		"specify percent of reordered packets on the bridge interface when creating a qemu cluster. e.g. 50% = 0.50 (default: 0.0)")
-	createCmd.Flags().Float64Var(&packetCorrupt, "with-network-packet-corrupt", 0.0,
-		"specify percent of corrupt packets on the bridge interface when creating a qemu cluster. e.g. 50% = 0.50 (default: 0.0)")
-	createCmd.Flags().IntVar(&bandwidth, "with-network-bandwidth", 0, "specify bandwidth restriction (in kbps) on the bridge interface when creating a qemu cluster")
-	createCmd.Flags().StringVar(&withFirewall, firewallFlag, "", "inject firewall rules into the cluster, value is default policy - accept/block (QEMU only)")
-	createCmd.Flags().BoolVar(&withUUIDHostnames, "with-uuid-hostnames", false, "use machine UUIDs as default hostnames (QEMU only)")
-	createCmd.Flags().Var(&withSiderolinkAgent, "with-siderolink", "enables the use of siderolink agent as configuration apply mechanism. `true` or `wireguard` enables the agent, `tunnel` enables the agent with grpc tunneling") //nolint:lll
-	createCmd.Flags().BoolVar(&withJSONLogs, "with-json-logs", false, "enable JSON logs receiver and configure Talos to send logs there")
-	createCmd.Flags().StringVar(&configInjectionMethodFlag, "config-injection-method", "", "a method to inject machine config: default is HTTP server, 'metal-iso' to mount an ISO (QEMU only)")
-	createCmd.Flags().Var(&mountOpts, "mount", "attach a mount to the container (Docker only)")
-
-	createCmd.MarkFlagsMutuallyExclusive(inputDirFlag, nodeInstallImageFlag)
-	createCmd.MarkFlagsMutuallyExclusive(inputDirFlag, configDebugFlag)
-	createCmd.MarkFlagsMutuallyExclusive(inputDirFlag, dnsDomainFlag)
-	createCmd.MarkFlagsMutuallyExclusive(inputDirFlag, withClusterDiscoveryFlag)
-	createCmd.MarkFlagsMutuallyExclusive(inputDirFlag, registryMirrorFlag)
-	createCmd.MarkFlagsMutuallyExclusive(inputDirFlag, registryInsecureFlag)
-	createCmd.MarkFlagsMutuallyExclusive(inputDirFlag, customCNIUrlFlag)
-	createCmd.MarkFlagsMutuallyExclusive(inputDirFlag, talosVersionFlag)
-	createCmd.MarkFlagsMutuallyExclusive(inputDirFlag, encryptStatePartitionFlag)
-	createCmd.MarkFlagsMutuallyExclusive(inputDirFlag, encryptEphemeralPartitionFlag)
-	createCmd.MarkFlagsMutuallyExclusive(inputDirFlag, encryptUserVolumeFlag)
-	createCmd.MarkFlagsMutuallyExclusive(inputDirFlag, enableKubeSpanFlag)
-	createCmd.MarkFlagsMutuallyExclusive(inputDirFlag, forceEndpointFlag)
-	createCmd.MarkFlagsMutuallyExclusive(inputDirFlag, kubePrismFlag)
-	createCmd.MarkFlagsMutuallyExclusive(inputDirFlag, diskEncryptionKeyTypesFlag)
-
-	clustercmd.Cmd.AddCommand(createCmd)
 }
 
 func newSiderolinkBuilder(wgHost string, useTLS bool) (*siderolinkBuilder, error) {
