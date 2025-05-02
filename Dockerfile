@@ -38,7 +38,6 @@ ARG PKG_LIBLZMA=scratch
 ARG PKG_LIBMNL=scratch
 ARG PKG_LIBNFTNL=scratch
 ARG PKG_LIBPOPT=scratch
-ARG PKG_LIBSECCOMP=scratch
 ARG PKG_LIBSELINUX=scratch
 ARG PKG_LIBSEPOL=scratch
 ARG PKG_LIBURCU=scratch
@@ -138,9 +137,6 @@ FROM --platform=arm64 ${PKG_PCRE2} AS pkg-pcre2-arm64
 
 FROM --platform=amd64 ${PKG_OPENSSL} AS pkg-openssl-amd64
 FROM --platform=arm64 ${PKG_OPENSSL} AS pkg-openssl-arm64
-
-FROM --platform=amd64 ${PKG_LIBSECCOMP} AS pkg-libseccomp-amd64
-FROM --platform=arm64 ${PKG_LIBSECCOMP} AS pkg-libseccomp-arm64
 
 # linux-firmware is not arch-specific
 FROM --platform=amd64 ${PKG_LINUX_FIRMWARE} AS pkg-linux-firmware
@@ -738,7 +734,6 @@ COPY --link --from=pkg-libsepol-amd64 / /rootfs
 COPY --link --from=pkg-libselinux-amd64 / /rootfs
 COPY --link --from=pkg-pcre2-amd64 / /rootfs
 COPY --link --from=pkg-openssl-amd64 / /rootfs
-COPY --link --from=pkg-libseccomp-amd64 / /rootfs
 COPY --link --from=pkg-lvm2-amd64 / /rootfs
 COPY --link --from=pkg-libaio-amd64 / /rootfs
 COPY --link --from=pkg-musl-amd64 / /rootfs
@@ -816,7 +811,6 @@ COPY --link --from=pkg-libsepol-arm64 / /rootfs
 COPY --link --from=pkg-libselinux-arm64 / /rootfs
 COPY --link --from=pkg-pcre2-arm64 / /rootfs
 COPY --link --from=pkg-openssl-arm64 / /rootfs
-COPY --link --from=pkg-libseccomp-arm64 / /rootfs
 COPY --link --from=pkg-lvm2-arm64 / /rootfs
 COPY --link --from=pkg-libaio-arm64 / /rootfs
 COPY --link --from=pkg-musl-arm64 / /rootfs
