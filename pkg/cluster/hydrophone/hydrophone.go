@@ -28,7 +28,7 @@ import (
 type Options struct {
 	RunTests []string
 	Skip     string
-	Parallel bool
+	Parallel int
 
 	RunTimeout    time.Duration
 	DeleteTimeout time.Duration
@@ -49,6 +49,7 @@ func DefaultOptions() *Options {
 			"Services should serve a basic endpoint from pods",
 			"Services should be able to change the type from ExternalName to ClusterIP",
 		},
+		Parallel: 2,
 
 		RunTimeout:    10 * time.Minute,
 		DeleteTimeout: 3 * time.Minute,
@@ -63,7 +64,7 @@ func FastConformance(ctx context.Context, cluster cluster.K8sProvider) error {
 		{
 			RunTests: []string{`\[Conformance\]`},
 			Skip:     `\[Serial\]`,
-			Parallel: true,
+			Parallel: 16,
 
 			RunTimeout:    time.Hour,
 			DeleteTimeout: 5 * time.Minute,
@@ -74,7 +75,6 @@ func FastConformance(ctx context.Context, cluster cluster.K8sProvider) error {
 		},
 		{
 			RunTests: []string{`\[Serial\].*\[Conformance\]`},
-			Parallel: false,
 
 			RunTimeout:    time.Hour,
 			DeleteTimeout: 5 * time.Minute,
@@ -98,8 +98,6 @@ func FastConformance(ctx context.Context, cluster cluster.K8sProvider) error {
 func CertifiedConformance(ctx context.Context, cluster cluster.K8sProvider) error {
 	options := Options{
 		RunTests: []string{`\[Conformance\]`},
-
-		Parallel: false,
 
 		RunTimeout:    2 * time.Hour,
 		DeleteTimeout: 5 * time.Minute,
@@ -139,11 +137,7 @@ func Run(ctx context.Context, cluster cluster.K8sProvider, options *Options) err
 	config := types.NewDefaultConfiguration()
 	config.ConformanceImage = fmt.Sprintf("registry.k8s.io/conformance:v%s", options.KubernetesVersion)
 	config.OutputDir = options.ResultsPath
-
-	if options.Parallel {
-		config.Parallel = 4
-	}
-
+	config.Parallel = options.Parallel
 	config.Skip = options.Skip
 
 	clientset, err := cluster.K8sClient(ctx)
