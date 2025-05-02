@@ -122,6 +122,18 @@ func SetRLimit(ctx context.Context, log *zap.Logger, rt runtime.Runtime, next Ne
 		return fmt.Errorf("setRLimit: %w", err)
 	}
 
+	if err := unix.Setrlimit(unix.RLIMIT_CORE, &unix.Rlimit{Cur: 1048576 * 1048576, Max: 1048576 * 1048576}); err != nil {
+		return fmt.Errorf("setRLimit: %w", err)
+	}
+
+	if err := os.MkdirAll("/system/core", 0o755); err != nil {
+		return fmt.Errorf("mkdir core: %w", err)
+	}
+
+	if err := os.WriteFile("/proc/sys/kernel/core_pattern", []byte("/system/core/core.%e.%p"), 0o644); err != nil {
+		return fmt.Errorf("write core_pattern: %w", err)
+	}
+
 	return next()(ctx, log, rt, next)
 }
 

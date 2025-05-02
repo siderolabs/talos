@@ -141,7 +141,7 @@ func Run(ctx context.Context, cluster cluster.K8sProvider, options *Options) err
 	config.OutputDir = options.ResultsPath
 
 	if options.Parallel {
-		config.Parallel = 4
+		config.Parallel = 16
 	}
 
 	config.Skip = options.Skip
