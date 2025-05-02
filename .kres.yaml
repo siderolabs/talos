@@ -728,6 +728,11 @@ spec:
             PLATFORM: linux/amd64,linux/arm64
             IMAGE_REGISTRY: registry.dev.siderolabs.io
             PUSH: true
+        - name: uki-certs
+          environment:
+            PLATFORM: linux/amd64
+          conditions:
+            - only-on-schedule
         - name: talosctl-cni-bundle
           conditions:
             - only-on-schedule
