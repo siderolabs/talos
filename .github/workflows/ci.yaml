@@ -1,6 +1,6 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
 #
-# Generated on 2025-05-06T10:11:16Z by kres 1a0156b.
+# Generated on 2025-05-06T10:12:53Z by kres 1a0156b.
 
 name: default
 concurrency:
@@ -2041,6 +2041,14 @@ jobs:
         if: github.event_name == 'schedule'
         run: |
           make talosctl-cni-bundle
+      - name: e2e-airgapped
+        env:
+          GITHUB_STEP_NAME: ${{ github.job}}-e2e-airgapped
+          IMAGE_REGISTRY: registry.dev.siderolabs.io
+          SHORT_INTEGRATION_TEST: "yes"
+          WITH_AIRGAPPED: "true"
+        run: |
+          sudo -E make e2e-qemu
       - name: e2e-no-cluster-discovery
         env:
           GITHUB_STEP_NAME: ${{ github.job}}-e2e-no-cluster-discovery
@@ -2085,6 +2093,7 @@ jobs:
           path: |-
             /tmp/logs-*.tar.gz
             /tmp/support-*.zip
+            /tmp/airgapped*.log
           retention-days: "5"
   integration-misc-1-enforcing:
     permissions:

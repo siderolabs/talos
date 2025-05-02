@@ -55,6 +55,10 @@ func (c *Client) getConn(opts ...grpc.DialOption) (*grpcConnectionWrapper, error
 	)
 
 	if c.options.unixSocketPath != "" {
+		dialOpts = append(dialOpts,
+			grpc.WithNoProxy(),
+		)
+
 		conn, err := grpc.NewClient(target, dialOpts...)
 
 		return newGRPCConnectionWrapper(c.GetClusterName(), conn), err
