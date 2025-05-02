@@ -262,6 +262,18 @@ case "${WITH_ENFORCING:-false}" in
     ;;
 esac
 
+case "${WITH_AIRGAPPED:-false}" in
+  false)
+    ;;
+  *)
+    "${TALOSCTL}" debug air-gapped --advertised-address 172.20.1.1 >/tmp/airgapped.log 2>&1 &
+     sleep 5 # wait for the air-gapped server to start
+     mv air-gapped-patch.yaml /tmp/air-gapped-patch.yaml
+
+    QEMU_FLAGS+=("--config-patch=@/tmp/air-gapped-patch.yaml")
+    ;;
+esac
+
 function create_cluster {
   build_registry_mirrors
 

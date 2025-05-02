@@ -981,6 +981,14 @@ spec:
         - name: talosctl-cni-bundle
           conditions:
             - only-on-schedule
+        - name: e2e-airgapped
+          command: e2e-qemu
+          withSudo: true
+          environment:
+            GITHUB_STEP_NAME: ${{ github.job}}-e2e-airgapped
+            SHORT_INTEGRATION_TEST: yes
+            WITH_AIRGAPPED: true
+            IMAGE_REGISTRY: registry.dev.siderolabs.io
         - name: e2e-no-cluster-discovery
           command: e2e-qemu
           withSudo: true
@@ -1027,6 +1035,7 @@ spec:
             artifactPath: /tmp/logs-*.tar.gz
             additionalArtifacts:
               - "/tmp/support-*.zip"
+              - "/tmp/airgapped*.log"
     - name: integration-misc-1-enforcing
       buildxOptions:
         enabled: true
