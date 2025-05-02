@@ -6,16 +6,34 @@ package vm
 
 import (
 	"context"
+	"net"
+
+	"github.com/siderolabs/gen/xslices"
 
 	"github.com/siderolabs/talos/pkg/provision"
 )
 
-// CreateNetwork TODO
+// CreateNetwork on darwin assigns the bridge name to the to-be created interface name.
+// The interface itself is later created by qemu, but the name needs to be known so that the dhcp server can be linked to the interface.
 func (p *Provisioner) CreateNetwork(ctx context.Context, state *State, network provision.NetworkRequest, options provision.Options) error {
-	panic("not implemented")
+	ifaces, err := net.Interfaces()
+	if err != nil {
+		return err
+	}
+
+	ifNames := xslices.Map(ifaces, func(iface net.Interface) string { return iface.Name })
+
+	bridgeNAme, err := GetVmnetInterfaceName(ifNames)
+	if err != nil {
+		return err
+	}
+
+	state.BridgeName = bridgeNAme
+
+	return nil
 }
 
-// DestroyNetwork TODO
+// DestroyNetwork does nothing on darwin as the network is automatically cleaned up by qemu when the final machine of a cidr block is killed.
 func (p *Provisioner) DestroyNetwork(state *State) error {
-	panic("not implemented")
+	return nil
 }
