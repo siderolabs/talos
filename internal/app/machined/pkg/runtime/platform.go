@@ -5,11 +5,13 @@
 package runtime
 
 import (
+	"bytes"
 	"context"
 	"net/netip"
 
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/siderolabs/go-procfs/procfs"
+	"gopkg.in/yaml.v3"
 
 	"github.com/siderolabs/talos/pkg/machinery/imager/quirks"
 	"github.com/siderolabs/talos/pkg/machinery/resources/network"
@@ -61,4 +63,20 @@ type PlatformNetworkConfig struct {
 	Probes []network.ProbeSpecSpec `yaml:"probes,omitempty"`
 
 	Metadata *runtime.PlatformMetadataSpec `yaml:"metadata,omitempty"`
+}
+
+// Equal compares two network configurations.
+func (p *PlatformNetworkConfig) Equal(other *PlatformNetworkConfig) bool {
+	// we will compare by marshaling to YAML
+	// and then comparing the bytes
+	// this is not the most efficient way to do this,
+	// but it will handle omitting empty fields
+	m1, err1 := yaml.Marshal(p)
+	m2, err2 := yaml.Marshal(other)
+
+	if err1 != nil || err2 != nil {
+		return false
+	}
+
+	return bytes.Equal(m1, m2)
 }

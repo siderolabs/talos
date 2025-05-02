@@ -575,10 +575,12 @@ func (mock *platformMock) NetworkConfiguration(
 
 	networkConfig.Metadata = mock.metadata
 
-	select {
-	case ch <- networkConfig:
-	case <-ctx.Done():
-		return ctx.Err()
+	for range 5 { // send the network config multiple times to test duplicate suppression
+		select {
+		case ch <- networkConfig:
+		case <-ctx.Done():
+			return ctx.Err()
+		}
 	}
 
 	return nil
