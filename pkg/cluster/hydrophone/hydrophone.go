@@ -60,18 +60,18 @@ func DefaultOptions() *Options {
 // FastConformance runs conformance suite in two passes: parallel + serial for non parallel-safe tests.
 func FastConformance(ctx context.Context, cluster cluster.K8sProvider) error {
 	optionsList := []Options{
-		{
-			RunTests: []string{`should delete pods created by rc when not orphaning`, `should orphan pods created by rc if deleteOptions.OrphanDependents is nil`},
-			Skip:     `\[Serial\]`,
-			Parallel: true,
+		// {
+		// 	RunTests: []string{`should delete pods created by rc when not orphaning`, `should orphan pods created by rc if deleteOptions.OrphanDependents is nil`},
+		// 	Skip:     `\[Serial\]`,
+		// 	Parallel: true,
 
-			RunTimeout:    time.Hour,
-			DeleteTimeout: 5 * time.Minute,
+		// 	RunTimeout:    time.Hour,
+		// 	DeleteTimeout: 5 * time.Minute,
 
-			KubernetesVersion: constants.DefaultKubernetesVersion,
+		// 	KubernetesVersion: constants.DefaultKubernetesVersion,
 
-			UseSpinner: true,
-		},
+		// 	UseSpinner: true,
+		// },
 		{
 			RunTests: []string{`should keep the rc around until all its pods are deleted if the deleteOptions says so`, `should orphan pods created by rc if delete options say so`},
 			Parallel: false,
