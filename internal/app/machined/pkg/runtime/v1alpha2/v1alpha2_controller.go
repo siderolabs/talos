@@ -459,6 +459,7 @@ func (ctrl *Controller) Run(ctx context.Context, drainer *runtime.Drainer) error
 		},
 		&runtimecontrollers.UniqueMachineTokenController{},
 		&runtimecontrollers.VersionController{},
+		&runtimecontrollers.TasksController{},
 		&runtimecontrollers.WatchdogTimerConfigController{},
 		&runtimecontrollers.WatchdogTimerController{},
 		&runtimecontrollers.OOMController{

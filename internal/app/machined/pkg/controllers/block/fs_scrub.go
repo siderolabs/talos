@@ -22,6 +22,7 @@ import (
 	"github.com/siderolabs/talos/internal/pkg/environment"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/resources/block"
+	runtimeres "github.com/siderolabs/talos/pkg/machinery/resources/runtime"
 )
 
 // VolumeStatus -[ScheduleController]-> ScrubSchedule -[ScrubRunController]-> Task -[TaskController]-> Result
@@ -81,6 +82,10 @@ func (ctrl *FSScrubController) Outputs() []controller.Output {
 		{
 			Type: block.FSScrubStatusType,
 			Kind: controller.OutputExclusive,
+		},
+		{
+			Type: runtimeres.TaskType,
+			Kind: controller.OutputShared,
 		},
 	}
 }
@@ -200,6 +205,10 @@ func (ctrl *FSScrubController) updateSchedule(ctx context.Context, r controller.
 		_, ok := ctrl.schedule[mountpoint]
 
 		if ok {
+			if ctrl.schedule[mountpoint].period == period {
+				continue
+			}
+
 			ctrl.schedule[mountpoint].timer.Stop()
 		}
 
@@ -221,6 +230,8 @@ func (ctrl *FSScrubController) updateSchedule(ctx context.Context, r controller.
 			period:     period,
 			timer:      time.AfterFunc(firstTimeout, cb),
 		}
+
+		fmt.Println("scrub schedule", zap.String("mountpoint", mountpoint), zap.Duration("period", period), zap.Time("startTime", scheduledTask.StartTime))
 
 		ctrl.status[mountpoint] = scrubStatus{
 			id:         item.Metadata().ID(),
@@ -265,6 +276,18 @@ func (ctrl *FSScrubController) runScrub(ctx context.Context, mountpoint string, 
 
 	start := time.Now()
 
+	task := runtimeres.NewTask()
+	fmt.Println("creating task", zap.String("task", task.Metadata().ID()), zap.String("mountpoint", mountpoint))
+	if err := safe.WriterModify(ctx, r, task, func(status *runtimeres.Task) error {
+		status.TypedSpec().Args = args
+		status.TypedSpec().TaskName = "fs_scrub"
+		status.TypedSpec().ID = ctrl.status[mountpoint].id
+
+		return nil
+	}); err != nil {
+		return fmt.Errorf("error updating filesystem task scredule: %w", err)
+	}
+
 	mountStatuses, err := safe.ReaderListAll[*block.MountStatus](ctx, r)
 	if err != nil && !state.IsNotFoundError(err) {
 		return fmt.Errorf("error getting mount statuses to obtain finalizers: %w", err)
@@ -286,6 +309,8 @@ func (ctrl *FSScrubController) runScrub(ctx context.Context, mountpoint string, 
 	}
 
 	err = runner.Run(func(s events.ServiceState, msg string, args ...any) {})
+	// delete the task
+	r.Destroy(ctx, task.Metadata())
 
 	if mountStatus != nil {
 		if err := r.RemoveFinalizer(ctx, mountStatus.Metadata(), ctrl.Name()); err != nil {

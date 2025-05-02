@@ -233,6 +233,8 @@ func NewState() (*State, error) {
 		&runtime.PlatformMetadata{},
 		&runtime.SBOMItem{},
 		&runtime.SecurityState{},
+		&runtime.Task{},
+		&runtime.TaskStatus{},
 		&runtime.UniqueMachineToken{},
 		&runtime.Version{},
 		&runtime.WatchdogTimerConfig{},
