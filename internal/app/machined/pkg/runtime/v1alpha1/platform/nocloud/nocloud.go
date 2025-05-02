@@ -146,9 +146,9 @@ func (n *Nocloud) NetworkConfiguration(ctx context.Context, st state.State, ch c
 
 	// do a loop to retry network config remap in case of missing links
 	// on each try, export the configuration as it is, and if the network is reconciled next time, export the reconciled configuration
-	for {
-		bckoff := backoff.NewExponentialBackOff()
+	bckoff := backoff.NewExponentialBackOff()
 
+	for {
 		networkConfig, needsReconcile, err := n.ParseMetadata(ctx, unmarshalledNetworkConfig, st, metadata)
 		if err != nil {
 			return err
