@@ -35,7 +35,12 @@ CONFORMANCE_IMAGE ?= ghcr.io/siderolabs/conform:latest
 PKG_APPARMOR ?= $(PKGS_PREFIX)/apparmor:$(PKGS)
 PKG_CA_CERTIFICATES ?= $(PKGS_PREFIX)/ca-certificates:$(PKGS)
 PKG_CNI ?= $(PKGS_PREFIX)/cni:$(PKGS)
-PKG_CONTAINERD ?= $(PKGS_PREFIX)/containerd:$(PKGS)
+# vDSO revert - no segfault
+# PKG_CONTAINERD ?= 127.0.0.1:5005/siderolabs/containerd:v1.11.0-alpha.0-5-g74da85c-dirty@sha256:b4a334e079afaa9846e8e1b647af8887699cd653b6843f0db4e20d61522d8e07
+# No vDSO revert - segfault
+# PKG_CONTAINERD ?= 127.0.0.1:5005/siderolabs/containerd:v1.11.0-alpha.0-5-g74da85c-dirty@sha256:4ab2ad081db71d2a53241be5575302574e11e39f602770dd3bafecaa816fe366
+# Fix from 1.24.3 (0ab64e2caad9c09f6db3de23898a2294b07b9fd3) - no segfault
+PKG_CONTAINERD ?= 127.0.0.1:5005/siderolabs/containerd:v1.11.0-alpha.0-5-g74da85c-dirty@sha256:e941db437ae2b6012eea4ff74c16a1a68166b13660a7e499140898a4334273e0
 PKG_CPIO ?= $(PKGS_PREFIX)/cpio:$(PKGS)
 PKG_CRYPTSETUP ?= $(PKGS_PREFIX)/cryptsetup:$(PKGS)
 PKG_DOSFSTOOLS ?= $(PKGS_PREFIX)/dosfstools:$(PKGS)
