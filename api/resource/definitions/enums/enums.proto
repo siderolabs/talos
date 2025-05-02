@@ -462,3 +462,10 @@ enum RuntimeSELinuxState {
   SE_LINUX_STATE_ENFORCING = 2;
 }
 
+// RuntimeTaskState describes the task state.
+enum RuntimeTaskState {
+  TASK_STATE_CREATED = 0;
+  TASK_STATE_RUNNING = 1;
+  TASK_STATE_COMPLETED = 2;
+}
+

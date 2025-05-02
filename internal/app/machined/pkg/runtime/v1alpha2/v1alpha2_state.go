@@ -222,6 +222,8 @@ func NewState() (*State, error) {
 		&runtime.MountStatus{},
 		&runtime.PlatformMetadata{},
 		&runtime.SecurityState{},
+		&runtime.Task{},
+		&runtime.TaskStatus{},
 		&runtime.UniqueMachineToken{},
 		&runtime.WatchdogTimerConfig{},
 		&runtime.WatchdogTimerStatus{},

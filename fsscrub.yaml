@@ -1,0 +1,5 @@
+apiVersion: v1alpha1
+kind: FilesystemScrubConfig
+name: var # Name of the config document.
+mountpoint: /var # Mountpoint of the filesystem to be scrubbed.
+period: 168s # Period for running the scrub task for this filesystem.
