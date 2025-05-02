@@ -61,7 +61,7 @@ func DefaultOptions() *Options {
 func FastConformance(ctx context.Context, cluster cluster.K8sProvider) error {
 	optionsList := []Options{
 		{
-			RunTests: []string{`\[Conformance\]`},
+			RunTests: []string{`should delete pods created by rc when not orphaning`, `should orphan pods created by rc if deleteOptions.OrphanDependents is nil`},
 			Skip:     `\[Serial\]`,
 			Parallel: true,
 
@@ -73,7 +73,7 @@ func FastConformance(ctx context.Context, cluster cluster.K8sProvider) error {
 			UseSpinner: true,
 		},
 		{
-			RunTests: []string{`\[Serial\].*\[Conformance\]`},
+			RunTests: []string{`should keep the rc around until all its pods are deleted if the deleteOptions says so`, `should orphan pods created by rc if delete options say so`},
 			Parallel: false,
 
 			RunTimeout:    time.Hour,
