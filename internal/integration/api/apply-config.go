@@ -570,6 +570,38 @@ func (suite *ApplyConfigSuite) TestApplyTry() {
 	suite.Fail("dummy interface wasn't removed after config try timeout")
 }
 
+// TestApplyRemovingV1Alpha1 verifies the apply config doesn't accept removal of v1alpha1 config.
+func (suite *ApplyConfigSuite) TestApplyRemovingV1Alpha1() {
+	suite.WaitForBootDone(suite.ctx)
+
+	node := suite.RandomDiscoveredNodeInternalIP()
+	suite.ClearConnectionRefused(suite.ctx, node)
+
+	nodeCtx := client.WithNode(suite.ctx, node)
+
+	// create a simple multi-doc config without v1alpha1
+	cfgDocument := runtime.NewWatchdogTimerV1Alpha1()
+	cfgDocument.WatchdogDevice = "/dev/watchdog0"
+	cfgDocument.WatchdogTimeout = 120 * time.Second
+
+	ctr, err := container.New(cfgDocument)
+	suite.Require().NoError(err, "failed to create container")
+
+	cfgDataOut, err := ctr.Bytes()
+	suite.Require().NoError(err, "failed to marshal container")
+
+	// Talos should deny a request that effectively removes the v1alpha1 config
+	_, err = suite.Client.ApplyConfiguration(
+		nodeCtx, &machineapi.ApplyConfigurationRequest{
+			Data: cfgDataOut,
+			Mode: machineapi.ApplyConfigurationRequest_AUTO,
+		},
+	)
+	suite.Require().Error(err)
+	suite.Require().Equal(codes.InvalidArgument, client.StatusCode(err))
+	suite.Require().ErrorContains(err, "the applied machine configuration doesn't contain v1alpha1 config")
+}
+
 func init() {
 	allSuites = append(allSuites, new(ApplyConfigSuite))
 }
