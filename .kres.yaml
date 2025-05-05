@@ -1780,7 +1780,7 @@ spec:
         - name: checkout contrib
           checkoutStep:
             repository: siderolabs/contrib
-            ref: main
+            ref: release-1.9
             path: _out/contrib
         - name: setup tf
           terraformStep: true
@@ -1873,7 +1873,7 @@ spec:
         - name: checkout contrib
           checkoutStep:
             repository: siderolabs/contrib
-            ref: main
+            ref: release-1.9
             path: _out/contrib
         - name: setup tf
           terraformStep: true
@@ -1970,7 +1970,7 @@ spec:
         - name: checkout contrib
           checkoutStep:
             repository: siderolabs/contrib
-            ref: main
+            ref: release-1.9
             path: _out/contrib
         - name: setup tf
           terraformStep: true
@@ -2045,7 +2045,7 @@ spec:
         - name: checkout contrib
           checkoutStep:
             repository: siderolabs/contrib
-            ref: main
+            ref: release-1.9
             path: _out/contrib
         - name: setup tf
           terraformStep: true
@@ -2122,7 +2122,7 @@ spec:
         - name: checkout contrib
           checkoutStep:
             repository: siderolabs/contrib
-            ref: main
+            ref: release-1.9
             path: _out/contrib
         - name: setup tf
           terraformStep: true
@@ -2182,7 +2182,7 @@ spec:
         - name: checkout contrib
           checkoutStep:
             repository: siderolabs/contrib
-            ref: main
+            ref: release-1.9
             path: _out/contrib
         - name: setup tf
           terraformStep: true
