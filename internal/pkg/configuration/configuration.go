@@ -10,7 +10,6 @@ import (
 	"errors"
 	"fmt"
 	"net/url"
-	"os"
 	"time"
 
 	"github.com/cosi-project/runtime/pkg/safe"
@@ -126,7 +125,7 @@ func Generate(ctx context.Context, st state.State, in *machine.GenerateConfigura
 		}
 
 		switch {
-		case os.IsNotExist(err):
+		case state.IsNotFoundError(err):
 			secretsBundle, err = secrets.NewBundle(clock, config.TalosVersionCurrent)
 			if err != nil {
 				return nil, err
