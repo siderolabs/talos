@@ -13,7 +13,7 @@
 this targets the facets of algolia search to only return the version you're actively looking at
 except in the case of not having a version (being on the main page) and then it'll return "latest".
 -->
-{{ if ne $currentVersion "" }}
+{{ if and (ne $currentVersion "") (ne $currentVersion "404") }}
 <script>
   docsearch({
     appId: "D72DGJBSSA",
