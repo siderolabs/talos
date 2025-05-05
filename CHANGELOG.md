@@ -1,3 +1,91 @@
+## [Talos 1.9.6](https://github.com/siderolabs/talos/releases/tag/v1.9.6) (2025-05-05)
+
+Welcome to the v1.9.6 release of Talos!
+
+
+
+Please try out the release binaries and report any issues at
+https://github.com/siderolabs/talos/issues.
+
+### Component Updates
+
+* Linux: 6.12.25
+* containerd: 2.0.5
+* runc: 1.2.6
+* Kubernetes: 1.32.4
+* etcd: 3.5.21
+
+Talos is built with Go 1.23.8.
+
+
+### Contributors
+
+* Andrey Smirnov
+* Dmitrii Sharshakov
+* Noel Georgi
+
+### Changes
+<details><summary>13 commits</summary>
+<p>
+
+* [`f826e5e64`](https://github.com/siderolabs/talos/commit/f826e5e644b6b6743e1ae53f2f0af0f3e081b74f) test: pin contrib to release-1.9
+* [`d11e6b3be`](https://github.com/siderolabs/talos/commit/d11e6b3bee7f957f8055dddfa4d2ed4447f00f42) fix: do correct backoff for nocloud reconcile
+* [`2785ab9eb`](https://github.com/siderolabs/talos/commit/2785ab9ebcf5e20e3b7e602eb35b8b2098eda7d2) fix: fix Gvisor tests with containerd patch
+* [`c932d4c51`](https://github.com/siderolabs/talos/commit/c932d4c5167dbe15c976fc342e27c283a8c379f3) fix: extension services logging to console
+* [`7c8b1fd15`](https://github.com/siderolabs/talos/commit/7c8b1fd154f9bf6454b3e0e968542df3e30cfcf7) fix: relax etcd APIs RBAC requirements
+* [`b03ad9d86`](https://github.com/siderolabs/talos/commit/b03ad9d86e4469007fe80cf35821986b4cb45089) fix: preserve kubelet image suffix
+* [`b9dd6d8d3`](https://github.com/siderolabs/talos/commit/b9dd6d8d33d6eb34c9c46cdd80f808b0134f833b) fix: handle encryption type mismatch
+* [`757a369cf`](https://github.com/siderolabs/talos/commit/757a369cf6309555e9c7f7195467eadcbf70043d) fix: containerd auth hostname in the config
+* [`3355c2001`](https://github.com/siderolabs/talos/commit/3355c20015deabd608232f6213f5c9bc9949cc5b) fix: image cache generation on Windows
+* [`0db17e129`](https://github.com/siderolabs/talos/commit/0db17e1291c8ecaed62d671cfb29b899d1c67dba) chore: drop runc memfd bind
+* [`9b0604af7`](https://github.com/siderolabs/talos/commit/9b0604af7d04d145930440fd0ed06d4fd1fdc205) fix: ignore missing config (nocloud) via cidata
+* [`9efea0603`](https://github.com/siderolabs/talos/commit/9efea060315fd429954be2889838378a5bd1d2c7) fix: reconnect on SideroLink tunnel on/off change
+* [`ff94a352b`](https://github.com/siderolabs/talos/commit/ff94a352b3fa085ddf081f937356bba61dff5b6a) feat: update base dependencies
+</p>
+</details>
+
+### Changes from siderolabs/pkgs
+<details><summary>1 commit</summary>
+<p>
+
+* [`ebd46bc`](https://github.com/siderolabs/pkgs/commit/ebd46bce0444962cc3b50251b1d7cf370682c259) feat: update for Talos v1.9.6
+</p>
+</details>
+
+### Changes from siderolabs/tools
+<details><summary>1 commit</summary>
+<p>
+
+* [`468b139`](https://github.com/siderolabs/tools/commit/468b139a78013aaf5b5432b3f80714d67661a330) feat: update Go to 1.23.8
+</p>
+</details>
+
+### Dependency Changes
+
+* **github.com/containerd/containerd/v2**  v2.0.2 -> v2.0.5
+* **github.com/siderolabs/pkgs**           v1.9.0-36-g792f5ca -> v1.9.0-37-gebd46bc
+* **github.com/siderolabs/tools**          v1.9.0-4-g17d43b2 -> v1.9.0-5-g468b139
+* **go.etcd.io/etcd/api/v3**               v3.5.18 -> v3.5.21
+* **go.etcd.io/etcd/client/pkg/v3**        v3.5.18 -> v3.5.21
+* **go.etcd.io/etcd/client/v3**            v3.5.18 -> v3.5.21
+* **go.etcd.io/etcd/etcdutl/v3**           v3.5.18 -> v3.5.21
+* **golang.org/x/net**                     v0.34.0 -> v0.38.0
+* **golang.org/x/oauth2**                  v0.24.0 -> v0.28.0
+* **golang.org/x/sync**                    v0.10.0 -> v0.12.0
+* **golang.org/x/sys**                     v0.29.0 -> v0.31.0
+* **golang.org/x/term**                    v0.28.0 -> v0.30.0
+* **golang.org/x/text**                    v0.21.0 -> v0.23.0
+* **k8s.io/api**                           v0.32.1 -> v0.32.4
+* **k8s.io/apiserver**                     v0.32.1 -> v0.32.4
+* **k8s.io/client-go**                     v0.32.1 -> v0.32.4
+* **k8s.io/component-base**                v0.32.1 -> v0.32.4
+* **k8s.io/kube-scheduler**                v0.32.1 -> v0.32.4
+* **k8s.io/kubectl**                       v0.32.1 -> v0.32.4
+* **k8s.io/kubelet**                       v0.32.1 -> v0.32.4
+* **k8s.io/pod-security-admission**        v0.32.1 -> v0.32.4
+
+Previous release can be found at [v1.9.5](https://github.com/siderolabs/talos/releases/tag/v1.9.5)
+
 ## [Talos 1.9.5](https://github.com/siderolabs/talos/releases/tag/v1.9.5) (2025-03-12)
 
 Welcome to the v1.9.5 release of Talos!
