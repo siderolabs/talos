@@ -205,6 +205,7 @@ func (options Options) CreateUEFI(printf func(string, ...any)) (Generator, error
 			"-iso_mbr_part_type", "0x83", // just to have more clear info when doing a fdisk -l
 			"-no-emul-boot",
 			"-m", "efiboot.img", // exclude the EFI boot image from the ISO
+			"-iso-level", "3",
 			"-o", options.OutPath,
 			options.ScratchDir,
 			"--",

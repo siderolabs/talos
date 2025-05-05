@@ -78,6 +78,7 @@ func (options Options) CreateGRUB(printf func(string, ...any)) (Generator, error
 			"--output=" + options.OutPath,
 			"--verbose",
 			options.ScratchDir,
+			"-iso-level", "3",
 			"--",
 		},
 	}, nil
