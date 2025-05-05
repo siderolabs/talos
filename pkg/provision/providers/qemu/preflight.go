@@ -105,7 +105,7 @@ func (check *preflightCheckContext) checkFlashImages(context.Context) error {
 }
 
 func (check *preflightCheckContext) swtpmExecutable(context.Context) error {
-	if check.options.TPM2Enabled {
+	if check.options.TPM2Enabled || check.options.TPM1_2Enabled {
 		if _, err := exec.LookPath("swtpm"); err != nil {
 			return fmt.Errorf("swtpm not found in PATH, please install swtpm-tools with the package manager: %w", err)
 		}

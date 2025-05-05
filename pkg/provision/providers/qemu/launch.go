@@ -57,7 +57,7 @@ type LaunchConfig struct {
 	DefaultBootOrder  string
 	EnableKVM         bool
 	BootloaderEnabled bool
-	TPM2Config        tpm2Config
+	TPMConfig         tpmConfig
 	NodeUUID          uuid.UUID
 	BadRTC            bool
 	ArchitectureData  Arch
@@ -103,9 +103,11 @@ type LaunchConfig struct {
 	controller *Controller
 }
 
-type tpm2Config struct {
+type tpmConfig struct {
 	NodeName string
 	StateDir string
+
+	TPM2 bool
 }
 
 // withCNIOperationLocked ensures that CNI operations don't run concurrently.
@@ -431,21 +433,27 @@ func launchVM(config *LaunchConfig) error {
 		return err
 	}
 
-	if config.TPM2Config.NodeName != "" {
-		tpm2SocketPath := filepath.Join(config.TPM2Config.StateDir, "swtpm.sock")
+	if config.TPMConfig.NodeName != "" {
+		tpm2SocketPath := filepath.Join(config.TPMConfig.StateDir, "swtpm.sock")
 
-		cmd := exec.Command("swtpm", []string{
+		swtpmArgs := []string{
 			"socket",
 			"--tpmstate",
-			fmt.Sprintf("dir=%s,mode=0644", config.TPM2Config.StateDir),
+			fmt.Sprintf("dir=%s,mode=0644", config.TPMConfig.StateDir),
 			"--ctrl",
 			fmt.Sprintf("type=unixio,path=%s", tpm2SocketPath),
-			"--tpm2",
+			// "--tpm2",
 			"--pid",
-			fmt.Sprintf("file=%s", filepath.Join(config.TPM2Config.StateDir, "swtpm.pid")),
+			fmt.Sprintf("file=%s", filepath.Join(config.TPMConfig.StateDir, "swtpm.pid")),
 			"--log",
-			fmt.Sprintf("file=%s,level=20", filepath.Join(config.TPM2Config.StateDir, "swtpm.log")),
-		}...)
+			fmt.Sprintf("file=%s,level=20", filepath.Join(config.TPMConfig.StateDir, "swtpm.log")),
+		}
+
+		if config.TPMConfig.TPM2 {
+			swtpmArgs = append(swtpmArgs, "--tpm2")
+		}
+
+		cmd := exec.Command("swtpm", swtpmArgs...)
 
 		log.Printf("starting swtpm: %s", cmd.String())
 

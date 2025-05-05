@@ -1242,6 +1242,14 @@ spec:
             SHORT_INTEGRATION_TEST: yes
             WITH_CONFIG_PATCH: "@hack/test/patches/node-address-v2.yaml"
             IMAGE_REGISTRY: registry.dev.siderolabs.io
+        - name: e2e-tpm1_2
+          command: e2e-qemu
+          withSudo: true
+          environment:
+            GITHUB_STEP_NAME: ${{ github.job}}-e2e-tpm1_2
+            SHORT_INTEGRATION_TEST: yes
+            WITH_TPM1_2: true
+            IMAGE_REGISTRY: registry.dev.siderolabs.io
         - name: save-talos-logs
           conditions:
             - always

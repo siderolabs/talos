@@ -94,6 +94,7 @@ const (
 	bootloaderEnabledFlag        = "with-bootloader"
 	controlPlanePortFlag         = "control-plane-port"
 	firewallFlag                 = "with-firewall"
+	tpmEnabledFlag               = "with-tpm1_2"
 	tpm2EnabledFlag              = "with-tpm2"
 	withDebugShellFlag           = "with-debug-shell"
 	withIOMMUFlag                = "with-iommu"
@@ -135,6 +136,7 @@ var (
 	applyConfigEnabled        bool
 	bootloaderEnabled         bool
 	uefiEnabled               bool
+	tpm1_2Enabled             bool
 	tpm2Enabled               bool
 	extraUEFISearchPaths      []string
 	configDebug               bool
@@ -549,6 +551,7 @@ func create(ctx context.Context) error {
 		provision.WithDockerPortsHostIP(dockerHostIP),
 		provision.WithBootlader(bootloaderEnabled),
 		provision.WithUEFI(uefiEnabled),
+		provision.WithTPM1_2(tpm1_2Enabled),
 		provision.WithTPM2(tpm2Enabled),
 		provision.WithDebugShell(debugShellEnabled),
 		provision.WithIOMMU(withIOMMU),
@@ -1312,7 +1315,8 @@ func init() {
 	createCmd.Flags().BoolVar(&applyConfigEnabled, "with-apply-config", false, "enable apply config when the VM is starting in maintenance mode")
 	createCmd.Flags().BoolVar(&bootloaderEnabled, bootloaderEnabledFlag, true, "enable bootloader to load kernel and initramfs from disk image after install")
 	createCmd.Flags().BoolVar(&uefiEnabled, "with-uefi", true, "enable UEFI on x86_64 architecture")
-	createCmd.Flags().BoolVar(&tpm2Enabled, tpm2EnabledFlag, false, "enable TPM2 emulation support using swtpm")
+	createCmd.Flags().BoolVar(&tpm1_2Enabled, tpmEnabledFlag, false, "enable TPM 1.2 emulation support using swtpm")
+	createCmd.Flags().BoolVar(&tpm2Enabled, tpm2EnabledFlag, false, "enable TPM 2.0 emulation support using swtpm")
 	createCmd.Flags().BoolVar(&debugShellEnabled, withDebugShellFlag, false, "drop talos into a maintenance shell on boot, this is for advanced debugging for developers only")
 	createCmd.Flags().BoolVar(&withIOMMU, withIOMMUFlag, false, "enable IOMMU support, this also add a new PCI root port and an interface attached to it (qemu only)")
 	createCmd.Flags().MarkHidden("with-debug-shell") //nolint:errcheck

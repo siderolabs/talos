@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"strings"
 	"time"
 
 	"github.com/google/go-tpm/tpm2"
@@ -22,8 +21,8 @@ import (
 func TPMSeed() error {
 	t, err := tpm.Open()
 	if err != nil {
-		// if the TPM is not available or not a TPM 2.0, we can skip the PCR extension
-		if os.IsNotExist(err) || strings.Contains(err.Error(), "device is not a TPM 2.0") {
+		// if the TPM is not available we can skip seeding random pool
+		if os.IsNotExist(err) {
 			log.Printf("TPM device is not available")
 
 			return nil
@@ -34,13 +33,18 @@ func TPMSeed() error {
 
 	defer t.Close() //nolint:errcheck
 
+	// now we need to check if the TPM is a 2.0 device
+	// we can do this by checking the manufacturer,
+	// if it fails, we can skip trying to seed the pool
 	caps, err := tpm2.GetCapability{
 		Capability:    tpm2.TPMCapTPMProperties,
 		Property:      uint32(tpm2.TPMPTManufacturer),
 		PropertyCount: 1,
 	}.Execute(t)
 	if err != nil {
-		return fmt.Errorf("error getting TPM capabilities: %w", err)
+		log.Printf("TPM device is not a TPM 2.0, skipping seeding entropy pool from TPM")
+
+		return nil
 	}
 
 	props, err := caps.CapabilityData.Data.TPMProperties()

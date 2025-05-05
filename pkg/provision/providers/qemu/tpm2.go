@@ -15,40 +15,42 @@ import (
 	"github.com/siderolabs/talos/pkg/provision/providers/vm"
 )
 
-func (p *provisioner) createVirtualTPM2State(state *vm.State, nodeName string) (tpm2Config, error) {
-	tpm2StateDir := state.GetRelativePath(fmt.Sprintf("%s-tpm2", nodeName))
+func (p *provisioner) createVirtualTPMState(state *vm.State, nodeName string, tpm2Enabled bool) (tpmConfig, error) {
+	tpmStateDir := state.GetRelativePath(fmt.Sprintf("%s-tpm", nodeName))
 
-	if err := os.MkdirAll(tpm2StateDir, 0o755); err != nil {
-		return tpm2Config{}, err
+	if err := os.MkdirAll(tpmStateDir, 0o755); err != nil {
+		return tpmConfig{}, err
 	}
 
-	return tpm2Config{
+	return tpmConfig{
 		NodeName: nodeName,
-		StateDir: tpm2StateDir,
+		StateDir: tpmStateDir,
+
+		TPM2: tpm2Enabled,
 	}, nil
 }
 
-func (p *provisioner) destroyVirtualTPM2s(cluster provision.ClusterInfo) error {
+func (p *provisioner) destroyVirtualTPMs(cluster provision.ClusterInfo) error {
 	errCh := make(chan error)
 
 	nodes := append([]provision.NodeInfo{}, cluster.Nodes...)
 
 	for _, node := range nodes {
-		if node.TPM2StateDir == "" {
+		if node.TPMStateDir == "" {
 			continue
 		}
 
-		tpm2PidPath := filepath.Join(node.TPM2StateDir, "swtpm.pid")
+		tpm2PidPath := filepath.Join(node.TPMStateDir, "swtpm.pid")
 
 		go func() {
-			errCh <- p.destroyVirtualTPM2(tpm2PidPath)
+			errCh <- p.destroyVirtualTPM(tpm2PidPath)
 		}()
 	}
 
 	var multiErr *multierror.Error
 
 	for _, node := range nodes {
-		if node.TPM2StateDir == "" {
+		if node.TPMStateDir == "" {
 			continue
 		}
 
@@ -58,6 +60,6 @@ func (p *provisioner) destroyVirtualTPM2s(cluster provision.ClusterInfo) error {
 	return multiErr.ErrorOrNil()
 }
 
-func (p *provisioner) destroyVirtualTPM2(pid string) error {
+func (p *provisioner) destroyVirtualTPM(pid string) error {
 	return vm.StopProcessByPidfile(pid)
 }

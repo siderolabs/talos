@@ -187,6 +187,14 @@ case "${WITH_TRUSTED_BOOT_ISO:-false}" in
     ;;
 esac
 
+case "${WITH_TPM1_2:-false}" in
+  false)
+    ;;
+  *)
+    QEMU_FLAGS+=("--with-tpm1_2")
+    ;;
+esac
+
 case "${WITH_SIDEROLINK_AGENT:-false}" in
   false)
     ;;
