@@ -74,8 +74,12 @@ const (
 	vipOffset = 50
 )
 
+// downloadBootAssets downloads the boot assets in the given qemuOps if they are URLs, and replaces their URL paths with the downloaded paths on the filesystem.
+//
+// As it modifies the qemuOps struct, it needs to be passed by reference.
+//
 //nolint:gocyclo
-func downloadBootAssets(ctx context.Context, qOps qemuOps) error {
+func downloadBootAssets(ctx context.Context, qOps *qemuOps) error {
 	// download & cache images if provides as URLs
 	for _, downloadableImage := range []struct {
 		path           *string
@@ -237,7 +241,7 @@ func create(ctx context.Context, ops createOps) error {
 	// docker options
 	dockerOps := ops.docker
 
-	if err := downloadBootAssets(ctx, qOps); err != nil {
+	if err := downloadBootAssets(ctx, &qOps); err != nil {
 		return err
 	}
 
