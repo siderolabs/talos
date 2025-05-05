@@ -27,6 +27,7 @@ func (options Options) CreateHybrid(printf func(string, ...any)) (Generator, err
 			"--verbose",
 			"--directory=/usr/lib/grub/i386-pc", // only for BIOS boot
 			"-m", "efiboot.img",                 // exclude the EFI boot image from the ISO
+			"-iso-level", "3",
 			options.ScratchDir,
 			"-eltorito-alt-boot",
 			"-e", "--interval:appended_partition_2:all::", // use appended partition 2 for EFI
