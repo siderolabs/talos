@@ -37,6 +37,7 @@ const (
 	bootloaderEnabledFlag        = "with-bootloader"
 	controlPlanePortFlag         = "control-plane-port"
 	firewallFlag                 = "with-firewall"
+	tpmEnabledFlag               = "with-tpm1_2"
 	tpm2EnabledFlag              = "with-tpm2"
 	withDebugShellFlag           = "with-debug-shell"
 	withIOMMUFlag                = "with-iommu"
@@ -117,6 +118,7 @@ type qemuOps struct {
 	nodeIPXEBootScript           string
 	bootloaderEnabled            bool
 	uefiEnabled                  bool
+	tpm1_2Enabled                bool
 	tpm2Enabled                  bool
 	extraUEFISearchPaths         []string
 	networkNoMasqueradeCIDRs     []string
@@ -249,7 +251,8 @@ func init() {
 	createCmd.Flags().StringVar(&ops.qemu.nodeIPXEBootScript, "ipxe-boot-script", "", "iPXE boot script (URL) to use")
 	createCmd.Flags().BoolVar(&ops.qemu.bootloaderEnabled, bootloaderEnabledFlag, true, "enable bootloader to load kernel and initramfs from disk image after install")
 	createCmd.Flags().BoolVar(&ops.qemu.uefiEnabled, "with-uefi", true, "enable UEFI on x86_64 architecture")
-	createCmd.Flags().BoolVar(&ops.qemu.tpm2Enabled, tpm2EnabledFlag, false, "enable TPM2 emulation support using swtpm")
+	createCmd.Flags().BoolVar(&ops.qemu.tpm1_2Enabled, tpmEnabledFlag, false, "enable TPM 1.2 emulation support using swtpm")
+	createCmd.Flags().BoolVar(&ops.qemu.tpm2Enabled, tpm2EnabledFlag, false, "enable TPM 2.0 emulation support using swtpm")
 	createCmd.Flags().BoolVar(&ops.qemu.debugShellEnabled, withDebugShellFlag, false, "drop talos into a maintenance shell on boot, this is for advanced debugging for developers only")
 	createCmd.Flags().BoolVar(&ops.qemu.withIOMMU, withIOMMUFlag, false, "enable IOMMU support, this also add a new PCI root port and an interface attached to it (qemu only)")
 	createCmd.Flags().MarkHidden("with-debug-shell") //nolint:errcheck
@@ -316,6 +319,8 @@ func init() {
 	createCmd.MarkFlagsMutuallyExclusive(inputDirFlag, forceEndpointFlag)
 	createCmd.MarkFlagsMutuallyExclusive(inputDirFlag, kubePrismFlag)
 	createCmd.MarkFlagsMutuallyExclusive(inputDirFlag, diskEncryptionKeyTypesFlag)
+
+	createCmd.MarkFlagsMutuallyExclusive(tpmEnabledFlag, tpm2EnabledFlag)
 
 	clustercmd.Cmd.AddCommand(createCmd)
 }

@@ -1,6 +1,6 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
 #
-# Generated on 2025-04-04T12:28:10Z by kres d903dae.
+# Generated on 2025-05-05T04:55:03Z by kres 6cbcbd1.
 
 name: integration-misc-2-cron
 concurrency:
@@ -147,6 +147,14 @@ jobs:
           IMAGE_REGISTRY: registry.dev.siderolabs.io
           SHORT_INTEGRATION_TEST: "yes"
           WITH_CONFIG_PATCH: '@hack/test/patches/node-address-v2.yaml'
+        run: |
+          sudo -E make e2e-qemu
+      - name: e2e-tpm1_2
+        env:
+          GITHUB_STEP_NAME: ${{ github.job}}-e2e-tpm1_2
+          IMAGE_REGISTRY: registry.dev.siderolabs.io
+          SHORT_INTEGRATION_TEST: "yes"
+          WITH_TPM1_2: "true"
         run: |
           sudo -E make e2e-qemu
       - name: save artifacts

@@ -417,6 +417,7 @@ func create(ctx context.Context, ops createOps) error {
 		provision.WithDockerPortsHostIP(dockerOps.dockerHostIP),
 		provision.WithBootlader(qOps.bootloaderEnabled),
 		provision.WithUEFI(qOps.uefiEnabled),
+		provision.WithTPM1_2(qOps.tpm1_2Enabled),
 		provision.WithTPM2(qOps.tpm2Enabled),
 		provision.WithDebugShell(qOps.debugShellEnabled),
 		provision.WithIOMMU(qOps.withIOMMU),

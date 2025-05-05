@@ -11,7 +11,6 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"strings"
 
 	"github.com/google/go-tpm/tpm2"
 	"github.com/google/go-tpm/tpm2/transport"
@@ -67,8 +66,8 @@ func ReadPCR(t transport.TPM, pcr int) ([]byte, error) {
 func PCRExtend(pcr int, data []byte) error {
 	t, err := tpm.Open()
 	if err != nil {
-		// if the TPM is not available or not a TPM 2.0, we can skip the PCR extension
-		if os.IsNotExist(err) || strings.Contains(err.Error(), "device is not a TPM 2.0") {
+		// if the TPM is not available we can skip the PCR extension
+		if os.IsNotExist(err) {
 			log.Printf("TPM device is not available, skipping PCR extension")
 
 			return nil
@@ -78,6 +77,20 @@ func PCRExtend(pcr int, data []byte) error {
 	}
 
 	defer t.Close() //nolint:errcheck
+
+	// now we need to check if the TPM is a 2.0 device
+	// we can do this by checking the manufacturer,
+	// if it fails, we can skip the PCR extension
+	_, err = tpm2.GetCapability{
+		Capability:    tpm2.TPMCapTPMProperties,
+		Property:      uint32(tpm2.TPMPTManufacturer),
+		PropertyCount: 1,
+	}.Execute(t)
+	if err != nil {
+		log.Printf("TPM device is not a TPM 2.0, skipping PCR extension")
+
+		return nil
+	}
 
 	// since we are using SHA256, we can assume that the PCR bank is SHA256
 	digest := sha256.Sum256(data)

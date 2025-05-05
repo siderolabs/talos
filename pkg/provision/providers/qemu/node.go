@@ -210,14 +210,14 @@ func (p *provisioner) createNode(state *vm.State, clusterReq provision.ClusterRe
 		APIPort: apiPort,
 	}
 
-	if opts.TPM2Enabled {
-		tpm2, tpm2Err := p.createVirtualTPM2State(state, nodeReq.Name)
+	if opts.TPM1_2Enabled || opts.TPM2Enabled {
+		tpmConfig, tpm2Err := p.createVirtualTPMState(state, nodeReq.Name, opts.TPM2Enabled)
 		if tpm2Err != nil {
 			return provision.NodeInfo{}, tpm2Err
 		}
 
-		launchConfig.TPM2Config = tpm2
-		nodeInfo.TPM2StateDir = tpm2.StateDir
+		launchConfig.TPMConfig = tpmConfig
+		nodeInfo.TPMStateDir = tpmConfig.StateDir
 	}
 
 	if !clusterReq.Network.DHCPSkipHostname {

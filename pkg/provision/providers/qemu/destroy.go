@@ -56,7 +56,7 @@ func (p *provisioner) Destroy(ctx context.Context, cluster provision.Cluster, op
 		return err
 	}
 
-	if err := p.destroyVirtualTPM2s(cluster.Info()); err != nil {
+	if err := p.destroyVirtualTPMs(cluster.Info()); err != nil {
 		return err
 	}
 

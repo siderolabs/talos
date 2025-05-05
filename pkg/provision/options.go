@@ -70,7 +70,16 @@ func WithUEFI(enabled bool) Option {
 	}
 }
 
-// WithTPM2 enables or disables TPM2 emulation.
+// WithTPM1_2 enables or disables TPM1.2 emulation.
+func WithTPM1_2(enabled bool) Option {
+	return func(o *Options) error {
+		o.TPM1_2Enabled = enabled
+
+		return nil
+	}
+}
+
+// WithTPM2 enables or disables TPM2.0 emulation.
 func WithTPM2(enabled bool) Option {
 	return func(o *Options) error {
 		o.TPM2Enabled = enabled
@@ -200,7 +209,9 @@ type Options struct {
 
 	// Enable UEFI (for amd64), arm64 can only boot UEFI
 	UEFIEnabled bool
-	// Enable TPM2 emulation using swtpm.
+	// Enable TPM 1.2 emulation using swtpm.
+	TPM1_2Enabled bool
+	// Enable TPM 2.0 emulation using swtpm.
 	TPM2Enabled bool
 	// Enable debug shell in the bootloader.
 	WithDebugShell bool
