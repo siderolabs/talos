@@ -18,7 +18,6 @@ import (
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/state"
-	"github.com/siderolabs/gen/optional"
 	"go.uber.org/zap"
 	"gopkg.in/yaml.v3"
 
@@ -30,7 +29,6 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/resources/block"
 	"github.com/siderolabs/talos/pkg/machinery/resources/network"
 	runtimeres "github.com/siderolabs/talos/pkg/machinery/resources/runtime"
-	"github.com/siderolabs/talos/pkg/machinery/resources/v1alpha1"
 )
 
 // Virtual link name for external IPs.
@@ -41,7 +39,9 @@ type PlatformConfigController struct {
 	V1alpha1Platform v1alpha1runtime.Platform
 	PlatformState    state.State
 
-	stateMachine blockautomaton.VolumeMounterAutomaton
+	stateMachine                                                     blockautomaton.VolumeMounterAutomaton
+	cachedNetworkConfig, activeNetworkConfig, networkConfigToPersist *v1alpha1runtime.PlatformNetworkConfig
+	cachedNetworkConfigLoaded                                        bool
 }
 
 // Name implements controller.Controller interface.
@@ -52,12 +52,6 @@ func (ctrl *PlatformConfigController) Name() string {
 // Inputs implements controller.Controller interface.
 func (ctrl *PlatformConfigController) Inputs() []controller.Input {
 	return []controller.Input{
-		{
-			Namespace: v1alpha1.NamespaceName,
-			Type:      runtimeres.MountStatusType,
-			ID:        optional.Some(constants.StatePartitionLabel),
-			Kind:      controller.InputWeak,
-		},
 		{
 			Namespace: block.NamespaceName,
 			Type:      block.VolumeMountStatusType,
@@ -157,48 +151,56 @@ func (ctrl *PlatformConfigController) Run(ctx context.Context, r controller.Runt
 
 	r.QueueReconcile()
 
-	var cachedNetworkConfig, networkConfig, activeNetworkConfig *v1alpha1runtime.PlatformNetworkConfig
-
+	// the main loop of the controller does the following:
+	// 1. there are two sources platform network config: cached config in STATE (from previous boot) and live config from the platform
+	// 2. we should prefer live config over cached config always
+	// 3. when we get a new config from the platform, we should persist it to the STATE partition
+	// 4. any new (either cached or received from the platform) platform network config should be applied to the network stack
 	for {
 		select {
 		case <-ctx.Done():
 			return nil
 		case <-r.EventCh():
-		case networkConfig = <-platformCh:
-		}
-
-		// prefer live network config over cached config always
-		if networkConfig != nil {
-			if activeNetworkConfig != nil && activeNetworkConfig.Equal(networkConfig) {
-				// network config has no changes, skip applying
-				networkConfig = nil
-			} else {
-				activeNetworkConfig = networkConfig
+		case networkConfig := <-platformCh:
+			if networkConfig == nil {
+				continue
 			}
+
+			if ctrl.activeNetworkConfig != nil && ctrl.activeNetworkConfig.Equal(networkConfig) {
+				// network config has no changes, skip applying
+				continue
+			}
+
+			// prefer live network config over any previous config, and schedule to persist it
+			ctrl.activeNetworkConfig = networkConfig
+			ctrl.networkConfigToPersist = networkConfig
 		}
 
-		// cached network is only used as last resort
-		if activeNetworkConfig == nil {
-			activeNetworkConfig = cachedNetworkConfig
-		}
-
-		if activeNetworkConfig != nil {
-			if err := ctrl.apply(ctx, r, activeNetworkConfig); err != nil {
+		if ctrl.activeNetworkConfig != nil {
+			if err := ctrl.apply(ctx, r); err != nil {
 				return err
 			}
 		}
 
 		// we either need to save new network config, or we don't have any and we need to load cached config
-		pendingStateOperation := networkConfig != nil || (activeNetworkConfig == nil && cachedNetworkConfig == nil)
+		pendingStateOperation := ctrl.networkConfigToPersist != nil || (ctrl.activeNetworkConfig == nil && !ctrl.cachedNetworkConfigLoaded)
 
 		if pendingStateOperation && ctrl.stateMachine == nil {
-			ctrl.stateMachine = blockautomaton.NewVolumeMounter(ctrl.Name(), constants.StatePartitionLabel, ctrl.loadStore(&networkConfig, &cachedNetworkConfig))
+			ctrl.stateMachine = blockautomaton.NewVolumeMounter(
+				ctrl.Name(), constants.StatePartitionLabel,
+				ctrl.loadStore(),
+			)
 		}
 
 		if ctrl.stateMachine != nil {
 			if err := ctrl.stateMachine.Run(ctx, r, logger,
 				automaton.WithAfterFunc(func() error {
 					ctrl.stateMachine = nil
+
+					// cached network is only used as last resort
+					if ctrl.activeNetworkConfig == nil {
+						ctrl.activeNetworkConfig = ctrl.cachedNetworkConfig
+					}
 
 					r.QueueReconcile()
 
@@ -213,36 +215,36 @@ func (ctrl *PlatformConfigController) Run(ctx context.Context, r controller.Runt
 	}
 }
 
-func (ctrl *PlatformConfigController) loadStore(
-	networkConfig **v1alpha1runtime.PlatformNetworkConfig, cachedNetworkConfig **v1alpha1runtime.PlatformNetworkConfig,
-) func(
+func (ctrl *PlatformConfigController) loadStore() func(
 	ctx context.Context, r controller.ReaderWriter, logger *zap.Logger, mountStatus *block.VolumeMountStatus,
 ) error {
 	return func(ctx context.Context, r controller.ReaderWriter, logger *zap.Logger, mountStatus *block.VolumeMountStatus) error {
 		rootPath := mountStatus.TypedSpec().Target
+		//  no matter what this function will do or fail, we should try just once to load the cached network config
+		ctrl.cachedNetworkConfigLoaded = true
 
 		// first, if we have network config, save it
-		if *networkConfig != nil {
-			if err := ctrl.storeConfig(filepath.Join(rootPath, constants.PlatformNetworkConfigFilename), *networkConfig); err != nil {
+		if ctrl.networkConfigToPersist != nil {
+			if err := ctrl.storeConfig(filepath.Join(rootPath, constants.PlatformNetworkConfigFilename), ctrl.networkConfigToPersist); err != nil {
 				return fmt.Errorf("error saving platform network config: %w", err)
 			}
 
 			logger.Debug("stored active platform network config")
 
 			// mark it as nil as it was saved
-			*networkConfig = nil
+			ctrl.networkConfigToPersist = nil
 
 			return nil
 		}
 
 		// if we don't have cached network config, load it
-		if *cachedNetworkConfig == nil {
+		if ctrl.cachedNetworkConfig == nil {
 			var err error
 
-			*cachedNetworkConfig, err = ctrl.loadConfig(filepath.Join(rootPath, constants.PlatformNetworkConfigFilename))
+			ctrl.cachedNetworkConfig, err = ctrl.loadConfig(filepath.Join(rootPath, constants.PlatformNetworkConfigFilename))
 			if err != nil {
 				logger.Warn("ignored failure loading cached platform network config", zap.Error(err))
-			} else if *cachedNetworkConfig != nil {
+			} else if ctrl.cachedNetworkConfig != nil {
 				logger.Debug("loaded cached platform network config")
 			}
 		}
@@ -252,7 +254,9 @@ func (ctrl *PlatformConfigController) loadStore(
 }
 
 //nolint:dupl,gocyclo
-func (ctrl *PlatformConfigController) apply(ctx context.Context, r controller.Runtime, networkConfig *v1alpha1runtime.PlatformNetworkConfig) error {
+func (ctrl *PlatformConfigController) apply(ctx context.Context, r controller.Runtime) error {
+	networkConfig := ctrl.activeNetworkConfig
+
 	metadataLength := 0
 
 	if networkConfig.Metadata != nil {
