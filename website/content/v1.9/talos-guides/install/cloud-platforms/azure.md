@@ -222,11 +222,6 @@ Azure allows you to pass Talos machine configuration to the virtual machine at b
 
 Talos supports only `custom-data` method, machine configuration is available to the VM only on the first boot.
 
-Use the steps below depending on whether you have manually uploaded a Talos image or if you are using the Community Gallery image.
-
-- [Manual Image Upload](#manual-image-upload)
-- [Azure Community Gallery Image](#azure-community-gallery-image)
-
 #### Manual Image Upload
 
 ```bash
@@ -256,71 +251,6 @@ done
   az vm create \
     --name talos-worker-0 \
     --image talos \
-    --vnet-name talos-vnet \
-    --subnet talos-subnet \
-    --custom-data ./worker.yaml \
-    -g $GROUP \
-    --admin-username talos \
-    --generate-ssh-keys \
-    --verbose \
-    --boot-diagnostics-storage $STORAGE_ACCOUNT \
-    --nsg talos-sg \
-    --os-disk-size-gb 20 \
-    --no-wait
-
-# NOTES:
-# `--admin-username` and `--generate-ssh-keys` are required by the az cli,
-# but are not actually used by talos
-# `--os-disk-size-gb` is the backing disk for Kubernetes and any workload containers
-# `--boot-diagnostics-storage` is to enable console output which may be necessary
-# for troubleshooting
-```
-
-#### Azure Community Gallery Image
-
-Talos is updated in Azure's Community Galleries (Preview) on every release.
-
-To use the Talos image for the current release create the following environment variables.
-
-Edit the variables below if you would like to use a different `architecture` or `version`.
-
-```bash
-# The architecture you would like to use. Options are "talos-x64" or "talos-arm64"
-ARCHITECTURE="talos-x64"
-
-# This will use the latest version of Talos. The version must be "latest" or in the format Major(int).Minor(int).Patch(int), e.g. 1.5.0
-VERSION="latest"
-```
-
-Create the Virtual Machines.
-
-```bash
-# Create availability set
-az vm availability-set create \
-  --name talos-controlplane-av-set \
-  -g $GROUP
-
-# Create the controlplane nodes
-for i in $( seq 0 1 2 ); do
-  az vm create \
-    --name talos-controlplane-$i \
-    --image /CommunityGalleries/siderolabs-c4d707c0-343e-42de-b597-276e4f7a5b0b/Images/${ARCHITECTURE}/Versions/${VERSION} \
-    --custom-data ./controlplane.yaml \
-    -g $GROUP \
-    --admin-username talos \
-    --generate-ssh-keys \
-    --verbose \
-    --boot-diagnostics-storage $STORAGE_ACCOUNT \
-    --os-disk-size-gb 20 \
-    --nics talos-controlplane-nic-$i \
-    --availability-set talos-controlplane-av-set \
-    --no-wait
-done
-
-# Create worker node
-  az vm create \
-    --name talos-worker-0 \
-    --image /CommunityGalleries/siderolabs-c4d707c0-343e-42de-b597-276e4f7a5b0b/Images/${ARCHITECTURE}/Versions/${VERSION} \
     --vnet-name talos-vnet \
     --subnet talos-subnet \
     --custom-data ./worker.yaml \
