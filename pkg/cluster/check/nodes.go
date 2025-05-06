@@ -102,6 +102,7 @@ func getNodesTypes(cluster ClusterInfo, nodeTypes ...machine.Type) map[string]ma
 }
 
 // AllNodesDiskSizes checks that all nodes have enough disk space.
+// [TODO]: REWRITE THIS USING VolumeStatus
 //
 //nolint:gocyclo
 func AllNodesDiskSizes(ctx context.Context, cluster ClusterInfo) error {

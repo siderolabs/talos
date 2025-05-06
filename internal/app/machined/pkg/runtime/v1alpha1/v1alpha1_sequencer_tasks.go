@@ -35,6 +35,7 @@ import (
 	"github.com/siderolabs/go-procfs/procfs"
 	clientv3 "go.etcd.io/etcd/client/v3"
 	"golang.org/x/sys/unix"
+	"gopkg.in/yaml.v3"
 	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1"
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
@@ -114,6 +115,41 @@ func WaitForUSB(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
 // EnforceKSPPRequirements represents the EnforceKSPPRequirements task.
 func EnforceKSPPRequirements(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
+		go func() {
+			st := r.State().V1Alpha2().Resources()
+			ctx := context.Background()
+
+			watchCh := make(chan state.Event)
+
+			err := st.WatchKind(ctx, blockres.NewVolumeMountStatus(blockres.NamespaceName, "").Metadata(), watchCh)
+			if err != nil {
+				logger.Printf("failed to watch volume mount status: %v", err)
+
+				return
+			}
+
+			for ev := range watchCh {
+				var resourceBytes []byte
+
+				res := ev.Resource
+				if res != nil {
+					mrsh, err := resource.MarshalYAML(res)
+					if err == nil {
+						resourceBytes, _ = yaml.Marshal(mrsh) //nolint:errcheck
+
+						resourceBytes = bytes.ReplaceAll(resourceBytes, []byte("\n"), []byte(" "))
+					}
+				}
+
+				switch ev.Type { //nolint:exhaustive
+				case state.Errored:
+					log.Printf("watch error: %v", ev.Error)
+				case state.Created, state.Updated, state.Destroyed:
+					log.Printf("watch event: %s %s (%s)", ev.Type, ev.Resource.Metadata().ID(), string(resourceBytes))
+				}
+			}
+		}()
+
 		if err = resourceruntime.NewKernelParamsSetCondition(r.State().V1Alpha2().Resources(), kspp.GetKernelParams()...).Wait(ctx); err != nil {
 			return err
 		}

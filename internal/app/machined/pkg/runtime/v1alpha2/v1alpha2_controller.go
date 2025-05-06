@@ -563,7 +563,7 @@ func (ctrl *Controller) MakeLogger(serviceName string) (*zap.Logger, error) {
 		logging.NewLogDestination(logging.StdWriter, ctrl.consoleLogLevel,
 			logging.WithoutTimestamp(),
 			logging.WithoutLogLevels(),
-			logging.WithControllerErrorSuppressor(constants.ConsoleLogErrorSuppressThreshold),
+			// logging.WithControllerErrorSuppressor(constants.ConsoleLogErrorSuppressThreshold),
 		),
 	).With(logging.Component(serviceName)), nil
 }
