@@ -33,6 +33,8 @@ replace (
 // https://github.com/insomniacslk/dhcp/pull/550
 replace github.com/insomniacslk/dhcp => github.com/smira/dhcp v0.0.0-20250407153013-99942baa5d59
 
+replace github.com/cosi-project/runtime => github.com/smira/os-runtime v0.0.0-20250506141913-32a76e6c9cce
+
 // Kubernetes dependencies sharing the same version.
 require (
 	k8s.io/api v0.33.0

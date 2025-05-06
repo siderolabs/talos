@@ -164,8 +164,6 @@ github.com/coreos/go-semver v0.3.1 h1:yi21YpKnrx1gt5R+la8n5WgS0kCrsPp33dmEyHReZr
 github.com/coreos/go-semver v0.3.1/go.mod h1:irMmmIw/7yzSRPWryHsK7EYSg09caPQL03VsM8rvUec=
 github.com/coreos/go-systemd/v22 v22.5.0 h1:RrqgGjYQKalulkV8NGVIfkXQf6YYmOyiJKk8iXXhfZs=
 github.com/coreos/go-systemd/v22 v22.5.0/go.mod h1:Y58oyj3AT4RCenI/lSvhwexgC+NSVTIJ3seZv2GcEnc=
-github.com/cosi-project/runtime v0.10.2 h1:pKdMdmiZcMc2rCsykaNQAR4QqXVKmJf+n6+f0YjEeZM=
-github.com/cosi-project/runtime v0.10.2/go.mod h1:aK3oljZUJG6+ewkJRwY+VI9B40JmDp5++Ixri447TjE=
 github.com/cpuguy83/go-md2man/v2 v2.0.6 h1:XJtiaUW6dEEqVuZiMTn1ldk455QWwEIsMIJlo5vtkx0=
 github.com/cpuguy83/go-md2man/v2 v2.0.6/go.mod h1:oOW0eioCTA6cOiMLiUPZOpcVxMig6NIQQ7OS05n1F4g=
 github.com/creack/pty v1.1.9/go.mod h1:oKZEueFk5CKHvIhNR5MUki03XCEU+Q6VDXinZuGJ33E=
@@ -691,6 +689,8 @@ github.com/smira/dhcp v0.0.0-20250407153013-99942baa5d59 h1:lBQLOP8ZZI6mbePwGX/b
 github.com/smira/dhcp v0.0.0-20250407153013-99942baa5d59/go.mod h1:VvGYjkZoJyKqlmT1yzakUs4mfKMNB0XdODP0+rdml6k=
 github.com/smira/kobject v0.0.0-20240304111826-49c8d4613389 h1:f/5NRv5IGZxbjBhc5MnlbNmyuXBPxvekhBAUzyKWyLY=
 github.com/smira/kobject v0.0.0-20240304111826-49c8d4613389/go.mod h1:+SexPO1ZvdbbWUdUnyXEWv3+4NwHZjKhxOmQqHY4Pqc=
+github.com/smira/os-runtime v0.0.0-20250506141913-32a76e6c9cce h1:B1XynDjfpgg4n/BjxWpLsZ1psPP/Mxp2YFsA9JoJvsI=
+github.com/smira/os-runtime v0.0.0-20250506141913-32a76e6c9cce/go.mod h1:aK3oljZUJG6+ewkJRwY+VI9B40JmDp5++Ixri447TjE=
 github.com/spaolacci/murmur3 v0.0.0-20180118202830-f09979ecbc72/go.mod h1:JwIasOWyU6f++ZhiEuf87xNszmSA2myDM2Kzu9HwQUA=
 github.com/spf13/afero v1.10.0 h1:EaGW2JJh15aKOejeuJ+wpFSHnbd7GE6Wvp3TsNhb6LY=
 github.com/spf13/afero v1.10.0/go.mod h1:UBogFpq8E9Hx+xc5CNTTEpTnuHVmXDwZcZcE1eb/UhQ=
