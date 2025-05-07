@@ -1,3 +1,65 @@
+## [Talos 1.10.1](https://github.com/siderolabs/talos/releases/tag/v1.10.1) (2025-05-07)
+
+Welcome to the v1.10.1 release of Talos!
+
+
+
+Please try out the release binaries and report any issues at
+https://github.com/siderolabs/talos/issues.
+
+### Contributors
+
+* Andrey Smirnov
+* Noel Georgi
+
+### Changes
+<details><summary>15 commits</summary>
+<p>
+
+* [`5c4f5a120`](https://github.com/siderolabs/talos/commit/5c4f5a120f7e11091f749463f8ed247783fbf618) fix: multiple logic issues in platform network config controller
+* [`c881e6aa0`](https://github.com/siderolabs/talos/commit/c881e6aa040d518bdf6cd3a829058a494df150ee) fix: deny apply config requests without v1alpha1 in "normal" mode
+* [`5c64e7c27`](https://github.com/siderolabs/talos/commit/5c64e7c2717c9ed8da1972a16259516f0582d803) fix: interactive installer config gen
+* [`46c30f339`](https://github.com/siderolabs/talos/commit/46c30f339c9713de3f2abb59211b908ad1cd47b1) fix: generate iso greater than 4 gig
+* [`33401beb2`](https://github.com/siderolabs/talos/commit/33401beb28cb79b7fa2bc2e1a4a5219685a0c85b) fix: skip PCR extension if TPM1.2 is found
+* [`77078ff22`](https://github.com/siderolabs/talos/commit/77078ff22d4f575ac4cc47a0ed0a3bf913ce7cd2) fix: containerd crashing with sigsegv
+* [`39561440a`](https://github.com/siderolabs/talos/commit/39561440aa07abd3031273c884e0d26f4183ea6a) fix: ignore http proxy on grpc socket dial
+* [`eb6d98bc9`](https://github.com/siderolabs/talos/commit/eb6d98bc9101ef85ea68eb091d49ed5fc771ed13) fix: suppress duplicate platform config updates
+* [`6a438ec93`](https://github.com/siderolabs/talos/commit/6a438ec93e4ae70640d222043d00e6b9be594e9a) fix: do correct backoff for nocloud reconcile
+* [`9d64f3194`](https://github.com/siderolabs/talos/commit/9d64f3194e5535b109091f6bfba7b99385dd8db4) fix: drop libseccomp from rootfs
+* [`29b20770e`](https://github.com/siderolabs/talos/commit/29b20770e7c7fb46c5505800aa4445075eed43e1) fix(ci): provision tests
+* [`52afece5d`](https://github.com/siderolabs/talos/commit/52afece5dda1354611cd53b971ef2d30e1004bd2) fix(ci): bios provision test
+* [`208503c8f`](https://github.com/siderolabs/talos/commit/208503c8fdddd9a1677d917821b7a31dbea6fb49) test: update hydrophone to 0.7.0
+* [`649d0f857`](https://github.com/siderolabs/talos/commit/649d0f857b432bb0bbf280341d647b1d9316e04a) chore(ci): add extensions test for Youki runtime
+* [`e37573ec2`](https://github.com/siderolabs/talos/commit/e37573ec2ec3424e68c731d3f568bfb35f79477d) fix: relax etcd APIs RBAC requirements
+</p>
+</details>
+
+### Changes from siderolabs/pkgs
+<details><summary>3 commits</summary>
+<p>
+
+* [`13e9f09`](https://github.com/siderolabs/pkgs/commit/13e9f092edbf4429f5446a3779288954ed04e14b) fix: build containerd with Go 1.23
+* [`bdee168`](https://github.com/siderolabs/pkgs/commit/bdee168347f7ba3a55fae075abf8d9f40802c081) fix: containerd build doesn't need seccomp
+* [`61c59a4`](https://github.com/siderolabs/pkgs/commit/61c59a46772d6099d5e71a55955d90e6e76e3f62) fix: downgrade libseccomp to 2.5.5
+</p>
+</details>
+
+### Changes from siderolabs/tools
+<details><summary>1 commit</summary>
+<p>
+
+* [`67d3f5a`](https://github.com/siderolabs/tools/commit/67d3f5a122c94173c2588de61f30d340cbeaac41) chore: update toolchain to the latest version
+</p>
+</details>
+
+### Dependency Changes
+
+* **github.com/siderolabs/pkgs**   v1.10.0-5-g48dba3e -> v1.10.0-8-g13e9f09
+* **github.com/siderolabs/tools**  v1.10.0 -> v1.10.0-1-g67d3f5a
+* **sigs.k8s.io/hydrophone**       b92baf7e0b04 -> v0.7.0
+
+Previous release can be found at [v1.10.0](https://github.com/siderolabs/talos/releases/tag/v1.10.0)
+
 ## [Talos 1.10.0](https://github.com/siderolabs/talos/releases/tag/v1.10.0) (2025-04-30)
 
 Welcome to the v1.10.0 release of Talos!
