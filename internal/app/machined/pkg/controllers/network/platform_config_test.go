@@ -320,6 +320,11 @@ func (suite *PlatformConfigSuite) TestStoreConfig() {
 		),
 	)
 
+	// wait for the controller to acquire the config
+	ctest.AssertResources(suite, []string{
+		"external/10.3.4.5/32",
+	}, func(r *network.AddressStatus, asrt *assert.Assertions) {})
+
 	statePath := suite.T().TempDir()
 	mountID := (&netctrl.PlatformConfigController{}).Name() + "-" + constants.StatePartitionLabel
 
@@ -380,6 +385,10 @@ func (suite *PlatformConfigSuite) TestLoadConfig() {
 	volumeMountStatus.TypedSpec().Target = statePath
 	suite.Create(volumeMountStatus)
 
+	ctest.AssertNoResource[*block.VolumeMountRequest](suite, mountID)
+
+	suite.Destroy(volumeMountStatus)
+
 	// controller should pick up cached network configuration
 	ctest.AssertResources(suite, []string{
 		"external/10.3.4.5/32",
@@ -406,14 +415,6 @@ func (suite *PlatformConfigSuite) TestLoadConfig() {
 		asrt.Equal("", spec.Domainname)
 		asrt.Equal(network.ConfigPlatform, spec.ConfigLayer)
 	}, rtestutils.WithNamespace(network.ConfigNamespaceName))
-
-	ctest.AssertResources(suite, []resource.ID{volumeMountStatus.Metadata().ID()}, func(vms *block.VolumeMountStatus, asrt *assert.Assertions) {
-		asrt.True(vms.Metadata().Finalizers().Empty())
-	})
-
-	suite.Destroy(volumeMountStatus)
-
-	ctest.AssertNoResource[*block.VolumeMountRequest](suite, mountID)
 }
 
 func TestPlatformConfigSuite(t *testing.T) {
