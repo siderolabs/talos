@@ -154,5 +154,20 @@ func removeMountRequest(ctx context.Context, r controller.ReaderWriter, logger *
 		return nil, fmt.Errorf("error destroying mount request: %w", err)
 	}
 
-	return nil, nil
+	return waitForVolumeMountStatusRemoved, nil
+}
+
+// waitForVolumeMountStatusRemoved is the state of the volume mounter controller state machine that waits for the volume mount status to be removed.
+func waitForVolumeMountStatusRemoved(ctx context.Context, r controller.ReaderWriter, logger *zap.Logger, mountContext volumeMountContext) (automaton.ControllerStateFunc[volumeMountContext], error) {
+	mountStatus, err := safe.ReaderGetByID[*block.VolumeMountStatus](ctx, r, mountContext.mountID)
+	if err != nil && !state.IsNotFoundError(err) {
+		return nil, fmt.Errorf("error reading volume mount status: %w", err)
+	}
+
+	if mountStatus == nil {
+		// removed
+		return nil, nil
+	}
+
+	return nil, xerrors.NewTaggedf[automaton.Continue]("waiting for mount status to be removed")
 }

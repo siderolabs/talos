@@ -292,6 +292,7 @@ func (suite *AcquireSuite) injectViaDisk(cfg []byte, wait bool) {
 
 	if wait {
 		ctest.AssertNoResource[*block.VolumeMountRequest](suite, mountID)
+		suite.Destroy(volumeMountStatus)
 	}
 }
 
