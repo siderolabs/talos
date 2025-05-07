@@ -11,15 +11,13 @@ import (
 	"slices"
 
 	"github.com/cosi-project/runtime/pkg/safe"
-	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/dustin/go-humanize"
 	"github.com/hashicorp/go-multierror"
-	"google.golang.org/grpc/codes"
 
 	"github.com/siderolabs/talos/pkg/machinery/client"
 	"github.com/siderolabs/talos/pkg/machinery/config/machine"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
-	"github.com/siderolabs/talos/pkg/machinery/resources/runtime"
+	"github.com/siderolabs/talos/pkg/machinery/resources/block"
 	"github.com/siderolabs/talos/pkg/minimal"
 )
 
@@ -125,52 +123,30 @@ func AllNodesDiskSizes(ctx context.Context, cluster ClusterInfo) error {
 		return nil
 	}
 
-	ctx = client.WithNodes(ctx, nodesIP...)
-
-	nodesMounts, err := getNodesMounts(ctx, cl)
-	if err != nil {
-		return err
-	}
-
 	var resultErr error
 
+	slices.Sort(nodesIP)
+
 	for _, nodeIP := range nodesIP {
-		data, err := getEphemeralPartitionData(ctx, cl.COSI, nodeIP)
-		if errors.Is(err, ErrOldTalosVersion) {
-			continue
-		} else if err != nil {
-			resultErr = multierror.Append(resultErr, err)
+		vs, err := safe.StateGetByID[*block.VolumeStatus](client.WithNode(ctx, nodeIP), cl.COSI, constants.EphemeralPartitionLabel)
+		if err != nil {
+			resultErr = multierror.Append(resultErr, fmt.Errorf("error getting volume status for node %q: %w", nodeIP, err))
 
 			continue
 		}
 
-		nodeMounts, ok := nodesMounts[nodeIP]
-		if !ok {
-			resultErr = multierror.Append(resultErr, fmt.Errorf("node %q not found in mounts", nodeIP))
+		actualSize := vs.TypedSpec().Size
+		adjustment := uint64(1400 * humanize.MiByte) // adjust for system stuff
+		minimalSize := minimal.DiskSize() - adjustment
 
-			continue
-		}
-
-		idx := slices.IndexFunc(nodeMounts, func(mnt mntData) bool { return mnt.Filesystem == data.Source })
-		if idx == -1 {
-			resultErr = multierror.Append(resultErr, fmt.Errorf("ephemeral partition %q not found for node %q", data.Source, nodeIP))
-
-			continue
-		}
-
-		minimalDiskSize := minimal.DiskSize()
-
-		// adjust by 1400 MiB to account for the size of system stuff
-		if actualDiskSize := nodeMounts[idx].Size + 1400*humanize.MiByte; actualDiskSize < minimal.DiskSize() {
+		if actualSize < minimalSize {
 			resultErr = multierror.Append(resultErr, fmt.Errorf(
 				"ephemeral partition %q for node %q is too small, expected at least %s, actual %s",
-				data.Source,
+				vs.TypedSpec().Location,
 				nodeIP,
-				humanize.IBytes(minimalDiskSize),
-				humanize.IBytes(actualDiskSize),
+				humanize.IBytes(minimalSize),
+				humanize.IBytes(actualSize),
 			))
-
-			continue
 		}
 	}
 
@@ -198,73 +174,4 @@ func getNonContainerNodes(ctx context.Context, cl *client.Client) ([]string, err
 	}
 
 	return result, nil
-}
-
-type mountData struct {
-	Source string
-}
-
-// ErrOldTalosVersion is returned when the node is running an old version of Talos.
-var ErrOldTalosVersion = errors.New("old Talos version")
-
-func getEphemeralPartitionData(ctx context.Context, state state.State, nodeIP string) (mountData, error) {
-	items, err := safe.StateListAll[*runtime.MountStatus](client.WithNode(ctx, nodeIP), state)
-	if err != nil {
-		if client.StatusCode(err) == codes.Unimplemented {
-			// old version of Talos without COSI API
-			return mountData{}, ErrOldTalosVersion
-		}
-
-		return mountData{}, fmt.Errorf("error listing mounts for node %q: %w", nodeIP, err)
-	}
-
-	for mount := range items.All() {
-		mountID := mount.Metadata().ID()
-
-		if mountID == constants.EphemeralPartitionLabel {
-			return mountData{
-				Source: mount.TypedSpec().Source,
-			}, nil
-		}
-	}
-
-	return mountData{}, fmt.Errorf("no ephemeral partition found for node '%s'", nodeIP)
-}
-
-type mntData struct {
-	Filesystem string
-	Size       uint64
-}
-
-func getNodesMounts(ctx context.Context, cl *client.Client) (map[string][]mntData, error) {
-	diskResp, err := cl.Mounts(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("error getting nodes mounts: %w", err)
-	}
-
-	if len(diskResp.Messages) == 0 {
-		return nil, errors.New("no nodes with mounts found")
-	}
-
-	nodesMnts := map[string][]mntData{}
-
-	for _, msg := range diskResp.Messages {
-		switch {
-		case msg.Metadata == nil:
-			return nil, errors.New("no metadata in response")
-		case len(msg.GetStats()) == 0:
-			return nil, fmt.Errorf("no mounts found for node %q", msg.Metadata.Hostname)
-		}
-
-		hostname := msg.Metadata.Hostname
-
-		for _, mnt := range msg.GetStats() {
-			nodesMnts[hostname] = append(nodesMnts[hostname], mntData{
-				Filesystem: mnt.Filesystem,
-				Size:       mnt.Size,
-			})
-		}
-	}
-
-	return nodesMnts, nil
 }
