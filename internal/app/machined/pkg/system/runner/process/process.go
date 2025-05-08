@@ -214,13 +214,17 @@ func (p *processRunner) build() (commandWrapper, error) {
 		return commandWrapper{}, err
 	}
 
-	go io.Copy(writer, pr) //nolint:errcheck
+	go func() {
+		defer pr.Close() //nolint:errcheck
+
+		io.Copy(writer, pr) //nolint:errcheck
+	}()
 
 	// close the writer if we exit early due to an error
 	closeWriter := true
 
 	closeLogging := func() (e error) {
-		for _, closer := range []io.Closer{w, pr, pw} {
+		for _, closer := range []io.Closer{w, pw} {
 			e = cmp.Or(closer.Close(), e)
 		}
 

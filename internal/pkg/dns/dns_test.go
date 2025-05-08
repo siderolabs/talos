@@ -29,7 +29,7 @@ import (
 )
 
 func TestDNS(t *testing.T) {
-	goleak.VerifyNone(t)
+	t.Cleanup(func() { goleak.VerifyNone(t) })
 
 	tests := []struct {
 		name         string
@@ -47,7 +47,7 @@ func TestDNS(t *testing.T) {
 		},
 		{
 			name:        "failure",
-			hostname:    "google.com",
+			hostname:    "google-fail.com",
 			nameservers: []string{"242.242.242.242"},
 			errCheck:    check.ErrorContains("i/o timeout"),
 		},
@@ -104,7 +104,7 @@ func TestDNS(t *testing.T) {
 }
 
 func TestDNSEmptyDestinations(t *testing.T) {
-	goleak.VerifyNone(t)
+	t.Cleanup(func() { goleak.VerifyNone(t) })
 
 	stop := newManager(t)
 	defer stop()
@@ -123,7 +123,7 @@ func TestDNSEmptyDestinations(t *testing.T) {
 }
 
 func Test_ServeBackground(t *testing.T) {
-	goleak.VerifyNone(t)
+	t.Cleanup(func() { goleak.VerifyNone(t) })
 
 	m := dns.NewManager(&testReader{}, func(e suture.Event) { t.Log("dns-runners event:", e) }, zaptest.NewLogger(t))
 
