@@ -23,8 +23,7 @@ import (
 )
 
 func TestCmdlineParse(t *testing.T) {
-	t.Parallel()
-
+	// [NOTE]: this test is not safe to run in parallel, as defaultIfaceName might flip if some interface is created concurrently
 	ifaces, _ := net.Interfaces() //nolint:errcheck // ignoring error here as ifaces will be empty
 
 	slices.SortFunc(ifaces, func(a, b net.Interface) int { return cmp.Compare(a.Name, b.Name) })
@@ -599,8 +598,6 @@ func TestCmdlineParse(t *testing.T) {
 		},
 	} {
 		t.Run(test.name, func(t *testing.T) {
-			t.Parallel()
-
 			cmdline := procfs.NewCmdline(test.cmdline)
 
 			link1 := netconfig.NewLinkStatus(netconfig.NamespaceName, "eth31")
