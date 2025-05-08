@@ -649,8 +649,8 @@ github.com/siderolabs/go-kmsg v0.1.4 h1:RLAa90O9bWuhA3pXPAYAdrI+kzcqTshZASRA5yso
 github.com/siderolabs/go-kmsg v0.1.4/go.mod h1:BLkt2N2DHT0wsFMz32lMw6vNEZL90c8ZnBjpIUoBb/M=
 github.com/siderolabs/go-kubeconfig v0.1.1 h1:tZlgpelj/OqrcHVUwISPN0NRgObcflpH9WtE41mtQZ0=
 github.com/siderolabs/go-kubeconfig v0.1.1/go.mod h1:QaGp4i9L95oDbcU7jDn30aw4gnREkb3O5otgxw8imOk=
-github.com/siderolabs/go-kubernetes v0.2.21 h1:+gHiyTyVz5oZy6cIVtqKbIWtAH/ejnQ7Yg9hZLG32WI=
-github.com/siderolabs/go-kubernetes v0.2.21/go.mod h1:3qZzReVZV7e+r0DZC2cE6bBQse+CoC7SGL+EavA52G8=
+github.com/siderolabs/go-kubernetes v0.2.22 h1:UX7F9FbaPL6qtomQ4yKB5dZHlkkQ1RcRYsZH+Jba3G8=
+github.com/siderolabs/go-kubernetes v0.2.22/go.mod h1:3qZzReVZV7e+r0DZC2cE6bBQse+CoC7SGL+EavA52G8=
 github.com/siderolabs/go-loadbalancer v0.4.0 h1:nqZC4x1yZAFAtkb7eu5T1IoPaMDKu5jgQQGkk6rZa9s=
 github.com/siderolabs/go-loadbalancer v0.4.0/go.mod h1:tRVouZ9i2R/TRbNUF9MqyBlV2wsjX0cxkYTjPXcI9P0=
 github.com/siderolabs/go-pcidb v0.3.1 h1:Gef+LOwxB+bCUzoFajzvHg4icMqYGAoS/msdiMmPXo0=
