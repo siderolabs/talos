@@ -11,7 +11,7 @@ require (
 	github.com/invopop/jsonschema v0.13.0
 	github.com/microcosm-cc/bluemonday v1.0.27
 	github.com/santhosh-tekuri/jsonschema/v5 v5.3.1
-	github.com/siderolabs/gen v0.8.0
+	github.com/siderolabs/gen v0.8.1
 	github.com/wk8/go-ordered-map/v2 v2.1.8
 	gopkg.in/yaml.v3 v3.0.1
 	mvdan.cc/gofumpt v0.8.0

@@ -25,9 +25,9 @@ DEBUG_TOOLS_SOURCE := scratch
 EMBED_TARGET ?= embed
 
 TOOLS_PREFIX ?= ghcr.io/siderolabs/tools
-TOOLS ?= v1.11.0-alpha.0
+TOOLS ?= v1.11.0-alpha.0-1-ge35234b
 PKGS_PREFIX ?= ghcr.io/siderolabs
-PKGS ?= v1.11.0-alpha.0-6-ga347857
+PKGS ?= v1.11.0-alpha.0-10-g4cd7084
 
 KRES_IMAGE ?= ghcr.io/siderolabs/kres:latest
 CONFORMANCE_IMAGE ?= ghcr.io/siderolabs/conform:latest
@@ -86,17 +86,17 @@ PKG_ZSTD ?= $(PKGS_PREFIX)/zstd:$(PKGS)
 # renovate: datasource=github-tags depName=golang/go
 GO_VERSION ?= 1.24
 # renovate: datasource=go depName=golang.org/x/tools
-GOIMPORTS_VERSION ?= v0.32.0
+GOIMPORTS_VERSION ?= v0.33.0
 # renovate: datasource=go depName=mvdan.cc/gofumpt
 GOFUMPT_VERSION ?= v0.8.0
 # renovate: datasource=go depName=github.com/golangci/golangci-lint
-GOLANGCILINT_VERSION ?= v2.1.1
+GOLANGCILINT_VERSION ?= v2.1.6
 # renovate: datasource=go depName=golang.org/x/tools
-STRINGER_VERSION ?= v0.32.0
+STRINGER_VERSION ?= v0.33.0
 # renovate: datasource=go depName=github.com/dmarkham/enumer
 ENUMER_VERSION ?= v1.5.11
 # renovate: datasource=go depName=k8s.io/code-generator
-DEEPCOPY_GEN_VERSION ?= v0.32.3
+DEEPCOPY_GEN_VERSION ?= v0.33.0
 # renovate: datasource=go depName=github.com/planetscale/vtprotobuf
 VTPROTOBUF_VERSION ?= v0.6.0
 # renovate: datasource=go depName=github.com/siderolabs/deep-copy
@@ -110,7 +110,7 @@ PROTOC_GEN_DOC_VERSION ?= v1.5.1
 # renovate: datasource=npm depName=markdownlint-cli
 MARKDOWNLINTCLI_VERSION ?= 0.44.0
 # renovate: datasource=npm depName=textlint
-TEXTLINT_VERSION ?= 14.6.0
+TEXTLINT_VERSION ?= 14.7.1
 # renovate: datasource=npm depName=textlint-filter-rule-comments
 TEXTLINT_FILTER_RULE_COMMENTS_VERSION ?= 1.2.2
 # renovate: datasource=npm depName=textlint-rule-one-sentence-per-line
@@ -127,7 +127,7 @@ INTEGRATION_TEST_PROVISION_DEFAULT_TARGET := integration-test-provision-$(OPERAT
 # renovate: datasource=github-releases depName=kubernetes/kubernetes
 KUBECTL_VERSION ?= v1.33.0
 # renovate: datasource=github-releases depName=kastenhq/kubestr
-KUBESTR_VERSION ?= v0.4.48
+KUBESTR_VERSION ?= v0.4.49
 # renovate: datasource=github-releases depName=helm/helm
 HELM_VERSION ?= v3.17.3
 # renovate: datasource=github-releases depName=cilium/cilium-cli
