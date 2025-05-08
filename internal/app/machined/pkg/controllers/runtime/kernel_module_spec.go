@@ -8,12 +8,14 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"os"
 	"strings"
 
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/pmorjan/kmod"
 	"go.uber.org/zap"
+	"golang.org/x/sys/unix"
 
 	v1alpha1runtime "github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
 	"github.com/siderolabs/talos/pkg/machinery/resources/runtime"
@@ -52,7 +54,7 @@ func (ctrl *KernelModuleSpecController) Run(ctx context.Context, r controller.Ru
 		return nil
 	}
 
-	manager, err := kmod.New()
+	manager, err := kmod.New(kmod.SetInitFunc(finitMod))
 	if err != nil {
 		return fmt.Errorf("error initializing kmod manager: %w", err)
 	}
@@ -87,4 +89,17 @@ func (ctrl *KernelModuleSpecController) Run(ctx context.Context, r controller.Ru
 
 		r.ResetRestartBackoff()
 	}
+}
+
+// finitMod loads a kernel module, with finit_module(2). Compressed modules are supported via
+// in-kernel decompression by passing the `MODULE_INIT_COMPRESSED_FILE` flag.
+func finitMod(filename string, params string, flags int) error {
+	f, err := os.Open(filename)
+	if err != nil {
+		return err
+	}
+	//nolint:errcheck
+	defer f.Close()
+
+	return unix.FinitModule(int(f.Fd()), params, flags|unix.MODULE_INIT_COMPRESSED_FILE)
 }
