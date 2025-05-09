@@ -7,7 +7,6 @@ package process_test
 import (
 	"fmt"
 	"io"
-	"log"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -18,6 +17,7 @@ import (
 	"time"
 
 	"github.com/siderolabs/go-cmd/pkg/cmd/proc/reaper"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
@@ -28,8 +28,10 @@ import (
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system/runner/restart"
 )
 
-func MockEventSink(state events.ServiceState, message string, args ...any) {
-	log.Printf("state %s: %s", state, fmt.Sprintf(message, args...))
+func MockEventSink(t *testing.T) func(state events.ServiceState, message string, args ...any) {
+	return func(state events.ServiceState, message string, args ...any) {
+		t.Logf("state %s: %s", state, fmt.Sprintf(message, args...))
+	}
 }
 
 type ProcessSuite struct {
@@ -67,7 +69,7 @@ func (suite *ProcessSuite) TestRunSuccess() {
 
 	defer func() { suite.Assert().NoError(r.Close()) }()
 
-	suite.Assert().NoError(r.Run(MockEventSink))
+	suite.Assert().NoError(r.Run(MockEventSink(suite.T())))
 	// calling stop when Run has finished is no-op
 	suite.Assert().NoError(r.Stop())
 }
@@ -82,18 +84,17 @@ func (suite *ProcessSuite) TestRunLogs() {
 
 	defer func() { suite.Assert().NoError(r.Close()) }()
 
-	suite.Assert().NoError(r.Run(MockEventSink))
+	suite.Assert().NoError(r.Run(MockEventSink(suite.T())))
 
-	logFile, err := os.Open(filepath.Join(suite.tmpDir, "logtest.log"))
-	suite.Assert().NoError(err)
+	// the log file is written asynchronously, so we need to wait a bit
+	suite.EventuallyWithT(func(collect *assert.CollectT) {
+		asrt := assert.New(collect)
 
-	//nolint:errcheck
-	defer logFile.Close()
+		logContents, err := os.ReadFile(filepath.Join(suite.tmpDir, "logtest.log"))
+		asrt.NoError(err)
 
-	logContents, err := io.ReadAll(logFile)
-	suite.Assert().NoError(err)
-
-	suite.Assert().Equal([]byte("Test 1\nTest 2\n"), logContents)
+		asrt.Equal([]byte("Test 1\nTest 2\n"), logContents)
+	}, time.Second, 10*time.Millisecond)
 }
 
 func (suite *ProcessSuite) TestRunRestartFailed() {
@@ -116,7 +117,7 @@ func (suite *ProcessSuite) TestRunRestartFailed() {
 
 	go func() {
 		defer wg.Done()
-		suite.Assert().NoError(r.Run(MockEventSink))
+		suite.Assert().NoError(r.Run(MockEventSink(suite.T())))
 	}()
 
 	fetchLog := func() []byte {
@@ -166,7 +167,7 @@ func (suite *ProcessSuite) TestStopFailingAndRestarting() {
 	done := make(chan error, 1)
 
 	go func() {
-		done <- r.Run(MockEventSink)
+		done <- r.Run(MockEventSink(suite.T()))
 	}()
 
 	time.Sleep(40 * time.Millisecond)
@@ -213,7 +214,7 @@ func (suite *ProcessSuite) TestStopSigKill() {
 	done := make(chan error, 1)
 
 	go func() {
-		done <- r.Run(MockEventSink)
+		done <- r.Run(MockEventSink(suite.T()))
 	}()
 
 	time.Sleep(100 * time.Millisecond)
@@ -253,7 +254,7 @@ func (suite *ProcessSuite) TestPriority() {
 	done := make(chan error, 1)
 
 	go func() {
-		done <- r.Run(MockEventSink)
+		done <- r.Run(MockEventSink(suite.T()))
 	}()
 
 	time.Sleep(10 * time.Millisecond)
@@ -307,7 +308,7 @@ func (suite *ProcessSuite) TestIOPriority() {
 	done := make(chan error, 1)
 
 	go func() {
-		done <- r.Run(MockEventSink)
+		done <- r.Run(MockEventSink(suite.T()))
 	}()
 
 	time.Sleep(10 * time.Millisecond)
@@ -360,7 +361,7 @@ func (suite *ProcessSuite) TestSchedulingPolicy() {
 	done := make(chan error, 1)
 
 	go func() {
-		done <- r.Run(MockEventSink)
+		done <- r.Run(MockEventSink(suite.T()))
 	}()
 
 	time.Sleep(10 * time.Millisecond)
@@ -383,8 +384,10 @@ func (suite *ProcessSuite) TestSchedulingPolicy() {
 
 func TestProcessSuite(t *testing.T) {
 	for _, runReaper := range []bool{true, false} {
-		func(runReaper bool) {
-			t.Run(fmt.Sprintf("runReaper=%v", runReaper), func(t *testing.T) { suite.Run(t, &ProcessSuite{runReaper: runReaper}) })
-		}(runReaper)
+		t.Run(fmt.Sprintf("runReaper=%v", runReaper),
+			func(t *testing.T) {
+				suite.Run(t, &ProcessSuite{runReaper: runReaper})
+			},
+		)
 	}
 }
