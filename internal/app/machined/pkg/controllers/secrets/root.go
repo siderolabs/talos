@@ -6,6 +6,7 @@ package secrets
 
 import (
 	"context"
+	stdlibx509 "crypto/x509"
 	"errors"
 	"fmt"
 	"net/netip"
@@ -166,10 +167,19 @@ func NewRootOSController() *RootOSController {
 						Crt: osSecrets.IssuingCA.Crt,
 					})
 
+					issuingCert, err := osSecrets.IssuingCA.GetCert()
+					if err != nil {
+						return err
+					}
+
+					osSecrets.Algorithm = int(issuingCert.SignatureAlgorithm)
+
 					if len(osSecrets.IssuingCA.Key) == 0 {
 						// drop incomplete issuing CA, as the machine config for workers contains just the cert
 						osSecrets.IssuingCA = nil
 					}
+				} else {
+					osSecrets.Algorithm = int(stdlibx509.PureEd25519)
 				}
 
 				osSecrets.CertSANIPs = nil
