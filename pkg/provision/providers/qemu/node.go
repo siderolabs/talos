@@ -9,7 +9,6 @@ import (
 	"fmt"
 	"io"
 	"math"
-	"net"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -127,7 +126,7 @@ func (p *provisioner) createNode(state *vm.State, clusterReq provision.ClusterRe
 		nodeUUID = *nodeReq.UUID
 	}
 
-	apiPort, err := p.findBridgeListenPort(clusterReq)
+	apiBind, err := p.findAPIBindAddrs(clusterReq)
 	if err != nil {
 		return provision.NodeInfo{}, fmt.Errorf("error finding listen address for the API: %w", err)
 	}
@@ -185,7 +184,7 @@ func (p *provisioner) createNode(state *vm.State, clusterReq provision.ClusterRe
 		Nameservers:       clusterReq.Network.Nameservers,
 		TFTPServer:        nodeReq.TFTPServer,
 		IPXEBootFileName:  nodeReq.IPXEBootFilename,
-		APIPort:           apiPort,
+		APIBindAddress:    apiBind,
 		WithDebugShell:    opts.WithDebugShell,
 		IOMMUEnabled:      opts.IOMMUEnabled,
 	}
@@ -207,7 +206,7 @@ func (p *provisioner) createNode(state *vm.State, clusterReq provision.ClusterRe
 
 		IPs: nodeReq.IPs,
 
-		APIPort: apiPort,
+		APIPort: apiBind.Port,
 	}
 
 	if opts.TPM1_2Enabled || opts.TPM2Enabled {
@@ -303,17 +302,6 @@ func (p *provisioner) createNodes(state *vm.State, clusterReq provision.ClusterR
 	}
 
 	return nodesInfo, multiErr.ErrorOrNil()
-}
-
-func (p *provisioner) findBridgeListenPort(clusterReq provision.ClusterRequest) (int, error) {
-	l, err := net.Listen("tcp", net.JoinHostPort(clusterReq.Network.GatewayAddrs[0].String(), "0"))
-	if err != nil {
-		return 0, err
-	}
-
-	port := l.Addr().(*net.TCPAddr).Port
-
-	return port, l.Close()
 }
 
 func (p *provisioner) populateSystemDisk(disks []string, clusterReq provision.ClusterRequest) error {

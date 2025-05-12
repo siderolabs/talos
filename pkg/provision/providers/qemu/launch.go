@@ -9,6 +9,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"net"
 	"net/netip"
 	"os"
 	"os/exec"
@@ -73,7 +74,7 @@ type LaunchConfig struct {
 	IPXEBootFileName string
 
 	// API
-	APIPort int
+	APIBindAddress *net.TCPAddr
 
 	// sd-stub
 	sdStubExtraCmdline       string
@@ -402,7 +403,12 @@ func Launch() error {
 	config.c = vm.ConfigureSignals()
 	config.controller = NewController()
 
-	httpServer, err := vm.NewHTTPServer(config.GatewayAddrs[0], config.APIPort, []byte(config.Config), config.controller)
+	apiBindAddrs, err := netip.ParseAddr(config.APIBindAddress.IP.String())
+	if err != nil {
+		return err
+	}
+
+	httpServer, err := vm.NewHTTPServer(apiBindAddrs, config.APIBindAddress.Port, []byte(config.Config), config.controller)
 	if err != nil {
 		return err
 	}
