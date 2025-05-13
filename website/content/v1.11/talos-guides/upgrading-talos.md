@@ -98,9 +98,6 @@ It then starts to drain its existing workload.
 
 Once all of the workload Pods are drained, Talos will start shutting down its
 internal processes.
-If it is a control node, this will include etcd.
-If `preserve` is not enabled, Talos will leave etcd membership.
-(Talos ensures the etcd cluster is healthy and will remain healthy after our node leaves the etcd cluster, before allowing a control plane node to be upgraded.)
 
 Once all the processes are stopped and the services are shut down, the filesystems will be unmounted.
 This allows Talos to produce a very clean upgrade, as close as possible to a pristine system.
