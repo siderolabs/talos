@@ -19,6 +19,7 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/client"
 	"github.com/siderolabs/talos/pkg/machinery/config/machine"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
+	"github.com/siderolabs/talos/pkg/machinery/imager/quirks"
 	"github.com/siderolabs/talos/pkg/machinery/resources/block"
 	"github.com/siderolabs/talos/pkg/minimal"
 )
@@ -143,15 +144,17 @@ func AllNodesDiskSizes(ctx context.Context, cluster ClusterInfo) error {
 		}
 
 		actualSize := vs.TypedSpec().Size
-		adjustment := uint64(1400 * humanize.MiByte) // adjust for system stuff
-		minimalSize := minimal.DiskSize() - adjustment
 
-		if actualSize < minimalSize {
+		// calculate EPHEMERAL by subtracting the size of all other partitions and GPT overhead
+		ps := quirks.New("").PartitionSizes()
+		minimalEphemeralSize := minimal.DiskSize() - (ps.UKIEFISize() + ps.StateSize() + ps.METASize() + 10*1048576 /* GPT overhead, including alignment */)
+
+		if actualSize < minimalEphemeralSize {
 			resultErr = multierror.Append(resultErr, fmt.Errorf(
 				"ephemeral partition %q for node %q is too small, expected at least %s, actual %s",
 				vs.TypedSpec().Location,
 				nodeIP,
-				humanize.IBytes(minimalSize),
+				humanize.IBytes(minimalEphemeralSize),
 				humanize.IBytes(actualSize),
 			))
 		}

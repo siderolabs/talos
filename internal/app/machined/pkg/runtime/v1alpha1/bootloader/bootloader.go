@@ -34,7 +34,7 @@ type Bootloader interface {
 	// Revert mounts the partitions as required.
 	Revert(disk string) error
 	// RequiredPartitions returns the required partitions for the bootloader.
-	RequiredPartitions() []partition.Options
+	RequiredPartitions(quirk quirks.Quirks) []partition.Options
 
 	// KexecLoad does a kexec_file_load using the current entry of the bootloader.
 	KexecLoad(r runtime.Runtime, disk string) error

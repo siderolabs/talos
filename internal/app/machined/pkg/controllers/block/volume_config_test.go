@@ -18,13 +18,13 @@ import (
 
 	blockctrls "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/block"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/ctest"
-	"github.com/siderolabs/talos/internal/pkg/partition"
 	"github.com/siderolabs/talos/pkg/machinery/cel"
 	"github.com/siderolabs/talos/pkg/machinery/cel/celenv"
 	"github.com/siderolabs/talos/pkg/machinery/config/container"
 	blockcfg "github.com/siderolabs/talos/pkg/machinery/config/types/block"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
+	"github.com/siderolabs/talos/pkg/machinery/imager/quirks"
 	"github.com/siderolabs/talos/pkg/machinery/meta"
 	"github.com/siderolabs/talos/pkg/machinery/resources/block"
 	"github.com/siderolabs/talos/pkg/machinery/resources/config"
@@ -119,7 +119,7 @@ func (suite *VolumeConfigSuite) TestReconcileDefaults() {
 
 		asrt.True(r.TypedSpec().Provisioning.PartitionSpec.Grow)
 		asrt.EqualValues(0, r.TypedSpec().Provisioning.PartitionSpec.MaxSize)
-		asrt.EqualValues(partition.EphemeralMinSize, r.TypedSpec().Provisioning.PartitionSpec.MinSize)
+		asrt.EqualValues(quirks.New("").PartitionSizes().EphemeralMinSize(), r.TypedSpec().Provisioning.PartitionSpec.MinSize)
 
 		asrt.Equal(constants.EphemeralMountPoint, r.TypedSpec().Mount.TargetPath)
 	})
@@ -284,6 +284,6 @@ func (suite *VolumeConfigSuite) TestReconcileExtraEPHEMERALConfig() {
 
 		asrt.False(r.TypedSpec().Provisioning.PartitionSpec.Grow)
 		asrt.EqualValues(2.5*1024*1024*1024*1024, r.TypedSpec().Provisioning.PartitionSpec.MaxSize)
-		asrt.EqualValues(partition.EphemeralMinSize, r.TypedSpec().Provisioning.PartitionSpec.MinSize)
+		asrt.EqualValues(quirks.New("").PartitionSizes().EphemeralMinSize(), r.TypedSpec().Provisioning.PartitionSpec.MinSize)
 	})
 }

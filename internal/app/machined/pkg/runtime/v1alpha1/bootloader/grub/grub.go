@@ -18,6 +18,7 @@ import (
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/options"
 	"github.com/siderolabs/talos/internal/pkg/partition"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
+	"github.com/siderolabs/talos/pkg/machinery/imager/quirks"
 	"github.com/siderolabs/talos/pkg/machinery/version"
 )
 
@@ -93,11 +94,11 @@ func (c *Config) KexecLoad(r runtime.Runtime, disk string) error {
 }
 
 // RequiredPartitions returns the list of partitions required by the bootloader.
-func (c *Config) RequiredPartitions() []partition.Options {
+func (c *Config) RequiredPartitions(quirk quirks.Quirks) []partition.Options {
 	return []partition.Options{
-		partition.NewPartitionOptions(constants.EFIPartitionLabel, false),
-		partition.NewPartitionOptions(constants.BIOSGrubPartitionLabel, false),
-		partition.NewPartitionOptions(constants.BootPartitionLabel, false),
+		partition.NewPartitionOptions(constants.EFIPartitionLabel, false, quirk),
+		partition.NewPartitionOptions(constants.BIOSGrubPartitionLabel, false, quirk),
+		partition.NewPartitionOptions(constants.BootPartitionLabel, false, quirk),
 	}
 }
 

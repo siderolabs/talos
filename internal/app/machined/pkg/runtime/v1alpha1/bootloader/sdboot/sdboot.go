@@ -32,6 +32,7 @@ import (
 	"github.com/siderolabs/talos/internal/pkg/uki"
 	"github.com/siderolabs/talos/pkg/imager/utils"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
+	"github.com/siderolabs/talos/pkg/machinery/imager/quirks"
 )
 
 // LoaderConfBytes is the content of the loader.conf file.
@@ -281,9 +282,9 @@ func (c *Config) KexecLoad(r runtime.Runtime, disk string) error {
 }
 
 // RequiredPartitions returns the list of partitions required by the bootloader.
-func (c *Config) RequiredPartitions() []partition.Options {
+func (c *Config) RequiredPartitions(quirk quirks.Quirks) []partition.Options {
 	return []partition.Options{
-		partition.NewPartitionOptions(constants.EFIPartitionLabel, true),
+		partition.NewPartitionOptions(constants.EFIPartitionLabel, true, quirk),
 	}
 }
 

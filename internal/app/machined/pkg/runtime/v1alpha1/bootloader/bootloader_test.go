@@ -26,6 +26,7 @@ import (
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/grub"
 	"github.com/siderolabs/talos/internal/pkg/partition"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
+	"github.com/siderolabs/talos/pkg/machinery/imager/quirks"
 )
 
 func checkRequirements(t *testing.T) {
@@ -112,9 +113,9 @@ func TestCleanup(t *testing.T) {
 	assert.NoError(t, err)
 
 	// we use grub since it includes the EFI partition in the required partitions
-	partitions := grub.NewConfig().RequiredPartitions()
+	partitions := grub.NewConfig().RequiredPartitions(quirks.New(""))
 
-	partitions = append(partitions, partition.NewPartitionOptions(constants.MetaPartitionLabel, false))
+	partitions = append(partitions, partition.NewPartitionOptions(constants.MetaPartitionLabel, false, quirks.New("")))
 
 	for _, p := range partitions {
 		size := p.Size

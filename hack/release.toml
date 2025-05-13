@@ -130,6 +130,12 @@ Added ETCD downgrade API mimicking the ETCD API and etcdctl interfaces.
 This API allows to downgrade ETCD cluster (storage format) to a previous version.
 """
 
+    [notes.boot]
+        title = "Boot"
+        description = """\
+Talos increases the boot partition size to 2 GiB to accommodate larger images (with many system extensions included).
+"""
+
 [make_deps]
 
     [make_deps.tools]

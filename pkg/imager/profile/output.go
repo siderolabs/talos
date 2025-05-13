@@ -144,9 +144,14 @@ func (o *Output) FillDefaults(arch, version string, secureboot bool) {
 			o.ImageOptions.Bootloader = DiskImageBootloaderDualBoot
 		}
 
+		ps := quirks.New(version).PartitionSizes()
+
+		// bump default image size for expanded boot
+		o.ImageOptions.DiskSize += int64(ps.GrubBootSize()) - 1000*1024*1024 // 1000 MiB
+
 		if o.ImageOptions.Bootloader == DiskImageBootloaderDualBoot {
 			// add extra space for BIOS and BOOT partitions
-			o.ImageOptions.DiskSize += 1*1024*1024 + 1000*1024*1024
+			o.ImageOptions.DiskSize += int64(ps.GrubBIOSSize()) + int64(ps.GrubBootSize())
 		}
 	}
 }

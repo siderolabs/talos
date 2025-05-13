@@ -16,7 +16,7 @@ input:
 output:
   kind: image
   imageOptions:
-    diskSize: 2356150272
+    diskSize: 4453302272
     diskFormat: raw
     bootloader: dual-boot
   outFormat: .gz

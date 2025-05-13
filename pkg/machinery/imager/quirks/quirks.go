@@ -228,6 +228,22 @@ func (q Quirks) SupportsUnifiedInstaller() bool {
 	return q.v.GTE(minTalosVersionUnifiedInstaller)
 }
 
+var minTalosVersionBoot2G = semver.MustParse("1.11.0")
+
+// PartitionSizes returns partition sizes for the given Talos version.
+func (q Quirks) PartitionSizes() PartitionSizes {
+	bootSize := uint64(2000 * mib) // 2000 MiB
+
+	if q.v != nil && q.v.LT(minTalosVersionBoot2G) {
+		// legacy size of 1000 MiB
+		bootSize = uint64(1000 * mib)
+	}
+
+	return PartitionSizes{
+		bootSize: bootSize,
+	}
+}
+
 // XFSMkfsConfig returns the mkfs.xfs config for the given Talos version.
 func (q Quirks) XFSMkfsConfig() string {
 	switch version := q.v; {

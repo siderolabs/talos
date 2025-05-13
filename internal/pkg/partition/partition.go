@@ -11,6 +11,7 @@ import (
 	"github.com/siderolabs/go-blockdevice/v2/partitioning/gpt"
 
 	"github.com/siderolabs/talos/pkg/machinery/constants"
+	"github.com/siderolabs/talos/pkg/machinery/imager/quirks"
 )
 
 // Options contains the options for creating a partition.
@@ -26,7 +27,7 @@ type Options struct {
 // NewPartitionOptions returns a new PartitionOptions.
 //
 //nolint:gocyclo
-func NewPartitionOptions(label string, uki bool) Options {
+func NewPartitionOptions(label string, uki bool, quirk quirks.Quirks) Options {
 	formatOptions := NewFormatOptions(label)
 	if formatOptions == nil {
 		panic(fmt.Sprintf("unknown format options for label %q", label))
@@ -38,11 +39,11 @@ func NewPartitionOptions(label string, uki bool) Options {
 			FormatOptions:  *formatOptions,
 			PartitionLabel: label,
 			PartitionType:  EFISystemPartition,
-			Size:           EFISize,
+			Size:           quirk.PartitionSizes().GrubEFISize(),
 		}
 
 		if uki {
-			partitionOptions.Size = EFIUKISize
+			partitionOptions.Size = quirk.PartitionSizes().UKIEFISize()
 		}
 
 		return partitionOptions
@@ -55,7 +56,7 @@ func NewPartitionOptions(label string, uki bool) Options {
 			FormatOptions:  *formatOptions,
 			PartitionLabel: label,
 			PartitionType:  BIOSBootPartition,
-			Size:           BIOSGrubSize,
+			Size:           quirk.PartitionSizes().GrubBIOSSize(),
 			PartitionOpts:  []gpt.PartitionOption{gpt.WithLegacyBIOSBootableAttribute(true)},
 		}
 	case constants.BootPartitionLabel:
@@ -67,21 +68,21 @@ func NewPartitionOptions(label string, uki bool) Options {
 			FormatOptions:  *formatOptions,
 			PartitionLabel: label,
 			PartitionType:  LinuxFilesystemData,
-			Size:           BootSize,
+			Size:           quirk.PartitionSizes().GrubBootSize(),
 		}
 	case constants.MetaPartitionLabel:
 		return Options{
 			FormatOptions:  *formatOptions,
 			PartitionLabel: label,
 			PartitionType:  LinuxFilesystemData,
-			Size:           MetaSize,
+			Size:           quirk.PartitionSizes().METASize(),
 		}
 	case constants.StatePartitionLabel:
 		return Options{
 			FormatOptions:  *formatOptions,
 			PartitionLabel: label,
 			PartitionType:  LinuxFilesystemData,
-			Size:           StateSize,
+			Size:           quirk.PartitionSizes().StateSize(),
 		}
 	case constants.EphemeralPartitionLabel:
 		return Options{

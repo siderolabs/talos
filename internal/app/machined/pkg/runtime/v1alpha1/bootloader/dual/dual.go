@@ -23,6 +23,7 @@ import (
 	"github.com/siderolabs/talos/internal/pkg/uki"
 	"github.com/siderolabs/talos/pkg/imager/utils"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
+	"github.com/siderolabs/talos/pkg/machinery/imager/quirks"
 )
 
 // Config describes a dual-boot bootloader.
@@ -93,11 +94,11 @@ func (c *Config) Revert(disk string) error {
 }
 
 // RequiredPartitions returns the list of partitions required by the bootloader.
-func (c *Config) RequiredPartitions() []partition.Options {
+func (c *Config) RequiredPartitions(quirk quirks.Quirks) []partition.Options {
 	return []partition.Options{
-		partition.NewPartitionOptions(constants.EFIPartitionLabel, true),
-		partition.NewPartitionOptions(constants.BIOSGrubPartitionLabel, false),
-		partition.NewPartitionOptions(constants.BootPartitionLabel, false),
+		partition.NewPartitionOptions(constants.EFIPartitionLabel, true, quirk),
+		partition.NewPartitionOptions(constants.BIOSGrubPartitionLabel, false, quirk),
+		partition.NewPartitionOptions(constants.BootPartitionLabel, false, quirk),
 	}
 }
 

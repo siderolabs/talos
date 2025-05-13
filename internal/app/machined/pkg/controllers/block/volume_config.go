@@ -24,6 +24,7 @@ import (
 	cfg "github.com/siderolabs/talos/pkg/machinery/config/config"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
+	"github.com/siderolabs/talos/pkg/machinery/imager/quirks"
 	"github.com/siderolabs/talos/pkg/machinery/meta"
 	"github.com/siderolabs/talos/pkg/machinery/resources/block"
 	"github.com/siderolabs/talos/pkg/machinery/resources/config"
@@ -239,7 +240,7 @@ func (ctrl *VolumeConfigController) manageEphemeral(config cfg.Config) func(vc *
 				Match: extraVolumeConfig.Provisioning().DiskSelector().ValueOr(systemDiskMatch()),
 			},
 			PartitionSpec: block.PartitionSpec{
-				MinSize:  extraVolumeConfig.Provisioning().MinSize().ValueOr(partition.EphemeralMinSize),
+				MinSize:  extraVolumeConfig.Provisioning().MinSize().ValueOr(quirks.New("").PartitionSizes().EphemeralMinSize()),
 				MaxSize:  extraVolumeConfig.Provisioning().MaxSize().ValueOr(0),
 				Grow:     extraVolumeConfig.Provisioning().Grow().ValueOr(true),
 				Label:    constants.EphemeralPartitionLabel,
@@ -309,8 +310,8 @@ func (ctrl *VolumeConfigController) manageStateConfigPresent(config cfg.Config) 
 				Match: systemDiskMatch(),
 			},
 			PartitionSpec: block.PartitionSpec{
-				MinSize:  partition.StateSize,
-				MaxSize:  partition.StateSize,
+				MinSize:  quirks.New("").PartitionSizes().StateSize(),
+				MaxSize:  quirks.New("").PartitionSizes().StateSize(),
 				Label:    constants.StatePartitionLabel,
 				TypeUUID: partition.LinuxFilesystemData,
 			},

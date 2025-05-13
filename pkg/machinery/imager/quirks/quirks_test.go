@@ -175,3 +175,76 @@ func TestXFSMkfsConfigFile(t *testing.T) {
 		})
 	}
 }
+
+func TestPartitionSizes(t *testing.T) {
+	const (
+		MiB = 1024 * 1024
+		GiB = 1024 * MiB
+	)
+
+	for _, test := range []struct {
+		version string
+
+		// expected partition sizes
+		grubEFISize      uint64
+		grubBIOSSize     uint64
+		grubBootSize     uint64
+		ukiEFISize       uint64
+		metaSize         uint64
+		stateSize        uint64
+		ephemeralMinSize uint64
+	}{
+		{
+			version:          "1.9.0",
+			grubEFISize:      100 * MiB,
+			grubBIOSSize:     1 * MiB,
+			grubBootSize:     1000 * MiB,
+			ukiEFISize:       1000*MiB + 100*MiB + 1*MiB,
+			metaSize:         1 * MiB,
+			stateSize:        100 * MiB,
+			ephemeralMinSize: 2 * GiB,
+		},
+		{
+			version:          "1.10.0",
+			grubEFISize:      100 * MiB,
+			grubBIOSSize:     1 * MiB,
+			grubBootSize:     1000 * MiB,
+			ukiEFISize:       1000*MiB + 100*MiB + 1*MiB,
+			metaSize:         1 * MiB,
+			stateSize:        100 * MiB,
+			ephemeralMinSize: 2 * GiB,
+		},
+		{
+			version:          "1.11.0",
+			grubEFISize:      100 * MiB,
+			grubBIOSSize:     1 * MiB,
+			grubBootSize:     2000 * MiB,
+			ukiEFISize:       2000*MiB + 100*MiB + 1*MiB,
+			metaSize:         1 * MiB,
+			stateSize:        100 * MiB,
+			ephemeralMinSize: 2 * GiB,
+		},
+		{
+			version:          "",
+			grubEFISize:      100 * MiB,
+			grubBIOSSize:     1 * MiB,
+			grubBootSize:     2000 * MiB,
+			ukiEFISize:       2000*MiB + 100*MiB + 1*MiB,
+			metaSize:         1 * MiB,
+			stateSize:        100 * MiB,
+			ephemeralMinSize: 2 * GiB,
+		},
+	} {
+		t.Run(test.version, func(t *testing.T) {
+			ps := quirks.New(test.version).PartitionSizes()
+
+			assert.Equal(t, test.grubEFISize, ps.GrubEFISize())
+			assert.Equal(t, test.grubBIOSSize, ps.GrubBIOSSize())
+			assert.Equal(t, test.grubBootSize, ps.GrubBootSize())
+			assert.Equal(t, test.ukiEFISize, ps.UKIEFISize())
+			assert.Equal(t, test.metaSize, ps.METASize())
+			assert.Equal(t, test.stateSize, ps.StateSize())
+			assert.Equal(t, test.ephemeralMinSize, ps.EphemeralMinSize())
+		})
+	}
+}

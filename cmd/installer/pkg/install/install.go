@@ -487,12 +487,14 @@ func (i *Installer) createPartitions(gptdev gpt.Device, mode Mode, hostTalosVers
 		return nil, fmt.Errorf("failed to initialize GPT: %w", err)
 	}
 
+	quirk := quirks.New(i.options.Version)
+
 	// boot partitions
-	partitions := bootlder.RequiredPartitions()
+	partitions := bootlder.RequiredPartitions(quirk)
 
 	// META partition
 	partitions = append(partitions,
-		partition.NewPartitionOptions(constants.MetaPartitionLabel, false),
+		partition.NewPartitionOptions(constants.MetaPartitionLabel, false, quirk),
 	)
 
 	legacyImage := mode == ModeImage && !quirks.New(i.options.Version).SkipDataPartitions()
@@ -500,19 +502,19 @@ func (i *Installer) createPartitions(gptdev gpt.Device, mode Mode, hostTalosVers
 	// compatibility when installing on Talos < 1.8
 	if legacyImage || (hostTalosVersion != nil && hostTalosVersion.PrecreateStatePartition()) {
 		partitions = append(partitions,
-			partition.NewPartitionOptions(constants.StatePartitionLabel, false),
+			partition.NewPartitionOptions(constants.StatePartitionLabel, false, quirk),
 		)
 	}
 
 	if legacyImage {
 		partitions = append(partitions,
-			partition.NewPartitionOptions(constants.EphemeralPartitionLabel, false),
+			partition.NewPartitionOptions(constants.EphemeralPartitionLabel, false, quirk),
 		)
 	}
 
 	if i.options.ImageCachePath != "" {
 		partitions = append(partitions,
-			partition.NewPartitionOptions(constants.ImageCachePartitionLabel, false),
+			partition.NewPartitionOptions(constants.ImageCachePartitionLabel, false, quirk),
 		)
 	}
 

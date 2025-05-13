@@ -16,7 +16,7 @@ input:
 output:
   kind: image
   imageOptions:
-    diskSize: 10737418240
+    diskSize: 11785994240
     diskFormat: qcow2
     diskFormatOptions: cluster_size=8k
     bootloader: sd-boot

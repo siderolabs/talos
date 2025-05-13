@@ -16,7 +16,7 @@ input:
 output:
   kind: image
   imageOptions:
-    diskSize: 11787042816
+    diskSize: 13884194816
     diskFormat: qcow2
     diskFormatOptions: cluster_size=8k
     bootloader: dual-boot

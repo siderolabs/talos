@@ -16,7 +16,7 @@ input:
 output:
   kind: image
   imageOptions:
-    diskSize: 8589934592
+    diskSize: 9638510592
     diskFormat: raw
     bootloader: sd-boot
   outFormat: .zst
