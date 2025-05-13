@@ -14,6 +14,7 @@ import (
 	"github.com/dustin/go-humanize"
 	"github.com/hashicorp/go-multierror"
 
+	"github.com/siderolabs/talos/internal/pkg/partition"
 	"github.com/siderolabs/talos/pkg/machinery/client"
 	"github.com/siderolabs/talos/pkg/machinery/config/machine"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
@@ -136,15 +137,16 @@ func AllNodesDiskSizes(ctx context.Context, cluster ClusterInfo) error {
 		}
 
 		actualSize := vs.TypedSpec().Size
-		adjustment := uint64(1400 * humanize.MiByte) // adjust for system stuff
-		minimalSize := minimal.DiskSize() - adjustment
 
-		if actualSize < minimalSize {
+		// calculate EPHEMERAL by subtracting the size of all other partitions and GPT overhead
+		minimalEphemeralSize := minimal.DiskSize() - (partition.EFIUKISize + partition.StateSize + partition.MetaSize + 10*1048576 /* GPT overhead, including alignment */)
+
+		if actualSize < minimalEphemeralSize {
 			resultErr = multierror.Append(resultErr, fmt.Errorf(
 				"ephemeral partition %q for node %q is too small, expected at least %s, actual %s",
 				vs.TypedSpec().Location,
 				nodeIP,
-				humanize.IBytes(minimalSize),
+				humanize.IBytes(minimalEphemeralSize),
 				humanize.IBytes(actualSize),
 			))
 		}

@@ -1,0 +1,26 @@
+arch: arm64
+platform: metal
+secureboot: true
+version: 1.11.0
+input:
+  kernel:
+    path: /usr/install/arm64/vmlinuz
+  initramfs:
+    path: /usr/install/arm64/initramfs.xz
+  sdStub:
+    path: /usr/install/arm64/systemd-stub.efi
+  sdBoot:
+    path: /usr/install/arm64/systemd-boot.efi
+  baseInstaller:
+    imageRef: ghcr.io/siderolabs/installer-base:1.11.0
+  secureboot:
+    secureBootSigner:
+      keyPath: /secureboot/uki-signing-key.pem
+      certPath: /secureboot/uki-signing-cert.pem
+    pcrSigner:
+      keyPath: /secureboot/pcr-signing-key.pem
+output:
+  kind: iso
+  isoOptions:
+    sdBootEnrollKeys: if-safe
+  outFormat: raw
