@@ -19,6 +19,7 @@ import (
 	"github.com/siderolabs/go-cmd/pkg/cmd/proc/reaper"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
+	"go.uber.org/goleak"
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/logging"
@@ -390,4 +391,8 @@ func TestProcessSuite(t *testing.T) {
 			},
 		)
 	}
+}
+
+func TestMain(m *testing.M) {
+	goleak.VerifyTestMain(m)
 }
