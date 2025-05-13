@@ -28,7 +28,6 @@ import (
 	sideronet "github.com/siderolabs/net"
 
 	"github.com/siderolabs/talos/pkg/provision/internal/cniutils"
-	"github.com/siderolabs/talos/pkg/provision/providers/vm"
 )
 
 // withCNIOperationLocked ensures that CNI operations don't run concurrently.
@@ -168,40 +167,8 @@ func withNetworkContext(ctx context.Context, config *LaunchConfig, f func(config
 	}
 
 	config.tapName = tapIface.Name
-	config.vmMAC = vmIface.Mac
+	config.VMMac = vmIface.Mac
 	config.nsPath = ns.Path()
-
-	for j := range config.CIDRs {
-		nameservers := make([]netip.Addr, 0, len(config.Nameservers))
-
-		// filter nameservers by IPv4/IPv6 matching IPs
-		for i := range config.Nameservers {
-			if config.IPs[j].Is6() {
-				if config.Nameservers[i].Is6() {
-					nameservers = append(nameservers, config.Nameservers[i])
-				}
-			} else {
-				if config.Nameservers[i].Is4() {
-					nameservers = append(nameservers, config.Nameservers[i])
-				}
-			}
-		}
-
-		// dump node IP/mac/hostname for dhcp
-		if err = vm.DumpIPAMRecord(config.StatePath, vm.IPAMRecord{
-			IP:               config.IPs[j],
-			Netmask:          byte(config.CIDRs[j].Bits()),
-			MAC:              vmIface.Mac,
-			Hostname:         config.Hostname,
-			Gateway:          config.GatewayAddrs[j],
-			MTU:              config.MTU,
-			Nameservers:      nameservers,
-			TFTPServer:       config.TFTPServer,
-			IPXEBootFilename: config.IPXEBootFileName,
-		}); err != nil {
-			return err
-		}
-	}
 
 	return f(config)
 }

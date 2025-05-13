@@ -9,8 +9,9 @@ import (
 	"os/exec"
 )
 
+// withNetworkContext runs the f on the host network on darwin.
 func withNetworkContext(ctx context.Context, config *LaunchConfig, f func(config *LaunchConfig) error) error {
-	panic("not implemented")
+	return f(config)
 }
 
 func checkPartitions(config *LaunchConfig) (bool, error) {
