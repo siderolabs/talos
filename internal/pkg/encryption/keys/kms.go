@@ -23,6 +23,7 @@ import (
 
 	"github.com/siderolabs/talos/internal/pkg/encryption/helpers"
 	"github.com/siderolabs/talos/internal/pkg/endpoint"
+	"github.com/siderolabs/talos/pkg/grpc/dialer"
 	"github.com/siderolabs/talos/pkg/httpdefaults"
 )
 
@@ -144,5 +145,6 @@ func (h *KMSKeyHandler) getConn() (*grpc.ClientConn, error) {
 		endpoint.Host,
 		grpc.WithTransportCredentials(transportCredentials),
 		grpc.WithSharedWriteBuffer(true),
+		grpc.WithContextDialer(dialer.DynamicProxyDialer),
 	)
 }

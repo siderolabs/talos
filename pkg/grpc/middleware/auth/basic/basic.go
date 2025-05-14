@@ -13,6 +13,8 @@ import (
 	"github.com/siderolabs/gen/xslices"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
+
+	"github.com/siderolabs/talos/pkg/grpc/dialer"
 )
 
 // Credentials describes an authorization method.
@@ -42,6 +44,7 @@ func NewConnection(address string, creds credentials.PerRPCCredentials, accepted
 		grpc.WithTransportCredentials(credentials.NewTLS(tlsConfig)),
 		grpc.WithPerRPCCredentials(creds),
 		grpc.WithSharedWriteBuffer(true),
+		grpc.WithContextDialer(dialer.DynamicProxyDialer),
 	}
 
 	conn, err = grpc.NewClient(address, grpcOpts...)

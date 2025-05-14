@@ -30,6 +30,7 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 
 	networkutils "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/network/utils"
+	"github.com/siderolabs/talos/pkg/grpc/dialer"
 	"github.com/siderolabs/talos/pkg/httpdefaults"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
@@ -345,6 +346,7 @@ func (ctrl *ManagerController) provision(ctx context.Context, r controller.Runti
 			cfg.TypedSpec().Host,
 			withTransportCredentials(cfg.TypedSpec().Insecure),
 			grpc.WithSharedWriteBuffer(true),
+			grpc.WithContextDialer(dialer.DynamicProxyDialer),
 		)
 		if connErr != nil {
 			return nil, fmt.Errorf("error dialing SideroLink endpoint %q: %w", cfg.TypedSpec().Host, connErr)
