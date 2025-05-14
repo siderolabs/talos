@@ -8,6 +8,8 @@ package api
 
 import (
 	"context"
+	"fmt"
+	"math/rand/v2"
 	"os"
 	"testing"
 	"time"
@@ -23,6 +25,7 @@ import (
 	"github.com/siderolabs/talos/internal/integration/base"
 	"github.com/siderolabs/talos/pkg/machinery/client"
 	networkconfig "github.com/siderolabs/talos/pkg/machinery/config/types/network"
+	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
 	"github.com/siderolabs/talos/pkg/machinery/resources/network"
 )
 
@@ -196,6 +199,99 @@ func (suite *EthernetSuite) TestEthernetConfig() {
 	suite.Run("Channels", func() {
 		suite.T().Skip("channels are not supported by the current QEMU version")
 	})
+}
+
+// TestBridgeMAC verifies bridge MAC address.
+func (suite *EthernetSuite) TestBridgeMAC() {
+	// pick up a random node to test the Ethernet on, and use it throughout the test
+	node := suite.RandomDiscoveredNodeInternalIP()
+
+	suite.T().Logf("testing bridge MAC on node %s", node)
+
+	// build a Talos API context which is tied to the node
+	nodeCtx := client.WithNode(suite.ctx, node)
+
+	randomSuffix := fmt.Sprintf("%04x", rand.Int32())
+
+	patch1 := v1alpha1.Config{
+		MachineConfig: &v1alpha1.MachineConfig{
+			MachineNetwork: &v1alpha1.NetworkConfig{
+				NetworkInterfaces: v1alpha1.NetworkDeviceList{
+					{
+						DeviceInterface: "dummy" + randomSuffix,
+						DeviceDummy:     pointer.To(true),
+					},
+					{
+						DeviceInterface: "bridge" + randomSuffix,
+						DeviceBridge:    &v1alpha1.Bridge{},
+					},
+				},
+			},
+		},
+	}
+
+	suite.PatchMachineConfig(nodeCtx, patch1)
+
+	var dummyMAC string
+
+	// the links should be created
+	rtestutils.AssertResources(nodeCtx, suite.T(), suite.Client.COSI,
+		[]string{"dummy" + randomSuffix, "bridge" + randomSuffix},
+		func(link *network.LinkStatus, _ *assert.Assertions) {
+			if link.TypedSpec().Kind == "dummy" {
+				dummyMAC = link.TypedSpec().HardwareAddr.String()
+			}
+		})
+
+	suite.Assert().NotEmpty(dummyMAC, "dummy MAC address is empty")
+
+	// now, let's put dummy interface into the bridge
+	patch2 := v1alpha1.Config{
+		MachineConfig: &v1alpha1.MachineConfig{
+			MachineNetwork: &v1alpha1.NetworkConfig{
+				NetworkInterfaces: v1alpha1.NetworkDeviceList{
+					{
+						DeviceInterface: "bridge" + randomSuffix,
+						DeviceBridge: &v1alpha1.Bridge{
+							BridgedInterfaces: []string{"dummy" + randomSuffix},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	suite.PatchMachineConfig(nodeCtx, patch2)
+
+	// now bridge should have the same MAC address as dummy
+	rtestutils.AssertResources(nodeCtx, suite.T(), suite.Client.COSI,
+		[]string{"dummy" + randomSuffix, "bridge" + randomSuffix},
+		func(link *network.LinkStatus, asrt *assert.Assertions) {
+			asrt.Equal(dummyMAC, link.TypedSpec().HardwareAddr.String(), "dummy MAC address is not equal to bridge MAC address")
+		})
+
+	// revert the changes removing the dummy interface from the bridge
+	patch3 := map[string]any{
+		"machine": map[string]any{
+			"network": map[string]any{
+				"interfaces": []map[string]any{
+					{
+						"interface": "bridge" + randomSuffix,
+						"$patch":    "delete",
+					},
+					{
+						"interface": "dummy" + randomSuffix,
+						"$patch":    "delete",
+					},
+				},
+			},
+		},
+	}
+
+	suite.PatchMachineConfig(nodeCtx, patch3)
+
+	rtestutils.AssertNoResource[*network.LinkStatus](nodeCtx, suite.T(), suite.Client.COSI, "dummy"+randomSuffix)
+	rtestutils.AssertNoResource[*network.LinkStatus](nodeCtx, suite.T(), suite.Client.COSI, "bridge"+randomSuffix)
 }
 
 func init() {
