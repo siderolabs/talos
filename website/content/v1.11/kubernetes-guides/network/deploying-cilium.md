@@ -99,7 +99,7 @@ cilium install \
     --set k8sServicePort=7445 \
     --set gatewayAPI.enabled=true \
     --set gatewayAPI.enableAlpn=true \
-    --set gatewayAPI.enableAppProtocol=true \
+    --set gatewayAPI.enableAppProtocol=true
 ```
 
 > Note: If you plan to use gRPC and GRPCRoutes with TLS, you must enable ALPN by setting `gatewayAPI.enableAlpn=true`.
