@@ -366,13 +366,13 @@ hack-test-%: ## Runs the specified script in ./hack/test with well known environ
 
 .PHONY: generate
 generate: ## Generates code from protobuf service definitions and machinery config.
-	@$(MAKE) local-$@ DEST=./ PLATFORM=$(OPERATING_SYSTEM)/$(ARCH) EMBED_TARGET=embed-abbrev
+	@$(MAKE) local-$@ DEST=./ PLATFORM=linux/$(ARCH) EMBED_TARGET=embed-abbrev
 
 .PHONY: docs
 docs: ## Generates the documentation for machine config, and talosctl.
 	@rm -rf docs/configuration/*
 	@rm -rf docs/talosctl/*
-	@$(MAKE) local-$@ DEST=./ PLATFORM=$(OPERATING_SYSTEM)/$(ARCH)
+	@$(MAKE) local-$@ DEST=./ PLATFORM=linux/amd64
 
 .PHONY: docs-preview
 docs-preview: ## Starts a local preview of the documentation using Hugo in docker
@@ -527,19 +527,19 @@ cache-create: installer imager ## Generate image cache.
 # Code Quality
 
 api-descriptors: ## Generates API descriptors used to detect breaking API changes.
-	@$(MAKE) local-api-descriptors DEST=./ PLATFORM=$(OPERATING_SYSTEM)/$(ARCH)
+	@$(MAKE) local-api-descriptors DEST=./ PLATFORM=linux/$(ARCH)
 
 fmt-go: ## Formats the source code.
 	@docker run --rm -it -v $(PWD):/src -w /src -e GOTOOLCHAIN=local golang:$(GO_VERSION) bash -c "go install golang.org/x/tools/cmd/goimports@$(GOIMPORTS_VERSION) && goimports -w -local github.com/siderolabs/talos . && go install mvdan.cc/gofumpt@$(GOFUMPT_VERSION) && gofumpt -w ."
 
 fmt-protobuf: ## Formats protobuf files.
-	@$(MAKE) local-fmt-protobuf DEST=./ PLATFORM=$(OPERATING_SYSTEM)/$(ARCH)
+	@$(MAKE) local-fmt-protobuf DEST=./ PLATFORM=linux/$(ARCH)
 
 fmt: ## Formats the source code and protobuf files.
 	@$(MAKE) fmt-go fmt-protobuf
 
 lint-%: ## Runs the specified linter. Valid options are go, protobuf, and markdown (e.g. lint-go).
-	@$(MAKE) target-lint-$* PLATFORM=$(OPERATING_SYSTEM)/$(ARCH)
+	@$(MAKE) target-lint-$* PLATFORM=linux/$(ARCH)
 
 lint: ## Runs linters on go, vulncheck, protobuf, and markdown file types.
 	@$(MAKE) lint-go lint-vulncheck lint-protobuf lint-markdown
@@ -548,17 +548,17 @@ check-dirty: ## Verifies that source tree is not dirty
 	@if test -n "`git status --porcelain`"; then echo "Source tree is dirty"; git status; git diff; exit 1 ; fi
 
 go-mod-outdated: ## Runs the go-mod-oudated to show outdated dependencies.
-	@$(MAKE) target-go-mod-outdated PLATFORM=$(OPERATING_SYSTEM)/$(ARCH)
+	@$(MAKE) target-go-mod-outdated PLATFORM=linux/$(ARCH)
 
 # Tests
 
 .PHONY: unit-tests
 unit-tests: ## Performs unit tests.
-	@$(MAKE) local-$@ DEST=$(ARTIFACTS) TARGET_ARGS="--allow security.insecure" PLATFORM=$(OPERATING_SYSTEM)/$(ARCH)
+	@$(MAKE) local-$@ DEST=$(ARTIFACTS) TARGET_ARGS="--allow security.insecure" PLATFORM=linux/$(ARCH)
 
 .PHONY: unit-tests-race
 unit-tests-race: ## Performs unit tests with race detection enabled.
-	@$(MAKE) target-$@ TARGET_ARGS="--allow security.insecure" PLATFORM=$(OPERATING_SYSTEM)/$(ARCH)
+	@$(MAKE) target-$@ TARGET_ARGS="--allow security.insecure" PLATFORM=linux/$(ARCH)
 
 $(ARTIFACTS)/$(INTEGRATION_TEST_DEFAULT_TARGET)-amd64:
 	@$(MAKE) local-$(INTEGRATION_TEST_DEFAULT_TARGET)-amd64 DEST=$(ARTIFACTS) PLATFORM=linux/amd64 WITH_RACE=true PUSH=false
@@ -708,8 +708,8 @@ sign-images: ## Run cosign to sign all images built by this Makefile.
 .PHONY: reproducibility-test
 reproducibility-test:
 	@$(MAKE) reproducibility-test-local-initramfs
-	@$(MAKE) reproducibility-test-docker-installer-base INSTALLER_ARCH=targetarch PLATFORM=$(OPERATING_SYSTEM)/$(ARCH)
-	@$(MAKE) reproducibility-test-docker-talos reproducibility-test-docker-imager reproducibility-test-docker-talosctl PLATFORM=$(OPERATING_SYSTEM)/$(ARCH)
+	@$(MAKE) reproducibility-test-docker-installer-base INSTALLER_ARCH=targetarch PLATFORM=linux/$(ARCH)
+	@$(MAKE) reproducibility-test-docker-talos reproducibility-test-docker-imager reproducibility-test-docker-talosctl PLATFORM=linux/$(ARCH)
 
 reproducibility-test-docker-%:
 	@rm -rf _out1/ _out2/
