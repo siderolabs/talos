@@ -65,6 +65,7 @@ func (l *Local) GetConnection(ctx context.Context, _ string) (context.Context, *
 			grpc.ForceCodecV2(proxy.Codec()),
 		),
 		grpc.WithSharedWriteBuffer(true),
+		grpc.WithNoProxy(),
 	)
 
 	return outCtx, l.conn, err
