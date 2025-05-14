@@ -19,6 +19,7 @@ import (
 	"time"
 
 	"github.com/containernetworking/cni/libcni"
+	"github.com/diskfs/go-diskfs"
 	"github.com/google/uuid"
 
 	"github.com/siderolabs/talos/pkg/provision"
@@ -232,8 +233,7 @@ func launchVM(config *LaunchConfig) error {
 		)
 	}
 
-	// check if disk is empty/wiped
-	diskBootable, err := checkPartitions(config)
+	diskBootable, err := checkBootDiskPartition(config)
 	if err != nil {
 		return err
 	}
@@ -504,4 +504,28 @@ func dumpIpam(config LaunchConfig) error {
 	}
 
 	return nil
+}
+
+func checkBootDiskPartition(config *LaunchConfig) (diskBootable bool, err error) {
+	disk, err := diskfs.Open(config.DiskPaths[0])
+	if err != nil {
+		return false, fmt.Errorf("error probing disk: %w", err)
+	}
+
+	defer disk.Close() //nolint:errcheck
+
+	if disk.Table == nil || disk.Table.Type() != "gpt" {
+		return false, nil
+	}
+
+	if len(disk.Table.GetPartitions()) == 0 {
+		return false, nil
+	}
+
+	if disk.LogicalBlocksize != int64(config.DiskBlockSizes[0]) {
+		return false, fmt.Errorf("expected a disk block size of %d, got %d\nreformat the disk or change block size configuration (disk %s)",
+			config.DiskBlockSizes[0], disk.LogicalBlocksize, config.DiskPaths[0])
+	}
+
+	return true, nil
 }

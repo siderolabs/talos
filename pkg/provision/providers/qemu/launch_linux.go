@@ -24,7 +24,6 @@ import (
 	"github.com/coreos/go-iptables/iptables"
 	"github.com/google/uuid"
 	"github.com/siderolabs/gen/xslices"
-	"github.com/siderolabs/go-blockdevice/v2/blkid"
 	sideronet "github.com/siderolabs/net"
 
 	"github.com/siderolabs/talos/pkg/provision/internal/cniutils"
@@ -171,15 +170,6 @@ func withNetworkContext(ctx context.Context, config *LaunchConfig, f func(config
 	config.nsPath = ns.Path()
 
 	return f(config)
-}
-
-func checkPartitions(config *LaunchConfig) (bool, error) {
-	info, err := blkid.ProbePath(config.DiskPaths[0], blkid.WithSectorSize(config.DiskBlockSizes[0]))
-	if err != nil {
-		return false, fmt.Errorf("error probing disk: %w", err)
-	}
-
-	return info.Name == "gpt" && len(info.Parts) > 0, nil
 }
 
 func startQemuCmd(config *LaunchConfig, cmd *exec.Cmd) error {
