@@ -12,4 +12,4 @@ OriginalName=*
 [Link]
 NamePolicy=keep kernel database onboard slot path mac
 AlternativeNamesPolicy=database onboard slot path mac
-MACAddressPolicy=persistent
+MACAddressPolicy=none
