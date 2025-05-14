@@ -34,7 +34,13 @@ var IsEnabled = sync.OnceValue(func() bool {
 
 	val := procfs.ProcCmdline().Get(constants.KernelParamSELinux).First()
 
-	return val != nil && *val == "1"
+	var selinuxFSPresent bool
+
+	if _, err := os.Stat("/sys/fs/selinux"); err == nil {
+		selinuxFSPresent = true
+	}
+
+	return val != nil && *val == "1" && selinuxFSPresent
 })
 
 // IsEnforcing checks if SELinux is enabled and the mode should be enforcing.
