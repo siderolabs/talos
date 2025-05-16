@@ -133,7 +133,8 @@ Talos will be installed to disk, the VM will reboot, and then Talos will configu
 
 Create at least a single worker node using a process similar to the control plane creation above.
 Start the worker node VM and wait for it to enter "maintenance mode".
-Take note of the worker node's IP address, which will be referred to as `$WORKER_IP`
+Take note of the worker node's IP address, which will be referred to as `$WORKER_IP`.
+If you wish to export this IP as a bash variable, simply issue a command like `export WORKER_IP=1.2.3.4`.
 
 Issue:
 
@@ -143,8 +144,25 @@ talosctl apply-config --insecure --nodes $WORKER_IP --file _out/worker.yaml
 
 > Note: This process can be repeated multiple times to add additional workers.
 
-## Using the Cluster
+### Bootstrap Etcd
 
+Before the cluster is ready, the Etcd has to be boostrapted. The cluster will be in stage `Booting` and `healthy` state until this is stage is completed.
+
+Set the `endpoints` and `nodes`:
+
+```bash
+talosctl --talosconfig $TALOSCONFIG config endpoint <control plane 1 IP>
+talosctl --talosconfig $TALOSCONFIG config node <control plane 1 IP>
+```
+
+Bootstrap `etcd` by running the following command. You should see stage change to `Running` and your cluster is now ready.
+
+```bash
+talosctl --talosconfig $TALOSCONFIG bootstrap
+```
+
+## Using the Cluster
+      
 Once the cluster is available, you can make use of `talosctl` and `kubectl` to interact with the cluster.
 For example, to view current running containers, run `talosctl containers` for a list of containers in the `system` namespace, or `talosctl containers -k` for the `k8s.io` namespace.
 To view the logs of a container, use `talosctl logs <container>` or `talosctl logs -k <container>`.
@@ -157,21 +175,6 @@ talosctl config endpoint $CONTROL_PLANE_IP
 talosctl config node $CONTROL_PLANE_IP
 ```
 
-### Bootstrap Etcd
-
-Set the `endpoints` and `nodes`:
-
-```bash
-talosctl --talosconfig $TALOSCONFIG config endpoint <control plane 1 IP>
-talosctl --talosconfig $TALOSCONFIG config node <control plane 1 IP>
-```
-
-Bootstrap `etcd`:
-
-```bash
-talosctl --talosconfig $TALOSCONFIG bootstrap
-```
-
 ### Retrieve the `kubeconfig`
 
 At this point we can retrieve the admin `kubeconfig` by running:
@@ -179,6 +182,8 @@ At this point we can retrieve the admin `kubeconfig` by running:
 ```bash
 talosctl --talosconfig $TALOSCONFIG kubeconfig .
 ```
+
+Export the config so kubectl can find it: `export KUBECONFIG=$(pwd)/kubeconfig`.
 
 You can then use kubectl in this fashion:
 
