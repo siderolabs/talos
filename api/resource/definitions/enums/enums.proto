@@ -466,6 +466,7 @@ enum RuntimeSELinuxState {
 enum RuntimeTaskState {
   TASK_STATE_CREATED = 0;
   TASK_STATE_RUNNING = 1;
-  TASK_STATE_COMPLETED = 2;
+  TASK_STATE_STOPPING = 2;
+  TASK_STATE_COMPLETED = 3;
 }
 

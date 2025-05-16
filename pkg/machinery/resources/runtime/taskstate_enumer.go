@@ -7,11 +7,11 @@ import (
 	"strings"
 )
 
-const _TaskStateName = "createdrunningcompleted"
+const _TaskStateName = "createdrunningstoppingcompleted"
 
-var _TaskStateIndex = [...]uint8{0, 7, 14, 23}
+var _TaskStateIndex = [...]uint8{0, 7, 14, 22, 31}
 
-const _TaskStateLowerName = "createdrunningcompleted"
+const _TaskStateLowerName = "createdrunningstoppingcompleted"
 
 func (i TaskState) String() string {
 	if i < 0 || i >= TaskState(len(_TaskStateIndex)-1) {
@@ -26,24 +26,28 @@ func _TaskStateNoOp() {
 	var x [1]struct{}
 	_ = x[TaskStateCreated-(0)]
 	_ = x[TaskStateRunning-(1)]
-	_ = x[TaskStateCompleted-(2)]
+	_ = x[TaskStateStopping-(2)]
+	_ = x[TaskStateCompleted-(3)]
 }
 
-var _TaskStateValues = []TaskState{TaskStateCreated, TaskStateRunning, TaskStateCompleted}
+var _TaskStateValues = []TaskState{TaskStateCreated, TaskStateRunning, TaskStateStopping, TaskStateCompleted}
 
 var _TaskStateNameToValueMap = map[string]TaskState{
 	_TaskStateName[0:7]:        TaskStateCreated,
 	_TaskStateLowerName[0:7]:   TaskStateCreated,
 	_TaskStateName[7:14]:       TaskStateRunning,
 	_TaskStateLowerName[7:14]:  TaskStateRunning,
-	_TaskStateName[14:23]:      TaskStateCompleted,
-	_TaskStateLowerName[14:23]: TaskStateCompleted,
+	_TaskStateName[14:22]:      TaskStateStopping,
+	_TaskStateLowerName[14:22]: TaskStateStopping,
+	_TaskStateName[22:31]:      TaskStateCompleted,
+	_TaskStateLowerName[22:31]: TaskStateCompleted,
 }
 
 var _TaskStateNames = []string{
 	_TaskStateName[0:7],
 	_TaskStateName[7:14],
-	_TaskStateName[14:23],
+	_TaskStateName[14:22],
+	_TaskStateName[22:31],
 }
 
 // TaskStateString retrieves an enum value from the enum constants string name.

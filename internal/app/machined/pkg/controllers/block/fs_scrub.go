@@ -205,6 +205,10 @@ func (ctrl *FSScrubController) updateSchedule(ctx context.Context, r controller.
 		_, ok := ctrl.schedule[mountpoint]
 
 		if ok {
+			if ctrl.schedule[mountpoint].period == period {
+				continue
+			}
+
 			ctrl.schedule[mountpoint].timer.Stop()
 		}
 
@@ -226,6 +230,8 @@ func (ctrl *FSScrubController) updateSchedule(ctx context.Context, r controller.
 			period:     period,
 			timer:      time.AfterFunc(firstTimeout, cb),
 		}
+
+		fmt.Println("scrub schedule", zap.String("mountpoint", mountpoint), zap.Duration("period", period), zap.Time("startTime", scheduledTask.StartTime))
 
 		ctrl.status[mountpoint] = scrubStatus{
 			id:         item.Metadata().ID(),
@@ -271,6 +277,7 @@ func (ctrl *FSScrubController) runScrub(ctx context.Context, mountpoint string, 
 	start := time.Now()
 
 	task := runtimeres.NewTask()
+	fmt.Println("creating task", zap.String("task", task.Metadata().ID()), zap.String("mountpoint", mountpoint))
 	if err := safe.WriterModify(ctx, r, task, func(status *runtimeres.Task) error {
 		status.TypedSpec().Args = args
 		status.TypedSpec().TaskName = "fs_scrub"

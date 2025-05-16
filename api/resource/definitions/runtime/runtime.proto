@@ -7,6 +7,7 @@ option java_package = "dev.talos.api.resource.definitions.runtime";
 
 import "common/common.proto";
 import "google/protobuf/duration.proto";
+import "google/protobuf/timestamp.proto";
 import "resource/definitions/enums/enums.proto";
 
 // DevicesStatusSpec is the spec for devices status.
@@ -138,6 +139,8 @@ message TaskStatusSpec {
   string id = 1;
   talos.resource.definitions.enums.RuntimeTaskState task_status = 2;
   int64 exit_code = 3;
+  google.protobuf.Timestamp start = 4;
+  google.protobuf.Duration duration = 5;
 }
 
 // UniqueMachineTokenSpec is the spec for the machine unique token. Token can be empty if machine wasn't assigned any.

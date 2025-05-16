@@ -32,6 +32,7 @@ type TaskState int
 const (
 	TaskStateCreated   TaskState = iota // created
 	TaskStateRunning                    // running
+	TaskStateStopping                   // stopping
 	TaskStateCompleted                  // completed
 )
 
