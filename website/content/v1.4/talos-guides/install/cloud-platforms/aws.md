@@ -308,7 +308,7 @@ At this point we can retrieve the admin `kubeconfig` by running:
 talosctl --talosconfig talosconfig kubeconfig .
 ```
 
-The different control plane nodes should sendi/receive traffic via the load balancer, notice that one of the control plane has intiated the etcd cluster, and the others should join.
+The different control plane nodes should send/receive traffic via the load balancer, notice that one of the control plane has intiated the etcd cluster, and the others should join.
 You can now watch as your cluster bootstraps, by using
 
 ```bash
