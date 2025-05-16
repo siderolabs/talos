@@ -1,3 +1,79 @@
+## [Talos 1.10.2](https://github.com/siderolabs/talos/releases/tag/v1.10.2) (2025-05-16)
+
+Welcome to the v1.10.2 release of Talos!
+
+
+
+Please try out the release binaries and report any issues at
+https://github.com/siderolabs/talos/issues.
+
+### Component Updates
+
+Linux: 6.12.27
+
+Talos is built with Go 1.24.3.
+
+
+### Contributors
+
+* Andrey Smirnov
+* Noel Georgi
+* Andrew Longwill
+
+### Changes
+<details><summary>11 commits</summary>
+<p>
+
+* [`44083c6e6`](https://github.com/siderolabs/talos/commit/44083c6e62bbef3481982b96746cd476ae512454) feat: update Linux to 6.12.27
+* [`78df89b87`](https://github.com/siderolabs/talos/commit/78df89b87c8521f688fb072470b8f90a1f32a927) fix: disable automatic MAC assignment to bridge interfaces
+* [`a5de48b87`](https://github.com/siderolabs/talos/commit/a5de48b873b9c1b2f0b5f2989eef813d5f90a6e4) fix: selinux detection
+* [`92dcddd19`](https://github.com/siderolabs/talos/commit/92dcddd1931cc1d696527f0eaf10de135aaa373f) fix: consistently apply dynamic grpc proxy dialer
+* [`b8f1bde3c`](https://github.com/siderolabs/talos/commit/b8f1bde3c862a20e88ec931a24dc85525b449592) chore: rotate aws iam credentials
+* [`e6b33e233`](https://github.com/siderolabs/talos/commit/e6b33e233b42251e91b55ac1652715d3446d04d6) chore: update sops keys
+* [`b7e5741e6`](https://github.com/siderolabs/talos/commit/b7e5741e6fe5065ae8f00cb759513fa75b123804) test: fix the process runner log collection
+* [`9e71cc8f5`](https://github.com/siderolabs/talos/commit/9e71cc8f50a7071b55c755bccc311bd89898f62c) fix: upgrade go-kubernetes for DRA flag bug
+* [`55885600b`](https://github.com/siderolabs/talos/commit/55885600ba0165b4a0e29869bc97345a26dcd3b9) test: fix some flaky tests
+* [`b183f95c7`](https://github.com/siderolabs/talos/commit/b183f95c7c072c47293ab0f4dea287e493ccf490) fix: k8s 1.32->1.33 upgrade check
+* [`4b27faf44`](https://github.com/siderolabs/talos/commit/4b27faf44e030623caa51edd1aecaf5f4a427773) fix: improve volume mounter automaton
+</p>
+</details>
+
+### Changes from siderolabs/go-kubernetes
+<details><summary>2 commits</summary>
+<p>
+
+* [`9070be4`](https://github.com/siderolabs/go-kubernetes/commit/9070be4308e23d969ec4fc49b25dab4a27d512e7) fix: remove DynamicResourceAllocation feature gate
+* [`8cb588b`](https://github.com/siderolabs/go-kubernetes/commit/8cb588bc4c93d812de901a6a33e599ba2169cd96) fix: k8s 1.32->1.33 upgrade check
+</p>
+</details>
+
+### Changes from siderolabs/pkgs
+<details><summary>4 commits</summary>
+<p>
+
+* [`b425b44`](https://github.com/siderolabs/pkgs/commit/b425b44f7975a89c25e786647f74d40c6c3de775) feat: update NVIDIA drivers
+* [`88034a5`](https://github.com/siderolabs/pkgs/commit/88034a5daa2fbc6c4626af69efb8db897f52b15a) feat: update ZFS to 2.3.2
+* [`87ce8f7`](https://github.com/siderolabs/pkgs/commit/87ce8f71d420b1600fcd121c373324e87987abec) feat: update Linux to 6.12.27
+* [`c0af3b8`](https://github.com/siderolabs/pkgs/commit/c0af3b8715ebf6adb5bc68e983a8aa03facb361f) feat: update Go to 1.24.3
+</p>
+</details>
+
+### Changes from siderolabs/tools
+<details><summary>1 commit</summary>
+<p>
+
+* [`fa51331`](https://github.com/siderolabs/tools/commit/fa513311ad42bb2a60e9b464c7c8fe3fbc2f0855) feat: update Go to 1.24.3
+</p>
+</details>
+
+### Dependency Changes
+
+* **github.com/siderolabs/go-kubernetes**  v0.2.21 -> v0.2.23
+* **github.com/siderolabs/pkgs**           v1.10.0-8-g13e9f09 -> v1.10.0-12-gb425b44
+* **github.com/siderolabs/tools**          v1.10.0-1-g67d3f5a -> v1.10.0-2-gfa51331
+
+Previous release can be found at [v1.10.1](https://github.com/siderolabs/talos/releases/tag/v1.10.1)
+
 ## [Talos 1.10.1](https://github.com/siderolabs/talos/releases/tag/v1.10.1) (2025-05-07)
 
 Welcome to the v1.10.1 release of Talos!
