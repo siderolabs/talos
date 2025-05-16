@@ -24,8 +24,7 @@ If the disk encryption is enabled for the EPHEMERAL partition, the system will:
 
 - Get the encryption config from the machine config.
 - Before mounting the EPHEMERAL partition, encrypt and format it.
-
-This occurs only if the EPHEMERAL partition is empty and has no filesystem.
+  This occurs only if the EPHEMERAL partition is empty and has no filesystem.
 
 Talos Linux supports four encryption methods, which can be combined together for a single partition:
 
