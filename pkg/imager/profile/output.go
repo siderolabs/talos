@@ -119,6 +119,8 @@ const (
 )
 
 // FillDefaults fills default values for the output.
+//
+//nolint:gocyclo
 func (o *Output) FillDefaults(arch, version string, secureboot bool) {
 	if o.Kind == OutKindImage {
 		if o.ImageOptions == nil {
@@ -130,30 +132,32 @@ func (o *Output) FillDefaults(arch, version string, secureboot bool) {
 			return
 		}
 
-		if secureboot {
-			o.ImageOptions.Bootloader = DiskImageBootloaderSDBoot
-
-			return
-		}
-
 		useSDBoot := quirks.New(version).UseSDBootForUEFI()
 
-		// for arm64, we always use sd-boot
-		if arch == "arm64" && useSDBoot {
+		switch {
+		case secureboot:
 			o.ImageOptions.Bootloader = DiskImageBootloaderSDBoot
-
-			return
-		}
-
-		if !useSDBoot {
+		case arch == "arm64" && useSDBoot:
+			o.ImageOptions.Bootloader = DiskImageBootloaderSDBoot
+		case !useSDBoot:
 			o.ImageOptions.Bootloader = DiskImageBootloaderGrub
-
-			return
+		default:
+			o.ImageOptions.Bootloader = DiskImageBootloaderDualBoot
 		}
 
-		// Default to dual-boot.
-		o.ImageOptions.Bootloader = DiskImageBootloaderDualBoot
-		// add extra space for BIOS and BOOT partitions
-		o.ImageOptions.DiskSize += 1*1024*1024 + 1000*1024*1024
+		if o.ImageOptions.Bootloader == DiskImageBootloaderDualBoot {
+			// add extra space for BIOS and BOOT partitions
+			o.ImageOptions.DiskSize += 1*1024*1024 + 1000*1024*1024
+		}
+
+		if quirks.New(version).Uses2GBBoot() {
+			// increase size for 2GB boot
+			o.ImageOptions.DiskSize += 1000 * 1024 * 1024
+
+			if o.ImageOptions.Bootloader == DiskImageBootloaderDualBoot {
+				// bump once more, for dual boot
+				o.ImageOptions.DiskSize += 1000 * 1024 * 1024
+			}
+		}
 	}
 }

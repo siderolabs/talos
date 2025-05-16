@@ -175,3 +175,31 @@ func TestXFSMkfsConfigFile(t *testing.T) {
 		})
 	}
 }
+
+func TestUses2GBBoot(t *testing.T) {
+	for _, test := range []struct {
+		version string
+
+		expected bool
+	}{
+		{
+			version:  "1.6.3",
+			expected: false,
+		},
+		{
+			version:  "1.7.0",
+			expected: false,
+		},
+		{
+			expected: true,
+		},
+		{
+			version:  "1.11.0",
+			expected: true,
+		},
+	} {
+		t.Run(test.version, func(t *testing.T) {
+			assert.Equal(t, test.expected, quirks.New(test.version).Uses2GBBoot())
+		})
+	}
+}
