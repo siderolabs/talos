@@ -16,7 +16,7 @@ require (
 	github.com/siderolabs/go-retry v0.3.3
 	github.com/spf13/pflag v1.0.6
 	golang.org/x/sync v0.14.0
-	google.golang.org/api v0.232.0
+	google.golang.org/api v0.233.0
 )
 
 require (
