@@ -7,7 +7,7 @@ match_deps = "^github.com/((talos-systems|siderolabs)/[a-zA-Z0-9-]+)$"
 ignore_deps = ["github.com/coredns/coredns"]
 
 # previous release
-previous = "v1.10.0"
+previous = "v1.10.1"
 
 pre_release = false
 
@@ -15,6 +15,14 @@ preface = """
 """
 
 [notes]
+
+    [notes.updates]
+        title = "Component Updates"
+        description = """
+Linux: 6.12.27
+
+Talos is built with Go 1.24.3.
+"""
 
 [make_deps]
 
