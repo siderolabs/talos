@@ -322,6 +322,9 @@ talosctl wipe disk nvme0n1p2 --drop-partition
 The `nvme0n1p2` is the partition name, and it can be obtained from the `VolumeStatus` resource before the user volume is removed,
 or from the `DiscoveredVolume` resource any time later.
 
+Obviously the partition needs to be removed from the machine config prior issuing the wipe cmd otherwise it is still mounted and
+the wipe is going to fail with `blockdevice nvme0n1p2 is in use by volume`
+
 ## Common Configuration
 
 ### Disk Selector
