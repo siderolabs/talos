@@ -92,7 +92,7 @@ Download the `vmware.sh` script to your local machine.
 You can do this by issuing `curl -fsSL "https://raw.githubusercontent.com/siderolabs/talos/master/website/content/{{< version >}}/talos-guides/install/virtualized-platforms/vmware/vmware.sh" | sed s/latest/{{< release >}}/ > vmware.sh`.
 This script has default variables for things like Talos version and cluster name that may be interesting to tweak before deploying.
 
-The script downloads VMWare OVA with `talos-vmtoolsd` from [Image Factory](https://factory.talos.dev/?arch=amd64&cmdline-set=true&extensions=-&extensions=siderolabs%2Fvmtoolsd-guest-agent&platform=vmware&target=cloud&version={{< release >}}) extension pre-installed.
+The script downloads VMWare OVA with `talos-vmtoolsd` from [Image Factory](https://factory.talos.dev/?arch=amd64&cmdline-set=true&extensions=-&extensions=siderolabs%2Fvmtoolsd-guest-agent&platform=vmware&target=cloud&version={{< release_version_trimmed >}}) extension pre-installed.
 
 #### Import OVA
 
