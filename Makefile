@@ -27,7 +27,7 @@ EMBED_TARGET ?= embed
 TOOLS_PREFIX ?= ghcr.io/siderolabs/tools
 TOOLS ?= v1.11.0-alpha.0-1-ge35234b
 PKGS_PREFIX ?= ghcr.io/siderolabs
-PKGS ?= v1.11.0-alpha.0-14-g9f1ba1f
+PKGS ?= v1.11.0-alpha.0-17-g2563e47
 
 KRES_IMAGE ?= ghcr.io/siderolabs/kres:latest
 CONFORMANCE_IMAGE ?= ghcr.io/siderolabs/conform:latest
@@ -68,6 +68,7 @@ PKG_LVM2 ?= $(PKGS_PREFIX)/lvm2:$(PKGS)
 PKG_MTOOLS ?= $(PKGS_PREFIX)/mtools:$(PKGS)
 PKG_MUSL ?= $(PKGS_PREFIX)/musl:$(PKGS)
 PKG_OPENSSL ?= $(PKGS_PREFIX)/openssl:$(PKGS)
+PKG_OPEN_VMDK ?= $(PKGS_PREFIX)/open-vmdk:$(PKGS)
 PKG_PCRE2 ?= $(PKGS_PREFIX)/pcre2:$(PKGS)
 PKG_PIGZ ?= $(PKGS_PREFIX)/pigz:$(PKGS)
 PKG_QEMU_TOOLS ?= $(PKGS_PREFIX)/qemu-tools:$(PKGS)
@@ -249,6 +250,7 @@ COMMON_ARGS += --build-arg=PKG_LVM2=$(PKG_LVM2)
 COMMON_ARGS += --build-arg=PKG_MTOOLS=$(PKG_MTOOLS)
 COMMON_ARGS += --build-arg=PKG_MUSL=$(PKG_MUSL)
 COMMON_ARGS += --build-arg=PKG_OPENSSL=$(PKG_OPENSSL)
+COMMON_ARGS += --build-arg=PKG_OPEN_VMDK=$(PKG_OPEN_VMDK)
 COMMON_ARGS += --build-arg=PKG_PCRE2=$(PKG_PCRE2)
 COMMON_ARGS += --build-arg=PKG_PIGZ=$(PKG_PIGZ)
 COMMON_ARGS += --build-arg=PKG_QEMU_TOOLS=$(PKG_QEMU_TOOLS)

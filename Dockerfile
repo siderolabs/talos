@@ -46,6 +46,7 @@ ARG PKG_LVM2=scratch
 ARG PKG_MTOOLS=scratch
 ARG PKG_MUSL=scratch
 ARG PKG_OPENSSL=scratch
+ARG PKG_OPEN_VMDK=scratch
 ARG PKG_PCRE2=scratch
 ARG PKG_PIGZ=scratch
 ARG PKG_QEMU_TOOLS=scratch
@@ -188,6 +189,7 @@ FROM ${PKG_LIBURCU} AS pkg-liburcu
 FROM ${PKG_MTOOLS} AS pkg-mtools
 FROM ${PKG_MUSL} AS pkg-musl
 FROM ${PKG_OPENSSL} AS pkg-openssl
+FROM ${PKG_OPEN_VMDK} AS pkg-open-vmdk
 FROM ${PKG_PCRE2} AS pkg-pcre2
 FROM ${PKG_PIGZ} AS pkg-pigz
 FROM ${PKG_QEMU_TOOLS} AS pkg-qemu-tools
@@ -1012,6 +1014,7 @@ COPY --link --exclude=**/*.a --exclude=**/*.la  --exclude=usr/include --exclude=
 COPY --link --exclude=**/*.a --exclude=**/*.la  --exclude=usr/include --exclude=usr/lib/pkgconfig --from=pkg-libisofs / /
 COPY --link --from=pkg-mtools / /
 COPY --link --exclude=**/*.a --exclude=**/*.la  --exclude=usr/include --exclude=usr/lib/pkgconfig --exclude=usr/lib/cmake --from=pkg-openssl / /
+COPY --link --from=pkg-open-vmdk / /
 COPY --link --exclude=**/*.a --exclude=**/*.la  --exclude=usr/include --exclude=usr/lib/pkgconfig --from=pkg-pcre2 / /
 COPY --link --from=pkg-pigz / /
 COPY --link --from=pkg-qemu-tools / /
