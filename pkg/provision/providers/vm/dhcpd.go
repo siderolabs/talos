@@ -25,6 +25,7 @@ import (
 	"golang.org/x/sync/errgroup"
 
 	"github.com/siderolabs/talos/pkg/provision"
+	"github.com/siderolabs/talos/pkg/provision/providers/vm/internal/ethtool"
 )
 
 //nolint:gocyclo
@@ -224,6 +225,10 @@ func DHCPd(ifName string, ips []net.IP, statePath string) error {
 	iface, err := net.InterfaceByName(ifName)
 	if err != nil {
 		return fmt.Errorf("error looking up interface: %w", err)
+	}
+
+	if err := ethtool.TXOff(iface.Name); err != nil {
+		return fmt.Errorf("error disabling TX checksum offload: %w", err)
 	}
 
 	var eg errgroup.Group
