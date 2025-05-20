@@ -16,10 +16,10 @@ import (
 	"go.uber.org/zap"
 )
 
-type genericMergeFunc[T typed.DeepCopyable[T], E typed.Extension, R typed.Resource[T, E]] func(logger *zap.Logger, in safe.List[*R]) map[resource.ID]*T
+type genericMergeFunc[T typed.DeepCopyable[T], E typed.Extension] func(logger *zap.Logger, in safe.List[*typed.Resource[T, E]]) map[resource.ID]*T
 
 // GenericMergeController initializes a generic merge controller for network resources.
-func GenericMergeController[T typed.DeepCopyable[T], E typed.Extension](namespaceIn, namespaceOut resource.Namespace, mergeFunc genericMergeFunc[T, E, typed.Resource[T, E]]) controller.Controller {
+func GenericMergeController[T typed.DeepCopyable[T], E typed.Extension](namespaceIn, namespaceOut resource.Namespace, mergeFunc genericMergeFunc[T, E]) controller.Controller {
 	var zeroE E
 
 	controllerName := strings.ReplaceAll(zeroE.ResourceDefinition().Type, "Spec", "MergeController")
@@ -38,7 +38,7 @@ type genericMergeController[T typed.DeepCopyable[T], E typed.Extension] struct {
 	resourceType   resource.Type
 	namespaceIn    resource.Namespace
 	namespaceOut   resource.Namespace
-	mergeFunc      genericMergeFunc[T, E, typed.Resource[T, E]]
+	mergeFunc      genericMergeFunc[T, E]
 }
 
 func (ctrl *genericMergeController[T, E]) Name() string {

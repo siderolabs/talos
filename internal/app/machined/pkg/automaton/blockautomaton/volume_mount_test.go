@@ -7,7 +7,6 @@ package blockautomaton_test
 import (
 	"context"
 	"errors"
-	"fmt"
 	"testing"
 	"time"
 
@@ -17,6 +16,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/cosi-project/runtime/pkg/state/impl/inmem"
 	"github.com/cosi-project/runtime/pkg/state/impl/namespaced"
+	"github.com/cosi-project/runtime/pkg/state/owned"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
@@ -26,67 +26,6 @@ import (
 	"github.com/siderolabs/talos/internal/app/machined/pkg/automaton/blockautomaton"
 	"github.com/siderolabs/talos/pkg/machinery/resources/block"
 )
-
-type stateReaderWriterAdapter struct {
-	state.State
-
-	owner string
-}
-
-func (s stateReaderWriterAdapter) Create(ctx context.Context, r resource.Resource) error {
-	return s.State.Create(ctx, r)
-}
-
-func (s stateReaderWriterAdapter) Destroy(ctx context.Context, r resource.Pointer, _ ...controller.DeleteOption) error {
-	return s.State.Destroy(ctx, r, state.WithDestroyOwner(s.owner))
-}
-
-func (s stateReaderWriterAdapter) ModifyWithResult(
-	ctx context.Context, emptyResource resource.Resource, updateFunc func(resource.Resource) error, options ...controller.ModifyOption,
-) (resource.Resource, error) {
-	_, err := s.State.Get(ctx, emptyResource.Metadata())
-	if err != nil {
-		if state.IsNotFoundError(err) {
-			err = updateFunc(emptyResource)
-			if err != nil {
-				return nil, err
-			}
-
-			if err = s.State.Create(ctx, emptyResource, state.WithCreateOwner(s.owner)); err != nil {
-				return nil, err
-			}
-
-			return emptyResource, nil
-		}
-
-		return nil, fmt.Errorf("error querying current object state: %w", err)
-	}
-
-	updateOptions := []state.UpdateOption{state.WithUpdateOwner(s.owner)}
-
-	modifyOptions := controller.ToModifyOptions(options...)
-	if modifyOptions.ExpectedPhase != nil {
-		updateOptions = append(updateOptions, state.WithExpectedPhase(*modifyOptions.ExpectedPhase))
-	} else {
-		updateOptions = append(updateOptions, state.WithExpectedPhaseAny())
-	}
-
-	return s.State.UpdateWithConflicts(ctx, emptyResource.Metadata(), updateFunc, updateOptions...)
-}
-
-func (s stateReaderWriterAdapter) Modify(ctx context.Context, emptyResource resource.Resource, updateFunc func(resource.Resource) error, options ...controller.ModifyOption) error {
-	_, err := s.ModifyWithResult(ctx, emptyResource, updateFunc, options...)
-
-	return err
-}
-
-func (s stateReaderWriterAdapter) Teardown(ctx context.Context, r resource.Pointer, _ ...controller.DeleteOption) (bool, error) {
-	return s.State.Teardown(ctx, r, state.WithTeardownOwner(s.owner))
-}
-
-func (s stateReaderWriterAdapter) Update(ctx context.Context, r resource.Resource) error {
-	return s.State.Update(ctx, r)
-}
 
 func TestVolumeMounter(t *testing.T) {
 	t.Parallel()
@@ -112,7 +51,7 @@ func TestVolumeMounter(t *testing.T) {
 
 	const mountID = "requester-volumeID"
 
-	adapter := stateReaderWriterAdapter{st, "automaton"}
+	adapter := owned.New(st, "automaton")
 
 	// 1st run, should create the volume mount request
 	require.NoError(t, volumeMounter.Run(ctx, adapter, logger))
