@@ -796,7 +796,7 @@ const (
 	CgroupApidReservedMemory = 16 * 1024 * 1024
 
 	// CgroupApidMaxMemory is the hard memory limit for the apid process.
-	CgroupApidMaxMemory = 40 * 1024 * 1024
+	CgroupApidMaxMemory = 128 * 1024 * 1024
 
 	// CgroupApidMillicores is the CPU weight for the apid process.
 	CgroupApidMillicores = 500
