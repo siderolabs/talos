@@ -28,7 +28,7 @@ Talos Linux has no SSH access: `talosctl` is the tool you use to interact with t
 You can download `talosctl` on MacOS and Linux via:
 
 ```bash
-brew install siderolabs/tap/talosctl
+brew install talosctl
 ```
 
 For manual installation and other platforms please see the [talosctl installation guide]({{< relref "../talos-guides/install/talosctl.md" >}}).
