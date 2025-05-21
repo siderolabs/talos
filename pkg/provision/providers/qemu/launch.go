@@ -18,11 +18,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/containernetworking/cni/libcni"
 	"github.com/google/uuid"
 	"github.com/siderolabs/go-blockdevice/v2/blkid"
 
-	"github.com/siderolabs/talos/pkg/provision"
 	"github.com/siderolabs/talos/pkg/provision/providers/vm"
 )
 
@@ -57,18 +55,6 @@ type LaunchConfig struct {
 	// Talos config
 	Config string
 
-	// Network
-	BridgeName        string
-	NetworkConfig     *libcni.NetworkConfigList
-	CNI               provision.CNIConfig
-	IPs               []netip.Addr
-	CIDRs             []netip.Prefix
-	NoMasqueradeCIDRs []netip.Prefix
-	Hostname          string
-	GatewayAddrs      []netip.Addr
-	MTU               int
-	Nameservers       []netip.Addr
-
 	// PXE
 	TFTPServer       string
 	BootFilename     string
@@ -81,16 +67,26 @@ type LaunchConfig struct {
 	sdStubExtraCmdline       string
 	sdStubExtraCmdlineConfig string
 
-	// filled by CNI invocation
-	tapName string
-	VMMac   string
-	nsPath  string
+	// platform specific Network configuration
+	Network networkConfig
+
+	VMMac string
 
 	// signals
 	c chan os.Signal
 
 	// controller
 	controller *Controller
+}
+
+type networkConfigBase struct {
+	BridgeName   string
+	IPs          []netip.Addr
+	CIDRs        []netip.Prefix
+	GatewayAddrs []netip.Addr
+	Hostname     string
+	MTU          int
+	Nameservers  []netip.Addr
 }
 
 type tpmConfig struct {
@@ -121,7 +117,7 @@ func launchVM(config *LaunchConfig) error {
 		"-smp", fmt.Sprintf("cpus=%d", config.VCPUCount),
 		"-cpu", cpuArg,
 		"-nographic",
-		"-netdev", fmt.Sprintf("tap,id=net0,ifname=%s,script=no,downscript=no", config.tapName),
+		"-netdev", getNetdevParams(config.Network, "net0"),
 		"-device", fmt.Sprintf("virtio-net-pci,netdev=net0,mac=%s", config.VMMac),
 		// TODO: uncomment the following line to get another eth interface not connected to anything
 		// "-nic", "tap,model=virtio-net-pci",
@@ -131,19 +127,18 @@ func launchVM(config *LaunchConfig) error {
 		"-no-reboot",
 		"-boot", fmt.Sprintf("order=%s,reboot-timeout=5000", bootOrder),
 		"-smbios", fmt.Sprintf("type=1,uuid=%s", config.NodeUUID),
-		"-chardev", fmt.Sprintf("socket,path=%s/%s.sock,server=on,wait=off,id=qga0", config.StatePath, config.Hostname),
+		"-chardev", fmt.Sprintf("socket,path=%s/%s.sock,server=on,wait=off,id=qga0", config.StatePath, config.Network.Hostname),
 		"-device", "virtio-serial",
 		"-device", "virtserialport,chardev=qga0,name=org.qemu.guest_agent.0",
 		"-device", "i6300esb,id=watchdog0",
-		"-watchdog-action",
-		"pause",
+		"-watchdog-action", "pause",
 	}
 
 	if config.WithDebugShell {
 		args = append(
 			args,
 			"-serial",
-			fmt.Sprintf("unix:%s/%s.serial,server,nowait", config.StatePath, config.Hostname),
+			fmt.Sprintf("unix:%s/%s.serial,server,nowait", config.StatePath, config.Network.Hostname),
 		)
 	}
 
@@ -392,6 +387,8 @@ func launchVM(config *LaunchConfig) error {
 // logfile in state directory.
 //
 // When signals SIGINT, SIGTERM are received, control process stops qemu and exits.
+//
+//nolint:gocyclo
 func Launch() error {
 	var config LaunchConfig
 
@@ -417,7 +414,9 @@ func Launch() error {
 	httpServer.Serve()
 	defer httpServer.Shutdown(ctx) //nolint:errcheck
 
-	patchKernelArgs(&config, httpServer.GetAddr().String())
+	if err := patchKernelArgs(&config, httpServer.GetAddr()); err != nil {
+		return err
+	}
 
 	return withNetworkContext(ctx, &config, func(config *LaunchConfig) error {
 		err = dumpIpam(*config)
@@ -444,13 +443,20 @@ func Launch() error {
 	})
 }
 
-func patchKernelArgs(config *LaunchConfig, httpServerAddr string) {
+func patchKernelArgs(config *LaunchConfig, httpServerAddr net.Addr) error {
+	configServerAddr, err := getConfigServerAddr(httpServerAddr, *config)
+	if err != nil {
+		return err
+	}
+
 	config.sdStubExtraCmdline = "console=ttyS0"
 
 	if strings.Contains(config.KernelArgs, "{TALOS_CONFIG_URL}") {
-		config.KernelArgs = strings.ReplaceAll(config.KernelArgs, "{TALOS_CONFIG_URL}", fmt.Sprintf("http://%s/config.yaml", httpServerAddr))
+		config.KernelArgs = strings.ReplaceAll(config.KernelArgs, "{TALOS_CONFIG_URL}", fmt.Sprintf("http://%s/config.yaml", configServerAddr))
 		config.sdStubExtraCmdlineConfig = fmt.Sprintf(" talos.config=http://%s/config.yaml", httpServerAddr)
 	}
+
+	return nil
 }
 
 func waitForFileToExist(path string, timeout time.Duration) error {
@@ -472,30 +478,30 @@ func waitForFileToExist(path string, timeout time.Duration) error {
 }
 
 func dumpIpam(config LaunchConfig) error {
-	for j := range config.CIDRs {
-		nameservers := make([]netip.Addr, 0, len(config.Nameservers))
+	for j := range config.Network.CIDRs {
+		nameservers := make([]netip.Addr, 0, len(config.Network.Nameservers))
 
 		// filter nameservers by IPv4/IPv6 matching IPs
-		for i := range config.Nameservers {
-			if config.IPs[j].Is6() {
-				if config.Nameservers[i].Is6() {
-					nameservers = append(nameservers, config.Nameservers[i])
+		for i := range config.Network.Nameservers {
+			if config.Network.IPs[j].Is6() {
+				if config.Network.Nameservers[i].Is6() {
+					nameservers = append(nameservers, config.Network.Nameservers[i])
 				}
 			} else {
-				if config.Nameservers[i].Is4() {
-					nameservers = append(nameservers, config.Nameservers[i])
+				if config.Network.Nameservers[i].Is4() {
+					nameservers = append(nameservers, config.Network.Nameservers[i])
 				}
 			}
 		}
 
 		// dump node IP/mac/hostname for dhcp
 		if err := vm.DumpIPAMRecord(config.StatePath, vm.IPAMRecord{
-			IP:               config.IPs[j],
-			Netmask:          byte(config.CIDRs[j].Bits()),
+			IP:               config.Network.IPs[j],
+			Netmask:          byte(config.Network.CIDRs[j].Bits()),
 			MAC:              config.VMMac,
-			Hostname:         config.Hostname,
-			Gateway:          config.GatewayAddrs[j],
-			MTU:              config.MTU,
+			Hostname:         config.Network.Hostname,
+			Gateway:          config.Network.GatewayAddrs[j],
+			MTU:              config.Network.MTU,
 			Nameservers:      nameservers,
 			TFTPServer:       config.TFTPServer,
 			IPXEBootFilename: config.IPXEBootFileName,

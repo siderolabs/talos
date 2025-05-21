@@ -9,6 +9,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"net"
 	"net/netip"
 	"os/exec"
 	"path/filepath"
@@ -26,8 +27,40 @@ import (
 	"github.com/siderolabs/gen/xslices"
 	sideronet "github.com/siderolabs/net"
 
+	"github.com/siderolabs/talos/pkg/provision"
 	"github.com/siderolabs/talos/pkg/provision/internal/cniutils"
+	"github.com/siderolabs/talos/pkg/provision/providers/vm"
 )
+
+type networkConfig struct {
+	networkConfigBase
+
+	// TODO: rename field to cniNetworkConfig
+	CniNetworkConfig  *libcni.NetworkConfigList
+	CNI               provision.CNIConfig
+	NoMasqueradeCIDRs []netip.Prefix
+
+	// filled by CNI invocation
+	tapName string
+	ns      ns.NetNS
+}
+
+func getLaunchNetworkConfig(state *vm.State, clusterReq provision.ClusterRequest, nodeReq provision.NodeRequest) networkConfig {
+	return networkConfig{
+		networkConfigBase: getLaunchNetworkConfigBase(state, clusterReq, nodeReq),
+		CniNetworkConfig:  state.VMCNIConfig,
+		CNI:               clusterReq.Network.CNI,
+		NoMasqueradeCIDRs: clusterReq.Network.NoMasqueradeCIDRs,
+	}
+}
+
+func getNetdevParams(networkConfig networkConfig, id string) string {
+	return fmt.Sprintf("tap,id=%s,ifname=%s,script=no,downscript=no", id, networkConfig.tapName)
+}
+
+func getConfigServerAddr(hostAddrs net.Addr, _ LaunchConfig) (net.Addr, error) {
+	return hostAddrs, nil
+}
 
 // withCNIOperationLocked ensures that CNI operations don't run concurrently.
 //
@@ -70,7 +103,7 @@ func withNetworkContext(ctx context.Context, config *LaunchConfig, f func(config
 	// random ID for the CNI, maps to single VM
 	containerID := uuid.New().String()
 
-	cniConfig := libcni.NewCNIConfigWithCacheDir(config.CNI.BinPath, config.CNI.CacheDir, nil)
+	cniConfig := libcni.NewCNIConfigWithCacheDir(config.Network.CNI.BinPath, config.Network.CNI.CacheDir, nil)
 
 	// create a network namespace
 	ns, err := testutils.NewNS()
@@ -83,12 +116,12 @@ func withNetworkContext(ctx context.Context, config *LaunchConfig, f func(config
 		testutils.UnmountNS(ns) //nolint:errcheck
 	}()
 
-	ips := make([]string, len(config.IPs))
+	ips := make([]string, len(config.Network.IPs))
 	for j := range ips {
-		ips[j] = sideronet.FormatCIDR(config.IPs[j], config.CIDRs[j])
+		ips[j] = sideronet.FormatCIDR(config.Network.IPs[j], config.Network.CIDRs[j])
 	}
 
-	gatewayAddrs := xslices.Map(config.GatewayAddrs, netip.Addr.String)
+	gatewayAddrs := xslices.Map(config.Network.GatewayAddrs, netip.Addr.String)
 
 	runtimeConf := libcni.RuntimeConf{
 		ContainerID: containerID,
@@ -105,7 +138,7 @@ func withNetworkContext(ctx context.Context, config *LaunchConfig, f func(config
 	err = withCNIOperationLockedNoResult(
 		config,
 		func() error {
-			return cniConfig.DelNetworkList(ctx, config.NetworkConfig, &runtimeConf)
+			return cniConfig.DelNetworkList(ctx, config.Network.CniNetworkConfig, &runtimeConf)
 		},
 	)
 	if err != nil {
@@ -115,7 +148,7 @@ func withNetworkContext(ctx context.Context, config *LaunchConfig, f func(config
 	res, err := withCNIOperationLocked(
 		config,
 		func() (types.Result, error) {
-			return cniConfig.AddNetworkList(ctx, config.NetworkConfig, &runtimeConf)
+			return cniConfig.AddNetworkList(ctx, config.Network.CniNetworkConfig, &runtimeConf)
 		},
 	)
 	if err != nil {
@@ -126,7 +159,7 @@ func withNetworkContext(ctx context.Context, config *LaunchConfig, f func(config
 		if e := withCNIOperationLockedNoResult(
 			config,
 			func() error {
-				return cniConfig.DelNetworkList(ctx, config.NetworkConfig, &runtimeConf)
+				return cniConfig.DelNetworkList(ctx, config.Network.CniNetworkConfig, &runtimeConf)
 			},
 		); e != nil {
 			log.Printf("error cleaning up CNI: %s", e)
@@ -145,7 +178,7 @@ func withNetworkContext(ctx context.Context, config *LaunchConfig, f func(config
 				"that supports automatic VM network configuration such as tc-redirect-tap")
 	}
 
-	cniChain := utils.FormatChainName(config.NetworkConfig.Name, containerID)
+	cniChain := utils.FormatChainName(config.Network.CniNetworkConfig.Name, containerID)
 
 	ipt, err := iptables.New()
 	if err != nil {
@@ -159,21 +192,21 @@ func withNetworkContext(ctx context.Context, config *LaunchConfig, f func(config
 		return fmt.Errorf("failed to insert iptables rule to allow broadcast traffic: %w", err)
 	}
 
-	for _, cidr := range config.NoMasqueradeCIDRs {
+	for _, cidr := range config.Network.NoMasqueradeCIDRs {
 		if err = ipt.InsertUnique("nat", cniChain, 1, "--destination", cidr.String(), "-j", "ACCEPT"); err != nil {
 			return fmt.Errorf("failed to insert iptables rule to allow non-masquerade traffic to cidr %q: %w", cidr.String(), err)
 		}
 	}
 
-	config.tapName = tapIface.Name
+	config.Network.tapName = tapIface.Name
 	config.VMMac = vmIface.Mac
-	config.nsPath = ns.Path()
+	config.Network.ns = ns
 
 	return f(config)
 }
 
 func startQemuCmd(config *LaunchConfig, cmd *exec.Cmd) error {
-	if err := ns.WithNetNSPath(config.nsPath, func(_ ns.NetNS) error {
+	if err := ns.WithNetNSPath(config.Network.ns.Path(), func(_ ns.NetNS) error {
 		return cmd.Start()
 	}); err != nil {
 		return err
