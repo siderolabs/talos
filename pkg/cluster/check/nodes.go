@@ -13,7 +13,9 @@ import (
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/dustin/go-humanize"
 	"github.com/hashicorp/go-multierror"
+	"google.golang.org/grpc/codes"
 
+	"github.com/siderolabs/talos/pkg/conditions"
 	"github.com/siderolabs/talos/pkg/machinery/client"
 	"github.com/siderolabs/talos/pkg/machinery/config/machine"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
@@ -130,6 +132,11 @@ func AllNodesDiskSizes(ctx context.Context, cluster ClusterInfo) error {
 	for _, nodeIP := range nodesIP {
 		vs, err := safe.StateGetByID[*block.VolumeStatus](client.WithNode(ctx, nodeIP), cl.COSI, constants.EphemeralPartitionLabel)
 		if err != nil {
+			if client.StatusCode(err) == codes.PermissionDenied {
+				// old Talos versions don't support this resource
+				return conditions.ErrSkipAssertion
+			}
+
 			resultErr = multierror.Append(resultErr, fmt.Errorf("error getting volume status for node %q: %w", nodeIP, err))
 
 			continue
