@@ -145,7 +145,7 @@ require (
 	github.com/siderolabs/gen v0.8.1
 	github.com/siderolabs/go-api-signature v0.3.6
 	github.com/siderolabs/go-blockdevice v0.4.8
-	github.com/siderolabs/go-blockdevice/v2 v2.0.16
+	github.com/siderolabs/go-blockdevice/v2 v2.0.17
 	github.com/siderolabs/go-circular v0.2.3
 	github.com/siderolabs/go-cmd v0.1.3
 	github.com/siderolabs/go-copy v0.1.0

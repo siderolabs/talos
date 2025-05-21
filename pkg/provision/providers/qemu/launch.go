@@ -20,6 +20,7 @@ import (
 
 	"github.com/containernetworking/cni/libcni"
 	"github.com/google/uuid"
+	"github.com/siderolabs/go-blockdevice/v2/blkid"
 
 	"github.com/siderolabs/talos/pkg/provision"
 	"github.com/siderolabs/talos/pkg/provision/providers/vm"
@@ -504,4 +505,13 @@ func dumpIpam(config LaunchConfig) error {
 	}
 
 	return nil
+}
+
+func checkPartitions(config *LaunchConfig) (bool, error) {
+	info, err := blkid.ProbePath(config.DiskPaths[0], blkid.WithSectorSize(config.DiskBlockSizes[0]))
+	if err != nil {
+		return false, fmt.Errorf("error probing disk: %w", err)
+	}
+
+	return info.Name == "gpt" && len(info.Parts) > 0, nil
 }

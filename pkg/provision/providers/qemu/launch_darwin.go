@@ -14,10 +14,6 @@ func withNetworkContext(ctx context.Context, config *LaunchConfig, f func(config
 	return f(config)
 }
 
-func checkPartitions(config *LaunchConfig) (bool, error) {
-	panic("not implemented")
-}
-
 // startQemuCmd on darwin just runs cmd.Start.
 func startQemuCmd(_ *LaunchConfig, cmd *exec.Cmd) error {
 	return cmd.Start()
