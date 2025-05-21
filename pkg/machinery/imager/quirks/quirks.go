@@ -223,6 +223,18 @@ func (q Quirks) SupportsUnifiedInstaller() bool {
 	return q.v.GTE(minTalosVersionUnifiedInstaller)
 }
 
+var minTalosVersionBoot2G = semver.MustParse("1.11.0")
+
+// Uses2GBBoot returns true if the Talos version uses 2 GB boot partition.
+func (q Quirks) Uses2GBBoot() bool {
+	// if the version doesn't parse, we assume it's latest Talos
+	if q.v == nil {
+		return true
+	}
+
+	return q.v.GTE(minTalosVersionBoot2G)
+}
+
 // XFSMkfsConfig returns the mkfs.xfs config for the given Talos version.
 func (q Quirks) XFSMkfsConfig() string {
 	switch version := q.v; {
