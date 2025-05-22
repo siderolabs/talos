@@ -708,6 +708,7 @@ reproducibility-test:
 	@$(MAKE) reproducibility-test-local-initramfs
 	@$(MAKE) reproducibility-test-docker-installer-base INSTALLER_ARCH=targetarch PLATFORM=$(OPERATING_SYSTEM)/$(ARCH)
 	@$(MAKE) reproducibility-test-docker-talos reproducibility-test-docker-imager reproducibility-test-docker-talosctl PLATFORM=$(OPERATING_SYSTEM)/$(ARCH)
+	@$(MAKE) reproducibility-test-iso
 
 reproducibility-test-docker-%:
 	@rm -rf _out1/ _out2/
@@ -724,6 +725,13 @@ reproducibility-test-local-%:
 	@$(MAKE) local-$* DEST=_out2/ TARGET_ARGS="--no-cache"
 	@find _out1/ -type f | xargs -IFILE diffoscope FILE `echo FILE | sed 's/_out1/_out2/'`
 	@rm -rf _out1/ _out2/
+
+reproducibility-test-iso:
+	@$(MAKE) iso
+	cp $(ARTIFACTS)/metal-amd64.iso $(ARTIFACTS)/metal-amd64.iso.orig
+	@$(MAKE) iso
+	@diffoscope $(ARTIFACTS)/metal-amd64.iso $(ARTIFACTS)/metal-amd64.iso.orig
+	@rm -f $(ARTIFACTS)/metal-amd64.iso.orig
 
 .PHONY: ci-temp-release-tag
 ci-temp-release-tag: ## Generates a temporary release tag for CI run.
