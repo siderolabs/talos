@@ -86,18 +86,19 @@ func (p *provisioner) Create(ctx context.Context, request provision.ClusterReque
 		}
 	}
 
-	fmt.Fprintln(options.LogWriter, "creating dhcpd")
-
-	if err = p.CreateDHCPd(state, request); err != nil {
-		return nil, fmt.Errorf("error creating dhcpd: %w", err)
-	}
-
 	var nodeInfo []provision.NodeInfo
 
 	fmt.Fprintln(options.LogWriter, "creating controlplane nodes")
 
 	if nodeInfo, err = p.createNodes(state, request, request.Nodes.ControlPlaneNodes(), &options); err != nil {
 		return nil, err
+	}
+
+	// On darwin, qemu creates the bridge interface to which the dhcpd server is attached to, so at least one machine has to be created first.
+	fmt.Fprintln(options.LogWriter, "creating dhcpd")
+
+	if err = p.CreateDHCPd(ctx, state, request); err != nil {
+		return nil, fmt.Errorf("error creating dhcpd: %w", err)
 	}
 
 	fmt.Fprintln(options.LogWriter, "creating worker nodes")

@@ -275,8 +275,8 @@ const (
 	dhcpLog = "dhcpd.log"
 )
 
-// CreateDHCPd creates DHCPd.
-func (p *Provisioner) CreateDHCPd(state *State, clusterReq provision.ClusterRequest) error {
+// startDHCPd starts the DHCPd server.
+func (p *Provisioner) startDHCPd(state *State, clusterReq provision.ClusterRequest) error {
 	pidPath := state.GetRelativePath(dhcpPid)
 
 	logFile, err := os.OpenFile(state.GetRelativePath(dhcpLog), os.O_APPEND|os.O_CREATE|os.O_RDWR, 0o666)
