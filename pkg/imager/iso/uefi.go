@@ -171,6 +171,11 @@ func (options Options) CreateUEFI(printf func(string, ...any)) (Generator, error
 		}
 	}
 
+	// fixup directory timestamps recursively
+	if err := utils.TouchFiles(printf, options.ScratchDir); err != nil {
+		return nil, err
+	}
+
 	if _, err := cmd.Run(
 		"mcopy",
 		"-s", // recursive
@@ -183,11 +188,6 @@ func (options Options) CreateUEFI(printf func(string, ...any)) (Generator, error
 		filepath.Join(options.ScratchDir, "loader"),
 		"::",
 	); err != nil {
-		return nil, err
-	}
-
-	// fixup directory timestamps recursively
-	if err := utils.TouchFiles(printf, options.ScratchDir); err != nil {
 		return nil, err
 	}
 
