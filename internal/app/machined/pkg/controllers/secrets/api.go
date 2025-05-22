@@ -345,7 +345,18 @@ func (ctrl *APIController) generateWorker(ctx context.Context, r controller.Runt
 
 	defer remoteGen.Close() //nolint:errcheck
 
-	serverCSR, serverCert, err := x509.NewEd25519CSRAndIdentity(
+	// use the last CA in the list of accepted CAs as a template
+	if len(rootSpec.AcceptedCAs) == 0 {
+		return errors.New("no accepted CAs")
+	}
+
+	acceptedCA, err := rootSpec.AcceptedCAs[len(rootSpec.AcceptedCAs)-1].GetCert()
+	if err != nil {
+		return fmt.Errorf("failed to parse CA certificate: %w", err)
+	}
+
+	serverCSR, serverCert, err := x509.NewCSRAndIdentityFromCA(
+		acceptedCA,
 		x509.IPAddresses(certSANs.StdIPs()),
 		x509.DNSNames(certSANs.DNSNames),
 		x509.CommonName(certSANs.FQDN),
