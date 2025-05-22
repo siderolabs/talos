@@ -329,7 +329,7 @@ The `<cluster-name>` you chose above will be used as the context name.
 
 ## Kubernetes Bootstrap
 
-Bootstrapping your Kubernetes cluster by simply calling the `bootstrap` command against any of your control plane nodes (or the loadbalancer, if used for the Talos API endpoint).:
+Bootstrapping your Kubernetes cluster by simply calling the `bootstrap` command against any one of your control plane nodes (or the loadbalancer, if used for the Talos API endpoint).:
 
 ```sh
   talosctl bootstrap --nodes 192.168.0.2
