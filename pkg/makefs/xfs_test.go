@@ -104,7 +104,7 @@ realtime =none                   extsz=4096   blocks=0, rtextents=0
 
 			var stdout bytes.Buffer
 
-			cmd := exec.Command("xfs_info", tempFile)
+			cmd := exec.Command("xfs_db", "-p", "xfs_info", "-c", "info", tempFile)
 			cmd.Stdout = &stdout
 			require.NoError(t, cmd.Run())
 
