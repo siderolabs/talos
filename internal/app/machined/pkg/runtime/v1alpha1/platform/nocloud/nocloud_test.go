@@ -189,3 +189,57 @@ func TestMedatada(t *testing.T) {
 		InternalDNS: "talos-worker-3",
 	}, md)
 }
+
+func TestExtractURL(t *testing.T) {
+	t.Parallel()
+
+	for _, test := range []struct {
+		name     string
+		userdata []byte
+
+		expectedURL   string
+		expectedError string
+	}{
+		{
+			name: "valid include userdata URL",
+			userdata: []byte(`https://metadataserver/userdata
+`),
+			expectedURL: "https://metadataserver/userdata",
+		},
+		{
+			name: "multiple URLs is invalid",
+			userdata: []byte(`
+https://metadataserver1/userdata
+https://metadataserver2/userdata
+https://metadataserver3/userdata
+`),
+			expectedError: "multiple #include URLs found",
+		},
+		{
+			name: "invalid URL",
+			userdata: []byte(`
+:/invalidurl/userdata`),
+			expectedError: "missing protocol scheme",
+		},
+		{
+			name: "no URL found",
+			userdata: []byte(`
+`),
+			expectedError: "no #include URL found in nocloud configuration",
+		},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+
+			u, err := nocloud.ExtractIncludeURL(test.userdata)
+
+			if test.expectedError != "" {
+				require.Error(t, err)
+				require.ErrorContains(t, err, test.expectedError)
+			} else {
+				require.NoError(t, err)
+				assert.Equal(t, test.expectedURL, u.String())
+			}
+		})
+	}
+}

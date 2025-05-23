@@ -96,8 +96,15 @@ func (n *Nocloud) Configuration(ctx context.Context, r state.State) ([]byte, err
 		return nil, err
 	}
 
-	if bytes.HasPrefix(machineConfigDl, []byte("#cloud-config")) {
+	firstLine, rest, _ := bytes.Cut(machineConfigDl, []byte("\n"))
+	firstLine = bytes.TrimSpace(firstLine)
+
+	switch {
+	case bytes.Equal(firstLine, []byte("#cloud-config")):
+		// ignore cloud-config, Talos does not support it
 		return nil, errors.ErrNoConfigSource
+	case bytes.Equal(firstLine, []byte("#include")):
+		return n.FetchInclude(ctx, rest, r)
 	}
 
 	return machineConfigDl, nil
