@@ -172,3 +172,72 @@ func TestParseMetadata(t *testing.T) {
 		})
 	}
 }
+
+func TestExtractURL(t *testing.T) {
+	u, err := nocloud.ExtractURL([]byte(`#include
+https://metadataserver/userdata`))
+	assert.NoError(t, err)
+	assert.Equal(t, u.String(), "https://metadataserver/userdata")
+}
+
+func TestEventConfig(t *testing.T) {
+	type test struct {
+		name        string
+		userdata    []byte
+		expectedURL string
+		errExpected bool
+	}
+	tests := []test{
+		{
+			name: "valid include userdata URL",
+			userdata: []byte(`#include
+			https://metadataserver/userdata
+`),
+			expectedURL: "https://metadataserver/userdata",
+			errExpected: false,
+		},
+		{
+			name: "multiple URL fetches first URL and ignore the rest",
+			userdata: []byte(`#include
+https://metadataserver1/userdata
+https://metadataserver2/userdata
+https://metadataserver3/userdata
+`),
+			expectedURL: "https://metadataserver1/userdata",
+			errExpected: false,
+		},
+		{
+			name: "invalid URL",
+			userdata: []byte(`#include
+:/invalidurl/userdata`),
+			expectedURL: "",
+			errExpected: true,
+		},
+		{
+			name:        "no URL found",
+			userdata:    []byte(`#include`),
+			expectedURL: "",
+			errExpected: true,
+		},
+		{
+			name: "invalid URL",
+			userdata: []byte(`#include
+:/invalidurl/userdata`),
+			expectedURL: "",
+			errExpected: true,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			u, err := nocloud.ExtractURL(tc.userdata)
+			if tc.errExpected {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+				assert.Equal(t, u.String(), tc.expectedURL)
+			}
+		},
+		)
+	}
+}

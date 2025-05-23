@@ -6,6 +6,8 @@
 package nocloud
 
 import (
+	"bufio"
+	"bytes"
 	"context"
 	"fmt"
 	"log"
@@ -932,4 +934,45 @@ func withDefault[T comparable](v T, defaultValue T) T {
 	}
 
 	return v
+}
+
+func (n *Nocloud) fromInclude(ctx context.Context, b []byte, r state.State) ([]byte, error) {
+	u, err := ExtractURL(b)
+	if err != nil {
+		return nil, err
+	}
+
+	log.Printf("fetching the userdata config from: %q", u.String())
+
+	if err = netutils.Wait(ctx, r); err != nil {
+		return nil, err
+	}
+
+	machineConfig, err := download.Download(ctx, u.String(), download.WithErrorOnNotFound(errors.ErrNoConfigSource),
+		download.WithErrorOnEmptyResponse(errors.ErrNoConfigSource))
+
+	return machineConfig, err
+}
+
+func ExtractURL(b []byte) (*url.URL, error) {
+	s := bufio.NewScanner(bytes.NewReader(b))
+	urlPath := ""
+	l := 0
+	for s.Scan() {
+		l = l + 1
+		if l == 2 {
+			urlPath = s.Text()
+			break
+		}
+	}
+
+	if err := s.Err(); err != nil {
+		return nil, err
+	}
+
+	u, err := url.ParseRequestURI(urlPath)
+	if err != nil {
+		return nil, err
+	}
+	return u, nil
 }
