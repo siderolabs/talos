@@ -8,7 +8,7 @@ import (
 	"context"
 	"fmt"
 	"path/filepath"
-	stdruntime "runtime"
+	"runtime"
 	"time"
 
 	"github.com/docker/cli/opts"
@@ -238,6 +238,28 @@ func init() {
 		diskEncryptionKeyTypesFlag    = "disk-encryption-key-types"
 	)
 
+	unImplementedQemuFlagsDarwin := []string{
+		tpmEnabledFlag,
+		tpm2EnabledFlag,
+		networkNoMasqueradeCIDRsFlag,
+		cniBinPathFlag,
+		cniConfDirFlag,
+		cniCacheDirFlag,
+		cniBundleURLFlag,
+		badRTCFlag,
+		networkChaosFlag,
+		jitterFlag,
+		latencyFlag,
+		packetLossFlag,
+		packetReorderFlag,
+		packetCorruptFlag,
+		bandwidthFlag,
+
+		// The following might work but need testing first.
+		withSiderolinkAgentFlag,
+		configInjectionMethodFlag,
+	}
+
 	ops := &createOps{
 		common: commonOps{},
 		docker: dockerOps{},
@@ -262,7 +284,7 @@ func init() {
 				if err := providers.IsValidProvider(ops.common.rootOps.ProvisionerName); err != nil {
 					return err
 				}
-				if err := validateProviderFlags(*ops, flags); err != nil {
+				if err := validateProviderFlags(*ops, flags, unImplementedQemuFlagsDarwin); err != nil {
 					return err
 				}
 
@@ -341,7 +363,7 @@ func init() {
 	flags.qemu.IntVar(&ops.qemu.extraDisks, extraDisksFlag, 0, "number of extra disks to create for each worker VM")
 	flags.qemu.StringSliceVar(&ops.qemu.extraDisksDrivers, "extra-disks-drivers", nil, "driver for each extra disk (virtio, ide, ahci, scsi, nvme, megaraid)")
 	flags.qemu.IntVar(&ops.qemu.extraDiskSize, extraDiskSizeFlag, 5*1024, "default limit on disk size in MB (each VM)")
-	flags.qemu.StringVar(&ops.qemu.targetArch, targetArchFlag, stdruntime.GOARCH, "cluster architecture")
+	flags.qemu.StringVar(&ops.qemu.targetArch, targetArchFlag, runtime.GOARCH, "cluster architecture")
 	flags.qemu.StringSliceVar(&ops.qemu.cniBinPath, cniBinPathFlag, []string{filepath.Join(clustercmd.DefaultCNIDir, "bin")}, "search path for CNI binaries")
 	flags.qemu.StringVar(&ops.qemu.cniConfDir, cniConfDirFlag, filepath.Join(clustercmd.DefaultCNIDir, "conf.d"), "CNI config directory path")
 	flags.qemu.StringVar(&ops.qemu.cniCacheDir, cniCacheDirFlag, filepath.Join(clustercmd.DefaultCNIDir, "cache"), "CNI cache directory path")
@@ -417,21 +439,35 @@ func init() {
 
 	createCmd.MarkFlagsMutuallyExclusive(tpmEnabledFlag, tpm2EnabledFlag)
 
+	hideUnimplementedQemuFlags(createCmd, unImplementedQemuFlagsDarwin)
+
 	clustercmd.Cmd.AddCommand(createCmd)
 }
 
 // validateProviderFlags checks if flags not applicable for the given provisioner are passed.
-func validateProviderFlags(ops createOps, flags createFlags) error {
+func validateProviderFlags(ops createOps, flags createFlags, unImplementedQemuFlagsDarwin []string) error {
 	var invalidFlags *pflag.FlagSet
+
+	errMsg := ""
 
 	switch ops.common.rootOps.ProvisionerName {
 	case providers.DockerProviderName:
 		invalidFlags = flags.qemu
 	case providers.QemuProviderName:
 		invalidFlags = flags.docker
-	}
 
-	errMsg := ""
+		if runtime.GOOS == "darwin" {
+			flags.qemu.VisitAll(func(f *pflag.Flag) {
+				for _, unimplemented := range unImplementedQemuFlagsDarwin {
+					if f.Changed && f.Name == unimplemented {
+						errMsg += fmt.Sprintf("%s flag is not supported on macos\n", f.Name)
+
+						return
+					}
+				}
+			})
+		}
+	}
 
 	invalidFlags.VisitAll(func(invalidFlag *pflag.Flag) {
 		if invalidFlag.Changed {
@@ -442,8 +478,22 @@ func validateProviderFlags(ops createOps, flags createFlags) error {
 	if errMsg != "" {
 		fmt.Println()
 
-		return fmt.Errorf("%sinvalid provisioner flags found", errMsg)
+		return fmt.Errorf("%sinvalid flags found", errMsg)
 	}
 
 	return nil
+}
+
+func hideUnimplementedQemuFlags(cmd *cobra.Command, unImplementedQemuFlagsDarwin []string) {
+	cmd.Flags().VisitAll(func(f *pflag.Flag) {
+		if runtime.GOOS != "darwin" {
+			return
+		}
+
+		for _, unimplemented := range unImplementedQemuFlagsDarwin {
+			if f.Name == unimplemented {
+				f.Hidden = true
+			}
+		}
+	})
 }
