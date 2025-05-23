@@ -129,8 +129,8 @@ type VLAN struct {
 // MetadataConfig holds meta info.
 type MetadataConfig struct {
 	Hostname     string `yaml:"hostname,omitempty"`
-	InternalDNS  string `json:"local-hostname,omitempty"`
-	ExternalDNS  string `json:"public-hostname,omitempty"`
+	InternalDNS  string `yaml:"local-hostname,omitempty"`
+	ExternalDNS  string `yaml:"public-hostname,omitempty"`
 	InstanceID   string `yaml:"instance-id,omitempty"`
 	InstanceType string `yaml:"instance-type,omitempty"`
 	ProviderID   string `yaml:"provider-id,omitempty"`
