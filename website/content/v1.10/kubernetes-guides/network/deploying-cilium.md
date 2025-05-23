@@ -377,7 +377,7 @@ cluster:
               hostNetwork: true
               containers:
               - name: cilium-install
-                image: quay.io/cilium/cilium-cli-ci:latest
+                image: quay.io/cilium/cilium-cli:latest
                 env:
                 - name: KUBERNETES_SERVICE_HOST
                   valueFrom:
