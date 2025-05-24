@@ -730,11 +730,14 @@ reproducibility-test-local-%:
 	@rm -rf _out1/ _out2/
 
 reproducibility-test-iso:
+	@rm -rf _out1/ _out2/
+	@mkdir -p _out1/ _out2/
 	@$(MAKE) iso
-	cp $(ARTIFACTS)/metal-amd64.iso $(ARTIFACTS)/metal-amd64.iso.orig
+	mv $(ARTIFACTS)/metal-amd64.iso _out1/metal-amd64.iso
 	@$(MAKE) iso
-	@diffoscope $(ARTIFACTS)/metal-amd64.iso $(ARTIFACTS)/metal-amd64.iso.orig
-	@rm -f $(ARTIFACTS)/metal-amd64.iso.orig
+	mv $(ARTIFACTS)/metal-amd64.iso _out2/metal-amd64.iso
+	@diffoscope _out1/metal-amd64.iso _out2/metal-amd64.iso
+	@rm -rf _out1/ _out2/
 
 .PHONY: ci-temp-release-tag
 ci-temp-release-tag: ## Generates a temporary release tag for CI run.
