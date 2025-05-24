@@ -36,8 +36,8 @@ A list of adopters of Talos Linux, and the use
 * **[Sidero Labs](https://www.siderolabs.com)**  
   Sidero Labs uses Talos to build & test Talos! All the unit and end-to-end testing happens on our CI platform running in Talos-backed Kubernetes clusters.
   
-* **[Tremor Video](https://www.tremorvideo.com)**  
-  Tremor Video helps advertisers deliver impactful brand stories across all screens through the power of innovative video technology combined with advanced audience data and captivating creative.
+* **[Nexxen](https://www.nexxen.com)**  
+  Nexxen is the flexible advertising platform that connects data to deliver desired outcomes.
 
 * **[Vandebron](https://www.vandebron.nl)**  
   Vandebron is a Dutch green-tech energy company on a mission to accelerate the transition towards 100% sustainable energy, 100% of the time. We use TalosOS on our edge devices contributing to stabilize the Dutch energy grid with curtailment and flexibility services.
