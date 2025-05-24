@@ -43,7 +43,7 @@ The path to the configuration file can be specified with `--talosconfig` flag to
 If `talosctl` returns an error saying that certificate IPs are empty, it might be due to a conflict between Kubernetes and host subnets.
 The Talos API runs on the host network, but it automatically excludes Kubernetes pod & network subnets from the useable set of addresses.
 
-Talos default machine configuration specifies the following Kubernetes pod and subnet IPv4 CIDRs: `10.244.0.0/16` and `10.96.0.0/12`.
+Talos default machine configuration specifies the following Kubernetes pod and service IPv4 CIDRs: `10.244.0.0/16` and `10.96.0.0/12`.
 If the host network is configured with one of these subnets, change the machine configuration to use a different subnet.
 
 ### Wrong Endpoints
