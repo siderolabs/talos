@@ -338,6 +338,9 @@ help: ## This help menu.
 
 # Build Abstractions
 
+$(ARTIFACTS):
+	@mkdir -p $(ARTIFACTS)
+
 .PHONY: base
 target-%: ## Builds the specified target defined in the Dockerfile. The build result will only remain in the build cache.
 	@$(BUILD) \
@@ -570,23 +573,19 @@ $(ARTIFACTS)/$(INTEGRATION_TEST):
 $(ARTIFACTS)/$(INTEGRATION_TEST_PROVISION_DEFAULT_TARGET)-amd64:
 	@$(MAKE) local-$(INTEGRATION_TEST_PROVISION_DEFAULT_TARGET) DEST=$(ARTIFACTS) PLATFORM=linux/amd64 WITH_RACE=true
 
-$(ARTIFACTS)/kubectl:
-	@mkdir -p $(ARTIFACTS)
+$(ARTIFACTS)/kubectl: $(ARTIFACTS)
 	@curl -L -o $(ARTIFACTS)/kubectl "$(KUBECTL_URL)"
 	@chmod +x $(ARTIFACTS)/kubectl
 
-$(ARTIFACTS)/kubestr:
-	@mkdir -p $(ARTIFACTS)
+$(ARTIFACTS)/kubestr: $(ARTIFACTS)
 	@curl -L "$(KUBESTR_URL)" | tar xzf - -C $(ARTIFACTS) kubestr
 	@chmod +x $(ARTIFACTS)/kubestr
 
-$(ARTIFACTS)/helm:
-	@mkdir -p $(ARTIFACTS)
+$(ARTIFACTS)/helm: $(ARTIFACTS)
 	@curl -L "$(HELM_URL)" | tar xzf - -C $(ARTIFACTS) --strip-components=1 linux-amd64/helm
 	@chmod +x $(ARTIFACTS)/helm
 
-$(ARTIFACTS)/cilium:
-	@mkdir -p $(ARTIFACTS)
+$(ARTIFACTS)/cilium: $(ARTIFACTS)
 	@curl -L "$(CILIUM_CLI_URL)" | tar xzf - -C $(ARTIFACTS) cilium
 	@chmod +x $(ARTIFACTS)/cilium
 
@@ -704,13 +703,13 @@ sign-images: ## Run cosign to sign all images built by this Makefile.
 	done
 
 .PHONY: reproducibility-test
-reproducibility-test:
+reproducibility-test: $(ARTIFACTS)
 	@$(MAKE) reproducibility-test-local-initramfs
 	@$(MAKE) reproducibility-test-docker-installer-base INSTALLER_ARCH=targetarch PLATFORM=$(OPERATING_SYSTEM)/$(ARCH)
 	@$(MAKE) reproducibility-test-docker-talos reproducibility-test-docker-imager reproducibility-test-docker-talosctl PLATFORM=$(OPERATING_SYSTEM)/$(ARCH)
 	@$(MAKE) reproducibility-test-iso
 
-reproducibility-test-docker-%:
+reproducibility-test-docker-%: $(ARTIFACTS)
 	@rm -rf _out1/ _out2/
 	@mkdir -p _out1/ _out2/
 	@$(MAKE) docker-$* DEST=_out1/
@@ -718,7 +717,7 @@ reproducibility-test-docker-%:
 	@find _out1/ -type f | xargs -IFILE diffoscope FILE `echo FILE | sed 's/_out1/_out2/'`
 	@rm -rf _out1/ _out2/
 
-reproducibility-test-local-%:
+reproducibility-test-local-%: $(ARTIFACTS)
 	@rm -rf _out1/ _out2/
 	@mkdir -p _out1/ _out2/
 	@$(MAKE) local-$* DEST=_out1/
@@ -726,15 +725,12 @@ reproducibility-test-local-%:
 	@find _out1/ -type f | xargs -IFILE diffoscope FILE `echo FILE | sed 's/_out1/_out2/'`
 	@rm -rf _out1/ _out2/
 
-reproducibility-test-iso:
-	@rm -rf _out1/ _out2/
-	@mkdir -p _out1/ _out2/
+reproducibility-test-iso: $(ARTIFACTS)
 	@$(MAKE) iso
-	mv $(ARTIFACTS)/metal-amd64.iso _out1/metal-amd64.iso
+	mv $(ARTIFACTS)/metal-amd64.iso $(ARTIFACTS)/metal-amd64.iso.orig
 	@$(MAKE) iso
-	mv $(ARTIFACTS)/metal-amd64.iso _out2/metal-amd64.iso
-	@diffoscope _out1/metal-amd64.iso _out2/metal-amd64.iso
-	@rm -rf _out1/ _out2/
+	@diffoscope $(ARTIFACTS)/metal-amd64.iso.orig $(ARTIFACTS)/metal-amd64.iso
+	@rm -rf $(ARTIFACTS)/metal-amd64.iso.orig
 
 .PHONY: ci-temp-release-tag
 ci-temp-release-tag: ## Generates a temporary release tag for CI run.
