@@ -221,7 +221,7 @@ customresourcedefinition.apiextensions.k8s.io "objectbuckets.objectbucket.io" de
 
 If the Rook Operator is cleanly removed following the above process, the node metadata and disks should be clean and ready to be re-used.
 In the case of an unclean cluster removal, there may be still a few instances of metadata stored on the system disk, as well as the partition information on the storage disks.
-First the node metadata needs to be removed, make sure to update the `nodeName` with the actual name of a storage node that needs cleaning, and `path` with the Rook configuration `dataDirHostPath` set when installing the chart.
+First the node metadata needs to be removed, make sure to update the `nodeName` with the actual name of a storage node that needs cleaning, and `path` with the Rook configuration `dataDirHostPath` (this is `/var/lib/rook` when using the default values.yaml) set when installing the chart.
 The following will need to be repeated for each node used in the Rook Ceph cluster.
 
 ```shell
