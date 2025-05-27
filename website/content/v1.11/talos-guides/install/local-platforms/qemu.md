@@ -11,33 +11,60 @@ In this guide we will create a Kubernetes cluster using QEMU.
 
 ## Video Walkthrough
 
-To see a live demo of this writeup, see the video below:
+To see a live demo of this writeup on Linux, see the video below:
 
 <iframe width="560" height="315" src="https://www.youtube.com/embed/UzQ8Hl_TfF8" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
 
 ## Requirements
 
-- Linux
+{{< tabpane text=true >}}
+{{% tab header="linux" %}}
+
+- QEMU
 - a kernel with
   - KVM enabled (`/dev/kvm` must exist)
   - `CONFIG_NET_SCH_NETEM` enabled
   - `CONFIG_NET_SCH_INGRESS` enabled
 - at least `CAP_SYS_ADMIN` and `CAP_NET_ADMIN` capabilities
-- QEMU
 - `bridge`, `static` and `firewall` CNI plugins from the [standard CNI plugins](https://github.com/containernetworking/cni), and `tc-redirect-tap` CNI plugin from the [awslabs tc-redirect-tap](https://github.com/awslabs/tc-redirect-tap) installed to `/opt/cni/bin` (installed automatically by `talosctl`)
 - iptables
 - `/var/run/netns` directory should exist
+
+{{% /tab %}}
+{{% tab header="macOS" %}}
+
+- QEMU
+- Apple Silicon Mac
+
+{{% /tab %}}
+{{< /tabpane >}}
 
 ## Installation
 
 ### How to get QEMU
 
 Install QEMU with your operating system package manager.
+
+{{< tabpane text=true right=false >}}
+{{%tab header="linux" %}}
+
 For example, on Ubuntu for x86:
 
 ```bash
 apt install qemu-system-x86 qemu-kvm
 ```
+
+{{% /tab %}}
+{{% tab header="macOS" %}}
+
+Via brew:
+
+```bash
+brew install qemu
+```
+
+{{% /tab %}}
+{{< /tabpane >}}
 
 ### Install talosctl
 
@@ -60,7 +87,7 @@ curl https://github.com/siderolabs/talos/releases/download/<version>/vmlinuz-<ar
 curl https://github.com/siderolabs/talos/releases/download/<version>/initramfs-<arch>.xz -L -o _out/initramfs-<arch>.xz
 ```
 
-For example version `{{< release >}}`:
+For example version `{{< release >}}` on `amd64` platform:
 
 ```bash
 curl https://github.com/siderolabs/talos/releases/download/{{< release >}}/vmlinuz-amd64 -L -o _out/vmlinuz-amd64
@@ -78,10 +105,10 @@ mkdir -p ~/.talos/clusters
 Create the cluster:
 
 ```bash
-sudo --preserve-env=HOME talosctl cluster create --provisioner qemu
+sudo --preserve-env=HOME talosctl cluster create qemu
 ```
 
-Before the first cluster is created, `talosctl` will download the CNI bundle for the VM provisioning and install it to `~/.talos/cni` directory.
+On Linux, before the first cluster is created, `talosctl` will download the CNI bundle for the VM provisioning and install it to `~/.talos/cni` directory.
 
 Once the above finishes successfully, your talosconfig (`~/.talos/config`) will be configured to point to the new cluster, and `kubeconfig` will be
 downloaded and merged into default kubectl config location (`~/.kube/config`).
@@ -231,9 +258,12 @@ sudo kill -s SIGTERM 157609
 
 ### Remove network
 
+{{< tabpane text=true >}}
+{{% tab header="linux" %}}
 This is more tricky part as if you have already deleted the state folder.
 If you didn't then it is written in the `state.yaml` in the
 `~/.talos/clusters/<cluster-name>` directory.
+<br /><br />
 
 ```bash
 sudo cat ~/.talos/clusters/<cluster-name>/state.yaml | grep bridgename
@@ -242,6 +272,7 @@ bridgename: talos<uuid>
 
 If you only had one cluster, then it will be the interface with name
 `talos<uuid>`
+<br /><br />
 
 ```bash
 46: talos<uuid>: <NO-CARRIER,BROADCAST,MULTICAST,UP> mtu 1500 qdisc noqueue state DOWN group default qlen 1000
@@ -253,10 +284,17 @@ If you only had one cluster, then it will be the interface with name
 ```
 
 To remove this interface:
+<br /><br />
 
 ```bash
 sudo ip link del talos<uuid>
 ```
+
+{{% /tab %}}
+{{% tab header="macOS" %}}
+The bridge is automatically created by qemu, so removing all the machines will also result in the deletion of the bridge interface.
+{{% /tab %}}
+{{< /tabpane >}}
 
 ### Remove state directory
 
@@ -292,3 +330,16 @@ Inspect logs during the installation
 ```bash
 tail -f ~/.talos/clusters/<cluster-name>/*.log
 ```
+
+## How it works
+
+### Linux
+
+On Linux the KVM accelerator is utilized.
+Networking is created using the CNI plugins.
+For DHCP a custom server is used.
+
+### MacOS
+
+On Macos the `hvf` accelerator (Apple Hypervisor Framework) is utilized.
+Networking is created by QEMU via the [apple vmnet framework](https://developer.apple.com/documentation/vmnet) which handles everything but the DHCP for which a custom server is used instead.
