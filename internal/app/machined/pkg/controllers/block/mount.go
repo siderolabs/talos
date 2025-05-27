@@ -16,6 +16,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/siderolabs/gen/xslices"
+	"github.com/siderolabs/go-blockdevice/v2/swap"
 	"go.uber.org/zap"
 	"golang.org/x/sys/unix"
 
@@ -287,6 +288,10 @@ func (ctrl *MountController) handleMountOperation(
 	case block.VolumeTypeTmpfs:
 		return fmt.Errorf("not implemented yet")
 	case block.VolumeTypeDisk, block.VolumeTypePartition:
+		if mountFilesystem == block.FilesystemTypeSwap {
+			return ctrl.handleSwapMountOperation(logger, mountSource, mountRequest, volumeStatus)
+		}
+
 		return ctrl.handleDiskMountOperation(logger, mountSource, filepath.Join(rootPath, mountTarget), mountFilesystem, mountRequest, volumeStatus)
 	default:
 		return fmt.Errorf("unsupported volume type %q", volumeStatus.TypedSpec().Type)
@@ -575,6 +580,33 @@ func (ctrl *MountController) handleOverlayMountOperation(
 	return nil
 }
 
+func (ctrl *MountController) handleSwapMountOperation(
+	logger *zap.Logger,
+	mountSource string,
+	mountRequest *block.MountRequest,
+	volumeStatus *block.VolumeStatus,
+) error {
+	_, ok := ctrl.activeMounts[mountRequest.Metadata().ID()]
+	if ok {
+		return nil
+	}
+
+	if err := swap.On(mountSource, swap.FLAG_DISCARD_ONCE); err != nil {
+		return fmt.Errorf("failed to enable swap on %q: %w", mountSource, err)
+	}
+
+	ctrl.activeMounts[mountRequest.Metadata().ID()] = &mountContext{
+		point: mount.NewPoint(mountSource, "", "swap"),
+	}
+
+	logger.Info("swap enabled",
+		zap.String("volume", volumeStatus.Metadata().ID()),
+		zap.String("source", mountSource),
+	)
+
+	return nil
+}
+
 func (ctrl *MountController) handleUnmountOperation(
 	logger *zap.Logger,
 	mountRequest *block.MountRequest,
@@ -586,6 +618,10 @@ func (ctrl *MountController) handleUnmountOperation(
 	case block.VolumeTypeTmpfs:
 		return fmt.Errorf("not implemented yet")
 	case block.VolumeTypeDisk, block.VolumeTypePartition, block.VolumeTypeOverlay:
+		if volumeStatus.TypedSpec().Filesystem == block.FilesystemTypeSwap {
+			return ctrl.handleSwapUmountOperation(logger, mountRequest, volumeStatus)
+		}
+
 		return ctrl.handleDiskUnmountOperation(logger, mountRequest, volumeStatus)
 	case block.VolumeTypeSymlink:
 		return ctrl.handleSymlinkUmountOperation(mountRequest)
@@ -624,6 +660,30 @@ func (ctrl *MountController) handleSymlinkUmountOperation(
 	mountRequest *block.MountRequest,
 ) error {
 	delete(ctrl.activeMounts, mountRequest.Metadata().ID())
+
+	return nil
+}
+
+func (ctrl *MountController) handleSwapUmountOperation(
+	logger *zap.Logger,
+	mountRequest *block.MountRequest,
+	volumeStatus *block.VolumeStatus,
+) error {
+	mountCtx, ok := ctrl.activeMounts[mountRequest.Metadata().ID()]
+	if !ok {
+		return nil
+	}
+
+	if err := swap.Off(mountCtx.point.Source()); err != nil {
+		return fmt.Errorf("failed to disable swap on %q: %w", mountCtx.point.Source(), err)
+	}
+
+	delete(ctrl.activeMounts, mountRequest.Metadata().ID())
+
+	logger.Info("swap disabled",
+		zap.String("volume", volumeStatus.Metadata().ID()),
+		zap.String("source", mountCtx.point.Source()),
+	)
 
 	return nil
 }

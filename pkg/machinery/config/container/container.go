@@ -225,6 +225,11 @@ func (container *Container) UserVolumeConfigs() []config.UserVolumeConfig {
 	return findMatchingDocs[config.UserVolumeConfig](container.documents)
 }
 
+// SwapVolumeConfigs implements config.Config interface.
+func (container *Container) SwapVolumeConfigs() []config.SwapVolumeConfig {
+	return findMatchingDocs[config.SwapVolumeConfig](container.documents)
+}
+
 // Bytes returns source YAML representation (if available) or does default encoding.
 func (container *Container) Bytes() ([]byte, error) {
 	if !container.readonly {

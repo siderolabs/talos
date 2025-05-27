@@ -21,36 +21,35 @@ import (
 	blockres "github.com/siderolabs/talos/pkg/machinery/resources/block"
 )
 
-func TestUserVolumeConfigMarshalUnmarshal(t *testing.T) {
+func TestSwapVolumeConfigMarshalUnmarshal(t *testing.T) {
 	t.Parallel()
 
 	for _, test := range []struct {
 		name string
 
 		filename string
-		cfg      func(t *testing.T) *block.UserVolumeConfigV1Alpha1
+		cfg      func(t *testing.T) *block.SwapVolumeConfigV1Alpha1
 	}{
 		{
 			name:     "disk selector",
-			filename: "uservolumeconfig_diskselector.yaml",
-			cfg: func(t *testing.T) *block.UserVolumeConfigV1Alpha1 {
-				c := block.NewUserVolumeConfigV1Alpha1()
-				c.MetaName = "ceph-data"
+			filename: "swapvolumeconfig_diskselector.yaml",
+			cfg: func(t *testing.T) *block.SwapVolumeConfigV1Alpha1 {
+				c := block.NewSwapVolumeConfigV1Alpha1()
+				c.MetaName = "big"
 
 				require.NoError(t, c.ProvisioningSpec.DiskSelectorSpec.Match.UnmarshalText([]byte(`disk.transport == "nvme" && !system_disk`)))
 				c.ProvisioningSpec.ProvisioningMinSize = block.MustByteSize("10GiB")
 				c.ProvisioningSpec.ProvisioningMaxSize = block.MustByteSize("100GiB")
-				c.FilesystemSpec.FilesystemType = blockres.FilesystemTypeXFS
 
 				return c
 			},
 		},
 		{
 			name:     "encrypted",
-			filename: "uservolumeconfig_encrypted.yaml",
-			cfg: func(t *testing.T) *block.UserVolumeConfigV1Alpha1 {
-				c := block.NewUserVolumeConfigV1Alpha1()
-				c.MetaName = "secret-store"
+			filename: "swapvolumeconfig_encrypted.yaml",
+			cfg: func(t *testing.T) *block.SwapVolumeConfigV1Alpha1 {
+				c := block.NewSwapVolumeConfigV1Alpha1()
+				c.MetaName = "secret-swap"
 
 				require.NoError(t, c.ProvisioningSpec.DiskSelectorSpec.Match.UnmarshalText([]byte(`!system_disk`)))
 				c.ProvisioningSpec.ProvisioningMinSize = block.MustByteSize("10GiB")
@@ -103,21 +102,21 @@ func TestUserVolumeConfigMarshalUnmarshal(t *testing.T) {
 	}
 }
 
-func TestUserVolumeConfigValidate(t *testing.T) {
+func TestSwapVolumeConfigValidate(t *testing.T) {
 	t.Parallel()
 
 	for _, test := range []struct {
 		name string
 
-		cfg func(t *testing.T) *block.UserVolumeConfigV1Alpha1
+		cfg func(t *testing.T) *block.SwapVolumeConfigV1Alpha1
 
 		expectedErrors string
 	}{
 		{
 			name: "no name",
 
-			cfg: func(t *testing.T) *block.UserVolumeConfigV1Alpha1 {
-				c := block.NewUserVolumeConfigV1Alpha1()
+			cfg: func(t *testing.T) *block.SwapVolumeConfigV1Alpha1 {
+				c := block.NewSwapVolumeConfigV1Alpha1()
 
 				require.NoError(t, c.ProvisioningSpec.DiskSelectorSpec.Match.UnmarshalText([]byte(`disk.size > 1u`)))
 				c.ProvisioningSpec.ProvisioningMinSize = block.MustByteSize("2.5TiB")
@@ -130,8 +129,8 @@ func TestUserVolumeConfigValidate(t *testing.T) {
 		{
 			name: "too long name",
 
-			cfg: func(t *testing.T) *block.UserVolumeConfigV1Alpha1 {
-				c := block.NewUserVolumeConfigV1Alpha1()
+			cfg: func(t *testing.T) *block.SwapVolumeConfigV1Alpha1 {
+				c := block.NewSwapVolumeConfigV1Alpha1()
 				c.MetaName = strings.Repeat("X", 35)
 
 				require.NoError(t, c.ProvisioningSpec.DiskSelectorSpec.Match.UnmarshalText([]byte(`disk.size > 1u`)))
@@ -145,8 +144,8 @@ func TestUserVolumeConfigValidate(t *testing.T) {
 		{
 			name: "invalid characters in name",
 
-			cfg: func(t *testing.T) *block.UserVolumeConfigV1Alpha1 {
-				c := block.NewUserVolumeConfigV1Alpha1()
+			cfg: func(t *testing.T) *block.SwapVolumeConfigV1Alpha1 {
+				c := block.NewSwapVolumeConfigV1Alpha1()
 				c.MetaName = "some/name"
 
 				require.NoError(t, c.ProvisioningSpec.DiskSelectorSpec.Match.UnmarshalText([]byte(`disk.size > 1u`)))
@@ -160,8 +159,8 @@ func TestUserVolumeConfigValidate(t *testing.T) {
 		{
 			name: "invalid disk selector",
 
-			cfg: func(t *testing.T) *block.UserVolumeConfigV1Alpha1 {
-				c := block.NewUserVolumeConfigV1Alpha1()
+			cfg: func(t *testing.T) *block.SwapVolumeConfigV1Alpha1 {
+				c := block.NewSwapVolumeConfigV1Alpha1()
 				c.MetaName = constants.EphemeralPartitionLabel
 
 				require.NoError(t, c.ProvisioningSpec.DiskSelectorSpec.Match.UnmarshalText([]byte(`disk.size > 120`)))
@@ -174,8 +173,8 @@ func TestUserVolumeConfigValidate(t *testing.T) {
 		{
 			name: "min size greater than max size",
 
-			cfg: func(t *testing.T) *block.UserVolumeConfigV1Alpha1 {
-				c := block.NewUserVolumeConfigV1Alpha1()
+			cfg: func(t *testing.T) *block.SwapVolumeConfigV1Alpha1 {
+				c := block.NewSwapVolumeConfigV1Alpha1()
 				c.MetaName = constants.EphemeralPartitionLabel
 
 				c.ProvisioningSpec.ProvisioningMinSize = block.MustByteSize("2.5TiB")
@@ -187,27 +186,10 @@ func TestUserVolumeConfigValidate(t *testing.T) {
 			expectedErrors: "disk selector is required\nmin size is greater than max size",
 		},
 		{
-			name: "unsupported filesystem type",
-
-			cfg: func(t *testing.T) *block.UserVolumeConfigV1Alpha1 {
-				c := block.NewUserVolumeConfigV1Alpha1()
-				c.MetaName = constants.EphemeralPartitionLabel
-
-				require.NoError(t, c.ProvisioningSpec.DiskSelectorSpec.Match.UnmarshalText([]byte(`disk.size > 120u * GiB`)))
-				c.ProvisioningSpec.ProvisioningMaxSize = block.MustByteSize("2.5TiB")
-				c.ProvisioningSpec.ProvisioningMinSize = block.MustByteSize("10GiB")
-				c.FilesystemSpec.FilesystemType = blockres.FilesystemTypeISO9660
-
-				return c
-			},
-
-			expectedErrors: "unsupported filesystem type: iso9660",
-		},
-		{
 			name: "no encryption provider",
 
-			cfg: func(t *testing.T) *block.UserVolumeConfigV1Alpha1 {
-				c := block.NewUserVolumeConfigV1Alpha1()
+			cfg: func(t *testing.T) *block.SwapVolumeConfigV1Alpha1 {
+				c := block.NewSwapVolumeConfigV1Alpha1()
 				c.MetaName = constants.EphemeralPartitionLabel
 
 				require.NoError(t, c.ProvisioningSpec.DiskSelectorSpec.Match.UnmarshalText([]byte(`system_disk`)))
@@ -227,8 +209,8 @@ func TestUserVolumeConfigValidate(t *testing.T) {
 		{
 			name: "no encryption keys",
 
-			cfg: func(t *testing.T) *block.UserVolumeConfigV1Alpha1 {
-				c := block.NewUserVolumeConfigV1Alpha1()
+			cfg: func(t *testing.T) *block.SwapVolumeConfigV1Alpha1 {
+				c := block.NewSwapVolumeConfigV1Alpha1()
 				c.MetaName = constants.EphemeralPartitionLabel
 
 				require.NoError(t, c.ProvisioningSpec.DiskSelectorSpec.Match.UnmarshalText([]byte(`system_disk`)))
@@ -243,8 +225,8 @@ func TestUserVolumeConfigValidate(t *testing.T) {
 		{
 			name: "invalid encryption key slots",
 
-			cfg: func(t *testing.T) *block.UserVolumeConfigV1Alpha1 {
-				c := block.NewUserVolumeConfigV1Alpha1()
+			cfg: func(t *testing.T) *block.SwapVolumeConfigV1Alpha1 {
+				c := block.NewSwapVolumeConfigV1Alpha1()
 				c.MetaName = constants.EphemeralPartitionLabel
 
 				require.NoError(t, c.ProvisioningSpec.DiskSelectorSpec.Match.UnmarshalText([]byte(`system_disk`)))
@@ -272,14 +254,13 @@ func TestUserVolumeConfigValidate(t *testing.T) {
 		{
 			name: "valid",
 
-			cfg: func(t *testing.T) *block.UserVolumeConfigV1Alpha1 {
-				c := block.NewUserVolumeConfigV1Alpha1()
+			cfg: func(t *testing.T) *block.SwapVolumeConfigV1Alpha1 {
+				c := block.NewSwapVolumeConfigV1Alpha1()
 				c.MetaName = constants.EphemeralPartitionLabel
 
 				require.NoError(t, c.ProvisioningSpec.DiskSelectorSpec.Match.UnmarshalText([]byte(`disk.size > 120u * GiB`)))
 				c.ProvisioningSpec.ProvisioningMaxSize = block.MustByteSize("2.5TiB")
 				c.ProvisioningSpec.ProvisioningMinSize = block.MustByteSize("10GiB")
-				c.FilesystemSpec.FilesystemType = blockres.FilesystemTypeEXT4
 
 				return c
 			},
@@ -287,8 +268,8 @@ func TestUserVolumeConfigValidate(t *testing.T) {
 		{
 			name: "valid encrypted",
 
-			cfg: func(t *testing.T) *block.UserVolumeConfigV1Alpha1 {
-				c := block.NewUserVolumeConfigV1Alpha1()
+			cfg: func(t *testing.T) *block.SwapVolumeConfigV1Alpha1 {
+				c := block.NewSwapVolumeConfigV1Alpha1()
 				c.MetaName = constants.EphemeralPartitionLabel
 
 				require.NoError(t, c.ProvisioningSpec.DiskSelectorSpec.Match.UnmarshalText([]byte(`system_disk`)))

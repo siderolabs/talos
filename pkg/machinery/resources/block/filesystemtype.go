@@ -16,4 +16,5 @@ const (
 	FilesystemTypeVFAT                          // vfat
 	FilesystemTypeEXT4                          // ext4
 	FilesystemTypeISO9660                       // iso9660
+	FilesystemTypeSwap                          // swap
 )

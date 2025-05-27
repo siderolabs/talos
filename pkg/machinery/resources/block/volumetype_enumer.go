@@ -211,11 +211,11 @@ func (i *VolumePhase) UnmarshalText(text []byte) error {
 	return err
 }
 
-const _FilesystemTypeName = "nonexfsvfatext4iso9660"
+const _FilesystemTypeName = "nonexfsvfatext4iso9660swap"
 
-var _FilesystemTypeIndex = [...]uint8{0, 4, 7, 11, 15, 22}
+var _FilesystemTypeIndex = [...]uint8{0, 4, 7, 11, 15, 22, 26}
 
-const _FilesystemTypeLowerName = "nonexfsvfatext4iso9660"
+const _FilesystemTypeLowerName = "nonexfsvfatext4iso9660swap"
 
 func (i FilesystemType) String() string {
 	if i < 0 || i >= FilesystemType(len(_FilesystemTypeIndex)-1) {
@@ -233,9 +233,10 @@ func _FilesystemTypeNoOp() {
 	_ = x[FilesystemTypeVFAT-(2)]
 	_ = x[FilesystemTypeEXT4-(3)]
 	_ = x[FilesystemTypeISO9660-(4)]
+	_ = x[FilesystemTypeSwap-(5)]
 }
 
-var _FilesystemTypeValues = []FilesystemType{FilesystemTypeNone, FilesystemTypeXFS, FilesystemTypeVFAT, FilesystemTypeEXT4, FilesystemTypeISO9660}
+var _FilesystemTypeValues = []FilesystemType{FilesystemTypeNone, FilesystemTypeXFS, FilesystemTypeVFAT, FilesystemTypeEXT4, FilesystemTypeISO9660, FilesystemTypeSwap}
 
 var _FilesystemTypeNameToValueMap = map[string]FilesystemType{
 	_FilesystemTypeName[0:4]:        FilesystemTypeNone,
@@ -248,6 +249,8 @@ var _FilesystemTypeNameToValueMap = map[string]FilesystemType{
 	_FilesystemTypeLowerName[11:15]: FilesystemTypeEXT4,
 	_FilesystemTypeName[15:22]:      FilesystemTypeISO9660,
 	_FilesystemTypeLowerName[15:22]: FilesystemTypeISO9660,
+	_FilesystemTypeName[22:26]:      FilesystemTypeSwap,
+	_FilesystemTypeLowerName[22:26]: FilesystemTypeSwap,
 }
 
 var _FilesystemTypeNames = []string{
@@ -256,6 +259,7 @@ var _FilesystemTypeNames = []string{
 	_FilesystemTypeName[7:11],
 	_FilesystemTypeName[11:15],
 	_FilesystemTypeName[15:22],
+	_FilesystemTypeName[22:26],
 }
 
 // FilesystemTypeString retrieves an enum value from the enum constants string name.

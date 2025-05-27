@@ -119,7 +119,7 @@ func (widget *MemInfo) OnAPIDataChange(node string, data *apidata.Data) {
 				"Total  [::b]%8s[::-]  Buffers [::b]%8s[::-]\n"+
 				"Used   [::b]%8s[::-]  Cache   [::b]%8s[::-]\n"+
 				"Free   [::b]%8s[::-]  Avail   [::b]%8s[::-]\n"+
-				"Shared [::b]%8s[::-]\n",
+				"Shared [::b]%8s[::-]  Swapped [::b]%8s[::-]\n",
 			humanize.Bytes(nodeData.Memory.GetMeminfo().GetMemtotal()<<10),
 			humanize.Bytes(nodeData.Memory.GetMeminfo().GetBuffers()<<10),
 			humanize.Bytes((nodeData.Memory.GetMeminfo().GetMemtotal()-nodeData.Memory.GetMeminfo().GetMemfree()-nodeData.Memory.GetMeminfo().GetCached()-nodeData.Memory.GetMeminfo().GetBuffers())<<10),
@@ -127,6 +127,7 @@ func (widget *MemInfo) OnAPIDataChange(node string, data *apidata.Data) {
 			humanize.Bytes(nodeData.Memory.GetMeminfo().GetMemfree()<<10),
 			humanize.Bytes(nodeData.Memory.GetMeminfo().GetMemavailable()<<10),
 			humanize.Bytes(nodeData.Memory.GetMeminfo().GetShmem()<<10),
+			humanize.Bytes((nodeData.Memory.GetMeminfo().GetSwaptotal()-nodeData.Memory.GetMeminfo().GetSwapfree())<<10),
 		))
 	}
 }

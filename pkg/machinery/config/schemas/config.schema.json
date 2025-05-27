@@ -220,6 +220,56 @@
       "type": "object",
       "description": "ProvisioningSpec describes how the volume is provisioned."
     },
+    "block.SwapVolumeConfigV1Alpha1": {
+      "properties": {
+        "apiVersion": {
+          "enum": [
+            "v1alpha1"
+          ],
+          "title": "apiVersion",
+          "description": "apiVersion is the API version of the resource.\n",
+          "markdownDescription": "apiVersion is the API version of the resource.",
+          "x-intellij-html-description": "\u003cp\u003eapiVersion is the API version of the resource.\u003c/p\u003e\n"
+        },
+        "kind": {
+          "enum": [
+            "SwapVolumeConfig"
+          ],
+          "title": "kind",
+          "description": "kind is the kind of the resource.\n",
+          "markdownDescription": "kind is the kind of the resource.",
+          "x-intellij-html-description": "\u003cp\u003ekind is the kind of the resource.\u003c/p\u003e\n"
+        },
+        "name": {
+          "type": "string",
+          "title": "name",
+          "description": "Name of the volume.\n\nName might be between 1 and 34 characters long and can only contain:\nlowercase and uppercase ASCII letters, digits, and hyphens.\n",
+          "markdownDescription": "Name of the volume.\n\nName might be between 1 and 34 characters long and can only contain:\nlowercase and uppercase ASCII letters, digits, and hyphens.",
+          "x-intellij-html-description": "\u003cp\u003eName of the volume.\u003c/p\u003e\n\n\u003cp\u003eName might be between 1 and 34 characters long and can only contain:\nlowercase and uppercase ASCII letters, digits, and hyphens.\u003c/p\u003e\n"
+        },
+        "provisioning": {
+          "$ref": "#/$defs/block.ProvisioningSpec",
+          "title": "provisioning",
+          "description": "The provisioning describes how the volume is provisioned.\n",
+          "markdownDescription": "The provisioning describes how the volume is provisioned.",
+          "x-intellij-html-description": "\u003cp\u003eThe provisioning describes how the volume is provisioned.\u003c/p\u003e\n"
+        },
+        "encryption": {
+          "$ref": "#/$defs/block.EncryptionSpec",
+          "title": "encryption",
+          "description": "The encryption describes how the volume is encrypted.\n",
+          "markdownDescription": "The encryption describes how the volume is encrypted.",
+          "x-intellij-html-description": "\u003cp\u003eThe encryption describes how the volume is encrypted.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "apiVersion",
+        "kind"
+      ],
+      "description": "SwapVolumeConfig is a disk swap volume configuration document.\\nSwap volume is automatically allocated as a partition on the specified disk\\nand activated as swap, removing a swap volume deactivates swap.\\nThe partition label is automatically generated as `s-\u003cname\u003e`.\\n"
+    },
     "block.UserVolumeConfigV1Alpha1": {
       "properties": {
         "apiVersion": {
@@ -4183,6 +4233,9 @@
     }
   },
   "oneOf": [
+    {
+      "$ref": "#/$defs/block.SwapVolumeConfigV1Alpha1"
+    },
     {
       "$ref": "#/$defs/block.UserVolumeConfigV1Alpha1"
     },

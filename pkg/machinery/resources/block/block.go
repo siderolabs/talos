@@ -19,7 +19,7 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/resources/v1alpha1"
 )
 
-//go:generate deep-copy -type DeviceSpec -type DiscoveredVolumeSpec -type DiscoveryRefreshRequestSpec -type DiscoveryRefreshStatusSpec  -type DiskSpec -type MountRequestSpec -type MountStatusSpec -type SymlinkSpec -type SystemDiskSpec -type UserDiskConfigStatusSpec -type VolumeConfigSpec -type VolumeLifecycleSpec -type VolumeMountRequestSpec -type VolumeMountStatusSpec -type VolumeStatusSpec -header-file ../../../../hack/boilerplate.txt -o deep_copy.generated.go .
+//go:generate deep-copy -type DeviceSpec -type DiscoveredVolumeSpec -type DiscoveryRefreshRequestSpec -type DiscoveryRefreshStatusSpec  -type DiskSpec -type MountRequestSpec -type MountStatusSpec -type SwapStatusSpec -type SymlinkSpec -type SystemDiskSpec -type UserDiskConfigStatusSpec -type VolumeConfigSpec -type VolumeLifecycleSpec -type VolumeMountRequestSpec -type VolumeMountStatusSpec -type VolumeStatusSpec -header-file ../../../../hack/boilerplate.txt -o deep_copy.generated.go .
 
 //go:generate enumer -type=VolumeType,VolumePhase,FilesystemType,EncryptionKeyType,EncryptionProviderType  -linecomment -text
 
@@ -31,6 +31,9 @@ const UserDiskLabel = "talos.dev/user-disk"
 
 // UserVolumeLabel is the label for user volumes.
 const UserVolumeLabel = "talos.dev/user-volume"
+
+// SwapVolumeLabel is the label for swap volumes.
+const SwapVolumeLabel = "talos.dev/swap-volume"
 
 // PlatformLabel is the label for platform volumes.
 const PlatformLabel = "talos.dev/platform"

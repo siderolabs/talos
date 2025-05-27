@@ -27,7 +27,7 @@ const UserVolumeConfigKind = "UserVolumeConfig"
 func init() {
 	registry.Register(UserVolumeConfigKind, func(version string) config.Document {
 		switch version {
-		case "v1alpha1":
+		case "v1alpha1": //nolint:goconst
 			return &UserVolumeConfigV1Alpha1{}
 		default:
 			return nil
@@ -42,7 +42,7 @@ var (
 	_ config.Validator        = &UserVolumeConfigV1Alpha1{}
 )
 
-const maxNameLength = constants.PartitionLabelLength - len(constants.UserVolumePrefix)
+const maxUserVolumeNameLength = constants.PartitionLabelLength - len(constants.UserVolumePrefix)
 
 // UserVolumeConfigV1Alpha1 is a user volume configuration document.
 //
@@ -138,8 +138,8 @@ func (s *UserVolumeConfigV1Alpha1) Validate(validation.RuntimeMode, ...validatio
 		validationErrors = errors.Join(validationErrors, errors.New("name is required"))
 	}
 
-	if len(s.MetaName) < 1 || len(s.MetaName) > maxNameLength {
-		validationErrors = errors.Join(validationErrors, fmt.Errorf("name must be between 1 and %d characters long", maxNameLength))
+	if len(s.MetaName) < 1 || len(s.MetaName) > maxUserVolumeNameLength {
+		validationErrors = errors.Join(validationErrors, fmt.Errorf("name must be between 1 and %d characters long", maxUserVolumeNameLength))
 	}
 
 	if strings.ContainsFunc(s.MetaName, func(r rune) bool {

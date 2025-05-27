@@ -42,6 +42,7 @@ description: Talos gRPC API reference.
     - [MountStatusSpec](#talos.resource.definitions.block.MountStatusSpec)
     - [PartitionSpec](#talos.resource.definitions.block.PartitionSpec)
     - [ProvisioningSpec](#talos.resource.definitions.block.ProvisioningSpec)
+    - [SwapStatusSpec](#talos.resource.definitions.block.SwapStatusSpec)
     - [SymlinkProvisioningSpec](#talos.resource.definitions.block.SymlinkProvisioningSpec)
     - [SymlinkSpec](#talos.resource.definitions.block.SymlinkSpec)
     - [SystemDiskSpec](#talos.resource.definitions.block.SystemDiskSpec)
@@ -1129,6 +1130,27 @@ ProvisioningSpec is the spec for volume provisioning.
 
 
 
+<a name="talos.resource.definitions.block.SwapStatusSpec"></a>
+
+### SwapStatusSpec
+SwapStatusSpec is the spec for SwapStatuss resource.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| device | [string](#string) |  |  |
+| size_bytes | [uint64](#uint64) |  |  |
+| size_human | [string](#string) |  |  |
+| used_bytes | [uint64](#uint64) |  |  |
+| used_human | [string](#string) |  |  |
+| priority | [int32](#int32) |  |  |
+| type | [string](#string) |  |  |
+
+
+
+
+
+
 <a name="talos.resource.definitions.block.SymlinkProvisioningSpec"></a>
 
 ### SymlinkProvisioningSpec
@@ -1663,6 +1685,7 @@ BlockFilesystemType describes filesystem type.
 | FILESYSTEM_TYPE_VFAT | 2 |  |
 | FILESYSTEM_TYPE_EXT4 | 3 |  |
 | FILESYSTEM_TYPE_ISO9660 | 4 |  |
+| FILESYSTEM_TYPE_SWAP | 5 |  |
 
 
 

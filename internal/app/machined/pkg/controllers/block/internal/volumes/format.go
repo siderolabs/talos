@@ -10,9 +10,11 @@ import (
 	"os"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/siderolabs/gen/xerrors"
 	"github.com/siderolabs/go-blockdevice/v2/blkid"
 	blockdev "github.com/siderolabs/go-blockdevice/v2/block"
+	"github.com/siderolabs/go-blockdevice/v2/swap"
 	"go.uber.org/zap"
 
 	mountv2 "github.com/siderolabs/talos/internal/pkg/mount/v2"
@@ -73,8 +75,10 @@ func Format(ctx context.Context, logger *zap.Logger, volumeContext ManagerContex
 		return nil
 	case info.Name == "":
 		// no filesystem, format
+	case info.Name == "swap":
+		// swap volume, format always
 	case info.Name == volumeContext.Cfg.TypedSpec().Provisioning.FilesystemSpec.Type.String():
-		// filesystem already exists
+		// filesystem already exists and matches the requested type
 		if volumeContext.Cfg.TypedSpec().Provisioning.PartitionSpec.Grow {
 			// if the partition is set to grow, we need to grow the filesystem
 			if err = GrowFilesystem(logger, volumeContext); err != nil {
@@ -124,6 +128,13 @@ func Format(ctx context.Context, logger *zap.Logger, volumeContext ManagerContex
 		if err = makefs.Ext4(volumeContext.Status.MountLocation, makefsOptions...); err != nil {
 			return fmt.Errorf("error formatting ext4: %w", err)
 		}
+	case block.FilesystemTypeSwap:
+		if err = swap.Format(volumeContext.Status.MountLocation, swap.FormatOptions{
+			Label: volumeContext.Cfg.TypedSpec().Provisioning.FilesystemSpec.Label,
+			UUID:  uuid.New(),
+		}); err != nil {
+			return fmt.Errorf("error formatting swap: %w", err)
+		}
 	default:
 		return fmt.Errorf("unsupported filesystem type: %s", volumeContext.Cfg.TypedSpec().Provisioning.FilesystemSpec.Type)
 	}
@@ -169,6 +180,9 @@ func GrowFilesystem(logger *zap.Logger, volumeContext ManagerContext) error {
 			return fmt.Errorf("error growing ext4: %w", err)
 		}
 
+		return nil
+	case block.FilesystemTypeSwap:
+		// swap is always reformatted, so we don't need to grow it
 		return nil
 	default:
 		return fmt.Errorf("unsupported filesystem type to grow: %s", volumeContext.Cfg.TypedSpec().Provisioning.FilesystemSpec.Type)

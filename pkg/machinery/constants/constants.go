@@ -1245,6 +1245,9 @@ const (
 	// UserVolumePrefix is the prefix for the user volumes.
 	UserVolumePrefix = "u-"
 
+	// SwapVolumePrefix is the prefix for the swap volumes.
+	SwapVolumePrefix = "s-"
+
 	// PartitionLabelLength is the length of the partition label.
 	//
 	// See https://en.wikipedia.org/wiki/GUID_Partition_Table#Partition_entries_(LBA_2%E2%80%9333)

@@ -160,6 +160,17 @@ message ProvisioningSpec {
   FilesystemSpec filesystem_spec = 4;
 }
 
+// SwapStatusSpec is the spec for SwapStatuss resource.
+message SwapStatusSpec {
+  string device = 1;
+  uint64 size_bytes = 2;
+  string size_human = 3;
+  uint64 used_bytes = 4;
+  string used_human = 5;
+  int32 priority = 6;
+  string type = 7;
+}
+
 // SymlinkProvisioningSpec is the spec for volume symlink.
 message SymlinkProvisioningSpec {
   string symlink_target_path = 1;

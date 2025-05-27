@@ -381,6 +381,7 @@ enum BlockFilesystemType {
   FILESYSTEM_TYPE_VFAT = 2;
   FILESYSTEM_TYPE_EXT4 = 3;
   FILESYSTEM_TYPE_ISO9660 = 4;
+  FILESYSTEM_TYPE_SWAP = 5;
 }
 
 // BlockVolumePhase describes volume phase.

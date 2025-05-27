@@ -627,6 +627,134 @@ func (suite *VolumesSuite) TestUserVolumes() {
 	}))
 }
 
+// TestSwapStatus verifies that all swap volumes are successfully enabled.
+func (suite *VolumesSuite) TestSwapStatus() {
+	for _, node := range suite.DiscoverNodeInternalIPs(suite.ctx) {
+		suite.Run(node, func() {
+			ctx := client.WithNode(suite.ctx, node)
+
+			swapVolumes, err := safe.StateListAll[*block.VolumeConfig](ctx, suite.Client.COSI, state.WithLabelQuery(resource.LabelExists(block.SwapVolumeLabel)))
+			suite.Require().NoError(err)
+
+			if swapVolumes.Len() == 0 {
+				suite.T().Skipf("skipping test, no swap volumes found on node %s", node)
+			}
+
+			rtestutils.AssertResources(ctx, suite.T(), suite.Client.COSI,
+				xslices.Map(slices.Collect(swapVolumes.All()), func(sv *block.VolumeConfig) string {
+					return sv.Metadata().ID()
+				}),
+				func(vs *block.VolumeStatus, asrt *assert.Assertions) {
+					asrt.Equal(block.VolumePhaseReady, vs.TypedSpec().Phase)
+				},
+			)
+
+			swapVolumesStatus, err := safe.StateListAll[*block.VolumeStatus](ctx, suite.Client.COSI, state.WithLabelQuery(resource.LabelExists(block.SwapVolumeLabel)))
+			suite.Require().NoError(err)
+
+			deviceNames := xslices.Map(slices.Collect(swapVolumesStatus.All()), func(sv *block.VolumeStatus) string {
+				return sv.TypedSpec().MountLocation
+			})
+
+			rtestutils.AssertResources(ctx, suite.T(), suite.Client.COSI,
+				deviceNames,
+				func(vs *block.SwapStatus, asrt *assert.Assertions) {},
+			)
+
+			suite.T().Logf("found swap volumes (%q) on node %s", deviceNames, node)
+		})
+	}
+}
+
+// TestSwapOnOff performs a series of operations on swap volume: creating, destroying, enabling, disabling, etc.
+func (suite *VolumesSuite) TestSwapOnOff() {
+	if testing.Short() {
+		suite.T().Skip("skipping test in short mode.")
+	}
+
+	if suite.Cluster == nil || suite.Cluster.Provisioner() != base.ProvisionerQEMU {
+		suite.T().Skip("skipping test for non-qemu provisioner")
+	}
+
+	node := suite.RandomDiscoveredNodeInternalIP(machine.TypeWorker)
+
+	k8sNode, err := suite.GetK8sNodeByInternalIP(suite.ctx, node)
+	suite.Require().NoError(err)
+
+	nodeName := k8sNode.Name
+
+	suite.T().Logf("verifying swap on node %s/%s", node, nodeName)
+
+	userDisks := suite.UserDisks(suite.ctx, node)
+
+	if len(userDisks) < 1 {
+		suite.T().Skipf("skipping test, not enough user disks available on node %s/%s: %q", node, nodeName, userDisks)
+	}
+
+	ctx := client.WithNode(suite.ctx, node)
+
+	disk, err := safe.StateGetByID[*block.Disk](ctx, suite.Client.COSI, filepath.Base(userDisks[0]))
+	suite.Require().NoError(err)
+
+	volumeName := fmt.Sprintf("%04x", rand.Int31())
+
+	doc := blockcfg.NewSwapVolumeConfigV1Alpha1()
+	doc.MetaName = volumeName
+	doc.ProvisioningSpec.DiskSelectorSpec.Match = cel.MustExpression(
+		cel.ParseBooleanExpression(fmt.Sprintf("'%s' in disk.symlinks", disk.TypedSpec().Symlinks[0]), celenv.DiskLocator()),
+	)
+	doc.EncryptionSpec = blockcfg.EncryptionSpec{
+		EncryptionProvider: block.EncryptionProviderLUKS2,
+		EncryptionKeys: []blockcfg.EncryptionKey{
+			{
+				KeySlot: 0,
+				KeyStatic: &blockcfg.EncryptionKeyStatic{
+					KeyData: "secretswap",
+				},
+			},
+		},
+	}
+	doc.ProvisioningSpec.ProvisioningMinSize = blockcfg.MustByteSize("100MiB")
+	doc.ProvisioningSpec.ProvisioningMaxSize = blockcfg.MustByteSize("500MiB")
+
+	// create user volumes
+	suite.PatchMachineConfig(ctx, doc)
+
+	swapVolumeID := constants.SwapVolumePrefix + doc.MetaName
+
+	rtestutils.AssertResources(ctx, suite.T(), suite.Client.COSI, []string{swapVolumeID},
+		func(vs *block.VolumeStatus, asrt *assert.Assertions) {
+			asrt.Equal(block.VolumePhaseReady, vs.TypedSpec().Phase)
+		},
+	)
+
+	// check that the volumes are mounted
+	rtestutils.AssertResources(ctx, suite.T(), suite.Client.COSI, []string{swapVolumeID},
+		func(vs *block.MountStatus, _ *assert.Assertions) {})
+
+	// check that the swap is enabled
+	volumeStatus, err := safe.ReaderGetByID[*block.VolumeStatus](ctx, suite.Client.COSI, swapVolumeID)
+	suite.Require().NoError(err)
+
+	rtestutils.AssertResources(ctx, suite.T(), suite.Client.COSI, []string{volumeStatus.TypedSpec().MountLocation},
+		func(vs *block.SwapStatus, asrt *assert.Assertions) {})
+
+	// clean up
+	suite.RemoveMachineConfigDocumentsByName(ctx, blockcfg.SwapVolumeConfigKind, volumeName)
+
+	rtestutils.AssertNoResource[*block.VolumeStatus](ctx, suite.T(), suite.Client.COSI, swapVolumeID)
+	rtestutils.AssertNoResource[*block.SwapStatus](ctx, suite.T(), suite.Client.COSI, volumeStatus.TypedSpec().MountLocation)
+
+	suite.Require().NoError(suite.Client.BlockDeviceWipe(ctx, &storage.BlockDeviceWipeRequest{
+		Devices: []*storage.BlockDeviceWipeDescriptor{
+			{
+				Device: filepath.Base(userDisks[0]),
+				Method: storage.BlockDeviceWipeDescriptor_FAST,
+			},
+		},
+	}))
+}
+
 func init() {
 	allSuites = append(allSuites, new(VolumesSuite))
 }

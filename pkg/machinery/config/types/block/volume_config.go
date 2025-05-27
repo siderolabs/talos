@@ -28,7 +28,7 @@ const VolumeConfigKind = "VolumeConfig"
 func init() {
 	registry.Register(VolumeConfigKind, func(version string) config.Document {
 		switch version {
-		case "v1alpha1":
+		case "v1alpha1": //nolint:goconst
 			return &VolumeConfigV1Alpha1{}
 		default:
 			return nil

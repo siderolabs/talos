@@ -17,6 +17,10 @@ func (EncryptionSpec) Doc() *encoder.Doc {
 		Description: "EncryptionSpec represents volume encryption settings.",
 		AppearsIn: []encoder.Appearance{
 			{
+				TypeName:  "SwapVolumeConfigV1Alpha1",
+				FieldName: "encryption",
+			},
+			{
 				TypeName:  "UserVolumeConfigV1Alpha1",
 				FieldName: "encryption",
 			},
@@ -236,18 +240,18 @@ func (EncryptionKeyNodeID) Doc() *encoder.Doc {
 	return doc
 }
 
-func (VolumeConfigV1Alpha1) Doc() *encoder.Doc {
+func (SwapVolumeConfigV1Alpha1) Doc() *encoder.Doc {
 	doc := &encoder.Doc{
-		Type:        "VolumeConfig",
-		Comments:    [3]string{"" /* encoder.HeadComment */, "VolumeConfig is a system volume configuration document." /* encoder.LineComment */, "" /* encoder.FootComment */},
-		Description: "VolumeConfig is a system volume configuration document.\nNote: at the moment, only `EPHEMERAL` and `IMAGE-CACHE` system volumes are supported.\n",
+		Type:        "SwapVolumeConfig",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "SwapVolumeConfig is a disk swap volume configuration document." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "SwapVolumeConfig is a disk swap volume configuration document.\nSwap volume is automatically allocated as a partition on the specified disk\nand activated as swap, removing a swap volume deactivates swap.\nThe partition label is automatically generated as `s-<name>`.\n",
 		Fields: []encoder.Doc{
 			{},
 			{
 				Name:        "name",
 				Type:        "string",
 				Note:        "",
-				Description: "Name of the volume.",
+				Description: "Name of the volume.\n\nName might be between 1 and 34 characters long and can only contain:\nlowercase and uppercase ASCII letters, digits, and hyphens.",
 				Comments:    [3]string{"" /* encoder.HeadComment */, "Name of the volume." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
 			{
@@ -257,91 +261,17 @@ func (VolumeConfigV1Alpha1) Doc() *encoder.Doc {
 				Description: "The provisioning describes how the volume is provisioned.",
 				Comments:    [3]string{"" /* encoder.HeadComment */, "The provisioning describes how the volume is provisioned." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
-		},
-	}
-
-	doc.AddExample("", exampleVolumeConfigEphemeralV1Alpha1())
-
-	return doc
-}
-
-func (ProvisioningSpec) Doc() *encoder.Doc {
-	doc := &encoder.Doc{
-		Type:        "ProvisioningSpec",
-		Comments:    [3]string{"" /* encoder.HeadComment */, "ProvisioningSpec describes how the volume is provisioned." /* encoder.LineComment */, "" /* encoder.FootComment */},
-		Description: "ProvisioningSpec describes how the volume is provisioned.",
-		AppearsIn: []encoder.Appearance{
 			{
-				TypeName:  "VolumeConfigV1Alpha1",
-				FieldName: "provisioning",
-			},
-			{
-				TypeName:  "UserVolumeConfigV1Alpha1",
-				FieldName: "provisioning",
-			},
-		},
-		Fields: []encoder.Doc{
-			{
-				Name:        "diskSelector",
-				Type:        "DiskSelector",
+				Name:        "encryption",
+				Type:        "EncryptionSpec",
 				Note:        "",
-				Description: "The disk selector expression.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "The disk selector expression." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-			{
-				Name:        "grow",
-				Type:        "bool",
-				Note:        "",
-				Description: "Should the volume grow to the size of the disk (if possible).",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Should the volume grow to the size of the disk (if possible)." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-			{
-				Name:        "minSize",
-				Type:        "ByteSize",
-				Note:        "",
-				Description: "The minimum size of the volume.\n\nSize is specified in bytes, but can be expressed in human readable format, e.g. 100MB.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "The minimum size of the volume." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-			{
-				Name:        "maxSize",
-				Type:        "ByteSize",
-				Note:        "",
-				Description: "The maximum size of the volume, if not specified the volume can grow to the size of the\ndisk.\n\nSize is specified in bytes, but can be expressed in human readable format, e.g. 100MB.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "The maximum size of the volume, if not specified the volume can grow to the size of the" /* encoder.LineComment */, "" /* encoder.FootComment */},
+				Description: "The encryption describes how the volume is encrypted.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "The encryption describes how the volume is encrypted." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
 		},
 	}
 
-	doc.Fields[2].AddExample("", "2.5GiB")
-	doc.Fields[3].AddExample("", "50GiB")
-
-	return doc
-}
-
-func (DiskSelector) Doc() *encoder.Doc {
-	doc := &encoder.Doc{
-		Type:        "DiskSelector",
-		Comments:    [3]string{"" /* encoder.HeadComment */, "DiskSelector selects a disk for the volume." /* encoder.LineComment */, "" /* encoder.FootComment */},
-		Description: "DiskSelector selects a disk for the volume.",
-		AppearsIn: []encoder.Appearance{
-			{
-				TypeName:  "ProvisioningSpec",
-				FieldName: "diskSelector",
-			},
-		},
-		Fields: []encoder.Doc{
-			{
-				Name:        "match",
-				Type:        "Expression",
-				Note:        "",
-				Description: "The Common Expression Language (CEL) expression to match the disk.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "The Common Expression Language (CEL) expression to match the disk." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-		},
-	}
-
-	doc.Fields[0].AddExample("match disks with size between 120GB and 1TB", exampleDiskSelector1())
-	doc.Fields[0].AddExample("match SATA disks that are not rotational and not system disks", exampleDiskSelector2())
+	doc.AddExample("", exampleSwapVolumeConfigV1Alpha1())
 
 	return doc
 }
@@ -418,6 +348,120 @@ func (FilesystemSpec) Doc() *encoder.Doc {
 	return doc
 }
 
+func (VolumeConfigV1Alpha1) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "VolumeConfig",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "VolumeConfig is a system volume configuration document." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "VolumeConfig is a system volume configuration document.\nNote: at the moment, only `EPHEMERAL` and `IMAGE-CACHE` system volumes are supported.\n",
+		Fields: []encoder.Doc{
+			{},
+			{
+				Name:        "name",
+				Type:        "string",
+				Note:        "",
+				Description: "Name of the volume.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Name of the volume." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "provisioning",
+				Type:        "ProvisioningSpec",
+				Note:        "",
+				Description: "The provisioning describes how the volume is provisioned.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "The provisioning describes how the volume is provisioned." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
+
+	doc.AddExample("", exampleVolumeConfigEphemeralV1Alpha1())
+
+	return doc
+}
+
+func (ProvisioningSpec) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "ProvisioningSpec",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "ProvisioningSpec describes how the volume is provisioned." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "ProvisioningSpec describes how the volume is provisioned.",
+		AppearsIn: []encoder.Appearance{
+			{
+				TypeName:  "SwapVolumeConfigV1Alpha1",
+				FieldName: "provisioning",
+			},
+			{
+				TypeName:  "UserVolumeConfigV1Alpha1",
+				FieldName: "provisioning",
+			},
+			{
+				TypeName:  "VolumeConfigV1Alpha1",
+				FieldName: "provisioning",
+			},
+		},
+		Fields: []encoder.Doc{
+			{
+				Name:        "diskSelector",
+				Type:        "DiskSelector",
+				Note:        "",
+				Description: "The disk selector expression.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "The disk selector expression." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "grow",
+				Type:        "bool",
+				Note:        "",
+				Description: "Should the volume grow to the size of the disk (if possible).",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Should the volume grow to the size of the disk (if possible)." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "minSize",
+				Type:        "ByteSize",
+				Note:        "",
+				Description: "The minimum size of the volume.\n\nSize is specified in bytes, but can be expressed in human readable format, e.g. 100MB.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "The minimum size of the volume." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "maxSize",
+				Type:        "ByteSize",
+				Note:        "",
+				Description: "The maximum size of the volume, if not specified the volume can grow to the size of the\ndisk.\n\nSize is specified in bytes, but can be expressed in human readable format, e.g. 100MB.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "The maximum size of the volume, if not specified the volume can grow to the size of the" /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
+
+	doc.Fields[2].AddExample("", "2.5GiB")
+	doc.Fields[3].AddExample("", "50GiB")
+
+	return doc
+}
+
+func (DiskSelector) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "DiskSelector",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "DiskSelector selects a disk for the volume." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "DiskSelector selects a disk for the volume.",
+		AppearsIn: []encoder.Appearance{
+			{
+				TypeName:  "ProvisioningSpec",
+				FieldName: "diskSelector",
+			},
+		},
+		Fields: []encoder.Doc{
+			{
+				Name:        "match",
+				Type:        "Expression",
+				Note:        "",
+				Description: "The Common Expression Language (CEL) expression to match the disk.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "The Common Expression Language (CEL) expression to match the disk." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
+
+	doc.Fields[0].AddExample("match disks with size between 120GB and 1TB", exampleDiskSelector1())
+	doc.Fields[0].AddExample("match SATA disks that are not rotational and not system disks", exampleDiskSelector2())
+
+	return doc
+}
+
 // GetFileDoc returns documentation for the file block_doc.go.
 func GetFileDoc() *encoder.FileDoc {
 	return &encoder.FileDoc{
@@ -430,11 +474,12 @@ func GetFileDoc() *encoder.FileDoc {
 			EncryptionKeyKMS{}.Doc(),
 			EncryptionKeyTPM{}.Doc(),
 			EncryptionKeyNodeID{}.Doc(),
+			SwapVolumeConfigV1Alpha1{}.Doc(),
+			UserVolumeConfigV1Alpha1{}.Doc(),
+			FilesystemSpec{}.Doc(),
 			VolumeConfigV1Alpha1{}.Doc(),
 			ProvisioningSpec{}.Doc(),
 			DiskSelector{}.Doc(),
-			UserVolumeConfigV1Alpha1{}.Doc(),
-			FilesystemSpec{}.Doc(),
 		},
 	}
 }

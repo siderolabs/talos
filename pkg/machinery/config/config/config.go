@@ -20,4 +20,5 @@ type Config interface { //nolint:interfacebloat
 	PCIDriverRebindConfig() PCIDriverRebindConfig
 	EthernetConfigs() []EthernetConfig
 	UserVolumeConfigs() []UserVolumeConfig
+	SwapVolumeConfigs() []SwapVolumeConfig
 }

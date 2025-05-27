@@ -41,6 +41,13 @@ Talos now drops the IMA (Integrity Measurement Architecture) support. This featu
 and has historically caused performance issues. See #11133 for more details.
 """
 
+    [notes.swap]
+        title = "Swap Suport"
+        description = """\
+Talos now supports swap on block devices.
+This feature can be enable by using [SwapVolumeConfig](https://www.talos.dev/v1.11/reference/configuration/block/swapvolumeconfig/) document in the machine configuration.  
+"""
+
 [make_deps]
 
     [make_deps.tools]

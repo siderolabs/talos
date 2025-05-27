@@ -1988,6 +1988,7 @@ const (
 	BlockFilesystemType_FILESYSTEM_TYPE_VFAT    BlockFilesystemType = 2
 	BlockFilesystemType_FILESYSTEM_TYPE_EXT4    BlockFilesystemType = 3
 	BlockFilesystemType_FILESYSTEM_TYPE_ISO9660 BlockFilesystemType = 4
+	BlockFilesystemType_FILESYSTEM_TYPE_SWAP    BlockFilesystemType = 5
 )
 
 // Enum value maps for BlockFilesystemType.
@@ -1998,6 +1999,7 @@ var (
 		2: "FILESYSTEM_TYPE_VFAT",
 		3: "FILESYSTEM_TYPE_EXT4",
 		4: "FILESYSTEM_TYPE_ISO9660",
+		5: "FILESYSTEM_TYPE_SWAP",
 	}
 	BlockFilesystemType_value = map[string]int32{
 		"FILESYSTEM_TYPE_NONE":    0,
@@ -2005,6 +2007,7 @@ var (
 		"FILESYSTEM_TYPE_VFAT":    2,
 		"FILESYSTEM_TYPE_EXT4":    3,
 		"FILESYSTEM_TYPE_ISO9660": 4,
+		"FILESYSTEM_TYPE_SWAP":    5,
 	}
 )
 
@@ -2838,13 +2841,14 @@ const file_resource_definitions_enums_enums_proto_rawDesc = "" +
 	"\x12ENCRYPTION_KEY_TPM\x10\x03*Z\n" +
 	"\x1bBlockEncryptionProviderType\x12\x1c\n" +
 	"\x18ENCRYPTION_PROVIDER_NONE\x10\x00\x12\x1d\n" +
-	"\x19ENCRYPTION_PROVIDER_LUKS2\x10\x01*\x99\x01\n" +
+	"\x19ENCRYPTION_PROVIDER_LUKS2\x10\x01*\xb3\x01\n" +
 	"\x13BlockFilesystemType\x12\x18\n" +
 	"\x14FILESYSTEM_TYPE_NONE\x10\x00\x12\x17\n" +
 	"\x13FILESYSTEM_TYPE_XFS\x10\x01\x12\x18\n" +
 	"\x14FILESYSTEM_TYPE_VFAT\x10\x02\x12\x18\n" +
 	"\x14FILESYSTEM_TYPE_EXT4\x10\x03\x12\x1b\n" +
-	"\x17FILESYSTEM_TYPE_ISO9660\x10\x04*\xe3\x01\n" +
+	"\x17FILESYSTEM_TYPE_ISO9660\x10\x04\x12\x18\n" +
+	"\x14FILESYSTEM_TYPE_SWAP\x10\x05*\xe3\x01\n" +
 	"\x10BlockVolumePhase\x12\x18\n" +
 	"\x14VOLUME_PHASE_WAITING\x10\x00\x12\x17\n" +
 	"\x13VOLUME_PHASE_FAILED\x10\x01\x12\x18\n" +

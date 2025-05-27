@@ -64,7 +64,12 @@ func (suite *UserVolumeConfigSuite) TestReconcile() {
 		},
 	}
 
-	ctr, err := container.New(uv1, uv2)
+	sv1 := blockcfg.NewSwapVolumeConfigV1Alpha1()
+	sv1.MetaName = "swap"
+	suite.Require().NoError(sv1.ProvisioningSpec.DiskSelectorSpec.Match.UnmarshalText([]byte(`disk.transport == "nvme"`)))
+	sv1.ProvisioningSpec.ProvisioningMaxSize = blockcfg.MustByteSize("2GiB")
+
+	ctr, err := container.New(uv1, uv2, sv1)
 	suite.Require().NoError(err)
 
 	cfg := config.NewMachineConfig(ctr)
@@ -92,6 +97,24 @@ func (suite *UserVolumeConfigSuite) TestReconcile() {
 
 	ctest.AssertResources(suite, userVolumes, func(vmr *block.VolumeMountRequest, asrt *assert.Assertions) {
 		asrt.Contains(vmr.Metadata().Labels().Raw(), block.UserVolumeLabel)
+	})
+
+	swapVolumes := []string{
+		constants.SwapVolumePrefix + "swap",
+	}
+
+	ctest.AssertResources(suite, swapVolumes, func(vc *block.VolumeConfig, asrt *assert.Assertions) {
+		asrt.Contains(vc.Metadata().Labels().Raw(), block.SwapVolumeLabel)
+
+		asrt.Equal(block.VolumeTypePartition, vc.TypedSpec().Type)
+		asrt.Contains(swapVolumes, vc.TypedSpec().Provisioning.PartitionSpec.Label)
+
+		locator, err := vc.TypedSpec().Locator.Match.MarshalText()
+		asrt.NoError(err)
+
+		asrt.Contains(string(locator), vc.TypedSpec().Provisioning.PartitionSpec.Label)
+
+		asrt.Equal(block.FilesystemTypeSwap, vc.TypedSpec().Provisioning.FilesystemSpec.Type)
 	})
 
 	// simulate other controllers working - add finalizers for volume config & mount request

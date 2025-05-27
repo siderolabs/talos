@@ -1,0 +1,16 @@
+apiVersion: v1alpha1
+kind: SwapVolumeConfig
+name: secret-swap
+provisioning:
+    diskSelector:
+        match: '!system_disk'
+    minSize: 10GiB
+encryption:
+    provider: luks2
+    keys:
+        - slot: 0
+          tpm: {}
+        - slot: 1
+          static:
+            passphrase: topsecret
+    cipher: aes-xts-plain64

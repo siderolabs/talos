@@ -76,11 +76,6 @@ func (emptyVolumeConfig) MaxSize() optional.Optional[uint64] {
 	return optional.None[uint64]()
 }
 
-// UserVolumesConfig defines the interface to access user volume configurations.
-type UserVolumesConfig interface {
-	UserVolumes() []UserVolumeConfig
-}
-
 // UserVolumeConfig defines the interface to access user volume configuration.
 type UserVolumeConfig interface {
 	NamedDocument
@@ -94,4 +89,12 @@ type UserVolumeConfig interface {
 type FilesystemConfig interface {
 	// Type returns the filesystem type.
 	Type() block.FilesystemType
+}
+
+// SwapVolumeConfig defines the interface to access swap volume configuration.
+type SwapVolumeConfig interface {
+	NamedDocument
+	SwapVolumeConfigSignal()
+	Provisioning() VolumeProvisioningConfig
+	Encryption() EncryptionConfig
 }
