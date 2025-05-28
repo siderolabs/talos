@@ -26,6 +26,12 @@ containerd: 2.1.1
 Talos is built with Go 1.24.3.
 """
 
+    [notes.macos-qemu]
+        title = "Qemu provisioner on MacOS"
+                description = """\
+On MacOS `talosctl cluster create` command now supports the Qemu provisioner in addition to the Docker provisioner.
+"""
+
 [make_deps]
 
     [make_deps.tools]
