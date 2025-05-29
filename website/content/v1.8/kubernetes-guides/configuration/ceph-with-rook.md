@@ -100,6 +100,188 @@ ceph-bucket            rook-ceph.ceph.rook.io/bucket   Delete          Immediate
 ceph-filesystem        rook-ceph.cephfs.csi.ceph.com   Delete          Immediate           true                   77m
 ```
 
+## 🔧 Single Node Setup Instructions
+
+If you're deploying on a **single worker node**, follow these specialized steps to set up Rook Ceph with Talos Linux:
+
+---
+
+### Additional Requirements
+
+To run a Ceph cluster reliably with Talos Linux and Rook:
+
+* You need **at least 4 disks for the worker node**:
+
+  * **1 disk** for the Talos OS
+  * **3 dedicated and unused disks** for Ceph OSDs
+
+> ❗ Rook will not function properly without **at least three available and empty disks** for Ceph.
+---
+
+### 1. Enable the Ceph Kernel Module
+
+Talos includes the `nbd` kernel module, but it needs to be explicitly enabled.
+
+**Create a patch file** (`patch.values.yaml`):
+
+```yaml
+machine:
+  kernel:
+    modules:
+      - name: nbd
+```
+**Apply the kernel module patch**:
+```shell
+talosctl -n 192.168.178.79 patch mc --patch @./terraform/talos/patch/patch.yaml
+```
+
+---
+
+### 2. Install Rook Operator
+
+**Add the Helm repository**:
+
+```shell
+helm repo add rook-release https://charts.rook.io/release
+```
+
+**Install the Rook Operator**:
+
+```shell
+helm install --create-namespace --namespace rook-ceph rook-ceph rook-release/rook-ceph
+```
+
+**Label the namespace for privileged pods**:
+
+```shell
+kubectl label namespace rook-ceph pod-security.kubernetes.io/enforce=privileged
+```
+
+---
+
+### 3. Inspect Available Disks
+
+Check which disks are available:
+
+```shell
+talosctl get disks -n 192.168.178.79
+```
+
+> ✅ You need to identify **three unused devices** (e.g., `/dev/sdb`, `/dev/sdc`, `/dev/sdd`) for use by Ceph.
+If necessary, create or attach new disks (virtual or physical) that Ceph can consume.
+
+---
+
+### 4. Prepare Custom `values.yaml` for Single-Node Ceph
+
+Replace all instances of `talos-mec-lba` below with the **actual name of your worker node**, which you can get from:
+
+```shell
+kubectl get nodes -o wide
+```
+
+Here is an example `values.yaml` configuration:
+
+```yaml
+storage:
+  useAllNodes: false
+  useAllDevices: true
+  config:
+    allowMultiplePerNode: true
+  nodes:
+    - name: talos-mec-lba  # 🔁 Replace with your actual node name
+
+placement:
+  all:
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+          - matchExpressions:
+              - key: kubernetes.io/hostname
+                operator: In
+                values:
+                  - talos-mec-lba  # 🔁 Replace with your actual node name
+    tolerations:
+      - key: "node-role.kubernetes.io/control-plane"
+        operator: "Exists"
+        effect: "NoSchedule"
+
+cephClusterSpec:
+  mon:
+    count: 1
+    allowMultiplePerNode: true
+  mgr:
+    count: 1
+    allowMultiplePerNode: true
+  mds:
+    count: 0
+    allowMultiplePerNode: true
+  rgw:
+    count: 0
+    allowMultiplePerNode: true
+  crashCollector:
+    disable: true
+  dashboard:
+    enabled: true
+  pool:
+    replicated:
+      size: 1
+      minSize: 1
+
+cephCSI:
+  csiCephFS:
+    provisionerReplicas: 1
+    pluginReplicas: 1
+    placement:
+      podAntiAffinity: null
+  csiRBD:
+    provisionerReplicas: 1
+    pluginReplicas: 1
+    placement:
+      podAntiAffinity: null
+```
+---
+### 5. Install Rook Ceph Cluster with Custom Configuration
+```shell
+helm install --create-namespace --namespace rook-ceph rook-ceph-cluster \
+  -f values.yaml \
+  --set operatorNamespace=rook-ceph \
+  rook-release/rook-ceph-cluster
+```
+
+---
+
+### 6. ✅ Test PVC Provisioning
+
+Create a test `PersistentVolumeClaim` to verify that Ceph RBD block storage is working:
+
+```yaml
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: ceph-block-pvc-23
+  namespace: default
+spec:
+  storageClassName: ceph-block   # your Ceph RBD StorageClass name
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
+```
+Apply the PVC:
+```shell
+kubectl apply -f test-pvc.yaml
+```
+
+Check if the volume has been successfully provisioned:
+
+```shell
+kubectl get pvc ceph-block-pvc-23
+```
+
+> ✅ If the PVC shows `STATUS: Bound`, your Ceph cluster is working correctly.
+
 ## Talos Linux Considerations
 
 It is important to note that a Rook Ceph cluster saves cluster information directly onto the node (by default `dataDirHostPath` is set to `/var/lib/rook`).
