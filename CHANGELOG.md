@@ -1,3 +1,77 @@
+## [Talos 1.10.3](https://github.com/siderolabs/talos/releases/tag/v1.10.3) (2025-05-29)
+
+Welcome to the v1.10.3 release of Talos!
+
+
+
+Please try out the release binaries and report any issues at
+https://github.com/siderolabs/talos/issues.
+
+### Component Updates
+
+Linux: 6.12.28
+Kubernetes: 1.33.1
+
+Talos is built with Go 1.24.3.
+
+
+### Contributors
+
+* Andrey Smirnov
+* Noel Georgi
+
+### Changes
+<details><summary>9 commits</summary>
+<p>
+
+* [`85110deec`](https://github.com/siderolabs/talos/commit/85110deec25d0fbfe1cdfc4eec2189ad48bec8ad) fix(ci): reproducibility test
+* [`64609aad5`](https://github.com/siderolabs/talos/commit/64609aad5c7986d0051e9ff2a1d0e232a65ee16b) fix(ci): iso reproducibility file permissions
+* [`d24ef442b`](https://github.com/siderolabs/talos/commit/d24ef442bce8d3b09e7a839e992fb55b113c4300) fix: nocloud metadata for hostname
+* [`d4eaf78dc`](https://github.com/siderolabs/talos/commit/d4eaf78dc6685072d98e31ab5cf4e9af37d3fd8d) fix: allow any PKI in Talos API
+* [`2b5f34a41`](https://github.com/siderolabs/talos/commit/2b5f34a4127478c5aa46df85c44780bfd7cee9b0) fix: metal-iso reproducibility
+* [`3692f6fef`](https://github.com/siderolabs/talos/commit/3692f6fefa8bc68337067505970013d3af531d64) fix: bump apid memory limit
+* [`284ffe9cb`](https://github.com/siderolabs/talos/commit/284ffe9cbe5b933aacf5b3ae1434ca82296a00cf) feat: update default Kubernetes to v1.33.1
+* [`ecdac8802`](https://github.com/siderolabs/talos/commit/ecdac88029129a1e3ce6099ff64da333de4a0244) chore: clean up `/usr/bin`
+* [`e9a6ba902`](https://github.com/siderolabs/talos/commit/e9a6ba902049f8608da984e8c0c101618cdab178) feat: update Linux to 6.12.28
+</p>
+</details>
+
+### Changes from siderolabs/crypto
+<details><summary>2 commits</summary>
+<p>
+
+* [`17107ae`](https://github.com/siderolabs/crypto/commit/17107ae45403a2bcd4fecfb4660b60276652b00d) fix: add generic CSR generator and OpenSSL interop
+* [`53659fc`](https://github.com/siderolabs/crypto/commit/53659fc35f6abd4ada7ffa22ef1b148cf93c0f28) refactor: split into files
+</p>
+</details>
+
+### Changes from siderolabs/pkgs
+<details><summary>4 commits</summary>
+<p>
+
+* [`39b9c9f`](https://github.com/siderolabs/pkgs/commit/39b9c9f841cb786f46a791ac392c66945c218eca) fix: drop pcre2 binaries
+* [`b622793`](https://github.com/siderolabs/pkgs/commit/b6227930a0f68f9da7cd95b6928419c546b17ada) fix: drop broken symlinks
+* [`ca63fc8`](https://github.com/siderolabs/pkgs/commit/ca63fc87df90a1fd1c44bc5b9c223f367843897f) fix: clean up some binaries
+* [`1ff9dc5`](https://github.com/siderolabs/pkgs/commit/1ff9dc5cd64e43949e661e4eb3b6e6a92f063a8b) feat: update Linux 6.12.28, firmware
+</p>
+</details>
+
+### Dependency Changes
+
+* **github.com/siderolabs/crypto**   v0.5.1 -> v0.6.0
+* **github.com/siderolabs/pkgs**     v1.10.0-12-gb425b44 -> v1.10.0-16-g39b9c9f
+* **k8s.io/api**                     v0.33.0 -> v0.33.1
+* **k8s.io/apimachinery**            v0.33.0 -> v0.33.1
+* **k8s.io/apiserver**               v0.33.0 -> v0.33.1
+* **k8s.io/client-go**               v0.33.0 -> v0.33.1
+* **k8s.io/component-base**          v0.33.0 -> v0.33.1
+* **k8s.io/kube-scheduler**          v0.33.0 -> v0.33.1
+* **k8s.io/kubectl**                 v0.33.0 -> v0.33.1
+* **k8s.io/kubelet**                 v0.33.0 -> v0.33.1
+* **k8s.io/pod-security-admission**  v0.33.0 -> v0.33.1
+
+Previous release can be found at [v1.10.2](https://github.com/siderolabs/talos/releases/tag/v1.10.2)
+
 ## [Talos 1.10.2](https://github.com/siderolabs/talos/releases/tag/v1.10.2) (2025-05-16)
 
 Welcome to the v1.10.2 release of Talos!
