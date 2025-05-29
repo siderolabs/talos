@@ -55,7 +55,7 @@ Usually an overlay consist of a few key components:
 - `bootloader`: contains the bootloader, e.g. `u-boot` for the board
 - `dtb`: contains the device tree blobs for the board
 - `installer`: contains the installer that will be used to install this overlay on the node
-- `profile`: contains information
+- `profile`: contains information about the disk image profile, e.g. the disk image size, bootloader used, output format etc.
 
 1. For the new overlay, create any needed folders and `pkg.yaml` files.
 2. If your board introduces a new chipset that is not supported yet, make sure to add the firmware build for it.
@@ -92,8 +92,8 @@ export BOARD=nanopi-r5s
 export TAG=664638a
 
 docker run --rm -t -v ./_out:/out -v /dev:/dev --privileged ghcr.io/siderolabs/imager:${TALOS_VERSION} \
-    metal --arch arm64 \
-    --base-installer-image="ghcr.io/siderolabs/installer:${TALOS_VERSION}" \
+    "${BOARD}" --arch arm64 \
+    --base-installer-image="ghcr.io/siderolabs/installer-base:${TALOS_VERSION}" \
     --overlay-name="${BOARD}" \
     --overlay-image="ghcr.io/${USERNAME}/sbc-rockchip:${TAG}" \
 ```
