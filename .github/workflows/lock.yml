@@ -1,0 +1,21 @@
+# THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
+#
+# Generated on 2025-06-13T13:26:36Z by kres 5128bc1.
+
+name: Lock old issues
+"on":
+  schedule:
+    - cron: 0 2 * * *
+permissions:
+  issues: write
+jobs:
+  action:
+    runs-on:
+      - ubuntu-latest
+    steps:
+      - name: Lock old issues
+        uses: dessant/lock-threads@v5.0.1
+        with:
+          issue-inactive-days: "60"
+          log-output: "true"
+          process-only: issues

@@ -115,6 +115,7 @@ spec:
             PUSH: true
         - name: lint
         - name: talosctl-cni-bundle
+        - name: sbom
         - name: iso
           command: iso secureboot-iso
           environment:
@@ -205,6 +206,7 @@ spec:
               - metal-arm64-uki.efi
               - metal-amd64.raw.zst
               - metal-arm64.raw.zst
+              - sbom.json
               - talosctl-cni-bundle-amd64.tar.gz
               - talosctl-cni-bundle-arm64.tar.gz
               - talosctl-darwin-amd64

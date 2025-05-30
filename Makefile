@@ -455,6 +455,9 @@ talosctl-windows-arm64:
 
 talosctl: talosctl-$(OPERATING_SYSTEM)-$(ARCH)
 
+sbom:
+	@$(MAKE) local-sbom DEST=$(ARTIFACTS)
+
 image-%: ## Builds the specified image. Valid options are aws, azure, digital-ocean, gcp, and vmware (e.g. image-aws)
 	@docker pull $(REGISTRY_AND_USERNAME)/imager:$(IMAGE_TAG_IN)
 	@for platform in $(subst $(,),$(space),$(PLATFORM)); do \

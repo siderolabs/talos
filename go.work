@@ -8,4 +8,5 @@ use (
 	./hack/module-sig-verify
 	./hack/structprotogen
 	./pkg/machinery
+	./tools
 )
