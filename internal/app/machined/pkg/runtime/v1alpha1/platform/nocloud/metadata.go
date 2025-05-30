@@ -6,7 +6,10 @@
 package nocloud
 
 import (
+	"bufio"
+	"bytes"
 	"context"
+	stderrors "errors"
 	"fmt"
 	"log"
 	"net"
@@ -932,4 +935,53 @@ func withDefault[T comparable](v T, defaultValue T) T {
 	}
 
 	return v
+}
+
+// FetchInclude fetches nocloud #include configuration from the URL specified in the body.
+func (n *Nocloud) FetchInclude(ctx context.Context, body []byte, st state.State) ([]byte, error) {
+	u, err := ExtractIncludeURL(body)
+	if err != nil {
+		return nil, err
+	}
+
+	log.Printf("fetching the nocloud #include configuration from: %q", u.String())
+
+	if err = netutils.Wait(ctx, st); err != nil {
+		return nil, err
+	}
+
+	return download.Download(ctx, u.String(), download.WithErrorOnNotFound(errors.ErrNoConfigSource),
+		download.WithErrorOnEmptyResponse(errors.ErrNoConfigSource))
+}
+
+// ExtractIncludeURL extracts the URL from the body of a nocloud #include configuration.
+//
+// Note: only a single URL is expected in the body.
+func ExtractIncludeURL(body []byte) (*url.URL, error) {
+	var urlLine string
+
+	scanner := bufio.NewScanner(bytes.NewReader(body))
+
+	for scanner.Scan() {
+		line := strings.TrimSpace(scanner.Text())
+		if line == "" {
+			continue
+		}
+
+		if urlLine != "" {
+			return nil, fmt.Errorf("multiple #include URLs found in nocloud configuration: %q and %q", urlLine, line)
+		}
+
+		urlLine = line
+	}
+
+	if err := scanner.Err(); err != nil {
+		return nil, err
+	}
+
+	if urlLine == "" {
+		return nil, stderrors.New("no #include URL found in nocloud configuration")
+	}
+
+	return url.Parse(urlLine)
 }
