@@ -449,6 +449,30 @@ FROM scratch AS microsoft-db-keys
 COPY --from=microsoft-secureboot-database /DB/Certificates/MicCor*.der /db/
 COPY --from=microsoft-secureboot-database /DB/Certificates/microsoft*.der /db/
 
+FROM build-go AS sbom-generate
+COPY ./tools ./tools
+
+ARG SOURCE_DATE_EPOCH
+ENV SYFT_FORMAT_SPDX_JSON_CREATED_TIME=${SOURCE_DATE_EPOCH}
+ENV SYFT_FORMAT_PRETTY=1
+ENV SYFT_FORMAT_SPDX_JSON_DETERMINISTIC_UUID=1
+
+ARG NAME
+ARG TAG
+
+RUN mkdir -p sbom-src /usr/share/sbom
+# TODO: copy pkgs SBOMs to sbom-src when we generate them
+RUN cp go.mod go.sum sbom-src
+RUN --mount=type=cache,target=/.cache,id=talos/.cache go tool -modfile=tools/go.mod \
+    github.com/anchore/syft/cmd/syft \
+    scan --from dir sbom-src \
+    --select-catalogers "+sbom-cataloger,go" \
+    --source-name "${NAME}" --source-version "${TAG}" \
+    -o spdx-json > /usr/share/sbom/sbom.json
+
+FROM scratch AS sbom
+COPY --from=sbom-generate /usr/share/sbom/sbom.json /
+
 FROM --platform=${BUILDPLATFORM} scratch AS generate
 COPY --from=proto-format-build /src/api /api/
 COPY --from=generate-build /api/common/*.pb.go /pkg/machinery/api/common/
