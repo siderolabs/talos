@@ -26,14 +26,14 @@ var dashboardCmd = &cobra.Command{
 
 Keyboard shortcuts:
 
- - h, &lt;Left&gt; - switch one node to the left
- - l, &lt;Right&gt; - switch one node to the right
- - j, &lt;Down&gt; - scroll logs/process list down
- - k, &lt;Up&gt; - scroll logs/process list up
- - &lt;C-d&gt; - scroll logs/process list half page down
- - &lt;C-u&gt; - scroll logs/process list half page up
- - &lt;C-f&gt; - scroll logs/process list one page down
- - &lt;C-b&gt; - scroll logs/process list one page up
+ - h, <Left> - switch one node to the left
+ - l, <Right> - switch one node to the right
+ - j, <Down> - scroll logs/process list down
+ - k, <Up> - scroll logs/process list up
+ - <C-d> - scroll logs/process list half page down
+ - <C-u> - scroll logs/process list half page up
+ - <C-f> - scroll logs/process list one page down
+ - <C-b> - scroll logs/process list one page up
 `,
 	Args: cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
