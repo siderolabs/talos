@@ -9,3 +9,6 @@ import "github.com/cosi-project/runtime/pkg/resource"
 
 // NamespaceName contains file resources.
 const NamespaceName resource.Namespace = "files"
+
+// SourceFileAnnotation is used to annotate a file resource with the source file path(s).
+const SourceFileAnnotation = "talos.dev/source-file"
