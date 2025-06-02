@@ -1,6 +1,6 @@
-## testdata/1.toml
-## testdata/2.toml
-## testdata/3.toml
+## testdata/1.toml (sha256:2eac71621235f8666c54ad3f29a77b2e8483bbd7f0717f8613af591fb5609b44)
+## testdata/2.toml (sha256:47ae85a638a291b04518413a12b19c51883a17c8f5064193462d3527b4495e36)
+## testdata/3.toml (sha256:159608dffd674e5fe351d47166eab59ee93f6523ff336602364edfd7be25c796)
 
 version = 2
 

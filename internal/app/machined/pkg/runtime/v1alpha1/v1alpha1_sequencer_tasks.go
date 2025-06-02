@@ -8,6 +8,8 @@ import (
 	"bufio"
 	"bytes"
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -662,20 +664,6 @@ func injectCRIConfigPatch(ctx context.Context, st state.State, content []byte) e
 	ctx, cancel := context.WithTimeout(ctx, time.Minute)
 	defer cancel()
 
-	ch := make(chan state.Event)
-
-	// wait for the CRI config to be created
-	if err := st.Watch(ctx, resourcefiles.NewEtcFileSpec(resourcefiles.NamespaceName, constants.CRIConfig).Metadata(), ch); err != nil {
-		return err
-	}
-
-	// first update should be received about the existing resource
-	select {
-	case <-ch:
-	case <-ctx.Done():
-		return ctx.Err()
-	}
-
 	etcFileSpec := resourcefiles.NewEtcFileSpec(resourcefiles.NamespaceName, constants.CRICustomizationConfigPart)
 	etcFileSpec.TypedSpec().Mode = 0o600
 	etcFileSpec.TypedSpec().Contents = content
@@ -685,24 +673,33 @@ func injectCRIConfigPatch(ctx context.Context, st state.State, content []byte) e
 		return err
 	}
 
-	// wait for the CRI config parts controller to generate the merged file
-	var version resource.Version
+	checksumRaw := sha256.Sum256(content)
+	expectedChecksum := hex.EncodeToString(checksumRaw[:])
+	expectedAnnotation := resourcefiles.SourceFileAnnotation + ":" + filepath.Join("/etc", etcFileSpec.Metadata().ID())
 
-	select {
-	case ev := <-ch:
-		version = ev.Resource.Metadata().Version()
-	case <-ctx.Done():
-		return ctx.Err()
+	fileSpec, err := st.WatchFor(ctx, resourcefiles.NewEtcFileSpec(resourcefiles.NamespaceName, constants.CRIConfig).Metadata(),
+		state.WithCondition(func(r resource.Resource) (bool, error) {
+			spec, ok := r.(*resourcefiles.EtcFileSpec)
+			if !ok {
+				return false, nil
+			}
+
+			value, ok := spec.Metadata().Annotations().Get(expectedAnnotation)
+
+			return ok && value == expectedChecksum, nil
+		}))
+	if err != nil {
+		return fmt.Errorf("error waiting for file %q to be updated: %w", constants.CRIConfig, err)
 	}
 
 	// wait for the file to be rendered
-	_, err := st.WatchFor(ctx, resourcefiles.NewEtcFileStatus(resourcefiles.NamespaceName, constants.CRIConfig).Metadata(), state.WithCondition(func(r resource.Resource) (bool, error) {
+	_, err = st.WatchFor(ctx, resourcefiles.NewEtcFileStatus(resourcefiles.NamespaceName, constants.CRIConfig).Metadata(), state.WithCondition(func(r resource.Resource) (bool, error) {
 		fileStatus, ok := r.(*resourcefiles.EtcFileStatus)
 		if !ok {
 			return false, nil
 		}
 
-		return fileStatus.TypedSpec().SpecVersion == version.String(), nil
+		return fileStatus.TypedSpec().SpecVersion == fileSpec.Metadata().Version().String(), nil
 	}))
 
 	return err

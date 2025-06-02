@@ -18,6 +18,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/resource/rtestutils"
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/siderolabs/gen/ensure"
+	"github.com/siderolabs/gen/xslices"
 	"github.com/siderolabs/go-pointer"
 	"github.com/siderolabs/go-retry/retry"
 	"github.com/stretchr/testify/assert"
@@ -121,10 +122,7 @@ func (suite *ApplyConfigSuite) TestApply() {
 					Mode: machineapi.ApplyConfigurationRequest_REBOOT,
 				},
 			)
-			if err != nil {
-				// It is expected that the connection will EOF here, so just log the error
-				suite.Assert().NoErrorf(err, "failed to apply configuration (node %q)", node)
-			}
+			suite.Assert().NoErrorf(err, "failed to apply configuration (node %q)", node)
 
 			return nil
 		}, assertRebootedRebootTimeout,
@@ -150,6 +148,84 @@ func (suite *ApplyConfigSuite) TestApply() {
 	suite.Assert().Equal(
 		newProvider.Machine().Sysctls()[applyConfigTestSysctl],
 		applyConfigTestSysctlVal,
+	)
+}
+
+// TestApplyNoOpCRIPatch verifies the apply config with no-op CRI patch.
+func (suite *ApplyConfigSuite) TestApplyNoOpCRIPatch() {
+	if testing.Short() {
+		suite.T().Skip("skipping in short mode")
+	}
+
+	if !suite.Capabilities().SupportsReboot {
+		suite.T().Skip("cluster doesn't support reboot")
+	}
+
+	node := suite.RandomDiscoveredNodeInternalIP(machine.TypeWorker)
+
+	suite.WaitForBootDone(suite.ctx)
+
+	nodeCtx := client.WithNode(suite.ctx, node)
+
+	provider, err := suite.ReadConfigFromNode(nodeCtx)
+	suite.Assert().NoErrorf(err, "failed to read existing config from node %q", node)
+
+	// this CRI patch is a no-op, as NRI is already disabled by default, this verifies that CRI config generation handles it correctly.
+	cfgDataOut := suite.PatchV1Alpha1Config(provider, func(cfg *v1alpha1.Config) {
+		cfg.MachineConfig.MachineFiles = xslices.Filter(cfg.MachineConfig.MachineFiles, func(file *v1alpha1.MachineFile) bool {
+			return file.FilePath != "/etc/cri/conf.d/20-customization.part"
+		})
+
+		cfg.MachineConfig.MachineFiles = append(cfg.MachineConfig.MachineFiles,
+			&v1alpha1.MachineFile{
+				FilePath: "/etc/cri/conf.d/20-customization.part",
+				FileOp:   "create",
+				FileContent: `[plugins]
+          [plugins."io.containerd.nri.v1.nri"]
+             disable = true`,
+			},
+		)
+	})
+
+	suite.AssertRebooted(
+		suite.ctx, node, func(nodeCtx context.Context) error {
+			_, err = suite.Client.ApplyConfiguration(
+				nodeCtx, &machineapi.ApplyConfigurationRequest{
+					Data: cfgDataOut,
+					Mode: machineapi.ApplyConfigurationRequest_REBOOT,
+				},
+			)
+			suite.Assert().NoErrorf(err, "failed to apply configuration (node %q)", node)
+
+			return nil
+		}, assertRebootedRebootTimeout,
+		suite.CleanupFailedPods,
+	)
+
+	// revert the patch
+	provider, err = suite.ReadConfigFromNode(nodeCtx)
+	suite.Assert().NoErrorf(err, "failed to read existing config from node %q", node)
+
+	// this CRI patch is a no-op, as NRI is already disabled by default, this verifies that CRI config generation handles it correctly.
+	cfgDataOut = suite.PatchV1Alpha1Config(provider, func(cfg *v1alpha1.Config) {
+		cfg.MachineConfig.MachineFiles = xslices.Filter(cfg.MachineConfig.MachineFiles, func(file *v1alpha1.MachineFile) bool {
+			return file.FilePath != "/etc/cri/conf.d/20-customization.part"
+		})
+	})
+
+	suite.AssertRebooted(
+		suite.ctx, node, func(nodeCtx context.Context) error {
+			_, err = suite.Client.ApplyConfiguration(
+				nodeCtx, &machineapi.ApplyConfigurationRequest{
+					Data: cfgDataOut,
+					Mode: machineapi.ApplyConfigurationRequest_REBOOT,
+				},
+			)
+			suite.Assert().NoErrorf(err, "failed to apply configuration (node %q)", node)
+
+			return nil
+		}, assertRebootedRebootTimeout,
+		suite.CleanupFailedPods,
 	)
 }
 

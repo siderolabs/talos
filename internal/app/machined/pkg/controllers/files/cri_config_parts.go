@@ -6,6 +6,7 @@ package files
 
 import (
 	"context"
+	"encoding/hex"
 	"fmt"
 	"path/filepath"
 	"slices"
@@ -72,13 +73,21 @@ func (ctrl *CRIConfigPartsController) Run(ctx context.Context, r controller.Runt
 
 		slices.Sort(parts)
 
-		out, err := toml.Merge(parts)
+		out, checksums, err := toml.Merge(parts)
 		if err != nil {
 			return err
 		}
 
 		if err := safe.WriterModify(ctx, r, files.NewEtcFileSpec(files.NamespaceName, constants.CRIConfig),
 			func(r *files.EtcFileSpec) error {
+				for _, key := range r.Metadata().Annotations().Raw() {
+					r.Metadata().Annotations().Delete(key)
+				}
+
+				for path, checksum := range checksums {
+					r.Metadata().Annotations().Set(files.SourceFileAnnotation+":"+path, hex.EncodeToString(checksum))
+				}
+
 				spec := r.TypedSpec()
 
 				spec.Contents = out
