@@ -198,7 +198,7 @@ output:
   kind: iso
   outFormat: raw
 skipped initramfs rebuild (no system extensions)
-kernel command line: talos.platform=metal console=tty0 init_on_alloc=1 slab_nomerge pti=on consoleblank=0 nvme_core.io_timeout=4294967295 printk.devkmsg=on ima_template=ima-ng ima_appraise=fix ima_hash=sha512 lockdown=confidentiality
+kernel command line: talos.platform=metal console=tty0 init_on_alloc=1 slab_nomerge pti=on consoleblank=0 nvme_core.io_timeout=4294967295 printk.devkmsg=on lockdown=confidentiality
 UKI ready
 ISO ready
 output asset path: /out/metal-amd64-secureboot.iso
@@ -236,7 +236,7 @@ output:
   kind: installer
   outFormat: raw
 skipped initramfs rebuild (no system extensions)
-kernel command line: talos.platform=metal console=tty0 init_on_alloc=1 slab_nomerge pti=on consoleblank=0 nvme_core.io_timeout=4294967295 printk.devkmsg=on ima_template=ima-ng ima_appraise=fix ima_hash=sha512 lockdown=confidentiality
+kernel command line: talos.platform=metal console=tty0 init_on_alloc=1 slab_nomerge pti=on consoleblank=0 nvme_core.io_timeout=4294967295 printk.devkmsg=on lockdown=confidentiality
 UKI ready
 installer container image ready
 output asset path: /out/installer-amd64-secureboot.tar

@@ -233,7 +233,7 @@ output:
     diskFormat: raw
   outFormat: .xz
 initramfs ready
-kernel command line: talos.platform=metal console=tty0 console=ttyAMA0,115200 sysctl.kernel.kexec_load_disabled=1 talos.dashboard.disabled=1 init_on_alloc=1 slab_nomerge pti=on consoleblank=0 nvme_core.io_timeout=4294967295 printk.devkmsg=on ima_template=ima-ng ima_appraise=fix ima_hash=sha512
+kernel command line: talos.platform=metal console=tty0 console=ttyAMA0,115200 sysctl.kernel.kexec_load_disabled=1 talos.dashboard.disabled=1 init_on_alloc=1 slab_nomerge pti=on consoleblank=0 nvme_core.io_timeout=4294967295 printk.devkmsg=on
 disk image ready
 output asset path: /out/metal-arm64.raw
 compression done: /out/metal-arm64.raw.xz

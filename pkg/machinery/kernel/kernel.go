@@ -32,9 +32,16 @@ func DefaultArgs(quirks quirks.Quirks) []string {
 		"nvme_core.io_timeout=4294967295",
 		// Disable rate limited printk
 		"printk.devkmsg=on",
-		"ima_template=ima-ng",
-		"ima_appraise=fix",
-		"ima_hash=sha512",
+	}
+
+	if quirks.SupportsIMA() {
+		// Enable IMAs for integrity measurement
+		result = append(
+			result,
+			"ima_template=ima-ng",
+			"ima_appraise=fix",
+			"ima_hash=sha512",
+		)
 	}
 
 	if quirks.SupportsSELinux() {

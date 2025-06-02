@@ -241,3 +241,15 @@ func (q Quirks) XFSMkfsConfig() string {
 		return "/usr/share/xfsprogs/mkfs/lts_6.1.conf"
 	}
 }
+
+var maxTalosVersionIMASupported = semver.MustParse("1.10.99")
+
+// SupportsIMA returns true if the Talos version has IMA support.
+func (q Quirks) SupportsIMA() bool {
+	// if the version doesn't parse, we assume it's latest Talos
+	if q.v == nil {
+		return false
+	}
+
+	return q.v.LTE(maxTalosVersionIMASupported)
+}

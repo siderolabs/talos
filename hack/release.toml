@@ -18,7 +18,7 @@ preface = """
     [notes.updates]
         title = "Component Updates"
         description = """\
-Linux: 6.12.28
+Linux: 6.12.30
 Kubernetes: 1.33.1
 runc: 1.3.0
 containerd: 2.1.1
@@ -30,6 +30,13 @@ Talos is built with Go 1.24.3.
         title = "Qemu provisioner on MacOS"
                 description = """\
 On MacOS `talosctl cluster create` command now supports the Qemu provisioner in addition to the Docker provisioner.
+"""
+
+    [notes.ima]
+        title = "IMA support removed"
+        description = """\
+Talos now drops the IMA (Integrity Measurement Architecture) support. This feature was not used in Talos for any meaningful security purpose
+and has historically caused performance issues. See #11133 for more details.
 """
 
 [make_deps]

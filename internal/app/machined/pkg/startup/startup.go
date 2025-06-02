@@ -44,7 +44,6 @@ func DefaultTasks() []Task {
 		MountCgroups,
 		SetRLimit,
 		SetEnvironmentVariables,
-		WriteIMAPolicy,
 		CreateSystemCgroups,
 	}
 }
