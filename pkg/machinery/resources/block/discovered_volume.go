@@ -24,7 +24,7 @@ type DiscoveredVolume = typed.Resource[DiscoveredVolumeSpec, DiscoveredVolumeExt
 //
 //gotagsrewrite:gen
 type DiscoveredVolumeSpec struct {
-	DevPath       string `yaml:"dev_dath" protobuf:"17"`
+	DevPath       string `yaml:"dev_path" protobuf:"17"`
 	Type          string `yaml:"type" protobuf:"14"`
 	DevicePath    string `yaml:"device_path" protobuf:"15"`
 	Parent        string `yaml:"parent,omitempty" protobuf:"16"`
