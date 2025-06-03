@@ -14,6 +14,7 @@ import (
 
 	"github.com/siderolabs/talos/pkg/machinery/cel"
 	"github.com/siderolabs/talos/pkg/machinery/proto"
+	"github.com/siderolabs/talos/pkg/machinery/yamlutils"
 )
 
 // VolumeConfigType is type of VolumeConfig resource.
@@ -138,7 +139,7 @@ type EncryptionKey struct {
 	Type EncryptionKeyType `yaml:"type" protobuf:"2"`
 
 	// Only for Type == "static":
-	StaticPassphrase []byte `yaml:"staticPassphrase,omitempty" protobuf:"3"`
+	StaticPassphrase yamlutils.StringBytes `yaml:"staticPassphrase,omitempty" protobuf:"3"`
 
 	// Only for Type == "kms":
 	KMSEndpoint string `yaml:"kmsEndpoint,omitempty" protobuf:"4"`

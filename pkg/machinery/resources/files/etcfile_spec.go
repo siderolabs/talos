@@ -13,6 +13,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/resource/typed"
 
 	"github.com/siderolabs/talos/pkg/machinery/proto"
+	"github.com/siderolabs/talos/pkg/machinery/yamlutils"
 )
 
 //go:generate deep-copy -type EtcFileSpecSpec -type EtcFileStatusSpec -header-file ../../../../hack/boilerplate.txt -o deep_copy.generated.go .
@@ -27,9 +28,9 @@ type EtcFileSpec = typed.Resource[EtcFileSpecSpec, EtcFileSpecExtension]
 //
 //gotagsrewrite:gen
 type EtcFileSpecSpec struct {
-	Contents     []byte      `yaml:"contents" protobuf:"1"`
-	Mode         fs.FileMode `yaml:"mode" protobuf:"2"`
-	SelinuxLabel string      `yaml:"selinux_label" protobuf:"3"`
+	Contents     yamlutils.StringBytes `yaml:"contents" protobuf:"1"`
+	Mode         fs.FileMode           `yaml:"mode" protobuf:"2"`
+	SelinuxLabel string                `yaml:"selinux_label" protobuf:"3"`
 }
 
 // NewEtcFileSpec initializes a EtcFileSpec resource.

@@ -29,6 +29,7 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/resources/block"
 	"github.com/siderolabs/talos/pkg/machinery/resources/config"
 	"github.com/siderolabs/talos/pkg/machinery/resources/runtime"
+	"github.com/siderolabs/talos/pkg/machinery/yamlutils"
 )
 
 type VolumeConfigSuite struct {
@@ -192,7 +193,7 @@ func (suite *VolumeConfigSuite) TestReconcileEncryptedSTATE() {
 		asrt.Equal(1, r.TypedSpec().Encryption.Keys[0].Slot)
 
 		asrt.Equal(block.EncryptionKeyStatic, r.TypedSpec().Encryption.Keys[0].Type)
-		asrt.Equal([]byte("supersecret"), r.TypedSpec().Encryption.Keys[0].StaticPassphrase)
+		asrt.Equal(yamlutils.StringBytes([]byte("supersecret")), r.TypedSpec().Encryption.Keys[0].StaticPassphrase)
 
 		asrt.Equal(2, r.TypedSpec().Encryption.Keys[1].Slot)
 		asrt.Equal(block.EncryptionKeyTPM, r.TypedSpec().Encryption.Keys[1].Type)
