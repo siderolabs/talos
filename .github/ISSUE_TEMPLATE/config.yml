@@ -5,4 +5,7 @@ contact_links:
     about: Ask a question about Talos Linux.
   - name: Community
     url: https://taloscommunity.slack.com
-    about: Join the community. Get your invite by visiting https://slack.dev.talos-systems.io.
+    about: Join the community. (Not an official support channel.) Get your invite by visiting https://slack.dev.talos-systems.io.
+  - name: Get Enterprise Support
+    url: https://www.siderolabs.com/support/
+    about: Get commercial support from the Sidero Labs team, with SLAs for every issue.
