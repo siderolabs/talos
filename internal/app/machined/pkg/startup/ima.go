@@ -44,7 +44,7 @@ var rules = []string{
 	"dont_measure fsmagic=0xef51",     // EXT2_OLD_SUPER_MAGIC
 	"dont_measure fsmagic=0xef53",     // EXT2_SUPER_MAGIC / EXT3_SUPER_MAGIC / EXT4_SUPER_MAGIC
 	"dont_measure fsmagic=0x00c36400", // CEPH_SUPER_MAGIC
-	"dont_measure fsmagic=0x65735543", // FUSE_CTL_SUPER_MAGIC
+	"dont_measure fsmagic=0x65735546", // FUSE_SUPER_MAGIC
 	"measure func=MMAP_CHECK mask=MAY_EXEC",
 	"measure func=BPRM_CHECK mask=MAY_EXEC",
 	"measure func=FILE_CHECK mask=^MAY_READ euid=0",
