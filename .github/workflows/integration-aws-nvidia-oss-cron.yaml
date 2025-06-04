@@ -1,6 +1,6 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
 #
-# Generated on 2025-04-15T15:57:38Z by kres fd5cab0.
+# Generated on 2025-06-04T11:41:24Z by kres fc6afbe.
 
 name: integration-aws-nvidia-oss-cron
 concurrency:
@@ -17,7 +17,7 @@ jobs:
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@v1.3.0
+        uses: kenchan0130/actions-system-info@v1.3.1
         continue-on-error: true
       - name: print-system-info
         run: |

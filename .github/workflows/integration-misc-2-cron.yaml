@@ -1,6 +1,6 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
 #
-# Generated on 2025-05-05T04:55:03Z by kres 6cbcbd1.
+# Generated on 2025-06-04T11:41:24Z by kres fc6afbe.
 
 name: integration-misc-2-cron
 concurrency:
@@ -17,7 +17,7 @@ jobs:
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@v1.3.0
+        uses: kenchan0130/actions-system-info@v1.3.1
         continue-on-error: true
       - name: print-system-info
         run: |

@@ -1,6 +1,6 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
 #
-# Generated on 2025-04-01T08:14:24Z by kres d903dae.
+# Generated on 2025-06-04T11:41:24Z by kres fc6afbe.
 
 name: integration-image-factory-cron
 concurrency:
@@ -17,7 +17,7 @@ jobs:
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@v1.3.0
+        uses: kenchan0130/actions-system-info@v1.3.1
         continue-on-error: true
       - name: print-system-info
         run: |

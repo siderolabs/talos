@@ -25,9 +25,9 @@ DEBUG_TOOLS_SOURCE := scratch
 EMBED_TARGET ?= embed
 
 TOOLS_PREFIX ?= ghcr.io/siderolabs/tools
-TOOLS ?= v1.11.0-alpha.0-1-ge35234b
+TOOLS ?= v1.11.0-alpha.0-2-gaf3fd64
 PKGS_PREFIX ?= ghcr.io/siderolabs
-PKGS ?= v1.11.0-alpha.0-28-gebd6627
+PKGS ?= v1.11.0-alpha.0-32-g79bfa9e
 
 KRES_IMAGE ?= ghcr.io/siderolabs/kres:latest
 CONFORMANCE_IMAGE ?= ghcr.io/siderolabs/conform:latest
@@ -97,7 +97,7 @@ STRINGER_VERSION ?= v0.33.0
 # renovate: datasource=go depName=github.com/dmarkham/enumer
 ENUMER_VERSION ?= v1.5.11
 # renovate: datasource=go depName=k8s.io/code-generator
-DEEPCOPY_GEN_VERSION ?= v0.33.0
+DEEPCOPY_GEN_VERSION ?= v0.33.1
 # renovate: datasource=go depName=github.com/planetscale/vtprotobuf
 VTPROTOBUF_VERSION ?= v0.6.0
 # renovate: datasource=go depName=github.com/siderolabs/deep-copy
@@ -109,9 +109,9 @@ PROTOTOOL_VERSION ?= v1.10.0
 # renovate: datasource=go depName=github.com/pseudomuto/protoc-gen-doc
 PROTOC_GEN_DOC_VERSION ?= v1.5.1
 # renovate: datasource=npm depName=markdownlint-cli
-MARKDOWNLINTCLI_VERSION ?= 0.44.0
+MARKDOWNLINTCLI_VERSION ?= 0.45.0
 # renovate: datasource=npm depName=textlint
-TEXTLINT_VERSION ?= 14.7.1
+TEXTLINT_VERSION ?= 14.7.2
 # renovate: datasource=npm depName=textlint-filter-rule-comments
 TEXTLINT_FILTER_RULE_COMMENTS_VERSION ?= 1.2.2
 # renovate: datasource=npm depName=textlint-rule-one-sentence-per-line
@@ -130,9 +130,9 @@ KUBECTL_VERSION ?= v1.33.1
 # renovate: datasource=github-releases depName=kastenhq/kubestr
 KUBESTR_VERSION ?= v0.4.49
 # renovate: datasource=github-releases depName=helm/helm
-HELM_VERSION ?= v3.17.3
+HELM_VERSION ?= v3.18.2
 # renovate: datasource=github-releases depName=cilium/cilium-cli
-CILIUM_CLI_VERSION ?= v0.18.3
+CILIUM_CLI_VERSION ?= v0.18.4
 # renovate: datasource=github-releases depName=microsoft/secureboot_objects
 MICROSOFT_SECUREBOOT_RELEASE ?= v1.1.3
 
