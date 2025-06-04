@@ -39,7 +39,7 @@ Also, if you need _both_ mount-once _and_ mount-many capabilities, Ceph is your 
 
 ### Longhorn
 
-Documentation for installing Longhorn on Talos Linux is available on the [LongHorn site](https://longhorn.io/docs/1.9.0/advanced-resources/os-distro-specific/talos-linux-support/).
+Documentation for installing Longhorn on Talos Linux is available on the [Longhorn site](https://longhorn.io/docs/1.9.0/advanced-resources/os-distro-specific/talos-linux-support/).
 
 ### Rook/Ceph
 
