@@ -99,6 +99,9 @@ func (ctrl *Controller) Run(ctx context.Context, drainer *runtime.Drainer) error
 		&block.MountController{},
 		&block.MountRequestController{},
 		&block.MountStatusController{},
+		&block.SwapStatusController{
+			V1Alpha1Mode: ctrl.v1alpha1Runtime.State().Platform().Mode(),
+		},
 		&block.SymlinksController{},
 		&block.SystemDiskController{},
 		&block.UserDiskConfigController{},
