@@ -501,6 +501,9 @@ const (
 	// ConfigGuestInfo is the name of the VMware guestinfo config strategy.
 	ConfigGuestInfo = "guestinfo"
 
+	// VMwareGuestInfoPrefix is the prefix to extraConfig variables.
+	VMwareGuestInfoPrefix = "guestinfo."
+
 	// VMwareGuestInfoConfigKey is the guestinfo key used to provide a config file.
 	VMwareGuestInfoConfigKey = "talos.config"
 
