@@ -2,7 +2,8 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-//go:build amd64
+// the build is constrained to architectures supported by the hypercall package
+//go:build amd64 || arm64
 
 package vmware
 
@@ -13,11 +14,12 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"log/slog"
 
 	"github.com/cosi-project/runtime/pkg/state"
+	"github.com/equinix-ms/go-vmw-guestrpc/pkg/hypercall"
+	"github.com/equinix-ms/go-vmw-guestrpc/pkg/nanotoolbox"
 	"github.com/siderolabs/go-procfs/procfs"
-	"github.com/vmware/vmw-guestinfo/rpcvmx"
-	"github.com/vmware/vmw-guestinfo/vmcheck"
 	yaml "gopkg.in/yaml.v3"
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
@@ -27,8 +29,8 @@ import (
 )
 
 // Read and de-base64 a property from `extraConfig`. This is commonly referred to as `guestinfo`.
-func readConfigFromExtraConfig(extraConfig *rpcvmx.Config, key string) ([]byte, error) {
-	val, err := extraConfig.String(key, "")
+func readConfigFromExtraConfig(rpci *nanotoolbox.RPCI, key string) ([]byte, error) {
+	val, err := rpci.InfoGet(constants.VMwareGuestInfoPrefix+key, "")
 	if err != nil {
 		return nil, fmt.Errorf("failed to get extraConfig %s: %w", key, err)
 	}
@@ -81,8 +83,8 @@ type ovfEnvProperty struct {
 
 // Read and de-base64 a property from the OVF env. This is different way to pass data to your VM.
 // This is how data gets passed when using vCloud Director.
-func readConfigFromOvf(extraConfig *rpcvmx.Config, key string) ([]byte, error) {
-	ovfXML, err := extraConfig.String(constants.VMwareGuestInfoOvfEnvKey, "")
+func readConfigFromOvf(rpci *nanotoolbox.RPCI, key string) ([]byte, error) {
+	ovfXML, err := rpci.InfoGet(constants.VMwareGuestInfoPrefix+constants.VMwareGuestInfoOvfEnvKey, "")
 	if err != nil {
 		return nil, fmt.Errorf("failed to read extraConfig var '%s': %w", key, err)
 	}
@@ -128,6 +130,23 @@ func readConfigFromOvf(extraConfig *rpcvmx.Config, key string) ([]byte, error) {
 	return nil, nil
 }
 
+func initializeRPCI() (*nanotoolbox.RPCI, error) {
+	if !hypercall.IsVMWareVM() {
+		return nil, errors.New("this is not a VMWare VM")
+	}
+
+	rpci, err := nanotoolbox.NewRPCI(slog.New(slog.NewTextHandler(log.Writer(), nil)))
+	if err != nil {
+		return nil, fmt.Errorf("could not initialize RPCI: %w", err)
+	}
+
+	if err = rpci.Start(); err != nil {
+		return nil, fmt.Errorf("could not start RPCI: %w", err)
+	}
+
+	return rpci, nil
+}
+
 // Configuration implements the platform.Platform interface.
 //
 //nolint:gocyclo
@@ -140,21 +159,16 @@ func (v *VMware) Configuration(context.Context, state.State) ([]byte, error) {
 	if *option == constants.ConfigGuestInfo {
 		log.Printf("fetching machine config from VMware extraConfig or OVF env")
 
-		ok, err := vmcheck.IsVirtualWorld(true)
+		rpci, err := initializeRPCI()
 		if err != nil {
-			return nil, fmt.Errorf("error checking if we are virtual: %w", err)
+			return nil, fmt.Errorf("error initiliazing RPCI: %w", err)
 		}
-
-		if !ok {
-			return nil, errors.New("not a virtual world")
-		}
-
-		extraConfig := rpcvmx.NewConfig()
+		defer rpci.Stop() //nolint:errcheck
 
 		// try to fetch `talos.config` from plain extraConfig (ie, the old behavior)
 		log.Printf("trying to find '%s' in extraConfig", constants.VMwareGuestInfoConfigKey)
 
-		config, err := readConfigFromExtraConfig(extraConfig, constants.VMwareGuestInfoConfigKey)
+		config, err := readConfigFromExtraConfig(rpci, constants.VMwareGuestInfoConfigKey)
 		if err != nil {
 			return nil, err
 		}
@@ -166,7 +180,7 @@ func (v *VMware) Configuration(context.Context, state.State) ([]byte, error) {
 		// try to fetch `userdata` from plain extraConfig (ie, the old behavior)
 		log.Printf("trying to find '%s' in extraConfig", constants.VMwareGuestInfoFallbackKey)
 
-		config, err = readConfigFromExtraConfig(extraConfig, constants.VMwareGuestInfoFallbackKey)
+		config, err = readConfigFromExtraConfig(rpci, constants.VMwareGuestInfoFallbackKey)
 		if err != nil {
 			return nil, err
 		}
@@ -178,7 +192,7 @@ func (v *VMware) Configuration(context.Context, state.State) ([]byte, error) {
 		// try to fetch `talos.config` from OVF
 		log.Printf("trying to find '%s' in OVF env", constants.VMwareGuestInfoConfigKey)
 
-		config, err = readConfigFromOvf(extraConfig, constants.VMwareGuestInfoConfigKey)
+		config, err = readConfigFromOvf(rpci, constants.VMwareGuestInfoConfigKey)
 		if err != nil {
 			return nil, err
 		}
@@ -190,7 +204,7 @@ func (v *VMware) Configuration(context.Context, state.State) ([]byte, error) {
 		// try to fetch `userdata` from OVF
 		log.Printf("trying to find '%s' in OVF env", constants.VMwareGuestInfoFallbackKey)
 
-		config, err = readConfigFromOvf(extraConfig, constants.VMwareGuestInfoFallbackKey)
+		config, err = readConfigFromOvf(rpci, constants.VMwareGuestInfoFallbackKey)
 		if err != nil {
 			return nil, err
 		}
@@ -206,14 +220,14 @@ func (v *VMware) Configuration(context.Context, state.State) ([]byte, error) {
 }
 
 // Read VMware GuestInfo metadata if available.
-func (v *VMware) readMetadata(extraConfig *rpcvmx.Config) ([]byte, error) {
-	guestInfoMetadata, err := readConfigFromExtraConfig(extraConfig, constants.VMwareGuestInfoMetadataKey)
+func (v *VMware) readMetadata(rpci *nanotoolbox.RPCI) ([]byte, error) {
+	guestInfoMetadata, err := readConfigFromExtraConfig(rpci, constants.VMwareGuestInfoMetadataKey)
 	if err != nil {
 		return nil, err
 	}
 
 	if guestInfoMetadata == nil {
-		guestInfoMetadata, err = readConfigFromOvf(extraConfig, constants.VMwareGuestInfoMetadataKey)
+		guestInfoMetadata, err = readConfigFromOvf(rpci, constants.VMwareGuestInfoMetadataKey)
 	}
 
 	if err != nil {
@@ -225,9 +239,13 @@ func (v *VMware) readMetadata(extraConfig *rpcvmx.Config) ([]byte, error) {
 
 // NetworkConfiguration implements the runtime.Platform interface.
 func (v *VMware) NetworkConfiguration(ctx context.Context, st state.State, ch chan<- *runtime.PlatformNetworkConfig) error {
-	extraConfig := rpcvmx.NewConfig()
+	rpci, err := initializeRPCI()
+	if err != nil {
+		return fmt.Errorf("error initiliazing RPCI: %w", err)
+	}
+	defer rpci.Stop() //nolint:errcheck
 
-	guestInfoMetadata, err := v.readMetadata(extraConfig)
+	guestInfoMetadata, err := v.readMetadata(rpci)
 	if err != nil {
 		return fmt.Errorf("failed to read GuestInfo: %w", err)
 	}

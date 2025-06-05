@@ -48,6 +48,12 @@ Talos now supports swap on block devices.
 This feature can be enable by using [SwapVolumeConfig](https://www.talos.dev/v1.11/reference/configuration/block/swapvolumeconfig/) document in the machine configuration.  
 """
 
+    [notes.vmware]
+        title = "VMware"
+        description = """\
+Talos VMWare platform now supports `arm64` architecture in addition to `amd64`.
+"""
+
 [make_deps]
 
     [make_deps.tools]
