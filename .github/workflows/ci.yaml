@@ -1,6 +1,6 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
 #
-# Generated on 2025-06-04T11:41:24Z by kres fc6afbe.
+# Generated on 2025-06-05T06:51:16Z by kres fc6afbe.
 
 name: default
 concurrency:
@@ -370,7 +370,7 @@ jobs:
     runs-on:
       - self-hosted
       - generic
-    if: contains(fromJSON(needs.default.outputs.labels), 'integration/aws')
+    if: contains(fromJSON(needs.default.outputs.labels), 'integration/aws') || contains(fromJSON(needs.default.outputs.labels), 'integration/release-gate')
     needs:
       - default
     steps:
@@ -809,7 +809,7 @@ jobs:
     runs-on:
       - self-hosted
       - talos
-    if: contains(fromJSON(needs.default.outputs.labels), 'integration/cilium')
+    if: contains(fromJSON(needs.default.outputs.labels), 'integration/cilium') || contains(fromJSON(needs.default.outputs.labels), 'integration/release-gate')
     needs:
       - default
     steps:
@@ -1019,7 +1019,7 @@ jobs:
     runs-on:
       - self-hosted
       - talos
-    if: contains(fromJSON(needs.default.outputs.labels), 'integration/conformance')
+    if: contains(fromJSON(needs.default.outputs.labels), 'integration/conformance') || contains(fromJSON(needs.default.outputs.labels), 'integration/release-gate')
     needs:
       - default
     steps:
@@ -1227,7 +1227,7 @@ jobs:
     runs-on:
       - self-hosted
       - talos
-    if: contains(fromJSON(needs.default.outputs.labels), 'integration/extensions')
+    if: contains(fromJSON(needs.default.outputs.labels), 'integration/extensions') || contains(fromJSON(needs.default.outputs.labels), 'integration/release-gate')
     needs:
       - default
     steps:
@@ -1353,7 +1353,7 @@ jobs:
     runs-on:
       - self-hosted
       - generic
-    if: contains(fromJSON(needs.default.outputs.labels), 'integration/gcp')
+    if: contains(fromJSON(needs.default.outputs.labels), 'integration/gcp') || contains(fromJSON(needs.default.outputs.labels), 'integration/release-gate')
     needs:
       - default
     steps:
@@ -1481,7 +1481,7 @@ jobs:
     runs-on:
       - self-hosted
       - talos
-    if: contains(fromJSON(needs.default.outputs.labels), 'integration/image-cache')
+    if: contains(fromJSON(needs.default.outputs.labels), 'integration/image-cache') || contains(fromJSON(needs.default.outputs.labels), 'integration/release-gate')
     needs:
       - default
     steps:
@@ -1764,7 +1764,7 @@ jobs:
     runs-on:
       - self-hosted
       - generic
-    if: contains(fromJSON(needs.default.outputs.labels), 'integration/images')
+    if: contains(fromJSON(needs.default.outputs.labels), 'integration/images') || contains(fromJSON(needs.default.outputs.labels), 'integration/release-gate')
     needs:
       - default
     steps:
@@ -1847,7 +1847,7 @@ jobs:
     runs-on:
       - self-hosted
       - talos
-    if: contains(fromJSON(needs.default.outputs.labels), 'integration/misc') || contains(fromJSON(needs.default.outputs.labels), 'integration/misc-0')
+    if: contains(fromJSON(needs.default.outputs.labels), 'integration/misc') || contains(fromJSON(needs.default.outputs.labels), 'integration/misc-0') || contains(fromJSON(needs.default.outputs.labels), 'integration/release-gate')
     needs:
       - default
     steps:
@@ -1974,7 +1974,7 @@ jobs:
     runs-on:
       - self-hosted
       - talos
-    if: contains(fromJSON(needs.default.outputs.labels), 'integration/misc') || contains(fromJSON(needs.default.outputs.labels), 'integration/misc-1')
+    if: contains(fromJSON(needs.default.outputs.labels), 'integration/misc') || contains(fromJSON(needs.default.outputs.labels), 'integration/misc-1') || contains(fromJSON(needs.default.outputs.labels), 'integration/release-gate')
     needs:
       - default
     steps:
@@ -2105,7 +2105,7 @@ jobs:
     runs-on:
       - self-hosted
       - talos
-    if: contains(fromJSON(needs.default.outputs.labels), 'integration/misc-enforcing') || contains(fromJSON(needs.default.outputs.labels), 'integration/misc-1-enforcing')
+    if: contains(fromJSON(needs.default.outputs.labels), 'integration/misc-enforcing') || contains(fromJSON(needs.default.outputs.labels), 'integration/misc-1-enforcing') || contains(fromJSON(needs.default.outputs.labels), 'integration/release-gate')
     needs:
       - default
     steps:
@@ -2254,7 +2254,7 @@ jobs:
     runs-on:
       - self-hosted
       - talos
-    if: contains(fromJSON(needs.default.outputs.labels), 'integration/misc') || contains(fromJSON(needs.default.outputs.labels), 'integration/misc-2')
+    if: contains(fromJSON(needs.default.outputs.labels), 'integration/misc') || contains(fromJSON(needs.default.outputs.labels), 'integration/misc-2') || contains(fromJSON(needs.default.outputs.labels), 'integration/release-gate')
     needs:
       - default
     steps:
@@ -2419,7 +2419,7 @@ jobs:
     runs-on:
       - self-hosted
       - talos
-    if: contains(fromJSON(needs.default.outputs.labels), 'integration/misc') || contains(fromJSON(needs.default.outputs.labels), 'integration/misc-3')
+    if: contains(fromJSON(needs.default.outputs.labels), 'integration/misc') || contains(fromJSON(needs.default.outputs.labels), 'integration/misc-3') || contains(fromJSON(needs.default.outputs.labels), 'integration/release-gate')
     needs:
       - default
     steps:
@@ -2663,7 +2663,7 @@ jobs:
     runs-on:
       - self-hosted
       - talos
-    if: contains(fromJSON(needs.default.outputs.labels), 'integration/misc') || contains(fromJSON(needs.default.outputs.labels), 'integration/misc-4')
+    if: contains(fromJSON(needs.default.outputs.labels), 'integration/misc') || contains(fromJSON(needs.default.outputs.labels), 'integration/misc-4') || contains(fromJSON(needs.default.outputs.labels), 'integration/release-gate')
     needs:
       - default
     steps:
@@ -2792,7 +2792,7 @@ jobs:
     runs-on:
       - self-hosted
       - talos
-    if: contains(fromJSON(needs.default.outputs.labels), 'integration/misc-enforcing') || contains(fromJSON(needs.default.outputs.labels), 'integration/misc-4-enforcing')
+    if: contains(fromJSON(needs.default.outputs.labels), 'integration/misc-enforcing') || contains(fromJSON(needs.default.outputs.labels), 'integration/misc-4-enforcing') || contains(fromJSON(needs.default.outputs.labels), 'integration/release-gate')
     needs:
       - default
     steps:
@@ -2948,7 +2948,7 @@ jobs:
     runs-on:
       - self-hosted
       - talos
-    if: contains(fromJSON(needs.default.outputs.labels), 'integration/provision') || contains(fromJSON(needs.default.outputs.labels), 'integration/provision-0')
+    if: contains(fromJSON(needs.default.outputs.labels), 'integration/provision') || contains(fromJSON(needs.default.outputs.labels), 'integration/provision-0') || contains(fromJSON(needs.default.outputs.labels), 'integration/release-gate')
     needs:
       - default
     steps:
@@ -3057,7 +3057,7 @@ jobs:
     runs-on:
       - self-hosted
       - talos
-    if: contains(fromJSON(needs.default.outputs.labels), 'integration/provision') || contains(fromJSON(needs.default.outputs.labels), 'integration/provision-1')
+    if: contains(fromJSON(needs.default.outputs.labels), 'integration/provision') || contains(fromJSON(needs.default.outputs.labels), 'integration/provision-1') || contains(fromJSON(needs.default.outputs.labels), 'integration/release-gate')
     needs:
       - default
     steps:
@@ -3152,7 +3152,7 @@ jobs:
     runs-on:
       - self-hosted
       - talos
-    if: contains(fromJSON(needs.default.outputs.labels), 'integration/provision') || contains(fromJSON(needs.default.outputs.labels), 'integration/provision-2')
+    if: contains(fromJSON(needs.default.outputs.labels), 'integration/provision') || contains(fromJSON(needs.default.outputs.labels), 'integration/provision-2') || contains(fromJSON(needs.default.outputs.labels), 'integration/release-gate')
     needs:
       - default
     steps:
@@ -3247,7 +3247,7 @@ jobs:
     runs-on:
       - self-hosted
       - talos
-    if: contains(fromJSON(needs.default.outputs.labels), 'integration/qemu')
+    if: contains(fromJSON(needs.default.outputs.labels), 'integration/qemu') || contains(fromJSON(needs.default.outputs.labels), 'integration/release-gate')
     needs:
       - default
     steps:
@@ -3344,7 +3344,7 @@ jobs:
     runs-on:
       - self-hosted
       - talos
-    if: contains(fromJSON(needs.default.outputs.labels), 'integration/qemu-csi') || contains(fromJSON(needs.default.outputs.labels), 'integration/extensions') || contains(fromJSON(needs.default.outputs.labels), 'integration/qemu-csi-longhorn')
+    if: contains(fromJSON(needs.default.outputs.labels), 'integration/qemu-csi') || contains(fromJSON(needs.default.outputs.labels), 'integration/extensions') || contains(fromJSON(needs.default.outputs.labels), 'integration/qemu-csi-longhorn') || contains(fromJSON(needs.default.outputs.labels), 'integration/release-gate')
     needs:
       - default
     steps:
@@ -3482,7 +3482,7 @@ jobs:
     runs-on:
       - self-hosted
       - talos
-    if: contains(fromJSON(needs.default.outputs.labels), 'integration/qemu-csi') || contains(fromJSON(needs.default.outputs.labels), 'integration/qemu-csi-openebs')
+    if: contains(fromJSON(needs.default.outputs.labels), 'integration/qemu-csi') || contains(fromJSON(needs.default.outputs.labels), 'integration/qemu-csi-openebs') || contains(fromJSON(needs.default.outputs.labels), 'integration/release-gate')
     needs:
       - default
     steps:
@@ -3590,7 +3590,7 @@ jobs:
     runs-on:
       - self-hosted
       - talos
-    if: contains(fromJSON(needs.default.outputs.labels), 'integration/qemu-csi') || contains(fromJSON(needs.default.outputs.labels), 'integration/qemu-csi-rook-ceph')
+    if: contains(fromJSON(needs.default.outputs.labels), 'integration/qemu-csi') || contains(fromJSON(needs.default.outputs.labels), 'integration/qemu-csi-rook-ceph') || contains(fromJSON(needs.default.outputs.labels), 'integration/release-gate')
     needs:
       - default
     steps:
@@ -3697,7 +3697,7 @@ jobs:
     runs-on:
       - self-hosted
       - talos
-    if: contains(fromJSON(needs.default.outputs.labels), 'integration/qemu-encrypted-vip')
+    if: contains(fromJSON(needs.default.outputs.labels), 'integration/qemu-encrypted-vip') || contains(fromJSON(needs.default.outputs.labels), 'integration/release-gate')
     needs:
       - default
     steps:
@@ -3795,7 +3795,7 @@ jobs:
     runs-on:
       - self-hosted
       - talos
-    if: contains(fromJSON(needs.default.outputs.labels), 'integration/qemu-enforcing')
+    if: contains(fromJSON(needs.default.outputs.labels), 'integration/qemu-enforcing') || contains(fromJSON(needs.default.outputs.labels), 'integration/release-gate')
     needs:
       - default
     steps:
@@ -3910,7 +3910,7 @@ jobs:
     runs-on:
       - self-hosted
       - talos
-    if: contains(fromJSON(needs.default.outputs.labels), 'integration/qemu-race')
+    if: contains(fromJSON(needs.default.outputs.labels), 'integration/qemu-race') || contains(fromJSON(needs.default.outputs.labels), 'integration/release-gate')
     needs:
       - default
     steps:
@@ -4018,7 +4018,7 @@ jobs:
     runs-on:
       - self-hosted
       - talos
-    if: contains(fromJSON(needs.default.outputs.labels), 'integration/reproducibility-test')
+    if: contains(fromJSON(needs.default.outputs.labels), 'integration/reproducibility-test') || contains(fromJSON(needs.default.outputs.labels), 'integration/release-gate')
     needs:
       - default
     steps:
@@ -4088,7 +4088,7 @@ jobs:
     runs-on:
       - self-hosted
       - talos
-    if: contains(fromJSON(needs.default.outputs.labels), 'integration/trusted-boot')
+    if: contains(fromJSON(needs.default.outputs.labels), 'integration/trusted-boot') || contains(fromJSON(needs.default.outputs.labels), 'integration/release-gate')
     needs:
       - default
     steps:

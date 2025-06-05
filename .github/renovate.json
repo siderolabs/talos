@@ -12,7 +12,9 @@
         {
             "customType": "regex",
             "versioningTemplate": "{{#if versioning}}{{versioning}}{{else}}semver{{/if}}",
-            "managerFilePatterns": null,
+            "managerFilePatterns": [
+                "/Makefile/"
+            ],
             "matchStrings": [
                 "# renovate: datasource=(?<datasource>.*?)(?:\\s+extractVersion=(?<extractVersion>.+?))?\\s+depName=(?<depName>.+?)\\s.*_VERSION\\s+\\?=\\s+(?<currentValue>.+)"
             ]
@@ -20,7 +22,9 @@
         {
             "customType": "regex",
             "versioningTemplate": "{{#if versioning}}{{versioning}}{{else}}semver{{/if}}",
-            "managerFilePatterns": null,
+            "managerFilePatterns": [
+                "/pkg/machinery/constants/constants.go/"
+            ],
             "matchStrings": [
                 "\\/\\/\\s+renovate: datasource=(?<datasource>.*?)(?:\\s+extractVersion=(?<extractVersion>.+?))?(?:\\s+versioning=(?<versioning>.+?))?\\s+depName=(?<depName>.+?)?\\s.*Version\\s+=\\s+\\\"(?<currentValue>.+?)\\\""
             ]
@@ -28,7 +32,9 @@
         {
             "customType": "regex",
             "versioningTemplate": "{{#if versioning}}{{versioning}}{{else}}semver{{/if}}",
-            "managerFilePatterns": null,
+            "managerFilePatterns": [
+                "/internal/integration/k8s/constants.go/"
+            ],
             "matchStrings": [
                 "\\/\\/\\s+renovate: datasource=(?<datasource>.*?)(?:\\s+extractVersion=(?<extractVersion>.+?))?(?:\\s+versioning=(?<versioning>.+?))?\\s+depName=(?<depName>.+?)?(?:\\s+registryUrl=(?<registryUrl>.+?))?\\s.*Version\\s+=\\s+\\\"(?<currentValue>.+?)\\\""
             ]
@@ -38,7 +44,9 @@
             "datasourceTemplate": "docker",
             "depNameTemplate": "docker/dockerfile-upstream",
             "versioningTemplate": "docker",
-            "managerFilePatterns": null,
+            "managerFilePatterns": [
+                "/Dockerfile/"
+            ],
             "matchStrings": [
                 "# syntax = docker\\/dockerfile-upstream:(?<currentValue>.*)"
             ]
