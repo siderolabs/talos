@@ -1,6 +1,6 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
 #
-# Generated on 2025-05-06T10:19:56Z by kres 1a0156b.
+# Generated on 2025-06-11T09:49:20Z by kres 5128bc1.
 
 name: default
 concurrency:
@@ -34,7 +34,7 @@ jobs:
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@v1.3.0
+        uses: kenchan0130/actions-system-info@v1.3.1
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -166,7 +166,7 @@ jobs:
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@v1.3.0
+        uses: kenchan0130/actions-system-info@v1.3.1
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -236,7 +236,7 @@ jobs:
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@v1.3.0
+        uses: kenchan0130/actions-system-info@v1.3.1
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -305,7 +305,7 @@ jobs:
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@v1.3.0
+        uses: kenchan0130/actions-system-info@v1.3.1
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -370,13 +370,13 @@ jobs:
     runs-on:
       - self-hosted
       - generic
-    if: contains(fromJSON(needs.default.outputs.labels), 'integration/aws')
+    if: contains(fromJSON(needs.default.outputs.labels), 'integration/aws') || contains(fromJSON(needs.default.outputs.labels), 'integration/release-gate')
     needs:
       - default
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@v1.3.0
+        uses: kenchan0130/actions-system-info@v1.3.1
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -507,7 +507,7 @@ jobs:
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@v1.3.0
+        uses: kenchan0130/actions-system-info@v1.3.1
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -661,7 +661,7 @@ jobs:
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@v1.3.0
+        uses: kenchan0130/actions-system-info@v1.3.1
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -809,13 +809,13 @@ jobs:
     runs-on:
       - self-hosted
       - talos
-    if: contains(fromJSON(needs.default.outputs.labels), 'integration/cilium')
+    if: contains(fromJSON(needs.default.outputs.labels), 'integration/cilium') || contains(fromJSON(needs.default.outputs.labels), 'integration/release-gate')
     needs:
       - default
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@v1.3.0
+        uses: kenchan0130/actions-system-info@v1.3.1
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -937,7 +937,7 @@ jobs:
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@v1.3.0
+        uses: kenchan0130/actions-system-info@v1.3.1
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -1019,13 +1019,13 @@ jobs:
     runs-on:
       - self-hosted
       - talos
-    if: contains(fromJSON(needs.default.outputs.labels), 'integration/conformance')
+    if: contains(fromJSON(needs.default.outputs.labels), 'integration/conformance') || contains(fromJSON(needs.default.outputs.labels), 'integration/release-gate')
     needs:
       - default
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@v1.3.0
+        uses: kenchan0130/actions-system-info@v1.3.1
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -1120,7 +1120,7 @@ jobs:
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@v1.3.0
+        uses: kenchan0130/actions-system-info@v1.3.1
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -1227,13 +1227,13 @@ jobs:
     runs-on:
       - self-hosted
       - talos
-    if: contains(fromJSON(needs.default.outputs.labels), 'integration/extensions')
+    if: contains(fromJSON(needs.default.outputs.labels), 'integration/extensions') || contains(fromJSON(needs.default.outputs.labels), 'integration/release-gate')
     needs:
       - default
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@v1.3.0
+        uses: kenchan0130/actions-system-info@v1.3.1
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -1353,13 +1353,13 @@ jobs:
     runs-on:
       - self-hosted
       - generic
-    if: contains(fromJSON(needs.default.outputs.labels), 'integration/gcp')
+    if: contains(fromJSON(needs.default.outputs.labels), 'integration/gcp') || contains(fromJSON(needs.default.outputs.labels), 'integration/release-gate')
     needs:
       - default
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@v1.3.0
+        uses: kenchan0130/actions-system-info@v1.3.1
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -1481,13 +1481,13 @@ jobs:
     runs-on:
       - self-hosted
       - talos
-    if: contains(fromJSON(needs.default.outputs.labels), 'integration/image-cache')
+    if: contains(fromJSON(needs.default.outputs.labels), 'integration/image-cache') || contains(fromJSON(needs.default.outputs.labels), 'integration/release-gate')
     needs:
       - default
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@v1.3.0
+        uses: kenchan0130/actions-system-info@v1.3.1
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -1597,7 +1597,7 @@ jobs:
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@v1.3.0
+        uses: kenchan0130/actions-system-info@v1.3.1
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -1764,13 +1764,13 @@ jobs:
     runs-on:
       - self-hosted
       - generic
-    if: contains(fromJSON(needs.default.outputs.labels), 'integration/images')
+    if: contains(fromJSON(needs.default.outputs.labels), 'integration/images') || contains(fromJSON(needs.default.outputs.labels), 'integration/release-gate')
     needs:
       - default
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@v1.3.0
+        uses: kenchan0130/actions-system-info@v1.3.1
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -1847,13 +1847,13 @@ jobs:
     runs-on:
       - self-hosted
       - talos
-    if: contains(fromJSON(needs.default.outputs.labels), 'integration/misc') || contains(fromJSON(needs.default.outputs.labels), 'integration/misc-0')
+    if: contains(fromJSON(needs.default.outputs.labels), 'integration/misc') || contains(fromJSON(needs.default.outputs.labels), 'integration/misc-0') || contains(fromJSON(needs.default.outputs.labels), 'integration/release-gate')
     needs:
       - default
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@v1.3.0
+        uses: kenchan0130/actions-system-info@v1.3.1
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -1974,13 +1974,13 @@ jobs:
     runs-on:
       - self-hosted
       - talos
-    if: contains(fromJSON(needs.default.outputs.labels), 'integration/misc') || contains(fromJSON(needs.default.outputs.labels), 'integration/misc-1')
+    if: contains(fromJSON(needs.default.outputs.labels), 'integration/misc') || contains(fromJSON(needs.default.outputs.labels), 'integration/misc-1') || contains(fromJSON(needs.default.outputs.labels), 'integration/release-gate')
     needs:
       - default
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@v1.3.0
+        uses: kenchan0130/actions-system-info@v1.3.1
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -2105,13 +2105,13 @@ jobs:
     runs-on:
       - self-hosted
       - talos
-    if: contains(fromJSON(needs.default.outputs.labels), 'integration/misc-enforcing') || contains(fromJSON(needs.default.outputs.labels), 'integration/misc-1-enforcing')
+    if: contains(fromJSON(needs.default.outputs.labels), 'integration/misc-enforcing') || contains(fromJSON(needs.default.outputs.labels), 'integration/misc-1-enforcing') || contains(fromJSON(needs.default.outputs.labels), 'integration/release-gate')
     needs:
       - default
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@v1.3.0
+        uses: kenchan0130/actions-system-info@v1.3.1
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -2254,13 +2254,13 @@ jobs:
     runs-on:
       - self-hosted
       - talos
-    if: contains(fromJSON(needs.default.outputs.labels), 'integration/misc') || contains(fromJSON(needs.default.outputs.labels), 'integration/misc-2')
+    if: contains(fromJSON(needs.default.outputs.labels), 'integration/misc') || contains(fromJSON(needs.default.outputs.labels), 'integration/misc-2') || contains(fromJSON(needs.default.outputs.labels), 'integration/release-gate')
     needs:
       - default
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@v1.3.0
+        uses: kenchan0130/actions-system-info@v1.3.1
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -2419,13 +2419,13 @@ jobs:
     runs-on:
       - self-hosted
       - talos
-    if: contains(fromJSON(needs.default.outputs.labels), 'integration/misc') || contains(fromJSON(needs.default.outputs.labels), 'integration/misc-3')
+    if: contains(fromJSON(needs.default.outputs.labels), 'integration/misc') || contains(fromJSON(needs.default.outputs.labels), 'integration/misc-3') || contains(fromJSON(needs.default.outputs.labels), 'integration/release-gate')
     needs:
       - default
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@v1.3.0
+        uses: kenchan0130/actions-system-info@v1.3.1
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -2535,7 +2535,7 @@ jobs:
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@v1.3.0
+        uses: kenchan0130/actions-system-info@v1.3.1
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -2663,13 +2663,13 @@ jobs:
     runs-on:
       - self-hosted
       - talos
-    if: contains(fromJSON(needs.default.outputs.labels), 'integration/misc') || contains(fromJSON(needs.default.outputs.labels), 'integration/misc-4')
+    if: contains(fromJSON(needs.default.outputs.labels), 'integration/misc') || contains(fromJSON(needs.default.outputs.labels), 'integration/misc-4') || contains(fromJSON(needs.default.outputs.labels), 'integration/release-gate')
     needs:
       - default
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@v1.3.0
+        uses: kenchan0130/actions-system-info@v1.3.1
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -2792,13 +2792,13 @@ jobs:
     runs-on:
       - self-hosted
       - talos
-    if: contains(fromJSON(needs.default.outputs.labels), 'integration/misc-enforcing') || contains(fromJSON(needs.default.outputs.labels), 'integration/misc-4-enforcing')
+    if: contains(fromJSON(needs.default.outputs.labels), 'integration/misc-enforcing') || contains(fromJSON(needs.default.outputs.labels), 'integration/misc-4-enforcing') || contains(fromJSON(needs.default.outputs.labels), 'integration/release-gate')
     needs:
       - default
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@v1.3.0
+        uses: kenchan0130/actions-system-info@v1.3.1
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -2948,13 +2948,13 @@ jobs:
     runs-on:
       - self-hosted
       - talos
-    if: contains(fromJSON(needs.default.outputs.labels), 'integration/provision') || contains(fromJSON(needs.default.outputs.labels), 'integration/provision-0')
+    if: contains(fromJSON(needs.default.outputs.labels), 'integration/provision') || contains(fromJSON(needs.default.outputs.labels), 'integration/provision-0') || contains(fromJSON(needs.default.outputs.labels), 'integration/release-gate')
     needs:
       - default
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@v1.3.0
+        uses: kenchan0130/actions-system-info@v1.3.1
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -3051,13 +3051,13 @@ jobs:
     runs-on:
       - self-hosted
       - talos
-    if: contains(fromJSON(needs.default.outputs.labels), 'integration/provision') || contains(fromJSON(needs.default.outputs.labels), 'integration/provision-1')
+    if: contains(fromJSON(needs.default.outputs.labels), 'integration/provision') || contains(fromJSON(needs.default.outputs.labels), 'integration/provision-1') || contains(fromJSON(needs.default.outputs.labels), 'integration/release-gate')
     needs:
       - default
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@v1.3.0
+        uses: kenchan0130/actions-system-info@v1.3.1
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -3146,13 +3146,13 @@ jobs:
     runs-on:
       - self-hosted
       - talos
-    if: contains(fromJSON(needs.default.outputs.labels), 'integration/provision') || contains(fromJSON(needs.default.outputs.labels), 'integration/provision-2')
+    if: contains(fromJSON(needs.default.outputs.labels), 'integration/provision') || contains(fromJSON(needs.default.outputs.labels), 'integration/provision-2') || contains(fromJSON(needs.default.outputs.labels), 'integration/release-gate')
     needs:
       - default
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@v1.3.0
+        uses: kenchan0130/actions-system-info@v1.3.1
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -3241,13 +3241,13 @@ jobs:
     runs-on:
       - self-hosted
       - talos
-    if: contains(fromJSON(needs.default.outputs.labels), 'integration/qemu')
+    if: contains(fromJSON(needs.default.outputs.labels), 'integration/qemu') || contains(fromJSON(needs.default.outputs.labels), 'integration/release-gate')
     needs:
       - default
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@v1.3.0
+        uses: kenchan0130/actions-system-info@v1.3.1
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -3338,13 +3338,13 @@ jobs:
     runs-on:
       - self-hosted
       - talos
-    if: contains(fromJSON(needs.default.outputs.labels), 'integration/qemu-csi') || contains(fromJSON(needs.default.outputs.labels), 'integration/extensions') || contains(fromJSON(needs.default.outputs.labels), 'integration/qemu-csi-longhorn')
+    if: contains(fromJSON(needs.default.outputs.labels), 'integration/qemu-csi') || contains(fromJSON(needs.default.outputs.labels), 'integration/extensions') || contains(fromJSON(needs.default.outputs.labels), 'integration/qemu-csi-longhorn') || contains(fromJSON(needs.default.outputs.labels), 'integration/release-gate')
     needs:
       - default
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@v1.3.0
+        uses: kenchan0130/actions-system-info@v1.3.1
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -3476,13 +3476,13 @@ jobs:
     runs-on:
       - self-hosted
       - talos
-    if: contains(fromJSON(needs.default.outputs.labels), 'integration/qemu-csi') || contains(fromJSON(needs.default.outputs.labels), 'integration/qemu-csi-openebs')
+    if: contains(fromJSON(needs.default.outputs.labels), 'integration/qemu-csi') || contains(fromJSON(needs.default.outputs.labels), 'integration/qemu-csi-openebs') || contains(fromJSON(needs.default.outputs.labels), 'integration/release-gate')
     needs:
       - default
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@v1.3.0
+        uses: kenchan0130/actions-system-info@v1.3.1
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -3584,13 +3584,13 @@ jobs:
     runs-on:
       - self-hosted
       - talos
-    if: contains(fromJSON(needs.default.outputs.labels), 'integration/qemu-csi') || contains(fromJSON(needs.default.outputs.labels), 'integration/qemu-csi-rook-ceph')
+    if: contains(fromJSON(needs.default.outputs.labels), 'integration/qemu-csi') || contains(fromJSON(needs.default.outputs.labels), 'integration/qemu-csi-rook-ceph') || contains(fromJSON(needs.default.outputs.labels), 'integration/release-gate')
     needs:
       - default
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@v1.3.0
+        uses: kenchan0130/actions-system-info@v1.3.1
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -3691,13 +3691,13 @@ jobs:
     runs-on:
       - self-hosted
       - talos
-    if: contains(fromJSON(needs.default.outputs.labels), 'integration/qemu-encrypted-vip')
+    if: contains(fromJSON(needs.default.outputs.labels), 'integration/qemu-encrypted-vip') || contains(fromJSON(needs.default.outputs.labels), 'integration/release-gate')
     needs:
       - default
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@v1.3.0
+        uses: kenchan0130/actions-system-info@v1.3.1
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -3789,13 +3789,13 @@ jobs:
     runs-on:
       - self-hosted
       - talos
-    if: contains(fromJSON(needs.default.outputs.labels), 'integration/qemu-enforcing')
+    if: contains(fromJSON(needs.default.outputs.labels), 'integration/qemu-enforcing') || contains(fromJSON(needs.default.outputs.labels), 'integration/release-gate')
     needs:
       - default
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@v1.3.0
+        uses: kenchan0130/actions-system-info@v1.3.1
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -3904,13 +3904,13 @@ jobs:
     runs-on:
       - self-hosted
       - talos
-    if: contains(fromJSON(needs.default.outputs.labels), 'integration/qemu-race')
+    if: contains(fromJSON(needs.default.outputs.labels), 'integration/qemu-race') || contains(fromJSON(needs.default.outputs.labels), 'integration/release-gate')
     needs:
       - default
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@v1.3.0
+        uses: kenchan0130/actions-system-info@v1.3.1
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -4012,13 +4012,13 @@ jobs:
     runs-on:
       - self-hosted
       - talos
-    if: contains(fromJSON(needs.default.outputs.labels), 'integration/reproducibility-test')
+    if: contains(fromJSON(needs.default.outputs.labels), 'integration/reproducibility-test') || contains(fromJSON(needs.default.outputs.labels), 'integration/release-gate')
     needs:
       - default
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@v1.3.0
+        uses: kenchan0130/actions-system-info@v1.3.1
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -4082,13 +4082,13 @@ jobs:
     runs-on:
       - self-hosted
       - talos
-    if: contains(fromJSON(needs.default.outputs.labels), 'integration/trusted-boot')
+    if: contains(fromJSON(needs.default.outputs.labels), 'integration/trusted-boot') || contains(fromJSON(needs.default.outputs.labels), 'integration/release-gate')
     needs:
       - default
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@v1.3.0
+        uses: kenchan0130/actions-system-info@v1.3.1
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -4205,7 +4205,7 @@ jobs:
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@v1.3.0
+        uses: kenchan0130/actions-system-info@v1.3.1
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -4323,7 +4323,7 @@ jobs:
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@v1.3.0
+        uses: kenchan0130/actions-system-info@v1.3.1
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -4397,7 +4397,7 @@ jobs:
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@v1.3.0
+        uses: kenchan0130/actions-system-info@v1.3.1
         continue-on-error: true
       - name: print-system-info
         run: |
