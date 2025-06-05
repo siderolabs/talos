@@ -1,7 +1,7 @@
 NAME="Talos"
 ID=talos
-VERSION_ID=v1.11.0-alpha.0
-PRETTY_NAME="Talos (v1.11.0-alpha.0)"
+VERSION_ID=v1.11.0-alpha.1
+PRETTY_NAME="Talos (v1.11.0-alpha.1)"
 HOME_URL="https://www.talos.dev/"
 BUG_REPORT_URL="https://github.com/siderolabs/talos/issues"
 VENDOR_NAME="Sidero Labs"
