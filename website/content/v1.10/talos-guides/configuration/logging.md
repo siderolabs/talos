@@ -239,6 +239,9 @@ config:
       Daemon        Off
       Log_Level     warn
       Parsers_File  custom_parsers.conf
+      HTTP_Server   On
+      HTTP_Listen   0.0.0.0
+      HTTP_Port     2020
 
   inputs: |
     [INPUT]
