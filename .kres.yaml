@@ -115,6 +115,7 @@ spec:
             PUSH: true
         - name: lint
         - name: talosctl-cni-bundle
+        - name: sbom
         - name: iso
           command: iso secureboot-iso
           environment:

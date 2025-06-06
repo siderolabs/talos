@@ -1,6 +1,6 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
 #
-# Generated on 2025-06-05T06:51:16Z by kres fc6afbe.
+# Generated on 2025-06-06T11:11:06Z by kres fc6afbe.
 
 name: default
 concurrency:
@@ -99,6 +99,9 @@ jobs:
       - name: talosctl-cni-bundle
         run: |
           make talosctl-cni-bundle
+      - name: sbom
+        run: |
+          make sbom
       - name: iso
         env:
           IMAGE_REGISTRY: registry.dev.siderolabs.io
