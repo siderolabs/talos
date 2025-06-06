@@ -225,6 +225,10 @@ func (ctrl *ResolverConfigController) parseMachineConfiguration(logger *zap.Logg
 		return spec, false
 	}
 
+	if len(resolvers) > 0 {
+		spec.DNSServers = make([]netip.Addr, 0, len(resolvers))
+	}
+
 	for _, resolver := range resolvers {
 		server, err := netip.ParseAddr(resolver)
 		if err != nil {
