@@ -944,6 +944,8 @@ ENTRYPOINT ["/sbin/init"]
 
 # The installer target generates an image that can be used to install Talos to
 # various environments.
+
+# Make the installer binary.
 FROM base AS installer-build
 ARG GO_BUILDFLAGS
 ARG GO_LDFLAGS
@@ -952,6 +954,7 @@ ARG TARGETARCH
 RUN --mount=type=cache,target=/.cache,id=talos/.cache GOOS=linux GOARCH=${TARGETARCH} go build ${GO_BUILDFLAGS} -ldflags "${GO_LDFLAGS}" -o /installer
 RUN chmod +x /installer
 
+# Make the images containing the boot artifacts.
 FROM scratch AS install-artifacts-amd64
 COPY --from=pkg-kernel-amd64 /boot/vmlinuz /usr/install/amd64/vmlinuz
 COPY --from=initramfs-archive-amd64 /initramfs.xz /usr/install/amd64/initramfs.xz
@@ -972,17 +975,18 @@ FROM install-artifacts-${TARGETARCH} AS install-artifacts-targetarch
 
 FROM install-artifacts-${INSTALLER_ARCH} AS install-artifacts
 
+# Add the installer with a symlink as 'imager' and a /rootfs dir containing only the installer.
 FROM tools AS installer-image-gen
 COPY --from=installer-build /installer /rootfs/usr/bin/installer
 RUN ln -s installer /rootfs/usr/bin/imager
 
+# Add the installer binary and the tools needed to run the installer.
 FROM scratch AS installer-base-image
 ARG TARGETARCH
 ENV TARGETARCH=${TARGETARCH}
 COPY --link --from=pkg-fhs / /
 COPY --link --from=pkg-ca-certificates / /
 COPY --link --exclude=**/*.a --exclude=**/*.la --exclude=usr/include --from=pkg-musl / /
-
 COPY --link --from=pkg-dosfstools / /
 COPY --link --exclude=etc/bash_completion.d --from=pkg-grub / /
 COPY --link --exclude=**/*.a --exclude=**/*.la  --exclude=usr/include --exclude=usr/lib/pkgconfig --from=pkg-libattr / /
@@ -990,11 +994,16 @@ COPY --link --exclude=**/*.a --exclude=**/*.la  --exclude=usr/include --exclude=
 COPY --link --exclude=**/*.a --exclude=**/*.la  --exclude=usr/include --exclude=usr/lib/pkgconfig --from=pkg-liblzma / /
 COPY --link --exclude=**/*.a --exclude=**/*.la  --exclude=usr/include --exclude=usr/lib/pkgconfig --from=pkg-liburcu / /
 COPY --link --from=pkg-xfsprogs / /
+# Only copy the installer binary and none of the tools used for building it.
 COPY --link --from=installer-image-gen /rootfs /
 
+# Squash the installer-base-image layers to reduce size.
 FROM scratch AS installer-base-image-squashed
 COPY --from=installer-base-image / /
 
+# Add metadata.
+# 'installer-base' only contains the installer binary and the tools it uses.
+# 'installer-base' does not contain boot assets or talos itself.
 FROM installer-base-image-squashed AS installer-base
 ARG TAG
 ENV VERSION=${TAG}
@@ -1002,6 +1011,9 @@ LABEL "alpha.talos.dev/version"="${VERSION}"
 LABEL org.opencontainers.image.source=https://github.com/siderolabs/talos
 ENTRYPOINT ["/bin/installer"]
 
+# Imager can be thought of as an extended installer.
+# It has the boot artifacts and tools to build any requested talos image with desired modifications and system extensions.
+# Imager is meant to be run outside of talos and the talos installation flow.
 FROM installer-base-image-squashed AS imager-image
 COPY --link --from=pkg-cpio / /
 COPY --link --exclude=**/*.a --exclude=**/*.la  --exclude=usr/lib/pkgconfig --from=pkg-e2fsprogs / /

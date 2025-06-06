@@ -6,8 +6,7 @@ aliases:
 ---
 
 This guide outlines steps and tricks to develop Talos operating systems and related components.
-The guide assumes Linux operating system on the development host.
-Some steps might work under Mac OS X, but using Linux is highly advised.
+The guide assumes macOS or a Linux operating system on the development host.
 
 ## Prepare
 
@@ -45,8 +44,8 @@ Try to build and push to local registry an installer image:
 
 ```bash
 make installer-base IMAGE_REGISTRY=127.0.0.1:5005 PUSH=true
-make imager IMAGE_REGISTRY=127.0.0.1:5005 PUSH=true
-make installer IMAGE_REGISTRY=127.0.0.1:5005
+make imager IMAGE_REGISTRY=127.0.0.1:5005 PUSH=true INSTALLER_ARCH=targetarch
+make installer IMAGE_REGISTRY=127.0.0.1:5005 PUSH=true
 ```
 
 Record the image name output in the step above.
@@ -64,7 +63,7 @@ bash hack/start-registry-proxies.sh
 Start your local cluster with:
 
 ```bash
-sudo --preserve-env=HOME _out/talosctl-linux-amd64 cluster create \
+sudo --preserve-env=HOME _out/talosctl-<YOUR FLAVOR> cluster create \
     --provisioner=qemu \
     --cidr=172.20.0.0/24 \
     --registry-mirror docker.io=http://172.20.0.1:5000 \
@@ -83,17 +82,12 @@ sudo --preserve-env=HOME _out/talosctl-linux-amd64 cluster create \
 - `--registry-mirror` uses the caching proxies set up above to speed up boot time a lot, last one adds your local registry (installer image was pushed to it)
 - `--install-image` is the image you built with `make installer` above
 - `--controlplanes` & `--workers` configure cluster size, choose to match your resources; 3 controlplanes give you HA control plane; 1 controlplane is enough, never do 2 controlplanes
-- `--with-bootloader=false` disables boot from disk (Talos will always boot from `_out/vmlinuz-amd64` and `_out/initramfs-amd64.xz`).
-  This speeds up development cycle a lot - no need to rebuild installer and perform install, rebooting is enough to get new code.
+- `--with-bootloader=false` disables boot from disk (Talos will always boot from `_out/vmlinuz-<ARCH>` and `_out/initramfs-<ARCH>.xz`).
+  This speeds up development cycle a lot - no need to rebuild installer and perform an install, rebooting is enough to get new code changes.
 
-> Note: as boot loader is not used, it's not necessary to  rebuild `installer` each time (old image is fine), but sometimes it's needed (when configuration changes are done and old installer doesn't validate the config).
+> Note: when configuration changes are introduced and the old installer doesn't validate the config, or the installation flow itself is being worked on  `--with-bootloader=false` should not be used
 >
 > `talosctl cluster create` derives Talos machine configuration version from the install image tag, so sometimes early in the development cycle (when new minor tag is not released yet), machine config version can be overridden with `--talos-version={{< version >}}`.
-
-If the `--with-bootloader=false` flag is not enabled, for Talos cluster to pick up new changes to the code (in `initramfs`), it will require a Talos upgrade (so new `installer` should be built).
-With `--with-bootloader=false` flag, Talos always boots from `initramfs` in `_out/` directory, so simple reboot is enough to pick up new code changes.
-
-If the installation flow needs to be tested, `--with-bootloader=false` shouldn't be used.
 
 ## Console Logs
 
