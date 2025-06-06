@@ -184,7 +184,7 @@ GO_BUILDFLAGS += -tags "$(GO_BUILDTAGS)"
 , := ,
 space := $(subst ,, )
 BUILD := docker buildx build
-PLATFORM ?= linux/amd64
+PLATFORM ?= linux/$(ARCH)
 PROGRESS ?= auto
 PUSH ?= false
 COMMON_ARGS := --file=Dockerfile
