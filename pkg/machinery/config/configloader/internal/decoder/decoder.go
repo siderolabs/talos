@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"io"
 
+	"github.com/siderolabs/gen/xyaml"
 	yaml "gopkg.in/yaml.v3"
 
 	"github.com/siderolabs/talos/pkg/machinery/config/config"
@@ -173,7 +174,7 @@ func decode(manifest *yaml.Node) (target config.Document, err error) {
 		return nil, fmt.Errorf("error decoding %s to %T: %w", kind, target, err)
 	}
 
-	if err = checkUnknownKeys(target, manifest); err != nil {
+	if err = xyaml.CheckUnknownKeys(target, manifest); err != nil {
 		return nil, err
 	}
 
