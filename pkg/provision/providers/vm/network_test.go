@@ -24,7 +24,7 @@ func TestGetVmnetInterfaceNameNoVmnetInterface(t *testing.T) {
 
 func TestGetVmnetInterfaceNameWithExistingVmnetInterfaces(t *testing.T) {
 	interfaces := []string{
-		"bridge", "bridge1", "eth0", "utun1", "bridge001", "bridge1001", "bridge100", "bridge101",
+		"bridge", "bridge1", "eth0", "utun1", "bridge001", "bridge1001", "bridge100", "bridge101", "bridge104",
 	}
 	result, err := vm.GetVmnetInterfaceName(interfaces)
 	assert.NoError(t, err)

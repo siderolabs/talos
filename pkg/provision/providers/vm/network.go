@@ -5,39 +5,20 @@
 package vm
 
 import (
+	"errors"
 	"fmt"
-	"regexp"
-	"strconv"
-	"sync"
+	"slices"
 )
-
-var vmnetInterfaceRegex = sync.OnceValue(func() *regexp.Regexp { return regexp.MustCompile(`\bbridge(1\d\d)\b`) })
 
 // GetVmnetInterfaceName returns the name of the interface that will be assigned to the next vmnet interface.
 // The name is assigned incrementing by one, starting from "bridge100".
 func GetVmnetInterfaceName(allCurrentInterfaces []string) (string, error) {
-	vmnetInterfaceFound := false
-	largestVmnetIfIndex := 100
-
-	for _, iface := range allCurrentInterfaces {
-		matches := vmnetInterfaceRegex().FindSubmatch([]byte(iface))
-		if matches != nil {
-			vmnetInterfaceFound = true
-
-			index, err := strconv.Atoi(string(matches[1]))
-			if err != nil {
-				return "", fmt.Errorf("failed to parse interface name: %w", err)
-			}
-
-			if index > largestVmnetIfIndex {
-				largestVmnetIfIndex = index
-			}
+	for i := 100; i < 200; i++ {
+		interfaceName := fmt.Sprintf("bridge%d", i)
+		if slices.Index(allCurrentInterfaces, interfaceName) == -1 {
+			return interfaceName, nil
 		}
 	}
 
-	if !vmnetInterfaceFound {
-		return "bridge100", nil
-	}
-
-	return "bridge" + strconv.Itoa(largestVmnetIfIndex+1), nil
+	return "", errors.New("all interface names seem to be already in use")
 }
