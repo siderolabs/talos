@@ -52,7 +52,7 @@ func CloseWithHandler(ctx context.Context, logger *zap.Logger, volumeContext Man
 	ctx, cancel := context.WithTimeout(ctx, encryptionTimeout)
 	defer cancel()
 
-	encryptedName := filepath.Base(volumeContext.Status.MountLocation)
+	encryptedName := filepath.Base(volumeContext.Status.Location) + "-encrypted"
 
 	if err := handler.Close(ctx, encryptedName); err != nil {
 		return xerrors.NewTaggedf[Retryable]("error closing encrypted volume %q: %w", encryptedName, err)
