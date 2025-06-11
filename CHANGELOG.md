@@ -1,3 +1,107 @@
+## [Talos 1.10.4](https://github.com/siderolabs/talos/releases/tag/v1.10.4) (2025-06-11)
+
+Welcome to the v1.10.4 release of Talos!
+
+
+
+Please try out the release binaries and report any issues at
+https://github.com/siderolabs/talos/issues.
+
+### Component Updates
+
+Linux: 6.12.31
+
+Talos is built with Go 1.24.4.
+
+
+### Contributors
+
+* Andrey Smirnov
+* Artem Chernyshev
+* Dennis Marttinen
+* Utku Ozdemir
+* Dmitriy Matrenichev
+* Noel Georgi
+* Spencer Smith
+* yashutanu
+
+### Changes
+<details><summary>11 commits</summary>
+<p>
+
+* [`7caf90a37`](https://github.com/siderolabs/talos/commit/7caf90a37ce7a822a1c805ea86b4af0da7d77ece) fix: nil pointer deref in quirk
+* [`b6f16e592`](https://github.com/siderolabs/talos/commit/b6f16e59275b1dcdff68333c153c865c76271d23) fix: update siderolink library for wgtunnel panic fix
+* [`037801f5f`](https://github.com/siderolabs/talos/commit/037801f5f1cd6eebb03c9236f2f3ba8d055ebb76) fix: correctl close encrypted volumes
+* [`2755aebec`](https://github.com/siderolabs/talos/commit/2755aebec88d7c427bb2e062fff6f218a0494ed7) chore: fix renovate config, add release-gate label
+* [`1cab7bba1`](https://github.com/siderolabs/talos/commit/1cab7bba13b8c077502ca0c315ba66bed4452fc2) fix: rework the way CRI config generation is waited for
+* [`bda53869e`](https://github.com/siderolabs/talos/commit/bda53869e578ddb1ce5d80163261df968ba950c7) fix: typo in DiscoverdVolume spec
+* [`76ecdacbc`](https://github.com/siderolabs/talos/commit/76ecdacbcf50a4ee3bac31c001650f541310df3e) feat: support nocloud include url userdata directive
+* [`4f96f35a4`](https://github.com/siderolabs/talos/commit/4f96f35a47ae20ca87f1aae74e687a98babf48e5) fix(ci): drop nebula from extensions test
+* [`47a642804`](https://github.com/siderolabs/talos/commit/47a642804a47fb98cdeed85a848e8ec5377dc290) feat: update Linux 6.12.31, go 1.24.4
+* [`141e452c4`](https://github.com/siderolabs/talos/commit/141e452c4aa7151fd9e84ee84fff6ca786e62171) fix: use correct FUSE magic for IMA `fsmagic` matching
+* [`09a4ed1e0`](https://github.com/siderolabs/talos/commit/09a4ed1e0768ab37deb6e16ef403de855b820aa0) fix: upgrade grpc library to the latest 1.71.x
+</p>
+</details>
+
+### Changes from siderolabs/gen
+<details><summary>4 commits</summary>
+<p>
+
+* [`dcb2b74`](https://github.com/siderolabs/gen/commit/dcb2b7417879f230a569ce834dad5c89bd09d6bf) feat: add `panicsafe` package
+* [`b36ee43`](https://github.com/siderolabs/gen/commit/b36ee43f667a7a56b340a3e769868ff2a609bb5b) feat: make `xyaml.CheckUnknownKeys` public
+* [`3e319e7`](https://github.com/siderolabs/gen/commit/3e319e7e52c5a74d1730be8e47952b3d16d91148) feat: implement `xyaml.UnmarshalStrict`
+* [`7c0324f`](https://github.com/siderolabs/gen/commit/7c0324fee9a7cfbdd117f43702fa273689f0db97) chore: future-proof HashTrieMap
+</p>
+</details>
+
+### Changes from siderolabs/pkgs
+<details><summary>6 commits</summary>
+<p>
+
+* [`51e388c`](https://github.com/siderolabs/pkgs/commit/51e388c75957eca9dfee7fd6b0e118b4dec57a5a) chore: use ftpmirror for GNU sources
+* [`81623cd`](https://github.com/siderolabs/pkgs/commit/81623cdb004efcc91828e517afd8501232d51fe5) feat: update NVIDIA drivers to 570.148.08
+* [`f6caaf0`](https://github.com/siderolabs/pkgs/commit/f6caaf00d59ee5fffe53acca586997b753bd49d5) feat: update Linux to 6.12.31
+* [`ae52cde`](https://github.com/siderolabs/pkgs/commit/ae52cde1aa850a4b31865e373114f5f1b1e3e61d) feat: add patch for CephFS IMA performance regression
+* [`d0a42eb`](https://github.com/siderolabs/pkgs/commit/d0a42eb1d972161da3143834d4bd06409331fcb8) feat: add CONFIG_NFT_CONNLIMIT to kernel
+* [`cd20b0a`](https://github.com/siderolabs/pkgs/commit/cd20b0a4812ec801e9dcc089404dc994d8ba602e) feat: update Go to 1.24.4/1.23.10
+</p>
+</details>
+
+### Changes from siderolabs/siderolink
+<details><summary>3 commits</summary>
+<p>
+
+* [`5f46f65`](https://github.com/siderolabs/siderolink/commit/5f46f6583b9d03f91c9bb5f637149fe466d17bfc) feat: handle panics in goroutines
+* [`d09ff45`](https://github.com/siderolabs/siderolink/commit/d09ff45b450a37aa84652fa70b5cd3467ee8243d) fix: race in wait value
+* [`d2a79e0`](https://github.com/siderolabs/siderolink/commit/d2a79e0263806b68ff0a44ea9efa58b83fb269ec) fix: clean up device on failure
+</p>
+</details>
+
+### Changes from siderolabs/tools
+<details><summary>2 commits</summary>
+<p>
+
+* [`9d54ed4`](https://github.com/siderolabs/tools/commit/9d54ed43416f0f94c8b1a0e0adcb724a446f1844) chore: use ftpmirror for GNU sources
+* [`8b87c11`](https://github.com/siderolabs/tools/commit/8b87c111974cf0c9d4ca1b80f753403809aa2eef) feat: update Go to 1.24.4
+</p>
+</details>
+
+### Dependency Changes
+
+* **github.com/siderolabs/gen**         v0.8.0 -> v0.8.4
+* **github.com/siderolabs/pkgs**        v1.10.0-16-g39b9c9f -> v1.10.0-22-g51e388c
+* **github.com/siderolabs/siderolink**  v0.3.13 -> v0.3.15
+* **github.com/siderolabs/tools**       v1.10.0-2-gfa51331 -> v1.10.0-4-g9d54ed4
+* **golang.org/x/net**                  v0.39.0 -> v0.41.0
+* **golang.org/x/oauth2**               v0.29.0 -> v0.30.0
+* **golang.org/x/sync**                 v0.13.0 -> v0.15.0
+* **golang.org/x/sys**                  v0.32.0 -> v0.33.0
+* **golang.org/x/term**                 v0.31.0 -> v0.32.0
+* **golang.org/x/text**                 v0.24.0 -> v0.26.0
+* **google.golang.org/grpc**            v1.71.1 -> v1.71.3
+
+Previous release can be found at [v1.10.3](https://github.com/siderolabs/talos/releases/tag/v1.10.3)
+
 ## [Talos 1.10.3](https://github.com/siderolabs/talos/releases/tag/v1.10.3) (2025-05-29)
 
 Welcome to the v1.10.3 release of Talos!
