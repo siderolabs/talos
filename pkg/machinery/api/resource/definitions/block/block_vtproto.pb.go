@@ -1859,6 +1859,91 @@ func (m *VolumeStatusSpec) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 	return len(dAtA) - i, nil
 }
 
+func (m *ZswapStatusSpec) MarshalVT() (dAtA []byte, err error) {
+	if m == nil {
+		return nil, nil
+	}
+	size := m.SizeVT()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBufferVT(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *ZswapStatusSpec) MarshalToVT(dAtA []byte) (int, error) {
+	size := m.SizeVT()
+	return m.MarshalToSizedBufferVT(dAtA[:size])
+}
+
+func (m *ZswapStatusSpec) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
+	if m == nil {
+		return 0, nil
+	}
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.unknownFields != nil {
+		i -= len(m.unknownFields)
+		copy(dAtA[i:], m.unknownFields)
+	}
+	if m.WrittenBackPages != 0 {
+		i = protohelpers.EncodeVarint(dAtA, i, uint64(m.WrittenBackPages))
+		i--
+		dAtA[i] = 0x50
+	}
+	if m.RejectCompressPoor != 0 {
+		i = protohelpers.EncodeVarint(dAtA, i, uint64(m.RejectCompressPoor))
+		i--
+		dAtA[i] = 0x48
+	}
+	if m.RejectCompressFail != 0 {
+		i = protohelpers.EncodeVarint(dAtA, i, uint64(m.RejectCompressFail))
+		i--
+		dAtA[i] = 0x40
+	}
+	if m.RejectKmemcacheFail != 0 {
+		i = protohelpers.EncodeVarint(dAtA, i, uint64(m.RejectKmemcacheFail))
+		i--
+		dAtA[i] = 0x38
+	}
+	if m.RejectAllocFail != 0 {
+		i = protohelpers.EncodeVarint(dAtA, i, uint64(m.RejectAllocFail))
+		i--
+		dAtA[i] = 0x30
+	}
+	if m.RejectReclaimFail != 0 {
+		i = protohelpers.EncodeVarint(dAtA, i, uint64(m.RejectReclaimFail))
+		i--
+		dAtA[i] = 0x28
+	}
+	if m.PoolLimitHit != 0 {
+		i = protohelpers.EncodeVarint(dAtA, i, uint64(m.PoolLimitHit))
+		i--
+		dAtA[i] = 0x20
+	}
+	if m.StoredPages != 0 {
+		i = protohelpers.EncodeVarint(dAtA, i, uint64(m.StoredPages))
+		i--
+		dAtA[i] = 0x18
+	}
+	if len(m.TotalSizeHuman) > 0 {
+		i -= len(m.TotalSizeHuman)
+		copy(dAtA[i:], m.TotalSizeHuman)
+		i = protohelpers.EncodeVarint(dAtA, i, uint64(len(m.TotalSizeHuman)))
+		i--
+		dAtA[i] = 0x12
+	}
+	if m.TotalSizeBytes != 0 {
+		i = protohelpers.EncodeVarint(dAtA, i, uint64(m.TotalSizeBytes))
+		i--
+		dAtA[i] = 0x8
+	}
+	return len(dAtA) - i, nil
+}
+
 func (m *DeviceSpec) SizeVT() (n int) {
 	if m == nil {
 		return 0
@@ -2626,6 +2711,47 @@ func (m *VolumeStatusSpec) SizeVT() (n int) {
 	l = len(m.ParentId)
 	if l > 0 {
 		n += 2 + l + protohelpers.SizeOfVarint(uint64(l))
+	}
+	n += len(m.unknownFields)
+	return n
+}
+
+func (m *ZswapStatusSpec) SizeVT() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if m.TotalSizeBytes != 0 {
+		n += 1 + protohelpers.SizeOfVarint(uint64(m.TotalSizeBytes))
+	}
+	l = len(m.TotalSizeHuman)
+	if l > 0 {
+		n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
+	}
+	if m.StoredPages != 0 {
+		n += 1 + protohelpers.SizeOfVarint(uint64(m.StoredPages))
+	}
+	if m.PoolLimitHit != 0 {
+		n += 1 + protohelpers.SizeOfVarint(uint64(m.PoolLimitHit))
+	}
+	if m.RejectReclaimFail != 0 {
+		n += 1 + protohelpers.SizeOfVarint(uint64(m.RejectReclaimFail))
+	}
+	if m.RejectAllocFail != 0 {
+		n += 1 + protohelpers.SizeOfVarint(uint64(m.RejectAllocFail))
+	}
+	if m.RejectKmemcacheFail != 0 {
+		n += 1 + protohelpers.SizeOfVarint(uint64(m.RejectKmemcacheFail))
+	}
+	if m.RejectCompressFail != 0 {
+		n += 1 + protohelpers.SizeOfVarint(uint64(m.RejectCompressFail))
+	}
+	if m.RejectCompressPoor != 0 {
+		n += 1 + protohelpers.SizeOfVarint(uint64(m.RejectCompressPoor))
+	}
+	if m.WrittenBackPages != 0 {
+		n += 1 + protohelpers.SizeOfVarint(uint64(m.WrittenBackPages))
 	}
 	n += len(m.unknownFields)
 	return n
@@ -7640,6 +7766,260 @@ func (m *VolumeStatusSpec) UnmarshalVT(dAtA []byte) error {
 			}
 			m.ParentId = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := protohelpers.Skip(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return protohelpers.ErrInvalidLength
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.unknownFields = append(m.unknownFields, dAtA[iNdEx:iNdEx+skippy]...)
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *ZswapStatusSpec) UnmarshalVT(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return protohelpers.ErrIntOverflow
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: ZswapStatusSpec: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: ZswapStatusSpec: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field TotalSizeBytes", wireType)
+			}
+			m.TotalSizeBytes = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return protohelpers.ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.TotalSizeBytes |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field TotalSizeHuman", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return protohelpers.ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return protohelpers.ErrInvalidLength
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return protohelpers.ErrInvalidLength
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.TotalSizeHuman = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 3:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field StoredPages", wireType)
+			}
+			m.StoredPages = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return protohelpers.ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.StoredPages |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 4:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field PoolLimitHit", wireType)
+			}
+			m.PoolLimitHit = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return protohelpers.ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.PoolLimitHit |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 5:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field RejectReclaimFail", wireType)
+			}
+			m.RejectReclaimFail = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return protohelpers.ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.RejectReclaimFail |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 6:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field RejectAllocFail", wireType)
+			}
+			m.RejectAllocFail = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return protohelpers.ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.RejectAllocFail |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 7:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field RejectKmemcacheFail", wireType)
+			}
+			m.RejectKmemcacheFail = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return protohelpers.ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.RejectKmemcacheFail |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 8:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field RejectCompressFail", wireType)
+			}
+			m.RejectCompressFail = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return protohelpers.ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.RejectCompressFail |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 9:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field RejectCompressPoor", wireType)
+			}
+			m.RejectCompressPoor = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return protohelpers.ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.RejectCompressPoor |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 10:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field WrittenBackPages", wireType)
+			}
+			m.WrittenBackPages = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return protohelpers.ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.WrittenBackPages |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
 		default:
 			iNdEx = preIndex
 			skippy, err := protohelpers.Skip(dAtA[iNdEx:])

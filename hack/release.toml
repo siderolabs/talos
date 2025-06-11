@@ -71,6 +71,13 @@ Previously this check was performed only on upgrade, but now it is consistently 
 This implies that all image references should contain the tag, even if the image is pinned by digest.
 """
 
+    [notes.zswap]
+        title = "Zswap Support"
+        description = """\
+Talos now supports zswap, a compressed cache for swap pages.
+This feature can be enabled by using [ZswapConfig](https://www.talos.dev/v1.11/reference/configuration/block/zswapconfig/) document in the machine configuration.
+"""
+
 [make_deps]
 
     [make_deps.tools]

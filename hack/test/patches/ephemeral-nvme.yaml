@@ -21,3 +21,8 @@ machine:
     extraConfig:
       memorySwap:
         swapBehavior: LimitedSwap
+---
+apiVersion: v1alpha1
+kind: ZswapConfig
+maxPoolPercent: 25
+shrinkerEnabled: true

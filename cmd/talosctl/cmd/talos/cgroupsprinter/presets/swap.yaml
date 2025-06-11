@@ -7,3 +7,9 @@ columns:
     template: '{{ .MemorySwapHigh.HumanizeIBytes | printf "%8s" }}'
   - name: SwapMax
     template: '{{ .MemorySwapMax.HumanizeIBytes | printf "%8s" }}'
+  - name: ZswapCurrent
+    template: '{{ .MemoryZswapCurrent.HumanizeIBytes | printf "%8s" }}'
+  - name: ZswapMax
+    template: '{{ .MemoryZswapMax.HumanizeIBytes | printf "%8s" }}'
+  - name: ZswapWriteback
+    template: '{{ .MemoryZswapWriteback }}'

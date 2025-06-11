@@ -21,4 +21,5 @@ type Config interface { //nolint:interfacebloat
 	EthernetConfigs() []EthernetConfig
 	UserVolumeConfigs() []UserVolumeConfig
 	SwapVolumeConfigs() []SwapVolumeConfig
+	ZswapConfig() ZswapConfig
 }

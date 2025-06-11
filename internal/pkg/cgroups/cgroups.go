@@ -134,6 +134,10 @@ type Node struct {
 	MemorySwapMax     Value
 	MemorySwapPeak    Value
 
+	MemoryZswapCurrent   Value
+	MemoryZswapMax       Value
+	MemoryZswapWriteback Value
+
 	PidsCurrent Value
 	PidsEvents  FlatMap
 	PidsMax     Value
@@ -280,6 +284,12 @@ func (n *Node) Parse(filename string, r io.Reader) error {
 		return parseSingleValue(ParseNewlineSeparatedValues, &n.MemorySwapMax, r)
 	case "memory.swap.peak":
 		return parseSingleValue(ParseNewlineSeparatedValues, &n.MemorySwapPeak, r)
+	case "memory.zswap.current":
+		return parseSingleValue(ParseNewlineSeparatedValues, &n.MemoryZswapCurrent, r)
+	case "memory.zswap.max":
+		return parseSingleValue(ParseNewlineSeparatedValues, &n.MemoryZswapMax, r)
+	case "memory.zswap.writeback":
+		return parseSingleValue(ParseNewlineSeparatedValues, &n.MemoryZswapWriteback, r)
 	case "pids.current":
 		return parseSingleValue(ParseNewlineSeparatedValues, &n.PidsCurrent, r)
 	case "pids.events":

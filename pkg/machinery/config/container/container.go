@@ -230,6 +230,16 @@ func (container *Container) SwapVolumeConfigs() []config.SwapVolumeConfig {
 	return findMatchingDocs[config.SwapVolumeConfig](container.documents)
 }
 
+// ZswapConfig implements config.Config interface.
+func (container *Container) ZswapConfig() config.ZswapConfig {
+	matching := findMatchingDocs[config.ZswapConfig](container.documents)
+	if len(matching) == 0 {
+		return nil
+	}
+
+	return matching[0]
+}
+
 // Bytes returns source YAML representation (if available) or does default encoding.
 func (container *Container) Bytes() ([]byte, error) {
 	if !container.readonly {

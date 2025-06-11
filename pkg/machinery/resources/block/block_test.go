@@ -40,6 +40,7 @@ func TestRegisterResource(t *testing.T) {
 		&block.VolumeMountRequest{},
 		&block.VolumeMountStatus{},
 		&block.VolumeStatus{},
+		&block.ZswapStatus{},
 	} {
 		assert.NoError(t, resourceRegistry.Register(ctx, resource))
 	}
