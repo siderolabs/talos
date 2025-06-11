@@ -43,6 +43,10 @@ cluster:
   network:
     cni:
       name: none
+  apiServer:
+    extraArgs:
+      # https://kubernetes.io/docs/tasks/extend-kubernetes/configure-aggregation-layer/
+      enable-aggregator-routing: true
   proxy:
     disabled: true
 ```
@@ -262,6 +266,10 @@ cluster:
   network:
     cni:
       name: none
+  apiServer:
+    extraArgs:
+      # https://kubernetes.io/docs/tasks/extend-kubernetes/configure-aggregation-layer/
+      enable-aggregator-routing: true
   proxy:
     disabled: true
 ```
