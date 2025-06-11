@@ -2025,6 +2025,123 @@ func (x *VolumeStatusSpec) GetParentId() string {
 	return ""
 }
 
+// ZswapStatusSpec is the spec for ZswapStatus resource.
+type ZswapStatusSpec struct {
+	state               protoimpl.MessageState `protogen:"open.v1"`
+	TotalSizeBytes      uint64                 `protobuf:"varint,1,opt,name=total_size_bytes,json=totalSizeBytes,proto3" json:"total_size_bytes,omitempty"`
+	TotalSizeHuman      string                 `protobuf:"bytes,2,opt,name=total_size_human,json=totalSizeHuman,proto3" json:"total_size_human,omitempty"`
+	StoredPages         uint64                 `protobuf:"varint,3,opt,name=stored_pages,json=storedPages,proto3" json:"stored_pages,omitempty"`
+	PoolLimitHit        uint64                 `protobuf:"varint,4,opt,name=pool_limit_hit,json=poolLimitHit,proto3" json:"pool_limit_hit,omitempty"`
+	RejectReclaimFail   uint64                 `protobuf:"varint,5,opt,name=reject_reclaim_fail,json=rejectReclaimFail,proto3" json:"reject_reclaim_fail,omitempty"`
+	RejectAllocFail     uint64                 `protobuf:"varint,6,opt,name=reject_alloc_fail,json=rejectAllocFail,proto3" json:"reject_alloc_fail,omitempty"`
+	RejectKmemcacheFail uint64                 `protobuf:"varint,7,opt,name=reject_kmemcache_fail,json=rejectKmemcacheFail,proto3" json:"reject_kmemcache_fail,omitempty"`
+	RejectCompressFail  uint64                 `protobuf:"varint,8,opt,name=reject_compress_fail,json=rejectCompressFail,proto3" json:"reject_compress_fail,omitempty"`
+	RejectCompressPoor  uint64                 `protobuf:"varint,9,opt,name=reject_compress_poor,json=rejectCompressPoor,proto3" json:"reject_compress_poor,omitempty"`
+	WrittenBackPages    uint64                 `protobuf:"varint,10,opt,name=written_back_pages,json=writtenBackPages,proto3" json:"written_back_pages,omitempty"`
+	unknownFields       protoimpl.UnknownFields
+	sizeCache           protoimpl.SizeCache
+}
+
+func (x *ZswapStatusSpec) Reset() {
+	*x = ZswapStatusSpec{}
+	mi := &file_resource_definitions_block_block_proto_msgTypes[24]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ZswapStatusSpec) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ZswapStatusSpec) ProtoMessage() {}
+
+func (x *ZswapStatusSpec) ProtoReflect() protoreflect.Message {
+	mi := &file_resource_definitions_block_block_proto_msgTypes[24]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ZswapStatusSpec.ProtoReflect.Descriptor instead.
+func (*ZswapStatusSpec) Descriptor() ([]byte, []int) {
+	return file_resource_definitions_block_block_proto_rawDescGZIP(), []int{24}
+}
+
+func (x *ZswapStatusSpec) GetTotalSizeBytes() uint64 {
+	if x != nil {
+		return x.TotalSizeBytes
+	}
+	return 0
+}
+
+func (x *ZswapStatusSpec) GetTotalSizeHuman() string {
+	if x != nil {
+		return x.TotalSizeHuman
+	}
+	return ""
+}
+
+func (x *ZswapStatusSpec) GetStoredPages() uint64 {
+	if x != nil {
+		return x.StoredPages
+	}
+	return 0
+}
+
+func (x *ZswapStatusSpec) GetPoolLimitHit() uint64 {
+	if x != nil {
+		return x.PoolLimitHit
+	}
+	return 0
+}
+
+func (x *ZswapStatusSpec) GetRejectReclaimFail() uint64 {
+	if x != nil {
+		return x.RejectReclaimFail
+	}
+	return 0
+}
+
+func (x *ZswapStatusSpec) GetRejectAllocFail() uint64 {
+	if x != nil {
+		return x.RejectAllocFail
+	}
+	return 0
+}
+
+func (x *ZswapStatusSpec) GetRejectKmemcacheFail() uint64 {
+	if x != nil {
+		return x.RejectKmemcacheFail
+	}
+	return 0
+}
+
+func (x *ZswapStatusSpec) GetRejectCompressFail() uint64 {
+	if x != nil {
+		return x.RejectCompressFail
+	}
+	return 0
+}
+
+func (x *ZswapStatusSpec) GetRejectCompressPoor() uint64 {
+	if x != nil {
+		return x.RejectCompressPoor
+	}
+	return 0
+}
+
+func (x *ZswapStatusSpec) GetWrittenBackPages() uint64 {
+	if x != nil {
+		return x.WrittenBackPages
+	}
+	return 0
+}
+
 var File_resource_definitions_block_block_proto protoreflect.FileDescriptor
 
 const file_resource_definitions_block_block_proto_rawDesc = "" +
@@ -2225,7 +2342,19 @@ const file_resource_definitions_block_block_proto_rawDesc = "" +
 	"\x04type\x18\x10 \x01(\x0e21.talos.resource.definitions.enums.BlockVolumeTypeR\x04type\x12<\n" +
 	"\x1aconfigured_encryption_keys\x18\x11 \x03(\tR\x18configuredEncryptionKeys\x12\\\n" +
 	"\fsymlink_spec\x18\x12 \x01(\v29.talos.resource.definitions.block.SymlinkProvisioningSpecR\vsymlinkSpec\x12\x1b\n" +
-	"\tparent_id\x18\x13 \x01(\tR\bparentIdBt\n" +
+	"\tparent_id\x18\x13 \x01(\tR\bparentId\"\xd0\x03\n" +
+	"\x0fZswapStatusSpec\x12(\n" +
+	"\x10total_size_bytes\x18\x01 \x01(\x04R\x0etotalSizeBytes\x12(\n" +
+	"\x10total_size_human\x18\x02 \x01(\tR\x0etotalSizeHuman\x12!\n" +
+	"\fstored_pages\x18\x03 \x01(\x04R\vstoredPages\x12$\n" +
+	"\x0epool_limit_hit\x18\x04 \x01(\x04R\fpoolLimitHit\x12.\n" +
+	"\x13reject_reclaim_fail\x18\x05 \x01(\x04R\x11rejectReclaimFail\x12*\n" +
+	"\x11reject_alloc_fail\x18\x06 \x01(\x04R\x0frejectAllocFail\x122\n" +
+	"\x15reject_kmemcache_fail\x18\a \x01(\x04R\x13rejectKmemcacheFail\x120\n" +
+	"\x14reject_compress_fail\x18\b \x01(\x04R\x12rejectCompressFail\x120\n" +
+	"\x14reject_compress_poor\x18\t \x01(\x04R\x12rejectCompressPoor\x12,\n" +
+	"\x12written_back_pages\x18\n" +
+	" \x01(\x04R\x10writtenBackPagesBt\n" +
 	"(dev.talos.api.resource.definitions.blockZHgithub.com/siderolabs/talos/pkg/machinery/api/resource/definitions/blockb\x06proto3"
 
 var (
@@ -2240,7 +2369,7 @@ func file_resource_definitions_block_block_proto_rawDescGZIP() []byte {
 	return file_resource_definitions_block_block_proto_rawDescData
 }
 
-var file_resource_definitions_block_block_proto_msgTypes = make([]protoimpl.MessageInfo, 24)
+var file_resource_definitions_block_block_proto_msgTypes = make([]protoimpl.MessageInfo, 25)
 var file_resource_definitions_block_block_proto_goTypes = []any{
 	(*DeviceSpec)(nil),                     // 0: talos.resource.definitions.block.DeviceSpec
 	(*DiscoveredVolumeSpec)(nil),           // 1: talos.resource.definitions.block.DiscoveredVolumeSpec
@@ -2266,38 +2395,39 @@ var file_resource_definitions_block_block_proto_goTypes = []any{
 	(*VolumeMountRequestSpec)(nil),         // 21: talos.resource.definitions.block.VolumeMountRequestSpec
 	(*VolumeMountStatusSpec)(nil),          // 22: talos.resource.definitions.block.VolumeMountStatusSpec
 	(*VolumeStatusSpec)(nil),               // 23: talos.resource.definitions.block.VolumeStatusSpec
-	(*v1alpha1.CheckedExpr)(nil),           // 24: google.api.expr.v1alpha1.CheckedExpr
-	(enums.BlockEncryptionKeyType)(0),      // 25: talos.resource.definitions.enums.BlockEncryptionKeyType
-	(enums.BlockEncryptionProviderType)(0), // 26: talos.resource.definitions.enums.BlockEncryptionProviderType
-	(enums.BlockFilesystemType)(0),         // 27: talos.resource.definitions.enums.BlockFilesystemType
-	(enums.BlockVolumeType)(0),             // 28: talos.resource.definitions.enums.BlockVolumeType
-	(enums.BlockVolumePhase)(0),            // 29: talos.resource.definitions.enums.BlockVolumePhase
+	(*ZswapStatusSpec)(nil),                // 24: talos.resource.definitions.block.ZswapStatusSpec
+	(*v1alpha1.CheckedExpr)(nil),           // 25: google.api.expr.v1alpha1.CheckedExpr
+	(enums.BlockEncryptionKeyType)(0),      // 26: talos.resource.definitions.enums.BlockEncryptionKeyType
+	(enums.BlockEncryptionProviderType)(0), // 27: talos.resource.definitions.enums.BlockEncryptionProviderType
+	(enums.BlockFilesystemType)(0),         // 28: talos.resource.definitions.enums.BlockFilesystemType
+	(enums.BlockVolumeType)(0),             // 29: talos.resource.definitions.enums.BlockVolumeType
+	(enums.BlockVolumePhase)(0),            // 30: talos.resource.definitions.enums.BlockVolumePhase
 }
 var file_resource_definitions_block_block_proto_depIdxs = []int32{
-	24, // 0: talos.resource.definitions.block.DiskSelector.match:type_name -> google.api.expr.v1alpha1.CheckedExpr
-	25, // 1: talos.resource.definitions.block.EncryptionKey.type:type_name -> talos.resource.definitions.enums.BlockEncryptionKeyType
-	26, // 2: talos.resource.definitions.block.EncryptionSpec.provider:type_name -> talos.resource.definitions.enums.BlockEncryptionProviderType
+	25, // 0: talos.resource.definitions.block.DiskSelector.match:type_name -> google.api.expr.v1alpha1.CheckedExpr
+	26, // 1: talos.resource.definitions.block.EncryptionKey.type:type_name -> talos.resource.definitions.enums.BlockEncryptionKeyType
+	27, // 2: talos.resource.definitions.block.EncryptionSpec.provider:type_name -> talos.resource.definitions.enums.BlockEncryptionProviderType
 	6,  // 3: talos.resource.definitions.block.EncryptionSpec.keys:type_name -> talos.resource.definitions.block.EncryptionKey
-	27, // 4: talos.resource.definitions.block.FilesystemSpec.type:type_name -> talos.resource.definitions.enums.BlockFilesystemType
-	24, // 5: talos.resource.definitions.block.LocatorSpec.match:type_name -> google.api.expr.v1alpha1.CheckedExpr
+	28, // 4: talos.resource.definitions.block.FilesystemSpec.type:type_name -> talos.resource.definitions.enums.BlockFilesystemType
+	25, // 5: talos.resource.definitions.block.LocatorSpec.match:type_name -> google.api.expr.v1alpha1.CheckedExpr
 	10, // 6: talos.resource.definitions.block.MountStatusSpec.spec:type_name -> talos.resource.definitions.block.MountRequestSpec
-	27, // 7: talos.resource.definitions.block.MountStatusSpec.filesystem:type_name -> talos.resource.definitions.enums.BlockFilesystemType
-	26, // 8: talos.resource.definitions.block.MountStatusSpec.encryption_provider:type_name -> talos.resource.definitions.enums.BlockEncryptionProviderType
+	28, // 7: talos.resource.definitions.block.MountStatusSpec.filesystem:type_name -> talos.resource.definitions.enums.BlockFilesystemType
+	27, // 8: talos.resource.definitions.block.MountStatusSpec.encryption_provider:type_name -> talos.resource.definitions.enums.BlockEncryptionProviderType
 	4,  // 9: talos.resource.definitions.block.ProvisioningSpec.disk_selector:type_name -> talos.resource.definitions.block.DiskSelector
 	13, // 10: talos.resource.definitions.block.ProvisioningSpec.partition_spec:type_name -> talos.resource.definitions.block.PartitionSpec
 	8,  // 11: talos.resource.definitions.block.ProvisioningSpec.filesystem_spec:type_name -> talos.resource.definitions.block.FilesystemSpec
-	28, // 12: talos.resource.definitions.block.VolumeConfigSpec.type:type_name -> talos.resource.definitions.enums.BlockVolumeType
+	29, // 12: talos.resource.definitions.block.VolumeConfigSpec.type:type_name -> talos.resource.definitions.enums.BlockVolumeType
 	14, // 13: talos.resource.definitions.block.VolumeConfigSpec.provisioning:type_name -> talos.resource.definitions.block.ProvisioningSpec
 	9,  // 14: talos.resource.definitions.block.VolumeConfigSpec.locator:type_name -> talos.resource.definitions.block.LocatorSpec
 	11, // 15: talos.resource.definitions.block.VolumeConfigSpec.mount:type_name -> talos.resource.definitions.block.MountSpec
 	7,  // 16: talos.resource.definitions.block.VolumeConfigSpec.encryption:type_name -> talos.resource.definitions.block.EncryptionSpec
 	16, // 17: talos.resource.definitions.block.VolumeConfigSpec.symlink:type_name -> talos.resource.definitions.block.SymlinkProvisioningSpec
-	29, // 18: talos.resource.definitions.block.VolumeStatusSpec.phase:type_name -> talos.resource.definitions.enums.BlockVolumePhase
-	29, // 19: talos.resource.definitions.block.VolumeStatusSpec.pre_fail_phase:type_name -> talos.resource.definitions.enums.BlockVolumePhase
-	27, // 20: talos.resource.definitions.block.VolumeStatusSpec.filesystem:type_name -> talos.resource.definitions.enums.BlockFilesystemType
-	26, // 21: talos.resource.definitions.block.VolumeStatusSpec.encryption_provider:type_name -> talos.resource.definitions.enums.BlockEncryptionProviderType
+	30, // 18: talos.resource.definitions.block.VolumeStatusSpec.phase:type_name -> talos.resource.definitions.enums.BlockVolumePhase
+	30, // 19: talos.resource.definitions.block.VolumeStatusSpec.pre_fail_phase:type_name -> talos.resource.definitions.enums.BlockVolumePhase
+	28, // 20: talos.resource.definitions.block.VolumeStatusSpec.filesystem:type_name -> talos.resource.definitions.enums.BlockFilesystemType
+	27, // 21: talos.resource.definitions.block.VolumeStatusSpec.encryption_provider:type_name -> talos.resource.definitions.enums.BlockEncryptionProviderType
 	11, // 22: talos.resource.definitions.block.VolumeStatusSpec.mount_spec:type_name -> talos.resource.definitions.block.MountSpec
-	28, // 23: talos.resource.definitions.block.VolumeStatusSpec.type:type_name -> talos.resource.definitions.enums.BlockVolumeType
+	29, // 23: talos.resource.definitions.block.VolumeStatusSpec.type:type_name -> talos.resource.definitions.enums.BlockVolumeType
 	16, // 24: talos.resource.definitions.block.VolumeStatusSpec.symlink_spec:type_name -> talos.resource.definitions.block.SymlinkProvisioningSpec
 	25, // [25:25] is the sub-list for method output_type
 	25, // [25:25] is the sub-list for method input_type
@@ -2317,7 +2447,7 @@ func file_resource_definitions_block_block_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_resource_definitions_block_block_proto_rawDesc), len(file_resource_definitions_block_block_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   24,
+			NumMessages:   25,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

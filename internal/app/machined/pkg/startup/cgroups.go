@@ -152,9 +152,10 @@ func CreateSystemCgroups(ctx context.Context, log *zap.Logger, rt runtime.Runtim
 			name: constants.CgroupApid,
 			resources: &cgroup2.Resources{
 				Memory: &cgroup2.Memory{
-					Min: pointer.To[int64](constants.CgroupApidReservedMemory),
-					Low: pointer.To[int64](constants.CgroupApidReservedMemory * 2),
-					Max: zeroIfRace(pointer.To[int64](constants.CgroupApidMaxMemory)),
+					Min:  pointer.To[int64](constants.CgroupApidReservedMemory),
+					Low:  pointer.To[int64](constants.CgroupApidReservedMemory * 2),
+					Max:  zeroIfRace(pointer.To[int64](constants.CgroupApidMaxMemory)),
+					Swap: pointer.To[int64](0),
 				},
 				CPU: &cgroup2.CPU{
 					Weight: pointer.To[uint64](cgroup.MillicoresToCPUWeight(cgroup.MilliCores(constants.CgroupApidMillicores))),
@@ -165,9 +166,10 @@ func CreateSystemCgroups(ctx context.Context, log *zap.Logger, rt runtime.Runtim
 			name: constants.CgroupTrustd,
 			resources: &cgroup2.Resources{
 				Memory: &cgroup2.Memory{
-					Min: pointer.To[int64](constants.CgroupTrustdReservedMemory),
-					Low: pointer.To[int64](constants.CgroupTrustdReservedMemory * 2),
-					Max: zeroIfRace(pointer.To[int64](constants.CgroupTrustdMaxMemory)),
+					Min:  pointer.To[int64](constants.CgroupTrustdReservedMemory),
+					Low:  pointer.To[int64](constants.CgroupTrustdReservedMemory * 2),
+					Max:  zeroIfRace(pointer.To[int64](constants.CgroupTrustdMaxMemory)),
+					Swap: pointer.To[int64](0),
 				},
 				CPU: &cgroup2.CPU{
 					Weight: pointer.To[uint64](cgroup.MillicoresToCPUWeight(cgroup.MilliCores(constants.CgroupTrustdMillicores))),
