@@ -24,7 +24,7 @@ extraAnnouncedEndpoints:
 
 | Field | Type | Description | Value(s) |
 |-------|------|-------------|----------|
-|`extraAnnouncedEndpoints` |[]AddrPort |<details><summary>A list of extra Wireguard endpoints to announce from this machine.</summary><br />Talos automatically adds endpoints based on machine addresses, public IP, etc.<br />This field allows to add extra endpoints which are managed outside of Talos, e.g. NAT mapping.</details>  | |
+|`extraAnnouncedEndpoints` |[]AddrPort |A list of extra Wireguard endpoints to announce from this machine.<br><br>Talos automatically adds endpoints based on machine addresses, public IP, etc.<br>This field allows to add extra endpoints which are managed outside of Talos, e.g. NAT mapping.  | |
 
 
 

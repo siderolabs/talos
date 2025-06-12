@@ -165,12 +165,7 @@ func encodeYaml(in any, path string) string {
 }
 
 func formatDescription(description string) string {
-	lines := strings.Split(description, "\n")
-	if len(lines) <= 1 {
-		return strings.Join(lines, "<br />")
-	}
-
-	return fmt.Sprintf("<details><summary>%s</summary>%s</details>", lines[0], strings.Join(lines[1:], "<br />"))
+	return strings.ReplaceAll(description, "\n", "<br>")
 }
 
 func tmplDict(vals ...any) (map[string]any, error) {

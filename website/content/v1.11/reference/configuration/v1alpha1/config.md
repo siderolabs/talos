@@ -23,7 +23,7 @@ cluster: # ...
 | Field | Type | Description | Value(s) |
 |-------|------|-------------|----------|
 |`version` |string |Indicates the schema used to decode the contents.  |`v1alpha1`<br /> |
-|`debug` |bool |<details><summary>Enable verbose logging to the console.</summary>All system containers logs will flow into serial console.<br /><br />**Note:** To avoid breaking Talos bootstrap flow enable this option only if serial console can handle high message throughput.</details>  |`true`<br />`yes`<br />`false`<br />`no`<br /> |
+|`debug` |bool |Enable verbose logging to the console.<br>All system containers logs will flow into serial console.<br><br>**Note:** To avoid breaking Talos bootstrap flow enable this option only if serial console can handle high message throughput.  |`true`<br />`yes`<br />`false`<br />`no`<br /> |
 |`machine` |<a href="#Config.machine">MachineConfig</a> |Provides machine specific configuration options.  | |
 |`cluster` |<a href="#Config.cluster">ClusterConfig</a> |Provides cluster specific configuration options.  | |
 
@@ -59,17 +59,17 @@ machine:
 
 | Field | Type | Description | Value(s) |
 |-------|------|-------------|----------|
-|`type` |string |<details><summary>Defines the role of the machine within the cluster.</summary><br />**Control Plane**<br /><br />Control Plane node type designates the node as a control plane member.<br />This means it will host etcd along with the Kubernetes controlplane components such as API Server, Controller Manager, Scheduler.<br /><br />**Worker**<br /><br />Worker node type designates the node as a worker node.<br />This means it will be an available compute node for scheduling workloads.<br /><br />This node type was previously known as "join"; that value is still supported but deprecated.</details>  |`controlplane`<br />`worker`<br /> |
-|`token` |string |<details><summary>The `token` is used by a machine to join the PKI of the cluster.</summary>Using this token, a machine will create a certificate signing request (CSR), and request a certificate that will be used as its' identity.</details> <details><summary>Show example(s)</summary>{{< highlight yaml >}}
+|`type` |string |Defines the role of the machine within the cluster.<br><br>**Control Plane**<br><br>Control Plane node type designates the node as a control plane member.<br>This means it will host etcd along with the Kubernetes controlplane components such as API Server, Controller Manager, Scheduler.<br><br>**Worker**<br><br>Worker node type designates the node as a worker node.<br>This means it will be an available compute node for scheduling workloads.<br><br>This node type was previously known as "join"; that value is still supported but deprecated.  |`controlplane`<br />`worker`<br /> |
+|`token` |string |The `token` is used by a machine to join the PKI of the cluster.<br>Using this token, a machine will create a certificate signing request (CSR), and request a certificate that will be used as its' identity. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 token: 328hom.uqjzh6jnn2eie9oi
 {{< /highlight >}}</details> | |
-|`ca` |PEMEncodedCertificateAndKey |<details><summary>The root certificate authority of the PKI.</summary>It is composed of a base64 encoded `crt` and `key`.</details> <details><summary>Show example(s)</summary>{{< highlight yaml >}}
+|`ca` |PEMEncodedCertificateAndKey |The root certificate authority of the PKI.<br>It is composed of a base64 encoded `crt` and `key`. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 ca:
     crt: LS0tIEVYQU1QTEUgQ0VSVElGSUNBVEUgLS0t
     key: LS0tIEVYQU1QTEUgS0VZIC0tLQ==
 {{< /highlight >}}</details> | |
-|`acceptedCAs` |[]PEMEncodedCertificate |<details><summary>The certificates issued by certificate authorities are accepted in addition to issuing 'ca'.</summary>It is composed of a base64 encoded `crt``.</details>  | |
-|`certSANs` |[]string |<details><summary>Extra certificate subject alternative names for the machine's certificate.</summary>By default, all non-loopback interface IPs are automatically added to the certificate's SANs.</details> <details><summary>Show example(s)</summary>{{< highlight yaml >}}
+|`acceptedCAs` |[]PEMEncodedCertificate |The certificates issued by certificate authorities are accepted in addition to issuing 'ca'.<br>It is composed of a base64 encoded `crt``.  | |
+|`certSANs` |[]string |Extra certificate subject alternative names for the machine's certificate.<br>By default, all non-loopback interface IPs are automatically added to the certificate's SANs. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 certSANs:
     - 10.0.0.10
     - 172.16.0.10
@@ -134,7 +134,7 @@ kubelet:
     #         - '!10.0.0.3/32'
     #         - fdc7::/16
 {{< /highlight >}}</details> | |
-|`pods` |[]Unstructured |<details><summary>Used to provide static pod definitions to be run by the kubelet directly bypassing the kube-apiserver.</summary><br />Static pods can be used to run components which should be started before the Kubernetes control plane is up.<br />Talos doesn't validate the pod definition.<br />Updates to this field can be applied without a reboot.<br /><br />See https://kubernetes.io/docs/tasks/configure-pod-container/static-pod/.</details> <details><summary>Show example(s)</summary>{{< highlight yaml >}}
+|`pods` |[]Unstructured |Used to provide static pod definitions to be run by the kubelet directly bypassing the kube-apiserver.<br><br>Static pods can be used to run components which should be started before the Kubernetes control plane is up.<br>Talos doesn't validate the pod definition.<br>Updates to this field can be applied without a reboot.<br><br>See https://kubernetes.io/docs/tasks/configure-pod-container/static-pod/. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 pods:
     - apiVersion: v1
       kind: pod
@@ -262,7 +262,7 @@ network:
     # kubespan:
     #     enabled: true # Enable the KubeSpan feature.
 {{< /highlight >}}</details> | |
-|`install` |<a href="#Config.machine.install">InstallConfig</a> |<details><summary>Used to provide instructions for installations.</summary><br />Note that this configuration section gets silently ignored by Talos images that are considered pre-installed.<br />To make sure Talos installs according to the provided configuration, Talos should be booted with ISO or PXE-booted.</details> <details><summary>Show example(s)</summary>{{< highlight yaml >}}
+|`install` |<a href="#Config.machine.install">InstallConfig</a> |Used to provide instructions for installations.<br><br>Note that this configuration section gets silently ignored by Talos images that are considered pre-installed.<br>To make sure Talos installs according to the provided configuration, Talos should be booted with ISO or PXE-booted. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 install:
     disk: /dev/sda # The disk used for installations.
     # Allows for supplying extra kernel args via the bootloader.
@@ -278,14 +278,14 @@ install:
     #     model: WDC* # Disk model `/sys/block/<dev>/device/model`.
     #     busPath: /pci0000:00/0000:00:17.0/ata1/host0/target0:0:0/0:0:0:0 # Disk bus path.
 {{< /highlight >}}</details> | |
-|`files` |<a href="#Config.machine.files.">[]MachineFile</a> |<details><summary>Allows the addition of user specified files.</summary>The value of `op` can be `create`, `overwrite`, or `append`.<br />In the case of `create`, `path` must not exist.<br />In the case of `overwrite`, and `append`, `path` must be a valid file.<br />If an `op` value of `append` is used, the existing file will be appended.<br />Note that the file contents are not required to be base64 encoded.</details> <details><summary>Show example(s)</summary>{{< highlight yaml >}}
+|`files` |<a href="#Config.machine.files.">[]MachineFile</a> |Allows the addition of user specified files.<br>The value of `op` can be `create`, `overwrite`, or `append`.<br>In the case of `create`, `path` must not exist.<br>In the case of `overwrite`, and `append`, `path` must be a valid file.<br>If an `op` value of `append` is used, the existing file will be appended.<br>Note that the file contents are not required to be base64 encoded. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 files:
     - content: '...' # The contents of the file.
       permissions: 0o666 # The file's permissions in octal.
       path: /tmp/file.txt # The path of the file.
       op: append # The operation to use
 {{< /highlight >}}</details> | |
-|`env` |Env |<details><summary>The `env` field allows for the addition of environment variables.</summary>All environment variables are set on PID 1 in addition to every service.</details> <details><summary>Show example(s)</summary>{{< highlight yaml >}}
+|`env` |Env |The `env` field allows for the addition of environment variables.<br>All environment variables are set on PID 1 in addition to every service. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 env:
     GRPC_GO_LOG_SEVERITY_LEVEL: info
     GRPC_GO_LOG_VERBOSITY_LEVEL: "99"
@@ -316,7 +316,7 @@ sysctls:
 sysfs:
     devices.system.cpu.cpu0.cpufreq.scaling_governor: performance
 {{< /highlight >}}</details> | |
-|`registries` |<a href="#Config.machine.registries">RegistriesConfig</a> |<details><summary>Used to configure the machine's container image registry mirrors.</summary><br />Automatically generates matching CRI configuration for registry mirrors.<br /><br />The `mirrors` section allows to redirect requests for images to a non-default registry,<br />which might be a local registry or a caching mirror.<br /><br />The `config` section provides a way to authenticate to the registry with TLS client<br />identity, provide registry CA, or authentication information.<br />Authentication information has same meaning with the corresponding field in [`.docker/config.json`](https://docs.docker.com/engine/api/v1.41/#section/Authentication).<br /><br />See also matching configuration for [CRI containerd plugin](https://github.com/containerd/cri/blob/master/docs/registry.md).</details> <details><summary>Show example(s)</summary>{{< highlight yaml >}}
+|`registries` |<a href="#Config.machine.registries">RegistriesConfig</a> |Used to configure the machine's container image registry mirrors.<br><br>Automatically generates matching CRI configuration for registry mirrors.<br><br>The `mirrors` section allows to redirect requests for images to a non-default registry,<br>which might be a local registry or a caching mirror.<br><br>The `config` section provides a way to authenticate to the registry with TLS client<br>identity, provide registry CA, or authentication information.<br>Authentication information has same meaning with the corresponding field in [`.docker/config.json`](https://docs.docker.com/engine/api/v1.41/#section/Authentication).<br><br>See also matching configuration for [CRI containerd plugin](https://github.com/containerd/cri/blob/master/docs/registry.md). <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 registries:
     # Specifies mirror configuration for each registry host namespace.
     mirrors:
@@ -338,7 +338,7 @@ registries:
                 username: username # Optional registry authentication.
                 password: password # Optional registry authentication.
 {{< /highlight >}}</details> | |
-|`systemDiskEncryption` |<a href="#Config.machine.systemDiskEncryption">SystemDiskEncryptionConfig</a> |<details><summary>Machine system disk encryption configuration.</summary>Defines each system partition encryption parameters.</details> <details><summary>Show example(s)</summary>{{< highlight yaml >}}
+|`systemDiskEncryption` |<a href="#Config.machine.systemDiskEncryption">SystemDiskEncryptionConfig</a> |Machine system disk encryption configuration.<br>Defines each system partition encryption parameters. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 systemDiskEncryption:
     # Ephemeral partition encryption.
     ephemeral:
@@ -404,7 +404,7 @@ seccompProfiles:
       value:
         defaultAction: SCMP_ACT_LOG
 {{< /highlight >}}</details> | |
-|`baseRuntimeSpecOverrides` |Unstructured |<details><summary>Override (patch) settings in the default OCI runtime spec for CRI containers.</summary><br />It can be used to set some default container settings which are not configurable in Kubernetes,<br />for example default ulimits.<br />Note: this change applies to all newly created containers, and it requires a reboot to take effect.</details> <details><summary>Show example(s)</summary>{{< highlight yaml >}}
+|`baseRuntimeSpecOverrides` |Unstructured |Override (patch) settings in the default OCI runtime spec for CRI containers.<br><br>It can be used to set some default container settings which are not configurable in Kubernetes,<br>for example default ulimits.<br>Note: this change applies to all newly created containers, and it requires a reboot to take effect. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 baseRuntimeSpecOverrides:
     process:
         rlimits:
@@ -412,7 +412,7 @@ baseRuntimeSpecOverrides:
               soft: 1024
               type: RLIMIT_NOFILE
 {{< /highlight >}}</details> | |
-|`nodeLabels` |map[string]string |<details><summary>Configures the node labels for the machine.</summary><br />Note: In the default Kubernetes configuration, worker nodes are restricted to set<br />labels with some prefixes (see [NodeRestriction](https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/#noderestriction) admission plugin).</details> <details><summary>Show example(s)</summary>{{< highlight yaml >}}
+|`nodeLabels` |map[string]string |Configures the node labels for the machine.<br><br>Note: In the default Kubernetes configuration, worker nodes are restricted to set<br>labels with some prefixes (see [NodeRestriction](https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/#noderestriction) admission plugin). <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 nodeLabels:
     exampleLabel: exampleLabelValue
 {{< /highlight >}}</details> | |
@@ -420,7 +420,7 @@ nodeLabels:
 nodeAnnotations:
     customer.io/rack: r13a25
 {{< /highlight >}}</details> | |
-|`nodeTaints` |map[string]string |<details><summary>Configures the node taints for the machine. Effect is optional.</summary><br />Note: In the default Kubernetes configuration, worker nodes are not allowed to<br />modify the taints (see [NodeRestriction](https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/#noderestriction) admission plugin).</details> <details><summary>Show example(s)</summary>{{< highlight yaml >}}
+|`nodeTaints` |map[string]string |Configures the node taints for the machine. Effect is optional.<br><br>Note: In the default Kubernetes configuration, worker nodes are not allowed to<br>modify the taints (see [NodeRestriction](https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/#noderestriction) admission plugin). <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 nodeTaints:
     exampleTaint: exampleTaintValue:NoSchedule
 {{< /highlight >}}</details> | |
@@ -561,7 +561,7 @@ clusterDNS:
 extraArgs:
     key: value
 {{< /highlight >}}</details> | |
-|`extraMounts` |<a href="#Config.machine.kubelet.extraMounts.">[]ExtraMount</a> |<details><summary>The `extraMounts` field is used to add additional mounts to the kubelet container.</summary>Note that either `bind` or `rbind` are required in the `options`.</details> <details><summary>Show example(s)</summary>{{< highlight yaml >}}
+|`extraMounts` |<a href="#Config.machine.kubelet.extraMounts.">[]ExtraMount</a> |The `extraMounts` field is used to add additional mounts to the kubelet container.<br>Note that either `bind` or `rbind` are required in the `options`. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 extraMounts:
     - destination: /var/lib/example # Destination is the absolute path where the mount will be placed in the container.
       type: bind # Type specifies the mount kind.
@@ -572,7 +572,7 @@ extraMounts:
         - rshared
         - rw
 {{< /highlight >}}</details> | |
-|`extraConfig` |Unstructured |<details><summary>The `extraConfig` field is used to provide kubelet configuration overrides.</summary><br />Some fields are not allowed to be overridden: authentication and authorization, cgroups<br />configuration, ports, etc.</details> <details><summary>Show example(s)</summary>{{< highlight yaml >}}
+|`extraConfig` |Unstructured |The `extraConfig` field is used to provide kubelet configuration overrides.<br><br>Some fields are not allowed to be overridden: authentication and authorization, cgroups<br>configuration, ports, etc. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 extraConfig:
     serverTLSBootstrap: true
 {{< /highlight >}}</details> | |
@@ -592,8 +592,8 @@ credentialProviderConfig:
           name: ecr-credential-provider
 {{< /highlight >}}</details> | |
 |`defaultRuntimeSeccompProfileEnabled` |bool |Enable container runtime default Seccomp profile.  |`true`<br />`yes`<br />`false`<br />`no`<br /> |
-|`registerWithFQDN` |bool |<details><summary>The `registerWithFQDN` field is used to force kubelet to use the node FQDN for registration.</summary>This is required in clouds like AWS.</details>  |`true`<br />`yes`<br />`false`<br />`no`<br /> |
-|`nodeIP` |<a href="#Config.machine.kubelet.nodeIP">KubeletNodeIPConfig</a> |<details><summary>The `nodeIP` field is used to configure `--node-ip` flag for the kubelet.</summary>This is used when a node has multiple addresses to choose from.</details> <details><summary>Show example(s)</summary>{{< highlight yaml >}}
+|`registerWithFQDN` |bool |The `registerWithFQDN` field is used to force kubelet to use the node FQDN for registration.<br>This is required in clouds like AWS.  |`true`<br />`yes`<br />`false`<br />`no`<br /> |
+|`nodeIP` |<a href="#Config.machine.kubelet.nodeIP">KubeletNodeIPConfig</a> |The `nodeIP` field is used to configure `--node-ip` flag for the kubelet.<br>This is used when a node has multiple addresses to choose from. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 nodeIP:
     # The `validSubnets` field configures the networks to pick kubelet node IP from.
     validSubnets:
@@ -601,8 +601,8 @@ nodeIP:
         - '!10.0.0.3/32'
         - fdc7::/16
 {{< /highlight >}}</details> | |
-|`skipNodeRegistration` |bool |<details><summary>The `skipNodeRegistration` is used to run the kubelet without registering with the apiserver.</summary>This runs kubelet as standalone and only runs static pods.</details>  |`true`<br />`yes`<br />`false`<br />`no`<br /> |
-|`disableManifestsDirectory` |bool |<details><summary>The `disableManifestsDirectory` field configures the kubelet to get static pod manifests from the /etc/kubernetes/manifests directory.</summary>It's recommended to configure static pods with the "pods" key instead.</details>  |`true`<br />`yes`<br />`false`<br />`no`<br /> |
+|`skipNodeRegistration` |bool |The `skipNodeRegistration` is used to run the kubelet without registering with the apiserver.<br>This runs kubelet as standalone and only runs static pods.  |`true`<br />`yes`<br />`false`<br />`no`<br /> |
+|`disableManifestsDirectory` |bool |The `disableManifestsDirectory` field configures the kubelet to get static pod manifests from the /etc/kubernetes/manifests directory.<br>It's recommended to configure static pods with the "pods" key instead.  |`true`<br />`yes`<br />`false`<br />`no`<br /> |
 
 
 
@@ -634,8 +634,8 @@ machine:
 |`type` |string |Type specifies the mount kind.  | |
 |`source` |string |Source specifies the source path of the mount.  | |
 |`options` |[]string |Options are fstab style mount options.  | |
-|`uidMappings` |<a href="#Config.machine.kubelet.extraMounts..uidMappings.">[]LinuxIDMapping</a> |<details><summary>UID/GID mappings used for changing file owners w/o calling chown, fs should support it.</summary><br />Every mount point could have its own mapping.</details>  | |
-|`gidMappings` |<a href="#Config.machine.kubelet.extraMounts..gidMappings.">[]LinuxIDMapping</a> |<details><summary>UID/GID mappings used for changing file owners w/o calling chown, fs should support it.</summary><br />Every mount point could have its own mapping.</details>  | |
+|`uidMappings` |<a href="#Config.machine.kubelet.extraMounts..uidMappings.">[]LinuxIDMapping</a> |UID/GID mappings used for changing file owners w/o calling chown, fs should support it.<br><br>Every mount point could have its own mapping.  | |
+|`gidMappings` |<a href="#Config.machine.kubelet.extraMounts..gidMappings.">[]LinuxIDMapping</a> |UID/GID mappings used for changing file owners w/o calling chown, fs should support it.<br><br>Every mount point could have its own mapping.  | |
 
 
 
@@ -698,7 +698,7 @@ machine:
 
 | Field | Type | Description | Value(s) |
 |-------|------|-------------|----------|
-|`validSubnets` |[]string |<details><summary>The `validSubnets` field configures the networks to pick kubelet node IP from.</summary>For dual stack configuration, there should be two subnets: one for IPv4, another for IPv6.<br />IPs can be excluded from the list by using negative match with `!`, e.g `!10.0.0.0/8`.<br />Negative subnet matches should be specified last to filter out IPs picked by positive matches.<br />If not specified, node IP is picked based on cluster podCIDRs: IPv4/IPv6 address or both.</details>  | |
+|`validSubnets` |[]string |The `validSubnets` field configures the networks to pick kubelet node IP from.<br>For dual stack configuration, there should be two subnets: one for IPv4, another for IPv6.<br>IPs can be excluded from the list by using negative match with `!`, e.g `!10.0.0.0/8`.<br>Negative subnet matches should be specified last to filter out IPs picked by positive matches.<br>If not specified, node IP is picked based on cluster podCIDRs: IPv4/IPv6 address or both.  | |
 
 
 
@@ -836,7 +836,7 @@ machine:
 | Field | Type | Description | Value(s) |
 |-------|------|-------------|----------|
 |`hostname` |string |Used to statically set the hostname for the machine.  | |
-|`interfaces` |<a href="#Config.machine.network.interfaces.">[]Device</a> |<details><summary>`interfaces` is used to define the network interface configuration.</summary>By default all network interfaces will attempt a DHCP discovery.<br />This can be further tuned through this configuration parameter.</details> <details><summary>Show example(s)</summary>{{< highlight yaml >}}
+|`interfaces` |<a href="#Config.machine.network.interfaces.">[]Device</a> |`interfaces` is used to define the network interface configuration.<br>By default all network interfaces will attempt a DHCP discovery.<br>This can be further tuned through this configuration parameter. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 interfaces:
     - interface: enp0s1 # The interface name.
       # Assigns static IP addresses to the interface.
@@ -930,7 +930,7 @@ interfaces:
       # vip:
       #     ip: 172.16.199.55 # Specifies the IP address to be used.
 {{< /highlight >}}</details> | |
-|`nameservers` |[]string |<details><summary>Used to statically set the nameservers for the machine.</summary>Defaults to `1.1.1.1` and `8.8.8.8`</details> <details><summary>Show example(s)</summary>{{< highlight yaml >}}
+|`nameservers` |[]string |Used to statically set the nameservers for the machine.<br>Defaults to `1.1.1.1` and `8.8.8.8` <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 nameservers:
     - 8.8.8.8
     - 1.1.1.1
@@ -952,7 +952,7 @@ extraHostEntries:
 kubespan:
     enabled: true # Enable the KubeSpan feature.
 {{< /highlight >}}</details> | |
-|`disableSearchDomain` |bool |<details><summary>Disable generating a default search domain in /etc/resolv.conf</summary>based on the machine hostname.<br />Defaults to `false`.</details>  |`true`<br />`yes`<br />`false`<br />`no`<br /> |
+|`disableSearchDomain` |bool |Disable generating a default search domain in /etc/resolv.conf<br>based on the machine hostname.<br>Defaults to `false`.  |`true`<br />`yes`<br />`false`<br />`no`<br /> |
 
 
 
@@ -1063,10 +1063,10 @@ machine:
 
 | Field | Type | Description | Value(s) |
 |-------|------|-------------|----------|
-|`interface` |string |<details><summary>The interface name.</summary>Mutually exclusive with `deviceSelector`.</details> <details><summary>Show example(s)</summary>{{< highlight yaml >}}
+|`interface` |string |The interface name.<br>Mutually exclusive with `deviceSelector`. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 interface: enp0s3
 {{< /highlight >}}</details> | |
-|`deviceSelector` |<a href="#Config.machine.network.interfaces..deviceSelector">NetworkDeviceSelector</a> |<details><summary>Picks a network device using the selector.</summary>Mutually exclusive with `interface`.<br />Supports partial match using wildcard syntax.</details> <details><summary>Show example(s)</summary>{{< highlight yaml >}}
+|`deviceSelector` |<a href="#Config.machine.network.interfaces..deviceSelector">NetworkDeviceSelector</a> |Picks a network device using the selector.<br>Mutually exclusive with `interface`.<br>Supports partial match using wildcard syntax. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 deviceSelector:
     busPath: 00:* # PCI, USB bus prefix, supports matching by wildcard.
 {{< /highlight >}}{{< highlight yaml >}}
@@ -1074,12 +1074,12 @@ deviceSelector:
     hardwareAddr: '*:f0:ab' # Device hardware (MAC) address, supports matching by wildcard.
     driver: virtio_net # Kernel driver, supports matching by wildcard.
 {{< /highlight >}}</details> | |
-|`addresses` |[]string |<details><summary>Assigns static IP addresses to the interface.</summary>An address can be specified either in proper CIDR notation or as a standalone address (netmask of all ones is assumed).</details> <details><summary>Show example(s)</summary>{{< highlight yaml >}}
+|`addresses` |[]string |Assigns static IP addresses to the interface.<br>An address can be specified either in proper CIDR notation or as a standalone address (netmask of all ones is assumed). <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 addresses:
     - 10.5.0.0/16
     - 192.168.3.7
 {{< /highlight >}}</details> | |
-|`routes` |<a href="#Config.machine.network.interfaces..routes.">[]Route</a> |<details><summary>A list of routes associated with the interface.</summary>If used in combination with DHCP, these routes will be appended to routes returned by DHCP server.</details> <details><summary>Show example(s)</summary>{{< highlight yaml >}}
+|`routes` |<a href="#Config.machine.network.interfaces..routes.">[]Route</a> |A list of routes associated with the interface.<br>If used in combination with DHCP, these routes will be appended to routes returned by DHCP server. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 routes:
     - network: 0.0.0.0/0 # The route's network (destination).
       gateway: 10.5.0.1 # The route's gateway (if empty, creates link scope route).
@@ -1113,22 +1113,22 @@ bridge:
     stp:
         enabled: true # Whether Spanning Tree Protocol (STP) is enabled.
 {{< /highlight >}}</details> | |
-|`bridgePort` |<a href="#Config.machine.network.interfaces..bridgePort">BridgePort</a> |<details><summary>Configure this device as a bridge port.</summary>This can be used to dynamically assign network interfaces to a bridge.</details> <details><summary>Show example(s)</summary>{{< highlight yaml >}}
+|`bridgePort` |<a href="#Config.machine.network.interfaces..bridgePort">BridgePort</a> |Configure this device as a bridge port.<br>This can be used to dynamically assign network interfaces to a bridge. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 bridgePort:
     master: br0 # The name of the bridge master interface
 {{< /highlight >}}</details> | |
 |`vlans` |<a href="#Config.machine.network.interfaces..vlans.">[]Vlan</a> |VLAN specific options.  | |
-|`mtu` |int |<details><summary>The interface's MTU.</summary>If used in combination with DHCP, this will override any MTU settings returned from DHCP server.</details>  | |
-|`dhcp` |bool |<details><summary>Indicates if DHCP should be used to configure the interface.</summary>The following DHCP options are supported:<br /><br />- `OptionClasslessStaticRoute`<br />- `OptionDomainNameServer`<br />- `OptionDNSDomainSearchList`<br />- `OptionHostName`</details> <details><summary>Show example(s)</summary>{{< highlight yaml >}}
+|`mtu` |int |The interface's MTU.<br>If used in combination with DHCP, this will override any MTU settings returned from DHCP server.  | |
+|`dhcp` |bool |Indicates if DHCP should be used to configure the interface.<br>The following DHCP options are supported:<br><br>- `OptionClasslessStaticRoute`<br>- `OptionDomainNameServer`<br>- `OptionDNSDomainSearchList`<br>- `OptionHostName` <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 dhcp: true
 {{< /highlight >}}</details> | |
 |`ignore` |bool |Indicates if the interface should be ignored (skips configuration).  | |
-|`dummy` |bool |<details><summary>Indicates if the interface is a dummy interface.</summary>`dummy` is used to specify that this interface should be a virtual-only, dummy interface.</details>  | |
-|`dhcpOptions` |<a href="#Config.machine.network.interfaces..dhcpOptions">DHCPOptions</a> |<details><summary>DHCP specific options.</summary>`dhcp` *must* be set to true for these to take effect.</details> <details><summary>Show example(s)</summary>{{< highlight yaml >}}
+|`dummy` |bool |Indicates if the interface is a dummy interface.<br>`dummy` is used to specify that this interface should be a virtual-only, dummy interface.  | |
+|`dhcpOptions` |<a href="#Config.machine.network.interfaces..dhcpOptions">DHCPOptions</a> |DHCP specific options.<br>`dhcp` *must* be set to true for these to take effect. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 dhcpOptions:
     routeMetric: 1024 # The priority of all routes received via DHCP.
 {{< /highlight >}}</details> | |
-|`wireguard` |<a href="#Config.machine.network.interfaces..wireguard">DeviceWireguardConfig</a> |<details><summary>Wireguard specific configuration.</summary>Includes things like private key, listen port, peers.</details> <details><summary>Show example(s)</summary>{{< highlight yaml >}}
+|`wireguard` |<a href="#Config.machine.network.interfaces..wireguard">DeviceWireguardConfig</a> |Wireguard specific configuration.<br>Includes things like private key, listen port, peers. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 wireguard:
     privateKey: ABCDEF... # Specifies a private key configuration (base64 encoded).
     listenPort: 51111 # Specifies a device's listening port.
@@ -1197,7 +1197,7 @@ machine:
 |-------|------|-------------|----------|
 |`busPath` |string |PCI, USB bus prefix, supports matching by wildcard.  | |
 |`hardwareAddr` |string |Device hardware (MAC) address, supports matching by wildcard.  | |
-|`permanentAddr` |string |<details><summary>Device permanent hardware address, supports matching by wildcard.</summary>The permanent address doesn't change when the link is enslaved to a bond,<br />so it's recommended to use this field for bond members.</details>  | |
+|`permanentAddr` |string |Device permanent hardware address, supports matching by wildcard.<br>The permanent address doesn't change when the link is enslaved to a bond,<br>so it's recommended to use this field for bond members.  | |
 |`pciID` |string |PCI ID (vendor ID, product ID), supports matching by wildcard.  | |
 |`driver` |string |Kernel driver, supports matching by wildcard.  | |
 |`physical` |bool |Select only physical devices.  | |
@@ -1269,38 +1269,38 @@ machine:
 | Field | Type | Description | Value(s) |
 |-------|------|-------------|----------|
 |`interfaces` |[]string |The interfaces that make up the bond.  | |
-|`deviceSelectors` |<a href="#Config.machine.network.interfaces..bond.deviceSelectors.">[]NetworkDeviceSelector</a> |<details><summary>Picks a network device using the selector.</summary>Mutually exclusive with `interfaces`.<br />Supports partial match using wildcard syntax.</details> <details><summary>Show example(s)</summary>{{< highlight yaml >}}
+|`deviceSelectors` |<a href="#Config.machine.network.interfaces..bond.deviceSelectors.">[]NetworkDeviceSelector</a> |Picks a network device using the selector.<br>Mutually exclusive with `interfaces`.<br>Supports partial match using wildcard syntax. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 deviceSelectors:
     - busPath: 00:* # PCI, USB bus prefix, supports matching by wildcard.
     - hardwareAddr: '*:f0:ab' # Device hardware (MAC) address, supports matching by wildcard.
       driver: virtio_net # Kernel driver, supports matching by wildcard.
 {{< /highlight >}}</details> | |
-|`arpIPTarget` |[]string |<details><summary>A bond option.</summary>Please see the official kernel documentation.<br />Not supported at the moment.</details>  | |
-|`mode` |string |<details><summary>A bond option.</summary>Please see the official kernel documentation.</details>  | |
-|`xmitHashPolicy` |string |<details><summary>A bond option.</summary>Please see the official kernel documentation.</details>  | |
-|`lacpRate` |string |<details><summary>A bond option.</summary>Please see the official kernel documentation.</details>  | |
-|`adActorSystem` |string |<details><summary>A bond option.</summary>Please see the official kernel documentation.<br />Not supported at the moment.</details>  | |
-|`arpValidate` |string |<details><summary>A bond option.</summary>Please see the official kernel documentation.</details>  | |
-|`arpAllTargets` |string |<details><summary>A bond option.</summary>Please see the official kernel documentation.</details>  | |
-|`primary` |string |<details><summary>A bond option.</summary>Please see the official kernel documentation.</details>  | |
-|`primaryReselect` |string |<details><summary>A bond option.</summary>Please see the official kernel documentation.</details>  | |
-|`failOverMac` |string |<details><summary>A bond option.</summary>Please see the official kernel documentation.</details>  | |
-|`adSelect` |string |<details><summary>A bond option.</summary>Please see the official kernel documentation.</details>  | |
-|`miimon` |uint32 |<details><summary>A bond option.</summary>Please see the official kernel documentation.</details>  | |
-|`updelay` |uint32 |<details><summary>A bond option.</summary>Please see the official kernel documentation.</details>  | |
-|`downdelay` |uint32 |<details><summary>A bond option.</summary>Please see the official kernel documentation.</details>  | |
-|`arpInterval` |uint32 |<details><summary>A bond option.</summary>Please see the official kernel documentation.</details>  | |
-|`resendIgmp` |uint32 |<details><summary>A bond option.</summary>Please see the official kernel documentation.</details>  | |
-|`minLinks` |uint32 |<details><summary>A bond option.</summary>Please see the official kernel documentation.</details>  | |
-|`lpInterval` |uint32 |<details><summary>A bond option.</summary>Please see the official kernel documentation.</details>  | |
-|`packetsPerSlave` |uint32 |<details><summary>A bond option.</summary>Please see the official kernel documentation.</details>  | |
-|`numPeerNotif` |uint8 |<details><summary>A bond option.</summary>Please see the official kernel documentation.</details>  | |
-|`tlbDynamicLb` |uint8 |<details><summary>A bond option.</summary>Please see the official kernel documentation.</details>  | |
-|`allSlavesActive` |uint8 |<details><summary>A bond option.</summary>Please see the official kernel documentation.</details>  | |
-|`useCarrier` |bool |<details><summary>A bond option.</summary>Please see the official kernel documentation.</details>  | |
-|`adActorSysPrio` |uint16 |<details><summary>A bond option.</summary>Please see the official kernel documentation.</details>  | |
-|`adUserPortKey` |uint16 |<details><summary>A bond option.</summary>Please see the official kernel documentation.</details>  | |
-|`peerNotifyDelay` |uint32 |<details><summary>A bond option.</summary>Please see the official kernel documentation.</details>  | |
+|`arpIPTarget` |[]string |A bond option.<br>Please see the official kernel documentation.<br>Not supported at the moment.  | |
+|`mode` |string |A bond option.<br>Please see the official kernel documentation.  | |
+|`xmitHashPolicy` |string |A bond option.<br>Please see the official kernel documentation.  | |
+|`lacpRate` |string |A bond option.<br>Please see the official kernel documentation.  | |
+|`adActorSystem` |string |A bond option.<br>Please see the official kernel documentation.<br>Not supported at the moment.  | |
+|`arpValidate` |string |A bond option.<br>Please see the official kernel documentation.  | |
+|`arpAllTargets` |string |A bond option.<br>Please see the official kernel documentation.  | |
+|`primary` |string |A bond option.<br>Please see the official kernel documentation.  | |
+|`primaryReselect` |string |A bond option.<br>Please see the official kernel documentation.  | |
+|`failOverMac` |string |A bond option.<br>Please see the official kernel documentation.  | |
+|`adSelect` |string |A bond option.<br>Please see the official kernel documentation.  | |
+|`miimon` |uint32 |A bond option.<br>Please see the official kernel documentation.  | |
+|`updelay` |uint32 |A bond option.<br>Please see the official kernel documentation.  | |
+|`downdelay` |uint32 |A bond option.<br>Please see the official kernel documentation.  | |
+|`arpInterval` |uint32 |A bond option.<br>Please see the official kernel documentation.  | |
+|`resendIgmp` |uint32 |A bond option.<br>Please see the official kernel documentation.  | |
+|`minLinks` |uint32 |A bond option.<br>Please see the official kernel documentation.  | |
+|`lpInterval` |uint32 |A bond option.<br>Please see the official kernel documentation.  | |
+|`packetsPerSlave` |uint32 |A bond option.<br>Please see the official kernel documentation.  | |
+|`numPeerNotif` |uint8 |A bond option.<br>Please see the official kernel documentation.  | |
+|`tlbDynamicLb` |uint8 |A bond option.<br>Please see the official kernel documentation.  | |
+|`allSlavesActive` |uint8 |A bond option.<br>Please see the official kernel documentation.  | |
+|`useCarrier` |bool |A bond option.<br>Please see the official kernel documentation.  | |
+|`adActorSysPrio` |uint16 |A bond option.<br>Please see the official kernel documentation.  | |
+|`adUserPortKey` |uint16 |A bond option.<br>Please see the official kernel documentation.  | |
+|`peerNotifyDelay` |uint32 |A bond option.<br>Please see the official kernel documentation.  | |
 
 
 
@@ -1346,7 +1346,7 @@ machine:
 |-------|------|-------------|----------|
 |`busPath` |string |PCI, USB bus prefix, supports matching by wildcard.  | |
 |`hardwareAddr` |string |Device hardware (MAC) address, supports matching by wildcard.  | |
-|`permanentAddr` |string |<details><summary>Device permanent hardware address, supports matching by wildcard.</summary>The permanent address doesn't change when the link is enslaved to a bond,<br />so it's recommended to use this field for bond members.</details>  | |
+|`permanentAddr` |string |Device permanent hardware address, supports matching by wildcard.<br>The permanent address doesn't change when the link is enslaved to a bond,<br>so it's recommended to use this field for bond members.  | |
 |`pciID` |string |PCI ID (vendor ID, product ID), supports matching by wildcard.  | |
 |`driver` |string |Kernel driver, supports matching by wildcard.  | |
 |`physical` |bool |Select only physical devices.  | |
@@ -1382,8 +1382,8 @@ machine:
 | Field | Type | Description | Value(s) |
 |-------|------|-------------|----------|
 |`interfaces` |[]string |The interfaces that make up the bridge.  | |
-|`stp` |<a href="#Config.machine.network.interfaces..bridge.stp">STP</a> |<details><summary>Enable STP on this bridge.</summary>Please see the official kernel documentation.</details>  | |
-|`vlan` |<a href="#Config.machine.network.interfaces..bridge.vlan">BridgeVLAN</a> |<details><summary>Enable VLAN-awareness on this bridge.</summary>Please see the official kernel documentation.</details>  | |
+|`stp` |<a href="#Config.machine.network.interfaces..bridge.stp">STP</a> |Enable STP on this bridge.<br>Please see the official kernel documentation.  | |
+|`vlan` |<a href="#Config.machine.network.interfaces..bridge.vlan">BridgeVLAN</a> |Enable VLAN-awareness on this bridge.<br>Please see the official kernel documentation.  | |
 
 
 
@@ -1461,7 +1461,7 @@ Vlan represents vlan settings for a device.
 |`vlanId` |uint16 |The VLAN's ID.  | |
 |`mtu` |uint32 |The VLAN's MTU.  | |
 |`vip` |<a href="#Config.machine.network.interfaces..vlans..vip">DeviceVIPConfig</a> |The VLAN's virtual IP address configuration.  | |
-|`dhcpOptions` |<a href="#Config.machine.network.interfaces..vlans..dhcpOptions">DHCPOptions</a> |<details><summary>DHCP specific options.</summary>`dhcp` *must* be set to true for these to take effect.</details>  | |
+|`dhcpOptions` |<a href="#Config.machine.network.interfaces..vlans..dhcpOptions">DHCPOptions</a> |DHCP specific options.<br>`dhcp` *must* be set to true for these to take effect.  | |
 
 
 
@@ -1655,7 +1655,7 @@ machine:
 
 | Field | Type | Description | Value(s) |
 |-------|------|-------------|----------|
-|`privateKey` |string |<details><summary>Specifies a private key configuration (base64 encoded).</summary>Can be generated by `wg genkey`.</details>  | |
+|`privateKey` |string |Specifies a private key configuration (base64 encoded).<br>Can be generated by `wg genkey`.  | |
 |`listenPort` |int |Specifies a device's listening port.  | |
 |`firewallMark` |int |Specifies a device's firewall mark.  | |
 |`peers` |<a href="#Config.machine.network.interfaces..wireguard.peers.">[]DeviceWireguardPeer</a> |Specifies a list of peer configurations to apply to a device.  | |
@@ -1672,9 +1672,9 @@ DeviceWireguardPeer a WireGuard device peer configuration.
 
 | Field | Type | Description | Value(s) |
 |-------|------|-------------|----------|
-|`publicKey` |string |<details><summary>Specifies the public key of this peer.</summary>Can be extracted from private key by running `wg pubkey < private.key > public.key && cat public.key`.</details>  | |
+|`publicKey` |string |Specifies the public key of this peer.<br>Can be extracted from private key by running `wg pubkey < private.key > public.key && cat public.key`.  | |
 |`endpoint` |string |Specifies the endpoint of this peer entry.  | |
-|`persistentKeepaliveInterval` |Duration |<details><summary>Specifies the persistent keepalive interval for this peer.</summary>Field format accepts any Go time.Duration format ('1h' for one hour, '10m' for ten minutes).</details>  | |
+|`persistentKeepaliveInterval` |Duration |Specifies the persistent keepalive interval for this peer.<br>Field format accepts any Go time.Duration format ('1h' for one hour, '10m' for ten minutes).  | |
 |`allowedIPs` |[]string |AllowedIPs specifies a list of allowed IP addresses in CIDR notation for this peer.  | |
 
 
@@ -1788,12 +1788,12 @@ machine:
 
 | Field | Type | Description | Value(s) |
 |-------|------|-------------|----------|
-|`enabled` |bool |<details><summary>Enable the KubeSpan feature.</summary>Cluster discovery should be enabled with .cluster.discovery.enabled for KubeSpan to be enabled.</details>  | |
-|`advertiseKubernetesNetworks` |bool |<details><summary>Control whether Kubernetes pod CIDRs are announced over KubeSpan from the node.</summary>If disabled, CNI handles encapsulating pod-to-pod traffic into some node-to-node tunnel,<br />and KubeSpan handles the node-to-node traffic.<br />If enabled, KubeSpan will take over pod-to-pod traffic and send it over KubeSpan directly.<br />When enabled, KubeSpan should have a way to detect complete pod CIDRs of the node which<br />is not always the case with CNIs not relying on Kubernetes for IPAM.</details>  | |
-|`allowDownPeerBypass` |bool |<details><summary>Skip sending traffic via KubeSpan if the peer connection state is not up.</summary>This provides configurable choice between connectivity and security: either traffic is always<br />forced to go via KubeSpan (even if Wireguard peer connection is not up), or traffic can go directly<br />to the peer if Wireguard connection can't be established.</details>  | |
-|`harvestExtraEndpoints` |bool |<details><summary>KubeSpan can collect and publish extra endpoints for each member of the cluster</summary>based on Wireguard endpoint information for each peer.<br />This feature is disabled by default, don't enable it<br />with high number of peers (>50) in the KubeSpan network (performance issues).</details>  | |
-|`mtu` |uint32 |<details><summary>KubeSpan link MTU size.</summary>Default value is 1420.</details>  | |
-|`filters` |<a href="#Config.machine.network.kubespan.filters">KubeSpanFilters</a> |<details><summary>KubeSpan advanced filtering of network addresses .</summary><br />Settings in this section are optional, and settings apply only to the node.</details>  | |
+|`enabled` |bool |Enable the KubeSpan feature.<br>Cluster discovery should be enabled with .cluster.discovery.enabled for KubeSpan to be enabled.  | |
+|`advertiseKubernetesNetworks` |bool |Control whether Kubernetes pod CIDRs are announced over KubeSpan from the node.<br>If disabled, CNI handles encapsulating pod-to-pod traffic into some node-to-node tunnel,<br>and KubeSpan handles the node-to-node traffic.<br>If enabled, KubeSpan will take over pod-to-pod traffic and send it over KubeSpan directly.<br>When enabled, KubeSpan should have a way to detect complete pod CIDRs of the node which<br>is not always the case with CNIs not relying on Kubernetes for IPAM.  | |
+|`allowDownPeerBypass` |bool |Skip sending traffic via KubeSpan if the peer connection state is not up.<br>This provides configurable choice between connectivity and security: either traffic is always<br>forced to go via KubeSpan (even if Wireguard peer connection is not up), or traffic can go directly<br>to the peer if Wireguard connection can't be established.  | |
+|`harvestExtraEndpoints` |bool |KubeSpan can collect and publish extra endpoints for each member of the cluster<br>based on Wireguard endpoint information for each peer.<br>This feature is disabled by default, don't enable it<br>with high number of peers (>50) in the KubeSpan network (performance issues).  | |
+|`mtu` |uint32 |KubeSpan link MTU size.<br>Default value is 1420.  | |
+|`filters` |<a href="#Config.machine.network.kubespan.filters">KubeSpanFilters</a> |KubeSpan advanced filtering of network addresses .<br><br>Settings in this section are optional, and settings apply only to the node.  | |
 
 
 
@@ -1807,7 +1807,7 @@ KubeSpanFilters struct describes KubeSpan advanced network addresses filtering.
 
 | Field | Type | Description | Value(s) |
 |-------|------|-------------|----------|
-|`endpoints` |[]string |<details><summary>Filter node addresses which will be advertised as KubeSpan endpoints for peer-to-peer Wireguard connections.</summary><br />By default, all addresses are advertised, and KubeSpan cycles through all endpoints until it finds one that works.<br /><br />Default value: no filtering.</details> <details><summary>Show example(s)</summary>{{< highlight yaml >}}
+|`endpoints` |[]string |Filter node addresses which will be advertised as KubeSpan endpoints for peer-to-peer Wireguard connections.<br><br>By default, all addresses are advertised, and KubeSpan cycles through all endpoints until it finds one that works.<br><br>Default value: no filtering. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 endpoints:
     - 0.0.0.0/0
     - '!192.168.0.0/16'
@@ -1855,7 +1855,7 @@ disk: /dev/sda
 {{< /highlight >}}{{< highlight yaml >}}
 disk: /dev/nvme0
 {{< /highlight >}}</details> | |
-|`diskSelector` |<a href="#Config.machine.install.diskSelector">InstallDiskSelector</a> |<details><summary>Look up disk using disk attributes like model, size, serial and others.</summary>Always has priority over `disk`.</details> <details><summary>Show example(s)</summary>{{< highlight yaml >}}
+|`diskSelector` |<a href="#Config.machine.install.diskSelector">InstallDiskSelector</a> |Look up disk using disk attributes like model, size, serial and others.<br>Always has priority over `disk`. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 diskSelector:
     size: '>= 1TB' # Disk size.
     model: WDC* # Disk model `/sys/block/<dev>/device/model`.
@@ -1864,16 +1864,16 @@ diskSelector:
     # busPath: /pci0000:00/0000:00:17.0/ata1/host0/target0:0:0/0:0:0:0
     # busPath: /pci0000:00/*
 {{< /highlight >}}</details> | |
-|`extraKernelArgs` |[]string |<details><summary>Allows for supplying extra kernel args via the bootloader.</summary>Existing kernel args can be removed by prefixing the argument with a `-`.<br />For example `-console` removes all `console=<value>` arguments, whereas `-console=tty0` removes the `console=tty0` default argument.<br />If Talos is using systemd-boot as a bootloader (default for UEFI) this setting will be ignored.</details> <details><summary>Show example(s)</summary>{{< highlight yaml >}}
+|`extraKernelArgs` |[]string |Allows for supplying extra kernel args via the bootloader.<br>Existing kernel args can be removed by prefixing the argument with a `-`.<br>For example `-console` removes all `console=<value>` arguments, whereas `-console=tty0` removes the `console=tty0` default argument.<br>If Talos is using systemd-boot as a bootloader (default for UEFI) this setting will be ignored. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 extraKernelArgs:
     - talos.platform=metal
     - reboot=k
 {{< /highlight >}}</details> | |
-|`image` |string |<details><summary>Allows for supplying the image used to perform the installation.</summary>Image reference for each Talos release can be found on<br />[GitHub releases page](https://github.com/siderolabs/talos/releases).</details> <details><summary>Show example(s)</summary>{{< highlight yaml >}}
+|`image` |string |Allows for supplying the image used to perform the installation.<br>Image reference for each Talos release can be found on<br>[GitHub releases page](https://github.com/siderolabs/talos/releases). <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 image: ghcr.io/siderolabs/installer:latest
 {{< /highlight >}}</details> | |
-|`wipe` |bool |<details><summary>Indicates if the installation disk should be wiped at installation time.</summary>Defaults to `true`.</details>  |`true`<br />`yes`<br />`false`<br />`no`<br /> |
-|`legacyBIOSSupport` |bool |<details><summary>Indicates if MBR partition should be marked as bootable (active).</summary>Should be enabled only for the systems with legacy BIOS that doesn't support GPT partitioning scheme.</details>  | |
+|`wipe` |bool |Indicates if the installation disk should be wiped at installation time.<br>Defaults to `true`.  |`true`<br />`yes`<br />`false`<br />`no`<br /> |
+|`legacyBIOSSupport` |bool |Indicates if MBR partition should be marked as bootable (active).<br>Should be enabled only for the systems with legacy BIOS that doesn't support GPT partitioning scheme.  | |
 
 
 
@@ -1973,9 +1973,9 @@ machine:
 
 | Field | Type | Description | Value(s) |
 |-------|------|-------------|----------|
-|`disabled` |bool |<details><summary>Indicates if the time service is disabled for the machine.</summary>Defaults to `false`.</details>  | |
-|`servers` |[]string |<details><summary>description: |</summary>    Specifies time (NTP) servers to use for setting the system time.<br />    Defaults to `time.cloudflare.com`.<br /><br />   Talos can also sync to the PTP time source (e.g provided by the hypervisor),<br />    provide the path to the PTP device as "/dev/ptp0" or "/dev/ptp_kvm".<br /></details>  | |
-|`bootTimeout` |Duration |<details><summary>Specifies the timeout when the node time is considered to be in sync unlocking the boot sequence.</summary>NTP sync will be still running in the background.<br />Defaults to "infinity" (waiting forever for time sync)</details>  | |
+|`disabled` |bool |Indicates if the time service is disabled for the machine.<br>Defaults to `false`.  | |
+|`servers` |[]string |description: |<br>    Specifies time (NTP) servers to use for setting the system time.<br>    Defaults to `time.cloudflare.com`.<br><br>   Talos can also sync to the PTP time source (e.g provided by the hypervisor),<br>    provide the path to the PTP device as "/dev/ptp0" or "/dev/ptp_kvm".<br>  | |
+|`bootTimeout` |Duration |Specifies the timeout when the node time is considered to be in sync unlocking the boot sequence.<br>NTP sync will be still running in the background.<br>Defaults to "infinity" (waiting forever for time sync)  | |
 
 
 
@@ -2015,7 +2015,7 @@ machine:
 
 | Field | Type | Description | Value(s) |
 |-------|------|-------------|----------|
-|`mirrors` |<a href="#Config.machine.registries.mirrors.-">map[string]RegistryMirrorConfig</a> |<details><summary>Specifies mirror configuration for each registry host namespace.</summary>This setting allows to configure local pull-through caching registires,<br />air-gapped installations, etc.<br /><br />For example, when pulling an image with the reference `example.com:123/image:v1`,<br />the `example.com:123` key will be used to lookup the mirror configuration.<br /><br />Optionally the `*` key can be used to configure a fallback mirror.<br /><br />Registry name is the first segment of image identifier, with 'docker.io'<br />being default one.</details> <details><summary>Show example(s)</summary>{{< highlight yaml >}}
+|`mirrors` |<a href="#Config.machine.registries.mirrors.-">map[string]RegistryMirrorConfig</a> |Specifies mirror configuration for each registry host namespace.<br>This setting allows to configure local pull-through caching registires,<br>air-gapped installations, etc.<br><br>For example, when pulling an image with the reference `example.com:123/image:v1`,<br>the `example.com:123` key will be used to lookup the mirror configuration.<br><br>Optionally the `*` key can be used to configure a fallback mirror.<br><br>Registry name is the first segment of image identifier, with 'docker.io'<br>being default one. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 mirrors:
     ghcr.io:
         # List of endpoints (URLs) for registry mirrors to use.
@@ -2023,7 +2023,7 @@ mirrors:
             - https://registry.insecure
             - https://ghcr.io/v2/
 {{< /highlight >}}</details> | |
-|`config` |<a href="#Config.machine.registries.config.-">map[string]RegistryConfig</a> |<details><summary>Specifies TLS & auth configuration for HTTPS image registries.</summary>Mutual TLS can be enabled with 'clientIdentity' option.<br /><br />The full hostname and port (if not using a default port 443)<br />should be used as the key.<br />The fallback key `*` can't be used for TLS configuration.<br /><br />TLS configuration can be skipped if registry has trusted<br />server certificate.</details> <details><summary>Show example(s)</summary>{{< highlight yaml >}}
+|`config` |<a href="#Config.machine.registries.config.-">map[string]RegistryConfig</a> |Specifies TLS & auth configuration for HTTPS image registries.<br>Mutual TLS can be enabled with 'clientIdentity' option.<br><br>The full hostname and port (if not using a default port 443)<br>should be used as the key.<br>The fallback key `*` can't be used for TLS configuration.<br><br>TLS configuration can be skipped if registry has trusted<br>server certificate. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 config:
     registry.insecure:
         # The TLS configuration for the registry.
@@ -2064,9 +2064,9 @@ machine:
 
 | Field | Type | Description | Value(s) |
 |-------|------|-------------|----------|
-|`endpoints` |[]string |<details><summary>List of endpoints (URLs) for registry mirrors to use.</summary>Endpoint configures HTTP/HTTPS access mode, host name,<br />port and path (if path is not set, it defaults to `/v2`).</details>  | |
-|`overridePath` |bool |<details><summary>Use the exact path specified for the endpoint (don't append /v2/).</summary>This setting is often required for setting up multiple mirrors<br />on a single instance of a registry.</details>  | |
-|`skipFallback` |bool |<details><summary>Skip fallback to the upstream endpoint, for example the mirror configuration</summary>for `docker.io` will not fallback to `registry-1.docker.io`.</details>  | |
+|`endpoints` |[]string |List of endpoints (URLs) for registry mirrors to use.<br>Endpoint configures HTTP/HTTPS access mode, host name,<br>port and path (if path is not set, it defaults to `/v2`).  | |
+|`overridePath` |bool |Use the exact path specified for the endpoint (don't append /v2/).<br>This setting is often required for setting up multiple mirrors<br>on a single instance of a registry.  | |
+|`skipFallback` |bool |Skip fallback to the upstream endpoint, for example the mirror configuration<br>for `docker.io` will not fallback to `registry-1.docker.io`.  | |
 
 
 
@@ -2117,7 +2117,7 @@ tls:
     #     crt: LS0tIEVYQU1QTEUgQ0VSVElGSUNBVEUgLS0t
     #     key: LS0tIEVYQU1QTEUgS0VZIC0tLQ==
 {{< /highlight >}}</details> | |
-|`auth` |<a href="#Config.machine.registries.config.-.auth">RegistryAuthConfig</a> |<details><summary>The auth configuration for this registry.</summary>Note: changes to the registry auth will not be picked up by the CRI containerd plugin without a reboot.</details> <details><summary>Show example(s)</summary>{{< highlight yaml >}}
+|`auth` |<a href="#Config.machine.registries.config.-.auth">RegistryAuthConfig</a> |The auth configuration for this registry.<br>Note: changes to the registry auth will not be picked up by the CRI containerd plugin without a reboot. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 auth:
     username: username # Optional registry authentication.
     password: password # Optional registry authentication.
@@ -2161,12 +2161,12 @@ machine:
 
 | Field | Type | Description | Value(s) |
 |-------|------|-------------|----------|
-|`clientIdentity` |PEMEncodedCertificateAndKey |<details><summary>Enable mutual TLS authentication with the registry.</summary>Client certificate and key should be base64-encoded.</details> <details><summary>Show example(s)</summary>{{< highlight yaml >}}
+|`clientIdentity` |PEMEncodedCertificateAndKey |Enable mutual TLS authentication with the registry.<br>Client certificate and key should be base64-encoded. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 clientIdentity:
     crt: LS0tIEVYQU1QTEUgQ0VSVElGSUNBVEUgLS0t
     key: LS0tIEVYQU1QTEUgS0VZIC0tLQ==
 {{< /highlight >}}</details> | |
-|`ca` |Base64Bytes |<details><summary>CA registry certificate to add the list of trusted certificates.</summary>Certificate should be base64-encoded.</details>  | |
+|`ca` |Base64Bytes |CA registry certificate to add the list of trusted certificates.<br>Certificate should be base64-encoded.  | |
 |`insecureSkipVerify` |bool |Skip TLS server certificate verification (not recommended).  | |
 
 
@@ -2193,10 +2193,10 @@ machine:
 
 | Field | Type | Description | Value(s) |
 |-------|------|-------------|----------|
-|`username` |string |<details><summary>Optional registry authentication.</summary>The meaning of each field is the same with the corresponding field in [`.docker/config.json`](https://docs.docker.com/engine/api/v1.41/#section/Authentication).</details>  | |
-|`password` |string |<details><summary>Optional registry authentication.</summary>The meaning of each field is the same with the corresponding field in [`.docker/config.json`](https://docs.docker.com/engine/api/v1.41/#section/Authentication).</details>  | |
-|`auth` |string |<details><summary>Optional registry authentication.</summary>The meaning of each field is the same with the corresponding field in [`.docker/config.json`](https://docs.docker.com/engine/api/v1.41/#section/Authentication).</details>  | |
-|`identityToken` |string |<details><summary>Optional registry authentication.</summary>The meaning of each field is the same with the corresponding field in [`.docker/config.json`](https://docs.docker.com/engine/api/v1.41/#section/Authentication).</details>  | |
+|`username` |string |Optional registry authentication.<br>The meaning of each field is the same with the corresponding field in [`.docker/config.json`](https://docs.docker.com/engine/api/v1.41/#section/Authentication).  | |
+|`password` |string |Optional registry authentication.<br>The meaning of each field is the same with the corresponding field in [`.docker/config.json`](https://docs.docker.com/engine/api/v1.41/#section/Authentication).  | |
+|`auth` |string |Optional registry authentication.<br>The meaning of each field is the same with the corresponding field in [`.docker/config.json`](https://docs.docker.com/engine/api/v1.41/#section/Authentication).  | |
+|`identityToken` |string |Optional registry authentication.<br>The meaning of each field is the same with the corresponding field in [`.docker/config.json`](https://docs.docker.com/engine/api/v1.41/#section/Authentication).  | |
 
 
 
@@ -2362,7 +2362,7 @@ EncryptionKeyTPM represents a key that is generated and then sealed/unsealed by 
 
 | Field | Type | Description | Value(s) |
 |-------|------|-------------|----------|
-|`checkSecurebootStatusOnEnroll` |bool |<details><summary>Check that Secureboot is enabled in the EFI firmware.</summary>If Secureboot is not enabled, the enrollment of the key will fail. As the TPM key is anyways bound to the value of PCR 7, changing Secureboot status or configuration after the initial enrollment will make the key unusable.</details>  | |
+|`checkSecurebootStatusOnEnroll` |bool |Check that Secureboot is enabled in the EFI firmware.<br>If Secureboot is not enabled, the enrollment of the key will fail. As the TPM key is anyways bound to the value of PCR 7, changing Secureboot status or configuration after the initial enrollment will make the key unusable.  | |
 
 
 
@@ -2485,7 +2485,7 @@ EncryptionKeyTPM represents a key that is generated and then sealed/unsealed by 
 
 | Field | Type | Description | Value(s) |
 |-------|------|-------------|----------|
-|`checkSecurebootStatusOnEnroll` |bool |<details><summary>Check that Secureboot is enabled in the EFI firmware.</summary>If Secureboot is not enabled, the enrollment of the key will fail. As the TPM key is anyways bound to the value of PCR 7, changing Secureboot status or configuration after the initial enrollment will make the key unusable.</details>  | |
+|`checkSecurebootStatusOnEnroll` |bool |Check that Secureboot is enabled in the EFI firmware.<br>If Secureboot is not enabled, the enrollment of the key will fail. As the TPM key is anyways bound to the value of PCR 7, changing Secureboot status or configuration after the initial enrollment will make the key unusable.  | |
 
 
 
@@ -2525,7 +2525,7 @@ machine:
 |-------|------|-------------|----------|
 |`rbac` |bool |Enable role-based access control (RBAC).  | |
 |`stableHostname` |bool |Enable stable default hostname.  | |
-|`kubernetesTalosAPIAccess` |<a href="#Config.machine.features.kubernetesTalosAPIAccess">KubernetesTalosAPIAccessConfig</a> |<details><summary>Configure Talos API access from Kubernetes pods.</summary><br />This feature is disabled if the feature config is not specified.</details> <details><summary>Show example(s)</summary>{{< highlight yaml >}}
+|`kubernetesTalosAPIAccess` |<a href="#Config.machine.features.kubernetesTalosAPIAccess">KubernetesTalosAPIAccessConfig</a> |Configure Talos API access from Kubernetes pods.<br><br>This feature is disabled if the feature config is not specified. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 kubernetesTalosAPIAccess:
     enabled: true # Enable Talos API access from Kubernetes pods.
     # The list of Talos API roles which can be granted for access from Kubernetes pods.
@@ -2536,11 +2536,11 @@ kubernetesTalosAPIAccess:
         - kube-system
 {{< /highlight >}}</details> | |
 |`apidCheckExtKeyUsage` |bool |Enable checks for extended key usage of client certificates in apid.  | |
-|`diskQuotaSupport` |bool |<details><summary>Enable XFS project quota support for EPHEMERAL partition and user disks.</summary>Also enables kubelet tracking of ephemeral disk usage in the kubelet via quota.</details>  | |
-|`kubePrism` |<a href="#Config.machine.features.kubePrism">KubePrism</a> |<details><summary>KubePrism - local proxy/load balancer on defined port that will distribute</summary>requests to all API servers in the cluster.</details>  | |
+|`diskQuotaSupport` |bool |Enable XFS project quota support for EPHEMERAL partition and user disks.<br>Also enables kubelet tracking of ephemeral disk usage in the kubelet via quota.  | |
+|`kubePrism` |<a href="#Config.machine.features.kubePrism">KubePrism</a> |KubePrism - local proxy/load balancer on defined port that will distribute<br>requests to all API servers in the cluster.  | |
 |`hostDNS` |<a href="#Config.machine.features.hostDNS">HostDNSConfig</a> |Configures host DNS caching resolver.  | |
 |`imageCache` |<a href="#Config.machine.features.imageCache">ImageCacheConfig</a> |Enable Image Cache feature.  | |
-|`nodeAddressSortAlgorithm` |string |<details><summary>Select the node address sort algorithm.</summary>The 'v1' algorithm sorts addresses by the address itself.<br />The 'v2' algorithm prefers more specific prefixes.<br />If unset, defaults to 'v1'.</details>  | |
+|`nodeAddressSortAlgorithm` |string |Select the node address sort algorithm.<br>The 'v1' algorithm sorts addresses by the address itself.<br>The 'v2' algorithm prefers more specific prefixes.<br>If unset, defaults to 'v1'.  | |
 
 
 
@@ -2568,7 +2568,7 @@ machine:
 | Field | Type | Description | Value(s) |
 |-------|------|-------------|----------|
 |`enabled` |bool |Enable Talos API access from Kubernetes pods.  | |
-|`allowedRoles` |[]string |<details><summary>The list of Talos API roles which can be granted for access from Kubernetes pods.</summary><br />Empty list means that no roles can be granted, so access is blocked.</details>  | |
+|`allowedRoles` |[]string |The list of Talos API roles which can be granted for access from Kubernetes pods.<br><br>Empty list means that no roles can be granted, so access is blocked.  | |
 |`allowedKubernetesNamespaces` |[]string |The list of Kubernetes namespaces Talos API access is available from.  | |
 
 
@@ -2603,8 +2603,8 @@ HostDNSConfig describes the configuration for the host DNS resolver.
 | Field | Type | Description | Value(s) |
 |-------|------|-------------|----------|
 |`enabled` |bool |Enable host DNS caching resolver.  | |
-|`forwardKubeDNSToHost` |bool |<details><summary>Use the host DNS resolver as upstream for Kubernetes CoreDNS pods.</summary><br />When enabled, CoreDNS pods use host DNS server as the upstream DNS (instead of<br />using configured upstream DNS resolvers directly).</details>  | |
-|`resolveMemberNames` |bool |<details><summary>Resolve member hostnames using the host DNS resolver.</summary><br />When enabled, cluster member hostnames and node names are resolved using the host DNS resolver.<br />This requires service discovery to be enabled.</details>  | |
+|`forwardKubeDNSToHost` |bool |Use the host DNS resolver as upstream for Kubernetes CoreDNS pods.<br><br>When enabled, CoreDNS pods use host DNS server as the upstream DNS (instead of<br>using configured upstream DNS resolvers directly).  | |
+|`resolveMemberNames` |bool |Resolve member hostnames using the host DNS resolver.<br><br>When enabled, cluster member hostnames and node names are resolved using the host DNS resolver.<br>This requires service discovery to be enabled.  | |
 
 
 
@@ -2843,7 +2843,7 @@ cluster:
 | Field | Type | Description | Value(s) |
 |-------|------|-------------|----------|
 |`id` |string |Globally unique identifier for this cluster (base64 encoded random 32 bytes).  | |
-|`secret` |string |<details><summary>Shared secret of cluster (base64 encoded random 32 bytes).</summary>This secret is shared among cluster members but should never be sent over the network.</details>  | |
+|`secret` |string |Shared secret of cluster (base64 encoded random 32 bytes).<br>This secret is shared among cluster members but should never be sent over the network.  | |
 |`controlPlane` |<a href="#Config.cluster.controlPlane">ControlPlaneConfig</a> |Provides control plane specific configuration options. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 controlPlane:
     endpoint: https://1.2.3.4 # Endpoint is the canonical controlplane endpoint, which can be an IP address or a DNS hostname.
@@ -2866,10 +2866,10 @@ network:
 |`token` |string |The [bootstrap token](https://kubernetes.io/docs/reference/access-authn-authz/bootstrap-tokens/) used to join the cluster. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 token: wlzjyw.bei2zfylhs2by0wd
 {{< /highlight >}}</details> | |
-|`aescbcEncryptionSecret` |string |<details><summary>A key used for the [encryption of secret data at rest](https://kubernetes.io/docs/tasks/administer-cluster/encrypt-data/).</summary>Enables encryption with AESCBC.</details> <details><summary>Show example(s)</summary>{{< highlight yaml >}}
+|`aescbcEncryptionSecret` |string |A key used for the [encryption of secret data at rest](https://kubernetes.io/docs/tasks/administer-cluster/encrypt-data/).<br>Enables encryption with AESCBC. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 aescbcEncryptionSecret: z01mye6j16bspJYtTB/5SFX8j7Ph4JXxM2Xuu4vsBPM=
 {{< /highlight >}}</details> | |
-|`secretboxEncryptionSecret` |string |<details><summary>A key used for the [encryption of secret data at rest](https://kubernetes.io/docs/tasks/administer-cluster/encrypt-data/).</summary>Enables encryption with secretbox.<br />Secretbox has precedence over AESCBC.</details> <details><summary>Show example(s)</summary>{{< highlight yaml >}}
+|`secretboxEncryptionSecret` |string |A key used for the [encryption of secret data at rest](https://kubernetes.io/docs/tasks/administer-cluster/encrypt-data/).<br>Enables encryption with secretbox.<br>Secretbox has precedence over AESCBC. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 secretboxEncryptionSecret: z01mye6j16bspJYtTB/5SFX8j7Ph4JXxM2Xuu4vsBPM=
 {{< /highlight >}}</details> | |
 |`ca` |PEMEncodedCertificateAndKey |The base64 encoded root certificate authority used by Kubernetes. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
@@ -2878,7 +2878,7 @@ ca:
     key: LS0tIEVYQU1QTEUgS0VZIC0tLQ==
 {{< /highlight >}}</details> | |
 |`acceptedCAs` |[]PEMEncodedCertificate |The list of base64 encoded accepted certificate authorities used by Kubernetes.  | |
-|`aggregatorCA` |PEMEncodedCertificateAndKey |<details><summary>The base64 encoded aggregator certificate authority used by Kubernetes for front-proxy certificate generation.</summary><br />This CA can be self-signed.</details> <details><summary>Show example(s)</summary>{{< highlight yaml >}}
+|`aggregatorCA` |PEMEncodedCertificateAndKey |The base64 encoded aggregator certificate authority used by Kubernetes for front-proxy certificate generation.<br><br>This CA can be self-signed. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 aggregatorCA:
     crt: LS0tIEVYQU1QTEUgQ0VSVElGSUNBVEUgLS0t
     key: LS0tIEVYQU1QTEUgS0VZIC0tLQ==
@@ -3015,7 +3015,7 @@ externalCloudProvider:
         - https://raw.githubusercontent.com/kubernetes/cloud-provider-aws/v1.20.0-alpha.0/manifests/rbac.yaml
         - https://raw.githubusercontent.com/kubernetes/cloud-provider-aws/v1.20.0-alpha.0/manifests/aws-cloud-controller-manager-daemonset.yaml
 {{< /highlight >}}</details> | |
-|`extraManifests` |[]string |<details><summary>A list of urls that point to additional manifests.</summary>These will get automatically deployed as part of the bootstrap.</details> <details><summary>Show example(s)</summary>{{< highlight yaml >}}
+|`extraManifests` |[]string |A list of urls that point to additional manifests.<br>These will get automatically deployed as part of the bootstrap. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 extraManifests:
     - https://www.example.com/manifest1.yaml
     - https://www.example.com/manifest2.yaml
@@ -3025,7 +3025,7 @@ extraManifestHeaders:
     Token: "1234567"
     X-ExtraInfo: info
 {{< /highlight >}}</details> | |
-|`inlineManifests` |<a href="#Config.cluster.inlineManifests.">[]ClusterInlineManifest</a> |<details><summary>A list of inline Kubernetes manifests.</summary>These will get automatically deployed as part of the bootstrap.</details> <details><summary>Show example(s)</summary>{{< highlight yaml >}}
+|`inlineManifests` |<a href="#Config.cluster.inlineManifests.">[]ClusterInlineManifest</a> |A list of inline Kubernetes manifests.<br>These will get automatically deployed as part of the bootstrap. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 inlineManifests:
     - name: namespace-ci # Name of the manifest.
       contents: |- # Manifest contents as a string.
@@ -3034,7 +3034,7 @@ inlineManifests:
         metadata:
         	name: ci
 {{< /highlight >}}</details> | |
-|`adminKubeconfig` |<a href="#Config.cluster.adminKubeconfig">AdminKubeconfigConfig</a> |<details><summary>Settings for admin kubeconfig generation.</summary>Certificate lifetime can be configured.</details> <details><summary>Show example(s)</summary>{{< highlight yaml >}}
+|`adminKubeconfig` |<a href="#Config.cluster.adminKubeconfig">AdminKubeconfigConfig</a> |Settings for admin kubeconfig generation.<br>Certificate lifetime can be configured. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 adminKubeconfig:
     certLifetime: 1h0m0s # Admin kubeconfig certificate lifetime (default is 1 year).
 {{< /highlight >}}</details> | |
@@ -3061,12 +3061,12 @@ cluster:
 
 | Field | Type | Description | Value(s) |
 |-------|------|-------------|----------|
-|`endpoint` |<a href="#Config.cluster.controlPlane.endpoint">Endpoint</a> |<details><summary>Endpoint is the canonical controlplane endpoint, which can be an IP address or a DNS hostname.</summary>It is single-valued, and may optionally include a port number.</details> <details><summary>Show example(s)</summary>{{< highlight yaml >}}
+|`endpoint` |<a href="#Config.cluster.controlPlane.endpoint">Endpoint</a> |Endpoint is the canonical controlplane endpoint, which can be an IP address or a DNS hostname.<br>It is single-valued, and may optionally include a port number. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 endpoint: https://1.2.3.4:6443
 {{< /highlight >}}{{< highlight yaml >}}
 endpoint: https://cluster1.internal:6443
 {{< /highlight >}}</details> | |
-|`localAPIServerPort` |int |<details><summary>The port that the API server listens on internally.</summary>This may be different than the port portion listed in the endpoint field above.<br />The default is `6443`.</details>  | |
+|`localAPIServerPort` |int |The port that the API server listens on internally.<br>This may be different than the port portion listed in the endpoint field above.<br>The default is `6443`.  | |
 
 
 
@@ -3136,14 +3136,14 @@ cluster:
 
 | Field | Type | Description | Value(s) |
 |-------|------|-------------|----------|
-|`cni` |<a href="#Config.cluster.network.cni">CNIConfig</a> |<details><summary>The CNI used.</summary>Composed of "name" and "urls".<br />The "name" key supports the following options: "flannel", "custom", and "none".<br />"flannel" uses Talos-managed Flannel CNI, and that's the default option.<br />"custom" uses custom manifests that should be provided in "urls".<br />"none" indicates that Talos will not manage any CNI installation.</details> <details><summary>Show example(s)</summary>{{< highlight yaml >}}
+|`cni` |<a href="#Config.cluster.network.cni">CNIConfig</a> |The CNI used.<br>Composed of "name" and "urls".<br>The "name" key supports the following options: "flannel", "custom", and "none".<br>"flannel" uses Talos-managed Flannel CNI, and that's the default option.<br>"custom" uses custom manifests that should be provided in "urls".<br>"none" indicates that Talos will not manage any CNI installation. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 cni:
     name: custom # Name of CNI to use.
     # URLs containing manifests to apply for the CNI.
     urls:
         - https://docs.projectcalico.org/archive/v3.20/manifests/canal.yaml
 {{< /highlight >}}</details> | |
-|`dnsDomain` |string |<details><summary>The domain used by Kubernetes DNS.</summary>The default is `cluster.local`</details> <details><summary>Show example(s)</summary>{{< highlight yaml >}}
+|`dnsDomain` |string |The domain used by Kubernetes DNS.<br>The default is `cluster.local` <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 dnsDomain: cluster.local
 {{< /highlight >}}</details> | |
 |`podSubnets` |[]string |The pod subnet CIDR. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
@@ -3178,8 +3178,8 @@ cluster:
 | Field | Type | Description | Value(s) |
 |-------|------|-------------|----------|
 |`name` |string |Name of CNI to use.  |`flannel`<br />`custom`<br />`none`<br /> |
-|`urls` |[]string |<details><summary>URLs containing manifests to apply for the CNI.</summary>Should be present for "custom", must be empty for "flannel" and "none".</details>  | |
-|`flannel` |<a href="#Config.cluster.network.cni.flannel">FlannelCNIConfig</a> |<details><summary>description: |</summary>Flannel configuration options.<br /></details>  | |
+|`urls` |[]string |URLs containing manifests to apply for the CNI.<br>Should be present for "custom", must be empty for "flannel" and "none".  | |
+|`flannel` |<a href="#Config.cluster.network.cni.flannel">FlannelCNIConfig</a> |description: |<br>Flannel configuration options.<br>  | |
 
 
 
@@ -3405,8 +3405,8 @@ cluster:
 
 | Field | Type | Description | Value(s) |
 |-------|------|-------------|----------|
-|`name` |string |<details><summary>Name is the name of the admission controller.</summary>It must match the registered admission plugin name.</details>  | |
-|`configuration` |Unstructured |<details><summary>Configuration is an embedded configuration object to be used as the plugin's</summary>configuration.</details>  | |
+|`name` |string |Name is the name of the admission controller.<br>It must match the registered admission plugin name.  | |
+|`configuration` |Unstructured |Configuration is an embedded configuration object to be used as the plugin's<br>configuration.  | |
 
 
 
@@ -3595,7 +3595,7 @@ disabled: false
 |`image` |string |The container image used in the kube-proxy manifest. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 image: registry.k8s.io/kube-proxy:v1.33.1
 {{< /highlight >}}</details> | |
-|`mode` |string |<details><summary>proxy mode of kube-proxy.</summary>The default is 'iptables'.</details>  | |
+|`mode` |string |proxy mode of kube-proxy.<br>The default is 'iptables'.  | |
 |`extraArgs` |map[string]string |Extra arguments to supply to kube-proxy.  | |
 
 
@@ -3706,7 +3706,7 @@ cluster:
 
 | Field | Type | Description | Value(s) |
 |-------|------|-------------|----------|
-|`enabled` |bool |<details><summary>Enable the cluster membership discovery feature.</summary>Cluster discovery is based on individual registries which are configured under the registries field.</details>  | |
+|`enabled` |bool |Enable the cluster membership discovery feature.<br>Cluster discovery is based on individual registries which are configured under the registries field.  | |
 |`registries` |<a href="#Config.cluster.discovery.registries">DiscoveryRegistriesConfig</a> |Configure registries used for cluster member discovery.  | |
 
 
@@ -3721,7 +3721,7 @@ DiscoveryRegistriesConfig struct configures cluster membership discovery.
 
 | Field | Type | Description | Value(s) |
 |-------|------|-------------|----------|
-|`kubernetes` |<a href="#Config.cluster.discovery.registries.kubernetes">RegistryKubernetesConfig</a> |<details><summary>Kubernetes registry uses Kubernetes API server to discover cluster members and stores additional information</summary>as annotations on the Node resources.<br /><br />This feature is deprecated as it is not compatible with Kubernetes 1.32+.<br />See https://github.com/siderolabs/talos/issues/9980 for more information.</details>  | |
+|`kubernetes` |<a href="#Config.cluster.discovery.registries.kubernetes">RegistryKubernetesConfig</a> |Kubernetes registry uses Kubernetes API server to discover cluster members and stores additional information<br>as annotations on the Node resources.<br><br>This feature is deprecated as it is not compatible with Kubernetes 1.32+.<br>See https://github.com/siderolabs/talos/issues/9980 for more information.  | |
 |`service` |<a href="#Config.cluster.discovery.registries.service">RegistryServiceConfig</a> |Service registry is using an external service to push and pull information about cluster members.  | |
 
 
@@ -3795,17 +3795,17 @@ cluster:
 |`image` |string |The container image used to create the etcd service. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 image: gcr.io/etcd-development/etcd:v3.5.21
 {{< /highlight >}}</details> | |
-|`ca` |PEMEncodedCertificateAndKey |<details><summary>The `ca` is the root certificate authority of the PKI.</summary>It is composed of a base64 encoded `crt` and `key`.</details> <details><summary>Show example(s)</summary>{{< highlight yaml >}}
+|`ca` |PEMEncodedCertificateAndKey |The `ca` is the root certificate authority of the PKI.<br>It is composed of a base64 encoded `crt` and `key`. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 ca:
     crt: LS0tIEVYQU1QTEUgQ0VSVElGSUNBVEUgLS0t
     key: LS0tIEVYQU1QTEUgS0VZIC0tLQ==
 {{< /highlight >}}</details> | |
-|`extraArgs` |map[string]string |<details><summary>Extra arguments to supply to etcd.</summary>Note that the following args are not allowed:<br /><br />- `name`<br />- `data-dir`<br />- `initial-cluster-state`<br />- `listen-peer-urls`<br />- `listen-client-urls`<br />- `cert-file`<br />- `key-file`<br />- `trusted-ca-file`<br />- `peer-client-cert-auth`<br />- `peer-cert-file`<br />- `peer-trusted-ca-file`<br />- `peer-key-file`</details>  | |
-|`advertisedSubnets` |[]string |<details><summary>The `advertisedSubnets` field configures the networks to pick etcd advertised IP from.</summary><br />IPs can be excluded from the list by using negative match with `!`, e.g `!10.0.0.0/8`.<br />Negative subnet matches should be specified last to filter out IPs picked by positive matches.<br />If not specified, advertised IP is selected as the first routable address of the node.</details> <details><summary>Show example(s)</summary>{{< highlight yaml >}}
+|`extraArgs` |map[string]string |Extra arguments to supply to etcd.<br>Note that the following args are not allowed:<br><br>- `name`<br>- `data-dir`<br>- `initial-cluster-state`<br>- `listen-peer-urls`<br>- `listen-client-urls`<br>- `cert-file`<br>- `key-file`<br>- `trusted-ca-file`<br>- `peer-client-cert-auth`<br>- `peer-cert-file`<br>- `peer-trusted-ca-file`<br>- `peer-key-file`  | |
+|`advertisedSubnets` |[]string |The `advertisedSubnets` field configures the networks to pick etcd advertised IP from.<br><br>IPs can be excluded from the list by using negative match with `!`, e.g `!10.0.0.0/8`.<br>Negative subnet matches should be specified last to filter out IPs picked by positive matches.<br>If not specified, advertised IP is selected as the first routable address of the node. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 advertisedSubnets:
     - 10.0.0.0/8
 {{< /highlight >}}</details> | |
-|`listenSubnets` |[]string |<details><summary>The `listenSubnets` field configures the networks for the etcd to listen for peer and client connections.</summary><br />If `listenSubnets` is not set, but `advertisedSubnets` is set, `listenSubnets` defaults to<br />`advertisedSubnets`.<br /><br />If neither `advertisedSubnets` nor `listenSubnets` is set, `listenSubnets` defaults to listen on all addresses.<br /><br />IPs can be excluded from the list by using negative match with `!`, e.g `!10.0.0.0/8`.<br />Negative subnet matches should be specified last to filter out IPs picked by positive matches.<br />If not specified, advertised IP is selected as the first routable address of the node.</details>  | |
+|`listenSubnets` |[]string |The `listenSubnets` field configures the networks for the etcd to listen for peer and client connections.<br><br>If `listenSubnets` is not set, but `advertisedSubnets` is set, `listenSubnets` defaults to<br>`advertisedSubnets`.<br><br>If neither `advertisedSubnets` nor `listenSubnets` is set, `listenSubnets` defaults to listen on all addresses.<br><br>IPs can be excluded from the list by using negative match with `!`, e.g `!10.0.0.0/8`.<br>Negative subnet matches should be specified last to filter out IPs picked by positive matches.<br>If not specified, advertised IP is selected as the first routable address of the node.  | |
 
 
 
@@ -3855,7 +3855,7 @@ cluster:
 | Field | Type | Description | Value(s) |
 |-------|------|-------------|----------|
 |`enabled` |bool |Enable external cloud provider.  |`true`<br />`yes`<br />`false`<br />`no`<br /> |
-|`manifests` |[]string |<details><summary>A list of urls that point to additional manifests for an external cloud provider.</summary>These will get automatically deployed as part of the bootstrap.</details> <details><summary>Show example(s)</summary>{{< highlight yaml >}}
+|`manifests` |[]string |A list of urls that point to additional manifests for an external cloud provider.<br>These will get automatically deployed as part of the bootstrap. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 manifests:
     - https://raw.githubusercontent.com/kubernetes/cloud-provider-aws/v1.20.0-alpha.0/manifests/rbac.yaml
     - https://raw.githubusercontent.com/kubernetes/cloud-provider-aws/v1.20.0-alpha.0/manifests/aws-cloud-controller-manager-daemonset.yaml
@@ -3886,7 +3886,7 @@ cluster:
 
 | Field | Type | Description | Value(s) |
 |-------|------|-------------|----------|
-|`name` |string |<details><summary>Name of the manifest.</summary>Name should be unique.</details> <details><summary>Show example(s)</summary>{{< highlight yaml >}}
+|`name` |string |Name of the manifest.<br>Name should be unique. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 name: csi
 {{< /highlight >}}</details> | |
 |`contents` |string |Manifest contents as a string. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
@@ -3913,7 +3913,7 @@ cluster:
 
 | Field | Type | Description | Value(s) |
 |-------|------|-------------|----------|
-|`certLifetime` |Duration |<details><summary>Admin kubeconfig certificate lifetime (default is 1 year).</summary>Field format accepts any Go time.Duration format ('1h' for one hour, '10m' for ten minutes).</details>  | |
+|`certLifetime` |Duration |Admin kubeconfig certificate lifetime (default is 1 year).<br>Field format accepts any Go time.Duration format ('1h' for one hour, '10m' for ten minutes).  | |
 
 
 

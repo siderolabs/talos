@@ -25,7 +25,7 @@ apiUrl: https://siderolink.api/jointoken?token=secret # SideroLink API URL to co
 |`apiUrl` |URL |SideroLink API URL to connect to. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 apiUrl: https://siderolink.api/?jointoken=secret
 {{< /highlight >}}</details> | |
-|`uniqueToken` |string |<details><summary>SideroLink unique token to use for the connection (optional).</summary><br />This value is overridden with META key UniqueMachineToken.</details>  | |
+|`uniqueToken` |string |SideroLink unique token to use for the connection (optional).<br><br>This value is overridden with META key UniqueMachineToken.  | |
 
 
 

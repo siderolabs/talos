@@ -69,7 +69,7 @@ encryption:
 
 | Field | Type | Description | Value(s) |
 |-------|------|-------------|----------|
-|`name` |string |<details><summary>Name of the volume.</summary><br />Name might be between 1 and 34 characters long and can only contain:<br />lowercase and uppercase ASCII letters, digits, and hyphens.</details>  | |
+|`name` |string |Name of the volume.<br><br>Name might be between 1 and 34 characters long and can only contain:<br>lowercase and uppercase ASCII letters, digits, and hyphens.  | |
 |`provisioning` |<a href="#UserVolumeConfig.provisioning">ProvisioningSpec</a> |The provisioning describes how the volume is provisioned.  | |
 |`filesystem` |<a href="#UserVolumeConfig.filesystem">FilesystemSpec</a> |The filesystem describes how the volume is formatted.  | |
 |`encryption` |<a href="#UserVolumeConfig.encryption">EncryptionSpec</a> |The encryption describes how the volume is encrypted.  | |
@@ -88,10 +88,10 @@ ProvisioningSpec describes how the volume is provisioned.
 |-------|------|-------------|----------|
 |`diskSelector` |<a href="#UserVolumeConfig.provisioning.diskSelector">DiskSelector</a> |The disk selector expression.  | |
 |`grow` |bool |Should the volume grow to the size of the disk (if possible).  | |
-|`minSize` |ByteSize |<details><summary>The minimum size of the volume.</summary><br />Size is specified in bytes, but can be expressed in human readable format, e.g. 100MB.</details> <details><summary>Show example(s)</summary>{{< highlight yaml >}}
+|`minSize` |ByteSize |The minimum size of the volume.<br><br>Size is specified in bytes, but can be expressed in human readable format, e.g. 100MB. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 minSize: 2.5GiB
 {{< /highlight >}}</details> | |
-|`maxSize` |ByteSize |<details><summary>The maximum size of the volume, if not specified the volume can grow to the size of the</summary>disk.<br /><br />Size is specified in bytes, but can be expressed in human readable format, e.g. 100MB.</details> <details><summary>Show example(s)</summary>{{< highlight yaml >}}
+|`maxSize` |ByteSize |The maximum size of the volume, if not specified the volume can grow to the size of the<br>disk.<br><br>Size is specified in bytes, but can be expressed in human readable format, e.g. 100MB. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 maxSize: 50GiB
 {{< /highlight >}}</details> | |
 
@@ -267,7 +267,7 @@ EncryptionKeyTPM represents a key that is generated and then sealed/unsealed by 
 
 | Field | Type | Description | Value(s) |
 |-------|------|-------------|----------|
-|`checkSecurebootStatusOnEnroll` |bool |<details><summary>Check that Secureboot is enabled in the EFI firmware.</summary>If Secureboot is not enabled, the enrollment of the key will fail. As the TPM key is anyways bound to the value of PCR 7, changing Secureboot status or configuration after the initial enrollment will make the key unusable.</details>  | |
+|`checkSecurebootStatusOnEnroll` |bool |Check that Secureboot is enabled in the EFI firmware.<br>If Secureboot is not enabled, the enrollment of the key will fail. As the TPM key is anyways bound to the value of PCR 7, changing Secureboot status or configuration after the initial enrollment will make the key unusable.  | |
 
 
 

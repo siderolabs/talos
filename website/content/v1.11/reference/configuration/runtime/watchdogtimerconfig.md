@@ -26,7 +26,7 @@ timeout: 2m0s # Timeout for the watchdog.
 |`device` |string |Path to the watchdog device. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 device: /dev/watchdog0
 {{< /highlight >}}</details> | |
-|`timeout` |Duration |<details><summary>Timeout for the watchdog.</summary><br />If Talos is unresponsive for this duration, the watchdog will reset the system.<br /><br />Default value is 1 minute, minimum value is 10 seconds.</details>  | |
+|`timeout` |Duration |Timeout for the watchdog.<br><br>If Talos is unresponsive for this duration, the watchdog will reset the system.<br><br>Default value is 1 minute, minimum value is 10 seconds.  | |
 
 
 

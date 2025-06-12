@@ -27,7 +27,7 @@ certificates: | # List of additional trusted certificate authorities (as PEM-enc
 | Field | Type | Description | Value(s) |
 |-------|------|-------------|----------|
 |`name` |string |Name of the config document.  | |
-|`certificates` |string |<details><summary>List of additional trusted certificate authorities (as PEM-encoded certificates).</summary><br />Multiple certificates can be provided in a single config document, separated by newline characters.</details>  | |
+|`certificates` |string |List of additional trusted certificate authorities (as PEM-encoded certificates).<br><br>Multiple certificates can be provided in a single config document, separated by newline characters.  | |
 
 
 

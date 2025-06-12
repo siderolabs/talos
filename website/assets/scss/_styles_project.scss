@@ -11,8 +11,8 @@
     color: white;
 }
 
-.td-page-meta__child { 
-    display: none !important; 
+.td-page-meta__child {
+    display: none !important;
 }
 
 blockquote {
@@ -29,7 +29,7 @@ blockquote {
         padding-top: 1px;
         padding-left: 10px;
         padding-right: 10px;
-    }    
+    }
 }
 
 
@@ -39,4 +39,8 @@ html[data-bs-theme="dark"] {
 
 html[data-bs-theme="light"] {
     @include code-type($gray-100)
+}
+
+details {
+    margin-top: 1rem;
 }
