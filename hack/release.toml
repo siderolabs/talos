@@ -61,6 +61,15 @@ Talos on Azure now defaults to MTU of 1400 bytes for the `eth0` interface to avo
 The default MTU can be overriden with machine configuration.
 """
 
+    [notes.k8s_version]
+        title = "Kubernetes Version Validation"
+        description = """\
+Talos now validates Kubernetes version in the image submitted in the machine configuration.
+Previously this check was performed only on upgrade, but now it is consistently applied to upgrade, initial provisioning, and machine configuration updates.
+
+This implies that all image references should contain the tag, even if the image is pinned by digest.
+"""
+
 [make_deps]
 
     [make_deps.tools]

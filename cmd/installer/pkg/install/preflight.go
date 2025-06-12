@@ -9,10 +9,7 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"strings"
 
-	"github.com/cosi-project/runtime/pkg/safe"
-	"github.com/cosi-project/runtime/pkg/state"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/metadata"
@@ -20,7 +17,6 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/client"
 	"github.com/siderolabs/talos/pkg/machinery/compatibility"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
-	"github.com/siderolabs/talos/pkg/machinery/resources/k8s"
 	"github.com/siderolabs/talos/pkg/machinery/role"
 	"github.com/siderolabs/talos/pkg/machinery/version"
 )
@@ -77,7 +73,6 @@ func (checks *PreflightChecks) Run(ctx context.Context) error {
 
 	for _, check := range []func(context.Context) error{
 		checks.talosVersion,
-		checks.kubernetesVersion,
 	} {
 		if err := check(ctx); err != nil {
 			return fmt.Errorf("pre-flight checks failed: %w", err)
@@ -110,162 +105,6 @@ func (checks *PreflightChecks) talosVersion(ctx context.Context) error {
 	}
 
 	return checks.installerTalosVersion.UpgradeableFrom(checks.hostTalosVersion)
-}
-
-type k8sVersions struct {
-	kubelet           *compatibility.KubernetesVersion
-	apiServer         *compatibility.KubernetesVersion
-	scheduler         *compatibility.KubernetesVersion
-	controllerManager *compatibility.KubernetesVersion
-}
-
-//nolint:gocyclo
-func (versions *k8sVersions) gatherVersions(ctx context.Context, client *client.Client) error {
-	kubeletSpec, err := safe.StateGet[*k8s.KubeletSpec](ctx, client.COSI, k8s.NewKubeletSpec(k8s.NamespaceName, k8s.KubeletID).Metadata())
-	if err != nil && !state.IsNotFoundError(err) {
-		return fmt.Errorf("error getting kubelet spec: %w", err)
-	}
-
-	if kubeletSpec != nil {
-		versions.kubelet, err = KubernetesVersionFromImageRef(kubeletSpec.TypedSpec().Image)
-		if err != nil {
-			return fmt.Errorf("error parsing kubelet version: %w", err)
-		}
-	}
-
-	apiServerSpec, err := safe.StateGet[*k8s.APIServerConfig](ctx, client.COSI, k8s.NewAPIServerConfig().Metadata())
-	if err != nil && !state.IsNotFoundError(err) {
-		return fmt.Errorf("error getting API server spec: %w", err)
-	}
-
-	if apiServerSpec != nil {
-		versions.apiServer, err = KubernetesVersionFromImageRef(apiServerSpec.TypedSpec().Image)
-		if err != nil {
-			return fmt.Errorf("error parsing API server version: %w", err)
-		}
-	}
-
-	schedulerSpec, err := safe.StateGet[*k8s.SchedulerConfig](ctx, client.COSI, k8s.NewSchedulerConfig().Metadata())
-	if err != nil && !state.IsNotFoundError(err) {
-		return fmt.Errorf("error getting scheduler spec: %w", err)
-	}
-
-	if schedulerSpec != nil {
-		versions.scheduler, err = KubernetesVersionFromImageRef(schedulerSpec.TypedSpec().Image)
-		if err != nil {
-			return fmt.Errorf("error parsing scheduler version: %w", err)
-		}
-	}
-
-	controllerManagerSpec, err := safe.StateGet[*k8s.ControllerManagerConfig](ctx, client.COSI, k8s.NewControllerManagerConfig().Metadata())
-	if err != nil && !state.IsNotFoundError(err) {
-		return fmt.Errorf("error getting controller manager spec: %w", err)
-	}
-
-	if controllerManagerSpec != nil {
-		versions.controllerManager, err = KubernetesVersionFromImageRef(controllerManagerSpec.TypedSpec().Image)
-		if err != nil {
-			return fmt.Errorf("error parsing controller manager version: %w", err)
-		}
-	}
-
-	return nil
-}
-
-func (versions *k8sVersions) checkCompatibility(target *compatibility.TalosVersion) error {
-	for _, component := range []struct {
-		name    string
-		version *compatibility.KubernetesVersion
-	}{
-		{
-			name:    "kubelet",
-			version: versions.kubelet,
-		},
-		{
-			name:    "kube-apiserver",
-			version: versions.apiServer,
-		},
-		{
-			name:    "kube-scheduler",
-			version: versions.scheduler,
-		},
-		{
-			name:    "kube-controller-manager",
-			version: versions.controllerManager,
-		},
-	} {
-		if component.version == nil {
-			continue
-		}
-
-		if err := component.version.SupportedWith(target); err != nil {
-			return fmt.Errorf("component %s version issue: %w", component.name, err)
-		}
-	}
-
-	return nil
-}
-
-func (versions *k8sVersions) String() string {
-	var components []string //nolint:prealloc
-
-	for _, component := range []struct {
-		name    string
-		version *compatibility.KubernetesVersion
-	}{
-		{
-			name:    "kubelet",
-			version: versions.kubelet,
-		},
-		{
-			name:    "kube-apiserver",
-			version: versions.apiServer,
-		},
-		{
-			name:    "kube-scheduler",
-			version: versions.scheduler,
-		},
-		{
-			name:    "kube-controller-manager",
-			version: versions.controllerManager,
-		},
-	} {
-		if component.version == nil {
-			continue
-		}
-
-		components = append(components, fmt.Sprintf("%s: %s", component.name, component.version))
-	}
-
-	return strings.Join(components, ", ")
-}
-
-func (checks *PreflightChecks) kubernetesVersion(ctx context.Context) error {
-	var versions k8sVersions
-
-	if err := versions.gatherVersions(ctx, checks.client); err != nil {
-		return err
-	}
-
-	log.Printf("host Kubernetes versions: %s", &versions)
-
-	return versions.checkCompatibility(checks.installerTalosVersion)
-}
-
-// KubernetesVersionFromImageRef parses the Kubernetes version from the image reference.
-func KubernetesVersionFromImageRef(ref string) (*compatibility.KubernetesVersion, error) {
-	idx := strings.LastIndex(ref, ":v")
-	if idx == -1 {
-		return nil, fmt.Errorf("invalid image reference: %q", ref)
-	}
-
-	versionPart := ref[idx+2:]
-
-	if shaIndex := strings.Index(versionPart, "@"); shaIndex != -1 {
-		versionPart = versionPart[:shaIndex]
-	}
-
-	return compatibility.ParseKubernetesVersion(versionPart)
 }
 
 func unpack[T any](s []T) T {

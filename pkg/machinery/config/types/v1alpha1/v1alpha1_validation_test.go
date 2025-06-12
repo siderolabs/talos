@@ -10,14 +10,18 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/cosi-project/runtime/pkg/state"
+	"github.com/cosi-project/runtime/pkg/state/impl/inmem"
 	"github.com/siderolabs/crypto/x509"
 	"github.com/siderolabs/go-pointer"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/siderolabs/talos/pkg/machinery/compatibility"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
 	"github.com/siderolabs/talos/pkg/machinery/config/validation"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
+	"github.com/siderolabs/talos/pkg/machinery/version"
 )
 
 type runtimeMode struct {
@@ -2065,6 +2069,161 @@ func TestValidateCNI(t *testing.T) {
 				assert.NoError(t, errrors)
 			} else {
 				assert.EqualError(t, errrors, test.expectedError)
+			}
+		})
+	}
+}
+
+func TestKubernetesVersionFromImageRef(t *testing.T) {
+	t.Parallel()
+
+	for _, test := range []struct {
+		imageRef string
+
+		expectedVersion string
+	}{
+		{
+			imageRef:        "ghcr.io/siderolabs/kubelet:v1.32.2",
+			expectedVersion: "1.32.2",
+		},
+		{
+			imageRef:        "ghcr.io/siderolabs/kubelet:v1.32.2@sha256:123456",
+			expectedVersion: "1.32.2",
+		},
+	} {
+		t.Run(test.imageRef, func(t *testing.T) {
+			t.Parallel()
+
+			version, err := v1alpha1.KubernetesVersionFromImageRef(test.imageRef)
+			require.NoError(t, err)
+
+			assert.Equal(t, test.expectedVersion, version.String())
+		})
+	}
+}
+
+func TestRuntimeValidate(t *testing.T) {
+	t.Parallel()
+
+	endpointURL, err := url.Parse("https://localhost:6443/")
+	require.NoError(t, err)
+
+	for _, test := range []struct {
+		name             string
+		config           *v1alpha1.Config
+		requiresInstall  bool
+		strict           bool
+		expectedWarnings []string
+		expectedError    string
+	}{
+		{
+			name: "valid",
+			config: &v1alpha1.Config{
+				ClusterConfig: &v1alpha1.ClusterConfig{
+					ControlPlane: &v1alpha1.ControlPlaneConfig{
+						Endpoint: &v1alpha1.Endpoint{
+							URL: endpointURL,
+						},
+					},
+				},
+				MachineConfig: &v1alpha1.MachineConfig{
+					MachineType: "controlplane",
+				},
+			},
+		},
+		{
+			name: "old kubelet version",
+			config: &v1alpha1.Config{
+				ClusterConfig: &v1alpha1.ClusterConfig{
+					ControlPlane: &v1alpha1.ControlPlaneConfig{
+						Endpoint: &v1alpha1.Endpoint{
+							URL: endpointURL,
+						},
+					},
+				},
+				MachineConfig: &v1alpha1.MachineConfig{
+					MachineType: "worker",
+					MachineKubelet: &v1alpha1.KubeletConfig{
+						KubeletImage: constants.KubeletImage + ":v1.24.0",
+					},
+				},
+			},
+			expectedError: "1 error occurred:\n\t* kubelet image is not valid: version of Kubernetes 1.24.0 is too old to be used with Talos VERSION\n\n",
+		},
+		{
+			name: "old api-server version",
+			config: &v1alpha1.Config{
+				ClusterConfig: &v1alpha1.ClusterConfig{
+					ControlPlane: &v1alpha1.ControlPlaneConfig{
+						Endpoint: &v1alpha1.Endpoint{
+							URL: endpointURL,
+						},
+					},
+					APIServerConfig: &v1alpha1.APIServerConfig{
+						ContainerImage: constants.KubernetesAPIServerImage + ":v1.24.0",
+					},
+				},
+				MachineConfig: &v1alpha1.MachineConfig{
+					MachineType: "controlplane",
+					MachineKubelet: &v1alpha1.KubeletConfig{
+						KubeletImage: constants.KubeletImage + ":v" + constants.DefaultKubernetesVersion,
+					},
+				},
+			},
+			expectedError: "1 error occurred:\n\t* kube-apiserver image is not valid: version of Kubernetes 1.24.0 is too old to be used with Talos VERSION\n\n",
+		},
+		{
+			name: "old controller-manager and scheduler version",
+			config: &v1alpha1.Config{
+				ClusterConfig: &v1alpha1.ClusterConfig{
+					ControlPlane: &v1alpha1.ControlPlaneConfig{
+						Endpoint: &v1alpha1.Endpoint{
+							URL: endpointURL,
+						},
+					},
+					APIServerConfig: &v1alpha1.APIServerConfig{
+						ContainerImage: constants.KubernetesAPIServerImage + ":v" + constants.DefaultKubernetesVersion,
+					},
+					ControllerManagerConfig: &v1alpha1.ControllerManagerConfig{
+						ContainerImage: constants.KubernetesControllerManagerImage + ":v1.24.0",
+					},
+					SchedulerConfig: &v1alpha1.SchedulerConfig{
+						ContainerImage: constants.KubernetesSchedulerImage + ":v1.24.0",
+					},
+				},
+				MachineConfig: &v1alpha1.MachineConfig{
+					MachineType: "controlplane",
+					MachineKubelet: &v1alpha1.KubeletConfig{
+						KubeletImage: constants.KubeletImage + ":v" + constants.DefaultKubernetesVersion,
+					},
+				},
+			},
+			expectedError: "2 errors occurred:\n\t* kube-controller-manager image is not valid: version of Kubernetes 1.24.0 is too old to be used with Talos VERSION\n\t* kube-scheduler image is not valid: version of Kubernetes 1.24.0 is too old to be used with Talos VERSION\n\n", //nolint:lll
+		},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+
+			var opts []validation.Option
+			if test.strict {
+				opts = append(opts, validation.WithStrict())
+			}
+
+			st := state.WrapCore(inmem.NewState(""))
+
+			warnings, errors := test.config.RuntimeValidate(t.Context(), st, runtimeMode{test.requiresInstall}, opts...)
+
+			assert.Equal(t, test.expectedWarnings, warnings)
+
+			currentTalosVersion, err := compatibility.ParseTalosVersion(version.NewVersion())
+			require.NoError(t, err)
+
+			if test.expectedError == "" {
+				assert.NoError(t, errors)
+			} else {
+				test.expectedError = strings.ReplaceAll(test.expectedError, "VERSION", currentTalosVersion.String())
+
+				assert.EqualError(t, errors, test.expectedError)
 			}
 		})
 	}

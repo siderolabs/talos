@@ -18,7 +18,9 @@ import (
 
 	"github.com/siderolabs/talos/cmd/talosctl/pkg/mgmt/helpers"
 	"github.com/siderolabs/talos/pkg/images"
+	"github.com/siderolabs/talos/pkg/machinery/compatibility"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
+	"github.com/siderolabs/talos/pkg/machinery/version"
 )
 
 // K8sCompatibilitySuite ...
@@ -56,6 +58,22 @@ func (suite *K8sCompatibilitySuite) SetupSuite() {
 		Major: maxVersion.Major,
 		Minor: maxVersion.Minor - constants.SupportedKubernetesVersions + 1,
 		Patch: 0,
+	}
+
+	// while Talos is in alpha stage, DefaultKubernetesVersion might be 1 minor behind the latest alpha Kubernetes version,
+	// so we need to ensure that minVersion fits into compatibility range
+	minVersionAdjusted := false
+
+	currentTalosVersion, err := compatibility.ParseTalosVersion(version.NewVersion())
+	suite.Require().NoError(err)
+
+	minKubernetesVersion, err := compatibility.ParseKubernetesVersion(minVersion.String())
+	suite.Require().NoError(err)
+
+	if minKubernetesVersion.SupportedWith(currentTalosVersion) != nil {
+		// bump up minVersion to the next minor version
+		minVersion.Minor++
+		minVersionAdjusted = true
 	}
 
 	type versionInfo struct {
@@ -111,7 +129,12 @@ func (suite *K8sCompatibilitySuite) SetupSuite() {
 
 	suite.T().Logf("using following upgrade sequence: %v", suite.versionsSequence)
 
-	suite.Assert().Len(suite.versionsSequence, constants.SupportedKubernetesVersions)
+	if minVersionAdjusted {
+		suite.T().Logf("min Kubernetes version was adjusted to %s to fit Talos compatibility range", minVersion.String())
+		suite.Assert().Len(suite.versionsSequence, constants.SupportedKubernetesVersions-1)
+	} else {
+		suite.Assert().Len(suite.versionsSequence, constants.SupportedKubernetesVersions)
+	}
 
 	suite.BaseSuite.SetupSuite()
 }

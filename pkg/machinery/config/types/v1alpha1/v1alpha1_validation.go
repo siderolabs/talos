@@ -24,6 +24,7 @@ import (
 	"github.com/opencontainers/runtime-spec/specs-go"
 	sideronet "github.com/siderolabs/net"
 
+	"github.com/siderolabs/talos/pkg/machinery/compatibility"
 	"github.com/siderolabs/talos/pkg/machinery/config/config"
 	"github.com/siderolabs/talos/pkg/machinery/config/machine"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/block/blockhelpers"
@@ -33,6 +34,7 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/labels"
 	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
 	"github.com/siderolabs/talos/pkg/machinery/role"
+	"github.com/siderolabs/talos/pkg/machinery/version"
 )
 
 var (
@@ -985,7 +987,70 @@ func (c *Config) RuntimeValidate(ctx context.Context, st state.State, mode valid
 		if len(c.MachineConfig.Install().Extensions()) > 0 {
 			warnings = append(warnings, ".machine.install.extensions is deprecated, please see https://www.talos.dev/latest/talos-guides/install/boot-assets/")
 		}
+
+		if err := ValidateKubernetesImageTag(c.Machine().Kubelet().Image()); err != nil {
+			result = multierror.Append(result, fmt.Errorf("kubelet image is not valid: %w", err))
+		}
+	}
+
+	if c.ClusterConfig != nil && c.MachineConfig != nil {
+		if c.Machine().Type().IsControlPlane() {
+			for _, spec := range []struct {
+				name     string
+				imageRef string
+			}{
+				{
+					name:     "kube-apiserver",
+					imageRef: c.Cluster().APIServer().Image(),
+				},
+				{
+					name:     "kube-controller-manager",
+					imageRef: c.Cluster().ControllerManager().Image(),
+				},
+				{
+					name:     "kube-scheduler",
+					imageRef: c.Cluster().Scheduler().Image(),
+				},
+			} {
+				if err := ValidateKubernetesImageTag(spec.imageRef); err != nil {
+					result = multierror.Append(result, fmt.Errorf("%s image is not valid: %w", spec.name, err))
+				}
+			}
+		}
 	}
 
 	return warnings, result.ErrorOrNil()
+}
+
+// ValidateKubernetesImageTag validates the Kubernetes image tag format.
+func ValidateKubernetesImageTag(imageRef string) error {
+	// this method is called from RuntimeValidate, so we are inside running Talos,
+	// so the version of Talos is available, and we can check compatibility
+	currentTalosVersion, err := compatibility.ParseTalosVersion(version.NewVersion())
+	if err != nil {
+		return fmt.Errorf("failed to parse Talos version: %w", err)
+	}
+
+	k8sVersion, err := KubernetesVersionFromImageRef(imageRef)
+	if err != nil {
+		return fmt.Errorf("failed to parse Kubernetes version from image reference %q: %w", imageRef, err)
+	}
+
+	return k8sVersion.SupportedWith(currentTalosVersion)
+}
+
+// KubernetesVersionFromImageRef parses the Kubernetes version from the image reference.
+func KubernetesVersionFromImageRef(ref string) (*compatibility.KubernetesVersion, error) {
+	idx := strings.LastIndex(ref, ":v")
+	if idx == -1 {
+		return nil, fmt.Errorf("invalid image reference: %q", ref)
+	}
+
+	versionPart := ref[idx+2:]
+
+	if shaIndex := strings.Index(versionPart, "@"); shaIndex != -1 {
+		versionPart = versionPart[:shaIndex]
+	}
+
+	return compatibility.ParseKubernetesVersion(versionPart)
 }
