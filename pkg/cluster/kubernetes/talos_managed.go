@@ -122,6 +122,10 @@ func Upgrade(ctx context.Context, cluster UpgradeProvider, options UpgradeOption
 		return err
 	}
 
+	if err = VerifyVersionCompatibility(ctx, talosClient, slices.Concat(options.controlPlaneNodes, options.workerNodes), options.Path.ToVersion(), options.Log); err != nil {
+		return err
+	}
+
 	upgradeChecks, err := upgrade.NewChecks(options.Path, talosClient.COSI, k8sConfig, options.controlPlaneNodes, options.workerNodes, options.Log)
 	if err != nil {
 		return err
