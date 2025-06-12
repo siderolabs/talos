@@ -451,8 +451,7 @@ talosctl-windows-amd64:
 talosctl-windows-arm64:
 	@$(MAKE) local-talosctl-windows-arm64 DEST=$(ARTIFACTS) PUSH=false
 
-talosctl:
-	@$(MAKE) local-talosctl-targetarch DEST=$(ARTIFACTS)
+talosctl: talosctl-$(OPERATING_SYSTEM)-$(ARCH)
 
 image-%: ## Builds the specified image. Valid options are aws, azure, digital-ocean, gcp, and vmware (e.g. image-aws)
 	@docker pull $(REGISTRY_AND_USERNAME)/imager:$(IMAGE_TAG_IN)
