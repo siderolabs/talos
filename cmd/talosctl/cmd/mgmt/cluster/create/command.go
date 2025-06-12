@@ -256,7 +256,6 @@ func init() {
 		bandwidthFlag,
 
 		// The following might work but need testing first.
-		withSiderolinkAgentFlag,
 		configInjectionMethodFlag,
 	}
 
