@@ -60,6 +60,9 @@ kernel/drivers/hwmon/k8temp.ko
 kernel/drivers/i2c/algos/i2c-algo-bit.ko
 kernel/drivers/i2c/busses/i2c-i801.ko
 kernel/drivers/i2c/i2c-smbus.ko
+kernel/drivers/infiniband/core/ib_umad.ko
+kernel/drivers/infiniband/core/ib_uverbs.ko
+kernel/drivers/infiniband/core/rdma_ucm.ko
 kernel/drivers/infiniband/hw/mlx4/mlx4_ib.ko
 kernel/drivers/infiniband/hw/mlx5/mlx5_ib.ko
 kernel/drivers/infiniband/sw/rxe/rdma_rxe.ko
