@@ -524,15 +524,17 @@ FROM base AS machined-build-amd64
 WORKDIR /src/internal/app/machined
 ARG GO_BUILDFLAGS
 ARG GO_LDFLAGS
+ARG GO_MACHINED_LDFLAGS
 ARG GOAMD64
-RUN --mount=type=cache,target=/.cache,id=talos/.cache GOOS=linux GOARCH=amd64 GOAMD64=${GOAMD64} go build ${GO_BUILDFLAGS} -ldflags "${GO_LDFLAGS}" -o /machined
+RUN --mount=type=cache,target=/.cache,id=talos/.cache GOOS=linux GOARCH=amd64 GOAMD64=${GOAMD64} go build ${GO_BUILDFLAGS} -ldflags "${GO_LDFLAGS} ${GO_MACHINED_LDFLAGS}" -o /machined
 RUN chmod +x /machined
 
 FROM base AS machined-build-arm64
 WORKDIR /src/internal/app/machined
 ARG GO_BUILDFLAGS
 ARG GO_LDFLAGS
-RUN --mount=type=cache,target=/.cache,id=talos/.cache GOOS=linux GOARCH=arm64 go build ${GO_BUILDFLAGS} -ldflags "${GO_LDFLAGS}" -o /machined
+ARG GO_MACHINED_LDFLAGS
+RUN --mount=type=cache,target=/.cache,id=talos/.cache GOOS=linux GOARCH=arm64 go build ${GO_BUILDFLAGS} -ldflags "${GO_LDFLAGS} ${GO_MACHINED_LDFLAGS}" -o /machined
 RUN chmod +x /machined
 
 FROM machined-build-${TARGETARCH} AS machined-build

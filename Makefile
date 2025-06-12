@@ -154,6 +154,7 @@ GO_BUILDFLAGS ?=
 GO_BUILDTAGS ?= tcell_minimal,grpcnotrace
 GO_BUILDTAGS_TALOSCTL ?= grpcnotrace
 GO_LDFLAGS ?=
+GO_MACHINED_LDFLAGS ?= -X golang.zx2c4.com/wireguard/ipc.socketPath=/system/wireguard-sock # see https://github.com/siderolabs/talos/issues/8514
 GOAMD64 ?= v2
 
 WITH_RACE ?= false
@@ -203,6 +204,7 @@ COMMON_ARGS += --build-arg=ENUMER_VERSION=$(ENUMER_VERSION)
 COMMON_ARGS += --build-arg=GO_BUILDFLAGS_TALOSCTL="$(GO_BUILDFLAGS_TALOSCTL)"
 COMMON_ARGS += --build-arg=GO_BUILDFLAGS="$(GO_BUILDFLAGS)"
 COMMON_ARGS += --build-arg=GO_LDFLAGS="$(GO_LDFLAGS)"
+COMMON_ARGS += --build-arg=GO_MACHINED_LDFLAGS="$(GO_MACHINED_LDFLAGS)"
 COMMON_ARGS += --build-arg=GOAMD64="$(GOAMD64)"
 COMMON_ARGS += --build-arg=GOFUMPT_VERSION=$(GOFUMPT_VERSION)
 COMMON_ARGS += --build-arg=GOIMPORTS_VERSION=$(GOIMPORTS_VERSION)

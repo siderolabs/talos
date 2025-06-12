@@ -18,12 +18,6 @@ replace (
 	// Use nested module.
 	github.com/siderolabs/talos/pkg/machinery => ./pkg/machinery
 
-	// see https://github.com/siderolabs/talos/issues/8514
-	golang.zx2c4.com/wireguard => github.com/siderolabs/wireguard-go v0.0.0-20240401105714-9c7067e9d4b9
-
-	// see https://github.com/siderolabs/talos/issues/8514
-	golang.zx2c4.com/wireguard/wgctrl => github.com/siderolabs/wgctrl-go v0.0.0-20240401105613-579af3342774
-
 	// forked go-yaml that introduces RawYAML interface, which can be used to populate YAML fields using bytes
 	// which are then encoded as a valid YAML blocks with proper indentiation
 	gopkg.in/yaml.v3 => github.com/unix4ever/yaml v0.0.0-20220527175918-f17b0f05cf2c
