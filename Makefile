@@ -87,13 +87,13 @@ PKG_ZSTD ?= $(PKGS_PREFIX)/zstd:$(PKGS)
 # renovate: datasource=github-tags depName=golang/go
 GO_VERSION ?= 1.24
 # renovate: datasource=go depName=golang.org/x/tools
-GOIMPORTS_VERSION ?= v0.33.0
+GOIMPORTS_VERSION ?= v0.34.0
 # renovate: datasource=go depName=mvdan.cc/gofumpt
 GOFUMPT_VERSION ?= v0.8.0
 # renovate: datasource=go depName=github.com/golangci/golangci-lint
 GOLANGCILINT_VERSION ?= v2.1.6
 # renovate: datasource=go depName=golang.org/x/tools
-STRINGER_VERSION ?= v0.33.0
+STRINGER_VERSION ?= v0.34.0
 # renovate: datasource=go depName=github.com/dmarkham/enumer
 ENUMER_VERSION ?= v1.5.11
 # renovate: datasource=go depName=k8s.io/code-generator
@@ -111,7 +111,7 @@ PROTOC_GEN_DOC_VERSION ?= v1.5.1
 # renovate: datasource=npm depName=markdownlint-cli
 MARKDOWNLINTCLI_VERSION ?= 0.45.0
 # renovate: datasource=npm depName=textlint
-TEXTLINT_VERSION ?= 14.7.2
+TEXTLINT_VERSION ?= 14.8.0
 # renovate: datasource=npm depName=textlint-filter-rule-comments
 TEXTLINT_FILTER_RULE_COMMENTS_VERSION ?= 1.2.2
 # renovate: datasource=npm depName=textlint-rule-one-sentence-per-line
