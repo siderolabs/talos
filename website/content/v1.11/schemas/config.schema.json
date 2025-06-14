@@ -370,6 +370,49 @@
       ],
       "description": "VolumeConfig is a system volume configuration document.\\nNote: at the moment, only `EPHEMERAL` and `IMAGE-CACHE` system volumes are supported.\\n"
     },
+    "block.ZswapConfigV1Alpha1": {
+      "properties": {
+        "apiVersion": {
+          "enum": [
+            "v1alpha1"
+          ],
+          "title": "apiVersion",
+          "description": "apiVersion is the API version of the resource.\n",
+          "markdownDescription": "apiVersion is the API version of the resource.",
+          "x-intellij-html-description": "\u003cp\u003eapiVersion is the API version of the resource.\u003c/p\u003e\n"
+        },
+        "kind": {
+          "enum": [
+            "ZswapConfig"
+          ],
+          "title": "kind",
+          "description": "kind is the kind of the resource.\n",
+          "markdownDescription": "kind is the kind of the resource.",
+          "x-intellij-html-description": "\u003cp\u003ekind is the kind of the resource.\u003c/p\u003e\n"
+        },
+        "maxPoolPercent": {
+          "type": "integer",
+          "title": "maxPoolPercent",
+          "description": "The maximum percent of memory that zswap can use.\nThis is a percentage of the total system memory.\nThe value must be between 0 and 100.\n",
+          "markdownDescription": "The maximum percent of memory that zswap can use.\nThis is a percentage of the total system memory.\nThe value must be between 0 and 100.",
+          "x-intellij-html-description": "\u003cp\u003eThe maximum percent of memory that zswap can use.\nThis is a percentage of the total system memory.\nThe value must be between 0 and 100.\u003c/p\u003e\n"
+        },
+        "shrinkerEnabled": {
+          "type": "boolean",
+          "title": "shrinkerEnabled",
+          "description": "Enable the shrinker feature: kernel might move\ncold pages from zswap to swap device to free up memory\nfor other use cases.\n",
+          "markdownDescription": "Enable the shrinker feature: kernel might move\ncold pages from zswap to swap device to free up memory\nfor other use cases.",
+          "x-intellij-html-description": "\u003cp\u003eEnable the shrinker feature: kernel might move\ncold pages from zswap to swap device to free up memory\nfor other use cases.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "apiVersion",
+        "kind"
+      ],
+      "description": "ZswapConfig is a zswap (compressed memory) configuration document.\\nWhen zswap is enabled, Linux kernel compresses pages that would otherwise be swapped out to disk.\\nThe compressed pages are stored in a memory pool, which is used to avoid writing to disk\\nwhen the system is under memory pressure.\\n"
+    },
     "extensions.ConfigFile": {
       "properties": {
         "content": {
@@ -4241,6 +4284,9 @@
     },
     {
       "$ref": "#/$defs/block.VolumeConfigV1Alpha1"
+    },
+    {
+      "$ref": "#/$defs/block.ZswapConfigV1Alpha1"
     },
     {
       "$ref": "#/$defs/extensions.ServiceConfigV1Alpha1"

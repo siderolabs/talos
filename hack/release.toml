@@ -54,6 +54,13 @@ This feature can be enable by using [SwapVolumeConfig](https://www.talos.dev/v1.
 Talos VMWare platform now supports `arm64` architecture in addition to `amd64`.
 """
 
+    [notes.zswap]
+        title = "Zswap Support"
+        description = """\
+Talos now supports zswap, a compressed cache for swap pages.
+This feature can be enabled by using [ZswapConfig](https://www.talos.dev/v1.11/reference/configuration/block/zswapconfig/) document in the machine configuration.
+"""
+
 [make_deps]
 
     [make_deps.tools]

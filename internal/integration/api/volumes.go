@@ -755,6 +755,29 @@ func (suite *VolumesSuite) TestSwapOnOff() {
 	}))
 }
 
+// TestZswapStatus verifies that all zswap-enabled machines have zswap running.
+func (suite *VolumesSuite) TestZswapStatus() {
+	for _, node := range suite.DiscoverNodeInternalIPs(suite.ctx) {
+		suite.Run(node, func() {
+			ctx := client.WithNode(suite.ctx, node)
+
+			cfg, err := suite.ReadConfigFromNode(ctx)
+			suite.Require().NoError(err)
+
+			if cfg.ZswapConfig() == nil {
+				suite.T().Skipf("skipping test, zswap is not enabled on node %s", node)
+			}
+
+			rtestutils.AssertResource(ctx, suite.T(), suite.Client.COSI,
+				block.ZswapStatusID,
+				func(vs *block.ZswapStatus, asrt *assert.Assertions) {
+					suite.T().Logf("zswap total size %s, stored pages %d", vs.TypedSpec().TotalSizeHuman, vs.TypedSpec().StoredPages)
+				},
+			)
+		})
+	}
+}
+
 func init() {
 	allSuites = append(allSuites, new(VolumesSuite))
 }

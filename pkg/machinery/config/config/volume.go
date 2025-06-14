@@ -98,3 +98,10 @@ type SwapVolumeConfig interface {
 	Provisioning() VolumeProvisioningConfig
 	Encryption() EncryptionConfig
 }
+
+// ZswapConfig defines the interface to access zswap configuration.
+type ZswapConfig interface {
+	ZswapConfigSignal()
+	MaxPoolPercent() int
+	ShrinkerEnabled() bool
+}

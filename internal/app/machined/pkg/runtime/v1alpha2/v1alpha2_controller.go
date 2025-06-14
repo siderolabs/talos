@@ -110,6 +110,10 @@ func (ctrl *Controller) Run(ctx context.Context, drainer *runtime.Drainer) error
 			V1Alpha1Mode: ctrl.v1alpha1Runtime.State().Platform().Mode(),
 		},
 		&block.VolumeManagerController{},
+		&block.ZswapConfigController{},
+		&block.ZswapStatusController{
+			V1Alpha1Mode: ctrl.v1alpha1Runtime.State().Platform().Mode(),
+		},
 		&cluster.AffiliateMergeController{},
 		cluster.NewConfigController(),
 		&cluster.DiscoveryServiceController{},
