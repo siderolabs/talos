@@ -41,6 +41,7 @@ This can be done in the machine config of your node:
 
 ```yaml
 machine:
+  network:
       interfaces:
       - interface: br0
         addresses:
