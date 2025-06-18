@@ -207,7 +207,7 @@ We will build and use [imager]({{< relref "../talos-guides/install/boot-assets#i
 Clone the Talos repo.
 
 ```bash
-git clone https://github.com/siderolabs/extensions
+git clone https://github.com/siderolabs/talos
 cd talos
 ```
 
@@ -230,15 +230,25 @@ Create a installer image from your extension and the imager you just created wit
 make image-installer \
   REGISTRY=127.0.0.1:5005 \
   IMAGER_ARGS="--base-installer-image=${IMAGER_IMAGE} \
-    --system-extensions-image=${EXTENSION_IMAGE}"
+    --system-extension-image=${EXTENSION_IMAGE}"
 ```
 
-We'll have a new container image tar file in the _out/ folder of our repository.
+We'll have a new container image tar file in the `_out/` folder of our repository.
 Load and push the container image to a registry with [crane](https://github.com/google/go-containerregistry/blob/main/cmd/crane/doc/crane.md).
 Make sure you replace `$REGISTRY`, `$USER`, and `$TAG` with the values you want.
 
 ```bash
 crane push _out/installer-amd64.tar $REGISTRY/$USER/installer:$TAG
+```
+
+And if you don't have `crane`:
+
+```bash
+docker load -i _out/installer-amd64.tar
+# note down sha256 or the image tag output from above command
+
+docker tag $SHA256_OR_IMAGE_TAG $REGISTRY/$USER/installer:$TAG
+docker push $REGISTRY/$USER/installer:$TAG
 ```
 
 ## Test the installer with fresh install
