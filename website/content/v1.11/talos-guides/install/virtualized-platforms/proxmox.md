@@ -164,13 +164,13 @@ And set the IP parameters for the VM.
 [Format is](https://www.kernel.org/doc/Documentation/filesystems/nfs/nfsroot.txt):
 
 ```bash
-ip=<client-ip>:<srv-ip>:<gw-ip>:<netmask>:<host>:<device>:<autoconf>
+ip=<client-ip>:<srv-ip>:<gw-ip>:<netmask>:<host>:<device>:<autoconf>:<dns0-ip
 ```
 
-For example $CONTROL_PLANE_IP will be 192.168.0.100 and gateway 192.168.0.1
+For example $CONTROL_PLANE_IP will be 192.168.0.100 and gateway and dns 192.168.0.1
 
 ```bash
-linux /boot/vmlinuz init_on_alloc=1 slab_nomerge pti=on panic=0 consoleblank=0 printk.devkmsg=on earlyprintk=ttyS0 console=tty0 console=ttyS0 talos.platform=metal ip=192.168.0.100::192.168.0.1:255.255.255.0::eth0:off
+linux /boot/vmlinuz init_on_alloc=1 slab_nomerge pti=on panic=0 consoleblank=0 printk.devkmsg=on earlyprintk=ttyS0 console=tty0 console=ttyS0 talos.platform=metal ip=192.168.0.100::192.168.0.1:255.255.255.0::eth0:off:192.168.0.1
 ```
 
 <img src="/images/proxmox-guide/maintenance-mode-grub-menu-ip.png" width="630px">
