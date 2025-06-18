@@ -100,6 +100,9 @@ talosctl -n <node IP or DNS name> upgrade --image=factory.talos.dev/installer/ee
 
 Let's assume we want to boot Talos on a Raspberry Pi with the `vc4` system extension for V3D/VC4 Broadcom VideoCore GPU support.
 
+> Note: The `vc4` system extension requires sufficient Contiguous Memory Allocator (CMA) size for GPU operations.
+> See the [GPU Memory Issues](#gpu-memory-issues) section for recommended CMA sizes and configuration steps to prevent errors like `DRM_IOCTL_MODE_CREATE_DUMB failed`.
+
 First, let's create the schematic file `rpi_generic.yaml`:
 
 #### Schematic example with `vc4` system extension
@@ -160,6 +163,9 @@ talosctl upgrade --image factory.talos.dev/installer/<new_schematic_id>:{{< rele
 ### Example: Raspberry Pi generic with Broadcom VideoCore GPU support with Imager
 
 Let's assume we want to boot Talos on Raspberry Pi with `rpi_generic` overlay and the `vc4` system extension for Broadcom VideoCore GPU support.
+
+> Note: The `vc4` system extension requires sufficient Contiguous Memory Allocator (CMA) size for GPU operations.
+> See the [GPU Memory Issues](#gpu-memory-issues) section for recommended CMA sizes and configuration steps to prevent errors like `DRM_IOCTL_MODE_CREATE_DUMB failed`.
 
 First, let's lookup extension images for `vc4` in the [extensions repository](https://github.com/siderolabs/extensions):
 
@@ -282,6 +288,9 @@ Refer to the default [config.txt](https://github.com/siderolabs/sbc-raspberrypi/
 
 ### Configure the `config.txt` file for usage with the `vc4` system extension
 
+> Note: Incorrect GPU memory settings in `config.txt` can lead to rendering failures with the `vc4` extension.
+> See the [GPU Memory Issues](#gpu-memory-issues) section for guidance on setting the Contiguous Memory Allocator (CMA) size via `cma-*` parameters.
+
 ```ini
 ...
 gpu_mem=128 # <== Add or edit this line
@@ -314,3 +323,53 @@ The following table can be used to troubleshoot booting issues:
 | 4            |       5       |                Fatal firmware error |
 | 4            |       6       |                Power failure type A |
 | 4            |       7       |                Power failure type B |
+
+### GPU Memory Issues
+
+The Contiguous Memory Allocator (CMA) reserves physically contiguous memory for Raspberry Pi GPU/display operations (e.g., KMS/DRM rendering).
+An error like `DRM_IOCTL_MODE_CREATE_DUMB failed: Cannot allocate memory` indicates an undersized CMA pool for graphics tasks.
+
+In Talos Linux, the Raspberry Pi 4’s CMA size is set via bootloader or kernel parameters.
+The default may be too small for GPU-intensive tasks, and oversizing reduces system memory.
+
+**CMA Size Guide**:
+
+| CMA Size | Suitable For |
+|:--------:|:-------------|
+| 64 MB    | Headless, no GPU use |
+| 128 MB   | Light use |
+| 256 MB   | HD media, cameras |
+| 512 MB   | 4K media, ML with GPU |
+| 1024 MB  | Experimental, may destabilize |
+
+#### Change CMA Size
+
+**Kernel Parameters**:
+
+Set CMA size with the `cma` parameter (e.g., `cma=256M`, `cma=384M`).
+
+Locate and apply the `machine.kernel` section to the machine config:
+
+```yaml
+machine:
+  kernel:
+    extraArgs:
+      - cma=256M
+```
+
+**Bootloader via Talos Image Factory**:
+
+> Talos’s immutable image requires `config.txt` changes via Talos Image Factory, direct `/boot/config.txt` edits are lost on upgrades.
+
+In Image Factory, Set CMA size with the `cma-*` parameter in `ConfigTxt` (e.g., `cma-128`, `cma-256`):
+
+```ini
+...
+overlay:
+  ...
+  options:
+    configTxt: |-
+      ...
+      dtoverlay=vc4-kms-v3d,cma-256
+      ...
+```
