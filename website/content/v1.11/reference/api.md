@@ -51,6 +51,7 @@ description: Talos gRPC API reference.
     - [VolumeMountRequestSpec](#talos.resource.definitions.block.VolumeMountRequestSpec)
     - [VolumeMountStatusSpec](#talos.resource.definitions.block.VolumeMountStatusSpec)
     - [VolumeStatusSpec](#talos.resource.definitions.block.VolumeStatusSpec)
+    - [ZswapStatusSpec](#talos.resource.definitions.block.ZswapStatusSpec)
   
 - [resource/definitions/cluster/cluster.proto](#resource/definitions/cluster/cluster.proto)
     - [AffiliateSpec](#talos.resource.definitions.cluster.AffiliateSpec)
@@ -1297,6 +1298,30 @@ VolumeStatusSpec is the spec for VolumeStatus resource.
 | configured_encryption_keys | [string](#string) | repeated |  |
 | symlink_spec | [SymlinkProvisioningSpec](#talos.resource.definitions.block.SymlinkProvisioningSpec) |  |  |
 | parent_id | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.block.ZswapStatusSpec"></a>
+
+### ZswapStatusSpec
+ZswapStatusSpec is the spec for ZswapStatus resource.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| total_size_bytes | [uint64](#uint64) |  |  |
+| total_size_human | [string](#string) |  |  |
+| stored_pages | [uint64](#uint64) |  |  |
+| pool_limit_hit | [uint64](#uint64) |  |  |
+| reject_reclaim_fail | [uint64](#uint64) |  |  |
+| reject_alloc_fail | [uint64](#uint64) |  |  |
+| reject_kmemcache_fail | [uint64](#uint64) |  |  |
+| reject_compress_fail | [uint64](#uint64) |  |  |
+| reject_compress_poor | [uint64](#uint64) |  |  |
+| written_back_pages | [uint64](#uint64) |  |  |
 
 
 

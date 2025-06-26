@@ -41,6 +41,7 @@ func PseudoSubMountPoints() Points {
 		NewPoint("securityfs", "/sys/kernel/security", "securityfs", WithFlags(unix.MS_NOSUID|unix.MS_NOEXEC|unix.MS_NODEV|unix.MS_RELATIME)),
 		NewPoint("tracefs", "/sys/kernel/tracing", "tracefs", WithFlags(unix.MS_NOSUID|unix.MS_NOEXEC|unix.MS_NODEV)),
 		NewPoint("configfs", "/sys/kernel/config", "configfs", WithFlags(unix.MS_NOSUID|unix.MS_NOEXEC|unix.MS_NODEV|unix.MS_RELATIME)),
+		NewPoint("debugfs", "/sys/kernel/debug", "debugfs", WithFlags(unix.MS_NOSUID|unix.MS_NOEXEC|unix.MS_NODEV|unix.MS_RELATIME)),
 	}
 
 	if _, err := os.Stat(constants.EFIVarsMountPoint); err == nil {

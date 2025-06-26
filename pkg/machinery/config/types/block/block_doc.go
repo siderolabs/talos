@@ -462,6 +462,35 @@ func (DiskSelector) Doc() *encoder.Doc {
 	return doc
 }
 
+func (ZswapConfigV1Alpha1) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "ZswapConfig",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "ZswapConfig is a zswap (compressed memory) configuration document." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "ZswapConfig is a zswap (compressed memory) configuration document.\nWhen zswap is enabled, Linux kernel compresses pages that would otherwise be swapped out to disk.\nThe compressed pages are stored in a memory pool, which is used to avoid writing to disk\nwhen the system is under memory pressure.\n",
+		Fields: []encoder.Doc{
+			{},
+			{
+				Name:        "maxPoolPercent",
+				Type:        "int",
+				Note:        "",
+				Description: "The maximum percent of memory that zswap can use.\nThis is a percentage of the total system memory.\nThe value must be between 0 and 100.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "The maximum percent of memory that zswap can use." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "shrinkerEnabled",
+				Type:        "bool",
+				Note:        "",
+				Description: "Enable the shrinker feature: kernel might move\ncold pages from zswap to swap device to free up memory\nfor other use cases.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Enable the shrinker feature: kernel might move" /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
+
+	doc.AddExample("", exampleZswapConfigV1Alpha1())
+
+	return doc
+}
+
 // GetFileDoc returns documentation for the file block_doc.go.
 func GetFileDoc() *encoder.FileDoc {
 	return &encoder.FileDoc{
@@ -480,6 +509,7 @@ func GetFileDoc() *encoder.FileDoc {
 			VolumeConfigV1Alpha1{}.Doc(),
 			ProvisioningSpec{}.Doc(),
 			DiskSelector{}.Doc(),
+			ZswapConfigV1Alpha1{}.Doc(),
 		},
 	}
 }

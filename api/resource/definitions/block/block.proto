@@ -243,3 +243,17 @@ message VolumeStatusSpec {
   string parent_id = 19;
 }
 
+// ZswapStatusSpec is the spec for ZswapStatus resource.
+message ZswapStatusSpec {
+  uint64 total_size_bytes = 1;
+  string total_size_human = 2;
+  uint64 stored_pages = 3;
+  uint64 pool_limit_hit = 4;
+  uint64 reject_reclaim_fail = 5;
+  uint64 reject_alloc_fail = 6;
+  uint64 reject_kmemcache_fail = 7;
+  uint64 reject_compress_fail = 8;
+  uint64 reject_compress_poor = 9;
+  uint64 written_back_pages = 10;
+}
+
