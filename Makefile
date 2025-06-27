@@ -27,7 +27,7 @@ EMBED_TARGET ?= embed
 TOOLS_PREFIX ?= ghcr.io/siderolabs/tools
 TOOLS ?= v1.10.0-4-g9d54ed4
 PKGS_PREFIX ?= ghcr.io/siderolabs
-PKGS ?= v1.10.0-22-g51e388c
+PKGS ?= v1.10.0-24-g28fa97d
 
 KRES_IMAGE ?= ghcr.io/siderolabs/kres:latest
 CONFORMANCE_IMAGE ?= ghcr.io/siderolabs/conform:latest
