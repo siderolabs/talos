@@ -561,7 +561,7 @@ func (e *Etcd) recoverFromSnapshot(spec *etcdresource.SpecSpec) error {
 
 		PeerURLs: getEtcdURLs(spec.AdvertisedAddresses, constants.EtcdPeerPort),
 
-		InitialCluster: fmt.Sprintf("%s=%s", spec.Name, formatEtcdURLs(spec.AdvertisedAddresses, constants.EtcdPeerPort)),
+		InitialCluster: formatClusterURLs(spec.Name, getEtcdURLs(spec.AdvertisedAddresses, constants.EtcdPeerPort)),
 
 		SkipHashCheck: e.RecoverSkipHashCheck,
 	}); err != nil {
