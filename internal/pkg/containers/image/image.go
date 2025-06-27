@@ -106,7 +106,7 @@ func Pull(ctx context.Context, registryBuilder RegistriesBuilder, client *contai
 		); err != nil {
 			err = fmt.Errorf("failed to pull image %q: %w", ref, err)
 
-			if errdefs.IsNotFound(err) || errdefs.IsCanceled(err) {
+			if errdefs.IsNotFound(err) {
 				return err
 			}
 
