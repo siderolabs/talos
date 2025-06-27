@@ -1,5 +1,12 @@
 addresses: []
-links: []
+links:
+    - name: eth0
+      logical: false
+      up: true
+      mtu: 1400
+      kind: ""
+      type: netrom
+      layer: platform
 routes:
     - family: inet6
       dst: ""
@@ -25,7 +32,11 @@ operators:
       requireUp: true
       dhcp6:
         routeMetric: 2048
-      layer: default
+      layer: platform
+    - operator: dhcp4
+      linkName: eth0
+      requireUp: true
+      layer: platform
 externalIPs:
     - 1.2.3.4
     - 2603:1020:10:5::34

@@ -124,6 +124,7 @@ func (a *Azure) ParseMetadata(metadata *ComputeMetadata, interfaceAddresses []Ne
 				DHCP6: network.DHCP6OperatorSpec{
 					RouteMetric: 2 * network.DefaultRouteMetric,
 				},
+				ConfigLayer: network.ConfigPlatform,
 			})
 
 			// If accept_ra is not set, use the default gateway.
@@ -159,6 +160,22 @@ func (a *Azure) ParseMetadata(metadata *ComputeMetadata, interfaceAddresses []Ne
 	if err != nil {
 		return nil, err
 	}
+
+	networkConfig.Operators = append(networkConfig.Operators, network.OperatorSpecSpec{
+		Operator:    network.OperatorDHCP4,
+		LinkName:    "eth0",
+		RequireUp:   true,
+		ConfigLayer: network.ConfigPlatform,
+	})
+
+	networkConfig.Links = append(networkConfig.Links,
+		network.LinkSpecSpec{
+			Name:        "eth0",
+			Up:          true,
+			MTU:         1400,
+			ConfigLayer: network.ConfigPlatform,
+		},
+	)
 
 	networkConfig.Metadata = &runtimeres.PlatformMetadataSpec{
 		Platform:     a.Name(),
