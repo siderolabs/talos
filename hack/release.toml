@@ -54,6 +54,13 @@ This feature can be enable by using [SwapVolumeConfig](https://www.talos.dev/v1.
 Talos VMWare platform now supports `arm64` architecture in addition to `amd64`.
 """
 
+    [notes.azure]
+        title = "Azure"
+        description = """\
+Talos on Azure now defaults to MTU of 1400 bytes for the `eth0` interface to avoid packet fragmentation issues.
+The default MTU can be overriden with machine configuration.
+"""
+
 [make_deps]
 
     [make_deps.tools]
