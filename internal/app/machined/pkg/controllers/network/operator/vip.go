@@ -283,7 +283,6 @@ campaignLoop:
 			return nil
 		case event := <-watchCh:
 			// note: here we don't wait for kube-apiserver, as it might not be up on cluster bootstrap, but VIP should be still assigned
-
 			// break the loop when etcd is stopped
 			if event.Type == state.Destroyed && event.Resource.Metadata().ID() == "etcd" {
 				return nil
