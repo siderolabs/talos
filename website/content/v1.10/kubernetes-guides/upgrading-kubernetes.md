@@ -200,7 +200,7 @@ The JSON patch might need be adjusted if current machine configuration is missin
 Capture new version of `kube-controller-manager` config with:
 
 ```bash
-$ talosctl -n <CONTROL_PLANE_IP_1> get kcpc controllermanagerconfig -o yaml
+$ talosctl -n <CONTROL_PLANE_IP_1> get controllermanagerconfig -o yaml
 node: 172.20.0.2
 metadata:
     namespace: controlplane

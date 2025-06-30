@@ -6,25 +6,63 @@ description: "Using local storage for Kubernetes workloads."
 Using local storage for Kubernetes workloads implies that the pod will be bound to the node where the local storage is available.
 Local storage is not replicated, so in case of a machine failure contents of the local storage will be lost.
 
-## `hostPath` mounts
+## User Volumes
 
-The simplest way to use local storage is to use `hostPath` mounts.
-When using `hostPath` mounts, make sure the root directory of the mount is mounted into the `kubelet` container:
+The simplest way to use local storage is to use [user volumes]({{< relref "../../talos-guides/configuration/disk-management#user-volumes" >}}).
+
+Once the user volume is created, it is automatically mounted under `/var/mnt/u-<user-volume-name>` path on the node.
+
+For example, create a configuration patch for a user volume named `local-storage`:
 
 ```yaml
-machine:
-  kubelet:
-    extraMounts:
-      - destination: /var/mnt
-        type: bind
-        source: /var/mnt
-        options:
-          - bind
-          - rshared
-          - rw
+# local-storage.yaml
+apiVersion: v1alpha1
+kind: UserVolumeConfig
+name: local-storage
+provisioning:
+  diskSelector:
+    match: "!system_disk"
+  minSize: 2GB
+  maxSize: 2GB
 ```
 
-Both `EPHEMERAL` partition and [user volumes]({{< relref "../../talos-guides/configuration/disk-management#user-volumes" >}}) can be used for `hostPath` mounts.
+Apply the patch to the machine configuration:
+
+```bash
+talosctl --nodes <WORKER_IP> patch mc --patch @local-storage.yaml
+```
+
+If there is enough space available on a non-system disk (see `diskSelector`), the user volume will be created and mounted under `/var/mnt/u-local-storage` path on the node.
+
+```bash
+$ talosctl -n <WORKER-IP> get volumestatus u-local-storage
+NODE         NAMESPACE   TYPE           ID                VERSION   TYPE        PHASE   LOCATION         SIZE
+172.20.0.5   runtime     VolumeStatus   u-local-storage   3         partition   ready   /dev/nvme0n2p1   2.0 GB
+$ talosctl -n <WORKER-IP> get mountstatus u-local-storage
+NODE         NAMESPACE   TYPE          ID                VERSION   SOURCE           TARGET                   FILESYSTEM   VOLUME
+172.20.0.5   runtime     MountStatus   u-local-storage   2         /dev/nvme0n2p1   /var/mnt/local-storage   xfs          u-local-storage
+```
+
+Now you can use the `/var/mnt/local-storage` path in your Kubernetes manifests to refer to the local storage:
+
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: local-storage-pod
+spec:
+  containers:
+  - name: local-storage-container
+    # ...
+    volumeMounts:
+    - mountPath: /usr/share
+      name: local-storage-volume
+  volumes:
+  - name: local-storage-volume
+    hostPath:
+      path: /var/mnt/local-storage
+      type: DirectoryOrCreate
+```
 
 ## Local Path Provisioner
 
@@ -55,7 +93,7 @@ For example, Local Path Provisioner can be installed using [kustomize](https://k
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 resources:
-- github.com/rancher/local-path-provisioner/deploy?ref=v0.0.26
+- github.com/rancher/local-path-provisioner/deploy?ref=v0.0.31
 patches:
 - patch: |-
     kind: ConfigMap
