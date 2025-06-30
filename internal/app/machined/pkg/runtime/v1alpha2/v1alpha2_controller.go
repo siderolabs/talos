@@ -453,6 +453,7 @@ func (ctrl *Controller) watchMachineConfig(ctx context.Context) {
 
 	for {
 		var cfg talosconfig.Config
+
 		select {
 		case event := <-watchCh:
 			if event.Type != state.Created && event.Type != state.Updated {

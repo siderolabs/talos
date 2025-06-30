@@ -74,7 +74,6 @@ func ForEachResource(ctx context.Context,
 				resource.NewMetadata(namespace, rd.TypedSpec().Type, resourceID, resource.VersionUndefined),
 				state.WithGetUnmarshalOptions(state.WithSkipProtobufUnmarshal()),
 			)
-
 			if err = callback(ctx, node, r, callErr); err != nil {
 				return err
 			}

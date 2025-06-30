@@ -25,6 +25,7 @@ import (
 
 var applyConfigCmdFlags struct {
 	helpers.Mode
+
 	certFingerprints []string
 	patches          []string
 	filename         string

@@ -233,6 +233,7 @@ func (suite *BaseSuite) assertSameVersionCluster(client *talosclient.Client, exp
 	).Retry(
 		func() error {
 			var e error
+
 			v, e = client.Version(ctx)
 
 			return retry.ExpectedError(e)

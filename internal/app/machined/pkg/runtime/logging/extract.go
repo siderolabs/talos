@@ -34,6 +34,7 @@ func parseLogLine(l []byte, now time.Time) *runtime.LogEvent {
 
 	for _, k := range []string{"time", "ts"} {
 		var t time.Time
+
 		switch ts := m[k].(type) {
 		case string:
 			t, _ = time.Parse(time.RFC3339Nano, ts) //nolint:errcheck

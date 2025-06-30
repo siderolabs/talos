@@ -28,6 +28,7 @@ func (a *all) Wait(ctx context.Context) error {
 	errCh := make(chan waitResult)
 
 	a.mu.Lock()
+
 	for i := range a.conditions {
 		go func(i int) {
 			errCh <- waitResult{
@@ -36,6 +37,7 @@ func (a *all) Wait(ctx context.Context) error {
 			}
 		}(i)
 	}
+
 	a.mu.Unlock()
 
 	err := (*multierror.Error)(nil)
@@ -66,11 +68,13 @@ func (a *all) String() string {
 	descriptions := []string(nil)
 
 	a.mu.Lock()
+
 	for _, c := range a.conditions {
 		if c != nil {
 			descriptions = append(descriptions, c.String())
 		}
 	}
+
 	a.mu.Unlock()
 
 	return strings.Join(descriptions, ", ")

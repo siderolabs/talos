@@ -207,6 +207,7 @@ func init() {
 		},
 		func(slc []byte) (Expression, error) {
 			var v Expression
+
 			err := v.UnmarshalProto(slc)
 
 			return v, err

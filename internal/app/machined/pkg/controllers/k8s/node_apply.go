@@ -253,7 +253,6 @@ func (ctrl *NodeApplyController) sync(
 	// run several attempts retrying conflict errors
 	return retry.Constant(10*time.Second, retry.WithUnits(100*time.Millisecond)).RetryWithContext(ctx, func(ctx context.Context) error {
 		err := ctrl.syncOnce(ctx, logger, k8sClient, nodeName, nodeLabelSpecs, nodeAnnotationSpecs, nodeTaintSpecs, nodeShouldCordon)
-
 		if err != nil && (apierrors.IsConflict(err) || apierrors.IsForbidden(err)) {
 			return retry.ExpectedError(err)
 		}

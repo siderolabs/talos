@@ -42,6 +42,7 @@ var (
 //	schemaMeta: v1alpha1/NetworkDefaultActionConfig
 type DefaultActionConfigV1Alpha1 struct {
 	meta.Meta `yaml:",inline"`
+
 	//   description: |
 	//     Default action for all not explicitly configured ingress traffic: accept or block.
 	//   values:

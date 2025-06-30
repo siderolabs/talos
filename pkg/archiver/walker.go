@@ -82,6 +82,7 @@ func WithFileTypes(fileType ...FileType) WalkerOption {
 //nolint:gocyclo,cyclop
 func Walker(ctx context.Context, rootPath string, options ...WalkerOption) (<-chan FileItem, error) {
 	var opts walkerOptions
+
 	opts.maxRecurseDepth = -1
 
 	for _, o := range options {
@@ -111,7 +112,6 @@ func Walker(ctx context.Context, rootPath string, options ...WalkerOption) (<-ch
 				FileInfo: fileInfo,
 				Error:    walkErr,
 			}
-
 			if path == rootPath && !fileInfo.IsDir() {
 				// only one file
 				item.RelPath = filepath.Base(path)

@@ -394,7 +394,6 @@ func updateTagResource(ctx context.Context, st state.State, t uint8, val string)
 
 		return nil
 	})
-
 	if err == nil {
 		return nil
 	}

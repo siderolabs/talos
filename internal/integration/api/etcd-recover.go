@@ -175,7 +175,6 @@ func (suite *EtcdRecoverSuite) recoverEtcd(recoverNode string, src io.ReadSeeker
 					RecoverEtcd: true,
 				},
 			)
-
 			if client.StatusCode(err) == codes.FailedPrecondition || client.StatusCode(err) == codes.DeadlineExceeded {
 				return retry.ExpectedError(err)
 			}

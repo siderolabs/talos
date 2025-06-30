@@ -74,6 +74,7 @@ func NewTable() *Table {
 // Table list of choices represented in table format.
 type Table struct {
 	*tview.Table
+
 	selectedRow   int
 	hoveredRow    int
 	onRowSelected func(row int)

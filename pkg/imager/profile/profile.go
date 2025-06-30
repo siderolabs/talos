@@ -52,7 +52,7 @@ type OverlayOptions struct {
 	// Image to use for the overlay.
 	Image ContainerAsset `yaml:"image"`
 	// Options for the overlay.
-	overlay.ExtraOptions `yaml:"options,omitempty"`
+	overlay.ExtraOptions `yaml:"options,omitempty"` //nolint:embeddedstructfieldcheck
 }
 
 // SecureBootEnabled derefences SecureBoot.

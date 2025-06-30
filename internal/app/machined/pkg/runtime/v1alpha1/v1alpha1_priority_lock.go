@@ -118,5 +118,6 @@ func (lock *PriorityLock[T]) Unlock() {
 	var zeroSeq T
 
 	lock.setRunningPriority(zeroSeq, nil)
+
 	lock.runningCh <- struct{}{}
 }

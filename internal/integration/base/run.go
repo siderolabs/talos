@@ -158,7 +158,6 @@ func retryRunAndWait(t *testing.T, cmdFunc func() *exec.Cmd, retryer retry.Retry
 		stdoutBuf, stderrBuf, err = runAndWait(t, cmdFunc())
 
 		var exitError *exec.ExitError
-
 		if errors.As(err, &exitError) {
 			return retry.ExpectedErrorf("command failed, stderr %v: %w", stderrBuf.String(), err)
 		}

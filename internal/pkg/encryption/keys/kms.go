@@ -35,6 +35,7 @@ type KMSToken struct {
 // KMSKeyHandler seals token using KMS service.
 type KMSKeyHandler struct {
 	KeyHandler
+
 	kmsEndpoint   string
 	getSystemInfo helpers.SystemInformationGetter
 }

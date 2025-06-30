@@ -20,6 +20,7 @@ import (
 
 type ExtensionServiceConfigFilesSuite struct {
 	ctest.DefaultSuite
+
 	extensionsConfigDir string
 }
 

@@ -14,6 +14,7 @@ import (
 // StaticKeyHandler just handles the static key value all the time.
 type StaticKeyHandler struct {
 	KeyHandler
+
 	data []byte
 }
 

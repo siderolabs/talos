@@ -72,8 +72,8 @@ func (p *PlatformNetworkConfig) Equal(other *PlatformNetworkConfig) bool {
 	// this is not the most efficient way to do this,
 	// but it will handle omitting empty fields
 	m1, err1 := yaml.Marshal(p)
-	m2, err2 := yaml.Marshal(other)
 
+	m2, err2 := yaml.Marshal(other)
 	if err1 != nil || err2 != nil {
 		return false
 	}

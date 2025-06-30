@@ -63,7 +63,6 @@ func (r *ResourcesConfig) Validate() error {
 
 		return nil
 	}
-
 	if err := checkKeys(r.Requests); err != nil {
 		return err
 	}

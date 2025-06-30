@@ -258,6 +258,7 @@ func ServerGracefulStop(server *grpc.Server, shutdownCtx context.Context) { //no
 
 	go func() {
 		defer close(stopped)
+
 		server.GracefulStop()
 	}()
 

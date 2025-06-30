@@ -56,7 +56,6 @@ func UnmountAll() error {
 
 			if strings.HasPrefix(mountInfo.MountSource, "/dev/") {
 				err = unmountWithTimeout(mountInfo.MountPoint, 0, time.Second)
-
 				if err == nil {
 					log.Printf("unmounted %s (%s)", mountInfo.MountPoint, mountInfo.MountSource)
 				} else {

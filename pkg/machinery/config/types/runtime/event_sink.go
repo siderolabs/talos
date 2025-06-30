@@ -48,6 +48,7 @@ var (
 //	schemaMeta: v1alpha1/EventSinkConfig
 type EventSinkV1Alpha1 struct {
 	meta.Meta `yaml:",inline"`
+
 	//   description: |
 	//     The endpoint for the event sink as 'host:port'.
 	//   examples:

@@ -110,7 +110,8 @@ type Ethernet struct {
 
 // Bond holds bonding interface info.
 type Bond struct {
-	Ethernet   `yaml:",inline"`
+	Ethernet `yaml:",inline"`
+
 	Interfaces []string `yaml:"interfaces,omitempty"`
 	Params     struct {
 		Mode       string `yaml:"mode,omitempty"`
@@ -125,8 +126,9 @@ type Bond struct {
 // VLAN holds vlan interface info.
 type VLAN struct {
 	Ethernet `yaml:",inline"`
-	ID       uint16 `yaml:"id,omitempty"`
-	Link     string `yaml:"link,omitempty"`
+
+	ID   uint16 `yaml:"id,omitempty"`
+	Link string `yaml:"link,omitempty"`
 }
 
 // MetadataConfig holds meta info.

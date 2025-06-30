@@ -83,6 +83,7 @@ func TestGenerateSuite(t *testing.T) {
 
 func (suite *GenerateSuite) SetupSuite() {
 	var err error
+
 	suite.input, err = generate.NewInput("test", "https://10.0.1.5", constants.DefaultKubernetesVersion, suite.genOptions...)
 	suite.Require().NoError(err)
 

@@ -551,8 +551,8 @@ func getSortedNodeAliases(ipToNodeAliases map[string]string) []string {
 	// all IPs come before non-IPs
 	slices.SortFunc(nodeAliases, func(a, b string) int {
 		addrA, aErr := netip.ParseAddr(a)
-		addrB, bErr := netip.ParseAddr(b)
 
+		addrB, bErr := netip.ParseAddr(b)
 		if aErr != nil && bErr != nil {
 			return strings.Compare(a, b)
 		}

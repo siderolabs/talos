@@ -644,7 +644,6 @@ func (k8sSuite *K8sSuite) WaitForResource(ctx context.Context, namespace, group,
 
 		return false, nil
 	}
-
 	if _, err = watchtools.UntilWithSync(ctx, lw, &unstructured.Unstructured{}, preconditionFunc, func(event watch.Event) (bool, error) {
 		obj, ok := event.Object.(*unstructured.Unstructured)
 		if !ok {

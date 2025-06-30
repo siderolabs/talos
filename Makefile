@@ -87,17 +87,17 @@ PKG_ZSTD ?= $(PKGS_PREFIX)/zstd:$(PKGS)
 # renovate: datasource=github-tags depName=golang/go
 GO_VERSION ?= 1.24
 # renovate: datasource=go depName=golang.org/x/tools
-GOIMPORTS_VERSION ?= v0.33.0
+GOIMPORTS_VERSION ?= v0.34.0
 # renovate: datasource=go depName=mvdan.cc/gofumpt
 GOFUMPT_VERSION ?= v0.8.0
 # renovate: datasource=go depName=github.com/golangci/golangci-lint
-GOLANGCILINT_VERSION ?= v2.1.6
+GOLANGCILINT_VERSION ?= v2.2.1
 # renovate: datasource=go depName=golang.org/x/tools
-STRINGER_VERSION ?= v0.33.0
+STRINGER_VERSION ?= v0.34.0
 # renovate: datasource=go depName=github.com/dmarkham/enumer
 ENUMER_VERSION ?= v1.5.11
 # renovate: datasource=go depName=k8s.io/code-generator
-DEEPCOPY_GEN_VERSION ?= v0.33.1
+DEEPCOPY_GEN_VERSION ?= v0.33.2
 # renovate: datasource=go depName=github.com/planetscale/vtprotobuf
 VTPROTOBUF_VERSION ?= v0.6.0
 # renovate: datasource=go depName=github.com/siderolabs/deep-copy
@@ -111,7 +111,7 @@ PROTOC_GEN_DOC_VERSION ?= v1.5.1
 # renovate: datasource=npm depName=markdownlint-cli
 MARKDOWNLINTCLI_VERSION ?= 0.45.0
 # renovate: datasource=npm depName=textlint
-TEXTLINT_VERSION ?= 14.7.2
+TEXTLINT_VERSION ?= 15.0.1
 # renovate: datasource=npm depName=textlint-filter-rule-comments
 TEXTLINT_FILTER_RULE_COMMENTS_VERSION ?= 1.2.2
 # renovate: datasource=npm depName=textlint-rule-one-sentence-per-line
@@ -126,11 +126,11 @@ INTEGRATION_TEST := integration-test
 INTEGRATION_TEST_DEFAULT_TARGET := $(INTEGRATION_TEST)-$(OPERATING_SYSTEM)
 INTEGRATION_TEST_PROVISION_DEFAULT_TARGET := integration-test-provision-$(OPERATING_SYSTEM)
 # renovate: datasource=github-releases depName=kubernetes/kubernetes
-KUBECTL_VERSION ?= v1.33.1
+KUBECTL_VERSION ?= v1.34.0-alpha.2
 # renovate: datasource=github-releases depName=kastenhq/kubestr
 KUBESTR_VERSION ?= v0.4.49
 # renovate: datasource=github-releases depName=helm/helm
-HELM_VERSION ?= v3.18.2
+HELM_VERSION ?= v3.18.3
 # renovate: datasource=github-releases depName=cilium/cilium-cli
 CILIUM_CLI_VERSION ?= v0.18.4
 # renovate: datasource=github-releases depName=microsoft/secureboot_objects

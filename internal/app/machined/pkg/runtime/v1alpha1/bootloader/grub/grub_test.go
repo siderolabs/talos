@@ -163,6 +163,7 @@ func TestFallback(t *testing.T) {
 	config.Fallback = grub.BootB
 
 	var buf bytes.Buffer
+
 	_ = config.Encode(&buf)
 
 	result := buf.String()

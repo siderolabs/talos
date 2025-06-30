@@ -180,6 +180,7 @@ func (suite *RotateCASuite) restartAPIServices(c *client.Client) {
 	suite.T().Logf("restarting API services")
 
 	var oldClient *client.Client
+
 	oldClient, suite.Client = suite.Client, c
 
 	defer func() {

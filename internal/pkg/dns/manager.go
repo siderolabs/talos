@@ -287,6 +287,7 @@ func newDNSRunnerOpts(cfg AddressPair, rootHandler dnssrv.Handler, forwardEnable
 // RunResult represents the result of a RunAll iteration.
 type RunResult struct {
 	AddressPair
+
 	Status Status
 }
 

@@ -210,8 +210,8 @@ func (s *MachineState) probeMeta() {
 	if s.stagedInstall {
 		// clear the staged install flags
 		_, err1 := s.meta.DeleteTag(context.Background(), metaconsts.StagedUpgradeImageRef)
-		_, err2 := s.meta.DeleteTag(context.Background(), metaconsts.StagedUpgradeInstallOptions)
 
+		_, err2 := s.meta.DeleteTag(context.Background(), metaconsts.StagedUpgradeInstallOptions)
 		if err := s.meta.Flush(); err != nil || err1 != nil || err2 != nil {
 			// failed to delete staged install tags, clear the stagedInstall to prevent boot looping
 			s.stagedInstall = false
@@ -295,6 +295,7 @@ func (s *MachineState) DBus() runtime.DBusState {
 
 type metaWrapper struct {
 	*MachineState
+
 	justLoaded bool
 	loadErr    error
 }

@@ -57,7 +57,6 @@ func (a *AWS) getMetadata(ctx context.Context) (*MetadataConfig, error) {
 		metadata MetadataConfig
 		err      error
 	)
-
 	if metadata.Hostname, err = getMetadataKey("hostname"); err != nil {
 		return nil, err
 	}
@@ -113,7 +112,6 @@ func (a *AWS) getMetadata(ctx context.Context) (*MetadataConfig, error) {
 
 func isNotFoundError(err error) bool {
 	var awsErr *smithyhttp.ResponseError
-
 	if errors.As(err, &awsErr) {
 		return awsErr.HTTPStatusCode() == http.StatusNotFound
 	}

@@ -48,6 +48,7 @@ var (
 //	schemaMeta: v1alpha1/PCIDriverRebindConfig
 type PCIDriverRebindConfigV1Alpha1 struct {
 	meta.Meta `yaml:",inline"`
+
 	//   description: |
 	//     PCI device id
 	//   schemaRequired: true

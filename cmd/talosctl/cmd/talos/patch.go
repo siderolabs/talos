@@ -28,6 +28,7 @@ import (
 
 var patchCmdFlags struct {
 	helpers.Mode
+
 	namespace        string
 	patch            []string
 	patchFile        string

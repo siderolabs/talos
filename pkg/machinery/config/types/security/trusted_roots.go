@@ -43,6 +43,7 @@ var (
 //	schemaMeta: v1alpha1/TrustedRootsConfig
 type TrustedRootsConfigV1Alpha1 struct {
 	meta.Meta `yaml:",inline"`
+
 	//   description: |
 	//     Name of the config document.
 	//   schemaRequired: true

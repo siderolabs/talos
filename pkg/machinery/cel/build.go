@@ -16,6 +16,7 @@ import (
 // Builder allows building CEL expressions programmatically.
 type Builder struct {
 	ast.ExprFactory
+
 	env    *cel.Env
 	nextID int64
 }

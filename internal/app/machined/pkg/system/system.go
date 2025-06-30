@@ -101,6 +101,7 @@ func (s *singleton) Load(services ...Service) []string {
 // It is not an error to unload a service which was already removed or stopped.
 func (s *singleton) Unload(ctx context.Context, serviceIDs ...string) error {
 	s.mu.Lock()
+
 	if s.terminating {
 		s.mu.Unlock()
 
@@ -114,6 +115,7 @@ func (s *singleton) Unload(ctx context.Context, serviceIDs ...string) error {
 			servicesToRemove = append(servicesToRemove, id)
 		}
 	}
+
 	s.mu.Unlock()
 
 	if err := s.Stop(ctx, servicesToRemove...); err != nil {
@@ -227,6 +229,7 @@ func (s *singleton) LoadAndStart(services ...Service) {
 // Shutdown all the services.
 func (s *singleton) Shutdown(ctx context.Context) {
 	s.mu.Lock()
+
 	if s.terminating {
 		s.mu.Unlock()
 
@@ -245,6 +248,7 @@ func (s *singleton) Stop(ctx context.Context, serviceIDs ...string) (err error) 
 	}
 
 	s.mu.Lock()
+
 	if s.terminating {
 		s.mu.Unlock()
 
@@ -263,6 +267,7 @@ func (s *singleton) StopWithRevDepenencies(ctx context.Context, serviceIDs ...st
 	}
 
 	s.mu.Lock()
+
 	if s.terminating {
 		s.mu.Unlock()
 

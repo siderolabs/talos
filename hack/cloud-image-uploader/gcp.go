@@ -221,7 +221,6 @@ func (u *GCPUploder) checkImageExists(imageName string) (bool, error) {
 	_, err := u.computeService.Images.Get(u.projectID, imageName).Do()
 	if err != nil {
 		var googleErr *googleapi.Error
-
 		if errors.As(err, &googleErr) {
 			if googleErr.Code == http.StatusNotFound {
 				return false, nil

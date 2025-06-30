@@ -3,6 +3,8 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 // Package util provides utility functions for the dashboard.
+//
+//nolint:revive
 package util
 
 import (

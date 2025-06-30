@@ -41,6 +41,7 @@ linters:
     - nakedret
     - nestif
     - nilnil
+    - noinlineerr
     - nolintlint
     - nonamedreturns
     - paralleltest
@@ -54,6 +55,7 @@ linters:
     - thelper
     - varnamelen
     - wrapcheck
+    - wsl # replaced by wsl_v5
   settings:
     cyclop:
       max-complexity: 20

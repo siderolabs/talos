@@ -135,8 +135,11 @@ func (suite *RestartSuite) TestRunUntilSuccess() {
 	}()
 
 	mock.exitCh <- failed
+
 	mock.exitCh <- failed
+
 	mock.exitCh <- failed
+
 	mock.exitCh <- nil
 
 	suite.Assert().NoError(<-errCh)
@@ -162,8 +165,11 @@ func (suite *RestartSuite) TestRunForever() {
 	}()
 
 	mock.exitCh <- failed
+
 	mock.exitCh <- nil
+
 	mock.exitCh <- failed
+
 	mock.exitCh <- nil
 
 	select {

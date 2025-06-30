@@ -52,6 +52,7 @@ var (
 //	schemaMeta: v1alpha1/NetworkRuleConfig
 type RuleConfigV1Alpha1 struct {
 	meta.Meta `yaml:",inline"`
+
 	//   description: |
 	//     Name of the config document.
 	//   schemaRequired: true

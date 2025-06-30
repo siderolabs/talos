@@ -40,7 +40,6 @@ func (p *provisioner) createNode(state *vm.State, clusterReq provision.ClusterRe
 
 	if pflashSpec := arch.PFlash(opts.UEFIEnabled, opts.ExtraUEFISearchPaths); pflashSpec != nil {
 		var err error
-
 		if pflashImages, err = p.createPFlashImages(state, nodeReq.Name, pflashSpec); err != nil {
 			return provision.NodeInfo{}, fmt.Errorf("error creating flash images: %w", err)
 		}

@@ -31,6 +31,7 @@ func (suite *ValidateSuite) SetupTest() {
 	suite.tmpDir = suite.T().TempDir()
 
 	var err error
+
 	suite.savedCwd, err = os.Getwd()
 	suite.Require().NoError(err)
 

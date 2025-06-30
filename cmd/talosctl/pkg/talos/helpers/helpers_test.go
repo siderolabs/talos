@@ -28,6 +28,7 @@ func TestExtractFileFromTarGz(t *testing.T) {
 
 	// just some primitive sanity check that yaml file inside was not corrupted somehow
 	var c cfg
+
 	err = yaml.Unmarshal(data, &c)
 	assert.NoError(t, err)
 

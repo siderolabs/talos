@@ -33,6 +33,7 @@ func MockEventSink(state events.ServiceState, message string, args ...any) {
 
 type GoroutineSuite struct {
 	suite.Suite
+
 	r runtime.Runtime
 
 	tmpDir string

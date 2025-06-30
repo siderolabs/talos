@@ -87,6 +87,7 @@ func mapAddress(address string) (*url.URL, error) {
 // bytes in the buffer.
 type bufConn struct {
 	net.Conn
+
 	r io.Reader
 }
 

@@ -70,6 +70,7 @@ func (m *WipeMode) Type() string {
 
 var resetCmdFlags struct {
 	trackableActionCmdFlags
+
 	graceful           bool
 	reboot             bool
 	insecure           bool

@@ -34,6 +34,7 @@ func (suite *MachineConfigSuite) SuiteName() string {
 // SetupTest ...
 func (suite *MachineConfigSuite) SetupTest() {
 	var err error
+
 	suite.savedCwd, err = os.Getwd()
 	suite.Require().NoError(err)
 }

@@ -101,7 +101,6 @@ func handle(ctx context.Context, err error) {
 	rebootCmd := int(emergency.RebootCmd.Load())
 
 	var rebootErr runtime.RebootError
-
 	if errors.As(err, &rebootErr) {
 		// not a failure, but wrapped reboot command
 		rebootCmd = rebootErr.Cmd
@@ -207,6 +206,7 @@ func runEntrypoint(ctx context.Context, c *v1alpha1runtime.Controller) error {
 	defer cancel()
 
 	drainer := runtime.NewDrainer()
+
 	defer func() {
 		drainCtx, drainCtxCancel := context.WithTimeout(context.Background(), time.Second*10)
 		defer drainCtxCancel()

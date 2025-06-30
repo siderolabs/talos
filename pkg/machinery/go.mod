@@ -23,14 +23,14 @@ require (
 	github.com/google/cel-go v0.25.0
 	github.com/hashicorp/go-multierror v1.1.1
 	github.com/hexops/gotextdiff v1.0.3
-	github.com/jsimonetti/rtnetlink/v2 v2.0.3
+	github.com/jsimonetti/rtnetlink/v2 v2.0.5
 	github.com/mdlayher/ethtool v0.4.0
 	github.com/opencontainers/runtime-spec v1.2.1
 	github.com/planetscale/vtprotobuf v0.6.1-0.20241121165744-79df5c4772f2
 	github.com/ryanuber/go-glob v1.0.0
 	github.com/santhosh-tekuri/jsonschema/v5 v5.3.1
 	github.com/siderolabs/crypto v0.6.0
-	github.com/siderolabs/gen v0.8.3
+	github.com/siderolabs/gen v0.8.4
 	github.com/siderolabs/go-api-signature v0.3.6
 	github.com/siderolabs/go-pointer v1.0.1
 	github.com/siderolabs/net v0.4.0
@@ -38,7 +38,7 @@ require (
 	github.com/stretchr/testify v1.10.0
 	google.golang.org/genproto/googleapis/api v0.0.0-20250603155806-513f23925822
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20250603155806-513f23925822
-	google.golang.org/grpc v1.72.2
+	google.golang.org/grpc v1.73.0
 	google.golang.org/protobuf v1.36.6
 	gopkg.in/yaml.v3 v3.0.1
 )
@@ -75,7 +75,7 @@ require (
 	golang.org/x/crypto v0.38.0 // indirect
 	golang.org/x/exp v0.0.0-20250128182459-e0ece0dbea4c // indirect
 	golang.org/x/net v0.40.0 // indirect
-	golang.org/x/sync v0.14.0 // indirect
+	golang.org/x/sync v0.15.0 // indirect
 	golang.org/x/sys v0.33.0 // indirect
 	golang.org/x/text v0.25.0 // indirect
 	golang.org/x/time v0.11.0 // indirect

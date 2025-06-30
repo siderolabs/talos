@@ -48,7 +48,6 @@ func (g *GCP) getMetadata(ctx context.Context) (*MetadataConfig, error) {
 		meta MetadataConfig
 		err  error
 	)
-
 	if meta.ProjectID, err = metadata.ProjectIDWithContext(ctx); err != nil {
 		return nil, err
 	}

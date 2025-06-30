@@ -48,6 +48,7 @@ var (
 //	schemaMeta: v1alpha1/ExtensionServiceConfig
 type ServiceConfigV1Alpha1 struct {
 	meta.Meta `yaml:",inline"`
+
 	//   description: |
 	//     Name of the extension service.
 	//   schemaRequired: true

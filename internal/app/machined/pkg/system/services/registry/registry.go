@@ -267,6 +267,7 @@ func getManifestData(ctx context.Context, store content.Store, ref reference.Can
 
 type canonical struct {
 	reference.NamedTagged
+
 	digest digest.Digest
 }
 

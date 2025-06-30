@@ -69,7 +69,6 @@ func KubeletCSRNotApprovedCheck(ctx context.Context, r controller.Reader, logger
 	}
 
 	var netError *net.OpError
-
 	if !errors.As(err, &netError) {
 		// not our error
 		return nil, nil

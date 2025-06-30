@@ -113,6 +113,7 @@ func AssembleNative(srcPath, dstPath string, sections []Section) error {
 
 	type peSectionWithPath struct {
 		pe.Section
+
 		SourcePath string
 	}
 

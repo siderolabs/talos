@@ -57,6 +57,7 @@ const maxSwapVolumeNameLength = constants.PartitionLabelLength - len(constants.S
 //	schemaMeta: v1alpha1/SwapVolumeConfig
 type SwapVolumeConfigV1Alpha1 struct {
 	meta.Meta `yaml:",inline"`
+
 	//   description: |
 	//     Name of the volume.
 	//

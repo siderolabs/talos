@@ -118,7 +118,8 @@ func (suite *CRISuite) SetupSuite() {
 
 	go func() {
 		defer suite.containerdWg.Done()
-		defer suite.containerdRunner.Close()      //nolint:errcheck
+		defer suite.containerdRunner.Close() //nolint:errcheck
+
 		suite.containerdRunner.Run(MockEventSink) //nolint:errcheck
 	}()
 

@@ -118,6 +118,7 @@ func (suite *ProcessSuite) TestRunRestartFailed() {
 
 	go func() {
 		defer wg.Done()
+
 		suite.Assert().NoError(r.Run(MockEventSink(suite.T())))
 	}()
 

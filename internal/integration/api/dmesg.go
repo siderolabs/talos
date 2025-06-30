@@ -105,6 +105,7 @@ DrainLoop:
 		select {
 		case msg, ok := <-respCh:
 			logCount++
+
 			suite.Require().True(ok)
 			suite.Assert().NotEmpty(msg.Bytes)
 		case <-time.After(200 * time.Millisecond):

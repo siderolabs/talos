@@ -128,7 +128,7 @@ type GoalState struct {
 	XMLName xml.Name `xml:"GoalState"`
 	Xsi     string   `xml:"xsi,attr"`
 	Xsd     string   `xml:"xsd,attr"`
-	WAAgent
+	WAAgent          //nolint:embeddedstructfieldcheck
 }
 
 // Health is the response from the local machine to Azure to denote current
@@ -137,7 +137,7 @@ type Health struct {
 	XMLName xml.Name `xml:"Health"`
 	Xsi     string   `xml:"xmlns:xsi,attr"`
 	Xsd     string   `xml:"xmlns:xsd,attr"`
-	WAAgent
+	WAAgent          //nolint:embeddedstructfieldcheck
 }
 
 // WAAgent contains the meat of the data format that is passed between the

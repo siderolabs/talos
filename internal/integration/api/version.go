@@ -77,6 +77,7 @@ func (suite *VersionSuite) TestSameVersionCluster() {
 		time.Minute,
 	).Retry(func() error {
 		var e error
+
 		v, e = suite.Client.Version(ctx)
 
 		return retry.ExpectedError(e)

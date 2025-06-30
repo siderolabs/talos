@@ -15,6 +15,7 @@ import (
 // TermUIWrapper is a custom tview component that wraps a legacy termui component and draws it.
 type TermUIWrapper struct {
 	*tview.Box
+
 	termUIDrawable termui.Drawable
 }
 

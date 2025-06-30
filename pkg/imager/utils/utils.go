@@ -3,4 +3,6 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 // Package utils contains small utilities used by the imager.
+//
+//nolint:revive
 package utils

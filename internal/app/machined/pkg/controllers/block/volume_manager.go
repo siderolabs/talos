@@ -392,8 +392,8 @@ func (ctrl *VolumeManagerController) Run(ctx context.Context, r controller.Runti
 			); err != nil {
 				volumeStatus.TypedSpec().PreFailPhase = volumeStatus.TypedSpec().Phase
 				volumeStatus.TypedSpec().Phase = block.VolumePhaseFailed
-				volumeStatus.TypedSpec().ErrorMessage = err.Error()
 
+				volumeStatus.TypedSpec().ErrorMessage = err.Error()
 				if xerrors.TagIs[volumes.Retryable](err) {
 					shouldRetry = true
 				}

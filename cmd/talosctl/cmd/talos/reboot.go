@@ -18,6 +18,7 @@ import (
 
 var rebootCmdFlags struct {
 	trackableActionCmdFlags
+
 	mode string
 }
 

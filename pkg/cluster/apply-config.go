@@ -57,7 +57,6 @@ func (s *APIBootstrapper) ApplyConfig(ctx context.Context, nodes []provision.Nod
 
 			return nil
 		}
-
 		if err := retry.Constant(2*time.Minute, retry.WithUnits(250*time.Millisecond), retry.WithJitter(50*time.Millisecond)).Retry(configureNode); err != nil {
 			return err
 		}

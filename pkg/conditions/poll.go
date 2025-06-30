@@ -35,6 +35,7 @@ func (p *pollingCondition) String() string {
 	lastErr := "..."
 
 	p.lastErrMu.Lock()
+
 	if p.lastErrSet {
 		if p.lastErr != nil {
 			lastErr = p.lastErr.Error()
@@ -42,6 +43,7 @@ func (p *pollingCondition) String() string {
 			lastErr = OK
 		}
 	}
+
 	p.lastErrMu.Unlock()
 
 	return fmt.Sprintf("%s: %s", p.description, lastErr)
@@ -68,7 +70,6 @@ func (p *pollingCondition) Wait(ctx context.Context) error {
 
 			return err
 		}()
-
 		if err == nil || err == ErrSkipAssertion {
 			return nil
 		}

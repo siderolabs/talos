@@ -51,8 +51,10 @@ func NewReader(readCtx context.Context, source *os.File) *Reader {
 // Read implements io.Reader interface.
 func (r *Reader) Read(p []byte) (n int, err error) {
 	r.mu.Lock()
+
 	if r.closed {
 		err = io.ErrClosedPipe
+
 		r.mu.Unlock()
 
 		return
@@ -61,6 +63,7 @@ func (r *Reader) Read(p []byte) (n int, err error) {
 	if !r.notifyStarted {
 		r.startNotify()
 	}
+
 	r.mu.Unlock()
 
 	select {

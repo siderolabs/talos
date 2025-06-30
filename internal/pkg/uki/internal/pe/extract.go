@@ -12,10 +12,11 @@ import (
 
 // AssetInfo contains the kernel, initrd, and cmdline from a PE file.
 type AssetInfo struct {
+	io.Closer
+
 	Kernel  io.Reader
 	Initrd  io.Reader
 	Cmdline io.Reader
-	io.Closer
 }
 
 // Extract extracts the kernel, initrd, and cmdline from a PE file.

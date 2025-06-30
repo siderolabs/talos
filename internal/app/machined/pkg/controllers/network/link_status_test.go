@@ -180,7 +180,6 @@ func (suite *LinkStatusSuite) TestInterfaceHwInfo() {
 			return retry.ExpectedError(errNoInterfaces)
 		},
 	)
-
 	if errors.Is(err, errNoInterfaces) {
 		suite.T().Skip(err.Error())
 	}

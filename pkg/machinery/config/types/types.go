@@ -3,6 +3,8 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 // Package types imports all configuration document types to register them.
+//
+//nolint:revive
 package types
 
 import (

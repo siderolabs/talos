@@ -57,6 +57,7 @@ func (l *Local) GetConnection(ctx context.Context, _ string) (context.Context, *
 	}
 
 	var err error
+
 	l.conn, err = grpc.NewClient(
 		"unix:"+l.socketPath,
 		grpc.WithTransportCredentials(insecure.NewCredentials()),

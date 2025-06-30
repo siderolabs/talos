@@ -152,7 +152,6 @@ func GenerateConfigBundle(genOptions []generate.Option,
 
 		return nil
 	}
-
 	if err := addConfigPatch(configPatch, bundle.WithPatch); err != nil {
 		return nil, err
 	}

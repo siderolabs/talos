@@ -10,7 +10,6 @@ spec:
 apiVersion: v1
 kind: Pod
 metadata:
-  creationTimestamp: null
   name: test1
 spec:
   containers:
@@ -68,7 +67,6 @@ spec:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  creationTimestamp: null
   name: test1
 spec:
   selector:
@@ -77,7 +75,6 @@ spec:
   strategy: {}
   template:
     metadata:
-      creationTimestamp: null
       labels:
         app: test
     spec:
@@ -107,7 +104,6 @@ status: {}
 apiVersion: apps/v1
 kind: DaemonSet
 metadata:
-  creationTimestamp: null
   name: test2
 spec:
   selector:
@@ -115,7 +111,6 @@ spec:
       app: test
   template:
     metadata:
-      creationTimestamp: null
       labels:
         app: test
     spec:
@@ -159,7 +154,6 @@ spec:
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
-  creationTimestamp: null
   name: test3
 spec:
   selector:
@@ -168,7 +162,6 @@ spec:
   serviceName: test
   template:
     metadata:
-      creationTimestamp: null
       labels:
         app: test
     spec:
@@ -210,19 +203,16 @@ spec:
 apiVersion: batch/v1
 kind: CronJob
 metadata:
-  creationTimestamp: null
   name: test4
   namespace: testns
 spec:
   jobTemplate:
     metadata:
-      creationTimestamp: null
       labels:
         app: test
     spec:
       template:
         metadata:
-          creationTimestamp: null
           labels:
             app: test
         spec:
@@ -261,13 +251,11 @@ spec:
 apiVersion: batch/v1
 kind: Job
 metadata:
-  creationTimestamp: null
   name: test5
   namespace: testns2
 spec:
   template:
-    metadata:
-      creationTimestamp: null
+    metadata: {}
     spec:
       containers:
         - image: alpine:3

@@ -156,6 +156,7 @@ func (s *Server) Register(obj *grpc.Server) {
 // modeWrapper overrides RequiresInstall() based on actual installed status.
 type modeWrapper struct {
 	runtime.Mode
+
 	installed bool
 }
 
@@ -787,6 +788,7 @@ func (s *Server) Copy(req *machine.CopyRequest, obj machine.MachineService_CopyS
 	go func() {
 		//nolint:errcheck
 		defer pw.Close()
+
 		errCh <- archiver.TarGz(ctx, path, pw)
 	}()
 

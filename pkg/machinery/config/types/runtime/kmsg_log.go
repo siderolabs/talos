@@ -48,6 +48,7 @@ var (
 //	schemaMeta: v1alpha1/KmsgLogConfig
 type KmsgLogV1Alpha1 struct {
 	meta.Meta `yaml:",inline"`
+
 	//   description: |
 	//     Name of the config document.
 	MetaName string `yaml:"name"`

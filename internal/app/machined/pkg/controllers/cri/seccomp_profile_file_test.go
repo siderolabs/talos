@@ -126,5 +126,6 @@ func TestSeccompProfileFileSuite(t *testing.T) {
 
 type CRISeccompProfileFileSuite struct {
 	ctest.DefaultSuite
+
 	seccompProfilesDirectory string
 }

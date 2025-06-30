@@ -143,12 +143,16 @@ func handleConn(ctx context.Context, conn *net.UnixConn, mu *sync.Mutex, ours, t
 	}
 
 	mu.Lock()
+
 	*ours = conn
+
 	mu.Unlock()
 
 	defer func() {
 		mu.Lock()
+
 		*ours = nil
+
 		mu.Unlock()
 	}()
 
@@ -182,7 +186,9 @@ func handleConn(ctx context.Context, conn *net.UnixConn, mu *sync.Mutex, ours, t
 
 		for range 10 {
 			mu.Lock()
+
 			w = *theirs
+
 			mu.Unlock()
 
 			if w != nil {

@@ -105,7 +105,6 @@ func Pull(ctx context.Context, registryBuilder RegistriesBuilder, client *contai
 			containerd.WithChildLabelMap(images.ChildGCLabelsFilterLayers),
 		); err != nil {
 			err = fmt.Errorf("failed to pull image %q: %w", ref, err)
-
 			if errdefs.IsNotFound(err) {
 				return err
 			}

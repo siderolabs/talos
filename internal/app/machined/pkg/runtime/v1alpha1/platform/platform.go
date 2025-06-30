@@ -161,7 +161,6 @@ func FireEvent(ctx context.Context, p runtime.Platform, e Event) {
 		}
 
 		eventErr := platType.FireEvent(ctx, emEvent)
-
 		if eventErr != nil {
 			log.Printf("failed sending event: %s", eventErr)
 		}

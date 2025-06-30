@@ -73,7 +73,9 @@ func (mock *mockOperator) Run(ctx context.Context, notifyCh chan<- struct{}) {
 
 	{
 		runningOperatorsMu.Lock()
+
 		runningOperators[mock.Prefix()] = mock
+
 		runningOperatorsMu.Unlock()
 	}
 
@@ -463,7 +465,9 @@ func (suite *OperatorSpecSuite) TestOperatorOutputs() {
 
 	// pretend dhcp has some specs ready
 	runningOperatorsMu.Lock()
+
 	dhcpMock := runningOperators["dhcp4/eth0"]
+
 	runningOperatorsMu.Unlock()
 
 	dhcpMock.mu.Lock()

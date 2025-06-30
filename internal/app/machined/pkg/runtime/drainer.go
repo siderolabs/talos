@@ -30,6 +30,7 @@ type Drainer struct {
 // Drain initializes drain sequence waits for it to succeed until the context is canceled.
 func (d *Drainer) Drain(ctx context.Context) error {
 	d.subscriptionsMu.Lock()
+
 	if d.draining {
 		d.subscriptionsMu.Unlock()
 
@@ -44,6 +45,7 @@ func (d *Drainer) Drain(ctx context.Context) error {
 		default:
 		}
 	}
+
 	d.subscriptionsMu.Unlock()
 
 	for {

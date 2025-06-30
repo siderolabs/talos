@@ -52,6 +52,7 @@ func PrintNode(name string, w io.Writer, schema *Schema, node, parent *cgroups.N
 
 	rowData, err := schema.Render(struct {
 		*cgroups.Node
+
 		Parent *cgroups.Node
 	}{
 		Node:   node,

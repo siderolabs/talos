@@ -119,7 +119,8 @@ func (suite *ContainerdSuite) SetupSuite() {
 
 	go func() {
 		defer suite.containerdWg.Done()
-		defer suite.containerdRunner.Close()      //nolint:errcheck
+		defer suite.containerdRunner.Close() //nolint:errcheck
+
 		suite.containerdRunner.Run(MockEventSink) //nolint:errcheck
 	}()
 
@@ -381,6 +382,7 @@ func (suite *ContainerdSuite) TestStopSigKill() {
 	}()
 
 	time.Sleep(50 * time.Millisecond)
+
 	select {
 	case <-done:
 		suite.Assert().Fail("container should be still running")

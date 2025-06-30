@@ -260,6 +260,7 @@ func deleteStructFrom(searchIn reflect.Value, searchFor string, path []string, k
 
 type namedSelector struct {
 	selector
+
 	name string
 }
 

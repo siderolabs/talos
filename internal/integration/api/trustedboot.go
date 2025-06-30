@@ -85,6 +85,7 @@ func (suite *TrustedBootSuite) TestTrustedBootState() {
 	suite.Require().NoError(err)
 
 	var dmesg bytes.Buffer
+
 	_, err = io.Copy(bufio.NewWriter(&dmesg), logReader)
 	suite.Require().NoError(err)
 

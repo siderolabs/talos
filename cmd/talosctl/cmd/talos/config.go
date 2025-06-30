@@ -525,6 +525,7 @@ func configInfoCommand(config *clientconfig.Config, now time.Time) (string, erro
 	}
 
 	var res bytes.Buffer
+
 	err = configInfoCmdTemplate.Execute(&res, info)
 
 	return res.String() + "\n", err

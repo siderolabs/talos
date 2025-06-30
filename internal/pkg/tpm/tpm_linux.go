@@ -20,7 +20,6 @@ import (
 // Tries first /dev/tpmrm0 and then /dev/tpm0.
 func Open() (transport.TPMCloser, error) {
 	tpm, err := linuxtpm.Open("/dev/tpmrm0")
-
 	if errors.Is(err, os.ErrNotExist) {
 		tpm, err = linuxtpm.Open("/dev/tpm0")
 	}

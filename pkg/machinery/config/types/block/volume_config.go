@@ -54,6 +54,7 @@ var (
 //	schemaMeta: v1alpha1/VolumeConfig
 type VolumeConfigV1Alpha1 struct {
 	meta.Meta `yaml:",inline"`
+
 	//   description: |
 	//     Name of the volume.
 	MetaName string `yaml:"name"`

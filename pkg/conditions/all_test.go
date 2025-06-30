@@ -60,13 +60,16 @@ func (suite *AllSuite) TestString() {
 	}()
 
 	suite.Require().Equal("A, B", waiter.String())
+
 	conds[0].(*MockCondition).errCh <- nil
+
 	time.Sleep(50 * time.Millisecond)
 
 	// done waiting for 'A', so description should now be shorter
 	suite.Require().Equal("B", waiter.String())
 
 	conds[1].(*MockCondition).errCh <- nil
+
 	<-done
 }
 
@@ -93,6 +96,7 @@ func (suite *AllSuite) TestFlatten() {
 	}()
 
 	conds1[0].(*MockCondition).errCh <- nil
+
 	conds2[1].(*MockCondition).errCh <- nil
 
 	time.Sleep(50 * time.Millisecond)

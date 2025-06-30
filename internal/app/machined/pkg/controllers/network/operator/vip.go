@@ -366,7 +366,6 @@ func (vip *VIP) markAsLeader(ctx context.Context, notifyCh chan<- struct{}, lead
 
 	if leader {
 		handlerErr = vip.handler.Acquire(ctx)
-
 		if handlerErr != nil {
 			// if failed to acquire, we are not a leader, we will resign from the election
 			// so don't mark as leader, so that Talos doesn't announce IPs on the host

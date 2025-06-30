@@ -159,7 +159,6 @@ func (suite *TinkSuite) TestDeploy() {
 	suite.Require().NoError(err)
 
 	readyErr := suite.waitForEndpointReady(talosEndpoint)
-
 	if readyErr != nil {
 		suite.LogPodLogs(ctx, namespace, ss+"-0")
 	}
@@ -190,7 +189,6 @@ func (suite *TinkSuite) TestDeploy() {
 	suite.T().Logf("talosconfig = %s", string(ensure.Value(talosconfig.Bytes())))
 
 	readyErr = suite.waitForEndpointReady(talosEndpoint)
-
 	if readyErr != nil {
 		suite.LogPodLogs(ctx, namespace, ss+"-0")
 	}

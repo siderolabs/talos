@@ -40,6 +40,7 @@ const (
 // MenuButton creates a new menu button.
 type MenuButton struct {
 	*tview.Button
+
 	label  string
 	colors [4]tcell.Color
 	active bool

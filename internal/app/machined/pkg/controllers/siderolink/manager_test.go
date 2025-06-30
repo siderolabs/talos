@@ -33,6 +33,7 @@ import (
 
 func TestManagerSuite(t *testing.T) {
 	var m ManagerSuite
+
 	m.AfterSetup = func(suite *ctest.DefaultSuite) {
 		lis, err := net.Listen("tcp", "localhost:0")
 		suite.Require().NoError(err)
@@ -56,6 +57,7 @@ func TestManagerSuite(t *testing.T) {
 
 type ManagerSuite struct {
 	ctest.DefaultSuite
+
 	s *grpc.Server
 }
 

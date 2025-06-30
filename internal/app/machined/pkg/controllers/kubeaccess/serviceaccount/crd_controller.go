@@ -301,8 +301,8 @@ func (t *CRDController) syncHandler(ctx context.Context, key string) error {
 	}
 
 	secret, err := t.secretsLister.Secrets(namespace).Get(name)
-	secretNotFound := kubeerrors.IsNotFound(err)
 
+	secretNotFound := kubeerrors.IsNotFound(err)
 	if err != nil && !secretNotFound {
 		return err
 	}

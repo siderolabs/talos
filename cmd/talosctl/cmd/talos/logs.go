@@ -151,6 +151,7 @@ func (slicer *lineSlicer) getPipe(node string) *io.PipeWriter {
 	pipe, ok := slicer.pipes[node]
 	if !ok {
 		var piper *io.PipeReader
+
 		piper, pipe = io.Pipe()
 
 		slicer.wg.Add(1)
@@ -183,6 +184,7 @@ func (slicer *lineSlicer) run(stream machine.MachineService_LogsClient) {
 			if err == io.EOF || client.StatusCode(err) == codes.Canceled {
 				return
 			}
+
 			slicer.errCh <- err
 
 			return

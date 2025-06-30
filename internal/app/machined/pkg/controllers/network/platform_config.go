@@ -580,7 +580,6 @@ func (ctrl *PlatformConfigController) runWithRestarts(ctx context.Context, logge
 
 	for ctx.Err() == nil {
 		var err error
-
 		if err = ctrl.runWithPanicHandler(logger, f); err == nil {
 			// operator finished without an error
 			return

@@ -18,6 +18,7 @@ import (
 
 var shutdownCmdFlags struct {
 	trackableActionCmdFlags
+
 	force bool
 }
 

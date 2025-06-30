@@ -124,7 +124,8 @@ func (suite *ContainerdSuite) SetupSuite() {
 
 	go func() {
 		defer suite.containerdWg.Done()
-		defer suite.containerdRunner.Close()      //nolint:errcheck
+		defer suite.containerdRunner.Close() //nolint:errcheck
+
 		suite.containerdRunner.Run(MockEventSink) //nolint:errcheck
 	}()
 
@@ -171,6 +172,7 @@ func (suite *ContainerdSuite) run(runners ...runner.Runner) {
 
 			defer func() { runningCh <- false }()
 			defer suite.containersWg.Done()
+
 			suite.Require().NoError(r.Run(runningSink))
 		}(r)
 	}

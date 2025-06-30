@@ -221,8 +221,8 @@ func hostDirectory(host string) string {
 
 // HostEntry describes the configuration for a single host.
 type HostEntry struct {
-	Host string
-	HostToml
+	Host     string
+	HostToml //nolint:embeddedstructfieldcheck
 }
 
 // HostsConfiguration describes the configuration of `hosts.toml` file in the format not compatible with TOML.
@@ -310,7 +310,7 @@ func (hc *HostsConfiguration) RenderTOML() ([]byte, error) {
 type HostsTomlServer struct {
 	// top-level entry is used as the last one in the fallback chain.
 	Server   string `toml:"server,omitempty"`
-	HostToml        // embedded, matches the server
+	HostToml        //nolint:embeddedstructfieldcheck       // embedded, matches the server
 }
 
 // HostsTomlHost describes the `hosts.toml` file entry for hosts.

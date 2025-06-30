@@ -18,6 +18,7 @@ import (
 // and provided template string.
 type NodeIDKeyHandler struct {
 	KeyHandler
+
 	partitionLabel string
 	getSystemInfo  helpers.SystemInformationGetter
 }

@@ -32,6 +32,7 @@ import (
 
 var editCmdFlags struct {
 	helpers.Mode
+
 	namespace        string
 	dryRun           bool
 	configTryTimeout time.Duration

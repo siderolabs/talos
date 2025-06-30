@@ -57,6 +57,7 @@ var spinnerStatusSymbols = []string{
 // Spinner a unicode spinner primitive.
 type Spinner struct {
 	*tview.Box
+
 	spinner  []string
 	label    string
 	index    int
@@ -99,6 +100,7 @@ func (s *Spinner) Stop(success bool) <-chan struct{} {
 	}
 
 	s.ticker.Stop()
+
 	s.shutdown <- struct{}{}
 
 	return s.stopped

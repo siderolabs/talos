@@ -35,6 +35,7 @@ import (
 // It is only kept here for compatibility purposes, proper API is to query `block.Disk` resources.
 type Server struct {
 	storage.UnimplementedStorageServiceServer
+
 	Controller      runtime.Controller
 	MaintenanceMode bool
 }

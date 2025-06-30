@@ -35,6 +35,7 @@ func TestLoadJSON(t *testing.T) {
 	assert.Equal(t, p[0].Kind(), "add")
 
 	var path string
+
 	path, err = p[0].Path()
 
 	require.NoError(t, err)
@@ -52,12 +53,14 @@ func TestLoadYAML(t *testing.T) {
 	assert.Equal(t, p[0].Kind(), "add")
 
 	var path string
+
 	path, err = p[0].Path()
 
 	require.NoError(t, err)
 	assert.Equal(t, path, "/some/path")
 
 	var v any
+
 	v, err = p[0].ValueInterface()
 	require.NoError(t, err)
 	assert.Equal(t, v, []any{"a", "b", "c"})

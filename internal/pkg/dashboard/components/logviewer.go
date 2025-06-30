@@ -12,6 +12,7 @@ import (
 // LogViewer represents the logs widget.
 type LogViewer struct {
 	tview.Grid
+
 	logs tview.TextView
 }
 

@@ -109,6 +109,7 @@ func (apiSuite *APISuite) DiscoverNodes(ctx context.Context) cluster.Info {
 	var err error
 
 	var ctxCancel context.CancelFunc
+
 	ctx, ctxCancel = context.WithTimeout(ctx, time.Minute)
 
 	defer ctxCancel()

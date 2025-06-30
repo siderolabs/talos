@@ -119,7 +119,6 @@ func gatherValidationErrors(t *testing.T, err error) []string {
 	require.ErrorAs(t, err, &validationErr)
 
 	messages := make([]string, 0, len(validationErr.Causes)+1)
-
 	if len(validationErr.Causes) == 0 {
 		messages = append(messages, validationErr.Error())
 	}

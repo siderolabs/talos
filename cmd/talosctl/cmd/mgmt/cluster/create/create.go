@@ -645,7 +645,6 @@ func create(ctx context.Context, ops createOps) error {
 
 		return nil
 	}
-
 	if err = addConfigPatch(cOps.configPatch, bundle.WithPatch); err != nil {
 		return err
 	}

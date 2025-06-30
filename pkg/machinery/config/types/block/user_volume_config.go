@@ -57,6 +57,7 @@ const maxUserVolumeNameLength = constants.PartitionLabelLength - len(constants.U
 //	schemaMeta: v1alpha1/UserVolumeConfig
 type UserVolumeConfigV1Alpha1 struct {
 	meta.Meta `yaml:",inline"`
+
 	//   description: |
 	//     Name of the volume.
 	//

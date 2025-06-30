@@ -43,6 +43,7 @@ var (
 //	schemaMeta: v1alpha1/KubeSpanEndpoints
 type KubespanEndpointsConfigV1Alpha1 struct {
 	meta.Meta `yaml:",inline"`
+
 	//   description: |
 	//     A list of extra Wireguard endpoints to announce from this machine.
 	//

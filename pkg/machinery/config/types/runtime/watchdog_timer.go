@@ -52,6 +52,7 @@ const (
 //	schemaMeta: v1alpha1/WatchdogTimerConfig
 type WatchdogTimerV1Alpha1 struct {
 	meta.Meta `yaml:",inline"`
+
 	//   description: |
 	//     Path to the watchdog device.
 	//   examples:

@@ -32,6 +32,7 @@ import (
 
 var upgradeCmdFlags struct {
 	trackableActionCmdFlags
+
 	upgradeImage string
 	rebootMode   string
 	preserve     bool

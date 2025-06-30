@@ -19,11 +19,12 @@ preface = """
         title = "Component Updates"
         description = """\
 Linux: 6.12.35
-Kubernetes: 1.33.1
+Kubernetes: 1.34.0-alpha.2
 runc: 1.3.0
 containerd: 2.1.3
 Flannel CNI plugin: 1.7.1-flannel1
 Flannel: 0.27.0
+CoreDNS: 1.12.2
 
 Talos is built with Go 1.24.4.
 """

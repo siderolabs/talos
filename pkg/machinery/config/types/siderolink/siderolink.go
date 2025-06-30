@@ -53,6 +53,7 @@ var (
 //	schemaMeta: v1alpha1/SideroLinkConfig
 type ConfigV1Alpha1 struct {
 	meta.Meta `yaml:",inline"`
+
 	//   description: |
 	//     SideroLink API URL to connect to.
 	//   examples:

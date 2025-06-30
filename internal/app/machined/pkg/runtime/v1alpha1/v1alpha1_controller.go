@@ -89,7 +89,6 @@ func (c *Controller) setupLogging() error {
 		Value: "on\n",
 	}); err != nil {
 		var serr syscall.Errno
-
 		if !(errors.As(err, &serr) && serr == syscall.EINVAL) { // ignore EINVAL which is returned when kernel arg is set
 			log.Printf("failed setting kernel.printk_devkmsg: %s, error ignored", err)
 		}

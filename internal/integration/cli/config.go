@@ -144,6 +144,7 @@ func (suite *TalosconfigSuite) TestNew() {
 	stdout, _ := suite.RunCLI([]string{"version", "--json", "--nodes", suite.RandomDiscoveredNodeInternalIP()})
 
 	var v machineapi.Version
+
 	err := protojson.Unmarshal([]byte(stdout), &v)
 	suite.Require().NoError(err)
 

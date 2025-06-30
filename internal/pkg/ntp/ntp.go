@@ -223,7 +223,6 @@ func (syncer *Syncer) Run(ctx context.Context) {
 
 		if resp != nil && !spike {
 			err = syncer.adjustTime(resp.ClockOffset, resp.Leap, lastSyncServer, pollInterval, rtcClock)
-
 			if err == nil {
 				if !syncer.timeSyncNotified {
 					// successful first time sync, notify about it

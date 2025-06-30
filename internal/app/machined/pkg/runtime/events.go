@@ -31,6 +31,7 @@ type Event struct {
 // EventInfo unifies event and queue information for the WatchFunc.
 type EventInfo struct {
 	Event
+
 	Backlog int
 }
 

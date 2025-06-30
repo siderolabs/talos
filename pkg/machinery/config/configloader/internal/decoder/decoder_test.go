@@ -36,6 +36,7 @@ func (m Meta) APIVersion() string {
 
 type Mock struct {
 	Meta
+
 	Test bool `yaml:"test"`
 }
 
@@ -45,6 +46,7 @@ func (m *Mock) Clone() config.Document {
 
 type MockV2 struct {
 	Meta
+
 	Slice []Mock           `yaml:"slice"`
 	Map   map[string]*Mock `yaml:"map"`
 }
@@ -55,6 +57,7 @@ func (m *MockV2) Clone() config.Document {
 
 type MockV3 struct {
 	Meta
+
 	Omit bool `yaml:"omit,omitempty"`
 }
 
@@ -73,6 +76,7 @@ func (m *KubeletConfig) Clone() config.Document {
 
 type MockUnstructured struct {
 	Meta
+
 	Pods []v1alpha1.Unstructured `yaml:"pods,omitempty"`
 }
 

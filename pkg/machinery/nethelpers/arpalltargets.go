@@ -9,7 +9,7 @@ import "fmt"
 // ARPAllTargets is an ARP targets mode.
 type ARPAllTargets uint32
 
-// ARPAllTargets contants.
+// ARPAllTargets constants.
 //
 //structprotogen:gen_enum
 const (

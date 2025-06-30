@@ -108,6 +108,7 @@ func (suite *KubernetesCertSANsSuite) TestReconcile() {
 
 	ctest.UpdateWithConflicts(suite, rootSecrets, func(rootSecrets *secrets.KubernetesRoot) error {
 		var err error
+
 		rootSecrets.TypedSpec().Endpoint, err = url.Parse("https://some.other.url:6443/")
 
 		return err

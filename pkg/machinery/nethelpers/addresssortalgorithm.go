@@ -7,7 +7,7 @@ package nethelpers
 // AddressSortAlgorithm is an internal address sorting algorithm.
 type AddressSortAlgorithm int
 
-// AddressSortAlgorithm contants.
+// AddressSortAlgorithm constants.
 //
 //structprotogen:gen_enum
 const (

@@ -36,7 +36,6 @@ func NewState(statePath, provisionerName, clusterName string) (*State, error) {
 	}
 
 	_, err := os.Stat(s.statePath)
-
 	if err == nil {
 		return nil, fmt.Errorf(
 			"state directory %q already exists, is the cluster %q already running? remove cluster state with talosctl cluster destroy",

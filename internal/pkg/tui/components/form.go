@@ -236,6 +236,7 @@ func NewForm(app *tview.Application) *Form {
 // Form is a more flexible form component for tview lib.
 type Form struct {
 	*tview.Flex
+
 	form          *tview.Flex
 	buttons       *tview.Flex
 	formItems     []tview.FormItem

@@ -295,7 +295,6 @@ func (c *Client) Restart(ctx context.Context, namespace string, driver common.Co
 		Namespace: namespace,
 		Driver:    driver,
 	})
-
 	if err == nil {
 		_, err = FilterMessages(resp, err)
 	}
@@ -306,7 +305,6 @@ func (c *Client) Restart(ctx context.Context, namespace string, driver common.Co
 // Reset implements the proto.MachineServiceClient interface.
 func (c *Client) Reset(ctx context.Context, graceful, reboot bool) (err error) {
 	resp, err := c.MachineClient.Reset(ctx, &machineapi.ResetRequest{Graceful: graceful, Reboot: reboot})
-
 	if err == nil {
 		_, err = FilterMessages(resp, err)
 	}
@@ -324,7 +322,6 @@ func (c *Client) ResetGeneric(ctx context.Context, req *machineapi.ResetRequest)
 // ResetGenericWithResponse resets the machine and returns the response.
 func (c *Client) ResetGenericWithResponse(ctx context.Context, req *machineapi.ResetRequest) (*machineapi.ResetResponse, error) {
 	resp, err := c.MachineClient.Reset(ctx, req)
-
 	if err == nil {
 		_, err = FilterMessages(resp, err)
 	}
@@ -355,7 +352,6 @@ func (c *Client) RebootWithResponse(ctx context.Context, opts ...RebootMode) (*m
 	}
 
 	resp, err := c.MachineClient.Reboot(ctx, &req)
-
 	if err == nil {
 		_, err = FilterMessages(resp, err)
 	}
@@ -366,7 +362,6 @@ func (c *Client) RebootWithResponse(ctx context.Context, opts ...RebootMode) (*m
 // Rollback implements the proto.MachineServiceClient interface.
 func (c *Client) Rollback(ctx context.Context) (err error) {
 	resp, err := c.MachineClient.Rollback(ctx, &machineapi.RollbackRequest{})
-
 	if err == nil {
 		_, err = FilterMessages(resp, err)
 	}
@@ -377,7 +372,6 @@ func (c *Client) Rollback(ctx context.Context) (err error) {
 // Bootstrap implements the proto.MachineServiceClient interface.
 func (c *Client) Bootstrap(ctx context.Context, req *machineapi.BootstrapRequest) (err error) {
 	resp, err := c.MachineClient.Bootstrap(ctx, req)
-
 	if err == nil {
 		_, err = FilterMessages(resp, err)
 	}
@@ -411,7 +405,6 @@ func (c *Client) ShutdownWithResponse(ctx context.Context, opts ...ShutdownOptio
 	}
 
 	resp, err := c.MachineClient.Shutdown(ctx, &req)
-
 	if err == nil {
 		_, err = FilterMessages(resp, err)
 	}
@@ -730,7 +723,6 @@ func (c *Client) ClusterHealthCheck(ctx context.Context, waitTimeout time.Durati
 // EtcdRemoveMemberByID removes a node from etcd cluster by etcd member ID.
 func (c *Client) EtcdRemoveMemberByID(ctx context.Context, req *machineapi.EtcdRemoveMemberByIDRequest, callOptions ...grpc.CallOption) error {
 	resp, err := c.MachineClient.EtcdRemoveMemberByID(ctx, req, callOptions...)
-
 	if err == nil {
 		_, err = FilterMessages(resp, err)
 	}
@@ -741,7 +733,6 @@ func (c *Client) EtcdRemoveMemberByID(ctx context.Context, req *machineapi.EtcdR
 // EtcdLeaveCluster makes node leave etcd cluster.
 func (c *Client) EtcdLeaveCluster(ctx context.Context, req *machineapi.EtcdLeaveClusterRequest, callOptions ...grpc.CallOption) error {
 	resp, err := c.MachineClient.EtcdLeaveCluster(ctx, req, callOptions...)
-
 	if err == nil {
 		_, err = FilterMessages(resp, err)
 	}
