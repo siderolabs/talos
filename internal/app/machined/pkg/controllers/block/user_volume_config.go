@@ -78,6 +78,20 @@ func (ctrl *UserVolumeConfigController) Run(ctx context.Context, r controller.Ru
 			return nil
 		}
 
+		// create a volume mount request for the root user volume mount point
+		// to keep it alive and prevent it from being torn down
+		if err := safe.WriterModify(ctx, r,
+			block.NewVolumeMountRequest(block.NamespaceName, constants.UserVolumeMountPoint),
+			func(v *block.VolumeMountRequest) error {
+				v.TypedSpec().Requester = ctrl.Name()
+				v.TypedSpec().VolumeID = constants.UserVolumeMountPoint
+
+				return nil
+			},
+		); err != nil {
+			return fmt.Errorf("error creating volume mount request for user volume mount point: %w", err)
+		}
+
 		cfg, err := safe.ReaderGetByID[*config.MachineConfig](ctx, r, config.ActiveID)
 		if err != nil && !state.IsNotFoundError(err) {
 			return fmt.Errorf("error fetching machine configuration")
