@@ -276,6 +276,7 @@ description: Talos gRPC API reference.
     - [ExtensionServiceConfigFile](#talos.resource.definitions.runtime.ExtensionServiceConfigFile)
     - [ExtensionServiceConfigSpec](#talos.resource.definitions.runtime.ExtensionServiceConfigSpec)
     - [ExtensionServiceConfigStatusSpec](#talos.resource.definitions.runtime.ExtensionServiceConfigStatusSpec)
+    - [KernelCmdlineSpec](#talos.resource.definitions.runtime.KernelCmdlineSpec)
     - [KernelModuleSpecSpec](#talos.resource.definitions.runtime.KernelModuleSpecSpec)
     - [KernelParamSpecSpec](#talos.resource.definitions.runtime.KernelParamSpecSpec)
     - [KernelParamStatusSpec](#talos.resource.definitions.runtime.KernelParamStatusSpec)
@@ -5107,6 +5108,21 @@ ExtensionServiceConfigStatusSpec describes status of rendered extensions service
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | spec_version | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.runtime.KernelCmdlineSpec"></a>
+
+### KernelCmdlineSpec
+KernelCmdlineSpec presents kernel command line (contents of /proc/cmdline).
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| cmdline | [string](#string) |  |  |
 
 
 

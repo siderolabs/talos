@@ -42,6 +42,11 @@ message ExtensionServiceConfigStatusSpec {
   string spec_version = 1;
 }
 
+// KernelCmdlineSpec presents kernel command line (contents of /proc/cmdline).
+message KernelCmdlineSpec {
+  string cmdline = 1;
+}
+
 // KernelModuleSpecSpec describes Linux kernel module to load.
 message KernelModuleSpecSpec {
   string name = 1;

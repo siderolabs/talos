@@ -31,7 +31,7 @@ Talos is built with Go 1.24.4.
 
     [notes.macos-qemu]
         title = "Qemu provisioner on MacOS"
-                description = """\
+        description = """\
 On MacOS `talosctl cluster create` command now supports the Qemu provisioner in addition to the Docker provisioner.
 """
 
@@ -76,6 +76,12 @@ This implies that all image references should contain the tag, even if the image
         description = """\
 Talos now supports zswap, a compressed cache for swap pages.
 This feature can be enabled by using [ZswapConfig](https://www.talos.dev/v1.11/reference/configuration/block/zswapconfig/) document in the machine configuration.
+"""
+
+    [notes.cmdline]
+        title = "Kernel Command Line"
+        description = """\
+Talos now exposes the kernel command line as a KernelCmdline resource (`talosctl get cmdline`).
 """
 
 [make_deps]
