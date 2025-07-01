@@ -249,7 +249,7 @@ func (au *AWSUploader) registerAMI(ctx context.Context, region string, svc *ec2.
 		g.Go(func() error {
 			err = au.registerAMIArch(ctx, region, svc, arch, bucketName, uploader)
 			if err != nil {
-				return fmt.Errorf("error registering AMI for %s: %w", arch, err)
+				log.Printf("WARNING: aws: ignoring failure to upload AMI into %s/%s: %s", region, arch, err)
 			}
 
 			return nil
@@ -261,7 +261,7 @@ func (au *AWSUploader) registerAMI(ctx context.Context, region string, svc *ec2.
 
 //nolint:gocyclo
 func (au *AWSUploader) registerAMIArch(ctx context.Context, region string, svc *ec2.Client, arch, bucketName string, uploader *manager.Uploader) error {
-	err := retry.Constant(15*time.Minute, retry.WithUnits(time.Second), retry.WithErrorLogging(true)).RetryWithContext(ctx, func(ctx context.Context) error {
+	err := retry.Constant(30*time.Minute, retry.WithUnits(time.Second), retry.WithErrorLogging(true)).RetryWithContext(ctx, func(ctx context.Context) error {
 		source, err := os.Open(au.Options.AWSImage(arch))
 		if err != nil {
 			return err
@@ -285,7 +285,7 @@ func (au *AWSUploader) registerAMIArch(ctx context.Context, region string, svc *
 		return retry.ExpectedError(err)
 	})
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to upload image to the bucket: %w", err)
 	}
 
 	log.Printf("aws: import into %s/%s, image uploaded to S3", region, arch)
@@ -302,7 +302,7 @@ func (au *AWSUploader) registerAMIArch(ctx context.Context, region string, svc *
 		},
 	})
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to import snapshot: %w", err)
 	}
 
 	taskID := *resp.ImportTaskId
@@ -348,9 +348,7 @@ func (au *AWSUploader) registerAMIArch(ctx context.Context, region string, svc *
 		return retry.ExpectedErrorf("task status not found")
 	})
 	if err != nil {
-		log.Printf("WARNING: aws: ignoring failure to import snapshot into %s/%s: %s", region, arch, err)
-
-		return nil //nolint:nilerr
+		return fmt.Errorf("failed to wait for import task: %w", err)
 	}
 
 	log.Printf("aws: import into %s/%s, snapshot ID %q", region, arch, snapshotID)
@@ -370,7 +368,7 @@ func (au *AWSUploader) registerAMIArch(ctx context.Context, region string, svc *
 		},
 	})
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to describe images: %w", err)
 	}
 
 	for _, image := range imageResp.Images {
@@ -378,7 +376,7 @@ func (au *AWSUploader) registerAMIArch(ctx context.Context, region string, svc *
 			ImageId: image.ImageId,
 		})
 		if err != nil {
-			return err
+			return fmt.Errorf("failed to deregister image: %w", err)
 		}
 
 		log.Printf("aws: import into %s/%s, deregistered image ID %q", region, arch, *image.ImageId)
@@ -412,7 +410,7 @@ func (au *AWSUploader) registerAMIArch(ctx context.Context, region string, svc *
 
 	registerResp, err := svc.RegisterImage(ctx, registerReq)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to register image: %w", err)
 	}
 
 	imageID := *registerResp.ImageId
@@ -430,6 +428,9 @@ func (au *AWSUploader) registerAMIArch(ctx context.Context, region string, svc *
 		},
 		Attribute: aws.String("launchPermission"),
 	})
+	if err != nil {
+		return fmt.Errorf("failed to modify image attribute: %w", err)
+	}
 
 	pushResult(CloudImage{
 		Cloud:  "aws",
