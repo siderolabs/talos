@@ -1,20 +1,21 @@
 ---
-title: Getting Started with a Local Talos Cluster
+title: Getting Started
 weight: 30
 description: "A guide to setting up a Talos cluster"
 ---
 
 This guide walks you through creating a simple Talos cluster with one control plane node and one or more worker nodes. 
 
-If you're looking to set up a cluster with multiple control plane nodes, see [Production Notes](/website/content/v1.11/introduction/prodnotes).
+If you're looking to set up a cluster with multiple control plane nodes, see [Production Notes]({{< relref "prodnotes" >}}).
 
-**New to Talos?** Start with [Quickstart](/website/content/v1.11/introduction/quickstart) to create a local virtual cluster on your workstation.
+**New to Talos?** Start with [Quickstart]({{< relref "quickstart" >}}) to create a local virtual cluster on your workstation.
 
-**Planning for production?** See [Production Notes](/website/content/v1.11/introduction/prodnotes) for additional requirements and best practices.
+**Planning for production?** See [Production Notes]({{< relref "prodnotes" >}}) for additional requirements and best practices.
 
-**Installing on cloud or virtualized platforms?** Check out the [platform-specific guides](/website/content/v1.11/talos-guides/install) for installation methods tailored to different environments.
+**Installing on cloud or virtualized platforms?** Check out the [platform-specific guides]({{< relref "../talos-guides/install" >}}) for installation methods tailored to different environments.
 
-# Prerequisites
+
+## Prerequisites
 
 To create a Kubernetes cluster with Talos, you’ll need to:
 
@@ -27,13 +28,14 @@ To create a Kubernetes cluster with Talos, you’ll need to:
 brew install siderolabs/tap/talosctl
 ```
 
-Refer to the [talosctl installation guide](/website/content/v1.11/talos-guides/install/talosctl) for installation on other platforms.
+Refer to the [talosctl installation guide]({{< relref "../talos-guides/install/talosctl" >}}) for installation on other platforms.
     
 - **Ensure network access**: Your machines will need internet access to download the Talos installer and container images, sync time, and more.
 
 
-    If you’re working in a restricted network environment, check out the official documentation on using [registry proxies](/website/content/v1.11/talos-guides/configuration/pull-through-cache), local registries, or setting up an [air-gapped installation](/website/content/v1.11/advanced/air-gapped).
-# Talos Cluster Setup Overview
+    If you’re working in a restricted network environment, check out the official documentation on using [registry proxies]({{< relref "../talos-guides/configuration/pull-through-cache" >}}), local registries, or setting up an [air-gapped installation]({{< relref "../advanced/air-gapped" >}}).
+
+## Talos Cluster Setup Overview
 
 Every Talos cluster follows the same process, regardless of where you deploy it:
 
@@ -43,16 +45,16 @@ Every Talos cluster follows the same process, regardless of where you deploy it:
 4. **Connect** - Set up your local `talosctl` client
 5. **Bootstrap** - Initialize the Kubernetes cluster. 
 
-**Note**: You can also opt to use the Omni GUI to create a Talos cluster spanning different platforms, bare metal, cloud providers, and virtual machines.
+**Note**: You can also use [Omni](https://www.siderolabs.com/omni-signup/) to create a Talos cluster that spans multiple platforms, including bare metal, cloud providers, and virtual machines.
 
 Let's walk through each step and create a Talos cluster.
 
-# Step 1: Download The Talos Linux Image
+## Step 1: Download The Talos Linux Image
 
 Get the latest ISO for your architecture from our [Image factory](https://factory.talos.dev/).
 
 
-# Step 2: Boot Your Machine
+## Step 2: Boot Your Machine
 
 Boot your hardware using the ISO image you just downloaded. At this stage, you'll:
 
@@ -61,11 +63,11 @@ Boot your hardware using the ISO image you just downloaded. At this stage, you'l
 
 You’ll see the Talos dashboard once your hardware boots from the ISO image.
 
-**Note**: The ISO runs entirely in RAM and won't modify your disks until you apply a configuration**.**
+**Note:** The ISO runs entirely in RAM and won't modify your disks until you apply a configuration.
 
 **Troubleshooting network connectivity:** If your machine fails to establish a network connection after booting, you may need to add network drivers through system extensions. Add these extensions to your Talos image via the [Image factory](https://factory.talos.dev/), or see the [system extensions repository](https://github.com/siderolabs/extensions) for more information.
 
-# Step 3: Store Your Node IP Addresses in a Variable
+## Step 3: Store Your Node IP Addresses in a Variable
 
 To create variables for your machines’ IP addresses:
 
@@ -74,7 +76,7 @@ To create variables for your machines’ IP addresses:
 
 If you don’t have a display connected, retrieve the IP addresses from your DHCP server.
 
-![](https://lh7-rt.googleusercontent.com/docsz/AD_4nXf8GSw-N_xtOrf9SF5woCrykShYdR4viP50-5C0vrtAGwe6Y7s7W4nzMPFrRI7DSLGXRhnDjYZB-nDzSW1ekiVbzgr-mYPEjfH22nFQgwAFBE-HcdV_ZahOoZyg6qfFP184Yo0_MA?key=EnbElPOmPgqlw8y3xF7EsA)
+![IP address display](/images/IP-address-install-display.png)
 
 
 
@@ -90,35 +92,29 @@ export CONTROL_PLANE_IP=<your-control-plane-ip>
 WORKER_IP=("<worker-ip-1>" "<worker-ip-2>" "<worker-ip-3>"...)
 ```
 
-**Example:**
-
-If your worker node IPs are `192.168.0.10`, `192.168.0.11`, `192.168.0.12`, your array would be:
-
-```bash
-WORKER_IP=("192.168.0.10" "192.168.0.11" "192.168.0.12")
-```
-
-# Step 4: Unmount the ISO
+## Step 4: Unmount the ISO
 
 Unplug your installation USB drive or unmount the ISO. This prevents you from accidentally installing to the USB drive and makes it clearer which disk to select for installation.
 
-# Step 5: Learn About Your Installation Disks 
+## Step 5: Learn About Your Installation Disks 
 
 When you first boot your machine from the ISO, Talos runs temporarily in memory. This means that your Talos nodes, configurations, and cluster membership won't survive reboots or power cycles.
 
 However, once you apply the machine configuration (which you'll do later in this guide), you'll install Talos, its complete operating system, and your configuration to a specified disk for permanent storage.
 
 Run this command to view all the available disks on your control plane:
-```
+
+```bash
 talosctl get disks --insecure --nodes $CONTROL_PLANE_IP
 ```
+
 Note the disk ID (e.g., `sda`, `vda`) as you will use it in the next step.
 
 
 
-# Step 6: Generate Cluster Configuration
+## Step 6: Generate Cluster Configuration
 
-Talos Linux is configured entirely using declarative configuration files rather than traditional SSH commands.
+Talos Linux is configured entirely using declarative configuration files avoiding the need to deal with SSH and running commands.
 
 To generate these declarative configuration files: 
 
@@ -145,7 +141,7 @@ You'll get three files from this command:
 
 
 
-# Step 7: Apply Configurations
+## Step 7: Apply Configurations
 
 Now that you've created your configurations, it's time to apply them to bring your nodes and cluster online:
 
@@ -164,47 +160,54 @@ for ip in "${WORKER_IP[@]}"; do
 done
 ```
 
-# Step 8: Bootstrap Your Etcd Cluster
+## Step 8: Set your endpoints
+Set your endpoints with this:
+
+```bash
+talosctl --talosconfig=./talosconfig config endpoints $CONTROL_PLANE_IP
+```
+
+## Step 9: Bootstrap Your Etcd Cluster
 
 Wait for your control plane node to finish booting, then bootstrap your etcd cluster by running:
 
 ```bash
-talosctl bootstrap --nodes $CONTROL_PLANE_IP --endpoints $CONTROL_PLANE_IP --talosconfig=./talosconfig
+talosctl bootstrap --nodes $CONTROL_PLANE_IP --talosconfig=./talosconfig
 ```
 
-<Note>Run this command ONCE on a SINGLE control plane node. If you have multiple control plane nodes, you can choose any of them.</Note>
+**Note:** Run this command ONCE on a SINGLE control plane node. If you have multiple control plane nodes, you can choose any of them.
 
-# Step 9: Get Kubernetes Access
+## Step 10: Get Kubernetes Access
 
 Download your `kubeconfig` file to start using `kubectl`.
 
-You can get your `kubeconfig` file in one of two ways:
+You have two download options: you can either merge your Kubernetes configurations **OR** keep them separate.
+
+Here’s how to do both:
 
 - Merge your new cluster into your local Kubernetes configuration:
 
 ```bash
-talosctl kubeconfig --nodes $CONTROL_PLANE_IP --endpoints $CONTROL_PLANE_IP \
-  --talosconfig=./talosconfig
+talosctl kubeconfig --nodes $CONTROL_PLANE_IP --talosconfig=./talosconfig
 ```
 
-- **S**pecify a filename if you prefer not to merge with your default Kubernetes configuration:
+- Specify a filename if you prefer not to merge with your default Kubernetes configuration:
 
 ```bash
-talosctl kubeconfig alternative-kubeconfig --nodes $CONTROL_PLANE_IP --endpoints $CONTROL_PLANE_IP \
-  --talosconfig=./talosconfig
+talosctl kubeconfig alternative-kubeconfig --nodes $CONTROL_PLANE_IP --talosconfig=./talosconfig
 export KUBECONFIG=./alternative-kubeconfig
 
 ```
 
-# Step 10: Verify Your Nodes Are Running
+## Step 11: Check Cluster Health
 
 Run the following command to check the health of your nodes:
 
 ```bash
-talosctl --nodes $CONTROL_PLANE_IP --endpoints $CONTROL_PLANE_IP --talosconfig=./talosconfig health
+talosctl --nodes $CONTROL_PLANE_IP --talosconfig=./talosconfig health
 ```
 
-# Step 11: See Your Nodes
+## Step 11: Verify Node Registration
 
 Confirm that your nodes are registered in Kubernetes:
 
@@ -213,13 +216,13 @@ kubectl get nodes
 ```
 You should see your control plane and worker nodes listed with a **Ready** status.
 
-# Next Steps
+## Next Steps
 
 Congratulations! You now have a working Kubernetes cluster on Talos Linux . 
 
 For a list of all the commands and operations that `talosctl` provides, see the CLI reference.
 
-## What's Next?
+### What's Next?
 - Deploy your first application
 - Set up persistent storage
 - Configure networking policies
