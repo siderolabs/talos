@@ -426,6 +426,9 @@ talos: ## Builds the Talos container image and outputs it to the registry.
 talosctl-image: ## Builds the talosctl container image and outputs it to the registry.
 	@$(MAKE) registry-talosctl
 
+talosctl-all-image:
+	@$(MAKE) registry-talosctl-all
+
 talosctl-all:
 	@$(MAKE) local-talosctl-all DEST=$(ARTIFACTS) PUSH=false
 
@@ -689,6 +692,7 @@ push: ## Pushes the installer, imager, talos and talosctl images to the configur
 	@$(MAKE) installer PUSH=true
 	@$(MAKE) talos PUSH=true
 	@$(MAKE) talosctl-image PUSH=true
+	@$(MAKE) talosctl-all-image PUSH=true
 
 push-%: ## Pushes the installer, imager, talos and talosctl images to the configured container registry with the specified tag (e.g. push-latest).
 	@$(MAKE) push IMAGE_TAG_OUT=$*
@@ -699,7 +703,7 @@ clean: ## Cleans up all artifacts.
 
 .PHONY: image-list
 image-list: ## Prints a list of all images built by this Makefile with digests.
-	@echo -n installer installer-base talos imager talosctl | xargs -d ' ' -I{} sh -c 'echo $(REGISTRY_AND_USERNAME)/{}:$(IMAGE_TAG_IN)' | xargs -I{} sh -c 'echo {}@$$(crane digest {})'
+	@echo -n installer installer-base talos imager talosctl talosctl-all | xargs -d ' ' -I{} sh -c 'echo $(REGISTRY_AND_USERNAME)/{}:$(IMAGE_TAG_IN)' | xargs -I{} sh -c 'echo {}@$$(crane digest {})'
 
 .PHONY: sign-images
 sign-images: ## Run cosign to sign all images built by this Makefile.
