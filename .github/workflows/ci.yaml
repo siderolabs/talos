@@ -1,6 +1,6 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
 #
-# Generated on 2025-07-02T11:24:50Z by kres 5128bc1.
+# Generated on 2025-07-02T13:34:46Z by kres 880678f.
 
 name: default
 concurrency:
@@ -4396,6 +4396,7 @@ jobs:
     permissions:
       actions: read
       contents: write
+      id-token: write
       issues: read
       packages: write
       pull-requests: read
@@ -4479,11 +4480,42 @@ jobs:
           PLATFORM: linux/amd64,linux/arm64
         run: |
           make cloud-images
+      - name: Install Cosign
+        uses: sigstore/cosign-installer@v3
+      - name: Sign artifacts
+        run: |
+          cosign sign-blob --output _out/cloud-images.json.sig --yes _out/cloud-images.json
+          cosign sign-blob --output _out/initramfs-amd64.xz.sig --yes _out/initramfs-amd64.xz
+          cosign sign-blob --output _out/initramfs-arm64.xz.sig --yes _out/initramfs-arm64.xz
+          cosign sign-blob --output _out/metal-amd64.iso.sig --yes _out/metal-amd64.iso
+          cosign sign-blob --output _out/metal-arm64.iso.sig --yes _out/metal-arm64.iso
+          cosign sign-blob --output _out/metal-amd64-uki.efi.sig --yes _out/metal-amd64-uki.efi
+          cosign sign-blob --output _out/metal-arm64-uki.efi.sig --yes _out/metal-arm64-uki.efi
+          cosign sign-blob --output _out/metal-amd64.raw.zst.sig --yes _out/metal-amd64.raw.zst
+          cosign sign-blob --output _out/metal-arm64.raw.zst.sig --yes _out/metal-arm64.raw.zst
+          cosign sign-blob --output _out/sbom.json.sig --yes _out/sbom.json
+          cosign sign-blob --output _out/talosctl-cni-bundle-amd64.tar.gz.sig --yes _out/talosctl-cni-bundle-amd64.tar.gz
+          cosign sign-blob --output _out/talosctl-cni-bundle-arm64.tar.gz.sig --yes _out/talosctl-cni-bundle-arm64.tar.gz
+          cosign sign-blob --output _out/talosctl-darwin-amd64.sig --yes _out/talosctl-darwin-amd64
+          cosign sign-blob --output _out/talosctl-darwin-arm64.sig --yes _out/talosctl-darwin-arm64
+          cosign sign-blob --output _out/talosctl-freebsd-amd64.sig --yes _out/talosctl-freebsd-amd64
+          cosign sign-blob --output _out/talosctl-freebsd-arm64.sig --yes _out/talosctl-freebsd-arm64
+          cosign sign-blob --output _out/talosctl-linux-amd64.sig --yes _out/talosctl-linux-amd64
+          cosign sign-blob --output _out/talosctl-linux-arm64.sig --yes _out/talosctl-linux-arm64
+          cosign sign-blob --output _out/talosctl-linux-armv7.sig --yes _out/talosctl-linux-armv7
+          cosign sign-blob --output _out/talosctl-windows-amd64.exe.sig --yes _out/talosctl-windows-amd64.exe
+          cosign sign-blob --output _out/talosctl-windows-arm64.exe.sig --yes _out/talosctl-windows-arm64.exe
+          cosign sign-blob --output _out/vmlinuz-amd64.sig --yes _out/vmlinuz-amd64
+          cosign sign-blob --output _out/vmlinuz-arm64.sig --yes _out/vmlinuz-arm64
       - name: Generate Checksums
         run: |
           cd _out
           sha256sum cloud-images.json initramfs-amd64.xz initramfs-arm64.xz metal-amd64.iso metal-arm64.iso metal-amd64-uki.efi metal-arm64-uki.efi metal-amd64.raw.zst metal-arm64.raw.zst sbom.json talosctl-cni-bundle-amd64.tar.gz talosctl-cni-bundle-arm64.tar.gz talosctl-darwin-amd64 talosctl-darwin-arm64 talosctl-freebsd-amd64 talosctl-freebsd-arm64 talosctl-linux-amd64 talosctl-linux-arm64 talosctl-linux-armv7 talosctl-windows-amd64.exe talosctl-windows-arm64.exe vmlinuz-amd64 vmlinuz-arm64 > sha256sum.txt
           sha512sum cloud-images.json initramfs-amd64.xz initramfs-arm64.xz metal-amd64.iso metal-arm64.iso metal-amd64-uki.efi metal-arm64-uki.efi metal-amd64.raw.zst metal-arm64.raw.zst sbom.json talosctl-cni-bundle-amd64.tar.gz talosctl-cni-bundle-arm64.tar.gz talosctl-darwin-amd64 talosctl-darwin-arm64 talosctl-freebsd-amd64 talosctl-freebsd-arm64 talosctl-linux-amd64 talosctl-linux-arm64 talosctl-linux-armv7 talosctl-windows-amd64.exe talosctl-windows-arm64.exe vmlinuz-amd64 vmlinuz-arm64 > sha512sum.txt
+      - name: Sign checksums
+        run: |
+          cosign sign-blob --output sha256sum.txt.sig --yes sha256sum.txt
+          cosign sign-blob --output sha512sum.txt.sig --yes sha512sum.txt
       - name: release
         uses: crazy-max/ghaction-github-release@v2
         with:
@@ -4514,3 +4546,4 @@ jobs:
             _out/vmlinuz-amd64
             _out/vmlinuz-arm64
             _out/sha*.txt
+            _out/*.sig

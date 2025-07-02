@@ -222,6 +222,7 @@ spec:
               - vmlinuz-amd64
               - vmlinuz-arm64
             generateChecksums: true
+            generateSignatures: true
             releaseNotes: RELEASE_NOTES.md
     - name: e2e-iso
       depends:
