@@ -71,6 +71,16 @@ message KmsgLogConfigSpec {
   repeated common.URL destinations = 1;
 }
 
+// LoadedKernelModuleSpec describes Linux kernel module to load.
+message LoadedKernelModuleSpec {
+  string name = 1;
+  int64 size = 2;
+  int64 instances = 3;
+  repeated string dependencies = 4;
+  string state = 5;
+  string address = 6;
+}
+
 // MachineStatusSpec describes status of the defined sysctls.
 message MachineStatusSpec {
   talos.resource.definitions.enums.RuntimeMachineStage stage = 1;
