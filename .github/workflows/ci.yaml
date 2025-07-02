@@ -1,6 +1,6 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
 #
-# Generated on 2025-06-13T13:26:36Z by kres 5128bc1.
+# Generated on 2025-07-02T11:24:50Z by kres 5128bc1.
 
 name: default
 concurrency:
@@ -4455,6 +4455,9 @@ jobs:
       - name: release-notes
         run: |
           make release-notes
+      - name: sbom
+        run: |
+          make sbom
       - name: login-to-registry
         uses: docker/login-action@v3
         with:

@@ -181,6 +181,7 @@ spec:
           environment:
             PLATFORM: linux/amd64,linux/arm64
         - name: release-notes
+        - name: sbom
         - name: login-to-registry
           registryLoginStep:
             registry: ghcr.io
