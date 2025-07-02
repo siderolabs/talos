@@ -19,9 +19,11 @@ import (
 	"time"
 
 	"github.com/cosi-project/runtime/pkg/resource"
+	"github.com/cosi-project/runtime/pkg/resource/rtestutils"
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/siderolabs/go-pointer"
+	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
 	nodev1 "k8s.io/api/node/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -34,6 +36,7 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/config/machine"
 	"github.com/siderolabs/talos/pkg/machinery/resources/block"
 	"github.com/siderolabs/talos/pkg/machinery/resources/network"
+	"github.com/siderolabs/talos/pkg/machinery/resources/runtime"
 )
 
 // ExtensionsSuiteQEMU verifies Talos extensions on QEMU.
@@ -578,6 +581,28 @@ func (suite *ExtensionsSuiteQEMU) TestExtensionsSpin() {
 
 	// wait for the pod to be ready
 	suite.Require().NoError(suite.WaitForPodToBeRunning(suite.ctx, 5*time.Minute, "default", "spin-test"))
+}
+
+// TestLoadedKernelModule tests the /proc/modules resource.
+func (suite *ExtensionsSuiteQEMU) TestLoadedKernelModule() {
+	node := suite.RandomDiscoveredNodeInternalIP()
+	ctx := client.WithNode(suite.ctx, node)
+
+	suite.T().Logf("using node %s", node)
+
+	rtestutils.AssertResources(ctx, suite.T(), suite.Client.COSI, []resource.ID{
+		"virtio_balloon",
+		"virtio_pci",
+		"virtio_pci_legacy_dev",
+		"virtio_pci_modern_dev",
+	},
+		func(res *runtime.LoadedKernelModule, asrt *assert.Assertions) {
+			asrt.NotEmpty(res.TypedSpec().Name, "kernel module name should not be empty")
+			asrt.NotEmpty(res.TypedSpec().Size, "kernel module size should not be empty")
+			asrt.NotEmpty(res.TypedSpec().Address, "kernel module address should not be empty")
+			asrt.NotZero(res.TypedSpec().Instances, "kernel module instances should not be zero")
+		},
+	)
 }
 
 func init() {

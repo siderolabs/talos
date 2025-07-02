@@ -43,7 +43,7 @@ type KernelModuleSpecExtension struct{}
 func (KernelModuleSpecExtension) ResourceDefinition() meta.ResourceDefinitionSpec {
 	return meta.ResourceDefinitionSpec{
 		Type:             KernelModuleSpecType,
-		Aliases:          []resource.Type{"modules"},
+		Aliases:          []resource.Type{},
 		DefaultNamespace: NamespaceName,
 	}
 }

@@ -8,6 +8,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/safe"
@@ -63,7 +64,7 @@ func (ctrl *KernelCmdlineController) Run(ctx context.Context, r controller.Runti
 	if err := safe.WriterModify(ctx, r,
 		runtime.NewKernelCmdline(),
 		func(res *runtime.KernelCmdline) error {
-			res.TypedSpec().Cmdline = string(contents)
+			res.TypedSpec().Cmdline = strings.TrimSpace(string(contents))
 
 			return nil
 		},

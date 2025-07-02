@@ -281,6 +281,7 @@ description: Talos gRPC API reference.
     - [KernelParamSpecSpec](#talos.resource.definitions.runtime.KernelParamSpecSpec)
     - [KernelParamStatusSpec](#talos.resource.definitions.runtime.KernelParamStatusSpec)
     - [KmsgLogConfigSpec](#talos.resource.definitions.runtime.KmsgLogConfigSpec)
+    - [LoadedKernelModuleSpec](#talos.resource.definitions.runtime.LoadedKernelModuleSpec)
     - [MachineStatusSpec](#talos.resource.definitions.runtime.MachineStatusSpec)
     - [MachineStatusStatus](#talos.resource.definitions.runtime.MachineStatusStatus)
     - [MaintenanceServiceConfigSpec](#talos.resource.definitions.runtime.MaintenanceServiceConfigSpec)
@@ -5187,6 +5188,26 @@ KmsgLogConfigSpec describes configuration for kmsg log streaming.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | destinations | [common.URL](#common.URL) | repeated |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.runtime.LoadedKernelModuleSpec"></a>
+
+### LoadedKernelModuleSpec
+LoadedKernelModuleSpec describes Linux kernel module to load.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| name | [string](#string) |  |  |
+| size | [int64](#int64) |  |  |
+| instances | [int64](#int64) |  |  |
+| dependencies | [string](#string) | repeated |  |
+| state | [string](#string) |  |  |
+| address | [string](#string) |  |  |
 
 
 

@@ -214,6 +214,7 @@ func NewState() (*State, error) {
 		&runtime.KernelParamDefaultSpec{},
 		&runtime.KernelParamStatus{},
 		&runtime.KmsgLogConfig{},
+		&runtime.LoadedKernelModule{},
 		&runtime.MaintenanceServiceConfig{},
 		&runtime.MaintenanceServiceRequest{},
 		&runtime.MachineResetSignal{},

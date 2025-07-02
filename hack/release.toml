@@ -84,6 +84,12 @@ This feature can be enabled by using [ZswapConfig](https://www.talos.dev/v1.11/r
 Talos now exposes the kernel command line as a KernelCmdline resource (`talosctl get cmdline`).
 """
 
+    [notes.modules]
+        title = "Kernel Modules"
+        description = """\
+Talosctl now returns the loaded modules, not the modules configured to be loaded (`talosctl get modules`).
+"""
+
 [make_deps]
 
     [make_deps.tools]
