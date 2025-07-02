@@ -6,6 +6,7 @@ package image
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	stdlog "log"
 	"time"
@@ -34,12 +35,28 @@ type PullOption func(*PullOptions)
 // PullOptions configure Pull function.
 type PullOptions struct {
 	SkipIfAlreadyPulled bool
+	MaxNotFoundRetries  int
+}
+
+// DefaultPullOptions returns default options for Pull function.
+func DefaultPullOptions() PullOptions {
+	return PullOptions{
+		SkipIfAlreadyPulled: false,
+		MaxNotFoundRetries:  5,
+	}
 }
 
 // WithSkipIfAlreadyPulled skips pulling if image is already pulled and unpacked.
 func WithSkipIfAlreadyPulled() PullOption {
 	return func(opts *PullOptions) {
 		opts.SkipIfAlreadyPulled = true
+	}
+}
+
+// WithMaxNotFoundRetries sets the maximum number of retries for not found errors.
+func WithMaxNotFoundRetries(maxRetries int) PullOption {
+	return func(opts *PullOptions) {
+		opts.MaxNotFoundRetries = maxRetries
 	}
 }
 
@@ -51,7 +68,7 @@ type RegistriesBuilder = func(context.Context) (config.Registries, error)
 //
 //nolint:gocyclo
 func Pull(ctx context.Context, registryBuilder RegistriesBuilder, client *containerd.Client, ref string, opt ...PullOption) (img containerd.Image, err error) {
-	var opts PullOptions
+	opts := DefaultPullOptions()
 
 	for _, o := range opt {
 		o(&opts)
@@ -89,6 +106,8 @@ func Pull(ctx context.Context, registryBuilder RegistriesBuilder, client *contai
 
 	ctx = log.WithLogger(ctx, containerdLogger.WithField("image", ref))
 
+	notFoundErrors := 0
+
 	err = retry.Exponential(PullTimeout, retry.WithUnits(PullRetryInterval), retry.WithErrorLogging(true)).RetryWithContext(ctx, func(ctx context.Context) error {
 		registriesConfig, err := registryBuilder(ctx)
 		if err != nil {
@@ -105,8 +124,12 @@ func Pull(ctx context.Context, registryBuilder RegistriesBuilder, client *contai
 			containerd.WithChildLabelMap(images.ChildGCLabelsFilterLayers),
 		); err != nil {
 			err = fmt.Errorf("failed to pull image %q: %w", ref, err)
-			if errdefs.IsNotFound(err) {
-				return err
+			if errors.Is(err, errdefs.ErrNotFound) {
+				notFoundErrors++
+
+				if notFoundErrors > opts.MaxNotFoundRetries {
+					return err
+				}
 			}
 
 			return retry.ExpectedError(err)

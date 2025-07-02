@@ -35,7 +35,10 @@ func PullAndValidateInstallerImage(ctx context.Context, registryBuilder image.Re
 
 	defer client.Close() //nolint:errcheck
 
-	img, err := image.Pull(containerdctx, registryBuilder, client, ref, image.WithSkipIfAlreadyPulled())
+	img, err := image.Pull(containerdctx, registryBuilder, client, ref,
+		image.WithSkipIfAlreadyPulled(),
+		image.WithMaxNotFoundRetries(1),
+	)
 	if err != nil {
 		return err
 	}
