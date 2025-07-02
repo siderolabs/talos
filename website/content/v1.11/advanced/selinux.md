@@ -14,6 +14,16 @@ The default mode is permissive, as currently some CNI and CSI solutions as well 
 For now, enforcing mode has only been tested with the Flannel CNI we ship by default.
 These missing parts are being worked on to make SELinux available for more use cases.
 
+### Disabling SELinux
+
+On some occasions, you may want to disable SELinux completely, mostly if even permissive mode
+is not compatible with some of your workloads or plugins.
+
+SELinux also needs to be disabled if you are enabling AppArmor, because both security modules cannot be enabled at the same time.
+
+If you want to disable SELinux, you can do so by adding `selinux=0` to the kernel cmdline.
+This is most commonly done when creating the image via the configuration in the Image Factory.
+
 ### Mode of operation
 
 You can query the SELinux state with:
