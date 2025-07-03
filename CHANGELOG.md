@@ -1,3 +1,69 @@
+## [Talos 1.10.5](https://github.com/siderolabs/talos/releases/tag/v1.10.5) (2025-07-03)
+
+Welcome to the v1.10.5 release of Talos!
+
+
+
+Please try out the release binaries and report any issues at
+https://github.com/siderolabs/talos/issues.
+
+### Azure
+
+Talos on Azure now defaults to MTU of 1400 bytes for the `eth0` interface to avoid packet fragmentation issues.
+The default MTU can be overriden with machine configuration.
+
+
+### Component Updates
+
+Linux: 6.12.35
+Kubernetes: 1.33.2
+
+Talos is built with Go 1.24.4.
+
+
+### Contributors
+
+* Andrey Smirnov
+* Noel Georgi
+
+### Changes
+<details><summary>8 commits</summary>
+<p>
+
+* [`b84e15037`](https://github.com/siderolabs/talos/commit/b84e15037c3acc2b2f92543f11faf5c5a5cb1627) feat: update Kubernetes default to 1.33.2
+* [`2017ec228`](https://github.com/siderolabs/talos/commit/2017ec228d7903ffc2bf92a74fb7d525172dcf87) fix: add limited retries for not found images
+* [`b3e510ac5`](https://github.com/siderolabs/talos/commit/b3e510ac5a8002c9afc188b6e05b56047d3a3060) chore: improve cloud image uploader resilience
+* [`4a40cddbb`](https://github.com/siderolabs/talos/commit/4a40cddbbf190dd90322a6b7cd0c7cd485ccef67) fix: hold user volume mount point across kubelet restarts
+* [`9e1f347f5`](https://github.com/siderolabs/talos/commit/9e1f347f5a098159067c6c555da27a3db361f4ea) fix: etcd recover with multiple advertised addresses
+* [`f85ff5fa8`](https://github.com/siderolabs/talos/commit/f85ff5fa8dc447c19f3db20c31f59bfc0cc2d0c3) feat: update Linux to 6.12.35
+* [`87ed1b589`](https://github.com/siderolabs/talos/commit/87ed1b589343d8a7cc939a65af9c0b9ce4d3633d) fix: treat context canceled as expected error on image pull
+* [`9a0644a64`](https://github.com/siderolabs/talos/commit/9a0644a64fad894f481298185b636e862ba3b87d) fix: set default MTU on Azure to 1400
+</p>
+</details>
+
+### Changes from siderolabs/pkgs
+<details><summary>2 commits</summary>
+<p>
+
+* [`28fa97d`](https://github.com/siderolabs/pkgs/commit/28fa97deebdb72d278aef5406676eaeafad0fe77) fix: iptables url
+* [`6109fe6`](https://github.com/siderolabs/pkgs/commit/6109fe67ce5d335f8de68ffbad4b3944c6b4da4e) feat: update dependencies
+</p>
+</details>
+
+### Dependency Changes
+
+* **github.com/siderolabs/pkgs**     v1.10.0-22-g51e388c -> v1.10.0-24-g28fa97d
+* **k8s.io/api**                     v0.33.1 -> v0.33.2
+* **k8s.io/apiserver**               v0.33.1 -> v0.33.2
+* **k8s.io/client-go**               v0.33.1 -> v0.33.2
+* **k8s.io/component-base**          v0.33.1 -> v0.33.2
+* **k8s.io/kube-scheduler**          v0.33.1 -> v0.33.2
+* **k8s.io/kubectl**                 v0.33.1 -> v0.33.2
+* **k8s.io/kubelet**                 v0.33.1 -> v0.33.2
+* **k8s.io/pod-security-admission**  v0.33.1 -> v0.33.2
+
+Previous release can be found at [v1.10.4](https://github.com/siderolabs/talos/releases/tag/v1.10.4)
+
 ## [Talos 1.10.4](https://github.com/siderolabs/talos/releases/tag/v1.10.4) (2025-06-11)
 
 Welcome to the v1.10.4 release of Talos!
