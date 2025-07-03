@@ -5,6 +5,7 @@
 package makefs
 
 import (
+	"crypto/sha256"
 	"fmt"
 
 	"github.com/google/uuid"
@@ -32,7 +33,7 @@ func Ext4(partname string, setters ...Option) error {
 			return err
 		} else if ok {
 			// ref: https://gitlab.archlinux.org/archlinux/archiso/-/merge_requests/202/diffs
-			detUUID := uuid.NewSHA1(uuid.MustParse("93a870ff-8565-4cf3-a67b-f47299271a96"), []byte(fmt.Sprintf("%d ext4 hash seed", epoch)))
+			detUUID := uuid.NewHash(sha256.New(), uuid.MustParse("93a870ff-8565-4cf3-a67b-f47299271a96"), []byte(fmt.Sprintf("%d ext4 hash seed", epoch)), 5)
 
 			args = append(args, "-U", detUUID.String())
 			args = append(args, "-E", fmt.Sprintf("hash_seed=%s", detUUID.String()))

@@ -6,6 +6,7 @@ package siderolink_test
 
 import (
 	"context"
+	"crypto/fips140"
 	"fmt"
 	"net"
 	"net/netip"
@@ -32,6 +33,10 @@ import (
 )
 
 func TestManagerSuite(t *testing.T) {
+	if fips140.Enabled() {
+		t.Skip("skipping test in FIPS mode")
+	}
+
 	var m ManagerSuite
 
 	m.AfterSetup = func(suite *ctest.DefaultSuite) {

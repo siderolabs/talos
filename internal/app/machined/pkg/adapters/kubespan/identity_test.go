@@ -5,6 +5,7 @@
 package kubespan_test
 
 import (
+	"crypto/fips140"
 	"net"
 	"testing"
 
@@ -16,6 +17,10 @@ import (
 )
 
 func TestIdentityGenerateKey(t *testing.T) {
+	if fips140.Enabled() {
+		t.Skip("skipping test in FIPS mode")
+	}
+
 	var spec kubespan.IdentitySpec
 
 	assert.NoError(t, kubespanadapter.IdentitySpec(&spec).GenerateKey())

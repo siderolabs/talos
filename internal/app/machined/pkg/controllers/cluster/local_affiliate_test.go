@@ -5,6 +5,7 @@
 package cluster_test
 
 import (
+	"crypto/fips140"
 	"net"
 	"net/netip"
 	"testing"
@@ -224,6 +225,10 @@ func (suite *LocalAffiliateSuite) createResources() (*cluster.Identity, *network
 
 func TestLocalAffiliateSuite(t *testing.T) {
 	t.Parallel()
+
+	if fips140.Enabled() {
+		t.Skip("skipping test in FIPS mode")
+	}
 
 	suite.Run(t, new(LocalAffiliateSuite))
 }
