@@ -304,6 +304,8 @@ ENV GO111MODULE=on
 ENV GOPROXY=https://proxy.golang.org
 ARG CGO_ENABLED
 ENV CGO_ENABLED=${CGO_ENABLED}
+ARG GOFIPS140
+ENV GOFIPS140=${GOFIPS140}
 ENV GOCACHE=/.cache/go-build
 ENV GOMODCACHE=/.cache/mod
 ENV PROTOTOOL_CACHE_PATH=/.cache/prototool
@@ -1157,6 +1159,19 @@ ARG GO_LDFLAGS
 RUN --security=insecure --mount=type=cache,id=testspace,target=/tmp --mount=type=cache,target=/.cache,id=talos/.cache go test -v \
     -ldflags "${GO_LDFLAGS}" \
     -race -count 1 -p 4 ${TESTPKGS}
+
+# The unit-tests-fips target performs tests with FIPS strict mode.
+FROM base AS unit-tests-fips
+COPY --from=rootfs / /
+COPY --from=pkg-ca-certificates / /
+ARG TESTPKGS
+ENV PLATFORM=container
+ENV GOFIPS140=latest
+ENV GODEBUG=fips140=only
+ARG GO_LDFLAGS
+RUN --security=insecure --mount=type=cache,id=testspace,target=/tmp --mount=type=cache,target=/.cache,id=talos/.cache go test -v \
+    -ldflags "${GO_LDFLAGS}" \
+    -count 1 -p 4 ${TESTPKGS}
 
 # The integration-test targets builds integration test binary.
 

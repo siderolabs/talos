@@ -22,7 +22,7 @@ const SecurityStateID = resource.ID("securitystate")
 // SecurityState is the security state resource.
 type SecurityState = typed.Resource[SecurityStateSpec, SecurityStateExtension]
 
-//go:generate enumer -type=SELinuxState -linecomment -text
+//go:generate enumer -type FIPSState -type=SELinuxState -linecomment -text
 
 // SELinuxState describes the current SELinux status.
 type SELinuxState int
@@ -36,6 +36,18 @@ const (
 	SELinuxStateEnforcing                      // enabled, enforcing
 )
 
+// FIPSState describes the current FIPS status.
+type FIPSState int
+
+// FIPS state.
+//
+//structprotogen:gen_enum
+const (
+	FIPSStateDisabled FIPSState = iota // disabled
+	FIPSStateEnabled                   // enabled
+	FIPSStateStrict                    // enabled, strict
+)
+
 // SecurityStateSpec describes the security state resource properties.
 //
 //gotagsrewrite:gen
@@ -44,6 +56,7 @@ type SecurityStateSpec struct {
 	UKISigningKeyFingerprint string       `yaml:"ukiSigningKeyFingerprint,omitempty" protobuf:"2"`
 	PCRSigningKeyFingerprint string       `yaml:"pcrSigningKeyFingerprint,omitempty" protobuf:"3"`
 	SELinuxState             SELinuxState `yaml:"selinuxState,omitempty" protobuf:"4"`
+	FIPSState                FIPSState    `yaml:"fipsState,omitempty" protobuf:"6"`
 	BootedWithUKI            bool         `yaml:"bootedWithUKI,omitempty" protobuf:"5"`
 }
 

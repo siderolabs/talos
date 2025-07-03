@@ -21,6 +21,7 @@ import (
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/ctest"
 	kubespanctrl "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/kubespan"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
+	"github.com/siderolabs/talos/pkg/machinery/fipsmode"
 	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
 	"github.com/siderolabs/talos/pkg/machinery/resources/config"
 	"github.com/siderolabs/talos/pkg/machinery/resources/kubespan"
@@ -80,6 +81,10 @@ func (mock mockRulesManager) Cleanup() error {
 }
 
 func (suite *ManagerSuite) TestReconcile() {
+	if fipsmode.Strict() {
+		suite.T().Skip("skipping test in strict FIPS mode")
+	}
+
 	cfg := kubespan.NewConfig(config.NamespaceName, kubespan.ConfigID)
 	cfg.TypedSpec().Enabled = true
 	cfg.TypedSpec().SharedSecret = "TPbGXrYlvuXgAl8dERpwjlA5tnEMoihPDPxlovcLtVg="

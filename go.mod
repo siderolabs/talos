@@ -134,9 +134,9 @@ require (
 	github.com/ryanuber/go-glob v1.0.0
 	github.com/safchain/ethtool v0.6.1
 	github.com/scaleway/scaleway-sdk-go v1.0.0-beta.33
-	github.com/siderolabs/crypto v0.6.0
+	github.com/siderolabs/crypto v0.6.3
 	github.com/siderolabs/discovery-api v0.1.6
-	github.com/siderolabs/discovery-client v0.1.11
+	github.com/siderolabs/discovery-client v0.1.12
 	github.com/siderolabs/gen v0.8.4
 	github.com/siderolabs/go-api-signature v0.3.6
 	github.com/siderolabs/go-blockdevice v0.4.8

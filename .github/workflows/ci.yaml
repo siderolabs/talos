@@ -1,6 +1,6 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
 #
-# Generated on 2025-07-07T16:49:31Z by kres b282c9b.
+# Generated on 2025-07-08T16:48:03Z by kres b282c9b.
 
 name: default
 concurrency:
@@ -118,6 +118,9 @@ jobs:
       - name: unit-tests
         run: |
           make unit-tests
+      - name: unit-tests-fips
+        run: |
+          make unit-tests-fips
       - name: unit-tests-race
         run: |
           make unit-tests-race

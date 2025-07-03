@@ -1129,6 +1129,7 @@ type SecurityStateSpec struct {
 	PcrSigningKeyFingerprint string                    `protobuf:"bytes,3,opt,name=pcr_signing_key_fingerprint,json=pcrSigningKeyFingerprint,proto3" json:"pcr_signing_key_fingerprint,omitempty"`
 	SeLinuxState             enums.RuntimeSELinuxState `protobuf:"varint,4,opt,name=se_linux_state,json=seLinuxState,proto3,enum=talos.resource.definitions.enums.RuntimeSELinuxState" json:"se_linux_state,omitempty"`
 	BootedWithUki            bool                      `protobuf:"varint,5,opt,name=booted_with_uki,json=bootedWithUki,proto3" json:"booted_with_uki,omitempty"`
+	FipsState                enums.RuntimeFIPSState    `protobuf:"varint,6,opt,name=fips_state,json=fipsState,proto3,enum=talos.resource.definitions.enums.RuntimeFIPSState" json:"fips_state,omitempty"`
 	unknownFields            protoimpl.UnknownFields
 	sizeCache                protoimpl.SizeCache
 }
@@ -1196,6 +1197,13 @@ func (x *SecurityStateSpec) GetBootedWithUki() bool {
 		return x.BootedWithUki
 	}
 	return false
+}
+
+func (x *SecurityStateSpec) GetFipsState() enums.RuntimeFIPSState {
+	if x != nil {
+		return x.FipsState
+	}
+	return enums.RuntimeFIPSState(0)
 }
 
 // UniqueMachineTokenSpec is the spec for the machine unique token. Token can be empty if machine wasn't assigned any.
@@ -1491,14 +1499,16 @@ const file_resource_definitions_runtime_runtime_proto_rawDesc = "" +
 	"\x04tags\x18\v \x03(\v2B.talos.resource.definitions.runtime.PlatformMetadataSpec.TagsEntryR\x04tags\x1a7\n" +
 	"\tTagsEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\xb7\x02\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\x8a\x03\n" +
 	"\x11SecurityStateSpec\x12\x1f\n" +
 	"\vsecure_boot\x18\x01 \x01(\bR\n" +
 	"secureBoot\x12=\n" +
 	"\x1buki_signing_key_fingerprint\x18\x02 \x01(\tR\x18ukiSigningKeyFingerprint\x12=\n" +
 	"\x1bpcr_signing_key_fingerprint\x18\x03 \x01(\tR\x18pcrSigningKeyFingerprint\x12[\n" +
 	"\x0ese_linux_state\x18\x04 \x01(\x0e25.talos.resource.definitions.enums.RuntimeSELinuxStateR\fseLinuxState\x12&\n" +
-	"\x0fbooted_with_uki\x18\x05 \x01(\bR\rbootedWithUki\".\n" +
+	"\x0fbooted_with_uki\x18\x05 \x01(\bR\rbootedWithUki\x12Q\n" +
+	"\n" +
+	"fips_state\x18\x06 \x01(\x0e22.talos.resource.definitions.enums.RuntimeFIPSStateR\tfipsState\".\n" +
 	"\x16UniqueMachineTokenSpec\x12\x14\n" +
 	"\x05token\x18\x01 \x01(\tR\x05token\"<\n" +
 	"\x0eUnmetCondition\x12\x12\n" +
@@ -1556,7 +1566,8 @@ var file_resource_definitions_runtime_runtime_proto_goTypes = []any{
 	(enums.RuntimeMachineStage)(0),           // 26: talos.resource.definitions.enums.RuntimeMachineStage
 	(*common.NetIP)(nil),                     // 27: common.NetIP
 	(enums.RuntimeSELinuxState)(0),           // 28: talos.resource.definitions.enums.RuntimeSELinuxState
-	(*durationpb.Duration)(nil),              // 29: google.protobuf.Duration
+	(enums.RuntimeFIPSState)(0),              // 29: talos.resource.definitions.enums.RuntimeFIPSState
+	(*durationpb.Duration)(nil),              // 30: google.protobuf.Duration
 }
 var file_resource_definitions_runtime_runtime_proto_depIdxs = []int32{
 	3,  // 0: talos.resource.definitions.runtime.ExtensionServiceConfigSpec.files:type_name -> talos.resource.definitions.runtime.ExtensionServiceConfigFile
@@ -1567,14 +1578,15 @@ var file_resource_definitions_runtime_runtime_proto_depIdxs = []int32{
 	27, // 5: talos.resource.definitions.runtime.MaintenanceServiceConfigSpec.reachable_addresses:type_name -> common.NetIP
 	24, // 6: talos.resource.definitions.runtime.PlatformMetadataSpec.tags:type_name -> talos.resource.definitions.runtime.PlatformMetadataSpec.TagsEntry
 	28, // 7: talos.resource.definitions.runtime.SecurityStateSpec.se_linux_state:type_name -> talos.resource.definitions.enums.RuntimeSELinuxState
-	29, // 8: talos.resource.definitions.runtime.WatchdogTimerConfigSpec.timeout:type_name -> google.protobuf.Duration
-	29, // 9: talos.resource.definitions.runtime.WatchdogTimerStatusSpec.timeout:type_name -> google.protobuf.Duration
-	29, // 10: talos.resource.definitions.runtime.WatchdogTimerStatusSpec.feed_interval:type_name -> google.protobuf.Duration
-	11, // [11:11] is the sub-list for method output_type
-	11, // [11:11] is the sub-list for method input_type
-	11, // [11:11] is the sub-list for extension type_name
-	11, // [11:11] is the sub-list for extension extendee
-	0,  // [0:11] is the sub-list for field type_name
+	29, // 8: talos.resource.definitions.runtime.SecurityStateSpec.fips_state:type_name -> talos.resource.definitions.enums.RuntimeFIPSState
+	30, // 9: talos.resource.definitions.runtime.WatchdogTimerConfigSpec.timeout:type_name -> google.protobuf.Duration
+	30, // 10: talos.resource.definitions.runtime.WatchdogTimerStatusSpec.timeout:type_name -> google.protobuf.Duration
+	30, // 11: talos.resource.definitions.runtime.WatchdogTimerStatusSpec.feed_interval:type_name -> google.protobuf.Duration
+	12, // [12:12] is the sub-list for method output_type
+	12, // [12:12] is the sub-list for method input_type
+	12, // [12:12] is the sub-list for extension type_name
+	12, // [12:12] is the sub-list for extension extendee
+	0,  // [0:12] is the sub-list for field type_name
 }
 
 func init() { file_resource_definitions_runtime_runtime_proto_init() }

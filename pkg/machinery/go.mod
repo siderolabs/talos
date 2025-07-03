@@ -29,7 +29,7 @@ require (
 	github.com/planetscale/vtprotobuf v0.6.1-0.20241121165744-79df5c4772f2
 	github.com/ryanuber/go-glob v1.0.0
 	github.com/santhosh-tekuri/jsonschema/v5 v5.3.1
-	github.com/siderolabs/crypto v0.6.0
+	github.com/siderolabs/crypto v0.6.3
 	github.com/siderolabs/gen v0.8.4
 	github.com/siderolabs/go-api-signature v0.3.6
 	github.com/siderolabs/go-pointer v1.0.1

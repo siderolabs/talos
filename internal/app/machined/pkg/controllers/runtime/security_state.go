@@ -28,6 +28,7 @@ import (
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/sdboot"
 	"github.com/siderolabs/talos/internal/pkg/selinux"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
+	"github.com/siderolabs/talos/pkg/machinery/fipsmode"
 	runtimeres "github.com/siderolabs/talos/pkg/machinery/resources/runtime"
 	"github.com/siderolabs/talos/pkg/machinery/resources/v1alpha1"
 )
@@ -135,10 +136,21 @@ func (ctrl *SecurityStateController) Run(ctx context.Context, r controller.Runti
 			return fmt.Errorf("failed to get SELinux state: %w", err)
 		}
 
+		fipsState := runtimeres.FIPSStateDisabled
+
+		if fipsmode.Enabled() {
+			if fipsmode.Strict() {
+				fipsState = runtimeres.FIPSStateStrict
+			} else {
+				fipsState = runtimeres.FIPSStateEnabled
+			}
+		}
+
 		if err := safe.WriterModify(ctx, r, runtimeres.NewSecurityStateSpec(runtimeres.NamespaceName), func(state *runtimeres.SecurityState) error {
 			state.TypedSpec().SecureBoot = secureBootState
 			state.TypedSpec().PCRSigningKeyFingerprint = pcrSigningKeyFingerprint
 			state.TypedSpec().SELinuxState = selinuxState
+			state.TypedSpec().FIPSState = fipsState
 			state.TypedSpec().BootedWithUKI = bootedWithUKI
 
 			return nil

@@ -16,10 +16,15 @@ import (
 	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
 
 	networkadapter "github.com/siderolabs/talos/internal/app/machined/pkg/adapters/network"
+	"github.com/siderolabs/talos/pkg/machinery/fipsmode"
 	"github.com/siderolabs/talos/pkg/machinery/resources/network"
 )
 
 func TestWireguardSpecDecode(t *testing.T) {
+	if fipsmode.Strict() {
+		t.Skip("skipping test in strict FIPS mode")
+	}
+
 	priv, err := wgtypes.GeneratePrivateKey()
 	require.NoError(t, err)
 
@@ -103,6 +108,10 @@ func TestWireguardSpecDecode(t *testing.T) {
 }
 
 func TestWireguardSpecDecodeStatus(t *testing.T) {
+	if fipsmode.Strict() {
+		t.Skip("skipping test in strict FIPS mode")
+	}
+
 	priv, err := wgtypes.GeneratePrivateKey()
 	require.NoError(t, err)
 
@@ -127,6 +136,10 @@ func TestWireguardSpecDecodeStatus(t *testing.T) {
 }
 
 func TestWireguardSpecEncode(t *testing.T) {
+	if fipsmode.Strict() {
+		t.Skip("skipping test in strict FIPS mode")
+	}
+
 	priv, err := wgtypes.GeneratePrivateKey()
 	require.NoError(t, err)
 

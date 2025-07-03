@@ -127,6 +127,7 @@ spec:
             IMAGER_ARGS: "--extra-kernel-arg=console=ttyS0"
             IMAGE_REGISTRY: registry.dev.siderolabs.io
         - name: unit-tests
+        - name: unit-tests-fips
         - name: unit-tests-race
         - name: coverage
           coverageStep:

@@ -2542,6 +2542,56 @@ func (RuntimeSELinuxState) EnumDescriptor() ([]byte, []int) {
 	return file_resource_definitions_enums_enums_proto_rawDescGZIP(), []int{39}
 }
 
+// RuntimeFIPSState describes the current FIPS status.
+type RuntimeFIPSState int32
+
+const (
+	RuntimeFIPSState_FIPS_STATE_DISABLED RuntimeFIPSState = 0
+	RuntimeFIPSState_FIPS_STATE_ENABLED  RuntimeFIPSState = 1
+	RuntimeFIPSState_FIPS_STATE_STRICT   RuntimeFIPSState = 2
+)
+
+// Enum value maps for RuntimeFIPSState.
+var (
+	RuntimeFIPSState_name = map[int32]string{
+		0: "FIPS_STATE_DISABLED",
+		1: "FIPS_STATE_ENABLED",
+		2: "FIPS_STATE_STRICT",
+	}
+	RuntimeFIPSState_value = map[string]int32{
+		"FIPS_STATE_DISABLED": 0,
+		"FIPS_STATE_ENABLED":  1,
+		"FIPS_STATE_STRICT":   2,
+	}
+)
+
+func (x RuntimeFIPSState) Enum() *RuntimeFIPSState {
+	p := new(RuntimeFIPSState)
+	*p = x
+	return p
+}
+
+func (x RuntimeFIPSState) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (RuntimeFIPSState) Descriptor() protoreflect.EnumDescriptor {
+	return file_resource_definitions_enums_enums_proto_enumTypes[40].Descriptor()
+}
+
+func (RuntimeFIPSState) Type() protoreflect.EnumType {
+	return &file_resource_definitions_enums_enums_proto_enumTypes[40]
+}
+
+func (x RuntimeFIPSState) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use RuntimeFIPSState.Descriptor instead.
+func (RuntimeFIPSState) EnumDescriptor() ([]byte, []int) {
+	return file_resource_definitions_enums_enums_proto_rawDescGZIP(), []int{40}
+}
+
 var File_resource_definitions_enums_enums_proto protoreflect.FileDescriptor
 
 const file_resource_definitions_enums_enums_proto_rawDesc = "" +
@@ -2902,7 +2952,11 @@ const file_resource_definitions_enums_enums_proto_rawDesc = "" +
 	"\x13RuntimeSELinuxState\x12\x1b\n" +
 	"\x17SE_LINUX_STATE_DISABLED\x10\x00\x12\x1d\n" +
 	"\x19SE_LINUX_STATE_PERMISSIVE\x10\x01\x12\x1c\n" +
-	"\x18SE_LINUX_STATE_ENFORCING\x10\x02Bt\n" +
+	"\x18SE_LINUX_STATE_ENFORCING\x10\x02*Z\n" +
+	"\x10RuntimeFIPSState\x12\x17\n" +
+	"\x13FIPS_STATE_DISABLED\x10\x00\x12\x16\n" +
+	"\x12FIPS_STATE_ENABLED\x10\x01\x12\x15\n" +
+	"\x11FIPS_STATE_STRICT\x10\x02Bt\n" +
 	"(dev.talos.api.resource.definitions.enumsZHgithub.com/siderolabs/talos/pkg/machinery/api/resource/definitions/enumsb\x06proto3"
 
 var (
@@ -2917,7 +2971,7 @@ func file_resource_definitions_enums_enums_proto_rawDescGZIP() []byte {
 	return file_resource_definitions_enums_enums_proto_rawDescData
 }
 
-var file_resource_definitions_enums_enums_proto_enumTypes = make([]protoimpl.EnumInfo, 40)
+var file_resource_definitions_enums_enums_proto_enumTypes = make([]protoimpl.EnumInfo, 41)
 var file_resource_definitions_enums_enums_proto_goTypes = []any{
 	(MachineType)(0),                     // 0: talos.resource.definitions.enums.MachineType
 	(NethelpersAddressFlag)(0),           // 1: talos.resource.definitions.enums.NethelpersAddressFlag
@@ -2959,6 +3013,7 @@ var file_resource_definitions_enums_enums_proto_goTypes = []any{
 	(NetworkOperator)(0),                 // 37: talos.resource.definitions.enums.NetworkOperator
 	(RuntimeMachineStage)(0),             // 38: talos.resource.definitions.enums.RuntimeMachineStage
 	(RuntimeSELinuxState)(0),             // 39: talos.resource.definitions.enums.RuntimeSELinuxState
+	(RuntimeFIPSState)(0),                // 40: talos.resource.definitions.enums.RuntimeFIPSState
 }
 var file_resource_definitions_enums_enums_proto_depIdxs = []int32{
 	0, // [0:0] is the sub-list for method output_type
@@ -2978,7 +3033,7 @@ func file_resource_definitions_enums_enums_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_resource_definitions_enums_enums_proto_rawDesc), len(file_resource_definitions_enums_enums_proto_rawDesc)),
-			NumEnums:      40,
+			NumEnums:      41,
 			NumMessages:   0,
 			NumExtensions: 0,
 			NumServices:   0,

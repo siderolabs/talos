@@ -12,10 +12,15 @@ import (
 	"github.com/stretchr/testify/require"
 
 	kubespanadapter "github.com/siderolabs/talos/internal/app/machined/pkg/adapters/kubespan"
+	"github.com/siderolabs/talos/pkg/machinery/fipsmode"
 	"github.com/siderolabs/talos/pkg/machinery/resources/kubespan"
 )
 
 func TestIdentityGenerateKey(t *testing.T) {
+	if fipsmode.Strict() {
+		t.Skip("skipping test in strict FIPS mode")
+	}
+
 	var spec kubespan.IdentitySpec
 
 	assert.NoError(t, kubespanadapter.IdentitySpec(&spec).GenerateKey())

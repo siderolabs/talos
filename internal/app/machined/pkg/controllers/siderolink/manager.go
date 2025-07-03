@@ -33,6 +33,7 @@ import (
 	"github.com/siderolabs/talos/pkg/grpc/dialer"
 	"github.com/siderolabs/talos/pkg/httpdefaults"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
+	"github.com/siderolabs/talos/pkg/machinery/fipsmode"
 	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
 	"github.com/siderolabs/talos/pkg/machinery/resources/config"
 	"github.com/siderolabs/talos/pkg/machinery/resources/hardware"
@@ -80,6 +81,12 @@ func (ctrl *ManagerController) Outputs() []controller.Output {
 //
 //nolint:gocyclo,cyclop
 func (ctrl *ManagerController) Run(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
+	if fipsmode.Strict() {
+		logger.Warn("SideroLink is not supported in strict FIPS mode")
+
+		return nil
+	}
+
 	// initially, wait for the network address status to be ready
 	if err := networkutils.WaitForNetworkReady(ctx, r,
 		func(status *network.StatusSpec) bool {

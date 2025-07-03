@@ -19,6 +19,7 @@ import (
 	clusterctrl "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/cluster"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/ctest"
 	"github.com/siderolabs/talos/pkg/machinery/config/machine"
+	"github.com/siderolabs/talos/pkg/machinery/fipsmode"
 	"github.com/siderolabs/talos/pkg/machinery/resources/cluster"
 	"github.com/siderolabs/talos/pkg/machinery/resources/config"
 	"github.com/siderolabs/talos/pkg/machinery/resources/k8s"
@@ -57,6 +58,10 @@ func (suite *LocalAffiliateSuite) TestGeneration() {
 		asrt.Equal("Talos ("+version.Tag+")", spec.OperatingSystem)
 		asrt.Equal(cluster.KubeSpanAffiliateSpec{}, spec.KubeSpan)
 	})
+
+	if fipsmode.Strict() {
+		suite.T().Skip("skipping test in strict FIPS mode (Wireguard/KubeSpan)")
+	}
 
 	// enable kubespan
 	mac, err := net.ParseMAC("ea:71:1b:b2:cc:ee")

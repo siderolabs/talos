@@ -35,6 +35,7 @@ import (
 	"github.com/siderolabs/talos/internal/pkg/selinux"
 	"github.com/siderolabs/talos/pkg/conditions"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
+	"github.com/siderolabs/talos/pkg/machinery/fipsmode"
 	"github.com/siderolabs/talos/pkg/machinery/resources/network"
 	"github.com/siderolabs/talos/pkg/machinery/resources/secrets"
 	timeresource "github.com/siderolabs/talos/pkg/machinery/resources/time"
@@ -168,6 +169,10 @@ func (t *Trustd) Runner(r runtime.Runtime) (runner.Runner, error) {
 
 	if debug.RaceEnabled {
 		env = append(env, "GORACE=halt_on_error=1")
+	}
+
+	if fipsmode.Strict() {
+		env = append(env, fipsmode.StrictEnvironmentVariable())
 	}
 
 	return restart.New(containerd.NewRunner(

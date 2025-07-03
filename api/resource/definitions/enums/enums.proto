@@ -465,3 +465,10 @@ enum RuntimeSELinuxState {
   SE_LINUX_STATE_ENFORCING = 2;
 }
 
+// RuntimeFIPSState describes the current FIPS status.
+enum RuntimeFIPSState {
+  FIPS_STATE_DISABLED = 0;
+  FIPS_STATE_ENABLED = 1;
+  FIPS_STATE_STRICT = 2;
+}
+

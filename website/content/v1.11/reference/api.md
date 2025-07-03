@@ -113,6 +113,7 @@ description: Talos gRPC API reference.
     - [NethelpersVLANProtocol](#talos.resource.definitions.enums.NethelpersVLANProtocol)
     - [NetworkConfigLayer](#talos.resource.definitions.enums.NetworkConfigLayer)
     - [NetworkOperator](#talos.resource.definitions.enums.NetworkOperator)
+    - [RuntimeFIPSState](#talos.resource.definitions.enums.RuntimeFIPSState)
     - [RuntimeMachineStage](#talos.resource.definitions.enums.RuntimeMachineStage)
     - [RuntimeSELinuxState](#talos.resource.definitions.enums.RuntimeSELinuxState)
   
@@ -2330,6 +2331,19 @@ NetworkOperator enumerates Talos network operators.
 | OPERATOR_DHCP4 | 0 |  |
 | OPERATOR_DHCP6 | 1 |  |
 | OPERATOR_VIP | 2 |  |
+
+
+
+<a name="talos.resource.definitions.enums.RuntimeFIPSState"></a>
+
+### RuntimeFIPSState
+RuntimeFIPSState describes the current FIPS status.
+
+| Name | Number | Description |
+| ---- | ------ | ----------- |
+| FIPS_STATE_DISABLED | 0 |  |
+| FIPS_STATE_ENABLED | 1 |  |
+| FIPS_STATE_STRICT | 2 |  |
 
 
 
@@ -5366,6 +5380,7 @@ SecurityStateSpec describes the security state resource properties.
 | pcr_signing_key_fingerprint | [string](#string) |  |  |
 | se_linux_state | [talos.resource.definitions.enums.RuntimeSELinuxState](#talos.resource.definitions.enums.RuntimeSELinuxState) |  |  |
 | booted_with_uki | [bool](#bool) |  |  |
+| fips_state | [talos.resource.definitions.enums.RuntimeFIPSState](#talos.resource.definitions.enums.RuntimeFIPSState) |  |  |
 
 
 

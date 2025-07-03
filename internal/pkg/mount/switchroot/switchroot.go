@@ -12,6 +12,7 @@ import (
 	"path/filepath"
 
 	"github.com/siderolabs/go-debug"
+	"github.com/siderolabs/go-pointer"
 	"github.com/siderolabs/go-procfs/procfs"
 	"golang.org/x/sys/unix"
 
@@ -20,6 +21,7 @@ import (
 	"github.com/siderolabs/talos/internal/pkg/secureboot/tpm2"
 	"github.com/siderolabs/talos/internal/pkg/selinux"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
+	"github.com/siderolabs/talos/pkg/machinery/fipsmode"
 	"github.com/siderolabs/talos/pkg/machinery/imager/quirks"
 )
 
@@ -96,6 +98,12 @@ func Switch(prefix string, mountpoints mount.Points) (err error) {
 		envv = append(envv, "GORACE=halt_on_error=1")
 
 		log.Printf("race detection enabled with halt_on_error=1")
+	}
+
+	if val := procfs.ProcCmdline().Get("talos.fips140"); val != nil && fipsmode.Enabled() {
+		if pointer.SafeDeref(val.First()) == "strict" {
+			envv = append(envv, fipsmode.StrictEnvironmentVariable())
+		}
 	}
 
 	if val := procfs.ProcCmdline().Get("talos.debugshell"); val != nil {

@@ -21,12 +21,14 @@ import (
 	"github.com/siderolabs/talos/internal/pkg/mount/v2"
 	"github.com/siderolabs/talos/internal/pkg/selinux"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
+	"github.com/siderolabs/talos/pkg/machinery/fipsmode"
 	"github.com/siderolabs/talos/pkg/machinery/resources/block"
 )
 
 // LogMode prints the current mode.
 func LogMode(ctx context.Context, log *zap.Logger, rt runtime.Runtime, next NextTaskFunc) error {
 	log.Info("platform information", zap.Stringer("mode", rt.State().Platform().Mode()))
+	log.Info("FIPS mode", zap.Bool("enabled", fipsmode.Enabled()), zap.Bool("strict", fipsmode.Strict()))
 
 	return next()(ctx, log, rt, next)
 }

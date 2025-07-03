@@ -156,6 +156,7 @@ GO_BUILDTAGS_TALOSCTL ?= grpcnotrace
 GO_LDFLAGS ?=
 GO_MACHINED_LDFLAGS ?= -X golang.zx2c4.com/wireguard/ipc.socketPath=/system/wireguard-sock # see https://github.com/siderolabs/talos/issues/8514
 GOAMD64 ?= v2
+GOFIPS140 ?= off
 
 WITH_RACE ?= false
 WITH_DEBUG ?= false
@@ -206,6 +207,7 @@ COMMON_ARGS += --build-arg=GO_BUILDFLAGS="$(GO_BUILDFLAGS)"
 COMMON_ARGS += --build-arg=GO_LDFLAGS="$(GO_LDFLAGS)"
 COMMON_ARGS += --build-arg=GO_MACHINED_LDFLAGS="$(GO_MACHINED_LDFLAGS)"
 COMMON_ARGS += --build-arg=GOAMD64="$(GOAMD64)"
+COMMON_ARGS += --build-arg=GOFIPS140="$(GOFIPS140)"
 COMMON_ARGS += --build-arg=GOFUMPT_VERSION=$(GOFUMPT_VERSION)
 COMMON_ARGS += --build-arg=GOIMPORTS_VERSION=$(GOIMPORTS_VERSION)
 COMMON_ARGS += --build-arg=GOLANGCILINT_VERSION=$(GOLANGCILINT_VERSION)
@@ -569,6 +571,10 @@ unit-tests: ## Performs unit tests.
 
 .PHONY: unit-tests-race
 unit-tests-race: ## Performs unit tests with race detection enabled.
+	@$(MAKE) target-$@ TARGET_ARGS="--allow security.insecure" PLATFORM=linux/$(ARCH)
+
+.PHONY: unit-tests-fips
+unit-tests-fips: ## Performs unit tests with FIPS strict mode.
 	@$(MAKE) target-$@ TARGET_ARGS="--allow security.insecure" PLATFORM=linux/$(ARCH)
 
 $(ARTIFACTS)/$(INTEGRATION_TEST_DEFAULT_TARGET)-amd64:

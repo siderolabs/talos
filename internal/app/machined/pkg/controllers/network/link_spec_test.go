@@ -33,6 +33,7 @@ import (
 	networkadapter "github.com/siderolabs/talos/internal/app/machined/pkg/adapters/network"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/ctest"
 	netctrl "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/network"
+	"github.com/siderolabs/talos/pkg/machinery/fipsmode"
 	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
 	"github.com/siderolabs/talos/pkg/machinery/resources/network"
 	runtimeres "github.com/siderolabs/talos/pkg/machinery/resources/runtime"
@@ -932,7 +933,12 @@ func (suite *LinkSpecSuite) TestBridge() {
 	)
 }
 
+//nolint:gocyclo
 func (suite *LinkSpecSuite) TestWireguard() {
+	if fipsmode.Strict() {
+		suite.T().Skip("skipping test in strict FIPS mode")
+	}
+
 	priv, err := wgtypes.GeneratePrivateKey()
 	suite.Require().NoError(err)
 
