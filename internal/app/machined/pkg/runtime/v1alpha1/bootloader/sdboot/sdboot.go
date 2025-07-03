@@ -15,7 +15,11 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/ecks/uefi/efi/efiguid"
+	"github.com/ecks/uefi/efi/efitypes"
+	"github.com/ecks/uefi/efi/efitypes/efidevicepath"
 	"github.com/ecks/uefi/efi/efivario"
+	"github.com/ecks/uefi/efi/efivars"
 	"github.com/foxboron/go-uefi/efi"
 	"github.com/siderolabs/gen/xerrors"
 	"github.com/siderolabs/go-blockdevice/v2/blkid"
@@ -297,7 +301,7 @@ func (c *Config) Install(opts options.InstallOptions) (*options.InstallResult, e
 // Assumes that EFI partition is already mounted.
 // Writes down the UKI and updates the EFI variables.
 //
-//nolint:gocyclo
+//nolint:gocyclo,cyclop
 func (c *Config) install(opts options.InstallOptions) (*options.InstallResult, error) {
 	var sdbootFilename string
 
@@ -378,6 +382,46 @@ func (c *Config) install(opts options.InstallOptions) (*options.InstallResult, e
 		// set default 5 second boot timeout
 		if err := WriteVariable(efiCtx, LoaderConfigTimeoutName, "5"); err != nil {
 			return nil, err
+		}
+
+		it, err := efivars.BootIterator(efiCtx)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get boot iterator: %w", err)
+		}
+
+		defer it.Close() //nolint:errcheck
+
+		info, err := blkid.ProbePath(opts.BootDisk, blkid.WithSkipLocking(true))
+		if err != nil {
+			return nil, fmt.Errorf("error probing disk %s: %w", opts.BootDisk, err)
+		}
+
+		for it.Next() {
+			if it.Value().Index != 0 {
+				continue
+			}
+
+			guid, err := efiguid.FromString(info.UUID.String())
+			if err != nil {
+				return nil, fmt.Errorf("failed to parse UUID %s: %w", info.UUID.String(), err)
+			}
+
+			if err := it.Value().Variable.Set(efiCtx, &efitypes.LoadOption{
+				Attributes:  efitypes.ActiveAttribute,
+				Description: []byte("Talos UKI"),
+				FilePathList: efidevicepath.DevicePaths{
+					&efidevicepath.HardDriveMediaDevicePath{
+						PartitionNumber:    1,
+						PartitionStartLBA:  info.SignatureRanges[0].Offset,
+						PartitionSizeLBA:   info.SignatureRanges[0].Size,
+						PartitionSignature: guid,
+						PartitionFormat:    efidevicepath.GUIDPartitionFormat,
+						SignatureType:      efidevicepath.GUIDSignatureType,
+					},
+				},
+			}); err != nil {
+				return nil, fmt.Errorf("failed to set boot variable: %w", err)
+			}
 		}
 	}
 
