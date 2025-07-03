@@ -35,16 +35,16 @@ replace github.com/insomniacslk/dhcp => github.com/smira/dhcp v0.0.0-20241001122
 
 // Kubernetes dependencies sharing the same version.
 require (
-	k8s.io/api v0.33.1
-	k8s.io/apimachinery v0.33.1
-	k8s.io/apiserver v0.33.1
-	k8s.io/client-go v0.33.1
-	k8s.io/component-base v0.33.1
-	k8s.io/cri-api v0.33.1
-	k8s.io/kube-scheduler v0.33.1
-	k8s.io/kubectl v0.33.1
-	k8s.io/kubelet v0.33.1
-	k8s.io/pod-security-admission v0.33.1
+	k8s.io/api v0.33.2
+	k8s.io/apimachinery v0.33.2
+	k8s.io/apiserver v0.33.2
+	k8s.io/client-go v0.33.2
+	k8s.io/component-base v0.33.2
+	k8s.io/cri-api v0.33.2
+	k8s.io/kube-scheduler v0.33.2
+	k8s.io/kubectl v0.33.2
+	k8s.io/kubelet v0.33.2
+	k8s.io/pod-security-admission v0.33.2
 )
 
 require (
@@ -233,7 +233,7 @@ require (
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/chai2010/gettext-go v1.0.2 // indirect
 	github.com/cilium/ebpf v0.17.3 // indirect
-	github.com/cloudflare/circl v1.6.0 // indirect
+	github.com/cloudflare/circl v1.6.1 // indirect
 	github.com/containerd/continuity v0.4.4 // indirect
 	github.com/containerd/errdefs/pkg v0.3.0 // indirect
 	github.com/containerd/fifo v1.1.0 // indirect
@@ -364,7 +364,7 @@ require (
 	gopkg.in/evanphx/json-patch.v4 v4.12.0 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
-	k8s.io/cli-runtime v0.33.1 // indirect
+	k8s.io/cli-runtime v0.33.2 // indirect
 	k8s.io/kube-openapi v0.0.0-20250318190949-c8a335a9a2ff // indirect
 	k8s.io/utils v0.0.0-20250321185631-1f6e0b77f77e // indirect
 	kernel.org/pub/linux/libs/security/libcap/psx v1.2.76 // indirect
