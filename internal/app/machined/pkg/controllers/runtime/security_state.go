@@ -20,7 +20,6 @@ import (
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
-	"github.com/ecks/uefi/efi/efivario"
 	"github.com/foxboron/go-uefi/efi"
 	"go.uber.org/zap"
 
@@ -97,9 +96,7 @@ func (ctrl *SecurityStateController) Run(ctx context.Context, r controller.Runti
 				secureBootState = true
 			}
 
-			efiVarCtx := efivario.NewDefaultContext()
-
-			defaultEntry, err := sdboot.ReadVariable(efiVarCtx, sdboot.LoaderEntryDefaultName)
+			defaultEntry, err := sdboot.ReadVariable(sdboot.LoaderEntryDefaultName)
 			if err == nil {
 				if strings.HasPrefix(defaultEntry, "Talos-") {
 					bootedWithUKI = true
@@ -109,7 +106,7 @@ func (ctrl *SecurityStateController) Run(ctx context.Context, r controller.Runti
 			// if defaultEntry is empty in the case when we booted off a disk image when installer never runs, we can rely on the
 			// stub image identifier to determine if we booted with UKI
 			if defaultEntry == "" {
-				stubImageIdentifier, err := sdboot.ReadVariable(efiVarCtx, sdboot.StubImageIdentifierName)
+				stubImageIdentifier, err := sdboot.ReadVariable(sdboot.StubImageIdentifierName)
 				if err == nil {
 					if strings.HasPrefix(filepath.Base(strings.ReplaceAll(stubImageIdentifier, "\\", "/")), "Talos-") {
 						bootedWithUKI = true

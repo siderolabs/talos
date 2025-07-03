@@ -74,7 +74,6 @@ require (
 	github.com/docker/docker v28.3.0+incompatible
 	github.com/docker/go-connections v0.5.0
 	github.com/dustin/go-humanize v1.0.1
-	github.com/ecks/uefi v0.0.0-20221116212947-caef65d070eb
 	github.com/elastic/go-libaudit/v2 v2.6.2
 	github.com/equinix-ms/go-vmw-guestrpc v0.1.1
 	github.com/fatih/color v1.18.0
@@ -82,6 +81,7 @@ require (
 	github.com/foxboron/go-uefi v0.0.0-20250625111927-a3183a1bfc84
 	github.com/freddierice/go-losetup/v2 v2.0.1
 	github.com/fsnotify/fsnotify v1.9.0
+	github.com/g0rbe/go-chattr v1.0.1
 	github.com/gdamore/tcell/v2 v2.8.1
 	github.com/gertd/go-pluralize v0.2.1
 	github.com/gizak/termui/v3 v3.1.0
@@ -196,7 +196,6 @@ require (
 
 require (
 	cel.dev/expr v0.24.0 // indirect
-	github.com/0x5a17ed/itkit v0.6.0 // indirect
 	github.com/Azure/azure-sdk-for-go/sdk/internal v1.11.1 // indirect
 	github.com/Azure/azure-sdk-for-go/sdk/security/keyvault/internal v1.2.0 // indirect
 	github.com/Azure/go-ansiterm v0.0.0-20230124172434-306776ec8161 // indirect
@@ -357,6 +356,7 @@ require (
 	gopkg.in/evanphx/json-patch.v4 v4.12.0 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
+	gotest.tools/v3 v3.4.0 // indirect
 	k8s.io/cli-runtime v0.34.0-alpha.2 // indirect
 	k8s.io/kube-openapi v0.0.0-20250610211856-8b98d1ed966a // indirect
 	k8s.io/utils v0.0.0-20250604170112-4c0f3b243397 // indirect

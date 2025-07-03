@@ -15,7 +15,6 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/ecks/uefi/efi/efivario"
 	"github.com/foxboron/go-uefi/efi"
 	"github.com/siderolabs/gen/xerrors"
 	"github.com/siderolabs/go-blockdevice/v2/blkid"
@@ -79,11 +78,9 @@ func ProbeWithCallback(disk string, options options.ProbeOptions, callback func(
 	// and populate config accordingly
 	// https://www.freedesktop.org/software/systemd/man/latest/systemd-boot.html#LoaderEntryDefault
 	// this is set by systemd-boot.
-	efiCtx := efivario.NewDefaultContext()
-
 	// first we start by checking if we have a Default entry
 	// this is set by installer
-	bootedEntry, err := ReadVariable(efiCtx, LoaderEntryDefaultName)
+	bootedEntry, err := ReadVariable(LoaderEntryDefaultName)
 	if err != nil {
 		return nil, err
 	}
@@ -292,24 +289,26 @@ func (c *Config) Install(opts options.InstallOptions) (*options.InstallResult, e
 	return installResult, err
 }
 
+func sdBootFilePath(arch string) (string, error) {
+	basePath := filepath.Join("EFI", "boot")
+
+	switch arch {
+	case "amd64":
+		return filepath.Join(basePath, "BOOTX64.efi"), nil
+	case "arm64":
+		return filepath.Join(basePath, "BOOTAA64.efi"), nil
+	default:
+		return "", fmt.Errorf("unsupported architecture: %s", arch)
+	}
+}
+
 // Install the bootloader.
 //
 // Assumes that EFI partition is already mounted.
 // Writes down the UKI and updates the EFI variables.
 //
-//nolint:gocyclo
+//nolint:gocyclo,cyclop
 func (c *Config) install(opts options.InstallOptions) (*options.InstallResult, error) {
-	var sdbootFilename string
-
-	switch opts.Arch {
-	case "amd64":
-		sdbootFilename = "BOOTX64.efi"
-	case "arm64":
-		sdbootFilename = "BOOTAA64.efi"
-	default:
-		return nil, fmt.Errorf("unsupported architecture: %s", opts.Arch)
-	}
-
 	if _, err := os.Stat(filepath.Join(opts.MountPrefix, constants.EFIMountPoint, "loader", "loader.conf")); err != nil {
 		if os.IsNotExist(err) {
 			if err := os.MkdirAll(filepath.Join(opts.MountPrefix, constants.EFIMountPoint, "loader"), 0o755); err != nil {
@@ -350,6 +349,11 @@ func (c *Config) install(opts options.InstallOptions) (*options.InstallResult, e
 		}
 	}
 
+	sdbootFilename, err := sdBootFilePath(opts.Arch)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get sd-boot file path: %w", err)
+	}
+
 	if err := utils.CopyFiles(
 		opts.Printf,
 		utils.SourceDestination(
@@ -358,7 +362,7 @@ func (c *Config) install(opts options.InstallOptions) (*options.InstallResult, e
 		),
 		utils.SourceDestination(
 			opts.BootAssets.SDBootPath,
-			filepath.Join(opts.MountPrefix, constants.EFIMountPoint, "EFI", "boot", sdbootFilename),
+			filepath.Join(opts.MountPrefix, constants.EFIMountPoint, sdbootFilename),
 		),
 	); err != nil {
 		return nil, err
@@ -368,16 +372,18 @@ func (c *Config) install(opts options.InstallOptions) (*options.InstallResult, e
 	if !opts.ImageMode {
 		opts.Printf("updating EFI variables")
 
-		efiCtx := efivario.NewDefaultContext()
-
 		// set the new entry as a default one
-		if err := WriteVariable(efiCtx, LoaderEntryDefaultName, ukiPath); err != nil {
+		if err := WriteVariable(LoaderEntryDefaultName, ukiPath); err != nil {
 			return nil, err
 		}
 
 		// set default 5 second boot timeout
-		if err := WriteVariable(efiCtx, LoaderConfigTimeoutName, "5"); err != nil {
+		if err := WriteVariable(LoaderConfigTimeoutName, "5"); err != nil {
 			return nil, err
+		}
+
+		if err := CreateBootEntry(opts.BootDisk, sdbootFilename); err != nil {
+			return nil, fmt.Errorf("failed to create boot entry: %w", err)
 		}
 	}
 
@@ -431,7 +437,7 @@ func (c *Config) revert() error {
 
 		log.Printf("reverting to previous UKI: %s", file)
 
-		return WriteVariable(efivario.NewDefaultContext(), LoaderEntryDefaultName, filepath.Base(file))
+		return WriteVariable(LoaderEntryDefaultName, filepath.Base(file))
 	}
 
 	return errors.New("previous UKI not found")
