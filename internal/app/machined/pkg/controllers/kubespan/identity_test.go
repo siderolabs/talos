@@ -4,6 +4,7 @@
 package kubespan_test
 
 import (
+	"crypto/fips140"
 	"net"
 	"os"
 	"path/filepath"
@@ -133,6 +134,10 @@ publicKey: Oak2fBEWngBhwslBxDVgnRNHXs88OAp4kjroSX0uqUE=
 
 func TestIdentitySuite(t *testing.T) {
 	t.Parallel()
+
+	if fips140.Enabled() {
+		t.Skip("skipping test in FIPS mode")
+	}
 
 	suite.Run(t, &IdentitySuite{
 		DefaultSuite: ctest.DefaultSuite{

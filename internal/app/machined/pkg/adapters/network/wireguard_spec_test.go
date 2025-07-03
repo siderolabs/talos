@@ -5,6 +5,7 @@
 package network_test
 
 import (
+	"crypto/fips140"
 	"net"
 	"net/netip"
 	"testing"
@@ -20,6 +21,10 @@ import (
 )
 
 func TestWireguardSpecDecode(t *testing.T) {
+	if fips140.Enabled() {
+		t.Skip("skipping test in FIPS mode")
+	}
+
 	priv, err := wgtypes.GeneratePrivateKey()
 	require.NoError(t, err)
 
@@ -103,6 +108,10 @@ func TestWireguardSpecDecode(t *testing.T) {
 }
 
 func TestWireguardSpecDecodeStatus(t *testing.T) {
+	if fips140.Enabled() {
+		t.Skip("skipping test in FIPS mode")
+	}
+
 	priv, err := wgtypes.GeneratePrivateKey()
 	require.NoError(t, err)
 
@@ -127,6 +136,10 @@ func TestWireguardSpecDecodeStatus(t *testing.T) {
 }
 
 func TestWireguardSpecEncode(t *testing.T) {
+	if fips140.Enabled() {
+		t.Skip("skipping test in FIPS mode")
+	}
+
 	priv, err := wgtypes.GeneratePrivateKey()
 	require.NoError(t, err)
 
