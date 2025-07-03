@@ -111,7 +111,7 @@ PROTOC_GEN_DOC_VERSION ?= v1.5.1
 # renovate: datasource=npm depName=markdownlint-cli
 MARKDOWNLINTCLI_VERSION ?= 0.45.0
 # renovate: datasource=npm depName=textlint
-TEXTLINT_VERSION ?= 15.0.1
+TEXTLINT_VERSION ?= 15.1.0
 # renovate: datasource=npm depName=textlint-filter-rule-comments
 TEXTLINT_FILTER_RULE_COMMENTS_VERSION ?= 1.2.2
 # renovate: datasource=npm depName=textlint-rule-one-sentence-per-line
@@ -132,7 +132,7 @@ KUBESTR_VERSION ?= v0.4.49
 # renovate: datasource=github-releases depName=helm/helm
 HELM_VERSION ?= v3.18.3
 # renovate: datasource=github-releases depName=cilium/cilium-cli
-CILIUM_CLI_VERSION ?= v0.18.4
+CILIUM_CLI_VERSION ?= v0.18.5
 # renovate: datasource=github-releases depName=microsoft/secureboot_objects
 MICROSOFT_SECUREBOOT_RELEASE ?= v1.1.3
 
