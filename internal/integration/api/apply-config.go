@@ -11,7 +11,6 @@ import (
 	"encoding/json"
 	"net/url"
 	"os"
-	"slices"
 	"testing"
 	"time"
 
@@ -93,18 +92,15 @@ func (suite *ApplyConfigSuite) TestApply() {
 		suite.T().Skip("cluster doesn't support reboot")
 	}
 
-	nodes := suite.DiscoverNodeInternalIPsByType(suite.ctx, machine.TypeWorker)
-	suite.Require().NotEmpty(nodes)
-
 	suite.WaitForBootDone(suite.ctx)
 
-	slices.Sort(nodes)
-
-	node := nodes[0]
+	node := suite.RandomDiscoveredNodeInternalIP(machine.TypeWorker)
+	suite.T().Logf("applying configuration to node %q", node)
+	suite.ClearConnectionRefused(suite.ctx, node)
 	nodeCtx := client.WithNode(suite.ctx, node)
 
 	provider, err := suite.ReadConfigFromNode(nodeCtx)
-	suite.Assert().NoErrorf(err, "failed to read existing config from node %q", node)
+	suite.Require().NoErrorf(err, "failed to read existing config from node %q", node)
 
 	cfgDataOut := suite.PatchV1Alpha1Config(provider, func(cfg *v1alpha1.Config) {
 		if cfg.MachineConfig.MachineSysctls == nil {
@@ -161,14 +157,15 @@ func (suite *ApplyConfigSuite) TestApplyNoOpCRIPatch() {
 		suite.T().Skip("cluster doesn't support reboot")
 	}
 
-	node := suite.RandomDiscoveredNodeInternalIP(machine.TypeWorker)
-
 	suite.WaitForBootDone(suite.ctx)
 
+	node := suite.RandomDiscoveredNodeInternalIP(machine.TypeWorker)
+	suite.T().Logf("applying configuration to node %q", node)
+	suite.ClearConnectionRefused(suite.ctx, node)
 	nodeCtx := client.WithNode(suite.ctx, node)
 
 	provider, err := suite.ReadConfigFromNode(nodeCtx)
-	suite.Assert().NoErrorf(err, "failed to read existing config from node %q", node)
+	suite.Require().NoErrorf(err, "failed to read existing config from node %q", node)
 
 	// this CRI patch is a no-op, as NRI is already disabled by default, this verifies that CRI config generation handles it correctly.
 	cfgDataOut := suite.PatchV1Alpha1Config(provider, func(cfg *v1alpha1.Config) {
@@ -204,7 +201,7 @@ func (suite *ApplyConfigSuite) TestApplyNoOpCRIPatch() {
 
 	// revert the patch
 	provider, err = suite.ReadConfigFromNode(nodeCtx)
-	suite.Assert().NoErrorf(err, "failed to read existing config from node %q", node)
+	suite.Require().NoErrorf(err, "failed to read existing config from node %q", node)
 
 	// this CRI patch is a no-op, as NRI is already disabled by default, this verifies that CRI config generation handles it correctly.
 	cfgDataOut = suite.PatchV1Alpha1Config(provider, func(cfg *v1alpha1.Config) {
@@ -237,9 +234,9 @@ func (suite *ApplyConfigSuite) TestApplyWithoutReboot() {
 	} {
 		suite.WaitForBootDone(suite.ctx)
 
-		node := suite.RandomDiscoveredNodeInternalIP()
+		node := suite.RandomDiscoveredNodeInternalIP(machine.TypeWorker)
+		suite.T().Logf("applying configuration to node %q", node)
 		suite.ClearConnectionRefused(suite.ctx, node)
-
 		nodeCtx := client.WithNode(suite.ctx, node)
 
 		provider, err := suite.ReadConfigFromNode(nodeCtx)
@@ -304,7 +301,7 @@ func (suite *ApplyConfigSuite) TestApplyConfigRotateEncryptionSecrets() {
 	nodeCtx := client.WithNode(suite.ctx, node)
 	provider, err := suite.ReadConfigFromNode(nodeCtx)
 
-	suite.Assert().NoError(err)
+	suite.Require().NoError(err)
 
 	machineConfig := provider.RawV1Alpha1()
 	suite.Assert().NotNil(machineConfig)
@@ -457,14 +454,11 @@ func toJSONString(t *testing.T, v any) string {
 
 // TestApplyNoReboot verifies the apply config API fails if NoReboot mode is requested on a field that can not be applied immediately.
 func (suite *ApplyConfigSuite) TestApplyNoReboot() {
-	nodes := suite.DiscoverNodeInternalIPsByType(suite.ctx, machine.TypeWorker)
-	suite.Require().NotEmpty(nodes)
-
 	suite.WaitForBootDone(suite.ctx)
 
-	slices.Sort(nodes)
-
-	node := nodes[0]
+	node := suite.RandomDiscoveredNodeInternalIP(machine.TypeWorker)
+	suite.T().Logf("applying configuration to node %q", node)
+	suite.ClearConnectionRefused(suite.ctx, node)
 	nodeCtx := client.WithNode(suite.ctx, node)
 
 	provider, err := suite.ReadConfigFromNode(nodeCtx)
@@ -488,14 +482,11 @@ func (suite *ApplyConfigSuite) TestApplyNoReboot() {
 
 // TestApplyDryRun verifies the apply config API with dry run enabled.
 func (suite *ApplyConfigSuite) TestApplyDryRun() {
-	nodes := suite.DiscoverNodeInternalIPsByType(suite.ctx, machine.TypeWorker)
-	suite.Require().NotEmpty(nodes)
-
 	suite.WaitForBootDone(suite.ctx)
 
-	slices.Sort(nodes)
-
-	node := nodes[0]
+	node := suite.RandomDiscoveredNodeInternalIP()
+	suite.T().Logf("applying configuration to node %q", node)
+	suite.ClearConnectionRefused(suite.ctx, node)
 	nodeCtx := client.WithNode(suite.ctx, node)
 
 	provider, err := suite.ReadConfigFromNode(nodeCtx)
@@ -527,14 +518,11 @@ func (suite *ApplyConfigSuite) TestApplyDryRun() {
 
 // TestApplyDryRunDocuments verifies the apply config API with multi doc and dry run enabled.
 func (suite *ApplyConfigSuite) TestApplyDryRunDocuments() {
-	nodes := suite.DiscoverNodeInternalIPsByType(suite.ctx, machine.TypeWorker)
-	suite.Require().NotEmpty(nodes)
-
 	suite.WaitForBootDone(suite.ctx)
 
-	slices.Sort(nodes)
-
-	node := nodes[0]
+	node := suite.RandomDiscoveredNodeInternalIP()
+	suite.T().Logf("applying configuration to node %q", node)
+	suite.ClearConnectionRefused(suite.ctx, node)
 	nodeCtx := client.WithNode(suite.ctx, node)
 
 	provider, err := suite.ReadConfigFromNode(nodeCtx)
@@ -566,14 +554,11 @@ func (suite *ApplyConfigSuite) TestApplyDryRunDocuments() {
 
 // TestApplyTry applies the config in try mode with a short timeout.
 func (suite *ApplyConfigSuite) TestApplyTry() {
-	nodes := suite.DiscoverNodeInternalIPsByType(suite.ctx, machine.TypeWorker)
-	suite.Require().NotEmpty(nodes)
-
 	suite.WaitForBootDone(suite.ctx)
 
-	slices.Sort(nodes)
-
-	node := nodes[0]
+	node := suite.RandomDiscoveredNodeInternalIP(machine.TypeWorker)
+	suite.T().Logf("applying configuration to node %q", node)
+	suite.ClearConnectionRefused(suite.ctx, node)
 	nodeCtx := client.WithNode(suite.ctx, node)
 
 	getMachineConfig := func(ctx context.Context) (*mc.MachineConfig, error) {
@@ -651,8 +636,8 @@ func (suite *ApplyConfigSuite) TestApplyRemovingV1Alpha1() {
 	suite.WaitForBootDone(suite.ctx)
 
 	node := suite.RandomDiscoveredNodeInternalIP()
+	suite.T().Logf("applying configuration to node %q", node)
 	suite.ClearConnectionRefused(suite.ctx, node)
-
 	nodeCtx := client.WithNode(suite.ctx, node)
 
 	// create a simple multi-doc config without v1alpha1
