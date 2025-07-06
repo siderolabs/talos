@@ -798,6 +798,7 @@ RUN <<END
     mkdir -pv /rootfs/opt/{containerd/bin,containerd/lib}
 END
 COPY --chmod=0644 hack/zoneinfo/Etc/UTC /rootfs/usr/share/zoneinfo/Etc/UTC
+COPY --chmod=0644 hack/nfs.conf /rootfs/etc/nfs.conf
 COPY --chmod=0644 hack/nfsmount.conf /rootfs/etc/nfsmount.conf
 COPY --chmod=0644 hack/containerd.toml /rootfs/etc/containerd/config.toml
 COPY --chmod=0644 hack/cri-containerd.toml /rootfs/etc/cri/containerd.toml
@@ -875,6 +876,7 @@ RUN <<END
     mkdir -pv /rootfs/opt/{containerd/bin,containerd/lib}
 END
 COPY --chmod=0644 hack/zoneinfo/Etc/UTC /rootfs/usr/share/zoneinfo/Etc/UTC
+COPY --chmod=0644 hack/nfs.conf /rootfs/etc/nfs.conf
 COPY --chmod=0644 hack/nfsmount.conf /rootfs/etc/nfsmount.conf
 COPY --chmod=0644 hack/containerd.toml /rootfs/etc/containerd/config.toml
 COPY --chmod=0644 hack/cri-containerd.toml /rootfs/etc/cri/containerd.toml
