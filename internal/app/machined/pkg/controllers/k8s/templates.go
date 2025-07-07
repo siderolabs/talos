@@ -71,12 +71,6 @@ var coreDNSSvcTemplate string
 //go:embed templates/pod-security-policy-template.yaml
 var podSecurityPolicy string
 
-// talosAPIService is the service to access Talos API from Kubernetes.
-// Service exposes the Endpoints which are managed by controllers.
-//
-//go:embed templates/talos-api-service-template.yaml
-var talosAPIService string
-
 var flannelTemplate = string(flannel.Template)
 
 // talosServiceAccountCRDTemplate is the template of the CRD which
