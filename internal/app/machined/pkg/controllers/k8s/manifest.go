@@ -229,7 +229,6 @@ func (ctrl *ManifestController) render(cfg k8s.BootstrapManifestsConfigSpec, scr
 	if cfg.TalosAPIServiceEnabled {
 		defaultManifests = slices.Concat(defaultManifests,
 			[]manifestDesc{
-				{"12-talos-api-service", talosAPIService},
 				{"13-talos-service-account-crd", talosServiceAccountCRDTemplate},
 			},
 		)

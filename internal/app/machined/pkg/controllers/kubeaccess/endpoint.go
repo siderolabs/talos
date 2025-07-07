@@ -18,6 +18,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
@@ -125,7 +126,7 @@ func (ctrl *EndpointController) Run(ctx context.Context, r controller.Runtime, l
 			return fmt.Errorf("error loading kubeconfig: %w", err)
 		}
 
-		if err = ctrl.updateTalosEndpoints(ctx, logger, kubeconfig, endpointAddrs); err != nil {
+		if err = ctrl.manageEndpoints(ctx, logger, kubeconfig, endpointAddrs); err != nil {
 			return err
 		}
 
@@ -133,8 +134,7 @@ func (ctrl *EndpointController) Run(ctx context.Context, r controller.Runtime, l
 	}
 }
 
-//nolint:gocyclo
-func (ctrl *EndpointController) updateTalosEndpoints(ctx context.Context, logger *zap.Logger, kubeconfig *rest.Config, endpointAddrs k8s.EndpointList) error {
+func (ctrl *EndpointController) manageEndpoints(ctx context.Context, logger *zap.Logger, kubeconfig *rest.Config, endpointAddrs k8s.EndpointList) error {
 	client, err := kubernetes.NewForConfig(kubeconfig)
 	if err != nil {
 		return fmt.Errorf("error building Kubernetes client: %w", err)
@@ -142,6 +142,62 @@ func (ctrl *EndpointController) updateTalosEndpoints(ctx context.Context, logger
 
 	defer client.Close() //nolint:errcheck
 
+	// create the Service before creating the Endpoints, as Kubernetes EndpointController will clean up orphaned Endpoints
+	if err = ctrl.ensureTalosService(ctx, client); err != nil {
+		return fmt.Errorf("error ensuring Talos API service: %w", err)
+	}
+
+	// now create or update the Endpoints resource
+	if err = ctrl.ensureTalosEndpoints(ctx, logger, client, endpointAddrs); err != nil {
+		return fmt.Errorf("error ensuring Talos API endpoints: %w", err)
+	}
+
+	return nil
+}
+
+func (ctrl *EndpointController) ensureTalosService(ctx context.Context, client *kubernetes.Client) error {
+	_, err := client.CoreV1().Services(constants.KubernetesTalosAPIServiceNamespace).Get(ctx, constants.KubernetesTalosAPIServiceName, metav1.GetOptions{})
+	if err == nil {
+		// service already exists, nothing to do
+		return nil
+	}
+
+	if !apierrors.IsNotFound(err) {
+		return fmt.Errorf("error getting Talos API service: %w", err)
+	}
+
+	// create the service if it does not exist
+	newService := &corev1.Service{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      constants.KubernetesTalosAPIServiceName,
+			Namespace: constants.KubernetesTalosAPIServiceNamespace,
+			Labels: map[string]string{
+				"provider":  constants.KubernetesTalosProvider,
+				"component": "apid",
+			},
+		},
+		Spec: corev1.ServiceSpec{
+			Ports: []corev1.ServicePort{
+				{
+					Name:       "apid",
+					Port:       constants.ApidPort,
+					Protocol:   corev1.ProtocolTCP,
+					TargetPort: intstr.FromInt(constants.ApidPort),
+				},
+			},
+		},
+	}
+
+	_, err = client.CoreV1().Services(constants.KubernetesTalosAPIServiceNamespace).Create(ctx, newService, metav1.CreateOptions{})
+	if err != nil && !apierrors.IsAlreadyExists(err) {
+		return fmt.Errorf("error creating Talos API service: %w", err)
+	}
+
+	return nil
+}
+
+//nolint:gocyclo
+func (ctrl *EndpointController) ensureTalosEndpoints(ctx context.Context, logger *zap.Logger, client *kubernetes.Client, endpointAddrs k8s.EndpointList) error {
 	for {
 		oldEndpoints, err := client.CoreV1().Endpoints(constants.KubernetesTalosAPIServiceNamespace).Get(ctx, constants.KubernetesTalosAPIServiceName, metav1.GetOptions{})
 		if err != nil && !apierrors.IsNotFound(err) {
