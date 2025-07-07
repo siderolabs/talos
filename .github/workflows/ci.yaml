@@ -1,6 +1,6 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
 #
-# Generated on 2025-07-02T15:29:45Z by kres b282c9b.
+# Generated on 2025-07-07T16:49:31Z by kres b282c9b.
 
 name: default
 concurrency:
@@ -4493,7 +4493,10 @@ jobs:
           cosign sign-blob --output _out/metal-arm64-uki.efi.sig --yes _out/metal-arm64-uki.efi
           cosign sign-blob --output _out/metal-amd64.raw.zst.sig --yes _out/metal-amd64.raw.zst
           cosign sign-blob --output _out/metal-arm64.raw.zst.sig --yes _out/metal-arm64.raw.zst
-          cosign sign-blob --output _out/sbom.json.sig --yes _out/sbom.json
+          cosign sign-blob --output _out/talos-arm64.spdx.json.sig --yes _out/talos-arm64.spdx.json
+          cosign sign-blob --output _out/talos-amd64.spdx.json.sig --yes _out/talos-amd64.spdx.json
+          cosign sign-blob --output _out/talos-container-arm64.spdx.json.sig --yes _out/talos-container-arm64.spdx.json
+          cosign sign-blob --output _out/talos-container-amd64.spdx.json.sig --yes _out/talos-container-amd64.spdx.json
           cosign sign-blob --output _out/talosctl-cni-bundle-amd64.tar.gz.sig --yes _out/talosctl-cni-bundle-amd64.tar.gz
           cosign sign-blob --output _out/talosctl-cni-bundle-arm64.tar.gz.sig --yes _out/talosctl-cni-bundle-arm64.tar.gz
           cosign sign-blob --output _out/talosctl-darwin-amd64.sig --yes _out/talosctl-darwin-amd64
@@ -4510,8 +4513,8 @@ jobs:
       - name: Generate Checksums
         run: |
           cd _out
-          sha256sum cloud-images.json initramfs-amd64.xz initramfs-arm64.xz metal-amd64.iso metal-arm64.iso metal-amd64-uki.efi metal-arm64-uki.efi metal-amd64.raw.zst metal-arm64.raw.zst sbom.json talosctl-cni-bundle-amd64.tar.gz talosctl-cni-bundle-arm64.tar.gz talosctl-darwin-amd64 talosctl-darwin-arm64 talosctl-freebsd-amd64 talosctl-freebsd-arm64 talosctl-linux-amd64 talosctl-linux-arm64 talosctl-linux-armv7 talosctl-windows-amd64.exe talosctl-windows-arm64.exe vmlinuz-amd64 vmlinuz-arm64 > sha256sum.txt
-          sha512sum cloud-images.json initramfs-amd64.xz initramfs-arm64.xz metal-amd64.iso metal-arm64.iso metal-amd64-uki.efi metal-arm64-uki.efi metal-amd64.raw.zst metal-arm64.raw.zst sbom.json talosctl-cni-bundle-amd64.tar.gz talosctl-cni-bundle-arm64.tar.gz talosctl-darwin-amd64 talosctl-darwin-arm64 talosctl-freebsd-amd64 talosctl-freebsd-arm64 talosctl-linux-amd64 talosctl-linux-arm64 talosctl-linux-armv7 talosctl-windows-amd64.exe talosctl-windows-arm64.exe vmlinuz-amd64 vmlinuz-arm64 > sha512sum.txt
+          sha256sum cloud-images.json initramfs-amd64.xz initramfs-arm64.xz metal-amd64.iso metal-arm64.iso metal-amd64-uki.efi metal-arm64-uki.efi metal-amd64.raw.zst metal-arm64.raw.zst talos-arm64.spdx.json talos-amd64.spdx.json talos-container-arm64.spdx.json talos-container-amd64.spdx.json talosctl-cni-bundle-amd64.tar.gz talosctl-cni-bundle-arm64.tar.gz talosctl-darwin-amd64 talosctl-darwin-arm64 talosctl-freebsd-amd64 talosctl-freebsd-arm64 talosctl-linux-amd64 talosctl-linux-arm64 talosctl-linux-armv7 talosctl-windows-amd64.exe talosctl-windows-arm64.exe vmlinuz-amd64 vmlinuz-arm64 > sha256sum.txt
+          sha512sum cloud-images.json initramfs-amd64.xz initramfs-arm64.xz metal-amd64.iso metal-arm64.iso metal-amd64-uki.efi metal-arm64-uki.efi metal-amd64.raw.zst metal-arm64.raw.zst talos-arm64.spdx.json talos-amd64.spdx.json talos-container-arm64.spdx.json talos-container-amd64.spdx.json talosctl-cni-bundle-amd64.tar.gz talosctl-cni-bundle-arm64.tar.gz talosctl-darwin-amd64 talosctl-darwin-arm64 talosctl-freebsd-amd64 talosctl-freebsd-arm64 talosctl-linux-amd64 talosctl-linux-arm64 talosctl-linux-armv7 talosctl-windows-amd64.exe talosctl-windows-arm64.exe vmlinuz-amd64 vmlinuz-arm64 > sha512sum.txt
       - name: Sign checksums
         run: |
           cosign sign-blob --output sha256sum.txt.sig --yes sha256sum.txt
@@ -4531,7 +4534,10 @@ jobs:
             _out/metal-arm64-uki.efi
             _out/metal-amd64.raw.zst
             _out/metal-arm64.raw.zst
-            _out/sbom.json
+            _out/talos-arm64.spdx.json
+            _out/talos-amd64.spdx.json
+            _out/talos-container-arm64.spdx.json
+            _out/talos-container-amd64.spdx.json
             _out/talosctl-cni-bundle-amd64.tar.gz
             _out/talosctl-cni-bundle-arm64.tar.gz
             _out/talosctl-darwin-amd64

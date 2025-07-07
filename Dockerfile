@@ -449,30 +449,6 @@ FROM scratch AS microsoft-db-keys
 COPY --from=microsoft-secureboot-database /DB/Certificates/MicCor*.der /db/
 COPY --from=microsoft-secureboot-database /DB/Certificates/microsoft*.der /db/
 
-FROM build-go AS sbom-generate
-COPY ./tools ./tools
-
-ARG SOURCE_DATE_EPOCH
-ENV SYFT_FORMAT_SPDX_JSON_CREATED_TIME=${SOURCE_DATE_EPOCH}
-ENV SYFT_FORMAT_PRETTY=1
-ENV SYFT_FORMAT_SPDX_JSON_DETERMINISTIC_UUID=1
-
-ARG NAME
-ARG TAG
-
-RUN mkdir -p sbom-src /usr/share/sbom
-# TODO: copy pkgs SBOMs to sbom-src when we generate them
-RUN cp go.mod go.sum sbom-src
-RUN --mount=type=cache,target=/.cache,id=talos/.cache go tool -modfile=tools/go.mod \
-    github.com/anchore/syft/cmd/syft \
-    scan --from dir sbom-src \
-    --select-catalogers "+sbom-cataloger,go" \
-    --source-name "${NAME}" --source-version "${TAG}" \
-    -o spdx-json > /usr/share/sbom/sbom.json
-
-FROM scratch AS sbom
-COPY --from=sbom-generate /usr/share/sbom/sbom.json /
-
 FROM --platform=${BUILDPLATFORM} scratch AS generate
 COPY --from=proto-format-build /src/api /api/
 COPY --from=generate-build /api/common/*.pb.go /pkg/machinery/api/common/
@@ -893,13 +869,67 @@ RUN <<END
     ln -s /etc/ssl /rootfs/etc/ca-certificates
 END
 
+FROM build-go AS build-sbom
+ARG SOURCE_DATE_EPOCH
+ENV SYFT_FORMAT_SPDX_JSON_CREATED_TIME=${SOURCE_DATE_EPOCH}
+ARG NAME
+ARG TAG
+
+COPY ./hack/sbom.sh /usr/bin/sbom.sh
+COPY ./tools ./tools
+
+RUN mkdir -p /tmp/sbom-src /rootfs/usr/share/spdx
+RUN cp go.mod go.sum /tmp/sbom-src/
+
+FROM build-sbom AS sbom-container-arm64-generate
+COPY --from=rootfs-base-arm64 /rootfs/usr/share/spdx /tmp/sbom-src/
+RUN --mount=type=cache,target=/.cache,id=talos/.cache sbom.sh /tmp/sbom-src/ "$NAME (arm64 container)" talos-container-arm64.spdx.json
+
+FROM scratch AS sbom-container-arm64
+COPY --from=sbom-container-arm64-generate /rootfs/usr/share/spdx/talos-container-arm64.spdx.json /
+
+FROM build-sbom AS sbom-container-amd64-generate
+COPY --from=rootfs-base-amd64 /rootfs/usr/share/spdx /tmp/sbom-src/
+RUN --mount=type=cache,target=/.cache,id=talos/.cache sbom.sh /tmp/sbom-src/ "$NAME (amd64 container)" talos-container-amd64.spdx.json
+
+FROM scratch AS sbom-container-amd64
+COPY --from=sbom-container-amd64-generate /rootfs/usr/share/spdx/talos-container-amd64.spdx.json /
+
+FROM build-sbom AS sbom-arm64-generate
+COPY --from=rootfs-base-arm64 /rootfs/usr/share/spdx /tmp/sbom-src/
+COPY --from=pkg-kernel-arm64 /usr/share/spdx/kernel.spdx.json /tmp/sbom-src/
+RUN --mount=type=cache,target=/.cache,id=talos/.cache sbom.sh /tmp/sbom-src/ "$NAME (arm64)" talos-arm64.spdx.json
+
+FROM scratch AS sbom-arm64
+COPY --from=sbom-arm64-generate /rootfs/usr/share/spdx/talos-arm64.spdx.json /
+
+FROM build-sbom AS sbom-amd64-generate
+COPY --from=rootfs-base-amd64 /rootfs/usr/share/spdx /tmp/sbom-src/
+COPY --from=pkg-kernel-amd64 /usr/share/spdx/kernel.spdx.json /tmp/sbom-src/
+RUN --mount=type=cache,target=/.cache,id=talos/.cache sbom.sh /tmp/sbom-src/ "$NAME (amd64)" talos-amd64.spdx.json
+
+FROM scratch AS sbom-amd64
+COPY --from=sbom-amd64-generate /rootfs/usr/share/spdx/talos-amd64.spdx.json /
+
+FROM scratch AS sbom
+COPY --from=sbom-container-arm64 / /
+COPY --from=sbom-container-amd64 / /
+COPY --from=sbom-arm64 / /
+COPY --from=sbom-amd64 / /
+
+FROM sbom-container-${TARGETARCH} AS sbom-container-target
+
 FROM rootfs-base-${TARGETARCH} AS rootfs-base
+RUN rm -rf /rootfs/usr/share/spdx/*
+COPY --from=sbom-container-target / /rootfs/usr/share/spdx/
 RUN echo "true" > /rootfs/usr/etc/in-container
 RUN rm -rf /rootfs/usr/lib/modules/*
 RUN find /rootfs -print0 \
     | xargs -0r touch --no-dereference --date="@${SOURCE_DATE_EPOCH}"
 
 FROM rootfs-base-arm64 AS rootfs-squashfs-arm64
+RUN rm -rf /rootfs/usr/share/spdx/*
+COPY --from=sbom-arm64 / /rootfs/usr/share/spdx/
 ARG ZSTD_COMPRESSION_LEVEL
 RUN find /rootfs -print0 \
     | xargs -0r touch --no-dereference --date="@${SOURCE_DATE_EPOCH}"
@@ -908,6 +938,8 @@ COPY ./hack/labeled-squashfs.sh /
 RUN fakeroot /labeled-squashfs.sh /rootfs /rootfs.sqsh /file_contexts ${ZSTD_COMPRESSION_LEVEL}
 
 FROM rootfs-base-amd64 AS rootfs-squashfs-amd64
+RUN rm -rf /rootfs/usr/share/spdx/*
+COPY --from=sbom-amd64 / /rootfs/usr/share/spdx/
 ARG ZSTD_COMPRESSION_LEVEL
 RUN find /rootfs -print0 \
     | xargs -0r touch --no-dereference --date="@${SOURCE_DATE_EPOCH}"

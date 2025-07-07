@@ -207,7 +207,10 @@ spec:
               - metal-arm64-uki.efi
               - metal-amd64.raw.zst
               - metal-arm64.raw.zst
-              - sbom.json
+              - talos-arm64.spdx.json
+              - talos-amd64.spdx.json
+              - talos-container-arm64.spdx.json
+              - talos-container-amd64.spdx.json
               - talosctl-cni-bundle-amd64.tar.gz
               - talosctl-cni-bundle-arm64.tar.gz
               - talosctl-darwin-amd64
