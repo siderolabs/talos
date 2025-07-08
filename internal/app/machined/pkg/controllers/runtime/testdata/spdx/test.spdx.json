@@ -1,0 +1,68 @@
+{
+ "spdxVersion": "SPDX-2.3",
+ "dataLicense": "CC0-1.0",
+ "SPDXID": "SPDXRef-DOCUMENT",
+ "name": "Talos (amd64)",
+ "documentNamespace": "https://anchore.com/syft/dir/Talos%20%28amd64%29-ab5f950d-20cd-5a2f-b198-9e345e29f1c8",
+ "creationInfo": {
+  "licenseListVersion": "3.25",
+  "creators": [
+   "Organization: Anchore, Inc",
+   "Tool: syft-[not provided]"
+  ],
+  "created": "2025-07-07T19:03:36Z"
+ },
+ "packages": [
+  {
+   "name": "apparmor-x86_64",
+   "SPDXID": "SPDXRef-Package-bldr-package-apparmor-x86-64-925cc702a977d6be",
+   "versionInfo": "v3.1.7",
+   "supplier": "NOASSERTION",
+   "downloadLocation": "NOASSERTION",
+   "filesAnalyzed": false,
+   "sourceInfo": "acquired package info from SBOM: /apparmor.spdx.json",
+   "licenseConcluded": "NOASSERTION",
+   "licenseDeclared": "GPL-2.0-or-later",
+   "copyrightText": "NOASSERTION",
+   "externalRefs": [
+    {
+     "referenceCategory": "SECURITY",
+     "referenceType": "cpe23Type",
+     "referenceLocator": "cpe:2.3:a:apparmor:apparmor:v3.1.7:*:*:*:*:*:*:*"
+    },
+    {
+     "referenceCategory": "SECURITY",
+     "referenceType": "cpe23Type",
+     "referenceLocator": "cpe:2.3:a:canonical:apparmor:v3.1.7:*:*:*:*:*:*:*"
+    }
+   ]
+  },
+  {
+   "name": "cel.dev/expr",
+   "SPDXID": "SPDXRef-Package-go-module-cel.dev-expr-e4715f3e7652c734",
+   "versionInfo": "v0.24.0",
+   "supplier": "NOASSERTION",
+   "downloadLocation": "NOASSERTION",
+   "filesAnalyzed": false,
+   "sourceInfo": "acquired package info from go module information: /go.mod",
+   "licenseConcluded": "NOASSERTION",
+   "licenseDeclared": "NOASSERTION",
+   "copyrightText": "NOASSERTION",
+   "externalRefs": [
+    {
+     "referenceCategory": "PACKAGE-MANAGER",
+     "referenceType": "purl",
+     "referenceLocator": "pkg:golang/cel.dev/expr@v0.24.0"
+    }
+   ]
+  }
+ ],
+ "relationships": [
+  {
+   "spdxElementId": "SPDXRef-Package-go-module-github.com-jonboulle-clockwork-008a81e8156b0c05",
+   "relatedSpdxElement": "SPDXRef-File-go.mod-3fc5a8d3d86e9790",
+   "relationshipType": "OTHER",
+   "comment": "evident-by: indicates the package's existence is evident by the given file"
+  }
+ ]
+}

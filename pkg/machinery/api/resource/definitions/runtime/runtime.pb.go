@@ -1121,6 +1121,83 @@ func (x *PlatformMetadataSpec) GetTags() map[string]string {
 	return nil
 }
 
+// SBOMItemSpec describes the SBOM item resource properties.
+type SBOMItemSpec struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Name          string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	Version       string                 `protobuf:"bytes,2,opt,name=version,proto3" json:"version,omitempty"`
+	License       string                 `protobuf:"bytes,3,opt,name=license,proto3" json:"license,omitempty"`
+	CpEs          []string               `protobuf:"bytes,4,rep,name=cp_es,json=cpEs,proto3" json:"cp_es,omitempty"`
+	PurLs         []string               `protobuf:"bytes,5,rep,name=pur_ls,json=purLs,proto3" json:"pur_ls,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SBOMItemSpec) Reset() {
+	*x = SBOMItemSpec{}
+	mi := &file_resource_definitions_runtime_runtime_proto_msgTypes[19]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SBOMItemSpec) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SBOMItemSpec) ProtoMessage() {}
+
+func (x *SBOMItemSpec) ProtoReflect() protoreflect.Message {
+	mi := &file_resource_definitions_runtime_runtime_proto_msgTypes[19]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SBOMItemSpec.ProtoReflect.Descriptor instead.
+func (*SBOMItemSpec) Descriptor() ([]byte, []int) {
+	return file_resource_definitions_runtime_runtime_proto_rawDescGZIP(), []int{19}
+}
+
+func (x *SBOMItemSpec) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *SBOMItemSpec) GetVersion() string {
+	if x != nil {
+		return x.Version
+	}
+	return ""
+}
+
+func (x *SBOMItemSpec) GetLicense() string {
+	if x != nil {
+		return x.License
+	}
+	return ""
+}
+
+func (x *SBOMItemSpec) GetCpEs() []string {
+	if x != nil {
+		return x.CpEs
+	}
+	return nil
+}
+
+func (x *SBOMItemSpec) GetPurLs() []string {
+	if x != nil {
+		return x.PurLs
+	}
+	return nil
+}
+
 // SecurityStateSpec describes the security state resource properties.
 type SecurityStateSpec struct {
 	state                    protoimpl.MessageState    `protogen:"open.v1"`
@@ -1136,7 +1213,7 @@ type SecurityStateSpec struct {
 
 func (x *SecurityStateSpec) Reset() {
 	*x = SecurityStateSpec{}
-	mi := &file_resource_definitions_runtime_runtime_proto_msgTypes[19]
+	mi := &file_resource_definitions_runtime_runtime_proto_msgTypes[20]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1148,7 +1225,7 @@ func (x *SecurityStateSpec) String() string {
 func (*SecurityStateSpec) ProtoMessage() {}
 
 func (x *SecurityStateSpec) ProtoReflect() protoreflect.Message {
-	mi := &file_resource_definitions_runtime_runtime_proto_msgTypes[19]
+	mi := &file_resource_definitions_runtime_runtime_proto_msgTypes[20]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1161,7 +1238,7 @@ func (x *SecurityStateSpec) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SecurityStateSpec.ProtoReflect.Descriptor instead.
 func (*SecurityStateSpec) Descriptor() ([]byte, []int) {
-	return file_resource_definitions_runtime_runtime_proto_rawDescGZIP(), []int{19}
+	return file_resource_definitions_runtime_runtime_proto_rawDescGZIP(), []int{20}
 }
 
 func (x *SecurityStateSpec) GetSecureBoot() bool {
@@ -1216,7 +1293,7 @@ type UniqueMachineTokenSpec struct {
 
 func (x *UniqueMachineTokenSpec) Reset() {
 	*x = UniqueMachineTokenSpec{}
-	mi := &file_resource_definitions_runtime_runtime_proto_msgTypes[20]
+	mi := &file_resource_definitions_runtime_runtime_proto_msgTypes[21]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1228,7 +1305,7 @@ func (x *UniqueMachineTokenSpec) String() string {
 func (*UniqueMachineTokenSpec) ProtoMessage() {}
 
 func (x *UniqueMachineTokenSpec) ProtoReflect() protoreflect.Message {
-	mi := &file_resource_definitions_runtime_runtime_proto_msgTypes[20]
+	mi := &file_resource_definitions_runtime_runtime_proto_msgTypes[21]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1241,7 +1318,7 @@ func (x *UniqueMachineTokenSpec) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UniqueMachineTokenSpec.ProtoReflect.Descriptor instead.
 func (*UniqueMachineTokenSpec) Descriptor() ([]byte, []int) {
-	return file_resource_definitions_runtime_runtime_proto_rawDescGZIP(), []int{20}
+	return file_resource_definitions_runtime_runtime_proto_rawDescGZIP(), []int{21}
 }
 
 func (x *UniqueMachineTokenSpec) GetToken() string {
@@ -1262,7 +1339,7 @@ type UnmetCondition struct {
 
 func (x *UnmetCondition) Reset() {
 	*x = UnmetCondition{}
-	mi := &file_resource_definitions_runtime_runtime_proto_msgTypes[21]
+	mi := &file_resource_definitions_runtime_runtime_proto_msgTypes[22]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1274,7 +1351,7 @@ func (x *UnmetCondition) String() string {
 func (*UnmetCondition) ProtoMessage() {}
 
 func (x *UnmetCondition) ProtoReflect() protoreflect.Message {
-	mi := &file_resource_definitions_runtime_runtime_proto_msgTypes[21]
+	mi := &file_resource_definitions_runtime_runtime_proto_msgTypes[22]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1287,7 +1364,7 @@ func (x *UnmetCondition) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UnmetCondition.ProtoReflect.Descriptor instead.
 func (*UnmetCondition) Descriptor() ([]byte, []int) {
-	return file_resource_definitions_runtime_runtime_proto_rawDescGZIP(), []int{21}
+	return file_resource_definitions_runtime_runtime_proto_rawDescGZIP(), []int{22}
 }
 
 func (x *UnmetCondition) GetName() string {
@@ -1315,7 +1392,7 @@ type WatchdogTimerConfigSpec struct {
 
 func (x *WatchdogTimerConfigSpec) Reset() {
 	*x = WatchdogTimerConfigSpec{}
-	mi := &file_resource_definitions_runtime_runtime_proto_msgTypes[22]
+	mi := &file_resource_definitions_runtime_runtime_proto_msgTypes[23]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1327,7 +1404,7 @@ func (x *WatchdogTimerConfigSpec) String() string {
 func (*WatchdogTimerConfigSpec) ProtoMessage() {}
 
 func (x *WatchdogTimerConfigSpec) ProtoReflect() protoreflect.Message {
-	mi := &file_resource_definitions_runtime_runtime_proto_msgTypes[22]
+	mi := &file_resource_definitions_runtime_runtime_proto_msgTypes[23]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1340,7 +1417,7 @@ func (x *WatchdogTimerConfigSpec) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use WatchdogTimerConfigSpec.ProtoReflect.Descriptor instead.
 func (*WatchdogTimerConfigSpec) Descriptor() ([]byte, []int) {
-	return file_resource_definitions_runtime_runtime_proto_rawDescGZIP(), []int{22}
+	return file_resource_definitions_runtime_runtime_proto_rawDescGZIP(), []int{23}
 }
 
 func (x *WatchdogTimerConfigSpec) GetDevice() string {
@@ -1369,7 +1446,7 @@ type WatchdogTimerStatusSpec struct {
 
 func (x *WatchdogTimerStatusSpec) Reset() {
 	*x = WatchdogTimerStatusSpec{}
-	mi := &file_resource_definitions_runtime_runtime_proto_msgTypes[23]
+	mi := &file_resource_definitions_runtime_runtime_proto_msgTypes[24]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1381,7 +1458,7 @@ func (x *WatchdogTimerStatusSpec) String() string {
 func (*WatchdogTimerStatusSpec) ProtoMessage() {}
 
 func (x *WatchdogTimerStatusSpec) ProtoReflect() protoreflect.Message {
-	mi := &file_resource_definitions_runtime_runtime_proto_msgTypes[23]
+	mi := &file_resource_definitions_runtime_runtime_proto_msgTypes[24]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1394,7 +1471,7 @@ func (x *WatchdogTimerStatusSpec) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use WatchdogTimerStatusSpec.ProtoReflect.Descriptor instead.
 func (*WatchdogTimerStatusSpec) Descriptor() ([]byte, []int) {
-	return file_resource_definitions_runtime_runtime_proto_rawDescGZIP(), []int{23}
+	return file_resource_definitions_runtime_runtime_proto_rawDescGZIP(), []int{24}
 }
 
 func (x *WatchdogTimerStatusSpec) GetDevice() string {
@@ -1499,7 +1576,13 @@ const file_resource_definitions_runtime_runtime_proto_rawDesc = "" +
 	"\x04tags\x18\v \x03(\v2B.talos.resource.definitions.runtime.PlatformMetadataSpec.TagsEntryR\x04tags\x1a7\n" +
 	"\tTagsEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\x8a\x03\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\x82\x01\n" +
+	"\fSBOMItemSpec\x12\x12\n" +
+	"\x04name\x18\x01 \x01(\tR\x04name\x12\x18\n" +
+	"\aversion\x18\x02 \x01(\tR\aversion\x12\x18\n" +
+	"\alicense\x18\x03 \x01(\tR\alicense\x12\x13\n" +
+	"\x05cp_es\x18\x04 \x03(\tR\x04cpEs\x12\x15\n" +
+	"\x06pur_ls\x18\x05 \x03(\tR\x05purLs\"\x8a\x03\n" +
 	"\x11SecurityStateSpec\x12\x1f\n" +
 	"\vsecure_boot\x18\x01 \x01(\bR\n" +
 	"secureBoot\x12=\n" +
@@ -1535,7 +1618,7 @@ func file_resource_definitions_runtime_runtime_proto_rawDescGZIP() []byte {
 	return file_resource_definitions_runtime_runtime_proto_rawDescData
 }
 
-var file_resource_definitions_runtime_runtime_proto_msgTypes = make([]protoimpl.MessageInfo, 25)
+var file_resource_definitions_runtime_runtime_proto_msgTypes = make([]protoimpl.MessageInfo, 26)
 var file_resource_definitions_runtime_runtime_proto_goTypes = []any{
 	(*DevicesStatusSpec)(nil),                // 0: talos.resource.definitions.runtime.DevicesStatusSpec
 	(*DiagnosticSpec)(nil),                   // 1: talos.resource.definitions.runtime.DiagnosticSpec
@@ -1556,32 +1639,33 @@ var file_resource_definitions_runtime_runtime_proto_goTypes = []any{
 	(*MetaLoadedSpec)(nil),                   // 16: talos.resource.definitions.runtime.MetaLoadedSpec
 	(*MountStatusSpec)(nil),                  // 17: talos.resource.definitions.runtime.MountStatusSpec
 	(*PlatformMetadataSpec)(nil),             // 18: talos.resource.definitions.runtime.PlatformMetadataSpec
-	(*SecurityStateSpec)(nil),                // 19: talos.resource.definitions.runtime.SecurityStateSpec
-	(*UniqueMachineTokenSpec)(nil),           // 20: talos.resource.definitions.runtime.UniqueMachineTokenSpec
-	(*UnmetCondition)(nil),                   // 21: talos.resource.definitions.runtime.UnmetCondition
-	(*WatchdogTimerConfigSpec)(nil),          // 22: talos.resource.definitions.runtime.WatchdogTimerConfigSpec
-	(*WatchdogTimerStatusSpec)(nil),          // 23: talos.resource.definitions.runtime.WatchdogTimerStatusSpec
-	nil,                                      // 24: talos.resource.definitions.runtime.PlatformMetadataSpec.TagsEntry
-	(*common.URL)(nil),                       // 25: common.URL
-	(enums.RuntimeMachineStage)(0),           // 26: talos.resource.definitions.enums.RuntimeMachineStage
-	(*common.NetIP)(nil),                     // 27: common.NetIP
-	(enums.RuntimeSELinuxState)(0),           // 28: talos.resource.definitions.enums.RuntimeSELinuxState
-	(enums.RuntimeFIPSState)(0),              // 29: talos.resource.definitions.enums.RuntimeFIPSState
-	(*durationpb.Duration)(nil),              // 30: google.protobuf.Duration
+	(*SBOMItemSpec)(nil),                     // 19: talos.resource.definitions.runtime.SBOMItemSpec
+	(*SecurityStateSpec)(nil),                // 20: talos.resource.definitions.runtime.SecurityStateSpec
+	(*UniqueMachineTokenSpec)(nil),           // 21: talos.resource.definitions.runtime.UniqueMachineTokenSpec
+	(*UnmetCondition)(nil),                   // 22: talos.resource.definitions.runtime.UnmetCondition
+	(*WatchdogTimerConfigSpec)(nil),          // 23: talos.resource.definitions.runtime.WatchdogTimerConfigSpec
+	(*WatchdogTimerStatusSpec)(nil),          // 24: talos.resource.definitions.runtime.WatchdogTimerStatusSpec
+	nil,                                      // 25: talos.resource.definitions.runtime.PlatformMetadataSpec.TagsEntry
+	(*common.URL)(nil),                       // 26: common.URL
+	(enums.RuntimeMachineStage)(0),           // 27: talos.resource.definitions.enums.RuntimeMachineStage
+	(*common.NetIP)(nil),                     // 28: common.NetIP
+	(enums.RuntimeSELinuxState)(0),           // 29: talos.resource.definitions.enums.RuntimeSELinuxState
+	(enums.RuntimeFIPSState)(0),              // 30: talos.resource.definitions.enums.RuntimeFIPSState
+	(*durationpb.Duration)(nil),              // 31: google.protobuf.Duration
 }
 var file_resource_definitions_runtime_runtime_proto_depIdxs = []int32{
 	3,  // 0: talos.resource.definitions.runtime.ExtensionServiceConfigSpec.files:type_name -> talos.resource.definitions.runtime.ExtensionServiceConfigFile
-	25, // 1: talos.resource.definitions.runtime.KmsgLogConfigSpec.destinations:type_name -> common.URL
-	26, // 2: talos.resource.definitions.runtime.MachineStatusSpec.stage:type_name -> talos.resource.definitions.enums.RuntimeMachineStage
+	26, // 1: talos.resource.definitions.runtime.KmsgLogConfigSpec.destinations:type_name -> common.URL
+	27, // 2: talos.resource.definitions.runtime.MachineStatusSpec.stage:type_name -> talos.resource.definitions.enums.RuntimeMachineStage
 	13, // 3: talos.resource.definitions.runtime.MachineStatusSpec.status:type_name -> talos.resource.definitions.runtime.MachineStatusStatus
-	21, // 4: talos.resource.definitions.runtime.MachineStatusStatus.unmet_conditions:type_name -> talos.resource.definitions.runtime.UnmetCondition
-	27, // 5: talos.resource.definitions.runtime.MaintenanceServiceConfigSpec.reachable_addresses:type_name -> common.NetIP
-	24, // 6: talos.resource.definitions.runtime.PlatformMetadataSpec.tags:type_name -> talos.resource.definitions.runtime.PlatformMetadataSpec.TagsEntry
-	28, // 7: talos.resource.definitions.runtime.SecurityStateSpec.se_linux_state:type_name -> talos.resource.definitions.enums.RuntimeSELinuxState
-	29, // 8: talos.resource.definitions.runtime.SecurityStateSpec.fips_state:type_name -> talos.resource.definitions.enums.RuntimeFIPSState
-	30, // 9: talos.resource.definitions.runtime.WatchdogTimerConfigSpec.timeout:type_name -> google.protobuf.Duration
-	30, // 10: talos.resource.definitions.runtime.WatchdogTimerStatusSpec.timeout:type_name -> google.protobuf.Duration
-	30, // 11: talos.resource.definitions.runtime.WatchdogTimerStatusSpec.feed_interval:type_name -> google.protobuf.Duration
+	22, // 4: talos.resource.definitions.runtime.MachineStatusStatus.unmet_conditions:type_name -> talos.resource.definitions.runtime.UnmetCondition
+	28, // 5: talos.resource.definitions.runtime.MaintenanceServiceConfigSpec.reachable_addresses:type_name -> common.NetIP
+	25, // 6: talos.resource.definitions.runtime.PlatformMetadataSpec.tags:type_name -> talos.resource.definitions.runtime.PlatformMetadataSpec.TagsEntry
+	29, // 7: talos.resource.definitions.runtime.SecurityStateSpec.se_linux_state:type_name -> talos.resource.definitions.enums.RuntimeSELinuxState
+	30, // 8: talos.resource.definitions.runtime.SecurityStateSpec.fips_state:type_name -> talos.resource.definitions.enums.RuntimeFIPSState
+	31, // 9: talos.resource.definitions.runtime.WatchdogTimerConfigSpec.timeout:type_name -> google.protobuf.Duration
+	31, // 10: talos.resource.definitions.runtime.WatchdogTimerStatusSpec.timeout:type_name -> google.protobuf.Duration
+	31, // 11: talos.resource.definitions.runtime.WatchdogTimerStatusSpec.feed_interval:type_name -> google.protobuf.Duration
 	12, // [12:12] is the sub-list for method output_type
 	12, // [12:12] is the sub-list for method input_type
 	12, // [12:12] is the sub-list for extension type_name
@@ -1600,7 +1684,7 @@ func file_resource_definitions_runtime_runtime_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_resource_definitions_runtime_runtime_proto_rawDesc), len(file_resource_definitions_runtime_runtime_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   25,
+			NumMessages:   26,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

@@ -223,6 +223,7 @@ func NewState() (*State, error) {
 		&runtime.MetaLoaded{},
 		&runtime.MountStatus{},
 		&runtime.PlatformMetadata{},
+		&runtime.SBOMItem{},
 		&runtime.SecurityState{},
 		&runtime.UniqueMachineToken{},
 		&runtime.Version{},

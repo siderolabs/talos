@@ -364,6 +364,7 @@ func (ctrl *Controller) Run(ctx context.Context, drainer *runtime.Drainer) error
 			V1Alpha1Events: ctrl.v1alpha1Runtime.Events(),
 		},
 		&runtimecontrollers.MountStatusController{},
+		&runtimecontrollers.SBOMItemController{},
 		&runtimecontrollers.SecurityStateController{
 			V1Alpha1Mode: ctrl.v1alpha1Runtime.State().Platform().Mode(),
 		},

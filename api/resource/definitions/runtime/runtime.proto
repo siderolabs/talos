@@ -134,6 +134,15 @@ message PlatformMetadataSpec {
   map<string, string> tags = 11;
 }
 
+// SBOMItemSpec describes the SBOM item resource properties.
+message SBOMItemSpec {
+  string name = 1;
+  string version = 2;
+  string license = 3;
+  repeated string cp_es = 4;
+  repeated string pur_ls = 5;
+}
+
 // SecurityStateSpec describes the security state resource properties.
 message SecurityStateSpec {
   bool secure_boot = 1;

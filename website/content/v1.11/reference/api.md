@@ -291,6 +291,7 @@ description: Talos gRPC API reference.
     - [MountStatusSpec](#talos.resource.definitions.runtime.MountStatusSpec)
     - [PlatformMetadataSpec](#talos.resource.definitions.runtime.PlatformMetadataSpec)
     - [PlatformMetadataSpec.TagsEntry](#talos.resource.definitions.runtime.PlatformMetadataSpec.TagsEntry)
+    - [SBOMItemSpec](#talos.resource.definitions.runtime.SBOMItemSpec)
     - [SecurityStateSpec](#talos.resource.definitions.runtime.SecurityStateSpec)
     - [UniqueMachineTokenSpec](#talos.resource.definitions.runtime.UniqueMachineTokenSpec)
     - [UnmetCondition](#talos.resource.definitions.runtime.UnmetCondition)
@@ -5361,6 +5362,25 @@ PlatformMetadataSpec describes platform metadata properties.
 | ----- | ---- | ----- | ----------- |
 | key | [string](#string) |  |  |
 | value | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.runtime.SBOMItemSpec"></a>
+
+### SBOMItemSpec
+SBOMItemSpec describes the SBOM item resource properties.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| name | [string](#string) |  |  |
+| version | [string](#string) |  |  |
+| license | [string](#string) |  |  |
+| cp_es | [string](#string) | repeated |  |
+| pur_ls | [string](#string) | repeated |  |
 
 
 

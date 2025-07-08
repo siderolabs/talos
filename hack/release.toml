@@ -90,6 +90,13 @@ Talos now exposes the kernel command line as a KernelCmdline resource (`talosctl
 Talosctl now returns the loaded modules, not the modules configured to be loaded (`talosctl get modules`).
 """
 
+    [notes.sbom]
+        title = "SBOM"
+        description = """\
+Talos now publishes Software Bill of Materials (SBOM) in the SPDX format.
+The SBOM is available in the `/usr/share/sbom` directory on the machine and can be retrieved using `talosctl get sbom`.
+"""
+
 [make_deps]
 
     [make_deps.tools]

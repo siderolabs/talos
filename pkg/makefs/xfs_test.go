@@ -49,6 +49,7 @@ log      =internal log           bsize=4096   blocks=16384, version=2
          =                       sectsz=512   sunit=0 blks, lazy-count=1
 realtime =none                   extsz=4096   blocks=0, rtextents=0
          =                       rgcount=0    rgsize=0 extents
+         =                       zoned=0      start=0 reserved=0
 `,
 		},
 		{
@@ -68,6 +69,7 @@ log      =internal log           bsize=4096   blocks=16384, version=2
          =                       sectsz=512   sunit=0 blks, lazy-count=1
 realtime =none                   extsz=4096   blocks=0, rtextents=0
          =                       rgcount=0    rgsize=0 extents
+         =                       zoned=0      start=0 reserved=0
 `,
 		},
 		{
@@ -87,6 +89,7 @@ log      =internal log           bsize=4096   blocks=16384, version=2
          =                       sectsz=512   sunit=0 blks, lazy-count=1
 realtime =none                   extsz=4096   blocks=0, rtextents=0
          =                       rgcount=0    rgsize=0 extents
+         =                       zoned=0      start=0 reserved=0
 `,
 		},
 	} {

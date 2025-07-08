@@ -548,6 +548,9 @@ const (
 	// DefaultContainerdVersion is the default container runtime version.
 	DefaultContainerdVersion = "2.1.3"
 
+	// RuncVersion is the runc version.
+	RuncVersion = "1.3.0"
+
 	// SystemContainerdNamespace is the Containerd namespace for Talos services.
 	SystemContainerdNamespace = "system"
 
@@ -1255,6 +1258,9 @@ const (
 	//
 	// See https://en.wikipedia.org/wiki/GUID_Partition_Table#Partition_entries_(LBA_2%E2%80%9333)
 	PartitionLabelLength = 36
+
+	// SPDXPath is the path to the SBOM file(s).
+	SPDXPath = "/usr/share/spdx"
 )
 
 // See https://linux.die.net/man/3/klogctl
