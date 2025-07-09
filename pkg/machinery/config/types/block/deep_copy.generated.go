@@ -85,6 +85,10 @@ func (o *UserVolumeConfigV1Alpha1) DeepCopy() *UserVolumeConfigV1Alpha1 {
 		cp.ProvisioningSpec.ProvisioningMaxSize.raw = make([]byte, len(o.ProvisioningSpec.ProvisioningMaxSize.raw))
 		copy(cp.ProvisioningSpec.ProvisioningMaxSize.raw, o.ProvisioningSpec.ProvisioningMaxSize.raw)
 	}
+	if o.FilesystemSpec.ProjectQuotaSupportConfig != nil {
+		cp.FilesystemSpec.ProjectQuotaSupportConfig = new(bool)
+		*cp.FilesystemSpec.ProjectQuotaSupportConfig = *o.FilesystemSpec.ProjectQuotaSupportConfig
+	}
 	if o.EncryptionSpec.EncryptionKeys != nil {
 		cp.EncryptionSpec.EncryptionKeys = make([]EncryptionKey, len(o.EncryptionSpec.EncryptionKeys))
 		copy(cp.EncryptionSpec.EncryptionKeys, o.EncryptionSpec.EncryptionKeys)

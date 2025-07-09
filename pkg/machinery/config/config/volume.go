@@ -89,6 +89,8 @@ type UserVolumeConfig interface {
 type FilesystemConfig interface {
 	// Type returns the filesystem type.
 	Type() block.FilesystemType
+	// ProjectQuotaSupport returns true if the filesystem should support project quotas.
+	ProjectQuotaSupport() bool
 }
 
 // SwapVolumeConfig defines the interface to access swap volume configuration.

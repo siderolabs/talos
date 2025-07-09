@@ -130,6 +130,7 @@ FilesystemSpec configures the filesystem for the volume.
 | Field | Type | Description | Value(s) |
 |-------|------|-------------|----------|
 |`type` |FilesystemType |Filesystem type. Default is `xfs`.  |`ext4`<br />`xfs`<br /> |
+|`projectQuotaSupport` |bool |Enables project quota support, valid only for 'xfs' filesystem.<br><br>Note: changing this value might require a full remount of the filesystem.  | |
 
 
 

@@ -11,6 +11,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/siderolabs/go-pointer"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -68,6 +69,21 @@ func TestUserVolumeConfigMarshalUnmarshal(t *testing.T) {
 						},
 					},
 				}
+
+				return c
+			},
+		},
+		{
+			name:     "prjquota",
+			filename: "uservolumeconfig_prjquota.yaml",
+			cfg: func(t *testing.T) *block.UserVolumeConfigV1Alpha1 {
+				c := block.NewUserVolumeConfigV1Alpha1()
+				c.MetaName = "secret-store"
+
+				require.NoError(t, c.ProvisioningSpec.DiskSelectorSpec.Match.UnmarshalText([]byte(`!system_disk`)))
+				c.ProvisioningSpec.ProvisioningMinSize = block.MustByteSize("10GiB")
+				c.FilesystemSpec.FilesystemType = blockres.FilesystemTypeXFS
+				c.FilesystemSpec.ProjectQuotaSupportConfig = pointer.To(true)
 
 				return c
 			},
@@ -268,6 +284,23 @@ func TestUserVolumeConfigValidate(t *testing.T) {
 			},
 
 			expectedErrors: "at least one encryption key type must be specified for slot 0\nduplicate key slot 1",
+		},
+		{
+			name: "prjquota not supported",
+
+			cfg: func(t *testing.T) *block.UserVolumeConfigV1Alpha1 {
+				c := block.NewUserVolumeConfigV1Alpha1()
+				c.MetaName = constants.EphemeralPartitionLabel
+
+				require.NoError(t, c.ProvisioningSpec.DiskSelectorSpec.Match.UnmarshalText([]byte(`system_disk`)))
+				c.ProvisioningSpec.ProvisioningMinSize = block.MustByteSize("10GiB")
+				c.FilesystemSpec.FilesystemType = blockres.FilesystemTypeEXT4
+				c.FilesystemSpec.ProjectQuotaSupportConfig = pointer.To(true)
+
+				return c
+			},
+
+			expectedErrors: "project quota support is only available for xfs filesystem",
 		},
 		{
 			name: "valid",

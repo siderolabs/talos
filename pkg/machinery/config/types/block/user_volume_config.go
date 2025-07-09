@@ -11,6 +11,8 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/siderolabs/go-pointer"
+
 	"github.com/siderolabs/talos/pkg/machinery/cel"
 	"github.com/siderolabs/talos/pkg/machinery/cel/celenv"
 	"github.com/siderolabs/talos/pkg/machinery/config/config"
@@ -206,6 +208,11 @@ type FilesystemSpec struct {
 	//     - ext4
 	//     - xfs
 	FilesystemType block.FilesystemType `yaml:"type,omitempty"`
+	//   description: |
+	//     Enables project quota support, valid only for 'xfs' filesystem.
+	//
+	//     Note: changing this value might require a full remount of the filesystem.
+	ProjectQuotaSupportConfig *bool `yaml:"projectQuotaSupport,omitempty"`
 }
 
 // Type implements config.FilesystemConfig interface.
@@ -217,6 +224,11 @@ func (s FilesystemSpec) Type() block.FilesystemType {
 	return s.FilesystemType
 }
 
+// ProjectQuotaSupport implements config.FilesysteemConfig interface.
+func (s FilesystemSpec) ProjectQuotaSupport() bool {
+	return pointer.SafeDeref(s.ProjectQuotaSupportConfig)
+}
+
 // Validate implements config.Validator interface.
 func (s FilesystemSpec) Validate() ([]string, error) {
 	switch s.FilesystemType { //nolint:exhaustive
@@ -225,6 +237,10 @@ func (s FilesystemSpec) Validate() ([]string, error) {
 	case block.FilesystemTypeEXT4:
 	default:
 		return nil, fmt.Errorf("unsupported filesystem type: %s", s.FilesystemType)
+	}
+
+	if pointer.SafeDeref(s.ProjectQuotaSupportConfig) && s.Type() != block.FilesystemTypeXFS {
+		return nil, fmt.Errorf("project quota support is only available for xfs filesystem")
 	}
 
 	return nil, nil

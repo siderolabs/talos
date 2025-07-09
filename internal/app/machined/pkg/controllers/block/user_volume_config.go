@@ -275,12 +275,13 @@ func (ctrl *UserVolumeConfigController) handleUserVolumeConfig(
 		},
 	}
 	v.TypedSpec().Mount = block.MountSpec{
-		TargetPath:   userVolumeConfig.Name(),
-		ParentID:     constants.UserVolumeMountPoint,
-		SelinuxLabel: constants.EphemeralSelinuxLabel,
-		FileMode:     0o755,
-		UID:          0,
-		GID:          0,
+		TargetPath:          userVolumeConfig.Name(),
+		ParentID:            constants.UserVolumeMountPoint,
+		SelinuxLabel:        constants.EphemeralSelinuxLabel,
+		FileMode:            0o755,
+		UID:                 0,
+		GID:                 0,
+		ProjectQuotaSupport: userVolumeConfig.Filesystem().ProjectQuotaSupport(),
 	}
 
 	if err := convertEncryptionConfiguration(userVolumeConfig.Encryption(), v.TypedSpec()); err != nil {

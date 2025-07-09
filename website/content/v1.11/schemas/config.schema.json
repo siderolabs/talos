@@ -179,6 +179,13 @@
           "description": "Filesystem type. Default is xfs.\n",
           "markdownDescription": "Filesystem type. Default is `xfs`.",
           "x-intellij-html-description": "\u003cp\u003eFilesystem type. Default is \u003ccode\u003exfs\u003c/code\u003e.\u003c/p\u003e\n"
+        },
+        "projectQuotaSupport": {
+          "type": "boolean",
+          "title": "projectQuotaSupport",
+          "description": "Enables project quota support, valid only for ‘xfs’ filesystem.\n\nNote: changing this value might require a full remount of the filesystem.\n",
+          "markdownDescription": "Enables project quota support, valid only for 'xfs' filesystem.\n\nNote: changing this value might require a full remount of the filesystem.",
+          "x-intellij-html-description": "\u003cp\u003eEnables project quota support, valid only for \u0026lsquo;xfs\u0026rsquo; filesystem.\u003c/p\u003e\n\n\u003cp\u003eNote: changing this value might require a full remount of the filesystem.\u003c/p\u003e\n"
         }
       },
       "additionalProperties": false,

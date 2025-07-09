@@ -1,0 +1,10 @@
+apiVersion: v1alpha1
+kind: UserVolumeConfig
+name: secret-store
+provisioning:
+    diskSelector:
+        match: '!system_disk'
+    minSize: 10GiB
+filesystem:
+    type: xfs
+    projectQuotaSupport: true

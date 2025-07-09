@@ -342,6 +342,13 @@ func (FilesystemSpec) Doc() *encoder.Doc {
 					"xfs",
 				},
 			},
+			{
+				Name:        "projectQuotaSupport",
+				Type:        "bool",
+				Note:        "",
+				Description: "Enables project quota support, valid only for 'xfs' filesystem.\n\nNote: changing this value might require a full remount of the filesystem.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Enables project quota support, valid only for 'xfs' filesystem." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
 		},
 	}
 

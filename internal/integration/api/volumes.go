@@ -23,6 +23,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/google/uuid"
 	"github.com/siderolabs/gen/xslices"
+	"github.com/siderolabs/go-pointer"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/helpers"
@@ -598,7 +599,8 @@ func (suite *VolumesSuite) TestUserVolumes() {
 	// wait for the discovered volume to disappear
 	rtestutils.AssertNoResource[*block.DiscoveredVolume](ctx, suite.T(), suite.Client.COSI, filepath.Base(vs.TypedSpec().Location))
 
-	// re-create the volume
+	// re-create the volume with project quota support
+	configDocs[0].(*blockcfg.UserVolumeConfigV1Alpha1).FilesystemSpec.ProjectQuotaSupportConfig = pointer.To(true)
 	suite.PatchMachineConfig(ctx, configDocs[0])
 
 	rtestutils.AssertResources(ctx, suite.T(), suite.Client.COSI, userVolumeIDs,
@@ -608,7 +610,15 @@ func (suite *VolumesSuite) TestUserVolumes() {
 	)
 
 	rtestutils.AssertResources(ctx, suite.T(), suite.Client.COSI, userVolumeIDs,
-		func(vs *block.MountStatus, _ *assert.Assertions) {})
+		func(vs *block.MountStatus, asrt *assert.Assertions) {
+			if vs.Metadata().ID() == userVolumeIDs[0] {
+				// check that the project quota support is enabled
+				asrt.True(vs.TypedSpec().ProjectQuotaSupport, "project quota support should be enabled for %s", vs.Metadata().ID())
+			} else {
+				// check that the project quota support is disabled
+				asrt.False(vs.TypedSpec().ProjectQuotaSupport, "project quota support should be disabled for %s", vs.Metadata().ID())
+			}
+		})
 
 	// clean up
 	suite.RemoveMachineConfigDocumentsByName(ctx, blockcfg.UserVolumeConfigKind, volumeIDs...)
