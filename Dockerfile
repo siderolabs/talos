@@ -1141,9 +1141,9 @@ COPY --from=pkg-ca-certificates / /
 ARG TESTPKGS
 ENV PLATFORM=container
 ARG GO_LDFLAGS
-RUN --security=insecure --mount=type=cache,id=testspace,target=/tmp --mount=type=cache,target=/.cache,id=talos/.cache go test -failfast -v \
+RUN --security=insecure --mount=type=cache,id=testspace,target=/tmp --mount=type=cache,target=/.cache,id=talos/.cache go test \
     -ldflags "${GO_LDFLAGS}" \
-    -covermode=atomic -coverprofile=coverage.txt -coverpkg=${TESTPKGS} -count 1 -p 4 ${TESTPKGS}
+    -covermode=atomic -coverprofile=coverage.txt -coverpkg=${TESTPKGS} -p 4 ${TESTPKGS}
 FROM scratch AS unit-tests
 COPY --from=unit-tests-runner /src/coverage.txt /coverage.txt
 
@@ -1156,9 +1156,9 @@ ARG TESTPKGS
 ENV PLATFORM=container
 ENV CGO_ENABLED=1
 ARG GO_LDFLAGS
-RUN --security=insecure --mount=type=cache,id=testspace,target=/tmp --mount=type=cache,target=/.cache,id=talos/.cache go test -v \
+RUN --security=insecure --mount=type=cache,id=testspace,target=/tmp --mount=type=cache,target=/.cache,id=talos/.cache go test \
     -ldflags "${GO_LDFLAGS}" \
-    -race -count 1 -p 4 ${TESTPKGS}
+    -race -p 4 ${TESTPKGS}
 
 # The unit-tests-fips target performs tests with FIPS strict mode.
 FROM base AS unit-tests-fips
@@ -1169,9 +1169,9 @@ ENV PLATFORM=container
 ENV GOFIPS140=latest
 ENV GODEBUG=fips140=only
 ARG GO_LDFLAGS
-RUN --security=insecure --mount=type=cache,id=testspace,target=/tmp --mount=type=cache,target=/.cache,id=talos/.cache go test -v \
+RUN --security=insecure --mount=type=cache,id=testspace,target=/tmp --mount=type=cache,target=/.cache,id=talos/.cache go test \
     -ldflags "${GO_LDFLAGS}" \
-    -count 1 -p 4 ${TESTPKGS}
+    -p 4 ${TESTPKGS}
 
 # The integration-test targets builds integration test binary.
 
