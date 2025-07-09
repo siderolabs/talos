@@ -23,9 +23,11 @@ var wipeCmd = &cobra.Command{
 }
 
 var wipeDiskCmdFlags struct {
-	wipeMethod      string
-	skipVolumeCheck bool
-	dropPartition   bool
+	wipeMethod         string
+	skipVolumeCheck    bool
+	skipSecondaryCheck bool
+	dropPartition      bool
+	insecure           bool
 }
 
 // wipeDiskCmd represents the wipe disk command.
@@ -37,24 +39,33 @@ var wipeDiskCmd = &cobra.Command{
 Use device names as arguments, for example: vda or sda5.`,
 	Args: cobra.MinimumNArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
-		return WithClient(func(ctx context.Context, c *client.Client) error {
-			method, ok := storage.BlockDeviceWipeDescriptor_Method_value[wipeDiskCmdFlags.wipeMethod]
-			if !ok {
-				return fmt.Errorf("invalid wipe method %q", wipeDiskCmdFlags.wipeMethod)
-			}
+		if wipeDiskCmdFlags.insecure {
+			return WithClientMaintenance(nil, cmdWipe(args))
+		}
 
-			return c.BlockDeviceWipe(ctx, &storage.BlockDeviceWipeRequest{
-				Devices: xslices.Map(args, func(devName string) *storage.BlockDeviceWipeDescriptor {
-					return &storage.BlockDeviceWipeDescriptor{
-						Device:          devName,
-						Method:          storage.BlockDeviceWipeDescriptor_Method(method),
-						SkipVolumeCheck: wipeDiskCmdFlags.skipVolumeCheck,
-						DropPartition:   wipeDiskCmdFlags.dropPartition,
-					}
-				}),
-			})
-		})
+		return WithClient(cmdWipe(args))
 	},
+}
+
+func cmdWipe(args []string) func(ctx context.Context, c *client.Client) error {
+	return func(ctx context.Context, c *client.Client) error {
+		method, ok := storage.BlockDeviceWipeDescriptor_Method_value[wipeDiskCmdFlags.wipeMethod]
+		if !ok {
+			return fmt.Errorf("invalid wipe method %q", wipeDiskCmdFlags.wipeMethod)
+		}
+
+		return c.BlockDeviceWipe(ctx, &storage.BlockDeviceWipeRequest{
+			Devices: xslices.Map(args, func(devName string) *storage.BlockDeviceWipeDescriptor {
+				return &storage.BlockDeviceWipeDescriptor{
+					Device:             devName,
+					Method:             storage.BlockDeviceWipeDescriptor_Method(method),
+					SkipVolumeCheck:    wipeDiskCmdFlags.skipVolumeCheck,
+					SkipSecondaryCheck: wipeDiskCmdFlags.skipSecondaryCheck,
+					DropPartition:      wipeDiskCmdFlags.dropPartition,
+				}
+			}),
+		})
+	}
 }
 
 func wipeMethodValues() []string {
@@ -74,8 +85,11 @@ func init() {
 
 	wipeDiskCmd.Flags().StringVar(&wipeDiskCmdFlags.wipeMethod, "method", wipeMethodValues()[0], fmt.Sprintf("wipe method to use %s", wipeMethodValues()))
 	wipeDiskCmd.Flags().BoolVar(&wipeDiskCmdFlags.skipVolumeCheck, "skip-volume-check", false, "skip volume check")
+	wipeDiskCmd.Flags().BoolVar(&wipeDiskCmdFlags.skipSecondaryCheck, "skip-secondary-check", false, "skip secondary disk check (e.g. underlying disk for RAID or LVM), use with caution")
 	wipeDiskCmd.Flags().BoolVar(&wipeDiskCmdFlags.dropPartition, "drop-partition", false, "drop partition after wipe (if applicable)")
-	wipeDiskCmd.Flags().MarkHidden("skip-volume-check") //nolint:errcheck
+	wipeDiskCmd.Flags().MarkHidden("skip-volume-check")    //nolint:errcheck
+	wipeDiskCmd.Flags().MarkHidden("skip-secondary-check") //nolint:errcheck
+	wipeDiskCmd.Flags().BoolVarP(&wipeDiskCmdFlags.insecure, "insecure", "i", false, "use Talos maintenance mode API")
 
 	wipeCmd.AddCommand(wipeDiskCmd)
 }

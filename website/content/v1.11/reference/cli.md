@@ -3162,6 +3162,7 @@ talosctl wipe disk <device names>... [flags]
 ```
       --drop-partition   drop partition after wipe (if applicable)
   -h, --help             help for disk
+  -i, --insecure         use Talos maintenance mode API
       --method string    wipe method to use [FAST ZEROES] (default "FAST")
 ```
 

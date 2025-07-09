@@ -441,6 +441,8 @@ type BlockDeviceWipeDescriptor struct {
 	Method BlockDeviceWipeDescriptor_Method `protobuf:"varint,2,opt,name=method,proto3,enum=storage.BlockDeviceWipeDescriptor_Method" json:"method,omitempty"`
 	// Skip the volume in use check.
 	SkipVolumeCheck bool `protobuf:"varint,3,opt,name=skip_volume_check,json=skipVolumeCheck,proto3" json:"skip_volume_check,omitempty"`
+	// Skip the secondary disk check (e.g. underlying disk for RAID or LVM).
+	SkipSecondaryCheck bool `protobuf:"varint,5,opt,name=skip_secondary_check,json=skipSecondaryCheck,proto3" json:"skip_secondary_check,omitempty"`
 	// Drop the partition (only applies if the device is a partition).
 	DropPartition bool `protobuf:"varint,4,opt,name=drop_partition,json=dropPartition,proto3" json:"drop_partition,omitempty"`
 	unknownFields protoimpl.UnknownFields
@@ -494,6 +496,13 @@ func (x *BlockDeviceWipeDescriptor) GetMethod() BlockDeviceWipeDescriptor_Method
 func (x *BlockDeviceWipeDescriptor) GetSkipVolumeCheck() bool {
 	if x != nil {
 		return x.SkipVolumeCheck
+	}
+	return false
+}
+
+func (x *BlockDeviceWipeDescriptor) GetSkipSecondaryCheck() bool {
+	if x != nil {
+		return x.SkipSecondaryCheck
 	}
 	return false
 }
@@ -628,11 +637,12 @@ const file_storage_storage_proto_rawDesc = "" +
 	"\rDisksResponse\x12*\n" +
 	"\bmessages\x18\x01 \x03(\v2\x0e.storage.DisksR\bmessages\"V\n" +
 	"\x16BlockDeviceWipeRequest\x12<\n" +
-	"\adevices\x18\x01 \x03(\v2\".storage.BlockDeviceWipeDescriptorR\adevices\"\xe9\x01\n" +
+	"\adevices\x18\x01 \x03(\v2\".storage.BlockDeviceWipeDescriptorR\adevices\"\x9b\x02\n" +
 	"\x19BlockDeviceWipeDescriptor\x12\x16\n" +
 	"\x06device\x18\x01 \x01(\tR\x06device\x12A\n" +
 	"\x06method\x18\x02 \x01(\x0e2).storage.BlockDeviceWipeDescriptor.MethodR\x06method\x12*\n" +
-	"\x11skip_volume_check\x18\x03 \x01(\bR\x0fskipVolumeCheck\x12%\n" +
+	"\x11skip_volume_check\x18\x03 \x01(\bR\x0fskipVolumeCheck\x120\n" +
+	"\x14skip_secondary_check\x18\x05 \x01(\bR\x12skipSecondaryCheck\x12%\n" +
 	"\x0edrop_partition\x18\x04 \x01(\bR\rdropPartition\"\x1e\n" +
 	"\x06Method\x12\b\n" +
 	"\x04FAST\x10\x00\x12\n" +

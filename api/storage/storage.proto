@@ -93,6 +93,8 @@ message BlockDeviceWipeDescriptor {
   Method method = 2;
   // Skip the volume in use check.
   bool skip_volume_check = 3;
+  // Skip the secondary disk check (e.g. underlying disk for RAID or LVM).
+  bool skip_secondary_check = 5;
   // Drop the partition (only applies if the device is a partition).
   bool drop_partition = 4;
 }

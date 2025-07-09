@@ -24,10 +24,8 @@ import (
 	"google.golang.org/protobuf/types/known/emptypb"
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
-	"github.com/siderolabs/talos/pkg/grpc/middleware/authz"
 	"github.com/siderolabs/talos/pkg/machinery/api/storage"
 	"github.com/siderolabs/talos/pkg/machinery/resources/block"
-	"github.com/siderolabs/talos/pkg/machinery/role"
 )
 
 // Server implements storage.StorageService.
@@ -103,14 +101,11 @@ func (s *Server) Disks(ctx context.Context, in *emptypb.Empty) (reply *storage.D
 func (s *Server) BlockDeviceWipe(ctx context.Context, req *storage.BlockDeviceWipeRequest) (*storage.BlockDeviceWipeResponse, error) {
 	// the storage server is included both into machined and maintenance service
 	// in apid/machined mode, the normal authz checks are used before reaching this method
-	// in maintenance mode, do the role check, which maps today to SideroLink API connection
-	if s.MaintenanceMode && !authz.HasRole(ctx, role.Admin) {
-		return nil, status.Error(codes.Unimplemented, "API is not implemented in maintenance mode")
-	}
-
+	// in maintenance mode, we allow this method to be accessible, as it only allows to wipe block devices
+	//
 	// validate the list of devices
 	for _, deviceRequest := range req.GetDevices() {
-		if err := s.validateDeviceForWipe(ctx, deviceRequest.GetDevice(), deviceRequest.GetSkipVolumeCheck()); err != nil {
+		if err := s.validateDeviceForWipe(ctx, deviceRequest.GetDevice(), deviceRequest.GetSkipVolumeCheck(), deviceRequest.GetSkipSecondaryCheck()); err != nil {
 			return nil, err
 		}
 	}
@@ -130,7 +125,7 @@ func (s *Server) BlockDeviceWipe(ctx context.Context, req *storage.BlockDeviceWi
 }
 
 //nolint:gocyclo,cyclop
-func (s *Server) validateDeviceForWipe(ctx context.Context, deviceName string, skipVolumeCheck bool) error {
+func (s *Server) validateDeviceForWipe(ctx context.Context, deviceName string, skipVolumeCheck, skipSecondaryCheck bool) error {
 	// first, resolve the blockdevice and figure out what type it is
 	st := s.Controller.Runtime().State().V1Alpha2().Resources()
 
@@ -177,59 +172,59 @@ func (s *Server) validateDeviceForWipe(ctx context.Context, deviceName string, s
 	}
 
 	// secondaries check
-	switch deviceType {
-	case block.DeviceTypeDisk: // for disks, check secondaries even if the partition is used as secondary (track via Disk resource)
-		disks, err := safe.StateListAll[*block.Disk](ctx, st)
-		if err != nil {
-			return err
-		}
+	if !skipSecondaryCheck {
+		switch deviceType {
+		case block.DeviceTypeDisk: // for disks, check secondaries even if the partition is used as secondary (track via Disk resource)
+			disks, err := safe.StateListAll[*block.Disk](ctx, st)
+			if err != nil {
+				return err
+			}
 
-		for disk := range disks.All() {
-			if slices.Index(disk.TypedSpec().SecondaryDisks, deviceName) != -1 {
-				return status.Errorf(codes.FailedPrecondition, "blockdevice %q is in use by disk %q", deviceName, disk.Metadata().ID())
+			for disk := range disks.All() {
+				if slices.Index(disk.TypedSpec().SecondaryDisks, deviceName) != -1 {
+					return status.Errorf(codes.FailedPrecondition, "blockdevice %q is in use by disk %q", deviceName, disk.Metadata().ID())
+				}
+			}
+		case block.DeviceTypePartition: // for partitions, check secondaries only if the partition is used as a secondary
+			blockdevices, err := safe.StateListAll[*block.Device](ctx, st)
+			if err != nil {
+				return err
+			}
+
+			for blockdevice := range blockdevices.All() {
+				if slices.Index(blockdevice.TypedSpec().Secondaries, deviceName) != -1 {
+					return status.Errorf(codes.FailedPrecondition, "blockdevice %q is in use by blockdevice %q", deviceName, blockdevice.Metadata().ID())
+				}
 			}
 		}
-	case block.DeviceTypePartition: // for partitions, check secondaries only if the partition is used as a secondary
-		blockdevices, err := safe.StateListAll[*block.Device](ctx, st)
-		if err != nil {
-			return err
-		}
-
-		for blockdevice := range blockdevices.All() {
-			if slices.Index(blockdevice.TypedSpec().Secondaries, deviceName) != -1 {
-				return status.Errorf(codes.FailedPrecondition, "blockdevice %q is in use by blockdevice %q", deviceName, blockdevice.Metadata().ID())
-			}
-		}
-	}
-
-	if skipVolumeCheck {
-		return nil
 	}
 
 	// volume in use checks
-	volumeStatuses, err := safe.StateListAll[*block.VolumeStatus](ctx, st)
-	if err != nil {
-		return err
-	}
-
-	for volumeStatus := range volumeStatuses.All() {
-		for _, location := range []string{
-			filepath.Base(volumeStatus.TypedSpec().Location),
-			filepath.Base(volumeStatus.TypedSpec().MountLocation),
-		} {
-			for _, dev := range []string{deviceName, parent} {
-				if dev == "" || location == "" {
-					continue
-				}
-
-				if location == dev {
-					return status.Errorf(codes.FailedPrecondition, "blockdevice %q is in use by volume %q", dev, volumeStatus.Metadata().ID())
-				}
-			}
+	if !skipVolumeCheck {
+		volumeStatuses, err := safe.StateListAll[*block.VolumeStatus](ctx, st)
+		if err != nil {
+			return err
 		}
 
-		if filepath.Base(volumeStatus.TypedSpec().ParentLocation) == deviceName {
-			return status.Errorf(codes.FailedPrecondition, "blockdevice %q is in use by volume %q", deviceName, volumeStatus.Metadata().ID())
+		for volumeStatus := range volumeStatuses.All() {
+			for _, location := range []string{
+				filepath.Base(volumeStatus.TypedSpec().Location),
+				filepath.Base(volumeStatus.TypedSpec().MountLocation),
+			} {
+				for _, dev := range []string{deviceName, parent} {
+					if dev == "" || location == "" {
+						continue
+					}
+
+					if location == dev {
+						return status.Errorf(codes.FailedPrecondition, "blockdevice %q is in use by volume %q", dev, volumeStatus.Metadata().ID())
+					}
+				}
+			}
+
+			if filepath.Base(volumeStatus.TypedSpec().ParentLocation) == deviceName {
+				return status.Errorf(codes.FailedPrecondition, "blockdevice %q is in use by volume %q", deviceName, volumeStatus.Metadata().ID())
+			}
 		}
 	}
 

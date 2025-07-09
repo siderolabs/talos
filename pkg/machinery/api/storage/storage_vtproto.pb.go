@@ -335,6 +335,16 @@ func (m *BlockDeviceWipeDescriptor) MarshalToSizedBufferVT(dAtA []byte) (int, er
 		i -= len(m.unknownFields)
 		copy(dAtA[i:], m.unknownFields)
 	}
+	if m.SkipSecondaryCheck {
+		i--
+		if m.SkipSecondaryCheck {
+			dAtA[i] = 1
+		} else {
+			dAtA[i] = 0
+		}
+		i--
+		dAtA[i] = 0x28
+	}
 	if m.DropPartition {
 		i--
 		if m.DropPartition {
@@ -603,6 +613,9 @@ func (m *BlockDeviceWipeDescriptor) SizeVT() (n int) {
 		n += 2
 	}
 	if m.DropPartition {
+		n += 2
+	}
+	if m.SkipSecondaryCheck {
 		n += 2
 	}
 	n += len(m.unknownFields)
@@ -1481,6 +1494,26 @@ func (m *BlockDeviceWipeDescriptor) UnmarshalVT(dAtA []byte) error {
 				}
 			}
 			m.DropPartition = bool(v != 0)
+		case 5:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field SkipSecondaryCheck", wireType)
+			}
+			var v int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return protohelpers.ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				v |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			m.SkipSecondaryCheck = bool(v != 0)
 		default:
 			iNdEx = preIndex
 			skippy, err := protohelpers.Skip(dAtA[iNdEx:])

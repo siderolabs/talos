@@ -97,6 +97,12 @@ Talos now publishes Software Bill of Materials (SBOM) in the SPDX format.
 The SBOM is available in the `/usr/share/sbom` directory on the machine and can be retrieved using `talosctl get sbom`.
 """
 
+    [notes.disk_wipe]
+        title = "Disk Wipe"
+        description = """\
+Talos now supports `talosctl disk wipe` command in maintenance mode (`talosctl disk wipe <disk> --insecure`).
+"""
+
 [make_deps]
 
     [make_deps.tools]
