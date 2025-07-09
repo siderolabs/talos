@@ -231,6 +231,7 @@ COPY --from=pkg-cni-amd64 /opt/cni/bin/firewall /opt/cni/bin/firewall
 COPY --from=pkg-cni-amd64 /opt/cni/bin/host-local /opt/cni/bin/host-local
 COPY --from=pkg-cni-amd64 /opt/cni/bin/loopback /opt/cni/bin/loopback
 COPY --from=pkg-cni-amd64 /opt/cni/bin/portmap /opt/cni/bin/portmap
+COPY --from=pkg-cni-amd64 /usr/share/spdx/cni.spdx.json /usr/share/spdx/cni.spdx.json
 
 FROM scratch AS pkg-cni-stripped-arm64
 COPY --from=pkg-cni-arm64 /opt/cni/bin/bridge /opt/cni/bin/bridge
@@ -238,6 +239,7 @@ COPY --from=pkg-cni-arm64 /opt/cni/bin/firewall /opt/cni/bin/firewall
 COPY --from=pkg-cni-arm64 /opt/cni/bin/host-local /opt/cni/bin/host-local
 COPY --from=pkg-cni-arm64 /opt/cni/bin/loopback /opt/cni/bin/loopback
 COPY --from=pkg-cni-arm64 /opt/cni/bin/portmap /opt/cni/bin/portmap
+COPY --from=pkg-cni-arm64 /usr/share/spdx/cni.spdx.json /usr/share/spdx/cni.spdx.json
 
 FROM ${PKG_TALOSCTL_CNI_BUNDLE} AS pkgs-talosctl-cni-bundle
 
@@ -311,6 +313,8 @@ ENV GOMODCACHE=/.cache/mod
 ENV PROTOTOOL_CACHE_PATH=/.cache/prototool
 ARG SOURCE_DATE_EPOCH
 ENV SOURCE_DATE_EPOCH=${SOURCE_DATE_EPOCH}
+# Go standard library is shipped with Talos, thus it must be tracked in SBOM
+COPY --link --from=tools /usr/share/spdx/golang.spdx.json /rootfs/usr/share/spdx/golang.spdx.json
 WORKDIR /src
 
 # The build-go target creates a container to build Go code with Go modules downloaded and verified.
@@ -727,8 +731,10 @@ COPY --link --exclude=usr/bin/ctr --from=pkg-containerd-amd64 / /rootfs
 COPY --link --from=pkg-dosfstools-amd64 / /rootfs
 COPY --link --from=pkg-e2fsprogs-amd64 / /rootfs
 COPY --link --exclude=usr/share --from=pkg-systemd-udevd-amd64 / /rootfs
+COPY --link --from=pkg-systemd-udevd-amd64 /usr/share/spdx/systemd.spdx.json /rootfs/usr/share/spdx/systemd.spdx.json
 COPY --link --from=pkg-libcap-amd64 / /rootfs
 COPY --link --exclude=usr/share --from=pkg-iptables-amd64 / /rootfs
+COPY --link --from=pkg-iptables-amd64 /usr/share/spdx/iptables.spdx.json /rootfs/usr/share/spdx/iptables.spdx.json
 COPY --link --from=pkg-libattr-amd64 / /rootfs
 COPY --link --from=pkg-libinih-amd64 / /rootfs
 COPY --link --from=pkg-libjson-c-amd64 / /rootfs
@@ -748,8 +754,10 @@ COPY --link --from=pkg-xfsprogs-amd64 / /rootfs
 COPY --link --from=pkg-util-linux-amd64 /usr/lib/libblkid.* /rootfs/usr/lib/
 COPY --link --from=pkg-util-linux-amd64 /usr/lib/libuuid.* /rootfs/usr/lib/
 COPY --link --from=pkg-util-linux-amd64 /usr/lib/libmount.* /rootfs/usr/lib/
+COPY --link --from=pkg-util-linux-amd64 /usr/share/spdx/util-linux.spdx.json /rootfs/usr/share/spdx/util-linux.spdx.json
 COPY --link --from=pkg-kmod-amd64 /usr/lib/libkmod.* /rootfs/usr/lib/
 COPY --link --from=pkg-kmod-amd64 /usr/bin/kmod /rootfs/usr/bin/modprobe
+COPY --link --from=pkg-kmod-amd64 usr/share/spdx/kmod.spdx.json /rootfs/usr/share/spdx/kmod.spdx.json
 COPY --link --from=modules-amd64 /usr/lib/modules /rootfs/usr/lib/modules
 COPY --link --from=machined-build-amd64 /machined /rootfs/usr/bin/init
 
@@ -804,8 +812,10 @@ COPY --link --exclude=usr/bin/ctr --from=pkg-containerd-arm64 / /rootfs
 COPY --link --from=pkg-dosfstools-arm64 / /rootfs
 COPY --link --from=pkg-e2fsprogs-arm64 / /rootfs
 COPY --link --exclude=usr/share --from=pkg-systemd-udevd-arm64 / /rootfs
+COPY --link --from=pkg-systemd-udevd-arm64 /usr/share/spdx/systemd.spdx.json /rootfs/usr/share/spdx/systemd.spdx.json
 COPY --link --from=pkg-libcap-arm64 / /rootfs
 COPY --link --exclude=usr/share --from=pkg-iptables-arm64 / /rootfs
+COPY --link --from=pkg-iptables-arm64 /usr/share/spdx/iptables.spdx.json /rootfs/usr/share/spdx/iptables.spdx.json
 COPY --link --from=pkg-libattr-arm64 / /rootfs
 COPY --link --from=pkg-libinih-arm64 / /rootfs
 COPY --link --from=pkg-libjson-c-arm64 / /rootfs
@@ -825,8 +835,10 @@ COPY --link --from=pkg-xfsprogs-arm64 / /rootfs
 COPY --link --from=pkg-util-linux-arm64 /usr/lib/libblkid.* /rootfs/usr/lib/
 COPY --link --from=pkg-util-linux-arm64 /usr/lib/libuuid.* /rootfs/usr/lib/
 COPY --link --from=pkg-util-linux-arm64 /usr/lib/libmount.* /rootfs/usr/lib/
+COPY --link --from=pkg-util-linux-arm64 /usr/share/spdx/util-linux.spdx.json /rootfs/usr/share/spdx/util-linux.spdx.json
 COPY --link --from=pkg-kmod-arm64 /usr/lib/libkmod.* /rootfs/usr/lib/
 COPY --link --from=pkg-kmod-arm64 /usr/bin/kmod /rootfs/usr/bin/modprobe
+COPY --link --from=pkg-kmod-arm64 /usr/share/spdx/kmod.spdx.json /rootfs/usr/share/spdx/kmod.spdx.json
 COPY --link --from=modules-arm64 /usr/lib/modules /rootfs/usr/lib/modules
 COPY --link --from=machined-build-arm64 /machined /rootfs/usr/bin/init
 
@@ -885,14 +897,14 @@ RUN cp go.mod go.sum /tmp/sbom-src/
 
 FROM build-sbom AS sbom-container-arm64-generate
 COPY --from=rootfs-base-arm64 /rootfs/usr/share/spdx /tmp/sbom-src/
-RUN --mount=type=cache,target=/.cache,id=talos/.cache sbom.sh /tmp/sbom-src/ "$NAME (arm64 container)" talos-container-arm64.spdx.json
+RUN --mount=type=cache,target=/.cache,id=talos/.cache sbom.sh /tmp/sbom-src/ talos-container-arm64.spdx.json
 
 FROM scratch AS sbom-container-arm64
 COPY --from=sbom-container-arm64-generate /rootfs/usr/share/spdx/talos-container-arm64.spdx.json /
 
 FROM build-sbom AS sbom-container-amd64-generate
 COPY --from=rootfs-base-amd64 /rootfs/usr/share/spdx /tmp/sbom-src/
-RUN --mount=type=cache,target=/.cache,id=talos/.cache sbom.sh /tmp/sbom-src/ "$NAME (amd64 container)" talos-container-amd64.spdx.json
+RUN --mount=type=cache,target=/.cache,id=talos/.cache sbom.sh /tmp/sbom-src/ talos-container-amd64.spdx.json
 
 FROM scratch AS sbom-container-amd64
 COPY --from=sbom-container-amd64-generate /rootfs/usr/share/spdx/talos-container-amd64.spdx.json /
@@ -900,7 +912,7 @@ COPY --from=sbom-container-amd64-generate /rootfs/usr/share/spdx/talos-container
 FROM build-sbom AS sbom-arm64-generate
 COPY --from=rootfs-base-arm64 /rootfs/usr/share/spdx /tmp/sbom-src/
 COPY --from=pkg-kernel-arm64 /usr/share/spdx/kernel.spdx.json /tmp/sbom-src/
-RUN --mount=type=cache,target=/.cache,id=talos/.cache sbom.sh /tmp/sbom-src/ "$NAME (arm64)" talos-arm64.spdx.json
+RUN --mount=type=cache,target=/.cache,id=talos/.cache sbom.sh /tmp/sbom-src/ talos-arm64.spdx.json
 
 FROM scratch AS sbom-arm64
 COPY --from=sbom-arm64-generate /rootfs/usr/share/spdx/talos-arm64.spdx.json /
@@ -908,7 +920,7 @@ COPY --from=sbom-arm64-generate /rootfs/usr/share/spdx/talos-arm64.spdx.json /
 FROM build-sbom AS sbom-amd64-generate
 COPY --from=rootfs-base-amd64 /rootfs/usr/share/spdx /tmp/sbom-src/
 COPY --from=pkg-kernel-amd64 /usr/share/spdx/kernel.spdx.json /tmp/sbom-src/
-RUN --mount=type=cache,target=/.cache,id=talos/.cache sbom.sh /tmp/sbom-src/ "$NAME (amd64)" talos-amd64.spdx.json
+RUN --mount=type=cache,target=/.cache,id=talos/.cache sbom.sh /tmp/sbom-src/ talos-amd64.spdx.json
 
 FROM scratch AS sbom-amd64
 COPY --from=sbom-amd64-generate /rootfs/usr/share/spdx/talos-amd64.spdx.json /
@@ -933,8 +945,6 @@ FROM rootfs-base-arm64 AS rootfs-squashfs-arm64
 RUN rm -rf /rootfs/usr/share/spdx/*
 COPY --from=sbom-arm64 / /rootfs/usr/share/spdx/
 ARG ZSTD_COMPRESSION_LEVEL
-RUN find /rootfs -print0 \
-    | xargs -0r touch --no-dereference --date="@${SOURCE_DATE_EPOCH}"
 COPY --from=selinux-generate /policy/file_contexts /file_contexts
 COPY ./hack/labeled-squashfs.sh /
 RUN fakeroot /labeled-squashfs.sh /rootfs /rootfs.sqsh /file_contexts ${ZSTD_COMPRESSION_LEVEL}
@@ -943,8 +953,6 @@ FROM rootfs-base-amd64 AS rootfs-squashfs-amd64
 RUN rm -rf /rootfs/usr/share/spdx/*
 COPY --from=sbom-amd64 / /rootfs/usr/share/spdx/
 ARG ZSTD_COMPRESSION_LEVEL
-RUN find /rootfs -print0 \
-    | xargs -0r touch --no-dereference --date="@${SOURCE_DATE_EPOCH}"
 COPY --from=selinux-generate /policy/file_contexts /file_contexts
 COPY ./hack/labeled-squashfs.sh /
 RUN fakeroot /labeled-squashfs.sh /rootfs /rootfs.sqsh /file_contexts ${ZSTD_COMPRESSION_LEVEL}

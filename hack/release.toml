@@ -18,15 +18,19 @@ preface = """
     [notes.updates]
         title = "Component Updates"
         description = """\
-Linux: 6.12.35
+Linux: 6.12.36
 Kubernetes: 1.34.0-alpha.2
 runc: 1.3.0
 containerd: 2.1.3
 Flannel CNI plugin: 1.7.1-flannel1
 Flannel: 0.27.0
 CoreDNS: 1.12.2
+xfsprogs: 6.15.0
+systemd-udevd and systemd-boot: 257.7
+lvm2: 2.03.33
+cryptsetup: 2.8.0
 
-Talos is built with Go 1.24.4.
+Talos is built with Go 1.24.5.
 """
 
     [notes.macos-qemu]

@@ -1,6 +1,6 @@
 module github.com/siderolabs/talos/tools
 
-go 1.24.3
+go 1.24.5
 
 tool github.com/anchore/syft/cmd/syft
 
