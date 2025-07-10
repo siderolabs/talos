@@ -338,6 +338,7 @@ func (i *Installer) Install(ctx context.Context, mode Mode) (err error) {
 			BlockProbeOptions: []blkid.ProbeOption{
 				blkid.WithSkipLocking(true),
 			},
+			Logger: log.Printf,
 		})
 		if err != nil {
 			return fmt.Errorf("failed to probe bootloader on upgrade: %w", err)

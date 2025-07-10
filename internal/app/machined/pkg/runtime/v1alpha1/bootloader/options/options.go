@@ -98,4 +98,14 @@ func (assets *BootAssets) FillDefaults(arch string) {
 // ProbeOptions configures bootloader probing.
 type ProbeOptions struct {
 	BlockProbeOptions []blkid.ProbeOption
+	Logger            func(format string, v ...any)
+}
+
+// Log logs the message using the provided logger.
+func (options *ProbeOptions) Log(format string, v ...any) {
+	if options.Logger == nil {
+		return
+	}
+
+	options.Logger(format, v...)
 }
