@@ -85,6 +85,14 @@ type UserVolumeConfig interface {
 	Encryption() EncryptionConfig
 }
 
+// RawVolumeConfig defines the interface to access raw volume configuration.
+type RawVolumeConfig interface {
+	NamedDocument
+	RawVolumeConfigSignal()
+	Provisioning() VolumeProvisioningConfig
+	Encryption() EncryptionConfig
+}
+
 // FilesystemConfig defines the interface to access filesystem configuration.
 type FilesystemConfig interface {
 	// Type returns the filesystem type.

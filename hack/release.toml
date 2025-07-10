@@ -107,6 +107,12 @@ The SBOM is available in the `/usr/share/sbom` directory on the machine and can 
 Talos now supports `talosctl disk wipe` command in maintenance mode (`talosctl disk wipe <disk> --insecure`).
 """
 
+    [notes.volumes]
+        title = "Volumes"
+        description = """\
+Talos now supports [raw user volumes](https://www.talos.dev/v1.11/talos-guides/configuration/disk-management/raw/), allowing to allocate unformatted disk space as partition.
+"""
+
 [make_deps]
 
     [make_deps.tools]
