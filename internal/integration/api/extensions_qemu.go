@@ -597,10 +597,9 @@ func (suite *ExtensionsSuiteQEMU) TestLoadedKernelModule() {
 		"virtio_pci_modern_dev",
 	},
 		func(res *runtime.LoadedKernelModule, asrt *assert.Assertions) {
-			asrt.NotEmpty(res.TypedSpec().Name, "kernel module name should not be empty")
 			asrt.NotEmpty(res.TypedSpec().Size, "kernel module size should not be empty")
 			asrt.NotEmpty(res.TypedSpec().Address, "kernel module address should not be empty")
-			asrt.GreaterOrEqual(res.TypedSpec().Instances, 0, "kernel module instances should be non-negative")
+			asrt.GreaterOrEqual(res.TypedSpec().ReferenceCount, 0, "kernel module instances should be non-negative")
 		},
 	)
 }

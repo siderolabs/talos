@@ -5217,9 +5217,8 @@ LoadedKernelModuleSpec describes Linux kernel module to load.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| name | [string](#string) |  |  |
 | size | [int64](#int64) |  |  |
-| instances | [int64](#int64) |  |  |
+| reference_count | [int64](#int64) |  |  |
 | dependencies | [string](#string) | repeated |  |
 | state | [string](#string) |  |  |
 | address | [string](#string) |  |  |

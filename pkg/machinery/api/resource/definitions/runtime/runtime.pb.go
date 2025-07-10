@@ -579,15 +579,14 @@ func (x *KmsgLogConfigSpec) GetDestinations() []*common.URL {
 
 // LoadedKernelModuleSpec describes Linux kernel module to load.
 type LoadedKernelModuleSpec struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Name          string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
-	Size          int64                  `protobuf:"varint,2,opt,name=size,proto3" json:"size,omitempty"`
-	Instances     int64                  `protobuf:"varint,3,opt,name=instances,proto3" json:"instances,omitempty"`
-	Dependencies  []string               `protobuf:"bytes,4,rep,name=dependencies,proto3" json:"dependencies,omitempty"`
-	State         string                 `protobuf:"bytes,5,opt,name=state,proto3" json:"state,omitempty"`
-	Address       string                 `protobuf:"bytes,6,opt,name=address,proto3" json:"address,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state          protoimpl.MessageState `protogen:"open.v1"`
+	Size           int64                  `protobuf:"varint,1,opt,name=size,proto3" json:"size,omitempty"`
+	ReferenceCount int64                  `protobuf:"varint,2,opt,name=reference_count,json=referenceCount,proto3" json:"reference_count,omitempty"`
+	Dependencies   []string               `protobuf:"bytes,3,rep,name=dependencies,proto3" json:"dependencies,omitempty"`
+	State          string                 `protobuf:"bytes,4,opt,name=state,proto3" json:"state,omitempty"`
+	Address        string                 `protobuf:"bytes,5,opt,name=address,proto3" json:"address,omitempty"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
 }
 
 func (x *LoadedKernelModuleSpec) Reset() {
@@ -620,13 +619,6 @@ func (*LoadedKernelModuleSpec) Descriptor() ([]byte, []int) {
 	return file_resource_definitions_runtime_runtime_proto_rawDescGZIP(), []int{11}
 }
 
-func (x *LoadedKernelModuleSpec) GetName() string {
-	if x != nil {
-		return x.Name
-	}
-	return ""
-}
-
 func (x *LoadedKernelModuleSpec) GetSize() int64 {
 	if x != nil {
 		return x.Size
@@ -634,9 +626,9 @@ func (x *LoadedKernelModuleSpec) GetSize() int64 {
 	return 0
 }
 
-func (x *LoadedKernelModuleSpec) GetInstances() int64 {
+func (x *LoadedKernelModuleSpec) GetReferenceCount() int64 {
 	if x != nil {
-		return x.Instances
+		return x.ReferenceCount
 	}
 	return 0
 }
@@ -1531,14 +1523,13 @@ const file_resource_definitions_runtime_runtime_proto_rawDesc = "" +
 	"\adefault\x18\x02 \x01(\tR\adefault\x12 \n" +
 	"\vunsupported\x18\x03 \x01(\bR\vunsupported\"D\n" +
 	"\x11KmsgLogConfigSpec\x12/\n" +
-	"\fdestinations\x18\x01 \x03(\v2\v.common.URLR\fdestinations\"\xb2\x01\n" +
+	"\fdestinations\x18\x01 \x03(\v2\v.common.URLR\fdestinations\"\xa9\x01\n" +
 	"\x16LoadedKernelModuleSpec\x12\x12\n" +
-	"\x04name\x18\x01 \x01(\tR\x04name\x12\x12\n" +
-	"\x04size\x18\x02 \x01(\x03R\x04size\x12\x1c\n" +
-	"\tinstances\x18\x03 \x01(\x03R\tinstances\x12\"\n" +
-	"\fdependencies\x18\x04 \x03(\tR\fdependencies\x12\x14\n" +
-	"\x05state\x18\x05 \x01(\tR\x05state\x12\x18\n" +
-	"\aaddress\x18\x06 \x01(\tR\aaddress\"\xb1\x01\n" +
+	"\x04size\x18\x01 \x01(\x03R\x04size\x12'\n" +
+	"\x0freference_count\x18\x02 \x01(\x03R\x0ereferenceCount\x12\"\n" +
+	"\fdependencies\x18\x03 \x03(\tR\fdependencies\x12\x14\n" +
+	"\x05state\x18\x04 \x01(\tR\x05state\x12\x18\n" +
+	"\aaddress\x18\x05 \x01(\tR\aaddress\"\xb1\x01\n" +
 	"\x11MachineStatusSpec\x12K\n" +
 	"\x05stage\x18\x01 \x01(\x0e25.talos.resource.definitions.enums.RuntimeMachineStageR\x05stage\x12O\n" +
 	"\x06status\x18\x02 \x01(\v27.talos.resource.definitions.runtime.MachineStatusStatusR\x06status\"\x8a\x01\n" +

@@ -73,12 +73,11 @@ message KmsgLogConfigSpec {
 
 // LoadedKernelModuleSpec describes Linux kernel module to load.
 message LoadedKernelModuleSpec {
-  string name = 1;
-  int64 size = 2;
-  int64 instances = 3;
-  repeated string dependencies = 4;
-  string state = 5;
-  string address = 6;
+  int64 size = 1;
+  int64 reference_count = 2;
+  repeated string dependencies = 3;
+  string state = 4;
+  string address = 5;
 }
 
 // MachineStatusSpec describes status of the defined sysctls.

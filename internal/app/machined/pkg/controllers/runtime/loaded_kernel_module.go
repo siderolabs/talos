@@ -81,12 +81,12 @@ func (ctrl *LoadedKernelModuleController) Run(ctx context.Context, r controller.
 
 // Module represents a kernel module parsed from /proc/modules.
 type Module struct {
-	Name         string
-	Size         int
-	Instances    int
-	Dependencies []string
-	State        string
-	Address      string
+	Name           string
+	Size           int
+	ReferenceCount int
+	Dependencies   []string
+	State          string
+	Address        string
 }
 
 // ParseModules parses the contents of /proc/modules from the given reader
@@ -108,7 +108,7 @@ func ParseModules(r io.Reader) ([]Module, error) {
 			return nil, fmt.Errorf("invalid size for module %s: %v", name, err)
 		}
 
-		instances, err := strconv.Atoi(fields[2])
+		refCount, err := strconv.Atoi(fields[2])
 		if err != nil {
 			return nil, fmt.Errorf("invalid instance count for module %s: %v", name, err)
 		}
@@ -122,12 +122,12 @@ func ParseModules(r io.Reader) ([]Module, error) {
 		}
 
 		modules = append(modules, Module{
-			Name:         name,
-			Size:         size,
-			Dependencies: deps,
-			Instances:    instances,
-			State:        fields[4],
-			Address:      fields[5],
+			Name:           name,
+			Size:           size,
+			Dependencies:   deps,
+			ReferenceCount: refCount,
+			State:          fields[4],
+			Address:        fields[5],
 		})
 	}
 
@@ -156,9 +156,8 @@ func (ctrl *LoadedKernelModuleController) reconcile(ctx context.Context, r contr
 		if err := safe.WriterModify(ctx, r,
 			runtime.NewLoadedKernelModule(runtime.NamespaceName, module.Name),
 			func(res *runtime.LoadedKernelModule) error {
-				res.TypedSpec().Name = module.Name
 				res.TypedSpec().Size = module.Size
-				res.TypedSpec().Instances = module.Instances
+				res.TypedSpec().ReferenceCount = module.ReferenceCount
 				res.TypedSpec().Dependencies = module.Dependencies
 				res.TypedSpec().State = module.State
 				res.TypedSpec().Address = module.Address

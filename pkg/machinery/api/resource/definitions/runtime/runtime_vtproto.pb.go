@@ -586,14 +586,14 @@ func (m *LoadedKernelModuleSpec) MarshalToSizedBufferVT(dAtA []byte) (int, error
 		copy(dAtA[i:], m.Address)
 		i = protohelpers.EncodeVarint(dAtA, i, uint64(len(m.Address)))
 		i--
-		dAtA[i] = 0x32
+		dAtA[i] = 0x2a
 	}
 	if len(m.State) > 0 {
 		i -= len(m.State)
 		copy(dAtA[i:], m.State)
 		i = protohelpers.EncodeVarint(dAtA, i, uint64(len(m.State)))
 		i--
-		dAtA[i] = 0x2a
+		dAtA[i] = 0x22
 	}
 	if len(m.Dependencies) > 0 {
 		for iNdEx := len(m.Dependencies) - 1; iNdEx >= 0; iNdEx-- {
@@ -601,25 +601,18 @@ func (m *LoadedKernelModuleSpec) MarshalToSizedBufferVT(dAtA []byte) (int, error
 			copy(dAtA[i:], m.Dependencies[iNdEx])
 			i = protohelpers.EncodeVarint(dAtA, i, uint64(len(m.Dependencies[iNdEx])))
 			i--
-			dAtA[i] = 0x22
+			dAtA[i] = 0x1a
 		}
 	}
-	if m.Instances != 0 {
-		i = protohelpers.EncodeVarint(dAtA, i, uint64(m.Instances))
+	if m.ReferenceCount != 0 {
+		i = protohelpers.EncodeVarint(dAtA, i, uint64(m.ReferenceCount))
 		i--
-		dAtA[i] = 0x18
+		dAtA[i] = 0x10
 	}
 	if m.Size != 0 {
 		i = protohelpers.EncodeVarint(dAtA, i, uint64(m.Size))
 		i--
-		dAtA[i] = 0x10
-	}
-	if len(m.Name) > 0 {
-		i -= len(m.Name)
-		copy(dAtA[i:], m.Name)
-		i = protohelpers.EncodeVarint(dAtA, i, uint64(len(m.Name)))
-		i--
-		dAtA[i] = 0xa
+		dAtA[i] = 0x8
 	}
 	return len(dAtA) - i, nil
 }
@@ -1628,15 +1621,11 @@ func (m *LoadedKernelModuleSpec) SizeVT() (n int) {
 	}
 	var l int
 	_ = l
-	l = len(m.Name)
-	if l > 0 {
-		n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
-	}
 	if m.Size != 0 {
 		n += 1 + protohelpers.SizeOfVarint(uint64(m.Size))
 	}
-	if m.Instances != 0 {
-		n += 1 + protohelpers.SizeOfVarint(uint64(m.Instances))
+	if m.ReferenceCount != 0 {
+		n += 1 + protohelpers.SizeOfVarint(uint64(m.ReferenceCount))
 	}
 	if len(m.Dependencies) > 0 {
 		for _, s := range m.Dependencies {
@@ -3118,38 +3107,6 @@ func (m *LoadedKernelModuleSpec) UnmarshalVT(dAtA []byte) error {
 		}
 		switch fieldNum {
 		case 1:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Name", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return protohelpers.ErrIntOverflow
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return protohelpers.ErrInvalidLength
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return protohelpers.ErrInvalidLength
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.Name = string(dAtA[iNdEx:postIndex])
-			iNdEx = postIndex
-		case 2:
 			if wireType != 0 {
 				return fmt.Errorf("proto: wrong wireType = %d for field Size", wireType)
 			}
@@ -3168,11 +3125,11 @@ func (m *LoadedKernelModuleSpec) UnmarshalVT(dAtA []byte) error {
 					break
 				}
 			}
-		case 3:
+		case 2:
 			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Instances", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field ReferenceCount", wireType)
 			}
-			m.Instances = 0
+			m.ReferenceCount = 0
 			for shift := uint(0); ; shift += 7 {
 				if shift >= 64 {
 					return protohelpers.ErrIntOverflow
@@ -3182,12 +3139,12 @@ func (m *LoadedKernelModuleSpec) UnmarshalVT(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				m.Instances |= int64(b&0x7F) << shift
+				m.ReferenceCount |= int64(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}
 			}
-		case 4:
+		case 3:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field Dependencies", wireType)
 			}
@@ -3219,7 +3176,7 @@ func (m *LoadedKernelModuleSpec) UnmarshalVT(dAtA []byte) error {
 			}
 			m.Dependencies = append(m.Dependencies, string(dAtA[iNdEx:postIndex]))
 			iNdEx = postIndex
-		case 5:
+		case 4:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field State", wireType)
 			}
@@ -3251,7 +3208,7 @@ func (m *LoadedKernelModuleSpec) UnmarshalVT(dAtA []byte) error {
 			}
 			m.State = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
-		case 6:
+		case 5:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field Address", wireType)
 			}

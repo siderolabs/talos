@@ -23,12 +23,11 @@ type LoadedKernelModule = typed.Resource[LoadedKernelModuleSpec, LoadedKernelMod
 //
 //gotagsrewrite:gen
 type LoadedKernelModuleSpec struct {
-	Name         string   `yaml:"name" protobuf:"1"`
-	Size         int      `yaml:"size" protobuf:"2"`
-	Instances    int      `yaml:"instances" protobuf:"3"`
-	Dependencies []string `yaml:"dependencies,omitempty" protobuf:"4"`
-	State        string   `yaml:"state" protobuf:"5"`
-	Address      string   `yaml:"address" protobuf:"6"`
+	Size           int      `yaml:"size" protobuf:"1"`
+	ReferenceCount int      `yaml:"referenceCount" protobuf:"2"`
+	Dependencies   []string `yaml:"dependencies,omitempty" protobuf:"3"`
+	State          string   `yaml:"state" protobuf:"4"`
+	Address        string   `yaml:"address" protobuf:"5"`
 }
 
 // NewLoadedKernelModule initializes a LoadedKernelModule resource.
@@ -49,10 +48,6 @@ func (LoadedKernelModuleExtension) ResourceDefinition() meta.ResourceDefinitionS
 		Aliases:          []resource.Type{"module", "modules"},
 		DefaultNamespace: NamespaceName,
 		PrintColumns: []meta.PrintColumn{
-			{
-				Name:     "Name",
-				JSONPath: "{.name}",
-			},
 			{
 				Name:     "State",
 				JSONPath: "{.state}",

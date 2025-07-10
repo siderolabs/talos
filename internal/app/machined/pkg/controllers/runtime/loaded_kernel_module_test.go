@@ -47,7 +47,7 @@ func (suite *LoadedKernelModuleSuite) TestParseModules() {
 			name:  "single module",
 			input: `module1 12345 0 - Live 0x00000000`,
 			expected: []runtimectrl.Module{
-				{Name: "module1", Size: 12345, Instances: 0, Dependencies: []string{}, State: "Live", Address: "0x00000000"},
+				{Name: "module1", Size: 12345, ReferenceCount: 0, Dependencies: []string{}, State: "Live", Address: "0x00000000"},
 			},
 		},
 		{
@@ -56,9 +56,9 @@ func (suite *LoadedKernelModuleSuite) TestParseModules() {
 module2 67890 1 module1 Live 0x00000001
 module3 54321 2 module1,module2 Live 0x00000002`,
 			expected: []runtimectrl.Module{
-				{Name: "module1", Size: 12345, Instances: 0, Dependencies: []string{}, State: "Live", Address: "0x00000000"},
-				{Name: "module2", Size: 67890, Instances: 1, Dependencies: []string{"module1"}, State: "Live", Address: "0x00000001"},
-				{Name: "module3", Size: 54321, Instances: 2, Dependencies: []string{"module1", "module2"}, State: "Live", Address: "0x00000002"},
+				{Name: "module1", Size: 12345, ReferenceCount: 0, Dependencies: []string{}, State: "Live", Address: "0x00000000"},
+				{Name: "module2", Size: 67890, ReferenceCount: 1, Dependencies: []string{"module1"}, State: "Live", Address: "0x00000001"},
+				{Name: "module3", Size: 54321, ReferenceCount: 2, Dependencies: []string{"module1", "module2"}, State: "Live", Address: "0x00000002"},
 			},
 		},
 		{
@@ -69,10 +69,10 @@ module3 54321 2 module1,module2 Live 0x00000002
 invalid_line
 module4 11111 0 - Live 0x00000003`,
 			expected: []runtimectrl.Module{
-				{Name: "module1", Size: 12345, Instances: 0, Dependencies: []string{}, State: "Live", Address: "0x00000000"},
-				{Name: "module2", Size: 67890, Instances: 1, Dependencies: []string{"module1"}, State: "Live", Address: "0x00000001"},
-				{Name: "module3", Size: 54321, Instances: 2, Dependencies: []string{"module1", "module2"}, State: "Live", Address: "0x00000002"},
-				{Name: "module4", Size: 11111, Instances: 0, Dependencies: []string{}, State: "Live", Address: "0x00000003"},
+				{Name: "module1", Size: 12345, ReferenceCount: 0, Dependencies: []string{}, State: "Live", Address: "0x00000000"},
+				{Name: "module2", Size: 67890, ReferenceCount: 1, Dependencies: []string{"module1"}, State: "Live", Address: "0x00000001"},
+				{Name: "module3", Size: 54321, ReferenceCount: 2, Dependencies: []string{"module1", "module2"}, State: "Live", Address: "0x00000002"},
+				{Name: "module4", Size: 11111, ReferenceCount: 0, Dependencies: []string{}, State: "Live", Address: "0x00000003"},
 			},
 		},
 	} {
