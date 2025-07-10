@@ -17,6 +17,7 @@ import (
 
 	"github.com/foxboron/go-uefi/efi"
 	"github.com/siderolabs/gen/xerrors"
+	"github.com/siderolabs/gen/xslices"
 	"github.com/siderolabs/go-blockdevice/v2/blkid"
 	"golang.org/x/sys/unix"
 
@@ -71,6 +72,8 @@ func New() *Config {
 func ProbeWithCallback(disk string, options options.ProbeOptions, callback func(*Config) error) (*Config, error) {
 	// if not UEFI boot, nothing to do
 	if !IsUEFIBoot() {
+		options.Log("sd-boot: not booted using UEFI, skipping probing")
+
 		return nil, nil
 	}
 
@@ -84,6 +87,8 @@ func ProbeWithCallback(disk string, options options.ProbeOptions, callback func(
 	if err != nil {
 		return nil, err
 	}
+
+	options.Log("sd-boot: booted entry: %q", bootedEntry)
 
 	var sdbootConf *Config
 
@@ -115,9 +120,13 @@ func ProbeWithCallback(disk string, options options.ProbeOptions, callback func(
 				return err
 			}
 
+			options.Log("sd-boot: found UKI files: %v", xslices.Map(ukiFiles, filepath.Base))
+
 			// here we handle a case when we boot of just kernel+initrd/uki/iso and we don't have a booted entry
 			// then we know we're booted of UKI
 			if bootedEntry == "" && len(ukiFiles) == 1 {
+				options.Log("sd-boot: no booted entry found, assuming the only UKI file: %s", ukiFiles[0])
+
 				sdbootConf = &Config{
 					Default: filepath.Base(ukiFiles[0]),
 				}
@@ -125,6 +134,8 @@ func ProbeWithCallback(disk string, options options.ProbeOptions, callback func(
 
 			for _, ukiFile := range ukiFiles {
 				if strings.EqualFold(filepath.Base(ukiFile), bootedEntry) {
+					options.Log("sd-boot: default entry matched as %q", bootedEntry)
+
 					sdbootConf = &Config{
 						Default: bootedEntry,
 					}

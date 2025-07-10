@@ -40,6 +40,10 @@ func ProbeWithCallback(disk string, options options.ProbeOptions, callback func(
 				return callback(grubConf)
 			}
 
+			if grubConf == nil {
+				options.Log("GRUB: config not found")
+			}
+
 			return nil
 		},
 		options.BlockProbeOptions,
@@ -53,6 +57,8 @@ func ProbeWithCallback(disk string, options options.ProbeOptions, callback func(
 	); err != nil {
 		if xerrors.TagIs[mount.NotFoundTag](err) {
 			// if partitions are not found, it means GRUB is not installed
+			options.Log("GRUB: BOOT partition not found, skipping probing")
+
 			return nil, nil
 		}
 
