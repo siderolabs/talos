@@ -119,7 +119,7 @@ You can see the size of your cache by looking at the size of the image-cache.oci
 
 If the disk image is used, the `IMAGECACHE` volume doesn't need to be configured, as the image cache volume is already present in the disk image.
 
-See [disk management]({{< relref "./disk-management#machine-configuration" >}}) for more information on volume configuration.
+See [disk management]({{< relref "./disk-management/system" >}}) for more information on volume configuration.
 
 ## Troubleshooting
 

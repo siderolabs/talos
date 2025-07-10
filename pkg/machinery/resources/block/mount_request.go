@@ -56,7 +56,7 @@ func (MountRequestExtension) ResourceDefinition() meta.ResourceDefinitionSpec {
 			},
 			{
 				Name:     "Parent",
-				JSONPath: `{.ParentID}`,
+				JSONPath: `{.parentID}`,
 			},
 			{
 				Name:     "Requesters",

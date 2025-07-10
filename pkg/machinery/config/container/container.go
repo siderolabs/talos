@@ -225,6 +225,11 @@ func (container *Container) UserVolumeConfigs() []config.UserVolumeConfig {
 	return findMatchingDocs[config.UserVolumeConfig](container.documents)
 }
 
+// RawVolumeConfigs implements config.Config interface.
+func (container *Container) RawVolumeConfigs() []config.RawVolumeConfig {
+	return findMatchingDocs[config.RawVolumeConfig](container.documents)
+}
+
 // SwapVolumeConfigs implements config.Config interface.
 func (container *Container) SwapVolumeConfigs() []config.SwapVolumeConfig {
 	return findMatchingDocs[config.SwapVolumeConfig](container.documents)

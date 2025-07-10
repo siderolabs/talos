@@ -100,17 +100,20 @@ func (ctrl *UserVolumeConfigController) Run(ctx context.Context, r controller.Ru
 		// fetch all user-defined volume configs
 		var (
 			userVolumeConfigs []configconfig.UserVolumeConfig
+			rawVolumeConfigs  []configconfig.RawVolumeConfig
 			swapVolumeConfigs []configconfig.SwapVolumeConfig
 		)
 
 		if cfg != nil {
 			userVolumeConfigs = cfg.Config().UserVolumeConfigs()
+			rawVolumeConfigs = cfg.Config().RawVolumeConfigs()
 			swapVolumeConfigs = cfg.Config().SwapVolumeConfigs()
 		}
 
 		// list of all labels for VolumeConfig and VolumeMountRequest resources that are managed by this controller
 		labelQuery := []state.ListOption{
 			state.WithLabelQuery(resource.LabelExists(block.UserVolumeLabel)),
+			state.WithLabelQuery(resource.LabelExists(block.RawVolumeLabel)),
 			state.WithLabelQuery(resource.LabelExists(block.SwapVolumeLabel)),
 		}
 
@@ -143,8 +146,20 @@ func (ctrl *UserVolumeConfigController) Run(ctx context.Context, r controller.Ru
 				ctx, r, constants.UserVolumePrefix, block.UserVolumeLabel, ctrl.Name(),
 				userVolumeConfig, volumeConfigsByID, volumeMountRequestsByID,
 				ctrl.handleUserVolumeConfig,
+				false,
 			); err != nil {
 				return fmt.Errorf("error handling user volume config %q: %w", userVolumeConfig.Name(), err)
+			}
+		}
+
+		for _, rawVolumeConfig := range rawVolumeConfigs {
+			if err := handleCustomVolumeConfig(
+				ctx, r, constants.RawVolumePrefix, block.RawVolumeLabel, ctrl.Name(),
+				rawVolumeConfig, volumeConfigsByID, volumeMountRequestsByID,
+				ctrl.handleRawVolumeConfig,
+				true,
+			); err != nil {
+				return fmt.Errorf("error handling raw volume config %q: %w", rawVolumeConfig.Name(), err)
 			}
 		}
 
@@ -153,6 +168,7 @@ func (ctrl *UserVolumeConfigController) Run(ctx context.Context, r controller.Ru
 				ctx, r, constants.SwapVolumePrefix, block.SwapVolumeLabel, ctrl.Name(),
 				swapVolumeConfig, volumeConfigsByID, volumeMountRequestsByID,
 				ctrl.handleSwapVolumeConfig,
+				false,
 			); err != nil {
 				return fmt.Errorf("error handling swap volume config %q: %w", swapVolumeConfig.Name(), err)
 			}
@@ -201,6 +217,7 @@ func handleCustomVolumeConfig[C configconfig.NamedDocument](
 	volumeConfigsByID map[string]*block.VolumeConfig,
 	volumeMountRequestsByID map[string]*block.VolumeMountRequest,
 	transformFunc func(c C, v *block.VolumeConfig, volumeID string) error,
+	skipMount bool,
 ) error {
 	volumeID := prefix + configDocument.Name()
 
@@ -210,7 +227,7 @@ func handleCustomVolumeConfig[C configconfig.NamedDocument](
 	tearingDown := (volumeConfig != nil && volumeConfig.Metadata().Phase() == resource.PhaseTearingDown) ||
 		(volumeMountRequest != nil && volumeMountRequest.Metadata().Phase() == resource.PhaseTearingDown)
 
-		// if the volume is being torn down, do the tear down (in the next loop)
+	// if the volume is being torn down, do the tear down (in the next loop)
 	if tearingDown {
 		return nil
 	}
@@ -227,6 +244,10 @@ func handleCustomVolumeConfig[C configconfig.NamedDocument](
 		},
 	); err != nil {
 		return fmt.Errorf("error creating volume configuration: %w", err)
+	}
+
+	if skipMount {
+		return nil
 	}
 
 	if err := safe.WriterModify(ctx, r,
@@ -291,6 +312,45 @@ func (ctrl *UserVolumeConfigController) handleUserVolumeConfig(
 	return nil
 }
 
+//nolint:dupl
+func (ctrl *UserVolumeConfigController) handleRawVolumeConfig(
+	rawVolumeConfig configconfig.RawVolumeConfig,
+	v *block.VolumeConfig,
+	volumeID string,
+) error {
+	diskSelector, ok := rawVolumeConfig.Provisioning().DiskSelector().Get()
+	if !ok {
+		// this shouldn't happen due to validation
+		return fmt.Errorf("disk selector not found for volume %q", volumeID)
+	}
+
+	v.TypedSpec().Type = block.VolumeTypePartition
+	v.TypedSpec().Locator.Match = labelVolumeMatch(volumeID)
+	v.TypedSpec().Provisioning = block.ProvisioningSpec{
+		Wave: block.WaveUserVolumes,
+		DiskSelector: block.DiskSelector{
+			Match: diskSelector,
+		},
+		PartitionSpec: block.PartitionSpec{
+			MinSize:  rawVolumeConfig.Provisioning().MinSize().ValueOrZero(),
+			MaxSize:  rawVolumeConfig.Provisioning().MaxSize().ValueOrZero(),
+			Grow:     rawVolumeConfig.Provisioning().Grow().ValueOrZero(),
+			Label:    volumeID,
+			TypeUUID: partition.LinuxFilesystemData,
+		},
+		FilesystemSpec: block.FilesystemSpec{
+			Type: block.FilesystemTypeNone,
+		},
+	}
+
+	if err := convertEncryptionConfiguration(rawVolumeConfig.Encryption(), v.TypedSpec()); err != nil {
+		return fmt.Errorf("error apply encryption configuration: %w", err)
+	}
+
+	return nil
+}
+
+//nolint:dupl
 func (ctrl *UserVolumeConfigController) handleSwapVolumeConfig(
 	swapVolumeConfig configconfig.SwapVolumeConfig,
 	v *block.VolumeConfig,

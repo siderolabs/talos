@@ -8,7 +8,7 @@ Local storage is not replicated, so in case of a machine failure contents of the
 
 ## User Volumes
 
-The simplest way to use local storage is to use [user volumes]({{< relref "../../talos-guides/configuration/disk-management#user-volumes" >}}).
+The simplest way to use local storage is to use [user volumes]({{< relref "../../talos-guides/configuration/disk-management/user" >}}).
 
 Once the user volume is created, it is automatically mounted under `/var/mnt/u-<user-volume-name>` path on the node.
 
@@ -68,10 +68,10 @@ spec:
 
 [Local Path Provisioner](https://github.com/rancher/local-path-provisioner) can be used to dynamically provision local storage.
 
-First, we will create a separate [user volume]({{< relref "../../talos-guides/configuration/disk-management#user-volumes" >}}) for the Local Path Provisioner to use.
+First, we will create a separate [user volume]({{< relref "../../talos-guides/configuration/disk-management/user" >}}) for the Local Path Provisioner to use.
 Apply the following machine configuration patch:
 
-> Note: make sure you have [enough space]({{< relref "../../talos-guides/configuration/disk-management#disk-layout" >}}) available to provision the user volume.
+> Note: make sure you have [enough space]({{< relref "../../talos-guides/configuration/disk-management/layout" >}}) available to provision the user volume.
 
 ```yaml
 apiVersion: v1alpha1

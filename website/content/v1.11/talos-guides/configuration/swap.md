@@ -18,7 +18,7 @@ Swap and zswap are disabled by default in Talos, but can be enabled through the 
 
 ## Swap Devices
 
-Swap devices can be configured in the [Talos machine configuration]({{< relref "../../reference/configuration/block/swapvolumeconfig" >}}) similar to how [User Volumes]({{< relref "disk-management#" >}}) are configured.
+Swap devices can be configured in the [Talos machine configuration]({{< relref "../../reference/configuration/block/swapvolumeconfig" >}}) similar to how [User Volumes]({{< relref "disk-management/user" >}}) are configured.
 As swap devices contain memory pages, it is recommended to enable disk encryption for swap devices to prevent sensitive data from being written to disk in plaintext.
 It is also recommended to use a separate disk for swap devices to avoid performance degradation on the system disk and other workloads.
 
