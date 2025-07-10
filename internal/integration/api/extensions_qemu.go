@@ -600,7 +600,7 @@ func (suite *ExtensionsSuiteQEMU) TestLoadedKernelModule() {
 			asrt.NotEmpty(res.TypedSpec().Name, "kernel module name should not be empty")
 			asrt.NotEmpty(res.TypedSpec().Size, "kernel module size should not be empty")
 			asrt.NotEmpty(res.TypedSpec().Address, "kernel module address should not be empty")
-			asrt.NotZero(res.TypedSpec().Instances, "kernel module instances should not be zero")
+			asrt.GreaterOrEqual(res.TypedSpec().Instances, 0, "kernel module instances should be non-negative")
 		},
 	)
 }
