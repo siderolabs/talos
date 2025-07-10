@@ -13,6 +13,16 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/resources/block"
 )
 
+// DiskRejectedReason is the reason why a disk cannot be used for provisioning.
+type DiskRejectedReason int
+
+// Possible reasons why a disk cannot be used for provisioning.
+const (
+	GeneralError DiskRejectedReason = iota
+	NotEnoughSpace
+	WrongFormat
+)
+
 // CheckDiskResult is the result of checking a disk for provisioning.
 type CheckDiskResult struct {
 	// CanProvision indicates if the disk can be used for provisioning.
@@ -21,6 +31,8 @@ type CheckDiskResult struct {
 	HasGPT bool
 	// DiskSize is the size of the disk.
 	DiskSize uint64
+	// RejectedReason is the reason why the disk cannot be used for provisioning (if CanProvision is false).
+	RejectedReason DiskRejectedReason
 }
 
 // CheckDiskForProvisioning checks if the disk can be used for provisioning for the given volume configuration.
@@ -35,8 +47,9 @@ func CheckDiskForProvisioning(logger *zap.Logger, diskPath string, volumeCfg *bl
 	switch volumeCfg.TypedSpec().Type { //nolint:exhaustive
 	case block.VolumeTypeDisk:
 		return CheckDiskResult{
-			CanProvision: info.Name == "",
-			DiskSize:     info.Size,
+			CanProvision:   info.Name == "",
+			DiskSize:       info.Size,
+			RejectedReason: WrongFormat,
 		}
 	case block.VolumeTypePartition:
 		if info.Name == "" {
@@ -44,14 +57,17 @@ func CheckDiskForProvisioning(logger *zap.Logger, diskPath string, volumeCfg *bl
 			overhead := uint64(info.SectorSize) * 67 // GPT + MBR
 
 			return CheckDiskResult{
-				CanProvision: info.Size >= volumeCfg.TypedSpec().Provisioning.PartitionSpec.MinSize+overhead,
-				DiskSize:     info.Size,
+				CanProvision:   info.Size >= volumeCfg.TypedSpec().Provisioning.PartitionSpec.MinSize+overhead,
+				DiskSize:       info.Size,
+				RejectedReason: NotEnoughSpace,
 			}
 		}
 
 		if info.Name != "gpt" {
 			// not empty, and not gpt => can't be used for partitioning
-			return CheckDiskResult{}
+			return CheckDiskResult{
+				RejectedReason: WrongFormat,
+			}
 		}
 	default:
 		panic("unexpected volume type")
@@ -95,8 +111,9 @@ func CheckDiskForProvisioning(logger *zap.Logger, diskPath string, volumeCfg *bl
 	logger.Debug("checking disk for provisioning", zap.String("disk", diskPath), zap.Uint64("available", available))
 
 	return CheckDiskResult{
-		CanProvision: available >= volumeCfg.TypedSpec().Provisioning.PartitionSpec.MinSize,
-		HasGPT:       true,
-		DiskSize:     info.Size,
+		CanProvision:   available >= volumeCfg.TypedSpec().Provisioning.PartitionSpec.MinSize,
+		HasGPT:         true,
+		DiskSize:       info.Size,
+		RejectedReason: NotEnoughSpace,
 	}
 }

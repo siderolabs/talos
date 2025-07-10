@@ -107,7 +107,7 @@ func LocateAndProvision(ctx context.Context, logger *zap.Logger, volumeContext M
 	}
 
 	if len(matchedDisks) == 0 {
-		return fmt.Errorf("no disks matched for volume")
+		return fmt.Errorf("no disks matched selector for volume")
 	}
 
 	logger.Debug("matched disks", zap.Strings("disks", matchedDisks))
@@ -116,6 +116,7 @@ func LocateAndProvision(ctx context.Context, logger *zap.Logger, volumeContext M
 	var (
 		pickedDisk      string
 		diskCheckResult CheckDiskResult
+		rejectedReasons = map[DiskRejectedReason]int{}
 	)
 
 	for _, matchedDisk := range matchedDisks {
@@ -125,10 +126,17 @@ func LocateAndProvision(ctx context.Context, logger *zap.Logger, volumeContext M
 
 			break
 		}
+
+		rejectedReasons[diskCheckResult.RejectedReason]++
 	}
 
 	if pickedDisk == "" {
-		return xerrors.NewTaggedf[Retryable]("no disks matched for volume")
+		return xerrors.NewTaggedf[Retryable]("no disks matched for volume (%d matched selector): %d have not enough space, %d have wrong format, %d have other issues",
+			len(matchedDisks),
+			rejectedReasons[NotEnoughSpace],
+			rejectedReasons[WrongFormat],
+			rejectedReasons[GeneralError],
+		)
 	}
 
 	logger.Debug("picked disk", zap.String("disk", pickedDisk))
