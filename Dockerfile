@@ -1028,12 +1028,14 @@ COPY --from=pkg-kernel-amd64 /boot/vmlinuz /usr/install/amd64/vmlinuz
 COPY --from=initramfs-archive-amd64 /initramfs.xz /usr/install/amd64/initramfs.xz
 COPY --from=pkg-sd-boot-amd64 /linuxx64.efi.stub /usr/install/amd64/systemd-stub.efi
 COPY --from=pkg-sd-boot-amd64 /systemd-bootx64.efi /usr/install/amd64/systemd-boot.efi
+COPY --from=sbom-amd64 /talos-amd64.spdx.json /usr/install/amd64/talos.spdx.json
 
 FROM scratch AS install-artifacts-arm64
 COPY --from=pkg-kernel-arm64 /boot/vmlinuz /usr/install/arm64/vmlinuz
 COPY --from=initramfs-archive-arm64 /initramfs.xz /usr/install/arm64/initramfs.xz
 COPY --from=pkg-sd-boot-arm64 /linuxaa64.efi.stub /usr/install/arm64/systemd-stub.efi
 COPY --from=pkg-sd-boot-arm64 /systemd-bootaa64.efi /usr/install/arm64/systemd-boot.efi
+COPY --from=sbom-arm64 /talos-arm64.spdx.json /usr/install/arm64/talos.spdx.json
 
 FROM scratch AS install-artifacts-all
 COPY --from=install-artifacts-amd64 / /

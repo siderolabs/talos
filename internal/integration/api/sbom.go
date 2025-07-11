@@ -87,6 +87,16 @@ func (suite *SBOMSuite) TestCommon() {
 		},
 	)
 
+	// Assert on Go version.
+	rtestutils.AssertResource(ctx, suite.T(), suite.Client.COSI,
+		"golang",
+		func(item *runtime.SBOMItem, asrt *assert.Assertions) {
+			goVersion := strings.TrimPrefix(constants.GoVersion, "go")
+
+			asrt.Equal(goVersion, item.TypedSpec().Version)
+		},
+	)
+
 	if suite.Capabilities().RunsTalosKernel {
 		// Assert on Talos kernel version.
 		rtestutils.AssertResource(ctx, suite.T(), suite.Client.COSI,
