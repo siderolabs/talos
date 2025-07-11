@@ -90,7 +90,11 @@ func TestDNS(t *testing.T) {
 
 				time.Sleep(10 * time.Millisecond)
 
-				r, err := dnssrv.Exchange(createQuery(test.hostname), dnsAddr)
+				c := dnssrv.Client{
+					Timeout: time.Second,
+				}
+
+				r, _, err := c.Exchange(createQuery(test.hostname), dnsAddr)
 				test.errCheck(t, err)
 
 				if r != nil {
