@@ -4,7 +4,7 @@ go 1.24.5
 
 replace (
 	// see e.g. https://github.com/grpc/grpc-go/issues/6696
-	cloud.google.com/go => cloud.google.com/go v0.100.2
+	cloud.google.com/go => cloud.google.com/go v0.121.3
 
 	// forked coredns so we don't carry caddy and other stuff into the Talos
 	github.com/coredns/coredns => github.com/siderolabs/coredns v1.12.52
@@ -13,26 +13,26 @@ replace (
 	github.com/mdlayher/ethtool => github.com/siderolabs/ethtool v0.4.0-sidero
 
 	// see https://github.com/mdlayher/kobject/pull/5
-	github.com/mdlayher/kobject => github.com/smira/kobject v0.0.0-20240304111826-49c8d4613389
+	github.com/mdlayher/kobject => github.com/smira/kobject 19ca17470d7d
 
 	// Use nested module.
 	github.com/siderolabs/talos/pkg/machinery => ./pkg/machinery
 
 	// forked go-yaml that introduces RawYAML interface, which can be used to populate YAML fields using bytes
 	// which are then encoded as a valid YAML blocks with proper indentiation
-	gopkg.in/yaml.v3 => github.com/unix4ever/yaml v0.0.0-20220527175918-f17b0f05cf2c
+	gopkg.in/yaml.v3 => github.com/unix4ever/yaml/v2 v2.4.0
 )
 
 // fd-leak related replacements: https://github.com/siderolabs/talos/issues/9412
 // https://github.com/insomniacslk/dhcp/pull/550
-replace github.com/insomniacslk/dhcp => github.com/smira/dhcp v0.0.0-20250407153013-99942baa5d59
+replace github.com/insomniacslk/dhcp => github.com/smira/dhcp 7d93572ebe8e
 
 // Kubernetes dependencies sharing the same version.
 require (
 	k8s.io/api v0.34.0-alpha.3
 	k8s.io/apimachinery v0.34.0-alpha.3
 	k8s.io/apiserver v0.34.0-alpha.3
-	k8s.io/client-go v0.34.0-alpha.3
+	k8s.io/client-go v11.0.0+incompatible
 	k8s.io/component-base v0.34.0-alpha.3
 	k8s.io/cri-api v0.34.0-alpha.3
 	k8s.io/kube-scheduler v0.34.0-alpha.3
@@ -43,7 +43,7 @@ require (
 
 require (
 	cloud.google.com/go/compute/metadata v0.7.0
-	github.com/Azure/azure-sdk-for-go/sdk/azcore v1.18.0
+	github.com/Azure/azure-sdk-for-go/sdk/azcore v1.18.1
 	github.com/Azure/azure-sdk-for-go/sdk/azidentity v1.10.1
 	github.com/Azure/azure-sdk-for-go/sdk/security/keyvault/azcertificates v1.4.0
 	github.com/Azure/azure-sdk-for-go/sdk/security/keyvault/azkeys v1.4.0
@@ -55,7 +55,7 @@ require (
 	github.com/beevik/ntp v1.4.3
 	github.com/benbjohnson/clock v1.3.5 // project archived on 2023-05-18
 	github.com/blang/semver/v4 v4.0.0
-	github.com/cenkalti/backoff/v4 v4.3.0
+	github.com/cenkalti/backoff/v5 v5.0.2
 	github.com/containerd/cgroups/v3 v3.0.5
 	github.com/containerd/containerd/api v1.9.0
 	github.com/containerd/containerd/v2 v2.1.3
@@ -65,13 +65,13 @@ require (
 	github.com/containerd/typeurl/v2 v2.2.3
 	github.com/containernetworking/cni v1.3.0
 	github.com/containernetworking/plugins v1.7.1
-	github.com/coredns/coredns v1.12.1
+	github.com/coredns/coredns v1.12.2
 	github.com/coreos/go-iptables v0.8.0
 	github.com/cosi-project/runtime v0.10.6
 	github.com/detailyang/go-fallocate v0.0.0-20180908115635-432fa640bd2e
 	github.com/distribution/reference v0.6.0
-	github.com/docker/cli v28.3.0+incompatible
-	github.com/docker/docker v28.3.0+incompatible
+	github.com/docker/cli v28.3.2+incompatible
+	github.com/docker/docker v28.3.2+incompatible
 	github.com/docker/go-connections v0.5.0
 	github.com/dustin/go-humanize v1.0.1
 	github.com/elastic/go-libaudit/v2 v2.6.2
@@ -100,8 +100,8 @@ require (
 	github.com/hashicorp/go-envparse v0.1.0
 	github.com/hashicorp/go-getter/v2 v2.2.3
 	github.com/hashicorp/go-multierror v1.1.1
-	github.com/hetznercloud/hcloud-go/v2 v2.21.1
-	github.com/insomniacslk/dhcp v0.0.0-20250109001534-8abf58130905
+	github.com/hetznercloud/hcloud-go/v2 v2.22.0
+	github.com/insomniacslk/dhcp 5f8cf70e8c5f
 	github.com/jeromer/syslogparser v1.1.0
 	github.com/jsimonetti/rtnetlink/v2 v2.0.5
 	github.com/jxskiss/base62 v1.1.0
@@ -114,10 +114,10 @@ require (
 	github.com/mdlayher/ethtool v0.4.0
 	github.com/mdlayher/genetlink v1.3.2
 	github.com/mdlayher/kobject v0.0.0-20200520190114-19ca17470d7d
-	github.com/mdlayher/netlink v1.7.3-0.20250113171957-fbb4dce95f42
+	github.com/mdlayher/netlink 0f7746f74615
 	github.com/mdlayher/netx v0.0.0-20230430222610-7e21880baee8
 	github.com/mdp/qrterminal/v3 v3.2.1
-	github.com/miekg/dns v1.1.66
+	github.com/miekg/dns v1.1.67
 	github.com/nberlee/go-netstat v0.1.2
 	github.com/opencontainers/go-digest v1.0.0
 	github.com/opencontainers/image-spec v1.1.1
@@ -125,21 +125,21 @@ require (
 	github.com/packethost/packngo v0.31.0
 	github.com/pelletier/go-toml/v2 v2.2.4
 	github.com/pin/tftp/v3 v3.1.0
-	github.com/pkg/xattr v0.4.11
+	github.com/pkg/xattr v0.4.12
 	github.com/pmorjan/kmod v1.1.1
-	github.com/prometheus/procfs v0.16.1
+	github.com/prometheus/procfs v0.17.0
 	github.com/rivo/tview v0.0.0-20250625164341-a4a78f1e05cb
 	github.com/rs/xid v1.6.0
 	github.com/ryanuber/columnize v2.1.2+incompatible
 	github.com/ryanuber/go-glob v1.0.0
 	github.com/safchain/ethtool v0.6.1
-	github.com/scaleway/scaleway-sdk-go v1.0.0-beta.33
+	github.com/scaleway/scaleway-sdk-go v1.0.0-beta.34
 	github.com/siderolabs/crypto v0.6.3
 	github.com/siderolabs/discovery-api v0.1.6
 	github.com/siderolabs/discovery-client v0.1.12
 	github.com/siderolabs/gen v0.8.4
 	github.com/siderolabs/go-api-signature v0.3.6
-	github.com/siderolabs/go-blockdevice v0.4.8
+	github.com/siderolabs/go-blockdevice/v2 v2.0.18
 	github.com/siderolabs/go-blockdevice/v2 v2.0.18
 	github.com/siderolabs/go-circular v0.2.3
 	github.com/siderolabs/go-cmd v0.1.3
@@ -170,19 +170,19 @@ require (
 	github.com/u-root/u-root v0.14.0
 	github.com/ulikunitz/xz v0.5.12
 	github.com/vultr/metadata v1.1.0
-	go.etcd.io/etcd/api/v3 v3.6.1
-	go.etcd.io/etcd/client/pkg/v3 v3.6.1
-	go.etcd.io/etcd/client/v3 v3.6.1
-	go.etcd.io/etcd/etcdutl/v3 v3.6.1
+	go.etcd.io/etcd/api/v3 v3.6.2
+	go.etcd.io/etcd/client/pkg/v3 v3.6.2
+	go.etcd.io/etcd/client/v3 v3.6.2
+	go.etcd.io/etcd/etcdutl/v3 v3.6.2
 	go.uber.org/goleak v1.3.0
 	go.uber.org/zap v1.27.0
 	go4.org/netipx v0.0.0-20231129151722-fdeea329fbba
-	golang.org/x/net v0.41.0
+	golang.org/x/net v0.42.0
 	golang.org/x/oauth2 v0.30.0
-	golang.org/x/sync v0.15.0
-	golang.org/x/sys v0.33.0
-	golang.org/x/term v0.32.0
-	golang.org/x/text v0.26.0
+	golang.org/x/sync v0.16.0
+	golang.org/x/sys v0.34.0
+	golang.org/x/term v0.33.0
+	golang.org/x/text v0.27.0
 	golang.org/x/time v0.12.0
 	golang.zx2c4.com/wireguard/wgctrl v0.0.0-20241231184526-a9ab2273dd10
 	google.golang.org/grpc v1.73.0
