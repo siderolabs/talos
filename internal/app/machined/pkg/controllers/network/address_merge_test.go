@@ -2,91 +2,37 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-//nolint:dupl
 package network_test
 
 import (
 	"context"
 	"net/netip"
-	"sync"
 	"testing"
 	"time"
 
-	"github.com/cosi-project/runtime/pkg/controller/runtime"
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/rtestutils"
 	"github.com/cosi-project/runtime/pkg/state"
-	"github.com/cosi-project/runtime/pkg/state/impl/inmem"
-	"github.com/cosi-project/runtime/pkg/state/impl/namespaced"
 	"github.com/siderolabs/gen/xslices"
-	"github.com/siderolabs/go-retry/retry"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
-	"go.uber.org/zap/zaptest"
-	"golang.org/x/sync/errgroup"
 
+	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/ctest"
 	netctrl "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/network"
 	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
 	"github.com/siderolabs/talos/pkg/machinery/resources/network"
 )
 
 type AddressMergeSuite struct {
-	suite.Suite
-
-	state state.State
-
-	runtime *runtime.Runtime
-	wg      sync.WaitGroup
-
-	ctx       context.Context //nolint:containedctx
-	ctxCancel context.CancelFunc
-}
-
-func (suite *AddressMergeSuite) SetupTest() {
-	suite.ctx, suite.ctxCancel = context.WithTimeout(context.Background(), 3*time.Minute)
-
-	suite.state = state.WrapCore(namespaced.NewState(inmem.Build))
-
-	var err error
-
-	suite.runtime, err = runtime.NewRuntime(suite.state, zaptest.NewLogger(suite.T()))
-	suite.Require().NoError(err)
-
-	suite.Require().NoError(suite.runtime.RegisterController(netctrl.NewAddressMergeController()))
-
-	suite.startRuntime()
-}
-
-func (suite *AddressMergeSuite) startRuntime() {
-	suite.wg.Add(1)
-
-	go func() {
-		defer suite.wg.Done()
-
-		suite.Assert().NoError(suite.runtime.Run(suite.ctx))
-	}()
+	ctest.DefaultSuite
 }
 
 func (suite *AddressMergeSuite) assertAddresses(requiredIDs []string, check func(*network.AddressSpec, *assert.Assertions)) {
-	assertResources(suite.ctx, suite.T(), suite.state, requiredIDs, check)
+	ctest.AssertResources(suite, requiredIDs, check)
 }
 
-func (suite *AddressMergeSuite) assertNoAddress(id string) error {
-	resources, err := suite.state.List(
-		suite.ctx,
-		resource.NewMetadata(network.NamespaceName, network.AddressSpecType, "", resource.VersionUndefined),
-	)
-	if err != nil {
-		return err
-	}
-
-	for _, res := range resources.Items {
-		if res.Metadata().ID() == id {
-			return retry.ExpectedErrorf("address %q is still there", id)
-		}
-	}
-
-	return nil
+func (suite *AddressMergeSuite) assertNoAddress(id string) {
+	ctest.AssertNoResource[*network.AddressSpec](suite, id)
 }
 
 func (suite *AddressMergeSuite) TestMerge() {
@@ -127,7 +73,7 @@ func (suite *AddressMergeSuite) TestMerge() {
 	}
 
 	for _, res := range []resource.Resource{loopback, dhcp, static, override} {
-		suite.Require().NoError(suite.state.Create(suite.ctx, res), "%v", res.Spec())
+		suite.Create(res)
 	}
 
 	suite.assertAddresses(
@@ -147,7 +93,7 @@ func (suite *AddressMergeSuite) TestMerge() {
 		},
 	)
 
-	suite.Require().NoError(suite.state.Destroy(suite.ctx, static.Metadata()))
+	suite.Destroy(static)
 
 	suite.assertAddresses(
 		[]string{
@@ -155,13 +101,8 @@ func (suite *AddressMergeSuite) TestMerge() {
 			"eth0/10.0.0.1/8",
 		}, func(*network.AddressSpec, *assert.Assertions) {},
 	)
-	suite.Assert().NoError(
-		retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-			func() error {
-				return suite.assertNoAddress("eth0/10.0.0.35/32")
-			},
-		),
-	)
+
+	suite.assertNoAddress("eth0/10.0.0.35/32")
 }
 
 func (suite *AddressMergeSuite) TestMergeFlapping() {
@@ -184,95 +125,20 @@ func (suite *AddressMergeSuite) TestMergeFlapping() {
 		ConfigLayer: network.ConfigMachineConfiguration,
 	}
 
-	resources := []resource.Resource{dhcp, override}
-
-	flipflop := func(idx int) func() error {
-		return func() error {
-			for range 500 {
-				if err := suite.state.Create(suite.ctx, resources[idx]); err != nil {
-					return err
-				}
-
-				if err := suite.state.Destroy(suite.ctx, resources[idx].Metadata()); err != nil {
-					return err
-				}
-
-				time.Sleep(time.Millisecond)
-			}
-
-			return suite.state.Create(suite.ctx, resources[idx])
-		}
-	}
-
-	var eg errgroup.Group
-
-	eg.Go(flipflop(0))
-	eg.Go(flipflop(1))
-	eg.Go(
-		func() error {
-			// add/remove finalizer to the merged resource
-			for range 1000 {
-				if err := suite.state.AddFinalizer(
-					suite.ctx,
-					resource.NewMetadata(
-						network.NamespaceName,
-						network.AddressSpecType,
-						"eth0/10.0.0.1/8",
-						resource.VersionUndefined,
-					),
-					"foo",
-				); err != nil {
-					if !state.IsNotFoundError(err) {
-						return err
-					}
-
-					continue
-				}
-
-				suite.T().Log("finalizer added")
-
-				time.Sleep(10 * time.Millisecond)
-
-				if err := suite.state.RemoveFinalizer(
-					suite.ctx,
-					resource.NewMetadata(
-						network.NamespaceName,
-						network.AddressSpecType,
-						"eth0/10.0.0.1/8",
-						resource.VersionUndefined,
-					),
-					"foo",
-				); err != nil && !state.IsNotFoundError(err) {
-					return err
-				}
-			}
-
-			return nil
-		},
-	)
-
-	suite.Require().NoError(eg.Wait())
-
-	suite.assertAddresses(
-		[]string{
-			"eth0/10.0.0.1/8",
-		}, func(r *network.AddressSpec, asrt *assert.Assertions) {
-			asrt.Equal(r.Metadata().Phase(), resource.PhaseRunning, "resource phase is %s", r.Metadata().Phase())
-			asrt.Equal(*override.TypedSpec(), *r.TypedSpec())
-		},
-	)
-}
-
-func (suite *AddressMergeSuite) TearDownTest() {
-	suite.T().Log("tear down")
-
-	suite.ctxCancel()
-
-	suite.wg.Wait()
+	testMergeFlapping(&suite.DefaultSuite, []*network.AddressSpec{dhcp, override}, "eth0/10.0.0.1/8", override)
 }
 
 func TestAddressMergeSuite(t *testing.T) {
-	suite.Run(t, new(AddressMergeSuite))
+	t.Parallel()
+
+	suite.Run(t, &AddressMergeSuite{
+		DefaultSuite: ctest.DefaultSuite{
+			Timeout: 5 * time.Second,
+			AfterSetup: func(s *ctest.DefaultSuite) {
+				s.Require().NoError(s.Runtime().RegisterController(netctrl.NewAddressMergeController()))
+			},
+		},
+	})
 }
 
 func assertResources[R rtestutils.ResourceWithRD](

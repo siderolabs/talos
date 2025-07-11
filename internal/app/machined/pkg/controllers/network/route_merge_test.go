@@ -2,119 +2,35 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-//nolint:dupl
 package network_test
 
 import (
-	"context"
+	"math/rand/v2"
 	"net/netip"
-	"sync"
 	"testing"
 	"time"
 
-	"github.com/cosi-project/runtime/pkg/controller/runtime"
 	"github.com/cosi-project/runtime/pkg/resource"
-	"github.com/cosi-project/runtime/pkg/state"
-	"github.com/cosi-project/runtime/pkg/state/impl/inmem"
-	"github.com/cosi-project/runtime/pkg/state/impl/namespaced"
-	"github.com/siderolabs/go-retry/retry"
+	"github.com/cosi-project/runtime/pkg/resource/rtestutils"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
-	"go.uber.org/zap/zaptest"
-	"golang.org/x/sync/errgroup"
 
+	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/ctest"
 	netctrl "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/network"
 	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
 	"github.com/siderolabs/talos/pkg/machinery/resources/network"
 )
 
 type RouteMergeSuite struct {
-	suite.Suite
-
-	state state.State
-
-	runtime *runtime.Runtime
-	wg      sync.WaitGroup
-
-	ctx       context.Context //nolint:containedctx
-	ctxCancel context.CancelFunc
+	ctest.DefaultSuite
 }
 
-func (suite *RouteMergeSuite) SetupTest() {
-	suite.ctx, suite.ctxCancel = context.WithTimeout(context.Background(), 3*time.Minute)
-
-	suite.state = state.WrapCore(namespaced.NewState(inmem.Build))
-
-	var err error
-
-	suite.runtime, err = runtime.NewRuntime(suite.state, zaptest.NewLogger(suite.T()))
-	suite.Require().NoError(err)
-
-	suite.Require().NoError(suite.runtime.RegisterController(netctrl.NewRouteMergeController()))
-
-	suite.startRuntime()
+func (suite *RouteMergeSuite) assertRoutes(requiredIDs []string, check func(*network.RouteSpec, *assert.Assertions)) {
+	ctest.AssertResources(suite, requiredIDs, check)
 }
 
-func (suite *RouteMergeSuite) startRuntime() {
-	suite.wg.Add(1)
-
-	go func() {
-		defer suite.wg.Done()
-
-		suite.Assert().NoError(suite.runtime.Run(suite.ctx))
-	}()
-}
-
-func (suite *RouteMergeSuite) assertRoutes(requiredIDs []string, check func(*network.RouteSpec) error) error {
-	missingIDs := make(map[string]struct{}, len(requiredIDs))
-
-	for _, id := range requiredIDs {
-		missingIDs[id] = struct{}{}
-	}
-
-	resources, err := suite.state.List(
-		suite.ctx,
-		resource.NewMetadata(network.NamespaceName, network.RouteSpecType, "", resource.VersionUndefined),
-	)
-	if err != nil {
-		return err
-	}
-
-	for _, res := range resources.Items {
-		_, required := missingIDs[res.Metadata().ID()]
-		if !required {
-			continue
-		}
-
-		delete(missingIDs, res.Metadata().ID())
-
-		if err = check(res.(*network.RouteSpec)); err != nil {
-			return retry.ExpectedError(err)
-		}
-	}
-
-	if len(missingIDs) > 0 {
-		return retry.ExpectedErrorf("some resources are missing: %q", missingIDs)
-	}
-
-	return nil
-}
-
-func (suite *RouteMergeSuite) assertNoRoute(id string) error {
-	resources, err := suite.state.List(
-		suite.ctx,
-		resource.NewMetadata(network.NamespaceName, network.RouteSpecType, "", resource.VersionUndefined),
-	)
-	if err != nil {
-		return err
-	}
-
-	for _, res := range resources.Items {
-		if res.Metadata().ID() == id {
-			return retry.ExpectedErrorf("address %q is still there", id)
-		}
-	}
-
-	return nil
+func (suite *RouteMergeSuite) assertNoRoute(id string) {
+	ctest.AssertNoResource[*network.RouteSpec](suite, id)
 }
 
 func (suite *RouteMergeSuite) TestMerge() {
@@ -156,70 +72,116 @@ func (suite *RouteMergeSuite) TestMerge() {
 	}
 
 	for _, res := range []resource.Resource{cmdline, dhcp, static} {
-		suite.Require().NoError(suite.state.Create(suite.ctx, res), "%v", res.Spec())
+		suite.Create(res)
 	}
 
-	suite.Assert().NoError(
-		retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-			func() error {
-				return suite.assertRoutes(
-					[]string{
-						"inet4/10.5.0.3//50",
-						"inet4/10.0.0.34/10.0.0.35/32/1024",
-					}, func(r *network.RouteSpec) error {
-						suite.Assert().Equal(resource.PhaseRunning, r.Metadata().Phase())
+	suite.assertRoutes(
+		[]string{
+			"inet4/10.5.0.3//50",
+			"inet4/10.0.0.34/10.0.0.35/32/1024",
+		}, func(r *network.RouteSpec, asrt *assert.Assertions) {
+			asrt.Equal(resource.PhaseRunning, r.Metadata().Phase())
 
-						switch r.Metadata().ID() {
-						case "inet4/10.5.0.3//50":
-							suite.Assert().Equal(*dhcp.TypedSpec(), *r.TypedSpec())
-						case "inet4/10.0.0.34/10.0.0.35/32/1024":
-							suite.Assert().Equal(*static.TypedSpec(), *r.TypedSpec())
-						}
-
-						return nil
-					},
-				)
-			},
-		),
+			switch r.Metadata().ID() {
+			case "inet4/10.5.0.3//50":
+				asrt.Equal(*dhcp.TypedSpec(), *r.TypedSpec())
+			case "inet4/10.0.0.34/10.0.0.35/32/1024":
+				asrt.Equal(*static.TypedSpec(), *r.TypedSpec())
+			}
+		},
 	)
 
-	suite.Require().NoError(suite.state.Destroy(suite.ctx, dhcp.Metadata()))
+	suite.Destroy(dhcp)
 
-	suite.Assert().NoError(
-		retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-			func() error {
-				return suite.assertRoutes(
-					[]string{
-						"inet4/10.5.0.3//50",
-						"inet4/10.0.0.34/10.0.0.35/32/1024",
-					}, func(r *network.RouteSpec) error {
-						suite.Assert().Equal(resource.PhaseRunning, r.Metadata().Phase())
+	suite.assertRoutes(
+		[]string{
+			"inet4/10.5.0.3//50",
+			"inet4/10.0.0.34/10.0.0.35/32/1024",
+		}, func(r *network.RouteSpec, asrt *assert.Assertions) {
+			asrt.Equal(resource.PhaseRunning, r.Metadata().Phase())
 
-						switch r.Metadata().ID() {
-						case "inet4/10.5.0.3//50":
-							if *cmdline.TypedSpec() != *r.TypedSpec() {
-								// using retry here, as it might not be reconciled immediately
-								return retry.ExpectedErrorf("not equal yet")
-							}
-						case "inet4/10.0.0.34/10.0.0.35/32/1024":
-							suite.Assert().Equal(*static.TypedSpec(), *r.TypedSpec())
-						}
-
-						return nil
-					},
-				)
-			},
-		),
+			switch r.Metadata().ID() {
+			case "inet4/10.5.0.3//50":
+				asrt.Equal(*cmdline.TypedSpec(), *r.TypedSpec())
+			case "inet4/10.0.0.34/10.0.0.35/32/1024":
+				asrt.Equal(*static.TypedSpec(), *r.TypedSpec())
+			}
+		},
 	)
 
-	suite.Require().NoError(suite.state.Destroy(suite.ctx, static.Metadata()))
+	suite.Destroy(static)
 
-	suite.Assert().NoError(
-		retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-			func() error {
-				return suite.assertNoRoute("inet4/10.0.0.34/10.0.0.35/32/1024")
-			},
-		),
+	suite.assertNoRoute("inet4/10.0.0.34/10.0.0.35/32/1024")
+}
+
+func testMergeFlapping[R rtestutils.ResourceWithRD](suite *ctest.DefaultSuite, resources []R, outputID string, mergedResource R) {
+	var zeroR R
+
+	outputMetadata := resource.NewMetadata(
+		zeroR.ResourceDefinition().DefaultNamespace,
+		zeroR.ResourceDefinition().Type,
+		outputID,
+		resource.VersionUndefined,
+	)
+
+	for range 30 {
+		// pick a set of input resources to create, each bit in the choice represents a resource
+		choice := rand.IntN(1 << len(resources))
+
+		if choice == 0 {
+			continue
+		}
+
+		for idx, res := range resources {
+			if choice&(1<<idx) != 0 {
+				suite.Create(res)
+			}
+		}
+
+		// wait for output to be created
+		ctest.AssertResources(suite, []string{outputID}, func(r R, asrt *assert.Assertions) {
+			asrt.Equal(resource.PhaseRunning, r.Metadata().Phase())
+		})
+
+		// put a finalizer on the output resource
+		suite.Require().NoError(suite.State().AddFinalizer(
+			suite.Ctx(),
+			outputMetadata,
+			"foo",
+		))
+
+		for idx, res := range resources {
+			if choice&(1<<idx) != 0 {
+				suite.Destroy(res)
+			}
+		}
+
+		// wait for output to be torn down
+		ctest.AssertResources(suite, []string{outputID}, func(r R, asrt *assert.Assertions) {
+			asrt.Equal(resource.PhaseTearingDown, r.Metadata().Phase())
+		})
+
+		// remove a finalizer
+		suite.Require().NoError(suite.State().RemoveFinalizer(
+			suite.Ctx(),
+			outputMetadata,
+			"foo",
+		))
+	}
+
+	// create all resources
+	for _, res := range resources {
+		suite.Create(res)
+	}
+
+	ctest.AssertResources(
+		suite,
+		[]string{
+			outputID,
+		}, func(r R, asrt *assert.Assertions) {
+			asrt.Equal(resource.PhaseRunning, r.Metadata().Phase())
+			asrt.Equal(mergedResource.Spec(), r.Spec())
+		},
 	)
 }
 
@@ -250,107 +212,18 @@ func (suite *RouteMergeSuite) TestMergeFlapping() {
 		ConfigLayer: network.ConfigOperator,
 	}
 
-	resources := []resource.Resource{cmdline, dhcp}
-
-	flipflop := func(idx int) func() error {
-		return func() error {
-			for range 500 {
-				if err := suite.state.Create(suite.ctx, resources[idx]); err != nil {
-					return err
-				}
-
-				if err := suite.state.Destroy(suite.ctx, resources[idx].Metadata()); err != nil {
-					return err
-				}
-
-				time.Sleep(time.Millisecond)
-			}
-
-			return suite.state.Create(suite.ctx, resources[idx])
-		}
-	}
-
-	var eg errgroup.Group
-
-	eg.Go(flipflop(0))
-	eg.Go(flipflop(1))
-	eg.Go(
-		func() error {
-			// add/remove finalizer to the merged resource
-			for range 1000 {
-				if err := suite.state.AddFinalizer(
-					suite.ctx,
-					resource.NewMetadata(
-						network.NamespaceName,
-						network.RouteSpecType,
-						"inet4/10.5.0.3//50",
-						resource.VersionUndefined,
-					),
-					"foo",
-				); err != nil {
-					if !state.IsNotFoundError(err) {
-						return err
-					}
-
-					continue
-				}
-
-				suite.T().Log("finalizer added")
-
-				time.Sleep(10 * time.Millisecond)
-
-				if err := suite.state.RemoveFinalizer(
-					suite.ctx,
-					resource.NewMetadata(
-						network.NamespaceName,
-						network.RouteSpecType,
-						"inet4/10.5.0.3//50",
-						resource.VersionUndefined,
-					),
-					"foo",
-				); err != nil && !state.IsNotFoundError(err) {
-					return err
-				}
-			}
-
-			return nil
-		},
-	)
-
-	suite.Require().NoError(eg.Wait())
-
-	suite.Assert().NoError(
-		retry.Constant(15*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-			func() error {
-				return suite.assertRoutes(
-					[]string{
-						"inet4/10.5.0.3//50",
-					}, func(r *network.RouteSpec) error {
-						if r.Metadata().Phase() != resource.PhaseRunning {
-							return retry.ExpectedErrorf("resource phase is %s", r.Metadata().Phase())
-						}
-
-						if *dhcp.TypedSpec() != *r.TypedSpec() {
-							// using retry here, as it might not be reconciled immediately
-							return retry.ExpectedErrorf("not equal yet")
-						}
-
-						return nil
-					},
-				)
-			},
-		),
-	)
-}
-
-func (suite *RouteMergeSuite) TearDownTest() {
-	suite.T().Log("tear down")
-
-	suite.ctxCancel()
-
-	suite.wg.Wait()
+	testMergeFlapping(&suite.DefaultSuite, []*network.RouteSpec{cmdline, dhcp}, "inet4/10.5.0.3//50", dhcp)
 }
 
 func TestRouteMergeSuite(t *testing.T) {
-	suite.Run(t, new(RouteMergeSuite))
+	t.Parallel()
+
+	suite.Run(t, &RouteMergeSuite{
+		DefaultSuite: ctest.DefaultSuite{
+			Timeout: 5 * time.Second,
+			AfterSetup: func(s *ctest.DefaultSuite) {
+				s.Require().NoError(s.Runtime().RegisterController(netctrl.NewRouteMergeController()))
+			},
+		},
+	})
 }

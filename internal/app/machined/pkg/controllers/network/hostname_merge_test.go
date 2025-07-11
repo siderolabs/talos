@@ -2,67 +2,27 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-//nolint:dupl
 package network_test
 
 import (
-	"context"
-	"sync"
 	"testing"
 	"time"
 
-	"github.com/cosi-project/runtime/pkg/controller/runtime"
 	"github.com/cosi-project/runtime/pkg/resource"
-	"github.com/cosi-project/runtime/pkg/state"
-	"github.com/cosi-project/runtime/pkg/state/impl/inmem"
-	"github.com/cosi-project/runtime/pkg/state/impl/namespaced"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
-	"go.uber.org/zap/zaptest"
 
+	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/ctest"
 	netctrl "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/network"
 	"github.com/siderolabs/talos/pkg/machinery/resources/network"
 )
 
 type HostnameMergeSuite struct {
-	suite.Suite
-
-	state state.State
-
-	runtime *runtime.Runtime
-	wg      sync.WaitGroup
-
-	ctx       context.Context //nolint:containedctx
-	ctxCancel context.CancelFunc
-}
-
-func (suite *HostnameMergeSuite) SetupTest() {
-	suite.ctx, suite.ctxCancel = context.WithTimeout(context.Background(), 3*time.Minute)
-
-	suite.state = state.WrapCore(namespaced.NewState(inmem.Build))
-
-	var err error
-
-	suite.runtime, err = runtime.NewRuntime(suite.state, zaptest.NewLogger(suite.T()))
-	suite.Require().NoError(err)
-
-	suite.Require().NoError(suite.runtime.RegisterController(netctrl.NewHostnameMergeController()))
-
-	suite.startRuntime()
-}
-
-func (suite *HostnameMergeSuite) startRuntime() {
-	suite.wg.Add(1)
-
-	go func() {
-		defer suite.wg.Done()
-
-		suite.Assert().NoError(suite.runtime.Run(suite.ctx))
-	}()
+	ctest.DefaultSuite
 }
 
 func (suite *HostnameMergeSuite) assertHostnames(requiredIDs []string, check func(*network.HostnameSpec, *assert.Assertions)) {
-	assertResources(suite.ctx, suite.T(), suite.state, requiredIDs, check)
+	ctest.AssertResources(suite, requiredIDs, check)
 }
 
 func (suite *HostnameMergeSuite) TestMerge() {
@@ -93,7 +53,7 @@ func (suite *HostnameMergeSuite) TestMerge() {
 	}
 
 	for _, res := range []resource.Resource{def, dhcp1, dhcp2, static} {
-		suite.Require().NoError(suite.state.Create(suite.ctx, res), "%v", res.Spec())
+		suite.Create(res)
 	}
 
 	suite.assertHostnames(
@@ -106,7 +66,7 @@ func (suite *HostnameMergeSuite) TestMerge() {
 		},
 	)
 
-	suite.Require().NoError(suite.state.Destroy(suite.ctx, static.Metadata()))
+	suite.Destroy(static)
 
 	suite.assertHostnames(
 		[]string{
@@ -117,14 +77,15 @@ func (suite *HostnameMergeSuite) TestMerge() {
 	)
 }
 
-func (suite *HostnameMergeSuite) TearDownTest() {
-	suite.T().Log("tear down")
-
-	suite.ctxCancel()
-
-	suite.wg.Wait()
-}
-
 func TestHostnameMergeSuite(t *testing.T) {
-	suite.Run(t, new(HostnameMergeSuite))
+	t.Parallel()
+
+	suite.Run(t, &HostnameMergeSuite{
+		DefaultSuite: ctest.DefaultSuite{
+			Timeout: 5 * time.Second,
+			AfterSetup: func(s *ctest.DefaultSuite) {
+				s.Require().NoError(s.Runtime().RegisterController(netctrl.NewHostnameMergeController()))
+			},
+		},
+	})
 }
