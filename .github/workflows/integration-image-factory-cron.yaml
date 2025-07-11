@@ -1,14 +1,14 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
 #
-# Generated on 2025-07-02T15:29:45Z by kres b282c9b.
+# Generated on 2025-07-14T07:43:31Z by kres c691b83.
 
-name: integration-image-factory-cron
 concurrency:
   group: ${{ github.head_ref || github.run_id }}
   cancel-in-progress: true
 "on":
   schedule:
     - cron: 30 6 * * *
+name: integration-image-factory-cron
 jobs:
   default:
     runs-on:

@@ -1,14 +1,14 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
 #
-# Generated on 2025-06-04T11:41:24Z by kres fc6afbe.
+# Generated on 2025-07-14T07:43:31Z by kres c691b83.
 
-name: integration-provision-0-cron
 concurrency:
   group: ${{ github.head_ref || github.run_id }}
   cancel-in-progress: true
 "on":
   schedule:
     - cron: 30 4 * * *
+name: integration-provision-0-cron
 jobs:
   default:
     runs-on:
