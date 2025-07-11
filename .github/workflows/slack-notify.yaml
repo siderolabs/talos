@@ -1,6 +1,6 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
 #
-# Generated on 2025-03-24T14:29:42Z by kres 921213e.
+# Generated on 2025-07-11T10:48:37Z by kres 1700045.
 
 name: slack-notify
 "on":
@@ -8,6 +8,7 @@ name: slack-notify
     workflows:
       - default
       - integration-qemu-cron
+      - integration-qemu-etcd-cron
       - integration-qemu-enforcing-cron
       - integration-conformance-cron
       - integration-conformance-enforcing-cron
