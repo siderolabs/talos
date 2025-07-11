@@ -11,6 +11,12 @@ kernel/drivers/ata/pata_marvell.ko
 kernel/drivers/ata/pata_oldpiix.ko
 kernel/drivers/ata/pata_sch.ko
 kernel/drivers/block/nbd.ko
+kernel/drivers/char/hw_random/amd-rng.ko
+kernel/drivers/char/hw_random/ba431-rng.ko
+kernel/drivers/char/hw_random/intel-rng.ko
+kernel/drivers/char/hw_random/via-rng.ko
+kernel/drivers/char/hw_random/virtio-rng.ko
+kernel/drivers/char/hw_random/xiphera-trng.ko
 kernel/drivers/char/ipmi/ipmi_watchdog.ko
 kernel/drivers/edac/amd64_edac.ko
 kernel/drivers/edac/e752x_edac.ko
