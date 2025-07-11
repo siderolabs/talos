@@ -46,7 +46,7 @@ func (c *Client) ImageStatus(ctx context.Context, image *runtimeapi.ImageSpec) (
 	}
 
 	if resp.Image != nil {
-		if resp.Image.Id == "" || resp.Image.Size_ == 0 {
+		if resp.Image.Id == "" || resp.Image.Size == 0 {
 			return nil, fmt.Errorf("id or size of image %q is not set", image.Image)
 		}
 	}

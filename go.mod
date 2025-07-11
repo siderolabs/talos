@@ -29,16 +29,16 @@ replace github.com/insomniacslk/dhcp => github.com/smira/dhcp v0.0.0-20250407153
 
 // Kubernetes dependencies sharing the same version.
 require (
-	k8s.io/api v0.34.0-alpha.2
-	k8s.io/apimachinery v0.34.0-alpha.2
-	k8s.io/apiserver v0.34.0-alpha.2
-	k8s.io/client-go v0.34.0-alpha.2
-	k8s.io/component-base v0.34.0-alpha.2
-	k8s.io/cri-api v0.34.0-alpha.2
-	k8s.io/kube-scheduler v0.34.0-alpha.2
-	k8s.io/kubectl v0.34.0-alpha.2
-	k8s.io/kubelet v0.34.0-alpha.2
-	k8s.io/pod-security-admission v0.34.0-alpha.2
+	k8s.io/api v0.34.0-alpha.3
+	k8s.io/apimachinery v0.34.0-alpha.3
+	k8s.io/apiserver v0.34.0-alpha.3
+	k8s.io/client-go v0.34.0-alpha.3
+	k8s.io/component-base v0.34.0-alpha.3
+	k8s.io/cri-api v0.34.0-alpha.3
+	k8s.io/kube-scheduler v0.34.0-alpha.3
+	k8s.io/kubectl v0.34.0-alpha.3
+	k8s.io/kubelet v0.34.0-alpha.3
+	k8s.io/pod-security-admission v0.34.0-alpha.3
 )
 
 require (
@@ -241,7 +241,7 @@ require (
 	github.com/docker/docker-credential-helpers v0.9.3 // indirect
 	github.com/docker/go-units v0.5.0 // indirect
 	github.com/emicklei/dot v1.8.0 // indirect
-	github.com/emicklei/go-restful/v3 v3.12.1 // indirect
+	github.com/emicklei/go-restful/v3 v3.12.2 // indirect
 	github.com/evanphx/json-patch v5.9.11+incompatible // indirect
 	github.com/exponent-io/jsonpath v0.0.0-20210407135951-1de76d718b3f // indirect
 	github.com/felixge/httpsnoop v1.0.4 // indirect
@@ -260,7 +260,7 @@ require (
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/golang/protobuf v1.5.4 // indirect
 	github.com/google/btree v1.1.3 // indirect
-	github.com/google/gnostic-models v0.6.9 // indirect
+	github.com/google/gnostic-models v0.7.0 // indirect
 	github.com/google/go-cmp v0.7.0 // indirect
 	github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510 // indirect
 	github.com/gorilla/websocket v1.5.4-0.20250319132907-e064f32e3674 // indirect
@@ -344,7 +344,7 @@ require (
 	go.opentelemetry.io/otel/trace v1.36.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	go.yaml.in/yaml/v2 v2.4.2 // indirect
-	go.yaml.in/yaml/v3 v3.0.3 // indirect
+	go.yaml.in/yaml/v3 v3.0.4 // indirect
 	golang.org/x/crypto v0.39.0 // indirect
 	golang.org/x/exp v0.0.0-20250506013437-ce4c2cf36ca6 // indirect
 	golang.org/x/mod v0.25.0 // indirect
@@ -357,8 +357,8 @@ require (
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gotest.tools/v3 v3.4.0 // indirect
-	k8s.io/cli-runtime v0.34.0-alpha.2 // indirect
-	k8s.io/kube-openapi v0.0.0-20250610211856-8b98d1ed966a // indirect
+	k8s.io/cli-runtime v0.34.0-alpha.3 // indirect
+	k8s.io/kube-openapi v0.0.0-20250628140032-d90c4fd18f59 // indirect
 	k8s.io/utils v0.0.0-20250604170112-4c0f3b243397 // indirect
 	kernel.org/pub/linux/libs/security/libcap/psx v1.2.76 // indirect
 	rsc.io/qr v0.2.0 // indirect
