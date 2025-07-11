@@ -175,6 +175,8 @@ kernel/drivers/vfio/pci/vfio-pci-core.ko
 kernel/drivers/vfio/pci/vfio-pci.ko
 kernel/drivers/vfio/vfio.ko
 kernel/drivers/vfio/vfio_iommu_type1.ko
+kernel/drivers/virt/coco/sev-guest/sev-guest.ko
+kernel/drivers/virt/coco/tsm.ko
 kernel/drivers/virtio/virtio_balloon.ko
 kernel/drivers/virtio/virtio_input.ko
 kernel/drivers/virtio/virtio_mmio.ko
