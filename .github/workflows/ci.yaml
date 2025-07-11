@@ -1,6 +1,6 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
 #
-# Generated on 2025-07-08T16:48:03Z by kres b282c9b.
+# Generated on 2025-07-11T13:21:55Z by kres 1700045.
 
 name: default
 concurrency:
@@ -18,6 +18,148 @@ concurrency:
       - main
       - release-*
 jobs:
+  base-lint:
+    permissions:
+      actions: read
+      contents: write
+      issues: read
+      packages: write
+      pull-requests: read
+    runs-on:
+      - self-hosted
+      - talos
+    if: (!startsWith(github.head_ref, 'renovate/') && !startsWith(github.head_ref, 'dependabot/'))
+    needs:
+      - default
+    steps:
+      - name: gather-system-info
+        id: system-info
+        uses: kenchan0130/actions-system-info@v1.3.1
+        continue-on-error: true
+      - name: print-system-info
+        run: |
+          MEMORY_GB=$((${{ steps.system-info.outputs.totalmem }}/1024/1024/1024))
+
+          OUTPUTS=(
+            "CPU Core: ${{ steps.system-info.outputs.cpu-core }}"
+            "CPU Model: ${{ steps.system-info.outputs.cpu-model }}"
+            "Hostname: ${{ steps.system-info.outputs.hostname }}"
+            "NodeName: ${NODE_NAME}"
+            "Kernel release: ${{ steps.system-info.outputs.kernel-release }}"
+            "Kernel version: ${{ steps.system-info.outputs.kernel-version }}"
+            "Name: ${{ steps.system-info.outputs.name }}"
+            "Platform: ${{ steps.system-info.outputs.platform }}"
+            "Release: ${{ steps.system-info.outputs.release }}"
+            "Total memory: ${MEMORY_GB} GB"
+          )
+
+          for OUTPUT in "${OUTPUTS[@]}";do
+            echo "${OUTPUT}"
+          done
+        continue-on-error: true
+      - name: checkout
+        uses: actions/checkout@v4
+      - name: Unshallow
+        run: |
+          git fetch --prune --unshallow
+      - name: Set up Docker Buildx
+        id: setup-buildx
+        uses: docker/setup-buildx-action@v3
+        with:
+          driver: remote
+          endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
+        timeout-minutes: 10
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: talos-artifacts
+          path: _out
+      - name: Fix artifact permissions
+        run: |
+          xargs -a _out/executable-artifacts -I {} chmod +x {}
+      - name: ci-temp-release-tag
+        run: |
+          make ci-temp-release-tag
+      - name: lint
+        run: |
+          make lint
+  base-unit-tests:
+    permissions:
+      actions: read
+      contents: write
+      issues: read
+      packages: write
+      pull-requests: read
+    runs-on:
+      - self-hosted
+      - talos
+    if: (!startsWith(github.head_ref, 'renovate/') && !startsWith(github.head_ref, 'dependabot/'))
+    needs:
+      - default
+    steps:
+      - name: gather-system-info
+        id: system-info
+        uses: kenchan0130/actions-system-info@v1.3.1
+        continue-on-error: true
+      - name: print-system-info
+        run: |
+          MEMORY_GB=$((${{ steps.system-info.outputs.totalmem }}/1024/1024/1024))
+
+          OUTPUTS=(
+            "CPU Core: ${{ steps.system-info.outputs.cpu-core }}"
+            "CPU Model: ${{ steps.system-info.outputs.cpu-model }}"
+            "Hostname: ${{ steps.system-info.outputs.hostname }}"
+            "NodeName: ${NODE_NAME}"
+            "Kernel release: ${{ steps.system-info.outputs.kernel-release }}"
+            "Kernel version: ${{ steps.system-info.outputs.kernel-version }}"
+            "Name: ${{ steps.system-info.outputs.name }}"
+            "Platform: ${{ steps.system-info.outputs.platform }}"
+            "Release: ${{ steps.system-info.outputs.release }}"
+            "Total memory: ${MEMORY_GB} GB"
+          )
+
+          for OUTPUT in "${OUTPUTS[@]}";do
+            echo "${OUTPUT}"
+          done
+        continue-on-error: true
+      - name: checkout
+        uses: actions/checkout@v4
+      - name: Unshallow
+        run: |
+          git fetch --prune --unshallow
+      - name: Set up Docker Buildx
+        id: setup-buildx
+        uses: docker/setup-buildx-action@v3
+        with:
+          driver: remote
+          endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
+        timeout-minutes: 10
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: talos-artifacts
+          path: _out
+      - name: Fix artifact permissions
+        run: |
+          xargs -a _out/executable-artifacts -I {} chmod +x {}
+      - name: ci-temp-release-tag
+        run: |
+          make ci-temp-release-tag
+      - name: unit-tests
+        run: |
+          make unit-tests
+      - name: unit-tests-fips
+        run: |
+          make unit-tests-fips
+      - name: unit-tests-race
+        run: |
+          make unit-tests-race
+      - name: coverage
+        uses: codecov/codecov-action@v5
+        with:
+          files: _out/coverage.txt
+          token: ${{ secrets.CODECOV_TOKEN }}
+        timeout-minutes: 3
   default:
     permissions:
       actions: read
@@ -93,9 +235,6 @@ jobs:
           PUSH: "true"
         run: |
           make talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
-      - name: lint
-        run: |
-          make lint
       - name: talosctl-cni-bundle
         run: |
           make talosctl-cni-bundle
@@ -115,21 +254,6 @@ jobs:
           PLATFORM: linux/amd64,linux/arm64
         run: |
           make images-essential
-      - name: unit-tests
-        run: |
-          make unit-tests
-      - name: unit-tests-fips
-        run: |
-          make unit-tests-fips
-      - name: unit-tests-race
-        run: |
-          make unit-tests-race
-      - name: coverage
-        uses: codecov/codecov-action@v5
-        with:
-          files: _out/coverage.txt
-          token: ${{ secrets.CODECOV_TOKEN }}
-        timeout-minutes: 3
       - name: Generate executable list
         run: |
           find _out -type f -executable > _out/executable-artifacts
@@ -137,9 +261,8 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: talos-artifacts
-          path: |-
+          path: |
             _out
-            !_out/coverage.txt
           retention-days: "5"
       - name: Retrieve PR labels
         id: retrieve-pr-labels

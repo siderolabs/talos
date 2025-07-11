@@ -50,6 +50,8 @@ spec:
         // file, You can obtain one at http://mozilla.org/MPL/2.0/.
   enforceContexts:
     - default
+    - base-lint
+    - base-unit-tests
     - e2e-iso
     - e2e-qemu-short
     - e2e-docker-short
@@ -113,7 +115,6 @@ spec:
             PLATFORM: linux/amd64,linux/arm64
             IMAGE_REGISTRY: registry.dev.siderolabs.io
             PUSH: true
-        - name: lint
         - name: talosctl-cni-bundle
         - name: sbom
         - name: iso
@@ -126,21 +127,11 @@ spec:
             PLATFORM: linux/amd64,linux/arm64
             IMAGER_ARGS: "--extra-kernel-arg=console=ttyS0"
             IMAGE_REGISTRY: registry.dev.siderolabs.io
-        - name: unit-tests
-        - name: unit-tests-fips
-        - name: unit-tests-race
-        - name: coverage
-          coverageStep:
-            files:
-              - _out/coverage.txt
-          timeoutMinutes: 3
         - name: save-artifacts
           artifactStep:
             type: upload
             artifactName: talos-artifacts
             artifactPath: _out
-            additionalArtifacts:
-              - "!_out/coverage.txt"
     - name: push
       buildxOptions:
         enabled: true
@@ -228,6 +219,45 @@ spec:
             generateChecksums: true
             generateSignatures: true
             releaseNotes: RELEASE_NOTES.md
+    - name: base-unit-tests
+      buildxOptions:
+        enabled: true
+      depends:
+        - default
+      runners:
+        - self-hosted
+        - talos
+      steps:
+        - name: download-artifacts
+          artifactStep:
+            type: download
+            artifactName: talos-artifacts
+            artifactPath: _out
+        - name: ci-temp-release-tag
+        - name: unit-tests
+        - name: unit-tests-fips
+        - name: unit-tests-race
+        - name: coverage
+          coverageStep:
+            files:
+              - _out/coverage.txt
+          timeoutMinutes: 3
+    - name: base-lint
+      buildxOptions:
+        enabled: true
+      depends:
+        - default
+      runners:
+        - self-hosted
+        - talos
+      steps:
+        - name: download-artifacts
+          artifactStep:
+            type: download
+            artifactName: talos-artifacts
+            artifactPath: _out
+        - name: ci-temp-release-tag
+        - name: lint
     - name: e2e-iso
       depends:
         - default
