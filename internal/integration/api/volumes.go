@@ -635,6 +635,145 @@ func (suite *VolumesSuite) TestUserVolumes() {
 			},
 		},
 	}))
+
+	// wait for the discovered volume reflect wiped status
+	rtestutils.AssertResource(ctx, suite.T(), suite.Client.COSI, filepath.Base(userDisks[0]),
+		func(dv *block.DiscoveredVolume, asrt *assert.Assertions) {
+			asrt.Empty(dv.TypedSpec().Name, "expected discovered volume %s to be wiped", dv.Metadata().ID())
+		})
+}
+
+// TestRawVolumes performs a series of operations on raw volumes: creating, destroying, etc.
+func (suite *VolumesSuite) TestRawVolumes() {
+	if testing.Short() {
+		suite.T().Skip("skipping test in short mode.")
+	}
+
+	if suite.Cluster == nil || suite.Cluster.Provisioner() != base.ProvisionerQEMU {
+		suite.T().Skip("skipping test for non-qemu provisioner")
+	}
+
+	node := suite.RandomDiscoveredNodeInternalIP(machine.TypeWorker)
+
+	k8sNode, err := suite.GetK8sNodeByInternalIP(suite.ctx, node)
+	suite.Require().NoError(err)
+
+	nodeName := k8sNode.Name
+
+	suite.T().Logf("verifying raw volumes on node %s/%s", node, nodeName)
+
+	userDisks := suite.UserDisks(suite.ctx, node)
+
+	if len(userDisks) < 1 {
+		suite.T().Skipf("skipping test, not enough user disks available on node %s/%s: %q", node, nodeName, userDisks)
+	}
+
+	ctx := client.WithNode(suite.ctx, node)
+
+	disk, err := safe.StateGetByID[*block.Disk](ctx, suite.Client.COSI, filepath.Base(userDisks[0]))
+	suite.Require().NoError(err)
+
+	volumeName := fmt.Sprintf("%04x", rand.Int31()) + "-"
+
+	const numVolumes = 2
+
+	volumeIDs := make([]string, numVolumes)
+
+	for i := range numVolumes {
+		volumeIDs[i] = volumeName + strconv.Itoa(i)
+	}
+
+	rawVolumeIDs := xslices.Map(volumeIDs, func(volumeID string) string { return constants.RawVolumePrefix + volumeID })
+
+	configDocs := xslices.Map(volumeIDs, func(volumeID string) any {
+		doc := blockcfg.NewRawVolumeConfigV1Alpha1()
+		doc.MetaName = volumeID
+		doc.ProvisioningSpec.DiskSelectorSpec.Match = cel.MustExpression(
+			cel.ParseBooleanExpression(fmt.Sprintf("'%s' in disk.symlinks", disk.TypedSpec().Symlinks[0]), celenv.DiskLocator()),
+		)
+		doc.ProvisioningSpec.ProvisioningMinSize = blockcfg.MustByteSize("100MiB")
+		doc.ProvisioningSpec.ProvisioningMaxSize = blockcfg.MustByteSize("500MiB")
+
+		return doc
+	})
+
+	// create raw volumes
+	suite.PatchMachineConfig(ctx, configDocs...)
+
+	rtestutils.AssertResources(ctx, suite.T(), suite.Client.COSI, rawVolumeIDs,
+		func(vs *block.VolumeStatus, asrt *assert.Assertions) {
+			asrt.Equal(block.VolumePhaseReady, vs.TypedSpec().Phase)
+		},
+	)
+
+	// verify that volume labels are set properly
+	expectedLabels := xslices.ToSet(rawVolumeIDs)
+
+	dvs, err := safe.StateListAll[*block.DiscoveredVolume](ctx, suite.Client.COSI)
+	suite.Require().NoError(err)
+
+	for dv := range dvs.All() {
+		delete(expectedLabels, dv.TypedSpec().PartitionLabel)
+	}
+
+	suite.Require().Empty(expectedLabels, "expected labels %v to be set on discovered volumes", expectedLabels)
+
+	// now, remove one of the volumes, wipe the partition and re-create the volume
+	vs, err := safe.ReaderGetByID[*block.VolumeStatus](ctx, suite.Client.COSI, rawVolumeIDs[0])
+	suite.Require().NoError(err)
+
+	suite.RemoveMachineConfigDocumentsByName(ctx, blockcfg.RawVolumeConfigKind, volumeIDs[0])
+
+	rtestutils.AssertNoResource[*block.VolumeStatus](ctx, suite.T(), suite.Client.COSI, rawVolumeIDs[0])
+
+	suite.Require().EventuallyWithT(func(collect *assert.CollectT) {
+		// a little retry loop, as the device might be considered busy for a little while after unmounting
+		asrt := assert.New(collect)
+
+		asrt.NoError(suite.Client.BlockDeviceWipe(ctx, &storage.BlockDeviceWipeRequest{
+			Devices: []*storage.BlockDeviceWipeDescriptor{
+				{
+					Device:        filepath.Base(vs.TypedSpec().Location),
+					Method:        storage.BlockDeviceWipeDescriptor_FAST,
+					DropPartition: true,
+				},
+			},
+		}))
+	}, time.Minute, time.Second, "failed to wipe partition %s", vs.TypedSpec().Location)
+
+	// wait for the discovered volume to disappear
+	rtestutils.AssertNoResource[*block.DiscoveredVolume](ctx, suite.T(), suite.Client.COSI, filepath.Base(vs.TypedSpec().Location))
+
+	// re-create the volume
+	suite.PatchMachineConfig(ctx, configDocs[0])
+
+	rtestutils.AssertResources(ctx, suite.T(), suite.Client.COSI, rawVolumeIDs,
+		func(vs *block.VolumeStatus, asrt *assert.Assertions) {
+			asrt.Equal(block.VolumePhaseReady, vs.TypedSpec().Phase)
+		},
+	)
+
+	// clean up
+	suite.RemoveMachineConfigDocumentsByName(ctx, blockcfg.RawVolumeConfigKind, volumeIDs...)
+
+	for _, rawVolumeID := range rawVolumeIDs {
+		rtestutils.AssertNoResource[*block.VolumeStatus](ctx, suite.T(), suite.Client.COSI, rawVolumeID)
+	}
+
+	suite.Require().NoError(suite.Client.BlockDeviceWipe(ctx, &storage.BlockDeviceWipeRequest{
+		Devices: []*storage.BlockDeviceWipeDescriptor{
+			{
+				Device: filepath.Base(userDisks[0]),
+				Method: storage.BlockDeviceWipeDescriptor_FAST,
+			},
+		},
+	}))
+
+	// wait for the discovered volume reflect wiped status
+	rtestutils.AssertResource(ctx, suite.T(), suite.Client.COSI, filepath.Base(userDisks[0]),
+		func(dv *block.DiscoveredVolume, asrt *assert.Assertions) {
+			asrt.Empty(dv.TypedSpec().Name, "expected discovered volume %s to be wiped", dv.Metadata().ID())
+		})
 }
 
 // TestSwapStatus verifies that all swap volumes are successfully enabled.

@@ -17,6 +17,10 @@ func (EncryptionSpec) Doc() *encoder.Doc {
 		Description: "EncryptionSpec represents volume encryption settings.",
 		AppearsIn: []encoder.Appearance{
 			{
+				TypeName:  "RawVolumeConfigV1Alpha1",
+				FieldName: "encryption",
+			},
+			{
 				TypeName:  "SwapVolumeConfigV1Alpha1",
 				FieldName: "encryption",
 			},
@@ -240,6 +244,42 @@ func (EncryptionKeyNodeID) Doc() *encoder.Doc {
 	return doc
 }
 
+func (RawVolumeConfigV1Alpha1) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "RawVolumeConfig",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "RawVolumeConfig is a raw volume configuration document." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "RawVolumeConfig is a raw volume configuration document.\nRaw volumes allow to create partitions without formatting them.\n If you want to use local storage, user volumes is a better choice,\n raw volumes are intended to be used with CSI provisioners.\nThe partition label is automatically generated as `r-<name>`.\n",
+		Fields: []encoder.Doc{
+			{},
+			{
+				Name:        "name",
+				Type:        "string",
+				Note:        "",
+				Description: "Name of the volume.\n\nName might be between 1 and 34 characters long and can only contain:\nlowercase and uppercase ASCII letters, digits, and hyphens.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Name of the volume." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "provisioning",
+				Type:        "ProvisioningSpec",
+				Note:        "",
+				Description: "The provisioning describes how the volume is provisioned.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "The provisioning describes how the volume is provisioned." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "encryption",
+				Type:        "EncryptionSpec",
+				Note:        "",
+				Description: "The encryption describes how the volume is encrypted.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "The encryption describes how the volume is encrypted." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
+
+	doc.AddExample("", exampleRawVolumeConfigV1Alpha1())
+
+	return doc
+}
+
 func (SwapVolumeConfigV1Alpha1) Doc() *encoder.Doc {
 	doc := &encoder.Doc{
 		Type:        "SwapVolumeConfig",
@@ -391,6 +431,10 @@ func (ProvisioningSpec) Doc() *encoder.Doc {
 		Description: "ProvisioningSpec describes how the volume is provisioned.",
 		AppearsIn: []encoder.Appearance{
 			{
+				TypeName:  "RawVolumeConfigV1Alpha1",
+				FieldName: "provisioning",
+			},
+			{
 				TypeName:  "SwapVolumeConfigV1Alpha1",
 				FieldName: "provisioning",
 			},
@@ -510,6 +554,7 @@ func GetFileDoc() *encoder.FileDoc {
 			EncryptionKeyKMS{}.Doc(),
 			EncryptionKeyTPM{}.Doc(),
 			EncryptionKeyNodeID{}.Doc(),
+			RawVolumeConfigV1Alpha1{}.Doc(),
 			SwapVolumeConfigV1Alpha1{}.Doc(),
 			UserVolumeConfigV1Alpha1{}.Doc(),
 			FilesystemSpec{}.Doc(),
