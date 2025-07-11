@@ -239,8 +239,6 @@ func init() {
 	)
 
 	unImplementedQemuFlagsDarwin := []string{
-		tpmEnabledFlag,
-		tpm2EnabledFlag,
 		networkNoMasqueradeCIDRsFlag,
 		cniBinPathFlag,
 		cniConfDirFlag,
