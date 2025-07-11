@@ -221,6 +221,10 @@ func writeConfig(args []string) error {
 			return fmt.Errorf("failed to load secrets bundle: %w", err)
 		}
 
+		if err = secretsBundle.Validate(); err != nil {
+			return fmt.Errorf("failed to validate secrets bundle: %w", err)
+		}
+
 		genOptions = append(genOptions, generate.WithSecretsBundle(secretsBundle))
 	}
 

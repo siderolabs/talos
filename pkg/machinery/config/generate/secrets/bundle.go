@@ -6,11 +6,13 @@ package secrets
 
 import (
 	"encoding/base64"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
 	"time"
 
+	"github.com/hashicorp/go-multierror"
 	"github.com/siderolabs/crypto/x509"
 	"gopkg.in/yaml.v3"
 
@@ -354,4 +356,92 @@ func (bundle *Bundle) GenerateTalosAPIClientCertificateWithTTL(roles role.Set, c
 		roles,
 		crtTTL,
 	)
+}
+
+// Validate the bundle.
+//
+//nolint:gocyclo,cyclop
+func (bundle *Bundle) Validate() error {
+	var multiErr error
+
+	if bundle.Cluster == nil {
+		multiErr = multierror.Append(multiErr, fmt.Errorf("cluster is required"))
+	} else {
+		if bundle.Cluster.ID == "" {
+			multiErr = multierror.Append(multiErr, fmt.Errorf("cluster.id is required"))
+		}
+
+		if bundle.Cluster.Secret == "" {
+			multiErr = multierror.Append(multiErr, fmt.Errorf("cluster.secret is required"))
+		}
+	}
+
+	if bundle.Secrets == nil {
+		multiErr = multierror.Append(multiErr, fmt.Errorf("secrets is required"))
+	} else {
+		if bundle.Secrets.BootstrapToken == "" {
+			multiErr = multierror.Append(multiErr, fmt.Errorf("secrets.bootstraptoken is required"))
+		}
+
+		if bundle.Secrets.AESCBCEncryptionSecret == "" && bundle.Secrets.SecretboxEncryptionSecret == "" {
+			multiErr = multierror.Append(multiErr, fmt.Errorf("one of [secrets.secretboxencryptionsecret, secrets.aescbcencryptionsecret] is required"))
+		}
+
+		if bundle.Secrets.AESCBCEncryptionSecret != "" && bundle.Secrets.SecretboxEncryptionSecret != "" {
+			multiErr = multierror.Append(multiErr, fmt.Errorf("only one of [secrets.secretboxencryptionsecret, secrets.aescbcencryptionsecret] is allowed"))
+		}
+	}
+
+	if bundle.TrustdInfo == nil {
+		multiErr = multierror.Append(multiErr, fmt.Errorf("trustdinfo is required"))
+	} else if bundle.TrustdInfo.Token == "" {
+		multiErr = multierror.Append(multiErr, fmt.Errorf("trustdinfo.token is required"))
+	}
+
+	if err := bundle.validateCerts(); err != nil {
+		multiErr = multierror.Append(multiErr, err)
+	}
+
+	return multiErr
+}
+
+//nolint:gocyclo,cyclop
+func (bundle *Bundle) validateCerts() error {
+	if bundle.Certs == nil {
+		return errors.New("certs is required")
+	}
+
+	var multiErr error
+
+	if bundle.Certs.Etcd == nil {
+		multiErr = multierror.Append(multiErr, fmt.Errorf("certs.etcd is required"))
+	} else if err := validatePEMEncodedCertificateAndKey(bundle.Certs.Etcd); err != nil {
+		multiErr = multierror.Append(multiErr, fmt.Errorf("certs.etcd is invalid: %w", err))
+	}
+
+	if bundle.Certs.K8s == nil {
+		multiErr = multierror.Append(multiErr, fmt.Errorf("certs.k8s is required"))
+	} else if err := validatePEMEncodedCertificateAndKey(bundle.Certs.K8s); err != nil {
+		multiErr = multierror.Append(multiErr, fmt.Errorf("certs.k8s is invalid: %w", err))
+	}
+
+	if bundle.Certs.K8sAggregator == nil {
+		multiErr = multierror.Append(multiErr, fmt.Errorf("certs.k8saggregator is required"))
+	} else if err := validatePEMEncodedCertificateAndKey(bundle.Certs.K8sAggregator); err != nil {
+		multiErr = multierror.Append(multiErr, fmt.Errorf("certs.k8saggregator is invalid: %w", err))
+	}
+
+	if bundle.Certs.OS == nil {
+		multiErr = multierror.Append(multiErr, fmt.Errorf("certs.os is required"))
+	} else if err := validatePEMEncodedCertificateAndKey(bundle.Certs.OS); err != nil {
+		multiErr = multierror.Append(multiErr, fmt.Errorf("certs.os is invalid: %w", err))
+	}
+
+	if bundle.Certs.K8sServiceAccount == nil {
+		multiErr = multierror.Append(multiErr, fmt.Errorf("certs.k8sserviceaccount is required"))
+	} else if _, err := bundle.Certs.K8sServiceAccount.GetKey(); err != nil {
+		multiErr = multierror.Append(multiErr, fmt.Errorf("certs.k8sserviceaccount.key is invalid: %w", err))
+	}
+
+	return multiErr
 }
