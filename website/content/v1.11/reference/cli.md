@@ -1064,6 +1064,117 @@ talosctl etcd defrag [flags]
 
 * [talosctl etcd](#talosctl-etcd)	 - Manage etcd
 
+## talosctl etcd downgrade cancel
+
+Cancel etcd storage system downgrade.
+
+```
+talosctl etcd downgrade cancel [flags]
+```
+
+### Options
+
+```
+  -h, --help   help for cancel
+```
+
+### Options inherited from parent commands
+
+```
+      --cluster string       Cluster to connect to if a proxy endpoint is used.
+      --context string       Context to be used in command
+  -e, --endpoints strings    override default endpoints in Talos configuration
+  -n, --nodes strings        target the specified nodes
+      --talosconfig string   The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
+```
+
+### SEE ALSO
+
+* [talosctl etcd downgrade](#talosctl-etcd-downgrade)	 - Manage etcd storage system downgrades
+
+## talosctl etcd downgrade enable
+
+Enable etcd storage system downgrade to the specified version.
+
+```
+talosctl etcd downgrade enable <version> [flags]
+```
+
+### Options
+
+```
+  -h, --help   help for enable
+```
+
+### Options inherited from parent commands
+
+```
+      --cluster string       Cluster to connect to if a proxy endpoint is used.
+      --context string       Context to be used in command
+  -e, --endpoints strings    override default endpoints in Talos configuration
+  -n, --nodes strings        target the specified nodes
+      --talosconfig string   The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
+```
+
+### SEE ALSO
+
+* [talosctl etcd downgrade](#talosctl-etcd-downgrade)	 - Manage etcd storage system downgrades
+
+## talosctl etcd downgrade validate
+
+Validate if the etcd storage system can be downgraded to the specified version.
+
+```
+talosctl etcd downgrade validate <version> [flags]
+```
+
+### Options
+
+```
+  -h, --help   help for validate
+```
+
+### Options inherited from parent commands
+
+```
+      --cluster string       Cluster to connect to if a proxy endpoint is used.
+      --context string       Context to be used in command
+  -e, --endpoints strings    override default endpoints in Talos configuration
+  -n, --nodes strings        target the specified nodes
+      --talosconfig string   The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
+```
+
+### SEE ALSO
+
+* [talosctl etcd downgrade](#talosctl-etcd-downgrade)	 - Manage etcd storage system downgrades
+
+## talosctl etcd downgrade
+
+Manage etcd storage system downgrades
+
+### Options
+
+```
+  -h, --help   help for downgrade
+```
+
+### Options inherited from parent commands
+
+```
+      --cluster string       Cluster to connect to if a proxy endpoint is used.
+      --context string       Context to be used in command
+  -e, --endpoints strings    override default endpoints in Talos configuration
+  -n, --nodes strings        target the specified nodes
+      --talosconfig string   The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
+```
+
+### SEE ALSO
+
+* [talosctl etcd](#talosctl-etcd)	 - Manage etcd
+* [talosctl etcd downgrade cancel](#talosctl-etcd-downgrade-cancel)	 - Cancel etcd storage system downgrade.
+* [talosctl etcd downgrade enable](#talosctl-etcd-downgrade-enable)	 - Enable etcd storage system downgrade to the specified version.
+* [talosctl etcd downgrade validate](#talosctl-etcd-downgrade-validate)	 - Validate if the etcd storage system can be downgraded to the specified version.
+
 ## talosctl etcd forfeit-leadership
 
 Tell node to forfeit etcd cluster leadership
@@ -1267,6 +1378,7 @@ Manage etcd
 * [talosctl](#talosctl)	 - A CLI for out-of-band management of Kubernetes nodes created by Talos
 * [talosctl etcd alarm](#talosctl-etcd-alarm)	 - Manage etcd alarms
 * [talosctl etcd defrag](#talosctl-etcd-defrag)	 - Defragment etcd database on the node
+* [talosctl etcd downgrade](#talosctl-etcd-downgrade)	 - Manage etcd storage system downgrades
 * [talosctl etcd forfeit-leadership](#talosctl-etcd-forfeit-leadership)	 - Tell node to forfeit etcd cluster leadership
 * [talosctl etcd leave](#talosctl-etcd-leave)	 - Tell nodes to leave etcd cluster
 * [talosctl etcd members](#talosctl-etcd-members)	 - Get the list of etcd cluster members

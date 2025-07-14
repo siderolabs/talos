@@ -70,6 +70,26 @@ func (suite *EtcdSuite) TestSnapshot() {
 	)
 }
 
+// TestDowngrade tests etcd downgrade.
+func (suite *EtcdSuite) TestDowngrade() {
+	downgradeTo := "3.5"
+
+	// FIXME: enable tests once the tests run on on ETCD >=3.6.0
+	suite.T().Skip("ETCD below 3.6.0")
+
+	node := suite.RandomDiscoveredNodeInternalIP(machine.TypeControlPlane)
+
+	suite.RunCLI([]string{"etcd", "downgrade", "validate", "--nodes", node, downgradeTo},
+		base.StdoutShouldMatch(regexp.MustCompile(`downgrade validate success, cluster version \d+\.\d+`)),
+	)
+	suite.RunCLI([]string{"etcd", "downgrade", "enable", "--nodes", node, downgradeTo},
+		base.StdoutShouldMatch(regexp.MustCompile(`downgrade enable success, cluster version \d+\.\d+`)),
+	)
+	suite.RunCLI([]string{"etcd", "downgrade", "cancel", "--nodes", node},
+		base.StdoutShouldMatch(regexp.MustCompile(`downgrade cancel success, cluster version \d+\.\d+`)),
+	)
+}
+
 func init() {
 	allSuites = append(allSuites, new(EtcdSuite))
 }

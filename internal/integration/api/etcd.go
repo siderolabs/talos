@@ -12,6 +12,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/blang/semver/v4"
 	"github.com/cosi-project/runtime/pkg/safe"
 	"google.golang.org/grpc/codes"
 
@@ -262,6 +263,83 @@ func (suite *EtcdSuite) TestRemoveMember() {
 		}, 10*time.Minute,
 		suite.CleanupFailedPods,
 	)
+}
+
+func (suite *EtcdSuite) downgradesSupported() bool {
+	suite.T().Helper()
+
+	downgradeFromAtLeast := semver.Version{Major: 3, Minor: 6}
+
+	status, err := suite.Client.EtcdStatus(suite.ctx)
+	suite.Require().NoError(err)
+
+	for _, message := range status.Messages {
+		etcdVersion := message.GetMemberStatus().GetProtocolVersion()
+
+		etcdVersionSemver, err := semver.Parse(etcdVersion)
+		if err != nil {
+			suite.T().Logf("ETCD version parsing failed: %s", err)
+
+			continue
+		}
+
+		if etcdVersionSemver.LT(downgradeFromAtLeast) {
+			return false
+		}
+	}
+
+	return true
+}
+
+// TestDowngrade tests downgrade API of etcd.
+func (suite *EtcdSuite) TestDowngrade() {
+	if testing.Short() {
+		suite.T().Skip("skipping in short mode")
+	}
+
+	if !suite.Capabilities().SupportsReboot {
+		suite.T().Skip("cluster doesn't support reboot (and reset)")
+	}
+
+	if !suite.downgradesSupported() {
+		suite.T().Skip("cluster needs to run ETCD 3.6.x to support downgrades")
+	}
+
+	nodes := suite.DiscoverNodeInternalIPsByType(suite.ctx, machine.TypeControlPlane)
+	node := nodes[0]
+	downgradeTo := "3.5"
+
+	// test the downgrade validate API
+	validateResp, err := suite.Client.EtcdDowngradeValidate(
+		client.WithNodes(suite.ctx, node),
+		&machineapi.EtcdDowngradeValidateRequest{Version: downgradeTo},
+	)
+	suite.Require().NoError(err)
+
+	for _, message := range validateResp.GetMessages() {
+		suite.Assert().NotEqual(downgradeTo, message.GetClusterDowngrade().GetClusterVersion())
+	}
+
+	// test the downgrade enable API
+	enableResp, err := suite.Client.EtcdDowngradeEnable(
+		client.WithNodes(suite.ctx, node),
+		&machineapi.EtcdDowngradeEnableRequest{Version: downgradeTo},
+	)
+	suite.Require().NoError(err)
+
+	for _, message := range enableResp.GetMessages() {
+		suite.Assert().NotEqual(downgradeTo, message.GetClusterDowngrade().GetClusterVersion())
+	}
+
+	// test the downgrade cancel API
+	cancelResp, err := suite.Client.EtcdDowngradeCancel(
+		client.WithNodes(suite.ctx, node),
+	)
+	suite.Require().NoError(err)
+
+	for _, message := range cancelResp.GetMessages() {
+		suite.Assert().NotEqual(downgradeTo, message.GetClusterDowngrade().GetClusterVersion())
+	}
 }
 
 func init() {

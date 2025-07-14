@@ -277,8 +277,8 @@ var etcdStatusCmd = &cobra.Command{
 
 			w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
 			node := ""
-			pattern := "%s\t%s\t%s (%.2f%%)\t%s\t%d\t%d\t%d\t%v\t%s\n"
-			header := "MEMBER\tDB SIZE\tIN USE\tLEADER\tRAFT INDEX\tRAFT TERM\tRAFT APPLIED INDEX\tLEARNER\tERRORS"
+			pattern := "%s\t%s\t%s (%.2f%%)\t%s\t%d\t%d\t%d\t%v\t%s\t%s\t%s\n"
+			header := "MEMBER\tDB SIZE\tIN USE\tLEADER\tRAFT INDEX\tRAFT TERM\tRAFT APPLIED INDEX\tLEARNER\tPROTOCOL\tSTORAGE\tERRORS"
 
 			for i, message := range response.Messages {
 				if message.Metadata != nil && message.Metadata.Hostname != "" {
@@ -310,6 +310,8 @@ var etcdStatusCmd = &cobra.Command{
 					message.GetMemberStatus().GetRaftTerm(),
 					message.GetMemberStatus().GetRaftAppliedIndex(),
 					message.GetMemberStatus().GetIsLearner(),
+					message.GetMemberStatus().GetProtocolVersion(),
+					message.GetMemberStatus().GetStorageVersion(),
 					strings.Join(message.GetMemberStatus().GetErrors(), ", "),
 				}
 				if node != "" {
@@ -393,10 +395,187 @@ var etcdSnapshotCmd = &cobra.Command{
 	},
 }
 
+var etcdDowngradeCmd = &cobra.Command{
+	Use:   "downgrade",
+	Short: "Manage etcd storage system downgrades",
+	Long:  ``,
+}
+
+const (
+	etcdDowngradePattern = "%s\n"
+	etcdDowngradeHeader  = "MESSAGE"
+)
+
+var etcdDowngradeValidateCmd = &cobra.Command{
+	Use:   "validate <version>",
+	Short: "Validate if the etcd storage system can be downgraded to the specified version.",
+	Long:  ``,
+	Args:  cobra.ExactArgs(1),
+	RunE: func(cmd *cobra.Command, args []string) error {
+		return WithClient(func(ctx context.Context, c *client.Client) error {
+			if err := helpers.FailIfMultiNodes(ctx, "etcd downgrade validate"); err != nil {
+				return err
+			}
+
+			version := args[0]
+
+			r, err := c.EtcdDowngradeValidate(ctx, &machine.EtcdDowngradeValidateRequest{Version: version})
+			if err != nil {
+				return err
+			}
+
+			w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
+			node := ""
+			pattern := etcdDowngradePattern
+			header := etcdDowngradeHeader
+
+			for i, message := range r.Messages {
+				if message.Metadata != nil && message.Metadata.Hostname != "" {
+					node = message.Metadata.Hostname
+				}
+
+				if i == 0 {
+					if node != "" {
+						header = "NODE\t" + header
+						pattern = "%s\t" + pattern
+					}
+
+					fmt.Fprintln(w, header)
+				}
+
+				args := []any{
+					fmt.Sprintf("downgrade validate success, cluster version %s",
+						message.GetClusterDowngrade().GetClusterVersion(),
+					),
+				}
+				if node != "" {
+					args = slices.Insert(args, 0, any(node))
+				}
+
+				fmt.Fprintf(w, pattern, args...)
+			}
+
+			return w.Flush()
+		})
+	},
+}
+
+var etcdDowngradeEnableCmd = &cobra.Command{
+	Use:   "enable <version>",
+	Short: "Enable etcd storage system downgrade to the specified version.",
+	Long:  ``,
+	Args:  cobra.ExactArgs(1),
+	RunE: func(cmd *cobra.Command, args []string) error {
+		return WithClient(func(ctx context.Context, c *client.Client) error {
+			if err := helpers.FailIfMultiNodes(ctx, "etcd downgrade enable"); err != nil {
+				return err
+			}
+
+			version := args[0]
+
+			r, err := c.EtcdDowngradeEnable(ctx, &machine.EtcdDowngradeEnableRequest{Version: version})
+			if err != nil {
+				return err
+			}
+
+			w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
+			node := ""
+			pattern := etcdDowngradePattern
+			header := etcdDowngradeHeader
+
+			for i, message := range r.Messages {
+				if message.Metadata != nil && message.Metadata.Hostname != "" {
+					node = message.Metadata.Hostname
+				}
+
+				if i == 0 {
+					if node != "" {
+						header = "NODE\t" + header
+						pattern = "%s\t" + pattern
+					}
+
+					fmt.Fprintln(w, header)
+				}
+
+				args := []any{
+					fmt.Sprintf("downgrade enable success, cluster version %s",
+						message.GetClusterDowngrade().GetClusterVersion(),
+					),
+				}
+				if node != "" {
+					args = slices.Insert(args, 0, any(node))
+				}
+
+				fmt.Fprintf(w, pattern, args...)
+			}
+
+			return w.Flush()
+		})
+	},
+}
+
+var etcdDowngradeCancelCmd = &cobra.Command{
+	Use:   "cancel",
+	Short: "Cancel etcd storage system downgrade.",
+	Long:  ``,
+	Args:  cobra.NoArgs,
+	RunE: func(cmd *cobra.Command, args []string) error {
+		return WithClient(func(ctx context.Context, c *client.Client) error {
+			if err := helpers.FailIfMultiNodes(ctx, "etcd downgrade cancel"); err != nil {
+				return err
+			}
+
+			r, err := c.EtcdDowngradeCancel(ctx)
+			if err != nil {
+				return err
+			}
+
+			w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
+			node := ""
+			pattern := etcdDowngradePattern
+			header := etcdDowngradeHeader
+
+			for i, message := range r.Messages {
+				if message.Metadata != nil && message.Metadata.Hostname != "" {
+					node = message.Metadata.Hostname
+				}
+
+				if i == 0 {
+					if node != "" {
+						header = "NODE\t" + header
+						pattern = "%s\t" + pattern
+					}
+
+					fmt.Fprintln(w, header)
+				}
+
+				args := []any{
+					fmt.Sprintf("downgrade cancel success, cluster version %s",
+						message.GetClusterDowngrade().GetClusterVersion(),
+					),
+				}
+				if node != "" {
+					args = slices.Insert(args, 0, any(node))
+				}
+
+				fmt.Fprintf(w, pattern, args...)
+			}
+
+			return w.Flush()
+		})
+	},
+}
+
 func init() {
 	etcdAlarmCmd.AddCommand(
 		etcdAlarmListCmd,
 		etcdAlarmDisarmCmd,
+	)
+
+	etcdDowngradeCmd.AddCommand(
+		etcdDowngradeValidateCmd,
+		etcdDowngradeEnableCmd,
+		etcdDowngradeCancelCmd,
 	)
 
 	etcdCmd.AddCommand(
@@ -408,6 +587,7 @@ func init() {
 		etcdMemberRemoveCmd,
 		etcdSnapshotCmd,
 		etcdStatusCmd,
+		etcdDowngradeCmd,
 	)
 
 	addCommand(etcdCmd)

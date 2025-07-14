@@ -650,7 +650,7 @@ func (x MachineConfig_MachineType) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use MachineConfig_MachineType.Descriptor instead.
 func (MachineConfig_MachineType) EnumDescriptor() ([]byte, []int) {
-	return file_machine_machine_proto_rawDescGZIP(), []int{138, 0}
+	return file_machine_machine_proto_rawDescGZIP(), []int{147, 0}
 }
 
 type NetstatRequest_Filter int32
@@ -699,7 +699,7 @@ func (x NetstatRequest_Filter) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use NetstatRequest_Filter.Descriptor instead.
 func (NetstatRequest_Filter) EnumDescriptor() ([]byte, []int) {
-	return file_machine_machine_proto_rawDescGZIP(), []int{151, 0}
+	return file_machine_machine_proto_rawDescGZIP(), []int{160, 0}
 }
 
 type ConnectRecord_State int32
@@ -775,7 +775,7 @@ func (x ConnectRecord_State) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use ConnectRecord_State.Descriptor instead.
 func (ConnectRecord_State) EnumDescriptor() ([]byte, []int) {
-	return file_machine_machine_proto_rawDescGZIP(), []int{152, 0}
+	return file_machine_machine_proto_rawDescGZIP(), []int{161, 0}
 }
 
 type ConnectRecord_TimerActive int32
@@ -830,7 +830,7 @@ func (x ConnectRecord_TimerActive) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use ConnectRecord_TimerActive.Descriptor instead.
 func (ConnectRecord_TimerActive) EnumDescriptor() ([]byte, []int) {
-	return file_machine_machine_proto_rawDescGZIP(), []int{152, 1}
+	return file_machine_machine_proto_rawDescGZIP(), []int{161, 1}
 }
 
 // rpc applyConfiguration
@@ -8941,6 +8941,7 @@ func (x *EtcdStatus) GetMemberStatus() *EtcdMemberStatus {
 
 type EtcdMemberStatus struct {
 	state            protoimpl.MessageState `protogen:"open.v1"`
+	StorageVersion   string                 `protobuf:"bytes,11,opt,name=storage_version,json=storageVersion,proto3" json:"storage_version,omitempty"`
 	MemberId         uint64                 `protobuf:"varint,10,opt,name=member_id,json=memberId,proto3" json:"member_id,omitempty"`
 	ProtocolVersion  string                 `protobuf:"bytes,1,opt,name=protocol_version,json=protocolVersion,proto3" json:"protocol_version,omitempty"`
 	DbSize           int64                  `protobuf:"varint,2,opt,name=db_size,json=dbSize,proto3" json:"db_size,omitempty"`
@@ -8983,6 +8984,13 @@ func (x *EtcdMemberStatus) ProtoReflect() protoreflect.Message {
 // Deprecated: Use EtcdMemberStatus.ProtoReflect.Descriptor instead.
 func (*EtcdMemberStatus) Descriptor() ([]byte, []int) {
 	return file_machine_machine_proto_rawDescGZIP(), []int{132}
+}
+
+func (x *EtcdMemberStatus) GetStorageVersion() string {
+	if x != nil {
+		return x.StorageVersion
+	}
+	return ""
 }
 
 func (x *EtcdMemberStatus) GetMemberId() uint64 {
@@ -9055,6 +9063,426 @@ func (x *EtcdMemberStatus) GetIsLearner() bool {
 	return false
 }
 
+type EtcdDowngradeValidateRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Version       string                 `protobuf:"bytes,1,opt,name=version,proto3" json:"version,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *EtcdDowngradeValidateRequest) Reset() {
+	*x = EtcdDowngradeValidateRequest{}
+	mi := &file_machine_machine_proto_msgTypes[133]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *EtcdDowngradeValidateRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*EtcdDowngradeValidateRequest) ProtoMessage() {}
+
+func (x *EtcdDowngradeValidateRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_machine_machine_proto_msgTypes[133]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use EtcdDowngradeValidateRequest.ProtoReflect.Descriptor instead.
+func (*EtcdDowngradeValidateRequest) Descriptor() ([]byte, []int) {
+	return file_machine_machine_proto_rawDescGZIP(), []int{133}
+}
+
+func (x *EtcdDowngradeValidateRequest) GetVersion() string {
+	if x != nil {
+		return x.Version
+	}
+	return ""
+}
+
+type EtcdDowngradeValidateResponse struct {
+	state         protoimpl.MessageState   `protogen:"open.v1"`
+	Messages      []*EtcdDowngradeValidate `protobuf:"bytes,1,rep,name=messages,proto3" json:"messages,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *EtcdDowngradeValidateResponse) Reset() {
+	*x = EtcdDowngradeValidateResponse{}
+	mi := &file_machine_machine_proto_msgTypes[134]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *EtcdDowngradeValidateResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*EtcdDowngradeValidateResponse) ProtoMessage() {}
+
+func (x *EtcdDowngradeValidateResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_machine_machine_proto_msgTypes[134]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use EtcdDowngradeValidateResponse.ProtoReflect.Descriptor instead.
+func (*EtcdDowngradeValidateResponse) Descriptor() ([]byte, []int) {
+	return file_machine_machine_proto_rawDescGZIP(), []int{134}
+}
+
+func (x *EtcdDowngradeValidateResponse) GetMessages() []*EtcdDowngradeValidate {
+	if x != nil {
+		return x.Messages
+	}
+	return nil
+}
+
+type EtcdDowngradeValidate struct {
+	state            protoimpl.MessageState `protogen:"open.v1"`
+	Metadata         *common.Metadata       `protobuf:"bytes,1,opt,name=metadata,proto3" json:"metadata,omitempty"`
+	ClusterDowngrade *EtcdClusterDowngrade  `protobuf:"bytes,2,opt,name=cluster_downgrade,json=clusterDowngrade,proto3" json:"cluster_downgrade,omitempty"`
+	unknownFields    protoimpl.UnknownFields
+	sizeCache        protoimpl.SizeCache
+}
+
+func (x *EtcdDowngradeValidate) Reset() {
+	*x = EtcdDowngradeValidate{}
+	mi := &file_machine_machine_proto_msgTypes[135]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *EtcdDowngradeValidate) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*EtcdDowngradeValidate) ProtoMessage() {}
+
+func (x *EtcdDowngradeValidate) ProtoReflect() protoreflect.Message {
+	mi := &file_machine_machine_proto_msgTypes[135]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use EtcdDowngradeValidate.ProtoReflect.Descriptor instead.
+func (*EtcdDowngradeValidate) Descriptor() ([]byte, []int) {
+	return file_machine_machine_proto_rawDescGZIP(), []int{135}
+}
+
+func (x *EtcdDowngradeValidate) GetMetadata() *common.Metadata {
+	if x != nil {
+		return x.Metadata
+	}
+	return nil
+}
+
+func (x *EtcdDowngradeValidate) GetClusterDowngrade() *EtcdClusterDowngrade {
+	if x != nil {
+		return x.ClusterDowngrade
+	}
+	return nil
+}
+
+type EtcdDowngradeEnableRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Version       string                 `protobuf:"bytes,1,opt,name=version,proto3" json:"version,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *EtcdDowngradeEnableRequest) Reset() {
+	*x = EtcdDowngradeEnableRequest{}
+	mi := &file_machine_machine_proto_msgTypes[136]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *EtcdDowngradeEnableRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*EtcdDowngradeEnableRequest) ProtoMessage() {}
+
+func (x *EtcdDowngradeEnableRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_machine_machine_proto_msgTypes[136]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use EtcdDowngradeEnableRequest.ProtoReflect.Descriptor instead.
+func (*EtcdDowngradeEnableRequest) Descriptor() ([]byte, []int) {
+	return file_machine_machine_proto_rawDescGZIP(), []int{136}
+}
+
+func (x *EtcdDowngradeEnableRequest) GetVersion() string {
+	if x != nil {
+		return x.Version
+	}
+	return ""
+}
+
+type EtcdDowngradeEnableResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Messages      []*EtcdDowngradeEnable `protobuf:"bytes,1,rep,name=messages,proto3" json:"messages,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *EtcdDowngradeEnableResponse) Reset() {
+	*x = EtcdDowngradeEnableResponse{}
+	mi := &file_machine_machine_proto_msgTypes[137]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *EtcdDowngradeEnableResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*EtcdDowngradeEnableResponse) ProtoMessage() {}
+
+func (x *EtcdDowngradeEnableResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_machine_machine_proto_msgTypes[137]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use EtcdDowngradeEnableResponse.ProtoReflect.Descriptor instead.
+func (*EtcdDowngradeEnableResponse) Descriptor() ([]byte, []int) {
+	return file_machine_machine_proto_rawDescGZIP(), []int{137}
+}
+
+func (x *EtcdDowngradeEnableResponse) GetMessages() []*EtcdDowngradeEnable {
+	if x != nil {
+		return x.Messages
+	}
+	return nil
+}
+
+type EtcdDowngradeEnable struct {
+	state            protoimpl.MessageState `protogen:"open.v1"`
+	Metadata         *common.Metadata       `protobuf:"bytes,1,opt,name=metadata,proto3" json:"metadata,omitempty"`
+	ClusterDowngrade *EtcdClusterDowngrade  `protobuf:"bytes,2,opt,name=cluster_downgrade,json=clusterDowngrade,proto3" json:"cluster_downgrade,omitempty"`
+	unknownFields    protoimpl.UnknownFields
+	sizeCache        protoimpl.SizeCache
+}
+
+func (x *EtcdDowngradeEnable) Reset() {
+	*x = EtcdDowngradeEnable{}
+	mi := &file_machine_machine_proto_msgTypes[138]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *EtcdDowngradeEnable) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*EtcdDowngradeEnable) ProtoMessage() {}
+
+func (x *EtcdDowngradeEnable) ProtoReflect() protoreflect.Message {
+	mi := &file_machine_machine_proto_msgTypes[138]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use EtcdDowngradeEnable.ProtoReflect.Descriptor instead.
+func (*EtcdDowngradeEnable) Descriptor() ([]byte, []int) {
+	return file_machine_machine_proto_rawDescGZIP(), []int{138}
+}
+
+func (x *EtcdDowngradeEnable) GetMetadata() *common.Metadata {
+	if x != nil {
+		return x.Metadata
+	}
+	return nil
+}
+
+func (x *EtcdDowngradeEnable) GetClusterDowngrade() *EtcdClusterDowngrade {
+	if x != nil {
+		return x.ClusterDowngrade
+	}
+	return nil
+}
+
+type EtcdDowngradeCancelResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Messages      []*EtcdDowngradeCancel `protobuf:"bytes,1,rep,name=messages,proto3" json:"messages,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *EtcdDowngradeCancelResponse) Reset() {
+	*x = EtcdDowngradeCancelResponse{}
+	mi := &file_machine_machine_proto_msgTypes[139]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *EtcdDowngradeCancelResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*EtcdDowngradeCancelResponse) ProtoMessage() {}
+
+func (x *EtcdDowngradeCancelResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_machine_machine_proto_msgTypes[139]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use EtcdDowngradeCancelResponse.ProtoReflect.Descriptor instead.
+func (*EtcdDowngradeCancelResponse) Descriptor() ([]byte, []int) {
+	return file_machine_machine_proto_rawDescGZIP(), []int{139}
+}
+
+func (x *EtcdDowngradeCancelResponse) GetMessages() []*EtcdDowngradeCancel {
+	if x != nil {
+		return x.Messages
+	}
+	return nil
+}
+
+type EtcdDowngradeCancel struct {
+	state            protoimpl.MessageState `protogen:"open.v1"`
+	Metadata         *common.Metadata       `protobuf:"bytes,1,opt,name=metadata,proto3" json:"metadata,omitempty"`
+	ClusterDowngrade *EtcdClusterDowngrade  `protobuf:"bytes,2,opt,name=cluster_downgrade,json=clusterDowngrade,proto3" json:"cluster_downgrade,omitempty"`
+	unknownFields    protoimpl.UnknownFields
+	sizeCache        protoimpl.SizeCache
+}
+
+func (x *EtcdDowngradeCancel) Reset() {
+	*x = EtcdDowngradeCancel{}
+	mi := &file_machine_machine_proto_msgTypes[140]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *EtcdDowngradeCancel) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*EtcdDowngradeCancel) ProtoMessage() {}
+
+func (x *EtcdDowngradeCancel) ProtoReflect() protoreflect.Message {
+	mi := &file_machine_machine_proto_msgTypes[140]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use EtcdDowngradeCancel.ProtoReflect.Descriptor instead.
+func (*EtcdDowngradeCancel) Descriptor() ([]byte, []int) {
+	return file_machine_machine_proto_rawDescGZIP(), []int{140}
+}
+
+func (x *EtcdDowngradeCancel) GetMetadata() *common.Metadata {
+	if x != nil {
+		return x.Metadata
+	}
+	return nil
+}
+
+func (x *EtcdDowngradeCancel) GetClusterDowngrade() *EtcdClusterDowngrade {
+	if x != nil {
+		return x.ClusterDowngrade
+	}
+	return nil
+}
+
+type EtcdClusterDowngrade struct {
+	state          protoimpl.MessageState `protogen:"open.v1"`
+	ClusterVersion string                 `protobuf:"bytes,1,opt,name=cluster_version,json=clusterVersion,proto3" json:"cluster_version,omitempty"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
+}
+
+func (x *EtcdClusterDowngrade) Reset() {
+	*x = EtcdClusterDowngrade{}
+	mi := &file_machine_machine_proto_msgTypes[141]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *EtcdClusterDowngrade) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*EtcdClusterDowngrade) ProtoMessage() {}
+
+func (x *EtcdClusterDowngrade) ProtoReflect() protoreflect.Message {
+	mi := &file_machine_machine_proto_msgTypes[141]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use EtcdClusterDowngrade.ProtoReflect.Descriptor instead.
+func (*EtcdClusterDowngrade) Descriptor() ([]byte, []int) {
+	return file_machine_machine_proto_rawDescGZIP(), []int{141}
+}
+
+func (x *EtcdClusterDowngrade) GetClusterVersion() string {
+	if x != nil {
+		return x.ClusterVersion
+	}
+	return ""
+}
+
 type RouteConfig struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Network       string                 `protobuf:"bytes,1,opt,name=network,proto3" json:"network,omitempty"`
@@ -9066,7 +9494,7 @@ type RouteConfig struct {
 
 func (x *RouteConfig) Reset() {
 	*x = RouteConfig{}
-	mi := &file_machine_machine_proto_msgTypes[133]
+	mi := &file_machine_machine_proto_msgTypes[142]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -9078,7 +9506,7 @@ func (x *RouteConfig) String() string {
 func (*RouteConfig) ProtoMessage() {}
 
 func (x *RouteConfig) ProtoReflect() protoreflect.Message {
-	mi := &file_machine_machine_proto_msgTypes[133]
+	mi := &file_machine_machine_proto_msgTypes[142]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -9091,7 +9519,7 @@ func (x *RouteConfig) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RouteConfig.ProtoReflect.Descriptor instead.
 func (*RouteConfig) Descriptor() ([]byte, []int) {
-	return file_machine_machine_proto_rawDescGZIP(), []int{133}
+	return file_machine_machine_proto_rawDescGZIP(), []int{142}
 }
 
 func (x *RouteConfig) GetNetwork() string {
@@ -9124,7 +9552,7 @@ type DHCPOptionsConfig struct {
 
 func (x *DHCPOptionsConfig) Reset() {
 	*x = DHCPOptionsConfig{}
-	mi := &file_machine_machine_proto_msgTypes[134]
+	mi := &file_machine_machine_proto_msgTypes[143]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -9136,7 +9564,7 @@ func (x *DHCPOptionsConfig) String() string {
 func (*DHCPOptionsConfig) ProtoMessage() {}
 
 func (x *DHCPOptionsConfig) ProtoReflect() protoreflect.Message {
-	mi := &file_machine_machine_proto_msgTypes[134]
+	mi := &file_machine_machine_proto_msgTypes[143]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -9149,7 +9577,7 @@ func (x *DHCPOptionsConfig) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DHCPOptionsConfig.ProtoReflect.Descriptor instead.
 func (*DHCPOptionsConfig) Descriptor() ([]byte, []int) {
-	return file_machine_machine_proto_rawDescGZIP(), []int{134}
+	return file_machine_machine_proto_rawDescGZIP(), []int{143}
 }
 
 func (x *DHCPOptionsConfig) GetRouteMetric() uint32 {
@@ -9174,7 +9602,7 @@ type NetworkDeviceConfig struct {
 
 func (x *NetworkDeviceConfig) Reset() {
 	*x = NetworkDeviceConfig{}
-	mi := &file_machine_machine_proto_msgTypes[135]
+	mi := &file_machine_machine_proto_msgTypes[144]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -9186,7 +9614,7 @@ func (x *NetworkDeviceConfig) String() string {
 func (*NetworkDeviceConfig) ProtoMessage() {}
 
 func (x *NetworkDeviceConfig) ProtoReflect() protoreflect.Message {
-	mi := &file_machine_machine_proto_msgTypes[135]
+	mi := &file_machine_machine_proto_msgTypes[144]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -9199,7 +9627,7 @@ func (x *NetworkDeviceConfig) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use NetworkDeviceConfig.ProtoReflect.Descriptor instead.
 func (*NetworkDeviceConfig) Descriptor() ([]byte, []int) {
-	return file_machine_machine_proto_rawDescGZIP(), []int{135}
+	return file_machine_machine_proto_rawDescGZIP(), []int{144}
 }
 
 func (x *NetworkDeviceConfig) GetInterface() string {
@@ -9261,7 +9689,7 @@ type NetworkConfig struct {
 
 func (x *NetworkConfig) Reset() {
 	*x = NetworkConfig{}
-	mi := &file_machine_machine_proto_msgTypes[136]
+	mi := &file_machine_machine_proto_msgTypes[145]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -9273,7 +9701,7 @@ func (x *NetworkConfig) String() string {
 func (*NetworkConfig) ProtoMessage() {}
 
 func (x *NetworkConfig) ProtoReflect() protoreflect.Message {
-	mi := &file_machine_machine_proto_msgTypes[136]
+	mi := &file_machine_machine_proto_msgTypes[145]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -9286,7 +9714,7 @@ func (x *NetworkConfig) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use NetworkConfig.ProtoReflect.Descriptor instead.
 func (*NetworkConfig) Descriptor() ([]byte, []int) {
-	return file_machine_machine_proto_rawDescGZIP(), []int{136}
+	return file_machine_machine_proto_rawDescGZIP(), []int{145}
 }
 
 func (x *NetworkConfig) GetHostname() string {
@@ -9313,7 +9741,7 @@ type InstallConfig struct {
 
 func (x *InstallConfig) Reset() {
 	*x = InstallConfig{}
-	mi := &file_machine_machine_proto_msgTypes[137]
+	mi := &file_machine_machine_proto_msgTypes[146]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -9325,7 +9753,7 @@ func (x *InstallConfig) String() string {
 func (*InstallConfig) ProtoMessage() {}
 
 func (x *InstallConfig) ProtoReflect() protoreflect.Message {
-	mi := &file_machine_machine_proto_msgTypes[137]
+	mi := &file_machine_machine_proto_msgTypes[146]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -9338,7 +9766,7 @@ func (x *InstallConfig) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use InstallConfig.ProtoReflect.Descriptor instead.
 func (*InstallConfig) Descriptor() ([]byte, []int) {
-	return file_machine_machine_proto_rawDescGZIP(), []int{137}
+	return file_machine_machine_proto_rawDescGZIP(), []int{146}
 }
 
 func (x *InstallConfig) GetInstallDisk() string {
@@ -9367,7 +9795,7 @@ type MachineConfig struct {
 
 func (x *MachineConfig) Reset() {
 	*x = MachineConfig{}
-	mi := &file_machine_machine_proto_msgTypes[138]
+	mi := &file_machine_machine_proto_msgTypes[147]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -9379,7 +9807,7 @@ func (x *MachineConfig) String() string {
 func (*MachineConfig) ProtoMessage() {}
 
 func (x *MachineConfig) ProtoReflect() protoreflect.Message {
-	mi := &file_machine_machine_proto_msgTypes[138]
+	mi := &file_machine_machine_proto_msgTypes[147]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -9392,7 +9820,7 @@ func (x *MachineConfig) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use MachineConfig.ProtoReflect.Descriptor instead.
 func (*MachineConfig) Descriptor() ([]byte, []int) {
-	return file_machine_machine_proto_rawDescGZIP(), []int{138}
+	return file_machine_machine_proto_rawDescGZIP(), []int{147}
 }
 
 func (x *MachineConfig) GetType() MachineConfig_MachineType {
@@ -9432,7 +9860,7 @@ type ControlPlaneConfig struct {
 
 func (x *ControlPlaneConfig) Reset() {
 	*x = ControlPlaneConfig{}
-	mi := &file_machine_machine_proto_msgTypes[139]
+	mi := &file_machine_machine_proto_msgTypes[148]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -9444,7 +9872,7 @@ func (x *ControlPlaneConfig) String() string {
 func (*ControlPlaneConfig) ProtoMessage() {}
 
 func (x *ControlPlaneConfig) ProtoReflect() protoreflect.Message {
-	mi := &file_machine_machine_proto_msgTypes[139]
+	mi := &file_machine_machine_proto_msgTypes[148]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -9457,7 +9885,7 @@ func (x *ControlPlaneConfig) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ControlPlaneConfig.ProtoReflect.Descriptor instead.
 func (*ControlPlaneConfig) Descriptor() ([]byte, []int) {
-	return file_machine_machine_proto_rawDescGZIP(), []int{139}
+	return file_machine_machine_proto_rawDescGZIP(), []int{148}
 }
 
 func (x *ControlPlaneConfig) GetEndpoint() string {
@@ -9477,7 +9905,7 @@ type CNIConfig struct {
 
 func (x *CNIConfig) Reset() {
 	*x = CNIConfig{}
-	mi := &file_machine_machine_proto_msgTypes[140]
+	mi := &file_machine_machine_proto_msgTypes[149]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -9489,7 +9917,7 @@ func (x *CNIConfig) String() string {
 func (*CNIConfig) ProtoMessage() {}
 
 func (x *CNIConfig) ProtoReflect() protoreflect.Message {
-	mi := &file_machine_machine_proto_msgTypes[140]
+	mi := &file_machine_machine_proto_msgTypes[149]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -9502,7 +9930,7 @@ func (x *CNIConfig) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CNIConfig.ProtoReflect.Descriptor instead.
 func (*CNIConfig) Descriptor() ([]byte, []int) {
-	return file_machine_machine_proto_rawDescGZIP(), []int{140}
+	return file_machine_machine_proto_rawDescGZIP(), []int{149}
 }
 
 func (x *CNIConfig) GetName() string {
@@ -9529,7 +9957,7 @@ type ClusterNetworkConfig struct {
 
 func (x *ClusterNetworkConfig) Reset() {
 	*x = ClusterNetworkConfig{}
-	mi := &file_machine_machine_proto_msgTypes[141]
+	mi := &file_machine_machine_proto_msgTypes[150]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -9541,7 +9969,7 @@ func (x *ClusterNetworkConfig) String() string {
 func (*ClusterNetworkConfig) ProtoMessage() {}
 
 func (x *ClusterNetworkConfig) ProtoReflect() protoreflect.Message {
-	mi := &file_machine_machine_proto_msgTypes[141]
+	mi := &file_machine_machine_proto_msgTypes[150]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -9554,7 +9982,7 @@ func (x *ClusterNetworkConfig) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ClusterNetworkConfig.ProtoReflect.Descriptor instead.
 func (*ClusterNetworkConfig) Descriptor() ([]byte, []int) {
-	return file_machine_machine_proto_rawDescGZIP(), []int{141}
+	return file_machine_machine_proto_rawDescGZIP(), []int{150}
 }
 
 func (x *ClusterNetworkConfig) GetDnsDomain() string {
@@ -9583,7 +10011,7 @@ type ClusterConfig struct {
 
 func (x *ClusterConfig) Reset() {
 	*x = ClusterConfig{}
-	mi := &file_machine_machine_proto_msgTypes[142]
+	mi := &file_machine_machine_proto_msgTypes[151]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -9595,7 +10023,7 @@ func (x *ClusterConfig) String() string {
 func (*ClusterConfig) ProtoMessage() {}
 
 func (x *ClusterConfig) ProtoReflect() protoreflect.Message {
-	mi := &file_machine_machine_proto_msgTypes[142]
+	mi := &file_machine_machine_proto_msgTypes[151]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -9608,7 +10036,7 @@ func (x *ClusterConfig) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ClusterConfig.ProtoReflect.Descriptor instead.
 func (*ClusterConfig) Descriptor() ([]byte, []int) {
-	return file_machine_machine_proto_rawDescGZIP(), []int{142}
+	return file_machine_machine_proto_rawDescGZIP(), []int{151}
 }
 
 func (x *ClusterConfig) GetName() string {
@@ -9653,7 +10081,7 @@ type GenerateConfigurationRequest struct {
 
 func (x *GenerateConfigurationRequest) Reset() {
 	*x = GenerateConfigurationRequest{}
-	mi := &file_machine_machine_proto_msgTypes[143]
+	mi := &file_machine_machine_proto_msgTypes[152]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -9665,7 +10093,7 @@ func (x *GenerateConfigurationRequest) String() string {
 func (*GenerateConfigurationRequest) ProtoMessage() {}
 
 func (x *GenerateConfigurationRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_machine_machine_proto_msgTypes[143]
+	mi := &file_machine_machine_proto_msgTypes[152]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -9678,7 +10106,7 @@ func (x *GenerateConfigurationRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GenerateConfigurationRequest.ProtoReflect.Descriptor instead.
 func (*GenerateConfigurationRequest) Descriptor() ([]byte, []int) {
-	return file_machine_machine_proto_rawDescGZIP(), []int{143}
+	return file_machine_machine_proto_rawDescGZIP(), []int{152}
 }
 
 func (x *GenerateConfigurationRequest) GetConfigVersion() string {
@@ -9721,7 +10149,7 @@ type GenerateConfiguration struct {
 
 func (x *GenerateConfiguration) Reset() {
 	*x = GenerateConfiguration{}
-	mi := &file_machine_machine_proto_msgTypes[144]
+	mi := &file_machine_machine_proto_msgTypes[153]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -9733,7 +10161,7 @@ func (x *GenerateConfiguration) String() string {
 func (*GenerateConfiguration) ProtoMessage() {}
 
 func (x *GenerateConfiguration) ProtoReflect() protoreflect.Message {
-	mi := &file_machine_machine_proto_msgTypes[144]
+	mi := &file_machine_machine_proto_msgTypes[153]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -9746,7 +10174,7 @@ func (x *GenerateConfiguration) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GenerateConfiguration.ProtoReflect.Descriptor instead.
 func (*GenerateConfiguration) Descriptor() ([]byte, []int) {
-	return file_machine_machine_proto_rawDescGZIP(), []int{144}
+	return file_machine_machine_proto_rawDescGZIP(), []int{153}
 }
 
 func (x *GenerateConfiguration) GetMetadata() *common.Metadata {
@@ -9779,7 +10207,7 @@ type GenerateConfigurationResponse struct {
 
 func (x *GenerateConfigurationResponse) Reset() {
 	*x = GenerateConfigurationResponse{}
-	mi := &file_machine_machine_proto_msgTypes[145]
+	mi := &file_machine_machine_proto_msgTypes[154]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -9791,7 +10219,7 @@ func (x *GenerateConfigurationResponse) String() string {
 func (*GenerateConfigurationResponse) ProtoMessage() {}
 
 func (x *GenerateConfigurationResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_machine_machine_proto_msgTypes[145]
+	mi := &file_machine_machine_proto_msgTypes[154]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -9804,7 +10232,7 @@ func (x *GenerateConfigurationResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GenerateConfigurationResponse.ProtoReflect.Descriptor instead.
 func (*GenerateConfigurationResponse) Descriptor() ([]byte, []int) {
-	return file_machine_machine_proto_rawDescGZIP(), []int{145}
+	return file_machine_machine_proto_rawDescGZIP(), []int{154}
 }
 
 func (x *GenerateConfigurationResponse) GetMessages() []*GenerateConfiguration {
@@ -9826,7 +10254,7 @@ type GenerateClientConfigurationRequest struct {
 
 func (x *GenerateClientConfigurationRequest) Reset() {
 	*x = GenerateClientConfigurationRequest{}
-	mi := &file_machine_machine_proto_msgTypes[146]
+	mi := &file_machine_machine_proto_msgTypes[155]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -9838,7 +10266,7 @@ func (x *GenerateClientConfigurationRequest) String() string {
 func (*GenerateClientConfigurationRequest) ProtoMessage() {}
 
 func (x *GenerateClientConfigurationRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_machine_machine_proto_msgTypes[146]
+	mi := &file_machine_machine_proto_msgTypes[155]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -9851,7 +10279,7 @@ func (x *GenerateClientConfigurationRequest) ProtoReflect() protoreflect.Message
 
 // Deprecated: Use GenerateClientConfigurationRequest.ProtoReflect.Descriptor instead.
 func (*GenerateClientConfigurationRequest) Descriptor() ([]byte, []int) {
-	return file_machine_machine_proto_rawDescGZIP(), []int{146}
+	return file_machine_machine_proto_rawDescGZIP(), []int{155}
 }
 
 func (x *GenerateClientConfigurationRequest) GetRoles() []string {
@@ -9885,7 +10313,7 @@ type GenerateClientConfiguration struct {
 
 func (x *GenerateClientConfiguration) Reset() {
 	*x = GenerateClientConfiguration{}
-	mi := &file_machine_machine_proto_msgTypes[147]
+	mi := &file_machine_machine_proto_msgTypes[156]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -9897,7 +10325,7 @@ func (x *GenerateClientConfiguration) String() string {
 func (*GenerateClientConfiguration) ProtoMessage() {}
 
 func (x *GenerateClientConfiguration) ProtoReflect() protoreflect.Message {
-	mi := &file_machine_machine_proto_msgTypes[147]
+	mi := &file_machine_machine_proto_msgTypes[156]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -9910,7 +10338,7 @@ func (x *GenerateClientConfiguration) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GenerateClientConfiguration.ProtoReflect.Descriptor instead.
 func (*GenerateClientConfiguration) Descriptor() ([]byte, []int) {
-	return file_machine_machine_proto_rawDescGZIP(), []int{147}
+	return file_machine_machine_proto_rawDescGZIP(), []int{156}
 }
 
 func (x *GenerateClientConfiguration) GetMetadata() *common.Metadata {
@@ -9957,7 +10385,7 @@ type GenerateClientConfigurationResponse struct {
 
 func (x *GenerateClientConfigurationResponse) Reset() {
 	*x = GenerateClientConfigurationResponse{}
-	mi := &file_machine_machine_proto_msgTypes[148]
+	mi := &file_machine_machine_proto_msgTypes[157]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -9969,7 +10397,7 @@ func (x *GenerateClientConfigurationResponse) String() string {
 func (*GenerateClientConfigurationResponse) ProtoMessage() {}
 
 func (x *GenerateClientConfigurationResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_machine_machine_proto_msgTypes[148]
+	mi := &file_machine_machine_proto_msgTypes[157]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -9982,7 +10410,7 @@ func (x *GenerateClientConfigurationResponse) ProtoReflect() protoreflect.Messag
 
 // Deprecated: Use GenerateClientConfigurationResponse.ProtoReflect.Descriptor instead.
 func (*GenerateClientConfigurationResponse) Descriptor() ([]byte, []int) {
-	return file_machine_machine_proto_rawDescGZIP(), []int{148}
+	return file_machine_machine_proto_rawDescGZIP(), []int{157}
 }
 
 func (x *GenerateClientConfigurationResponse) GetMessages() []*GenerateClientConfiguration {
@@ -10008,7 +10436,7 @@ type PacketCaptureRequest struct {
 
 func (x *PacketCaptureRequest) Reset() {
 	*x = PacketCaptureRequest{}
-	mi := &file_machine_machine_proto_msgTypes[149]
+	mi := &file_machine_machine_proto_msgTypes[158]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -10020,7 +10448,7 @@ func (x *PacketCaptureRequest) String() string {
 func (*PacketCaptureRequest) ProtoMessage() {}
 
 func (x *PacketCaptureRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_machine_machine_proto_msgTypes[149]
+	mi := &file_machine_machine_proto_msgTypes[158]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -10033,7 +10461,7 @@ func (x *PacketCaptureRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PacketCaptureRequest.ProtoReflect.Descriptor instead.
 func (*PacketCaptureRequest) Descriptor() ([]byte, []int) {
-	return file_machine_machine_proto_rawDescGZIP(), []int{149}
+	return file_machine_machine_proto_rawDescGZIP(), []int{158}
 }
 
 func (x *PacketCaptureRequest) GetInterface() string {
@@ -10076,7 +10504,7 @@ type BPFInstruction struct {
 
 func (x *BPFInstruction) Reset() {
 	*x = BPFInstruction{}
-	mi := &file_machine_machine_proto_msgTypes[150]
+	mi := &file_machine_machine_proto_msgTypes[159]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -10088,7 +10516,7 @@ func (x *BPFInstruction) String() string {
 func (*BPFInstruction) ProtoMessage() {}
 
 func (x *BPFInstruction) ProtoReflect() protoreflect.Message {
-	mi := &file_machine_machine_proto_msgTypes[150]
+	mi := &file_machine_machine_proto_msgTypes[159]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -10101,7 +10529,7 @@ func (x *BPFInstruction) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use BPFInstruction.ProtoReflect.Descriptor instead.
 func (*BPFInstruction) Descriptor() ([]byte, []int) {
-	return file_machine_machine_proto_rawDescGZIP(), []int{150}
+	return file_machine_machine_proto_rawDescGZIP(), []int{159}
 }
 
 func (x *BPFInstruction) GetOp() uint32 {
@@ -10144,7 +10572,7 @@ type NetstatRequest struct {
 
 func (x *NetstatRequest) Reset() {
 	*x = NetstatRequest{}
-	mi := &file_machine_machine_proto_msgTypes[151]
+	mi := &file_machine_machine_proto_msgTypes[160]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -10156,7 +10584,7 @@ func (x *NetstatRequest) String() string {
 func (*NetstatRequest) ProtoMessage() {}
 
 func (x *NetstatRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_machine_machine_proto_msgTypes[151]
+	mi := &file_machine_machine_proto_msgTypes[160]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -10169,7 +10597,7 @@ func (x *NetstatRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use NetstatRequest.ProtoReflect.Descriptor instead.
 func (*NetstatRequest) Descriptor() ([]byte, []int) {
-	return file_machine_machine_proto_rawDescGZIP(), []int{151}
+	return file_machine_machine_proto_rawDescGZIP(), []int{160}
 }
 
 func (x *NetstatRequest) GetFilter() NetstatRequest_Filter {
@@ -10226,7 +10654,7 @@ type ConnectRecord struct {
 
 func (x *ConnectRecord) Reset() {
 	*x = ConnectRecord{}
-	mi := &file_machine_machine_proto_msgTypes[152]
+	mi := &file_machine_machine_proto_msgTypes[161]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -10238,7 +10666,7 @@ func (x *ConnectRecord) String() string {
 func (*ConnectRecord) ProtoMessage() {}
 
 func (x *ConnectRecord) ProtoReflect() protoreflect.Message {
-	mi := &file_machine_machine_proto_msgTypes[152]
+	mi := &file_machine_machine_proto_msgTypes[161]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -10251,7 +10679,7 @@ func (x *ConnectRecord) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ConnectRecord.ProtoReflect.Descriptor instead.
 func (*ConnectRecord) Descriptor() ([]byte, []int) {
-	return file_machine_machine_proto_rawDescGZIP(), []int{152}
+	return file_machine_machine_proto_rawDescGZIP(), []int{161}
 }
 
 func (x *ConnectRecord) GetL4Proto() string {
@@ -10390,7 +10818,7 @@ type Netstat struct {
 
 func (x *Netstat) Reset() {
 	*x = Netstat{}
-	mi := &file_machine_machine_proto_msgTypes[153]
+	mi := &file_machine_machine_proto_msgTypes[162]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -10402,7 +10830,7 @@ func (x *Netstat) String() string {
 func (*Netstat) ProtoMessage() {}
 
 func (x *Netstat) ProtoReflect() protoreflect.Message {
-	mi := &file_machine_machine_proto_msgTypes[153]
+	mi := &file_machine_machine_proto_msgTypes[162]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -10415,7 +10843,7 @@ func (x *Netstat) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Netstat.ProtoReflect.Descriptor instead.
 func (*Netstat) Descriptor() ([]byte, []int) {
-	return file_machine_machine_proto_rawDescGZIP(), []int{153}
+	return file_machine_machine_proto_rawDescGZIP(), []int{162}
 }
 
 func (x *Netstat) GetMetadata() *common.Metadata {
@@ -10441,7 +10869,7 @@ type NetstatResponse struct {
 
 func (x *NetstatResponse) Reset() {
 	*x = NetstatResponse{}
-	mi := &file_machine_machine_proto_msgTypes[154]
+	mi := &file_machine_machine_proto_msgTypes[163]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -10453,7 +10881,7 @@ func (x *NetstatResponse) String() string {
 func (*NetstatResponse) ProtoMessage() {}
 
 func (x *NetstatResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_machine_machine_proto_msgTypes[154]
+	mi := &file_machine_machine_proto_msgTypes[163]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -10466,7 +10894,7 @@ func (x *NetstatResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use NetstatResponse.ProtoReflect.Descriptor instead.
 func (*NetstatResponse) Descriptor() ([]byte, []int) {
-	return file_machine_machine_proto_rawDescGZIP(), []int{154}
+	return file_machine_machine_proto_rawDescGZIP(), []int{163}
 }
 
 func (x *NetstatResponse) GetMessages() []*Netstat {
@@ -10486,7 +10914,7 @@ type MetaWriteRequest struct {
 
 func (x *MetaWriteRequest) Reset() {
 	*x = MetaWriteRequest{}
-	mi := &file_machine_machine_proto_msgTypes[155]
+	mi := &file_machine_machine_proto_msgTypes[164]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -10498,7 +10926,7 @@ func (x *MetaWriteRequest) String() string {
 func (*MetaWriteRequest) ProtoMessage() {}
 
 func (x *MetaWriteRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_machine_machine_proto_msgTypes[155]
+	mi := &file_machine_machine_proto_msgTypes[164]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -10511,7 +10939,7 @@ func (x *MetaWriteRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use MetaWriteRequest.ProtoReflect.Descriptor instead.
 func (*MetaWriteRequest) Descriptor() ([]byte, []int) {
-	return file_machine_machine_proto_rawDescGZIP(), []int{155}
+	return file_machine_machine_proto_rawDescGZIP(), []int{164}
 }
 
 func (x *MetaWriteRequest) GetKey() uint32 {
@@ -10537,7 +10965,7 @@ type MetaWrite struct {
 
 func (x *MetaWrite) Reset() {
 	*x = MetaWrite{}
-	mi := &file_machine_machine_proto_msgTypes[156]
+	mi := &file_machine_machine_proto_msgTypes[165]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -10549,7 +10977,7 @@ func (x *MetaWrite) String() string {
 func (*MetaWrite) ProtoMessage() {}
 
 func (x *MetaWrite) ProtoReflect() protoreflect.Message {
-	mi := &file_machine_machine_proto_msgTypes[156]
+	mi := &file_machine_machine_proto_msgTypes[165]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -10562,7 +10990,7 @@ func (x *MetaWrite) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use MetaWrite.ProtoReflect.Descriptor instead.
 func (*MetaWrite) Descriptor() ([]byte, []int) {
-	return file_machine_machine_proto_rawDescGZIP(), []int{156}
+	return file_machine_machine_proto_rawDescGZIP(), []int{165}
 }
 
 func (x *MetaWrite) GetMetadata() *common.Metadata {
@@ -10581,7 +11009,7 @@ type MetaWriteResponse struct {
 
 func (x *MetaWriteResponse) Reset() {
 	*x = MetaWriteResponse{}
-	mi := &file_machine_machine_proto_msgTypes[157]
+	mi := &file_machine_machine_proto_msgTypes[166]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -10593,7 +11021,7 @@ func (x *MetaWriteResponse) String() string {
 func (*MetaWriteResponse) ProtoMessage() {}
 
 func (x *MetaWriteResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_machine_machine_proto_msgTypes[157]
+	mi := &file_machine_machine_proto_msgTypes[166]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -10606,7 +11034,7 @@ func (x *MetaWriteResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use MetaWriteResponse.ProtoReflect.Descriptor instead.
 func (*MetaWriteResponse) Descriptor() ([]byte, []int) {
-	return file_machine_machine_proto_rawDescGZIP(), []int{157}
+	return file_machine_machine_proto_rawDescGZIP(), []int{166}
 }
 
 func (x *MetaWriteResponse) GetMessages() []*MetaWrite {
@@ -10625,7 +11053,7 @@ type MetaDeleteRequest struct {
 
 func (x *MetaDeleteRequest) Reset() {
 	*x = MetaDeleteRequest{}
-	mi := &file_machine_machine_proto_msgTypes[158]
+	mi := &file_machine_machine_proto_msgTypes[167]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -10637,7 +11065,7 @@ func (x *MetaDeleteRequest) String() string {
 func (*MetaDeleteRequest) ProtoMessage() {}
 
 func (x *MetaDeleteRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_machine_machine_proto_msgTypes[158]
+	mi := &file_machine_machine_proto_msgTypes[167]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -10650,7 +11078,7 @@ func (x *MetaDeleteRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use MetaDeleteRequest.ProtoReflect.Descriptor instead.
 func (*MetaDeleteRequest) Descriptor() ([]byte, []int) {
-	return file_machine_machine_proto_rawDescGZIP(), []int{158}
+	return file_machine_machine_proto_rawDescGZIP(), []int{167}
 }
 
 func (x *MetaDeleteRequest) GetKey() uint32 {
@@ -10669,7 +11097,7 @@ type MetaDelete struct {
 
 func (x *MetaDelete) Reset() {
 	*x = MetaDelete{}
-	mi := &file_machine_machine_proto_msgTypes[159]
+	mi := &file_machine_machine_proto_msgTypes[168]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -10681,7 +11109,7 @@ func (x *MetaDelete) String() string {
 func (*MetaDelete) ProtoMessage() {}
 
 func (x *MetaDelete) ProtoReflect() protoreflect.Message {
-	mi := &file_machine_machine_proto_msgTypes[159]
+	mi := &file_machine_machine_proto_msgTypes[168]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -10694,7 +11122,7 @@ func (x *MetaDelete) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use MetaDelete.ProtoReflect.Descriptor instead.
 func (*MetaDelete) Descriptor() ([]byte, []int) {
-	return file_machine_machine_proto_rawDescGZIP(), []int{159}
+	return file_machine_machine_proto_rawDescGZIP(), []int{168}
 }
 
 func (x *MetaDelete) GetMetadata() *common.Metadata {
@@ -10713,7 +11141,7 @@ type MetaDeleteResponse struct {
 
 func (x *MetaDeleteResponse) Reset() {
 	*x = MetaDeleteResponse{}
-	mi := &file_machine_machine_proto_msgTypes[160]
+	mi := &file_machine_machine_proto_msgTypes[169]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -10725,7 +11153,7 @@ func (x *MetaDeleteResponse) String() string {
 func (*MetaDeleteResponse) ProtoMessage() {}
 
 func (x *MetaDeleteResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_machine_machine_proto_msgTypes[160]
+	mi := &file_machine_machine_proto_msgTypes[169]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -10738,7 +11166,7 @@ func (x *MetaDeleteResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use MetaDeleteResponse.ProtoReflect.Descriptor instead.
 func (*MetaDeleteResponse) Descriptor() ([]byte, []int) {
-	return file_machine_machine_proto_rawDescGZIP(), []int{160}
+	return file_machine_machine_proto_rawDescGZIP(), []int{169}
 }
 
 func (x *MetaDeleteResponse) GetMessages() []*MetaDelete {
@@ -10758,7 +11186,7 @@ type ImageListRequest struct {
 
 func (x *ImageListRequest) Reset() {
 	*x = ImageListRequest{}
-	mi := &file_machine_machine_proto_msgTypes[161]
+	mi := &file_machine_machine_proto_msgTypes[170]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -10770,7 +11198,7 @@ func (x *ImageListRequest) String() string {
 func (*ImageListRequest) ProtoMessage() {}
 
 func (x *ImageListRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_machine_machine_proto_msgTypes[161]
+	mi := &file_machine_machine_proto_msgTypes[170]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -10783,7 +11211,7 @@ func (x *ImageListRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ImageListRequest.ProtoReflect.Descriptor instead.
 func (*ImageListRequest) Descriptor() ([]byte, []int) {
-	return file_machine_machine_proto_rawDescGZIP(), []int{161}
+	return file_machine_machine_proto_rawDescGZIP(), []int{170}
 }
 
 func (x *ImageListRequest) GetNamespace() common.ContainerdNamespace {
@@ -10806,7 +11234,7 @@ type ImageListResponse struct {
 
 func (x *ImageListResponse) Reset() {
 	*x = ImageListResponse{}
-	mi := &file_machine_machine_proto_msgTypes[162]
+	mi := &file_machine_machine_proto_msgTypes[171]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -10818,7 +11246,7 @@ func (x *ImageListResponse) String() string {
 func (*ImageListResponse) ProtoMessage() {}
 
 func (x *ImageListResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_machine_machine_proto_msgTypes[162]
+	mi := &file_machine_machine_proto_msgTypes[171]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -10831,7 +11259,7 @@ func (x *ImageListResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ImageListResponse.ProtoReflect.Descriptor instead.
 func (*ImageListResponse) Descriptor() ([]byte, []int) {
-	return file_machine_machine_proto_rawDescGZIP(), []int{162}
+	return file_machine_machine_proto_rawDescGZIP(), []int{171}
 }
 
 func (x *ImageListResponse) GetMetadata() *common.Metadata {
@@ -10881,7 +11309,7 @@ type ImagePullRequest struct {
 
 func (x *ImagePullRequest) Reset() {
 	*x = ImagePullRequest{}
-	mi := &file_machine_machine_proto_msgTypes[163]
+	mi := &file_machine_machine_proto_msgTypes[172]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -10893,7 +11321,7 @@ func (x *ImagePullRequest) String() string {
 func (*ImagePullRequest) ProtoMessage() {}
 
 func (x *ImagePullRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_machine_machine_proto_msgTypes[163]
+	mi := &file_machine_machine_proto_msgTypes[172]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -10906,7 +11334,7 @@ func (x *ImagePullRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ImagePullRequest.ProtoReflect.Descriptor instead.
 func (*ImagePullRequest) Descriptor() ([]byte, []int) {
-	return file_machine_machine_proto_rawDescGZIP(), []int{163}
+	return file_machine_machine_proto_rawDescGZIP(), []int{172}
 }
 
 func (x *ImagePullRequest) GetNamespace() common.ContainerdNamespace {
@@ -10932,7 +11360,7 @@ type ImagePull struct {
 
 func (x *ImagePull) Reset() {
 	*x = ImagePull{}
-	mi := &file_machine_machine_proto_msgTypes[164]
+	mi := &file_machine_machine_proto_msgTypes[173]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -10944,7 +11372,7 @@ func (x *ImagePull) String() string {
 func (*ImagePull) ProtoMessage() {}
 
 func (x *ImagePull) ProtoReflect() protoreflect.Message {
-	mi := &file_machine_machine_proto_msgTypes[164]
+	mi := &file_machine_machine_proto_msgTypes[173]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -10957,7 +11385,7 @@ func (x *ImagePull) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ImagePull.ProtoReflect.Descriptor instead.
 func (*ImagePull) Descriptor() ([]byte, []int) {
-	return file_machine_machine_proto_rawDescGZIP(), []int{164}
+	return file_machine_machine_proto_rawDescGZIP(), []int{173}
 }
 
 func (x *ImagePull) GetMetadata() *common.Metadata {
@@ -10976,7 +11404,7 @@ type ImagePullResponse struct {
 
 func (x *ImagePullResponse) Reset() {
 	*x = ImagePullResponse{}
-	mi := &file_machine_machine_proto_msgTypes[165]
+	mi := &file_machine_machine_proto_msgTypes[174]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -10988,7 +11416,7 @@ func (x *ImagePullResponse) String() string {
 func (*ImagePullResponse) ProtoMessage() {}
 
 func (x *ImagePullResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_machine_machine_proto_msgTypes[165]
+	mi := &file_machine_machine_proto_msgTypes[174]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -11001,7 +11429,7 @@ func (x *ImagePullResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ImagePullResponse.ProtoReflect.Descriptor instead.
 func (*ImagePullResponse) Descriptor() ([]byte, []int) {
-	return file_machine_machine_proto_rawDescGZIP(), []int{165}
+	return file_machine_machine_proto_rawDescGZIP(), []int{174}
 }
 
 func (x *ImagePullResponse) GetMessages() []*ImagePull {
@@ -11021,7 +11449,7 @@ type MachineStatusEvent_MachineStatus struct {
 
 func (x *MachineStatusEvent_MachineStatus) Reset() {
 	*x = MachineStatusEvent_MachineStatus{}
-	mi := &file_machine_machine_proto_msgTypes[166]
+	mi := &file_machine_machine_proto_msgTypes[175]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -11033,7 +11461,7 @@ func (x *MachineStatusEvent_MachineStatus) String() string {
 func (*MachineStatusEvent_MachineStatus) ProtoMessage() {}
 
 func (x *MachineStatusEvent_MachineStatus) ProtoReflect() protoreflect.Message {
-	mi := &file_machine_machine_proto_msgTypes[166]
+	mi := &file_machine_machine_proto_msgTypes[175]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -11073,7 +11501,7 @@ type MachineStatusEvent_MachineStatus_UnmetCondition struct {
 
 func (x *MachineStatusEvent_MachineStatus_UnmetCondition) Reset() {
 	*x = MachineStatusEvent_MachineStatus_UnmetCondition{}
-	mi := &file_machine_machine_proto_msgTypes[167]
+	mi := &file_machine_machine_proto_msgTypes[176]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -11085,7 +11513,7 @@ func (x *MachineStatusEvent_MachineStatus_UnmetCondition) String() string {
 func (*MachineStatusEvent_MachineStatus_UnmetCondition) ProtoMessage() {}
 
 func (x *MachineStatusEvent_MachineStatus_UnmetCondition) ProtoReflect() protoreflect.Message {
-	mi := &file_machine_machine_proto_msgTypes[167]
+	mi := &file_machine_machine_proto_msgTypes[176]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -11124,7 +11552,7 @@ type NetstatRequest_Feature struct {
 
 func (x *NetstatRequest_Feature) Reset() {
 	*x = NetstatRequest_Feature{}
-	mi := &file_machine_machine_proto_msgTypes[168]
+	mi := &file_machine_machine_proto_msgTypes[177]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -11136,7 +11564,7 @@ func (x *NetstatRequest_Feature) String() string {
 func (*NetstatRequest_Feature) ProtoMessage() {}
 
 func (x *NetstatRequest_Feature) ProtoReflect() protoreflect.Message {
-	mi := &file_machine_machine_proto_msgTypes[168]
+	mi := &file_machine_machine_proto_msgTypes[177]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -11149,7 +11577,7 @@ func (x *NetstatRequest_Feature) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use NetstatRequest_Feature.ProtoReflect.Descriptor instead.
 func (*NetstatRequest_Feature) Descriptor() ([]byte, []int) {
-	return file_machine_machine_proto_rawDescGZIP(), []int{151, 0}
+	return file_machine_machine_proto_rawDescGZIP(), []int{160, 0}
 }
 
 func (x *NetstatRequest_Feature) GetPid() bool {
@@ -11175,7 +11603,7 @@ type NetstatRequest_L4Proto struct {
 
 func (x *NetstatRequest_L4Proto) Reset() {
 	*x = NetstatRequest_L4Proto{}
-	mi := &file_machine_machine_proto_msgTypes[169]
+	mi := &file_machine_machine_proto_msgTypes[178]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -11187,7 +11615,7 @@ func (x *NetstatRequest_L4Proto) String() string {
 func (*NetstatRequest_L4Proto) ProtoMessage() {}
 
 func (x *NetstatRequest_L4Proto) ProtoReflect() protoreflect.Message {
-	mi := &file_machine_machine_proto_msgTypes[169]
+	mi := &file_machine_machine_proto_msgTypes[178]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -11200,7 +11628,7 @@ func (x *NetstatRequest_L4Proto) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use NetstatRequest_L4Proto.ProtoReflect.Descriptor instead.
 func (*NetstatRequest_L4Proto) Descriptor() ([]byte, []int) {
-	return file_machine_machine_proto_rawDescGZIP(), []int{151, 1}
+	return file_machine_machine_proto_rawDescGZIP(), []int{160, 1}
 }
 
 func (x *NetstatRequest_L4Proto) GetTcp() bool {
@@ -11270,7 +11698,7 @@ type NetstatRequest_NetNS struct {
 
 func (x *NetstatRequest_NetNS) Reset() {
 	*x = NetstatRequest_NetNS{}
-	mi := &file_machine_machine_proto_msgTypes[170]
+	mi := &file_machine_machine_proto_msgTypes[179]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -11282,7 +11710,7 @@ func (x *NetstatRequest_NetNS) String() string {
 func (*NetstatRequest_NetNS) ProtoMessage() {}
 
 func (x *NetstatRequest_NetNS) ProtoReflect() protoreflect.Message {
-	mi := &file_machine_machine_proto_msgTypes[170]
+	mi := &file_machine_machine_proto_msgTypes[179]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -11295,7 +11723,7 @@ func (x *NetstatRequest_NetNS) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use NetstatRequest_NetNS.ProtoReflect.Descriptor instead.
 func (*NetstatRequest_NetNS) Descriptor() ([]byte, []int) {
-	return file_machine_machine_proto_rawDescGZIP(), []int{151, 2}
+	return file_machine_machine_proto_rawDescGZIP(), []int{160, 2}
 }
 
 func (x *NetstatRequest_NetNS) GetHostnetwork() bool {
@@ -11329,7 +11757,7 @@ type ConnectRecord_Process struct {
 
 func (x *ConnectRecord_Process) Reset() {
 	*x = ConnectRecord_Process{}
-	mi := &file_machine_machine_proto_msgTypes[171]
+	mi := &file_machine_machine_proto_msgTypes[180]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -11341,7 +11769,7 @@ func (x *ConnectRecord_Process) String() string {
 func (*ConnectRecord_Process) ProtoMessage() {}
 
 func (x *ConnectRecord_Process) ProtoReflect() protoreflect.Message {
-	mi := &file_machine_machine_proto_msgTypes[171]
+	mi := &file_machine_machine_proto_msgTypes[180]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -11354,7 +11782,7 @@ func (x *ConnectRecord_Process) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ConnectRecord_Process.ProtoReflect.Descriptor instead.
 func (*ConnectRecord_Process) Descriptor() ([]byte, []int) {
-	return file_machine_machine_proto_rawDescGZIP(), []int{152, 0}
+	return file_machine_machine_proto_rawDescGZIP(), []int{161, 0}
 }
 
 func (x *ConnectRecord_Process) GetPid() uint32 {
@@ -12035,8 +12463,9 @@ const file_machine_machine_proto_rawDesc = "" +
 	"\n" +
 	"EtcdStatus\x12,\n" +
 	"\bmetadata\x18\x01 \x01(\v2\x10.common.MetadataR\bmetadata\x12>\n" +
-	"\rmember_status\x18\x02 \x01(\v2\x19.machine.EtcdMemberStatusR\fmemberStatus\"\xd1\x02\n" +
-	"\x10EtcdMemberStatus\x12\x1b\n" +
+	"\rmember_status\x18\x02 \x01(\v2\x19.machine.EtcdMemberStatusR\fmemberStatus\"\xfa\x02\n" +
+	"\x10EtcdMemberStatus\x12'\n" +
+	"\x0fstorage_version\x18\v \x01(\tR\x0estorageVersion\x12\x1b\n" +
 	"\tmember_id\x18\n" +
 	" \x01(\x04R\bmemberId\x12)\n" +
 	"\x10protocol_version\x18\x01 \x01(\tR\x0fprotocolVersion\x12\x17\n" +
@@ -12049,7 +12478,28 @@ const file_machine_machine_proto_rawDesc = "" +
 	"\x12raft_applied_index\x18\a \x01(\x04R\x10raftAppliedIndex\x12\x16\n" +
 	"\x06errors\x18\b \x03(\tR\x06errors\x12\x1d\n" +
 	"\n" +
-	"is_learner\x18\t \x01(\bR\tisLearner\"Y\n" +
+	"is_learner\x18\t \x01(\bR\tisLearner\"8\n" +
+	"\x1cEtcdDowngradeValidateRequest\x12\x18\n" +
+	"\aversion\x18\x01 \x01(\tR\aversion\"[\n" +
+	"\x1dEtcdDowngradeValidateResponse\x12:\n" +
+	"\bmessages\x18\x01 \x03(\v2\x1e.machine.EtcdDowngradeValidateR\bmessages\"\x91\x01\n" +
+	"\x15EtcdDowngradeValidate\x12,\n" +
+	"\bmetadata\x18\x01 \x01(\v2\x10.common.MetadataR\bmetadata\x12J\n" +
+	"\x11cluster_downgrade\x18\x02 \x01(\v2\x1d.machine.EtcdClusterDowngradeR\x10clusterDowngrade\"6\n" +
+	"\x1aEtcdDowngradeEnableRequest\x12\x18\n" +
+	"\aversion\x18\x01 \x01(\tR\aversion\"W\n" +
+	"\x1bEtcdDowngradeEnableResponse\x128\n" +
+	"\bmessages\x18\x01 \x03(\v2\x1c.machine.EtcdDowngradeEnableR\bmessages\"\x8f\x01\n" +
+	"\x13EtcdDowngradeEnable\x12,\n" +
+	"\bmetadata\x18\x01 \x01(\v2\x10.common.MetadataR\bmetadata\x12J\n" +
+	"\x11cluster_downgrade\x18\x02 \x01(\v2\x1d.machine.EtcdClusterDowngradeR\x10clusterDowngrade\"W\n" +
+	"\x1bEtcdDowngradeCancelResponse\x128\n" +
+	"\bmessages\x18\x01 \x03(\v2\x1c.machine.EtcdDowngradeCancelR\bmessages\"\x8f\x01\n" +
+	"\x13EtcdDowngradeCancel\x12,\n" +
+	"\bmetadata\x18\x01 \x01(\v2\x10.common.MetadataR\bmetadata\x12J\n" +
+	"\x11cluster_downgrade\x18\x02 \x01(\v2\x1d.machine.EtcdClusterDowngradeR\x10clusterDowngrade\"?\n" +
+	"\x14EtcdClusterDowngrade\x12'\n" +
+	"\x0fcluster_version\x18\x01 \x01(\tR\x0eclusterVersion\"Y\n" +
 	"\vRouteConfig\x12\x18\n" +
 	"\anetwork\x18\x01 \x01(\tR\anetwork\x12\x18\n" +
 	"\agateway\x18\x02 \x01(\tR\agateway\x12\x16\n" +
@@ -12234,7 +12684,7 @@ const file_machine_machine_proto_rawDesc = "" +
 	"\tImagePull\x12,\n" +
 	"\bmetadata\x18\x01 \x01(\v2\x10.common.MetadataR\bmetadata\"C\n" +
 	"\x11ImagePullResponse\x12.\n" +
-	"\bmessages\x18\x01 \x03(\v2\x12.machine.ImagePullR\bmessages2\x8e\x1c\n" +
+	"\bmessages\x18\x01 \x03(\v2\x12.machine.ImagePullR\bmessages2\xad\x1e\n" +
 	"\x0eMachineService\x12]\n" +
 	"\x12ApplyConfiguration\x12\".machine.ApplyConfigurationRequest\x1a#.machine.ApplyConfigurationResponse\x12B\n" +
 	"\tBootstrap\x12\x19.machine.BootstrapRequest\x1a\x1a.machine.BootstrapResponse\x12E\n" +
@@ -12257,6 +12707,9 @@ const file_machine_machine_proto_rawDesc = "" +
 	"\x0eEtcdDefragment\x12\x16.google.protobuf.Empty\x1a\x1f.machine.EtcdDefragmentResponse\x12A\n" +
 	"\n" +
 	"EtcdStatus\x12\x16.google.protobuf.Empty\x1a\x1b.machine.EtcdStatusResponse\x12f\n" +
+	"\x15EtcdDowngradeValidate\x12%.machine.EtcdDowngradeValidateRequest\x1a&.machine.EtcdDowngradeValidateResponse\x12`\n" +
+	"\x13EtcdDowngradeEnable\x12#.machine.EtcdDowngradeEnableRequest\x1a$.machine.EtcdDowngradeEnableResponse\x12S\n" +
+	"\x13EtcdDowngradeCancel\x12\x16.google.protobuf.Empty\x1a$.machine.EtcdDowngradeCancelResponse\x12f\n" +
 	"\x15GenerateConfiguration\x12%.machine.GenerateConfigurationRequest\x1a&.machine.GenerateConfigurationResponse\x12=\n" +
 	"\bHostname\x12\x16.google.protobuf.Empty\x1a\x19.machine.HostnameResponse\x124\n" +
 	"\n" +
@@ -12308,7 +12761,7 @@ func file_machine_machine_proto_rawDescGZIP() []byte {
 }
 
 var file_machine_machine_proto_enumTypes = make([]protoimpl.EnumInfo, 15)
-var file_machine_machine_proto_msgTypes = make([]protoimpl.MessageInfo, 172)
+var file_machine_machine_proto_msgTypes = make([]protoimpl.MessageInfo, 181)
 var file_machine_machine_proto_goTypes = []any{
 	(ApplyConfigurationRequest_Mode)(0),                     // 0: machine.ApplyConfigurationRequest.Mode
 	(RebootRequest_Mode)(0),                                 // 1: machine.RebootRequest.Mode
@@ -12458,329 +12911,353 @@ var file_machine_machine_proto_goTypes = []any{
 	(*EtcdStatusResponse)(nil),                              // 145: machine.EtcdStatusResponse
 	(*EtcdStatus)(nil),                                      // 146: machine.EtcdStatus
 	(*EtcdMemberStatus)(nil),                                // 147: machine.EtcdMemberStatus
-	(*RouteConfig)(nil),                                     // 148: machine.RouteConfig
-	(*DHCPOptionsConfig)(nil),                               // 149: machine.DHCPOptionsConfig
-	(*NetworkDeviceConfig)(nil),                             // 150: machine.NetworkDeviceConfig
-	(*NetworkConfig)(nil),                                   // 151: machine.NetworkConfig
-	(*InstallConfig)(nil),                                   // 152: machine.InstallConfig
-	(*MachineConfig)(nil),                                   // 153: machine.MachineConfig
-	(*ControlPlaneConfig)(nil),                              // 154: machine.ControlPlaneConfig
-	(*CNIConfig)(nil),                                       // 155: machine.CNIConfig
-	(*ClusterNetworkConfig)(nil),                            // 156: machine.ClusterNetworkConfig
-	(*ClusterConfig)(nil),                                   // 157: machine.ClusterConfig
-	(*GenerateConfigurationRequest)(nil),                    // 158: machine.GenerateConfigurationRequest
-	(*GenerateConfiguration)(nil),                           // 159: machine.GenerateConfiguration
-	(*GenerateConfigurationResponse)(nil),                   // 160: machine.GenerateConfigurationResponse
-	(*GenerateClientConfigurationRequest)(nil),              // 161: machine.GenerateClientConfigurationRequest
-	(*GenerateClientConfiguration)(nil),                     // 162: machine.GenerateClientConfiguration
-	(*GenerateClientConfigurationResponse)(nil),             // 163: machine.GenerateClientConfigurationResponse
-	(*PacketCaptureRequest)(nil),                            // 164: machine.PacketCaptureRequest
-	(*BPFInstruction)(nil),                                  // 165: machine.BPFInstruction
-	(*NetstatRequest)(nil),                                  // 166: machine.NetstatRequest
-	(*ConnectRecord)(nil),                                   // 167: machine.ConnectRecord
-	(*Netstat)(nil),                                         // 168: machine.Netstat
-	(*NetstatResponse)(nil),                                 // 169: machine.NetstatResponse
-	(*MetaWriteRequest)(nil),                                // 170: machine.MetaWriteRequest
-	(*MetaWrite)(nil),                                       // 171: machine.MetaWrite
-	(*MetaWriteResponse)(nil),                               // 172: machine.MetaWriteResponse
-	(*MetaDeleteRequest)(nil),                               // 173: machine.MetaDeleteRequest
-	(*MetaDelete)(nil),                                      // 174: machine.MetaDelete
-	(*MetaDeleteResponse)(nil),                              // 175: machine.MetaDeleteResponse
-	(*ImageListRequest)(nil),                                // 176: machine.ImageListRequest
-	(*ImageListResponse)(nil),                               // 177: machine.ImageListResponse
-	(*ImagePullRequest)(nil),                                // 178: machine.ImagePullRequest
-	(*ImagePull)(nil),                                       // 179: machine.ImagePull
-	(*ImagePullResponse)(nil),                               // 180: machine.ImagePullResponse
-	(*MachineStatusEvent_MachineStatus)(nil),                // 181: machine.MachineStatusEvent.MachineStatus
-	(*MachineStatusEvent_MachineStatus_UnmetCondition)(nil), // 182: machine.MachineStatusEvent.MachineStatus.UnmetCondition
-	(*NetstatRequest_Feature)(nil),                          // 183: machine.NetstatRequest.Feature
-	(*NetstatRequest_L4Proto)(nil),                          // 184: machine.NetstatRequest.L4proto
-	(*NetstatRequest_NetNS)(nil),                            // 185: machine.NetstatRequest.NetNS
-	(*ConnectRecord_Process)(nil),                           // 186: machine.ConnectRecord.Process
-	(*durationpb.Duration)(nil),                             // 187: google.protobuf.Duration
-	(*common.Metadata)(nil),                                 // 188: common.Metadata
-	(*common.Error)(nil),                                    // 189: common.Error
-	(*anypb.Any)(nil),                                       // 190: google.protobuf.Any
-	(*timestamppb.Timestamp)(nil),                           // 191: google.protobuf.Timestamp
-	(common.ContainerDriver)(0),                             // 192: common.ContainerDriver
-	(common.ContainerdNamespace)(0),                         // 193: common.ContainerdNamespace
-	(*emptypb.Empty)(nil),                                   // 194: google.protobuf.Empty
-	(*common.Data)(nil),                                     // 195: common.Data
+	(*EtcdDowngradeValidateRequest)(nil),                    // 148: machine.EtcdDowngradeValidateRequest
+	(*EtcdDowngradeValidateResponse)(nil),                   // 149: machine.EtcdDowngradeValidateResponse
+	(*EtcdDowngradeValidate)(nil),                           // 150: machine.EtcdDowngradeValidate
+	(*EtcdDowngradeEnableRequest)(nil),                      // 151: machine.EtcdDowngradeEnableRequest
+	(*EtcdDowngradeEnableResponse)(nil),                     // 152: machine.EtcdDowngradeEnableResponse
+	(*EtcdDowngradeEnable)(nil),                             // 153: machine.EtcdDowngradeEnable
+	(*EtcdDowngradeCancelResponse)(nil),                     // 154: machine.EtcdDowngradeCancelResponse
+	(*EtcdDowngradeCancel)(nil),                             // 155: machine.EtcdDowngradeCancel
+	(*EtcdClusterDowngrade)(nil),                            // 156: machine.EtcdClusterDowngrade
+	(*RouteConfig)(nil),                                     // 157: machine.RouteConfig
+	(*DHCPOptionsConfig)(nil),                               // 158: machine.DHCPOptionsConfig
+	(*NetworkDeviceConfig)(nil),                             // 159: machine.NetworkDeviceConfig
+	(*NetworkConfig)(nil),                                   // 160: machine.NetworkConfig
+	(*InstallConfig)(nil),                                   // 161: machine.InstallConfig
+	(*MachineConfig)(nil),                                   // 162: machine.MachineConfig
+	(*ControlPlaneConfig)(nil),                              // 163: machine.ControlPlaneConfig
+	(*CNIConfig)(nil),                                       // 164: machine.CNIConfig
+	(*ClusterNetworkConfig)(nil),                            // 165: machine.ClusterNetworkConfig
+	(*ClusterConfig)(nil),                                   // 166: machine.ClusterConfig
+	(*GenerateConfigurationRequest)(nil),                    // 167: machine.GenerateConfigurationRequest
+	(*GenerateConfiguration)(nil),                           // 168: machine.GenerateConfiguration
+	(*GenerateConfigurationResponse)(nil),                   // 169: machine.GenerateConfigurationResponse
+	(*GenerateClientConfigurationRequest)(nil),              // 170: machine.GenerateClientConfigurationRequest
+	(*GenerateClientConfiguration)(nil),                     // 171: machine.GenerateClientConfiguration
+	(*GenerateClientConfigurationResponse)(nil),             // 172: machine.GenerateClientConfigurationResponse
+	(*PacketCaptureRequest)(nil),                            // 173: machine.PacketCaptureRequest
+	(*BPFInstruction)(nil),                                  // 174: machine.BPFInstruction
+	(*NetstatRequest)(nil),                                  // 175: machine.NetstatRequest
+	(*ConnectRecord)(nil),                                   // 176: machine.ConnectRecord
+	(*Netstat)(nil),                                         // 177: machine.Netstat
+	(*NetstatResponse)(nil),                                 // 178: machine.NetstatResponse
+	(*MetaWriteRequest)(nil),                                // 179: machine.MetaWriteRequest
+	(*MetaWrite)(nil),                                       // 180: machine.MetaWrite
+	(*MetaWriteResponse)(nil),                               // 181: machine.MetaWriteResponse
+	(*MetaDeleteRequest)(nil),                               // 182: machine.MetaDeleteRequest
+	(*MetaDelete)(nil),                                      // 183: machine.MetaDelete
+	(*MetaDeleteResponse)(nil),                              // 184: machine.MetaDeleteResponse
+	(*ImageListRequest)(nil),                                // 185: machine.ImageListRequest
+	(*ImageListResponse)(nil),                               // 186: machine.ImageListResponse
+	(*ImagePullRequest)(nil),                                // 187: machine.ImagePullRequest
+	(*ImagePull)(nil),                                       // 188: machine.ImagePull
+	(*ImagePullResponse)(nil),                               // 189: machine.ImagePullResponse
+	(*MachineStatusEvent_MachineStatus)(nil),                // 190: machine.MachineStatusEvent.MachineStatus
+	(*MachineStatusEvent_MachineStatus_UnmetCondition)(nil), // 191: machine.MachineStatusEvent.MachineStatus.UnmetCondition
+	(*NetstatRequest_Feature)(nil),                          // 192: machine.NetstatRequest.Feature
+	(*NetstatRequest_L4Proto)(nil),                          // 193: machine.NetstatRequest.L4proto
+	(*NetstatRequest_NetNS)(nil),                            // 194: machine.NetstatRequest.NetNS
+	(*ConnectRecord_Process)(nil),                           // 195: machine.ConnectRecord.Process
+	(*durationpb.Duration)(nil),                             // 196: google.protobuf.Duration
+	(*common.Metadata)(nil),                                 // 197: common.Metadata
+	(*common.Error)(nil),                                    // 198: common.Error
+	(*anypb.Any)(nil),                                       // 199: google.protobuf.Any
+	(*timestamppb.Timestamp)(nil),                           // 200: google.protobuf.Timestamp
+	(common.ContainerDriver)(0),                             // 201: common.ContainerDriver
+	(common.ContainerdNamespace)(0),                         // 202: common.ContainerdNamespace
+	(*emptypb.Empty)(nil),                                   // 203: google.protobuf.Empty
+	(*common.Data)(nil),                                     // 204: common.Data
 }
 var file_machine_machine_proto_depIdxs = []int32{
 	0,   // 0: machine.ApplyConfigurationRequest.mode:type_name -> machine.ApplyConfigurationRequest.Mode
-	187, // 1: machine.ApplyConfigurationRequest.try_mode_timeout:type_name -> google.protobuf.Duration
-	188, // 2: machine.ApplyConfiguration.metadata:type_name -> common.Metadata
+	196, // 1: machine.ApplyConfigurationRequest.try_mode_timeout:type_name -> google.protobuf.Duration
+	197, // 2: machine.ApplyConfiguration.metadata:type_name -> common.Metadata
 	0,   // 3: machine.ApplyConfiguration.mode:type_name -> machine.ApplyConfigurationRequest.Mode
 	16,  // 4: machine.ApplyConfigurationResponse.messages:type_name -> machine.ApplyConfiguration
 	1,   // 5: machine.RebootRequest.mode:type_name -> machine.RebootRequest.Mode
-	188, // 6: machine.Reboot.metadata:type_name -> common.Metadata
+	197, // 6: machine.Reboot.metadata:type_name -> common.Metadata
 	19,  // 7: machine.RebootResponse.messages:type_name -> machine.Reboot
-	188, // 8: machine.Bootstrap.metadata:type_name -> common.Metadata
+	197, // 8: machine.Bootstrap.metadata:type_name -> common.Metadata
 	22,  // 9: machine.BootstrapResponse.messages:type_name -> machine.Bootstrap
 	2,   // 10: machine.SequenceEvent.action:type_name -> machine.SequenceEvent.Action
-	189, // 11: machine.SequenceEvent.error:type_name -> common.Error
+	198, // 11: machine.SequenceEvent.error:type_name -> common.Error
 	3,   // 12: machine.PhaseEvent.action:type_name -> machine.PhaseEvent.Action
 	4,   // 13: machine.TaskEvent.action:type_name -> machine.TaskEvent.Action
 	5,   // 14: machine.ServiceStateEvent.action:type_name -> machine.ServiceStateEvent.Action
 	50,  // 15: machine.ServiceStateEvent.health:type_name -> machine.ServiceHealth
 	6,   // 16: machine.MachineStatusEvent.stage:type_name -> machine.MachineStatusEvent.MachineStage
-	181, // 17: machine.MachineStatusEvent.status:type_name -> machine.MachineStatusEvent.MachineStatus
-	188, // 18: machine.Event.metadata:type_name -> common.Metadata
-	190, // 19: machine.Event.data:type_name -> google.protobuf.Any
+	190, // 17: machine.MachineStatusEvent.status:type_name -> machine.MachineStatusEvent.MachineStatus
+	197, // 18: machine.Event.metadata:type_name -> common.Metadata
+	199, // 19: machine.Event.data:type_name -> google.protobuf.Any
 	35,  // 20: machine.ResetRequest.system_partitions_to_wipe:type_name -> machine.ResetPartitionSpec
 	7,   // 21: machine.ResetRequest.mode:type_name -> machine.ResetRequest.WipeMode
-	188, // 22: machine.Reset.metadata:type_name -> common.Metadata
+	197, // 22: machine.Reset.metadata:type_name -> common.Metadata
 	37,  // 23: machine.ResetResponse.messages:type_name -> machine.Reset
-	188, // 24: machine.Shutdown.metadata:type_name -> common.Metadata
+	197, // 24: machine.Shutdown.metadata:type_name -> common.Metadata
 	39,  // 25: machine.ShutdownResponse.messages:type_name -> machine.Shutdown
 	8,   // 26: machine.UpgradeRequest.reboot_mode:type_name -> machine.UpgradeRequest.RebootMode
-	188, // 27: machine.Upgrade.metadata:type_name -> common.Metadata
+	197, // 27: machine.Upgrade.metadata:type_name -> common.Metadata
 	43,  // 28: machine.UpgradeResponse.messages:type_name -> machine.Upgrade
-	188, // 29: machine.ServiceList.metadata:type_name -> common.Metadata
+	197, // 29: machine.ServiceList.metadata:type_name -> common.Metadata
 	47,  // 30: machine.ServiceList.services:type_name -> machine.ServiceInfo
 	45,  // 31: machine.ServiceListResponse.messages:type_name -> machine.ServiceList
 	48,  // 32: machine.ServiceInfo.events:type_name -> machine.ServiceEvents
 	50,  // 33: machine.ServiceInfo.health:type_name -> machine.ServiceHealth
 	49,  // 34: machine.ServiceEvents.events:type_name -> machine.ServiceEvent
-	191, // 35: machine.ServiceEvent.ts:type_name -> google.protobuf.Timestamp
-	191, // 36: machine.ServiceHealth.last_change:type_name -> google.protobuf.Timestamp
-	188, // 37: machine.ServiceStart.metadata:type_name -> common.Metadata
+	200, // 35: machine.ServiceEvent.ts:type_name -> google.protobuf.Timestamp
+	200, // 36: machine.ServiceHealth.last_change:type_name -> google.protobuf.Timestamp
+	197, // 37: machine.ServiceStart.metadata:type_name -> common.Metadata
 	52,  // 38: machine.ServiceStartResponse.messages:type_name -> machine.ServiceStart
-	188, // 39: machine.ServiceStop.metadata:type_name -> common.Metadata
+	197, // 39: machine.ServiceStop.metadata:type_name -> common.Metadata
 	55,  // 40: machine.ServiceStopResponse.messages:type_name -> machine.ServiceStop
-	188, // 41: machine.ServiceRestart.metadata:type_name -> common.Metadata
+	197, // 41: machine.ServiceRestart.metadata:type_name -> common.Metadata
 	58,  // 42: machine.ServiceRestartResponse.messages:type_name -> machine.ServiceRestart
 	9,   // 43: machine.ListRequest.types:type_name -> machine.ListRequest.Type
-	188, // 44: machine.FileInfo.metadata:type_name -> common.Metadata
+	197, // 44: machine.FileInfo.metadata:type_name -> common.Metadata
 	64,  // 45: machine.FileInfo.xattrs:type_name -> machine.Xattr
-	188, // 46: machine.DiskUsageInfo.metadata:type_name -> common.Metadata
-	188, // 47: machine.Mounts.metadata:type_name -> common.Metadata
+	197, // 46: machine.DiskUsageInfo.metadata:type_name -> common.Metadata
+	197, // 47: machine.Mounts.metadata:type_name -> common.Metadata
 	68,  // 48: machine.Mounts.stats:type_name -> machine.MountStat
 	66,  // 49: machine.MountsResponse.messages:type_name -> machine.Mounts
-	188, // 50: machine.Version.metadata:type_name -> common.Metadata
+	197, // 50: machine.Version.metadata:type_name -> common.Metadata
 	71,  // 51: machine.Version.version:type_name -> machine.VersionInfo
 	72,  // 52: machine.Version.platform:type_name -> machine.PlatformInfo
 	73,  // 53: machine.Version.features:type_name -> machine.FeaturesInfo
 	69,  // 54: machine.VersionResponse.messages:type_name -> machine.Version
-	192, // 55: machine.LogsRequest.driver:type_name -> common.ContainerDriver
-	188, // 56: machine.LogsContainer.metadata:type_name -> common.Metadata
+	201, // 55: machine.LogsRequest.driver:type_name -> common.ContainerDriver
+	197, // 56: machine.LogsContainer.metadata:type_name -> common.Metadata
 	76,  // 57: machine.LogsContainersResponse.messages:type_name -> machine.LogsContainer
-	188, // 58: machine.Rollback.metadata:type_name -> common.Metadata
+	197, // 58: machine.Rollback.metadata:type_name -> common.Metadata
 	79,  // 59: machine.RollbackResponse.messages:type_name -> machine.Rollback
-	192, // 60: machine.ContainersRequest.driver:type_name -> common.ContainerDriver
-	188, // 61: machine.Container.metadata:type_name -> common.Metadata
+	201, // 60: machine.ContainersRequest.driver:type_name -> common.ContainerDriver
+	197, // 61: machine.Container.metadata:type_name -> common.Metadata
 	82,  // 62: machine.Container.containers:type_name -> machine.ContainerInfo
 	83,  // 63: machine.ContainersResponse.messages:type_name -> machine.Container
 	87,  // 64: machine.ProcessesResponse.messages:type_name -> machine.Process
-	188, // 65: machine.Process.metadata:type_name -> common.Metadata
+	197, // 65: machine.Process.metadata:type_name -> common.Metadata
 	88,  // 66: machine.Process.processes:type_name -> machine.ProcessInfo
-	192, // 67: machine.RestartRequest.driver:type_name -> common.ContainerDriver
-	188, // 68: machine.Restart.metadata:type_name -> common.Metadata
+	201, // 67: machine.RestartRequest.driver:type_name -> common.ContainerDriver
+	197, // 68: machine.Restart.metadata:type_name -> common.Metadata
 	90,  // 69: machine.RestartResponse.messages:type_name -> machine.Restart
-	192, // 70: machine.StatsRequest.driver:type_name -> common.ContainerDriver
-	188, // 71: machine.Stats.metadata:type_name -> common.Metadata
+	201, // 70: machine.StatsRequest.driver:type_name -> common.ContainerDriver
+	197, // 71: machine.Stats.metadata:type_name -> common.Metadata
 	95,  // 72: machine.Stats.stats:type_name -> machine.Stat
 	93,  // 73: machine.StatsResponse.messages:type_name -> machine.Stats
-	188, // 74: machine.Memory.metadata:type_name -> common.Metadata
+	197, // 74: machine.Memory.metadata:type_name -> common.Metadata
 	98,  // 75: machine.Memory.meminfo:type_name -> machine.MemInfo
 	96,  // 76: machine.MemoryResponse.messages:type_name -> machine.Memory
 	100, // 77: machine.HostnameResponse.messages:type_name -> machine.Hostname
-	188, // 78: machine.Hostname.metadata:type_name -> common.Metadata
+	197, // 78: machine.Hostname.metadata:type_name -> common.Metadata
 	102, // 79: machine.LoadAvgResponse.messages:type_name -> machine.LoadAvg
-	188, // 80: machine.LoadAvg.metadata:type_name -> common.Metadata
+	197, // 80: machine.LoadAvg.metadata:type_name -> common.Metadata
 	104, // 81: machine.SystemStatResponse.messages:type_name -> machine.SystemStat
-	188, // 82: machine.SystemStat.metadata:type_name -> common.Metadata
+	197, // 82: machine.SystemStat.metadata:type_name -> common.Metadata
 	105, // 83: machine.SystemStat.cpu_total:type_name -> machine.CPUStat
 	105, // 84: machine.SystemStat.cpu:type_name -> machine.CPUStat
 	106, // 85: machine.SystemStat.soft_irq:type_name -> machine.SoftIRQStat
 	108, // 86: machine.CPUFreqStatsResponse.messages:type_name -> machine.CPUsFreqStats
-	188, // 87: machine.CPUsFreqStats.metadata:type_name -> common.Metadata
+	197, // 87: machine.CPUsFreqStats.metadata:type_name -> common.Metadata
 	109, // 88: machine.CPUsFreqStats.cpu_freq_stats:type_name -> machine.CPUFreqStats
 	111, // 89: machine.CPUInfoResponse.messages:type_name -> machine.CPUsInfo
-	188, // 90: machine.CPUsInfo.metadata:type_name -> common.Metadata
+	197, // 90: machine.CPUsInfo.metadata:type_name -> common.Metadata
 	112, // 91: machine.CPUsInfo.cpu_info:type_name -> machine.CPUInfo
 	114, // 92: machine.NetworkDeviceStatsResponse.messages:type_name -> machine.NetworkDeviceStats
-	188, // 93: machine.NetworkDeviceStats.metadata:type_name -> common.Metadata
+	197, // 93: machine.NetworkDeviceStats.metadata:type_name -> common.Metadata
 	115, // 94: machine.NetworkDeviceStats.total:type_name -> machine.NetDev
 	115, // 95: machine.NetworkDeviceStats.devices:type_name -> machine.NetDev
 	117, // 96: machine.DiskStatsResponse.messages:type_name -> machine.DiskStats
-	188, // 97: machine.DiskStats.metadata:type_name -> common.Metadata
+	197, // 97: machine.DiskStats.metadata:type_name -> common.Metadata
 	118, // 98: machine.DiskStats.total:type_name -> machine.DiskStat
 	118, // 99: machine.DiskStats.devices:type_name -> machine.DiskStat
-	188, // 100: machine.EtcdLeaveCluster.metadata:type_name -> common.Metadata
+	197, // 100: machine.EtcdLeaveCluster.metadata:type_name -> common.Metadata
 	120, // 101: machine.EtcdLeaveClusterResponse.messages:type_name -> machine.EtcdLeaveCluster
-	188, // 102: machine.EtcdRemoveMember.metadata:type_name -> common.Metadata
+	197, // 102: machine.EtcdRemoveMember.metadata:type_name -> common.Metadata
 	123, // 103: machine.EtcdRemoveMemberResponse.messages:type_name -> machine.EtcdRemoveMember
-	188, // 104: machine.EtcdRemoveMemberByID.metadata:type_name -> common.Metadata
+	197, // 104: machine.EtcdRemoveMemberByID.metadata:type_name -> common.Metadata
 	126, // 105: machine.EtcdRemoveMemberByIDResponse.messages:type_name -> machine.EtcdRemoveMemberByID
-	188, // 106: machine.EtcdForfeitLeadership.metadata:type_name -> common.Metadata
+	197, // 106: machine.EtcdForfeitLeadership.metadata:type_name -> common.Metadata
 	129, // 107: machine.EtcdForfeitLeadershipResponse.messages:type_name -> machine.EtcdForfeitLeadership
-	188, // 108: machine.EtcdMembers.metadata:type_name -> common.Metadata
+	197, // 108: machine.EtcdMembers.metadata:type_name -> common.Metadata
 	132, // 109: machine.EtcdMembers.members:type_name -> machine.EtcdMember
 	133, // 110: machine.EtcdMemberListResponse.messages:type_name -> machine.EtcdMembers
-	188, // 111: machine.EtcdRecover.metadata:type_name -> common.Metadata
+	197, // 111: machine.EtcdRecover.metadata:type_name -> common.Metadata
 	136, // 112: machine.EtcdRecoverResponse.messages:type_name -> machine.EtcdRecover
 	139, // 113: machine.EtcdAlarmListResponse.messages:type_name -> machine.EtcdAlarm
-	188, // 114: machine.EtcdAlarm.metadata:type_name -> common.Metadata
+	197, // 114: machine.EtcdAlarm.metadata:type_name -> common.Metadata
 	140, // 115: machine.EtcdAlarm.member_alarms:type_name -> machine.EtcdMemberAlarm
 	10,  // 116: machine.EtcdMemberAlarm.alarm:type_name -> machine.EtcdMemberAlarm.AlarmType
 	142, // 117: machine.EtcdAlarmDisarmResponse.messages:type_name -> machine.EtcdAlarmDisarm
-	188, // 118: machine.EtcdAlarmDisarm.metadata:type_name -> common.Metadata
+	197, // 118: machine.EtcdAlarmDisarm.metadata:type_name -> common.Metadata
 	140, // 119: machine.EtcdAlarmDisarm.member_alarms:type_name -> machine.EtcdMemberAlarm
 	144, // 120: machine.EtcdDefragmentResponse.messages:type_name -> machine.EtcdDefragment
-	188, // 121: machine.EtcdDefragment.metadata:type_name -> common.Metadata
+	197, // 121: machine.EtcdDefragment.metadata:type_name -> common.Metadata
 	146, // 122: machine.EtcdStatusResponse.messages:type_name -> machine.EtcdStatus
-	188, // 123: machine.EtcdStatus.metadata:type_name -> common.Metadata
+	197, // 123: machine.EtcdStatus.metadata:type_name -> common.Metadata
 	147, // 124: machine.EtcdStatus.member_status:type_name -> machine.EtcdMemberStatus
-	149, // 125: machine.NetworkDeviceConfig.dhcp_options:type_name -> machine.DHCPOptionsConfig
-	148, // 126: machine.NetworkDeviceConfig.routes:type_name -> machine.RouteConfig
-	150, // 127: machine.NetworkConfig.interfaces:type_name -> machine.NetworkDeviceConfig
-	11,  // 128: machine.MachineConfig.type:type_name -> machine.MachineConfig.MachineType
-	152, // 129: machine.MachineConfig.install_config:type_name -> machine.InstallConfig
-	151, // 130: machine.MachineConfig.network_config:type_name -> machine.NetworkConfig
-	155, // 131: machine.ClusterNetworkConfig.cni_config:type_name -> machine.CNIConfig
-	154, // 132: machine.ClusterConfig.control_plane:type_name -> machine.ControlPlaneConfig
-	156, // 133: machine.ClusterConfig.cluster_network:type_name -> machine.ClusterNetworkConfig
-	157, // 134: machine.GenerateConfigurationRequest.cluster_config:type_name -> machine.ClusterConfig
-	153, // 135: machine.GenerateConfigurationRequest.machine_config:type_name -> machine.MachineConfig
-	191, // 136: machine.GenerateConfigurationRequest.override_time:type_name -> google.protobuf.Timestamp
-	188, // 137: machine.GenerateConfiguration.metadata:type_name -> common.Metadata
-	159, // 138: machine.GenerateConfigurationResponse.messages:type_name -> machine.GenerateConfiguration
-	187, // 139: machine.GenerateClientConfigurationRequest.crt_ttl:type_name -> google.protobuf.Duration
-	188, // 140: machine.GenerateClientConfiguration.metadata:type_name -> common.Metadata
-	162, // 141: machine.GenerateClientConfigurationResponse.messages:type_name -> machine.GenerateClientConfiguration
-	165, // 142: machine.PacketCaptureRequest.bpf_filter:type_name -> machine.BPFInstruction
-	12,  // 143: machine.NetstatRequest.filter:type_name -> machine.NetstatRequest.Filter
-	183, // 144: machine.NetstatRequest.feature:type_name -> machine.NetstatRequest.Feature
-	184, // 145: machine.NetstatRequest.l4proto:type_name -> machine.NetstatRequest.L4proto
-	185, // 146: machine.NetstatRequest.netns:type_name -> machine.NetstatRequest.NetNS
-	13,  // 147: machine.ConnectRecord.state:type_name -> machine.ConnectRecord.State
-	14,  // 148: machine.ConnectRecord.tr:type_name -> machine.ConnectRecord.TimerActive
-	186, // 149: machine.ConnectRecord.process:type_name -> machine.ConnectRecord.Process
-	188, // 150: machine.Netstat.metadata:type_name -> common.Metadata
-	167, // 151: machine.Netstat.connectrecord:type_name -> machine.ConnectRecord
-	168, // 152: machine.NetstatResponse.messages:type_name -> machine.Netstat
-	188, // 153: machine.MetaWrite.metadata:type_name -> common.Metadata
-	171, // 154: machine.MetaWriteResponse.messages:type_name -> machine.MetaWrite
-	188, // 155: machine.MetaDelete.metadata:type_name -> common.Metadata
-	174, // 156: machine.MetaDeleteResponse.messages:type_name -> machine.MetaDelete
-	193, // 157: machine.ImageListRequest.namespace:type_name -> common.ContainerdNamespace
-	188, // 158: machine.ImageListResponse.metadata:type_name -> common.Metadata
-	191, // 159: machine.ImageListResponse.created_at:type_name -> google.protobuf.Timestamp
-	193, // 160: machine.ImagePullRequest.namespace:type_name -> common.ContainerdNamespace
-	188, // 161: machine.ImagePull.metadata:type_name -> common.Metadata
-	179, // 162: machine.ImagePullResponse.messages:type_name -> machine.ImagePull
-	182, // 163: machine.MachineStatusEvent.MachineStatus.unmet_conditions:type_name -> machine.MachineStatusEvent.MachineStatus.UnmetCondition
-	15,  // 164: machine.MachineService.ApplyConfiguration:input_type -> machine.ApplyConfigurationRequest
-	21,  // 165: machine.MachineService.Bootstrap:input_type -> machine.BootstrapRequest
-	81,  // 166: machine.MachineService.Containers:input_type -> machine.ContainersRequest
-	60,  // 167: machine.MachineService.Copy:input_type -> machine.CopyRequest
-	194, // 168: machine.MachineService.CPUFreqStats:input_type -> google.protobuf.Empty
-	194, // 169: machine.MachineService.CPUInfo:input_type -> google.protobuf.Empty
-	194, // 170: machine.MachineService.DiskStats:input_type -> google.protobuf.Empty
-	85,  // 171: machine.MachineService.Dmesg:input_type -> machine.DmesgRequest
-	33,  // 172: machine.MachineService.Events:input_type -> machine.EventsRequest
-	131, // 173: machine.MachineService.EtcdMemberList:input_type -> machine.EtcdMemberListRequest
-	125, // 174: machine.MachineService.EtcdRemoveMemberByID:input_type -> machine.EtcdRemoveMemberByIDRequest
-	119, // 175: machine.MachineService.EtcdLeaveCluster:input_type -> machine.EtcdLeaveClusterRequest
-	128, // 176: machine.MachineService.EtcdForfeitLeadership:input_type -> machine.EtcdForfeitLeadershipRequest
-	195, // 177: machine.MachineService.EtcdRecover:input_type -> common.Data
-	135, // 178: machine.MachineService.EtcdSnapshot:input_type -> machine.EtcdSnapshotRequest
-	194, // 179: machine.MachineService.EtcdAlarmList:input_type -> google.protobuf.Empty
-	194, // 180: machine.MachineService.EtcdAlarmDisarm:input_type -> google.protobuf.Empty
-	194, // 181: machine.MachineService.EtcdDefragment:input_type -> google.protobuf.Empty
-	194, // 182: machine.MachineService.EtcdStatus:input_type -> google.protobuf.Empty
-	158, // 183: machine.MachineService.GenerateConfiguration:input_type -> machine.GenerateConfigurationRequest
-	194, // 184: machine.MachineService.Hostname:input_type -> google.protobuf.Empty
-	194, // 185: machine.MachineService.Kubeconfig:input_type -> google.protobuf.Empty
-	61,  // 186: machine.MachineService.List:input_type -> machine.ListRequest
-	62,  // 187: machine.MachineService.DiskUsage:input_type -> machine.DiskUsageRequest
-	194, // 188: machine.MachineService.LoadAvg:input_type -> google.protobuf.Empty
-	74,  // 189: machine.MachineService.Logs:input_type -> machine.LogsRequest
-	194, // 190: machine.MachineService.LogsContainers:input_type -> google.protobuf.Empty
-	194, // 191: machine.MachineService.Memory:input_type -> google.protobuf.Empty
-	194, // 192: machine.MachineService.Mounts:input_type -> google.protobuf.Empty
-	194, // 193: machine.MachineService.NetworkDeviceStats:input_type -> google.protobuf.Empty
-	194, // 194: machine.MachineService.Processes:input_type -> google.protobuf.Empty
-	75,  // 195: machine.MachineService.Read:input_type -> machine.ReadRequest
-	18,  // 196: machine.MachineService.Reboot:input_type -> machine.RebootRequest
-	89,  // 197: machine.MachineService.Restart:input_type -> machine.RestartRequest
-	78,  // 198: machine.MachineService.Rollback:input_type -> machine.RollbackRequest
-	36,  // 199: machine.MachineService.Reset:input_type -> machine.ResetRequest
-	194, // 200: machine.MachineService.ServiceList:input_type -> google.protobuf.Empty
-	57,  // 201: machine.MachineService.ServiceRestart:input_type -> machine.ServiceRestartRequest
-	51,  // 202: machine.MachineService.ServiceStart:input_type -> machine.ServiceStartRequest
-	54,  // 203: machine.MachineService.ServiceStop:input_type -> machine.ServiceStopRequest
-	40,  // 204: machine.MachineService.Shutdown:input_type -> machine.ShutdownRequest
-	92,  // 205: machine.MachineService.Stats:input_type -> machine.StatsRequest
-	194, // 206: machine.MachineService.SystemStat:input_type -> google.protobuf.Empty
-	42,  // 207: machine.MachineService.Upgrade:input_type -> machine.UpgradeRequest
-	194, // 208: machine.MachineService.Version:input_type -> google.protobuf.Empty
-	161, // 209: machine.MachineService.GenerateClientConfiguration:input_type -> machine.GenerateClientConfigurationRequest
-	164, // 210: machine.MachineService.PacketCapture:input_type -> machine.PacketCaptureRequest
-	166, // 211: machine.MachineService.Netstat:input_type -> machine.NetstatRequest
-	170, // 212: machine.MachineService.MetaWrite:input_type -> machine.MetaWriteRequest
-	173, // 213: machine.MachineService.MetaDelete:input_type -> machine.MetaDeleteRequest
-	176, // 214: machine.MachineService.ImageList:input_type -> machine.ImageListRequest
-	178, // 215: machine.MachineService.ImagePull:input_type -> machine.ImagePullRequest
-	17,  // 216: machine.MachineService.ApplyConfiguration:output_type -> machine.ApplyConfigurationResponse
-	23,  // 217: machine.MachineService.Bootstrap:output_type -> machine.BootstrapResponse
-	84,  // 218: machine.MachineService.Containers:output_type -> machine.ContainersResponse
-	195, // 219: machine.MachineService.Copy:output_type -> common.Data
-	107, // 220: machine.MachineService.CPUFreqStats:output_type -> machine.CPUFreqStatsResponse
-	110, // 221: machine.MachineService.CPUInfo:output_type -> machine.CPUInfoResponse
-	116, // 222: machine.MachineService.DiskStats:output_type -> machine.DiskStatsResponse
-	195, // 223: machine.MachineService.Dmesg:output_type -> common.Data
-	34,  // 224: machine.MachineService.Events:output_type -> machine.Event
-	134, // 225: machine.MachineService.EtcdMemberList:output_type -> machine.EtcdMemberListResponse
-	127, // 226: machine.MachineService.EtcdRemoveMemberByID:output_type -> machine.EtcdRemoveMemberByIDResponse
-	121, // 227: machine.MachineService.EtcdLeaveCluster:output_type -> machine.EtcdLeaveClusterResponse
-	130, // 228: machine.MachineService.EtcdForfeitLeadership:output_type -> machine.EtcdForfeitLeadershipResponse
-	137, // 229: machine.MachineService.EtcdRecover:output_type -> machine.EtcdRecoverResponse
-	195, // 230: machine.MachineService.EtcdSnapshot:output_type -> common.Data
-	138, // 231: machine.MachineService.EtcdAlarmList:output_type -> machine.EtcdAlarmListResponse
-	141, // 232: machine.MachineService.EtcdAlarmDisarm:output_type -> machine.EtcdAlarmDisarmResponse
-	143, // 233: machine.MachineService.EtcdDefragment:output_type -> machine.EtcdDefragmentResponse
-	145, // 234: machine.MachineService.EtcdStatus:output_type -> machine.EtcdStatusResponse
-	160, // 235: machine.MachineService.GenerateConfiguration:output_type -> machine.GenerateConfigurationResponse
-	99,  // 236: machine.MachineService.Hostname:output_type -> machine.HostnameResponse
-	195, // 237: machine.MachineService.Kubeconfig:output_type -> common.Data
-	63,  // 238: machine.MachineService.List:output_type -> machine.FileInfo
-	65,  // 239: machine.MachineService.DiskUsage:output_type -> machine.DiskUsageInfo
-	101, // 240: machine.MachineService.LoadAvg:output_type -> machine.LoadAvgResponse
-	195, // 241: machine.MachineService.Logs:output_type -> common.Data
-	77,  // 242: machine.MachineService.LogsContainers:output_type -> machine.LogsContainersResponse
-	97,  // 243: machine.MachineService.Memory:output_type -> machine.MemoryResponse
-	67,  // 244: machine.MachineService.Mounts:output_type -> machine.MountsResponse
-	113, // 245: machine.MachineService.NetworkDeviceStats:output_type -> machine.NetworkDeviceStatsResponse
-	86,  // 246: machine.MachineService.Processes:output_type -> machine.ProcessesResponse
-	195, // 247: machine.MachineService.Read:output_type -> common.Data
-	20,  // 248: machine.MachineService.Reboot:output_type -> machine.RebootResponse
-	91,  // 249: machine.MachineService.Restart:output_type -> machine.RestartResponse
-	80,  // 250: machine.MachineService.Rollback:output_type -> machine.RollbackResponse
-	38,  // 251: machine.MachineService.Reset:output_type -> machine.ResetResponse
-	46,  // 252: machine.MachineService.ServiceList:output_type -> machine.ServiceListResponse
-	59,  // 253: machine.MachineService.ServiceRestart:output_type -> machine.ServiceRestartResponse
-	53,  // 254: machine.MachineService.ServiceStart:output_type -> machine.ServiceStartResponse
-	56,  // 255: machine.MachineService.ServiceStop:output_type -> machine.ServiceStopResponse
-	41,  // 256: machine.MachineService.Shutdown:output_type -> machine.ShutdownResponse
-	94,  // 257: machine.MachineService.Stats:output_type -> machine.StatsResponse
-	103, // 258: machine.MachineService.SystemStat:output_type -> machine.SystemStatResponse
-	44,  // 259: machine.MachineService.Upgrade:output_type -> machine.UpgradeResponse
-	70,  // 260: machine.MachineService.Version:output_type -> machine.VersionResponse
-	163, // 261: machine.MachineService.GenerateClientConfiguration:output_type -> machine.GenerateClientConfigurationResponse
-	195, // 262: machine.MachineService.PacketCapture:output_type -> common.Data
-	169, // 263: machine.MachineService.Netstat:output_type -> machine.NetstatResponse
-	172, // 264: machine.MachineService.MetaWrite:output_type -> machine.MetaWriteResponse
-	175, // 265: machine.MachineService.MetaDelete:output_type -> machine.MetaDeleteResponse
-	177, // 266: machine.MachineService.ImageList:output_type -> machine.ImageListResponse
-	180, // 267: machine.MachineService.ImagePull:output_type -> machine.ImagePullResponse
-	216, // [216:268] is the sub-list for method output_type
-	164, // [164:216] is the sub-list for method input_type
-	164, // [164:164] is the sub-list for extension type_name
-	164, // [164:164] is the sub-list for extension extendee
-	0,   // [0:164] is the sub-list for field type_name
+	150, // 125: machine.EtcdDowngradeValidateResponse.messages:type_name -> machine.EtcdDowngradeValidate
+	197, // 126: machine.EtcdDowngradeValidate.metadata:type_name -> common.Metadata
+	156, // 127: machine.EtcdDowngradeValidate.cluster_downgrade:type_name -> machine.EtcdClusterDowngrade
+	153, // 128: machine.EtcdDowngradeEnableResponse.messages:type_name -> machine.EtcdDowngradeEnable
+	197, // 129: machine.EtcdDowngradeEnable.metadata:type_name -> common.Metadata
+	156, // 130: machine.EtcdDowngradeEnable.cluster_downgrade:type_name -> machine.EtcdClusterDowngrade
+	155, // 131: machine.EtcdDowngradeCancelResponse.messages:type_name -> machine.EtcdDowngradeCancel
+	197, // 132: machine.EtcdDowngradeCancel.metadata:type_name -> common.Metadata
+	156, // 133: machine.EtcdDowngradeCancel.cluster_downgrade:type_name -> machine.EtcdClusterDowngrade
+	158, // 134: machine.NetworkDeviceConfig.dhcp_options:type_name -> machine.DHCPOptionsConfig
+	157, // 135: machine.NetworkDeviceConfig.routes:type_name -> machine.RouteConfig
+	159, // 136: machine.NetworkConfig.interfaces:type_name -> machine.NetworkDeviceConfig
+	11,  // 137: machine.MachineConfig.type:type_name -> machine.MachineConfig.MachineType
+	161, // 138: machine.MachineConfig.install_config:type_name -> machine.InstallConfig
+	160, // 139: machine.MachineConfig.network_config:type_name -> machine.NetworkConfig
+	164, // 140: machine.ClusterNetworkConfig.cni_config:type_name -> machine.CNIConfig
+	163, // 141: machine.ClusterConfig.control_plane:type_name -> machine.ControlPlaneConfig
+	165, // 142: machine.ClusterConfig.cluster_network:type_name -> machine.ClusterNetworkConfig
+	166, // 143: machine.GenerateConfigurationRequest.cluster_config:type_name -> machine.ClusterConfig
+	162, // 144: machine.GenerateConfigurationRequest.machine_config:type_name -> machine.MachineConfig
+	200, // 145: machine.GenerateConfigurationRequest.override_time:type_name -> google.protobuf.Timestamp
+	197, // 146: machine.GenerateConfiguration.metadata:type_name -> common.Metadata
+	168, // 147: machine.GenerateConfigurationResponse.messages:type_name -> machine.GenerateConfiguration
+	196, // 148: machine.GenerateClientConfigurationRequest.crt_ttl:type_name -> google.protobuf.Duration
+	197, // 149: machine.GenerateClientConfiguration.metadata:type_name -> common.Metadata
+	171, // 150: machine.GenerateClientConfigurationResponse.messages:type_name -> machine.GenerateClientConfiguration
+	174, // 151: machine.PacketCaptureRequest.bpf_filter:type_name -> machine.BPFInstruction
+	12,  // 152: machine.NetstatRequest.filter:type_name -> machine.NetstatRequest.Filter
+	192, // 153: machine.NetstatRequest.feature:type_name -> machine.NetstatRequest.Feature
+	193, // 154: machine.NetstatRequest.l4proto:type_name -> machine.NetstatRequest.L4proto
+	194, // 155: machine.NetstatRequest.netns:type_name -> machine.NetstatRequest.NetNS
+	13,  // 156: machine.ConnectRecord.state:type_name -> machine.ConnectRecord.State
+	14,  // 157: machine.ConnectRecord.tr:type_name -> machine.ConnectRecord.TimerActive
+	195, // 158: machine.ConnectRecord.process:type_name -> machine.ConnectRecord.Process
+	197, // 159: machine.Netstat.metadata:type_name -> common.Metadata
+	176, // 160: machine.Netstat.connectrecord:type_name -> machine.ConnectRecord
+	177, // 161: machine.NetstatResponse.messages:type_name -> machine.Netstat
+	197, // 162: machine.MetaWrite.metadata:type_name -> common.Metadata
+	180, // 163: machine.MetaWriteResponse.messages:type_name -> machine.MetaWrite
+	197, // 164: machine.MetaDelete.metadata:type_name -> common.Metadata
+	183, // 165: machine.MetaDeleteResponse.messages:type_name -> machine.MetaDelete
+	202, // 166: machine.ImageListRequest.namespace:type_name -> common.ContainerdNamespace
+	197, // 167: machine.ImageListResponse.metadata:type_name -> common.Metadata
+	200, // 168: machine.ImageListResponse.created_at:type_name -> google.protobuf.Timestamp
+	202, // 169: machine.ImagePullRequest.namespace:type_name -> common.ContainerdNamespace
+	197, // 170: machine.ImagePull.metadata:type_name -> common.Metadata
+	188, // 171: machine.ImagePullResponse.messages:type_name -> machine.ImagePull
+	191, // 172: machine.MachineStatusEvent.MachineStatus.unmet_conditions:type_name -> machine.MachineStatusEvent.MachineStatus.UnmetCondition
+	15,  // 173: machine.MachineService.ApplyConfiguration:input_type -> machine.ApplyConfigurationRequest
+	21,  // 174: machine.MachineService.Bootstrap:input_type -> machine.BootstrapRequest
+	81,  // 175: machine.MachineService.Containers:input_type -> machine.ContainersRequest
+	60,  // 176: machine.MachineService.Copy:input_type -> machine.CopyRequest
+	203, // 177: machine.MachineService.CPUFreqStats:input_type -> google.protobuf.Empty
+	203, // 178: machine.MachineService.CPUInfo:input_type -> google.protobuf.Empty
+	203, // 179: machine.MachineService.DiskStats:input_type -> google.protobuf.Empty
+	85,  // 180: machine.MachineService.Dmesg:input_type -> machine.DmesgRequest
+	33,  // 181: machine.MachineService.Events:input_type -> machine.EventsRequest
+	131, // 182: machine.MachineService.EtcdMemberList:input_type -> machine.EtcdMemberListRequest
+	125, // 183: machine.MachineService.EtcdRemoveMemberByID:input_type -> machine.EtcdRemoveMemberByIDRequest
+	119, // 184: machine.MachineService.EtcdLeaveCluster:input_type -> machine.EtcdLeaveClusterRequest
+	128, // 185: machine.MachineService.EtcdForfeitLeadership:input_type -> machine.EtcdForfeitLeadershipRequest
+	204, // 186: machine.MachineService.EtcdRecover:input_type -> common.Data
+	135, // 187: machine.MachineService.EtcdSnapshot:input_type -> machine.EtcdSnapshotRequest
+	203, // 188: machine.MachineService.EtcdAlarmList:input_type -> google.protobuf.Empty
+	203, // 189: machine.MachineService.EtcdAlarmDisarm:input_type -> google.protobuf.Empty
+	203, // 190: machine.MachineService.EtcdDefragment:input_type -> google.protobuf.Empty
+	203, // 191: machine.MachineService.EtcdStatus:input_type -> google.protobuf.Empty
+	148, // 192: machine.MachineService.EtcdDowngradeValidate:input_type -> machine.EtcdDowngradeValidateRequest
+	151, // 193: machine.MachineService.EtcdDowngradeEnable:input_type -> machine.EtcdDowngradeEnableRequest
+	203, // 194: machine.MachineService.EtcdDowngradeCancel:input_type -> google.protobuf.Empty
+	167, // 195: machine.MachineService.GenerateConfiguration:input_type -> machine.GenerateConfigurationRequest
+	203, // 196: machine.MachineService.Hostname:input_type -> google.protobuf.Empty
+	203, // 197: machine.MachineService.Kubeconfig:input_type -> google.protobuf.Empty
+	61,  // 198: machine.MachineService.List:input_type -> machine.ListRequest
+	62,  // 199: machine.MachineService.DiskUsage:input_type -> machine.DiskUsageRequest
+	203, // 200: machine.MachineService.LoadAvg:input_type -> google.protobuf.Empty
+	74,  // 201: machine.MachineService.Logs:input_type -> machine.LogsRequest
+	203, // 202: machine.MachineService.LogsContainers:input_type -> google.protobuf.Empty
+	203, // 203: machine.MachineService.Memory:input_type -> google.protobuf.Empty
+	203, // 204: machine.MachineService.Mounts:input_type -> google.protobuf.Empty
+	203, // 205: machine.MachineService.NetworkDeviceStats:input_type -> google.protobuf.Empty
+	203, // 206: machine.MachineService.Processes:input_type -> google.protobuf.Empty
+	75,  // 207: machine.MachineService.Read:input_type -> machine.ReadRequest
+	18,  // 208: machine.MachineService.Reboot:input_type -> machine.RebootRequest
+	89,  // 209: machine.MachineService.Restart:input_type -> machine.RestartRequest
+	78,  // 210: machine.MachineService.Rollback:input_type -> machine.RollbackRequest
+	36,  // 211: machine.MachineService.Reset:input_type -> machine.ResetRequest
+	203, // 212: machine.MachineService.ServiceList:input_type -> google.protobuf.Empty
+	57,  // 213: machine.MachineService.ServiceRestart:input_type -> machine.ServiceRestartRequest
+	51,  // 214: machine.MachineService.ServiceStart:input_type -> machine.ServiceStartRequest
+	54,  // 215: machine.MachineService.ServiceStop:input_type -> machine.ServiceStopRequest
+	40,  // 216: machine.MachineService.Shutdown:input_type -> machine.ShutdownRequest
+	92,  // 217: machine.MachineService.Stats:input_type -> machine.StatsRequest
+	203, // 218: machine.MachineService.SystemStat:input_type -> google.protobuf.Empty
+	42,  // 219: machine.MachineService.Upgrade:input_type -> machine.UpgradeRequest
+	203, // 220: machine.MachineService.Version:input_type -> google.protobuf.Empty
+	170, // 221: machine.MachineService.GenerateClientConfiguration:input_type -> machine.GenerateClientConfigurationRequest
+	173, // 222: machine.MachineService.PacketCapture:input_type -> machine.PacketCaptureRequest
+	175, // 223: machine.MachineService.Netstat:input_type -> machine.NetstatRequest
+	179, // 224: machine.MachineService.MetaWrite:input_type -> machine.MetaWriteRequest
+	182, // 225: machine.MachineService.MetaDelete:input_type -> machine.MetaDeleteRequest
+	185, // 226: machine.MachineService.ImageList:input_type -> machine.ImageListRequest
+	187, // 227: machine.MachineService.ImagePull:input_type -> machine.ImagePullRequest
+	17,  // 228: machine.MachineService.ApplyConfiguration:output_type -> machine.ApplyConfigurationResponse
+	23,  // 229: machine.MachineService.Bootstrap:output_type -> machine.BootstrapResponse
+	84,  // 230: machine.MachineService.Containers:output_type -> machine.ContainersResponse
+	204, // 231: machine.MachineService.Copy:output_type -> common.Data
+	107, // 232: machine.MachineService.CPUFreqStats:output_type -> machine.CPUFreqStatsResponse
+	110, // 233: machine.MachineService.CPUInfo:output_type -> machine.CPUInfoResponse
+	116, // 234: machine.MachineService.DiskStats:output_type -> machine.DiskStatsResponse
+	204, // 235: machine.MachineService.Dmesg:output_type -> common.Data
+	34,  // 236: machine.MachineService.Events:output_type -> machine.Event
+	134, // 237: machine.MachineService.EtcdMemberList:output_type -> machine.EtcdMemberListResponse
+	127, // 238: machine.MachineService.EtcdRemoveMemberByID:output_type -> machine.EtcdRemoveMemberByIDResponse
+	121, // 239: machine.MachineService.EtcdLeaveCluster:output_type -> machine.EtcdLeaveClusterResponse
+	130, // 240: machine.MachineService.EtcdForfeitLeadership:output_type -> machine.EtcdForfeitLeadershipResponse
+	137, // 241: machine.MachineService.EtcdRecover:output_type -> machine.EtcdRecoverResponse
+	204, // 242: machine.MachineService.EtcdSnapshot:output_type -> common.Data
+	138, // 243: machine.MachineService.EtcdAlarmList:output_type -> machine.EtcdAlarmListResponse
+	141, // 244: machine.MachineService.EtcdAlarmDisarm:output_type -> machine.EtcdAlarmDisarmResponse
+	143, // 245: machine.MachineService.EtcdDefragment:output_type -> machine.EtcdDefragmentResponse
+	145, // 246: machine.MachineService.EtcdStatus:output_type -> machine.EtcdStatusResponse
+	149, // 247: machine.MachineService.EtcdDowngradeValidate:output_type -> machine.EtcdDowngradeValidateResponse
+	152, // 248: machine.MachineService.EtcdDowngradeEnable:output_type -> machine.EtcdDowngradeEnableResponse
+	154, // 249: machine.MachineService.EtcdDowngradeCancel:output_type -> machine.EtcdDowngradeCancelResponse
+	169, // 250: machine.MachineService.GenerateConfiguration:output_type -> machine.GenerateConfigurationResponse
+	99,  // 251: machine.MachineService.Hostname:output_type -> machine.HostnameResponse
+	204, // 252: machine.MachineService.Kubeconfig:output_type -> common.Data
+	63,  // 253: machine.MachineService.List:output_type -> machine.FileInfo
+	65,  // 254: machine.MachineService.DiskUsage:output_type -> machine.DiskUsageInfo
+	101, // 255: machine.MachineService.LoadAvg:output_type -> machine.LoadAvgResponse
+	204, // 256: machine.MachineService.Logs:output_type -> common.Data
+	77,  // 257: machine.MachineService.LogsContainers:output_type -> machine.LogsContainersResponse
+	97,  // 258: machine.MachineService.Memory:output_type -> machine.MemoryResponse
+	67,  // 259: machine.MachineService.Mounts:output_type -> machine.MountsResponse
+	113, // 260: machine.MachineService.NetworkDeviceStats:output_type -> machine.NetworkDeviceStatsResponse
+	86,  // 261: machine.MachineService.Processes:output_type -> machine.ProcessesResponse
+	204, // 262: machine.MachineService.Read:output_type -> common.Data
+	20,  // 263: machine.MachineService.Reboot:output_type -> machine.RebootResponse
+	91,  // 264: machine.MachineService.Restart:output_type -> machine.RestartResponse
+	80,  // 265: machine.MachineService.Rollback:output_type -> machine.RollbackResponse
+	38,  // 266: machine.MachineService.Reset:output_type -> machine.ResetResponse
+	46,  // 267: machine.MachineService.ServiceList:output_type -> machine.ServiceListResponse
+	59,  // 268: machine.MachineService.ServiceRestart:output_type -> machine.ServiceRestartResponse
+	53,  // 269: machine.MachineService.ServiceStart:output_type -> machine.ServiceStartResponse
+	56,  // 270: machine.MachineService.ServiceStop:output_type -> machine.ServiceStopResponse
+	41,  // 271: machine.MachineService.Shutdown:output_type -> machine.ShutdownResponse
+	94,  // 272: machine.MachineService.Stats:output_type -> machine.StatsResponse
+	103, // 273: machine.MachineService.SystemStat:output_type -> machine.SystemStatResponse
+	44,  // 274: machine.MachineService.Upgrade:output_type -> machine.UpgradeResponse
+	70,  // 275: machine.MachineService.Version:output_type -> machine.VersionResponse
+	172, // 276: machine.MachineService.GenerateClientConfiguration:output_type -> machine.GenerateClientConfigurationResponse
+	204, // 277: machine.MachineService.PacketCapture:output_type -> common.Data
+	178, // 278: machine.MachineService.Netstat:output_type -> machine.NetstatResponse
+	181, // 279: machine.MachineService.MetaWrite:output_type -> machine.MetaWriteResponse
+	184, // 280: machine.MachineService.MetaDelete:output_type -> machine.MetaDeleteResponse
+	186, // 281: machine.MachineService.ImageList:output_type -> machine.ImageListResponse
+	189, // 282: machine.MachineService.ImagePull:output_type -> machine.ImagePullResponse
+	228, // [228:283] is the sub-list for method output_type
+	173, // [173:228] is the sub-list for method input_type
+	173, // [173:173] is the sub-list for extension type_name
+	173, // [173:173] is the sub-list for extension extendee
+	0,   // [0:173] is the sub-list for field type_name
 }
 
 func init() { file_machine_machine_proto_init() }
@@ -12794,7 +13271,7 @@ func file_machine_machine_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_machine_machine_proto_rawDesc), len(file_machine_machine_proto_rawDesc)),
 			NumEnums:      15,
-			NumMessages:   172,
+			NumMessages:   181,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

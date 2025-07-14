@@ -122,6 +122,13 @@ The default version will be kept at v3.5.x for now, but users can still use v3.6
 See https://github.com/etcd-io/etcd/issues/20340
 """
 
+    [notes.etcd_downgrade_api]
+        title = "ETCD downgrade API"
+        description = """\
+Added ETCD downgrade API mimicking the ETCD API and etcdctl interfaces.
+This API allows to downgrade ETCD cluster (storage format) to a previous version.
+"""
+
 [make_deps]
 
     [make_deps.tools]

@@ -849,6 +849,33 @@ func (c *Client) EtcdStatus(ctx context.Context, opts ...grpc.CallOption) (*mach
 	return FilterMessages(resp, err)
 }
 
+// EtcdDowngradeCancel cancels etcd cluster downgrade that is in progress.
+//
+// This method is available only on control plane nodes (which run etcd).
+func (c *Client) EtcdDowngradeCancel(ctx context.Context, opts ...grpc.CallOption) (*machineapi.EtcdDowngradeCancelResponse, error) {
+	resp, err := c.MachineClient.EtcdDowngradeCancel(ctx, &emptypb.Empty{}, opts...)
+
+	return FilterMessages(resp, err)
+}
+
+// EtcdDowngradeEnable enables etcd cluster downgrade to a specific version.
+//
+// This method is available only on control plane nodes (which run etcd).
+func (c *Client) EtcdDowngradeEnable(ctx context.Context, req *machineapi.EtcdDowngradeEnableRequest, opts ...grpc.CallOption) (*machineapi.EtcdDowngradeEnableResponse, error) {
+	resp, err := c.MachineClient.EtcdDowngradeEnable(ctx, req, opts...)
+
+	return FilterMessages(resp, err)
+}
+
+// EtcdDowngradeValidate validates etcd cluster for downgrade to a specific version.
+//
+// This method is available only on control plane nodes (which run etcd).
+func (c *Client) EtcdDowngradeValidate(ctx context.Context, req *machineapi.EtcdDowngradeValidateRequest, opts ...grpc.CallOption) (*machineapi.EtcdDowngradeValidateResponse, error) {
+	resp, err := c.MachineClient.EtcdDowngradeValidate(ctx, req, opts...)
+
+	return FilterMessages(resp, err)
+}
+
 // GenerateClientConfiguration implements proto.MachineServiceClient interface.
 func (c *Client) GenerateClientConfiguration(ctx context.Context, req *machineapi.GenerateClientConfigurationRequest, callOptions ...grpc.CallOption) (resp *machineapi.GenerateClientConfigurationResponse, err error) { //nolint:lll
 	resp, err = c.MachineClient.GenerateClientConfiguration(ctx, req, callOptions...)

@@ -19,10 +19,12 @@ import (
 	"os"
 	"path/filepath"
 	"slices"
+	"strconv"
 	"strings"
 	"syscall"
 	"time"
 
+	"github.com/blang/semver/v4"
 	cosiv1alpha1 "github.com/cosi-project/runtime/api/v1alpha1"
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
@@ -2131,6 +2133,18 @@ func (s *Server) EtcdStatus(ctx context.Context, in *emptypb.Empty) (*machine.Et
 		return nil, fmt.Errorf("failed to query etcd status: %w", err)
 	}
 
+	storageVersion := resp.StorageVersion
+	// NOTE: this field is only filled on >3.6.0, thus we need a workaround for previous ETCD versions
+	if storageVersion == "" {
+		if v, err := semver.Parse(resp.Version); err == nil {
+			storageVersion = fmt.Sprintf("%d.%d.0", v.Major, v.Minor)
+		} else {
+			// we swallow the error here, as we don't want to fail the request
+			// over something that is not critical
+			storageVersion = "unknown"
+		}
+	}
+
 	return &machine.EtcdStatusResponse{
 		Messages: []*machine.EtcdStatus{
 			{
@@ -2143,12 +2157,151 @@ func (s *Server) EtcdStatus(ctx context.Context, in *emptypb.Empty) (*machine.Et
 					RaftIndex:        resp.RaftIndex,
 					RaftTerm:         resp.RaftTerm,
 					RaftAppliedIndex: resp.RaftAppliedIndex,
+					StorageVersion:   storageVersion,
 					Errors:           resp.Errors,
 					IsLearner:        resp.IsLearner,
 				},
 			},
 		},
 	}, nil
+}
+
+// EtcdDowngradeCancel cancels etcd cluster downgrade that is in progress.
+//
+// This method is available only on control plane nodes (which run etcd).
+func (s *Server) EtcdDowngradeCancel(ctx context.Context, _ *emptypb.Empty) (*machine.EtcdDowngradeCancelResponse, error) {
+	if err := s.checkControlplane("etcd downgrade cancel"); err != nil {
+		return nil, err
+	}
+
+	client, err := etcd.NewLocalClient(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create etcd client: %w", err)
+	}
+
+	//nolint:errcheck
+	defer client.Close()
+
+	resp, err := client.Downgrade(ctx, clientv3.DowngradeCancel, "")
+	if err != nil {
+		return nil, fmt.Errorf("failed to query etcd status: %w", err)
+	}
+
+	return &machine.EtcdDowngradeCancelResponse{
+		Messages: []*machine.EtcdDowngradeCancel{
+			{
+				ClusterDowngrade: &machine.EtcdClusterDowngrade{
+					ClusterVersion: resp.Version,
+				},
+			},
+		},
+	}, nil
+}
+
+// EtcdDowngradeEnable enables etcd cluster downgrade to a specific version.
+//
+// This method is available only on control plane nodes (which run etcd).
+//
+//nolint:dupl
+func (s *Server) EtcdDowngradeEnable(ctx context.Context, in *machine.EtcdDowngradeEnableRequest) (*machine.EtcdDowngradeEnableResponse, error) {
+	if err := s.checkControlplane("etcd downgrade cancel"); err != nil {
+		return nil, err
+	}
+
+	if err := validateDowngrade(in.Version); err != nil {
+		return nil, err
+	}
+
+	client, err := etcd.NewLocalClient(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create etcd client: %w", err)
+	}
+
+	//nolint:errcheck
+	defer client.Close()
+
+	resp, err := client.Downgrade(ctx, clientv3.DowngradeEnable, in.Version)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query etcd status: %w", err)
+	}
+
+	return &machine.EtcdDowngradeEnableResponse{
+		Messages: []*machine.EtcdDowngradeEnable{
+			{
+				ClusterDowngrade: &machine.EtcdClusterDowngrade{
+					ClusterVersion: resp.Version,
+				},
+			},
+		},
+	}, nil
+}
+
+// EtcdDowngradeValidate validates etcd cluster for downgrade to a specific version.
+//
+// This method is available only on control plane nodes (which run etcd).
+//
+//nolint:dupl
+func (s *Server) EtcdDowngradeValidate(ctx context.Context, in *machine.EtcdDowngradeValidateRequest) (*machine.EtcdDowngradeValidateResponse, error) {
+	if err := s.checkControlplane("etcd downgrade cancel"); err != nil {
+		return nil, err
+	}
+
+	if err := validateDowngrade(in.Version); err != nil {
+		return nil, err
+	}
+
+	client, err := etcd.NewLocalClient(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create etcd client: %w", err)
+	}
+
+	//nolint:errcheck
+	defer client.Close()
+
+	resp, err := client.Downgrade(ctx, clientv3.DowngradeValidate, in.Version)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query etcd status: %w", err)
+	}
+
+	return &machine.EtcdDowngradeValidateResponse{
+		Messages: []*machine.EtcdDowngradeValidate{
+			{
+				ClusterDowngrade: &machine.EtcdClusterDowngrade{
+					ClusterVersion: resp.Version,
+				},
+			},
+		},
+	}, nil
+}
+
+var minEtcdDowngradeVersion = semver.Version{Major: 3, Minor: 5}
+
+func validateDowngrade(version string) error {
+	if version == "" {
+		return status.Error(codes.InvalidArgument, "version is required for etcd downgrade")
+	}
+
+	parts := strings.Split(version, ".")
+	if len(parts) != 2 {
+		return status.Error(codes.InvalidArgument, "version should be in MAJOR.MINOR format")
+	}
+
+	major, err := strconv.ParseInt(parts[0], 10, 64)
+	if err != nil {
+		return status.Error(codes.InvalidArgument, "major version should be a number")
+	}
+
+	minor, err := strconv.ParseInt(parts[1], 10, 64)
+	if err != nil {
+		return status.Error(codes.InvalidArgument, "minor version should be a number")
+	}
+
+	semverVersion := semver.Version{Major: uint64(major), Minor: uint64(minor)}
+	if semverVersion.LT(minEtcdDowngradeVersion) {
+		return status.Error(codes.InvalidArgument, "etcd downgrade is only supported to 3.5 and later versions")
+	}
+
+	return nil
 }
 
 // GenerateClientConfiguration implements the machine.MachineServer interface.

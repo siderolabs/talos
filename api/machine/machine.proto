@@ -55,6 +55,15 @@ service MachineService {
   // EtcdStatus returns etcd status for the current member.
   // This method is available only on control plane nodes (which run etcd).
   rpc EtcdStatus(google.protobuf.Empty) returns (EtcdStatusResponse);
+  // EtcdDowngradeValidate validates etcd cluster for downgrade to a specific version.
+  // This method is available only on control plane nodes (which run etcd).
+  rpc EtcdDowngradeValidate(EtcdDowngradeValidateRequest) returns (EtcdDowngradeValidateResponse);
+  // EtcdDowngradeEnable enables etcd cluster downgrade to a specific version.
+  // This method is available only on control plane nodes (which run etcd).
+  rpc EtcdDowngradeEnable(EtcdDowngradeEnableRequest) returns (EtcdDowngradeEnableResponse);
+  // EtcdDowngradeCancel cancels etcd cluster downgrade that is in progress.
+  // This method is available only on control plane nodes (which run etcd).
+  rpc EtcdDowngradeCancel(google.protobuf.Empty) returns (EtcdDowngradeCancelResponse);
   rpc GenerateConfiguration(GenerateConfigurationRequest) returns (GenerateConfigurationResponse);
   rpc Hostname(google.protobuf.Empty) returns (HostnameResponse);
   rpc Kubeconfig(google.protobuf.Empty) returns (stream common.Data);
@@ -1097,6 +1106,7 @@ message EtcdStatus {
 }
 
 message EtcdMemberStatus {
+  string storage_version = 11;
   uint64 member_id = 10;
   string protocol_version = 1;
   int64 db_size = 2;
@@ -1107,6 +1117,45 @@ message EtcdMemberStatus {
   uint64 raft_applied_index = 7;
   repeated string errors = 8;
   bool is_learner = 9;
+}
+
+message EtcdDowngradeValidateRequest {
+  string version = 1;
+}
+
+message EtcdDowngradeValidateResponse {
+  repeated EtcdDowngradeValidate messages = 1;
+}
+
+message EtcdDowngradeValidate {
+  common.Metadata metadata = 1;
+  EtcdClusterDowngrade cluster_downgrade = 2;
+}
+
+message EtcdDowngradeEnableRequest {
+  string version = 1;
+}
+
+message EtcdDowngradeEnableResponse {
+  repeated EtcdDowngradeEnable messages = 1;
+}
+
+message EtcdDowngradeEnable {
+  common.Metadata metadata = 1;
+  EtcdClusterDowngrade cluster_downgrade = 2;
+}
+
+message EtcdDowngradeCancelResponse {
+  repeated EtcdDowngradeCancel messages = 1;
+}
+
+message EtcdDowngradeCancel {
+  common.Metadata metadata = 1;
+  EtcdClusterDowngrade cluster_downgrade = 2;
+}
+
+message EtcdClusterDowngrade {
+  string cluster_version = 1;
 }
 
 // rpc generateConfiguration

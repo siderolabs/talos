@@ -373,8 +373,17 @@ description: Talos gRPC API reference.
     - [EtcdAlarmDisarm](#machine.EtcdAlarmDisarm)
     - [EtcdAlarmDisarmResponse](#machine.EtcdAlarmDisarmResponse)
     - [EtcdAlarmListResponse](#machine.EtcdAlarmListResponse)
+    - [EtcdClusterDowngrade](#machine.EtcdClusterDowngrade)
     - [EtcdDefragment](#machine.EtcdDefragment)
     - [EtcdDefragmentResponse](#machine.EtcdDefragmentResponse)
+    - [EtcdDowngradeCancel](#machine.EtcdDowngradeCancel)
+    - [EtcdDowngradeCancelResponse](#machine.EtcdDowngradeCancelResponse)
+    - [EtcdDowngradeEnable](#machine.EtcdDowngradeEnable)
+    - [EtcdDowngradeEnableRequest](#machine.EtcdDowngradeEnableRequest)
+    - [EtcdDowngradeEnableResponse](#machine.EtcdDowngradeEnableResponse)
+    - [EtcdDowngradeValidate](#machine.EtcdDowngradeValidate)
+    - [EtcdDowngradeValidateRequest](#machine.EtcdDowngradeValidateRequest)
+    - [EtcdDowngradeValidateResponse](#machine.EtcdDowngradeValidateResponse)
     - [EtcdForfeitLeadership](#machine.EtcdForfeitLeadership)
     - [EtcdForfeitLeadershipRequest](#machine.EtcdForfeitLeadershipRequest)
     - [EtcdForfeitLeadershipResponse](#machine.EtcdForfeitLeadershipResponse)
@@ -6669,6 +6678,21 @@ dmesg
 
 
 
+<a name="machine.EtcdClusterDowngrade"></a>
+
+### EtcdClusterDowngrade
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| cluster_version | [string](#string) |  |  |
+
+
+
+
+
+
 <a name="machine.EtcdDefragment"></a>
 
 ### EtcdDefragment
@@ -6693,6 +6717,129 @@ dmesg
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | messages | [EtcdDefragment](#machine.EtcdDefragment) | repeated |  |
+
+
+
+
+
+
+<a name="machine.EtcdDowngradeCancel"></a>
+
+### EtcdDowngradeCancel
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| metadata | [common.Metadata](#common.Metadata) |  |  |
+| cluster_downgrade | [EtcdClusterDowngrade](#machine.EtcdClusterDowngrade) |  |  |
+
+
+
+
+
+
+<a name="machine.EtcdDowngradeCancelResponse"></a>
+
+### EtcdDowngradeCancelResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| messages | [EtcdDowngradeCancel](#machine.EtcdDowngradeCancel) | repeated |  |
+
+
+
+
+
+
+<a name="machine.EtcdDowngradeEnable"></a>
+
+### EtcdDowngradeEnable
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| metadata | [common.Metadata](#common.Metadata) |  |  |
+| cluster_downgrade | [EtcdClusterDowngrade](#machine.EtcdClusterDowngrade) |  |  |
+
+
+
+
+
+
+<a name="machine.EtcdDowngradeEnableRequest"></a>
+
+### EtcdDowngradeEnableRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| version | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="machine.EtcdDowngradeEnableResponse"></a>
+
+### EtcdDowngradeEnableResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| messages | [EtcdDowngradeEnable](#machine.EtcdDowngradeEnable) | repeated |  |
+
+
+
+
+
+
+<a name="machine.EtcdDowngradeValidate"></a>
+
+### EtcdDowngradeValidate
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| metadata | [common.Metadata](#common.Metadata) |  |  |
+| cluster_downgrade | [EtcdClusterDowngrade](#machine.EtcdClusterDowngrade) |  |  |
+
+
+
+
+
+
+<a name="machine.EtcdDowngradeValidateRequest"></a>
+
+### EtcdDowngradeValidateRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| version | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="machine.EtcdDowngradeValidateResponse"></a>
+
+### EtcdDowngradeValidateResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| messages | [EtcdDowngradeValidate](#machine.EtcdDowngradeValidate) | repeated |  |
 
 
 
@@ -6853,6 +7000,7 @@ EtcdMember describes a single etcd member.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
+| storage_version | [string](#string) |  |  |
 | member_id | [uint64](#uint64) |  |  |
 | protocol_version | [string](#string) |  |  |
 | db_size | [int64](#int64) |  |  |
@@ -9146,6 +9294,9 @@ The machine service definition.
 | EtcdAlarmDisarm | [.google.protobuf.Empty](#google.protobuf.Empty) | [EtcdAlarmDisarmResponse](#machine.EtcdAlarmDisarmResponse) | EtcdAlarmDisarm disarms etcd alarms for the current node. This method is available only on control plane nodes (which run etcd). |
 | EtcdDefragment | [.google.protobuf.Empty](#google.protobuf.Empty) | [EtcdDefragmentResponse](#machine.EtcdDefragmentResponse) | EtcdDefragment defragments etcd data directory for the current node. Defragmentation is a resource-heavy operation, so it should only run on a specific node. This method is available only on control plane nodes (which run etcd). |
 | EtcdStatus | [.google.protobuf.Empty](#google.protobuf.Empty) | [EtcdStatusResponse](#machine.EtcdStatusResponse) | EtcdStatus returns etcd status for the current member. This method is available only on control plane nodes (which run etcd). |
+| EtcdDowngradeValidate | [EtcdDowngradeValidateRequest](#machine.EtcdDowngradeValidateRequest) | [EtcdDowngradeValidateResponse](#machine.EtcdDowngradeValidateResponse) | EtcdDowngradeValidate validates etcd cluster for downgrade to a specific version. This method is available only on control plane nodes (which run etcd). |
+| EtcdDowngradeEnable | [EtcdDowngradeEnableRequest](#machine.EtcdDowngradeEnableRequest) | [EtcdDowngradeEnableResponse](#machine.EtcdDowngradeEnableResponse) | EtcdDowngradeEnable enables etcd cluster downgrade to a specific version. This method is available only on control plane nodes (which run etcd). |
+| EtcdDowngradeCancel | [.google.protobuf.Empty](#google.protobuf.Empty) | [EtcdDowngradeCancelResponse](#machine.EtcdDowngradeCancelResponse) | EtcdDowngradeCancel cancels etcd cluster downgrade that is in progress. This method is available only on control plane nodes (which run etcd). |
 | GenerateConfiguration | [GenerateConfigurationRequest](#machine.GenerateConfigurationRequest) | [GenerateConfigurationResponse](#machine.GenerateConfigurationResponse) |  |
 | Hostname | [.google.protobuf.Empty](#google.protobuf.Empty) | [HostnameResponse](#machine.HostnameResponse) |  |
 | Kubeconfig | [.google.protobuf.Empty](#google.protobuf.Empty) | [.common.Data](#common.Data) stream |  |
