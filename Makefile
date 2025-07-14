@@ -471,7 +471,7 @@ image-%: ## Builds the specified image. Valid options are aws, azure, digital-oc
 	done
 
 .PHONY: images-essential
-images-essential: image-aws image-gcp image-metal image-metal-uki installer secureboot-installer ## Builds only essential images used in the CI (AWS, Azure, GCP, and Metal).
+images-essential: image-metal image-metal-uki installer secureboot-installer ## Builds only essential images used in the CI.
 
 .PHONY: images
 images: image-akamai image-aws image-azure image-digital-ocean image-exoscale image-cloudstack image-gcp image-hcloud image-iso image-metal image-metal-uki image-nocloud image-opennebula image-openstack image-oracle image-scaleway image-upcloud image-vmware image-vultr ## Builds all known images (AWS, Azure, DigitalOcean, Exoscale, Cloudstack, GCP, HCloud, Metal, NoCloud, OpenNebula, OpenStack, Oracle, Scaleway, UpCloud, Vultr and VMware).
@@ -492,7 +492,8 @@ installer: ## Builds the installer and outputs it to the artifact directory.
 	@for platform in $(subst $(,),$(space),$(PLATFORM)); do \
 		arch=$$(basename "$${platform}") && \
 		image=$$(crane push $(ARTIFACTS)/installer-$${arch}.tar $(REGISTRY_AND_USERNAME)/installer:$(IMAGE_TAG_OUT)-$${arch}) && \
-		crane_args="$${crane_args} -m $${image}" ; \
+		crane_args="$${crane_args} -m $${image}" && \
+		rm -f $(ARTIFACTS)/installer-$${arch}.tar ; \
 	done; \
 	crane index append -t "${REGISTRY_AND_USERNAME}/installer:${IMAGE_TAG_OUT}" $${crane_args}
 
@@ -502,7 +503,8 @@ secureboot-installer: ## Builds UEFI only installer which uses UKI and push it t
 	@$(MAKE) image-secureboot-installer IMAGER_ARGS="--base-installer-image $(REGISTRY_AND_USERNAME)/installer-base:$(IMAGE_TAG_IN) $(IMAGER_ARGS)"
 	@for platform in $(subst $(,),$(space),$(PLATFORM)); do \
 		arch=$$(basename "$${platform}") && \
-		crane push $(ARTIFACTS)/installer-$${arch}-secureboot.tar $(REGISTRY_AND_USERNAME)/installer:$(IMAGE_TAG_OUT)-$${arch}-secureboot ; \
+		crane push $(ARTIFACTS)/installer-$${arch}-secureboot.tar $(REGISTRY_AND_USERNAME)/installer:$(IMAGE_TAG_OUT)-$${arch}-secureboot && \
+		rm -f $(ARTIFACTS)/installer-$${arch}-secureboot.tar ; \
 	done
 
 .PHONY: talosctl-cni-bundle
