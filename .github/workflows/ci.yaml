@@ -1,6 +1,6 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
 #
-# Generated on 2025-07-15T17:31:52Z by kres b869533.
+# Generated on 2025-07-21T09:52:07Z by kres b869533.
 
 concurrency:
   group: ${{ github.head_ref || github.run_id }}
@@ -585,6 +585,12 @@ jobs:
           PLATFORM: linux/amd64,linux/arm64
         run: |
           make images-essential
+      - name: image-aws
+        env:
+          IMAGE_REGISTRY: registry.dev.siderolabs.io
+          PLATFORM: linux/amd64,linux/arm64
+        run: |
+          make image-aws
       - name: e2e-aws-prepare
         env:
           E2E_AWS_TARGET: default
@@ -720,6 +726,12 @@ jobs:
           PLATFORM: linux/amd64,linux/arm64
         run: |
           make images-essential
+      - name: image-aws
+        env:
+          IMAGE_REGISTRY: registry.dev.siderolabs.io
+          PLATFORM: linux/amd64,linux/arm64
+        run: |
+          make image-aws
       - name: checkout extensions
         uses: actions/checkout@v4
         with:
@@ -874,6 +886,12 @@ jobs:
           PLATFORM: linux/amd64,linux/arm64
         run: |
           make images-essential
+      - name: image-aws
+        env:
+          IMAGE_REGISTRY: registry.dev.siderolabs.io
+          PLATFORM: linux/amd64,linux/arm64
+        run: |
+          make image-aws
       - name: checkout extensions
         uses: actions/checkout@v4
         with:
@@ -1568,6 +1586,12 @@ jobs:
           PLATFORM: linux/amd64,linux/arm64
         run: |
           make images-essential
+      - name: image-gcp
+        env:
+          IMAGE_REGISTRY: registry.dev.siderolabs.io
+          PLATFORM: linux/amd64,linux/arm64
+        run: |
+          make image-gcp
       - name: e2e-gcp-prepare
         run: |
           make e2e-gcp-prepare
