@@ -140,6 +140,7 @@ message SBOMItemSpec {
   string license = 3;
   repeated string cp_es = 4;
   repeated string pur_ls = 5;
+  bool extension = 6;
 }
 
 // SecurityStateSpec describes the security state resource properties.

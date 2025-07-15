@@ -14,7 +14,7 @@ import (
 
 const (
 	// DefaultKernelVersion is the default Linux kernel version.
-	DefaultKernelVersion = "6.12.36-talos"
+	DefaultKernelVersion = "6.12.38-talos"
 
 	// KernelParamConfig is the kernel parameter name for specifying the URL.
 	// to the config.
@@ -1264,6 +1264,9 @@ const (
 
 	// SPDXPath is the path to the SBOM file(s).
 	SPDXPath = "/usr/share/spdx"
+
+	// ExtensionSPDXPath is the path to the SBOM file(s) provided by system extensions.
+	ExtensionSPDXPath = "/usr/local/share/spdx"
 )
 
 // See https://linux.die.net/man/3/klogctl

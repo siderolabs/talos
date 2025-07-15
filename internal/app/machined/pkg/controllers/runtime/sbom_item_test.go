@@ -28,7 +28,8 @@ func TestSBOMItemSuite(t *testing.T) {
 			Timeout: 5 * time.Second,
 			AfterSetup: func(suite *ctest.DefaultSuite) {
 				suite.Require().NoError(suite.Runtime().RegisterController(&runtimectrls.SBOMItemController{
-					SPDXPath: "./testdata/spdx",
+					SPDXPath:          "./testdata/spdx",
+					ExtensionSPDXPath: "./testdata/ext-spdx",
 				}))
 			},
 		},
@@ -43,6 +44,7 @@ func (suite *SBOMItemSuite) TestReconcile() {
 		asrt.Contains(item.TypedSpec().CPEs, "cpe:2.3:a:apparmor:apparmor:v3.1.7:*:*:*:*:*:*:*")
 		asrt.Contains(item.TypedSpec().CPEs, "cpe:2.3:a:canonical:apparmor:v3.1.7:*:*:*:*:*:*:*")
 		asrt.Empty(item.TypedSpec().PURLs)
+		asrt.False(item.TypedSpec().Extension)
 	})
 
 	ctest.AssertResource(suite, "cel.dev/expr", func(item *runtime.SBOMItem, asrt *assert.Assertions) {
@@ -51,5 +53,15 @@ func (suite *SBOMItemSuite) TestReconcile() {
 		asrt.Empty(item.TypedSpec().License)
 		asrt.Empty(item.TypedSpec().CPEs)
 		asrt.Contains(item.TypedSpec().PURLs, "pkg:golang/cel.dev/expr@v0.24.0")
+		asrt.False(item.TypedSpec().Extension)
+	})
+
+	ctest.AssertResource(suite, "tailscale", func(item *runtime.SBOMItem, asrt *assert.Assertions) {
+		asrt.Equal("tailscale", item.TypedSpec().Name)
+		asrt.Equal("1.84.2", item.TypedSpec().Version)
+		asrt.Equal("BSD-3-Clause", item.TypedSpec().License)
+		asrt.Contains(item.TypedSpec().CPEs, "cpe:2.3:a:tailscale:tailscale:1.84.2:*:*:*:*:*:*:*")
+		asrt.Empty(item.TypedSpec().PURLs)
+		asrt.True(item.TypedSpec().Extension)
 	})
 }

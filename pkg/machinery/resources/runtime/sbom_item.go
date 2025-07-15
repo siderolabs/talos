@@ -23,11 +23,12 @@ type SBOMItem = typed.Resource[SBOMItemSpec, SBOMItemExtension]
 //
 //gotagsrewrite:gen
 type SBOMItemSpec struct {
-	Name    string   `yaml:"name" protobuf:"1"`
-	Version string   `yaml:"version" protobuf:"2"`
-	License string   `yaml:"license,omitempty" protobuf:"3"`
-	CPEs    []string `yaml:"cpes,omitempty" protobuf:"4"`
-	PURLs   []string `yaml:"purls,omitempty" protobuf:"5"`
+	Name      string   `yaml:"name" protobuf:"1"`
+	Version   string   `yaml:"version" protobuf:"2"`
+	License   string   `yaml:"license,omitempty" protobuf:"3"`
+	CPEs      []string `yaml:"cpes,omitempty" protobuf:"4"`
+	PURLs     []string `yaml:"purls,omitempty" protobuf:"5"`
+	Extension bool     `yaml:"extension,omitempty" protobuf:"6"`
 }
 
 // NewSBOMItemSpec initializes a security state resource.
@@ -55,6 +56,10 @@ func (SBOMItemExtension) ResourceDefinition() meta.ResourceDefinitionSpec {
 			{
 				Name:     "License",
 				JSONPath: `{.license}`,
+			},
+			{
+				Name:     "Extension",
+				JSONPath: `{.extension}`,
 			},
 		},
 	}

@@ -23,7 +23,8 @@ import (
 
 // SBOMItemController is a controller that publishes Talos SBOMs as resources.
 type SBOMItemController struct {
-	SPDXPath string
+	SPDXPath          string
+	ExtensionSPDXPath string
 }
 
 // Name implements controller.Controller interface.
@@ -52,6 +53,10 @@ func (ctrl *SBOMItemController) Run(ctx context.Context, r controller.Runtime, l
 		ctrl.SPDXPath = constants.SPDXPath
 	}
 
+	if ctrl.ExtensionSPDXPath == "" {
+		ctrl.ExtensionSPDXPath = constants.ExtensionSPDXPath
+	}
+
 	// the controller runs a single time
 	select {
 	case <-ctx.Done():
@@ -59,9 +64,25 @@ func (ctrl *SBOMItemController) Run(ctx context.Context, r controller.Runtime, l
 	case <-r.EventCh():
 	}
 
-	files, err := os.ReadDir(ctrl.SPDXPath)
+	for _, spec := range []struct {
+		isExtension bool
+		path        string
+	}{
+		{false, ctrl.SPDXPath},
+		{true, ctrl.ExtensionSPDXPath},
+	} {
+		if err := ctrl.processSPDXDirectory(ctx, r, logger, spec.path, spec.isExtension); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (ctrl *SBOMItemController) processSPDXDirectory(ctx context.Context, r controller.Runtime, logger *zap.Logger, path string, isExtension bool) error {
+	files, err := os.ReadDir(path)
 	if err != nil {
-		return fmt.Errorf("failed to read SBOM directory %q: %w", ctrl.SPDXPath, err)
+		return fmt.Errorf("failed to read SBOM directory %q: %w", path, err)
 	}
 
 	for _, file := range files {
@@ -77,7 +98,7 @@ func (ctrl *SBOMItemController) Run(ctx context.Context, r controller.Runtime, l
 			continue
 		}
 
-		if err = ctrl.processSPDXFile(ctx, r, filepath.Join(ctrl.SPDXPath, file.Name())); err != nil {
+		if err = ctrl.processSPDXFile(ctx, r, filepath.Join(path, file.Name()), isExtension); err != nil {
 			return fmt.Errorf("failed to process SBOM file %q: %w", file.Name(), err)
 		}
 	}
@@ -104,7 +125,7 @@ type spdxExternalRef struct {
 	Locator string `json:"referenceLocator"`
 }
 
-func (ctrl *SBOMItemController) processSPDXFile(ctx context.Context, r controller.Runtime, path string) error {
+func (ctrl *SBOMItemController) processSPDXFile(ctx context.Context, r controller.Runtime, path string, isExtension bool) error {
 	in, err := os.Open(path)
 	if err != nil {
 		return fmt.Errorf("failed to open SBOM file %q: %w", path, err)
@@ -140,6 +161,8 @@ func (ctrl *SBOMItemController) processSPDXFile(ctx context.Context, r controlle
 						item.TypedSpec().PURLs = append(item.TypedSpec().PURLs, ref.Locator)
 					}
 				}
+
+				item.TypedSpec().Extension = isExtension
 
 				return nil
 			}); err != nil {

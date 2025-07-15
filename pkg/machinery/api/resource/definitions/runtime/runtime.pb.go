@@ -1121,6 +1121,7 @@ type SBOMItemSpec struct {
 	License       string                 `protobuf:"bytes,3,opt,name=license,proto3" json:"license,omitempty"`
 	CpEs          []string               `protobuf:"bytes,4,rep,name=cp_es,json=cpEs,proto3" json:"cp_es,omitempty"`
 	PurLs         []string               `protobuf:"bytes,5,rep,name=pur_ls,json=purLs,proto3" json:"pur_ls,omitempty"`
+	Extension     bool                   `protobuf:"varint,6,opt,name=extension,proto3" json:"extension,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1188,6 +1189,13 @@ func (x *SBOMItemSpec) GetPurLs() []string {
 		return x.PurLs
 	}
 	return nil
+}
+
+func (x *SBOMItemSpec) GetExtension() bool {
+	if x != nil {
+		return x.Extension
+	}
+	return false
 }
 
 // SecurityStateSpec describes the security state resource properties.
@@ -1567,13 +1575,14 @@ const file_resource_definitions_runtime_runtime_proto_rawDesc = "" +
 	"\x04tags\x18\v \x03(\v2B.talos.resource.definitions.runtime.PlatformMetadataSpec.TagsEntryR\x04tags\x1a7\n" +
 	"\tTagsEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\x82\x01\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\xa0\x01\n" +
 	"\fSBOMItemSpec\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12\x18\n" +
 	"\aversion\x18\x02 \x01(\tR\aversion\x12\x18\n" +
 	"\alicense\x18\x03 \x01(\tR\alicense\x12\x13\n" +
 	"\x05cp_es\x18\x04 \x03(\tR\x04cpEs\x12\x15\n" +
-	"\x06pur_ls\x18\x05 \x03(\tR\x05purLs\"\x8a\x03\n" +
+	"\x06pur_ls\x18\x05 \x03(\tR\x05purLs\x12\x1c\n" +
+	"\textension\x18\x06 \x01(\bR\textension\"\x8a\x03\n" +
 	"\x11SecurityStateSpec\x12\x1f\n" +
 	"\vsecure_boot\x18\x01 \x01(\bR\n" +
 	"secureBoot\x12=\n" +

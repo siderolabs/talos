@@ -1,8 +1,7 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
 #
-# Generated on 2025-07-11T13:21:55Z by kres 1700045.
+# Generated on 2025-07-15T17:31:52Z by kres b869533.
 
-name: default
 concurrency:
   group: ${{ github.head_ref || github.run_id }}
   cancel-in-progress: true
@@ -17,6 +16,7 @@ concurrency:
     branches:
       - main
       - release-*
+name: default
 jobs:
   base-lint:
     permissions:

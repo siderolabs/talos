@@ -1,8 +1,7 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
 #
-# Generated on 2025-03-24T14:29:42Z by kres 921213e.
+# Generated on 2025-07-15T17:31:52Z by kres b869533.
 
-name: slack-notify
 "on":
   workflow_run:
     workflows:
@@ -41,6 +40,7 @@ name: slack-notify
       - integration-gcp-cron
     types:
       - completed
+name: slack-notify
 jobs:
   slack-notify:
     runs-on:

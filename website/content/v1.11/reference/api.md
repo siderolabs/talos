@@ -5380,6 +5380,7 @@ SBOMItemSpec describes the SBOM item resource properties.
 | license | [string](#string) |  |  |
 | cp_es | [string](#string) | repeated |  |
 | pur_ls | [string](#string) | repeated |  |
+| extension | [bool](#bool) |  |  |
 
 
 

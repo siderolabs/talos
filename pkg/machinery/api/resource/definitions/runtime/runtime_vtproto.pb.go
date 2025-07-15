@@ -1104,6 +1104,16 @@ func (m *SBOMItemSpec) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 		i -= len(m.unknownFields)
 		copy(dAtA[i:], m.unknownFields)
 	}
+	if m.Extension {
+		i--
+		if m.Extension {
+			dAtA[i] = 1
+		} else {
+			dAtA[i] = 0
+		}
+		i--
+		dAtA[i] = 0x30
+	}
 	if len(m.PurLs) > 0 {
 		for iNdEx := len(m.PurLs) - 1; iNdEx >= 0; iNdEx-- {
 			i -= len(m.PurLs[iNdEx])
@@ -1857,6 +1867,9 @@ func (m *SBOMItemSpec) SizeVT() (n int) {
 			l = len(s)
 			n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
 		}
+	}
+	if m.Extension {
+		n += 2
 	}
 	n += len(m.unknownFields)
 	return n
@@ -4658,6 +4671,26 @@ func (m *SBOMItemSpec) UnmarshalVT(dAtA []byte) error {
 			}
 			m.PurLs = append(m.PurLs, string(dAtA[iNdEx:postIndex]))
 			iNdEx = postIndex
+		case 6:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Extension", wireType)
+			}
+			var v int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return protohelpers.ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				v |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			m.Extension = bool(v != 0)
 		default:
 			iNdEx = preIndex
 			skippy, err := protohelpers.Skip(dAtA[iNdEx:])
