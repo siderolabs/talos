@@ -113,6 +113,15 @@ Talos now supports `talosctl disk wipe` command in maintenance mode (`talosctl d
 Talos now supports [raw user volumes](https://www.talos.dev/v1.11/talos-guides/configuration/disk-management/raw/), allowing to allocate unformatted disk space as partition.
 """
 
+    [notes.etcd]
+        title = "ETCD v3.6.x"
+        description = """\
+Talos won't default to ETCD v3.6.x in the next release due to bug in the v3.6.x series that causes data corruption in some cases.
+The default version will be kept at v3.5.x for now, but users can still use v3.6.x by explicitly specifying it in the configuration.
+
+See https://github.com/etcd-io/etcd/issues/20340
+"""
+
 [make_deps]
 
     [make_deps.tools]
