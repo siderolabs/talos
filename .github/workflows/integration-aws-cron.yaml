@@ -1,14 +1,14 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
 #
-# Generated on 2025-06-04T11:41:24Z by kres fc6afbe.
+# Generated on 2025-07-14T17:31:52Z by kres c691b83.
 
-name: integration-aws-cron
 concurrency:
   group: ${{ github.head_ref || github.run_id }}
   cancel-in-progress: true
 "on":
   schedule:
     - cron: 30 7 * * *
+name: integration-aws-cron
 jobs:
   default:
     runs-on:
@@ -97,6 +97,12 @@ jobs:
           PLATFORM: linux/amd64,linux/arm64
         run: |
           make images-essential
+      - name: image-aws
+        env:
+          IMAGE_REGISTRY: registry.dev.siderolabs.io
+          PLATFORM: linux/amd64,linux/arm64
+        run: |
+          make image-aws
       - name: e2e-aws-prepare
         env:
           E2E_AWS_TARGET: default
