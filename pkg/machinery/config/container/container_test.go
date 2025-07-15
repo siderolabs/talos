@@ -18,6 +18,7 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/config/configloader"
 	"github.com/siderolabs/talos/pkg/machinery/config/container"
 	"github.com/siderolabs/talos/pkg/machinery/config/machine"
+	"github.com/siderolabs/talos/pkg/machinery/config/types/block"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/hardware"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/runtime/extensions"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/siderolink"
@@ -95,6 +96,30 @@ func TestNewDuplicate(t *testing.T) {
 
 	_, err = container.New(siderolink1, siderolink2)
 	assert.EqualError(t, err, "duplicate document: SideroLinkConfig/")
+}
+
+func TestNewConflict(t *testing.T) {
+	t.Parallel()
+
+	v1alpha1Cfg1 := &v1alpha1.Config{}
+	uv1 := block.NewUserVolumeConfigV1Alpha1()
+	uv1.MetaName = "my-user-volume-1"
+	uv2 := block.NewUserVolumeConfigV1Alpha1()
+	uv2.MetaName = "my-user-volume-2"
+
+	ev1 := block.NewExistingVolumeConfigV1Alpha1()
+	ev1.MetaName = "my-user-volume-1"
+	ev2 := block.NewExistingVolumeConfigV1Alpha1()
+	ev2.MetaName = "my-user-volume-2"
+
+	_, err := container.New(v1alpha1Cfg1, uv1, uv2, ev1)
+	assert.EqualError(t, err, "conflicting documents: UserVolumeConfig/my-user-volume-1 and ExistingVolumeConfig/my-user-volume-1")
+
+	_, err = container.New(uv1, uv2)
+	require.NoError(t, err)
+
+	_, err = container.New(ev2, ev1, uv1, uv2)
+	assert.EqualError(t, err, "conflicting documents: ExistingVolumeConfig/my-user-volume-1 and UserVolumeConfig/my-user-volume-1")
 }
 
 func TestPatchV1Alpha1(t *testing.T) {
