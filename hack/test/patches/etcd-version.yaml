@@ -1,0 +1,3 @@
+cluster:
+  etcd:
+    image: gcr.io/etcd-development/etcd:v3.6.2

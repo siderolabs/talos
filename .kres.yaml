@@ -397,6 +397,62 @@ spec:
             artifactPath: /tmp/logs-*.tar.gz
             additionalArtifacts:
               - "/tmp/support-*.zip"
+    - name: integration-qemu-etcd
+      buildxOptions:
+        enabled: true
+      depends:
+        - default
+      runners:
+        - self-hosted
+        - talos
+      crons:
+        - '30 3 * * *'
+      triggerLabels:
+        - integration/qemu
+        - integration/release-gate
+      steps:
+        - name: download-artifacts
+          conditions:
+            - not-on-schedule
+          artifactStep:
+            type: download
+            artifactName: talos-artifacts
+            artifactPath: _out
+        - name: ci-temp-release-tag
+          conditions:
+            - not-on-schedule
+        - name: build
+          conditions:
+            - only-on-schedule
+          command: talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
+          environment:
+            PLATFORM: linux/amd64,linux/arm64
+            IMAGE_REGISTRY: registry.dev.siderolabs.io
+            PUSH: true
+        - name: talosctl-cni-bundle
+          conditions:
+            - only-on-schedule
+        - name: e2e-qemu
+          withSudo: true
+          environment:
+            IMAGE_REGISTRY: registry.dev.siderolabs.io
+            QEMU_EXTRA_DISKS: "3"
+            QEMU_EXTRA_DISKS_SIZE: "10240"
+            QEMU_EXTRA_DISKS_DRIVERS: "ide,nvme"
+            WITH_CONFIG_PATCH_CONTROLPLANE: "@hack/test/patches/etcd-version.yaml"
+            WITH_CONFIG_PATCH_WORKER: "@hack/test/patches/ephemeral-nvme.yaml:@hack/test/patches/dm-raid-module.yaml"
+            WITH_USER_DISK: "true"
+            USER_DISKS_MOUNTS: "/var/mnt/extra,/var/mnt/p1,/var/mnt/p2"
+        - name: save-talos-logs
+          conditions:
+            - always
+          artifactStep:
+            type: upload
+            artifactName: talos-logs-integration-qemu-etcd
+            disableExecutableListGeneration: true
+            artifactPath: /tmp/logs-*.tar.gz
+            additionalArtifacts:
+              - "/tmp/support-*.zip"
     - name: integration-qemu-enforcing
       buildxOptions:
         enabled: true

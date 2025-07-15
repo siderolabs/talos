@@ -1,14 +1,14 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
 #
-# Generated on 2025-07-14T07:43:31Z by kres c691b83.
+# Generated on 2025-07-14T09:11:24Z by kres c691b83.
 
 concurrency:
   group: ${{ github.head_ref || github.run_id }}
   cancel-in-progress: true
 "on":
   schedule:
-    - cron: 30 5 * * *
-name: integration-misc-4-cron
+    - cron: 30 3 * * *
+name: integration-qemu-etcd-cron
 jobs:
   default:
     runs-on:
@@ -78,54 +78,23 @@ jobs:
         if: github.event_name == 'schedule'
         run: |
           make talosctl-cni-bundle
-      - name: e2e-siderolink
+      - name: e2e-qemu
         env:
-          GITHUB_STEP_NAME: ${{ github.job}}-e2e-siderolink
           IMAGE_REGISTRY: registry.dev.siderolabs.io
-          SHORT_INTEGRATION_TEST: "yes"
-          VIA_MAINTENANCE_MODE: "true"
-          WITH_SIDEROLINK_AGENT: "true"
-        run: |
-          sudo -E make e2e-qemu
-      - name: e2e-siderolink-tunnel
-        env:
-          GITHUB_STEP_NAME: ${{ github.job}}-e2e-siderolink-tunnel
-          IMAGE_REGISTRY: registry.dev.siderolabs.io
-          SHORT_INTEGRATION_TEST: "yes"
-          VIA_MAINTENANCE_MODE: "true"
-          WITH_SIDEROLINK_AGENT: tunnel
-        run: |
-          sudo -E make e2e-qemu
-      - name: e2e-siderolink-tls
-        env:
-          GITHUB_STEP_NAME: ${{ github.job}}-e2e-siderolink-tls
-          IMAGE_REGISTRY: registry.dev.siderolabs.io
-          SHORT_INTEGRATION_TEST: "yes"
-          VIA_MAINTENANCE_MODE: "true"
-          WITH_SIDEROLINK_AGENT: wireguard+tls
-        run: |
-          sudo -E make e2e-qemu
-      - name: e2e-apparmor
-        env:
-          GITHUB_STEP_NAME: ${{ github.job}}-e2e-apparmor
-          IMAGE_REGISTRY: registry.dev.siderolabs.io
-          SHORT_INTEGRATION_TEST: "yes"
-          WITH_APPARMOR_LSM_ENABLED: "yes"
-        run: |
-          sudo -E make e2e-qemu
-      - name: e2e-k8s-user-namespace
-        env:
-          GITHUB_STEP_NAME: ${{ github.job}}-e2e-k8s-user-namespace
-          IMAGE_REGISTRY: registry.dev.siderolabs.io
-          SHORT_INTEGRATION_TEST: "yes"
-          WITH_CONFIG_PATCH: '@hack/test/patches/usernamespace.yaml'
+          QEMU_EXTRA_DISKS: "3"
+          QEMU_EXTRA_DISKS_DRIVERS: ide,nvme
+          QEMU_EXTRA_DISKS_SIZE: "10240"
+          USER_DISKS_MOUNTS: /var/mnt/extra,/var/mnt/p1,/var/mnt/p2
+          WITH_CONFIG_PATCH_CONTROLPLANE: '@hack/test/patches/etcd-version.yaml'
+          WITH_CONFIG_PATCH_WORKER: '@hack/test/patches/ephemeral-nvme.yaml:@hack/test/patches/dm-raid-module.yaml'
+          WITH_USER_DISK: "true"
         run: |
           sudo -E make e2e-qemu
       - name: save artifacts
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: talos-logs-integration-misc-4
+          name: talos-logs-integration-qemu-etcd
           path: |-
             /tmp/logs-*.tar.gz
             /tmp/support-*.zip
