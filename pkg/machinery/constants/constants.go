@@ -1254,6 +1254,9 @@ const (
 	// RawVolumePrefix is the prefix for the raw volumes.
 	RawVolumePrefix = "r-"
 
+	// ExistingVolumePrefix is the prefix for the existing volumes.
+	ExistingVolumePrefix = "e-"
+
 	// SwapVolumePrefix is the prefix for the swap volumes.
 	SwapVolumePrefix = "s-"
 

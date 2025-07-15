@@ -35,6 +35,9 @@ const UserVolumeLabel = "talos.dev/user-volume"
 // RawVolumeLabel is the label for raw volumes.
 const RawVolumeLabel = "talos.dev/raw-volume"
 
+// ExistingVolumeLabel is the label for existing volumes.
+const ExistingVolumeLabel = "talos.dev/existing-volume"
+
 // SwapVolumeLabel is the label for swap volumes.
 const SwapVolumeLabel = "talos.dev/swap-volume"
 

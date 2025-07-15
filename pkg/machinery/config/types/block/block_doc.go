@@ -244,6 +244,120 @@ func (EncryptionKeyNodeID) Doc() *encoder.Doc {
 	return doc
 }
 
+func (ExistingVolumeConfigV1Alpha1) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "ExistingVolumeConfig",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "ExistingVolumeConfig is an existing volume configuration document." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "ExistingVolumeConfig is an existing volume configuration document.\nExisting volumes allow to mount partitions (or whole disks) that were created\noutside of Talos. Volume will be mounted under `/var/mnt/<name>`.\nThe existing volume config name should not conflict with user volume names.\n",
+		Fields: []encoder.Doc{
+			{},
+			{
+				Name:        "name",
+				Type:        "string",
+				Note:        "",
+				Description: "Name of the volume.\n\nName can only contain:\nlowercase and uppercase ASCII letters, digits, and hyphens.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Name of the volume." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "discovery",
+				Type:        "VolumeDiscoverySpec",
+				Note:        "",
+				Description: "The discovery describes how to find a volume.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "The discovery describes how to find a volume." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "mount",
+				Type:        "MountSpec",
+				Note:        "",
+				Description: "The mount describes additional mount options.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "The mount describes additional mount options." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
+
+	doc.AddExample("", exampleExistingVolumeConfigV1Alpha1())
+
+	return doc
+}
+
+func (VolumeDiscoverySpec) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "VolumeDiscoverySpec",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "VolumeDiscoverySpec describes how the volume is discovered." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "VolumeDiscoverySpec describes how the volume is discovered.",
+		AppearsIn: []encoder.Appearance{
+			{
+				TypeName:  "ExistingVolumeConfigV1Alpha1",
+				FieldName: "discovery",
+			},
+		},
+		Fields: []encoder.Doc{
+			{
+				Name:        "volumeSelector",
+				Type:        "VolumeSelector",
+				Note:        "",
+				Description: "The volume selector expression.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "The volume selector expression." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
+
+	return doc
+}
+
+func (VolumeSelector) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "VolumeSelector",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "VolumeSelector selects an existing volume." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "VolumeSelector selects an existing volume.",
+		AppearsIn: []encoder.Appearance{
+			{
+				TypeName:  "VolumeDiscoverySpec",
+				FieldName: "volumeSelector",
+			},
+		},
+		Fields: []encoder.Doc{
+			{
+				Name:        "match",
+				Type:        "Expression",
+				Note:        "",
+				Description: "The Common Expression Language (CEL) expression to match the volume.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "The Common Expression Language (CEL) expression to match the volume." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
+
+	doc.Fields[0].AddExample("match volumes with partition label MY-DATA", exampleVolumeSelector1())
+	doc.Fields[0].AddExample("match xfs volume on disk with serial 'SERIAL123'", exampleVolumeSelector2())
+
+	return doc
+}
+
+func (MountSpec) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "MountSpec",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "MountSpec describes how the volume is mounted." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "MountSpec describes how the volume is mounted.",
+		AppearsIn: []encoder.Appearance{
+			{
+				TypeName:  "ExistingVolumeConfigV1Alpha1",
+				FieldName: "mount",
+			},
+		},
+		Fields: []encoder.Doc{
+			{
+				Name:        "readOnly",
+				Type:        "bool",
+				Note:        "",
+				Description: "Mount the volume read-only.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Mount the volume read-only." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
+
+	return doc
+}
+
 func (RawVolumeConfigV1Alpha1) Doc() *encoder.Doc {
 	doc := &encoder.Doc{
 		Type:        "RawVolumeConfig",
@@ -554,6 +668,10 @@ func GetFileDoc() *encoder.FileDoc {
 			EncryptionKeyKMS{}.Doc(),
 			EncryptionKeyTPM{}.Doc(),
 			EncryptionKeyNodeID{}.Doc(),
+			ExistingVolumeConfigV1Alpha1{}.Doc(),
+			VolumeDiscoverySpec{}.Doc(),
+			VolumeSelector{}.Doc(),
+			MountSpec{}.Doc(),
 			RawVolumeConfigV1Alpha1{}.Doc(),
 			SwapVolumeConfigV1Alpha1{}.Doc(),
 			UserVolumeConfigV1Alpha1{}.Doc(),

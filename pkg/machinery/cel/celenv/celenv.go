@@ -58,13 +58,18 @@ var DiskLocator = sync.OnceValue(func() *cel.Env {
 
 // VolumeLocator is a volume locator CEL environment.
 var VolumeLocator = sync.OnceValue(func() *cel.Env {
-	var volumeSpec block.DiscoveredVolumeSpec
+	var (
+		volumeSpec block.DiscoveredVolumeSpec
+		diskSpec   block.DiskSpec
+	)
 
 	env, err := cel.NewEnv(
 		slices.Concat(
 			[]cel.EnvOption{
 				cel.Types(&volumeSpec),
+				cel.Types(&diskSpec),
 				cel.Variable("volume", cel.ObjectType(string(volumeSpec.ProtoReflect().Descriptor().FullName()))),
+				cel.Variable("disk", cel.ObjectType(string(diskSpec.ProtoReflect().Descriptor().FullName()))),
 			},
 			celUnitMultipliersConstants(),
 		)...,

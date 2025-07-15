@@ -35,12 +35,15 @@ type Container struct {
 var _ coreconfig.Provider = &Container{}
 
 // New creates a container out of the list of documents.
+//
+//nolint:gocyclo
 func New(documents ...config.Document) (*Container, error) {
 	container := &Container{
 		documents: make([]config.Document, 0, len(documents)),
 	}
 
 	seenDocuments := make(map[string]struct{})
+	conflictingDocuments := make(map[string]string)
 
 	for _, doc := range documents {
 		switch d := doc.(type) {
@@ -63,6 +66,26 @@ func New(documents ...config.Document) (*Container, error) {
 				}
 
 				seenDocuments[documentID] = struct{}{}
+
+				if conflictingID, isConflicting := conflictingDocuments[documentID]; isConflicting {
+					return nil, fmt.Errorf("conflicting documents: %s and %s", conflictingID, documentID)
+				}
+
+				if conflicting, ok := d.(config.ConflictingDocument); ok {
+					for _, kind := range conflicting.ConflictsWithKinds() {
+						conflictingID := kind + "/"
+
+						if named, ok := d.(config.NamedDocument); ok {
+							conflictingID += named.Name()
+						}
+
+						if _, alreadySeen := seenDocuments[conflictingID]; alreadySeen {
+							return nil, fmt.Errorf("conflicting documents: %s and %s", conflictingID, documentID)
+						}
+
+						conflictingDocuments[conflictingID] = documentID
+					}
+				}
 			}
 
 			container.documents = append(container.documents, d)
@@ -228,6 +251,11 @@ func (container *Container) UserVolumeConfigs() []config.UserVolumeConfig {
 // RawVolumeConfigs implements config.Config interface.
 func (container *Container) RawVolumeConfigs() []config.RawVolumeConfig {
 	return findMatchingDocs[config.RawVolumeConfig](container.documents)
+}
+
+// ExistingVolumeConfigs implements config.Config interface.
+func (container *Container) ExistingVolumeConfigs() []config.ExistingVolumeConfig {
+	return findMatchingDocs[config.ExistingVolumeConfig](container.documents)
 }
 
 // SwapVolumeConfigs implements config.Config interface.

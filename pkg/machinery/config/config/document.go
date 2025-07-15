@@ -20,6 +20,13 @@ type NamedDocument interface {
 	Name() string
 }
 
+// ConflictingDocument is a configuration document which conflicts with other document.
+//
+// If the document is named, it conflicts by name, otherwise it conflicts by kind.
+type ConflictingDocument interface {
+	ConflictsWithKinds() []string
+}
+
 // SecretDocument is a configuration document that contains secrets.
 type SecretDocument interface {
 	// Redact does in-place replacement of secrets with the given string.

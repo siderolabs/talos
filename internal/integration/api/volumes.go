@@ -58,7 +58,7 @@ func (suite *VolumesSuite) SetupTest() {
 		suite.T().Skip("cluster doesn't support volumes")
 	}
 
-	suite.ctx, suite.ctxCancel = context.WithTimeout(context.Background(), time.Minute)
+	suite.ctx, suite.ctxCancel = context.WithTimeout(context.Background(), 2*time.Minute)
 }
 
 // TearDownTest ...
@@ -759,6 +759,155 @@ func (suite *VolumesSuite) TestRawVolumes() {
 	for _, rawVolumeID := range rawVolumeIDs {
 		rtestutils.AssertNoResource[*block.VolumeStatus](ctx, suite.T(), suite.Client.COSI, rawVolumeID)
 	}
+
+	suite.Require().NoError(suite.Client.BlockDeviceWipe(ctx, &storage.BlockDeviceWipeRequest{
+		Devices: []*storage.BlockDeviceWipeDescriptor{
+			{
+				Device: filepath.Base(userDisks[0]),
+				Method: storage.BlockDeviceWipeDescriptor_FAST,
+			},
+		},
+	}))
+
+	// wait for the discovered volume reflect wiped status
+	rtestutils.AssertResource(ctx, suite.T(), suite.Client.COSI, filepath.Base(userDisks[0]),
+		func(dv *block.DiscoveredVolume, asrt *assert.Assertions) {
+			asrt.Empty(dv.TypedSpec().Name, "expected discovered volume %s to be wiped", dv.Metadata().ID())
+		})
+}
+
+// TestExistingVolumes performs a series of operations on existing volumes: mount/unmount, etc.
+func (suite *VolumesSuite) TestExistingVolumes() {
+	if testing.Short() {
+		suite.T().Skip("skipping test in short mode.")
+	}
+
+	if suite.Cluster == nil || suite.Cluster.Provisioner() != base.ProvisionerQEMU {
+		suite.T().Skip("skipping test for non-qemu provisioner")
+	}
+
+	node := suite.RandomDiscoveredNodeInternalIP(machine.TypeWorker)
+
+	k8sNode, err := suite.GetK8sNodeByInternalIP(suite.ctx, node)
+	suite.Require().NoError(err)
+
+	nodeName := k8sNode.Name
+
+	suite.T().Logf("verifying existing volumes on node %s/%s", node, nodeName)
+
+	userDisks := suite.UserDisks(suite.ctx, node)
+
+	if len(userDisks) < 1 {
+		suite.T().Skipf("skipping test, not enough user disks available on node %s/%s: %q", node, nodeName, userDisks)
+	}
+
+	ctx := client.WithNode(suite.ctx, node)
+
+	disk, err := safe.StateGetByID[*block.Disk](ctx, suite.Client.COSI, filepath.Base(userDisks[0]))
+	suite.Require().NoError(err)
+
+	volumeID := fmt.Sprintf("%04x", rand.Int31())
+	existingVolumeID := constants.ExistingVolumePrefix + volumeID
+
+	// first, create a user volume config to get the volume created
+	userVolumeID := constants.UserVolumePrefix + volumeID
+
+	userVolumeDoc := blockcfg.NewUserVolumeConfigV1Alpha1()
+	userVolumeDoc.MetaName = volumeID
+	userVolumeDoc.ProvisioningSpec.DiskSelectorSpec.Match = cel.MustExpression(
+		cel.ParseBooleanExpression(fmt.Sprintf("'%s' in disk.symlinks", disk.TypedSpec().Symlinks[0]), celenv.DiskLocator()),
+	)
+	userVolumeDoc.ProvisioningSpec.ProvisioningMinSize = blockcfg.MustByteSize("100MiB")
+	userVolumeDoc.ProvisioningSpec.ProvisioningMaxSize = blockcfg.MustByteSize("1GiB")
+
+	// create user volumes
+	suite.PatchMachineConfig(ctx, userVolumeDoc)
+
+	rtestutils.AssertResources(ctx, suite.T(), suite.Client.COSI, []resource.ID{userVolumeID},
+		func(vs *block.VolumeStatus, asrt *assert.Assertions) {
+			asrt.Equal(block.VolumePhaseReady, vs.TypedSpec().Phase)
+		},
+	)
+
+	// now destroy a user volume
+	suite.RemoveMachineConfigDocumentsByName(ctx, blockcfg.UserVolumeConfigKind, volumeID)
+
+	// wait for the user volume to be removed
+	rtestutils.AssertNoResource[*block.VolumeStatus](ctx, suite.T(), suite.Client.COSI, userVolumeID)
+
+	// now, recreate the volume as an existing volume
+	existingVolumeDoc := blockcfg.NewExistingVolumeConfigV1Alpha1()
+	existingVolumeDoc.MetaName = volumeID
+	existingVolumeDoc.VolumeDiscoverySpec.VolumeSelectorConfig.Match = cel.MustExpression(
+		cel.ParseBooleanExpression(
+			fmt.Sprintf("volume.partition_label == '%s' && '%s' in disk.symlinks", userVolumeID, disk.TypedSpec().Symlinks[0]),
+			celenv.VolumeLocator(),
+		),
+	)
+
+	// create existing volume
+	suite.PatchMachineConfig(ctx, existingVolumeDoc)
+
+	// wait for the existing volume to be discovered
+	rtestutils.AssertResources(ctx, suite.T(), suite.Client.COSI, []resource.ID{existingVolumeID},
+		func(vs *block.VolumeStatus, asrt *assert.Assertions) {
+			asrt.Equal(block.VolumePhaseReady, vs.TypedSpec().Phase)
+			asrt.Equal(userDisks[0], vs.TypedSpec().ParentLocation)
+		},
+	)
+
+	// check that the volume is mounted
+	rtestutils.AssertResources(ctx, suite.T(), suite.Client.COSI, []resource.ID{existingVolumeID},
+		func(vs *block.MountStatus, asrt *assert.Assertions) {
+			asrt.False(vs.TypedSpec().ReadOnly)
+		})
+
+	// create a pod using existing volumes
+	podDef, err := suite.NewPod("existing-volume-test")
+	suite.Require().NoError(err)
+
+	// using subdirectory here to test that the hostPath mount is properly propagated into the kubelet
+	podDef = podDef.WithNodeName(nodeName).
+		WithNamespace("kube-system").
+		WithHostVolumeMount(filepath.Join(constants.UserVolumeMountPoint, volumeID, "data"), "/mnt/data")
+
+	suite.Require().NoError(podDef.Create(suite.ctx, 1*time.Minute))
+
+	_, _, err = podDef.Exec(suite.ctx, "mkdir -p /mnt/data/test")
+	suite.Require().NoError(err)
+
+	suite.Require().NoError(podDef.Delete(suite.ctx))
+
+	// verify that directory exists
+	expectedPath := filepath.Join(constants.UserVolumeMountPoint, volumeID, "data", "test")
+
+	stream, err := suite.Client.LS(ctx, &machineapi.ListRequest{
+		Root:  expectedPath,
+		Types: []machineapi.ListRequest_Type{machineapi.ListRequest_DIRECTORY},
+	})
+
+	suite.Require().NoError(err)
+
+	suite.Require().NoError(helpers.ReadGRPCStream(stream, func(info *machineapi.FileInfo, _ string, _ bool) error {
+		suite.T().Logf("found %s on node %s", info.Name, node)
+		suite.Require().Equal(expectedPath, info.Name, "expected %s to exist", expectedPath)
+
+		return nil
+	}))
+
+	// now, re-mount the existing volume as read-only
+	existingVolumeDoc.MountSpec.MountReadOnly = pointer.To(true)
+	suite.PatchMachineConfig(ctx, existingVolumeDoc)
+
+	rtestutils.AssertResources(ctx, suite.T(), suite.Client.COSI, []resource.ID{existingVolumeID},
+		func(vs *block.MountStatus, asrt *assert.Assertions) {
+			asrt.True(vs.TypedSpec().ReadOnly)
+		})
+
+	// clean up
+	suite.RemoveMachineConfigDocumentsByName(ctx, blockcfg.ExistingVolumeConfigKind, volumeID)
+
+	rtestutils.AssertNoResource[*block.VolumeStatus](ctx, suite.T(), suite.Client.COSI, existingVolumeID)
 
 	suite.Require().NoError(suite.Client.BlockDeviceWipe(ctx, &storage.BlockDeviceWipeRequest{
 		Devices: []*storage.BlockDeviceWipeDescriptor{

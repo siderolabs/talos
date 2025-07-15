@@ -21,6 +21,7 @@ User volumes come in several flavors:
 
 * [User Volumes]({{< relref "user" >}}) - for dynamically allocated local storage for Kubernetes workloads.
 * [Raw Volumes]({{< relref "raw" >}}) - for allocating unformatted storage (e.g. to be used with CSIs).
+* [Existing Volumes]({{< relref "existing" >}}) - for mounting pre-existing partitions or disks.
 
 For information on allocating swap space, see [Swap Management]({{< relref "../swap" >}}).
 

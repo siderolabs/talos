@@ -93,6 +93,24 @@ type RawVolumeConfig interface {
 	Encryption() EncryptionConfig
 }
 
+// ExistingVolumeConfig defines the interface to access existing volume configuration.
+type ExistingVolumeConfig interface {
+	NamedDocument
+	ExistingVolumeConfigSignal()
+	VolumeDiscovery() VolumeDiscoveryConfig
+	Mount() VolumeMountConfig
+}
+
+// VolumeDiscoveryConfig defines the interface to discover volumes.
+type VolumeDiscoveryConfig interface {
+	VolumeSelector() cel.Expression
+}
+
+// VolumeMountConfig defines the interface to access volume mount configuration.
+type VolumeMountConfig interface {
+	ReadOnly() bool
+}
+
 // FilesystemConfig defines the interface to access filesystem configuration.
 type FilesystemConfig interface {
 	// Type returns the filesystem type.

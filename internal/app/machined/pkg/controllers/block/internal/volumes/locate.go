@@ -44,9 +44,26 @@ func LocateAndProvision(ctx context.Context, logger *zap.Logger, volumeContext M
 
 	// attempt to discover the volume
 	for _, dv := range volumeContext.DiscoveredVolumes {
-		matches, err := volumeContext.Cfg.TypedSpec().Locator.Match.EvalBool(celenv.VolumeLocator(), map[string]any{
+		matchContext := map[string]any{
 			"volume": dv,
-		})
+		}
+
+		// add disk to the context, so we can use it in CEL expressions
+		for _, diskCtx := range volumeContext.Disks {
+			if dv.ParentDevPath != "" && diskCtx.Disk.DevPath == dv.ParentDevPath {
+				matchContext["disk"] = diskCtx.Disk
+
+				break
+			}
+
+			if dv.ParentDevPath == "" && diskCtx.Disk.DevPath == dv.DevPath {
+				matchContext["disk"] = diskCtx.Disk
+
+				break
+			}
+		}
+
+		matches, err := volumeContext.Cfg.TypedSpec().Locator.Match.EvalBool(celenv.VolumeLocator(), matchContext)
 		if err != nil {
 			return fmt.Errorf("error evaluating volume locator: %w", err)
 		}

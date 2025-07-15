@@ -61,6 +61,10 @@ func TestVolumeLocator(t *testing.T) {
 			name:       "by filesystem and size",
 			expression: "volume.name == 'ext4' && volume.size > 1000u * TB",
 		},
+		{
+			name:       "by filesystem and disk transport",
+			expression: "volume.name == 'ext4' && disk.transport == 'nvme'",
+		},
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()

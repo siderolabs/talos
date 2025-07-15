@@ -39,9 +39,10 @@ func init() {
 
 // Check interfaces.
 var (
-	_ config.UserVolumeConfig = &UserVolumeConfigV1Alpha1{}
-	_ config.NamedDocument    = &UserVolumeConfigV1Alpha1{}
-	_ config.Validator        = &UserVolumeConfigV1Alpha1{}
+	_ config.UserVolumeConfig    = &UserVolumeConfigV1Alpha1{}
+	_ config.ConflictingDocument = &UserVolumeConfigV1Alpha1{}
+	_ config.NamedDocument       = &UserVolumeConfigV1Alpha1{}
+	_ config.Validator           = &UserVolumeConfigV1Alpha1{}
 )
 
 const maxUserVolumeNameLength = constants.PartitionLabelLength - len(constants.UserVolumePrefix)
@@ -126,6 +127,11 @@ func (s *UserVolumeConfigV1Alpha1) Name() string {
 // Clone implements config.Document interface.
 func (s *UserVolumeConfigV1Alpha1) Clone() config.Document {
 	return s.DeepCopy()
+}
+
+// ConflictsWithKinds implements config.ConflictingDocument interface.
+func (s *UserVolumeConfigV1Alpha1) ConflictsWithKinds() []string {
+	return []string{ExistingVolumeConfigKind}
 }
 
 // Validate implements config.Validator interface.

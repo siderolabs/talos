@@ -111,6 +111,7 @@ Talos now supports `talosctl disk wipe` command in maintenance mode (`talosctl d
         title = "Volumes"
         description = """\
 Talos now supports [raw user volumes](https://www.talos.dev/v1.11/talos-guides/configuration/disk-management/raw/), allowing to allocate unformatted disk space as partition.
+In addition to that, support for [existing volumes](https://www.talos.dev/v1.11/talos-guides/configuration/disk-management/existing/) has been added, allowing to mount existing partitions without formatting them.
 """
 
     [notes.etcd]
