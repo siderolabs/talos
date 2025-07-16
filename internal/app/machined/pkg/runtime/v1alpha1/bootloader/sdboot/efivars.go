@@ -5,7 +5,9 @@
 package sdboot
 
 import (
+	"errors"
 	"fmt"
+	"os"
 	"slices"
 
 	"github.com/siderolabs/gen/xslices"
@@ -35,6 +37,11 @@ const (
 func ReadVariable(name string) (string, error) {
 	data, _, err := efivarfs.Read(efivarfs.ScopeSystemd, name)
 	if err != nil {
+		// if the variable does not exist, return an empty string
+		if errors.Is(err, os.ErrNotExist) {
+			return "", nil
+		}
+
 		return "", err
 	}
 

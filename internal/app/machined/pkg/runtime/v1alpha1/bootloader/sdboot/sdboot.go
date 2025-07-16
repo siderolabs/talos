@@ -13,6 +13,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 
 	"github.com/foxboron/go-uefi/efi"
@@ -67,6 +68,7 @@ func New() *Config {
 }
 
 // ProbeWithCallback probes the sd-boot bootloader, and calls the callback function with the Config.
+// this is called when we upgrade, do KexecLoad, or for reverting the bootloader.
 //
 //nolint:gocyclo
 func ProbeWithCallback(disk string, options options.ProbeOptions, callback func(*Config) error) (*Config, error) {
@@ -76,19 +78,6 @@ func ProbeWithCallback(disk string, options options.ProbeOptions, callback func(
 
 		return nil, nil
 	}
-
-	// here we need to read the EFI vars to see if we have any defaults
-	// and populate config accordingly
-	// https://www.freedesktop.org/software/systemd/man/latest/systemd-boot.html#LoaderEntryDefault
-	// this is set by systemd-boot.
-	// first we start by checking if we have a Default entry
-	// this is set by installer
-	bootedEntry, err := ReadVariable(LoaderEntryDefaultName)
-	if err != nil {
-		return nil, err
-	}
-
-	options.Log("sd-boot: booted entry: %q", bootedEntry)
 
 	var sdbootConf *Config
 
@@ -111,7 +100,7 @@ func ProbeWithCallback(disk string, options options.ProbeOptions, callback func(
 			}
 
 			if len(files) == 0 {
-				return fmt.Errorf("no boot*.efi files found in %q", filepath.Join(constants.EFIMountPoint, "EFI", "boot"))
+				return fmt.Errorf("no boot*.efi files found in %s", filepath.Join(constants.EFIMountPoint, "EFI", "boot"))
 			}
 
 			// list existing UKIs, and check if the current one is present
@@ -120,29 +109,59 @@ func ProbeWithCallback(disk string, options options.ProbeOptions, callback func(
 				return err
 			}
 
-			options.Log("sd-boot: found UKI files: %v", xslices.Map(ukiFiles, filepath.Base))
-
-			// here we handle a case when we boot of just kernel+initrd/uki/iso and we don't have a booted entry
-			// then we know we're booted of UKI
-			if bootedEntry == "" && len(ukiFiles) == 1 {
-				options.Log("sd-boot: no booted entry found, assuming the only UKI file: %s", ukiFiles[0])
-
-				sdbootConf = &Config{
-					Default: filepath.Base(ukiFiles[0]),
-				}
+			if len(ukiFiles) == 0 {
+				return fmt.Errorf("no UKI files found in %q", filepath.Join(constants.EFIMountPoint, "EFI", "Linux"))
 			}
 
+			options.Log("sd-boot: found UKI files: %v", xslices.Map(ukiFiles, filepath.Base))
+
+			// If we booted of UKI/Kernel+Initramfs/ISO Talos installer will always be run which
+			// sets the `LoaderEntryDefault` to the UKI file name, so either for reboot with Kexec or upgrade
+			// we will always have the UKI file name in the `LoaderEntryDefault`
+			// and we can use it to determine the default entry.
+			bootEntry, err := ReadVariable(LoaderEntryDefaultName)
+			if err != nil {
+				return err
+			}
+
+			options.Log("sd-boot: LoaderEntryDefault: %s", bootEntry)
+
+			if bootEntry == "" {
+				// If we booted of a Disk image, only `LoaderEntrySelected` will be set until we do an upgrade
+				// which will set the `LoaderEntryDefault` to the UKI file name.
+				// So for reboot with Kexec we will have to read the `LoaderEntrySelected`
+				// upgrades will always have `LoaderEntryDefault` set to the UKI file name.
+				loaderEntrySelected, err := ReadVariable(LoaderEntrySelectedName)
+				if err != nil {
+					return err
+				}
+
+				if loaderEntrySelected == "" {
+					return errors.New("sd-boot: no LoaderEntryDefault or LoaderEntrySelected found, cannot continue")
+				}
+
+				bootEntry = loaderEntrySelected
+			}
+
+			options.Log("sd-boot: found boot entry: %s", bootEntry)
+
 			for _, ukiFile := range ukiFiles {
-				if strings.EqualFold(filepath.Base(ukiFile), bootedEntry) {
-					options.Log("sd-boot: default entry matched as %q", bootedEntry)
+				if strings.EqualFold(filepath.Base(ukiFile), bootEntry) {
+					options.Log("sd-boot: default entry matched as %q", bootEntry)
 
 					sdbootConf = &Config{
-						Default: bootedEntry,
+						Default: bootEntry,
 					}
 				}
 			}
 
-			if sdbootConf != nil && callback != nil {
+			if sdbootConf == nil {
+				return errors.New("sd-boot: no valid sd-boot config found, cannot continue")
+			}
+
+			options.Log("sd-boot: using %s as default entry", sdbootConf.Default)
+
+			if callback != nil {
 				return callback(sdbootConf)
 			}
 
@@ -321,15 +340,15 @@ func sdBootFilePath(arch string) (string, error) {
 //nolint:gocyclo,cyclop
 func (c *Config) install(opts options.InstallOptions) (*options.InstallResult, error) {
 	if _, err := os.Stat(filepath.Join(opts.MountPrefix, constants.EFIMountPoint, "loader", "loader.conf")); err != nil {
-		if os.IsNotExist(err) {
-			if err := os.MkdirAll(filepath.Join(opts.MountPrefix, constants.EFIMountPoint, "loader"), 0o755); err != nil {
-				return nil, err
-			}
+		if !os.IsNotExist(err) {
+			return nil, err
+		}
 
-			if err := os.WriteFile(filepath.Join(opts.MountPrefix, constants.EFIMountPoint, "loader", "loader.conf"), LoaderConfBytes, 0o644); err != nil {
-				return nil, err
-			}
-		} else {
+		if err := os.MkdirAll(filepath.Join(opts.MountPrefix, constants.EFIMountPoint, "loader"), 0o755); err != nil {
+			return nil, err
+		}
+
+		if err := os.WriteFile(filepath.Join(opts.MountPrefix, constants.EFIMountPoint, "loader", "loader.conf"), LoaderConfBytes, 0o644); err != nil {
 			return nil, err
 		}
 	}
@@ -340,8 +359,12 @@ func (c *Config) install(opts options.InstallOptions) (*options.InstallResult, e
 		return nil, err
 	}
 
-	// writing UKI by version-based filename here
-	ukiPath := fmt.Sprintf("%s-%s.efi", "Talos", opts.Version)
+	opts.Printf("sd-boot: found existing UKIs during install: %v", xslices.Map(files, filepath.Base))
+
+	ukiPath, err := GenerateNextUKIName(opts.Version, files)
+	if err != nil {
+		return nil, fmt.Errorf("failed to generate next UKI name: %w", err)
+	}
 
 	for _, file := range files {
 		if strings.EqualFold(filepath.Base(file), c.Default) {
@@ -407,6 +430,44 @@ func (c *Config) install(opts options.InstallOptions) (*options.InstallResult, e
 	return &options.InstallResult{
 		PreviousLabel: c.Fallback,
 	}, nil
+}
+
+// GenerateNextUKIName generates the next UKI name based on the version and existing files.
+// It checks for existing files and increments the index if necessary.
+func GenerateNextUKIName(version string, existingFiles []string) (string, error) {
+	maxIndex := -1
+
+	for _, file := range existingFiles {
+		base := strings.TrimSuffix(filepath.Base(file), ".efi")
+		if !strings.HasPrefix(base, "Talos-") {
+			continue
+		}
+
+		suffix := strings.TrimPrefix(base, "Talos-")
+		parts := strings.SplitN(suffix, "~", 2)
+
+		if parts[0] != version {
+			continue
+		}
+
+		if len(parts) == 1 {
+			// Talos-{version}.efi format
+			if maxIndex < 0 {
+				maxIndex = 0
+			}
+		} else if len(parts) == 2 {
+			// Talos-{version}+{index}.efi format
+			if idx, err := strconv.Atoi(parts[1]); err == nil && idx > maxIndex {
+				maxIndex = idx
+			}
+		}
+	}
+
+	if maxIndex >= 0 {
+		return fmt.Sprintf("Talos-%s~%d.efi", version, maxIndex+1), nil
+	}
+
+	return fmt.Sprintf("Talos-%s.efi", version), nil
 }
 
 // Revert the bootloader to the previous version.
