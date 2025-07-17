@@ -13,6 +13,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/siderolabs/gen/optional"
+	"github.com/siderolabs/gen/xerrors"
 	"github.com/siderolabs/gen/xslices"
 	"go.uber.org/zap"
 
@@ -99,14 +100,16 @@ func (ctrl *UserVolumeConfigController) Run(ctx context.Context, r controller.Ru
 
 		// fetch all user-defined volume configs
 		var (
-			userVolumeConfigs []configconfig.UserVolumeConfig
-			rawVolumeConfigs  []configconfig.RawVolumeConfig
-			swapVolumeConfigs []configconfig.SwapVolumeConfig
+			userVolumeConfigs     []configconfig.UserVolumeConfig
+			rawVolumeConfigs      []configconfig.RawVolumeConfig
+			existingVolumeConfigs []configconfig.ExistingVolumeConfig
+			swapVolumeConfigs     []configconfig.SwapVolumeConfig
 		)
 
 		if cfg != nil {
 			userVolumeConfigs = cfg.Config().UserVolumeConfigs()
 			rawVolumeConfigs = cfg.Config().RawVolumeConfigs()
+			existingVolumeConfigs = cfg.Config().ExistingVolumeConfigs()
 			swapVolumeConfigs = cfg.Config().SwapVolumeConfigs()
 		}
 
@@ -114,6 +117,7 @@ func (ctrl *UserVolumeConfigController) Run(ctx context.Context, r controller.Ru
 		labelQuery := []state.ListOption{
 			state.WithLabelQuery(resource.LabelExists(block.UserVolumeLabel)),
 			state.WithLabelQuery(resource.LabelExists(block.RawVolumeLabel)),
+			state.WithLabelQuery(resource.LabelExists(block.ExistingVolumeLabel)),
 			state.WithLabelQuery(resource.LabelExists(block.SwapVolumeLabel)),
 		}
 
@@ -146,7 +150,7 @@ func (ctrl *UserVolumeConfigController) Run(ctx context.Context, r controller.Ru
 				ctx, r, constants.UserVolumePrefix, block.UserVolumeLabel, ctrl.Name(),
 				userVolumeConfig, volumeConfigsByID, volumeMountRequestsByID,
 				ctrl.handleUserVolumeConfig,
-				false,
+				defaultMountTransform,
 			); err != nil {
 				return fmt.Errorf("error handling user volume config %q: %w", userVolumeConfig.Name(), err)
 			}
@@ -157,9 +161,20 @@ func (ctrl *UserVolumeConfigController) Run(ctx context.Context, r controller.Ru
 				ctx, r, constants.RawVolumePrefix, block.RawVolumeLabel, ctrl.Name(),
 				rawVolumeConfig, volumeConfigsByID, volumeMountRequestsByID,
 				ctrl.handleRawVolumeConfig,
-				true,
+				skipMountTransform,
 			); err != nil {
 				return fmt.Errorf("error handling raw volume config %q: %w", rawVolumeConfig.Name(), err)
+			}
+		}
+
+		for _, existingVolumeConfig := range existingVolumeConfigs {
+			if err := handleCustomVolumeConfig(
+				ctx, r, constants.ExistingVolumePrefix, block.ExistingVolumeLabel, ctrl.Name(),
+				existingVolumeConfig, volumeConfigsByID, volumeMountRequestsByID,
+				ctrl.handleExistingVolumeConfig,
+				ctrl.handleExistinVolumeMountRequest,
+			); err != nil {
+				return fmt.Errorf("error handling existing volume config %q: %w", existingVolumeConfig.Name(), err)
 			}
 		}
 
@@ -168,7 +183,7 @@ func (ctrl *UserVolumeConfigController) Run(ctx context.Context, r controller.Ru
 				ctx, r, constants.SwapVolumePrefix, block.SwapVolumeLabel, ctrl.Name(),
 				swapVolumeConfig, volumeConfigsByID, volumeMountRequestsByID,
 				ctrl.handleSwapVolumeConfig,
-				false,
+				defaultMountTransform,
 			); err != nil {
 				return fmt.Errorf("error handling swap volume config %q: %w", swapVolumeConfig.Name(), err)
 			}
@@ -203,6 +218,17 @@ func (ctrl *UserVolumeConfigController) Run(ctx context.Context, r controller.Ru
 	}
 }
 
+// skipUserVolumeMountRequest is used to skip creating a VolumeMountRequest for a user volume.
+type skipUserVolumeMountRequest struct{}
+
+func defaultMountTransform[C configconfig.NamedDocument](C, *block.VolumeMountRequest, string) error {
+	return nil
+}
+
+func skipMountTransform[C configconfig.NamedDocument](C, *block.VolumeMountRequest, string) error {
+	return xerrors.NewTaggedf[skipUserVolumeMountRequest]("skip")
+}
+
 // handleCustomVolumeConfig handled transormation of a custom (user) volume configuration
 // into VolumeConfig and VolumeMountRequest resources.
 //
@@ -217,7 +243,7 @@ func handleCustomVolumeConfig[C configconfig.NamedDocument](
 	volumeConfigsByID map[string]*block.VolumeConfig,
 	volumeMountRequestsByID map[string]*block.VolumeMountRequest,
 	transformFunc func(c C, v *block.VolumeConfig, volumeID string) error,
-	skipMount bool,
+	mountTransformFunc func(c C, m *block.VolumeMountRequest, volumeID string) error,
 ) error {
 	volumeID := prefix + configDocument.Name()
 
@@ -246,10 +272,6 @@ func handleCustomVolumeConfig[C configconfig.NamedDocument](
 		return fmt.Errorf("error creating volume configuration: %w", err)
 	}
 
-	if skipMount {
-		return nil
-	}
-
 	if err := safe.WriterModify(ctx, r,
 		block.NewVolumeMountRequest(block.NamespaceName, volumeID),
 		func(v *block.VolumeMountRequest) error {
@@ -257,10 +279,12 @@ func handleCustomVolumeConfig[C configconfig.NamedDocument](
 			v.TypedSpec().Requester = requester
 			v.TypedSpec().VolumeID = volumeID
 
-			return nil
+			return mountTransformFunc(configDocument, v, volumeID)
 		},
 	); err != nil {
-		return fmt.Errorf("error creating volume mount request: %w", err)
+		if !xerrors.TagIs[skipUserVolumeMountRequest](err) {
+			return fmt.Errorf("error creating volume mount request: %w", err)
+		}
 	}
 
 	return nil
@@ -346,6 +370,35 @@ func (ctrl *UserVolumeConfigController) handleRawVolumeConfig(
 	if err := convertEncryptionConfiguration(rawVolumeConfig.Encryption(), v.TypedSpec()); err != nil {
 		return fmt.Errorf("error apply encryption configuration: %w", err)
 	}
+
+	return nil
+}
+
+func (ctrl *UserVolumeConfigController) handleExistingVolumeConfig(
+	existingVolumeConfig configconfig.ExistingVolumeConfig,
+	v *block.VolumeConfig,
+	volumeID string,
+) error {
+	v.TypedSpec().Type = block.VolumeTypePartition
+	v.TypedSpec().Locator.Match = existingVolumeConfig.VolumeDiscovery().VolumeSelector()
+	v.TypedSpec().Mount = block.MountSpec{
+		TargetPath:   existingVolumeConfig.Name(),
+		ParentID:     constants.UserVolumeMountPoint,
+		SelinuxLabel: constants.EphemeralSelinuxLabel,
+		FileMode:     0o755,
+		UID:          0,
+		GID:          0,
+	}
+
+	return nil
+}
+
+func (ctrl *UserVolumeConfigController) handleExistinVolumeMountRequest(
+	existingVolumeConfig configconfig.ExistingVolumeConfig,
+	m *block.VolumeMountRequest,
+	_ string,
+) error {
+	m.TypedSpec().ReadOnly = existingVolumeConfig.Mount().ReadOnly()
 
 	return nil
 }
