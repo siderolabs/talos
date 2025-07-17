@@ -7,6 +7,7 @@ package runtime
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -72,6 +73,11 @@ func (ctrl *SBOMItemController) Run(ctx context.Context, r controller.Runtime, l
 		{true, ctrl.ExtensionSPDXPath},
 	} {
 		if err := ctrl.processSPDXDirectory(ctx, r, logger, spec.path, spec.isExtension); err != nil {
+			if spec.isExtension && errors.Is(err, os.ErrNotExist) {
+				// Extension SBOM directory is only present if extensions are installed
+				continue
+			}
+
 			return err
 		}
 	}
