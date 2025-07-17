@@ -199,6 +199,7 @@ func (ctrl *ManifestController) render(cfg k8s.BootstrapManifestsConfigSpec, scr
 		{"01-csr-approver-role-binding", csrApproverRoleBindingTemplate},
 		{"01-csr-renewal-role-binding", csrRenewalRoleBindingTemplate},
 		{"11-kube-config-in-cluster", kubeConfigInClusterTemplate},
+		{"11-talos-node-rbac-template", talosNodesRBACTemplate},
 	}
 
 	if cfg.CoreDNSEnabled {

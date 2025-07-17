@@ -40,6 +40,11 @@ var (
 		Version:  "v1",
 		Resource: "secrets",
 	}
+	jobGVR = schema.GroupVersionResource{
+		Group:    "batch",
+		Version:  "v1",
+		Resource: "jobs",
+	}
 )
 
 // ServiceAccountSuite verifies Talos ServiceAccount.
@@ -107,6 +112,20 @@ func (suite *ServiceAccountSuite) TestValid() {
 		constants.KubernetesTalosAPIServiceNamespace,
 	)
 	suite.Assert().Equal([]string{expectedServiceName}, conf.Contexts[conf.Context].Endpoints)
+
+	node := suite.RandomDiscoveredNodeInternalIP()
+
+	_, err = suite.creteTestJob("kube-system", name, name, node)
+	suite.Assert().NoError(err)
+
+	err = suite.waitForJobReady(30*time.Second, "kube-system", name)
+	suite.Assert().NoError(err)
+
+	err = suite.DeleteResource(suite.ctx, jobGVR, "kube-system", name)
+	suite.Require().NoError(err)
+
+	err = suite.EnsureResourceIsDeleted(suite.ctx, 30*time.Second, jobGVR, "kube-system", name)
+	suite.Assert().NoError(err)
 
 	err = suite.DeleteResource(suite.ctx, serviceAccountGVR, "kube-system", name)
 	suite.Require().NoError(err)
@@ -227,6 +246,73 @@ func (suite *ServiceAccountSuite) createServiceAccount(ns string, name string, r
 			},
 		},
 	}, metav1.CreateOptions{})
+}
+
+func (suite *ServiceAccountSuite) creteTestJob(ns, name, serviceAccount, node string) (*unstructured.Unstructured, error) {
+	return suite.DynamicClient.Resource(jobGVR).Namespace(ns).Create(suite.ctx, &unstructured.Unstructured{
+		Object: map[string]any{
+			"apiVersion": fmt.Sprintf("%s/%s", jobGVR.Group, jobGVR.Version),
+			"kind":       "Job",
+			"metadata": map[string]any{
+				"name": name,
+			},
+			"spec": map[string]any{
+				"template": map[string]any{
+					"spec": map[string]any{
+						"restartPolicy": "Never",
+						"volumes": []map[string]any{
+							{
+								"name": "talos-secrets",
+								"secret": map[string]any{
+									"secretName": serviceAccount,
+								},
+							},
+						},
+						"containers": []map[string]any{
+							{
+								"name":  "talosctl",
+								"image": "ghcr.io/siderolabs/talosctl:latest",
+								"args": []string{
+									"--nodes", node,
+									"version",
+								},
+								"volumeMounts": []map[string]any{
+									{
+										"mountPath": "/var/run/secrets/talos.dev",
+										"name":      "talos-secrets",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}, metav1.CreateOptions{})
+}
+
+func (suite *ServiceAccountSuite) waitForJobReady(duration time.Duration, ns, name string) error {
+	cli := suite.DynamicClient.Resource(jobGVR).Namespace(ns)
+
+	return retry.Constant(duration).RetryWithContext(suite.ctx, func(ctx context.Context) error {
+		job, err := cli.Get(ctx, name, metav1.GetOptions{})
+		if kubeerrors.IsNotFound(err) {
+			return retry.ExpectedError(fmt.Errorf("job %s/%s not found", ns, name))
+		} else if err != nil {
+			return err
+		}
+
+		if job.Object["status"] == nil {
+			return retry.ExpectedError(fmt.Errorf("job %s/%s status is not set", ns, name))
+		}
+
+		status := job.Object["status"].(map[string]any)
+		if status["succeeded"] == nil || status["succeeded"].(int64) == 0 {
+			return retry.ExpectedError(fmt.Errorf("job %s/%s is not ready yet", ns, name))
+		}
+
+		return nil
+	})
 }
 
 // configureAPIAccess configures the API access feature on all control plane nodes.

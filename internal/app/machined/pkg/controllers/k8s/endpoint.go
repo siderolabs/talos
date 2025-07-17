@@ -9,7 +9,6 @@ import (
 	"fmt"
 	"net/netip"
 	"slices"
-	"time"
 
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/safe"
@@ -17,10 +16,10 @@ import (
 	"github.com/siderolabs/gen/optional"
 	"go.uber.org/zap"
 	corev1 "k8s.io/api/core/v1"
+	discoveryv1 "k8s.io/api/discovery/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/client-go/informers"
-	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/tools/clientcmd"
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
@@ -119,29 +118,22 @@ func (ctrl *EndpointController) watchEndpointsOnWorker(ctx context.Context, r co
 
 	defer client.Close() //nolint:errcheck
 
-	ticker := time.NewTicker(10 * time.Minute)
-	defer ticker.Stop()
+	r.QueueReconcile()
 
 	for {
-		// unfortunately we can't use Watch or CachedInformer here as system:node role is only allowed verb 'Get'
-		endpoints, err := client.CoreV1().Endpoints(corev1.NamespaceDefault).Get(ctx, "kubernetes", v1.GetOptions{})
-		if err != nil {
-			return fmt.Errorf("error getting endpoints: %w", err)
-		}
-
-		if err = ctrl.updateEndpointsResource(ctx, r, logger, endpoints); err != nil {
-			return err
-		}
-
 		select {
+		case <-r.EventCh():
 		case <-ctx.Done():
 			return nil
-		case <-ticker.C:
-		case <-r.EventCh():
+		}
+
+		if err = ctrl.watchKubernetesEndpointSlices(ctx, r, logger, client); err != nil {
+			return err
 		}
 	}
 }
 
+//nolint:gocyclo
 func (ctrl *EndpointController) watchEndpointsOnControlPlane(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
 	if err := r.UpdateInputs([]controller.Input{
 		{
@@ -188,18 +180,39 @@ func (ctrl *EndpointController) watchEndpointsOnControlPlane(ctx context.Context
 			return fmt.Errorf("error loading kubeconfig: %w", err)
 		}
 
-		if err = ctrl.watchKubernetesEndpoint(ctx, r, logger, kubeconfig); err != nil {
+		// closure to capture the deferred close on client
+		watch := func() error {
+			client, err := kubernetes.NewForConfig(kubeconfig)
+			if err != nil {
+				return fmt.Errorf("error building Kubernetes client: %w", err)
+			}
+
+			defer client.Close() //nolint:errcheck
+
+			if err = ctrl.watchKubernetesEndpointSlices(ctx, r, logger, client); err != nil {
+				return err
+			}
+
+			return nil
+		}
+		if err = watch(); err != nil {
 			return err
 		}
 	}
 }
 
-func (ctrl *EndpointController) updateEndpointsResource(ctx context.Context, r controller.Runtime, logger *zap.Logger, endpoints *corev1.Endpoints) error { //nolint:staticcheck
+//nolint:gocyclo
+func (ctrl *EndpointController) updateEndpointsResource(
+	ctx context.Context,
+	r controller.Runtime,
+	logger *zap.Logger,
+	object *discoveryv1.EndpointSlice,
+) error {
 	var addrs []netip.Addr
 
-	for _, endpoint := range endpoints.Subsets {
+	for _, endpoint := range object.Endpoints {
 		for _, addr := range endpoint.Addresses {
-			ip, err := netip.ParseAddr(addr.IP)
+			ip, err := netip.ParseAddr(addr)
 			if err == nil {
 				addrs = append(addrs, ip)
 			}
@@ -216,7 +229,33 @@ func (ctrl *EndpointController) updateEndpointsResource(ctx context.Context, r c
 				logger.Debug("updated controlplane endpoints", zap.Any("endpoints", addrs))
 			}
 
-			r.TypedSpec().Addresses = addrs
+			var addrIPv4, addrIPv6 []netip.Addr
+
+			for _, addr := range r.TypedSpec().Addresses {
+				switch {
+				case addr.Is4():
+					addrIPv4 = append(addrIPv4, addr)
+
+				case addr.Is6():
+					addrIPv6 = append(addrIPv6, addr)
+				}
+			}
+
+			switch object.AddressType {
+			case discoveryv1.AddressTypeIPv4:
+				addrIPv4 = addrs
+
+			case discoveryv1.AddressTypeIPv6:
+				addrIPv6 = addrs
+
+			case discoveryv1.AddressTypeFQDN:
+				fallthrough
+
+			default:
+				// ignore all other cases
+			}
+
+			r.TypedSpec().Addresses = slices.Concat(addrIPv4, addrIPv6)
 
 			return nil
 		},
@@ -227,21 +266,14 @@ func (ctrl *EndpointController) updateEndpointsResource(ctx context.Context, r c
 	return nil
 }
 
-func (ctrl *EndpointController) watchKubernetesEndpoint(ctx context.Context, r controller.Runtime, logger *zap.Logger, kubeconfig *rest.Config) error {
-	client, err := kubernetes.NewForConfig(kubeconfig)
-	if err != nil {
-		return fmt.Errorf("error building Kubernetes client: %w", err)
-	}
-
-	defer client.Close() //nolint:errcheck
-
+func (ctrl *EndpointController) watchKubernetesEndpointSlices(ctx context.Context, r controller.Runtime, logger *zap.Logger, client *kubernetes.Client) error {
 	// abort the watch on any return from this function
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
-	notifyCh, watchCloser, err := kubernetesEndpointWatcher(ctx, logger, client)
+	notifyCh, watchCloser, err := kubernetesEndpointSliceWatcher(ctx, logger, client)
 	if err != nil {
-		return fmt.Errorf("error watching Kubernetes endpoint: %w", err)
+		return fmt.Errorf("error watching Kubernetes endpoint slice: %w", err)
 	}
 
 	defer func() {
@@ -267,7 +299,7 @@ func (ctrl *EndpointController) watchKubernetesEndpoint(ctx context.Context, r c
 	}
 }
 
-func kubernetesEndpointWatcher(ctx context.Context, logger *zap.Logger, client *kubernetes.Client) (chan *corev1.Endpoints, func(), error) { //nolint:staticcheck
+func kubernetesEndpointSliceWatcher(ctx context.Context, logger *zap.Logger, client *kubernetes.Client) (chan *discoveryv1.EndpointSlice, func(), error) {
 	informerFactory := informers.NewSharedInformerFactoryWithOptions(
 		client.Clientset, constants.KubernetesInformerDefaultResyncPeriod,
 		informers.WithNamespace(corev1.NamespaceDefault),
@@ -276,9 +308,9 @@ func kubernetesEndpointWatcher(ctx context.Context, logger *zap.Logger, client *
 		}),
 	)
 
-	notifyCh := make(chan *corev1.Endpoints, 1) //nolint:staticcheck
+	notifyCh := make(chan *discoveryv1.EndpointSlice, 1)
 
-	informer := informerFactory.Core().V1().Endpoints().Informer()
+	informer := informerFactory.Discovery().V1().EndpointSlices().Informer()
 
 	if err := informer.SetWatchErrorHandler(func(r *cache.Reflector, err error) {
 		logger.Error("kubernetes endpoint watch error", zap.Error(err))
@@ -287,9 +319,9 @@ func kubernetesEndpointWatcher(ctx context.Context, logger *zap.Logger, client *
 	}
 
 	if _, err := informer.AddEventHandler(cache.ResourceEventHandlerFuncs{
-		AddFunc:    func(obj any) { notifyCh <- obj.(*corev1.Endpoints) },    //nolint:staticcheck
-		DeleteFunc: func(_ any) { notifyCh <- &corev1.Endpoints{} },          //nolint:staticcheck
-		UpdateFunc: func(_, obj any) { notifyCh <- obj.(*corev1.Endpoints) }, //nolint:staticcheck
+		AddFunc:    func(obj any) { notifyCh <- obj.(*discoveryv1.EndpointSlice) },
+		DeleteFunc: func(_ any) { notifyCh <- &discoveryv1.EndpointSlice{} },
+		UpdateFunc: func(_, obj any) { notifyCh <- obj.(*discoveryv1.EndpointSlice) },
 	}); err != nil {
 		return nil, nil, fmt.Errorf("error adding watch event handler: %w", err)
 	}

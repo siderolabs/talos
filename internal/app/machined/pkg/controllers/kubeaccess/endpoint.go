@@ -8,20 +8,24 @@ import (
 	"context"
 	"fmt"
 	"reflect"
+	"strings"
 
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/siderolabs/gen/optional"
+	"github.com/siderolabs/gen/xslices"
 	"go.uber.org/zap"
 	corev1 "k8s.io/api/core/v1"
+	discoveryv1 "k8s.io/api/discovery/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
+	"k8s.io/utils/ptr"
 
 	"github.com/siderolabs/talos/pkg/kubernetes"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
@@ -147,9 +151,14 @@ func (ctrl *EndpointController) manageEndpoints(ctx context.Context, logger *zap
 		return fmt.Errorf("error ensuring Talos API service: %w", err)
 	}
 
-	// now create or update the Endpoints resource
-	if err = ctrl.ensureTalosEndpoints(ctx, logger, client, endpointAddrs); err != nil {
-		return fmt.Errorf("error ensuring Talos API endpoints: %w", err)
+	// now create or update the EndpointSlices resource
+	if err = ctrl.ensureTalosEndpointSlices(ctx, logger, client, endpointAddrs); err != nil {
+		return fmt.Errorf("error ensuring Talos API endpoint slices: %w", err)
+	}
+
+	// clean-up deprecated endpoints
+	if err = ctrl.cleanupTalosEndpoints(ctx, logger, client); err != nil {
+		return fmt.Errorf("error cleaning up dangling Talos API endpoints: %w", err)
 	}
 
 	return nil
@@ -197,70 +206,170 @@ func (ctrl *EndpointController) ensureTalosService(ctx context.Context, client *
 }
 
 //nolint:gocyclo
-func (ctrl *EndpointController) ensureTalosEndpoints(ctx context.Context, logger *zap.Logger, client *kubernetes.Client, endpointAddrs k8s.EndpointList) error {
+func (ctrl *EndpointController) ensureTalosEndpointSlices(ctx context.Context, logger *zap.Logger, client *kubernetes.Client, endpointAddrs k8s.EndpointList) error {
+	var (
+		addrsIPv4 k8s.EndpointList
+		addrsIPv6 k8s.EndpointList
+	)
+
+	for _, addr := range endpointAddrs {
+		switch {
+		case addr.Is4():
+			addrsIPv4 = append(addrsIPv4, addr)
+
+		case addr.Is6():
+			addrsIPv6 = append(addrsIPv6, addr)
+
+		default:
+			// ignore other address types
+		}
+	}
+
+	if len(addrsIPv4) == 0 {
+		if err := ctrl.deleteTalosEndpointSlicesTyped(ctx, logger, client, discoveryv1.AddressTypeIPv4); err != nil {
+			return fmt.Errorf("error deleting Talos API endpoint slices for IPv4: %w", err)
+		}
+	} else {
+		if err := ctrl.ensureTalosEndpointSlicesTyped(ctx, logger, client, addrsIPv4, discoveryv1.AddressTypeIPv4); err != nil {
+			return fmt.Errorf("error ensuring Talos API endpoint slices for IPv4: %w", err)
+		}
+	}
+
+	if len(addrsIPv6) == 0 {
+		if err := ctrl.deleteTalosEndpointSlicesTyped(ctx, logger, client, discoveryv1.AddressTypeIPv6); err != nil {
+			return fmt.Errorf("error deleting Talos API endpoint slices for IPv6: %w", err)
+		}
+	} else {
+		if err := ctrl.ensureTalosEndpointSlicesTyped(ctx, logger, client, addrsIPv6, discoveryv1.AddressTypeIPv6); err != nil {
+			return fmt.Errorf("error ensuring Talos API endpoint slices for IPv6: %w", err)
+		}
+	}
+
+	return nil
+}
+
+func (ctrl *EndpointController) deleteTalosEndpointSlicesTyped(ctx context.Context, logger *zap.Logger, client *kubernetes.Client, addressType discoveryv1.AddressType) error {
+	endpointSliceName := constants.KubernetesTalosAPIServiceName + "-" + strings.ToLower(string(addressType))
+
+	err := client.DiscoveryV1().EndpointSlices(constants.KubernetesTalosAPIServiceNamespace).Delete(ctx, endpointSliceName, metav1.DeleteOptions{})
+	if err != nil && !apierrors.IsNotFound(err) {
+		return fmt.Errorf("error deleting Talos API endpoint slices: %w", err)
+	}
+
+	logger.Info("deleted Talos API endpoint slices in Kubernetes", zap.String("addressType", string(addressType)))
+
+	return nil
+}
+
+//nolint:gocyclo
+func (ctrl *EndpointController) ensureTalosEndpointSlicesTyped(
+	ctx context.Context,
+	logger *zap.Logger,
+	client *kubernetes.Client,
+	endpointAddrs k8s.EndpointList,
+	addressType discoveryv1.AddressType,
+) error {
 	for {
-		oldEndpoints, err := client.CoreV1().Endpoints(constants.KubernetesTalosAPIServiceNamespace).Get(ctx, constants.KubernetesTalosAPIServiceName, metav1.GetOptions{})
+		esc := client.DiscoveryV1().EndpointSlices(constants.KubernetesTalosAPIServiceNamespace)
+		name := constants.KubernetesTalosAPIServiceName + "-" + strings.ToLower(string(addressType))
+
+		oldEndpointSlice, err := esc.Get(ctx, name, metav1.GetOptions{})
 		if err != nil && !apierrors.IsNotFound(err) {
 			return fmt.Errorf("error getting endpoints: %w", err)
 		}
 
-		var newEndpoints *corev1.Endpoints //nolint:staticcheck
+		var newEndpointSlice *discoveryv1.EndpointSlice
 
 		if apierrors.IsNotFound(err) {
-			newEndpoints = &corev1.Endpoints{ //nolint:staticcheck
+			newEndpointSlice = &discoveryv1.EndpointSlice{
 				ObjectMeta: metav1.ObjectMeta{
-					Name:      constants.KubernetesTalosAPIServiceName,
+					Name:      name,
 					Namespace: constants.KubernetesTalosAPIServiceNamespace,
 					Labels: map[string]string{
-						"provider":  constants.KubernetesTalosProvider,
-						"component": "apid",
+						"kubernetes.io/service-name": constants.KubernetesTalosAPIServiceName,
+						"provider":                   constants.KubernetesTalosProvider,
+						"component":                  "apid",
 					},
 				},
+				AddressType: addressType,
 			}
+			oldEndpointSlice = nil
 		} else {
-			newEndpoints = oldEndpoints.DeepCopy()
+			newEndpointSlice = oldEndpointSlice.DeepCopy()
 		}
 
-		newEndpoints.Subsets = []corev1.EndpointSubset{ //nolint:staticcheck
+		newEndpointSlice.Ports = []discoveryv1.EndpointPort{
 			{
-				Ports: []corev1.EndpointPort{
-					{
-						Name:     "apid",
-						Port:     constants.ApidPort,
-						Protocol: "TCP",
-					},
-				},
+				Name:     ptr.To("apid"),
+				Port:     ptr.To[int32](constants.ApidPort),
+				Protocol: ptr.To(corev1.ProtocolTCP),
 			},
 		}
 
 		for _, addr := range endpointAddrs {
-			newEndpoints.Subsets[0].Addresses = append(newEndpoints.Subsets[0].Addresses,
-				corev1.EndpointAddress{
-					IP: addr.String(),
+			newEndpointSlice.Endpoints = append(
+				newEndpointSlice.Endpoints,
+				discoveryv1.Endpoint{
+					Addresses: []string{addr.String()},
+					Conditions: discoveryv1.EndpointConditions{
+						Ready:       ptr.To(true),
+						Serving:     ptr.To(true),
+						Terminating: ptr.To(false),
+					},
 				},
 			)
 		}
 
-		if oldEndpoints != nil && reflect.DeepEqual(oldEndpoints.Subsets, newEndpoints.Subsets) {
+		newEndpointSlice.Endpoints = xslices.Deduplicate(newEndpointSlice.Endpoints, func(e discoveryv1.Endpoint) string {
+			return e.Addresses[0]
+		})
+
+		if oldEndpointSlice != nil &&
+			(reflect.DeepEqual(oldEndpointSlice.Endpoints, newEndpointSlice.Endpoints) &&
+				reflect.DeepEqual(oldEndpointSlice.Ports, newEndpointSlice.Ports)) {
 			// no change, bail out
 			return nil
 		}
 
-		if oldEndpoints == nil {
-			_, err = client.CoreV1().Endpoints(constants.KubernetesTalosAPIServiceNamespace).Create(ctx, newEndpoints, metav1.CreateOptions{})
+		if oldEndpointSlice == nil {
+			_, err = client.DiscoveryV1().EndpointSlices(constants.KubernetesTalosAPIServiceNamespace).Create(ctx, newEndpointSlice, metav1.CreateOptions{})
 		} else {
-			_, err = client.CoreV1().Endpoints(constants.KubernetesTalosAPIServiceNamespace).Update(ctx, newEndpoints, metav1.UpdateOptions{})
+			_, err = client.DiscoveryV1().EndpointSlices(constants.KubernetesTalosAPIServiceNamespace).Update(ctx, newEndpointSlice, metav1.UpdateOptions{})
 		}
 
 		switch {
 		case err == nil:
-			logger.Info("updated Talos API endpoints in Kubernetes", zap.Strings("endpoints", endpointAddrs.Strings()))
+			logger.Info("updated Talos API endpoint slices in Kubernetes", zap.Strings("endpoints", endpointAddrs.Strings()))
 
 			return nil
 		case apierrors.IsConflict(err) || apierrors.IsAlreadyExists(err):
 			// retry
 		default:
-			return fmt.Errorf("error updating Kubernetes Talos API endpoints: %w", err)
+			return fmt.Errorf("error updating Kubernetes Talos API endpoint slices: %w", err)
+		}
+	}
+}
+
+//nolint:gocyclo
+func (ctrl *EndpointController) cleanupTalosEndpoints(ctx context.Context, logger *zap.Logger, client *kubernetes.Client) error {
+	for {
+		err := client.CoreV1().Endpoints(constants.KubernetesTalosAPIServiceNamespace).Delete(ctx, constants.KubernetesTalosAPIServiceName, metav1.DeleteOptions{})
+		if err != nil && !apierrors.IsNotFound(err) {
+			return fmt.Errorf("error getting endpoints: %w", err)
+		}
+
+		switch {
+		case err == nil:
+			logger.Info("deleted dangling Talos API endpoints in Kubernetes")
+
+			return nil
+		case apierrors.IsNotFound(err):
+			logger.Info("no dangling Talos API endpoints in Kubernetes")
+
+			return nil
+
+		default:
+			return fmt.Errorf("error deleting dangling Kubernetes Talos API endpoints: %w", err)
 		}
 	}
 }

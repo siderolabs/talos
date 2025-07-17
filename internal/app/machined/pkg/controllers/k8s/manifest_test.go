@@ -137,6 +137,7 @@ func (suite *ManifestSuite) TestReconcileDefaults() {
 						"11-core-dns",
 						"11-core-dns-svc",
 						"11-kube-config-in-cluster",
+						"11-talos-node-rbac-template",
 					},
 				)
 			},
@@ -168,6 +169,7 @@ func (suite *ManifestSuite) TestReconcileDisableKubeProxy() {
 						"11-core-dns",
 						"11-core-dns-svc",
 						"11-kube-config-in-cluster",
+						"11-talos-node-rbac-template",
 					},
 				)
 			},
@@ -200,6 +202,7 @@ func (suite *ManifestSuite) TestReconcileKubeProxyExtraArgs() {
 						"11-core-dns",
 						"11-core-dns-svc",
 						"11-kube-config-in-cluster",
+						"11-talos-node-rbac-template",
 					},
 				)
 			},
@@ -256,6 +259,7 @@ func (suite *ManifestSuite) TestReconcileIPv6() {
 						"11-core-dns",
 						"11-core-dns-svc",
 						"11-kube-config-in-cluster",
+						"11-talos-node-rbac-template",
 					},
 				)
 			},
@@ -338,6 +342,7 @@ func (suite *ManifestSuite) TestReconcileDisablePSP() {
 						"11-core-dns",
 						"11-core-dns-svc",
 						"11-kube-config-in-cluster",
+						"11-talos-node-rbac-template",
 					},
 				)
 			},

@@ -78,3 +78,10 @@ var flannelTemplate = string(flannel.Template)
 //
 //go:embed templates/talos-service-account-crd-template.yaml
 var talosServiceAccountCRDTemplate string
+
+// talosNodeRBACTemplate is the template of the RBAC rules which allow
+// Talos to discover the nodes in the Kubernetes cluster and assign
+// endpoints for the internal discovery.
+//
+//go:embed templates/talos-nodes-rbac-template.yaml
+var talosNodesRBACTemplate string

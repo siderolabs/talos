@@ -137,7 +137,7 @@ require (
 	github.com/siderolabs/crypto v0.6.3
 	github.com/siderolabs/discovery-api v0.1.6
 	github.com/siderolabs/discovery-client v0.1.12
-	github.com/siderolabs/gen v0.8.4
+	github.com/siderolabs/gen v0.8.5
 	github.com/siderolabs/go-api-signature v0.3.6
 	github.com/siderolabs/go-blockdevice v0.4.8
 	github.com/siderolabs/go-blockdevice/v2 v2.0.18
@@ -189,6 +189,7 @@ require (
 	google.golang.org/protobuf v1.36.6
 	gopkg.in/yaml.v3 v3.0.1
 	k8s.io/klog/v2 v2.130.1
+	k8s.io/utils v0.0.0-20250604170112-4c0f3b243397
 	kernel.org/pub/linux/libs/security/libcap/cap v1.2.76
 	sigs.k8s.io/hydrophone v0.7.0
 	sigs.k8s.io/yaml v1.5.0
@@ -359,7 +360,6 @@ require (
 	gotest.tools/v3 v3.4.0 // indirect
 	k8s.io/cli-runtime v0.34.0-beta.0 // indirect
 	k8s.io/kube-openapi v0.0.0-20250710124328-f3f2b991d03b // indirect
-	k8s.io/utils v0.0.0-20250604170112-4c0f3b243397 // indirect
 	kernel.org/pub/linux/libs/security/libcap/psx v1.2.76 // indirect
 	rsc.io/qr v0.2.0 // indirect
 	sigs.k8s.io/json v0.0.0-20241014173422-cfa47c3a1cc8 // indirect
