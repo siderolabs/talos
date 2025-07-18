@@ -123,8 +123,11 @@ func (ctrl *EndpointController) watchEndpointsOnWorker(ctx context.Context, r co
 	defer ticker.Stop()
 
 	for {
+		// TODO(shanduur): missing RBAC might need workaround for earlier versions of K8s, to allow nodes to "get" on EndpointSlices
+		cli := client.CoreV1().Endpoints(corev1.NamespaceDefault)
+
 		// unfortunately we can't use Watch or CachedInformer here as system:node role is only allowed verb 'Get'
-		endpoints, err := client.CoreV1().Endpoints(corev1.NamespaceDefault).Get(ctx, "kubernetes", v1.GetOptions{})
+		endpoints, err := cli.Get(ctx, "kubernetes", v1.GetOptions{})
 		if err != nil {
 			return fmt.Errorf("error getting endpoints: %w", err)
 		}
@@ -194,10 +197,15 @@ func (ctrl *EndpointController) watchEndpointsOnControlPlane(ctx context.Context
 	}
 }
 
-func (ctrl *EndpointController) updateEndpointsResource(ctx context.Context, r controller.Runtime, logger *zap.Logger, endpoints *corev1.Endpoints) error { //nolint:staticcheck
+func (ctrl *EndpointController) updateEndpointsResource(
+	ctx context.Context,
+	r controller.Runtime,
+	logger *zap.Logger,
+	object *corev1.Endpoints, //nolint:statickcheck // TODO(shanduur): migrate to EndpointSlice
+) error {
 	var addrs []netip.Addr
 
-	for _, endpoint := range endpoints.Subsets {
+	for _, endpoint := range object.Subsets {
 		for _, addr := range endpoint.Addresses {
 			ip, err := netip.ParseAddr(addr.IP)
 			if err == nil {
@@ -216,6 +224,7 @@ func (ctrl *EndpointController) updateEndpointsResource(ctx context.Context, r c
 				logger.Debug("updated controlplane endpoints", zap.Any("endpoints", addrs))
 			}
 
+			// TODO(shanduur): handle IPv4/IPv6 comming from different sources when migrating to EndpointSlices
 			r.TypedSpec().Addresses = addrs
 
 			return nil
@@ -267,7 +276,7 @@ func (ctrl *EndpointController) watchKubernetesEndpoint(ctx context.Context, r c
 	}
 }
 
-func kubernetesEndpointWatcher(ctx context.Context, logger *zap.Logger, client *kubernetes.Client) (chan *corev1.Endpoints, func(), error) { //nolint:staticcheck
+func kubernetesEndpointWatcher(ctx context.Context, logger *zap.Logger, client *kubernetes.Client) (chan *corev1.Endpoints, func(), error) { //nolint:statickcheck // TODO: migrate to EndpointSlice
 	informerFactory := informers.NewSharedInformerFactoryWithOptions(
 		client.Clientset, constants.KubernetesInformerDefaultResyncPeriod,
 		informers.WithNamespace(corev1.NamespaceDefault),
@@ -276,7 +285,7 @@ func kubernetesEndpointWatcher(ctx context.Context, logger *zap.Logger, client *
 		}),
 	)
 
-	notifyCh := make(chan *corev1.Endpoints, 1) //nolint:staticcheck
+	notifyCh := make(chan *corev1.Endpoints, 1) //nolint:statickcheck // TODO(shanduur): migrate to EndpointSlice
 
 	informer := informerFactory.Core().V1().Endpoints().Informer()
 
@@ -287,9 +296,9 @@ func kubernetesEndpointWatcher(ctx context.Context, logger *zap.Logger, client *
 	}
 
 	if _, err := informer.AddEventHandler(cache.ResourceEventHandlerFuncs{
-		AddFunc:    func(obj any) { notifyCh <- obj.(*corev1.Endpoints) },    //nolint:staticcheck
-		DeleteFunc: func(_ any) { notifyCh <- &corev1.Endpoints{} },          //nolint:staticcheck
-		UpdateFunc: func(_, obj any) { notifyCh <- obj.(*corev1.Endpoints) }, //nolint:staticcheck
+		AddFunc:    func(obj any) { notifyCh <- obj.(*corev1.Endpoints) },    //nolint:statickcheck // TODO(shanduur): migrate to EndpointSlice
+		DeleteFunc: func(_ any) { notifyCh <- &corev1.Endpoints{} },          //nolint:statickcheck // TODO(shanduur): migrate to EndpointSlice
+		UpdateFunc: func(_, obj any) { notifyCh <- obj.(*corev1.Endpoints) }, //nolint:statickcheck // TODO(shanduur): migrate to EndpointSlice
 	}); err != nil {
 		return nil, nil, fmt.Errorf("error adding watch event handler: %w", err)
 	}
