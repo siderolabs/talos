@@ -1693,7 +1693,9 @@ func KexecPrepare(_ runtime.Sequence, data any) (runtime.TaskExecutionFunc, stri
 
 		defer dev.Unlock() //nolint:errcheck
 
-		bootloaderInfo, err := bootloader.Probe(systemDisk.DevPath, options.ProbeOptions{})
+		bootloaderInfo, err := bootloader.Probe(systemDisk.DevPath, options.ProbeOptions{
+			Logger: log.Printf,
+		})
 		if err != nil {
 			return fmt.Errorf("failed to probe system disk: %w", err)
 		}
