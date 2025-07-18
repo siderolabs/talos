@@ -258,6 +258,36 @@ spec:
             artifactPath: _out
         - name: ci-temp-release-tag
         - name: lint
+    - name: grype-scan
+      buildxOptions:
+        enabled: true
+      depends:
+        - default
+      runners:
+        - self-hosted
+        - talos
+      crons:
+        - '30 7 * * *'
+      steps:
+        - name: download-artifacts
+          artifactStep:
+            type: download
+            artifactName: talos-artifacts
+            artifactPath: _out
+        - name: ci-temp-release-tag
+        - name: local-grype-scan-result
+          environment:
+            DEST: _out
+        # Fail the run if found vulnerabilities which do not have a statement
+        - name: target-grype-validate
+        - name: save-scan-result
+          conditions:
+            - always
+          artifactStep:
+            type: upload
+            artifactName: talos-grype-scan-result
+            disableExecutableListGeneration: true
+            artifactPath: _out/grype-scan.log
     - name: e2e-iso
       depends:
         - default

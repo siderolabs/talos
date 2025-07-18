@@ -10,6 +10,9 @@ ARG DEBUG_TOOLS_SOURCE=scratch
 ARG PKGS_PREFIX=scratch
 ARG TOOLS_PREFIX=scratch
 
+ARG GENERATE_VEX_PREFIX=scratch
+ARG GENERATE_VEX=scratch
+
 ARG PKG_APPARMOR=scratch
 ARG PKG_CA_CERTIFICATES=scratch
 ARG PKG_CNI=scratch
@@ -932,6 +935,41 @@ COPY --from=sbom-arm64 / /
 COPY --from=sbom-amd64 / /
 
 FROM sbom-container-${TARGETARCH} AS sbom-container-target
+
+# Use an unpinned latest version, because we want to use the latest advisories
+FROM ${GENERATE_VEX_PREFIX}:${GENERATE_VEX} AS talos-vex
+
+FROM build-go AS vex-generate
+ARG TAG
+COPY --from=talos-vex /generate-vex /generate-vex
+RUN /generate-vex gen --target-version $TAG > /talos.vex.json
+# This config contains IDs of the tracked, but affected vulnerabilities.
+# Once an advisory is made, the CI should go back to passing status.
+RUN /generate-vex grype-config --target-version $TAG > /talos.grype.yaml
+
+FROM scratch AS vex
+COPY --from=vex-generate /talos.vex.json /talos.vex.json
+COPY --from=vex-generate /talos.grype.yaml /talos.grype.yaml
+
+FROM build-go AS grype-scan
+COPY --from=sbom-arm64 /talos-arm64.spdx.json /talos-arm64.spdx.json
+COPY --from=vex /talos.vex.json /talos.vex.json
+COPY ./tools ./tools
+RUN --mount=type=cache,target=/.cache,id=talos/.cache go tool -modfile=tools/go.mod \
+    github.com/anchore/grype/cmd/grype sbom:/talos-arm64.spdx.json \
+    --vex /talos.vex.json -vv 2>&1 | tee /grype-scan.log
+
+FROM scratch AS grype-scan-result
+COPY --from=grype-scan /grype-scan.log /grype-scan.log
+
+FROM build-go AS grype-validate
+COPY --from=sbom-arm64 /talos-arm64.spdx.json /talos-arm64.spdx.json
+COPY --from=vex /talos.vex.json /talos.vex.json
+COPY --from=vex /talos.grype.yaml /talos.grype.yaml
+COPY ./tools ./tools
+RUN --mount=type=cache,target=/.cache,id=talos/.cache go tool -modfile=tools/go.mod \
+    github.com/anchore/grype/cmd/grype sbom:/talos-arm64.spdx.json \
+    --vex /talos.vex.json -vv --fail-on negligible --config /talos.grype.yaml
 
 FROM rootfs-base-${TARGETARCH} AS rootfs-base
 RUN rm -rf /rootfs/usr/share/spdx/*

@@ -28,6 +28,8 @@ TOOLS_PREFIX ?= ghcr.io/siderolabs/tools
 TOOLS ?= v1.11.0
 PKGS_PREFIX ?= ghcr.io/siderolabs
 PKGS ?= v1.11.0
+GENERATE_VEX_PREFIX ?= ghcr.io/siderolabs/generate-vex
+GENERATE_VEX ?= latest
 
 KRES_IMAGE ?= ghcr.io/siderolabs/kres:latest
 CONFORMANCE_IMAGE ?= ghcr.io/siderolabs/conform:latest
@@ -286,6 +288,8 @@ COMMON_ARGS += --build-arg=TEXTLINT_RULE_ONE_SENTENCE_PER_LINE_VERSION=$(TEXTLIN
 COMMON_ARGS += --build-arg=TEXTLINT_VERSION=$(TEXTLINT_VERSION)
 COMMON_ARGS += --build-arg=TOOLS_PREFIX=$(TOOLS_PREFIX)
 COMMON_ARGS += --build-arg=TOOLS=$(TOOLS)
+COMMON_ARGS += --build-arg=GENERATE_VEX_PREFIX=$(GENERATE_VEX_PREFIX)
+COMMON_ARGS += --build-arg=GENERATE_VEX=$(GENERATE_VEX)
 COMMON_ARGS += --build-arg=USERNAME=$(USERNAME)
 COMMON_ARGS += --build-arg=VTPROTOBUF_VERSION=$(VTPROTOBUF_VERSION)
 COMMON_ARGS += --build-arg=ZSTD_COMPRESSION_LEVEL=$(ZSTD_COMPRESSION_LEVEL)
