@@ -4,365 +4,386 @@ weight: 30
 description: "Recommendations for setting up a Talos Linux cluster in production."
 ---
 
-This document explains recommendations for running Talos Linux in production.
+This guide explains things to consider to create a production quality Talos Linux cluster for bare metal.
+Check out the [Reference Architecture documentation](https://www.siderolabs.com/resource-hub/resources/) for architectural diagrams and guidance on creating production-grade clusters in other environments.
 
-## Acquire the installation image
+This guide assumes that you’ve already created a development cluster and are familiar with the **Getting Started** documentation.
+If not, please refer to the [Getting Started]({{< relref "getting-started" >}}) guide for more information.
 
-### Alternative Booting
+When moving from a learning environment to a production-ready Talos Linux cluster, you have to consider several critical factors:
 
-For network booting and self-built media, you can use the published kernel and initramfs images:
+- High availability for your control plane nodes.
+- Secure configuration management.
+- Reliability for continuous service and minimal downtime.
+- Authentication for access control.
 
-- X86: [vmlinuz-amd64](https://github.com/siderolabs/talos/releases/download/{{< release >}}/vmlinuz-amd64) [initramfs-amd64.xz](https://github.com/siderolabs/talos/releases/download/{{< release >}}/initramfs-amd64.xz)
-- ARM64: [vmlinuz-arm64](https://github.com/siderolabs/talos/releases/download/{{< release >}}/vmlinuz-arm64) [initramfs-arm64.xz](https://github.com/siderolabs/talos/releases/download/{{< release >}}/initramfs-arm64.xz)
+Follow the steps below to build a production-grade Talos cluster that is highly available, reliable, and secure.
 
-Note that to use alternate booting, there are a number of required kernel parameters.
-Please see the [kernel]({{< relref "../reference/kernel" >}}) docs for more information.
+**Note**: Check out [Omni](https://www.siderolabs.com/omni-signup/) for managing large-scale Talos Linux clusters automatically.
 
-## Control plane nodes
+## Step 1: Prepare Your Infrastructure
 
-For a production, highly available Kubernetes cluster, it is recommended to use three control plane nodes.
-Using five nodes can provide greater fault tolerance, but imposes more replication overhead and can result in worse performance.
+To create your production cluster infrastructure :
 
-Boot all three control plane nodes at this point.
-They will boot Talos Linux, and come up in maintenance mode, awaiting a configuration.
+1. Boot your machines using the Talos ISO image
+1. Ensure network access on your nodes.
 
-## Decide the Kubernetes Endpoint
+Here is how to do each step:
 
-The Kubernetes API Server endpoint, in order to be highly available, should be configured in a way that uses all available control plane nodes.
-There are three common ways to do this: using a load-balancer, using Talos Linux's built in VIP functionality, or using multiple DNS records.
+### Boot Your Machines Using the Talos ISO Image
 
-### Dedicated Load-balancer
+Follow these steps to boot your machines using the Talos ISO image:
 
-If you are using a cloud provider or have your own load-balancer
-(such as HAProxy, Nginx reverse proxy, or an F5 load-balancer), a dedicated load balancer is a natural choice.
-Create an appropriate frontend for the endpoint, listening on TCP port 6443, and point the backends at the addresses of each of the Talos control plane nodes.
-Your Kubernetes endpoint will be the IP address or DNS name of the load balancer front end, with the port appended (e.g. https://myK8s.mydomain.io:6443).
+1. Download the latest ISO for your infrastructure depending on the hardware type from the [Talos Image factory](https://factory.talos.dev/).
 
-> Note: an HTTP load balancer can't be used, as Kubernetes API server does TLS termination and mutual TLS authentication.
+   **Note**: For network booting and self-built media using published kernel there are a number of required kernel parameters.
+Please see the [kernel docs]({{< relref "../reference/kernel" >}}) getting-started for more information.
 
-### Layer 2 VIP Shared IP
+1. Boot three control planes using the ISO image you just downloaded.
+1. Boot additional machines as worker nodes.
 
-Talos has integrated support for serving Kubernetes from a shared/virtual IP address.
-This requires Layer 2 connectivity between control plane nodes.
+### Ensure Network Access
 
-Choose an unused IP address on the same subnet as the control plane nodes for the VIP.
-For instance, if your control plane node IPs are:
+If your nodes are behind a firewall, in a private network, or otherwise not directly reachable, you would need to configure a load balancer to forward TCP port 50000 to reach the nodes for Talos API access.
 
-- 192.168.0.10
-- 192.168.0.11
-- 192.168.0.12
+**Note**: Because the Talos Linux API uses gRPC and mutual TLS, it cannot be proxied by a HTTP/S proxy, but only by a TCP load balancer.
 
-you could choose the IP `192.168.0.15` as your VIP IP address.
-(Make sure that `192.168.0.15` is not used by any other machine and is excluded from DHCP ranges.)
+With your control plane and worker nodes booted, next configure your Kubernetes endpoint.
 
-Once chosen, form the full HTTPS URL from this IP:
+## Step 2: Store Your IP Addresses in a Variable
+
+To store variables for your machines’ IP addresses:
+
+1. Copy the IP address displayed on each machine console, including the control plane and any worker nodes you’ve created.
+
+    If you don’t have a display connected, retrieve the IP addresses from your DHCP server.
+
+   ![IP address display](/images/IP-address-install-display.png)
+
+1. Create a Bash array for your control plane node IP addresses, replacing each `<control-plane-ip>` placeholder with the IP address of a control plane node.
+You can include as many IP addresses as needed:
+
+    ```bash
+    CONTROL_PLANE_IP=("<control-plane-ip-1>" "<control-plane-ip-1>" "<control-plane-ip-2>")
+    ```
+
+   **For example**:
+
+   If your control plane nodes IP addresses are `192.168.0.2`, `192.168.0.3`, `192.168.0.4`, your command would be:
+
+    ```bash
+    CONTROL_PLANE_IP= ("192.168.0.2" "192.168.0.3" "192.168.0.4")
+    ```
+
+1. If you have worker nodes, store their IP addresses in a Bash array.
+Replace each `<worker-ip>` placeholder with the actual IP address of a worker node.
+You can include as many IP addresses as needed:
+
+    ```bash
+    WORKER_IP=("<worker-ip-1>" "<worker-ip-2>" "<worker-ip-3>")
+    ```
+
+## Step 3: Decide Your Kubernetes Endpoint
+
+You've set up multiple control planes for high availability, but they only provide true high availability if the Kubernetes API server endpoint can reach all control plane nodes.
+
+Here are two common ways to configure this:
+
+- **Dedicated load balancer**: Set a dedicated load balancer that route to your control plane nodes.
+- **DNS records**: Create multiple DNS records that point to all your control plane nodes
+
+With these, you can pass in one IP address or DNS name during setup that route to all your control plane nodes.
+
+Here is how you can configure each option:
+
+### Dedicated Load Balancer
+
+If you're using a cloud provider or have your own load balancer (such as HAProxy, an NGINX reverse proxy, or an F5 load balancer), setting up a dedicated load balancer is a natural choice.
+
+It is also important to note that if you [created the cluster with Omni](https://omni.siderolabs.com/tutorials/getting_started), Omni will automatically be a load balancer for your Kubernetes endpoint.
+
+Configure a frontend to listen on TCP port 6443 and direct traffic to the addresses of your Talos control plane nodes.
+
+Your Kubernetes endpoint will be the IP address or DNS name of the load balancer's frontend, with the port appended, for example, `https://myK8s.mydomain.io:6443`.
+
+**Note**: You cannot use a HTTP load balancer, because the Kubernetes API server handles TLS termination and mutual TLS authentication.
+
+### DNS Records
+
+Additionally, you can configure your Kubernetes endpoint using DNS records.
+Simply, add multiple A or AAAA records, one for each control plane, to a DNS name.
+
+For example, you can add:
 
 ```url
-https://192.168.0.15:6443
-```
-
-If you create a DNS record for this IP, note you will need to use the IP address itself, not the DNS name, to configure the shared IP (`machine.network.interfaces[].vip.ip`) in the Talos configuration.
-
-After the machine configurations are generated, you will want to edit the `controlplane.yaml` file to activate the VIP:
-
-```yaml
-machine:
-  network:
-    interfaces:
-      - interface: enp2s0
-        dhcp: true
-        vip:
-          ip: 192.168.0.15
-```
-
-For more information about using a shared IP, see the related
-[Guide]({{< relref "../talos-guides/network/vip" >}})
-
-### DNS records
-
-Add multiple A or AAAA records (one for each control plane node) to a DNS name.
-
-For instance, you could add:
-
-```dns
 kube.cluster1.mydomain.com  IN  A  192.168.0.10
 kube.cluster1.mydomain.com  IN  A  192.168.0.11
 kube.cluster1.mydomain.com  IN  A  192.168.0.12
 ```
 
-where the IP addresses are those of the control plane nodes.
-
-Then, your endpoint would be:
+Then your endpoint would be:
 
 ```url
 https://kube.cluster1.mydomain.com:6443
 ```
 
-## Multihoming
+## Step 4: Save Your Endpoint in a Variable
 
-If your machines are multihomed, i.e., they have more than one IPv4 and/or IPv6 addresses other than loopback, then additional configuration is required.
-A point to note is that the machines may become multihomed via privileged workloads.
+Set a variable to store the endpoint you chose in Step 3.
+Replace `<your_endpoint>` placeholder with your actual endpoint:
 
-### Multihoming and etcd
-
-The `etcd` cluster needs to establish a mesh of connections among the members.
-It is done using the so-called advertised address - each node learns the others' addresses as they are advertised.
-It is crucial that these IP addresses are stable, i.e., that each node always advertises the same IP address.
-Moreover, it is beneficial to control them to establish the correct routes between the members and, e.g., avoid congested paths.
-In Talos, these addresses are controlled using the `cluster.etcd.advertisedSubnets` configuration key.
-
-### Multihoming and kubelets
-
-Stable IP addressing for kubelets (i.e., nodeIP) is not strictly necessary but highly recommended as it ensures that, e.g., kube-proxy and CNI routing take the desired routes.
-Analogously to etcd, for kubelets this is controlled via `machine.kubelet.nodeIP.validSubnets`.
-
-### Example
-
-Let's assume that we have a cluster with two networks:
-
-- public network
-- private network `192.168.0.0/16`
-
-We want to use the private network for etcd and kubelet communication:
-
-```yaml
-machine:
-  kubelet:
-    nodeIP:
-      validSubnets:
-        - 192.168.0.0/16
-#...
-cluster:
-  etcd:
-    advertisedSubnets: # listenSubnets defaults to advertisedSubnets if not set explicitly
-      - 192.168.0.0/16
+```bash
+export YOUR_ENDPOINT=<your_endpoint>
 ```
 
-This way we ensure that the `etcd` cluster will use the private network for communication and the kubelets will use the private network for communication with the control plane.
+## Step 5: Generate Secrets Bundle
 
-## Load balancing the Talos API
+The secrets bundle is a file that contains all the cryptographic keys, certificates, and tokens needed to secure your Talos Linux cluster.
 
-The `talosctl` tool provides built-in client-side load-balancing across control plane nodes, so usually you do not need to configure a load balancer for the Talos API.
+To generate the secrets bundle, run:
 
-However, if the control plane nodes are *not* directly reachable from the workstation where you run `talosctl`, then configure a load balancer to forward TCP port 50000 to the control plane nodes.
-
-> Note: Because the Talos Linux API uses gRPC and mutual TLS, it cannot be proxied by a HTTP/S proxy, but only by a TCP load balancer.
-
-If you create a load balancer to forward the Talos API calls, the load balancer IP or hostname will be used as the `endpoint` for `talosctl`.
-
-Add the load balancer IP or hostname to the `.machine.certSANs` field of the machine configuration file.
-
-> Do *not* use Talos Linux's built in VIP function for accessing the Talos API.
-> In the event of an error in `etcd`, the VIP will not function, and you will not be able to access the Talos API to recover.
-
-## Configure Talos
-
-In many installation methods, a configuration can be passed in on boot.
-
-For example, Talos can be booted with the `talos.config` kernel
-argument set to an HTTP(s) URL from which it should receive its
-configuration.
-Where a PXE server is available, this is much more efficient than
-manually configuring each node.
-If you do use this method, note that Talos requires a number of other
-kernel commandline parameters.
-See [required kernel parameters]({{< relref "../reference/kernel" >}}).
-
-Similarly, if creating [EC2 kubernetes clusters]({{< relref "../talos-guides/install/cloud-platforms/aws/" >}}), the configuration file can be passed in as `--user-data` to the `aws ec2 run-instances` command.
-See generally the [Installation Guide]({{< relref "../talos-guides/install" >}}) for the platform being deployed.
-
-### Separating out secrets
-
-When generating the configuration files for a Talos Linux cluster, it is recommended to start with generating a secrets bundle which should be saved in a secure location.
-This bundle can be used to generate machine or client configurations at any time:
-
-```sh
+```bash
 talosctl gen secrets -o secrets.yaml
 ```
 
-> The `secrets.yaml` can also be extracted from the existing controlplane machine configuration with
-> `talosctl gen secrets --from-controlplane-config controlplane.yaml -o secrets.yaml` command.
+## Step 6: Generate Machine Configurations
 
-Now, we can generate the machine configuration for each node:
+Follow these steps to generate machine configuration:
 
-```sh
-talosctl gen config --with-secrets secrets.yaml <cluster-name> <cluster-endpoint>
-```
+1. Set a variable for your cluster name by running the following command.
+Replace `<your_cluster_name>` with the name you want to give your cluster:
 
-Here, `cluster-name` is an arbitrary name for the cluster, used
-in your local client configuration as a label.
-It should be unique in the configuration on your local workstation.
+    ```bash
+    export CLUSTER_NAME=<your_cluster_name>
+    ```
 
-The `cluster-endpoint` is the Kubernetes Endpoint you
-selected from above.
-This is the Kubernetes API URL, and it should be a complete URL, with `https://`
-and port.
-(The default port is `6443`, but you may have configured your load balancer to forward a different port.)
-For example:
+1. Run this command to generate your machine configuration files using your secrets bundle:
 
-```sh
-$ talosctl gen config --with-secrets secrets.yaml my-cluster https://192.168.64.15:6443
-generating PKI and tokens
-created controlplane.yaml
-created worker.yaml
-created talosconfig
-```
+    ```bash
+    talosctl gen config --with-secrets secrets.yaml $CLUSTER_NAME https://$YOUR_ENDPOINT:6443
+    ```
 
-### Customizing Machine Configuration
+This command will generate three files:
 
-The generated machine configuration provides sane defaults for most cases, but can be modified to fit specific needs.
+- **controlplane.yaml**: Configuration for your control plane.
+- **worker.yaml**: Configuration for your worker nodes.
+- **talosconfig**: The `talosctl` configuration file used to connect to and authenticate with your cluster.
 
-Some machine configuration options are available as flags for the `talosctl gen config` command,
-for example setting a specific Kubernetes version:
+## Step 7: Unmount the ISO
 
-```sh
-talosctl gen config --with-secrets secrets.yaml --kubernetes-version 1.25.4 my-cluster https://192.168.64.15:6443
-```
+Unplug your installation USB drive or unmount the ISO from all your control plane and worker nodes.
+This prevents you from accidentally installing to the USB drive and makes it clearer which disk to select for installation.
 
-Other modifications are done with [machine configuration patches]({{< relref "../talos-guides/configuration/patching" >}}).
-Machine configuration patches can be applied with `talosctl gen config` command:
+## Step 8: Understand Your Nodes
 
-```sh
-talosctl gen config --with-secrets secrets.yaml --config-patch-control-plane @cni.patch my-cluster https://192.168.64.15:6443
-```
+The default machine configurations for control plane and worker nodes are typically sufficient to get your cluster running.
+However, you may need to customize certain settings such as network interfaces and disk configurations depending on your specific environment.
 
-> Note: `@cni.patch` means that the patch is read from a file named `cni.patch`.
+Follow these steps to verify that your machine configurations are set up correctly:
 
-#### Machine Configs as Templates
+1. **Check network interfaces**: Run this command to view all network interfaces on any node, whether control plane or worker.
 
-Individual machines may need different settings: for instance, each may have a
-different [static IP address]({{< relref "../advanced/advanced-networking/#static-addressing" >}}).
+    Replace `<node-ip-address>` with the IP of the node you want to inspect.
 
-When different files are needed for machines of the same type, there are two supported flows:
+    **Note**: Copy the network ID with an Operational state (OPER) value of **up**.
 
-1. Use the `talosctl gen config` command to generate a template, and then patch
-   the template for each machine with `talosctl machineconfig patch`.
-2. Generate each machine configuration file separately with `talosctl gen config` while applying patches.
+    ```bash
+    talosctl --nodes <node-ip-address> get links --insecure
+    ```
 
-For example, given a machine configuration patch which sets the static machine hostname:
+1. **Check Available Disks:** Run this command to check all available disks on any node.
+Replace `<node-ip-address>` with the IP address of the node you want to inspect:
 
-```yaml
-# worker1.patch
-machine:
-  network:
-    hostname: worker1
-```
+    ```bash
+    talosctl get disks --insecure --nodes <node-ip-address>
+    ```
 
-Either of the following commands will generate a worker machine configuration file with the hostname set to `worker1`:
+1. **Verify Configuration Files:** Open your `worker.yaml` and `controlplane.yaml` configuration files in your preferred editor.
+Check that the values match your worker and control plane node's network and disk settings.
+If the values don't match, you'll need to update your machine configuration..
+
+    **Note**: Refer to the [Talos CLI reference]({{< relref "../reference/cli" >}}) for additional commands to gather more information about your nodes and cluster.
+
+## Step 9: Patch Your Machine Configuration (Optional)
+
+You can patch your worker and control plane machine configuration to reflect the correct network interface and disk of your control plane nodes.
+
+Follow these steps to patch your machine configuration:
+
+1. Create patch files for the configurations you want to modify:
+
+    ```bash
+    touch controlplane-patch-1.yaml # For patching the control plane nodes configuration
+    touch worker-patch-1.yaml # For patching the worker nodes configuration
+    ```
+
+   **Note**: You don't have to create both patch files, only create patches for the configurations you actually need to modify.
+
+   You can also create multiple patch files (e.g., `controlplane-patch-2.yaml`, `controlplane-patch-3.yaml`) if you want to make multiple subsequent patches to the same machine configuration.
+
+1. Copy and paste this YAML block of code and add the correct hardware values to each patch file.
+
+    For example, for `controlplane-patch-1` use the network interface and disk information you gathered from your control plane nodes :
+
+    ```yaml
+    # controlplane-patch-1 file
+    machine:
+      network:
+        interfaces:
+          - interface: <control-plane-network-interface>  # From control plane node
+            dhcp: true
+      install:
+        disk: /dev/<control-plane-disk-name> # From control plane node
+    ```
+
+   For `worker-patch-1.yaml`, use network interface and disk information from your worker nodes:
+
+    ```yaml
+    # worker-patch-1.yaml file
+
+    machine:
+      network:
+        interfaces:
+          - interface: <worker-network-interface>  # From worker node
+            dhcp: true
+      install:
+        disk: /dev/<worker-disk-name> # From worker node
+   ```
+
+1. Apply the different patch files for the different machine configuration:
+    - **For control plane**:
+
+    ```bash
+    talosctl machineconfig patch controlplane.yaml --patch @controlplane-patch-1.yaml --output controlplane.yaml
+    ```
+
+   - **For worker**:
+
+    ```bash
+    talosctl machineconfig patch worker.yaml --patch @worker-patch-1.yaml --output worker.yaml
+    ```
+
+Additionally, you can learn more about [patches]({{< relref "../talos-guides/configuration/patching/" >}}) from the configuration patches documentation.
+
+## Step 10: Apply the Machine Configuration
+
+To apply your machine configuration:
+
+1. Run this command to apply the `controlplane.yaml` configuration to your control plane nodes:
+
+    ```bash
+    for ip in "${CONTROL_PLANE_IP[@]}"; do
+      echo "=== Applying configuration to node $ip ==="
+      talosctl apply-config --insecure \
+        --nodes $ip \
+        --file controlplane.yaml
+      echo "Configuration applied to $ip"
+      echo ""
+    done
+    ```
+
+1. Run this command to apply the `worker.yaml`configuration to your worker node:
+
+    ```bash
+    for ip in "${WORKER_IP[@]}"; do
+      echo "=== Applying configuration to node $ip ==="
+      talosctl apply-config --insecure \
+        --nodes $ip \
+        --file worker.yaml
+      echo "Configuration applied to $ip"
+      echo ""
+    done
+    ```
+
+## Step 11: Manage Your Talos Configuration File
+
+The `talosconfig` is your key to managing the Talos Linux cluster, without it, you cannot authenticate or communicate with your cluster nodes using `talosctl`.
+
+You have two options for managing your `talosconfig`:
+
+1. Merge your new `talosconfig` into the default configuration file located at `~/.talos/config`:
+
+    ```bash
+    talosctl config merge ./talosconfig
+    ```
+
+1. Copy the configuration file to your `~/.talos` directory and set the `TALOSCONFIG` environment variable:
+
+    ```bash
+    mkdir -p ~/.talos
+    cp ./talosconfig ~/.talos/config
+    export TALOSCONFIG=~/.talos/config
+    ```
+
+## Step 12: Set Endpoints of Your Control Plane Nodes
+
+Configure your endpoints to enable talosctl to automatically load balance requests and fail over between control plane nodes when individual nodes become unavailable.
+
+Run this command to configure your endpoints.
+Replace the placeholders `<control_plane_IP_1> <control_plane_IP_2> <control_plane_IP_3>` with the IP addresses of your control plane nodes:
 
 ```bash
-$ talosctl gen config --with-secrets secrets.yaml my-cluster https://192.168.64.15:6443
-created /Users/taloswork/controlplane.yaml
-created /Users/taloswork/worker.yaml
-created /Users/taloswork/talosconfig
-$ talosctl machineconfig patch worker.yaml --patch @worker1.patch --output worker1.yaml
+talosctl config endpoint <control_plane_IP_1> <control_plane_IP_2> <control_plane_IP_3>
 ```
 
-```sh
-talosctl gen config --with-secrets secrets.yaml --config-patch-worker @worker1.patch --output-types worker -o worker1.yaml my-cluster https://192.168.64.15:6443
+**For example**:
+
+If your control plane nodes IP addresses are `192.168.0.2`, `192.168.0.3`, `192.168.0.4`, your command would be:
+
+```bash
+talosctl config endpoint 192.168.0.2 192.168.0.3 192.168.0.4
 ```
 
-### Apply Configuration while validating the node identity
+## Step 13: Bootstrap Your Kubernetes Cluster
 
-If you have console access you can extract the server certificate fingerprint and use it for an additional layer of validation:
+Wait for your control plane nodes to finish booting, then bootstrap your etcd cluster by running the command below.
 
-```sh
-  talosctl apply-config --insecure \
-    --nodes 192.168.0.2 \
-    --cert-fingerprint xA9a1t2dMxB0NJ0qH1pDzilWbA3+DK/DjVbFaJBYheE= \
-    --file cp0.yaml
+Replace the `<control-plane-IP>` placeholder with the IP address of ONE of your three control plane nodes:
+
+```bash
+talosctl bootstrap --nodes <control-plane-IP>
 ```
 
-Using the fingerprint allows you to be sure you are sending the configuration to the correct machine, but is completely optional.
-After the configuration is applied to a node, it will reboot.
-Repeat this process for each of the nodes in your cluster.
+**Note**: Run this command ONCE on a SINGLE control plane node.
+If you have multiple control plane nodes, you can choose any of them.
 
-## Further details about talosctl, endpoints and nodes
+## Step 14: Get Kubernetes Access
 
-### Endpoints
+Download your `kubeconfig` file to start using `kubectl` with your cluster.
+These commands must be run against a single control plane node.
 
-When passed multiple endpoints, `talosctl` will automatically load balance requests to, and fail over between, all endpoints.
+You have two options for managing your `kubeconfig`.
+Replace `<control-plane-IP>` with the IP address of any one of your control plane nodes:
 
-You can pass in `--endpoints <IP Address1>,<IP Address2>` as a comma separated list of IP/DNS addresses to the current `talosctl` command.
-You can also set the `endpoints` in your `talosconfig`, by calling `talosctl config endpoint <IP Address1> <IP Address2>`.
-Note: these are space separated, not comma separated.
+- Merge into your default `kubeconfig`:
 
-As an example, if the IP addresses of our control plane nodes are:
-
-- 192.168.0.2
-- 192.168.0.3
-- 192.168.0.4
-
-We would set those in the `talosconfig` with:
-
-```sh
-  talosctl --talosconfig=./talosconfig \
-    config endpoint 192.168.0.2 192.168.0.3 192.168.0.4
+```bash
+talosctl kubeconfig --nodes <control-plane-IP>
 ```
 
-### Nodes
+- Create a separate `kubeconfig` file:
 
-The node is the target you wish to perform the API call on.
+```bash
+talosctl kubeconfig alternative-kubeconfig --nodes <control-plane-IP>
+export KUBECONFIG=./alternative-kubeconfig
 
-It is possible to set a default set of nodes in the `talosconfig` file, but our recommendation is to explicitly pass in the node or nodes to be operated on with each `talosctl` command.
-For a more in-depth discussion of Endpoints and Nodes, please see [talosctl]({{< relref "../learn-more/talosctl" >}}).
-
-### Default configuration file
-
-You can reference which configuration file to use directly with the `--talosconfig` parameter:
-
-```sh
-  talosctl --talosconfig=./talosconfig \
-    --nodes 192.168.0.2 version
 ```
 
-However, `talosctl` comes with tooling to help you integrate and merge this configuration into the default `talosctl` configuration file.
-This is done with the `merge` option.
+## Step 15: Verify Your Nodes Are Running
 
-```sh
-  talosctl config merge ./talosconfig
+Run the command to ensure that your nodes are running:
+
+```bash
+kubectl get nodes
 ```
 
-This will merge your new `talosconfig` into the default configuration file (`$XDG_CONFIG_HOME/talos/config.yaml`), creating it if necessary.
-Like Kubernetes, the `talosconfig` configuration files has multiple "contexts" which correspond to multiple clusters.
-The `<cluster-name>` you chose above will be used as the context name.
+## Next Steps
 
-## Kubernetes Bootstrap
+Congratulations!
+You now have a working production grade Talos Linux Kubernetes cluster.
 
-Bootstrapping your Kubernetes cluster by simply calling the `bootstrap` command against any of your control plane nodes (or the loadbalancer, if used for the Talos API endpoint).:
+### What's Next?
 
-```sh
-  talosctl bootstrap --nodes 192.168.0.2
-```
-
->The bootstrap operation should only be called **ONCE** and only on a **SINGLE** control plane node!
-
-At this point, Talos will form an `etcd` cluster, generate all of the core Kubernetes assets, and start the Kubernetes control plane components.
-
-After a few moments, you will be able to download your Kubernetes client configuration and get started:
-
-```sh
-  talosctl kubeconfig
-```
-
-Running this command will add (merge) you new cluster into your local Kubernetes configuration.
-
-If you would prefer the configuration to *not* be merged into your default Kubernetes configuration file, pass in a filename:
-
-```sh
-  talosctl kubeconfig alternative-kubeconfig
-```
-
-You should now be able to connect to Kubernetes and see your nodes:
-
-```sh
-  kubectl get nodes
-```
-
-And use talosctl to explore your cluster:
-
-```sh
-  talosctl -n <NODEIP> dashboard
-```
-
-For a list of all the commands and operations that `talosctl` provides, see the [CLI reference]({{< relref "../reference/cli/#talosctl" >}}).
+- [Set up persistent storage]({{< relref "../kubernetes-guides/configuration/storage" >}})
+- [Deploy a Metrics Server]({{< relref "../kubernetes-guides/configuration/deploy-metrics-server" >}})
+- [Explore the talosctl CLI reference]({{< relref "../reference/cli" >}})
