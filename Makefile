@@ -28,7 +28,7 @@ TOOLS_PREFIX ?= ghcr.io/siderolabs/tools
 TOOLS ?= v1.11.0
 PKGS_PREFIX ?= ghcr.io/siderolabs
 PKGS ?= v1.11.0
-GENERATE_VEX_PREFIX ?= ghcr.io/siderolabs/generate-vex
+GENERATE_VEX_PREFIX ?= ghcr.io/dsseng/generate-vex
 GENERATE_VEX ?= latest
 
 KRES_IMAGE ?= ghcr.io/siderolabs/kres:latest
