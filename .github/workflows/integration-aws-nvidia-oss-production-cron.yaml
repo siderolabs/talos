@@ -1,6 +1,6 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
 #
-# Generated on 2025-07-21T09:52:07Z by kres b869533.
+# Generated on 2025-07-22T04:25:57Z by kres b869533.
 
 concurrency:
   group: ${{ github.head_ref || github.run_id }}
@@ -8,7 +8,7 @@ concurrency:
 "on":
   schedule:
     - cron: 30 5 * * *
-name: integration-aws-nvidia-oss-cron
+name: integration-aws-nvidia-oss-production-cron
 jobs:
   default:
     runs-on:
@@ -94,13 +94,6 @@ jobs:
         if: github.event_name == 'schedule'
         run: |
           make talosctl-cni-bundle
-      - name: images-essential
-        if: github.event_name == 'schedule'
-        env:
-          IMAGE_REGISTRY: registry.dev.siderolabs.io
-          PLATFORM: linux/amd64,linux/arm64
-        run: |
-          make images-essential
       - name: image-aws
         env:
           IMAGE_REGISTRY: registry.dev.siderolabs.io
@@ -125,7 +118,7 @@ jobs:
           make nvidia-container-toolkit-production nvidia-open-gpu-kernel-modules-production zfs extensions-metadata -C _out/extensions
       - name: e2e-aws-prepare
         env:
-          E2E_AWS_TARGET: nvidia-oss
+          E2E_AWS_TARGET: nvidia-oss-production
           EXTENSIONS_METADATA_FILE: _out/extensions/_out/extensions-metadata
           IMAGE_REGISTRY: registry.dev.siderolabs.io
         run: |
@@ -147,7 +140,7 @@ jobs:
           TF_SCRIPT_DIR: _out/contrib
         run: |
           make e2e-cloud-tf
-      - name: e2e-aws-nvidia-oss
+      - name: e2e-aws-nvidia-oss-production
         env:
           EXTRA_TEST_ARGS: -talos.extensions.nvidia -talos.verifyukibooted=false
         run: |

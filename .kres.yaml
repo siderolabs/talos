@@ -85,8 +85,10 @@ spec:
     - integration-image-cache
     - integration-image-factory
     - integration-aws
-    - integration-aws-nvidia-oss
-    - integration-aws-nvidia-nonfree
+    - integration-aws-nvidia-oss-lts
+    - integration-aws-nvidia-oss-production
+    - integration-aws-nvidia-nonfree-lts
+    - integration-aws-nvidia-nonfree-production
     - integration-gcp
 ---
 kind: common.GHWorkflow
@@ -2602,7 +2604,7 @@ spec:
             TF_E2E_TEST_TYPE: aws
             TF_E2E_ACTION: destroy
             TF_E2E_REFRESH_ON_DESTROY: false
-    - name: integration-aws-nvidia-oss
+    - name: integration-aws-nvidia-oss-lts
       buildxOptions:
         enabled: true
       sops: true
@@ -2614,7 +2616,10 @@ spec:
       crons:
         - '30 5 * * *'
       triggerLabels:
+        - integration/aws-nvidia-oss-lts
         - integration/aws-nvidia-oss
+        - integration/aws-nvidia
+        - integration/aws
       steps:
         - name: download-artifacts
           conditions:
@@ -2645,12 +2650,6 @@ spec:
         - name: talosctl-cni-bundle
           conditions:
             - only-on-schedule
-        - name: images-essential
-          conditions:
-            - only-on-schedule
-          environment:
-            PLATFORM: linux/amd64,linux/arm64
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
         - name: image-aws
           environment:
             PLATFORM: linux/amd64,linux/arm64
@@ -2664,7 +2663,9 @@ spec:
           nonMakeStep: true
           command: cat _out/talos-metadata >> "$GITHUB_ENV"
         - name: build extensions
-          command: nvidia-container-toolkit-production nvidia-open-gpu-kernel-modules-production zfs extensions-metadata
+          # zfs is only added since it uses libtirpc from musl and nvidia needs libtirpc from glibc
+          # this verifies that both libtirpc can co-exist together
+          command: nvidia-container-toolkit-lts nvidia-open-gpu-kernel-modules-lts zfs extensions-metadata
           arguments:
             - -C
             - _out/extensions
@@ -2675,7 +2676,7 @@ spec:
         - name: e2e-aws-prepare
           environment:
             EXTENSIONS_METADATA_FILE: _out/extensions/_out/extensions-metadata
-            E2E_AWS_TARGET: nvidia-oss
+            E2E_AWS_TARGET: nvidia-oss-lts
             IMAGE_REGISTRY: registry.dev.siderolabs.io
         - name: checkout contrib
           checkoutStep:
@@ -2690,7 +2691,7 @@ spec:
             TF_SCRIPT_DIR: _out/contrib
             TF_E2E_TEST_TYPE: aws
             TF_E2E_ACTION: apply
-        - name: e2e-aws-nvidia-oss
+        - name: e2e-aws-nvidia-oss-lts
           command: e2e-aws
           environment:
             EXTRA_TEST_ARGS: "-talos.extensions.nvidia -talos.verifyukibooted=false"
@@ -2703,7 +2704,7 @@ spec:
             TF_E2E_TEST_TYPE: aws
             TF_E2E_ACTION: destroy
             TF_E2E_REFRESH_ON_DESTROY: false
-    - name: integration-aws-nvidia-nonfree
+    - name: integration-aws-nvidia-oss-production
       buildxOptions:
         enabled: true
       sops: true
@@ -2713,9 +2714,12 @@ spec:
         - self-hosted
         - generic # we can use generic here since the tests run against a remote talos cluster
       crons:
-        - '30 7 * * *'
+        - '30 5 * * *'
       triggerLabels:
-        - integration/aws-nvidia-nonfree
+        - integration/aws-nvidia-oss-production
+        - integration/aws-nvidia-oss
+        - integration/aws-nvidia
+        - integration/aws
       steps:
         - name: download-artifacts
           conditions:
@@ -2746,12 +2750,106 @@ spec:
         - name: talosctl-cni-bundle
           conditions:
             - only-on-schedule
-        - name: images-essential
-          conditions:
-            - only-on-schedule
+        - name: image-aws
           environment:
             PLATFORM: linux/amd64,linux/arm64
             IMAGE_REGISTRY: registry.dev.siderolabs.io
+        - name: checkout extensions
+          checkoutStep:
+            repository: siderolabs/extensions
+            ref: main
+            path: _out/extensions
+        - name: set variables
+          nonMakeStep: true
+          command: cat _out/talos-metadata >> "$GITHUB_ENV"
+        - name: build extensions
+          # zfs is only added since it uses libtirpc from musl and nvidia needs libtirpc from glibc
+          # this verifies that both libtirpc can co-exist together
+          command: nvidia-container-toolkit-production nvidia-open-gpu-kernel-modules-production zfs extensions-metadata
+          arguments:
+            - -C
+            - _out/extensions
+          environment:
+            PLATFORM: linux/amd64
+            PUSH: true
+            REGISTRY: registry.dev.siderolabs.io
+        - name: e2e-aws-prepare
+          environment:
+            EXTENSIONS_METADATA_FILE: _out/extensions/_out/extensions-metadata
+            E2E_AWS_TARGET: nvidia-oss-production
+            IMAGE_REGISTRY: registry.dev.siderolabs.io
+        - name: checkout contrib
+          checkoutStep:
+            repository: siderolabs/contrib
+            ref: main
+            path: _out/contrib
+        - name: setup tf
+          terraformStep: true
+        - name: tf apply
+          command: e2e-cloud-tf
+          environment:
+            TF_SCRIPT_DIR: _out/contrib
+            TF_E2E_TEST_TYPE: aws
+            TF_E2E_ACTION: apply
+        - name: e2e-aws-nvidia-oss-production
+          command: e2e-aws
+          environment:
+            EXTRA_TEST_ARGS: "-talos.extensions.nvidia -talos.verifyukibooted=false"
+        - name: tf destroy
+          command: e2e-cloud-tf
+          conditions:
+            - always
+          environment:
+            TF_SCRIPT_DIR: _out/contrib
+            TF_E2E_TEST_TYPE: aws
+            TF_E2E_ACTION: destroy
+            TF_E2E_REFRESH_ON_DESTROY: false
+    - name: integration-aws-nvidia-nonfree-lts
+      buildxOptions:
+        enabled: true
+      sops: true
+      depends:
+        - default
+      runners:
+        - self-hosted
+        - generic # we can use generic here since the tests run against a remote talos cluster
+      crons:
+        - '30 7 * * *'
+      triggerLabels:
+        - integration/aws-nvidia-nonfree-lts
+        - integration/aws-nvidia-nonfree
+        - integration/aws-nvidia
+        - integration/aws
+      steps:
+        - name: download-artifacts
+          conditions:
+            - not-on-schedule
+          artifactStep:
+            type: download
+            artifactName: talos-artifacts
+            artifactPath: _out
+        - name: ci-temp-release-tag
+          conditions:
+            - not-on-schedule
+        - name: generate
+          conditions:
+            - only-on-schedule
+        - name: uki-certs
+          conditions:
+            - only-on-schedule
+          environment:
+            PLATFORM: linux/amd64
+        - name: build
+          conditions:
+            - only-on-schedule
+          command: talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
+          environment:
+            PLATFORM: linux/amd64,linux/arm64
+            IMAGE_REGISTRY: registry.dev.siderolabs.io
+            PUSH: true
+        - name: talosctl-cni-bundle
+          conditions:
+            - only-on-schedule
         - name: image-aws
           environment:
             PLATFORM: linux/amd64,linux/arm64
@@ -2776,7 +2874,7 @@ spec:
         - name: e2e-aws-prepare
           environment:
             EXTENSIONS_METADATA_FILE: _out/extensions/_out/extensions-metadata
-            E2E_AWS_TARGET: nvidia-nonfree
+            E2E_AWS_TARGET: nvidia-nonfree-lts
             IMAGE_REGISTRY: registry.dev.siderolabs.io
         - name: checkout contrib
           checkoutStep:
@@ -2791,7 +2889,105 @@ spec:
             TF_SCRIPT_DIR: _out/contrib
             TF_E2E_TEST_TYPE: aws
             TF_E2E_ACTION: apply
-        - name: e2e-aws-nvidia-nonfree
+        - name: e2e-aws-nvidia-nonfree-lts
+          command: e2e-aws
+          environment:
+            EXTRA_TEST_ARGS: -talos.extensions.nvidia
+        - name: tf destroy
+          command: e2e-cloud-tf
+          conditions:
+            - always
+          environment:
+            TF_SCRIPT_DIR: _out/contrib
+            TF_E2E_TEST_TYPE: aws
+            TF_E2E_ACTION: destroy
+            TF_E2E_REFRESH_ON_DESTROY: false
+    - name: integration-aws-nvidia-nonfree-production
+      buildxOptions:
+        enabled: true
+      sops: true
+      depends:
+        - default
+      runners:
+        - self-hosted
+        - generic # we can use generic here since the tests run against a remote talos cluster
+      crons:
+        - '30 7 * * *'
+      triggerLabels:
+        - integration/aws-nvidia-nonfree-production
+        - integration/aws-nvidia-nonfree
+        - integration/aws-nvidia
+        - integration/aws
+      steps:
+        - name: download-artifacts
+          conditions:
+            - not-on-schedule
+          artifactStep:
+            type: download
+            artifactName: talos-artifacts
+            artifactPath: _out
+        - name: ci-temp-release-tag
+          conditions:
+            - not-on-schedule
+        - name: generate
+          conditions:
+            - only-on-schedule
+        - name: uki-certs
+          conditions:
+            - only-on-schedule
+          environment:
+            PLATFORM: linux/amd64
+        - name: build
+          conditions:
+            - only-on-schedule
+          command: talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
+          environment:
+            PLATFORM: linux/amd64,linux/arm64
+            IMAGE_REGISTRY: registry.dev.siderolabs.io
+            PUSH: true
+        - name: talosctl-cni-bundle
+          conditions:
+            - only-on-schedule
+        - name: image-aws
+          environment:
+            PLATFORM: linux/amd64,linux/arm64
+            IMAGE_REGISTRY: registry.dev.siderolabs.io
+        - name: checkout extensions
+          checkoutStep:
+            repository: siderolabs/extensions
+            ref: main
+            path: _out/extensions
+        - name: set variables
+          nonMakeStep: true
+          command: cat _out/talos-metadata >> "$GITHUB_ENV"
+        - name: build extensions
+          command: nvidia-container-toolkit-production nonfree-kmod-nvidia-production extensions-metadata
+          arguments:
+            - -C
+            - _out/extensions
+          environment:
+            PLATFORM: linux/amd64
+            PUSH: true
+            REGISTRY: registry.dev.siderolabs.io
+        - name: e2e-aws-prepare
+          environment:
+            EXTENSIONS_METADATA_FILE: _out/extensions/_out/extensions-metadata
+            E2E_AWS_TARGET: nvidia-nonfree-production
+            IMAGE_REGISTRY: registry.dev.siderolabs.io
+        - name: checkout contrib
+          checkoutStep:
+            repository: siderolabs/contrib
+            ref: main
+            path: _out/contrib
+        - name: setup tf
+          terraformStep: true
+        - name: tf apply
+          command: e2e-cloud-tf
+          environment:
+            TF_SCRIPT_DIR: _out/contrib
+            TF_E2E_TEST_TYPE: aws
+            TF_E2E_ACTION: apply
+        - name: e2e-aws-nvidia-nonfree-production
           command: e2e-aws
           environment:
             EXTRA_TEST_ARGS: -talos.extensions.nvidia
@@ -2898,6 +3094,7 @@ spec:
     - customType: regex
       managerFilePatterns:
         - internal/integration/k8s/constants.go
+        - internal/integration/api/constants.go
       matchStrings:
         - '\/\/\s+renovate: datasource=(?<datasource>.*?)(?:\s+extractVersion=(?<extractVersion>.+?))?(?:\s+versioning=(?<versioning>.+?))?\s+depName=(?<depName>.+?)?(?:\s+registryUrl=(?<registryUrl>.+?))?\s.*Version\s+=\s+\"(?<currentValue>.+?)\"'
       versioningTemplate: "{{#if versioning}}{{versioning}}{{else}}semver{{/if}}"

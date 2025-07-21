@@ -10,7 +10,7 @@ function cloud_image_upload() {
   CLOUD_IMAGES_EXTRA_ARGS=("--name-prefix=${1}" "--target-clouds=aws" "--architectures=amd64" "--aws-regions=${REGION}")
 
   case "${1}" in
-    talos-e2e-nvidia-oss)
+    talos-e2e-nvidia-oss-*)
       CLOUD_IMAGES_EXTRA_ARGS+=("--aws-force-bios")
       ;;
   esac
@@ -24,14 +24,20 @@ function get_ami_id() {
 
 function cloud_image_upload_with_extensions() {
   case "${1}" in
-    nvidia-oss)
+    nvidia-oss-lts)
+      EXTENSIONS=$(jq -R < "${EXTENSIONS_METADATA_FILE}" | jq -rs 'map(select(. | (contains("nvidia-open-gpu-kernel-modules-lts") or contains("nvidia-container-toolkit-lts") or contains("zfs")) and (contains("nvidia-fabricmanager") or contains("nonfree-kmod-nvidia") | not))) | .[] |= "--system-extension-image=" + . | join(" ")')
+      ;;
+    nvidia-oss-production)
       EXTENSIONS=$(jq -R < "${EXTENSIONS_METADATA_FILE}" | jq -rs 'map(select(. | (contains("nvidia-open-gpu-kernel-modules-production") or contains("nvidia-container-toolkit-production") or contains("zfs")) and (contains("nvidia-fabricmanager") or contains("nonfree-kmod-nvidia") | not))) | .[] |= "--system-extension-image=" + . | join(" ")')
       ;;
     nvidia-oss-fabricmanager)
       EXTENSIONS=$(jq -R < "${EXTENSIONS_METADATA_FILE}" | jq -rs 'map(select(. | (contains("nvidia-open-gpu-kernel-modules-production") or contains("nvidia-container-toolkit-production")) and (contains("nonfree-kmod-nvidia") | not))) | .[] |= "--system-extension-image=" + . | join(" ")')
       ;;
-    nvidia-nonfree)
+    nvidia-nonfree-lts)
       EXTENSIONS=$(jq -R < "${EXTENSIONS_METADATA_FILE}" | jq -rs 'map(select(. | (contains("nonfree-kmod-nvidia-lts") or contains("nvidia-container-toolkit-lts")) and (contains("nvidia-fabricmanager") or contains("nvidia-open-gpu-kernel-modules") | not))) | .[] |= "--system-extension-image=" + . | join(" ")')
+      ;;
+    nvidia-nonfree-production)
+      EXTENSIONS=$(jq -R < "${EXTENSIONS_METADATA_FILE}" | jq -rs 'map(select(. | (contains("nonfree-kmod-nvidia-production") or contains("nvidia-container-toolkit-production")) and (contains("nvidia-fabricmanager") or contains("nvidia-open-gpu-kernel-modules") | not))) | .[] |= "--system-extension-image=" + . | join(" ")')
       ;;
     nvidia-nonfree-fabricmanager)
       EXTENSIONS=$(jq -R < "${EXTENSIONS_METADATA_FILE}" | jq -rs 'map(select(. | (contains("nonfree-kmod-nvidia-lts") or contains("nvidia-container-toolkit-lts")) and (contains("nvidia-open-gpu-kernel-modules") | not))) | .[] |= "--system-extension-image=" + . | join(" ")')
@@ -65,7 +71,7 @@ esac
 
 mkdir -p "${ARTIFACTS}/e2e-aws-generated"
 
-NAME_PREFIX="talos-e2e-${SHA}-aws-${E2E_AWS_TARGET}"
+NAME_PREFIX="${SHA}-${E2E_AWS_TARGET}"
 
 jq --null-input \
   --arg WORKER_GROUP "${WORKER_GROUP}" \
