@@ -5,15 +5,20 @@
 package block
 
 import (
+	"bufio"
+	"cmp"
 	"context"
 	"fmt"
+	"io"
 	"path/filepath"
+	"strings"
 
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/siderolabs/gen/xslices"
 	blkdev "github.com/siderolabs/go-blockdevice/v2/block"
+	"github.com/siderolabs/go-cmd/pkg/cmd"
 	"go.uber.org/zap"
 
 	"github.com/siderolabs/talos/pkg/machinery/resources/block"
@@ -217,6 +222,15 @@ func (ctrl *DisksController) analyzeBlockDevice(
 
 	touchedDisks[device.Metadata().ID()] = struct{}{}
 
+	serial := props.Serial
+	if serial == "" {
+		// try to get serial from udevd helpers
+		serial = serialFromUdevdHelpers(ctx, device.Metadata().ID(), props.Transport)
+		if serial == "" {
+			logger.Debug("failed to get serial from udevd helpers, using empty value", zap.String("device", device.Metadata().ID()), zap.String("transport", props.Transport))
+		}
+	}
+
 	return safe.WriterModify(ctx, r, block.NewDisk(block.NamespaceName, device.Metadata().ID()), func(d *block.Disk) error {
 		d.TypedSpec().SetSize(size)
 
@@ -227,7 +241,7 @@ func (ctrl *DisksController) analyzeBlockDevice(
 		d.TypedSpec().CDROM = isCD
 
 		d.TypedSpec().Model = props.Model
-		d.TypedSpec().Serial = props.Serial
+		d.TypedSpec().Serial = serial
 		d.TypedSpec().Modalias = props.Modalias
 		d.TypedSpec().WWID = props.WWID
 		d.TypedSpec().UUID = props.UUID
@@ -246,4 +260,60 @@ func (ctrl *DisksController) analyzeBlockDevice(
 
 		return nil
 	})
+}
+
+func serialFromUdevdHelpers(ctx context.Context, id, transport string) string {
+	switch strings.ToLower(transport) {
+	case "ata":
+		return runUdevdHelper(
+			ctx,
+			"/usr/lib/udev/ata_id",
+			"--export", filepath.Join("/dev", id),
+		)
+
+	case "scsi":
+		return runUdevdHelper(
+			ctx,
+			"/usr/lib/udev/scsi_id",
+			"--export", "--allowlisted", "--device", filepath.Join("/dev", id),
+		)
+
+	default:
+		return ""
+	}
+}
+
+func runUdevdHelper(ctx context.Context, helper string, args ...string) string {
+	out, err := cmd.RunContext(ctx, helper, args...)
+	if err != nil {
+		return ""
+	}
+
+	env := parseEnv(strings.NewReader(out))
+
+	return cmp.Or(
+		env["ID_SERIAL"],
+		env["ID_SERIAL_SHORT"],
+	)
+}
+
+func parseEnv(r io.Reader) map[string]string {
+	env := map[string]string{}
+
+	scanner := bufio.NewScanner(r)
+	for scanner.Scan() {
+		line := scanner.Text()
+		if line == "" || strings.HasPrefix(line, "#") {
+			continue
+		}
+
+		key, value, ok := strings.Cut(line, "=")
+		if !ok {
+			continue
+		}
+
+		env[strings.TrimSpace(key)] = strings.TrimSpace(value)
+	}
+
+	return env
 }

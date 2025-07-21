@@ -158,7 +158,7 @@ func launchVM(config *LaunchConfig) error {
 				"-device", fmt.Sprintf("virtio-blk-pci,drive=virtio%d,logical_block_size=%d,physical_block_size=%d", i, blockSize, blockSize),
 			)
 		case "ide":
-			args = append(args, "-drive", fmt.Sprintf("format=raw,if=ide,file=%s,cache=none,", disk))
+			args = append(args, "-drive", fmt.Sprintf("format=raw,if=ide,file=%s,cache=none", disk))
 		case "ahci":
 			if !ahciAttached {
 				args = append(args, "-device", "ahci,id=ahci0")
