@@ -8,12 +8,13 @@ package api
 
 import (
 	"context"
+	_ "embed"
+	"fmt"
 	"io"
 	"time"
 
 	"github.com/siderolabs/go-pointer"
 	"github.com/siderolabs/go-retry/retry"
-	appsv1 "k8s.io/api/apps/v1"
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
 	nodev1 "k8s.io/api/node/v1"
@@ -21,6 +22,9 @@ import (
 
 	"github.com/siderolabs/talos/internal/integration/base"
 )
+
+//go:embed testdata/nvidia-device-plugin.yaml
+var nvidiaDevicePluginHelmChartValues []byte
 
 // ExtensionsSuiteNVIDIA verifies Talos is securebooted.
 type ExtensionsSuiteNVIDIA struct {
@@ -97,13 +101,18 @@ func (suite *ExtensionsSuiteNVIDIA) TestExtensionsNVIDIA() {
 
 	suite.Require().NoError(err)
 
-	_, err = suite.Clientset.AppsV1().DaemonSets("kube-system").Create(suite.ctx, nvidiaDevicePluginDaemonSetSpec(), metav1.CreateOptions{})
-	defer suite.Clientset.AppsV1().DaemonSets("kube-system").Delete(suite.ctx, "nvidia-device-plugin", metav1.DeleteOptions{}) //nolint:errcheck
-
-	suite.Require().NoError(err)
+	suite.Require().NoError(suite.HelmInstall(
+		suite.ctx,
+		"kube-system",
+		"https://nvidia.github.io/k8s-device-plugin",
+		NvidiaDevicePluginChartVersion,
+		"nvidia-device-plugin",
+		"nvidia-device-plugin",
+		nvidiaDevicePluginHelmChartValues,
+	))
 
 	// now we can create a cuda test job
-	_, err = suite.Clientset.BatchV1().Jobs("default").Create(suite.ctx, nvidiaCUDATestJob("nvcr.io/nvidia/k8s/cuda-sample:vectoradd-cuda11.7.1"), metav1.CreateOptions{})
+	_, err = suite.Clientset.BatchV1().Jobs("default").Create(suite.ctx, nvidiaCUDATestJob(), metav1.CreateOptions{})
 	defer suite.Clientset.BatchV1().Jobs("default").Delete(suite.ctx, "cuda-test", metav1.DeleteOptions{}) //nolint:errcheck
 
 	suite.Require().NoError(err)
@@ -199,80 +208,7 @@ func (suite *ExtensionsSuiteNVIDIA) getNVIDIANodes(labelQuery string) []string {
 	return nodeList
 }
 
-func nvidiaDevicePluginDaemonSetSpec() *appsv1.DaemonSet {
-	return &appsv1.DaemonSet{
-		ObjectMeta: metav1.ObjectMeta{
-			Name: "nvidia-device-plugin",
-		},
-		Spec: appsv1.DaemonSetSpec{
-			Selector: &metav1.LabelSelector{
-				MatchLabels: map[string]string{
-					"app.kubernetes.io/name": "nvidia-device-plugin",
-				},
-			},
-			UpdateStrategy: appsv1.DaemonSetUpdateStrategy{
-				Type: appsv1.RollingUpdateDaemonSetStrategyType,
-			},
-			Template: corev1.PodTemplateSpec{
-				ObjectMeta: metav1.ObjectMeta{
-					Labels: map[string]string{
-						"app.kubernetes.io/name": "nvidia-device-plugin",
-					},
-				},
-				Spec: corev1.PodSpec{
-					PriorityClassName: "system-node-critical",
-					RuntimeClassName:  pointer.To("nvidia"),
-					Containers: []corev1.Container{
-						{
-							Name:  "nvidia-device-plugin-ctr",
-							Image: "nvcr.io/nvidia/k8s-device-plugin:v0.14.1",
-							Env: []corev1.EnvVar{
-								{
-									Name:  "NVIDIA_MIG_MONITOR_DEVICES",
-									Value: "all",
-								},
-							},
-							SecurityContext: &corev1.SecurityContext{
-								Capabilities: &corev1.Capabilities{
-									Add: []corev1.Capability{"SYS_ADMIN"},
-								},
-							},
-							VolumeMounts: []corev1.VolumeMount{
-								{
-									Name:      "device-plugin",
-									MountPath: "/var/lib/kubelet/device-plugins",
-								},
-							},
-						},
-					},
-					Volumes: []corev1.Volume{
-						{
-							Name: "device-plugin",
-							VolumeSource: corev1.VolumeSource{
-								HostPath: &corev1.HostPathVolumeSource{
-									Path: "/var/lib/kubelet/device-plugins",
-								},
-							},
-						},
-					},
-					Tolerations: []corev1.Toleration{
-						{
-							Key:      "CriticalAddonsOnly",
-							Operator: corev1.TolerationOpExists,
-						},
-						{
-							Effect:   corev1.TaintEffectNoSchedule,
-							Key:      "nvidia.com/gpu",
-							Operator: corev1.TolerationOpExists,
-						},
-					},
-				},
-			},
-		},
-	}
-}
-
-func nvidiaCUDATestJob(image string) *batchv1.Job {
+func nvidiaCUDATestJob() *batchv1.Job {
 	return &batchv1.Job{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "cuda-test",
@@ -290,7 +226,7 @@ func nvidiaCUDATestJob(image string) *batchv1.Job {
 					Containers: []corev1.Container{
 						{
 							Name:  "cuda-test",
-							Image: image,
+							Image: fmt.Sprintf("nvcr.io/nvidia/k8s/cuda-sample:%s", NvidiaCUDATestImageVersion),
 						},
 					},
 					Affinity: &corev1.Affinity{

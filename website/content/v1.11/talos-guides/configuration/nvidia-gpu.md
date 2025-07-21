@@ -57,16 +57,17 @@ The NVIDIA modules should be loaded and the system extension should be installed
 This can be confirmed by running:
 
 ```bash
-talosctl read /proc/modules
+talosctl get modules
 ```
 
 which should produce an output similar to below:
 
 ```text
-nvidia_uvm 1146880 - - Live 0xffffffffc2733000 (PO)
-nvidia_drm 69632 - - Live 0xffffffffc2721000 (PO)
-nvidia_modeset 1142784 - - Live 0xffffffffc25ea000 (PO)
-nvidia 39047168 - - Live 0xffffffffc00ac000 (PO)
+NODE       NAMESPACE   TYPE                 ID                     VERSION   STATE
+10.5.0.3   runtime     LoadedKernelModule   nvidia_uvm             1         Live
+10.5.0.3   runtime     LoadedKernelModule   nvidia_drm             1         Live
+10.5.0.3   runtime     LoadedKernelModule   nvidia_modeset         1         Live
+10.5.0.3   runtime     LoadedKernelModule   nvidia                 1         Live
 ```
 
 ```bash
@@ -79,17 +80,6 @@ which should produce an output similar to below:
 NODE           NAMESPACE   TYPE              ID                                                                           VERSION   NAME                             VERSION
 172.31.41.27   runtime     ExtensionStatus   000.ghcr.io-siderolabs-nvidia-container-toolkit-515.65.01-v1.10.0            1         nvidia-container-toolkit         515.65.01-v1.10.0
 172.31.41.27   runtime     ExtensionStatus   000.ghcr.io-siderolabs-nvidia-open-gpu-kernel-modules-515.65.01-v1.2.0       1         nvidia-open-gpu-kernel-modules   515.65.01-v1.2.0
-```
-
-```bash
-talosctl read /proc/driver/nvidia/version
-```
-
-which should produce an output similar to below:
-
-```text
-NVRM version: NVIDIA UNIX x86_64 Kernel Module  515.65.01  Wed Mar 16 11:24:05 UTC 2022
-GCC version:  gcc version 12.2.0 (GCC)
 ```
 
 ## Deploying NVIDIA device plugin
@@ -151,7 +141,7 @@ kubectl run \
   nvidia-test \
   --restart=Never \
   -ti --rm \
-  --image nvcr.io/nvidia/cuda:12.5.0-base-ubuntu22.04 \
+  --image nvcr.io/nvidia/k8s/cuda-sample:vectoradd-cuda12.5.0 \
   --overrides '{"spec": {"runtimeClassName": "nvidia"}}' \
   nvidia-smi
 ```

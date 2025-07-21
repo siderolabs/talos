@@ -1,6 +1,6 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
 #
-# Generated on 2025-07-21T16:10:17Z by kres b869533.
+# Generated on 2025-08-04T12:44:39Z by kres 5fb5b90.
 
 "on":
   workflow_run:
@@ -36,8 +36,10 @@
       - integration-image-cache-cron
       - integration-image-factory-cron
       - integration-aws-cron
-      - integration-aws-nvidia-oss-cron
-      - integration-aws-nvidia-nonfree-cron
+      - integration-aws-nvidia-oss-lts-cron
+      - integration-aws-nvidia-oss-production-cron
+      - integration-aws-nvidia-nonfree-lts-cron
+      - integration-aws-nvidia-nonfree-production-cron
       - integration-gcp-cron
     types:
       - completed
@@ -62,11 +64,13 @@ jobs:
           method: chat.postMessage
           payload: |
             {
-                "channel": "proj-talos-maintainers",
+                "channel": "ci-all",
+                "text": "${{ github.event.workflow_run.conclusion }} - ${{ github.repository }}",
+                "icon_emoji": "${{ github.event.workflow_run.conclusion == 'success' && ':white_check_mark:' || github.event.workflow_run.conclusion == 'failure' && ':x:' || ':warning:' }}",
+                "username": "GitHub Actions",
                 "attachments": [
                     {
                         "color": "${{ github.event.workflow_run.conclusion == 'success' && '#2EB886' || github.event.workflow_run.conclusion == 'failure' && '#A30002' || '#FFCC00' }}",
-                        "fallback": "test",
                         "blocks": [
                             {
                                 "type": "section",
@@ -122,4 +126,4 @@ jobs:
                     }
                 ]
             }
-          token: ${{ secrets.SLACK_BOT_TOKEN }}
+          token: ${{ secrets.SLACK_BOT_TOKEN_V2 }}

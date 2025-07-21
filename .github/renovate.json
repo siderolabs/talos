@@ -33,7 +33,8 @@
             "customType": "regex",
             "versioningTemplate": "{{#if versioning}}{{versioning}}{{else}}semver{{/if}}",
             "managerFilePatterns": [
-                "/internal/integration/k8s/constants.go/"
+                "/internal/integration/k8s/constants.go/",
+                "/internal/integration/api/constants.go/"
             ],
             "matchStrings": [
                 "\\/\\/\\s+renovate: datasource=(?<datasource>.*?)(?:\\s+extractVersion=(?<extractVersion>.+?))?(?:\\s+versioning=(?<versioning>.+?))?\\s+depName=(?<depName>.+?)?(?:\\s+registryUrl=(?<registryUrl>.+?))?\\s.*Version\\s+=\\s+\\\"(?<currentValue>.+?)\\\""

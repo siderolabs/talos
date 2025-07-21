@@ -1,6 +1,6 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
 #
-# Generated on 2025-07-22T11:47:45Z by kres b869533.
+# Generated on 2025-08-04T12:44:39Z by kres 5fb5b90.
 
 concurrency:
   group: ${{ github.head_ref || github.run_id }}
@@ -704,7 +704,7 @@ jobs:
           TF_SCRIPT_DIR: _out/contrib
         run: |
           make e2e-cloud-tf
-  integration-aws-nvidia-nonfree:
+  integration-aws-nvidia-nonfree-lts:
     permissions:
       actions: read
       contents: write
@@ -714,7 +714,7 @@ jobs:
     runs-on:
       - self-hosted
       - generic
-    if: contains(fromJSON(needs.default.outputs.labels), 'integration/aws-nvidia-nonfree')
+    if: contains(fromJSON(needs.default.outputs.labels), 'integration/aws-nvidia-nonfree-lts') || contains(fromJSON(needs.default.outputs.labels), 'integration/aws-nvidia-nonfree') || contains(fromJSON(needs.default.outputs.labels), 'integration/aws-nvidia') || contains(fromJSON(needs.default.outputs.labels), 'integration/aws')
     needs:
       - default
     steps:
@@ -797,13 +797,6 @@ jobs:
         if: github.event_name == 'schedule'
         run: |
           make talosctl-cni-bundle
-      - name: images-essential
-        if: github.event_name == 'schedule'
-        env:
-          IMAGE_REGISTRY: registry.dev.siderolabs.io
-          PLATFORM: linux/amd64,linux/arm64
-        run: |
-          make images-essential
       - name: image-aws
         env:
           IMAGE_REGISTRY: registry.dev.siderolabs.io
@@ -828,7 +821,7 @@ jobs:
           make nvidia-container-toolkit-lts nonfree-kmod-nvidia-lts extensions-metadata -C _out/extensions
       - name: e2e-aws-prepare
         env:
-          E2E_AWS_TARGET: nvidia-nonfree
+          E2E_AWS_TARGET: nvidia-nonfree-lts
           EXTENSIONS_METADATA_FILE: _out/extensions/_out/extensions-metadata
           IMAGE_REGISTRY: registry.dev.siderolabs.io
         run: |
@@ -850,7 +843,7 @@ jobs:
           TF_SCRIPT_DIR: _out/contrib
         run: |
           make e2e-cloud-tf
-      - name: e2e-aws-nvidia-nonfree
+      - name: e2e-aws-nvidia-nonfree-lts
         env:
           EXTRA_TEST_ARGS: -talos.extensions.nvidia
         run: |
@@ -864,7 +857,7 @@ jobs:
           TF_SCRIPT_DIR: _out/contrib
         run: |
           make e2e-cloud-tf
-  integration-aws-nvidia-oss:
+  integration-aws-nvidia-nonfree-production:
     permissions:
       actions: read
       contents: write
@@ -874,7 +867,7 @@ jobs:
     runs-on:
       - self-hosted
       - generic
-    if: contains(fromJSON(needs.default.outputs.labels), 'integration/aws-nvidia-oss')
+    if: contains(fromJSON(needs.default.outputs.labels), 'integration/aws-nvidia-nonfree-production') || contains(fromJSON(needs.default.outputs.labels), 'integration/aws-nvidia-nonfree') || contains(fromJSON(needs.default.outputs.labels), 'integration/aws-nvidia') || contains(fromJSON(needs.default.outputs.labels), 'integration/aws')
     needs:
       - default
     steps:
@@ -957,13 +950,6 @@ jobs:
         if: github.event_name == 'schedule'
         run: |
           make talosctl-cni-bundle
-      - name: images-essential
-        if: github.event_name == 'schedule'
-        env:
-          IMAGE_REGISTRY: registry.dev.siderolabs.io
-          PLATFORM: linux/amd64,linux/arm64
-        run: |
-          make images-essential
       - name: image-aws
         env:
           IMAGE_REGISTRY: registry.dev.siderolabs.io
@@ -974,7 +960,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           path: _out/extensions
-          ref: release-1.11
+          ref: main
           repository: siderolabs/extensions
       - name: set variables
         run: |
@@ -985,10 +971,10 @@ jobs:
           PUSH: "true"
           REGISTRY: registry.dev.siderolabs.io
         run: |
-          make nvidia-container-toolkit-production nvidia-open-gpu-kernel-modules-production zfs extensions-metadata -C _out/extensions
+          make nvidia-container-toolkit-production nonfree-kmod-nvidia-production extensions-metadata -C _out/extensions
       - name: e2e-aws-prepare
         env:
-          E2E_AWS_TARGET: nvidia-oss
+          E2E_AWS_TARGET: nvidia-nonfree-production
           EXTENSIONS_METADATA_FILE: _out/extensions/_out/extensions-metadata
           IMAGE_REGISTRY: registry.dev.siderolabs.io
         run: |
@@ -1010,7 +996,313 @@ jobs:
           TF_SCRIPT_DIR: _out/contrib
         run: |
           make e2e-cloud-tf
-      - name: e2e-aws-nvidia-oss
+      - name: e2e-aws-nvidia-nonfree-production
+        env:
+          EXTRA_TEST_ARGS: -talos.extensions.nvidia
+        run: |
+          make e2e-aws
+      - name: tf destroy
+        if: always()
+        env:
+          TF_E2E_ACTION: destroy
+          TF_E2E_REFRESH_ON_DESTROY: "false"
+          TF_E2E_TEST_TYPE: aws
+          TF_SCRIPT_DIR: _out/contrib
+        run: |
+          make e2e-cloud-tf
+  integration-aws-nvidia-oss-lts:
+    permissions:
+      actions: read
+      contents: write
+      issues: read
+      packages: write
+      pull-requests: read
+    runs-on:
+      - self-hosted
+      - generic
+    if: contains(fromJSON(needs.default.outputs.labels), 'integration/aws-nvidia-oss-lts') || contains(fromJSON(needs.default.outputs.labels), 'integration/aws-nvidia-oss') || contains(fromJSON(needs.default.outputs.labels), 'integration/aws-nvidia') || contains(fromJSON(needs.default.outputs.labels), 'integration/aws')
+    needs:
+      - default
+    steps:
+      - name: gather-system-info
+        id: system-info
+        uses: kenchan0130/actions-system-info@v1.3.1
+        continue-on-error: true
+      - name: print-system-info
+        run: |
+          MEMORY_GB=$((${{ steps.system-info.outputs.totalmem }}/1024/1024/1024))
+
+          OUTPUTS=(
+            "CPU Core: ${{ steps.system-info.outputs.cpu-core }}"
+            "CPU Model: ${{ steps.system-info.outputs.cpu-model }}"
+            "Hostname: ${{ steps.system-info.outputs.hostname }}"
+            "NodeName: ${NODE_NAME}"
+            "Kernel release: ${{ steps.system-info.outputs.kernel-release }}"
+            "Kernel version: ${{ steps.system-info.outputs.kernel-version }}"
+            "Name: ${{ steps.system-info.outputs.name }}"
+            "Platform: ${{ steps.system-info.outputs.platform }}"
+            "Release: ${{ steps.system-info.outputs.release }}"
+            "Total memory: ${MEMORY_GB} GB"
+          )
+
+          for OUTPUT in "${OUTPUTS[@]}";do
+            echo "${OUTPUT}"
+          done
+        continue-on-error: true
+      - name: checkout
+        uses: actions/checkout@v4
+      - name: Unshallow
+        run: |
+          git fetch --prune --unshallow
+      - name: Set up Docker Buildx
+        id: setup-buildx
+        uses: docker/setup-buildx-action@v3
+        with:
+          driver: remote
+          endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
+        timeout-minutes: 10
+      - name: Mask secrets
+        run: |
+          echo "$(sops -d .secrets.yaml | yq -e '.secrets | to_entries[] | "::add-mask::" + .value')"
+      - name: Set secrets for job
+        run: |
+          sops -d .secrets.yaml | yq -e '.secrets | to_entries[] | .key + "=" + .value' >> "$GITHUB_ENV"
+      - name: Download artifacts
+        if: github.event_name != 'schedule'
+        uses: actions/download-artifact@v4
+        with:
+          name: talos-artifacts
+          path: _out
+      - name: Fix artifact permissions
+        if: github.event_name != 'schedule'
+        run: |
+          xargs -a _out/executable-artifacts -I {} chmod +x {}
+      - name: ci-temp-release-tag
+        if: github.event_name != 'schedule'
+        run: |
+          make ci-temp-release-tag
+      - name: generate
+        if: github.event_name == 'schedule'
+        run: |
+          make generate
+      - name: uki-certs
+        if: github.event_name == 'schedule'
+        env:
+          PLATFORM: linux/amd64
+        run: |
+          make uki-certs
+      - name: build
+        if: github.event_name == 'schedule'
+        env:
+          IMAGE_REGISTRY: registry.dev.siderolabs.io
+          PLATFORM: linux/amd64,linux/arm64
+          PUSH: "true"
+        run: |
+          make talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
+      - name: talosctl-cni-bundle
+        if: github.event_name == 'schedule'
+        run: |
+          make talosctl-cni-bundle
+      - name: image-aws
+        env:
+          IMAGE_REGISTRY: registry.dev.siderolabs.io
+          PLATFORM: linux/amd64,linux/arm64
+        run: |
+          make image-aws
+      - name: checkout extensions
+        uses: actions/checkout@v4
+        with:
+          path: _out/extensions
+          ref: release-1.11
+          repository: siderolabs/extensions
+      - name: set variables
+        run: |
+          cat _out/talos-metadata >> "$GITHUB_ENV"
+      - name: build extensions
+        env:
+          PLATFORM: linux/amd64
+          PUSH: "true"
+          REGISTRY: registry.dev.siderolabs.io
+        run: |
+          make nvidia-container-toolkit-lts nvidia-open-gpu-kernel-modules-lts zfs extensions-metadata -C _out/extensions
+      - name: e2e-aws-prepare
+        env:
+          E2E_AWS_TARGET: nvidia-oss-lts
+          EXTENSIONS_METADATA_FILE: _out/extensions/_out/extensions-metadata
+          IMAGE_REGISTRY: registry.dev.siderolabs.io
+        run: |
+          make e2e-aws-prepare
+      - name: checkout contrib
+        uses: actions/checkout@v4
+        with:
+          path: _out/contrib
+          ref: main
+          repository: siderolabs/contrib
+      - name: setup tf
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_wrapper: "false"
+      - name: tf apply
+        env:
+          TF_E2E_ACTION: apply
+          TF_E2E_TEST_TYPE: aws
+          TF_SCRIPT_DIR: _out/contrib
+        run: |
+          make e2e-cloud-tf
+      - name: e2e-aws-nvidia-oss-lts
+        env:
+          EXTRA_TEST_ARGS: -talos.extensions.nvidia -talos.verifyukibooted=false
+        run: |
+          make e2e-aws
+      - name: tf destroy
+        if: always()
+        env:
+          TF_E2E_ACTION: destroy
+          TF_E2E_REFRESH_ON_DESTROY: "false"
+          TF_E2E_TEST_TYPE: aws
+          TF_SCRIPT_DIR: _out/contrib
+        run: |
+          make e2e-cloud-tf
+  integration-aws-nvidia-oss-production:
+    permissions:
+      actions: read
+      contents: write
+      issues: read
+      packages: write
+      pull-requests: read
+    runs-on:
+      - self-hosted
+      - generic
+    if: contains(fromJSON(needs.default.outputs.labels), 'integration/aws-nvidia-oss-production') || contains(fromJSON(needs.default.outputs.labels), 'integration/aws-nvidia-oss') || contains(fromJSON(needs.default.outputs.labels), 'integration/aws-nvidia') || contains(fromJSON(needs.default.outputs.labels), 'integration/aws')
+    needs:
+      - default
+    steps:
+      - name: gather-system-info
+        id: system-info
+        uses: kenchan0130/actions-system-info@v1.3.1
+        continue-on-error: true
+      - name: print-system-info
+        run: |
+          MEMORY_GB=$((${{ steps.system-info.outputs.totalmem }}/1024/1024/1024))
+
+          OUTPUTS=(
+            "CPU Core: ${{ steps.system-info.outputs.cpu-core }}"
+            "CPU Model: ${{ steps.system-info.outputs.cpu-model }}"
+            "Hostname: ${{ steps.system-info.outputs.hostname }}"
+            "NodeName: ${NODE_NAME}"
+            "Kernel release: ${{ steps.system-info.outputs.kernel-release }}"
+            "Kernel version: ${{ steps.system-info.outputs.kernel-version }}"
+            "Name: ${{ steps.system-info.outputs.name }}"
+            "Platform: ${{ steps.system-info.outputs.platform }}"
+            "Release: ${{ steps.system-info.outputs.release }}"
+            "Total memory: ${MEMORY_GB} GB"
+          )
+
+          for OUTPUT in "${OUTPUTS[@]}";do
+            echo "${OUTPUT}"
+          done
+        continue-on-error: true
+      - name: checkout
+        uses: actions/checkout@v4
+      - name: Unshallow
+        run: |
+          git fetch --prune --unshallow
+      - name: Set up Docker Buildx
+        id: setup-buildx
+        uses: docker/setup-buildx-action@v3
+        with:
+          driver: remote
+          endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
+        timeout-minutes: 10
+      - name: Mask secrets
+        run: |
+          echo "$(sops -d .secrets.yaml | yq -e '.secrets | to_entries[] | "::add-mask::" + .value')"
+      - name: Set secrets for job
+        run: |
+          sops -d .secrets.yaml | yq -e '.secrets | to_entries[] | .key + "=" + .value' >> "$GITHUB_ENV"
+      - name: Download artifacts
+        if: github.event_name != 'schedule'
+        uses: actions/download-artifact@v4
+        with:
+          name: talos-artifacts
+          path: _out
+      - name: Fix artifact permissions
+        if: github.event_name != 'schedule'
+        run: |
+          xargs -a _out/executable-artifacts -I {} chmod +x {}
+      - name: ci-temp-release-tag
+        if: github.event_name != 'schedule'
+        run: |
+          make ci-temp-release-tag
+      - name: generate
+        if: github.event_name == 'schedule'
+        run: |
+          make generate
+      - name: uki-certs
+        if: github.event_name == 'schedule'
+        env:
+          PLATFORM: linux/amd64
+        run: |
+          make uki-certs
+      - name: build
+        if: github.event_name == 'schedule'
+        env:
+          IMAGE_REGISTRY: registry.dev.siderolabs.io
+          PLATFORM: linux/amd64,linux/arm64
+          PUSH: "true"
+        run: |
+          make talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
+      - name: talosctl-cni-bundle
+        if: github.event_name == 'schedule'
+        run: |
+          make talosctl-cni-bundle
+      - name: image-aws
+        env:
+          IMAGE_REGISTRY: registry.dev.siderolabs.io
+          PLATFORM: linux/amd64,linux/arm64
+        run: |
+          make image-aws
+      - name: checkout extensions
+        uses: actions/checkout@v4
+        with:
+          path: _out/extensions
+          ref: main
+          repository: siderolabs/extensions
+      - name: set variables
+        run: |
+          cat _out/talos-metadata >> "$GITHUB_ENV"
+      - name: build extensions
+        env:
+          PLATFORM: linux/amd64
+          PUSH: "true"
+          REGISTRY: registry.dev.siderolabs.io
+        run: |
+          make nvidia-container-toolkit-production nvidia-open-gpu-kernel-modules-production zfs extensions-metadata -C _out/extensions
+      - name: e2e-aws-prepare
+        env:
+          E2E_AWS_TARGET: nvidia-oss-production
+          EXTENSIONS_METADATA_FILE: _out/extensions/_out/extensions-metadata
+          IMAGE_REGISTRY: registry.dev.siderolabs.io
+        run: |
+          make e2e-aws-prepare
+      - name: checkout contrib
+        uses: actions/checkout@v4
+        with:
+          path: _out/contrib
+          ref: main
+          repository: siderolabs/contrib
+      - name: setup tf
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_wrapper: "false"
+      - name: tf apply
+        env:
+          TF_E2E_ACTION: apply
+          TF_E2E_TEST_TYPE: aws
+          TF_SCRIPT_DIR: _out/contrib
+        run: |
+          make e2e-cloud-tf
+      - name: e2e-aws-nvidia-oss-production
         env:
           EXTRA_TEST_ARGS: -talos.extensions.nvidia -talos.verifyukibooted=false
         run: |
@@ -4712,32 +5004,32 @@ jobs:
         uses: sigstore/cosign-installer@v3
       - name: Sign artifacts
         run: |
-          cosign sign-blob --output _out/cloud-images.json.sig --yes _out/cloud-images.json
-          cosign sign-blob --output _out/initramfs-amd64.xz.sig --yes _out/initramfs-amd64.xz
-          cosign sign-blob --output _out/initramfs-arm64.xz.sig --yes _out/initramfs-arm64.xz
-          cosign sign-blob --output _out/metal-amd64.iso.sig --yes _out/metal-amd64.iso
-          cosign sign-blob --output _out/metal-arm64.iso.sig --yes _out/metal-arm64.iso
-          cosign sign-blob --output _out/metal-amd64-uki.efi.sig --yes _out/metal-amd64-uki.efi
-          cosign sign-blob --output _out/metal-arm64-uki.efi.sig --yes _out/metal-arm64-uki.efi
-          cosign sign-blob --output _out/metal-amd64.raw.zst.sig --yes _out/metal-amd64.raw.zst
-          cosign sign-blob --output _out/metal-arm64.raw.zst.sig --yes _out/metal-arm64.raw.zst
-          cosign sign-blob --output _out/talos-arm64.spdx.json.sig --yes _out/talos-arm64.spdx.json
-          cosign sign-blob --output _out/talos-amd64.spdx.json.sig --yes _out/talos-amd64.spdx.json
-          cosign sign-blob --output _out/talos-container-arm64.spdx.json.sig --yes _out/talos-container-arm64.spdx.json
-          cosign sign-blob --output _out/talos-container-amd64.spdx.json.sig --yes _out/talos-container-amd64.spdx.json
-          cosign sign-blob --output _out/talosctl-cni-bundle-amd64.tar.gz.sig --yes _out/talosctl-cni-bundle-amd64.tar.gz
-          cosign sign-blob --output _out/talosctl-cni-bundle-arm64.tar.gz.sig --yes _out/talosctl-cni-bundle-arm64.tar.gz
-          cosign sign-blob --output _out/talosctl-darwin-amd64.sig --yes _out/talosctl-darwin-amd64
-          cosign sign-blob --output _out/talosctl-darwin-arm64.sig --yes _out/talosctl-darwin-arm64
-          cosign sign-blob --output _out/talosctl-freebsd-amd64.sig --yes _out/talosctl-freebsd-amd64
-          cosign sign-blob --output _out/talosctl-freebsd-arm64.sig --yes _out/talosctl-freebsd-arm64
-          cosign sign-blob --output _out/talosctl-linux-amd64.sig --yes _out/talosctl-linux-amd64
-          cosign sign-blob --output _out/talosctl-linux-arm64.sig --yes _out/talosctl-linux-arm64
-          cosign sign-blob --output _out/talosctl-linux-armv7.sig --yes _out/talosctl-linux-armv7
-          cosign sign-blob --output _out/talosctl-windows-amd64.exe.sig --yes _out/talosctl-windows-amd64.exe
-          cosign sign-blob --output _out/talosctl-windows-arm64.exe.sig --yes _out/talosctl-windows-arm64.exe
-          cosign sign-blob --output _out/vmlinuz-amd64.sig --yes _out/vmlinuz-amd64
-          cosign sign-blob --output _out/vmlinuz-arm64.sig --yes _out/vmlinuz-arm64
+          cosign sign-blob --output-signature _out/cloud-images.json.sig --yes _out/cloud-images.json
+          cosign sign-blob --output-signature _out/initramfs-amd64.xz.sig --yes _out/initramfs-amd64.xz
+          cosign sign-blob --output-signature _out/initramfs-arm64.xz.sig --yes _out/initramfs-arm64.xz
+          cosign sign-blob --output-signature _out/metal-amd64.iso.sig --yes _out/metal-amd64.iso
+          cosign sign-blob --output-signature _out/metal-arm64.iso.sig --yes _out/metal-arm64.iso
+          cosign sign-blob --output-signature _out/metal-amd64-uki.efi.sig --yes _out/metal-amd64-uki.efi
+          cosign sign-blob --output-signature _out/metal-arm64-uki.efi.sig --yes _out/metal-arm64-uki.efi
+          cosign sign-blob --output-signature _out/metal-amd64.raw.zst.sig --yes _out/metal-amd64.raw.zst
+          cosign sign-blob --output-signature _out/metal-arm64.raw.zst.sig --yes _out/metal-arm64.raw.zst
+          cosign sign-blob --output-signature _out/talos-arm64.spdx.json.sig --yes _out/talos-arm64.spdx.json
+          cosign sign-blob --output-signature _out/talos-amd64.spdx.json.sig --yes _out/talos-amd64.spdx.json
+          cosign sign-blob --output-signature _out/talos-container-arm64.spdx.json.sig --yes _out/talos-container-arm64.spdx.json
+          cosign sign-blob --output-signature _out/talos-container-amd64.spdx.json.sig --yes _out/talos-container-amd64.spdx.json
+          cosign sign-blob --output-signature _out/talosctl-cni-bundle-amd64.tar.gz.sig --yes _out/talosctl-cni-bundle-amd64.tar.gz
+          cosign sign-blob --output-signature _out/talosctl-cni-bundle-arm64.tar.gz.sig --yes _out/talosctl-cni-bundle-arm64.tar.gz
+          cosign sign-blob --output-signature _out/talosctl-darwin-amd64.sig --yes _out/talosctl-darwin-amd64
+          cosign sign-blob --output-signature _out/talosctl-darwin-arm64.sig --yes _out/talosctl-darwin-arm64
+          cosign sign-blob --output-signature _out/talosctl-freebsd-amd64.sig --yes _out/talosctl-freebsd-amd64
+          cosign sign-blob --output-signature _out/talosctl-freebsd-arm64.sig --yes _out/talosctl-freebsd-arm64
+          cosign sign-blob --output-signature _out/talosctl-linux-amd64.sig --yes _out/talosctl-linux-amd64
+          cosign sign-blob --output-signature _out/talosctl-linux-arm64.sig --yes _out/talosctl-linux-arm64
+          cosign sign-blob --output-signature _out/talosctl-linux-armv7.sig --yes _out/talosctl-linux-armv7
+          cosign sign-blob --output-signature _out/talosctl-windows-amd64.exe.sig --yes _out/talosctl-windows-amd64.exe
+          cosign sign-blob --output-signature _out/talosctl-windows-arm64.exe.sig --yes _out/talosctl-windows-arm64.exe
+          cosign sign-blob --output-signature _out/vmlinuz-amd64.sig --yes _out/vmlinuz-amd64
+          cosign sign-blob --output-signature _out/vmlinuz-arm64.sig --yes _out/vmlinuz-arm64
       - name: Generate Checksums
         run: |
           cd _out
@@ -4745,8 +5037,9 @@ jobs:
           sha512sum cloud-images.json initramfs-amd64.xz initramfs-arm64.xz metal-amd64.iso metal-arm64.iso metal-amd64-uki.efi metal-arm64-uki.efi metal-amd64.raw.zst metal-arm64.raw.zst talos-arm64.spdx.json talos-amd64.spdx.json talos-container-arm64.spdx.json talos-container-amd64.spdx.json talosctl-cni-bundle-amd64.tar.gz talosctl-cni-bundle-arm64.tar.gz talosctl-darwin-amd64 talosctl-darwin-arm64 talosctl-freebsd-amd64 talosctl-freebsd-arm64 talosctl-linux-amd64 talosctl-linux-arm64 talosctl-linux-armv7 talosctl-windows-amd64.exe talosctl-windows-arm64.exe vmlinuz-amd64 vmlinuz-arm64 > sha512sum.txt
       - name: Sign checksums
         run: |
-          cosign sign-blob --output sha256sum.txt.sig --yes sha256sum.txt
-          cosign sign-blob --output sha512sum.txt.sig --yes sha512sum.txt
+          cd _out
+          cosign sign-blob --output-signature sha256sum.txt.sig --yes sha256sum.txt
+          cosign sign-blob --output-signature sha512sum.txt.sig --yes sha512sum.txt
       - name: release
         uses: crazy-max/ghaction-github-release@v2
         with:
