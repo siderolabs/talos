@@ -10,53 +10,86 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/blang/semver/v4"
 	"github.com/siderolabs/gen/maps"
 	"github.com/stretchr/testify/require"
 
 	"github.com/siderolabs/talos/pkg/imager/profile"
+	"github.com/siderolabs/talos/pkg/machinery/version"
 )
 
 func TestFillDefaults(t *testing.T) {
+	t.Parallel()
+
 	// we can ignore profile that are legacy Boards
 	defaultProfiles := maps.Filter(profile.Default, func(k string, v profile.Profile) bool {
 		return v.Board == ""
 	})
 
 	arches := []string{"amd64", "arm64"}
-	versions := []string{"1.9.0", "1.10.0"}
+	versions := []string{"1.9.0", "1.10.0", "1.11.0"}
+
+	lastVersion := semver.MustParse(versions[len(versions)-1])
+
+	currentVersion, err := semver.ParseTolerant(version.Tag)
+	require.NoError(t, err)
+
+	currentVersion.Patch = 0
+	currentVersion.Pre = nil
+
+	require.True(t, lastVersion.EQ(currentVersion), "last version %s should be equal to current version %s", lastVersion, currentVersion)
 
 	profiles := maps.Keys(defaultProfiles)
 
 	sort.Strings(profiles)
 
+	// flip this to true to generate missing testdata files
+	const recordMissing = false
+
 	for _, profile := range profiles {
-		var secureBoot bool
+		t.Run(profile, func(t *testing.T) {
+			t.Parallel()
 
-		if strings.HasPrefix(profile, "secureboot") {
-			secureBoot = true
-		}
+			var secureBoot bool
 
-		for _, arch := range arches {
-			for _, version := range versions {
-				p := defaultProfiles[profile].DeepCopy()
-
-				p.Arch = arch
-				p.Version = version
-
-				p.Input.FillDefaults(arch, version, secureBoot)
-				p.Output.FillDefaults(arch, version, secureBoot)
-
-				require.NoError(t, p.Validate())
-
-				var profileData strings.Builder
-
-				require.NoError(t, p.Dump(&profileData))
-
-				expectedData, err := os.ReadFile("testdata/" + profile + "-" + arch + "-" + version + ".yaml")
-				require.NoError(t, err)
-
-				require.Equal(t, string(expectedData), profileData.String(), "profile: %s, platform: %s, version: %s", profile, arch, version)
+			if strings.HasPrefix(profile, "secureboot") {
+				secureBoot = true
 			}
-		}
+
+			for _, arch := range arches {
+				t.Run(arch, func(t *testing.T) {
+					t.Parallel()
+
+					for _, version := range versions {
+						t.Run(version, func(t *testing.T) {
+							t.Parallel()
+
+							p := defaultProfiles[profile].DeepCopy()
+
+							p.Arch = arch
+							p.Version = version
+
+							p.Input.FillDefaults(arch, version, secureBoot)
+							p.Output.FillDefaults(arch, version, secureBoot)
+
+							require.NoError(t, p.Validate())
+
+							var profileData strings.Builder
+
+							require.NoError(t, p.Dump(&profileData))
+
+							expectedData, err := os.ReadFile("testdata/" + profile + "-" + arch + "-" + version + ".yaml")
+							if os.IsNotExist(err) && recordMissing {
+								require.NoError(t, os.WriteFile("testdata/"+profile+"-"+arch+"-"+version+".yaml", []byte(profileData.String()), 0o644))
+							} else {
+								require.NoError(t, err)
+
+								require.Equal(t, string(expectedData), profileData.String(), "profile: %s, platform: %s, version: %s", profile, arch, version)
+							}
+						})
+					}
+				})
+			}
+		})
 	}
 }

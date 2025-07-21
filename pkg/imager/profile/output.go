@@ -125,35 +125,28 @@ func (o *Output) FillDefaults(arch, version string, secureboot bool) {
 			o.ImageOptions = &ImageOptions{}
 		}
 
-		// allow user to override bootloader
-		if o.ImageOptions.Bootloader != DiskImageBootloaderDualBoot {
-			return
-		}
-
-		if secureboot {
-			o.ImageOptions.Bootloader = DiskImageBootloaderSDBoot
-
-			return
-		}
-
 		useSDBoot := quirks.New(version).UseSDBootForUEFI()
 
-		// for arm64, we always use sd-boot
-		if arch == "arm64" && useSDBoot {
+		switch {
+		case o.ImageOptions.Bootloader != DiskImageBootloaderDualBoot:
+			// allow user to override bootloader
+		case secureboot:
+			// secureboot is always using sd-boot
 			o.ImageOptions.Bootloader = DiskImageBootloaderSDBoot
-
-			return
-		}
-
-		if !useSDBoot {
+		case arch == "arm64" && useSDBoot:
+			// arm64 always uses sd-boot for Talos >= 1.10
+			o.ImageOptions.Bootloader = DiskImageBootloaderSDBoot
+		case !useSDBoot:
+			// legacy versions of Talos use GRUB for BIOS/UEFI
 			o.ImageOptions.Bootloader = DiskImageBootloaderGrub
-
-			return
+		default:
+			// Default to dual-boot.
+			o.ImageOptions.Bootloader = DiskImageBootloaderDualBoot
 		}
 
-		// Default to dual-boot.
-		o.ImageOptions.Bootloader = DiskImageBootloaderDualBoot
-		// add extra space for BIOS and BOOT partitions
-		o.ImageOptions.DiskSize += 1*1024*1024 + 1000*1024*1024
+		if o.ImageOptions.Bootloader == DiskImageBootloaderDualBoot {
+			// add extra space for BIOS and BOOT partitions
+			o.ImageOptions.DiskSize += 1*1024*1024 + 1000*1024*1024
+		}
 	}
 }
