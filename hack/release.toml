@@ -23,7 +23,7 @@ Kubernetes: 1.34.0-beta.0
 runc: 1.3.0
 containerd: 2.1.3
 Flannel CNI plugin: 1.7.1-flannel1
-Flannel: 0.27.0
+Flannel: 0.27.2
 CoreDNS: 1.12.2
 xfsprogs: 6.15.0
 systemd-udevd and systemd-boot: 257.7
