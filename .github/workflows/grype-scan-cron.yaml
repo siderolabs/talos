@@ -1,6 +1,6 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
 #
-# Generated on 2025-07-21T16:10:17Z by kres b869533.
+# Generated on 2025-07-25T10:11:21Z by kres 4c6b4c0.
 
 concurrency:
   group: ${{ github.head_ref || github.run_id }}
@@ -52,17 +52,6 @@ jobs:
           driver: remote
           endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
         timeout-minutes: 10
-      - name: Download artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: talos-artifacts
-          path: _out
-      - name: Fix artifact permissions
-        run: |
-          xargs -a _out/executable-artifacts -I {} chmod +x {}
-      - name: ci-temp-release-tag
-        run: |
-          make ci-temp-release-tag
       - name: local-grype-scan-result
         env:
           DEST: _out
