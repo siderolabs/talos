@@ -1,6 +1,6 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
 #
-# Generated on 2025-07-21T14:04:07Z by kres b869533.
+# Generated on 2025-07-22T11:47:45Z by kres b869533.
 
 concurrency:
   group: ${{ github.head_ref || github.run_id }}
@@ -814,7 +814,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           path: _out/extensions
-          ref: main
+          ref: release-1.11
           repository: siderolabs/extensions
       - name: set variables
         run: |
@@ -974,7 +974,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           path: _out/extensions
-          ref: main
+          ref: release-1.11
           repository: siderolabs/extensions
       - name: set variables
         run: |
@@ -1527,7 +1527,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           path: _out/extensions
-          ref: main
+          ref: release-1.11
           repository: siderolabs/extensions
       - name: unshallow-extensions
         run: |
@@ -3650,7 +3650,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           path: _out/extensions
-          ref: main
+          ref: release-1.11
           repository: siderolabs/extensions
       - name: set variables
         run: |

@@ -201,6 +201,7 @@ var imageIntegrationCmd = &cobra.Command{
 			imgs.Pause,
 			"registry.k8s.io/conformance:v" + constants.DefaultKubernetesVersion,
 			"docker.io/library/alpine:latest",
+			"ghcr.io/siderolabs/talosctl:latest",
 			imageIntegrationCmdFlags.registryAndUser + "/installer:" +
 				imageIntegrationCmdFlags.installerTag,
 		}

@@ -20,6 +20,7 @@ spec:
 ---
 kind: common.Repository
 spec:
+  conformMaximumOfOneCommit: false
   conformScopes:
     - apid
     - machined
@@ -1749,7 +1750,7 @@ spec:
         - name: checkout extensions
           checkoutStep:
             repository: siderolabs/extensions
-            ref: main
+            ref: release-1.11
             path: _out/extensions
         - name: unshallow-extensions
           nonMakeStep: true
@@ -2105,7 +2106,7 @@ spec:
         - name: checkout extensions
           checkoutStep:
             repository: siderolabs/extensions
-            ref: main
+            ref: release-1.11
             path: _out/extensions
         - name: set variables
           nonMakeStep: true
@@ -2658,7 +2659,7 @@ spec:
         - name: checkout extensions
           checkoutStep:
             repository: siderolabs/extensions
-            ref: main
+            ref: release-1.11
             path: _out/extensions
         - name: set variables
           nonMakeStep: true
@@ -2759,7 +2760,7 @@ spec:
         - name: checkout extensions
           checkoutStep:
             repository: siderolabs/extensions
-            ref: main
+            ref: release-1.11
             path: _out/extensions
         - name: set variables
           nonMakeStep: true
