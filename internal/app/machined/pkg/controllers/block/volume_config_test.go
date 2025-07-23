@@ -7,10 +7,15 @@ package block_test
 import (
 	"encoding/json"
 	"net/url"
+	"os"
+	"path/filepath"
 	"testing"
 	"time"
 
 	"github.com/cosi-project/runtime/pkg/resource"
+	"github.com/cosi-project/runtime/pkg/state"
+	"github.com/cosi-project/runtime/pkg/state/impl/inmem"
+	"github.com/cosi-project/runtime/pkg/state/impl/namespaced"
 	"github.com/siderolabs/gen/xslices"
 	"github.com/siderolabs/go-pointer"
 	"github.com/stretchr/testify/assert"
@@ -18,6 +23,8 @@ import (
 
 	blockctrls "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/block"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/ctest"
+	machineruntime "github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
+	intmeta "github.com/siderolabs/talos/internal/pkg/meta"
 	"github.com/siderolabs/talos/pkg/machinery/cel"
 	"github.com/siderolabs/talos/pkg/machinery/cel/celenv"
 	"github.com/siderolabs/talos/pkg/machinery/config/container"
@@ -36,6 +43,14 @@ type VolumeConfigSuite struct {
 	ctest.DefaultSuite
 }
 
+type metaProvider struct {
+	meta *intmeta.Meta
+}
+
+func (m metaProvider) Meta() machineruntime.Meta {
+	return m.meta
+}
+
 func TestVolumeConfigSuite(t *testing.T) {
 	t.Parallel()
 
@@ -43,7 +58,24 @@ func TestVolumeConfigSuite(t *testing.T) {
 		DefaultSuite: ctest.DefaultSuite{
 			Timeout: 3 * time.Second,
 			AfterSetup: func(suite *ctest.DefaultSuite) {
-				suite.Require().NoError(suite.Runtime().RegisterController(&blockctrls.VolumeConfigController{}))
+				tmpDir := suite.T().TempDir()
+				path := filepath.Join(tmpDir, "meta")
+
+				f, err := os.Create(path)
+				suite.Require().NoError(err)
+				suite.Require().NoError(f.Truncate(1024 * 1024))
+				suite.Require().NoError(f.Close())
+
+				st := state.WrapCore(namespaced.NewState(inmem.Build))
+
+				m, err := intmeta.New(t.Context(), st, intmeta.WithFixedPath(path))
+				suite.Require().NoError(err)
+
+				suite.Require().NoError(suite.Runtime().RegisterController(
+					&blockctrls.VolumeConfigController{
+						MetaProvider: metaProvider{meta: m},
+					},
+				))
 			},
 		},
 	})
@@ -266,6 +298,15 @@ func (suite *VolumeConfigSuite) TestReconcileExtraEPHEMERALConfig() {
 				ProvisioningGrow:    pointer.To(false),
 				ProvisioningMaxSize: blockcfg.MustByteSize("2.5TiB"),
 			},
+			EncryptionSpec: blockcfg.EncryptionSpec{
+				EncryptionProvider: block.EncryptionProviderLUKS2,
+				EncryptionKeys: []blockcfg.EncryptionKey{
+					{
+						KeySlot: 0,
+						KeyTPM:  &blockcfg.EncryptionKeyTPM{},
+					},
+				},
+			},
 		},
 	)
 	suite.Require().NoError(err)
@@ -276,7 +317,7 @@ func (suite *VolumeConfigSuite) TestReconcileExtraEPHEMERALConfig() {
 	// now the volume config should be created
 	ctest.AssertResource(suite, constants.EphemeralPartitionLabel, func(r *block.VolumeConfig, asrt *assert.Assertions) {
 		asrt.NotEmpty(r.TypedSpec().Provisioning)
-		asrt.Empty(r.TypedSpec().Encryption)
+		asrt.NotEmpty(r.TypedSpec().Encryption)
 
 		locator, err := r.TypedSpec().Provisioning.DiskSelector.Match.MarshalText()
 		asrt.NoError(err)
@@ -285,5 +326,7 @@ func (suite *VolumeConfigSuite) TestReconcileExtraEPHEMERALConfig() {
 		asrt.False(r.TypedSpec().Provisioning.PartitionSpec.Grow)
 		asrt.EqualValues(2.5*1024*1024*1024*1024, r.TypedSpec().Provisioning.PartitionSpec.MaxSize)
 		asrt.EqualValues(quirks.New("").PartitionSizes().EphemeralMinSize(), r.TypedSpec().Provisioning.PartitionSpec.MinSize)
+
+		asrt.Equal(block.EncryptionProviderLUKS2, r.TypedSpec().Encryption.Provider)
 	})
 }

@@ -19,7 +19,6 @@ import (
 	"time"
 
 	"github.com/siderolabs/gen/xslices"
-	"github.com/siderolabs/go-blockdevice/v2/encryption"
 	"github.com/siderolabs/go-kubernetes/kubernetes/upgrade"
 	"github.com/siderolabs/go-retry/retry"
 	sideronet "github.com/siderolabs/net"
@@ -38,11 +37,15 @@ import (
 	clientconfig "github.com/siderolabs/talos/pkg/machinery/client/config"
 	"github.com/siderolabs/talos/pkg/machinery/config"
 	"github.com/siderolabs/talos/pkg/machinery/config/bundle"
+	"github.com/siderolabs/talos/pkg/machinery/config/configpatcher"
+	"github.com/siderolabs/talos/pkg/machinery/config/container"
 	"github.com/siderolabs/talos/pkg/machinery/config/encoder"
 	"github.com/siderolabs/talos/pkg/machinery/config/generate"
 	"github.com/siderolabs/talos/pkg/machinery/config/machine"
+	"github.com/siderolabs/talos/pkg/machinery/config/types/block"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
+	blockres "github.com/siderolabs/talos/pkg/machinery/resources/block"
 	"github.com/siderolabs/talos/pkg/machinery/version"
 	"github.com/siderolabs/talos/pkg/provision"
 	"github.com/siderolabs/talos/pkg/provision/access"
@@ -516,31 +519,33 @@ func (suite *BaseSuite) setupCluster(options clusterOptions) {
 		)
 	}
 
+	var extraPatches []configpatcher.Patch
+
 	if options.WithEncryption {
-		genOptions = append(
-			genOptions, generate.WithSystemDiskEncryption(
-				&v1alpha1.SystemDiskEncryptionConfig{
-					StatePartition: &v1alpha1.EncryptionConfig{
-						EncryptionProvider: encryption.LUKS2,
-						EncryptionKeys: []*v1alpha1.EncryptionKey{
-							{
-								KeyNodeID: &v1alpha1.EncryptionKeyNodeID{},
-								KeySlot:   0,
-							},
-						},
-					},
-					EphemeralPartition: &v1alpha1.EncryptionConfig{
-						EncryptionProvider: encryption.LUKS2,
-						EncryptionKeys: []*v1alpha1.EncryptionKey{
-							{
-								KeyNodeID: &v1alpha1.EncryptionKeyNodeID{},
-								KeySlot:   0,
-							},
-						},
-					},
-				},
-			),
-		)
+		stateCfg := block.NewVolumeConfigV1Alpha1()
+		stateCfg.MetaName = constants.StatePartitionLabel
+		stateCfg.EncryptionSpec.EncryptionProvider = blockres.EncryptionProviderLUKS2
+		stateCfg.EncryptionSpec.EncryptionKeys = []block.EncryptionKey{
+			{
+				KeySlot:   0,
+				KeyNodeID: &block.EncryptionKeyNodeID{},
+			},
+		}
+
+		ephemeralCfg := block.NewVolumeConfigV1Alpha1()
+		ephemeralCfg.MetaName = constants.EphemeralPartitionLabel
+		ephemeralCfg.EncryptionSpec.EncryptionProvider = blockres.EncryptionProviderLUKS2
+		ephemeralCfg.EncryptionSpec.EncryptionKeys = []block.EncryptionKey{
+			{
+				KeySlot:   0,
+				KeyNodeID: &block.EncryptionKeyNodeID{},
+			},
+		}
+
+		ctr, err := container.New(stateCfg, ephemeralCfg)
+		suite.Require().NoError(err)
+
+		extraPatches = append(extraPatches, configpatcher.NewStrategicMergePatch(ctr))
 	}
 
 	versionContract, err := config.ParseContractFromVersion(options.SourceVersion)
@@ -561,6 +566,7 @@ func (suite *BaseSuite) setupCluster(options clusterOptions) {
 				),
 			},
 		),
+		bundle.WithPatch(extraPatches),
 	)
 	suite.Require().NoError(err)
 

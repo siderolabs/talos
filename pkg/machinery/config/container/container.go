@@ -22,6 +22,7 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/config/encoder"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
 	"github.com/siderolabs/talos/pkg/machinery/config/validation"
+	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
 
 // Container wraps all configuration documents into a single container.
@@ -365,6 +366,18 @@ func (container *Container) Validate(mode validation.RuntimeMode, opt ...validat
 
 			warnings = append(warnings, docWarnings...)
 			multiErr = multierror.Append(multiErr, docErr)
+		}
+	}
+
+	// now cross-validate the config
+	if container.v1alpha1Config != nil {
+		for _, systemLabel := range []string{constants.StatePartitionLabel, constants.EphemeralPartitionLabel} {
+			legacy := container.Machine().SystemDiskEncryption().Get(systemLabel)
+			volumeConfig, ok := container.Volumes().ByName(systemLabel)
+
+			if ok && legacy != nil && volumeConfig.Encryption() != nil {
+				multiErr = multierror.Append(multiErr, fmt.Errorf("system disk encryption for %q is configured in both v1alpha1.Config and VolumeConfig", systemLabel))
+			}
 		}
 	}
 

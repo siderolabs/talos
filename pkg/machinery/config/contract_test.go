@@ -65,6 +65,7 @@ func TestContractCurrent(t *testing.T) {
 	assert.True(t, contract.HostDNSForwardKubeDNSToHost())
 	assert.True(t, contract.AddExcludeFromExternalLoadBalancer())
 	assert.True(t, contract.SecureBootEnrollEnforcementSupported())
+	assert.True(t, contract.VolumeConfigEncryptionSupported())
 }
 
 func TestContract1_12(t *testing.T) {
@@ -88,6 +89,7 @@ func TestContract1_12(t *testing.T) {
 	assert.True(t, contract.HostDNSForwardKubeDNSToHost())
 	assert.True(t, contract.AddExcludeFromExternalLoadBalancer())
 	assert.True(t, contract.SecureBootEnrollEnforcementSupported())
+	assert.True(t, contract.VolumeConfigEncryptionSupported())
 }
 
 func TestContract1_11(t *testing.T) {
@@ -111,6 +113,7 @@ func TestContract1_11(t *testing.T) {
 	assert.True(t, contract.HostDNSForwardKubeDNSToHost())
 	assert.True(t, contract.AddExcludeFromExternalLoadBalancer())
 	assert.True(t, contract.SecureBootEnrollEnforcementSupported())
+	assert.True(t, contract.VolumeConfigEncryptionSupported())
 }
 
 func TestContract1_10(t *testing.T) {
@@ -134,6 +137,7 @@ func TestContract1_10(t *testing.T) {
 	assert.True(t, contract.HostDNSForwardKubeDNSToHost())
 	assert.True(t, contract.AddExcludeFromExternalLoadBalancer())
 	assert.True(t, contract.SecureBootEnrollEnforcementSupported())
+	assert.False(t, contract.VolumeConfigEncryptionSupported())
 }
 
 func TestContract1_9(t *testing.T) {
@@ -157,6 +161,7 @@ func TestContract1_9(t *testing.T) {
 	assert.True(t, contract.HostDNSForwardKubeDNSToHost())
 	assert.True(t, contract.AddExcludeFromExternalLoadBalancer())
 	assert.True(t, contract.SecureBootEnrollEnforcementSupported())
+	assert.False(t, contract.VolumeConfigEncryptionSupported())
 }
 
 func TestContract1_8(t *testing.T) {
@@ -180,6 +185,7 @@ func TestContract1_8(t *testing.T) {
 	assert.True(t, contract.HostDNSForwardKubeDNSToHost())
 	assert.True(t, contract.AddExcludeFromExternalLoadBalancer())
 	assert.True(t, contract.SecureBootEnrollEnforcementSupported())
+	assert.False(t, contract.VolumeConfigEncryptionSupported())
 }
 
 func TestContract1_7(t *testing.T) {
@@ -203,6 +209,7 @@ func TestContract1_7(t *testing.T) {
 	assert.False(t, contract.HostDNSForwardKubeDNSToHost())
 	assert.False(t, contract.AddExcludeFromExternalLoadBalancer())
 	assert.False(t, contract.SecureBootEnrollEnforcementSupported())
+	assert.False(t, contract.VolumeConfigEncryptionSupported())
 }
 
 func TestContract1_6(t *testing.T) {
@@ -226,6 +233,7 @@ func TestContract1_6(t *testing.T) {
 	assert.False(t, contract.HostDNSForwardKubeDNSToHost())
 	assert.False(t, contract.AddExcludeFromExternalLoadBalancer())
 	assert.False(t, contract.SecureBootEnrollEnforcementSupported())
+	assert.False(t, contract.VolumeConfigEncryptionSupported())
 }
 
 func TestContract1_5(t *testing.T) {
@@ -249,6 +257,7 @@ func TestContract1_5(t *testing.T) {
 	assert.False(t, contract.HostDNSForwardKubeDNSToHost())
 	assert.False(t, contract.AddExcludeFromExternalLoadBalancer())
 	assert.False(t, contract.SecureBootEnrollEnforcementSupported())
+	assert.False(t, contract.VolumeConfigEncryptionSupported())
 }
 
 func TestContract1_4(t *testing.T) {
@@ -272,6 +281,7 @@ func TestContract1_4(t *testing.T) {
 	assert.False(t, contract.HostDNSForwardKubeDNSToHost())
 	assert.False(t, contract.AddExcludeFromExternalLoadBalancer())
 	assert.False(t, contract.SecureBootEnrollEnforcementSupported())
+	assert.False(t, contract.VolumeConfigEncryptionSupported())
 }
 
 func TestContract1_3(t *testing.T) {
@@ -295,6 +305,7 @@ func TestContract1_3(t *testing.T) {
 	assert.False(t, contract.HostDNSForwardKubeDNSToHost())
 	assert.False(t, contract.AddExcludeFromExternalLoadBalancer())
 	assert.False(t, contract.SecureBootEnrollEnforcementSupported())
+	assert.False(t, contract.VolumeConfigEncryptionSupported())
 }
 
 func TestContract1_2(t *testing.T) {
@@ -318,6 +329,7 @@ func TestContract1_2(t *testing.T) {
 	assert.False(t, contract.HostDNSForwardKubeDNSToHost())
 	assert.False(t, contract.AddExcludeFromExternalLoadBalancer())
 	assert.False(t, contract.SecureBootEnrollEnforcementSupported())
+	assert.False(t, contract.VolumeConfigEncryptionSupported())
 }
 
 func TestContract1_1(t *testing.T) {
@@ -341,6 +353,7 @@ func TestContract1_1(t *testing.T) {
 	assert.False(t, contract.HostDNSForwardKubeDNSToHost())
 	assert.False(t, contract.AddExcludeFromExternalLoadBalancer())
 	assert.False(t, contract.SecureBootEnrollEnforcementSupported())
+	assert.False(t, contract.VolumeConfigEncryptionSupported())
 }
 
 func TestContract1_0(t *testing.T) {
@@ -364,4 +377,5 @@ func TestContract1_0(t *testing.T) {
 	assert.False(t, contract.HostDNSForwardKubeDNSToHost())
 	assert.False(t, contract.AddExcludeFromExternalLoadBalancer())
 	assert.False(t, contract.SecureBootEnrollEnforcementSupported())
+	assert.False(t, contract.VolumeConfigEncryptionSupported())
 }

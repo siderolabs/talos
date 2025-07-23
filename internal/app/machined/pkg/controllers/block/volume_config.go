@@ -5,8 +5,10 @@
 package block
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -22,7 +24,7 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/cel"
 	"github.com/siderolabs/talos/pkg/machinery/cel/celenv"
 	cfg "github.com/siderolabs/talos/pkg/machinery/config/config"
-	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
+	blockcfg "github.com/siderolabs/talos/pkg/machinery/config/types/block"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/imager/quirks"
 	"github.com/siderolabs/talos/pkg/machinery/meta"
@@ -33,9 +35,15 @@ import (
 
 var noMatch = cel.MustExpression(cel.ParseBooleanExpression("false", celenv.Empty()))
 
+// MetaProvider wraps acquiring meta.
+type MetaProvider interface {
+	Meta() machinedruntime.Meta
+}
+
 // VolumeConfigController provides volume configuration based on Talos defaults and machine configuration.
 type VolumeConfigController struct {
 	V1Alpha1Mode machinedruntime.Mode
+	MetaProvider MetaProvider
 }
 
 // Name implements controller.Controller interface.
@@ -128,7 +136,7 @@ func convertEncryptionConfiguration(in cfg.EncryptionConfig, out *block.VolumeCo
 // Run implements controller.Controller interface.
 //
 //nolint:gocyclo
-func (ctrl *VolumeConfigController) Run(ctx context.Context, r controller.Runtime, _ *zap.Logger) error {
+func (ctrl *VolumeConfigController) Run(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
 	for {
 		select {
 		case <-r.EventCh():
@@ -174,7 +182,7 @@ func (ctrl *VolumeConfigController) Run(ctx context.Context, r controller.Runtim
 		if configurationPresent {
 			err = safe.WriterModify(ctx, r,
 				block.NewVolumeConfig(block.NamespaceName, constants.StatePartitionLabel),
-				ctrl.manageStateConfigPresent(cfg.Config()),
+				ctrl.manageStateConfigPresent(ctx, logger, cfg.Config()),
 			)
 		} else {
 			err = safe.WriterModify(ctx, r,
@@ -265,8 +273,14 @@ func (ctrl *VolumeConfigController) manageEphemeral(config cfg.Config) func(vc *
 			Match: labelVolumeMatch(constants.EphemeralPartitionLabel),
 		}
 
+		encryptionConfig := extraVolumeConfig.Encryption()
+		if encryptionConfig == nil {
+			// fall back to v1alpha1 encryption config
+			encryptionConfig = config.Machine().SystemDiskEncryption().Get(constants.EphemeralPartitionLabel)
+		}
+
 		if err := convertEncryptionConfiguration(
-			config.Machine().SystemDiskEncryption().Get(constants.EphemeralPartitionLabel),
+			encryptionConfig,
 			vc.TypedSpec(),
 		); err != nil {
 			return fmt.Errorf("error converting encryption for %s: %w", constants.EphemeralPartitionLabel, err)
@@ -289,7 +303,7 @@ func (ctrl *VolumeConfigController) manageStateInContainer(vc *block.VolumeConfi
 	return nil
 }
 
-func (ctrl *VolumeConfigController) manageStateConfigPresent(config cfg.Config) func(vc *block.VolumeConfig) error {
+func (ctrl *VolumeConfigController) manageStateConfigPresent(ctx context.Context, logger *zap.Logger, config cfg.Config) func(vc *block.VolumeConfig) error {
 	if ctrl.V1Alpha1Mode.InContainer() {
 		return ctrl.manageStateInContainer
 	}
@@ -325,12 +339,45 @@ func (ctrl *VolumeConfigController) manageStateConfigPresent(config cfg.Config) 
 			Match: labelVolumeMatch(constants.StatePartitionLabel),
 		}
 
+		extraVolumeConfig, _ := config.Volumes().ByName(constants.StatePartitionLabel)
+
+		encryptionConfig := extraVolumeConfig.Encryption()
+		if encryptionConfig == nil {
+			// fall back to v1alpha1 encryption config
+			encryptionConfig = config.Machine().SystemDiskEncryption().Get(constants.StatePartitionLabel)
+		}
+
 		if err := convertEncryptionConfiguration(
-			config.Machine().SystemDiskEncryption().Get(constants.StatePartitionLabel),
+			encryptionConfig,
 			vc.TypedSpec(),
 		); err != nil {
 			return fmt.Errorf("error converting encryption for %s: %w", constants.StatePartitionLabel, err)
 		}
+
+		metaEncryptionConfig, err := json.Marshal(encryptionConfig)
+		if err != nil {
+			return fmt.Errorf("error marshaling encryption config for %s: %w", constants.StatePartitionLabel, err)
+		}
+
+		previous, ok := ctrl.MetaProvider.Meta().ReadTagBytes(meta.StateEncryptionConfig)
+		if ok && bytes.Equal(previous, metaEncryptionConfig) {
+			return nil
+		}
+
+		ok, err = ctrl.MetaProvider.Meta().SetTagBytes(ctx, meta.StateEncryptionConfig, metaEncryptionConfig)
+		if err != nil {
+			return fmt.Errorf("error setting meta tag %q: %w", meta.StateEncryptionConfig, err)
+		}
+
+		if !ok {
+			return errors.New("failed to save state encryption config to meta")
+		}
+
+		if err = ctrl.MetaProvider.Meta().Flush(); err != nil {
+			return fmt.Errorf("error flushing meta: %w", err)
+		}
+
+		logger.Info("saved state encryption config to META")
 
 		return nil
 	}
@@ -362,7 +409,7 @@ func (ctrl *VolumeConfigController) manageStateNoConfig(encryptionMeta *runtime.
 		}
 
 		if encryptionMeta != nil {
-			var encryptionFromMeta *v1alpha1.EncryptionConfig
+			var encryptionFromMeta blockcfg.EncryptionSpec
 
 			if err := json.Unmarshal([]byte(encryptionMeta.TypedSpec().Value), &encryptionFromMeta); err != nil {
 				return fmt.Errorf("error unmarshalling state encryption meta key: %w", err)

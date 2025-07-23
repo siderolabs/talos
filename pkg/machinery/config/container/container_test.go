@@ -23,6 +23,8 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/config/types/runtime/extensions"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/siderolink"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
+	"github.com/siderolabs/talos/pkg/machinery/constants"
+	blockres "github.com/siderolabs/talos/pkg/machinery/resources/block"
 )
 
 func TestNew(t *testing.T) {
@@ -213,6 +215,114 @@ func TestValidate(t *testing.T) {
 			name:          "invalid multi-doc",
 			documents:     []config.Document{invalidSideroLinkCfg, invalidV1alpha1Config},
 			expectedError: "2 errors occurred:\n\t* machine instructions are required\n\t* apiUrl is required\n\n",
+		},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			ctr, err := container.New(tt.documents...)
+			require.NoError(t, err)
+
+			warnings, err := ctr.Validate(validationMode{})
+
+			if tt.expectedError == "" {
+				require.NoError(t, err)
+			} else {
+				require.EqualError(t, err, tt.expectedError)
+			}
+
+			require.Equal(t, tt.expecetedWarnings, warnings)
+		})
+	}
+}
+
+func TestCrossValidateEncryption(t *testing.T) {
+	t.Parallel()
+
+	v1alpha1Cfg := &v1alpha1.Config{
+		ClusterConfig: &v1alpha1.ClusterConfig{
+			ControlPlane: &v1alpha1.ControlPlaneConfig{
+				Endpoint: &v1alpha1.Endpoint{
+					URL: must.Value(url.Parse("https://localhost:6443"))(t),
+				},
+			},
+		},
+		MachineConfig: &v1alpha1.MachineConfig{
+			MachineType: "worker",
+			MachineCA: &x509.PEMEncodedCertificateAndKey{
+				Crt: []byte("cert"),
+			},
+			MachineSystemDiskEncryption: &v1alpha1.SystemDiskEncryptionConfig{
+				EphemeralPartition: &v1alpha1.EncryptionConfig{
+					EncryptionKeys: []*v1alpha1.EncryptionKey{
+						{
+							KeySlot: 1,
+							KeyStatic: &v1alpha1.EncryptionKeyStatic{
+								KeyData: "static-key",
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	defaultEphemeral := block.NewVolumeConfigV1Alpha1()
+	defaultEphemeral.MetaName = constants.EphemeralPartitionLabel
+
+	encryptedEphemeral := block.NewVolumeConfigV1Alpha1()
+	encryptedEphemeral.MetaName = constants.EphemeralPartitionLabel
+	encryptedEphemeral.EncryptionSpec = block.EncryptionSpec{
+		EncryptionProvider: blockres.EncryptionProviderLUKS2,
+		EncryptionKeys: []block.EncryptionKey{
+			{
+				KeySlot: 2,
+				KeyStatic: &block.EncryptionKeyStatic{
+					KeyData: "encrypted-static-key",
+				},
+			},
+		},
+	}
+
+	encryptedState := block.NewVolumeConfigV1Alpha1()
+	encryptedState.MetaName = constants.StatePartitionLabel
+	encryptedState.EncryptionSpec = block.EncryptionSpec{
+		EncryptionProvider: blockres.EncryptionProviderLUKS2,
+		EncryptionKeys: []block.EncryptionKey{
+			{
+				KeySlot: 3,
+				KeyTPM:  &block.EncryptionKeyTPM{},
+			},
+		},
+	}
+
+	for _, tt := range []struct {
+		name      string
+		documents []config.Document
+
+		expectedError     string
+		expecetedWarnings []string
+	}{
+		{
+			name:      "only v1alpha1",
+			documents: []config.Document{v1alpha1Cfg},
+		},
+		{
+			name:      "v1alpha1 with no-conflict volumes",
+			documents: []config.Document{v1alpha1Cfg, defaultEphemeral, encryptedState},
+		},
+		{
+			name:      "v1alpha1 with no-conflict volumes",
+			documents: []config.Document{v1alpha1Cfg, encryptedState},
+		},
+		{
+			name:      "no v1alpha1",
+			documents: []config.Document{encryptedEphemeral, encryptedState},
+		},
+		{
+			name:          "conflict on ephemeral encryption",
+			documents:     []config.Document{v1alpha1Cfg, encryptedEphemeral},
+			expectedError: "1 error occurred:\n\t* system disk encryption for \"EPHEMERAL\" is configured in both v1alpha1.Config and VolumeConfig\n\n",
 		},
 	} {
 		t.Run(tt.name, func(t *testing.T) {

@@ -212,15 +212,6 @@ func WithVersionContract(versionContract *config.VersionContract) Option {
 	}
 }
 
-// WithSystemDiskEncryption specifies encryption settings for the system disk partitions.
-func WithSystemDiskEncryption(cfg *v1alpha1.SystemDiskEncryptionConfig) Option {
-	return func(o *Options) error {
-		o.SystemDiskEncryptionConfig = cfg
-
-		return nil
-	}
-}
-
 // WithRoles specifies user roles.
 func WithRoles(roles role.Set) Option {
 	return func(o *Options) error {
@@ -289,8 +280,7 @@ type Options struct {
 	InstallExtraKernelArgs []string
 
 	// Machine disks.
-	MachineDisks               []*v1alpha1.MachineDisk
-	SystemDiskEncryptionConfig *v1alpha1.SystemDiskEncryptionConfig
+	MachineDisks []*v1alpha1.MachineDisk
 
 	// Machine network settings.
 	NetworkConfigOptions []v1alpha1.NetworkConfigOption

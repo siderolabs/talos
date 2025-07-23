@@ -20,6 +20,7 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/config/types/meta"
 	"github.com/siderolabs/talos/pkg/machinery/config/validation"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
+	"github.com/siderolabs/talos/pkg/machinery/resources/block"
 )
 
 // VolumeConfigKind is a config document kind.
@@ -46,7 +47,7 @@ var (
 // VolumeConfigV1Alpha1 is a system volume configuration document.
 //
 //	description: |
-//	  Note: at the moment, only `EPHEMERAL` and `IMAGE-CACHE` system volumes are supported.
+//	  Note: at the moment, only `STATE`, `EPHEMERAL` and `IMAGE-CACHE` system volumes are supported.
 //	examples:
 //	  - value: exampleVolumeConfigEphemeralV1Alpha1()
 //	alias: VolumeConfig
@@ -61,6 +62,9 @@ type VolumeConfigV1Alpha1 struct {
 	//   description: |
 	//     The provisioning describes how the volume is provisioned.
 	ProvisioningSpec ProvisioningSpec `yaml:"provisioning,omitempty"`
+	//   description: |
+	//     The encryption describes how the volume is encrypted.
+	EncryptionSpec EncryptionSpec `yaml:"encryption,omitempty"`
 }
 
 // ProvisioningSpec describes how the volume is provisioned.
@@ -153,18 +157,51 @@ func (s *VolumeConfigV1Alpha1) Clone() config.Document {
 
 // Validate implements config.Validator interface.
 func (s *VolumeConfigV1Alpha1) Validate(validation.RuntimeMode, ...validation.Option) ([]string, error) {
-	allowedVolumes := []string{constants.EphemeralPartitionLabel, constants.ImageCachePartitionLabel}
+	allowedVolumes := []string{
+		constants.StatePartitionLabel,
+		constants.EphemeralPartitionLabel,
+		constants.ImageCachePartitionLabel,
+	}
 
 	if slices.Index(allowedVolumes, s.MetaName) == -1 {
 		return nil, fmt.Errorf("only %q volumes are supported", allowedVolumes)
 	}
 
-	return s.ProvisioningSpec.Validate(false)
+	var (
+		warnings         []string
+		validationErrors error
+	)
+
+	if s.MetaName == constants.StatePartitionLabel {
+		// no provisioning config is allowed for the state partition.
+		if !s.ProvisioningSpec.IsZero() {
+			validationErrors = errors.Join(validationErrors, fmt.Errorf("provisioning config is not allowed for the %q volume", s.MetaName))
+		}
+	}
+
+	extraWarnings, extraErrors := s.ProvisioningSpec.Validate(false)
+	warnings = append(warnings, extraWarnings...)
+	validationErrors = errors.Join(validationErrors, extraErrors)
+
+	extraWarnings, extraErrors = s.EncryptionSpec.Validate()
+	warnings = append(warnings, extraWarnings...)
+	validationErrors = errors.Join(validationErrors, extraErrors)
+
+	return warnings, validationErrors
 }
 
 // Provisioning implements config.VolumeConfig interface.
 func (s *VolumeConfigV1Alpha1) Provisioning() config.VolumeProvisioningConfig {
 	return s.ProvisioningSpec
+}
+
+// Encryption implements config.VolumeConfig interface.
+func (s *VolumeConfigV1Alpha1) Encryption() config.EncryptionConfig {
+	if s.EncryptionSpec.EncryptionProvider == block.EncryptionProviderNone {
+		return nil
+	}
+
+	return s.EncryptionSpec
 }
 
 // Validate the provisioning spec.
@@ -188,6 +225,11 @@ func (s ProvisioningSpec) Validate(required bool) ([]string, error) {
 	}
 
 	return nil, validationErrors
+}
+
+// IsZero checks if the provisioning spec is zero.
+func (s ProvisioningSpec) IsZero() bool {
+	return s.ProvisioningGrow == nil && s.ProvisioningMaxSize.IsZero() && s.ProvisioningMinSize.IsZero() && s.DiskSelectorSpec.Match.IsZero()
 }
 
 // DiskSelector implements config.VolumeProvisioningConfig interface.

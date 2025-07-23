@@ -1,30 +1,33 @@
 ---
 title: "Disk Encryption"
-description: "Guide on using system disk encryption"
+description: "Guide on using disk encryption"
 aliases:
   - ../../guides/disk-encryption
 ---
 
-It is possible to enable encryption for system disks at the OS level.
-Currently, only [STATE]({{< relref "../../learn-more/architecture/#file-system-partitions" >}}) and [EPHEMERAL]({{< relref "../../learn-more/architecture/#file-system-partitions" >}}) partitions can be encrypted.
-STATE contains the most sensitive node data: secrets and certs.
-The EPHEMERAL partition may contain sensitive workload data.
+Talos Linux supports disk encryption for system volumes, and for user volumes.
+
+System volumes include the `STATE` and `EPHEMERAL` partitions:
+
+- `STATE` contains the most sensitive node data: secrets and certs.
+- `EPHEMERAL` may contain sensitive workload data.
+
 Data is encrypted using LUKS2, which is provided by the Linux kernel modules and `cryptsetup` utility.
 The operating system will run additional setup steps when encryption is enabled.
 
-If the disk encryption is enabled for the STATE partition, the system will:
+If the disk encryption is enabled for the `STATE` partition, the system will:
 
-- Save STATE encryption config as JSON in the META partition.
-- Before mounting the STATE partition, load encryption configs either from the machine config or from the META partition.
-  Note that the machine config is always preferred over the META one.
-- Before mounting the STATE partition, format and encrypt it.
-  This occurs only if the STATE partition is empty and has no filesystem.
+- Save `STATE` encryption config as JSON in the `META` partition.
+- Before mounting the `STATE` partition, load encryption configs either from the machine config or from the `META` partition.
+  Note that the machine config is always preferred over the `META` one.
+- Before mounting the `STATE` partition, format and encrypt it.
+  This occurs only if the `STATE` partition is empty and has no filesystem.
 
-If the disk encryption is enabled for the EPHEMERAL partition, the system will:
+If the disk encryption is enabled for the `EPHEMERAL` partition, the system will:
 
 - Get the encryption config from the machine config.
-- Before mounting the EPHEMERAL partition, encrypt and format it.
-  This occurs only if the EPHEMERAL partition is empty and has no filesystem.
+- Before mounting the `EPHEMERAL` partition, encrypt and format it.
+  This occurs only if the `EPHEMERAL` partition is empty and has no filesystem.
 
 Talos Linux supports four encryption methods, which can be combined together for a single partition:
 
@@ -42,22 +45,43 @@ Talos Linux supports four encryption methods, which can be combined together for
 ## Configuration
 
 Disk encryption is disabled by default.
-To enable disk encryption you should modify the machine configuration with the following options:
+
+For system volumes, disk encryption is configured with the [`VolumeConfig`]({{< relref "../../reference/configuration/block/volumeconfig" >}}) machine configuration document,
+while for user volumes it is configured with the [`UserVolumeConfig`]({{< relref "../../reference/configuration/block/uservolumeconfig" >}}) document.
+
+To enable disk encryption you should patch the machine configuration, for example for the `STATE` and `EPHEMERAL` partitions using `nodeID` encryption:
 
 ```yaml
-machine:
-  ...
-  systemDiskEncryption:
-    ephemeral:
-      provider: luks2
-      keys:
-        - nodeID: {}
-          slot: 0
-    state:
-      provider: luks2
-      keys:
-        - nodeID: {}
-          slot: 0
+apiVersion: v1alpha1
+kind: VolumeConfig
+name: STATE
+encryption:
+  provider: luks2
+  keys:
+    - nodeID: {}
+      slot: 0
+---
+apiVersion: v1alpha1
+kind: VolumeConfig
+name: EPHEMERAL
+encryption:
+  provider: luks2
+  keys:
+    - nodeID: {}
+      slot: 0
+```
+
+For user volumes, the configuration is similar, but you should use the `UserVolumeConfig` kind:
+
+```yaml
+apiVersion: v1alpha1
+kind: UserVolumeConfig
+name: my-user-volume
+encryption:
+  provider: luks2
+  keys:
+    - nodeID: {}
+      slot: 0
 ```
 
 ### Encryption Keys
@@ -72,18 +96,22 @@ So if you update the keys list, keep at least one key that is not changed to be 
 When you define a key you should specify the key kind and the `slot`:
 
 ```yaml
-machine:
-  ...
-  state:
-    keys:
-      - nodeID: {} # key kind
-        slot: 1
-
-  ephemeral:
-    keys:
-      - static:
-          passphrase: supersecret
-        slot: 0
+apiVersion: v1alpha1
+kind: VolumeConfig
+name: STATE
+encryption:
+  keys:
+    - nodeID: {} # key kind
+      slot: 1
+---
+apiVersion: v1alpha1
+kind: VolumeConfig
+name: EPHEMERAL
+encryption:
+  keys:
+    - static:
+        passphrase: supersecret
+      slot: 0
 ```
 
 Take a note that key order does not play any role on which key slot is used.
@@ -105,45 +133,47 @@ Talos supports two kinds of keys:
 
 In order to completely rotate keys, it is necessary to do `talosctl apply-config` a couple of times, since there is a need to always maintain a single working key while changing the other keys around it.
 
+Key rotation can only be handled after a reboot, so the system can re-encrypt the partitions with the new keys, and some encryption types (TPM) can only be used after the initial boot.
+
 So, for example, first add a new key:
 
 ```yaml
-machine:
-  ...
-  ephemeral:
-    keys:
-      - static:
-          passphrase: oldkey
-        slot: 0
-      - static:
-          passphrase: newkey
-        slot: 1
-  ...
+apiVersion: v1alpha1
+kind: VolumeConfig
+name: EPHEMERAL
+encryption:
+  keys:
+    - static:
+        passphrase: oldkey
+      slot: 0
+    - static:
+        passphrase: newkey
+      slot: 1
 ```
 
 Run:
 
 ```bash
-talosctl apply-config -n <node> -f config.yaml
+talosctl apply-config -n <node> --mode=reboot -f config.yaml
 ```
 
 Then remove the old key:
 
 ```yaml
-machine:
-  ...
-  ephemeral:
-    keys:
-      - static:
-          passphrase: newkey
-        slot: 1
-  ...
+apiVersion: v1alpha1
+kind: VolumeConfig
+name: EPHEMERAL
+encryption:
+  keys:
+    - static:
+        passphrase: newkey
+      slot: 1
 ```
 
 Run:
 
 ```bash
-talosctl apply-config -n <node> -f config.yaml
+talosctl apply-config -n <node> --mode=reboot -f config.yaml
 ```
 
 ## Going from Unencrypted to Encrypted and Vice Versa
