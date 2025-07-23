@@ -51,10 +51,9 @@ func (in *Input) init() ([]config.Document, error) {
 			RegistryMirrors: in.Options.RegistryMirrors,
 			RegistryConfig:  in.Options.RegistryConfig,
 		},
-		MachineDisks:                in.Options.MachineDisks,
-		MachineSystemDiskEncryption: in.Options.SystemDiskEncryptionConfig,
-		MachineSysctls:              in.Options.Sysctls,
-		MachineFeatures:             &v1alpha1.FeaturesConfig{},
+		MachineDisks:    in.Options.MachineDisks,
+		MachineSysctls:  in.Options.Sysctls,
+		MachineFeatures: &v1alpha1.FeaturesConfig{},
 	}
 
 	machine.MachineFeatures.RBAC = pointer.To(true)

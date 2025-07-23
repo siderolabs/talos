@@ -1,0 +1,11 @@
+apiVersion: v1alpha1
+kind: VolumeConfig
+name: STATE
+encryption:
+    provider: luks2
+    keys:
+        - slot: 0
+          tpm: {}
+        - slot: 1
+          static:
+            passphrase: topsecret

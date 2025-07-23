@@ -253,11 +253,9 @@ type MachineConfig struct {
 	//   examples:
 	//     - value: machineConfigRegistriesExample()
 	MachineRegistries RegistriesConfig `yaml:"registries,omitempty"`
-	//   description: |
-	//     Machine system disk encryption configuration.
-	//     Defines each system partition encryption parameters.
-	//   examples:
-	//     - value: machineSystemDiskEncryptionExample()
+	// docgen:nodoc
+	//
+	// Deprecated: Use `VolumeConfig` instead.
 	MachineSystemDiskEncryption *SystemDiskEncryptionConfig `yaml:"systemDiskEncryption,omitempty"`
 	//   description: |
 	//     Features describe individual Talos features that can be switched on or off.
@@ -1547,6 +1545,8 @@ type DiskPartition struct {
 }
 
 // EncryptionConfig represents partition encryption settings.
+//
+//docgen:nodoc
 type EncryptionConfig struct {
 	//   description: >
 	//     Encryption provider to use for the encryption.
@@ -1587,6 +1587,8 @@ type EncryptionConfig struct {
 }
 
 // EncryptionKey represents configuration for disk encryption key.
+//
+//docgen:nodoc
 type EncryptionKey struct {
 	//   description: >
 	//     Key which value is stored in the configuration file.
@@ -1608,6 +1610,8 @@ type EncryptionKey struct {
 }
 
 // EncryptionKeyStatic represents throw away key type.
+//
+//docgen:nodoc
 type EncryptionKeyStatic struct {
 	//   description: >
 	//     Defines the static passphrase value.
@@ -1615,6 +1619,8 @@ type EncryptionKeyStatic struct {
 }
 
 // EncryptionKeyKMS represents a key that is generated and then sealed/unsealed by the KMS server.
+//
+//docgen:nodoc
 type EncryptionKeyKMS struct {
 	//   description: >
 	//     KMS endpoint to Seal/Unseal the key.
@@ -1622,6 +1628,8 @@ type EncryptionKeyKMS struct {
 }
 
 // EncryptionKeyTPM represents a key that is generated and then sealed/unsealed by the TPM.
+//
+//docgen:nodoc
 type EncryptionKeyTPM struct {
 	//   description: >
 	//     Check that Secureboot is enabled in the EFI firmware.
@@ -1634,6 +1642,8 @@ type EncryptionKeyTPM struct {
 }
 
 // EncryptionKeyNodeID represents deterministically generated key from the node UUID and PartitionLabel.
+//
+//docgen:nodoc
 type EncryptionKeyNodeID struct{}
 
 // Env represents a set of environment variables.
@@ -2172,6 +2182,8 @@ type RegistryTLSConfig struct {
 }
 
 // SystemDiskEncryptionConfig specifies system disk partitions encryption settings.
+//
+//docgen:nodoc
 type SystemDiskEncryptionConfig struct {
 	//   description: |
 	//     State partition encryption.

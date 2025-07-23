@@ -17,6 +17,7 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/config/merge"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/block"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
+	blockres "github.com/siderolabs/talos/pkg/machinery/resources/block"
 )
 
 func TestVolumeConfigMarshalUnmarshal(t *testing.T) {
@@ -63,6 +64,30 @@ func TestVolumeConfigMarshalUnmarshal(t *testing.T) {
 				return c
 			},
 		},
+		{
+			name:     "state",
+			filename: "volumeconfig_state.yaml",
+			cfg: func(t *testing.T) *block.VolumeConfigV1Alpha1 {
+				c := block.NewVolumeConfigV1Alpha1()
+				c.MetaName = constants.StatePartitionLabel
+
+				c.EncryptionSpec.EncryptionProvider = blockres.EncryptionProviderLUKS2
+				c.EncryptionSpec.EncryptionKeys = []block.EncryptionKey{
+					{
+						KeySlot: 0,
+						KeyTPM:  &block.EncryptionKeyTPM{},
+					},
+					{
+						KeySlot: 1,
+						KeyStatic: &block.EncryptionKeyStatic{
+							KeyData: "topsecret",
+						},
+					},
+				}
+
+				return c
+			},
+		},
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
@@ -86,6 +111,10 @@ func TestVolumeConfigMarshalUnmarshal(t *testing.T) {
 			require.Len(t, docs, 1)
 
 			assert.Equal(t, cfg, docs[0])
+
+			warnings, err := cfg.Validate(validationMode{})
+			require.NoError(t, err)
+			assert.Empty(t, warnings)
 		})
 	}
 }
@@ -110,7 +139,7 @@ func TestVolumeConfigValidate(t *testing.T) {
 				return c
 			},
 
-			expectedErrors: "only [\"EPHEMERAL\" \"IMAGECACHE\"] volumes are supported",
+			expectedErrors: "only [\"STATE\" \"EPHEMERAL\" \"IMAGECACHE\"] volumes are supported",
 		},
 		{
 			name: "invalid disk selector",
@@ -140,6 +169,21 @@ func TestVolumeConfigValidate(t *testing.T) {
 			},
 
 			expectedErrors: "min size is greater than max size",
+		},
+		{
+			name: "state provisioning config",
+
+			cfg: func(t *testing.T) *block.VolumeConfigV1Alpha1 {
+				c := block.NewVolumeConfigV1Alpha1()
+				c.MetaName = constants.StatePartitionLabel
+
+				c.ProvisioningSpec.ProvisioningMinSize = block.MustByteSize("2.5GiB")
+				c.ProvisioningSpec.ProvisioningMaxSize = block.MustByteSize("10GiB")
+
+				return c
+			},
+
+			expectedErrors: "provisioning config is not allowed for the \"STATE\" volume",
 		},
 		{
 			name: "valid",

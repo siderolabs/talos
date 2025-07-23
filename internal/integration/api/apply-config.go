@@ -31,6 +31,7 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/config"
 	"github.com/siderolabs/talos/pkg/machinery/config/container"
 	"github.com/siderolabs/talos/pkg/machinery/config/machine"
+	blockcfg "github.com/siderolabs/talos/pkg/machinery/config/types/block"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/runtime"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
@@ -299,39 +300,32 @@ func (suite *ApplyConfigSuite) TestApplyConfigRotateEncryptionSecrets() {
 	suite.ClearConnectionRefused(suite.ctx, node)
 
 	nodeCtx := client.WithNode(suite.ctx, node)
-	provider, err := suite.ReadConfigFromNode(nodeCtx)
 
+	provider, err := suite.ReadConfigFromNode(nodeCtx)
 	suite.Require().NoError(err)
 
-	machineConfig := provider.RawV1Alpha1()
-	suite.Assert().NotNil(machineConfig)
-
-	encryption := machineConfig.MachineConfig.MachineSystemDiskEncryption
+	ephemeralCfg, _ := provider.Volumes().ByName(constants.EphemeralPartitionLabel)
+	encryption := ephemeralCfg.Encryption()
 
 	if encryption == nil {
 		suite.T().Skip("skipped in not encrypted mode")
 	}
 
-	cfg := encryption.EphemeralPartition
-
-	if cfg == nil {
-		suite.T().Skip("skipped in not encrypted mode")
-	}
-
-	provider.Machine().SystemDiskEncryption().Get(constants.EphemeralPartitionLabel)
-
 	suite.WaitForBootDone(suite.ctx)
 
 	suite.T().Logf("testing encryption key rotation on node %s", node)
 
+	cfg, ok := encryption.(blockcfg.EncryptionSpec)
+	suite.Require().True(ok, "expected blockcfg.EncryptionSpec, got %T", encryption)
+
 	existing := cfg.EncryptionKeys[0]
 	slot := existing.Slot() + 1
 
-	keySets := [][]*v1alpha1.EncryptionKey{
+	keySets := [][]blockcfg.EncryptionKey{
 		{
 			existing,
 			{
-				KeyStatic: &v1alpha1.EncryptionKeyStatic{
+				KeyStatic: &blockcfg.EncryptionKeyStatic{
 					KeyData: "AlO93jayutOpsDxDS=-",
 				},
 				KeySlot: slot,
@@ -339,16 +333,7 @@ func (suite *ApplyConfigSuite) TestApplyConfigRotateEncryptionSecrets() {
 		},
 		{
 			{
-				KeyStatic: &v1alpha1.EncryptionKeyStatic{
-					KeyData: "AlO93jayutOpsDxDS=-",
-				},
-				KeySlot: slot,
-			},
-		},
-		{
-			existing,
-			{
-				KeyStatic: &v1alpha1.EncryptionKeyStatic{
+				KeyStatic: &blockcfg.EncryptionKeyStatic{
 					KeyData: "AlO93jayutOpsDxDS=-",
 				},
 				KeySlot: slot,
@@ -357,41 +342,53 @@ func (suite *ApplyConfigSuite) TestApplyConfigRotateEncryptionSecrets() {
 		{
 			existing,
 			{
-				KeyNodeID: &v1alpha1.EncryptionKeyNodeID{},
+				KeyStatic: &blockcfg.EncryptionKeyStatic{
+					KeyData: "AlO93jayutOpsDxDS=-",
+				},
+				KeySlot: slot,
+			},
+		},
+		{
+			existing,
+			{
+				KeyNodeID: &blockcfg.EncryptionKeyNodeID{},
 				KeySlot:   slot,
 			},
 		},
 		{
 			{
-				KeyNodeID: &v1alpha1.EncryptionKeyNodeID{},
+				KeyNodeID: &blockcfg.EncryptionKeyNodeID{},
 				KeySlot:   slot,
 			},
 		},
 	}
 
 	for _, keys := range keySets {
-		data := suite.PatchV1Alpha1Config(provider, func(cfg *v1alpha1.Config) {
-			suite.T().Logf("changing encryption keys to %s",
-				toJSONString(suite.T(), keys),
-			)
+		suite.T().Logf("applying encryption keys %s on node %s", toJSONString(suite.T(), keys), node)
 
-			cfg.MachineConfig.MachineSystemDiskEncryption.EphemeralPartition.EncryptionKeys = keys
-		})
+		// prepare a patch to apply, first removing existing keys
+		removeKeysPatch := map[string]any{
+			"apiVersion": "v1alpha1",
+			"kind":       "VolumeConfig",
+			"name":       constants.EphemeralPartitionLabel,
+			"encryption": map[string]any{
+				"keys": map[string]any{
+					"$patch": "delete",
+				},
+			},
+		}
+
+		newEphemeralCfg := blockcfg.NewVolumeConfigV1Alpha1()
+		newEphemeralCfg.MetaName = constants.EphemeralPartitionLabel
+		newEphemeralCfg.EncryptionSpec.EncryptionKeys = keys
+
+		// right now, patching encryption keys doesn't reboot and doesn't rotate the secrets either
+		suite.PatchMachineConfig(nodeCtx, removeKeysPatch, newEphemeralCfg)
 
 		suite.AssertRebooted(
-			suite.ctx, node, func(nodeCtx context.Context) error {
-				_, err = suite.Client.ApplyConfiguration(
-					nodeCtx, &machineapi.ApplyConfigurationRequest{
-						Data: data,
-						Mode: machineapi.ApplyConfigurationRequest_REBOOT,
-					},
-				)
-				if err != nil {
-					// It is expected that the connection will EOF here, so just log the error
-					suite.T().Logf("failed to apply configuration (node %q): %s", node, err)
-				}
-
-				return nil
+			suite.ctx, node,
+			func(nodeCtx context.Context) error {
+				return base.IgnoreGRPCUnavailable(suite.Client.Reboot(nodeCtx))
 			}, assertRebootedRebootTimeout,
 			suite.CleanupFailedPods,
 		)
@@ -414,7 +411,8 @@ func (suite *ApplyConfigSuite) TestApplyConfigRotateEncryptionSecrets() {
 			), "failed to read updated configuration from node %q", node,
 		)
 
-		e := newProvider.Machine().SystemDiskEncryption().Get(constants.EphemeralPartitionLabel)
+		newEphemeral, _ := newProvider.Volumes().ByName(constants.EphemeralPartitionLabel)
+		e := newEphemeral.Encryption()
 
 		for i, k := range e.Keys() {
 			if keys[i].KeyStatic == nil {

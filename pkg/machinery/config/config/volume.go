@@ -23,6 +23,7 @@ type VolumesConfig interface {
 type VolumeConfig interface {
 	NamedDocument
 	Provisioning() VolumeProvisioningConfig
+	Encryption() EncryptionConfig
 }
 
 // VolumeProvisioningConfig defines the interface to access volume provisioning configuration.
@@ -58,6 +59,10 @@ func (emptyVolumeConfig) Name() string {
 
 func (emptyVolumeConfig) Provisioning() VolumeProvisioningConfig {
 	return emptyVolumeConfig{}
+}
+
+func (emptyVolumeConfig) Encryption() EncryptionConfig {
+	return nil
 }
 
 func (emptyVolumeConfig) DiskSelector() optional.Optional[cel.Expression] {

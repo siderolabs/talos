@@ -169,9 +169,6 @@ func (*Sequencer) Install(r runtime.Runtime) []runtime.Phase {
 				"saveMeta", // saving META here to merge in-memory changes with the on-disk ones from the installer
 				FlushMeta,
 			).Append(
-				"saveStateEncryptionConfig",
-				SaveStateEncryptionConfig,
-			).Append(
 				"volumeFinalize",
 				TeardownVolumeLifecycle,
 			).Append(
@@ -196,11 +193,7 @@ func (*Sequencer) Install(r runtime.Runtime) []runtime.Phase {
 func (*Sequencer) Boot(r runtime.Runtime) []runtime.Phase {
 	phases := PhaseList{}
 
-	phases = phases.AppendWhen(
-		r.State().Platform().Mode() != runtime.ModeContainer,
-		"saveStateEncryptionConfig",
-		SaveStateEncryptionConfig,
-	).Append(
+	phases = phases.Append(
 		"memorySizeCheck",
 		MemorySizeCheck,
 	).Append(

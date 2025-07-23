@@ -1371,38 +1371,6 @@ func Shutdown(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
 	}, "shutdown"
 }
 
-// SaveStateEncryptionConfig saves state partition encryption info in the meta partition.
-func SaveStateEncryptionConfig(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
-	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
-		config := r.Config()
-		if config == nil {
-			return nil
-		}
-
-		encryption := config.Machine().SystemDiskEncryption().Get(constants.StatePartitionLabel)
-		if encryption == nil {
-			return nil
-		}
-
-		var data []byte
-
-		if data, err = json.Marshal(encryption); err != nil {
-			return err
-		}
-
-		ok, err := r.State().Machine().Meta().SetTagBytes(ctx, metamachinery.StateEncryptionConfig, data)
-		if err != nil {
-			return err
-		}
-
-		if !ok {
-			return errors.New("failed to save state encryption config in the META partition")
-		}
-
-		return r.State().Machine().Meta().Flush()
-	}, "SaveStateEncryptionConfig"
-}
-
 // haltIfInstalled halts the boot process if Talos is installed to disk but booted from ISO.
 func haltIfInstalled(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) error {

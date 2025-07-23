@@ -32,6 +32,7 @@ import (
 	"github.com/siderolabs/go-pointer"
 	"github.com/siderolabs/go-procfs/procfs"
 	sideronet "github.com/siderolabs/net"
+	"gopkg.in/yaml.v3"
 	"k8s.io/client-go/tools/clientcmd"
 
 	clustercmd "github.com/siderolabs/talos/cmd/talosctl/cmd/mgmt/cluster"
@@ -519,29 +520,76 @@ func create(ctx context.Context, ops createOps) error {
 
 		disks = slices.Concat(disks, extraDisks)
 
-		if qOps.encryptStatePartition || qOps.encryptEphemeralPartition {
-			diskEncryptionConfig := &v1alpha1.SystemDiskEncryptionConfig{}
+		var diskEncryptionPatches []configpatcher.Patch
 
+		if qOps.encryptStatePartition || qOps.encryptEphemeralPartition {
 			keys, err := getEncryptionKeys(cidr4, versionContract, &provisionOptions, qOps.diskEncryptionKeyTypes)
 			if err != nil {
 				return err
 			}
 
-			if qOps.encryptStatePartition {
-				diskEncryptionConfig.StatePartition = &v1alpha1.EncryptionConfig{
-					EncryptionProvider: encryption.LUKS2,
-					EncryptionKeys:     keys,
+			if !versionContract.VolumeConfigEncryptionSupported() {
+				// legacy v1alpha1 flow to support booting old Talos versions
+				diskEncryptionConfig := &v1alpha1.SystemDiskEncryptionConfig{}
+
+				if qOps.encryptStatePartition {
+					diskEncryptionConfig.StatePartition = &v1alpha1.EncryptionConfig{
+						EncryptionProvider: encryption.LUKS2,
+						EncryptionKeys:     keys,
+					}
+				}
+
+				if qOps.encryptEphemeralPartition {
+					diskEncryptionConfig.EphemeralPartition = &v1alpha1.EncryptionConfig{
+						EncryptionProvider: encryption.LUKS2,
+						EncryptionKeys:     keys,
+					}
+				}
+
+				patchRaw := map[string]any{
+					"machine": map[string]any{
+						"systemDiskEncryption": diskEncryptionConfig,
+					},
+				}
+
+				patchData, err := yaml.Marshal(patchRaw)
+				if err != nil {
+					return fmt.Errorf("error marshaling patch: %w", err)
+				}
+
+				patch, err := configpatcher.LoadPatch(patchData)
+				if err != nil {
+					return fmt.Errorf("error loading patch: %w", err)
+				}
+
+				diskEncryptionPatches = append(diskEncryptionPatches, patch)
+			} else {
+				for _, spec := range []struct {
+					label   string
+					enabled bool
+				}{
+					{label: constants.StatePartitionLabel, enabled: qOps.encryptStatePartition},
+					{label: constants.EphemeralPartitionLabel, enabled: qOps.encryptEphemeralPartition},
+				} {
+					if !spec.enabled {
+						continue
+					}
+
+					blockCfg := block.NewVolumeConfigV1Alpha1()
+					blockCfg.MetaName = spec.label
+					blockCfg.EncryptionSpec = block.EncryptionSpec{
+						EncryptionProvider: blockres.EncryptionProviderLUKS2,
+						EncryptionKeys:     convertEncryptionKeys(keys),
+					}
+
+					ctr, err := container.New(blockCfg)
+					if err != nil {
+						return fmt.Errorf("error creating container for %q volume: %w", spec.label, err)
+					}
+
+					diskEncryptionPatches = append(diskEncryptionPatches, configpatcher.NewStrategicMergePatch(ctr))
 				}
 			}
-
-			if qOps.encryptEphemeralPartition {
-				diskEncryptionConfig.EphemeralPartition = &v1alpha1.EncryptionConfig{
-					EncryptionProvider: encryption.LUKS2,
-					EncryptionKeys:     keys,
-				}
-			}
-
-			genOptions = append(genOptions, generate.WithSystemDiskEncryption(diskEncryptionConfig))
 		}
 
 		if qOps.useVIP {
@@ -630,6 +678,7 @@ func create(ctx context.Context, ops createOps) error {
 					GenOptions:  genOptions,
 				}),
 			bundle.WithPatch(userVolumePatches),
+			bundle.WithPatch(diskEncryptionPatches),
 		)
 	}
 
@@ -1063,6 +1112,32 @@ func parseCPUShare(cpus string) (int64, error) {
 	return nano.Num().Int64(), nil
 }
 
+func convertEncryptionKeys(keys []*v1alpha1.EncryptionKey) []block.EncryptionKey {
+	return xslices.Map(keys, func(k *v1alpha1.EncryptionKey) block.EncryptionKey {
+		r := block.EncryptionKey{
+			KeySlot: k.KeySlot,
+		}
+
+		if k.KeyKMS != nil {
+			r.KeyKMS = pointer.To(block.EncryptionKeyKMS(*k.KeyKMS))
+		}
+
+		if k.KeyTPM != nil {
+			r.KeyTPM = pointer.To(block.EncryptionKeyTPM(*k.KeyTPM))
+		}
+
+		if k.KeyNodeID != nil {
+			r.KeyNodeID = pointer.To(block.EncryptionKeyNodeID(*k.KeyNodeID))
+		}
+
+		if k.KeyStatic != nil {
+			r.KeyStatic = pointer.To(block.EncryptionKeyStatic(*k.KeyStatic))
+		}
+
+		return r
+	})
+}
+
 //nolint:gocyclo
 func getDisks(
 	provisioner provision.Provisioner,
@@ -1091,29 +1166,7 @@ func getDisks(
 			return nil, nil, err
 		}
 
-		encryptionSpec.EncryptionKeys = xslices.Map(keys, func(k *v1alpha1.EncryptionKey) block.EncryptionKey {
-			r := block.EncryptionKey{
-				KeySlot: k.KeySlot,
-			}
-
-			if k.KeyKMS != nil {
-				r.KeyKMS = pointer.To(block.EncryptionKeyKMS(*k.KeyKMS))
-			}
-
-			if k.KeyTPM != nil {
-				r.KeyTPM = pointer.To(block.EncryptionKeyTPM(*k.KeyTPM))
-			}
-
-			if k.KeyNodeID != nil {
-				r.KeyNodeID = pointer.To(block.EncryptionKeyNodeID(*k.KeyNodeID))
-			}
-
-			if k.KeyStatic != nil {
-				r.KeyStatic = pointer.To(block.EncryptionKeyStatic(*k.KeyStatic))
-			}
-
-			return r
-		})
+		encryptionSpec.EncryptionKeys = convertEncryptionKeys(keys)
 	}
 
 	disks := make([]*provision.Disk, 0, len(qOps.clusterUserVolumes))

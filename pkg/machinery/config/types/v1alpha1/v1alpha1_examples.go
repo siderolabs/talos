@@ -256,20 +256,6 @@ func machineSysfsExample() map[string]string {
 	}
 }
 
-func machineSystemDiskEncryptionExample() *SystemDiskEncryptionConfig {
-	return &SystemDiskEncryptionConfig{
-		EphemeralPartition: &EncryptionConfig{
-			EncryptionProvider: "luks2",
-			EncryptionKeys: []*EncryptionKey{
-				{
-					KeyNodeID: &EncryptionKeyNodeID{},
-					KeySlot:   0,
-				},
-			},
-		},
-	}
-}
-
 func machineFeaturesExample() *FeaturesConfig {
 	return &FeaturesConfig{
 		RBAC: pointer.To(true),
@@ -788,12 +774,6 @@ func kubernetesTalosAPIAccessConfigExample() *KubernetesTalosAPIAccessConfig {
 		AccessAllowedKubernetesNamespaces: []string{
 			"kube-system",
 		},
-	}
-}
-
-func kmsKeyExample() *EncryptionKeyKMS {
-	return &EncryptionKeyKMS{
-		KMSEndpoint: "https://192.168.88.21:4443",
 	}
 }
 

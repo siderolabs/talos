@@ -137,6 +137,13 @@ This API allows to downgrade ETCD cluster (storage format) to a previous version
 Talos increases the boot partition size to 2 GiB to accommodate larger images (with many system extensions included).
 """
 
+    [notes.disk-encryption]
+        title = "Disk Encryption"
+        description = """\ 
+Disk encryption for system volumes is now managed by the `VolumeConfig` machine configuration document.
+Legacy configuration in `valpha1` machine configuration is still supported.
+"""
+
 [make_deps]
 
     [make_deps.tools]

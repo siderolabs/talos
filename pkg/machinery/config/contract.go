@@ -172,3 +172,8 @@ func (contract *VersionContract) AddExcludeFromExternalLoadBalancer() bool {
 func (contract *VersionContract) SecureBootEnrollEnforcementSupported() bool {
 	return contract.Greater(TalosVersion1_7)
 }
+
+// VolumeConfigEncryptionSupported returns true if version of Talos supports disk encryption via VolumeConfig.
+func (contract *VersionContract) VolumeConfigEncryptionSupported() bool {
+	return contract.Greater(TalosVersion1_10)
+}

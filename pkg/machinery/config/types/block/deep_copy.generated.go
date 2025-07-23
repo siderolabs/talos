@@ -211,6 +211,36 @@ func (o *VolumeConfigV1Alpha1) DeepCopy() *VolumeConfigV1Alpha1 {
 		cp.ProvisioningSpec.ProvisioningMaxSize.raw = make([]byte, len(o.ProvisioningSpec.ProvisioningMaxSize.raw))
 		copy(cp.ProvisioningSpec.ProvisioningMaxSize.raw, o.ProvisioningSpec.ProvisioningMaxSize.raw)
 	}
+	if o.EncryptionSpec.EncryptionKeys != nil {
+		cp.EncryptionSpec.EncryptionKeys = make([]EncryptionKey, len(o.EncryptionSpec.EncryptionKeys))
+		copy(cp.EncryptionSpec.EncryptionKeys, o.EncryptionSpec.EncryptionKeys)
+		for i3 := range o.EncryptionSpec.EncryptionKeys {
+			if o.EncryptionSpec.EncryptionKeys[i3].KeyStatic != nil {
+				cp.EncryptionSpec.EncryptionKeys[i3].KeyStatic = new(EncryptionKeyStatic)
+				*cp.EncryptionSpec.EncryptionKeys[i3].KeyStatic = *o.EncryptionSpec.EncryptionKeys[i3].KeyStatic
+			}
+			if o.EncryptionSpec.EncryptionKeys[i3].KeyNodeID != nil {
+				cp.EncryptionSpec.EncryptionKeys[i3].KeyNodeID = new(EncryptionKeyNodeID)
+				*cp.EncryptionSpec.EncryptionKeys[i3].KeyNodeID = *o.EncryptionSpec.EncryptionKeys[i3].KeyNodeID
+			}
+			if o.EncryptionSpec.EncryptionKeys[i3].KeyKMS != nil {
+				cp.EncryptionSpec.EncryptionKeys[i3].KeyKMS = new(EncryptionKeyKMS)
+				*cp.EncryptionSpec.EncryptionKeys[i3].KeyKMS = *o.EncryptionSpec.EncryptionKeys[i3].KeyKMS
+			}
+			if o.EncryptionSpec.EncryptionKeys[i3].KeyTPM != nil {
+				cp.EncryptionSpec.EncryptionKeys[i3].KeyTPM = new(EncryptionKeyTPM)
+				*cp.EncryptionSpec.EncryptionKeys[i3].KeyTPM = *o.EncryptionSpec.EncryptionKeys[i3].KeyTPM
+				if o.EncryptionSpec.EncryptionKeys[i3].KeyTPM.TPMCheckSecurebootStatusOnEnroll != nil {
+					cp.EncryptionSpec.EncryptionKeys[i3].KeyTPM.TPMCheckSecurebootStatusOnEnroll = new(bool)
+					*cp.EncryptionSpec.EncryptionKeys[i3].KeyTPM.TPMCheckSecurebootStatusOnEnroll = *o.EncryptionSpec.EncryptionKeys[i3].KeyTPM.TPMCheckSecurebootStatusOnEnroll
+				}
+			}
+		}
+	}
+	if o.EncryptionSpec.EncryptionPerfOptions != nil {
+		cp.EncryptionSpec.EncryptionPerfOptions = make([]string, len(o.EncryptionSpec.EncryptionPerfOptions))
+		copy(cp.EncryptionSpec.EncryptionPerfOptions, o.EncryptionSpec.EncryptionPerfOptions)
+	}
 	return &cp
 }
 

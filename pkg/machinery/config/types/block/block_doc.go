@@ -28,6 +28,10 @@ func (EncryptionSpec) Doc() *encoder.Doc {
 				TypeName:  "UserVolumeConfigV1Alpha1",
 				FieldName: "encryption",
 			},
+			{
+				TypeName:  "VolumeConfigV1Alpha1",
+				FieldName: "encryption",
+			},
 		},
 		Fields: []encoder.Doc{
 			{
@@ -513,7 +517,7 @@ func (VolumeConfigV1Alpha1) Doc() *encoder.Doc {
 	doc := &encoder.Doc{
 		Type:        "VolumeConfig",
 		Comments:    [3]string{"" /* encoder.HeadComment */, "VolumeConfig is a system volume configuration document." /* encoder.LineComment */, "" /* encoder.FootComment */},
-		Description: "VolumeConfig is a system volume configuration document.\nNote: at the moment, only `EPHEMERAL` and `IMAGE-CACHE` system volumes are supported.\n",
+		Description: "VolumeConfig is a system volume configuration document.\nNote: at the moment, only `STATE`, `EPHEMERAL` and `IMAGE-CACHE` system volumes are supported.\n",
 		Fields: []encoder.Doc{
 			{},
 			{
@@ -529,6 +533,13 @@ func (VolumeConfigV1Alpha1) Doc() *encoder.Doc {
 				Note:        "",
 				Description: "The provisioning describes how the volume is provisioned.",
 				Comments:    [3]string{"" /* encoder.HeadComment */, "The provisioning describes how the volume is provisioned." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "encryption",
+				Type:        "EncryptionSpec",
+				Note:        "",
+				Description: "The encryption describes how the volume is encrypted.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "The encryption describes how the volume is encrypted." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
 		},
 	}
