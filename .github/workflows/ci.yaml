@@ -1,6 +1,6 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
 #
-# Generated on 2025-07-23T08:53:56Z by kres 4c6b4c0.
+# Generated on 2025-07-23T09:52:29Z by kres 4c6b4c0.
 
 concurrency:
   group: ${{ github.head_ref || github.run_id }}
@@ -687,6 +687,7 @@ jobs:
           terraform_wrapper: "false"
       - name: tf apply
         env:
+          AWS_REGION: us-west-2
           TF_E2E_ACTION: apply
           TF_E2E_TEST_TYPE: aws
           TF_SCRIPT_DIR: _out/contrib
@@ -698,6 +699,7 @@ jobs:
       - name: tf destroy
         if: always()
         env:
+          AWS_REGION: us-west-2
           TF_E2E_ACTION: destroy
           TF_E2E_REFRESH_ON_DESTROY: "false"
           TF_E2E_TEST_TYPE: aws
@@ -838,6 +840,7 @@ jobs:
           terraform_wrapper: "false"
       - name: tf apply
         env:
+          AWS_REGION: us-west-2
           TF_E2E_ACTION: apply
           TF_E2E_TEST_TYPE: aws
           TF_SCRIPT_DIR: _out/contrib
@@ -851,6 +854,7 @@ jobs:
       - name: tf destroy
         if: always()
         env:
+          AWS_REGION: us-west-2
           TF_E2E_ACTION: destroy
           TF_E2E_REFRESH_ON_DESTROY: "false"
           TF_E2E_TEST_TYPE: aws
@@ -991,6 +995,7 @@ jobs:
           terraform_wrapper: "false"
       - name: tf apply
         env:
+          AWS_REGION: us-west-2
           TF_E2E_ACTION: apply
           TF_E2E_TEST_TYPE: aws
           TF_SCRIPT_DIR: _out/contrib
@@ -1004,6 +1009,7 @@ jobs:
       - name: tf destroy
         if: always()
         env:
+          AWS_REGION: us-west-2
           TF_E2E_ACTION: destroy
           TF_E2E_REFRESH_ON_DESTROY: "false"
           TF_E2E_TEST_TYPE: aws
@@ -1144,6 +1150,7 @@ jobs:
           terraform_wrapper: "false"
       - name: tf apply
         env:
+          AWS_REGION: us-west-2
           TF_E2E_ACTION: apply
           TF_E2E_TEST_TYPE: aws
           TF_SCRIPT_DIR: _out/contrib
@@ -1157,6 +1164,7 @@ jobs:
       - name: tf destroy
         if: always()
         env:
+          AWS_REGION: us-west-2
           TF_E2E_ACTION: destroy
           TF_E2E_REFRESH_ON_DESTROY: "false"
           TF_E2E_TEST_TYPE: aws
@@ -1297,6 +1305,7 @@ jobs:
           terraform_wrapper: "false"
       - name: tf apply
         env:
+          AWS_REGION: us-west-2
           TF_E2E_ACTION: apply
           TF_E2E_TEST_TYPE: aws
           TF_SCRIPT_DIR: _out/contrib
@@ -1310,6 +1319,7 @@ jobs:
       - name: tf destroy
         if: always()
         env:
+          AWS_REGION: us-west-2
           TF_E2E_ACTION: destroy
           TF_E2E_REFRESH_ON_DESTROY: "false"
           TF_E2E_TEST_TYPE: aws

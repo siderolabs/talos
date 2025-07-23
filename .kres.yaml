@@ -2593,6 +2593,7 @@ spec:
           environment:
             TF_SCRIPT_DIR: _out/contrib
             TF_E2E_TEST_TYPE: aws
+            AWS_REGION: us-west-2
             TF_E2E_ACTION: apply
         - name: e2e-aws
         - name: tf destroy
@@ -2602,6 +2603,7 @@ spec:
           environment:
             TF_SCRIPT_DIR: _out/contrib
             TF_E2E_TEST_TYPE: aws
+            AWS_REGION: us-west-2
             TF_E2E_ACTION: destroy
             TF_E2E_REFRESH_ON_DESTROY: false
     - name: integration-aws-nvidia-oss-lts
@@ -2690,6 +2692,7 @@ spec:
           environment:
             TF_SCRIPT_DIR: _out/contrib
             TF_E2E_TEST_TYPE: aws
+            AWS_REGION: us-west-2
             TF_E2E_ACTION: apply
         - name: e2e-aws-nvidia-oss-lts
           command: e2e-aws
@@ -2702,6 +2705,7 @@ spec:
           environment:
             TF_SCRIPT_DIR: _out/contrib
             TF_E2E_TEST_TYPE: aws
+            AWS_REGION: us-west-2
             TF_E2E_ACTION: destroy
             TF_E2E_REFRESH_ON_DESTROY: false
     - name: integration-aws-nvidia-oss-production
@@ -2790,6 +2794,7 @@ spec:
           environment:
             TF_SCRIPT_DIR: _out/contrib
             TF_E2E_TEST_TYPE: aws
+            AWS_REGION: us-west-2
             TF_E2E_ACTION: apply
         - name: e2e-aws-nvidia-oss-production
           command: e2e-aws
@@ -2802,6 +2807,7 @@ spec:
           environment:
             TF_SCRIPT_DIR: _out/contrib
             TF_E2E_TEST_TYPE: aws
+            AWS_REGION: us-west-2
             TF_E2E_ACTION: destroy
             TF_E2E_REFRESH_ON_DESTROY: false
     - name: integration-aws-nvidia-nonfree-lts
@@ -2888,6 +2894,7 @@ spec:
           environment:
             TF_SCRIPT_DIR: _out/contrib
             TF_E2E_TEST_TYPE: aws
+            AWS_REGION: us-west-2
             TF_E2E_ACTION: apply
         - name: e2e-aws-nvidia-nonfree-lts
           command: e2e-aws
@@ -2900,6 +2907,7 @@ spec:
           environment:
             TF_SCRIPT_DIR: _out/contrib
             TF_E2E_TEST_TYPE: aws
+            AWS_REGION: us-west-2
             TF_E2E_ACTION: destroy
             TF_E2E_REFRESH_ON_DESTROY: false
     - name: integration-aws-nvidia-nonfree-production
@@ -2986,6 +2994,7 @@ spec:
           environment:
             TF_SCRIPT_DIR: _out/contrib
             TF_E2E_TEST_TYPE: aws
+            AWS_REGION: us-west-2
             TF_E2E_ACTION: apply
         - name: e2e-aws-nvidia-nonfree-production
           command: e2e-aws
@@ -2998,6 +3007,7 @@ spec:
           environment:
             TF_SCRIPT_DIR: _out/contrib
             TF_E2E_TEST_TYPE: aws
+            AWS_REGION: us-west-2
             TF_E2E_ACTION: destroy
             TF_E2E_REFRESH_ON_DESTROY: false
     - name: integration-gcp

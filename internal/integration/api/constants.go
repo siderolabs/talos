@@ -11,6 +11,6 @@ const (
 	// renovate: datasource=helm versioning=helm depName=nvidia-device-plugin registryUrl=https://nvidia.github.io/k8s-device-plugin
 	NvidiaDevicePluginChartVersion = "v0.17.2"
 	// NvidiaCUDATestImageVersion is the version of the NVIDIA CUDA test image to use
-	// renovate: datasource=docker depName=nvcr.io/nvidia/k8s/cuda-sample
+	// renovate: datasource=docker versioning=docker depName=nvcr.io/nvidia/k8s/cuda-sample
 	NvidiaCUDATestImageVersion = "vectoradd-cuda12.5.0"
 )

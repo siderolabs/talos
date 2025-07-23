@@ -17,7 +17,8 @@ BACKEND_CONFIG_KEY="cloud-tf/${CLUSTER_NAME}-terraform.tfstate"
 terraform -chdir="${TF_DIR}" \
     init \
     -backend-config="bucket=${BUCKET_NAME}" \
-    -backend-config="key=${BACKEND_CONFIG_KEY}"
+    -backend-config="key=${BACKEND_CONFIG_KEY}" \
+    -backend-config="region=us-east-1"
 
 case "${TF_E2E_ACTION}" in
     "apply")
