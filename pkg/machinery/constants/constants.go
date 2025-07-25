@@ -1275,6 +1275,12 @@ const (
 
 	// ExtensionSPDXPath is the path to the SBOM file(s) provided by system extensions.
 	ExtensionSPDXPath = "/usr/local/share/spdx"
+
+	// EncryptionSaltFilename is the filename for the encryption salt file.
+	EncryptionSaltFilename = "encryption-salt.yaml"
+
+	// DiskEncryptionSaltSize is the size of the disk encryption salt in bytes.
+	DiskEncryptionSaltSize = 32
 )
 
 // See https://linux.die.net/man/3/klogctl

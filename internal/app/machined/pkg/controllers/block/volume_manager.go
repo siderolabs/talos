@@ -23,12 +23,15 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/block/internal/volumes"
+	"github.com/siderolabs/talos/internal/pkg/encryption"
+	"github.com/siderolabs/talos/internal/pkg/encryption/helpers"
 	blockpb "github.com/siderolabs/talos/pkg/machinery/api/resource/definitions/block"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/proto"
 	"github.com/siderolabs/talos/pkg/machinery/resources/block"
 	"github.com/siderolabs/talos/pkg/machinery/resources/hardware"
 	"github.com/siderolabs/talos/pkg/machinery/resources/runtime"
+	"github.com/siderolabs/talos/pkg/machinery/resources/secrets"
 )
 
 // VolumeManagerController manages volumes in the system, converting VolumeConfig resources to VolumeStatuses.
@@ -95,6 +98,12 @@ func (ctrl *VolumeManagerController) Inputs() []controller.Input {
 			Namespace: hardware.NamespaceName,
 			Type:      hardware.PCRStatusType,
 			Kind:      controller.InputStrong,
+		},
+		{
+			Namespace: secrets.NamespaceName,
+			Type:      secrets.EncryptionSaltType,
+			ID:        optional.Some(secrets.EncryptionSaltID),
+			Kind:      controller.InputWeak,
 		},
 	}
 }
@@ -374,19 +383,11 @@ func (ctrl *VolumeManagerController) Run(ctx context.Context, r controller.Runti
 					Disks:                   diskSpecs,
 					DevicesReady:            devicesReady,
 					PreviousWaveProvisioned: vc.TypedSpec().Provisioning.Wave <= fullyProvisionedWave,
-					GetSystemInformation: func(ctx context.Context) (*hardware.SystemInformation, error) {
-						systemInfo, err := safe.ReaderGetByID[*hardware.SystemInformation](ctx, r, hardware.SystemInformationID)
-						if err != nil && !state.IsNotFoundError(err) {
-							return nil, fmt.Errorf("error fetching system information: %w", err)
-						}
-
-						if systemInfo == nil {
-							return nil, errors.New("system information not available")
-						}
-
-						return systemInfo, nil
+					EncryptionHelpers: encryption.Helpers{
+						GetSystemInformation: ctrl.getSystemInformation(r),
+						TPMLocker:            hardware.LockPCRStatus(r, constants.UKIPCR, vc.Metadata().ID()),
+						SaltGetter:           ctrl.getSaltGetter(r),
 					},
-					TPMLocker:         hardware.LockPCRStatus(r, constants.UKIPCR, vc.Metadata().ID()),
 					ShouldCloseVolume: shouldCloseVolume,
 				},
 			); err != nil {
@@ -589,5 +590,35 @@ func (ctrl *VolumeManagerController) processVolumeConfig(ctx context.Context, lo
 		}
 
 		prevPhase = volumeContext.Status.Phase
+	}
+}
+
+func (ctrl *VolumeManagerController) getSystemInformation(r controller.Reader) helpers.SystemInformationGetter {
+	return func(ctx context.Context) (*hardware.SystemInformation, error) {
+		systemInfo, err := safe.ReaderGetByID[*hardware.SystemInformation](ctx, r, hardware.SystemInformationID)
+		if err != nil && !state.IsNotFoundError(err) {
+			return nil, fmt.Errorf("error fetching system information: %w", err)
+		}
+
+		if systemInfo == nil {
+			return nil, errors.New("system information not available")
+		}
+
+		return systemInfo, nil
+	}
+}
+
+func (ctrl *VolumeManagerController) getSaltGetter(r controller.Reader) helpers.SaltGetter {
+	return func(ctx context.Context) ([]byte, error) {
+		salt, err := safe.ReaderGetByID[*secrets.EncryptionSalt](ctx, r, secrets.EncryptionSaltID)
+		if err != nil && !state.IsNotFoundError(err) {
+			return nil, fmt.Errorf("error fetching encryption salt: %w", err)
+		}
+
+		if salt == nil {
+			return nil, errors.New("encryption salt not available")
+		}
+
+		return salt.TypedSpec().DiskSalt, nil
 	}
 }

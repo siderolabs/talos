@@ -148,6 +148,13 @@ func (EncryptionKey) Doc() *encoder.Doc {
 				Description: "Enable TPM based disk encryption.",
 				Comments:    [3]string{"" /* encoder.HeadComment */, "Enable TPM based disk encryption." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
+			{
+				Name:        "lockToState",
+				Type:        "bool",
+				Note:        "",
+				Description: "Lock the disk encryption key to the random salt stored in the STATE partition. This is useful to prevent the volume from being unlocked if STATE partition is compromised or replaced. It is recommended to use this option with TPM disk encryption for non-STATE volumes.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Lock the disk encryption key to the random salt stored in the STATE partition. This is useful to prevent the volume from being unlocked if STATE partition is compromised or replaced. It is recommended to use this option with TPM disk encryption for non-STATE volumes." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
 		},
 	}
 

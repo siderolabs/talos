@@ -232,6 +232,7 @@ func NewState() (*State, error) {
 		&runtime.WatchdogTimerStatus{},
 		&secrets.API{},
 		&secrets.CertSAN{},
+		&secrets.EncryptionSalt{},
 		&secrets.Etcd{},
 		&secrets.EtcdRoot{},
 		&secrets.Kubelet{},

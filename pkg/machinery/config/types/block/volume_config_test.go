@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/siderolabs/go-pointer"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -184,6 +185,37 @@ func TestVolumeConfigValidate(t *testing.T) {
 			},
 
 			expectedErrors: "provisioning config is not allowed for the \"STATE\" volume",
+		},
+		{
+			name: "state encryption lock to state",
+
+			cfg: func(t *testing.T) *block.VolumeConfigV1Alpha1 {
+				c := block.NewVolumeConfigV1Alpha1()
+				c.MetaName = constants.StatePartitionLabel
+
+				c.EncryptionSpec = block.EncryptionSpec{
+					EncryptionProvider: blockres.EncryptionProviderLUKS2,
+					EncryptionKeys: []block.EncryptionKey{
+						{
+							KeySlot: 0,
+							KeyStatic: &block.EncryptionKeyStatic{
+								KeyData: "topsecret",
+							},
+						},
+						{
+							KeySlot: 1,
+							KeyStatic: &block.EncryptionKeyStatic{
+								KeyData: "topsecret2",
+							},
+							KeyLockToSTATE: pointer.To(true),
+						},
+					},
+				}
+
+				return c
+			},
+
+			expectedErrors: "state-locked key is not allowed for the \"STATE\" volume",
 		},
 		{
 			name: "valid",

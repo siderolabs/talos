@@ -132,6 +132,9 @@ Talos increases the boot partition size to 2 GiB to accommodate larger images (w
         description = """\ 
 Disk encryption for system volumes is now managed by the `VolumeConfig` machine configuration document.
 Legacy configuration in `valpha1` machine configuration is still supported.
+
+New per-key option `lockToSTATE` is added to the `VolumeConfig` document, which allows to lock the volume encryption key to the secret salt in the `STATE` volume.
+So, if the `STATE` volume is wiped or replaced, the volume encryption key will not be usable anymore.
 """
 
     [notes.early-config]

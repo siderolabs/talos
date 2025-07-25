@@ -28,8 +28,15 @@ import (
 
 const keyHandlerTimeout = time.Second * 10
 
+// Helpers provides helper methods for encryption handling.
+type Helpers struct {
+	GetSystemInformation helpers.SystemInformationGetter
+	TPMLocker            helpers.TPMLockFunc
+	SaltGetter           helpers.SaltGetter
+}
+
 // NewHandler creates new Handler.
-func NewHandler(encryptionConfig block.EncryptionSpec, volumeID string, getSystemInformation helpers.SystemInformationGetter, tpmLocker helpers.TPMLockFunc) (*Handler, error) {
+func NewHandler(encryptionConfig block.EncryptionSpec, volumeID string, helpers Helpers) (*Handler, error) {
 	cipher, err := luks.ParseCipherKind(encryptionConfig.Cipher)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse cipher kind: %w", err)
@@ -60,8 +67,9 @@ func NewHandler(encryptionConfig block.EncryptionSpec, volumeID string, getSyste
 	for _, cfg := range encryptionConfig.Keys {
 		handler, err := keys.NewHandler(cfg,
 			keys.WithVolumeID(volumeID),
-			keys.WithSystemInformationGetter(getSystemInformation),
-			keys.WithTPMLocker(tpmLocker),
+			keys.WithSystemInformationGetter(helpers.GetSystemInformation),
+			keys.WithTPMLocker(helpers.TPMLocker),
+			keys.WithSaltGetter(helpers.SaltGetter),
 		)
 		if err != nil {
 			return nil, err
@@ -81,6 +89,7 @@ func NewHandler(encryptionConfig block.EncryptionSpec, volumeID string, getSyste
 	return &Handler{
 		encryptionProvider: provider,
 		keyHandlers:        keyHandlers,
+		saltGetter:         helpers.SaltGetter,
 	}, nil
 }
 
@@ -89,6 +98,7 @@ func NewHandler(encryptionConfig block.EncryptionSpec, volumeID string, getSyste
 type Handler struct {
 	encryptionProvider encryption.Provider
 	keyHandlers        []keys.Handler
+	saltGetter         helpers.SaltGetter
 }
 
 // Open encrypted partition.

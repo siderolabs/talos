@@ -378,6 +378,7 @@ func (ctrl *Controller) Run(ctx context.Context, drainer *runtime.Drainer) error
 		&runtimecontrollers.WatchdogTimerController{},
 		&secrets.APICertSANsController{},
 		&secrets.APIController{},
+		&secrets.EncryptionSaltController{},
 		&secrets.EtcdController{},
 		secrets.NewKubeletController(),
 		&secrets.KubernetesCertSANsController{},
