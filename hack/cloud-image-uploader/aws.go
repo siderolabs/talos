@@ -260,6 +260,24 @@ func (au *AWSUploader) registerAMI(ctx context.Context, region string, svc *ec2.
 }
 
 //nolint:gocyclo
+func (au *AWSUploader) tagSnapshot(ctx context.Context, svc *ec2.Client, snapshotID, imageName string) {
+	if snapshotID == "" {
+		return
+	}
+
+	_, tagErr := svc.CreateTags(ctx, &ec2.CreateTagsInput{
+		Resources: []string{snapshotID},
+		Tags: []types.Tag{{
+			Key:   pointer.To("Name"),
+			Value: pointer.To(imageName),
+		}},
+	})
+	if tagErr != nil {
+		log.Printf("WARNING: failed to tag snapshot %s: %v", snapshotID, tagErr)
+	}
+}
+
+//nolint:gocyclo
 func (au *AWSUploader) registerAMIArch(ctx context.Context, region string, svc *ec2.Client, arch, bucketName string, uploader *manager.Uploader) error {
 	err := retry.Constant(30*time.Minute, retry.WithUnits(time.Second), retry.WithErrorLogging(true)).RetryWithContext(ctx, func(ctx context.Context) error {
 		source, err := os.Open(au.Options.AWSImage(arch))
@@ -358,6 +376,8 @@ func (au *AWSUploader) registerAMIArch(ctx context.Context, region string, svc *
 	if au.Options.NamePrefix != "" {
 		imageName = fmt.Sprintf("%s-%s-%s-%s", au.Options.NamePrefix, au.Options.Tag, region, arch)
 	}
+
+	au.tagSnapshot(ctx, svc, snapshotID, imageName)
 
 	imageResp, err := svc.DescribeImages(ctx, &ec2.DescribeImagesInput{
 		Filters: []types.Filter{
