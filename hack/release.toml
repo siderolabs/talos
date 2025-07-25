@@ -98,8 +98,7 @@ Talosctl now returns the loaded modules, not the modules configured to be loaded
     [notes.sbom]
         title = "SBOM"
         description = """\
-Talos now publishes Software Bill of Materials (SBOM) in the SPDX format.
-The SBOM is available in the `/usr/share/sbom` directory on the machine and can be retrieved using `talosctl get sbom`.
+Talos now publishes [Software Bill of Materials (SBOM)](https://www.talos.dev/v1.11/advanced/sbom/) in the SPDX format.
 """
 
     [notes.disk_wipe]
