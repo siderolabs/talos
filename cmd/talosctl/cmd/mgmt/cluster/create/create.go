@@ -582,6 +582,12 @@ func create(ctx context.Context, ops createOps) error {
 						EncryptionKeys:     convertEncryptionKeys(keys),
 					}
 
+					if spec.label != constants.StatePartitionLabel {
+						for idx := range blockCfg.EncryptionSpec.EncryptionKeys {
+							blockCfg.EncryptionSpec.EncryptionKeys[idx].KeyLockToSTATE = pointer.To(true)
+						}
+					}
+
 					ctr, err := container.New(blockCfg)
 					if err != nil {
 						return fmt.Errorf("error creating container for %q volume: %w", spec.label, err)

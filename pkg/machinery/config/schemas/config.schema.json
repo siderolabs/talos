@@ -52,6 +52,13 @@
           "description": "Enable TPM based disk encryption.\n",
           "markdownDescription": "Enable TPM based disk encryption.",
           "x-intellij-html-description": "\u003cp\u003eEnable TPM based disk encryption.\u003c/p\u003e\n"
+        },
+        "lockToState": {
+          "type": "boolean",
+          "title": "lockToState",
+          "description": "Lock the disk encryption key to the random salt stored in the STATE partition. This is useful to prevent the volume from being unlocked if STATE partition is compromised or replaced. It is recommended to use this option with TPM disk encryption for non-STATE volumes.\n",
+          "markdownDescription": "Lock the disk encryption key to the random salt stored in the STATE partition. This is useful to prevent the volume from being unlocked if STATE partition is compromised or replaced. It is recommended to use this option with TPM disk encryption for non-STATE volumes.",
+          "x-intellij-html-description": "\u003cp\u003eLock the disk encryption key to the random salt stored in the STATE partition. This is useful to prevent the volume from being unlocked if STATE partition is compromised or replaced. It is recommended to use this option with TPM disk encryption for non-STATE volumes.\u003c/p\u003e\n"
         }
       },
       "additionalProperties": false,

@@ -302,6 +302,7 @@ description: Talos gRPC API reference.
 - [resource/definitions/secrets/secrets.proto](#resource/definitions/secrets/secrets.proto)
     - [APICertsSpec](#talos.resource.definitions.secrets.APICertsSpec)
     - [CertSANSpec](#talos.resource.definitions.secrets.CertSANSpec)
+    - [EncryptionSaltSpec](#talos.resource.definitions.secrets.EncryptionSaltSpec)
     - [EtcdCertsSpec](#talos.resource.definitions.secrets.EtcdCertsSpec)
     - [EtcdRootSpec](#talos.resource.definitions.secrets.EtcdRootSpec)
     - [KubeletSpec](#talos.resource.definitions.secrets.KubeletSpec)
@@ -989,6 +990,7 @@ EncryptionKey is the spec for volume encryption key.
 | static_passphrase | [bytes](#bytes) |  |  |
 | kms_endpoint | [string](#string) |  |  |
 | tpm_check_secureboot_status_on_enroll | [bool](#bool) |  |  |
+| lock_to_state | [bool](#bool) |  |  |
 
 
 
@@ -5540,6 +5542,21 @@ CertSANSpec describes fields of the cert SANs.
 | i_ps | [common.NetIP](#common.NetIP) | repeated |  |
 | dns_names | [string](#string) | repeated |  |
 | fqdn | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.secrets.EncryptionSaltSpec"></a>
+
+### EncryptionSaltSpec
+EncryptionSaltSpec describes the salt.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| disk_salt | [bytes](#bytes) |  |  |
 
 
 

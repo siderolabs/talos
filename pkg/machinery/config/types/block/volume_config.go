@@ -12,6 +12,7 @@ import (
 	"slices"
 
 	"github.com/siderolabs/gen/optional"
+	"github.com/siderolabs/go-pointer"
 
 	"github.com/siderolabs/talos/pkg/machinery/cel"
 	"github.com/siderolabs/talos/pkg/machinery/cel/celenv"
@@ -176,6 +177,13 @@ func (s *VolumeConfigV1Alpha1) Validate(validation.RuntimeMode, ...validation.Op
 		// no provisioning config is allowed for the state partition.
 		if !s.ProvisioningSpec.IsZero() {
 			validationErrors = errors.Join(validationErrors, fmt.Errorf("provisioning config is not allowed for the %q volume", s.MetaName))
+		}
+
+		for _, key := range s.EncryptionSpec.EncryptionKeys {
+			if pointer.SafeDeref(key.KeyLockToSTATE) {
+				// state-locked keys are not allowed
+				validationErrors = errors.Join(validationErrors, fmt.Errorf("state-locked key is not allowed for the %q volume", s.MetaName))
+			}
 		}
 	}
 

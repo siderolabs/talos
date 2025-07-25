@@ -128,6 +128,8 @@ func (suite *ResetSuite) TestResetWithSpecEphemeral() {
 // TestResetWithSpecStateAndUserDisks resets state partition and user disks on the node.
 //
 // As ephemeral partition is not reset, so kubelet cert shouldn't change.
+//
+//nolint:gocyclo
 func (suite *ResetSuite) TestResetWithSpecStateAndUserDisks() {
 	if suite.Capabilities().SecureBooted {
 		// this is because in secure boot mode, the machine config is only applied and cannot be passed as kernel args
@@ -135,8 +137,25 @@ func (suite *ResetSuite) TestResetWithSpecStateAndUserDisks() {
 	}
 
 	node := suite.RandomDiscoveredNodeInternalIP(machine.TypeWorker)
+	nodeCtx := client.WithNode(suite.ctx, node)
 
-	disks, err := suite.Client.Disks(client.WithNode(suite.ctx, node))
+	suite.T().Logf("resetting STATE + user disk on node %s", node)
+
+	config, err := suite.ReadConfigFromNode(nodeCtx)
+	suite.Require().NoError(err)
+
+	// check if EPHEMERAL is encrypted locked to STATE
+	var lockedToState bool
+
+	if volume, ok := config.Volumes().ByName(constants.EphemeralPartitionLabel); ok && volume.Encryption() != nil {
+		for _, key := range volume.Encryption().Keys() {
+			if key.LockToSTATE() {
+				lockedToState = true
+			}
+		}
+	}
+
+	disks, err := suite.Client.Disks(nodeCtx)
 	suite.Require().NoError(err)
 	suite.Require().NotEmpty(disks.Messages)
 
@@ -160,6 +179,26 @@ func (suite *ResetSuite) TestResetWithSpecStateAndUserDisks() {
 		},
 	)
 
+	if !lockedToState {
+		// if not locked to STATE, wipe will be successful
+		suite.ResetNode(suite.ctx, node, &machineapi.ResetRequest{
+			Reboot:   true,
+			Graceful: true,
+			SystemPartitionsToWipe: []*machineapi.ResetPartitionSpec{
+				{
+					Label: constants.StatePartitionLabel,
+					Wipe:  true,
+				},
+			},
+			UserDisksToWipe: userDisksToWipe,
+		}, true)
+
+		return
+	}
+
+	suite.T().Logf("verifying that EPHEMERAL partition would fail to unlock after reset, as it is locked to STATE")
+
+	// if the EPHEMERAL partition is locked to STATE, it will fail to unlock after reset, so let's verify it
 	suite.ResetNode(suite.ctx, node, &machineapi.ResetRequest{
 		Reboot:   true,
 		Graceful: true,
@@ -170,6 +209,27 @@ func (suite *ResetSuite) TestResetWithSpecStateAndUserDisks() {
 			},
 		},
 		UserDisksToWipe: userDisksToWipe,
+	}, false)
+
+	// wait for EPHEMERAL failure
+	rtestutils.AssertResources(nodeCtx, suite.T(), suite.Client.COSI,
+		[]string{constants.EphemeralPartitionLabel},
+		func(vs *block.VolumeStatus, asrt *assert.Assertions) {
+			asrt.Equal(block.VolumePhaseFailed, vs.TypedSpec().Phase)
+			asrt.Contains(vs.TypedSpec().ErrorMessage, "encryption key rejected")
+		},
+	)
+
+	// now reset EPHEMERAL
+	suite.ResetNode(suite.ctx, node, &machineapi.ResetRequest{
+		Reboot:   true,
+		Graceful: false,
+		SystemPartitionsToWipe: []*machineapi.ResetPartitionSpec{
+			{
+				Label: constants.EphemeralPartitionLabel,
+				Wipe:  true,
+			},
+		},
 	}, true)
 }
 

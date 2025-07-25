@@ -606,6 +606,16 @@ func (m *EncryptionKey) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 		i -= len(m.unknownFields)
 		copy(dAtA[i:], m.unknownFields)
 	}
+	if m.LockToState {
+		i--
+		if m.LockToState {
+			dAtA[i] = 1
+		} else {
+			dAtA[i] = 0
+		}
+		i--
+		dAtA[i] = 0x30
+	}
 	if m.TpmCheckSecurebootStatusOnEnroll {
 		i--
 		if m.TpmCheckSecurebootStatusOnEnroll {
@@ -2214,6 +2224,9 @@ func (m *EncryptionKey) SizeVT() (n int) {
 		n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
 	}
 	if m.TpmCheckSecurebootStatusOnEnroll {
+		n += 2
+	}
+	if m.LockToState {
 		n += 2
 	}
 	n += len(m.unknownFields)
@@ -4552,6 +4565,26 @@ func (m *EncryptionKey) UnmarshalVT(dAtA []byte) error {
 				}
 			}
 			m.TpmCheckSecurebootStatusOnEnroll = bool(v != 0)
+		case 6:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field LockToState", wireType)
+			}
+			var v int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return protohelpers.ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				v |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			m.LockToState = bool(v != 0)
 		default:
 			iNdEx = preIndex
 			skippy, err := protohelpers.Skip(dAtA[iNdEx:])

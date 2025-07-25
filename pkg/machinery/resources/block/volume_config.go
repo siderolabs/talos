@@ -135,8 +135,9 @@ type EncryptionSpec struct {
 //
 //gotagsrewrite:gen
 type EncryptionKey struct {
-	Slot int               `yaml:"slot" protobuf:"1"`
-	Type EncryptionKeyType `yaml:"type" protobuf:"2"`
+	Slot        int               `yaml:"slot" protobuf:"1"`
+	Type        EncryptionKeyType `yaml:"type" protobuf:"2"`
+	LockToSTATE bool              `yaml:"lockToState,omitempty" protobuf:"6"`
 
 	// Only for Type == "static":
 	StaticPassphrase yamlutils.StringBytes `yaml:"staticPassphrase,omitempty" protobuf:"3"`

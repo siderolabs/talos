@@ -7,14 +7,13 @@ package volumes
 
 import (
 	"cmp"
-	"context"
 	"math"
 
 	"github.com/siderolabs/gen/optional"
 
+	"github.com/siderolabs/talos/internal/pkg/encryption"
 	blockpb "github.com/siderolabs/talos/pkg/machinery/api/resource/definitions/block"
 	"github.com/siderolabs/talos/pkg/machinery/resources/block"
-	"github.com/siderolabs/talos/pkg/machinery/resources/hardware"
 )
 
 // CompareVolumeConfigs compares two volume configs in the proposed order of provisioning.
@@ -89,7 +88,6 @@ type ManagerContext struct {
 
 	DevicesReady            bool
 	PreviousWaveProvisioned bool
-	GetSystemInformation    func(context.Context) (*hardware.SystemInformation, error)
-	TPMLocker               func(context.Context, func() error) error
+	EncryptionHelpers       encryption.Helpers
 	ShouldCloseVolume       bool
 }

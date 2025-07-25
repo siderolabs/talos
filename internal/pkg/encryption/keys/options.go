@@ -14,6 +14,7 @@ type KeyOptions struct {
 	VolumeID             string
 	GetSystemInformation helpers.SystemInformationGetter
 	TPMLocker            helpers.TPMLockFunc
+	SaltGetter           helpers.SaltGetter
 }
 
 // WithVolumeID passes the partition label to the key handler.
@@ -38,6 +39,15 @@ func WithSystemInformationGetter(getter helpers.SystemInformationGetter) KeyOpti
 func WithTPMLocker(locker helpers.TPMLockFunc) KeyOption {
 	return func(o *KeyOptions) error {
 		o.TPMLocker = locker
+
+		return nil
+	}
+}
+
+// WithSaltGetter passes the salt getter to the key handler.
+func WithSaltGetter(getter helpers.SaltGetter) KeyOption {
+	return func(o *KeyOptions) error {
+		o.SaltGetter = getter
 
 		return nil
 	}

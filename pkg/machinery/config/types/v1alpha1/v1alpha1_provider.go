@@ -1604,6 +1604,12 @@ func (e *EncryptionKey) TPM() config.EncryptionKeyTPM {
 	return e.KeyTPM
 }
 
+// LockToSTATE implements the config.Provider interface.
+func (e *EncryptionKey) LockToSTATE() bool {
+	// not supported in v1alpha1
+	return false
+}
+
 // String implements the config.Provider interface.
 func (e *EncryptionKeyNodeID) String() string {
 	return "nodeid"
