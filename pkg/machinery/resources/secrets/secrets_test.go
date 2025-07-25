@@ -26,6 +26,7 @@ func TestRegisterResource(t *testing.T) {
 	for _, resource := range []meta.ResourceWithRD{
 		&secrets.API{},
 		&secrets.CertSAN{},
+		&secrets.EncryptionSalt{},
 		&secrets.Etcd{},
 		&secrets.EtcdRoot{},
 		&secrets.Kubelet{},

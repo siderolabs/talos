@@ -112,6 +112,7 @@ func convertEncryptionConfiguration(in cfg.EncryptionConfig, out *block.VolumeCo
 
 	for i, key := range in.Keys() {
 		out.Encryption.Keys[i].Slot = key.Slot()
+		out.Encryption.Keys[i].LockToSTATE = key.LockToSTATE()
 
 		switch {
 		case key.Static() != nil:

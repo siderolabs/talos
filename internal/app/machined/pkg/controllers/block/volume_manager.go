@@ -23,6 +23,8 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/block/internal/volumes"
+	"github.com/siderolabs/talos/internal/pkg/encryption"
+	"github.com/siderolabs/talos/internal/pkg/encryption/helpers"
 	blockpb "github.com/siderolabs/talos/pkg/machinery/api/resource/definitions/block"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/proto"
@@ -374,19 +376,10 @@ func (ctrl *VolumeManagerController) Run(ctx context.Context, r controller.Runti
 					Disks:                   diskSpecs,
 					DevicesReady:            devicesReady,
 					PreviousWaveProvisioned: vc.TypedSpec().Provisioning.Wave <= fullyProvisionedWave,
-					GetSystemInformation: func(ctx context.Context) (*hardware.SystemInformation, error) {
-						systemInfo, err := safe.ReaderGetByID[*hardware.SystemInformation](ctx, r, hardware.SystemInformationID)
-						if err != nil && !state.IsNotFoundError(err) {
-							return nil, fmt.Errorf("error fetching system information: %w", err)
-						}
-
-						if systemInfo == nil {
-							return nil, errors.New("system information not available")
-						}
-
-						return systemInfo, nil
+					EncryptionHelpers: encryption.Helpers{
+						GetSystemInformation: ctrl.getSystemInformation(r),
+						TPMLocker:            hardware.LockPCRStatus(r, constants.UKIPCR, vc.Metadata().ID()),
 					},
-					TPMLocker:         hardware.LockPCRStatus(r, constants.UKIPCR, vc.Metadata().ID()),
 					ShouldCloseVolume: shouldCloseVolume,
 				},
 			); err != nil {
@@ -589,5 +582,20 @@ func (ctrl *VolumeManagerController) processVolumeConfig(ctx context.Context, lo
 		}
 
 		prevPhase = volumeContext.Status.Phase
+	}
+}
+
+func (ctrl *VolumeManagerController) getSystemInformation(r controller.Reader) helpers.SystemInformationGetter {
+	return func(ctx context.Context) (*hardware.SystemInformation, error) {
+		systemInfo, err := safe.ReaderGetByID[*hardware.SystemInformation](ctx, r, hardware.SystemInformationID)
+		if err != nil && !state.IsNotFoundError(err) {
+			return nil, fmt.Errorf("error fetching system information: %w", err)
+		}
+
+		if systemInfo == nil {
+			return nil, errors.New("system information not available")
+		}
+
+		return systemInfo, nil
 	}
 }

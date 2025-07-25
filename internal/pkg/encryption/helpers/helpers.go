@@ -16,3 +16,6 @@ type SystemInformationGetter func(context.Context) (*hardware.SystemInformation,
 
 // TPMLockFunc is a function that ensures that the TPM is locked and PCR state is as expected.
 type TPMLockFunc func(context.Context, func() error) error
+
+// SaltGetter defines the closure which can be used in key handlers to get the encryption salt.
+type SaltGetter func(context.Context) ([]byte, error)

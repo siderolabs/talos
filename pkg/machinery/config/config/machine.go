@@ -407,6 +407,7 @@ type EncryptionKey interface {
 	KMS() EncryptionKeyKMS
 	Slot() int
 	TPM() EncryptionKeyTPM
+	LockToSTATE() bool
 }
 
 // EncryptionKeyStatic ephemeral encryption key.

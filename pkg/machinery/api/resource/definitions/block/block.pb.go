@@ -647,6 +647,7 @@ type EncryptionKey struct {
 	StaticPassphrase                 []byte                       `protobuf:"bytes,3,opt,name=static_passphrase,json=staticPassphrase,proto3" json:"static_passphrase,omitempty"`
 	KmsEndpoint                      string                       `protobuf:"bytes,4,opt,name=kms_endpoint,json=kmsEndpoint,proto3" json:"kms_endpoint,omitempty"`
 	TpmCheckSecurebootStatusOnEnroll bool                         `protobuf:"varint,5,opt,name=tpm_check_secureboot_status_on_enroll,json=tpmCheckSecurebootStatusOnEnroll,proto3" json:"tpm_check_secureboot_status_on_enroll,omitempty"`
+	LockToState                      bool                         `protobuf:"varint,6,opt,name=lock_to_state,json=lockToState,proto3" json:"lock_to_state,omitempty"`
 	unknownFields                    protoimpl.UnknownFields
 	sizeCache                        protoimpl.SizeCache
 }
@@ -712,6 +713,13 @@ func (x *EncryptionKey) GetKmsEndpoint() string {
 func (x *EncryptionKey) GetTpmCheckSecurebootStatusOnEnroll() bool {
 	if x != nil {
 		return x.TpmCheckSecurebootStatusOnEnroll
+	}
+	return false
+}
+
+func (x *EncryptionKey) GetLockToState() bool {
+	if x != nil {
+		return x.LockToState
 	}
 	return false
 }
@@ -2217,13 +2225,14 @@ const file_resource_definitions_block_block_proto_rawDesc = "" +
 	"prettySize\x12'\n" +
 	"\x0fsecondary_disks\x18\x10 \x03(\tR\x0esecondaryDisks\x12\x12\n" +
 	"\x04uuid\x18\x11 \x01(\tR\x04uuid\x12\x1a\n" +
-	"\bsymlinks\x18\x12 \x03(\tR\bsymlinks\"\x92\x02\n" +
+	"\bsymlinks\x18\x12 \x03(\tR\bsymlinks\"\xb6\x02\n" +
 	"\rEncryptionKey\x12\x12\n" +
 	"\x04slot\x18\x01 \x01(\x03R\x04slot\x12L\n" +
 	"\x04type\x18\x02 \x01(\x0e28.talos.resource.definitions.enums.BlockEncryptionKeyTypeR\x04type\x12+\n" +
 	"\x11static_passphrase\x18\x03 \x01(\fR\x10staticPassphrase\x12!\n" +
 	"\fkms_endpoint\x18\x04 \x01(\tR\vkmsEndpoint\x12O\n" +
-	"%tpm_check_secureboot_status_on_enroll\x18\x05 \x01(\bR tpmCheckSecurebootStatusOnEnroll\"\xa5\x02\n" +
+	"%tpm_check_secureboot_status_on_enroll\x18\x05 \x01(\bR tpmCheckSecurebootStatusOnEnroll\x12\"\n" +
+	"\rlock_to_state\x18\x06 \x01(\bR\vlockToState\"\xa5\x02\n" +
 	"\x0eEncryptionSpec\x12Y\n" +
 	"\bprovider\x18\x01 \x01(\x0e2=.talos.resource.definitions.enums.BlockEncryptionProviderTypeR\bprovider\x12C\n" +
 	"\x04keys\x18\x02 \x03(\v2/.talos.resource.definitions.block.EncryptionKeyR\x04keys\x12\x16\n" +
