@@ -15,6 +15,8 @@ import (
 )
 
 func TestIdentityGenerate(t *testing.T) {
+	t.Parallel()
+
 	var spec1, spec2 cluster.IdentitySpec
 
 	require.NoError(t, clusteradapter.IdentitySpec(&spec1).Generate())
@@ -29,6 +31,8 @@ func TestIdentityGenerate(t *testing.T) {
 }
 
 func TestIdentityConvertMachineID(t *testing.T) {
+	t.Parallel()
+
 	spec := cluster.IdentitySpec{
 		NodeID: "sou7yy34ykX3n373Zw1DXKb8zD7UnyKT6HT3QDsGH6L",
 	}

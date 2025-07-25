@@ -99,6 +99,12 @@ type EncryptionKey struct {
 	//   description: >
 	//     Enable TPM based disk encryption.
 	KeyTPM *EncryptionKeyTPM `yaml:"tpm,omitempty"`
+	//   description: >
+	//     Lock the disk encryption key to the random salt stored in the STATE partition.
+	//     This is useful to prevent the volume from being unlocked if STATE partition is compromised
+	//     or replaced. It is recommended to use this option with TPM disk encryption for
+	//     non-STATE volumes.
+	KeyLockToSTATE *bool `yaml:"lockToState,omitempty"`
 }
 
 // EncryptionKeyStatic represents throw away key type.
@@ -211,6 +217,11 @@ func (s EncryptionSpec) Keys() []config.EncryptionKey {
 // Slot implements the config.Provider interface.
 func (k EncryptionKey) Slot() int {
 	return k.KeySlot
+}
+
+// LockToSTATE implements the config.Provider interface.
+func (k EncryptionKey) LockToSTATE() bool {
+	return pointer.SafeDeref(k.KeyLockToSTATE)
 }
 
 // Static implements the config.Provider interface.
