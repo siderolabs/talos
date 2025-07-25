@@ -8,6 +8,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/state"
 
 	"github.com/siderolabs/talos/pkg/conditions"
@@ -69,7 +70,11 @@ func (cond *volumeMountedCondition) Wait(ctx context.Context) error {
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
-	_, err := cond.st.WatchFor(ctx, block.NewVolumeMountStatus(block.NamespaceName, cond.id).Metadata(), state.WithEventTypes(state.Created, state.Updated))
+	_, err := cond.st.WatchFor(ctx,
+		block.NewVolumeMountStatus(block.NamespaceName, cond.id).Metadata(),
+		state.WithEventTypes(state.Created, state.Updated),
+		state.WithPhases(resource.PhaseRunning),
+	)
 	if err != nil {
 		return err
 	}
