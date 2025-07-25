@@ -96,9 +96,10 @@ function run_talos_integration_test_docker {
 
   "${INTEGRATION_TEST}" \
     -test.v \
+    -talos.failfast \
     -talos.talosctlpath "${TALOSCTL}" \
     -talos.kubectlpath "${KUBECTL}" \
-     -talos.helmpath "${HELM}" \
+    -talos.helmpath "${HELM}" \
     -talos.kubestrpath "${KUBESTR}" \
     -talos.provisioner "${PROVISIONER}" \
     -talos.name "${CLUSTER_NAME}" \
