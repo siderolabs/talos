@@ -221,15 +221,15 @@ make installer-base imager PLATFORM=linux/amd64 \
   PUSH=true
 ```
 
-This will create an imager image and push it to your local registry.
-Export the image and save it as `$IMAGER_IMAGE`.
+This will create two images - installer-base and imager and push them to your local registry.
+Export the installer-base image and save it as `$BASE_INSTALLER_IMAGE`.
 
-Create a installer image from your extension and the imager you just created with the following command.
+Create an installer image from your extension and the installer-base you just created with the following command.
 
 ```bash
 make image-installer \
   REGISTRY=127.0.0.1:5005 \
-  IMAGER_ARGS="--base-installer-image=${IMAGER_IMAGE} \
+  IMAGER_ARGS="--base-installer-image=${BASE_INSTALLER_IMAGE} \
     --system-extension-image=${EXTENSION_IMAGE}"
 ```
 
