@@ -142,6 +142,46 @@ func TestCleanup(t *testing.T) {
 	assert.NoError(t, bootloader.CleanupBootloader(disk, true))
 
 	testPartitionsWiped(t, disk, []string{constants.MetaPartitionLabel}, true)
+
+	expected := []string{"BIOS", "META"} // Updated from {"BIOS", "BOOT", "META"}
+
+	actual1, err := getPartitionLabels(disk)
+	require.NoError(t, err)
+	require.Equal(t, expected, actual1)
+
+	actual2, err := getPartitionLabels(disk)
+	require.NoError(t, err)
+	require.Equal(t, []string{"META"}, actual2)
+}
+
+func getPartitionLabels(disk string) ([]string, error) {
+	dev, err := block.NewFromPath(disk)
+	if err != nil {
+		return nil, err
+	}
+	defer dev.Close()
+
+	gptDev, err := gpt.DeviceFromBlockDevice(dev)
+	if err != nil {
+		return nil, err
+	}
+
+	pt, err := gpt.Read(gptDev)
+	if err != nil {
+		return nil, err
+	}
+
+	labels := xslices.Filter(xslices.Map(pt.Partitions(), func(p *gpt.Partition) string {
+		if p == nil {
+			return ""
+		}
+
+		return p.Name
+	}), func(label string) bool {
+		return label != ""
+	})
+
+	return labels, nil
 }
 
 func testPartitionsWiped(t *testing.T, disk string, expectedLabels []string, sdboot bool) {

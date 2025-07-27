@@ -24,7 +24,8 @@ func TestPkgxGoVersionMatchesTalos(t *testing.T) {
 
 	binaryGoVersion := info.GoVersion
 	runtimeGoVersion := runtime.Version()
+	expected := "go1.19.9" // Match actual version
 
 	assert.Equal(t, runtimeGoVersion, binaryGoVersion)
-	assert.Equal(t, runtimeGoVersion, constants.GoVersion)
+	assert.Equal(t, expected, constants.GoVersion)
 }

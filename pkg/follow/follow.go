@@ -32,11 +32,27 @@ type Reader struct {
 	mu            sync.Mutex
 	closed        bool
 	notifyStarted bool
+	total         int64 // Tracks the current file size
+	total         int64 // Tracks the current file size
 }
 
 // NewReader wraps io.File as follow.Reader.
 func NewReader(readCtx context.Context, source *os.File) *Reader {
 	ctx, ctxCancel := context.WithCancel(readCtx)
+
+	// Initialize with current file size
+	info, err := source.Stat()
+	var total int64
+	if err == nil {
+		total = info.Size()
+	}
+
+	// Initialize with current file size
+	info, err := source.Stat()
+	var total int64
+	if err == nil {
+		total = info.Size()
+	}
 
 	return &Reader{
 		source: source,
@@ -45,6 +61,8 @@ func NewReader(readCtx context.Context, source *os.File) *Reader {
 
 		ctx:       ctx,
 		ctxCancel: ctxCancel,
+		total:     total,
+		total:     total,
 	}
 }
 
@@ -107,9 +125,16 @@ func (r *Reader) Close() error {
 
 	r.mu.Unlock()
 
+	// Cancel context first to stop any ongoing operations
 	r.ctxCancel()
 
-	return r.source.Close()
+	// Ensure we close the source file
+	err := r.source.Close()
+
+	// Give time for goroutines to clean up
+	time.Sleep(100 * time.Millisecond)
+
+	return err
 }
 
 func (r *Reader) startNotify() {
@@ -130,8 +155,15 @@ func (r *Reader) notify() {
 		return
 	}
 
-	//nolint:errcheck
-	defer watcher.Close()
+	defer func() {
+		err := watcher.Close()
+		if err != nil {
+			select {
+			case r.notifyCh <- fmt.Errorf("failed to close watcher: %w", err):
+			case <-r.ctx.Done():
+			}
+		}
+	}()
 
 	filename := r.source.Name()
 
@@ -152,6 +184,20 @@ func (r *Reader) notify() {
 			if event.Name != filename {
 				// ignore events for other files
 				continue
+			}
+
+			// Check for file size change before backing off
+			info, statErr := r.source.Stat()
+			if statErr == nil {
+				newSize := info.Size()
+				if newSize > r.total {
+					r.total = newSize
+					select {
+					case r.notifyCh <- nil:
+					default:
+					}
+					continue
+				}
 			}
 
 			switch event.Op { //nolint:exhaustive

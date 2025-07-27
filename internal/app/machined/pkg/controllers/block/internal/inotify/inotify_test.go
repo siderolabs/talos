@@ -43,7 +43,10 @@ func assertNoEvent(t *testing.T, watchCh <-chan string, errCh <-chan error) {
 
 func TestWatcherCloseWrite(t *testing.T) {
 	watcher, err := inotify.NewWatcher()
-	require.NoError(t, err)
+	if err != nil {
+		t.Fatalf("failed to create watcher: %v", err)
+	}
+	defer watcher.Close() // Ensure watcher is closed
 
 	d := t.TempDir()
 
@@ -61,6 +64,7 @@ func TestWatcherCloseWrite(t *testing.T) {
 	// open file1 for writing, should get inotify event
 	f1, err := os.OpenFile(filepath.Join(d, "file1"), os.O_WRONLY, 0)
 	require.NoError(t, err)
+	defer f1.Close()
 
 	require.NoError(t, f1.Close())
 
@@ -80,13 +84,14 @@ func TestWatcherCloseWrite(t *testing.T) {
 	assertNoEvent(t, watchCh, errCh)
 
 	require.NoError(t, watcher.Remove(filepath.Join(d, "file2")))
-
-	require.NoError(t, watcher.Close())
 }
 
 func TestWatcherDirectory(t *testing.T) {
 	watcher, err := inotify.NewWatcher()
-	require.NoError(t, err)
+	if err != nil {
+		t.Fatalf("failed to create watcher: %v", err)
+	}
+	defer watcher.Close() // Ensure watcher is closed
 
 	d := t.TempDir()
 
@@ -123,6 +128,4 @@ func TestWatcherDirectory(t *testing.T) {
 	assertNoEvent(t, watchCh, errCh)
 
 	require.NoError(t, watcher.Remove(d))
-
-	require.NoError(t, watcher.Close())
 }

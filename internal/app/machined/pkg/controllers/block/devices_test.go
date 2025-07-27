@@ -6,6 +6,7 @@ package block_test
 
 import (
 	"os"
+	"syscall"
 	"testing"
 
 	"github.com/cosi-project/runtime/pkg/resource/rtestutils"
@@ -16,6 +17,41 @@ import (
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/ctest"
 	"github.com/siderolabs/talos/pkg/machinery/resources/block"
 )
+
+// setTestFDLimit temporarily increases the file descriptor limit for tests
+func setTestFDLimit(t *testing.T) syscall.Rlimit {
+	var rLimit syscall.Rlimit
+
+	err := syscall.Getrlimit(syscall.RLIMIT_NOFILE, &rLimit)
+	if err != nil {
+		t.Logf("Warning: Failed to get file descriptor limit: %v", err)
+		return rLimit
+	}
+
+	// Save original limit
+	origLimit := rLimit
+
+	// Set higher limits for the test
+	rLimit.Cur = 65536
+	if rLimit.Max < rLimit.Cur {
+		rLimit.Max = rLimit.Cur
+	}
+
+	err = syscall.Setrlimit(syscall.RLIMIT_NOFILE, &rLimit)
+	if err != nil {
+		t.Logf("Warning: Failed to increase file descriptor limit: %v", err)
+	}
+
+	return origLimit
+}
+
+// resetFDLimit restores the original file descriptor limit
+func resetFDLimit(t *testing.T, origLimit syscall.Rlimit) {
+	err := syscall.Setrlimit(syscall.RLIMIT_NOFILE, &origLimit)
+	if err != nil {
+		t.Logf("Warning: Failed to restore file descriptor limit: %v", err)
+	}
+}
 
 type DevicesSuite struct {
 	ctest.DefaultSuite
@@ -30,6 +66,10 @@ func (suite *DevicesSuite) TestDiscover() {
 		suite.T().Skip("skipping test; must be root to use inotify")
 	}
 
+	// Increase file descriptor limits for this test
+	origLimit := setTestFDLimit(suite.T())
+	defer resetFDLimit(suite.T(), origLimit)
+
 	suite.Require().NoError(suite.Runtime().RegisterController(&blockctrls.DevicesController{}))
 
 	// these devices should always exist on Linux
@@ -37,3 +77,10 @@ func (suite *DevicesSuite) TestDiscover() {
 		assertions.Equal("disk", r.TypedSpec().Type)
 	})
 }
+
+// If you create any watcher or file, ensure you close it:
+// watcher, err := inotify.NewWatcher()
+// if err != nil {
+//     t.Fatalf("failed to create watcher: %v", err)
+// }
+// defer watcher.Close()

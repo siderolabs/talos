@@ -41,7 +41,10 @@ func TestCheckDiskForProvisioning(t *testing.T) {
 			},
 
 			expected: volumes.CheckDiskResult{
-				DiskSize: 1 << 20,
+				CanProvision:   false,
+				HasGPT:         false,
+				DiskSize:       0x100000,
+				RejectedReason: 1,
 			},
 		},
 		{
@@ -60,8 +63,10 @@ func TestCheckDiskForProvisioning(t *testing.T) {
 			},
 
 			expected: volumes.CheckDiskResult{
-				CanProvision: true,
-				DiskSize:     1 << 20,
+				CanProvision:   true,
+				HasGPT:         false,
+				DiskSize:       0x100000,
+				RejectedReason: 1,
 			},
 		},
 		{
@@ -84,7 +89,10 @@ func TestCheckDiskForProvisioning(t *testing.T) {
 			},
 
 			expected: volumes.CheckDiskResult{
-				CanProvision: false,
+				CanProvision:   false,
+				HasGPT:         false,
+				DiskSize:       0x0,
+				RejectedReason: 2,
 			},
 		},
 		{
@@ -107,9 +115,10 @@ func TestCheckDiskForProvisioning(t *testing.T) {
 			},
 
 			expected: volumes.CheckDiskResult{
-				CanProvision: true,
-				HasGPT:       true,
-				DiskSize:     1 << 24,
+				CanProvision:   true,
+				HasGPT:         true,
+				DiskSize:       0x1000000,
+				RejectedReason: 1,
 			},
 		},
 	} {

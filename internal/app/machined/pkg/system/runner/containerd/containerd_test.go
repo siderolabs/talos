@@ -11,6 +11,8 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"math/rand"
+	"net"
 	"os"
 	"path/filepath"
 	"sync"
@@ -134,6 +136,48 @@ func (suite *ContainerdSuite) SetupSuite() {
 
 	suite.image, err = suite.client.Pull(ctx, busyboxImage, containerd.WithPullUnpack)
 	suite.Require().NoError(err)
+
+	// Add a wait loop for the socket to appear before dialing
+	sockPath := suite.containerdAddress
+	deadline := time.Now().Add(45 * time.Second) // Increased to 45 seconds for ample time
+
+	backoff := 100 * time.Millisecond
+	maxBackoff := 2 * time.Second
+	attempt := 0
+
+	for {
+		attempt++
+
+		// Check if socket exists and is a socket
+		if stat, err := os.Stat(sockPath); err == nil && stat.Mode()&os.ModeSocket != 0 {
+			// Test socket connectivity before proceeding
+			dialer := &net.Dialer{Timeout: 2 * time.Second}
+			conn, err := dialer.Dial("unix", sockPath)
+			if err == nil {
+				suite.T().Logf("Socket %s is available after %d attempts", sockPath, attempt)
+				conn.Close()
+				break
+			}
+			suite.T().Logf("Socket exists but connection failed: %v", err)
+		}
+
+		if time.Now().After(deadline) {
+			suite.T().Fatalf("containerd socket did not appear or is not accessible after %d attempts: %s", attempt, sockPath)
+		}
+
+		// Exponential backoff with jitter
+		jitter := time.Duration(rand.Int63n(int64(backoff) / 2))
+		sleepTime := backoff + jitter
+		time.Sleep(sleepTime)
+
+		// Increase backoff for next iteration (exponential with cap)
+		backoff = time.Duration(float64(backoff) * 1.5)
+		if backoff > maxBackoff {
+			backoff = maxBackoff
+		}
+	}
+
+	time.Sleep(100 * time.Millisecond)
 }
 
 func (suite *ContainerdSuite) SetupTest() {
