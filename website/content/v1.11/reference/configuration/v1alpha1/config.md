@@ -2673,7 +2673,7 @@ discovery:
 {{< /highlight >}}</details> | |
 |`etcd` |<a href="#Config.cluster.etcd">EtcdConfig</a> |Etcd specific configuration options. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 etcd:
-    image: gcr.io/etcd-development/etcd:v3.5.22 # The container image used to create the etcd service.
+    image: gcr.io/etcd-development/etcd:v3.6.4 # The container image used to create the etcd service.
     # The `ca` is the root certificate authority of the PKI.
     ca:
         crt: LS0tIEVYQU1QTEUgQ0VSVElGSUNBVEUgLS0t
@@ -3458,7 +3458,7 @@ EtcdConfig represents the etcd configuration options.
 {{< highlight yaml >}}
 cluster:
     etcd:
-        image: gcr.io/etcd-development/etcd:v3.5.22 # The container image used to create the etcd service.
+        image: gcr.io/etcd-development/etcd:v3.6.4 # The container image used to create the etcd service.
         # The `ca` is the root certificate authority of the PKI.
         ca:
             crt: LS0tIEVYQU1QTEUgQ0VSVElGSUNBVEUgLS0t
@@ -3476,7 +3476,7 @@ cluster:
 | Field | Type | Description | Value(s) |
 |-------|------|-------------|----------|
 |`image` |string |The container image used to create the etcd service. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
-image: gcr.io/etcd-development/etcd:v3.5.22
+image: gcr.io/etcd-development/etcd:v3.6.4
 {{< /highlight >}}</details> | |
 |`ca` |PEMEncodedCertificateAndKey |The `ca` is the root certificate authority of the PKI.<br>It is composed of a base64 encoded `crt` and `key`. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 ca:
