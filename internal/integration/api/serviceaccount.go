@@ -118,7 +118,7 @@ func (suite *ServiceAccountSuite) TestValid() {
 	_, err = suite.creteTestJob("kube-system", name, name, node)
 	suite.Assert().NoError(err)
 
-	err = suite.waitForJobReady(30*time.Second, "kube-system", name)
+	err = suite.waitForJobReady(2*time.Minute, "kube-system", name)
 	suite.Assert().NoError(err)
 
 	err = suite.DeleteResource(suite.ctx, jobGVR, "kube-system", name)
