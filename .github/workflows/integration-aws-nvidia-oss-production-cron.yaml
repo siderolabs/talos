@@ -1,13 +1,13 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
 #
-# Generated on 2025-08-04T12:44:39Z by kres 5fb5b90.
+# Generated on 2025-08-04T12:55:21Z by kres 5fb5b90.
 
 concurrency:
   group: ${{ github.head_ref || github.run_id }}
   cancel-in-progress: true
 "on":
   schedule:
-    - cron: 30 5 * * *
+    - cron: 30 7 * * *
 name: integration-aws-nvidia-oss-production-cron
 jobs:
   default:

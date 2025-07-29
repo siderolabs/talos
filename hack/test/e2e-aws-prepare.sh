@@ -7,7 +7,9 @@ source ./hack/test/e2e.sh
 REGION="us-east-1"
 
 function cloud_image_upload() {
-  CLOUD_IMAGES_EXTRA_ARGS=("--name-prefix=${1}" "--target-clouds=aws" "--architectures=amd64" "--aws-regions=${REGION}")
+  RANDOM_SUFFIX=$(openssl rand -hex 4)
+
+  CLOUD_IMAGES_EXTRA_ARGS=("--name-prefix=${1}-${RANDOM_SUFFIX}" "--target-clouds=aws" "--architectures=amd64" "--aws-regions=${REGION}")
 
   case "${1}" in
     talos-e2e-nvidia-oss-*)
