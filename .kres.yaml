@@ -2608,7 +2608,7 @@ spec:
         - self-hosted
         - generic # we can use generic here since the tests run against a remote talos cluster
       crons:
-        - '30 5 * * *'
+        - '30 7 * * *'
       triggerLabels:
         - integration/aws-nvidia-oss-lts
         - integration/aws-nvidia-oss
@@ -2708,7 +2708,7 @@ spec:
         - self-hosted
         - generic # we can use generic here since the tests run against a remote talos cluster
       crons:
-        - '30 5 * * *'
+        - '30 7 * * *'
       triggerLabels:
         - integration/aws-nvidia-oss-production
         - integration/aws-nvidia-oss
