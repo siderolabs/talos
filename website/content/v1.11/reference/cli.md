@@ -129,9 +129,97 @@ talosctl cgroups [flags]
 
 * [talosctl](#talosctl)	 - A CLI for out-of-band management of Kubernetes nodes created by Talos
 
+## talosctl cluster create docker
+
+Create a local Docker based kubernetes cluster
+
+```
+talosctl cluster create docker [flags]
+```
+
+### Options
+
+```
+      --cidr string                      CIDR of the cluster network (IPv4, ULA network for IPv6 is derived in automated way) (default "10.5.0.0/24")
+      --control-plane-port int           control plane port (load balancer and local API port) (default 6443)
+      --controlplanes int                the number of controlplanes to create (default 1)
+      --cpus string                      the share of CPUs as fraction (each control plane/VM) (default "2.0")
+      --cpus-workers string              the share of CPUs as fraction (each worker/VM) (default "2.0")
+      --kubernetes-version string        desired kubernetes version to run (default "1.34.0-beta.0")
+      --memory int                       the limit on memory usage in MB (each control plane/VM) (default 2048)
+      --memory-workers int               the limit on memory usage in MB (each worker/VM) (default 2048)
+      --talos-version string             the desired Talos version (default "v1.11.0-alpha.3-71-gbbb557965")
+      --talosconfig-destination string   The location to save the generated Talos configuration file to. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
+      --wireguard-cidr string            CIDR of the wireguard network
+      --workers int                      the number of workers to create (default 1)
+      --image string                     (docker) the image to use (default "ghcr.io/siderolabs/talos:latest")
+  -h, --help                             help for docker
+```
+
+### Options inherited from parent commands
+
+```
+      --cluster string       Cluster to connect to if a proxy endpoint is used.
+      --context string       Context to be used in command
+  -e, --endpoints strings    override default endpoints in Talos configuration
+      --name string          the name of the cluster (default "talos-default")
+  -n, --nodes strings        target the specified nodes
+      --provisioner string   Talos cluster provisioner to use (default "docker")
+      --state string         directory path to store cluster state (default "/home/user/.talos/clusters")
+```
+
+### SEE ALSO
+
+* [talosctl cluster create](#talosctl-cluster-create)	 - Creates a local cluster for Talos development
+
+## talosctl cluster create qemu
+
+Create a local Qemu based kubernetes cluster
+
+```
+talosctl cluster create qemu [flags]
+```
+
+### Options
+
+```
+      --cidr string                      CIDR of the cluster network (IPv4, ULA network for IPv6 is derived in automated way) (default "10.5.0.0/24")
+      --control-plane-port int           control plane port (load balancer and local API port) (default 6443)
+      --controlplanes int                the number of controlplanes to create (default 1)
+      --cpus string                      the share of CPUs as fraction (each control plane/VM) (default "2.0")
+      --cpus-workers string              the share of CPUs as fraction (each worker/VM) (default "2.0")
+      --kubernetes-version string        desired kubernetes version to run (default "1.34.0-beta.0")
+      --memory int                       the limit on memory usage in MB (each control plane/VM) (default 2048)
+      --memory-workers int               the limit on memory usage in MB (each worker/VM) (default 2048)
+      --talos-version string             the desired Talos version (default "v1.11.0-alpha.3-71-gbbb557965")
+      --talosconfig-destination string   The location to save the generated Talos configuration file to. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
+      --wireguard-cidr string            CIDR of the wireguard network
+      --workers int                      the number of workers to create (default 1)
+      --disk-preallocate                 whether disk space should be preallocated (default true)
+      --disks strings                    list of disks to create in format "<driver1>:<size1>" (size is specified in megabytes) (disks after the first one are added only to worker machines) (default [virtio:6144])
+      --user-volumes strings             list of user volumes to create for each VM in format: <name1>:<size1>:<name2>:<size2>
+  -h, --help                             help for qemu
+```
+
+### Options inherited from parent commands
+
+```
+      --cluster string       Cluster to connect to if a proxy endpoint is used.
+      --context string       Context to be used in command
+  -e, --endpoints strings    override default endpoints in Talos configuration
+      --name string          the name of the cluster (default "talos-default")
+  -n, --nodes strings        target the specified nodes
+      --provisioner string   Talos cluster provisioner to use (default "docker")
+      --state string         directory path to store cluster state (default "/home/user/.talos/clusters")
+```
+
+### SEE ALSO
+
+* [talosctl cluster create](#talosctl-cluster-create)	 - Creates a local cluster for Talos development
+
 ## talosctl cluster create
 
-Creates a local docker-based or QEMU-based kubernetes cluster
+Creates a local cluster for Talos development
 
 ```
 talosctl cluster create [flags]
@@ -165,7 +253,7 @@ talosctl cluster create [flags]
       --skip-k8s-node-readiness-check            skip k8s node readiness checks
       --skip-kubeconfig                          skip merging kubeconfig from the created cluster
       --talos-version string                     the desired Talos version to generate config for (if not set, defaults to image version)
-      --talosconfig string                       The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
+      --talosconfig string                       The location to save the generated Talos configuration file to. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
       --wait                                     wait for the cluster to be ready before returning (default true)
       --wait-timeout duration                    timeout to wait for the cluster to be ready (default 20m0s)
       --wireguard-cidr string                    CIDR of the wireguard network
@@ -224,11 +312,7 @@ talosctl cluster create [flags]
       --with-tpm2                                (qemu) enable TPM 2.0 emulation support using swtpm
       --with-uefi                                (qemu) enable UEFI on x86_64 architecture (default true)
       --with-uuid-hostnames                      (qemu) use machine UUIDs as default hostnames
-      --docker-disable-ipv6                      (docker) skip enabling IPv6 in containers
-      --docker-host-ip string                    (docker) Host IP to forward exposed ports to (default "0.0.0.0")
-  -p, --exposed-ports string                     (docker) Comma-separated list of ports/protocols to expose on init node. Ex -p <hostPort>:<containerPort>/<protocol (tcp or udp)>
       --image string                             (docker) the image to use (default "ghcr.io/siderolabs/talos:latest")
-      --mount mount                              (docker) attach a mount to the container
   -h, --help                                     help for create
 ```
 
@@ -247,6 +331,8 @@ talosctl cluster create [flags]
 ### SEE ALSO
 
 * [talosctl cluster](#talosctl-cluster)	 - A collection of commands for managing local docker-based or QEMU-based clusters
+* [talosctl cluster create docker](#talosctl-cluster-create-docker)	 - Create a local Docker based kubernetes cluster
+* [talosctl cluster create qemu](#talosctl-cluster-create-qemu)	 - Create a local Qemu based kubernetes cluster
 
 ## talosctl cluster destroy
 
@@ -339,7 +425,7 @@ A collection of commands for managing local docker-based or QEMU-based clusters
 ### SEE ALSO
 
 * [talosctl](#talosctl)	 - A CLI for out-of-band management of Kubernetes nodes created by Talos
-* [talosctl cluster create](#talosctl-cluster-create)	 - Creates a local docker-based or QEMU-based kubernetes cluster
+* [talosctl cluster create](#talosctl-cluster-create)	 - Creates a local cluster for Talos development
 * [talosctl cluster destroy](#talosctl-cluster-destroy)	 - Destroys a local docker-based or firecracker-based kubernetes cluster
 * [talosctl cluster show](#talosctl-cluster-show)	 - Shows info about a local provisioned kubernetes cluster
 

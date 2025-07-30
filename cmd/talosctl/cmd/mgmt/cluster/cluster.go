@@ -49,7 +49,7 @@ func init() {
 		DefaultCNIDir = filepath.Join(talosDir, "cni")
 	}
 
-	Cmd.PersistentFlags().StringVar(&Flags.ProvisionerName, "provisioner", providers.DockerProviderName, "Talos cluster provisioner to use")
+	Cmd.PersistentFlags().StringVar(&Flags.ProvisionerName, ProvisionerFlag, providers.DockerProviderName, "Talos cluster provisioner to use")
 	Cmd.PersistentFlags().StringVar(&Flags.StateDir, "state", DefaultStateDir, "directory path to store cluster state")
 	Cmd.PersistentFlags().StringVar(&Flags.ClusterName, "name", "talos-default", "the name of the cluster")
 }
