@@ -19,10 +19,10 @@ preface = """
     [notes.updates]
         title = "Component Updates"
         description = """\
-Linux: 6.12.35
-Kubernetes: 1.33.2
+Linux: 6.12.40
+Kubernetes: 1.33.3
 
-Talos is built with Go 1.24.4.
+Talos is built with Go 1.24.5.
 """
 
     [notes.azure]
