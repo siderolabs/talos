@@ -192,6 +192,7 @@ kernel/drivers/virtio/virtio_mmio.ko
 kernel/drivers/virtio/virtio_pci.ko
 kernel/drivers/virtio/virtio_pci_legacy_dev.ko
 kernel/drivers/virtio/virtio_pci_modern_dev.ko
+kernel/drivers/watchdog/f71808e_wdt.ko
 kernel/drivers/watchdog/i6300esb.ko
 kernel/drivers/watchdog/iTCO_vendor_support.ko
 kernel/drivers/watchdog/iTCO_wdt.ko
