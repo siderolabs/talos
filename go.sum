@@ -618,8 +618,8 @@ github.com/siderolabs/crypto v0.6.3 h1:9eGHzAJQg7FvPcjVANLQKnepc0nrl5IkLJ3FxhMvs
 github.com/siderolabs/crypto v0.6.3/go.mod h1:LEhGuXlvwElMgh+rYjCFw6JgfOgyaC+sqsl/YwWU+EM=
 github.com/siderolabs/discovery-api v0.1.6 h1:/LhsF1ytqFEfWwV0UKfUgn90k9fk5+rhYMJ9yeUB2yc=
 github.com/siderolabs/discovery-api v0.1.6/go.mod h1:s5CnTyRMGid/vJNSJs8Jw9I4tnKHu/2SGqP2ytTaePQ=
-github.com/siderolabs/discovery-client v0.1.12 h1:DXCESqezMMRBLFyWawaJkVogAzvFuvdYyEeITTcD6uk=
-github.com/siderolabs/discovery-client v0.1.12/go.mod h1:kojlX4Kk0o9wsbJU1XOy4BH0W6RMg2I2d8WJ4ciK3qU=
+github.com/siderolabs/discovery-client v0.1.13 h1:s0iK2ixopCFFgQ5zZmzsQ8xf8Hd+SygrUdlhE+um6iQ=
+github.com/siderolabs/discovery-client v0.1.13/go.mod h1:kojlX4Kk0o9wsbJU1XOy4BH0W6RMg2I2d8WJ4ciK3qU=
 github.com/siderolabs/ethtool v0.4.0-sidero h1:Ls/M4bFUjfcB1RDVviPZlL3kWcXaEVVSbKke+EZ2A9U=
 github.com/siderolabs/ethtool v0.4.0-sidero/go.mod h1:nOIR88fiFTdBfakYLEUAhxdy75Ih/fgnSlsSKAHRpfc=
 github.com/siderolabs/gen v0.8.0/go.mod h1:an3a2Y53O7kUjnnK8Bfu3gewtvnIOu5RTU6HalFtXQQ=
