@@ -5,6 +5,7 @@
 package block
 
 import (
+	"cmp"
 	"context"
 	"fmt"
 
@@ -21,6 +22,12 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/resources/block"
 	"github.com/siderolabs/talos/pkg/machinery/resources/config"
+)
+
+// Size constants.
+const (
+	MiB               = 1024 * 1024
+	MinUserVolumeSize = 100 * MiB
 )
 
 // UserVolumeConfigController provides user volume configuration based on UserVolumeConfig documents.
@@ -163,7 +170,7 @@ func (ctrl *UserVolumeConfigController) Run(ctx context.Context, r controller.Ru
 							Match: diskSelector,
 						},
 						PartitionSpec: block.PartitionSpec{
-							MinSize:  userVolumeConfig.Provisioning().MinSize().ValueOrZero(),
+							MinSize:  cmp.Or(userVolumeConfig.Provisioning().MinSize().ValueOrZero(), MinUserVolumeSize),
 							MaxSize:  userVolumeConfig.Provisioning().MaxSize().ValueOrZero(),
 							Grow:     userVolumeConfig.Provisioning().Grow().ValueOrZero(),
 							Label:    volumeID,
