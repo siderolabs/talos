@@ -7,7 +7,7 @@ match_deps = "^github.com/((talos-systems|siderolabs)/[a-zA-Z0-9-]+)$"
 ignore_deps = ["github.com/coredns/coredns"]
 
 # previous release
-previous = "v1.10.4"
+previous = "v1.10.5"
 
 pre_release = false
 
@@ -23,13 +23,6 @@ Linux: 6.12.40
 Kubernetes: 1.33.3
 
 Talos is built with Go 1.24.5.
-"""
-
-    [notes.azure]
-        title = "Azure"
-        description = """\
-Talos on Azure now defaults to MTU of 1400 bytes for the `eth0` interface to avoid packet fragmentation issues.
-The default MTU can be overriden with machine configuration.
 """
 
 [make_deps]

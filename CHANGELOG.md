@@ -1,3 +1,80 @@
+## [Talos 1.10.6](https://github.com/siderolabs/talos/releases/tag/v1.10.6) (2025-07-31)
+
+Welcome to the v1.10.6 release of Talos!
+
+
+
+Please try out the release binaries and report any issues at
+https://github.com/siderolabs/talos/issues.
+
+### Component Updates
+
+Linux: 6.12.40
+Kubernetes: 1.33.3
+
+Talos is built with Go 1.24.5.
+
+
+### Contributors
+
+* Andrey Smirnov
+* Andrew Longwill
+* Mateusz Urbanek
+
+### Changes
+<details><summary>7 commits</summary>
+<p>
+
+* [`755308906`](https://github.com/siderolabs/talos/commit/755308906f3ad3855a2d8755ceeec9d8a8263be8) fix: issues with reading GPT
+* [`bb1cdc86b`](https://github.com/siderolabs/talos/commit/bb1cdc86b61b1890f1b7ae0da19ef6e6ad14b136) fix: issue with volume remount on service restart
+* [`e8bbe4a51`](https://github.com/siderolabs/talos/commit/e8bbe4a516ea58d25e1b228df3558780e95c0c32) chore: tag aws snapshots created via ci with the image name
+* [`e59522577`](https://github.com/siderolabs/talos/commit/e59522577bfabee9381b3073e46730ff0dfbec4b) feat: include AMD encrypted mem modules into base
+* [`68a485269`](https://github.com/siderolabs/talos/commit/68a4852699160abd56c5218ecfa0b0effc38096a) fix: add more bootloader probe logs on upgrade
+* [`d76649dd5`](https://github.com/siderolabs/talos/commit/d76649dd570964c55986b3b5739c2b6f42dd9051) fix: talos endpoint might not be created in Kubernetes
+* [`e62175948`](https://github.com/siderolabs/talos/commit/e62175948c0058b712bac331b2717aa3f2bc16ab) feat: update Linux to 6.12.40
+</p>
+</details>
+
+### Changes from siderolabs/gen
+<details><summary>1 commit</summary>
+<p>
+
+* [`044d921`](https://github.com/siderolabs/gen/commit/044d921685bbd8b603a64175ea63b07efe9a64a7) feat: add xslices.Deduplicate
+</p>
+</details>
+
+### Changes from siderolabs/pkgs
+<details><summary>5 commits</summary>
+<p>
+
+* [`2e6dd0a`](https://github.com/siderolabs/pkgs/commit/2e6dd0a3b624b816824cc08716ec90a4f2322d31) feat: update Linux to 6.12.40
+* [`3657b7d`](https://github.com/siderolabs/pkgs/commit/3657b7d755532a411f24c40c723f4e8456f0898d) feat: update Linux to 6.12.38
+* [`a8e77ff`](https://github.com/siderolabs/pkgs/commit/a8e77ffa5b52b40b36d8767cf9ffb401a1575aa7) feat: enable AMD encrypted memory
+* [`8dd783f`](https://github.com/siderolabs/pkgs/commit/8dd783fcf6b4120761dca1236697904e6c76cd4c) feat: update Linux to 6.12.36 and firmware
+* [`7e49fce`](https://github.com/siderolabs/pkgs/commit/7e49fce6cbb55497c4954878907006ba0f5bf1ad) feat: update tools and toolchain
+</p>
+</details>
+
+### Changes from siderolabs/tools
+<details><summary>1 commit</summary>
+<p>
+
+* [`31fd099`](https://github.com/siderolabs/tools/commit/31fd099ca3272a75b5402c413b168c2ca7e8270d) feat: update Go to 1.24.5
+</p>
+</details>
+
+### Dependency Changes
+
+* **github.com/siderolabs/gen**                v0.8.4 -> v0.8.5
+* **github.com/siderolabs/go-blockdevice/v2**  v2.0.16 -> v2.0.19
+* **github.com/siderolabs/pkgs**               v1.10.0-24-g28fa97d -> v1.10.0-29-g2e6dd0a
+* **github.com/siderolabs/tools**              v1.10.0-4-g9d54ed4 -> v1.10.0-5-g31fd099
+* **golang.org/x/sync**                        v0.15.0 -> v0.16.0
+* **golang.org/x/sys**                         v0.33.0 -> v0.34.0
+* **golang.org/x/text**                        v0.26.0 -> v0.27.0
+
+Previous release can be found at [v1.10.5](https://github.com/siderolabs/talos/releases/tag/v1.10.5)
+
 ## [Talos 1.10.5](https://github.com/siderolabs/talos/releases/tag/v1.10.5) (2025-07-03)
 
 Welcome to the v1.10.5 release of Talos!
