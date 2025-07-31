@@ -271,6 +271,7 @@ description: Talos gRPC API reference.
     - [Mount](#talos.resource.definitions.proto.Mount)
   
 - [resource/definitions/runtime/runtime.proto](#resource/definitions/runtime/runtime.proto)
+    - [BootedEntrySpec](#talos.resource.definitions.runtime.BootedEntrySpec)
     - [DevicesStatusSpec](#talos.resource.definitions.runtime.DevicesStatusSpec)
     - [DiagnosticSpec](#talos.resource.definitions.runtime.DiagnosticSpec)
     - [EventSinkConfigSpec](#talos.resource.definitions.runtime.EventSinkConfigSpec)
@@ -5043,6 +5044,21 @@ Mount specifies a mount for a container.
 <p align="right"><a href="#top">Top</a></p>
 
 ## resource/definitions/runtime/runtime.proto
+
+
+
+<a name="talos.resource.definitions.runtime.BootedEntrySpec"></a>
+
+### BootedEntrySpec
+BootedEntrySpec describes the booted entry resource properties.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| booted_entry | [string](#string) |  |  |
+
+
+
 
 
 
