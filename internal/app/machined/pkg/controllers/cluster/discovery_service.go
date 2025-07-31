@@ -243,8 +243,10 @@ func (ctrl *DiscoveryServiceController) Run(ctx context.Context, r controller.Ru
 				TTL:           defaultDiscoveryTTL,
 				Insecure:      discoveryConfig.TypedSpec().ServiceEndpointInsecure,
 				ClientVersion: version.Tag,
-				TLSConfig: &tls.Config{
-					RootCAs: httpdefaults.RootCAs(),
+				TLSConfig: func() *tls.Config {
+					return &tls.Config{
+						RootCAs: httpdefaults.RootCAs(),
+					}
 				},
 				DialOptions: []grpc.DialOption{
 					grpc.WithContextDialer(dialer.DynamicProxyDialer),

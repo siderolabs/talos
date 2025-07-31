@@ -140,7 +140,7 @@ require (
 	github.com/scaleway/scaleway-sdk-go v1.0.0-beta.33
 	github.com/siderolabs/crypto v0.6.0
 	github.com/siderolabs/discovery-api v0.1.6
-	github.com/siderolabs/discovery-client v0.1.11
+	github.com/siderolabs/discovery-client v0.1.13
 	github.com/siderolabs/gen v0.8.5
 	github.com/siderolabs/go-api-signature v0.3.6
 	github.com/siderolabs/go-blockdevice v0.4.8
@@ -190,7 +190,7 @@ require (
 	golang.org/x/text v0.27.0
 	golang.org/x/time v0.11.0
 	golang.zx2c4.com/wireguard/wgctrl v0.0.0-20241231184526-a9ab2273dd10
-	google.golang.org/grpc v1.71.3
+	google.golang.org/grpc v1.73.0
 	google.golang.org/protobuf v1.36.6
 	gopkg.in/yaml.v3 v3.0.1
 	k8s.io/klog/v2 v2.130.1
@@ -200,7 +200,7 @@ require (
 )
 
 require (
-	cel.dev/expr v0.19.2 // indirect
+	cel.dev/expr v0.23.0 // indirect
 	github.com/0x5a17ed/itkit v0.6.0 // indirect
 	github.com/AdaLogics/go-fuzz-headers v0.0.0-20240806141605-e8a1dd7889d6 // indirect
 	github.com/AdamKorcz/go-118-fuzz-build v0.0.0-20231105174938-2b5cbb29f3e2 // indirect
@@ -349,9 +349,9 @@ require (
 	go.opentelemetry.io/auto/sdk v1.1.0 // indirect
 	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.58.0 // indirect
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.59.0 // indirect
-	go.opentelemetry.io/otel v1.34.0 // indirect
-	go.opentelemetry.io/otel/metric v1.34.0 // indirect
-	go.opentelemetry.io/otel/trace v1.34.0 // indirect
+	go.opentelemetry.io/otel v1.35.0 // indirect
+	go.opentelemetry.io/otel/metric v1.35.0 // indirect
+	go.opentelemetry.io/otel/trace v1.35.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	golang.org/x/crypto v0.39.0 // indirect
 	golang.org/x/exp v0.0.0-20250128182459-e0ece0dbea4c // indirect
