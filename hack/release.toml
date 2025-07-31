@@ -22,7 +22,7 @@ Linux: 6.12.40
 Kubernetes: 1.34.0-beta.0
 runc: 1.3.0
 etcd: 3.6.4
-containerd: 2.1.3
+containerd: 2.1.4
 Flannel CNI plugin: 1.7.1-flannel1
 Flannel: 0.27.2
 CoreDNS: 1.12.2

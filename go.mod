@@ -58,7 +58,7 @@ require (
 	github.com/cenkalti/backoff/v4 v4.3.0
 	github.com/containerd/cgroups/v3 v3.0.5
 	github.com/containerd/containerd/api v1.9.0
-	github.com/containerd/containerd/v2 v2.1.3
+	github.com/containerd/containerd/v2 v2.1.4
 	github.com/containerd/errdefs v1.0.0
 	github.com/containerd/log v0.1.0
 	github.com/containerd/platforms v1.0.0-rc.1
