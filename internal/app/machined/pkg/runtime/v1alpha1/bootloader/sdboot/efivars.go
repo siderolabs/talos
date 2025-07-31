@@ -26,9 +26,11 @@ var SystemdBootStubInfoPath = constants.EFIVarsMountPoint + "/" + "StubInfo-" + 
 
 // Variable names.
 const (
-	LoaderEntryDefaultName  = "LoaderEntryDefault"
-	LoaderEntrySelectedName = "LoaderEntrySelected"
-	LoaderConfigTimeoutName = "LoaderConfigTimeout"
+	LoaderConfigTimeoutName     = "LoaderConfigTimeout"
+	LoaderEntryDefaultName      = "LoaderEntryDefault"
+	LoaderEntryOneShotName      = "LoaderEntryOneShot"
+	LoaderEntryRebootReasonName = "LoaderEntryRebootReason"
+	LoaderEntrySelectedName     = "LoaderEntrySelected"
 
 	StubImageIdentifierName = "StubImageIdentifier"
 )

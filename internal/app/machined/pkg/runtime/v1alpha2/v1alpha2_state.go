@@ -202,6 +202,7 @@ func NewState() (*State, error) {
 		&perf.CPU{},
 		&perf.Memory{},
 		&cri.RegistriesConfig{},
+		&runtime.BootedEntry{},
 		&runtime.DevicesStatus{},
 		&runtime.Diagnostic{},
 		&runtime.EventSinkConfig{},

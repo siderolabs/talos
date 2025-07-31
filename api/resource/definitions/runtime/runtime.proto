@@ -9,6 +9,11 @@ import "common/common.proto";
 import "google/protobuf/duration.proto";
 import "resource/definitions/enums/enums.proto";
 
+// BootedEntrySpec describes the booted entry resource properties.
+message BootedEntrySpec {
+  string booted_entry = 1;
+}
+
 // DevicesStatusSpec is the spec for devices status.
 message DevicesStatusSpec {
   bool ready = 1;

@@ -48,7 +48,7 @@ func (ctrl *SecurityStateController) Inputs() []controller.Input {
 		{
 			Namespace: v1alpha1.NamespaceName,
 			Type:      v1alpha1.ServiceType,
-			Kind:      controller.OutputExclusive,
+			Kind:      controller.InputWeak,
 		},
 	}
 }
