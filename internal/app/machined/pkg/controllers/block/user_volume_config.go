@@ -5,6 +5,7 @@
 package block
 
 import (
+	"cmp"
 	"context"
 	"fmt"
 
@@ -22,6 +23,12 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/resources/block"
 	"github.com/siderolabs/talos/pkg/machinery/resources/config"
+)
+
+// Size constants.
+const (
+	MiB               = 1024 * 1024
+	MinUserVolumeSize = 100 * MiB
 )
 
 // UserVolumeConfigController provides user volume configuration based on UserVolumeConfig, SwapVolumeConfig, etc. documents.
@@ -309,7 +316,7 @@ func (ctrl *UserVolumeConfigController) handleUserVolumeConfig(
 			Match: diskSelector,
 		},
 		PartitionSpec: block.PartitionSpec{
-			MinSize:  userVolumeConfig.Provisioning().MinSize().ValueOrZero(),
+			MinSize:  cmp.Or(userVolumeConfig.Provisioning().MinSize().ValueOrZero(), MinUserVolumeSize),
 			MaxSize:  userVolumeConfig.Provisioning().MaxSize().ValueOrZero(),
 			Grow:     userVolumeConfig.Provisioning().Grow().ValueOrZero(),
 			Label:    volumeID,
@@ -356,7 +363,7 @@ func (ctrl *UserVolumeConfigController) handleRawVolumeConfig(
 			Match: diskSelector,
 		},
 		PartitionSpec: block.PartitionSpec{
-			MinSize:  rawVolumeConfig.Provisioning().MinSize().ValueOrZero(),
+			MinSize:  cmp.Or(rawVolumeConfig.Provisioning().MinSize().ValueOrZero(), MinUserVolumeSize),
 			MaxSize:  rawVolumeConfig.Provisioning().MaxSize().ValueOrZero(),
 			Grow:     rawVolumeConfig.Provisioning().Grow().ValueOrZero(),
 			Label:    volumeID,
@@ -423,8 +430,7 @@ func (ctrl *UserVolumeConfigController) handleSwapVolumeConfig(
 			Match: diskSelector,
 		},
 		PartitionSpec: block.PartitionSpec{
-			MinSize:  swapVolumeConfig.Provisioning().MinSize().ValueOrZero(),
-			MaxSize:  swapVolumeConfig.Provisioning().MaxSize().ValueOrZero(),
+			MaxSize:  cmp.Or(swapVolumeConfig.Provisioning().MaxSize().ValueOrZero(), MinUserVolumeSize),
 			Grow:     swapVolumeConfig.Provisioning().Grow().ValueOrZero(),
 			Label:    volumeID,
 			TypeUUID: partition.LinkSwap,

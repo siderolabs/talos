@@ -93,6 +93,13 @@ func (suite *UserVolumeConfigSuite) TestReconcileUserVolumesSwapVolumes() {
 
 		asrt.Contains([]string{"data1", "data2"}, vc.TypedSpec().Mount.TargetPath)
 		asrt.Equal(constants.UserVolumeMountPoint, vc.TypedSpec().Mount.ParentID)
+
+		switch vc.Metadata().ID() {
+		case userVolumes[0]:
+			asrt.EqualValues(10*1024*1024*1024, vc.TypedSpec().Provisioning.PartitionSpec.MinSize)
+		case userVolumes[1]:
+			asrt.EqualValues(100*1024*1024, vc.TypedSpec().Provisioning.PartitionSpec.MinSize)
+		}
 	})
 
 	ctest.AssertResources(suite, userVolumes, func(vmr *block.VolumeMountRequest, asrt *assert.Assertions) {
