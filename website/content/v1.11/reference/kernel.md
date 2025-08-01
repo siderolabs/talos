@@ -145,10 +145,19 @@ mkisofs -joliet -rock -volid 'metal-iso' -output config.iso iso/
 
 Kernel parameters prefixed with `talos.config.auth.` are used to configure [OAuth2 authentication for the machine configuration]({{< relref "../advanced/machine-config-oauth" >}}).
 
-#### `talos.config.inline`
+#### `talos.config.early` and `talos.config.inline`
 
-The kernel parameter `talos.config.inline` can be used to provide initial minimal machine configuration directly on the kernel command line, when other means of providing the configuration are not available.
-The machine configuration should be `zstd` compressed and base64-encoded to be passed as a kernel parameter.
+The kernel parameters `talos.config.early` and `talos.config.inline` are used to provide the initial machine configuration directly on the kernel command line.
+
+The difference between the two is the order of configuration loading:
+
+* first, the persisted configuration is loaded from the `STATE` partition, if it exists;
+* `talos.config.early` is tried next;
+* any platform-specific configuration source is tried next (e.g. `talos.config` for the `metal` platform, our VM user data source, etc.);
+* finally, `talos.config.inline` is tried;
+* if no complete configuration is found, the system will enter maintenance mode.
+
+For both arguments, the machine configuration should be `zstd` compressed and base64-encoded to be passed as a kernel parameter.
 
 > Note: The kernel command line has a limited size (4096 bytes), so this method is only suitable for small configuration documents.
 

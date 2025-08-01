@@ -137,6 +137,14 @@ New per-key option `lockToSTATE` is added to the `VolumeConfig` document, which 
 So, if the `STATE` volume is wiped or replaced, the volume encryption key will not be usable anymore.
 """
 
+    [notes.early-config]
+        title = "Early Inline Configuration"
+        description = """\
+Talos now supports passing early inline configuration via the `talos.config.early` kernel parameter.
+This allows to pass the configuration before the platform config source is probed, which is useful for early boot configuration.
+The value of this parameter has same format as the `talos.config.inline` parameter, i.e. it should be base64 encoded and zstd-compressed.
+"""
+
 [make_deps]
 
     [make_deps.tools]

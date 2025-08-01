@@ -526,7 +526,7 @@ func (suite *AcquireSuite) TestFromPlatformToMaintenance() {
 	)
 }
 
-func (suite *AcquireSuite) TestFromCmdlineToMaintenance() {
+func (suite *AcquireSuite) TestFromCmdlineLateToMaintenance() {
 	var cfgCompressed bytes.Buffer
 
 	zw, err := zstd.NewWriter(&cfgCompressed)
@@ -584,6 +584,57 @@ func (suite *AcquireSuite) TestFromCmdlineToMaintenance() {
 				Type:    platform.EventTypeActivate,
 				Message: "Talos booted into maintenance mode. Ready for user interaction.",
 			},
+			{
+				Type:    platform.EventTypeConfigLoaded,
+				Message: "Talos machine config loaded successfully.",
+			},
+		},
+		suite.platformEvent.getEvents(),
+	)
+}
+
+func (suite *AcquireSuite) TestFromCmdlineEarlyToPlatform() {
+	var cfgCompressed bytes.Buffer
+
+	zw, err := zstd.NewWriter(&cfgCompressed)
+	suite.Require().NoError(err)
+
+	_, err = zw.Write(suite.partialMachineConfig)
+	suite.Require().NoError(err)
+
+	suite.Require().NoError(zw.Close())
+
+	cfgEncoded := base64.StdEncoding.EncodeToString(cfgCompressed.Bytes())
+
+	suite.cmdline.cmdline = procfs.NewCmdline(fmt.Sprintf("%s=%s", constants.KernelParamConfigEarly, cfgEncoded))
+
+	suite.noStateVolume()
+	suite.platformConfig.configuration = suite.completeMachineConfig
+	suite.platformConfig.err = nil
+	suite.triggerAcquire()
+
+	var cfg config.Provider
+
+	select {
+	case cfg = <-suite.configSetter.cfgCh:
+	case <-suite.Ctx().Done():
+		suite.Require().Fail("timed out waiting for config")
+	}
+
+	select {
+	case <-suite.configSetter.persistedCfgCh:
+	case <-suite.Ctx().Done():
+		suite.Require().Fail("timed out waiting for persisted config")
+	}
+
+	suite.Require().Equal(cfg.SideroLink().APIUrl().Host, "siderolink.api")
+
+	cfg = suite.waitForConfig(true)
+	suite.Require().Equal(cfg.Cluster().Name(), suite.clusterName)
+
+	suite.Assert().Empty(suite.eventPublisher.getEvents())
+	suite.Assert().Equal(
+		[]platform.Event{
 			{
 				Type:    platform.EventTypeConfigLoaded,
 				Message: "Talos machine config loaded successfully.",

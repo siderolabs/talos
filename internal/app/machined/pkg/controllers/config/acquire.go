@@ -222,7 +222,7 @@ func (ctrl *AcquireController) Run(ctx context.Context, r controller.Runtime, lo
 //
 // Transitions:
 //
-//	--> platform: no config found on disk, proceed to platform
+//	--> cmdlineEarly: no config found on disk, proceed to cmdlineEarly
 //	--> maintenanceEnter: config found on disk, but it's incomplete, proceed to maintenance
 //	--> done: config found on disk, and it's complete
 //
@@ -239,8 +239,8 @@ func (ctrl *AcquireController) stateDisk(ctx context.Context, r controller.Runti
 		// wait for the status to be available
 		return nil, nil, nil
 	case stateVolumeStatus.TypedSpec().Phase == block.VolumePhaseMissing:
-		// STATE is missing, proceed to platform
-		return ctrl.statePlatform, nil, nil
+		// STATE is missing, proceed to cmdlineEarly
+		return ctrl.stateCmdlineEarly, nil, nil
 	case stateVolumeStatus.TypedSpec().Phase == block.VolumePhaseReady:
 		// STATE is ready, proceed to to the action
 	default:
@@ -264,8 +264,8 @@ func (ctrl *AcquireController) stateDisk(ctx context.Context, r controller.Runti
 
 	switch {
 	case cfg == nil:
-		// no config loaded, proceed to platform
-		return ctrl.statePlatform, nil, nil
+		// no config loaded, proceed to cmdlineEarly
+		return ctrl.stateCmdlineEarly, nil, nil
 	case cfg.CompleteForBoot():
 		// complete config, we are done
 		return ctrl.stateDone, cfg, nil
@@ -356,11 +356,23 @@ func (ctrl *AcquireController) loadConfigFromDisk(ctx context.Context, r control
 	return nil
 }
 
+// stateCmdlineEarly acquires machine configuration from the kernel cmdline source (talos.config.early).
+//
+// It is called before the platform source.
+//
+// Transitions:
+//
+//	--> platform: config loaded from cmdline, but it's incomplete, or no config: proceed to platform
+//	--> done: config loaded from cmdline, and it's complete
+func (ctrl *AcquireController) stateCmdlineEarly(ctx context.Context, r controller.Runtime, logger *zap.Logger) (stateMachineFunc, config.Provider, error) {
+	return ctrl.stateCmdlineGeneric(constants.KernelParamConfigEarly, "cmdline-early", ctrl.statePlatform)(ctx, r, logger)
+}
+
 // statePlatform acquires machine configuration from the platform source.
 //
 // Transitions:
 //
-//	--> cmdline: config loaded from platform, but it's incomplete, or no config from platform: proceed to cmdline
+//	--> cmdlineLate: config loaded from platform, but it's incomplete, or no config from platform: proceed to cmdline
 //	--> done: config loaded from platform, and it's complete
 func (ctrl *AcquireController) statePlatform(ctx context.Context, r controller.Runtime, logger *zap.Logger) (stateMachineFunc, config.Provider, error) {
 	cfg, err := ctrl.loadFromPlatform(ctx, logger)
@@ -377,7 +389,7 @@ func (ctrl *AcquireController) statePlatform(ctx context.Context, r controller.R
 		fallthrough
 	case !cfg.CompleteForBoot():
 		// incomplete or missing config, proceed to maintenance
-		return ctrl.stateCmdline, cfg, nil
+		return ctrl.stateCmdlineLate, cfg, nil
 	default:
 		// complete config, we are done
 		return ctrl.stateDone, cfg, nil
@@ -445,52 +457,63 @@ func (ctrl *AcquireController) loadFromPlatform(ctx context.Context, logger *zap
 	return cfg, nil
 }
 
-// stateCmdline acquires machine configuration from the kernel cmdline source.
+// stateCmdlineLate acquires machine configuration from the kernel cmdline source (talos.config.inline).
+//
+// It is called after the platform source.
 //
 // Transitions:
 //
-//	--> maintenanceEnter: config loaded from cmdline, but it's incomplete, or no config from platform: proceed to maintenance
+//	--> maintenanceEnter: config loaded from cmdline, but it's incomplete, or no config from cmdline: proceed to maintenance
 //	--> done: config loaded from cmdline, and it's complete
-func (ctrl *AcquireController) stateCmdline(ctx context.Context, r controller.Runtime, logger *zap.Logger) (stateMachineFunc, config.Provider, error) {
-	if ctrl.Mode.InContainer() {
-		// no cmdline in containers
-		return ctrl.stateMaintenanceEnter, nil, nil
-	}
+func (ctrl *AcquireController) stateCmdlineLate(ctx context.Context, r controller.Runtime, logger *zap.Logger) (stateMachineFunc, config.Provider, error) {
+	return ctrl.stateCmdlineGeneric(constants.KernelParamConfigInline, "cmdline-late", ctrl.stateMaintenanceEnter)(ctx, r, logger)
+}
 
-	cfg, err := ctrl.loadFromCmdline(ctx, logger)
-	if err != nil {
-		return nil, nil, err
-	}
+// stateCmdlineGeneric is a generic function to load config from cmdline given a parameter name and source name, and the next state in the state machine.
+func (ctrl *AcquireController) stateCmdlineGeneric(
+	paramName, sourceName string, next stateMachineFunc,
+) func(ctx context.Context, r controller.Runtime, logger *zap.Logger) (stateMachineFunc, config.Provider, error) {
+	return func(ctx context.Context, r controller.Runtime, logger *zap.Logger) (stateMachineFunc, config.Provider, error) {
+		if ctrl.Mode.InContainer() {
+			// no cmdline in containers
+			return next, nil, nil
+		}
 
-	if cfg != nil {
-		ctrl.configSourcesUsed = append(ctrl.configSourcesUsed, "cmdline")
-	}
+		cfg, err := ctrl.loadFromCmdline(ctx, logger, paramName)
+		if err != nil {
+			return nil, nil, err
+		}
 
-	switch {
-	case cfg == nil:
-		fallthrough
-	case !cfg.CompleteForBoot():
-		// incomplete or missing config, proceed to maintenance
-		return ctrl.stateMaintenanceEnter, cfg, nil
-	default:
-		// complete config, we are done
-		return ctrl.stateDone, cfg, nil
+		if cfg != nil {
+			ctrl.configSourcesUsed = append(ctrl.configSourcesUsed, sourceName)
+		}
+
+		switch {
+		case cfg == nil:
+			fallthrough
+		case !cfg.CompleteForBoot():
+			// incomplete or missing config, proceed to maintenance
+			return next, cfg, nil
+		default:
+			// complete config, we are done
+			return ctrl.stateDone, cfg, nil
+		}
 	}
 }
 
 // loadFromCmdline is a helper function for stateCmdline.
 //
 //nolint:gocyclo
-func (ctrl *AcquireController) loadFromCmdline(ctx context.Context, logger *zap.Logger) (config.Provider, error) {
+func (ctrl *AcquireController) loadFromCmdline(ctx context.Context, logger *zap.Logger, paramName string) (config.Provider, error) {
 	cmdline := ctrl.CmdlineGetter()
 
-	param := cmdline.Get(constants.KernelParamConfigInline)
+	param := cmdline.Get(paramName)
 
 	if param == nil {
 		return nil, nil
 	}
 
-	logger.Info("getting config from cmdline", zap.String("param", constants.KernelParamConfigInline))
+	logger.Info("getting config from cmdline", zap.String("param", paramName))
 
 	var cfgEncoded strings.Builder
 
@@ -505,7 +528,7 @@ func (ctrl *AcquireController) loadFromCmdline(ctx context.Context, logger *zap.
 
 	cfgDecoded, err := base64.StdEncoding.DecodeString(cfgEncoded.String())
 	if err != nil {
-		return nil, fmt.Errorf("failed to decode base64 config from cmdline %s: %w", constants.KernelParamConfigInline, err)
+		return nil, fmt.Errorf("failed to decode base64 config from cmdline %s: %w", paramName, err)
 	}
 
 	zr, err := zstd.NewReader(bytes.NewReader(cfgDecoded))
@@ -517,26 +540,26 @@ func (ctrl *AcquireController) loadFromCmdline(ctx context.Context, logger *zap.
 
 	cfgBytes, err := io.ReadAll(zr)
 	if err != nil {
-		return nil, fmt.Errorf("failed to read zstd compressed config from cmdline %s: %w", constants.KernelParamConfigInline, err)
+		return nil, fmt.Errorf("failed to read zstd compressed config from cmdline %s: %w", paramName, err)
 	}
 
 	cfg, err := configloader.NewFromBytes(cfgBytes)
 	if err != nil {
-		return nil, fmt.Errorf("failed to load config via cmdline %s: %w", constants.KernelParamConfigInline, err)
+		return nil, fmt.Errorf("failed to load config via cmdline %s: %w", paramName, err)
 	}
 
 	warnings, err := cfg.Validate(ctrl.ValidationMode)
 	if err != nil {
-		return nil, fmt.Errorf("failed to validate config acquired via cmdline %s: %w", constants.KernelParamConfigInline, err)
+		return nil, fmt.Errorf("failed to validate config acquired via cmdline %s: %w", paramName, err)
 	}
 
 	warningsRuntime, err := cfg.RuntimeValidate(ctx, ctrl.ResourceState, ctrl.ValidationMode)
 	if err != nil {
-		return nil, fmt.Errorf("failed to validate config acquired via cmdline %s: %w", constants.KernelParamConfigInline, err)
+		return nil, fmt.Errorf("failed to validate config acquired via cmdline %s: %w", paramName, err)
 	}
 
 	for _, warning := range slices.Concat(warnings, warningsRuntime) {
-		logger.Warn("config validation warning", zap.String("cmdline", constants.KernelParamConfigInline), zap.String("warning", warning))
+		logger.Warn("config validation warning", zap.String("cmdline", paramName), zap.String("warning", warning))
 	}
 
 	return cfg, nil
