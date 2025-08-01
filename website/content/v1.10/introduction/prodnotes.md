@@ -64,7 +64,7 @@ To store variables for your machines’ IP addresses:
 You can include as many IP addresses as needed:
 
     ```bash
-    CONTROL_PLANE_IP=("<control-plane-ip-1>" "<control-plane-ip-1>" "<control-plane-ip-2>")
+    CONTROL_PLANE_IP=("<control-plane-ip-1>" "<control-plane-ip-2>" "<control-plane-ip-3>")
     ```
 
    **For example**:
