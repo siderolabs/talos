@@ -133,6 +133,10 @@ talosctl cgroups [flags]
 
 A collection of commands for managing local docker-based or QEMU-based clusters
 
+```
+talosctl cluster [flags]
+```
+
 ### Options
 
 ```
@@ -1348,6 +1352,10 @@ talosctl events [flags]
 
 Generate CAs, certificates, and private keys
 
+```
+talosctl gen [flags]
+```
+
 ### Options
 
 ```
@@ -1582,6 +1590,10 @@ talosctl gen secrets [flags]
 ## talosctl gen secureboot
 
 Generates secrets for the SecureBoot process
+
+```
+talosctl gen secureboot [flags]
+```
 
 ### Options
 
@@ -1924,6 +1936,10 @@ talosctl image pull <image> [flags]
 
 Inject Talos API resources into Kubernetes manifests
 
+```
+talosctl inject [flags]
+```
+
 ### Options
 
 ```
@@ -2138,6 +2154,10 @@ talosctl logs <service name> [flags]
 ## talosctl machineconfig
 
 Machine config related commands
+
+```
+talosctl machineconfig [flags]
+```
 
 ### Options
 
