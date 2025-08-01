@@ -16,14 +16,17 @@ The process to run a Talos node in Scaleway is as follows:
 
 ## Image Preparation
 
-1. **Download the ISO image** of the Talos version you wish to run:
+1. **Download the image disk** of the Talos version you wish to run:
    ```bash
-   wget "https://factory.talos.dev/image/376567988ad370138ad8b2698212367b8edcb69b5fd68c80be1f2ec7d603b4ba/v{{< release >}}/scaleway-amd64.iso"
+   wget "https://factory.talos.dev/image/376567988ad370138ad8b2698212367b8edcb69b5fd68c80be1f2ec7d603b4ba/v{{< release >}}/scaleway-amd64.raw.zst"
    ```
 
-2. **Convert ISO to QCOW2 format**:
+   > You can create your own brew on [Talos Factory](https://factory.talos.dev) if you need a custom image.
+
+2. **Decompress and convert the image**:
    ```bash
-   qemu-img convert -O qcow2 scaleway-amd64.iso scaleway-amd64.qcow2
+   zstd --decompress scaleway-amd64.raw.zst
+   qemu-img convert -O qcow2 scaleway-amd64.raw scaleway-amd64.qcow2
    ```
 
 3. **Create S3 bucket** (if it doesn't exist):
