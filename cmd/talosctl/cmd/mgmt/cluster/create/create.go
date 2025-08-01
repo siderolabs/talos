@@ -1433,7 +1433,7 @@ func (slb *siderolinkBuilder) SetKernelArgs(extraKernelArgs *procfs.Cmdline, tun
 			return fmt.Errorf("failed to close zstd encoder: %w", err)
 		}
 
-		extraKernelArgs.Append(constants.KernelParamConfigInline, base64.StdEncoding.EncodeToString(buf.Bytes()))
+		extraKernelArgs.Append(constants.KernelParamConfigEarly, base64.StdEncoding.EncodeToString(buf.Bytes()))
 
 		return nil
 	}

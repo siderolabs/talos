@@ -25,6 +25,11 @@ const (
 	// The inline config should be base64 encoded and zstd-compressed.
 	KernelParamConfigInline = "talos.config.inline"
 
+	// KernelParamConfigEarly is the kernel parameter name for specifying the inline config (as the first source).
+	//
+	// The inline config should be base64 encoded and zstd-compressed.
+	KernelParamConfigEarly = "talos.config.early"
+
 	// KernelParamConfigOAuthClientID is the kernel parameter name for specifying the OAuth2 client ID.
 	KernelParamConfigOAuthClientID = "talos.config.oauth.client_id"
 
