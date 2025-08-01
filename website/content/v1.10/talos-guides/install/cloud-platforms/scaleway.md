@@ -7,6 +7,8 @@ aliases:
 
 Talos is known to work on scaleway.com; however, it is currently mostly undocumented.
 
+> **Warning**: This guide is working with talos version >=1.10.6
+
 The process to run a Talos node in Scaleway is as follows:
 
 ## Prerequisites
