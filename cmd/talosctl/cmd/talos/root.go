@@ -8,6 +8,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"path/filepath"
 	"slices"
 	"strings"
 
@@ -19,6 +20,7 @@ import (
 	"google.golang.org/grpc/peer"
 
 	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/global"
+	"github.com/siderolabs/talos/pkg/cli"
 	"github.com/siderolabs/talos/pkg/machinery/api/common"
 	machineapi "github.com/siderolabs/talos/pkg/machinery/api/machine"
 	"github.com/siderolabs/talos/pkg/machinery/client"
@@ -54,6 +56,23 @@ func WithClientMaintenance(enforceFingerprints []string, action func(context.Con
 var Commands []*cobra.Command
 
 func addCommand(cmd *cobra.Command) {
+	cmd.PersistentFlags().StringVar(
+		&GlobalArgs.Talosconfig,
+		"talosconfig",
+		"",
+		fmt.Sprintf("The path to the Talos configuration file. Defaults to '%s' env variable if set, otherwise '%s' and '%s' in order.",
+			constants.TalosConfigEnvVar,
+			filepath.Join("$HOME", constants.TalosDir, constants.TalosconfigFilename),
+			filepath.Join(constants.ServiceAccountMountPath, constants.TalosconfigFilename),
+		),
+	)
+	cmd.PersistentFlags().StringSliceVarP(&GlobalArgs.Nodes, "nodes", "n", []string{}, "target the specified nodes")
+	cmd.PersistentFlags().StringSliceVarP(&GlobalArgs.Endpoints, "endpoints", "e", []string{}, "override default endpoints in Talos configuration")
+	cli.Should(cmd.RegisterFlagCompletionFunc("nodes", CompleteNodes))
+	cmd.PersistentFlags().StringVar(&GlobalArgs.Cluster, "cluster", "", "Cluster to connect to if a proxy endpoint is used.")
+	cmd.PersistentFlags().StringVar(&GlobalArgs.CmdContext, "context", "", "Context to be used in command")
+	cli.Should(cmd.RegisterFlagCompletionFunc("context", CompleteConfigContext))
+
 	Commands = append(Commands, cmd)
 }
 
