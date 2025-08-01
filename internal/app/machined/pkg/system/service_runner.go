@@ -11,6 +11,7 @@ import (
 	"log"
 	"slices"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/siderolabs/gen/xslices"
@@ -33,10 +34,11 @@ var WaitConditionCheckInterval = time.Second
 type ServiceRunner struct {
 	mu sync.Mutex
 
-	runtime  runtime.Runtime
-	service  Service
-	id       string
-	instance *singleton
+	runtime    runtime.Runtime
+	service    Service
+	id         string
+	instance   *singleton
+	generation atomic.Int64
 
 	state  events.ServiceState
 	events events.ServiceEvents
@@ -200,6 +202,8 @@ func (svcrunner *ServiceRunner) Run(notifyChannels ...chan<- struct{}) error {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
+	generation := svcrunner.generation.Add(1)
+
 	go func() {
 		select {
 		case <-ctx.Done():
@@ -229,7 +233,7 @@ func (svcrunner *ServiceRunner) Run(notifyChannels ...chan<- struct{}) error {
 		volumeRequests := make([]volumeRequest, 0, len(volumeIDs))
 
 		for _, volumeID := range volumeIDs {
-			requestID, err := svcrunner.createVolumeMountRequest(ctx, volumeID)
+			requestID, err := svcrunner.createVolumeMountRequest(ctx, volumeID, generation)
 			if err != nil {
 				return err
 			}
