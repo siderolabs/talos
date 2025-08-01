@@ -13,6 +13,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"regexp"
+	"slices"
 	"strings"
 	"testing"
 	"time"
@@ -113,7 +114,25 @@ func (cliSuite *CLISuite) MakeCMDFn(args []string) func() *exec.Cmd {
 		args = append([]string{"--endpoints", cliSuite.Endpoint}, args...)
 	}
 
-	args = append([]string{"--talosconfig", cliSuite.TalosConfig}, args...)
+	var firstArg string
+
+	for _, arg := range args {
+		if strings.HasPrefix(arg, "--") {
+			// this is a flag, skip it
+			continue
+		}
+
+		firstArg = arg
+
+		break
+	}
+
+	mgmtCommand := slices.Contains([]string{"completion", "gen", "inject", "machineconfig", "validate"}, firstArg)
+
+	if !mgmtCommand {
+		args = append([]string{"--talosconfig", cliSuite.TalosConfig}, args...)
+	}
+
 	path := cliSuite.TalosctlPath
 
 	return func() *exec.Cmd { return exec.Command(path, args...) }
