@@ -1337,6 +1337,7 @@ RUN find . \
 FROM base AS docs-build
 ARG TARGETOS
 ARG TARGETARCH
+ENV DOCUMENTATION_GENERATION=true
 WORKDIR /src
 COPY --from=talosctl-targetarch /talosctl-${TARGETOS}-${TARGETARCH} /bin/talosctl
 RUN env HOME=/home/user TAG=latest /bin/talosctl docs --config /tmp/configuration \

@@ -129,6 +129,26 @@ talosctl cgroups [flags]
 
 * [talosctl](#talosctl)	 - A CLI for out-of-band management of Kubernetes nodes created by Talos
 
+## talosctl cluster
+
+A collection of commands for managing local docker-based or QEMU-based clusters
+
+### Options
+
+```
+  -h, --help                 help for cluster
+      --name string          the name of the cluster (default "talos-default")
+      --provisioner string   Talos cluster provisioner to use (default "docker")
+      --state string         directory path to store cluster state (default "/home/user/.talos/clusters")
+```
+
+### SEE ALSO
+
+* [talosctl](#talosctl)	 - A CLI for out-of-band management of Kubernetes nodes created by Talos
+* [talosctl cluster create](#talosctl-cluster-create)	 - Creates a local docker-based or QEMU-based kubernetes cluster
+* [talosctl cluster destroy](#talosctl-cluster-destroy)	 - Destroys a local docker-based or firecracker-based kubernetes cluster
+* [talosctl cluster show](#talosctl-cluster-show)	 - Shows info about a local provisioned kubernetes cluster
+
 ## talosctl cluster create
 
 Creates a local docker-based or QEMU-based kubernetes cluster
@@ -235,11 +255,7 @@ talosctl cluster create [flags]
 ### Options inherited from parent commands
 
 ```
-      --cluster string       Cluster to connect to if a proxy endpoint is used.
-      --context string       Context to be used in command
-  -e, --endpoints strings    override default endpoints in Talos configuration
       --name string          the name of the cluster (default "talos-default")
-  -n, --nodes strings        target the specified nodes
       --provisioner string   Talos cluster provisioner to use (default "docker")
       --state string         directory path to store cluster state (default "/home/user/.talos/clusters")
 ```
@@ -268,14 +284,9 @@ talosctl cluster destroy [flags]
 ### Options inherited from parent commands
 
 ```
-      --cluster string       Cluster to connect to if a proxy endpoint is used.
-      --context string       Context to be used in command
-  -e, --endpoints strings    override default endpoints in Talos configuration
       --name string          the name of the cluster (default "talos-default")
-  -n, --nodes strings        target the specified nodes
       --provisioner string   Talos cluster provisioner to use (default "docker")
       --state string         directory path to store cluster state (default "/home/user/.talos/clusters")
-      --talosconfig string   The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
 ```
 
 ### SEE ALSO
@@ -299,31 +310,23 @@ talosctl cluster show [flags]
 ### Options inherited from parent commands
 
 ```
-      --cluster string       Cluster to connect to if a proxy endpoint is used.
-      --context string       Context to be used in command
-  -e, --endpoints strings    override default endpoints in Talos configuration
       --name string          the name of the cluster (default "talos-default")
-  -n, --nodes strings        target the specified nodes
       --provisioner string   Talos cluster provisioner to use (default "docker")
       --state string         directory path to store cluster state (default "/home/user/.talos/clusters")
-      --talosconfig string   The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
 ```
 
 ### SEE ALSO
 
 * [talosctl cluster](#talosctl-cluster)	 - A collection of commands for managing local docker-based or QEMU-based clusters
 
-## talosctl cluster
+## talosctl config
 
-A collection of commands for managing local docker-based or QEMU-based clusters
+Manage the client configuration file (talosconfig)
 
 ### Options
 
 ```
-  -h, --help                 help for cluster
-      --name string          the name of the cluster (default "talos-default")
-      --provisioner string   Talos cluster provisioner to use (default "docker")
-      --state string         directory path to store cluster state (default "/home/user/.talos/clusters")
+  -h, --help   help for config
 ```
 
 ### Options inherited from parent commands
@@ -339,80 +342,15 @@ A collection of commands for managing local docker-based or QEMU-based clusters
 ### SEE ALSO
 
 * [talosctl](#talosctl)	 - A CLI for out-of-band management of Kubernetes nodes created by Talos
-* [talosctl cluster create](#talosctl-cluster-create)	 - Creates a local docker-based or QEMU-based kubernetes cluster
-* [talosctl cluster destroy](#talosctl-cluster-destroy)	 - Destroys a local docker-based or firecracker-based kubernetes cluster
-* [talosctl cluster show](#talosctl-cluster-show)	 - Shows info about a local provisioned kubernetes cluster
-
-## talosctl completion
-
-Output shell completion code for the specified shell (bash, fish or zsh)
-
-### Synopsis
-
-Output shell completion code for the specified shell (bash, fish or zsh).
-The shell code must be evaluated to provide interactive
-completion of talosctl commands.  This can be done by sourcing it from
-the .bash_profile.
-
-Note for zsh users: [1] zsh completions are only supported in versions of zsh >= 5.2
-
-```
-talosctl completion SHELL [flags]
-```
-
-### Examples
-
-```
-# Installing bash completion on macOS using homebrew
-## If running Bash 3.2 included with macOS
-	brew install bash-completion
-## or, if running Bash 4.1+
-	brew install bash-completion@2
-## If talosctl is installed via homebrew, this should start working immediately.
-## If you've installed via other means, you may need add the completion to your completion directory
-	talosctl completion bash > $(brew --prefix)/etc/bash_completion.d/talosctl
-
-# Installing bash completion on Linux
-## If bash-completion is not installed on Linux, please install the 'bash-completion' package
-## via your distribution's package manager.
-## Load the talosctl completion code for bash into the current shell
-	source <(talosctl completion bash)
-## Write bash completion code to a file and source if from .bash_profile
-	talosctl completion bash > ~/.talos/completion.bash.inc
-	printf "
-		# talosctl shell completion
-		source '$HOME/.talos/completion.bash.inc'
-		" >> $HOME/.bash_profile
-	source $HOME/.bash_profile
-# Load the talosctl completion code for fish[1] into the current shell
-	talosctl completion fish | source
-# Set the talosctl completion code for fish[1] to autoload on startup
-    talosctl completion fish > ~/.config/fish/completions/talosctl.fish
-# Load the talosctl completion code for zsh[1] into the current shell
-	source <(talosctl completion zsh)
-# Set the talosctl completion code for zsh[1] to autoload on startup
-    talosctl completion zsh > "${fpath[1]}/_talosctl"
-```
-
-### Options
-
-```
-  -h, --help   help for completion
-```
-
-### Options inherited from parent commands
-
-```
-      --cluster string       Cluster to connect to if a proxy endpoint is used.
-      --context string       Context to be used in command
-  -e, --endpoints strings    override default endpoints in Talos configuration
-  -n, --nodes strings        target the specified nodes
-      --talosconfig string   The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
-```
-
-### SEE ALSO
-
-* [talosctl](#talosctl)	 - A CLI for out-of-band management of Kubernetes nodes created by Talos
+* [talosctl config add](#talosctl-config-add)	 - Add a new context
+* [talosctl config context](#talosctl-config-context)	 - Set the current context
+* [talosctl config contexts](#talosctl-config-contexts)	 - List defined contexts
+* [talosctl config endpoint](#talosctl-config-endpoint)	 - Set the endpoint(s) for the current context
+* [talosctl config info](#talosctl-config-info)	 - Show information about the current context
+* [talosctl config merge](#talosctl-config-merge)	 - Merge additional contexts from another client configuration file
+* [talosctl config new](#talosctl-config-new)	 - Generate a new client configuration file
+* [talosctl config node](#talosctl-config-node)	 - Set the node(s) for the current context
+* [talosctl config remove](#talosctl-config-remove)	 - Remove contexts
 
 ## talosctl config add
 
@@ -678,14 +616,14 @@ talosctl config remove <context> [flags]
 
 * [talosctl config](#talosctl-config)	 - Manage the client configuration file (talosconfig)
 
-## talosctl config
+## talosctl conformance
 
-Manage the client configuration file (talosconfig)
+Run conformance tests
 
 ### Options
 
 ```
-  -h, --help   help for config
+  -h, --help   help for conformance
 ```
 
 ### Options inherited from parent commands
@@ -701,15 +639,7 @@ Manage the client configuration file (talosconfig)
 ### SEE ALSO
 
 * [talosctl](#talosctl)	 - A CLI for out-of-band management of Kubernetes nodes created by Talos
-* [talosctl config add](#talosctl-config-add)	 - Add a new context
-* [talosctl config context](#talosctl-config-context)	 - Set the current context
-* [talosctl config contexts](#talosctl-config-contexts)	 - List defined contexts
-* [talosctl config endpoint](#talosctl-config-endpoint)	 - Set the endpoint(s) for the current context
-* [talosctl config info](#talosctl-config-info)	 - Show information about the current context
-* [talosctl config merge](#talosctl-config-merge)	 - Merge additional contexts from another client configuration file
-* [talosctl config new](#talosctl-config-new)	 - Generate a new client configuration file
-* [talosctl config node](#talosctl-config-node)	 - Set the node(s) for the current context
-* [talosctl config remove](#talosctl-config-remove)	 - Remove contexts
+* [talosctl conformance kubernetes](#talosctl-conformance-kubernetes)	 - Run Kubernetes conformance tests
 
 ## talosctl conformance kubernetes
 
@@ -739,31 +669,6 @@ talosctl conformance kubernetes [flags]
 ### SEE ALSO
 
 * [talosctl conformance](#talosctl-conformance)	 - Run conformance tests
-
-## talosctl conformance
-
-Run conformance tests
-
-### Options
-
-```
-  -h, --help   help for conformance
-```
-
-### Options inherited from parent commands
-
-```
-      --cluster string       Cluster to connect to if a proxy endpoint is used.
-      --context string       Context to be used in command
-  -e, --endpoints strings    override default endpoints in Talos configuration
-  -n, --nodes strings        target the specified nodes
-      --talosconfig string   The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
-```
-
-### SEE ALSO
-
-* [talosctl](#talosctl)	 - A CLI for out-of-band management of Kubernetes nodes created by Talos
-* [talosctl conformance kubernetes](#talosctl-conformance-kubernetes)	 - Run Kubernetes conformance tests
 
 ## talosctl containers
 
@@ -878,6 +783,27 @@ talosctl dashboard [flags]
 
 * [talosctl](#talosctl)	 - A CLI for out-of-band management of Kubernetes nodes created by Talos
 
+## talosctl debug air-gapped
+
+Starts a local HTTP proxy and HTTPS server serving a test manifest.
+
+```
+talosctl debug air-gapped [flags]
+```
+
+### Options
+
+```
+      --advertised-address ip   The address to advertise to the cluster. (default 10.5.0.2)
+  -h, --help                    help for air-gapped
+      --https-port int          The HTTPS server port. (default 8001)
+      --proxy-port int          The HTTP proxy port. (default 8002)
+```
+
+### SEE ALSO
+
+* [talosctl debug](#talosctl-debug)	 - A collection of commands to facilitate debugging of Talos.
+
 ## talosctl dmesg
 
 Retrieve kernel logs
@@ -949,6 +875,65 @@ talosctl edit <type> [<id>] [flags]
 
 * [talosctl](#talosctl)	 - A CLI for out-of-band management of Kubernetes nodes created by Talos
 
+## talosctl etcd
+
+Manage etcd
+
+### Options
+
+```
+  -h, --help   help for etcd
+```
+
+### Options inherited from parent commands
+
+```
+      --cluster string       Cluster to connect to if a proxy endpoint is used.
+      --context string       Context to be used in command
+  -e, --endpoints strings    override default endpoints in Talos configuration
+  -n, --nodes strings        target the specified nodes
+      --talosconfig string   The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
+```
+
+### SEE ALSO
+
+* [talosctl](#talosctl)	 - A CLI for out-of-band management of Kubernetes nodes created by Talos
+* [talosctl etcd alarm](#talosctl-etcd-alarm)	 - Manage etcd alarms
+* [talosctl etcd defrag](#talosctl-etcd-defrag)	 - Defragment etcd database on the node
+* [talosctl etcd downgrade](#talosctl-etcd-downgrade)	 - Manage etcd storage system downgrades
+* [talosctl etcd forfeit-leadership](#talosctl-etcd-forfeit-leadership)	 - Tell node to forfeit etcd cluster leadership
+* [talosctl etcd leave](#talosctl-etcd-leave)	 - Tell nodes to leave etcd cluster
+* [talosctl etcd members](#talosctl-etcd-members)	 - Get the list of etcd cluster members
+* [talosctl etcd remove-member](#talosctl-etcd-remove-member)	 - Remove the node from etcd cluster
+* [talosctl etcd snapshot](#talosctl-etcd-snapshot)	 - Stream snapshot of the etcd node to the path.
+* [talosctl etcd status](#talosctl-etcd-status)	 - Get the status of etcd cluster member
+
+## talosctl etcd alarm
+
+Manage etcd alarms
+
+### Options
+
+```
+  -h, --help   help for alarm
+```
+
+### Options inherited from parent commands
+
+```
+      --cluster string       Cluster to connect to if a proxy endpoint is used.
+      --context string       Context to be used in command
+  -e, --endpoints strings    override default endpoints in Talos configuration
+  -n, --nodes strings        target the specified nodes
+      --talosconfig string   The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
+```
+
+### SEE ALSO
+
+* [talosctl etcd](#talosctl-etcd)	 - Manage etcd
+* [talosctl etcd alarm disarm](#talosctl-etcd-alarm-disarm)	 - Disarm the etcd alarms for the node.
+* [talosctl etcd alarm list](#talosctl-etcd-alarm-list)	 - List the etcd alarms for the node.
+
 ## talosctl etcd alarm disarm
 
 Disarm the etcd alarms for the node.
@@ -1005,32 +990,6 @@ talosctl etcd alarm list [flags]
 
 * [talosctl etcd alarm](#talosctl-etcd-alarm)	 - Manage etcd alarms
 
-## talosctl etcd alarm
-
-Manage etcd alarms
-
-### Options
-
-```
-  -h, --help   help for alarm
-```
-
-### Options inherited from parent commands
-
-```
-      --cluster string       Cluster to connect to if a proxy endpoint is used.
-      --context string       Context to be used in command
-  -e, --endpoints strings    override default endpoints in Talos configuration
-  -n, --nodes strings        target the specified nodes
-      --talosconfig string   The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
-```
-
-### SEE ALSO
-
-* [talosctl etcd](#talosctl-etcd)	 - Manage etcd
-* [talosctl etcd alarm disarm](#talosctl-etcd-alarm-disarm)	 - Disarm the etcd alarms for the node.
-* [talosctl etcd alarm list](#talosctl-etcd-alarm-list)	 - List the etcd alarms for the node.
-
 ## talosctl etcd defrag
 
 Defragment etcd database on the node
@@ -1063,6 +1022,33 @@ talosctl etcd defrag [flags]
 ### SEE ALSO
 
 * [talosctl etcd](#talosctl-etcd)	 - Manage etcd
+
+## talosctl etcd downgrade
+
+Manage etcd storage system downgrades
+
+### Options
+
+```
+  -h, --help   help for downgrade
+```
+
+### Options inherited from parent commands
+
+```
+      --cluster string       Cluster to connect to if a proxy endpoint is used.
+      --context string       Context to be used in command
+  -e, --endpoints strings    override default endpoints in Talos configuration
+  -n, --nodes strings        target the specified nodes
+      --talosconfig string   The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
+```
+
+### SEE ALSO
+
+* [talosctl etcd](#talosctl-etcd)	 - Manage etcd
+* [talosctl etcd downgrade cancel](#talosctl-etcd-downgrade-cancel)	 - Cancel etcd storage system downgrade.
+* [talosctl etcd downgrade enable](#talosctl-etcd-downgrade-enable)	 - Enable etcd storage system downgrade to the specified version.
+* [talosctl etcd downgrade validate](#talosctl-etcd-downgrade-validate)	 - Validate if the etcd storage system can be downgraded to the specified version.
 
 ## talosctl etcd downgrade cancel
 
@@ -1147,33 +1133,6 @@ talosctl etcd downgrade validate <version> [flags]
 ### SEE ALSO
 
 * [talosctl etcd downgrade](#talosctl-etcd-downgrade)	 - Manage etcd storage system downgrades
-
-## talosctl etcd downgrade
-
-Manage etcd storage system downgrades
-
-### Options
-
-```
-  -h, --help   help for downgrade
-```
-
-### Options inherited from parent commands
-
-```
-      --cluster string       Cluster to connect to if a proxy endpoint is used.
-      --context string       Context to be used in command
-  -e, --endpoints strings    override default endpoints in Talos configuration
-  -n, --nodes strings        target the specified nodes
-      --talosconfig string   The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
-```
-
-### SEE ALSO
-
-* [talosctl etcd](#talosctl-etcd)	 - Manage etcd
-* [talosctl etcd downgrade cancel](#talosctl-etcd-downgrade-cancel)	 - Cancel etcd storage system downgrade.
-* [talosctl etcd downgrade enable](#talosctl-etcd-downgrade-enable)	 - Enable etcd storage system downgrade to the specified version.
-* [talosctl etcd downgrade validate](#talosctl-etcd-downgrade-validate)	 - Validate if the etcd storage system can be downgraded to the specified version.
 
 ## talosctl etcd forfeit-leadership
 
@@ -1353,39 +1312,6 @@ talosctl etcd status [flags]
 
 * [talosctl etcd](#talosctl-etcd)	 - Manage etcd
 
-## talosctl etcd
-
-Manage etcd
-
-### Options
-
-```
-  -h, --help   help for etcd
-```
-
-### Options inherited from parent commands
-
-```
-      --cluster string       Cluster to connect to if a proxy endpoint is used.
-      --context string       Context to be used in command
-  -e, --endpoints strings    override default endpoints in Talos configuration
-  -n, --nodes strings        target the specified nodes
-      --talosconfig string   The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
-```
-
-### SEE ALSO
-
-* [talosctl](#talosctl)	 - A CLI for out-of-band management of Kubernetes nodes created by Talos
-* [talosctl etcd alarm](#talosctl-etcd-alarm)	 - Manage etcd alarms
-* [talosctl etcd defrag](#talosctl-etcd-defrag)	 - Defragment etcd database on the node
-* [talosctl etcd downgrade](#talosctl-etcd-downgrade)	 - Manage etcd storage system downgrades
-* [talosctl etcd forfeit-leadership](#talosctl-etcd-forfeit-leadership)	 - Tell node to forfeit etcd cluster leadership
-* [talosctl etcd leave](#talosctl-etcd-leave)	 - Tell nodes to leave etcd cluster
-* [talosctl etcd members](#talosctl-etcd-members)	 - Get the list of etcd cluster members
-* [talosctl etcd remove-member](#talosctl-etcd-remove-member)	 - Remove the node from etcd cluster
-* [talosctl etcd snapshot](#talosctl-etcd-snapshot)	 - Stream snapshot of the etcd node to the path.
-* [talosctl etcd status](#talosctl-etcd-status)	 - Get the status of etcd cluster member
-
 ## talosctl events
 
 Stream runtime events
@@ -1418,6 +1344,29 @@ talosctl events [flags]
 
 * [talosctl](#talosctl)	 - A CLI for out-of-band management of Kubernetes nodes created by Talos
 
+## talosctl gen
+
+Generate CAs, certificates, and private keys
+
+### Options
+
+```
+  -f, --force   will overwrite existing files
+  -h, --help    help for gen
+```
+
+### SEE ALSO
+
+* [talosctl](#talosctl)	 - A CLI for out-of-band management of Kubernetes nodes created by Talos
+* [talosctl gen ca](#talosctl-gen-ca)	 - Generates a self-signed X.509 certificate authority
+* [talosctl gen config](#talosctl-gen-config)	 - Generates a set of configuration files for Talos cluster
+* [talosctl gen crt](#talosctl-gen-crt)	 - Generates an X.509 Ed25519 certificate
+* [talosctl gen csr](#talosctl-gen-csr)	 - Generates a CSR using an Ed25519 private key
+* [talosctl gen key](#talosctl-gen-key)	 - Generates an Ed25519 private key
+* [talosctl gen keypair](#talosctl-gen-keypair)	 - Generates an X.509 Ed25519 key pair
+* [talosctl gen secrets](#talosctl-gen-secrets)	 - Generates a secrets bundle file which can later be used to generate a config
+* [talosctl gen secureboot](#talosctl-gen-secureboot)	 - Generates secrets for the SecureBoot process
+
 ## talosctl gen ca
 
 Generates a self-signed X.509 certificate authority
@@ -1438,12 +1387,7 @@ talosctl gen ca [flags]
 ### Options inherited from parent commands
 
 ```
-      --cluster string       Cluster to connect to if a proxy endpoint is used.
-      --context string       Context to be used in command
-  -e, --endpoints strings    override default endpoints in Talos configuration
-  -f, --force                will overwrite existing files
-  -n, --nodes strings        target the specified nodes
-      --talosconfig string   The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
+  -f, --force   will overwrite existing files
 ```
 
 ### SEE ALSO
@@ -1493,12 +1437,7 @@ talosctl gen config <cluster name> <cluster endpoint> [flags]
 ### Options inherited from parent commands
 
 ```
-      --cluster string       Cluster to connect to if a proxy endpoint is used.
-      --context string       Context to be used in command
-  -e, --endpoints strings    override default endpoints in Talos configuration
-  -f, --force                will overwrite existing files
-  -n, --nodes strings        target the specified nodes
-      --talosconfig string   The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
+  -f, --force   will overwrite existing files
 ```
 
 ### SEE ALSO
@@ -1526,12 +1465,7 @@ talosctl gen crt [flags]
 ### Options inherited from parent commands
 
 ```
-      --cluster string       Cluster to connect to if a proxy endpoint is used.
-      --context string       Context to be used in command
-  -e, --endpoints strings    override default endpoints in Talos configuration
-  -f, --force                will overwrite existing files
-  -n, --nodes strings        target the specified nodes
-      --talosconfig string   The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
+  -f, --force   will overwrite existing files
 ```
 
 ### SEE ALSO
@@ -1558,12 +1492,7 @@ talosctl gen csr [flags]
 ### Options inherited from parent commands
 
 ```
-      --cluster string       Cluster to connect to if a proxy endpoint is used.
-      --context string       Context to be used in command
-  -e, --endpoints strings    override default endpoints in Talos configuration
-  -f, --force                will overwrite existing files
-  -n, --nodes strings        target the specified nodes
-      --talosconfig string   The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
+  -f, --force   will overwrite existing files
 ```
 
 ### SEE ALSO
@@ -1588,12 +1517,7 @@ talosctl gen key [flags]
 ### Options inherited from parent commands
 
 ```
-      --cluster string       Cluster to connect to if a proxy endpoint is used.
-      --context string       Context to be used in command
-  -e, --endpoints strings    override default endpoints in Talos configuration
-  -f, --force                will overwrite existing files
-  -n, --nodes strings        target the specified nodes
-      --talosconfig string   The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
+  -f, --force   will overwrite existing files
 ```
 
 ### SEE ALSO
@@ -1619,12 +1543,7 @@ talosctl gen keypair [flags]
 ### Options inherited from parent commands
 
 ```
-      --cluster string       Cluster to connect to if a proxy endpoint is used.
-      --context string       Context to be used in command
-  -e, --endpoints strings    override default endpoints in Talos configuration
-  -f, --force                will overwrite existing files
-  -n, --nodes strings        target the specified nodes
-      --talosconfig string   The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
+  -f, --force   will overwrite existing files
 ```
 
 ### SEE ALSO
@@ -1653,17 +1572,36 @@ talosctl gen secrets [flags]
 ### Options inherited from parent commands
 
 ```
-      --cluster string       Cluster to connect to if a proxy endpoint is used.
-      --context string       Context to be used in command
-  -e, --endpoints strings    override default endpoints in Talos configuration
-  -f, --force                will overwrite existing files
-  -n, --nodes strings        target the specified nodes
-      --talosconfig string   The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
+  -f, --force   will overwrite existing files
 ```
 
 ### SEE ALSO
 
 * [talosctl gen](#talosctl-gen)	 - Generate CAs, certificates, and private keys
+
+## talosctl gen secureboot
+
+Generates secrets for the SecureBoot process
+
+### Options
+
+```
+  -h, --help            help for secureboot
+  -o, --output string   path to the directory storing the generated files (default "_out")
+```
+
+### Options inherited from parent commands
+
+```
+  -f, --force   will overwrite existing files
+```
+
+### SEE ALSO
+
+* [talosctl gen](#talosctl-gen)	 - Generate CAs, certificates, and private keys
+* [talosctl gen secureboot database](#talosctl-gen-secureboot-database)	 - Generates a UEFI database to enroll the signing certificate
+* [talosctl gen secureboot pcr](#talosctl-gen-secureboot-pcr)	 - Generates a key which is used to sign TPM PCR values
+* [talosctl gen secureboot uki](#talosctl-gen-secureboot-uki)	 - Generates a certificate which is used to sign boot assets (UKI)
 
 ## talosctl gen secureboot database
 
@@ -1686,13 +1624,8 @@ talosctl gen secureboot database [flags]
 ### Options inherited from parent commands
 
 ```
-      --cluster string       Cluster to connect to if a proxy endpoint is used.
-      --context string       Context to be used in command
-  -e, --endpoints strings    override default endpoints in Talos configuration
-  -f, --force                will overwrite existing files
-  -n, --nodes strings        target the specified nodes
-  -o, --output string        path to the directory storing the generated files (default "_out")
-      --talosconfig string   The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
+  -f, --force           will overwrite existing files
+  -o, --output string   path to the directory storing the generated files (default "_out")
 ```
 
 ### SEE ALSO
@@ -1716,13 +1649,8 @@ talosctl gen secureboot pcr [flags]
 ### Options inherited from parent commands
 
 ```
-      --cluster string       Cluster to connect to if a proxy endpoint is used.
-      --context string       Context to be used in command
-  -e, --endpoints strings    override default endpoints in Talos configuration
-  -f, --force                will overwrite existing files
-  -n, --nodes strings        target the specified nodes
-  -o, --output string        path to the directory storing the generated files (default "_out")
-      --talosconfig string   The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
+  -f, --force           will overwrite existing files
+  -o, --output string   path to the directory storing the generated files (default "_out")
 ```
 
 ### SEE ALSO
@@ -1747,79 +1675,12 @@ talosctl gen secureboot uki [flags]
 ### Options inherited from parent commands
 
 ```
-      --cluster string       Cluster to connect to if a proxy endpoint is used.
-      --context string       Context to be used in command
-  -e, --endpoints strings    override default endpoints in Talos configuration
-  -f, --force                will overwrite existing files
-  -n, --nodes strings        target the specified nodes
-  -o, --output string        path to the directory storing the generated files (default "_out")
-      --talosconfig string   The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
-```
-
-### SEE ALSO
-
-* [talosctl gen secureboot](#talosctl-gen-secureboot)	 - Generates secrets for the SecureBoot process
-
-## talosctl gen secureboot
-
-Generates secrets for the SecureBoot process
-
-### Options
-
-```
-  -h, --help            help for secureboot
+  -f, --force           will overwrite existing files
   -o, --output string   path to the directory storing the generated files (default "_out")
 ```
 
-### Options inherited from parent commands
-
-```
-      --cluster string       Cluster to connect to if a proxy endpoint is used.
-      --context string       Context to be used in command
-  -e, --endpoints strings    override default endpoints in Talos configuration
-  -f, --force                will overwrite existing files
-  -n, --nodes strings        target the specified nodes
-      --talosconfig string   The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
-```
-
 ### SEE ALSO
 
-* [talosctl gen](#talosctl-gen)	 - Generate CAs, certificates, and private keys
-* [talosctl gen secureboot database](#talosctl-gen-secureboot-database)	 - Generates a UEFI database to enroll the signing certificate
-* [talosctl gen secureboot pcr](#talosctl-gen-secureboot-pcr)	 - Generates a key which is used to sign TPM PCR values
-* [talosctl gen secureboot uki](#talosctl-gen-secureboot-uki)	 - Generates a certificate which is used to sign boot assets (UKI)
-
-## talosctl gen
-
-Generate CAs, certificates, and private keys
-
-### Options
-
-```
-  -f, --force   will overwrite existing files
-  -h, --help    help for gen
-```
-
-### Options inherited from parent commands
-
-```
-      --cluster string       Cluster to connect to if a proxy endpoint is used.
-      --context string       Context to be used in command
-  -e, --endpoints strings    override default endpoints in Talos configuration
-  -n, --nodes strings        target the specified nodes
-      --talosconfig string   The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
-```
-
-### SEE ALSO
-
-* [talosctl](#talosctl)	 - A CLI for out-of-band management of Kubernetes nodes created by Talos
-* [talosctl gen ca](#talosctl-gen-ca)	 - Generates a self-signed X.509 certificate authority
-* [talosctl gen config](#talosctl-gen-config)	 - Generates a set of configuration files for Talos cluster
-* [talosctl gen crt](#talosctl-gen-crt)	 - Generates an X.509 Ed25519 certificate
-* [talosctl gen csr](#talosctl-gen-csr)	 - Generates a CSR using an Ed25519 private key
-* [talosctl gen key](#talosctl-gen-key)	 - Generates an Ed25519 private key
-* [talosctl gen keypair](#talosctl-gen-keypair)	 - Generates an X.509 Ed25519 key pair
-* [talosctl gen secrets](#talosctl-gen-secrets)	 - Generates a secrets bundle file which can later be used to generate a config
 * [talosctl gen secureboot](#talosctl-gen-secureboot)	 - Generates secrets for the SecureBoot process
 
 ## talosctl get
@@ -1893,6 +1754,35 @@ talosctl health [flags]
 ### SEE ALSO
 
 * [talosctl](#talosctl)	 - A CLI for out-of-band management of Kubernetes nodes created by Talos
+
+## talosctl image
+
+Manage CRI container images
+
+### Options
+
+```
+  -h, --help               help for image
+      --namespace system   namespace to use: system (etcd and kubelet images) or `cri` for all Kubernetes workloads (default "cri")
+```
+
+### Options inherited from parent commands
+
+```
+      --cluster string       Cluster to connect to if a proxy endpoint is used.
+      --context string       Context to be used in command
+  -e, --endpoints strings    override default endpoints in Talos configuration
+  -n, --nodes strings        target the specified nodes
+      --talosconfig string   The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
+```
+
+### SEE ALSO
+
+* [talosctl](#talosctl)	 - A CLI for out-of-band management of Kubernetes nodes created by Talos
+* [talosctl image cache-create](#talosctl-image-cache-create)	 - Create a cache of images in OCI format into a directory
+* [talosctl image default](#talosctl-image-default)	 - List the default images used by Talos
+* [talosctl image list](#talosctl-image-list)	 - List CRI images
+* [talosctl image pull](#talosctl-image-pull)	 - Pull an image into CRI
 
 ## talosctl image cache-create
 
@@ -2030,34 +1920,20 @@ talosctl image pull <image> [flags]
 
 * [talosctl image](#talosctl-image)	 - Manage CRI container images
 
-## talosctl image
+## talosctl inject
 
-Manage CRI container images
+Inject Talos API resources into Kubernetes manifests
 
 ### Options
 
 ```
-  -h, --help               help for image
-      --namespace system   namespace to use: system (etcd and kubelet images) or `cri` for all Kubernetes workloads (default "cri")
-```
-
-### Options inherited from parent commands
-
-```
-      --cluster string       Cluster to connect to if a proxy endpoint is used.
-      --context string       Context to be used in command
-  -e, --endpoints strings    override default endpoints in Talos configuration
-  -n, --nodes strings        target the specified nodes
-      --talosconfig string   The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
+  -h, --help   help for inject
 ```
 
 ### SEE ALSO
 
 * [talosctl](#talosctl)	 - A CLI for out-of-band management of Kubernetes nodes created by Talos
-* [talosctl image cache-create](#talosctl-image-cache-create)	 - Create a cache of images in OCI format into a directory
-* [talosctl image default](#talosctl-image-default)	 - List the default images used by Talos
-* [talosctl image list](#talosctl-image-list)	 - List CRI images
-* [talosctl image pull](#talosctl-image-pull)	 - Pull an image into CRI
+* [talosctl inject serviceaccount](#talosctl-inject-serviceaccount)	 - Inject Talos API ServiceAccount into Kubernetes manifests
 
 ## talosctl inject serviceaccount
 
@@ -2085,28 +1961,18 @@ cat deployment.yaml | talosctl inject serviceaccount --roles="os:admin" -f - > d
   -r, --roles strings   roles to add to the generated ServiceAccount manifests (default [os:reader])
 ```
 
-### Options inherited from parent commands
-
-```
-      --cluster string       Cluster to connect to if a proxy endpoint is used.
-      --context string       Context to be used in command
-  -e, --endpoints strings    override default endpoints in Talos configuration
-  -n, --nodes strings        target the specified nodes
-      --talosconfig string   The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
-```
-
 ### SEE ALSO
 
 * [talosctl inject](#talosctl-inject)	 - Inject Talos API resources into Kubernetes manifests
 
-## talosctl inject
+## talosctl inspect
 
-Inject Talos API resources into Kubernetes manifests
+Inspect internals of Talos
 
 ### Options
 
 ```
-  -h, --help   help for inject
+  -h, --help   help for inspect
 ```
 
 ### Options inherited from parent commands
@@ -2122,7 +1988,7 @@ Inject Talos API resources into Kubernetes manifests
 ### SEE ALSO
 
 * [talosctl](#talosctl)	 - A CLI for out-of-band management of Kubernetes nodes created by Talos
-* [talosctl inject serviceaccount](#talosctl-inject-serviceaccount)	 - Inject Talos API ServiceAccount into Kubernetes manifests
+* [talosctl inspect dependencies](#talosctl-inspect-dependencies)	 - Inspect controller-resource dependencies as graphviz graph.
 
 ## talosctl inspect dependencies
 
@@ -2162,31 +2028,6 @@ talosctl inspect dependencies [flags]
 ### SEE ALSO
 
 * [talosctl inspect](#talosctl-inspect)	 - Inspect internals of Talos
-
-## talosctl inspect
-
-Inspect internals of Talos
-
-### Options
-
-```
-  -h, --help   help for inspect
-```
-
-### Options inherited from parent commands
-
-```
-      --cluster string       Cluster to connect to if a proxy endpoint is used.
-      --context string       Context to be used in command
-  -e, --endpoints strings    override default endpoints in Talos configuration
-  -n, --nodes strings        target the specified nodes
-      --talosconfig string   The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
-```
-
-### SEE ALSO
-
-* [talosctl](#talosctl)	 - A CLI for out-of-band management of Kubernetes nodes created by Talos
-* [talosctl inspect dependencies](#talosctl-inspect-dependencies)	 - Inspect controller-resource dependencies as graphviz graph.
 
 ## talosctl kubeconfig
 
@@ -2294,6 +2135,22 @@ talosctl logs <service name> [flags]
 
 * [talosctl](#talosctl)	 - A CLI for out-of-band management of Kubernetes nodes created by Talos
 
+## talosctl machineconfig
+
+Machine config related commands
+
+### Options
+
+```
+  -h, --help   help for machineconfig
+```
+
+### SEE ALSO
+
+* [talosctl](#talosctl)	 - A CLI for out-of-band management of Kubernetes nodes created by Talos
+* [talosctl machineconfig gen](#talosctl-machineconfig-gen)	 - Generates a set of configuration files for Talos cluster
+* [talosctl machineconfig patch](#talosctl-machineconfig-patch)	 - Patch a machine config
+
 ## talosctl machineconfig gen
 
 Generates a set of configuration files for Talos cluster
@@ -2313,16 +2170,6 @@ talosctl machineconfig gen <cluster name> <cluster endpoint> [flags]
 
 ```
   -h, --help   help for gen
-```
-
-### Options inherited from parent commands
-
-```
-      --cluster string       Cluster to connect to if a proxy endpoint is used.
-      --context string       Context to be used in command
-  -e, --endpoints strings    override default endpoints in Talos configuration
-  -n, --nodes strings        target the specified nodes
-      --talosconfig string   The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
 ```
 
 ### SEE ALSO
@@ -2345,45 +2192,9 @@ talosctl machineconfig patch <machineconfig-file> [flags]
   -p, --patch stringArray   patch generated machineconfigs (applied to all node types), use @file to read a patch from file
 ```
 
-### Options inherited from parent commands
-
-```
-      --cluster string       Cluster to connect to if a proxy endpoint is used.
-      --context string       Context to be used in command
-  -e, --endpoints strings    override default endpoints in Talos configuration
-  -n, --nodes strings        target the specified nodes
-      --talosconfig string   The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
-```
-
 ### SEE ALSO
 
 * [talosctl machineconfig](#talosctl-machineconfig)	 - Machine config related commands
-
-## talosctl machineconfig
-
-Machine config related commands
-
-### Options
-
-```
-  -h, --help   help for machineconfig
-```
-
-### Options inherited from parent commands
-
-```
-      --cluster string       Cluster to connect to if a proxy endpoint is used.
-      --context string       Context to be used in command
-  -e, --endpoints strings    override default endpoints in Talos configuration
-  -n, --nodes strings        target the specified nodes
-      --talosconfig string   The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
-```
-
-### SEE ALSO
-
-* [talosctl](#talosctl)	 - A CLI for out-of-band management of Kubernetes nodes created by Talos
-* [talosctl machineconfig gen](#talosctl-machineconfig-gen)	 - Generates a set of configuration files for Talos cluster
-* [talosctl machineconfig patch](#talosctl-machineconfig-patch)	 - Patch a machine config
 
 ## talosctl memory
 
@@ -2413,6 +2224,33 @@ talosctl memory [flags]
 ### SEE ALSO
 
 * [talosctl](#talosctl)	 - A CLI for out-of-band management of Kubernetes nodes created by Talos
+
+## talosctl meta
+
+Write and delete keys in the META partition
+
+### Options
+
+```
+  -h, --help       help for meta
+  -i, --insecure   write|delete meta using the insecure (encrypted with no auth) maintenance service
+```
+
+### Options inherited from parent commands
+
+```
+      --cluster string       Cluster to connect to if a proxy endpoint is used.
+      --context string       Context to be used in command
+  -e, --endpoints strings    override default endpoints in Talos configuration
+  -n, --nodes strings        target the specified nodes
+      --talosconfig string   The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
+```
+
+### SEE ALSO
+
+* [talosctl](#talosctl)	 - A CLI for out-of-band management of Kubernetes nodes created by Talos
+* [talosctl meta delete](#talosctl-meta-delete)	 - Delete a key from the META partition.
+* [talosctl meta write](#talosctl-meta-write)	 - Write a key-value pair to the META partition.
 
 ## talosctl meta delete
 
@@ -2471,33 +2309,6 @@ talosctl meta write key value [flags]
 ### SEE ALSO
 
 * [talosctl meta](#talosctl-meta)	 - Write and delete keys in the META partition
-
-## talosctl meta
-
-Write and delete keys in the META partition
-
-### Options
-
-```
-  -h, --help       help for meta
-  -i, --insecure   write|delete meta using the insecure (encrypted with no auth) maintenance service
-```
-
-### Options inherited from parent commands
-
-```
-      --cluster string       Cluster to connect to if a proxy endpoint is used.
-      --context string       Context to be used in command
-  -e, --endpoints strings    override default endpoints in Talos configuration
-  -n, --nodes strings        target the specified nodes
-      --talosconfig string   The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
-```
-
-### SEE ALSO
-
-* [talosctl](#talosctl)	 - A CLI for out-of-band management of Kubernetes nodes created by Talos
-* [talosctl meta delete](#talosctl-meta-delete)	 - Delete a key from the META partition.
-* [talosctl meta write](#talosctl-meta-write)	 - Write a key-value pair to the META partition.
 
 ## talosctl mounts
 
@@ -3210,16 +3021,6 @@ talosctl validate [flags]
       --strict          treat validation warnings as errors
 ```
 
-### Options inherited from parent commands
-
-```
-      --cluster string       Cluster to connect to if a proxy endpoint is used.
-      --context string       Context to be used in command
-  -e, --endpoints strings    override default endpoints in Talos configuration
-  -n, --nodes strings        target the specified nodes
-      --talosconfig string   The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
-```
-
 ### SEE ALSO
 
 * [talosctl](#talosctl)	 - A CLI for out-of-band management of Kubernetes nodes created by Talos
@@ -3254,6 +3055,31 @@ talosctl version [flags]
 ### SEE ALSO
 
 * [talosctl](#talosctl)	 - A CLI for out-of-band management of Kubernetes nodes created by Talos
+
+## talosctl wipe
+
+Wipe block device or volumes
+
+### Options
+
+```
+  -h, --help   help for wipe
+```
+
+### Options inherited from parent commands
+
+```
+      --cluster string       Cluster to connect to if a proxy endpoint is used.
+      --context string       Context to be used in command
+  -e, --endpoints strings    override default endpoints in Talos configuration
+  -n, --nodes strings        target the specified nodes
+      --talosconfig string   The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
+```
+
+### SEE ALSO
+
+* [talosctl](#talosctl)	 - A CLI for out-of-band management of Kubernetes nodes created by Talos
+* [talosctl wipe disk](#talosctl-wipe-disk)	 - Wipe a block device (disk or partition) which is not used as a volume
 
 ## talosctl wipe disk
 
@@ -3290,96 +3116,5 @@ talosctl wipe disk <device names>... [flags]
 
 ### SEE ALSO
 
-* [talosctl wipe](#talosctl-wipe)	 - Wipe block device or volumes
-
-## talosctl wipe
-
-Wipe block device or volumes
-
-### Options
-
-```
-  -h, --help   help for wipe
-```
-
-### Options inherited from parent commands
-
-```
-      --cluster string       Cluster to connect to if a proxy endpoint is used.
-      --context string       Context to be used in command
-  -e, --endpoints strings    override default endpoints in Talos configuration
-  -n, --nodes strings        target the specified nodes
-      --talosconfig string   The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
-```
-
-### SEE ALSO
-
-* [talosctl](#talosctl)	 - A CLI for out-of-band management of Kubernetes nodes created by Talos
-* [talosctl wipe disk](#talosctl-wipe-disk)	 - Wipe a block device (disk or partition) which is not used as a volume
-
-## talosctl
-
-A CLI for out-of-band management of Kubernetes nodes created by Talos
-
-### Options
-
-```
-      --cluster string       Cluster to connect to if a proxy endpoint is used.
-      --context string       Context to be used in command
-  -e, --endpoints strings    override default endpoints in Talos configuration
-  -h, --help                 help for talosctl
-  -n, --nodes strings        target the specified nodes
-      --talosconfig string   The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
-```
-
-### SEE ALSO
-
-* [talosctl apply-config](#talosctl-apply-config)	 - Apply a new configuration to a node
-* [talosctl bootstrap](#talosctl-bootstrap)	 - Bootstrap the etcd cluster on the specified node.
-* [talosctl cgroups](#talosctl-cgroups)	 - Retrieve cgroups usage information
-* [talosctl cluster](#talosctl-cluster)	 - A collection of commands for managing local docker-based or QEMU-based clusters
-* [talosctl completion](#talosctl-completion)	 - Output shell completion code for the specified shell (bash, fish or zsh)
-* [talosctl config](#talosctl-config)	 - Manage the client configuration file (talosconfig)
-* [talosctl conformance](#talosctl-conformance)	 - Run conformance tests
-* [talosctl containers](#talosctl-containers)	 - List containers
-* [talosctl copy](#talosctl-copy)	 - Copy data out from the node
-* [talosctl dashboard](#talosctl-dashboard)	 - Cluster dashboard with node overview, logs and real-time metrics
-* [talosctl dmesg](#talosctl-dmesg)	 - Retrieve kernel logs
-* [talosctl edit](#talosctl-edit)	 - Edit a resource from the default editor.
-* [talosctl etcd](#talosctl-etcd)	 - Manage etcd
-* [talosctl events](#talosctl-events)	 - Stream runtime events
-* [talosctl gen](#talosctl-gen)	 - Generate CAs, certificates, and private keys
-* [talosctl get](#talosctl-get)	 - Get a specific resource or list of resources (use 'talosctl get rd' to see all available resource types).
-* [talosctl health](#talosctl-health)	 - Check cluster health
-* [talosctl image](#talosctl-image)	 - Manage CRI container images
-* [talosctl inject](#talosctl-inject)	 - Inject Talos API resources into Kubernetes manifests
-* [talosctl inspect](#talosctl-inspect)	 - Inspect internals of Talos
-* [talosctl kubeconfig](#talosctl-kubeconfig)	 - Download the admin kubeconfig from the node
-* [talosctl list](#talosctl-list)	 - Retrieve a directory listing
-* [talosctl logs](#talosctl-logs)	 - Retrieve logs for a service
-* [talosctl machineconfig](#talosctl-machineconfig)	 - Machine config related commands
-* [talosctl memory](#talosctl-memory)	 - Show memory usage
-* [talosctl meta](#talosctl-meta)	 - Write and delete keys in the META partition
-* [talosctl mounts](#talosctl-mounts)	 - List mounts
-* [talosctl netstat](#talosctl-netstat)	 - Show network connections and sockets
-* [talosctl patch](#talosctl-patch)	 - Update field(s) of a resource using a JSON patch.
-* [talosctl pcap](#talosctl-pcap)	 - Capture the network packets from the node.
-* [talosctl processes](#talosctl-processes)	 - List running processes
-* [talosctl read](#talosctl-read)	 - Read a file on the machine
-* [talosctl reboot](#talosctl-reboot)	 - Reboot a node
-* [talosctl reset](#talosctl-reset)	 - Reset a node
-* [talosctl restart](#talosctl-restart)	 - Restart a process
-* [talosctl rollback](#talosctl-rollback)	 - Rollback a node to the previous installation
-* [talosctl rotate-ca](#talosctl-rotate-ca)	 - Rotate cluster CAs (Talos and Kubernetes APIs).
-* [talosctl service](#talosctl-service)	 - Retrieve the state of a service (or all services), control service state
-* [talosctl shutdown](#talosctl-shutdown)	 - Shutdown a node
-* [talosctl stats](#talosctl-stats)	 - Get container stats
-* [talosctl support](#talosctl-support)	 - Dump debug information about the cluster
-* [talosctl time](#talosctl-time)	 - Gets current server time
-* [talosctl upgrade](#talosctl-upgrade)	 - Upgrade Talos on the target node
-* [talosctl upgrade-k8s](#talosctl-upgrade-k8s)	 - Upgrade Kubernetes control plane in the Talos cluster.
-* [talosctl usage](#talosctl-usage)	 - Retrieve a disk usage
-* [talosctl validate](#talosctl-validate)	 - Validate config
-* [talosctl version](#talosctl-version)	 - Prints the version
 * [talosctl wipe](#talosctl-wipe)	 - Wipe block device or volumes
 

@@ -8,17 +8,20 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"os"
 	"slices"
 	"strings"
 
 	"github.com/siderolabs/gen/maps"
 	_ "github.com/siderolabs/proto-codec/codec" // register codec v2
 	"github.com/spf13/cobra"
+	"github.com/spf13/pflag"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/peer"
 
 	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/global"
+	"github.com/siderolabs/talos/pkg/cli"
 	"github.com/siderolabs/talos/pkg/machinery/api/common"
 	machineapi "github.com/siderolabs/talos/pkg/machinery/api/machine"
 	"github.com/siderolabs/talos/pkg/machinery/client"
@@ -51,9 +54,36 @@ func WithClientMaintenance(enforceFingerprints []string, action func(context.Con
 }
 
 // Commands is a list of commands published by the package.
-var Commands []*cobra.Command
+var (
+	Commands                   []*cobra.Command
+	persistentFlags            = global.GetPersistentFlags(&GlobalArgs)
+	flagCompleteionsRegistered = false
+)
+
+func init() {
+	persistentFlags.VisitAll(func(f *pflag.Flag) { f.Hidden = true })
+
+	cobra.AddTemplateFunc("persistentFlagUsages", func() string {
+		return global.GetPersistentFlags(&global.Args{}).FlagUsages()
+	})
+}
 
 func addCommand(cmd *cobra.Command) {
+	_, docGenEnv := os.LookupEnv("DOCUMENTATION_GENERATION")
+
+	if !docGenEnv {
+		cmd.PersistentFlags().AddFlagSet(persistentFlags)
+
+		if flagCompleteionsRegistered {
+			cli.Should(cmd.RegisterFlagCompletionFunc("context", CompleteConfigContext))
+			cli.Should(cmd.RegisterFlagCompletionFunc("nodes", CompleteNodes))
+
+			flagCompleteionsRegistered = true
+		}
+	}
+
+	cmd.SetUsageTemplate(customUsageTemplate)
+
 	Commands = append(Commands, cmd)
 }
 
@@ -231,3 +261,29 @@ func mergeSuggestions(s ...[]string) []string {
 func relativeTo(fullPath string, filter string) bool {
 	return strings.HasPrefix(fullPath, filter)
 }
+
+const customUsageTemplate = `Usage:{{if .Runnable}}
+  {{.UseLine}}{{end}}{{if .HasAvailableSubCommands}}
+  {{.CommandPath}} [command]{{end}}{{if gt (len .Aliases) 0}}
+
+Aliases:
+  {{.NameAndAliases}}{{end}}{{if .HasExample}}
+
+Examples:
+{{.Example}}{{end}}{{if .HasAvailableSubCommands}}
+
+Available Commands:{{range .Commands}}{{if (or .IsAvailableCommand (eq .Name "help"))}}
+  {{rpad .Name .NamePadding }} {{.Short}}{{end}}{{end}}{{end}}{{if .HasAvailableLocalFlags}}
+
+Flags:
+{{.LocalFlags.FlagUsages | trimTrailingWhitespaces}}{{end}}
+
+Persistent Flags:{{if .HasAvailableInheritedFlags}}
+{{.InheritedFlags.FlagUsages | trimTrailingWhitespaces}}{{end}}
+{{persistentFlagUsages | trimTrailingWhitespaces}}{{if .HasHelpSubCommands}}
+
+Additional help topics:{{range .Commands}}{{if .IsAdditionalHelpTopicCommand}}
+  {{rpad .CommandPath .CommandPathPadding}} {{.Short}}{{end}}{{end}}{{end}}{{if .HasAvailableSubCommands}}
+
+Use "{{.CommandPath}} [command] --help" for more information about a command.{{end}}
+`

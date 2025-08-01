@@ -10,13 +10,16 @@ import (
 	"crypto/tls"
 	"errors"
 	"fmt"
+	"path/filepath"
 
 	"github.com/siderolabs/crypto/x509"
+	"github.com/spf13/pflag"
 	"google.golang.org/grpc"
 
 	"github.com/siderolabs/talos/pkg/cli"
 	"github.com/siderolabs/talos/pkg/machinery/client"
 	clientconfig "github.com/siderolabs/talos/pkg/machinery/client/config"
+	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
 
 // Args is a context for the Talos command line client.
@@ -136,4 +139,24 @@ func (c *Args) WithClientMaintenance(enforceFingerprints []string, action func(c
 			return action(ctx, c)
 		},
 	)
+}
+
+// GetPersistentFlags returns the flags for the global.Args struct.
+func GetPersistentFlags(args *Args) *pflag.FlagSet {
+	persistentFlags := pflag.NewFlagSet("persistentflags", pflag.PanicOnError)
+
+	persistentFlags.StringVar(
+		&args.Talosconfig, "talosconfig", "",
+		fmt.Sprintf("The path to the Talos configuration file. Defaults to '%s' env variable if set, otherwise '%s' and '%s' in order.",
+			constants.TalosConfigEnvVar,
+			filepath.Join("$HOME", constants.TalosDir, constants.TalosconfigFilename),
+			filepath.Join(constants.ServiceAccountMountPath, constants.TalosconfigFilename),
+		),
+	)
+	persistentFlags.StringVar(&args.CmdContext, "context", "", "Context to be used in command")
+	persistentFlags.StringSliceVarP(&args.Nodes, "nodes", "n", []string{}, "target the specified nodes")
+	persistentFlags.StringSliceVarP(&args.Endpoints, "endpoints", "e", []string{}, "override default endpoints in Talos configuration")
+	persistentFlags.StringVar(&args.Cluster, "cluster", "", "Cluster to connect to if a proxy endpoint is used.")
+
+	return persistentFlags
 }

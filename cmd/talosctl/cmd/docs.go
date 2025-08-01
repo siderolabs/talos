@@ -12,12 +12,16 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"sort"
 	"strings"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/cobra/doc"
 	"gopkg.in/yaml.v3"
 
+	"github.com/siderolabs/talos/cmd/talosctl/cmd/mgmt"
+	"github.com/siderolabs/talos/cmd/talosctl/cmd/talos"
+	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/global"
 	"github.com/siderolabs/talos/pkg/machinery/config/encoder"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/block"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/hardware"
@@ -82,7 +86,28 @@ var docsCmd = &cobra.Command{
 		if cliDocs || all {
 			w := &bytes.Buffer{}
 
-			if err := GenMarkdownReference(rootCmd, w, linkHandler); err != nil {
+			allCmds := []*cobra.Command{}
+
+			talosCmd := getRootCmd()
+			talosCmd.PersistentFlags().AddFlagSet(global.GetPersistentFlags(&global.Args{}))
+			for _, cmd := range talos.Commands {
+				talosCmd.AddCommand(cmd)
+			}
+
+			allCmds = append(allCmds, talosCmd.Commands()...)
+			mgmtCmd := getRootCmd()
+
+			for _, cmd := range mgmt.Commands {
+				mgmtCmd.AddCommand(cmd)
+			}
+
+			allCmds = append(allCmds, mgmtCmd.Commands()...)
+
+			sort.Slice(allCmds, func(i, j int) bool {
+				return allCmds[i].Name() < allCmds[j].Name()
+			})
+
+			if err := GenMarkdownReference(allCmds, w, linkHandler); err != nil {
 				return fmt.Errorf("failed to generate docs: %w", err)
 			}
 
@@ -157,20 +182,22 @@ var docsCmd = &cobra.Command{
 	},
 }
 
-// GenMarkdownReference is the same as GenMarkdownTree, but
+// GenMarkdownReference is similar to the GenMarkdownTree, but
 // with custom filePrepender and linkHandler.
-func GenMarkdownReference(cmd *cobra.Command, w io.Writer, linkHandler func(string) string) error {
-	for _, c := range cmd.Commands() {
-		if !c.IsAvailableCommand() || c.IsAdditionalHelpTopicCommand() {
-			continue
+func GenMarkdownReference(cmds []*cobra.Command, w io.Writer, linkHandler func(string) string) error {
+	for _, cmd := range cmds {
+		if cmd.IsAvailableCommand() && !cmd.IsAdditionalHelpTopicCommand() {
+			if err := doc.GenMarkdownCustom(cmd, w, linkHandler); err != nil {
+				return err
+			}
 		}
 
-		if err := GenMarkdownReference(c, w, linkHandler); err != nil {
+		if err := GenMarkdownReference(cmd.Commands(), w, linkHandler); err != nil {
 			return err
 		}
 	}
 
-	return doc.GenMarkdownCustom(cmd, w, linkHandler)
+	return nil
 }
 
 func init() {
