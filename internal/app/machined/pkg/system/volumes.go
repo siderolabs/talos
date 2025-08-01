@@ -7,6 +7,7 @@ package system
 import (
 	"context"
 	"fmt"
+	"strconv"
 
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/state"
@@ -15,10 +16,10 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/resources/block"
 )
 
-func (svcrunner *ServiceRunner) createVolumeMountRequest(ctx context.Context, volumeID string) (string, error) {
+func (svcrunner *ServiceRunner) createVolumeMountRequest(ctx context.Context, volumeID string, generation int64) (string, error) {
 	st := svcrunner.runtime.State().V1Alpha2().Resources()
 	requester := "service/" + svcrunner.id
-	requestID := requester + "-" + volumeID
+	requestID := requester + "-" + volumeID + "-" + strconv.FormatInt(generation, 10)
 
 	mountRequest := block.NewVolumeMountRequest(block.NamespaceName, requestID)
 	mountRequest.TypedSpec().Requester = requester
