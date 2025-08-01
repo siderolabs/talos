@@ -13,6 +13,7 @@ import (
 	"path/filepath"
 
 	"github.com/siderolabs/crypto/x509"
+	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 	"google.golang.org/grpc"
 
@@ -159,4 +160,31 @@ func GetPersistentFlags(args *Args) *pflag.FlagSet {
 	persistentFlags.StringVar(&args.Cluster, "cluster", "", "Cluster to connect to if a proxy endpoint is used.")
 
 	return persistentFlags
+}
+
+// AddLegacyPersistentFlags adds the previously global flags to the command and all it's sub-commands.
+// It also logs a warning if any of the flags are passed.
+func AddLegacyPersistentFlags(cmd *cobra.Command) {
+	persistentFlags := GetPersistentFlags(&Args{})
+	persistentFlags.VisitAll(func(f *pflag.Flag) { f.Hidden = true })
+
+	cmd.Flags().AddFlagSet(persistentFlags)
+	oldRunE := cmd.RunE
+	cmd.RunE = func(cmd *cobra.Command, args []string) error {
+		cmd.Flags().VisitAll(func(f *pflag.Flag) {
+			if f.Changed {
+				fmt.Printf("WARNING: the %q flag has no effect with the %q command, and will be deprecated in the future\n", f.Name, cmd.Name())
+			}
+		})
+
+		if oldRunE != nil {
+			return oldRunE(cmd, args)
+		}
+
+		return nil
+	}
+
+	for _, c := range cmd.Commands() {
+		AddLegacyPersistentFlags(c)
+	}
 }

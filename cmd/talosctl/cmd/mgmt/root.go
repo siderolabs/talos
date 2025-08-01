@@ -6,7 +6,6 @@ package mgmt
 
 import (
 	"github.com/spf13/cobra"
-	"github.com/spf13/pflag"
 
 	"github.com/siderolabs/talos/cmd/talosctl/cmd/mgmt/cluster"
 	"github.com/siderolabs/talos/cmd/talosctl/cmd/mgmt/debug"
@@ -24,16 +23,13 @@ var Commands []*cobra.Command
 // Kept with this name in this package for backwards-compatibility.
 var GenV1Alpha1Config = gen.GenerateConfigBundle
 
-var persistentFlags = global.GetPersistentFlags(&global.Args{})
-
 func addCommand(cmd *cobra.Command) {
-	cmd.PersistentFlags().AddFlagSet(persistentFlags)
+	global.AddLegacyPersistentFlags(cmd)
+
 	Commands = append(Commands, cmd)
 }
 
 func init() {
-	persistentFlags.VisitAll(func(f *pflag.Flag) { f.Hidden = true })
-
 	addCommand(cluster.Cmd)
 	addCommand(gen.Cmd)
 	addCommand(debug.Cmd)

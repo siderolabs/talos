@@ -10,6 +10,7 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/global"
 	"github.com/siderolabs/talos/pkg/cli"
 )
 
@@ -78,5 +79,6 @@ Note for zsh users: [1] zsh completions are only supported in versions of zsh >=
 }
 
 func init() {
+	global.AddLegacyPersistentFlags(completionCmd)
 	rootCmd.AddCommand(completionCmd)
 }
