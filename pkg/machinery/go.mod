@@ -8,7 +8,7 @@ replace (
 
 	// forked go-yaml that introduces RawYAML interface, which can be used to populate YAML fields using bytes
 	// which are then encoded as a valid YAML blocks with proper indentiation
-	gopkg.in/yaml.v3 => github.com/unix4ever/yaml v0.0.0-20220527175918-f17b0f05cf2c
+	gopkg.in/yaml.v3 => github.com/unix4ever/yaml/v2 v2.4.0
 )
 
 require (
@@ -16,7 +16,7 @@ require (
 	github.com/containerd/go-cni v1.1.12
 	github.com/cosi-project/runtime v1.10.7
 	github.com/dustin/go-humanize v1.0.1
-	github.com/emicklei/dot v1.8.0
+	github.com/emicklei/dot v1.9.0
 	github.com/evanphx/json-patch v5.9.11+incompatible
 	github.com/fatih/color v1.18.0
 	github.com/ghodss/yaml v1.0.0
@@ -26,9 +26,9 @@ require (
 	github.com/jsimonetti/rtnetlink/v2 v2.0.5
 	github.com/mdlayher/ethtool v0.4.0
 	github.com/opencontainers/runtime-spec v1.2.1
-	github.com/planetscale/vtprotobuf v0.6.1-0.20241121165744-79df5c4772f2
+	github.com/planetscale/vtprotobuf ba97887b0a25
 	github.com/ryanuber/go-glob v1.0.0
-	github.com/santhosh-tekuri/jsonschema/v5 v5.3.1
+	github.com/santhosh-tekuri/jsonschema/v6 v6.0.2
 	github.com/siderolabs/crypto v0.6.3
 	github.com/siderolabs/gen v0.8.5
 	github.com/siderolabs/go-api-signature v0.3.6
@@ -36,9 +36,9 @@ require (
 	github.com/siderolabs/net v0.4.0
 	github.com/siderolabs/protoenc v0.2.2
 	github.com/stretchr/testify v1.10.0
-	google.golang.org/genproto/googleapis/api v0.0.0-20250715232539-7130f93afb79
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20250715232539-7130f93afb79
-	google.golang.org/grpc v1.73.0
+	google.golang.org/genproto/googleapis/api f173205681a0
+	google.golang.org/genproto/googleapis/rpc f173205681a0
+	google.golang.org/grpc v1.74.2
 	google.golang.org/protobuf v1.36.6
 	gopkg.in/yaml.v3 v3.0.1
 )

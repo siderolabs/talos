@@ -93,7 +93,7 @@ GOIMPORTS_VERSION ?= v0.35.0
 # renovate: datasource=go depName=mvdan.cc/gofumpt
 GOFUMPT_VERSION ?= v0.8.0
 # renovate: datasource=go depName=github.com/golangci/golangci-lint
-GOLANGCILINT_VERSION ?= v2.2.2
+GOLANGCILINT_VERSION ?= v2.3.0
 # renovate: datasource=go depName=golang.org/x/tools
 STRINGER_VERSION ?= v0.35.0
 # renovate: datasource=go depName=github.com/dmarkham/enumer
@@ -113,7 +113,7 @@ PROTOC_GEN_DOC_VERSION ?= v1.5.1
 # renovate: datasource=npm depName=markdownlint-cli
 MARKDOWNLINTCLI_VERSION ?= 0.45.0
 # renovate: datasource=npm depName=textlint
-TEXTLINT_VERSION ?= 15.2.0
+TEXTLINT_VERSION ?= 15.2.1
 # renovate: datasource=npm depName=textlint-filter-rule-comments
 TEXTLINT_FILTER_RULE_COMMENTS_VERSION ?= 1.2.2
 # renovate: datasource=npm depName=textlint-rule-one-sentence-per-line
@@ -134,7 +134,7 @@ KUBESTR_VERSION ?= v0.4.49
 # renovate: datasource=github-releases depName=helm/helm
 HELM_VERSION ?= v3.18.4
 # renovate: datasource=github-releases depName=cilium/cilium-cli
-CILIUM_CLI_VERSION ?= v0.18.5
+CILIUM_CLI_VERSION ?= v0.18.6
 # renovate: datasource=github-releases depName=microsoft/secureboot_objects
 MICROSOFT_SECUREBOOT_RELEASE ?= v1.1.3
 
