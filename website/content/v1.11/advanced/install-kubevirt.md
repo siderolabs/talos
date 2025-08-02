@@ -530,7 +530,7 @@ fedora-vm   6d9h   Running   10.99.101.53   kube1      True    True
 ## Other forms of management
 
 There is a project called [KubeVirt-Manager](https://kubevirt-manager.io/) for managing virtual machines with KubeVirt through a nice web interface.
-You can also choose to deploy virtual machines with ArgoCD of Flux.
+You can also choose to deploy virtual machines with ArgoCD or Flux.
 
 ## Documentation
 
