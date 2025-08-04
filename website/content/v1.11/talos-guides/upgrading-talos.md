@@ -86,7 +86,22 @@ future.
 
 ## Machine Configuration Changes
 
-TBD
+New configuration documents:
+
+* [`ExistingVolumeConfig`]({{< relref "../reference/configuration/block/existingvolumeconfig" >}}) - allows to use existing data partitions or disks.
+* [`RawVolumeConfig`]({{< relref "../reference/configuration/block/rawvolumeconfig" >}}) - allows to allocate unformatted disk space as a partition.
+* [`SwapVolumeConfig`]({{< relref "../reference/configuration/block/swapvolumeconfig" >}}) - allows to configure swap on block devices.
+* [`ZswapConfig`]({{< relref "../reference/configuration/block/zswapconfig" >}}) - allows to configure `zswap`, a compressed cache for swap pages.
+
+Updated configuration documents:
+
+* [`UserVolumeConfig`]({{< relref "../reference/configuration/block/uservolumeconfig" >}}) - now supports `projectQuotaSupport` for `xfs` filesystems.
+* [`VolumeConfig`]({{< relref "../reference/configuration/block/volumeconfig" >}}) - now supports disk encryption configuration for system volumes, including `STATE` volume.
+* disk encryption configuration in various volume configuration documents support `lockToSTATE` option, which allows to lock the volume encryption key to the secret salt in the `STATE` volume.
+
+Deprecated, but still supported configuration values (in [`v1alpha1` machine configuration]({{< relref "../reference/configuration/v1alpha1/config" >}})):
+
+* `.machine.systemDiskEncryption` - replaced by [`VolumeConfig`]({{< relref "../reference/configuration/block/volumeconfig" >}}) machine configuration document.
 
 ## Upgrade Sequence
 
