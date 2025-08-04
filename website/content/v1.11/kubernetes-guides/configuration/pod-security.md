@@ -5,24 +5,22 @@ aliases:
   - ../../guides/pod-security
 ---
 
-Kubernetes deprecated [Pod Security Policy](https://kubernetes.io/docs/concepts/policy/pod-security-policy/) as of v1.21, and it was removed in v1.25.
+Kubernetes deprecated [Pod Security Policy (PSP)](https://kubernetes.io/docs/concepts/policy/pod-security-policy/) in version 1.21 and removed it entirely in 1.25.
 
-Pod Security Policy was replaced with [Pod Security Admission](https://kubernetes.io/docs/concepts/security/pod-security-admission/), which is enabled by default
-starting with Kubernetes v1.23.
+It was replaced by [Pod Security Admission (PSA)](https://kubernetes.io/docs/concepts/security/pod-security-admission/), which is enabled by default starting with v1.23.
 
-Talos Linux by default enables and configures Pod Security Admission plugin to enforce [Pod Security Standards](https://kubernetes.io/docs/concepts/security/pod-security-standards/) with the
-`baseline` profile as the default enforced with the exception of `kube-system` namespace which enforces `privileged` profile.
+Talos Linux automatically enables and configures PSA to enforce Pod Security Standards.
+These [Pod Security Standards](https://kubernetes.io/docs/concepts/security/pod-security-standards/) define three policies that cover the security spectrum:
 
-Some applications (e.g. Prometheus node exporter or storage solutions) require more relaxed Pod Security Standards, which can be configured by either updating the Pod Security Admission plugin configuration,
-or by using the `pod-security.kubernetes.io/enforce` label on the namespace level:
+* **Privileged**: Unrestricted policy, providing the widest possible level of permissions.
+* **Baseline**: Minimally restrictive policy.
+* **Restricted**: Heavily restricted policy.
 
-```shell
-kubectl label namespace NAMESPACE-NAME pod-security.kubernetes.io/enforce=privileged
-```
+By default, Talos with the help of PSA, applies the `baseline` profile to all namespaces, except for the `kube-system` namespace, which uses the `privileged` profile.
 
-## Configuration
+## Default PSA Configuration
 
-Talos provides default Pod Security Admission in the machine configuration:
+Here is the default PSA configuration on Talos:
 
 ```yaml
 apiVersion: pod-security.admission.config.k8s.io/v1alpha1
@@ -40,17 +38,20 @@ exemptions:
     namespaces: [kube-system]
 ```
 
-This is a cluster-wide configuration for the Pod Security Admission plugin:
+This cluster-wide configuration:
 
-* by default `baseline` [Pod Security Standard](https://kubernetes.io/docs/concepts/security/pod-security-standards/) profile is enforced
-* more strict `restricted` profile is not enforced, but API server warns about found issues
+* Enforces the `baseline` security profile by default.
+* Throws a warning, if the `restricted` profile is violated, but does not enforce this profile.
 
-This default policy can be modified by updating the generated machine configuration before the cluster is created or on the fly by using the `talosctl` CLI utility.
+## Modify the Default PSA Configuraion
+
+You can modify this PSA policy by updating the generated machine configuration before the cluster is created or on the fly by using the `talosctl` CLI utility.
 
 Verify current admission plugin configuration with:
 
-```shell
+```bash
 $ talosctl get admissioncontrolconfigs.kubernetes.talos.dev admission-control -o yaml
+
 node: 172.20.0.2
 metadata:
     namespace: controlplane
@@ -81,20 +82,112 @@ spec:
             kind: PodSecurityConfiguration
 ```
 
-## Usage
+## Workloads That Satisfy the Different Security Profiles
 
-Create a deployment that satisfies the `baseline` policy but gives warnings on `restricted` policy:
+To deploy a workload that satisfies both the `baseline` and `restricted` profiles, you must ensure that your workloads:
 
-```shell
-$ kubectl create deployment nginx --image=nginx
+* Run as non-root users (UID 1000 or higher)
+* Use read-only root filesystems where possible
+* Minimize or eliminate kernel capabilities
+
+To see how PSA treats workloads that violate security profiles, consider these examples that violate the `restricted`, `baseline`, or both profiles:
+
+* A Deployment that satisfies the `restricted` profile
+* A Deployment that meets `baseline` requirements but `violates` restricted
+* A DaemonSet that violates both `restricted` and `baseline` profiles
+
+### Deployment that Satisfies the Restricted Profile
+
+This Deployment complies with the `restricted` profile and does not produce any errors or warnings when applied:
+
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: example-workload
+  namespace: default
+spec:
+  selector:
+    matchLabels:
+      app: example-workload
+  template:
+    metadata:
+      labels:
+        app: example-workload
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: example-workload
+          image: ghcr.io/siderolabs/example-workload
+          imagePullPolicy: Always
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 256Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            runAsNonRoot: true
+            capabilities:
+              drop:
+                - ALL
+```
+
+When you apply this `example-workload` Deployment, it successfully creates the Deployment and deploys its pods:
+
+<pre>
+$ kubectl apply -f example-workload.yaml
+deployment.apps/example-workload created
+
+$ kubectl get pods
+NAME                                READY   STATUS    RESTARTS   AGE
+example-workload-6f847d64b9-jctkv   1/1     Running   0          10s
+
+</pre>
+
+This is because the Deployment follows Talos’ recommended security practices, which, as shown in the Deployment configuration, include:
+
+* **runAsNonRoot: true**: Prevents the container from running as root.
+* **runAsUser and runAsGroup**: Ensures a dedicated non-root user (UID/GID 1000) runs the process.
+* **fsGroup**: Sets file system group ownership for shared volumes.
+* **seccompProfile: RuntimeDefault**: Uses the default seccomp profile to restrict available system calls.
+* **allowPrivilegeEscalation: false**: Blocks processes from gaining additional privileges.
+* **capabilities: drop: [ALL]**: Removes unnecessary Linux capabilities.
+
+### Deployment that Violates the Restricted but Meets Baseline Profile
+
+Run the following command to create a Deployment that complies with the `baseline` profile but violates the `restricted` profile:
+
+```bash
+kubectl create deployment nginx --image=nginx
+```
+
+Applying this Deployment triggers warnings indicating excessive privileges:
+
+<pre>
 Warning: would violate PodSecurity "restricted:latest": allowPrivilegeEscalation != false (container "nginx" must set securityContext.allowPrivilegeEscalation=false), unrestricted capabilities (container "nginx" must set securityContext.capabilities.drop=["ALL"]), runAsNonRoot != true (pod or container "nginx" must set securityContext.runAsNonRoot=true), seccompProfile (pod or container "nginx" must set securityContext.seccompProfile.type to "RuntimeDefault" or "Localhost")
 deployment.apps/nginx created
+</pre>
+
+Despite these warnings, the deployment and its pods are still created successfully because it complies with the default Talos `baseline` security profile:
+
+<pre>
 $ kubectl get pods
 NAME                     READY   STATUS    RESTARTS   AGE
 nginx-85b98978db-j68l8   1/1     Running   0          2m3s
-```
+</pre>
 
-Create a daemonset which fails to meet requirements of the `baseline` policy:
+### DaemonSet that Fails Both the Restricted and Baseline Profiles
+
+This DaemonSet violates both the `baseline` and `restricted` profiles:
 
 ```yaml
 apiVersion: apps/v1
@@ -143,36 +236,53 @@ spec:
     type: RollingUpdate
 ```
 
-```shell
-$ kubectl apply -f debug.yaml
+When you apply this DaemonSet:
+
+* An error is thrown, showing that the DaemonSet requests too much privileges:
+
+<pre>
 Warning: would violate PodSecurity "restricted:latest": host namespaces (hostNetwork=true, hostPID=true, hostIPC=true), privileged (container "debug-container" must not set securityContext.privileged=true), allowPrivilegeEscalation != false (container "debug-container" must set securityContext.allowPrivilegeEscalation=false), unrestricted capabilities (container "debug-container" must set securityContext.capabilities.drop=["ALL"]), runAsNonRoot != true (pod or container "debug-container" must set securityContext.runAsNonRoot=true), seccompProfile (pod or container "debug-container" must set securityContext.seccompProfile.type to "RuntimeDefault" or "Localhost")
 daemonset.apps/debug-container created
-```
+</pre>
 
-Daemonset `debug-container` gets created, but no pods are scheduled:
+* The DaemonSet object gets created but no pods are scheduled:
 
-```shell
+<pre>
 $ kubectl get ds
+
 NAME              DESIRED   CURRENT   READY   UP-TO-DATE   AVAILABLE   NODE SELECTOR   AGE
 debug-container   0         0         0       0            0           <none>          34s
-```
 
-Pod Security Admission plugin errors are in the daemonset events:
+</pre>
 
-```shell
-$ kubectl describe ds debug-container
-...
-  Warning  FailedCreate  92s                daemonset-controller  Error creating: pods "debug-container-kwzdj" is forbidden: violates PodSecurity "baseline:latest": host namespaces (hostNetwork=true, hostPID=true, hostIPC=true), privileged (container "debug-container" must not set securityContext.privileged=true)
-```
+* When you check the Controller Manager logs, you can see that the Pod Security Admission plugin errors are blocking pod creation:
 
-Pod Security Admission configuration can also be overridden on a namespace level:
+<pre>
+$ kubectl logs -n kube-system -l component=kube-controller-manager
 
-```shell
-$ kubectl label ns default pod-security.kubernetes.io/enforce=privileged
+Unhandled Error" err="pods \"debug-container-2sbw6\" is forbidden: violates PodSecurity \"baseline:latest\": host namespaces (hostNetwork=true, hostPID=true, hostIPC=true), privileged (container \"debug-container\" must not set securityContext.privileged=true)" logger="UnhandledError
+</pre>
+
+This happens because the DaemonSet does not comply with the enforced `baseline` Pod Security profile.
+
+## Override the Pod Security Admission Configuration
+
+You can override the Pod Security Admission configuration at the namespace level.
+
+This is especially useful for applications like Prometheus node exporter or storage solutions that require more relaxed Pod Security Standards.
+
+Using the DaemonSet workload example, you can update the enforced policy to `privilege` for its namespace, which is the default namespace.
+
+```bash
+kubectl label ns default pod-security.kubernetes.io/enforce=privileged
 namespace/default labeled
+```
+
+With this update, the DaemonSet is successfully running:
+
+<pre>
 $ kubectl get ds
+
 NAME              DESIRED   CURRENT   READY   UP-TO-DATE   AVAILABLE   NODE SELECTOR   AGE
 debug-container   2         2         0       2            0           <none>          4s
-```
-
-As enforce policy was updated to the `privileged` for the `default` namespace, `debug-container` is now successfully running.
+</pre>
