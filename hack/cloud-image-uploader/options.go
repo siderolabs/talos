@@ -24,8 +24,7 @@ type Options struct {
 	FactorySchematics []string
 
 	// AWS options.
-	AWSRegions   []string
-	AWSForceBIOS bool
+	AWSRegions []string
 }
 
 // DefaultOptions used throughout the cli.
