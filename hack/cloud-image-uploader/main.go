@@ -68,7 +68,6 @@ func run() error {
 	pflag.StringArrayVar(&DefaultOptions.FactorySchematics, "factory-schematics", DefaultOptions.FactorySchematics, "list of schematics to fetch from factory")
 
 	pflag.StringSliceVar(&DefaultOptions.AWSRegions, "aws-regions", DefaultOptions.AWSRegions, "list of AWS regions to upload to")
-	pflag.BoolVar(&DefaultOptions.AWSForceBIOS, "aws-force-bios", DefaultOptions.AWSForceBIOS, "force BIOS boot mode for AWS images")
 
 	pflag.Parse()
 

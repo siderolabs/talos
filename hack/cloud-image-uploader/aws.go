@@ -416,16 +416,13 @@ func (au *AWSUploader) registerAMIArch(ctx context.Context, region string, svc *
 				},
 			},
 		},
+		BootMode:           types.BootModeValuesUefi,
 		RootDeviceName:     new("/dev/xvda"),
 		VirtualizationType: new("hvm"),
 		EnaSupport:         new(true),
 		Description:        new(fmt.Sprintf("Talos AMI %s %s %s", au.Options.Tag, arch, region)),
 		Architecture:       awsArchitectures[arch],
 		ImdsSupport:        types.ImdsSupportValuesV20,
-	}
-
-	if !au.Options.AWSForceBIOS {
-		registerReq.BootMode = types.BootModeValuesUefiPreferred
 	}
 
 	registerResp, err := svc.RegisterImage(ctx, registerReq)
