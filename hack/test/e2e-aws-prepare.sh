@@ -11,12 +11,6 @@ function cloud_image_upload() {
 
   CLOUD_IMAGES_EXTRA_ARGS=("--name-prefix=${1}-${RANDOM_SUFFIX}" "--target-clouds=aws" "--architectures=amd64" "--aws-regions=${REGION}")
 
-  case "${1}" in
-    talos-e2e-nvidia-oss-*)
-      CLOUD_IMAGES_EXTRA_ARGS+=("--aws-force-bios")
-      ;;
-  esac
-
   make cloud-images CLOUD_IMAGES_EXTRA_ARGS="${CLOUD_IMAGES_EXTRA_ARGS[*]}"
 }
 
