@@ -9,6 +9,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io/fs"
 	"os"
 	"path/filepath"
 
@@ -20,6 +21,7 @@ import (
 
 	"github.com/siderolabs/talos/internal/pkg/mount/v2"
 	"github.com/siderolabs/talos/internal/pkg/selinux"
+	"github.com/siderolabs/talos/internal/pkg/xfs"
 	"github.com/siderolabs/talos/pkg/machinery/resources/files"
 )
 
@@ -27,11 +29,12 @@ import (
 type EtcFileController struct {
 	// Path to /etc directory, read-only filesystem.
 	EtcPath string
-	// Shadow path where actual file will be created and bind mounted into EtcdPath.
-	ShadowPath string
+
+	// AnonFS is a writable filesystem that is used to create bind mounts.
+	AnonFS xfs.FS
 
 	// Cache of bind mounts created.
-	bindMounts map[string]any
+	bindMounts map[string]struct{}
 }
 
 // Name implements controller.Controller interface.
@@ -65,7 +68,7 @@ func (ctrl *EtcFileController) Outputs() []controller.Output {
 //nolint:gocyclo,cyclop
 func (ctrl *EtcFileController) Run(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
 	if ctrl.bindMounts == nil {
-		ctrl.bindMounts = make(map[string]any)
+		ctrl.bindMounts = make(map[string]struct{})
 	}
 
 	for {
@@ -97,8 +100,8 @@ func (ctrl *EtcFileController) Run(ctx context.Context, r controller.Runtime, lo
 			filename := spec.Metadata().ID()
 			_, mountExists := ctrl.bindMounts[filename]
 
-			src := filepath.Join(ctrl.ShadowPath, filename)
 			dst := filepath.Join(ctrl.EtcPath, filename)
+			src := dst
 
 			switch spec.Metadata().Phase() {
 			case resource.PhaseTearingDown:
@@ -126,7 +129,7 @@ func (ctrl *EtcFileController) Run(ctx context.Context, r controller.Runtime, lo
 				if !mountExists {
 					logger.Debug("creating bind mount", zap.String("src", src), zap.String("dst", dst))
 
-					if err = createBindMountFile(src, dst, spec.TypedSpec().Mode); err != nil {
+					if err = createBindMountFile(ctrl.AnonFS, src, dst, spec.TypedSpec().Mode); err != nil {
 						return fmt.Errorf("failed to create shadow bind mount %q -> %q: %w", src, dst, err)
 					}
 
@@ -135,7 +138,7 @@ func (ctrl *EtcFileController) Run(ctx context.Context, r controller.Runtime, lo
 
 				logger.Debug("writing file contents", zap.String("src", src), zap.Stringer("version", spec.Metadata().Version()))
 
-				if err = UpdateFile(src, spec.TypedSpec().Contents, spec.TypedSpec().Mode, spec.TypedSpec().SelinuxLabel); err != nil {
+				if err = UpdateFileFs(ctrl.AnonFS, src, spec.TypedSpec().Contents, spec.TypedSpec().Mode, spec.TypedSpec().SelinuxLabel); err != nil {
 					return fmt.Errorf("error updating %q: %w", src, err)
 				}
 
@@ -172,14 +175,14 @@ func (ctrl *EtcFileController) Run(ctx context.Context, r controller.Runtime, lo
 // createBindMountFile creates a common way to create a writable source file with a
 // bind mounted destination. This is most commonly used for well known files
 // under /etc that need to be adjusted during startup.
-func createBindMountFile(src, dst string, mode os.FileMode) (err error) {
-	if err = os.MkdirAll(filepath.Dir(src), 0o755); err != nil {
+func createBindMountFile(anonfs xfs.FS, src, dst string, mode os.FileMode) (err error) {
+	if err = xfs.MkdirAll(anonfs, filepath.Dir(src), 0o755); err != nil {
 		return err
 	}
 
-	var f *os.File
+	var f fs.File
 
-	if f, err = os.OpenFile(src, os.O_WRONLY|os.O_CREATE, mode); err != nil {
+	if f, err = xfs.OpenFile(anonfs, src, os.O_WRONLY|os.O_CREATE, mode); err != nil {
 		return err
 	}
 
@@ -187,18 +190,19 @@ func createBindMountFile(src, dst string, mode os.FileMode) (err error) {
 		return err
 	}
 
-	return mount.BindReadonly(src, dst)
+	return mount.BindReadonly(filepath.Join(anonfs.MountPoint(), src), dst)
 }
 
 // createBindMountDir creates a common way to create a writable source dir with a
 // bind mounted destination. This is most commonly used for well known directories
 // under /etc that need to be adjusted during startup.
-func createBindMountDir(src, dst string) (err error) {
-	if err = os.MkdirAll(src, 0o755); err != nil {
+func createBindMountDirFs(anonfs xfs.FS, src, dst string) error {
+	err := xfs.MkdirAll(anonfs, src, 0o755)
+	if err != nil {
 		return err
 	}
 
-	return mount.BindReadonly(src, dst)
+	return mount.BindReadonly(filepath.Join(anonfs.MountPoint(), src), dst)
 }
 
 // UpdateFile is like `os.WriteFile`, but it will only update the file if the
@@ -210,6 +214,22 @@ func UpdateFile(filename string, contents []byte, mode os.FileMode, selinuxLabel
 	}
 
 	err = os.WriteFile(filename, contents, mode)
+	if err != nil {
+		return err
+	}
+
+	return selinux.SetLabel(filename, selinuxLabel)
+}
+
+// UpdateFileFs is like `os.WriteFile`, but it will only update the file if the
+// contents have changed. It acts on a file in the anonymous filesystem.
+func UpdateFileFs(anonfs xfs.FS, filename string, contents []byte, mode os.FileMode, selinuxLabel string) error {
+	oldContents, err := xfs.ReadFile(anonfs, filename)
+	if err == nil && bytes.Equal(oldContents, contents) {
+		return selinux.SetLabel(filename, selinuxLabel)
+	}
+
+	err = xfs.WriteFile(anonfs, filename, contents, mode)
 	if err != nil {
 		return err
 	}
