@@ -5,13 +5,8 @@
 package k8s
 
 import (
-	"bytes"
 	"context"
-	"encoding/json"
 	"fmt"
-	"slices"
-	"strings"
-	"text/template"
 
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
@@ -19,9 +14,10 @@ import (
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/siderolabs/gen/optional"
 	"go.uber.org/zap"
+	"k8s.io/apimachinery/pkg/runtime"
 
 	k8sadapter "github.com/siderolabs/talos/internal/app/machined/pkg/adapters/k8s"
-	"github.com/siderolabs/talos/pkg/machinery/constants"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/k8s/internal/k8stemplates"
 	"github.com/siderolabs/talos/pkg/machinery/resources/k8s"
 	"github.com/siderolabs/talos/pkg/machinery/resources/secrets"
 )
@@ -110,7 +106,7 @@ func (ctrl *ManifestController) Run(ctx context.Context, r controller.Runtime, _
 		for _, renderedManifest := range renderedManifests {
 			if err = safe.WriterModify(ctx, r, k8s.NewManifest(k8s.ControlPlaneNamespaceName, renderedManifest.name),
 				func(r *k8s.Manifest) error {
-					return k8sadapter.Manifest(r).SetYAML(renderedManifest.data)
+					return k8sadapter.Manifest(r).SetObjects(renderedManifest.objs)
 				}); err != nil {
 				return fmt.Errorf("error updating manifest %q: %w", renderedManifest.name, err)
 			}
@@ -148,115 +144,112 @@ func (ctrl *ManifestController) Run(ctx context.Context, r controller.Runtime, _
 
 type renderedManifest struct {
 	name string
-	data []byte
-}
-
-func jsonify(input string) (string, error) {
-	out, err := json.Marshal(input)
-
-	return string(out), err
+	objs []runtime.Object
 }
 
 func (ctrl *ManifestController) render(cfg k8s.BootstrapManifestsConfigSpec, scrt *secrets.KubernetesRootSpec) ([]renderedManifest, error) {
-	templateConfig := struct {
-		k8s.BootstrapManifestsConfigSpec
-
-		Secrets *secrets.KubernetesRootSpec
-
-		KubernetesTalosAPIServiceName      string
-		KubernetesTalosAPIServiceNamespace string
-
-		ApidPort int
-
-		TalosServiceAccount TalosServiceAccount
-	}{
-		BootstrapManifestsConfigSpec: cfg,
-		Secrets:                      scrt,
-
-		KubernetesTalosAPIServiceName:      constants.KubernetesTalosAPIServiceName,
-		KubernetesTalosAPIServiceNamespace: constants.KubernetesTalosAPIServiceNamespace,
-
-		ApidPort: constants.ApidPort,
-
-		TalosServiceAccount: TalosServiceAccount{
-			Group:            constants.ServiceAccountResourceGroup,
-			Version:          constants.ServiceAccountResourceVersion,
-			Kind:             constants.ServiceAccountResourceKind,
-			ResourceSingular: constants.ServiceAccountResourceSingular,
-			ResourcePlural:   constants.ServiceAccountResourcePlural,
-			ShortName:        constants.ServiceAccountResourceShortName,
+	manifests := []renderedManifest{
+		{
+			"00-kubelet-bootstrapping-token",
+			[]runtime.Object{
+				k8stemplates.KubeletBootstrapTokenSecret(scrt),
+			},
+		},
+		{
+			"01-csr-node-bootstrap",
+			[]runtime.Object{
+				k8stemplates.CSRNodeBootstrapTemplate(),
+			},
+		},
+		{
+			"01-csr-approver-role-binding",
+			[]runtime.Object{
+				k8stemplates.CSRApproverRoleBindingTemplate(),
+			},
+		},
+		{
+			"01-csr-renewal-role-binding",
+			[]runtime.Object{
+				k8stemplates.CSRRenewalRoleBindingTemplate(),
+			},
+		},
+		{
+			"11-kube-config-in-cluster",
+			[]runtime.Object{
+				k8stemplates.KubeconfigInClusterTemplate(&cfg),
+			},
+		},
+		{
+			"11-talos-node-rbac-template",
+			[]runtime.Object{
+				k8stemplates.TalosNodesRBACClusterRoleBinding(),
+				k8stemplates.TalosNodesRBACClusterRole(),
+			},
 		},
 	}
 
-	type manifestDesc struct {
-		name     string
-		template string
-	}
-
-	defaultManifests := []manifestDesc{
-		{"00-kubelet-bootstrapping-token", kubeletBootstrappingToken},
-		{"01-csr-node-bootstrap", csrNodeBootstrapTemplate},
-		{"01-csr-approver-role-binding", csrApproverRoleBindingTemplate},
-		{"01-csr-renewal-role-binding", csrRenewalRoleBindingTemplate},
-		{"11-kube-config-in-cluster", kubeConfigInClusterTemplate},
-		{"11-talos-node-rbac-template", talosNodesRBACTemplate},
-	}
-
 	if cfg.CoreDNSEnabled {
-		defaultManifests = slices.Concat(defaultManifests,
-			[]manifestDesc{
-				{"11-core-dns", coreDNSTemplate},
-				{"11-core-dns-svc", coreDNSSvcTemplate},
+		manifests = append(manifests,
+			renderedManifest{
+				"11-core-dns",
+				[]runtime.Object{
+					k8stemplates.CoreDNSServiceAccount(),
+					k8stemplates.CoreDNSClusterRole(),
+					k8stemplates.CoreDNSClusterRoleBinding(),
+					k8stemplates.CoreDNSConfigMap(&cfg),
+					k8stemplates.CoreDNSDeployment(&cfg),
+				},
+			},
+			renderedManifest{
+				"11-core-dns-svc",
+				[]runtime.Object{
+					k8stemplates.CoreDNSService(&cfg),
+				},
 			},
 		)
 	}
 
 	if cfg.FlannelEnabled {
-		defaultManifests = append(defaultManifests,
-			manifestDesc{"05-flannel", flannelTemplate})
-	}
-
-	if cfg.ProxyEnabled {
-		defaultManifests = append(defaultManifests,
-			manifestDesc{"10-kube-proxy", kubeProxyTemplate})
-	}
-
-	if cfg.PodSecurityPolicyEnabled {
-		defaultManifests = append(defaultManifests,
-			manifestDesc{"03-default-pod-security-policy", podSecurityPolicy},
-		)
-	}
-
-	if cfg.TalosAPIServiceEnabled {
-		defaultManifests = slices.Concat(defaultManifests,
-			[]manifestDesc{
-				{"13-talos-service-account-crd", talosServiceAccountCRDTemplate},
+		manifests = append(manifests,
+			renderedManifest{
+				"05-flannel",
+				[]runtime.Object{
+					k8stemplates.FlannelClusterRoleTemplate(),
+					k8stemplates.FlannelClusterRoleBindingTemplate(),
+					k8stemplates.FlannelServiceAccountTemplate(),
+					k8stemplates.FlannelConfigMapTemplate(&cfg),
+					k8stemplates.FlannelDaemonSetTemplate(&cfg),
+				},
 			},
 		)
 	}
 
-	manifests := make([]renderedManifest, len(defaultManifests))
+	if cfg.ProxyEnabled {
+		manifests = append(manifests,
+			renderedManifest{
+				"10-kube-proxy",
+				[]runtime.Object{
+					k8stemplates.KubeProxyDaemonSetTemplate(&cfg),
+					k8stemplates.KubeProxyServiceAccount(),
+					k8stemplates.KubeProxyClusterRoleBinding(),
+				},
+			},
+		)
+	}
 
-	for i := range defaultManifests {
-		tmpl, err := template.New(defaultManifests[i].name).
-			Funcs(template.FuncMap{
-				"json":     jsonify,
-				"join":     strings.Join,
-				"contains": strings.Contains,
-			}).
-			Parse(defaultManifests[i].template)
-		if err != nil {
-			return nil, fmt.Errorf("error parsing manifest template %q: %w", defaultManifests[i].name, err)
-		}
+	if cfg.PodSecurityPolicyEnabled {
+		return nil, fmt.Errorf("pod security policies are not supported anymore, please remove the flag from the configuration")
+	}
 
-		var buf bytes.Buffer
-
-		if err = tmpl.Execute(&buf, &templateConfig); err != nil {
-			return nil, fmt.Errorf("error executing template %q: %w", defaultManifests[i].name, err)
-		}
-
-		manifests[i].name = defaultManifests[i].name
-		manifests[i].data = buf.Bytes()
+	if cfg.TalosAPIServiceEnabled {
+		manifests = append(manifests,
+			renderedManifest{
+				"13-talos-service-account-crd",
+				[]runtime.Object{
+					k8stemplates.TalosServiceAccountCRDTemplate(),
+				},
+			},
+		)
 	}
 
 	return manifests, nil

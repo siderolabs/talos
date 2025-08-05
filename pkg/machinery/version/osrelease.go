@@ -7,9 +7,8 @@ package version
 //go:generate env CGO_ENABLED=0 go run ./gen.go
 
 import (
-	"bytes"
+	"fmt"
 	"strings"
-	"text/template"
 
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
@@ -30,27 +29,5 @@ func OSRelease() ([]byte, error) {
 
 // OSReleaseFor returns the contents of /etc/os-release for a given name and version.
 func OSReleaseFor(name, version string) ([]byte, error) {
-	data := struct {
-		Name    string
-		ID      string
-		Version string
-	}{
-		Name:    name,
-		ID:      strings.ToLower(name),
-		Version: version,
-	}
-
-	tmpl, err := template.New("").Parse(constants.OSReleaseTemplate)
-	if err != nil {
-		return nil, err
-	}
-
-	var writer bytes.Buffer
-
-	err = tmpl.Execute(&writer, data)
-	if err != nil {
-		return nil, err
-	}
-
-	return writer.Bytes(), nil
+	return []byte(fmt.Sprintf(constants.OSReleaseTemplate, name, strings.ToLower(name), version)), nil
 }

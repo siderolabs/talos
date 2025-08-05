@@ -11,7 +11,6 @@ import (
 	"os"
 	"regexp"
 	"runtime"
-	"text/template"
 
 	machineapi "github.com/siderolabs/talos/pkg/machinery/api/machine"
 	"github.com/siderolabs/talos/pkg/machinery/gendata"
@@ -31,11 +30,11 @@ var (
 	PkgsVersion = gendata.VersionPkgs
 )
 
-const versionTemplate = `	Tag:         {{ .Tag }}
-	SHA:         {{ .Sha }}
-	Built:       {{ .Built }}
-	Go version:  {{ .GoVersion }}
-	OS/Arch:     {{ .Os }}/{{ .Arch }}
+const versionTemplate = `	Tag:         %[1]s
+	SHA:         %[2]s
+	Built:       %[3]s
+	Go version:  %[4]s
+	OS/Arch:     %[5]s/%[6]s
 `
 
 // NewVersion prints verbose version information.
@@ -66,15 +65,7 @@ func WriteLongVersionFromExisting(w io.Writer, v *machineapi.VersionInfo) {
 }
 
 func printLong(w io.Writer, v *machineapi.VersionInfo) {
-	tmpl, err := template.New("version").Parse(versionTemplate)
-	if err != nil {
-		return
-	}
-
-	err = tmpl.Execute(w, v)
-	if err != nil {
-		return
-	}
+	fmt.Fprintf(w, versionTemplate, v.Tag, v.Sha, v.Built, v.GoVersion, v.Os, v.Arch)
 }
 
 // PrintShortVersion prints the tag and SHA.

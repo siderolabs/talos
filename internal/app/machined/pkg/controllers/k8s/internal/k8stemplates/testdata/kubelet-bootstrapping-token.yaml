@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: bootstrap-token-25p8ak
+  namespace: kube-system
+stringData:
+  auth-extra-groups: system:bootstrappers:nodes
+  token-id: 25p8ak
+  token-secret: vshybadgp2mhtvm7
+  usage-bootstrap-authentication: "true"
+type: bootstrap.kubernetes.io/token

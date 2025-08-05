@@ -8,7 +8,6 @@ import (
 	"bytes"
 	"context"
 	"crypto/x509"
-	"encoding/base64"
 	stdjson "encoding/json"
 	"encoding/pem"
 	"errors"
@@ -16,7 +15,6 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
-	"text/template"
 
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
@@ -29,6 +27,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/serializer/json"
 	"k8s.io/client-go/tools/clientcmd"
+	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
 	kubeletconfig "k8s.io/kubelet/config/v1beta1"
 
 	runtimetalos "github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
@@ -300,27 +299,35 @@ func getFromMap[T any](m map[string]any, key string) (optional.Optional[T], erro
 func (ctrl *KubeletServiceController) writePKI(secretSpec *secrets.KubeletSpec) error {
 	acceptedCAs := bytes.Join(xslices.Map(secretSpec.AcceptedCAs, func(ca *talosx509.PEMEncodedCertificate) []byte { return ca.Crt }), nil)
 
-	cfg := struct {
-		Server               string
-		CACert               string
-		BootstrapTokenID     string
-		BootstrapTokenSecret string
-	}{
-		Server:               secretSpec.Endpoint.String(),
-		CACert:               base64.StdEncoding.EncodeToString(acceptedCAs),
-		BootstrapTokenID:     secretSpec.BootstrapTokenID,
-		BootstrapTokenSecret: secretSpec.BootstrapTokenSecret,
+	bootstrapKubeconfig := clientcmdapi.Config{
+		APIVersion: "v1",
+		Kind:       "Config",
+		Clusters: map[string]*clientcmdapi.Cluster{
+			"local": {
+				Server:                   secretSpec.Endpoint.String(),
+				CertificateAuthorityData: acceptedCAs,
+			},
+		},
+		AuthInfos: map[string]*clientcmdapi.AuthInfo{
+			"kubelet@local": {
+				Token: fmt.Sprintf("%s.%s", secretSpec.BootstrapTokenID, secretSpec.BootstrapTokenSecret),
+			},
+		},
+		Contexts: map[string]*clientcmdapi.Context{
+			"kubelet@local": {
+				Cluster:  "local",
+				AuthInfo: "kubelet@local",
+			},
+		},
+		CurrentContext: "kubelet@local",
 	}
 
-	templ := template.Must(template.New("tmpl").Parse(string(kubeletKubeConfigTemplate)))
-
-	var buf bytes.Buffer
-
-	if err := templ.Execute(&buf, cfg); err != nil {
-		return err
+	marshaledKubeConfig, err := clientcmd.Write(bootstrapKubeconfig)
+	if err != nil {
+		return fmt.Errorf("error marshaling kubeconfig: %w", err)
 	}
 
-	if err := os.WriteFile(constants.KubeletBootstrapKubeconfig, buf.Bytes(), 0o600); err != nil {
+	if err := os.WriteFile(constants.KubeletBootstrapKubeconfig, marshaledKubeConfig, 0o600); err != nil {
 		return err
 	}
 
@@ -330,23 +337,6 @@ func (ctrl *KubeletServiceController) writePKI(secretSpec *secrets.KubeletSpec) 
 
 	return os.WriteFile(constants.KubernetesCACert, acceptedCAs, 0o400)
 }
-
-var kubeletKubeConfigTemplate = []byte(`apiVersion: v1
-kind: Config
-clusters:
-- name: local
-  cluster:
-    server: {{ .Server }}
-    certificate-authority-data: {{ .CACert }}
-users:
-- name: kubelet
-  user:
-    token: {{ .BootstrapTokenID }}.{{ .BootstrapTokenSecret }}
-contexts:
-- context:
-    cluster: local
-    user: kubelet
-`)
 
 func (ctrl *KubeletServiceController) writeConfig(cfgSpec *k8s.KubeletSpecSpec) error {
 	var kubeletConfiguration kubeletconfig.KubeletConfiguration

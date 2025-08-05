@@ -1,0 +1,74 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  labels:
+    k8s-app: kube-proxy
+    tier: node
+  name: kube-proxy
+  namespace: kube-system
+spec:
+  selector:
+    matchLabels:
+      k8s-app: kube-proxy
+      tier: node
+  template:
+    metadata:
+      labels:
+        k8s-app: kube-proxy
+        tier: node
+    spec:
+      containers:
+      - command:
+        - /usr/local/bin/kube-proxy
+        - --proxy-mode=iptables
+        env:
+        - name: NODE_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: spec.nodeName
+        - name: POD_IP
+          valueFrom:
+            fieldRef:
+              fieldPath: status.podIP
+        image: k8s.gcr.io/kube-proxy:v1.27.0
+        name: kube-proxy
+        resources: {}
+        securityContext:
+          privileged: true
+        volumeMounts:
+        - mountPath: /lib/modules
+          name: lib-modules
+          readOnly: true
+        - mountPath: /etc/ssl/certs
+          name: ssl-certs-host
+          readOnly: true
+        - mountPath: /etc/kubernetes
+          name: kubeconfig
+          readOnly: true
+      hostNetwork: true
+      priorityClassName: system-cluster-critical
+      serviceAccountName: kube-proxy
+      tolerations:
+      - effect: NoSchedule
+        operator: Exists
+      - effect: NoExecute
+        operator: Exists
+      volumes:
+      - hostPath:
+          path: /usr/lib/modules
+        name: lib-modules
+      - hostPath:
+          path: /etc/ssl/certs
+        name: ssl-certs-host
+      - configMap:
+          name: kubeconfig-in-cluster
+        name: kubeconfig
+  updateStrategy:
+    rollingUpdate:
+      maxUnavailable: 1
+    type: RollingUpdate
+status:
+  currentNumberScheduled: 0
+  desiredNumberScheduled: 0
+  numberMisscheduled: 0
+  numberReady: 0
