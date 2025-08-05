@@ -19,10 +19,13 @@ import (
 	"time"
 
 	"github.com/siderolabs/gen/xslices"
+	"github.com/siderolabs/go-blockdevice/v2/encryption"
 	"github.com/siderolabs/go-kubernetes/kubernetes/upgrade"
+	"github.com/siderolabs/go-pointer"
 	"github.com/siderolabs/go-retry/retry"
 	sideronet "github.com/siderolabs/net"
 	"github.com/stretchr/testify/suite"
+	"gopkg.in/yaml.v2"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -521,35 +524,75 @@ func (suite *BaseSuite) setupCluster(options clusterOptions) {
 
 	var extraPatches []configpatcher.Patch
 
-	if options.WithEncryption {
-		stateCfg := block.NewVolumeConfigV1Alpha1()
-		stateCfg.MetaName = constants.StatePartitionLabel
-		stateCfg.EncryptionSpec.EncryptionProvider = blockres.EncryptionProviderLUKS2
-		stateCfg.EncryptionSpec.EncryptionKeys = []block.EncryptionKey{
-			{
-				KeySlot:   0,
-				KeyNodeID: &block.EncryptionKeyNodeID{},
-			},
-		}
-
-		ephemeralCfg := block.NewVolumeConfigV1Alpha1()
-		ephemeralCfg.MetaName = constants.EphemeralPartitionLabel
-		ephemeralCfg.EncryptionSpec.EncryptionProvider = blockres.EncryptionProviderLUKS2
-		ephemeralCfg.EncryptionSpec.EncryptionKeys = []block.EncryptionKey{
-			{
-				KeySlot:   0,
-				KeyNodeID: &block.EncryptionKeyNodeID{},
-			},
-		}
-
-		ctr, err := container.New(stateCfg, ephemeralCfg)
-		suite.Require().NoError(err)
-
-		extraPatches = append(extraPatches, configpatcher.NewStrategicMergePatch(ctr))
-	}
-
 	versionContract, err := config.ParseContractFromVersion(options.SourceVersion)
 	suite.Require().NoError(err)
+
+	if options.WithEncryption {
+		if versionContract.VolumeConfigEncryptionSupported() {
+			// use modern encryption config
+			stateCfg := block.NewVolumeConfigV1Alpha1()
+			stateCfg.MetaName = constants.StatePartitionLabel
+			stateCfg.EncryptionSpec.EncryptionProvider = blockres.EncryptionProviderLUKS2
+			stateCfg.EncryptionSpec.EncryptionKeys = []block.EncryptionKey{
+				{
+					KeySlot:   0,
+					KeyNodeID: &block.EncryptionKeyNodeID{},
+				},
+			}
+
+			ephemeralCfg := block.NewVolumeConfigV1Alpha1()
+			ephemeralCfg.MetaName = constants.EphemeralPartitionLabel
+			ephemeralCfg.EncryptionSpec.EncryptionProvider = blockres.EncryptionProviderLUKS2
+			ephemeralCfg.EncryptionSpec.EncryptionKeys = []block.EncryptionKey{
+				{
+					KeySlot:        0,
+					KeyNodeID:      &block.EncryptionKeyNodeID{},
+					KeyLockToSTATE: pointer.To(true),
+				},
+			}
+
+			ctr, err := container.New(stateCfg, ephemeralCfg)
+			suite.Require().NoError(err)
+
+			extraPatches = append(extraPatches, configpatcher.NewStrategicMergePatch(ctr))
+		} else {
+			// use legacy encryption config
+			diskEncryptionConfig := &v1alpha1.SystemDiskEncryptionConfig{
+				StatePartition: &v1alpha1.EncryptionConfig{
+					EncryptionProvider: encryption.LUKS2,
+					EncryptionKeys: []*v1alpha1.EncryptionKey{
+						{
+							KeySlot:   0,
+							KeyNodeID: &v1alpha1.EncryptionKeyNodeID{},
+						},
+					},
+				},
+				EphemeralPartition: &v1alpha1.EncryptionConfig{
+					EncryptionProvider: encryption.LUKS2,
+					EncryptionKeys: []*v1alpha1.EncryptionKey{
+						{
+							KeySlot:   0,
+							KeyNodeID: &v1alpha1.EncryptionKeyNodeID{},
+						},
+					},
+				},
+			}
+
+			patchRaw := map[string]any{
+				"machine": map[string]any{
+					"systemDiskEncryption": diskEncryptionConfig,
+				},
+			}
+
+			patchData, err := yaml.Marshal(patchRaw)
+			suite.Require().NoError(err)
+
+			patch, err := configpatcher.LoadPatch(patchData)
+			suite.Require().NoError(err)
+
+			extraPatches = append(extraPatches, patch)
+		}
+	}
 
 	suite.configBundle, err = bundle.NewBundle(
 		bundle.WithInputOptions(

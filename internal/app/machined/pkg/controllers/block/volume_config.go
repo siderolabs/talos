@@ -7,7 +7,6 @@ package block
 import (
 	"bytes"
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"os"
@@ -24,7 +23,6 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/cel"
 	"github.com/siderolabs/talos/pkg/machinery/cel/celenv"
 	cfg "github.com/siderolabs/talos/pkg/machinery/config/config"
-	blockcfg "github.com/siderolabs/talos/pkg/machinery/config/types/block"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/imager/quirks"
 	"github.com/siderolabs/talos/pkg/machinery/meta"
@@ -355,7 +353,7 @@ func (ctrl *VolumeConfigController) manageStateConfigPresent(ctx context.Context
 			return fmt.Errorf("error converting encryption for %s: %w", constants.StatePartitionLabel, err)
 		}
 
-		metaEncryptionConfig, err := json.Marshal(encryptionConfig)
+		metaEncryptionConfig, err := MarshalEncryptionMeta(encryptionConfig)
 		if err != nil {
 			return fmt.Errorf("error marshaling encryption config for %s: %w", constants.StatePartitionLabel, err)
 		}
@@ -410,10 +408,9 @@ func (ctrl *VolumeConfigController) manageStateNoConfig(encryptionMeta *runtime.
 		}
 
 		if encryptionMeta != nil {
-			var encryptionFromMeta blockcfg.EncryptionSpec
-
-			if err := json.Unmarshal([]byte(encryptionMeta.TypedSpec().Value), &encryptionFromMeta); err != nil {
-				return fmt.Errorf("error unmarshalling state encryption meta key: %w", err)
+			encryptionFromMeta, err := UnmarshalEncryptionMeta([]byte(encryptionMeta.TypedSpec().Value))
+			if err != nil {
+				return err
 			}
 
 			if err := convertEncryptionConfiguration(
