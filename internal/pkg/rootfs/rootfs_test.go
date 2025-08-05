@@ -6,6 +6,7 @@ package rootfs_test
 
 import (
 	"debug/buildinfo"
+	"os"
 	"runtime"
 	"testing"
 
@@ -14,7 +15,13 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
 
-func TestPkgxGoVersionMatchesTalos(t *testing.T) {
+func TestPkgsGoVersionMatchesTalos(t *testing.T) {
+	t.Parallel()
+
+	if hostname, _ := os.Hostname(); hostname != "buildkitsandbox" { //nolint:errcheck
+		t.Skipf("skipping test; only run on buildkitsandbox, got %s", hostname)
+	}
+
 	const sampleBinaryPath = "/usr/bin/containerd"
 
 	info, err := buildinfo.ReadFile(sampleBinaryPath)

@@ -10,7 +10,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	stdlibtemplate "text/template"
 
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
@@ -21,6 +20,7 @@ import (
 	"github.com/siderolabs/gen/xslices"
 	"go.uber.org/zap"
 
+	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/k8s/internal/k8stemplates"
 	"github.com/siderolabs/talos/internal/pkg/selinux"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/resources/k8s"
@@ -157,9 +157,9 @@ func (ctrl *RenderSecretsStaticPodController) Run(ctx context.Context, r control
 			keyFilename  string
 		}
 
-		type template struct {
-			filename string
-			template string
+		type file struct {
+			filename    string
+			contentFunc func() ([]byte, error)
 		}
 
 		for _, pod := range []struct {
@@ -169,7 +169,7 @@ func (ctrl *RenderSecretsStaticPodController) Run(ctx context.Context, r control
 			uid          int
 			gid          int
 			secrets      []secret
-			templates    []template
+			files        []file
 		}{
 			{
 				name:         "kube-apiserver",
@@ -225,10 +225,12 @@ func (ctrl *RenderSecretsStaticPodController) Run(ctx context.Context, r control
 						keyFilename:  "front-proxy-client.key",
 					},
 				},
-				templates: []template{
+				files: []file{
 					{
 						filename: "encryptionconfig.yaml",
-						template: kubeSystemEncryptionConfigTemplate,
+						contentFunc: func() ([]byte, error) {
+							return k8stemplates.Marshal(k8stemplates.APIServerEncryptionConfig(rootK8sSecrets))
+						},
 					},
 				},
 			},
@@ -254,10 +256,10 @@ func (ctrl *RenderSecretsStaticPodController) Run(ctx context.Context, r control
 						keyFilename: "service-account.key",
 					},
 				},
-				templates: []template{
+				files: []file{
 					{
-						filename: "kubeconfig",
-						template: "{{ .Secrets.ControllerManagerKubeconfig }}",
+						filename:    "kubeconfig",
+						contentFunc: func() ([]byte, error) { return []byte(k8sSecrets.ControllerManagerKubeconfig), nil },
 					},
 				},
 			},
@@ -267,10 +269,10 @@ func (ctrl *RenderSecretsStaticPodController) Run(ctx context.Context, r control
 				selinuxLabel: constants.KubernetesSchedulerSecretsDirSELinuxLabel,
 				uid:          constants.KubernetesSchedulerRunUser,
 				gid:          constants.KubernetesSchedulerRunGroup,
-				templates: []template{
+				files: []file{
 					{
-						filename: "kubeconfig",
-						template: "{{ .Secrets.SchedulerKubeconfig }}",
+						filename:    "kubeconfig",
+						contentFunc: func() ([]byte, error) { return []byte(k8sSecrets.SchedulerKubeconfig), nil },
 					},
 				},
 			},
@@ -307,36 +309,18 @@ func (ctrl *RenderSecretsStaticPodController) Run(ctx context.Context, r control
 				}
 			}
 
-			type templateParams struct {
-				Root    *secrets.KubernetesRootSpec
-				Secrets *secrets.KubernetesCertsSpec
-			}
-
-			params := templateParams{
-				Root:    rootK8sSecrets,
-				Secrets: k8sSecrets,
-			}
-
-			for _, templ := range pod.templates {
-				var t *stdlibtemplate.Template
-
-				t, err = stdlibtemplate.New(templ.filename).Parse(templ.template)
+			for _, file := range pod.files {
+				fileContent, err := file.contentFunc()
 				if err != nil {
-					return fmt.Errorf("error parsing template %q: %w", templ.filename, err)
+					return fmt.Errorf("error getting content for file %q for %q: %w", file.filename, pod.name, err)
 				}
 
-				var buf bytes.Buffer
-
-				if err = t.Execute(&buf, &params); err != nil {
-					return fmt.Errorf("error executing template %q: %w", templ.filename, err)
+				if err = os.WriteFile(filepath.Join(pod.directory, file.filename), fileContent, 0o400); err != nil {
+					return fmt.Errorf("error writing file %q for %q: %w", file.filename, pod.name, err)
 				}
 
-				if err = os.WriteFile(filepath.Join(pod.directory, templ.filename), buf.Bytes(), 0o400); err != nil {
-					return fmt.Errorf("error writing template %q for %q: %w", templ.filename, pod.name, err)
-				}
-
-				if err = os.Chown(filepath.Join(pod.directory, templ.filename), pod.uid, pod.gid); err != nil {
-					return fmt.Errorf("error chowning %q for %q: %w", templ.filename, pod.name, err)
+				if err = os.Chown(filepath.Join(pod.directory, file.filename), pod.uid, pod.gid); err != nil {
+					return fmt.Errorf("error chowning %q for %q: %w", file.filename, pod.name, err)
 				}
 			}
 		}

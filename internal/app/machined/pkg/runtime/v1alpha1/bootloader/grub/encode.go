@@ -6,42 +6,11 @@ package grub
 
 import (
 	"bytes"
+	"fmt"
 	"io"
 	"os"
 	"path/filepath"
-	"text/template"
 )
-
-const confTemplate = `set default="{{ (index .Entries .Default).Name }}"
-{{ with (index .Entries .Fallback).Name -}}
-set fallback="{{ . }}"
-{{- end }}
-set timeout=3
-
-insmod all_video
-
-terminal_input console
-terminal_output console
-
-{{ range $key, $entry := .Entries -}}
-menuentry "{{ $entry.Name }}" {
-  set gfxmode=auto
-  set gfxpayload=text
-  linux {{ $entry.Linux }} {{ quote $entry.Cmdline }}
-  initrd {{ $entry.Initrd }}
-}
-{{ end -}}
-
-{{ if .AddResetOption -}}
-{{ $defaultEntry := index .Entries .Default -}}
-menuentry "Reset Talos installation and return to maintenance mode" {
-  set gfxmode=auto
-  set gfxpayload=text
-  linux {{ $defaultEntry.Linux }} {{ quote $defaultEntry.Cmdline }} talos.experimental.wipe=system:EPHEMERAL,STATE
-  initrd {{ $defaultEntry.Initrd }}
-}
-{{ end -}}
-`
 
 // Write the grub configuration to the given file.
 func (c *Config) Write(path string, printf func(string, ...any)) error {
@@ -68,9 +37,43 @@ func (c *Config) Encode(wr io.Writer) error {
 		return err
 	}
 
-	t := template.Must(template.New("grub").Funcs(template.FuncMap{
-		"quote": Quote,
-	}).Parse(confTemplate))
+	fmt.Fprintf(wr, "set default=\"%s\"\n", c.Entries[c.Default].Name)
 
-	return t.Execute(wr, c)
+	if fallback, ok := c.Entries[c.Fallback]; ok {
+		fmt.Fprintf(wr, "set fallback=\"%s\"\n", fallback.Name)
+	}
+
+	fmt.Fprint(wr, `
+set timeout=3
+
+insmod all_video
+
+terminal_input console
+terminal_output console
+
+`)
+
+	for _, entry := range c.Entries {
+		fmt.Fprintf(wr, `menuentry "%s" {
+  set gfxmode=auto
+  set gfxpayload=text
+  linux %s %s
+  initrd %s
+}
+`, entry.Name, entry.Linux, Quote(entry.Cmdline), entry.Initrd)
+	}
+
+	if c.AddResetOption {
+		defaultEntry := c.Entries[c.Default]
+
+		fmt.Fprintf(wr, `menuentry "Reset Talos installation and return to maintenance mode" {
+  set gfxmode=auto
+  set gfxpayload=text
+  linux %s %s talos.experimental.wipe=system:EPHEMERAL,STATE
+  initrd %s
+}
+`, defaultEntry.Linux, Quote(defaultEntry.Cmdline), defaultEntry.Initrd)
+	}
+
+	return nil
 }

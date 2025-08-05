@@ -30,6 +30,7 @@ replace github.com/insomniacslk/dhcp => github.com/smira/dhcp v0.0.0-20250407153
 // Kubernetes dependencies sharing the same version.
 require (
 	k8s.io/api v0.34.0-beta.0
+	k8s.io/apiextensions-apiserver v0.34.0-beta.0
 	k8s.io/apimachinery v0.34.0-beta.0
 	k8s.io/apiserver v0.34.0-beta.0
 	k8s.io/client-go v0.34.0-beta.0

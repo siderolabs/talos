@@ -1,0 +1,39 @@
+apiVersion: v1
+data:
+  cni-conf.json: |-
+    {
+      "name": "cbr0",
+      "cniVersion": "1.0.0",
+      "plugins": [
+        {
+          "type": "flannel",
+          "delegate": {
+            "hairpinMode": true,
+            "isDefaultGateway": true
+          }
+        },
+        {
+          "type": "portmap",
+          "capabilities": {
+            "portMappings": true
+          }
+        }
+      ]
+    }
+  net-conf.json: |-
+    {
+      "Network": "10.96.0.0/12",
+      "IPv6Network": "fd00::/112",
+      "EnableIPv6": true,
+      "Backend": {
+        "Type": "vxlan",
+        "Port": 4789
+      }
+    }
+kind: ConfigMap
+metadata:
+  labels:
+    k8s-app: flannel
+    tier: node
+  name: kube-flannel-cfg
+  namespace: kube-system

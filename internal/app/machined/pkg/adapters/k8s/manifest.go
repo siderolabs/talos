@@ -32,6 +32,28 @@ type manifest struct {
 	*k8s.Manifest
 }
 
+// SetObjects parses manifest from a list of runtime objects.
+func (a manifest) SetObjects(objects []runtime.Object) error {
+	a.Manifest.TypedSpec().Items = make([]k8s.SingleManifest, 0, len(objects))
+
+	for _, obj := range objects {
+		unstructuredObj, err := runtime.DefaultUnstructuredConverter.ToUnstructured(obj)
+		if err != nil {
+			return fmt.Errorf("error converting object to unstructured: %w", err)
+		}
+
+		u := unstructured.Unstructured{Object: unstructuredObj}
+		u.SetGroupVersionKind(obj.GetObjectKind().GroupVersionKind())
+		delete(u.Object, "status") // remove status field if present
+
+		a.Manifest.TypedSpec().Items = append(a.Manifest.TypedSpec().Items, k8s.SingleManifest{
+			Object: u.Object,
+		})
+	}
+
+	return nil
+}
+
 // SetYAML parses manifest from YAML.
 //
 //nolint:gocyclo

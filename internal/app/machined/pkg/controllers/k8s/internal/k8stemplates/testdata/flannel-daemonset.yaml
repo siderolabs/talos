@@ -1,0 +1,107 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  labels:
+    k8s-app: flannel
+    tier: node
+  name: kube-flannel
+  namespace: kube-system
+spec:
+  selector:
+    matchLabels:
+      k8s-app: flannel
+      tier: node
+  template:
+    metadata:
+      labels:
+        k8s-app: flannel
+        tier: node
+    spec:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: kubernetes.io/os
+                operator: In
+                values:
+                - linux
+      containers:
+      - args:
+        - --ip-masq
+        - --kube-subnet-mgr
+        - --foo=bar
+        command:
+        - /opt/bin/flanneld
+        env:
+        - name: POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        - name: POD_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        - name: EVENT_QUEUE_DEPTH
+          value: "5000"
+        - name: CONT_WHEN_CACHE_NOT_READY
+          value: "false"
+        image: quay.io/coreos/flannel:v0.14.0
+        name: kube-flannel
+        resources:
+          requests:
+            cpu: 100m
+            memory: 50Mi
+        securityContext:
+          capabilities:
+            add:
+            - NET_ADMIN
+            - NET_RAW
+          privileged: false
+        volumeMounts:
+        - mountPath: /run/flannel
+          name: run
+        - mountPath: /etc/kube-flannel/
+          name: flannel-cfg
+      hostNetwork: true
+      initContainers:
+      - args:
+        - -f
+        - /etc/kube-flannel/cni-conf.json
+        - /etc/cni/net.d/10-flannel.conflist
+        command:
+        - cp
+        image: quay.io/coreos/flannel:v0.14.0
+        name: install-config
+        resources: {}
+        volumeMounts:
+        - mountPath: /etc/cni/net.d
+          name: cni
+        - mountPath: /etc/kube-flannel/
+          name: flannel-cfg
+      priorityClassName: system-node-critical
+      serviceAccountName: flannel
+      tolerations:
+      - effect: NoSchedule
+        operator: Exists
+      - effect: NoExecute
+        operator: Exists
+      volumes:
+      - hostPath:
+          path: /run/flannel
+        name: run
+      - hostPath:
+          path: /opt/cni/bin
+        name: cni-plugin
+      - hostPath:
+          path: /etc/cni/net.d
+        name: cni
+      - configMap:
+          name: kube-flannel-cfg
+        name: flannel-cfg
+  updateStrategy: {}
+status:
+  currentNumberScheduled: 0
+  desiredNumberScheduled: 0
+  numberMisscheduled: 0
+  numberReady: 0
