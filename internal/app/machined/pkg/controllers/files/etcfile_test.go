@@ -24,6 +24,8 @@ import (
 	"go.uber.org/zap/zaptest"
 
 	filesctrl "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/files"
+	"github.com/siderolabs/talos/internal/pkg/xfs"
+	"github.com/siderolabs/talos/internal/pkg/xfs/fsopen"
 	"github.com/siderolabs/talos/pkg/machinery/resources/files"
 )
 
@@ -38,8 +40,9 @@ type EtcFileSuite struct {
 	ctx       context.Context //nolint:containedctx
 	ctxCancel context.CancelFunc
 
-	etcPath    string
-	shadowPath string
+	anonfs xfs.FS
+
+	etcPath string
 }
 
 func (suite *EtcFileSuite) SetupTest() {
@@ -54,14 +57,29 @@ func (suite *EtcFileSuite) SetupTest() {
 
 	suite.startRuntime()
 
-	suite.etcPath = suite.T().TempDir()
-	suite.shadowPath = suite.T().TempDir()
+	fsc, err := fsopen.New("tmpfs")
+	suite.Require().NoError(err)
+
+	ufs, err := xfs.NewUnix(fsc)
+	suite.Require().NoError(err)
+	suite.anonfs = ufs
+
+	ufs.Shadow, err = fsc.MountAt(suite.T().TempDir())
+	suite.Require().NoError(err)
+
+	suite.T().Cleanup(func() {
+		err := fsc.UnmountFrom(ufs.MountPoint())
+		suite.Require().NoError(err)
+	})
+
+	suite.etcPath, err = xfs.MkdirTemp(suite.anonfs, "", "")
+	suite.Require().NoError(err)
 
 	suite.Require().NoError(
 		suite.runtime.RegisterController(
 			&filesctrl.EtcFileController{
-				EtcPath:    suite.etcPath,
-				ShadowPath: suite.shadowPath,
+				AnonFS:  suite.anonfs,
+				EtcPath: suite.etcPath,
 			},
 		),
 	)
@@ -78,7 +96,7 @@ func (suite *EtcFileSuite) startRuntime() {
 }
 
 func (suite *EtcFileSuite) assertEtcFile(filename, contents string, expectedVersion resource.Version) error {
-	b, err := os.ReadFile(filepath.Join(suite.etcPath, filename))
+	b, err := xfs.ReadFile(suite.anonfs, filepath.Join(suite.etcPath, filename))
 	if err != nil {
 		return retry.ExpectedError(err)
 	}
@@ -118,7 +136,7 @@ func (suite *EtcFileSuite) TestFiles() {
 
 	// create "read-only" mock (in Talos it's part of rootfs)
 	suite.T().Logf("mock created %q", filepath.Join(suite.etcPath, etcFileSpec.Metadata().ID()))
-	suite.Require().NoError(os.WriteFile(filepath.Join(suite.etcPath, etcFileSpec.Metadata().ID()), nil, 0o644))
+	suite.Require().NoError(xfs.WriteFile(suite.anonfs, filepath.Join(suite.etcPath, etcFileSpec.Metadata().ID()), nil, 0o644))
 
 	suite.Require().NoError(suite.state.Create(suite.ctx, etcFileSpec))
 

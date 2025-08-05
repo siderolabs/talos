@@ -40,6 +40,8 @@ import (
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
 	runtimelogging "github.com/siderolabs/talos/internal/app/machined/pkg/runtime/logging"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system"
+	"github.com/siderolabs/talos/internal/pkg/xfs"
+	"github.com/siderolabs/talos/internal/pkg/xfs/fsopen"
 	"github.com/siderolabs/talos/pkg/logging"
 	talosconfig "github.com/siderolabs/talos/pkg/machinery/config/config"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
@@ -86,6 +88,23 @@ func (ctrl *Controller) Run(ctx context.Context, drainer *runtime.Drainer) error
 	if err != nil {
 		return err
 	}
+
+	tmpfs, err := fsopen.New("tmpfs")
+	if err != nil {
+		return fmt.Errorf("failed to get tmpfs creator: %w", err)
+	}
+	defer tmpfs.Close() //nolint:errcheck
+
+	anonfs, err := xfs.NewUnix(tmpfs)
+	if err != nil {
+		return fmt.Errorf("failed to create anonymous filesystem: %w", err)
+	}
+
+	anonfs.Shadow, err = tmpfs.MountAt(constants.SystemEtcPath)
+	if err != nil {
+		return fmt.Errorf("failed to mount filesystem: %w", err)
+	}
+	defer tmpfs.UnmountFrom(anonfs.MountPoint()) //nolint:errcheck
 
 	for _, c := range []controller.Controller{
 		&block.DevicesController{
@@ -158,10 +177,12 @@ func (ctrl *Controller) Run(ctx context.Context, drainer *runtime.Drainer) error
 		&etcd.MemberController{},
 		&files.CRIBaseRuntimeSpecController{},
 		&files.CRIConfigPartsController{},
-		&files.CRIRegistryConfigController{},
+		&files.CRIRegistryConfigController{
+			AnonFS: anonfs,
+		},
 		&files.EtcFileController{
-			EtcPath:    "/etc",
-			ShadowPath: constants.SystemEtcPath,
+			EtcPath: "/etc",
+			AnonFS:  anonfs,
 		},
 		&files.IQNController{
 			V1Alpha1Mode: ctrl.v1alpha1Runtime.State().Platform().Mode(),
