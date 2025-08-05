@@ -103,6 +103,8 @@ func upgradeStableToCurrent() upgradeSpec {
 
 		ControlplaneNodes: DefaultSettings.ControlplaneNodes,
 		WorkerNodes:       DefaultSettings.WorkerNodes,
+
+		WithEncryption: true,
 	}
 }
 
