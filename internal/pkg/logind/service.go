@@ -9,7 +9,6 @@ import (
 	"syscall"
 
 	"github.com/godbus/dbus/v5"
-	"github.com/godbus/dbus/v5/prop"
 )
 
 // ServiceMock connects to the broker and mocks the D-Bus and logind.
@@ -31,20 +30,42 @@ func NewServiceMock(socketPath string) (*ServiceMock, error) {
 		return nil, err
 	}
 
-	if err = conn.Export(dbusMock{}, dbusPath, dbusInterface); err != nil {
+	var dbusMock dbusMock
+
+	if err = conn.ExportMethodTable(
+		map[string]any{
+			"AddMatch": dbusMock.AddMatch,
+			"Hello":    dbusMock.Hello,
+		},
+		dbusPath, dbusInterface,
+	); err != nil {
 		return nil, err
 	}
 
-	if err = conn.Export(&mock.logind, logindObject, logindService); err != nil {
+	if err = conn.ExportMethodTable(
+		map[string]any{
+			"Inhibit": mock.logind.Inhibit,
+		},
+		logindObject, logindService,
+	); err != nil {
 		return nil, err
 	}
 
-	if err = conn.Export(&mock.logind, logindObject, logindInterface); err != nil {
+	if err = conn.ExportMethodTable(
+		map[string]any{
+			"Inhibit": mock.logind.Inhibit,
+		},
+		logindObject, logindInterface,
+	); err != nil {
 		return nil, err
 	}
 
-	_, err = prop.Export(conn, logindObject, logindProps)
-	if err != nil {
+	if err = conn.ExportMethodTable(
+		map[string]any{
+			"Get": mock.logind.Get,
+		},
+		logindObject, propsInterface,
+	); err != nil {
 		return nil, err
 	}
 

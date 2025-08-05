@@ -7,8 +7,9 @@ package logind
 import "github.com/godbus/dbus/v5"
 
 const (
-	dbusPath      = dbus.ObjectPath("/org/freedesktop/DBus")
-	dbusInterface = "org.freedesktop.DBus"
+	dbusPath       = dbus.ObjectPath("/org/freedesktop/DBus")
+	dbusInterface  = "org.freedesktop.DBus"
+	propsInterface = "org.freedesktop.DBus.Properties"
 )
 
 type dbusMock struct{}

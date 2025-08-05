@@ -31,15 +31,6 @@ type logindMock struct {
 	inhibitPipe []int
 }
 
-var logindProps = map[string]map[string]*prop.Prop{
-	logindInterface: {
-		"InhibitDelayMaxUSec": {
-			Value:    uint64(InhibitMaxDelay / time.Microsecond),
-			Writable: false,
-		},
-	},
-}
-
 func (mock *logindMock) Inhibit(what, who, why, mode string) (dbus.UnixFD, *dbus.Error) {
 	mock.mu.Lock()
 	defer mock.mu.Unlock()
@@ -54,6 +45,18 @@ func (mock *logindMock) Inhibit(what, who, why, mode string) (dbus.UnixFD, *dbus
 	}
 
 	return dbus.UnixFD(mock.inhibitPipe[1]), nil
+}
+
+func (mock *logindMock) Get(iface, property string) (dbus.Variant, *dbus.Error) {
+	if iface != logindInterface {
+		return dbus.Variant{}, prop.ErrIfaceNotFound
+	}
+
+	if property != "InhibitDelayMaxUSec" {
+		return dbus.Variant{}, prop.ErrPropNotFound
+	}
+
+	return dbus.MakeVariant(uint64(InhibitMaxDelay / time.Microsecond)), nil
 }
 
 func (mock *logindMock) getPipe() []int {
