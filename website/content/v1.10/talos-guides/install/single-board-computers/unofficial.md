@@ -3,11 +3,12 @@ title: "Unofficial Ports"
 description: "List of unofficial ports of Talos Linux to single-board computers."
 ---
 
-Certain single-board computers cannot be officially supported by Talos Linux due to the need for a custom fork of the Linux kernel.
-This page provides a list of unofficial ports of Talos Linux to single-board computers, created and maintained by the community.
-These ports are not officially supported by Talos Linux and are offered as-is.
+All single-board computer (SBC) ports are community-maintained and provided as-is.
+They are not part of the official Talos Linux source tree and live in the [overlays repository](https://github.com/siderolabs/overlays).
 
-Some of these ports may become official in the future.
+While Talos contributors may offer best-effort help for Talos-specific issues (for example, if Kubernetes doesn’t run properly on a supported architecture), we do not provide official support for SBC-specific problems such as boot failures, firmware quirks, or custom kernel requirements.
+
+If you need official support for SBC boards please contact sales@siderolabs.com to discuss a support contract.
 
 ## Raspberry Pi 5
 
