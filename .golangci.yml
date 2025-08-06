@@ -83,6 +83,7 @@ linters:
         - cloud.google.com/go
         - github.com/mdlayher/ethtool
         - github.com/insomniacslk/dhcp
+        - github.com/containerd/containerd/v2
       replace-local: true
       exclude-forbidden: false
       retract-allow-no-explanation: false

@@ -27,6 +27,11 @@ replace (
 // https://github.com/insomniacslk/dhcp/pull/550
 replace github.com/insomniacslk/dhcp => github.com/smira/dhcp v0.0.0-20250407153013-99942baa5d59
 
+// deadcode elimination fix replacement: https://github.com/siderolabs/talos/issues/11296
+// upstream PR: https://github.com/containerd/containerd/pull/12175
+// this a fork with containerd 2.1 branch + the commit from the PR above
+replace github.com/containerd/containerd/v2 => github.com/smira/containerd/v2 v2.0.0-20250806103510-dcf2fc86e156
+
 // Kubernetes dependencies sharing the same version.
 require (
 	k8s.io/api v0.34.0-beta.0
