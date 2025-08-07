@@ -30,11 +30,21 @@ func TestCreateCommandInvalidProvisioner(t *testing.T) {
 }
 
 func TestCreateCommandInvalidProvisionerFlagQemu(t *testing.T) {
-	_, _, err := runCmd(cluster.Cmd, "create", "--provisioner=qemu", "--docker-disable-ipv6=true")
-	assert.ErrorContains(t, err, "docker-disable-ipv6 flag has been set but has no effect with the qemu provisioner")
+	_, _, err := runCmd(cluster.Cmd, "create", "--provisioner=qemu", "--disable-ipv6=true")
+	assert.ErrorContains(t, err, "disable-ipv6 flag has been set but has no effect with the qemu provisioner")
 }
 
 func TestCreateCommandInvalidProvisionerFlagDocker(t *testing.T) {
 	_, _, err := runCmd(cluster.Cmd, "create", "--provisioner=docker", "--with-network-chaos=true")
 	assert.ErrorContains(t, err, "with-network-chaos flag has been set but has no effect with the docker provisioner")
+}
+
+func TestCreateQemuCommandUnvalidFlag(t *testing.T) {
+	_, _, err := runCmd(cluster.Cmd, "create", "qemu", "--with-network-chaos=true")
+	assert.ErrorContains(t, err, "unknown flag(s): --with-network-chaos")
+}
+
+func TestCreateDockerCommandUnvalidFlag(t *testing.T) {
+	_, _, err := runCmd(cluster.Cmd, "create", "docker", "--mtu=123")
+	assert.ErrorContains(t, err, "unknown flag(s): --mtu")
 }
