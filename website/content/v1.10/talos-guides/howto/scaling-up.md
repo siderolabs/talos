@@ -21,7 +21,7 @@ Once you have the IP address, you can then apply the correct configuration for e
     --file controlplane.yaml
 ```
 
-The insecure flag is necessary because the PKI infrastructure has not yet been made available to the node.
+The insecure flag is necessary because the PKI has not yet been made available to the node.
 
 You do not need to bootstrap the new node.
 Regardless of whether you are adding a control plane or worker node, it will now join the cluster in its role.

@@ -131,7 +131,7 @@ Talos requires two set of keys to be used for the SecureBoot process:
 
 The same key might be used for both, but it is recommended to use separate keys for each purpose.
 
-Talos provides a utility to generate the keys, but existing PKI infrastructure can be used as well:
+Talos provides a utility to generate the keys, but existing PKI can be used as well:
 
 ```shell
 $ talosctl gen secureboot uki --common-name "SecureBoot Key"
