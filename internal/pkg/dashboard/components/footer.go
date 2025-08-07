@@ -24,6 +24,7 @@ type Footer struct {
 	screenKeyToName map[string]string
 
 	selectedScreen string
+	paused         bool
 }
 
 // NewFooter initializes Footer.
@@ -80,6 +81,13 @@ func (widget *Footer) SelectScreen(screen string) {
 	widget.refresh()
 }
 
+// SetPaused refreshes the footer with the new paused state.
+func (widget *Footer) SetPaused(paused bool) {
+	widget.paused = paused
+
+	widget.refresh()
+}
+
 func (widget *Footer) refresh() {
 	widget.SetText(fmt.Sprintf(
 		"[%s] --- %s",
@@ -121,6 +129,10 @@ func (widget *Footer) screensText() string {
 		} else {
 			screenTexts = append(screenTexts, fmt.Sprintf("[%s: %s]", screenKey, screen))
 		}
+	}
+
+	if widget.paused {
+		screenTexts = append(screenTexts, "[[yellow]PAUSED[-]]")
 	}
 
 	return strings.Join(screenTexts, " --- ")
