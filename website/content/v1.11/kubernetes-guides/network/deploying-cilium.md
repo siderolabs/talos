@@ -7,10 +7,10 @@ aliases:
 
 > Cilium can be installed either via the `cilium` cli or using `helm`.
 
-This documentation will outline installing Cilium CNI v1.14.0 on Talos in six different ways.
+This documentation will outline installing Cilium CNI v1.18.0 on Talos in six different ways.
 Adhering to Talos principles we'll deploy Cilium with IPAM mode set to Kubernetes, and using the `cgroupv2` and `bpffs` mount that talos already provides.
 As Talos does not allow loading kernel modules by Kubernetes workloads, `SYS_MODULE` capability needs to be dropped from the Cilium default set of values, this override can be seen in the helm/cilium cli install commands.
-Each method can either install Cilium using kube proxy (default) or without: [Kubernetes Without kube-proxy](https://docs.cilium.io/en/v1.16/network/kubernetes/kubeproxy-free/)
+Each method can either install Cilium using kube proxy (default) or without: [Kubernetes Without kube-proxy](https://docs.cilium.io/en/stable/network/kubernetes/kubeproxy-free/)
 
 In this guide we assume that [KubePrism]({{< relref "../configuration/kubeprism" >}}) is enabled and configured to use the port 7445.
 
@@ -57,7 +57,7 @@ talosctl gen config \
 
 > Note: It is recommended to template the cilium manifest using helm and use it as part of Talos machine config, but if you want to install Cilium using the Cilium CLI, you can follow the steps below.
 
-Install the [Cilium CLI](https://docs.cilium.io/en/v1.16/gettingstarted/k8s-install-default/#install-the-cilium-cli) following the steps here.
+Install the [Cilium CLI](https://docs.cilium.io/en/stable/gettingstarted/k8s-install-default/#install-the-cilium-cli) following the steps here.
 
 #### With kube-proxy
 
@@ -85,7 +85,7 @@ cilium install \
     --set k8sServicePort=7445
 ```
 
-Or if you want to deploy Cilium with support for Gateway API (requires installing cilium without kube-proxy), install [Gateway API CRDs](https://docs.cilium.io/en/v1.16/network/servicemesh/gateway-api/gateway-api/#prerequisites) and set some extra parameters:
+Or if you want to deploy Cilium with support for Gateway API (requires installing cilium without kube-proxy), install [Gateway API CRDs](https://docs.cilium.io/en/stable/network/servicemesh/gateway-api/gateway-api/#prerequisites) and set some extra parameters:
 
 ```bash
 cilium install \
@@ -107,7 +107,7 @@ cilium install \
 
 ### Installation using Helm
 
-Refer to [Installing with Helm](https://docs.cilium.io/en/v1.16/installation/k8s-install-helm/) for more information.
+Refer to [Installing with Helm](https://docs.cilium.io/en/stable/installation/k8s-install-helm/) for more information.
 
 First we'll need to add the helm repo for Cilium.
 
@@ -128,7 +128,7 @@ During this window you can install Cilium manually by running the following:
 helm install \
     cilium \
     cilium/cilium \
-    --version 1.15.6 \
+    --version 1.18.0 \
     --namespace kube-system \
     --set ipam.mode=kubernetes \
     --set kubeProxyReplacement=false \
@@ -144,7 +144,7 @@ Or if you want to deploy Cilium without kube-proxy, also set some extra paramete
 helm install \
     cilium \
     cilium/cilium \
-    --version 1.15.6 \
+    --version 1.18.0 \
     --namespace kube-system \
     --set ipam.mode=kubernetes \
     --set kubeProxyReplacement=true \
@@ -175,7 +175,7 @@ Instead of directly installing Cilium you can instead first generate the manifes
 helm template \
     cilium \
     cilium/cilium \
-    --version 1.15.6 \
+    --version 1.18.0 \
     --namespace kube-system \
     --set ipam.mode=kubernetes \
     --set kubeProxyReplacement=false \
@@ -193,7 +193,7 @@ Without kube-proxy:
 helm template \
     cilium \
     cilium/cilium \
-    --version 1.15.6 \
+    --version 1.18.0 \
     --namespace kube-system \
     --set ipam.mode=kubernetes \
     --set kubeProxyReplacement=true \
@@ -432,6 +432,6 @@ For more details see [the discusssion here](https://github.com/siderolabs/talos/
   This is expected, you can workaround it by adding the `pod-security.kubernetes.io/enforce=privileged` [label on the namespace level]({{< relref "../configuration/pod-security">}}).
 
 - Talos has full kernel module support for eBPF, See:
-  - [Cilium System Requirements](https://docs.cilium.io/en/v1.14/operations/system_requirements/)
+  - [Cilium System Requirements](https://docs.cilium.io/en/stable/operations/system_requirements/)
   - [Talos Kernel Config AMD64](https://github.com/siderolabs/pkgs/blob/main/kernel/build/config-amd64)
   - [Talos Kernel Config ARM64](https://github.com/siderolabs/pkgs/blob/main/kernel/build/config-arm64)
