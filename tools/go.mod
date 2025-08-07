@@ -3,6 +3,7 @@ module github.com/siderolabs/talos/tools
 go 1.24.5
 
 tool (
+	github.com/aarzilli/whydeadcode
 	github.com/anchore/grype/cmd/grype
 	github.com/anchore/syft/cmd/syft
 )
@@ -42,6 +43,7 @@ require (
 	github.com/OneOfOne/xxhash v1.2.8 // indirect
 	github.com/ProtonMail/go-crypto v1.2.0 // indirect
 	github.com/STARRY-S/zip v0.2.1 // indirect
+	github.com/aarzilli/whydeadcode v0.0.0-20241226171816-ed86f8ea0a6f // indirect
 	github.com/acarl005/stripansi v0.0.0-20180116102854-5a71ef0e047d // indirect
 	github.com/acobaugh/osrelease v0.1.0 // indirect
 	github.com/adrg/xdg v0.5.3 // indirect

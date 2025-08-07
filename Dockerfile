@@ -325,7 +325,10 @@ WORKDIR /src
 FROM build AS build-go
 COPY ./go.mod ./go.sum ./
 COPY ./pkg/machinery/go.mod ./pkg/machinery/go.sum ./pkg/machinery/
+COPY ./tools ./tools
 WORKDIR /src/pkg/machinery
+RUN --mount=type=cache,target=/.cache,id=talos/.cache go mod download
+WORKDIR /src/tools
 RUN --mount=type=cache,target=/.cache,id=talos/.cache go mod download
 WORKDIR /src
 RUN --mount=type=cache,target=/.cache,id=talos/.cache go mod download
@@ -504,6 +507,22 @@ WORKDIR /src
 
 FROM base AS lint-vulncheck
 RUN --mount=type=cache,target=/.cache,id=talos/.cache govulncheck ./...
+
+# The lint-deadcode target runs the deadcode elimination check.
+FROM base AS lint-deadcode
+ARG GO_BUILDFLAGS
+ARG GO_LDFLAGS
+ARG GO_MACHINED_LDFLAGS
+ARG GOAMD64
+RUN --mount=type=cache,target=/.cache,id=talos/.cache GOOS=linux GOARCH=amd64 GOAMD64=${GOAMD64} go build ${GO_BUILDFLAGS} -ldflags "${GO_LDFLAGS} ${GO_MACHINED_LDFLAGS} -dumpdep" ./internal/app/machined \
+    |& go tool  -modfile=tools/go.mod github.com/aarzilli/whydeadcode > deadcode.txt
+RUN if [[ -s deadcode.txt ]]; then \
+        echo "Dead code elimination problem found:"; \
+        cat deadcode.txt; \
+        exit 1; \
+    else \
+        echo "No dead code elimination issues found"; \
+    fi
 
 # The init target builds the init binary.
 
@@ -892,7 +911,6 @@ ARG NAME
 ARG TAG
 
 COPY ./hack/sbom.sh /usr/bin/sbom.sh
-COPY ./tools ./tools
 
 RUN mkdir -p /tmp/sbom-src /rootfs/usr/share/spdx
 RUN cp go.mod go.sum /tmp/sbom-src/
@@ -953,7 +971,6 @@ COPY --from=vex-generate /talos.grype.yaml /talos.grype.yaml
 FROM build-go AS grype-scan
 COPY --from=sbom-arm64 /talos-arm64.spdx.json /talos-arm64.spdx.json
 COPY --from=vex /talos.vex.json /talos.vex.json
-COPY ./tools ./tools
 RUN --mount=type=cache,target=/.cache,id=talos/.cache go tool -modfile=tools/go.mod \
     github.com/anchore/grype/cmd/grype sbom:/talos-arm64.spdx.json \
     --vex /talos.vex.json -vv 2>&1 | tee /grype-scan.log
@@ -965,7 +982,6 @@ FROM build-go AS grype-validate
 COPY --from=sbom-arm64 /talos-arm64.spdx.json /talos-arm64.spdx.json
 COPY --from=vex /talos.vex.json /talos.vex.json
 COPY --from=vex /talos.grype.yaml /talos.grype.yaml
-COPY ./tools ./tools
 RUN --mount=type=cache,target=/.cache,id=talos/.cache go tool -modfile=tools/go.mod \
     github.com/anchore/grype/cmd/grype sbom:/talos-arm64.spdx.json \
     --vex /talos.vex.json -vv --fail-on negligible --config /talos.grype.yaml
