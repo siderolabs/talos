@@ -122,6 +122,7 @@ type Dashboard struct {
 
 	selectedNodeIndex int
 	selectedNode      string
+	paused            bool
 	nodeSet           map[string]struct{}
 	ipsToNodeAliases  map[string]string
 	nodes             []string
@@ -129,7 +130,7 @@ type Dashboard struct {
 
 // buildDashboard initializes the summary dashboard.
 //
-//nolint:gocyclo
+//nolint:gocyclo,cyclop
 func buildDashboard(ctx context.Context, cli *client.Client, opts ...Option) (*Dashboard, error) {
 	defOptions := defaultOptions()
 
@@ -200,6 +201,11 @@ func buildDashboard(ctx context.Context, cli *client.Client, opts ...Option) (*D
 			return nil
 		case defOptions.allowExitKeys && (event.Key() == tcell.KeyCtrlC || event.Rune() == 'q'):
 			dashboard.app.Stop()
+
+			return nil
+		case event.Key() == tcell.KeyCtrlZ:
+			dashboard.paused = !dashboard.paused
+			dashboard.footer.SetPaused(dashboard.paused)
 
 			return nil
 		}
@@ -403,7 +409,9 @@ func (d *Dashboard) startDataHandler(ctx context.Context) func() error {
 				lastLogTime = time.Now()
 			case d.data = <-dataCh:
 				d.app.QueueUpdateDraw(func() {
-					d.processAPIData()
+					if !d.paused {
+						d.processAPIData()
+					}
 				})
 			case nodeResource := <-d.resourceDataSource.NodeResourceCh:
 				d.app.QueueUpdateDraw(func() {
