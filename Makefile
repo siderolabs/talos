@@ -560,8 +560,8 @@ fmt: ## Formats the source code and protobuf files.
 lint-%: ## Runs the specified linter. Valid options are go, protobuf, and markdown (e.g. lint-go).
 	@$(MAKE) target-lint-$* PLATFORM=linux/$(ARCH)
 
-lint: ## Runs linters on go, vulncheck, protobuf, and markdown file types.
-	@$(MAKE) lint-go lint-vulncheck lint-protobuf lint-markdown
+lint: ## Runs linters on go, vulncheck, deadcode, protobuf, and markdown file types.
+	@$(MAKE) lint-go lint-vulncheck lint-deadcode lint-protobuf lint-markdown
 
 check-dirty: ## Verifies that source tree is not dirty
 	@if test -n "`git status --porcelain`"; then echo "Source tree is dirty"; git status; git diff; exit 1 ; fi
