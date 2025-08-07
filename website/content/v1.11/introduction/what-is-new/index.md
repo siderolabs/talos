@@ -111,7 +111,7 @@ The value of this parameter has same format as the `talos.config.inline` paramet
 * lvm2: 2.03.33
 * cryptsetup: 2.8.0
 
-Talos is built with Go 1.24.5.
+Talos is built with Go 1.24.6.
 
 ## Contributors
 
