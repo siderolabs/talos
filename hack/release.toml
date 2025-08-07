@@ -31,7 +31,7 @@ systemd-udevd and systemd-boot: 257.7
 lvm2: 2.03.33
 cryptsetup: 2.8.0
 
-Talos is built with Go 1.24.5.
+Talos is built with Go 1.24.6.
 """
 
     [notes.macos-qemu]
