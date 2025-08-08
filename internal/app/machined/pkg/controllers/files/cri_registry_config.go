@@ -20,6 +20,7 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/siderolabs/talos/internal/pkg/containers/cri/containerd"
+	"github.com/siderolabs/talos/internal/pkg/xfs"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/resources/cri"
 	"github.com/siderolabs/talos/pkg/machinery/resources/files"
@@ -27,6 +28,9 @@ import (
 
 // CRIRegistryConfigController generates parts of the CRI config for registry configuration.
 type CRIRegistryConfigController struct {
+	// AnonFS is a writable filesystem that is used to create bind mounts.
+	AnonFS xfs.FS
+
 	bindMountCreated bool
 }
 
@@ -62,13 +66,13 @@ func (ctrl *CRIRegistryConfigController) Outputs() []controller.Output {
 //nolint:gocyclo
 func (ctrl *CRIRegistryConfigController) Run(ctx context.Context, r controller.Runtime, _ *zap.Logger) error {
 	basePath := filepath.Join(constants.CRIConfdPath, "hosts")
-	shadowPath := filepath.Join(constants.SystemPath, basePath)
+	shadowPath := basePath
 
 	// bind mount shadow path over to base path
 	// shadow path is writeable, controller is going to update it
 	// base path is read-only, containerd will read from it
 	if !ctrl.bindMountCreated {
-		if err := createBindMountDir(shadowPath, basePath); err != nil {
+		if err := createBindMountDirFs(ctrl.AnonFS, shadowPath, basePath); err != nil {
 			return err
 		}
 
