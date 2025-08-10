@@ -20,7 +20,7 @@ Let's create an example package to walk through each step.
 Clone the repo and create a folder.
 
 ```bash
-git clone https://github.com/siderolabs/pkgs
+git clone https://github.com/siderolabs/pkgs.git
 cd pkgs
 mkdir my-module
 ```
