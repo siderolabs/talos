@@ -34,17 +34,17 @@ replace github.com/containerd/containerd/v2 => github.com/smira/containerd/v2 v2
 
 // Kubernetes dependencies sharing the same version.
 require (
-	k8s.io/api v0.34.0-beta.0
-	k8s.io/apiextensions-apiserver v0.34.0-beta.0
-	k8s.io/apimachinery v0.34.0-beta.0
-	k8s.io/apiserver v0.34.0-beta.0
-	k8s.io/client-go v0.34.0-beta.0
-	k8s.io/component-base v0.34.0-beta.0
-	k8s.io/cri-api v0.34.0-beta.0
-	k8s.io/kube-scheduler v0.34.0-beta.0
-	k8s.io/kubectl v0.34.0-beta.0
-	k8s.io/kubelet v0.34.0-beta.0
-	k8s.io/pod-security-admission v0.34.0-beta.0
+	k8s.io/api v0.34.0-rc.1
+	k8s.io/apiextensions-apiserver v0.34.0-rc.1
+	k8s.io/apimachinery v0.34.0-rc.1
+	k8s.io/apiserver v0.34.0-rc.1
+	k8s.io/client-go v0.34.0-rc.1
+	k8s.io/component-base v0.34.0-rc.1
+	k8s.io/cri-api v0.34.0-rc.1
+	k8s.io/kube-scheduler v0.34.0-rc.1
+	k8s.io/kubectl v0.34.0-rc.1
+	k8s.io/kubelet v0.34.0-rc.1
+	k8s.io/pod-security-admission v0.34.0-rc.1
 )
 
 require (
@@ -198,7 +198,6 @@ require (
 	k8s.io/utils v0.0.0-20250604170112-4c0f3b243397
 	kernel.org/pub/linux/libs/security/libcap/cap v1.2.76
 	sigs.k8s.io/hydrophone v0.7.0
-	sigs.k8s.io/yaml v1.5.0
 )
 
 require (
@@ -252,7 +251,7 @@ require (
 	github.com/evanphx/json-patch v5.9.11+incompatible // indirect
 	github.com/exponent-io/jsonpath v0.0.0-20210407135951-1de76d718b3f // indirect
 	github.com/felixge/httpsnoop v1.0.4 // indirect
-	github.com/fxamacker/cbor/v2 v2.8.0 // indirect
+	github.com/fxamacker/cbor/v2 v2.9.0 // indirect
 	github.com/gdamore/encoding v1.0.1 // indirect
 	github.com/ghodss/yaml v1.0.0 // indirect
 	github.com/go-errors/errors v1.4.2 // indirect
@@ -269,7 +268,6 @@ require (
 	github.com/google/btree v1.1.3 // indirect
 	github.com/google/gnostic-models v0.7.0 // indirect
 	github.com/google/go-cmp v0.7.0 // indirect
-	github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510 // indirect
 	github.com/gorilla/websocket v1.5.4-0.20250319132907-e064f32e3674 // indirect
 	github.com/gosuri/uilive v0.0.4 // indirect
 	github.com/gregjones/httpcache v0.0.0-20190611155906-901d90724c79 // indirect
@@ -364,16 +362,17 @@ require (
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gotest.tools/v3 v3.4.0 // indirect
-	k8s.io/cli-runtime v0.34.0-beta.0 // indirect
+	k8s.io/cli-runtime v0.34.0-rc.1 // indirect
 	k8s.io/kube-openapi v0.0.0-20250710124328-f3f2b991d03b // indirect
 	kernel.org/pub/linux/libs/security/libcap/psx v1.2.76 // indirect
 	rsc.io/qr v0.2.0 // indirect
 	sigs.k8s.io/json v0.0.0-20241014173422-cfa47c3a1cc8 // indirect
 	sigs.k8s.io/knftables v0.0.18 // indirect
-	sigs.k8s.io/kustomize/api v0.19.0 // indirect
-	sigs.k8s.io/kustomize/kyaml v0.19.0 // indirect
+	sigs.k8s.io/kustomize/api v0.20.1 // indirect
+	sigs.k8s.io/kustomize/kyaml v0.20.1 // indirect
 	sigs.k8s.io/randfill v1.0.0 // indirect
-	sigs.k8s.io/structured-merge-diff/v6 v6.2.0 // indirect
+	sigs.k8s.io/structured-merge-diff/v6 v6.3.0 // indirect
+	sigs.k8s.io/yaml v1.6.0 // indirect
 )
 
 exclude github.com/containerd/containerd v1.7.0
