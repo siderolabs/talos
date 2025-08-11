@@ -16,7 +16,7 @@ import (
 )
 
 func TestServer(t *testing.T) {
-	srv, err := inmemhttp.NewServer("localhost:0")
+	srv, err := inmemhttp.NewServer(t.Context(), "localhost:0")
 	assert.NoError(t, err)
 
 	contents := []byte("DEADBEEF")

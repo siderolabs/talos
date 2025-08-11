@@ -119,7 +119,8 @@ func getSignatureUsingSDMeasure(t *testing.T) string {
 		stderr    bytes.Buffer
 	)
 
-	sdCmd := exec.Command(
+	sdCmd := exec.CommandContext(
+		t.Context(),
 		"systemd-measure",
 		append([]string{
 			"sign",

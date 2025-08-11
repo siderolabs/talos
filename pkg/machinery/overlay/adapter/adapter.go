@@ -6,6 +6,7 @@
 package adapter
 
 import (
+	"context"
 	"fmt"
 	"os"
 
@@ -15,7 +16,7 @@ import (
 )
 
 // Execute executes the overlay installer.
-func Execute[T any](installer overlay.Installer[T]) {
+func Execute[T any](ctx context.Context, installer overlay.Installer[T]) {
 	if len(os.Args) < 2 {
 		fmt.Fprint(os.Stderr, "missing command")
 
@@ -24,9 +25,9 @@ func Execute[T any](installer overlay.Installer[T]) {
 
 	switch os.Args[1] {
 	case "install":
-		install(installer)
+		install(ctx, installer)
 	case "get-options":
-		getOptions(installer)
+		getOptions(ctx, installer)
 	default:
 		fmt.Fprintf(os.Stderr, "unknown command: %s", os.Args[1])
 
@@ -34,12 +35,12 @@ func Execute[T any](installer overlay.Installer[T]) {
 	}
 }
 
-func getOptions[T any](installer overlay.Installer[T]) {
+func getOptions[T any](ctx context.Context, installer overlay.Installer[T]) {
 	var opts T
 
 	withErrorHandler(yaml.NewDecoder(os.Stdin).Decode(&opts))
 
-	opt, err := installer.GetOptions(opts)
+	opt, err := installer.GetOptions(ctx, opts)
 	if err != nil {
 		fmt.Fprint(os.Stderr, err.Error())
 
@@ -49,12 +50,12 @@ func getOptions[T any](installer overlay.Installer[T]) {
 	withErrorHandler(yaml.NewEncoder(os.Stdout).Encode(opt))
 }
 
-func install[T any](installer overlay.Installer[T]) {
+func install[T any](ctx context.Context, installer overlay.Installer[T]) {
 	var opts overlay.InstallOptions[T]
 
 	withErrorHandler(yaml.NewDecoder(os.Stdin).Decode(&opts))
 
-	withErrorHandler(installer.Install(opts))
+	withErrorHandler(installer.Install(ctx, opts))
 }
 
 func withErrorHandler(err error) {

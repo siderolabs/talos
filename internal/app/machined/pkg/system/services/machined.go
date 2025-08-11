@@ -161,7 +161,7 @@ func (s *machinedService) Main(ctx context.Context, _ runtime.Runtime, logWriter
 		return err
 	}
 
-	listener, err := factory.NewListener(factory.Network("unix"), factory.SocketPath(constants.MachineSocketPath)) //nolint:contextcheck
+	listener, err := factory.NewListener(ctx, factory.Network("unix"), factory.SocketPath(constants.MachineSocketPath)) //nolint:contextcheck
 	if err != nil {
 		return err
 	}

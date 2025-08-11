@@ -3,10 +3,9 @@ go 1.24.5
 use (
 	.
 	./hack/cloud-image-uploader
-	./hack/docgen
-	./hack/gotagsrewrite
-	./hack/module-sig-verify
-	./hack/structprotogen
 	./pkg/machinery
 	./tools
+	./tools/docgen
+	./tools/gotagsrewrite
+	./tools/structprotogen
 )

@@ -5,6 +5,7 @@
 package extensions
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"io/fs"
@@ -46,7 +47,7 @@ func initramfsPaths(quirks quirks.Quirks) []string {
 //
 // Components which should be placed to the initramfs are moved to the initramfsPath.
 // Ucode components are moved into a separate designated location.
-func (ext *Extension) Compress(squashPath, initramfsPath string, quirks quirks.Quirks) (string, error) {
+func (ext *Extension) Compress(ctx context.Context, squashPath, initramfsPath string, quirks quirks.Quirks) (string, error) {
 	if err := ext.handleUcode(initramfsPath, quirks); err != nil {
 		return "", err
 	}
@@ -69,7 +70,7 @@ func (ext *Extension) Compress(squashPath, initramfsPath string, quirks quirks.Q
 		compressArgs = []string{"-comp", "xz", "-Xdict-size", "100%"}
 	}
 
-	cmd := exec.Command("mksquashfs", append([]string{ext.RootfsPath(), squashPath, "-all-root", "-noappend", "-no-progress"}, compressArgs...)...)
+	cmd := exec.CommandContext(ctx, "mksquashfs", append([]string{ext.RootfsPath(), squashPath, "-all-root", "-noappend", "-no-progress"}, compressArgs...)...)
 	cmd.Stderr = os.Stderr
 
 	return squashPath, cmd.Run()

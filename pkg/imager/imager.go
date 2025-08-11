@@ -94,7 +94,7 @@ func (i *Imager) Execute(ctx context.Context, outputPath string, report *reporte
 	}
 
 	// 3. Prepare kernel arguments.
-	if err = i.buildCmdline(); err != nil {
+	if err = i.buildCmdline(ctx); err != nil {
 		return "", err
 	}
 
@@ -172,7 +172,7 @@ func (i *Imager) Execute(ctx context.Context, outputPath string, report *reporte
 	case profile.OutFormatZSTD:
 		return i.postProcessZstd(outputAssetPath, report)
 	case profile.OutFormatTar:
-		return i.postProcessTar(outputAssetPath, report)
+		return i.postProcessTar(ctx, outputAssetPath, report)
 	case profile.OutFormatUnknown:
 		fallthrough
 	default:
@@ -328,7 +328,7 @@ func (i *Imager) buildInitramfs(ctx context.Context, report *reporter.Reporter) 
 		Quirks:            quirks.New(i.prof.Version),
 	}
 
-	if err := builder.Build(); err != nil {
+	if err := builder.Build(ctx); err != nil {
 		return err
 	}
 
@@ -343,7 +343,7 @@ func (i *Imager) buildInitramfs(ctx context.Context, report *reporter.Reporter) 
 // buildCmdline builds the kernel command line.
 //
 //nolint:gocyclo
-func (i *Imager) buildCmdline() error {
+func (i *Imager) buildCmdline(ctx context.Context) error {
 	p, err := platform.NewPlatform(i.prof.Platform)
 	if err != nil {
 		return err
@@ -377,7 +377,7 @@ func (i *Imager) buildCmdline() error {
 
 	// overlay kernel args
 	if i.overlayInstaller != nil {
-		options, optsErr := i.overlayInstaller.GetOptions(i.prof.Overlay.ExtraOptions)
+		options, optsErr := i.overlayInstaller.GetOptions(ctx, i.prof.Overlay.ExtraOptions)
 		if optsErr != nil {
 			return optsErr
 		}

@@ -226,7 +226,7 @@ func (ctrl *MaintenanceServiceController) Run(ctx context.Context, r controller.
 		}
 
 		if listener == nil {
-			listener, err = net.Listen("tcp", cfg.TypedSpec().ListenAddress)
+			listener, err = (&net.ListenConfig{}).Listen(ctx, "tcp", cfg.TypedSpec().ListenAddress)
 			if err != nil {
 				return fmt.Errorf("failed to listen: %w", err)
 			}

@@ -25,6 +25,6 @@ func DialUnix() func(context.Context, string) (net.Conn, error) {
 			return nil, fmt.Errorf("invalid scheme: %q", u.Scheme)
 		}
 
-		return net.Dial(u.Scheme, u.Path)
+		return (&net.Dialer{}).DialContext(ctx, u.Scheme, u.Path)
 	}
 }

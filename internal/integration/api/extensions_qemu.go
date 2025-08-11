@@ -163,7 +163,7 @@ func (suite *ExtensionsSuiteQEMU) TestExtensionsQEMUGuestAgent() {
 	clusterStatePath, err := suite.Cluster.StatePath()
 	suite.Require().NoError(err)
 
-	conn, err := net.Dial("unix", filepath.Join(clusterStatePath, hostnameSpec.TypedSpec().Hostname+".sock"))
+	conn, err := (&net.Dialer{}).DialContext(ctx, "unix", filepath.Join(clusterStatePath, hostnameSpec.TypedSpec().Hostname+".sock"))
 	suite.Require().NoError(err)
 
 	defer conn.Close() //nolint:errcheck

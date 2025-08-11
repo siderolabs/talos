@@ -1,4 +1,4 @@
-module github.com/siderolabs/structprotogen
+module github.com/siderolabs/talos/tools/structprotogen
 
 go 1.24.0
 

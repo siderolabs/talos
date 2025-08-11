@@ -14,9 +14,9 @@ import (
 
 	"gopkg.in/typ.v4/slices"
 
-	"github.com/siderolabs/structprotogen/consts"
-	"github.com/siderolabs/structprotogen/sliceutil"
-	"github.com/siderolabs/structprotogen/types"
+	"github.com/siderolabs/talos/tools/structprotogen/consts"
+	"github.com/siderolabs/talos/tools/structprotogen/sliceutil"
+	"github.com/siderolabs/talos/tools/structprotogen/types"
 )
 
 // Pkg represents a protobuf package.

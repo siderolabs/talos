@@ -25,8 +25,8 @@ type provisioner struct {
 	mappedKubernetesPort, mappedTalosAPIPort int
 }
 
-func getAvailableTCPPort() (int, error) {
-	l, err := net.Listen("tcp", "127.0.0.1:0")
+func getAvailableTCPPort(ctx context.Context) (int, error) {
+	l, err := (&net.ListenConfig{}).Listen(ctx, "tcp", "127.0.0.1:0")
 	if err != nil {
 		return 0, err
 	}
@@ -62,12 +62,12 @@ func NewProvisioner(ctx context.Context) (provision.Provisioner, error) {
 		return nil, err
 	}
 
-	p.mappedKubernetesPort, err = getAvailableTCPPort()
+	p.mappedKubernetesPort, err = getAvailableTCPPort(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get available port for Kubernetes API: %w", err)
 	}
 
-	p.mappedTalosAPIPort, err = getAvailableTCPPort()
+	p.mappedTalosAPIPort, err = getAvailableTCPPort(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get available port for Talos API: %w", err)
 	}

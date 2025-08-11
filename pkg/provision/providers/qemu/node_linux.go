@@ -5,13 +5,14 @@
 package qemu
 
 import (
+	"context"
 	"net"
 
 	"github.com/siderolabs/talos/pkg/provision"
 )
 
-func (p *provisioner) findAPIBindAddrs(clusterReq provision.ClusterRequest) (*net.TCPAddr, error) {
-	l, err := net.Listen("tcp", net.JoinHostPort(clusterReq.Network.GatewayAddrs[0].String(), "0"))
+func (p *provisioner) findAPIBindAddrs(ctx context.Context, clusterReq provision.ClusterRequest) (*net.TCPAddr, error) {
+	l, err := (&net.ListenConfig{}).Listen(ctx, "tcp", net.JoinHostPort(clusterReq.Network.GatewayAddrs[0].String(), "0"))
 	if err != nil {
 		return nil, err
 	}

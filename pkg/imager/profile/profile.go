@@ -16,9 +16,9 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/overlay"
 )
 
-//go:generate deep-copy -type Profile -type SecureBootAssets -header-file ../../../hack/boilerplate.txt -o deep_copy.generated.go .
+//go:generate go tool github.com/siderolabs/deep-copy -type Profile -type SecureBootAssets -header-file ../../../hack/boilerplate.txt -o deep_copy.generated.go .
 
-//go:generate enumer -type OutputKind,OutFormat,DiskFormat,SDBootEnrollKeys,DiskImageBootloader -linecomment -text
+//go:generate go tool github.com/dmarkham/enumer -type OutputKind,OutFormat,DiskFormat,SDBootEnrollKeys,DiskImageBootloader -linecomment -text
 
 // Profile describes image generation result.
 type Profile struct {

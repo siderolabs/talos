@@ -5,6 +5,7 @@
 package imager
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"os/exec"
@@ -16,7 +17,7 @@ import (
 )
 
 //nolint:gocyclo
-func (i *Imager) postProcessTar(filename string, report *reporter.Reporter) (string, error) {
+func (i *Imager) postProcessTar(ctx context.Context, filename string, report *reporter.Reporter) (string, error) {
 	report.Report(reporter.Update{Message: "processing .tar.gz", Status: reporter.StatusRunning})
 
 	dir := filepath.Dir(filename)
@@ -33,7 +34,7 @@ func (i *Imager) postProcessTar(filename string, report *reporter.Reporter) (str
 		return "", err
 	}
 
-	cmd1 := exec.Command("tar", "-cvf", "-", "-C", dir, "--sparse", src)
+	cmd1 := exec.CommandContext(ctx, "tar", "-cvf", "-", "-C", dir, "--sparse", src)
 
 	cmd1.Stdout = pipeW
 	cmd1.Stderr = os.Stderr
@@ -53,7 +54,7 @@ func (i *Imager) postProcessTar(filename string, report *reporter.Reporter) (str
 
 	defer destination.Close() //nolint:errcheck
 
-	cmd2 := exec.Command("pigz", "-6", "-f", "-")
+	cmd2 := exec.CommandContext(ctx, "pigz", "-6", "-f", "-")
 	cmd2.Stdin = pipeR
 	cmd2.Stdout = destination
 	cmd2.Stderr = os.Stderr

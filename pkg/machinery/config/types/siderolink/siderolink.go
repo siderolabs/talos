@@ -19,9 +19,9 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/config/validation"
 )
 
-//go:generate docgen -output ./siderolink_doc.go ./siderolink.go
+//go:generate go tool github.com/siderolabs/talos/tools/docgen -output ./siderolink_doc.go ./siderolink.go
 
-//go:generate deep-copy -type ConfigV1Alpha1 -pointer-receiver -header-file ../../../../../hack/boilerplate.txt -o deep_copy.generated.go .
+//go:generate go tool github.com/siderolabs/deep-copy -type ConfigV1Alpha1 -pointer-receiver -header-file ../../../../../hack/boilerplate.txt -o deep_copy.generated.go .
 
 // Kind is a siderolink config document kind.
 const Kind = "SideroLinkConfig"

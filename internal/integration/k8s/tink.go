@@ -263,12 +263,11 @@ func (access *tinkClusterAccess) NodesByType(typ machine.Type) []cluster.NodeInf
 
 func (suite *TinkSuite) waitForEndpointReady(endpoint string) error {
 	return retry.Constant(30*time.Second, retry.WithUnits(10*time.Millisecond)).Retry(func() error {
-		c, err := tls.Dial("tcp", endpoint,
-			&tls.Config{
+		c, err := (&tls.Dialer{
+			Config: &tls.Config{
 				InsecureSkipVerify: true,
 			},
-		)
-
+		}).DialContext(suite.T().Context(), "tcp", endpoint)
 		if c != nil {
 			c.Close() //nolint:errcheck
 		}

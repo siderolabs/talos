@@ -7,6 +7,7 @@ package extensions
 
 import (
 	"bytes"
+	"context"
 	"errors"
 	"fmt"
 	"io"
@@ -60,6 +61,7 @@ func autoDecompress(r io.Reader) (io.Reader, error) {
 //
 //nolint:gocyclo
 func GenerateKernelModuleDependencyTreeExtension(
+	ctx context.Context,
 	extensionPathsWithKernelModules []string,
 	initramfsPath, scratchPath string,
 	quirks quirks.Quirks,
@@ -101,7 +103,7 @@ func GenerateKernelModuleDependencyTreeExtension(
 	// extract /usr/lib/modules from the squashfs under a temporary root to run depmod on it
 	tempLibModules := filepath.Join(tempDir, "modules")
 
-	if err = unsquash(tempRootfsFile, tempLibModules, kernelModulesPath); err != nil {
+	if err = unsquash(ctx, tempRootfsFile, tempLibModules, kernelModulesPath); err != nil {
 		return nil, fmt.Errorf("error running unsquashfs: %w", err)
 	}
 
@@ -128,7 +130,7 @@ func GenerateKernelModuleDependencyTreeExtension(
 
 	printFunc("running depmod to generate kernel modules dependency tree")
 
-	if err = depmod(rootfsKernelModulesPath, kernelVersionPath); err != nil {
+	if err = depmod(ctx, rootfsKernelModulesPath, kernelVersionPath); err != nil {
 		return nil, fmt.Errorf("error running depmod: %w", err)
 	}
 
@@ -201,18 +203,18 @@ func extractRootfsFromInitramfs(r io.Reader, rootfsFilePath string) error {
 	})
 }
 
-func unsquash(squashfsPath, dest, path string) error {
-	cmd := exec.Command("unsquashfs", "-no-xattrs", "-d", dest, "-f", "-n", squashfsPath, path)
+func unsquash(ctx context.Context, squashfsPath, dest, path string) error {
+	cmd := exec.CommandContext(ctx, "unsquashfs", "-no-xattrs", "-d", dest, "-f", "-n", squashfsPath, path)
 	cmd.Stderr = os.Stderr
 
 	return cmd.Run()
 }
 
-func depmod(baseDir, kernelVersionPath string) error {
+func depmod(ctx context.Context, baseDir, kernelVersionPath string) error {
 	// Do not trim /usr, because it is needed for depmod
 	baseDir = strings.TrimSuffix(baseDir, "/lib/modules")
 
-	cmd := exec.Command("depmod", "--all", "--basedir", baseDir, "--config", "/etc/modules.d/10-extra-modules.conf", kernelVersionPath)
+	cmd := exec.CommandContext(ctx, "depmod", "--all", "--basedir", baseDir, "--config", "/etc/modules.d/10-extra-modules.conf", kernelVersionPath)
 	cmd.Stderr = os.Stderr
 
 	return cmd.Run()

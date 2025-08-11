@@ -135,7 +135,7 @@ func (cliSuite *CLISuite) MakeCMDFn(args []string) func() *exec.Cmd {
 
 	path := cliSuite.TalosctlPath
 
-	return func() *exec.Cmd { return exec.Command(path, args...) }
+	return func() *exec.Cmd { return exec.CommandContext(cliSuite.T().Context(), path, args...) }
 }
 
 // RunCLI runs talosctl binary with the options provided.

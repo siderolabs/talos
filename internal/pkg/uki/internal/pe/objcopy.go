@@ -5,6 +5,7 @@
 package pe
 
 import (
+	"context"
 	"debug/pe"
 	"errors"
 	"fmt"
@@ -13,7 +14,7 @@ import (
 )
 
 // AssembleObjcopy is a helper function to assemble the PE file using objcopy.
-func AssembleObjcopy(srcPath, dstPath string, sections []Section) error {
+func AssembleObjcopy(ctx context.Context, srcPath, dstPath string, sections []Section) error {
 	peFile, err := pe.Open(srcPath)
 	if err != nil {
 		return err
@@ -65,7 +66,7 @@ func AssembleObjcopy(srcPath, dstPath string, sections []Section) error {
 
 	args = append(args, srcPath, dstPath)
 
-	cmd := exec.Command("objcopy", args...)
+	cmd := exec.CommandContext(ctx, "objcopy", args...)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 

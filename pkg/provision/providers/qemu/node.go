@@ -5,6 +5,7 @@
 package qemu
 
 import (
+	"context"
 	"crypto/rand"
 	"encoding/json"
 	"fmt"
@@ -32,7 +33,7 @@ import (
 )
 
 //nolint:gocyclo,cyclop
-func (p *provisioner) createNode(state *vm.State, clusterReq provision.ClusterRequest, nodeReq provision.NodeRequest, opts *provision.Options) (provision.NodeInfo, error) {
+func (p *provisioner) createNode(ctx context.Context, state *vm.State, clusterReq provision.ClusterRequest, nodeReq provision.NodeRequest, opts *provision.Options) (provision.NodeInfo, error) {
 	arch := Arch(opts.TargetArch)
 	pidPath := state.GetRelativePath(fmt.Sprintf("%s.pid", nodeReq.Name))
 
@@ -127,7 +128,7 @@ func (p *provisioner) createNode(state *vm.State, clusterReq provision.ClusterRe
 		nodeUUID = *nodeReq.UUID
 	}
 
-	apiBind, err := p.findAPIBindAddrs(clusterReq)
+	apiBind, err := p.findAPIBindAddrs(ctx, clusterReq)
 	if err != nil {
 		return provision.NodeInfo{}, fmt.Errorf("error finding listen address for the API: %w", err)
 	}
@@ -248,7 +249,7 @@ func (p *provisioner) createNode(state *vm.State, clusterReq provision.ClusterRe
 
 	defer launchConfigFile.Close() //nolint:errcheck
 
-	cmd := exec.Command(clusterReq.SelfExecutable, "qemu-launch")
+	cmd := exec.Command(clusterReq.SelfExecutable, "qemu-launch") //nolint:noctx // runs in background
 	cmd.Stdout = logFile
 	cmd.Stderr = logFile
 	cmd.Stdin = launchConfigFile
@@ -269,13 +270,13 @@ func (p *provisioner) createNode(state *vm.State, clusterReq provision.ClusterRe
 	return nodeInfo, nil
 }
 
-func (p *provisioner) createNodes(state *vm.State, clusterReq provision.ClusterRequest, nodeReqs []provision.NodeRequest, opts *provision.Options) ([]provision.NodeInfo, error) {
+func (p *provisioner) createNodes(ctx context.Context, state *vm.State, clusterReq provision.ClusterRequest, nodeReqs []provision.NodeRequest, opts *provision.Options) ([]provision.NodeInfo, error) {
 	errCh := make(chan error)
 	nodeCh := make(chan provision.NodeInfo, len(nodeReqs))
 
 	for _, nodeReq := range nodeReqs {
 		go func(nodeReq provision.NodeRequest) {
-			nodeInfo, err := p.createNode(state, clusterReq, nodeReq, opts)
+			nodeInfo, err := p.createNode(ctx, state, clusterReq, nodeReq, opts)
 			if err == nil {
 				nodeCh <- nodeInfo
 			}

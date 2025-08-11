@@ -100,7 +100,7 @@ func TestRepair(t *testing.T) {
 	assert.NoError(t, unmounter1())
 
 	// // now corrupt the disk
-	cmd := exec.Command("xfs_db", []string{
+	cmd := exec.CommandContext(t.Context(), "xfs_db", []string{
 		"-x",
 		"-c blockget",
 		"-c blocktrash -s 512109 -n 100",

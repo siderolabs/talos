@@ -13,7 +13,7 @@
 !.textlintrc.json
 !go.mod
 !go.sum
-!prototool.yaml
+!go.work
 !README.md
 !CONTRIBUTING.md
 !_out/uki-certs

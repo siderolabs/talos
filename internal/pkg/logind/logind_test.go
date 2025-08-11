@@ -22,7 +22,7 @@ func TestIntegration(t *testing.T) {
 	socketPathService := filepath.Join(dir, "system_bus_service")
 	socketPathClient := filepath.Join(dir, "system_bus_client")
 
-	broker, err := logind.NewBroker(socketPathService, socketPathClient)
+	broker, err := logind.NewBroker(t.Context(), socketPathService, socketPathClient)
 	require.NoError(t, err)
 
 	ctx, cancel := context.WithCancel(t.Context())

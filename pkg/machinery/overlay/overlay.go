@@ -5,10 +5,12 @@
 // Package overlay provides an interface for overlay installers.
 package overlay
 
+import "context"
+
 // Installer is an interface for overlay installers.
 type Installer[T any] interface {
-	GetOptions(extra T) (Options, error)
-	Install(options InstallOptions[T]) error
+	GetOptions(ctx context.Context, extra T) (Options, error)
+	Install(ctx context.Context, options InstallOptions[T]) error
 }
 
 // Options for the overlay installer.

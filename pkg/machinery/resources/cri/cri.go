@@ -16,9 +16,9 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/config/config"
 )
 
-//go:generate deep-copy -type RegistriesConfigSpec -type ImageCacheConfigSpec -type SeccompProfileSpec -header-file ../../../../hack/boilerplate.txt -o deep_copy.generated.go .
+//go:generate go tool github.com/siderolabs/deep-copy -type RegistriesConfigSpec -type ImageCacheConfigSpec -type SeccompProfileSpec -header-file ../../../../hack/boilerplate.txt -o deep_copy.generated.go .
 
-//go:generate enumer -type=ImageCacheStatus -type=ImageCacheCopyStatus -linecomment -text
+//go:generate go tool github.com/dmarkham/enumer -type=ImageCacheStatus -type=ImageCacheCopyStatus -linecomment -text
 
 // NamespaceName contains resources related to stats.
 const NamespaceName resource.Namespace = "cri"

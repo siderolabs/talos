@@ -13,9 +13,9 @@ migrated to their own documents.
 */
 package v1alpha1
 
-//go:generate docgen -output ./v1alpha1_types_doc.go ./v1alpha1_types.go
+//go:generate go tool github.com/siderolabs/talos/tools/docgen -output ./v1alpha1_types_doc.go ./v1alpha1_types.go
 
-//go:generate deepcopy-gen --go-header-file ../../../../../hack/boilerplate.txt --bounding-dirs ../v1alpha1 --output-file zz_generated.deepcopy
+//go:generate go tool k8s.io/code-generator/cmd/deepcopy-gen --go-header-file ../../../../../hack/boilerplate.txt --bounding-dirs ../v1alpha1 --output-file zz_generated.deepcopy
 
 //docgen:jsonschema
 

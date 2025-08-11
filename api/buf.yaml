@@ -1,0 +1,29 @@
+version: v2
+modules:
+  - path: ./
+    excludes:
+      - vendor/
+    breaking:
+      use:
+        - WIRE
+    lint:
+      use:
+        - BASIC
+      ignore_only:
+        PACKAGE_DIRECTORY_MATCH:
+          - resource/definitions/
+          - security/
+        ENUM_NO_ALLOW_ALIAS:
+          - resource/definitions/enums/
+  - path: vendor/
+    lint:
+      ignore:
+        - vendor/
+
+lint:
+  use:
+    - BASIC
+
+breaking:
+  use:
+    - FILE

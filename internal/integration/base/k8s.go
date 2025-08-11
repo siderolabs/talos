@@ -580,7 +580,7 @@ func (k8sSuite *K8sSuite) HelmInstall(ctx context.Context, namespace, repository
 		chartName,
 	}
 
-	cmd := exec.Command(k8sSuite.HelmPath, args...)
+	cmd := exec.CommandContext(k8sSuite.T().Context(), k8sSuite.HelmPath, args...)
 
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
@@ -744,7 +744,7 @@ func (k8sSuite *K8sSuite) RunFIOTest(ctx context.Context, storageClass, size str
 		size,
 	}
 
-	cmd := exec.Command(k8sSuite.KubeStrPath, args...)
+	cmd := exec.CommandContext(k8sSuite.T().Context(), k8sSuite.KubeStrPath, args...)
 
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr

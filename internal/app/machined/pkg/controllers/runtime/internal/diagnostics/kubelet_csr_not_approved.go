@@ -57,13 +57,12 @@ func KubeletCSRNotApprovedCheck(ctx context.Context, r controller.Reader, logger
 	}
 
 	// try to access kubelet API to see if we get 'tls: internal error'
-	c, err := tls.DialWithDialer(
-		&net.Dialer{Timeout: 5 * time.Second},
-		"tcp", "127.0.0.1:10250",
-		&tls.Config{
+	c, err := (&tls.Dialer{
+		NetDialer: &net.Dialer{Timeout: 5 * time.Second},
+		Config: &tls.Config{
 			InsecureSkipVerify: true,
 		},
-	)
+	}).DialContext(ctx, "tcp", "127.0.0.1:10250")
 	if err == nil {
 		return nil, c.Close()
 	}

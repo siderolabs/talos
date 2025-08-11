@@ -44,7 +44,7 @@ func (p *Provisioner) CreateKMS(state *State, clusterReq provision.ClusterReques
 		"--kms-key", base64.StdEncoding.EncodeToString(key),
 	}
 
-	cmd := exec.Command(clusterReq.SelfExecutable, args...)
+	cmd := exec.Command(clusterReq.SelfExecutable, args...) //nolint:noctx // runs in background
 	cmd.Stdout = logFile
 	cmd.Stderr = logFile
 	cmd.SysProcAttr = &syscall.SysProcAttr{

@@ -310,7 +310,7 @@ func (syncer *Syncer) resolveServers(ctx context.Context) ([]string, error) {
 		if IsPTPDevice(server) {
 			serverList = append(serverList, server)
 		} else {
-			ips, err := net.LookupIP(server)
+			ips, err := (&net.Resolver{}).LookupIPAddr(ctx, server)
 			if err != nil {
 				syncer.logger.Error(fmt.Sprintf("failed looking up %q, ignored", server), zap.Error(err))
 			}

@@ -294,7 +294,8 @@ func TestBuildUKI(t *testing.T) {
 			resetMaintenanceProfile := filepath.Join(tempDir, "profile0.efi")
 			resetProfile := filepath.Join(tempDir, "profile1.efi")
 
-			ukifyResetMaintenanceProfileCmd := exec.Command(
+			ukifyResetMaintenanceProfileCmd := exec.CommandContext(
+				t.Context(),
 				"ukify",
 				[]string{
 					"build",
@@ -316,7 +317,8 @@ func TestBuildUKI(t *testing.T) {
 
 			require.NoError(t, ukifyResetMaintenanceProfileCmd.Run())
 
-			ukifyResetProfileCmd := exec.Command(
+			ukifyResetProfileCmd := exec.CommandContext(
+				t.Context(),
 				"ukify",
 				[]string{
 					"build",
@@ -353,7 +355,8 @@ func TestBuildUKI(t *testing.T) {
 			)
 		}
 
-		ukifyCmd := exec.Command(
+		ukifyCmd := exec.CommandContext(
+			t.Context(),
 			"ukify",
 			ukifyCmdArgs...,
 		)
@@ -367,7 +370,8 @@ func TestBuildUKI(t *testing.T) {
 
 		compareUKIFiles(t, ukiUnsigned, ukifyUKIUnsigned)
 
-		ukifySignedCmd := exec.Command(
+		ukifySignedCmd := exec.CommandContext(
+			t.Context(),
 			"ukify",
 			ukifySignedCmdArgs...,
 		)

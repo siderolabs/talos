@@ -16,7 +16,7 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/yamlutils"
 )
 
-//go:generate deep-copy -type EtcFileSpecSpec -type EtcFileStatusSpec -header-file ../../../../hack/boilerplate.txt -o deep_copy.generated.go .
+//go:generate go tool github.com/siderolabs/deep-copy -type EtcFileSpecSpec -type EtcFileStatusSpec -header-file ../../../../hack/boilerplate.txt -o deep_copy.generated.go .
 
 // EtcFileSpecType is type of EtcFile resource.
 const EtcFileSpecType = resource.Type("EtcFileSpecs.files.talos.dev")

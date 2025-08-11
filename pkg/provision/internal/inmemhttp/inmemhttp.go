@@ -33,14 +33,14 @@ type server struct {
 }
 
 // NewServer creates in-mem HTTP server.
-func NewServer(address string) (Server, error) {
+func NewServer(ctx context.Context, address string) (Server, error) {
 	s := &server{
 		mux: http.NewServeMux(),
 	}
 
 	var err error
 
-	s.l, err = net.Listen("tcp", address)
+	s.l, err = (&net.ListenConfig{}).Listen(ctx, "tcp", address)
 	if err != nil {
 		return nil, err
 	}

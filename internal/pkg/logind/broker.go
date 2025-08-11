@@ -34,7 +34,7 @@ type DBusBroker struct {
 }
 
 // NewBroker initializes new broker.
-func NewBroker(serviceSocketPath, clientSocketPath string) (*DBusBroker, error) {
+func NewBroker(ctx context.Context, serviceSocketPath, clientSocketPath string) (*DBusBroker, error) {
 	// remove socket paths as with Docker mode paths might persist across container restarts
 	for _, socketPath := range []string{serviceSocketPath, clientSocketPath} {
 		if err := os.RemoveAll(socketPath); err != nil {
@@ -46,7 +46,7 @@ func NewBroker(serviceSocketPath, clientSocketPath string) (*DBusBroker, error) 
 
 	var err error
 
-	broker.listenService, err = net.Listen("unix", serviceSocketPath)
+	broker.listenService, err = (&net.ListenConfig{}).Listen(ctx, "unix", serviceSocketPath)
 	if err != nil {
 		return nil, err
 	}
@@ -55,7 +55,7 @@ func NewBroker(serviceSocketPath, clientSocketPath string) (*DBusBroker, error) 
 		return nil, err
 	}
 
-	broker.listenClient, err = net.Listen("unix", clientSocketPath)
+	broker.listenClient, err = (&net.ListenConfig{}).Listen(ctx, "unix", clientSocketPath)
 	if err != nil {
 		return nil, err
 	}

@@ -10,7 +10,7 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-//go:generate deep-copy -type Layer -header-file ../../../hack/boilerplate.txt -o deep_copy.generated.go .
+//go:generate go tool github.com/siderolabs/deep-copy -type Layer -header-file ../../../hack/boilerplate.txt -o deep_copy.generated.go .
 
 // Config specifies Talos installer extensions configuration.
 type Config struct {

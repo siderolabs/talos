@@ -4,7 +4,7 @@
 
 package services
 
-//go:generate enumer -type=RestartKind -linecomment -text
+//go:generate go tool github.com/dmarkham/enumer -type=RestartKind -linecomment -text
 
 // RestartKind specifies how the service should be restarted.
 type RestartKind int

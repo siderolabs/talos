@@ -28,7 +28,7 @@ type NfTablesChainSuite struct {
 }
 
 func (s *NfTablesChainSuite) nftOutput() string {
-	out, err := exec.Command("nft", "list", "table", "inet", "talos-test").CombinedOutput()
+	out, err := exec.CommandContext(s.T().Context(), "nft", "list", "table", "inet", "talos-test").CombinedOutput()
 	s.Require().NoError(err, "nft list table inet talos-test failed: %s", string(out))
 
 	return string(out)
@@ -552,7 +552,7 @@ func TestNftablesChainSuite(t *testing.T) {
 		t.Skip("requires root")
 	}
 
-	if exec.Command("nft", "list", "tables").Run() != nil {
+	if exec.CommandContext(t.Context(), "nft", "list", "tables").Run() != nil {
 		t.Skip("requires nftables CLI to be installed")
 	}
 
@@ -561,14 +561,14 @@ func TestNftablesChainSuite(t *testing.T) {
 			Timeout: 5 * time.Second,
 			AfterSetup: func(s *ctest.DefaultSuite) {
 				// try to see if the table is there
-				if exec.Command("nft", "list", "table", "inet", "talos-test").Run() == nil {
-					s.Require().NoError(exec.Command("nft", "delete", "table", "inet", "talos-test").Run())
+				if exec.CommandContext(s.Ctx(), "nft", "list", "table", "inet", "talos-test").Run() == nil {
+					s.Require().NoError(exec.CommandContext(s.Ctx(), "nft", "delete", "table", "inet", "talos-test").Run())
 				}
 
 				s.Require().NoError(s.Runtime().RegisterController(&netctrl.NfTablesChainController{TableName: "talos-test"}))
 			},
 			AfterTearDown: func(s *ctest.DefaultSuite) {
-				s.Require().NoError(exec.Command("nft", "delete", "table", "inet", "talos-test").Run())
+				s.Require().NoError(exec.CommandContext(s.T().Context(), "nft", "delete", "table", "inet", "talos-test").Run())
 			},
 		},
 	})

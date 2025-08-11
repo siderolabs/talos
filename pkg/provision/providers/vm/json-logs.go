@@ -42,7 +42,7 @@ func (p *Provisioner) CreateJSONLogs(state *State, clusterReq provision.ClusterR
 		"--addr", options.JSONLogsEndpoint,
 	}
 
-	cmd := exec.Command(clusterReq.SelfExecutable, args...)
+	cmd := exec.Command(clusterReq.SelfExecutable, args...) //nolint:noctx // runs in background
 	cmd.Stdout = logFile
 	cmd.Stderr = logFile
 	cmd.SysProcAttr = &syscall.SysProcAttr{

@@ -6,6 +6,7 @@
 package extensions
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -35,7 +36,7 @@ type Builder struct {
 // Build rebuilds the initramfs.xz with extensions.
 //
 //nolint:gocyclo
-func (builder *Builder) Build() error {
+func (builder *Builder) Build(ctx context.Context) error {
 	extensionsList, err := extensions.List(builder.ExtensionTreePath)
 	if err != nil {
 		return fmt.Errorf("error listing extensions: %w", err)
@@ -66,7 +67,7 @@ func (builder *Builder) Build() error {
 
 		defer os.RemoveAll(scratchPath) //nolint:errcheck
 
-		kernelModuleDepExtension, genErr := extensions.GenerateKernelModuleDependencyTreeExtension(extensionPathsWithKernelModules, builder.InitramfsPath, scratchPath, builder.Quirks, builder.Printf)
+		kernelModuleDepExtension, genErr := extensions.GenerateKernelModuleDependencyTreeExtension(ctx, extensionPathsWithKernelModules, builder.InitramfsPath, scratchPath, builder.Quirks, builder.Printf)
 		if genErr != nil {
 			return genErr
 		}
@@ -83,7 +84,7 @@ func (builder *Builder) Build() error {
 
 	var cfg *extinterface.Config
 
-	if cfg, err = builder.compressExtensions(extensionsList, tempDir); err != nil {
+	if cfg, err = builder.compressExtensions(ctx, extensionsList, tempDir); err != nil {
 		return err
 	}
 
@@ -91,7 +92,7 @@ func (builder *Builder) Build() error {
 		return err
 	}
 
-	return builder.rebuildInitramfs(tempDir, builder.Quirks)
+	return builder.rebuildInitramfs(ctx, tempDir, builder.Quirks)
 }
 
 func (builder *Builder) validateExtensions(extensions []*extensions.Extension) error {
@@ -115,13 +116,13 @@ func (builder *Builder) validateExtensions(extensions []*extensions.Extension) e
 	return nil
 }
 
-func (builder *Builder) compressExtensions(extensions []*extensions.Extension, tempDir string) (*extinterface.Config, error) {
+func (builder *Builder) compressExtensions(ctx context.Context, extensions []*extensions.Extension, tempDir string) (*extinterface.Config, error) {
 	cfg := &extinterface.Config{}
 
 	builder.Printf("compressing system extensions")
 
 	for _, ext := range extensions {
-		path, err := ext.Compress(tempDir, tempDir, builder.Quirks)
+		path, err := ext.Compress(ctx, tempDir, tempDir, builder.Quirks)
 		if err != nil {
 			return nil, fmt.Errorf("error compressing extension %q: %w", ext.Manifest.Metadata.Name, err)
 		}

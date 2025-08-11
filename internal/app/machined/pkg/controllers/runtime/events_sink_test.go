@@ -116,7 +116,7 @@ func (suite *EventsSinkSuite) startServer(ctx context.Context) string {
 			&machine.PhaseEvent{},
 		})
 
-	lis, err := net.Listen("tcp", "localhost:0")
+	lis, err := (&net.ListenConfig{}).Listen(ctx, "tcp", "localhost:0")
 	suite.Require().NoError(err)
 
 	suite.server = grpc.NewServer()
@@ -226,7 +226,7 @@ func (suite *EventsSinkSuite) TestDrain() {
 	suite.Require().Equal(0, len(suite.handler.events))
 
 	// first, publish wrong endpoint
-	badLis, err := net.Listen("tcp", "localhost:0")
+	badLis, err := (&net.ListenConfig{}).Listen(ctx, "tcp", "localhost:0")
 	suite.Require().NoError(err)
 
 	badEndpoint := badLis.Addr().String()

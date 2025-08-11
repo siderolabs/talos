@@ -735,7 +735,7 @@ func create(ctx context.Context, ops createOps) error {
 	var slb *siderolinkBuilder
 
 	if qOps.withSiderolinkAgent.IsEnabled() {
-		slb, err = newSiderolinkBuilder(gatewayIPs[0].String(), qOps.withSiderolinkAgent.IsTLS())
+		slb, err = newSiderolinkBuilder(ctx, gatewayIPs[0].String(), qOps.withSiderolinkAgent.IsTLS())
 		if err != nil {
 			return err
 		}
@@ -1227,7 +1227,7 @@ func getDisks(
 	return disks, nil, nil
 }
 
-func newSiderolinkBuilder(wgHost string, useTLS bool) (*siderolinkBuilder, error) {
+func newSiderolinkBuilder(ctx context.Context, wgHost string, useTLS bool) (*siderolinkBuilder, error) {
 	prefix, err := networkPrefix("")
 	if err != nil {
 		return nil, err
@@ -1265,7 +1265,7 @@ func newSiderolinkBuilder(wgHost string, useTLS bool) (*siderolinkBuilder, error
 		} {
 			var err error
 
-			*d.field, err = getDynamicPort(d.net)
+			*d.field, err = getDynamicPort(ctx, d.net)
 			if err != nil {
 				return nil, fmt.Errorf("failed to get dynamic port for %s: %w", d.what, err)
 			}
@@ -1445,7 +1445,7 @@ func (slb *siderolinkBuilder) SetKernelArgs(extraKernelArgs *procfs.Cmdline, tun
 	}
 }
 
-func getDynamicPort(network string) (int, error) {
+func getDynamicPort(ctx context.Context, network string) (int, error) {
 	var (
 		closeFn func() error
 		addrFn  func() net.Addr
@@ -1453,14 +1453,14 @@ func getDynamicPort(network string) (int, error) {
 
 	switch network {
 	case "tcp", "tcp4", "tcp6":
-		l, err := net.Listen(network, "127.0.0.1:0")
+		l, err := (&net.ListenConfig{}).Listen(ctx, network, "127.0.0.1:0")
 		if err != nil {
 			return 0, err
 		}
 
 		addrFn, closeFn = l.Addr, l.Close
 	case "udp", "udp4", "udp6":
-		l, err := net.ListenPacket(network, "127.0.0.1:0")
+		l, err := (&net.ListenConfig{}).ListenPacket(ctx, network, "127.0.0.1:0")
 		if err != nil {
 			return 0, err
 		}

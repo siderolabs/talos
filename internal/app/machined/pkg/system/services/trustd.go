@@ -57,7 +57,7 @@ func (t *Trustd) ID(runtime.Runtime) string {
 // PreFunc implements the Service interface.
 //
 //nolint:gocyclo
-func (t *Trustd) PreFunc(_ context.Context, r runtime.Runtime) error {
+func (t *Trustd) PreFunc(ctx context.Context, r runtime.Runtime) error {
 	// filter apid access to make sure apid can only access its certificates
 	resources := state.Filter(
 		r.State().V1Alpha2().Resources(),
@@ -92,7 +92,7 @@ func (t *Trustd) PreFunc(_ context.Context, r runtime.Runtime) error {
 		return err
 	}
 
-	listener, err := net.Listen("unix", constants.TrustdRuntimeSocketPath)
+	listener, err := (&net.ListenConfig{}).Listen(ctx, "unix", constants.TrustdRuntimeSocketPath)
 	if err != nil {
 		return err
 	}

@@ -254,7 +254,7 @@ func launchVM(config *LaunchConfig) error {
 			swtpmArgs = append(swtpmArgs, "--tpm2")
 		}
 
-		cmd := exec.Command("swtpm", swtpmArgs...)
+		cmd := exec.Command("swtpm", swtpmArgs...) //nolint:noctx // runs in background
 
 		log.Printf("starting swtpm: %s", cmd.String())
 
@@ -322,7 +322,7 @@ func launchVM(config *LaunchConfig) error {
 	}
 
 	fmt.Fprintf(os.Stderr, "starting %s with args:\n%s\n", config.ArchitectureData.QemuExecutable(), strings.Join(args, " "))
-	cmd := exec.Command(
+	cmd := exec.Command( //nolint:noctx // runs in background
 		config.ArchitectureData.QemuExecutable(),
 		args...,
 	)
@@ -406,7 +406,7 @@ func Launch() error {
 		return err
 	}
 
-	httpServer, err := vm.NewHTTPServer(apiBindAddrs, config.APIBindAddress.Port, []byte(config.Config), config.controller)
+	httpServer, err := vm.NewHTTPServer(ctx, apiBindAddrs, config.APIBindAddress.Port, []byte(config.Config), config.controller)
 	if err != nil {
 		return err
 	}

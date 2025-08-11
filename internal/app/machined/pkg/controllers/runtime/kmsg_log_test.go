@@ -82,10 +82,10 @@ func (suite *KmsgLogDeliverySuite) SetupTest() {
 	suite.handler1 = &logHandler{}
 	suite.handler2 = &logHandler{}
 
-	suite.listener1, err = net.Listen("tcp", "localhost:0")
+	suite.listener1, err = (&net.ListenConfig{}).Listen(suite.ctx, "tcp", "localhost:0")
 	suite.Require().NoError(err)
 
-	suite.listener2, err = net.Listen("tcp", "localhost:0")
+	suite.listener2, err = (&net.ListenConfig{}).Listen(suite.ctx, "tcp", "localhost:0")
 	suite.Require().NoError(err)
 
 	suite.srv1 = logreceiver.NewServer(logger, suite.listener1, suite.handler1.HandleLog)

@@ -6,7 +6,7 @@ package kubespan
 
 import "fmt"
 
-//go:generate stringer -type=PeerState -linecomment
+//go:generate go tool golang.org/x/tools/cmd/stringer -type=PeerState -linecomment
 
 // PeerState is KubeSpan peer current state.
 type PeerState int

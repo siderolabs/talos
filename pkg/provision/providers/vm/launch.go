@@ -5,6 +5,7 @@
 package vm
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -96,8 +97,8 @@ func httpGetWrapper(f func(w io.Writer)) http.Handler {
 }
 
 // NewHTTPServer creates new inmemhttp.Server and mounts config file into it.
-func NewHTTPServer(gatewayAddr netip.Addr, port int, config []byte, controller Controller) (inmemhttp.Server, error) {
-	httpServer, err := inmemhttp.NewServer(nethelpers.JoinHostPort(gatewayAddr.String(), port))
+func NewHTTPServer(ctx context.Context, gatewayAddr netip.Addr, port int, config []byte, controller Controller) (inmemhttp.Server, error) {
+	httpServer, err := inmemhttp.NewServer(ctx, nethelpers.JoinHostPort(gatewayAddr.String(), port))
 	if err != nil {
 		return nil, fmt.Errorf("error launching in-memory HTTP server: %w", err)
 	}

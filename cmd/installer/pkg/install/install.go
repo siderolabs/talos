@@ -151,7 +151,7 @@ func Install(ctx context.Context, p runtime.Platform, mode Mode, opts *Options) 
 	}
 
 	if opts.OverlayInstaller != nil {
-		overlayOpts, getOptsErr := opts.OverlayInstaller.GetOptions(opts.ExtraOptions)
+		overlayOpts, getOptsErr := opts.OverlayInstaller.GetOptions(ctx, opts.ExtraOptions)
 		if getOptsErr != nil {
 			return fmt.Errorf("failed to get overlay installer options: %w", getOptsErr)
 		}
@@ -313,7 +313,7 @@ func (i *Installer) Install(ctx context.Context, mode Mode) (err error) {
 
 	if mode == ModeImage || mode == ModeInstall {
 		// create partitions and re-probe the device
-		info, err = i.createPartitions(gptdev, mode, hostTalosVersion, bootlder)
+		info, err = i.createPartitions(ctx, gptdev, mode, hostTalosVersion, bootlder)
 		if err != nil {
 			return fmt.Errorf("failed to create partitions: %w", err)
 		}
@@ -383,7 +383,7 @@ func (i *Installer) Install(ctx context.Context, mode Mode) (err error) {
 			if i.options.OverlayInstaller != nil {
 				i.options.Printf("running overlay installer %q", i.options.OverlayName)
 
-				if err = i.options.OverlayInstaller.Install(overlay.InstallOptions[overlay.ExtraOptions]{
+				if err = i.options.OverlayInstaller.Install(ctx, overlay.InstallOptions[overlay.ExtraOptions]{
 					InstallDisk:   i.options.Disk,
 					MountPrefix:   i.options.MountPrefix,
 					ArtifactsPath: filepath.Join(i.options.OverlayExtractedDir, constants.ImagerOverlayArtifactsPath),
@@ -445,7 +445,7 @@ func (i *Installer) Install(ctx context.Context, mode Mode) (err error) {
 }
 
 //nolint:gocyclo,cyclop
-func (i *Installer) createPartitions(gptdev gpt.Device, mode Mode, hostTalosVersion *compatibility.TalosVersion, bootlder bootloader.Bootloader) (*blkid.Info, error) {
+func (i *Installer) createPartitions(ctx context.Context, gptdev gpt.Device, mode Mode, hostTalosVersion *compatibility.TalosVersion, bootlder bootloader.Bootloader) (*blkid.Info, error) {
 	var partitionOptions *runtime.PartitionOptions
 
 	if i.options.Board != constants.BoardNone && !quirks.New(i.options.Version).SupportsOverlay() {
@@ -460,7 +460,7 @@ func (i *Installer) createPartitions(gptdev gpt.Device, mode Mode, hostTalosVers
 	}
 
 	if i.options.OverlayInstaller != nil {
-		overlayOpts, getOptsErr := i.options.OverlayInstaller.GetOptions(i.options.ExtraOptions)
+		overlayOpts, getOptsErr := i.options.OverlayInstaller.GetOptions(ctx, i.options.ExtraOptions)
 		if getOptsErr != nil {
 			return nil, fmt.Errorf("failed to get overlay installer options: %w", getOptsErr)
 		}

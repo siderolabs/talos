@@ -1,4 +1,4 @@
-module github.com/siderolabs/gotagsrewrite
+module github.com/siderolabs/talos/tools/gotagsrewrite
 
 go 1.24.0
 

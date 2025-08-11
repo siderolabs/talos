@@ -90,7 +90,7 @@ func (p *provisioner) Create(ctx context.Context, request provision.ClusterReque
 
 	fmt.Fprintln(options.LogWriter, "creating controlplane nodes")
 
-	if nodeInfo, err = p.createNodes(state, request, request.Nodes.ControlPlaneNodes(), &options); err != nil {
+	if nodeInfo, err = p.createNodes(ctx, state, request, request.Nodes.ControlPlaneNodes(), &options); err != nil {
 		return nil, err
 	}
 
@@ -105,7 +105,7 @@ func (p *provisioner) Create(ctx context.Context, request provision.ClusterReque
 
 	var workerNodeInfo []provision.NodeInfo
 
-	if workerNodeInfo, err = p.createNodes(state, request, request.Nodes.WorkerNodes(), &options); err != nil {
+	if workerNodeInfo, err = p.createNodes(ctx, state, request, request.Nodes.WorkerNodes(), &options); err != nil {
 		return nil, err
 	}
 
@@ -115,7 +115,7 @@ func (p *provisioner) Create(ctx context.Context, request provision.ClusterReque
 	if len(pxeNodes) > 0 {
 		fmt.Fprintln(options.LogWriter, "creating PXE nodes")
 
-		if pxeNodeInfo, err = p.createNodes(state, request, pxeNodes, &options); err != nil {
+		if pxeNodeInfo, err = p.createNodes(ctx, state, request, pxeNodes, &options); err != nil {
 			return nil, err
 		}
 	}

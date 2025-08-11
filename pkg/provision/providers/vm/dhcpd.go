@@ -301,7 +301,7 @@ func (p *Provisioner) startDHCPd(state *State, clusterReq provision.ClusterReque
 		"--ipxe-next-handler", clusterReq.IPXEBootScript,
 	}
 
-	cmd := exec.Command(clusterReq.SelfExecutable, args...)
+	cmd := exec.Command(clusterReq.SelfExecutable, args...) //nolint:noctx // runs in background
 	cmd.Stdout = logFile
 	cmd.Stderr = logFile
 	cmd.SysProcAttr = &syscall.SysProcAttr{

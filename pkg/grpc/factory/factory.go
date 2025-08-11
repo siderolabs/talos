@@ -200,7 +200,7 @@ func NewServer(r Registrator, setters ...Option) *grpc.Server {
 }
 
 // NewListener builds listener for grpc server.
-func NewListener(setters ...Option) (net.Listener, error) {
+func NewListener(ctx context.Context, setters ...Option) (net.Listener, error) {
 	opts := NewDefaultOptions(setters...)
 
 	if opts.Network == "tcp" && opts.Port == 0 {
@@ -231,7 +231,7 @@ func NewListener(setters ...Option) (net.Listener, error) {
 		return nil, fmt.Errorf("unknown network: %s", opts.Network)
 	}
 
-	return net.Listen(opts.Network, address)
+	return (&net.ListenConfig{}).Listen(ctx, opts.Network, address)
 }
 
 // ListenAndServe configures TLS for mutual authentication by loading the CA into a
@@ -239,10 +239,10 @@ func NewListener(setters ...Option) (net.Listener, error) {
 // Once TLS is configured, the gRPC options are built to make use of the TLS
 // configuration and the receiver (Server) is registered to the gRPC server.
 // Finally the gRPC server is started.
-func ListenAndServe(r Registrator, setters ...Option) (err error) {
+func ListenAndServe(ctx context.Context, r Registrator, setters ...Option) (err error) {
 	server := NewServer(r, setters...)
 
-	listener, err := NewListener(setters...)
+	listener, err := NewListener(ctx, setters...)
 	if err != nil {
 		return err
 	}

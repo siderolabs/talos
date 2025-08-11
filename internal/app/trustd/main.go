@@ -93,6 +93,7 @@ func trustdMain() error {
 	creds := basic.NewTokenCredentialsDynamic(tokenGetter(resources))
 
 	networkListener, err := factory.NewListener(
+		ctx,
 		factory.Port(constants.TrustdPort),
 	)
 	if err != nil {

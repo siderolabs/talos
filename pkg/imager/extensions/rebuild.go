@@ -6,6 +6,7 @@ package extensions
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"io"
 	"os"
@@ -19,26 +20,26 @@ import (
 // If uncompressedListing is not empty, contents will be prepended to the initramfs uncompressed.
 // Contents from compressedListing will be appended to the initramfs compressed (xz/zstd) as a second block.
 // Original initramfs.xz contents will stay without changes.
-func (builder *Builder) rebuildInitramfs(tempDir string, quirks quirks.Quirks) error {
+func (builder *Builder) rebuildInitramfs(ctx context.Context, tempDir string, quirks quirks.Quirks) error {
 	compressedListing, uncompressedListing, err := buildInitramfsContents(tempDir)
 	if err != nil {
 		return err
 	}
 
 	if len(uncompressedListing) > 0 {
-		if err = builder.prependUncompressedInitramfs(tempDir, uncompressedListing); err != nil {
+		if err = builder.prependUncompressedInitramfs(ctx, tempDir, uncompressedListing); err != nil {
 			return fmt.Errorf("error prepending uncompressed initramfs: %w", err)
 		}
 	}
 
-	if err = builder.appendCompressedInitramfs(tempDir, compressedListing, quirks); err != nil {
+	if err = builder.appendCompressedInitramfs(ctx, tempDir, compressedListing, quirks); err != nil {
 		return fmt.Errorf("error appending compressed initramfs: %w", err)
 	}
 
 	return nil
 }
 
-func (builder *Builder) appendCompressedInitramfs(tempDir string, compressedListing []byte, quirks quirks.Quirks) error {
+func (builder *Builder) appendCompressedInitramfs(ctx context.Context, tempDir string, compressedListing []byte, quirks quirks.Quirks) error {
 	builder.Printf("creating system extensions initramfs archive and compressing it")
 
 	// the code below runs the equivalent of:
@@ -53,7 +54,7 @@ func (builder *Builder) appendCompressedInitramfs(tempDir string, compressedList
 	defer pipeW.Close() //nolint:errcheck
 
 	// build cpio image which contains .sqsh images and extensions.yaml
-	cmd1 := exec.Command("cpio", "-H", "newc", "--create", "--reproducible", "--quiet", "-R", "+0:+0")
+	cmd1 := exec.CommandContext(ctx, "cpio", "-H", "newc", "--create", "--reproducible", "--quiet", "-R", "+0:+0")
 	cmd1.Dir = tempDir
 	cmd1.Stdin = bytes.NewReader(compressedListing)
 	cmd1.Stdout = pipeW
@@ -78,9 +79,9 @@ func (builder *Builder) appendCompressedInitramfs(tempDir string, compressedList
 	var cmd2 *exec.Cmd
 
 	if quirks.UseZSTDCompression() {
-		cmd2 = exec.Command("zstd", "-T0", "-18", "-c", "--quiet")
+		cmd2 = exec.CommandContext(ctx, "zstd", "-T0", "-18", "-c", "--quiet")
 	} else {
-		cmd2 = exec.Command("xz", "-v", "-C", "crc32", "-0", "-e", "-T", "0", "-z", "--quiet")
+		cmd2 = exec.CommandContext(ctx, "xz", "-v", "-C", "crc32", "-0", "-e", "-T", "0", "-z", "--quiet")
 	}
 
 	cmd2.Dir = tempDir
@@ -115,7 +116,7 @@ func (builder *Builder) appendCompressedInitramfs(tempDir string, compressedList
 	return destination.Sync()
 }
 
-func (builder *Builder) prependUncompressedInitramfs(tempDir string, uncompressedListing []byte) error {
+func (builder *Builder) prependUncompressedInitramfs(ctx context.Context, tempDir string, uncompressedListing []byte) error {
 	builder.Printf("creating uncompressed initramfs archive")
 
 	// the code below runs the equivalent of:
@@ -137,7 +138,7 @@ func (builder *Builder) prependUncompressedInitramfs(tempDir string, uncompresse
 
 	defer destination.Close() //nolint:errcheck
 
-	cmd := exec.Command("cpio", "-H", "newc", "--create", "--reproducible", "--quiet", "-R", "+0:+0")
+	cmd := exec.CommandContext(ctx, "cpio", "-H", "newc", "--create", "--reproducible", "--quiet", "-R", "+0:+0")
 	cmd.Dir = tempDir
 	cmd.Stdin = bytes.NewReader(uncompressedListing)
 	cmd.Stdout = destination

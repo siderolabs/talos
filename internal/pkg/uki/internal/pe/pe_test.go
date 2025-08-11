@@ -71,7 +71,7 @@ func TestAssembleNative(t *testing.T) {
 
 	require.NoError(t, pe.AssembleNative("testdata/linuxx64.efi.stub", outNative, sections()))
 
-	require.NoError(t, pe.AssembleObjcopy("testdata/linuxx64.efi.stub", outObjcopy, sections()))
+	require.NoError(t, pe.AssembleObjcopy(t.Context(), "testdata/linuxx64.efi.stub", outObjcopy, sections()))
 
 	headersNative := dumpHeaders(t, outNative)
 	headersObjcopy := dumpHeaders(t, outObjcopy)
@@ -111,7 +111,7 @@ func TestAssembleNative(t *testing.T) {
 func dumpHeaders(t *testing.T, path string) string {
 	t.Helper()
 
-	output, err := exec.Command("objdump", "-x", path).CombinedOutput()
+	output, err := exec.CommandContext(t.Context(), "objdump", "-x", path).CombinedOutput()
 	require.NoError(t, err, string(output))
 
 	output = bytes.ReplaceAll(output, []byte(path), []byte("uki.bin"))
@@ -122,7 +122,7 @@ func dumpHeaders(t *testing.T, path string) string {
 func binaryDump(t *testing.T, path string) string {
 	t.Helper()
 
-	output, err := exec.Command("xxd", path).CombinedOutput()
+	output, err := exec.CommandContext(t.Context(), "xxd", path).CombinedOutput()
 	require.NoError(t, err, string(output))
 
 	return string(output)
@@ -131,7 +131,7 @@ func binaryDump(t *testing.T, path string) string {
 func extractSection(t *testing.T, path, section string) string {
 	t.Helper()
 
-	output, err := exec.Command("objdump", "-s", "--section", section, path).CombinedOutput()
+	output, err := exec.CommandContext(t.Context(), "objdump", "-s", "--section", section, path).CombinedOutput()
 	require.NoError(t, err, string(output))
 
 	output = bytes.ReplaceAll(output, []byte(path), []byte("uki.bin"))

@@ -120,14 +120,14 @@ func (l *loggingDestination) Format() string {
 func TestSenderJSONLines(t *testing.T) { //nolint:tparallel
 	t.Parallel()
 
-	lisUDP, err := net.ListenPacket("udp", "127.0.0.1:0")
+	lisUDP, err := (&net.ListenConfig{}).ListenPacket(t.Context(), "udp", "127.0.0.1:0")
 	require.NoError(t, err)
 
 	t.Cleanup(func() {
 		require.NoError(t, lisUDP.Close())
 	})
 
-	lisTCP, err := net.Listen("tcp", "127.0.0.1:0")
+	lisTCP, err := (&net.ListenConfig{}).Listen(t.Context(), "tcp", "127.0.0.1:0")
 	require.NoError(t, err)
 
 	t.Cleanup(func() {

@@ -14,11 +14,11 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/siderolabs/structprotogen/ast"
-	"github.com/siderolabs/structprotogen/consts"
-	"github.com/siderolabs/structprotogen/loader"
-	"github.com/siderolabs/structprotogen/proto"
-	"github.com/siderolabs/structprotogen/types"
+	"github.com/siderolabs/talos/tools/structprotogen/ast"
+	"github.com/siderolabs/talos/tools/structprotogen/consts"
+	"github.com/siderolabs/talos/tools/structprotogen/loader"
+	"github.com/siderolabs/talos/tools/structprotogen/proto"
+	"github.com/siderolabs/talos/tools/structprotogen/types"
 )
 
 // rootCmd represents the base command when called without any subcommands.

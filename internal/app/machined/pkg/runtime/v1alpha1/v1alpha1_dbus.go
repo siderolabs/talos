@@ -31,16 +31,17 @@ func (dbus *DBusState) Start() error {
 		}
 	}
 
-	var err error
+	var (
+		err error
+		ctx context.Context
+	)
 
-	dbus.broker, err = logind.NewBroker(constants.DBusServiceSocketPath, constants.DBusClientSocketPath)
+	ctx, dbus.cancel = context.WithCancel(context.Background())
+
+	dbus.broker, err = logind.NewBroker(ctx, constants.DBusServiceSocketPath, constants.DBusClientSocketPath)
 	if err != nil {
 		return err
 	}
-
-	var ctx context.Context
-
-	ctx, dbus.cancel = context.WithCancel(context.Background())
 
 	dbus.errCh = make(chan error)
 

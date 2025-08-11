@@ -61,7 +61,7 @@ func (p *Provisioner) CreateSiderolinkAgent(state *State, clusterReq provision.C
 		args = append(args, "--predefined-pair", bind.UUID.String()+"="+bind.Addr.String())
 	}
 
-	cmd := exec.Command(clusterReq.SelfExecutable, args...)
+	cmd := exec.Command(clusterReq.SelfExecutable, args...) //nolint:noctx // runs in background
 	cmd.Stdout = logFile
 	cmd.Stderr = logFile
 	cmd.SysProcAttr = &syscall.SysProcAttr{

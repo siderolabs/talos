@@ -23,6 +23,7 @@ type MySpecSpec3 struct {
 }
 
 // MyCustomStruct is a custom struct
+//
 //gotagsrewrite:gen
 type MyCustomStruct struct {
 	NewField string `yaml:"new_field" protobuf:"1"`

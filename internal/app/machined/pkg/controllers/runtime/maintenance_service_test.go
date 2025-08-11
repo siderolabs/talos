@@ -68,7 +68,7 @@ type MaintenanceServiceSuite struct {
 }
 
 func (suite *MaintenanceServiceSuite) findListenAddr() string {
-	l, err := net.Listen("tcp", "127.0.0.1:0")
+	l, err := (&net.ListenConfig{}).Listen(suite.Ctx(), "tcp", "127.0.0.1:0")
 	suite.Require().NoError(err)
 
 	addr := l.Addr().String()
@@ -93,12 +93,11 @@ func (suite *MaintenanceServiceSuite) TestRunService() {
 
 	// wait for the service to be up
 	suite.AssertWithin(time.Second, 10*time.Millisecond, func() error {
-		c, err := tls.Dial("tcp", maintenanceConfig.TypedSpec().ListenAddress,
-			&tls.Config{
+		c, err := (&tls.Dialer{
+			Config: &tls.Config{
 				InsecureSkipVerify: true,
 			},
-		)
-
+		}).DialContext(suite.Ctx(), "tcp", maintenanceConfig.TypedSpec().ListenAddress)
 		if c != nil {
 			c.Close() //nolint:errcheck
 		}
@@ -145,13 +144,13 @@ url: "tcp://127.0.0.42:1234"
 
 	// wait for the service to be up on the new address
 	suite.AssertWithin(time.Second, 10*time.Millisecond, func() error {
-		var c *tls.Conn
+		var c net.Conn
 
-		c, err = tls.Dial("tcp", maintenanceConfig.TypedSpec().ListenAddress,
-			&tls.Config{
+		c, err = (&tls.Dialer{
+			Config: &tls.Config{
 				InsecureSkipVerify: true,
 			},
-		)
+		}).DialContext(suite.Ctx(), "tcp", maintenanceConfig.TypedSpec().ListenAddress)
 
 		if c != nil {
 			c.Close() //nolint:errcheck
@@ -161,7 +160,7 @@ url: "tcp://127.0.0.42:1234"
 	})
 
 	// verify that old address returns connection refused
-	_, err = net.Dial("tcp", oldListenAddress)
+	_, err = (&net.Dialer{}).DialContext(suite.Ctx(), "tcp", oldListenAddress)
 	suite.Require().ErrorContains(err, "connection refused")
 
 	// test the API again over SideroLink - the Admin role must be injected to the call
@@ -188,7 +187,7 @@ url: "tcp://127.0.0.42:1234"
 
 	suite.Require().NoError(suite.State().Destroy(suite.Ctx(), maintenanceRequest.Metadata()))
 
-	_, err = net.Dial("tcp", maintenanceConfig.TypedSpec().ListenAddress)
+	_, err = (&net.Dialer{}).DialContext(suite.Ctx(), "tcp", maintenanceConfig.TypedSpec().ListenAddress)
 	suite.Require().ErrorContains(err, "connection refused")
 
 	// assert that the maintenance service is removed from the config after the service was shut down

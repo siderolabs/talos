@@ -13,7 +13,7 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/proto"
 )
 
-//go:generate deep-copy -type CPUSpec -type MemorySpec -header-file ../../../../hack/boilerplate.txt -o deep_copy.generated.go .
+//go:generate go tool github.com/siderolabs/deep-copy -type CPUSpec -type MemorySpec -header-file ../../../../hack/boilerplate.txt -o deep_copy.generated.go .
 
 // CPUType is type of Etcd resource.
 const CPUType = resource.Type("CPUStats.perf.talos.dev")

@@ -147,6 +147,7 @@ func apidMain() error {
 	router.RegisterStreamedRegex("Stream$")
 
 	networkListener, err := factory.NewListener(
+		ctx,
 		factory.Port(constants.ApidPort),
 	)
 	if err != nil {
@@ -154,6 +155,7 @@ func apidMain() error {
 	}
 
 	socketListener, err := factory.NewListener(
+		ctx,
 		factory.Network("unix"),
 		factory.SocketPath(constants.APISocketPath),
 	)

@@ -193,10 +193,10 @@ func runHTTPServer(ctx context.Context, certPEM, keyPEM []byte) error {
 	return srv.Close()
 }
 
-func handleTunneling(w http.ResponseWriter, r *http.Request) {
+func handleTunneling(ctx context.Context, w http.ResponseWriter, r *http.Request) {
 	addr := r.URL.Host
 
-	dstConn, err := net.DialTimeout("tcp", addr, 10*time.Second)
+	dstConn, err := (&net.Dialer{Timeout: 10 * time.Second}).DialContext(ctx, "tcp", addr)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusServiceUnavailable)
 
@@ -289,7 +289,7 @@ func runHTTPProxy(ctx context.Context) error {
 		Addr: net.JoinHostPort("", strconv.Itoa(airgappedFlags.proxyPort)),
 		Handler: loggingMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			if r.Method == http.MethodConnect {
-				handleTunneling(w, r)
+				handleTunneling(ctx, w, r)
 			} else {
 				handleHTTP(w, r)
 			}

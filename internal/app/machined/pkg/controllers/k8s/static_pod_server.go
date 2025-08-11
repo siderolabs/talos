@@ -169,7 +169,7 @@ func (ctrl *StaticPodServerController) createServer(ctx context.Context, r contr
 		}
 	})
 
-	listener, err := net.Listen("tcp", "127.0.0.1:0")
+	listener, err := (&net.ListenConfig{}).Listen(ctx, "tcp", "127.0.0.1:0")
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to create listener for serving static pod manifests: %w", err)
 	}

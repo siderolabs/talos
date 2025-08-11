@@ -46,7 +46,7 @@ func (p *Provisioner) CreateLoadBalancer(state *State, clusterReq provision.Clus
 		args = append(args, "--loadbalancer-ports", strings.Join(ports, ","))
 	}
 
-	cmd := exec.Command(clusterReq.SelfExecutable, args...)
+	cmd := exec.Command(clusterReq.SelfExecutable, args...) //nolint:noctx // runs in background
 	cmd.Stdout = logFile
 	cmd.Stderr = logFile
 	cmd.SysProcAttr = &syscall.SysProcAttr{

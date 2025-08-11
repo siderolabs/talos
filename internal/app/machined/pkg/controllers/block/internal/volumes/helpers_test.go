@@ -85,7 +85,7 @@ func prepareRawImage(t *testing.T, size int64) string {
 func formatExt4(t *testing.T, path string) {
 	t.Helper()
 
-	cmd := exec.Command("mkfs.ext4", "-L", "extlabel", path)
+	cmd := exec.CommandContext(t.Context(), "mkfs.ext4", "-L", "extlabel", path)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 

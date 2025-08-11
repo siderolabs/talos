@@ -16,7 +16,7 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/resources/config"
 )
 
-//go:generate deep-copy -type ConfigSpec -type EndpointSpec -type IdentitySpec -type PeerSpecSpec -type PeerStatusSpec -header-file ../../../../hack/boilerplate.txt -o deep_copy.generated.go .
+//go:generate go tool github.com/siderolabs/deep-copy -type ConfigSpec -type EndpointSpec -type IdentitySpec -type PeerSpecSpec -type PeerStatusSpec -header-file ../../../../hack/boilerplate.txt -o deep_copy.generated.go .
 
 // ConfigType is type of Config resource.
 const ConfigType = resource.Type("KubeSpanConfigs.kubespan.talos.dev")

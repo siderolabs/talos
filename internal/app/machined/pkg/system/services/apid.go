@@ -75,7 +75,7 @@ func apidResourceFilter(_ context.Context, access state.Access) error {
 }
 
 // PreFunc implements the Service interface.
-func (o *APID) PreFunc(_ context.Context, r runtime.Runtime) error {
+func (o *APID) PreFunc(ctx context.Context, r runtime.Runtime) error {
 	// filter apid access to make sure apid can only access its certificates
 	resources := state.Filter(r.State().V1Alpha2().Resources(), apidResourceFilter)
 
@@ -94,7 +94,7 @@ func (o *APID) PreFunc(_ context.Context, r runtime.Runtime) error {
 		return err
 	}
 
-	listener, err := net.Listen("unix", constants.APIRuntimeSocketPath)
+	listener, err := (&net.ListenConfig{}).Listen(ctx, "unix", constants.APIRuntimeSocketPath)
 	if err != nil {
 		return err
 	}

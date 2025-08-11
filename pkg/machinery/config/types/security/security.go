@@ -5,6 +5,6 @@
 // Package security provides security-related machine configuration documents.
 package security
 
-//go:generate docgen -output security_doc.go security.go trusted_roots.go
+//go:generate go tool github.com/siderolabs/talos/tools/docgen -output security_doc.go security.go trusted_roots.go
 
-//go:generate deep-copy -type TrustedRootsConfigV1Alpha1 -pointer-receiver -header-file ../../../../../hack/boilerplate.txt -o deep_copy.generated.go .
+//go:generate go tool github.com/siderolabs/deep-copy -type TrustedRootsConfigV1Alpha1 -pointer-receiver -header-file ../../../../../hack/boilerplate.txt -o deep_copy.generated.go .

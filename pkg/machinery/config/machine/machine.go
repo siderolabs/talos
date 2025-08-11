@@ -9,7 +9,7 @@ import (
 	"fmt"
 )
 
-//go:generate stringer -type=Type -linecomment
+//go:generate go tool golang.org/x/tools/cmd/stringer -type=Type -linecomment
 
 // Type represents a machine type.
 type Type int

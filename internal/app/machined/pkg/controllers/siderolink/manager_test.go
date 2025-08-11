@@ -40,7 +40,7 @@ func TestManagerSuite(t *testing.T) {
 	var m ManagerSuite
 
 	m.AfterSetup = func(suite *ctest.DefaultSuite) {
-		lis, err := net.Listen("tcp", "localhost:0")
+		lis, err := (&net.ListenConfig{}).Listen(suite.Ctx(), "tcp", "localhost:0")
 		suite.Require().NoError(err)
 
 		m.s = grpc.NewServer()

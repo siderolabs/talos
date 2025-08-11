@@ -252,53 +252,6 @@ FROM --platform=${BUILDPLATFORM} ${TOOLS_PREFIX}:${TOOLS} AS tools
 ENV GOTOOLCHAIN=local
 ENV CGO_ENABLED=0
 SHELL ["/bin/bash", "-c"]
-ARG GOLANGCILINT_VERSION
-RUN --mount=type=cache,target=/.cache,id=talos/.cache go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@${GOLANGCILINT_VERSION} \
-	&& mv /root/go/bin/golangci-lint /usr/bin/golangci-lint
-ARG GOIMPORTS_VERSION
-RUN --mount=type=cache,target=/.cache,id=talos/.cache go install golang.org/x/tools/cmd/goimports@${GOIMPORTS_VERSION} \
-    && mv /root/go/bin/goimports /usr/bin/goimports
-ARG GOFUMPT_VERSION
-RUN --mount=type=cache,target=/.cache,id=talos/.cache go install mvdan.cc/gofumpt@${GOFUMPT_VERSION} \
-    && mv /root/go/bin/gofumpt /usr/bin/gofumpt
-ARG DEEPCOPY_VERSION
-RUN --mount=type=cache,target=/.cache,id=talos/.cache go install github.com/siderolabs/deep-copy@${DEEPCOPY_VERSION} \
-    && mv /root/go/bin/deep-copy /usr/bin/deep-copy
-ARG STRINGER_VERSION
-RUN --mount=type=cache,target=/.cache,id=talos/.cache go install golang.org/x/tools/cmd/stringer@${STRINGER_VERSION} \
-    && mv /root/go/bin/stringer /usr/bin/stringer
-ARG ENUMER_VERSION
-RUN --mount=type=cache,target=/.cache,id=talos/.cache go install github.com/dmarkham/enumer@${ENUMER_VERSION} \
-    && mv /root/go/bin/enumer /usr/bin/enumer
-ARG DEEPCOPY_GEN_VERSION
-RUN --mount=type=cache,target=/.cache,id=talos/.cache go install k8s.io/code-generator/cmd/deepcopy-gen@${DEEPCOPY_GEN_VERSION} \
-    && mv /root/go/bin/deepcopy-gen /usr/bin/deepcopy-gen
-ARG VTPROTOBUF_VERSION
-RUN --mount=type=cache,target=/.cache,id=talos/.cache go install github.com/planetscale/vtprotobuf/cmd/protoc-gen-go-vtproto@${VTPROTOBUF_VERSION} \
-    && mv /root/go/bin/protoc-gen-go-vtproto /usr/bin/protoc-gen-go-vtproto
-ARG IMPORTVET_VERSION
-RUN --mount=type=cache,target=/.cache,id=talos/.cache go install github.com/siderolabs/importvet/cmd/importvet@${IMPORTVET_VERSION} \
-    && mv /root/go/bin/importvet /usr/bin/importvet
-RUN --mount=type=cache,target=/.cache,id=talos/.cache go install golang.org/x/vuln/cmd/govulncheck@latest \
-    && mv /root/go/bin/govulncheck /usr/bin/govulncheck
-ARG PROTOTOOL_VERSION
-RUN --mount=type=cache,target=/.cache,id=talos/.cache go install github.com/uber/prototool/cmd/prototool@${PROTOTOOL_VERSION} \
-    && mv /root/go/bin/prototool /usr/bin/prototool
-ARG PROTOC_GEN_DOC_VERSION
-RUN --mount=type=cache,target=/.cache,id=talos/.cache go install github.com/pseudomuto/protoc-gen-doc/cmd/protoc-gen-doc@${PROTOC_GEN_DOC_VERSION} \
-    && mv /root/go/bin/protoc-gen-doc /usr/bin/protoc-gen-doc
-COPY ./hack/docgen /go/src/github.com/siderolabs/talos-hack-docgen
-RUN --mount=type=cache,target=/.cache,id=talos/.cache cd /go/src/github.com/siderolabs/talos-hack-docgen \
-    && go build -o docgen . \
-    && mv docgen /usr/bin/
-COPY ./hack/gotagsrewrite /go/src/github.com/siderolabs/gotagsrewrite
-RUN --mount=type=cache,target=/.cache,id=talos/.cache cd /go/src/github.com/siderolabs/gotagsrewrite \
-    && go build -o gotagsrewrite . \
-    && mv gotagsrewrite /usr/bin/
-COPY ./hack/structprotogen /go/src/github.com/siderolabs/structprotogen
-RUN --mount=type=cache,target=/.cache,id=talos/.cache cd /go/src/github.com/siderolabs/structprotogen \
-    && go build -o structprotogen . \
-    && mv structprotogen /usr/bin/
 
 # The build target creates a container that will be used to build Talos source
 # code.
@@ -313,7 +266,6 @@ ARG GOFIPS140
 ENV GOFIPS140=${GOFIPS140}
 ENV GOCACHE=/.cache/go-build
 ENV GOMODCACHE=/.cache/mod
-ENV PROTOTOOL_CACHE_PATH=/.cache/prototool
 ARG SOURCE_DATE_EPOCH
 ENV SOURCE_DATE_EPOCH=${SOURCE_DATE_EPOCH}
 # Go standard library is shipped with Talos, thus it must be tracked in SBOM
@@ -323,13 +275,10 @@ WORKDIR /src
 # The build-go target creates a container to build Go code with Go modules downloaded and verified.
 
 FROM build AS build-go
-COPY ./go.mod ./go.sum ./
+COPY ./go.mod ./go.sum ./go.work ./
 COPY ./pkg/machinery/go.mod ./pkg/machinery/go.sum ./pkg/machinery/
+COPY ./hack/cloud-image-uploader/go.mod ./hack/cloud-image-uploader/go.sum ./hack/cloud-image-uploader/
 COPY ./tools ./tools
-WORKDIR /src/pkg/machinery
-RUN --mount=type=cache,target=/.cache,id=talos/.cache go mod download
-WORKDIR /src/tools
-RUN --mount=type=cache,target=/.cache,id=talos/.cache go mod download
 WORKDIR /src
 RUN --mount=type=cache,target=/.cache,id=talos/.cache go mod download
 RUN --mount=type=cache,target=/.cache,id=talos/.cache go mod verify
@@ -374,20 +323,20 @@ COPY --from=embed-abbrev-generate /src/_out/talos-metadata /_out/talos-metadata
 FROM ${EMBED_TARGET} AS embed-target
 
 # generate API descriptors
-FROM build AS api-descriptors-build
+FROM build-go AS api-descriptors-build
 WORKDIR /src/api
 COPY api .
-RUN --mount=type=cache,target=/.cache,id=talos/.cache prototool format --overwrite --protoc-bin-path=/usr/bin/protoc --protoc-wkt-path=/usr/include
-RUN --mount=type=cache,target=/.cache,id=talos/.cache prototool break descriptor-set --output-path=api.descriptors --protoc-bin-path=/usr/bin/protoc --protoc-wkt-path=/usr/include
+RUN --mount=type=cache,target=/.cache,id=talos/.cache go tool github.com/bufbuild/buf/cmd/buf format
+RUN --mount=type=cache,target=/.cache,id=talos/.cache go tool github.com/bufbuild/buf/cmd/buf build --exclude-source-info -o lock.binpb
 
 FROM --platform=${BUILDPLATFORM} scratch AS api-descriptors
-COPY --from=api-descriptors-build /src/api/api.descriptors /api/api.descriptors
+COPY --from=api-descriptors-build /src/api/lock.binpb /api/lock.binpb
 
 # format protobuf service definitions
-FROM build AS proto-format-build
+FROM build-go AS proto-format-build
 WORKDIR /src/api
 COPY api .
-RUN --mount=type=cache,target=/.cache,id=talos/.cache prototool format --overwrite --protoc-bin-path=/usr/bin/protoc --protoc-wkt-path=/usr/include
+RUN --mount=type=cache,target=/.cache,id=talos/.cache go tool github.com/bufbuild/buf/cmd/buf format
 
 FROM --platform=${BUILDPLATFORM} scratch AS fmt-protobuf
 COPY --from=proto-format-build /src/api/ /api/
@@ -398,46 +347,31 @@ COPY ./pkg ./pkg
 COPY ./hack/boilerplate.txt ./hack/boilerplate.txt
 COPY --from=embed-target / ./
 RUN --mount=type=cache,target=/.cache,id=talos/.cache go generate ./pkg/...
-RUN goimports -w -local github.com/siderolabs/talos ./pkg/
-RUN gofumpt -w ./pkg/
+RUN --mount=type=cache,target=/.cache,id=talos/.cache go tool golang.org/x/tools/cmd/goimports -w -local github.com/siderolabs/talos ./pkg/
+RUN --mount=type=cache,target=/.cache,id=talos/.cache go tool mvdan.cc/gofumpt -w ./pkg/
 WORKDIR /src/pkg/machinery
 RUN --mount=type=cache,target=/.cache,id=talos/.cache go generate ./...
-RUN gotagsrewrite .
-RUN goimports -w -local github.com/siderolabs/talos ./
-RUN gofumpt -w ./
+RUN go tool github.com/siderolabs/talos/tools/gotagsrewrite .
+RUN --mount=type=cache,target=/.cache,id=talos/.cache go tool golang.org/x/tools/cmd/goimports -w -local github.com/siderolabs/talos ./
+RUN --mount=type=cache,target=/.cache,id=talos/.cache go tool mvdan.cc/gofumpt -w ./
 
 FROM go-generate AS gen-proto-go
 WORKDIR /src/
-RUN --mount=type=cache,target=/.cache,id=talos/.cache structprotogen github.com/siderolabs/talos/pkg/machinery/... /api/resource/definitions/
+RUN --mount=type=cache,target=/.cache,id=talos/.cache go tool github.com/siderolabs/talos/tools/structprotogen github.com/siderolabs/talos/pkg/machinery/... /api/resource/definitions/
 
 # compile protobuf service definitions
-FROM build AS generate-build
-COPY --from=proto-format-build /src/api /api/
-# Common needs to be at or near the top to satisfy the subsequent imports
-COPY ./api/vendor/ /api/vendor/
-COPY ./api/common/common.proto /api/common/common.proto
-RUN protoc -I/api -I/api/vendor/ --go_out=paths=source_relative:/api --go-grpc_out=paths=source_relative:/api --go-vtproto_out=paths=source_relative:/api --go-vtproto_opt=features=marshal+unmarshal+size common/common.proto
-COPY ./api/security/security.proto /api/security/security.proto
-RUN protoc -I/api -I/api/vendor/ --go_out=paths=source_relative:/api --go-grpc_out=paths=source_relative:/api --go-vtproto_out=paths=source_relative:/api --go-vtproto_opt=features=marshal+unmarshal+size security/security.proto
-COPY ./api/storage/storage.proto /api/storage/storage.proto
-RUN protoc -I/api -I/api/vendor/ --go_out=paths=source_relative:/api --go-grpc_out=paths=source_relative:/api --go-vtproto_out=paths=source_relative:/api --go-vtproto_opt=features=marshal+unmarshal+size storage/storage.proto
-COPY ./api/machine/machine.proto /api/machine/machine.proto
-RUN protoc -I/api -I/api/vendor/ --go_out=paths=source_relative:/api --go-grpc_out=paths=source_relative:/api --go-vtproto_out=paths=source_relative:/api --go-vtproto_opt=features=marshal+unmarshal+size machine/machine.proto
-COPY ./api/time/time.proto /api/time/time.proto
-RUN protoc -I/api -I/api/vendor/ --go_out=paths=source_relative:/api --go-grpc_out=paths=source_relative:/api --go-vtproto_out=paths=source_relative:/api --go-vtproto_opt=features=marshal+unmarshal+size time/time.proto
-COPY ./api/cluster/cluster.proto /api/cluster/cluster.proto
-RUN protoc -I/api -I/api/vendor/ --go_out=paths=source_relative:/api --go-grpc_out=paths=source_relative:/api --go-vtproto_out=paths=source_relative:/api --go-vtproto_opt=features=marshal+unmarshal+size cluster/cluster.proto
-COPY ./api/resource/config/config.proto /api/resource/config/config.proto
-RUN protoc -I/api -I/api/vendor/ --go_out=paths=source_relative:/api --go-grpc_out=paths=source_relative:/api --go-vtproto_out=paths=source_relative:/api --go-vtproto_opt=features=marshal+unmarshal+size resource/config/config.proto
-COPY ./api/resource/network/device_config.proto /api/resource/network/device_config.proto
-RUN protoc -I/api -I/api/vendor/ --go_out=paths=source_relative:/api --go-grpc_out=paths=source_relative:/api --go-vtproto_out=paths=source_relative:/api --go-vtproto_opt=features=marshal+unmarshal+size resource/network/device_config.proto
-COPY ./api/inspect/inspect.proto /api/inspect/inspect.proto
-RUN protoc -I/api -I/api/vendor/ --go_out=paths=source_relative:/api --go-grpc_out=paths=source_relative:/api --go-vtproto_out=paths=source_relative:/api --go-vtproto_opt=features=marshal+unmarshal+size inspect/inspect.proto
-COPY --from=gen-proto-go /api/resource/definitions/ /api/resource/definitions/
-RUN find /api/resource/definitions/ -type f -name "*.proto" | xargs -I {} /bin/bash -c 'protoc -I/api -I/api/vendor/ --go_out=paths=source_relative:/api --go-grpc_out=paths=source_relative:/api --go-vtproto_out=paths=source_relative:/api --go-vtproto_opt=features=marshal+unmarshal+size {} && mkdir -p /api/resource/definitions_go/$(basename {} .proto) && mv /api/resource/definitions/$(basename {} .proto)/*.go /api/resource/definitions_go/$(basename {} .proto)'
+FROM build-go AS generate-build
+COPY --from=proto-format-build /src/api /src/api/
+COPY --from=gen-proto-go /api/resource/definitions/ /src/api/resource/definitions/
+WORKDIR /src/api
+RUN --mount=type=cache,target=/.cache,id=talos/.cache go tool github.com/bufbuild/buf/cmd/buf build
+RUN --mount=type=cache,target=/.cache,id=talos/.cache,sharing=locked go tool github.com/bufbuild/buf/cmd/buf generate
 # Goimports and gofumpt generated files to adjust import order
-RUN goimports -w -local github.com/siderolabs/talos /api/
-RUN gofumpt -w /api/
+RUN --mount=type=cache,target=/.cache,id=talos/.cache go tool golang.org/x/tools/cmd/goimports -w -local github.com/siderolabs/talos /src/api/machinery/
+RUN --mount=type=cache,target=/.cache,id=talos/.cache go tool mvdan.cc/gofumpt -w /src/api/machinery/
+
+FROM scratch AS generate-build-clean
+COPY --from=generate-build /src/api /api/
 
 FROM tools AS selinux
 COPY ./internal/pkg/selinux/policy/* /selinux/
@@ -463,18 +397,8 @@ COPY --from=microsoft-secureboot-database /DB/Certificates/microsoft*.der /db/
 
 FROM --platform=${BUILDPLATFORM} scratch AS generate
 COPY --from=proto-format-build /src/api /api/
-COPY --from=generate-build /api/common/*.pb.go /pkg/machinery/api/common/
-COPY --from=generate-build /api/resource/definitions/ /api/resource/definitions/
-COPY --from=generate-build /api/resource/definitions_go/ /pkg/machinery/api/resource/definitions/
-COPY --from=generate-build /api/security/*.pb.go /pkg/machinery/api/security/
-COPY --from=generate-build /api/machine/*.pb.go /pkg/machinery/api/machine/
-COPY --from=generate-build /api/time/*.pb.go /pkg/machinery/api/time/
-COPY --from=generate-build /api/cluster/*.pb.go /pkg/machinery/api/cluster/
-COPY --from=generate-build /api/storage/*.pb.go /pkg/machinery/api/storage/
-COPY --from=generate-build /api/resource/*.pb.go /pkg/machinery/api/resource/
-COPY --from=generate-build /api/resource/config/*.pb.go /pkg/machinery/api/resource/config/
-COPY --from=generate-build /api/resource/network/*.pb.go /pkg/machinery/api/resource/network/
-COPY --from=generate-build /api/inspect/*.pb.go /pkg/machinery/api/inspect/
+COPY --from=generate-build-clean /api/resource/definitions/ /api/resource/definitions/
+COPY --from=generate-build-clean /api/machinery /pkg/machinery/
 COPY --from=go-generate /src/pkg/imager/profile/ /pkg/imager/profile/
 COPY --from=go-generate /src/pkg/machinery/resources/ /pkg/machinery/resources/
 COPY --from=go-generate /src/pkg/machinery/config/schemas/ /pkg/machinery/config/schemas/
@@ -506,7 +430,7 @@ WORKDIR /src
 # The vulncheck target runs the vulnerability check tool.
 
 FROM base AS lint-vulncheck
-RUN --mount=type=cache,target=/.cache,id=talos/.cache govulncheck ./...
+RUN --mount=type=cache,target=/.cache,id=talos/.cache go tool golang.org/x/vuln/cmd/govulncheck ./...
 
 # The lint-deadcode target runs the deadcode elimination check.
 FROM base AS lint-deadcode
@@ -515,7 +439,7 @@ ARG GO_LDFLAGS
 ARG GO_MACHINED_LDFLAGS
 ARG GOAMD64
 RUN --mount=type=cache,target=/.cache,id=talos/.cache GOOS=linux GOARCH=amd64 GOAMD64=${GOAMD64} go build ${GO_BUILDFLAGS} -ldflags "${GO_LDFLAGS} ${GO_MACHINED_LDFLAGS} -dumpdep" ./internal/app/machined \
-    |& go tool  -modfile=tools/go.mod github.com/aarzilli/whydeadcode > deadcode.txt
+    |& go tool github.com/aarzilli/whydeadcode > deadcode.txt
 RUN if [[ -s deadcode.txt ]]; then \
         echo "Dead code elimination problem found:"; \
         cat deadcode.txt; \
@@ -971,7 +895,7 @@ COPY --from=vex-generate /talos.grype.yaml /talos.grype.yaml
 FROM build-go AS grype-scan
 COPY --from=sbom-arm64 /talos-arm64.spdx.json /talos-arm64.spdx.json
 COPY --from=vex /talos.vex.json /talos.vex.json
-RUN --mount=type=cache,target=/.cache,id=talos/.cache go tool -modfile=tools/go.mod \
+RUN --mount=type=cache,target=/.cache,id=talos/.cache go tool \
     github.com/anchore/grype/cmd/grype sbom:/talos-arm64.spdx.json \
     --vex /talos.vex.json -vv 2>&1 | tee /grype-scan.log
 
@@ -982,7 +906,7 @@ FROM build-go AS grype-validate
 COPY --from=sbom-arm64 /talos-arm64.spdx.json /talos-arm64.spdx.json
 COPY --from=vex /talos.vex.json /talos.vex.json
 COPY --from=vex /talos.grype.yaml /talos.grype.yaml
-RUN --mount=type=cache,target=/.cache,id=talos/.cache go tool -modfile=tools/go.mod \
+RUN --mount=type=cache,target=/.cache,id=talos/.cache go tool \
     github.com/anchore/grype/cmd/grype sbom:/talos-arm64.spdx.json \
     --vex /talos.vex.json -vv --fail-on negligible --config /talos.grype.yaml
 
@@ -1277,49 +1201,36 @@ RUN --mount=type=cache,target=/.cache,id=talos/.cache GOOS=linux GOARCH=amd64 GO
 FROM scratch AS integration-test-provision-linux
 COPY --from=integration-test-provision-linux-build /src/integration.test /integration-test-provision-linux-amd64
 
-# The module-sig-verify targets builds module-sig-verify binary.
-FROM build-go AS module-sig-verify-linux-build
-ARG GO_BUILDFLAGS
-ARG GO_LDFLAGS
-ARG GOAMD64
-WORKDIR /src/module-sig-verify
-COPY ./hack/module-sig-verify/go.mod ./hack/module-sig-verify/go.sum ./
-RUN --mount=type=cache,target=/.cache,id=talos/.cache go mod download
-COPY ./hack/module-sig-verify/main.go .
-RUN --mount=type=cache,target=/.cache,id=talos/.cache GOOS=linux GOARCH=amd64 GOAMD64=${GOAMD64} go build -o module-sig-verify .
-
-FROM scratch AS module-sig-verify-linux
-COPY --from=module-sig-verify-linux-build /src/module-sig-verify/module-sig-verify /module-sig-verify-linux-amd64
-
 # The lint target performs linting on the source code.
 FROM base AS lint-go
 COPY .golangci.yml .
 ENV GOGC=50
 ENV GOLANGCI_LINT_CACHE=/.cache/lint
-RUN golangci-lint config verify --config .golangci.yml
-RUN --mount=type=cache,target=/.cache,id=talos/.cache,sharing=locked golangci-lint run --config .golangci.yml
+RUN --mount=type=cache,target=/.cache,id=talos/.cache,sharing=locked go tool github.com/golangci/golangci-lint/v2/cmd/golangci-lint config verify --config .golangci.yml
+RUN --mount=type=cache,target=/.cache,id=talos/.cache,sharing=locked go tool github.com/golangci/golangci-lint/v2/cmd/golangci-lint run --config .golangci.yml
 WORKDIR /src/pkg/machinery
-RUN --mount=type=cache,target=/.cache,id=talos/.cache,sharing=locked golangci-lint run --config ../../.golangci.yml
+RUN --mount=type=cache,target=/.cache,id=talos/.cache,sharing=locked go tool github.com/golangci/golangci-lint/v2/cmd/golangci-lint run --config ../../.golangci.yml
 COPY ./hack/cloud-image-uploader /src/hack/cloud-image-uploader
 WORKDIR /src/hack/cloud-image-uploader
-RUN --mount=type=cache,target=/.cache,id=talos/.cache,sharing=locked golangci-lint run --config ../../.golangci.yml
+RUN --mount=type=cache,target=/.cache,id=talos/.cache,sharing=locked go tool github.com/golangci/golangci-lint/v2/cmd/golangci-lint run --config ../../.golangci.yml
 WORKDIR /src
-RUN --mount=type=cache,target=/.cache,id=talos/.cache importvet github.com/siderolabs/talos/...
+RUN --mount=type=cache,target=/.cache,id=talos/.cache go tool github.com/siderolabs/importvet/cmd/importvet github.com/siderolabs/talos/...
 
 # The protolint target performs linting on protobuf files.
 
 FROM base AS lint-protobuf
 WORKDIR /src/api
 COPY api .
-RUN --mount=type=cache,target=/.cache,id=talos/.cache prototool lint --protoc-bin-path=/usr/bin/protoc --protoc-wkt-path=/usr/include
-RUN --mount=type=cache,target=/.cache,id=talos/.cache prototool break check --descriptor-set-path=api.descriptors --protoc-bin-path=/usr/bin/protoc --protoc-wkt-path=/usr/include
+COPY --from=api-descriptors /api/lock.binpb ./current.lock.binpb
+RUN --mount=type=cache,target=/.cache,id=talos/.cache go tool github.com/bufbuild/buf/cmd/buf lint
+RUN --mount=type=cache,target=/.cache,id=talos/.cache go tool github.com/bufbuild/buf/cmd/buf breaking current.lock.binpb --against lock.binpb
 
 # The markdownlint target performs linting on Markdown files.
 
 FROM oven/bun:1-alpine AS lint-markdown
 ARG MARKDOWNLINTCLI_VERSION
 RUN apk add --no-cache findutils
-RUN bun i -g markdownlint-cli@${MARKDOWNLINTCLI_VERSION} 
+RUN bun i -g markdownlint-cli@${MARKDOWNLINTCLI_VERSION}
 WORKDIR /src
 COPY . .
 RUN bun run --bun markdownlint \
@@ -1344,35 +1255,14 @@ RUN env HOME=/home/user TAG=latest /bin/talosctl docs --config /tmp/configuratio
     && env HOME=/home/user TAG=latest /bin/talosctl docs --cli /tmp
 COPY ./pkg/machinery/config/schemas/*.schema.json /tmp/schemas/
 
-FROM tools AS proto-docs-build
-COPY --from=generate-build /api /protos
-COPY ./hack/protoc-gen-doc/markdown.tmpl /tmp/markdown.tmpl
-RUN protoc \
-    -I/protos \
-    -I/protos/common \
-    -I/protos/resource/definitions \
-    -I/protos/inspect \
-    -I/protos/machine \
-    -I/protos/resource \
-    -I/protos/security \
-    -I/protos/storage \
-    -I/protos/time \
-    -I/protos/vendor \
-    --doc_opt=/tmp/markdown.tmpl,api.md \
-    --doc_out=/tmp \
-    /protos/common/*.proto \
-    /protos/resource/definitions/**/*.proto \
-    /protos/inspect/*.proto \
-    /protos/machine/*.proto \
-    /protos/security/*.proto \
-    /protos/storage/*.proto \
-    /protos/time/*.proto
+FROM scratch AS proto-docs-build
+COPY --from=generate-build-clean /api/docs/api.md /api.md
 
 FROM scratch AS docs
 COPY --from=docs-build /tmp/configuration/ /website/content/v1.12/reference/configuration/
 COPY --from=docs-build /tmp/cli.md /website/content/v1.12/reference/
 COPY --from=docs-build /tmp/schemas /website/content/v1.12/schemas/
-COPY --from=proto-docs-build /tmp/api.md /website/content/v1.12/reference/
+COPY --from=proto-docs-build /api.md /website/content/v1.12/reference/
 
 # The talosctl-cni-bundle builds the CNI bundle for talosctl.
 
@@ -1386,13 +1276,9 @@ FROM base AS go-mod-outdated
 RUN --mount=type=cache,target=/.cache,id=talos/.cache go install github.com/psampaz/go-mod-outdated@latest \
     && mv /root/go/bin/go-mod-outdated /usr/bin/go-mod-outdated
 COPY ./hack/cloud-image-uploader ./hack/cloud-image-uploader
-COPY ./hack/docgen ./hack/docgen
-COPY ./hack/gotagsrewrite ./hack/gotagsrewrite
-COPY ./hack/module-sig-verify ./hack/module-sig-verify
-COPY ./hack/structprotogen ./hack/structprotogen
 # fail always to get the output back
 RUN --mount=type=cache,target=/.cache,id=talos/.cache <<EOF
-    for project in pkg/machinery . hack/cloud-image-uploader hack/docgen hack/gotagsrewrite hack/module-sig-verify hack/structprotogen; do
+    for project in pkg/machinery . hack/cloud-image-uploader; do
         echo -e "\n>>>> ${project}:" && \
         (cd "${project}" && go list -u -m -json all | go-mod-outdated -update -direct)
     done

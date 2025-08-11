@@ -25,7 +25,7 @@ DEBUG_TOOLS_SOURCE := scratch
 EMBED_TARGET ?= embed
 
 TOOLS_PREFIX ?= ghcr.io/siderolabs/tools
-TOOLS ?= v1.12.0-alpha.0
+TOOLS ?= v1.12.0-alpha.0-1-g52db66e
 PKGS_PREFIX ?= ghcr.io/siderolabs
 PKGS ?= v1.12.0-alpha.0-4-gd5f7467
 GENERATE_VEX_PREFIX ?= ghcr.io/siderolabs/generate-vex
@@ -88,28 +88,6 @@ PKG_ZSTD ?= $(PKGS_PREFIX)/zstd:$(PKGS)
 
 # renovate: datasource=github-tags depName=golang/go
 GO_VERSION ?= 1.24
-# renovate: datasource=go depName=golang.org/x/tools
-GOIMPORTS_VERSION ?= v0.35.0
-# renovate: datasource=go depName=mvdan.cc/gofumpt
-GOFUMPT_VERSION ?= v0.8.0
-# renovate: datasource=go depName=github.com/golangci/golangci-lint
-GOLANGCILINT_VERSION ?= v2.2.2
-# renovate: datasource=go depName=golang.org/x/tools
-STRINGER_VERSION ?= v0.35.0
-# renovate: datasource=go depName=github.com/dmarkham/enumer
-ENUMER_VERSION ?= v1.5.11
-# renovate: datasource=go depName=k8s.io/code-generator
-DEEPCOPY_GEN_VERSION ?= v0.33.3
-# renovate: datasource=go depName=github.com/planetscale/vtprotobuf
-VTPROTOBUF_VERSION ?= v0.6.0
-# renovate: datasource=go depName=github.com/siderolabs/deep-copy
-DEEPCOPY_VERSION ?= v0.5.6
-# renovate: datasource=go depName=github.com/siderolabs/importvet
-IMPORTVET_VERSION ?= v0.2.0
-# not setting renovate config since the repo is archived
-PROTOTOOL_VERSION ?= v1.10.0
-# renovate: datasource=go depName=github.com/pseudomuto/protoc-gen-doc
-PROTOC_GEN_DOC_VERSION ?= v1.5.1
 # renovate: datasource=npm depName=markdownlint-cli
 MARKDOWNLINTCLI_VERSION ?= 0.45.0
 # renovate: datasource=docker versioning=docker depName=hugomods/hugo
@@ -194,22 +172,15 @@ COMMON_ARGS += --build-arg=ABBREV_TAG=$(ABBREV_TAG)
 COMMON_ARGS += --build-arg=ARTIFACTS=$(ARTIFACTS)
 COMMON_ARGS += --build-arg=CGO_ENABLED=$(CGO_ENABLED)
 COMMON_ARGS += --build-arg=DEBUG_TOOLS_SOURCE=$(DEBUG_TOOLS_SOURCE)
-COMMON_ARGS += --build-arg=DEEPCOPY_GEN_VERSION=$(DEEPCOPY_GEN_VERSION)
-COMMON_ARGS += --build-arg=DEEPCOPY_VERSION=$(DEEPCOPY_VERSION)
 COMMON_ARGS += --build-arg=EMBED_TARGET=$(EMBED_TARGET)
-COMMON_ARGS += --build-arg=ENUMER_VERSION=$(ENUMER_VERSION)
 COMMON_ARGS += --build-arg=GO_BUILDFLAGS_TALOSCTL="$(GO_BUILDFLAGS_TALOSCTL)"
 COMMON_ARGS += --build-arg=GO_BUILDFLAGS="$(GO_BUILDFLAGS)"
 COMMON_ARGS += --build-arg=GO_LDFLAGS="$(GO_LDFLAGS)"
 COMMON_ARGS += --build-arg=GO_MACHINED_LDFLAGS="$(GO_MACHINED_LDFLAGS)"
 COMMON_ARGS += --build-arg=GOAMD64="$(GOAMD64)"
 COMMON_ARGS += --build-arg=GOFIPS140="$(GOFIPS140)"
-COMMON_ARGS += --build-arg=GOFUMPT_VERSION=$(GOFUMPT_VERSION)
-COMMON_ARGS += --build-arg=GOIMPORTS_VERSION=$(GOIMPORTS_VERSION)
-COMMON_ARGS += --build-arg=GOLANGCILINT_VERSION=$(GOLANGCILINT_VERSION)
 COMMON_ARGS += --build-arg=http_proxy=$(http_proxy)
 COMMON_ARGS += --build-arg=https_proxy=$(https_proxy)
-COMMON_ARGS += --build-arg=IMPORTVET_VERSION=$(IMPORTVET_VERSION)
 COMMON_ARGS += --build-arg=INSTALLER_ARCH=$(INSTALLER_ARCH)
 COMMON_ARGS += --build-arg=MARKDOWNLINTCLI_VERSION=$(MARKDOWNLINTCLI_VERSION)
 COMMON_ARGS += --build-arg=MICROSOFT_SECUREBOOT_RELEASE=$(MICROSOFT_SECUREBOOT_RELEASE)
@@ -269,12 +240,9 @@ COMMON_ARGS += --build-arg=PKG_ZLIB=$(PKG_ZLIB)
 COMMON_ARGS += --build-arg=PKG_ZSTD=$(PKG_ZSTD)
 COMMON_ARGS += --build-arg=PKGS_PREFIX=$(PKGS_PREFIX)
 COMMON_ARGS += --build-arg=PKGS=$(PKGS)
-COMMON_ARGS += --build-arg=PROTOC_GEN_DOC_VERSION=$(PROTOC_GEN_DOC_VERSION)
-COMMON_ARGS += --build-arg=PROTOTOOL_VERSION=$(PROTOTOOL_VERSION)
 COMMON_ARGS += --build-arg=REGISTRY=$(REGISTRY)
 COMMON_ARGS += --build-arg=SHA=$(SHA)
 COMMON_ARGS += --build-arg=SOURCE_DATE_EPOCH=$(SOURCE_DATE_EPOCH)
-COMMON_ARGS += --build-arg=STRINGER_VERSION=$(STRINGER_VERSION)
 COMMON_ARGS += --build-arg=TAG=$(TAG)
 COMMON_ARGS += --build-arg=TESTPKGS=$(TESTPKGS)
 COMMON_ARGS += --build-arg=TOOLS_PREFIX=$(TOOLS_PREFIX)
@@ -282,7 +250,6 @@ COMMON_ARGS += --build-arg=TOOLS=$(TOOLS)
 COMMON_ARGS += --build-arg=GENERATE_VEX_PREFIX=$(GENERATE_VEX_PREFIX)
 COMMON_ARGS += --build-arg=GENERATE_VEX=$(GENERATE_VEX)
 COMMON_ARGS += --build-arg=USERNAME=$(USERNAME)
-COMMON_ARGS += --build-arg=VTPROTOBUF_VERSION=$(VTPROTOBUF_VERSION)
 COMMON_ARGS += --build-arg=ZSTD_COMPRESSION_LEVEL=$(ZSTD_COMPRESSION_LEVEL)
 
 CI_ARGS ?=
@@ -539,14 +506,11 @@ cache-create: installer imager ## Generate image cache.
 api-descriptors: ## Generates API descriptors used to detect breaking API changes.
 	@$(MAKE) local-api-descriptors DEST=./ PLATFORM=linux/$(ARCH)
 
-fmt-go: ## Formats the source code.
-	@docker run --rm -it -v $(PWD):/src -w /src -e GOTOOLCHAIN=local golang:$(GO_VERSION) bash -c "go install golang.org/x/tools/cmd/goimports@$(GOIMPORTS_VERSION) && goimports -w -local github.com/siderolabs/talos . && go install mvdan.cc/gofumpt@$(GOFUMPT_VERSION) && gofumpt -w ."
-
 fmt-protobuf: ## Formats protobuf files.
 	@$(MAKE) local-fmt-protobuf DEST=./ PLATFORM=linux/$(ARCH)
 
 fmt: ## Formats the source code and protobuf files.
-	@$(MAKE) fmt-go fmt-protobuf
+	@$(MAKE) fmt-protobuf
 
 lint-%: ## Runs the specified linter. Valid options are go, protobuf, and markdown (e.g. lint-go).
 	@$(MAKE) target-lint-$* PLATFORM=linux/$(ARCH)

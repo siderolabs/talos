@@ -11,6 +11,7 @@ import (
 	"os"
 	"testing"
 
+	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -57,7 +58,7 @@ func (suite *TimedSuite) TestTime() {
 		ConfigProvider: &mockConfigProvider{timeServer: testServer},
 	}
 	server := factory.NewServer(api)
-	listener, err := fakeTimedRPC()
+	listener, err := fakeTimedRPC(suite.T())
 	suite.Assert().NoError(err)
 
 	defer server.Stop()
@@ -92,7 +93,7 @@ func (suite *TimedSuite) TestTimeCheck() {
 	// Create gRPC server
 	api := &runtime.TimeServer{}
 	server := factory.NewServer(api)
-	listener, err := fakeTimedRPC()
+	listener, err := fakeTimedRPC(suite.T())
 	suite.Assert().NoError(err)
 
 	defer server.Stop()
@@ -117,13 +118,14 @@ func (suite *TimedSuite) TestTimeCheck() {
 	suite.Assert().Equal(reply.Messages[0].Server, testServer)
 }
 
-func fakeTimedRPC() (net.Listener, error) {
-	tmpfile, err := os.CreateTemp("", "timed")
-	if err != nil {
-		return nil, err
-	}
+func fakeTimedRPC(t *testing.T) (net.Listener, error) {
+	t.Helper()
+
+	tmpfile, err := os.CreateTemp(t.TempDir(), "timed")
+	require.NoError(t, err)
 
 	return factory.NewListener(
+		t.Context(),
 		factory.Network("unix"),
 		factory.SocketPath(tmpfile.Name()),
 	)

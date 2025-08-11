@@ -7,6 +7,7 @@ package executor
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"io"
 	"os/exec"
@@ -31,14 +32,14 @@ func New(commandPath string) *Options {
 }
 
 // GetOptions returns the options for the overlay installer.
-func (o *Options) GetOptions(extra overlay.ExtraOptions) (overlay.Options, error) {
+func (o *Options) GetOptions(ctx context.Context, extra overlay.ExtraOptions) (overlay.Options, error) {
 	// parse extra as yaml
 	extraYAML, err := yaml.Marshal(extra)
 	if err != nil {
 		return overlay.Options{}, fmt.Errorf("failed to marshal extra: %w", err)
 	}
 
-	out, err := o.execute(bytes.NewReader(extraYAML), "get-options")
+	out, err := o.execute(ctx, bytes.NewReader(extraYAML), "get-options")
 	if err != nil {
 		return overlay.Options{}, err
 	}
@@ -53,21 +54,21 @@ func (o *Options) GetOptions(extra overlay.ExtraOptions) (overlay.Options, error
 }
 
 // Install installs the overlay.
-func (o *Options) Install(options overlay.InstallOptions[overlay.ExtraOptions]) error {
+func (o *Options) Install(ctx context.Context, options overlay.InstallOptions[overlay.ExtraOptions]) error {
 	optionsBytes, err := yaml.Marshal(&options)
 	if err != nil {
 		return fmt.Errorf("failed to marshal options: %w", err)
 	}
 
-	if _, err := o.execute(bytes.NewReader(optionsBytes), "install"); err != nil {
+	if _, err := o.execute(ctx, bytes.NewReader(optionsBytes), "install"); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func (o *Options) execute(stdin io.Reader, args ...string) ([]byte, error) {
-	cmd := exec.Command(o.commandPath, args...)
+func (o *Options) execute(ctx context.Context, stdin io.Reader, args ...string) ([]byte, error) {
+	cmd := exec.CommandContext(ctx, o.commandPath, args...)
 	cmd.Stdin = stdin
 
 	var stdOut, stdErr bytes.Buffer
