@@ -561,7 +561,7 @@ lint-%: ## Runs the specified linter. Valid options are go, protobuf, and markdo
 	@$(MAKE) target-lint-$* PLATFORM=linux/$(ARCH)
 
 lint: ## Runs linters on go, vulncheck, deadcode, protobuf, and markdown file types.
-	@$(MAKE) lint-go lint-deadcode lint-protobuf lint-markdown
+	@$(MAKE) lint-go lint-vulncheck lint-deadcode lint-protobuf lint-markdown
 
 check-dirty: ## Verifies that source tree is not dirty
 	@if test -n "`git status --porcelain`"; then echo "Source tree is dirty"; git status; git diff; exit 1 ; fi
