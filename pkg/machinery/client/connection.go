@@ -92,7 +92,7 @@ func (c *Client) getConn(opts ...grpc.DialOption) (*grpcConnectionWrapper, error
 		}
 
 		authInterceptor := interceptor.New(interceptor.Options{
-			UserKeyProvider: client.NewKeyProvider("talos/keys"),
+			UserKeyProvider: getKeyProvider(c.options.sideroV1KeysDir),
 			ContextName:     contextName,
 			Identity:        sideroV1.Identity,
 			ClientName:      "Talos",
@@ -110,6 +110,20 @@ func (c *Client) getConn(opts ...grpc.DialOption) (*grpcConnectionWrapper, error
 	}
 
 	return c.makeConnection(target, creds, dialOpts)
+}
+
+func getKeyProvider(customKeysDir string) *client.KeyProvider {
+	if customKeysDir != "" {
+		return client.NewKeyProviderWithFallback("talos/keys", customKeysDir, "", true)
+	}
+
+	talosDir, err := clientconfig.GetTalosDirectory()
+	if err != nil {
+		// TODO: start failing instead of falling back to XDG data directory if we can't resolve Talos directory
+		return client.NewKeyProvider("talos/keys")
+	}
+
+	return client.NewKeyProviderWithFallback("talos/keys", talosDir, "keys", true)
 }
 
 func buildTLSConfig(configContext *clientconfig.Context) (*tls.Config, error) {

@@ -15,8 +15,7 @@ To see some live examples of talosctl usage, view the following video:
 
 ## Client Configuration
 
-Talosctl configuration is located in `$XDG_CONFIG_HOME/talos/config.yaml` if `$XDG_CONFIG_HOME` is defined.
-Otherwise it is in `$HOME/.talos/config`.
+Talosctl configuration is located in `$HOME/.talos/config`.
 The location can always be overridden by the `TALOSCONFIG` environment variable or the `--talosconfig` parameter.
 
 Like `kubectl`, `talosctl` uses the concept of configuration contexts, so any number of Talos clusters can be managed with a single configuration file.

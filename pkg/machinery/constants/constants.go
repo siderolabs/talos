@@ -1281,6 +1281,12 @@ const (
 
 	// DiskEncryptionSaltSize is the size of the disk encryption salt in bytes.
 	DiskEncryptionSaltSize = 32
+
+	// SideroV1KeysDirEnvVar is the environment variable that points to the directory containing user PGP keys for SideroV1 auth.
+	SideroV1KeysDirEnvVar = "SIDEROV1_KEYS_DIR"
+
+	// SideroV1KeysDir is the default directory containing user PGP keys for SideroV1 auth.
+	SideroV1KeysDir = "keys"
 )
 
 // See https://linux.die.net/man/3/klogctl

@@ -21,11 +21,12 @@ import (
 
 // Args is a context for the Talos command line client.
 type Args struct {
-	Talosconfig string
-	CmdContext  string
-	Cluster     string
-	Nodes       []string
-	Endpoints   []string
+	Talosconfig     string
+	CmdContext      string
+	Cluster         string
+	Nodes           []string
+	Endpoints       []string
+	SideroV1KeysDir string
 }
 
 // NodeList returns the list of nodes to run the command against.
@@ -47,6 +48,7 @@ func (c *Args) WithClientNoNodes(action func(context.Context, *client.Client) er
 			opts := []client.OptionFunc{
 				client.WithConfig(cfg),
 				client.WithGRPCDialOptions(dialOptions...),
+				client.WithSideroV1KeysDir(c.SideroV1KeysDir),
 			}
 
 			if c.CmdContext != "" {

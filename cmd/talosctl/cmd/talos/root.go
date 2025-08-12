@@ -71,6 +71,15 @@ func addCommand(cmd *cobra.Command) {
 	cli.Should(cmd.RegisterFlagCompletionFunc("nodes", CompleteNodes))
 	cmd.PersistentFlags().StringVar(&GlobalArgs.Cluster, "cluster", "", "Cluster to connect to if a proxy endpoint is used.")
 	cmd.PersistentFlags().StringVar(&GlobalArgs.CmdContext, "context", "", "Context to be used in command")
+	cmd.PersistentFlags().StringVar(
+		&GlobalArgs.SideroV1KeysDir,
+		"siderov1-keys-dir",
+		"",
+		fmt.Sprintf("The path to the SideroV1 auth PGP keys directory. Defaults to '%s' env variable if set, otherwise '%s'. Only valid for Contexts that use SideroV1 auth.",
+			constants.SideroV1KeysDirEnvVar,
+			filepath.Join("$HOME", constants.TalosDir, constants.SideroV1KeysDir),
+		),
+	)
 	cli.Should(cmd.RegisterFlagCompletionFunc("context", CompleteConfigContext))
 
 	Commands = append(Commands, cmd)
