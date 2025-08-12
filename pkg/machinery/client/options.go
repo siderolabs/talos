@@ -11,7 +11,12 @@ import (
 	"google.golang.org/grpc"
 
 	clientconfig "github.com/siderolabs/talos/pkg/machinery/client/config"
+	"github.com/siderolabs/talos/pkg/machinery/client/dialer"
 )
+
+var defaultDialOptions = []grpc.DialOption{
+	grpc.WithContextDialer(dialer.DynamicProxyDialer),
+}
 
 // Options contains the set of client configuration options.
 type Options struct {
@@ -57,6 +62,15 @@ func WithContextName(name string) OptionFunc {
 func WithConfigContext(cfg *clientconfig.Context) OptionFunc {
 	return func(o *Options) error {
 		o.configContext = cfg
+
+		return nil
+	}
+}
+
+// WithDefaultGRPCDialOptions adds the default grpc.DialOptions to a Client.
+func WithDefaultGRPCDialOptions() OptionFunc {
+	return func(o *Options) error {
+		o.grpcDialOptions = append(o.grpcDialOptions, defaultDialOptions...)
 
 		return nil
 	}

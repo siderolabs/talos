@@ -30,8 +30,8 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 
 	networkutils "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/network/utils"
-	"github.com/siderolabs/talos/pkg/grpc/dialer"
 	"github.com/siderolabs/talos/pkg/httpdefaults"
+	"github.com/siderolabs/talos/pkg/machinery/client/dialer"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/fipsmode"
 	"github.com/siderolabs/talos/pkg/machinery/nethelpers"

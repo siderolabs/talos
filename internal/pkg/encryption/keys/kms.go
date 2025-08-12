@@ -23,8 +23,8 @@ import (
 
 	"github.com/siderolabs/talos/internal/pkg/encryption/helpers"
 	"github.com/siderolabs/talos/internal/pkg/endpoint"
-	"github.com/siderolabs/talos/pkg/grpc/dialer"
 	"github.com/siderolabs/talos/pkg/httpdefaults"
+	"github.com/siderolabs/talos/pkg/machinery/client/dialer"
 )
 
 // KMSToken is the userdata stored in the partition token metadata.

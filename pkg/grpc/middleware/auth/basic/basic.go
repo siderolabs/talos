@@ -14,7 +14,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 
-	"github.com/siderolabs/talos/pkg/grpc/dialer"
+	"github.com/siderolabs/talos/pkg/machinery/client/dialer"
 )
 
 // Credentials describes an authorization method.

@@ -32,7 +32,13 @@ func (c *LocalClientProvider) Client(endpoints ...string) (*client.Client, error
 	var err error
 
 	if c.client == nil {
-		c.client, err = client.New(context.TODO(), client.WithUnixSocket(constants.APISocketPath), client.WithGRPCDialOptions(grpc.WithTransportCredentials(insecure.NewCredentials())))
+		c.client, err = client.New(
+			context.TODO(),
+			client.WithUnixSocket(constants.APISocketPath),
+			client.WithGRPCDialOptions(
+				grpc.WithTransportCredentials(insecure.NewCredentials()),
+			),
+		)
 	}
 
 	return c.client, err
