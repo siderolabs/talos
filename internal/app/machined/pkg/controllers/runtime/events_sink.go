@@ -22,7 +22,7 @@ import (
 
 	networkutils "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/network/utils"
 	machinedruntime "github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
-	"github.com/siderolabs/talos/pkg/grpc/dialer"
+	"github.com/siderolabs/talos/pkg/machinery/client/dialer"
 	"github.com/siderolabs/talos/pkg/machinery/resources/network"
 	"github.com/siderolabs/talos/pkg/machinery/resources/runtime"
 )

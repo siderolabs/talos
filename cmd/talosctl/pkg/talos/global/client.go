@@ -47,6 +47,7 @@ func (c *Args) WithClientNoNodes(action func(context.Context, *client.Client) er
 
 			opts := []client.OptionFunc{
 				client.WithConfig(cfg),
+				client.WithDefaultGRPCDialOptions(),
 				client.WithGRPCDialOptions(dialOptions...),
 				client.WithSideroV1KeysDir(c.SideroV1KeysDir),
 			}

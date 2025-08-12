@@ -13,7 +13,7 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1"
 
-	"github.com/siderolabs/talos/pkg/grpc/dialer"
+	"github.com/siderolabs/talos/pkg/machinery/client/dialer"
 )
 
 var newClientPprof = pprof.NewProfile("internal/pkg/cri.NewClient")

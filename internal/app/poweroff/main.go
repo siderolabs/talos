@@ -37,7 +37,13 @@ func Main(args []string) {
 	authz.SetMetadata(md, role.MakeSet(role.Admin))
 	adminCtx := metadata.NewOutgoingContext(ctx, md)
 
-	client, err := client.New(adminCtx, client.WithUnixSocket(constants.MachineSocketPath), client.WithGRPCDialOptions(grpc.WithTransportCredentials(insecure.NewCredentials())))
+	client, err := client.New(
+		adminCtx,
+		client.WithUnixSocket(constants.MachineSocketPath),
+		client.WithGRPCDialOptions(
+			grpc.WithTransportCredentials(insecure.NewCredentials()),
+		),
+	)
 	if err != nil {
 		log.Fatalf("error while creating machinery client: %s", err)
 	}

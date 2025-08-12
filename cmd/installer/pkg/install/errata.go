@@ -49,7 +49,9 @@ func readHostTalosVersion() (*compatibility.TalosVersion, error) {
 
 	c, err := client.New(ctx,
 		client.WithUnixSocket(constants.MachineSocketPath),
-		client.WithGRPCDialOptions(grpc.WithTransportCredentials(insecure.NewCredentials())),
+		client.WithGRPCDialOptions(
+			grpc.WithTransportCredentials(insecure.NewCredentials()),
+		),
 	)
 	if err != nil {
 		return nil, fmt.Errorf("error connecting to the machine service: %w", err)

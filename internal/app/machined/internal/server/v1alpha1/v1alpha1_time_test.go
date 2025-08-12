@@ -17,9 +17,9 @@ import (
 	"google.golang.org/protobuf/types/known/emptypb"
 
 	runtime "github.com/siderolabs/talos/internal/app/machined/internal/server/v1alpha1"
-	"github.com/siderolabs/talos/pkg/grpc/dialer"
 	"github.com/siderolabs/talos/pkg/grpc/factory"
 	timeapi "github.com/siderolabs/talos/pkg/machinery/api/time"
+	"github.com/siderolabs/talos/pkg/machinery/client/dialer"
 	"github.com/siderolabs/talos/pkg/machinery/config"
 	"github.com/siderolabs/talos/pkg/machinery/config/container"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
