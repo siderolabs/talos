@@ -115,8 +115,8 @@ github.com/siderolabs/ethtool v0.4.0-sidero h1:Ls/M4bFUjfcB1RDVviPZlL3kWcXaEVVSb
 github.com/siderolabs/ethtool v0.4.0-sidero/go.mod h1:nOIR88fiFTdBfakYLEUAhxdy75Ih/fgnSlsSKAHRpfc=
 github.com/siderolabs/gen v0.8.5 h1:xlWXTynnGD/epaj7uplvKvmAkBH+Fp51bLnw1JC0xME=
 github.com/siderolabs/gen v0.8.5/go.mod h1:CRrktDXQf3yDJI7xKv+cDYhBbKdfd/YE16OpgcHoT9E=
-github.com/siderolabs/go-api-signature v0.3.6 h1:wDIsXbpl7Oa/FXvxB6uz4VL9INA9fmr3EbmjEZYFJrU=
-github.com/siderolabs/go-api-signature v0.3.6/go.mod h1:hoH13AfunHflxbXfh+NoploqV13ZTDfQ1mQJWNVSW9U=
+github.com/siderolabs/go-api-signature v0.3.7 h1:Qx5NH3BrtYucCgiLObAJhx7pouLR4tivr1moOClII3M=
+github.com/siderolabs/go-api-signature v0.3.7/go.mod h1:MQy+DcXCQIFFXZr+E4tbMmnQSQs7WpubSpJFRN694mI=
 github.com/siderolabs/go-pointer v1.0.1 h1:f7Yi4IK1jptS8yrT9GEbwhmGcVxvPQgBUG/weH3V3DM=
 github.com/siderolabs/go-pointer v1.0.1/go.mod h1:C8Q/3pNHT4RE9e4rYR9PHeS6KPMlStRBgYrJQJNy/vA=
 github.com/siderolabs/go-retry v0.3.3 h1:zKV+S1vumtO72E6sYsLlmIdV/G/GcYSBLiEx/c9oCEg=

@@ -26,6 +26,7 @@ type Options struct {
 
 	unixSocketPath      string
 	clusterNameOverride string
+	sideroV1KeysDir     string
 }
 
 // OptionFunc sets an option for the creation of the Client.
@@ -129,6 +130,15 @@ func WithUnixSocket(path string) OptionFunc {
 func WithCluster(cluster string) OptionFunc {
 	return func(o *Options) error {
 		o.clusterNameOverride = cluster
+
+		return nil
+	}
+}
+
+// WithSideroV1KeysDir overrides the default SideroV1KeysDir configuration with the one provided.
+func WithSideroV1KeysDir(keysDir string) OptionFunc {
+	return func(o *Options) error {
+		o.sideroV1KeysDir = keysDir
 
 		return nil
 	}
