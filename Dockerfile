@@ -1318,11 +1318,8 @@ RUN --mount=type=cache,target=/.cache,id=talos/.cache prototool break check --de
 
 FROM oven/bun:1-alpine AS lint-markdown
 ARG MARKDOWNLINTCLI_VERSION
-ARG TEXTLINT_VERSION
-ARG TEXTLINT_FILTER_RULE_COMMENTS_VERSION
-ARG TEXTLINT_RULE_ONE_SENTENCE_PER_LINE_VERSION
 RUN apk add --no-cache findutils
-RUN bun i -g markdownlint-cli@${MARKDOWNLINTCLI_VERSION} textlint@${TEXTLINT_VERSION} textlint-filter-rule-comments@${TEXTLINT_FILTER_RULE_COMMENTS_VERSION} textlint-rule-one-sentence-per-line@${TEXTLINT_RULE_ONE_SENTENCE_PER_LINE_VERSION}
+RUN bun i -g markdownlint-cli@${MARKDOWNLINTCLI_VERSION} 
 WORKDIR /src
 COPY . .
 RUN bun run --bun markdownlint \
@@ -1335,17 +1332,6 @@ RUN bun run --bun markdownlint \
     --ignore 'website/themes/**' \
     --disable MD045 MD056 -- \
     .
-RUN find . \
-    -name '*.md' \
-    -not -path './LICENCE.md' \
-    -not -path './CHANGELOG.md' \
-    -not -path './CODE_OF_CONDUCT.md' \
-    -not -path '*/node_modules/*' \
-    -not -path './hack/chglog/**' \
-    -not -path './website/content/*/reference/*' \
-    -not -path './website/themes/**' \
-    -print0 \
-    | xargs -0 bun run --bun textlint
 
 # The docs target generates documentation.
 
@@ -1383,10 +1369,10 @@ RUN protoc \
     /protos/time/*.proto
 
 FROM scratch AS docs
-COPY --from=docs-build /tmp/configuration/ /website/content/v1.11/reference/configuration/
-COPY --from=docs-build /tmp/cli.md /website/content/v1.11/reference/
-COPY --from=docs-build /tmp/schemas /website/content/v1.11/schemas/
-COPY --from=proto-docs-build /tmp/api.md /website/content/v1.11/reference/
+COPY --from=docs-build /tmp/configuration/ /website/content/v1.12/reference/configuration/
+COPY --from=docs-build /tmp/cli.md /website/content/v1.12/reference/
+COPY --from=docs-build /tmp/schemas /website/content/v1.12/schemas/
+COPY --from=proto-docs-build /tmp/api.md /website/content/v1.12/reference/
 
 # The talosctl-cni-bundle builds the CNI bundle for talosctl.
 

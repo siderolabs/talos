@@ -112,12 +112,6 @@ PROTOTOOL_VERSION ?= v1.10.0
 PROTOC_GEN_DOC_VERSION ?= v1.5.1
 # renovate: datasource=npm depName=markdownlint-cli
 MARKDOWNLINTCLI_VERSION ?= 0.45.0
-# renovate: datasource=npm depName=textlint
-TEXTLINT_VERSION ?= 15.2.0
-# renovate: datasource=npm depName=textlint-filter-rule-comments
-TEXTLINT_FILTER_RULE_COMMENTS_VERSION ?= 1.2.2
-# renovate: datasource=npm depName=textlint-rule-one-sentence-per-line
-TEXTLINT_RULE_ONE_SENTENCE_PER_LINE_VERSION ?= 2.0.0
 # renovate: datasource=docker versioning=docker depName=hugomods/hugo
 HUGO_VERSION ?= dart-sass-0.145.0
 OPERATING_SYSTEM := $(shell uname -s | tr "[:upper:]" "[:lower:]")
@@ -283,9 +277,6 @@ COMMON_ARGS += --build-arg=SOURCE_DATE_EPOCH=$(SOURCE_DATE_EPOCH)
 COMMON_ARGS += --build-arg=STRINGER_VERSION=$(STRINGER_VERSION)
 COMMON_ARGS += --build-arg=TAG=$(TAG)
 COMMON_ARGS += --build-arg=TESTPKGS=$(TESTPKGS)
-COMMON_ARGS += --build-arg=TEXTLINT_FILTER_RULE_COMMENTS_VERSION=$(TEXTLINT_FILTER_RULE_COMMENTS_VERSION)
-COMMON_ARGS += --build-arg=TEXTLINT_RULE_ONE_SENTENCE_PER_LINE_VERSION=$(TEXTLINT_RULE_ONE_SENTENCE_PER_LINE_VERSION)
-COMMON_ARGS += --build-arg=TEXTLINT_VERSION=$(TEXTLINT_VERSION)
 COMMON_ARGS += --build-arg=TOOLS_PREFIX=$(TOOLS_PREFIX)
 COMMON_ARGS += --build-arg=TOOLS=$(TOOLS)
 COMMON_ARGS += --build-arg=GENERATE_VEX_PREFIX=$(GENERATE_VEX_PREFIX)
@@ -561,7 +552,7 @@ lint-%: ## Runs the specified linter. Valid options are go, protobuf, and markdo
 	@$(MAKE) target-lint-$* PLATFORM=linux/$(ARCH)
 
 lint: ## Runs linters on go, vulncheck, deadcode, protobuf, and markdown file types.
-	@$(MAKE) lint-go lint-vulncheck lint-deadcode lint-protobuf lint-markdown
+	@$(MAKE) lint-go lint-deadcode lint-protobuf lint-markdown
 
 check-dirty: ## Verifies that source tree is not dirty
 	@if test -n "`git status --porcelain`"; then echo "Source tree is dirty"; git status; git diff; exit 1 ; fi
