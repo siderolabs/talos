@@ -140,6 +140,7 @@ func (d *DHCP4) waitForNetworkReady(ctx context.Context) error {
 func (d *DHCP4) Run(ctx context.Context, notifyCh chan<- struct{}) {
 	const minRenewDuration = 5 * time.Second // Protect from renewing too often
 
+	dhcpStartTime := time.Now() // Time when client began address acquisition or renewal process
 	renewInterval := minRenewDuration
 
 	// Never send the hostname on the first iteration, to have a chance to query the hostname from the DHCP server.
@@ -157,7 +158,7 @@ func (d *DHCP4) Run(ctx context.Context, notifyCh chan<- struct{}) {
 		newLease := d.lease == nil
 
 		// Perform a lease request or renewal
-		leaseTime, err := d.requestRenew(ctx, hostname)
+		leaseTime, err := d.requestRenew(ctx, hostname, uint16(time.Since(dhcpStartTime).Seconds()))
 		if err != nil && !errors.Is(err, context.Canceled) {
 			d.logger.Warn("DHCP request/renew failed", zap.Error(err), zap.String("link", d.linkName))
 		}
@@ -189,6 +190,10 @@ func (d *DHCP4) Run(ctx context.Context, notifyCh chan<- struct{}) {
 			case <-ctx.Done():
 				return
 			case <-time.After(renewInterval):
+				if leaseTime != 0 {
+					// set the dhcpStartTime as the process of renewal has begun.
+					dhcpStartTime = time.Now()
+				}
 			case event := <-hostnameWatchCh:
 				// Attempt to drain the hostname watch channel coalescing multiple events into a single
 				// change to the DHCP.
@@ -239,6 +244,8 @@ func (d *DHCP4) Run(ctx context.Context, notifyCh chan<- struct{}) {
 						return spec.Hostname
 					})),
 				)
+				// set the dhcpStartTime as the DHCP sequence has begun.
+				dhcpStartTime = time.Now()
 			}
 
 			break
@@ -474,7 +481,7 @@ func (d *DHCP4) newClient() (*nclient4.Client, error) {
 }
 
 //nolint:gocyclo
-func (d *DHCP4) requestRenew(ctx context.Context, hostname network.HostnameStatusSpec) (time.Duration, error) {
+func (d *DHCP4) requestRenew(ctx context.Context, hostname network.HostnameStatusSpec, secs uint16) (time.Duration, error) {
 	opts := []dhcpv4.OptionCode{
 		dhcpv4.OptionClasslessStaticRoute,
 		dhcpv4.OptionDomainNameServer,
@@ -511,7 +518,7 @@ func (d *DHCP4) requestRenew(ctx context.Context, hostname network.HostnameStatu
 		opts = append(opts, dhcpv4.OptionHostName, dhcpv4.OptionDomainName)
 	}
 
-	mods := []dhcpv4.Modifier{dhcpv4.WithRequestedOptions(opts...)}
+	mods := []dhcpv4.Modifier{dhcpv4.WithRequestedOptions(opts...), WithNumSecunds(secs)}
 
 	if !sendHostnameRequest {
 		// If the node has a hostname, always send it to the DHCP
@@ -581,4 +588,11 @@ func collapseSummary(summary string) string {
 	}
 
 	return strings.Join(lines, ", ")
+}
+
+// WithNumSecunds sets the secs field of a DHCPv4 packet.
+func WithNumSecunds(secs uint16) dhcpv4.Modifier {
+	return func(d *dhcpv4.DHCPv4) {
+		d.NumSeconds = secs
+	}
 }
