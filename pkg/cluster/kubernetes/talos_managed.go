@@ -75,7 +75,7 @@ func (options *UpgradeOptions) Validate() error {
 
 // Upgrade the Kubernetes control plane components, manifests, kubelets.
 //
-//nolint:gocyclo
+//nolint:gocyclo,cyclop
 func Upgrade(ctx context.Context, cluster UpgradeProvider, options UpgradeOptions) error {
 	if err := options.Validate(); err != nil {
 		return fmt.Errorf("invalid upgrade options: %w", err)
@@ -151,8 +151,10 @@ func Upgrade(ctx context.Context, cluster UpgradeProvider, options UpgradeOption
 		return fmt.Errorf("failed updating kube-proxy: %w", err)
 	}
 
-	if err = upgradeKubelet(ctx, cluster, options); err != nil {
-		return fmt.Errorf("failed upgrading kubelet: %w", err)
+	if options.UpgradeKubelet {
+		if err = upgradeKubelet(ctx, cluster, options); err != nil {
+			return fmt.Errorf("failed upgrading kubelet: %w", err)
+		}
 	}
 
 	objects, err := getManifests(ctx, cluster)
