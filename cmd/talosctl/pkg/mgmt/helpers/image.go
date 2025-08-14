@@ -13,7 +13,12 @@ import (
 
 // DefaultImage appends default image version.
 func DefaultImage(image string) string {
-	return fmt.Sprintf("%s:%s", image, getEnv("TAG", version.Tag))
+	return fmt.Sprintf("%s:%s", image, GetTag())
+}
+
+// GetTag retrieves the current tag.
+func GetTag() string {
+	return getEnv("TAG", version.Tag)
 }
 
 func getEnv(key, fallback string) string {

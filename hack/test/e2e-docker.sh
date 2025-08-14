@@ -10,17 +10,12 @@ CLUSTER_NAME=e2e-${PROVISIONER}
 function create_cluster {
   build_registry_mirrors
 
-  "${TALOSCTL}" cluster create \
-    --provisioner="${PROVISIONER}" \
+  "${TALOSCTL}" cluster create docker \
     --name="${CLUSTER_NAME}" \
     --kubernetes-version=${KUBERNETES_VERSION} \
     --image="${IMAGE}" \
-    --controlplanes=1 \
     --workers=1 \
     --mtu=1430 \
-    --memory=2048 \
-    --cpus=2.0 \
-    --with-init-node=false \
     "${REGISTRY_MIRROR_FLAGS[@]}"
 
   "${TALOSCTL}" config node 10.5.0.2
