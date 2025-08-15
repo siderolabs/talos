@@ -481,13 +481,17 @@ func launchVM(config *LaunchConfig) error {
 	}
 
 	if !diskBootable || !config.BootloaderEnabled {
+		// if the disk is bootable, and we were forced to disable disk bootloader,
+		// we need to skip ISO/USB boot, as it will fall back to boot from disk
+		skipBootloader := diskBootable && !config.BootloaderEnabled
+
 		switch {
-		case config.ISOPath != "":
+		case config.ISOPath != "" && !skipBootloader:
 			args = append(args,
 				"-drive",
 				fmt.Sprintf("id=cdrom0,file=%s,media=cdrom", config.ISOPath),
 			)
-		case config.USBPath != "":
+		case config.USBPath != "" && !skipBootloader:
 			args = append(args,
 				"-drive", fmt.Sprintf("if=none,id=stick,format=raw,read-only=on,file=%s", config.USBPath),
 				"-device", "nec-usb-xhci,id=xhci",
