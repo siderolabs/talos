@@ -46,6 +46,7 @@ func (s *NfTablesChainSuite) checkNftOutput(expected ...string) {
 		if output != prevOutput {
 			if !matches {
 				s.T().Logf("nft list table inet talos-test:\n%s", output)
+				s.T().Logf("expected:\n%s", strings.Join(expected, "\n"))
 			}
 
 			prevOutput = output
@@ -543,6 +544,40 @@ func (s *NfTablesChainSuite) TestL4MatchAny() {
 	chain test-tcp {
 		type filter hook input priority filter; policy accept;
 		meta nfproto ipv4 tcp dport { 1023 } accept
+	}
+}`)
+}
+
+func (s *NfTablesChainSuite) TestICMPTypeMatch() {
+	chain := network.NewNfTablesChain(network.NamespaceName, "test-tcp")
+	chain.TypedSpec().Type = nethelpers.ChainTypeFilter
+	chain.TypedSpec().Hook = nethelpers.ChainHookInput
+	chain.TypedSpec().Priority = nethelpers.ChainPriorityFilter
+	chain.TypedSpec().Policy = nethelpers.VerdictAccept
+	chain.TypedSpec().Rules = []network.NfTablesRule{
+		{
+			MatchLayer4: &network.NfTablesLayer4Match{
+				Protocol: nethelpers.ProtocolICMP,
+				MatchICMPType: &network.NfTablesICMPTypeMatch{
+					Types: []nethelpers.ICMPType{
+						nethelpers.ICMPTypeTimestampRequest,
+						nethelpers.ICMPTypeTimestampReply,
+						nethelpers.ICMPTypeAddressMaskRequest,
+						nethelpers.ICMPTypeAddressMaskReply,
+					},
+				},
+			},
+			AnonCounter: true,
+			Verdict:     pointer.To(nethelpers.VerdictDrop),
+		},
+	}
+
+	s.Require().NoError(s.State().Create(s.Ctx(), chain))
+
+	s.checkNftOutput(`table inet talos-test {
+	chain test-tcp {
+		type filter hook input priority filter; policy accept;
+		icmp type { timestamp-request, timestamp-reply, address-mask-request, address-mask-reply } counter packets 0 bytes 0 drop
 	}
 }`)
 }

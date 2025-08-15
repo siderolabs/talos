@@ -44,6 +44,7 @@ With either `accept` or `block`, traffic is always allowed on the following netw
 In `block` mode:
 
 * ICMP and ICMPv6 traffic is also allowed with a rate limit of 5 packets per second
+* ICMP packet types timestamp-request, timestamp-reply, address-mask-request and address-mask-reply are blocked (CVE-1999-0524 mitigation)
 * traffic between Kubernetes pod/service subnets is allowed (for native routing CNIs)
 
 The second document defines an ingress rule for a set of ports and protocols on the host.
@@ -229,6 +230,7 @@ table inet talos {
     iifname { "lo", "siderolink", "kubespan" }  accept
     ct state { established, related } accept
     ct state invalid drop
+    meta l4proto icmp type { timestamp-request, timestamp-reply, address-mask-request, address-mask-reply } drop
     meta l4proto icmp limit rate 5/second accept
     meta l4proto ipv6-icmp limit rate 5/second accept
     ip saddr { 172.20.0.0/24 } tcp dport { 10250 }  accept

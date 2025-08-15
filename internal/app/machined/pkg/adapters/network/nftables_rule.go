@@ -45,6 +45,7 @@ const (
 	SetKindPort
 	SetKindIfName
 	SetKindConntrackState
+	SetKindICMPType
 )
 
 // NfTablesSet is a compiled representation of the set.
@@ -54,6 +55,7 @@ type NfTablesSet struct {
 	Ports           [][2]uint16
 	Strings         [][]byte
 	ConntrackStates []nethelpers.ConntrackState
+	ICMPTypes       []nethelpers.ICMPType
 }
 
 // IsInterval returns true if the set is an interval set.
@@ -61,7 +63,7 @@ func (set NfTablesSet) IsInterval() bool {
 	switch set.Kind {
 	case SetKindIPv4, SetKindIPv6, SetKindPort:
 		return true
-	case SetKindIfName, SetKindConntrackState:
+	case SetKindIfName, SetKindConntrackState, SetKindICMPType:
 		return false
 	default:
 		panic(fmt.Sprintf("unknown set kind: %d", set.Kind))
@@ -81,6 +83,8 @@ func (set NfTablesSet) KeyType() nftables.SetDatatype {
 		return nftables.TypeIFName
 	case SetKindConntrackState:
 		return nftables.TypeCTState
+	case SetKindICMPType:
+		return nftables.TypeICMPType
 	default:
 		panic(fmt.Sprintf("unknown set kind: %d", set.Kind))
 	}
@@ -155,6 +159,12 @@ func (set NfTablesSet) SetElements() []nftables.SetElement {
 		}
 
 		return elements
+	case SetKindICMPType:
+		return xslices.Map(set.ICMPTypes, func(t nethelpers.ICMPType) nftables.SetElement {
+			return nftables.SetElement{
+				Key: []byte{byte(t)},
+			}
+		})
 	default:
 		panic(fmt.Sprintf("unknown set kind: %d", set.Kind))
 	}
@@ -526,6 +536,30 @@ func (a nftablesRule) Compile() (*NfTablesCompiled, error) {
 
 		if match.MatchDestinationPort != nil {
 			portMatch(2, match.MatchDestinationPort.Ranges)
+		}
+
+		if match.MatchICMPType != nil {
+			result.Sets = append(result.Sets,
+				NfTablesSet{
+					Kind:      SetKindICMPType,
+					ICMPTypes: match.MatchICMPType.Types,
+				},
+			)
+
+			rulePost = append(rulePost,
+				// [ payload load 1b @ transport header + 0 => reg 1 ]
+				&expr.Payload{
+					DestRegister: 1,
+					Base:         expr.PayloadBaseTransportHeader,
+					Offset:       0,
+					Len:          1,
+				},
+				// [ lookup reg 1 set <set> ]
+				&expr.Lookup{
+					SourceRegister: 1,
+					SetID:          uint32(len(result.Sets) - 1), // reference will be fixed up by the controller
+				},
+			)
 		}
 	}
 

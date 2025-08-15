@@ -703,6 +703,49 @@ func TestNfTablesRuleCompile(t *testing.T) { //nolint:tparallel
 				},
 			},
 		},
+		{
+			name: "icmp packet type",
+			spec: networkres.NfTablesRule{
+				MatchLayer4: &networkres.NfTablesLayer4Match{
+					Protocol: nethelpers.ProtocolICMP,
+					MatchICMPType: &networkres.NfTablesICMPTypeMatch{
+						Types: []nethelpers.ICMPType{
+							nethelpers.ICMPTypeTimestampRequest,
+							nethelpers.ICMPTypeTimestampReply,
+						},
+					},
+				},
+			},
+			expectedRules: [][]expr.Any{
+				{
+					&expr.Meta{Key: expr.MetaKeyL4PROTO, Register: 1},
+					&expr.Cmp{
+						Op:       expr.CmpOpEq,
+						Register: 1,
+						Data:     []byte{0x1},
+					},
+					&expr.Payload{
+						DestRegister: 1,
+						Base:         expr.PayloadBaseTransportHeader,
+						Offset:       0,
+						Len:          1,
+					},
+					&expr.Lookup{
+						SourceRegister: 1,
+						SetID:          0,
+					},
+				},
+			},
+			expectedSets: []network.NfTablesSet{
+				{
+					Kind: network.SetKindICMPType,
+					ICMPTypes: []nethelpers.ICMPType{
+						nethelpers.ICMPTypeTimestampRequest,
+						nethelpers.ICMPTypeTimestampReply,
+					},
+				},
+			},
+		},
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			result, err := network.NfTablesRule(&test.spec).Compile()
