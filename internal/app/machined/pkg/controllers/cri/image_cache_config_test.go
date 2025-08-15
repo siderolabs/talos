@@ -69,8 +69,8 @@ func (suite *ImageCacheConfigSuite) TestReconcileFeatureEnabled() {
 	})
 
 	ctest.AssertResource(suite, cri.ImageCacheConfigID, func(r *cri.ImageCacheConfig, asrt *assert.Assertions) {
-		asrt.Equal(cri.ImageCacheStatusPreparing, r.TypedSpec().Status)
-		asrt.Equal(cri.ImageCacheCopyStatusUnknown, r.TypedSpec().CopyStatus)
+		asrt.Equal(cri.ImageCacheStatusDisabled, r.TypedSpec().Status)
+		asrt.Equal(cri.ImageCacheCopyStatusSkipped, r.TypedSpec().CopyStatus)
 	})
 
 	// create volume statuses to simulate the volume being ready
@@ -137,6 +137,8 @@ func (suite *ImageCacheConfigSuite) TestReconcileFeatureEnabled() {
 }
 
 func (suite *ImageCacheConfigSuite) TestReconcileJustDiskVolume() {
+	ctrlName := (&crictrl.ImageCacheConfigController{}).Name()
+
 	cfg := config.NewMachineConfig(container.NewV1Alpha1(&v1alpha1.Config{
 		MachineConfig: &v1alpha1.MachineConfig{
 			MachineFeatures: &v1alpha1.FeaturesConfig{
@@ -150,8 +152,8 @@ func (suite *ImageCacheConfigSuite) TestReconcileJustDiskVolume() {
 	suite.Require().NoError(suite.State().Create(suite.Ctx(), cfg))
 
 	ctest.AssertResource(suite, cri.ImageCacheConfigID, func(r *cri.ImageCacheConfig, asrt *assert.Assertions) {
-		asrt.Equal(cri.ImageCacheStatusPreparing, r.TypedSpec().Status)
-		asrt.Equal(cri.ImageCacheCopyStatusUnknown, r.TypedSpec().CopyStatus)
+		asrt.Equal(cri.ImageCacheStatusDisabled, r.TypedSpec().Status)
+		asrt.Equal(cri.ImageCacheCopyStatusSkipped, r.TypedSpec().CopyStatus)
 	})
 
 	// create volume statuses to simulate the volume being ready/not
@@ -169,6 +171,58 @@ func (suite *ImageCacheConfigSuite) TestReconcileJustDiskVolume() {
 		asrt.Equal(cri.ImageCacheCopyStatusSkipped, r.TypedSpec().CopyStatus)
 		asrt.Empty(r.TypedSpec().Roots)
 	})
+
+	// make disk image cache ready
+	vs2.TypedSpec().Phase = block.VolumePhaseReady
+	suite.Update(vs2)
+
+	// simulate disk being mounted
+	vms2 := block.NewVolumeMountStatus(block.NamespaceName, ctrlName+"-"+crictrl.VolumeImageCacheDISK)
+	vms2.TypedSpec().ReadOnly = false
+	vms2.TypedSpec().Target = constants.ImageCacheDiskMountPoint
+	suite.Require().NoError(suite.State().Create(suite.Ctx(), vms2))
+
+	ctest.AssertResource(suite, cri.ImageCacheConfigID, func(r *cri.ImageCacheConfig, asrt *assert.Assertions) {
+		asrt.Equal(cri.ImageCacheStatusPreparing, r.TypedSpec().Status)
+		asrt.Equal(cri.ImageCacheCopyStatusSkipped, r.TypedSpec().CopyStatus)
+		asrt.Equal([]string{constants.ImageCacheDiskMountPoint}, r.TypedSpec().Roots)
+	})
+
+	// simulate registryd being ready
+	service := v1alpha1res.NewService(crictrl.RegistrydServiceID)
+	service.TypedSpec().Healthy = true
+	service.TypedSpec().Running = true
+	suite.Require().NoError(suite.State().Create(suite.Ctx(), service))
+
+	ctest.AssertResource(suite, cri.ImageCacheConfigID, func(r *cri.ImageCacheConfig, asrt *assert.Assertions) {
+		asrt.Equal(cri.ImageCacheStatusReady, r.TypedSpec().Status)
+		asrt.Equal(cri.ImageCacheCopyStatusSkipped, r.TypedSpec().CopyStatus)
+		asrt.Equal([]string{constants.ImageCacheDiskMountPoint}, r.TypedSpec().Roots)
+	})
+
+	// volume mount status should have a finalizer
+	ctest.AssertResource(suite,
+		ctrlName+"-"+crictrl.VolumeImageCacheDISK,
+		func(vms *block.VolumeMountStatus, asrt *assert.Assertions) {
+			asrt.True(vms.Metadata().Finalizers().Has(ctrlName))
+		},
+	)
+
+	// now, simulate reboot sequence:
+	// * missing ISO volume is destroyed
+	// * volume mount status is being torn down
+	suite.Destroy(vs1)
+
+	_, err := suite.State().Teardown(suite.Ctx(), block.NewVolumeMountStatus(block.NamespaceName, ctrlName+"-"+crictrl.VolumeImageCacheDISK).Metadata())
+	suite.Require().NoError(err)
+
+	// controller should remove its finalizer
+	ctest.AssertResource(suite,
+		ctrlName+"-"+crictrl.VolumeImageCacheDISK,
+		func(vms *block.VolumeMountStatus, asrt *assert.Assertions) {
+			asrt.True(vms.Metadata().Finalizers().Empty())
+		},
+	)
 }
 
 func (suite *ImageCacheConfigSuite) TestReconcileWithImageCacheVolume() {
@@ -204,8 +258,8 @@ func (suite *ImageCacheConfigSuite) TestReconcileWithImageCacheVolume() {
 	})
 
 	ctest.AssertResource(suite, cri.ImageCacheConfigID, func(r *cri.ImageCacheConfig, asrt *assert.Assertions) {
-		asrt.Equal(cri.ImageCacheStatusPreparing, r.TypedSpec().Status)
-		asrt.Equal(cri.ImageCacheCopyStatusUnknown, r.TypedSpec().CopyStatus)
+		asrt.Equal(cri.ImageCacheStatusDisabled, r.TypedSpec().Status)
+		asrt.Equal(cri.ImageCacheCopyStatusSkipped, r.TypedSpec().CopyStatus)
 	})
 
 	// create volume statuses to simulate the volume being ready & missing
