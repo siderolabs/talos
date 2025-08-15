@@ -169,6 +169,22 @@ func (ctrl *NfTablesChainConfigController) buildIngressChain(cfg *config.Machine
 					AnonCounter: true,
 					Verdict:     pointer.To(nethelpers.VerdictDrop),
 				},
+				// CVE-1999-0524 mitigation: drop timestamp and address mask ICMP requests
+				network.NfTablesRule{
+					MatchLayer4: &network.NfTablesLayer4Match{
+						Protocol: nethelpers.ProtocolICMP,
+						MatchICMPType: &network.NfTablesICMPTypeMatch{
+							Types: []nethelpers.ICMPType{
+								nethelpers.ICMPTypeTimestampRequest,
+								nethelpers.ICMPTypeTimestampReply,
+								nethelpers.ICMPTypeAddressMaskRequest,
+								nethelpers.ICMPTypeAddressMaskReply,
+							},
+						},
+					},
+					AnonCounter: true,
+					Verdict:     pointer.To(nethelpers.VerdictDrop),
+				},
 				// allow ICMP and ICMPv6 explicitly
 				network.NfTablesRule{
 					MatchLayer4: &network.NfTablesLayer4Match{

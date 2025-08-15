@@ -95,6 +95,7 @@ description: Talos gRPC API reference.
     - [NethelpersDuplex](#talos.resource.definitions.enums.NethelpersDuplex)
     - [NethelpersFailOverMAC](#talos.resource.definitions.enums.NethelpersFailOverMAC)
     - [NethelpersFamily](#talos.resource.definitions.enums.NethelpersFamily)
+    - [NethelpersICMPType](#talos.resource.definitions.enums.NethelpersICMPType)
     - [NethelpersLACPRate](#talos.resource.definitions.enums.NethelpersLACPRate)
     - [NethelpersLinkType](#talos.resource.definitions.enums.NethelpersLinkType)
     - [NethelpersMatchOperator](#talos.resource.definitions.enums.NethelpersMatchOperator)
@@ -232,6 +233,7 @@ description: Talos gRPC API reference.
     - [NfTablesChainSpec](#talos.resource.definitions.network.NfTablesChainSpec)
     - [NfTablesClampMSS](#talos.resource.definitions.network.NfTablesClampMSS)
     - [NfTablesConntrackStateMatch](#talos.resource.definitions.network.NfTablesConntrackStateMatch)
+    - [NfTablesICMPTypeMatch](#talos.resource.definitions.network.NfTablesICMPTypeMatch)
     - [NfTablesIfNameMatch](#talos.resource.definitions.network.NfTablesIfNameMatch)
     - [NfTablesLayer4Match](#talos.resource.definitions.network.NfTablesLayer4Match)
     - [NfTablesLimitMatch](#talos.resource.definitions.network.NfTablesLimitMatch)
@@ -1976,6 +1978,21 @@ NethelpersFamily is a network family.
 | NETHELPERS_FAMILY_UNSPECIFIED | 0 |  |
 | FAMILY_INET4 | 2 |  |
 | FAMILY_INET6 | 10 |  |
+
+
+
+<a name="talos.resource.definitions.enums.NethelpersICMPType"></a>
+
+### NethelpersICMPType
+NethelpersICMPType is a ICMP packet type.
+
+| Name | Number | Description |
+| ---- | ------ | ----------- |
+| NETHELPERS_ICMPTYPE_UNSPECIFIED | 0 |  |
+| ICMP_TYPE_TIMESTAMP_REQUEST | 13 |  |
+| ICMP_TYPE_TIMESTAMP_REPLY | 14 |  |
+| ICMP_TYPE_ADDRESS_MASK_REQUEST | 17 |  |
+| ICMP_TYPE_ADDRESS_MASK_REPLY | 18 |  |
 
 
 
@@ -4351,6 +4368,21 @@ NfTablesConntrackStateMatch describes the match on the connection tracking state
 
 
 
+<a name="talos.resource.definitions.network.NfTablesICMPTypeMatch"></a>
+
+### NfTablesICMPTypeMatch
+NfTablesICMPTypeMatch describes the match on the ICMP type.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| types | [talos.resource.definitions.enums.NethelpersICMPType](#talos.resource.definitions.enums.NethelpersICMPType) | repeated |  |
+
+
+
+
+
+
 <a name="talos.resource.definitions.network.NfTablesIfNameMatch"></a>
 
 ### NfTablesIfNameMatch
@@ -4378,6 +4410,7 @@ NfTablesLayer4Match describes the match on the transport layer protocol.
 | protocol | [talos.resource.definitions.enums.NethelpersProtocol](#talos.resource.definitions.enums.NethelpersProtocol) |  |  |
 | match_source_port | [NfTablesPortMatch](#talos.resource.definitions.network.NfTablesPortMatch) |  |  |
 | match_destination_port | [NfTablesPortMatch](#talos.resource.definitions.network.NfTablesPortMatch) |  |  |
+| match_icmp_type | [NfTablesICMPTypeMatch](#talos.resource.definitions.network.NfTablesICMPTypeMatch) |  |  |
 
 
 

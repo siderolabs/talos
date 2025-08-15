@@ -384,6 +384,14 @@ func (o NfTablesChainSpec) DeepCopy() NfTablesChainSpec {
 						copy(cp.Rules[i2].MatchLayer4.MatchDestinationPort.Ranges, o.Rules[i2].MatchLayer4.MatchDestinationPort.Ranges)
 					}
 				}
+				if o.Rules[i2].MatchLayer4.MatchICMPType != nil {
+					cp.Rules[i2].MatchLayer4.MatchICMPType = new(NfTablesICMPTypeMatch)
+					*cp.Rules[i2].MatchLayer4.MatchICMPType = *o.Rules[i2].MatchLayer4.MatchICMPType
+					if o.Rules[i2].MatchLayer4.MatchICMPType.Types != nil {
+						cp.Rules[i2].MatchLayer4.MatchICMPType.Types = make([]nethelpers.ICMPType, len(o.Rules[i2].MatchLayer4.MatchICMPType.Types))
+						copy(cp.Rules[i2].MatchLayer4.MatchICMPType.Types, o.Rules[i2].MatchLayer4.MatchICMPType.Types)
+					}
+				}
 			}
 			if o.Rules[i2].MatchLimit != nil {
 				cp.Rules[i2].MatchLimit = new(NfTablesLimitMatch)

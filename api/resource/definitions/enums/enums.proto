@@ -114,6 +114,15 @@ enum NethelpersFamily {
   FAMILY_INET6 = 10;
 }
 
+// NethelpersICMPType is a ICMP packet type.
+enum NethelpersICMPType {
+  NETHELPERS_ICMPTYPE_UNSPECIFIED = 0;
+  ICMP_TYPE_TIMESTAMP_REQUEST = 13;
+  ICMP_TYPE_TIMESTAMP_REPLY = 14;
+  ICMP_TYPE_ADDRESS_MASK_REQUEST = 17;
+  ICMP_TYPE_ADDRESS_MASK_REPLY = 18;
+}
+
 // NethelpersLACPRate is a LACP rate.
 enum NethelpersLACPRate {
   LACP_RATE_SLOW = 0;

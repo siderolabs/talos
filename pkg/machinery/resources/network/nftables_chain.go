@@ -89,9 +89,10 @@ type NfTablesAddressMatch struct {
 //
 //gotagsrewrite:gen
 type NfTablesLayer4Match struct {
-	Protocol             nethelpers.Protocol `yaml:"protocol" protobuf:"1"`
-	MatchSourcePort      *NfTablesPortMatch  `yaml:"matchSourcePort,omitempty" protobuf:"2"`
-	MatchDestinationPort *NfTablesPortMatch  `yaml:"matchDestinationPort,omitempty" protobuf:"3"`
+	Protocol             nethelpers.Protocol    `yaml:"protocol" protobuf:"1"`
+	MatchSourcePort      *NfTablesPortMatch     `yaml:"matchSourcePort,omitempty" protobuf:"2"`
+	MatchDestinationPort *NfTablesPortMatch     `yaml:"matchDestinationPort,omitempty" protobuf:"3"`
+	MatchICMPType        *NfTablesICMPTypeMatch `yaml:"matchICMPType,omitempty" protobuf:"4"`
 }
 
 // NfTablesPortMatch describes the match on the transport layer port.
@@ -99,6 +100,13 @@ type NfTablesLayer4Match struct {
 //gotagsrewrite:gen
 type NfTablesPortMatch struct {
 	Ranges []PortRange `yaml:"ranges,omitempty" protobuf:"1"`
+}
+
+// NfTablesICMPTypeMatch describes the match on the ICMP type.
+//
+//gotagsrewrite:gen
+type NfTablesICMPTypeMatch struct {
+	Types []nethelpers.ICMPType `yaml:"types" protobuf:"1"`
 }
 
 // PortRange describes a range of ports.

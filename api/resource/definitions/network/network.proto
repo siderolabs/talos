@@ -299,6 +299,11 @@ message NfTablesConntrackStateMatch {
   repeated talos.resource.definitions.enums.NethelpersConntrackState states = 1;
 }
 
+// NfTablesICMPTypeMatch describes the match on the ICMP type.
+message NfTablesICMPTypeMatch {
+  repeated talos.resource.definitions.enums.NethelpersICMPType types = 1;
+}
+
 // NfTablesIfNameMatch describes the match on the interface name.
 message NfTablesIfNameMatch {
   talos.resource.definitions.enums.NethelpersMatchOperator operator = 2;
@@ -310,6 +315,7 @@ message NfTablesLayer4Match {
   talos.resource.definitions.enums.NethelpersProtocol protocol = 1;
   NfTablesPortMatch match_source_port = 2;
   NfTablesPortMatch match_destination_port = 3;
+  NfTablesICMPTypeMatch match_icmp_type = 4;
 }
 
 // NfTablesLimitMatch describes the match on the packet rate.

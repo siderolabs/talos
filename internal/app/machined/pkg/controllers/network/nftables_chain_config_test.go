@@ -301,6 +301,21 @@ func (suite *NfTablesChainConfigTestSuite) TestDefaultBlock() {
 				{
 					MatchLayer4: &network.NfTablesLayer4Match{
 						Protocol: nethelpers.ProtocolICMP,
+						MatchICMPType: &network.NfTablesICMPTypeMatch{
+							Types: []nethelpers.ICMPType{
+								nethelpers.ICMPTypeTimestampRequest,
+								nethelpers.ICMPTypeTimestampReply,
+								nethelpers.ICMPTypeAddressMaskRequest,
+								nethelpers.ICMPTypeAddressMaskReply,
+							},
+						},
+					},
+					AnonCounter: true,
+					Verdict:     pointer.To(nethelpers.VerdictDrop),
+				},
+				{
+					MatchLayer4: &network.NfTablesLayer4Match{
+						Protocol: nethelpers.ProtocolICMP,
 					},
 					MatchLimit: &network.NfTablesLimitMatch{
 						PacketRatePerSecond: 5,
