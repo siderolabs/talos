@@ -98,7 +98,7 @@ The value of this parameter has same format as the `talos.config.inline` paramet
 
 ## Component Updates
 
-* Linux: 6.12.40
+* Linux: 6.12.41
 * Kubernetes: 1.34.0-rc.1
 * runc: 1.3.0
 * etcd: 3.6.4
