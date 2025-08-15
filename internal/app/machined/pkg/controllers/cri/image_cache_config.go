@@ -342,7 +342,7 @@ func (ctrl *ImageCacheConfigController) analyzeImageCacheVolumes(ctx context.Con
 		if err != nil {
 			if state.IsNotFoundError(err) {
 				// wait for volume statuses to be present
-				return &imageCacheVolumeStatus{}, nil
+				continue
 			}
 
 			return nil, fmt.Errorf("error getting volume status: %w", err)
