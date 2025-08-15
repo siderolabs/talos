@@ -342,7 +342,7 @@ func (ctrl *ImageCacheConfigController) analyzeImageCacheVolumes(ctx context.Con
 		if err != nil {
 			if state.IsNotFoundError(err) {
 				// wait for volume statuses to be present
-				return &imageCacheVolumeStatus{}, nil
+				continue
 			}
 
 			return nil, fmt.Errorf("error getting volume status: %w", err)
@@ -362,10 +362,6 @@ func (ctrl *ImageCacheConfigController) analyzeImageCacheVolumes(ctx context.Con
 		case VolumeImageCacheDISK:
 			diskStatus = volumeStatus.TypedSpec().Phase
 		}
-	}
-
-	if isoStatus != block.VolumePhaseMissing && isoStatus != block.VolumePhaseReady {
-		return &imageCacheVolumeStatus{}, nil
 	}
 
 	isoPresent := isoStatus == block.VolumePhaseReady
