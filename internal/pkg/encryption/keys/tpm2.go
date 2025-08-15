@@ -84,7 +84,7 @@ func (h *TPMKeyHandler) NewKey(ctx context.Context) (*encryption.Key, token.Toke
 			KeySlots:          []int{h.slot},
 			SealedBlobPrivate: resp.SealedBlobPrivate,
 			SealedBlobPublic:  resp.SealedBlobPublic,
-			PCRs:              []int{constants.UKIPCR},
+			PCRs:              []int{tpm2.SecureBootStatePCR, constants.UKIPCR},
 			Alg:               "sha256",
 			PolicyHash:        resp.PolicyDigest,
 			KeyName:           resp.KeyName,
