@@ -21,7 +21,6 @@ import (
 	"github.com/siderolabs/talos/pkg/images"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/version"
-	"github.com/siderolabs/talos/pkg/provision/providers"
 )
 
 type qemuOps struct {
@@ -93,7 +92,6 @@ func getCreateCmd() *cobra.Command {
 		inputDirFlag                  = "input-dir"
 		networkIPv4Flag               = "ipv4"
 		networkIPv6Flag               = "ipv6"
-		networkCIDRFlag               = "cidr"
 		networkNoMasqueradeCIDRsFlag  = "no-masquerade-cidrs"
 		nameserversFlag               = "nameservers"
 		preallocateDisksFlag          = "disk-preallocate"
@@ -166,7 +164,6 @@ func getCreateCmd() *cobra.Command {
 		withClusterDiscoveryFlag      = "with-cluster-discovery"
 		registryInsecureFlag          = "registry-insecure-skip-verify"
 		customCNIUrlFlag              = "custom-cni-url"
-		talosconfigVersionFlag        = "talos-version"
 		encryptStatePartitionFlag     = "encrypt-state"
 		encryptEphemeralPartitionFlag = "encrypt-ephemeral"
 		encryptUserVolumeFlag         = "encrypt-user-volumes"
@@ -219,8 +216,9 @@ func getCreateCmd() *cobra.Command {
 		addConfigPatchWorkerFlag(common, &ops.common.configPatchWorker, configPatchWorkerFlag)
 		addRegistryMirrorFlag(common, &ops.common.registryMirrors)
 		addNetworkMTUFlag(common, &ops.common.networkMTU)
+		addTalosVersionFlag(common, &ops.common.talosVersion, "the desired Talos version to generate config for")
 
-		common.StringVar(&ops.common.networkCIDR, networkCIDRFlag, "10.5.0.0/24", "CIDR of the cluster network (IPv4, ULA network for IPv6 is derived in automated way)")
+		common.StringVar(&ops.common.networkCIDR, networkCIDRFlagName, "10.5.0.0/24", "CIDR of the cluster network (IPv4, ULA network for IPv6 is derived in automated way)")
 		common.StringVar(&ops.common.wireguardCIDR, wireguardCIDRFlag, "", "CIDR of the wireguard network")
 		common.BoolVar(&ops.common.applyConfigEnabled, applyConfigEnabledFlag, false, "enable apply config when the VM is starting in maintenance mode")
 		common.StringSliceVar(&ops.common.registryInsecure, registryInsecureFlag, []string{}, "list of registry hostnames to skip TLS verification for")
@@ -242,7 +240,6 @@ func getCreateCmd() *cobra.Command {
 		common.IntVar(&ops.common.kubePrismPort, kubePrismFlag, constants.DefaultKubePrismPort, "KubePrism port (set to 0 to disable)")
 		common.BoolVar(&ops.common.skipK8sNodeReadinessCheck, skipK8sNodeReadinessCheckFlag, false, "skip k8s node readiness checks")
 		common.BoolVar(&ops.common.withJSONLogs, withJSONLogsFlag, false, "enable JSON logs receiver and configure Talos to send logs there")
-		common.StringVar(&ops.common.talosVersion, talosconfigVersionFlag, helpers.GetTag(), "the desired Talos version to generate config for")
 		common.BoolVar(&ops.common.withUUIDHostnames, withUUIDHostnamesFlag, false, "use machine UUIDs as default hostnames")
 
 		return common
@@ -310,7 +307,7 @@ func getCreateCmd() *cobra.Command {
 		return qemu
 	}
 
-	ops.common.rootOps = &clustercmd.Flags
+	ops.common.rootOps = &clustercmd.PersistentFlags
 
 	// createCmd is the developer oriented create command.
 	createCmd := &cobra.Command{
@@ -320,9 +317,6 @@ func getCreateCmd() *cobra.Command {
 		Args:   cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return cli.WithContext(context.Background(), func(ctx context.Context) error {
-				if err := providers.IsValidProvider(ops.common.rootOps.ProvisionerName); err != nil {
-					return err
-				}
 				if err := validateQemuFlags(cmd.Flags(), unImplementedFlagsDarwin); err != nil {
 					return err
 				}
@@ -349,6 +343,9 @@ func getCreateCmd() *cobra.Command {
 		},
 	}
 
+	clustercmd.AddProvisionerFlag(createCmd)
+	cli.Should(createCmd.Flags().MarkHidden(clustercmd.ProvisionerFlag))
+
 	createCmd.Flags().AddFlagSet(getCommonFlags())
 	createCmd.Flags().AddFlagSet(getQemuFlags())
 
@@ -359,7 +356,7 @@ func getCreateCmd() *cobra.Command {
 	createCmd.MarkFlagsMutuallyExclusive(inputDirFlag, registryMirrorFlagName)
 	createCmd.MarkFlagsMutuallyExclusive(inputDirFlag, registryInsecureFlag)
 	createCmd.MarkFlagsMutuallyExclusive(inputDirFlag, customCNIUrlFlag)
-	createCmd.MarkFlagsMutuallyExclusive(inputDirFlag, talosconfigVersionFlag)
+	createCmd.MarkFlagsMutuallyExclusive(inputDirFlag, talosVersionFlagName)
 	createCmd.MarkFlagsMutuallyExclusive(inputDirFlag, encryptStatePartitionFlag)
 	createCmd.MarkFlagsMutuallyExclusive(inputDirFlag, encryptEphemeralPartitionFlag)
 	createCmd.MarkFlagsMutuallyExclusive(inputDirFlag, encryptUserVolumeFlag)

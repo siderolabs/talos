@@ -32,14 +32,14 @@ var destroyCmd = &cobra.Command{
 }
 
 func destroy(ctx context.Context) error {
-	provisioner, err := providers.Factory(ctx, Flags.ProvisionerName)
+	provisioner, err := providers.Factory(ctx, provisionerName)
 	if err != nil {
 		return err
 	}
 
 	defer provisioner.Close() //nolint:errcheck
 
-	cluster, err := provisioner.Reflect(ctx, Flags.ClusterName, Flags.StateDir)
+	cluster, err := provisioner.Reflect(ctx, PersistentFlags.ClusterName, PersistentFlags.StateDir)
 	if err != nil {
 		return err
 	}
@@ -57,6 +57,7 @@ func init() {
 	destroyCmd.PersistentFlags().BoolVarP(&destroyCmdFlags.forceDelete, "force", "f", false, "force deletion of cluster directory if there were errors")
 	destroyCmd.PersistentFlags().StringVarP(&destroyCmdFlags.saveSupportArchivePath, "save-support-archive-path", "", "", "save support archive to the specified file on destroy")
 	destroyCmd.PersistentFlags().StringVarP(&destroyCmdFlags.saveClusterLogsArchivePath, "save-cluster-logs-archive-path", "", "", "save cluster logs archive to the specified file on destroy")
+	AddProvisionerFlag(destroyCmd)
 
 	Cmd.AddCommand(destroyCmd)
 }

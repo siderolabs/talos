@@ -35,14 +35,14 @@ var showCmd = &cobra.Command{
 }
 
 func show(ctx context.Context) error {
-	provisioner, err := providers.Factory(ctx, Flags.ProvisionerName)
+	provisioner, err := providers.Factory(ctx, provisionerName)
 	if err != nil {
 		return err
 	}
 
 	defer provisioner.Close() //nolint:errcheck
 
-	cluster, err := provisioner.Reflect(ctx, Flags.ClusterName, Flags.StateDir)
+	cluster, err := provisioner.Reflect(ctx, PersistentFlags.ClusterName, PersistentFlags.StateDir)
 	if err != nil {
 		return err
 	}
@@ -112,5 +112,7 @@ func ShowCluster(cluster provision.Cluster) error {
 }
 
 func init() {
+	AddProvisionerFlag(showCmd)
+
 	Cmd.AddCommand(showCmd)
 }

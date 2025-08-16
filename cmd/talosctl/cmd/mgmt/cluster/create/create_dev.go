@@ -333,7 +333,7 @@ func create(ctx context.Context, ops createOps) error {
 			cOps.talosVersion = parts[len(parts)-1]
 		}
 
-		versionContractGenOps, versionContract, err := getVersionContractGenOps(cOps) // THIS
+		versionContractGenOps, versionContract, err := getVersionContractGenOps(cOps)
 		if err != nil {
 			return err
 		}

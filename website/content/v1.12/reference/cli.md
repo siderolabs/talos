@@ -129,7 +129,7 @@ talosctl cluster create docker [flags]
 
 ```
       --config-patch stringArray                 patch generated machineconfigs (applied to all node types), use @file to read a patch from file
-      --config-patch-controlplanes stringArray   patch generated machineconfigs (applied to 'init' and 'controlplane' types)
+      --config-patch-controlplanes stringArray   patch generated machineconfigs (applied to 'controlplane' type)
       --config-patch-workers stringArray         patch generated machineconfigs (applied to 'worker' type)
       --cpus-controlplanes string                the share of CPUs as fraction (each control plane/VM) (default "2.0")
       --cpus-workers string                      the share of CPUs as fraction (each worker/VM) (default "2.0")
@@ -149,9 +149,49 @@ talosctl cluster create docker [flags]
 ### Options inherited from parent commands
 
 ```
-      --name string          the name of the cluster (default "talos-default")
-      --provisioner string   Talos cluster provisioner to use (default "docker")
-      --state string         directory path to store cluster state (default "/home/user/.talos/clusters")
+      --name string    the name of the cluster (default "talos-default")
+      --state string   directory path to store cluster state (default "/home/user/.talos/clusters")
+```
+
+### SEE ALSO
+
+* [talosctl cluster create](#talosctl-cluster-create)	 - Creates a local qemu based cluster for Talos development
+
+## talosctl cluster create qemu
+
+Create a local QEMU based Talos cluster
+
+```
+talosctl cluster create qemu [flags]
+```
+
+### Options
+
+```
+      --cidr string                              CIDR of the cluster network (default "10.5.0.0/24")
+      --config-patch stringArray                 patch generated machineconfigs (applied to all node types), use @file to read a patch from file
+      --config-patch-controlplanes stringArray   patch generated machineconfigs (applied to 'controlplane' type)
+      --config-patch-workers stringArray         patch generated machineconfigs (applied to 'worker' type)
+      --controlplanes int                        the number of controlplanes to create (default 1)
+      --cpus-controlplanes string                the share of CPUs as fraction (each control plane/VM) (default "2.0")
+      --cpus-workers string                      the share of CPUs as fraction (each worker/VM) (default "2.0")
+      --disks strings                            list of disks to create in format "<driver1>:<size1>" (size is specified in megabytes) (disks after the first one are added only to worker machines) (default [virtio:10240,virtio:6144])
+  -h, --help                                     help for qemu
+      --image-factory-url string                 image factory url (default "https://factory.talos.dev/")
+      --kubernetes-version string                desired kubernetes version to run (default "1.34.0-rc.1")
+      --memory-controlplanes int                 the limit on memory usage in MB (each control plane/VM) (default 2048)
+      --memory-workers int                       the limit on memory usage in MB (each worker/VM) (default 2048)
+      --schematic-id string                      image factory schematic id (defaults to an empty schematic)
+      --talos-version string                     the desired talos version (default "latest")
+      --talosconfig-destination string           The location to save the generated Talos configuration file to. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
+      --workers int                              the number of workers to create (default 1)
+```
+
+### Options inherited from parent commands
+
+```
+      --name string    the name of the cluster (default "talos-default")
+      --state string   directory path to store cluster state (default "/home/user/.talos/clusters")
 ```
 
 ### SEE ALSO
@@ -178,7 +218,7 @@ talosctl cluster create [flags]
       --cni-conf-dir string                      CNI config directory path (default "/home/user/.talos/cni/conf.d")
       --config-injection-method string           a method to inject machine config: default is HTTP server, 'metal-iso' to mount an ISO
       --config-patch stringArray                 patch generated machineconfigs (applied to all node types), use @file to read a patch from file
-      --config-patch-control-plane stringArray   patch generated machineconfigs (applied to 'init' and 'controlplane' types)
+      --config-patch-control-plane stringArray   patch generated machineconfigs (applied to 'controlplane' type)
       --config-patch-worker stringArray          patch generated machineconfigs (applied to 'worker' type)
       --control-plane-port int                   control plane port (load balancer and local API port) (default 6443)
       --controlplanes int                        the number of controlplanes to create (default 1)
@@ -259,15 +299,15 @@ talosctl cluster create [flags]
 ### Options inherited from parent commands
 
 ```
-      --name string          the name of the cluster (default "talos-default")
-      --provisioner string   Talos cluster provisioner to use (default "docker")
-      --state string         directory path to store cluster state (default "/home/user/.talos/clusters")
+      --name string    the name of the cluster (default "talos-default")
+      --state string   directory path to store cluster state (default "/home/user/.talos/clusters")
 ```
 
 ### SEE ALSO
 
 * [talosctl cluster](#talosctl-cluster)	 - A collection of commands for managing local docker-based or QEMU-based clusters
 * [talosctl cluster create docker](#talosctl-cluster-create-docker)	 - Create a local Docker based kubernetes cluster
+* [talosctl cluster create qemu](#talosctl-cluster-create-qemu)	 - Create a local QEMU based Talos cluster
 
 ## talosctl cluster destroy
 
@@ -282,6 +322,7 @@ talosctl cluster destroy [flags]
 ```
   -f, --force                                   force deletion of cluster directory if there were errors
   -h, --help                                    help for destroy
+      --provisioner string                      Talos cluster provisioner to use (default "docker")
       --save-cluster-logs-archive-path string   save cluster logs archive to the specified file on destroy
       --save-support-archive-path string        save support archive to the specified file on destroy
 ```
@@ -289,9 +330,8 @@ talosctl cluster destroy [flags]
 ### Options inherited from parent commands
 
 ```
-      --name string          the name of the cluster (default "talos-default")
-      --provisioner string   Talos cluster provisioner to use (default "docker")
-      --state string         directory path to store cluster state (default "/home/user/.talos/clusters")
+      --name string    the name of the cluster (default "talos-default")
+      --state string   directory path to store cluster state (default "/home/user/.talos/clusters")
 ```
 
 ### SEE ALSO
@@ -309,15 +349,15 @@ talosctl cluster show [flags]
 ### Options
 
 ```
-  -h, --help   help for show
+  -h, --help                 help for show
+      --provisioner string   Talos cluster provisioner to use (default "docker")
 ```
 
 ### Options inherited from parent commands
 
 ```
-      --name string          the name of the cluster (default "talos-default")
-      --provisioner string   Talos cluster provisioner to use (default "docker")
-      --state string         directory path to store cluster state (default "/home/user/.talos/clusters")
+      --name string    the name of the cluster (default "talos-default")
+      --state string   directory path to store cluster state (default "/home/user/.talos/clusters")
 ```
 
 ### SEE ALSO
@@ -331,10 +371,9 @@ A collection of commands for managing local docker-based or QEMU-based clusters
 ### Options
 
 ```
-  -h, --help                 help for cluster
-      --name string          the name of the cluster (default "talos-default")
-      --provisioner string   Talos cluster provisioner to use (default "docker")
-      --state string         directory path to store cluster state (default "/home/user/.talos/clusters")
+  -h, --help           help for cluster
+      --name string    the name of the cluster (default "talos-default")
+      --state string   directory path to store cluster state (default "/home/user/.talos/clusters")
 ```
 
 ### SEE ALSO

@@ -27,13 +27,14 @@ var Cmd = &cobra.Command{
 
 // CmdOps are the options for the cluster command.
 type CmdOps struct {
-	ProvisionerName string
-	StateDir        string
-	ClusterName     string
+	StateDir    string
+	ClusterName string
 }
 
-// Flags are the flags of the cluster command.
-var Flags CmdOps
+// PersistentFlags are the persistent flags of the cluster command.
+var PersistentFlags CmdOps
+
+var provisionerName string
 
 var (
 	// DefaultStateDir is the default location of the cluster related file state.
@@ -49,7 +50,11 @@ func init() {
 		DefaultCNIDir = filepath.Join(talosDir, "cni")
 	}
 
-	Cmd.PersistentFlags().StringVar(&Flags.ProvisionerName, ProvisionerFlag, providers.DockerProviderName, "Talos cluster provisioner to use")
-	Cmd.PersistentFlags().StringVar(&Flags.StateDir, "state", DefaultStateDir, "directory path to store cluster state")
-	Cmd.PersistentFlags().StringVar(&Flags.ClusterName, "name", "talos-default", "the name of the cluster")
+	Cmd.PersistentFlags().StringVar(&PersistentFlags.StateDir, "state", DefaultStateDir, "directory path to store cluster state")
+	Cmd.PersistentFlags().StringVar(&PersistentFlags.ClusterName, "name", "talos-default", "the name of the cluster")
+}
+
+// AddProvisionerFlag adds the provisioner flag to a command.
+func AddProvisionerFlag(cmd *cobra.Command) {
+	cmd.Flags().StringVar(&provisionerName, ProvisionerFlag, providers.DockerProviderName, "Talos cluster provisioner to use")
 }
