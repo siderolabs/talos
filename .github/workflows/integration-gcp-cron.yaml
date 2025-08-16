@@ -17,7 +17,7 @@ jobs:
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@v1.3.1
+        uses: kenchan0130/actions-system-info@v1.4.0
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -41,7 +41,7 @@ jobs:
           done
         continue-on-error: true
       - name: checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
       - name: Unshallow
         run: |
           git fetch --prune --unshallow
@@ -60,7 +60,7 @@ jobs:
           sops -d .secrets.yaml | yq -e '.secrets | to_entries[] | .key + "=" + .value' >> "$GITHUB_ENV"
       - name: Download artifacts
         if: github.event_name != 'schedule'
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: talos-artifacts
           path: _out
@@ -107,7 +107,7 @@ jobs:
         run: |
           make e2e-gcp-prepare
       - name: checkout contrib
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           path: _out/contrib
           ref: main
