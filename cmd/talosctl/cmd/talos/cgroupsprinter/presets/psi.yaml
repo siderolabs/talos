@@ -1,0 +1,12 @@
+# PSI-related cgroup metrics
+columns:
+  - name: MemCurrent
+    template: '{{ .MemoryCurrent.HumanizeIBytes | printf "%8s" }}'
+  - name: MemPsiSome10
+    template: '{{ .MemoryPressure.some.avg10 | printf "%6s" }}'
+  - name: MemPsi10
+    template: '{{ .MemoryPressure.full.avg10 | printf "%6s" }}'
+  - name: CpuPsi10
+    template: '{{ .CPUPressure.full.avg10 | printf "%6s" }}'
+  - name: IoPsi10
+    template: '{{ .IOPressure.full.avg10 | printf "%6s" }}'

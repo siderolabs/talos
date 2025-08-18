@@ -30,8 +30,9 @@ import (
 )
 
 var cgroupsCmdFlags struct {
-	schemaFile string
-	presetName string
+	schemaFile     string
+	presetName     string
+	skipCRIResolve bool
 }
 
 // cgroupsCmd represents the cgroups command.
@@ -91,7 +92,6 @@ To see schema examples, refer to https://github.com/siderolabs/talos/tree/main/c
 				return fmt.Errorf("error compiling schema: %w", err)
 			}
 
-			cgroupNameResolveMap := buildCgroupResolveMap(ctx, c)
 			processResolveMap := buildProcessResolveMap(ctx, c)
 			devicesResolveMap := buildDevicesResolveMap(ctx, c)
 
@@ -107,7 +107,11 @@ To see schema examples, refer to https://github.com/siderolabs/talos/tree/main/c
 				return fmt.Errorf("error reading cgroups: %w", err)
 			}
 
-			tree.ResolveNames(cgroupNameResolveMap)
+			if !cgroupsCmdFlags.skipCRIResolve {
+				cgroupNameResolveMap := buildCgroupResolveMap(ctx, c)
+				tree.ResolveNames(cgroupNameResolveMap)
+			}
+
 			tree.Walk(func(node *cgroups.Node) {
 				node.CgroupProcsResolved = xslices.Map(node.CgroupProcs, func(pid cgroups.Value) cgroups.RawValue {
 					if name, ok := processResolveMap[pid.String()]; ok {
@@ -247,6 +251,7 @@ func init() {
 
 	cgroupsCmd.Flags().StringVar(&cgroupsCmdFlags.schemaFile, "schema-file", "", "path to the columns schema file")
 	cgroupsCmd.Flags().StringVar(&cgroupsCmdFlags.presetName, "preset", "", fmt.Sprintf("preset name (one of: %v)", presetNames))
+	cgroupsCmd.Flags().BoolVar(&cgroupsCmdFlags.skipCRIResolve, "skip-cri-resolve", false, "do not resolve cgroup names via a request to CRI")
 	cgroupsCmd.MarkFlagsMutuallyExclusive("schema-file", "preset")
 	cgroupsCmd.RegisterFlagCompletionFunc("preset", completeCgroupPresetArg) //nolint:errcheck
 

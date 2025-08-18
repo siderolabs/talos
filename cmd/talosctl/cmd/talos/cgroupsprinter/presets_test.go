@@ -13,7 +13,7 @@ import (
 )
 
 func TestGetPresetNames(t *testing.T) {
-	assert.Equal(t, []string{"cpu", "cpuset", "io", "memory", "process", "swap"}, cgroupsprinter.GetPresetNames())
+	assert.Equal(t, []string{"cpu", "cpuset", "io", "memory", "process", "psi", "swap"}, cgroupsprinter.GetPresetNames())
 }
 
 func TestGetPreset(t *testing.T) {

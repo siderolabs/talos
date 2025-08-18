@@ -252,6 +252,57 @@ In the swap view, the following columns are displayed:
 * `SwapHigh`: the high swap limit of the cgroup
 * `SwapMax`: the maximum swap limit of the cgroup
 
+### `psi`
+
+```bash
+$ talosctl cgroups --preset=psi
+NAME                                                                          MemCurrent   MemPsiSome10   MemPsi10   CpuPsi10   IoPsi10
+.                                                                                unset       0.00           0.00       0.00       0.00
+├──init                                                                         62 MiB       0.00           0.00       0.00       0.00
+├──kubepods                                                                    693 MiB       0.00           0.00       0.00       0.00
+│   ├──besteffort                                                               57 MiB       0.00           0.00       0.00       0.00
+│   │   └──kube-system/kube-proxy-mfrjg                                         57 MiB       0.00           0.00       0.00       0.00
+│   │       ├──kube-proxy                                                       57 MiB       0.00           0.00       0.00       0.00
+│   │       └──sandbox                                                         204 KiB       0.00           0.00       0.00       0.00
+│   └──burstable                                                               635 MiB       0.00           0.00       0.00       0.00
+│       ├──kube-system/coredns-7bb49dc74c-fms26                                 50 MiB       0.00           0.00       0.00       0.00
+│       │   ├──coredns                                                          50 MiB       0.00           0.00       0.00       0.00
+│       │   └──sandbox                                                         244 KiB       0.00           0.00       0.00       0.00
+│       ├──kube-system/coredns-7bb49dc74c-zmcn7                                 26 MiB       0.00           0.00       0.00       0.00
+│       │   ├──coredns                                                          26 MiB       0.00           0.00       0.00       0.00
+│       │   └──sandbox                                                         248 KiB       0.00           0.00       0.00       0.00
+│       ├──kube-system/kube-apiserver-talos-default-controlplane-1             337 MiB       0.00           0.00       0.00       0.00
+│       │   ├──kube-apiserver                                                  336 MiB       0.00           0.00       0.00       0.00
+│       │   └──sandbox                                                         956 KiB       0.00           0.00       0.00       0.00
+│       ├──kube-system/kube-controller-manager-talos-default-controlplane-1    106 MiB       0.00           0.00       0.00       0.00
+│       │   ├──kube-controller-manager                                         106 MiB       0.00           0.00       0.00       0.00
+│       │   └──sandbox                                                         240 KiB       0.00           0.00       0.00       0.00
+│       ├──kube-system/kube-flannel-sbv76                                       56 MiB       0.00           0.00       0.00       0.00
+│       │   ├──kube-flannel                                                     55 MiB       0.00           0.00       0.00       0.00
+│       │   └──sandbox                                                         236 KiB       0.00           0.00       0.00       0.00
+│       └──kube-system/kube-scheduler-talos-default-controlplane-1              60 MiB       0.00           0.00       0.00       0.00
+│           ├──kube-scheduler                                                   60 MiB       0.00           0.00       0.00       0.00
+│           └──sandbox                                                         232 KiB       0.00           0.00       0.00       0.00
+├──podruntime                                                                  279 MiB       0.00           0.00       0.00       0.00
+│   ├──etcd                                                                     96 MiB       0.00           0.00       0.00       0.00
+│   ├──kubelet                                                                  95 MiB       0.00           0.00       0.00       0.00
+│   └──runtime                                                                  88 MiB       0.00           0.00       0.00       0.00
+└──system                                                                      196 MiB       0.00           0.00       0.00       0.00
+    ├──apid                                                                     21 MiB       0.00           0.00       0.00       0.00
+    ├──dashboard                                                                82 MiB       0.00           0.00       0.00       0.00
+    ├──runtime                                                                  70 MiB       0.00           0.00       0.00       0.00
+    ├──trustd                                                                   12 MiB       0.00           0.00       0.00       0.00
+    └──udevd                                                                    11 MiB       0.00           0.00       0.00       0.00
+```
+
+In the PSI view, the following columns are displayed:
+
+* `MemCurrent`: the current memory usage of the cgroup and its children
+* `MemPsiSome10`: avg10 of the `some` PSI value for memory pressure (at least one process is waiting on memory)
+* `MemPsi10`: avg10 of the `full` PSI value for memory pressure
+* `CpuPsi10`: avg10 of the `full` PSI value for CPU pressure
+* `IoPsi10`: avg10 of the `full` PSI value for I/O pressure
+
 ## Custom Schemas
 
 The `talosctl cgroups` command allows you to define custom schemas to display the cgroups information in a specific way.
