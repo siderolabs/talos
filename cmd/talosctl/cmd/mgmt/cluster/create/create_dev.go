@@ -338,7 +338,7 @@ func create(ctx context.Context, ops createOps) error {
 			return err
 		}
 
-		genOptions = append(genOptions, versionContractGenOps)
+		genOptions = append(genOptions, versionContractGenOps...)
 
 		extraDisks, userVolumePatches, err := getExtraDisks(provisioner, cidr4, versionContract, &provisionOptions, qOps)
 		if err != nil {

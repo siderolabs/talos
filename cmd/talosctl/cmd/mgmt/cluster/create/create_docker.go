@@ -68,7 +68,7 @@ func getDockerClusterRequest(
 
 	clusterRequest := getBaseClusterRequest(cOps, []netip.Prefix{cidr}, []netip.Addr{gatewayIP})
 
-	genOptions := []generate.Option{}
+	var genOptions []generate.Option
 
 	registryMirrorOps, err := getRegistryMirrorGenOps(cOps)
 	if err != nil {
@@ -83,7 +83,7 @@ func getDockerClusterRequest(
 		return clusterCreateRequestData{}, err
 	}
 
-	genOptions = append(genOptions, versionContractGenOps)
+	genOptions = append(genOptions, versionContractGenOps...)
 	genOptions = append(genOptions, provisioner.GenOptions(clusterRequest.Network)...)
 
 	endpointList := provisioner.GetTalosAPIEndpoints(clusterRequest.Network)

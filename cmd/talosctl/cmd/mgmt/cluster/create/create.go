@@ -20,6 +20,7 @@ import (
 	"time"
 
 	"github.com/hashicorp/go-getter/v2"
+	"github.com/siderolabs/gen/xslices"
 	sideronet "github.com/siderolabs/net"
 
 	"github.com/siderolabs/talos/pkg/cluster/check"
@@ -103,12 +104,9 @@ func createNodeRequests(cOps commonOps, controlplaneRes, workerRes parsedNodeRes
 }
 
 func getNodeIPs(ips [][]netip.Addr, nodeIndex int) []netip.Addr {
-	nodeIPs := make([]netip.Addr, len(ips))
-	for j := range nodeIPs {
-		nodeIPs[j] = ips[j][nodeIndex]
-	}
-
-	return nodeIPs
+	return xslices.Map(ips, func(ips []netip.Addr) netip.Addr {
+		return ips[nodeIndex]
+	})
 }
 
 // downloadBootAssets downloads the boot assets in the given qemuOps if they are URLs, and replaces their URL paths with the downloaded paths on the filesystem.
@@ -256,7 +254,7 @@ func parseCPUShare(cpus string) (int64, error) {
 }
 
 func getRegistryMirrorGenOps(cOps commonOps) ([]generate.Option, error) {
-	ops := []generate.Option{}
+	ops := make([]generate.Option, 0, len(cOps.registryMirrors))
 
 	for _, registryMirror := range cOps.registryMirrors {
 		left, right, ok := strings.Cut(registryMirror, "=")
@@ -286,36 +284,28 @@ func getBaseClusterRequest(cOps commonOps, cidrs []netip.Prefix, gatewayIPs []ne
 	}
 }
 
-func getVersionContractGenOps(cOps commonOps) (generate.Option, *config.VersionContract, error) {
-	var genOption generate.Option
-
-	var versionContract *config.VersionContract
-
-	if cOps.talosVersion != "latest" {
-		versionContract, err := config.ParseContractFromVersion(cOps.talosVersion)
-		if err != nil {
-			return nil, nil, fmt.Errorf("error parsing Talos version %q: %w", cOps.talosVersion, err)
-		}
-
-		genOption = generate.WithVersionContract(versionContract)
+func getVersionContractGenOps(cOps commonOps) ([]generate.Option, *config.VersionContract, error) {
+	if cOps.talosVersion == "latest" {
+		return nil, nil, nil
 	}
 
-	return genOption, versionContract, nil
+	versionContract, err := config.ParseContractFromVersion(cOps.talosVersion)
+	if err != nil {
+		return nil, nil, fmt.Errorf("error parsing Talos version %q: %w", cOps.talosVersion, err)
+	}
+
+	return []generate.Option{generate.WithVersionContract(versionContract)}, versionContract, nil
 }
 
 func getWithAdditionalSubjectAltNamesGenOps(endpointList []string) []generate.Option {
-	ops := []generate.Option{}
-
-	for _, endpointHostPort := range endpointList {
+	return xslices.Map(endpointList, func(endpointHostPort string) generate.Option {
 		endpointHost, _, err := net.SplitHostPort(endpointHostPort)
 		if err != nil {
 			endpointHost = endpointHostPort
 		}
 
-		ops = append(ops, generate.WithAdditionalSubjectAltNames([]string{endpointHost}))
-	}
-
-	return ops
+		return generate.WithAdditionalSubjectAltNames([]string{endpointHost})
+	})
 }
 
 func getIps(cidr netip.Prefix, cOps commonOps) ([]netip.Addr, error) {
@@ -418,13 +408,7 @@ func postCreate(
 		}
 	}
 
-	fmt.Println("Bootstrapping kubernetes cluster")
-
-	if err := bootstrapCluster(ctx, clusterAccess, cOps); err != nil {
-		return err
-	}
-
-	return nil
+	return bootstrapCluster(ctx, clusterAccess, cOps)
 }
 
 func bootstrapCluster(ctx context.Context, clusterAccess *access.Adapter, cOps commonOps) error {
@@ -448,17 +432,15 @@ func bootstrapCluster(ctx context.Context, clusterAccess *access.Adapter, cOps c
 		checks = slices.Concat(check.PreBootSequenceChecks(), check.K8sComponentsReadinessChecks())
 	}
 
-	checks = append(checks, check.ExtraClusterChecks()...)
+	checks = slices.Concat(checks, check.ExtraClusterChecks())
 
 	if err := check.Wait(checkCtx, clusterAccess, checks, check.StderrReporter()); err != nil {
 		return err
 	}
 
-	if !cOps.skipKubeconfig {
-		if err := mergeKubeconfig(ctx, clusterAccess); err != nil {
-			return err
-		}
+	if cOps.skipKubeconfig {
+		return nil
 	}
 
-	return nil
+	return mergeKubeconfig(ctx, clusterAccess)
 }

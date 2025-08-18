@@ -50,7 +50,7 @@ func (s *APIBootstrapper) Bootstrap(ctx context.Context, out io.Writer) error {
 	nodeIP := controlPlaneNodes[0].IPs[0]
 	nodeCtx := client.WithNodes(ctx, nodeIP.String())
 
-	fmt.Fprintln(out, "waiting for API")
+	fmt.Fprintln(out, "waiting for Talos API (to bootstrap the cluster)")
 
 	err = retry.Constant(10*time.Minute, retry.WithUnits(500*time.Millisecond)).RetryWithContext(nodeCtx, func(nodeCtx context.Context) error {
 		retryCtx, cancel := context.WithTimeout(nodeCtx, 2*time.Second)
