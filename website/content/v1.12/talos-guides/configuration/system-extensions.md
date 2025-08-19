@@ -12,6 +12,23 @@ container runtimes, loading additional firmware, etc.
 System extensions are only activated during the installation or upgrade of Talos Linux.
 With system extensions installed, the Talos root filesystem is still immutable and read-only.
 
+## Official System Extension Tiers
+
+Talos Linux provides a number of [official system extensions](https://github.com/siderolabs/extensions), which are split into the following
+tiers based on support level:
+
+| Tier | core | extra | contrib |
+| --- | --- | --- | --- |
+| Description | Extensions fully supported by Sidero Labs | Some level of support, might vary per extension | Supported by the community |
+| Supported by Sidero Labs | 🟢 | ✔️ (best effort) | ❌ |
+| Support Channel | GitHub [Issues](https://github.com/siderolabs/extensions/issues), [Discussions](https://github.com/siderolabs/extensions/discussions), [Sidero Labs commercial support](https://www.siderolabs.com/support/) | GitHub [Issues](https://github.com/siderolabs/extensions/issues) and [Discussions](https://github.com/siderolabs/extensions/discussions) | GitHub [Discussions in “contrib” section](https://github.com/siderolabs/extensions/discussions/categories/contrib) |
+| Updates managed by Sidero Labs | 🟢 | 🟢 | ✔️ (best effort) |
+| Documentation | 🟢 | ✔️ (best effort) | ❌ |
+| Automated tests | 🟢 (or no automated tests required, e.g. firmware) | ✔️ (best effort) | ❌ |
+| SBOMs | 🟢 (or not required, e.g. firmware) | ✔️ (best effort) | ❌ (community might provide some, but not required) |
+| CVE Scan | 🟢 | ✔️ (scan is done, but CVEs don’t block the release) | ❌ |
+| Compatibility/Build issues | 🟢 | ✔️ (best effort) | ❌ (extension will be disabled if it fails to build) |
+
 ## Installing System Extensions
 
 > Note: the way to install system extensions in the `.machine.install` section of the machine configuration is now deprecated.
