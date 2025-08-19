@@ -2613,7 +2613,6 @@ spec:
         - integration/aws-nvidia-oss-lts
         - integration/aws-nvidia-oss
         - integration/aws-nvidia
-        - integration/aws
       steps:
         - name: download-artifacts
           conditions:
@@ -2713,7 +2712,6 @@ spec:
         - integration/aws-nvidia-oss-production
         - integration/aws-nvidia-oss
         - integration/aws-nvidia
-        - integration/aws
       steps:
         - name: download-artifacts
           conditions:
@@ -2813,7 +2811,6 @@ spec:
         - integration/aws-nvidia-nonfree-lts
         - integration/aws-nvidia-nonfree
         - integration/aws-nvidia
-        - integration/aws
       steps:
         - name: download-artifacts
           conditions:
@@ -2911,7 +2908,6 @@ spec:
         - integration/aws-nvidia-nonfree-production
         - integration/aws-nvidia-nonfree
         - integration/aws-nvidia
-        - integration/aws
       steps:
         - name: download-artifacts
           conditions:

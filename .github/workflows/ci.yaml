@@ -1,6 +1,6 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
 #
-# Generated on 2025-08-19T08:41:30Z by kres 8d5a3f6.
+# Generated on 2025-08-19T12:49:21Z by kres d1ef768.
 
 concurrency:
   group: ${{ github.head_ref || github.run_id }}
@@ -703,7 +703,7 @@ jobs:
     runs-on:
       - self-hosted
       - generic
-    if: contains(fromJSON(needs.default.outputs.labels), 'integration/aws-nvidia-nonfree-lts') || contains(fromJSON(needs.default.outputs.labels), 'integration/aws-nvidia-nonfree') || contains(fromJSON(needs.default.outputs.labels), 'integration/aws-nvidia') || contains(fromJSON(needs.default.outputs.labels), 'integration/aws')
+    if: contains(fromJSON(needs.default.outputs.labels), 'integration/aws-nvidia-nonfree-lts') || contains(fromJSON(needs.default.outputs.labels), 'integration/aws-nvidia-nonfree') || contains(fromJSON(needs.default.outputs.labels), 'integration/aws-nvidia')
     needs:
       - default
     steps:
@@ -856,7 +856,7 @@ jobs:
     runs-on:
       - self-hosted
       - generic
-    if: contains(fromJSON(needs.default.outputs.labels), 'integration/aws-nvidia-nonfree-production') || contains(fromJSON(needs.default.outputs.labels), 'integration/aws-nvidia-nonfree') || contains(fromJSON(needs.default.outputs.labels), 'integration/aws-nvidia') || contains(fromJSON(needs.default.outputs.labels), 'integration/aws')
+    if: contains(fromJSON(needs.default.outputs.labels), 'integration/aws-nvidia-nonfree-production') || contains(fromJSON(needs.default.outputs.labels), 'integration/aws-nvidia-nonfree') || contains(fromJSON(needs.default.outputs.labels), 'integration/aws-nvidia')
     needs:
       - default
     steps:
@@ -1009,7 +1009,7 @@ jobs:
     runs-on:
       - self-hosted
       - generic
-    if: contains(fromJSON(needs.default.outputs.labels), 'integration/aws-nvidia-oss-lts') || contains(fromJSON(needs.default.outputs.labels), 'integration/aws-nvidia-oss') || contains(fromJSON(needs.default.outputs.labels), 'integration/aws-nvidia') || contains(fromJSON(needs.default.outputs.labels), 'integration/aws')
+    if: contains(fromJSON(needs.default.outputs.labels), 'integration/aws-nvidia-oss-lts') || contains(fromJSON(needs.default.outputs.labels), 'integration/aws-nvidia-oss') || contains(fromJSON(needs.default.outputs.labels), 'integration/aws-nvidia')
     needs:
       - default
     steps:
@@ -1162,7 +1162,7 @@ jobs:
     runs-on:
       - self-hosted
       - generic
-    if: contains(fromJSON(needs.default.outputs.labels), 'integration/aws-nvidia-oss-production') || contains(fromJSON(needs.default.outputs.labels), 'integration/aws-nvidia-oss') || contains(fromJSON(needs.default.outputs.labels), 'integration/aws-nvidia') || contains(fromJSON(needs.default.outputs.labels), 'integration/aws')
+    if: contains(fromJSON(needs.default.outputs.labels), 'integration/aws-nvidia-oss-production') || contains(fromJSON(needs.default.outputs.labels), 'integration/aws-nvidia-oss') || contains(fromJSON(needs.default.outputs.labels), 'integration/aws-nvidia')
     needs:
       - default
     steps:
