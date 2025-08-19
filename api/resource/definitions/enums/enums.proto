@@ -438,22 +438,6 @@ enum KubespanPeerState {
   PEER_STATE_DOWN = 2;
 }
 
-// NetworkConfigLayer describes network configuration layers, with lowest priority first.
-enum NetworkConfigLayer {
-  CONFIG_DEFAULT = 0;
-  CONFIG_CMDLINE = 1;
-  CONFIG_PLATFORM = 2;
-  CONFIG_OPERATOR = 3;
-  CONFIG_MACHINE_CONFIGURATION = 4;
-}
-
-// NetworkOperator enumerates Talos network operators.
-enum NetworkOperator {
-  OPERATOR_DHCP4 = 0;
-  OPERATOR_DHCP6 = 1;
-  OPERATOR_VIP = 2;
-}
-
 // RuntimeMachineStage describes the stage of the machine boot/run process.
 enum RuntimeMachineStage {
   MACHINE_STAGE_UNKNOWN = 0;
@@ -479,5 +463,21 @@ enum RuntimeFIPSState {
   FIPS_STATE_DISABLED = 0;
   FIPS_STATE_ENABLED = 1;
   FIPS_STATE_STRICT = 2;
+}
+
+// NetworkConfigLayer describes network configuration layers, with lowest priority first.
+enum NetworkConfigLayer {
+  CONFIG_DEFAULT = 0;
+  CONFIG_CMDLINE = 1;
+  CONFIG_PLATFORM = 2;
+  CONFIG_OPERATOR = 3;
+  CONFIG_MACHINE_CONFIGURATION = 4;
+}
+
+// NetworkOperator enumerates Talos network operators.
+enum NetworkOperator {
+  OPERATOR_DHCP4 = 0;
+  OPERATOR_DHCP6 = 1;
+  OPERATOR_VIP = 2;
 }
 

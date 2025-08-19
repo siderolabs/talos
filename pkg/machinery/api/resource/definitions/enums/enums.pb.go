@@ -2374,112 +2374,6 @@ func (KubespanPeerState) EnumDescriptor() ([]byte, []int) {
 	return file_resource_definitions_enums_enums_proto_rawDescGZIP(), []int{36}
 }
 
-// NetworkConfigLayer describes network configuration layers, with lowest priority first.
-type NetworkConfigLayer int32
-
-const (
-	NetworkConfigLayer_CONFIG_DEFAULT               NetworkConfigLayer = 0
-	NetworkConfigLayer_CONFIG_CMDLINE               NetworkConfigLayer = 1
-	NetworkConfigLayer_CONFIG_PLATFORM              NetworkConfigLayer = 2
-	NetworkConfigLayer_CONFIG_OPERATOR              NetworkConfigLayer = 3
-	NetworkConfigLayer_CONFIG_MACHINE_CONFIGURATION NetworkConfigLayer = 4
-)
-
-// Enum value maps for NetworkConfigLayer.
-var (
-	NetworkConfigLayer_name = map[int32]string{
-		0: "CONFIG_DEFAULT",
-		1: "CONFIG_CMDLINE",
-		2: "CONFIG_PLATFORM",
-		3: "CONFIG_OPERATOR",
-		4: "CONFIG_MACHINE_CONFIGURATION",
-	}
-	NetworkConfigLayer_value = map[string]int32{
-		"CONFIG_DEFAULT":               0,
-		"CONFIG_CMDLINE":               1,
-		"CONFIG_PLATFORM":              2,
-		"CONFIG_OPERATOR":              3,
-		"CONFIG_MACHINE_CONFIGURATION": 4,
-	}
-)
-
-func (x NetworkConfigLayer) Enum() *NetworkConfigLayer {
-	p := new(NetworkConfigLayer)
-	*p = x
-	return p
-}
-
-func (x NetworkConfigLayer) String() string {
-	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
-}
-
-func (NetworkConfigLayer) Descriptor() protoreflect.EnumDescriptor {
-	return file_resource_definitions_enums_enums_proto_enumTypes[37].Descriptor()
-}
-
-func (NetworkConfigLayer) Type() protoreflect.EnumType {
-	return &file_resource_definitions_enums_enums_proto_enumTypes[37]
-}
-
-func (x NetworkConfigLayer) Number() protoreflect.EnumNumber {
-	return protoreflect.EnumNumber(x)
-}
-
-// Deprecated: Use NetworkConfigLayer.Descriptor instead.
-func (NetworkConfigLayer) EnumDescriptor() ([]byte, []int) {
-	return file_resource_definitions_enums_enums_proto_rawDescGZIP(), []int{37}
-}
-
-// NetworkOperator enumerates Talos network operators.
-type NetworkOperator int32
-
-const (
-	NetworkOperator_OPERATOR_DHCP4 NetworkOperator = 0
-	NetworkOperator_OPERATOR_DHCP6 NetworkOperator = 1
-	NetworkOperator_OPERATOR_VIP   NetworkOperator = 2
-)
-
-// Enum value maps for NetworkOperator.
-var (
-	NetworkOperator_name = map[int32]string{
-		0: "OPERATOR_DHCP4",
-		1: "OPERATOR_DHCP6",
-		2: "OPERATOR_VIP",
-	}
-	NetworkOperator_value = map[string]int32{
-		"OPERATOR_DHCP4": 0,
-		"OPERATOR_DHCP6": 1,
-		"OPERATOR_VIP":   2,
-	}
-)
-
-func (x NetworkOperator) Enum() *NetworkOperator {
-	p := new(NetworkOperator)
-	*p = x
-	return p
-}
-
-func (x NetworkOperator) String() string {
-	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
-}
-
-func (NetworkOperator) Descriptor() protoreflect.EnumDescriptor {
-	return file_resource_definitions_enums_enums_proto_enumTypes[38].Descriptor()
-}
-
-func (NetworkOperator) Type() protoreflect.EnumType {
-	return &file_resource_definitions_enums_enums_proto_enumTypes[38]
-}
-
-func (x NetworkOperator) Number() protoreflect.EnumNumber {
-	return protoreflect.EnumNumber(x)
-}
-
-// Deprecated: Use NetworkOperator.Descriptor instead.
-func (NetworkOperator) EnumDescriptor() ([]byte, []int) {
-	return file_resource_definitions_enums_enums_proto_rawDescGZIP(), []int{38}
-}
-
 // RuntimeMachineStage describes the stage of the machine boot/run process.
 type RuntimeMachineStage int32
 
@@ -2532,11 +2426,11 @@ func (x RuntimeMachineStage) String() string {
 }
 
 func (RuntimeMachineStage) Descriptor() protoreflect.EnumDescriptor {
-	return file_resource_definitions_enums_enums_proto_enumTypes[39].Descriptor()
+	return file_resource_definitions_enums_enums_proto_enumTypes[37].Descriptor()
 }
 
 func (RuntimeMachineStage) Type() protoreflect.EnumType {
-	return &file_resource_definitions_enums_enums_proto_enumTypes[39]
+	return &file_resource_definitions_enums_enums_proto_enumTypes[37]
 }
 
 func (x RuntimeMachineStage) Number() protoreflect.EnumNumber {
@@ -2545,7 +2439,7 @@ func (x RuntimeMachineStage) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use RuntimeMachineStage.Descriptor instead.
 func (RuntimeMachineStage) EnumDescriptor() ([]byte, []int) {
-	return file_resource_definitions_enums_enums_proto_rawDescGZIP(), []int{39}
+	return file_resource_definitions_enums_enums_proto_rawDescGZIP(), []int{37}
 }
 
 // RuntimeSELinuxState describes the current SELinux status.
@@ -2582,11 +2476,11 @@ func (x RuntimeSELinuxState) String() string {
 }
 
 func (RuntimeSELinuxState) Descriptor() protoreflect.EnumDescriptor {
-	return file_resource_definitions_enums_enums_proto_enumTypes[40].Descriptor()
+	return file_resource_definitions_enums_enums_proto_enumTypes[38].Descriptor()
 }
 
 func (RuntimeSELinuxState) Type() protoreflect.EnumType {
-	return &file_resource_definitions_enums_enums_proto_enumTypes[40]
+	return &file_resource_definitions_enums_enums_proto_enumTypes[38]
 }
 
 func (x RuntimeSELinuxState) Number() protoreflect.EnumNumber {
@@ -2595,7 +2489,7 @@ func (x RuntimeSELinuxState) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use RuntimeSELinuxState.Descriptor instead.
 func (RuntimeSELinuxState) EnumDescriptor() ([]byte, []int) {
-	return file_resource_definitions_enums_enums_proto_rawDescGZIP(), []int{40}
+	return file_resource_definitions_enums_enums_proto_rawDescGZIP(), []int{38}
 }
 
 // RuntimeFIPSState describes the current FIPS status.
@@ -2632,11 +2526,11 @@ func (x RuntimeFIPSState) String() string {
 }
 
 func (RuntimeFIPSState) Descriptor() protoreflect.EnumDescriptor {
-	return file_resource_definitions_enums_enums_proto_enumTypes[41].Descriptor()
+	return file_resource_definitions_enums_enums_proto_enumTypes[39].Descriptor()
 }
 
 func (RuntimeFIPSState) Type() protoreflect.EnumType {
-	return &file_resource_definitions_enums_enums_proto_enumTypes[41]
+	return &file_resource_definitions_enums_enums_proto_enumTypes[39]
 }
 
 func (x RuntimeFIPSState) Number() protoreflect.EnumNumber {
@@ -2645,6 +2539,112 @@ func (x RuntimeFIPSState) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use RuntimeFIPSState.Descriptor instead.
 func (RuntimeFIPSState) EnumDescriptor() ([]byte, []int) {
+	return file_resource_definitions_enums_enums_proto_rawDescGZIP(), []int{39}
+}
+
+// NetworkConfigLayer describes network configuration layers, with lowest priority first.
+type NetworkConfigLayer int32
+
+const (
+	NetworkConfigLayer_CONFIG_DEFAULT               NetworkConfigLayer = 0
+	NetworkConfigLayer_CONFIG_CMDLINE               NetworkConfigLayer = 1
+	NetworkConfigLayer_CONFIG_PLATFORM              NetworkConfigLayer = 2
+	NetworkConfigLayer_CONFIG_OPERATOR              NetworkConfigLayer = 3
+	NetworkConfigLayer_CONFIG_MACHINE_CONFIGURATION NetworkConfigLayer = 4
+)
+
+// Enum value maps for NetworkConfigLayer.
+var (
+	NetworkConfigLayer_name = map[int32]string{
+		0: "CONFIG_DEFAULT",
+		1: "CONFIG_CMDLINE",
+		2: "CONFIG_PLATFORM",
+		3: "CONFIG_OPERATOR",
+		4: "CONFIG_MACHINE_CONFIGURATION",
+	}
+	NetworkConfigLayer_value = map[string]int32{
+		"CONFIG_DEFAULT":               0,
+		"CONFIG_CMDLINE":               1,
+		"CONFIG_PLATFORM":              2,
+		"CONFIG_OPERATOR":              3,
+		"CONFIG_MACHINE_CONFIGURATION": 4,
+	}
+)
+
+func (x NetworkConfigLayer) Enum() *NetworkConfigLayer {
+	p := new(NetworkConfigLayer)
+	*p = x
+	return p
+}
+
+func (x NetworkConfigLayer) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (NetworkConfigLayer) Descriptor() protoreflect.EnumDescriptor {
+	return file_resource_definitions_enums_enums_proto_enumTypes[40].Descriptor()
+}
+
+func (NetworkConfigLayer) Type() protoreflect.EnumType {
+	return &file_resource_definitions_enums_enums_proto_enumTypes[40]
+}
+
+func (x NetworkConfigLayer) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use NetworkConfigLayer.Descriptor instead.
+func (NetworkConfigLayer) EnumDescriptor() ([]byte, []int) {
+	return file_resource_definitions_enums_enums_proto_rawDescGZIP(), []int{40}
+}
+
+// NetworkOperator enumerates Talos network operators.
+type NetworkOperator int32
+
+const (
+	NetworkOperator_OPERATOR_DHCP4 NetworkOperator = 0
+	NetworkOperator_OPERATOR_DHCP6 NetworkOperator = 1
+	NetworkOperator_OPERATOR_VIP   NetworkOperator = 2
+)
+
+// Enum value maps for NetworkOperator.
+var (
+	NetworkOperator_name = map[int32]string{
+		0: "OPERATOR_DHCP4",
+		1: "OPERATOR_DHCP6",
+		2: "OPERATOR_VIP",
+	}
+	NetworkOperator_value = map[string]int32{
+		"OPERATOR_DHCP4": 0,
+		"OPERATOR_DHCP6": 1,
+		"OPERATOR_VIP":   2,
+	}
+)
+
+func (x NetworkOperator) Enum() *NetworkOperator {
+	p := new(NetworkOperator)
+	*p = x
+	return p
+}
+
+func (x NetworkOperator) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (NetworkOperator) Descriptor() protoreflect.EnumDescriptor {
+	return file_resource_definitions_enums_enums_proto_enumTypes[41].Descriptor()
+}
+
+func (NetworkOperator) Type() protoreflect.EnumType {
+	return &file_resource_definitions_enums_enums_proto_enumTypes[41]
+}
+
+func (x NetworkOperator) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use NetworkOperator.Descriptor instead.
+func (NetworkOperator) EnumDescriptor() ([]byte, []int) {
 	return file_resource_definitions_enums_enums_proto_rawDescGZIP(), []int{41}
 }
 
@@ -2990,17 +2990,7 @@ const file_resource_definitions_enums_enums_proto_rawDesc = "" +
 	"\x11KubespanPeerState\x12\x16\n" +
 	"\x12PEER_STATE_UNKNOWN\x10\x00\x12\x11\n" +
 	"\rPEER_STATE_UP\x10\x01\x12\x13\n" +
-	"\x0fPEER_STATE_DOWN\x10\x02*\x88\x01\n" +
-	"\x12NetworkConfigLayer\x12\x12\n" +
-	"\x0eCONFIG_DEFAULT\x10\x00\x12\x12\n" +
-	"\x0eCONFIG_CMDLINE\x10\x01\x12\x13\n" +
-	"\x0fCONFIG_PLATFORM\x10\x02\x12\x13\n" +
-	"\x0fCONFIG_OPERATOR\x10\x03\x12 \n" +
-	"\x1cCONFIG_MACHINE_CONFIGURATION\x10\x04*K\n" +
-	"\x0fNetworkOperator\x12\x12\n" +
-	"\x0eOPERATOR_DHCP4\x10\x00\x12\x12\n" +
-	"\x0eOPERATOR_DHCP6\x10\x01\x12\x10\n" +
-	"\fOPERATOR_VIP\x10\x02*\x9b\x02\n" +
+	"\x0fPEER_STATE_DOWN\x10\x02*\x9b\x02\n" +
 	"\x13RuntimeMachineStage\x12\x19\n" +
 	"\x15MACHINE_STAGE_UNKNOWN\x10\x00\x12\x19\n" +
 	"\x15MACHINE_STAGE_BOOTING\x10\x01\x12\x1c\n" +
@@ -3018,7 +3008,17 @@ const file_resource_definitions_enums_enums_proto_rawDesc = "" +
 	"\x10RuntimeFIPSState\x12\x17\n" +
 	"\x13FIPS_STATE_DISABLED\x10\x00\x12\x16\n" +
 	"\x12FIPS_STATE_ENABLED\x10\x01\x12\x15\n" +
-	"\x11FIPS_STATE_STRICT\x10\x02Bt\n" +
+	"\x11FIPS_STATE_STRICT\x10\x02*\x88\x01\n" +
+	"\x12NetworkConfigLayer\x12\x12\n" +
+	"\x0eCONFIG_DEFAULT\x10\x00\x12\x12\n" +
+	"\x0eCONFIG_CMDLINE\x10\x01\x12\x13\n" +
+	"\x0fCONFIG_PLATFORM\x10\x02\x12\x13\n" +
+	"\x0fCONFIG_OPERATOR\x10\x03\x12 \n" +
+	"\x1cCONFIG_MACHINE_CONFIGURATION\x10\x04*K\n" +
+	"\x0fNetworkOperator\x12\x12\n" +
+	"\x0eOPERATOR_DHCP4\x10\x00\x12\x12\n" +
+	"\x0eOPERATOR_DHCP6\x10\x01\x12\x10\n" +
+	"\fOPERATOR_VIP\x10\x02Bt\n" +
 	"(dev.talos.api.resource.definitions.enumsZHgithub.com/siderolabs/talos/pkg/machinery/api/resource/definitions/enumsb\x06proto3"
 
 var (
@@ -3072,11 +3072,11 @@ var file_resource_definitions_enums_enums_proto_goTypes = []any{
 	(CriImageCacheStatus)(0),             // 34: talos.resource.definitions.enums.CriImageCacheStatus
 	(CriImageCacheCopyStatus)(0),         // 35: talos.resource.definitions.enums.CriImageCacheCopyStatus
 	(KubespanPeerState)(0),               // 36: talos.resource.definitions.enums.KubespanPeerState
-	(NetworkConfigLayer)(0),              // 37: talos.resource.definitions.enums.NetworkConfigLayer
-	(NetworkOperator)(0),                 // 38: talos.resource.definitions.enums.NetworkOperator
-	(RuntimeMachineStage)(0),             // 39: talos.resource.definitions.enums.RuntimeMachineStage
-	(RuntimeSELinuxState)(0),             // 40: talos.resource.definitions.enums.RuntimeSELinuxState
-	(RuntimeFIPSState)(0),                // 41: talos.resource.definitions.enums.RuntimeFIPSState
+	(RuntimeMachineStage)(0),             // 37: talos.resource.definitions.enums.RuntimeMachineStage
+	(RuntimeSELinuxState)(0),             // 38: talos.resource.definitions.enums.RuntimeSELinuxState
+	(RuntimeFIPSState)(0),                // 39: talos.resource.definitions.enums.RuntimeFIPSState
+	(NetworkConfigLayer)(0),              // 40: talos.resource.definitions.enums.NetworkConfigLayer
+	(NetworkOperator)(0),                 // 41: talos.resource.definitions.enums.NetworkOperator
 }
 var file_resource_definitions_enums_enums_proto_depIdxs = []int32{
 	0, // [0:0] is the sub-list for method output_type

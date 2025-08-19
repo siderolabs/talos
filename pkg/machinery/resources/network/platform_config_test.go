@@ -2,7 +2,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-package runtime_test
+package network_test
 
 import (
 	"net/netip"
@@ -10,7 +10,6 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
 	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
 	"github.com/siderolabs/talos/pkg/machinery/resources/network"
 )
@@ -18,16 +17,16 @@ import (
 func TestPlatformConfigEqual(t *testing.T) {
 	t.Parallel()
 
-	assert.True(t, (&runtime.PlatformNetworkConfig{}).Equal(&runtime.PlatformNetworkConfig{}))
-	assert.True(t, (&runtime.PlatformNetworkConfig{Addresses: []network.AddressSpecSpec{}}).Equal(&runtime.PlatformNetworkConfig{}))
-	assert.True(t, (&runtime.PlatformNetworkConfig{Addresses: []network.AddressSpecSpec{
+	assert.True(t, (&network.PlatformConfigSpec{}).Equal(&network.PlatformConfigSpec{}))
+	assert.True(t, (&network.PlatformConfigSpec{Addresses: []network.AddressSpecSpec{}}).Equal(&network.PlatformConfigSpec{}))
+	assert.True(t, (&network.PlatformConfigSpec{Addresses: []network.AddressSpecSpec{
 		{
 			Address:  netip.MustParsePrefix("192.168.68.54/22"),
 			LinkName: "eth0",
 			Family:   nethelpers.FamilyInet4,
 			Scope:    nethelpers.ScopeGlobal,
 		},
-	}}).Equal(&runtime.PlatformNetworkConfig{Addresses: []network.AddressSpecSpec{
+	}}).Equal(&network.PlatformConfigSpec{Addresses: []network.AddressSpecSpec{
 		{
 			Address:  netip.MustParsePrefix("192.168.68.54/22"),
 			LinkName: "eth0",
@@ -36,15 +35,15 @@ func TestPlatformConfigEqual(t *testing.T) {
 		},
 	}}))
 
-	assert.False(t, (&runtime.PlatformNetworkConfig{}).Equal(nil))
-	assert.False(t, (&runtime.PlatformNetworkConfig{Addresses: []network.AddressSpecSpec{
+	assert.False(t, (&network.PlatformConfigSpec{}).Equal(nil))
+	assert.False(t, (&network.PlatformConfigSpec{Addresses: []network.AddressSpecSpec{
 		{
 			Address:  netip.MustParsePrefix("192.168.68.1/22"),
 			LinkName: "eth0",
 			Family:   nethelpers.FamilyInet4,
 			Scope:    nethelpers.ScopeGlobal,
 		},
-	}}).Equal(&runtime.PlatformNetworkConfig{Addresses: []network.AddressSpecSpec{
+	}}).Equal(&network.PlatformConfigSpec{Addresses: []network.AddressSpecSpec{
 		{
 			Address:  netip.MustParsePrefix("192.168.68.2/22"),
 			LinkName: "eth1",

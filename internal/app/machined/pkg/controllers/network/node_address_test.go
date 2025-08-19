@@ -89,7 +89,7 @@ func (suite *NodeAddressSuite) newAddress(addr netip.Prefix, link *network.LinkS
 }
 
 func (suite *NodeAddressSuite) newExternalAddress(addr netip.Prefix) {
-	var platformConfigController netctrl.PlatformConfigController
+	var platformConfigController netctrl.PlatformConfigApplyController
 
 	addressStatus := network.NewAddressStatus(network.NamespaceName, network.AddressID("external", addr))
 	addressStatus.TypedSpec().Address = addr

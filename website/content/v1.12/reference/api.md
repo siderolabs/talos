@@ -430,6 +430,35 @@ description: Talos gRPC API reference.
     - [PeerSpecSpec](#talos.resource.definitions.kubespan.PeerSpecSpec)
     - [PeerStatusSpec](#talos.resource.definitions.kubespan.PeerStatusSpec)
   
+- [resource/definitions/runtime/runtime.proto](#resource/definitions/runtime/runtime.proto)
+    - [BootedEntrySpec](#talos.resource.definitions.runtime.BootedEntrySpec)
+    - [DevicesStatusSpec](#talos.resource.definitions.runtime.DevicesStatusSpec)
+    - [DiagnosticSpec](#talos.resource.definitions.runtime.DiagnosticSpec)
+    - [EventSinkConfigSpec](#talos.resource.definitions.runtime.EventSinkConfigSpec)
+    - [ExtensionServiceConfigFile](#talos.resource.definitions.runtime.ExtensionServiceConfigFile)
+    - [ExtensionServiceConfigSpec](#talos.resource.definitions.runtime.ExtensionServiceConfigSpec)
+    - [ExtensionServiceConfigStatusSpec](#talos.resource.definitions.runtime.ExtensionServiceConfigStatusSpec)
+    - [KernelCmdlineSpec](#talos.resource.definitions.runtime.KernelCmdlineSpec)
+    - [KernelModuleSpecSpec](#talos.resource.definitions.runtime.KernelModuleSpecSpec)
+    - [KernelParamSpecSpec](#talos.resource.definitions.runtime.KernelParamSpecSpec)
+    - [KernelParamStatusSpec](#talos.resource.definitions.runtime.KernelParamStatusSpec)
+    - [KmsgLogConfigSpec](#talos.resource.definitions.runtime.KmsgLogConfigSpec)
+    - [LoadedKernelModuleSpec](#talos.resource.definitions.runtime.LoadedKernelModuleSpec)
+    - [MachineStatusSpec](#talos.resource.definitions.runtime.MachineStatusSpec)
+    - [MachineStatusStatus](#talos.resource.definitions.runtime.MachineStatusStatus)
+    - [MaintenanceServiceConfigSpec](#talos.resource.definitions.runtime.MaintenanceServiceConfigSpec)
+    - [MetaKeySpec](#talos.resource.definitions.runtime.MetaKeySpec)
+    - [MetaLoadedSpec](#talos.resource.definitions.runtime.MetaLoadedSpec)
+    - [MountStatusSpec](#talos.resource.definitions.runtime.MountStatusSpec)
+    - [PlatformMetadataSpec](#talos.resource.definitions.runtime.PlatformMetadataSpec)
+    - [PlatformMetadataSpec.TagsEntry](#talos.resource.definitions.runtime.PlatformMetadataSpec.TagsEntry)
+    - [SBOMItemSpec](#talos.resource.definitions.runtime.SBOMItemSpec)
+    - [SecurityStateSpec](#talos.resource.definitions.runtime.SecurityStateSpec)
+    - [UniqueMachineTokenSpec](#talos.resource.definitions.runtime.UniqueMachineTokenSpec)
+    - [UnmetCondition](#talos.resource.definitions.runtime.UnmetCondition)
+    - [WatchdogTimerConfigSpec](#talos.resource.definitions.runtime.WatchdogTimerConfigSpec)
+    - [WatchdogTimerStatusSpec](#talos.resource.definitions.runtime.WatchdogTimerStatusSpec)
+  
 - [resource/definitions/network/network.proto](#resource/definitions/network/network.proto)
     - [AddressSpecSpec](#talos.resource.definitions.network.AddressSpecSpec)
     - [AddressStatusSpec](#talos.resource.definitions.network.AddressStatusSpec)
@@ -471,6 +500,7 @@ description: Talos gRPC API reference.
     - [NodeAddressSortAlgorithmSpec](#talos.resource.definitions.network.NodeAddressSortAlgorithmSpec)
     - [NodeAddressSpec](#talos.resource.definitions.network.NodeAddressSpec)
     - [OperatorSpecSpec](#talos.resource.definitions.network.OperatorSpecSpec)
+    - [PlatformConfigSpec](#talos.resource.definitions.network.PlatformConfigSpec)
     - [PortRange](#talos.resource.definitions.network.PortRange)
     - [ProbeSpecSpec](#talos.resource.definitions.network.ProbeSpecSpec)
     - [ProbeStatusSpec](#talos.resource.definitions.network.ProbeStatusSpec)
@@ -494,35 +524,6 @@ description: Talos gRPC API reference.
     - [CPUSpec](#talos.resource.definitions.perf.CPUSpec)
     - [CPUStat](#talos.resource.definitions.perf.CPUStat)
     - [MemorySpec](#talos.resource.definitions.perf.MemorySpec)
-  
-- [resource/definitions/runtime/runtime.proto](#resource/definitions/runtime/runtime.proto)
-    - [BootedEntrySpec](#talos.resource.definitions.runtime.BootedEntrySpec)
-    - [DevicesStatusSpec](#talos.resource.definitions.runtime.DevicesStatusSpec)
-    - [DiagnosticSpec](#talos.resource.definitions.runtime.DiagnosticSpec)
-    - [EventSinkConfigSpec](#talos.resource.definitions.runtime.EventSinkConfigSpec)
-    - [ExtensionServiceConfigFile](#talos.resource.definitions.runtime.ExtensionServiceConfigFile)
-    - [ExtensionServiceConfigSpec](#talos.resource.definitions.runtime.ExtensionServiceConfigSpec)
-    - [ExtensionServiceConfigStatusSpec](#talos.resource.definitions.runtime.ExtensionServiceConfigStatusSpec)
-    - [KernelCmdlineSpec](#talos.resource.definitions.runtime.KernelCmdlineSpec)
-    - [KernelModuleSpecSpec](#talos.resource.definitions.runtime.KernelModuleSpecSpec)
-    - [KernelParamSpecSpec](#talos.resource.definitions.runtime.KernelParamSpecSpec)
-    - [KernelParamStatusSpec](#talos.resource.definitions.runtime.KernelParamStatusSpec)
-    - [KmsgLogConfigSpec](#talos.resource.definitions.runtime.KmsgLogConfigSpec)
-    - [LoadedKernelModuleSpec](#talos.resource.definitions.runtime.LoadedKernelModuleSpec)
-    - [MachineStatusSpec](#talos.resource.definitions.runtime.MachineStatusSpec)
-    - [MachineStatusStatus](#talos.resource.definitions.runtime.MachineStatusStatus)
-    - [MaintenanceServiceConfigSpec](#talos.resource.definitions.runtime.MaintenanceServiceConfigSpec)
-    - [MetaKeySpec](#talos.resource.definitions.runtime.MetaKeySpec)
-    - [MetaLoadedSpec](#talos.resource.definitions.runtime.MetaLoadedSpec)
-    - [MountStatusSpec](#talos.resource.definitions.runtime.MountStatusSpec)
-    - [PlatformMetadataSpec](#talos.resource.definitions.runtime.PlatformMetadataSpec)
-    - [PlatformMetadataSpec.TagsEntry](#talos.resource.definitions.runtime.PlatformMetadataSpec.TagsEntry)
-    - [SBOMItemSpec](#talos.resource.definitions.runtime.SBOMItemSpec)
-    - [SecurityStateSpec](#talos.resource.definitions.runtime.SecurityStateSpec)
-    - [UniqueMachineTokenSpec](#talos.resource.definitions.runtime.UniqueMachineTokenSpec)
-    - [UnmetCondition](#talos.resource.definitions.runtime.UnmetCondition)
-    - [WatchdogTimerConfigSpec](#talos.resource.definitions.runtime.WatchdogTimerConfigSpec)
-    - [WatchdogTimerStatusSpec](#talos.resource.definitions.runtime.WatchdogTimerStatusSpec)
   
 - [resource/definitions/secrets/secrets.proto](#resource/definitions/secrets/secrets.proto)
     - [APICertsSpec](#talos.resource.definitions.secrets.APICertsSpec)
@@ -7438,6 +7439,471 @@ PeerStatusSpec describes PeerStatus state.
 
 
 
+<a name="resource/definitions/runtime/runtime.proto"></a>
+<p align="right"><a href="#top">Top</a></p>
+
+## resource/definitions/runtime/runtime.proto
+
+
+
+<a name="talos.resource.definitions.runtime.BootedEntrySpec"></a>
+
+### BootedEntrySpec
+BootedEntrySpec describes the booted entry resource properties.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| booted_entry | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.runtime.DevicesStatusSpec"></a>
+
+### DevicesStatusSpec
+DevicesStatusSpec is the spec for devices status.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| ready | [bool](#bool) |  |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.runtime.DiagnosticSpec"></a>
+
+### DiagnosticSpec
+DiagnosticSpec is the spec for devices status.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| message | [string](#string) |  |  |
+| details | [string](#string) | repeated |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.runtime.EventSinkConfigSpec"></a>
+
+### EventSinkConfigSpec
+EventSinkConfigSpec describes configuration of Talos event log streaming.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| endpoint | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.runtime.ExtensionServiceConfigFile"></a>
+
+### ExtensionServiceConfigFile
+ExtensionServiceConfigFile describes extensions service config files.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| content | [string](#string) |  |  |
+| mount_path | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.runtime.ExtensionServiceConfigSpec"></a>
+
+### ExtensionServiceConfigSpec
+ExtensionServiceConfigSpec describes status of rendered extensions service config files.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| files | [ExtensionServiceConfigFile](#talos.resource.definitions.runtime.ExtensionServiceConfigFile) | repeated |  |
+| environment | [string](#string) | repeated |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.runtime.ExtensionServiceConfigStatusSpec"></a>
+
+### ExtensionServiceConfigStatusSpec
+ExtensionServiceConfigStatusSpec describes status of rendered extensions service config files.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| spec_version | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.runtime.KernelCmdlineSpec"></a>
+
+### KernelCmdlineSpec
+KernelCmdlineSpec presents kernel command line (contents of /proc/cmdline).
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| cmdline | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.runtime.KernelModuleSpecSpec"></a>
+
+### KernelModuleSpecSpec
+KernelModuleSpecSpec describes Linux kernel module to load.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| name | [string](#string) |  |  |
+| parameters | [string](#string) | repeated |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.runtime.KernelParamSpecSpec"></a>
+
+### KernelParamSpecSpec
+KernelParamSpecSpec describes status of the defined sysctls.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| value | [string](#string) |  |  |
+| ignore_errors | [bool](#bool) |  |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.runtime.KernelParamStatusSpec"></a>
+
+### KernelParamStatusSpec
+KernelParamStatusSpec describes status of the defined sysctls.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| current | [string](#string) |  |  |
+| default | [string](#string) |  |  |
+| unsupported | [bool](#bool) |  |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.runtime.KmsgLogConfigSpec"></a>
+
+### KmsgLogConfigSpec
+KmsgLogConfigSpec describes configuration for kmsg log streaming.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| destinations | [common.URL](#common.URL) | repeated |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.runtime.LoadedKernelModuleSpec"></a>
+
+### LoadedKernelModuleSpec
+LoadedKernelModuleSpec describes Linux kernel module to load.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| size | [int64](#int64) |  |  |
+| reference_count | [int64](#int64) |  |  |
+| dependencies | [string](#string) | repeated |  |
+| state | [string](#string) |  |  |
+| address | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.runtime.MachineStatusSpec"></a>
+
+### MachineStatusSpec
+MachineStatusSpec describes status of the defined sysctls.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| stage | [talos.resource.definitions.enums.RuntimeMachineStage](#talos.resource.definitions.enums.RuntimeMachineStage) |  |  |
+| status | [MachineStatusStatus](#talos.resource.definitions.runtime.MachineStatusStatus) |  |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.runtime.MachineStatusStatus"></a>
+
+### MachineStatusStatus
+MachineStatusStatus describes machine current status at the stage.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| ready | [bool](#bool) |  |  |
+| unmet_conditions | [UnmetCondition](#talos.resource.definitions.runtime.UnmetCondition) | repeated |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.runtime.MaintenanceServiceConfigSpec"></a>
+
+### MaintenanceServiceConfigSpec
+MaintenanceServiceConfigSpec describes configuration for maintenance service API.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| listen_address | [string](#string) |  |  |
+| reachable_addresses | [common.NetIP](#common.NetIP) | repeated |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.runtime.MetaKeySpec"></a>
+
+### MetaKeySpec
+MetaKeySpec describes status of the defined sysctls.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| value | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.runtime.MetaLoadedSpec"></a>
+
+### MetaLoadedSpec
+MetaLoadedSpec is the spec for meta loaded. The Done field is always true when resource exists.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| done | [bool](#bool) |  |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.runtime.MountStatusSpec"></a>
+
+### MountStatusSpec
+MountStatusSpec describes status of the defined sysctls.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| source | [string](#string) |  |  |
+| target | [string](#string) |  |  |
+| filesystem_type | [string](#string) |  |  |
+| options | [string](#string) | repeated |  |
+| encrypted | [bool](#bool) |  |  |
+| encryption_providers | [string](#string) | repeated |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.runtime.PlatformMetadataSpec"></a>
+
+### PlatformMetadataSpec
+PlatformMetadataSpec describes platform metadata properties.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| platform | [string](#string) |  |  |
+| hostname | [string](#string) |  |  |
+| region | [string](#string) |  |  |
+| zone | [string](#string) |  |  |
+| instance_type | [string](#string) |  |  |
+| instance_id | [string](#string) |  |  |
+| provider_id | [string](#string) |  |  |
+| spot | [bool](#bool) |  |  |
+| internal_dns | [string](#string) |  |  |
+| external_dns | [string](#string) |  |  |
+| tags | [PlatformMetadataSpec.TagsEntry](#talos.resource.definitions.runtime.PlatformMetadataSpec.TagsEntry) | repeated |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.runtime.PlatformMetadataSpec.TagsEntry"></a>
+
+### PlatformMetadataSpec.TagsEntry
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| key | [string](#string) |  |  |
+| value | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.runtime.SBOMItemSpec"></a>
+
+### SBOMItemSpec
+SBOMItemSpec describes the SBOM item resource properties.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| name | [string](#string) |  |  |
+| version | [string](#string) |  |  |
+| license | [string](#string) |  |  |
+| cp_es | [string](#string) | repeated |  |
+| pur_ls | [string](#string) | repeated |  |
+| extension | [bool](#bool) |  |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.runtime.SecurityStateSpec"></a>
+
+### SecurityStateSpec
+SecurityStateSpec describes the security state resource properties.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| secure_boot | [bool](#bool) |  |  |
+| uki_signing_key_fingerprint | [string](#string) |  |  |
+| pcr_signing_key_fingerprint | [string](#string) |  |  |
+| se_linux_state | [talos.resource.definitions.enums.RuntimeSELinuxState](#talos.resource.definitions.enums.RuntimeSELinuxState) |  |  |
+| booted_with_uki | [bool](#bool) |  |  |
+| fips_state | [talos.resource.definitions.enums.RuntimeFIPSState](#talos.resource.definitions.enums.RuntimeFIPSState) |  |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.runtime.UniqueMachineTokenSpec"></a>
+
+### UniqueMachineTokenSpec
+UniqueMachineTokenSpec is the spec for the machine unique token. Token can be empty if machine wasn't assigned any.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| token | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.runtime.UnmetCondition"></a>
+
+### UnmetCondition
+UnmetCondition is a failure which prevents machine from being ready at the stage.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| name | [string](#string) |  |  |
+| reason | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.runtime.WatchdogTimerConfigSpec"></a>
+
+### WatchdogTimerConfigSpec
+WatchdogTimerConfigSpec describes configuration of watchdog timer.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| device | [string](#string) |  |  |
+| timeout | [google.protobuf.Duration](#google.protobuf.Duration) |  |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.runtime.WatchdogTimerStatusSpec"></a>
+
+### WatchdogTimerStatusSpec
+WatchdogTimerStatusSpec describes configuration of watchdog timer.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| device | [string](#string) |  |  |
+| timeout | [google.protobuf.Duration](#google.protobuf.Duration) |  |  |
+| feed_interval | [google.protobuf.Duration](#google.protobuf.Duration) |  |  |
+
+
+
+
+
+ <!-- end messages -->
+
+ <!-- end enums -->
+
+ <!-- end HasExtensions -->
+
+ <!-- end services -->
+
+
+
 <a name="resource/definitions/network/network.proto"></a>
 <p align="right"><a href="#top">Top</a></p>
 
@@ -8227,6 +8693,33 @@ OperatorSpecSpec describes DNS resolvers.
 
 
 
+<a name="talos.resource.definitions.network.PlatformConfigSpec"></a>
+
+### PlatformConfigSpec
+PlatformConfigSpec describes platform network configuration.
+
+This structure is marshaled to STATE partition to persist cached network configuration across
+reboots.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| addresses | [AddressSpecSpec](#talos.resource.definitions.network.AddressSpecSpec) | repeated |  |
+| links | [LinkSpecSpec](#talos.resource.definitions.network.LinkSpecSpec) | repeated |  |
+| routes | [RouteSpecSpec](#talos.resource.definitions.network.RouteSpecSpec) | repeated |  |
+| hostnames | [HostnameSpecSpec](#talos.resource.definitions.network.HostnameSpecSpec) | repeated |  |
+| resolvers | [ResolverSpecSpec](#talos.resource.definitions.network.ResolverSpecSpec) | repeated |  |
+| time_servers | [TimeServerSpecSpec](#talos.resource.definitions.network.TimeServerSpecSpec) | repeated |  |
+| operators | [OperatorSpecSpec](#talos.resource.definitions.network.OperatorSpecSpec) | repeated |  |
+| external_ips | [common.NetIP](#common.NetIP) | repeated |  |
+| probes | [ProbeSpecSpec](#talos.resource.definitions.network.ProbeSpecSpec) | repeated |  |
+| metadata | [talos.resource.definitions.runtime.PlatformMetadataSpec](#talos.resource.definitions.runtime.PlatformMetadataSpec) |  |  |
+
+
+
+
+
+
 <a name="talos.resource.definitions.network.PortRange"></a>
 
 ### PortRange
@@ -8670,471 +9163,6 @@ MemorySpec represents the last Memory stats snapshot.
 | direct_map4k | [uint64](#uint64) |  |  |
 | direct_map2m | [uint64](#uint64) |  |  |
 | direct_map1g | [uint64](#uint64) |  |  |
-
-
-
-
-
- <!-- end messages -->
-
- <!-- end enums -->
-
- <!-- end HasExtensions -->
-
- <!-- end services -->
-
-
-
-<a name="resource/definitions/runtime/runtime.proto"></a>
-<p align="right"><a href="#top">Top</a></p>
-
-## resource/definitions/runtime/runtime.proto
-
-
-
-<a name="talos.resource.definitions.runtime.BootedEntrySpec"></a>
-
-### BootedEntrySpec
-BootedEntrySpec describes the booted entry resource properties.
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| booted_entry | [string](#string) |  |  |
-
-
-
-
-
-
-<a name="talos.resource.definitions.runtime.DevicesStatusSpec"></a>
-
-### DevicesStatusSpec
-DevicesStatusSpec is the spec for devices status.
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| ready | [bool](#bool) |  |  |
-
-
-
-
-
-
-<a name="talos.resource.definitions.runtime.DiagnosticSpec"></a>
-
-### DiagnosticSpec
-DiagnosticSpec is the spec for devices status.
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| message | [string](#string) |  |  |
-| details | [string](#string) | repeated |  |
-
-
-
-
-
-
-<a name="talos.resource.definitions.runtime.EventSinkConfigSpec"></a>
-
-### EventSinkConfigSpec
-EventSinkConfigSpec describes configuration of Talos event log streaming.
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| endpoint | [string](#string) |  |  |
-
-
-
-
-
-
-<a name="talos.resource.definitions.runtime.ExtensionServiceConfigFile"></a>
-
-### ExtensionServiceConfigFile
-ExtensionServiceConfigFile describes extensions service config files.
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| content | [string](#string) |  |  |
-| mount_path | [string](#string) |  |  |
-
-
-
-
-
-
-<a name="talos.resource.definitions.runtime.ExtensionServiceConfigSpec"></a>
-
-### ExtensionServiceConfigSpec
-ExtensionServiceConfigSpec describes status of rendered extensions service config files.
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| files | [ExtensionServiceConfigFile](#talos.resource.definitions.runtime.ExtensionServiceConfigFile) | repeated |  |
-| environment | [string](#string) | repeated |  |
-
-
-
-
-
-
-<a name="talos.resource.definitions.runtime.ExtensionServiceConfigStatusSpec"></a>
-
-### ExtensionServiceConfigStatusSpec
-ExtensionServiceConfigStatusSpec describes status of rendered extensions service config files.
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| spec_version | [string](#string) |  |  |
-
-
-
-
-
-
-<a name="talos.resource.definitions.runtime.KernelCmdlineSpec"></a>
-
-### KernelCmdlineSpec
-KernelCmdlineSpec presents kernel command line (contents of /proc/cmdline).
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| cmdline | [string](#string) |  |  |
-
-
-
-
-
-
-<a name="talos.resource.definitions.runtime.KernelModuleSpecSpec"></a>
-
-### KernelModuleSpecSpec
-KernelModuleSpecSpec describes Linux kernel module to load.
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| name | [string](#string) |  |  |
-| parameters | [string](#string) | repeated |  |
-
-
-
-
-
-
-<a name="talos.resource.definitions.runtime.KernelParamSpecSpec"></a>
-
-### KernelParamSpecSpec
-KernelParamSpecSpec describes status of the defined sysctls.
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| value | [string](#string) |  |  |
-| ignore_errors | [bool](#bool) |  |  |
-
-
-
-
-
-
-<a name="talos.resource.definitions.runtime.KernelParamStatusSpec"></a>
-
-### KernelParamStatusSpec
-KernelParamStatusSpec describes status of the defined sysctls.
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| current | [string](#string) |  |  |
-| default | [string](#string) |  |  |
-| unsupported | [bool](#bool) |  |  |
-
-
-
-
-
-
-<a name="talos.resource.definitions.runtime.KmsgLogConfigSpec"></a>
-
-### KmsgLogConfigSpec
-KmsgLogConfigSpec describes configuration for kmsg log streaming.
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| destinations | [common.URL](#common.URL) | repeated |  |
-
-
-
-
-
-
-<a name="talos.resource.definitions.runtime.LoadedKernelModuleSpec"></a>
-
-### LoadedKernelModuleSpec
-LoadedKernelModuleSpec describes Linux kernel module to load.
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| size | [int64](#int64) |  |  |
-| reference_count | [int64](#int64) |  |  |
-| dependencies | [string](#string) | repeated |  |
-| state | [string](#string) |  |  |
-| address | [string](#string) |  |  |
-
-
-
-
-
-
-<a name="talos.resource.definitions.runtime.MachineStatusSpec"></a>
-
-### MachineStatusSpec
-MachineStatusSpec describes status of the defined sysctls.
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| stage | [talos.resource.definitions.enums.RuntimeMachineStage](#talos.resource.definitions.enums.RuntimeMachineStage) |  |  |
-| status | [MachineStatusStatus](#talos.resource.definitions.runtime.MachineStatusStatus) |  |  |
-
-
-
-
-
-
-<a name="talos.resource.definitions.runtime.MachineStatusStatus"></a>
-
-### MachineStatusStatus
-MachineStatusStatus describes machine current status at the stage.
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| ready | [bool](#bool) |  |  |
-| unmet_conditions | [UnmetCondition](#talos.resource.definitions.runtime.UnmetCondition) | repeated |  |
-
-
-
-
-
-
-<a name="talos.resource.definitions.runtime.MaintenanceServiceConfigSpec"></a>
-
-### MaintenanceServiceConfigSpec
-MaintenanceServiceConfigSpec describes configuration for maintenance service API.
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| listen_address | [string](#string) |  |  |
-| reachable_addresses | [common.NetIP](#common.NetIP) | repeated |  |
-
-
-
-
-
-
-<a name="talos.resource.definitions.runtime.MetaKeySpec"></a>
-
-### MetaKeySpec
-MetaKeySpec describes status of the defined sysctls.
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| value | [string](#string) |  |  |
-
-
-
-
-
-
-<a name="talos.resource.definitions.runtime.MetaLoadedSpec"></a>
-
-### MetaLoadedSpec
-MetaLoadedSpec is the spec for meta loaded. The Done field is always true when resource exists.
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| done | [bool](#bool) |  |  |
-
-
-
-
-
-
-<a name="talos.resource.definitions.runtime.MountStatusSpec"></a>
-
-### MountStatusSpec
-MountStatusSpec describes status of the defined sysctls.
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| source | [string](#string) |  |  |
-| target | [string](#string) |  |  |
-| filesystem_type | [string](#string) |  |  |
-| options | [string](#string) | repeated |  |
-| encrypted | [bool](#bool) |  |  |
-| encryption_providers | [string](#string) | repeated |  |
-
-
-
-
-
-
-<a name="talos.resource.definitions.runtime.PlatformMetadataSpec"></a>
-
-### PlatformMetadataSpec
-PlatformMetadataSpec describes platform metadata properties.
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| platform | [string](#string) |  |  |
-| hostname | [string](#string) |  |  |
-| region | [string](#string) |  |  |
-| zone | [string](#string) |  |  |
-| instance_type | [string](#string) |  |  |
-| instance_id | [string](#string) |  |  |
-| provider_id | [string](#string) |  |  |
-| spot | [bool](#bool) |  |  |
-| internal_dns | [string](#string) |  |  |
-| external_dns | [string](#string) |  |  |
-| tags | [PlatformMetadataSpec.TagsEntry](#talos.resource.definitions.runtime.PlatformMetadataSpec.TagsEntry) | repeated |  |
-
-
-
-
-
-
-<a name="talos.resource.definitions.runtime.PlatformMetadataSpec.TagsEntry"></a>
-
-### PlatformMetadataSpec.TagsEntry
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| key | [string](#string) |  |  |
-| value | [string](#string) |  |  |
-
-
-
-
-
-
-<a name="talos.resource.definitions.runtime.SBOMItemSpec"></a>
-
-### SBOMItemSpec
-SBOMItemSpec describes the SBOM item resource properties.
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| name | [string](#string) |  |  |
-| version | [string](#string) |  |  |
-| license | [string](#string) |  |  |
-| cp_es | [string](#string) | repeated |  |
-| pur_ls | [string](#string) | repeated |  |
-| extension | [bool](#bool) |  |  |
-
-
-
-
-
-
-<a name="talos.resource.definitions.runtime.SecurityStateSpec"></a>
-
-### SecurityStateSpec
-SecurityStateSpec describes the security state resource properties.
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| secure_boot | [bool](#bool) |  |  |
-| uki_signing_key_fingerprint | [string](#string) |  |  |
-| pcr_signing_key_fingerprint | [string](#string) |  |  |
-| se_linux_state | [talos.resource.definitions.enums.RuntimeSELinuxState](#talos.resource.definitions.enums.RuntimeSELinuxState) |  |  |
-| booted_with_uki | [bool](#bool) |  |  |
-| fips_state | [talos.resource.definitions.enums.RuntimeFIPSState](#talos.resource.definitions.enums.RuntimeFIPSState) |  |  |
-
-
-
-
-
-
-<a name="talos.resource.definitions.runtime.UniqueMachineTokenSpec"></a>
-
-### UniqueMachineTokenSpec
-UniqueMachineTokenSpec is the spec for the machine unique token. Token can be empty if machine wasn't assigned any.
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| token | [string](#string) |  |  |
-
-
-
-
-
-
-<a name="talos.resource.definitions.runtime.UnmetCondition"></a>
-
-### UnmetCondition
-UnmetCondition is a failure which prevents machine from being ready at the stage.
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| name | [string](#string) |  |  |
-| reason | [string](#string) |  |  |
-
-
-
-
-
-
-<a name="talos.resource.definitions.runtime.WatchdogTimerConfigSpec"></a>
-
-### WatchdogTimerConfigSpec
-WatchdogTimerConfigSpec describes configuration of watchdog timer.
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| device | [string](#string) |  |  |
-| timeout | [google.protobuf.Duration](#google.protobuf.Duration) |  |  |
-
-
-
-
-
-
-<a name="talos.resource.definitions.runtime.WatchdogTimerStatusSpec"></a>
-
-### WatchdogTimerStatusSpec
-WatchdogTimerStatusSpec describes configuration of watchdog timer.
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| device | [string](#string) |  |  |
-| timeout | [google.protobuf.Duration](#google.protobuf.Duration) |  |  |
-| feed_interval | [google.protobuf.Duration](#google.protobuf.Duration) |  |  |
 
 
 

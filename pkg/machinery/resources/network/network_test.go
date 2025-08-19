@@ -41,6 +41,7 @@ func TestRegisterResource(t *testing.T) {
 		&network.NodeAddressFilter{},
 		&network.NodeAddressSortAlgorithm{},
 		&network.OperatorSpec{},
+		&network.PlatformConfig{},
 		&network.ProbeSpec{},
 		&network.ResolverStatus{},
 		&network.ResolverSpec{},

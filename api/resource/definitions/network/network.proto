@@ -8,6 +8,7 @@ option java_package = "dev.talos.api.resource.definitions.network";
 import "common/common.proto";
 import "google/protobuf/duration.proto";
 import "resource/definitions/enums/enums.proto";
+import "resource/definitions/runtime/runtime.proto";
 
 // AddressSpecSpec describes status of rendered secrets.
 message AddressSpecSpec {
@@ -383,6 +384,23 @@ message OperatorSpecSpec {
   DHCP6OperatorSpec dhcp6 = 5;
   VIPOperatorSpec vip = 6;
   talos.resource.definitions.enums.NetworkConfigLayer config_layer = 7;
+}
+
+// PlatformConfigSpec describes platform network configuration.
+//
+// This structure is marshaled to STATE partition to persist cached network configuration across
+// reboots.
+message PlatformConfigSpec {
+  repeated AddressSpecSpec addresses = 1;
+  repeated LinkSpecSpec links = 2;
+  repeated RouteSpecSpec routes = 3;
+  repeated HostnameSpecSpec hostnames = 4;
+  repeated ResolverSpecSpec resolvers = 5;
+  repeated TimeServerSpecSpec time_servers = 6;
+  repeated OperatorSpecSpec operators = 7;
+  repeated common.NetIP external_ips = 8;
+  repeated ProbeSpecSpec probes = 9;
+  talos.resource.definitions.runtime.PlatformMetadataSpec metadata = 10;
 }
 
 // PortRange describes a range of ports.

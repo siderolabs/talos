@@ -190,6 +190,7 @@ func NewState() (*State, error) {
 		&network.NodeAddressFilter{},
 		&network.NodeAddressSortAlgorithm{},
 		&network.OperatorSpec{},
+		&network.PlatformConfig{},
 		&network.ProbeSpec{},
 		&network.ProbeStatus{},
 		&network.ResolverStatus{},

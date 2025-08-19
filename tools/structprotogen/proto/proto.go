@@ -402,6 +402,8 @@ func formatTypeName(fieldTypePkg string, fieldType string, declPkg string) (stri
 	case typeData{"github.com/siderolabs/talos/pkg/machinery/resources/cri", "RegistryConfig"}:
 		// This is a hack, but I (Dmitry) don't have enough patience to figure out why we don't support complex maps
 		return "resource/definitions/cri/registry.proto", "talos.resource.definitions.cri.RegistryConfig"
+	case typeData{"github.com/siderolabs/talos/pkg/machinery/resources/runtime", "PlatformMetadataSpec"}:
+		return "resource/definitions/runtime/runtime.proto", "talos.resource.definitions.runtime.PlatformMetadataSpec"
 	default:
 		return "", ""
 	}
