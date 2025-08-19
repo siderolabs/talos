@@ -64,13 +64,13 @@ Talos VMWare platform now supports `arm64` architecture in addition to `amd64`.
         title = "Azure"
         description = """\
 Talos on Azure now defaults to MTU of 1400 bytes for the `eth0` interface to avoid packet fragmentation issues.
-The default MTU can be overriden with machine configuration.
+The default MTU can be overriden via machine configuration.
 """
 
     [notes.k8s_version]
         title = "Kubernetes Version Validation"
         description = """\
-Talos now validates Kubernetes version in the image submitted in the machine configuration.
+Talos now validates the Kubernetes version in the image specified in the machine configuration.
 Previously this check was performed only on upgrade, but now it is consistently applied to upgrade, initial provisioning, and machine configuration updates.
 
 This implies that all image references should contain the tag, even if the image is pinned by digest.
@@ -124,7 +124,7 @@ This API allows to downgrade ETCD cluster (storage format) to a previous version
     [notes.boot]
         title = "Boot"
         description = """\
-Talos increases the boot partition size to 2 GiB to accommodate larger images (with many system extensions included).
+Talos boot partition size increased to 2 GiB to accommodate large images (with many system extensions included).
 """
 
     [notes.disk-encryption]
@@ -142,7 +142,7 @@ So, if the `STATE` volume is wiped or replaced, the volume encryption key will n
         description = """\
 Talos now supports passing early inline configuration via the `talos.config.early` kernel parameter.
 This allows to pass the configuration before the platform config source is probed, which is useful for early boot configuration.
-The value of this parameter has same format as the `talos.config.inline` parameter, i.e. it should be base64 encoded and zstd-compressed.
+The value of this parameter has the same format as the `talos.config.inline` parameter, i.e. it should be base64 encoded and zstd-compressed.
 """
 
 [make_deps]

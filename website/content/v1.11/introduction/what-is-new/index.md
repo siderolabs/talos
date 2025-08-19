@@ -10,7 +10,7 @@ For critical changes, refer to the [upgrade notes]({{< relref "../talos-guides/u
 
 ### Kubernetes Version Validation
 
-Talos now validates Kubernetes version in the image submitted in the machine configuration for [compatibility]({{< relref "support-matrix" >}}).
+Talos now validates the Kubernetes version in the image specified in the machine configuration for [compatibility]({{< relref "support-matrix" >}}).
 Previously this check was performed only on upgrade, but now it is consistently applied to upgrade, initial provisioning, and machine configuration updates.
 The default image references have the version tag, e.g. `ghcr.io/siderolabs/kubelet:v1.33.0`, which is used for validation.
 
@@ -57,7 +57,7 @@ if downgrading to 3.5.x is required.
 ### Azure
 
 Talos on Azure now defaults to MTU of 1400 bytes for the `eth0` interface to avoid packet fragmentation issues.
-The default MTU can be overridden with machine configuration.
+The default MTU can be overridden via machine configuration.
 
 ### VMware
 
@@ -73,7 +73,7 @@ This feature allows to create a test Talos cluster on macOS using QEMU virtual m
 
 ### Bootloader
 
-Talos increases the default boot partition size to 2 GiB to accommodate larger images (with many system extensions included).
+Talos boot partition size increased to 2 GiB to accommodate large images (with many system extensions included).
 On UEFI systems with `systemd-boot` (default since Talos 1.10), Talos now installs itself correctly into the UEFI boot order.
 
 ### New Resources
@@ -94,7 +94,7 @@ and has historically caused performance issues.
 
 Talos now supports passing early inline configuration via the `talos.config.early` [kernel parameter]({{< relref "../reference/kernel#talosconfigearly-and-talosconfiginline" >}}).
 This allows to pass the configuration before the platform config source is probed, which is useful for early boot configuration.
-The value of this parameter has same format as the `talos.config.inline` parameter, i.e. it should be base64 encoded and zstd-compressed.
+The value of this parameter has the same format as the `talos.config.inline` parameter, i.e. it should be base64 encoded and zstd-compressed.
 
 ## Component Updates
 
