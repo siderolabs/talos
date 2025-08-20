@@ -65,7 +65,6 @@ type qemuOps struct {
 	bandwidth                 int
 	diskEncryptionKeyTypes    []string
 	withFirewall              string
-	withUUIDHostnames         bool
 	withSiderolinkAgent       agentFlag
 	debugShellEnabled         bool
 	withIOMMU                 bool
@@ -244,6 +243,7 @@ func getCreateCmd() *cobra.Command {
 		common.BoolVar(&ops.common.skipK8sNodeReadinessCheck, skipK8sNodeReadinessCheckFlag, false, "skip k8s node readiness checks")
 		common.BoolVar(&ops.common.withJSONLogs, withJSONLogsFlag, false, "enable JSON logs receiver and configure Talos to send logs there")
 		common.StringVar(&ops.common.talosVersion, talosconfigVersionFlag, helpers.GetTag(), "the desired Talos version to generate config for")
+		common.BoolVar(&ops.common.withUUIDHostnames, withUUIDHostnamesFlag, false, "use machine UUIDs as default hostnames")
 
 		return common
 	}
@@ -302,7 +302,6 @@ func getCreateCmd() *cobra.Command {
 			"specify percent of corrupt packets on the bridge interface. e.g. 50% = 0.50 (default: 0.0)")
 		qemu.IntVar(&ops.qemu.bandwidth, bandwidthFlag, 0, "specify bandwidth restriction (in kbps) on the bridge interface")
 		qemu.StringVar(&ops.qemu.withFirewall, firewallFlag, "", "inject firewall rules into the cluster, value is default policy - accept/block")
-		qemu.BoolVar(&ops.qemu.withUUIDHostnames, withUUIDHostnamesFlag, false, "use machine UUIDs as default hostnames")
 		qemu.Var(&ops.qemu.withSiderolinkAgent, withSiderolinkAgentFlag,
 			"enables the use of siderolink agent as configuration apply mechanism. `true` or `wireguard` enables the agent, `tunnel` enables the agent with grpc tunneling")
 		qemu.StringVar(&ops.qemu.configInjectionMethod,

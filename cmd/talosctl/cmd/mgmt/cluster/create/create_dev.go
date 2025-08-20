@@ -644,9 +644,7 @@ func create(ctx context.Context, ops createOps) error {
 	for i, node := range controlplanes {
 		var cfg config.Provider
 
-		nodeUUID := uuid.New()
-
-		err = slb.DefineIPv6ForUUID(nodeUUID)
+		err = slb.DefineIPv6ForUUID(*node.UUID)
 		if err != nil {
 			return err
 		}
@@ -657,7 +655,6 @@ func create(ctx context.Context, ops createOps) error {
 		node.ConfigInjectionMethod = configInjectionMethod
 		node.BadRTC = qOps.badRTC
 		node.ExtraKernelArgs = extraKernelArgs
-		node.UUID = pointer.To(nodeUUID)
 
 		if cOps.withInitNode && i == 0 {
 			cfg = configBundle.Init()
@@ -689,9 +686,7 @@ func create(ctx context.Context, ops createOps) error {
 			}
 		}
 
-		nodeUUID := uuid.New()
-
-		err = slb.DefineIPv6ForUUID(nodeUUID)
+		err = slb.DefineIPv6ForUUID(*node.UUID)
 		if err != nil {
 			return err
 		}
@@ -703,7 +698,6 @@ func create(ctx context.Context, ops createOps) error {
 		node.SkipInjectingConfig = cOps.skipInjectingConfig
 		node.BadRTC = qOps.badRTC
 		node.ExtraKernelArgs = extraKernelArgs
-		node.UUID = pointer.To(nodeUUID)
 
 		request.Nodes = append(request.Nodes, node)
 	}

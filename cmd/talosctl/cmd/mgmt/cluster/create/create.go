@@ -19,8 +19,10 @@ import (
 	"strings"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/hashicorp/go-getter/v2"
 	"github.com/siderolabs/gen/xslices"
+	"github.com/siderolabs/go-pointer"
 	sideronet "github.com/siderolabs/net"
 
 	"github.com/siderolabs/talos/pkg/cluster/check"
@@ -77,26 +79,42 @@ func createNodeRequests(cOps commonOps, controlplaneRes, workerRes parsedNodeRes
 	}
 
 	for i := range cOps.controlplanes {
+		nodeUUID := uuid.New()
+		machineName := fmt.Sprintf("%s-%s-%d", cOps.rootOps.ClusterName, "controlplane", i+1)
+
+		if cOps.withUUIDHostnames {
+			machineName = fmt.Sprintf("%s-%s", "machine", nodeUUID)
+		}
+
 		machineType := machine.TypeControlPlane
 		ips := getNodeIPs(nodeIPs, i)
 		controlplanes = append(controlplanes, provision.NodeRequest{
-			Name:     fmt.Sprintf("%s-%s-%d", cOps.rootOps.ClusterName, "controlplane", i+1),
+			Name:     machineName,
 			IPs:      ips,
 			Type:     machineType,
 			Memory:   controlplaneRes.memoryMb,
 			NanoCPUs: controlplaneRes.nanoCPUs,
+			UUID:     pointer.To(nodeUUID),
 		})
 	}
 
 	for workerIndex := range cOps.workers {
+		nodeUUID := uuid.New()
+		machineName := fmt.Sprintf("%s-%s-%d", cOps.rootOps.ClusterName, "worker", workerIndex+1)
+
+		if cOps.withUUIDHostnames {
+			machineName = fmt.Sprintf("%s-%s", "machine", nodeUUID)
+		}
+
 		nodeIndex := cOps.controlplanes + workerIndex
 		ips := getNodeIPs(nodeIPs, nodeIndex)
 		workers = append(workers, provision.NodeRequest{
-			Name:     fmt.Sprintf("%s-%s-%d", cOps.rootOps.ClusterName, "worker", workerIndex+1),
+			Name:     machineName,
 			IPs:      ips,
 			Type:     machine.TypeWorker,
 			Memory:   workerRes.memoryMb,
 			NanoCPUs: workerRes.nanoCPUs,
+			UUID:     pointer.To(nodeUUID),
 		})
 	}
 

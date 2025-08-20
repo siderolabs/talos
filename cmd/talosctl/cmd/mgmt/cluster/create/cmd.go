@@ -64,6 +64,7 @@ type commonOps struct {
 	skipK8sNodeReadinessCheck bool
 	withJSONLogs              bool
 	wireguardCIDR             string
+	withUUIDHostnames         bool
 }
 
 func addTalosconfigDestinationFlag(flagset *pflag.FlagSet, bind *string, flagName string) {

@@ -6,6 +6,7 @@ package create //nolint:testpackage
 
 import (
 	"net/netip"
+	"regexp"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -177,4 +178,13 @@ func TestCreateNodeRequestsNames(t *testing.T) {
 	assert.Equal(t, "127.5.0.4", workers[0].IPs[1].String())
 	assert.Equal(t, "10.5.0.5", workers[1].IPs[0].String())
 	assert.Equal(t, "127.5.0.5", workers[1].IPs[1].String())
+
+	cOps.withUUIDHostnames = true
+	controlplanes, workers, err = createNodeRequests(cOps, resources, resources, [][]netip.Addr{nodeIps1, nodeIps2})
+	assert.NoError(t, err)
+
+	assert.Regexp(t, regexp.MustCompile("^machine-[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"), controlplanes[0].Name)
+	assert.Regexp(t, regexp.MustCompile("^machine-[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"), controlplanes[1].Name)
+	assert.Regexp(t, regexp.MustCompile("^machine-[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"), workers[0].Name)
+	assert.Regexp(t, regexp.MustCompile("^machine-[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"), workers[1].Name)
 }
