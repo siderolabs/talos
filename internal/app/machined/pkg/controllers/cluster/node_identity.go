@@ -7,7 +7,6 @@ package cluster
 import (
 	"context"
 	"fmt"
-	"path/filepath"
 
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/safe"
@@ -16,6 +15,8 @@ import (
 	clusteradapter "github.com/siderolabs/talos/internal/app/machined/pkg/adapters/cluster"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/automaton/blockautomaton"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers"
+	"github.com/siderolabs/talos/internal/pkg/xfs"
+	"github.com/siderolabs/talos/internal/pkg/xfs/opentree"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/resources/block"
 	"github.com/siderolabs/talos/pkg/machinery/resources/cluster"
@@ -90,11 +91,20 @@ func (ctrl *NodeIdentityController) Run(ctx context.Context, r controller.Runtim
 }
 
 func (ctrl *NodeIdentityController) establishNodeIdentity(ctx context.Context, r controller.ReaderWriter, logger *zap.Logger, mountStatus *block.VolumeMountStatus) error {
-	rootPath := mountStatus.TypedSpec().Target
+	root := &xfs.UnixRoot{FS: opentree.NewFromPath(mountStatus.TypedSpec().Target)}
+	if err := root.OpenFS(); err != nil {
+		return fmt.Errorf("error opening filesystem: %w", err)
+	}
+
+	defer func() {
+		if err := root.Close(); err != nil {
+			logger.Error("error closing filesystem", zap.Error(err))
+		}
+	}()
 
 	var localIdentity cluster.IdentitySpec
 
-	if err := controllers.LoadOrNewFromFile(filepath.Join(rootPath, constants.NodeIdentityFilename), &localIdentity, func(v *cluster.IdentitySpec) error {
+	if err := controllers.LoadOrNewFromFile(root, constants.NodeIdentityFilename, &localIdentity, func(v *cluster.IdentitySpec) error {
 		return clusteradapter.IdentitySpec(v).Generate()
 	}); err != nil {
 		return fmt.Errorf("error caching node identity: %w", err)

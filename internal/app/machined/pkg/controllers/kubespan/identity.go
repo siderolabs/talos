@@ -8,7 +8,6 @@ import (
 	"context"
 	"fmt"
 	"net"
-	"path/filepath"
 
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/safe"
@@ -20,6 +19,8 @@ import (
 	"github.com/siderolabs/talos/internal/app/machined/pkg/automaton"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/automaton/blockautomaton"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers"
+	"github.com/siderolabs/talos/internal/pkg/xfs"
+	"github.com/siderolabs/talos/internal/pkg/xfs/opentree"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/fipsmode"
 	"github.com/siderolabs/talos/pkg/machinery/resources/block"
@@ -140,11 +141,20 @@ func (ctrl *IdentityController) establishIdentity(
 	ctx context.Context, r controller.ReaderWriter, logger *zap.Logger, mountStatus *block.VolumeMountStatus,
 ) error {
 	return func(ctx context.Context, r controller.ReaderWriter, logger *zap.Logger, mountStatus *block.VolumeMountStatus) error {
-		rootPath := mountStatus.TypedSpec().Target
+		root := &xfs.UnixRoot{FS: opentree.NewFromPath(mountStatus.TypedSpec().Target)}
+		if err := root.OpenFS(); err != nil {
+			return fmt.Errorf("error opening filesystem: %w", err)
+		}
+
+		defer func() {
+			if err := root.Close(); err != nil {
+				logger.Error("error closing filesystem", zap.Error(err))
+			}
+		}()
 
 		var localIdentity kubespan.IdentitySpec
 
-		if err := controllers.LoadOrNewFromFile(filepath.Join(rootPath, constants.KubeSpanIdentityFilename), &localIdentity, func(v *kubespan.IdentitySpec) error {
+		if err := controllers.LoadOrNewFromFile(root, constants.KubeSpanIdentityFilename, &localIdentity, func(v *kubespan.IdentitySpec) error {
 			return kubespanadapter.IdentitySpec(v).GenerateKey()
 		}); err != nil {
 			return fmt.Errorf("error caching kubespan identity: %w", err)

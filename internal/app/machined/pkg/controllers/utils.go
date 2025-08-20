@@ -12,11 +12,13 @@ import (
 	"reflect"
 
 	yaml "gopkg.in/yaml.v3"
+
+	"github.com/siderolabs/talos/internal/pkg/xfs"
 )
 
 // LoadOrNewFromFile either loads value from file.yaml or generates new values and saves as file.yaml.
-func LoadOrNewFromFile[T any](path string, empty T, generate func(T) error) error {
-	f, err := os.OpenFile(path, os.O_RDONLY, 0)
+func LoadOrNewFromFile[T any](root xfs.Root, path string, empty T, generate func(T) error) error {
+	f, err := xfs.OpenFile(root, path, os.O_RDONLY, 0)
 	if err != nil && !os.IsNotExist(err) {
 		return fmt.Errorf("error reading state file: %w", err)
 	}
@@ -27,7 +29,7 @@ func LoadOrNewFromFile[T any](path string, empty T, generate func(T) error) erro
 			return err
 		}
 
-		f, err = os.OpenFile(path, os.O_CREATE|os.O_WRONLY|os.O_EXCL, 0o600)
+		f, err = xfs.OpenFile(root, path, os.O_CREATE|os.O_WRONLY|os.O_EXCL, 0o600)
 		if err != nil {
 			return fmt.Errorf("error creating state file: %w", err)
 		}
