@@ -1,6 +1,6 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
 #
-# Generated on 2025-08-19T08:41:30Z by kres 8d5a3f6.
+# Generated on 2025-08-20T17:20:56Z by kres 18c31cf.
 
 concurrency:
   group: ${{ github.head_ref || github.run_id }}
@@ -110,7 +110,7 @@ jobs:
           sudo -E make e2e-image-factory
       - name: factory-1.10-pxe
         env:
-          FACTORY_BOOT_METHOD: pxe
+          FACTORY_BOOT_METHOD: ipxe
           FACTORY_SCHEMATIC: 376567988ad370138ad8b2698212367b8edcb69b5fd68c80be1f2ec7d603b4ba
           FACTORY_VERSION: v1.10.4
           GITHUB_STEP_NAME: ${{ github.job}}-factory-1.10-pxe

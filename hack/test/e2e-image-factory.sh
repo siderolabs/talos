@@ -28,6 +28,10 @@ case "${FACTORY_BOOT_METHOD:-iso}" in
     QEMU_FLAGS+=("--iso-path=${FACTORY_SCHEME}://${FACTORY_HOSTNAME}/image/${FACTORY_SCHEMATIC}/${FACTORY_VERSION}/metal-amd64-secureboot.iso" "--with-tpm2" "--encrypt-ephemeral" "--encrypt-state" "--disk-encryption-key-types=tpm")
     INSTALLER_IMAGE_NAME=installer-secureboot
     ;;
+  *)
+    echo "unknown factory boot method: ${FACTORY_BOOT_METHOD}"
+    exit 1
+    ;;
 esac
 
 function assert_secureboot {

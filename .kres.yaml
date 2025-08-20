@@ -2458,7 +2458,7 @@ spec:
           withSudo: true
           environment:
             GITHUB_STEP_NAME: ${{ github.job}}-factory-1.10-pxe
-            FACTORY_BOOT_METHOD: pxe
+            FACTORY_BOOT_METHOD: ipxe
             FACTORY_VERSION: v1.10.4
             FACTORY_SCHEMATIC: 376567988ad370138ad8b2698212367b8edcb69b5fd68c80be1f2ec7d603b4ba
             KUBERNETES_VERSION: 1.33.2
