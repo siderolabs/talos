@@ -43,9 +43,9 @@ type EtcdEncryptionConfigV1Alpha1 struct {
 
 	//   description: |
 	//     Custom API server etcd encryption configuration document.
-	//     https://kubernetes.io/docs/reference/config-api/apiserver-config.v1/
+	//     https://kubernetes.io/docs/reference/Config-api/apiserver-Config.v1/#apiserver-Config-k8s-io-v1-EncryptionConfiguration
 	//
-	config string `yaml:"config"`
+	Config string `yaml:"config"`
 }
 
 // NewEtcdEncryptionConfigV1Alpha1 creates a new EtcdEncryptionConfig config document.
@@ -60,7 +60,7 @@ func NewEtcdEncryptionConfigV1Alpha1() *EtcdEncryptionConfigV1Alpha1 {
 
 func exampleEtcdEncryptionConfigV1Alpha1() *EtcdEncryptionConfigV1Alpha1 {
 	cfg := NewEtcdEncryptionConfigV1Alpha1()
-	cfg.config = `---
+	cfg.Config = `---
 apiVersion: apiserver.config.k8s.io/v1
 kind: EncryptionConfiguration
 resources:
@@ -83,7 +83,7 @@ func (s *EtcdEncryptionConfigV1Alpha1) Clone() config.Document {
 	return s.DeepCopy()
 }
 
-// ExtraTrustedRootCertificates implements config.EtcdEncryptionConfig interface.
+// EtcdEncryptionConfig implements config.EtcdEncryptionConfig interface.
 func (s *EtcdEncryptionConfigV1Alpha1) EtcdEncryptionConfig() string {
-	return s.config
+	return s.Config
 }
