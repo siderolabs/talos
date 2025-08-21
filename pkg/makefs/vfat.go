@@ -8,6 +8,11 @@ import (
 	"github.com/siderolabs/go-cmd/pkg/cmd"
 )
 
+const (
+	// FilesystemTypeVFAT is the filesystem type for VFAT.
+	FilesystemTypeVFAT = "vfat"
+)
+
 // VFAT creates a VFAT filesystem on the specified partition.
 func VFAT(partname string, setters ...Option) error {
 	opts := NewDefaultOptions(setters...)

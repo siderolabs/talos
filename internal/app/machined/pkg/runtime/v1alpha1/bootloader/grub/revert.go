@@ -15,7 +15,7 @@ import (
 	"github.com/siderolabs/gen/xerrors"
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/mount"
-	mountv2 "github.com/siderolabs/talos/internal/pkg/mount/v2"
+	mountv3 "github.com/siderolabs/talos/internal/pkg/mount/v3"
 	"github.com/siderolabs/talos/internal/pkg/partition"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
@@ -37,10 +37,10 @@ func (c *Config) Revert(disk string) error {
 		},
 		c.revert,
 		nil,
-		nil,
-		[]mountv2.OperationOption{
-			mountv2.WithSkipIfMounted(),
+		[]mountv3.ManagerOption{
+			mountv3.WithSkipIfMounted(),
 		},
+		nil,
 		nil,
 	)
 	if err != nil && !xerrors.TagIs[mount.NotFoundTag](err) {

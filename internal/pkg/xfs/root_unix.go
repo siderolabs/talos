@@ -48,6 +48,11 @@ func (root *UnixRoot) Close() error {
 	return root.FS.Close()
 }
 
+// RepairFS repairs the underlying filesystem if necessary.
+func (root *UnixRoot) RepairFS() error {
+	return root.FS.Repair()
+}
+
 // Fd returns the file descriptor of the mounted root filesystem.
 // It returns an error if the filesystem is not open or has been closed.
 func (root *UnixRoot) Fd() (int, error) {
@@ -107,4 +112,14 @@ func (root *UnixRoot) stat(name string) (os.FileInfo, error) {
 	defer f.Close() //nolint:errcheck
 
 	return f.Stat()
+}
+
+// Source returns the source of the underlying filesystem.
+func (root *UnixRoot) Source() string {
+	return root.FS.Source()
+}
+
+// FSType returns the type of the underlying filesystem.
+func (root *UnixRoot) FSType() string {
+	return root.FS.FSType()
 }
