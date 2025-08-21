@@ -4,15 +4,9 @@
   <h1 align="center">Talos Linux</h1>
   <p align="center">A modern OS for Kubernetes.</p>
   <p align="center">
-    <a href="https://github.com/talos-systems/talos/releases/latest">
-      <img alt="Release" src="https://img.shields.io/github/release/talos-systems/talos.svg?logo=github&logoColor=white&style=flat-square">
-    </a>
-    <a href="https://github.com/talos-systems/talos/releases/latest">
-      <img alt="Pre-release" src="https://img.shields.io/github/release-pre/talos-systems/talos.svg?label=pre-release&logo=GitHub&logoColor=white&style=flat-square">
-    </a>
-    <a href="https://www.bestpractices.dev/projects/7340">
-      <img src="https://www.bestpractices.dev/projects/7340/badge" alt="OpenSSF badge">
-    </a>
+    <a href="https://github.com/talos-systems/talos/releases/latest"><img alt="Release" src="https://img.shields.io/github/release/talos-systems/talos.svg?logo=github&logoColor=white"></a>
+    <a href="https://github.com/talos-systems/talos/releases/latest"><img alt="Pre-release" src="https://img.shields.io/github/release-pre/talos-systems/talos.svg?label=pre-release&logo=GitHub&logoColor=white"></a>
+    <a href="https://www.bestpractices.dev/projects/7340"><img src="https://www.bestpractices.dev/projects/7340/badge" alt="OpenSSF badge"></a>
   </p>
 </p>
 
