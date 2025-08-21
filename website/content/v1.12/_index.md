@@ -9,7 +9,7 @@ lastRelease: v1.12.0-alpha0
 kubernetesRelease: "1.35.0-alpha.0"
 prevKubernetesRelease: "1.34.0"
 nvidiaContainerToolkitRelease: "v1.17.8"
-nvidiaDriverRelease: "535.247.01"
+nvidiaDriverRelease: "580.65.06"
 preRelease: true
 ---
 
