@@ -131,15 +131,15 @@ talosctl cluster create docker [flags]
       --config-patch stringArray                 patch generated machineconfigs (applied to all node types), use @file to read a patch from file
       --config-patch-controlplanes stringArray   patch generated machineconfigs (applied to 'controlplane' type)
       --config-patch-workers stringArray         patch generated machineconfigs (applied to 'worker' type)
-      --cpus-controlplanes string                the share of CPUs as fraction (each control plane/VM) (default "2.0")
-      --cpus-workers string                      the share of CPUs as fraction (each worker/VM) (default "2.0")
+      --cpus-controlplanes string                the share of CPUs as fraction for each control plane/VM (default "2.0")
+      --cpus-workers string                      the share of CPUs as fraction for each worker/VM (default "2.0")
   -p, --exposed-ports string                     comma-separated list of ports/protocols to expose on init node. Ex -p <hostPort>:<containerPort>/<protocol (tcp or udp)>
   -h, --help                                     help for docker
       --host-ip string                           Host IP to forward exposed ports to (default "0.0.0.0")
       --image string                             the talos image to run (default "ghcr.io/siderolabs/talos:latest")
       --kubernetes-version string                desired kubernetes version to run (default "1.34.0-rc.2")
-      --memory-controlplanes int                 the limit on memory usage in MB (each control plane/VM) (default 2048)
-      --memory-workers int                       the limit on memory usage in MB (each worker/VM) (default 2048)
+      --memory-controlplanes string(mb,gb)       the limit on memory usage for each control plane/VM (default 2.0GiB)
+      --memory-workers string(mb,gb)             the limit on memory usage for each worker/VM (default 2.0GiB)
       --mount mount                              attach a mount to the container (docker --mount syntax)
       --subnet string                            Docker network subnet CIDR (default "10.5.0.0/24")
       --talosconfig-destination string           The location to save the generated Talos configuration file to. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
@@ -173,14 +173,14 @@ talosctl cluster create qemu [flags]
       --config-patch-controlplanes stringArray   patch generated machineconfigs (applied to 'controlplane' type)
       --config-patch-workers stringArray         patch generated machineconfigs (applied to 'worker' type)
       --controlplanes int                        the number of controlplanes to create (default 1)
-      --cpus-controlplanes string                the share of CPUs as fraction (each control plane/VM) (default "2.0")
-      --cpus-workers string                      the share of CPUs as fraction (each worker/VM) (default "2.0")
-      --disks strings                            list of disks to create in format "<driver1>:<size1>" (size is specified in megabytes) (disks after the first one are added only to worker machines) (default [virtio:10240,virtio:6144])
+      --cpus-controlplanes string                the share of CPUs as fraction for each control plane/VM (default "2.0")
+      --cpus-workers string                      the share of CPUs as fraction for each worker/VM (default "2.0")
+      --disks strings                            list of disks to create in format "<driver1>:<size1>" (disks after the first one are added only to worker machines) (default [virtio:10GB,virtio:6GB])
   -h, --help                                     help for qemu
       --image-factory-url string                 image factory url (default "https://factory.talos.dev/")
       --kubernetes-version string                desired kubernetes version to run (default "1.34.0-rc.2")
-      --memory-controlplanes int                 the limit on memory usage in MB (each control plane/VM) (default 2048)
-      --memory-workers int                       the limit on memory usage in MB (each worker/VM) (default 2048)
+      --memory-controlplanes string(mb,gb)       the limit on memory usage for each control plane/VM (default 2.0GiB)
+      --memory-workers string(mb,gb)             the limit on memory usage for each worker/VM (default 2.0GiB)
       --schematic-id string                      image factory schematic id (defaults to an empty schematic)
       --talos-version string                     the desired talos version (default "latest")
       --talosconfig-destination string           The location to save the generated Talos configuration file to. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
@@ -222,8 +222,8 @@ talosctl cluster create [flags]
       --config-patch-worker stringArray          patch generated machineconfigs (applied to 'worker' type)
       --control-plane-port int                   control plane port (load balancer and local API port) (default 6443)
       --controlplanes int                        the number of controlplanes to create (default 1)
-      --cpus string                              the share of CPUs as fraction (each control plane/VM) (default "2.0")
-      --cpus-workers string                      the share of CPUs as fraction (each worker/VM) (default "2.0")
+      --cpus string                              the share of CPUs as fraction for each control plane/VM (default "2.0")
+      --cpus-workers string                      the share of CPUs as fraction for each worker/VM (default "2.0")
       --custom-cni-url string                    install custom CNI from the URL (Talos cluster)
       --disable-dhcp-hostname                    skip announcing hostname via DHCP
       --disk int                                 default limit on disk size in MB (each VM) (default 6144)
@@ -252,8 +252,8 @@ talosctl cluster create [flags]
       --iso-path string                          the ISO path to use for the initial boot
       --kubeprism-port int                       KubePrism port (set to 0 to disable) (default 7445)
       --kubernetes-version string                desired kubernetes version to run (default "1.34.0-rc.2")
-      --memory int                               the limit on memory usage in MB (each control plane/VM) (default 2048)
-      --memory-workers int                       the limit on memory usage in MB (each worker/VM) (default 2048)
+      --memory string(mb,gb)                     the limit on memory usage for each control plane/VM (default 2.0GiB)
+      --memory-workers string(mb,gb)             the limit on memory usage for each worker/VM (default 2.0GiB)
       --mtu int                                  MTU of the cluster network (default 1500)
       --nameservers strings                      list of nameservers to use (default [8.8.8.8,1.1.1.1,2001:4860:4860::8888,2606:4700:4700::1111])
       --no-masquerade-cidrs strings              list of CIDRs to exclude from NAT

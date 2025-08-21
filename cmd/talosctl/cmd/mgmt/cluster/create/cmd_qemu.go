@@ -10,7 +10,6 @@ import (
 	"net/url"
 	"path/filepath"
 	"runtime"
-	"strconv"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
@@ -58,7 +57,7 @@ func init() {
 	getQemuFlags := func() *pflag.FlagSet {
 		qemu := pflag.NewFlagSet("qemu", pflag.PanicOnError)
 
-		addDisksFlag(qemu, &ops.qemu.disks, []string{"virtio:" + strconv.Itoa(10*1024), "virtio:" + strconv.Itoa(6*1024)})
+		addDisksFlag(qemu, &ops.qemu.disks, []string{"virtio:10GB", "virtio:6GB"})
 		qemu.StringVar(&schematicID, "schematic-id", "", "image factory schematic id (defaults to an empty schematic)")
 		qemu.StringVar(&imageFactoryURL, "image-factory-url", "https://factory.talos.dev/", "image factory url")
 

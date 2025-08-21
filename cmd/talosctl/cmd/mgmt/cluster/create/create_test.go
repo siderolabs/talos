@@ -12,6 +12,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/siderolabs/talos/cmd/talosctl/cmd/mgmt/cluster"
+	"github.com/siderolabs/talos/pkg/bytesize"
 	"github.com/siderolabs/talos/pkg/provision"
 )
 
@@ -133,7 +134,7 @@ func TestGetDisks(t *testing.T) {
 	}
 }
 
-func TestCreateNodeRequestsNames(t *testing.T) {
+func TestCreateNodeRequests(t *testing.T) {
 	cOps := commonOps{
 		rootOps: &cluster.CmdOps{
 			ClusterName: "test-cluster",
@@ -141,9 +142,13 @@ func TestCreateNodeRequestsNames(t *testing.T) {
 		controlplanes: 2,
 		workers:       2,
 	}
+	memory := bytesize.New()
+	err := memory.Set("2mb")
+	assert.NoError(t, err)
+
 	resources := parsedNodeResources{
 		nanoCPUs: 2000,
-		memoryMb: 2000,
+		memory:   *memory,
 	}
 	cidr1, err := netip.ParsePrefix("10.5.0.0/24")
 	assert.NoError(t, err)

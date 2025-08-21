@@ -15,7 +15,6 @@ import (
 	"os"
 	"path/filepath"
 	"slices"
-	"strconv"
 	"strings"
 	"time"
 
@@ -25,6 +24,7 @@ import (
 	"github.com/siderolabs/go-pointer"
 	sideronet "github.com/siderolabs/net"
 
+	"github.com/siderolabs/talos/pkg/bytesize"
 	"github.com/siderolabs/talos/pkg/cluster/check"
 	clientconfig "github.com/siderolabs/talos/pkg/machinery/client/config"
 	"github.com/siderolabs/talos/pkg/machinery/config"
@@ -38,12 +38,12 @@ import (
 
 type nodeResources struct {
 	cpu    string
-	memory int
+	memory bytesize.ByteSize
 }
 
 type parsedNodeResources struct {
 	nanoCPUs int64
-	memoryMb int64
+	memory   bytesize.ByteSize
 }
 
 func parseResources(res nodeResources) (parsedNodeResources, error) {
@@ -54,7 +54,7 @@ func parseResources(res nodeResources) (parsedNodeResources, error) {
 
 	return parsedNodeResources{
 		nanoCPUs: nanoCPUs,
-		memoryMb: int64(res.memory) * 1024 * 1024,
+		memory:   res.memory,
 	}, nil
 }
 
@@ -92,7 +92,7 @@ func createNodeRequests(cOps commonOps, controlplaneRes, workerRes parsedNodeRes
 			Name:     machineName,
 			IPs:      ips,
 			Type:     machineType,
-			Memory:   controlplaneRes.memoryMb,
+			Memory:   int64(controlplaneRes.memory.Bytes()),
 			NanoCPUs: controlplaneRes.nanoCPUs,
 			UUID:     pointer.To(nodeUUID),
 		})
@@ -112,7 +112,7 @@ func createNodeRequests(cOps commonOps, controlplaneRes, workerRes parsedNodeRes
 			Name:     machineName,
 			IPs:      ips,
 			Type:     machine.TypeWorker,
-			Memory:   workerRes.memoryMb,
+			Memory:   int64(workerRes.memory.Bytes()),
 			NanoCPUs: workerRes.nanoCPUs,
 			UUID:     pointer.To(nodeUUID),
 		})
@@ -243,14 +243,16 @@ func parseDisksFlag(disks []string) ([]diskRequest, error) {
 			return nil, fmt.Errorf("invalid disk format: %q", d)
 		}
 
-		size, err := strconv.Atoi(parts[1])
+		size := bytesize.WithDefaultUnit("MiB")
+
+		err := size.Set(parts[1])
 		if err != nil {
 			return nil, fmt.Errorf("invalid size in disk spec: %q", d)
 		}
 
 		result = append(result, diskRequest{
-			Driver: parts[0],
-			SizeMB: size,
+			Driver:    parts[0],
+			SizeBytes: size.Bytes(),
 		})
 	}
 
@@ -343,8 +345,8 @@ func getIps(cidr netip.Prefix, cOps commonOps) ([]netip.Addr, error) {
 }
 
 type diskRequest struct {
-	Driver string
-	SizeMB int
+	Driver    string
+	SizeBytes uint64
 }
 
 func getDisks(qOps qemuOps) (primaryDisks, workerExtraDisks []*provision.Disk, err error) {
@@ -355,7 +357,7 @@ func getDisks(qOps qemuOps) (primaryDisks, workerExtraDisks []*provision.Disk, e
 
 	primaryDisks = []*provision.Disk{
 		{
-			Size:            uint64(diskRequests[0].SizeMB) * 1024 * 1024,
+			Size:            diskRequests[0].SizeBytes,
 			SkipPreallocate: !qOps.preallocateDisks,
 			Driver:          diskRequests[0].Driver,
 			BlockSize:       qOps.diskBlockSize,
@@ -364,7 +366,7 @@ func getDisks(qOps qemuOps) (primaryDisks, workerExtraDisks []*provision.Disk, e
 	// get worker extra disks
 	for _, d := range diskRequests[1:] {
 		workerExtraDisks = append(workerExtraDisks, &provision.Disk{
-			Size:            uint64(d.SizeMB) * 1024 * 1024,
+			Size:            d.SizeBytes,
 			SkipPreallocate: !qOps.preallocateDisks,
 			Driver:          d.Driver,
 			BlockSize:       qOps.diskBlockSize,

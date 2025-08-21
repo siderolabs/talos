@@ -13,6 +13,7 @@ import (
 
 	clustercmd "github.com/siderolabs/talos/cmd/talosctl/cmd/mgmt/cluster"
 	"github.com/siderolabs/talos/cmd/talosctl/pkg/mgmt/helpers"
+	"github.com/siderolabs/talos/pkg/bytesize"
 	"github.com/siderolabs/talos/pkg/cli"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
@@ -131,19 +132,23 @@ func addTalosconfigDestinationFlag(flagset *pflag.FlagSet, bind *string, flagNam
 }
 
 func addControlplaneCpusFlag(flagset *pflag.FlagSet, bind *string, flagName string) {
-	flagset.StringVar(bind, flagName, "2.0", "the share of CPUs as fraction (each control plane/VM)")
+	flagset.StringVar(bind, flagName, "2.0", "the share of CPUs as fraction for each control plane/VM")
 }
 
 func addWorkersCpusFlag(flagset *pflag.FlagSet, bind *string, flagName string) {
-	flagset.StringVar(bind, flagName, "2.0", "the share of CPUs as fraction (each worker/VM)")
+	flagset.StringVar(bind, flagName, "2.0", "the share of CPUs as fraction for each worker/VM")
 }
 
-func addControlPlaneMemoryFlag(flagset *pflag.FlagSet, bind *int, flagName string) {
-	flagset.IntVar(bind, flagName, 2048, "the limit on memory usage in MB (each control plane/VM)")
+func addControlPlaneMemoryFlag(flagset *pflag.FlagSet, bind *bytesize.ByteSize, flagName string) {
+	cli.Should(bind.Set("2.0GiB")) // set default value
+	bind.SetDefaultUnit("MB")
+	flagset.Var(bind, flagName, "the limit on memory usage for each control plane/VM")
 }
 
-func addWorkersMemoryFlag(flagset *pflag.FlagSet, bind *int, flagName string) {
-	flagset.IntVar(bind, flagName, 2048, "the limit on memory usage in MB (each worker/VM)")
+func addWorkersMemoryFlag(flagset *pflag.FlagSet, bind *bytesize.ByteSize, flagName string) {
+	cli.Should(bind.Set("2.0GiB")) // set default value
+	bind.SetDefaultUnit("MB")
+	flagset.Var(bind, flagName, "the limit on memory usage for each worker/VM")
 }
 
 func addConfigPatchFlag(flagset *pflag.FlagSet, bind *[]string, flagName string) {
@@ -186,5 +191,5 @@ func addTalosVersionFlag(flagset *pflag.FlagSet, bind *string, description strin
 
 func addDisksFlag(flagset *pflag.FlagSet, bind *[]string, defaultVal []string) {
 	flagset.StringSliceVar(bind, disksFlagName, defaultVal,
-		`list of disks to create in format "<driver1>:<size1>" (size is specified in megabytes) (disks after the first one are added only to worker machines)`)
+		`list of disks to create in format "<driver1>:<size1>" (disks after the first one are added only to worker machines)`)
 }
