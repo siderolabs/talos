@@ -34,17 +34,17 @@ replace github.com/containerd/containerd/v2 => github.com/smira/containerd/v2 v2
 
 // Kubernetes dependencies sharing the same version.
 require (
-	k8s.io/api v0.34.0-rc.1
-	k8s.io/apiextensions-apiserver v0.34.0-rc.1
-	k8s.io/apimachinery v0.34.0-rc.1
-	k8s.io/apiserver v0.34.0-rc.1
-	k8s.io/client-go v0.34.0-rc.1
-	k8s.io/component-base v0.34.0-rc.1
-	k8s.io/cri-api v0.34.0-rc.1
-	k8s.io/kube-scheduler v0.34.0-rc.1
-	k8s.io/kubectl v0.34.0-rc.1
-	k8s.io/kubelet v0.34.0-rc.1
-	k8s.io/pod-security-admission v0.34.0-rc.1
+	k8s.io/api v0.34.0-rc.2
+	k8s.io/apiextensions-apiserver v0.34.0-rc.2
+	k8s.io/apimachinery v0.34.0-rc.2
+	k8s.io/apiserver v0.34.0-rc.2
+	k8s.io/client-go v0.34.0-rc.2
+	k8s.io/component-base v0.34.0-rc.2
+	k8s.io/cri-api v0.34.0-rc.2
+	k8s.io/kube-scheduler v0.34.0-rc.2
+	k8s.io/kubectl v0.34.0-rc.2
+	k8s.io/kubelet v0.34.0-rc.2
+	k8s.io/pod-security-admission v0.34.0-rc.2
 )
 
 require (
@@ -362,7 +362,7 @@ require (
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gotest.tools/v3 v3.4.0 // indirect
-	k8s.io/cli-runtime v0.34.0-rc.1 // indirect
+	k8s.io/cli-runtime v0.34.0-rc.2 // indirect
 	k8s.io/kube-openapi v0.0.0-20250710124328-f3f2b991d03b // indirect
 	kernel.org/pub/linux/libs/security/libcap/psx v1.2.76 // indirect
 	rsc.io/qr v0.2.0 // indirect
