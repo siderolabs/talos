@@ -20,7 +20,7 @@ import (
 	"github.com/siderolabs/talos/internal/pkg/xfs/opentree"
 )
 
-func TestSubfs(t *testing.T) {
+func TestOpentree(t *testing.T) {
 	t.Parallel()
 
 	if uid := os.Getuid(); uid != 0 {
@@ -50,12 +50,11 @@ func TestSubfs(t *testing.T) {
 	t.Run("MountDir", func(t *testing.T) {
 		t.Parallel()
 
-		fs, err := fsopen.New("tmpfs")
-		require.NoError(t, err)
+		fs := fsopen.New("tmpfs")
 
 		roRoot := &xfs.UnixRoot{FS: fs}
 
-		err = roRoot.OpenFS()
+		err := roRoot.OpenFS()
 		require.NoError(t, err)
 
 		roRoot.Shadow, err = fs.MountAt(t.TempDir())
@@ -88,12 +87,11 @@ func TestSubfs(t *testing.T) {
 			t.Skip("OpenTree on Anonymous FS requires kernel 6.15.0+")
 		}
 
-		fs, err := fsopen.New("tmpfs")
-		require.NoError(t, err)
+		fs := fsopen.New("tmpfs")
 
 		roRoot := &xfs.UnixRoot{FS: fs}
 
-		err = roRoot.OpenFS()
+		err := roRoot.OpenFS()
 		require.NoError(t, err)
 
 		fd, err := roRoot.Fd()

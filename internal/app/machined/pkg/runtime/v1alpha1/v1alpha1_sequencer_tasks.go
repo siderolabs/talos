@@ -53,7 +53,7 @@ import (
 	"github.com/siderolabs/talos/internal/pkg/etcd"
 	"github.com/siderolabs/talos/internal/pkg/install"
 	"github.com/siderolabs/talos/internal/pkg/logind"
-	mountv2 "github.com/siderolabs/talos/internal/pkg/mount/v2"
+	mountv3 "github.com/siderolabs/talos/internal/pkg/mount/v3"
 	"github.com/siderolabs/talos/internal/pkg/partition"
 	"github.com/siderolabs/talos/internal/pkg/selinux"
 	"github.com/siderolabs/talos/pkg/conditions"
@@ -377,7 +377,13 @@ func StartDashboard(_ runtime.Sequence, _ any) (runtime.TaskExecutionFunc, strin
 // StartUdevd represents the task to start udevd.
 func StartUdevd(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
-		mp := mountv2.NewSystemOverlay([]string{constants.UdevDir}, constants.UdevDir, mountv2.WithShared(), mountv2.WithFlags(unix.MS_I_VERSION), mountv2.WithSelinuxLabel(constants.UdevRulesLabel))
+		mp := mountv3.NewSystemOverlay(
+			[]string{constants.UdevDir},
+			constants.UdevDir,
+			logger.Printf,
+			mountv3.WithShared(),
+			mountv3.WithSelinuxLabel(constants.UdevRulesLabel),
+		)
 
 		if _, err = mp.Mount(); err != nil {
 			return err
@@ -747,7 +753,7 @@ func UnmountPodMounts(runtime.Sequence, any) (runtime.TaskExecutionFunc, string)
 			if strings.HasPrefix(mountpoint, constants.EphemeralMountPoint+"/") {
 				logger.Printf("unmounting %s\n", mountpoint)
 
-				if err = mountv2.SafeUnmount(ctx, logger.Printf, mountpoint); err != nil {
+				if err = mountv3.SafeUnmount(ctx, logger.Printf, mountpoint); err != nil {
 					if errors.Is(err, syscall.EINVAL) {
 						log.Printf("ignoring unmount error %s: %v", mountpoint, err)
 					} else {
@@ -804,7 +810,7 @@ func UnmountSystemDiskBindMounts(runtime.Sequence, any) (runtime.TaskExecutionFu
 
 			logger.Printf("unmounting %s\n", mountpoint)
 
-			if err = mountv2.SafeUnmount(ctx, logger.Printf, mountpoint); err != nil {
+			if err = mountv3.SafeUnmount(ctx, logger.Printf, mountpoint); err != nil {
 				if errors.Is(err, syscall.EINVAL) {
 					log.Printf("ignoring unmount error %s: %v", mountpoint, err)
 				} else {
@@ -1697,7 +1703,7 @@ func ForceCleanup(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
 			logger.Printf("error killing all procs: %s", err)
 		}
 
-		if err := mountv2.UnmountAll(); err != nil {
+		if err := mountv3.UnmountAll(); err != nil {
 			logger.Printf("error unmounting: %s", err)
 		}
 

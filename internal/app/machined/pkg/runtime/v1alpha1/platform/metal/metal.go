@@ -27,7 +27,8 @@ import (
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/internal/netutils"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/metal/oauth2"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/metal/url"
-	"github.com/siderolabs/talos/internal/pkg/mount/v2"
+	"github.com/siderolabs/talos/internal/pkg/mount/v3"
+	"github.com/siderolabs/talos/internal/pkg/xfs/fsopen"
 	"github.com/siderolabs/talos/pkg/download"
 	"github.com/siderolabs/talos/pkg/machinery/cel"
 	"github.com/siderolabs/talos/pkg/machinery/cel/celenv"
@@ -172,13 +173,24 @@ func readConfigFromISO(ctx context.Context, r state.State) ([]byte, error) {
 		return nil, fmt.Errorf("failed to find volume with machine configuration %s", vc.TypedSpec().Locator.Match)
 	}
 
+	manager := mount.NewManager(
+		mount.WithTarget(volumeStatus.TypedSpec().MountSpec.TargetPath),
+		mount.WithReadOnly(),
+		mount.WithPrinter(log.Printf),
+		mount.WithFsopen(
+			volumeStatus.TypedSpec().Filesystem.String(),
+			fsopen.WithSource(volumeStatus.TypedSpec().MountLocation),
+			fsopen.WithBoolParameter("ro"),
+			fsopen.WithPrinter(log.Printf),
+		),
+	)
+
 	// mount the volume, unmount when done
-	unmounter, err := mount.NewPoint(volumeStatus.TypedSpec().MountLocation, vc.TypedSpec().Mount.TargetPath, volumeStatus.TypedSpec().Filesystem.String(), mount.WithReadonly()).Mount()
-	if err != nil {
+	if _, err := manager.Mount(); err != nil {
 		return nil, fmt.Errorf("failed to mount volume: %w", err)
 	}
 
-	defer unmounter() //nolint:errcheck
+	defer manager.Unmount() //nolint:errcheck
 
 	b, err := os.ReadFile(filepath.Join(mnt, constants.ConfigFilename))
 	if err != nil {

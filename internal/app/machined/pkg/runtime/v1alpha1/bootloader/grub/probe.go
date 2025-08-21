@@ -10,7 +10,7 @@ import (
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/mount"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/options"
-	mountv2 "github.com/siderolabs/talos/internal/pkg/mount/v2"
+	mountv3 "github.com/siderolabs/talos/internal/pkg/mount/v3"
 	"github.com/siderolabs/talos/internal/pkg/partition"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
@@ -47,12 +47,11 @@ func ProbeWithCallback(disk string, options options.ProbeOptions, callback func(
 			return nil
 		},
 		options.BlockProbeOptions,
-		[]mountv2.NewPointOption{
-			mountv2.WithReadonly(),
+		[]mountv3.ManagerOption{
+			mountv3.WithSkipIfMounted(),
+			mountv3.WithReadOnly(),
 		},
-		[]mountv2.OperationOption{
-			mountv2.WithSkipIfMounted(),
-		},
+		nil,
 		nil,
 	); err != nil {
 		if xerrors.TagIs[mount.NotFoundTag](err) {

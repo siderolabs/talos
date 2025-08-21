@@ -32,12 +32,11 @@ func TestTmpfs(t *testing.T) {
 		t.Run(tc.fstype, func(t *testing.T) {
 			t.Parallel()
 
-			fs, err := fsopen.New(tc.fstype, tc.opts...)
-			require.NoError(t, err)
+			fs := fsopen.New(tc.fstype, tc.opts...)
 
 			root := &xfs.UnixRoot{FS: fs}
 
-			err = root.OpenFS()
+			err := root.OpenFS()
 			require.NoError(t, err)
 
 			t.Cleanup(func() {
