@@ -18,7 +18,7 @@ import (
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
 	"github.com/siderolabs/talos/internal/pkg/environment"
-	"github.com/siderolabs/talos/internal/pkg/mount/v2"
+	"github.com/siderolabs/talos/internal/pkg/mount/v3"
 	"github.com/siderolabs/talos/internal/pkg/selinux"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/fipsmode"
@@ -80,13 +80,14 @@ func MountCgroups(ctx context.Context, log *zap.Logger, rt runtime.Runtime, next
 		log.Warn(fmt.Sprintf("kernel argument %v is no longer supported", constants.KernelParamCGroups))
 	}
 
-	unmounter, err := mount.CGroupMountPoints().Mount()
-	if err != nil {
+	cgroup := mount.NewCgroup2()
+
+	if _, err := cgroup.Mount(); err != nil {
 		return fmt.Errorf("mountCgroups: %w", err)
 	}
 
 	defer func() {
-		if err := unmounter(); err != nil {
+		if err := cgroup.Unmount(); err != nil {
 			log.Warn("failed to unmount cgroups", zap.Error(err))
 		}
 	}()
@@ -100,7 +101,9 @@ func MountPseudoLate(ctx context.Context, log *zap.Logger, rt runtime.Runtime, n
 		return next()(ctx, log, rt, next)
 	}
 
-	unmounter, err := mount.PseudoLate().Mount()
+	late := mount.PseudoLate(log.Sugar().Infof)
+
+	unmounter, err := late.Mount()
 	if err != nil {
 		return fmt.Errorf("mountPseudoLate: %w", err)
 	}

@@ -4,100 +4,90 @@
 
 package fsopen
 
-import (
-	"maps"
-	"strings"
-)
-
 // Option is a functional option for configuring a filesystem instance.
 type Option struct {
-	set func(*FS) error
+	set func(*FS)
 }
 
-// WithStringParameters adds a map of strings to the filesystem configuration.
-func WithStringParameters(flags map[string]string) Option {
+// WithSource adds a source to the filesystem configuration.
+func WithSource(source string) Option {
 	return Option{
-		set: func(t *FS) error {
-			if t.stringParams == nil {
-				t.stringParams = make(map[string]string)
-			}
-
-			maps.Insert(t.stringParams, maps.All(flags))
-
-			return nil
+		set: func(t *FS) {
+			t.source = source
 		},
 	}
 }
 
-// WithBoolParameters adds a list of parameters to the filesystem configuration.
-// Set the parameter named by the parameter to true.
-func WithBoolParameters(params ...string) Option {
+// WithMountFlags adds a flag set that will be passed to Fsmount syscall.
+func WithMountFlags(flag int) Option {
 	return Option{
-		set: func(t *FS) error {
-			t.boolParams = append(t.boolParams, params...)
+		set: func(f *FS) {
+			f.mntflags |= flag
+		},
+	}
+}
 
-			return nil
+// WithPrinter adds a printer to the filesystem configuration.
+func WithPrinter(printer func(string, ...any)) Option {
+	return Option{
+		set: func(t *FS) {
+			t.printer = printer
+		},
+	}
+}
+
+// WithProjectQuota sets the project quota flag.
+func WithProjectQuota(enabled bool) Option {
+	return Option{
+		set: func(t *FS) {
+			if !enabled {
+				return
+			}
+
+			if t.boolParams == nil {
+				t.boolParams = make(map[string]struct{})
+			}
+
+			t.boolParams["prjquota"] = struct{}{}
+		},
+	}
+}
+
+// WithStringParameter adds a map of strings to the filesystem configuration.
+func WithStringParameter(param, value string) Option {
+	return Option{
+		set: func(t *FS) {
+			if t.stringParams == nil {
+				t.stringParams = make(map[string][]string)
+			}
+
+			t.stringParams[param] = append(t.stringParams[param], value)
+		},
+	}
+}
+
+// WithBoolParameter adds a flag parameter to the filesystem configuration.
+func WithBoolParameter(param string) Option {
+	return Option{
+		set: func(t *FS) {
+			if t.boolParams == nil {
+				t.boolParams = make(map[string]struct{})
+			}
+
+			t.boolParams[param] = struct{}{}
 		},
 	}
 }
 
 // WithBinaryParameters adds a map of byte arrays to the filesystem configuration.
-func WithBinaryParameters(params map[string][]byte) Option {
+func WithBinaryParameters(param string, value []byte) Option {
 	return Option{
-		set: func(t *FS) error {
+		set: func(t *FS) {
 			if t.binaryParams == nil {
-				t.binaryParams = make(map[string][]byte)
+				t.binaryParams = make(map[string][][]byte)
 			}
 
-			maps.Insert(t.binaryParams, maps.All(params))
-
-			return nil
+			t.binaryParams[param] = append(t.binaryParams[param], value)
 		},
 	}
-}
-
-// WithParameters parses parameters and adds them to the filesystem configuration.
-func WithParameters(parameters string) Option {
-	return Option{
-		set: func(t *FS) error {
-			sparams, bparams := parseParameters(parameters)
-
-			if t.stringParams == nil {
-				t.stringParams = make(map[string]string)
-			}
-
-			maps.Insert(t.stringParams, maps.All(sparams))
-
-			t.boolParams = append(t.boolParams, bparams...)
-
-			return nil
-		},
-	}
-}
-
-func parseParameters(parameters string) (map[string]string, []string) {
-	if parameters == "" {
-		return nil, nil
-	}
-
-	var (
-		bparams []string
-		sparams = make(map[string]string)
-	)
-
-	for param := range strings.SplitSeq(parameters, ",") {
-		if param == "" {
-			continue
-		}
-
-		kv := strings.SplitN(param, "=", 2)
-
-		if len(kv) == 2 {
-			bparams = append(bparams, kv[0])
-		} else {
-			sparams[kv[0]] = "true"
-		}
-	}
-
-	return sparams, bparams
 }

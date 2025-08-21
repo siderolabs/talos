@@ -85,3 +85,19 @@ func (fs *FS) Close() error {
 
 	return unix.Close(oldmntfd)
 }
+
+// Repair repairs the filesystem if needed.
+// This method is a no-op as the `open_tree` syscall does not support repair operations.
+func (fs *FS) Repair() error {
+	return nil
+}
+
+// Source returns the source path of the filesystem.
+func (fs *FS) Source() string {
+	return fs.root
+}
+
+// FSType is no-op for opentree fs.
+func (fs *FS) FSType() string {
+	return ""
+}

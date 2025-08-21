@@ -7,13 +7,15 @@ package mount
 
 import (
 	"fmt"
+	"slices"
 
 	"github.com/siderolabs/gen/xerrors"
 	"github.com/siderolabs/go-blockdevice/v2/blkid"
 	"github.com/siderolabs/go-blockdevice/v2/partitioning"
 	"github.com/siderolabs/go-pointer"
 
-	"github.com/siderolabs/talos/internal/pkg/mount/v2"
+	"github.com/siderolabs/talos/internal/pkg/mount/v3"
+	"github.com/siderolabs/talos/internal/pkg/xfs/fsopen"
 )
 
 // Spec specifies what has to be mounted.
@@ -32,8 +34,8 @@ type NotFoundTag struct{}
 func PartitionOp(
 	disk string, specs []Spec, opFunc func() error,
 	probeOptions []blkid.ProbeOption,
-	newPointOptions []mount.NewPointOption,
-	mountOptions []mount.OperationOption,
+	mountOptions []mount.ManagerOption,
+	filesystemOptions []fsopen.Option,
 	info *blkid.Info, // might be nil
 ) error {
 	if info == nil {
@@ -45,7 +47,7 @@ func PartitionOp(
 		}
 	}
 
-	var points mount.Points
+	var managers mount.Managers
 
 	for _, spec := range specs {
 		var found bool
@@ -56,13 +58,24 @@ func PartitionOp(
 					return xerrors.NewTaggedf[NotFoundTag]("partition %d with label %s is not of type %s (actual %q)", partition.PartitionIndex, *partition.PartitionLabel, spec.FilesystemType, partition.Name)
 				}
 
-				points = append(points,
-					mount.NewPoint(
-						partitioning.DevName(disk, partition.PartitionIndex),
-						spec.MountTarget,
-						spec.FilesystemType,
-						newPointOptions...,
-					),
+				manager := mount.NewManager(slices.Concat(
+					[]mount.ManagerOption{
+						mount.WithTarget(spec.MountTarget),
+						mount.WithFsopen(
+							spec.FilesystemType,
+							slices.Concat(
+								[]fsopen.Option{
+									fsopen.WithSource(partitioning.DevName(disk, partition.PartitionIndex)),
+								},
+								filesystemOptions,
+							)...,
+						),
+					},
+					mountOptions,
+				)...)
+
+				managers = append(managers,
+					manager,
 				)
 
 				found = true
@@ -76,7 +89,7 @@ func PartitionOp(
 		}
 	}
 
-	unmounter, err := points.Mount(mountOptions...)
+	unmounter, err := managers.Mount()
 	if err != nil {
 		return fmt.Errorf("error mounting partitions: %w", err)
 	}

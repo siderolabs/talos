@@ -112,7 +112,7 @@ func readMountInfo() ([]mountInfo, error) {
 			mntInfo.MountPoint = pre[4]
 		}
 
-		if len(post) >= 1 {
+		if len(post) >= 2 {
 			mntInfo.MountSource = post[1]
 		}
 

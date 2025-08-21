@@ -22,7 +22,7 @@ import (
 	"golang.org/x/sys/unix"
 
 	"github.com/siderolabs/talos/internal/pkg/mount/switchroot"
-	"github.com/siderolabs/talos/internal/pkg/mount/v2"
+	"github.com/siderolabs/talos/internal/pkg/mount/v3"
 	"github.com/siderolabs/talos/internal/pkg/rng"
 	"github.com/siderolabs/talos/internal/pkg/secureboot"
 	"github.com/siderolabs/talos/internal/pkg/secureboot/tpm2"
@@ -37,15 +37,16 @@ func init() {
 	runtime.MemProfileRate = 0
 }
 
+//nolint:gocyclo
 func run() error {
 	// Mount the pseudo devices.
-	pseudoMountPoints := mount.Pseudo()
+	pseudo := mount.Pseudo(nil)
 
-	if _, err := pseudoMountPoints.Mount(); err != nil {
+	if _, err := pseudo.Mount(); err != nil {
 		return err
 	}
 
-	if _, err := mount.PseudoSubMountPoints().Mount(); err != nil {
+	if _, err := mount.PseudoSub(nil).Mount(); err != nil {
 		return err
 	}
 
@@ -87,7 +88,7 @@ func run() error {
 	// Switch into the new rootfs.
 	log.Println("entering the rootfs")
 
-	return switchroot.Switch(constants.NewRoot, pseudoMountPoints)
+	return switchroot.Switch(constants.NewRoot, pseudo)
 }
 
 func recovery() {
@@ -124,20 +125,22 @@ func mountRootFS() error {
 
 	if err := extensionsConfig.Read(constants.ExtensionsConfigFile); err != nil {
 		if !os.IsNotExist(err) {
-			return err
+			return fmt.Errorf("failed to read extensions config: %w", err)
 		}
 	}
 
 	// if no extensions found use plain squashfs mount
 	if len(extensionsConfig.Layers) == 0 {
-		squashfs, err := mount.Squashfs(constants.NewRoot, "/"+constants.RootfsAsset)
+		squashfs, err := mount.Squashfs(constants.NewRoot, "/"+constants.RootfsAsset, log.Printf)
 		if err != nil {
-			return err
+			return fmt.Errorf("failed to initialize squashfs: %w", err)
 		}
 
-		_, err = squashfs.Mount()
+		if _, err := squashfs.Mount(); err != nil {
+			return fmt.Errorf("failed to mount squashfs: %w", err)
+		}
 
-		return err
+		return nil
 	}
 
 	// otherwise compose overlay mounts
@@ -147,8 +150,8 @@ func mountRootFS() error {
 	}
 
 	var (
-		layers         []layer
-		squashfsPoints mount.Points
+		layers   []layer
+		squashfs mount.Managers
 	)
 
 	// going in the inverse order as earlier layers are overlayed on top of the latter ones
@@ -171,21 +174,26 @@ func mountRootFS() error {
 	for _, layer := range layers {
 		target := filepath.Join(constants.ExtensionLayers, layer.name)
 
-		point, err := mount.Squashfs(target, layer.image)
+		manager, err := mount.Squashfs(target, layer.image, nil)
 		if err != nil {
 			return err
 		}
 
-		squashfsPoints = append(squashfsPoints, point)
+		squashfs = append(squashfs, manager)
 		overlays = append(overlays, target)
 	}
 
-	squashfsUnmounter, err := squashfsPoints.Mount()
+	squashfsUnmounter, err := squashfs.Mount()
 	if err != nil {
 		return err
 	}
 
-	overlayPoint := mount.NewReadonlyOverlay(overlays, constants.NewRoot, mount.WithShared(), mount.WithFlags(unix.MS_I_VERSION))
+	overlayPoint := mount.NewReadOnlyOverlay(
+		overlays,
+		constants.NewRoot,
+		nil,
+		mount.WithShared(),
+	)
 
 	_, err = overlayPoint.Mount()
 	if err != nil {

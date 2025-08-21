@@ -14,6 +14,11 @@ import (
 	"github.com/siderolabs/talos/pkg/imager/utils"
 )
 
+const (
+	// FilesystemTypeEXT4 is the filesystem type for EXT4.
+	FilesystemTypeEXT4 = "ext4"
+)
+
 // Ext4 creates a ext4 filesystem on the specified partition.
 func Ext4(partname string, setters ...Option) error {
 	opts := NewDefaultOptions(setters...)

@@ -16,7 +16,7 @@ import (
 	"github.com/siderolabs/go-procfs/procfs"
 	"golang.org/x/sys/unix"
 
-	"github.com/siderolabs/talos/internal/pkg/mount/v2"
+	"github.com/siderolabs/talos/internal/pkg/mount/v3"
 	"github.com/siderolabs/talos/internal/pkg/secureboot"
 	"github.com/siderolabs/talos/internal/pkg/secureboot/tpm2"
 	"github.com/siderolabs/talos/internal/pkg/selinux"
@@ -36,7 +36,7 @@ var preservedPaths = map[string]struct{}{
 // https://github.com/karelzak/util-linux/blob/master/sys-utils/switch_root.c.
 //
 //nolint:gocyclo
-func Switch(prefix string, mountpoints mount.Points) (err error) {
+func Switch(prefix string, mountpoints mount.Managers) (err error) {
 	log.Println("moving mounts to the new rootfs")
 
 	if err = mountpoints.Move(prefix); err != nil {

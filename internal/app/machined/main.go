@@ -37,7 +37,7 @@ import (
 	"github.com/siderolabs/talos/internal/app/maintenance"
 	"github.com/siderolabs/talos/internal/app/poweroff"
 	"github.com/siderolabs/talos/internal/app/trustd"
-	"github.com/siderolabs/talos/internal/pkg/mount/v2"
+	"github.com/siderolabs/talos/internal/pkg/mount/v3"
 	"github.com/siderolabs/talos/pkg/httpdefaults"
 	"github.com/siderolabs/talos/pkg/machinery/api/common"
 	"github.com/siderolabs/talos/pkg/machinery/api/machine"

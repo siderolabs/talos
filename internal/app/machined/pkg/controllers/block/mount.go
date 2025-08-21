@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"slices"
 	"syscall"
 
 	"github.com/cosi-project/runtime/pkg/controller"
@@ -20,8 +21,9 @@ import (
 	"go.uber.org/zap"
 	"golang.org/x/sys/unix"
 
-	"github.com/siderolabs/talos/internal/pkg/mount/v2"
+	"github.com/siderolabs/talos/internal/pkg/mount/v3"
 	"github.com/siderolabs/talos/internal/pkg/selinux"
+	"github.com/siderolabs/talos/internal/pkg/xfs/fsopen"
 	"github.com/siderolabs/talos/pkg/filetree"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/resources/block"
@@ -454,6 +456,7 @@ func (ctrl *MountController) updateTargetSettings(
 	return nil
 }
 
+//nolint:gocyclo
 func (ctrl *MountController) handleDiskMountOperation(
 	logger *zap.Logger,
 	mountSource, mountTarget string,
@@ -465,32 +468,45 @@ func (ctrl *MountController) handleDiskMountOperation(
 
 	// mount hasn't been done yet
 	if !ok {
-		var opts []mount.NewPointOption
+		var (
+			opts   []mount.ManagerOption
+			fsOpts []fsopen.Option
+		)
+
+		fsOpts = append(fsOpts,
+			fsopen.WithSource(mountSource),
+			fsopen.WithPrinter(logger.Sugar().With(zap.String("volume", volumeStatus.Metadata().ID())).Infof),
+			fsopen.WithProjectQuota(volumeStatus.TypedSpec().MountSpec.ProjectQuotaSupport),
+		)
 
 		opts = append(opts,
-			mount.WithProjectQuota(volumeStatus.TypedSpec().MountSpec.ProjectQuotaSupport),
 			mount.WithSelinuxLabel(volumeStatus.TypedSpec().MountSpec.SelinuxLabel),
 		)
 
 		if mountRequest.TypedSpec().ReadOnly {
-			opts = append(opts, mount.WithReadonly())
+			opts = append(opts, mount.WithMountAttributes(unix.MOUNT_ATTR_RDONLY))
 		}
 
-		mountpoint := mount.NewPoint(
-			mountSource,
-			mountTarget,
-			mountFilesystem.String(),
-			opts...,
-		)
+		manager := mount.NewManager(slices.Concat(
+			[]mount.ManagerOption{
+				mount.WithTarget(mountTarget),
+				mount.WithFsopen(
+					mountFilesystem.String(),
+					fsOpts...,
+				),
+				mount.WithPrinter(logger.Sugar().Infof),
+			},
+			opts,
+		)...)
 
-		unmounter, err := mountpoint.Mount(mount.WithMountPrinter(logger.Sugar().Infof))
+		mountpoint, err := manager.Mount()
 		if err != nil {
 			return fmt.Errorf("failed to mount %q: %w", mountRequest.Metadata().ID(), err)
 		}
 
 		if !mountRequest.TypedSpec().ReadOnly {
 			if err = ctrl.updateTargetSettings(mountTarget, volumeStatus.TypedSpec().MountSpec); err != nil {
-				unmounter() //nolint:errcheck
+				manager.Unmount() //nolint:errcheck
 
 				return fmt.Errorf("failed to update target settings %q: %w", mountRequest.Metadata().ID(), err)
 			}
@@ -507,7 +523,7 @@ func (ctrl *MountController) handleDiskMountOperation(
 		ctrl.activeMounts[mountRequest.Metadata().ID()] = &mountContext{
 			point:     mountpoint,
 			readOnly:  mountRequest.TypedSpec().ReadOnly,
-			unmounter: unmounter,
+			unmounter: manager.Unmount,
 		}
 	} else if mountCtx.readOnly != mountRequest.TypedSpec().ReadOnly { // remount if needed
 		var err error
@@ -548,20 +564,20 @@ func (ctrl *MountController) handleOverlayMountOperation(
 		return fmt.Errorf("overlay mount is not supported for %q", volumeStatus.TypedSpec().ParentID)
 	}
 
-	mountpoint := mount.NewVarOverlay(
+	manager := mount.NewVarOverlay(
 		[]string{mountTarget},
 		mountTarget,
-		mount.WithFlags(unix.MS_I_VERSION),
+		logger.Sugar().Infof,
 		mount.WithSelinuxLabel(volumeStatus.TypedSpec().MountSpec.SelinuxLabel),
 	)
 
-	unmounter, err := mountpoint.Mount(mount.WithMountPrinter(logger.Sugar().Infof))
+	mountpoint, err := manager.Mount()
 	if err != nil {
 		return fmt.Errorf("failed to mount %q: %w", mountRequest.Metadata().ID(), err)
 	}
 
 	if err = ctrl.updateTargetSettings(mountTarget, volumeStatus.TypedSpec().MountSpec); err != nil {
-		unmounter() //nolint:errcheck
+		manager.Unmount() //nolint:errcheck
 
 		return fmt.Errorf("failed to update target settings %q: %w", mountRequest.Metadata().ID(), err)
 	}
@@ -574,7 +590,7 @@ func (ctrl *MountController) handleOverlayMountOperation(
 
 	ctrl.activeMounts[mountRequest.Metadata().ID()] = &mountContext{
 		point:     mountpoint,
-		unmounter: unmounter,
+		unmounter: manager.Unmount,
 	}
 
 	return nil
@@ -596,7 +612,7 @@ func (ctrl *MountController) handleSwapMountOperation(
 	}
 
 	ctrl.activeMounts[mountRequest.Metadata().ID()] = &mountContext{
-		point: mount.NewPoint(mountSource, "", "swap"),
+		point: mount.NewPoint(mountSource, 0, "", 0, "swap"),
 	}
 
 	logger.Info("swap enabled",

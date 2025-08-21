@@ -12,8 +12,31 @@ import (
 	"golang.org/x/sys/unix"
 )
 
+func trySyncMount(target string, printer func(string, ...any)) error {
+	// open the mountpoint directory to get an fd on the fs
+	fd, err := unix.Open(target, unix.O_RDONLY|unix.O_DIRECTORY|unix.O_CLOEXEC, 0)
+	if err != nil {
+		return fmt.Errorf("open %q: %w", target, err)
+	}
+	defer unix.Close(fd) //nolint:errcheck
+
+	// sync the filesystem backing this fd
+	if err := unix.Syncfs(fd); err != nil {
+		return fmt.Errorf("SYS_SYNCFS %q: %w", target, err)
+	}
+
+	printer("syncfs(%s) ok", target)
+
+	return nil
+}
+
 func unmountLoop(ctx context.Context, printer func(string, ...any), target string, flags int, timeout time.Duration, extraMessage string) (bool, error) {
 	errCh := make(chan error, 1)
+
+	// we need to try to sync fs before
+	if err := trySyncMount(target, printer); err != nil {
+		printer("sync failed: %s", err)
+	}
 
 	go func() {
 		errCh <- unix.Unmount(target, flags)
@@ -38,9 +61,7 @@ unmountLoop:
 				break unmountLoop
 			}
 
-			if printer != nil {
-				printer("unmounting %s%s is taking longer than expected, still waiting for %s", target, extraMessage, timeLeft)
-			}
+			printer("unmounting %s%s is taking longer than expected, still waiting for %s", target, extraMessage, timeLeft)
 		}
 	}
 
@@ -56,15 +77,17 @@ func SafeUnmount(ctx context.Context, printer func(string, ...any), target strin
 		unmountForceTimeout = 10 * time.Second
 	)
 
+	if printer == nil {
+		printer = discard
+	}
+
 	ok, err := unmountLoop(ctx, printer, target, 0, unmountTimeout, "")
 
 	if ok {
 		return err
 	}
 
-	if printer != nil {
-		printer("unmounting %s with force", target)
-	}
+	printer("unmounting %s with force", target)
 
 	ok, err = unmountLoop(ctx, printer, target, unix.MNT_FORCE, unmountTimeout, " with force flag")
 

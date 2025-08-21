@@ -24,6 +24,10 @@ import (
 type FS interface {
 	Open() (int, error)
 	io.Closer
+	Repair() error
+
+	Source() string
+	FSType() string
 }
 
 // Root is an interface that extends the standard fs.FS interface with Write capabilities.
@@ -32,11 +36,15 @@ type Root interface {
 
 	io.Closer
 	OpenFS() error
+	RepairFS() error
 	Fd() (int, error)
 
 	Mkdir(name string, perm os.FileMode) error
 	OpenFile(name string, flags int, perm os.FileMode) (File, error)
 	Remove(name string) error
+
+	Source() string
+	FSType() string
 }
 
 // File is an interface that extends the standard fs.File interface with additional methods for writing.

@@ -29,6 +29,10 @@ var _ interface {
 func (root *UnixRoot) OpenFS() error {
 	var err error
 
+	if root.mntfd != 0 {
+		return nil
+	}
+
 	root.mntfd, err = root.FS.Open()
 	if err != nil {
 		return fmt.Errorf("failed to create root filesystem: %w", err)
@@ -48,8 +52,14 @@ func (root *UnixRoot) Close() error {
 	return root.FS.Close()
 }
 
+// RepairFS repairs the underlying filesystem if necessary.
+func (root *UnixRoot) RepairFS() error {
+	return root.FS.Repair()
+}
+
 // Fd returns the file descriptor of the mounted root filesystem.
 // It returns an error if the filesystem is not open or has been closed.
+// Usage of the returned file descriptior is no longer thread safe.
 func (root *UnixRoot) Fd() (int, error) {
 	if root.mntfd == 0 {
 		return 0, os.ErrClosed
@@ -61,11 +71,6 @@ func (root *UnixRoot) Fd() (int, error) {
 // Mkdir creates a new directory in the root filesystem with the specified name and permissions.
 func (root *UnixRoot) Mkdir(name string, perm os.FileMode) error {
 	return unix.Mkdirat(root.mntfd, name, uint32(perm))
-}
-
-// MountPoint returns the shadow directory of the mounted root filesystem.
-func (root *UnixRoot) MountPoint() string {
-	return root.Shadow
 }
 
 // Open opens a file in the root filesystem with the specified name in read-only mode.
@@ -107,4 +112,14 @@ func (root *UnixRoot) stat(name string) (os.FileInfo, error) {
 	defer f.Close() //nolint:errcheck
 
 	return f.Stat()
+}
+
+// Source returns the source of the underlying filesystem.
+func (root *UnixRoot) Source() string {
+	return root.FS.Source()
+}
+
+// FSType returns the type of the underlying filesystem.
+func (root *UnixRoot) FSType() string {
+	return root.FS.FSType()
 }

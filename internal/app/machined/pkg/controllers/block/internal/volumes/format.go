@@ -17,7 +17,8 @@ import (
 	"github.com/siderolabs/go-blockdevice/v2/swap"
 	"go.uber.org/zap"
 
-	mountv2 "github.com/siderolabs/talos/internal/pkg/mount/v2"
+	mountv3 "github.com/siderolabs/talos/internal/pkg/mount/v3"
+	"github.com/siderolabs/talos/internal/pkg/xfs/fsopen"
 	"github.com/siderolabs/talos/pkg/machinery/imager/quirks"
 	"github.com/siderolabs/talos/pkg/machinery/resources/block"
 	"github.com/siderolabs/talos/pkg/makefs"
@@ -157,14 +158,21 @@ func GrowFilesystem(logger *zap.Logger, volumeContext ManagerContext) error {
 
 		defer os.Remove(tmpDir) //nolint:errcheck
 
-		mountpoint := mountv2.NewPoint(volumeContext.Status.MountLocation, tmpDir, volumeContext.Cfg.TypedSpec().Provisioning.FilesystemSpec.Type.String())
+		manager := mountv3.NewManager(
+			mountv3.WithPrinter(logger.Sugar().Infof),
+			mountv3.WithTarget(tmpDir),
+			mountv3.WithFsopen(
+				volumeContext.Cfg.TypedSpec().Provisioning.FilesystemSpec.Type.String(),
+				fsopen.WithSource(volumeContext.Status.MountLocation),
+				fsopen.WithPrinter(logger.Sugar().Infof),
+			),
+		)
 
-		unmounter, err := mountpoint.Mount(mountv2.WithMountPrinter(logger.Sugar().Infof))
-		if err != nil {
+		if _, err := manager.Mount(); err != nil {
 			return fmt.Errorf("error mounting partition: %w", err)
 		}
 
-		defer unmounter() //nolint:errcheck
+		defer manager.Unmount() //nolint:errcheck
 
 		logger.Info("growing XFS filesystem", zap.String("device", volumeContext.Status.MountLocation))
 
