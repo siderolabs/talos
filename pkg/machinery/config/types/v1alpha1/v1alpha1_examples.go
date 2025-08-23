@@ -667,7 +667,7 @@ func machineKernelExample() *KernelConfig {
 	return &KernelConfig{
 		KernelModules: []*KernelModuleConfig{
 			{
-				ModuleName: "brtfs",
+				ModuleName: "btrfs",
 			},
 		},
 	}

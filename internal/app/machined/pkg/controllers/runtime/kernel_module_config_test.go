@@ -36,7 +36,7 @@ func (suite *KernelModuleConfigSuite) TestReconcileConfig() {
 					MachineKernel: &v1alpha1.KernelConfig{
 						KernelModules: []*v1alpha1.KernelModuleConfig{
 							{
-								ModuleName: "brtfs",
+								ModuleName: "btrfs",
 							},
 							{
 								ModuleName: "e1000",

@@ -369,7 +369,7 @@ logging:
 kernel:
     # Kernel modules to load.
     modules:
-        - name: brtfs # Module name.
+        - name: btrfs # Module name.
 {{< /highlight >}}</details> | |
 |`seccompProfiles` |<a href="#Config.machine.seccompProfiles.">[]MachineSeccompProfile</a> |Configures the seccomp profiles for the machine. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 seccompProfiles:
@@ -2437,7 +2437,7 @@ machine:
     kernel:
         # Kernel modules to load.
         modules:
-            - name: brtfs # Module name.
+            - name: btrfs # Module name.
 {{< /highlight >}}
 
 
