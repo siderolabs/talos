@@ -1,6 +1,6 @@
 module github.com/siderolabs/talos
 
-go 1.24.5
+go 1.25.0
 
 replace (
 	// see e.g. https://github.com/grpc/grpc-go/issues/6696
@@ -150,7 +150,7 @@ require (
 	github.com/siderolabs/go-circular v0.2.3
 	github.com/siderolabs/go-cmd v0.1.3
 	github.com/siderolabs/go-copy v0.1.0
-	github.com/siderolabs/go-debug v0.5.0
+	github.com/siderolabs/go-debug v0.6.0
 	github.com/siderolabs/go-kmsg v0.1.4
 	github.com/siderolabs/go-kubeconfig v0.1.1
 	github.com/siderolabs/go-kubernetes v0.2.25

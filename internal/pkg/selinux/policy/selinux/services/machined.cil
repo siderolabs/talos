@@ -79,6 +79,7 @@
 
 ; reboot & kexec
 (allow init_t self (capability (sys_boot)))
+(allow init_t tmpfs_t (system (kexec_image_load kexec_initramfs_load)))
 
 ; labeling FS
 (allow init_t any_f (fs_classes (relabelfrom relabelto)))

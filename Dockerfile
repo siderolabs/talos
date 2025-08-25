@@ -1154,7 +1154,7 @@ COPY --from=pkg-ca-certificates / /
 ARG TESTPKGS
 ENV PLATFORM=container
 ENV GOFIPS140=latest
-ENV GODEBUG=fips140=only
+ENV GODEBUG=fips140=only,tlsmlkem=0
 ARG GO_LDFLAGS
 RUN --security=insecure --mount=type=cache,id=testspace,target=/tmp --mount=type=cache,target=/.cache,id=talos/.cache go test \
     -ldflags "${GO_LDFLAGS}" \

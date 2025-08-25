@@ -150,6 +150,9 @@
     syslog_console
     syslog_mod
     syslog_read
+    firmware_load
+    kexec_image_load
+    kexec_initramfs_load
 ))
 (class process2 (nnp_transition nosuid_transition))
 (class fd (use))

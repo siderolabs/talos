@@ -25,9 +25,9 @@ DEBUG_TOOLS_SOURCE := scratch
 EMBED_TARGET ?= embed
 
 TOOLS_PREFIX ?= ghcr.io/siderolabs/tools
-TOOLS ?= v1.12.0-alpha.0-1-g52db66e
+TOOLS ?= v1.12.0-alpha.0-3-gedafd5f
 PKGS_PREFIX ?= ghcr.io/siderolabs
-PKGS ?= v1.12.0-alpha.0-12-gab4e975
+PKGS ?= v1.12.0-alpha.0-13-g2cfb920
 GENERATE_VEX_PREFIX ?= ghcr.io/siderolabs/generate-vex
 GENERATE_VEX ?= latest
 
@@ -87,7 +87,7 @@ PKG_ZLIB ?= $(PKGS_PREFIX)/zlib:$(PKGS)
 PKG_ZSTD ?= $(PKGS_PREFIX)/zstd:$(PKGS)
 
 # renovate: datasource=github-tags depName=golang/go
-GO_VERSION ?= 1.24
+GO_VERSION ?= 1.25
 # renovate: datasource=npm depName=markdownlint-cli
 MARKDOWNLINTCLI_VERSION ?= 0.45.0
 # renovate: datasource=docker versioning=docker depName=hugomods/hugo
