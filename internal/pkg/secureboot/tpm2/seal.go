@@ -9,7 +9,6 @@ import (
 	"fmt"
 
 	"github.com/google/go-tpm/tpm2"
-	"github.com/google/go-tpm/tpm2/transport"
 
 	"github.com/siderolabs/talos/internal/pkg/tpm"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
@@ -28,9 +27,9 @@ func Seal(key []byte) (*SealedResponse, error) {
 		return nil, err
 	}
 
-	sealingPolicyDigest, err := calculateSealingPolicyDigest(t)
+	sealingPolicyDigest, err := CalculateSealingPolicyDigest(constants.PCRPublicKey)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to calculate sealing policy digest: %v", err)
 	}
 
 	primary := tpm2.CreatePrimary{
@@ -108,32 +107,4 @@ func Seal(key []byte) (*SealedResponse, error) {
 	}
 
 	return &resp, nil
-}
-
-func calculateSealingPolicyDigest(t transport.TPM) ([]byte, error) {
-	pcrSelector, err := CreateSelector([]int{SecureBootStatePCR})
-	if err != nil {
-		return nil, fmt.Errorf("failed to create PCR selection: %v", err)
-	}
-
-	pcrSelection := tpm2.TPMLPCRSelection{
-		PCRSelections: []tpm2.TPMSPCRSelection{
-			{
-				Hash:      tpm2.TPMAlgSHA256,
-				PCRSelect: pcrSelector,
-			},
-		},
-	}
-
-	pcrValue, err := ReadPCR(t, SecureBootStatePCR)
-	if err != nil {
-		return nil, err
-	}
-
-	sealingDigest, err := CalculateSealingPolicyDigest(pcrValue, pcrSelection, constants.PCRPublicKey)
-	if err != nil {
-		return nil, fmt.Errorf("failed to calculate sealing policy digest: %v", err)
-	}
-
-	return sealingDigest, nil
 }

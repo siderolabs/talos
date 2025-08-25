@@ -243,7 +243,6 @@ func launchVM(config *LaunchConfig) error {
 			fmt.Sprintf("dir=%s,mode=0644", config.TPMConfig.StateDir),
 			"--ctrl",
 			fmt.Sprintf("type=unixio,path=%s", tpm2SocketPath),
-			// "--tpm2",
 			"--pid",
 			fmt.Sprintf("file=%s", filepath.Join(config.TPMConfig.StateDir, "swtpm.pid")),
 			"--log",
