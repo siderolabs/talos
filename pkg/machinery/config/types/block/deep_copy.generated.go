@@ -62,6 +62,10 @@ func (o *RawVolumeConfigV1Alpha1) DeepCopy() *RawVolumeConfigV1Alpha1 {
 					cp.EncryptionSpec.EncryptionKeys[i3].KeyTPM.TPMCheckSecurebootStatusOnEnroll = new(bool)
 					*cp.EncryptionSpec.EncryptionKeys[i3].KeyTPM.TPMCheckSecurebootStatusOnEnroll = *o.EncryptionSpec.EncryptionKeys[i3].KeyTPM.TPMCheckSecurebootStatusOnEnroll
 				}
+				if o.EncryptionSpec.EncryptionKeys[i3].KeyTPM.TPMPCRs != nil {
+					cp.EncryptionSpec.EncryptionKeys[i3].KeyTPM.TPMPCRs = make([]int, len(o.EncryptionSpec.EncryptionKeys[i3].KeyTPM.TPMPCRs))
+					copy(cp.EncryptionSpec.EncryptionKeys[i3].KeyTPM.TPMPCRs, o.EncryptionSpec.EncryptionKeys[i3].KeyTPM.TPMPCRs)
+				}
 			}
 			if o.EncryptionSpec.EncryptionKeys[i3].KeyLockToSTATE != nil {
 				cp.EncryptionSpec.EncryptionKeys[i3].KeyLockToSTATE = new(bool)
@@ -121,6 +125,10 @@ func (o *SwapVolumeConfigV1Alpha1) DeepCopy() *SwapVolumeConfigV1Alpha1 {
 				if o.EncryptionSpec.EncryptionKeys[i3].KeyTPM.TPMCheckSecurebootStatusOnEnroll != nil {
 					cp.EncryptionSpec.EncryptionKeys[i3].KeyTPM.TPMCheckSecurebootStatusOnEnroll = new(bool)
 					*cp.EncryptionSpec.EncryptionKeys[i3].KeyTPM.TPMCheckSecurebootStatusOnEnroll = *o.EncryptionSpec.EncryptionKeys[i3].KeyTPM.TPMCheckSecurebootStatusOnEnroll
+				}
+				if o.EncryptionSpec.EncryptionKeys[i3].KeyTPM.TPMPCRs != nil {
+					cp.EncryptionSpec.EncryptionKeys[i3].KeyTPM.TPMPCRs = make([]int, len(o.EncryptionSpec.EncryptionKeys[i3].KeyTPM.TPMPCRs))
+					copy(cp.EncryptionSpec.EncryptionKeys[i3].KeyTPM.TPMPCRs, o.EncryptionSpec.EncryptionKeys[i3].KeyTPM.TPMPCRs)
 				}
 			}
 			if o.EncryptionSpec.EncryptionKeys[i3].KeyLockToSTATE != nil {
@@ -186,6 +194,10 @@ func (o *UserVolumeConfigV1Alpha1) DeepCopy() *UserVolumeConfigV1Alpha1 {
 					cp.EncryptionSpec.EncryptionKeys[i3].KeyTPM.TPMCheckSecurebootStatusOnEnroll = new(bool)
 					*cp.EncryptionSpec.EncryptionKeys[i3].KeyTPM.TPMCheckSecurebootStatusOnEnroll = *o.EncryptionSpec.EncryptionKeys[i3].KeyTPM.TPMCheckSecurebootStatusOnEnroll
 				}
+				if o.EncryptionSpec.EncryptionKeys[i3].KeyTPM.TPMPCRs != nil {
+					cp.EncryptionSpec.EncryptionKeys[i3].KeyTPM.TPMPCRs = make([]int, len(o.EncryptionSpec.EncryptionKeys[i3].KeyTPM.TPMPCRs))
+					copy(cp.EncryptionSpec.EncryptionKeys[i3].KeyTPM.TPMPCRs, o.EncryptionSpec.EncryptionKeys[i3].KeyTPM.TPMPCRs)
+				}
 			}
 			if o.EncryptionSpec.EncryptionKeys[i3].KeyLockToSTATE != nil {
 				cp.EncryptionSpec.EncryptionKeys[i3].KeyLockToSTATE = new(bool)
@@ -245,6 +257,10 @@ func (o *VolumeConfigV1Alpha1) DeepCopy() *VolumeConfigV1Alpha1 {
 				if o.EncryptionSpec.EncryptionKeys[i3].KeyTPM.TPMCheckSecurebootStatusOnEnroll != nil {
 					cp.EncryptionSpec.EncryptionKeys[i3].KeyTPM.TPMCheckSecurebootStatusOnEnroll = new(bool)
 					*cp.EncryptionSpec.EncryptionKeys[i3].KeyTPM.TPMCheckSecurebootStatusOnEnroll = *o.EncryptionSpec.EncryptionKeys[i3].KeyTPM.TPMCheckSecurebootStatusOnEnroll
+				}
+				if o.EncryptionSpec.EncryptionKeys[i3].KeyTPM.TPMPCRs != nil {
+					cp.EncryptionSpec.EncryptionKeys[i3].KeyTPM.TPMPCRs = make([]int, len(o.EncryptionSpec.EncryptionKeys[i3].KeyTPM.TPMPCRs))
+					copy(cp.EncryptionSpec.EncryptionKeys[i3].KeyTPM.TPMPCRs, o.EncryptionSpec.EncryptionKeys[i3].KeyTPM.TPMPCRs)
 				}
 			}
 			if o.EncryptionSpec.EncryptionKeys[i3].KeyLockToSTATE != nil {

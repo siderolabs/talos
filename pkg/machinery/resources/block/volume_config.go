@@ -146,7 +146,8 @@ type EncryptionKey struct {
 	KMSEndpoint string `yaml:"kmsEndpoint,omitempty" protobuf:"4"`
 
 	// Only for Type == "tpm":
-	TPMCheckSecurebootStatusOnEnroll bool `yaml:"tpmCheckSecurebootStatusOnEnroll,omitempty" protobuf:"5"`
+	TPMCheckSecurebootStatusOnEnroll bool  `yaml:"tpmCheckSecurebootStatusOnEnroll,omitempty" protobuf:"5"`
+	TPMPCRs                          []int `yaml:"pcrs,omitempty" protobuf:"7"`
 }
 
 // MountSpec is the spec for volume mount.

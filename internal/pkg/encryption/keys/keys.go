@@ -59,7 +59,11 @@ func NewHandler(cfg block.EncryptionKey, options ...KeyOption) (Handler, error) 
 			return nil, fmt.Errorf("failed to create TPM key handler at slot %d: no TPM lock function", cfg.Slot)
 		}
 
-		handler, err = NewTPMKeyHandler(key, cfg.TPMCheckSecurebootStatusOnEnroll, opts.TPMLocker)
+		handler, err = NewTPMKeyHandler(
+			key,
+			cfg.TPMCheckSecurebootStatusOnEnroll,
+			cfg.TPMPCRs,
+			opts.TPMLocker)
 		if err != nil {
 			return nil, err
 		}

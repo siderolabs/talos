@@ -229,8 +229,15 @@ func (EncryptionKeyTPM) Doc() *encoder.Doc {
 				Name:        "checkSecurebootStatusOnEnroll",
 				Type:        "bool",
 				Note:        "",
-				Description: "Check that Secureboot is enabled in the EFI firmware.\nIf Secureboot is not enabled, the enrollment of the key will fail. As the TPM key is anyways bound to the value of PCR 7, changing Secureboot status or configuration after the initial enrollment will make the key unusable.",
+				Description: "Check that Secureboot is enabled in the EFI firmware.\nIf Secureboot is not enabled, the enrollment of the key will fail.",
 				Comments:    [3]string{"" /* encoder.HeadComment */, "Check that Secureboot is enabled in the EFI firmware." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "pcrs",
+				Type:        "[]int",
+				Note:        "",
+				Description: "List of PCRs to bind the key to. If not set, defaults to PCR 7, can be disabled by passing an empty list.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "List of PCRs to bind the key to. If not set, defaults to PCR 7, can be disabled by passing an empty list." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
 		},
 	}

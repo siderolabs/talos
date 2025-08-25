@@ -715,6 +715,10 @@ const (
 	// UKIPCR is the PCR number where systemd-stub measures the UKI.
 	UKIPCR = 11
 
+	// SecureBootStatePCR is the PCR number where the secure boot state and the signature are measured.
+	// PCR 7 changes when UEFI SecureBoot mode is enabled/disabled, or firmware certificates (PK, KEK, db, dbx, …) are updated.
+	SecureBootStatePCR = 7
+
 	// DefaultCertificateValidityDuration is the default duration for a certificate.
 	DefaultCertificateValidityDuration = x509.DefaultCertificateValidityDuration
 

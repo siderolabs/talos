@@ -37,8 +37,8 @@ func CreateSelector(pcrs []int) ([]byte, error) {
 }
 
 // ReadPCR reads the value of a single PCR.
-func ReadPCR(t transport.TPM, pcr int) ([]byte, error) {
-	pcrSelector, err := CreateSelector([]int{pcr})
+func ReadPCR(t transport.TPM, pcrs []int) ([]byte, error) {
+	pcrSelector, err := CreateSelector(pcrs)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create PCR selection: %w", err)
 	}
@@ -141,8 +141,8 @@ func PolicyPCRDigest(t transport.TPM, policyHandle tpm2.TPMHandle, pcrSelection 
 }
 
 //nolint:gocyclo
-func validatePCRBanks(t transport.TPM) error {
-	pcrValue, err := ReadPCR(t, constants.UKIPCR)
+func validatePCRBanks(t transport.TPM, tpmPCRs []int) error {
+	pcrValue, err := ReadPCR(t, []int{constants.UKIPCR})
 	if err != nil {
 		return fmt.Errorf("failed to read PCR: %w", err)
 	}
@@ -151,13 +151,16 @@ func validatePCRBanks(t transport.TPM) error {
 		return err
 	}
 
-	pcrValue, err = ReadPCR(t, SecureBootStatePCR)
-	if err != nil {
-		return fmt.Errorf("failed to read PCR: %w", err)
-	}
+	// here we need to read individual PCRs and not the overall PCR state to make sure each is not empty
+	for _, pcr := range tpmPCRs {
+		pcrValue, err = ReadPCR(t, []int{pcr})
+		if err != nil {
+			return fmt.Errorf("failed to read PCR %d: %w", pcr, err)
+		}
 
-	if err = validatePCRNotZeroAndNotFilled(pcrValue, SecureBootStatePCR); err != nil {
-		return err
+		if err = validatePCRNotZeroAndNotFilled(pcrValue, pcr); err != nil {
+			return err
+		}
 	}
 
 	caps := tpm2.GetCapability{

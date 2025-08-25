@@ -108,6 +108,10 @@ func (o VolumeConfigSpec) DeepCopy() VolumeConfigSpec {
 				cp.Encryption.Keys[i3].StaticPassphrase = make([]byte, len(o.Encryption.Keys[i3].StaticPassphrase))
 				copy(cp.Encryption.Keys[i3].StaticPassphrase, o.Encryption.Keys[i3].StaticPassphrase)
 			}
+			if o.Encryption.Keys[i3].TPMPCRs != nil {
+				cp.Encryption.Keys[i3].TPMPCRs = make([]int, len(o.Encryption.Keys[i3].TPMPCRs))
+				copy(cp.Encryption.Keys[i3].TPMPCRs, o.Encryption.Keys[i3].TPMPCRs)
+			}
 		}
 	}
 	if o.Encryption.PerfOptions != nil {

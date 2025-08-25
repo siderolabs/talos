@@ -1639,6 +1639,8 @@ type EncryptionKeyTPM struct {
 	//     changing Secureboot status or configuration
 	//     after the initial enrollment will make the key unusable.
 	TPMCheckSecurebootStatusOnEnroll *bool `yaml:"checkSecurebootStatusOnEnroll,omitempty"`
+	// docgen:nodoc
+	TPMPCRs []int `yaml:"pcrs,omitempty"`
 }
 
 // EncryptionKeyNodeID represents deterministically generated key from the node UUID and PartitionLabel.

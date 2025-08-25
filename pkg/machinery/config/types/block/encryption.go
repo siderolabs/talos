@@ -12,6 +12,7 @@ import (
 	"github.com/siderolabs/go-pointer"
 
 	"github.com/siderolabs/talos/pkg/machinery/config/config"
+	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/resources/block"
 )
 
@@ -130,10 +131,11 @@ type EncryptionKeyTPM struct {
 	//     Check that Secureboot is enabled in the EFI firmware.
 	//
 	//     If Secureboot is not enabled, the enrollment of the key will fail.
-	//     As the TPM key is anyways bound to the value of PCR 7,
-	//     changing Secureboot status or configuration
-	//     after the initial enrollment will make the key unusable.
 	TPMCheckSecurebootStatusOnEnroll *bool `yaml:"checkSecurebootStatusOnEnroll,omitempty"`
+	//   description: >
+	//     List of PCRs to bind the key to.
+	//     If not set, defaults to PCR 7, can be disabled by passing an empty list.
+	TPMPCRs []int `yaml:"pcrs,omitempty"`
 }
 
 // EncryptionKeyNodeID represents deterministically generated key from the node UUID and PartitionLabel.
@@ -277,6 +279,15 @@ func (e *EncryptionKeyTPM) CheckSecurebootOnEnroll() bool {
 	}
 
 	return pointer.SafeDeref(e.TPMCheckSecurebootStatusOnEnroll)
+}
+
+// PCRs implements the config.Provider interface.
+func (e *EncryptionKeyTPM) PCRs() []int {
+	if e == nil {
+		return []int{constants.SecureBootStatePCR}
+	}
+
+	return e.TPMPCRs
 }
 
 // Key implements the config.Provider interface.

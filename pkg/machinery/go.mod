@@ -36,6 +36,7 @@ require (
 	github.com/siderolabs/net v0.4.0
 	github.com/siderolabs/protoenc v0.2.3
 	github.com/stretchr/testify v1.10.0
+	golang.org/x/net v0.40.0
 	google.golang.org/genproto/googleapis/api v0.0.0-20250715232539-7130f93afb79
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20250715232539-7130f93afb79
 	google.golang.org/grpc v1.73.0
@@ -74,7 +75,6 @@ require (
 	go.uber.org/zap v1.27.0 // indirect
 	golang.org/x/crypto v0.38.0 // indirect
 	golang.org/x/exp v0.0.0-20250128182459-e0ece0dbea4c // indirect
-	golang.org/x/net v0.40.0 // indirect
 	golang.org/x/sync v0.15.0 // indirect
 	golang.org/x/sys v0.33.0 // indirect
 	golang.org/x/text v0.25.0 // indirect

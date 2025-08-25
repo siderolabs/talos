@@ -5339,6 +5339,7 @@ EncryptionKey is the spec for volume encryption key.
 | kms_endpoint | [string](#string) |  |  |
 | tpm_check_secureboot_status_on_enroll | [bool](#bool) |  |  |
 | lock_to_state | [bool](#bool) |  |  |
+| tpmpc_rs | [int64](#int64) | repeated |  |
 
 
 
