@@ -1,8 +1,11 @@
+kernel/arch/x86/lib/crc-t10dif-x86.ko
+kernel/arch/x86/lib/crc64-x86.ko
 kernel/crypto/async_tx/async_memcpy.ko
 kernel/crypto/async_tx/async_pq.ko
 kernel/crypto/async_tx/async_raid6_recov.ko
 kernel/crypto/async_tx/async_tx.ko
 kernel/crypto/async_tx/async_xor.ko
+kernel/crypto/hkdf.ko
 kernel/crypto/xor.ko
 kernel/drivers/ata/ahci.ko
 kernel/drivers/ata/libahci.ko
@@ -35,6 +38,7 @@ kernel/drivers/edac/x38_edac.ko
 kernel/drivers/gpu/drm/display/drm_display_helper.ko
 kernel/drivers/gpu/drm/drm_buddy.ko
 kernel/drivers/gpu/drm/drm_exec.ko
+kernel/drivers/gpu/drm/drm_panel_backlight_quirks.ko
 kernel/drivers/gpu/drm/drm_suballoc_helper.ko
 kernel/drivers/gpu/drm/drm_ttm_helper.ko
 kernel/drivers/gpu/drm/scheduler/gpu-sched.ko
@@ -73,6 +77,7 @@ kernel/drivers/infiniband/hw/irdma/irdma.ko
 kernel/drivers/infiniband/hw/mlx4/mlx4_ib.ko
 kernel/drivers/infiniband/hw/mlx5/mlx5_ib.ko
 kernel/drivers/infiniband/sw/rxe/rdma_rxe.ko
+kernel/drivers/leds/led-class-multicolor.ko
 kernel/drivers/md/bcache/bcache.ko
 kernel/drivers/md/dm-bio-prison.ko
 kernel/drivers/md/dm-cache-smq.ko
@@ -83,6 +88,7 @@ kernel/drivers/md/dm-round-robin.ko
 kernel/drivers/md/dm-thin-pool.ko
 kernel/drivers/md/persistent-data/dm-persistent-data.ko
 kernel/drivers/md/raid456.ko
+kernel/drivers/media/cec/core/cec.ko
 kernel/drivers/message/fusion/mptbase.ko
 kernel/drivers/message/fusion/mptsas.ko
 kernel/drivers/message/fusion/mptscsih.ko
@@ -93,6 +99,7 @@ kernel/drivers/misc/hpilo.ko
 kernel/drivers/mmc/host/sdhci-acpi.ko
 kernel/drivers/mmc/host/sdhci-pci.ko
 kernel/drivers/mmc/host/sdhci-pltfm.ko
+kernel/drivers/mmc/host/sdhci-uhs2.ko
 kernel/drivers/mmc/host/sdhci-xenon-driver.ko
 kernel/drivers/mmc/host/sdhci_f_sdh30.ko
 kernel/drivers/net/ethernet/amazon/ena/ena.ko
@@ -156,7 +163,7 @@ kernel/drivers/nvme/target/nvmet-fc.ko
 kernel/drivers/nvme/target/nvmet-rdma.ko
 kernel/drivers/nvme/target/nvmet-tcp.ko
 kernel/drivers/nvme/target/nvmet.ko
-kernel/drivers/platform/x86/intel/intel_vsec.ko
+kernel/drivers/platform/x86/intel/intel-vsec.ko
 kernel/drivers/platform/x86/intel/pmc/intel_pmc_core.ko
 kernel/drivers/platform/x86/intel/pmc/intel_pmc_core_pltdrv.ko
 kernel/drivers/platform/x86/intel/pmt/pmt_class.ko
@@ -188,8 +195,7 @@ kernel/drivers/vfio/vfio_iommu_type1.ko
 kernel/drivers/virt/coco/sev-guest/sev-guest.ko
 kernel/drivers/virt/coco/tsm.ko
 kernel/drivers/virtio/virtio_balloon.ko
-kernel/drivers/virtio/virtio_input.ko
-kernel/drivers/virtio/virtio_mmio.ko
+kernel/drivers/virtio/virtio_mem.ko
 kernel/drivers/virtio/virtio_pci.ko
 kernel/drivers/virtio/virtio_pci_legacy_dev.ko
 kernel/drivers/virtio/virtio_pci_modern_dev.ko
@@ -201,7 +207,9 @@ kernel/drivers/watchdog/sp5100_tco.ko
 kernel/drivers/watchdog/watchdog.ko
 kernel/drivers/watchdog/wdat_wdt.ko
 kernel/drivers/watchdog/xen_wdt.ko
+kernel/lib/crc-t10dif.ko
 kernel/lib/crc64.ko
+kernel/lib/crc8.ko
 kernel/lib/objagg.ko
 kernel/lib/parman.ko
 kernel/lib/raid6/raid6_pq.ko
