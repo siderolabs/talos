@@ -58,7 +58,7 @@ func (DiscoveryRefreshRequestExtension) ResourceDefinition() meta.ResourceDefini
 func init() {
 	proto.RegisterDefaultTypes()
 
-	err := protobuf.RegisterDynamic[DiscoveryRefreshRequestSpec](DiscoveryRefreshRequestType, &DiscoveryRefreshRequest{})
+	err := protobuf.RegisterDynamic(DiscoveryRefreshRequestType, &DiscoveryRefreshRequest{})
 	if err != nil {
 		panic(err)
 	}

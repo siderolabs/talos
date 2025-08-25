@@ -105,7 +105,7 @@ func (DiscoveredVolumeExtension) ResourceDefinition() meta.ResourceDefinitionSpe
 func init() {
 	proto.RegisterDefaultTypes()
 
-	err := protobuf.RegisterDynamic[DiscoveredVolumeSpec](DiscoveredVolumeType, &DiscoveredVolume{})
+	err := protobuf.RegisterDynamic(DiscoveredVolumeType, &DiscoveredVolume{})
 	if err != nil {
 		panic(err)
 	}

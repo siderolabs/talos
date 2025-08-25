@@ -53,7 +53,7 @@ func (SymlinkExtension) ResourceDefinition() meta.ResourceDefinitionSpec {
 func init() {
 	proto.RegisterDefaultTypes()
 
-	err := protobuf.RegisterDynamic[SymlinkSpec](SymlinkType, &Symlink{})
+	err := protobuf.RegisterDynamic(SymlinkType, &Symlink{})
 	if err != nil {
 		panic(err)
 	}

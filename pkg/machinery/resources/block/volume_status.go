@@ -110,7 +110,7 @@ func (VolumeStatusExtension) ResourceDefinition() meta.ResourceDefinitionSpec {
 func init() {
 	proto.RegisterDefaultTypes()
 
-	err := protobuf.RegisterDynamic[VolumeStatusSpec](VolumeStatusType, &VolumeStatus{})
+	err := protobuf.RegisterDynamic(VolumeStatusType, &VolumeStatus{})
 	if err != nil {
 		panic(err)
 	}

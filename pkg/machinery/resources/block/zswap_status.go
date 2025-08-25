@@ -79,7 +79,7 @@ func (ZswapStatusExtension) ResourceDefinition() meta.ResourceDefinitionSpec {
 func init() {
 	proto.RegisterDefaultTypes()
 
-	err := protobuf.RegisterDynamic[ZswapStatusSpec](ZswapStatusType, &ZswapStatus{})
+	err := protobuf.RegisterDynamic(ZswapStatusType, &ZswapStatus{})
 	if err != nil {
 		panic(err)
 	}

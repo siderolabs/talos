@@ -51,7 +51,7 @@ func (VolumeLifecycleExtension) ResourceDefinition() meta.ResourceDefinitionSpec
 func init() {
 	proto.RegisterDefaultTypes()
 
-	err := protobuf.RegisterDynamic[VolumeLifecycleSpec](VolumeLifecycleType, &VolumeLifecycle{})
+	err := protobuf.RegisterDynamic(VolumeLifecycleType, &VolumeLifecycle{})
 	if err != nil {
 		panic(err)
 	}

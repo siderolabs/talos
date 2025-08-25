@@ -63,7 +63,7 @@ func (VolumeMountRequestExtension) ResourceDefinition() meta.ResourceDefinitionS
 func init() {
 	proto.RegisterDefaultTypes()
 
-	err := protobuf.RegisterDynamic[VolumeMountRequestSpec](VolumeMountRequestType, &VolumeMountRequest{})
+	err := protobuf.RegisterDynamic(VolumeMountRequestType, &VolumeMountRequest{})
 	if err != nil {
 		panic(err)
 	}

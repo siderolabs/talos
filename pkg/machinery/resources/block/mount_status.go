@@ -74,7 +74,7 @@ func (MountStatusExtension) ResourceDefinition() meta.ResourceDefinitionSpec {
 func init() {
 	proto.RegisterDefaultTypes()
 
-	err := protobuf.RegisterDynamic[MountStatusSpec](MountStatusType, &MountStatus{})
+	err := protobuf.RegisterDynamic(MountStatusType, &MountStatus{})
 	if err != nil {
 		panic(err)
 	}

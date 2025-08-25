@@ -73,7 +73,7 @@ func (SwapStatusExtension) ResourceDefinition() meta.ResourceDefinitionSpec {
 func init() {
 	proto.RegisterDefaultTypes()
 
-	err := protobuf.RegisterDynamic[SwapStatusSpec](SwapStatusType, &SwapStatus{})
+	err := protobuf.RegisterDynamic(SwapStatusType, &SwapStatus{})
 	if err != nil {
 		panic(err)
 	}

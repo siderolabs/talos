@@ -59,7 +59,7 @@ func (UserDiskConfigStatusExtension) ResourceDefinition() meta.ResourceDefinitio
 func init() {
 	proto.RegisterDefaultTypes()
 
-	err := protobuf.RegisterDynamic[UserDiskConfigStatusSpec](UserDiskConfigStatusType, &UserDiskConfigStatus{})
+	err := protobuf.RegisterDynamic(UserDiskConfigStatusType, &UserDiskConfigStatus{})
 	if err != nil {
 		panic(err)
 	}

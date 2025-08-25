@@ -85,7 +85,7 @@ func (DeviceExtension) ResourceDefinition() meta.ResourceDefinitionSpec {
 func init() {
 	proto.RegisterDefaultTypes()
 
-	err := protobuf.RegisterDynamic[DeviceSpec](DeviceType, &Device{})
+	err := protobuf.RegisterDynamic(DeviceType, &Device{})
 	if err != nil {
 		panic(err)
 	}

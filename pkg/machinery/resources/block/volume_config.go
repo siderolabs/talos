@@ -206,7 +206,7 @@ func (VolumeConfigExtension) ResourceDefinition() meta.ResourceDefinitionSpec {
 func init() {
 	proto.RegisterDefaultTypes()
 
-	err := protobuf.RegisterDynamic[VolumeConfigSpec](VolumeConfigType, &VolumeConfig{})
+	err := protobuf.RegisterDynamic(VolumeConfigType, &VolumeConfig{})
 	if err != nil {
 		panic(err)
 	}

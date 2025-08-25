@@ -112,7 +112,7 @@ func (DiskExtension) ResourceDefinition() meta.ResourceDefinitionSpec {
 func init() {
 	proto.RegisterDefaultTypes()
 
-	err := protobuf.RegisterDynamic[DiskSpec](DiskType, &Disk{})
+	err := protobuf.RegisterDynamic(DiskType, &Disk{})
 	if err != nil {
 		panic(err)
 	}

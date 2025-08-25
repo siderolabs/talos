@@ -69,7 +69,7 @@ func (MountRequestExtension) ResourceDefinition() meta.ResourceDefinitionSpec {
 func init() {
 	proto.RegisterDefaultTypes()
 
-	err := protobuf.RegisterDynamic[MountRequestSpec](MountRequestType, &MountRequest{})
+	err := protobuf.RegisterDynamic(MountRequestType, &MountRequest{})
 	if err != nil {
 		panic(err)
 	}
