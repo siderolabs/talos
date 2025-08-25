@@ -141,13 +141,13 @@ func addWorkersCpusFlag(flagset *pflag.FlagSet, bind *string, flagName string) {
 
 func addControlPlaneMemoryFlag(flagset *pflag.FlagSet, bind *bytesize.ByteSize, flagName string) {
 	cli.Should(bind.Set("2.0GiB")) // set default value
-	bind.SetDefaultUnit("MB")
+	bind.SetDefaultUnit("MiB")
 	flagset.Var(bind, flagName, "the limit on memory usage for each control plane/VM")
 }
 
 func addWorkersMemoryFlag(flagset *pflag.FlagSet, bind *bytesize.ByteSize, flagName string) {
 	cli.Should(bind.Set("2.0GiB")) // set default value
-	bind.SetDefaultUnit("MB")
+	bind.SetDefaultUnit("MiB")
 	flagset.Var(bind, flagName, "the limit on memory usage for each worker/VM")
 }
 
