@@ -28,6 +28,7 @@ type TPMToken struct {
 	SealedBlobPublic  []byte `json:"sealed_blob_public"`
 	PCRs              []int  `json:"pcrs"`
 	Alg               string `json:"alg"`
+	EncryptionVersion string `json:"encryption_version,omitempty"`
 	PolicyHash        []byte `json:"policy_hash"`
 	KeyName           []byte `json:"key_name"`
 }
@@ -38,14 +39,16 @@ type TPMKeyHandler struct {
 
 	tpmLocker               helpers.TPMLockFunc
 	checkSecurebootOnEnroll bool
+	lockToSecureBootState   bool
 }
 
 // NewTPMKeyHandler creates new TPMKeyHandler.
-func NewTPMKeyHandler(key KeyHandler, checkSecurebootOnEnroll bool, tpmLocker helpers.TPMLockFunc) (*TPMKeyHandler, error) {
+func NewTPMKeyHandler(key KeyHandler, checkSecurebootOnEnroll bool, lockToSecureBootState bool, tpmLocker helpers.TPMLockFunc) (*TPMKeyHandler, error) {
 	return &TPMKeyHandler{
 		KeyHandler:              key,
 		tpmLocker:               tpmLocker,
 		checkSecurebootOnEnroll: checkSecurebootOnEnroll,
+		lockToSecureBootState:   lockToSecureBootState,
 	}, nil
 }
 
@@ -71,11 +74,17 @@ func (h *TPMKeyHandler) NewKey(ctx context.Context) (*encryption.Key, token.Toke
 	if err := h.tpmLocker(ctx, func() error {
 		var err error
 
-		resp, err = tpm2.Seal(key)
+		resp, err = tpm2.Seal(key, h.lockToSecureBootState)
 
 		return err
 	}); err != nil {
 		return nil, nil, err
+	}
+
+	pcrs := []int{constants.UKIPCR}
+
+	if h.lockToSecureBootState {
+		pcrs = []int{tpm2.SecureBootStatePCR, constants.UKIPCR}
 	}
 
 	token := &luks.Token[*TPMToken]{
@@ -84,8 +93,9 @@ func (h *TPMKeyHandler) NewKey(ctx context.Context) (*encryption.Key, token.Toke
 			KeySlots:          []int{h.slot},
 			SealedBlobPrivate: resp.SealedBlobPrivate,
 			SealedBlobPublic:  resp.SealedBlobPublic,
-			PCRs:              []int{constants.UKIPCR},
+			PCRs:              pcrs,
 			Alg:               "sha256",
+			EncryptionVersion: EncryptionSchemaVersionErrata,
 			PolicyHash:        resp.PolicyDigest,
 			KeyName:           resp.KeyName,
 		},
@@ -106,6 +116,8 @@ func (h *TPMKeyHandler) GetKey(ctx context.Context, t token.Token) (*encryption.
 		SealedBlobPublic:  token.UserData.SealedBlobPublic,
 		PolicyDigest:      token.UserData.PolicyHash,
 		KeyName:           token.UserData.KeyName,
+		Version:           token.UserData.EncryptionVersion,
+		PCRs:              token.UserData.PCRs,
 	}
 
 	var key []byte

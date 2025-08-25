@@ -130,10 +130,12 @@ type EncryptionKeyTPM struct {
 	//     Check that Secureboot is enabled in the EFI firmware.
 	//
 	//     If Secureboot is not enabled, the enrollment of the key will fail.
-	//     As the TPM key is anyways bound to the value of PCR 7,
+	TPMCheckSecurebootStatusOnEnroll *bool `yaml:"checkSecurebootStatusOnEnroll,omitempty"`
+	//   description: >
+	//     Lock the TPM key to the current Secureboot state.
 	//     changing Secureboot status or configuration
 	//     after the initial enrollment will make the key unusable.
-	TPMCheckSecurebootStatusOnEnroll *bool `yaml:"checkSecurebootStatusOnEnroll,omitempty"`
+	TPMLockToSecureBootState *bool `yaml:"lockToSecureBootState,omitempty"`
 }
 
 // EncryptionKeyNodeID represents deterministically generated key from the node UUID and PartitionLabel.
@@ -277,6 +279,15 @@ func (e *EncryptionKeyTPM) CheckSecurebootOnEnroll() bool {
 	}
 
 	return pointer.SafeDeref(e.TPMCheckSecurebootStatusOnEnroll)
+}
+
+// LockToSecureBootState implements the config.Provider interface.
+func (e *EncryptionKeyTPM) LockToSecureBootState() bool {
+	if e == nil {
+		return false
+	}
+
+	return pointer.SafeDeref(e.TPMLockToSecureBootState)
 }
 
 // Key implements the config.Provider interface.

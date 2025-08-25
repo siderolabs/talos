@@ -1629,6 +1629,12 @@ func (e *EncryptionKeyTPM) CheckSecurebootOnEnroll() bool {
 	return pointer.SafeDeref(e.TPMCheckSecurebootStatusOnEnroll)
 }
 
+// LockToSecureBootState implements the config.Provider interface.
+func (e *EncryptionKeyTPM) LockToSecureBootState() bool {
+	// not supported in v1alpha1
+	return false
+}
+
 // Slot implements the config.Provider interface.
 func (e *EncryptionKey) Slot() int {
 	return e.KeySlot

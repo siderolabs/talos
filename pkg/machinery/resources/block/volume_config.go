@@ -147,6 +147,7 @@ type EncryptionKey struct {
 
 	// Only for Type == "tpm":
 	TPMCheckSecurebootStatusOnEnroll bool `yaml:"tpmCheckSecurebootStatusOnEnroll,omitempty" protobuf:"5"`
+	TPMLockToSecureBootState         bool `yaml:"tpmLockToSecureBootState,omitempty" protobuf:"7"`
 }
 
 // MountSpec is the spec for volume mount.

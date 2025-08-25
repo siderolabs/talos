@@ -35,30 +35,49 @@ func CalculatePolicy(pcrValue []byte, pcrSelection tpm2.TPMLPCRSelection) ([]byt
 	return calculator.Hash().Digest, nil
 }
 
-// CalculateSealingPolicyDigest calculates the sealing policy digest for a given PCR value, PCR selection and public key.
-func CalculateSealingPolicyDigest(pcrValue []byte, pcrSelection tpm2.TPMLPCRSelection, pubKey string) ([]byte, error) {
-	calculator, err := tpm2.NewPolicyCalculator(tpm2.TPMAlgSHA256)
-	if err != nil {
-		return nil, err
-	}
-
+// calculatePolicyAuthorize creates and updates a PolicyAuthorize for the given public key.
+func calculatePolicyAuthorize(calculator *tpm2.PolicyCalculator, pubKey string) error {
 	pubKeyData, err := ParsePCRSigningPubKey(pubKey)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	publicKeyTemplate := RSAPubKeyTemplate(pubKeyData.N.BitLen(), pubKeyData.E, pubKeyData.N.Bytes())
 
 	name, err := tpm2.ObjectName(&publicKeyTemplate)
 	if err != nil {
-		return nil, fmt.Errorf("failed to calculate name: %v", err)
+		return fmt.Errorf("failed to calculate name: %v", err)
 	}
 
 	policyAuthorize := tpm2.PolicyAuthorize{
 		KeySign: *name,
 	}
 
-	if err := policyAuthorize.Update(calculator); err != nil {
+	return policyAuthorize.Update(calculator)
+}
+
+// CalculateSealingPolicyDigest calculates the sealing policy digest for a public key.
+func CalculateSealingPolicyDigest(pubKey string) ([]byte, error) {
+	calculator, err := tpm2.NewPolicyCalculator(tpm2.TPMAlgSHA256)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := calculatePolicyAuthorize(calculator, pubKey); err != nil {
+		return nil, err
+	}
+
+	return calculator.Hash().Digest, nil
+}
+
+// CalculateSealingPolicyDigestWithPCR calculates the sealing policy digest for a public key with PCR value and selection.
+func CalculateSealingPolicyDigestWithPCR(pcrValue []byte, pcrSelection tpm2.TPMLPCRSelection, pubKey string) ([]byte, error) {
+	calculator, err := tpm2.NewPolicyCalculator(tpm2.TPMAlgSHA256)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := calculatePolicyAuthorize(calculator, pubKey); err != nil {
 		return nil, err
 	}
 

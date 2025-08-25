@@ -16,7 +16,7 @@ import (
 )
 
 // Seal seals the key using TPM2.0.
-func Seal(key []byte) (*SealedResponse, error) {
+func Seal(key []byte, lockToPCR7 bool) (*SealedResponse, error) {
 	t, err := tpm.Open()
 	if err != nil {
 		return nil, err
@@ -28,9 +28,9 @@ func Seal(key []byte) (*SealedResponse, error) {
 		return nil, err
 	}
 
-	sealingPolicyDigest, err := calculateSealingPolicyDigest(t)
+	sealingPolicyDigest, err := calculateSealingPolicyDigest(t, lockToPCR7)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to calculate sealing policy digest: %v", err)
 	}
 
 	primary := tpm2.CreatePrimary{
@@ -83,6 +83,7 @@ func Seal(key []byte) (*SealedResponse, error) {
 			ObjectAttributes: tpm2.TPMAObject{
 				FixedTPM:    true,
 				FixedParent: true,
+				NoDA:        true, // see https://github.com/systemd/systemd/pull/30728
 			},
 			Parameters: tpm2.NewTPMUPublicParms(tpm2.TPMAlgKeyedHash, &tpm2.TPMSKeyedHashParms{
 				Scheme: tpm2.TPMTKeyedHashScheme{
@@ -110,27 +111,36 @@ func Seal(key []byte) (*SealedResponse, error) {
 	return &resp, nil
 }
 
-func calculateSealingPolicyDigest(t transport.TPM) ([]byte, error) {
-	pcrSelector, err := CreateSelector([]int{SecureBootStatePCR})
-	if err != nil {
-		return nil, fmt.Errorf("failed to create PCR selection: %v", err)
-	}
+func calculateSealingPolicyDigest(t transport.TPM, lockToPCR7 bool) ([]byte, error) {
+	if lockToPCR7 {
+		pcrSelector, err := CreateSelector([]int{SecureBootStatePCR})
+		if err != nil {
+			return nil, fmt.Errorf("failed to create PCR selection: %v", err)
+		}
 
-	pcrSelection := tpm2.TPMLPCRSelection{
-		PCRSelections: []tpm2.TPMSPCRSelection{
-			{
-				Hash:      tpm2.TPMAlgSHA256,
-				PCRSelect: pcrSelector,
+		pcrSelection := tpm2.TPMLPCRSelection{
+			PCRSelections: []tpm2.TPMSPCRSelection{
+				{
+					Hash:      tpm2.TPMAlgSHA256,
+					PCRSelect: pcrSelector,
+				},
 			},
-		},
+		}
+
+		pcrValue, err := ReadPCR(t, SecureBootStatePCR)
+		if err != nil {
+			return nil, err
+		}
+
+		sealingDigest, err := CalculateSealingPolicyDigestWithPCR(pcrValue, pcrSelection, constants.PCRPublicKey)
+		if err != nil {
+			return nil, fmt.Errorf("failed to calculate sealing policy digest with PCR: %v", err)
+		}
+
+		return sealingDigest, nil
 	}
 
-	pcrValue, err := ReadPCR(t, SecureBootStatePCR)
-	if err != nil {
-		return nil, err
-	}
-
-	sealingDigest, err := CalculateSealingPolicyDigest(pcrValue, pcrSelection, constants.PCRPublicKey)
+	sealingDigest, err := CalculateSealingPolicyDigest(constants.PCRPublicKey)
 	if err != nil {
 		return nil, fmt.Errorf("failed to calculate sealing policy digest: %v", err)
 	}

@@ -89,6 +89,7 @@ message EncryptionKey {
   string kms_endpoint = 4;
   bool tpm_check_secureboot_status_on_enroll = 5;
   bool lock_to_state = 6;
+  bool tpm_lock_to_secure_boot_state = 7;
 }
 
 // EncryptionSpec is the spec for volume encryption.
