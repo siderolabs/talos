@@ -28,6 +28,7 @@ type TPMToken struct {
 	SealedBlobPublic  []byte `json:"sealed_blob_public"`
 	PCRs              []int  `json:"pcrs"`
 	Alg               string `json:"alg"`
+	EncryptionVersion string `json:"encryption_version,omitempty"`
 	PolicyHash        []byte `json:"policy_hash"`
 	KeyName           []byte `json:"key_name"`
 }
@@ -86,6 +87,7 @@ func (h *TPMKeyHandler) NewKey(ctx context.Context) (*encryption.Key, token.Toke
 			SealedBlobPublic:  resp.SealedBlobPublic,
 			PCRs:              []int{constants.UKIPCR},
 			Alg:               "sha256",
+			EncryptionVersion: EncryptionSchemaVersionErrata,
 			PolicyHash:        resp.PolicyDigest,
 			KeyName:           resp.KeyName,
 		},
@@ -106,6 +108,7 @@ func (h *TPMKeyHandler) GetKey(ctx context.Context, t token.Token) (*encryption.
 		SealedBlobPublic:  token.UserData.SealedBlobPublic,
 		PolicyDigest:      token.UserData.PolicyHash,
 		KeyName:           token.UserData.KeyName,
+		Version:           token.UserData.EncryptionVersion,
 	}
 
 	var key []byte

@@ -224,25 +224,27 @@ func Unseal(sealed SealedResponse) ([]byte, error) {
 		return nil, fmt.Errorf("failed to execute policy authorize: %w", err)
 	}
 
-	secureBootStatePCRSelector, err := CreateSelector([]int{SecureBootStatePCR})
-	if err != nil {
-		return nil, err
-	}
+	if sealed.Version == "" {
+		secureBootStatePCRSelector, err := CreateSelector([]int{SecureBootStatePCR})
+		if err != nil {
+			return nil, err
+		}
 
-	secureBootStatePolicyDigest, err := PolicyPCRDigest(t, policySess.Handle(), tpm2.TPMLPCRSelection{
-		PCRSelections: []tpm2.TPMSPCRSelection{
-			{
-				Hash:      tpm2.TPMAlgSHA256,
-				PCRSelect: secureBootStatePCRSelector,
+		secureBootStatePolicyDigest, err := PolicyPCRDigest(t, policySess.Handle(), tpm2.TPMLPCRSelection{
+			PCRSelections: []tpm2.TPMSPCRSelection{
+				{
+					Hash:      tpm2.TPMAlgSHA256,
+					PCRSelect: secureBootStatePCRSelector,
+				},
 			},
-		},
-	})
-	if err != nil {
-		return nil, fmt.Errorf("failed to calculate policy PCR digest: %w", err)
-	}
+		})
+		if err != nil {
+			return nil, fmt.Errorf("failed to calculate policy PCR digest: %w", err)
+		}
 
-	if !bytes.Equal(secureBootStatePolicyDigest.Buffer, sealed.PolicyDigest) {
-		return nil, errors.New("sealing policy digest does not match")
+		if !bytes.Equal(secureBootStatePolicyDigest.Buffer, sealed.PolicyDigest) {
+			return nil, errors.New("sealing policy digest does not match")
+		}
 	}
 
 	unsealOp := tpm2.Unseal{

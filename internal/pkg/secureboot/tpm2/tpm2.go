@@ -17,4 +17,5 @@ type SealedResponse struct {
 	SealedBlobPublic  []byte
 	KeyName           []byte
 	PolicyDigest      []byte
+	Version           string
 }

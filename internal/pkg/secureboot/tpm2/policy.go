@@ -35,8 +35,8 @@ func CalculatePolicy(pcrValue []byte, pcrSelection tpm2.TPMLPCRSelection) ([]byt
 	return calculator.Hash().Digest, nil
 }
 
-// CalculateSealingPolicyDigest calculates the sealing policy digest for a given PCR value, PCR selection and public key.
-func CalculateSealingPolicyDigest(pcrValue []byte, pcrSelection tpm2.TPMLPCRSelection, pubKey string) ([]byte, error) {
+// CalculateSealingPolicyDigest calculates the sealing policy digest for a public key.
+func CalculateSealingPolicyDigest(pubKey string) ([]byte, error) {
 	calculator, err := tpm2.NewPolicyCalculator(tpm2.TPMAlgSHA256)
 	if err != nil {
 		return nil, err
@@ -59,19 +59,6 @@ func CalculateSealingPolicyDigest(pcrValue []byte, pcrSelection tpm2.TPMLPCRSele
 	}
 
 	if err := policyAuthorize.Update(calculator); err != nil {
-		return nil, err
-	}
-
-	pcrHash := sha256.Sum256(pcrValue)
-
-	policy := tpm2.PolicyPCR{
-		PcrDigest: tpm2.TPM2BDigest{
-			Buffer: pcrHash[:],
-		},
-		Pcrs: pcrSelection,
-	}
-
-	if err := policy.Update(calculator); err != nil {
 		return nil, err
 	}
 
