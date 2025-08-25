@@ -12,6 +12,7 @@ import (
 	"github.com/siderolabs/go-pointer"
 
 	"github.com/siderolabs/talos/pkg/machinery/config/config"
+	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/resources/block"
 )
 
@@ -127,13 +128,22 @@ type EncryptionKeyKMS struct {
 // EncryptionKeyTPM represents a key that is generated and then sealed/unsealed by the TPM.
 type EncryptionKeyTPM struct {
 	//   description: >
+	//     TPM options for key protection.
+	TPMOptions *EncryptionKeyTPMOptions `yaml:"options,omitempty"`
+
+	//   description: >
 	//     Check that Secureboot is enabled in the EFI firmware.
 	//
 	//     If Secureboot is not enabled, the enrollment of the key will fail.
-	//     As the TPM key is anyways bound to the value of PCR 7,
-	//     changing Secureboot status or configuration
-	//     after the initial enrollment will make the key unusable.
 	TPMCheckSecurebootStatusOnEnroll *bool `yaml:"checkSecurebootStatusOnEnroll,omitempty"`
+}
+
+// EncryptionKeyTPMOptions represents the options for TPM-based key protection.
+type EncryptionKeyTPMOptions struct {
+	//   description: >
+	//     List of PCRs to bind the key to.
+	//     If not set, defaults to PCR 7, can be disabled by passing an empty list.
+	PCRs []int `yaml:"pcrs,omitempty"`
 }
 
 // EncryptionKeyNodeID represents deterministically generated key from the node UUID and PartitionLabel.
@@ -178,6 +188,14 @@ func (s EncryptionSpec) Validate() ([]string, error) {
 
 		if key.KeyStatic == nil && key.KeyNodeID == nil && key.KeyKMS == nil && key.KeyTPM == nil {
 			errs = errors.Join(errs, fmt.Errorf("at least one encryption key type must be specified for slot %d", key.KeySlot))
+		}
+
+		if key.KeyTPM != nil && key.KeyTPM.TPMOptions != nil {
+			for _, pcr := range key.KeyTPM.TPMOptions.PCRs {
+				if pcr < 0 || pcr > 23 {
+					errs = errors.Join(errs, fmt.Errorf("TPM PCR %d is out of range (0-23)", pcr))
+				}
+			}
 		}
 	}
 
@@ -277,6 +295,25 @@ func (e *EncryptionKeyTPM) CheckSecurebootOnEnroll() bool {
 	}
 
 	return pointer.SafeDeref(e.TPMCheckSecurebootStatusOnEnroll)
+}
+
+// PCRs implements the config.Provider interface.
+func (e *EncryptionKeyTPM) PCRs() []int {
+	if e == nil {
+		return []int{}
+	}
+
+	if e.TPMOptions == nil {
+		return []int{constants.SecureBootStatePCR}
+	}
+
+	return e.TPMOptions.PCRs
+}
+
+// PubKeyPCRs implements the config.Provider interface.
+func (e *EncryptionKeyTPM) PubKeyPCRs() []int {
+	// we always lock to PCR 11
+	return []int{constants.UKIPCR}
 }
 
 // Key implements the config.Provider interface.

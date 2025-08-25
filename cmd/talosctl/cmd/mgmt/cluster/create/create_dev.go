@@ -822,7 +822,11 @@ func convertEncryptionKeys(keys []*v1alpha1.EncryptionKey) []block.EncryptionKey
 		}
 
 		if k.KeyTPM != nil {
-			r.KeyTPM = pointer.To(block.EncryptionKeyTPM(*k.KeyTPM))
+			encryptionKeyTPM := block.EncryptionKeyTPM{
+				TPMCheckSecurebootStatusOnEnroll: k.KeyTPM.TPMCheckSecurebootStatusOnEnroll,
+			}
+
+			r.KeyTPM = pointer.To(encryptionKeyTPM)
 		}
 
 		if k.KeyNodeID != nil {

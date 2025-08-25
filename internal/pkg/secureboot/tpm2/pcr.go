@@ -141,7 +141,7 @@ func PolicyPCRDigest(t transport.TPM, policyHandle tpm2.TPMHandle, pcrSelection 
 }
 
 //nolint:gocyclo
-func validatePCRBanks(t transport.TPM) error {
+func validatePCRBanks(t transport.TPM, tpmPCRs []int) error {
 	pcrValue, err := ReadPCR(t, constants.UKIPCR)
 	if err != nil {
 		return fmt.Errorf("failed to read PCR: %w", err)
@@ -151,13 +151,16 @@ func validatePCRBanks(t transport.TPM) error {
 		return err
 	}
 
-	pcrValue, err = ReadPCR(t, SecureBootStatePCR)
-	if err != nil {
-		return fmt.Errorf("failed to read PCR: %w", err)
-	}
+	// here we need to read individual PCRs and not the overall PCR state to make sure each is not empty
+	for _, pcr := range tpmPCRs {
+		pcrValue, err = ReadPCR(t, pcr)
+		if err != nil {
+			return fmt.Errorf("failed to read PCR %d: %w", pcr, err)
+		}
 
-	if err = validatePCRNotZeroAndNotFilled(pcrValue, SecureBootStatePCR); err != nil {
-		return err
+		if err = validatePCRNotZeroAndNotFilled(pcrValue, pcr); err != nil {
+			return err
+		}
 	}
 
 	caps := tpm2.GetCapability{

@@ -744,11 +744,11 @@ spec:
             PLATFORM: linux/amd64,linux/arm64
             IMAGER_ARGS: "--extra-kernel-arg=console=ttyS0 --extra-kernel-arg=enforcing=1"
             IMAGE_REGISTRY: registry.dev.siderolabs.io
-        - name: integration-trusted-boot
+        - name: integration-trusted-boot-enforcing
           command: e2e-qemu
           withSudo: true
           environment:
-            GITHUB_STEP_NAME: ${{ github.job}}-integration-trusted-boot
+            GITHUB_STEP_NAME: ${{ github.job}}-integration-trusted-boot-enforcing
             VIA_MAINTENANCE_MODE: true
             WITH_TRUSTED_BOOT_ISO: true
             TAG_SUFFIX_IN: -enforcing

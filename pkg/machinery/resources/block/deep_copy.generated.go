@@ -108,6 +108,14 @@ func (o VolumeConfigSpec) DeepCopy() VolumeConfigSpec {
 				cp.Encryption.Keys[i3].StaticPassphrase = make([]byte, len(o.Encryption.Keys[i3].StaticPassphrase))
 				copy(cp.Encryption.Keys[i3].StaticPassphrase, o.Encryption.Keys[i3].StaticPassphrase)
 			}
+			if o.Encryption.Keys[i3].TPMPCRs != nil {
+				cp.Encryption.Keys[i3].TPMPCRs = make([]int, len(o.Encryption.Keys[i3].TPMPCRs))
+				copy(cp.Encryption.Keys[i3].TPMPCRs, o.Encryption.Keys[i3].TPMPCRs)
+			}
+			if o.Encryption.Keys[i3].TPMPubKeyPCRs != nil {
+				cp.Encryption.Keys[i3].TPMPubKeyPCRs = make([]int, len(o.Encryption.Keys[i3].TPMPubKeyPCRs))
+				copy(cp.Encryption.Keys[i3].TPMPubKeyPCRs, o.Encryption.Keys[i3].TPMPubKeyPCRs)
+			}
 		}
 	}
 	if o.Encryption.PerfOptions != nil {
@@ -145,6 +153,18 @@ func (o VolumeStatusSpec) DeepCopy() VolumeStatusSpec {
 	if o.ConfiguredEncryptionKeys != nil {
 		cp.ConfiguredEncryptionKeys = make([]string, len(o.ConfiguredEncryptionKeys))
 		copy(cp.ConfiguredEncryptionKeys, o.ConfiguredEncryptionKeys)
+	}
+	if o.EncryptionSlot != nil {
+		cp.EncryptionSlot = new(int)
+		*cp.EncryptionSlot = *o.EncryptionSlot
+	}
+	if o.TPMEncryptionOptions.PCRs != nil {
+		cp.TPMEncryptionOptions.PCRs = make([]int, len(o.TPMEncryptionOptions.PCRs))
+		copy(cp.TPMEncryptionOptions.PCRs, o.TPMEncryptionOptions.PCRs)
+	}
+	if o.TPMEncryptionOptions.PubKeyPCRs != nil {
+		cp.TPMEncryptionOptions.PubKeyPCRs = make([]int, len(o.TPMEncryptionOptions.PubKeyPCRs))
+		copy(cp.TPMEncryptionOptions.PubKeyPCRs, o.TPMEncryptionOptions.PubKeyPCRs)
 	}
 	return cp
 }

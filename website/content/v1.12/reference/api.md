@@ -313,6 +313,7 @@ description: Talos gRPC API reference.
     - [SymlinkProvisioningSpec](#talos.resource.definitions.block.SymlinkProvisioningSpec)
     - [SymlinkSpec](#talos.resource.definitions.block.SymlinkSpec)
     - [SystemDiskSpec](#talos.resource.definitions.block.SystemDiskSpec)
+    - [TPMEncryptionOptionsInfo](#talos.resource.definitions.block.TPMEncryptionOptionsInfo)
     - [UserDiskConfigStatusSpec](#talos.resource.definitions.block.UserDiskConfigStatusSpec)
     - [VolumeConfigSpec](#talos.resource.definitions.block.VolumeConfigSpec)
     - [VolumeMountRequestSpec](#talos.resource.definitions.block.VolumeMountRequestSpec)
@@ -5339,6 +5340,8 @@ EncryptionKey is the spec for volume encryption key.
 | kms_endpoint | [string](#string) |  |  |
 | tpm_check_secureboot_status_on_enroll | [bool](#bool) |  |  |
 | lock_to_state | [bool](#bool) |  |  |
+| tpmpc_rs | [int64](#int64) | repeated |  |
+| tpm_pub_key_pc_rs | [int64](#int64) | repeated |  |
 
 
 
@@ -5563,6 +5566,22 @@ SystemDiskSpec is the spec for SystemDisks resource.
 
 
 
+<a name="talos.resource.definitions.block.TPMEncryptionOptionsInfo"></a>
+
+### TPMEncryptionOptionsInfo
+TPMEncryptionOptionsInfo is the options for TPM-based encryption.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| pc_rs | [int64](#int64) | repeated |  |
+| pub_key_pc_rs | [int64](#int64) | repeated |  |
+
+
+
+
+
+
 <a name="talos.resource.definitions.block.UserDiskConfigStatusSpec"></a>
 
 ### UserDiskConfigStatusSpec
@@ -5662,6 +5681,9 @@ VolumeStatusSpec is the spec for VolumeStatus resource.
 | configured_encryption_keys | [string](#string) | repeated |  |
 | symlink_spec | [SymlinkProvisioningSpec](#talos.resource.definitions.block.SymlinkProvisioningSpec) |  |  |
 | parent_id | [string](#string) |  |  |
+| encryption_locked_to_state | [bool](#bool) |  |  |
+| encryption_slot | [int64](#int64) |  |  |
+| tpm_encryption_options | [TPMEncryptionOptionsInfo](#talos.resource.definitions.block.TPMEncryptionOptionsInfo) |  |  |
 
 
 

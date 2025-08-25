@@ -1,6 +1,6 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
 #
-# Generated on 2025-08-29T13:41:44Z by kres 784fa1f.
+# Generated on 2025-09-05T10:38:07Z by kres cc45611.
 
 concurrency:
   group: ${{ github.head_ref || github.run_id }}
@@ -101,10 +101,10 @@ jobs:
           PLATFORM: linux/amd64,linux/arm64
         run: |
           make secureboot-iso
-      - name: integration-trusted-boot
+      - name: integration-trusted-boot-enforcing
         env:
           EXTRA_TEST_ARGS: -talos.trustedboot -talos.enforcing
-          GITHUB_STEP_NAME: ${{ github.job}}-integration-trusted-boot
+          GITHUB_STEP_NAME: ${{ github.job}}-integration-trusted-boot-enforcing
           IMAGE_REGISTRY: registry.dev.siderolabs.io
           TAG_SUFFIX_IN: -enforcing
           VIA_MAINTENANCE_MODE: "true"

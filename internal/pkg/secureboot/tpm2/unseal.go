@@ -15,6 +15,7 @@ import (
 	"fmt"
 
 	"github.com/google/go-tpm/tpm2"
+	"github.com/google/go-tpm/tpm2/transport"
 
 	"github.com/siderolabs/talos/internal/pkg/tpm"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
@@ -31,7 +32,7 @@ func Unseal(sealed SealedResponse) ([]byte, error) {
 	defer t.Close() //nolint:errcheck
 
 	// fail early if PCR banks are not present or filled with all zeroes or 0xff
-	if err = validatePCRBanks(t); err != nil {
+	if err = validatePCRBanks(t, sealed.PCRs); err != nil {
 		return nil, err
 	}
 
@@ -80,7 +81,7 @@ func Unseal(sealed SealedResponse) ([]byte, error) {
 	if !bytes.Equal(createPrimaryResponse.Name.Buffer, srk.Buffer) {
 		// this means the srk name does not match, possibly due to a different TPM or tpm was reset
 		// could also mean the disk was used on a different machine
-		return nil, errors.New("srk name does not match")
+		return nil, fmt.Errorf("srk name does not match, expected %x, got %x", srk.Buffer, createPrimaryResponse.Name.Buffer)
 	}
 
 	load := tpm2.Load{
@@ -224,25 +225,23 @@ func Unseal(sealed SealedResponse) ([]byte, error) {
 		return nil, fmt.Errorf("failed to execute policy authorize: %w", err)
 	}
 
-	secureBootStatePCRSelector, err := CreateSelector([]int{SecureBootStatePCR})
-	if err != nil {
-		return nil, err
+	// this handles the case when talos is upgraded from pre Talos 1.12 and we had PCRs field
+	// set to just PCR 11 but locked to PCR 7
+	// in this case the EncryptionVersion is empty and the PubKeyPCRs field is also empty
+	// since both EncryptionVersion and PubKeyPCRs are introduced for Talos 1.12+ only
+	if sealed.EncryptionVersion == "" && len(sealed.PubKeyPCRs) == 0 {
+		if len(sealed.PCRs) == 1 && sealed.PCRs[0] == constants.UKIPCR {
+			if err := validatePCRPolicyDigest(t, policySess.Handle(), []int{constants.SecureBootStatePCR}, sealed.PolicyDigest); err != nil {
+				return nil, fmt.Errorf("failed to validate PCR policy digest for PCRs %v: %w", []int{constants.SecureBootStatePCR}, err)
+			}
+		}
 	}
 
-	secureBootStatePolicyDigest, err := PolicyPCRDigest(t, policySess.Handle(), tpm2.TPMLPCRSelection{
-		PCRSelections: []tpm2.TPMSPCRSelection{
-			{
-				Hash:      tpm2.TPMAlgSHA256,
-				PCRSelect: secureBootStatePCRSelector,
-			},
-		},
-	})
-	if err != nil {
-		return nil, fmt.Errorf("failed to calculate policy PCR digest: %w", err)
-	}
-
-	if !bytes.Equal(secureBootStatePolicyDigest.Buffer, sealed.PolicyDigest) {
-		return nil, errors.New("sealing policy digest does not match")
+	// Talos 1.12+ sets the EncryptionVersion and PubKeyPCRs to PCR 11 and any other PCR used to PCRs field
+	if sealed.EncryptionVersion != "" && len(sealed.PCRs) > 0 {
+		if err := validatePCRPolicyDigest(t, policySess.Handle(), sealed.PCRs, sealed.PolicyDigest); err != nil {
+			return nil, fmt.Errorf("failed to validate PCR policy digest for PCRs %v: %w", sealed.PCRs, err)
+		}
 	}
 
 	unsealOp := tpm2.Unseal{
@@ -265,4 +264,29 @@ func Unseal(sealed SealedResponse) ([]byte, error) {
 	}
 
 	return unsealResponse.OutData.Buffer, nil
+}
+
+func validatePCRPolicyDigest(t transport.TPM, handle tpm2.TPMHandle, pcrs []int, digest []byte) error {
+	pcrSelector, err := CreateSelector(pcrs)
+	if err != nil {
+		return fmt.Errorf("failed to create PCR selector for PCRs %v: %w", pcrs, err)
+	}
+
+	pcrPolicyDigest, err := PolicyPCRDigest(t, handle, tpm2.TPMLPCRSelection{
+		PCRSelections: []tpm2.TPMSPCRSelection{
+			{
+				Hash:      tpm2.TPMAlgSHA256,
+				PCRSelect: pcrSelector,
+			},
+		},
+	})
+	if err != nil {
+		return fmt.Errorf("failed to calculate policy PCR digest: %w", err)
+	}
+
+	if !bytes.Equal(pcrPolicyDigest.Buffer, digest) {
+		return fmt.Errorf("sealing policy digest does not match, expected %x, got %x", digest, pcrPolicyDigest.Buffer)
+	}
+
+	return nil
 }

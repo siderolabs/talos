@@ -89,6 +89,8 @@ message EncryptionKey {
   string kms_endpoint = 4;
   bool tpm_check_secureboot_status_on_enroll = 5;
   bool lock_to_state = 6;
+  repeated int64 tpmpc_rs = 7;
+  repeated int64 tpm_pub_key_pc_rs = 8;
 }
 
 // EncryptionSpec is the spec for volume encryption.
@@ -189,6 +191,12 @@ message SystemDiskSpec {
   string dev_path = 2;
 }
 
+// TPMEncryptionOptionsInfo is the options for TPM-based encryption.
+message TPMEncryptionOptionsInfo {
+  repeated int64 pc_rs = 1;
+  repeated int64 pub_key_pc_rs = 2;
+}
+
 // UserDiskConfigStatusSpec is the spec for UserDiskConfigStatus resource.
 message UserDiskConfigStatusSpec {
   bool ready = 1;
@@ -242,6 +250,9 @@ message VolumeStatusSpec {
   repeated string configured_encryption_keys = 17;
   SymlinkProvisioningSpec symlink_spec = 18;
   string parent_id = 19;
+  bool encryption_locked_to_state = 20;
+  int64 encryption_slot = 21;
+  TPMEncryptionOptionsInfo tpm_encryption_options = 22;
 }
 
 // ZswapStatusSpec is the spec for ZswapStatus resource.

@@ -1629,6 +1629,18 @@ func (e *EncryptionKeyTPM) CheckSecurebootOnEnroll() bool {
 	return pointer.SafeDeref(e.TPMCheckSecurebootStatusOnEnroll)
 }
 
+// PCRs implements the config.Provider interface.
+func (e *EncryptionKeyTPM) PCRs() []int {
+	// v1alpha1 always used PCR 7
+	return []int{constants.SecureBootStatePCR}
+}
+
+// PubKeyPCRs implements the config.Provider interface.
+func (e *EncryptionKeyTPM) PubKeyPCRs() []int {
+	// we always lock to PCR 11
+	return []int{constants.UKIPCR}
+}
+
 // Slot implements the config.Provider interface.
 func (e *EncryptionKey) Slot() int {
 	return e.KeySlot

@@ -124,6 +124,8 @@ func convertEncryptionConfiguration(in cfg.EncryptionConfig, out *block.VolumeCo
 		case key.TPM() != nil:
 			out.Encryption.Keys[i].Type = block.EncryptionKeyTPM
 			out.Encryption.Keys[i].TPMCheckSecurebootStatusOnEnroll = key.TPM().CheckSecurebootOnEnroll()
+			out.Encryption.Keys[i].TPMPCRs = key.TPM().PCRs()
+			out.Encryption.Keys[i].TPMPubKeyPCRs = key.TPM().PubKeyPCRs()
 		default:
 			return fmt.Errorf("unsupported encryption key type: slot %d", key.Slot())
 		}

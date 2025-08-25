@@ -107,10 +107,10 @@ func (h *Handler) Name() string {
 }
 
 // Open encrypted partition.
-func (h *Handler) Open(ctx context.Context, logger *zap.Logger, devicePath, mappedName string) (string, []string, error) {
+func (h *Handler) Open(ctx context.Context, logger *zap.Logger, devicePath, mappedName string) (string, int, []string, error) {
 	isOpen, path, err := h.encryptionProvider.IsOpen(ctx, devicePath, mappedName)
 	if err != nil {
-		return "", nil, err
+		return "", -1, nil, err
 	}
 
 	var usedKey *encryption.Key
@@ -136,7 +136,7 @@ func (h *Handler) Open(ctx context.Context, logger *zap.Logger, devicePath, mapp
 			return slotKey, slotToken, nil
 		})
 		if err != nil {
-			return "", nil, err
+			return "", -1, nil, err
 		}
 
 		logger.Info("opened encrypted device", zap.Int("slot", handler.Slot()), zap.String("type", fmt.Sprintf("%T", handler)))
@@ -146,10 +146,10 @@ func (h *Handler) Open(ctx context.Context, logger *zap.Logger, devicePath, mapp
 
 	failedSyncs, err := h.syncKeys(ctx, logger, devicePath, usedKey)
 	if err != nil {
-		return "", nil, err
+		return "", -1, nil, err
 	}
 
-	return path, failedSyncs, nil
+	return path, usedKey.Slot, failedSyncs, nil
 }
 
 // Close encrypted partition.

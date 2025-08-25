@@ -269,7 +269,7 @@ func (suite *DiscoverySuite) TestKubeSpanPeers() {
 		rtestutils.AssertLength[*kubespan.PeerSpec](nodeCtx, suite.T(), suite.Client.COSI, len(nodes)-1)
 		rtestutils.AssertLength[*kubespan.PeerStatus](nodeCtx, suite.T(), suite.Client.COSI, len(nodes)-1)
 
-		rtestutils.AssertAll[*kubespan.PeerStatus](nodeCtx, suite.T(), suite.Client.COSI,
+		rtestutils.AssertAll(nodeCtx, suite.T(), suite.Client.COSI,
 			func(status *kubespan.PeerStatus, asrt *assert.Assertions) {
 				asrt.Equal(kubespan.PeerStateUp, status.TypedSpec().State)
 				asrt.False(value.IsZero(status.TypedSpec().Endpoint))

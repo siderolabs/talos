@@ -98,7 +98,7 @@ func HandleEncryptionWithHandler(ctx context.Context, logger *zap.Logger, volume
 
 	mappedName := handler.Name() + "-" + volumeContext.Cfg.Metadata().ID()
 
-	mappedPath, failedSyncs, err := handler.Open(ctx, logger, volumeContext.Status.Location, mappedName)
+	mappedPath, usedSlot, failedSyncs, err := handler.Open(ctx, logger, volumeContext.Status.Location, mappedName)
 	if err != nil {
 		return xerrors.NewTaggedf[Retryable]("error opening encrypted volume: %w", err)
 	}
@@ -114,9 +114,21 @@ func HandleEncryptionWithHandler(ctx context.Context, logger *zap.Logger, volume
 	volumeContext.Status.EncryptionFailedSyncs = failedSyncs
 
 	volumeContext.Status.ConfiguredEncryptionKeys = nil
+	volumeContext.Status.EncryptionSlot = &usedSlot
 
 	for _, key := range volumeContext.Cfg.TypedSpec().Encryption.Keys {
 		provider := key.Type.String()
+
+		if key.Slot == usedSlot {
+			volumeContext.Status.EncryptionLockedToState = key.LockToSTATE
+
+			if provider == "tpm" {
+				volumeContext.Status.TPMEncryptionOptions = block.TPMEncryptionOptionsInfo{
+					PCRs:       key.TPMPCRs,
+					PubKeyPCRs: key.TPMPubKeyPCRs,
+				}
+			}
+		}
 
 		if slices.Index(volumeContext.Status.ConfiguredEncryptionKeys, provider) == -1 {
 			volumeContext.Status.ConfiguredEncryptionKeys = append(volumeContext.Status.ConfiguredEncryptionKeys, provider)

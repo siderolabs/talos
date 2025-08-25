@@ -9,14 +9,13 @@ import (
 	"fmt"
 
 	"github.com/google/go-tpm/tpm2"
-	"github.com/google/go-tpm/tpm2/transport"
 
 	"github.com/siderolabs/talos/internal/pkg/tpm"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
 
 // Seal seals the key using TPM2.0.
-func Seal(key []byte) (*SealedResponse, error) {
+func Seal(key []byte, tpmPCRs []int) (*SealedResponse, error) {
 	t, err := tpm.Open()
 	if err != nil {
 		return nil, err
@@ -24,13 +23,17 @@ func Seal(key []byte) (*SealedResponse, error) {
 	defer t.Close() //nolint:errcheck
 
 	// fail early if PCR banks are not present or filled with all zeroes or 0xff
-	if err = validatePCRBanks(t); err != nil {
+	if err = validatePCRBanks(t, tpmPCRs); err != nil {
 		return nil, err
 	}
 
-	sealingPolicyDigest, err := calculateSealingPolicyDigest(t)
+	sealingPolicyDigest, err := CalculateSealingPolicyDigest(t, SealingPolicyDigestInfo{
+		PublicKey:   constants.PCRPublicKey,
+		PCRs:        tpmPCRs,
+		ReadPCRFunc: ReadPCR,
+	})
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to calculate sealing policy digest: %v", err)
 	}
 
 	primary := tpm2.CreatePrimary{
@@ -42,6 +45,8 @@ func Seal(key []byte) (*SealedResponse, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	// TODO: persist SRK as per https://github.com/systemd/systemd/blob/main/src/shared/tpm2-util.c#L1039
 
 	defer func() {
 		flush := tpm2.FlushContext{
@@ -83,6 +88,7 @@ func Seal(key []byte) (*SealedResponse, error) {
 			ObjectAttributes: tpm2.TPMAObject{
 				FixedTPM:    true,
 				FixedParent: true,
+				NoDA:        true, // see https://github.com/systemd/systemd/pull/30728
 			},
 			Parameters: tpm2.NewTPMUPublicParms(tpm2.TPMAlgKeyedHash, &tpm2.TPMSKeyedHashParms{
 				Scheme: tpm2.TPMTKeyedHashScheme{
@@ -105,35 +111,11 @@ func Seal(key []byte) (*SealedResponse, error) {
 		SealedBlobPublic:  tpm2.Marshal(createResp.OutPublic),
 		KeyName:           tpm2.Marshal(createPrimaryResponse.Name),
 		PolicyDigest:      sealingPolicyDigest,
+		PCRs:              tpmPCRs,
+		PubKeyPCRs:        []int{constants.UKIPCR},
+		EncryptionVersion: EncryptionSchemaVersionErrata,
+		Alg:               "sha256",
 	}
 
 	return &resp, nil
-}
-
-func calculateSealingPolicyDigest(t transport.TPM) ([]byte, error) {
-	pcrSelector, err := CreateSelector([]int{SecureBootStatePCR})
-	if err != nil {
-		return nil, fmt.Errorf("failed to create PCR selection: %v", err)
-	}
-
-	pcrSelection := tpm2.TPMLPCRSelection{
-		PCRSelections: []tpm2.TPMSPCRSelection{
-			{
-				Hash:      tpm2.TPMAlgSHA256,
-				PCRSelect: pcrSelector,
-			},
-		},
-	}
-
-	pcrValue, err := ReadPCR(t, SecureBootStatePCR)
-	if err != nil {
-		return nil, err
-	}
-
-	sealingDigest, err := CalculateSealingPolicyDigest(pcrValue, pcrSelection, constants.PCRPublicKey)
-	if err != nil {
-		return nil, fmt.Errorf("failed to calculate sealing policy digest: %v", err)
-	}
-
-	return sealingDigest, nil
 }

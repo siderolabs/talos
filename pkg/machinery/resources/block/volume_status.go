@@ -53,6 +53,12 @@ type VolumeStatusSpec struct {
 	EncryptionFailedSyncs []string `yaml:"encryptionFailedSyncs,omitempty" protobuf:"14"`
 	// ConfiguredEncryptionKeys is the list of configured encryption keys for the volume.
 	ConfiguredEncryptionKeys []string `yaml:"configuredEncryptionKeys,omitempty" protobuf:"17"`
+	// EncryptionLockedToState indicates if the encryption is locked to STATE partition
+	EncryptionLockedToState bool `yaml:"encryptionLockedToState,omitempty" protobuf:"20"`
+	// EncryptionSlot indicates the currently used encryption slot used for decryption.
+	EncryptionSlot *int `yaml:"encryptionSlot,omitempty" protobuf:"21"`
+	// TPMEncryptionOptions is the options for TPM-based encryption.
+	TPMEncryptionOptions TPMEncryptionOptionsInfo `yaml:"tpmEncryptionOptions,omitempty" protobuf:"22"`
 
 	// MountSpec is the mount specification.
 	MountSpec MountSpec `yaml:"mountSpec,omitempty" protobuf:"15"`
@@ -61,6 +67,14 @@ type VolumeStatusSpec struct {
 	SymlinkSpec SymlinkProvisioningSpec `yaml:"symlink,omitempty" protobuf:"18"`
 
 	ErrorMessage string `yaml:"errorMessage,omitempty" protobuf:"3"`
+}
+
+// TPMEncryptionOptionsInfo is the options for TPM-based encryption.
+//
+//gotagsrewrite:gen
+type TPMEncryptionOptionsInfo struct {
+	PCRs       []int `yaml:"pcrs,omitempty" protobuf:"1"`
+	PubKeyPCRs []int `yaml:"pubKeyPcrs,omitempty" protobuf:"2"`
 }
 
 // SetSize sets the size of the volume status, including the pretty size.

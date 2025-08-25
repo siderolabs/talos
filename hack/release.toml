@@ -36,6 +36,24 @@ This change should not affect system or user volumes, but might allow easier ide
 and specifically for raw encrypted volumes.
 """
 
+    [notes.disk-encryption]
+        title = "Disk Encryption"
+        description = """\
+Talos versions prior to v1.12 used the state of PCR 7 and signed policies locked to PCR 11 for TPM based disk encryption.
+
+Talos now supports configuring which PCRs states are to be used for TPM based disk encryption via the `options.pcrs`
+field in the `tpm` section of the disk encryption configuration.
+
+If user doesn't specify any options Talos defaults to using PCR 7 for backwards compatibility with existing installations.
+
+This change was made to improve compatibility with systems that may have varying states in PCR 7 due to UEFI Secure Boot configurations
+and users may wish to disable locking to PCR 7 state entirely.
+
+Signed PCR policies will still be bound to PCR 11.
+
+The currently used PCR's can be seen with `talosctl get volumestatus <volume> -o yaml` command.
+"""
+
 [make_deps]
 
     [make_deps.tools]

@@ -101,17 +101,41 @@
     },
     "block.EncryptionKeyTPM": {
       "properties": {
+        "options": {
+          "$ref": "#/$defs/block.EncryptionKeyTPMOptions",
+          "title": "options",
+          "description": "TPM options for key protection.\n",
+          "markdownDescription": "TPM options for key protection.",
+          "x-intellij-html-description": "\u003cp\u003eTPM options for key protection.\u003c/p\u003e\n"
+        },
         "checkSecurebootStatusOnEnroll": {
           "type": "boolean",
           "title": "checkSecurebootStatusOnEnroll",
-          "description": "Check that Secureboot is enabled in the EFI firmware.\nIf Secureboot is not enabled, the enrollment of the key will fail. As the TPM key is anyways bound to the value of PCR 7, changing Secureboot status or configuration after the initial enrollment will make the key unusable.\n",
-          "markdownDescription": "Check that Secureboot is enabled in the EFI firmware.\nIf Secureboot is not enabled, the enrollment of the key will fail. As the TPM key is anyways bound to the value of PCR 7, changing Secureboot status or configuration after the initial enrollment will make the key unusable.",
-          "x-intellij-html-description": "\u003cp\u003eCheck that Secureboot is enabled in the EFI firmware.\nIf Secureboot is not enabled, the enrollment of the key will fail. As the TPM key is anyways bound to the value of PCR 7, changing Secureboot status or configuration after the initial enrollment will make the key unusable.\u003c/p\u003e\n"
+          "description": "Check that Secureboot is enabled in the EFI firmware.\nIf Secureboot is not enabled, the enrollment of the key will fail.\n",
+          "markdownDescription": "Check that Secureboot is enabled in the EFI firmware.\nIf Secureboot is not enabled, the enrollment of the key will fail.",
+          "x-intellij-html-description": "\u003cp\u003eCheck that Secureboot is enabled in the EFI firmware.\nIf Secureboot is not enabled, the enrollment of the key will fail.\u003c/p\u003e\n"
         }
       },
       "additionalProperties": false,
       "type": "object",
       "description": "EncryptionKeyTPM represents a key that is generated and then sealed/unsealed by the TPM."
+    },
+    "block.EncryptionKeyTPMOptions": {
+      "properties": {
+        "pcrs": {
+          "items": {
+            "type": "integer"
+          },
+          "type": "array",
+          "title": "pcrs",
+          "description": "List of PCRs to bind the key to. If not set, defaults to PCR 7, can be disabled by passing an empty list.\n",
+          "markdownDescription": "List of PCRs to bind the key to. If not set, defaults to PCR 7, can be disabled by passing an empty list.",
+          "x-intellij-html-description": "\u003cp\u003eList of PCRs to bind the key to. If not set, defaults to PCR 7, can be disabled by passing an empty list.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "description": "EncryptionKeyTPMOptions represents the options for TPM-based key protection."
     },
     "block.EncryptionSpec": {
       "properties": {

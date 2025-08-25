@@ -226,11 +226,43 @@ func (EncryptionKeyTPM) Doc() *encoder.Doc {
 		},
 		Fields: []encoder.Doc{
 			{
+				Name:        "options",
+				Type:        "EncryptionKeyTPMOptions",
+				Note:        "",
+				Description: "TPM options for key protection.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "TPM options for key protection." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
 				Name:        "checkSecurebootStatusOnEnroll",
 				Type:        "bool",
 				Note:        "",
-				Description: "Check that Secureboot is enabled in the EFI firmware.\nIf Secureboot is not enabled, the enrollment of the key will fail. As the TPM key is anyways bound to the value of PCR 7, changing Secureboot status or configuration after the initial enrollment will make the key unusable.",
+				Description: "Check that Secureboot is enabled in the EFI firmware.\nIf Secureboot is not enabled, the enrollment of the key will fail.",
 				Comments:    [3]string{"" /* encoder.HeadComment */, "Check that Secureboot is enabled in the EFI firmware." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
+
+	return doc
+}
+
+func (EncryptionKeyTPMOptions) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "EncryptionKeyTPMOptions",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "EncryptionKeyTPMOptions represents the options for TPM-based key protection." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "EncryptionKeyTPMOptions represents the options for TPM-based key protection.",
+		AppearsIn: []encoder.Appearance{
+			{
+				TypeName:  "EncryptionKeyTPM",
+				FieldName: "options",
+			},
+		},
+		Fields: []encoder.Doc{
+			{
+				Name:        "pcrs",
+				Type:        "[]int",
+				Note:        "",
+				Description: "List of PCRs to bind the key to. If not set, defaults to PCR 7, can be disabled by passing an empty list.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "List of PCRs to bind the key to. If not set, defaults to PCR 7, can be disabled by passing an empty list." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
 		},
 	}
@@ -685,6 +717,7 @@ func GetFileDoc() *encoder.FileDoc {
 			EncryptionKeyStatic{}.Doc(),
 			EncryptionKeyKMS{}.Doc(),
 			EncryptionKeyTPM{}.Doc(),
+			EncryptionKeyTPMOptions{}.Doc(),
 			EncryptionKeyNodeID{}.Doc(),
 			ExistingVolumeConfigV1Alpha1{}.Doc(),
 			VolumeDiscoverySpec{}.Doc(),

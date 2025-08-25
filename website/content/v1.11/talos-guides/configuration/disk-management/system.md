@@ -63,8 +63,6 @@ provisioning:
     match: disk.transport == 'nvme' && !system_disk
 ```
 
-> Note: Currently, encryption for `EPHEMERAL` and `STATE` volumes is configured using [another config document]({{< relref "../../../reference/configuration/v1alpha1/config#Config.machine.systemDiskEncryption" >}}).
-
 ## `IMAGECACHE` Volume
 
 This system volume is not provisioned by default, and it only gets created if the [Image Cache]({{< relref "../image-cache" >}}) feature is enabled.

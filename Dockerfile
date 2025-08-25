@@ -351,7 +351,7 @@ RUN --mount=type=cache,target=/.cache,id=talos/.cache go tool golang.org/x/tools
 RUN --mount=type=cache,target=/.cache,id=talos/.cache go tool mvdan.cc/gofumpt -w ./pkg/
 WORKDIR /src/pkg/machinery
 RUN --mount=type=cache,target=/.cache,id=talos/.cache go generate ./...
-RUN go tool github.com/siderolabs/talos/tools/gotagsrewrite .
+RUN --mount=type=cache,target=/.cache,id=talos/.cache go tool github.com/siderolabs/talos/tools/gotagsrewrite .
 RUN --mount=type=cache,target=/.cache,id=talos/.cache go tool golang.org/x/tools/cmd/goimports -w -local github.com/siderolabs/talos ./
 RUN --mount=type=cache,target=/.cache,id=talos/.cache go tool mvdan.cc/gofumpt -w ./
 
@@ -1184,6 +1184,17 @@ RUN --mount=type=cache,target=/.cache,id=talos/.cache GOOS=linux GOARCH=arm64 go
 
 FROM scratch AS integration-test-linux-arm64
 COPY --from=integration-test-linux-arm64-build /src/integration.test /integration-test-linux-arm64
+
+FROM base AS integration-test-darwin-arm64-build
+ARG GO_BUILDFLAGS
+ARG GO_LDFLAGS
+RUN --mount=type=cache,target=/.cache,id=talos/.cache GOOS=darwin GOARCH=arm64 go test -v -c ${GO_BUILDFLAGS} \
+    -ldflags "${GO_LDFLAGS}" \
+    -tags integration,integration_api,integration_cli,integration_k8s \
+    ./internal/integration
+
+FROM scratch AS integration-test-darwin-arm64
+COPY --from=integration-test-darwin-arm64-build /src/integration.test /integration-test-darwin-arm64
 
 FROM --platform=${BUILDPLATFORM} integration-test-${TARGETOS}-${TARGETARCH} AS integration-test-targetarch
 

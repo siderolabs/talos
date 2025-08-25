@@ -58,6 +58,14 @@ func (o *RawVolumeConfigV1Alpha1) DeepCopy() *RawVolumeConfigV1Alpha1 {
 			if o.EncryptionSpec.EncryptionKeys[i3].KeyTPM != nil {
 				cp.EncryptionSpec.EncryptionKeys[i3].KeyTPM = new(EncryptionKeyTPM)
 				*cp.EncryptionSpec.EncryptionKeys[i3].KeyTPM = *o.EncryptionSpec.EncryptionKeys[i3].KeyTPM
+				if o.EncryptionSpec.EncryptionKeys[i3].KeyTPM.TPMOptions != nil {
+					cp.EncryptionSpec.EncryptionKeys[i3].KeyTPM.TPMOptions = new(EncryptionKeyTPMOptions)
+					*cp.EncryptionSpec.EncryptionKeys[i3].KeyTPM.TPMOptions = *o.EncryptionSpec.EncryptionKeys[i3].KeyTPM.TPMOptions
+					if o.EncryptionSpec.EncryptionKeys[i3].KeyTPM.TPMOptions.PCRs != nil {
+						cp.EncryptionSpec.EncryptionKeys[i3].KeyTPM.TPMOptions.PCRs = make([]int, len(o.EncryptionSpec.EncryptionKeys[i3].KeyTPM.TPMOptions.PCRs))
+						copy(cp.EncryptionSpec.EncryptionKeys[i3].KeyTPM.TPMOptions.PCRs, o.EncryptionSpec.EncryptionKeys[i3].KeyTPM.TPMOptions.PCRs)
+					}
+				}
 				if o.EncryptionSpec.EncryptionKeys[i3].KeyTPM.TPMCheckSecurebootStatusOnEnroll != nil {
 					cp.EncryptionSpec.EncryptionKeys[i3].KeyTPM.TPMCheckSecurebootStatusOnEnroll = new(bool)
 					*cp.EncryptionSpec.EncryptionKeys[i3].KeyTPM.TPMCheckSecurebootStatusOnEnroll = *o.EncryptionSpec.EncryptionKeys[i3].KeyTPM.TPMCheckSecurebootStatusOnEnroll
@@ -118,6 +126,14 @@ func (o *SwapVolumeConfigV1Alpha1) DeepCopy() *SwapVolumeConfigV1Alpha1 {
 			if o.EncryptionSpec.EncryptionKeys[i3].KeyTPM != nil {
 				cp.EncryptionSpec.EncryptionKeys[i3].KeyTPM = new(EncryptionKeyTPM)
 				*cp.EncryptionSpec.EncryptionKeys[i3].KeyTPM = *o.EncryptionSpec.EncryptionKeys[i3].KeyTPM
+				if o.EncryptionSpec.EncryptionKeys[i3].KeyTPM.TPMOptions != nil {
+					cp.EncryptionSpec.EncryptionKeys[i3].KeyTPM.TPMOptions = new(EncryptionKeyTPMOptions)
+					*cp.EncryptionSpec.EncryptionKeys[i3].KeyTPM.TPMOptions = *o.EncryptionSpec.EncryptionKeys[i3].KeyTPM.TPMOptions
+					if o.EncryptionSpec.EncryptionKeys[i3].KeyTPM.TPMOptions.PCRs != nil {
+						cp.EncryptionSpec.EncryptionKeys[i3].KeyTPM.TPMOptions.PCRs = make([]int, len(o.EncryptionSpec.EncryptionKeys[i3].KeyTPM.TPMOptions.PCRs))
+						copy(cp.EncryptionSpec.EncryptionKeys[i3].KeyTPM.TPMOptions.PCRs, o.EncryptionSpec.EncryptionKeys[i3].KeyTPM.TPMOptions.PCRs)
+					}
+				}
 				if o.EncryptionSpec.EncryptionKeys[i3].KeyTPM.TPMCheckSecurebootStatusOnEnroll != nil {
 					cp.EncryptionSpec.EncryptionKeys[i3].KeyTPM.TPMCheckSecurebootStatusOnEnroll = new(bool)
 					*cp.EncryptionSpec.EncryptionKeys[i3].KeyTPM.TPMCheckSecurebootStatusOnEnroll = *o.EncryptionSpec.EncryptionKeys[i3].KeyTPM.TPMCheckSecurebootStatusOnEnroll
@@ -182,6 +198,14 @@ func (o *UserVolumeConfigV1Alpha1) DeepCopy() *UserVolumeConfigV1Alpha1 {
 			if o.EncryptionSpec.EncryptionKeys[i3].KeyTPM != nil {
 				cp.EncryptionSpec.EncryptionKeys[i3].KeyTPM = new(EncryptionKeyTPM)
 				*cp.EncryptionSpec.EncryptionKeys[i3].KeyTPM = *o.EncryptionSpec.EncryptionKeys[i3].KeyTPM
+				if o.EncryptionSpec.EncryptionKeys[i3].KeyTPM.TPMOptions != nil {
+					cp.EncryptionSpec.EncryptionKeys[i3].KeyTPM.TPMOptions = new(EncryptionKeyTPMOptions)
+					*cp.EncryptionSpec.EncryptionKeys[i3].KeyTPM.TPMOptions = *o.EncryptionSpec.EncryptionKeys[i3].KeyTPM.TPMOptions
+					if o.EncryptionSpec.EncryptionKeys[i3].KeyTPM.TPMOptions.PCRs != nil {
+						cp.EncryptionSpec.EncryptionKeys[i3].KeyTPM.TPMOptions.PCRs = make([]int, len(o.EncryptionSpec.EncryptionKeys[i3].KeyTPM.TPMOptions.PCRs))
+						copy(cp.EncryptionSpec.EncryptionKeys[i3].KeyTPM.TPMOptions.PCRs, o.EncryptionSpec.EncryptionKeys[i3].KeyTPM.TPMOptions.PCRs)
+					}
+				}
 				if o.EncryptionSpec.EncryptionKeys[i3].KeyTPM.TPMCheckSecurebootStatusOnEnroll != nil {
 					cp.EncryptionSpec.EncryptionKeys[i3].KeyTPM.TPMCheckSecurebootStatusOnEnroll = new(bool)
 					*cp.EncryptionSpec.EncryptionKeys[i3].KeyTPM.TPMCheckSecurebootStatusOnEnroll = *o.EncryptionSpec.EncryptionKeys[i3].KeyTPM.TPMCheckSecurebootStatusOnEnroll
@@ -242,6 +266,14 @@ func (o *VolumeConfigV1Alpha1) DeepCopy() *VolumeConfigV1Alpha1 {
 			if o.EncryptionSpec.EncryptionKeys[i3].KeyTPM != nil {
 				cp.EncryptionSpec.EncryptionKeys[i3].KeyTPM = new(EncryptionKeyTPM)
 				*cp.EncryptionSpec.EncryptionKeys[i3].KeyTPM = *o.EncryptionSpec.EncryptionKeys[i3].KeyTPM
+				if o.EncryptionSpec.EncryptionKeys[i3].KeyTPM.TPMOptions != nil {
+					cp.EncryptionSpec.EncryptionKeys[i3].KeyTPM.TPMOptions = new(EncryptionKeyTPMOptions)
+					*cp.EncryptionSpec.EncryptionKeys[i3].KeyTPM.TPMOptions = *o.EncryptionSpec.EncryptionKeys[i3].KeyTPM.TPMOptions
+					if o.EncryptionSpec.EncryptionKeys[i3].KeyTPM.TPMOptions.PCRs != nil {
+						cp.EncryptionSpec.EncryptionKeys[i3].KeyTPM.TPMOptions.PCRs = make([]int, len(o.EncryptionSpec.EncryptionKeys[i3].KeyTPM.TPMOptions.PCRs))
+						copy(cp.EncryptionSpec.EncryptionKeys[i3].KeyTPM.TPMOptions.PCRs, o.EncryptionSpec.EncryptionKeys[i3].KeyTPM.TPMOptions.PCRs)
+					}
+				}
 				if o.EncryptionSpec.EncryptionKeys[i3].KeyTPM.TPMCheckSecurebootStatusOnEnroll != nil {
 					cp.EncryptionSpec.EncryptionKeys[i3].KeyTPM.TPMCheckSecurebootStatusOnEnroll = new(bool)
 					*cp.EncryptionSpec.EncryptionKeys[i3].KeyTPM.TPMCheckSecurebootStatusOnEnroll = *o.EncryptionSpec.EncryptionKeys[i3].KeyTPM.TPMCheckSecurebootStatusOnEnroll

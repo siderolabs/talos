@@ -218,6 +218,32 @@ func TestVolumeConfigValidate(t *testing.T) {
 			expectedErrors: "state-locked key is not allowed for the \"STATE\" volume",
 		},
 		{
+			name: "invalid pcrs",
+
+			cfg: func(t *testing.T) *block.VolumeConfigV1Alpha1 {
+				c := block.NewVolumeConfigV1Alpha1()
+				c.MetaName = constants.StatePartitionLabel
+
+				c.EncryptionSpec = block.EncryptionSpec{
+					EncryptionProvider: blockres.EncryptionProviderLUKS2,
+					EncryptionKeys: []block.EncryptionKey{
+						{
+							KeySlot: 0,
+							KeyTPM: &block.EncryptionKeyTPM{
+								TPMOptions: &block.EncryptionKeyTPMOptions{
+									PCRs: []int{24, 25},
+								},
+							},
+						},
+					},
+				}
+
+				return c
+			},
+
+			expectedErrors: "TPM PCR 24 is out of range (0-23)\nTPM PCR 25 is out of range (0-23)",
+		},
+		{
 			name: "valid",
 
 			cfg: func(t *testing.T) *block.VolumeConfigV1Alpha1 {
@@ -246,6 +272,55 @@ func TestVolumeConfigValidate(t *testing.T) {
 
 				assert.EqualError(t, err, test.expectedErrors)
 			}
+		})
+	}
+}
+
+func TestVolumeConfigTPMPCRsDefaults(t *testing.T) {
+	t.Parallel()
+
+	for _, test := range []struct {
+		name string
+
+		filename     string
+		expectedPCRs []int
+	}{
+		{
+			name:     "tpm encryption no options",
+			filename: "volumeconfig_tpm_encryption_no_options.yaml",
+
+			expectedPCRs: []int{7},
+		},
+		{
+			name:     "tpm encryption with pcr settings",
+			filename: "volumeconfig_tpm_encryption_with_pcr_settings.yaml",
+
+			expectedPCRs: []int{0, 7},
+		},
+		{
+			name:     "tpm encryption with pcrs disabled",
+			filename: "volumeconfig_tpm_encryption_with_pcrs_disabled.yaml",
+
+			expectedPCRs: []int{},
+		},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+
+			marshaled, err := os.ReadFile(filepath.Join("testdata", test.filename))
+			require.NoError(t, err)
+
+			provider, err := configloader.NewFromBytes(marshaled)
+			require.NoError(t, err)
+
+			docs := provider.Documents()
+			require.Len(t, docs, 1)
+
+			cfg, ok := docs[0].(*block.VolumeConfigV1Alpha1)
+			require.True(t, ok)
+
+			assert.Equal(t, test.expectedPCRs, cfg.Encryption().Keys()[0].TPM().PCRs())
+			assert.Equal(t, []int{constants.UKIPCR}, cfg.Encryption().Keys()[0].TPM().PubKeyPCRs())
 		})
 	}
 }
