@@ -1,3 +1,83 @@
+## [Talos 1.10.7](https://github.com/siderolabs/talos/releases/tag/v1.10.7) (2025-08-26)
+
+Welcome to the v1.10.7 release of Talos!
+
+
+
+Please try out the release binaries and report any issues at
+https://github.com/siderolabs/talos/issues.
+
+### Component Updates
+
+Linux: 6.12.43
+Kubernetes: 1.33.4
+
+Talos is built with Go 1.24.6.
+
+
+### Contributors
+
+* Andrey Smirnov
+
+### Changes
+<details><summary>5 commits</summary>
+<p>
+
+* [`d7936dec6`](https://github.com/siderolabs/talos/commit/d7936dec6c749a6f6fa8f8a32e0acf357c03765a) fix: image cache lockup on a missing volume
+* [`f6541fa71`](https://github.com/siderolabs/talos/commit/f6541fa7169ed8ae6c8d39b056e524c7ec5d6658) fix: live reload of TLS client config for discovery client
+* [`29cfd9fd0`](https://github.com/siderolabs/talos/commit/29cfd9fd0e71f6f6edaf11273541e40aeccb9853) fix: enforce minimum size on user volumes if not set explicitly
+* [`83dcca3c7`](https://github.com/siderolabs/talos/commit/83dcca3c76d3210196300969f1aaf826f73f8970) feat: add F71808E watchdog driver
+* [`3f05c3922`](https://github.com/siderolabs/talos/commit/3f05c39220b32d84cf0ad9f7a5895b76a4f4ac89) feat: update Linux and Kubernetes
+</p>
+</details>
+
+### Changes from siderolabs/discovery-client
+<details><summary>3 commits</summary>
+<p>
+
+* [`0bffa6f`](https://github.com/siderolabs/discovery-client/commit/0bffa6fc7fbb350024d96e9ae986163dcdff7f91) fix: allow TLS config to be passed as a function
+* [`09c6687`](https://github.com/siderolabs/discovery-client/commit/09c6687a597fae973c432acdb85b975a7a84ae21) chore: fix project name in release.toml
+* [`71b0c6d`](https://github.com/siderolabs/discovery-client/commit/71b0c6d2ceefa0af83e95d157d2bdc0ad1b948f9) fix: add FIPS-140-3 strict compliance
+</p>
+</details>
+
+### Changes from siderolabs/pkgs
+<details><summary>5 commits</summary>
+<p>
+
+* [`88700c7`](https://github.com/siderolabs/pkgs/commit/88700c723d0126c8334c6f248aa31842bdc9ae0b) feat: update Linux to 6.12.43
+* [`4cf5eeb`](https://github.com/siderolabs/pkgs/commit/4cf5eeb6d61cea4464c6ead9421c3aa42ddd6016) fix: re-enable CPUSETS_V1 cgroups controller
+* [`8a14125`](https://github.com/siderolabs/pkgs/commit/8a1412589975df59a97faa0975e30a3830071841) feat: update backportable dependencies
+* [`69b9cdc`](https://github.com/siderolabs/pkgs/commit/69b9cdc83d1bd23ab840af92f28ce91be4853898) feat: enable F71808E watchdog driver
+* [`7ffefa9`](https://github.com/siderolabs/pkgs/commit/7ffefa933f6a4a2964e7e8b002e42a697b5d06f0) feat: update Go to 1.24.6
+</p>
+</details>
+
+### Changes from siderolabs/tools
+<details><summary>1 commit</summary>
+<p>
+
+* [`306d9d9`](https://github.com/siderolabs/tools/commit/306d9d9008e53c0bc7c21e803986b03da03970cd) feat: update Go to 1.24.6
+</p>
+</details>
+
+### Dependency Changes
+
+* **github.com/siderolabs/discovery-client**  v0.1.11 -> v0.1.13
+* **github.com/siderolabs/pkgs**              v1.10.0-29-g2e6dd0a -> v1.10.0-34-g88700c7
+* **github.com/siderolabs/tools**             v1.10.0-5-g31fd099 -> v1.10.0-6-g306d9d9
+* **google.golang.org/grpc**                  v1.71.3 -> v1.73.0
+* **k8s.io/api**                              v0.33.2 -> v0.33.4
+* **k8s.io/apiserver**                        v0.33.2 -> v0.33.4
+* **k8s.io/client-go**                        v0.33.2 -> v0.33.4
+* **k8s.io/component-base**                   v0.33.2 -> v0.33.4
+* **k8s.io/kube-scheduler**                   v0.33.2 -> v0.33.4
+* **k8s.io/kubectl**                          v0.33.2 -> v0.33.4
+* **k8s.io/kubelet**                          v0.33.2 -> v0.33.4
+* **k8s.io/pod-security-admission**           v0.33.2 -> v0.33.4
+
+Previous release can be found at [v1.10.6](https://github.com/siderolabs/talos/releases/tag/v1.10.6)
+
 ## [Talos 1.10.6](https://github.com/siderolabs/talos/releases/tag/v1.10.6) (2025-07-31)
 
 Welcome to the v1.10.6 release of Talos!
