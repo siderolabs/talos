@@ -39,7 +39,7 @@ So, if the `STATE` volume is wiped or replaced, the volume encryption key will n
 
 ### Disk Wipe
 
-Talos now supports `talosctl disk wipe` command in maintenance mode (`talosctl disk wipe <disk> --insecure`).
+Talos now supports `talosctl wipe disk` command in maintenance mode (`talosctl wipe disk <disk> --insecure`).
 
 ## SBOMs
 
