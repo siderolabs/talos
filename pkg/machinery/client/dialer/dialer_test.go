@@ -4,11 +4,28 @@
 
 package dialer_test
 
-import "testing"
+import (
+	"context"
+	"net"
+	"testing"
+	"time"
 
-func TestEmpty(t *testing.T) {
-	// added for accurate coverage estimation
-	//
-	// please remove it once any unit-test is added
-	// for this package
+	"github.com/siderolabs/talos/pkg/machinery/client/dialer"
+)
+
+func TestDynamicProxyDialer_SOCKS5(t *testing.T) {
+	t.Setenv("HTTPS_PROXY", "socks5://localhost:12345")
+
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	defer cancel()
+
+	// Expect a connection error because the port is not open
+	_, err := dialer.DynamicProxyDialer(ctx, "example.com:443")
+	if err == nil {
+		t.Fatal("expected a SOCKS5 connection error, but no error received")
+	}
+
+	if _, ok := err.(net.Error); !ok {
+		t.Fatalf("unexpected error: %v", err)
+	}
 }

@@ -16,6 +16,7 @@ import (
 	"net/url"
 
 	"golang.org/x/net/http/httpproxy"
+	"golang.org/x/net/proxy"
 	"google.golang.org/grpc"
 )
 
@@ -64,7 +65,32 @@ func DynamicProxyDialer(ctx context.Context, addr string) (net.Conn, error) {
 		return conn, err
 	}
 
+	// Support SOCKS5
+	if proxyURL.Scheme == "socks5" {
+		socks5Dialer, err := proxySocksFromURL(proxyURL)
+		if err != nil {
+			return nil, err
+		}
+
+		return socks5Dialer.Dial("tcp", addr)
+	}
+
+	// Standard HTTP/HTTPS proxy
 	return doHTTPConnectHandshake(ctx, conn, addr, proxyURL, grpcUA)
+}
+
+func proxySocksFromURL(u *url.URL) (proxy.Dialer, error) {
+	var auth *proxy.Auth
+
+	if u.User != nil {
+		password, _ := u.User.Password()
+		auth = &proxy.Auth{
+			User:     u.User.Username(),
+			Password: password,
+		}
+	}
+
+	return proxy.SOCKS5("tcp", u.Host, auth, NetDialerWithTCPKeepalive())
 }
 
 const proxyAuthHeaderKey = "Proxy-Authorization"
