@@ -27,6 +27,14 @@ systemd-udevd: 257.8
 Talos is built with Go 1.25.0.
 """
 
+    [notes.luks2]
+        title = "Encrypted Volumes"
+        description = """\
+Talos Linux now consistently provides mapped names for encrypted volumes in the format `/dev/mapper/luks2-<volume-id>`.
+This change should not affect system or user volumes, but might allow easier identification of encrypted volumes,
+and specifically for raw encrypted volumes.
+"""
+
 [make_deps]
 
     [make_deps.tools]
