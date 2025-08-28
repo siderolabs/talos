@@ -104,9 +104,16 @@
         "checkSecurebootStatusOnEnroll": {
           "type": "boolean",
           "title": "checkSecurebootStatusOnEnroll",
-          "description": "Check that Secureboot is enabled in the EFI firmware.\nIf Secureboot is not enabled, the enrollment of the key will fail. As the TPM key is anyways bound to the value of PCR 7, changing Secureboot status or configuration after the initial enrollment will make the key unusable.\n",
-          "markdownDescription": "Check that Secureboot is enabled in the EFI firmware.\nIf Secureboot is not enabled, the enrollment of the key will fail. As the TPM key is anyways bound to the value of PCR 7, changing Secureboot status or configuration after the initial enrollment will make the key unusable.",
-          "x-intellij-html-description": "\u003cp\u003eCheck that Secureboot is enabled in the EFI firmware.\nIf Secureboot is not enabled, the enrollment of the key will fail. As the TPM key is anyways bound to the value of PCR 7, changing Secureboot status or configuration after the initial enrollment will make the key unusable.\u003c/p\u003e\n"
+          "description": "Check that Secureboot is enabled in the EFI firmware.\nIf Secureboot is not enabled, the enrollment of the key will fail.\n",
+          "markdownDescription": "Check that Secureboot is enabled in the EFI firmware.\nIf Secureboot is not enabled, the enrollment of the key will fail.",
+          "x-intellij-html-description": "\u003cp\u003eCheck that Secureboot is enabled in the EFI firmware.\nIf Secureboot is not enabled, the enrollment of the key will fail.\u003c/p\u003e\n"
+        },
+        "lockToSecureBootState": {
+          "type": "boolean",
+          "title": "lockToSecureBootState",
+          "description": "Lock the TPM key to the current Secureboot state. changing Secureboot status or configuration after the initial enrollment will make the key unusable.\n",
+          "markdownDescription": "Lock the TPM key to the current Secureboot state. changing Secureboot status or configuration after the initial enrollment will make the key unusable.",
+          "x-intellij-html-description": "\u003cp\u003eLock the TPM key to the current Secureboot state. changing Secureboot status or configuration after the initial enrollment will make the key unusable.\u003c/p\u003e\n"
         }
       },
       "additionalProperties": false,

@@ -35,7 +35,18 @@ func TestCalculatePolicy(t *testing.T) {
 func TestCalculateSealingPolicyDigest(t *testing.T) {
 	t.Parallel()
 
-	calculated, err := tpm2internal.CalculateSealingPolicyDigest([]byte{1, 3, 5}, tpm2.TPMLPCRSelection{
+	calculated, err := tpm2internal.CalculateSealingPolicyDigest("testdata/pcr-signing-crt.pem")
+	require.NoError(t, err)
+	require.Equal(t,
+		[]byte{0x86, 0xdc, 0x2b, 0x7f, 0x5a, 0xeb, 0xde, 0x57, 0xd4, 0x72, 0xdd, 0xbc, 0x3d, 0x5b, 0xd5, 0xb5, 0xb, 0x15, 0x6f, 0x4d, 0x6b, 0xa6, 0x62, 0xc2, 0x1a, 0xff, 0xbf, 0xb1, 0xb2, 0xd4, 0xb9, 0x84},
+		calculated,
+	)
+}
+
+func TestCalculateSealingPolicyDigestWithPCR(t *testing.T) {
+	t.Parallel()
+
+	calculated, err := tpm2internal.CalculateSealingPolicyDigestWithPCR([]byte{1, 3, 5}, tpm2.TPMLPCRSelection{
 		PCRSelections: []tpm2.TPMSPCRSelection{
 			{
 				Hash:      tpm2.TPMAlgSHA256,
