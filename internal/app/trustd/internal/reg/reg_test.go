@@ -23,7 +23,6 @@ import (
 	"github.com/siderolabs/talos/internal/app/trustd/internal/reg"
 	"github.com/siderolabs/talos/pkg/machinery/api/security"
 	gensecrets "github.com/siderolabs/talos/pkg/machinery/config/generate/secrets"
-	"github.com/siderolabs/talos/pkg/machinery/fipsmode"
 	"github.com/siderolabs/talos/pkg/machinery/resources/secrets"
 	"github.com/siderolabs/talos/pkg/machinery/role"
 )
@@ -86,12 +85,7 @@ func TestCertificate(t *testing.T) {
 				serverCert *x509.PEMEncodedCertificateAndKey
 			)
 
-			if fipsmode.Enabled() {
-				serverCSR, serverCert, err = x509.NewECDSACSRAndIdentity(tt.csrSetters...)
-			} else {
-				serverCSR, serverCert, err = x509.NewEd25519CSRAndIdentity(tt.csrSetters...)
-			}
-
+			serverCSR, serverCert, err = x509.NewEd25519CSRAndIdentity(tt.csrSetters...)
 			require.NoError(t, err)
 
 			resp, err := r.Certificate(ctx, &security.CertificateRequest{

@@ -18,7 +18,6 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/config/generate/secrets"
 	"github.com/siderolabs/talos/pkg/machinery/config/machine"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
-	"github.com/siderolabs/talos/pkg/machinery/fipsmode"
 )
 
 func TestNewBundle(t *testing.T) {
@@ -63,11 +62,7 @@ func TestNewBundleFromConfig(t *testing.T) {
 	osCA, err := x509.NewCertificateAuthorityFromCertificateAndKey(bundle.Certs.OS)
 	require.NoError(t, err)
 
-	if fipsmode.Enabled() {
-		assert.Equal(t, stdx509.ECDSA, osCA.Crt.PublicKeyAlgorithm, "expected ECDSA signature algorithm in FIPS mode")
-	} else {
-		assert.Equal(t, stdx509.Ed25519, osCA.Crt.PublicKeyAlgorithm, "expected Ed25519 signature algorithm in non-FIPS mode")
-	}
+	assert.Equal(t, stdx509.Ed25519, osCA.Crt.PublicKeyAlgorithm, "expected Ed25519 signature algorithm")
 
 	input, err := generate.NewInput("test", "https://localhost:6443", constants.DefaultKubernetesVersion, generate.WithSecretsBundle(bundle))
 	require.NoError(t, err)

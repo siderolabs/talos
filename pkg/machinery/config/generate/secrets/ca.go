@@ -11,7 +11,6 @@ import (
 	"github.com/siderolabs/crypto/x509"
 
 	"github.com/siderolabs/talos/pkg/machinery/config"
-	"github.com/siderolabs/talos/pkg/machinery/fipsmode"
 	"github.com/siderolabs/talos/pkg/machinery/role"
 )
 
@@ -58,10 +57,6 @@ func NewTalosCA(currentTime time.Time) (ca *x509.CertificateAuthority, err error
 		x509.Organization("talos"),
 		x509.NotAfter(currentTime.Add(CAValidityTime)),
 		x509.NotBefore(currentTime),
-	}
-
-	if fipsmode.Enabled() {
-		opts = append(opts, x509.ECDSA(true))
 	}
 
 	return x509.NewSelfSignedCertificateAuthority(opts...)
