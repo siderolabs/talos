@@ -99,7 +99,7 @@ The value of this parameter has the same format as the `talos.config.inline` par
 ## Component Updates
 
 * Linux: 6.12.43
-* Kubernetes: 1.34.0-rc.2
+* Kubernetes: 1.34.0
 * runc: 1.3.0
 * etcd: 3.6.4
 * containerd: 2.1.4
