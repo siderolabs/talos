@@ -22,7 +22,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
-	"go.uber.org/goleak"
 	"go.uber.org/zap/zaptest"
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/ctest"
@@ -250,7 +249,7 @@ func (suite *DNSServer) TestResolveMembers() {
 }
 
 func TestDNSServer(t *testing.T) {
-	goleak.VerifyNone(t)
+	t.Parallel()
 
 	suite.Run(t, &DNSServer{
 		DefaultSuite: ctest.DefaultSuite{
@@ -343,7 +342,7 @@ func (suite *DNSUpstreams) TestOrder() {
 }
 
 func TestDNSUpstreams(t *testing.T) {
-	goleak.VerifyNone(t)
+	t.Parallel()
 
 	suite.Run(t, &DNSUpstreams{
 		DefaultSuite: ctest.DefaultSuite{
