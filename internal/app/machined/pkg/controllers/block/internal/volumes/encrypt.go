@@ -96,7 +96,7 @@ func HandleEncryptionWithHandler(ctx context.Context, logger *zap.Logger, volume
 
 	logger.Info("opening encrypted volume")
 
-	mappedName := filepath.Base(volumeContext.Cfg.TypedSpec().Provisioning.PartitionSpec.Label) + "-decrypted"
+	mappedName := filepath.Base(volumeContext.Cfg.Metadata().ID()) + "-decrypted"
 
 	mappedPath, failedSyncs, err := handler.Open(ctx, logger, volumeContext.Status.Location, mappedName)
 	if err != nil {
