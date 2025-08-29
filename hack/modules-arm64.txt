@@ -12,7 +12,6 @@ kernel/drivers/ata/pata_oldpiix.ko
 kernel/drivers/ata/pata_sch.ko
 kernel/drivers/block/nbd.ko
 kernel/drivers/crypto/tegra/tegra-se.ko
-kernel/drivers/gpu/drm/display/drm_dp_aux_bus.ko
 kernel/drivers/gpu/drm/drm_buddy.ko
 kernel/drivers/gpu/drm/drm_exec.ko
 kernel/drivers/gpu/drm/drm_panel_backlight_quirks.ko
@@ -143,6 +142,7 @@ kernel/drivers/net/ethernet/stmicro/stmmac/dwmac-ipq806x.ko
 kernel/drivers/net/ethernet/stmicro/stmmac/dwmac-meson.ko
 kernel/drivers/net/ethernet/stmicro/stmmac/dwmac-meson8b.ko
 kernel/drivers/net/ethernet/stmicro/stmmac/dwmac-qcom-ethqos.ko
+kernel/drivers/net/ethernet/stmicro/stmmac/dwmac-renesas-gbeth.ko
 kernel/drivers/net/ethernet/stmicro/stmmac/dwmac-rk.ko
 kernel/drivers/net/ethernet/stmicro/stmmac/dwmac-sun8i.ko
 kernel/drivers/net/ethernet/stmicro/stmmac/dwmac-sunxi.ko
