@@ -174,7 +174,7 @@ require (
 	github.com/stretchr/testify v1.10.0
 	github.com/thejerf/suture/v4 v4.0.6
 	github.com/u-root/u-root v0.14.0
-	github.com/ulikunitz/xz v0.5.12
+	github.com/ulikunitz/xz v0.5.14
 	github.com/vultr/metadata v1.1.0
 	go.etcd.io/etcd/api/v3 v3.6.4
 	go.etcd.io/etcd/client/pkg/v3 v3.6.4
