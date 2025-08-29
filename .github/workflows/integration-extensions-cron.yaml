@@ -1,6 +1,6 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
 #
-# Generated on 2025-07-22T11:47:45Z by kres b869533.
+# Generated on 2025-08-29T14:12:55Z by kres 784fa1f.
 
 concurrency:
   group: ${{ github.head_ref || github.run_id }}
@@ -41,7 +41,7 @@ jobs:
           done
         continue-on-error: true
       - name: checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
       - name: Unshallow
         run: |
           git fetch --prune --unshallow
@@ -83,7 +83,7 @@ jobs:
         run: |
           make talosctl-cni-bundle
       - name: checkout extensions
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           path: _out/extensions
           ref: release-1.11
