@@ -26,7 +26,7 @@ import (
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system/runner/restart"
 	"github.com/siderolabs/talos/internal/pkg/capability"
 	"github.com/siderolabs/talos/internal/pkg/environment"
-	"github.com/siderolabs/talos/internal/pkg/mount/v2"
+	"github.com/siderolabs/talos/internal/pkg/mount/v3"
 	"github.com/siderolabs/talos/pkg/conditions"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	extservices "github.com/siderolabs/talos/pkg/machinery/extensions/services"
@@ -56,13 +56,16 @@ func (svc *Extension) PreFunc(ctx context.Context, r runtime.Runtime) error {
 	overlay := mount.NewSystemOverlay(
 		[]string{rootfsPath},
 		rootfsPath,
+		nil,
 	)
 
-	var err error
+	if _, err := overlay.Mount(); err != nil {
+		return err
+	}
 
-	svc.overlayUnmounter, err = overlay.Mount()
+	svc.overlayUnmounter = overlay.Unmount
 
-	return err
+	return nil
 }
 
 // PostFunc implements the Service interface.
