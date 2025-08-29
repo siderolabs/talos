@@ -1,6 +1,6 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
 #
-# Generated on 2025-08-20T17:20:56Z by kres 18c31cf.
+# Generated on 2025-08-29T09:36:55Z by kres 784fa1f.
 
 concurrency:
   group: ${{ github.head_ref || github.run_id }}
@@ -34,7 +34,7 @@ jobs:
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@v1.4.0
+        uses: kenchan0130/actions-system-info@v1.3.1
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -99,7 +99,7 @@ jobs:
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@v1.4.0
+        uses: kenchan0130/actions-system-info@v1.3.1
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -176,7 +176,7 @@ jobs:
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@v1.4.0
+        uses: kenchan0130/actions-system-info@v1.3.1
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -295,7 +295,7 @@ jobs:
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@v1.4.0
+        uses: kenchan0130/actions-system-info@v1.3.1
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -365,7 +365,7 @@ jobs:
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@v1.4.0
+        uses: kenchan0130/actions-system-info@v1.3.1
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -434,7 +434,7 @@ jobs:
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@v1.4.0
+        uses: kenchan0130/actions-system-info@v1.3.1
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -505,7 +505,7 @@ jobs:
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@v1.4.0
+        uses: kenchan0130/actions-system-info@v1.3.1
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -572,7 +572,7 @@ jobs:
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@v1.4.0
+        uses: kenchan0130/actions-system-info@v1.3.1
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -709,7 +709,7 @@ jobs:
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@v1.4.0
+        uses: kenchan0130/actions-system-info@v1.3.1
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -862,7 +862,7 @@ jobs:
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@v1.4.0
+        uses: kenchan0130/actions-system-info@v1.3.1
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -1015,7 +1015,7 @@ jobs:
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@v1.4.0
+        uses: kenchan0130/actions-system-info@v1.3.1
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -1168,7 +1168,7 @@ jobs:
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@v1.4.0
+        uses: kenchan0130/actions-system-info@v1.3.1
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -1321,7 +1321,7 @@ jobs:
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@v1.4.0
+        uses: kenchan0130/actions-system-info@v1.3.1
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -1443,7 +1443,7 @@ jobs:
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@v1.4.0
+        uses: kenchan0130/actions-system-info@v1.3.1
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -1531,7 +1531,7 @@ jobs:
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@v1.4.0
+        uses: kenchan0130/actions-system-info@v1.3.1
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -1626,7 +1626,7 @@ jobs:
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@v1.4.0
+        uses: kenchan0130/actions-system-info@v1.3.1
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -1739,7 +1739,7 @@ jobs:
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@v1.4.0
+        uses: kenchan0130/actions-system-info@v1.3.1
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -1865,7 +1865,7 @@ jobs:
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@v1.4.0
+        uses: kenchan0130/actions-system-info@v1.3.1
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -1999,7 +1999,7 @@ jobs:
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@v1.4.0
+        uses: kenchan0130/actions-system-info@v1.3.1
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -2109,7 +2109,7 @@ jobs:
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@v1.4.0
+        uses: kenchan0130/actions-system-info@v1.3.1
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -2282,7 +2282,7 @@ jobs:
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@v1.4.0
+        uses: kenchan0130/actions-system-info@v1.3.1
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -2365,7 +2365,7 @@ jobs:
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@v1.4.0
+        uses: kenchan0130/actions-system-info@v1.3.1
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -2492,7 +2492,7 @@ jobs:
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@v1.4.0
+        uses: kenchan0130/actions-system-info@v1.3.1
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -2623,7 +2623,7 @@ jobs:
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@v1.4.0
+        uses: kenchan0130/actions-system-info@v1.3.1
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -2772,7 +2772,7 @@ jobs:
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@v1.4.0
+        uses: kenchan0130/actions-system-info@v1.3.1
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -2937,7 +2937,7 @@ jobs:
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@v1.4.0
+        uses: kenchan0130/actions-system-info@v1.3.1
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -3047,7 +3047,7 @@ jobs:
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@v1.4.0
+        uses: kenchan0130/actions-system-info@v1.3.1
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -3181,7 +3181,7 @@ jobs:
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@v1.4.0
+        uses: kenchan0130/actions-system-info@v1.3.1
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -3310,7 +3310,7 @@ jobs:
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@v1.4.0
+        uses: kenchan0130/actions-system-info@v1.3.1
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -3466,7 +3466,7 @@ jobs:
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@v1.4.0
+        uses: kenchan0130/actions-system-info@v1.3.1
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -3575,7 +3575,7 @@ jobs:
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@v1.4.0
+        uses: kenchan0130/actions-system-info@v1.3.1
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -3670,7 +3670,7 @@ jobs:
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@v1.4.0
+        uses: kenchan0130/actions-system-info@v1.3.1
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -3765,7 +3765,7 @@ jobs:
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@v1.4.0
+        uses: kenchan0130/actions-system-info@v1.3.1
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -3862,7 +3862,7 @@ jobs:
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@v1.4.0
+        uses: kenchan0130/actions-system-info@v1.3.1
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -4000,7 +4000,7 @@ jobs:
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@v1.4.0
+        uses: kenchan0130/actions-system-info@v1.3.1
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -4108,7 +4108,7 @@ jobs:
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@v1.4.0
+        uses: kenchan0130/actions-system-info@v1.3.1
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -4215,7 +4215,7 @@ jobs:
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@v1.4.0
+        uses: kenchan0130/actions-system-info@v1.3.1
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -4313,7 +4313,7 @@ jobs:
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@v1.4.0
+        uses: kenchan0130/actions-system-info@v1.3.1
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -4428,7 +4428,7 @@ jobs:
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@v1.4.0
+        uses: kenchan0130/actions-system-info@v1.3.1
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -4536,7 +4536,7 @@ jobs:
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@v1.4.0
+        uses: kenchan0130/actions-system-info@v1.3.1
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -4606,7 +4606,7 @@ jobs:
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@v1.4.0
+        uses: kenchan0130/actions-system-info@v1.3.1
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -4723,7 +4723,7 @@ jobs:
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@v1.4.0
+        uses: kenchan0130/actions-system-info@v1.3.1
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -4841,7 +4841,7 @@ jobs:
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@v1.4.0
+        uses: kenchan0130/actions-system-info@v1.3.1
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -4916,7 +4916,7 @@ jobs:
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@v1.4.0
+        uses: kenchan0130/actions-system-info@v1.3.1
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -5014,7 +5014,6 @@ jobs:
           cosign sign-blob --output-signature _out/talosctl-freebsd-arm64.sig --yes _out/talosctl-freebsd-arm64
           cosign sign-blob --output-signature _out/talosctl-linux-amd64.sig --yes _out/talosctl-linux-amd64
           cosign sign-blob --output-signature _out/talosctl-linux-arm64.sig --yes _out/talosctl-linux-arm64
-          cosign sign-blob --output-signature _out/talosctl-linux-armv7.sig --yes _out/talosctl-linux-armv7
           cosign sign-blob --output-signature _out/talosctl-windows-amd64.exe.sig --yes _out/talosctl-windows-amd64.exe
           cosign sign-blob --output-signature _out/talosctl-windows-arm64.exe.sig --yes _out/talosctl-windows-arm64.exe
           cosign sign-blob --output-signature _out/vmlinuz-amd64.sig --yes _out/vmlinuz-amd64
@@ -5022,8 +5021,8 @@ jobs:
       - name: Generate Checksums
         run: |
           cd _out
-          sha256sum cloud-images.json initramfs-amd64.xz initramfs-arm64.xz metal-amd64.iso metal-arm64.iso metal-amd64-uki.efi metal-arm64-uki.efi metal-amd64.raw.zst metal-arm64.raw.zst talos-arm64.spdx.json talos-amd64.spdx.json talos-container-arm64.spdx.json talos-container-amd64.spdx.json talosctl-cni-bundle-amd64.tar.gz talosctl-cni-bundle-arm64.tar.gz talosctl-darwin-amd64 talosctl-darwin-arm64 talosctl-freebsd-amd64 talosctl-freebsd-arm64 talosctl-linux-amd64 talosctl-linux-arm64 talosctl-linux-armv7 talosctl-windows-amd64.exe talosctl-windows-arm64.exe vmlinuz-amd64 vmlinuz-arm64 > sha256sum.txt
-          sha512sum cloud-images.json initramfs-amd64.xz initramfs-arm64.xz metal-amd64.iso metal-arm64.iso metal-amd64-uki.efi metal-arm64-uki.efi metal-amd64.raw.zst metal-arm64.raw.zst talos-arm64.spdx.json talos-amd64.spdx.json talos-container-arm64.spdx.json talos-container-amd64.spdx.json talosctl-cni-bundle-amd64.tar.gz talosctl-cni-bundle-arm64.tar.gz talosctl-darwin-amd64 talosctl-darwin-arm64 talosctl-freebsd-amd64 talosctl-freebsd-arm64 talosctl-linux-amd64 talosctl-linux-arm64 talosctl-linux-armv7 talosctl-windows-amd64.exe talosctl-windows-arm64.exe vmlinuz-amd64 vmlinuz-arm64 > sha512sum.txt
+          sha256sum cloud-images.json initramfs-amd64.xz initramfs-arm64.xz metal-amd64.iso metal-arm64.iso metal-amd64-uki.efi metal-arm64-uki.efi metal-amd64.raw.zst metal-arm64.raw.zst talos-arm64.spdx.json talos-amd64.spdx.json talos-container-arm64.spdx.json talos-container-amd64.spdx.json talosctl-cni-bundle-amd64.tar.gz talosctl-cni-bundle-arm64.tar.gz talosctl-darwin-amd64 talosctl-darwin-arm64 talosctl-freebsd-amd64 talosctl-freebsd-arm64 talosctl-linux-amd64 talosctl-linux-arm64 talosctl-windows-amd64.exe talosctl-windows-arm64.exe vmlinuz-amd64 vmlinuz-arm64 > sha256sum.txt
+          sha512sum cloud-images.json initramfs-amd64.xz initramfs-arm64.xz metal-amd64.iso metal-arm64.iso metal-amd64-uki.efi metal-arm64-uki.efi metal-amd64.raw.zst metal-arm64.raw.zst talos-arm64.spdx.json talos-amd64.spdx.json talos-container-arm64.spdx.json talos-container-amd64.spdx.json talosctl-cni-bundle-amd64.tar.gz talosctl-cni-bundle-arm64.tar.gz talosctl-darwin-amd64 talosctl-darwin-arm64 talosctl-freebsd-amd64 talosctl-freebsd-arm64 talosctl-linux-amd64 talosctl-linux-arm64 talosctl-windows-amd64.exe talosctl-windows-arm64.exe vmlinuz-amd64 vmlinuz-arm64 > sha512sum.txt
       - name: Sign checksums
         run: |
           cd _out
@@ -5056,7 +5055,6 @@ jobs:
             _out/talosctl-freebsd-arm64
             _out/talosctl-linux-amd64
             _out/talosctl-linux-arm64
-            _out/talosctl-linux-armv7
             _out/talosctl-windows-amd64.exe
             _out/talosctl-windows-arm64.exe
             _out/vmlinuz-amd64

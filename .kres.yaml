@@ -213,7 +213,6 @@ spec:
               - talosctl-freebsd-arm64
               - talosctl-linux-amd64
               - talosctl-linux-arm64
-              - talosctl-linux-armv7
               - talosctl-windows-amd64.exe
               - talosctl-windows-arm64.exe
               - vmlinuz-amd64
