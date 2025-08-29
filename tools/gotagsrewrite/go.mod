@@ -5,7 +5,7 @@ go 1.24.0
 require (
 	github.com/fatih/structtag v1.2.0
 	github.com/spf13/cobra v1.9.1
-	github.com/stretchr/testify v1.10.0
+	github.com/stretchr/testify v1.11.1
 )
 
 require (
