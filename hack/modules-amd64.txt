@@ -166,6 +166,7 @@ kernel/drivers/nvme/target/nvmet.ko
 kernel/drivers/platform/x86/intel/intel-vsec.ko
 kernel/drivers/platform/x86/intel/pmc/intel_pmc_core.ko
 kernel/drivers/platform/x86/intel/pmc/intel_pmc_core_pltdrv.ko
+kernel/drivers/platform/x86/intel/pmc/intel_pmc_ssram_telemetry.ko
 kernel/drivers/platform/x86/intel/pmt/pmt_class.ko
 kernel/drivers/platform/x86/intel/pmt/pmt_telemetry.ko
 kernel/drivers/scsi/aacraid/aacraid.ko
@@ -192,8 +193,8 @@ kernel/drivers/vfio/pci/vfio-pci-core.ko
 kernel/drivers/vfio/pci/vfio-pci.ko
 kernel/drivers/vfio/vfio.ko
 kernel/drivers/vfio/vfio_iommu_type1.ko
+kernel/drivers/virt/coco/guest/tsm_report.ko
 kernel/drivers/virt/coco/sev-guest/sev-guest.ko
-kernel/drivers/virt/coco/tsm.ko
 kernel/drivers/virtio/virtio_balloon.ko
 kernel/drivers/virtio/virtio_mem.ko
 kernel/drivers/virtio/virtio_pci.ko
