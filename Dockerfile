@@ -512,6 +512,14 @@ RUN --mount=type=cache,target=/.cache,id=talos/.cache GOOS=linux GOARCH=arm64 go
 RUN chmod +x /talosctl-linux-arm64
 RUN touch --date="@${SOURCE_DATE_EPOCH}" /talosctl-linux-arm64
 
+FROM base AS talosctl-linux-armv7-build
+WORKDIR /src/cmd/talosctl
+ARG GO_BUILDFLAGS_TALOSCTL
+ARG GO_LDFLAGS
+RUN --mount=type=cache,target=/.cache,id=talos/.cache GOOS=linux GOARCH=arm GOARM=7 go build ${GO_BUILDFLAGS_TALOSCTL} -ldflags "${GO_LDFLAGS}" -o /talosctl-linux-armv7
+RUN chmod +x /talosctl-linux-armv7
+RUN touch --date="@${SOURCE_DATE_EPOCH}" /talosctl-linux-armv7
+
 FROM base AS talosctl-darwin-amd64-build
 WORKDIR /src/cmd/talosctl
 ARG GO_BUILDFLAGS_TALOSCTL
@@ -565,6 +573,9 @@ COPY --from=talosctl-linux-amd64-build /talosctl-linux-amd64 /talosctl-linux-amd
 FROM scratch AS talosctl-linux-arm64
 COPY --from=talosctl-linux-arm64-build /talosctl-linux-arm64 /talosctl-linux-arm64
 
+FROM scratch AS talosctl-linux-armv7
+COPY --from=talosctl-linux-armv7-build /talosctl-linux-armv7 /talosctl-linux-armv7
+
 FROM scratch AS talosctl-darwin-amd64
 COPY --from=talosctl-darwin-amd64-build /talosctl-darwin-amd64 /talosctl-darwin-amd64
 
@@ -588,6 +599,7 @@ FROM --platform=${BUILDPLATFORM} talosctl-${TARGETOS}-${TARGETARCH} AS talosctl-
 FROM scratch AS talosctl-all
 COPY --from=talosctl-linux-amd64 / /
 COPY --from=talosctl-linux-arm64 / /
+COPY --from=talosctl-linux-armv7 / /
 COPY --from=talosctl-darwin-amd64 / /
 COPY --from=talosctl-darwin-arm64 / /
 COPY --from=talosctl-freebsd-amd64 / /
