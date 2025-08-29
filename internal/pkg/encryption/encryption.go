@@ -102,8 +102,8 @@ type Handler struct {
 }
 
 // Open encrypted partition.
-func (h *Handler) Open(ctx context.Context, logger *zap.Logger, devicePath, encryptedName string) (string, []string, error) {
-	isOpen, path, err := h.encryptionProvider.IsOpen(ctx, devicePath, encryptedName)
+func (h *Handler) Open(ctx context.Context, logger *zap.Logger, devicePath, mappedName string) (string, []string, error) {
+	isOpen, path, err := h.encryptionProvider.IsOpen(ctx, devicePath, mappedName)
 	if err != nil {
 		return "", nil, err
 	}
@@ -123,7 +123,7 @@ func (h *Handler) Open(ctx context.Context, logger *zap.Logger, devicePath, encr
 			}
 
 			// try to open with the key, if it fails, tryHandlers will try the next handler
-			path, err = h.encryptionProvider.Open(ctx, devicePath, encryptedName, slotKey)
+			path, err = h.encryptionProvider.Open(ctx, devicePath, mappedName, slotKey)
 			if err != nil {
 				return nil, nil, err
 			}
