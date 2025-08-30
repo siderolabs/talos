@@ -77,7 +77,7 @@ func init() {
 				if err != nil {
 					return err
 				}
-				// Create and save the talosctl configuration file.
+
 				err = postCreate(ctx, ops.common, data.talosconfig, cluster, data.provisionOptions, data.clusterRequest)
 				if err != nil {
 					return err
