@@ -43,28 +43,23 @@
       - integration-gcp-cron
     types:
       - completed
-name: slack-notify
+    branches:
+      - main
+name: slack-notify-failure
 jobs:
   slack-notify:
     runs-on:
       - self-hosted
       - generic
-    if: github.event.workflow_run.conclusion != 'skipped'
+    if: github.event.workflow_run.conclusion == 'failure' && github.event.workflow_run.event != 'pull_request'
     steps:
-      - name: Get PR number
-        id: get-pr-number
-        if: github.event.workflow_run.event == 'pull_request'
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          echo pull_request_number=$(gh pr view -R ${{ github.repository }} ${{ github.event.workflow_run.head_repository.owner.login }}:${{ github.event.workflow_run.head_branch }} --json number --jq .number) >> $GITHUB_OUTPUT
       - name: Slack Notify
         uses: slackapi/slack-github-action@v2
         with:
           method: chat.postMessage
           payload: |
             {
-                "channel": "ci-all",
+                "channel": "ci-failure",
                 "text": "${{ github.event.workflow_run.conclusion }} - ${{ github.repository }}",
                 "icon_emoji": "${{ github.event.workflow_run.conclusion == 'success' && ':white_check_mark:' || github.event.workflow_run.conclusion == 'failure' && ':x:' || ':warning:' }}",
                 "username": "GitHub Actions",

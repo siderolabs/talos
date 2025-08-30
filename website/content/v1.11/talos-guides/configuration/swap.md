@@ -87,6 +87,8 @@ Removing a `ZswapConfig` document will disable zswap on the system.
 
 Kubernetes by default [does not allow swap to be used by containers](https://kubernetes.io/blog/2025/03/25/swap-linux-improvements/), as it can lead to performance issues and unpredictable behavior.
 
+Refer to [Tuning Swap for Kubernetes](https://kubernetes.io/blog/2025/08/19/tuning-linux-swap-for-kubernetes-a-deep-dive/) for more information.
+
 At the very minimum, enable swap usage in the `kubelet` configuration with the following machine configuration patch:
 
 ```yaml
