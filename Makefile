@@ -25,9 +25,9 @@ DEBUG_TOOLS_SOURCE := scratch
 EMBED_TARGET ?= embed
 
 TOOLS_PREFIX ?= ghcr.io/siderolabs/tools
-TOOLS ?= v1.11.0-1-g330f478
+TOOLS ?= v1.11.0-2-g8556c73
 PKGS_PREFIX ?= ghcr.io/siderolabs
-PKGS ?= v1.11.0-14-gf31e192
+PKGS ?= v1.11.0-15-g2ac857a
 GENERATE_VEX_PREFIX ?= ghcr.io/siderolabs/generate-vex
 GENERATE_VEX ?= latest
 
