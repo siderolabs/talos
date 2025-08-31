@@ -9,12 +9,6 @@ In this guide we will create a Kubernetes cluster using QEMU.
 
 <img src="/images/qemu.png">
 
-## Video Walkthrough
-
-To see a live demo of this writeup on Linux, see the video below:
-
-<iframe width="560" height="315" src="https://www.youtube.com/embed/UzQ8Hl_TfF8" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-
 ## Requirements
 
 {{< tabpane text=true >}}
@@ -76,24 +70,6 @@ brew install siderolabs/tap/talosctl
 
 For manual installation and other platforms please see the [talosctl installation guide]({{< relref "../talosctl.md" >}}).
 
-## Install Talos kernel and initramfs
-
-QEMU provisioner depends on Talos kernel (`vmlinuz`) and initramfs (`initramfs.xz`).
-These files can be downloaded from the Talos release:
-
-```bash
-mkdir -p _out/
-curl https://github.com/siderolabs/talos/releases/download/<version>/vmlinuz-<arch> -L -o _out/vmlinuz-<arch>
-curl https://github.com/siderolabs/talos/releases/download/<version>/initramfs-<arch>.xz -L -o _out/initramfs-<arch>.xz
-```
-
-For example version `{{< release >}}` on `amd64` platform:
-
-```bash
-curl https://github.com/siderolabs/talos/releases/download/{{< release >}}/vmlinuz-amd64 -L -o _out/vmlinuz-amd64
-curl https://github.com/siderolabs/talos/releases/download/{{< release >}}/initramfs-amd64.xz -L -o _out/initramfs-amd64.xz
-```
-
 ## Create the Cluster
 
 For the first time, create root state directory as your user so that you can inspect the logs as non-root user:
@@ -113,7 +89,9 @@ On Linux, before the first cluster is created, `talosctl` will download the CNI 
 Once the above finishes successfully, your talosconfig (`~/.talos/config`) will be configured to point to the new cluster, and `kubeconfig` will be
 downloaded and merged into default kubectl config location (`~/.kube/config`).
 
-Cluster provisioning process can be optimized with [registry pull-through caches]({{< relref "../../configuration/pull-through-cache" >}}).
+### Image factory schematic
+
+Optionally a custom [Image Factory]({{< relref "../talosctl.md" >}}) schematic ID can be provided via the `--schematic-id` flag.
 
 ## Using the Cluster
 
