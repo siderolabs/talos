@@ -7,7 +7,7 @@ match_deps = "^github.com/((talos-systems|siderolabs)/[a-zA-Z0-9-]+)$"
 ignore_deps = ["github.com/coredns/coredns"]
 
 # previous release
-previous = "v1.10.0"
+previous = "v1.11.0"
 
 pre_release = true
 
@@ -19,130 +19,8 @@ preface = """
         title = "Component Updates"
         description = """\
 Linux: 6.16.4
-Kubernetes: 1.34.0
-runc: 1.3.0
-etcd: 3.6.4
-containerd: 2.1.4
-Flannel CNI plugin: 1.7.1-flannel1
-Flannel: 0.27.2
-CoreDNS: 1.12.3
-xfsprogs: 6.15.0
-systemd-udevd and systemd-boot: 257.7
-lvm2: 2.03.33
-cryptsetup: 2.8.0
 
-Talos is built with Go 1.24.6.
-"""
-
-    [notes.macos-qemu]
-        title = "Qemu provisioner on MacOS"
-        description = """\
-On MacOS `talosctl cluster create` command now supports the Qemu provisioner in addition to the Docker provisioner.
-"""
-
-    [notes.ima]
-        title = "IMA support removed"
-        description = """\
-Talos now drops the IMA (Integrity Measurement Architecture) support. This feature was not used in Talos for any meaningful security purpose
-and has historically caused performance issues. See #11133 for more details.
-"""
-
-    [notes.swap]
-        title = "Swap Suport"
-        description = """\
-Talos now supports swap on block devices.
-This feature can be enable by using [SwapVolumeConfig](https://www.talos.dev/v1.11/reference/configuration/block/swapvolumeconfig/) document in the machine configuration.  
-"""
-
-    [notes.vmware]
-        title = "VMware"
-        description = """\
-Talos VMWare platform now supports `arm64` architecture in addition to `amd64`.
-"""
-
-    [notes.azure]
-        title = "Azure"
-        description = """\
-Talos on Azure now defaults to MTU of 1400 bytes for the `eth0` interface to avoid packet fragmentation issues.
-The default MTU can be overriden via machine configuration.
-"""
-
-    [notes.k8s_version]
-        title = "Kubernetes Version Validation"
-        description = """\
-Talos now validates the Kubernetes version in the image specified in the machine configuration.
-Previously this check was performed only on upgrade, but now it is consistently applied to upgrade, initial provisioning, and machine configuration updates.
-
-This implies that all image references should contain the tag, even if the image is pinned by digest.
-"""
-
-    [notes.zswap]
-        title = "Zswap Support"
-        description = """\
-Talos now supports zswap, a compressed cache for swap pages.
-This feature can be enabled by using [ZswapConfig](https://www.talos.dev/v1.11/reference/configuration/block/zswapconfig/) document in the machine configuration.
-"""
-
-    [notes.cmdline]
-        title = "Kernel Command Line"
-        description = """\
-Talos now exposes the kernel command line as a KernelCmdline resource (`talosctl get cmdline`).
-"""
-
-    [notes.modules]
-        title = "Kernel Modules"
-        description = """\
-Talosctl now returns the loaded modules, not the modules configured to be loaded (`talosctl get modules`).
-"""
-
-    [notes.sbom]
-        title = "SBOM"
-        description = """\
-Talos now publishes [Software Bill of Materials (SBOM)](https://www.talos.dev/v1.11/advanced/sbom/) in the SPDX format.
-"""
-
-    [notes.disk_wipe]
-        title = "Disk Wipe"
-        description = """\
-Talos now supports `talosctl disk wipe` command in maintenance mode (`talosctl disk wipe <disk> --insecure`).
-"""
-
-    [notes.volumes]
-        title = "Volumes"
-        description = """\
-Talos now supports [raw user volumes](https://www.talos.dev/v1.11/talos-guides/configuration/disk-management/raw/), allowing to allocate unformatted disk space as partition.
-In addition to that, support for [existing volumes](https://www.talos.dev/v1.11/talos-guides/configuration/disk-management/existing/) has been added, allowing to mount existing partitions without formatting them.
-"""
-
-    [notes.etcd_downgrade_api]
-        title = "ETCD downgrade API"
-        description = """\
-Added ETCD downgrade API mimicking the ETCD API and etcdctl interfaces.
-This API allows to downgrade ETCD cluster (storage format) to a previous version.
-"""
-
-    [notes.boot]
-        title = "Boot"
-        description = """\
-Talos boot partition size increased to 2 GiB to accommodate large images (with many system extensions included).
-"""
-
-    [notes.disk-encryption]
-        title = "Disk Encryption"
-        description = """\ 
-Disk encryption for system volumes is now managed by the `VolumeConfig` machine configuration document.
-Legacy configuration in `valpha1` machine configuration is still supported.
-
-New per-key option `lockToSTATE` is added to the `VolumeConfig` document, which allows to lock the volume encryption key to the secret salt in the `STATE` volume.
-So, if the `STATE` volume is wiped or replaced, the volume encryption key will not be usable anymore.
-"""
-
-    [notes.early-config]
-        title = "Early Inline Configuration"
-        description = """\
-Talos now supports passing early inline configuration via the `talos.config.early` kernel parameter.
-This allows to pass the configuration before the platform config source is probed, which is useful for early boot configuration.
-The value of this parameter has the same format as the `talos.config.inline` parameter, i.e. it should be base64 encoded and zstd-compressed.
+Talos is built with Go 1.25.0.
 """
 
 [make_deps]
