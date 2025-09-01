@@ -1297,6 +1297,14 @@ const (
 
 	// ContainerMarkerFilePath is the path to the file added to container builds of Talos for platform detection.
 	ContainerMarkerFilePath = "/usr/etc/in-container"
+
+	// DefaultOOMTriggerExpression is the default CEL expression used to determine whether to trigger OOM.
+	DefaultOOMTriggerExpression = `memory_full_avg10 > 12.0 && time_since_trigger > duration("500ms")`
+
+	// DefaultOOMCgroupRankingExpression is the default CEL expression used to rank cgroups for OOM killer.
+	DefaultOOMCgroupRankingExpression = `memory_max.hasValue() ? 0.0 :
+		{Besteffort: 1.0, Burstable: 0.5, Guaranteed: 0.0, Podruntime: 0.0, System: 0.0}[class] *
+		   double(memory_current.orValue(0u)) / double(memory_peak.orValue(0u) - memory_current.orValue(0u))`
 )
 
 // See https://linux.die.net/man/3/klogctl

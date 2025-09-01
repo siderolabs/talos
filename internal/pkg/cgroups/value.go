@@ -79,6 +79,20 @@ func (v Value) DivideBy(other Value) Value {
 	}
 }
 
+// Float64 returns the float64 representation of the cgroup value.
+func (v Value) Float64() float64 {
+	switch {
+	case !v.IsSet:
+		return math.NaN()
+	case v.IsMax:
+		return math.Inf(1)
+	case v.Frac == 0:
+		return float64(v.Val)
+	default:
+		return float64(v.Val) / math.Pow10(v.Frac)
+	}
+}
+
 // UsecToDuration returns the duration representation of the cgroup value in microseconds.
 func (v Value) UsecToDuration() string {
 	if !v.IsSet || v.IsMax {

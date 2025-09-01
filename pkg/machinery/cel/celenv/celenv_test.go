@@ -11,6 +11,7 @@ import (
 
 	"github.com/siderolabs/talos/pkg/machinery/cel"
 	"github.com/siderolabs/talos/pkg/machinery/cel/celenv"
+	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
 
 func TestDiskLocator(t *testing.T) {
@@ -64,6 +65,52 @@ func TestVolumeLocator(t *testing.T) {
 		{
 			name:       "by filesystem and disk transport",
 			expression: "volume.name == 'ext4' && disk.transport == 'nvme'",
+		},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+
+			_, err := cel.ParseBooleanExpression(test.expression, env)
+			require.NoError(t, err)
+		})
+	}
+}
+
+func TestOOMCgroupScoring(t *testing.T) {
+	t.Parallel()
+
+	env := celenv.OOMCgroupScoring()
+
+	for _, test := range []struct {
+		name       string
+		expression string
+	}{
+		{
+			name:       "example 1",
+			expression: constants.DefaultOOMCgroupRankingExpression,
+		},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+
+			_, err := cel.ParseDoubleExpression(test.expression, env)
+			require.NoError(t, err)
+		})
+	}
+}
+
+func TestOOMTrigger(t *testing.T) {
+	t.Parallel()
+
+	env := celenv.OOMTrigger()
+
+	for _, test := range []struct {
+		name       string
+		expression string
+	}{
+		{
+			name:       "example 1",
+			expression: constants.DefaultOOMTriggerExpression,
 		},
 	} {
 		t.Run(test.name, func(t *testing.T) {

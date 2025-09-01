@@ -71,6 +71,45 @@ func (EventSinkV1Alpha1) Doc() *encoder.Doc {
 	return doc
 }
 
+func (OOMV1Alpha1) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "OOMConfig",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "OOMConfig is a Out of Memory handler config document." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "OOMConfig is a Out of Memory handler config document.",
+		Fields: []encoder.Doc{
+			{
+				Type:   "Meta",
+				Inline: true,
+			},
+			{
+				Name:        "triggerExpression",
+				Type:        "Expression",
+				Note:        "",
+				Description: "This expression defines when to trigger OOM action.\n\nThe expression must evaluate to a boolean value.\nIf the expression returns true, then OOM ranking and killing will be handled.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "This expression defines when to trigger OOM action." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "cgroupRankingExpression",
+				Type:        "Expression",
+				Note:        "",
+				Description: "This expression defines how to rank cgroups for OOM handler.\n\nThe cgroup with the highest rank (score) will be evicted first.\nThe expression must evaluate to a double value.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "This expression defines how to rank cgroups for OOM handler." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "sampleInterval",
+				Type:        "Duration",
+				Note:        "",
+				Description: "How often should the trigger expression be evaluated.\n\nThis interval determines how often should the OOM controller\ncheck for the OOM condition using the provided expression.\nAdjusting it can help tune the reactivity of the OOM handler.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "How often should the trigger expression be evaluated." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
+
+	doc.AddExample("", exampleOOMV1Alpha1())
+
+	return doc
+}
+
 func (WatchdogTimerV1Alpha1) Doc() *encoder.Doc {
 	doc := &encoder.Doc{
 		Type:        "WatchdogTimerConfig",
@@ -113,6 +152,7 @@ func GetFileDoc() *encoder.FileDoc {
 		Structs: []*encoder.Doc{
 			KmsgLogV1Alpha1{}.Doc(),
 			EventSinkV1Alpha1{}.Doc(),
+			OOMV1Alpha1{}.Doc(),
 			WatchdogTimerV1Alpha1{}.Doc(),
 		},
 	}

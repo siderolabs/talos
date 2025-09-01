@@ -5,6 +5,33 @@ package talos.resource.definitions.enums;
 option go_package = "github.com/siderolabs/talos/pkg/machinery/api/resource/definitions/enums";
 option java_package = "dev.talos.api.resource.definitions.enums";
 
+// RuntimeMachineStage describes the stage of the machine boot/run process.
+enum RuntimeMachineStage {
+  MACHINE_STAGE_UNKNOWN = 0;
+  MACHINE_STAGE_BOOTING = 1;
+  MACHINE_STAGE_INSTALLING = 2;
+  MACHINE_STAGE_MAINTENANCE = 3;
+  MACHINE_STAGE_RUNNING = 4;
+  MACHINE_STAGE_REBOOTING = 5;
+  MACHINE_STAGE_SHUTTING_DOWN = 6;
+  MACHINE_STAGE_RESETTING = 7;
+  MACHINE_STAGE_UPGRADING = 8;
+}
+
+// RuntimeSELinuxState describes the current SELinux status.
+enum RuntimeSELinuxState {
+  SE_LINUX_STATE_DISABLED = 0;
+  SE_LINUX_STATE_PERMISSIVE = 1;
+  SE_LINUX_STATE_ENFORCING = 2;
+}
+
+// RuntimeFIPSState describes the current FIPS status.
+enum RuntimeFIPSState {
+  FIPS_STATE_DISABLED = 0;
+  FIPS_STATE_ENABLED = 1;
+  FIPS_STATE_STRICT = 2;
+}
+
 // MachineType represents a machine type.
 enum MachineType {
   // TypeUnknown represents undefined node type, when there is no machine configuration yet.
@@ -707,33 +734,6 @@ enum KubespanPeerState {
   PEER_STATE_UNKNOWN = 0;
   PEER_STATE_UP = 1;
   PEER_STATE_DOWN = 2;
-}
-
-// RuntimeMachineStage describes the stage of the machine boot/run process.
-enum RuntimeMachineStage {
-  MACHINE_STAGE_UNKNOWN = 0;
-  MACHINE_STAGE_BOOTING = 1;
-  MACHINE_STAGE_INSTALLING = 2;
-  MACHINE_STAGE_MAINTENANCE = 3;
-  MACHINE_STAGE_RUNNING = 4;
-  MACHINE_STAGE_REBOOTING = 5;
-  MACHINE_STAGE_SHUTTING_DOWN = 6;
-  MACHINE_STAGE_RESETTING = 7;
-  MACHINE_STAGE_UPGRADING = 8;
-}
-
-// RuntimeSELinuxState describes the current SELinux status.
-enum RuntimeSELinuxState {
-  SE_LINUX_STATE_DISABLED = 0;
-  SE_LINUX_STATE_PERMISSIVE = 1;
-  SE_LINUX_STATE_ENFORCING = 2;
-}
-
-// RuntimeFIPSState describes the current FIPS status.
-enum RuntimeFIPSState {
-  FIPS_STATE_DISABLED = 0;
-  FIPS_STATE_ENABLED = 1;
-  FIPS_STATE_STRICT = 2;
 }
 
 // NetworkConfigLayer describes network configuration layers, with lowest priority first.

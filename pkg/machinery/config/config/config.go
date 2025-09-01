@@ -36,4 +36,5 @@ type Config interface { //nolint:interfacebloat
 	Runtime() RuntimeConfig
 	TrustedRoots() TrustedRootsConfig
 	PCIDriverRebindConfig() PCIDriverRebindConfig
+	OOMConfig() OOMConfig
 }

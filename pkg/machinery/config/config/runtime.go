@@ -7,6 +7,10 @@ package config
 import (
 	"net/url"
 	"time"
+
+	"github.com/siderolabs/gen/optional"
+
+	"github.com/siderolabs/talos/pkg/machinery/cel"
 )
 
 // RuntimeConfig defines the interface to access Talos runtime configuration.
@@ -45,4 +49,11 @@ func (w runtimeConfigWrapper) WatchdogTimer() WatchdogTimerConfig {
 	return findFirstValue(w, func(c RuntimeConfig) WatchdogTimerConfig {
 		return c.WatchdogTimer()
 	})
+}
+
+// OOMConfig defines the interface to access OOM configuration.
+type OOMConfig interface {
+	TriggerExpression() optional.Optional[cel.Expression]
+	CgroupRankingExpression() optional.Optional[cel.Expression]
+	SampleInterval() optional.Optional[time.Duration]
 }

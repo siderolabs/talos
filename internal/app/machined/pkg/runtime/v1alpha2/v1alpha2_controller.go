@@ -442,6 +442,7 @@ func (ctrl *Controller) Run(ctx context.Context, drainer *runtime.Drainer) error
 		&runtimecontrollers.VersionController{},
 		&runtimecontrollers.WatchdogTimerConfigController{},
 		&runtimecontrollers.WatchdogTimerController{},
+		&runtimecontrollers.OOMController{},
 		&secrets.APICertSANsController{},
 		&secrets.APIController{},
 		&secrets.EncryptionSaltController{},

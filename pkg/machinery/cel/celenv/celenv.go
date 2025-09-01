@@ -16,6 +16,7 @@ import (
 	"github.com/siderolabs/gen/xslices"
 
 	"github.com/siderolabs/talos/pkg/machinery/api/resource/definitions/block"
+	"github.com/siderolabs/talos/pkg/machinery/resources/runtime"
 )
 
 // Empty is an empty CEL environment.
@@ -81,6 +82,60 @@ var VolumeLocator = sync.OnceValue(func() *cel.Env {
 	return env
 })
 
+// OOMTrigger is a OOM Trigger Condition CEL environment.
+var OOMTrigger = sync.OnceValue(func() *cel.Env {
+	env, err := cel.NewEnv(
+		slices.Concat(
+			slices.Concat(
+				[]cel.EnvOption{
+					cel.Variable("memory_some_avg10", types.DoubleType),
+					cel.Variable("memory_some_avg60", types.DoubleType),
+					cel.Variable("memory_some_avg300", types.DoubleType),
+					cel.Variable("memory_some_total", types.DoubleType),
+					cel.Variable("memory_full_avg10", types.DoubleType),
+					cel.Variable("memory_full_avg60", types.DoubleType),
+					cel.Variable("memory_full_avg300", types.DoubleType),
+					cel.Variable("memory_full_total", types.DoubleType),
+					cel.Variable("time_since_trigger", types.DurationType),
+					cel.OptionalTypes(),
+				},
+				celUnitMultipliersConstants(),
+			),
+			celCgroupClassConstants(),
+		)...,
+	)
+	if err != nil {
+		panic(err)
+	}
+
+	return env
+})
+
+// OOMCgroupScoring is a OOM Cgroup Scoring CEL environment.
+var OOMCgroupScoring = sync.OnceValue(func() *cel.Env {
+	env, err := cel.NewEnv(
+		slices.Concat(
+			slices.Concat(
+				[]cel.EnvOption{
+					cel.Variable("memory_max", types.NewOptionalType(types.UintType)),
+					cel.Variable("memory_current", types.NewOptionalType(types.UintType)),
+					cel.Variable("memory_peak", types.NewOptionalType(types.UintType)),
+					cel.Variable("path", types.StringType),
+					cel.Variable("class", types.IntType),
+					cel.OptionalTypes(),
+				},
+				celUnitMultipliersConstants(),
+			),
+			celCgroupClassConstants(),
+		)...,
+	)
+	if err != nil {
+		panic(err)
+	}
+
+	return env
+})
+
 type unitMultiplier struct {
 	unit       string
 	multiplier uint64
@@ -107,4 +162,14 @@ func celUnitMultipliersConstants() []cel.EnvOption {
 	return xslices.Map(unitMultipliers, func(um unitMultiplier) cel.EnvOption {
 		return cel.Constant(um.unit, types.UintType, types.Uint(um.multiplier))
 	})
+}
+
+func celCgroupClassConstants() []cel.EnvOption {
+	return []cel.EnvOption{
+		cel.Constant("Besteffort", types.IntType, types.Int(runtime.QoSCgroupClassBesteffort)),
+		cel.Constant("Burstable", types.IntType, types.Int(runtime.QoSCgroupClassBurstable)),
+		cel.Constant("Guaranteed", types.IntType, types.Int(runtime.QoSCgroupClassGuaranteed)),
+		cel.Constant("Podruntime", types.IntType, types.Int(runtime.QoSCgroupClassPodruntime)),
+		cel.Constant("System", types.IntType, types.Int(runtime.QoSCgroupClassSystem)),
+	}
 }

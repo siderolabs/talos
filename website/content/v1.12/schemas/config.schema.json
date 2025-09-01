@@ -1540,6 +1540,57 @@
       ],
       "description": "KmsgLogConfig is a event sink config document."
     },
+    "runtime.OOMV1Alpha1": {
+      "properties": {
+        "apiVersion": {
+          "enum": [
+            "v1alpha1"
+          ],
+          "title": "apiVersion",
+          "description": "apiVersion is the API version of the resource.\n",
+          "markdownDescription": "apiVersion is the API version of the resource.",
+          "x-intellij-html-description": "\u003cp\u003eapiVersion is the API version of the resource.\u003c/p\u003e\n"
+        },
+        "kind": {
+          "enum": [
+            "OOMConfig"
+          ],
+          "title": "kind",
+          "description": "kind is the kind of the resource.\n",
+          "markdownDescription": "kind is the kind of the resource.",
+          "x-intellij-html-description": "\u003cp\u003ekind is the kind of the resource.\u003c/p\u003e\n"
+        },
+        "triggerExpression": {
+          "type": "string",
+          "title": "triggerExpression",
+          "description": "This expression defines when to trigger OOM action.\n\nThe expression must evaluate to a boolean value.\nIf the expression returns true, then OOM ranking and killing will be handled.\n",
+          "markdownDescription": "This expression defines when to trigger OOM action.\n\nThe expression must evaluate to a boolean value.\nIf the expression returns true, then OOM ranking and killing will be handled.",
+          "x-intellij-html-description": "\u003cp\u003eThis expression defines when to trigger OOM action.\u003c/p\u003e\n\n\u003cp\u003eThe expression must evaluate to a boolean value.\nIf the expression returns true, then OOM ranking and killing will be handled.\u003c/p\u003e\n"
+        },
+        "cgroupRankingExpression": {
+          "type": "string",
+          "title": "cgroupRankingExpression",
+          "description": "This expression defines how to rank cgroups for OOM handler.\n\nThe cgroup with the highest rank (score) will be evicted first.\nThe expression must evaluate to a double value.\n",
+          "markdownDescription": "This expression defines how to rank cgroups for OOM handler.\n\nThe cgroup with the highest rank (score) will be evicted first.\nThe expression must evaluate to a double value.",
+          "x-intellij-html-description": "\u003cp\u003eThis expression defines how to rank cgroups for OOM handler.\u003c/p\u003e\n\n\u003cp\u003eThe cgroup with the highest rank (score) will be evicted first.\nThe expression must evaluate to a double value.\u003c/p\u003e\n"
+        },
+        "sampleInterval": {
+          "type": "string",
+          "pattern": "^[-+]?(((\\d+(\\.\\d*)?|\\d*(\\.\\d+)+)([nuµm]?s|m|h))|0)+$",
+          "title": "sampleInterval",
+          "description": "How often should the trigger expression be evaluated.\n\nThis interval determines how often should the OOM controller\ncheck for the OOM condition using the provided expression.\nAdjusting it can help tune the reactivity of the OOM handler.\n",
+          "markdownDescription": "How often should the trigger expression be evaluated.\n\nThis interval determines how often should the OOM controller\ncheck for the OOM condition using the provided expression.\nAdjusting it can help tune the reactivity of the OOM handler.",
+          "x-intellij-html-description": "\u003cp\u003eHow often should the trigger expression be evaluated.\u003c/p\u003e\n\n\u003cp\u003eThis interval determines how often should the OOM controller\ncheck for the OOM condition using the provided expression.\nAdjusting it can help tune the reactivity of the OOM handler.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "apiVersion",
+        "kind"
+      ],
+      "description": "OOMConfig is a Out of Memory handler config document."
+    },
     "runtime.WatchdogTimerV1Alpha1": {
       "properties": {
         "apiVersion": {
@@ -4661,6 +4712,9 @@
     },
     {
       "$ref": "#/$defs/runtime.KmsgLogV1Alpha1"
+    },
+    {
+      "$ref": "#/$defs/runtime.OOMV1Alpha1"
     },
     {
       "$ref": "#/$defs/runtime.WatchdogTimerV1Alpha1"
