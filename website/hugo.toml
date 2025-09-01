@@ -114,7 +114,7 @@ version_menu = "Releases"
 
 # A link to latest version of the docs. Used in the "version-banner" partial to
 # point people to the main doc site.
-url_latest_version = "/v1.10"
+url_latest_version = "/v1.11"
 
 # Repository configuration (URLs for in-page links to opening issues and suggesting changes)
 github_repo = "https://github.com/siderolabs/talos"
@@ -147,11 +147,11 @@ version = "v1.12 (pre-release)"
 
 [[params.versions]]
 url = "/v1.11/"
-version = "v1.11 (pre-release)"
+version = "v1.11 (latest)"
 
 [[params.versions]]
 url = "/v1.10/"
-version = "v1.10 (latest)"
+version = "v1.10"
 
 [[params.versions]]
 url = "/v1.9/"
