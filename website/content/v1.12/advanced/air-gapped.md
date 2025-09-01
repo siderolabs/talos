@@ -130,7 +130,10 @@ waiting for API
 
 > Note: `--install-image` should match the image which was copied into the internal registry in the previous step.
 
-You can be verify that the cluster is air-gapped by inspecting the registry logs: `docker logs -f registry-airgapped`.
+> Note: If the `installer` image references extensions, they should be copied into the internal registry as well
+> as the installer does **not** include them and will need to pull them.
+
+You can verify that the cluster is air-gapped by inspecting the registry logs: `docker logs -f registry-airgapped`.
 
 ## Closing Notes
 
