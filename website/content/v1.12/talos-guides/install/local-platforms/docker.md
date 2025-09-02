@@ -63,6 +63,16 @@ $ talosctl cluster show
 KUBERNETES ENDPOINT   https://127.0.0.1:43083
 ```
 
+> **Note:** When running Kubernetes with Flannel inside Docker, you may encounter this error:
+> `Failed to check br_netfilter: stat /proc/sys/net/bridge/bridge-nf-call-iptables: no such file or directory`
+>
+> This happens because the host Linux kernel does not have the **`br_netfilter`** module enabled.
+> To resolve this, load the module by running
+>
+> ```bash
+> sudo modprobe br_netfilter
+> ```
+
 ## Using the Cluster
 
 Once the cluster is available, you can make use of `talosctl` and `kubectl` to interact with the cluster.
