@@ -30,7 +30,7 @@ spec:
     - kernel
     - security
     - ci
-    - ^v1.11
+    - ^v1.12
   licenseChecks:
     - skipPaths:
         - .git/

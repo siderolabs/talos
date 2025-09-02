@@ -27,7 +27,7 @@ func TestFillDefaults(t *testing.T) {
 	})
 
 	arches := []string{"amd64", "arm64"}
-	versions := []string{"1.9.0", "1.10.0", "1.11.0"}
+	versions := []string{"1.9.0", "1.10.0", "1.11.0", "1.12.0"}
 
 	lastVersion := semver.MustParse(versions[len(versions)-1])
 
