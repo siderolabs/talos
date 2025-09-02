@@ -381,13 +381,18 @@ Examples of disk selector expressions:
 - `disk.serial.startsWith('deadbeef') && !cdrom`: select disks with serial number starting with `deadbeef` and not of CD-ROM type
 - `'/dev/disk/by-path/pci-0000:00:1f.2-ata-1' in disk.symlinks`: select disks with a specific stable symlink
 
-### Minimum and Maximum Size
+### Minimum, Maximum and Grow
 
 The `minSize` and `maxSize` fields define the minimum and maximum size of the volume, respectively.
 Talos Linux will always ensure that the volume is at least `minSize` in size and will not exceed `maxSize`.
 If `maxSize` is not set, the volume will grow to utilize the maximum available space on the disk.
 
-If `grow` is set to `true`, the volume will automatically grow to utilize the maximum available space on the disk on each boot.
+The `grow` flag controls what happens when the volume already exists:
+
+- **On initial creation:** `grow` is ignored. The new volume is created between `minSize` and `maxSize` (or full disk if `maxSize` is unset).
+- **On subsequent boots (when the volume already exists):**
+  - If `grow: false`, the existing volume size is never changed.
+  - If `grow: true`, and the current volume is smaller than `maxSize` (or `maxSize` is unset), Talos will expand the volume to fill available space after it.
 
 Setting `minSize` might influence disk selection - if the disk does not have enough free space to satisfy the minimum size requirement, it will not be selected for provisioning.
 
