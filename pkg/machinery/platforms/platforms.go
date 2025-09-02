@@ -249,7 +249,7 @@ func CloudPlatforms() []Platform {
 			Label:       "VMWare",
 			Description: "Runs on VMWare ESXi virtual machines",
 
-			Architectures:   []Arch{ArchAmd64},
+			Architectures:   []Arch{ArchAmd64, ArchArm64},
 			Documentation:   "/talos-guides/install/virtualized-platforms/vmware/",
 			DiskImageSuffix: "ova",
 			BootMethods: []BootMethod{

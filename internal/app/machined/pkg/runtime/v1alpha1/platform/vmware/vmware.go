@@ -36,7 +36,13 @@ func (v *VMware) KernelArgs(arch string, _ quirks.Quirks) procfs.Parameters {
 			procfs.NewParameter("earlyprintk").Append("ttyS0,115200"),
 			procfs.NewParameter(constants.KernelParamNetIfnames).Append("0"),
 		}
+	case "arm64":
+		return []*procfs.Parameter{
+			procfs.NewParameter(constants.KernelParamConfig).Append(constants.ConfigGuestInfo),
+			procfs.NewParameter("console").Append("tty0").Append("ttyAMA0"),
+			procfs.NewParameter(constants.KernelParamNetIfnames).Append("0"),
+		}
 	default:
-		return nil // not supported on !amd64
+		return nil // not supported
 	}
 }
