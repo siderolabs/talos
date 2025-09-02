@@ -11,6 +11,7 @@ kernel/drivers/ata/pata_marvell.ko
 kernel/drivers/ata/pata_oldpiix.ko
 kernel/drivers/ata/pata_sch.ko
 kernel/drivers/block/nbd.ko
+kernel/drivers/block/ublk_drv.ko
 kernel/drivers/char/hw_random/amd-rng.ko
 kernel/drivers/char/hw_random/ba431-rng.ko
 kernel/drivers/char/hw_random/intel-rng.ko
