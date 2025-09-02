@@ -11,6 +11,7 @@ kernel/drivers/ata/pata_marvell.ko
 kernel/drivers/ata/pata_oldpiix.ko
 kernel/drivers/ata/pata_sch.ko
 kernel/drivers/block/nbd.ko
+kernel/drivers/block/ublk_drv.ko
 kernel/drivers/crypto/tegra/tegra-se.ko
 kernel/drivers/gpu/drm/drm_buddy.ko
 kernel/drivers/gpu/drm/drm_exec.ko
