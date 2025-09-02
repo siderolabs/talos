@@ -13,7 +13,14 @@ The virtual TTYs can be switched with `<Alt+F1>` and `<Alt+F2>` keys.
 Keys `<F1>` - `<Fn>` can be used to switch between different screens of the dashboard.
 
 The dashboard is using either UEFI framebuffer or VGA/VESA framebuffer (for legacy BIOS boot).
-For legacy BIOS boot screen resolution can be controlled with the [`vga=` kernel parameter](https://docs.kernel.org/fb/vesafb.html).
+
+## Dashboard Resolution Control
+
+On legacy BIOS systems, the screen resolution can be adjusted with the [`vga=` kernel parameter](https://docs.kernel.org/fb/vesafb.html).  
+
+In modern kernels and platforms, this parameter is often ignored. For reliable results, it is recommended to boot with **UEFI**.  
+
+When running in **UEFI mode**, you can set the screen resolution through your hypervisor or UEFI firmware settings.
 
 ## Summary Screen (`F1`)
 
