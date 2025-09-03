@@ -23,7 +23,7 @@ Follow the steps below to build a production-grade Talos cluster that is highly 
 
 ## Step 1: Prepare Your Infrastructure
 
-To create your production cluster infrastructure :
+To create your production cluster infrastructure:
 
 1. Boot your machines using the Talos ISO image
 1. Ensure network access on your nodes.
@@ -57,8 +57,6 @@ To store variables for your machines’ IP addresses:
 1. Copy the IP address displayed on each machine console, including the control plane and any worker nodes you’ve created.
 
     If you don’t have a display connected, retrieve the IP addresses from your DHCP server.
-
-   ![IP address display](/images/IP-address-install-display.png)
 
 1. Create a Bash array for your control plane node IP addresses, replacing each `<control-plane-ip>` placeholder with the IP address of a control plane node.
 You can include as many IP addresses as needed:
@@ -265,7 +263,12 @@ Follow these steps to patch your machine configuration:
 
 Additionally, you can learn more about [patches]({{< relref "../talos-guides/configuration/patching/" >}}) from the configuration patches documentation.
 
-## Step 10: Apply the Machine Configuration
+## Step 10: Configure Your Multihomed Machines
+
+If your machines are multihomed, i.e., they have more than one IPv4 and/or IPv6 addresses other than loopback, then additional configuration is required.
+Refer to [Multihoming]({{< relref "../talos-guides/network/multihoming.md" >}}) for more information.
+
+## Step 11: Apply the Machine Configuration
 
 To apply your machine configuration:
 
@@ -295,7 +298,7 @@ To apply your machine configuration:
     done
     ```
 
-## Step 11: Manage Your Talos Configuration File
+## Step 12: Manage Your Talos Configuration File
 
 The `talosconfig` is your key to managing the Talos Linux cluster, without it, you cannot authenticate or communicate with your cluster nodes using `talosctl`.
 
@@ -315,7 +318,7 @@ You have two options for managing your `talosconfig`:
     export TALOSCONFIG=~/.talos/config
     ```
 
-## Step 12: Set Endpoints of Your Control Plane Nodes
+## Step 13: Set Endpoints of Your Control Plane Nodes
 
 Configure your endpoints to enable talosctl to automatically load balance requests and fail over between control plane nodes when individual nodes become unavailable.
 
@@ -334,7 +337,7 @@ If your control plane nodes IP addresses are `192.168.0.2`, `192.168.0.3`, `192.
 talosctl config endpoint 192.168.0.2 192.168.0.3 192.168.0.4
 ```
 
-## Step 13: Bootstrap Your Kubernetes Cluster
+## Step 14: Bootstrap Your Kubernetes Cluster
 
 Wait for your control plane nodes to finish booting, then bootstrap your etcd cluster by running the command below.
 
@@ -347,7 +350,7 @@ talosctl bootstrap --nodes <control-plane-IP>
 **Note**: Run this command ONCE on a SINGLE control plane node.
 If you have multiple control plane nodes, you can choose any of them.
 
-## Step 14: Get Kubernetes Access
+## Step 15: Get Kubernetes Access
 
 Download your `kubeconfig` file to start using `kubectl` with your cluster.
 These commands must be run against a single control plane node.
@@ -369,7 +372,7 @@ export KUBECONFIG=./alternative-kubeconfig
 
 ```
 
-## Step 15: Verify Your Nodes Are Running
+## Step 16: Verify Your Nodes Are Running
 
 Run the command to ensure that your nodes are running:
 
