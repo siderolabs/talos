@@ -108,6 +108,19 @@ If the command fails for any reason, it can be safely restarted to continue the 
 
 > Note: When using custom/overridden Kubernetes component images, use flags `--*-image` to override the default image names.
 
+### Synchronize Declared and Deployed Configurations
+
+When Kubernetes is upgraded with `talosctl upgrade-k8s`, the live machine configuration on your nodes is updated with new component image versions (API server, controller manager, scheduler, kube-proxy, etc.).
+
+If you are storing full machine configuration files (`controlplane.yaml`, `worker.yaml`) in Git, these versions will drift out of sync.
+Re-applying those stale files later could unintentionally downgrade components.
+
+That is why we do not recommend storing full machine configurations.
+
+Version numbers for Talos, etcd, Kubernetes components, and add-ons change frequently. Maintaining these across upgrades requires editing many fields by hand.
+
+See the [Reproducible Machine Configuration]({{< relref "../talos-guides/configuration/reproducible-machine-config.md" >}}) guide for full instructions on handling machine configurations after version bumps.
+
 ## Manual Kubernetes Upgrade
 
 Kubernetes can be upgraded manually by following the steps outlined below.
