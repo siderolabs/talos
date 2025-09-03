@@ -187,6 +187,22 @@ spec:
           name: cnibin
 ```
 
+> **Note :** In earlier Talos versions, an image called `siderolabs/install-cni` was required to provide the standard [CNI reference plugins](https://www.cni.dev/plugins/current/).
+> This image has since been deprecated.
+>
+> With the newer Talos versions, the **essential CNI plugins are already bundled with Talos Linux itself**.
+> This means you generally do not need to use `siderolabs/install-cni` anymore.
+> Multus and most CNIs should work with the plugins shipped in Talos out of the box.
+>
+> If you need additional or custom CNI plugins that are not included, you can:
+>
+> * Use the official upstream builds, or
+> * Build your own plugin image and deploy it with a DaemonSet
+>
+> Since CNI plugins are distributed as static binaries, they are generally compatible across Talos versions.
+>
+> The references to `siderolabs/install-cni` in this guide remain for historical context and compatibility examples, but new deployments should rely on the bundled plugins in Talos unless a custom requirement exists.
+
 ### Exclusive CNI
 
 By default, Cilium is an exclusive CNI, meaning it removes other CNI configuration files.
