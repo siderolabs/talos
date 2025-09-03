@@ -64,7 +64,6 @@ type commonOps struct {
 	clusterWaitTimeout        time.Duration
 	forceInitNodeAsEndpoint   bool
 	forceEndpoint             string
-	inputDir                  string
 	controlPlanePort          int
 	withInitNode              bool
 	customCNIUrl              string

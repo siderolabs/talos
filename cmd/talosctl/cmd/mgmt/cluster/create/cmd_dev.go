@@ -87,7 +87,6 @@ var createCmd = getCreateCmd()
 //nolint:gocyclo
 func getCreateCmd() *cobra.Command {
 	const (
-		inputDirFlag                  = "input-dir"
 		networkIPv4Flag               = "ipv4"
 		networkIPv6Flag               = "ipv6"
 		networkNoMasqueradeCIDRsFlag  = "no-masquerade-cidrs"
@@ -226,7 +225,6 @@ func getCreateCmd() *cobra.Command {
 		common.DurationVar(&ops.common.clusterWaitTimeout, clusterWaitTimeoutFlag, ops.common.clusterWaitTimeout, "timeout to wait for the cluster to be ready")
 		common.BoolVar(&ops.common.forceInitNodeAsEndpoint, forceInitNodeAsEndpointFlag, ops.common.forceInitNodeAsEndpoint, "use init node as endpoint instead of any load balancer endpoint")
 		common.StringVar(&ops.common.forceEndpoint, forceEndpointFlag, ops.common.forceEndpoint, "use endpoint instead of provider defaults")
-		common.StringVarP(&ops.common.inputDir, inputDirFlag, "i", ops.common.inputDir, "location of pre-generated config files")
 		common.BoolVar(&ops.common.withInitNode, withInitNodeFlag, ops.common.withInitNode, "create the cluster with an init node")
 		common.StringVar(&ops.common.customCNIUrl, customCNIUrlFlag, ops.common.customCNIUrl, "install custom CNI from the URL (Talos cluster)")
 		common.StringVar(&ops.common.dnsDomain, dnsDomainFlag, ops.common.dnsDomain, "the dns domain to use for cluster")
@@ -345,22 +343,6 @@ func getCreateCmd() *cobra.Command {
 
 	createCmd.Flags().AddFlagSet(getCommonFlags())
 	createCmd.Flags().AddFlagSet(getQemuFlags())
-
-	createCmd.MarkFlagsMutuallyExclusive(inputDirFlag, nodeInstallImageFlag)
-	createCmd.MarkFlagsMutuallyExclusive(inputDirFlag, configDebugFlag)
-	createCmd.MarkFlagsMutuallyExclusive(inputDirFlag, dnsDomainFlag)
-	createCmd.MarkFlagsMutuallyExclusive(inputDirFlag, withClusterDiscoveryFlag)
-	createCmd.MarkFlagsMutuallyExclusive(inputDirFlag, registryMirrorFlagName)
-	createCmd.MarkFlagsMutuallyExclusive(inputDirFlag, registryInsecureFlag)
-	createCmd.MarkFlagsMutuallyExclusive(inputDirFlag, customCNIUrlFlag)
-	createCmd.MarkFlagsMutuallyExclusive(inputDirFlag, talosVersionFlagName)
-	createCmd.MarkFlagsMutuallyExclusive(inputDirFlag, encryptStatePartitionFlag)
-	createCmd.MarkFlagsMutuallyExclusive(inputDirFlag, encryptEphemeralPartitionFlag)
-	createCmd.MarkFlagsMutuallyExclusive(inputDirFlag, encryptUserVolumeFlag)
-	createCmd.MarkFlagsMutuallyExclusive(inputDirFlag, enableKubeSpanFlag)
-	createCmd.MarkFlagsMutuallyExclusive(inputDirFlag, forceEndpointFlag)
-	createCmd.MarkFlagsMutuallyExclusive(inputDirFlag, kubePrismFlag)
-	createCmd.MarkFlagsMutuallyExclusive(inputDirFlag, diskEncryptionKeyTypesFlag)
 
 	createCmd.MarkFlagsMutuallyExclusive(tpmEnabledFlag, tpm2EnabledFlag)
 

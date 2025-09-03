@@ -245,7 +245,6 @@ talosctl cluster create [flags]
   -h, --help                                     help for create
       --init-node-as-endpoint                    use init node as endpoint instead of any load balancer endpoint
       --initrd-path string                       initramfs image to use (default "_out/initramfs-${ARCH}.xz")
-  -i, --input-dir string                         location of pre-generated config files
       --install-image string                     the installer image to use (default "ghcr.io/siderolabs/installer:latest")
       --ipv4                                     enable IPv4 network in the cluster (default true)
       --ipv6                                     enable IPv6 network in the cluster

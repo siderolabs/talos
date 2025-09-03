@@ -63,6 +63,7 @@ func getQemuClusterRequest(
 		withExtraGenOpts: func(cr provision.ClusterRequest) []generate.Option {
 			genOptions := []generate.Option{
 				generate.WithInstallImage(qOps.nodeInstallImage),
+				generate.WithClusterDiscovery(cOps.enableClusterDiscovery),
 			}
 
 			endpointList := xslices.Map(cr.Nodes.ControlPlaneNodes(), func(n provision.NodeRequest) string { return n.IPs[0].String() })

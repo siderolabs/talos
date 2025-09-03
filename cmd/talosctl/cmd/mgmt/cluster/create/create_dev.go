@@ -292,213 +292,209 @@ func create(ctx context.Context, ops createOps) error {
 		return err
 	}
 
-	if cOps.inputDir != "" {
-		configBundleOpts = append(configBundleOpts, bundle.WithExistingConfigs(cOps.inputDir))
-	} else {
-		genOptions := []generate.Option{
-			generate.WithInstallImage(qOps.nodeInstallImage),
-			generate.WithDebug(cOps.configDebug),
-			generate.WithDNSDomain(cOps.dnsDomain),
-			generate.WithClusterDiscovery(cOps.enableClusterDiscovery), // figure out if this is needed
-		}
+	genOptions := []generate.Option{
+		generate.WithInstallImage(qOps.nodeInstallImage),
+		generate.WithDebug(cOps.configDebug),
+		generate.WithDNSDomain(cOps.dnsDomain),
+		generate.WithClusterDiscovery(cOps.enableClusterDiscovery),
+	}
 
-		registryMirrorOps, err := getRegistryMirrorGenOps(cOps)
+	registryMirrorOps, err := getRegistryMirrorGenOps(cOps)
+	if err != nil {
+		return err
+	}
+
+	genOptions = append(genOptions, registryMirrorOps...)
+
+	for _, registryHost := range cOps.registryInsecure {
+		genOptions = append(genOptions, generate.WithRegistryInsecureSkipVerify(registryHost))
+	}
+
+	genOptions = append(genOptions, provisioner.GenOptions(request.Network)...)
+
+	if cOps.customCNIUrl != "" {
+		genOptions = append(genOptions, generate.WithClusterCNIConfig(&v1alpha1.CNIConfig{
+			CNIName: constants.CustomCNI,
+			CNIUrls: []string{cOps.customCNIUrl},
+		}))
+	}
+
+	if cOps.talosVersion == "" {
+		parts := strings.Split(qOps.nodeInstallImage, ":")
+		cOps.talosVersion = parts[len(parts)-1]
+	}
+
+	versionContractGenOps, versionContract, err := getVersionContractGenOps(cOps)
+	if err != nil {
+		return err
+	}
+
+	genOptions = append(genOptions, versionContractGenOps...)
+
+	extraDisks, userVolumePatches, err := getExtraDisks(provisioner, cidr4, versionContract, &provisionOptions, qOps)
+	if err != nil {
+		return err
+	}
+
+	primaryDisks = append(primaryDisks, extraDisks...)
+
+	var diskEncryptionPatches []configpatcher.Patch
+
+	if qOps.encryptStatePartition || qOps.encryptEphemeralPartition {
+		keys, err := getEncryptionKeys(cidr4, versionContract, &provisionOptions, qOps.diskEncryptionKeyTypes)
 		if err != nil {
 			return err
 		}
 
-		genOptions = append(genOptions, registryMirrorOps...)
+		if !versionContract.VolumeConfigEncryptionSupported() {
+			// legacy v1alpha1 flow to support booting old Talos versions
+			diskEncryptionConfig := &v1alpha1.SystemDiskEncryptionConfig{}
 
-		for _, registryHost := range cOps.registryInsecure {
-			genOptions = append(genOptions, generate.WithRegistryInsecureSkipVerify(registryHost))
-		}
+			if qOps.encryptStatePartition {
+				diskEncryptionConfig.StatePartition = &v1alpha1.EncryptionConfig{
+					EncryptionProvider: encryption.LUKS2,
+					EncryptionKeys:     keys,
+				}
+			}
 
-		genOptions = append(genOptions, provisioner.GenOptions(request.Network)...)
+			if qOps.encryptEphemeralPartition {
+				diskEncryptionConfig.EphemeralPartition = &v1alpha1.EncryptionConfig{
+					EncryptionProvider: encryption.LUKS2,
+					EncryptionKeys:     keys,
+				}
+			}
 
-		if cOps.customCNIUrl != "" {
-			genOptions = append(genOptions, generate.WithClusterCNIConfig(&v1alpha1.CNIConfig{
-				CNIName: constants.CustomCNI,
-				CNIUrls: []string{cOps.customCNIUrl},
-			}))
-		}
+			patchRaw := map[string]any{
+				"machine": map[string]any{
+					"systemDiskEncryption": diskEncryptionConfig,
+				},
+			}
 
-		if cOps.talosVersion == "" {
-			parts := strings.Split(qOps.nodeInstallImage, ":")
-			cOps.talosVersion = parts[len(parts)-1]
-		}
-
-		versionContractGenOps, versionContract, err := getVersionContractGenOps(cOps)
-		if err != nil {
-			return err
-		}
-
-		genOptions = append(genOptions, versionContractGenOps...)
-
-		extraDisks, userVolumePatches, err := getExtraDisks(provisioner, cidr4, versionContract, &provisionOptions, qOps)
-		if err != nil {
-			return err
-		}
-
-		primaryDisks = append(primaryDisks, extraDisks...)
-
-		var diskEncryptionPatches []configpatcher.Patch
-
-		if qOps.encryptStatePartition || qOps.encryptEphemeralPartition {
-			keys, err := getEncryptionKeys(cidr4, versionContract, &provisionOptions, qOps.diskEncryptionKeyTypes)
+			patchData, err := yaml.Marshal(patchRaw)
 			if err != nil {
-				return err
+				return fmt.Errorf("error marshaling patch: %w", err)
 			}
 
-			if !versionContract.VolumeConfigEncryptionSupported() {
-				// legacy v1alpha1 flow to support booting old Talos versions
-				diskEncryptionConfig := &v1alpha1.SystemDiskEncryptionConfig{}
+			patch, err := configpatcher.LoadPatch(patchData)
+			if err != nil {
+				return fmt.Errorf("error loading patch: %w", err)
+			}
 
-				if qOps.encryptStatePartition {
-					diskEncryptionConfig.StatePartition = &v1alpha1.EncryptionConfig{
-						EncryptionProvider: encryption.LUKS2,
-						EncryptionKeys:     keys,
+			diskEncryptionPatches = append(diskEncryptionPatches, patch)
+		} else {
+			for _, spec := range []struct {
+				label   string
+				enabled bool
+			}{
+				{label: constants.StatePartitionLabel, enabled: qOps.encryptStatePartition},
+				{label: constants.EphemeralPartitionLabel, enabled: qOps.encryptEphemeralPartition},
+			} {
+				if !spec.enabled {
+					continue
+				}
+
+				blockCfg := block.NewVolumeConfigV1Alpha1()
+				blockCfg.MetaName = spec.label
+				blockCfg.EncryptionSpec = block.EncryptionSpec{
+					EncryptionProvider: blockres.EncryptionProviderLUKS2,
+					EncryptionKeys:     convertEncryptionKeys(keys),
+				}
+
+				if spec.label != constants.StatePartitionLabel {
+					for idx := range blockCfg.EncryptionSpec.EncryptionKeys {
+						blockCfg.EncryptionSpec.EncryptionKeys[idx].KeyLockToSTATE = pointer.To(true)
 					}
 				}
 
-				if qOps.encryptEphemeralPartition {
-					diskEncryptionConfig.EphemeralPartition = &v1alpha1.EncryptionConfig{
-						EncryptionProvider: encryption.LUKS2,
-						EncryptionKeys:     keys,
-					}
-				}
-
-				patchRaw := map[string]any{
-					"machine": map[string]any{
-						"systemDiskEncryption": diskEncryptionConfig,
-					},
-				}
-
-				patchData, err := yaml.Marshal(patchRaw)
+				ctr, err := container.New(blockCfg)
 				if err != nil {
-					return fmt.Errorf("error marshaling patch: %w", err)
+					return fmt.Errorf("error creating container for %q volume: %w", spec.label, err)
 				}
 
-				patch, err := configpatcher.LoadPatch(patchData)
-				if err != nil {
-					return fmt.Errorf("error loading patch: %w", err)
-				}
-
-				diskEncryptionPatches = append(diskEncryptionPatches, patch)
-			} else {
-				for _, spec := range []struct {
-					label   string
-					enabled bool
-				}{
-					{label: constants.StatePartitionLabel, enabled: qOps.encryptStatePartition},
-					{label: constants.EphemeralPartitionLabel, enabled: qOps.encryptEphemeralPartition},
-				} {
-					if !spec.enabled {
-						continue
-					}
-
-					blockCfg := block.NewVolumeConfigV1Alpha1()
-					blockCfg.MetaName = spec.label
-					blockCfg.EncryptionSpec = block.EncryptionSpec{
-						EncryptionProvider: blockres.EncryptionProviderLUKS2,
-						EncryptionKeys:     convertEncryptionKeys(keys),
-					}
-
-					if spec.label != constants.StatePartitionLabel {
-						for idx := range blockCfg.EncryptionSpec.EncryptionKeys {
-							blockCfg.EncryptionSpec.EncryptionKeys[idx].KeyLockToSTATE = pointer.To(true)
-						}
-					}
-
-					ctr, err := container.New(blockCfg)
-					if err != nil {
-						return fmt.Errorf("error creating container for %q volume: %w", spec.label, err)
-					}
-
-					diskEncryptionPatches = append(diskEncryptionPatches, configpatcher.NewStrategicMergePatch(ctr))
-				}
+				diskEncryptionPatches = append(diskEncryptionPatches, configpatcher.NewStrategicMergePatch(ctr))
 			}
 		}
+	}
 
-		if qOps.useVIP {
-			genOptions = append(genOptions,
-				generate.WithNetworkOptions(
-					v1alpha1.WithNetworkInterfaceVirtualIP(provisioner.GetFirstInterface(), vip.String()),
-				),
-			)
-		}
-
-		if cOps.enableKubeSpan {
-			genOptions = append(genOptions,
-				generate.WithNetworkOptions(
-					v1alpha1.WithKubeSpan(),
-				),
-			)
-		}
-
-		if !qOps.bootloaderEnabled {
-			// disable kexec, as this would effectively use the bootloader
-			genOptions = append(genOptions,
-				generate.WithSysctls(map[string]string{
-					"kernel.kexec_load_disabled": "1",
-				}),
-			)
-		}
-
-		if cOps.controlPlanePort != constants.DefaultControlPlanePort {
-			genOptions = append(genOptions,
-				generate.WithLocalAPIServerPort(cOps.controlPlanePort),
-			)
-		}
-
-		if cOps.kubePrismPort != constants.DefaultKubePrismPort {
-			genOptions = append(genOptions,
-				generate.WithKubePrismPort(cOps.kubePrismPort),
-			)
-		}
-
-		externalKubernetesEndpoint := provisioner.GetExternalKubernetesControlPlaneEndpoint(request.Network, cOps.controlPlanePort)
-
-		if qOps.useVIP {
-			externalKubernetesEndpoint = "https://" + nethelpers.JoinHostPort(vip.String(), cOps.controlPlanePort)
-		}
-
-		provisionOptions = append(provisionOptions, provision.WithKubernetesEndpoint(externalKubernetesEndpoint))
-
-		endpointList := provisioner.GetTalosAPIEndpoints(request.Network)
-
-		switch {
-		case cOps.forceEndpoint != "":
-			// using non-default endpoints, provision additional cert SANs and fix endpoint list
-			endpointList = []string{cOps.forceEndpoint}
-			genOptions = append(genOptions, generate.WithAdditionalSubjectAltNames(endpointList))
-		case cOps.forceInitNodeAsEndpoint:
-			endpointList = []string{ips[0][0].String()}
-		case endpointList == nil:
-			// use control plane nodes as endpoints, client-side load-balancing
-			for i := range cOps.controlplanes {
-				endpointList = append(endpointList, ips[0][i].String())
-			}
-		}
-
-		inClusterEndpoint := provisioner.GetInClusterKubernetesControlPlaneEndpoint(request.Network, cOps.controlPlanePort)
-
-		if qOps.useVIP {
-			inClusterEndpoint = "https://" + nethelpers.JoinHostPort(vip.String(), cOps.controlPlanePort)
-		}
-
-		genOptions = append(genOptions, generate.WithEndpointList(endpointList))
-		configBundleOpts = append(configBundleOpts,
-			bundle.WithInputOptions(
-				&bundle.InputOptions{
-					ClusterName: rootOps.ClusterName,
-					Endpoint:    inClusterEndpoint,
-					KubeVersion: strings.TrimPrefix(cOps.kubernetesVersion, "v"),
-					GenOptions:  genOptions,
-				}),
-			bundle.WithPatch(userVolumePatches),
-			bundle.WithPatch(diskEncryptionPatches),
+	if qOps.useVIP {
+		genOptions = append(genOptions,
+			generate.WithNetworkOptions(
+				v1alpha1.WithNetworkInterfaceVirtualIP(provisioner.GetFirstInterface(), vip.String()),
+			),
 		)
 	}
+
+	if cOps.enableKubeSpan {
+		genOptions = append(genOptions,
+			generate.WithNetworkOptions(
+				v1alpha1.WithKubeSpan(),
+			),
+		)
+	}
+
+	if !qOps.bootloaderEnabled {
+		// disable kexec, as this would effectively use the bootloader
+		genOptions = append(genOptions,
+			generate.WithSysctls(map[string]string{
+				"kernel.kexec_load_disabled": "1",
+			}),
+		)
+	}
+
+	if cOps.controlPlanePort != constants.DefaultControlPlanePort {
+		genOptions = append(genOptions,
+			generate.WithLocalAPIServerPort(cOps.controlPlanePort),
+		)
+	}
+
+	if cOps.kubePrismPort != constants.DefaultKubePrismPort {
+		genOptions = append(genOptions,
+			generate.WithKubePrismPort(cOps.kubePrismPort),
+		)
+	}
+
+	externalKubernetesEndpoint := provisioner.GetExternalKubernetesControlPlaneEndpoint(request.Network, cOps.controlPlanePort)
+
+	if qOps.useVIP {
+		externalKubernetesEndpoint = "https://" + nethelpers.JoinHostPort(vip.String(), cOps.controlPlanePort)
+	}
+
+	provisionOptions = append(provisionOptions, provision.WithKubernetesEndpoint(externalKubernetesEndpoint))
+
+	endpointList := provisioner.GetTalosAPIEndpoints(request.Network)
+
+	switch {
+	case cOps.forceEndpoint != "":
+		// using non-default endpoints, provision additional cert SANs and fix endpoint list
+		endpointList = []string{cOps.forceEndpoint}
+		genOptions = append(genOptions, generate.WithAdditionalSubjectAltNames(endpointList))
+	case cOps.forceInitNodeAsEndpoint:
+		endpointList = []string{ips[0][0].String()}
+	case endpointList == nil:
+		// use control plane nodes as endpoints, client-side load-balancing
+		for i := range cOps.controlplanes {
+			endpointList = append(endpointList, ips[0][i].String())
+		}
+	}
+
+	inClusterEndpoint := provisioner.GetInClusterKubernetesControlPlaneEndpoint(request.Network, cOps.controlPlanePort)
+
+	if qOps.useVIP {
+		inClusterEndpoint = "https://" + nethelpers.JoinHostPort(vip.String(), cOps.controlPlanePort)
+	}
+
+	genOptions = append(genOptions, generate.WithEndpointList(endpointList))
+	configBundleOpts = append(configBundleOpts,
+		bundle.WithInputOptions(
+			&bundle.InputOptions{
+				ClusterName: rootOps.ClusterName,
+				Endpoint:    inClusterEndpoint,
+				KubeVersion: strings.TrimPrefix(cOps.kubernetesVersion, "v"),
+				GenOptions:  genOptions,
+			}),
+		bundle.WithPatch(userVolumePatches),
+		bundle.WithPatch(diskEncryptionPatches),
+	)
 
 	configPatchBundleOps, err := getConfigPatchBundleOps(cOps)
 	if err != nil {
