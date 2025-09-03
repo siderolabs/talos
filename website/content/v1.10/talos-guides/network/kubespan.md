@@ -35,9 +35,9 @@ An alternative topology would be to run control plane nodes in a public cloud, a
 Workers could be behind firewalls, and KubeSpan connectivity will be established.
 Note that if workers are in different locations, behind different firewalls, the KubeSpan connectivity between workers *should* be correctly established, but may require opening the KubeSpan UDP port on the local firewall also.
 
-### Caveats
+## Caveats
 
-#### Kubernetes API Endpoint Limitations
+### Kubernetes API Endpoint Limitations
 
 When the K8s endpoint is an IP address that is **not** part of Kubespan, but is an address that is forwarded on to the Kubespan address of a control plane node, without changing the source address, then worker nodes will fail to join the cluster.
 In such a case, the control plane node has no way to determine whether the packet arrived on the private Kubespan address, or the public IP address.
@@ -47,7 +47,7 @@ This situation is seen, for example, when the Kubernetes API endpoint is the pub
 The control plane will receive packets on the public IP, but will reply from it's KubeSpan address.
 The workaround is to create a load balancer to terminate the Kubernetes API endpoint.
 
-#### Digital Ocean Limitations
+### Digital Ocean Limitations
 
 Digital Ocean assigns an "Anchor IP" address to each droplet.
 Talos Linux correctly identifies this as a link-local address, and configures KubeSpan correctly, but this address will often be selected by Flannel or other CNIs as a node's private IP.
@@ -59,11 +59,32 @@ This can be worked-around by assigning a non-Anchor private IP:
 Then restarting flannel:
 `kubectl delete pods -n kube-system -l k8s-app=flannel`
 
-#### Host Port Limitations
+### Host Port Limitations
 
 As mentioned in Network Requirements, Kubespan uses **UDP port 51820** to carry all KubeSpan encrypted traffic.
 For clusters that make heavy use of host ports for Kubernetes pods, care should be taken to ensure that this port is not given to these pods.
 Failure to do so can result in a pod being assigned the 51820 port and conflicting with Kubespan traffic.
+
+### Cilium Compatibility Limitations
+
+KubeSpan and [Cilium](https://cilium.io) can generally be used together.
+However, some advanced Cilium configurations are **not compatible** with KubeSpan.
+
+Cilium expects all inter-node traffic to flow directly over the node’s primary interface (for example, `eth0`).
+With KubeSpan enabled, Talos intercepts that traffic and routes it through the WireGuard mesh.
+This leads to asymmetric routing and broken pod-to-pod communication across nodes.
+
+We recommend the following workarounds:
+
+* If you need advanced Cilium features (e.g., full eBPF datapath with masquerading), use [Cilium’s built-in WireGuard
+  encryption](https://docs.cilium.io/en/stable/security/network/encryption/) instead of Kubespan.
+
+* If you prefer to use KubeSpan for secure node-to-node connectivity, run Cilium
+  with its **default configuration**, which is compatible with KubeSpan.
+
+> **Note**: Not all Cilium setups are affected.
+> Only certain advanced configurations (like full eBPF masquerading) cause incompatibility.
+> Default Cilium deployments work as expected with KubeSpan.
 
 ## Enabling
 
