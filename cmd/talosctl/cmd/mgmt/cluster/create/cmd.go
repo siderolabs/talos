@@ -84,15 +84,31 @@ type commonOps struct {
 }
 
 func getDefaultCommonOptions() commonOps {
+	memory2GB := bytesize.WithDefaultUnit("MiB")
+	cli.Should(memory2GB.Set("2.0GiB"))
+	defaultResources := nodeResources{
+		cpu:    "2.0",
+		memory: *memory2GB,
+	}
+
 	return commonOps{
-		controlplanes:      1,
-		networkMTU:         1500,
-		clusterWaitTimeout: 15 * time.Minute,
-		clusterWait:        true,
-		dnsDomain:          "cluster.local",
-		controlPlanePort:   constants.DefaultControlPlanePort,
-		rootOps:            &clustercmd.PersistentFlags,
-		networkIPv4:        true,
+		controlplanes:         1,
+		controlplaneResources: defaultResources,
+		workers:               1,
+		workerResources:       defaultResources,
+
+		networkCIDR:            "10.5.0.0/24",
+		kubernetesVersion:      constants.DefaultKubernetesVersion,
+		networkMTU:             1500,
+		clusterWaitTimeout:     20 * time.Minute,
+		clusterWait:            true,
+		dnsDomain:              "cluster.local",
+		controlPlanePort:       constants.DefaultControlPlanePort,
+		rootOps:                &clustercmd.PersistentFlags,
+		networkIPv4:            true,
+		kubePrismPort:          constants.DefaultKubePrismPort,
+		enableClusterDiscovery: true,
+		talosVersion:           helpers.GetTag(),
 	}
 }
 
@@ -133,22 +149,18 @@ func addTalosconfigDestinationFlag(flagset *pflag.FlagSet, bind *string, flagNam
 }
 
 func addControlplaneCpusFlag(flagset *pflag.FlagSet, bind *string, flagName string) {
-	flagset.StringVar(bind, flagName, "2.0", "the share of CPUs as fraction for each control plane/VM")
+	flagset.StringVar(bind, flagName, *bind, "the share of CPUs as fraction for each control plane/VM")
 }
 
 func addWorkersCpusFlag(flagset *pflag.FlagSet, bind *string, flagName string) {
-	flagset.StringVar(bind, flagName, "2.0", "the share of CPUs as fraction for each worker/VM")
+	flagset.StringVar(bind, flagName, *bind, "the share of CPUs as fraction for each worker/VM")
 }
 
 func addControlPlaneMemoryFlag(flagset *pflag.FlagSet, bind *bytesize.ByteSize, flagName string) {
-	cli.Should(bind.Set("2.0GiB")) // set default value
-	bind.SetDefaultUnit("MiB")
 	flagset.Var(bind, flagName, "the limit on memory usage for each control plane/VM")
 }
 
 func addWorkersMemoryFlag(flagset *pflag.FlagSet, bind *bytesize.ByteSize, flagName string) {
-	cli.Should(bind.Set("2.0GiB")) // set default value
-	bind.SetDefaultUnit("MiB")
 	flagset.Var(bind, flagName, "the limit on memory usage for each worker/VM")
 }
 
@@ -165,15 +177,15 @@ func addConfigPatchWorkerFlag(flagset *pflag.FlagSet, bind *[]string, flagName s
 }
 
 func addWorkersFlag(flagset *pflag.FlagSet, bind *int) {
-	flagset.IntVar(bind, workersFlagName, 1, "the number of workers to create")
+	flagset.IntVar(bind, workersFlagName, *bind, "the number of workers to create")
 }
 
 func addControlplanesFlag(flagset *pflag.FlagSet, bind *int) {
-	flagset.IntVar(bind, controlplanesFlagName, 1, "the number of controlplanes to create")
+	flagset.IntVar(bind, controlplanesFlagName, *bind, "the number of controlplanes to create")
 }
 
 func addKubernetesVersionFlag(flagset *pflag.FlagSet, bind *string) {
-	flagset.StringVar(bind, kubernetesVersionFlagName, constants.DefaultKubernetesVersion, "desired kubernetes version to run")
+	flagset.StringVar(bind, kubernetesVersionFlagName, *bind, "desired kubernetes version to run")
 }
 
 func addRegistryMirrorFlag(flagset *pflag.FlagSet, bind *[]string) {
@@ -181,11 +193,11 @@ func addRegistryMirrorFlag(flagset *pflag.FlagSet, bind *[]string) {
 }
 
 func addNetworkMTUFlag(flagset *pflag.FlagSet, bind *int) {
-	flagset.IntVar(bind, networkMTUFlagName, 1500, "MTU of the cluster network")
+	flagset.IntVar(bind, networkMTUFlagName, *bind, "MTU of the cluster network")
 }
 
 func addTalosVersionFlag(flagset *pflag.FlagSet, bind *string, description string) {
-	flagset.StringVar(bind, talosVersionFlagName, helpers.GetTag(), description)
+	flagset.StringVar(bind, talosVersionFlagName, *bind, description)
 }
 
 // qemu flags

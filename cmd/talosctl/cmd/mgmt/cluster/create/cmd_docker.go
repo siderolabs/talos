@@ -29,7 +29,10 @@ type dockerOps struct {
 func init() {
 	ops := &createOps{
 		common: getDefaultCommonOptions(),
-		docker: dockerOps{},
+		docker: dockerOps{
+			hostIP:     "0.0.0.0",
+			talosImage: helpers.DefaultImage(images.DefaultTalosImageRepository),
+		},
 	}
 
 	const (
@@ -43,19 +46,19 @@ func init() {
 	getDockerFlags := func() *pflag.FlagSet {
 		docker := pflag.NewFlagSet("docker", pflag.PanicOnError)
 
-		docker.StringVarP(&ops.docker.ports, portsFlag, "p", "",
+		docker.StringVarP(&ops.docker.ports, portsFlag, "p", ops.docker.ports,
 			"comma-separated list of ports/protocols to expose on init node. Ex -p <hostPort>:<containerPort>/<protocol (tcp or udp)>")
-		docker.StringVar(&ops.docker.hostIP, dockerHostIPFlag, "0.0.0.0", "Host IP to forward exposed ports to")
-		docker.BoolVar(&ops.docker.disableIPv6, dockerDisableIPv6Flag, false, "skip enabling IPv6 in containers")
+		docker.StringVar(&ops.docker.hostIP, dockerHostIPFlag, ops.docker.hostIP, "Host IP to forward exposed ports to")
+		docker.BoolVar(&ops.docker.disableIPv6, dockerDisableIPv6Flag, ops.docker.disableIPv6, "skip enabling IPv6 in containers")
 		cli.Should(docker.MarkHidden(dockerDisableIPv6Flag))
 		docker.Var(&ops.docker.mountOpts, mountOptsFlag, "attach a mount to the container (docker --mount syntax)")
-		docker.StringVar(&ops.docker.talosImage, "image", helpers.DefaultImage(images.DefaultTalosImageRepository), "the talos image to run")
+		docker.StringVar(&ops.docker.talosImage, "image", ops.docker.talosImage, "the talos image to run")
 
 		return docker
 	}
 
 	commonFlags := getCommonUserFacingFlags(&ops.common)
-	commonFlags.StringVar(&ops.common.networkCIDR, subnetFlag, "10.5.0.0/24", "Docker network subnet CIDR")
+	commonFlags.StringVar(&ops.common.networkCIDR, subnetFlag, ops.common.networkCIDR, "Docker network subnet CIDR")
 
 	createDockerCmd := &cobra.Command{
 		Use:   "docker",
@@ -77,7 +80,7 @@ func init() {
 				if err != nil {
 					return err
 				}
-				// Create and save the talosctl configuration file.
+
 				err = postCreate(ctx, ops.common, data.talosconfig, cluster, data.provisionOptions, data.clusterRequest)
 				if err != nil {
 					return err

@@ -468,3 +468,134 @@ func bootstrapCluster(ctx context.Context, clusterAccess *access.Adapter, cOps c
 
 	return mergeKubeconfig(ctx, clusterAccess)
 }
+
+type createClusterRequestOps struct {
+	commonOps              commonOps
+	provisioner            provision.Provisioner
+	withExtraGenOpts       func(provision.ClusterRequest) []generate.Option
+	withExtraProvisionOpts func(provision.ClusterRequest) []provision.Option
+	modifyClusterRequest   func(provision.ClusterRequest) (provision.ClusterRequest, error)
+	modifyNodes            func(cr provision.ClusterRequest, cp, w []provision.NodeRequest) (controlplanes, workers []provision.NodeRequest, err error)
+}
+
+//nolint:gocyclo
+func createClusterRequest(ops createClusterRequestOps) (clusterCreateRequestData, error) {
+	cOps := ops.commonOps
+	provisioner := ops.provisioner
+
+	controlplaneResources, err := parseResources(cOps.controlplaneResources)
+	if err != nil {
+		return clusterCreateRequestData{}, fmt.Errorf("error parsing controlplane resources: %s", err)
+	}
+
+	workerResources, err := parseResources(cOps.workerResources)
+	if err != nil {
+		return clusterCreateRequestData{}, fmt.Errorf("error parsing worker resources: %s", err)
+	}
+
+	cidr, err := getCidr4(cOps)
+	if err != nil {
+		return clusterCreateRequestData{}, err
+	}
+
+	nodeIPs, err := getIps(cidr, cOps)
+	if err != nil {
+		return clusterCreateRequestData{}, err
+	}
+
+	gatewayIP, err := sideronet.NthIPInNetwork(cidr, gatewayOffset)
+	if err != nil {
+		return clusterCreateRequestData{}, err
+	}
+
+	clusterRequest := getBaseClusterRequest(cOps, []netip.Prefix{cidr}, []netip.Addr{gatewayIP})
+
+	controlplanes, workers, err := createNodeRequests(cOps, controlplaneResources, workerResources, [][]netip.Addr{nodeIPs})
+	if err != nil {
+		return clusterCreateRequestData{}, err
+	}
+
+	clusterRequest.Nodes = append(clusterRequest.Nodes, controlplanes...)
+	clusterRequest.Nodes = append(clusterRequest.Nodes, workers...)
+
+	clusterRequest, err = ops.modifyClusterRequest(clusterRequest)
+	if err != nil {
+		return clusterCreateRequestData{}, err
+	}
+
+	genOptions := []generate.Option{}
+
+	registryMirrorOps, err := getRegistryMirrorGenOps(cOps)
+	if err != nil {
+		return clusterCreateRequestData{}, err
+	}
+
+	genOptions = append(genOptions, registryMirrorOps...)
+
+	versionContractGenOps, _, err := getVersionContractGenOps(cOps)
+	if err != nil {
+		return clusterCreateRequestData{}, err
+	}
+
+	genOptions = append(genOptions, versionContractGenOps...)
+	genOptions = append(genOptions, provisioner.GenOptions(clusterRequest.Network)...)
+	genOptions = append(genOptions, ops.withExtraGenOpts(clusterRequest)...)
+
+	configBundleOpts := []bundle.Option{}
+
+	configBundleOpts = append(configBundleOpts,
+		bundle.WithInputOptions(
+			&bundle.InputOptions{
+				ClusterName: cOps.rootOps.ClusterName,
+				Endpoint:    provisioner.GetInClusterKubernetesControlPlaneEndpoint(clusterRequest.Network, cOps.controlPlanePort),
+				KubeVersion: strings.TrimPrefix(cOps.kubernetesVersion, "v"),
+				GenOptions:  genOptions,
+			}),
+	)
+
+	provisionOptions := []provision.Option{
+		provision.WithKubernetesEndpoint(provisioner.GetExternalKubernetesControlPlaneEndpoint(clusterRequest.Network, cOps.controlPlanePort)),
+	}
+
+	configPatchBundleOps, err := getConfigPatchBundleOps(cOps)
+	if err != nil {
+		return clusterCreateRequestData{}, err
+	}
+
+	configBundleOpts = append(configBundleOpts, configPatchBundleOps...)
+
+	configBundle, err := bundle.NewBundle(configBundleOpts...)
+	if err != nil {
+		return clusterCreateRequestData{}, err
+	}
+
+	bundleTalosconfig := configBundle.TalosConfig()
+
+	provisionOptions = append(provisionOptions, provision.WithTalosConfig(configBundle.TalosConfig()))
+	provisionOptions = append(provisionOptions, ops.withExtraProvisionOpts(clusterRequest)...)
+
+	for i := range controlplanes {
+		controlplanes[i].Config = configBundle.ControlPlane()
+		controlplanes[i].SkipInjectingConfig = cOps.skipInjectingConfig
+	}
+
+	for i := range workers {
+		workers[i].Config = configBundle.Worker()
+		workers[i].SkipInjectingConfig = cOps.skipInjectingConfig
+	}
+
+	controlplanes, workers, err = ops.modifyNodes(clusterRequest, controlplanes, workers)
+	if err != nil {
+		return clusterCreateRequestData{}, err
+	}
+
+	clusterRequest.Nodes = provision.NodeRequests{}
+	clusterRequest.Nodes = append(clusterRequest.Nodes, controlplanes...)
+	clusterRequest.Nodes = append(clusterRequest.Nodes, workers...)
+
+	return clusterCreateRequestData{
+		clusterRequest:   clusterRequest,
+		provisionOptions: provisionOptions,
+		talosconfig:      bundleTalosconfig,
+	}, nil
+}

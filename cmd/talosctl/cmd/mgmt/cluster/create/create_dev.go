@@ -215,14 +215,9 @@ func create(ctx context.Context, ops createOps) error {
 		noMasqueradeCIDRs = append(noMasqueradeCIDRs, parsedCIDR)
 	}
 
-	// Parse nameservers
-	nameserverIPs := make([]netip.Addr, len(qOps.nameservers))
-
-	for i := range nameserverIPs {
-		nameserverIPs[i], err = netip.ParseAddr(qOps.nameservers[i])
-		if err != nil {
-			return fmt.Errorf("failed parsing nameserver IP %q: %w", qOps.nameservers[i], err)
-		}
+	nameserverIPs, err := getNameserverIPs(qOps)
+	if err != nil {
+		return err
 	}
 
 	// Virtual (shared) IP at the vipOffset IP in range, ex. 192.168.0.50
@@ -292,7 +287,6 @@ func create(ctx context.Context, ops createOps) error {
 
 	var configBundleOpts []bundle.Option
 
-	// should have at least a single primary disk
 	primaryDisks, workerDisks, err := getDisks(qOps)
 	if err != nil {
 		return err
@@ -305,7 +299,7 @@ func create(ctx context.Context, ops createOps) error {
 			generate.WithInstallImage(qOps.nodeInstallImage),
 			generate.WithDebug(cOps.configDebug),
 			generate.WithDNSDomain(cOps.dnsDomain),
-			generate.WithClusterDiscovery(cOps.enableClusterDiscovery),
+			generate.WithClusterDiscovery(cOps.enableClusterDiscovery), // figure out if this is needed
 		}
 
 		registryMirrorOps, err := getRegistryMirrorGenOps(cOps)
@@ -479,8 +473,6 @@ func create(ctx context.Context, ops createOps) error {
 			genOptions = append(genOptions, generate.WithAdditionalSubjectAltNames(endpointList))
 		case cOps.forceInitNodeAsEndpoint:
 			endpointList = []string{ips[0][0].String()}
-		case len(endpointList) > 0:
-			genOptions = append(genOptions, getWithAdditionalSubjectAltNamesGenOps(endpointList)...)
 		case endpointList == nil:
 			// use control plane nodes as endpoints, client-side load-balancing
 			for i := range cOps.controlplanes {
@@ -736,6 +728,21 @@ func create(ctx context.Context, ops createOps) error {
 	}
 
 	return clustercmd.ShowCluster(cluster)
+}
+
+func getNameserverIPs(qOps qemuOps) ([]netip.Addr, error) {
+	nameserverIPs := make([]netip.Addr, len(qOps.nameservers))
+
+	for i := range nameserverIPs {
+		ip, err := netip.ParseAddr(qOps.nameservers[i])
+		if err != nil {
+			return nil, fmt.Errorf("failed parsing nameserver IP %q: %w", qOps.nameservers[i], err)
+		}
+
+		nameserverIPs[i] = ip
+	}
+
+	return nameserverIPs, nil
 }
 
 func saveConfig(talosConfigObj *clientconfig.Config, talosconfigPath string) (err error) {

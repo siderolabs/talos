@@ -7,7 +7,6 @@ package create
 import (
 	"context"
 	"fmt"
-	"net/url"
 	"path/filepath"
 	"runtime"
 
@@ -17,7 +16,6 @@ import (
 	clustercmd "github.com/siderolabs/talos/cmd/talosctl/cmd/mgmt/cluster"
 	"github.com/siderolabs/talos/pkg/cli"
 	"github.com/siderolabs/talos/pkg/images"
-	"github.com/siderolabs/talos/pkg/machinery/config"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/version"
 	"github.com/siderolabs/talos/pkg/provision/providers"
@@ -25,26 +23,34 @@ import (
 
 const emptySchemanticID = "376567988ad370138ad8b2698212367b8edcb69b5fd68c80be1f2ec7d603b4ba"
 
-func init() {
-	var (
-		schematicID     string
-		imageFactoryURL string
-	)
+type createQemuOps struct {
+	schematicID     string
+	imageFactoryURL string
+}
 
+func getDefaultQemuOptions() qemuOps {
+	return qemuOps{
+		preallocateDisks:  false,
+		networkIPv6:       false,
+		bootloaderEnabled: true,
+		uefiEnabled:       true,
+		nameservers:       []string{"8.8.8.8", "1.1.1.1", "2001:4860:4860::8888", "2606:4700:4700::1111"},
+		diskBlockSize:     512,
+		targetArch:        runtime.GOARCH,
+		cniBinPath:        []string{filepath.Join(clustercmd.DefaultCNIDir, "bin")},
+		cniConfDir:        filepath.Join(clustercmd.DefaultCNIDir, "conf.d"),
+		cniCacheDir:       filepath.Join(clustercmd.DefaultCNIDir, "cache"),
+		cniBundleURL: fmt.Sprintf("https://github.com/%s/talos/releases/download/%s/talosctl-cni-bundle-%s.tar.gz",
+			images.Username, version.Trim(version.Tag), constants.ArchVariable),
+		// asd
+	}
+}
+
+func init() {
+	cqOps := createQemuOps{}
 	ops := &createOps{
 		common: getDefaultCommonOptions(),
-		qemu: qemuOps{
-			preallocateDisks: false,
-			uefiEnabled:      true,
-			nameservers:      []string{"8.8.8.8", "1.1.1.1", "2001:4860:4860::8888", "2606:4700:4700::1111"},
-			diskBlockSize:    512,
-			targetArch:       runtime.GOARCH,
-			cniBinPath:       []string{filepath.Join(clustercmd.DefaultCNIDir, "bin")},
-			cniConfDir:       filepath.Join(clustercmd.DefaultCNIDir, "conf.d"),
-			cniCacheDir:      filepath.Join(clustercmd.DefaultCNIDir, "cache"),
-			cniBundleURL: fmt.Sprintf("https://github.com/%s/talos/releases/download/%s/talosctl-cni-bundle-%s.tar.gz",
-				images.Username, version.Trim(version.Tag), constants.ArchVariable),
-		},
+		qemu:   getDefaultQemuOptions(),
 	}
 	ops.common.skipInjectingConfig = true
 	ops.common.applyConfigEnabled = true
@@ -58,8 +64,8 @@ func init() {
 		qemu := pflag.NewFlagSet("qemu", pflag.PanicOnError)
 
 		addDisksFlag(qemu, &ops.qemu.disks, []string{"virtio:10GB", "virtio:6GB"})
-		qemu.StringVar(&schematicID, "schematic-id", "", "image factory schematic id (defaults to an empty schematic)")
-		qemu.StringVar(&imageFactoryURL, "image-factory-url", "https://factory.talos.dev/", "image factory url")
+		qemu.StringVar(&cqOps.schematicID, "schematic-id", "", "image factory schematic id (defaults to an empty schematic)")
+		qemu.StringVar(&cqOps.imageFactoryURL, "image-factory-url", "https://factory.talos.dev/", "image factory url")
 
 		return qemu
 	}
@@ -70,34 +76,27 @@ func init() {
 		Args:  cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return cli.WithContext(context.Background(), func(ctx context.Context) error {
-				if ops.common.talosVersion == "" || ops.common.talosVersion[0] != 'v' {
-					return fmt.Errorf("failed to parse talos version: version string must start with a 'v'")
-				}
-
-				_, err := config.ParseContractFromVersion(ops.common.talosVersion)
+				provisioner, err := providers.Factory(ctx, providers.QemuProviderName)
 				if err != nil {
-					return fmt.Errorf("failed to parse talos version: %s", err)
+					return err
 				}
 
-				if schematicID == "" {
-					schematicID = emptySchemanticID
-				}
-
-				factoryURL, err := url.Parse(imageFactoryURL)
+				data, err := getQemuClusterRequest(ctx, ops.common, ops.qemu, cqOps, provisioner)
 				if err != nil {
-					return fmt.Errorf("malformed Image Factory URL: %q: %w", imageFactoryURL, err)
+					return err
 				}
 
-				if factoryURL.Scheme == "" || factoryURL.Host == "" {
-					return fmt.Errorf("image Factory URL must include scheme and host: %q", imageFactoryURL)
+				cluster, err := provisioner.Create(ctx, data.clusterRequest, data.provisionOptions...)
+				if err != nil {
+					return err
 				}
 
-				ops.qemu.nodeISOPath, err = url.JoinPath(factoryURL.String(), "image", schematicID, ops.common.talosVersion, "metal-"+ops.qemu.targetArch+".iso")
-				cli.Should(err)
-				ops.qemu.nodeInstallImage, err = url.JoinPath(factoryURL.Host, "metal-installer", schematicID+":"+ops.common.talosVersion)
-				cli.Should(err)
+				err = postCreate(ctx, ops.common, data.talosconfig, cluster, data.provisionOptions, data.clusterRequest)
+				if err != nil {
+					return err
+				}
 
-				return create(ctx, *ops)
+				return clustercmd.ShowCluster(cluster)
 			})
 		},
 	}
