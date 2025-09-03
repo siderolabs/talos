@@ -19,6 +19,10 @@ preface = """
         title = "Component Updates"
         description = """\
 Linux: 6.16.4
+CNI Plugins: 1.8.0
+cryptsetup: 2.8.1
+LVM2: 2_03_34
+systemd-udevd: 257.8
 
 Talos is built with Go 1.25.0.
 """
