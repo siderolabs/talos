@@ -161,7 +161,7 @@ export TALOS_IMAGE_ARCH=amd64 # You can change to arm architecture
 export HCLOUD_SERVER_ARCH=x86 # HCloud server architecture can be x86 or arm
 wget https://factory.talos.dev/image/376567988ad370138ad8b2698212367b8edcb69b5fd68c80be1f2ec7d603b4ba/${TALOS_IMAGE_VERSION}/hcloud-${TALOS_IMAGE_ARCH}.raw.xz
 hcloud-upload-image upload \
-      --image-path *.xz \
+      --image-path hcloud-${TALOS_IMAGE_ARCH}.raw.xz \
       --architecture $HCLOUD_SERVER_ARCH \
       --compression xz
 ```
