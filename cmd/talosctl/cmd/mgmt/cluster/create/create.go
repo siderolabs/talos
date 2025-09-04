@@ -432,6 +432,10 @@ func postCreate(
 }
 
 func bootstrapCluster(ctx context.Context, clusterAccess *access.Adapter, cOps commonOps) error {
+	if cOps.skipInjectingConfig && !cOps.applyConfigEnabled {
+		return nil
+	}
+
 	if !cOps.withInitNode {
 		if err := clusterAccess.Bootstrap(ctx, os.Stdout); err != nil {
 			return fmt.Errorf("bootstrap error: %w", err)
