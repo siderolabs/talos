@@ -713,10 +713,9 @@ type NetworkConfig struct {
 	//   examples:
 	//     - value: '[]string{"example.org", "example.com"}'
 	Searches []string `yaml:"searchDomains,omitempty"`
-	//   description: |
-	//     Allows for extra entries to be added to the `/etc/hosts` file
-	//   examples:
-	//     - value: networkConfigExtraHostsExample()
+	// docgen:nodoc
+	//
+	// Deprecated: Use `StatisHostConfig` instead.
 	ExtraHostEntries []*ExtraHost `yaml:"extraHostEntries,omitempty"`
 	//   description: |
 	//     Configures KubeSpan feature.
@@ -1705,6 +1704,8 @@ type MachineFile struct {
 }
 
 // ExtraHost represents a host entry in /etc/hosts.
+//
+// docgen:nodoc
 type ExtraHost struct {
 	//   description: The IP of the host.
 	HostIP string `yaml:"ip"`

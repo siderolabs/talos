@@ -459,18 +459,6 @@ func kubeletExtraMountsExample() []ExtraMount {
 	}
 }
 
-func networkConfigExtraHostsExample() []*ExtraHost {
-	return []*ExtraHost{
-		{
-			HostIP: "192.168.1.100",
-			HostAliases: []string{
-				"example",
-				"example.domain.tld",
-			},
-		},
-	}
-}
-
 func networkConfigRoutesExample() []*Route {
 	return []*Route{
 		{

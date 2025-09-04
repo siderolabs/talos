@@ -627,8 +627,8 @@ func (n *NetworkConfig) SearchDomains() []string {
 }
 
 // ExtraHosts implements the config.Provider interface.
-func (n *NetworkConfig) ExtraHosts() []config.ExtraHost {
-	return xslices.Map(n.ExtraHostEntries, func(e *ExtraHost) config.ExtraHost { return e })
+func (n *NetworkConfig) ExtraHosts() []config.NetworkStaticHostConfig {
+	return xslices.Map(n.ExtraHostEntries, func(e *ExtraHost) config.NetworkStaticHostConfig { return e })
 }
 
 // KubeSpan implements the config.Provider interface.

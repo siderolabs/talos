@@ -94,3 +94,9 @@ type EthernetChannelsConfig struct {
 	Other    *uint32
 	Combined *uint32
 }
+
+// NetworkStaticHostConfig defines a static host configuration.
+type NetworkStaticHostConfig interface {
+	IP() string
+	Aliases() []string
+}

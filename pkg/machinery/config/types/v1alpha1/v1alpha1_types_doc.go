@@ -950,13 +950,7 @@ func (NetworkConfig) Doc() *encoder.Doc {
 				Description: "Used to statically set arbitrary search domains.",
 				Comments:    [3]string{"" /* encoder.HeadComment */, "Used to statically set arbitrary search domains." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
-			{
-				Name:        "extraHostEntries",
-				Type:        "[]ExtraHost",
-				Note:        "",
-				Description: "Allows for extra entries to be added to the `/etc/hosts` file",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Allows for extra entries to be added to the `/etc/hosts` file" /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
+			{},
 			{
 				Name:        "kubespan",
 				Type:        "NetworkKubeSpan",
@@ -985,7 +979,6 @@ func (NetworkConfig) Doc() *encoder.Doc {
 	doc.Fields[1].AddExample("", machineNetworkConfigExample().NetworkInterfaces)
 	doc.Fields[2].AddExample("", []string{"8.8.8.8", "1.1.1.1"})
 	doc.Fields[3].AddExample("", []string{"example.org", "example.com"})
-	doc.Fields[4].AddExample("", networkConfigExtraHostsExample())
 	doc.Fields[5].AddExample("", networkKubeSpanExample())
 
 	return doc
@@ -2034,40 +2027,6 @@ func (MachineFile) Doc() *encoder.Doc {
 	}
 
 	doc.AddExample("MachineFiles usage example.", machineFilesExample())
-
-	return doc
-}
-
-func (ExtraHost) Doc() *encoder.Doc {
-	doc := &encoder.Doc{
-		Type:        "ExtraHost",
-		Comments:    [3]string{"" /* encoder.HeadComment */, "ExtraHost represents a host entry in /etc/hosts." /* encoder.LineComment */, "" /* encoder.FootComment */},
-		Description: "ExtraHost represents a host entry in /etc/hosts.",
-		AppearsIn: []encoder.Appearance{
-			{
-				TypeName:  "NetworkConfig",
-				FieldName: "extraHostEntries",
-			},
-		},
-		Fields: []encoder.Doc{
-			{
-				Name:        "ip",
-				Type:        "string",
-				Note:        "",
-				Description: "The IP of the host.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "The IP of the host." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-			{
-				Name:        "aliases",
-				Type:        "[]string",
-				Note:        "",
-				Description: "The host alias.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "The host alias." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-		},
-	}
-
-	doc.AddExample("", networkConfigExtraHostsExample())
 
 	return doc
 }
@@ -3881,7 +3840,6 @@ func GetFileDoc() *encoder.FileDoc {
 			AdminKubeconfigConfig{}.Doc(),
 			ResourcesConfig{}.Doc(),
 			MachineFile{}.Doc(),
-			ExtraHost{}.Doc(),
 			Device{}.Doc(),
 			DHCPOptions{}.Doc(),
 			DeviceWireguardConfig{}.Doc(),

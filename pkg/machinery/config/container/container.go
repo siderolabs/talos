@@ -274,6 +274,14 @@ func (container *Container) ZswapConfig() config.ZswapConfig {
 	return matching[0]
 }
 
+// NetworkStaticHostConfig implements config.Config interface.
+func (container *Container) NetworkStaticHostConfig() []config.NetworkStaticHostConfig {
+	return slices.Concat(
+		container.v1alpha1Config.NetworkStaticHostConfig(),
+		findMatchingDocs[config.NetworkStaticHostConfig](container.documents),
+	)
+}
+
 // Bytes returns source YAML representation (if available) or does default encoding.
 func (container *Container) Bytes() ([]byte, error) {
 	if !container.readonly {
