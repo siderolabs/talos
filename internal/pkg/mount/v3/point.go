@@ -24,6 +24,7 @@ import (
 type Point struct {
 	root         xfs.Root
 	keepOpen     bool
+	anonymous    bool
 	fstype       string
 	source       string
 	target       string
@@ -61,6 +62,10 @@ func (p *Point) Mount(opts Options) error {
 	}
 
 	defer p.Release(false) //nolint:errcheck
+
+	if p.anonymous {
+		return nil
+	}
 
 	return p.retry(func() error {
 		if err := p.moveMount(p.target); err != nil {
@@ -108,6 +113,10 @@ func (p *Point) Release(force bool) error {
 func (p *Point) Unmount(opts UnmountOptions) error {
 	if err := p.Release(true); err != nil {
 		return err
+	}
+
+	if p.anonymous {
+		return nil
 	}
 
 	return p.retry(func() error {
@@ -217,6 +226,13 @@ func (p *Point) moveMount(target string) error {
 // Target returns the target of the mount point.
 func (p *Point) Target() string {
 	return p.target
+}
+
+// FD returns the FD of the mount point.
+func (p *Point) FD() int {
+	fd, _ := p.root.Fd()
+
+	return fd
 }
 
 // Source returns the source of the mount point.

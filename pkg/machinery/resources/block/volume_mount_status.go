@@ -26,8 +26,10 @@ type VolumeMountStatusSpec struct {
 	VolumeID  string `yaml:"volumeID" protobuf:"1"`
 	Requester string `yaml:"requester" protobuf:"2"`
 
-	Target   string `yaml:"target" protobuf:"3"`
-	ReadOnly bool   `yaml:"readOnly" protobuf:"4"`
+	Target    string `yaml:"target" protobuf:"3"`
+	ReadOnly  bool   `yaml:"readOnly" protobuf:"4"`
+	Anonymous bool   `yaml:"anonymous" protobuf:"5"`
+	FD        int    `yaml:"fd" protobuf:"6"`
 }
 
 // NewVolumeMountStatus initializes a VolumeMountStatus resource.

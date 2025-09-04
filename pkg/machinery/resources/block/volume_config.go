@@ -169,6 +169,8 @@ type MountSpec struct {
 	GID int `yaml:"gid,omitempty" protobuf:"7"`
 	// RecursiveRelabel is the recursive relabel/chown flag for the mount target.
 	RecursiveRelabel bool `yaml:"recursiveRelabel,omitempty" protobuf:"8"`
+	// Anonymous mount.
+	Anonymous bool `yaml:"anonymous,omitempty" protobuf:"9"`
 }
 
 // SymlinkProvisioningSpec is the spec for volume symlink.

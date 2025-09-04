@@ -90,6 +90,8 @@ func (ctrl *MountStatusController) Run(ctx context.Context, r controller.Runtime
 							vms.TypedSpec().Target = mountStatus.TypedSpec().Target
 							vms.TypedSpec().VolumeID = mountStatus.TypedSpec().Spec.VolumeID
 							vms.TypedSpec().ReadOnly = mountStatus.TypedSpec().Spec.ReadOnly
+							vms.TypedSpec().Anonymous = mountStatus.TypedSpec().Spec.Anonymous
+							vms.TypedSpec().FD = mountStatus.TypedSpec().FD
 
 							return nil
 						},

@@ -25,7 +25,8 @@ type VolumeMountRequest = typed.Resource[VolumeMountRequestSpec, VolumeMountRequ
 type VolumeMountRequestSpec struct {
 	VolumeID string `yaml:"volumeID" protobuf:"1"`
 
-	ReadOnly bool `yaml:"readOnly" protobuf:"3"`
+	ReadOnly  bool `yaml:"readOnly" protobuf:"3"`
+	Anonymous bool `yaml:"anonymous" protobuf:"4"`
 
 	Requester string `yaml:"requester" protobuf:"2"`
 }

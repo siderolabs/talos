@@ -85,7 +85,6 @@ func (suite *SELinuxSuite) TestFileMountLabels() {
 		// Mounts
 		constants.SystemPath:          constants.SystemSelinuxLabel,
 		constants.EphemeralMountPoint: constants.EphemeralSelinuxLabel,
-		constants.StateMountPoint:     constants.SystemSelinuxLabel,
 		constants.SystemVarPath:       constants.SystemVarSelinuxLabel,
 		constants.RunPath:             constants.RunSelinuxLabel,
 		"/run/containerd":             "system_u:object_r:pod_containerd_run_t:s0",

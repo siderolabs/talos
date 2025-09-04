@@ -23,6 +23,7 @@ type Manager struct {
 	printer func(string, ...any)
 
 	selinuxLabel          string
+	anonymous             bool
 	shared                bool
 	skipIfMounted         bool
 	keepOpen              bool
@@ -51,15 +52,17 @@ func (m *Manager) Mount() (*Point, error) {
 		printer = m.printer
 	}
 
-	for _, dir := range m.extraDirs {
-		printer("creating directory tree %q", dir)
+	if !m.anonymous {
+		for _, dir := range m.extraDirs {
+			printer("creating directory tree %q", dir)
 
-		if !filepath.IsAbs(dir) {
-			return nil, fmt.Errorf("dir %q is not absolute", dir)
-		}
+			if !filepath.IsAbs(dir) {
+				return nil, fmt.Errorf("dir %q is not absolute", dir)
+			}
 
-		if err := os.MkdirAll(dir, 0o755); err != nil {
-			return nil, fmt.Errorf("error creating mount point directory %q: %w", dir, err)
+			if err := os.MkdirAll(dir, 0o755); err != nil {
+				return nil, fmt.Errorf("error creating mount point directory %q: %w", dir, err)
+			}
 		}
 	}
 
@@ -71,6 +74,7 @@ func (m *Manager) Mount() (*Point, error) {
 
 	m.point = &Point{
 		root:         root,
+		anonymous:    m.anonymous,
 		keepOpen:     m.keepOpen,
 		target:       m.target,
 		selinuxLabel: m.selinuxLabel,
@@ -83,13 +87,15 @@ func (m *Manager) Mount() (*Point, error) {
 		MountAttributes: m.mountattr,
 	}
 
-	printer("mkdirAll %q", m.target)
+	if !m.anonymous {
+		printer("mkdirAll %q", m.target)
 
-	if err := os.MkdirAll(m.target, 0o755); err != nil {
-		return nil, fmt.Errorf("failed to create mount target %s: %w", m.target, err)
+		if err := os.MkdirAll(m.target, 0o755); err != nil {
+			return nil, fmt.Errorf("failed to create mount target %s: %w", m.target, err)
+		}
+
+		printer("mounting %q to %q", m.point.Source(), m.target)
 	}
-
-	printer("mounting %q to %q", m.point.Source(), m.target)
 
 	if err := m.point.Mount(opts); err != nil {
 		return nil, fmt.Errorf("failed to mount: %w", err)
@@ -203,6 +209,15 @@ func WithReadOnly() ManagerOption {
 	return ManagerOption{
 		set: func(m *Manager) {
 			m.mountattr |= unix.MOUNT_ATTR_RDONLY
+		},
+	}
+}
+
+// WithAnonymous sets the mount as anonymous.
+func WithAnonymous() ManagerOption {
+	return ManagerOption{
+		set: func(m *Manager) {
+			m.anonymous = true
 		},
 	}
 }
