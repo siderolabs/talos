@@ -8,7 +8,6 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"path/filepath"
 
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/safe"
@@ -17,6 +16,8 @@ import (
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/automaton"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/automaton/blockautomaton"
+	"github.com/siderolabs/talos/internal/pkg/xfs"
+	"github.com/siderolabs/talos/internal/pkg/xfs/opentree"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/resources/block"
 	"github.com/siderolabs/talos/pkg/machinery/resources/network"
@@ -78,6 +79,7 @@ func (ctrl *PlatformConfigLoadController) Run(ctx context.Context, r controller.
 				ctrl.Name(), constants.StatePartitionLabel,
 				ctrl.load(),
 				blockautomaton.WithReadOnly(true),
+				blockautomaton.WithAnonymous(true),
 			)
 		}
 
@@ -104,9 +106,10 @@ func (ctrl *PlatformConfigLoadController) load() func(
 	ctx context.Context, r controller.ReaderWriter, logger *zap.Logger, mountStatus *block.VolumeMountStatus,
 ) error {
 	return func(ctx context.Context, r controller.ReaderWriter, logger *zap.Logger, mountStatus *block.VolumeMountStatus) error {
-		rootPath := mountStatus.TypedSpec().Target
+		root := &xfs.UnixRoot{FS: opentree.NewFromFd(mountStatus.TypedSpec().FD)}
+		defer root.Close() //nolint:errcheck
 
-		cachedNetworkConfig, err := ctrl.loadConfig(filepath.Join(rootPath, constants.PlatformNetworkConfigFilename))
+		cachedNetworkConfig, err := ctrl.loadConfig(root, constants.PlatformNetworkConfigFilename)
 		if err != nil {
 			logger.Warn("ignored failure loading cached platform network config", zap.Error(err))
 		} else if cachedNetworkConfig != nil {
@@ -130,8 +133,8 @@ func (ctrl *PlatformConfigLoadController) load() func(
 	}
 }
 
-func (ctrl *PlatformConfigLoadController) loadConfig(path string) (*network.PlatformConfigSpec, error) {
-	marshaled, err := os.ReadFile(path)
+func (ctrl *PlatformConfigLoadController) loadConfig(root xfs.Root, path string) (*network.PlatformConfigSpec, error) {
+	marshaled, err := xfs.ReadFile(root, path)
 	if err != nil {
 		if os.IsNotExist(err) {
 			return nil, nil

@@ -111,7 +111,8 @@ func (ctrl *MountRequestController) Run(ctx context.Context, r controller.Runtim
 			desiredMountRequest := desiredMountRequests[volumeID]
 			desiredMountRequest.Requesters = append(desiredMountRequest.Requesters, volumeMountRequest.TypedSpec().Requester)
 			desiredMountRequest.RequesterIDs = append(desiredMountRequest.RequesterIDs, volumeMountRequest.Metadata().ID())
-			desiredMountRequest.ReadOnly = desiredMountRequest.ReadOnly && volumeMountRequest.TypedSpec().ReadOnly // read-only if all requesters are read-only
+			desiredMountRequest.ReadOnly = desiredMountRequest.ReadOnly && volumeMountRequest.TypedSpec().ReadOnly    // read-only if all requesters are read-only
+			desiredMountRequest.Anonymous = desiredMountRequest.Anonymous && volumeMountRequest.TypedSpec().Anonymous // anonymous if all requesters are anonymous
 			desiredMountRequest.ParentMountID = volumeStatus.TypedSpec().MountSpec.ParentID
 		}
 

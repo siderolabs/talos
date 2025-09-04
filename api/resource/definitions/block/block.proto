@@ -119,6 +119,7 @@ message MountRequestSpec {
   repeated string requesters = 3;
   repeated string requester_i_ds = 4;
   bool read_only = 5;
+  bool anonymous = 6;
 }
 
 // MountSpec is the spec for volume mount.
@@ -131,6 +132,7 @@ message MountSpec {
   int64 uid = 6;
   int64 gid = 7;
   bool recursive_relabel = 8;
+  bool anonymous = 9;
 }
 
 // MountStatusSpec is the spec for MountStatus.
@@ -142,6 +144,8 @@ message MountStatusSpec {
   bool read_only = 5;
   bool project_quota_support = 6;
   talos.resource.definitions.enums.BlockEncryptionProviderType encryption_provider = 7;
+  bool anonymous = 8;
+  int64 fd = 9;
 }
 
 // PartitionSpec is the spec for volume partitioning.
@@ -211,6 +215,7 @@ message VolumeMountRequestSpec {
   string volume_id = 1;
   string requester = 2;
   bool read_only = 3;
+  bool anonymous = 4;
 }
 
 // VolumeMountStatusSpec is the spec for VolumeMountStatus.
@@ -219,6 +224,8 @@ message VolumeMountStatusSpec {
   string requester = 2;
   string target = 3;
   bool read_only = 4;
+  bool anonymous = 5;
+  int64 fd = 6;
 }
 
 // VolumeStatusSpec is the spec for VolumeStatus resource.

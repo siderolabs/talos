@@ -60,6 +60,9 @@ type VolumeStatusSpec struct {
 	// Symlink is the symlink specification.
 	SymlinkSpec SymlinkProvisioningSpec `yaml:"symlink,omitempty" protobuf:"18"`
 
+	// FD is a file descriptor of the mount.
+	FD int `yaml:"fd,omitempty" protobuf:"20"`
+
 	ErrorMessage string `yaml:"errorMessage,omitempty" protobuf:"3"`
 }
 

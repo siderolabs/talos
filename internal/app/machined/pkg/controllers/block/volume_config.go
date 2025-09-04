@@ -310,11 +310,7 @@ func (ctrl *VolumeConfigController) manageStateConfigPresent(ctx context.Context
 	return func(vc *block.VolumeConfig) error {
 		vc.TypedSpec().Type = block.VolumeTypePartition
 		vc.TypedSpec().Mount = block.MountSpec{
-			TargetPath:   constants.StateMountPoint,
-			SelinuxLabel: constants.StateSelinuxLabel,
-			FileMode:     0o700,
-			UID:          0,
-			GID:          0,
+			Anonymous: true,
 		}
 
 		vc.TypedSpec().Provisioning = block.ProvisioningSpec{
@@ -390,11 +386,7 @@ func (ctrl *VolumeConfigController) manageStateNoConfig(encryptionMeta *runtime.
 	return func(vc *block.VolumeConfig) error {
 		vc.TypedSpec().Type = block.VolumeTypePartition
 		vc.TypedSpec().Mount = block.MountSpec{
-			TargetPath:   constants.StateMountPoint,
-			SelinuxLabel: constants.StateSelinuxLabel,
-			FileMode:     0o700,
-			UID:          0,
-			GID:          0,
+			Anonymous: true,
 		}
 
 		match := labelVolumeMatchAndNonEmpty(constants.StatePartitionLabel)

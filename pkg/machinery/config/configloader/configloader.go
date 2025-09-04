@@ -11,6 +11,7 @@ import (
 	"io"
 	"os"
 
+	"github.com/siderolabs/talos/internal/pkg/xfs"
 	"github.com/siderolabs/talos/pkg/machinery/config"
 	"github.com/siderolabs/talos/pkg/machinery/config/configloader/internal/decoder"
 	"github.com/siderolabs/talos/pkg/machinery/config/container"
@@ -50,6 +51,18 @@ func newConfig(r io.Reader, opt ...Opt) (config config.Provider, err error) {
 // NewFromFile will take a filepath and attempt to parse a config file from it.
 func NewFromFile(filepath string) (config.Provider, error) {
 	f, err := os.Open(filepath)
+	if err != nil {
+		return nil, err
+	}
+
+	defer f.Close() //nolint:errcheck
+
+	return newConfig(f)
+}
+
+// NewFromFileInRoot will take a filepath and attempt to parse a config file from it.
+func NewFromFileInRoot(root xfs.Root, filepath string) (config.Provider, error) {
+	f, err := xfs.Open(root, filepath)
 	if err != nil {
 		return nil, err
 	}

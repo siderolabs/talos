@@ -93,7 +93,9 @@ func (suite *VolumeConfigSuite) TestReconcileDefaults() {
 		asrt.NoError(err)
 		asrt.Equal(`volume.partition_label == "STATE" && volume.name != ""`, string(locator))
 
-		asrt.Equal(constants.StateMountPoint, r.TypedSpec().Mount.TargetPath)
+		if !r.TypedSpec().Mount.Anonymous {
+			asrt.Equal(constants.StateMountPoint, r.TypedSpec().Mount.TargetPath)
+		}
 	})
 	ctest.AssertNoResource[*block.VolumeConfig](suite, constants.EphemeralPartitionLabel)
 

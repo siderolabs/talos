@@ -859,6 +859,16 @@ func (m *MountRequestSpec) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 		i -= len(m.unknownFields)
 		copy(dAtA[i:], m.unknownFields)
 	}
+	if m.Anonymous {
+		i--
+		if m.Anonymous {
+			dAtA[i] = 1
+		} else {
+			dAtA[i] = 0
+		}
+		i--
+		dAtA[i] = 0x30
+	}
 	if m.ReadOnly {
 		i--
 		if m.ReadOnly {
@@ -933,6 +943,16 @@ func (m *MountSpec) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 	if m.unknownFields != nil {
 		i -= len(m.unknownFields)
 		copy(dAtA[i:], m.unknownFields)
+	}
+	if m.Anonymous {
+		i--
+		if m.Anonymous {
+			dAtA[i] = 1
+		} else {
+			dAtA[i] = 0
+		}
+		i--
+		dAtA[i] = 0x48
 	}
 	if m.RecursiveRelabel {
 		i--
@@ -1022,6 +1042,21 @@ func (m *MountStatusSpec) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 	if m.unknownFields != nil {
 		i -= len(m.unknownFields)
 		copy(dAtA[i:], m.unknownFields)
+	}
+	if m.Fd != 0 {
+		i = protohelpers.EncodeVarint(dAtA, i, uint64(m.Fd))
+		i--
+		dAtA[i] = 0x48
+	}
+	if m.Anonymous {
+		i--
+		if m.Anonymous {
+			dAtA[i] = 1
+		} else {
+			dAtA[i] = 0
+		}
+		i--
+		dAtA[i] = 0x40
 	}
 	if m.EncryptionProvider != 0 {
 		i = protohelpers.EncodeVarint(dAtA, i, uint64(m.EncryptionProvider))
@@ -1608,6 +1643,16 @@ func (m *VolumeMountRequestSpec) MarshalToSizedBufferVT(dAtA []byte) (int, error
 		i -= len(m.unknownFields)
 		copy(dAtA[i:], m.unknownFields)
 	}
+	if m.Anonymous {
+		i--
+		if m.Anonymous {
+			dAtA[i] = 1
+		} else {
+			dAtA[i] = 0
+		}
+		i--
+		dAtA[i] = 0x20
+	}
 	if m.ReadOnly {
 		i--
 		if m.ReadOnly {
@@ -1664,6 +1709,21 @@ func (m *VolumeMountStatusSpec) MarshalToSizedBufferVT(dAtA []byte) (int, error)
 	if m.unknownFields != nil {
 		i -= len(m.unknownFields)
 		copy(dAtA[i:], m.unknownFields)
+	}
+	if m.Fd != 0 {
+		i = protohelpers.EncodeVarint(dAtA, i, uint64(m.Fd))
+		i--
+		dAtA[i] = 0x30
+	}
+	if m.Anonymous {
+		i--
+		if m.Anonymous {
+			dAtA[i] = 1
+		} else {
+			dAtA[i] = 0
+		}
+		i--
+		dAtA[i] = 0x28
 	}
 	if m.ReadOnly {
 		i--
@@ -2334,6 +2394,9 @@ func (m *MountRequestSpec) SizeVT() (n int) {
 	if m.ReadOnly {
 		n += 2
 	}
+	if m.Anonymous {
+		n += 2
+	}
 	n += len(m.unknownFields)
 	return n
 }
@@ -2371,6 +2434,9 @@ func (m *MountSpec) SizeVT() (n int) {
 	if m.RecursiveRelabel {
 		n += 2
 	}
+	if m.Anonymous {
+		n += 2
+	}
 	n += len(m.unknownFields)
 	return n
 }
@@ -2404,6 +2470,12 @@ func (m *MountStatusSpec) SizeVT() (n int) {
 	}
 	if m.EncryptionProvider != 0 {
 		n += 1 + protohelpers.SizeOfVarint(uint64(m.EncryptionProvider))
+	}
+	if m.Anonymous {
+		n += 2
+	}
+	if m.Fd != 0 {
+		n += 1 + protohelpers.SizeOfVarint(uint64(m.Fd))
 	}
 	n += len(m.unknownFields)
 	return n
@@ -2617,6 +2689,9 @@ func (m *VolumeMountRequestSpec) SizeVT() (n int) {
 	if m.ReadOnly {
 		n += 2
 	}
+	if m.Anonymous {
+		n += 2
+	}
 	n += len(m.unknownFields)
 	return n
 }
@@ -2641,6 +2716,12 @@ func (m *VolumeMountStatusSpec) SizeVT() (n int) {
 	}
 	if m.ReadOnly {
 		n += 2
+	}
+	if m.Anonymous {
+		n += 2
+	}
+	if m.Fd != 0 {
+		n += 1 + protohelpers.SizeOfVarint(uint64(m.Fd))
 	}
 	n += len(m.unknownFields)
 	return n
@@ -5187,6 +5268,26 @@ func (m *MountRequestSpec) UnmarshalVT(dAtA []byte) error {
 				}
 			}
 			m.ReadOnly = bool(v != 0)
+		case 6:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Anonymous", wireType)
+			}
+			var v int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return protohelpers.ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				v |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			m.Anonymous = bool(v != 0)
 		default:
 			iNdEx = preIndex
 			skippy, err := protohelpers.Skip(dAtA[iNdEx:])
@@ -5431,6 +5532,26 @@ func (m *MountSpec) UnmarshalVT(dAtA []byte) error {
 				}
 			}
 			m.RecursiveRelabel = bool(v != 0)
+		case 9:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Anonymous", wireType)
+			}
+			var v int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return protohelpers.ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				v |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			m.Anonymous = bool(v != 0)
 		default:
 			iNdEx = preIndex
 			skippy, err := protohelpers.Skip(dAtA[iNdEx:])
@@ -5656,6 +5777,45 @@ func (m *MountStatusSpec) UnmarshalVT(dAtA []byte) error {
 				b := dAtA[iNdEx]
 				iNdEx++
 				m.EncryptionProvider |= enums.BlockEncryptionProviderType(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 8:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Anonymous", wireType)
+			}
+			var v int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return protohelpers.ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				v |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			m.Anonymous = bool(v != 0)
+		case 9:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Fd", wireType)
+			}
+			m.Fd = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return protohelpers.ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.Fd |= int64(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}
@@ -7056,6 +7216,26 @@ func (m *VolumeMountRequestSpec) UnmarshalVT(dAtA []byte) error {
 				}
 			}
 			m.ReadOnly = bool(v != 0)
+		case 4:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Anonymous", wireType)
+			}
+			var v int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return protohelpers.ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				v |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			m.Anonymous = bool(v != 0)
 		default:
 			iNdEx = preIndex
 			skippy, err := protohelpers.Skip(dAtA[iNdEx:])
@@ -7223,6 +7403,45 @@ func (m *VolumeMountStatusSpec) UnmarshalVT(dAtA []byte) error {
 				}
 			}
 			m.ReadOnly = bool(v != 0)
+		case 5:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Anonymous", wireType)
+			}
+			var v int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return protohelpers.ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				v |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			m.Anonymous = bool(v != 0)
+		case 6:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Fd", wireType)
+			}
+			m.Fd = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return protohelpers.ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.Fd |= int64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
 		default:
 			iNdEx = preIndex
 			skippy, err := protohelpers.Skip(dAtA[iNdEx:])

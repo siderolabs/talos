@@ -14,7 +14,6 @@ import (
 	"io"
 	"net/http"
 	"os"
-	"path/filepath"
 	"slices"
 	"strings"
 
@@ -31,6 +30,8 @@ import (
 	talosruntime "github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/platform"
 	platformerrors "github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/errors"
+	"github.com/siderolabs/talos/internal/pkg/xfs"
+	"github.com/siderolabs/talos/internal/pkg/xfs/opentree"
 	machineapi "github.com/siderolabs/talos/pkg/machinery/api/machine"
 	"github.com/siderolabs/talos/pkg/machinery/config"
 	"github.com/siderolabs/talos/pkg/machinery/config/configloader"
@@ -297,8 +298,12 @@ func (validationModeDiskConfig) String() string {
 // loadFromDisk is a helper function for stateDisk.
 func (ctrl *AcquireController) loadFromDisk(ctx context.Context, r controller.ReaderWriter, logger *zap.Logger) (config.Provider, bool, error) {
 	if ctrl.stateMachine == nil {
-		ctrl.stateMachine = blockautomaton.NewVolumeMounter(ctrl.Name(), constants.StatePartitionLabel, ctrl.loadConfigFromDisk,
+		ctrl.stateMachine = blockautomaton.NewVolumeMounter(
+			ctrl.Name(),
+			constants.StatePartitionLabel,
+			ctrl.loadConfigFromDisk,
 			blockautomaton.WithReadOnly(true),
+			blockautomaton.WithAnonymous(true),
 		)
 	}
 
@@ -321,11 +326,14 @@ func (ctrl *AcquireController) loadFromDisk(ctx context.Context, r controller.Re
 }
 
 func (ctrl *AcquireController) loadConfigFromDisk(ctx context.Context, r controller.ReaderWriter, logger *zap.Logger, mountStatus *block.VolumeMountStatus) error {
-	configPath := filepath.Join(mountStatus.TypedSpec().Target, constants.ConfigFilename)
+	configPath := constants.ConfigFilename
 
 	logger.Debug("loading config from STATE", zap.String("path", configPath))
 
-	_, err := os.Stat(configPath)
+	root := &xfs.UnixRoot{FS: opentree.NewFromFd(mountStatus.TypedSpec().FD)}
+	defer root.Close() //nolint:errcheck
+
+	_, err := xfs.Stat(root, configPath)
 	if err != nil {
 		if os.IsNotExist(err) {
 			// no saved machine config
@@ -335,7 +343,7 @@ func (ctrl *AcquireController) loadConfigFromDisk(ctx context.Context, r control
 		return fmt.Errorf("failed to stat %s: %w", configPath, err)
 	}
 
-	cfg, err := configloader.NewFromFile(configPath)
+	cfg, err := configloader.NewFromFileInRoot(root, configPath)
 	if err != nil {
 		return fmt.Errorf("failed to load config from STATE: %w", err)
 	}

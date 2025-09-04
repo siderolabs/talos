@@ -35,7 +35,8 @@ type VolumeMounterAutomaton = *automaton.ControllerAutomaton[volumeMountContext]
 
 // VolumeMounterOptions is the options for the volume mounter controller state machine.
 type VolumeMounterOptions struct {
-	ReadOnly bool
+	ReadOnly  bool
+	Anonymous bool
 }
 
 // VolumeMounterOption is a function that configures the volume mounter controller state machine.
@@ -45,6 +46,13 @@ type VolumeMounterOption func(*VolumeMounterOptions)
 func WithReadOnly(readOnly bool) VolumeMounterOption {
 	return func(options *VolumeMounterOptions) {
 		options.ReadOnly = readOnly
+	}
+}
+
+// WithAnonymous sets the volume mounter controller state machine to anonymous mode.
+func WithAnonymous(anonymous bool) VolumeMounterOption {
+	return func(options *VolumeMounterOptions) {
+		options.Anonymous = anonymous
 	}
 }
 
@@ -77,6 +85,7 @@ func createVolumeMountRequest(ctx context.Context, r controller.ReaderWriter, lo
 		req.TypedSpec().VolumeID = mountContext.volumeID
 		req.TypedSpec().Requester = mountContext.requester
 		req.TypedSpec().ReadOnly = mountContext.options.ReadOnly
+		req.TypedSpec().Anonymous = mountContext.options.Anonymous
 
 		return nil
 	}); err != nil {

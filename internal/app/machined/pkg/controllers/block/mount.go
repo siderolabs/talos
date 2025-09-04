@@ -19,7 +19,6 @@ import (
 	"github.com/siderolabs/gen/xslices"
 	"github.com/siderolabs/go-blockdevice/v2/swap"
 	"go.uber.org/zap"
-	"golang.org/x/sys/unix"
 
 	"github.com/siderolabs/talos/internal/pkg/mount/v3"
 	"github.com/siderolabs/talos/internal/pkg/selinux"
@@ -232,6 +231,7 @@ func (ctrl *MountController) Run(ctx context.Context, r controller.Runtime, logg
 						mountStatus.TypedSpec().EncryptionProvider = volumeStatus.TypedSpec().EncryptionProvider
 						mountStatus.TypedSpec().ReadOnly = mountRequest.TypedSpec().ReadOnly
 						mountStatus.TypedSpec().ProjectQuotaSupport = volumeStatus.TypedSpec().MountSpec.ProjectQuotaSupport
+						mountStatus.TypedSpec().FD = ctrl.activeMounts[mountRequest.Metadata().ID()].point.FD()
 
 						return nil
 					},
@@ -484,7 +484,11 @@ func (ctrl *MountController) handleDiskMountOperation(
 		)
 
 		if mountRequest.TypedSpec().ReadOnly {
-			opts = append(opts, mount.WithMountAttributes(unix.MOUNT_ATTR_RDONLY))
+			opts = append(opts, mount.WithReadOnly())
+		}
+
+		if mountRequest.TypedSpec().Anonymous {
+			opts = append(opts, mount.WithAnonymous(), mount.WithKeepOpenAfterMount())
 		}
 
 		manager := mount.NewManager(slices.Concat(
@@ -504,7 +508,7 @@ func (ctrl *MountController) handleDiskMountOperation(
 			return fmt.Errorf("failed to mount %q: %w", mountRequest.Metadata().ID(), err)
 		}
 
-		if !mountRequest.TypedSpec().ReadOnly {
+		if !mountRequest.TypedSpec().ReadOnly && !mountRequest.TypedSpec().Anonymous {
 			if err = ctrl.updateTargetSettings(mountTarget, volumeStatus.TypedSpec().MountSpec); err != nil {
 				manager.Unmount() //nolint:errcheck
 
@@ -518,6 +522,7 @@ func (ctrl *MountController) handleDiskMountOperation(
 			zap.String("target", mountTarget),
 			zap.Stringer("filesystem", mountFilesystem),
 			zap.Bool("read_only", mountRequest.TypedSpec().ReadOnly),
+			zap.Bool("anonymous", mountRequest.TypedSpec().Anonymous),
 		)
 
 		ctrl.activeMounts[mountRequest.Metadata().ID()] = &mountContext{
