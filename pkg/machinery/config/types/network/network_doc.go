@@ -348,6 +348,35 @@ func (IngressRule) Doc() *encoder.Doc {
 	return doc
 }
 
+func (StaticHostConfigV1Alpha1) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "StaticHostConfig",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "StaticHostConfig is a config document to set /etc/hosts entries." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "StaticHostConfig is a config document to set /etc/hosts entries.",
+		Fields: []encoder.Doc{
+			{},
+			{
+				Name:        "name",
+				Type:        "string",
+				Note:        "",
+				Description: "IP address (IPv4 or IPv6) to map the hostnames to.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "IP address (IPv4 or IPv6) to map the hostnames to." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "hostnames",
+				Type:        "[]string",
+				Note:        "",
+				Description: "List of hostnames to map to the IP address.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "List of hostnames to map to the IP address." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
+
+	doc.AddExample("", exampleStaticHostConfigV1Alpha1())
+
+	return doc
+}
+
 // GetFileDoc returns documentation for the file network_doc.go.
 func GetFileDoc() *encoder.FileDoc {
 	return &encoder.FileDoc{
@@ -362,6 +391,7 @@ func GetFileDoc() *encoder.FileDoc {
 			RuleConfigV1Alpha1{}.Doc(),
 			RulePortSelector{}.Doc(),
 			IngressRule{}.Doc(),
+			StaticHostConfigV1Alpha1{}.Doc(),
 		},
 	}
 }

@@ -24,4 +24,5 @@ type Config interface { //nolint:interfacebloat
 	ExistingVolumeConfigs() []ExistingVolumeConfig
 	SwapVolumeConfigs() []SwapVolumeConfig
 	ZswapConfig() ZswapConfig
+	NetworkStaticHostConfig() []NetworkStaticHostConfig
 }

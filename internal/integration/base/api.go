@@ -775,9 +775,9 @@ func (apiSuite *APISuite) DumpLogs(ctx context.Context, node string, service, pa
 	}
 }
 
-// ReadCmdline reads cmdline from the node.
-func (apiSuite *APISuite) ReadCmdline(nodeCtx context.Context) string {
-	reader, err := apiSuite.Client.Read(nodeCtx, "/proc/cmdline")
+// ReadFile reads file from the node.
+func (apiSuite *APISuite) ReadFile(nodeCtx context.Context, path string) string {
+	reader, err := apiSuite.Client.Read(nodeCtx, path)
 	apiSuite.Require().NoError(err)
 
 	defer reader.Close() //nolint:errcheck
@@ -785,14 +785,19 @@ func (apiSuite *APISuite) ReadCmdline(nodeCtx context.Context) string {
 	body, err := io.ReadAll(reader)
 	apiSuite.Require().NoError(err)
 
-	cmdline := strings.TrimSpace(string(body))
+	content := strings.TrimSpace(string(body))
 
 	_, err = io.Copy(io.Discard, reader)
 	apiSuite.Require().NoError(err)
 
 	apiSuite.Require().NoError(reader.Close())
 
-	return cmdline
+	return content
+}
+
+// ReadCmdline reads cmdline from the node.
+func (apiSuite *APISuite) ReadCmdline(nodeCtx context.Context) string {
+	return apiSuite.ReadFile(nodeCtx, "/proc/cmdline")
 }
 
 // TearDownSuite closes Talos API client.

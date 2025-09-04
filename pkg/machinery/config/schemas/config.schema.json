@@ -1089,6 +1089,53 @@
       "type": "object",
       "description": "RulePortSelector is a port selector for the network rule."
     },
+    "network.StaticHostConfigV1Alpha1": {
+      "properties": {
+        "apiVersion": {
+          "enum": [
+            "v1alpha1"
+          ],
+          "title": "apiVersion",
+          "description": "apiVersion is the API version of the resource.\n",
+          "markdownDescription": "apiVersion is the API version of the resource.",
+          "x-intellij-html-description": "\u003cp\u003eapiVersion is the API version of the resource.\u003c/p\u003e\n"
+        },
+        "kind": {
+          "enum": [
+            "StaticHostConfig"
+          ],
+          "title": "kind",
+          "description": "kind is the kind of the resource.\n",
+          "markdownDescription": "kind is the kind of the resource.",
+          "x-intellij-html-description": "\u003cp\u003ekind is the kind of the resource.\u003c/p\u003e\n"
+        },
+        "name": {
+          "type": "string",
+          "title": "name",
+          "description": "IP address (IPv4 or IPv6) to map the hostnames to.\n",
+          "markdownDescription": "IP address (IPv4 or IPv6) to map the hostnames to.",
+          "x-intellij-html-description": "\u003cp\u003eIP address (IPv4 or IPv6) to map the hostnames to.\u003c/p\u003e\n"
+        },
+        "hostnames": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "title": "hostnames",
+          "description": "List of hostnames to map to the IP address.\n",
+          "markdownDescription": "List of hostnames to map to the IP address.",
+          "x-intellij-html-description": "\u003cp\u003eList of hostnames to map to the IP address.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "apiVersion",
+        "kind",
+        "name"
+      ],
+      "description": "StaticHostConfig is a config document to set /etc/hosts entries."
+    },
     "runtime.EventSinkV1Alpha1": {
       "properties": {
         "apiVersion": {
@@ -2587,30 +2634,6 @@
       "type": "object",
       "description": "ExternalCloudProviderConfig contains external cloud provider configuration."
     },
-    "v1alpha1.ExtraHost": {
-      "properties": {
-        "ip": {
-          "type": "string",
-          "title": "ip",
-          "description": "The IP of the host.\n",
-          "markdownDescription": "The IP of the host.",
-          "x-intellij-html-description": "\u003cp\u003eThe IP of the host.\u003c/p\u003e\n"
-        },
-        "aliases": {
-          "items": {
-            "type": "string"
-          },
-          "type": "array",
-          "title": "aliases",
-          "description": "The host alias.\n",
-          "markdownDescription": "The host alias.",
-          "x-intellij-html-description": "\u003cp\u003eThe host alias.\u003c/p\u003e\n"
-        }
-      },
-      "additionalProperties": false,
-      "type": "object",
-      "description": "ExtraHost represents a host entry in /etc/hosts."
-    },
     "v1alpha1.ExtraMount": {
       "properties": {
         "destination": {
@@ -3620,16 +3643,6 @@
           "markdownDescription": "Used to statically set arbitrary search domains.",
           "x-intellij-html-description": "\u003cp\u003eUsed to statically set arbitrary search domains.\u003c/p\u003e\n"
         },
-        "extraHostEntries": {
-          "items": {
-            "$ref": "#/$defs/v1alpha1.ExtraHost"
-          },
-          "type": "array",
-          "title": "extraHostEntries",
-          "description": "Allows for extra entries to be added to the /etc/hosts file\n",
-          "markdownDescription": "Allows for extra entries to be added to the `/etc/hosts` file",
-          "x-intellij-html-description": "\u003cp\u003eAllows for extra entries to be added to the \u003ccode\u003e/etc/hosts\u003c/code\u003e file\u003c/p\u003e\n"
-        },
         "kubespan": {
           "$ref": "#/$defs/v1alpha1.NetworkKubeSpan",
           "title": "kubespan",
@@ -4320,6 +4333,9 @@
     },
     {
       "$ref": "#/$defs/network.RuleConfigV1Alpha1"
+    },
+    {
+      "$ref": "#/$defs/network.StaticHostConfigV1Alpha1"
     },
     {
       "$ref": "#/$defs/runtime.EventSinkV1Alpha1"
