@@ -5,7 +5,7 @@ aliases:
   - ../../guides/configuring-certificate-authorities
 ---
 
-## Appending the Certificate Authority
+## Appending the Certificate Authority (CA)
 
 Append additional certificate authorities to the system's trusted certificate store by [patching]({{< relref "./patching" >}}) the machine configuration with the following
 [document]({{< relref "../../reference/configuration/security/trustedrootsconfig" >}}):

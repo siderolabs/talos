@@ -148,3 +148,14 @@ you can do the following:
     ```
 
     If the are not, modify all the labels fields, save the file, delete your current kube-proxy daemonset, and apply the one you modified.
+
+## Limitations on Custom PKI
+
+Talos always uses a per-cluster PKI model.
+During bootstrap, Talos expects a single root CA to issue all other certificates, including those for etcd, the Kubernetes API server, and the front-proxy.
+
+Talos does not support kubeadm PKIs that rely on intermediate CAs (for example, a root CA with separate intermediates for different components).
+By design, both `--cluster-signing-cert-file` and `--root-ca-file` point to the same CA certificate, and these values cannot be overridden.
+
+If your kubeadm cluster uses an intermediate CA hierarchy, you cannot directly reuse that PKI with Talos.
+Instead, you must regenerate certificates using the Talos per-cluster CA model.
