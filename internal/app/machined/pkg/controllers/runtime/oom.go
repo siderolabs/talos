@@ -7,14 +7,17 @@ package runtime
 import (
 	"context"
 	"fmt"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"sort"
 	"strconv"
+	"syscall"
 	"time"
 
 	"github.com/cosi-project/runtime/pkg/controller"
 	"go.uber.org/zap"
+	"golang.org/x/sys/unix"
 
 	"github.com/siderolabs/talos/internal/pkg/cgroups"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
@@ -26,7 +29,7 @@ const (
 	pressureType    = "full"
 	pressureSpan    = "avg10"
 	psiThresh       = 12
-	cooldownTimeout = time.Second * 20
+	cooldownTimeout = 500 * time.Millisecond
 )
 
 // Higher value corresponds to a more important cgroup
@@ -46,7 +49,7 @@ type oomRankedCgroup struct {
 	MemoryMax     int64
 }
 
-// OOMController is a controller that publishes Talos SBOMs as resources.
+// OOMController is a controller that monitors memory PSI and handles near-OOM situations.
 type OOMController struct {
 	CgroupRoot      string
 	ActionTriggered time.Time
@@ -118,13 +121,13 @@ func (ctrl *OOMController) Run(ctx context.Context, r controller.Runtime, logger
 
 		if val > psiThresh && time.Since(ctrl.ActionTriggered) > cooldownTimeout {
 			ctrl.ActionTriggered = time.Now()
-			ctrl.OomAction()
+			ctrl.OomAction(logger)
 		}
 	}
 }
 
 // OomAction
-func (ctrl *OOMController) OomAction() {
+func (ctrl *OOMController) OomAction(logger *zap.Logger) {
 	fmt.Println("OOM action!")
 
 	ranking := []oomRankedCgroup{}
@@ -202,7 +205,57 @@ func (ctrl *OOMController) OomAction() {
 	})
 
 	fmt.Println(ranking)
-	fmt.Println("SENDING SIGKILL TO CGROUP", ranking[0])
+	fmt.Println("SENDING SIGKILL TO CGROUP", filepath.Join(ranking[0].Path, "cgroup.kill"))
 
-	os.WriteFile(filepath.Join(ranking[0].Path, "cgroup.kill"), []byte{'1'}, 0o644)
+	err := ctrl.reapCg(ranking[0].Path)
+	if err != nil {
+		fmt.Println("cannot reap cgroup", ranking[0].Path, err)
+	}
+}
+
+func (ctrl *OOMController) reapCg(cgroupPath string) error {
+	processes := []int{}
+	// Ignore errors, find as many processes as possible
+	filepath.WalkDir(cgroupPath, func(path string, d fs.DirEntry, walkErr error) error {
+		if walkErr != nil {
+			return nil
+		}
+
+		node, err := cgroups.GetCgroupProperty(path, "cgroup.procs")
+		if err != nil {
+			return nil
+		}
+
+		fmt.Println("visiting:", path)
+		for _, p := range node.CgroupProcs {
+			processes = append(processes, int(p.Val))
+		}
+
+		return nil
+	})
+	fmt.Println("victim processes:", processes)
+
+	pidfds := []int{}
+	for _, pid := range processes {
+		pidfd, err := unix.PidfdOpen(pid, 0)
+		if err != nil {
+			fmt.Println("failed to open pidfd", pid, err)
+			continue
+		}
+		defer unix.Close(pidfd)
+		pidfds = append(pidfds, pidfd)
+	}
+
+	os.WriteFile(filepath.Join(cgroupPath, "cgroup.kill"), []byte{'1'}, 0o644)
+
+	for _, pidfd := range pidfds {
+		_, _, errno := syscall.Syscall(unix.SYS_PROCESS_MRELEASE, uintptr(pidfd), uintptr(0), uintptr(0))
+		if errno != 0 && errno != syscall.ESRCH {
+			fmt.Println("failed to call mrelease", errno)
+			continue
+		}
+		fmt.Println("mreleased")
+	}
+
+	return nil
 }
