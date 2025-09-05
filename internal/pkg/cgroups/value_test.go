@@ -5,6 +5,7 @@
 package cgroups_test
 
 import (
+	"math"
 	"strings"
 	"testing"
 
@@ -20,19 +21,23 @@ func TestParseValue(t *testing.T) {
 	for _, test := range []struct {
 		in string
 
-		expected cgroups.Value
+		expected        cgroups.Value
+		expectedFloat64 float64
 	}{
 		{
-			in:       "42",
-			expected: cgroups.Value{Val: 42, IsSet: true},
+			in:              "42",
+			expected:        cgroups.Value{Val: 42, IsSet: true},
+			expectedFloat64: 42,
 		},
 		{
-			in:       "max",
-			expected: cgroups.Value{IsMax: true, IsSet: true},
+			in:              "max",
+			expected:        cgroups.Value{IsMax: true, IsSet: true},
+			expectedFloat64: math.Inf(1),
 		},
 		{
-			in:       "42.5",
-			expected: cgroups.Value{Val: 425, Frac: 1, IsSet: true},
+			in:              "42.5",
+			expected:        cgroups.Value{Val: 425, Frac: 1, IsSet: true},
+			expectedFloat64: 42.5,
 		},
 		{
 			in:       "0.00",
@@ -46,6 +51,7 @@ func TestParseValue(t *testing.T) {
 			require.NoError(t, err)
 
 			assert.Equal(t, test.expected, v)
+			assert.Equal(t, test.expectedFloat64, v.Float64())
 
 			assert.Equal(t, test.in, v.String())
 		})

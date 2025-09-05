@@ -302,6 +302,16 @@ func (container *Container) NetworkHostnameConfig() config.NetworkHostnameConfig
 	return nil
 }
 
+// OOMConfig implements config.Config interface.
+func (container *Container) OOMConfig() config.OOMConfig {
+	matching := findMatchingDocs[config.OOMConfig](container.documents)
+	if len(matching) == 0 {
+		return nil
+	}
+
+	return matching[0]
+}
+
 // Bytes returns source YAML representation (if available) or does default encoding.
 func (container *Container) Bytes() ([]byte, error) {
 	if !container.readonly {

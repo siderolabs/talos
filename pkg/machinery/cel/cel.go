@@ -8,6 +8,7 @@ package cel
 import (
 	"encoding"
 	"fmt"
+	"math"
 
 	"github.com/google/cel-go/cel"
 	"github.com/google/cel-go/common/types"
@@ -43,7 +44,7 @@ func MustExpression(expr Expression, err error) Expression {
 
 // ParseBooleanExpression parses the expression and asserts the result to boolean.
 func ParseBooleanExpression(expression string, env *cel.Env) (Expression, error) {
-	ast, err := parseBooleanExpression(expression, env)
+	ast, err := parseExpressionWithOutputType(expression, env, types.BoolType)
 	if err != nil {
 		return Expression{}, err
 	}
@@ -51,8 +52,18 @@ func ParseBooleanExpression(expression string, env *cel.Env) (Expression, error)
 	return Expression{ast: ast}, nil
 }
 
-// parseBooleanExpression parses the expression and asserts the result to boolean.
-func parseBooleanExpression(expression string, env *cel.Env) (*cel.Ast, error) {
+// ParseDoubleExpression parses the expression and asserts the result to float.
+func ParseDoubleExpression(expression string, env *cel.Env) (Expression, error) {
+	ast, err := parseExpressionWithOutputType(expression, env, types.DoubleType)
+	if err != nil {
+		return Expression{}, err
+	}
+
+	return Expression{ast: ast}, nil
+}
+
+// parseExpressionWithOutputType parses the expression and asserts the result to boolean.
+func parseExpressionWithOutputType(expression string, env *cel.Env, expectedType *types.Type) (*cel.Ast, error) {
 	ast, issues := env.Parse(expression)
 	if issues != nil && issues.Err() != nil {
 		return nil, issues.Err()
@@ -63,8 +74,8 @@ func parseBooleanExpression(expression string, env *cel.Env) (*cel.Ast, error) {
 		return nil, issues.Err()
 	}
 
-	if outputType := ast.OutputType(); !outputType.IsExactType(types.BoolType) {
-		return nil, fmt.Errorf("expression output type is %s, expected bool", outputType)
+	if outputType := ast.OutputType(); !outputType.IsExactType(expectedType) {
+		return nil, fmt.Errorf("expression output type is %s, expected %s", outputType, expectedType)
 	}
 
 	return ast, nil
@@ -97,7 +108,26 @@ func (expr *Expression) ParseBool(env *cel.Env) error {
 
 	var err error
 
-	expr.ast, err = parseBooleanExpression(*expr.expression, env)
+	expr.ast, err = parseExpressionWithOutputType(*expr.expression, env, types.BoolType)
+
+	return err
+}
+
+// ParseDouble parses the expression and asserts the result to float.
+//
+// ParseDouble can be used after unmarshaling the expression from text.
+func (expr *Expression) ParseDouble(env *cel.Env) error {
+	if expr.ast != nil {
+		return nil
+	}
+
+	if expr.expression == nil {
+		panic("expression is not set")
+	}
+
+	var err error
+
+	expr.ast, err = parseExpressionWithOutputType(*expr.expression, env, types.DoubleType)
 
 	return err
 }
@@ -121,6 +151,30 @@ func (expr Expression) EvalBool(env *cel.Env, values map[string]any) (bool, erro
 	val, ok := out.Value().(bool)
 	if !ok {
 		return false, fmt.Errorf("expression output type is %s, expected bool", out.Type())
+	}
+
+	return val, nil
+}
+
+// EvalDouble evaluates the expression in the given environment.
+func (expr Expression) EvalDouble(env *cel.Env, values map[string]any) (float64, error) {
+	if err := expr.ParseDouble(env); err != nil {
+		return math.NaN(), err
+	}
+
+	prog, err := env.Program(expr.ast)
+	if err != nil {
+		return math.NaN(), err
+	}
+
+	out, _, err := prog.Eval(values)
+	if err != nil {
+		return math.NaN(), err
+	}
+
+	val, ok := out.Value().(float64)
+	if !ok {
+		return math.NaN(), fmt.Errorf("expression output type is %s, expected float64", out.Type())
 	}
 
 	return val, nil

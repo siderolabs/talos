@@ -74,3 +74,28 @@ func TestVolumeLocator(t *testing.T) {
 		})
 	}
 }
+
+func TestOOMCgroupScoring(t *testing.T) {
+	t.Parallel()
+
+	env := celenv.OOMCgroupScoring()
+
+	for _, test := range []struct {
+		name       string
+		expression string
+	}{
+		{
+			name: "example 1",
+			expression: `memory_max.hasValue() ? 0.0 : 
+			{Besteffort : 1.0, Guaranteed: 0.0, Burstable: 0.5}[class] * 
+			   double(memory_current.orValue(0u)) / double(memory_peak.orValue(0u) - memory_current.orValue(0u))`,
+		},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+
+			_, err := cel.ParseDoubleExpression(test.expression, env)
+			require.NoError(t, err)
+		})
+	}
+}
