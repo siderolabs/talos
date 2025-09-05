@@ -9,7 +9,6 @@ import (
 	"context"
 	"fmt"
 	"io/fs"
-	"os"
 	"path/filepath"
 
 	"github.com/cosi-project/runtime/pkg/controller"
@@ -20,6 +19,7 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/siderolabs/talos/internal/pkg/containers/cri/containerd"
+	"github.com/siderolabs/talos/internal/pkg/xfs"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/resources/cri"
 	"github.com/siderolabs/talos/pkg/machinery/resources/files"
@@ -27,6 +27,7 @@ import (
 
 // CRIRegistryConfigController generates parts of the CRI config for registry configuration.
 type CRIRegistryConfigController struct {
+	EtcRoot          xfs.Root
 	bindMountCreated bool
 }
 
@@ -62,14 +63,10 @@ func (ctrl *CRIRegistryConfigController) Outputs() []controller.Output {
 //nolint:gocyclo
 func (ctrl *CRIRegistryConfigController) Run(ctx context.Context, r controller.Runtime, _ *zap.Logger) error {
 	basePath := filepath.Join(constants.CRIConfdPath, "hosts")
-	shadowPath := filepath.Join(constants.SystemPath, basePath)
 
-	// bind mount shadow path over to base path
-	// shadow path is writeable, controller is going to update it
-	// base path is read-only, containerd will read from it
 	if !ctrl.bindMountCreated {
-		if err := createBindMountDir(shadowPath, basePath); err != nil {
-			return err
+		if err := createBindMountDir(ctrl.EtcRoot, basePath, basePath); err != nil {
+			return fmt.Errorf("bind mount failed for %q: %w", basePath, err)
 		}
 
 		ctrl.bindMountCreated = true
@@ -112,14 +109,13 @@ func (ctrl *CRIRegistryConfigController) Run(ctx context.Context, r controller.R
 
 				spec.Contents = criRegistryContents
 				spec.Mode = 0o600
-				spec.SelinuxLabel = constants.EtcSelinuxLabel
 
 				return nil
 			}); err != nil {
 			return fmt.Errorf("error modifying resource: %w", err)
 		}
 
-		if err := ctrl.syncHosts(shadowPath, criHosts); err != nil {
+		if err := ctrl.syncHosts(basePath, criHosts); err != nil {
 			return fmt.Errorf("error syncing hosts: %w", err)
 		}
 
@@ -128,30 +124,35 @@ func (ctrl *CRIRegistryConfigController) Run(ctx context.Context, r controller.R
 }
 
 //nolint:gocyclo
-func (ctrl *CRIRegistryConfigController) syncHosts(shadowPath string, criHosts *containerd.HostsConfig) error {
+func (ctrl *CRIRegistryConfigController) syncHosts(basePath string, criHosts *containerd.HostsConfig) error {
 	// 1. create/update all files and directories
 	for dirName, directory := range criHosts.Directories {
-		path := filepath.Join(shadowPath, dirName)
+		path := filepath.Join(basePath, dirName)
 
-		if err := os.MkdirAll(path, 0o700); err != nil {
+		if err := xfs.MkdirAll(ctrl.EtcRoot, path, 0o700); err != nil {
 			return err
 		}
 
 		for _, file := range directory.Files {
 			// match contents to see if the update can be skipped
-			contents, err := os.ReadFile(filepath.Join(path, file.Name))
+			contents, err := xfs.ReadFile(ctrl.EtcRoot, filepath.Join(path, file.Name))
 			if err == nil && bytes.Equal(contents, file.Contents) {
 				continue
 			}
 
 			// write file
-			if err = os.WriteFile(filepath.Join(path, file.Name), file.Contents, file.Mode); err != nil {
+			if err = xfs.WriteFile(
+				ctrl.EtcRoot,
+				filepath.Join(path, file.Name),
+				file.Contents,
+				file.Mode,
+			); err != nil {
 				return err
 			}
 		}
 
 		// remove any files which shouldn't be present
-		fileList, err := os.ReadDir(path)
+		fileList, err := xfs.ReadDir(ctrl.EtcRoot, path)
 		if err != nil {
 			return err
 		}
@@ -163,14 +164,14 @@ func (ctrl *CRIRegistryConfigController) syncHosts(shadowPath string, criHosts *
 		}
 
 		for file := range fileListMap {
-			if err = os.Remove(filepath.Join(path, file)); err != nil {
+			if err = xfs.Remove(ctrl.EtcRoot, filepath.Join(path, file)); err != nil {
 				return err
 			}
 		}
 	}
 
 	// 2. remove any directories which shouldn't be present
-	directoryList, err := os.ReadDir(shadowPath)
+	directoryList, err := xfs.ReadDir(ctrl.EtcRoot, basePath)
 	if err != nil {
 		return err
 	}
@@ -186,7 +187,7 @@ func (ctrl *CRIRegistryConfigController) syncHosts(shadowPath string, criHosts *
 	}
 
 	for dirName := range directoryListMap {
-		if err = os.RemoveAll(filepath.Join(shadowPath, dirName)); err != nil {
+		if err = xfs.RemoveAll(ctrl.EtcRoot, filepath.Join(basePath, dirName)); err != nil {
 			return err
 		}
 	}

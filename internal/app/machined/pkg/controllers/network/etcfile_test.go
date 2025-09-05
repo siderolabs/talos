@@ -72,8 +72,8 @@ func (suite *EtcFileConfigSuite) SetupTest() {
 	suite.Assert().NoFileExists(suite.podResolvConfPath)
 
 	suite.Require().NoError(suite.runtime.RegisterController(&netctrl.EtcFileController{
-		PodResolvConfPath: suite.podResolvConfPath,
-		V1Alpha1Mode:      v1alpha1runtime.ModeMetal,
+		V1Alpha1Mode: v1alpha1runtime.ModeMetal,
+		EtcRoot:      nil, // TODO(shanduur)
 	}))
 
 	u, err := url.Parse("https://foo:6443")

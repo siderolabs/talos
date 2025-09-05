@@ -16,7 +16,6 @@ import (
 
 	clusteradapter "github.com/siderolabs/talos/internal/app/machined/pkg/adapters/cluster"
 	runtimetalos "github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
-	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/resources/cluster"
 	"github.com/siderolabs/talos/pkg/machinery/resources/files"
 )
@@ -87,9 +86,8 @@ func (ctrl *IQNController) Run(ctx context.Context, r controller.Runtime, _ *zap
 				spec := r.TypedSpec()
 
 				// Fri Nov 3 16:19:12 2017 -0700 is the date of the first commit in the talos repository.
-				spec.Contents = []byte(fmt.Sprintf("InitiatorName=iqn.2017-11.dev.talos:%s\n", machineID))
+				spec.Contents = fmt.Appendf([]byte{}, "InitiatorName=iqn.2017-11.dev.talos:%s\n", machineID)
 				spec.Mode = 0o600
-				spec.SelinuxLabel = constants.EtcSelinuxLabel
 
 				return nil
 			}); err != nil {

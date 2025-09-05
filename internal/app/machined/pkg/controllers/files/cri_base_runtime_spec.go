@@ -125,7 +125,6 @@ func (ctrl *CRIBaseRuntimeSpecController) Run(ctx context.Context, r controller.
 
 				spec.Contents = contents
 				spec.Mode = 0o600
-				spec.SelinuxLabel = constants.EtcSelinuxLabel
 
 				return nil
 			}); err != nil {

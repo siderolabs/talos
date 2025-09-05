@@ -24,6 +24,8 @@ import (
 	"go.uber.org/zap/zaptest"
 
 	filesctrl "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/files"
+	"github.com/siderolabs/talos/internal/pkg/xfs"
+	"github.com/siderolabs/talos/internal/pkg/xfs/opentree"
 	"github.com/siderolabs/talos/pkg/machinery/resources/files"
 )
 
@@ -38,8 +40,8 @@ type EtcFileSuite struct {
 	ctx       context.Context //nolint:containedctx
 	ctxCancel context.CancelFunc
 
-	etcPath    string
-	shadowPath string
+	etcPath string
+	etcRoot xfs.Root
 }
 
 func (suite *EtcFileSuite) SetupTest() {
@@ -55,26 +57,24 @@ func (suite *EtcFileSuite) SetupTest() {
 	suite.startRuntime()
 
 	suite.etcPath = suite.T().TempDir()
-	suite.shadowPath = suite.T().TempDir()
+	suite.etcRoot = &xfs.UnixRoot{FS: opentree.NewFromPath(suite.T().TempDir())}
+
+	suite.Require().NoError(suite.etcRoot.OpenFS())
 
 	suite.Require().NoError(
 		suite.runtime.RegisterController(
 			&filesctrl.EtcFileController{
-				EtcPath:    suite.etcPath,
-				ShadowPath: suite.shadowPath,
+				EtcPath: suite.etcPath,
+				EtcRoot: suite.etcRoot,
 			},
 		),
 	)
 }
 
 func (suite *EtcFileSuite) startRuntime() {
-	suite.wg.Add(1)
-
-	go func() {
-		defer suite.wg.Done()
-
+	suite.wg.Go(func() {
 		suite.Assert().NoError(suite.runtime.Run(suite.ctx))
-	}()
+	})
 }
 
 func (suite *EtcFileSuite) assertEtcFile(filename, contents string, expectedVersion resource.Version) error {
@@ -148,6 +148,8 @@ func (suite *EtcFileSuite) TearDownTest() {
 	suite.T().Log("tear down")
 
 	suite.ctxCancel()
+
+	suite.etcRoot.Close() //nolint:errcheck
 
 	suite.wg.Wait()
 }
