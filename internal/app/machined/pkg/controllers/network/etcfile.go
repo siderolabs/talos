@@ -9,6 +9,7 @@ import (
 	"context"
 	"fmt"
 	"iter"
+	"maps"
 	"net/netip"
 	"os"
 	"path/filepath"
@@ -247,10 +248,16 @@ func (ctrl *EtcFileController) renderHosts(hostnameStatus *network.HostnameStatu
 	write("ff02::1\tip6-allnodes\n")
 	write("ff02::2\tip6-allrouters\n")
 
-	if cfgProvider != nil && cfgProvider.Machine() != nil {
-		for _, extraHost := range cfgProvider.Machine().Network().ExtraHosts() {
-			write(fmt.Sprintf("%s\t%s\n", extraHost.IP(), strings.Join(extraHost.Aliases(), " ")))
+	hostMap := map[string][]string{}
+
+	if cfgProvider != nil {
+		for _, extraHost := range cfgProvider.NetworkStaticHostConfig() {
+			hostMap[extraHost.IP()] = append(hostMap[extraHost.IP()], extraHost.Aliases()...)
 		}
+	}
+
+	for _, addr := range slices.Sorted(maps.Keys(hostMap)) {
+		write(fmt.Sprintf("%s\t%s\n", addr, strings.Join(hostMap[addr], " ")))
 	}
 
 	if err := tabW.Flush(); err != nil {

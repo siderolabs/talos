@@ -141,20 +141,15 @@ type MachineScheduler interface {
 
 // MachineNetwork defines the requirements for a config that pertains to network
 // related options.
+//
+// This is a legacy interface which is going to be decomposed and removed in the future.
 type MachineNetwork interface {
 	Hostname() string
 	Resolvers() []string
 	SearchDomains() []string
 	Devices() []Device
-	ExtraHosts() []ExtraHost
 	KubeSpan() KubeSpan
 	DisableSearchDomain() bool
-}
-
-// ExtraHost represents a host entry in /etc/hosts.
-type ExtraHost interface {
-	IP() string
-	Aliases() []string
 }
 
 // Device represents a network interface.

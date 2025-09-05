@@ -250,14 +250,6 @@ network:
         - example.org
         - example.com
 
-    # # Allows for extra entries to be added to the `/etc/hosts` file
-    # extraHostEntries:
-    #     - ip: 192.168.1.100 # The IP of the host.
-    #       # The host alias.
-    #       aliases:
-    #         - example
-    #         - example.domain.tld
-
     # # Configures KubeSpan feature.
     # kubespan:
     #     enabled: true # Enable the KubeSpan feature.
@@ -793,14 +785,6 @@ machine:
             - example.org
             - example.com
 
-        # # Allows for extra entries to be added to the `/etc/hosts` file
-        # extraHostEntries:
-        #     - ip: 192.168.1.100 # The IP of the host.
-        #       # The host alias.
-        #       aliases:
-        #         - example
-        #         - example.domain.tld
-
         # # Configures KubeSpan feature.
         # kubespan:
         #     enabled: true # Enable the KubeSpan feature.
@@ -913,14 +897,6 @@ nameservers:
 searchDomains:
     - example.org
     - example.com
-{{< /highlight >}}</details> | |
-|`extraHostEntries` |<a href="#Config.machine.network.extraHostEntries.">[]ExtraHost</a> |Allows for extra entries to be added to the `/etc/hosts` file <details><summary>Show example(s)</summary>{{< highlight yaml >}}
-extraHostEntries:
-    - ip: 192.168.1.100 # The IP of the host.
-      # The host alias.
-      aliases:
-        - example
-        - example.domain.tld
 {{< /highlight >}}</details> | |
 |`kubespan` |<a href="#Config.machine.network.kubespan">NetworkKubeSpan</a> |Configures KubeSpan feature. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 kubespan:
@@ -1712,34 +1688,6 @@ VIPHCloudConfig contains settings for Hetzner Cloud VIP management.
 
 
 
-
-
-
-
-
-
-#### extraHostEntries[] {#Config.machine.network.extraHostEntries.}
-
-ExtraHost represents a host entry in /etc/hosts.
-
-
-
-{{< highlight yaml >}}
-machine:
-    network:
-        extraHostEntries:
-            - ip: 192.168.1.100 # The IP of the host.
-              # The host alias.
-              aliases:
-                - example
-                - example.domain.tld
-{{< /highlight >}}
-
-
-| Field | Type | Description | Value(s) |
-|-------|------|-------------|----------|
-|`ip` |string |The IP of the host.  | |
-|`aliases` |[]string |The host alias.  | |
 
 
 
