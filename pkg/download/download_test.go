@@ -59,6 +59,8 @@ func TestDownload(t *testing.T) {
 		case "/404":
 			w.WriteHeader(http.StatusNotFound)
 			fmt.Fprintln(w, "not found")
+		case "/204":
+			w.WriteHeader(http.StatusNoContent)
 		default:
 			w.WriteHeader(http.StatusInternalServerError)
 		}
@@ -88,6 +90,11 @@ func TestDownload(t *testing.T) {
 			expected: "",
 		},
 		{
+			name:     "empty download with 204",
+			path:     "/204",
+			expected: "",
+		},
+		{
 			name:     "some data",
 			path:     "/data",
 			expected: "data",
@@ -101,6 +108,12 @@ func TestDownload(t *testing.T) {
 		{
 			name:          "empty error",
 			path:          "/empty",
+			opts:          []download.Option{download.WithErrorOnEmptyResponse(errors.New("empty response"))},
+			expectedError: "empty response",
+		},
+		{
+			name:          "empty error by 204",
+			path:          "/204",
 			opts:          []download.Option{download.WithErrorOnEmptyResponse(errors.New("empty response"))},
 			expectedError: "empty response",
 		},
