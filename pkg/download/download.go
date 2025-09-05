@@ -262,6 +262,11 @@ func download(req *http.Request, options *downloadOptions) (data []byte, err err
 		return data, options.ErrorOnBadRequest
 	}
 
+	// 204 - StatusNoContent is also a successful response, signaling  that there is no body
+	if resp.StatusCode == http.StatusNoContent {
+		return data, options.ErrorOnEmptyResponse
+	}
+
 	if resp.StatusCode != http.StatusOK {
 		// try to read first 32 bytes of the response body
 		// to provide more context in case of error
