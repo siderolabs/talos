@@ -40,6 +40,8 @@ import (
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
 	runtimelogging "github.com/siderolabs/talos/internal/app/machined/pkg/runtime/logging"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system"
+	"github.com/siderolabs/talos/internal/pkg/xfs"
+	"github.com/siderolabs/talos/internal/pkg/xfs/fsopen"
 	"github.com/siderolabs/talos/pkg/logging"
 	talosconfig "github.com/siderolabs/talos/pkg/machinery/config/config"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
@@ -86,6 +88,18 @@ func (ctrl *Controller) Run(ctx context.Context, drainer *runtime.Drainer) error
 	if err != nil {
 		return err
 	}
+
+	etcRoot := &xfs.UnixRoot{
+		FS: fsopen.New(
+			"tmpfs",
+			fsopen.WithStringParameter("mode", "0755"),
+			fsopen.WithStringParameter("size", "64M"),
+		),
+	}
+	if err := etcRoot.OpenFS(); err != nil {
+		return err
+	}
+	defer etcRoot.Close() //nolint:errcheck
 
 	for _, c := range []controller.Controller{
 		&block.DevicesController{
@@ -158,10 +172,12 @@ func (ctrl *Controller) Run(ctx context.Context, drainer *runtime.Drainer) error
 		&etcd.MemberController{},
 		&files.CRIBaseRuntimeSpecController{},
 		&files.CRIConfigPartsController{},
-		&files.CRIRegistryConfigController{},
+		&files.CRIRegistryConfigController{
+			EtcRoot: etcRoot,
+		},
 		&files.EtcFileController{
-			EtcPath:    "/etc",
-			ShadowPath: constants.SystemEtcPath,
+			EtcRoot: etcRoot,
+			EtcPath: "/etc",
 		},
 		&files.IQNController{
 			V1Alpha1Mode: ctrl.v1alpha1Runtime.State().Platform().Mode(),
@@ -245,8 +261,8 @@ func (ctrl *Controller) Run(ctx context.Context, drainer *runtime.Drainer) error
 		},
 		&network.DNSUpstreamController{},
 		&network.EtcFileController{
-			PodResolvConfPath: constants.PodResolvConfPath,
-			V1Alpha1Mode:      ctrl.v1alpha1Runtime.State().Platform().Mode(),
+			EtcRoot:      etcRoot,
+			V1Alpha1Mode: ctrl.v1alpha1Runtime.State().Platform().Mode(),
 		},
 		&network.EthernetConfigController{},
 		&network.EthernetSpecController{},

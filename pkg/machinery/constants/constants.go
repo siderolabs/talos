@@ -743,12 +743,6 @@ const (
 	// SystemVarSelinuxLabel is the SELinux label for the system var directory.
 	SystemVarSelinuxLabel = "system_u:object_r:system_var_t:s0"
 
-	// SystemEtcPath is the path to the system etc directory.
-	SystemEtcPath = SystemPath + "/etc"
-
-	// EtcSelinuxLabel is the SELinux label for the /etc and /system/etc directories.
-	EtcSelinuxLabel = "system_u:object_r:etc_t:s0"
-
 	// SystemLibexecPath is the path to the system libexec directory.
 	SystemLibexecPath = SystemPath + "/libexec"
 
@@ -1215,8 +1209,8 @@ const (
 	// DefaultNfTablesTableName is the default name of the nftables table created by Talos.
 	DefaultNfTablesTableName = "talos"
 
-	// PodResolvConfPath is the path to the pod resolv.conf file.
-	PodResolvConfPath = "/system/resolved/resolv.conf"
+	// ResolvConfPath is the path to the pod resolv.conf file.
+	PodResolvConfPath = SystemPath + "/resolved/resolv.conf"
 
 	// SyslogListenSocketPath is the path to the syslog socket.
 	SyslogListenSocketPath = "/dev/log"

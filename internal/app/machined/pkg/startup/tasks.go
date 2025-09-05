@@ -40,7 +40,6 @@ func SetupSystemDirectories(ctx context.Context, log *zap.Logger, rt runtime.Run
 		perm  os.FileMode
 		label string
 	}{
-		{constants.SystemEtcPath, 0o700, constants.EtcSelinuxLabel},
 		{constants.SystemVarPath, 0o700, constants.SystemVarSelinuxLabel},
 		{constants.StateMountPoint, 0o700, ""},
 		{constants.SystemRunPath, 0o751, "system_u:object_r:system_run_t:s0"},

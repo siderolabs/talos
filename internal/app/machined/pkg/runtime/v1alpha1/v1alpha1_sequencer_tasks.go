@@ -673,7 +673,6 @@ func injectCRIConfigPatch(ctx context.Context, st state.State, content []byte) e
 	etcFileSpec := resourcefiles.NewEtcFileSpec(resourcefiles.NamespaceName, constants.CRICustomizationConfigPart)
 	etcFileSpec.TypedSpec().Mode = 0o600
 	etcFileSpec.TypedSpec().Contents = content
-	etcFileSpec.TypedSpec().SelinuxLabel = constants.EtcSelinuxLabel
 
 	if err := st.Create(ctx, etcFileSpec); err != nil {
 		return err

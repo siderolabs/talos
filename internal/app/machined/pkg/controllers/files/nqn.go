@@ -17,7 +17,6 @@ import (
 
 	clusteradapter "github.com/siderolabs/talos/internal/app/machined/pkg/adapters/cluster"
 	runtimetalos "github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
-	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/resources/cluster"
 	"github.com/siderolabs/talos/pkg/machinery/resources/files"
 )
@@ -96,7 +95,6 @@ func (ctrl *NQNController) Run(ctx context.Context, r controller.Runtime, _ *zap
 
 				spec.Contents = []byte(hostID.String())
 				spec.Mode = 0o600
-				spec.SelinuxLabel = constants.EtcSelinuxLabel
 
 				return nil
 			}); err != nil {
@@ -108,9 +106,8 @@ func (ctrl *NQNController) Run(ctx context.Context, r controller.Runtime, _ *zap
 				spec := r.TypedSpec()
 
 				// Fri Nov 3 16:19:12 2017 -0700 is the date of the first commit in the talos repository.
-				spec.Contents = []byte(fmt.Sprintf("nqn.2017-11.dev.talos:uuid:%s", hostID.String()))
+				spec.Contents = fmt.Appendf([]byte{}, "nqn.2017-11.dev.talos:uuid:%s", hostID.String())
 				spec.Mode = 0o600
-				spec.SelinuxLabel = constants.EtcSelinuxLabel
 
 				return nil
 			}); err != nil {
