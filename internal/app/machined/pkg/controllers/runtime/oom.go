@@ -8,19 +8,27 @@ import (
 	"context"
 	"fmt"
 	"io/fs"
+	"math"
 	"os"
 	"path/filepath"
-	"sort"
 	"strconv"
 	"syscall"
 	"time"
 
 	"github.com/cosi-project/runtime/pkg/controller"
+	"github.com/cosi-project/runtime/pkg/safe"
+	"github.com/cosi-project/runtime/pkg/state"
 	"go.uber.org/zap"
 	"golang.org/x/sys/unix"
 
+	"github.com/siderolabs/gen/optional"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/runtime/internal/oom"
 	"github.com/siderolabs/talos/internal/pkg/cgroups"
+	"github.com/siderolabs/talos/pkg/machinery/cel"
+	"github.com/siderolabs/talos/pkg/machinery/cel/celenv"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
+	"github.com/siderolabs/talos/pkg/machinery/resources/config"
+	"github.com/siderolabs/talos/pkg/machinery/resources/runtime"
 )
 
 const (
@@ -31,23 +39,6 @@ const (
 	psiThresh       = 12
 	cooldownTimeout = 500 * time.Millisecond
 )
-
-// Higher value corresponds to a more important cgroup
-const (
-	OomCgroupClassBesteffort = iota
-	OomCgroupClassBurstable
-	OomCgroupClassGuaranteed
-	OomCgroupClassPodruntime
-	OomCgroupClassSystem
-)
-
-type oomRankedCgroup struct {
-	Class         int
-	Path          string
-	MemoryCurrent int64
-	MemoryPeak    int64
-	MemoryMax     int64
-}
 
 // OOMController is a controller that monitors memory PSI and handles near-OOM situations.
 type OOMController struct {
@@ -62,7 +53,14 @@ func (ctrl *OOMController) Name() string {
 
 // Inputs implements controller.Controller interface.
 func (ctrl *OOMController) Inputs() []controller.Input {
-	return nil
+	return []controller.Input{
+		{
+			Namespace: config.NamespaceName,
+			Type:      config.MachineConfigType,
+			ID:        optional.Some(config.ActiveID),
+			Kind:      controller.InputWeak,
+		},
+	}
 }
 
 // Outputs implements controller.Controller interface.
@@ -70,8 +68,17 @@ func (ctrl *OOMController) Outputs() []controller.Output {
 	return nil
 }
 
+func (ctrl *OOMController) defaultScoringExpr() cel.Expression {
+	return cel.MustExpression(cel.ParseDoubleExpression(
+		`memory_max.hasValue() ? 0.0 : ({Besteffort: 1.0, Guaranteed: 0.0, Burstable: 0.5}[class] * double(memory_current.orValue(0u)) / double(memory_peak.orValue(0u) - memory_current.orValue(0u)))`,
+		celenv.OOMCgroupScoring(),
+	))
+}
+
 // Run implements controller.Controller interface.
 func (ctrl *OOMController) Run(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
+	scoringExpr := ctrl.defaultScoringExpr()
+
 	ticker := time.NewTicker(sampleInterval)
 	tickerC := ticker.C
 
@@ -85,6 +92,20 @@ func (ctrl *OOMController) Run(ctx context.Context, r controller.Runtime, logger
 		case <-ctx.Done():
 			return nil
 		case <-r.EventCh():
+			cfg, err := safe.ReaderGetByID[*config.MachineConfig](ctx, r, config.ActiveID)
+			if err != nil && !state.IsNotFoundError(err) {
+				return fmt.Errorf("cannot get active machine config: %w", err)
+			}
+
+			scoringExpr = ctrl.defaultScoringExpr()
+
+			if cfg != nil {
+				if oomCfg := cfg.Config().OOMConfig(); oomCfg != nil {
+					if expr, ok := oomCfg.CgroupRankingExpression().Get(); ok {
+						scoringExpr = expr
+					}
+				}
+			}
 		case <-tickerC:
 		}
 
@@ -121,26 +142,26 @@ func (ctrl *OOMController) Run(ctx context.Context, r controller.Runtime, logger
 
 		if val > psiThresh && time.Since(ctrl.ActionTriggered) > cooldownTimeout {
 			ctrl.ActionTriggered = time.Now()
-			ctrl.OomAction(logger)
+			ctrl.OomAction(logger, scoringExpr)
 		}
 	}
 }
 
 // OomAction
-func (ctrl *OOMController) OomAction(logger *zap.Logger) {
+func (ctrl *OOMController) OomAction(logger *zap.Logger, scoringExpr cel.Expression) {
 	fmt.Println("OOM action!")
 
-	ranking := []oomRankedCgroup{}
+	ranking := map[oom.RankedCgroup]float64{}
 
 	for _, cg := range []struct {
 		dir   string
-		class int
+		class runtime.QoSCgroupClass
 	}{
-		{"kubepods/besteffort", OomCgroupClassBesteffort},
-		{"kubepods/burstable", OomCgroupClassBurstable},
-		{"kubepods/guaranteed", OomCgroupClassGuaranteed},
-		{"podruntime", OomCgroupClassPodruntime},
-		{"system", OomCgroupClassSystem},
+		{"kubepods/besteffort", runtime.QoSCgroupClassBesteffort},
+		{"kubepods/burstable", runtime.QoSCgroupClassBurstable},
+		{"kubepods/guaranteed", runtime.QoSCgroupClassGuaranteed},
+		{constants.CgroupPodRuntimeRoot, runtime.QoSCgroupClassPodruntime},
+		{constants.CgroupSystem, runtime.QoSCgroupClassSystem},
 	} {
 		entries, err := os.ReadDir(filepath.Join(constants.CgroupMountPath, cg.dir))
 		if err != nil {
@@ -160,18 +181,32 @@ func (ctrl *OOMController) OomAction(logger *zap.Logger) {
 			for _, prop := range []string{"memory.current", "memory.peak", "memory.max"} {
 				err := cgroups.ReadCgroupfsProperty(&node, leafDir, prop)
 				if err != nil {
-					fmt.Println("cannot read property for cgroup", leafDir, prop, err)
+					logger.Error("cannot read property for cgroup",
+						zap.String("dir", leafDir), zap.String("propery", prop), zap.Error(err),
+					)
+
 					continue
 				}
 			}
 
-			ranking = append(ranking, oomRankedCgroup{
+			cgroup := oom.RankedCgroup{
 				Path:          leafDir,
 				Class:         cg.class,
-				MemoryCurrent: node.MemoryCurrent.Val,
-				MemoryPeak:    node.MemoryPeak.Val,
-				MemoryMax:     node.MemoryMax.Val,
-			})
+				MemoryCurrent: node.MemoryCurrent,
+				MemoryPeak:    node.MemoryPeak,
+				MemoryMax:     node.MemoryMax,
+			}
+
+			score, err := cgroup.CalculateScore(&scoringExpr)
+			if err != nil {
+				logger.Error("cannot calculate score for cgroup",
+					zap.String("dir", leafDir), zap.Error(err),
+				)
+
+				continue
+			}
+
+			ranking[cgroup] = score
 		}
 	}
 
@@ -193,23 +228,24 @@ func (ctrl *OOMController) OomAction(logger *zap.Logger) {
 	// Fourth, look into memory max - memory current (if memory max is set).
 	//
 	// Sort to make the most prioritized to OOM-kill cgroup to the first place
-	//
-	// TODO: implement CEL or other configurable ranking method
-	sort.Slice(ranking, func(i int, j int) bool {
-		a, b := ranking[i], ranking[j]
-		if a.Class == b.Class {
-			return a.MemoryCurrent > b.MemoryCurrent
+
+	var (
+		maxScore     float64 = math.Inf(-1)
+		cgroupToKill oom.RankedCgroup
+	)
+
+	for cgroup, score := range ranking {
+		if score > maxScore {
+			maxScore = score
+			cgroupToKill = cgroup
 		}
+	}
 
-		return a.Class < b.Class
-	})
+	fmt.Println("SENDING SIGKILL TO CGROUP", filepath.Join(cgroupToKill.Path, "cgroup.kill"))
 
-	fmt.Println(ranking)
-	fmt.Println("SENDING SIGKILL TO CGROUP", filepath.Join(ranking[0].Path, "cgroup.kill"))
-
-	err := ctrl.reapCg(ranking[0].Path)
+	err := ctrl.reapCg(cgroupToKill.Path)
 	if err != nil {
-		fmt.Println("cannot reap cgroup", ranking[0].Path, err)
+		fmt.Println("cannot reap cgroup", cgroupToKill.Path, err)
 	}
 }
 
