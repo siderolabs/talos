@@ -16,5 +16,5 @@ const (
 	LongHornHelmChartVersion = "v1.9.1"
 	// OpenEBSChartVersion is the version of the OpenEBS Helm chart to use.
 	// renovate: datasource=helm versioning=helm depName=openebs registryUrl=https://openebs.github.io/openebs
-	OpenEBSChartVersion = "v4.2.0"
+	OpenEBSChartVersion = "4.3.3"
 )
