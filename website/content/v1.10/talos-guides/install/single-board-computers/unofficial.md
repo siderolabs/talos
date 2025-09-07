@@ -12,8 +12,7 @@ If you need official support for SBC boards please contact sales@siderolabs.com 
 
 ## Raspberry Pi 5
 
-* [sbc-raspberrypi fork](https://github.com/skyssolutions/talos-sbc-raspberrypi)
-* [Image Factory with RPi5 support](https://factory.kryptonian.dev/)
+* [Talos builder](https://github.com/talos-rpi5/talos-builder)
 
 ## MIXTILE Blade 3
 
