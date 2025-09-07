@@ -64,6 +64,27 @@ func (EventSinkV1Alpha1) Doc() *encoder.Doc {
 	return doc
 }
 
+func (OOMV1Alpha1) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "OOMConfig",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "OOMConfig is a Out of Memory handler config document." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "OOMConfig is a Out of Memory handler config document.",
+		Fields: []encoder.Doc{
+			{}, {
+				Name:        "cgroupRankingExpression",
+				Type:        "Expression",
+				Note:        "",
+				Description: "This expression defines how to rank cgroups for OOM handler.\n\nThe cgroup with the highest rank (score) will be evicted first.\nThe expression must evaluate to a double value.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "This expression defines how to rank cgroups for OOM handler." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
+
+	doc.AddExample("", exampleOOMV1Alpha1())
+
+	return doc
+}
+
 func (WatchdogTimerV1Alpha1) Doc() *encoder.Doc {
 	doc := &encoder.Doc{
 		Type:        "WatchdogTimerConfig",
@@ -103,6 +124,7 @@ func GetFileDoc() *encoder.FileDoc {
 		Structs: []*encoder.Doc{
 			KmsgLogV1Alpha1{}.Doc(),
 			EventSinkV1Alpha1{}.Doc(),
+			OOMV1Alpha1{}.Doc(),
 			WatchdogTimerV1Alpha1{}.Doc(),
 		},
 	}
