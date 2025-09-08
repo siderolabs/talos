@@ -202,11 +202,18 @@ func (suite *TinkSuite) TestDeploy() {
 
 	suite.T().Log("bootstrapping")
 
-	suite.Require().EventuallyWithT(func(collect *assert.CollectT) {
-		asrt := assert.New(collect)
+	if !suite.Assert().EventuallyWithT(
+		func(collect *assert.CollectT) {
+			asrt := assert.New(collect)
 
-		asrt.NoError(talosClient.Bootstrap(ctx, &machineapi.BootstrapRequest{}))
-	}, time.Minute, 100*time.Millisecond)
+			asrt.NoError(talosClient.Bootstrap(ctx, &machineapi.BootstrapRequest{}))
+		},
+		time.Minute,
+		100*time.Millisecond,
+	) {
+		suite.LogPodLogs(ctx, namespace, ss+"-0")
+		suite.T().Fatalf("failed to bootstrap Talos-in-Kubernetes")
+	}
 
 	clusterAccess := &tinkClusterAccess{
 		KubernetesClient: cluster.KubernetesClient{

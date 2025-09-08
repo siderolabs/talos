@@ -571,8 +571,11 @@ const (
 	// CRIContainerdConfig is the path to the config for the containerd instance that provides the CRI.
 	CRIContainerdConfig = "/etc/cri/containerd.toml"
 
-	// CRIConfdPath is the path to the directory providing parts of CRI plugin configuration.
-	CRIConfdPath = "/etc/cri/conf.d"
+	// EtcCRIConfdPath is the path to the directory providing parts of CRI plugin configuration.
+	EtcCRIConfdPath = "/etc/cri/conf.d"
+
+	// CRIConfdPath is the path to the subdirectory providing parts of CRI plugin configuration.
+	CRIConfdPath = "cri/conf.d"
 
 	// CRIConfig is the path to the CRI merged configuration file relative to /etc.
 	CRIConfig = "cri/conf.d/cri.toml"
@@ -1219,8 +1222,11 @@ const (
 	// DefaultNfTablesTableName is the default name of the nftables table created by Talos.
 	DefaultNfTablesTableName = "talos"
 
+	// SystemResolvedPath is the path to the resolved dir.
+	SystemResolvedPath = SystemPath + "/resolved"
+
 	// PodResolvConfPath is the path to the pod resolv.conf file.
-	PodResolvConfPath = "/system/resolved/resolv.conf"
+	PodResolvConfPath = SystemResolvedPath + "/resolv.conf"
 
 	// SyslogListenSocketPath is the path to the syslog socket.
 	SyslogListenSocketPath = "/dev/log"

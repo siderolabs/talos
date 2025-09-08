@@ -55,7 +55,7 @@ func (ctrl *CRIConfigPartsController) Outputs() []controller.Output {
 // Run implements controller.Controller interface.
 func (ctrl *CRIConfigPartsController) Run(ctx context.Context, r controller.Runtime, _ *zap.Logger) error {
 	if ctrl.CRIConfdPath == "" {
-		ctrl.CRIConfdPath = constants.CRIConfdPath
+		ctrl.CRIConfdPath = constants.EtcCRIConfdPath
 	}
 
 	for {

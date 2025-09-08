@@ -16,8 +16,10 @@ import (
 
 	"github.com/pkg/xattr"
 	"github.com/siderolabs/go-procfs/procfs"
+	"golang.org/x/sys/unix"
 
 	"github.com/siderolabs/talos/internal/pkg/containermode"
+	"github.com/siderolabs/talos/internal/pkg/xfs"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
 
@@ -99,6 +101,79 @@ func SetLabel(filename string, label string, excludeLabels ...string) error {
 
 	// We use LGet/LSet so that we manipulate label on the exact path, not the symlink target.
 	if err := xattr.LSet(filename, "security.selinux", []byte(label)); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// FGetLabel gets label for file, directory or symlink (not following symlinks) using provided root.
+// It does not perform the operation in case SELinux is disabled.
+func FGetLabel(root xfs.Root, filename string) (string, error) {
+	if !IsEnabled() {
+		return "", nil
+	}
+
+	f, err := xfs.OpenFile(root, filename, unix.O_RDONLY|unix.O_NOFOLLOW, 0)
+	if err != nil {
+		return "", err
+	}
+	defer f.Close() //nolint:errcheck
+
+	osf, err := xfs.AsOSFile(f, filename)
+	if err != nil {
+		return "", err
+	}
+	defer osf.Close() //nolint:errcheck
+
+	label, err := xattr.FGet(osf, "security.selinux")
+	if err != nil {
+		return "", err
+	}
+
+	if label == nil {
+		return "", nil
+	}
+
+	return string(bytes.Trim(label, "\x00\n")), nil
+}
+
+// FSetLabel sets label for file, directory or symlink (not following symlinks) using provided root.
+// It does not perform the operation in case SELinux is disabled, provided label is empty or already set.
+func FSetLabel(root xfs.Root, filename string, label string, excludeLabels ...string) error {
+	if label == "" || !IsEnabled() {
+		return nil
+	}
+
+	currentLabel, err := FGetLabel(root, filename)
+	if err != nil {
+		return err
+	}
+
+	// Skip extra FS transactions when labels are okay.
+	if currentLabel == label {
+		return nil
+	}
+
+	// Skip setting label if it's in excludeLabels.
+	if currentLabel != "" && slices.Contains(excludeLabels, currentLabel) {
+		return nil
+	}
+
+	f, err := xfs.Open(root, filename)
+	if err != nil {
+		return err
+	}
+	defer f.Close() //nolint:errcheck
+
+	osf, err := xfs.AsOSFile(f, filename)
+	if err != nil {
+		return err
+	}
+	defer osf.Close() //nolint:errcheck
+
+	// We use FGet/FSet so that we manipulate label on the exact path, not the symlink target.
+	if err := xattr.FSet(osf, "security.selinux", []byte(label)); err != nil {
 		return err
 	}
 

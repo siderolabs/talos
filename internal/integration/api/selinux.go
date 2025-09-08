@@ -117,8 +117,8 @@ func (suite *SELinuxSuite) TestFileMountLabels() {
 		"/var/log/containers":           "system_u:object_r:containers_log_t:s0",
 		"/var/log/pods":                 "system_u:object_r:pods_log_t:s0",
 		// Mounts and runtime-generated files
-		constants.SystemEtcPath: constants.EtcSelinuxLabel,
 		"/etc":                  constants.EtcSelinuxLabel,
+		constants.SystemEtcPath: constants.EtcSelinuxLabel,
 	}
 
 	// Only running on controlplane
