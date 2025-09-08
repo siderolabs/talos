@@ -154,12 +154,7 @@ func (t *Trustd) Runner(r runtime.Runtime) (runner.Runner, error) {
 		{Type: "bind", Destination: filepath.Dir(constants.TrustdRuntimeSocketPath), Source: filepath.Dir(constants.TrustdRuntimeSocketPath), Options: []string{"rbind", "ro"}},
 	}
 
-	if _, err := os.Stat("/usr/etc/in-container"); err == nil {
-		mounts = append(
-			mounts,
-			specs.Mount{Type: "bind", Destination: "/usr/etc/in-container", Source: "/usr/etc/in-container", Options: []string{"bind", "ro"}},
-		)
-	}
+	mounts = bindMountContainerMarker(mounts)
 
 	env := environment.Get(r.Config())
 	env = append(env,

@@ -413,7 +413,20 @@ func setSchedulingPolicy(p *processRunner, pid int, schedulingPolicy uint) error
 	return nil
 }
 
+//nolint:gocyclo
 func (p *processRunner) run(eventSink events.Recorder) error {
+	cg, err := cgroup.CreateCgroup(p.opts.CgroupPath)
+	if err != nil {
+		return fmt.Errorf("error creating cgroup: %w", err)
+	}
+
+	defer func() {
+		err := cg.Delete()
+		if err != nil {
+			eventSink(events.StateStopping, "Failed to remove cgroup for %s, %s", p, err)
+		}
+	}()
+
 	cmdWrapper, err := p.build()
 	if err != nil {
 		return fmt.Errorf("error building command: %w", err)

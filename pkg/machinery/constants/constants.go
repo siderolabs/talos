@@ -1291,6 +1291,9 @@ const (
 
 	// SideroV1KeysDir is the default directory containing user PGP keys for SideroV1 auth.
 	SideroV1KeysDir = "keys"
+
+	// ContainerMarkerFilePath is the path to the file added to container builds of Talos for platform detection.
+	ContainerMarkerFilePath = "/usr/etc/in-container"
 )
 
 // See https://linux.die.net/man/3/klogctl

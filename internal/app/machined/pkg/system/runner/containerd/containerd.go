@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"os"
 	"syscall"
 	"time"
 
@@ -167,6 +168,21 @@ func (c *containerdRunner) Run(eventSink events.Recorder) error {
 	if err != nil {
 		return fmt.Errorf("error creating log: %w", err)
 	}
+
+	cg, err := cgroup.CreateCgroup(c.opts.CgroupPath)
+	if err != nil {
+		return fmt.Errorf("error creating cgroup: %w", err)
+	}
+
+	// If the task is not cleaned up by containerd or another error
+	// happens during the lifecycle, remove the cgroup before exiting
+	// if one still exists
+	defer func() {
+		err := cg.Delete()
+		if err != nil && !os.IsNotExist(err) {
+			eventSink(events.StateStopping, "Failed to remove cgroup for %s, %s", c, err)
+		}
+	}()
 
 	defer logW.Close() //nolint:errcheck
 

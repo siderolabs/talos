@@ -9,8 +9,10 @@ import (
 	"os"
 	"path/filepath"
 
+	specs "github.com/opencontainers/runtime-spec/specs-go"
 	"golang.org/x/sys/unix"
 
+	"github.com/siderolabs/talos/internal/pkg/containermode"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
 
@@ -33,4 +35,16 @@ func prepareRootfs(id string) error {
 	}
 
 	return nil
+}
+
+// bindMountContainerMarker bind-mounts a file used for container detection into a container service.
+func bindMountContainerMarker(mounts []specs.Mount) []specs.Mount {
+	if containermode.InContainer() {
+		mounts = append(
+			mounts,
+			specs.Mount{Type: "bind", Destination: constants.ContainerMarkerFilePath, Source: constants.ContainerMarkerFilePath, Options: []string{"bind", "ro"}},
+		)
+	}
+
+	return mounts
 }

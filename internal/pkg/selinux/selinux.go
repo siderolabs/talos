@@ -17,6 +17,7 @@ import (
 	"github.com/pkg/xattr"
 	"github.com/siderolabs/go-procfs/procfs"
 
+	"github.com/siderolabs/talos/internal/pkg/containermode"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
 
@@ -28,7 +29,7 @@ var policy []byte
 // otherwise it returns false. It also ensures we're not in a container.
 // By default SELinux is disabled.
 var IsEnabled = sync.OnceValue(func() bool {
-	if _, err := os.Stat("/usr/etc/in-container"); err == nil {
+	if containermode.InContainer() {
 		return false
 	}
 
