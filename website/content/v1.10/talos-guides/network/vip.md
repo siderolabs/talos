@@ -107,3 +107,25 @@ Since VIP functionality relies on `etcd` for elections, the shared IP will not c
 alive until after you have bootstrapped Kubernetes.
 
 Don't use the VIP as the `endpoint` in the `talosconfig`, as the VIP is bound to `etcd` and `kube-apiserver` health, and you will not be able to recover from a failure of either of those components using Talos API.
+
+## VIP Failover Behavior
+
+When the control plane node holding the VIP shuts down gracefully, the address is reassigned almost instantly, ensuring uninterrupted access.
+
+However, if the node fails unexpectedly, for example, due to a power loss or crash, the failover process takes longer, typically up to a minute.
+
+This slower response is by design as Talos coordinates VIP ownership through an etcd election process that must balance speed with safety.
+
+The delay ensures that a temporary network hiccup or brief pause in communication does not lead to multiple nodes believing they own the VIP at the same time, a dangerous split-brain scenario.
+
+By waiting out the election timeout before reassigning the VIP, Talos guarantees that only one node will advertise the shared IP, even if it means failover is slower in sudden failure scenarios.
+
+### Impact on Workloads
+
+A VIP failover impacts only external access to the cluster, such as when you run `kubectl` against the API server.
+
+Inside the cluster, workloads continue to function normally.
+With the default configuration using [KubePrism and discovery]({{< relref "../../kubernetes-guides/configuration/kubeprism.md" >}}), pods can still reach the Kubernetes API through service discovery, so they remain unaffected by the VIP status.
+
+For external clients, however, a failover can briefly interrupt connectivity.
+Long-lived connections, such as HTTP/2 sessions, may be broken when the VIP moves to a new node, and clients should be ready to reconnect once the failover is complete.
