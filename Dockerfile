@@ -441,11 +441,11 @@ ARG GOAMD64
 RUN --mount=type=cache,target=/.cache,id=talos/.cache GOOS=linux GOARCH=amd64 GOAMD64=${GOAMD64} go build ${GO_BUILDFLAGS} -ldflags "${GO_LDFLAGS} ${GO_MACHINED_LDFLAGS} -dumpdep" ./internal/app/machined \
     |& go tool github.com/aarzilli/whydeadcode > deadcode.txt
 RUN if [[ -s deadcode.txt ]]; then \
-        echo "Dead code elimination problem found:"; \
-        cat deadcode.txt; \
-        exit 1; \
+    echo "Dead code elimination problem found:"; \
+    cat deadcode.txt; \
+    exit 1; \
     else \
-        echo "No dead code elimination issues found"; \
+    echo "No dead code elimination issues found"; \
     fi
 
 # The init target builds the init binary.

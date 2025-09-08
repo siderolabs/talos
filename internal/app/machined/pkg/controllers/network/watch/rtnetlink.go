@@ -30,11 +30,7 @@ func NewRtNetlink(trigger Trigger, groups uint32) (Watcher, error) {
 		return nil, fmt.Errorf("error dialing watch socket: %w", err)
 	}
 
-	watcher.wg.Add(1)
-
-	go func() {
-		defer watcher.wg.Done()
-
+	watcher.wg.Go(func() {
 		for {
 			_, _, watchErr := watcher.conn.Receive()
 			if watchErr != nil {
@@ -43,7 +39,7 @@ func NewRtNetlink(trigger Trigger, groups uint32) (Watcher, error) {
 
 			trigger.QueueReconcile()
 		}
-	}()
+	})
 
 	return watcher, nil
 }

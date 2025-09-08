@@ -7,14 +7,12 @@
 package xfs_test
 
 import (
-	"bytes"
 	"os"
 	"testing"
 
-	"github.com/blang/semver/v4"
 	"github.com/stretchr/testify/require"
-	"golang.org/x/sys/unix"
 
+	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
 	"github.com/siderolabs/talos/internal/pkg/xfs"
 	"github.com/siderolabs/talos/internal/pkg/xfs/fsopen"
 	"github.com/siderolabs/talos/internal/pkg/xfs/opentree"
@@ -40,8 +38,7 @@ func TestOpentree(t *testing.T) {
 		require.NoError(t, err)
 
 		t.Cleanup(func() {
-			err := fs.Close()
-			require.NoError(t, err)
+			require.NoError(t, root.Close())
 		})
 
 		testFilesystem(t, root, root)
@@ -61,8 +58,8 @@ func TestOpentree(t *testing.T) {
 		require.NoError(t, err)
 
 		t.Cleanup(func() {
-			err := fs.UnmountFrom(roRoot.Shadow)
-			require.NoError(t, err)
+			require.NoError(t, roRoot.Close())
+			require.NoError(t, fs.UnmountFrom(roRoot.Shadow))
 		})
 
 		bfs := opentree.NewFromPath(roRoot.Shadow)
@@ -73,8 +70,7 @@ func TestOpentree(t *testing.T) {
 		require.NoError(t, err)
 
 		t.Cleanup(func() {
-			err := fs.Close()
-			require.NoError(t, err)
+			require.NoError(t, rwRoot.Close())
 		})
 
 		testFilesystem(t, rwRoot, roRoot)
@@ -83,7 +79,10 @@ func TestOpentree(t *testing.T) {
 	t.Run("FileDescriptor", func(t *testing.T) {
 		t.Parallel()
 
-		if !hasKernel(t, "6.15.0") {
+		ok, err := runtime.KernelCapabilities().OpentreeOnAnonymousFS()
+		require.NoError(t, err)
+
+		if !ok {
 			t.Skip("OpenTree on Anonymous FS requires kernel 6.15.0+")
 		}
 
@@ -91,8 +90,12 @@ func TestOpentree(t *testing.T) {
 
 		roRoot := &xfs.UnixRoot{FS: fs}
 
-		err := roRoot.OpenFS()
+		err = roRoot.OpenFS()
 		require.NoError(t, err)
+
+		t.Cleanup(func() {
+			require.NoError(t, roRoot.Close())
+		})
 
 		fd, err := roRoot.Fd()
 		require.NoError(t, err)
@@ -105,27 +108,9 @@ func TestOpentree(t *testing.T) {
 		require.NoError(t, err)
 
 		t.Cleanup(func() {
-			err := fs.Close()
-			require.NoError(t, err)
+			require.NoError(t, fs.Close())
 		})
 
 		testFilesystem(t, rwRoot, roRoot)
 	})
-}
-
-func hasKernel(tb testing.TB, kernelVersion string) bool {
-	tb.Helper()
-
-	capabilityAt, err := semver.Parse(kernelVersion)
-	require.NoError(tb, err)
-
-	buf := new(unix.Utsname)
-
-	err = unix.Uname(buf)
-	require.NoError(tb, err)
-
-	current, err := semver.Parse(string(bytes.TrimRight(buf.Release[:], "\x00")))
-	require.NoError(tb, err)
-
-	return current.GE(capabilityAt)
 }

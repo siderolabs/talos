@@ -162,7 +162,7 @@ func testFilesystem(t *testing.T, rwRoot xfs.Root, roRoot xfs.Root) {
 	t.Run("Stat", func(t *testing.T) {
 		t.Parallel()
 
-		name := filepath.Join(testDir, "stat.d/stat.test")
+		name := filepath.Join(testDir, "stat.d", "stat.test")
 
 		touchTree(t, rwRoot, name)
 

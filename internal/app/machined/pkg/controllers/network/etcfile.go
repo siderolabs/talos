@@ -27,6 +27,8 @@ import (
 
 	efiles "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/files"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
+	"github.com/siderolabs/talos/internal/pkg/mount/v3"
+	"github.com/siderolabs/talos/internal/pkg/xfs"
 	talosconfig "github.com/siderolabs/talos/pkg/machinery/config"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/resources/config"
@@ -36,8 +38,11 @@ import (
 
 // EtcFileController creates /etc/hostname and /etc/resolv.conf files based on finalized network configuration.
 type EtcFileController struct {
-	PodResolvConfPath string
-	V1Alpha1Mode      runtime.Mode
+	V1Alpha1Mode runtime.Mode
+
+	EtcRoot          xfs.Root
+	BindMountTarget  string
+	bindMountCreated bool
 }
 
 // Name implements controller.Controller interface.
@@ -94,7 +99,7 @@ func (ctrl *EtcFileController) Outputs() []controller.Output {
 // Run implements controller.Controller interface.
 //
 //nolint:gocyclo,cyclop
-func (ctrl *EtcFileController) Run(ctx context.Context, r controller.Runtime, _ *zap.Logger) error {
+func (ctrl *EtcFileController) Run(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
 	for {
 		select {
 		case <-ctx.Done():
@@ -168,15 +173,23 @@ func (ctrl *EtcFileController) Run(ctx context.Context, r controller.Runtime, _ 
 				dnsServers = resolverStatus.TypedSpec().DNSServers
 			}
 
+			src := "resolv.conf"
+			dst := filepath.Join(ctrl.BindMountTarget, src)
+
 			conf := renderResolvConf(slices.All(dnsServers), resolverStatus.TypedSpec().SearchDomains)
 
-			if err = os.MkdirAll(filepath.Dir(ctrl.PodResolvConfPath), 0o755); err != nil {
-				return fmt.Errorf("error creating pod resolv.conf dir: %w", err)
+			if err := efiles.UpdateFile(ctrl.EtcRoot, src, conf, 0o644, constants.EtcSelinuxLabel); err != nil {
+				return fmt.Errorf("error writing pod resolv.conf: %w", err)
 			}
 
-			err = efiles.UpdateFile(ctrl.PodResolvConfPath, conf, 0o644, constants.EtcSelinuxLabel)
-			if err != nil {
-				return fmt.Errorf("error writing pod resolv.conf: %w", err)
+			if ctrl.EtcRoot.FSType() != "os" {
+				if !ctrl.bindMountCreated {
+					if err := createBindMountFileFd(ctrl.EtcRoot, src, dst, 0o644); err != nil {
+						return fmt.Errorf("failed to create shadow bind mount %q -> %q: %w", src, dst, err)
+					}
+
+					ctrl.bindMountCreated = true
+				}
 			}
 		}
 
@@ -265,4 +278,33 @@ func (ctrl *EtcFileController) renderHosts(hostnameStatus *network.HostnameStatu
 	}
 
 	return buf.Bytes(), nil
+}
+
+// createBindMountFileFd creates a common way to create a writable source file with a
+// bind mounted destination.
+func createBindMountFileFd(root xfs.Root, src, dst string, mode os.FileMode) (err error) {
+	if err := os.MkdirAll(filepath.Dir(dst), 0o755); err != nil {
+		return fmt.Errorf("error creating bind mount dir for resolv.conf: %w", err)
+	}
+
+	f, err := os.OpenFile(dst, os.O_CREATE|os.O_WRONLY, 0o644)
+	if err != nil {
+		return fmt.Errorf("error creating bind mount target %q for resolv.conf: %w", dst, err)
+	}
+
+	if err := f.Close(); err != nil {
+		return fmt.Errorf("error closing bind mount target %q for resolv.conf: %w", dst, err)
+	}
+
+	if err = xfs.MkdirAll(root, filepath.Dir(src), 0o755); err != nil {
+		return err
+	}
+
+	fsrc, err := xfs.OpenFile(root, src, os.O_WRONLY|os.O_CREATE, mode)
+	if err != nil {
+		return err
+	}
+	defer fsrc.Close() //nolint:errcheck
+
+	return mount.BindReadonlyFd(int(fsrc.Fd()), dst)
 }

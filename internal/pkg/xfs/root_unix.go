@@ -75,7 +75,7 @@ func (root *UnixRoot) Mkdir(name string, perm os.FileMode) error {
 
 // Open opens a file in the root filesystem with the specified name in read-only mode.
 func (root *UnixRoot) Open(name string) (fs.File, error) {
-	return root.OpenFile(name, os.O_RDONLY, 0)
+	return root.OpenFile(name, unix.O_RDONLY, 0)
 }
 
 // OpenFile opens a file in the root filesystem with the specified name, flags, and permissions.

@@ -13,7 +13,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cosi-project/runtime/pkg/controller/runtime"
+	osruntime "github.com/cosi-project/runtime/pkg/controller/runtime"
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
@@ -24,6 +24,9 @@ import (
 	"go.uber.org/zap/zaptest"
 
 	filesctrl "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/files"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
+	"github.com/siderolabs/talos/internal/pkg/xfs"
+	"github.com/siderolabs/talos/internal/pkg/xfs/opentree"
 	"github.com/siderolabs/talos/pkg/machinery/resources/files"
 )
 
@@ -32,14 +35,14 @@ type EtcFileSuite struct {
 
 	state state.State
 
-	runtime *runtime.Runtime
+	runtime *osruntime.Runtime
 	wg      sync.WaitGroup
 
 	ctx       context.Context //nolint:containedctx
 	ctxCancel context.CancelFunc
 
-	etcPath    string
-	shadowPath string
+	etcPath string
+	etcRoot xfs.Root
 }
 
 func (suite *EtcFileSuite) SetupTest() {
@@ -49,42 +52,65 @@ func (suite *EtcFileSuite) SetupTest() {
 
 	var err error
 
-	suite.runtime, err = runtime.NewRuntime(suite.state, zaptest.NewLogger(suite.T()))
+	suite.runtime, err = osruntime.NewRuntime(suite.state, zaptest.NewLogger(suite.T()))
 	suite.Require().NoError(err)
 
 	suite.startRuntime()
 
+	ok, err := runtime.KernelCapabilities().OpentreeOnAnonymousFS()
+	suite.Require().NoError(err)
+
 	suite.etcPath = suite.T().TempDir()
-	suite.shadowPath = suite.T().TempDir()
+
+	if ok {
+		suite.etcRoot = &xfs.UnixRoot{FS: opentree.NewFromPath(suite.T().TempDir())}
+	} else {
+		suite.etcRoot = &xfs.OSRoot{Shadow: suite.T().TempDir()}
+	}
+
+	suite.Require().NoError(suite.etcRoot.OpenFS())
 
 	suite.Require().NoError(
 		suite.runtime.RegisterController(
 			&filesctrl.EtcFileController{
-				EtcPath:    suite.etcPath,
-				ShadowPath: suite.shadowPath,
+				EtcPath: suite.etcPath,
+				EtcRoot: suite.etcRoot,
 			},
 		),
 	)
 }
 
 func (suite *EtcFileSuite) startRuntime() {
-	suite.wg.Add(1)
-
-	go func() {
-		defer suite.wg.Done()
-
+	suite.wg.Go(func() {
 		suite.Assert().NoError(suite.runtime.Run(suite.ctx))
-	}()
+	})
 }
 
-func (suite *EtcFileSuite) assertEtcFile(filename, contents string, expectedVersion resource.Version) error {
-	b, err := os.ReadFile(filepath.Join(suite.etcPath, filename))
+func (suite *EtcFileSuite) assertFileContents(root xfs.Root, filename, contents string) error {
+	rwb, err := xfs.ReadFile(root, filename)
 	if err != nil {
 		return retry.ExpectedError(err)
 	}
 
-	if string(b) != contents {
-		return retry.ExpectedErrorf("contents don't match %q != %q", string(b), contents)
+	if string(rwb) != contents {
+		return retry.ExpectedErrorf("contents for RW file %q don't match %q != %q", filename, string(rwb), contents)
+	}
+
+	rob, err := os.ReadFile(filepath.Join(suite.etcPath, filename))
+	if err != nil {
+		return retry.ExpectedError(err)
+	}
+
+	if string(rob) != contents {
+		return retry.ExpectedErrorf("contents for RO file %q don't match %q != %q", filepath.Join(suite.etcPath, filename), string(rob), contents)
+	}
+
+	return nil
+}
+
+func (suite *EtcFileSuite) assertEtcFile(filename, contents string, expectedVersion resource.Version) error {
+	if err := suite.assertFileContents(suite.etcRoot, filename, contents); err != nil {
+		return err // Already wrapped in the retry.ExpectedError
 	}
 
 	r, err := safe.ReaderGet[*files.EtcFileStatus](suite.ctx, suite.state, resource.NewMetadata(files.NamespaceName, files.EtcFileStatusType, filename, resource.VersionUndefined))
@@ -150,6 +176,8 @@ func (suite *EtcFileSuite) TearDownTest() {
 	suite.ctxCancel()
 
 	suite.wg.Wait()
+
+	suite.etcRoot.Close() //nolint:errcheck
 }
 
 func TestEtcFileSuite(t *testing.T) {

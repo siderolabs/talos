@@ -28,6 +28,9 @@ import (
 
 	netctrl "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/network"
 	v1alpha1runtime "github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
+	"github.com/siderolabs/talos/internal/pkg/mount/v3"
+	"github.com/siderolabs/talos/internal/pkg/xfs"
+	"github.com/siderolabs/talos/internal/pkg/xfs/opentree"
 	"github.com/siderolabs/talos/pkg/machinery/config/container"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
 	"github.com/siderolabs/talos/pkg/machinery/resources/config"
@@ -52,7 +55,9 @@ type EtcFileConfigSuite struct {
 	resolverStatus *network.ResolverStatus
 	hostDNSConfig  *network.HostDNSConfig
 
+	bindMountTarget   string
 	podResolvConfPath string
+	etcRoot           xfs.Root
 }
 
 func (suite *EtcFileConfigSuite) SetupTest() {
@@ -67,13 +72,25 @@ func (suite *EtcFileConfigSuite) SetupTest() {
 
 	suite.startRuntime()
 
-	suite.podResolvConfPath = filepath.Join(suite.T().TempDir(), "resolv.conf")
+	ok, err := v1alpha1runtime.KernelCapabilities().OpentreeOnAnonymousFS()
+	suite.Require().NoError(err)
 
+	if ok {
+		suite.etcRoot = &xfs.UnixRoot{FS: opentree.NewFromPath(suite.T().TempDir())}
+		suite.bindMountTarget = suite.T().TempDir()
+		suite.podResolvConfPath = filepath.Join(suite.bindMountTarget, "resolv.conf")
+	} else {
+		suite.etcRoot = &xfs.OSRoot{Shadow: suite.T().TempDir()}
+		suite.podResolvConfPath = filepath.Join(suite.etcRoot.Source(), "resolv.conf")
+	}
+
+	suite.Require().NoError(suite.etcRoot.OpenFS())
 	suite.Assert().NoFileExists(suite.podResolvConfPath)
 
 	suite.Require().NoError(suite.runtime.RegisterController(&netctrl.EtcFileController{
-		PodResolvConfPath: suite.podResolvConfPath,
-		V1Alpha1Mode:      v1alpha1runtime.ModeMetal,
+		V1Alpha1Mode:    v1alpha1runtime.ModeMetal,
+		EtcRoot:         suite.etcRoot,
+		BindMountTarget: suite.bindMountTarget,
 	}))
 
 	u, err := url.Parse("https://foo:6443")
@@ -133,13 +150,9 @@ func (suite *EtcFileConfigSuite) SetupTest() {
 }
 
 func (suite *EtcFileConfigSuite) startRuntime() {
-	suite.wg.Add(1)
-
-	go func() {
-		defer suite.wg.Done()
-
+	suite.wg.Go(func() {
 		suite.Assert().NoError(suite.runtime.Run(suite.ctx))
-	}()
+	})
 }
 
 type etcFileContents struct {
@@ -312,10 +325,20 @@ func (suite *EtcFileConfigSuite) TearDownTest() {
 	suite.ctxCancel()
 
 	if _, err := os.Lstat(suite.podResolvConfPath); err == nil {
-		suite.Require().NoError(os.Remove(suite.podResolvConfPath))
+		if suite.etcRoot.FSType() == "os" {
+			suite.Require().NoError(os.Remove(suite.podResolvConfPath))
+		} else {
+			suite.Require().NoError(mount.SafeUnmount(context.Background(), nil, suite.podResolvConfPath))
+		}
 	}
 
 	suite.wg.Wait()
+
+	if suite.etcRoot != nil {
+		suite.Require().NoError(os.RemoveAll(suite.bindMountTarget))
+
+		suite.etcRoot.Close() //nolint:errcheck
+	}
 }
 
 func TestEtcFileConfigSuite(t *testing.T) {

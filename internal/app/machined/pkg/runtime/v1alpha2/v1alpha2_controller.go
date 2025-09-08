@@ -40,6 +40,8 @@ import (
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
 	runtimelogging "github.com/siderolabs/talos/internal/app/machined/pkg/runtime/logging"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system"
+	"github.com/siderolabs/talos/internal/pkg/xfs"
+	"github.com/siderolabs/talos/internal/pkg/xfs/fsopen"
 	"github.com/siderolabs/talos/pkg/logging"
 	talosconfig "github.com/siderolabs/talos/pkg/machinery/config/config"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
@@ -86,6 +88,63 @@ func (ctrl *Controller) Run(ctx context.Context, drainer *runtime.Drainer) error
 	if err != nil {
 		return err
 	}
+
+	var (
+		etcRoot                xfs.Root
+		networkEtcRoot         xfs.Root
+		networkBindMountTarget string
+	)
+
+	etcRoot = &xfs.UnixRoot{
+		FS: fsopen.New(
+			"tmpfs",
+			fsopen.WithStringParameter("mode", "0755"),
+			fsopen.WithStringParameter("size", "8M"),
+		),
+	}
+
+	networkEtcRoot = &xfs.UnixRoot{
+		FS: fsopen.New(
+			"tmpfs",
+			fsopen.WithStringParameter("mode", "0755"),
+			fsopen.WithStringParameter("size", "4M"),
+		),
+	}
+
+	networkBindMountTarget = constants.SystemResolvedPath
+
+	// While running in container, we don't have control over kernel version
+	// shipped with the machine. If the kernel does not support open_tree syscall
+	// on anonymous filesystem file descriptors, we need to fallback to the classic,
+	// less secure mode. This capability was added in kernel 6.15.0.
+	if ctrl.v1alpha1Runtime.State().Platform().Mode().InContainer() {
+		opentreeOnAnonymous, err := runtime.KernelCapabilities().OpentreeOnAnonymousFS()
+		if err != nil {
+			return err
+		}
+
+		if !opentreeOnAnonymous {
+			etcRoot = &xfs.OSRoot{
+				Shadow: constants.SystemEtcPath,
+			}
+
+			networkEtcRoot = &xfs.OSRoot{
+				Shadow: constants.SystemResolvedPath,
+			}
+
+			networkBindMountTarget = ""
+		}
+	}
+
+	if err := etcRoot.OpenFS(); err != nil {
+		return fmt.Errorf("failed to open etc root: %w", err)
+	}
+	defer etcRoot.Close() //nolint:errcheck
+
+	if err := networkEtcRoot.OpenFS(); err != nil {
+		return fmt.Errorf("failed to open network etc root: %w", err)
+	}
+	defer networkEtcRoot.Close() //nolint:errcheck
 
 	for _, c := range []controller.Controller{
 		&block.DevicesController{
@@ -158,10 +217,13 @@ func (ctrl *Controller) Run(ctx context.Context, drainer *runtime.Drainer) error
 		&etcd.MemberController{},
 		&files.CRIBaseRuntimeSpecController{},
 		&files.CRIConfigPartsController{},
-		&files.CRIRegistryConfigController{},
+		&files.CRIRegistryConfigController{
+			EtcRoot: etcRoot,
+			EtcPath: "/etc",
+		},
 		&files.EtcFileController{
-			EtcPath:    "/etc",
-			ShadowPath: constants.SystemEtcPath,
+			EtcRoot: etcRoot,
+			EtcPath: "/etc",
 		},
 		&files.IQNController{
 			V1Alpha1Mode: ctrl.v1alpha1Runtime.State().Platform().Mode(),
@@ -245,8 +307,9 @@ func (ctrl *Controller) Run(ctx context.Context, drainer *runtime.Drainer) error
 		},
 		&network.DNSUpstreamController{},
 		&network.EtcFileController{
-			PodResolvConfPath: constants.PodResolvConfPath,
-			V1Alpha1Mode:      ctrl.v1alpha1Runtime.State().Platform().Mode(),
+			EtcRoot:         networkEtcRoot,
+			BindMountTarget: networkBindMountTarget,
+			V1Alpha1Mode:    ctrl.v1alpha1Runtime.State().Platform().Mode(),
 		},
 		&network.EthernetConfigController{},
 		&network.EthernetSpecController{},
@@ -559,14 +622,10 @@ func (ctrl *Controller) updateLoggingConfig(ctx context.Context, dests []talosco
 	var wg sync.WaitGroup
 
 	for _, sender := range prevSenders {
-		wg.Add(1)
-
-		go func() {
-			defer wg.Done()
-
+		wg.Go(func() {
 			err := sender.Close(closeCtx)
 			ctrl.logger.Info("log sender closed", zap.Error(err))
-		}()
+		})
 	}
 
 	wg.Wait()

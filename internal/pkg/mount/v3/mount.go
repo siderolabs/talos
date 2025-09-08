@@ -32,3 +32,25 @@ func BindReadonly(src, dst string) error {
 
 	return nil
 }
+
+// BindReadonlyFd creates a common way to create a readonly bind mounted destination.
+func BindReadonlyFd(dfd int, dst string) error {
+	sourceFD, err := unix.OpenTree(dfd, "", unix.OPEN_TREE_CLONE|unix.OPEN_TREE_CLOEXEC|unix.AT_EMPTY_PATH)
+	if err != nil {
+		return fmt.Errorf("failed to opentree: %w", err)
+	}
+
+	defer unix.Close(sourceFD) //nolint:errcheck
+
+	if err := unix.MountSetattr(sourceFD, "", unix.AT_EMPTY_PATH, &unix.MountAttr{
+		Attr_set: unix.MOUNT_ATTR_RDONLY,
+	}); err != nil {
+		return fmt.Errorf("failed to set mount attribute: %w", err)
+	}
+
+	if err := unix.MoveMount(sourceFD, "", unix.AT_FDCWD, dst, unix.MOVE_MOUNT_F_EMPTY_PATH); err != nil {
+		return fmt.Errorf("failed to move mount to %s: %w", dst, err)
+	}
+
+	return nil
+}
