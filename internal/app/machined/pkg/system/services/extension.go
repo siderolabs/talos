@@ -173,12 +173,7 @@ func (svc *Extension) Runner(r runtime.Runtime) (runner.Runner, error) {
 
 	mounts := append([]specs.Mount{}, svc.Spec.Container.Mounts...)
 
-	if _, err := os.Stat("/usr/etc/in-container"); err == nil {
-		mounts = append(
-			mounts,
-			specs.Mount{Type: "bind", Destination: "/usr/etc/in-container", Source: "/usr/etc/in-container", Options: []string{"bind", "ro"}},
-		)
-	}
+	mounts = bindMountContainerMarker(mounts)
 
 	envVars, err := svc.parseEnvironment()
 	if err != nil {

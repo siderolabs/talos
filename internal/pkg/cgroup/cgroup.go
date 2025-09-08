@@ -15,11 +15,26 @@
 package cgroup
 
 import (
+	"fmt"
+	"os"
 	"path/filepath"
 
 	"github.com/containerd/cgroups/v3"
+	"github.com/containerd/cgroups/v3/cgroup1"
 	"github.com/containerd/cgroups/v3/cgroup2"
+	"github.com/opencontainers/runtime-spec/specs-go"
+	"github.com/siderolabs/go-debug"
+	"github.com/siderolabs/go-pointer"
+
+	"github.com/siderolabs/talos/internal/pkg/containermode"
+	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
+
+// CommonCgroup interface presents a cgroup manager, be it v1 or v2
+// It can be further extended once new methods are required.
+type CommonCgroup interface {
+	Delete() error
+}
 
 var root = "/"
 
@@ -46,7 +61,7 @@ func Root() string {
 	return root
 }
 
-// Path returns the path to the cgroup.
+// Path returns the path to the
 //
 // This function handles the case when the cgroups are nested.
 func Path(cgroupPath string) string {
@@ -55,4 +70,161 @@ func Path(cgroupPath string) string {
 	}
 
 	return filepath.Join(root, cgroupPath)
+}
+
+func zeroIfRace[T any](v T) T {
+	if debug.RaceEnabled {
+		var zeroT T
+
+		return zeroT
+	}
+
+	return v
+}
+
+//nolint:gocyclo
+func getCgroupV2Resources(name string) *cgroup2.Resources {
+	switch name {
+	case constants.CgroupInit:
+		return &cgroup2.Resources{
+			Memory: &cgroup2.Memory{
+				Min: pointer.To[int64](constants.CgroupInitReservedMemory),
+				Low: pointer.To[int64](constants.CgroupInitReservedMemory * 2),
+			},
+			CPU: &cgroup2.CPU{
+				Weight: pointer.To[uint64](MillicoresToCPUWeight(MilliCores(constants.CgroupInitMillicores))),
+			},
+		}
+	case constants.CgroupSystem:
+		return &cgroup2.Resources{
+			Memory: &cgroup2.Memory{
+				Min: pointer.To[int64](constants.CgroupSystemReservedMemory),
+				Low: pointer.To[int64](constants.CgroupSystemReservedMemory * 2),
+			},
+			CPU: &cgroup2.CPU{
+				Weight: pointer.To[uint64](MillicoresToCPUWeight(MilliCores(constants.CgroupSystemMillicores))),
+			},
+		}
+	case constants.CgroupSystemRuntime:
+		return &cgroup2.Resources{
+			Memory: &cgroup2.Memory{
+				Min: pointer.To[int64](constants.CgroupSystemRuntimeReservedMemory),
+				Low: pointer.To[int64](constants.CgroupSystemRuntimeReservedMemory * 2),
+			},
+			CPU: &cgroup2.CPU{
+				Weight: pointer.To[uint64](MillicoresToCPUWeight(MilliCores(constants.CgroupSystemRuntimeMillicores))),
+			},
+		}
+	case constants.CgroupUdevd:
+		return &cgroup2.Resources{
+			Memory: &cgroup2.Memory{
+				Min: pointer.To[int64](constants.CgroupUdevdReservedMemory),
+				Low: pointer.To[int64](constants.CgroupUdevdReservedMemory * 2),
+			},
+			CPU: &cgroup2.CPU{
+				Weight: pointer.To[uint64](MillicoresToCPUWeight(MilliCores(constants.CgroupUdevdMillicores))),
+			},
+		}
+	case constants.CgroupPodRuntimeRoot:
+		return &cgroup2.Resources{
+			CPU: &cgroup2.CPU{
+				Weight: pointer.To[uint64](MillicoresToCPUWeight(MilliCores(constants.CgroupPodRuntimeRootMillicores))),
+			},
+		}
+	case constants.CgroupPodRuntime:
+		return &cgroup2.Resources{
+			Memory: &cgroup2.Memory{
+				Min: pointer.To[int64](constants.CgroupPodRuntimeReservedMemory),
+				Low: pointer.To[int64](constants.CgroupPodRuntimeReservedMemory * 2),
+			},
+			CPU: &cgroup2.CPU{
+				Weight: pointer.To[uint64](MillicoresToCPUWeight(MilliCores(constants.CgroupPodRuntimeMillicores))),
+			},
+		}
+	case constants.CgroupKubelet:
+		return &cgroup2.Resources{
+			Memory: &cgroup2.Memory{
+				Min: pointer.To[int64](constants.CgroupKubeletReservedMemory),
+				Low: pointer.To[int64](constants.CgroupKubeletReservedMemory * 2),
+			},
+			CPU: &cgroup2.CPU{
+				Weight: pointer.To[uint64](MillicoresToCPUWeight(MilliCores(constants.CgroupKubeletMillicores))),
+			},
+		}
+	case constants.CgroupDashboard:
+		return &cgroup2.Resources{
+			Memory: &cgroup2.Memory{
+				Max: zeroIfRace(pointer.To[int64](constants.CgroupDashboardMaxMemory)),
+			},
+			CPU: &cgroup2.CPU{
+				Weight: pointer.To[uint64](MillicoresToCPUWeight(MilliCores(constants.CgroupDashboardMillicores))),
+			},
+		}
+	case constants.CgroupApid:
+		return &cgroup2.Resources{
+			Memory: &cgroup2.Memory{
+				Min:  pointer.To[int64](constants.CgroupApidReservedMemory),
+				Low:  pointer.To[int64](constants.CgroupApidReservedMemory * 2),
+				Max:  zeroIfRace(pointer.To[int64](constants.CgroupApidMaxMemory)),
+				Swap: pointer.To[int64](0),
+			},
+			CPU: &cgroup2.CPU{
+				Weight: pointer.To[uint64](MillicoresToCPUWeight(MilliCores(constants.CgroupApidMillicores))),
+			},
+		}
+	case constants.CgroupTrustd:
+		return &cgroup2.Resources{
+			Memory: &cgroup2.Memory{
+				Min:  pointer.To[int64](constants.CgroupTrustdReservedMemory),
+				Low:  pointer.To[int64](constants.CgroupTrustdReservedMemory * 2),
+				Max:  zeroIfRace(pointer.To[int64](constants.CgroupTrustdMaxMemory)),
+				Swap: pointer.To[int64](0),
+			},
+			CPU: &cgroup2.CPU{
+				Weight: pointer.To[uint64](MillicoresToCPUWeight(MilliCores(constants.CgroupTrustdMillicores))),
+			},
+		}
+	}
+
+	return &cgroup2.Resources{}
+}
+
+// CreateCgroup creates a cgroup, with resources limits if configured and supported.
+func CreateCgroup(name string) (CommonCgroup, error) {
+	resources := getCgroupV2Resources(name)
+
+	if containermode.InContainer() {
+		// don't attempt to set resources in container mode, as they might conflict with the parent cgroup tree
+		resources = &cgroup2.Resources{}
+	}
+
+	if cgroups.Mode() == cgroups.Unified {
+		cg, err := cgroup2.NewManager(constants.CgroupMountPath, Path(name), resources)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create cgroup: %w", err)
+		}
+
+		if name == constants.CgroupInit {
+			if err := cg.AddProc(uint64(os.Getpid())); err != nil {
+				return nil, fmt.Errorf("failed to move init process to cgroup: %w", err)
+			}
+		}
+
+		return cg, nil
+	}
+
+	cg, err := cgroup1.New(cgroup1.StaticPath(name), &specs.LinuxResources{})
+	if err != nil {
+		return nil, fmt.Errorf("failed to create cgroup: %w", err)
+	}
+
+	if name == constants.CgroupInit {
+		if err := cg.Add(cgroup1.Process{
+			Pid: os.Getpid(),
+		}); err != nil {
+			return nil, fmt.Errorf("failed to move init process to cgroup: %w", err)
+		}
+	}
+
+	return cg, nil
 }

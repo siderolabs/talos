@@ -34,6 +34,7 @@ import (
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/upcloud"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/vmware"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/vultr"
+	"github.com/siderolabs/talos/internal/pkg/containermode"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
 
@@ -67,7 +68,7 @@ const (
 
 // CurrentPlatform is a helper func for discovering the current platform.
 func CurrentPlatform() (p runtime.Platform, err error) {
-	if _, err := os.Stat("/usr/etc/in-container"); err == nil {
+	if containermode.InContainer() {
 		return newPlatform("container")
 	}
 
