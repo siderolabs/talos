@@ -1,3 +1,67 @@
+## [Talos 1.11.1](https://github.com/siderolabs/talos/releases/tag/v1.11.1) (2025-09-08)
+
+Welcome to the v1.11.1 release of Talos!
+
+
+
+Please try out the release binaries and report any issues at
+https://github.com/siderolabs/talos/issues.
+
+### Component Updates
+
+Linux: 6.12.45
+CoreDNS: 1.12.3
+
+Talos is built with Go 1.24.6.
+
+
+### Contributors
+
+* Andrey Smirnov
+* Markus Freitag
+* Olivier Doucet
+* Sammy ETUR
+
+### Changes
+<details><summary>6 commits</summary>
+<p>
+
+* [`ff8644cd2`](https://github.com/siderolabs/talos/commit/ff8644cd2efefe00ef469f180392eb9fa63b8a52) fix: correctly handle status-code 204
+* [`7d5fe2d0f`](https://github.com/siderolabs/talos/commit/7d5fe2d0f1d5761d5aba28c55999bd8222ef5e3f) feat: update Linux kernel (memcg_v1, ublk)
+* [`9e310a9dd`](https://github.com/siderolabs/talos/commit/9e310a9dd9e70669c46900f6950c29929a308261) fix: enable support for VMWare arm64
+* [`f7620f028`](https://github.com/siderolabs/talos/commit/f7620f02817b271686024799353b87f5f51c3cf7) feat: update CoreDNS to 1.12.3
+* [`01bf2f6f9`](https://github.com/siderolabs/talos/commit/01bf2f6f9d203dad55910bdde3539e883b138f8e) feat: add SOCKS5 proxy support to dynamic proxy dialer
+* [`8a578bc4a`](https://github.com/siderolabs/talos/commit/8a578bc4ac95fc543f0564281d1a6a54f3299061) feat: update Linux to 6.12.45
+</p>
+</details>
+
+### Changes from siderolabs/pkgs
+<details><summary>3 commits</summary>
+<p>
+
+* [`1a25681`](https://github.com/siderolabs/pkgs/commit/1a25681589e3ff788a02b3c7f69cd728cd85f9eb) feat: enable ublk support
+* [`95f0be4`](https://github.com/siderolabs/pkgs/commit/95f0be4ea210cb873568e1313f1cfc69500afbbc) fix: enable memcg v1
+* [`e1c333c`](https://github.com/siderolabs/pkgs/commit/e1c333cfd95deebaedfd9eed87daf8b728767001) feat: update Linux to 6.12.45
+</p>
+</details>
+
+### Dependency Changes
+
+* **cloud.google.com/go/compute/metadata**           v0.7.0 -> v0.8.0
+* **github.com/aws/aws-sdk-go-v2/config**            v1.29.17 -> v1.31.2
+* **github.com/aws/aws-sdk-go-v2/feature/ec2/imds**  v1.16.32 -> v1.18.4
+* **github.com/aws/smithy-go**                       v1.22.4 -> v1.22.5
+* **github.com/miekg/dns**                           v1.1.67 -> v1.1.68
+* **github.com/siderolabs/pkgs**                     v1.11.0-15-g2ac857a -> v1.11.0-18-g1a25681
+* **golang.org/x/net**                               v0.42.0 -> v0.43.0
+* **golang.org/x/sys**                               v0.34.0 -> v0.35.0
+* **golang.org/x/term**                              v0.33.0 -> v0.34.0
+* **golang.org/x/text**                              v0.27.0 -> v0.28.0
+* **google.golang.org/grpc**                         v1.73.0 -> v1.75.0
+* **google.golang.org/protobuf**                     v1.36.6 -> v1.36.8
+
+Previous release can be found at [v1.11.0](https://github.com/siderolabs/talos/releases/tag/v1.11.0)
+
 ## [Talos 1.11.0](https://github.com/siderolabs/talos/releases/tag/v1.11.0) (2025-09-01)
 
 Welcome to the v1.11.0 release of Talos!
