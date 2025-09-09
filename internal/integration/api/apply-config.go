@@ -200,6 +200,8 @@ func (suite *ApplyConfigSuite) TestApplyNoOpCRIPatch() {
 		suite.CleanupFailedPods,
 	)
 
+	suite.ClearConnectionRefused(suite.ctx, node)
+
 	// revert the patch
 	provider, err = suite.ReadConfigFromNode(nodeCtx)
 	suite.Require().NoErrorf(err, "failed to read existing config from node %q", node)
