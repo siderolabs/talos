@@ -1231,9 +1231,6 @@ const (
 	// SyslogListenSocketPath is the path to the syslog socket.
 	SyslogListenSocketPath = "/dev/log"
 
-	// MinimumGOAMD64Level is the minimum x86_64 microarchitecture level required by Talos.
-	MinimumGOAMD64Level = 2
-
 	// ConsoleLogErrorSuppressThreshold is the threshold for suppressing console log errors.
 	ConsoleLogErrorSuppressThreshold = 4
 
