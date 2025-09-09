@@ -7,7 +7,6 @@
 package cli
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	"os"
@@ -15,6 +14,7 @@ import (
 	"strings"
 
 	"github.com/hashicorp/go-multierror"
+	"gopkg.in/yaml.v3"
 
 	"github.com/siderolabs/talos/internal/integration/base"
 )
@@ -68,20 +68,18 @@ func (suite *MachineConfigSuite) TestGen() {
 // TestPatchPrintStdout tests the patch subcommand with output set to stdout
 // with multiple patches from the command line and from file.
 func (suite *MachineConfigSuite) TestPatchPrintStdout() {
-	patch1, err := json.Marshal([]map[string]any{
-		{
-			"op":    "replace",
-			"path":  "/cluster/clusterName",
-			"value": "replaced",
+	patch1, err := yaml.Marshal(map[string]any{
+		"cluster": map[string]any{
+			"clusterName": "replaced",
 		},
 	})
 	suite.Require().NoError(err)
 
-	patch2, err := json.Marshal([]map[string]any{
-		{
-			"op":    "replace",
-			"path":  "/cluster/controlPlane/endpoint",
-			"value": "replaced",
+	patch2, err := yaml.Marshal(map[string]any{
+		"cluster": map[string]any{
+			"controlPlane": map[string]any{
+				"endpoint": "https://replaced",
+			},
 		},
 	})
 	suite.Require().NoError(err)
@@ -112,7 +110,7 @@ func (suite *MachineConfigSuite) TestPatchPrintStdout() {
 			matchErr = multierror.Append(matchErr, errors.New("clusterName not replaced"))
 		}
 
-		if !strings.Contains(output, "endpoint: replaced") {
+		if !strings.Contains(output, "endpoint: https://replaced") {
 			matchErr = multierror.Append(matchErr, errors.New("endpoint not replaced"))
 		}
 
@@ -122,11 +120,9 @@ func (suite *MachineConfigSuite) TestPatchPrintStdout() {
 
 // TestPatchWriteToFile tests the patch subcommand with output set to a file.
 func (suite *MachineConfigSuite) TestPatchWriteToFile() {
-	patch1, err := json.Marshal([]map[string]any{
-		{
-			"op":    "replace",
-			"path":  "/cluster/clusterName",
-			"value": "replaced",
+	patch1, err := yaml.Marshal(map[string]any{
+		"cluster": map[string]any{
+			"clusterName": "replaced",
 		},
 	})
 	suite.Require().NoError(err)

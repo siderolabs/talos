@@ -204,17 +204,17 @@ func TestValidate(t *testing.T) {
 		{
 			name:          "invalid siderolink",
 			documents:     []config.Document{invalidSideroLinkCfg},
-			expectedError: "1 error occurred:\n\t* apiUrl is required\n\n",
+			expectedError: "1 error occurred:\n\t* SideroLinkConfig: apiUrl is required\n\n",
 		},
 		{
 			name:          "invalid v1alpha1",
 			documents:     []config.Document{invalidV1alpha1Config},
-			expectedError: "1 error occurred:\n\t* machine instructions are required\n\n",
+			expectedError: "1 error occurred:\n\t* v1alpha1.Config: 1 error occurred:\n\t* machine instructions are required\n\n\n\n",
 		},
 		{
 			name:          "invalid multi-doc",
 			documents:     []config.Document{invalidSideroLinkCfg, invalidV1alpha1Config},
-			expectedError: "2 errors occurred:\n\t* machine instructions are required\n\t* apiUrl is required\n\n",
+			expectedError: "2 errors occurred:\n\t* v1alpha1.Config: 1 error occurred:\n\t* machine instructions are required\n\n\n\t* SideroLinkConfig: apiUrl is required\n\n",
 		},
 	} {
 		t.Run(tt.name, func(t *testing.T) {

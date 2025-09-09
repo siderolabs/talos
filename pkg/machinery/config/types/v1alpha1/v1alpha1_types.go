@@ -692,8 +692,9 @@ type KubeletNodeIPConfig struct {
 
 // NetworkConfig represents the machine's networking config values.
 type NetworkConfig struct {
-	//   description: |
-	//     Used to statically set the hostname for the machine.
+	// docgen:nodoc
+	//
+	// Deprecated: use `HostnameConfig` instead.
 	NetworkHostname string `yaml:"hostname,omitempty"`
 	//   description: |
 	//     `interfaces` is used to define the network interface configuration.
@@ -2201,8 +2202,9 @@ type FeaturesConfig struct {
 	//   description: |
 	//     Enable role-based access control (RBAC).
 	RBAC *bool `yaml:"rbac,omitempty"`
-	//   description: |
-	//     Enable stable default hostname.
+	// docgen:nodoc
+	//
+	// Deprecated: use HostConfig instead.
 	StableHostname *bool `yaml:"stableHostname,omitempty"`
 	//   description: |
 	//    Configure Talos API access from Kubernetes pods.

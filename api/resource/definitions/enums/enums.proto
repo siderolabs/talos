@@ -64,6 +64,13 @@ enum NethelpersARPValidate {
   ARP_VALIDATE_ALL = 3;
 }
 
+// NethelpersAutoHostnameKind is a kind of automatically generated hostname.
+enum NethelpersAutoHostnameKind {
+  AUTO_HOSTNAME_KIND_OFF = 0;
+  AUTO_HOSTNAME_KIND_ADDR = 1;
+  AUTO_HOSTNAME_KIND_STABLE = 2;
+}
+
 // NethelpersBondMode is a bond mode.
 enum NethelpersBondMode {
   BOND_MODE_ROUNDROBIN = 0;

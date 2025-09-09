@@ -12,14 +12,15 @@ import (
 	"testing"
 	"time"
 
+	"github.com/siderolabs/go-pointer"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/siderolabs/talos/internal/integration/base"
-	machineapi "github.com/siderolabs/talos/pkg/machinery/api/machine"
 	"github.com/siderolabs/talos/pkg/machinery/client"
 	"github.com/siderolabs/talos/pkg/machinery/config/machine"
-	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
+	"github.com/siderolabs/talos/pkg/machinery/config/types/network"
+	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
 )
 
 // UpdateHostnameSuite verifies UpdateHostname API.
@@ -79,8 +80,7 @@ func (suite *UpdateHostnameSuite) TestUpdateHostname() {
 
 	suite.T().Logf("updating hostname of node %q to %q (IP: %s)", oldHostname, newHostname, nodeInternalIP)
 
-	err = suite.updateHostname(nodeCtx, newHostname)
-	suite.Require().NoError(err)
+	suite.updateHostname(nodeCtx, newHostname)
 
 	nodeReady := func(status corev1.ConditionStatus) bool {
 		return status == corev1.ConditionTrue
@@ -94,8 +94,7 @@ func (suite *UpdateHostnameSuite) TestUpdateHostname() {
 		suite.T().Logf("reverting hostname of node %q to %q (IP: %s)", newHostname, oldHostname, nodeInternalIP)
 
 		// revert the hostname back to the original one
-		err = suite.updateHostname(nodeCtx, oldHostname)
-		suite.Require().NoError(err)
+		suite.updateHostname(nodeCtx, oldHostname)
 
 		suite.T().Logf("waiting for node %q to be ready", oldHostname)
 
@@ -136,22 +135,12 @@ func (suite *UpdateHostnameSuite) TestUpdateHostname() {
 	suite.Require().NoError(err)
 }
 
-func (suite *UpdateHostnameSuite) updateHostname(nodeCtx context.Context, newHostname string) error {
-	nodeConfig, err := suite.ReadConfigFromNode(nodeCtx)
-	if err != nil {
-		return err
-	}
+func (suite *UpdateHostnameSuite) updateHostname(nodeCtx context.Context, newHostname string) {
+	hostnameConfig := network.NewHostnameConfigV1Alpha1()
+	hostnameConfig.ConfigAuto = pointer.To(nethelpers.AutoHostnameKindOff)
+	hostnameConfig.ConfigHostname = newHostname
 
-	bytes := suite.PatchV1Alpha1Config(nodeConfig, func(nodeConfigRaw *v1alpha1.Config) {
-		nodeConfigRaw.MachineConfig.MachineNetwork.NetworkHostname = newHostname
-	})
-
-	_, err = suite.Client.ApplyConfiguration(nodeCtx, &machineapi.ApplyConfigurationRequest{
-		Data: bytes,
-		Mode: machineapi.ApplyConfigurationRequest_NO_REBOOT,
-	})
-
-	return err
+	suite.PatchMachineConfig(nodeCtx, hostnameConfig)
 }
 
 func init() {

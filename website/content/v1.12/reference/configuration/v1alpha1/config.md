@@ -147,7 +147,6 @@ pods:
 {{< /highlight >}}</details> | |
 |`network` |<a href="#Config.machine.network">NetworkConfig</a> |Provides machine specific network configuration options. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 network:
-    hostname: worker-1 # Used to statically set the hostname for the machine.
     # `interfaces` is used to define the network interface configuration.
     interfaces:
         - interface: enp0s1 # The interface name.
@@ -682,7 +681,6 @@ NetworkConfig represents the machine's networking config values.
 {{< highlight yaml >}}
 machine:
     network:
-        hostname: worker-1 # Used to statically set the hostname for the machine.
         # `interfaces` is used to define the network interface configuration.
         interfaces:
             - interface: enp0s1 # The interface name.
@@ -793,7 +791,6 @@ machine:
 
 | Field | Type | Description | Value(s) |
 |-------|------|-------------|----------|
-|`hostname` |string |Used to statically set the hostname for the machine.  | |
 |`interfaces` |<a href="#Config.machine.network.interfaces.">[]Device</a> |`interfaces` is used to define the network interface configuration.<br>By default all network interfaces will attempt a DHCP discovery.<br>This can be further tuned through this configuration parameter. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 interfaces:
     - interface: enp0s1 # The interface name.
@@ -2155,7 +2152,6 @@ machine:
 | Field | Type | Description | Value(s) |
 |-------|------|-------------|----------|
 |`rbac` |bool |Enable role-based access control (RBAC).  | |
-|`stableHostname` |bool |Enable stable default hostname.  | |
 |`kubernetesTalosAPIAccess` |<a href="#Config.machine.features.kubernetesTalosAPIAccess">KubernetesTalosAPIAccessConfig</a> |Configure Talos API access from Kubernetes pods.<br><br>This feature is disabled if the feature config is not specified. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 kubernetesTalosAPIAccess:
     enabled: true # Enable Talos API access from Kubernetes pods.

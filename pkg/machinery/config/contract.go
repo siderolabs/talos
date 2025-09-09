@@ -177,3 +177,8 @@ func (contract *VersionContract) SecureBootEnrollEnforcementSupported() bool {
 func (contract *VersionContract) VolumeConfigEncryptionSupported() bool {
 	return contract.Greater(TalosVersion1_10)
 }
+
+// MultidocNetworkConfigSupported returns true if version of Talos supports multiple NetworkConfig documents.
+func (contract *VersionContract) MultidocNetworkConfigSupported() bool {
+	return contract.Greater(TalosVersion1_11)
+}

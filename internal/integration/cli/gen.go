@@ -7,7 +7,6 @@
 package cli
 
 import (
-	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -131,21 +130,6 @@ func (suite *GenSuite) TestGenConfigURLValidation() {
 		base.StderrShouldMatch(regexp.MustCompile(`\Qtry: "https://192.168.0.1:2000"`)))
 }
 
-// TestGenConfigPatchJSON6902 verifies that gen config --config-patch works with JSON patches.
-func (suite *GenSuite) TestGenConfigPatchJSON6902() {
-	patch, err := json.Marshal([]map[string]any{
-		{
-			"op":    "replace",
-			"path":  "/cluster/clusterName",
-			"value": "bar",
-		},
-	})
-
-	suite.Assert().NoError(err)
-
-	suite.testGenConfigPatch(patch)
-}
-
 // TestGenConfigPatchStrategic verifies that gen config --config-patch works with strategic merge patches.
 func (suite *GenSuite) TestGenConfigPatchStrategic() {
 	patch, err := yaml.Marshal(map[string]any{
@@ -153,13 +137,8 @@ func (suite *GenSuite) TestGenConfigPatchStrategic() {
 			"clusterName": "bar",
 		},
 	})
+	suite.Require().NoError(err)
 
-	suite.Assert().NoError(err)
-
-	suite.testGenConfigPatch(patch)
-}
-
-func (suite *GenSuite) testGenConfigPatch(patch []byte) {
 	for _, tt := range []struct {
 		flag         string
 		shouldAffect map[string]bool

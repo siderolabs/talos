@@ -922,13 +922,7 @@ func (NetworkConfig) Doc() *encoder.Doc {
 			},
 		},
 		Fields: []encoder.Doc{
-			{
-				Name:        "hostname",
-				Type:        "string",
-				Note:        "",
-				Description: "Used to statically set the hostname for the machine.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Used to statically set the hostname for the machine." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
+			{},
 			{
 				Name:        "interfaces",
 				Type:        "[]Device",
@@ -3068,13 +3062,7 @@ func (FeaturesConfig) Doc() *encoder.Doc {
 				Description: "Enable role-based access control (RBAC).",
 				Comments:    [3]string{"" /* encoder.HeadComment */, "Enable role-based access control (RBAC)." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
-			{
-				Name:        "stableHostname",
-				Type:        "bool",
-				Note:        "",
-				Description: "Enable stable default hostname.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Enable stable default hostname." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
+			{},
 			{
 				Name:        "kubernetesTalosAPIAccess",
 				Type:        "KubernetesTalosAPIAccessConfig",

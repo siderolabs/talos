@@ -144,7 +144,6 @@ type MachineScheduler interface {
 //
 // This is a legacy interface which is going to be decomposed and removed in the future.
 type MachineNetwork interface {
-	Hostname() string
 	Resolvers() []string
 	SearchDomains() []string
 	Devices() []Device
@@ -448,7 +447,6 @@ type SystemDiskEncryption interface {
 // Features describe individual Talos features that can be switched on or off.
 type Features interface {
 	RBACEnabled() bool
-	StableHostnameEnabled() bool
 	KubernetesTalosAPIAccess() KubernetesTalosAPIAccess
 	ApidCheckExtKeyUsageEnabled() bool
 	DiskQuotaSupportEnabled() bool

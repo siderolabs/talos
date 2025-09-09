@@ -264,6 +264,7 @@ description: Talos gRPC API reference.
     - [NethelpersARPValidate](#talos.resource.definitions.enums.NethelpersARPValidate)
     - [NethelpersAddressFlag](#talos.resource.definitions.enums.NethelpersAddressFlag)
     - [NethelpersAddressSortAlgorithm](#talos.resource.definitions.enums.NethelpersAddressSortAlgorithm)
+    - [NethelpersAutoHostnameKind](#talos.resource.definitions.enums.NethelpersAutoHostnameKind)
     - [NethelpersBondMode](#talos.resource.definitions.enums.NethelpersBondMode)
     - [NethelpersBondXmitHashPolicy](#talos.resource.definitions.enums.NethelpersBondXmitHashPolicy)
     - [NethelpersConntrackState](#talos.resource.definitions.enums.NethelpersConntrackState)
@@ -4662,6 +4663,19 @@ NethelpersAddressSortAlgorithm is an internal address sorting algorithm.
 | ---- | ------ | ----------- |
 | ADDRESS_SORT_ALGORITHM_V1 | 0 |  |
 | ADDRESS_SORT_ALGORITHM_V2 | 1 |  |
+
+
+
+<a name="talos.resource.definitions.enums.NethelpersAutoHostnameKind"></a>
+
+### NethelpersAutoHostnameKind
+NethelpersAutoHostnameKind is a kind of automatically generated hostname.
+
+| Name | Number | Description |
+| ---- | ------ | ----------- |
+| AUTO_HOSTNAME_KIND_OFF | 0 |  |
+| AUTO_HOSTNAME_KIND_ADDR | 1 |  |
+| AUTO_HOSTNAME_KIND_STABLE | 2 |  |
 
 
 

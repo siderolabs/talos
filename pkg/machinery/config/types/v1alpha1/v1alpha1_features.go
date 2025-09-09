@@ -20,11 +20,6 @@ func (f *FeaturesConfig) RBACEnabled() bool {
 	return *f.RBAC
 }
 
-// StableHostnameEnabled implements config.Features interface.
-func (f *FeaturesConfig) StableHostnameEnabled() bool {
-	return pointer.SafeDeref(f.StableHostname)
-}
-
 // KubernetesTalosAPIAccess implements config.Features interface.
 func (f *FeaturesConfig) KubernetesTalosAPIAccess() config.KubernetesTalosAPIAccess {
 	return f.KubernetesTalosAPIAccessConfig

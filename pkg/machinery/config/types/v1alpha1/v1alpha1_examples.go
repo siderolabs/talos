@@ -146,7 +146,6 @@ func kubeletImageExample() string {
 
 func machineNetworkConfigExample() *NetworkConfig {
 	return &NetworkConfig{
-		NetworkHostname: "worker-1",
 		NetworkInterfaces: []*Device{
 			{
 				DeviceInterface: "enp0s1",

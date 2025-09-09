@@ -937,6 +937,52 @@
       "type": "object",
       "description": "EthernetRingsConfig is a configuration for Ethernet link rings."
     },
+    "network.HostnameConfigV1Alpha1": {
+      "properties": {
+        "apiVersion": {
+          "enum": [
+            "v1alpha1"
+          ],
+          "title": "apiVersion",
+          "description": "apiVersion is the API version of the resource.\n",
+          "markdownDescription": "apiVersion is the API version of the resource.",
+          "x-intellij-html-description": "\u003cp\u003eapiVersion is the API version of the resource.\u003c/p\u003e\n"
+        },
+        "kind": {
+          "enum": [
+            "HostnameConfig"
+          ],
+          "title": "kind",
+          "description": "kind is the kind of the resource.\n",
+          "markdownDescription": "kind is the kind of the resource.",
+          "x-intellij-html-description": "\u003cp\u003ekind is the kind of the resource.\u003c/p\u003e\n"
+        },
+        "auto": {
+          "enum": [
+            "stable",
+            "off"
+          ],
+          "title": "auto",
+          "description": "A method to automatically generate a hostname for the machine.\n\nThere are two methods available:\n  - stable - generates a stable hostname based on machine identity\n  - off - disables automatic hostname generation, Talos will wait for an external source to provide a hostname (DHCP, cloud-init, etc).\n\nAutomatic hostnames have the lowest priority over any other hostname sources: DHCP, cloud-init, etc.\nConflicts with hostname field.\n",
+          "markdownDescription": "A method to automatically generate a hostname for the machine.\n\nThere are two methods available:\n  - `stable` - generates a stable hostname based on machine identity\n  - `off` - disables automatic hostname generation, Talos will wait for an external source to provide a hostname (DHCP, cloud-init, etc).\n\nAutomatic hostnames have the lowest priority over any other hostname sources: DHCP, cloud-init, etc.\nConflicts with `hostname` field.",
+          "x-intellij-html-description": "\u003cp\u003eA method to automatically generate a hostname for the machine.\u003c/p\u003e\n\n\u003cp\u003eThere are two methods available:\n  - \u003ccode\u003estable\u003c/code\u003e - generates a stable hostname based on machine identity\n  - \u003ccode\u003eoff\u003c/code\u003e - disables automatic hostname generation, Talos will wait for an external source to provide a hostname (DHCP, cloud-init, etc).\u003c/p\u003e\n\n\u003cp\u003eAutomatic hostnames have the lowest priority over any other hostname sources: DHCP, cloud-init, etc.\nConflicts with \u003ccode\u003ehostname\u003c/code\u003e field.\u003c/p\u003e\n"
+        },
+        "hostname": {
+          "type": "string",
+          "title": "hostname",
+          "description": "A static hostname to set for the machine.\n\nThis hostname has the highest priority over any other hostname sources: DHCP, cloud-init, etc.\nConflicts with auto field.\n",
+          "markdownDescription": "A static hostname to set for the machine.\n\nThis hostname has the highest priority over any other hostname sources: DHCP, cloud-init, etc.\nConflicts with `auto` field.",
+          "x-intellij-html-description": "\u003cp\u003eA static hostname to set for the machine.\u003c/p\u003e\n\n\u003cp\u003eThis hostname has the highest priority over any other hostname sources: DHCP, cloud-init, etc.\nConflicts with \u003ccode\u003eauto\u003c/code\u003e field.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "apiVersion",
+        "kind"
+      ],
+      "description": "HostnameConfig is a config document to configure the hostname: either a static hostname or an automatically generated hostname."
+    },
     "network.IngressRule": {
       "properties": {
         "subnet": {
@@ -2701,13 +2747,6 @@
           "markdownDescription": "Enable role-based access control (RBAC).",
           "x-intellij-html-description": "\u003cp\u003eEnable role-based access control (RBAC).\u003c/p\u003e\n"
         },
-        "stableHostname": {
-          "type": "boolean",
-          "title": "stableHostname",
-          "description": "Enable stable default hostname.\n",
-          "markdownDescription": "Enable stable default hostname.",
-          "x-intellij-html-description": "\u003cp\u003eEnable stable default hostname.\u003c/p\u003e\n"
-        },
         "kubernetesTalosAPIAccess": {
           "$ref": "#/$defs/v1alpha1.KubernetesTalosAPIAccessConfig",
           "title": "kubernetesTalosAPIAccess",
@@ -3606,13 +3645,6 @@
     },
     "v1alpha1.NetworkConfig": {
       "properties": {
-        "hostname": {
-          "type": "string",
-          "title": "hostname",
-          "description": "Used to statically set the hostname for the machine.\n",
-          "markdownDescription": "Used to statically set the hostname for the machine.",
-          "x-intellij-html-description": "\u003cp\u003eUsed to statically set the hostname for the machine.\u003c/p\u003e\n"
-        },
         "interfaces": {
           "items": {
             "$ref": "#/$defs/v1alpha1.Device"
@@ -4327,6 +4359,9 @@
     },
     {
       "$ref": "#/$defs/network.EthernetConfigV1Alpha1"
+    },
+    {
+      "$ref": "#/$defs/network.HostnameConfigV1Alpha1"
     },
     {
       "$ref": "#/$defs/network.KubespanEndpointsConfigV1Alpha1"

@@ -17,8 +17,10 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/cel"
 	"github.com/siderolabs/talos/pkg/machinery/cel/celenv"
 	"github.com/siderolabs/talos/pkg/machinery/config/config"
+	"github.com/siderolabs/talos/pkg/machinery/config/container"
 	"github.com/siderolabs/talos/pkg/machinery/config/internal/registry"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/meta"
+	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
 	"github.com/siderolabs/talos/pkg/machinery/config/validation"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/resources/block"
@@ -40,9 +42,10 @@ func init() {
 
 // Check interfaces.
 var (
-	_ config.VolumeConfig  = &VolumeConfigV1Alpha1{}
-	_ config.NamedDocument = &VolumeConfigV1Alpha1{}
-	_ config.Validator     = &VolumeConfigV1Alpha1{}
+	_ config.VolumeConfig                 = &VolumeConfigV1Alpha1{}
+	_ config.NamedDocument                = &VolumeConfigV1Alpha1{}
+	_ config.Validator                    = &VolumeConfigV1Alpha1{}
+	_ container.V1Alpha1ConflictValidator = &VolumeConfigV1Alpha1{}
 )
 
 // VolumeConfigV1Alpha1 is a system volume configuration document.
@@ -233,6 +236,26 @@ func (s ProvisioningSpec) Validate(required bool) ([]string, error) {
 	}
 
 	return nil, validationErrors
+}
+
+// V1Alpha1ConflictValidate implements container.V1Alpha1ConflictValidator interface.
+func (s *VolumeConfigV1Alpha1) V1Alpha1ConflictValidate(v1alpha1Config *v1alpha1.Config) error {
+	if !slices.Contains([]string{constants.StatePartitionLabel, constants.EphemeralPartitionLabel}, s.MetaName) {
+		// only STATE and EPHEMERAL volumes can conflict with legacy config.
+		return nil
+	}
+
+	if s.Encryption() == nil {
+		// no encryption configured, no conflict.
+		return nil
+	}
+
+	legacy := v1alpha1Config.Machine().SystemDiskEncryption().Get(s.MetaName)
+	if legacy != nil {
+		return fmt.Errorf("system disk encryption for %q is configured in both v1alpha1.Config and VolumeConfig", s.MetaName)
+	}
+
+	return nil
 }
 
 // IsZero checks if the provisioning spec is zero.

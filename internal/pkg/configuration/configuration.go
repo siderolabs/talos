@@ -126,7 +126,7 @@ func Generate(ctx context.Context, st state.State, in *machine.GenerateConfigura
 
 		switch {
 		case state.IsNotFoundError(err):
-			secretsBundle, err = secrets.NewBundle(clock, config.TalosVersionCurrent)
+			secretsBundle, err = secrets.NewBundle(clock, config.TalosVersion1_11)
 			if err != nil {
 				return nil, err
 			}
@@ -136,7 +136,10 @@ func Generate(ctx context.Context, st state.State, in *machine.GenerateConfigura
 			secretsBundle = secrets.NewBundleFromConfig(clock, baseConfig)
 		}
 
-		options = append(options, generate.WithSecretsBundle(secretsBundle))
+		options = append(options,
+			generate.WithSecretsBundle(secretsBundle),
+			generate.WithVersionContract(config.TalosVersion1_11),
+		)
 
 		input, err = generate.NewInput(
 			in.ClusterConfig.Name,

@@ -36,7 +36,6 @@ machine:
                     - https://ghcr.io.my-mirror.com
     features:
         rbac: true
-        stableHostname: true
         apidCheckExtKeyUsage: true
         diskQuotaSupport: true
         kubePrism:
@@ -71,3 +70,7 @@ cluster:
             kubernetes:
                 disabled: true
             service: {}
+---
+apiVersion: v1alpha1
+kind: HostnameConfig
+auto: stable

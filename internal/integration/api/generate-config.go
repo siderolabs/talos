@@ -113,8 +113,8 @@ func (suite *GenerateConfigSuite) TestGenerate() {
 	)
 	suite.Require().EqualValues(request.MachineConfig.InstallConfig.InstallDisk, config.Machine().Install().Disk())
 	suite.Require().EqualValues(request.MachineConfig.InstallConfig.InstallImage, config.Machine().Install().Image())
-	suite.Require().EqualValues(request.MachineConfig.NetworkConfig.Hostname, config.Machine().Network().Hostname())
-	suite.Require().EqualValues(request.MachineConfig.NetworkConfig.Hostname, config.Machine().Network().Hostname())
+	suite.Require().EqualValues(request.MachineConfig.NetworkConfig.Hostname, config.NetworkHostnameConfig().Hostname())
+	suite.Require().EqualValues(request.MachineConfig.NetworkConfig.Hostname, config.NetworkHostnameConfig().Hostname())
 
 	talosconfig, err := clientconfig.FromBytes(reply.Messages[0].Talosconfig)
 
@@ -164,7 +164,7 @@ func (suite *GenerateConfigSuite) TestGenerate() {
 	)
 	suite.Require().EqualValues(
 		request.MachineConfig.NetworkConfig.Hostname,
-		joinedConfig.Machine().Network().Hostname(),
+		joinedConfig.NetworkHostnameConfig().Hostname(),
 	)
 
 	suite.Require().EqualValues(config.Machine().Security().IssuingCA(), joinedConfig.Machine().Security().IssuingCA())

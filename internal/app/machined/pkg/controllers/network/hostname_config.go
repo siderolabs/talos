@@ -20,6 +20,7 @@ import (
 	"go.uber.org/zap"
 
 	talosconfig "github.com/siderolabs/talos/pkg/machinery/config"
+	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
 	"github.com/siderolabs/talos/pkg/machinery/resources/cluster"
 	"github.com/siderolabs/talos/pkg/machinery/resources/config"
 	"github.com/siderolabs/talos/pkg/machinery/resources/network"
@@ -80,7 +81,7 @@ func (ctrl *HostnameConfigController) Run(ctx context.Context, r controller.Runt
 		case <-r.EventCh():
 		}
 
-		touchedIDs := make(map[resource.ID]struct{})
+		r.StartTrackingOutputs()
 
 		var cfgProvider talosconfig.Config
 
@@ -94,18 +95,6 @@ func (ctrl *HostnameConfigController) Run(ctx context.Context, r controller.Runt
 		}
 
 		var specs []network.HostnameSpecSpec
-
-		// defaults
-		var defaultAddr *network.NodeAddress
-
-		addrs, err := safe.ReaderGet[*network.NodeAddress](ctx, r, resource.NewMetadata(network.NamespaceName, network.NodeAddressType, network.NodeAddressDefaultID, resource.VersionUndefined))
-		if err != nil {
-			if !state.IsNotFoundError(err) {
-				return fmt.Errorf("error getting config: %w", err)
-			}
-		} else {
-			defaultAddr = addrs
-		}
 
 		// parse kernel cmdline for the default gateway
 		cmdlineHostname := ctrl.parseCmdline(logger)
@@ -121,65 +110,48 @@ func (ctrl *HostnameConfigController) Run(ctx context.Context, r controller.Runt
 				specs = append(specs, configHostname)
 			}
 
-			if cfgProvider.Machine().Features().StableHostnameEnabled() {
-				var identity *cluster.Identity
-
-				identity, err = safe.ReaderGet[*cluster.Identity](ctx, r, resource.NewMetadata(cluster.NamespaceName, cluster.IdentityType, cluster.LocalIdentity, resource.VersionUndefined))
-				if err != nil {
-					if !state.IsNotFoundError(err) {
-						return fmt.Errorf("error getting local identity: %w", err)
+			if cfgProvider.NetworkHostnameConfig() != nil {
+				switch cfgProvider.NetworkHostnameConfig().AutoHostname() {
+				case nethelpers.AutoHostnameKindOff:
+				case nethelpers.AutoHostnameKindAddr:
+					defaultAddr, err := safe.ReaderGet[*network.NodeAddress](ctx, r, resource.NewMetadata(network.NamespaceName, network.NodeAddressType, network.NodeAddressDefaultID, resource.VersionUndefined))
+					if err != nil {
+						if !state.IsNotFoundError(err) {
+							return fmt.Errorf("error getting config: %w", err)
+						}
+					} else {
+						specs = append(specs, ctrl.getDefault(defaultAddr))
 					}
+				case nethelpers.AutoHostnameKindStable:
+					var identity *cluster.Identity
 
-					continue
+					identity, err = safe.ReaderGet[*cluster.Identity](ctx, r, resource.NewMetadata(cluster.NamespaceName, cluster.IdentityType, cluster.LocalIdentity, resource.VersionUndefined))
+					if err != nil {
+						if !state.IsNotFoundError(err) {
+							return fmt.Errorf("error getting local identity: %w", err)
+						}
+					} else {
+						nodeID := identity.TypedSpec().NodeID
+
+						stableHostname := ctrl.getStableDefault(nodeID)
+						specs = append(specs, *stableHostname)
+					}
 				}
-
-				nodeID := identity.TypedSpec().NodeID
-
-				stableHostname := ctrl.getStableDefault(nodeID)
-				specs = append(specs, *stableHostname)
-			} else {
-				specs = append(specs, ctrl.getDefault(defaultAddr))
 			}
 		}
 
-		var ids []string
-
-		ids, err = ctrl.apply(ctx, r, specs)
-		if err != nil {
+		if err = ctrl.apply(ctx, r, specs); err != nil {
 			return fmt.Errorf("error applying specs: %w", err)
 		}
 
-		for _, id := range ids {
-			touchedIDs[id] = struct{}{}
+		if err = r.CleanupOutputs(ctx, resource.NewMetadata(network.ConfigNamespaceName, network.HostnameSpecType, "", resource.VersionUndefined)); err != nil {
+			return fmt.Errorf("error cleaning up outputs: %w", err)
 		}
-
-		// list specs for cleanup
-		list, err := r.List(ctx, resource.NewMetadata(network.ConfigNamespaceName, network.HostnameSpecType, "", resource.VersionUndefined))
-		if err != nil {
-			return fmt.Errorf("error listing resources: %w", err)
-		}
-
-		for _, res := range list.Items {
-			if res.Metadata().Owner() != ctrl.Name() {
-				// skip specs created by other controllers
-				continue
-			}
-
-			if _, ok := touchedIDs[res.Metadata().ID()]; !ok {
-				if err = r.Destroy(ctx, res.Metadata()); err != nil {
-					return fmt.Errorf("error cleaning up specs: %w", err)
-				}
-			}
-		}
-
-		r.ResetRestartBackoff()
 	}
 }
 
 //nolint:dupl
-func (ctrl *HostnameConfigController) apply(ctx context.Context, r controller.Runtime, specs []network.HostnameSpecSpec) ([]resource.ID, error) {
-	ids := make([]string, 0, len(specs))
-
+func (ctrl *HostnameConfigController) apply(ctx context.Context, r controller.Runtime, specs []network.HostnameSpecSpec) error {
 	for _, spec := range specs {
 		id := network.LayeredID(spec.ConfigLayer, network.HostnameID)
 
@@ -193,13 +165,11 @@ func (ctrl *HostnameConfigController) apply(ctx context.Context, r controller.Ru
 				return nil
 			},
 		); err != nil {
-			return ids, err
+			return err
 		}
-
-		ids = append(ids, id)
 	}
 
-	return ids, nil
+	return nil
 }
 
 func (ctrl *HostnameConfigController) getStableDefault(nodeID string) *network.HostnameSpecSpec {
@@ -253,7 +223,11 @@ func (ctrl *HostnameConfigController) parseCmdline(logger *zap.Logger) (spec net
 }
 
 func (ctrl *HostnameConfigController) parseMachineConfiguration(logger *zap.Logger, cfgProvider talosconfig.Config) (spec network.HostnameSpecSpec) {
-	hostname := cfgProvider.Machine().Network().Hostname()
+	var hostname string
+
+	if cfgProvider.NetworkHostnameConfig() != nil {
+		hostname = cfgProvider.NetworkHostnameConfig().Hostname()
+	}
 
 	if hostname == "" {
 		return

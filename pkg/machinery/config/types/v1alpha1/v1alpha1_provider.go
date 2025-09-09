@@ -584,11 +584,6 @@ func (r *RegistryTLSConfig) GetTLSConfig() (*tls.Config, error) {
 	return tlsConfig, nil
 }
 
-// Hostname implements the config.Provider interface.
-func (n *NetworkConfig) Hostname() string {
-	return n.NetworkHostname
-}
-
 // DisableSearchDomain implements the config.Provider interface.
 func (n *NetworkConfig) DisableSearchDomain() bool {
 	return pointer.SafeDeref(n.NetworkDisableSearchDomain)

@@ -28,7 +28,7 @@ import (
 //   - if the type implements 'merger' interface, Merge function is called to handle the merge process.
 //   - merger interface should be implemented on the pointer to the type.
 func Merge(left, right any) error {
-	return merge(reflect.ValueOf(left), reflect.ValueOf(right), false)
+	return merge(reflect.ValueOf(left), reflect.ValueOf(right), false, false)
 }
 
 type merger interface {
@@ -41,7 +41,7 @@ var (
 )
 
 //nolint:gocyclo,cyclop
-func merge(vl, vr reflect.Value, replace bool) error {
+func merge(vl, vr reflect.Value, replace, overwrite bool) error {
 	if vl == zeroValue && vr == zeroValue {
 		return nil
 	}
@@ -68,7 +68,7 @@ func merge(vl, vr reflect.Value, replace bool) error {
 			return nil
 		}
 
-		return merge(vl.Elem(), vr.Elem(), replace)
+		return merge(vl.Elem(), vr.Elem(), replace, true)
 	case reflect.Slice:
 		if vr.IsZero() {
 			return nil
@@ -130,7 +130,7 @@ func merge(vl, vr reflect.Value, replace bool) error {
 					rightV = vr.MapIndex(k)
 				}
 
-				if err := merge(v, rightV, false); err != nil {
+				if err := merge(v, rightV, false, false); err != nil {
 					return fmt.Errorf("merge map key %v[%v]: %w", tl, k, err)
 				}
 
@@ -164,7 +164,7 @@ func merge(vl, vr reflect.Value, replace bool) error {
 			fl := vl.FieldByIndex(tl.Field(i).Index)
 			fr := vr.FieldByIndex(tr.Field(i).Index)
 
-			if err := merge(fl, fr, replace); err != nil {
+			if err := merge(fl, fr, replace, false); err != nil {
 				return fmt.Errorf("merge field %v.%v: %w", tl, tl.Field(i).Name, err)
 			}
 		}
@@ -187,7 +187,7 @@ func merge(vl, vr reflect.Value, replace bool) error {
 			return fmt.Errorf("merge not possible, left %v is not settable", vl)
 		}
 
-		if tl.Kind() != reflect.Bool && vr.IsZero() {
+		if tl.Kind() != reflect.Bool && vr.IsZero() && !overwrite {
 			return nil
 		}
 

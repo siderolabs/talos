@@ -20,6 +20,7 @@ type Config struct {
 	A             string
 	B             int
 	C             *bool
+	D             *int
 	Slice         []Struct
 	ReplacedSlice []string `merge:"replace"`
 	Map           map[string]Struct
@@ -243,6 +244,18 @@ func TestMerge(t *testing.T) {
 			},
 			expected: &Config{
 				CustomSlice: []string{"a", "b", "c", "d"},
+			},
+		},
+		{
+			name: "merge with pointer override",
+			left: &Config{
+				D: pointer.To(1),
+			},
+			right: &Config{
+				D: pointer.To(0),
+			},
+			expected: &Config{
+				D: pointer.To(0),
 			},
 		},
 		{

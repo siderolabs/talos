@@ -17,7 +17,6 @@ machine:
         wipe: false
     features:
         rbac: true
-        stableHostname: true
         apidCheckExtKeyUsage: true
         diskQuotaSupport: true
         kubePrism:
@@ -48,3 +47,7 @@ cluster:
             kubernetes:
                 disabled: true
             service: {}
+---
+apiVersion: v1alpha1
+kind: HostnameConfig
+auto: stable

@@ -22,8 +22,12 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/config/encoder"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
 	"github.com/siderolabs/talos/pkg/machinery/config/validation"
-	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
+
+// V1Alpha1ConflictValidator is the interface implemented by config documents which conflict with legacy v1alpha1 config.
+type V1Alpha1ConflictValidator interface {
+	V1Alpha1ConflictValidate(*v1alpha1.Config) error
+}
 
 // Container wraps all configuration documents into a single container.
 type Container struct {
@@ -282,6 +286,22 @@ func (container *Container) NetworkStaticHostConfig() []config.NetworkStaticHost
 	)
 }
 
+// NetworkHostnameConfig implements config.Config interface.
+func (container *Container) NetworkHostnameConfig() config.NetworkHostnameConfig {
+	// first check if we have a dedicated document
+	matching := findMatchingDocs[config.NetworkHostnameConfig](container.documents)
+	if len(matching) > 0 {
+		return matching[0]
+	}
+
+	// fallback to v1alpha1
+	if container.v1alpha1Config != nil {
+		return container.v1alpha1Config
+	}
+
+	return nil
+}
+
 // Bytes returns source YAML representation (if available) or does default encoding.
 func (container *Container) Bytes() ([]byte, error) {
 	if !container.readonly {
@@ -351,7 +371,19 @@ func (container *Container) encodeToBuf(buf buffer, encoderOptions ...encoder.Op
 	return nil
 }
 
+func docID(doc config.Document) string {
+	id := doc.Kind()
+
+	if named, ok := doc.(config.NamedDocument); ok {
+		id += "/" + named.Name()
+	}
+
+	return id
+}
+
 // Validate checks configuration and returns warnings and fatal errors (as multierror).
+//
+//nolint:gocyclo
 func (container *Container) Validate(mode validation.RuntimeMode, opt ...validation.Option) ([]string, error) {
 	var (
 		warnings []string
@@ -360,6 +392,9 @@ func (container *Container) Validate(mode validation.RuntimeMode, opt ...validat
 
 	if container.v1alpha1Config != nil {
 		warnings, err = container.v1alpha1Config.Validate(mode, opt...)
+		if err != nil {
+			err = fmt.Errorf("v1alpha1.Config: %w", err)
+		}
 	}
 
 	var multiErr *multierror.Error
@@ -371,6 +406,9 @@ func (container *Container) Validate(mode validation.RuntimeMode, opt ...validat
 	for _, doc := range container.documents {
 		if validatableDoc, ok := doc.(config.Validator); ok {
 			docWarnings, docErr := validatableDoc.Validate(mode, opt...)
+			if docErr != nil {
+				docErr = fmt.Errorf("%s: %w", docID(doc), docErr)
+			}
 
 			warnings = append(warnings, docWarnings...)
 			multiErr = multierror.Append(multiErr, docErr)
@@ -379,12 +417,12 @@ func (container *Container) Validate(mode validation.RuntimeMode, opt ...validat
 
 	// now cross-validate the config
 	if container.v1alpha1Config != nil {
-		for _, systemLabel := range []string{constants.StatePartitionLabel, constants.EphemeralPartitionLabel} {
-			legacy := container.Machine().SystemDiskEncryption().Get(systemLabel)
-			volumeConfig, ok := container.Volumes().ByName(systemLabel)
-
-			if ok && legacy != nil && volumeConfig.Encryption() != nil {
-				multiErr = multierror.Append(multiErr, fmt.Errorf("system disk encryption for %q is configured in both v1alpha1.Config and VolumeConfig", systemLabel))
+		for _, doc := range container.documents {
+			if conflictValidator, ok := doc.(V1Alpha1ConflictValidator); ok {
+				err := conflictValidator.V1Alpha1ConflictValidate(container.v1alpha1Config)
+				if err != nil {
+					multiErr = multierror.Append(multiErr, err)
+				}
 			}
 		}
 	}
@@ -401,6 +439,9 @@ func (container *Container) RuntimeValidate(ctx context.Context, st state.State,
 
 	if container.v1alpha1Config != nil {
 		warnings, err = container.v1alpha1Config.RuntimeValidate(ctx, st, mode, opt...)
+		if err != nil {
+			err = fmt.Errorf("v1alpha1.Config: %w", err)
+		}
 	}
 
 	var multiErr *multierror.Error
@@ -412,6 +453,9 @@ func (container *Container) RuntimeValidate(ctx context.Context, st state.State,
 	for _, doc := range container.documents {
 		if validatableDoc, ok := doc.(config.RuntimeValidator); ok {
 			docWarnings, docErr := validatableDoc.RuntimeValidate(ctx, st, mode, opt...)
+			if docErr != nil {
+				docErr = fmt.Errorf("%s: %w", docID(doc), docErr)
+			}
 
 			warnings = append(warnings, docWarnings...)
 			multiErr = multierror.Append(multiErr, docErr)

@@ -100,3 +100,9 @@ type NetworkStaticHostConfig interface {
 	IP() string
 	Aliases() []string
 }
+
+// NetworkHostnameConfig defines a hostname configuration.
+type NetworkHostnameConfig interface {
+	Hostname() string
+	AutoHostname() nethelpers.AutoHostnameKind
+}

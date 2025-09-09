@@ -12,8 +12,10 @@ import (
 
 	"github.com/siderolabs/talos/pkg/machinery/config/config"
 	"github.com/siderolabs/talos/pkg/machinery/config/machine"
+	"github.com/siderolabs/talos/pkg/machinery/config/types/network"
 	v1alpha1 "github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
+	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
 )
 
 //nolint:gocyclo,cyclop
@@ -58,8 +60,8 @@ func (in *Input) init() ([]config.Document, error) {
 
 	machine.MachineFeatures.RBAC = pointer.To(true)
 
-	if in.Options.VersionContract.StableHostnameEnabled() {
-		machine.MachineFeatures.StableHostname = pointer.To(true)
+	if in.Options.VersionContract.StableHostnameEnabled() && !in.Options.VersionContract.MultidocNetworkConfigSupported() {
+		machine.MachineFeatures.StableHostname = pointer.To(true) //nolint:staticcheck // using legacy field for older Talos versions
 	}
 
 	if in.Options.VersionContract.ApidExtKeyUsageCheckEnabled() {
@@ -234,7 +236,16 @@ func (in *Input) init() ([]config.Document, error) {
 	v1alpha1Config.MachineConfig = machine
 	v1alpha1Config.ClusterConfig = cluster
 
-	return []config.Document{v1alpha1Config}, nil
+	documents := []config.Document{v1alpha1Config}
+
+	if in.Options.VersionContract.MultidocNetworkConfigSupported() {
+		hostnameConfig := network.NewHostnameConfigV1Alpha1()
+		hostnameConfig.ConfigAuto = pointer.To(nethelpers.AutoHostnameKindStable)
+
+		documents = append(documents, hostnameConfig)
+	}
+
+	return documents, nil
 }
 
 func ptrOrNil(b bool) *bool {

@@ -7,6 +7,7 @@ package v1alpha1_test
 import (
 	"testing"
 
+	"github.com/siderolabs/go-pointer"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -14,6 +15,7 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/config/container"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/network"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
+	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
 )
 
 // These tests ensure that v1alpha1 types properly implement new-style config interfaces.
@@ -134,6 +136,105 @@ func TestStaticHostsBridging(t *testing.T) {
 
 			assert.Equal(t, "2001:db8::1", staticHosts[2].IP())
 			assert.Equal(t, []string{"ipv6-host"}, staticHosts[2].Aliases())
+		})
+	}
+}
+
+func TestHostnameBridging(t *testing.T) {
+	t.Parallel()
+
+	for _, test := range []struct {
+		name string
+
+		cfg func(*testing.T) config.Config
+
+		expectedHostname     string
+		expectedAutoHostname nethelpers.AutoHostnameKind
+	}{
+		{
+			name: "v1alpha1 only",
+
+			cfg: func(*testing.T) config.Config {
+				return container.NewV1Alpha1(&v1alpha1.Config{
+					MachineConfig: &v1alpha1.MachineConfig{
+						MachineNetwork: &v1alpha1.NetworkConfig{
+							NetworkHostname: "my-machine",
+						},
+						MachineFeatures: &v1alpha1.FeaturesConfig{
+							StableHostname: pointer.To(true),
+						},
+					},
+				})
+			},
+
+			expectedHostname:     "my-machine",
+			expectedAutoHostname: nethelpers.AutoHostnameKindStable,
+		},
+		{
+			name: "v1alpha1 empty",
+
+			cfg: func(*testing.T) config.Config {
+				return container.NewV1Alpha1(&v1alpha1.Config{
+					MachineConfig: &v1alpha1.MachineConfig{},
+				})
+			},
+
+			expectedHostname:     "",
+			expectedAutoHostname: nethelpers.AutoHostnameKindAddr,
+		},
+		{
+			name: "new style only",
+
+			cfg: func(*testing.T) config.Config {
+				hc := network.NewHostnameConfigV1Alpha1()
+				hc.ConfigHostname = "my-machine"
+
+				c, err := container.New(
+					hc,
+				)
+				require.NoError(t, err)
+
+				return c
+			},
+
+			expectedHostname:     "my-machine",
+			expectedAutoHostname: nethelpers.AutoHostnameKindOff,
+		},
+		{
+			name: "mixed",
+
+			cfg: func(*testing.T) config.Config {
+				hc := network.NewHostnameConfigV1Alpha1()
+				hc.ConfigAuto = pointer.To(nethelpers.AutoHostnameKindStable)
+
+				c, err := container.New(
+					hc,
+					&v1alpha1.Config{
+						MachineConfig: &v1alpha1.MachineConfig{
+							MachineNetwork: &v1alpha1.NetworkConfig{},
+						},
+					},
+				)
+				require.NoError(t, err)
+
+				return c
+			},
+
+			expectedHostname:     "",
+			expectedAutoHostname: nethelpers.AutoHostnameKindStable,
+		},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+
+			cfg := test.cfg(t)
+
+			hostnameConfig := cfg.NetworkHostnameConfig()
+
+			require.NotNil(t, hostnameConfig)
+
+			assert.Equal(t, test.expectedHostname, hostnameConfig.Hostname())
+			assert.Equal(t, test.expectedAutoHostname, hostnameConfig.AutoHostname())
 		})
 	}
 }

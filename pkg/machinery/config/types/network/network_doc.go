@@ -214,6 +214,44 @@ func (EthernetChannelsConfig) Doc() *encoder.Doc {
 	return doc
 }
 
+func (HostnameConfigV1Alpha1) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "HostnameConfig",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "HostnameConfig is a config document to configure the hostname: either a static hostname or an automatically generated hostname." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "HostnameConfig is a config document to configure the hostname: either a static hostname or an automatically generated hostname.",
+		Fields: []encoder.Doc{
+			{},
+			{
+				Name:        "auto",
+				Type:        "AutoHostnameKind",
+				Note:        "",
+				Description: "A method to automatically generate a hostname for the machine.\n\nThere are two methods available:\n  - `stable` - generates a stable hostname based on machine identity\n  - `off` - disables automatic hostname generation, Talos will wait for an external source to provide a hostname (DHCP, cloud-init, etc).\n\nAutomatic hostnames have the lowest priority over any other hostname sources: DHCP, cloud-init, etc.\nConflicts with `hostname` field.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "A method to automatically generate a hostname for the machine." /* encoder.LineComment */, "" /* encoder.FootComment */},
+				Values: []string{
+					"stable",
+					"off",
+				},
+			},
+			{
+				Name:        "hostname",
+				Type:        "string",
+				Note:        "",
+				Description: "A static hostname to set for the machine.\n\nThis hostname has the highest priority over any other hostname sources: DHCP, cloud-init, etc.\nConflicts with `auto` field.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "A static hostname to set for the machine." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
+
+	doc.AddExample("", exampleHostnameConfigV1Alpha1())
+
+	doc.AddExample("", exampleHostnameConfigV1Alpha2())
+
+	doc.Fields[2].AddExample("", "controlplane1")
+	doc.Fields[2].AddExample("", "controlplane1.example.org")
+
+	return doc
+}
+
 func (KubespanEndpointsConfigV1Alpha1) Doc() *encoder.Doc {
 	doc := &encoder.Doc{
 		Type:        "KubeSpanEndpointsConfig",
@@ -387,6 +425,7 @@ func GetFileDoc() *encoder.FileDoc {
 			EthernetConfigV1Alpha1{}.Doc(),
 			EthernetRingsConfig{}.Doc(),
 			EthernetChannelsConfig{}.Doc(),
+			HostnameConfigV1Alpha1{}.Doc(),
 			KubespanEndpointsConfigV1Alpha1{}.Doc(),
 			RuleConfigV1Alpha1{}.Doc(),
 			RulePortSelector{}.Doc(),
