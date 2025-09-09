@@ -163,6 +163,8 @@ writing _out/PK.auth
 
 These files can be used to enroll the keys into the UEFI firmware automatically when booting from a SecureBoot ISO while UEFI firmware is in the setup mode.
 
+> **Note** : UEFI decides what Secure Boot trusts. By default, `talosctl gen secureboot ...` generates a self-signed UKI signing certificate and `PK.auth/KEK.auth/db.auth` for enrollment. You can also generate your own version of these files which uses other signing keys and certificate authorities specific to your environment.
+
 ### Generating the SecureBoot Assets
 
 Once the keys are generated, they can be used to sign the Talos boot assets to generate required ISO images, PXE boot assets, disk images, installer containers, etc.
