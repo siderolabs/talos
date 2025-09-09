@@ -222,8 +222,6 @@ func (suite *VolumesSuite) TestLVMActivation() {
 
 	nodeName := k8sNode.Name
 
-	suite.T().Logf("creating LVM volume group on node %s/%s", node, nodeName)
-
 	userDisks := suite.UserDisks(suite.ctx, node)
 
 	if len(userDisks) < 2 {
@@ -231,6 +229,8 @@ func (suite *VolumesSuite) TestLVMActivation() {
 	}
 
 	userDisksJoined := strings.Join(userDisks[:2], " ")
+
+	suite.T().Logf("creating LVM volume group on node %s/%s with disks %s", node, nodeName, userDisksJoined)
 
 	podDef, err := suite.NewPrivilegedPod("pv-create")
 	suite.Require().NoError(err)
@@ -243,7 +243,7 @@ func (suite *VolumesSuite) TestLVMActivation() {
 
 	stdout, _, err := podDef.Exec(
 		suite.ctx,
-		fmt.Sprintf("nsenter --mount=/proc/1/ns/mnt -- vgcreate vg0 %s", userDisksJoined),
+		fmt.Sprintf("nsenter --mount=/proc/1/ns/mnt -- vgcreate --nolocking vg0 %s", userDisksJoined),
 	)
 	suite.Require().NoError(err)
 
@@ -279,14 +279,14 @@ func (suite *VolumesSuite) TestLVMActivation() {
 
 		if _, _, err := deletePodDef.Exec(
 			suite.ctx,
-			"nsenter --mount=/proc/1/ns/mnt -- vgremove --yes vg0",
+			"nsenter --mount=/proc/1/ns/mnt -- vgremove --nolocking --yes vg0",
 		); err != nil {
 			suite.T().Logf("failed to remove pv vg0: %v", err)
 		}
 
 		if _, _, err := deletePodDef.Exec(
 			suite.ctx,
-			fmt.Sprintf("nsenter --mount=/proc/1/ns/mnt -- pvremove --yes %s", userDisksJoined),
+			fmt.Sprintf("nsenter --mount=/proc/1/ns/mnt -- pvremove --nolocking --yes %s", userDisksJoined),
 		); err != nil {
 			suite.T().Logf("failed to remove pv backed by volumes %s: %v", userDisksJoined, err)
 		}
@@ -358,7 +358,7 @@ func (suite *VolumesSuite) TestSymlinks() {
 	userDisk := userDisks[0]
 	userDiskName := filepath.Base(userDisk)
 
-	suite.T().Logf("performing a symlink test %s on %s/%s", userDisk, node, nodeName)
+	suite.T().Logf("performing a symlink test %s on %s/%s with disk %s", userDisk, node, nodeName, userDiskName)
 
 	podDef, err := suite.NewPrivilegedPod("xfs-format")
 	suite.Require().NoError(err)
@@ -478,13 +478,13 @@ func (suite *VolumesSuite) TestUserVolumes() {
 
 	nodeName := k8sNode.Name
 
-	suite.T().Logf("verifying user volumes on node %s/%s", node, nodeName)
-
 	userDisks := suite.UserDisks(suite.ctx, node)
 
 	if len(userDisks) < 1 {
 		suite.T().Skipf("skipping test, not enough user disks available on node %s/%s: %q", node, nodeName, userDisks)
 	}
+
+	suite.T().Logf("verifying user volumes on node %s/%s with disk %s", node, nodeName, userDisks[0])
 
 	ctx := client.WithNode(suite.ctx, node)
 
@@ -660,13 +660,13 @@ func (suite *VolumesSuite) TestRawVolumes() {
 
 	nodeName := k8sNode.Name
 
-	suite.T().Logf("verifying raw volumes on node %s/%s", node, nodeName)
-
 	userDisks := suite.UserDisks(suite.ctx, node)
 
 	if len(userDisks) < 1 {
 		suite.T().Skipf("skipping test, not enough user disks available on node %s/%s: %q", node, nodeName, userDisks)
 	}
+
+	suite.T().Logf("verifying raw volumes on node %s/%s with disk %s", node, nodeName, userDisks[0])
 
 	ctx := client.WithNode(suite.ctx, node)
 
@@ -793,13 +793,13 @@ func (suite *VolumesSuite) TestExistingVolumes() {
 
 	nodeName := k8sNode.Name
 
-	suite.T().Logf("verifying existing volumes on node %s/%s", node, nodeName)
-
 	userDisks := suite.UserDisks(suite.ctx, node)
 
 	if len(userDisks) < 1 {
 		suite.T().Skipf("skipping test, not enough user disks available on node %s/%s: %q", node, nodeName, userDisks)
 	}
+
+	suite.T().Logf("verifying existing volumes on node %s/%s with disk %s", node, nodeName, userDisks[0])
 
 	ctx := client.WithNode(suite.ctx, node)
 
@@ -981,13 +981,13 @@ func (suite *VolumesSuite) TestSwapOnOff() {
 
 	nodeName := k8sNode.Name
 
-	suite.T().Logf("verifying swap on node %s/%s", node, nodeName)
-
 	userDisks := suite.UserDisks(suite.ctx, node)
 
 	if len(userDisks) < 1 {
 		suite.T().Skipf("skipping test, not enough user disks available on node %s/%s: %q", node, nodeName, userDisks)
 	}
+
+	suite.T().Logf("verifying swap on node %s/%s with disk %s", node, nodeName, userDisks[0])
 
 	ctx := client.WithNode(suite.ctx, node)
 
