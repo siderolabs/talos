@@ -70,7 +70,7 @@ You can include as many IP addresses as needed:
    If your control plane nodes IP addresses are `192.168.0.2`, `192.168.0.3`, `192.168.0.4`, your command would be:
 
     ```bash
-    CONTROL_PLANE_IP= ("192.168.0.2" "192.168.0.3" "192.168.0.4")
+    CONTROL_PLANE_IP=("192.168.0.2" "192.168.0.3" "192.168.0.4")
     ```
 
 1. If you have worker nodes, store their IP addresses in a Bash array.
