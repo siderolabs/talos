@@ -52,11 +52,23 @@ func New(fstype string, opts ...Option) *FS {
 		binaryParams: make(map[string][][]byte),
 	}
 
-	for _, opt := range opts {
+	for _, opt := range defaultOpts(fstype, opts...) {
 		opt.set(fs)
 	}
 
 	return fs
+}
+
+// defaultOpts applies default options for filesystems.
+func defaultOpts(fstype string, opts ...Option) []Option {
+	if fstype == "iso9660" {
+		opts = append(
+			opts,
+			WithBoolParameter("ro"),
+		)
+	}
+
+	return opts
 }
 
 // Open initializes the filesystem and returns the file descriptor for the mounted filesystem.
