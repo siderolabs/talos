@@ -98,9 +98,7 @@ spec:
     - name: default
       buildxOptions:
         enabled: true
-      runners:
-        - self-hosted
-        - talos
+      runnerGroup: large
       conditions:
         - on-pull-request
       steps:
@@ -138,9 +136,7 @@ spec:
     - name: push
       buildxOptions:
         enabled: true
-      runners:
-        - self-hosted
-        - talos
+      runnerGroup: large
       conditions:
         - except-pull-request
         - not-on-tag
@@ -165,9 +161,7 @@ spec:
       sops: true
       buildxOptions:
         enabled: true
-      runners:
-        - self-hosted
-        - talos
+      runnerGroup: large
       conditions:
         - only-on-tag
       steps:
@@ -227,9 +221,7 @@ spec:
         enabled: true
       depends:
         - default
-      runners:
-        - self-hosted
-        - talos
+      runnerGroup: large
       steps:
         - name: download-artifacts
           artifactStep:
@@ -250,9 +242,7 @@ spec:
         enabled: true
       depends:
         - default
-      runners:
-        - self-hosted
-        - talos
+      runnerGroup: large
       steps:
         - name: download-artifacts
           artifactStep:
@@ -266,9 +256,7 @@ spec:
         enabled: true
       depends:
         - default
-      runners:
-        - self-hosted
-        - talos
+      runnerGroup: large
       crons:
         - '30 7 * * *'
       steps:
@@ -288,9 +276,7 @@ spec:
     - name: e2e-iso
       depends:
         - default
-      runners:
-        - self-hosted
-        - talos
+      runnerGroup: large
       steps:
         - name: download-artifacts
           artifactStep:
@@ -315,9 +301,7 @@ spec:
     - name: e2e-qemu-short
       depends:
         - default
-      runners:
-        - self-hosted
-        - talos
+      runnerGroup: large
       steps:
         - name: download-artifacts
           artifactStep:
@@ -344,9 +328,7 @@ spec:
     - name: e2e-docker-short
       depends:
         - default
-      runners:
-        - self-hosted
-        - talos
+      runnerGroup: large
       steps:
         - name: download-artifacts
           artifactStep:
@@ -374,9 +356,7 @@ spec:
         enabled: true
       depends:
         - default
-      runners:
-        - self-hosted
-        - talos
+      runnerGroup: large
       crons:
         - '30 3 * * *'
       triggerLabels:
@@ -429,9 +409,7 @@ spec:
         enabled: true
       depends:
         - default
-      runners:
-        - self-hosted
-        - talos
+      runnerGroup: large
       crons:
         - '30 3 * * *'
       triggerLabels:
@@ -500,9 +478,7 @@ spec:
         enabled: true
       depends:
         - default
-      runners:
-        - self-hosted
-        - talos
+      runnerGroup: large
       crons:
         - '30 4 * * *'
       triggerLabels:
@@ -554,9 +530,7 @@ spec:
         enabled: true
       depends:
         - default
-      runners:
-        - self-hosted
-        - talos
+      runnerGroup: large
       crons:
         - '30 4 * * *'
       triggerLabels:
@@ -623,9 +597,7 @@ spec:
         enabled: true
       depends:
         - default
-      runners:
-        - self-hosted
-        - talos
+      runnerGroup: large
       crons:
         - '30 3 * * *'
       triggerLabels:
@@ -696,9 +668,7 @@ spec:
         enabled: true
       depends:
         - default
-      runners:
-        - self-hosted
-        - talos
+      runnerGroup: large
       crons:
         - '30 3 * * *'
       triggerLabels:
@@ -771,9 +741,7 @@ spec:
         enabled: true
       depends:
         - default
-      runners:
-        - self-hosted
-        - talos
+      runnerGroup: large
       crons:
         - '30 4 * * *'
       triggerLabels:
@@ -835,9 +803,7 @@ spec:
         enabled: true
       depends:
         - default
-      runners:
-        - self-hosted
-        - talos
+      runnerGroup: large
       crons:
         - '30 4 * * *'
       triggerLabels:
@@ -887,9 +853,7 @@ spec:
         enabled: true
       depends:
         - default
-      runners:
-        - self-hosted
-        - talos
+      runnerGroup: large
       crons:
         - '30 4 * * *'
       triggerLabels:
@@ -939,9 +903,7 @@ spec:
         enabled: true
       depends:
         - default
-      runners:
-        - self-hosted
-        - talos
+      runnerGroup: large
       crons:
         - '30 5 * * *'
       triggerLabels:
@@ -1025,9 +987,7 @@ spec:
         enabled: true
       depends:
         - default
-      runners:
-        - self-hosted
-        - talos
+      runnerGroup: large
       crons:
         - '30 5 * * *'
       triggerLabels:
@@ -1116,9 +1076,7 @@ spec:
         enabled: true
       depends:
         - default
-      runners:
-        - self-hosted
-        - talos
+      runnerGroup: large
       crons:
         - '30 5 * * *'
       triggerLabels:
@@ -1223,9 +1181,7 @@ spec:
         enabled: true
       depends:
         - default
-      runners:
-        - self-hosted
-        - talos
+      runnerGroup: large
       crons:
         - '30 5 * * *'
       triggerLabels:
@@ -1346,9 +1302,7 @@ spec:
         enabled: true
       depends:
         - default
-      runners:
-        - self-hosted
-        - talos
+      runnerGroup: large
       crons:
         - '30 5 * * *'
       triggerLabels:
@@ -1416,9 +1370,7 @@ spec:
         enabled: true
       depends:
         - default
-      runners:
-        - self-hosted
-        - talos
+      runnerGroup: large
       crons:
         - '30 5 * * *'
       triggerLabels:
@@ -1507,9 +1459,7 @@ spec:
         enabled: true
       depends:
         - default
-      runners:
-        - self-hosted
-        - talos
+      runnerGroup: large
       crons:
         - '30 5 * * *'
       triggerLabels:
@@ -1596,9 +1546,7 @@ spec:
         enabled: true
       depends:
         - default
-      runners:
-        - self-hosted
-        - talos
+      runnerGroup: large
       crons:
         - '30 5 * * *'
       triggerLabels:
@@ -1710,9 +1658,7 @@ spec:
         enabled: true
       depends:
         - default
-      runners:
-        - self-hosted
-        - talos
+      runnerGroup: large
       crons:
         - '30 6 * * *'
       triggerLabels:
@@ -1794,9 +1740,7 @@ spec:
         enabled: true
       depends:
         - default
-      runners:
-        - self-hosted
-        - talos
+      runnerGroup: large
       crons:
         - '30 3 * * *'
       triggerLabels:
@@ -1875,9 +1819,7 @@ spec:
         enabled: true
       depends:
         - default
-      runners:
-        - self-hosted
-        - talos
+      runnerGroup: large
       crons:
         - '30 3 * * *'
       triggerLabels:
@@ -1931,9 +1873,7 @@ spec:
         enabled: true
       depends:
         - default
-      runners:
-        - self-hosted
-        - talos
+      runnerGroup: large
       crons:
         - '30 3 * * *'
       triggerLabels:
@@ -1997,9 +1937,7 @@ spec:
         enabled: true
       depends:
         - default
-      runners:
-        - self-hosted
-        - talos
+      runnerGroup: large
       crons:
         - '30 3 * * *'
       triggerLabels:
@@ -2064,9 +2002,7 @@ spec:
         enabled: true
       depends:
         - default
-      runners:
-        - self-hosted
-        - talos
+      runnerGroup: large
       crons:
         - '30 3 * * *'
       triggerLabels:
@@ -2160,9 +2096,7 @@ spec:
         enabled: true
       depends:
         - default
-      runners:
-        - self-hosted
-        - talos
+      runnerGroup: large
       crons:
         - '30 3 * * *'
       triggerLabels:
@@ -2228,9 +2162,7 @@ spec:
         enabled: true
       depends:
         - default
-      runners:
-        - self-hosted
-        - generic # this is pretty fast, so we can use generic
+      runnerGroup: generic # this is pretty fast, so we can use generic
       crons:
         - '30 2 * * *'
       triggerLabels:
@@ -2267,9 +2199,7 @@ spec:
         enabled: true
       depends:
         - default
-      runners:
-        - self-hosted
-        - talos
+      runnerGroup: large
       crons:
         - '30 2 * * *'
       triggerLabels:
@@ -2295,9 +2225,7 @@ spec:
       sops: true
       depends:
         - default
-      runners:
-        - self-hosted
-        - generic # this is not compute intensive, so we can use generic
+      runnerGroup: generic # this is not compute intensive, so we can use generic
       triggerLabels:
         - integration/cloud-images
       steps:
@@ -2329,9 +2257,7 @@ spec:
         enabled: true
       depends:
         - default
-      runners:
-        - self-hosted
-        - talos
+      runnerGroup: large
       crons:
         - '30 2 * * *'
       triggerLabels:
@@ -2396,9 +2322,7 @@ spec:
         enabled: true
       depends:
         - default
-      runners:
-        - self-hosted
-        - talos
+      runnerGroup: large
       crons:
         - '30 6 * * *'
       triggerLabels:
@@ -2527,9 +2451,7 @@ spec:
       sops: true
       depends:
         - default
-      runners:
-        - self-hosted
-        - generic # we can use generic here since the tests run against a remote talos cluster
+      runnerGroup: generic # we can use generic here since the tests run against a remote talos cluster
       crons:
         - '30 7 * * *'
       triggerLabels:
@@ -2605,9 +2527,7 @@ spec:
       sops: true
       depends:
         - default
-      runners:
-        - self-hosted
-        - generic # we can use generic here since the tests run against a remote talos cluster
+      runnerGroup: generic # we can use generic here since the tests run against a remote talos cluster
       crons:
         - '30 7 * * *'
       triggerLabels:
@@ -2705,9 +2625,7 @@ spec:
       sops: true
       depends:
         - default
-      runners:
-        - self-hosted
-        - generic # we can use generic here since the tests run against a remote talos cluster
+      runnerGroup: generic # we can use generic here since the tests run against a remote talos cluster
       crons:
         - '30 7 * * *'
       triggerLabels:
@@ -2805,9 +2723,7 @@ spec:
       sops: true
       depends:
         - default
-      runners:
-        - self-hosted
-        - generic # we can use generic here since the tests run against a remote talos cluster
+      runnerGroup: generic # we can use generic here since the tests run against a remote talos cluster
       crons:
         - '30 7 * * *'
       triggerLabels:
@@ -2903,9 +2819,7 @@ spec:
       sops: true
       depends:
         - default
-      runners:
-        - self-hosted
-        - generic # we can use generic here since the tests run against a remote talos cluster
+      runnerGroup: generic # we can use generic here since the tests run against a remote talos cluster
       crons:
         - '30 7 * * *'
       triggerLabels:
@@ -3001,9 +2915,7 @@ spec:
       sops: true
       depends:
         - default
-      runners:
-        - self-hosted
-        - generic # we can use generic here since the tests run against a remote talos cluster
+      runnerGroup: generic # we can use generic here since the tests run against a remote talos cluster
       crons:
         - '30 7 * * *'
       triggerLabels:

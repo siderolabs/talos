@@ -1,6 +1,6 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
 #
-# Generated on 2025-08-29T14:13:49Z by kres 784fa1f.
+# Generated on 2025-09-24T15:45:03Z by kres fdbc9fc.
 
 concurrency:
   group: ${{ github.head_ref || github.run_id }}
@@ -12,12 +12,11 @@ name: integration-conformance-enforcing-cron
 jobs:
   default:
     runs-on:
-      - self-hosted
-      - talos
+      group: large
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@v1.3.1
+        uses: kenchan0130/actions-system-info@v1.4.0
         continue-on-error: true
       - name: print-system-info
         run: |

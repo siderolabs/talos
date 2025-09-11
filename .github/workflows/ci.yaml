@@ -1,6 +1,6 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
 #
-# Generated on 2025-08-29T14:13:49Z by kres 784fa1f.
+# Generated on 2025-09-24T15:45:03Z by kres fdbc9fc.
 
 concurrency:
   group: ${{ github.head_ref || github.run_id }}
@@ -26,15 +26,14 @@ jobs:
       packages: write
       pull-requests: read
     runs-on:
-      - self-hosted
-      - talos
+      group: large
     if: (!startsWith(github.head_ref, 'renovate/') && !startsWith(github.head_ref, 'dependabot/'))
     needs:
       - default
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@v1.3.1
+        uses: kenchan0130/actions-system-info@v1.4.0
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -91,15 +90,14 @@ jobs:
       packages: write
       pull-requests: read
     runs-on:
-      - self-hosted
-      - talos
+      group: large
     if: (!startsWith(github.head_ref, 'renovate/') && !startsWith(github.head_ref, 'dependabot/'))
     needs:
       - default
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@v1.3.1
+        uses: kenchan0130/actions-system-info@v1.4.0
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -168,15 +166,14 @@ jobs:
       packages: write
       pull-requests: read
     runs-on:
-      - self-hosted
-      - talos
+      group: large
     if: (!startsWith(github.head_ref, 'renovate/') && !startsWith(github.head_ref, 'dependabot/')) && github.event_name == 'pull_request'
     outputs:
       labels: ${{ steps.retrieve-pr-labels.outputs.result }}
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@v1.3.1
+        uses: kenchan0130/actions-system-info@v1.4.0
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -287,15 +284,14 @@ jobs:
       packages: write
       pull-requests: read
     runs-on:
-      - self-hosted
-      - talos
+      group: large
     if: (!startsWith(github.head_ref, 'renovate/') && !startsWith(github.head_ref, 'dependabot/'))
     needs:
       - default
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@v1.3.1
+        uses: kenchan0130/actions-system-info@v1.4.0
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -357,15 +353,14 @@ jobs:
       packages: write
       pull-requests: read
     runs-on:
-      - self-hosted
-      - talos
+      group: large
     if: (!startsWith(github.head_ref, 'renovate/') && !startsWith(github.head_ref, 'dependabot/'))
     needs:
       - default
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@v1.3.1
+        uses: kenchan0130/actions-system-info@v1.4.0
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -426,15 +421,14 @@ jobs:
       packages: write
       pull-requests: read
     runs-on:
-      - self-hosted
-      - talos
+      group: large
     if: (!startsWith(github.head_ref, 'renovate/') && !startsWith(github.head_ref, 'dependabot/'))
     needs:
       - default
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@v1.3.1
+        uses: kenchan0130/actions-system-info@v1.4.0
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -497,15 +491,14 @@ jobs:
       packages: write
       pull-requests: read
     runs-on:
-      - self-hosted
-      - talos
+      group: large
     if: (!startsWith(github.head_ref, 'renovate/') && !startsWith(github.head_ref, 'dependabot/'))
     needs:
       - default
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@v1.3.1
+        uses: kenchan0130/actions-system-info@v1.4.0
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -564,15 +557,14 @@ jobs:
       packages: write
       pull-requests: read
     runs-on:
-      - self-hosted
-      - generic
+      group: generic
     if: contains(fromJSON(needs.default.outputs.labels), 'integration/aws') || contains(fromJSON(needs.default.outputs.labels), 'integration/release-gate')
     needs:
       - default
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@v1.3.1
+        uses: kenchan0130/actions-system-info@v1.4.0
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -701,15 +693,14 @@ jobs:
       packages: write
       pull-requests: read
     runs-on:
-      - self-hosted
-      - generic
+      group: generic
     if: contains(fromJSON(needs.default.outputs.labels), 'integration/aws-nvidia-nonfree-lts') || contains(fromJSON(needs.default.outputs.labels), 'integration/aws-nvidia-nonfree') || contains(fromJSON(needs.default.outputs.labels), 'integration/aws-nvidia') || contains(fromJSON(needs.default.outputs.labels), 'integration/aws')
     needs:
       - default
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@v1.3.1
+        uses: kenchan0130/actions-system-info@v1.4.0
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -854,15 +845,14 @@ jobs:
       packages: write
       pull-requests: read
     runs-on:
-      - self-hosted
-      - generic
+      group: generic
     if: contains(fromJSON(needs.default.outputs.labels), 'integration/aws-nvidia-nonfree-production') || contains(fromJSON(needs.default.outputs.labels), 'integration/aws-nvidia-nonfree') || contains(fromJSON(needs.default.outputs.labels), 'integration/aws-nvidia') || contains(fromJSON(needs.default.outputs.labels), 'integration/aws')
     needs:
       - default
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@v1.3.1
+        uses: kenchan0130/actions-system-info@v1.4.0
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -1007,15 +997,14 @@ jobs:
       packages: write
       pull-requests: read
     runs-on:
-      - self-hosted
-      - generic
+      group: generic
     if: contains(fromJSON(needs.default.outputs.labels), 'integration/aws-nvidia-oss-lts') || contains(fromJSON(needs.default.outputs.labels), 'integration/aws-nvidia-oss') || contains(fromJSON(needs.default.outputs.labels), 'integration/aws-nvidia') || contains(fromJSON(needs.default.outputs.labels), 'integration/aws')
     needs:
       - default
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@v1.3.1
+        uses: kenchan0130/actions-system-info@v1.4.0
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -1160,15 +1149,14 @@ jobs:
       packages: write
       pull-requests: read
     runs-on:
-      - self-hosted
-      - generic
+      group: generic
     if: contains(fromJSON(needs.default.outputs.labels), 'integration/aws-nvidia-oss-production') || contains(fromJSON(needs.default.outputs.labels), 'integration/aws-nvidia-oss') || contains(fromJSON(needs.default.outputs.labels), 'integration/aws-nvidia') || contains(fromJSON(needs.default.outputs.labels), 'integration/aws')
     needs:
       - default
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@v1.3.1
+        uses: kenchan0130/actions-system-info@v1.4.0
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -1313,15 +1301,14 @@ jobs:
       packages: write
       pull-requests: read
     runs-on:
-      - self-hosted
-      - talos
+      group: large
     if: contains(fromJSON(needs.default.outputs.labels), 'integration/cilium') || contains(fromJSON(needs.default.outputs.labels), 'integration/release-gate')
     needs:
       - default
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@v1.3.1
+        uses: kenchan0130/actions-system-info@v1.4.0
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -1435,15 +1422,14 @@ jobs:
       packages: write
       pull-requests: read
     runs-on:
-      - self-hosted
-      - generic
+      group: generic
     if: contains(fromJSON(needs.default.outputs.labels), 'integration/cloud-images')
     needs:
       - default
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@v1.3.1
+        uses: kenchan0130/actions-system-info@v1.4.0
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -1523,15 +1509,14 @@ jobs:
       packages: write
       pull-requests: read
     runs-on:
-      - self-hosted
-      - talos
+      group: large
     if: contains(fromJSON(needs.default.outputs.labels), 'integration/conformance') || contains(fromJSON(needs.default.outputs.labels), 'integration/release-gate')
     needs:
       - default
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@v1.3.1
+        uses: kenchan0130/actions-system-info@v1.4.0
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -1618,15 +1603,14 @@ jobs:
       packages: write
       pull-requests: read
     runs-on:
-      - self-hosted
-      - talos
+      group: large
     if: contains(fromJSON(needs.default.outputs.labels), 'integration/conformance-enforcing')
     needs:
       - default
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@v1.3.1
+        uses: kenchan0130/actions-system-info@v1.4.0
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -1731,15 +1715,14 @@ jobs:
       packages: write
       pull-requests: read
     runs-on:
-      - self-hosted
-      - talos
+      group: large
     if: contains(fromJSON(needs.default.outputs.labels), 'integration/extensions') || contains(fromJSON(needs.default.outputs.labels), 'integration/release-gate')
     needs:
       - default
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@v1.3.1
+        uses: kenchan0130/actions-system-info@v1.4.0
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -1857,15 +1840,14 @@ jobs:
       packages: write
       pull-requests: read
     runs-on:
-      - self-hosted
-      - generic
+      group: generic
     if: contains(fromJSON(needs.default.outputs.labels), 'integration/gcp') || contains(fromJSON(needs.default.outputs.labels), 'integration/release-gate')
     needs:
       - default
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@v1.3.1
+        uses: kenchan0130/actions-system-info@v1.4.0
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -1991,15 +1973,14 @@ jobs:
       packages: write
       pull-requests: read
     runs-on:
-      - self-hosted
-      - talos
+      group: large
     if: contains(fromJSON(needs.default.outputs.labels), 'integration/image-cache') || contains(fromJSON(needs.default.outputs.labels), 'integration/release-gate')
     needs:
       - default
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@v1.3.1
+        uses: kenchan0130/actions-system-info@v1.4.0
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -2101,15 +2082,14 @@ jobs:
       packages: write
       pull-requests: read
     runs-on:
-      - self-hosted
-      - talos
+      group: large
     if: contains(fromJSON(needs.default.outputs.labels), 'integration/image-factory')
     needs:
       - default
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@v1.3.1
+        uses: kenchan0130/actions-system-info@v1.4.0
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -2274,15 +2254,14 @@ jobs:
       packages: write
       pull-requests: read
     runs-on:
-      - self-hosted
-      - generic
+      group: generic
     if: contains(fromJSON(needs.default.outputs.labels), 'integration/images') || contains(fromJSON(needs.default.outputs.labels), 'integration/release-gate')
     needs:
       - default
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@v1.3.1
+        uses: kenchan0130/actions-system-info@v1.4.0
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -2357,15 +2336,14 @@ jobs:
       packages: write
       pull-requests: read
     runs-on:
-      - self-hosted
-      - talos
+      group: large
     if: contains(fromJSON(needs.default.outputs.labels), 'integration/misc') || contains(fromJSON(needs.default.outputs.labels), 'integration/misc-0') || contains(fromJSON(needs.default.outputs.labels), 'integration/release-gate')
     needs:
       - default
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@v1.3.1
+        uses: kenchan0130/actions-system-info@v1.4.0
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -2484,15 +2462,14 @@ jobs:
       packages: write
       pull-requests: read
     runs-on:
-      - self-hosted
-      - talos
+      group: large
     if: contains(fromJSON(needs.default.outputs.labels), 'integration/misc') || contains(fromJSON(needs.default.outputs.labels), 'integration/misc-1') || contains(fromJSON(needs.default.outputs.labels), 'integration/release-gate')
     needs:
       - default
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@v1.3.1
+        uses: kenchan0130/actions-system-info@v1.4.0
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -2615,15 +2592,14 @@ jobs:
       packages: write
       pull-requests: read
     runs-on:
-      - self-hosted
-      - talos
+      group: large
     if: contains(fromJSON(needs.default.outputs.labels), 'integration/misc-enforcing') || contains(fromJSON(needs.default.outputs.labels), 'integration/misc-1-enforcing') || contains(fromJSON(needs.default.outputs.labels), 'integration/release-gate')
     needs:
       - default
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@v1.3.1
+        uses: kenchan0130/actions-system-info@v1.4.0
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -2764,15 +2740,14 @@ jobs:
       packages: write
       pull-requests: read
     runs-on:
-      - self-hosted
-      - talos
+      group: large
     if: contains(fromJSON(needs.default.outputs.labels), 'integration/misc') || contains(fromJSON(needs.default.outputs.labels), 'integration/misc-2') || contains(fromJSON(needs.default.outputs.labels), 'integration/release-gate')
     needs:
       - default
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@v1.3.1
+        uses: kenchan0130/actions-system-info@v1.4.0
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -2929,15 +2904,14 @@ jobs:
       packages: write
       pull-requests: read
     runs-on:
-      - self-hosted
-      - talos
+      group: large
     if: contains(fromJSON(needs.default.outputs.labels), 'integration/misc') || contains(fromJSON(needs.default.outputs.labels), 'integration/misc-3') || contains(fromJSON(needs.default.outputs.labels), 'integration/release-gate')
     needs:
       - default
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@v1.3.1
+        uses: kenchan0130/actions-system-info@v1.4.0
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -3039,15 +3013,14 @@ jobs:
       packages: write
       pull-requests: read
     runs-on:
-      - self-hosted
-      - talos
+      group: large
     if: contains(fromJSON(needs.default.outputs.labels), 'integration/misc-enforcing') || contains(fromJSON(needs.default.outputs.labels), 'integration/misc-3-enforcing')
     needs:
       - default
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@v1.3.1
+        uses: kenchan0130/actions-system-info@v1.4.0
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -3173,15 +3146,14 @@ jobs:
       packages: write
       pull-requests: read
     runs-on:
-      - self-hosted
-      - talos
+      group: large
     if: contains(fromJSON(needs.default.outputs.labels), 'integration/misc') || contains(fromJSON(needs.default.outputs.labels), 'integration/misc-4') || contains(fromJSON(needs.default.outputs.labels), 'integration/release-gate')
     needs:
       - default
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@v1.3.1
+        uses: kenchan0130/actions-system-info@v1.4.0
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -3302,15 +3274,14 @@ jobs:
       packages: write
       pull-requests: read
     runs-on:
-      - self-hosted
-      - talos
+      group: large
     if: contains(fromJSON(needs.default.outputs.labels), 'integration/misc-enforcing') || contains(fromJSON(needs.default.outputs.labels), 'integration/misc-4-enforcing') || contains(fromJSON(needs.default.outputs.labels), 'integration/release-gate')
     needs:
       - default
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@v1.3.1
+        uses: kenchan0130/actions-system-info@v1.4.0
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -3458,15 +3429,14 @@ jobs:
       packages: write
       pull-requests: read
     runs-on:
-      - self-hosted
-      - talos
+      group: large
     if: contains(fromJSON(needs.default.outputs.labels), 'integration/provision') || contains(fromJSON(needs.default.outputs.labels), 'integration/provision-0') || contains(fromJSON(needs.default.outputs.labels), 'integration/release-gate')
     needs:
       - default
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@v1.3.1
+        uses: kenchan0130/actions-system-info@v1.4.0
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -3567,15 +3537,14 @@ jobs:
       packages: write
       pull-requests: read
     runs-on:
-      - self-hosted
-      - talos
+      group: large
     if: contains(fromJSON(needs.default.outputs.labels), 'integration/provision') || contains(fromJSON(needs.default.outputs.labels), 'integration/provision-1') || contains(fromJSON(needs.default.outputs.labels), 'integration/release-gate')
     needs:
       - default
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@v1.3.1
+        uses: kenchan0130/actions-system-info@v1.4.0
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -3662,15 +3631,14 @@ jobs:
       packages: write
       pull-requests: read
     runs-on:
-      - self-hosted
-      - talos
+      group: large
     if: contains(fromJSON(needs.default.outputs.labels), 'integration/provision') || contains(fromJSON(needs.default.outputs.labels), 'integration/provision-2') || contains(fromJSON(needs.default.outputs.labels), 'integration/release-gate')
     needs:
       - default
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@v1.3.1
+        uses: kenchan0130/actions-system-info@v1.4.0
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -3757,15 +3725,14 @@ jobs:
       packages: write
       pull-requests: read
     runs-on:
-      - self-hosted
-      - talos
+      group: large
     if: contains(fromJSON(needs.default.outputs.labels), 'integration/qemu') || contains(fromJSON(needs.default.outputs.labels), 'integration/release-gate')
     needs:
       - default
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@v1.3.1
+        uses: kenchan0130/actions-system-info@v1.4.0
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -3854,15 +3821,14 @@ jobs:
       packages: write
       pull-requests: read
     runs-on:
-      - self-hosted
-      - talos
+      group: large
     if: contains(fromJSON(needs.default.outputs.labels), 'integration/qemu-csi') || contains(fromJSON(needs.default.outputs.labels), 'integration/extensions') || contains(fromJSON(needs.default.outputs.labels), 'integration/qemu-csi-longhorn') || contains(fromJSON(needs.default.outputs.labels), 'integration/release-gate')
     needs:
       - default
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@v1.3.1
+        uses: kenchan0130/actions-system-info@v1.4.0
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -3992,15 +3958,14 @@ jobs:
       packages: write
       pull-requests: read
     runs-on:
-      - self-hosted
-      - talos
+      group: large
     if: contains(fromJSON(needs.default.outputs.labels), 'integration/qemu-csi') || contains(fromJSON(needs.default.outputs.labels), 'integration/qemu-csi-openebs') || contains(fromJSON(needs.default.outputs.labels), 'integration/release-gate')
     needs:
       - default
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@v1.3.1
+        uses: kenchan0130/actions-system-info@v1.4.0
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -4100,15 +4065,14 @@ jobs:
       packages: write
       pull-requests: read
     runs-on:
-      - self-hosted
-      - talos
+      group: large
     if: contains(fromJSON(needs.default.outputs.labels), 'integration/qemu-csi') || contains(fromJSON(needs.default.outputs.labels), 'integration/qemu-csi-rook-ceph') || contains(fromJSON(needs.default.outputs.labels), 'integration/release-gate')
     needs:
       - default
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@v1.3.1
+        uses: kenchan0130/actions-system-info@v1.4.0
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -4207,15 +4171,14 @@ jobs:
       packages: write
       pull-requests: read
     runs-on:
-      - self-hosted
-      - talos
+      group: large
     if: contains(fromJSON(needs.default.outputs.labels), 'integration/qemu-encrypted-vip') || contains(fromJSON(needs.default.outputs.labels), 'integration/release-gate')
     needs:
       - default
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@v1.3.1
+        uses: kenchan0130/actions-system-info@v1.4.0
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -4305,15 +4268,14 @@ jobs:
       packages: write
       pull-requests: read
     runs-on:
-      - self-hosted
-      - talos
+      group: large
     if: contains(fromJSON(needs.default.outputs.labels), 'integration/qemu-enforcing') || contains(fromJSON(needs.default.outputs.labels), 'integration/release-gate')
     needs:
       - default
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@v1.3.1
+        uses: kenchan0130/actions-system-info@v1.4.0
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -4420,15 +4382,14 @@ jobs:
       packages: write
       pull-requests: read
     runs-on:
-      - self-hosted
-      - talos
+      group: large
     if: contains(fromJSON(needs.default.outputs.labels), 'integration/qemu-race') || contains(fromJSON(needs.default.outputs.labels), 'integration/release-gate')
     needs:
       - default
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@v1.3.1
+        uses: kenchan0130/actions-system-info@v1.4.0
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -4528,15 +4489,14 @@ jobs:
       packages: write
       pull-requests: read
     runs-on:
-      - self-hosted
-      - talos
+      group: large
     if: contains(fromJSON(needs.default.outputs.labels), 'integration/reproducibility-test') || contains(fromJSON(needs.default.outputs.labels), 'integration/release-gate')
     needs:
       - default
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@v1.3.1
+        uses: kenchan0130/actions-system-info@v1.4.0
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -4598,15 +4558,14 @@ jobs:
       packages: write
       pull-requests: read
     runs-on:
-      - self-hosted
-      - talos
+      group: large
     if: contains(fromJSON(needs.default.outputs.labels), 'integration/trusted-boot') || contains(fromJSON(needs.default.outputs.labels), 'integration/release-gate')
     needs:
       - default
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@v1.3.1
+        uses: kenchan0130/actions-system-info@v1.4.0
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -4715,15 +4674,14 @@ jobs:
       packages: write
       pull-requests: read
     runs-on:
-      - self-hosted
-      - talos
+      group: large
     if: contains(fromJSON(needs.default.outputs.labels), 'integration/trusted-boot-enforcing')
     needs:
       - default
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@v1.3.1
+        uses: kenchan0130/actions-system-info@v1.4.0
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -4835,13 +4793,12 @@ jobs:
       packages: write
       pull-requests: read
     runs-on:
-      - self-hosted
-      - talos
+      group: large
     if: (!startsWith(github.head_ref, 'renovate/') && !startsWith(github.head_ref, 'dependabot/')) && github.event_name != 'pull_request' && !startsWith(github.ref, 'refs/tags/')
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@v1.3.1
+        uses: kenchan0130/actions-system-info@v1.4.0
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -4910,13 +4867,12 @@ jobs:
       packages: write
       pull-requests: read
     runs-on:
-      - self-hosted
-      - talos
+      group: large
     if: (!startsWith(github.head_ref, 'renovate/') && !startsWith(github.head_ref, 'dependabot/')) && startsWith(github.ref, 'refs/tags/')
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@v1.3.1
+        uses: kenchan0130/actions-system-info@v1.4.0
         continue-on-error: true
       - name: print-system-info
         run: |
