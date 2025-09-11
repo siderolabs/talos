@@ -19,6 +19,7 @@ preface = """
         title = "Component Updates"
         description = """\
 Linux: 6.16.6
+Kubernetes: 1.34.1
 CNI Plugins: 1.8.0
 cryptsetup: 2.8.1
 LVM2: 2_03_34

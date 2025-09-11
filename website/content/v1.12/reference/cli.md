@@ -138,7 +138,7 @@ talosctl cluster create docker [flags]
   -h, --help                                     help for docker
       --host-ip string                           Host IP to forward exposed ports to (default "0.0.0.0")
       --image string                             the talos image to run (default "ghcr.io/siderolabs/talos:latest")
-      --kubernetes-version string                desired kubernetes version to run (default "1.34.0")
+      --kubernetes-version string                desired kubernetes version to run (default "1.34.1")
       --memory-controlplanes string(mb,gb)       the limit on memory usage for each control plane/VM (default 2.0GiB)
       --memory-workers string(mb,gb)             the limit on memory usage for each worker/VM (default 2.0GiB)
       --mount mount                              attach a mount to the container (docker --mount syntax)
@@ -179,7 +179,7 @@ talosctl cluster create qemu [flags]
       --disks strings                            list of disks to create in format "<driver1>:<size1>" (disks after the first one are added only to worker machines) (default [virtio:10GB,virtio:6GB])
   -h, --help                                     help for qemu
       --image-factory-url string                 image factory url (default "https://factory.talos.dev/")
-      --kubernetes-version string                desired kubernetes version to run (default "1.34.0")
+      --kubernetes-version string                desired kubernetes version to run (default "1.34.1")
       --memory-controlplanes string(mb,gb)       the limit on memory usage for each control plane/VM (default 2.0GiB)
       --memory-workers string(mb,gb)             the limit on memory usage for each worker/VM (default 2.0GiB)
       --schematic-id string                      image factory schematic id (defaults to an empty schematic)
@@ -251,7 +251,7 @@ talosctl cluster create [flags]
       --ipxe-boot-script string                  iPXE boot script (URL) to use
       --iso-path string                          the ISO path to use for the initial boot
       --kubeprism-port int                       KubePrism port (set to 0 to disable) (default 7445)
-      --kubernetes-version string                desired kubernetes version to run (default "1.34.0")
+      --kubernetes-version string                desired kubernetes version to run (default "1.34.1")
       --memory string(mb,gb)                     the limit on memory usage for each control plane/VM (default 2.0GiB)
       --memory-workers string(mb,gb)             the limit on memory usage for each worker/VM (default 2.0GiB)
       --mtu int                                  MTU of the cluster network (default 1500)
@@ -1489,7 +1489,7 @@ talosctl gen config <cluster name> <cluster endpoint> [flags]
   -h, --help                                     help for config
       --install-disk string                      the disk to install to (default "/dev/sda")
       --install-image string                     the image used to perform an installation (default "ghcr.io/siderolabs/installer:latest")
-      --kubernetes-version string                desired kubernetes version to run (default "1.34.0")
+      --kubernetes-version string                desired kubernetes version to run (default "1.34.1")
   -o, --output string                            destination to output generated files. when multiple output types are specified, it must be a directory. for a single output type, it must either be a file path, or "-" for stdout
   -t, --output-types strings                     types of outputs to be generated. valid types are: ["controlplane" "worker" "talosconfig"] (default [controlplane,worker,talosconfig])
   -p, --persist                                  the desired persist value for configs (default true)
@@ -1854,7 +1854,7 @@ talosctl image cache-create [flags]
 ### Examples
 
 ```
-talosctl images cache-create --images=ghcr.io/siderolabs/kubelet:v1.34.0 --image-cache-path=/tmp/talos-image-cache
+talosctl images cache-create --images=ghcr.io/siderolabs/kubelet:v1.34.1 --image-cache-path=/tmp/talos-image-cache
 
 Alternatively, stdin can be piped to the command:
 talosctl images default | talosctl images cache-create --image-cache-path=/tmp/talos-image-cache --images=-
@@ -2953,7 +2953,7 @@ talosctl upgrade-k8s [flags]
       --scheduler-image string            kube-scheduler image to use (default "registry.k8s.io/kube-scheduler")
       --siderov1-keys-dir string          The path to the SideroV1 auth PGP keys directory. Defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'. Only valid for Contexts that use SideroV1 auth.
       --talosconfig string                The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
-      --to string                         the Kubernetes control plane version to upgrade to (default "1.34.0")
+      --to string                         the Kubernetes control plane version to upgrade to (default "1.34.1")
       --upgrade-kubelet                   upgrade kubelet service (default true)
       --with-docs                         patch all machine configs adding the documentation for each field (default true)
       --with-examples                     patch all machine configs with the commented examples (default true)
