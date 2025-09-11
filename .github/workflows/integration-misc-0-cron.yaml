@@ -1,6 +1,6 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
 #
-# Generated on 2025-08-29T13:41:44Z by kres 784fa1f.
+# Generated on 2025-09-11T01:41:29Z by kres ba56673-dirty.
 
 concurrency:
   group: ${{ github.head_ref || github.run_id }}
@@ -12,8 +12,7 @@ name: integration-misc-0-cron
 jobs:
   default:
     runs-on:
-      - self-hosted
-      - talos
+      group: large
     steps:
       - name: gather-system-info
         id: system-info
