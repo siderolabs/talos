@@ -121,6 +121,22 @@ If the disk image is used, the `IMAGECACHE` volume doesn't need to be configured
 
 See [disk management]({{< relref "./disk-management/system" >}}) for more information on volume configuration.
 
+## Updating the Image Cache
+
+The image cache is initially populated during installation from the boot media (ISO or disk image) and stored on disk.
+
+To update the image cache on a live node, attach new cache media (ISO or USB) as a secondary device by:
+
+* Booting the node from its installed disk.
+* [Bundling the updated image cache into a Talos ISO image]({{< relref "#iso" >}}).
+* Inserting the bundled ISO into the Talos node.
+
+Talos will then mount the media under `/system/imagecache/iso/imagecache` and copy its contents into the on-disk `IMAGECACHE` partition.
+
+Once copied, the new images are available on the node and can be pulled directly from the cache.
+
+This process allows you to refresh cached images without rebuilding or reinstalling the node.
+
 ## Troubleshooting
 
 When the image cache is enabled, Talos will block on boot waiting for the image cache to be available:
