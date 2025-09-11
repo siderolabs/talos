@@ -707,16 +707,15 @@ func (suite *VolumesSuite) TestRawVolumes() {
 	)
 
 	// verify that volume labels are set properly
-	expectedLabels := xslices.ToSet(rawVolumeIDs)
+	for _, rawVolumeID := range rawVolumeIDs {
+		vs, err := safe.StateGetByID[*block.VolumeStatus](ctx, suite.Client.COSI, rawVolumeID)
+		suite.Require().NoError(err)
 
-	dvs, err := safe.StateListAll[*block.DiscoveredVolume](ctx, suite.Client.COSI)
-	suite.Require().NoError(err)
-
-	for dv := range dvs.All() {
-		delete(expectedLabels, dv.TypedSpec().PartitionLabel)
+		rtestutils.AssertResource(ctx, suite.T(), suite.Client.COSI, filepath.Base(vs.TypedSpec().Location),
+			func(dv *block.DiscoveredVolume, asrt *assert.Assertions) {
+				asrt.Equal(vs.Metadata().ID(), dv.TypedSpec().PartitionLabel, "expected discovered volume %s to have label %s", dv.Metadata().ID(), vs.Metadata().ID())
+			})
 	}
-
-	suite.Require().Empty(expectedLabels, "expected labels %v to be set on discovered volumes", expectedLabels)
 
 	// now, remove one of the volumes, wipe the partition and re-create the volume
 	vs, err := safe.ReaderGetByID[*block.VolumeStatus](ctx, suite.Client.COSI, rawVolumeIDs[0])
