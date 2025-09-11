@@ -121,6 +121,29 @@ If the disk image is used, the `IMAGECACHE` volume doesn't need to be configured
 
 See [disk management]({{< relref "./disk-management/system" >}}) for more information on volume configuration.
 
+## Updating the Image Cache
+
+The image cache is initially populated during installation from the boot media (ISO or disk image) and stored on disk.
+Over time, you may want to update or refresh the cached images without reinstalling the node.
+
+To update the image cache on a live node, attach a new cache media as a secondary device.
+
+You can create this media by bundling your updated image cache into a new ISO or disk image, as explained in the [Bundling Boot Assets section]({{< relref "#building-boot-assets" >}}) of this documentation.
+
+Once attached, Talos mounts the media under `/system/imagecache/iso/imagecache` and copies its contents into the on-disk `IMAGECACHE` partition.
+
+After the copy is complete, the new images are immediately available on the node and can be pulled directly from the cache.
+
+This process allows you to refresh cached images without rebuilding or reinstalling the node.
+
+> **Note:** You can update the image cache using any medium described in the documentation for building boot assets. The media does not need to have Talos installed or be bootable itself, it only needs to provide the cache contents.
+
+### Limitations of Live Image Cache Updates
+
+Only images baked into the ISO or USB are copied. There is no way to push arbitrary new images directly into the cache on a running system.
+
+For dynamic updates or for caching non-container artifacts (e.g., Helm charts, FluxCD manifests), use a dedicated registry mirror (`registry:2`, Harbor, Quay, Zarf, etc.), since the Talos cache is not exposed as a network-accessible registry.
+
 ## Troubleshooting
 
 When the image cache is enabled, Talos will block on boot waiting for the image cache to be available:
