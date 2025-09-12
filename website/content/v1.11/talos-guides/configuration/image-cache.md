@@ -38,7 +38,7 @@ crane push ./image-cache.oci my.registry/image-cache:my-cache
 ## Building Boot Assets
 
 The image cache is provided to Talos via the boot assets.
-There are two supported boot asset types for the Image Cache: ISO and disk image.
+There are two supported boot asset types for the Image Cache: ISO and disk image
 
 ### ISO
 
@@ -120,6 +120,28 @@ You can see the size of your cache by looking at the size of the image-cache.oci
 If the disk image is used, the `IMAGECACHE` volume doesn't need to be configured, as the image cache volume is already present in the disk image.
 
 See [disk management]({{< relref "./disk-management/system" >}}) for more information on volume configuration.
+
+## Updating the Image Cache
+
+The image cache is initially populated during installation from the boot media (ISO or disk image) and stored on disk.
+
+To update the image cache on a live node, attach new cache media (ISO or USB) as a secondary device by:
+
+* Booting the node from its installed disk.
+* [Bundling the updated image cache into a Talos ISO image]({{< relref "#iso" >}}).
+* Inserting the bundled ISO into the Talos node.
+
+Talos will then mount the media under `/system/imagecache/iso/imagecache` and copy its contents into the on-disk `IMAGECACHE` partition.
+
+Once copied, the new images are available on the node and can be pulled directly from the cache.
+
+This process allows you to refresh cached images without rebuilding or reinstalling the node.
+
+### Limitations of Live Image Cache Updates
+
+Only images baked into the ISO or USB are copied. There is no way to push arbitrary new images directly into the cache on a running system.
+
+For dynamic updates or for caching non-container artifacts (e.g., Helm charts, FluxCD manifests), use a dedicated registry mirror (`registry:2`, Harbor, Quay, Zarf, etc.), since the Talos cache is not exposed as a network-accessible registry.
 
 ## Troubleshooting
 
