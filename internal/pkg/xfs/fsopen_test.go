@@ -16,7 +16,7 @@ import (
 	"github.com/siderolabs/talos/internal/pkg/xfs/fsopen"
 )
 
-func TestTmpfs(t *testing.T) {
+func TestFsopen(t *testing.T) {
 	t.Parallel()
 
 	if uid := os.Getuid(); uid != 0 {
@@ -40,8 +40,7 @@ func TestTmpfs(t *testing.T) {
 			require.NoError(t, err)
 
 			t.Cleanup(func() {
-				err := fs.Close()
-				require.NoError(t, err)
+				require.NoError(t, root.Close())
 			})
 
 			testFilesystem(t, root, nil)

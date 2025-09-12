@@ -18,6 +18,7 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"syscall"
 )
 
 // FS is an interface for creating file system handles.
@@ -56,6 +57,7 @@ type File interface {
 	io.Seeker
 	io.Writer
 	io.WriterAt
+	Fd() uintptr
 }
 
 // Interface guard.
@@ -63,22 +65,22 @@ var _ File = (*os.File)(nil)
 
 // ReadFile wraps fs.ReadFile to read a file from the specified FileSystem.
 func ReadFile(root Root, name string) ([]byte, error) {
-	return fs.ReadFile(root, name)
+	return fs.ReadFile(root, strings.TrimLeft(name, "/"))
 }
 
 // ReadDir wraps fs.ReadDir to read a directory from the specified FileSystem.
 func ReadDir(root Root, name string) ([]fs.DirEntry, error) {
-	return fs.ReadDir(root, name)
+	return fs.ReadDir(root, strings.TrimLeft(name, "/"))
 }
 
 // Stat wraps fs.Stat to get the file or directory information from the specified FileSystem.
 func Stat(root Root, name string) (fs.FileInfo, error) {
-	return fs.Stat(root, name)
+	return fs.Stat(root, strings.TrimLeft(name, "/"))
 }
 
 // WriteFile is equivalent of os.WriteFile acting on specified FileSystem.
 func WriteFile(root Root, name string, data []byte, perm os.FileMode) error {
-	f, err := root.OpenFile(name, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, perm)
+	f, err := root.OpenFile(strings.TrimLeft(name, "/"), os.O_WRONLY|os.O_CREATE|os.O_TRUNC, perm)
 	if err != nil {
 		return err
 	}
@@ -91,29 +93,39 @@ func WriteFile(root Root, name string, data []byte, perm os.FileMode) error {
 	return err
 }
 
+// AsOSFile attempts to convert fs.File to *os.File.
+func AsOSFile(f fs.File, name string) (*os.File, error) {
+	ff, ok := f.(File)
+	if !ok {
+		return nil, errors.ErrUnsupported
+	}
+
+	newFd, err := syscall.Dup(int(ff.Fd()))
+	if err != nil {
+		return nil, fmt.Errorf("failed to duplicate file descriptor: %w", err)
+	}
+
+	return os.NewFile(uintptr(newFd), name), nil
+}
+
 // Open wraps (FS).Open.
 func Open(root Root, name string) (fs.File, error) {
-	return root.Open(name)
+	return root.Open(strings.TrimLeft(name, "/"))
 }
 
 // OpenFile wraps (FS).OpenFile.
 func OpenFile(root Root, name string, flags int, perm os.FileMode) (File, error) {
-	return root.OpenFile(name, flags, perm)
+	return root.OpenFile(strings.TrimLeft(name, "/"), flags, perm)
 }
 
 // Mkdir wraps (FS).Mkdir.
 func Mkdir(root Root, name string, perm os.FileMode) error {
-	err := root.Mkdir(name, perm)
-	if err != nil {
-		return fmt.Errorf("%w: %s", err, name)
-	}
-
-	return nil
+	return root.Mkdir(strings.TrimLeft(name, "/"), perm)
 }
 
 // MkdirAll is equivalent of os.MkdirAll acting on specified FileSystem.
 func MkdirAll(root Root, name string, perm os.FileMode) error {
-	components := SplitPath(name)
+	components := SplitPath(strings.TrimLeft(name, "/"))
 
 	for i := range len(components) + 1 {
 		dir := filepath.Join(components[:i]...)
@@ -136,6 +148,8 @@ func MkdirTemp(root Root, dir, pattern string) (string, error) {
 	if dir == "" {
 		dir = os.TempDir()
 	}
+
+	dir = strings.TrimLeft(dir, "/")
 
 	if pattern == "" {
 		pattern = "tmp"
@@ -174,14 +188,14 @@ func MkdirTemp(root Root, dir, pattern string) (string, error) {
 
 // Remove wraps (FS).Remove.
 func Remove(root Root, name string) error {
-	return root.Remove(name)
+	return root.Remove(strings.TrimLeft(name, "/"))
 }
 
 // RemoveAll is equivalent of os.RemoveAll acting on specified FileSystem.
 func RemoveAll(root Root, name string) (err error) {
 	var f fs.File
 
-	f, err = root.Open(name)
+	f, err = root.Open(strings.TrimLeft(name, "/"))
 	if err != nil {
 		if errors.Is(err, os.ErrNotExist) {
 			return nil
@@ -200,22 +214,22 @@ func RemoveAll(root Root, name string) (err error) {
 	}
 
 	if !stat.IsDir() {
-		return root.Remove(name)
+		return root.Remove(strings.TrimLeft(name, "/"))
 	}
 
-	entries, err := ReadDir(root, name)
+	entries, err := ReadDir(root, strings.TrimLeft(name, "/"))
 	if err != nil {
 		return err
 	}
 
 	for _, entry := range entries {
-		childPath := filepath.Join(name, entry.Name())
+		childPath := filepath.Join(strings.TrimLeft(name, "/"), entry.Name())
 		if err := RemoveAll(root, childPath); err != nil {
 			return err
 		}
 	}
 
-	return root.Remove(name)
+	return root.Remove(strings.TrimLeft(name, "/"))
 }
 
 // SplitPath splits a path into its components, similar to filepath.Split but returns all parts.

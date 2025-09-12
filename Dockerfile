@@ -441,11 +441,11 @@ ARG GOAMD64
 RUN --mount=type=cache,target=/.cache,id=talos/.cache GOOS=linux GOARCH=amd64 GOAMD64=${GOAMD64} go build ${GO_BUILDFLAGS} -ldflags "${GO_LDFLAGS} ${GO_MACHINED_LDFLAGS} -dumpdep" ./internal/app/machined \
     |& go tool github.com/aarzilli/whydeadcode > deadcode.txt
 RUN if [[ -s deadcode.txt ]]; then \
-        echo "Dead code elimination problem found:"; \
-        cat deadcode.txt; \
-        exit 1; \
+    echo "Dead code elimination problem found:"; \
+    cat deadcode.txt; \
+    exit 1; \
     else \
-        echo "No dead code elimination issues found"; \
+    echo "No dead code elimination issues found"; \
     fi
 
 # The init target builds the init binary.
@@ -1129,8 +1129,8 @@ ARG TESTPKGS
 ENV PLATFORM=container
 ARG GO_LDFLAGS
 RUN --security=insecure --mount=type=cache,id=testspace,target=/tmp --mount=type=cache,target=/.cache,id=talos/.cache go test \
-    -ldflags "${GO_LDFLAGS}" \
-    -covermode=atomic -coverprofile=coverage.txt -coverpkg=${TESTPKGS} -p 4 ${TESTPKGS}
+    -ldflags "${GO_LDFLAGS}"\
+    -v -covermode=atomic -coverprofile=coverage.txt -coverpkg=${TESTPKGS} -p 4 ${TESTPKGS}
 FROM scratch AS unit-tests
 COPY --from=unit-tests-runner /src/coverage.txt /coverage.txt
 
