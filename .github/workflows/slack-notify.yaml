@@ -1,6 +1,6 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
 #
-# Generated on 2025-09-11T08:52:07Z by kres 953994c.
+# Generated on 2025-09-25T16:16:48Z by kres fdbc9fc.
 
 "on":
   workflow_run:
@@ -9,6 +9,7 @@
       - grype-scan-cron
       - integration-qemu-cron
       - integration-qemu-enforcing-cron
+      - integration-embedded-cron
       - integration-conformance-cron
       - integration-conformance-enforcing-cron
       - integration-trusted-boot-cron

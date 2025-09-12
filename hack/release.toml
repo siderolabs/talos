@@ -75,6 +75,12 @@ The Ethernet configuration now includes a `wakeOnLAN` field to enable Wake-on-LA
 This field can be set to enable WOL and specify the desired WOL modes.
 """
 
+    [notes.embedded-config]
+        title = "Embedded Config"
+        description = """\
+Talos Linux now supports [embedding the machine configuration](https://www.talos.dev/v1.12/talos-guides/configuration/acquire/) directly into the boot image.
+"""
+
 [make_deps]
 
     [make_deps.tools]

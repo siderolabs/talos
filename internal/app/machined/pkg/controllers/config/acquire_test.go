@@ -56,6 +56,7 @@ type AcquireSuite struct {
 	configSetter   *configSetterMock
 	eventPublisher *eventPublisherMock
 	cmdline        *cmdlineGetterMock
+	embeddedPath   string
 
 	clusterName           string
 	completeMachineConfig []byte
@@ -196,6 +197,8 @@ func TestAcquireSuite(t *testing.T) {
 		s.partialMachineConfig, err = pCfg.Bytes()
 		s.Require().NoError(err)
 
+		s.embeddedPath = t.TempDir()
+
 		s.Require().NoError(s.Runtime().RegisterController(&configctrl.AcquireController{
 			PlatformConfiguration: s.platformConfig,
 			PlatformEvent:         s.platformEvent,
@@ -205,6 +208,7 @@ func TestAcquireSuite(t *testing.T) {
 			EventPublisher:        s.eventPublisher,
 			ValidationMode:        validationModeMock{},
 			ResourceState:         s.State(),
+			EmbeddedDirectory:     s.embeddedPath,
 		}))
 	}
 
@@ -663,6 +667,61 @@ func (suite *AcquireSuite) TestFromMaintenance() {
 	suite.injectViaMaintenance(suite.completeMachineConfig)
 
 	cfg := suite.waitForConfig(true)
+	suite.Require().Equal(cfg.Cluster().Name(), suite.clusterName)
+
+	suite.Assert().Equal(
+		[]proto.Message{
+			&machineapi.TaskEvent{
+				Action: machineapi.TaskEvent_START,
+				Task:   "runningMaintenance",
+			},
+			&machineapi.TaskEvent{
+				Action: machineapi.TaskEvent_STOP,
+				Task:   "runningMaintenance",
+			},
+		},
+		suite.eventPublisher.getEvents(),
+	)
+	suite.Assert().Equal(
+		[]platform.Event{
+			{
+				Type:    platform.EventTypeActivate,
+				Message: "Talos booted into maintenance mode. Ready for user interaction.",
+			},
+			{
+				Type:    platform.EventTypeConfigLoaded,
+				Message: "Talos machine config loaded successfully.",
+			},
+		},
+		suite.platformEvent.getEvents(),
+	)
+}
+
+func (suite *AcquireSuite) TestFromEmbeddedToMaintenance() {
+	suite.Require().NoError(os.WriteFile(filepath.Join(suite.embeddedPath, constants.ConfigFilename), suite.partialMachineConfig, 0o644))
+
+	suite.noStateVolume()
+	suite.triggerAcquire()
+
+	var cfg config.Provider
+
+	select {
+	case cfg = <-suite.configSetter.cfgCh:
+	case <-suite.Ctx().Done():
+		suite.Require().Fail("timed out waiting for config")
+	}
+
+	select {
+	case <-suite.configSetter.persistedCfgCh:
+	case <-suite.Ctx().Done():
+		suite.Require().Fail("timed out waiting for persisted config")
+	}
+
+	suite.Require().Equal(cfg.SideroLink().APIUrl().Host, "siderolink.api")
+
+	suite.injectViaMaintenance(suite.completeMachineConfig)
+
+	cfg = suite.waitForConfig(true)
 	suite.Require().Equal(cfg.Cluster().Name(), suite.clusterName)
 
 	suite.Assert().Equal(

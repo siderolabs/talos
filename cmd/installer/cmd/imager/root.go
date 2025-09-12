@@ -41,6 +41,7 @@ var cmdFlags struct {
 	SystemExtensionImages []string
 	BaseInstallerImage    string
 	ImageCache            string
+	EmbeddedConfigPath    string
 	OutputPath            string
 	OutputKind            string
 	TarToStdout           bool
@@ -203,6 +204,15 @@ var rootCmd = &cobra.Command{
 					}
 					prof.Input.SecureBoot.IncludeWellKnownCerts = true
 				}
+
+				if cmdFlags.EmbeddedConfigPath != "" {
+					data, err := os.ReadFile(cmdFlags.EmbeddedConfigPath)
+					if err != nil {
+						return fmt.Errorf("error reading embedded config file: %w", err)
+					}
+
+					prof.Customization.EmbeddedMachineConfiguration = string(data)
+				}
 			}
 
 			if err := os.MkdirAll(cmdFlags.OutputPath, 0o755); err != nil {
@@ -257,6 +267,7 @@ func init() {
 	rootCmd.PersistentFlags().StringVar(&cmdFlags.OverlayName, "overlay-name", "", "The name of the overlay to use")
 	rootCmd.PersistentFlags().StringVar(&cmdFlags.OverlayImage, "overlay-image", "", "The image reference to the overlay")
 	rootCmd.PersistentFlags().StringArrayVar(&cmdFlags.OverlayOptions, "overlay-option", []string{}, "Extra options to pass to the overlay")
+	rootCmd.PersistentFlags().StringVar(&cmdFlags.EmbeddedConfigPath, "embedded-config-path", "", "Path to a file containing the machine configuration to embed into the image")
 	rootCmd.MarkFlagsMutuallyExclusive("board", "overlay-name")
 	rootCmd.MarkFlagsMutuallyExclusive("board", "overlay-image")
 	rootCmd.MarkFlagsMutuallyExclusive("board", "overlay-option")

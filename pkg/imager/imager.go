@@ -78,6 +78,10 @@ func (i *Imager) Execute(ctx context.Context, outputPath string, report *reporte
 		return "", err
 	}
 
+	if err = i.handleEmbeddedConfig(); err != nil {
+		return "", err
+	}
+
 	report.Report(reporter.Update{
 		Message: "profile ready:",
 		Status:  reporter.StatusSucceeded,

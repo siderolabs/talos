@@ -14,6 +14,8 @@ import (
 	"io"
 	"io/fs"
 	"net/http"
+	"os"
+	"path/filepath"
 	"slices"
 	"strings"
 
@@ -24,6 +26,7 @@ import (
 	"github.com/siderolabs/gen/optional"
 	"github.com/siderolabs/go-procfs/procfs"
 	"go.uber.org/zap"
+	"golang.org/x/sys/unix"
 
 	blockadapter "github.com/siderolabs/talos/internal/app/machined/pkg/adapters/block"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/automaton"
@@ -31,6 +34,7 @@ import (
 	talosruntime "github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/platform"
 	platformerrors "github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/errors"
+	"github.com/siderolabs/talos/internal/pkg/mount/v3"
 	machineapi "github.com/siderolabs/talos/pkg/machinery/api/machine"
 	"github.com/siderolabs/talos/pkg/machinery/config"
 	"github.com/siderolabs/talos/pkg/machinery/config/configloader"
@@ -75,10 +79,13 @@ type AcquireController struct {
 	EventPublisher        talosruntime.Publisher
 	ValidationMode        validation.RuntimeMode
 	ResourceState         state.State
+	EmbeddedDirectory     string
 
-	configSourcesUsed []string
-	stateMachine      blockautomaton.VolumeMounterAutomaton
-	diskConfig        config.Provider
+	configSourcesUsed         []string
+	stateMachine              blockautomaton.VolumeMounterAutomaton
+	diskConfig                config.Provider
+	storedEmbeddedConfig      []byte
+	skipMaskingEmbeddedConfig bool
 }
 
 // Name implements controller.Controller interface.
@@ -149,6 +156,21 @@ type stateMachineFunc func(context.Context, controller.Runtime, *zap.Logger) (st
 //
 //nolint:gocyclo
 func (ctrl *AcquireController) Run(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
+	if ctrl.EmbeddedDirectory == "" {
+		ctrl.EmbeddedDirectory = constants.EmbeddedConfigDirectory
+	} else {
+		// if the embedded directory is overridden, we skip masking the embedded config
+		// as we are in the test mode
+		ctrl.skipMaskingEmbeddedConfig = true
+	}
+
+	// early on, load the embedded config, and store it in the controller struct
+	// this way we can "mask" the config directory with an empty mount to prevent it from being read from the tree
+	// by malicious workloads
+	if err := ctrl.processEmbeddedConfig(logger); err != nil {
+		return fmt.Errorf("failed to process embedded config: %w", err)
+	}
+
 	// start always with loading config from disk
 	var currentState stateMachineFunc = ctrl.stateDisk
 
@@ -223,7 +245,7 @@ func (ctrl *AcquireController) Run(ctx context.Context, r controller.Runtime, lo
 //
 // Transitions:
 //
-//	--> cmdlineEarly: no config found on disk, proceed to cmdlineEarly
+//	--> embedded: no config found on disk, proceed to embedded
 //	--> maintenanceEnter: config found on disk, but it's incomplete, proceed to maintenance
 //	--> done: config found on disk, and it's complete
 //
@@ -240,8 +262,8 @@ func (ctrl *AcquireController) stateDisk(ctx context.Context, r controller.Runti
 		// wait for the status to be available
 		return nil, nil, nil
 	case stateVolumeStatus.TypedSpec().Phase == block.VolumePhaseMissing:
-		// STATE is missing, proceed to cmdlineEarly
-		return ctrl.stateCmdlineEarly, nil, nil
+		// STATE is missing, proceed to stateEmbedded
+		return ctrl.stateEmbedded, nil, nil
 	case stateVolumeStatus.TypedSpec().Phase == block.VolumePhaseReady:
 		// STATE is ready, proceed to to the action
 	default:
@@ -266,7 +288,7 @@ func (ctrl *AcquireController) stateDisk(ctx context.Context, r controller.Runti
 	switch {
 	case cfg == nil:
 		// no config loaded, proceed to cmdlineEarly
-		return ctrl.stateCmdlineEarly, nil, nil
+		return ctrl.stateEmbedded, nil, nil
 	case cfg.CompleteForBoot():
 		// complete config, we are done
 		return ctrl.stateDone, cfg, nil
@@ -361,6 +383,103 @@ func (ctrl *AcquireController) loadConfigFromDisk(ctx context.Context, r control
 
 		return nil
 	})
+}
+
+// stateEmbedded acquires machine configuration from the embedded file path.
+//
+// It is called before the cmdlineEarly source.
+//
+// Transitions:
+//
+//	--> cmdlineEarly: config loaded from embedded, but it's incomplete, or no config: proceed to cmdlineEarly
+//	--> done: config loaded from cmdline, and it's complete
+func (ctrl *AcquireController) stateEmbedded(ctx context.Context, r controller.Runtime, logger *zap.Logger) (stateMachineFunc, config.Provider, error) {
+	cfg, err := ctrl.loadConfigFromEmbedded(logger)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	if cfg != nil {
+		ctrl.configSourcesUsed = append(ctrl.configSourcesUsed, "embedded")
+	}
+
+	switch {
+	case cfg == nil:
+		fallthrough
+	case !cfg.CompleteForBoot():
+		// incomplete or missing config, proceed to cmdlineEarly
+		return ctrl.stateCmdlineEarly, cfg, nil
+	default:
+		// complete config, we are done
+		return ctrl.stateDone, cfg, nil
+	}
+}
+
+func (ctrl *AcquireController) processEmbeddedConfig(logger *zap.Logger) error {
+	configPath := filepath.Join(ctrl.EmbeddedDirectory, constants.ConfigFilename)
+
+	_, err := os.Stat(configPath)
+	if err != nil {
+		if os.IsNotExist(err) {
+			// no saved machine config
+			return nil
+		}
+
+		return fmt.Errorf("failed to stat %s: %w", configPath, err)
+	}
+
+	cfgBytes, err := os.ReadFile(configPath)
+	if err != nil {
+		return fmt.Errorf("failed to read embedded config: %w", err)
+	}
+
+	logger.Info("initialized embedded config processing", zap.String("path", configPath))
+
+	ctrl.storedEmbeddedConfig = cfgBytes
+
+	if ctrl.skipMaskingEmbeddedConfig {
+		return nil
+	}
+
+	// we are not going to unmount this, so we don't store the point
+	_, err = mount.NewManager(
+		mount.WithTarget(ctrl.EmbeddedDirectory),
+		mount.WithMountAttributes(unix.MOUNT_ATTR_NOSUID|unix.MOUNT_ATTR_NOEXEC|unix.MOUNT_ATTR_RELATIME|unix.MOUNT_ATTR_RDONLY),
+		mount.WithFsopen(
+			"tmpfs",
+		),
+	).Mount()
+	if err != nil {
+		return fmt.Errorf("failed to mask embedded config directory %q: %w", ctrl.EmbeddedDirectory, err)
+	}
+
+	return nil
+}
+
+func (ctrl *AcquireController) loadConfigFromEmbedded(logger *zap.Logger) (config.Provider, error) {
+	if ctrl.storedEmbeddedConfig == nil {
+		// no embedded config
+		return nil, nil
+	}
+
+	logger.Info("loading embedded config")
+
+	cfg, err := configloader.NewFromBytes(ctrl.storedEmbeddedConfig)
+	if err != nil {
+		return nil, fmt.Errorf("failed to load config from embedded: %w", err)
+	}
+
+	// if the STATE partition is present & contains machine config, Talos is already installed
+	warnings, err := cfg.Validate(validationModeDiskConfig{})
+	if err != nil {
+		return nil, fmt.Errorf("failed to validate embedded config: %w", err)
+	}
+
+	for _, warning := range warnings {
+		logger.Warn("config validation warning", zap.String("warning", warning))
+	}
+
+	return cfg, nil
 }
 
 // stateCmdlineEarly acquires machine configuration from the kernel cmdline source (talos.config.early).

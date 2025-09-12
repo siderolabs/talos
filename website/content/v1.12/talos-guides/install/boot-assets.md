@@ -487,3 +487,80 @@ $ cat profile.yaml | docker run --rm -i \
 -v $PWD/_out:/out -v $PWD/<your-extension>:/<your-extension> \
 ghcr.io/siderolabs/imager:{{< release>}} -
 ```
+
+### Example: Adding embedded machine configuration with Imager
+
+Talos supports embedding a machine configuration into the boot asset. The machine configuration might either be a full machine configuration or just a subset of machine configuration
+documents required e.g. to setup static network configuration.
+
+The configuration is embedded as a virtual system extension, so it should be embedded either into the initial boot asset (e.g. ISO), or provided throughout a lifecycle via an installer image.
+
+The example here shows how to embed a machine configuration into an ISO image.
+
+First, let's create a machine configuration file `machine.yaml`:
+
+```yaml
+# machine.yaml
+apiVersion: v1alpha1
+kind: WatchdogTimerConfig
+device: /dev/watchdog0
+timeout: 5m
+```
+
+This configuration file should be mounted into the `imager` container, so one of the way is to put it to the output directory `_out` which is mounted into the container:
+
+```shell
+cp machine.yaml _out/
+```
+
+Now we can generate the ISO image which embeds this machine configuration with the following command:
+
+```shell
+$ docker run --rm -t -v $PWD/_out:/out ghcr.io/siderolabs/imager:{{< release >}} iso --embedded-config-path=/out/machine.yaml
+profile ready:
+arch: amd64
+platform: metal
+secureboot: false
+version: {{< release >}}
+customization:
+  embeddedMachineConfiguration: |
+    apiVersion: v1alpha1
+    kind: WatchdogTimerConfig
+    device: /dev/watchdog0
+    timeout: 5m
+input:
+  kernel:
+    path: /usr/install/amd64/vmlinuz
+  initramfs:
+    path: /usr/install/amd64/initramfs.xz
+  baseInstaller:
+    imageRef: ghcr.io/siderolabs/installer:{{< release >}}
+  systemExtensions:
+    - imageRef: ""
+      tarballPath: /tmp/imager4028998552/embedded-config.tar
+output:
+  kind: iso
+  outFormat: raw
+initramfs ready
+kernel command line: talos.platform=metal console=ttyS1 init_on_alloc=1 slab_nomerge pti=on consoleblank=0 nvme_core.io_timeout=4294967295 printk.devkmsg=on
+ISO ready
+output asset path: /out/metal-amd64.iso
+```
+
+Once the machine is booted from this ISO, the embedded configuration will be [automatically applied]({{< relref "../configuration/acquire" >}}) to the machine.
+
+Use the following command to check whether the embedded configuration is present in the boot image:
+
+```shell
+$ talosctl get extensions
+NODE         NAMESPACE   TYPE              ID   VERSION   NAME              VERSION
+172.20.0.5   runtime     ExtensionStatus   0    1         embedded-config   5484261e2ab5d34501ce9ad7875c6c0919875cd44863ee2a8a4d06bf0bd0eef7
+```
+
+> Note: the embedded configuration is immutable, so to change it, a new boot asset should be generated.
+
+When the embedded configuration is processed the following log message is printed:
+
+```shell
+initialized embedded config processing {"component": "controller-runtime", "controller": "config.AcquireController", "path": "/usr/local/etc/talos/config.yaml"}
+```

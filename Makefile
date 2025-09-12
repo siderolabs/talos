@@ -92,7 +92,7 @@ GO_VERSION ?= 1.25
 # renovate: datasource=npm depName=markdownlint-cli
 MARKDOWNLINTCLI_VERSION ?= 0.45.0
 # renovate: datasource=docker versioning=docker depName=hugomods/hugo
-HUGO_VERSION ?= dart-sass-0.145.0
+HUGO_VERSION ?= dart-sass-0.150.1
 OPERATING_SYSTEM := $(shell uname -s | tr "[:upper:]" "[:lower:]")
 ARCH := $(shell uname -m | sed 's/x86_64/amd64/' | sed 's/aarch64/arm64/')
 TALOSCTL_DEFAULT_TARGET := talosctl-$(OPERATING_SYSTEM)

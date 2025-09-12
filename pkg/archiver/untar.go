@@ -13,6 +13,8 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/pkg/xattr"
+
 	"github.com/siderolabs/talos/pkg/safepath"
 )
 
@@ -82,6 +84,12 @@ func Untar(ctx context.Context, r io.Reader, rootPath string) error {
 
 			if err = os.Chmod(path, mode); err != nil {
 				return fmt.Errorf("error updating mode %s for %q: %w", mode, path, err)
+			}
+		}
+
+		if hdr.PAXRecords["SCHILY.xattr.security.selinux"] != "" {
+			if err = xattr.LSet(path, "security.selinux", []byte(hdr.PAXRecords["SCHILY.xattr.security.selinux"])); err != nil {
+				return fmt.Errorf("error setting selinux xattr for %q: %w", path, err)
 			}
 		}
 	}

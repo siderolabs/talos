@@ -57,6 +57,7 @@ spec:
     - e2e-docker-short
     - integration-qemu
     - integration-qemu-enforcing
+    - integration-embedded
     - integration-trusted-boot
     - integration-trusted-boot-enforcing
     - integration-provision-0
@@ -468,6 +469,53 @@ spec:
           artifactStep:
             type: upload
             artifactName: talos-logs-integration-qemu-enforcing
+            disableExecutableListGeneration: true
+            artifactPath: /tmp/logs-*.tar.gz
+            additionalArtifacts:
+              - "/tmp/support-*.zip"
+    - name: integration-embedded
+      buildxOptions:
+        enabled: true
+      depends:
+        - default
+      runnerGroup: large
+      crons:
+        - '30 3 * * *'
+      triggerLabels:
+        - integration/embedded
+        - integration/release-gate
+      steps:
+        - name: download-artifacts
+          conditions:
+            - not-on-schedule
+          artifactStep:
+            type: download
+            artifactName: talos-artifacts
+            artifactPath: _out
+        - name: ci-temp-release-tag
+          conditions:
+            - not-on-schedule
+        - name: build
+          conditions:
+            - only-on-schedule
+          command: talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
+          environment:
+            PLATFORM: linux/amd64,linux/arm64
+            IMAGE_REGISTRY: registry.dev.siderolabs.io
+            PUSH: true
+        - name: talosctl-cni-bundle
+          conditions:
+            - only-on-schedule
+        - name: e2e-embedded
+          withSudo: true
+          environment:
+            IMAGE_REGISTRY: registry.dev.siderolabs.io
+        - name: save-talos-logs
+          conditions:
+            - always
+          artifactStep:
+            type: upload
+            artifactName: talos-logs-integration-embedded
             disableExecutableListGeneration: true
             artifactPath: /tmp/logs-*.tar.gz
             additionalArtifacts:
