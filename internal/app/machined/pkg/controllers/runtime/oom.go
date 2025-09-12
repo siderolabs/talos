@@ -12,6 +12,7 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+	"sync"
 	"syscall"
 	"time"
 
@@ -68,16 +69,16 @@ func (ctrl *OOMController) Outputs() []controller.Output {
 	return nil
 }
 
-func (ctrl *OOMController) defaultScoringExpr() cel.Expression {
+var defaultScoringExpr = sync.OnceValue(func() cel.Expression {
 	return cel.MustExpression(cel.ParseDoubleExpression(
 		`memory_max.hasValue() ? 0.0 : ({Besteffort: 1.0, Guaranteed: 0.0, Burstable: 0.5}[class] * double(memory_current.orValue(0u)) / double(memory_peak.orValue(0u) - memory_current.orValue(0u)))`,
 		celenv.OOMCgroupScoring(),
 	))
-}
+})
 
 // Run implements controller.Controller interface.
 func (ctrl *OOMController) Run(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
-	scoringExpr := ctrl.defaultScoringExpr()
+	scoringExpr := defaultScoringExpr()
 
 	ticker := time.NewTicker(sampleInterval)
 	tickerC := ticker.C
@@ -97,7 +98,7 @@ func (ctrl *OOMController) Run(ctx context.Context, r controller.Runtime, logger
 				return fmt.Errorf("cannot get active machine config: %w", err)
 			}
 
-			scoringExpr = ctrl.defaultScoringExpr()
+			scoringExpr = defaultScoringExpr()
 
 			if cfg != nil {
 				if oomCfg := cfg.Config().OOMConfig(); oomCfg != nil {
