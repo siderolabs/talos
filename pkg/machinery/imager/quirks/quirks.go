@@ -274,3 +274,15 @@ func (q Quirks) SupportsIMA() bool {
 
 	return q.v.LTE(maxTalosVersionIMASupported)
 }
+
+var minTalosVersionEmbeddedConfig = semver.MustParse("1.12.0")
+
+// SupportsEmbeddedConfig returns true if the Talos version supports embedded machine configuration.
+func (q Quirks) SupportsEmbeddedConfig() bool {
+	// if the version doesn't parse, we assume it's latest Talos
+	if q.v == nil {
+		return true
+	}
+
+	return q.v.GTE(minTalosVersionEmbeddedConfig)
+}

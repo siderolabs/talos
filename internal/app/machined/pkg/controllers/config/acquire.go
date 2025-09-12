@@ -74,6 +74,7 @@ type AcquireController struct {
 	EventPublisher        talosruntime.Publisher
 	ValidationMode        validation.RuntimeMode
 	ResourceState         state.State
+	EmbeddedDirectory     string
 
 	configSourcesUsed []string
 	stateMachine      blockautomaton.VolumeMounterAutomaton
@@ -148,6 +149,10 @@ type stateMachineFunc func(context.Context, controller.Runtime, *zap.Logger) (st
 //
 //nolint:gocyclo
 func (ctrl *AcquireController) Run(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
+	if ctrl.EmbeddedDirectory == "" {
+		ctrl.EmbeddedDirectory = constants.EmbeddedConfigDirectory
+	}
+
 	// start always with loading config from disk
 	var currentState stateMachineFunc = ctrl.stateDisk
 
@@ -222,7 +227,7 @@ func (ctrl *AcquireController) Run(ctx context.Context, r controller.Runtime, lo
 //
 // Transitions:
 //
-//	--> cmdlineEarly: no config found on disk, proceed to cmdlineEarly
+//	--> embedded: no config found on disk, proceed to embedded
 //	--> maintenanceEnter: config found on disk, but it's incomplete, proceed to maintenance
 //	--> done: config found on disk, and it's complete
 //
@@ -239,8 +244,8 @@ func (ctrl *AcquireController) stateDisk(ctx context.Context, r controller.Runti
 		// wait for the status to be available
 		return nil, nil, nil
 	case stateVolumeStatus.TypedSpec().Phase == block.VolumePhaseMissing:
-		// STATE is missing, proceed to cmdlineEarly
-		return ctrl.stateCmdlineEarly, nil, nil
+		// STATE is missing, proceed to stateEmbedded
+		return ctrl.stateEmbedded, nil, nil
 	case stateVolumeStatus.TypedSpec().Phase == block.VolumePhaseReady:
 		// STATE is ready, proceed to to the action
 	default:
@@ -265,7 +270,7 @@ func (ctrl *AcquireController) stateDisk(ctx context.Context, r controller.Runti
 	switch {
 	case cfg == nil:
 		// no config loaded, proceed to cmdlineEarly
-		return ctrl.stateCmdlineEarly, nil, nil
+		return ctrl.stateEmbedded, nil, nil
 	case cfg.CompleteForBoot():
 		// complete config, we are done
 		return ctrl.stateDone, cfg, nil
@@ -354,6 +359,69 @@ func (ctrl *AcquireController) loadConfigFromDisk(ctx context.Context, r control
 	ctrl.diskConfig = cfg
 
 	return nil
+}
+
+// stateEmbedded acquires machine configuration from the embedded file path.
+//
+// It is called before the cmdlineEarly source.
+//
+// Transitions:
+//
+//	--> cmdlineEarly: config loaded from embedded, but it's incomplete, or no config: proceed to cmdlineEarly
+//	--> done: config loaded from cmdline, and it's complete
+func (ctrl *AcquireController) stateEmbedded(ctx context.Context, r controller.Runtime, logger *zap.Logger) (stateMachineFunc, config.Provider, error) {
+	cfg, err := ctrl.loadConfigFromEmbedded(logger)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	if cfg != nil {
+		ctrl.configSourcesUsed = append(ctrl.configSourcesUsed, "embedded")
+	}
+
+	switch {
+	case cfg == nil:
+		fallthrough
+	case !cfg.CompleteForBoot():
+		// incomplete or missing config, proceed to cmdlineEarly
+		return ctrl.stateCmdlineEarly, cfg, nil
+	default:
+		// complete config, we are done
+		return ctrl.stateDone, cfg, nil
+	}
+}
+
+func (ctrl *AcquireController) loadConfigFromEmbedded(logger *zap.Logger) (config.Provider, error) {
+	configPath := filepath.Join(ctrl.EmbeddedDirectory, constants.ConfigFilename)
+
+	_, err := os.Stat(configPath)
+	if err != nil {
+		if os.IsNotExist(err) {
+			// no saved machine config
+			return nil, nil
+		}
+
+		return nil, fmt.Errorf("failed to stat %s: %w", configPath, err)
+	}
+
+	logger.Info("loading config from embedded", zap.String("path", configPath))
+
+	cfg, err := configloader.NewFromFile(configPath)
+	if err != nil {
+		return nil, fmt.Errorf("failed to load config from embedded: %w", err)
+	}
+
+	// if the STATE partition is present & contains machine config, Talos is already installed
+	warnings, err := cfg.Validate(validationModeDiskConfig{})
+	if err != nil {
+		return nil, fmt.Errorf("failed to validate embedded config: %w", err)
+	}
+
+	for _, warning := range warnings {
+		logger.Warn("config validation warning", zap.String("warning", warning))
+	}
+
+	return cfg, nil
 }
 
 // stateCmdlineEarly acquires machine configuration from the kernel cmdline source (talos.config.early).
