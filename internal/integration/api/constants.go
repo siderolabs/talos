@@ -9,7 +9,7 @@ package api
 const (
 	// NvidiaDevicePluginChartVersion is the version of the NVIDA device plugin chart to use
 	// renovate: datasource=helm versioning=helm depName=nvidia-device-plugin registryUrl=https://nvidia.github.io/k8s-device-plugin
-	NvidiaDevicePluginChartVersion = "v0.17.3"
+	NvidiaDevicePluginChartVersion = "0.17.4"
 	// NvidiaCUDATestImageVersion is the version of the NVIDIA CUDA test image to use
 	// renovate: datasource=docker versioning=docker depName=nvcr.io/nvidia/k8s/cuda-sample
 	NvidiaCUDATestImageVersion = "vectoradd-cuda12.5.0"
