@@ -395,14 +395,18 @@ func (d *DHCP4) parseNetworkConfigFromAck(ack *dhcpv4.DHCPv4, useHostname bool) 
 	if useHostname {
 		d.hostname = nil
 
-		if ack.HostName() != "" {
+		hostname := strings.TrimRight(ack.HostName(), "\x00")
+
+		if hostname != "" {
 			spec := network.HostnameSpecSpec{
 				ConfigLayer: network.ConfigOperator,
 			}
 
-			if err := spec.ParseFQDN(ack.HostName()); err == nil {
-				if ack.DomainName() != "" {
-					spec.Domainname = ack.DomainName()
+			if err := spec.ParseFQDN(hostname); err == nil {
+				domainName := strings.TrimRight(ack.DomainName(), "\x00")
+
+				if domainName != "" {
+					spec.Domainname = domainName
 				}
 
 				d.hostname = []network.HostnameSpecSpec{
