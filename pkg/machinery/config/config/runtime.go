@@ -52,5 +52,6 @@ func (w runtimeConfigWrapper) WatchdogTimer() WatchdogTimerConfig {
 
 // OOMConfig defines the interface to access OOM configuration.
 type OOMConfig interface {
+	TriggerExpression() optional.Optional[cel.Expression]
 	CgroupRankingExpression() optional.Optional[cel.Expression]
 }
