@@ -8,6 +8,7 @@ import (
 	"context"
 	"fmt"
 	"io/fs"
+	"log"
 	"math"
 	"os"
 	"path/filepath"
@@ -37,8 +38,6 @@ const (
 	mempressureProp = "memory.pressure"
 	pressureType    = "full"
 	pressureSpan    = "avg10"
-	psiThresh       = 12
-	cooldownTimeout = 500 * time.Millisecond
 )
 
 // OOMController is a controller that monitors memory PSI and handles near-OOM situations.
@@ -69,6 +68,13 @@ func (ctrl *OOMController) Outputs() []controller.Output {
 	return nil
 }
 
+var defaultTriggerExpr = sync.OnceValue(func() cel.Expression {
+	return cel.MustExpression(cel.ParseBooleanExpression(
+		`memory_full_avg10 > 12.0 && time_since_trigger > duration("500ms")`,
+		celenv.OOMTrigger(),
+	))
+})
+
 var defaultScoringExpr = sync.OnceValue(func() cel.Expression {
 	return cel.MustExpression(cel.ParseDoubleExpression(
 		`memory_max.hasValue() ? 0.0 : ({Besteffort: 1.0, Guaranteed: 0.0, Burstable: 0.5}[class] * double(memory_current.orValue(0u)) / double(memory_peak.orValue(0u) - memory_current.orValue(0u)))`,
@@ -78,6 +84,7 @@ var defaultScoringExpr = sync.OnceValue(func() cel.Expression {
 
 // Run implements controller.Controller interface.
 func (ctrl *OOMController) Run(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
+	triggerExpr := defaultTriggerExpr()
 	scoringExpr := defaultScoringExpr()
 
 	ticker := time.NewTicker(sampleInterval)
@@ -96,6 +103,16 @@ func (ctrl *OOMController) Run(ctx context.Context, r controller.Runtime, logger
 			cfg, err := safe.ReaderGetByID[*config.MachineConfig](ctx, r, config.ActiveID)
 			if err != nil && !state.IsNotFoundError(err) {
 				return fmt.Errorf("cannot get active machine config: %w", err)
+			}
+
+			triggerExpr = defaultTriggerExpr()
+
+			if cfg != nil {
+				if oomCfg := cfg.Config().OOMConfig(); oomCfg != nil {
+					if expr, ok := oomCfg.TriggerExpression().Get(); ok {
+						triggerExpr = expr
+					}
+				}
 			}
 
 			scoringExpr = defaultScoringExpr()
@@ -134,14 +151,28 @@ func (ctrl *OOMController) Run(ctx context.Context, r controller.Runtime, logger
 			continue
 		}
 
-		val, err := strconv.ParseFloat(value.String(), 32)
+		val, err := strconv.ParseFloat(value.String(), 64)
 		if err != nil {
 			fmt.Println("cannot parse memory pressure:", pressureSpan, err)
 			continue
 		}
 		fmt.Println("monitoring", value.String(), val, err)
 
-		if val > psiThresh && time.Since(ctrl.ActionTriggered) > cooldownTimeout {
+		evalContext := map[string]any{
+			"memory_full_avg10":  float64(val),
+			"time_since_trigger": time.Since(ctrl.ActionTriggered),
+		}
+
+		log.Printf("evalContext = %v", evalContext)
+
+		trigger, err := triggerExpr.EvalBool(celenv.OOMTrigger(), evalContext)
+
+		if err != nil {
+			logger.Error("cannot evaluate trigger condition:", zap.Error(err))
+			continue
+		}
+
+		if trigger {
 			ctrl.ActionTriggered = time.Now()
 			ctrl.OomAction(logger, scoringExpr)
 		}

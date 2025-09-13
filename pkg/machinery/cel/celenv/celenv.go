@@ -82,6 +82,28 @@ var VolumeLocator = sync.OnceValue(func() *cel.Env {
 	return env
 })
 
+// OOMTrigger is a OOM Trigger Condition CEL environment.
+var OOMTrigger = sync.OnceValue(func() *cel.Env {
+	env, err := cel.NewEnv(
+		slices.Concat(
+			slices.Concat(
+				[]cel.EnvOption{
+					cel.Variable("memory_full_avg10", types.DoubleType),
+					cel.Variable("time_since_trigger", types.DurationType),
+					cel.OptionalTypes(),
+				},
+				celUnitMultipliersConstants(),
+			),
+			celCgroupClassConstants(),
+		)...,
+	)
+	if err != nil {
+		panic(err)
+	}
+
+	return env
+})
+
 // OOMCgroupScoring is a OOM Cgroup Scoring CEL environment.
 var OOMCgroupScoring = sync.OnceValue(func() *cel.Env {
 	env, err := cel.NewEnv(

@@ -51,6 +51,14 @@ type OOMV1Alpha1 struct {
 	meta.Meta `yaml:",inline"`
 
 	//   description: |
+	//     This expression defines when to trigger OOM action.
+	//
+	//     The expression must evaluate to a boolean value.
+	//     If the expression returns true, then OOM ranking and killing will be handled.
+	//   schema:
+	//     type: string
+	OOMTriggerExpression cel.Expression `yaml:"triggerExpression,omitempty"`
+	//   description: |
 	//     This expression defines how to rank cgroups for OOM handler.
 	//
 	//     The cgroup with the highest rank (score) will be evicted first.
@@ -73,8 +81,8 @@ func NewOOMV1Alpha1() *OOMV1Alpha1 {
 func exampleOOMV1Alpha1() *OOMV1Alpha1 {
 	cfg := NewOOMV1Alpha1()
 	cfg.OOMCgroupRankingExpression = cel.MustExpression(cel.ParseDoubleExpression(
-		`memory_max.hasValue() ? 0.0 : 
-			{Besteffort : 1.0, Guaranteed: 0.0, Burstable: 0.5}[class] * 
+		`memory_max.hasValue() ? 0.0 :
+			{Besteffort : 1.0, Guaranteed: 0.0, Burstable: 0.5}[class] *
 			   double(memory_current.orValue(0u)) / double(memory_peak.orValue(0u) - memory_current.orValue(0u))`,
 		celenv.OOMCgroupScoring(),
 	))
@@ -98,6 +106,15 @@ func (s *OOMV1Alpha1) Validate(validation.RuntimeMode, ...validation.Option) ([]
 	}
 
 	return nil, validationErrors
+}
+
+// TriggerExpression returns the OOM cgroup ranking expression.
+func (s *OOMV1Alpha1) TriggerExpression() optional.Optional[cel.Expression] {
+	if s.OOMCgroupRankingExpression.IsZero() {
+		return optional.None[cel.Expression]()
+	}
+
+	return optional.Some(s.OOMTriggerExpression)
 }
 
 // CgroupRankingExpression returns the OOM cgroup ranking expression.
