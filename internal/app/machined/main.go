@@ -228,12 +228,7 @@ func runEntrypoint(ctx context.Context, c *v1alpha1runtime.Controller) error {
 		}
 	}()
 
-	controllerWaitGroup.Add(1)
-
-	// Start v2 controller runtime.
-	go func() {
-		defer controllerWaitGroup.Done()
-
+	controllerWaitGroup.Go(func() {
 		if e := c.V1Alpha2().Run(ctx, drainer); e != nil {
 			ctrlErr := fmt.Errorf("fatal controller runtime error: %s", e)
 
@@ -243,7 +238,7 @@ func runEntrypoint(ctx context.Context, c *v1alpha1runtime.Controller) error {
 		}
 
 		log.Printf("controller runtime finished")
-	}()
+	})
 
 	// Inject controller into maintenance service.
 	maintenance.InjectController(c)

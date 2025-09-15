@@ -19,8 +19,8 @@ import (
 	"golang.org/x/sys/unix"
 
 	"github.com/siderolabs/talos/internal/pkg/containermode"
-	"github.com/siderolabs/talos/internal/pkg/xfs"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
+	"github.com/siderolabs/talos/pkg/xfs"
 )
 
 //go:embed policy/policy.33

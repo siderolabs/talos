@@ -336,10 +336,10 @@ func (suite *AcquireSuite) TestFromDiskFailure() {
 	ev := suite.platformEvent.getEvents()[0]
 	suite.Assert().Equal(platform.EventTypeFailure, ev.Type)
 	suite.Assert().Equal("Error loading and validating Talos machine config.", ev.Message)
-	suite.Assert().Equal("failed to load config from STATE: unknown keys found during decoding:\naaaversion: v1alpha1 # Indicates the schema used to decode the contents.\n", ev.Error.Error())
+	suite.Assert().Equal("failed to load \"config.yaml\" from STATE: unknown keys found during decoding:\naaaversion: v1alpha1 # Indicates the schema used to decode the contents.\n", ev.Error.Error())
 
 	suite.Assert().Equal(&machineapi.ConfigLoadErrorEvent{
-		Error: "failed to load config from STATE: unknown keys found during decoding:\naaaversion: v1alpha1 # Indicates the schema used to decode the contents.\n",
+		Error: "failed to load \"config.yaml\" from STATE: unknown keys found during decoding:\naaaversion: v1alpha1 # Indicates the schema used to decode the contents.\n",
 	}, suite.eventPublisher.getEvents()[0])
 }
 

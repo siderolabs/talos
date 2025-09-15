@@ -6,7 +6,9 @@ package block
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"slices"
@@ -19,14 +21,14 @@ import (
 	"github.com/siderolabs/gen/xslices"
 	"github.com/siderolabs/go-blockdevice/v2/swap"
 	"go.uber.org/zap"
-	"golang.org/x/sys/unix"
 
 	"github.com/siderolabs/talos/internal/pkg/mount/v3"
 	"github.com/siderolabs/talos/internal/pkg/selinux"
-	"github.com/siderolabs/talos/internal/pkg/xfs/fsopen"
 	"github.com/siderolabs/talos/pkg/filetree"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/resources/block"
+	"github.com/siderolabs/talos/pkg/xfs"
+	"github.com/siderolabs/talos/pkg/xfs/fsopen"
 )
 
 type mountContext struct {
@@ -232,6 +234,15 @@ func (ctrl *MountController) Run(ctx context.Context, r controller.Runtime, logg
 						mountStatus.TypedSpec().EncryptionProvider = volumeStatus.TypedSpec().EncryptionProvider
 						mountStatus.TypedSpec().ReadOnly = mountRequest.TypedSpec().ReadOnly
 						mountStatus.TypedSpec().ProjectQuotaSupport = volumeStatus.TypedSpec().MountSpec.ProjectQuotaSupport
+						mountStatus.TypedSpec().Detached = mountRequest.TypedSpec().Detached
+
+						// This needs to be set through accessor, and is not guaranteed to resolve to a valid root.
+						mount, ok := ctrl.activeMounts[mountRequest.Metadata().ID()]
+						if ok && mount.point != nil {
+							mountStatus.TypedSpec().SetRoot(mount.point.Root())
+						} else {
+							mountStatus.TypedSpec().SetRoot(&xfs.OSRoot{Shadow: filepath.Join(rootPath, mountTarget)})
+						}
 
 						return nil
 					},
@@ -341,7 +352,7 @@ func (ctrl *MountController) handleSymlinkMountOperation(
 	targetPath := filepath.Join(rootPath, target)
 
 	st, err := os.Lstat(targetPath)
-	if err != nil && !os.IsNotExist(err) {
+	if err != nil && !errors.Is(err, fs.ErrNotExist) {
 		return fmt.Errorf("failed to stat target path: %w", err)
 	}
 
@@ -450,7 +461,7 @@ func (ctrl *MountController) updateTargetSettings(
 	}
 
 	if err != nil {
-		return fmt.Errorf("error setting label %q: %w", targetPath, err)
+		return fmt.Errorf("error setting label on %q: %w", currentLabel, err)
 	}
 
 	return nil
@@ -475,7 +486,6 @@ func (ctrl *MountController) handleDiskMountOperation(
 
 		fsOpts = append(fsOpts,
 			fsopen.WithSource(mountSource),
-			fsopen.WithPrinter(logger.Sugar().With(zap.String("volume", volumeStatus.Metadata().ID())).Infof),
 			fsopen.WithProjectQuota(volumeStatus.TypedSpec().MountSpec.ProjectQuotaSupport),
 		)
 
@@ -484,7 +494,11 @@ func (ctrl *MountController) handleDiskMountOperation(
 		)
 
 		if mountRequest.TypedSpec().ReadOnly {
-			opts = append(opts, mount.WithMountAttributes(unix.MOUNT_ATTR_RDONLY))
+			opts = append(opts, mount.WithReadOnly())
+		}
+
+		if mountRequest.TypedSpec().Detached {
+			opts = append(opts, mount.WithDetached())
 		}
 
 		manager := mount.NewManager(slices.Concat(
@@ -504,7 +518,7 @@ func (ctrl *MountController) handleDiskMountOperation(
 			return fmt.Errorf("failed to mount %q: %w", mountRequest.Metadata().ID(), err)
 		}
 
-		if !mountRequest.TypedSpec().ReadOnly {
+		if !mountRequest.TypedSpec().ReadOnly && !mountRequest.TypedSpec().Detached {
 			if err = ctrl.updateTargetSettings(mountTarget, volumeStatus.TypedSpec().MountSpec); err != nil {
 				manager.Unmount() //nolint:errcheck
 
@@ -518,6 +532,7 @@ func (ctrl *MountController) handleDiskMountOperation(
 			zap.String("target", mountTarget),
 			zap.Stringer("filesystem", mountFilesystem),
 			zap.Bool("read_only", mountRequest.TypedSpec().ReadOnly),
+			zap.Bool("detached", mountRequest.TypedSpec().Detached),
 		)
 
 		ctrl.activeMounts[mountRequest.Metadata().ID()] = &mountContext{

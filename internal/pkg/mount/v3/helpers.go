@@ -15,8 +15,8 @@ import (
 	"golang.org/x/sys/unix"
 
 	"github.com/siderolabs/talos/internal/pkg/selinux"
-	"github.com/siderolabs/talos/internal/pkg/xfs/fsopen"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
+	"github.com/siderolabs/talos/pkg/xfs/fsopen"
 )
 
 //
@@ -40,9 +40,7 @@ func NewCgroup2() *Manager {
 
 // NewReadOnlyOverlay creates a new read-only overlay filesystem.
 func NewReadOnlyOverlay(sources []string, target string, printer func(string, ...any), options ...ManagerOption) *Manager {
-	fsOptions := []fsopen.Option{
-		fsopen.WithPrinter(printer),
-	}
+	fsOptions := []fsopen.Option{}
 
 	if printer != nil {
 		printer("mounting %d overlays: %v", len(sources), sources)
@@ -58,8 +56,7 @@ func NewReadOnlyOverlay(sources []string, target string, printer func(string, ..
 
 	options = append(options,
 		WithTarget(target),
-		WithPrinter(printer),
-		WithMountAttributes(unix.MOUNT_ATTR_RDONLY),
+		WithReadOnly(),
 		WithFsopen("overlay", fsOptions...),
 	)
 
@@ -75,7 +72,6 @@ func NewOverlayWithBasePath(sources []string, target, basePath string, printer f
 	workdir := fmt.Sprintf(filepath.Join(basePath, "%s-workdir"), overlayPrefix)
 
 	fsOptions := []fsopen.Option{
-		fsopen.WithPrinter(printer),
 		fsopen.WithStringParameter("upperdir", diff),
 		fsopen.WithStringParameter("workdir", workdir),
 	}
@@ -127,7 +123,6 @@ func Squashfs(target, squashfsFile string, printer func(string, ...any)) (*Manag
 			"squashfs",
 			fsopen.WithSource(dev.Path()),
 			fsopen.WithBoolParameter("ro"),
-			fsopen.WithPrinter(printer),
 		),
 	), nil
 }
@@ -184,7 +179,6 @@ func Pseudo(printer func(string, ...any)) Managers {
 			WithFsopen(
 				"devtmpfs",
 				fsopen.WithStringParameter("mode", "0755"),
-				fsopen.WithPrinter(printer),
 			),
 		),
 		newManager(
@@ -192,13 +186,13 @@ func Pseudo(printer func(string, ...any)) Managers {
 			WithTarget("/proc"),
 			WithKeepOpenAfterMount(),
 			WithMountAttributes(unix.MOUNT_ATTR_NOSUID|unix.MOUNT_ATTR_NOEXEC|unix.MOUNT_ATTR_NODEV),
-			WithFsopen("proc", fsopen.WithPrinter(printer)),
+			WithFsopen("proc"),
 		),
 		newManager(
 			always,
 			WithTarget("/sys"),
 			WithKeepOpenAfterMount(),
-			WithFsopen("sysfs", fsopen.WithPrinter(printer)),
+			WithFsopen("sysfs"),
 		),
 	)
 }
@@ -213,7 +207,6 @@ func PseudoLate(printer func(string, ...any)) Managers {
 			WithSelinuxLabel(constants.RunSelinuxLabel),
 			WithFsopen(
 				"tmpfs",
-				fsopen.WithPrinter(printer),
 				fsopen.WithStringParameter("mode", "0755"),
 			),
 		),
@@ -223,7 +216,6 @@ func PseudoLate(printer func(string, ...any)) Managers {
 			WithSelinuxLabel(constants.SystemSelinuxLabel),
 			WithFsopen(
 				"tmpfs",
-				fsopen.WithPrinter(printer),
 				fsopen.WithStringParameter("mode", "0755"),
 			),
 		),
@@ -233,7 +225,6 @@ func PseudoLate(printer func(string, ...any)) Managers {
 			WithMountAttributes(unix.MOUNT_ATTR_NOSUID|unix.MOUNT_ATTR_NOEXEC|unix.MOUNT_ATTR_NODEV),
 			WithFsopen(
 				"tmpfs",
-				fsopen.WithPrinter(printer),
 				fsopen.WithStringParameter("mode", "0755"),
 				fsopen.WithStringParameter("size", "64M"),
 			),
@@ -248,7 +239,7 @@ func PseudoSub(printer func(string, ...any)) Managers {
 			always,
 			WithTarget("/dev/shm"),
 			WithMountAttributes(unix.MOUNT_ATTR_NOSUID|unix.MOUNT_ATTR_NOEXEC|unix.MOUNT_ATTR_NODEV|unix.MOUNT_ATTR_RELATIME),
-			WithFsopen("tmpfs", fsopen.WithPrinter(printer)),
+			WithFsopen("tmpfs"),
 		),
 		newManager(
 			always,
@@ -259,55 +250,54 @@ func PseudoSub(printer func(string, ...any)) Managers {
 				fsopen.WithStringParameter("ptmxmode", "000"),
 				fsopen.WithStringParameter("mode", "620"),
 				fsopen.WithStringParameter("gid", "5"),
-				fsopen.WithPrinter(printer),
 			),
 		),
 		newManager(
 			always,
 			WithMountAttributes(unix.MOUNT_ATTR_NOSUID|unix.MOUNT_ATTR_NODEV),
 			WithTarget("/dev/hugepages"),
-			WithFsopen("hugetlbfs", fsopen.WithPrinter(printer)),
+			WithFsopen("hugetlbfs"),
 		),
 		newManager(
 			always,
 			WithTarget("/sys/fs/bpf"),
-			WithFsopen("bpf", fsopen.WithPrinter(printer)),
+			WithFsopen("bpf"),
 		),
 		newManager(
 			always,
 			WithTarget("/sys/kernel/security"),
 			WithMountAttributes(unix.MOUNT_ATTR_NOSUID|unix.MOUNT_ATTR_NOEXEC|unix.MOUNT_ATTR_NODEV|unix.MOUNT_ATTR_RELATIME),
-			WithFsopen("securityfs", fsopen.WithPrinter(printer)),
+			WithFsopen("securityfs"),
 		),
 		newManager(
 			always,
 			WithTarget("/sys/kernel/tracing"),
 			WithMountAttributes(unix.MOUNT_ATTR_NOSUID|unix.MOUNT_ATTR_NOEXEC|unix.MOUNT_ATTR_NODEV),
-			WithFsopen("tracefs", fsopen.WithPrinter(printer)),
+			WithFsopen("tracefs"),
 		),
 		newManager(
 			always,
 			WithTarget("/sys/kernel/config"),
 			WithMountAttributes(unix.MOUNT_ATTR_NOSUID|unix.MOUNT_ATTR_NOEXEC|unix.MOUNT_ATTR_NODEV|unix.MOUNT_ATTR_RELATIME),
-			WithFsopen("configfs", fsopen.WithPrinter(printer)),
+			WithFsopen("configfs"),
 		),
 		newManager(
 			always,
 			WithTarget("/sys/kernel/debug"),
 			WithMountAttributes(unix.MOUNT_ATTR_NOSUID|unix.MOUNT_ATTR_NOEXEC|unix.MOUNT_ATTR_NODEV|unix.MOUNT_ATTR_RELATIME),
-			WithFsopen("debugfs", fsopen.WithPrinter(printer)),
+			WithFsopen("debugfs"),
 		),
 		newManager(
 			selinux.IsEnabled,
 			WithTarget("/sys/fs/selinux"),
 			WithMountAttributes(unix.MOUNT_ATTR_NOSUID|unix.MOUNT_ATTR_NOEXEC|unix.MOUNT_ATTR_RELATIME),
-			WithFsopen("selinuxfs", fsopen.WithPrinter(printer)),
+			WithFsopen("selinuxfs"),
 		),
 		newManager(
 			hasEFIVars,
 			WithTarget(constants.EFIVarsMountPoint),
 			WithMountAttributes(unix.MOUNT_ATTR_NOSUID|unix.MOUNT_ATTR_NOEXEC|unix.MOUNT_ATTR_NODEV|unix.MOUNT_ATTR_RELATIME|unix.MOUNT_ATTR_RDONLY),
-			WithFsopen("efivarfs", fsopen.WithPrinter(printer)),
+			WithFsopen("efivarfs"),
 		),
 	)
 }

@@ -12,9 +12,8 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"io/fs"
 	"net/http"
-	"os"
-	"path/filepath"
 	"slices"
 	"strings"
 
@@ -26,6 +25,7 @@ import (
 	"github.com/siderolabs/go-procfs/procfs"
 	"go.uber.org/zap"
 
+	blockadapter "github.com/siderolabs/talos/internal/app/machined/pkg/adapters/block"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/automaton"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/automaton/blockautomaton"
 	talosruntime "github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
@@ -40,6 +40,7 @@ import (
 	configresource "github.com/siderolabs/talos/pkg/machinery/resources/config"
 	"github.com/siderolabs/talos/pkg/machinery/resources/runtime"
 	"github.com/siderolabs/talos/pkg/machinery/resources/v1alpha1"
+	"github.com/siderolabs/talos/pkg/xfs"
 )
 
 // PlatformConfigurator is a reduced interface of runtime.Platform.
@@ -297,8 +298,12 @@ func (validationModeDiskConfig) String() string {
 // loadFromDisk is a helper function for stateDisk.
 func (ctrl *AcquireController) loadFromDisk(ctx context.Context, r controller.ReaderWriter, logger *zap.Logger) (config.Provider, bool, error) {
 	if ctrl.stateMachine == nil {
-		ctrl.stateMachine = blockautomaton.NewVolumeMounter(ctrl.Name(), constants.StatePartitionLabel, ctrl.loadConfigFromDisk,
+		ctrl.stateMachine = blockautomaton.NewVolumeMounter(
+			ctrl.Name(),
+			constants.StatePartitionLabel,
+			ctrl.loadConfigFromDisk,
 			blockautomaton.WithReadOnly(true),
+			blockautomaton.WithDetached(true),
 		)
 	}
 
@@ -321,39 +326,41 @@ func (ctrl *AcquireController) loadFromDisk(ctx context.Context, r controller.Re
 }
 
 func (ctrl *AcquireController) loadConfigFromDisk(ctx context.Context, r controller.ReaderWriter, logger *zap.Logger, mountStatus *block.VolumeMountStatus) error {
-	configPath := filepath.Join(mountStatus.TypedSpec().Target, constants.ConfigFilename)
+	return blockadapter.VolumeMountStatus(mountStatus).WithRoot(logger, func(root xfs.Root) error {
+		configPath := constants.ConfigFilename
 
-	logger.Debug("loading config from STATE", zap.String("path", configPath))
+		logger.Debug("loading config from STATE", zap.String("path", configPath))
 
-	_, err := os.Stat(configPath)
-	if err != nil {
-		if os.IsNotExist(err) {
-			// no saved machine config
-			return nil
+		_, err := xfs.Stat(root, configPath)
+		if err != nil {
+			if errors.Is(err, fs.ErrNotExist) {
+				// no saved machine config
+				return nil
+			}
+
+			return fmt.Errorf("failed to stat %s: %w", configPath, err)
 		}
 
-		return fmt.Errorf("failed to stat %s: %w", configPath, err)
-	}
+		cfg, err := loadConfig(root, configPath)
+		if err != nil {
+			return err
+		}
 
-	cfg, err := configloader.NewFromFile(configPath)
-	if err != nil {
-		return fmt.Errorf("failed to load config from STATE: %w", err)
-	}
+		// if the STATE partition is present & contains machine config, Talos is already installed
+		warnings, err := cfg.Validate(validationModeDiskConfig{})
+		if err != nil {
+			return fmt.Errorf("failed to validate on-disk config: %w", err)
+		}
 
-	// if the STATE partition is present & contains machine config, Talos is already installed
-	warnings, err := cfg.Validate(validationModeDiskConfig{})
-	if err != nil {
-		return fmt.Errorf("failed to validate on-disk config: %w", err)
-	}
+		for _, warning := range warnings {
+			logger.Warn("config validation warning", zap.String("warning", warning))
+		}
 
-	for _, warning := range warnings {
-		logger.Warn("config validation warning", zap.String("warning", warning))
-	}
+		// we can't return the value directly
+		ctrl.diskConfig = cfg
 
-	// we can't return the value directly
-	ctrl.diskConfig = cfg
-
-	return nil
+		return nil
+	})
 }
 
 // stateCmdlineEarly acquires machine configuration from the kernel cmdline source (talos.config.early).
@@ -686,4 +693,19 @@ func (ctrl *AcquireController) stateDone(ctx context.Context, r controller.Runti
 // stateFinal just makes the controller do nothing.
 func (ctrl *AcquireController) stateFinal(ctx context.Context, r controller.Runtime, logger *zap.Logger) (stateMachineFunc, config.Provider, error) {
 	return nil, nil, nil
+}
+
+func loadConfig(root xfs.Root, configPath string) (config.Provider, error) {
+	f, err := xfs.Open(root, configPath)
+	if err != nil {
+		return nil, fmt.Errorf("failed to open %q from STATE: %w", configPath, err)
+	}
+	defer f.Close() //nolint:errcheck
+
+	cfg, err := configloader.NewFromReader(f)
+	if err != nil {
+		return nil, fmt.Errorf("failed to load %q from STATE: %w", configPath, err)
+	}
+
+	return cfg, nil
 }

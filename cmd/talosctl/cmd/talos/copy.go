@@ -6,8 +6,10 @@ package talos
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
+	"io/fs"
 	"os"
 	"path/filepath"
 
@@ -67,7 +69,7 @@ captures ownership and permission bits.`,
 				return fmt.Errorf("local path %q should be a directory", args[1])
 			}
 			if err != nil {
-				if !os.IsNotExist(err) {
+				if !errors.Is(err, fs.ErrNotExist) {
 					return fmt.Errorf("failed to stat local path: %w", err)
 				}
 				if err = os.MkdirAll(localPath, 0o777); err != nil {

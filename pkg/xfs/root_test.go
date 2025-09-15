@@ -12,7 +12,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/siderolabs/talos/internal/pkg/xfs"
+	"github.com/siderolabs/talos/pkg/xfs"
 )
 
 const testDir = "testdir"
@@ -183,6 +183,50 @@ func testFilesystem(t *testing.T, rwRoot xfs.Root, roRoot xfs.Root) {
 		actual, err := xfs.Stat(roRoot, name)
 		require.NoError(t, err, "stat file %q failed", name)
 		assert.False(t, actual.IsDir())
+	})
+
+	t.Run("Rename", func(t *testing.T) {
+		t.Parallel()
+
+		t.Run("Dir", func(t *testing.T) {
+			t.Parallel()
+
+			oldName := filepath.Join(testDir, "rename.old.d", "test")
+			newName := filepath.Join(testDir, "rename.new.d", "test")
+
+			touchTree(t, rwRoot, oldName)
+
+			err := xfs.Rename(rwRoot, filepath.Dir(oldName), filepath.Dir(newName))
+			assert.NoError(t, err)
+
+			newDirStat, err := xfs.Stat(roRoot, filepath.Dir(newName))
+			require.NoError(t, err, "stat dir %q failed", filepath.Dir(newName))
+			assert.True(t, newDirStat.IsDir())
+
+			_, err = xfs.Stat(roRoot, newName)
+			require.NoError(t, err, "stat file %q failed", newName)
+
+			_, err = xfs.Stat(roRoot, oldName)
+			require.ErrorIs(t, err, os.ErrNotExist, "stat dir %q failed", filepath.Dir(oldName))
+		})
+
+		t.Run("File", func(t *testing.T) {
+			t.Parallel()
+
+			oldName := filepath.Join(testDir, "rename.old.test")
+			newName := filepath.Join(testDir, "rename.new.test")
+
+			touchTree(t, rwRoot, oldName)
+
+			err := xfs.Rename(rwRoot, oldName, newName)
+			assert.NoError(t, err)
+
+			_, err = xfs.Stat(roRoot, newName)
+			require.NoError(t, err, "stat file %q failed", newName)
+
+			_, err = xfs.Stat(roRoot, oldName)
+			require.ErrorIs(t, err, os.ErrNotExist, "stat file %q failed", oldName)
+		})
 	})
 }
 

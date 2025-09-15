@@ -6,20 +6,22 @@ package network
 
 import (
 	"context"
+	"errors"
 	"fmt"
-	"os"
-	"path/filepath"
+	"io/fs"
 
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/safe"
 	"go.uber.org/zap"
 	"gopkg.in/yaml.v3"
 
+	blockadapter "github.com/siderolabs/talos/internal/app/machined/pkg/adapters/block"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/automaton"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/automaton/blockautomaton"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/resources/block"
 	"github.com/siderolabs/talos/pkg/machinery/resources/network"
+	"github.com/siderolabs/talos/pkg/xfs"
 )
 
 // PlatformConfigLoadController loads cached platform network config from STATE.
@@ -75,9 +77,11 @@ func (ctrl *PlatformConfigLoadController) Run(ctx context.Context, r controller.
 
 		if ctrl.stateMachine == nil {
 			ctrl.stateMachine = blockautomaton.NewVolumeMounter(
-				ctrl.Name(), constants.StatePartitionLabel,
+				ctrl.Name(),
+				constants.StatePartitionLabel,
 				ctrl.load(),
 				blockautomaton.WithReadOnly(true),
+				blockautomaton.WithDetached(true),
 			)
 		}
 
@@ -104,36 +108,36 @@ func (ctrl *PlatformConfigLoadController) load() func(
 	ctx context.Context, r controller.ReaderWriter, logger *zap.Logger, mountStatus *block.VolumeMountStatus,
 ) error {
 	return func(ctx context.Context, r controller.ReaderWriter, logger *zap.Logger, mountStatus *block.VolumeMountStatus) error {
-		rootPath := mountStatus.TypedSpec().Target
-
-		cachedNetworkConfig, err := ctrl.loadConfig(filepath.Join(rootPath, constants.PlatformNetworkConfigFilename))
-		if err != nil {
-			logger.Warn("ignored failure loading cached platform network config", zap.Error(err))
-		} else if cachedNetworkConfig != nil {
-			logger.Debug("loaded cached platform network config")
-		}
-
-		if cachedNetworkConfig != nil {
-			if err := safe.WriterModify(ctx, r,
-				network.NewPlatformConfig(network.NamespaceName, network.PlatformConfigCachedID),
-				func(out *network.PlatformConfig) error {
-					*out.TypedSpec() = *cachedNetworkConfig
-
-					return nil
-				},
-			); err != nil {
-				return fmt.Errorf("error modifying cached platform network config: %w", err)
+		return blockadapter.VolumeMountStatus(mountStatus).WithRoot(logger, func(root xfs.Root) error {
+			cachedNetworkConfig, err := ctrl.loadConfig(root, constants.PlatformNetworkConfigFilename)
+			if err != nil {
+				logger.Warn("ignored failure loading cached platform network config", zap.Error(err))
+			} else if cachedNetworkConfig != nil {
+				logger.Debug("loaded cached platform network config")
 			}
-		}
 
-		return nil
+			if cachedNetworkConfig != nil {
+				if err := safe.WriterModify(ctx, r,
+					network.NewPlatformConfig(network.NamespaceName, network.PlatformConfigCachedID),
+					func(out *network.PlatformConfig) error {
+						*out.TypedSpec() = *cachedNetworkConfig
+
+						return nil
+					},
+				); err != nil {
+					return fmt.Errorf("error modifying cached platform network config: %w", err)
+				}
+			}
+
+			return nil
+		})
 	}
 }
 
-func (ctrl *PlatformConfigLoadController) loadConfig(path string) (*network.PlatformConfigSpec, error) {
-	marshaled, err := os.ReadFile(path)
+func (ctrl *PlatformConfigLoadController) loadConfig(root xfs.Root, path string) (*network.PlatformConfigSpec, error) {
+	marshaled, err := xfs.ReadFile(root, path)
 	if err != nil {
-		if os.IsNotExist(err) {
+		if errors.Is(err, fs.ErrNotExist) {
 			return nil, nil
 		}
 

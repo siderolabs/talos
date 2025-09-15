@@ -6,7 +6,9 @@ package qemu
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"io/fs"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -42,7 +44,7 @@ func (check *preflightCheckContext) cniDirectories(ctx context.Context) error {
 	for _, cniDir := range cniDirs {
 		st, err := os.Stat(cniDir)
 		if err != nil {
-			if !os.IsNotExist(err) {
+			if !errors.Is(err, fs.ErrNotExist) {
 				return fmt.Errorf("error checking CNI directory %q: %w", cniDir, err)
 			}
 

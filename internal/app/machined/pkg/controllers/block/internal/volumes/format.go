@@ -18,10 +18,10 @@ import (
 	"go.uber.org/zap"
 
 	mountv3 "github.com/siderolabs/talos/internal/pkg/mount/v3"
-	"github.com/siderolabs/talos/internal/pkg/xfs/fsopen"
 	"github.com/siderolabs/talos/pkg/machinery/imager/quirks"
 	"github.com/siderolabs/talos/pkg/machinery/resources/block"
 	"github.com/siderolabs/talos/pkg/makefs"
+	"github.com/siderolabs/talos/pkg/xfs/fsopen"
 )
 
 // Format establishes a filesystem on a block device.
@@ -164,7 +164,6 @@ func GrowFilesystem(logger *zap.Logger, volumeContext ManagerContext) error {
 			mountv3.WithFsopen(
 				volumeContext.Cfg.TypedSpec().Provisioning.FilesystemSpec.Type.String(),
 				fsopen.WithSource(volumeContext.Status.MountLocation),
-				fsopen.WithPrinter(logger.Sugar().Infof),
 			),
 		)
 

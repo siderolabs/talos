@@ -6,7 +6,8 @@ package runtime
 
 import (
 	"context"
-	"os"
+	"errors"
+	"io/fs"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -36,7 +37,7 @@ func (s *Server) MetaWrite(ctx context.Context, req *machine.MetaWriteRequest) (
 	}
 
 	err = s.Controller.Runtime().State().Machine().Meta().Flush()
-	if err != nil && !os.IsNotExist(err) {
+	if err != nil && !errors.Is(err, fs.ErrNotExist) {
 		// ignore not exist error, as it's possible that the meta partition is not created yet
 		return nil, err
 	}
@@ -69,7 +70,7 @@ func (s *Server) MetaDelete(ctx context.Context, req *machine.MetaDeleteRequest)
 	}
 
 	err = s.Controller.Runtime().State().Machine().Meta().Flush()
-	if err != nil && !os.IsNotExist(err) {
+	if err != nil && !errors.Is(err, fs.ErrNotExist) {
 		// ignore not exist error, as it's possible that the meta partition is not created yet
 		return nil, err
 	}

@@ -8,6 +8,7 @@ package bundle
 import (
 	"errors"
 	"fmt"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"strings"
@@ -53,7 +54,7 @@ func NewBundle(opts ...Option) (*Bundle, error) {
 		for _, configType := range []machine.Type{machine.TypeInit, machine.TypeControlPlane, machine.TypeWorker} {
 			data, err := os.ReadFile(filepath.Join(options.ExistingConfigs, strings.ToLower(configType.String())+".yaml"))
 			if err != nil {
-				if configType == machine.TypeInit && os.IsNotExist(err) {
+				if configType == machine.TypeInit && errors.Is(err, fs.ErrNotExist) {
 					continue
 				}
 
@@ -85,7 +86,7 @@ func NewBundle(opts ...Option) (*Bundle, error) {
 
 		// Pull existing talosconfig
 		talosConfig, err := os.Open(filepath.Join(options.ExistingConfigs, "talosconfig"))
-		if os.IsNotExist(err) { // talosconfig is optional
+		if errors.Is(err, fs.ErrNotExist) { // talosconfig is optional
 			return bundle, nil
 		}
 

@@ -6,9 +6,10 @@ package oauth2_test
 
 import (
 	"context"
+	"errors"
+	"io/fs"
 	"net/http"
 	"net/http/httptest"
-	"os"
 	"testing"
 	"time"
 
@@ -70,7 +71,7 @@ func TestNewConfig(t *testing.T) { //nolint:tparallel
 			cfg, err := oauth2.NewConfig(procfs.NewCmdline(test.cmdline), "https://example.com/my/config")
 			if test.expected == nil {
 				require.Error(t, err)
-				assert.True(t, os.IsNotExist(err))
+				assert.True(t, errors.Is(err, fs.ErrNotExist))
 
 				return
 			}

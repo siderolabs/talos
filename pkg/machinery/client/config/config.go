@@ -7,8 +7,10 @@ package config
 import (
 	"bytes"
 	"encoding/base64"
+	"errors"
 	"fmt"
 	"io"
+	"io/fs"
 	"os"
 	"path/filepath"
 
@@ -248,7 +250,7 @@ func (c *Config) Merge(cfg *Config) []Rename {
 }
 
 func ensure(path string) error {
-	if _, err := os.Stat(path); os.IsNotExist(err) {
+	if _, err := os.Stat(path); errors.Is(err, fs.ErrNotExist) {
 		config := &Config{
 			Context:  "",
 			Contexts: map[string]*Context{},

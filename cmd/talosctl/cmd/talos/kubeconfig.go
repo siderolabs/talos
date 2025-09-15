@@ -7,7 +7,9 @@ package talos
 import (
 	"bufio"
 	"context"
+	"errors"
 	"fmt"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"strings"
@@ -70,7 +72,7 @@ If merge flag is false and [local-path] is "-", config will be written to stdout
 
 			st, err := os.Stat(localPath)
 			if err != nil {
-				if !os.IsNotExist(err) {
+				if !errors.Is(err, fs.ErrNotExist) {
 					return fmt.Errorf("error checking path %q: %w", localPath, err)
 				}
 
@@ -87,7 +89,7 @@ If merge flag is false and [local-path] is "-", config will be written to stdout
 			if err == nil && !(kubeconfigFlags.force || kubeconfigFlags.merge) {
 				return fmt.Errorf("kubeconfig file already exists, use --force to overwrite: %q", localPath)
 			} else if err != nil {
-				if os.IsNotExist(err) {
+				if errors.Is(err, fs.ErrNotExist) {
 					// merge doesn't make sense if target path doesn't exist
 					kubeconfigFlags.merge = false
 				} else {

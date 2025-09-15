@@ -6,7 +6,9 @@ package runtime
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"io/fs"
 	"os"
 	"path/filepath"
 
@@ -72,7 +74,7 @@ func (ctrl *ExtensionServiceController) Run(ctx context.Context, r controller.Ru
 	// extensions loading only needs to run once, as services are static
 	serviceFiles, err := os.ReadDir(ctrl.ConfigPath)
 	if err != nil {
-		if os.IsNotExist(err) {
+		if errors.Is(err, fs.ErrNotExist) {
 			// directory not present, skip completely
 			logger.Debug("extension service directory is not found")
 

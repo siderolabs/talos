@@ -25,9 +25,9 @@ import (
 
 	filesctrl "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/files"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
-	"github.com/siderolabs/talos/internal/pkg/xfs"
-	"github.com/siderolabs/talos/internal/pkg/xfs/opentree"
 	"github.com/siderolabs/talos/pkg/machinery/resources/files"
+	"github.com/siderolabs/talos/pkg/xfs"
+	"github.com/siderolabs/talos/pkg/xfs/opentree"
 )
 
 type EtcFileSuite struct {

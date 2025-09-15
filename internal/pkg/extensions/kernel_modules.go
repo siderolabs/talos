@@ -11,6 +11,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"io/fs"
 	"log"
 	"os"
 	"os/exec"
@@ -28,7 +29,7 @@ import (
 
 // ProvidesKernelModules returns true if the extension provides kernel modules.
 func (ext *Extension) ProvidesKernelModules(quirks quirks.Quirks) bool {
-	if _, err := os.Stat(ext.KernelModuleDirectory(quirks)); os.IsNotExist(err) {
+	if _, err := os.Stat(ext.KernelModuleDirectory(quirks)); errors.Is(err, fs.ErrNotExist) {
 		return false
 	}
 

@@ -31,6 +31,20 @@ type MountStatusSpec struct {
 
 	ReadOnly            bool `yaml:"readOnly" protobuf:"5"`
 	ProjectQuotaSupport bool `yaml:"projectQuotaSupport" protobuf:"6"`
+	Detached            bool `yaml:"detached" protobuf:"8"`
+
+	root any
+}
+
+// SetRoot sets the XFS root for the mount.
+func (m *MountStatusSpec) SetRoot(root any) {
+	m.root = root
+}
+
+// Root gets the XFS root for the mount.
+// It's not guaranteed to be set (may be nil).
+func (m *MountStatusSpec) Root() any {
+	return m.root
 }
 
 // NewMountStatus initializes a MountStatus resource.

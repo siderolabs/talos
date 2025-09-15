@@ -14,6 +14,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"io/fs"
 	"log"
 	"net"
 	"os"
@@ -1350,7 +1351,7 @@ func getContainerInspector(ctx context.Context, namespace string, driver common.
 func (s *Server) Read(in *machine.ReadRequest, srv machine.MachineService_ReadServer) (err error) {
 	stat, err := os.Stat(in.Path)
 	if err != nil {
-		if os.IsNotExist(err) {
+		if errors.Is(err, fs.ErrNotExist) {
 			return status.Error(codes.NotFound, err.Error())
 		}
 
@@ -1938,7 +1939,7 @@ func (s *Server) EtcdSnapshot(in *machine.EtcdSnapshotRequest, srv machine.Machi
 //nolint:gocyclo
 func (s *Server) EtcdRecover(srv machine.MachineService_EtcdRecoverServer) error {
 	if _, err := os.Stat(filepath.Dir(constants.EtcdRecoverySnapshotPath)); err != nil {
-		if os.IsNotExist(err) {
+		if errors.Is(err, fs.ErrNotExist) {
 			return status.Error(codes.FailedPrecondition, "etcd service is not ready for recovery yet")
 		}
 

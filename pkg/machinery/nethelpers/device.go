@@ -6,7 +6,9 @@ package nethelpers
 
 import (
 	"bytes"
+	"errors"
 	"io"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"strings"
@@ -41,7 +43,7 @@ func GetDeviceInfo(deviceName string) (*DeviceInfo, error) {
 
 	_, err := os.Stat(path)
 	if err != nil {
-		if os.IsNotExist(err) {
+		if errors.Is(err, fs.ErrNotExist) {
 			return &DeviceInfo{}, nil
 		}
 

@@ -2,6 +2,8 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+//go:build linux
+
 package fsopen
 
 // Option is a functional option for configuring a filesystem instance.
@@ -23,15 +25,6 @@ func WithMountFlags(flag int) Option {
 	return Option{
 		set: func(f *FS) {
 			f.mntflags |= flag
-		},
-	}
-}
-
-// WithPrinter adds a printer to the filesystem configuration.
-func WithPrinter(printer func(string, ...any)) Option {
-	return Option{
-		set: func(t *FS) {
-			t.printer = printer
 		},
 	}
 }

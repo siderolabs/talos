@@ -8,7 +8,9 @@ package kubelet
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"time"
@@ -49,7 +51,7 @@ func NewClient(nodename string, clientCert, clientKey, caPEM []byte) (*Client, e
 		config.CAData = append(config.CAData, kubeletCert...)
 	} else if err != nil {
 		// ignore if file doesn't exist, assume cert isn't self-signed
-		if !os.IsNotExist(err) {
+		if !errors.Is(err, fs.ErrNotExist) {
 			return nil, fmt.Errorf("error reading kubelet certificate: %w", err)
 		}
 	}

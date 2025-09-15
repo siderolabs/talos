@@ -2,7 +2,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-//go:build unix
+//go:build linux
 
 package xfs_test
 
@@ -13,9 +13,9 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
-	"github.com/siderolabs/talos/internal/pkg/xfs"
-	"github.com/siderolabs/talos/internal/pkg/xfs/fsopen"
-	"github.com/siderolabs/talos/internal/pkg/xfs/opentree"
+	"github.com/siderolabs/talos/pkg/xfs"
+	"github.com/siderolabs/talos/pkg/xfs/fsopen"
+	"github.com/siderolabs/talos/pkg/xfs/opentree"
 )
 
 func TestOpentree(t *testing.T) {
@@ -30,9 +30,7 @@ func TestOpentree(t *testing.T) {
 
 		testRoot := t.TempDir()
 
-		fs := opentree.NewFromPath(testRoot)
-
-		root := &xfs.UnixRoot{FS: fs}
+		root := &xfs.UnixRoot{FS: opentree.NewFromPath(testRoot)}
 
 		err := root.OpenFS()
 		require.NoError(t, err)
@@ -86,9 +84,7 @@ func TestOpentree(t *testing.T) {
 			t.Skip("OpenTree on Anonymous FS requires kernel 6.15.0+")
 		}
 
-		fs := fsopen.New("tmpfs")
-
-		roRoot := &xfs.UnixRoot{FS: fs}
+		roRoot := &xfs.UnixRoot{FS: fsopen.New("tmpfs")}
 
 		err = roRoot.OpenFS()
 		require.NoError(t, err)
@@ -106,10 +102,6 @@ func TestOpentree(t *testing.T) {
 
 		err = rwRoot.OpenFS()
 		require.NoError(t, err)
-
-		t.Cleanup(func() {
-			require.NoError(t, fs.Close())
-		})
 
 		testFilesystem(t, rwRoot, roRoot)
 	})

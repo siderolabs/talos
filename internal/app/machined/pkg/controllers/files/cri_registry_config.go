@@ -19,10 +19,10 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/siderolabs/talos/internal/pkg/containers/cri/containerd"
-	"github.com/siderolabs/talos/internal/pkg/xfs"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/resources/cri"
 	"github.com/siderolabs/talos/pkg/machinery/resources/files"
+	"github.com/siderolabs/talos/pkg/xfs"
 )
 
 // CRIRegistryConfigController generates parts of the CRI config for registry configuration.

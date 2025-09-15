@@ -6,7 +6,9 @@ package network
 
 import (
 	"cmp"
+	"errors"
 	"fmt"
+	"io/fs"
 	"net/netip"
 	"os"
 	"slices"
@@ -469,7 +471,7 @@ func (a nftablesRule) Compile() (*NfTablesCompiled, error) {
 		match := a.NfTablesRule.MatchSourceAddress
 
 		if err := addressMatchExpression(match, "source", 12, 8); err != nil {
-			if os.IsNotExist(err) {
+			if errors.Is(err, fs.ErrNotExist) {
 				return &NfTablesCompiled{}, nil
 			}
 
@@ -481,7 +483,7 @@ func (a nftablesRule) Compile() (*NfTablesCompiled, error) {
 		match := a.NfTablesRule.MatchDestinationAddress
 
 		if err := addressMatchExpression(match, "destination", 16, 24); err != nil {
-			if os.IsNotExist(err) {
+			if errors.Is(err, fs.ErrNotExist) {
 				return &NfTablesCompiled{}, nil
 			}
 

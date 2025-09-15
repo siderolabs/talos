@@ -12,14 +12,14 @@ import (
 	"github.com/cosi-project/runtime/pkg/safe"
 	"go.uber.org/zap"
 
+	blockadapter "github.com/siderolabs/talos/internal/app/machined/pkg/adapters/block"
 	secretsadapter "github.com/siderolabs/talos/internal/app/machined/pkg/adapters/secrets"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/automaton/blockautomaton"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers"
-	"github.com/siderolabs/talos/internal/pkg/xfs"
-	"github.com/siderolabs/talos/internal/pkg/xfs/opentree"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/resources/block"
 	"github.com/siderolabs/talos/pkg/machinery/resources/secrets"
+	"github.com/siderolabs/talos/pkg/xfs"
 )
 
 // EncryptionSaltController manages secrets.EncryptionSalt in STATE.
@@ -74,7 +74,12 @@ func (ctrl *EncryptionSaltController) Run(ctx context.Context, r controller.Runt
 		}
 
 		if ctrl.stateMachine == nil {
-			ctrl.stateMachine = blockautomaton.NewVolumeMounter(ctrl.Name(), constants.StatePartitionLabel, ctrl.establishEncryptionSalt)
+			ctrl.stateMachine = blockautomaton.NewVolumeMounter(
+				ctrl.Name(),
+				constants.StatePartitionLabel,
+				ctrl.establishEncryptionSalt,
+				blockautomaton.WithDetached(true),
+			)
 		}
 
 		if err := ctrl.stateMachine.Run(ctx, r, logger); err != nil {
@@ -86,34 +91,25 @@ func (ctrl *EncryptionSaltController) Run(ctx context.Context, r controller.Runt
 }
 
 func (ctrl *EncryptionSaltController) establishEncryptionSalt(ctx context.Context, r controller.ReaderWriter, logger *zap.Logger, mountStatus *block.VolumeMountStatus) error {
-	root := &xfs.UnixRoot{FS: opentree.NewFromPath(mountStatus.TypedSpec().Target)}
-	if err := root.OpenFS(); err != nil {
-		return fmt.Errorf("error opening filesystem: %w", err)
-	}
+	return blockadapter.VolumeMountStatus(mountStatus).WithRoot(logger, func(root xfs.Root) error {
+		var salt secrets.EncryptionSaltSpec
 
-	defer func() {
-		if err := root.Close(); err != nil {
-			logger.Error("error closing filesystem", zap.Error(err))
+		if err := controllers.LoadOrNewFromFile(root, constants.EncryptionSaltFilename, &salt, func(v *secrets.EncryptionSaltSpec) error {
+			return secretsadapter.EncryptionSalt(v).Generate()
+		}); err != nil {
+			return fmt.Errorf("error caching node identity: %w", err)
 		}
-	}()
 
-	var salt secrets.EncryptionSaltSpec
+		if err := safe.WriterModify(ctx, r, secrets.NewEncryptionSalt(), func(r *secrets.EncryptionSalt) error {
+			*r.TypedSpec() = salt
 
-	if err := controllers.LoadOrNewFromFile(root, constants.EncryptionSaltFilename, &salt, func(v *secrets.EncryptionSaltSpec) error {
-		return secretsadapter.EncryptionSalt(v).Generate()
-	}); err != nil {
-		return fmt.Errorf("error caching node identity: %w", err)
-	}
+			return nil
+		}); err != nil {
+			return fmt.Errorf("error modifying resource: %w", err)
+		}
 
-	if err := safe.WriterModify(ctx, r, secrets.NewEncryptionSalt(), func(r *secrets.EncryptionSalt) error {
-		*r.TypedSpec() = salt
+		logger.Info("encryption salt established")
 
 		return nil
-	}); err != nil {
-		return fmt.Errorf("error modifying resource: %w", err)
-	}
-
-	logger.Info("encryption salt established")
-
-	return nil
+	})
 }

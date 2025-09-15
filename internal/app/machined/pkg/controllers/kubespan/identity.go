@@ -15,18 +15,18 @@ import (
 	"github.com/siderolabs/gen/optional"
 	"go.uber.org/zap"
 
+	blockadapter "github.com/siderolabs/talos/internal/app/machined/pkg/adapters/block"
 	kubespanadapter "github.com/siderolabs/talos/internal/app/machined/pkg/adapters/kubespan"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/automaton"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/automaton/blockautomaton"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers"
-	"github.com/siderolabs/talos/internal/pkg/xfs"
-	"github.com/siderolabs/talos/internal/pkg/xfs/opentree"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/fipsmode"
 	"github.com/siderolabs/talos/pkg/machinery/resources/block"
 	"github.com/siderolabs/talos/pkg/machinery/resources/config"
 	"github.com/siderolabs/talos/pkg/machinery/resources/kubespan"
 	"github.com/siderolabs/talos/pkg/machinery/resources/network"
+	"github.com/siderolabs/talos/pkg/xfs"
 )
 
 // IdentityController watches KubeSpan configuration, updates KubeSpan Identity.
@@ -111,7 +111,12 @@ func (ctrl *IdentityController) Run(ctx context.Context, r controller.Runtime, l
 			}
 
 			if ctrl.stateMachine == nil && !alreadyHasIdentity {
-				ctrl.stateMachine = blockautomaton.NewVolumeMounter(ctrl.Name(), constants.StatePartitionLabel, ctrl.establishIdentity(cfg, firstMAC))
+				ctrl.stateMachine = blockautomaton.NewVolumeMounter(
+					ctrl.Name(),
+					constants.StatePartitionLabel,
+					ctrl.establishIdentity(cfg, firstMAC),
+					blockautomaton.WithDetached(true),
+				)
 			}
 		} else if alreadyHasIdentity {
 			if err = r.Destroy(ctx, kubespan.NewIdentity(kubespan.NamespaceName, kubespan.LocalIdentity).Metadata()); err != nil {
@@ -141,36 +146,27 @@ func (ctrl *IdentityController) establishIdentity(
 	ctx context.Context, r controller.ReaderWriter, logger *zap.Logger, mountStatus *block.VolumeMountStatus,
 ) error {
 	return func(ctx context.Context, r controller.ReaderWriter, logger *zap.Logger, mountStatus *block.VolumeMountStatus) error {
-		root := &xfs.UnixRoot{FS: opentree.NewFromPath(mountStatus.TypedSpec().Target)}
-		if err := root.OpenFS(); err != nil {
-			return fmt.Errorf("error opening filesystem: %w", err)
-		}
+		return blockadapter.VolumeMountStatus(mountStatus).WithRoot(logger, func(root xfs.Root) error {
+			var localIdentity kubespan.IdentitySpec
 
-		defer func() {
-			if err := root.Close(); err != nil {
-				logger.Error("error closing filesystem", zap.Error(err))
+			if err := controllers.LoadOrNewFromFile(root, constants.KubeSpanIdentityFilename, &localIdentity, func(v *kubespan.IdentitySpec) error {
+				return kubespanadapter.IdentitySpec(v).GenerateKey()
+			}); err != nil {
+				return fmt.Errorf("error caching kubespan identity: %w", err)
 			}
-		}()
 
-		var localIdentity kubespan.IdentitySpec
+			kubespanCfg := cfg.TypedSpec()
+			mac := firstMAC.TypedSpec()
 
-		if err := controllers.LoadOrNewFromFile(root, constants.KubeSpanIdentityFilename, &localIdentity, func(v *kubespan.IdentitySpec) error {
-			return kubespanadapter.IdentitySpec(v).GenerateKey()
-		}); err != nil {
-			return fmt.Errorf("error caching kubespan identity: %w", err)
-		}
+			if err := kubespanadapter.IdentitySpec(&localIdentity).UpdateAddress(kubespanCfg.ClusterID, net.HardwareAddr(mac.HardwareAddr)); err != nil {
+				return fmt.Errorf("error updating KubeSpan address: %w", err)
+			}
 
-		kubespanCfg := cfg.TypedSpec()
-		mac := firstMAC.TypedSpec()
+			return safe.WriterModify(ctx, r, kubespan.NewIdentity(kubespan.NamespaceName, kubespan.LocalIdentity), func(res *kubespan.Identity) error {
+				*res.TypedSpec() = localIdentity
 
-		if err := kubespanadapter.IdentitySpec(&localIdentity).UpdateAddress(kubespanCfg.ClusterID, net.HardwareAddr(mac.HardwareAddr)); err != nil {
-			return fmt.Errorf("error updating KubeSpan address: %w", err)
-		}
-
-		return safe.WriterModify(ctx, r, kubespan.NewIdentity(kubespan.NamespaceName, kubespan.LocalIdentity), func(res *kubespan.Identity) error {
-			*res.TypedSpec() = localIdentity
-
-			return nil
+				return nil
+			})
 		})
 	}
 }

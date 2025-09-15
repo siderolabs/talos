@@ -7,7 +7,9 @@ package metal
 
 import (
 	"context"
+	stderrors "errors"
 	"fmt"
+	"io/fs"
 	"log"
 	"os"
 	"path/filepath"
@@ -28,7 +30,6 @@ import (
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/metal/oauth2"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/metal/url"
 	"github.com/siderolabs/talos/internal/pkg/mount/v3"
-	"github.com/siderolabs/talos/internal/pkg/xfs/fsopen"
 	"github.com/siderolabs/talos/pkg/download"
 	"github.com/siderolabs/talos/pkg/machinery/cel"
 	"github.com/siderolabs/talos/pkg/machinery/cel/celenv"
@@ -38,6 +39,7 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/resources/block"
 	"github.com/siderolabs/talos/pkg/machinery/resources/hardware"
 	runtimeres "github.com/siderolabs/talos/pkg/machinery/resources/runtime"
+	"github.com/siderolabs/talos/pkg/xfs/fsopen"
 )
 
 const (
@@ -89,7 +91,7 @@ func (m *Metal) Configuration(ctx context.Context, r state.State) ([]byte, error
 		}
 
 		oauth2Cfg, err := oauth2.NewConfig(procfs.ProcCmdline(), *option)
-		if err != nil && !os.IsNotExist(err) {
+		if err != nil && !stderrors.Is(err, fs.ErrNotExist) {
 			return nil, fmt.Errorf("failed to parse OAuth2 config: %w", err)
 		}
 
@@ -180,7 +182,6 @@ func readConfigFromISO(ctx context.Context, r state.State) ([]byte, error) {
 		mount.WithFsopen(
 			volumeStatus.TypedSpec().Filesystem.String(),
 			fsopen.WithSource(volumeStatus.TypedSpec().MountLocation),
-			fsopen.WithPrinter(log.Printf),
 		),
 	)
 

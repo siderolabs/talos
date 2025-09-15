@@ -2,6 +2,8 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+//go:build linux
+
 // Package fsopen provides a simple interface to create and manage a filesystem
 // using the Linux syscalls for filesystem operations.
 package fsopen
@@ -14,8 +16,8 @@ import (
 
 	"golang.org/x/sys/unix"
 
-	"github.com/siderolabs/talos/internal/pkg/xfs"
 	"github.com/siderolabs/talos/pkg/makefs"
+	"github.com/siderolabs/talos/pkg/xfs"
 )
 
 // ErrRepairUnsupported is reported when the filesystem does not support repairs.
@@ -27,8 +29,6 @@ var ErrRepairUnsupported = errors.New("unsupported filesystem type for repair")
 type FS struct {
 	fstype string
 	source string
-
-	printer func(string, ...any)
 
 	boolParams   map[string]struct{}
 	stringParams map[string][]string
@@ -84,18 +84,9 @@ func (fs *FS) Open() (int, error) {
 	return fs.mntfd, err
 }
 
-func discard(string, ...any) {}
-
 //nolint:gocyclo
 func (fs *FS) new() (err error) {
 	var fsfd int
-
-	printer := discard
-	if fs.printer != nil {
-		printer = fs.printer
-	}
-
-	printer("creating filesystem of type: %q", fs.fstype)
 
 	fsfd, err = unix.Fsopen(fs.fstype, unix.FSOPEN_CLOEXEC)
 	if err != nil {
@@ -111,16 +102,12 @@ func (fs *FS) new() (err error) {
 	}()
 
 	if fs.source != "" {
-		printer("setting source: %q", fs.source)
-
 		if err := unix.FsconfigSetString(fsfd, "source", fs.source); err != nil {
 			return fmt.Errorf("FSCONFIG_SET_STRING failed: %w: key=%q value=%q", err, "source", fs.source)
 		}
 	}
 
 	for key := range fs.boolParams {
-		printer("setting boolean flag: %q", key)
-
 		if err := unix.FsconfigSetFlag(fsfd, key); err != nil {
 			return fmt.Errorf("FSCONFIG_SET_FLAG failed: %w: key=%q", err, key)
 		}
@@ -128,8 +115,6 @@ func (fs *FS) new() (err error) {
 
 	for key, binary := range fs.binaryParams {
 		for _, bf := range binary {
-			printer("setting binary param: %q", key)
-
 			if err := unix.FsconfigSetBinary(fsfd, key, bf); err != nil {
 				return fmt.Errorf("FSCONFIG_SET_BINARY failed: %w: key=%q", err, key)
 			}
@@ -138,8 +123,6 @@ func (fs *FS) new() (err error) {
 
 	for key, values := range fs.stringParams {
 		for _, value := range values {
-			printer("setting string param: %q=%q", key, value)
-
 			if err := unix.FsconfigSetString(fsfd, key, value); err != nil {
 				return fmt.Errorf("FSCONFIG_SET_BINARY failed: %w: key=%q", err, key)
 			}

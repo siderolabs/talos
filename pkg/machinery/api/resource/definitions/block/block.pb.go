@@ -931,6 +931,7 @@ type MountRequestSpec struct {
 	Requesters    []string               `protobuf:"bytes,3,rep,name=requesters,proto3" json:"requesters,omitempty"`
 	RequesterIDs  []string               `protobuf:"bytes,4,rep,name=requester_i_ds,json=requesterIDs,proto3" json:"requester_i_ds,omitempty"`
 	ReadOnly      bool                   `protobuf:"varint,5,opt,name=read_only,json=readOnly,proto3" json:"read_only,omitempty"`
+	Detached      bool                   `protobuf:"varint,6,opt,name=detached,proto3" json:"detached,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -996,6 +997,13 @@ func (x *MountRequestSpec) GetRequesterIDs() []string {
 func (x *MountRequestSpec) GetReadOnly() bool {
 	if x != nil {
 		return x.ReadOnly
+	}
+	return false
+}
+
+func (x *MountRequestSpec) GetDetached() bool {
+	if x != nil {
+		return x.Detached
 	}
 	return false
 }
@@ -1111,6 +1119,7 @@ type MountStatusSpec struct {
 	ReadOnly            bool                              `protobuf:"varint,5,opt,name=read_only,json=readOnly,proto3" json:"read_only,omitempty"`
 	ProjectQuotaSupport bool                              `protobuf:"varint,6,opt,name=project_quota_support,json=projectQuotaSupport,proto3" json:"project_quota_support,omitempty"`
 	EncryptionProvider  enums.BlockEncryptionProviderType `protobuf:"varint,7,opt,name=encryption_provider,json=encryptionProvider,proto3,enum=talos.resource.definitions.enums.BlockEncryptionProviderType" json:"encryption_provider,omitempty"`
+	Detached            bool                              `protobuf:"varint,8,opt,name=detached,proto3" json:"detached,omitempty"`
 	unknownFields       protoimpl.UnknownFields
 	sizeCache           protoimpl.SizeCache
 }
@@ -1192,6 +1201,13 @@ func (x *MountStatusSpec) GetEncryptionProvider() enums.BlockEncryptionProviderT
 		return x.EncryptionProvider
 	}
 	return enums.BlockEncryptionProviderType(0)
+}
+
+func (x *MountStatusSpec) GetDetached() bool {
+	if x != nil {
+		return x.Detached
+	}
+	return false
 }
 
 // PartitionSpec is the spec for volume partitioning.
@@ -1789,6 +1805,7 @@ type VolumeMountRequestSpec struct {
 	VolumeId      string                 `protobuf:"bytes,1,opt,name=volume_id,json=volumeId,proto3" json:"volume_id,omitempty"`
 	Requester     string                 `protobuf:"bytes,2,opt,name=requester,proto3" json:"requester,omitempty"`
 	ReadOnly      bool                   `protobuf:"varint,3,opt,name=read_only,json=readOnly,proto3" json:"read_only,omitempty"`
+	Detached      bool                   `protobuf:"varint,4,opt,name=detached,proto3" json:"detached,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1844,6 +1861,13 @@ func (x *VolumeMountRequestSpec) GetReadOnly() bool {
 	return false
 }
 
+func (x *VolumeMountRequestSpec) GetDetached() bool {
+	if x != nil {
+		return x.Detached
+	}
+	return false
+}
+
 // VolumeMountStatusSpec is the spec for VolumeMountStatus.
 type VolumeMountStatusSpec struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
@@ -1851,6 +1875,7 @@ type VolumeMountStatusSpec struct {
 	Requester     string                 `protobuf:"bytes,2,opt,name=requester,proto3" json:"requester,omitempty"`
 	Target        string                 `protobuf:"bytes,3,opt,name=target,proto3" json:"target,omitempty"`
 	ReadOnly      bool                   `protobuf:"varint,4,opt,name=read_only,json=readOnly,proto3" json:"read_only,omitempty"`
+	Detached      bool                   `protobuf:"varint,5,opt,name=detached,proto3" json:"detached,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1909,6 +1934,13 @@ func (x *VolumeMountStatusSpec) GetTarget() string {
 func (x *VolumeMountStatusSpec) GetReadOnly() bool {
 	if x != nil {
 		return x.ReadOnly
+	}
+	return false
+}
+
+func (x *VolumeMountStatusSpec) GetDetached() bool {
+	if x != nil {
+		return x.Detached
 	}
 	return false
 }
@@ -2340,7 +2372,7 @@ const file_resource_definitions_block_block_proto_rawDesc = "" +
 	"\x04type\x18\x01 \x01(\x0e25.talos.resource.definitions.enums.BlockFilesystemTypeR\x04type\x12\x14\n" +
 	"\x05label\x18\x02 \x01(\tR\x05label\"J\n" +
 	"\vLocatorSpec\x12;\n" +
-	"\x05match\x18\x01 \x01(\v2%.google.api.expr.v1alpha1.CheckedExprR\x05match\"\xba\x01\n" +
+	"\x05match\x18\x01 \x01(\v2%.google.api.expr.v1alpha1.CheckedExprR\x05match\"\xd6\x01\n" +
 	"\x10MountRequestSpec\x12\x1b\n" +
 	"\tvolume_id\x18\x01 \x01(\tR\bvolumeId\x12&\n" +
 	"\x0fparent_mount_id\x18\x02 \x01(\tR\rparentMountId\x12\x1e\n" +
@@ -2348,7 +2380,8 @@ const file_resource_definitions_block_block_proto_rawDesc = "" +
 	"requesters\x18\x03 \x03(\tR\n" +
 	"requesters\x12$\n" +
 	"\x0erequester_i_ds\x18\x04 \x03(\tR\frequesterIDs\x12\x1b\n" +
-	"\tread_only\x18\x05 \x01(\bR\breadOnly\"\x90\x02\n" +
+	"\tread_only\x18\x05 \x01(\bR\breadOnly\x12\x1a\n" +
+	"\bdetached\x18\x06 \x01(\bR\bdetached\"\x90\x02\n" +
 	"\tMountSpec\x12\x1f\n" +
 	"\vtarget_path\x18\x01 \x01(\tR\n" +
 	"targetPath\x12#\n" +
@@ -2358,7 +2391,7 @@ const file_resource_definitions_block_block_proto_rawDesc = "" +
 	"\tfile_mode\x18\x05 \x01(\rR\bfileMode\x12\x10\n" +
 	"\x03uid\x18\x06 \x01(\x03R\x03uid\x12\x10\n" +
 	"\x03gid\x18\a \x01(\x03R\x03gid\x12+\n" +
-	"\x11recursive_relabel\x18\b \x01(\bR\x10recursiveRelabel\"\xa1\x03\n" +
+	"\x11recursive_relabel\x18\b \x01(\bR\x10recursiveRelabel\"\xbd\x03\n" +
 	"\x0fMountStatusSpec\x12F\n" +
 	"\x04spec\x18\x01 \x01(\v22.talos.resource.definitions.block.MountRequestSpecR\x04spec\x12\x16\n" +
 	"\x06target\x18\x02 \x01(\tR\x06target\x12\x16\n" +
@@ -2368,7 +2401,8 @@ const file_resource_definitions_block_block_proto_rawDesc = "" +
 	"filesystem\x12\x1b\n" +
 	"\tread_only\x18\x05 \x01(\bR\breadOnly\x122\n" +
 	"\x15project_quota_support\x18\x06 \x01(\bR\x13projectQuotaSupport\x12n\n" +
-	"\x13encryption_provider\x18\a \x01(\x0e2=.talos.resource.definitions.enums.BlockEncryptionProviderTypeR\x12encryptionProvider\"\x8c\x01\n" +
+	"\x13encryption_provider\x18\a \x01(\x0e2=.talos.resource.definitions.enums.BlockEncryptionProviderTypeR\x12encryptionProvider\x12\x1a\n" +
+	"\bdetached\x18\b \x01(\bR\bdetached\"\x8c\x01\n" +
 	"\rPartitionSpec\x12\x19\n" +
 	"\bmin_size\x18\x01 \x01(\x04R\aminSize\x12\x19\n" +
 	"\bmax_size\x18\x02 \x01(\x04R\amaxSize\x12\x12\n" +
@@ -2416,16 +2450,18 @@ const file_resource_definitions_block_block_proto_rawDesc = "" +
 	"\n" +
 	"encryption\x18\x06 \x01(\v20.talos.resource.definitions.block.EncryptionSpecR\n" +
 	"encryption\x12S\n" +
-	"\asymlink\x18\a \x01(\v29.talos.resource.definitions.block.SymlinkProvisioningSpecR\asymlink\"p\n" +
+	"\asymlink\x18\a \x01(\v29.talos.resource.definitions.block.SymlinkProvisioningSpecR\asymlink\"\x8c\x01\n" +
 	"\x16VolumeMountRequestSpec\x12\x1b\n" +
 	"\tvolume_id\x18\x01 \x01(\tR\bvolumeId\x12\x1c\n" +
 	"\trequester\x18\x02 \x01(\tR\trequester\x12\x1b\n" +
-	"\tread_only\x18\x03 \x01(\bR\breadOnly\"\x87\x01\n" +
+	"\tread_only\x18\x03 \x01(\bR\breadOnly\x12\x1a\n" +
+	"\bdetached\x18\x04 \x01(\bR\bdetached\"\xa3\x01\n" +
 	"\x15VolumeMountStatusSpec\x12\x1b\n" +
 	"\tvolume_id\x18\x01 \x01(\tR\bvolumeId\x12\x1c\n" +
 	"\trequester\x18\x02 \x01(\tR\trequester\x12\x16\n" +
 	"\x06target\x18\x03 \x01(\tR\x06target\x12\x1b\n" +
-	"\tread_only\x18\x04 \x01(\bR\breadOnly\"\x83\n" +
+	"\tread_only\x18\x04 \x01(\bR\breadOnly\x12\x1a\n" +
+	"\bdetached\x18\x05 \x01(\bR\bdetached\"\x83\n" +
 	"\n" +
 	"\x10VolumeStatusSpec\x12H\n" +
 	"\x05phase\x18\x01 \x01(\x0e22.talos.resource.definitions.enums.BlockVolumePhaseR\x05phase\x12\x1a\n" +

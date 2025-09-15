@@ -27,6 +27,8 @@ type VolumeMountRequestSpec struct {
 
 	ReadOnly bool `yaml:"readOnly" protobuf:"3"`
 
+	Detached bool `yaml:"detached" protobuf:"4"`
+
 	Requester string `yaml:"requester" protobuf:"2"`
 }
 

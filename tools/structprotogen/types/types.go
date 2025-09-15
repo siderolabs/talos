@@ -136,6 +136,10 @@ func ParseDeclsData(sortedPkgs slices.Sorted[*PkgDecl], taggedStructs ast.Tagged
 			for j := 0; j < structType.NumFields(); j++ {
 				field := structType.Field(j)
 
+				if !field.Exported() {
+					continue
+				}
+
 				v := sliceutil.GetOrAdd(&result, &Type{
 					Pkg:      pkg.path,
 					Name:     structName,
@@ -183,6 +187,10 @@ func FindExternalTypes(pkgsTypes slices.Sorted[*Type], taggedStructs ast.TaggedS
 
 		for j := 0; j < typ.fields.Len(); j++ {
 			field := typ.fields.Get(j)
+
+			if !field.TypeData.Exported() {
+				continue
+			}
 
 			typeData := TypeInfo(field.TypeData.Type())
 

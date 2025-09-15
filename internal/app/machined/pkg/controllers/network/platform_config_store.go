@@ -8,8 +8,6 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"os"
-	"path/filepath"
 
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/safe"
@@ -18,11 +16,13 @@ import (
 	"go.uber.org/zap"
 	"gopkg.in/yaml.v3"
 
+	blockadapter "github.com/siderolabs/talos/internal/app/machined/pkg/adapters/block"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/automaton"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/automaton/blockautomaton"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/resources/block"
 	"github.com/siderolabs/talos/pkg/machinery/resources/network"
+	"github.com/siderolabs/talos/pkg/xfs"
 )
 
 // PlatformConfigStoreController stores (caches) active platform network config in STATE.
@@ -96,8 +96,10 @@ func (ctrl *PlatformConfigStoreController) Run(ctx context.Context, r controller
 
 		if ctrl.stateMachine == nil && ctrl.configToStore != nil {
 			ctrl.stateMachine = blockautomaton.NewVolumeMounter(
-				ctrl.Name(), constants.StatePartitionLabel,
+				ctrl.Name(),
+				constants.StatePartitionLabel,
 				ctrl.store(),
+				blockautomaton.WithDetached(true),
 			)
 		}
 
@@ -121,34 +123,34 @@ func (ctrl *PlatformConfigStoreController) store() func(
 	ctx context.Context, r controller.ReaderWriter, logger *zap.Logger, mountStatus *block.VolumeMountStatus,
 ) error {
 	return func(ctx context.Context, r controller.ReaderWriter, logger *zap.Logger, mountStatus *block.VolumeMountStatus) error {
-		rootPath := mountStatus.TypedSpec().Target
+		return blockadapter.VolumeMountStatus(mountStatus).WithRoot(logger, func(root xfs.Root) error {
+			if err := ctrl.storeConfig(root, constants.PlatformNetworkConfigFilename, ctrl.configToStore); err != nil {
+				return fmt.Errorf("error saving platform network config: %w", err)
+			}
 
-		if err := ctrl.storeConfig(filepath.Join(rootPath, constants.PlatformNetworkConfigFilename), ctrl.configToStore); err != nil {
-			return fmt.Errorf("error saving platform network config: %w", err)
-		}
+			// remember last stored config
+			ctrl.lastStoredConfig, ctrl.configToStore = ctrl.configToStore, nil
 
-		// remember last stored config
-		ctrl.lastStoredConfig, ctrl.configToStore = ctrl.configToStore, nil
+			logger.Debug("stored active platform network config")
 
-		logger.Debug("stored active platform network config")
-
-		return nil
+			return nil
+		})
 	}
 }
 
-func (ctrl *PlatformConfigStoreController) storeConfig(path string, networkConfig *network.PlatformConfig) error {
+func (ctrl *PlatformConfigStoreController) storeConfig(root xfs.Root, path string, networkConfig *network.PlatformConfig) error {
 	marshaled, err := yaml.Marshal(networkConfig.TypedSpec())
 	if err != nil {
 		return fmt.Errorf("error marshaling network config: %w", err)
 	}
 
-	if _, err := os.Stat(path); err == nil {
-		existing, err := os.ReadFile(path)
+	if _, err := xfs.Stat(root, path); err == nil {
+		existing, err := xfs.ReadFile(root, path)
 		if err == nil && bytes.Equal(marshaled, existing) {
 			// existing contents are identical, skip writing to avoid no-op writes
 			return nil
 		}
 	}
 
-	return os.WriteFile(path, marshaled, 0o400)
+	return xfs.WriteFile(root, path, marshaled, 0o400)
 }

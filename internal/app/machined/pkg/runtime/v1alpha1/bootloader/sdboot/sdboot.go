@@ -10,6 +10,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"io/fs"
 	"log"
 	"os"
 	"path/filepath"
@@ -340,7 +341,7 @@ func sdBootFilePath(arch string) (string, error) {
 //nolint:gocyclo,cyclop
 func (c *Config) install(opts options.InstallOptions) (*options.InstallResult, error) {
 	if _, err := os.Stat(filepath.Join(opts.MountPrefix, constants.EFIMountPoint, "loader", "loader.conf")); err != nil {
-		if !os.IsNotExist(err) {
+		if !errors.Is(err, fs.ErrNotExist) {
 			return nil, err
 		}
 

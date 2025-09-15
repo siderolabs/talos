@@ -8,37 +8,40 @@ package controllers
 import (
 	"errors"
 	"fmt"
+	"io/fs"
 	"os"
 	"reflect"
 
 	yaml "gopkg.in/yaml.v3"
 
-	"github.com/siderolabs/talos/internal/pkg/xfs"
+	"github.com/siderolabs/talos/pkg/xfs"
 )
 
 // LoadOrNewFromFile either loads value from file.yaml or generates new values and saves as file.yaml.
+//
+//nolint:gocyclo
 func LoadOrNewFromFile[T any](root xfs.Root, path string, empty T, generate func(T) error) error {
 	f, err := xfs.OpenFile(root, path, os.O_RDONLY, 0)
-	if err != nil && !os.IsNotExist(err) {
-		return fmt.Errorf("error reading state file: %w", err)
+	if err != nil && !errors.Is(err, fs.ErrNotExist) {
+		return fmt.Errorf("error reading state file %q: %w", path, err)
 	}
 
 	// file doesn't exist yet, generate new value and save it
-	if f == nil {
+	if f == nil || errors.Is(err, fs.ErrNotExist) {
 		if err = generate(empty); err != nil {
 			return err
 		}
 
 		f, err = xfs.OpenFile(root, path, os.O_CREATE|os.O_WRONLY|os.O_EXCL, 0o600)
 		if err != nil {
-			return fmt.Errorf("error creating state file: %w", err)
+			return fmt.Errorf("error creating state file %q: %w", path, err)
 		}
 
 		defer f.Close() //nolint:errcheck
 
 		encoder := yaml.NewEncoder(f)
 		if err = encoder.Encode(empty); err != nil {
-			return fmt.Errorf("error marshaling: %w", err)
+			return fmt.Errorf("error marshaling %q: %w", path, err)
 		}
 
 		if err = encoder.Close(); err != nil {
@@ -52,11 +55,11 @@ func LoadOrNewFromFile[T any](root xfs.Root, path string, empty T, generate func
 	defer f.Close() //nolint:errcheck
 
 	if err = yaml.NewDecoder(f).Decode(empty); err != nil {
-		return fmt.Errorf("error unmarshaling: %w", err)
+		return fmt.Errorf("error unmarshaling %q: %w", path, err)
 	}
 
 	if reflect.ValueOf(empty).Elem().IsZero() {
-		return errors.New("value is still zero after unmarshaling")
+		return fmt.Errorf("value of %q is still zero after unmarshaling", path)
 	}
 
 	return f.Close()

@@ -15,7 +15,7 @@ import (
 	"github.com/siderolabs/go-pointer"
 
 	"github.com/siderolabs/talos/internal/pkg/mount/v3"
-	"github.com/siderolabs/talos/internal/pkg/xfs/fsopen"
+	"github.com/siderolabs/talos/pkg/xfs/fsopen"
 )
 
 // Spec specifies what has to be mounted.

@@ -10,6 +10,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"io/fs"
 	"os"
 	"runtime"
 	"strings"
@@ -114,7 +115,7 @@ func editFn(c *client.Client) func(context.Context, string, resource.Resource, e
 
 			// If we're retrying the loop because of an error, and no change was made in the file, short-circuit
 			if lastError != "" && bytes.Equal(yamlstrip.Comments(editedDiff), yamlstrip.Comments(edited)) {
-				if _, err = os.Stat(path); !os.IsNotExist(err) {
+				if _, err = os.Stat(path); !errors.Is(err, fs.ErrNotExist) {
 					message := addEditingComment(lastError)
 					message += fmt.Sprintf("A copy of your changes has been stored to %q\nEdit canceled, no valid changes were saved.\n", path)
 

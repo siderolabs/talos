@@ -28,6 +28,20 @@ type VolumeMountStatusSpec struct {
 
 	Target   string `yaml:"target" protobuf:"3"`
 	ReadOnly bool   `yaml:"readOnly" protobuf:"4"`
+	Detached bool   `yaml:"detached" protobuf:"5"`
+
+	root any
+}
+
+// SetRoot sets the XFS root for the mount.
+func (m *VolumeMountStatusSpec) SetRoot(root any) {
+	m.root = root
+}
+
+// Root gets the XFS root for the mount.
+// It's not guaranteed to be set (may be nil).
+func (m *VolumeMountStatusSpec) Root() any {
+	return m.root
 }
 
 // NewVolumeMountStatus initializes a VolumeMountStatus resource.

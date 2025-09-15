@@ -6,7 +6,9 @@ package extensions
 
 import (
 	"cmp"
+	"errors"
 	"fmt"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"slices"
@@ -18,7 +20,7 @@ import (
 func List(rootPath string) ([]*Extension, error) {
 	items, err := os.ReadDir(rootPath)
 	if err != nil {
-		if os.IsNotExist(err) {
+		if errors.Is(err, fs.ErrNotExist) {
 			return nil, nil
 		}
 

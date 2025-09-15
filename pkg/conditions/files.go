@@ -6,7 +6,9 @@ package conditions
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"io/fs"
 	"os"
 	"time"
 
@@ -25,7 +27,7 @@ func (filename file) Wait(ctx context.Context) error {
 			return nil
 		}
 
-		if !os.IsNotExist(err) {
+		if !errors.Is(err, fs.ErrNotExist) {
 			return err
 		}
 

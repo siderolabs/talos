@@ -13,6 +13,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io/fs"
 	"log"
 	"os"
 	"path/filepath"
@@ -84,7 +85,7 @@ func WaitForUSB(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
 
 		_, err := os.Stat(file)
 		if err != nil {
-			if os.IsNotExist(err) {
+			if errors.Is(err, fs.ErrNotExist) {
 				return nil
 			}
 
@@ -716,7 +717,7 @@ func existsAndIsFile(p string) (err error) {
 
 	info, err = os.Stat(p)
 	if err != nil {
-		if !os.IsNotExist(err) {
+		if !errors.Is(err, fs.ErrNotExist) {
 			return err
 		}
 
@@ -829,7 +830,7 @@ func CordonAndDrainNode(runtime.Sequence, any) (runtime.TaskExecutionFunc, strin
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
 		// skip not exist error as it means that the node hasn't fully joined yet
 		if _, err = os.Stat("/var/lib/kubelet/pki/kubelet-client-current.pem"); err != nil {
-			if os.IsNotExist(err) {
+			if errors.Is(err, fs.ErrNotExist) {
 				return nil
 			}
 
@@ -893,7 +894,7 @@ func LeaveEtcd(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
 		_, err = os.Stat(filepath.Join(constants.EtcdDataPath, "/member"))
 		if err != nil {
-			if os.IsNotExist(err) {
+			if errors.Is(err, fs.ErrNotExist) {
 				return nil
 			}
 
@@ -1002,7 +1003,7 @@ func stopAndRemoveAllPods(stopAction cri.StopAction) runtime.TaskExecutionFunc {
 		}
 
 		// check that the CRI is running and the socket is available, if not, skip the rest
-		if _, err = os.Stat(constants.CRIContainerdAddress); os.IsNotExist(err) {
+		if _, err = os.Stat(constants.CRIContainerdAddress); errors.Is(err, fs.ErrNotExist) {
 			return nil
 		}
 
@@ -1717,12 +1718,12 @@ func ForceCleanup(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
 func ReloadMeta(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) error {
 		err := r.State().Machine().Meta().Reload(ctx)
-		if err != nil && !os.IsNotExist(err) {
+		if err != nil && !errors.Is(err, fs.ErrNotExist) {
 			return err
 		}
 
 		// attempt to populate meta from the environment if Talos is not installed (yet)
-		if os.IsNotExist(err) {
+		if errors.Is(err, fs.ErrNotExist) {
 			env := environment.Get(r.Config())
 
 			prefix := constants.MetaValuesEnvVar + "="

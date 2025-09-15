@@ -5,7 +5,9 @@
 package v1alpha1_test
 
 import (
+	"errors"
 	"fmt"
+	"io/fs"
 	"os"
 	"testing"
 
@@ -120,7 +122,7 @@ func testConfigStability(t *testing.T, in *generate.Input, versionContract *conf
 		expectedPath := fmt.Sprintf("testdata/stability/%s/%s-%s.yaml", versionContract, flavor, machineType)
 
 		expectedBytes, err := os.ReadFile(expectedPath)
-		if os.IsNotExist(err) && generateMode {
+		if errors.Is(err, fs.ErrNotExist) && generateMode {
 			require.NoError(t, os.WriteFile(expectedPath, cfgBytes, 0o644))
 
 			t.Logf("generated %s", expectedPath)

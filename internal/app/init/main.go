@@ -8,6 +8,7 @@ package main
 import (
 	"errors"
 	"fmt"
+	"io/fs"
 	"log"
 	"os"
 	"os/signal"
@@ -124,7 +125,7 @@ func mountRootFS() error {
 	var extensionsConfig extensions.Config
 
 	if err := extensionsConfig.Read(constants.ExtensionsConfigFile); err != nil {
-		if !os.IsNotExist(err) {
+		if !errors.Is(err, fs.ErrNotExist) {
 			return fmt.Errorf("failed to read extensions config: %w", err)
 		}
 	}
@@ -210,7 +211,7 @@ func mountRootFS() error {
 func bindMountFirmware() error {
 	firmwarePath := quirks.New("").FirmwarePath()
 	if _, err := os.Stat(firmwarePath); err != nil {
-		if os.IsNotExist(err) {
+		if errors.Is(err, fs.ErrNotExist) {
 			return nil
 		}
 
@@ -224,7 +225,7 @@ func bindMountFirmware() error {
 
 func bindMountExtra() error {
 	if _, err := os.Stat(constants.SDStubDynamicInitrdPath); err != nil {
-		if os.IsNotExist(err) {
+		if errors.Is(err, fs.ErrNotExist) {
 			return nil
 		}
 

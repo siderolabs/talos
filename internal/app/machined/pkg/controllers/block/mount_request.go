@@ -105,6 +105,7 @@ func (ctrl *MountRequestController) Run(ctx context.Context, r controller.Runtim
 				desiredMountRequests[volumeID] = &block.MountRequestSpec{
 					VolumeID: volumeID,
 					ReadOnly: volumeMountRequest.TypedSpec().ReadOnly,
+					Detached: volumeMountRequest.TypedSpec().Detached,
 				}
 			}
 
@@ -112,6 +113,7 @@ func (ctrl *MountRequestController) Run(ctx context.Context, r controller.Runtim
 			desiredMountRequest.Requesters = append(desiredMountRequest.Requesters, volumeMountRequest.TypedSpec().Requester)
 			desiredMountRequest.RequesterIDs = append(desiredMountRequest.RequesterIDs, volumeMountRequest.Metadata().ID())
 			desiredMountRequest.ReadOnly = desiredMountRequest.ReadOnly && volumeMountRequest.TypedSpec().ReadOnly // read-only if all requesters are read-only
+			desiredMountRequest.Detached = desiredMountRequest.Detached && volumeMountRequest.TypedSpec().Detached // detached if all requesters are detached
 			desiredMountRequest.ParentMountID = volumeStatus.TypedSpec().MountSpec.ParentID
 		}
 

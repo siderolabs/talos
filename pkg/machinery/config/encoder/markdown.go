@@ -9,6 +9,7 @@ import (
 	_ "embed"
 	"errors"
 	"fmt"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"slices"
@@ -67,7 +68,7 @@ func (fd *FileDoc) Encode(root *Doc, frontmatter func(title, description string)
 //
 //nolint:gocyclo
 func (fd *FileDoc) Write(path string, frontmatter func(title, description string) string) error {
-	if stat, err := os.Stat(path); !os.IsNotExist(err) {
+	if stat, err := os.Stat(path); !errors.Is(err, fs.ErrNotExist) {
 		if !stat.IsDir() {
 			return errors.New("destination path should be a directory")
 		}

@@ -5,9 +5,10 @@
 package rng
 
 import (
+	"errors"
 	"fmt"
+	"io/fs"
 	"log"
-	"os"
 	"time"
 
 	"github.com/google/go-tpm/tpm2"
@@ -22,7 +23,7 @@ func TPMSeed() error {
 	t, err := tpm.Open()
 	if err != nil {
 		// if the TPM is not available we can skip seeding random pool
-		if os.IsNotExist(err) {
+		if errors.Is(err, fs.ErrNotExist) {
 			log.Printf("TPM device is not available")
 
 			return nil

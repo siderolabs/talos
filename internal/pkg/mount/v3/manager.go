@@ -11,8 +11,8 @@ import (
 
 	"golang.org/x/sys/unix"
 
-	"github.com/siderolabs/talos/internal/pkg/xfs"
-	"github.com/siderolabs/talos/internal/pkg/xfs/fsopen"
+	"github.com/siderolabs/talos/pkg/xfs"
+	"github.com/siderolabs/talos/pkg/xfs/fsopen"
 )
 
 // Manager is the filesystem manager for mounting and unmounting filesystems.
@@ -26,6 +26,7 @@ type Manager struct {
 	shared                bool
 	skipIfMounted         bool
 	keepOpen              bool
+	detached              bool
 	mountattr             int
 	extraDirs             []string
 	extraUnmountCallbacks []func(m *Manager)
@@ -71,6 +72,7 @@ func (m *Manager) Mount() (*Point, error) {
 
 	m.point = &Point{
 		root:         root,
+		detached:     m.detached,
 		keepOpen:     m.keepOpen,
 		target:       m.target,
 		selinuxLabel: m.selinuxLabel,
@@ -82,8 +84,6 @@ func (m *Manager) Mount() (*Point, error) {
 		SkipIfMounted:   m.skipIfMounted,
 		MountAttributes: m.mountattr,
 	}
-
-	printer("mkdirAll %q", m.target)
 
 	if err := os.MkdirAll(m.target, 0o755); err != nil {
 		return nil, fmt.Errorf("failed to create mount target %s: %w", m.target, err)
@@ -203,6 +203,16 @@ func WithReadOnly() ManagerOption {
 	return ManagerOption{
 		set: func(m *Manager) {
 			m.mountattr |= unix.MOUNT_ATTR_RDONLY
+		},
+	}
+}
+
+// WithDetached sets the mount as detached.
+func WithDetached() ManagerOption {
+	return ManagerOption{
+		set: func(m *Manager) {
+			m.detached = true
+			m.keepOpen = true
 		},
 	}
 }

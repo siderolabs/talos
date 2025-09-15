@@ -7,7 +7,9 @@ package hardware
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -100,7 +102,7 @@ func (ctrl *PCIDevicesController) Run(ctx context.Context, r controller.Runtime,
 	for _, deviceID := range deviceIDs {
 		class, err := readHexPCIInfo(deviceID.Name(), "class")
 		if err != nil {
-			if os.IsNotExist(err) {
+			if errors.Is(err, fs.ErrNotExist) {
 				continue
 			}
 
@@ -109,7 +111,7 @@ func (ctrl *PCIDevicesController) Run(ctx context.Context, r controller.Runtime,
 
 		vendor, err := readHexPCIInfo(deviceID.Name(), "vendor")
 		if err != nil {
-			if os.IsNotExist(err) {
+			if errors.Is(err, fs.ErrNotExist) {
 				continue
 			}
 
@@ -118,7 +120,7 @@ func (ctrl *PCIDevicesController) Run(ctx context.Context, r controller.Runtime,
 
 		product, err := readHexPCIInfo(deviceID.Name(), "device")
 		if err != nil {
-			if os.IsNotExist(err) {
+			if errors.Is(err, fs.ErrNotExist) {
 				continue
 			}
 
@@ -176,7 +178,7 @@ func readDriverInfo(deviceID string) (string, error) {
 	if err != nil {
 		// ignore if the driver doesn't exist
 		// this can happen if the device is not bound to a driver or a pci root port
-		if os.IsNotExist(err) {
+		if errors.Is(err, fs.ErrNotExist) {
 			return "", nil
 		}
 

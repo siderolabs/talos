@@ -7,7 +7,9 @@ package sysblock
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
+	"io/fs"
 	"os"
 	"path/filepath"
 
@@ -29,7 +31,7 @@ func Walk(root string) ([]*kobject.Event, error) {
 	for _, entry := range entries {
 		fi, err := entry.Info()
 		if err != nil {
-			if os.IsNotExist(err) {
+			if errors.Is(err, fs.ErrNotExist) {
 				continue
 			}
 
@@ -42,7 +44,7 @@ func Walk(root string) ([]*kobject.Event, error) {
 
 		path, err := filepath.EvalSymlinks(filepath.Join(root, entry.Name()))
 		if err != nil {
-			if os.IsNotExist(err) {
+			if errors.Is(err, fs.ErrNotExist) {
 				continue
 			}
 
@@ -51,7 +53,7 @@ func Walk(root string) ([]*kobject.Event, error) {
 
 		uevent, err := readUevent(path)
 		if err != nil {
-			if os.IsNotExist(err) {
+			if errors.Is(err, fs.ErrNotExist) {
 				continue
 			}
 
@@ -103,7 +105,7 @@ func readUevent(path string) (map[string]string, error) {
 func readPartitions(path string) ([]*kobject.Event, error) {
 	entries, err := os.ReadDir(path)
 	if err != nil {
-		if os.IsNotExist(err) {
+		if errors.Is(err, fs.ErrNotExist) {
 			return nil, nil
 		}
 
@@ -126,7 +128,7 @@ func readPartitions(path string) ([]*kobject.Event, error) {
 
 		uevent, err := readUevent(partitionPath)
 		if err != nil {
-			if os.IsNotExist(err) {
+			if errors.Is(err, fs.ErrNotExist) {
 				continue
 			}
 

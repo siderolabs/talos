@@ -18,7 +18,6 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
-	"syscall"
 )
 
 // FS is an interface for creating file system handles.
@@ -32,6 +31,8 @@ type FS interface {
 }
 
 // Root is an interface that extends the standard fs.FS interface with Write capabilities.
+//
+//nolint:interfacebloat
 type Root interface {
 	fs.FS
 
@@ -43,6 +44,7 @@ type Root interface {
 	Mkdir(name string, perm os.FileMode) error
 	OpenFile(name string, flags int, perm os.FileMode) (File, error)
 	Remove(name string) error
+	Rename(oldname, newname string) error
 
 	Source() string
 	FSType() string
@@ -65,22 +67,22 @@ var _ File = (*os.File)(nil)
 
 // ReadFile wraps fs.ReadFile to read a file from the specified FileSystem.
 func ReadFile(root Root, name string) ([]byte, error) {
-	return fs.ReadFile(root, strings.TrimLeft(name, "/"))
+	return fs.ReadFile(root, name)
 }
 
 // ReadDir wraps fs.ReadDir to read a directory from the specified FileSystem.
 func ReadDir(root Root, name string) ([]fs.DirEntry, error) {
-	return fs.ReadDir(root, strings.TrimLeft(name, "/"))
+	return fs.ReadDir(root, name)
 }
 
 // Stat wraps fs.Stat to get the file or directory information from the specified FileSystem.
 func Stat(root Root, name string) (fs.FileInfo, error) {
-	return fs.Stat(root, strings.TrimLeft(name, "/"))
+	return fs.Stat(root, name)
 }
 
 // WriteFile is equivalent of os.WriteFile acting on specified FileSystem.
 func WriteFile(root Root, name string, data []byte, perm os.FileMode) error {
-	f, err := root.OpenFile(strings.TrimLeft(name, "/"), os.O_WRONLY|os.O_CREATE|os.O_TRUNC, perm)
+	f, err := root.OpenFile(name, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, perm)
 	if err != nil {
 		return err
 	}
@@ -93,39 +95,24 @@ func WriteFile(root Root, name string, data []byte, perm os.FileMode) error {
 	return err
 }
 
-// AsOSFile attempts to convert fs.File to *os.File.
-func AsOSFile(f fs.File, name string) (*os.File, error) {
-	ff, ok := f.(File)
-	if !ok {
-		return nil, errors.ErrUnsupported
-	}
-
-	newFd, err := syscall.Dup(int(ff.Fd()))
-	if err != nil {
-		return nil, fmt.Errorf("failed to duplicate file descriptor: %w", err)
-	}
-
-	return os.NewFile(uintptr(newFd), name), nil
-}
-
 // Open wraps (FS).Open.
 func Open(root Root, name string) (fs.File, error) {
-	return root.Open(strings.TrimLeft(name, "/"))
+	return root.Open(name)
 }
 
 // OpenFile wraps (FS).OpenFile.
 func OpenFile(root Root, name string, flags int, perm os.FileMode) (File, error) {
-	return root.OpenFile(strings.TrimLeft(name, "/"), flags, perm)
+	return root.OpenFile(name, flags, perm)
 }
 
 // Mkdir wraps (FS).Mkdir.
 func Mkdir(root Root, name string, perm os.FileMode) error {
-	return root.Mkdir(strings.TrimLeft(name, "/"), perm)
+	return root.Mkdir(name, perm)
 }
 
 // MkdirAll is equivalent of os.MkdirAll acting on specified FileSystem.
 func MkdirAll(root Root, name string, perm os.FileMode) error {
-	components := SplitPath(strings.TrimLeft(name, "/"))
+	components := SplitPath(name)
 
 	for i := range len(components) + 1 {
 		dir := filepath.Join(components[:i]...)
@@ -148,8 +135,6 @@ func MkdirTemp(root Root, dir, pattern string) (string, error) {
 	if dir == "" {
 		dir = os.TempDir()
 	}
-
-	dir = strings.TrimLeft(dir, "/")
 
 	if pattern == "" {
 		pattern = "tmp"
@@ -188,14 +173,14 @@ func MkdirTemp(root Root, dir, pattern string) (string, error) {
 
 // Remove wraps (FS).Remove.
 func Remove(root Root, name string) error {
-	return root.Remove(strings.TrimLeft(name, "/"))
+	return root.Remove(name)
 }
 
 // RemoveAll is equivalent of os.RemoveAll acting on specified FileSystem.
 func RemoveAll(root Root, name string) (err error) {
 	var f fs.File
 
-	f, err = root.Open(strings.TrimLeft(name, "/"))
+	f, err = root.Open(name)
 	if err != nil {
 		if errors.Is(err, os.ErrNotExist) {
 			return nil
@@ -214,22 +199,27 @@ func RemoveAll(root Root, name string) (err error) {
 	}
 
 	if !stat.IsDir() {
-		return root.Remove(strings.TrimLeft(name, "/"))
+		return root.Remove(name)
 	}
 
-	entries, err := ReadDir(root, strings.TrimLeft(name, "/"))
+	entries, err := ReadDir(root, name)
 	if err != nil {
 		return err
 	}
 
 	for _, entry := range entries {
-		childPath := filepath.Join(strings.TrimLeft(name, "/"), entry.Name())
+		childPath := filepath.Join(name, entry.Name())
 		if err := RemoveAll(root, childPath); err != nil {
 			return err
 		}
 	}
 
-	return root.Remove(strings.TrimLeft(name, "/"))
+	return root.Remove(name)
+}
+
+// Rename wraps (FS).Rename.
+func Rename(root Root, oldname, newname string) error {
+	return root.Rename(oldname, newname)
 }
 
 // SplitPath splits a path into its components, similar to filepath.Split but returns all parts.

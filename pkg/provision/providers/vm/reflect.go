@@ -6,7 +6,9 @@ package vm
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"io/fs"
 	"os"
 	"path/filepath"
 
@@ -21,7 +23,7 @@ func (p *Provisioner) Reflect(ctx context.Context, clusterName, stateDirectory s
 
 	st, err := os.Stat(statePath)
 	if err != nil {
-		if os.IsNotExist(err) {
+		if errors.Is(err, fs.ErrNotExist) {
 			return nil, fmt.Errorf("cluster %q not found: %w", clusterName, err)
 		}
 

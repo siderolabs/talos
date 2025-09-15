@@ -6,7 +6,9 @@ package conditions
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"io/fs"
 	"os"
 	"time"
 
@@ -21,7 +23,7 @@ func (filename kubeconfig) Wait(ctx context.Context) error {
 
 	for {
 		_, err := os.Stat(string(filename))
-		if err != nil && !os.IsNotExist(err) {
+		if err != nil && !errors.Is(err, fs.ErrNotExist) {
 			return err
 		}
 

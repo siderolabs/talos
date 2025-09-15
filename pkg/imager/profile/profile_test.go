@@ -5,6 +5,8 @@
 package profile_test
 
 import (
+	"errors"
+	"io/fs"
 	"os"
 	"sort"
 	"strings"
@@ -79,7 +81,7 @@ func TestFillDefaults(t *testing.T) {
 							require.NoError(t, p.Dump(&profileData))
 
 							expectedData, err := os.ReadFile("testdata/" + profile + "-" + arch + "-" + version + ".yaml")
-							if os.IsNotExist(err) && recordMissing {
+							if errors.Is(err, fs.ErrNotExist) && recordMissing {
 								require.NoError(t, os.WriteFile("testdata/"+profile+"-"+arch+"-"+version+".yaml", []byte(profileData.String()), 0o644))
 							} else {
 								require.NoError(t, err)

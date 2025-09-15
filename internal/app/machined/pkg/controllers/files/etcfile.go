@@ -20,8 +20,8 @@ import (
 
 	"github.com/siderolabs/talos/internal/pkg/mount/v3"
 	"github.com/siderolabs/talos/internal/pkg/selinux"
-	"github.com/siderolabs/talos/internal/pkg/xfs"
 	"github.com/siderolabs/talos/pkg/machinery/resources/files"
+	"github.com/siderolabs/talos/pkg/xfs"
 )
 
 // EtcFileController watches EtcFileSpecs, creates/updates files.

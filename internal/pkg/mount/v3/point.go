@@ -11,19 +11,21 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"syscall"
 	"time"
 
 	"github.com/siderolabs/go-retry/retry"
 	"golang.org/x/sys/unix"
 
 	"github.com/siderolabs/talos/internal/pkg/selinux"
-	"github.com/siderolabs/talos/internal/pkg/xfs"
+	"github.com/siderolabs/talos/pkg/xfs"
 )
 
 // Point represents a mount point in the filesystem.
 type Point struct {
 	root         xfs.Root
 	keepOpen     bool
+	detached     bool
 	fstype       string
 	source       string
 	target       string
@@ -62,6 +64,10 @@ func (p *Point) Mount(opts Options) error {
 
 	defer p.Release(false) //nolint:errcheck
 
+	if p.detached {
+		return nil
+	}
+
 	return p.retry(func() error {
 		if err := p.moveMount(p.target); err != nil {
 			return fmt.Errorf("error mounting %q to %q: %w", p.Source(), p.target, err)
@@ -85,6 +91,10 @@ func (p *Point) Mount(opts Options) error {
 
 // Share makes the mount point shared.
 func (p *Point) Share() error {
+	if p.detached {
+		return syscall.EINVAL
+	}
+
 	return p.setattr(&unix.MountAttr{
 		Propagation: unix.MS_SHARED,
 	}, unix.AT_RECURSIVE)
@@ -108,6 +118,10 @@ func (p *Point) Release(force bool) error {
 func (p *Point) Unmount(opts UnmountOptions) error {
 	if err := p.Release(true); err != nil {
 		return err
+	}
+
+	if p.detached {
+		return nil
 	}
 
 	return p.retry(func() error {
@@ -237,8 +251,17 @@ func (p *Point) FSType() string {
 	return p.fstype
 }
 
+// Root returns the underlying xfs.Root of the mount point.
+func (p *Point) Root() xfs.Root {
+	return p.root
+}
+
 // RemountReadOnly remounts the mount point as read-only.
 func (p *Point) RemountReadOnly() error {
+	if p.detached {
+		return syscall.EINVAL
+	}
+
 	return p.setattr(&unix.MountAttr{
 		Attr_set: unix.MOUNT_ATTR_RDONLY,
 	}, 0)
@@ -246,6 +269,10 @@ func (p *Point) RemountReadOnly() error {
 
 // RemountReadWrite remounts the mount point as read-write.
 func (p *Point) RemountReadWrite() error {
+	if p.detached {
+		return nil
+	}
+
 	return p.setattr(&unix.MountAttr{
 		Attr_clr: unix.MOUNT_ATTR_RDONLY,
 	}, 0)

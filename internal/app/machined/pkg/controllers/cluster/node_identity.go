@@ -12,15 +12,15 @@ import (
 	"github.com/cosi-project/runtime/pkg/safe"
 	"go.uber.org/zap"
 
+	blockadapter "github.com/siderolabs/talos/internal/app/machined/pkg/adapters/block"
 	clusteradapter "github.com/siderolabs/talos/internal/app/machined/pkg/adapters/cluster"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/automaton/blockautomaton"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers"
-	"github.com/siderolabs/talos/internal/pkg/xfs"
-	"github.com/siderolabs/talos/internal/pkg/xfs/opentree"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/resources/block"
 	"github.com/siderolabs/talos/pkg/machinery/resources/cluster"
 	"github.com/siderolabs/talos/pkg/machinery/resources/files"
+	"github.com/siderolabs/talos/pkg/xfs"
 )
 
 // NodeIdentityController manages runtime.Identity caching identity in the STATE.
@@ -79,7 +79,12 @@ func (ctrl *NodeIdentityController) Run(ctx context.Context, r controller.Runtim
 		}
 
 		if ctrl.stateMachine == nil {
-			ctrl.stateMachine = blockautomaton.NewVolumeMounter(ctrl.Name(), constants.StatePartitionLabel, ctrl.establishNodeIdentity)
+			ctrl.stateMachine = blockautomaton.NewVolumeMounter(
+				ctrl.Name(),
+				constants.StatePartitionLabel,
+				ctrl.establishNodeIdentity,
+				blockautomaton.WithDetached(true),
+			)
 		}
 
 		if err := ctrl.stateMachine.Run(ctx, r, logger); err != nil {
@@ -91,48 +96,39 @@ func (ctrl *NodeIdentityController) Run(ctx context.Context, r controller.Runtim
 }
 
 func (ctrl *NodeIdentityController) establishNodeIdentity(ctx context.Context, r controller.ReaderWriter, logger *zap.Logger, mountStatus *block.VolumeMountStatus) error {
-	root := &xfs.UnixRoot{FS: opentree.NewFromPath(mountStatus.TypedSpec().Target)}
-	if err := root.OpenFS(); err != nil {
-		return fmt.Errorf("error opening filesystem: %w", err)
-	}
+	return blockadapter.VolumeMountStatus(mountStatus).WithRoot(logger, func(root xfs.Root) error {
+		var localIdentity cluster.IdentitySpec
 
-	defer func() {
-		if err := root.Close(); err != nil {
-			logger.Error("error closing filesystem", zap.Error(err))
+		if err := controllers.LoadOrNewFromFile(root, constants.NodeIdentityFilename, &localIdentity, func(v *cluster.IdentitySpec) error {
+			return clusteradapter.IdentitySpec(v).Generate()
+		}); err != nil {
+			return fmt.Errorf("error caching node identity: %w", err)
 		}
-	}()
 
-	var localIdentity cluster.IdentitySpec
+		if err := safe.WriterModify(ctx, r, cluster.NewIdentity(cluster.NamespaceName, cluster.LocalIdentity), func(r *cluster.Identity) error {
+			*r.TypedSpec() = localIdentity
 
-	if err := controllers.LoadOrNewFromFile(root, constants.NodeIdentityFilename, &localIdentity, func(v *cluster.IdentitySpec) error {
-		return clusteradapter.IdentitySpec(v).Generate()
-	}); err != nil {
-		return fmt.Errorf("error caching node identity: %w", err)
-	}
+			return nil
+		}); err != nil {
+			return fmt.Errorf("error modifying resource: %w", err)
+		}
 
-	if err := safe.WriterModify(ctx, r, cluster.NewIdentity(cluster.NamespaceName, cluster.LocalIdentity), func(r *cluster.Identity) error {
-		*r.TypedSpec() = localIdentity
+		// generate `/etc/machine-id` from node identity
+		if err := safe.WriterModify(ctx, r, files.NewEtcFileSpec(files.NamespaceName, "machine-id"),
+			func(r *files.EtcFileSpec) error {
+				var err error
+
+				r.TypedSpec().Contents, err = clusteradapter.IdentitySpec(&localIdentity).ConvertMachineID()
+				r.TypedSpec().Mode = 0o444
+				r.TypedSpec().SelinuxLabel = constants.EtcSelinuxLabel
+
+				return err
+			}); err != nil {
+			return fmt.Errorf("error modifying machine-id: %w", err)
+		}
+
+		logger.Info("node identity established", zap.String("node_id", localIdentity.NodeID))
 
 		return nil
-	}); err != nil {
-		return fmt.Errorf("error modifying resource: %w", err)
-	}
-
-	// generate `/etc/machine-id` from node identity
-	if err := safe.WriterModify(ctx, r, files.NewEtcFileSpec(files.NamespaceName, "machine-id"),
-		func(r *files.EtcFileSpec) error {
-			var err error
-
-			r.TypedSpec().Contents, err = clusteradapter.IdentitySpec(&localIdentity).ConvertMachineID()
-			r.TypedSpec().Mode = 0o444
-			r.TypedSpec().SelinuxLabel = constants.EtcSelinuxLabel
-
-			return err
-		}); err != nil {
-		return fmt.Errorf("error modifying machine-id: %w", err)
-	}
-
-	logger.Info("node identity established", zap.String("node_id", localIdentity.NodeID))
-
-	return nil
+	})
 }

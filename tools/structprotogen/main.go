@@ -7,7 +7,9 @@ package main
 
 //nolint:gci
 import (
+	"errors"
 	"fmt"
+	"io/fs"
 	"os"
 	"path"
 	"path/filepath"
@@ -148,7 +150,7 @@ func withFile(filename string, fn func(f *os.File) error) error {
 	dir := filepath.Dir(filename)
 
 	_, err := os.Stat(dir)
-	if os.IsNotExist(err) {
+	if errors.Is(err, fs.ErrNotExist) {
 		err = os.MkdirAll(dir, 0o755)
 		if err != nil {
 			return err

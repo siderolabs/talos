@@ -5,7 +5,9 @@
 package vm
 
 import (
+	"errors"
 	"fmt"
+	"io/fs"
 	"os"
 	"syscall"
 	"time"
@@ -17,7 +19,7 @@ import (
 func StopProcessByPidfile(pidPath string) error {
 	pidFile, err := os.Open(pidPath)
 	if err != nil {
-		if os.IsNotExist(err) {
+		if errors.Is(err, fs.ErrNotExist) {
 			return nil
 		}
 

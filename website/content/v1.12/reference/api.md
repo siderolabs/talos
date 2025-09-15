@@ -5426,6 +5426,7 @@ MountRequestSpec is the spec for MountRequest.
 | requesters | [string](#string) | repeated |  |
 | requester_i_ds | [string](#string) | repeated |  |
 | read_only | [bool](#bool) |  |  |
+| detached | [bool](#bool) |  |  |
 
 
 
@@ -5469,6 +5470,7 @@ MountStatusSpec is the spec for MountStatus.
 | read_only | [bool](#bool) |  |  |
 | project_quota_support | [bool](#bool) |  |  |
 | encryption_provider | [talos.resource.definitions.enums.BlockEncryptionProviderType](#talos.resource.definitions.enums.BlockEncryptionProviderType) |  |  |
+| detached | [bool](#bool) |  |  |
 
 
 
@@ -5644,6 +5646,7 @@ VolumeMountRequestSpec is the spec for VolumeMountRequest.
 | volume_id | [string](#string) |  |  |
 | requester | [string](#string) |  |  |
 | read_only | [bool](#bool) |  |  |
+| detached | [bool](#bool) |  |  |
 
 
 
@@ -5662,6 +5665,7 @@ VolumeMountStatusSpec is the spec for VolumeMountStatus.
 | requester | [string](#string) |  |  |
 | target | [string](#string) |  |  |
 | read_only | [bool](#bool) |  |  |
+| detached | [bool](#bool) |  |  |
 
 
 

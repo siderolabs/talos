@@ -36,6 +36,7 @@ type VolumeMounterAutomaton = *automaton.ControllerAutomaton[volumeMountContext]
 // VolumeMounterOptions is the options for the volume mounter controller state machine.
 type VolumeMounterOptions struct {
 	ReadOnly bool
+	Detached bool
 }
 
 // VolumeMounterOption is a function that configures the volume mounter controller state machine.
@@ -45,6 +46,13 @@ type VolumeMounterOption func(*VolumeMounterOptions)
 func WithReadOnly(readOnly bool) VolumeMounterOption {
 	return func(options *VolumeMounterOptions) {
 		options.ReadOnly = readOnly
+	}
+}
+
+// WithDetached sets the volume mounter controller state machine to detached mode.
+func WithDetached(detached bool) VolumeMounterOption {
+	return func(options *VolumeMounterOptions) {
+		options.Detached = detached
 	}
 }
 
@@ -77,6 +85,7 @@ func createVolumeMountRequest(ctx context.Context, r controller.ReaderWriter, lo
 		req.TypedSpec().VolumeID = mountContext.volumeID
 		req.TypedSpec().Requester = mountContext.requester
 		req.TypedSpec().ReadOnly = mountContext.options.ReadOnly
+		req.TypedSpec().Detached = mountContext.options.Detached
 
 		return nil
 	}); err != nil {

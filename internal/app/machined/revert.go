@@ -6,9 +6,10 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"io/fs"
 	"log"
-	"os"
 
 	"github.com/cosi-project/runtime/pkg/state"
 
@@ -52,7 +53,7 @@ func revertBootloadInternal(ctx context.Context, resourceState state.State) erro
 
 	metaState, err := meta.New(ctx, resourceState)
 	if err != nil {
-		if os.IsNotExist(err) {
+		if errors.Is(err, fs.ErrNotExist) {
 			// no META, no way to revert
 			return nil
 		}

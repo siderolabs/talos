@@ -59,6 +59,11 @@ func NewFromFile(filepath string) (config.Provider, error) {
 	return newConfig(f)
 }
 
+// NewFromReader will take a reader and attempt to parse a config file from it.
+func NewFromReader(f io.Reader) (config.Provider, error) {
+	return newConfig(f)
+}
+
 // NewFromStdin initializes a config provider by reading from stdin.
 func NewFromStdin() (config.Provider, error) {
 	return newConfig(os.Stdin)

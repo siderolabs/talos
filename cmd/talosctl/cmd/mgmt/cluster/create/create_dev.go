@@ -10,6 +10,7 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
+	"io/fs"
 	"net"
 	"net/netip"
 	"net/url"
@@ -781,7 +782,7 @@ func mergeKubeconfig(ctx context.Context, clusterAccess *access.Adapter) error {
 
 	_, err = os.Stat(kubeconfigPath)
 	if err != nil {
-		if !os.IsNotExist(err) {
+		if !errors.Is(err, fs.ErrNotExist) {
 			return err
 		}
 

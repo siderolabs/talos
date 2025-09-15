@@ -7,7 +7,9 @@ package vm
 import (
 	"bufio"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"io/fs"
 	"net/netip"
 	"os"
 	"path/filepath"
@@ -56,7 +58,7 @@ func DumpIPAMRecord(statePath string, record IPAMRecord) error {
 func LoadIPAMRecords(statePath string) (IPAMDatabase, error) {
 	f, err := os.Open(filepath.Join(statePath, dbFile))
 	if err != nil {
-		if os.IsNotExist(err) {
+		if errors.Is(err, fs.ErrNotExist) {
 			return nil, nil
 		}
 

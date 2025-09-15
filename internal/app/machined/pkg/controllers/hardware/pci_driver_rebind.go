@@ -6,7 +6,9 @@ package hardware
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"io/fs"
 	"os"
 	"path/filepath"
 
@@ -154,7 +156,7 @@ func (c *PCIDriverRebindController) handlePCIDriverReBind(pciID, targetDriver st
 
 	// Unbind device from the host driver.
 	// in some cases, the device may not be bound to any driver, so we ignore the error.
-	if err := os.WriteFile(fmt.Sprintf(driverUnbindPath, pciID), []byte(pciID), 0o200); err != nil && !os.IsNotExist(err) {
+	if err := os.WriteFile(fmt.Sprintf(driverUnbindPath, pciID), []byte(pciID), 0o200); err != nil && !errors.Is(err, fs.ErrNotExist) {
 		return fmt.Errorf("error unbinding device with id: %s, %w", pciID, err)
 	}
 

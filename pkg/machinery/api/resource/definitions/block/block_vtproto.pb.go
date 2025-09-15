@@ -901,6 +901,16 @@ func (m *MountRequestSpec) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 		i -= len(m.unknownFields)
 		copy(dAtA[i:], m.unknownFields)
 	}
+	if m.Detached {
+		i--
+		if m.Detached {
+			dAtA[i] = 1
+		} else {
+			dAtA[i] = 0
+		}
+		i--
+		dAtA[i] = 0x30
+	}
 	if m.ReadOnly {
 		i--
 		if m.ReadOnly {
@@ -1064,6 +1074,16 @@ func (m *MountStatusSpec) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 	if m.unknownFields != nil {
 		i -= len(m.unknownFields)
 		copy(dAtA[i:], m.unknownFields)
+	}
+	if m.Detached {
+		i--
+		if m.Detached {
+			dAtA[i] = 1
+		} else {
+			dAtA[i] = 0
+		}
+		i--
+		dAtA[i] = 0x40
 	}
 	if m.EncryptionProvider != 0 {
 		i = protohelpers.EncodeVarint(dAtA, i, uint64(m.EncryptionProvider))
@@ -1725,6 +1745,16 @@ func (m *VolumeMountRequestSpec) MarshalToSizedBufferVT(dAtA []byte) (int, error
 		i -= len(m.unknownFields)
 		copy(dAtA[i:], m.unknownFields)
 	}
+	if m.Detached {
+		i--
+		if m.Detached {
+			dAtA[i] = 1
+		} else {
+			dAtA[i] = 0
+		}
+		i--
+		dAtA[i] = 0x20
+	}
 	if m.ReadOnly {
 		i--
 		if m.ReadOnly {
@@ -1781,6 +1811,16 @@ func (m *VolumeMountStatusSpec) MarshalToSizedBufferVT(dAtA []byte) (int, error)
 	if m.unknownFields != nil {
 		i -= len(m.unknownFields)
 		copy(dAtA[i:], m.unknownFields)
+	}
+	if m.Detached {
+		i--
+		if m.Detached {
+			dAtA[i] = 1
+		} else {
+			dAtA[i] = 0
+		}
+		i--
+		dAtA[i] = 0x28
 	}
 	if m.ReadOnly {
 		i--
@@ -2496,6 +2536,9 @@ func (m *MountRequestSpec) SizeVT() (n int) {
 	if m.ReadOnly {
 		n += 2
 	}
+	if m.Detached {
+		n += 2
+	}
 	n += len(m.unknownFields)
 	return n
 }
@@ -2566,6 +2609,9 @@ func (m *MountStatusSpec) SizeVT() (n int) {
 	}
 	if m.EncryptionProvider != 0 {
 		n += 1 + protohelpers.SizeOfVarint(uint64(m.EncryptionProvider))
+	}
+	if m.Detached {
+		n += 2
 	}
 	n += len(m.unknownFields)
 	return n
@@ -2803,6 +2849,9 @@ func (m *VolumeMountRequestSpec) SizeVT() (n int) {
 	if m.ReadOnly {
 		n += 2
 	}
+	if m.Detached {
+		n += 2
+	}
 	n += len(m.unknownFields)
 	return n
 }
@@ -2826,6 +2875,9 @@ func (m *VolumeMountStatusSpec) SizeVT() (n int) {
 		n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
 	}
 	if m.ReadOnly {
+		n += 2
+	}
+	if m.Detached {
 		n += 2
 	}
 	n += len(m.unknownFields)
@@ -5535,6 +5587,26 @@ func (m *MountRequestSpec) UnmarshalVT(dAtA []byte) error {
 				}
 			}
 			m.ReadOnly = bool(v != 0)
+		case 6:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Detached", wireType)
+			}
+			var v int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return protohelpers.ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				v |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			m.Detached = bool(v != 0)
 		default:
 			iNdEx = preIndex
 			skippy, err := protohelpers.Skip(dAtA[iNdEx:])
@@ -6008,6 +6080,26 @@ func (m *MountStatusSpec) UnmarshalVT(dAtA []byte) error {
 					break
 				}
 			}
+		case 8:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Detached", wireType)
+			}
+			var v int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return protohelpers.ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				v |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			m.Detached = bool(v != 0)
 		default:
 			iNdEx = preIndex
 			skippy, err := protohelpers.Skip(dAtA[iNdEx:])
@@ -7607,6 +7699,26 @@ func (m *VolumeMountRequestSpec) UnmarshalVT(dAtA []byte) error {
 				}
 			}
 			m.ReadOnly = bool(v != 0)
+		case 4:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Detached", wireType)
+			}
+			var v int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return protohelpers.ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				v |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			m.Detached = bool(v != 0)
 		default:
 			iNdEx = preIndex
 			skippy, err := protohelpers.Skip(dAtA[iNdEx:])
@@ -7774,6 +7886,26 @@ func (m *VolumeMountStatusSpec) UnmarshalVT(dAtA []byte) error {
 				}
 			}
 			m.ReadOnly = bool(v != 0)
+		case 5:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Detached", wireType)
+			}
+			var v int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return protohelpers.ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				v |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			m.Detached = bool(v != 0)
 		default:
 			iNdEx = preIndex
 			skippy, err := protohelpers.Skip(dAtA[iNdEx:])

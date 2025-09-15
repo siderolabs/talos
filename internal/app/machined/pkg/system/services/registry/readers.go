@@ -9,7 +9,6 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
-	"os"
 
 	"github.com/containerd/containerd/v2/core/content"
 	"github.com/containerd/errdefs"
@@ -95,7 +94,7 @@ func (r *readSeeker) Seek(offset int64, whence int) (int64, error) {
 func openReaderAt(p string, statFS fs.StatFS) (content.ReaderAt, error) {
 	fi, err := statFS.Stat(p)
 	if err != nil {
-		if !os.IsNotExist(err) {
+		if !errors.Is(err, fs.ErrNotExist) {
 			return nil, err
 		}
 
@@ -104,7 +103,7 @@ func openReaderAt(p string, statFS fs.StatFS) (content.ReaderAt, error) {
 
 	fp, err := statFS.Open(p)
 	if err != nil {
-		if !os.IsNotExist(err) {
+		if !errors.Is(err, fs.ErrNotExist) {
 			return nil, err
 		}
 

@@ -7,10 +7,11 @@ package containerd
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"io"
+	"io/fs"
 	"log"
-	"os"
 	"syscall"
 	"time"
 
@@ -180,7 +181,7 @@ func (c *containerdRunner) Run(eventSink events.Recorder) error {
 	// if one still exists
 	defer func() {
 		err := cg.Delete()
-		if err != nil && !os.IsNotExist(err) {
+		if err != nil && !errors.Is(err, fs.ErrNotExist) {
 			eventSink(events.StateStopping, "Failed to remove cgroup for %s, %s", c, err)
 		}
 	}()

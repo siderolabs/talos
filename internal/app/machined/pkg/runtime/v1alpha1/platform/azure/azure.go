@@ -12,6 +12,7 @@ import (
 	"encoding/xml"
 	stderrors "errors"
 	"fmt"
+	"io/fs"
 	"log"
 	"net/netip"
 	"os"
@@ -272,7 +273,7 @@ func (a *Azure) configFromCD() ([]byte, error) {
 			ovfEnvFile, err := os.ReadFile(filepath.Join(mnt, "ovf-env.xml"))
 			if err != nil {
 				// Device mount worked, but it wasn't the "CD" that contains the xml file
-				if os.IsNotExist(err) {
+				if stderrors.Is(err, fs.ErrNotExist) {
 					continue
 				}
 

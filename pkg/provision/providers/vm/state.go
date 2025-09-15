@@ -7,6 +7,7 @@ package vm
 import (
 	"errors"
 	"fmt"
+	"io/fs"
 	"os"
 	"path/filepath"
 
@@ -44,7 +45,7 @@ func NewState(statePath, provisionerName, clusterName string) (*State, error) {
 		)
 	}
 
-	if !os.IsNotExist(err) {
+	if !errors.Is(err, fs.ErrNotExist) {
 		return nil, fmt.Errorf("error checking state directory: %w", err)
 	}
 

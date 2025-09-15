@@ -9,7 +9,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/siderolabs/talos/internal/pkg/xfs"
+	"github.com/siderolabs/talos/pkg/xfs"
 )
 
 func TestOs(t *testing.T) {

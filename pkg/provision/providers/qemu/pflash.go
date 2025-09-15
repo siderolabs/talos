@@ -5,8 +5,10 @@
 package qemu
 
 import (
+	"errors"
 	"fmt"
 	"io"
+	"io/fs"
 	"os"
 
 	"github.com/siderolabs/talos/pkg/provision/providers/vm"
@@ -37,7 +39,7 @@ func (p *provisioner) createPFlashImages(state *vm.State, nodeName string, pflas
 
 					src, err = os.Open(sourcePath)
 					if err != nil {
-						if os.IsNotExist(err) {
+						if errors.Is(err, fs.ErrNotExist) {
 							continue
 						}
 

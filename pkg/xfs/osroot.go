@@ -60,6 +60,11 @@ func (root *OSRoot) Remove(name string) error {
 	return os.Remove(filepath.Join(root.Shadow, name))
 }
 
+// Rename renames a file or directory in the root filesystem from old to new.
+func (root *OSRoot) Rename(oldname, newname string) error {
+	return os.Rename(filepath.Join(root.Shadow, oldname), filepath.Join(root.Shadow, newname))
+}
+
 // Source returns the source of the underlying filesystem.
 func (root *OSRoot) Source() string {
 	return root.Shadow

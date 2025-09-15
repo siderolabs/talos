@@ -2,12 +2,15 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+//go:build linux
+
 package xfs
 
 import (
 	"fmt"
 	"io/fs"
 	"os"
+	"strings"
 
 	"golang.org/x/sys/unix"
 )
@@ -70,29 +73,29 @@ func (root *UnixRoot) Fd() (int, error) {
 
 // Mkdir creates a new directory in the root filesystem with the specified name and permissions.
 func (root *UnixRoot) Mkdir(name string, perm os.FileMode) error {
-	return unix.Mkdirat(root.mntfd, name, uint32(perm))
+	return unix.Mkdirat(root.mntfd, strings.TrimLeft(name, "/"), uint32(perm))
 }
 
 // Open opens a file in the root filesystem with the specified name in read-only mode.
 func (root *UnixRoot) Open(name string) (fs.File, error) {
-	return root.OpenFile(name, unix.O_RDONLY, 0)
+	return root.OpenFile(strings.TrimLeft(name, "/"), unix.O_RDONLY, 0)
 }
 
 // OpenFile opens a file in the root filesystem with the specified name, flags, and permissions.
 func (root *UnixRoot) OpenFile(name string, flags int, perm os.FileMode) (File, error) {
-	fd, err := unix.Openat(root.mntfd, name, flags, uint32(perm))
+	fd, err := unix.Openat(root.mntfd, strings.TrimLeft(name, "/"), flags, uint32(perm))
 	if err != nil {
 		return nil, err
 	}
 
-	return os.NewFile(uintptr(fd), name), nil
+	return os.NewFile(uintptr(fd), strings.TrimLeft(name, "/")), nil
 }
 
 // Remove removes a file or directory from the root filesystem.
 func (root *UnixRoot) Remove(name string) error {
 	flags := 0
 
-	info, err := root.stat(name)
+	info, err := root.stat(strings.TrimLeft(name, "/"))
 	if err != nil {
 		return err
 	}
@@ -101,11 +104,16 @@ func (root *UnixRoot) Remove(name string) error {
 		flags = unix.AT_REMOVEDIR
 	}
 
-	return unix.Unlinkat(root.mntfd, name, flags)
+	return unix.Unlinkat(root.mntfd, strings.TrimLeft(name, "/"), flags)
+}
+
+// Rename renames a file or directory in the root filesystem from old to new.
+func (root *UnixRoot) Rename(oldname, newname string) error {
+	return unix.Renameat(root.mntfd, strings.TrimLeft(oldname, "/"), root.mntfd, strings.TrimLeft(newname, "/"))
 }
 
 func (root *UnixRoot) stat(name string) (os.FileInfo, error) {
-	f, err := root.Open(name)
+	f, err := root.Open(strings.TrimLeft(name, "/"))
 	if err != nil {
 		return nil, err
 	}

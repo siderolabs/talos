@@ -7,8 +7,6 @@ package config
 import (
 	"context"
 	"fmt"
-	"os"
-	"path/filepath"
 
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
@@ -17,11 +15,13 @@ import (
 	"github.com/siderolabs/gen/optional"
 	"go.uber.org/zap"
 
+	blockadapter "github.com/siderolabs/talos/internal/app/machined/pkg/adapters/block"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/automaton"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/automaton/blockautomaton"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/resources/block"
 	"github.com/siderolabs/talos/pkg/machinery/resources/config"
+	"github.com/siderolabs/talos/pkg/xfs"
 )
 
 // PersistenceController ensures that the machine configuration is persisted in STATE partition.
@@ -112,7 +112,12 @@ func (ctrl *PersistenceController) Run(ctx context.Context, r controller.Runtime
 		}
 
 		if ctrl.stateMachine == nil && ctrl.configToPersist != nil {
-			ctrl.stateMachine = blockautomaton.NewVolumeMounter(ctrl.Name(), constants.StatePartitionLabel, ctrl.persistMachineConfig)
+			ctrl.stateMachine = blockautomaton.NewVolumeMounter(
+				ctrl.Name(),
+				constants.StatePartitionLabel,
+				ctrl.persistMachineConfig,
+				blockautomaton.WithDetached(true),
+			)
 		}
 
 		if ctrl.stateMachine != nil {
@@ -143,26 +148,27 @@ func (ctrl *PersistenceController) Run(ctx context.Context, r controller.Runtime
 }
 
 func (ctrl *PersistenceController) persistMachineConfig(ctx context.Context, r controller.ReaderWriter, logger *zap.Logger, mountStatus *block.VolumeMountStatus) error {
-	rootPath := mountStatus.TypedSpec().Target
-	tempName := constants.ConfigFilename + "-tmp"
+	return blockadapter.VolumeMountStatus(mountStatus).WithRoot(logger, func(root xfs.Root) error {
+		tempName := constants.ConfigFilename + "-tmp"
 
-	configContents, err := ctrl.configToPersist.Provider().Bytes()
-	if err != nil {
-		return fmt.Errorf("error getting config bytes: %w", err)
-	}
+		configContents, err := ctrl.configToPersist.Provider().Bytes()
+		if err != nil {
+			return fmt.Errorf("error getting config bytes: %w", err)
+		}
 
-	if err = os.WriteFile(filepath.Join(rootPath, tempName), configContents, 0o600); err != nil {
-		return fmt.Errorf("error writing config to file: %w", err)
-	}
+		if err = xfs.WriteFile(root, tempName, configContents, 0o600); err != nil {
+			return fmt.Errorf("error writing config to file: %w", err)
+		}
 
-	if err = os.Rename(filepath.Join(rootPath, tempName), filepath.Join(rootPath, constants.ConfigFilename)); err != nil {
-		return fmt.Errorf("error renaming config file: %w", err)
-	}
+		if err = xfs.Rename(root, tempName, constants.ConfigFilename); err != nil {
+			return fmt.Errorf("error renaming config file: %w", err)
+		}
 
-	logger.Info("machine configuration persisted to STATE")
+		logger.Info("machine configuration persisted to STATE")
 
-	ctrl.lastPersistedVersion = ctrl.configToPersist.Metadata().Version()
-	ctrl.configToPersist = nil
+		ctrl.lastPersistedVersion = ctrl.configToPersist.Metadata().Version()
+		ctrl.configToPersist = nil
 
-	return nil
+		return nil
+	})
 }

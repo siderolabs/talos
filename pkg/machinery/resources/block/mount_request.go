@@ -27,6 +27,7 @@ type MountRequestSpec struct {
 
 	ParentMountID string `yaml:"parentID" protobuf:"2"`
 	ReadOnly      bool   `yaml:"readOnly" protobuf:"5"`
+	Detached      bool   `yaml:"detached" protobuf:"6"`
 
 	Requesters   []string `yaml:"requesters" protobuf:"3"`
 	RequesterIDs []string `yaml:"requesterIDs" protobuf:"4"`

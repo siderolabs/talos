@@ -36,7 +36,7 @@ func (s *singleFileStore) Info(_ context.Context, dgst digest.Digest) (content.I
 
 	fi, err := s.root.Stat(p)
 	if err != nil {
-		if os.IsNotExist(err) || errors.Is(err, errdefs.ErrNotFound) {
+		if errors.Is(err, fs.ErrNotExist) || errors.Is(err, errdefs.ErrNotFound) {
 			return content.Info{}, xerrors.NewTaggedf[notFoundTag]("content '%s': %w", dgst, errdefs.ErrNotFound)
 		}
 

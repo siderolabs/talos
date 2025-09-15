@@ -2,7 +2,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-//go:build unix
+//go:build linux
 
 package xfs_test
 
@@ -12,8 +12,8 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/siderolabs/talos/internal/pkg/xfs"
-	"github.com/siderolabs/talos/internal/pkg/xfs/fsopen"
+	"github.com/siderolabs/talos/pkg/xfs"
+	"github.com/siderolabs/talos/pkg/xfs/fsopen"
 )
 
 func TestFsopen(t *testing.T) {
@@ -32,9 +32,7 @@ func TestFsopen(t *testing.T) {
 		t.Run(tc.fstype, func(t *testing.T) {
 			t.Parallel()
 
-			fs := fsopen.New(tc.fstype, tc.opts...)
-
-			root := &xfs.UnixRoot{FS: fs}
+			root := &xfs.UnixRoot{FS: fsopen.New(tc.fstype, tc.opts...)}
 
 			err := root.OpenFS()
 			require.NoError(t, err)

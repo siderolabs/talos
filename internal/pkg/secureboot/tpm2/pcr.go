@@ -8,9 +8,10 @@ package tpm2
 import (
 	"bytes"
 	"crypto/sha256"
+	"errors"
 	"fmt"
+	"io/fs"
 	"log"
-	"os"
 
 	"github.com/google/go-tpm/tpm2"
 	"github.com/google/go-tpm/tpm2/transport"
@@ -67,7 +68,7 @@ func PCRExtend(pcr int, data []byte) error {
 	t, err := tpm.Open()
 	if err != nil {
 		// if the TPM is not available we can skip the PCR extension
-		if os.IsNotExist(err) {
+		if errors.Is(err, fs.ErrNotExist) {
 			log.Printf("TPM device is not available, skipping PCR extension")
 
 			return nil
