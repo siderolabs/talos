@@ -8,7 +8,6 @@ import (
 	"context"
 	"fmt"
 	"io/fs"
-	"log"
 	"math"
 	"os"
 	"path/filepath"
@@ -34,7 +33,7 @@ import (
 )
 
 const (
-	sampleInterval  = 5000 * time.Millisecond
+	sampleInterval  = 500 * time.Millisecond
 	mempressureProp = "memory.pressure"
 	pressureType    = "full"
 	pressureSpan    = "avg10"
@@ -129,21 +128,19 @@ func (ctrl *OOMController) Run(ctx context.Context, r controller.Runtime, logger
 
 		node, err := cgroups.GetCgroupProperty(constants.CgroupMountPath, mempressureProp)
 		if err != nil {
-			fmt.Println("cannot read memory pressure", err)
+			logger.Error("cannot read memory pressure", zap.Error(err))
 			continue
 		}
 
-		fmt.Println(node.MemoryPressure)
-
 		spans, ok := node.MemoryPressure[pressureType]
 		if !ok {
-			fmt.Println("cannot find memory pressure type:", pressureType)
+			logger.Error("cannot find memory pressure type:", zap.String("pressureType", pressureType))
 			continue
 		}
 
 		value, ok := spans[pressureSpan]
 		if !ok {
-			fmt.Println("cannot find memory pressure span:", pressureSpan)
+			logger.Error("cannot find memory pressure span:", zap.String("pressureSpan", pressureSpan))
 			continue
 		}
 
@@ -153,17 +150,17 @@ func (ctrl *OOMController) Run(ctx context.Context, r controller.Runtime, logger
 
 		val, err := strconv.ParseFloat(value.String(), 64)
 		if err != nil {
-			fmt.Println("cannot parse memory pressure:", pressureSpan, err)
+			logger.Error("cannot parse memory pressure:", zap.String("pressureSpan", pressureSpan), zap.Error(err))
 			continue
 		}
-		fmt.Println("monitoring", value.String(), val, err)
 
 		evalContext := map[string]any{
 			"memory_full_avg10":  float64(val),
 			"time_since_trigger": time.Since(ctrl.ActionTriggered),
 		}
 
-		log.Printf("evalContext = %v", evalContext)
+		// FIXME: remove hot-path logging
+		logger.Info("Evaluating OOMTrigger", zap.Any("evalContext", evalContext))
 
 		trigger, err := triggerExpr.EvalBool(celenv.OOMTrigger(), evalContext)
 
@@ -181,7 +178,7 @@ func (ctrl *OOMController) Run(ctx context.Context, r controller.Runtime, logger
 
 // OomAction
 func (ctrl *OOMController) OomAction(logger *zap.Logger, scoringExpr cel.Expression) {
-	fmt.Println("OOM action!")
+	logger.Info("OOM controller triggered")
 
 	ranking := map[oom.RankedCgroup]float64{}
 
@@ -197,7 +194,7 @@ func (ctrl *OOMController) OomAction(logger *zap.Logger, scoringExpr cel.Express
 	} {
 		entries, err := os.ReadDir(filepath.Join(constants.CgroupMountPath, cg.dir))
 		if err != nil {
-			fmt.Println("cannot list cgroup members", cg.dir, err)
+			logger.Error("cannot list cgroup members", zap.String("dir", cg.dir), zap.Error(err))
 			continue
 		}
 
@@ -273,15 +270,15 @@ func (ctrl *OOMController) OomAction(logger *zap.Logger, scoringExpr cel.Express
 		}
 	}
 
-	fmt.Println("SENDING SIGKILL TO CGROUP", filepath.Join(cgroupToKill.Path, "cgroup.kill"))
+	logger.Info("Sending SIGKILL to cgroup", zap.String("cgroup", cgroupToKill.Path))
 
-	err := ctrl.reapCg(cgroupToKill.Path)
+	err := ctrl.reapCg(logger, cgroupToKill.Path)
 	if err != nil {
-		fmt.Println("cannot reap cgroup", cgroupToKill.Path, err)
+		logger.Error("cannot reap cgroup", zap.String("cgroup", cgroupToKill.Path), zap.Error(err))
 	}
 }
 
-func (ctrl *OOMController) reapCg(cgroupPath string) error {
+func (ctrl *OOMController) reapCg(logger *zap.Logger, cgroupPath string) error {
 	processes := []int{}
 	// Ignore errors, find as many processes as possible
 	filepath.WalkDir(cgroupPath, func(path string, d fs.DirEntry, walkErr error) error {
@@ -294,20 +291,19 @@ func (ctrl *OOMController) reapCg(cgroupPath string) error {
 			return nil
 		}
 
-		fmt.Println("visiting:", path)
 		for _, p := range node.CgroupProcs {
 			processes = append(processes, int(p.Val))
 		}
 
 		return nil
 	})
-	fmt.Println("victim processes:", processes)
+	logger.Debug("victim processes:", zap.Any("processes", processes))
 
 	pidfds := []int{}
 	for _, pid := range processes {
 		pidfd, err := unix.PidfdOpen(pid, 0)
 		if err != nil {
-			fmt.Println("failed to open pidfd", pid, err)
+			logger.Error("failed to open pidfd", zap.Int("pid", pid), zap.Error(err))
 			continue
 		}
 		defer unix.Close(pidfd)
@@ -319,10 +315,9 @@ func (ctrl *OOMController) reapCg(cgroupPath string) error {
 	for _, pidfd := range pidfds {
 		_, _, errno := syscall.Syscall(unix.SYS_PROCESS_MRELEASE, uintptr(pidfd), uintptr(0), uintptr(0))
 		if errno != 0 && errno != syscall.ESRCH {
-			fmt.Println("failed to call mrelease", errno)
+			logger.Error("failed to call mrelease", zap.Int("errno", int(errno)))
 			continue
 		}
-		fmt.Println("mreleased")
 	}
 
 	return nil

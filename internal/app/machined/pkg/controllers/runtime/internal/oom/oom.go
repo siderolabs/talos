@@ -46,7 +46,7 @@ func (cgroup *RankedCgroup) CalculateScore(expr *cel.Expression) (float64, error
 	cgroupValueToFloat64(cgroup.MemoryPeak, evalContext, "memory_peak")
 	cgroupValueToFloat64(cgroup.MemoryMax, evalContext, "memory_max")
 
-	log.Printf("evalContext = %v", evalContext)
+	log.Printf("Evaluating CalculateScore: evalContext = %v", evalContext)
 
 	return expr.EvalDouble(celenv.OOMCgroupScoring(), evalContext)
 }
