@@ -62,18 +62,21 @@ func GetDefaultPaths() ([]Path, error) {
 }
 
 // CustomSideroV1KeysDirPath returns the custom SideroV1 auth keys directory path if it's provided as command line flag or with environment variable.
-// If not provided, it returns an empty string.
-func CustomSideroV1KeysDirPath(path string) string {
-	if path != "" {
+func CustomSideroV1KeysDirPath(customPath string) string {
+	if path, ok := os.LookupEnv(constants.SideroV1KeysDirEnvVar); ok {
 		return path
 	}
 
-	path = os.Getenv(constants.SideroV1KeysDirEnvVar)
-	if path != "" {
-		return path
+	if customPath != "" {
+		return customPath
 	}
 
-	return ""
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return ""
+	}
+
+	return filepath.Join(home, constants.TalosDir, constants.SideroV1KeysDir)
 }
 
 // firstValidPath iterates over the default paths and returns the first one that exists and readable.
