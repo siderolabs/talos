@@ -53,6 +53,8 @@ NODE         NAMESPACE   TYPE           ID               VERSION   TYPE        P
 
 This volume can be referenced using a stable symlink `/dev/disk/by-partlabel/r-openebs-vol1`, which is created automatically by Talos Linux.
 
+> Note: Ceph will not create a partition if the partition label contains the substring `ceph`. Avoid using such names for your labels.
+
 ### Removing Raw Volumes
 
 Before removing a raw volume, ensure that it is not used anymore.

@@ -20,7 +20,7 @@ title: UserVolumeConfig
 {{< highlight yaml >}}
 apiVersion: v1alpha1
 kind: UserVolumeConfig
-name: ceph-data # Name of the volume.
+name: local-data # Name of the volume.
 # The provisioning describes how the volume is provisioned.
 provisioning:
     # The disk selector expression.

@@ -90,7 +90,7 @@ func NewUserVolumeConfigV1Alpha1() *UserVolumeConfigV1Alpha1 {
 
 func exampleUserVolumeConfigV1Alpha1() *UserVolumeConfigV1Alpha1 {
 	cfg := NewUserVolumeConfigV1Alpha1()
-	cfg.MetaName = "ceph-data"
+	cfg.MetaName = "local-data"
 	cfg.ProvisioningSpec = ProvisioningSpec{
 		DiskSelectorSpec: DiskSelector{
 			Match: cel.MustExpression(cel.ParseBooleanExpression(`disk.transport == "nvme"`, celenv.DiskLocator())),

@@ -132,12 +132,12 @@ Talos supports creating additional user volumes to be used for different purpose
 +-------------------------------------------------------------------------------------------------------+
 | Physical Disk (1TB)                                                                                   |
 +=============+===========+==========+============+===========+===============+=========================+
-| EFI (boot)  | META      | STATE    | EPHEMERAL  | ceph-data | local-storage | << Unallocated Space >> |
+| EFI (boot)  | META      | STATE    | EPHEMERAL  | csi-data  | local-storage | << Unallocated Space >> |
 | [~1GB]      | [~1MB]    | [~100MB] | [~200GB]   | [~100GB]  | [~200GB]      | [~500GB]                |
 +-------------+-----------+----------+------------+-----------+---------------+-------------------------+
 ```
 
-In this layout, the `EPHEMERAL` partition was limited to 200GB, and two additional partitions were created for `ceph-data` and `local-storage`.
+In this layout, the `EPHEMERAL` partition was limited to 200GB, and two additional partitions were created for `csi-data` and `local-storage`.
 
 ### Multiple Disk Layout
 
@@ -145,7 +145,7 @@ In this layout, the `EPHEMERAL` partition was limited to 200GB, and two addition
 +---------------------------------------------------------------------------------------+
 | Physical Disk 1 (1TB)                                                                 |
 +=============+===========+==========+============+===========+=========================+
-| EFI (boot)  | META      | STATE    | EPHEMERAL  | ceph-data | << Unallocated Space >> |
+| EFI (boot)  | META      | STATE    | EPHEMERAL  | csi-data  | << Unallocated Space >> |
 | [~1GB]      | [~1MB]    | [~100MB] | [~500GB]   | [~100GB]  | [~400GB]                |
 +-------------+-----------+----------+------------+-----------+-------------------------+
 | Physical Disk 2 (1TB)                                                                 |
@@ -155,5 +155,5 @@ In this layout, the `EPHEMERAL` partition was limited to 200GB, and two addition
 +---------------+-----------------------------------------------------------------------+
 ```
 
-In this layout, the `EPHEMERAL` partition was limited to 500GB, and two additional partitions were created for `ceph-data` and `local-storage`,
+In this layout, the `EPHEMERAL` partition was limited to 500GB, and two additional partitions were created for `csi-data` and `local-storage`,
 and they were created on different disks.

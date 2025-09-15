@@ -26,7 +26,7 @@ To create a user volume, append the following [document]({{< relref "../../../re
 # user-volume.patch.yaml
 apiVersion: v1alpha1
 kind: UserVolumeConfig
-name: ceph-data
+name: local-volume
 provisioning:
   diskSelector:
     match: disk.transport == 'nvme'
@@ -40,25 +40,25 @@ For example, this machine configuration patch can be applied using the following
 talosctl --nodes <NODE> patch mc --patch @user-volume.patch.yaml
 ```
 
-In this example, a user volume named `ceph-data` is created on the first NVMe disk which has `100GB` of disk space available, and it will be created as maximum
+In this example, a user volume named `local-volume` is created on the first NVMe disk which has `100GB` of disk space available, and it will be created as maximum
 of `200GB` if that space is available.
 
 The status of the volume can be checked using the following command:
 
 ```bash
-$ talosctl get volumestatus u-ceph-data # note u- prefix
+$ talosctl get volumestatus u-local-volume # note u- prefix
 NAMESPACE   TYPE           ID            VERSION   TYPE        PHASE   LOCATION         SIZE
-runtime     VolumeStatus   u-ceph-data   2         partition   ready   /dev/nvme0n1p2   200 GB
+runtime     VolumeStatus   u-local-volume   2         partition   ready   /dev/nvme0n1p2   200 GB
 ```
 
 If the volume fails to be provisioned, use the `-o yaml` flag to get additional details.
 
-The volume is immediately mounted to `/var/mnt/ceph-data`:
+The volume is immediately mounted to `/var/mnt/local-volume`:
 
 ```bash
 $ talosctl get mountstatus
 NAMESPACE   TYPE          ID           VERSION   SOURCE           TARGET               FILESYSTEM   VOLUME
-runtime     MountStatus   u-ceph-data  2         /dev/nvme0n1p2   /var/mnt/ceph-data   xfs          u-ceph-data
+runtime     MountStatus   u-local-volume  2         /dev/nvme0n1p2   /var/mnt/local-volume   xfs          u-local-volume
 ```
 
 It can be used in a Kubernetes pod as a `hostPath` mount:
@@ -70,11 +70,11 @@ spec:
     - name: ceph
       volumeMounts:
         - mountPath: /var/lib/ceph
-          name: ceph-data
+          name: local-volume
   volumes:
-    - name: ceph-data
+    - name: local-volume
       hostPath:
-        path: /var/mnt/ceph-data
+        path: /var/mnt/local-volume
 ```
 
 Please note, the path inside the container can be different from the path on the host.
