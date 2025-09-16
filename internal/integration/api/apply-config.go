@@ -144,6 +144,8 @@ func (suite *ApplyConfigSuite) TestApply() {
 	suite.Assert().Equal(
 		newProvider.Machine().Sysctls()[applyConfigTestSysctl],
 		applyConfigTestSysctlVal,
+		"expected sysctl %s to be set to %s, got %s on node %q",
+		applyConfigTestSysctl, applyConfigTestSysctlVal, newProvider.Machine().Sysctls()[applyConfigTestSysctl], node,
 	)
 }
 

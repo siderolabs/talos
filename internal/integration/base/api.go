@@ -304,22 +304,11 @@ func (apiSuite *APISuite) AssertRebootedNoChecks(ctx context.Context, node strin
 
 	nodeCtx := client.WithNode(ctx, node)
 
-	var (
-		bootIDBefore string
-		err          error
-	)
+	// read boot_id before reboot
+	bootIDBefore, err := apiSuite.ReadBootID(nodeCtx)
+	apiSuite.Require().NoError(err, "failed to read boot_id before reboot")
 
-	err = retry.Constant(time.Minute * 5).Retry(func() error {
-		// read boot_id before reboot
-		bootIDBefore, err = apiSuite.ReadBootID(nodeCtx)
-		if err != nil {
-			return retry.ExpectedError(err)
-		}
-
-		return nil
-	})
-
-	apiSuite.Require().NoError(err)
+	apiSuite.Assert().NotEmpty(bootIDBefore, "boot_id should not be empty")
 
 	apiSuite.Assert().NoError(rebootFunc(nodeCtx))
 
@@ -328,8 +317,6 @@ func (apiSuite *APISuite) AssertRebootedNoChecks(ctx context.Context, node strin
 
 // AssertBootIDChanged waits until node boot id changes.
 func (apiSuite *APISuite) AssertBootIDChanged(nodeCtx context.Context, bootIDBefore, node string, timeout time.Duration) {
-	apiSuite.Assert().NotEmpty(bootIDBefore)
-
 	apiSuite.Require().NoError(retry.Constant(timeout).Retry(func() error {
 		requestCtx, requestCtxCancel := context.WithTimeout(nodeCtx, time.Second)
 		defer requestCtxCancel()
