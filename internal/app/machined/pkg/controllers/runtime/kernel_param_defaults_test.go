@@ -8,10 +8,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cosi-project/runtime/pkg/resource"
-	"github.com/siderolabs/go-retry/retry"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 
+	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/ctest"
 	runtimecontrollers "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/runtime"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
 	"github.com/siderolabs/talos/pkg/machinery/kernel"
@@ -19,7 +19,7 @@ import (
 )
 
 type KernelParamDefaultsSuite struct {
-	RuntimeSuite
+	ctest.DefaultSuite
 }
 
 func getParams(mode runtime.Mode) []*kernel.Param {
@@ -60,6 +60,10 @@ func getParams(mode runtime.Mode) []*kernel.Param {
 				Key:   "proc.sys.net.bridge.bridge-nf-call-ip6tables",
 				Value: "1",
 			},
+			{
+				Key:   "proc.sys.fs.protected_fifos",
+				Value: "2",
+			},
 		}...)
 	}
 
@@ -72,19 +76,12 @@ func (suite *KernelParamDefaultsSuite) TestContainerMode() {
 		runtime.ModeContainer,
 	}
 
-	suite.Require().NoError(suite.runtime.RegisterController(controller))
-
-	suite.startRuntime()
+	suite.Require().NoError(suite.Runtime().RegisterController(controller))
 
 	for _, prop := range getParams(runtime.ModeContainer) {
-		suite.Assert().NoError(retry.Constant(10*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-			suite.assertResource(
-				resource.NewMetadata(runtimeresource.NamespaceName, runtimeresource.KernelParamDefaultSpecType, prop.Key, resource.VersionUndefined),
-				func(res resource.Resource) bool {
-					return res.(runtimeresource.KernelParam).TypedSpec().Value == prop.Value
-				},
-			),
-		))
+		ctest.AssertResource(suite, prop.Key, func(param *runtimeresource.KernelParamDefaultSpec, asrt *assert.Assertions) {
+			asrt.Equal(prop.Value, param.TypedSpec().Value)
+		})
 	}
 }
 
@@ -94,22 +91,21 @@ func (suite *KernelParamDefaultsSuite) TestMetalMode() {
 		runtime.ModeMetal,
 	}
 
-	suite.Require().NoError(suite.runtime.RegisterController(controller))
-
-	suite.startRuntime()
+	suite.Require().NoError(suite.Runtime().RegisterController(controller))
 
 	for _, prop := range getParams(runtime.ModeMetal) {
-		suite.Assert().NoError(retry.Constant(10*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-			suite.assertResource(
-				resource.NewMetadata(runtimeresource.NamespaceName, runtimeresource.KernelParamDefaultSpecType, prop.Key, resource.VersionUndefined),
-				func(res resource.Resource) bool {
-					return res.(runtimeresource.KernelParam).TypedSpec().Value == prop.Value
-				},
-			),
-		))
+		ctest.AssertResource(suite, prop.Key, func(param *runtimeresource.KernelParamDefaultSpec, asrt *assert.Assertions) {
+			asrt.Equal(prop.Value, param.TypedSpec().Value)
+		})
 	}
 }
 
 func TestKernelParamDefaultsSuite(t *testing.T) {
-	suite.Run(t, new(KernelParamDefaultsSuite))
+	t.Parallel()
+
+	suite.Run(t, &KernelParamDefaultsSuite{
+		DefaultSuite: ctest.DefaultSuite{
+			Timeout: 5 * time.Second,
+		},
+	})
 }

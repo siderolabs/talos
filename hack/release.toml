@@ -55,6 +55,13 @@ Signed PCR policies will still be bound to PCR 11.
 The currently used PCR's can be seen with `talosctl get volumestatus <volume> -o yaml` command.
 """
 
+    [notes.kspp]
+        title = "Kernel Security Posture Profile (KSPP)"
+        description = """\
+Talos now enables a stricter set of KSPP sysctl settings by default.
+The list of overridden settings is available with `talosctl get kernelparamstatus` command.
+"""
+
 [make_deps]
 
     [make_deps.tools]

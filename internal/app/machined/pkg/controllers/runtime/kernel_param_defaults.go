@@ -78,6 +78,14 @@ func (ctrl *KernelParamDefaultsController) getKernelParams() []*kernel.Param {
 			Key:   "proc.sys.net.ipv4.ip_forward",
 			Value: "1",
 		},
+		{
+			Key:   "proc.sys.net.ipv4.icmp_ignore_bogus_error_responses",
+			Value: "1",
+		},
+		{
+			Key:   "proc.sys.net.ipv4.icmp_echo_ignore_broadcasts",
+			Value: "1",
+		},
 	}
 
 	if ctrl.V1Alpha1Mode != v1alpha1runtime.ModeContainer {

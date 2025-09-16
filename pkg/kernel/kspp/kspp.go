@@ -51,8 +51,36 @@ func EnforceKSPPKernelParameters() error {
 func GetKernelParams() []*kernel.Param {
 	return []*kernel.Param{
 		{
-			Key:   "proc.sys.kernel.kptr_restrict",
+			Key:   "proc.sys.dev.tty.ldisc_autoload",
+			Value: "0",
+		},
+		{
+			Key:   "proc.sys.dev.tty.legacy_tiocsti",
+			Value: "0",
+		},
+		{
+			Key:   "proc.sys.fs.protected_symlinks",
 			Value: "1",
+		},
+		{
+			Key:   "proc.sys.fs.protected_hardlinks",
+			Value: "1",
+		},
+		{
+			Key:   "proc.sys.fs.protected_fifos",
+			Value: "2",
+		},
+		{
+			Key:   "proc.sys.fs.protected_regular",
+			Value: "2",
+		},
+		{
+			Key:   "proc.sys.fs.suid_dumpable",
+			Value: "0",
+		},
+		{
+			Key:   "proc.sys.kernel.kptr_restrict",
+			Value: "2",
 		},
 		{
 			Key:   "proc.sys.kernel.dmesg_restrict",
@@ -63,8 +91,14 @@ func GetKernelParams() []*kernel.Param {
 			Value: "3",
 		},
 		{
+			Key:   "proc.sys.kernel.randomize_va_space",
+			Value: "2",
+		},
+		{
+			// Bumping this to 3 (https://www.kernel.org/doc/Documentation/security/Yama.txt)
+			// breaks Kubernetes pods with user namespaces, which are not enabled by default, but still supported.
 			Key:   "proc.sys.kernel.yama.ptrace_scope",
-			Value: "1",
+			Value: "2",
 		},
 		{
 			Key:   "proc.sys.user.max_user_namespaces",
