@@ -15,7 +15,6 @@ import (
 	"time"
 
 	"github.com/cosi-project/runtime/pkg/resource/rtestutils"
-	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/siderolabs/gen/ensure"
 	"github.com/siderolabs/gen/xslices"
 	"github.com/siderolabs/go-pointer"
@@ -561,19 +560,10 @@ func (suite *ApplyConfigSuite) TestApplyTry() {
 	suite.ClearConnectionRefused(suite.ctx, node)
 	nodeCtx := client.WithNode(suite.ctx, node)
 
-	getMachineConfig := func(ctx context.Context) (*mc.MachineConfig, error) {
-		cfg, err := safe.StateGetByID[*mc.MachineConfig](ctx, suite.Client.COSI, mc.ActiveID)
-		if err != nil {
-			return nil, err
-		}
-
-		return cfg, nil
-	}
-
-	provider, err := getMachineConfig(nodeCtx)
+	provider, err := suite.ReadConfigFromNode(nodeCtx)
 	suite.Require().NoErrorf(err, "failed to read existing config from node %q: %s", node, err)
 
-	cfgDataOut := suite.PatchV1Alpha1Config(provider.Provider(), func(cfg *v1alpha1.Config) {
+	cfgDataOut := suite.PatchV1Alpha1Config(provider, func(cfg *v1alpha1.Config) {
 		if cfg.MachineConfig.MachineNetwork == nil {
 			cfg.MachineConfig.MachineNetwork = &v1alpha1.NetworkConfig{}
 		}
@@ -595,14 +585,22 @@ func (suite *ApplyConfigSuite) TestApplyTry() {
 	)
 	suite.Assert().NoErrorf(err, "failed to apply configuration (node %q)", node)
 
-	provider, err = getMachineConfig(nodeCtx)
+	provider, err = suite.ReadConfigFromNode(nodeCtx)
 	suite.Require().NoErrorf(err, "failed to read existing config from node %q", node)
 
-	suite.Assert().NotNil(provider.Config().Machine().Network())
-	suite.Assert().NotNil(provider.Config().Machine().Network().Devices())
+	suite.Assert().NotNil(provider.Machine().Network())
+	suite.Assert().NotNil(provider.Machine().Network().Devices())
 
-	lookupDummyInterface := func() bool {
-		for _, device := range provider.Config().Machine().Network().Devices() {
+	assertDummyInterface := func(provider config.Provider) bool {
+		if provider.Machine().Network() == nil {
+			return false
+		}
+
+		if provider.Machine().Network().Devices() == nil {
+			return false
+		}
+
+		for _, device := range provider.Machine().Network().Devices() {
 			if device.Dummy() && device.Interface() == "dummy0" {
 				return true
 			}
@@ -611,24 +609,11 @@ func (suite *ApplyConfigSuite) TestApplyTry() {
 		return false
 	}
 
-	suite.Assert().Truef(lookupDummyInterface(), "dummy interface wasn't found")
+	suite.Assert().Truef(assertDummyInterface(provider), "dummy interface wasn't found")
 
-	for range 100 {
-		provider, err = getMachineConfig(nodeCtx)
-		suite.Assert().NoErrorf(err, "failed to read existing config from node %q: %s", node, err)
-
-		if provider.Config().Machine().Network() == nil {
-			return
-		}
-
-		if !lookupDummyInterface() {
-			return
-		}
-
-		time.Sleep(time.Millisecond * 100)
-	}
-
-	suite.Fail("dummy interface wasn't removed after config try timeout")
+	rtestutils.AssertResource(nodeCtx, suite.T(), suite.Client.COSI, mc.ActiveID, func(r *mc.MachineConfig, asrt *assert.Assertions) {
+		asrt.False(assertDummyInterface(r.Provider()))
+	})
 }
 
 // TestApplyRemovingV1Alpha1 verifies the apply config doesn't accept removal of v1alpha1 config.
