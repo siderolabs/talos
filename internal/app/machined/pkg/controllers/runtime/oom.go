@@ -32,13 +32,6 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/resources/runtime"
 )
 
-const (
-	sampleInterval  = 500 * time.Millisecond
-	mempressureProp = "memory.pressure"
-	pressureType    = "full"
-	pressureSpan    = "avg10"
-)
-
 // OOMController is a controller that monitors memory PSI and handles near-OOM situations.
 type OOMController struct {
 	CgroupRoot      string
@@ -76,15 +69,20 @@ var defaultTriggerExpr = sync.OnceValue(func() cel.Expression {
 
 var defaultScoringExpr = sync.OnceValue(func() cel.Expression {
 	return cel.MustExpression(cel.ParseDoubleExpression(
-		`memory_max.hasValue() ? 0.0 : ({Besteffort: 1.0, Guaranteed: 0.0, Burstable: 0.5}[class] * double(memory_current.orValue(0u)) / double(memory_peak.orValue(0u) - memory_current.orValue(0u)))`,
+		`memory_max.hasValue() ? 0.0 :
+			{Besteffort : 1.0, Guaranteed: 0.0, Burstable: 0.5}[class] *
+			   double(memory_current.orValue(0u)) / double(memory_peak.orValue(0u) - memory_current.orValue(0u))`,
 		celenv.OOMCgroupScoring(),
 	))
 })
+
+const defaultSampleInterval = 500 * time.Millisecond
 
 // Run implements controller.Controller interface.
 func (ctrl *OOMController) Run(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
 	triggerExpr := defaultTriggerExpr()
 	scoringExpr := defaultScoringExpr()
+	sampleInterval := defaultSampleInterval
 
 	ticker := time.NewTicker(sampleInterval)
 	tickerC := ticker.C
@@ -123,14 +121,28 @@ func (ctrl *OOMController) Run(ctx context.Context, r controller.Runtime, logger
 					}
 				}
 			}
+
+			sampleInterval = defaultSampleInterval
+
+			if cfg != nil {
+				if oomCfg := cfg.Config().OOMConfig(); oomCfg != nil {
+					if interval, ok := oomCfg.SampleInterval().Get(); ok && sampleInterval != interval {
+						ticker.Reset(interval)
+						sampleInterval = interval
+					}
+				}
+			}
 		case <-tickerC:
 		}
 
-		node, err := cgroups.GetCgroupProperty(constants.CgroupMountPath, mempressureProp)
+		node, err := cgroups.GetCgroupProperty(constants.CgroupMountPath, "memory.pressure")
 		if err != nil {
 			logger.Error("cannot read memory pressure", zap.Error(err))
 			continue
 		}
+
+		pressureType := "some"
+		pressureSpan := "avg10"
 
 		spans, ok := node.MemoryPressure[pressureType]
 		if !ok {

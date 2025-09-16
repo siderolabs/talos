@@ -9,6 +9,7 @@ package runtime
 import (
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/siderolabs/gen/optional"
 
@@ -66,6 +67,16 @@ type OOMV1Alpha1 struct {
 	//   schema:
 	//     type: string
 	OOMCgroupRankingExpression cel.Expression `yaml:"cgroupRankingExpression,omitempty"`
+	//   description: |
+	//     How often should the trigger expression be evaluated.
+	//
+	//     This interval determines how often should the OOM controller
+	//     check for the OOM condition using the provided expression.
+	//     Adjusting it can help tune the reactivity of the OOM handler.
+	//   schema:
+	//     type: string
+	//     pattern: ^[-+]?(((\d+(\.\d*)?|\d*(\.\d+)+)([nuµm]?s|m|h))|0)+$
+	OOMSampleInterval time.Duration `yaml:"sampleInterval,omitempty"`
 }
 
 // NewOOMV1Alpha1 creates a new eventsink config document.
@@ -80,6 +91,11 @@ func NewOOMV1Alpha1() *OOMV1Alpha1 {
 
 func exampleOOMV1Alpha1() *OOMV1Alpha1 {
 	cfg := NewOOMV1Alpha1()
+	cfg.OOMSampleInterval = 100 * time.Millisecond
+	cfg.OOMTriggerExpression = cel.MustExpression(cel.ParseBooleanExpression(
+		`memory_full_avg10 > 12.0 && time_since_trigger > duration("500ms")`,
+		celenv.OOMTrigger(),
+	))
 	cfg.OOMCgroupRankingExpression = cel.MustExpression(cel.ParseDoubleExpression(
 		`memory_max.hasValue() ? 0.0 :
 			{Besteffort : 1.0, Guaranteed: 0.0, Burstable: 0.5}[class] *
@@ -99,16 +115,26 @@ func (s *OOMV1Alpha1) Clone() config.Document {
 func (s *OOMV1Alpha1) Validate(validation.RuntimeMode, ...validation.Option) ([]string, error) {
 	var validationErrors error
 
+	if !s.OOMTriggerExpression.IsZero() {
+		if err := s.OOMTriggerExpression.ParseBool(celenv.OOMTrigger()); err != nil {
+			validationErrors = errors.Join(validationErrors, fmt.Errorf("OOM trigger expression is invalid: %w", err))
+		}
+	}
+
 	if !s.OOMCgroupRankingExpression.IsZero() {
 		if err := s.OOMCgroupRankingExpression.ParseDouble(celenv.OOMCgroupScoring()); err != nil {
 			validationErrors = errors.Join(validationErrors, fmt.Errorf("OOM cgroup scoring expression is invalid: %w", err))
 		}
 	}
 
+	if s.OOMSampleInterval < 0 {
+		validationErrors = errors.Join(validationErrors, fmt.Errorf("OOM sample interval must be longer than 0"))
+	}
+
 	return nil, validationErrors
 }
 
-// TriggerExpression returns the OOM cgroup ranking expression.
+// TriggerExpression returns the OOM trigger expression.
 func (s *OOMV1Alpha1) TriggerExpression() optional.Optional[cel.Expression] {
 	if s.OOMCgroupRankingExpression.IsZero() {
 		return optional.None[cel.Expression]()
@@ -124,4 +150,13 @@ func (s *OOMV1Alpha1) CgroupRankingExpression() optional.Optional[cel.Expression
 	}
 
 	return optional.Some(s.OOMCgroupRankingExpression)
+}
+
+// SampleInterval returns the OOM sampling interval.
+func (s *OOMV1Alpha1) SampleInterval() optional.Optional[time.Duration] {
+	if s.OOMSampleInterval == 0 {
+		return optional.None[time.Duration]()
+	}
+
+	return optional.Some(s.OOMSampleInterval)
 }

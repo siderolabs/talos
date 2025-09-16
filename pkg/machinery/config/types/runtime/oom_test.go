@@ -7,6 +7,7 @@ package runtime_test
 import (
 	_ "embed"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -22,9 +23,14 @@ var expectedOOMDocument []byte
 
 func TestOOMMarshalStability(t *testing.T) {
 	cfg := runtime.NewOOMV1Alpha1()
+	cfg.OOMSampleInterval = 100 * time.Millisecond
+	cfg.OOMTriggerExpression = cel.MustExpression(cel.ParseBooleanExpression(
+		`memory_full_avg10 > 12.0 && time_since_trigger > duration("500ms")`,
+		celenv.OOMTrigger(),
+	))
 	cfg.OOMCgroupRankingExpression = cel.MustExpression(cel.ParseDoubleExpression(
-		`memory_max.hasValue() ? 0.0 : 
-			{Besteffort : 1.0, Guaranteed: 0.0, Burstable: 0.5}[class] * 
+		`memory_max.hasValue() ? 0.0 :
+			{Besteffort : 1.0, Guaranteed: 0.0, Burstable: 0.5}[class] *
 			   double(memory_current.orValue(0u)) / double(memory_peak.orValue(0u) - memory_current.orValue(0u))`,
 		celenv.OOMCgroupScoring(),
 	))
@@ -34,7 +40,7 @@ func TestOOMMarshalStability(t *testing.T) {
 
 	t.Log(string(marshaled))
 
-	assert.Equal(t, expectedOOMDocument, marshaled)
+	assert.Equal(t, string(expectedOOMDocument), string(marshaled))
 }
 
 func TestOOMValidate(t *testing.T) {

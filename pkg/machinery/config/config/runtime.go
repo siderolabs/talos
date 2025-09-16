@@ -54,4 +54,5 @@ func (w runtimeConfigWrapper) WatchdogTimer() WatchdogTimerConfig {
 type OOMConfig interface {
 	TriggerExpression() optional.Optional[cel.Expression]
 	CgroupRankingExpression() optional.Optional[cel.Expression]
+	SampleInterval() optional.Optional[time.Duration]
 }
