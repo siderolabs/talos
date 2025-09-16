@@ -36,7 +36,7 @@ func cgroupValueToFloat64(v cgroups.Value, evalContext map[string]any, key strin
 // CalculateScore calculates the score of the cgroup for OOM handling.
 //
 // Higher score means the cgroup is more likely to be killed.
-func (cgroup *RankedCgroup) CalculateScore(expr *cel.Expression) (float64, error) {
+func (cgroup *RankedCgroup) CalculateScore(expr *cel.Expression) (result float64, err error) {
 	evalContext := map[string]any{
 		"class": int(cgroup.Class),
 		"path":  cgroup.Path,
@@ -46,7 +46,8 @@ func (cgroup *RankedCgroup) CalculateScore(expr *cel.Expression) (float64, error
 	cgroupValueToFloat64(cgroup.MemoryPeak, evalContext, "memory_peak")
 	cgroupValueToFloat64(cgroup.MemoryMax, evalContext, "memory_max")
 
-	log.Printf("Evaluating CalculateScore: evalContext = %v", evalContext)
+	result, err = expr.EvalDouble(celenv.OOMCgroupScoring(), evalContext)
+	log.Printf("Evaluating CalculateScore: evalContext = %v, result = %v, err = %v", evalContext, result, err)
 
-	return expr.EvalDouble(celenv.OOMCgroupScoring(), evalContext)
+	return
 }

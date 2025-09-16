@@ -19,10 +19,10 @@ import (
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
+	"github.com/siderolabs/gen/optional"
 	"go.uber.org/zap"
 	"golang.org/x/sys/unix"
 
-	"github.com/siderolabs/gen/optional"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/runtime/internal/oom"
 	"github.com/siderolabs/talos/internal/pkg/cgroups"
 	"github.com/siderolabs/talos/pkg/machinery/cel"
@@ -122,15 +122,19 @@ func (ctrl *OOMController) Run(ctx context.Context, r controller.Runtime, logger
 				}
 			}
 
-			sampleInterval = defaultSampleInterval
+			newInterval := defaultSampleInterval
 
 			if cfg != nil {
 				if oomCfg := cfg.Config().OOMConfig(); oomCfg != nil {
-					if interval, ok := oomCfg.SampleInterval().Get(); ok && sampleInterval != interval {
-						ticker.Reset(interval)
-						sampleInterval = interval
+					if interval, ok := oomCfg.SampleInterval().Get(); ok {
+						newInterval = interval
 					}
 				}
+			}
+
+			if sampleInterval != newInterval {
+				ticker.Reset(newInterval)
+				sampleInterval = newInterval
 			}
 		case <-tickerC:
 		}
@@ -138,6 +142,7 @@ func (ctrl *OOMController) Run(ctx context.Context, r controller.Runtime, logger
 		node, err := cgroups.GetCgroupProperty(constants.CgroupMountPath, "memory.pressure")
 		if err != nil {
 			logger.Error("cannot read memory pressure", zap.Error(err))
+
 			continue
 		}
 
@@ -147,12 +152,14 @@ func (ctrl *OOMController) Run(ctx context.Context, r controller.Runtime, logger
 		spans, ok := node.MemoryPressure[pressureType]
 		if !ok {
 			logger.Error("cannot find memory pressure type:", zap.String("pressureType", pressureType))
+
 			continue
 		}
 
 		value, ok := spans[pressureSpan]
 		if !ok {
 			logger.Error("cannot find memory pressure span:", zap.String("pressureSpan", pressureSpan))
+
 			continue
 		}
 
@@ -163,6 +170,7 @@ func (ctrl *OOMController) Run(ctx context.Context, r controller.Runtime, logger
 		val, err := strconv.ParseFloat(value.String(), 64)
 		if err != nil {
 			logger.Error("cannot parse memory pressure:", zap.String("pressureSpan", pressureSpan), zap.Error(err))
+
 			continue
 		}
 
@@ -171,15 +179,16 @@ func (ctrl *OOMController) Run(ctx context.Context, r controller.Runtime, logger
 			"time_since_trigger": time.Since(ctrl.ActionTriggered),
 		}
 
-		// FIXME: remove hot-path logging
-		logger.Info("Evaluating OOMTrigger", zap.Any("evalContext", evalContext))
-
 		trigger, err := triggerExpr.EvalBool(celenv.OOMTrigger(), evalContext)
 
 		if err != nil {
 			logger.Error("cannot evaluate trigger condition:", zap.Error(err))
+
 			continue
 		}
+
+		// FIXME: remove hot-path logging
+		logger.Info("Evaluated OOMTrigger", zap.Any("evalContext", evalContext), zap.Bool("result", trigger))
 
 		if trigger {
 			ctrl.ActionTriggered = time.Now()
@@ -188,7 +197,7 @@ func (ctrl *OOMController) Run(ctx context.Context, r controller.Runtime, logger
 	}
 }
 
-// OomAction
+// OomAction handles out of memory conditions by selecting and killing cgroups based on memory usage data.
 func (ctrl *OOMController) OomAction(logger *zap.Logger, scoringExpr cel.Expression) {
 	logger.Info("OOM controller triggered")
 
@@ -207,6 +216,7 @@ func (ctrl *OOMController) OomAction(logger *zap.Logger, scoringExpr cel.Express
 		entries, err := os.ReadDir(filepath.Join(constants.CgroupMountPath, cg.dir))
 		if err != nil {
 			logger.Error("cannot list cgroup members", zap.String("dir", cg.dir), zap.Error(err))
+
 			continue
 		}
 
@@ -271,7 +281,7 @@ func (ctrl *OOMController) OomAction(logger *zap.Logger, scoringExpr cel.Express
 	// Sort to make the most prioritized to OOM-kill cgroup to the first place
 
 	var (
-		maxScore     float64 = math.Inf(-1)
+		maxScore     = math.Inf(-1)
 		cgroupToKill oom.RankedCgroup
 	)
 
@@ -293,14 +303,15 @@ func (ctrl *OOMController) OomAction(logger *zap.Logger, scoringExpr cel.Express
 func (ctrl *OOMController) reapCg(logger *zap.Logger, cgroupPath string) error {
 	processes := []int{}
 	// Ignore errors, find as many processes as possible
+	//nolint:errcheck
 	filepath.WalkDir(cgroupPath, func(path string, d fs.DirEntry, walkErr error) error {
 		if walkErr != nil {
-			return nil
+			return walkErr
 		}
 
 		node, err := cgroups.GetCgroupProperty(path, "cgroup.procs")
 		if err != nil {
-			return nil
+			return err
 		}
 
 		for _, p := range node.CgroupProcs {
@@ -312,22 +323,31 @@ func (ctrl *OOMController) reapCg(logger *zap.Logger, cgroupPath string) error {
 	logger.Debug("victim processes:", zap.Any("processes", processes))
 
 	pidfds := []int{}
+
 	for _, pid := range processes {
 		pidfd, err := unix.PidfdOpen(pid, 0)
 		if err != nil {
 			logger.Error("failed to open pidfd", zap.Int("pid", pid), zap.Error(err))
+
 			continue
 		}
-		defer unix.Close(pidfd)
+		defer unix.Close(pidfd) //nolint:errcheck
+
 		pidfds = append(pidfds, pidfd)
 	}
 
-	os.WriteFile(filepath.Join(cgroupPath, "cgroup.kill"), []byte{'1'}, 0o644)
+	err := os.WriteFile(filepath.Join(cgroupPath, "cgroup.kill"), []byte{'1'}, 0o644)
+	if err != nil {
+		logger.Error("failed to send SIGKILL", zap.String("cgroup", cgroupPath), zap.Error(err))
+
+		return err
+	}
 
 	for _, pidfd := range pidfds {
 		_, _, errno := syscall.Syscall(unix.SYS_PROCESS_MRELEASE, uintptr(pidfd), uintptr(0), uintptr(0))
 		if errno != 0 && errno != syscall.ESRCH {
 			logger.Error("failed to call mrelease", zap.Int("errno", int(errno)))
+
 			continue
 		}
 	}

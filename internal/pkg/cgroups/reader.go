@@ -10,6 +10,7 @@ import (
 	"path/filepath"
 )
 
+// ReadCgroupfsProperty reads a property from cgroupfs into an existing Node.
 func ReadCgroupfsProperty(node *Node, cgroupPath, property string) error {
 	f, err := os.OpenFile(filepath.Join(cgroupPath, property), os.O_RDONLY, 0)
 	if err != nil {
@@ -24,8 +25,10 @@ func ReadCgroupfsProperty(node *Node, cgroupPath, property string) error {
 	return nil
 }
 
+// GetCgroupProperty reads a property from cgroupfs into a new Node.
 func GetCgroupProperty(cgroupPath, property string) (*Node, error) {
 	node := Node{}
 	err := ReadCgroupfsProperty(&node, cgroupPath, property)
+
 	return &node, err
 }
