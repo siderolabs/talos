@@ -23,6 +23,7 @@ import (
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system/events"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system/runner"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/system/runner/internal/lastlog"
 	"github.com/siderolabs/talos/internal/pkg/cgroup"
 	"github.com/siderolabs/talos/internal/pkg/selinux"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
@@ -186,7 +187,10 @@ func (c *containerdRunner) Run(eventSink events.Recorder) error {
 
 	defer logW.Close() //nolint:errcheck
 
-	var w io.Writer = logW
+	var (
+		lastLog lastlog.Writer
+		w       = io.MultiWriter(logW, &lastLog)
+	)
 
 	if c.logToConsole {
 		w = io.MultiWriter(w, log.Writer())
@@ -227,7 +231,7 @@ func (c *containerdRunner) Run(eventSink events.Recorder) error {
 	case status := <-statusC:
 		code := status.ExitCode()
 		if code != 0 {
-			return fmt.Errorf("task %q failed: exit code %d", c.args.ID, code)
+			return fmt.Errorf("task %q failed: exit code %d (last log %q)", c.args.ID, code, lastLog.GetLastLog())
 		}
 
 		return nil

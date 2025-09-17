@@ -29,6 +29,7 @@ import (
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/platform"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system/events"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system/runner"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/system/runner/internal/lastlog"
 	"github.com/siderolabs/talos/internal/pkg/cgroup"
 	"github.com/siderolabs/talos/internal/pkg/selinux"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
@@ -175,7 +176,7 @@ func beforeExecCallback(pa *syscall.ProcAttr, data any) error {
 }
 
 //nolint:gocyclo
-func (p *processRunner) build() (commandWrapper, error) {
+func (p *processRunner) build(extraLogWriter io.Writer) (commandWrapper, error) {
 	wrapper := commandWrapper{}
 
 	env := slices.Concat([]string{"PATH=" + constants.PATH}, p.opts.Env, os.Environ())
@@ -198,11 +199,10 @@ func (p *processRunner) build() (commandWrapper, error) {
 		return commandWrapper{}, fmt.Errorf("service log handler: %w", err)
 	}
 
-	var logWriter io.Writer
+	logWriter := io.MultiWriter(logSink, extraLogWriter)
+
 	if p.debug {
 		logWriter = io.MultiWriter(logSink, log.Writer())
-	} else {
-		logWriter = logSink
 	}
 
 	// As MultiWriter is not a file, we need to create a pipe
@@ -427,7 +427,9 @@ func (p *processRunner) run(eventSink events.Recorder) error {
 		}
 	}()
 
-	cmdWrapper, err := p.build()
+	var lastLog lastlog.Writer
+
+	cmdWrapper, err := p.build(&lastLog)
 	if err != nil {
 		return fmt.Errorf("error building command: %w", err)
 	}
@@ -468,6 +470,10 @@ func (p *processRunner) run(eventSink events.Recorder) error {
 	select {
 	case err = <-waitCh:
 		// process exited
+		if err != nil {
+			err = fmt.Errorf("%w (last log %q)", err, lastLog.GetLastLog())
+		}
+
 		return err
 	case <-p.stop:
 		// graceful stop the service
