@@ -27,7 +27,7 @@ EMBED_TARGET ?= embed
 TOOLS_PREFIX ?= ghcr.io/siderolabs/tools
 TOOLS ?= v1.12.0-alpha.0-6-gc37ac80
 PKGS_PREFIX ?= ghcr.io/siderolabs
-PKGS ?= v1.12.0-alpha.0-21-g122fa66
+PKGS ?= v1.12.0-alpha.0-26-g7fe686d
 GENERATE_VEX_PREFIX ?= ghcr.io/siderolabs/generate-vex
 GENERATE_VEX ?= latest
 
@@ -69,6 +69,7 @@ PKG_LINUX_FIRMWARE ?= $(PKGS_PREFIX)/linux-firmware:$(PKGS)
 PKG_LVM2 ?= $(PKGS_PREFIX)/lvm2:$(PKGS)
 PKG_MTOOLS ?= $(PKGS_PREFIX)/mtools:$(PKGS)
 PKG_MUSL ?= $(PKGS_PREFIX)/musl:$(PKGS)
+PKG_NFTABLES ?= $(PKGS_PREFIX)/nftables:$(PKGS)
 PKG_OPENSSL ?= $(PKGS_PREFIX)/openssl:$(PKGS)
 PKG_OPEN_VMDK ?= $(PKGS_PREFIX)/open-vmdk:$(PKGS)
 PKG_PCRE2 ?= $(PKGS_PREFIX)/pcre2:$(PKGS)
@@ -219,6 +220,7 @@ COMMON_ARGS += --build-arg=PKG_LIBURCU=$(PKG_LIBURCU)
 COMMON_ARGS += --build-arg=PKG_LINUX_FIRMWARE=$(PKG_LINUX_FIRMWARE)
 COMMON_ARGS += --build-arg=PKG_LVM2=$(PKG_LVM2)
 COMMON_ARGS += --build-arg=PKG_MTOOLS=$(PKG_MTOOLS)
+COMMON_ARGS += --build-arg=PKG_NFTABLES=$(PKG_NFTABLES)
 COMMON_ARGS += --build-arg=PKG_MUSL=$(PKG_MUSL)
 COMMON_ARGS += --build-arg=PKG_OPENSSL=$(PKG_OPENSSL)
 COMMON_ARGS += --build-arg=PKG_OPEN_VMDK=$(PKG_OPEN_VMDK)

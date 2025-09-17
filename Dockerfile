@@ -48,6 +48,7 @@ ARG PKG_LINUX_FIRMWARE=scratch
 ARG PKG_LVM2=scratch
 ARG PKG_MTOOLS=scratch
 ARG PKG_MUSL=scratch
+ARG PKG_NFTABLES=scratch
 ARG PKG_OPENSSL=scratch
 ARG PKG_OPEN_VMDK=scratch
 ARG PKG_PCRE2=scratch
@@ -150,6 +151,9 @@ FROM --platform=arm64 ${PKG_LVM2} AS pkg-lvm2-arm64
 
 FROM --platform=amd64 ${PKG_LIBAIO} AS pkg-libaio-amd64
 FROM --platform=arm64 ${PKG_LIBAIO} AS pkg-libaio-arm64
+
+FROM --platform=amd64 ${PKG_NFTABLES} AS pkg-nftables-amd64
+FROM --platform=arm64 ${PKG_NFTABLES} AS pkg-nftables-arm64
 
 FROM --platform=amd64 ${PKG_MUSL} AS pkg-musl-amd64
 FROM --platform=arm64 ${PKG_MUSL} AS pkg-musl-arm64
@@ -694,6 +698,7 @@ COPY --link --from=pkg-openssl-amd64 / /rootfs
 COPY --link --from=pkg-lvm2-amd64 / /rootfs
 COPY --link --from=pkg-libaio-amd64 / /rootfs
 COPY --link --from=pkg-musl-amd64 / /rootfs
+COPY --link --from=pkg-nftables-amd64 / /rootfs
 COPY --link --from=pkg-runc-amd64 / /rootfs
 COPY --link --from=pkg-xfsprogs-amd64 / /rootfs
 COPY --link --from=pkg-util-linux-amd64 /usr/lib/libblkid.* /rootfs/usr/lib/
@@ -775,6 +780,7 @@ COPY --link --from=pkg-openssl-arm64 / /rootfs
 COPY --link --from=pkg-lvm2-arm64 / /rootfs
 COPY --link --from=pkg-libaio-arm64 / /rootfs
 COPY --link --from=pkg-musl-arm64 / /rootfs
+COPY --link --from=pkg-nftables-arm64 / /rootfs
 COPY --link --from=pkg-runc-arm64 / /rootfs
 COPY --link --from=pkg-xfsprogs-arm64 / /rootfs
 COPY --link --from=pkg-util-linux-arm64 /usr/lib/libblkid.* /rootfs/usr/lib/

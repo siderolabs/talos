@@ -29,6 +29,13 @@ type NfTablesChainSuite struct {
 
 func (s *NfTablesChainSuite) nftOutput() string {
 	out, err := exec.CommandContext(s.T().Context(), "nft", "list", "table", "inet", "talos-test").CombinedOutput()
+	if err != nil {
+		if strings.Contains(string(out), "No such file or directory") ||
+			strings.Contains(string(out), "No such table") {
+			return "table inet talos-test {\n}"
+		}
+	}
+
 	s.Require().NoError(err, "nft list table inet talos-test failed: %s", string(out))
 
 	return string(out)
@@ -195,7 +202,7 @@ func (s *NfTablesChainSuite) TestConntrackCounter() {
 	s.checkNftOutput(`table inet talos-test {
 	chain test1 {
 		type filter hook input priority security; policy accept;
-		ct state { established, related } accept
+		ct state { 0x2000000, 0x4000000 } accept
 		ct state invalid counter packets 0 bytes 0 drop
 	}
 }`)

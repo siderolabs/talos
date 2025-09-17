@@ -18,7 +18,7 @@ preface = """
     [notes.updates]
         title = "Component Updates"
         description = """\
-Linux: 6.16.6
+Linux: 6.16.7
 Kubernetes: 1.34.1
 CNI Plugins: 1.8.0
 cryptsetup: 2.8.1
@@ -60,6 +60,12 @@ The currently used PCR's can be seen with `talosctl get volumestatus <volume> -o
         description = """\
 Talos now enables a stricter set of KSPP sysctl settings by default.
 The list of overridden settings is available with `talosctl get kernelparamstatus` command.
+"""
+
+    [notes.extra-binaries]
+        title = "Extra Binaries"
+        description = """\
+Talos Linux now ships with `nft` binary in the rootfs to support CNIs which shell out to `nft` command.
 """
 
 [make_deps]
