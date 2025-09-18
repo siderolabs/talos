@@ -9,6 +9,7 @@ package api
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/url"
 	"os"
 	"testing"
@@ -118,7 +119,9 @@ func (suite *ApplyConfigSuite) TestApply() {
 					Mode: machineapi.ApplyConfigurationRequest_REBOOT,
 				},
 			)
-			suite.Assert().NoErrorf(err, "failed to apply configuration (node %q)", node)
+			if err != nil {
+				return fmt.Errorf("failed to apply configuration (node %q): %w", node, err)
+			}
 
 			return nil
 		}, assertRebootedRebootTimeout,

@@ -398,7 +398,7 @@ func (apiSuite *APISuite) ClearConnectionRefused(ctx context.Context, nodes ...s
 	}
 
 	apiSuite.Require().NoError(retry.Constant(backoff.DefaultConfig.MaxDelay, retry.WithUnits(time.Second)).Retry(func() error {
-		for range numMasterNodes {
+		for range numMasterNodes * 5 {
 			_, err := apiSuite.Client.Version(client.WithNodes(ctx, nodes...))
 			if err == nil {
 				continue
