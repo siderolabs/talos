@@ -1,5 +1,36 @@
 {{ frontmatter .Root.Type .Root.Description }}
 
+{{ define "field" -}}
+{{ if .Field.Name -}}
+|`{{ .Field.Name }}` |
+    {{- $type := index $.Types .Field.Type -}}
+        {{- if $type -}}
+            <a href="#{{ .Path }}.{{ .Field.Name }}">{{ .Field.Type }}</a>
+        {{- else -}}
+            {{- $type := index .Types (trimPrefix .Field.Type "[]") -}}
+            {{- if $type -}}
+                <a href="#{{ .Path }}.{{ .Field.Name }}.">{{ .Field.Type }}</a>
+            {{- else -}}
+                {{- $type := index .Types (trimPrefix .Field.Type "map[string]") -}}
+                {{- if $type -}}
+                    <a href="#{{ .Path }}.{{ .Field.Name }}.-">{{ .Field.Type }}</a>
+                {{- else -}}
+                    {{ .Field.Type }}
+                {{- end -}}
+            {{- end -}}
+        {{- end }} |
+{{- fmtDesc .Field.Description }} {{ with .Field.Examples }}<details><summary>Show example(s)</summary>{{ range . }}{{ yaml .GetValue (printf ".%s" $.Field.Name) }}{{ end }}</details>{{ end }} |
+{{- range $value := .Field.Values }}`{{ $value }}`<br />{{ end }} |
+{{ else if .Field.Inline -}}
+    {{- $struct := index .Types .Field.Type -}}
+    {{- if $struct -}}
+        {{- range $inlineField := $struct.Fields -}}
+            {{ template "field" dict "Field" $inlineField "Types" $.Types "Path" $.Path -}}
+        {{- end -}}
+    {{- end -}}
+{{ end -}}
+{{ end -}}
+
 {{ block "struct" dict "Struct" .Root "Level" 1 "Name" .Root.Type "Path" .Root.Type  "Types" .Types }}
 {{ if gt .Level 1 }}{{ repeat "#" (min .Level 6) }} {{ .Name }} {#{{ .Path }}}{{ end }}
 
@@ -15,33 +46,33 @@
 | Field | Type | Description | Value(s) |
 |-------|------|-------------|----------|
 {{ range $field := $.Struct.Fields -}}
-{{ if $field.Name -}}
-|`{{ $field.Name }}` |
-    {{- $type := index $.Types $field.Type -}}
-        {{- if $type -}}
-            <a href="#{{ $.Path }}.{{ $field.Name }}">{{ $field.Type }}</a>
-        {{- else -}}
-            {{- $type := index $.Types (trimPrefix $field.Type "[]") -}}
-            {{- if $type -}}
-                <a href="#{{ $.Path }}.{{ $field.Name }}.">{{ $field.Type }}</a>
-            {{- else -}}
-                {{- $type := index $.Types (trimPrefix $field.Type "map[string]") -}}
-                {{- if $type -}}
-                    <a href="#{{ $.Path }}.{{ $field.Name }}.-">{{ $field.Type }}</a>
-                {{- else -}}
-                    {{ $field.Type }}
-                {{- end -}}
-            {{- end -}}
-        {{- end }} |
-{{- fmtDesc $field.Description }} {{ with $field.Examples }}<details><summary>Show example(s)</summary>{{ range . }}{{ yaml .GetValue (printf ".%s" $field.Name) }}{{ end }}</details>{{ end }} |
-{{- range $value := $field.Values }}`{{ $value }}`<br />{{ end }} |
-{{ end -}}
+{{ template "field" dict "Field" $field "Types" $.Types "Path" $.Path -}}
 {{ end }}
 {{ end }}
 
 {{ range $field := .Struct.Fields }}
     {{- $struct := index $.Types $field.Type -}}
-    {{- if $struct -}}
+    {{- if $field.Inline -}}
+     {{- if $struct -}}
+      {{- range $inlineField := $struct.Fields -}}
+        {{- $struct := index $.Types $inlineField.Type -}}
+        {{- if $struct -}}
+            {{ template "struct" dict "Struct" $struct "Level" (add $.Level 1) "Name" $inlineField.Name "Types" $.Types "Path" (printf "%s.%s" $.Path $inlineField.Name) }}
+            {{- else -}}
+                {{- $struct := index $.Types (trimPrefix $inlineField.Type "[]") -}}
+                {{- if $struct -}}
+                    {{ template "struct" dict "Struct" $struct "Level" (add $.Level 1) "Name" (printf "%s[]" $inlineField.Name) "Types" $.Types "Path" (printf "%s.%s." $.Path $inlineField.Name) }}
+                {{- else -}}
+                    {{- $struct := index $.Types (trimPrefix $inlineField.Type "map[string]") -}}
+                    {{- if $struct -}}
+                        {{ template "struct" dict "Struct" $struct "Level" (add $.Level 1) "Name" (printf "%s.*" $inlineField.Name) "Types" $.Types "Path" (printf "%s.%s.-" $.Path $inlineField.Name) }}
+                    {{- end -}}
+                {{- end -}}
+        {{- end -}}
+       {{- end -}}
+      {{- end -}}
+    {{- else -}}
+      {{- if $struct -}}
         {{ template "struct" dict "Struct" $struct "Level" (add $.Level 1) "Name" $field.Name "Types" $.Types "Path" (printf "%s.%s" $.Path $field.Name) }}
         {{- else -}}
             {{- $struct := index $.Types (trimPrefix $field.Type "[]") -}}
@@ -53,6 +84,7 @@
                     {{ template "struct" dict "Struct" $struct "Level" (add $.Level 1) "Name" (printf "%s.*" $field.Name) "Types" $.Types "Path" (printf "%s.%s.-" $.Path $field.Name) }}
                 {{- end -}}
             {{- end -}}
+      {{- end -}}
     {{- end -}}
 {{ end }}
 

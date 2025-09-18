@@ -1,0 +1,13 @@
+apiVersion: v1alpha1
+kind: LinkConfig
+name: enp0s1
+up: true
+mtu: 9000
+addresses:
+    - address: 192.168.1.100/24
+    - address: 2001:db8::1/64
+      routePriority: 100
+routes:
+    - destination: 10.3.5.0/24
+      gateway: 10.3.5.1
+    - gateway: fe80::1

@@ -16,7 +16,10 @@ func (KmsgLogV1Alpha1) Doc() *encoder.Doc {
 		Comments:    [3]string{"" /* encoder.HeadComment */, "KmsgLogConfig is a event sink config document." /* encoder.LineComment */, "" /* encoder.FootComment */},
 		Description: "KmsgLogConfig is a event sink config document.",
 		Fields: []encoder.Doc{
-			{},
+			{
+				Type:   "Meta",
+				Inline: true,
+			},
 			{
 				Name:        "name",
 				Type:        "string",
@@ -47,7 +50,11 @@ func (EventSinkV1Alpha1) Doc() *encoder.Doc {
 		Comments:    [3]string{"" /* encoder.HeadComment */, "EventSinkConfig is a event sink config document." /* encoder.LineComment */, "" /* encoder.FootComment */},
 		Description: "EventSinkConfig is a event sink config document.",
 		Fields: []encoder.Doc{
-			{}, {
+			{
+				Type:   "Meta",
+				Inline: true,
+			},
+			{
 				Name:        "endpoint",
 				Type:        "string",
 				Note:        "",
@@ -70,7 +77,10 @@ func (WatchdogTimerV1Alpha1) Doc() *encoder.Doc {
 		Comments:    [3]string{"" /* encoder.HeadComment */, "WatchdogTimerConfig is a watchdog timer config document." /* encoder.LineComment */, "" /* encoder.FootComment */},
 		Description: "WatchdogTimerConfig is a watchdog timer config document.",
 		Fields: []encoder.Doc{
-			{},
+			{
+				Type:   "Meta",
+				Inline: true,
+			},
 			{
 				Name:        "device",
 				Type:        "string",

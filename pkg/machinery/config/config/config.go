@@ -26,4 +26,5 @@ type Config interface { //nolint:interfacebloat
 	ZswapConfig() ZswapConfig
 	NetworkStaticHostConfig() []NetworkStaticHostConfig
 	NetworkHostnameConfig() NetworkHostnameConfig
+	NetworkCommonLinkConfigs() []NetworkCommonLinkConfig
 }

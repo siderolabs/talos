@@ -14,13 +14,15 @@ import (
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
+	"github.com/siderolabs/gen/optional"
 	"github.com/siderolabs/gen/value"
 	"github.com/siderolabs/go-procfs/procfs"
 	"go.uber.org/zap"
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
-	"github.com/siderolabs/talos/pkg/machinery/config/config"
+	cfg "github.com/siderolabs/talos/pkg/machinery/config/config"
 	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
+	"github.com/siderolabs/talos/pkg/machinery/resources/config"
 	"github.com/siderolabs/talos/pkg/machinery/resources/network"
 )
 
@@ -43,6 +45,12 @@ func (ctrl *AddressConfigController) Inputs() []controller.Input {
 			Type:      network.DeviceConfigSpecType,
 			Kind:      controller.InputWeak,
 		},
+		{
+			Namespace: config.NamespaceName,
+			Type:      config.MachineConfigType,
+			ID:        optional.Some(config.ActiveID),
+			Kind:      controller.InputWeak,
+		},
 	}
 }
 
@@ -60,12 +68,6 @@ func (ctrl *AddressConfigController) Outputs() []controller.Output {
 //
 //nolint:gocyclo,cyclop
 func (ctrl *AddressConfigController) Run(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
-	// apply defaults for the loopback interface once
-	defaultTouchedIDs, err := ctrl.apply(ctx, r, ctrl.loopbackDefaults())
-	if err != nil {
-		return fmt.Errorf("error generating loopback interface defaults: %w", err)
-	}
-
 	for {
 		select {
 		case <-ctx.Done():
@@ -73,30 +75,23 @@ func (ctrl *AddressConfigController) Run(ctx context.Context, r controller.Runti
 		case <-r.EventCh():
 		}
 
-		touchedIDs := make(map[resource.ID]struct{})
+		r.StartTrackingOutputs()
 
-		for _, id := range defaultTouchedIDs {
-			touchedIDs[id] = struct{}{}
+		// apply defaults for the loopback interface
+		if err := ctrl.apply(ctx, r, ctrl.loopbackDefaults()); err != nil {
+			return fmt.Errorf("error generating loopback interface defaults: %w", err)
 		}
 
-		items, err := r.List(ctx, resource.NewMetadata(network.NamespaceName, network.DeviceConfigSpecType, "", resource.VersionUndefined))
+		devices, err := safe.ReaderListAll[*network.DeviceConfigSpec](ctx, r)
 		if err != nil {
-			if !state.IsNotFoundError(err) {
-				return fmt.Errorf("error getting config: %w", err)
-			}
+			return fmt.Errorf("error getting config: %w", err)
 		}
 
 		ignoredInterfaces := map[string]struct{}{}
 
-		devices := make([]config.Device, len(items.Items))
-
-		for i, item := range items.Items {
-			device := item.(*network.DeviceConfigSpec).TypedSpec().Device
-
-			devices[i] = device
-
-			if device.Ignore() {
-				ignoredInterfaces[device.Interface()] = struct{}{}
+		for device := range devices.All() {
+			if device.TypedSpec().Device.Ignore() {
+				ignoredInterfaces[device.TypedSpec().Device.Interface()] = struct{}{}
 			}
 		}
 
@@ -104,62 +99,42 @@ func (ctrl *AddressConfigController) Run(ctx context.Context, r controller.Runti
 		cmdlineAddresses := ctrl.parseCmdline(logger)
 		for _, cmdlineAddress := range cmdlineAddresses {
 			if _, ignored := ignoredInterfaces[cmdlineAddress.LinkName]; !ignored {
-				var ids []string
-
-				ids, err = ctrl.apply(ctx, r, []network.AddressSpecSpec{cmdlineAddress})
-				if err != nil {
+				if err = ctrl.apply(ctx, r, []network.AddressSpecSpec{cmdlineAddress}); err != nil {
 					return fmt.Errorf("error applying cmdline address: %w", err)
 				}
-
-				for _, id := range ids {
-					touchedIDs[id] = struct{}{}
-				}
 			}
 		}
 
-		// parse machine configuration for static addresses
-		if len(devices) > 0 {
+		// parse machine configuration for static addresses (legacy first)
+		if devices.Len() > 0 {
 			addresses := ctrl.processDevicesConfiguration(logger, devices)
 
-			var ids []string
-
-			ids, err = ctrl.apply(ctx, r, addresses)
-			if err != nil {
+			if err = ctrl.apply(ctx, r, addresses); err != nil {
 				return fmt.Errorf("error applying machine configuration address: %w", err)
 			}
-
-			for _, id := range ids {
-				touchedIDs[id] = struct{}{}
-			}
 		}
 
-		// list addresses for cleanup
-		list, err := r.List(ctx, resource.NewMetadata(network.ConfigNamespaceName, network.AddressSpecType, "", resource.VersionUndefined))
+		cfg, err := safe.ReaderGetByID[*config.MachineConfig](ctx, r, config.ActiveID)
 		if err != nil {
-			return fmt.Errorf("error listing resources: %w", err)
-		}
-
-		for _, res := range list.Items {
-			if res.Metadata().Owner() != ctrl.Name() {
-				// skip specs created by other controllers
-				continue
-			}
-
-			if _, ok := touchedIDs[res.Metadata().ID()]; !ok {
-				if err = r.Destroy(ctx, res.Metadata()); err != nil {
-					return fmt.Errorf("error cleaning up addresses: %w", err)
-				}
+			if !state.IsNotFoundError(err) {
+				return fmt.Errorf("error reading machine config: %w", err)
 			}
 		}
 
-		r.ResetRestartBackoff()
+		if cfg != nil {
+			if err = ctrl.apply(ctx, r, ctrl.processMachineConfig(cfg.Config().NetworkCommonLinkConfigs())); err != nil {
+				return fmt.Errorf("error applying machine configuration addresses: %w", err)
+			}
+		}
+
+		if err := r.CleanupOutputs(ctx, resource.NewMetadata(network.ConfigNamespaceName, network.AddressSpecType, "", resource.VersionUndefined)); err != nil {
+			return fmt.Errorf("error during cleanup: %w", err)
+		}
 	}
 }
 
 //nolint:dupl
-func (ctrl *AddressConfigController) apply(ctx context.Context, r controller.Runtime, addresses []network.AddressSpecSpec) ([]resource.ID, error) {
-	ids := make([]string, 0, len(addresses))
-
+func (ctrl *AddressConfigController) apply(ctx context.Context, r controller.Runtime, addresses []network.AddressSpecSpec) error {
 	for _, address := range addresses {
 		id := network.LayeredID(address.ConfigLayer, network.AddressID(address.LinkName, address.Address))
 
@@ -173,13 +148,11 @@ func (ctrl *AddressConfigController) apply(ctx context.Context, r controller.Run
 				return nil
 			},
 		); err != nil {
-			return ids, err
+			return err
 		}
-
-		ids = append(ids, id)
 	}
 
-	return ids, nil
+	return nil
 }
 
 func (ctrl *AddressConfigController) loopbackDefaults() []network.AddressSpecSpec {
@@ -251,8 +224,10 @@ func parseIPOrIPPrefix(address string) (netip.Prefix, error) {
 	return netip.PrefixFrom(ip, ip.BitLen()), nil
 }
 
-func (ctrl *AddressConfigController) processDevicesConfiguration(logger *zap.Logger, devices []config.Device) (addresses []network.AddressSpecSpec) {
-	for _, device := range devices {
+func (ctrl *AddressConfigController) processDevicesConfiguration(logger *zap.Logger, devices safe.List[*network.DeviceConfigSpec]) (addresses []network.AddressSpecSpec) {
+	for item := range devices.All() {
+		device := item.TypedSpec().Device
+
 		if device.Ignore() {
 			continue
 		}
@@ -307,6 +282,31 @@ func (ctrl *AddressConfigController) processDevicesConfiguration(logger *zap.Log
 
 				addresses = append(addresses, address)
 			}
+		}
+	}
+
+	return addresses
+}
+
+func (ctrl *AddressConfigController) processMachineConfig(linkConfigs []cfg.NetworkCommonLinkConfig) (addresses []network.AddressSpecSpec) {
+	for _, linkConfig := range linkConfigs {
+		for _, addr := range linkConfig.Addresses() {
+			address := network.AddressSpecSpec{
+				Address:     addr.Address(),
+				Scope:       nethelpers.ScopeGlobal,
+				LinkName:    linkConfig.Name(),
+				ConfigLayer: network.ConfigMachineConfiguration,
+				Priority:    addr.RoutePriority().ValueOrZero(),
+				Flags:       nethelpers.AddressFlags(nethelpers.AddressPermanent),
+			}
+
+			if address.Address.Addr().Is6() {
+				address.Family = nethelpers.FamilyInet6
+			} else {
+				address.Family = nethelpers.FamilyInet4
+			}
+
+			addresses = append(addresses, address)
 		}
 	}
 

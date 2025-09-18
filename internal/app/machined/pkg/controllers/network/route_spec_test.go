@@ -5,25 +5,18 @@
 package network_test
 
 import (
-	"context"
 	"fmt"
 	"math/rand/v2"
 	"net"
 	"net/netip"
 	"os"
-	"sync"
 	"testing"
 	"time"
 
-	"github.com/cosi-project/runtime/pkg/controller/runtime"
 	"github.com/cosi-project/runtime/pkg/resource"
-	"github.com/cosi-project/runtime/pkg/state"
-	"github.com/cosi-project/runtime/pkg/state/impl/inmem"
-	"github.com/cosi-project/runtime/pkg/state/impl/namespaced"
 	"github.com/jsimonetti/rtnetlink/v2"
 	"github.com/siderolabs/go-retry/retry"
 	"github.com/stretchr/testify/suite"
-	"go.uber.org/zap/zaptest"
 	"golang.org/x/sys/unix"
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/ctest"
@@ -33,50 +26,11 @@ import (
 )
 
 type RouteSpecSuite struct {
-	suite.Suite
-
-	state state.State
-
-	runtime *runtime.Runtime
-	wg      sync.WaitGroup
-
-	ctx       context.Context //nolint:containedctx
-	ctxCancel context.CancelFunc
-}
-
-func (suite *RouteSpecSuite) State() state.State { return suite.state }
-
-func (suite *RouteSpecSuite) Ctx() context.Context { return suite.ctx }
-
-func (suite *RouteSpecSuite) SetupTest() {
-	suite.ctx, suite.ctxCancel = context.WithTimeout(context.Background(), 3*time.Minute)
-
-	suite.state = state.WrapCore(namespaced.NewState(inmem.Build))
-
-	var err error
-
-	suite.runtime, err = runtime.NewRuntime(suite.state, zaptest.NewLogger(suite.T()))
-	suite.Require().NoError(err)
-
-	suite.Require().NoError(suite.runtime.RegisterController(&netctrl.RouteSpecController{}))
-
-	suite.Require().NoError(suite.runtime.RegisterController(&netctrl.DeviceConfigController{}))
-
-	suite.startRuntime()
+	ctest.DefaultSuite
 }
 
 func (suite *RouteSpecSuite) uniqueDummyInterface() string {
 	return fmt.Sprintf("dummy%02x%02x%02x", rand.Int32()&0xff, rand.Int32()&0xff, rand.Int32()&0xff)
-}
-
-func (suite *RouteSpecSuite) startRuntime() {
-	suite.wg.Add(1)
-
-	go func() {
-		defer suite.wg.Done()
-
-		suite.Assert().NoError(suite.runtime.Run(suite.ctx))
-	}()
 }
 
 func (suite *RouteSpecSuite) assertRoute(
@@ -159,7 +113,7 @@ func (suite *RouteSpecSuite) TestLoopback() {
 	}
 
 	for _, res := range []resource.Resource{loopback} {
-		suite.Require().NoError(suite.state.Create(suite.ctx, res), "%v", res.Spec())
+		suite.Create(res)
 	}
 
 	suite.Assert().NoError(
@@ -179,16 +133,7 @@ func (suite *RouteSpecSuite) TestLoopback() {
 	)
 
 	// teardown the route
-	for {
-		ready, err := suite.state.Teardown(suite.ctx, loopback.Metadata())
-		suite.Require().NoError(err)
-
-		if ready {
-			break
-		}
-
-		time.Sleep(100 * time.Millisecond)
-	}
+	suite.Require().NoError(suite.State().TeardownAndDestroy(suite.Ctx(), loopback.Metadata()))
 
 	// torn down address should be removed immediately
 	suite.Assert().NoError(
@@ -197,8 +142,6 @@ func (suite *RouteSpecSuite) TestLoopback() {
 			netip.MustParseAddr("127.0.11.1"),
 		),
 	)
-
-	suite.Require().NoError(suite.state.Destroy(suite.ctx, loopback.Metadata()))
 }
 
 func (suite *RouteSpecSuite) TestDefaultRoute() {
@@ -218,7 +161,7 @@ func (suite *RouteSpecSuite) TestDefaultRoute() {
 	}
 
 	for _, res := range []resource.Resource{def} {
-		suite.Require().NoError(suite.state.Create(suite.ctx, res), "%v", res.Spec())
+		suite.Create(res)
 	}
 
 	suite.Assert().NoError(
@@ -293,21 +236,10 @@ func (suite *RouteSpecSuite) TestDefaultRoute() {
 	)
 
 	// teardown the route
-	for {
-		ready, err := suite.state.Teardown(suite.ctx, def.Metadata())
-		suite.Require().NoError(err)
-
-		if ready {
-			break
-		}
-
-		time.Sleep(100 * time.Millisecond)
-	}
+	suite.Require().NoError(suite.State().TeardownAndDestroy(suite.Ctx(), def.Metadata()))
 
 	// torn down route should be removed immediately
 	suite.Assert().NoError(suite.assertNoRoute(netip.Prefix{}, netip.MustParseAddr("127.0.11.2")))
-
-	suite.Require().NoError(suite.state.Destroy(suite.ctx, def.Metadata()))
 }
 
 func (suite *RouteSpecSuite) TestDefaultAndInterfaceRoutes() {
@@ -388,7 +320,7 @@ func (suite *RouteSpecSuite) TestDefaultAndInterfaceRoutes() {
 	host.TypedSpec().Normalize()
 
 	for _, res := range []resource.Resource{def, host} {
-		suite.Require().NoError(suite.state.Create(suite.ctx, res), "%v", res.Spec())
+		suite.Create(res)
 	}
 
 	suite.Assert().NoError(
@@ -418,33 +350,12 @@ func (suite *RouteSpecSuite) TestDefaultAndInterfaceRoutes() {
 	)
 
 	// teardown the routes
-	for {
-		ready, err := suite.state.Teardown(suite.ctx, def.Metadata())
-		suite.Require().NoError(err)
-
-		if ready {
-			break
-		}
-
-		time.Sleep(100 * time.Millisecond)
-	}
-
-	for {
-		ready, err := suite.state.Teardown(suite.ctx, host.Metadata())
-		suite.Require().NoError(err)
-
-		if ready {
-			break
-		}
-
-		time.Sleep(100 * time.Millisecond)
-	}
+	suite.Require().NoError(suite.State().TeardownAndDestroy(suite.Ctx(), def.Metadata()))
+	suite.Require().NoError(suite.State().TeardownAndDestroy(suite.Ctx(), host.Metadata()))
 
 	// torn down route should be removed immediately
 	suite.Assert().NoError(suite.assertNoRoute(netip.Prefix{}, netip.MustParseAddr("10.28.0.1")))
 	suite.Assert().NoError(suite.assertNoRoute(netip.MustParsePrefix("10.28.0.1/32"), netip.Addr{}))
-
-	suite.Require().NoError(suite.state.Destroy(suite.ctx, def.Metadata()))
 }
 
 func (suite *RouteSpecSuite) TestLinkLocalRoute() {
@@ -510,7 +421,7 @@ func (suite *RouteSpecSuite) TestLinkLocalRoute() {
 	ll.TypedSpec().Normalize()
 
 	for _, res := range []resource.Resource{ll} {
-		suite.Require().NoError(suite.state.Create(suite.ctx, res), "%v", res.Spec())
+		suite.Create(res)
 	}
 
 	suite.Assert().NoError(
@@ -530,16 +441,7 @@ func (suite *RouteSpecSuite) TestLinkLocalRoute() {
 	)
 
 	// teardown the routes
-	for {
-		ready, err := suite.state.Teardown(suite.ctx, ll.Metadata())
-		suite.Require().NoError(err)
-
-		if ready {
-			break
-		}
-
-		time.Sleep(100 * time.Millisecond)
-	}
+	suite.Require().NoError(suite.State().TeardownAndDestroy(suite.Ctx(), ll.Metadata()))
 
 	// torn down route should be removed immediately
 	suite.Assert().NoError(
@@ -548,8 +450,6 @@ func (suite *RouteSpecSuite) TestLinkLocalRoute() {
 			netip.MustParseAddr("10.28.0.1"),
 		),
 	)
-
-	suite.Require().NoError(suite.state.Destroy(suite.ctx, ll.Metadata()))
 }
 
 func (suite *RouteSpecSuite) TestLinkLocalRouteAlias() {
@@ -627,7 +527,7 @@ func (suite *RouteSpecSuite) TestLinkLocalRouteAlias() {
 	ll.TypedSpec().Normalize()
 
 	for _, res := range []resource.Resource{ll} {
-		suite.Require().NoError(suite.state.Create(suite.ctx, res), "%v", res.Spec())
+		suite.Create(res)
 	}
 
 	suite.Assert().NoError(
@@ -647,16 +547,7 @@ func (suite *RouteSpecSuite) TestLinkLocalRouteAlias() {
 	)
 
 	// teardown the routes
-	for {
-		ready, err := suite.state.Teardown(suite.ctx, ll.Metadata())
-		suite.Require().NoError(err)
-
-		if ready {
-			break
-		}
-
-		time.Sleep(100 * time.Millisecond)
-	}
+	suite.Require().NoError(suite.State().TeardownAndDestroy(suite.Ctx(), ll.Metadata()))
 
 	// torn down route should be removed immediately
 	suite.Assert().NoError(
@@ -665,22 +556,21 @@ func (suite *RouteSpecSuite) TestLinkLocalRouteAlias() {
 			netip.MustParseAddr("10.28.0.1"),
 		),
 	)
-
-	suite.Require().NoError(suite.state.Destroy(suite.ctx, ll.Metadata()))
-}
-
-func (suite *RouteSpecSuite) TearDownTest() {
-	suite.T().Log("tear down")
-
-	suite.ctxCancel()
-
-	suite.wg.Wait()
 }
 
 func TestRouteSpecSuite(t *testing.T) {
+	t.Parallel()
+
 	if os.Geteuid() != 0 {
 		t.Skip("requires root")
 	}
 
-	suite.Run(t, new(RouteSpecSuite))
+	suite.Run(t, &RouteSpecSuite{
+		DefaultSuite: ctest.DefaultSuite{
+			Timeout: 15 * time.Second,
+			AfterSetup: func(suite *ctest.DefaultSuite) {
+				suite.Require().NoError(suite.Runtime().RegisterController(&netctrl.RouteSpecController{}))
+			},
+		},
+	})
 }
