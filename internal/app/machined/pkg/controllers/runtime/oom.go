@@ -67,6 +67,21 @@ var defaultTriggerExpr = sync.OnceValue(func() cel.Expression {
 	))
 })
 
+// Sort processes by the following hierarchy:
+// First, sort by high-level group:
+//     kubepods (workloads)
+//     podruntime (CRI, kubelet, etcd)
+//     runtime (core containerd, system services)
+//     init
+// Second, inside kubepods we have QoS groups:
+//     first priority: BestEffort
+//     second: Burstable
+//     last: Guaranteed
+// Third, look into other attributes, e.g. OOM score.
+// Fourth, look into memory max - memory current (if memory max is set).
+//
+// Sort to make the most prioritized to OOM-kill cgroup to the first place
+
 var defaultScoringExpr = sync.OnceValue(func() cel.Expression {
 	return cel.MustExpression(cel.ParseDoubleExpression(
 		`memory_max.hasValue() ? 0.0 :
@@ -102,35 +117,9 @@ func (ctrl *OOMController) Run(ctx context.Context, r controller.Runtime, logger
 				return fmt.Errorf("cannot get active machine config: %w", err)
 			}
 
-			triggerExpr = defaultTriggerExpr()
+			var newInterval time.Duration
 
-			if cfg != nil {
-				if oomCfg := cfg.Config().OOMConfig(); oomCfg != nil {
-					if expr, ok := oomCfg.TriggerExpression().Get(); ok {
-						triggerExpr = expr
-					}
-				}
-			}
-
-			scoringExpr = defaultScoringExpr()
-
-			if cfg != nil {
-				if oomCfg := cfg.Config().OOMConfig(); oomCfg != nil {
-					if expr, ok := oomCfg.CgroupRankingExpression().Get(); ok {
-						scoringExpr = expr
-					}
-				}
-			}
-
-			newInterval := defaultSampleInterval
-
-			if cfg != nil {
-				if oomCfg := cfg.Config().OOMConfig(); oomCfg != nil {
-					if interval, ok := oomCfg.SampleInterval().Get(); ok {
-						newInterval = interval
-					}
-				}
-			}
+			triggerExpr, scoringExpr, newInterval = ctrl.getConfig(cfg)
 
 			if sampleInterval != newInterval {
 				ticker.Reset(newInterval)
@@ -180,7 +169,6 @@ func (ctrl *OOMController) Run(ctx context.Context, r controller.Runtime, logger
 		}
 
 		trigger, err := triggerExpr.EvalBool(celenv.OOMTrigger(), evalContext)
-
 		if err != nil {
 			logger.Error("cannot evaluate trigger condition:", zap.Error(err))
 
@@ -197,10 +185,69 @@ func (ctrl *OOMController) Run(ctx context.Context, r controller.Runtime, logger
 	}
 }
 
+func (*OOMController) getConfig(cfg *config.MachineConfig) (cel.Expression, cel.Expression, time.Duration) {
+	triggerExpr := defaultTriggerExpr()
+
+	if cfg != nil {
+		if oomCfg := cfg.Config().OOMConfig(); oomCfg != nil {
+			if expr, ok := oomCfg.TriggerExpression().Get(); ok {
+				triggerExpr = expr
+			}
+		}
+	}
+
+	scoringExpr := defaultScoringExpr()
+
+	if cfg != nil {
+		if oomCfg := cfg.Config().OOMConfig(); oomCfg != nil {
+			if expr, ok := oomCfg.CgroupRankingExpression().Get(); ok {
+				scoringExpr = expr
+			}
+		}
+	}
+
+	newInterval := defaultSampleInterval
+
+	if cfg != nil {
+		if oomCfg := cfg.Config().OOMConfig(); oomCfg != nil {
+			if interval, ok := oomCfg.SampleInterval().Get(); ok {
+				newInterval = interval
+			}
+		}
+	}
+
+	return triggerExpr, scoringExpr, newInterval
+}
+
 // OomAction handles out of memory conditions by selecting and killing cgroups based on memory usage data.
 func (ctrl *OOMController) OomAction(logger *zap.Logger, scoringExpr cel.Expression) {
 	logger.Info("OOM controller triggered")
 
+	ranking := ctrl.rankCgroups(logger, scoringExpr)
+
+	if len(ranking) == 0 {
+		return
+	}
+
+	var (
+		maxScore     = math.Inf(-1)
+		cgroupToKill oom.RankedCgroup
+	)
+
+	for cgroup, score := range ranking {
+		if score > maxScore {
+			maxScore = score
+			cgroupToKill = cgroup
+		}
+	}
+
+	err := ctrl.reapCg(logger, cgroupToKill.Path)
+	if err != nil {
+		logger.Error("cannot reap cgroup", zap.String("cgroup", cgroupToKill.Path), zap.Error(err))
+	}
+}
+
+func (ctrl *OOMController) rankCgroups(logger *zap.Logger, scoringExpr cel.Expression) map[oom.RankedCgroup]float64 {
 	ranking := map[oom.RankedCgroup]float64{}
 
 	for _, cg := range []struct {
@@ -248,59 +295,23 @@ func (ctrl *OOMController) OomAction(logger *zap.Logger, scoringExpr cel.Express
 				MemoryMax:     node.MemoryMax,
 			}
 
-			score, err := cgroup.CalculateScore(&scoringExpr)
+			ranking[cgroup], err = cgroup.CalculateScore(&scoringExpr)
 			if err != nil {
 				logger.Error("cannot calculate score for cgroup",
-					zap.String("dir", leafDir), zap.Error(err),
+					zap.String("dir", cgroup.Path), zap.Error(err),
 				)
 
 				continue
 			}
-
-			ranking[cgroup] = score
 		}
 	}
 
-	if len(ranking) == 0 {
-		return
-	}
-
-	// Sort processes by the following hierarchy:
-	// First, sort by high-level group:
-	//     kubepods (workloads)
-	//     podruntime (CRI, kubelet, etcd)
-	//     runtime (core containerd, system services)
-	//     init
-	// Second, inside kubepods we have QoS groups:
-	//     first priority: BestEffort
-	//     second: Burstable
-	//     last: Guaranteed
-	// Third, look into other attributes, e.g. OOM score.
-	// Fourth, look into memory max - memory current (if memory max is set).
-	//
-	// Sort to make the most prioritized to OOM-kill cgroup to the first place
-
-	var (
-		maxScore     = math.Inf(-1)
-		cgroupToKill oom.RankedCgroup
-	)
-
-	for cgroup, score := range ranking {
-		if score > maxScore {
-			maxScore = score
-			cgroupToKill = cgroup
-		}
-	}
-
-	logger.Info("Sending SIGKILL to cgroup", zap.String("cgroup", cgroupToKill.Path))
-
-	err := ctrl.reapCg(logger, cgroupToKill.Path)
-	if err != nil {
-		logger.Error("cannot reap cgroup", zap.String("cgroup", cgroupToKill.Path), zap.Error(err))
-	}
+	return ranking
 }
 
 func (ctrl *OOMController) reapCg(logger *zap.Logger, cgroupPath string) error {
+	logger.Info("Sending SIGKILL to cgroup", zap.String("cgroup", cgroupPath))
+
 	processes := []int{}
 	// Ignore errors, find as many processes as possible
 	//nolint:errcheck
@@ -320,7 +331,7 @@ func (ctrl *OOMController) reapCg(logger *zap.Logger, cgroupPath string) error {
 
 		return nil
 	})
-	logger.Debug("victim processes:", zap.Any("processes", processes))
+	logger.Info("victim processes:", zap.Any("processes", processes))
 
 	pidfds := []int{}
 
