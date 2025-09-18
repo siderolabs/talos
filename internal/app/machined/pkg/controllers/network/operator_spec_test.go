@@ -12,15 +12,12 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cosi-project/runtime/pkg/controller/runtime"
 	"github.com/cosi-project/runtime/pkg/resource"
-	"github.com/cosi-project/runtime/pkg/state"
-	"github.com/cosi-project/runtime/pkg/state/impl/inmem"
-	"github.com/cosi-project/runtime/pkg/state/impl/namespaced"
+	"github.com/cosi-project/runtime/pkg/resource/rtestutils"
 	"github.com/siderolabs/go-retry/retry"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 	"go.uber.org/zap"
-	"go.uber.org/zap/zaptest"
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/ctest"
 	netctrl "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/network"
@@ -30,20 +27,8 @@ import (
 )
 
 type OperatorSpecSuite struct {
-	suite.Suite
-
-	state state.State
-
-	runtime *runtime.Runtime
-	wg      sync.WaitGroup
-
-	ctx       context.Context //nolint:containedctx
-	ctxCancel context.CancelFunc
+	ctest.DefaultSuite
 }
-
-func (suite *OperatorSpecSuite) State() state.State { return suite.state }
-
-func (suite *OperatorSpecSuite) Ctx() context.Context { return suite.ctx }
 
 type mockOperator struct {
 	spec     network.OperatorSpecSpec
@@ -149,39 +134,6 @@ func (suite *OperatorSpecSuite) newOperator(_ *zap.Logger, spec *network.Operato
 	}
 }
 
-func (suite *OperatorSpecSuite) SetupTest() {
-	suite.ctx, suite.ctxCancel = context.WithTimeout(context.Background(), 3*time.Minute)
-
-	suite.state = state.WrapCore(namespaced.NewState(inmem.Build))
-
-	var err error
-
-	suite.runtime, err = runtime.NewRuntime(suite.state, zaptest.NewLogger(suite.T()))
-	suite.Require().NoError(err)
-
-	runningOperators = map[string]*mockOperator{}
-
-	suite.Require().NoError(
-		suite.runtime.RegisterController(
-			&netctrl.OperatorSpecController{
-				Factory: suite.newOperator,
-			},
-		),
-	)
-
-	suite.startRuntime()
-}
-
-func (suite *OperatorSpecSuite) startRuntime() {
-	suite.wg.Add(1)
-
-	go func() {
-		defer suite.wg.Done()
-
-		suite.Assert().NoError(suite.runtime.Run(suite.ctx))
-	}()
-}
-
 func (suite *OperatorSpecSuite) assertRunning(runningIDs []string, assertFunc func(*mockOperator) error) error {
 	runningOperatorsMu.Lock()
 	defer runningOperatorsMu.Unlock()
@@ -217,32 +169,6 @@ func (suite *OperatorSpecSuite) assertRunning(runningIDs []string, assertFunc fu
 	return nil
 }
 
-func (suite *OperatorSpecSuite) assertResources(resourceType resource.Type, requiredIDs []string) error {
-	missingIDs := make(map[string]struct{}, len(requiredIDs))
-
-	for _, id := range requiredIDs {
-		missingIDs[id] = struct{}{}
-	}
-
-	resources, err := suite.state.List(
-		suite.ctx,
-		resource.NewMetadata(network.ConfigNamespaceName, resourceType, "", resource.VersionUndefined),
-	)
-	if err != nil {
-		return err
-	}
-
-	for _, res := range resources.Items {
-		delete(missingIDs, res.Metadata().ID())
-	}
-
-	if len(missingIDs) > 0 {
-		return retry.ExpectedErrorf("some resources are missing: %q", missingIDs)
-	}
-
-	return nil
-}
-
 func (suite *OperatorSpecSuite) TestScheduling() {
 	specDHCP := network.NewOperatorSpec(network.NamespaceName, "dhcp4/eth0")
 	*specDHCP.TypedSpec() = network.OperatorSpecSpec{
@@ -264,8 +190,8 @@ func (suite *OperatorSpecSuite) TestScheduling() {
 		},
 	}
 
-	suite.Require().NoError(suite.state.Create(suite.ctx, specDHCP))
-	suite.Require().NoError(suite.state.Create(suite.ctx, specVIP))
+	suite.Create(specDHCP)
+	suite.Create(specVIP)
 
 	// operators shouldn't be running yet, as link state is not known yet
 	suite.Assert().NoError(
@@ -285,7 +211,7 @@ func (suite *OperatorSpecSuite) TestScheduling() {
 		OperationalState: nethelpers.OperStateDown,
 	}
 
-	suite.Require().NoError(suite.state.Create(suite.ctx, linkState))
+	suite.Create(linkState)
 
 	// vip operator should be scheduled now, as VIP operator doesn't require link to be up
 	suite.Assert().NoError(
@@ -393,14 +319,14 @@ func (suite *OperatorSpecSuite) TestPanic() {
 		},
 	}
 
-	suite.Require().NoError(suite.state.Create(suite.ctx, specPanic))
+	suite.Create(specPanic)
 
 	linkState := network.NewLinkStatus(network.NamespaceName, "eth0")
 	*linkState.TypedSpec() = network.LinkStatusSpec{
 		OperationalState: nethelpers.OperStateUp,
 	}
 
-	suite.Require().NoError(suite.state.Create(suite.ctx, linkState))
+	suite.Create(linkState)
 
 	// DHCP6 operator should panic and then restart
 	suite.Assert().NoError(
@@ -442,14 +368,14 @@ func (suite *OperatorSpecSuite) TestOperatorOutputs() {
 		},
 	}
 
-	suite.Require().NoError(suite.state.Create(suite.ctx, specDHCP))
+	suite.Create(specDHCP)
 
 	linkState := network.NewLinkStatus(network.NamespaceName, "eth0")
 	*linkState.TypedSpec() = network.LinkStatusSpec{
 		OperationalState: nethelpers.OperStateUp,
 	}
 
-	suite.Require().NoError(suite.state.Create(suite.ctx, linkState))
+	suite.Create(linkState)
 
 	suite.Assert().NoError(
 		retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
@@ -498,26 +424,20 @@ func (suite *OperatorSpecSuite) TestOperatorOutputs() {
 
 	dhcpMock.notify()
 
-	suite.Assert().NoError(
-		retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-			func() error {
-				return suite.assertResources(network.AddressSpecType, []string{"dhcp4/eth0/eth0/10.5.0.2/24"})
-			},
-		),
+	ctest.AssertResources(suite,
+		[]resource.ID{"dhcp4/eth0/eth0/10.5.0.2/24"},
+		func(*network.AddressSpec, *assert.Assertions) {},
+		rtestutils.WithNamespace(network.ConfigNamespaceName),
 	)
-	suite.Assert().NoError(
-		retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-			func() error {
-				return suite.assertResources(network.LinkSpecType, []string{"dhcp4/eth0/eth0"})
-			},
-		),
+	ctest.AssertResources(suite,
+		[]resource.ID{"dhcp4/eth0/eth0"},
+		func(*network.LinkSpec, *assert.Assertions) {},
+		rtestutils.WithNamespace(network.ConfigNamespaceName),
 	)
-	suite.Assert().NoError(
-		retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-			func() error {
-				return suite.assertResources(network.HostnameSpecType, []string{"dhcp4/eth0/hostname"})
-			},
-		),
+	ctest.AssertResources(suite,
+		[]resource.ID{"dhcp4/eth0/hostname"},
+		func(*network.HostnameSpec, *assert.Assertions) {},
+		rtestutils.WithNamespace(network.ConfigNamespaceName),
 	)
 
 	// update specs
@@ -536,23 +456,33 @@ func (suite *OperatorSpecSuite) TestOperatorOutputs() {
 
 	dhcpMock.notify()
 
-	suite.Assert().NoError(
-		retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-			func() error {
-				return suite.assertResources(network.AddressSpecType, []string{"dhcp4/eth0/eth0/10.5.0.3/24"})
-			},
-		),
+	ctest.AssertResources(suite,
+		[]resource.ID{"dhcp4/eth0/eth0/10.5.0.3/24"},
+		func(*network.AddressSpec, *assert.Assertions) {},
+		rtestutils.WithNamespace(network.ConfigNamespaceName),
 	)
 }
 
-func (suite *OperatorSpecSuite) TearDownTest() {
-	suite.T().Log("tear down")
-
-	suite.ctxCancel()
-
-	suite.wg.Wait()
-}
-
 func TestOperatorSpecSuite(t *testing.T) {
-	suite.Run(t, new(OperatorSpecSuite))
+	t.Parallel()
+
+	operatorSuite := &OperatorSpecSuite{
+		DefaultSuite: ctest.DefaultSuite{
+			Timeout: 5 * time.Second,
+		},
+	}
+
+	operatorSuite.DefaultSuite.AfterSetup = func(suite *ctest.DefaultSuite) {
+		runningOperators = map[string]*mockOperator{}
+
+		suite.Require().NoError(
+			suite.Runtime().RegisterController(
+				&netctrl.OperatorSpecController{
+					Factory: operatorSuite.newOperator,
+				},
+			),
+		)
+	}
+
+	suite.Run(t, operatorSuite)
 }

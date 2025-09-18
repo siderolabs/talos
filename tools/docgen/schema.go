@@ -206,7 +206,7 @@ func populateDescriptionFields(description string, schema *jsonschema.Schema) {
 	}
 }
 
-func structToSchema(pkg string, st *Struct) *jsonschema.Schema {
+func structToSchema(pkg string, st *Struct, allStructs []*Struct) *jsonschema.Schema {
 	schema := jsonschema.Schema{
 		Type:                 "object",
 		AdditionalProperties: jsonschema.FalseSchema,
@@ -245,6 +245,33 @@ func structToSchema(pkg string, st *Struct) *jsonschema.Schema {
 	}
 
 	for _, field := range st.Fields {
+		if field.Inline {
+			var inlinedStruct *Struct
+
+			for _, otherStruct := range allStructs {
+				if otherStruct.Name == field.Type {
+					inlinedStruct = otherStruct
+
+					break
+				}
+			}
+
+			if inlinedStruct != nil {
+				for _, inlineField := range inlinedStruct.Fields {
+					if inlineField.Tag == "" {
+						// skip unknown/untagged field
+						continue
+					}
+
+					if inlineField.Text != nil && inlineField.Text.SchemaRequired {
+						requiredFields = append(requiredFields, inlineField.Tag)
+					}
+
+					properties.Set(inlineField.Tag, fieldToSchema(pkg, inlineField))
+				}
+			}
+		}
+
 		if field.Tag == "" {
 			// skip unknown/untagged field
 			continue
@@ -261,6 +288,7 @@ func structToSchema(pkg string, st *Struct) *jsonschema.Schema {
 
 	schema.Properties = properties
 	schema.Required = requiredFields
+
 	if st.Text.Description != "" {
 		schema.Description = st.Text.Description
 	}
@@ -285,7 +313,7 @@ func docsToSchema(docs []*Doc, schemaURL string) *jsonschema.Schema {
 				})
 			}
 
-			schema.Definitions[name] = structToSchema(doc.Package, docStruct)
+			schema.Definitions[name] = structToSchema(doc.Package, docStruct, doc.Structs)
 		}
 	}
 

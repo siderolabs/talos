@@ -19,7 +19,11 @@ func (DefaultActionConfigV1Alpha1) Doc() *encoder.Doc {
 		Comments:    [3]string{"" /* encoder.HeadComment */, "NetworkDefaultActionConfig is a ingress firewall default action configuration document." /* encoder.LineComment */, "" /* encoder.FootComment */},
 		Description: "NetworkDefaultActionConfig is a ingress firewall default action configuration document.",
 		Fields: []encoder.Doc{
-			{}, {
+			{
+				Type:   "Meta",
+				Inline: true,
+			},
+			{
 				Name:        "ingress",
 				Type:        "DefaultAction",
 				Note:        "",
@@ -38,13 +42,55 @@ func (DefaultActionConfigV1Alpha1) Doc() *encoder.Doc {
 	return doc
 }
 
+func (DummyLinkConfigV1Alpha1) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "DummyLinkConfig",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "DummyLinkConfig is a config document to create a dummy (virtual) network link." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "DummyLinkConfig is a config document to create a dummy (virtual) network link.",
+		Fields: []encoder.Doc{
+			{
+				Type:   "Meta",
+				Inline: true,
+			},
+			{
+				Name:        "name",
+				Type:        "string",
+				Note:        "",
+				Description: "Name of the dummy link (interface).",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Name of the dummy link (interface)." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "hardwareAddr",
+				Type:        "HardwareAddr",
+				Note:        "",
+				Description: "Override the hardware (MAC) address of the link.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Override the hardware (MAC) address of the link." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Type:   "CommonLinkConfig",
+				Inline: true,
+			},
+		},
+	}
+
+	doc.AddExample("", exampleDummyLinkConfigV1Alpha1())
+
+	doc.Fields[1].AddExample("", "dummy1")
+	doc.Fields[2].AddExample("", nethelpers.HardwareAddr{0x2e, 0x3c, 0x4d, 0x5e, 0x6f, 0x70})
+
+	return doc
+}
+
 func (EthernetConfigV1Alpha1) Doc() *encoder.Doc {
 	doc := &encoder.Doc{
 		Type:        "EthernetConfig",
 		Comments:    [3]string{"" /* encoder.HeadComment */, "EthernetConfig is a config document to configure Ethernet interfaces." /* encoder.LineComment */, "" /* encoder.FootComment */},
 		Description: "EthernetConfig is a config document to configure Ethernet interfaces.",
 		Fields: []encoder.Doc{
-			{},
+			{
+				Type:   "Meta",
+				Inline: true,
+			},
 			{
 				Name:        "name",
 				Type:        "string",
@@ -240,7 +286,10 @@ func (HostnameConfigV1Alpha1) Doc() *encoder.Doc {
 		Comments:    [3]string{"" /* encoder.HeadComment */, "HostnameConfig is a config document to configure the hostname: either a static hostname or an automatically generated hostname." /* encoder.LineComment */, "" /* encoder.FootComment */},
 		Description: "HostnameConfig is a config document to configure the hostname: either a static hostname or an automatically generated hostname.",
 		Fields: []encoder.Doc{
-			{},
+			{
+				Type:   "Meta",
+				Inline: true,
+			},
 			{
 				Name:        "auto",
 				Type:        "AutoHostnameKind",
@@ -278,7 +327,11 @@ func (KubespanEndpointsConfigV1Alpha1) Doc() *encoder.Doc {
 		Comments:    [3]string{"" /* encoder.HeadComment */, "KubeSpanEndpointsConfig is a config document to configure KubeSpan endpoints." /* encoder.LineComment */, "" /* encoder.FootComment */},
 		Description: "KubeSpanEndpointsConfig is a config document to configure KubeSpan endpoints.",
 		Fields: []encoder.Doc{
-			{}, {
+			{
+				Type:   "Meta",
+				Inline: true,
+			},
+			{
 				Name:        "extraAnnouncedEndpoints",
 				Type:        "[]AddrPort",
 				Note:        "",
@@ -293,13 +346,196 @@ func (KubespanEndpointsConfigV1Alpha1) Doc() *encoder.Doc {
 	return doc
 }
 
+func (LinkConfigV1Alpha1) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "LinkConfig",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "LinkConfig is a config document to configure physical interfaces (network links)." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "LinkConfig is a config document to configure physical interfaces (network links).",
+		Fields: []encoder.Doc{
+			{
+				Type:   "Meta",
+				Inline: true,
+			},
+			{
+				Name:        "name",
+				Type:        "string",
+				Note:        "",
+				Description: "Name of the link (interface).",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Name of the link (interface)." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Type:   "CommonLinkConfig",
+				Inline: true,
+			},
+		},
+	}
+
+	doc.AddExample("", exampleLinkConfigV1Alpha1())
+
+	doc.Fields[1].AddExample("", "enp0s2")
+	doc.Fields[1].AddExample("", "eth1")
+
+	return doc
+}
+
+func (CommonLinkConfig) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "CommonLinkConfig",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "CommonLinkConfig is common configuration for network links, and logical links." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "CommonLinkConfig is common configuration for network links, and logical links.",
+		AppearsIn: []encoder.Appearance{
+			{
+				TypeName:  "DummyLinkConfigV1Alpha1",
+				FieldName: "",
+			},
+			{
+				TypeName:  "LinkConfigV1Alpha1",
+				FieldName: "",
+			},
+		},
+		Fields: []encoder.Doc{
+			{
+				Name:        "up",
+				Type:        "bool",
+				Note:        "",
+				Description: "Bring the link up or down.\n\nIf not specified, the link will be brought up.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Bring the link up or down." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "mtu",
+				Type:        "uint32",
+				Note:        "",
+				Description: "Configure LinkMTU (Maximum Transmission Unit) for the link.\n\nIf not specified, the system default LinkMTU will be used (usually 1500).",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Configure LinkMTU (Maximum Transmission Unit) for the link." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "addresses",
+				Type:        "[]AddressConfig",
+				Note:        "",
+				Description: "Configure addresses to be statically assigned to the link.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Configure addresses to be statically assigned to the link." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "routes",
+				Type:        "[]RouteConfig",
+				Note:        "",
+				Description: "Configure routes to be statically created via the link.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Configure routes to be statically created via the link." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
+
+	return doc
+}
+
+func (AddressConfig) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "AddressConfig",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "AddressConfig represents a network address configuration." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "AddressConfig represents a network address configuration.",
+		AppearsIn: []encoder.Appearance{
+			{
+				TypeName:  "CommonLinkConfig",
+				FieldName: "addresses",
+			},
+		},
+		Fields: []encoder.Doc{
+			{
+				Name:        "address",
+				Type:        "Prefix",
+				Note:        "",
+				Description: "IP address to be assigned to the link.\n\nThis field must include the network prefix length (e.g. /24 for IPv4, /64 for IPv6).",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "IP address to be assigned to the link." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "routePriority",
+				Type:        "uint32",
+				Note:        "",
+				Description: "Configure the route priority (metric) for routes created for this address.\n\nIf not specified, the system default route priority will be used.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Configure the route priority (metric) for routes created for this address." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
+
+	doc.Fields[0].AddExample("", netip.MustParsePrefix("192.168.1.100/24"))
+	doc.Fields[0].AddExample("", netip.MustParsePrefix("fd00::1/64"))
+
+	return doc
+}
+
+func (RouteConfig) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "RouteConfig",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "RouteConfig represents a network route configuration." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "RouteConfig represents a network route configuration.",
+		AppearsIn: []encoder.Appearance{
+			{
+				TypeName:  "CommonLinkConfig",
+				FieldName: "routes",
+			},
+		},
+		Fields: []encoder.Doc{
+			{
+				Name:        "destination",
+				Type:        "Prefix",
+				Note:        "",
+				Description: "The route's destination as an address prefix.\n\nIf not specified, a default route will be created for the address family of the gateway.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "The route's destination as an address prefix." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "gateway",
+				Type:        "Addr",
+				Note:        "",
+				Description: "The route's gateway (if empty, creates link scope route).",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "The route's gateway (if empty, creates link scope route)." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "source",
+				Type:        "Addr",
+				Note:        "",
+				Description: "The route's source address (optional).",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "The route's source address (optional)." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "metric",
+				Type:        "uint32",
+				Note:        "",
+				Description: "The optional metric for the route.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "The optional metric for the route." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "mtu",
+				Type:        "uint32",
+				Note:        "",
+				Description: "The optional MTU for the route.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "The optional MTU for the route." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "table",
+				Type:        "RoutingTable",
+				Note:        "",
+				Description: "The routing table to use for the route.\n\nIf not specified, the main routing table will be used.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "The routing table to use for the route." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
+
+	doc.Fields[0].AddExample("", Prefix{netip.MustParsePrefix("10.0.0.0/8")})
+	doc.Fields[1].AddExample("", Addr{netip.MustParseAddr("10.0.0.1")})
+
+	return doc
+}
+
 func (RuleConfigV1Alpha1) Doc() *encoder.Doc {
 	doc := &encoder.Doc{
 		Type:        "NetworkRuleConfig",
 		Comments:    [3]string{"" /* encoder.HeadComment */, "NetworkRuleConfig is a network firewall rule config document." /* encoder.LineComment */, "" /* encoder.FootComment */},
 		Description: "NetworkRuleConfig is a network firewall rule config document.",
 		Fields: []encoder.Doc{
-			{},
+			{
+				Type:   "Meta",
+				Inline: true,
+			},
 			{
 				Name:        "name",
 				Type:        "string",
@@ -412,7 +648,10 @@ func (StaticHostConfigV1Alpha1) Doc() *encoder.Doc {
 		Comments:    [3]string{"" /* encoder.HeadComment */, "StaticHostConfig is a config document to set /etc/hosts entries." /* encoder.LineComment */, "" /* encoder.FootComment */},
 		Description: "StaticHostConfig is a config document to set /etc/hosts entries.",
 		Fields: []encoder.Doc{
-			{},
+			{
+				Type:   "Meta",
+				Inline: true,
+			},
 			{
 				Name:        "name",
 				Type:        "string",
@@ -442,11 +681,16 @@ func GetFileDoc() *encoder.FileDoc {
 		Description: "Package network provides network machine configuration documents.\n",
 		Structs: []*encoder.Doc{
 			DefaultActionConfigV1Alpha1{}.Doc(),
+			DummyLinkConfigV1Alpha1{}.Doc(),
 			EthernetConfigV1Alpha1{}.Doc(),
 			EthernetRingsConfig{}.Doc(),
 			EthernetChannelsConfig{}.Doc(),
 			HostnameConfigV1Alpha1{}.Doc(),
 			KubespanEndpointsConfigV1Alpha1{}.Doc(),
+			LinkConfigV1Alpha1{}.Doc(),
+			CommonLinkConfig{}.Doc(),
+			AddressConfig{}.Doc(),
+			RouteConfig{}.Doc(),
 			RuleConfigV1Alpha1{}.Doc(),
 			RulePortSelector{}.Doc(),
 			IngressRule{}.Doc(),

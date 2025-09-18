@@ -723,6 +723,72 @@
       ],
       "description": "PCIDriverRebindConfig allows to configure PCI driver rebinds."
     },
+    "network.AddressConfig": {
+      "properties": {
+        "address": {
+          "type": "string",
+          "pattern": "^[0-9a-f.:]+/\\d{1,3}$",
+          "title": "address",
+          "description": "IP address to be assigned to the link.\n\nThis field must include the network prefix length (e.g. /24 for IPv4, /64 for IPv6).\n",
+          "markdownDescription": "IP address to be assigned to the link.\n\nThis field must include the network prefix length (e.g. /24 for IPv4, /64 for IPv6).",
+          "x-intellij-html-description": "\u003cp\u003eIP address to be assigned to the link.\u003c/p\u003e\n\n\u003cp\u003eThis field must include the network prefix length (e.g. /24 for IPv4, /64 for IPv6).\u003c/p\u003e\n"
+        },
+        "routePriority": {
+          "type": "integer",
+          "title": "routePriority",
+          "description": "Configure the route priority (metric) for routes created for this address.\n\nIf not specified, the system default route priority will be used.\n",
+          "markdownDescription": "Configure the route priority (metric) for routes created for this address.\n\nIf not specified, the system default route priority will be used.",
+          "x-intellij-html-description": "\u003cp\u003eConfigure the route priority (metric) for routes created for this address.\u003c/p\u003e\n\n\u003cp\u003eIf not specified, the system default route priority will be used.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "address"
+      ],
+      "description": "AddressConfig represents a network address configuration."
+    },
+    "network.CommonLinkConfig": {
+      "properties": {
+        "up": {
+          "type": "boolean",
+          "title": "up",
+          "description": "Bring the link up or down.\n\nIf not specified, the link will be brought up.\n",
+          "markdownDescription": "Bring the link up or down.\n\nIf not specified, the link will be brought up.",
+          "x-intellij-html-description": "\u003cp\u003eBring the link up or down.\u003c/p\u003e\n\n\u003cp\u003eIf not specified, the link will be brought up.\u003c/p\u003e\n"
+        },
+        "mtu": {
+          "type": "integer",
+          "title": "mtu",
+          "description": "Configure LinkMTU (Maximum Transmission Unit) for the link.\n\nIf not specified, the system default LinkMTU will be used (usually 1500).\n",
+          "markdownDescription": "Configure LinkMTU (Maximum Transmission Unit) for the link.\n\nIf not specified, the system default LinkMTU will be used (usually 1500).",
+          "x-intellij-html-description": "\u003cp\u003eConfigure LinkMTU (Maximum Transmission Unit) for the link.\u003c/p\u003e\n\n\u003cp\u003eIf not specified, the system default LinkMTU will be used (usually 1500).\u003c/p\u003e\n"
+        },
+        "addresses": {
+          "items": {
+            "$ref": "#/$defs/network.AddressConfig"
+          },
+          "type": "array",
+          "title": "addresses",
+          "description": "Configure addresses to be statically assigned to the link.\n",
+          "markdownDescription": "Configure addresses to be statically assigned to the link.",
+          "x-intellij-html-description": "\u003cp\u003eConfigure addresses to be statically assigned to the link.\u003c/p\u003e\n"
+        },
+        "routes": {
+          "items": {
+            "$ref": "#/$defs/network.RouteConfig"
+          },
+          "type": "array",
+          "title": "routes",
+          "description": "Configure routes to be statically created via the link.\n",
+          "markdownDescription": "Configure routes to be statically created via the link.",
+          "x-intellij-html-description": "\u003cp\u003eConfigure routes to be statically created via the link.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "description": "CommonLinkConfig is common configuration for network links, and logical links."
+    },
     "network.DefaultActionConfigV1Alpha1": {
       "properties": {
         "apiVersion": {
@@ -761,6 +827,85 @@
         "kind"
       ],
       "description": "NetworkDefaultActionConfig is a ingress firewall default action configuration document."
+    },
+    "network.DummyLinkConfigV1Alpha1": {
+      "properties": {
+        "apiVersion": {
+          "enum": [
+            "v1alpha1"
+          ],
+          "title": "apiVersion",
+          "description": "apiVersion is the API version of the resource.\n",
+          "markdownDescription": "apiVersion is the API version of the resource.",
+          "x-intellij-html-description": "\u003cp\u003eapiVersion is the API version of the resource.\u003c/p\u003e\n"
+        },
+        "kind": {
+          "enum": [
+            "DummyLinkConfig"
+          ],
+          "title": "kind",
+          "description": "kind is the kind of the resource.\n",
+          "markdownDescription": "kind is the kind of the resource.",
+          "x-intellij-html-description": "\u003cp\u003ekind is the kind of the resource.\u003c/p\u003e\n"
+        },
+        "name": {
+          "type": "string",
+          "title": "name",
+          "description": "Name of the dummy link (interface).\n",
+          "markdownDescription": "Name of the dummy link (interface).",
+          "x-intellij-html-description": "\u003cp\u003eName of the dummy link (interface).\u003c/p\u003e\n"
+        },
+        "hardwareAddr": {
+          "type": "string",
+          "pattern": "^[0-9a-f:]+$",
+          "title": "hardwareAddr",
+          "description": "Override the hardware (MAC) address of the link.\n",
+          "markdownDescription": "Override the hardware (MAC) address of the link.",
+          "x-intellij-html-description": "\u003cp\u003eOverride the hardware (MAC) address of the link.\u003c/p\u003e\n"
+        },
+        "up": {
+          "type": "boolean",
+          "title": "up",
+          "description": "Bring the link up or down.\n\nIf not specified, the link will be brought up.\n",
+          "markdownDescription": "Bring the link up or down.\n\nIf not specified, the link will be brought up.",
+          "x-intellij-html-description": "\u003cp\u003eBring the link up or down.\u003c/p\u003e\n\n\u003cp\u003eIf not specified, the link will be brought up.\u003c/p\u003e\n"
+        },
+        "mtu": {
+          "type": "integer",
+          "title": "mtu",
+          "description": "Configure LinkMTU (Maximum Transmission Unit) for the link.\n\nIf not specified, the system default LinkMTU will be used (usually 1500).\n",
+          "markdownDescription": "Configure LinkMTU (Maximum Transmission Unit) for the link.\n\nIf not specified, the system default LinkMTU will be used (usually 1500).",
+          "x-intellij-html-description": "\u003cp\u003eConfigure LinkMTU (Maximum Transmission Unit) for the link.\u003c/p\u003e\n\n\u003cp\u003eIf not specified, the system default LinkMTU will be used (usually 1500).\u003c/p\u003e\n"
+        },
+        "addresses": {
+          "items": {
+            "$ref": "#/$defs/network.AddressConfig"
+          },
+          "type": "array",
+          "title": "addresses",
+          "description": "Configure addresses to be statically assigned to the link.\n",
+          "markdownDescription": "Configure addresses to be statically assigned to the link.",
+          "x-intellij-html-description": "\u003cp\u003eConfigure addresses to be statically assigned to the link.\u003c/p\u003e\n"
+        },
+        "routes": {
+          "items": {
+            "$ref": "#/$defs/network.RouteConfig"
+          },
+          "type": "array",
+          "title": "routes",
+          "description": "Configure routes to be statically created via the link.\n",
+          "markdownDescription": "Configure routes to be statically created via the link.",
+          "x-intellij-html-description": "\u003cp\u003eConfigure routes to be statically created via the link.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "apiVersion",
+        "kind",
+        "name"
+      ],
+      "description": "DummyLinkConfig is a config document to create a dummy (virtual) network link."
     },
     "network.EthernetChannelsConfig": {
       "properties": {
@@ -1054,6 +1199,129 @@
         "kind"
       ],
       "description": "KubeSpanEndpointsConfig is a config document to configure KubeSpan endpoints."
+    },
+    "network.LinkConfigV1Alpha1": {
+      "properties": {
+        "apiVersion": {
+          "enum": [
+            "v1alpha1"
+          ],
+          "title": "apiVersion",
+          "description": "apiVersion is the API version of the resource.\n",
+          "markdownDescription": "apiVersion is the API version of the resource.",
+          "x-intellij-html-description": "\u003cp\u003eapiVersion is the API version of the resource.\u003c/p\u003e\n"
+        },
+        "kind": {
+          "enum": [
+            "LinkConfig"
+          ],
+          "title": "kind",
+          "description": "kind is the kind of the resource.\n",
+          "markdownDescription": "kind is the kind of the resource.",
+          "x-intellij-html-description": "\u003cp\u003ekind is the kind of the resource.\u003c/p\u003e\n"
+        },
+        "name": {
+          "type": "string",
+          "title": "name",
+          "description": "Name of the link (interface).\n",
+          "markdownDescription": "Name of the link (interface).",
+          "x-intellij-html-description": "\u003cp\u003eName of the link (interface).\u003c/p\u003e\n"
+        },
+        "up": {
+          "type": "boolean",
+          "title": "up",
+          "description": "Bring the link up or down.\n\nIf not specified, the link will be brought up.\n",
+          "markdownDescription": "Bring the link up or down.\n\nIf not specified, the link will be brought up.",
+          "x-intellij-html-description": "\u003cp\u003eBring the link up or down.\u003c/p\u003e\n\n\u003cp\u003eIf not specified, the link will be brought up.\u003c/p\u003e\n"
+        },
+        "mtu": {
+          "type": "integer",
+          "title": "mtu",
+          "description": "Configure LinkMTU (Maximum Transmission Unit) for the link.\n\nIf not specified, the system default LinkMTU will be used (usually 1500).\n",
+          "markdownDescription": "Configure LinkMTU (Maximum Transmission Unit) for the link.\n\nIf not specified, the system default LinkMTU will be used (usually 1500).",
+          "x-intellij-html-description": "\u003cp\u003eConfigure LinkMTU (Maximum Transmission Unit) for the link.\u003c/p\u003e\n\n\u003cp\u003eIf not specified, the system default LinkMTU will be used (usually 1500).\u003c/p\u003e\n"
+        },
+        "addresses": {
+          "items": {
+            "$ref": "#/$defs/network.AddressConfig"
+          },
+          "type": "array",
+          "title": "addresses",
+          "description": "Configure addresses to be statically assigned to the link.\n",
+          "markdownDescription": "Configure addresses to be statically assigned to the link.",
+          "x-intellij-html-description": "\u003cp\u003eConfigure addresses to be statically assigned to the link.\u003c/p\u003e\n"
+        },
+        "routes": {
+          "items": {
+            "$ref": "#/$defs/network.RouteConfig"
+          },
+          "type": "array",
+          "title": "routes",
+          "description": "Configure routes to be statically created via the link.\n",
+          "markdownDescription": "Configure routes to be statically created via the link.",
+          "x-intellij-html-description": "\u003cp\u003eConfigure routes to be statically created via the link.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "apiVersion",
+        "kind",
+        "name"
+      ],
+      "description": "LinkConfig is a config document to configure physical interfaces (network links)."
+    },
+    "network.RouteConfig": {
+      "properties": {
+        "destination": {
+          "type": "string",
+          "pattern": "^[0-9a-f.:]+/\\d{1,3}$",
+          "title": "destination",
+          "description": "The route’s destination as an address prefix.\n\nIf not specified, a default route will be created for the address family of the gateway.\n",
+          "markdownDescription": "The route's destination as an address prefix.\n\nIf not specified, a default route will be created for the address family of the gateway.",
+          "x-intellij-html-description": "\u003cp\u003eThe route\u0026rsquo;s destination as an address prefix.\u003c/p\u003e\n\n\u003cp\u003eIf not specified, a default route will be created for the address family of the gateway.\u003c/p\u003e\n"
+        },
+        "gateway": {
+          "type": "string",
+          "pattern": "^[0-9a-f.:]+$",
+          "title": "gateway",
+          "description": "The route’s gateway (if empty, creates link scope route).\n",
+          "markdownDescription": "The route's gateway (if empty, creates link scope route).",
+          "x-intellij-html-description": "\u003cp\u003eThe route\u0026rsquo;s gateway (if empty, creates link scope route).\u003c/p\u003e\n"
+        },
+        "source": {
+          "type": "string",
+          "pattern": "^[0-9a-f.:]+$",
+          "title": "source",
+          "description": "The route’s source address (optional).\n",
+          "markdownDescription": "The route's source address (optional).",
+          "x-intellij-html-description": "\u003cp\u003eThe route\u0026rsquo;s source address (optional).\u003c/p\u003e\n"
+        },
+        "metric": {
+          "type": "integer",
+          "title": "metric",
+          "description": "The optional metric for the route.\n",
+          "markdownDescription": "The optional metric for the route.",
+          "x-intellij-html-description": "\u003cp\u003eThe optional metric for the route.\u003c/p\u003e\n"
+        },
+        "mtu": {
+          "type": "integer",
+          "title": "mtu",
+          "description": "The optional MTU for the route.\n",
+          "markdownDescription": "The optional MTU for the route.",
+          "x-intellij-html-description": "\u003cp\u003eThe optional MTU for the route.\u003c/p\u003e\n"
+        },
+        "table": {
+          "type": "string",
+          "title": "table",
+          "description": "The routing table to use for the route.\n\nIf not specified, the main routing table will be used.\n",
+          "markdownDescription": "The routing table to use for the route.\n\nIf not specified, the main routing table will be used.",
+          "x-intellij-html-description": "\u003cp\u003eThe routing table to use for the route.\u003c/p\u003e\n\n\u003cp\u003eIf not specified, the main routing table will be used.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "description": "RouteConfig represents a network route configuration."
     },
     "network.RuleConfigV1Alpha1": {
       "properties": {
@@ -4368,6 +4636,9 @@
       "$ref": "#/$defs/network.DefaultActionConfigV1Alpha1"
     },
     {
+      "$ref": "#/$defs/network.DummyLinkConfigV1Alpha1"
+    },
+    {
       "$ref": "#/$defs/network.EthernetConfigV1Alpha1"
     },
     {
@@ -4375,6 +4646,9 @@
     },
     {
       "$ref": "#/$defs/network.KubespanEndpointsConfigV1Alpha1"
+    },
+    {
+      "$ref": "#/$defs/network.LinkConfigV1Alpha1"
     },
     {
       "$ref": "#/$defs/network.RuleConfigV1Alpha1"

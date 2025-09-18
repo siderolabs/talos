@@ -9,14 +9,24 @@ package api
 import (
 	"bufio"
 	"context"
+	"fmt"
+	"math/rand/v2"
+	"net/netip"
 	"strings"
 	"time"
 
+	"github.com/cosi-project/runtime/pkg/resource"
+	"github.com/cosi-project/runtime/pkg/resource/rtestutils"
+	"github.com/cosi-project/runtime/pkg/safe"
+	"github.com/siderolabs/go-pointer"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/siderolabs/talos/internal/integration/base"
 	"github.com/siderolabs/talos/pkg/machinery/client"
+	"github.com/siderolabs/talos/pkg/machinery/config/machine"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/network"
+	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
+	networkres "github.com/siderolabs/talos/pkg/machinery/resources/network"
 )
 
 // NetworkConfigSuite ...
@@ -103,6 +113,121 @@ func (suite *NetworkConfigSuite) TestStaticHostConfig() {
 		},
 		time.Second, time.Millisecond, "waiting for /etc/hosts to be updated",
 	)
+}
+
+// TestDummyLinkConfig tests creation of dummy link interfaces.
+func (suite *NetworkConfigSuite) TestDummyLinkConfig() {
+	if suite.Cluster == nil {
+		suite.T().Skip("skipping if cluster is not qemu/docker")
+	}
+
+	node := suite.RandomDiscoveredNodeInternalIP(machine.TypeWorker)
+	nodeCtx := client.WithNode(suite.ctx, node)
+
+	suite.T().Logf("testing on node %q", node)
+
+	dummyName := fmt.Sprintf("dummy%d", rand.IntN(10000))
+
+	dummy := network.NewDummyLinkConfigV1Alpha1(dummyName)
+	dummy.HardwareAddressConfig = nethelpers.HardwareAddr{0x02, 0x00, 0x00, 0x00, byte(rand.IntN(256)), byte(rand.IntN(256))}
+	dummy.LinkUp = pointer.To(true)
+	dummy.LinkMTU = 9000
+	dummy.LinkAddresses = []network.AddressConfig{
+		{
+			AddressAddress:  netip.MustParsePrefix("fd13:1234::1/64"),
+			AddressPriority: pointer.To[uint32](100),
+		},
+	}
+	dummy.LinkRoutes = []network.RouteConfig{
+		{
+			RouteDestination: network.Prefix{Prefix: netip.MustParsePrefix("fd13:1235::/64")},
+			RouteGateway:     network.Addr{Addr: netip.MustParseAddr("fd13:1234::ffff")},
+		},
+	}
+
+	addressID := dummyName + "/fd13:1234::1/64"
+	routeID := dummyName + "/inet6/fd13:1234::ffff/fd13:1235::/64/1024"
+	addressRouteID := dummyName + "/inet6//fd13:1234::/64/100"
+
+	suite.PatchMachineConfig(nodeCtx, dummy)
+
+	rtestutils.AssertResource(nodeCtx, suite.T(), suite.Client.COSI, dummyName,
+		func(link *networkres.LinkStatus, asrt *assert.Assertions) {
+			asrt.Equal("dummy", link.TypedSpec().Kind)
+			asrt.Equal(dummy.HardwareAddressConfig, link.TypedSpec().HardwareAddr)
+			asrt.Equal(dummy.LinkMTU, link.TypedSpec().MTU)
+		},
+	)
+
+	rtestutils.AssertResource(nodeCtx, suite.T(), suite.Client.COSI, addressID,
+		func(addr *networkres.AddressStatus, asrt *assert.Assertions) {
+			asrt.Equal(dummyName, addr.TypedSpec().LinkName)
+		},
+	)
+
+	rtestutils.AssertResources(nodeCtx, suite.T(), suite.Client.COSI,
+		[]resource.ID{routeID, addressRouteID},
+		func(route *networkres.RouteStatus, asrt *assert.Assertions) {
+			asrt.Equal(dummyName, route.TypedSpec().OutLinkName)
+		},
+	)
+
+	suite.RemoveMachineConfigDocumentsByName(nodeCtx, network.DummyLinkKind, dummyName)
+
+	rtestutils.AssertNoResource[*networkres.LinkStatus](nodeCtx, suite.T(), suite.Client.COSI, dummyName)
+	rtestutils.AssertNoResource[*networkres.AddressStatus](nodeCtx, suite.T(), suite.Client.COSI, addressID)
+	rtestutils.AssertNoResource[*networkres.RouteStatus](nodeCtx, suite.T(), suite.Client.COSI, addressRouteID)
+	rtestutils.AssertNoResource[*networkres.RouteStatus](nodeCtx, suite.T(), suite.Client.COSI, routeID)
+}
+
+// TestLinkConfig tests configuring physical links.
+func (suite *NetworkConfigSuite) TestLinkConfig() {
+	if suite.Cluster == nil || suite.Cluster.Provisioner() != base.ProvisionerQEMU {
+		suite.T().Skip("skipping if cluster is not qemu")
+	}
+
+	node := suite.RandomDiscoveredNodeInternalIP(machine.TypeWorker)
+	nodeCtx := client.WithNode(suite.ctx, node)
+
+	suite.T().Logf("testing on node %q", node)
+
+	// find the first physical link
+	links, err := safe.ReaderListAll[*networkres.LinkStatus](nodeCtx, suite.Client.COSI)
+	suite.Require().NoError(err)
+
+	var linkName string
+
+	for link := range links.All() {
+		if link.TypedSpec().Physical() {
+			linkName = link.Metadata().ID()
+
+			break
+		}
+	}
+
+	suite.Require().NotEmpty(linkName, "expected to find at least one physical link")
+
+	cfg := network.NewLinkConfigV1Alpha1(linkName)
+	cfg.LinkAddresses = []network.AddressConfig{
+		{
+			AddressAddress:  netip.MustParsePrefix("fd13:1234::2/64"),
+			AddressPriority: pointer.To[uint32](2048),
+		},
+	}
+
+	addressID := linkName + "/fd13:1234::2/64"
+
+	suite.PatchMachineConfig(nodeCtx, cfg)
+
+	rtestutils.AssertResource(nodeCtx, suite.T(), suite.Client.COSI, addressID,
+		func(addr *networkres.AddressStatus, asrt *assert.Assertions) {
+			asrt.Equal(linkName, addr.TypedSpec().LinkName)
+		},
+	)
+
+	suite.RemoveMachineConfigDocumentsByName(nodeCtx, network.LinkKind, linkName)
+
+	rtestutils.AssertNoResource[*networkres.AddressStatus](nodeCtx, suite.T(), suite.Client.COSI, addressID)
 }
 
 func init() {

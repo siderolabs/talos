@@ -20,6 +20,7 @@ import (
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/ctest"
 	netctrl "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/network"
 	"github.com/siderolabs/talos/pkg/machinery/config/container"
+	networkcfg "github.com/siderolabs/talos/pkg/machinery/config/types/network"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
 	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
 	"github.com/siderolabs/talos/pkg/machinery/resources/config"
@@ -72,6 +73,47 @@ func (suite *OperatorConfigSuite) TestDefaultDHCP() {
 			case "default/dhcp4/eth1":
 				asrt.Equal("eth1", r.TypedSpec().LinkName)
 			}
+		},
+	)
+}
+
+func (suite *OperatorConfigSuite) TestNoDefaultDHCP() {
+	suite.Require().NoError(suite.Runtime().RegisterController(&netctrl.OperatorConfigController{}))
+
+	for _, link := range []string{"eth0", "eth1", "eth2"} {
+		linkStatus := network.NewLinkStatus(network.NamespaceName, link)
+		linkStatus.TypedSpec().Type = nethelpers.LinkEther
+		linkStatus.TypedSpec().LinkState = true
+
+		suite.Create(linkStatus)
+	}
+
+	// operators start
+	suite.assertOperators(
+		[]string{
+			"default/dhcp4/eth0",
+			"default/dhcp4/eth1",
+			"default/dhcp4/eth2",
+		},
+		func(r *network.OperatorSpec, asrt *assert.Assertions) {},
+	)
+
+	// create config
+	lc1 := networkcfg.NewLinkConfigV1Alpha1("enp0s2")
+	lc1.LinkMTU = 9001
+
+	ctr, err := container.New(lc1)
+	suite.Require().NoError(err)
+
+	cfg := config.NewMachineConfig(ctr)
+	suite.Create(cfg)
+
+	// operators stop
+	suite.assertNoOperators(
+		[]string{
+			"default/dhcp4/eth0",
+			"default/dhcp4/eth1",
+			"default/dhcp4/eth2",
 		},
 	)
 }

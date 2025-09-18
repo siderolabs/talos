@@ -5,9 +5,11 @@
 package network
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
+	"net"
 	"slices"
 
 	"github.com/cosi-project/runtime/pkg/controller"
@@ -350,8 +352,9 @@ func (ctrl *LinkSpecController) syncLink(ctx context.Context, r controller.Runti
 			if err = conn.Link.New(&rtnetlink.LinkMessage{
 				Type: uint16(link.TypedSpec().Type),
 				Attributes: &rtnetlink.LinkAttributes{
-					Name: link.TypedSpec().Name,
-					Type: parentIndex,
+					Name:    link.TypedSpec().Name,
+					Address: net.HardwareAddr(link.TypedSpec().HardwareAddress),
+					Type:    parentIndex,
 					Info: &rtnetlink.LinkInfo{
 						Kind: link.TypedSpec().Kind,
 						Data: &rtnetlink.LinkData{
@@ -606,6 +609,24 @@ func (ctrl *LinkSpecController) syncLink(ctx context.Context, r controller.Runti
 			existing.Attributes.MTU = link.TypedSpec().MTU
 
 			logger.Info("changed MTU for the link", zap.Uint32("mtu", link.TypedSpec().MTU))
+		}
+
+		// sync hardware address if it's set in the spec
+		if len(link.TypedSpec().HardwareAddress) != 0 && !bytes.Equal(net.HardwareAddr(link.TypedSpec().HardwareAddress), existing.Attributes.Address) {
+			if err := conn.Link.Set(&rtnetlink.LinkMessage{
+				Family: existing.Family,
+				Type:   existing.Type,
+				Index:  existing.Index,
+				Attributes: &rtnetlink.LinkAttributes{
+					Address: net.HardwareAddr(link.TypedSpec().HardwareAddress),
+				},
+			}); err != nil {
+				return fmt.Errorf("error setting hardware address for %q: %w", link.TypedSpec().Name, err)
+			}
+
+			existing.Attributes.Address = net.HardwareAddr(link.TypedSpec().HardwareAddress)
+
+			logger.Info("changed hardware address for the link", zap.String("hwaddr", net.HardwareAddr(link.TypedSpec().HardwareAddress).String()))
 		}
 
 		// sync master index (for links which are bridge or bond slaves)

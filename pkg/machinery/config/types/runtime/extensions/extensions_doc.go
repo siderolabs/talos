@@ -16,7 +16,10 @@ func (ServiceConfigV1Alpha1) Doc() *encoder.Doc {
 		Comments:    [3]string{"" /* encoder.HeadComment */, "ExtensionServiceConfig is a extensionserviceconfig document." /* encoder.LineComment */, "" /* encoder.FootComment */},
 		Description: "ExtensionServiceConfig is a extensionserviceconfig document.",
 		Fields: []encoder.Doc{
-			{},
+			{
+				Type:   "Meta",
+				Inline: true,
+			},
 			{
 				Name:        "name",
 				Type:        "string",

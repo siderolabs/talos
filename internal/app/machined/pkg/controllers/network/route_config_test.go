@@ -5,26 +5,21 @@
 package network_test
 
 import (
-	"context"
 	"net/netip"
 	"net/url"
-	"sync"
 	"testing"
 	"time"
 
-	"github.com/cosi-project/runtime/pkg/controller/runtime"
 	"github.com/cosi-project/runtime/pkg/resource/rtestutils"
-	"github.com/cosi-project/runtime/pkg/state"
-	"github.com/cosi-project/runtime/pkg/state/impl/inmem"
-	"github.com/cosi-project/runtime/pkg/state/impl/namespaced"
 	"github.com/siderolabs/go-pointer"
 	"github.com/siderolabs/go-procfs/procfs"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
-	"go.uber.org/zap/zaptest"
 
+	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/ctest"
 	netctrl "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/network"
 	"github.com/siderolabs/talos/pkg/machinery/config/container"
+	networkcfg "github.com/siderolabs/talos/pkg/machinery/config/types/network"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
 	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
 	"github.com/siderolabs/talos/pkg/machinery/resources/config"
@@ -32,60 +27,25 @@ import (
 )
 
 type RouteConfigSuite struct {
-	suite.Suite
-
-	state state.State
-
-	runtime *runtime.Runtime
-	wg      sync.WaitGroup
-
-	ctx       context.Context //nolint:containedctx
-	ctxCancel context.CancelFunc
-}
-
-func (suite *RouteConfigSuite) SetupTest() {
-	suite.ctx, suite.ctxCancel = context.WithTimeout(context.Background(), 3*time.Minute)
-
-	suite.state = state.WrapCore(namespaced.NewState(inmem.Build))
-
-	var err error
-
-	suite.runtime, err = runtime.NewRuntime(suite.state, zaptest.NewLogger(suite.T()))
-	suite.Require().NoError(err)
-
-	suite.Require().NoError(suite.runtime.RegisterController(&netctrl.DeviceConfigController{}))
-}
-
-func (suite *RouteConfigSuite) startRuntime() {
-	suite.wg.Add(1)
-
-	go func() {
-		defer suite.wg.Done()
-
-		suite.Assert().NoError(suite.runtime.Run(suite.ctx))
-	}()
-}
-
-func (suite *RouteConfigSuite) assertRoutes(requiredIDs []string, check func(*network.RouteSpec, *assert.Assertions)) {
-	assertResources(suite.ctx, suite.T(), suite.state, requiredIDs, check, rtestutils.WithNamespace(network.ConfigNamespaceName))
+	ctest.DefaultSuite
 }
 
 func (suite *RouteConfigSuite) TestCmdline() {
 	suite.Require().NoError(
-		suite.runtime.RegisterController(
+		suite.Runtime().RegisterController(
 			&netctrl.RouteConfigController{
 				Cmdline: procfs.NewCmdline("ip=172.20.0.2::172.20.0.1:255.255.255.0::eth1::::: ip=eth3:dhcp ip=10.3.5.7::10.3.5.1:255.255.255.0::eth4"),
 			},
 		),
 	)
 
-	suite.startRuntime()
-
-	suite.assertRoutes(
+	ctest.AssertResources(
+		suite,
 		[]string{
 			"cmdline/inet4/172.20.0.1//1024",
 			"cmdline/inet4/10.3.5.1//1026",
-		}, func(r *network.RouteSpec, asrt *assert.Assertions) {
+		},
+		func(r *network.RouteSpec, asrt *assert.Assertions) {
 			asrt.Equal(network.ConfigCmdline, r.TypedSpec().ConfigLayer)
 			asrt.Equal(nethelpers.FamilyInet4, r.TypedSpec().Family)
 
@@ -98,25 +58,26 @@ func (suite *RouteConfigSuite) TestCmdline() {
 				asrt.EqualValues(network.DefaultRouteMetric+2, r.TypedSpec().Priority)
 			}
 		},
+		rtestutils.WithNamespace(network.ConfigNamespaceName),
 	)
 }
 
 func (suite *RouteConfigSuite) TestCmdlineNotReachable() {
 	suite.Require().NoError(
-		suite.runtime.RegisterController(
+		suite.Runtime().RegisterController(
 			&netctrl.RouteConfigController{
 				Cmdline: procfs.NewCmdline("ip=172.20.0.2::172.20.0.1:255.255.255.255::eth1:::::"),
 			},
 		),
 	)
 
-	suite.startRuntime()
-
-	suite.assertRoutes(
+	ctest.AssertResources(
+		suite,
 		[]string{
 			"cmdline/inet4/172.20.0.1//1024",
 			"cmdline/inet4//172.20.0.1/32/1024",
-		}, func(r *network.RouteSpec, asrt *assert.Assertions) {
+		},
+		func(r *network.RouteSpec, asrt *assert.Assertions) {
 			asrt.Equal(network.ConfigCmdline, r.TypedSpec().ConfigLayer)
 			asrt.Equal(nethelpers.FamilyInet4, r.TypedSpec().Family)
 
@@ -131,13 +92,13 @@ func (suite *RouteConfigSuite) TestCmdlineNotReachable() {
 				asrt.EqualValues(network.DefaultRouteMetric, r.TypedSpec().Priority)
 			}
 		},
+		rtestutils.WithNamespace(network.ConfigNamespaceName),
 	)
 }
 
-func (suite *RouteConfigSuite) TestMachineConfiguration() {
-	suite.Require().NoError(suite.runtime.RegisterController(&netctrl.RouteConfigController{}))
-
-	suite.startRuntime()
+func (suite *RouteConfigSuite) TestMachineConfigurationLegacy() {
+	suite.Require().NoError(suite.Runtime().RegisterController(&netctrl.RouteConfigController{}))
+	suite.Require().NoError(suite.Runtime().RegisterController(&netctrl.DeviceConfigController{}))
 
 	u, err := url.Parse("https://foo:6443")
 	suite.Require().NoError(err)
@@ -225,16 +186,18 @@ func (suite *RouteConfigSuite) TestMachineConfiguration() {
 		),
 	)
 
-	suite.Require().NoError(suite.state.Create(suite.ctx, cfg))
+	suite.Create(cfg)
 
-	suite.assertRoutes(
+	ctest.AssertResources(
+		suite,
 		[]string{
 			"configuration/eth2/inet6/2001:470:6d:30e:8ed2:b60c:9d2f:803b//1024",
 			"configuration/inet4/10.0.3.1/10.0.3.0/24/1024",
 			"configuration/inet4/192.168.0.25/192.168.0.0/18/25",
 			"configuration/inet4/192.244.0.1/192.244.0.0/24/1024",
 			"configuration/inet4//169.254.254.254/32/1024",
-		}, func(r *network.RouteSpec, asrt *assert.Assertions) {
+		},
+		func(r *network.RouteSpec, asrt *assert.Assertions) {
 			switch r.Metadata().ID() {
 			case "configuration/inet6/2001:470:6d:30e:8ed2:b60c:9d2f:803b//1024":
 				asrt.Equal("eth2", r.TypedSpec().OutLinkName)
@@ -263,17 +226,64 @@ func (suite *RouteConfigSuite) TestMachineConfiguration() {
 
 			asrt.Equal(network.ConfigMachineConfiguration, r.TypedSpec().ConfigLayer)
 		},
+		rtestutils.WithNamespace(network.ConfigNamespaceName),
 	)
 }
 
-func (suite *RouteConfigSuite) TearDownTest() {
-	suite.T().Log("tear down")
+func (suite *RouteConfigSuite) TestMachineConfiguration() {
+	suite.Require().NoError(suite.Runtime().RegisterController(&netctrl.RouteConfigController{}))
 
-	suite.ctxCancel()
+	lc1 := networkcfg.NewLinkConfigV1Alpha1("enp0s2")
+	lc1.LinkRoutes = []networkcfg.RouteConfig{
+		{
+			RouteDestination: networkcfg.Prefix{Prefix: netip.MustParsePrefix("10.12.3.0/24")},
+			RouteGateway:     networkcfg.Addr{Addr: netip.MustParseAddr("10.12.3.1")},
+		},
+	}
 
-	suite.wg.Wait()
+	lc2 := networkcfg.NewLinkConfigV1Alpha1("enp0s3")
+	lc2.LinkRoutes = []networkcfg.RouteConfig{
+		{
+			RouteGateway: networkcfg.Addr{Addr: netip.MustParseAddr("2001:470:6d:30e:8ed2:b60c:9d2f:803b")},
+			RouteMetric:  200,
+		},
+	}
+
+	ctr, err := container.New(lc1, lc2)
+	suite.Require().NoError(err)
+
+	suite.Create(config.NewMachineConfig(ctr))
+
+	ctest.AssertResources(
+		suite,
+		[]string{
+			"configuration/enp0s3/inet6/2001:470:6d:30e:8ed2:b60c:9d2f:803b//200",
+			"configuration/inet4/10.12.3.1/10.12.3.0/24/1024",
+		},
+		func(r *network.RouteSpec, asrt *assert.Assertions) {
+			switch r.Metadata().ID() {
+			case "configuration/enp0s3/inet6/2001:470:6d:30e:8ed2:b60c:9d2f:803b//200":
+				asrt.Equal("enp0s3", r.TypedSpec().OutLinkName)
+				asrt.Equal(nethelpers.FamilyInet6, r.TypedSpec().Family)
+				asrt.EqualValues(200, r.TypedSpec().Priority)
+			case "configuration/inet4/10.12.3.1/10.12.3.0/24/1024":
+				asrt.Equal("enp0s2", r.TypedSpec().OutLinkName)
+				asrt.Equal(nethelpers.FamilyInet4, r.TypedSpec().Family)
+				asrt.EqualValues(network.DefaultRouteMetric, r.TypedSpec().Priority)
+			}
+
+			asrt.Equal(network.ConfigMachineConfiguration, r.TypedSpec().ConfigLayer)
+		},
+		rtestutils.WithNamespace(network.ConfigNamespaceName),
+	)
 }
 
 func TestRouteConfigSuite(t *testing.T) {
-	suite.Run(t, new(RouteConfigSuite))
+	t.Parallel()
+
+	suite.Run(t, &RouteConfigSuite{
+		DefaultSuite: ctest.DefaultSuite{
+			Timeout: 5 * time.Second,
+		},
+	})
 }

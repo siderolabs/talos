@@ -120,20 +120,6 @@ type IngressRule struct {
 	Except Prefix `yaml:"except,omitempty"`
 }
 
-// Prefix is a wrapper for netip.Prefix.
-//
-// It implements IsZero() so that yaml.Marshal correctly skips empty values.
-//
-//docgen:nodoc
-type Prefix struct {
-	netip.Prefix
-}
-
-// IsZero implements yaml.IsZeroer interface.
-func (n Prefix) IsZero() bool {
-	return n.Prefix == netip.Prefix{}
-}
-
 // NewRuleConfigV1Alpha1 creates a new RuleConfig config document.
 func NewRuleConfigV1Alpha1() *RuleConfigV1Alpha1 {
 	return &RuleConfigV1Alpha1{

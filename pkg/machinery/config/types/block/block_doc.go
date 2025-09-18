@@ -293,7 +293,10 @@ func (ExistingVolumeConfigV1Alpha1) Doc() *encoder.Doc {
 		Comments:    [3]string{"" /* encoder.HeadComment */, "ExistingVolumeConfig is an existing volume configuration document." /* encoder.LineComment */, "" /* encoder.FootComment */},
 		Description: "ExistingVolumeConfig is an existing volume configuration document.\nExisting volumes allow to mount partitions (or whole disks) that were created\noutside of Talos. Volume will be mounted under `/var/mnt/<name>`.\nThe existing volume config name should not conflict with user volume names.\n",
 		Fields: []encoder.Doc{
-			{},
+			{
+				Type:   "Meta",
+				Inline: true,
+			},
 			{
 				Name:        "name",
 				Type:        "string",
@@ -407,7 +410,10 @@ func (RawVolumeConfigV1Alpha1) Doc() *encoder.Doc {
 		Comments:    [3]string{"" /* encoder.HeadComment */, "RawVolumeConfig is a raw volume configuration document." /* encoder.LineComment */, "" /* encoder.FootComment */},
 		Description: "RawVolumeConfig is a raw volume configuration document.\nRaw volumes allow to create partitions without formatting them.\n If you want to use local storage, user volumes is a better choice,\n raw volumes are intended to be used with CSI provisioners.\nThe partition label is automatically generated as `r-<name>`.\n",
 		Fields: []encoder.Doc{
-			{},
+			{
+				Type:   "Meta",
+				Inline: true,
+			},
 			{
 				Name:        "name",
 				Type:        "string",
@@ -443,7 +449,10 @@ func (SwapVolumeConfigV1Alpha1) Doc() *encoder.Doc {
 		Comments:    [3]string{"" /* encoder.HeadComment */, "SwapVolumeConfig is a disk swap volume configuration document." /* encoder.LineComment */, "" /* encoder.FootComment */},
 		Description: "SwapVolumeConfig is a disk swap volume configuration document.\nSwap volume is automatically allocated as a partition on the specified disk\nand activated as swap, removing a swap volume deactivates swap.\nThe partition label is automatically generated as `s-<name>`.\n",
 		Fields: []encoder.Doc{
-			{},
+			{
+				Type:   "Meta",
+				Inline: true,
+			},
 			{
 				Name:        "name",
 				Type:        "string",
@@ -479,7 +488,10 @@ func (UserVolumeConfigV1Alpha1) Doc() *encoder.Doc {
 		Comments:    [3]string{"" /* encoder.HeadComment */, "UserVolumeConfig is a user volume configuration document." /* encoder.LineComment */, "" /* encoder.FootComment */},
 		Description: "UserVolumeConfig is a user volume configuration document.\nUser volume is automatically allocated as a partition on the specified disk\nand mounted under `/var/mnt/<name>`.\nThe partition label is automatically generated as `u-<name>`.\n",
 		Fields: []encoder.Doc{
-			{},
+			{
+				Type:   "Meta",
+				Inline: true,
+			},
 			{
 				Name:        "name",
 				Type:        "string",
@@ -558,7 +570,10 @@ func (VolumeConfigV1Alpha1) Doc() *encoder.Doc {
 		Comments:    [3]string{"" /* encoder.HeadComment */, "VolumeConfig is a system volume configuration document." /* encoder.LineComment */, "" /* encoder.FootComment */},
 		Description: "VolumeConfig is a system volume configuration document.\nNote: at the moment, only `STATE`, `EPHEMERAL` and `IMAGE-CACHE` system volumes are supported.\n",
 		Fields: []encoder.Doc{
-			{},
+			{
+				Type:   "Meta",
+				Inline: true,
+			},
 			{
 				Name:        "name",
 				Type:        "string",
@@ -683,7 +698,10 @@ func (ZswapConfigV1Alpha1) Doc() *encoder.Doc {
 		Comments:    [3]string{"" /* encoder.HeadComment */, "ZswapConfig is a zswap (compressed memory) configuration document." /* encoder.LineComment */, "" /* encoder.FootComment */},
 		Description: "ZswapConfig is a zswap (compressed memory) configuration document.\nWhen zswap is enabled, Linux kernel compresses pages that would otherwise be swapped out to disk.\nThe compressed pages are stored in a memory pool, which is used to avoid writing to disk\nwhen the system is under memory pressure.\n",
 		Fields: []encoder.Doc{
-			{},
+			{
+				Type:   "Meta",
+				Inline: true,
+			},
 			{
 				Name:        "maxPoolPercent",
 				Type:        "int",

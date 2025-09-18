@@ -13,7 +13,9 @@ import (
 	"github.com/cenkalti/backoff/v4"
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
+	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
+	"github.com/siderolabs/gen/xslices"
 	"go.uber.org/zap"
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/network/operator"
@@ -188,29 +190,25 @@ func (ctrl *OperatorSpecController) reconcileOperators(ctx context.Context, r co
 	// build link up statuses
 	linkStatuses := make(map[string]bool)
 
-	list, err := r.List(ctx, resource.NewMetadata(network.NamespaceName, network.LinkStatusType, "", resource.VersionUndefined))
+	linkStatusList, err := safe.ReaderListAll[*network.LinkStatus](ctx, r)
 	if err != nil {
-		return fmt.Errorf("error listing source network addresses: %w", err)
+		return fmt.Errorf("error listing link statuses: %w", err)
 	}
 
-	for _, item := range list.Items {
-		linkStatus := item.(*network.LinkStatus) //nolint:forcetypeassert
-
+	for linkStatus := range linkStatusList.All() {
 		linkStatuses[linkStatus.Metadata().ID()] = linkStatus.TypedSpec().OperationalState == nethelpers.OperStateUnknown || linkStatus.TypedSpec().OperationalState == nethelpers.OperStateUp
 	}
 
 	// list operator specs
-	list, err = r.List(ctx, resource.NewMetadata(network.NamespaceName, network.OperatorSpecType, "", resource.VersionUndefined))
+	operatorSpecs, err := safe.ReaderListAll[*network.OperatorSpec](ctx, r)
 	if err != nil {
-		return fmt.Errorf("error listing source network addresses: %w", err)
+		return fmt.Errorf("error listing operator specs: %w", err)
 	}
 
 	// figure out which operators should run
 	shouldRun := make(map[string]*network.OperatorSpecSpec)
 
-	for _, item := range list.Items {
-		operatorSpec := item.(*network.OperatorSpec) //nolint:forcetypeassert
-
+	for operatorSpec := range operatorSpecs.All() {
 		up, exists := linkStatuses[operatorSpec.TypedSpec().LinkName]
 
 		// link doesn't exist, skip operator
@@ -262,32 +260,20 @@ func (ctrl *OperatorSpecController) reconcileOperators(ctx context.Context, r co
 
 //nolint:gocyclo,cyclop
 func (ctrl *OperatorSpecController) reconcileOperatorOutputs(ctx context.Context, r controller.Runtime) error {
-	// query specs from all operators and update outputs
-	touchedIDs := map[string]map[string]struct{}{}
-
-	apply := func(res resource.Resource, fn func(resource.Resource)) error {
-		if touchedIDs[res.Metadata().Type()] == nil {
-			touchedIDs[res.Metadata().Type()] = map[string]struct{}{}
-		}
-
-		touchedIDs[res.Metadata().Type()][res.Metadata().ID()] = struct{}{}
-
-		return r.Modify(ctx, res, func(r resource.Resource) error {
-			fn(r)
-
-			return nil
-		})
-	}
+	r.StartTrackingOutputs()
 
 	for _, op := range ctrl.operators {
 		for _, addressSpec := range op.Operator.AddressSpecs() {
-			if err := apply(
+			if err := safe.WriterModify(
+				ctx, r,
 				network.NewAddressSpec(
 					network.ConfigNamespaceName,
 					fmt.Sprintf("%s/%s", op.Operator.Prefix(), network.AddressID(addressSpec.LinkName, addressSpec.Address)),
 				),
-				func(r resource.Resource) {
-					*r.(*network.AddressSpec).TypedSpec() = addressSpec
+				func(r *network.AddressSpec) error {
+					*r.TypedSpec() = addressSpec
+
+					return nil
 				},
 			); err != nil {
 				return fmt.Errorf("error applying spec: %w", err)
@@ -295,7 +281,8 @@ func (ctrl *OperatorSpecController) reconcileOperatorOutputs(ctx context.Context
 		}
 
 		for _, routeSpec := range op.Operator.RouteSpecs() {
-			if err := apply(
+			if err := safe.WriterModify(
+				ctx, r,
 				network.NewRouteSpec(
 					network.ConfigNamespaceName,
 					fmt.Sprintf("%s/%s",
@@ -303,8 +290,10 @@ func (ctrl *OperatorSpecController) reconcileOperatorOutputs(ctx context.Context
 						network.RouteID(routeSpec.Table, routeSpec.Family, routeSpec.Destination, routeSpec.Gateway, routeSpec.Priority, routeSpec.OutLinkName),
 					),
 				),
-				func(r resource.Resource) {
-					*r.(*network.RouteSpec).TypedSpec() = routeSpec
+				func(r *network.RouteSpec) error {
+					*r.TypedSpec() = routeSpec
+
+					return nil
 				},
 			); err != nil {
 				return fmt.Errorf("error applying spec: %w", err)
@@ -312,13 +301,16 @@ func (ctrl *OperatorSpecController) reconcileOperatorOutputs(ctx context.Context
 		}
 
 		for _, linkSpec := range op.Operator.LinkSpecs() {
-			if err := apply(
+			if err := safe.WriterModify(
+				ctx, r,
 				network.NewLinkSpec(
 					network.ConfigNamespaceName,
 					fmt.Sprintf("%s/%s", op.Operator.Prefix(), network.LinkID(linkSpec.Name)),
 				),
-				func(r resource.Resource) {
-					*r.(*network.LinkSpec).TypedSpec() = linkSpec
+				func(r *network.LinkSpec) error {
+					*r.TypedSpec() = linkSpec
+
+					return nil
 				},
 			); err != nil {
 				return fmt.Errorf("error applying spec: %w", err)
@@ -326,13 +318,16 @@ func (ctrl *OperatorSpecController) reconcileOperatorOutputs(ctx context.Context
 		}
 
 		for _, hostnameSpec := range op.Operator.HostnameSpecs() {
-			if err := apply(
+			if err := safe.WriterModify(
+				ctx, r,
 				network.NewHostnameSpec(
 					network.ConfigNamespaceName,
 					fmt.Sprintf("%s/%s", op.Operator.Prefix(), network.HostnameID),
 				),
-				func(r resource.Resource) {
-					*r.(*network.HostnameSpec).TypedSpec() = hostnameSpec
+				func(r *network.HostnameSpec) error {
+					*r.TypedSpec() = hostnameSpec
+
+					return nil
 				},
 			); err != nil {
 				return fmt.Errorf("error applying spec: %w", err)
@@ -340,13 +335,16 @@ func (ctrl *OperatorSpecController) reconcileOperatorOutputs(ctx context.Context
 		}
 
 		for _, resolverSpec := range op.Operator.ResolverSpecs() {
-			if err := apply(
+			if err := safe.WriterModify(
+				ctx, r,
 				network.NewResolverSpec(
 					network.ConfigNamespaceName,
 					fmt.Sprintf("%s/%s", op.Operator.Prefix(), network.ResolverID),
 				),
-				func(r resource.Resource) {
-					*r.(*network.ResolverSpec).TypedSpec() = resolverSpec
+				func(r *network.ResolverSpec) error {
+					*r.TypedSpec() = resolverSpec
+
+					return nil
 				},
 			); err != nil {
 				return fmt.Errorf("error applying spec: %w", err)
@@ -354,13 +352,16 @@ func (ctrl *OperatorSpecController) reconcileOperatorOutputs(ctx context.Context
 		}
 
 		for _, timeserverSpec := range op.Operator.TimeServerSpecs() {
-			if err := apply(
+			if err := safe.WriterModify(
+				ctx, r,
 				network.NewTimeServerSpec(
 					network.ConfigNamespaceName,
 					fmt.Sprintf("%s/%s", op.Operator.Prefix(), network.TimeServerID),
 				),
-				func(r resource.Resource) {
-					*r.(*network.TimeServerSpec).TypedSpec() = timeserverSpec
+				func(r *network.TimeServerSpec) error {
+					*r.TypedSpec() = timeserverSpec
+
+					return nil
 				},
 			); err != nil {
 				return fmt.Errorf("error applying spec: %w", err)
@@ -369,38 +370,19 @@ func (ctrl *OperatorSpecController) reconcileOperatorOutputs(ctx context.Context
 	}
 
 	// clean up not touched specs
-	for _, resourceType := range []resource.Type{
-		network.AddressSpecType,
-		network.LinkSpecType,
-		network.RouteSpecType,
-		network.HostnameSpecType,
-		network.ResolverSpecType,
-		network.TimeServerSpecType,
-	} {
-		list, err := r.List(ctx, resource.NewMetadata(network.ConfigNamespaceName, resourceType, "", resource.VersionUndefined))
-		if err != nil {
-			return fmt.Errorf("error listing specs: %w", err)
-		}
-
-		for _, item := range list.Items {
-			if item.Metadata().Owner() != ctrl.Name() {
-				continue
-			}
-
-			touched := false
-
-			if touchedIDs[resourceType] != nil {
-				if _, exists := touchedIDs[resourceType][item.Metadata().ID()]; exists {
-					touched = true
-				}
-			}
-
-			if !touched {
-				if err = r.Destroy(ctx, item.Metadata()); err != nil {
-					return fmt.Errorf("error cleaning up untouched spec: %w", err)
-				}
-			}
-		}
+	if err := r.CleanupOutputs(ctx,
+		xslices.Map([]resource.Type{
+			network.AddressSpecType,
+			network.LinkSpecType,
+			network.RouteSpecType,
+			network.HostnameSpecType,
+			network.ResolverSpecType,
+			network.TimeServerSpecType,
+		}, func(t resource.Type) resource.Kind {
+			return resource.NewMetadata(network.ConfigNamespaceName, t, "", resource.VersionUndefined)
+		})...,
+	); err != nil {
+		return fmt.Errorf("error during outputs cleanup: %w", err)
 	}
 
 	return nil

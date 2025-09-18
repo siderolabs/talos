@@ -1,6 +1,5 @@
 ---
-machine:
-  network:
-    interfaces:
-      - interface: dummy-ap-patch
-        $patch: delete
+apiVersion: v1alpha1
+kind: DummyLinkConfig
+name: dummy-ap-patch
+$patch: delete

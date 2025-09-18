@@ -73,6 +73,11 @@ func ({{ $struct.Name }}) Doc() *encoder.Doc {
 					  },
 					  {{ end -}}
 					},
+				{{ else if $field.Inline -}}
+					{
+					  Type: "{{ $field.Type }}",
+					  Inline: true,
+					},
 				{{ else -}}
 					{},
 				{{- end }}
@@ -151,6 +156,7 @@ type Field struct {
 	Text    *Text
 	Tag     string
 	Note    string
+	Inline  bool
 }
 
 type Text struct {
@@ -370,7 +376,15 @@ func collectFields(s *structType, aliases map[string]aliasType) (fields []*Field
 	for _, f := range s.node.Fields.List {
 		if f.Names == nil {
 			// This is an embedded struct.
-			fields = append(fields, &Field{Type: "unknown"})
+			if f.Tag != nil && reflect.StructTag(strings.Trim(f.Tag.Value, "`")).Get("yaml") == ",inline" {
+				fields = append(fields, &Field{
+					Type:    formatFieldType(f.Type),
+					TypeRef: getFieldType(f.Type),
+					Inline:  true,
+				})
+			} else {
+				fields = append(fields, &Field{Type: "unknown"})
+			}
 
 			continue
 		}
@@ -560,7 +574,7 @@ func packageToDoc(pkg *packageType, aliases map[string]aliasType) *Doc {
 				continue
 			}
 
-			if len(field.Text.Examples) > 0 {
+			if field.Text != nil && len(field.Text.Examples) > 0 {
 				extraExamples[field.TypeRef] = append(extraExamples[field.TypeRef], field.Text.Examples...)
 			}
 

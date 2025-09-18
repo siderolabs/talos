@@ -10,7 +10,6 @@ import (
 	"net/netip"
 
 	"github.com/cosi-project/runtime/pkg/controller"
-	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/jsimonetti/rtnetlink/v2"
 	"go.uber.org/zap"
@@ -69,6 +68,8 @@ func (ctrl *RouteStatusController) Run(ctx context.Context, r controller.Runtime
 		case <-r.EventCh():
 		}
 
+		r.StartTrackingOutputs()
+
 		// build links lookup table
 		links, err := conn.Link.List()
 		if err != nil {
@@ -79,18 +80,6 @@ func (ctrl *RouteStatusController) Run(ctx context.Context, r controller.Runtime
 
 		for _, link := range links {
 			linkLookup[link.Index] = link.Attributes.Name
-		}
-
-		// list resources for cleanup
-		list, err := r.List(ctx, resource.NewMetadata(network.NamespaceName, network.RouteStatusType, "", resource.VersionUndefined))
-		if err != nil {
-			return fmt.Errorf("error listing resources: %w", err)
-		}
-
-		itemsToDelete := map[resource.ID]struct{}{}
-
-		for _, r := range list.Items {
-			itemsToDelete[r.Metadata().ID()] = struct{}{}
 		}
 
 		routes, err := conn.Route.List()
@@ -133,16 +122,10 @@ func (ctrl *RouteStatusController) Run(ctx context.Context, r controller.Runtime
 			}); err != nil {
 				return fmt.Errorf("error modifying resource: %w", err)
 			}
-
-			delete(itemsToDelete, id)
 		}
 
-		for id := range itemsToDelete {
-			if err = r.Destroy(ctx, resource.NewMetadata(network.NamespaceName, network.RouteStatusType, id, resource.VersionUndefined)); err != nil {
-				return fmt.Errorf("error deleting route status %q: %w", id, err)
-			}
+		if err := safe.CleanupOutputs[*network.RouteStatus](ctx, r); err != nil {
+			return fmt.Errorf("error doing cleanup: %w", err)
 		}
-
-		r.ResetRestartBackoff()
 	}
 }

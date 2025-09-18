@@ -1803,23 +1803,24 @@ func (x *LinkRefreshSpec) GetGeneration() int64 {
 
 // LinkSpecSpec describes spec for the link.
 type LinkSpecSpec struct {
-	state         protoimpl.MessageState   `protogen:"open.v1"`
-	Name          string                   `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
-	Logical       bool                     `protobuf:"varint,2,opt,name=logical,proto3" json:"logical,omitempty"`
-	Up            bool                     `protobuf:"varint,3,opt,name=up,proto3" json:"up,omitempty"`
-	Mtu           uint32                   `protobuf:"varint,4,opt,name=mtu,proto3" json:"mtu,omitempty"`
-	Kind          string                   `protobuf:"bytes,5,opt,name=kind,proto3" json:"kind,omitempty"`
-	Type          enums.NethelpersLinkType `protobuf:"varint,6,opt,name=type,proto3,enum=talos.resource.definitions.enums.NethelpersLinkType" json:"type,omitempty"`
-	ParentName    string                   `protobuf:"bytes,7,opt,name=parent_name,json=parentName,proto3" json:"parent_name,omitempty"`
-	BondSlave     *BondSlave               `protobuf:"bytes,8,opt,name=bond_slave,json=bondSlave,proto3" json:"bond_slave,omitempty"`
-	BridgeSlave   *BridgeSlave             `protobuf:"bytes,9,opt,name=bridge_slave,json=bridgeSlave,proto3" json:"bridge_slave,omitempty"`
-	Vlan          *VLANSpec                `protobuf:"bytes,10,opt,name=vlan,proto3" json:"vlan,omitempty"`
-	BondMaster    *BondMasterSpec          `protobuf:"bytes,11,opt,name=bond_master,json=bondMaster,proto3" json:"bond_master,omitempty"`
-	BridgeMaster  *BridgeMasterSpec        `protobuf:"bytes,12,opt,name=bridge_master,json=bridgeMaster,proto3" json:"bridge_master,omitempty"`
-	Wireguard     *WireguardSpec           `protobuf:"bytes,13,opt,name=wireguard,proto3" json:"wireguard,omitempty"`
-	ConfigLayer   enums.NetworkConfigLayer `protobuf:"varint,14,opt,name=config_layer,json=configLayer,proto3,enum=talos.resource.definitions.enums.NetworkConfigLayer" json:"config_layer,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state           protoimpl.MessageState   `protogen:"open.v1"`
+	Name            string                   `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	Logical         bool                     `protobuf:"varint,2,opt,name=logical,proto3" json:"logical,omitempty"`
+	Up              bool                     `protobuf:"varint,3,opt,name=up,proto3" json:"up,omitempty"`
+	Mtu             uint32                   `protobuf:"varint,4,opt,name=mtu,proto3" json:"mtu,omitempty"`
+	Kind            string                   `protobuf:"bytes,5,opt,name=kind,proto3" json:"kind,omitempty"`
+	Type            enums.NethelpersLinkType `protobuf:"varint,6,opt,name=type,proto3,enum=talos.resource.definitions.enums.NethelpersLinkType" json:"type,omitempty"`
+	ParentName      string                   `protobuf:"bytes,7,opt,name=parent_name,json=parentName,proto3" json:"parent_name,omitempty"`
+	BondSlave       *BondSlave               `protobuf:"bytes,8,opt,name=bond_slave,json=bondSlave,proto3" json:"bond_slave,omitempty"`
+	BridgeSlave     *BridgeSlave             `protobuf:"bytes,9,opt,name=bridge_slave,json=bridgeSlave,proto3" json:"bridge_slave,omitempty"`
+	Vlan            *VLANSpec                `protobuf:"bytes,10,opt,name=vlan,proto3" json:"vlan,omitempty"`
+	BondMaster      *BondMasterSpec          `protobuf:"bytes,11,opt,name=bond_master,json=bondMaster,proto3" json:"bond_master,omitempty"`
+	BridgeMaster    *BridgeMasterSpec        `protobuf:"bytes,12,opt,name=bridge_master,json=bridgeMaster,proto3" json:"bridge_master,omitempty"`
+	Wireguard       *WireguardSpec           `protobuf:"bytes,13,opt,name=wireguard,proto3" json:"wireguard,omitempty"`
+	ConfigLayer     enums.NetworkConfigLayer `protobuf:"varint,14,opt,name=config_layer,json=configLayer,proto3,enum=talos.resource.definitions.enums.NetworkConfigLayer" json:"config_layer,omitempty"`
+	HardwareAddress []byte                   `protobuf:"bytes,15,opt,name=hardware_address,json=hardwareAddress,proto3" json:"hardware_address,omitempty"`
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
 }
 
 func (x *LinkSpecSpec) Reset() {
@@ -1948,6 +1949,13 @@ func (x *LinkSpecSpec) GetConfigLayer() enums.NetworkConfigLayer {
 		return x.ConfigLayer
 	}
 	return enums.NetworkConfigLayer(0)
+}
+
+func (x *LinkSpecSpec) GetHardwareAddress() []byte {
+	if x != nil {
+		return x.HardwareAddress
+	}
+	return nil
 }
 
 // LinkStatusSpec describes status of rendered secrets.
@@ -4707,7 +4715,7 @@ const file_resource_definitions_network_network_proto_rawDesc = "" +
 	"\x0fLinkRefreshSpec\x12\x1e\n" +
 	"\n" +
 	"generation\x18\x01 \x01(\x03R\n" +
-	"generation\"\x9b\x06\n" +
+	"generation\"\xc6\x06\n" +
 	"\fLinkSpecSpec\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12\x18\n" +
 	"\alogical\x18\x02 \x01(\bR\alogical\x12\x0e\n" +
@@ -4726,7 +4734,8 @@ const file_resource_definitions_network_network_proto_rawDesc = "" +
 	"bondMaster\x12Y\n" +
 	"\rbridge_master\x18\f \x01(\v24.talos.resource.definitions.network.BridgeMasterSpecR\fbridgeMaster\x12O\n" +
 	"\twireguard\x18\r \x01(\v21.talos.resource.definitions.network.WireguardSpecR\twireguard\x12W\n" +
-	"\fconfig_layer\x18\x0e \x01(\x0e24.talos.resource.definitions.enums.NetworkConfigLayerR\vconfigLayer\"\xe1\n" +
+	"\fconfig_layer\x18\x0e \x01(\x0e24.talos.resource.definitions.enums.NetworkConfigLayerR\vconfigLayer\x12)\n" +
+	"\x10hardware_address\x18\x0f \x01(\fR\x0fhardwareAddress\"\xe1\n" +
 	"\n" +
 	"\x0eLinkStatusSpec\x12\x14\n" +
 	"\x05index\x18\x01 \x01(\rR\x05index\x12H\n" +

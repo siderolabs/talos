@@ -20,6 +20,7 @@ import (
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/ctest"
 	netctrl "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/network"
 	"github.com/siderolabs/talos/pkg/machinery/config/container"
+	networkcfg "github.com/siderolabs/talos/pkg/machinery/config/types/network"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
 	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
 	"github.com/siderolabs/talos/pkg/machinery/resources/config"
@@ -458,6 +459,59 @@ func (suite *LinkConfigSuite) TestMachineConfigurationWithAliases() {
 	)
 }
 
+func (suite *LinkConfigSuite) TestMachineConfigurationNewStyle() {
+	suite.Require().NoError(suite.Runtime().RegisterController(&netctrl.LinkConfigController{}))
+
+	lc1 := networkcfg.NewLinkConfigV1Alpha1("enp0s2")
+	lc1.LinkMTU = 9001
+
+	dc1 := networkcfg.NewDummyLinkConfigV1Alpha1("dummy1")
+	dc1.HardwareAddressConfig = nethelpers.HardwareAddr{0x02, 0x42, 0xac, 0x11, 0x00, 0x02}
+	dc1.LinkUp = pointer.To(true)
+
+	ctr, err := container.New(dc1, lc1)
+	suite.Require().NoError(err)
+
+	cfg := config.NewMachineConfig(ctr)
+	suite.Create(cfg)
+
+	for _, link := range []struct {
+		name    string
+		aliases []string
+	}{
+		{
+			name:    "eth0",
+			aliases: []string{"enp0s2"},
+		},
+	} {
+		status := network.NewLinkStatus(network.NamespaceName, link.name)
+		status.TypedSpec().AltNames = link.aliases
+
+		suite.Create(status)
+	}
+
+	suite.assertLinks(
+		[]string{
+			"configuration/eth0",
+			"configuration/dummy1",
+		}, func(r *network.LinkSpec, asrt *assert.Assertions) {
+			asrt.Equal(network.ConfigMachineConfiguration, r.TypedSpec().ConfigLayer)
+
+			switch r.TypedSpec().Name {
+			case "eth0":
+				asrt.True(r.TypedSpec().Up)
+				asrt.False(r.TypedSpec().Logical)
+				asrt.EqualValues(9001, r.TypedSpec().MTU)
+			case "dummy1":
+				asrt.True(r.TypedSpec().Up)
+				asrt.True(r.TypedSpec().Logical)
+				asrt.Equal(nethelpers.LinkEther, r.TypedSpec().Type)
+				asrt.Equal("dummy", r.TypedSpec().Kind)
+			}
+		},
+	)
+}
+
 func (suite *LinkConfigSuite) TestDefaultUp() {
 	suite.Require().NoError(
 		suite.Runtime().RegisterController(
@@ -473,7 +527,7 @@ func (suite *LinkConfigSuite) TestDefaultUp() {
 		linkStatus.TypedSpec().LinkState = true
 
 		if link == "eth5" {
-			linkStatus.TypedSpec().AltNames = []string{"eth0"}
+			linkStatus.TypedSpec().AltNames = []string{"enp0s2"}
 		}
 
 		suite.Create(linkStatus)
@@ -546,6 +600,58 @@ func (suite *LinkConfigSuite) TestDefaultUp() {
 			"default/eth2",
 			"default/eth3",
 			"default/eth4",
+		},
+	)
+}
+
+func (suite *LinkConfigSuite) TestNoDefaultUp() {
+	suite.Require().NoError(suite.Runtime().RegisterController(&netctrl.LinkConfigController{}))
+
+	for _, link := range []string{"eth5", "eth1", "eth2", "eth3", "eth4"} {
+		linkStatus := network.NewLinkStatus(network.NamespaceName, link)
+		linkStatus.TypedSpec().Type = nethelpers.LinkEther
+		linkStatus.TypedSpec().LinkState = true
+
+		if link == "eth5" {
+			linkStatus.TypedSpec().AltNames = []string{"eth0"}
+		}
+
+		suite.Create(linkStatus)
+	}
+
+	// default link up
+	suite.assertLinks(
+		[]string{
+			"default/eth1",
+			"default/eth2",
+			"default/eth3",
+			"default/eth4",
+			"default/eth5",
+		}, func(r *network.LinkSpec, asrt *assert.Assertions) {
+			asrt.Equal(network.ConfigDefault, r.TypedSpec().ConfigLayer)
+			asrt.True(r.TypedSpec().Up)
+		},
+	)
+
+	// create config
+	lc1 := networkcfg.NewLinkConfigV1Alpha1("enp0s2")
+	lc1.LinkMTU = 9001
+
+	ctr, err := container.New(lc1)
+	suite.Require().NoError(err)
+
+	cfg := config.NewMachineConfig(ctr)
+	suite.Create(cfg)
+
+	// no default links up since we have config now
+	suite.assertNoLinks(
+		[]string{
+			"default/eth0",
+			"default/eth1",
+			"default/eth2",
+			"default/eth3",
+			"default/eth4",
+			"default/eth5",
 		},
 	)
 }

@@ -234,6 +234,7 @@ message LinkSpecSpec {
   BridgeMasterSpec bridge_master = 12;
   WireguardSpec wireguard = 13;
   talos.resource.definitions.enums.NetworkConfigLayer config_layer = 14;
+  bytes hardware_address = 15;
 }
 
 // LinkStatusSpec describes status of rendered secrets.

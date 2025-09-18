@@ -42,6 +42,8 @@ type Doc struct {
 	Note string
 	// AppearsIn describes back references for the type.
 	AppearsIn []Appearance
+	// Inline indicates that this field is inlined (embedded).
+	Inline bool
 }
 
 // AddExample adds a new example snippet to the doc.

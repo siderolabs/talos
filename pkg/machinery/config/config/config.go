@@ -7,23 +7,33 @@ package config
 
 // Config defines the interface to access contents of the machine configuration.
 type Config interface { //nolint:interfacebloat
+	// old v1alpha1 interface (to be decomposed as we move to multi-doc)
 	Debug() bool
 	Machine() MachineConfig
 	Cluster() ClusterConfig
+
+	// new multi-doc interfaces:
+	//  - network
 	SideroLink() SideroLinkConfig
-	ExtensionServiceConfigs() []ExtensionServiceConfig
-	Runtime() RuntimeConfig
 	NetworkRules() NetworkRuleConfig
-	TrustedRoots() TrustedRootsConfig
-	Volumes() VolumesConfig
 	KubespanConfig() KubespanConfig
-	PCIDriverRebindConfig() PCIDriverRebindConfig
 	EthernetConfigs() []EthernetConfig
+	RunDefaultDHCPOperators() bool
+	NetworkStaticHostConfig() []NetworkStaticHostConfig
+	NetworkHostnameConfig() NetworkHostnameConfig
+	NetworkCommonLinkConfigs() []NetworkCommonLinkConfig
+
+	// - block devices/storage:
+	Volumes() VolumesConfig
 	UserVolumeConfigs() []UserVolumeConfig
 	RawVolumeConfigs() []RawVolumeConfig
 	ExistingVolumeConfigs() []ExistingVolumeConfig
 	SwapVolumeConfigs() []SwapVolumeConfig
 	ZswapConfig() ZswapConfig
-	NetworkStaticHostConfig() []NetworkStaticHostConfig
-	NetworkHostnameConfig() NetworkHostnameConfig
+
+	// - misc:
+	ExtensionServiceConfigs() []ExtensionServiceConfig
+	Runtime() RuntimeConfig
+	TrustedRoots() TrustedRootsConfig
+	PCIDriverRebindConfig() PCIDriverRebindConfig
 }

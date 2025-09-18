@@ -14,12 +14,14 @@ import (
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/siderolabs/gen/maps"
+	"github.com/siderolabs/gen/optional"
 	"github.com/siderolabs/gen/pair/ordered"
 	"github.com/siderolabs/go-procfs/procfs"
 	"go.uber.org/zap"
 
 	talosconfig "github.com/siderolabs/talos/pkg/machinery/config/config"
 	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
+	"github.com/siderolabs/talos/pkg/machinery/resources/config"
 	"github.com/siderolabs/talos/pkg/machinery/resources/network"
 )
 
@@ -46,6 +48,12 @@ func (ctrl *LinkConfigController) Inputs() []controller.Input {
 			Type:      network.LinkStatusType,
 			Kind:      controller.InputWeak,
 		},
+		{
+			Namespace: config.NamespaceName,
+			Type:      config.MachineConfigType,
+			ID:        optional.Some(config.ActiveID),
+			Kind:      controller.InputWeak,
+		},
 	}
 }
 
@@ -70,22 +78,24 @@ func (ctrl *LinkConfigController) Run(ctx context.Context, r controller.Runtime,
 		case <-r.EventCh():
 		}
 
-		touchedIDs := make(map[resource.ID]struct{})
+		r.StartTrackingOutputs()
 
-		items, err := r.List(ctx, resource.NewMetadata(network.NamespaceName, network.DeviceConfigSpecType, "", resource.VersionUndefined))
+		cfg, err := safe.ReaderGetByID[*config.MachineConfig](ctx, r, config.ActiveID)
 		if err != nil {
 			if !state.IsNotFoundError(err) {
-				return fmt.Errorf("error getting config: %w", err)
+				return fmt.Errorf("error getting machine config: %w", err)
 			}
+		}
+
+		devices, err := safe.ReaderListAll[*network.DeviceConfigSpec](ctx, r)
+		if err != nil {
+			return fmt.Errorf("error getting device config: %w", err)
 		}
 
 		ignoredInterfaces := map[string]struct{}{}
 
-		devices := make([]talosconfig.Device, len(items.Items))
-
-		for i, item := range items.Items {
-			device := item.(*network.DeviceConfigSpec).TypedSpec().Device
-			devices[i] = device
+		for item := range devices.All() {
+			device := item.TypedSpec().Device
 
 			if device.Ignore() {
 				ignoredInterfaces[device.Interface()] = struct{}{}
@@ -101,21 +111,14 @@ func (ctrl *LinkConfigController) Run(ctx context.Context, r controller.Runtime,
 
 		// bring up loopback interface
 		{
-			var ids []string
-
-			ids, err = ctrl.apply(ctx, r, []network.LinkSpecSpec{
+			if err = ctrl.apply(ctx, r, []network.LinkSpecSpec{
 				{
 					Name:        "lo",
 					Up:          true,
 					ConfigLayer: network.ConfigDefault,
 				},
-			})
-			if err != nil {
+			}); err != nil {
 				return fmt.Errorf("error applying cmdline route: %w", err)
-			}
-
-			for _, id := range ids {
-				touchedIDs[id] = struct{}{}
 			}
 		}
 
@@ -124,121 +127,90 @@ func (ctrl *LinkConfigController) Run(ctx context.Context, r controller.Runtime,
 		for _, cmdlineLink := range cmdlineLinks {
 			if cmdlineLink.Name != "" {
 				if _, ignored := ignoredInterfaces[cmdlineLink.Name]; !ignored {
-					var ids []string
-
-					ids, err = ctrl.apply(ctx, r, []network.LinkSpecSpec{cmdlineLink})
-					if err != nil {
+					if err = ctrl.apply(ctx, r, []network.LinkSpecSpec{cmdlineLink}); err != nil {
 						return fmt.Errorf("error applying cmdline route: %w", err)
-					}
-
-					for _, id := range ids {
-						touchedIDs[id] = struct{}{}
 					}
 				}
 			}
 		}
 
 		// parse machine configuration for link specs
-		if len(devices) > 0 {
-			links := ctrl.processDevicesConfiguration(logger, devices, linkNameResolver)
+		links := ctrl.processMachineConfiguration(logger, cfg, devices, linkNameResolver)
 
-			var ids []string
-
-			ids, err = ctrl.apply(ctx, r, links)
-			if err != nil {
-				return fmt.Errorf("error applying machine configuration address: %w", err)
-			}
-
-			for _, id := range ids {
-				touchedIDs[id] = struct{}{}
-			}
+		if err = ctrl.apply(ctx, r, links); err != nil {
+			return fmt.Errorf("error applying machine configuration address: %w", err)
 		}
 
 		// bring up any physical link not mentioned explicitly in the machine configuration
-		configuredLinks := map[string]struct{}{}
+		// only in the mode when we run default DHCP operators
+		shouldRunDefaultDHCPOperators := cfg == nil || cfg.Config().RunDefaultDHCPOperators()
 
-		for _, linkName := range cmdlineIgnored {
-			configuredLinks[linkName] = struct{}{}
-		}
+		if shouldRunDefaultDHCPOperators {
+			configuredLinks := map[string]struct{}{}
 
-		for _, cmdlineLink := range cmdlineLinks {
-			if cmdlineLink.Name != "" {
-				configuredLinks[cmdlineLink.Name] = struct{}{}
+			for _, linkName := range cmdlineIgnored {
+				configuredLinks[linkName] = struct{}{}
 			}
-		}
 
-		if len(devices) > 0 {
-			for _, device := range devices {
-				configuredLinks[device.Interface()] = struct{}{}
+			for _, cmdlineLink := range cmdlineLinks {
+				if cmdlineLink.Name != "" {
+					configuredLinks[cmdlineLink.Name] = struct{}{}
+				}
+			}
 
-				if device.Bond() != nil {
-					for _, link := range device.Bond().Interfaces() {
-						configuredLinks[link] = struct{}{}
+			if devices.Len() > 0 {
+				for item := range devices.All() {
+					device := item.TypedSpec().Device
+
+					configuredLinks[device.Interface()] = struct{}{}
+
+					if device.Bond() != nil {
+						for _, link := range device.Bond().Interfaces() {
+							configuredLinks[link] = struct{}{}
+						}
+					}
+
+					if device.Bridge() != nil {
+						for _, link := range device.Bridge().Interfaces() {
+							configuredLinks[link] = struct{}{}
+						}
+					}
+				}
+			}
+
+			// if we have new-style link config documents, they disable shouldRunDefaultDHCPOperators, so
+			// we don't need to add them to configuredLinks here
+		outer:
+			for linkStatus := range linkStatuses.All() {
+				for linkAlias := range network.AllLinkNames(linkStatus) {
+					if _, configured := configuredLinks[linkAlias]; configured {
+						continue outer
 					}
 				}
 
-				if device.Bridge() != nil {
-					for _, link := range device.Bridge().Interfaces() {
-						configuredLinks[link] = struct{}{}
+				if linkStatus.TypedSpec().Physical() {
+					if err = ctrl.apply(ctx, r, []network.LinkSpecSpec{
+						{
+							Name:        linkStatus.Metadata().ID(),
+							Up:          true,
+							ConfigLayer: network.ConfigDefault,
+						},
+					}); err != nil {
+						return fmt.Errorf("error applying default link up: %w", err)
 					}
 				}
 			}
 		}
 
-	outer:
-		for linkStatus := range linkStatuses.All() {
-			for linkAlias := range network.AllLinkNames(linkStatus) {
-				if _, configured := configuredLinks[linkAlias]; configured {
-					continue outer
-				}
-			}
-
-			if linkStatus.TypedSpec().Physical() {
-				var ids []string
-
-				ids, err = ctrl.apply(ctx, r, []network.LinkSpecSpec{
-					{
-						Name:        linkStatus.Metadata().ID(),
-						Up:          true,
-						ConfigLayer: network.ConfigDefault,
-					},
-				})
-				if err != nil {
-					return fmt.Errorf("error applying default link up: %w", err)
-				}
-
-				for _, id := range ids {
-					touchedIDs[id] = struct{}{}
-				}
-			}
-		}
-
-		// list link specs for cleanup
-		linkSpecs, err := safe.ReaderList[*network.LinkSpec](ctx, r, resource.NewMetadata(network.ConfigNamespaceName, network.LinkSpecType, "", resource.VersionUndefined))
-		if err != nil {
-			return fmt.Errorf("error listing resources: %w", err)
-		}
-
-		for res := range linkSpecs.All() {
-			if res.Metadata().Owner() != ctrl.Name() {
-				// skip specs created by other controllers
-				continue
-			}
-
-			if _, ok := touchedIDs[res.Metadata().ID()]; !ok {
-				if err = r.Destroy(ctx, res.Metadata()); err != nil {
-					return fmt.Errorf("error cleaning up routes: %w", err)
-				}
-			}
+		if err = r.CleanupOutputs(ctx, resource.NewMetadata(network.ConfigNamespaceName, network.LinkSpecType, "", resource.VersionUndefined)); err != nil {
+			return fmt.Errorf("error cleaning up outputs: %w", err)
 		}
 
 		r.ResetRestartBackoff()
 	}
 }
 
-func (ctrl *LinkConfigController) apply(ctx context.Context, r controller.Runtime, links []network.LinkSpecSpec) ([]resource.ID, error) {
-	ids := make([]string, 0, len(links))
-
+func (ctrl *LinkConfigController) apply(ctx context.Context, r controller.Runtime, links []network.LinkSpecSpec) error {
 	for _, link := range links {
 		id := network.LayeredID(link.ConfigLayer, network.LinkID(link.Name))
 
@@ -252,13 +224,11 @@ func (ctrl *LinkConfigController) apply(ctx context.Context, r controller.Runtim
 				return nil
 			},
 		); err != nil {
-			return ids, err
+			return err
 		}
-
-		ids = append(ids, id)
 	}
 
-	return ids, nil
+	return nil
 }
 
 func (ctrl *LinkConfigController) parseCmdline(logger *zap.Logger, linkNameResolver *network.LinkResolver) ([]network.LinkSpecSpec, []string) {
@@ -276,13 +246,28 @@ func (ctrl *LinkConfigController) parseCmdline(logger *zap.Logger, linkNameResol
 	return settings.NetworkLinkSpecs, settings.IgnoreInterfaces
 }
 
+func (ctrl *LinkConfigController) processMachineConfiguration(
+	logger *zap.Logger, cfg *config.MachineConfig, devices safe.List[*network.DeviceConfigSpec], linkNameResolver *network.LinkResolver,
+) []network.LinkSpecSpec {
+	linkMap := map[string]*network.LinkSpecSpec{}
+
+	ctrl.processDevicesConfiguration(logger, linkMap, devices, linkNameResolver)
+	ctrl.processLinkConfigs(logger, linkMap, cfg, linkNameResolver)
+
+	return maps.ValuesFunc(linkMap, func(link *network.LinkSpecSpec) network.LinkSpecSpec { return *link })
+}
+
 //nolint:gocyclo,cyclop
-func (ctrl *LinkConfigController) processDevicesConfiguration(logger *zap.Logger, devices []talosconfig.Device, linkNameResolver *network.LinkResolver) []network.LinkSpecSpec {
+func (ctrl *LinkConfigController) processDevicesConfiguration(
+	logger *zap.Logger, linkMap map[string]*network.LinkSpecSpec, devices safe.List[*network.DeviceConfigSpec], linkNameResolver *network.LinkResolver,
+) {
 	// scan for the bonds or bridges
 	bondedLinks := map[string]ordered.Pair[string, int]{} // mapping physical interface -> bond interface
 	bridgedLinks := map[string]string{}                   // mapping physical interface -> bridge interface
 
-	for _, device := range devices {
+	for item := range devices.All() {
+		device := item.TypedSpec().Device
+
 		if device.Ignore() {
 			continue
 		}
@@ -342,9 +327,9 @@ func (ctrl *LinkConfigController) processDevicesConfiguration(logger *zap.Logger
 		}
 	}
 
-	linkMap := map[string]*network.LinkSpecSpec{}
+	for item := range devices.All() {
+		device := item.TypedSpec().Device
 
-	for _, device := range devices {
 		if device.Ignore() {
 			continue
 		}
@@ -420,8 +405,47 @@ func (ctrl *LinkConfigController) processDevicesConfiguration(logger *zap.Logger
 
 		SetBridgeSlave(linkMap[slaveName], bridgeIface)
 	}
+}
 
-	return maps.ValuesFunc(linkMap, func(link *network.LinkSpecSpec) network.LinkSpecSpec { return *link })
+func (ctrl *LinkConfigController) processLinkConfigs(logger *zap.Logger, linkMap map[string]*network.LinkSpecSpec, cfg *config.MachineConfig, linkNameResolver *network.LinkResolver) {
+	if cfg == nil {
+		return
+	}
+
+	for _, linkConfig := range cfg.Config().NetworkCommonLinkConfigs() {
+		linkName := linkConfig.Name()
+		linkName = linkNameResolver.Resolve(linkName)
+
+		if _, exists := linkMap[linkName]; !exists {
+			linkMap[linkName] = &network.LinkSpecSpec{
+				Name:        linkName,
+				ConfigLayer: network.ConfigMachineConfiguration,
+			}
+		}
+
+		linkMap[linkName].Up = linkConfig.Up().ValueOr(true)
+
+		if mtu, ok := linkConfig.MTU().Get(); ok {
+			linkMap[linkName].MTU = mtu
+		}
+
+		if hwAddrConfig, ok := linkConfig.(talosconfig.NetworkHardwareAddressConfig); ok {
+			if hwAddr, ok := hwAddrConfig.HardwareAddress().Get(); ok {
+				linkMap[linkName].HardwareAddress = hwAddr
+			}
+		} else {
+			linkMap[linkName].HardwareAddress = nil
+		}
+
+		switch specificLinkConfig := linkConfig.(type) {
+		case talosconfig.NetworkPhysicalLinkConfig:
+			// nothing specific for physical links
+		case talosconfig.NetworkDummyLinkConfig:
+			dummyLink(linkMap[linkName])
+		default:
+			logger.Error("unknown link config type", zap.String("linkName", linkName), zap.String("type", fmt.Sprintf("%T", specificLinkConfig)))
+		}
+	}
 }
 
 type vlaner interface {

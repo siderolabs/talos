@@ -16,7 +16,10 @@ func (PCIDriverRebindConfigV1Alpha1) Doc() *encoder.Doc {
 		Comments:    [3]string{"" /* encoder.HeadComment */, "PCIDriverRebindConfig allows to configure PCI driver rebinds." /* encoder.LineComment */, "" /* encoder.FootComment */},
 		Description: "PCIDriverRebindConfig allows to configure PCI driver rebinds.",
 		Fields: []encoder.Doc{
-			{},
+			{
+				Type:   "Meta",
+				Inline: true,
+			},
 			{
 				Name:        "name",
 				Type:        "string",

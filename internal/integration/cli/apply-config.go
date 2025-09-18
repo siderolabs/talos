@@ -36,6 +36,10 @@ var deleteDummyAPPatch []byte
 
 // TestApplyWithPatch verifies that .
 func (suite *ApplyConfigSuite) TestApplyWithPatch() {
+	if suite.Cluster == nil {
+		suite.T().Skip("skipping if cluster is not qemu/docker")
+	}
+
 	tmpDir := suite.T().TempDir()
 
 	node := suite.RandomDiscoveredNodeInternalIP()
@@ -54,9 +58,11 @@ func (suite *ApplyConfigSuite) TestApplyWithPatch() {
 		base.StderrShouldMatch(regexp.MustCompile("Applied configuration without a reboot")),
 	)
 
+	// sleep a bit to let the config propagate
+	time.Sleep(1 * time.Second)
+
 	suite.RunCLI([]string{"get", "--nodes", node, "links"},
 		base.StdoutShouldMatch(regexp.MustCompile("dummy-ap-patch")),
-		base.WithRetry(retry.Constant(15*time.Second, retry.WithUnits(time.Second))),
 	)
 
 	// now delete the dummy-ap-patch

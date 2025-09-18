@@ -5,6 +5,8 @@
 package network
 
 import (
+	"slices"
+
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/meta"
 	"github.com/cosi-project/runtime/pkg/resource/protobuf"
@@ -41,6 +43,9 @@ type LinkSpecSpec struct {
 	// Kind and Type are only required for Logical interfaces.
 	Kind string              `yaml:"kind" protobuf:"5"`
 	Type nethelpers.LinkType `yaml:"type" protobuf:"6"`
+
+	// Override hardware (MAC) address (if supported).
+	HardwareAddress nethelpers.HardwareAddr `yaml:"hardwareAddr,omitempty" protobuf:"15"`
 
 	// ParentName indicates link parent for VLAN interfaces.
 	ParentName string `yaml:"parentName,omitempty" protobuf:"7"`
@@ -94,6 +99,10 @@ func (spec *LinkSpecSpec) Merge(other *LinkSpecSpec) error {
 	updateIfNotZero(&spec.BondMaster, other.BondMaster)
 	updateIfNotZero(&spec.BridgeMaster, other.BridgeMaster)
 	updateIfNotZero(&spec.BridgeSlave, other.BridgeSlave)
+
+	if other.HardwareAddress != nil {
+		spec.HardwareAddress = slices.Clone(other.HardwareAddress)
+	}
 
 	// Wireguard config should be able to apply non-zero values in earlier config layers which may be zero values in later layers.
 	// Thus, we handle each Wireguard configuration value discretely.

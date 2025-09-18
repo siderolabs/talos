@@ -20,6 +20,7 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/config/machine"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/block"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/hardware"
+	"github.com/siderolabs/talos/pkg/machinery/config/types/network"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/runtime/extensions"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/siderolink"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
@@ -340,6 +341,60 @@ func TestCrossValidateEncryption(t *testing.T) {
 			}
 
 			require.Equal(t, tt.expecetedWarnings, warnings)
+		})
+	}
+}
+
+func TestRunDefaultDHCPOperators(t *testing.T) {
+	t.Parallel()
+
+	v1alpha1Cfg := &v1alpha1.Config{
+		ClusterConfig: &v1alpha1.ClusterConfig{},
+		MachineConfig: &v1alpha1.MachineConfig{
+			MachineType: "worker",
+		},
+	}
+
+	dummyLinkConfig := network.NewDummyLinkConfigV1Alpha1("dummy1")
+
+	for _, tt := range []struct {
+		name      string
+		documents []config.Document
+
+		expected bool
+	}{
+		{
+			name:      "empty",
+			documents: []config.Document{},
+
+			expected: true,
+		},
+		{
+			name:      "only v1alpha1",
+			documents: []config.Document{v1alpha1Cfg},
+
+			expected: true,
+		},
+		{
+			name:      "has dummy link config",
+			documents: []config.Document{v1alpha1Cfg, dummyLinkConfig},
+
+			expected: false,
+		},
+		{
+			name:      "only dummy link config",
+			documents: []config.Document{dummyLinkConfig},
+
+			expected: false,
+		},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			ctr, err := container.New(tt.documents...)
+			require.NoError(t, err)
+
+			assert.Equal(t, tt.expected, ctr.RunDefaultDHCPOperators())
 		})
 	}
 }

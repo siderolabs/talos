@@ -16,7 +16,10 @@ func (TrustedRootsConfigV1Alpha1) Doc() *encoder.Doc {
 		Comments:    [3]string{"" /* encoder.HeadComment */, "TrustedRootsConfig allows to configure additional trusted CA roots." /* encoder.LineComment */, "" /* encoder.FootComment */},
 		Description: "TrustedRootsConfig allows to configure additional trusted CA roots.",
 		Fields: []encoder.Doc{
-			{},
+			{
+				Type:   "Meta",
+				Inline: true,
+			},
 			{
 				Name:        "name",
 				Type:        "string",

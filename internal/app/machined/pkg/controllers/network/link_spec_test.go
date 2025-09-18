@@ -6,28 +6,22 @@
 package network_test
 
 import (
-	"context"
 	"fmt"
 	"math/rand/v2"
 	"net"
 	"net/netip"
 	"os"
-	"sync"
+	"slices"
 	"testing"
 	"time"
 
-	"github.com/cosi-project/runtime/pkg/controller/runtime"
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/safe"
-	"github.com/cosi-project/runtime/pkg/state"
-	"github.com/cosi-project/runtime/pkg/state/impl/inmem"
-	"github.com/cosi-project/runtime/pkg/state/impl/namespaced"
 	"github.com/jsimonetti/rtnetlink/v2"
 	"github.com/siderolabs/gen/xslices"
-	"github.com/siderolabs/go-retry/retry"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
-	"go.uber.org/zap/zaptest"
 	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
 
 	networkadapter "github.com/siderolabs/talos/internal/app/machined/pkg/adapters/network"
@@ -40,105 +34,7 @@ import (
 )
 
 type LinkSpecSuite struct {
-	suite.Suite
-
-	state state.State
-
-	runtime *runtime.Runtime
-	wg      sync.WaitGroup
-
-	ctx       context.Context //nolint:containedctx
-	ctxCancel context.CancelFunc
-}
-
-func (suite *LinkSpecSuite) State() state.State { return suite.state }
-
-func (suite *LinkSpecSuite) Ctx() context.Context { return suite.ctx }
-
-func (suite *LinkSpecSuite) SetupTest() {
-	suite.ctx, suite.ctxCancel = context.WithTimeout(context.Background(), 3*time.Minute)
-
-	suite.state = state.WrapCore(namespaced.NewState(inmem.Build))
-
-	var err error
-
-	suite.runtime, err = runtime.NewRuntime(suite.state, zaptest.NewLogger(suite.T()))
-	suite.Require().NoError(err)
-
-	// create fake device ready status
-	deviceStatus := runtimeres.NewDevicesStatus(runtimeres.NamespaceName, runtimeres.DevicesID)
-	deviceStatus.TypedSpec().Ready = true
-	suite.Require().NoError(suite.state.Create(suite.ctx, deviceStatus))
-
-	suite.Require().NoError(suite.runtime.RegisterController(&netctrl.LinkSpecController{}))
-
-	// register status controller to assert on the created links
-	suite.Require().NoError(suite.runtime.RegisterController(&netctrl.LinkStatusController{}))
-
-	suite.startRuntime()
-}
-
-func (suite *LinkSpecSuite) startRuntime() {
-	suite.wg.Add(1)
-
-	go func() {
-		defer suite.wg.Done()
-
-		suite.Assert().NoError(suite.runtime.Run(suite.ctx))
-	}()
-}
-
-func (suite *LinkSpecSuite) assertInterfaces(requiredIDs []string, check func(*network.LinkStatus) error) error {
-	missingIDs := make(map[string]struct{}, len(requiredIDs))
-
-	for _, id := range requiredIDs {
-		missingIDs[id] = struct{}{}
-	}
-
-	resources, err := suite.state.List(
-		suite.ctx,
-		resource.NewMetadata(network.NamespaceName, network.LinkStatusType, "", resource.VersionUndefined),
-	)
-	if err != nil {
-		return err
-	}
-
-	for _, res := range resources.Items {
-		_, required := missingIDs[res.Metadata().ID()]
-		if !required {
-			continue
-		}
-
-		delete(missingIDs, res.Metadata().ID())
-
-		if err = check(res.(*network.LinkStatus)); err != nil {
-			return retry.ExpectedError(err)
-		}
-	}
-
-	if len(missingIDs) > 0 {
-		return retry.ExpectedErrorf("some resources are missing: %q", missingIDs)
-	}
-
-	return nil
-}
-
-func (suite *LinkSpecSuite) assertNoInterface(id string) error {
-	resources, err := suite.state.List(
-		suite.ctx,
-		resource.NewMetadata(network.NamespaceName, network.LinkStatusType, "", resource.VersionUndefined),
-	)
-	if err != nil {
-		return err
-	}
-
-	for _, res := range resources.Items {
-		if res.Metadata().ID() == id {
-			return retry.ExpectedErrorf("interface %q is still there", id)
-		}
-	}
-
-	return nil
+	ctest.DefaultSuite
 }
 
 func (suite *LinkSpecSuite) uniqueDummyInterface() string {
@@ -154,20 +50,10 @@ func (suite *LinkSpecSuite) TestLoopback() {
 	}
 
 	for _, res := range []resource.Resource{loopback} {
-		suite.Require().NoError(suite.state.Create(suite.ctx, res), "%v", res.Spec())
+		suite.Create(res)
 	}
 
-	suite.Assert().NoError(
-		retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-			func() error {
-				return suite.assertInterfaces(
-					[]string{"lo"}, func(r *network.LinkStatus) error {
-						return nil
-					},
-				)
-			},
-		),
-	)
+	ctest.AssertResource(suite, "lo", func(r *network.LinkStatus, asrt *assert.Assertions) {})
 }
 
 func (suite *LinkSpecSuite) TestDummy() {
@@ -185,50 +71,62 @@ func (suite *LinkSpecSuite) TestDummy() {
 	}
 
 	for _, res := range []resource.Resource{dummy} {
-		suite.Require().NoError(suite.state.Create(suite.ctx, res), "%v", res.Spec())
+		suite.Create(res)
 	}
 
-	suite.Assert().NoError(
-		retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-			func() error {
-				return suite.assertInterfaces(
-					[]string{dummyInterface}, func(r *network.LinkStatus) error {
-						suite.Assert().Equal("dummy", r.TypedSpec().Kind)
+	newHardwareAddr := net.HardwareAddr{0x2e, 0x3c, 0x4d, 0x5e, 0x6f, 0x70}
 
-						if r.TypedSpec().OperationalState != nethelpers.OperStateUnknown && r.TypedSpec().OperationalState != nethelpers.OperStateUp {
-							return retry.ExpectedErrorf("link is not up")
-						}
+	ctest.AssertResource(suite, dummyInterface, func(r *network.LinkStatus, asrt *assert.Assertions) {
+		asrt.Equal("dummy", r.TypedSpec().Kind)
+		asrt.Contains([]nethelpers.OperationalState{nethelpers.OperStateUp, nethelpers.OperStateUnknown}, r.TypedSpec().OperationalState)
+		asrt.EqualValues(1400, r.TypedSpec().MTU)
+		asrt.NotEqual(newHardwareAddr, net.HardwareAddr(r.TypedSpec().HardwareAddr))
+	})
 
-						if r.TypedSpec().MTU != 1400 {
-							return retry.ExpectedErrorf("unexpected MTU %d", r.TypedSpec().MTU)
-						}
+	// attempt to change the hardware address
+	ctest.UpdateWithConflicts(suite, dummy, func(r *network.LinkSpec) error {
+		r.TypedSpec().HardwareAddress = nethelpers.HardwareAddr(newHardwareAddr)
 
-						return nil
-					},
-				)
-			},
-		),
-	)
+		return nil
+	})
 
-	// teardown the link
-	for {
-		ready, err := suite.state.Teardown(suite.ctx, dummy.Metadata())
-		suite.Require().NoError(err)
+	ctest.AssertResource(suite, dummyInterface, func(r *network.LinkStatus, asrt *assert.Assertions) {
+		asrt.Equal(newHardwareAddr, net.HardwareAddr(r.TypedSpec().HardwareAddr))
+	})
 
-		if ready {
-			break
-		}
+	suite.Require().NoError(suite.State().TeardownAndDestroy(suite.Ctx(), dummy.Metadata()))
 
-		time.Sleep(100 * time.Millisecond)
+	ctest.AssertNoResource[*network.LinkSpec](suite, dummyInterface)
+}
+
+func (suite *LinkSpecSuite) TestDummyWithMAC() {
+	dummyInterface := suite.uniqueDummyInterface()
+
+	newHardwareAddr := net.HardwareAddr{0x2e, 0x3c, 0x4d, 0x5e, 0x6f, 0x70}
+
+	dummy := network.NewLinkSpec(network.NamespaceName, dummyInterface)
+	*dummy.TypedSpec() = network.LinkSpecSpec{
+		Name:            dummyInterface,
+		Type:            nethelpers.LinkEther,
+		Kind:            "dummy",
+		HardwareAddress: nethelpers.HardwareAddr(newHardwareAddr),
+		Up:              true,
+		Logical:         true,
+		ConfigLayer:     network.ConfigDefault,
 	}
 
-	suite.Assert().NoError(
-		retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-			func() error {
-				return suite.assertNoInterface(dummyInterface)
-			},
-		),
-	)
+	for _, res := range []resource.Resource{dummy} {
+		suite.Create(res)
+	}
+
+	ctest.AssertResource(suite, dummyInterface, func(r *network.LinkStatus, asrt *assert.Assertions) {
+		asrt.Equal("dummy", r.TypedSpec().Kind)
+		asrt.Equal(newHardwareAddr, net.HardwareAddr(r.TypedSpec().HardwareAddr))
+	})
+
+	suite.Require().NoError(suite.State().TeardownAndDestroy(suite.Ctx(), dummy.Metadata()))
+
+	ctest.AssertNoResource[*network.LinkSpec](suite, dummyInterface)
 }
 
 //nolint:gocyclo
@@ -278,38 +176,26 @@ func (suite *LinkSpecSuite) TestVLAN() {
 	}
 
 	for _, res := range []resource.Resource{dummy, vlan1, vlan2} {
-		suite.Require().NoError(suite.state.Create(suite.ctx, res), "%v", res.Spec())
+		suite.Create(res)
 	}
 
-	suite.Assert().NoError(
-		retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-			func() error {
-				return suite.assertInterfaces(
-					[]string{dummyInterface, vlanName1, vlanName2}, func(r *network.LinkStatus) error {
-						switch r.Metadata().ID() {
-						case dummyInterface:
-							suite.Assert().Equal("dummy", r.TypedSpec().Kind)
-						case vlanName1, vlanName2:
-							suite.Assert().Equal(network.LinkKindVLAN, r.TypedSpec().Kind)
-							suite.Assert().Equal(nethelpers.VLANProtocol8021Q, r.TypedSpec().VLAN.Protocol)
+	ctest.AssertResources(suite, []string{dummyInterface, vlanName1, vlanName2}, func(r *network.LinkStatus, asrt *assert.Assertions) {
+		switch r.Metadata().ID() {
+		case dummyInterface:
+			asrt.Equal("dummy", r.TypedSpec().Kind)
+		case vlanName1, vlanName2:
+			asrt.Equal(network.LinkKindVLAN, r.TypedSpec().Kind)
+			asrt.Equal(nethelpers.VLANProtocol8021Q, r.TypedSpec().VLAN.Protocol)
 
-							if r.Metadata().ID() == vlanName1 {
-								suite.Assert().EqualValues(2, r.TypedSpec().VLAN.VID)
-							} else {
-								suite.Assert().EqualValues(4, r.TypedSpec().VLAN.VID)
-							}
-						}
+			if r.Metadata().ID() == vlanName1 {
+				asrt.EqualValues(2, r.TypedSpec().VLAN.VID)
+			} else {
+				asrt.EqualValues(4, r.TypedSpec().VLAN.VID)
+			}
+		}
 
-						if r.TypedSpec().OperationalState != nethelpers.OperStateUnknown && r.TypedSpec().OperationalState != nethelpers.OperStateUp {
-							return retry.ExpectedErrorf("link is not up")
-						}
-
-						return nil
-					},
-				)
-			},
-		),
-	)
+		asrt.Contains([]nethelpers.OperationalState{nethelpers.OperStateUp, nethelpers.OperStateUnknown}, r.TypedSpec().OperationalState)
+	})
 
 	// attempt to change VLAN ID
 	ctest.UpdateWithConflicts(suite, vlan1, func(r *network.LinkSpec) error {
@@ -318,43 +204,20 @@ func (suite *LinkSpecSuite) TestVLAN() {
 		return nil
 	})
 
-	suite.Assert().NoError(
-		retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-			func() error {
-				return suite.assertInterfaces(
-					[]string{vlanName1}, func(r *network.LinkStatus) error {
-						if r.TypedSpec().VLAN.VID != 42 {
-							return retry.ExpectedErrorf("vlan ID is not 42: %d", r.TypedSpec().VLAN.VID)
-						}
-
-						return nil
-					},
-				)
-			},
-		),
-	)
+	ctest.AssertResource(suite, vlanName1, func(r *network.LinkStatus, asrt *assert.Assertions) {
+		asrt.Equal(network.LinkKindVLAN, r.TypedSpec().Kind)
+		asrt.Equal(nethelpers.VLANProtocol8021Q, r.TypedSpec().VLAN.Protocol)
+		asrt.EqualValues(42, r.TypedSpec().VLAN.VID)
+	})
 
 	// teardown the links
 	for _, r := range []resource.Resource{vlan1, vlan2, dummy} {
-		for {
-			ready, err := suite.state.Teardown(suite.ctx, r.Metadata())
-			suite.Require().NoError(err)
-
-			if ready {
-				break
-			}
-
-			time.Sleep(100 * time.Millisecond)
-		}
+		suite.Require().NoError(suite.State().TeardownAndDestroy(suite.Ctx(), r.Metadata()))
 	}
 
-	suite.Assert().NoError(
-		retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-			func() error {
-				return suite.assertNoInterface(dummyInterface)
-			},
-		),
-	)
+	ctest.AssertNoResource[*network.LinkStatus](suite, dummyInterface)
+	ctest.AssertNoResource[*network.LinkStatus](suite, vlanName1)
+	ctest.AssertNoResource[*network.LinkStatus](suite, vlanName2)
 }
 
 //nolint:gocyclo
@@ -371,26 +234,13 @@ func (suite *LinkSpecSuite) TestVLANViaAlias() {
 		ConfigLayer: network.ConfigDefault,
 	}
 
-	suite.Require().NoError(suite.state.Create(suite.ctx, dummy), "%v", dummy.Spec())
+	suite.Create(dummy)
 
 	// create dummy interface, and create an alias for it manually
-	suite.Assert().NoError(
-		retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-			func() error {
-				return suite.assertInterfaces(
-					[]string{dummyInterface}, func(r *network.LinkStatus) error {
-						suite.Assert().Equal("dummy", r.TypedSpec().Kind)
-
-						if r.TypedSpec().OperationalState != nethelpers.OperStateUnknown && r.TypedSpec().OperationalState != nethelpers.OperStateUp {
-							return retry.ExpectedErrorf("link is not up")
-						}
-
-						return nil
-					},
-				)
-			},
-		),
-	)
+	ctest.AssertResource(suite, dummyInterface, func(r *network.LinkStatus, asrt *assert.Assertions) {
+		asrt.Equal("dummy", r.TypedSpec().Kind)
+		asrt.Contains([]nethelpers.OperationalState{nethelpers.OperStateUp, nethelpers.OperStateUnknown}, r.TypedSpec().OperationalState)
+	})
 
 	conn, err := rtnetlink.Dial(nil)
 	suite.Require().NoError(err)
@@ -446,64 +296,36 @@ func (suite *LinkSpecSuite) TestVLANViaAlias() {
 	}
 
 	for _, res := range []resource.Resource{vlan1, vlan2} {
-		suite.Require().NoError(suite.state.Create(suite.ctx, res), "%v", res.Spec())
+		suite.Create(res)
 	}
 
-	suite.Assert().NoError(
-		retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-			func() error {
-				return suite.assertInterfaces(
-					[]string{dummyInterface, vlanName1, vlanName2}, func(r *network.LinkStatus) error {
-						switch r.Metadata().ID() {
-						case dummyInterface:
-							suite.Assert().Equal("dummy", r.TypedSpec().Kind)
+	ctest.AssertResources(suite, []string{dummyInterface, vlanName1, vlanName2}, func(r *network.LinkStatus, asrt *assert.Assertions) {
+		switch r.Metadata().ID() {
+		case dummyInterface:
+			asrt.Equal("dummy", r.TypedSpec().Kind)
+			asrt.Equal(dummyAlias, r.TypedSpec().Alias)
+		case vlanName1, vlanName2:
+			asrt.Equal(network.LinkKindVLAN, r.TypedSpec().Kind)
+			asrt.Equal(nethelpers.VLANProtocol8021Q, r.TypedSpec().VLAN.Protocol)
 
-							if r.TypedSpec().Alias != dummyAlias {
-								return retry.ExpectedErrorf("alias is not %s: %s", dummyAlias, r.TypedSpec().Alias)
-							}
-						case vlanName1, vlanName2:
-							suite.Assert().Equal(network.LinkKindVLAN, r.TypedSpec().Kind)
-							suite.Assert().Equal(nethelpers.VLANProtocol8021Q, r.TypedSpec().VLAN.Protocol)
+			if r.Metadata().ID() == vlanName1 {
+				asrt.EqualValues(2, r.TypedSpec().VLAN.VID)
+			} else {
+				asrt.EqualValues(4, r.TypedSpec().VLAN.VID)
+			}
+		}
 
-							if r.Metadata().ID() == vlanName1 {
-								suite.Assert().EqualValues(2, r.TypedSpec().VLAN.VID)
-							} else {
-								suite.Assert().EqualValues(4, r.TypedSpec().VLAN.VID)
-							}
-						}
-
-						if r.TypedSpec().OperationalState != nethelpers.OperStateUnknown && r.TypedSpec().OperationalState != nethelpers.OperStateUp {
-							return retry.ExpectedErrorf("link is not up")
-						}
-
-						return nil
-					},
-				)
-			},
-		),
-	)
+		asrt.Contains([]nethelpers.OperationalState{nethelpers.OperStateUp, nethelpers.OperStateUnknown}, r.TypedSpec().OperationalState)
+	})
 
 	// teardown the links
 	for _, r := range []resource.Resource{vlan1, vlan2, dummy} {
-		for {
-			ready, err := suite.state.Teardown(suite.ctx, r.Metadata())
-			suite.Require().NoError(err)
-
-			if ready {
-				break
-			}
-
-			time.Sleep(100 * time.Millisecond)
-		}
+		suite.Require().NoError(suite.State().TeardownAndDestroy(suite.Ctx(), r.Metadata()))
 	}
 
-	suite.Assert().NoError(
-		retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-			func() error {
-				return suite.assertNoInterface(dummyInterface)
-			},
-		),
-	)
+	ctest.AssertNoResource[*network.LinkStatus](suite, dummyInterface)
+	ctest.AssertNoResource[*network.LinkStatus](suite, vlanName1)
+	ctest.AssertNoResource[*network.LinkStatus](suite, vlanName2)
 }
 
 //nolint:gocyclo
@@ -562,39 +384,20 @@ func (suite *LinkSpecSuite) TestBond() {
 	}
 
 	for _, res := range []resource.Resource{dummy0, dummy1, bond} {
-		suite.Require().NoError(suite.state.Create(suite.ctx, res), "%v", res.Spec())
+		suite.Create(res)
 	}
 
-	suite.Assert().NoError(
-		retry.Constant(10*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-			func() error {
-				return suite.assertInterfaces(
-					[]string{dummy0Name, dummy1Name, bondName}, func(r *network.LinkStatus) error {
-						switch r.Metadata().ID() {
-						case bondName:
-							suite.Assert().Equal(network.LinkKindBond, r.TypedSpec().Kind)
-
-							if r.TypedSpec().OperationalState != nethelpers.OperStateUnknown && r.TypedSpec().OperationalState != nethelpers.OperStateUp {
-								return retry.ExpectedErrorf("link is not up: %s", r.TypedSpec().OperationalState)
-							}
-						case dummy0Name, dummy1Name:
-							suite.Assert().Equal("dummy", r.TypedSpec().Kind)
-
-							if r.TypedSpec().OperationalState != nethelpers.OperStateUnknown {
-								return retry.ExpectedErrorf("link is not up: %s", r.TypedSpec().OperationalState)
-							}
-
-							if r.TypedSpec().MasterIndex == 0 {
-								return retry.ExpectedErrorf("masterIndex should be non-zero")
-							}
-						}
-
-						return nil
-					},
-				)
-			},
-		),
-	)
+	ctest.AssertResources(suite, []string{dummy0Name, dummy1Name, bondName}, func(r *network.LinkStatus, asrt *assert.Assertions) {
+		switch r.Metadata().ID() {
+		case bondName:
+			asrt.Equal(network.LinkKindBond, r.TypedSpec().Kind)
+			asrt.Contains([]nethelpers.OperationalState{nethelpers.OperStateUp, nethelpers.OperStateUnknown}, r.TypedSpec().OperationalState)
+		case dummy0Name, dummy1Name:
+			asrt.Equal("dummy", r.TypedSpec().Kind)
+			asrt.Equal(nethelpers.OperStateUnknown, r.TypedSpec().OperationalState)
+			asrt.NotZero(r.TypedSpec().MasterIndex)
+		}
+	})
 
 	// attempt to change bond type
 	ctest.UpdateWithConflicts(suite, bond, func(r *network.LinkSpec) error {
@@ -603,25 +406,9 @@ func (suite *LinkSpecSuite) TestBond() {
 		return nil
 	})
 
-	suite.Assert().NoError(
-		retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-			func() error {
-				return suite.assertInterfaces(
-					[]string{bondName}, func(r *network.LinkStatus) error {
-						if r.TypedSpec().BondMaster.Mode != nethelpers.BondModeRoundrobin {
-							return retry.ExpectedErrorf(
-								"bond mode is not %s: %s",
-								nethelpers.BondModeRoundrobin,
-								r.TypedSpec().BondMaster.Mode,
-							)
-						}
-
-						return nil
-					},
-				)
-			},
-		),
-	)
+	ctest.AssertResource(suite, bondName, func(r *network.LinkStatus, asrt *assert.Assertions) {
+		asrt.Equal(nethelpers.BondModeRoundrobin, r.TypedSpec().BondMaster.Mode)
+	})
 
 	// unslave one of the interfaces
 	ctest.UpdateWithConflicts(suite, dummy0, func(r *network.LinkSpec) error {
@@ -630,43 +417,18 @@ func (suite *LinkSpecSuite) TestBond() {
 		return nil
 	})
 
-	suite.Assert().NoError(
-		retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-			func() error {
-				return suite.assertInterfaces(
-					[]string{dummy0Name}, func(r *network.LinkStatus) error {
-						if r.TypedSpec().MasterIndex != 0 {
-							return retry.ExpectedErrorf("iface not unslaved yet")
-						}
-
-						return nil
-					},
-				)
-			},
-		),
-	)
+	ctest.AssertResource(suite, dummy0Name, func(r *network.LinkStatus, asrt *assert.Assertions) {
+		asrt.Zero(r.TypedSpec().MasterIndex)
+	})
 
 	// teardown the links
 	for _, r := range []resource.Resource{dummy0, dummy1, bond} {
-		for {
-			ready, err := suite.state.Teardown(suite.ctx, r.Metadata())
-			suite.Require().NoError(err)
-
-			if ready {
-				break
-			}
-
-			time.Sleep(100 * time.Millisecond)
-		}
+		suite.Require().NoError(suite.State().TeardownAndDestroy(suite.Ctx(), r.Metadata()))
 	}
 
-	suite.Assert().NoError(
-		retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-			func() error {
-				return suite.assertNoInterface(bondName)
-			},
-		),
-	)
+	ctest.AssertNoResource[*network.LinkStatus](suite, dummy0Name)
+	ctest.AssertNoResource[*network.LinkStatus](suite, dummy1Name)
+	ctest.AssertNoResource[*network.LinkStatus](suite, bondName)
 }
 
 //nolint:gocyclo
@@ -716,62 +478,32 @@ func (suite *LinkSpecSuite) TestBond8023ad() {
 	}
 
 	for _, res := range append(dummies, bond) {
-		suite.Require().NoError(suite.state.Create(suite.ctx, res), "%v", res.Spec())
+		suite.Create(res)
 	}
 
-	suite.Assert().NoError(
-		retry.Constant(10*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-			func() error {
-				return suite.assertInterfaces(
-					append(dummyNames, bondName), func(r *network.LinkStatus) error {
-						if r.Metadata().ID() == bondName {
-							// master
-							suite.Assert().Equal(network.LinkKindBond, r.TypedSpec().Kind)
-
-							if r.TypedSpec().OperationalState != nethelpers.OperStateUnknown && r.TypedSpec().OperationalState != nethelpers.OperStateUp {
-								return retry.ExpectedErrorf("link is not up: %s", r.TypedSpec().OperationalState)
-							}
-						} else {
-							// slaves
-							suite.Assert().Equal("dummy", r.TypedSpec().Kind)
-
-							if r.TypedSpec().OperationalState != nethelpers.OperStateUnknown {
-								return retry.ExpectedErrorf("link is not up: %s", r.TypedSpec().OperationalState)
-							}
-
-							if r.TypedSpec().MasterIndex == 0 {
-								return retry.ExpectedErrorf("masterIndex should be non-zero")
-							}
-						}
-
-						return nil
-					},
-				)
-			},
-		),
-	)
+	ctest.AssertResources(suite, slices.Concat(dummyNames, []string{bondName}), func(r *network.LinkStatus, asrt *assert.Assertions) {
+		switch r.Metadata().ID() {
+		case bondName:
+			asrt.Equal(network.LinkKindBond, r.TypedSpec().Kind)
+			asrt.EqualValues(9000, r.TypedSpec().MTU)
+			asrt.Contains([]nethelpers.OperationalState{nethelpers.OperStateUp, nethelpers.OperStateUnknown}, r.TypedSpec().OperationalState)
+		default:
+			asrt.Equal("dummy", r.TypedSpec().Kind)
+			asrt.Equal(nethelpers.OperStateUnknown, r.TypedSpec().OperationalState)
+			asrt.NotZero(r.TypedSpec().MasterIndex)
+		}
+	})
 
 	// teardown the links
 	for _, r := range append(dummies, bond) {
-		for {
-			ready, err := suite.state.Teardown(suite.ctx, r.Metadata())
-			suite.Require().NoError(err)
-
-			if ready {
-				break
-			}
-
-			time.Sleep(100 * time.Millisecond)
-		}
+		suite.Require().NoError(suite.State().TeardownAndDestroy(suite.Ctx(), r.Metadata()))
 	}
 
-	suite.Assert().NoError(
-		retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-			func() error {
-				return suite.assertNoInterface(bondName)
-			},
-		),
-	)
+	ctest.AssertNoResource[*network.LinkStatus](suite, bondName)
+
+	for _, n := range dummyNames {
+		ctest.AssertNoResource[*network.LinkStatus](suite, n)
+	}
 }
 
 //nolint:gocyclo
@@ -821,39 +553,20 @@ func (suite *LinkSpecSuite) TestBridge() {
 	}
 
 	for _, res := range []resource.Resource{dummy0, dummy1, bridge} {
-		suite.Require().NoError(suite.state.Create(suite.ctx, res), "%v", res.Spec())
+		suite.Create(res)
 	}
 
-	suite.Assert().NoError(
-		retry.Constant(10*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-			func() error {
-				return suite.assertInterfaces(
-					[]string{dummy0Name, dummy1Name, bridgeName}, func(r *network.LinkStatus) error {
-						switch r.Metadata().ID() {
-						case bridgeName:
-							suite.Assert().Equal(network.LinkKindBridge, r.TypedSpec().Kind)
-
-							if r.TypedSpec().OperationalState != nethelpers.OperStateUnknown && r.TypedSpec().OperationalState != nethelpers.OperStateUp {
-								return retry.ExpectedErrorf("link is not up: %s", r.TypedSpec().OperationalState)
-							}
-						case dummy0Name, dummy1Name:
-							suite.Assert().Equal("dummy", r.TypedSpec().Kind)
-
-							if r.TypedSpec().OperationalState != nethelpers.OperStateUnknown {
-								return retry.ExpectedErrorf("link is not up: %s", r.TypedSpec().OperationalState)
-							}
-
-							if r.TypedSpec().MasterIndex == 0 {
-								return retry.ExpectedErrorf("masterIndex should be non-zero")
-							}
-						}
-
-						return nil
-					},
-				)
-			},
-		),
-	)
+	ctest.AssertResources(suite, []string{dummy0Name, dummy1Name, bridgeName}, func(r *network.LinkStatus, asrt *assert.Assertions) {
+		switch r.Metadata().ID() {
+		case bridgeName:
+			asrt.Equal(network.LinkKindBridge, r.TypedSpec().Kind)
+			asrt.Contains([]nethelpers.OperationalState{nethelpers.OperStateUp, nethelpers.OperStateUnknown}, r.TypedSpec().OperationalState)
+		case dummy0Name, dummy1Name:
+			asrt.Equal("dummy", r.TypedSpec().Kind)
+			asrt.Equal(nethelpers.OperStateUnknown, r.TypedSpec().OperationalState)
+			asrt.NotZero(r.TypedSpec().MasterIndex)
+		}
+	})
 
 	// attempt to enable STP & VLAN filtering
 	ctest.UpdateWithConflicts(suite, bridge, func(r *network.LinkSpec) error {
@@ -863,29 +576,11 @@ func (suite *LinkSpecSuite) TestBridge() {
 		return nil
 	})
 
-	suite.Assert().NoError(
-		retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-			func() error {
-				return suite.assertInterfaces(
-					[]string{bridgeName}, func(r *network.LinkStatus) error {
-						if !r.TypedSpec().BridgeMaster.STP.Enabled {
-							return retry.ExpectedErrorf(
-								"stp is not enabled on bridge %s", r.Metadata().ID(),
-							)
-						}
-
-						if !r.TypedSpec().BridgeMaster.VLAN.FilteringEnabled {
-							return retry.ExpectedErrorf(
-								"vlan filtering is not enabled on bridge %s", r.Metadata().ID(),
-							)
-						}
-
-						return nil
-					},
-				)
-			},
-		),
-	)
+	ctest.AssertResource(suite, bridgeName, func(r *network.LinkStatus, asrt *assert.Assertions) {
+		asrt.Equal(network.LinkKindBridge, r.TypedSpec().Kind)
+		asrt.EqualValues(true, r.TypedSpec().BridgeMaster.STP.Enabled)
+		asrt.EqualValues(true, r.TypedSpec().BridgeMaster.VLAN.FilteringEnabled)
+	})
 
 	// unslave one of the interfaces
 	ctest.UpdateWithConflicts(suite, dummy0, func(r *network.LinkSpec) error {
@@ -894,43 +589,18 @@ func (suite *LinkSpecSuite) TestBridge() {
 		return nil
 	})
 
-	suite.Assert().NoError(
-		retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-			func() error {
-				return suite.assertInterfaces(
-					[]string{dummy0Name}, func(r *network.LinkStatus) error {
-						if r.TypedSpec().MasterIndex != 0 {
-							return retry.ExpectedErrorf("iface not unslaved yet")
-						}
-
-						return nil
-					},
-				)
-			},
-		),
-	)
+	ctest.AssertResource(suite, dummy0Name, func(r *network.LinkStatus, asrt *assert.Assertions) {
+		asrt.Zero(r.TypedSpec().MasterIndex)
+	})
 
 	// teardown the links
 	for _, r := range []resource.Resource{dummy0, dummy1, bridge} {
-		for {
-			ready, err := suite.state.Teardown(suite.ctx, r.Metadata())
-			suite.Require().NoError(err)
-
-			if ready {
-				break
-			}
-
-			time.Sleep(100 * time.Millisecond)
-		}
+		suite.Require().NoError(suite.State().TeardownAndDestroy(suite.Ctx(), r.Metadata()))
 	}
 
-	suite.Assert().NoError(
-		retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-			func() error {
-				return suite.assertNoInterface(bridgeName)
-			},
-		),
-	)
+	ctest.AssertNoResource[*network.LinkStatus](suite, dummy0Name)
+	ctest.AssertNoResource[*network.LinkStatus](suite, dummy1Name)
+	ctest.AssertNoResource[*network.LinkStatus](suite, bridgeName)
 }
 
 //nolint:gocyclo
@@ -981,34 +651,15 @@ func (suite *LinkSpecSuite) TestWireguard() {
 	}
 
 	for _, res := range []resource.Resource{wg} {
-		suite.Require().NoError(suite.state.Create(suite.ctx, res), "%v", res.Spec())
+		suite.Create(res)
 	}
 
-	suite.Assert().NoError(
-		retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-			func() error {
-				return suite.assertInterfaces(
-					[]string{wgInterface}, func(r *network.LinkStatus) error {
-						suite.Assert().Equal("wireguard", r.TypedSpec().Kind)
-
-						if r.TypedSpec().Wireguard.PublicKey != priv.PublicKey().String() {
-							return retry.ExpectedErrorf("private key not set")
-						}
-
-						if len(r.TypedSpec().Wireguard.Peers) != 2 {
-							return retry.ExpectedErrorf("peers are not set up")
-						}
-
-						if r.TypedSpec().OperationalState != nethelpers.OperStateUnknown && r.TypedSpec().OperationalState != nethelpers.OperStateUp {
-							return retry.ExpectedErrorf("link is not up")
-						}
-
-						return nil
-					},
-				)
-			},
-		),
-	)
+	ctest.AssertResource(suite, wgInterface, func(r *network.LinkStatus, asrt *assert.Assertions) {
+		asrt.Equal("wireguard", r.TypedSpec().Kind)
+		asrt.Contains([]nethelpers.OperationalState{nethelpers.OperStateUp, nethelpers.OperStateUnknown}, r.TypedSpec().OperationalState)
+		asrt.Equal(priv.PublicKey().String(), r.TypedSpec().Wireguard.PublicKey)
+		asrt.Len(r.TypedSpec().Wireguard.Peers, 2)
+	})
 
 	// attempt to change wireguard private key
 	priv2, err := wgtypes.GeneratePrivateKey()
@@ -1020,51 +671,16 @@ func (suite *LinkSpecSuite) TestWireguard() {
 		return nil
 	})
 
-	suite.Assert().NoError(
-		retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-			func() error {
-				return suite.assertInterfaces(
-					[]string{wgInterface}, func(r *network.LinkStatus) error {
-						if r.TypedSpec().Wireguard.PublicKey != priv2.PublicKey().String() {
-							return retry.ExpectedErrorf("private key was not updated")
-						}
-
-						return nil
-					},
-				)
-			},
-		),
-	)
+	ctest.AssertResource(suite, wgInterface, func(r *network.LinkStatus, asrt *assert.Assertions) {
+		asrt.Equal(priv2.PublicKey().String(), r.TypedSpec().Wireguard.PublicKey)
+	})
 
 	// teardown the links
 	for _, r := range []resource.Resource{wg} {
-		for {
-			ready, err := suite.state.Teardown(suite.ctx, r.Metadata())
-			suite.Require().NoError(err)
-
-			if ready {
-				break
-			}
-
-			time.Sleep(100 * time.Millisecond)
-		}
+		suite.Require().NoError(suite.State().TeardownAndDestroy(suite.Ctx(), r.Metadata()))
 	}
 
-	suite.Assert().NoError(
-		retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-			func() error {
-				return suite.assertNoInterface(wgInterface)
-			},
-		),
-	)
-}
-
-func (suite *LinkSpecSuite) TearDownTest() {
-	suite.T().Log("tear down")
-
-	suite.ctxCancel()
-
-	suite.wg.Wait()
+	ctest.AssertNoResource[*network.LinkStatus](suite, wgInterface)
 }
 
 func TestLinkSpecSuite(t *testing.T) {
@@ -1072,7 +688,20 @@ func TestLinkSpecSuite(t *testing.T) {
 		t.Skip("requires root")
 	}
 
-	suite.Run(t, new(LinkSpecSuite))
+	suite.Run(t, &LinkSpecSuite{
+		DefaultSuite: ctest.DefaultSuite{
+			Timeout: 15 * time.Second,
+			AfterSetup: func(suite *ctest.DefaultSuite) {
+				// create fake device ready status
+				deviceStatus := runtimeres.NewDevicesStatus(runtimeres.NamespaceName, runtimeres.DevicesID)
+				deviceStatus.TypedSpec().Ready = true
+				suite.Create(deviceStatus)
+
+				suite.Require().NoError(suite.Runtime().RegisterController(&netctrl.LinkSpecController{}))
+				suite.Require().NoError(suite.Runtime().RegisterController(&netctrl.LinkStatusController{}))
+			},
+		},
+	})
 }
 
 func TestSortBonds(t *testing.T) {

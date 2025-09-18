@@ -13,12 +13,14 @@ import (
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/hashicorp/go-multierror"
+	"github.com/siderolabs/gen/optional"
 	"github.com/siderolabs/gen/xslices"
 	"github.com/siderolabs/go-procfs/procfs"
 	"go.uber.org/zap"
 
 	talosconfig "github.com/siderolabs/talos/pkg/machinery/config/config"
 	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
+	"github.com/siderolabs/talos/pkg/machinery/resources/config"
 	"github.com/siderolabs/talos/pkg/machinery/resources/network"
 )
 
@@ -50,6 +52,12 @@ func (ctrl *OperatorConfigController) Inputs() []controller.Input {
 			Type:      network.LinkSpecType,
 			Kind:      controller.InputWeak,
 		},
+		{
+			Namespace: config.NamespaceName,
+			Type:      config.MachineConfigType,
+			ID:        optional.Some(config.ActiveID),
+			Kind:      controller.InputWeak,
+		},
 	}
 }
 
@@ -74,7 +82,14 @@ func (ctrl *OperatorConfigController) Run(ctx context.Context, r controller.Runt
 		case <-r.EventCh():
 		}
 
-		touchedIDs := make(map[resource.ID]struct{})
+		r.StartTrackingOutputs()
+
+		cfg, err := safe.ReaderGetByID[*config.MachineConfig](ctx, r, config.ActiveID)
+		if err != nil {
+			if !state.IsNotFoundError(err) {
+				return fmt.Errorf("error getting machine config: %w", err)
+			}
+		}
 
 		linkStatuses, err := safe.ReaderListAll[*network.LinkStatus](ctx, r)
 		if err != nil {
@@ -215,77 +230,61 @@ func (ctrl *OperatorConfigController) Run(ctx context.Context, r controller.Runt
 			}
 		}
 
-		// build configuredInterfaces from linkSpecs in `network-config` namespace
-		// any link which has any configuration derived from the machine configuration or platform configuration should be ignored
-		configuredInterfaces := map[string]struct{}{}
+		// run default DHCP operators if enabled
+		shouldRunDefaultDHCPOperators := cfg == nil || cfg.Config().RunDefaultDHCPOperators()
 
-		linkSpecs, err := safe.ReaderList[*network.LinkSpec](ctx, r, resource.NewMetadata(network.ConfigNamespaceName, network.LinkSpecType, "", resource.VersionUndefined))
-		if err != nil {
-			return fmt.Errorf("error listing link specs: %w", err)
-		}
+		if shouldRunDefaultDHCPOperators {
+			// build configuredInterfaces from linkSpecs in `network-config` namespace
+			// any link which has any configuration derived from the machine configuration or platform configuration should be ignored
+			configuredInterfaces := map[string]struct{}{}
 
-		for link := range linkSpecs.All() {
-			linkSpec := link.TypedSpec()
-
-			switch linkSpec.ConfigLayer {
-			case network.ConfigDefault:
-				// ignore default link specs
-			case network.ConfigOperator:
-				// specs produced by operators, ignore
-			case network.ConfigCmdline, network.ConfigMachineConfiguration, network.ConfigPlatform:
-				// interface is configured explicitly, don't run default dhcp4
-				configuredInterfaces[linkNameResolver.Resolve(linkSpec.Name)] = struct{}{}
+			linkSpecs, err := safe.ReaderList[*network.LinkSpec](ctx, r, resource.NewMetadata(network.ConfigNamespaceName, network.LinkSpecType, "", resource.VersionUndefined))
+			if err != nil {
+				return fmt.Errorf("error listing link specs: %w", err)
 			}
-		}
 
-		// operators from defaults
-		for linkStatus := range linkStatuses.All() {
-			if linkStatus.TypedSpec().Physical() {
-				if _, configured := configuredInterfaces[linkStatus.Metadata().ID()]; !configured {
-					if _, ignored := ignoredInterfaces[linkStatus.Metadata().ID()]; !ignored {
-						// enable DHCPv4 operator on physical interfaces which don't have any explicit configuration and are not ignored
-						specs = append(specs, network.OperatorSpecSpec{
-							Operator:  network.OperatorDHCP4,
-							LinkName:  linkStatus.Metadata().ID(),
-							RequireUp: true,
-							DHCP4: network.DHCP4OperatorSpec{
-								RouteMetric: network.DefaultRouteMetric,
-							},
-							ConfigLayer: network.ConfigDefault,
-						})
+			for link := range linkSpecs.All() {
+				linkSpec := link.TypedSpec()
+
+				switch linkSpec.ConfigLayer {
+				case network.ConfigDefault:
+					// ignore default link specs
+				case network.ConfigOperator:
+					// specs produced by operators, ignore
+				case network.ConfigCmdline, network.ConfigMachineConfiguration, network.ConfigPlatform:
+					// interface is configured explicitly, don't run default dhcp4
+					configuredInterfaces[linkNameResolver.Resolve(linkSpec.Name)] = struct{}{}
+				}
+			}
+
+			// operators from defaults
+			for linkStatus := range linkStatuses.All() {
+				if linkStatus.TypedSpec().Physical() {
+					if _, configured := configuredInterfaces[linkStatus.Metadata().ID()]; !configured {
+						if _, ignored := ignoredInterfaces[linkStatus.Metadata().ID()]; !ignored {
+							// enable DHCPv4 operator on physical interfaces which don't have any explicit configuration and are not ignored
+							specs = append(specs, network.OperatorSpecSpec{
+								Operator:  network.OperatorDHCP4,
+								LinkName:  linkStatus.Metadata().ID(),
+								RequireUp: true,
+								DHCP4: network.DHCP4OperatorSpec{
+									RouteMetric: network.DefaultRouteMetric,
+								},
+								ConfigLayer: network.ConfigDefault,
+							})
+						}
 					}
 				}
 			}
 		}
 
-		var ids []string
-
-		ids, err = ctrl.apply(ctx, r, specs)
-		if err != nil {
+		if err = ctrl.apply(ctx, r, specs); err != nil {
 			return fmt.Errorf("error applying operator specs: %w", err)
 		}
 
-		for _, id := range ids {
-			touchedIDs[id] = struct{}{}
-		}
-
 		// list specs for cleanup
-		operators, err := safe.ReaderList[*network.OperatorSpec](ctx, r, resource.NewMetadata(network.ConfigNamespaceName, network.OperatorSpecType, "", resource.VersionUndefined))
-		if err != nil {
-			return fmt.Errorf("error listing resources: %w", err)
-		}
-
-		for res := range operators.All() {
-			if res.Metadata().Owner() != ctrl.Name() {
-				// skip specs created by other controllers
-				continue
-			}
-
-			if _, ok := touchedIDs[res.Metadata().ID()]; !ok {
-				if err = r.Destroy(ctx, res.Metadata()); err != nil {
-					return fmt.Errorf("error cleaning up routes: %w", err)
-				}
-			}
+		if err = r.CleanupOutputs(ctx, resource.NewMetadata(network.ConfigNamespaceName, network.OperatorSpecType, "", resource.VersionUndefined)); err != nil {
+			return fmt.Errorf("error cleaning up operator specs: %w", err)
 		}
 
 		// last, check if some specs failed to build; fail last so that other operator specs are applied successfully
@@ -298,9 +297,7 @@ func (ctrl *OperatorConfigController) Run(ctx context.Context, r controller.Runt
 }
 
 //nolint:dupl
-func (ctrl *OperatorConfigController) apply(ctx context.Context, r controller.Runtime, specs []network.OperatorSpecSpec) ([]resource.ID, error) {
-	ids := make([]string, 0, len(specs))
-
+func (ctrl *OperatorConfigController) apply(ctx context.Context, r controller.Runtime, specs []network.OperatorSpecSpec) error {
 	for _, spec := range specs {
 		id := network.LayeredID(spec.ConfigLayer, network.OperatorID(spec.Operator, spec.LinkName))
 
@@ -314,11 +311,9 @@ func (ctrl *OperatorConfigController) apply(ctx context.Context, r controller.Ru
 				return nil
 			},
 		); err != nil {
-			return ids, err
+			return err
 		}
-
-		ids = append(ids, id)
 	}
 
-	return ids, nil
+	return nil
 }

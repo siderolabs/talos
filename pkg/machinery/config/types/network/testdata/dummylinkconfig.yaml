@@ -1,0 +1,7 @@
+apiVersion: v1alpha1
+kind: DummyLinkConfig
+name: dummy1
+hardwareAddr: 2e:3c:4d:5e:6f:70
+up: true
+addresses:
+    - address: 192.168.1.100/32

@@ -1,6 +1,4 @@
 ---
-machine:
-  network:
-    interfaces:
-      - interface: dummy-ap-patch
-        dummy: true
+apiVersion: v1alpha1
+kind: DummyLinkConfig
+name: dummy-ap-patch

@@ -550,7 +550,9 @@ func (apiSuite *APISuite) AssertExpectedModules(ctx context.Context, node string
 }
 
 // UpdateMachineConfig fetches machine configuration, patches it and applies the changes.
-func (apiSuite *APISuite) UpdateMachineConfig(nodeCtx context.Context, patch func(config.Provider) (config.Provider, error)) {
+func (apiSuite *APISuite) UpdateMachineConfig(
+	nodeCtx context.Context, modeSetter func(*machineapi.ApplyConfigurationRequest), patch func(config.Provider) (config.Provider, error),
+) {
 	cfg, err := apiSuite.ReadConfigFromNode(nodeCtx)
 	apiSuite.Require().NoError(err)
 
@@ -560,10 +562,14 @@ func (apiSuite *APISuite) UpdateMachineConfig(nodeCtx context.Context, patch fun
 	bytes, err := patchedCfg.Bytes()
 	apiSuite.Require().NoError(err)
 
-	resp, err := apiSuite.Client.ApplyConfiguration(nodeCtx, &machineapi.ApplyConfigurationRequest{
+	req := &machineapi.ApplyConfigurationRequest{
 		Data: bytes,
 		Mode: machineapi.ApplyConfigurationRequest_AUTO,
-	})
+	}
+
+	modeSetter(req)
+
+	resp, err := apiSuite.Client.ApplyConfiguration(nodeCtx, req)
 	apiSuite.Require().NoError(err)
 
 	apiSuite.T().Logf("patched machine config: %s", resp.Messages[0].ModeDetails)
@@ -571,6 +577,13 @@ func (apiSuite *APISuite) UpdateMachineConfig(nodeCtx context.Context, patch fun
 
 // PatchMachineConfig patches machine configuration on the node.
 func (apiSuite *APISuite) PatchMachineConfig(nodeCtx context.Context, patches ...any) {
+	apiSuite.PatchMachineConfigWithModeSetter(nodeCtx, func(*machineapi.ApplyConfigurationRequest) {}, patches...)
+}
+
+// PatchMachineConfigWithModeSetter patches machine configuration on the node with a specific mode.
+func (apiSuite *APISuite) PatchMachineConfigWithModeSetter(
+	nodeCtx context.Context, modeSetter func(*machineapi.ApplyConfigurationRequest), patches ...any,
+) {
 	configPatches := make([]configpatcher.Patch, 0, len(patches))
 
 	for _, patch := range patches {
@@ -583,41 +596,47 @@ func (apiSuite *APISuite) PatchMachineConfig(nodeCtx context.Context, patches ..
 		configPatches = append(configPatches, configPatch)
 	}
 
-	apiSuite.UpdateMachineConfig(nodeCtx, func(cfg config.Provider) (config.Provider, error) {
-		out, err := configpatcher.Apply(configpatcher.WithConfig(cfg), configPatches)
-		if err != nil {
-			return nil, err
-		}
+	apiSuite.UpdateMachineConfig(nodeCtx,
+		modeSetter,
+		func(cfg config.Provider) (config.Provider, error) {
+			out, err := configpatcher.Apply(configpatcher.WithConfig(cfg), configPatches)
+			if err != nil {
+				return nil, err
+			}
 
-		return out.Config()
-	})
+			return out.Config()
+		})
 }
 
 // RemoveMachineConfigDocuments removes machine configuration documents of specified type from the node.
 func (apiSuite *APISuite) RemoveMachineConfigDocuments(nodeCtx context.Context, docTypes ...string) {
-	apiSuite.UpdateMachineConfig(nodeCtx, func(cfg config.Provider) (config.Provider, error) {
-		return container.New(xslices.Filter(cfg.Documents(), func(doc configconfig.Document) bool {
-			return slices.Index(docTypes, doc.Kind()) == -1
-		})...)
-	})
+	apiSuite.UpdateMachineConfig(nodeCtx,
+		func(*machineapi.ApplyConfigurationRequest) {},
+		func(cfg config.Provider) (config.Provider, error) {
+			return container.New(xslices.Filter(cfg.Documents(), func(doc configconfig.Document) bool {
+				return slices.Index(docTypes, doc.Kind()) == -1
+			})...)
+		})
 }
 
 // RemoveMachineConfigDocumentsByName removes machine configuration documents of specified type and names from the node.
 func (apiSuite *APISuite) RemoveMachineConfigDocumentsByName(nodeCtx context.Context, docType string, names ...string) {
-	apiSuite.UpdateMachineConfig(nodeCtx, func(cfg config.Provider) (config.Provider, error) {
-		return container.New(xslices.Filter(cfg.Documents(), func(doc configconfig.Document) bool {
-			if doc.Kind() != docType {
-				return true
-			}
+	apiSuite.UpdateMachineConfig(nodeCtx,
+		func(*machineapi.ApplyConfigurationRequest) {},
+		func(cfg config.Provider) (config.Provider, error) {
+			return container.New(xslices.Filter(cfg.Documents(), func(doc configconfig.Document) bool {
+				if doc.Kind() != docType {
+					return true
+				}
 
-			namedDoc, ok := doc.(configconfig.NamedDocument)
-			if !ok {
-				return true
-			}
+				namedDoc, ok := doc.(configconfig.NamedDocument)
+				if !ok {
+					return true
+				}
 
-			return slices.Index(names, namedDoc.Name()) == -1
-		})...)
-	})
+				return slices.Index(names, namedDoc.Name()) == -1
+			})...)
+		})
 }
 
 // PatchV1Alpha1Config patches v1alpha1 config in the config provider.

@@ -269,6 +269,10 @@ func (o LinkRefreshSpec) DeepCopy() LinkRefreshSpec {
 // DeepCopy generates a deep copy of LinkSpecSpec.
 func (o LinkSpecSpec) DeepCopy() LinkSpecSpec {
 	var cp LinkSpecSpec = o
+	if o.HardwareAddress != nil {
+		cp.HardwareAddress = make([]byte, len(o.HardwareAddress))
+		copy(cp.HardwareAddress, o.HardwareAddress)
+	}
 	if o.Wireguard.Peers != nil {
 		cp.Wireguard.Peers = make([]WireguardPeer, len(o.Wireguard.Peers))
 		copy(cp.Wireguard.Peers, o.Wireguard.Peers)

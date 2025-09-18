@@ -302,6 +302,20 @@ func (container *Container) NetworkHostnameConfig() config.NetworkHostnameConfig
 	return nil
 }
 
+// NetworkCommonLinkConfigs implements config.Config interface.
+func (container *Container) NetworkCommonLinkConfigs() []config.NetworkCommonLinkConfig {
+	return findMatchingDocs[config.NetworkCommonLinkConfig](container.documents)
+}
+
+// RunDefaultDHCPOperators implements config.Config interface.
+//
+// The rules for this are:
+//   - if there is a single new-style network config document for links,
+//     we immediately stop running default DHCP operators (as user is taking full control)
+func (container *Container) RunDefaultDHCPOperators() bool {
+	return len(findMatchingDocs[config.NetworkCommonLinkConfig](container.documents)) == 0
+}
+
 // Bytes returns source YAML representation (if available) or does default encoding.
 func (container *Container) Bytes() ([]byte, error) {
 	if !container.readonly {

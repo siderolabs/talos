@@ -18,7 +18,6 @@ import (
 	"github.com/cosi-project/runtime/pkg/resource/rtestutils"
 	"github.com/siderolabs/gen/ensure"
 	"github.com/siderolabs/gen/xslices"
-	"github.com/siderolabs/go-pointer"
 	"github.com/siderolabs/go-retry/retry"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -29,9 +28,11 @@ import (
 	machineapi "github.com/siderolabs/talos/pkg/machinery/api/machine"
 	"github.com/siderolabs/talos/pkg/machinery/client"
 	"github.com/siderolabs/talos/pkg/machinery/config"
+	configconfig "github.com/siderolabs/talos/pkg/machinery/config/config"
 	"github.com/siderolabs/talos/pkg/machinery/config/container"
 	"github.com/siderolabs/talos/pkg/machinery/config/machine"
 	blockcfg "github.com/siderolabs/talos/pkg/machinery/config/types/block"
+	"github.com/siderolabs/talos/pkg/machinery/config/types/network"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/runtime"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
@@ -565,49 +566,24 @@ func (suite *ApplyConfigSuite) TestApplyTry() {
 	suite.ClearConnectionRefused(suite.ctx, node)
 	nodeCtx := client.WithNode(suite.ctx, node)
 
+	dummyCfg := network.NewDummyLinkConfigV1Alpha1("dummy-try")
+
+	suite.PatchMachineConfigWithModeSetter(nodeCtx, func(acr *machineapi.ApplyConfigurationRequest) {
+		acr.Mode = machineapi.ApplyConfigurationRequest_TRY
+		acr.TryModeTimeout = durationpb.New(time.Second * 1)
+	}, dummyCfg)
+
 	provider, err := suite.ReadConfigFromNode(nodeCtx)
-	suite.Require().NoErrorf(err, "failed to read existing config from node %q: %s", node, err)
-
-	cfgDataOut := suite.PatchV1Alpha1Config(provider, func(cfg *v1alpha1.Config) {
-		if cfg.MachineConfig.MachineNetwork == nil {
-			cfg.MachineConfig.MachineNetwork = &v1alpha1.NetworkConfig{}
-		}
-
-		cfg.MachineConfig.MachineNetwork.NetworkInterfaces = append(cfg.MachineConfig.MachineNetwork.NetworkInterfaces,
-			&v1alpha1.Device{
-				DeviceInterface: "dummy0",
-				DeviceDummy:     pointer.To(true),
-			},
-		)
-	})
-
-	_, err = suite.Client.ApplyConfiguration(
-		nodeCtx, &machineapi.ApplyConfigurationRequest{
-			Data:           cfgDataOut,
-			Mode:           machineapi.ApplyConfigurationRequest_TRY,
-			TryModeTimeout: durationpb.New(time.Second * 1),
-		},
-	)
-	suite.Assert().NoErrorf(err, "failed to apply configuration (node %q)", node)
-
-	provider, err = suite.ReadConfigFromNode(nodeCtx)
 	suite.Require().NoErrorf(err, "failed to read existing config from node %q", node)
 
-	suite.Assert().NotNil(provider.Machine().Network())
-	suite.Assert().NotNil(provider.Machine().Network().Devices())
-
 	assertDummyInterface := func(provider config.Provider) bool {
-		if provider.Machine().Network() == nil {
-			return false
-		}
+		docs := provider.Documents()
 
-		if provider.Machine().Network().Devices() == nil {
-			return false
-		}
-
-		for _, device := range provider.Machine().Network().Devices() {
-			if device.Dummy() && device.Interface() == "dummy0" {
-				return true
+		for _, doc := range docs {
+			if doc.Kind() == network.DummyLinkKind {
+				if namedDocument, ok := doc.(configconfig.NamedDocument); ok && namedDocument.Name() == "dummy-try" {
+					return true
+				}
 			}
 		}
 
