@@ -88,7 +88,14 @@ var OOMTrigger = sync.OnceValue(func() *cel.Env {
 		slices.Concat(
 			slices.Concat(
 				[]cel.EnvOption{
+					cel.Variable("memory_some_avg10", types.DoubleType),
+					cel.Variable("memory_some_avg60", types.DoubleType),
+					cel.Variable("memory_some_avg300", types.DoubleType),
+					cel.Variable("memory_some_total", types.DoubleType),
 					cel.Variable("memory_full_avg10", types.DoubleType),
+					cel.Variable("memory_full_avg60", types.DoubleType),
+					cel.Variable("memory_full_avg300", types.DoubleType),
+					cel.Variable("memory_full_total", types.DoubleType),
 					cel.Variable("time_since_trigger", types.DurationType),
 					cel.OptionalTypes(),
 				},

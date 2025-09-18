@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/siderolabs/gen/optional"
+
 	"github.com/siderolabs/talos/pkg/machinery/cel"
 )
 

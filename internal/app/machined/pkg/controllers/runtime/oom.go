@@ -128,61 +128,72 @@ func (ctrl *OOMController) Run(ctx context.Context, r controller.Runtime, logger
 		case <-tickerC:
 		}
 
-		node, err := cgroups.GetCgroupProperty(constants.CgroupMountPath, "memory.pressure")
-		if err != nil {
-			logger.Error("cannot read memory pressure", zap.Error(err))
-
-			continue
-		}
-
-		pressureType := "some"
-		pressureSpan := "avg10"
-
-		spans, ok := node.MemoryPressure[pressureType]
-		if !ok {
-			logger.Error("cannot find memory pressure type:", zap.String("pressureType", pressureType))
-
-			continue
-		}
-
-		value, ok := spans[pressureSpan]
-		if !ok {
-			logger.Error("cannot find memory pressure span:", zap.String("pressureSpan", pressureSpan))
-
-			continue
-		}
-
-		if !value.IsSet || value.IsMax {
-			continue
-		}
-
-		val, err := strconv.ParseFloat(value.String(), 64)
-		if err != nil {
-			logger.Error("cannot parse memory pressure:", zap.String("pressureSpan", pressureSpan), zap.Error(err))
-
-			continue
-		}
-
-		evalContext := map[string]any{
-			"memory_full_avg10":  float64(val),
-			"time_since_trigger": time.Since(ctrl.ActionTriggered),
-		}
-
-		trigger, err := triggerExpr.EvalBool(celenv.OOMTrigger(), evalContext)
-		if err != nil {
-			logger.Error("cannot evaluate trigger condition:", zap.Error(err))
-
-			continue
-		}
-
-		// FIXME: remove hot-path logging
-		logger.Info("Evaluated OOMTrigger", zap.Any("evalContext", evalContext), zap.Bool("result", trigger))
-
-		if trigger {
+		if ctrl.EvaluateTrigger(logger, triggerExpr) {
 			ctrl.ActionTriggered = time.Now()
 			ctrl.OomAction(logger, scoringExpr)
 		}
 	}
+}
+
+// EvaluateTrigger is a method obtaining data and evaluating the trigger expression.
+// When the result is true, designated OOM action is to be executed.
+func (ctrl *OOMController) EvaluateTrigger(logger *zap.Logger, triggerExpr cel.Expression) bool {
+	evalContext := map[string]any{
+		"time_since_trigger": time.Since(ctrl.ActionTriggered),
+	}
+
+	err := ctrl.populatePsiToCtx(evalContext)
+	if err != nil {
+		logger.Error("!!! ctxFailed ctxFailed ctxFailed", zap.Error(err))
+
+		return false
+	}
+
+	trigger, err := triggerExpr.EvalBool(celenv.OOMTrigger(), evalContext)
+	if err != nil {
+		logger.Error("cannot evaluate trigger condition:", zap.Error(err))
+
+		return false
+	}
+
+	// FIXME: remove hot-path logging
+	logger.Info("Evaluated OOMTrigger", zap.Any("evalContext", evalContext), zap.Bool("result", trigger))
+
+	return trigger
+}
+
+func (ctrl *OOMController) populatePsiToCtx(evalContext map[string]any) error {
+	node, err := cgroups.GetCgroupProperty(constants.CgroupMountPath, "memory.pressure")
+	if err != nil {
+		return fmt.Errorf("cannot read memory pressure: %w", err)
+	}
+
+	for _, psiType := range []string{"some", "full"} {
+		for _, span := range []string{"avg10", "avg60", "avg300", "total"} {
+			spans, ok := node.MemoryPressure[psiType]
+			if !ok {
+				return fmt.Errorf("cannot find memory pressure type: type: %s", psiType)
+			}
+
+			value, ok := spans[span]
+			if !ok {
+				return fmt.Errorf("cannot find memory pressure span: span: %s", span)
+			}
+
+			if !value.IsSet || value.IsMax {
+				return fmt.Errorf("PSI is not defined")
+			}
+
+			val, err := strconv.ParseFloat(value.String(), 64)
+			if err != nil {
+				return fmt.Errorf("cannot parse memory pressure: span: %s, err %w", span, err)
+			}
+
+			evalContext["memory_"+psiType+"_"+span] = val
+		}
+	}
+
+	return nil
 }
 
 func (*OOMController) getConfig(cfg *config.MachineConfig) (cel.Expression, cel.Expression, time.Duration) {
@@ -333,6 +344,8 @@ func (ctrl *OOMController) reapCg(logger *zap.Logger, cgroupPath string) error {
 	})
 	logger.Info("victim processes:", zap.Any("processes", processes))
 
+	// Open pidfd's of all the processes in cgroup to accelerate kernel
+	// garbage-collecting those processes via mrelease.
 	pidfds := []int{}
 
 	for _, pid := range processes {
@@ -357,6 +370,7 @@ func (ctrl *OOMController) reapCg(logger *zap.Logger, cgroupPath string) error {
 	for _, pidfd := range pidfds {
 		_, _, errno := syscall.Syscall(unix.SYS_PROCESS_MRELEASE, uintptr(pidfd), uintptr(0), uintptr(0))
 		if errno != 0 && errno != syscall.ESRCH {
+			// FIXME: tolerate some errors esp given that some processes might have been freed already.
 			logger.Error("failed to call mrelease", zap.Int("errno", int(errno)))
 
 			continue
