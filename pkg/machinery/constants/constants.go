@@ -829,7 +829,7 @@ const (
 	CgroupTrustdReservedMemory = 8 * 1024 * 1024
 
 	// CgroupTrustdMaxMemory is the hard memory limit for the trustd process.
-	CgroupTrustdMaxMemory = 24 * 1024 * 1024
+	CgroupTrustdMaxMemory = 128 * 1024 * 1024
 
 	// CgroupTrustdMillicores is the CPU weight for the trustd process.
 	CgroupTrustdMillicores = 250
