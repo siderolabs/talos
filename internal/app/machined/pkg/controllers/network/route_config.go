@@ -13,12 +13,14 @@ import (
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
+	"github.com/siderolabs/gen/optional"
 	"github.com/siderolabs/gen/value"
 	"github.com/siderolabs/go-procfs/procfs"
 	"go.uber.org/zap"
 
-	talosconfig "github.com/siderolabs/talos/pkg/machinery/config/config"
+	cfg "github.com/siderolabs/talos/pkg/machinery/config/config"
 	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
+	"github.com/siderolabs/talos/pkg/machinery/resources/config"
 	"github.com/siderolabs/talos/pkg/machinery/resources/network"
 )
 
@@ -38,6 +40,12 @@ func (ctrl *RouteConfigController) Inputs() []controller.Input {
 		{
 			Namespace: network.NamespaceName,
 			Type:      network.DeviceConfigSpecType,
+			Kind:      controller.InputWeak,
+		},
+		{
+			Namespace: config.NamespaceName,
+			Type:      config.MachineConfigType,
+			ID:        optional.Some(config.ActiveID),
 			Kind:      controller.InputWeak,
 		},
 	}
@@ -64,34 +72,18 @@ func (ctrl *RouteConfigController) Run(ctx context.Context, r controller.Runtime
 		case <-r.EventCh():
 		}
 
-		touchedIDs := make(map[resource.ID]struct{})
+		r.StartTrackingOutputs()
 
-		items, err := r.List(ctx, resource.NewMetadata(network.NamespaceName, network.DeviceConfigSpecType, "", resource.VersionUndefined))
+		devices, err := safe.ReaderListAll[*network.DeviceConfigSpec](ctx, r)
 		if err != nil {
-			if !state.IsNotFoundError(err) {
-				return fmt.Errorf("error getting config: %w", err)
-			}
+			return fmt.Errorf("error getting config: %w", err)
 		}
 
 		ignoredInterfaces := map[string]struct{}{}
 
-		devices := make([]talosconfig.Device, len(items.Items))
-
-		for i, item := range items.Items {
-			device := item.(*network.DeviceConfigSpec).TypedSpec().Device
-
-			devices[i] = device
-
-			if device.Ignore() {
-				ignoredInterfaces[device.Interface()] = struct{}{}
-			}
-		}
-
-		if len(devices) > 0 {
-			for _, device := range devices {
-				if device.Ignore() {
-					ignoredInterfaces[device.Interface()] = struct{}{}
-				}
+		for device := range devices.All() {
+			if device.TypedSpec().Device.Ignore() {
+				ignoredInterfaces[device.TypedSpec().Device.Interface()] = struct{}{}
 			}
 		}
 
@@ -99,61 +91,42 @@ func (ctrl *RouteConfigController) Run(ctx context.Context, r controller.Runtime
 		cmdlineRoutes := ctrl.parseCmdline(logger)
 		for _, cmdlineRoute := range cmdlineRoutes {
 			if _, ignored := ignoredInterfaces[cmdlineRoute.OutLinkName]; !ignored {
-				var ids []string
-
-				ids, err = ctrl.apply(ctx, r, []network.RouteSpecSpec{cmdlineRoute})
-				if err != nil {
+				if err = ctrl.apply(ctx, r, []network.RouteSpecSpec{cmdlineRoute}); err != nil {
 					return fmt.Errorf("error applying cmdline route: %w", err)
 				}
-
-				for _, id := range ids {
-					touchedIDs[id] = struct{}{}
-				}
 			}
 		}
 
-		// parse machine configuration for static routes
-		if len(devices) > 0 {
-			addresses := ctrl.processDevicesConfiguration(logger, devices)
+		// parse machine configuration for static routes (legacy)
+		if devices.Len() > 0 {
+			routes := ctrl.processDevicesConfiguration(logger, devices)
 
-			var ids []string
-
-			ids, err = ctrl.apply(ctx, r, addresses)
-			if err != nil {
-				return fmt.Errorf("error applying machine configuration address: %w", err)
-			}
-
-			for _, id := range ids {
-				touchedIDs[id] = struct{}{}
+			if err = ctrl.apply(ctx, r, routes); err != nil {
+				return fmt.Errorf("error applying machine configuration routes: %w", err)
 			}
 		}
 
-		// list routes for cleanup
-		list, err := r.List(ctx, resource.NewMetadata(network.ConfigNamespaceName, network.RouteSpecType, "", resource.VersionUndefined))
+		// parse machine configuration (modern)
+		cfg, err := safe.ReaderGetByID[*config.MachineConfig](ctx, r, config.ActiveID)
 		if err != nil {
-			return fmt.Errorf("error listing resources: %w", err)
-		}
-
-		for _, res := range list.Items {
-			if res.Metadata().Owner() != ctrl.Name() {
-				// skip specs created by other controllers
-				continue
-			}
-
-			if _, ok := touchedIDs[res.Metadata().ID()]; !ok {
-				if err = r.Destroy(ctx, res.Metadata()); err != nil {
-					return fmt.Errorf("error cleaning up routes: %w", err)
-				}
+			if !state.IsNotFoundError(err) {
+				return fmt.Errorf("error getting machine config: %w", err)
 			}
 		}
 
-		r.ResetRestartBackoff()
+		if cfg != nil {
+			if err = ctrl.apply(ctx, r, ctrl.processMachineConfig(cfg.Config().NetworkCommonLinkConfigs())); err != nil {
+				return fmt.Errorf("error applying machine configuration routes: %w", err)
+			}
+		}
+
+		if err = r.CleanupOutputs(ctx, resource.NewMetadata(network.ConfigNamespaceName, network.RouteSpecType, "", resource.VersionUndefined)); err != nil {
+			return fmt.Errorf("error cleaning outputs: %w", err)
+		}
 	}
 }
 
-func (ctrl *RouteConfigController) apply(ctx context.Context, r controller.Runtime, routes []network.RouteSpecSpec) ([]resource.ID, error) {
-	ids := make([]string, 0, len(routes))
-
+func (ctrl *RouteConfigController) apply(ctx context.Context, r controller.Runtime, routes []network.RouteSpecSpec) error {
 	for _, route := range routes {
 		id := network.LayeredID(route.ConfigLayer, network.RouteID(route.Table, route.Family, route.Destination, route.Gateway, route.Priority, route.OutLinkName))
 
@@ -167,13 +140,11 @@ func (ctrl *RouteConfigController) apply(ctx context.Context, r controller.Runti
 				return nil
 			},
 		); err != nil {
-			return ids, err
+			return err
 		}
-
-		ids = append(ids, id)
 	}
 
-	return ids, nil
+	return nil
 }
 
 func (ctrl *RouteConfigController) parseCmdline(logger *zap.Logger) (routes []network.RouteSpecSpec) {
@@ -236,8 +207,8 @@ func (ctrl *RouteConfigController) parseCmdline(logger *zap.Logger) (routes []ne
 }
 
 //nolint:gocyclo,cyclop
-func (ctrl *RouteConfigController) processDevicesConfiguration(logger *zap.Logger, devices []talosconfig.Device) (routes []network.RouteSpecSpec) {
-	convert := func(linkName string, in talosconfig.Route) (route network.RouteSpecSpec, err error) {
+func (ctrl *RouteConfigController) processDevicesConfiguration(logger *zap.Logger, devices safe.List[*network.DeviceConfigSpec]) (routes []network.RouteSpecSpec) {
+	convert := func(linkName string, in cfg.Route) (route network.RouteSpecSpec, err error) {
 		if in.Network() != "" {
 			route.Destination, err = netip.ParsePrefix(in.Network())
 			if err != nil {
@@ -293,7 +264,9 @@ func (ctrl *RouteConfigController) processDevicesConfiguration(logger *zap.Logge
 		return route, nil
 	}
 
-	for _, device := range devices {
+	for item := range devices.All() {
+		device := item.TypedSpec().Device
+
 		if device.Ignore() {
 			continue
 		}
@@ -322,6 +295,50 @@ func (ctrl *RouteConfigController) processDevicesConfiguration(logger *zap.Logge
 
 				routes = append(routes, routeSpec)
 			}
+		}
+	}
+
+	return routes
+}
+
+func (ctrl *RouteConfigController) processMachineConfig(linkConfigs []cfg.NetworkCommonLinkConfig) (routes []network.RouteSpecSpec) {
+	for _, linkConfig := range linkConfigs {
+		for _, spec := range linkConfig.Routes() {
+			var route network.RouteSpecSpec
+
+			route.Destination = spec.Destination().ValueOrZero()
+			route.Gateway = spec.Gateway().ValueOrZero()
+			route.Source = spec.Source().ValueOrZero()
+
+			normalizedFamily := route.Normalize()
+
+			route.Priority = spec.Metric().ValueOr(network.DefaultRouteMetric)
+
+			route.MTU = spec.MTU().ValueOrZero()
+
+			switch {
+			case !value.IsZero(route.Gateway) && route.Gateway.Is6():
+				route.Family = nethelpers.FamilyInet6
+			case !value.IsZero(route.Destination) && route.Destination.Addr().Is6():
+				route.Family = nethelpers.FamilyInet6
+			case normalizedFamily != 0:
+				route.Family = normalizedFamily
+			default:
+				route.Family = nethelpers.FamilyInet4
+			}
+
+			route.Table = nethelpers.TableMain
+			route.Protocol = nethelpers.ProtocolStatic
+			route.OutLinkName = linkConfig.Name()
+			route.ConfigLayer = network.ConfigMachineConfiguration
+
+			route.Type = nethelpers.TypeUnicast
+
+			if route.Destination.Addr().IsMulticast() {
+				route.Type = nethelpers.TypeMulticast
+			}
+
+			routes = append(routes, route)
 		}
 	}
 

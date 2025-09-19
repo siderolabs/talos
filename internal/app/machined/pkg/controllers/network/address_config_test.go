@@ -6,28 +6,24 @@ package network_test
 
 import (
 	"cmp"
-	"context"
 	"fmt"
 	"net"
+	"net/netip"
 	"net/url"
 	"slices"
-	"sync"
 	"testing"
 	"time"
 
-	"github.com/cosi-project/runtime/pkg/controller/runtime"
 	"github.com/cosi-project/runtime/pkg/resource/rtestutils"
-	"github.com/cosi-project/runtime/pkg/state"
-	"github.com/cosi-project/runtime/pkg/state/impl/inmem"
-	"github.com/cosi-project/runtime/pkg/state/impl/namespaced"
 	"github.com/siderolabs/go-pointer"
 	"github.com/siderolabs/go-procfs/procfs"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
-	"go.uber.org/zap/zaptest"
 
+	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/ctest"
 	netctrl "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/network"
 	"github.com/siderolabs/talos/pkg/machinery/config/container"
+	networkcfg "github.com/siderolabs/talos/pkg/machinery/config/types/network"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
 	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
 	"github.com/siderolabs/talos/pkg/machinery/resources/config"
@@ -35,71 +31,34 @@ import (
 )
 
 type AddressConfigSuite struct {
-	suite.Suite
-
-	state state.State
-
-	runtime *runtime.Runtime
-	wg      sync.WaitGroup
-
-	ctx       context.Context //nolint:containedctx
-	ctxCancel context.CancelFunc
-}
-
-func (suite *AddressConfigSuite) SetupTest() {
-	suite.ctx, suite.ctxCancel = context.WithTimeout(context.Background(), 3*time.Minute)
-
-	suite.state = state.WrapCore(namespaced.NewState(inmem.Build))
-
-	var err error
-
-	suite.runtime, err = runtime.NewRuntime(suite.state, zaptest.NewLogger(suite.T()))
-	suite.Require().NoError(err)
-
-	suite.Require().NoError(suite.runtime.RegisterController(&netctrl.DeviceConfigController{}))
-}
-
-func (suite *AddressConfigSuite) startRuntime() {
-	suite.wg.Add(1)
-
-	go func() {
-		defer suite.wg.Done()
-
-		suite.Assert().NoError(suite.runtime.Run(suite.ctx))
-	}()
-}
-
-func (suite *AddressConfigSuite) assertAddresses(requiredIDs []string, check func(*network.AddressSpec, *assert.Assertions)) {
-	assertResources(suite.ctx, suite.T(), suite.state, requiredIDs, check, rtestutils.WithNamespace(network.ConfigNamespaceName))
+	ctest.DefaultSuite
 }
 
 func (suite *AddressConfigSuite) TestLoopback() {
-	suite.Require().NoError(suite.runtime.RegisterController(&netctrl.AddressConfigController{}))
+	suite.Require().NoError(suite.Runtime().RegisterController(&netctrl.AddressConfigController{}))
 
-	suite.startRuntime()
-
-	suite.assertAddresses(
-		[]string{
-			"default/lo/127.0.0.1/8",
-		}, func(r *network.AddressSpec, asrt *assert.Assertions) {
+	ctest.AssertResource(
+		suite,
+		"default/lo/127.0.0.1/8",
+		func(r *network.AddressSpec, asrt *assert.Assertions) {
 			asrt.Equal("lo", r.TypedSpec().LinkName)
 			asrt.Equal(nethelpers.ScopeHost, r.TypedSpec().Scope)
 		},
+		rtestutils.WithNamespace(network.ConfigNamespaceName),
 	)
 }
 
 func (suite *AddressConfigSuite) TestCmdline() {
 	suite.Require().NoError(
-		suite.runtime.RegisterController(
+		suite.Runtime().RegisterController(
 			&netctrl.AddressConfigController{
 				Cmdline: procfs.NewCmdline("ip=172.20.0.2::172.20.0.1:255.255.255.0::eth1::::: ip=eth3:dhcp ip=10.3.5.7::10.3.5.1:255.255.255.0::eth4"),
 			},
 		),
 	)
 
-	suite.startRuntime()
-
-	suite.assertAddresses(
+	ctest.AssertResources(
+		suite,
 		[]string{
 			"cmdline/eth1/172.20.0.2/24",
 			"cmdline/eth4/10.3.5.7/24",
@@ -111,19 +70,18 @@ func (suite *AddressConfigSuite) TestCmdline() {
 				asrt.Equal("eth4", r.TypedSpec().LinkName)
 			}
 		},
+		rtestutils.WithNamespace(network.ConfigNamespaceName),
 	)
 }
 
 func (suite *AddressConfigSuite) TestCmdlineNoNetmask() {
 	suite.Require().NoError(
-		suite.runtime.RegisterController(
+		suite.Runtime().RegisterController(
 			&netctrl.AddressConfigController{
 				Cmdline: procfs.NewCmdline("ip=172.20.0.2::172.20.0.1"),
 			},
 		),
 	)
-
-	suite.startRuntime()
 
 	ifaces, _ := net.Interfaces() //nolint:errcheck // ignoring error here as ifaces will be empty
 
@@ -143,20 +101,20 @@ func (suite *AddressConfigSuite) TestCmdlineNoNetmask() {
 
 	suite.Assert().NotEmpty(ifaceName)
 
-	suite.assertAddresses(
-		[]string{
-			fmt.Sprintf("cmdline/%s/172.20.0.2/32", ifaceName),
-		}, func(r *network.AddressSpec, asrt *assert.Assertions) {
+	ctest.AssertResource(
+		suite,
+		fmt.Sprintf("cmdline/%s/172.20.0.2/32", ifaceName),
+		func(r *network.AddressSpec, asrt *assert.Assertions) {
 			asrt.Equal(ifaceName, r.TypedSpec().LinkName)
 			asrt.Equal(network.ConfigCmdline, r.TypedSpec().ConfigLayer)
 		},
+		rtestutils.WithNamespace(network.ConfigNamespaceName),
 	)
 }
 
-func (suite *AddressConfigSuite) TestMachineConfiguration() {
-	suite.Require().NoError(suite.runtime.RegisterController(&netctrl.AddressConfigController{}))
-
-	suite.startRuntime()
+func (suite *AddressConfigSuite) TestMachineConfigurationLegacy() {
+	suite.Require().NoError(suite.Runtime().RegisterController(&netctrl.AddressConfigController{}))
+	suite.Require().NoError(suite.Runtime().RegisterController(&netctrl.DeviceConfigController{}))
 
 	u, err := url.Parse("https://foo:6443")
 	suite.Require().NoError(err)
@@ -221,9 +179,10 @@ func (suite *AddressConfigSuite) TestMachineConfiguration() {
 		),
 	)
 
-	suite.Require().NoError(suite.state.Create(suite.ctx, cfg))
+	suite.Create(cfg)
 
-	suite.assertAddresses(
+	ctest.AssertResources(
+		suite,
 		[]string{
 			"configuration/eth2/2001:470:6d:30e:8ed2:b60c:9d2f:803a/64",
 			"configuration/eth3/192.168.0.24/28",
@@ -232,18 +191,56 @@ func (suite *AddressConfigSuite) TestMachineConfiguration() {
 			"configuration/eth6/2001:470:6d:30e:8ed2:b60c:9d2f:803b/64",
 			"configuration/eth0.24/10.0.0.1/8",
 			"configuration/eth0.25/11.0.0.1/8",
-		}, func(r *network.AddressSpec, asrt *assert.Assertions) {},
+		},
+		func(r *network.AddressSpec, asrt *assert.Assertions) {},
+		rtestutils.WithNamespace(network.ConfigNamespaceName),
 	)
 }
 
-func (suite *AddressConfigSuite) TearDownTest() {
-	suite.T().Log("tear down")
+func (suite *AddressConfigSuite) TestMachineConfiguration() {
+	suite.Require().NoError(suite.Runtime().RegisterController(&netctrl.AddressConfigController{}))
 
-	suite.ctxCancel()
+	lc1 := networkcfg.NewLinkConfigV1Alpha1("enp0s2")
+	lc1.LinkAddresses = []networkcfg.AddressConfig{
+		{
+			AddressAddress: netip.MustParsePrefix("10.12.3.4/24"),
+		},
+	}
 
-	suite.wg.Wait()
+	lc2 := networkcfg.NewLinkConfigV1Alpha1("enp0s3")
+	lc2.LinkAddresses = []networkcfg.AddressConfig{
+		{
+			AddressAddress:  netip.MustParsePrefix("172.20.0.1/20"),
+			AddressPriority: pointer.To[uint32](100),
+		},
+	}
+
+	ctr, err := container.New(lc1, lc2)
+	suite.Require().NoError(err)
+
+	suite.Create(config.NewMachineConfig(ctr))
+
+	ctest.AssertResources(
+		suite,
+		[]string{
+			"configuration/enp0s2/10.12.3.4/24",
+			"configuration/enp0s3/172.20.0.1/20",
+		},
+		func(r *network.AddressSpec, asrt *assert.Assertions) {
+			asrt.Equal(network.ConfigMachineConfiguration, r.TypedSpec().ConfigLayer)
+
+			if r.Metadata().ID() == "configuration/enp0s3/172.20.0.1/20" {
+				asrt.Equal(uint32(100), r.TypedSpec().Priority)
+			}
+		},
+		rtestutils.WithNamespace(network.ConfigNamespaceName),
+	)
 }
 
 func TestAddressConfigSuite(t *testing.T) {
-	suite.Run(t, new(AddressConfigSuite))
+	suite.Run(t, &AddressConfigSuite{
+		DefaultSuite: ctest.DefaultSuite{
+			Timeout: 5 * time.Second,
+		},
+	})
 }

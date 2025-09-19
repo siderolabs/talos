@@ -10,7 +10,6 @@ import (
 	"net/netip"
 
 	"github.com/cosi-project/runtime/pkg/controller"
-	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/jsimonetti/rtnetlink/v2"
 	"go.uber.org/zap"
@@ -69,6 +68,8 @@ func (ctrl *AddressStatusController) Run(ctx context.Context, r controller.Runti
 		case <-r.EventCh():
 		}
 
+		r.StartTrackingOutputs()
+
 		// build links lookup table
 		links, err := conn.Link.List()
 		if err != nil {
@@ -80,8 +81,6 @@ func (ctrl *AddressStatusController) Run(ctx context.Context, r controller.Runti
 		for _, link := range links {
 			linkLookup[link.Index] = link.Attributes.Name
 		}
-
-		touchedIDs := map[resource.ID]struct{}{}
 
 		addrs, err := conn.Address.List()
 		if err != nil {
@@ -118,30 +117,10 @@ func (ctrl *AddressStatusController) Run(ctx context.Context, r controller.Runti
 			}); err != nil {
 				return fmt.Errorf("error modifying resource: %w", err)
 			}
-
-			touchedIDs[id] = struct{}{}
 		}
 
-		// list resources for cleanup
-		list, err := r.List(ctx, resource.NewMetadata(network.NamespaceName, network.AddressStatusType, "", resource.VersionUndefined))
-		if err != nil {
-			return fmt.Errorf("error listing resources: %w", err)
+		if err := safe.CleanupOutputs[*network.AddressStatus](ctx, r); err != nil {
+			return fmt.Errorf("error doing cleanup: %w", err)
 		}
-
-		for _, res := range list.Items {
-			if res.Metadata().Owner() != ctrl.Name() {
-				continue
-			}
-
-			if _, ok := touchedIDs[res.Metadata().ID()]; ok {
-				continue
-			}
-
-			if err = r.Destroy(ctx, res.Metadata()); err != nil {
-				return fmt.Errorf("error deleting address status %s: %w", res, err)
-			}
-		}
-
-		r.ResetRestartBackoff()
 	}
 }

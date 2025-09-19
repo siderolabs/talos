@@ -11,6 +11,7 @@ import (
 
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
+	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/hashicorp/go-multierror"
 	"github.com/jsimonetti/rtnetlink/v2"
 	"github.com/siderolabs/gen/value"
@@ -73,13 +74,13 @@ func (ctrl *RouteSpecController) Run(ctx context.Context, r controller.Runtime, 
 		}
 
 		// list source network configuration resources
-		list, err := r.List(ctx, resource.NewMetadata(network.NamespaceName, network.RouteSpecType, "", resource.VersionUndefined))
+		list, err := safe.ReaderListAll[*network.RouteSpec](ctx, r)
 		if err != nil {
-			return fmt.Errorf("error listing source network addresses: %w", err)
+			return fmt.Errorf("error listing source network routes: %w", err)
 		}
 
 		// add finalizers for all live resources
-		for _, res := range list.Items {
+		for res := range list.All() {
 			if res.Metadata().Phase() != resource.PhaseRunning {
 				continue
 			}
@@ -104,9 +105,7 @@ func (ctrl *RouteSpecController) Run(ctx context.Context, r controller.Runtime, 
 		var multiErr *multierror.Error
 
 		// loop over routes and make reconcile decision
-		for _, res := range list.Items {
-			route := res.(*network.RouteSpec) //nolint:forcetypeassert
-
+		for route := range list.All() {
 			if err = ctrl.syncRoute(ctx, r, logger, conn, links, routes, route); err != nil {
 				multiErr = multierror.Append(multiErr, err)
 			}

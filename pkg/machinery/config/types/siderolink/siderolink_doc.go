@@ -16,7 +16,10 @@ func (ConfigV1Alpha1) Doc() *encoder.Doc {
 		Comments:    [3]string{"" /* encoder.HeadComment */, "SideroLinkConfig is a SideroLink connection machine configuration document." /* encoder.LineComment */, "" /* encoder.FootComment */},
 		Description: "SideroLinkConfig is a SideroLink connection machine configuration document.",
 		Fields: []encoder.Doc{
-			{},
+			{
+				Type:   "Meta",
+				Inline: true,
+			},
 			{
 				Name:        "apiUrl",
 				Type:        "URL",

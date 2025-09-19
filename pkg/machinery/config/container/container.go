@@ -302,6 +302,11 @@ func (container *Container) NetworkHostnameConfig() config.NetworkHostnameConfig
 	return nil
 }
 
+// NetworkCommonLinkConfigs implements config.Config interface.
+func (container *Container) NetworkCommonLinkConfigs() []config.NetworkCommonLinkConfig {
+	return findMatchingDocs[config.NetworkCommonLinkConfig](container.documents)
+}
+
 // Bytes returns source YAML representation (if available) or does default encoding.
 func (container *Container) Bytes() ([]byte, error) {
 	if !container.readonly {
