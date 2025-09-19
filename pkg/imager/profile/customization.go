@@ -14,4 +14,6 @@ type CustomizationProfile struct {
 	ExtraKernelArgs []string `yaml:"extraKernelArgs,omitempty"`
 	// MetaContents is a list of META partition contents.
 	MetaContents meta.Values `yaml:"metaContents,omitempty"`
+	// EmbeddedMachineConfiguration is the machine configuration to embed into the image.
+	EmbeddedMachineConfiguration string `yaml:"embeddedMachineConfiguration,omitempty"`
 }

@@ -497,6 +497,9 @@ const (
 	// ConfigFilename is the filename of the saved config in STATE partition.
 	ConfigFilename = "config.yaml"
 
+	// EmbeddedConfigDirectory is the path to the embedded config is placed inside rootfs.
+	EmbeddedConfigDirectory = "/usr/local/etc/talos/"
+
 	// ConfigTryTimeout is the timeout of the config apply in try mode.
 	ConfigTryTimeout = time.Minute
 
