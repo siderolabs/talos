@@ -66,8 +66,16 @@ $ talosctl validate --config worker.yaml --mode cloud
 worker.yaml is valid for cloud mode
 ```
 
-> Note: Using VMXNET network interfaces in VMware will cause the default [Flannel CNI](https://github.com/flannel-io/flannel) backend (vxlan) to not work between nodes.
-> To avoid this problem it is recommended to use Intel e1000 network interfaces or apply the patch below to use the host [gateway backend](https://github.com/flannel-io/flannel/blob/master/Documentation/backends.md).
+> **Note:** Using VMXNET network interfaces in VMware can cause networking issues with CNIs that rely on packet encapsulation (e.g., Flannel with VXLAN).
+> A common symptom is that CoreDNS becomes unreachable, leading to in-cluster DNS failures.
+>
+> **Recommended fix:** Use an Intel e1000, or a similar network adapter instead of VMXNET.
+>
+> **Alternative:** If you cannot change the NIC type, you may remove the default Flannel deployment and install Flannel (or another CNI) manually from upstream manifests,
+> configuring a non-encapsulation backend (such as `host-gw`) where supported. See [Flannel
+> Backends](https://github.com/flannel-io/flannel/blob/master/Documentation/backends.md) for details.
+>
+> This limitation is specific to VMware, other platforms such as OpenStack do not exhibit this problem.
 
 If you apply the patch you can save this to a separate file (e.g. cni-patch.yaml) and apply it via `talosctl`.
 
