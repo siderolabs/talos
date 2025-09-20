@@ -9,77 +9,23 @@ import (
 	"fmt"
 	"runtime"
 	"slices"
-	"time"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 
 	clustercmd "github.com/siderolabs/talos/cmd/talosctl/cmd/mgmt/cluster"
+	"github.com/siderolabs/talos/cmd/talosctl/cmd/mgmt/cluster/create/clusterops"
 	"github.com/siderolabs/talos/cmd/talosctl/pkg/mgmt/helpers"
 	"github.com/siderolabs/talos/pkg/cli"
 	"github.com/siderolabs/talos/pkg/images"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
 
-type qemuOps struct {
-	nodeInstallImage          string
-	nodeVmlinuzPath           string
-	nodeInitramfsPath         string
-	nodeISOPath               string
-	nodeUSBPath               string
-	nodeUKIPath               string
-	nodeDiskImagePath         string
-	nodeIPXEBootScript        string
-	bootloaderEnabled         bool
-	uefiEnabled               bool
-	tpm1_2Enabled             bool
-	tpm2Enabled               bool
-	extraUEFISearchPaths      []string
-	networkNoMasqueradeCIDRs  []string
-	nameservers               []string
-	disks                     []string
-	diskBlockSize             uint
-	preallocateDisks          bool
-	clusterUserVolumes        []string
-	targetArch                string
-	cniBinPath                []string
-	cniConfDir                string
-	cniCacheDir               string
-	cniBundleURL              string
-	encryptStatePartition     bool
-	encryptEphemeralPartition bool
-	encryptUserVolumes        bool
-	useVIP                    bool
-	badRTC                    bool
-	extraBootKernelArgs       string
-	dhcpSkipHostname          bool
-	networkChaos              bool
-	jitter                    time.Duration
-	latency                   time.Duration
-	packetLoss                float64
-	packetReorder             float64
-	packetCorrupt             float64
-	bandwidth                 int
-	diskEncryptionKeyTypes    []string
-	withFirewall              string
-	withSiderolinkAgent       agentFlag
-	debugShellEnabled         bool
-	withIOMMU                 bool
-	configInjectionMethod     string
-	networkIPv6               bool
-}
-
 type legacyOps struct {
 	clusterDiskSize   int
 	extraDisks        int
 	extraDiskSize     int
 	extraDisksDrivers []string
-}
-
-type createOps struct {
-	common commonOps
-	docker dockerOps
-	qemu   qemuOps
 }
 
 var createCmd = getCreateCmd()
@@ -189,54 +135,53 @@ func getCreateCmd() *cobra.Command {
 		configInjectionMethodFlag,
 	}
 
-	ops := &createOps{
-		common: getDefaultCommonOptions(),
-		qemu:   getDefaultQemuOptions(),
-	}
+	qOps := clusterops.GetQemu()
+	cOps := clusterops.GetCommon()
 	legacyOps := legacyOps{}
 
 	getCommonFlags := func() *pflag.FlagSet {
 		common := pflag.NewFlagSet("common", pflag.PanicOnError)
 
-		addControlplaneCpusFlag(common, &ops.common.controlplaneResources.cpu, controlPlaneCpusFlag)
-		addWorkersCpusFlag(common, &ops.common.workerResources.cpu, workersCpusFlag)
-		addControlPlaneMemoryFlag(common, &ops.common.controlplaneResources.memory, controlPlaneMemoryFlag)
-		addWorkersMemoryFlag(common, &ops.common.workerResources.memory, workersMemoryFlag)
+		addControlplaneCpusFlag(common, &cOps.ControlplaneResources.CPU, controlPlaneCpusFlag)
+		addWorkersCpusFlag(common, &cOps.WorkerResources.CPU, workersCpusFlag)
+		addControlPlaneMemoryFlag(common, &cOps.ControlplaneResources.Memory, controlPlaneMemoryFlag)
+		addWorkersMemoryFlag(common, &cOps.WorkerResources.Memory, workersMemoryFlag)
 
-		addWorkersFlag(common, &ops.common.workers)
-		addControlplanesFlag(common, &ops.common.controlplanes)
-		addKubernetesVersionFlag(common, &ops.common.kubernetesVersion)
-		addTalosconfigDestinationFlag(common, &ops.common.talosconfigDestination, talosconfigFlag)
-		addConfigPatchFlag(common, &ops.common.configPatch, configPatchFlag)
-		addConfigPatchControlPlaneFlag(common, &ops.common.configPatchControlPlane, configPatchControlPlaneFlag)
-		addConfigPatchWorkerFlag(common, &ops.common.configPatchWorker, configPatchWorkerFlag)
-		addRegistryMirrorFlag(common, &ops.common.registryMirrors)
-		addNetworkMTUFlag(common, &ops.common.networkMTU)
-		addTalosVersionFlag(common, &ops.common.talosVersion, "the desired Talos version to generate config for")
+		addWorkersFlag(common, &cOps.Workers)
+		addControlplanesFlag(common, &cOps.Controlplanes)
+		addKubernetesVersionFlag(common, &cOps.KubernetesVersion)
+		addTalosconfigDestinationFlag(common, &cOps.TalosconfigDestination, talosconfigFlag)
+		addConfigPatchFlag(common, &cOps.ConfigPatch, configPatchFlag)
+		addConfigPatchControlPlaneFlag(common, &cOps.ConfigPatchControlPlane, configPatchControlPlaneFlag)
+		addConfigPatchWorkerFlag(common, &cOps.ConfigPatchWorker, configPatchWorkerFlag)
+		addRegistryMirrorFlag(common, &cOps.RegistryMirrors)
+		addNetworkMTUFlag(common, &cOps.NetworkMTU)
+		addTalosVersionFlag(common, &cOps.TalosVersion, "the desired Talos version to generate config for")
 
-		common.StringVar(&ops.common.networkCIDR, networkCIDRFlagName, ops.common.networkCIDR, "CIDR of the cluster network (IPv4, ULA network for IPv6 is derived in automated way)")
-		common.StringVar(&ops.common.wireguardCIDR, wireguardCIDRFlag, ops.common.wireguardCIDR, "CIDR of the wireguard network")
-		common.BoolVar(&ops.common.applyConfigEnabled, applyConfigEnabledFlag, ops.common.applyConfigEnabled, "enable apply config when the VM is starting in maintenance mode")
-		common.StringSliceVar(&ops.common.registryInsecure, registryInsecureFlag, ops.common.registryInsecure, "list of registry hostnames to skip TLS verification for")
-		common.IntVar(&ops.common.controlPlanePort, controlPlanePortFlag, ops.common.controlPlanePort, "control plane port (load balancer and local API port)")
-		common.BoolVar(&ops.common.configDebug, configDebugFlag, ops.common.configDebug, "enable debug in Talos config to send service logs to the console")
-		common.BoolVar(&ops.common.networkIPv4, networkIPv4Flag, ops.common.networkIPv4, "enable IPv4 network in the cluster")
-		common.BoolVar(&ops.common.clusterWait, clusterWaitFlag, ops.common.clusterWait, "wait for the cluster to be ready before returning")
-		common.DurationVar(&ops.common.clusterWaitTimeout, clusterWaitTimeoutFlag, ops.common.clusterWaitTimeout, "timeout to wait for the cluster to be ready")
-		common.BoolVar(&ops.common.forceInitNodeAsEndpoint, forceInitNodeAsEndpointFlag, ops.common.forceInitNodeAsEndpoint, "use init node as endpoint instead of any load balancer endpoint")
-		common.StringVar(&ops.common.forceEndpoint, forceEndpointFlag, ops.common.forceEndpoint, "use endpoint instead of provider defaults")
-		common.BoolVar(&ops.common.withInitNode, withInitNodeFlag, ops.common.withInitNode, "create the cluster with an init node")
-		common.StringVar(&ops.common.customCNIUrl, customCNIUrlFlag, ops.common.customCNIUrl, "install custom CNI from the URL (Talos cluster)")
-		common.StringVar(&ops.common.dnsDomain, dnsDomainFlag, ops.common.dnsDomain, "the dns domain to use for cluster")
-		common.BoolVar(&ops.common.skipKubeconfig, skipKubeconfigFlag, ops.common.skipKubeconfig, "skip merging kubeconfig from the created cluster")
-		common.BoolVar(&ops.common.skipInjectingConfig, skipInjectingConfigFlag, ops.common.skipInjectingConfig,
+		common.StringVar(&cOps.NetworkCIDR, networkCIDRFlagName, cOps.NetworkCIDR, "CIDR of the cluster network (IPv4, ULA network for IPv6 is derived in automated way)")
+		common.StringVar(&cOps.WireguardCIDR, wireguardCIDRFlag, cOps.WireguardCIDR, "CIDR of the wireguard network")
+		common.BoolVar(&cOps.ApplyConfigEnabled, applyConfigEnabledFlag, cOps.ApplyConfigEnabled, "enable apply config when the VM is starting in maintenance mode")
+		common.StringSliceVar(&cOps.RegistryInsecure, registryInsecureFlag, cOps.RegistryInsecure, "list of registry hostnames to skip TLS verification for")
+		common.IntVar(&cOps.ControlPlanePort, controlPlanePortFlag, cOps.ControlPlanePort, "control plane port (load balancer and local API port)")
+		common.BoolVar(&cOps.ConfigDebug, configDebugFlag, cOps.ConfigDebug, "enable debug in Talos config to send service logs to the console")
+		common.BoolVar(&cOps.NetworkIPv4, networkIPv4Flag, cOps.NetworkIPv4, "enable IPv4 network in the cluster")
+		common.BoolVar(&cOps.ClusterWait, clusterWaitFlag, cOps.ClusterWait, "wait for the cluster to be ready before returning")
+		common.DurationVar(&cOps.ClusterWaitTimeout, clusterWaitTimeoutFlag, cOps.ClusterWaitTimeout, "timeout to wait for the cluster to be ready")
+		common.BoolVar(&cOps.ForceInitNodeAsEndpoint, forceInitNodeAsEndpointFlag, cOps.ForceInitNodeAsEndpoint, "use init node as endpoint instead of any load balancer endpoint")
+		common.StringVar(&cOps.ForceEndpoint, forceEndpointFlag, cOps.ForceEndpoint, "use endpoint instead of provider defaults")
+		common.BoolVar(&cOps.WithInitNode, withInitNodeFlag, cOps.WithInitNode, "create the cluster with an init node")
+		common.StringVar(&cOps.CustomCNIUrl, customCNIUrlFlag, cOps.CustomCNIUrl, "install custom CNI from the URL (Talos cluster)")
+		common.StringVar(&cOps.DNSDomain, dnsDomainFlag, cOps.DNSDomain, "the dns domain to use for cluster")
+		common.BoolVar(&cOps.SkipKubeconfig, skipKubeconfigFlag, cOps.SkipKubeconfig, "skip merging kubeconfig from the created cluster")
+		common.BoolVar(&cOps.SkipInjectingConfig, skipInjectingConfigFlag, cOps.SkipInjectingConfig,
 			"skip injecting config from embedded metadata server, write config files to current directory")
-		common.BoolVar(&ops.common.enableClusterDiscovery, withClusterDiscoveryFlag, ops.common.enableClusterDiscovery, "enable cluster discovery")
-		common.BoolVar(&ops.common.enableKubeSpan, enableKubeSpanFlag, ops.common.enableKubeSpan, "enable KubeSpan system")
-		common.IntVar(&ops.common.kubePrismPort, kubePrismFlag, ops.common.kubePrismPort, "KubePrism port (set to 0 to disable)")
-		common.BoolVar(&ops.common.skipK8sNodeReadinessCheck, skipK8sNodeReadinessCheckFlag, ops.common.skipK8sNodeReadinessCheck, "skip k8s node readiness checks")
-		common.BoolVar(&ops.common.withJSONLogs, withJSONLogsFlag, ops.common.withJSONLogs, "enable JSON logs receiver and configure Talos to send logs there")
-		common.BoolVar(&ops.common.withUUIDHostnames, withUUIDHostnamesFlag, ops.common.withUUIDHostnames, "use machine UUIDs as default hostnames")
+		common.BoolVar(&cOps.EnableClusterDiscovery, withClusterDiscoveryFlag, cOps.EnableClusterDiscovery, "enable cluster discovery")
+		common.BoolVar(&cOps.EnableKubeSpan, enableKubeSpanFlag, cOps.EnableKubeSpan, "enable KubeSpan system")
+		common.IntVar(&cOps.KubePrismPort, kubePrismFlag, cOps.KubePrismPort, "KubePrism port (set to 0 to disable)")
+		common.BoolVar(&cOps.SkipK8sNodeReadinessCheck, skipK8sNodeReadinessCheckFlag, cOps.SkipK8sNodeReadinessCheck, "skip k8s node readiness checks")
+		common.BoolVar(&cOps.WithJSONLogs, withJSONLogsFlag, cOps.WithJSONLogs, "enable JSON logs receiver and configure Talos to send logs there")
+		common.BoolVar(&cOps.WithUUIDHostnames, withUUIDHostnamesFlag, cOps.WithUUIDHostnames, "use machine UUIDs as default hostnames")
+		common.BoolVar(&cOps.NetworkIPv6, networkIPv6Flag, cOps.NetworkIPv6, "enable IPv6 network in the cluster")
 
 		return common
 	}
@@ -244,65 +189,58 @@ func getCreateCmd() *cobra.Command {
 	getQemuFlags := func() *pflag.FlagSet {
 		qemu := pflag.NewFlagSet("qemu", pflag.PanicOnError)
 
-		qemu.BoolVar(&ops.qemu.preallocateDisks, preallocateDisksFlag, true, "whether disk space should be preallocated")
-		qemu.StringSliceVar(&ops.qemu.clusterUserVolumes, clusterUserVolumesFlag, ops.qemu.clusterUserVolumes, "list of user volumes to create for each VM in format: <name1>:<size1>:<name2>:<size2>")
-		qemu.StringVar(&ops.qemu.nodeInstallImage, nodeInstallImageFlag, helpers.DefaultImage(images.DefaultInstallerImageRepository), "the installer image to use")
-		qemu.StringVar(&ops.qemu.nodeVmlinuzPath, nodeVmlinuzPathFlag, helpers.ArtifactPath(constants.KernelAssetWithArch), "the compressed kernel image to use")
-		qemu.StringVar(&ops.qemu.nodeISOPath, nodeISOPathFlag, ops.qemu.nodeISOPath, "the ISO path to use for the initial boot")
-		qemu.StringVar(&ops.qemu.nodeUSBPath, nodeUSBPathFlag, ops.qemu.nodeUSBPath, "the USB stick image path to use for the initial boot")
-		qemu.StringVar(&ops.qemu.nodeUKIPath, nodeUKIPathFlag, ops.qemu.nodeUKIPath, "the UKI image path to use for the initial boot")
-		qemu.StringVar(&ops.qemu.nodeInitramfsPath, nodeInitramfsPathFlag, helpers.ArtifactPath(constants.InitramfsAssetWithArch), "initramfs image to use")
-		qemu.StringVar(&ops.qemu.nodeDiskImagePath, nodeDiskImagePathFlag, ops.qemu.nodeDiskImagePath, "disk image to use")
-		qemu.StringVar(&ops.qemu.nodeIPXEBootScript, nodeIPXEBootScriptFlag, ops.qemu.nodeIPXEBootScript, "iPXE boot script (URL) to use")
-		qemu.BoolVar(&ops.qemu.bootloaderEnabled, bootloaderEnabledFlag, ops.qemu.bootloaderEnabled, "enable bootloader to load kernel and initramfs from disk image after install")
-		qemu.BoolVar(&ops.qemu.uefiEnabled, uefiEnabledFlag, ops.qemu.uefiEnabled, "enable UEFI on x86_64 architecture")
-		qemu.BoolVar(&ops.qemu.tpm1_2Enabled, tpmEnabledFlag, ops.qemu.tpm1_2Enabled, "enable TPM 1.2 emulation support using swtpm")
-		qemu.BoolVar(&ops.qemu.tpm2Enabled, tpm2EnabledFlag, ops.qemu.tpm2Enabled, "enable TPM 2.0 emulation support using swtpm")
-		qemu.BoolVar(&ops.qemu.debugShellEnabled, withDebugShellFlag, ops.qemu.debugShellEnabled, "drop talos into a maintenance shell on boot, this is for advanced debugging for developers only")
-		qemu.BoolVar(&ops.qemu.withIOMMU, withIOMMUFlag, ops.qemu.withIOMMU, "enable IOMMU support, this also add a new PCI root port and an interface attached to it")
+		qemu.BoolVar(&qOps.PreallocateDisks, preallocateDisksFlag, true, "whether disk space should be preallocated")
+		qemu.StringSliceVar(&qOps.ClusterUserVolumes, clusterUserVolumesFlag, qOps.ClusterUserVolumes, "list of user volumes to create for each VM in format: <name1>:<size1>:<name2>:<size2>")
+		qemu.StringVar(&qOps.NodeInstallImage, nodeInstallImageFlag, helpers.DefaultImage(images.DefaultInstallerImageRepository), "the installer image to use")
+		qemu.StringVar(&qOps.NodeVmlinuzPath, nodeVmlinuzPathFlag, helpers.ArtifactPath(constants.KernelAssetWithArch), "the compressed kernel image to use")
+		qemu.StringVar(&qOps.NodeISOPath, nodeISOPathFlag, qOps.NodeISOPath, "the ISO path to use for the initial boot")
+		qemu.StringVar(&qOps.NodeUSBPath, nodeUSBPathFlag, qOps.NodeUSBPath, "the USB stick image path to use for the initial boot")
+		qemu.StringVar(&qOps.NodeUKIPath, nodeUKIPathFlag, qOps.NodeUKIPath, "the UKI image path to use for the initial boot")
+		qemu.StringVar(&qOps.NodeInitramfsPath, nodeInitramfsPathFlag, helpers.ArtifactPath(constants.InitramfsAssetWithArch), "initramfs image to use")
+		qemu.StringVar(&qOps.NodeDiskImagePath, nodeDiskImagePathFlag, qOps.NodeDiskImagePath, "disk image to use")
+		qemu.StringVar(&qOps.NodeIPXEBootScript, nodeIPXEBootScriptFlag, qOps.NodeIPXEBootScript, "iPXE boot script (URL) to use")
+		qemu.BoolVar(&qOps.BootloaderEnabled, bootloaderEnabledFlag, qOps.BootloaderEnabled, "enable bootloader to load kernel and initramfs from disk image after install")
+		qemu.BoolVar(&qOps.UefiEnabled, uefiEnabledFlag, qOps.UefiEnabled, "enable UEFI on x86_64 architecture")
+		qemu.BoolVar(&qOps.Tpm1_2Enabled, tpmEnabledFlag, qOps.Tpm1_2Enabled, "enable TPM 1.2 emulation support using swtpm")
+		qemu.BoolVar(&qOps.Tpm2Enabled, tpm2EnabledFlag, qOps.Tpm2Enabled, "enable TPM 2.0 emulation support using swtpm")
+		qemu.BoolVar(&qOps.DebugShellEnabled, withDebugShellFlag, qOps.DebugShellEnabled, "drop talos into a maintenance shell on boot, this is for advanced debugging for developers only")
+		qemu.BoolVar(&qOps.WithIOMMU, withIOMMUFlag, qOps.WithIOMMU, "enable IOMMU support, this also add a new PCI root port and an interface attached to it")
 		qemu.MarkHidden("with-debug-shell") //nolint:errcheck
-		qemu.StringSliceVar(&ops.qemu.extraUEFISearchPaths, extraUEFISearchPathsFlag, ops.qemu.extraUEFISearchPaths, "additional search paths for UEFI firmware (only applies when UEFI is enabled)")
-		qemu.StringSliceVar(&ops.qemu.networkNoMasqueradeCIDRs, networkNoMasqueradeCIDRsFlag, ops.qemu.networkNoMasqueradeCIDRs, "list of CIDRs to exclude from NAT")
-		qemu.StringSliceVar(&ops.qemu.nameservers, nameserversFlag, ops.qemu.nameservers, "list of nameservers to use")
-		qemu.IntVar(&legacyOps.clusterDiskSize, clusterDiskSizeFlag, 6*1024, "default limit on disk size in MB (each VM)")
-		qemu.UintVar(&ops.qemu.diskBlockSize, diskBlockSizeFlag, ops.qemu.diskBlockSize, "disk block size")
-		qemu.IntVar(&legacyOps.extraDisks, extraDisksFlag, 0, "number of extra disks to create for each worker VM")
-		qemu.StringSliceVar(&legacyOps.extraDisksDrivers, "extra-disks-drivers", nil, "driver for each extra disk (virtio, ide, ahci, scsi, nvme, megaraid)")
-		qemu.IntVar(&legacyOps.extraDiskSize, extraDiskSizeFlag, 5*1024, "default limit on disk size in MB (each VM)")
-		qemu.StringVar(&ops.qemu.targetArch, targetArchFlag, ops.qemu.targetArch, "cluster architecture")
-		qemu.StringSliceVar(&ops.qemu.cniBinPath, cniBinPathFlag, ops.qemu.cniBinPath, "search path for CNI binaries")
-		qemu.StringVar(&ops.qemu.cniConfDir, cniConfDirFlag, ops.qemu.cniConfDir, "CNI config directory path")
-		qemu.StringVar(&ops.qemu.cniCacheDir, cniCacheDirFlag, ops.qemu.cniCacheDir, "CNI cache directory path")
-		qemu.StringVar(&ops.qemu.cniBundleURL, cniBundleURLFlag, ops.qemu.cniBundleURL, "URL to download CNI bundle from")
-		qemu.BoolVar(&ops.qemu.encryptStatePartition, encryptStatePartitionFlag, ops.qemu.encryptStatePartition, "enable state partition encryption")
-		qemu.BoolVar(&ops.qemu.encryptEphemeralPartition, encryptEphemeralPartitionFlag, ops.qemu.encryptEphemeralPartition, "enable ephemeral partition encryption")
-		qemu.BoolVar(&ops.qemu.encryptUserVolumes, encryptUserVolumeFlag, ops.qemu.encryptUserVolumes, "enable ephemeral partition encryption")
-		qemu.StringArrayVar(&ops.qemu.diskEncryptionKeyTypes, diskEncryptionKeyTypesFlag, []string{"uuid"}, "encryption key types to use for disk encryption (uuid, kms)")
-		qemu.BoolVar(&ops.qemu.networkIPv6, networkIPv6Flag, ops.qemu.networkIPv6, "enable IPv6 network in the cluster")
-		qemu.BoolVar(&ops.qemu.useVIP, useVIPFlag, ops.qemu.useVIP, "use a virtual IP for the controlplane endpoint instead of the loadbalancer")
-		qemu.BoolVar(&ops.qemu.badRTC, badRTCFlag, ops.qemu.badRTC, "launch VM with bad RTC state")
-		qemu.StringVar(&ops.qemu.extraBootKernelArgs, extraBootKernelArgsFlag, ops.qemu.extraBootKernelArgs, "add extra kernel args to the initial boot from vmlinuz and initramfs")
-		qemu.BoolVar(&ops.qemu.dhcpSkipHostname, dhcpSkipHostnameFlag, ops.qemu.dhcpSkipHostname, "skip announcing hostname via DHCP")
-		qemu.BoolVar(&ops.qemu.networkChaos, networkChaosFlag, ops.qemu.networkChaos, "enable to use network chaos parameters")
-		qemu.DurationVar(&ops.qemu.jitter, jitterFlag, ops.qemu.jitter, "specify jitter on the bridge interface")
-		qemu.DurationVar(&ops.qemu.latency, latencyFlag, ops.qemu.latency, "specify latency on the bridge interface")
-		qemu.Float64Var(&ops.qemu.packetLoss, packetLossFlag, ops.qemu.packetLoss,
+		qemu.StringSliceVar(&qOps.ExtraUEFISearchPaths, extraUEFISearchPathsFlag, qOps.ExtraUEFISearchPaths, "additional search paths for UEFI firmware (only applies when UEFI is enabled)")
+		qemu.StringSliceVar(&qOps.NetworkNoMasqueradeCIDRs, networkNoMasqueradeCIDRsFlag, qOps.NetworkNoMasqueradeCIDRs, "list of CIDRs to exclude from NAT")
+		qemu.StringSliceVar(&qOps.Nameservers, nameserversFlag, qOps.Nameservers, "list of nameservers to use")
+		qemu.UintVar(&qOps.DiskBlockSize, diskBlockSizeFlag, qOps.DiskBlockSize, "disk block size")
+		qemu.StringVar(&qOps.TargetArch, targetArchFlag, qOps.TargetArch, "cluster architecture")
+		qemu.StringSliceVar(&qOps.CniBinPath, cniBinPathFlag, qOps.CniBinPath, "search path for CNI binaries")
+		qemu.StringVar(&qOps.CniConfDir, cniConfDirFlag, qOps.CniConfDir, "CNI config directory path")
+		qemu.StringVar(&qOps.CniCacheDir, cniCacheDirFlag, qOps.CniCacheDir, "CNI cache directory path")
+		qemu.StringVar(&qOps.CniBundleURL, cniBundleURLFlag, qOps.CniBundleURL, "URL to download CNI bundle from")
+		qemu.BoolVar(&qOps.EncryptStatePartition, encryptStatePartitionFlag, qOps.EncryptStatePartition, "enable state partition encryption")
+		qemu.BoolVar(&qOps.EncryptEphemeralPartition, encryptEphemeralPartitionFlag, qOps.EncryptEphemeralPartition, "enable ephemeral partition encryption")
+		qemu.BoolVar(&qOps.EncryptUserVolumes, encryptUserVolumeFlag, qOps.EncryptUserVolumes, "enable ephemeral partition encryption")
+		qemu.StringArrayVar(&qOps.DiskEncryptionKeyTypes, diskEncryptionKeyTypesFlag, []string{"uuid"}, "encryption key types to use for disk encryption (uuid, kms)")
+		qemu.BoolVar(&qOps.UseVIP, useVIPFlag, qOps.UseVIP, "use a virtual IP for the controlplane endpoint instead of the loadbalancer")
+		qemu.BoolVar(&qOps.BadRTC, badRTCFlag, qOps.BadRTC, "launch VM with bad RTC state")
+		qemu.StringVar(&qOps.ExtraBootKernelArgs, extraBootKernelArgsFlag, qOps.ExtraBootKernelArgs, "add extra kernel args to the initial boot from vmlinuz and initramfs")
+		qemu.BoolVar(&qOps.DHCPSkipHostname, dhcpSkipHostnameFlag, qOps.DHCPSkipHostname, "skip announcing hostname via DHCP")
+		qemu.BoolVar(&qOps.NetworkChaos, networkChaosFlag, qOps.NetworkChaos, "enable to use network chaos parameters")
+		qemu.DurationVar(&qOps.Jjitter, jitterFlag, qOps.Jjitter, "specify jitter on the bridge interface")
+		qemu.DurationVar(&qOps.Latency, latencyFlag, qOps.Latency, "specify latency on the bridge interface")
+		qemu.Float64Var(&qOps.PacketLoss, packetLossFlag, qOps.PacketLoss,
 			"specify percent of packet loss on the bridge interface. e.g. 50% = 0.50 (default: 0.0)")
-		qemu.Float64Var(&ops.qemu.packetReorder, packetReorderFlag, ops.qemu.packetReorder,
+		qemu.Float64Var(&qOps.PacketReorder, packetReorderFlag, qOps.PacketReorder,
 			"specify percent of reordered packets on the bridge interface. e.g. 50% = 0.50 (default: 0.0)")
-		qemu.Float64Var(&ops.qemu.packetCorrupt, packetCorruptFlag, ops.qemu.packetCorrupt,
+		qemu.Float64Var(&qOps.PacketCorrupt, packetCorruptFlag, qOps.PacketCorrupt,
 			"specify percent of corrupt packets on the bridge interface. e.g. 50% = 0.50 (default: 0.0)")
-		qemu.IntVar(&ops.qemu.bandwidth, bandwidthFlag, ops.qemu.bandwidth, "specify bandwidth restriction (in kbps) on the bridge interface")
-		qemu.StringVar(&ops.qemu.withFirewall, firewallFlag, ops.qemu.withFirewall, "inject firewall rules into the cluster, value is default policy - accept/block")
-		qemu.Var(&ops.qemu.withSiderolinkAgent, withSiderolinkAgentFlag,
+		qemu.IntVar(&qOps.Bandwidth, bandwidthFlag, qOps.Bandwidth, "specify bandwidth restriction (in kbps) on the bridge interface")
+		qemu.StringVar(&qOps.WithFirewall, firewallFlag, qOps.WithFirewall, "inject firewall rules into the cluster, value is default policy - accept/block")
+		qemu.Var(&qOps.WithSiderolinkAgent, withSiderolinkAgentFlag,
 			"enables the use of siderolink agent as configuration apply mechanism. `true` or `wireguard` enables the agent, `tunnel` enables the agent with grpc tunneling")
-		qemu.StringVar(&ops.qemu.configInjectionMethod,
-			configInjectionMethodFlag, ops.qemu.configInjectionMethod, "a method to inject machine config: default is HTTP server, 'metal-iso' to mount an ISO")
+		qemu.StringVar(&qOps.ConfigInjectionMethod,
+			configInjectionMethodFlag, qOps.ConfigInjectionMethod, "a method to inject machine config: default is HTTP server, 'metal-iso' to mount an ISO")
 
 		return qemu
 	}
-
-	ops.common.rootOps = &clustercmd.PersistentFlags
 
 	// createCmd is the developer oriented create command.
 	createCmd := &cobra.Command{
@@ -316,13 +254,13 @@ func getCreateCmd() *cobra.Command {
 					return err
 				}
 
-				ops.qemu.disks = append(ops.qemu.disks, fmt.Sprintf("virtio:%d", legacyOps.clusterDiskSize))
+				disks := fmt.Sprintf("virtio:%d", legacyOps.clusterDiskSize)
 
 				for i := range legacyOps.extraDisks {
 					driver := "ide"
 
 					// ide driver is not supported on arm64
-					if ops.qemu.targetArch == "arm64" {
+					if qOps.TargetArch == "arm64" {
 						driver = "virtio"
 					}
 
@@ -330,13 +268,22 @@ func getCreateCmd() *cobra.Command {
 						driver = legacyOps.extraDisksDrivers[i]
 					}
 
-					ops.qemu.disks = append(ops.qemu.disks, fmt.Sprintf("%s:%d", driver, legacyOps.extraDiskSize))
+					disks += fmt.Sprintf(",%s:%d", driver, legacyOps.extraDiskSize)
 				}
 
-				return create(ctx, *ops)
+				if err := qOps.Disks.Set(disks); err != nil {
+					return err
+				}
+
+				return create(ctx, cOps, qOps)
 			})
 		},
 	}
+
+	createCmd.Flags().IntVar(&legacyOps.clusterDiskSize, clusterDiskSizeFlag, 6*1024, "default limit on disk size in MB (each VM)")
+	createCmd.Flags().IntVar(&legacyOps.extraDisks, extraDisksFlag, 0, "number of extra disks to create for each worker VM")
+	createCmd.Flags().StringSliceVar(&legacyOps.extraDisksDrivers, "extra-disks-drivers", nil, "driver for each extra disk (virtio, ide, ahci, scsi, nvme, megaraid)")
+	createCmd.Flags().IntVar(&legacyOps.extraDiskSize, extraDiskSizeFlag, 5*1024, "default limit on disk size in MB (each VM)")
 
 	clustercmd.AddProvisionerFlag(createCmd)
 	cli.Should(createCmd.Flags().MarkHidden(clustercmd.ProvisionerFlag))
