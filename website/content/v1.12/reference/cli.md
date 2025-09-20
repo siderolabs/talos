@@ -176,7 +176,7 @@ talosctl cluster create qemu [flags]
       --controlplanes int                        the number of controlplanes to create (default 1)
       --cpus-controlplanes string                the share of CPUs as fraction for each control plane/VM (default "2.0")
       --cpus-workers string                      the share of CPUs as fraction for each worker/VM (default "2.0")
-      --disks strings                            list of disks to create in format "<driver1>:<size1>" (disks after the first one are added only to worker machines) (default [virtio:10GB,virtio:6GB])
+      --disks disks                              list of disks to create in format "<driver1>:<size1>" (disks after the first one are added only to worker machines) (default virtio:10GiB,virtio:6GiB)
   -h, --help                                     help for qemu
       --image-factory-url string                 image factory url (default "https://factory.talos.dev/")
       --kubernetes-version string                desired kubernetes version to run (default "1.34.1")

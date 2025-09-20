@@ -6,18 +6,13 @@ package create
 
 import (
 	"context"
-	"fmt"
-	"path/filepath"
-	"runtime"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 
 	clustercmd "github.com/siderolabs/talos/cmd/talosctl/cmd/mgmt/cluster"
+	"github.com/siderolabs/talos/cmd/talosctl/cmd/mgmt/cluster/create/clusterops"
 	"github.com/siderolabs/talos/pkg/cli"
-	"github.com/siderolabs/talos/pkg/images"
-	"github.com/siderolabs/talos/pkg/machinery/constants"
-	"github.com/siderolabs/talos/pkg/machinery/version"
 	"github.com/siderolabs/talos/pkg/provision/providers"
 )
 
@@ -28,42 +23,22 @@ type createQemuOps struct {
 	imageFactoryURL string
 }
 
-func getDefaultQemuOptions() qemuOps {
-	return qemuOps{
-		preallocateDisks:  false,
-		networkIPv6:       false,
-		bootloaderEnabled: true,
-		uefiEnabled:       true,
-		nameservers:       []string{"8.8.8.8", "1.1.1.1", "2001:4860:4860::8888", "2606:4700:4700::1111"},
-		diskBlockSize:     512,
-		targetArch:        runtime.GOARCH,
-		cniBinPath:        []string{filepath.Join(clustercmd.DefaultCNIDir, "bin")},
-		cniConfDir:        filepath.Join(clustercmd.DefaultCNIDir, "conf.d"),
-		cniCacheDir:       filepath.Join(clustercmd.DefaultCNIDir, "cache"),
-		cniBundleURL: fmt.Sprintf("https://github.com/%s/talos/releases/download/%s/talosctl-cni-bundle-%s.tar.gz",
-			images.Username, version.Trim(version.Tag), constants.ArchVariable),
-		// asd
-	}
-}
-
 func init() {
 	cqOps := createQemuOps{}
-	ops := &createOps{
-		common: getDefaultCommonOptions(),
-		qemu:   getDefaultQemuOptions(),
-	}
-	ops.common.skipInjectingConfig = true
-	ops.common.applyConfigEnabled = true
+	qOps := clusterops.GetQemu()
+	cOps := clusterops.GetCommon()
+	cOps.SkipInjectingConfig = true
+	cOps.ApplyConfigEnabled = true
 
-	commonFlags := getCommonUserFacingFlags(&ops.common)
-	addControlplanesFlag(commonFlags, &ops.common.controlplanes)
-	addTalosVersionFlag(commonFlags, &ops.common.talosVersion, "the desired talos version")
-	commonFlags.StringVar(&ops.common.networkCIDR, networkCIDRFlagName, "10.5.0.0/24", "CIDR of the cluster network")
+	commonFlags := getCommonUserFacingFlags(&cOps)
+	addControlplanesFlag(commonFlags, &cOps.Controlplanes)
+	addTalosVersionFlag(commonFlags, &cOps.TalosVersion, "the desired talos version")
+	commonFlags.StringVar(&cOps.NetworkCIDR, networkCIDRFlagName, "10.5.0.0/24", "CIDR of the cluster network")
 
 	getQemuFlags := func() *pflag.FlagSet {
 		qemu := pflag.NewFlagSet("qemu", pflag.PanicOnError)
 
-		addDisksFlag(qemu, &ops.qemu.disks, []string{"virtio:10GB", "virtio:6GB"})
+		addDisksFlag(qemu, &qOps.Disks)
 		qemu.StringVar(&cqOps.schematicID, "schematic-id", "", "image factory schematic id (defaults to an empty schematic)")
 		qemu.StringVar(&cqOps.imageFactoryURL, "image-factory-url", "https://factory.talos.dev/", "image factory url")
 
@@ -81,17 +56,17 @@ func init() {
 					return err
 				}
 
-				data, err := getQemuClusterRequest(ctx, ops.common, ops.qemu, cqOps, provisioner)
+				data, err := getQemuClusterRequest(ctx, qOps, cOps, cqOps, provisioner)
 				if err != nil {
 					return err
 				}
 
-				cluster, err := provisioner.Create(ctx, data.clusterRequest, data.provisionOptions...)
+				cluster, err := provisioner.Create(ctx, data.ClusterRequest, data.ProvisionOptions...)
 				if err != nil {
 					return err
 				}
 
-				err = postCreate(ctx, ops.common, data.talosconfig, cluster, data.provisionOptions, data.clusterRequest)
+				err = postCreate(ctx, cOps, data.ConfigBundle.TalosCfg, cluster, data.ProvisionOptions, data.ClusterRequest)
 				if err != nil {
 					return err
 				}

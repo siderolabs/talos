@@ -4,7 +4,7 @@
 
 //go:build linux || darwin
 
-package create
+package siderolinkbuilder
 
 import (
 	"net/netip"
