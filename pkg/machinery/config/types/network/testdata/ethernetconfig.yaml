@@ -7,3 +7,6 @@ rings:
     rx: 16
 channels:
     combined: 1
+wakeOnLan:
+    - unicast
+    - multicast

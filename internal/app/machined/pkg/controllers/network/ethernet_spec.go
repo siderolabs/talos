@@ -17,6 +17,7 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/runtime"
+	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
 	"github.com/siderolabs/talos/pkg/machinery/resources/network"
 )
 
@@ -150,6 +151,23 @@ func (ctrl *EthernetSpecController) apply(
 			CombinedCount: optionalFromPtr(channelsSpec.Combined),
 		}); err != nil {
 			return fmt.Errorf("error updating channels: %w", err)
+		}
+	}
+
+	if spec.TypedSpec().WakeOnLAN != nil {
+		var wolModes nethelpers.WOLMode
+
+		for _, mode := range spec.TypedSpec().WakeOnLAN {
+			wolModes |= mode
+		}
+
+		if err := ethClient.SetWakeOnLAN(ethtool.WakeOnLAN{
+			Interface: ethtool.Interface{
+				Name: spec.Metadata().ID(),
+			},
+			Modes: ethtool.WOLMode(wolModes),
+		}); err != nil {
+			return fmt.Errorf("error updating wake-on-lan: %w", err)
 		}
 	}
 

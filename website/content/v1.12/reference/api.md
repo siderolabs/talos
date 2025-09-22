@@ -288,6 +288,7 @@ description: Talos gRPC API reference.
     - [NethelpersRoutingTable](#talos.resource.definitions.enums.NethelpersRoutingTable)
     - [NethelpersScope](#talos.resource.definitions.enums.NethelpersScope)
     - [NethelpersVLANProtocol](#talos.resource.definitions.enums.NethelpersVLANProtocol)
+    - [NethelpersWOLMode](#talos.resource.definitions.enums.NethelpersWOLMode)
     - [NetworkConfigLayer](#talos.resource.definitions.enums.NetworkConfigLayer)
     - [NetworkOperator](#talos.resource.definitions.enums.NetworkOperator)
     - [RuntimeFIPSState](#talos.resource.definitions.enums.RuntimeFIPSState)
@@ -5120,6 +5121,24 @@ NethelpersVLANProtocol is a VLAN protocol.
 
 
 
+<a name="talos.resource.definitions.enums.NethelpersWOLMode"></a>
+
+### NethelpersWOLMode
+NethelpersWOLMode wraps ethtool.WOLMode for YAML marshaling.
+
+| Name | Number | Description |
+| ---- | ------ | ----------- |
+| NETHELPERS_WOLMODE_UNSPECIFIED | 0 |  |
+| WOL_MODE_PHY | 1 |  |
+| WOL_MODE_UNICAST | 2 |  |
+| WOL_MODE_MULTICAST | 4 |  |
+| WOL_MODE_BROADCAST | 8 |  |
+| WOL_MODE_MAGIC | 32 |  |
+| WOL_MODE_MAGIC_SECURE | 64 |  |
+| WOL_MODE_FILTER | 128 |  |
+
+
+
 <a name="talos.resource.definitions.enums.NetworkConfigLayer"></a>
 
 ### NetworkConfigLayer
@@ -8266,6 +8285,7 @@ EthernetSpecSpec describes config of Ethernet link.
 | rings | [EthernetRingsSpec](#talos.resource.definitions.network.EthernetRingsSpec) |  |  |
 | features | [EthernetSpecSpec.FeaturesEntry](#talos.resource.definitions.network.EthernetSpecSpec.FeaturesEntry) | repeated |  |
 | channels | [EthernetChannelsSpec](#talos.resource.definitions.network.EthernetChannelsSpec) |  |  |
+| wake_on_lan | [talos.resource.definitions.enums.NethelpersWOLMode](#talos.resource.definitions.enums.NethelpersWOLMode) | repeated |  |
 
 
 
@@ -8305,6 +8325,7 @@ EthernetStatusSpec describes status of rendered secrets.
 | rings | [EthernetRingsStatus](#talos.resource.definitions.network.EthernetRingsStatus) |  |  |
 | features | [EthernetFeatureStatus](#talos.resource.definitions.network.EthernetFeatureStatus) | repeated |  |
 | channels | [EthernetChannelsStatus](#talos.resource.definitions.network.EthernetChannelsStatus) |  |  |
+| wake_on_lan | [talos.resource.definitions.enums.NethelpersWOLMode](#talos.resource.definitions.enums.NethelpersWOLMode) | repeated |  |
 
 
 

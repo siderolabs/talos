@@ -83,6 +83,7 @@ func (ctrl *EthernetConfigController) apply(ctx context.Context, r controller.Ru
 			spec.TypedSpec().Rings = network.EthernetRingsSpec(cfg.Rings())
 			spec.TypedSpec().Channels = network.EthernetChannelsSpec(cfg.Channels())
 			spec.TypedSpec().Features = cfg.Features()
+			spec.TypedSpec().WakeOnLAN = cfg.WakeOnLAN()
 
 			return nil
 		}); err != nil {

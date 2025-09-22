@@ -87,6 +87,10 @@ func (suite *NodeIdentitySuite) TestLoad() {
 func TestNodeIdentitySuite(t *testing.T) {
 	t.Parallel()
 
+	if os.Geteuid() != 0 {
+		t.Skip("skipping test that requires root privileges")
+	}
+
 	suite.Run(t, &NodeIdentitySuite{
 		DefaultSuite: ctest.DefaultSuite{
 			AfterSetup: func(suite *ctest.DefaultSuite) {

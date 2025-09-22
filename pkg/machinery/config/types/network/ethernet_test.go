@@ -16,6 +16,7 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/config/encoder"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/meta"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/network"
+	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
 )
 
 //go:embed testdata/ethernetconfig.yaml
@@ -33,6 +34,10 @@ func TestEthernetConfigMarshalStability(t *testing.T) {
 	}
 	cfg.ChannelsConfig = &network.EthernetChannelsConfig{
 		Combined: pointer.To[uint32](1),
+	}
+	cfg.WakeOnLANConfig = []nethelpers.WOLMode{
+		nethelpers.WOLModeUnicast,
+		nethelpers.WOLModeMulticast,
 	}
 
 	marshaled, err := encoder.NewEncoder(cfg, encoder.WithComments(encoder.CommentsDisabled)).Encode()
@@ -66,6 +71,10 @@ func TestEthernetConfigUnmarshal(t *testing.T) {
 		},
 		ChannelsConfig: &network.EthernetChannelsConfig{
 			Combined: pointer.To[uint32](1),
+		},
+		WakeOnLANConfig: []nethelpers.WOLMode{
+			nethelpers.WOLModeUnicast,
+			nethelpers.WOLModeMulticast,
 		},
 	}, docs[0])
 }

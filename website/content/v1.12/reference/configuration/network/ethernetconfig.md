@@ -26,6 +26,11 @@ rings:
 # Configuration for Ethernet link channels.
 channels:
     rx: 4 # Number of RX channels.
+
+# # Wake-on-LAN modes to enable.
+# wakeOnLan:
+#     - unicast
+#     - magic
 {{< /highlight >}}
 
 
@@ -35,6 +40,11 @@ channels:
 |`features` |map[string]bool |Configuration for Ethernet features.<br><br>Set of features available and whether they can be enabled or disabled is driver specific.<br>Use `talosctl get ethernetstatus <link> -o yaml` to get the list of available features and<br>their current status.  | |
 |`rings` |<a href="#EthernetConfig.rings">EthernetRingsConfig</a> |Configuration for Ethernet link rings.<br><br>This is similar to `ethtool -G` command.  | |
 |`channels` |<a href="#EthernetConfig.channels">EthernetChannelsConfig</a> |Configuration for Ethernet link channels.<br><br>This is similar to `ethtool -L` command.  | |
+|`wakeOnLan` |[]WOLMode |Wake-on-LAN modes to enable.<br><br>If this field is omitted, Wake-on-LAN configuration is not changed.<br>An empty list disables Wake-on-LAN.<br><br>This is similar to `ethtool -s <link> wol <options>` command. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
+wakeOnLan:
+    - unicast
+    - magic
+{{< /highlight >}}</details> |`phy`<br />`unicast`<br />`multicast`<br />`broadcast`<br />`arp`<br />`magic`<br />`magicsecure`<br />`filter`<br /> |
 
 
 

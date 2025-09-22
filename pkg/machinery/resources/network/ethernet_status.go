@@ -34,6 +34,7 @@ type EthernetStatusSpec struct {
 	Rings         *EthernetRingsStatus      `yaml:"rings,omitempty" protobuf:"7"`
 	Features      EthernetFeatureStatusList `yaml:"features,omitempty" protobuf:"8"`
 	Channels      *EthernetChannelsStatus   `yaml:"channels,omitempty" protobuf:"9"`
+	WakeOnLAN     []nethelpers.WOLMode      `yaml:"wakeOnLAN,omitempty" protobuf:"10"`
 }
 
 // EthernetFeatureStatusList is a list of EthernetFeatureStatus.

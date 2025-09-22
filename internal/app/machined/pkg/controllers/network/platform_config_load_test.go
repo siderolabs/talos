@@ -72,6 +72,10 @@ func (suite *PlatformConfigLoadSuite) TestLoadConfig() {
 func TestPlatformConfigLoadSuite(t *testing.T) {
 	t.Parallel()
 
+	if os.Geteuid() != 0 {
+		t.Skip("skipping test that requires root privileges")
+	}
+
 	suite.Run(t, &PlatformConfigLoadSuite{
 		DefaultSuite: ctest.DefaultSuite{
 			Timeout: 5 * time.Second,

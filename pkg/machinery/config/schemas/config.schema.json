@@ -849,6 +849,16 @@
           "description": "Configuration for Ethernet link channels.\n\nThis is similar to ethtool -L command.\n",
           "markdownDescription": "Configuration for Ethernet link channels.\n\nThis is similar to `ethtool -L` command.",
           "x-intellij-html-description": "\u003cp\u003eConfiguration for Ethernet link channels.\u003c/p\u003e\n\n\u003cp\u003eThis is similar to \u003ccode\u003eethtool -L\u003c/code\u003e command.\u003c/p\u003e\n"
+        },
+        "wakeOnLan": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "title": "wakeOnLan",
+          "description": "Wake-on-LAN modes to enable.\n\nIf this field is omitted, Wake-on-LAN configuration is not changed.\nAn empty list disables Wake-on-LAN.\n\nThis is similar to ethtool -s \u0026lt;link\u0026gt; wol \u0026lt;options\u0026gt; command.\n",
+          "markdownDescription": "Wake-on-LAN modes to enable.\n\nIf this field is omitted, Wake-on-LAN configuration is not changed.\nAn empty list disables Wake-on-LAN.\n\nThis is similar to `ethtool -s \u003clink\u003e wol \u003coptions\u003e` command.",
+          "x-intellij-html-description": "\u003cp\u003eWake-on-LAN modes to enable.\u003c/p\u003e\n\n\u003cp\u003eIf this field is omitted, Wake-on-LAN configuration is not changed.\nAn empty list disables Wake-on-LAN.\u003c/p\u003e\n\n\u003cp\u003eThis is similar to \u003ccode\u003eethtool -s \u0026lt;link\u0026gt; wol \u0026lt;options\u0026gt;\u003c/code\u003e command.\u003c/p\u003e\n"
         }
       },
       "additionalProperties": false,

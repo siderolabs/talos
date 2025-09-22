@@ -10,6 +10,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/resource/protobuf"
 	"github.com/cosi-project/runtime/pkg/resource/typed"
 
+	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
 	"github.com/siderolabs/talos/pkg/machinery/proto"
 )
 
@@ -23,9 +24,10 @@ type EthernetSpec = typed.Resource[EthernetSpecSpec, EthernetSpecExtension]
 //
 //gotagsrewrite:gen
 type EthernetSpecSpec struct {
-	Rings    EthernetRingsSpec    `yaml:"rings,omitempty" protobuf:"1"`
-	Features map[string]bool      `yaml:"features,omitempty" protobuf:"2"`
-	Channels EthernetChannelsSpec `yaml:"channels,omitempty" protobuf:"3"`
+	Rings     EthernetRingsSpec    `yaml:"rings,omitempty" protobuf:"1"`
+	Features  map[string]bool      `yaml:"features,omitempty" protobuf:"2"`
+	Channels  EthernetChannelsSpec `yaml:"channels,omitempty" protobuf:"3"`
+	WakeOnLAN []nethelpers.WOLMode `yaml:"wakeOnLan,omitempty" protobuf:"4"`
 }
 
 // EthernetRingsSpec describes config of Ethernet rings.

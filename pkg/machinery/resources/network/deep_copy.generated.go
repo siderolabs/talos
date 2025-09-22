@@ -95,6 +95,10 @@ func (o EthernetSpecSpec) DeepCopy() EthernetSpecSpec {
 		cp.Channels.Combined = new(uint32)
 		*cp.Channels.Combined = *o.Channels.Combined
 	}
+	if o.WakeOnLAN != nil {
+		cp.WakeOnLAN = make([]nethelpers.WOLMode, len(o.WakeOnLAN))
+		copy(cp.WakeOnLAN, o.WakeOnLAN)
+	}
 	return cp
 }
 
@@ -216,6 +220,10 @@ func (o EthernetStatusSpec) DeepCopy() EthernetStatusSpec {
 			cp.Channels.Combined = new(uint32)
 			*cp.Channels.Combined = *o.Channels.Combined
 		}
+	}
+	if o.WakeOnLAN != nil {
+		cp.WakeOnLAN = make([]nethelpers.WOLMode, len(o.WakeOnLAN))
+		copy(cp.WakeOnLAN, o.WakeOnLAN)
 	}
 	return cp
 }

@@ -101,6 +101,10 @@ func (o *EthernetConfigV1Alpha1) DeepCopy() *EthernetConfigV1Alpha1 {
 			*cp.ChannelsConfig.Combined = *o.ChannelsConfig.Combined
 		}
 	}
+	if o.WakeOnLANConfig != nil {
+		cp.WakeOnLANConfig = make([]nethelpers.WOLMode, len(o.WakeOnLANConfig))
+		copy(cp.WakeOnLANConfig, o.WakeOnLANConfig)
+	}
 	return &cp
 }
 

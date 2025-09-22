@@ -169,6 +169,7 @@ message EthernetSpecSpec {
   EthernetRingsSpec rings = 1;
   map<string, bool> features = 2;
   EthernetChannelsSpec channels = 3;
+  repeated talos.resource.definitions.enums.NethelpersWOLMode wake_on_lan = 4;
 }
 
 // EthernetStatusSpec describes status of rendered secrets.
@@ -182,6 +183,7 @@ message EthernetStatusSpec {
   EthernetRingsStatus rings = 7;
   repeated EthernetFeatureStatus features = 8;
   EthernetChannelsStatus channels = 9;
+  repeated talos.resource.definitions.enums.NethelpersWOLMode wake_on_lan = 10;
 }
 
 // HardwareAddrSpec describes spec for the link.

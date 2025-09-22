@@ -95,6 +95,10 @@ func (suite *EncryptionSaltSuite) TestLoad() {
 func TestEncryptionSaltSuite(t *testing.T) {
 	t.Parallel()
 
+	if os.Geteuid() != 0 {
+		t.Skip("skipping test that requires root privileges")
+	}
+
 	suite.Run(t, &EncryptionSaltSuite{
 		DefaultSuite: ctest.DefaultSuite{
 			AfterSetup: func(suite *ctest.DefaultSuite) {

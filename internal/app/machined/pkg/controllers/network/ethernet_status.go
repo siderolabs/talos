@@ -103,7 +103,7 @@ func (ctrl *EthernetStatusController) Run(ctx context.Context, r controller.Runt
 
 // reconcile function runs for every reconciliation loop querying the ethtool state and updating resources.
 //
-//nolint:gocyclo
+//nolint:gocyclo,cyclop
 func (ctrl *EthernetStatusController) reconcile(
 	ctx context.Context,
 	r controller.Runtime,
@@ -143,6 +143,11 @@ func (ctrl *EthernetStatusController) reconcile(
 		channels, err := ethClient.Channels(iface)
 		if err != nil && !errors.Is(err, os.ErrNotExist) {
 			lgger.Warn("error getting channels", zap.Error(err))
+		}
+
+		wolMode, err := ethClient.WakeOnLAN(iface)
+		if err != nil && !errors.Is(err, os.ErrNotExist) {
+			lgger.Warn("error getting Wake-on-LAN", zap.Error(err))
 		}
 
 		if err := safe.WriterModify(ctx, r, network.NewEthernetStatus(network.NamespaceName, iface.Name), func(res *network.EthernetStatus) error {
@@ -208,6 +213,16 @@ func (ctrl *EthernetStatusController) reconcile(
 					TX:       channels.TXCount.Ptr(),
 					Other:    channels.OtherCount.Ptr(),
 					Combined: channels.CombinedCount.Ptr(),
+				}
+			}
+
+			res.TypedSpec().WakeOnLAN = nil
+
+			if wolMode != nil {
+				for mode := nethelpers.WOLModeMin; mode <= nethelpers.WOLModeMax; mode <<= 1 {
+					if (nethelpers.WOLMode(wolMode.Modes) & mode) == mode {
+						res.TypedSpec().WakeOnLAN = append(res.TypedSpec().WakeOnLAN, mode)
+					}
 				}
 			}
 

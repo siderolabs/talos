@@ -133,6 +133,10 @@ func (suite *PersistenceSuite) TestConfig() {
 func TestPersistenceSuite(t *testing.T) {
 	t.Parallel()
 
+	if os.Geteuid() != 0 {
+		t.Skip("skipping test that requires root privileges")
+	}
+
 	sideroLinkCfg1 := siderolink.NewConfigV1Alpha1()
 	sideroLinkCfg1.APIUrlConfig.URL = must(url.Parse("https://siderolink.api/?jointoken=secret&user=alice"))
 

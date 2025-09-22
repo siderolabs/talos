@@ -1228,6 +1228,27 @@ func (m *EthernetSpecSpec) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 		i -= len(m.unknownFields)
 		copy(dAtA[i:], m.unknownFields)
 	}
+	if len(m.WakeOnLan) > 0 {
+		var pksize2 int
+		for _, num := range m.WakeOnLan {
+			pksize2 += protohelpers.SizeOfVarint(uint64(num))
+		}
+		i -= pksize2
+		j1 := i
+		for _, num1 := range m.WakeOnLan {
+			num := uint64(num1)
+			for num >= 1<<7 {
+				dAtA[j1] = uint8(uint64(num)&0x7f | 0x80)
+				num >>= 7
+				j1++
+			}
+			dAtA[j1] = uint8(num)
+			j1++
+		}
+		i = protohelpers.EncodeVarint(dAtA, i, uint64(pksize2))
+		i--
+		dAtA[i] = 0x22
+	}
 	if m.Channels != nil {
 		size, err := m.Channels.MarshalToSizedBufferVT(dAtA[:i])
 		if err != nil {
@@ -1302,6 +1323,27 @@ func (m *EthernetStatusSpec) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 	if m.unknownFields != nil {
 		i -= len(m.unknownFields)
 		copy(dAtA[i:], m.unknownFields)
+	}
+	if len(m.WakeOnLan) > 0 {
+		var pksize2 int
+		for _, num := range m.WakeOnLan {
+			pksize2 += protohelpers.SizeOfVarint(uint64(num))
+		}
+		i -= pksize2
+		j1 := i
+		for _, num1 := range m.WakeOnLan {
+			num := uint64(num1)
+			for num >= 1<<7 {
+				dAtA[j1] = uint8(uint64(num)&0x7f | 0x80)
+				num >>= 7
+				j1++
+			}
+			dAtA[j1] = uint8(num)
+			j1++
+		}
+		i = protohelpers.EncodeVarint(dAtA, i, uint64(pksize2))
+		i--
+		dAtA[i] = 0x52
 	}
 	if m.Channels != nil {
 		size, err := m.Channels.MarshalToSizedBufferVT(dAtA[:i])
@@ -4994,6 +5036,13 @@ func (m *EthernetSpecSpec) SizeVT() (n int) {
 		l = m.Channels.SizeVT()
 		n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
 	}
+	if len(m.WakeOnLan) > 0 {
+		l = 0
+		for _, e := range m.WakeOnLan {
+			l += protohelpers.SizeOfVarint(uint64(e))
+		}
+		n += 1 + protohelpers.SizeOfVarint(uint64(l)) + l
+	}
 	n += len(m.unknownFields)
 	return n
 }
@@ -5041,6 +5090,13 @@ func (m *EthernetStatusSpec) SizeVT() (n int) {
 	if m.Channels != nil {
 		l = m.Channels.SizeVT()
 		n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
+	}
+	if len(m.WakeOnLan) > 0 {
+		l = 0
+		for _, e := range m.WakeOnLan {
+			l += protohelpers.SizeOfVarint(uint64(e))
+		}
+		n += 1 + protohelpers.SizeOfVarint(uint64(l)) + l
 	}
 	n += len(m.unknownFields)
 	return n
@@ -9316,6 +9372,75 @@ func (m *EthernetSpecSpec) UnmarshalVT(dAtA []byte) error {
 				return err
 			}
 			iNdEx = postIndex
+		case 4:
+			if wireType == 0 {
+				var v enums.NethelpersWOLMode
+				for shift := uint(0); ; shift += 7 {
+					if shift >= 64 {
+						return protohelpers.ErrIntOverflow
+					}
+					if iNdEx >= l {
+						return io.ErrUnexpectedEOF
+					}
+					b := dAtA[iNdEx]
+					iNdEx++
+					v |= enums.NethelpersWOLMode(b&0x7F) << shift
+					if b < 0x80 {
+						break
+					}
+				}
+				m.WakeOnLan = append(m.WakeOnLan, v)
+			} else if wireType == 2 {
+				var packedLen int
+				for shift := uint(0); ; shift += 7 {
+					if shift >= 64 {
+						return protohelpers.ErrIntOverflow
+					}
+					if iNdEx >= l {
+						return io.ErrUnexpectedEOF
+					}
+					b := dAtA[iNdEx]
+					iNdEx++
+					packedLen |= int(b&0x7F) << shift
+					if b < 0x80 {
+						break
+					}
+				}
+				if packedLen < 0 {
+					return protohelpers.ErrInvalidLength
+				}
+				postIndex := iNdEx + packedLen
+				if postIndex < 0 {
+					return protohelpers.ErrInvalidLength
+				}
+				if postIndex > l {
+					return io.ErrUnexpectedEOF
+				}
+				var elementCount int
+				if elementCount != 0 && len(m.WakeOnLan) == 0 {
+					m.WakeOnLan = make([]enums.NethelpersWOLMode, 0, elementCount)
+				}
+				for iNdEx < postIndex {
+					var v enums.NethelpersWOLMode
+					for shift := uint(0); ; shift += 7 {
+						if shift >= 64 {
+							return protohelpers.ErrIntOverflow
+						}
+						if iNdEx >= l {
+							return io.ErrUnexpectedEOF
+						}
+						b := dAtA[iNdEx]
+						iNdEx++
+						v |= enums.NethelpersWOLMode(b&0x7F) << shift
+						if b < 0x80 {
+							break
+						}
+					}
+					m.WakeOnLan = append(m.WakeOnLan, v)
+				}
+			} else {
+				return fmt.Errorf("proto: wrong wireType = %d for field WakeOnLan", wireType)
+			}
 		default:
 			iNdEx = preIndex
 			skippy, err := protohelpers.Skip(dAtA[iNdEx:])
@@ -9614,6 +9739,75 @@ func (m *EthernetStatusSpec) UnmarshalVT(dAtA []byte) error {
 				return err
 			}
 			iNdEx = postIndex
+		case 10:
+			if wireType == 0 {
+				var v enums.NethelpersWOLMode
+				for shift := uint(0); ; shift += 7 {
+					if shift >= 64 {
+						return protohelpers.ErrIntOverflow
+					}
+					if iNdEx >= l {
+						return io.ErrUnexpectedEOF
+					}
+					b := dAtA[iNdEx]
+					iNdEx++
+					v |= enums.NethelpersWOLMode(b&0x7F) << shift
+					if b < 0x80 {
+						break
+					}
+				}
+				m.WakeOnLan = append(m.WakeOnLan, v)
+			} else if wireType == 2 {
+				var packedLen int
+				for shift := uint(0); ; shift += 7 {
+					if shift >= 64 {
+						return protohelpers.ErrIntOverflow
+					}
+					if iNdEx >= l {
+						return io.ErrUnexpectedEOF
+					}
+					b := dAtA[iNdEx]
+					iNdEx++
+					packedLen |= int(b&0x7F) << shift
+					if b < 0x80 {
+						break
+					}
+				}
+				if packedLen < 0 {
+					return protohelpers.ErrInvalidLength
+				}
+				postIndex := iNdEx + packedLen
+				if postIndex < 0 {
+					return protohelpers.ErrInvalidLength
+				}
+				if postIndex > l {
+					return io.ErrUnexpectedEOF
+				}
+				var elementCount int
+				if elementCount != 0 && len(m.WakeOnLan) == 0 {
+					m.WakeOnLan = make([]enums.NethelpersWOLMode, 0, elementCount)
+				}
+				for iNdEx < postIndex {
+					var v enums.NethelpersWOLMode
+					for shift := uint(0); ; shift += 7 {
+						if shift >= 64 {
+							return protohelpers.ErrIntOverflow
+						}
+						if iNdEx >= l {
+							return io.ErrUnexpectedEOF
+						}
+						b := dAtA[iNdEx]
+						iNdEx++
+						v |= enums.NethelpersWOLMode(b&0x7F) << shift
+						if b < 0x80 {
+							break
+						}
+					}
+					m.WakeOnLan = append(m.WakeOnLan, v)
+				}
+			} else {
+				return fmt.Errorf("proto: wrong wireType = %d for field WakeOnLan", wireType)
+			}
 		default:
 			iNdEx = preIndex
 			skippy, err := protohelpers.Skip(dAtA[iNdEx:])

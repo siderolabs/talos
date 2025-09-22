@@ -376,6 +376,18 @@ enum NethelpersVLANProtocol {
   VLAN_PROTOCOL8021_AD = 34984;
 }
 
+// NethelpersWOLMode wraps ethtool.WOLMode for YAML marshaling.
+enum NethelpersWOLMode {
+  NETHELPERS_WOLMODE_UNSPECIFIED = 0;
+  WOL_MODE_PHY = 1;
+  WOL_MODE_UNICAST = 2;
+  WOL_MODE_MULTICAST = 4;
+  WOL_MODE_BROADCAST = 8;
+  WOL_MODE_MAGIC = 32;
+  WOL_MODE_MAGIC_SECURE = 64;
+  WOL_MODE_FILTER = 128;
+}
+
 // BlockEncryptionKeyType describes encryption key type.
 enum BlockEncryptionKeyType {
   ENCRYPTION_KEY_STATIC = 0;

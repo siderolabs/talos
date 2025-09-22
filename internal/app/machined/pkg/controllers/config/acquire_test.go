@@ -297,6 +297,10 @@ func (suite *AcquireSuite) injectViaDisk(cfg []byte, wait bool) {
 }
 
 func (suite *AcquireSuite) TestFromDisk() {
+	if os.Geteuid() != 0 {
+		suite.T().Skip("skipping test that requires root privileges")
+	}
+
 	suite.presentStateVolume()
 
 	suite.triggerAcquire()
@@ -319,6 +323,10 @@ func (suite *AcquireSuite) TestFromDisk() {
 }
 
 func (suite *AcquireSuite) TestFromDiskFailure() {
+	if os.Geteuid() != 0 {
+		suite.T().Skip("skipping test that requires root privileges")
+	}
+
 	suite.presentStateVolume()
 
 	suite.triggerAcquire()
@@ -344,6 +352,10 @@ func (suite *AcquireSuite) TestFromDiskFailure() {
 }
 
 func (suite *AcquireSuite) TestFromDiskToMaintenance() {
+	if os.Geteuid() != 0 {
+		suite.T().Skip("skipping test that requires root privileges")
+	}
+
 	suite.presentStateVolume()
 
 	suite.triggerAcquire()

@@ -342,5 +342,9 @@ func (suite *EtcFileConfigSuite) TearDownTest() {
 }
 
 func TestEtcFileConfigSuite(t *testing.T) {
+	if os.Geteuid() != 0 {
+		t.Skip("skipping test that requires root privileges")
+	}
+
 	suite.Run(t, new(EtcFileConfigSuite))
 }

@@ -15,6 +15,7 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/config/internal/registry"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/meta"
 	"github.com/siderolabs/talos/pkg/machinery/config/validation"
+	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
 )
 
 // EthernetKind is a Ethernet config document kind.
@@ -69,6 +70,30 @@ type EthernetConfigV1Alpha1 struct {
 	//
 	//     This is similar to `ethtool -L` command.
 	ChannelsConfig *EthernetChannelsConfig `yaml:"channels,omitempty"`
+	//   description: |
+	//     Wake-on-LAN modes to enable.
+	//
+	//     If this field is omitted, Wake-on-LAN configuration is not changed.
+	//     An empty list disables Wake-on-LAN.
+	//
+	//     This is similar to `ethtool -s <link> wol <options>` command.
+	//   values:
+	//     - "phy"
+	//     - "unicast"
+	//     - "multicast"
+	//     - "broadcast"
+	//     - "arp"
+	//     - "magic"
+	//     - "magicsecure"
+	//     - "filter"
+	//   schema:
+	//     type: array
+	//     items:
+	//       type: string
+	//   examples:
+	//    - value: >
+	//       []nethelpers.WOLMode{nethelpers.WOLModeUnicast, nethelpers.WOLModeMagic}
+	WakeOnLANConfig []nethelpers.WOLMode `yaml:"wakeOnLan,omitempty"`
 }
 
 // EthernetRingsConfig is a configuration for Ethernet link rings.
@@ -170,6 +195,11 @@ func (s *EthernetConfigV1Alpha1) Channels() config.EthernetChannelsConfig {
 // Features implements config.EthernetConfig interface.
 func (s *EthernetConfigV1Alpha1) Features() map[string]bool {
 	return s.FeaturesConfig
+}
+
+// WakeOnLAN implements config.EthernetConfig interface.
+func (s *EthernetConfigV1Alpha1) WakeOnLAN() []nethelpers.WOLMode {
+	return s.WakeOnLANConfig
 }
 
 // Validate implements config.Validator interface.

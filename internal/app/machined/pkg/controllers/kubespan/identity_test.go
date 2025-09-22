@@ -139,6 +139,10 @@ func TestIdentitySuite(t *testing.T) {
 		t.Skip("skipping test in FIPS mode")
 	}
 
+	if os.Geteuid() != 0 {
+		t.Skip("skipping test that requires root privileges")
+	}
+
 	suite.Run(t, &IdentitySuite{
 		DefaultSuite: ctest.DefaultSuite{
 			AfterSetup: func(suite *ctest.DefaultSuite) {

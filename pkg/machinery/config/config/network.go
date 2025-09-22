@@ -71,6 +71,7 @@ type EthernetConfig interface {
 	Rings() EthernetRingsConfig
 	Channels() EthernetChannelsConfig
 	Features() map[string]bool
+	WakeOnLAN() []nethelpers.WOLMode
 }
 
 // EthernetRingsConfig defines a configuration for Ethernet link rings.

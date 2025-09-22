@@ -10,6 +10,7 @@ import (
 	"net/netip"
 
 	"github.com/siderolabs/talos/pkg/machinery/config/encoder"
+	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
 )
 
 func (DefaultActionConfigV1Alpha1) Doc() *encoder.Doc {
@@ -72,10 +73,29 @@ func (EthernetConfigV1Alpha1) Doc() *encoder.Doc {
 				Description: "Configuration for Ethernet link channels.\n\nThis is similar to `ethtool -L` command.",
 				Comments:    [3]string{"" /* encoder.HeadComment */, "Configuration for Ethernet link channels." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
+			{
+				Name:        "wakeOnLan",
+				Type:        "[]WOLMode",
+				Note:        "",
+				Description: "Wake-on-LAN modes to enable.\n\nIf this field is omitted, Wake-on-LAN configuration is not changed.\nAn empty list disables Wake-on-LAN.\n\nThis is similar to `ethtool -s <link> wol <options>` command.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Wake-on-LAN modes to enable." /* encoder.LineComment */, "" /* encoder.FootComment */},
+				Values: []string{
+					"phy",
+					"unicast",
+					"multicast",
+					"broadcast",
+					"arp",
+					"magic",
+					"magicsecure",
+					"filter",
+				},
+			},
 		},
 	}
 
 	doc.AddExample("", exampleEthernetConfigV1Alpha1())
+
+	doc.Fields[5].AddExample("", []nethelpers.WOLMode{nethelpers.WOLModeUnicast, nethelpers.WOLModeMagic})
 
 	return doc
 }

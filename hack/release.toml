@@ -68,6 +68,13 @@ The list of overridden settings is available with `talosctl get kernelparamstatu
 Talos Linux now ships with `nft` binary in the rootfs to support CNIs which shell out to `nft` command.
 """
 
+    [notes.ethernet-config]
+        title = "Ethernet Configuration"
+        description = """\
+The Ethernet configuration now includes a `wakeOnLAN` field to enable Wake-on-LAN (WOL) support.
+This field can be set to enable WOL and specify the desired WOL modes.
+"""
+
 [make_deps]
 
     [make_deps.tools]
