@@ -12,7 +12,6 @@ import (
 
 	"github.com/siderolabs/gen/xslices"
 	"github.com/siderolabs/go-blockdevice/v2/blkid"
-	"golang.org/x/sys/unix"
 
 	"github.com/siderolabs/talos/internal/pkg/efivarfs"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
@@ -37,7 +36,14 @@ const (
 
 // ReadVariable reads a SystemdBoot EFI variable.
 func ReadVariable(name string) (string, error) {
-	data, _, err := efivarfs.Read(efivarfs.ScopeSystemd, name)
+	efi, err := efivarfs.NewFilesystemReaderWriter(false)
+	if err != nil {
+		return "", fmt.Errorf("failed to create efivarfs reader/writer: %w", err)
+	}
+
+	defer efi.Close() //nolint:errcheck
+
+	data, _, err := efi.Read(efivarfs.ScopeSystemd, name)
 	if err != nil {
 		// if the variable does not exist, return an empty string
 		if errors.Is(err, os.ErrNotExist) {
@@ -65,12 +71,12 @@ func ReadVariable(name string) (string, error) {
 
 // WriteVariable reads a SystemdBoot EFI variable.
 func WriteVariable(name, value string) error {
-	// mount EFI vars as rw
-	if err := unix.Mount("efivarfs", constants.EFIVarsMountPoint, "efivarfs", unix.MS_REMOUNT, ""); err != nil {
-		return err
+	efi, err := efivarfs.NewFilesystemReaderWriter(true)
+	if err != nil {
+		return fmt.Errorf("failed to create efivarfs reader/writer: %w", err)
 	}
 
-	defer unix.Mount("efivarfs", constants.EFIVarsMountPoint, "efivarfs", unix.MS_REMOUNT|unix.MS_RDONLY, "") //nolint:errcheck
+	defer efi.Close() //nolint:errcheck
 
 	out := make([]byte, (len(value)+1)*2)
 
@@ -83,7 +89,7 @@ func WriteVariable(name, value string) error {
 
 	out = append(out[:n], 0, 0)
 
-	return efivarfs.Write(efivarfs.ScopeSystemd, name, efivarfs.AttrBootserviceAccess|efivarfs.AttrRuntimeAccess|efivarfs.AttrNonVolatile, out)
+	return efi.Write(efivarfs.ScopeSystemd, name, efivarfs.AttrBootserviceAccess|efivarfs.AttrRuntimeAccess|efivarfs.AttrNonVolatile, out)
 }
 
 // CreateBootEntry creates a UEFI boot entry named "Talos Linux UKI" and sets it as the first in the `BootOrder`
@@ -92,14 +98,14 @@ func WriteVariable(name, value string) error {
 //
 //nolint:gocyclo
 func CreateBootEntry(installDisk, sdBootFilePath string) error {
-	// mount EFI vars as rw
-	if err := unix.Mount("efivarfs", constants.EFIVarsMountPoint, "efivarfs", unix.MS_REMOUNT, ""); err != nil {
-		return err
+	efi, err := efivarfs.NewFilesystemReaderWriter(true)
+	if err != nil {
+		return fmt.Errorf("failed to create efivarfs reader/writer: %w", err)
 	}
 
-	defer unix.Mount("efivarfs", constants.EFIVarsMountPoint, "efivarfs", unix.MS_REMOUNT|unix.MS_RDONLY, "") //nolint:errcheck
+	defer efi.Close() //nolint:errcheck
 
-	rawBootOrderData, _, err := efivarfs.Read(efivarfs.ScopeGlobal, "BootOrder")
+	rawBootOrderData, _, err := efi.Read(efivarfs.ScopeGlobal, "BootOrder")
 	if err != nil {
 		return fmt.Errorf("failed to read BootOrder: %w", err)
 	}
@@ -113,7 +119,7 @@ func CreateBootEntry(installDisk, sdBootFilePath string) error {
 	talosBootIndex := len(bootOrder)
 
 	for _, idx := range bootOrder {
-		bootEntry, err := efivarfs.GetBootEntry(int(idx))
+		bootEntry, err := efivarfs.GetBootEntry(efi, int(idx))
 		if err != nil {
 			return fmt.Errorf("failed to get boot entry %d: %w", idx, err)
 		}
@@ -150,7 +156,7 @@ func CreateBootEntry(installDisk, sdBootFilePath string) error {
 		return fmt.Errorf("EFI partition UUID not found on install disk %q", installDisk)
 	}
 
-	if err := efivarfs.SetBootEntry(talosBootIndex, &efivarfs.LoadOption{
+	if err := efivarfs.SetBootEntry(efi, talosBootIndex, &efivarfs.LoadOption{
 		Description: TalosBootEntryDescription,
 		FilePath: efivarfs.DevicePath{
 			&efivarfs.HardDrivePath{
@@ -167,7 +173,7 @@ func CreateBootEntry(installDisk, sdBootFilePath string) error {
 		return fmt.Errorf("failed to set boot entry %d: %w", talosBootIndex, err)
 	}
 
-	currentBootOrder, err := efivarfs.GetBootOrder()
+	currentBootOrder, err := efivarfs.GetBootOrder(efi)
 	if err != nil {
 		return fmt.Errorf("failed to get current BootOrder: %w", err)
 	}
@@ -177,7 +183,7 @@ func CreateBootEntry(installDisk, sdBootFilePath string) error {
 		return nil
 	}
 
-	if err := efivarfs.SetBootOrder(slices.Concat([]uint16{uint16(talosBootIndex)}, currentBootOrder)); err != nil {
+	if err := efivarfs.SetBootOrder(efi, slices.Concat([]uint16{uint16(talosBootIndex)}, currentBootOrder)); err != nil {
 		return fmt.Errorf("failed to set BootOrder: %w", err)
 	}
 

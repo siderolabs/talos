@@ -74,7 +74,7 @@ func (e *LoadOption) Marshal() ([]byte, error) {
 		attrs |= 0x01
 	}
 
-	data = append32(data, attrs)
+	data = binary.LittleEndian.AppendUint32(data, attrs)
 
 	filePathRaw, err := e.FilePath.Marshal()
 	if err != nil {
@@ -94,7 +94,7 @@ func (e *LoadOption) Marshal() ([]byte, error) {
 		return nil, fmt.Errorf("failed marshaling FilePath/ExtraPath: value too big (%d)", len(filePathRaw))
 	}
 
-	data = append16(data, uint16(len(filePathRaw)))
+	data = binary.LittleEndian.AppendUint16(data, uint16(len(filePathRaw)))
 
 	if strings.IndexByte(e.Description, 0x00) != -1 {
 		return nil, fmt.Errorf("failed to encode Description: contains invalid null bytes")
@@ -178,8 +178,9 @@ type BootOrder []uint16
 // Marshal generates the binary representation of a BootOrder.
 func (t *BootOrder) Marshal() []byte {
 	var out []byte
+
 	for _, v := range *t {
-		out = append16(out, v)
+		out = binary.LittleEndian.AppendUint16(out, v)
 	}
 
 	return out
@@ -195,24 +196,8 @@ func UnmarshalBootOrder(d []byte) (BootOrder, error) {
 
 	out := make(BootOrder, l)
 	for i := range l {
-		out[i] = uint16(d[2*i]) | uint16(d[2*i+1])<<8
+		out[i] = binary.LittleEndian.Uint16(d[i*2:])
 	}
 
 	return out, nil
-}
-
-func append16(d []byte, v uint16) []byte {
-	return append(d,
-		byte(v&0xFF),
-		byte(v>>8&0xFF),
-	)
-}
-
-func append32(d []byte, v uint32) []byte {
-	return append(d,
-		byte(v&0xFF),
-		byte(v>>8&0xFF),
-		byte(v>>16&0xFF),
-		byte(v>>24&0xFF),
-	)
 }

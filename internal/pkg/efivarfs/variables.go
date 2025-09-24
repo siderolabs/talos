@@ -31,8 +31,8 @@ func decodeString(varData []byte) (string, error) {
 }
 
 // ReadLoaderDevicePartUUID reads the ESP UUID from an EFI variable.
-func ReadLoaderDevicePartUUID() (uuid.UUID, error) {
-	efiVar, _, err := Read(ScopeSystemd, "LoaderDevicePartUUID")
+func ReadLoaderDevicePartUUID(rw ReaderWriter) (uuid.UUID, error) {
+	efiVar, _, err := rw.Read(ScopeSystemd, "LoaderDevicePartUUID")
 	if err != nil {
 		return uuid.Nil, err
 	}
@@ -55,17 +55,15 @@ func ReadLoaderDevicePartUUID() (uuid.UUID, error) {
 // thus accept these here as well.
 var bootVarRegexp = regexp.MustCompile(`^Boot([0-9A-Fa-f]{4})$`)
 
-// AddBootEntry creates an new EFI boot entry variable and returns its
-// non-negative index on success.
-func AddBootEntry(be *LoadOption) (int, error) {
-	varNames, err := List(ScopeGlobal)
+// ListBootEntries lists all EFI boot entries present in the system by their index.
+func ListBootEntries(rw ReaderWriter) (map[int]*LoadOption, error) {
+	bootEntries := make(map[int]*LoadOption)
+
+	varNames, err := rw.List(ScopeGlobal)
 	if err != nil {
-		return -1, fmt.Errorf("failed to list EFI variables: %w", err)
+		return nil, fmt.Errorf("failed to list EFI variables at scope %s: %w", ScopeGlobal, err)
 	}
 
-	presentEntries := make(map[int]bool)
-	// Technically these are sorted, but due to the lower/upper case issue
-	// we cannot rely on this fact.
 	for _, varName := range varNames {
 		s := bootVarRegexp.FindStringSubmatch(varName)
 		if s == nil {
@@ -79,13 +77,29 @@ func AddBootEntry(be *LoadOption) (int, error) {
 			panic(err)
 		}
 
-		presentEntries[int(idx)] = true
+		entry, err := GetBootEntry(rw, int(idx))
+		if err != nil {
+			return nil, fmt.Errorf("failed to get boot entry %s: %w", varName, err)
+		}
+
+		bootEntries[int(idx)] = entry
+	}
+
+	return bootEntries, nil
+}
+
+// AddBootEntry creates an new EFI boot entry variable and returns its
+// non-negative index on success.
+func AddBootEntry(rw ReaderWriter, be *LoadOption) (int, error) {
+	bootEntries, err := ListBootEntries(rw)
+	if err != nil {
+		return -1, fmt.Errorf("failed to list boot entries: %w", err)
 	}
 
 	idx := -1
 
 	for i := range math.MaxUint16 {
-		if !presentEntries[i] {
+		if _, ok := bootEntries[i]; !ok {
 			idx = i
 
 			break
@@ -96,7 +110,7 @@ func AddBootEntry(be *LoadOption) (int, error) {
 		return -1, errors.New("all 2^16 boot entry variables are occupied")
 	}
 
-	err = SetBootEntry(idx, be)
+	err = SetBootEntry(rw, idx, be)
 	if err != nil {
 		return -1, fmt.Errorf("failed to set new boot entry: %w", err)
 	}
@@ -105,11 +119,11 @@ func AddBootEntry(be *LoadOption) (int, error) {
 }
 
 // GetBootEntry returns the boot entry at the given index.
-func GetBootEntry(idx int) (*LoadOption, error) {
-	raw, _, err := Read(ScopeGlobal, fmt.Sprintf("Boot%04X", idx))
+func GetBootEntry(rw ReaderWriter, idx int) (*LoadOption, error) {
+	raw, _, err := rw.Read(ScopeGlobal, fmt.Sprintf("Boot%04X", idx))
 	if errors.Is(err, fs.ErrNotExist) {
 		// Try non-spec-conforming lowercase entry
-		raw, _, err = Read(ScopeGlobal, fmt.Sprintf("Boot%04x", idx))
+		raw, _, err = rw.Read(ScopeGlobal, fmt.Sprintf("Boot%04x", idx))
 	}
 
 	if err != nil {
@@ -120,21 +134,21 @@ func GetBootEntry(idx int) (*LoadOption, error) {
 }
 
 // SetBootEntry writes the given boot entry to the given index.
-func SetBootEntry(idx int, be *LoadOption) error {
+func SetBootEntry(rw ReaderWriter, idx int, be *LoadOption) error {
 	bem, err := be.Marshal()
 	if err != nil {
 		return fmt.Errorf("while marshaling the EFI boot entry: %w", err)
 	}
 
-	return Write(ScopeGlobal, fmt.Sprintf("Boot%04X", idx), AttrNonVolatile|AttrRuntimeAccess, bem)
+	return rw.Write(ScopeGlobal, fmt.Sprintf("Boot%04X", idx), AttrNonVolatile|AttrRuntimeAccess, bem)
 }
 
 // DeleteBootEntry deletes the boot entry at the given index.
-func DeleteBootEntry(idx int) error {
-	err := Delete(ScopeGlobal, fmt.Sprintf("Boot%04X", idx))
+func DeleteBootEntry(rw ReaderWriter, idx int) error {
+	err := rw.Delete(ScopeGlobal, fmt.Sprintf("Boot%04X", idx))
 	if errors.Is(err, fs.ErrNotExist) {
 		// Try non-spec-conforming lowercase entry
-		err = Delete(ScopeGlobal, fmt.Sprintf("Boot%04x", idx))
+		err = rw.Delete(ScopeGlobal, fmt.Sprintf("Boot%04x", idx))
 	}
 
 	return err
@@ -142,13 +156,13 @@ func DeleteBootEntry(idx int) error {
 
 // SetBootOrder replaces contents of the boot order variable with the order
 // specified in ord.
-func SetBootOrder(ord BootOrder) error {
-	return Write(ScopeGlobal, "BootOrder", AttrNonVolatile|AttrRuntimeAccess, ord.Marshal())
+func SetBootOrder(rw ReaderWriter, ord BootOrder) error {
+	return rw.Write(ScopeGlobal, "BootOrder", AttrNonVolatile|AttrRuntimeAccess, ord.Marshal())
 }
 
 // GetBootOrder returns the current boot order of the system.
-func GetBootOrder() (BootOrder, error) {
-	raw, _, err := Read(ScopeGlobal, "BootOrder")
+func GetBootOrder(rw ReaderWriter) (BootOrder, error) {
+	raw, _, err := rw.Read(ScopeGlobal, "BootOrder")
 	if err != nil {
 		return nil, err
 	}
@@ -163,9 +177,9 @@ func GetBootOrder() (BootOrder, error) {
 
 // SetBootNext sets the boot entry used for the next boot only. It automatically
 // resets after the next boot.
-func SetBootNext(entryIdx uint16) error {
+func SetBootNext(rw ReaderWriter, entryIdx uint16) error {
 	data := make([]byte, 2)
 	binary.LittleEndian.PutUint16(data, entryIdx)
 
-	return Write(ScopeGlobal, "BootNext", AttrNonVolatile|AttrRuntimeAccess, data)
+	return rw.Write(ScopeGlobal, "BootNext", AttrNonVolatile|AttrRuntimeAccess, data)
 }

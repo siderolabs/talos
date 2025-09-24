@@ -23,7 +23,10 @@ import (
 
 	"github.com/g0rbe/go-chattr"
 	"github.com/google/uuid"
+	"golang.org/x/sys/unix"
 	"golang.org/x/text/encoding/unicode"
+
+	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
 
 const (
@@ -87,8 +90,48 @@ func varPath(scope uuid.UUID, varName string) string {
 	return fmt.Sprintf("/sys/firmware/efi/efivars/%s-%s", varName, scope.String())
 }
 
+// ReaderWriter is an interface for reading and writing EFI variables.
+type ReaderWriter interface {
+	Write(scope uuid.UUID, varName string, attrs Attribute, value []byte) error
+	Delete(scope uuid.UUID, varName string) error
+	Read(scope uuid.UUID, varName string) ([]byte, Attribute, error)
+	List(scope uuid.UUID) ([]string, error)
+}
+
+// FilesystemReaderWriter implements ReaderWriter using the efivars Linux filesystem.
+type FilesystemReaderWriter struct {
+	write bool
+}
+
+// NewFilesystemReaderWriter creates a new FilesystemReaderWriter.
+func NewFilesystemReaderWriter(write bool) (*FilesystemReaderWriter, error) {
+	if write {
+		if err := unix.Mount("efivarfs", constants.EFIVarsMountPoint, "efivarfs", unix.MS_REMOUNT, ""); err != nil {
+			return nil, err
+		}
+	}
+
+	return &FilesystemReaderWriter{
+		write: write,
+	}, nil
+}
+
+// Close unmounts efivarfs if the FilesystemReaderWriter was created with write
+// access.
+func (rw *FilesystemReaderWriter) Close() error {
+	if rw.write {
+		return unix.Mount("efivarfs", constants.EFIVarsMountPoint, "efivarfs", unix.MS_REMOUNT|unix.MS_RDONLY, "")
+	}
+
+	return nil
+}
+
 // Write writes the value of the named variable in the given scope.
-func Write(scope uuid.UUID, varName string, attrs Attribute, value []byte) error {
+func (rw *FilesystemReaderWriter) Write(scope uuid.UUID, varName string, attrs Attribute, value []byte) error {
+	if !rw.write {
+		return errors.New("efivarfs was opened read-only")
+	}
+
 	// Ref: https://docs.kernel.org/filesystems/efivarfs.html
 	// Remove immutable attribute from the efivarfs file if it exists
 	if _, err := os.Stat(varPath(scope, varName)); err == nil {
@@ -140,7 +183,7 @@ func Write(scope uuid.UUID, varName string, attrs Attribute, value []byte) error
 }
 
 // Read reads the value of the named variable in the given scope.
-func Read(scope uuid.UUID, varName string) ([]byte, Attribute, error) {
+func (rw *FilesystemReaderWriter) Read(scope uuid.UUID, varName string) ([]byte, Attribute, error) {
 	val, err := os.ReadFile(varPath(scope, varName))
 	if err != nil {
 		e := err
@@ -162,7 +205,7 @@ func Read(scope uuid.UUID, varName string) ([]byte, Attribute, error) {
 
 // List lists all variable names present for a given scope sorted by their names
 // in Go's "native" string sort order.
-func List(scope uuid.UUID) ([]string, error) {
+func (rw *FilesystemReaderWriter) List(scope uuid.UUID) ([]string, error) {
 	vars, err := os.ReadDir(Path)
 	if err != nil {
 		return nil, fmt.Errorf("failed to list variable directory: %w", err)
@@ -189,6 +232,10 @@ func List(scope uuid.UUID) ([]string, error) {
 
 // Delete deletes the given variable name in the given scope. Use with care,
 // some firmware fails to boot if variables it uses are deleted.
-func Delete(scope uuid.UUID, varName string) error {
+func (rw *FilesystemReaderWriter) Delete(scope uuid.UUID, varName string) error {
+	if !rw.write {
+		return errors.New("efivarfs was opened read-only")
+	}
+
 	return os.Remove(varPath(scope, varName))
 }
