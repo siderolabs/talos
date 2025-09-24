@@ -50,7 +50,7 @@ type PartitionMBR struct {
 func (p PartitionMBR) partitionSignature() (sig [16]byte) {
 	copy(sig[:4], p.DiskSignature[:])
 
-	return
+	return sig
 }
 
 func (p PartitionMBR) partitionFormat() uint8 {
@@ -283,7 +283,7 @@ func (d DevicePath) Marshal() ([]byte, error) {
 			return nil, fmt.Errorf("path element payload over maximum size")
 		}
 
-		buf = append16(buf, uint16(len(elemBuf)+4))
+		buf = binary.LittleEndian.AppendUint16(buf, uint16(len(elemBuf)+4))
 		buf = append(buf, elemBuf...)
 	}
 	// End of device path (Type 0x7f, SubType 0xFF)
