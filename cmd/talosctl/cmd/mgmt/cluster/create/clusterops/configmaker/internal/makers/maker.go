@@ -10,3 +10,13 @@ import "github.com/siderolabs/talos/cmd/talosctl/cmd/mgmt/cluster/create/cluster
 type ConfigMaker interface {
 	GetClusterConfigs() (clusterops.ClusterConfigs, error)
 }
+
+// ExtraOptionsProvider are used to implement provider specific logic.
+type ExtraOptionsProvider interface {
+	InitExtra() error
+	AddExtraGenOps() error
+	AddExtraProvisionOpts() error
+	AddExtraConfigBundleOpts() error
+	ModifyClusterRequest() error
+	ModifyNodes() error
+}

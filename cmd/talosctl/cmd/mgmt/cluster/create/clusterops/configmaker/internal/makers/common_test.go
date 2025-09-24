@@ -40,25 +40,28 @@ func (p testProvisioner) GetExternalKubernetesControlPlaneEndpoint(networkReq pr
 	return "external-kubernetes-controlplane-endpoint.test"
 }
 
+type nothingProvider struct{}
+
+func (*nothingProvider) InitExtra() error                { return nil }
+func (*nothingProvider) AddExtraGenOps() error           { return nil }
+func (*nothingProvider) AddExtraProvisionOpts() error    { return nil }
+func (*nothingProvider) AddExtraConfigBundleOpts() error { return nil }
+func (*nothingProvider) ModifyClusterRequest() error     { return nil }
+func (*nothingProvider) ModifyNodes() error              { return nil }
+
 func getInitializedTestMaker(t *testing.T, cOps clusterops.Common) makers.Maker[any] {
 	m, err := makers.New(makers.MakerOptions[any]{CommonOps: cOps, Provisioner: testProvisioner{}})
 	require.NoError(t, err)
 
-	emptyMakerHooks := makers.MakerHooks{
-		InitExtra:                func() error { return nil },
-		GetExtraGenOps:           func() error { return nil },
-		GetExtraProvisionOpts:    func() error { return nil },
-		GetExtraConfigBundleOpts: func() error { return nil },
-		ModifyClusterRequest:     func() error { return nil },
-		ModifyNodes:              func() error { return nil },
-	}
-	m.SetHooks(emptyMakerHooks)
+	m.SetExtraOptionsProvider(&nothingProvider{})
 
 	err = m.Init()
 	require.NoError(t, err)
 
 	return m
 }
+
+var nodeUUIDHostnameRegex = regexp.MustCompile("^machine-[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$")
 
 func TestCommonMaker(t *testing.T) {
 	cOps := clusterops.GetCommon()
@@ -109,10 +112,10 @@ func TestCommonMaker(t *testing.T) {
 	controlplanes = m.ClusterRequest.Nodes.ControlPlaneNodes()
 	workers = m.ClusterRequest.Nodes.WorkerNodes()
 
-	assert.Regexp(t, regexp.MustCompile("^machine-[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"), controlplanes[0].Name)
-	assert.Regexp(t, regexp.MustCompile("^machine-[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"), controlplanes[1].Name)
-	assert.Regexp(t, regexp.MustCompile("^machine-[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"), workers[0].Name)
-	assert.Regexp(t, regexp.MustCompile("^machine-[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"), workers[1].Name)
+	assert.Regexp(t, nodeUUIDHostnameRegex, controlplanes[0].Name)
+	assert.Regexp(t, nodeUUIDHostnameRegex, controlplanes[1].Name)
+	assert.Regexp(t, nodeUUIDHostnameRegex, workers[0].Name)
+	assert.Regexp(t, nodeUUIDHostnameRegex, workers[1].Name)
 
 	_, err = m.GetClusterConfigs()
 	assert.NoError(t, err)

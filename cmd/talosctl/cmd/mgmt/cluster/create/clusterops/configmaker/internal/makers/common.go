@@ -32,10 +32,10 @@ import (
 
 const (
 	// gatewayOffset is the offset from the network address of the IP address of the network gateway.
-	gatewayOffset = 1
+	gatewayOffset = 1 + iota
 
 	// nodesOffset is the offset from the network address of the beginning of the IP addresses to be used for nodes.
-	nodesOffset = 2
+	nodesOffset
 )
 
 // MakerOptions are the options needed to initialize a maker.
@@ -43,16 +43,6 @@ type MakerOptions[ExtraOps any] = struct {
 	ExtraOps    ExtraOps
 	CommonOps   clusterops.Common
 	Provisioner provision.Provisioner
-}
-
-// MakerHooks are used to implement provider specific logic.
-type MakerHooks = struct {
-	InitExtra                func() error
-	GetExtraGenOps           func() error
-	GetExtraProvisionOpts    func() error
-	GetExtraConfigBundleOpts func() error
-	ModifyClusterRequest     func() error
-	ModifyNodes              func() error
 }
 
 // New creates a new maker.
@@ -84,12 +74,12 @@ type Maker[ExtraOps any] struct {
 
 	EOps ExtraOps
 
-	hooks MakerHooks // should this be a pointer?
+	extraOptionsProvider ExtraOptionsProvider
 }
 
-// SetHooks sets the hooks containing the provider specific logic.
-func (m *Maker[T]) SetHooks(hooks MakerHooks) {
-	m.hooks = hooks
+// SetExtraOptionsProvider sets extra options provider containing the provider specific logic.
+func (m *Maker[T]) SetExtraOptionsProvider(hooks ExtraOptionsProvider) {
+	m.extraOptionsProvider = hooks
 }
 
 // Init initializes the common struct fields.
@@ -107,23 +97,23 @@ func (m *Maker[T]) Init() error {
 
 // InitExtra calls the init functions set by the individual implementation of the maker.
 func (m *Maker[T]) InitExtra() error {
-	if err := m.hooks.InitExtra(); err != nil {
+	if err := m.extraOptionsProvider.InitExtra(); err != nil {
 		return err
 	}
 
-	if err := m.hooks.GetExtraGenOps(); err != nil {
+	if err := m.extraOptionsProvider.AddExtraGenOps(); err != nil {
 		return err
 	}
 
-	if err := m.hooks.GetExtraProvisionOpts(); err != nil {
+	if err := m.extraOptionsProvider.AddExtraProvisionOpts(); err != nil {
 		return err
 	}
 
-	if err := m.hooks.ModifyClusterRequest(); err != nil {
+	if err := m.extraOptionsProvider.ModifyClusterRequest(); err != nil {
 		return err
 	}
 
-	if err := m.hooks.ModifyNodes(); err != nil {
+	if err := m.extraOptionsProvider.ModifyNodes(); err != nil {
 		return err
 	}
 
@@ -132,6 +122,10 @@ func (m *Maker[T]) InitExtra() error {
 
 // InitCommon initializes the common fields.
 func (m *Maker[T]) InitCommon() error {
+	if err := m.initVersionContract(); err != nil {
+		return err
+	}
+
 	if err := m.initCIDRs(); err != nil {
 		return err
 	}
@@ -155,10 +149,6 @@ func (m *Maker[T]) InitCommon() error {
 	}
 
 	if err := m.initGenOps(); err != nil {
-		return err
-	}
-
-	if err := m.initVersionContract(); err != nil {
 		return err
 	}
 

@@ -64,14 +64,7 @@ func NewQemu(ops MakerOptions[clusterops.Qemu]) (Qemu, error) {
 
 	m := Qemu{Maker: &maker}
 
-	m.SetHooks(MakerHooks{
-		InitExtra:                m.initExtra,
-		GetExtraConfigBundleOpts: m.getExtraConfigBundleOpts,
-		GetExtraGenOps:           m.getExtraGenOps,
-		GetExtraProvisionOpts:    m.getExtraProvisionOpts,
-		ModifyClusterRequest:     m.modifyClusterRequest,
-		ModifyNodes:              m.modifyNodes,
-	})
+	m.SetExtraOptionsProvider(&m)
 
 	if err := m.Init(); err != nil {
 		return Qemu{}, err
@@ -80,7 +73,8 @@ func NewQemu(ops MakerOptions[clusterops.Qemu]) (Qemu, error) {
 	return m, nil
 }
 
-func (m *Qemu) initExtra() error {
+// InitExtra implements ExtraOptionsProvider.
+func (m *Qemu) InitExtra() error {
 	if m.EOps.UseVIP {
 		vip, err := sideronet.NthIPInNetwork(m.Cidrs[0], vipOffset)
 		if err != nil {
@@ -112,7 +106,8 @@ func (m *Qemu) initExtra() error {
 	return nil
 }
 
-func (m *Qemu) getExtraGenOps() error {
+// AddExtraGenOps implements ExtraOptionsProvider.
+func (m *Qemu) AddExtraGenOps() error {
 	m.GenOps = slices.Concat(m.GenOps, []generate.Option{generate.WithInstallImage(m.EOps.NodeInstallImage)})
 
 	if m.Ops.CustomCNIUrl != "" {
@@ -156,7 +151,8 @@ func (m *Qemu) getExtraGenOps() error {
 	return nil
 }
 
-func (m *Qemu) getExtraProvisionOpts() error {
+// AddExtraProvisionOpts implements ExtraOptionsProvider.
+func (m *Qemu) AddExtraProvisionOpts() error {
 	m.ProvisionOps = slices.Concat(m.ProvisionOps, []provision.Option{
 		provision.WithBootlader(m.EOps.BootloaderEnabled),
 		provision.WithUEFI(m.EOps.UefiEnabled),
@@ -180,7 +176,8 @@ func (m *Qemu) getExtraProvisionOpts() error {
 	return nil
 }
 
-func (m *Qemu) getExtraConfigBundleOpts() error {
+// AddExtraConfigBundleOpts implements ExtraOptionsProvider.
+func (m *Qemu) AddExtraConfigBundleOpts() error {
 	if m.EOps.WithFirewall != "" {
 		var defaultAction nethelpers.DefaultAction
 
@@ -213,7 +210,8 @@ func (m *Qemu) getExtraConfigBundleOpts() error {
 	return nil
 }
 
-func (m *Qemu) modifyClusterRequest() error {
+// ModifyClusterRequest implements ExtraOptionsProvider.
+func (m *Qemu) ModifyClusterRequest() error {
 	nameserverIPs, err := getNameserverIPs(m.EOps.Nameservers)
 	if err != nil {
 		return err
@@ -276,7 +274,8 @@ func (m *Qemu) validateNetworkChaosParams() error {
 	return nil
 }
 
-func (m *Qemu) modifyNodes() error {
+// ModifyNodes implements ExtraOptionsProvider.
+func (m *Qemu) ModifyNodes() error {
 	var configInjectionMethod provision.ConfigInjectionMethod
 
 	switch m.EOps.ConfigInjectionMethod {
