@@ -7,6 +7,9 @@ package sdboot
 import (
 	"errors"
 	"fmt"
+	"io/fs"
+	"maps"
+	"math"
 	"os"
 	"slices"
 
@@ -93,76 +96,115 @@ func WriteVariable(name, value string) error {
 }
 
 // CreateBootEntry creates a UEFI boot entry named "Talos Linux UKI" and sets it as the first in the `BootOrder`
-// with the specified install disk and architecture.
 // The entry will point to the SystemdBoot PE binary located at the specified install disk path.
 //
-//nolint:gocyclo
-func CreateBootEntry(installDisk, sdBootFilePath string) error {
-	efi, err := efivarfs.NewFilesystemReaderWriter(true)
-	if err != nil {
-		return fmt.Errorf("failed to create efivarfs reader/writer: %w", err)
-	}
-
-	defer efi.Close() //nolint:errcheck
-
-	rawBootOrderData, _, err := efi.Read(efivarfs.ScopeGlobal, "BootOrder")
-	if err != nil {
-		return fmt.Errorf("failed to read BootOrder: %w", err)
-	}
-
-	bootOrder, err := efivarfs.UnmarshalBootOrder(rawBootOrderData)
-	if err != nil {
-		return fmt.Errorf("failed to unmarshal BootOrder: %w", err)
-	}
-
-	// Let's assume we are adding a new boot entry for Talos Linux UKI.
-	talosBootIndex := len(bootOrder)
-
-	for _, idx := range bootOrder {
-		bootEntry, err := efivarfs.GetBootEntry(efi, int(idx))
-		if err != nil {
-			return fmt.Errorf("failed to get boot entry %d: %w", idx, err)
-		}
-
-		if bootEntry.Description == TalosBootEntryDescription {
-			// If we already have a Talos Linux UKI boot entry, we will use its index.
-			// This allows us to update the existing entry instead of creating a new one.
-			talosBootIndex = int(idx)
-
-			break
-		}
-	}
-
-	info, err := blkid.ProbePath(installDisk, blkid.WithSkipLocking(true))
-	if err != nil {
-		return fmt.Errorf("failed to probe install disk %q: %w", installDisk, err)
-	}
-
-	efiPartInfo := xslices.Filter(info.Parts, func(part blkid.NestedProbeResult) bool {
+//nolint:gocyclo,cyclop
+func CreateBootEntry(rw efivarfs.ReadWriter, blkidInfo *blkid.Info, printf func(format string, args ...interface{}), sdBootFilePath string) error {
+	efiPartInfo := xslices.Filter(blkidInfo.Parts, func(part blkid.NestedProbeResult) bool {
 		return part.PartitionLabel != nil && *part.PartitionLabel == constants.EFIPartitionLabel
 	})
 
 	if len(efiPartInfo) == 0 {
-		return fmt.Errorf("EFI partition not found on install disk %q", installDisk)
+		return fmt.Errorf("EFI partition not found on install disk %q", blkidInfo.Name)
 	}
 
 	if len(efiPartInfo) > 1 {
-		return fmt.Errorf("multiple EFI partitions found on install disk %q, expected only one", installDisk)
+		return fmt.Errorf("multiple EFI partitions found on install disk %q, expected only one", blkidInfo.Name)
 	}
 
 	partitionUUID := efiPartInfo[0].PartitionUUID
 
 	if partitionUUID == nil {
-		return fmt.Errorf("EFI partition UUID not found on install disk %q", installDisk)
+		return fmt.Errorf("EFI partition UUID not found on install disk %q", blkidInfo.Name)
 	}
 
-	if err := efivarfs.SetBootEntry(efi, talosBootIndex, &efivarfs.LoadOption{
+	printf("using disk %s with partition %d and UUID %s", blkidInfo.Name, efiPartInfo[0].PartitionIndex, partitionUUID.String())
+
+	bootOrder, err := efivarfs.GetBootOrder(rw)
+	if err != nil {
+		if errors.Is(err, fs.ErrNotExist) {
+			bootOrder = efivarfs.BootOrder{}
+		} else {
+			return fmt.Errorf("failed to get BootOrder: %w", err)
+		}
+	}
+
+	printf("Current BootOrder: %v", bootOrder)
+
+	bootEntries, err := efivarfs.ListBootEntries(rw)
+	if err != nil {
+		return fmt.Errorf("failed to list existing Talos boot entries: %w", err)
+	}
+
+	printf("Existing boot entries: %v", slices.Collect(maps.Keys(bootEntries)))
+
+	var existingTalosBootEntryIndexes []int
+
+	// Find all boot entries with the Talos Linux UKI description.
+	for idx, entry := range bootEntries {
+		if entry.Description == TalosBootEntryDescription {
+			existingTalosBootEntryIndexes = append(existingTalosBootEntryIndexes, idx)
+		}
+	}
+
+	printf("Found existing Talos Linux UKI boot entries: %v", existingTalosBootEntryIndexes)
+
+	// Remove any existing Talos Linux UKI boot entries from the BootOrder.
+	// We need to do this since Talos 1.11.x release assumed that the boot order set by the code stays even after a reboot,
+	// but UEFI firmware settings can set a different boot order on boot, which lead to multiple Talos Linux UKI entries in the boot order,
+	// causing some UEFI firmwares to fail to boot at all.
+	// See https://github.com/siderolabs/talos/issues/11829
+	//
+	// So we remove any existing Talos Linux UKI entries from the boot order
+	// making sure the BootOrder only contains non Talos entries.
+	bootOrderUnique := efivarfs.UniqueBootOrder(bootOrder)
+
+	for _, idx := range existingTalosBootEntryIndexes {
+		bootOrderUnique = slices.DeleteFunc(bootOrderUnique, func(i uint16) bool {
+			return i == uint16(idx)
+		})
+	}
+
+	printf("Updated BootOrder without Talos entries: %v", bootOrderUnique)
+
+	// find the next minimal available index for the new Talos Linux UKI boot entry
+	nextMinimalIndex := -1
+
+	for i := range math.MaxUint16 {
+		if _, ok := bootEntries[i]; !ok {
+			nextMinimalIndex = i
+
+			break
+		}
+	}
+
+	if nextMinimalIndex == -1 {
+		return errors.New("all 2^16 boot entry variables are occupied")
+	}
+
+	// remove all existing Talos Linux UKI boot entries except the first one
+	// and use its index for the new/updated entry
+	for i, idx := range existingTalosBootEntryIndexes {
+		if i == 0 {
+			nextMinimalIndex = idx
+
+			continue
+		}
+
+		printf("Removing existing Talos Linux UKI boot entry at index %d", idx)
+
+		if err := efivarfs.DeleteBootEntry(rw, idx); err != nil {
+			return fmt.Errorf("failed to delete existing Talos boot entry at index %d: %w", idx, err)
+		}
+	}
+
+	if err := efivarfs.SetBootEntry(rw, nextMinimalIndex, &efivarfs.LoadOption{
 		Description: TalosBootEntryDescription,
 		FilePath: efivarfs.DevicePath{
 			&efivarfs.HardDrivePath{
 				PartitionNumber:     uint32(efiPartInfo[0].PartitionIndex),
-				PartitionStartBlock: efiPartInfo[0].PartitionOffset / uint64(info.SectorSize),
-				PartitionSizeBlocks: efiPartInfo[0].PartitionSize / uint64(info.SectorSize),
+				PartitionStartBlock: efiPartInfo[0].PartitionOffset / uint64(blkidInfo.SectorSize),
+				PartitionSizeBlocks: efiPartInfo[0].PartitionSize / uint64(blkidInfo.SectorSize),
 				PartitionMatch: &efivarfs.PartitionGPT{
 					PartitionUUID: *partitionUUID,
 				},
@@ -170,20 +212,29 @@ func CreateBootEntry(installDisk, sdBootFilePath string) error {
 			efivarfs.FilePath("/" + sdBootFilePath),
 		},
 	}); err != nil {
-		return fmt.Errorf("failed to set boot entry %d: %w", talosBootIndex, err)
+		return fmt.Errorf("failed to create Talos Linux UKI boot entry at index %d: %w", nextMinimalIndex, err)
 	}
 
-	currentBootOrder, err := efivarfs.GetBootOrder(efi)
-	if err != nil {
-		return fmt.Errorf("failed to get current BootOrder: %w", err)
-	}
+	printf("created Talos Linux UKI boot entry at index %d", nextMinimalIndex)
 
-	if currentBootOrder[0] == uint16(talosBootIndex) {
+	// if we have the new Talos Linux UKI boot entry index in the boot order already, we need to remove it first
+	// to avoid having it twice in the boot order
+	bootOrderUnique = slices.DeleteFunc(bootOrderUnique, func(i uint16) bool {
+		return i == uint16(nextMinimalIndex)
+	})
+
+	if len(bootOrderUnique) > 0 && bootOrderUnique[0] == uint16(nextMinimalIndex) {
 		// Talos Linux UKI boot entry is already first in the BootOrder
+		printf("Talos Linux UKI boot entry at index %d is already first in BootOrder: %v", nextMinimalIndex, bootOrderUnique)
+
 		return nil
 	}
 
-	if err := efivarfs.SetBootOrder(efi, slices.Concat([]uint16{uint16(talosBootIndex)}, currentBootOrder)); err != nil {
+	bootOrderUnique = slices.Insert(bootOrderUnique, 0, uint16(nextMinimalIndex))
+
+	printf("setting Talos Linux UKI boot entry at index %d as first in BootOrder: %v", nextMinimalIndex, bootOrderUnique)
+
+	if err := efivarfs.SetBootOrder(rw, bootOrderUnique); err != nil {
 		return fmt.Errorf("failed to set BootOrder: %w", err)
 	}
 

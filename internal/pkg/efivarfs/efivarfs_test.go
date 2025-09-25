@@ -126,4 +126,34 @@ func TestBootEntries(t *testing.T) {
 	entries, err = efivarfs.ListBootEntries(&efiRW)
 	require.NoError(t, err)
 	require.Len(t, entries, 1, "expected exactly one boot entry after deleting one of two")
+
+	// set entry with a high index
+	require.NoError(t, efivarfs.SetBootEntry(&efiRW, 42, &efivarfs.LoadOption{
+		Description: "High Index Entry",
+		FilePath: efivarfs.DevicePath{
+			efivarfs.FilePath("/high_index.efi"),
+		},
+	}), "failed to set high index boot entry")
+
+	// make sure adding a new entry uses the lowest available index (which is 1 now)
+	newIdx, err := efivarfs.AddBootEntry(&efiRW, &efivarfs.LoadOption{
+		Description: "New Entry",
+		FilePath: efivarfs.DevicePath{
+			efivarfs.FilePath("/new.efi"),
+		},
+	})
+	require.NoError(t, err)
+	require.Equal(t, 1, newIdx, "expected new boot entry index to be 1, the lowest available index")
+}
+
+func TestUniqueBootOrder(t *testing.T) {
+	t.Parallel()
+
+	require.Equal(t, efivarfs.BootOrder{}, efivarfs.UniqueBootOrder(efivarfs.BootOrder{}), "empty BootOrder should remain empty")
+
+	require.Equal(t, efivarfs.BootOrder{1, 2, 3}, efivarfs.UniqueBootOrder(efivarfs.BootOrder{1, 2, 3}), "BootOrder with unique entries should remain unchanged")
+
+	require.Equal(t, efivarfs.BootOrder{1, 2, 3}, efivarfs.UniqueBootOrder(efivarfs.BootOrder{1, 2, 3, 2, 1, 3}), "BootOrder with duplicates should have duplicates removed preserving order of first appearance") //nolint:lll
+
+	require.Equal(t, efivarfs.BootOrder{0, 1, 3, 2}, efivarfs.UniqueBootOrder(efivarfs.BootOrder{0, 1, 0, 1, 0, 1, 1, 3, 2, 2, 3, 3, 1}), "BootOrder with all entries duplicated should have duplicates removed preserving order of first appearance") //nolint:lll
 }

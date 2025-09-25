@@ -27,6 +27,7 @@ import (
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/kexec"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/mount"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/options"
+	"github.com/siderolabs/talos/internal/pkg/efivarfs"
 	mountv3 "github.com/siderolabs/talos/internal/pkg/mount/v3"
 	"github.com/siderolabs/talos/internal/pkg/partition"
 	smbiosinternal "github.com/siderolabs/talos/internal/pkg/smbios"
@@ -417,7 +418,19 @@ func (c *Config) install(opts options.InstallOptions) (*options.InstallResult, e
 			return nil, err
 		}
 
-		if err := CreateBootEntry(opts.BootDisk, sdbootFilename); err != nil {
+		efiRW, err := efivarfs.NewFilesystemReaderWriter(true)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create efivarfs reader/writer: %w", err)
+		}
+
+		defer efiRW.Close() //nolint:errcheck
+
+		blkidInfo, err := blkid.ProbePath(opts.BootDisk, blkid.WithSkipLocking(true))
+		if err != nil {
+			return nil, fmt.Errorf("failed to probe block device %s: %w", opts.BootDisk, err)
+		}
+
+		if err := CreateBootEntry(efiRW, blkidInfo, opts.Printf, sdbootFilename); err != nil {
 			return nil, fmt.Errorf("failed to create boot entry: %w", err)
 		}
 	}
