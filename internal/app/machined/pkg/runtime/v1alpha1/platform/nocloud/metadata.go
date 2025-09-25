@@ -603,7 +603,7 @@ func (n *Nocloud) applyNetworkConfigV1(ctx context.Context, config *NetworkConfi
 	return needsReconcile, nil
 }
 
-//nolint:gocyclo
+//nolint:gocyclo,cyclop
 func applyNetworkConfigV2Ethernet(name string, eth Ethernet, networkConfig *runtime.PlatformNetworkConfig, dnsIPs *[]netip.Addr) error {
 	if eth.DHCPv4 {
 		networkConfig.Operators = append(networkConfig.Operators, network.OperatorSpecSpec{
@@ -709,6 +709,14 @@ func applyNetworkConfigV2Ethernet(name string, eth Ethernet, networkConfig *runt
 		gw, err := netip.ParseAddr(route.Via)
 		if err != nil {
 			return fmt.Errorf("failed to parse route gateway: %w", err)
+		}
+
+		if route.To == "default" {
+			if gw.Is4() {
+				route.To = "0.0.0.0/0"
+			} else {
+				route.To = "::/0"
+			}
 		}
 
 		dest, err := netip.ParsePrefix(route.To)

@@ -21,7 +21,7 @@ network:
       nameservers:
         search: [ foo.local, bar.local ]
       routes:
-        - to: "0.0.0.0/0"
+        - to: default
           via: "192.168.14.1"
           metric: 100
           on-link: true
