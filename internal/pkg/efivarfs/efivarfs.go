@@ -90,8 +90,8 @@ func varPath(scope uuid.UUID, varName string) string {
 	return fmt.Sprintf("/sys/firmware/efi/efivars/%s-%s", varName, scope.String())
 }
 
-// ReaderWriter is an interface for reading and writing EFI variables.
-type ReaderWriter interface {
+// ReadWriter is an interface for reading and writing EFI variables.
+type ReadWriter interface {
 	Write(scope uuid.UUID, varName string, attrs Attribute, value []byte) error
 	Delete(scope uuid.UUID, varName string) error
 	Read(scope uuid.UUID, varName string) ([]byte, Attribute, error)
@@ -238,4 +238,23 @@ func (rw *FilesystemReaderWriter) Delete(scope uuid.UUID, varName string) error 
 	}
 
 	return os.Remove(varPath(scope, varName))
+}
+
+// UniqueBootOrder returns a copy of the given BootOrder with duplicate entries
+// removed, preserving the order of first appearance.
+func UniqueBootOrder(bootOrder BootOrder) BootOrder {
+	seen := make(map[uint16]struct{}, len(bootOrder))
+	j := 0
+
+	for _, v := range bootOrder {
+		if _, ok := seen[v]; ok {
+			continue
+		}
+
+		seen[v] = struct{}{}
+		bootOrder[j] = v
+		j++
+	}
+
+	return bootOrder[:j]
 }

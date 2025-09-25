@@ -31,7 +31,7 @@ func decodeString(varData []byte) (string, error) {
 }
 
 // ReadLoaderDevicePartUUID reads the ESP UUID from an EFI variable.
-func ReadLoaderDevicePartUUID(rw ReaderWriter) (uuid.UUID, error) {
+func ReadLoaderDevicePartUUID(rw ReadWriter) (uuid.UUID, error) {
 	efiVar, _, err := rw.Read(ScopeSystemd, "LoaderDevicePartUUID")
 	if err != nil {
 		return uuid.Nil, err
@@ -56,7 +56,7 @@ func ReadLoaderDevicePartUUID(rw ReaderWriter) (uuid.UUID, error) {
 var bootVarRegexp = regexp.MustCompile(`^Boot([0-9A-Fa-f]{4})$`)
 
 // ListBootEntries lists all EFI boot entries present in the system by their index.
-func ListBootEntries(rw ReaderWriter) (map[int]*LoadOption, error) {
+func ListBootEntries(rw ReadWriter) (map[int]*LoadOption, error) {
 	bootEntries := make(map[int]*LoadOption)
 
 	varNames, err := rw.List(ScopeGlobal)
@@ -90,7 +90,7 @@ func ListBootEntries(rw ReaderWriter) (map[int]*LoadOption, error) {
 
 // AddBootEntry creates an new EFI boot entry variable and returns its
 // non-negative index on success.
-func AddBootEntry(rw ReaderWriter, be *LoadOption) (int, error) {
+func AddBootEntry(rw ReadWriter, be *LoadOption) (int, error) {
 	bootEntries, err := ListBootEntries(rw)
 	if err != nil {
 		return -1, fmt.Errorf("failed to list boot entries: %w", err)
@@ -119,7 +119,7 @@ func AddBootEntry(rw ReaderWriter, be *LoadOption) (int, error) {
 }
 
 // GetBootEntry returns the boot entry at the given index.
-func GetBootEntry(rw ReaderWriter, idx int) (*LoadOption, error) {
+func GetBootEntry(rw ReadWriter, idx int) (*LoadOption, error) {
 	raw, _, err := rw.Read(ScopeGlobal, fmt.Sprintf("Boot%04X", idx))
 	if errors.Is(err, fs.ErrNotExist) {
 		// Try non-spec-conforming lowercase entry
@@ -134,7 +134,7 @@ func GetBootEntry(rw ReaderWriter, idx int) (*LoadOption, error) {
 }
 
 // SetBootEntry writes the given boot entry to the given index.
-func SetBootEntry(rw ReaderWriter, idx int, be *LoadOption) error {
+func SetBootEntry(rw ReadWriter, idx int, be *LoadOption) error {
 	bem, err := be.Marshal()
 	if err != nil {
 		return fmt.Errorf("while marshaling the EFI boot entry: %w", err)
@@ -144,7 +144,7 @@ func SetBootEntry(rw ReaderWriter, idx int, be *LoadOption) error {
 }
 
 // DeleteBootEntry deletes the boot entry at the given index.
-func DeleteBootEntry(rw ReaderWriter, idx int) error {
+func DeleteBootEntry(rw ReadWriter, idx int) error {
 	err := rw.Delete(ScopeGlobal, fmt.Sprintf("Boot%04X", idx))
 	if errors.Is(err, fs.ErrNotExist) {
 		// Try non-spec-conforming lowercase entry
@@ -156,12 +156,12 @@ func DeleteBootEntry(rw ReaderWriter, idx int) error {
 
 // SetBootOrder replaces contents of the boot order variable with the order
 // specified in ord.
-func SetBootOrder(rw ReaderWriter, ord BootOrder) error {
+func SetBootOrder(rw ReadWriter, ord BootOrder) error {
 	return rw.Write(ScopeGlobal, "BootOrder", AttrNonVolatile|AttrRuntimeAccess, ord.Marshal())
 }
 
 // GetBootOrder returns the current boot order of the system.
-func GetBootOrder(rw ReaderWriter) (BootOrder, error) {
+func GetBootOrder(rw ReadWriter) (BootOrder, error) {
 	raw, _, err := rw.Read(ScopeGlobal, "BootOrder")
 	if err != nil {
 		return nil, err
@@ -177,7 +177,7 @@ func GetBootOrder(rw ReaderWriter) (BootOrder, error) {
 
 // SetBootNext sets the boot entry used for the next boot only. It automatically
 // resets after the next boot.
-func SetBootNext(rw ReaderWriter, entryIdx uint16) error {
+func SetBootNext(rw ReadWriter, entryIdx uint16) error {
 	data := make([]byte, 2)
 	binary.LittleEndian.PutUint16(data, entryIdx)
 
