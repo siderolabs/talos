@@ -1,3 +1,79 @@
+## [Talos 1.11.2](https://github.com/siderolabs/talos/releases/tag/v1.11.2) (2025-09-25)
+
+Welcome to the v1.11.2 release of Talos!
+
+
+
+Please try out the release binaries and report any issues at
+https://github.com/siderolabs/talos/issues.
+
+### Component Updates
+
+runc: 1.3.1
+Kubernetes: 1.34.1
+Linux: 6.12.48
+linux-firmware: 20250917
+
+Talos is built with Go 1.24.6.
+
+
+### Contributors
+
+* Andrey Smirnov
+* Mateusz Urbanek
+* Noel Georgi
+* Dmitrii Sharshakov
+* Oguz Kilcan
+* Serge Logvinov
+
+### Changes
+<details><summary>16 commits</summary>
+<p>
+
+* [`ac452574e`](https://github.com/siderolabs/talos/commit/ac452574e79ef3564e622d44fd4516681740c8cf) fix: default gateway as string
+* [`7cec0e042`](https://github.com/siderolabs/talos/commit/7cec0e0420d613910d0d90c542e8f00ff3cfc9b5) fix: uefi boot entry handling logic
+* [`637154ed2`](https://github.com/siderolabs/talos/commit/637154ed2555a885a1de9dfdf14813b9b807fb38) docs: drop invalid v1.12 docs
+* [`a6d2f65a6`](https://github.com/siderolabs/talos/commit/a6d2f65a61065285366dc3698a2b5d556dde8da0) chore(ci): rekres to use new runner groups
+* [`cd82ee204`](https://github.com/siderolabs/talos/commit/cd82ee204eda75dd09cedd85b2414edebacfb5ca) refactor: efivarfs mock and tests
+* [`996d97de6`](https://github.com/siderolabs/talos/commit/996d97de6e1fd5feea4e1052e0d1c6f6c0f3c6f9) chore: update pkgs
+* [`bbf860c5c`](https://github.com/siderolabs/talos/commit/bbf860c5ccbdd2fdc877459d05b2f64b9c127a5d) docs: update component updates
+* [`24c1bcecf`](https://github.com/siderolabs/talos/commit/24c1bcecf5d1fd82e24bf85a48ae3f966aedec2d) fix: bump trustd memory limit
+* [`56d6d6f75`](https://github.com/siderolabs/talos/commit/56d6d6f755d35785f7be9665813e5847c7dfb14c) chore: pass in github token to imager
+* [`682df89d7`](https://github.com/siderolabs/talos/commit/682df89d78312b7a56d017c953397d171aee4a37) fix: use correct order to determine SideroV1 keys directory path
+* [`a838881fa`](https://github.com/siderolabs/talos/commit/a838881fafcdfe20b3ccb40b5535cc27946b19ea) fix: trim zero bytes in the DHCP host & domain response
+* [`9c962ae9c`](https://github.com/siderolabs/talos/commit/9c962ae9c86168eb71677a7ce678a3a443d64f40) fix: re-create cgroups when restarting runners
+* [`de243f9ae`](https://github.com/siderolabs/talos/commit/de243f9aede933336d7ca48937df40d168d5257e) test: fix flakiness in RawVolumes test
+* [`ec8fde596`](https://github.com/siderolabs/talos/commit/ec8fde596fac2058b205fe84026355d6220e31dc) feat: update Kubernetes to 1.34.1
+* [`797897dfb`](https://github.com/siderolabs/talos/commit/797897dfbf050b0b81a018ace9ac77de45b17410) test: improve test stability
+* [`98273666e`](https://github.com/siderolabs/talos/commit/98273666e8ed9fd8a94b66bd3834bf78ecbc44c8) feat: update runc to 1.3.1
+</p>
+</details>
+
+### Changes from siderolabs/pkgs
+<details><summary>3 commits</summary>
+<p>
+
+* [`f95c679`](https://github.com/siderolabs/pkgs/commit/f95c6797613d814d9cdad41a73b7836fa2fdaeae) chore: update kernel to 6.12.48
+* [`0bd4cb9`](https://github.com/siderolabs/pkgs/commit/0bd4cb9d13e7a71ab1374372bb30d8e667083fb2) chore: update linuxfirmware and rekres
+* [`0c8a195`](https://github.com/siderolabs/pkgs/commit/0c8a19519e713db3216917ca05a37649bf2a7230) feat: update runc to 1.3.1
+</p>
+</details>
+
+### Dependency Changes
+
+* **github.com/siderolabs/pkgs**      v1.11.0-18-g1a25681 -> v1.11.0-21-gf95c679
+* **k8s.io/api**                      v0.34.0 -> v0.34.1
+* **k8s.io/apiextensions-apiserver**  v0.34.0 -> v0.34.1
+* **k8s.io/apiserver**                v0.34.0 -> v0.34.1
+* **k8s.io/client-go**                v0.34.0 -> v0.34.1
+* **k8s.io/component-base**           v0.34.0 -> v0.34.1
+* **k8s.io/kube-scheduler**           v0.34.0 -> v0.34.1
+* **k8s.io/kubectl**                  v0.34.0 -> v0.34.1
+* **k8s.io/kubelet**                  v0.34.0 -> v0.34.1
+* **k8s.io/pod-security-admission**   v0.34.0 -> v0.34.1
+
+Previous release can be found at [v1.11.1](https://github.com/siderolabs/talos/releases/tag/v1.11.1)
+
 ## [Talos 1.11.1](https://github.com/siderolabs/talos/releases/tag/v1.11.1) (2025-09-08)
 
 Welcome to the v1.11.1 release of Talos!
