@@ -256,7 +256,7 @@ COMMON_ARGS += --build-arg=ZSTD_COMPRESSION_LEVEL=$(ZSTD_COMPRESSION_LEVEL)
 
 CI_ARGS ?=
 
-EXTENSIONS_FILTER_COMMAND ?= grep -vE 'tailscale|xen-guest-agent|nvidia|vmtoolsd-guest-agent|metal-agent|cloudflared|zerotier|nebula|newt'
+EXTENSIONS_FILTER_COMMAND ?= grep -vE 'tailscale|xen-guest-agent|nvidia|vmtoolsd-guest-agent|metal-agent|cloudflared|zerotier|nebula|newt|netbird'
 
 all: initramfs kernel installer imager talosctl talosctl-image talos
 
