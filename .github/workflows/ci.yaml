@@ -1,6 +1,6 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
 #
-# Generated on 2025-09-19T11:03:20Z by kres 065ec4c.
+# Generated on 2025-09-26T09:33:38Z by kres fdbc9fc.
 
 concurrency:
   group: ${{ github.head_ref || github.run_id }}
@@ -4858,6 +4858,91 @@ jobs:
           PLATFORM: linux/amd64,linux/arm64
         run: |
           make push-latest
+  release-cloud-images:
+    permissions:
+      actions: read
+      contents: write
+      id-token: write
+      issues: read
+      packages: write
+      pull-requests: read
+    runs-on:
+      group: generic
+    if: (!startsWith(github.head_ref, 'renovate/') && !startsWith(github.head_ref, 'dependabot/')) && startsWith(github.ref, 'refs/tags/')
+    steps:
+      - name: gather-system-info
+        id: system-info
+        uses: kenchan0130/actions-system-info@v1.4.0
+        continue-on-error: true
+      - name: print-system-info
+        run: |
+          MEMORY_GB=$((${{ steps.system-info.outputs.totalmem }}/1024/1024/1024))
+
+          OUTPUTS=(
+            "CPU Core: ${{ steps.system-info.outputs.cpu-core }}"
+            "CPU Model: ${{ steps.system-info.outputs.cpu-model }}"
+            "Hostname: ${{ steps.system-info.outputs.hostname }}"
+            "NodeName: ${NODE_NAME}"
+            "Kernel release: ${{ steps.system-info.outputs.kernel-release }}"
+            "Kernel version: ${{ steps.system-info.outputs.kernel-version }}"
+            "Name: ${{ steps.system-info.outputs.name }}"
+            "Platform: ${{ steps.system-info.outputs.platform }}"
+            "Release: ${{ steps.system-info.outputs.release }}"
+            "Total memory: ${MEMORY_GB} GB"
+          )
+
+          for OUTPUT in "${OUTPUTS[@]}";do
+            echo "${OUTPUT}"
+          done
+        continue-on-error: true
+      - name: checkout
+        uses: actions/checkout@v5
+      - name: Unshallow
+        run: |
+          git fetch --prune --unshallow
+      - name: Set up Docker Buildx
+        id: setup-buildx
+        uses: docker/setup-buildx-action@v3
+        with:
+          driver: remote
+          endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
+        timeout-minutes: 10
+      - name: Mask secrets
+        run: |
+          echo "$(sops -d .secrets.yaml | yq -e '.secrets | to_entries[] | "::add-mask::" + .value')"
+      - name: Set secrets for job
+        run: |
+          sops -d .secrets.yaml | yq -e '.secrets | to_entries[] | .key + "=" + .value' >> "$GITHUB_ENV"
+      - name: cloud-images
+        env:
+          CLOUD_IMAGES_EXTRA_ARGS: --use-factory
+          PLATFORM: linux/amd64,linux/arm64
+        run: |
+          make cloud-images
+      - name: Install Cosign
+        uses: sigstore/cosign-installer@v3
+      - name: Sign artifacts
+        run: |
+          cosign sign-blob --output-signature _out/cloud-images.json.sig --yes _out/cloud-images.json
+      - name: Generate Checksums
+        run: |
+          cd _out
+          sha256sum cloud-images.json > sha256sum.txt
+          sha512sum cloud-images.json > sha512sum.txt
+      - name: Sign checksums
+        run: |
+          cd _out
+          cosign sign-blob --output-signature sha256sum.txt.sig --yes sha256sum.txt
+          cosign sign-blob --output-signature sha512sum.txt.sig --yes sha512sum.txt
+      - name: release
+        uses: crazy-max/ghaction-github-release@v2
+        with:
+          body_path: _out
+          draft: "true"
+          files: |-
+            _out/cloud-images.json
+            _out/sha*.txt
+            _out/*.sig
   tag:
     permissions:
       actions: read
@@ -4940,16 +5025,10 @@ jobs:
           PLATFORM: linux/amd64,linux/arm64
         run: |
           make images
-      - name: cloud-images
-        env:
-          PLATFORM: linux/amd64,linux/arm64
-        run: |
-          make cloud-images
       - name: Install Cosign
         uses: sigstore/cosign-installer@v3
       - name: Sign artifacts
         run: |
-          cosign sign-blob --output-signature _out/cloud-images.json.sig --yes _out/cloud-images.json
           cosign sign-blob --output-signature _out/initramfs-amd64.xz.sig --yes _out/initramfs-amd64.xz
           cosign sign-blob --output-signature _out/initramfs-arm64.xz.sig --yes _out/initramfs-arm64.xz
           cosign sign-blob --output-signature _out/metal-amd64.iso.sig --yes _out/metal-amd64.iso
@@ -4978,8 +5057,8 @@ jobs:
       - name: Generate Checksums
         run: |
           cd _out
-          sha256sum cloud-images.json initramfs-amd64.xz initramfs-arm64.xz metal-amd64.iso metal-arm64.iso metal-amd64-uki.efi metal-arm64-uki.efi metal-amd64.raw.zst metal-arm64.raw.zst talos-arm64.spdx.json talos-amd64.spdx.json talos-container-arm64.spdx.json talos-container-amd64.spdx.json talosctl-cni-bundle-amd64.tar.gz talosctl-cni-bundle-arm64.tar.gz talosctl-darwin-amd64 talosctl-darwin-arm64 talosctl-freebsd-amd64 talosctl-freebsd-arm64 talosctl-linux-amd64 talosctl-linux-arm64 talosctl-linux-armv7 talosctl-windows-amd64.exe talosctl-windows-arm64.exe vmlinuz-amd64 vmlinuz-arm64 > sha256sum.txt
-          sha512sum cloud-images.json initramfs-amd64.xz initramfs-arm64.xz metal-amd64.iso metal-arm64.iso metal-amd64-uki.efi metal-arm64-uki.efi metal-amd64.raw.zst metal-arm64.raw.zst talos-arm64.spdx.json talos-amd64.spdx.json talos-container-arm64.spdx.json talos-container-amd64.spdx.json talosctl-cni-bundle-amd64.tar.gz talosctl-cni-bundle-arm64.tar.gz talosctl-darwin-amd64 talosctl-darwin-arm64 talosctl-freebsd-amd64 talosctl-freebsd-arm64 talosctl-linux-amd64 talosctl-linux-arm64 talosctl-linux-armv7 talosctl-windows-amd64.exe talosctl-windows-arm64.exe vmlinuz-amd64 vmlinuz-arm64 > sha512sum.txt
+          sha256sum initramfs-amd64.xz initramfs-arm64.xz metal-amd64.iso metal-arm64.iso metal-amd64-uki.efi metal-arm64-uki.efi metal-amd64.raw.zst metal-arm64.raw.zst talos-arm64.spdx.json talos-amd64.spdx.json talos-container-arm64.spdx.json talos-container-amd64.spdx.json talosctl-cni-bundle-amd64.tar.gz talosctl-cni-bundle-arm64.tar.gz talosctl-darwin-amd64 talosctl-darwin-arm64 talosctl-freebsd-amd64 talosctl-freebsd-arm64 talosctl-linux-amd64 talosctl-linux-arm64 talosctl-linux-armv7 talosctl-windows-amd64.exe talosctl-windows-arm64.exe vmlinuz-amd64 vmlinuz-arm64 > sha256sum.txt
+          sha512sum initramfs-amd64.xz initramfs-arm64.xz metal-amd64.iso metal-arm64.iso metal-amd64-uki.efi metal-arm64-uki.efi metal-amd64.raw.zst metal-arm64.raw.zst talos-arm64.spdx.json talos-amd64.spdx.json talos-container-arm64.spdx.json talos-container-amd64.spdx.json talosctl-cni-bundle-amd64.tar.gz talosctl-cni-bundle-arm64.tar.gz talosctl-darwin-amd64 talosctl-darwin-arm64 talosctl-freebsd-amd64 talosctl-freebsd-arm64 talosctl-linux-amd64 talosctl-linux-arm64 talosctl-linux-armv7 talosctl-windows-amd64.exe talosctl-windows-arm64.exe vmlinuz-amd64 vmlinuz-arm64 > sha512sum.txt
       - name: Sign checksums
         run: |
           cd _out
@@ -4991,7 +5070,6 @@ jobs:
           body_path: _out/RELEASE_NOTES.md
           draft: "true"
           files: |-
-            _out/cloud-images.json
             _out/initramfs-amd64.xz
             _out/initramfs-arm64.xz
             _out/metal-amd64.iso
