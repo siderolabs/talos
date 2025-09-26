@@ -63,6 +63,10 @@ func run() error {
 	pflag.StringVar(&DefaultOptions.Tag, "tag", DefaultOptions.Tag, "tag (version) of the uploaded image")
 	pflag.StringVar(&DefaultOptions.NamePrefix, "name-prefix", DefaultOptions.NamePrefix, "prefix for the name of the uploaded image")
 
+	pflag.BoolVar(&DefaultOptions.UseFactory, "use-factory", DefaultOptions.UseFactory, "whether to use factory to fetch images")
+	pflag.StringVar(&DefaultOptions.FactoryHost, "factory-host", DefaultOptions.FactoryHost, "factory host to fetch images from")
+	pflag.StringArrayVar(&DefaultOptions.FactorySchematics, "factory-schematics", DefaultOptions.FactorySchematics, "list of schematics to fetch from factory")
+
 	pflag.StringSliceVar(&DefaultOptions.AWSRegions, "aws-regions", DefaultOptions.AWSRegions, "list of AWS regions to upload to")
 	pflag.BoolVar(&DefaultOptions.AWSForceBIOS, "aws-force-bios", DefaultOptions.AWSForceBIOS, "force BIOS boot mode for AWS images")
 
@@ -84,6 +88,17 @@ func run() error {
 		switch target {
 		case "aws":
 			g.Go(func() error {
+				if DefaultOptions.UseFactory {
+					downloader := FactoryDownloader{
+						Target:  target,
+						Options: DefaultOptions,
+					}
+
+					if err := downloader.Download(ctx); err != nil {
+						return fmt.Errorf("failed to download image: %w", err)
+					}
+				}
+
 				if len(DefaultOptions.AWSRegions) == 0 {
 					DefaultOptions.AWSRegions, err = GetAWSDefaultRegions(ctx)
 					if err != nil {
@@ -99,6 +114,17 @@ func run() error {
 			})
 		case "gcp":
 			g.Go(func() error {
+				if DefaultOptions.UseFactory {
+					downloader := FactoryDownloader{
+						Target:  target,
+						Options: DefaultOptions,
+					}
+
+					if err := downloader.Download(ctx); err != nil {
+						return fmt.Errorf("failed to download image: %w", err)
+					}
+				}
+
 				gcp, err := NewGCPUploder(DefaultOptions)
 				if err != nil {
 					return fmt.Errorf("failed to create GCP uploader: %w", err)

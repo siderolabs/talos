@@ -1,6 +1,6 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
 #
-# Generated on 2025-09-25T16:16:48Z by kres fdbc9fc.
+# Generated on 2025-09-29T11:30:50Z by kres eb905b6-dirty.
 
 concurrency:
   group: ${{ github.head_ref || github.run_id }}
@@ -5030,16 +5030,10 @@ jobs:
           PLATFORM: linux/amd64,linux/arm64
         run: |
           make images
-      - name: cloud-images
-        env:
-          PLATFORM: linux/amd64,linux/arm64
-        run: |
-          make cloud-images
       - name: Install Cosign
         uses: sigstore/cosign-installer@v3
       - name: Sign artifacts
         run: |
-          cosign sign-blob --output-signature _out/cloud-images.json.sig --yes _out/cloud-images.json
           cosign sign-blob --output-signature _out/initramfs-amd64.xz.sig --yes _out/initramfs-amd64.xz
           cosign sign-blob --output-signature _out/initramfs-arm64.xz.sig --yes _out/initramfs-arm64.xz
           cosign sign-blob --output-signature _out/metal-amd64.iso.sig --yes _out/metal-amd64.iso
@@ -5068,20 +5062,19 @@ jobs:
       - name: Generate Checksums
         run: |
           cd _out
-          sha256sum cloud-images.json initramfs-amd64.xz initramfs-arm64.xz metal-amd64.iso metal-arm64.iso metal-amd64-uki.efi metal-arm64-uki.efi metal-amd64.raw.zst metal-arm64.raw.zst talos-arm64.spdx.json talos-amd64.spdx.json talos-container-arm64.spdx.json talos-container-amd64.spdx.json talosctl-cni-bundle-amd64.tar.gz talosctl-cni-bundle-arm64.tar.gz talosctl-darwin-amd64 talosctl-darwin-arm64 talosctl-freebsd-amd64 talosctl-freebsd-arm64 talosctl-linux-amd64 talosctl-linux-arm64 talosctl-linux-armv7 talosctl-windows-amd64.exe talosctl-windows-arm64.exe vmlinuz-amd64 vmlinuz-arm64 > sha256sum.txt
-          sha512sum cloud-images.json initramfs-amd64.xz initramfs-arm64.xz metal-amd64.iso metal-arm64.iso metal-amd64-uki.efi metal-arm64-uki.efi metal-amd64.raw.zst metal-arm64.raw.zst talos-arm64.spdx.json talos-amd64.spdx.json talos-container-arm64.spdx.json talos-container-amd64.spdx.json talosctl-cni-bundle-amd64.tar.gz talosctl-cni-bundle-arm64.tar.gz talosctl-darwin-amd64 talosctl-darwin-arm64 talosctl-freebsd-amd64 talosctl-freebsd-arm64 talosctl-linux-amd64 talosctl-linux-arm64 talosctl-linux-armv7 talosctl-windows-amd64.exe talosctl-windows-arm64.exe vmlinuz-amd64 vmlinuz-arm64 > sha512sum.txt
+          sha256sum initramfs-amd64.xz initramfs-arm64.xz metal-amd64.iso metal-arm64.iso metal-amd64-uki.efi metal-arm64-uki.efi metal-amd64.raw.zst metal-arm64.raw.zst talos-arm64.spdx.json talos-amd64.spdx.json talos-container-arm64.spdx.json talos-container-amd64.spdx.json talosctl-cni-bundle-amd64.tar.gz talosctl-cni-bundle-arm64.tar.gz talosctl-darwin-amd64 talosctl-darwin-arm64 talosctl-freebsd-amd64 talosctl-freebsd-arm64 talosctl-linux-amd64 talosctl-linux-arm64 talosctl-linux-armv7 talosctl-windows-amd64.exe talosctl-windows-arm64.exe vmlinuz-amd64 vmlinuz-arm64 > sha256sum.txt
+          sha512sum initramfs-amd64.xz initramfs-arm64.xz metal-amd64.iso metal-arm64.iso metal-amd64-uki.efi metal-arm64-uki.efi metal-amd64.raw.zst metal-arm64.raw.zst talos-arm64.spdx.json talos-amd64.spdx.json talos-container-arm64.spdx.json talos-container-amd64.spdx.json talosctl-cni-bundle-amd64.tar.gz talosctl-cni-bundle-arm64.tar.gz talosctl-darwin-amd64 talosctl-darwin-arm64 talosctl-freebsd-amd64 talosctl-freebsd-arm64 talosctl-linux-amd64 talosctl-linux-arm64 talosctl-linux-armv7 talosctl-windows-amd64.exe talosctl-windows-arm64.exe vmlinuz-amd64 vmlinuz-arm64 > sha512sum.txt
       - name: Sign checksums
         run: |
           cd _out
           cosign sign-blob --output-signature sha256sum.txt.sig --yes sha256sum.txt
           cosign sign-blob --output-signature sha512sum.txt.sig --yes sha512sum.txt
       - name: release
-        uses: crazy-max/ghaction-github-release@v2
+        uses: softprops/action-gh-release@v2
         with:
           body_path: _out/RELEASE_NOTES.md
           draft: "true"
           files: |-
-            _out/cloud-images.json
             _out/initramfs-amd64.xz
             _out/initramfs-arm64.xz
             _out/metal-amd64.iso

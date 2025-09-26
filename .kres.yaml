@@ -180,14 +180,10 @@ spec:
         - name: images
           environment:
             PLATFORM: linux/amd64,linux/arm64
-        - name: cloud-images
-          environment:
-            PLATFORM: linux/amd64,linux/arm64
         - name: release
           releaseStep:
             baseDirectory: _out
             artifacts:
-              - cloud-images.json
               - initramfs-amd64.xz
               - initramfs-arm64.xz
               - metal-amd64.iso
@@ -216,6 +212,28 @@ spec:
             generateChecksums: true
             generateSignatures: true
             releaseNotes: RELEASE_NOTES.md
+    - name: cloud-images
+      dispatchable: true
+      sops: true
+      runnerGroup: generic # this is not compute intensive - we are pulling images from factory
+      inputs:
+        - tag
+        - release
+      steps:
+        - name: cloud-images
+          environment:
+            CLOUD_IMAGES_EXTRA_ARGS: |-
+              --use-factory
+            PLATFORM: linux/amd64,linux/arm64
+            TAG: ${{ github.event.inputs.tag }}
+        - name: attach-images
+          nonMakeStep: true
+          environment:
+            RELEASE: ${{ github.event.inputs.release }}
+            GH_TOKEN: ${{ github.token }}
+          command: |-
+            gh release upload "${RELEASE}" \
+              _out/cloud-images.json
     - name: base-unit-tests
       buildxOptions:
         enabled: true
