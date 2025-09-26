@@ -5,11 +5,14 @@
 package runtime
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"math"
 	"os"
 	"path/filepath"
+	"strconv"
 	"sync"
 	"syscall"
 	"time"
@@ -22,16 +25,27 @@ import (
 	"golang.org/x/sys/unix"
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/runtime/internal/oom"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
 	"github.com/siderolabs/talos/pkg/machinery/cel"
 	"github.com/siderolabs/talos/pkg/machinery/cel/celenv"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/resources/config"
+	runtimeres "github.com/siderolabs/talos/pkg/machinery/resources/runtime"
 )
+
+type actionLogItem struct {
+	runtimeres.OOMActionSpec
+
+	ID int
+}
 
 // OOMController is a controller that monitors memory PSI and handles near-OOM situations.
 type OOMController struct {
 	CgroupRoot      string
 	ActionTriggered time.Time
+	V1Alpha1Mode    runtime.Mode
+	actionLog       []actionLogItem
+	idSeq           int
 }
 
 // Name implements controller.Controller interface.
@@ -53,7 +67,12 @@ func (ctrl *OOMController) Inputs() []controller.Input {
 
 // Outputs implements controller.Controller interface.
 func (ctrl *OOMController) Outputs() []controller.Output {
-	return nil
+	return []controller.Output{
+		{
+			Type: runtimeres.OOMActionType,
+			Kind: controller.OutputExclusive,
+		},
+	}
 }
 
 var defaultTriggerExpr = sync.OnceValue(func() cel.Expression {
@@ -91,6 +110,10 @@ const defaultSampleInterval = 500 * time.Millisecond
 //
 //nolint:gocyclo
 func (ctrl *OOMController) Run(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
+	if ctrl.V1Alpha1Mode.InContainer() {
+		return nil
+	}
+
 	triggerExpr := defaultTriggerExpr()
 	scoringExpr := defaultScoringExpr()
 	sampleInterval := defaultSampleInterval
@@ -134,10 +157,48 @@ func (ctrl *OOMController) Run(ctx context.Context, r controller.Runtime, logger
 			continue
 		}
 
+		r.StartTrackingOutputs()
+
+		for _, action := range ctrl.actionLog {
+			if err := safe.WriterModify(ctx, r, runtimeres.NewOOMActionSpec(runtimeres.NamespaceName, strconv.Itoa(action.ID)),
+				func(item *runtimeres.OOMAction) error {
+					*item.TypedSpec() = action.OOMActionSpec
+
+					return nil
+				}); err != nil {
+				return fmt.Errorf("failed to create OOM action log: %w", err)
+			}
+		}
+
+		if err = safe.CleanupOutputs[*runtimeres.OOMAction](ctx, r); err != nil {
+			return err
+		}
+
 		// TODO: evaluate on different cgroups, not only root. E.g. action when podruntime experiences high PSI.
 		if trigger {
+			score, processes := ctrl.OomAction(logger, ctrl.CgroupRoot, scoringExpr)
+
+			ctxString, err := json.Marshal(evalContext)
+			if err != nil {
+				return fmt.Errorf("failed to marshal trigger context: %w", err)
+			}
+
+			ctrl.actionLog = append(ctrl.actionLog, actionLogItem{
+				ID: ctrl.idSeq,
+				OOMActionSpec: runtimeres.OOMActionSpec{
+					TriggerContext: string(ctxString),
+					Processes:      processes,
+					Score:          score,
+				},
+			})
+
+			ctrl.idSeq++
+
+			if len(ctrl.actionLog) > 10 {
+				ctrl.actionLog = ctrl.actionLog[len(ctrl.actionLog)-10:]
+			}
+
 			ctrl.ActionTriggered = time.Now()
-			ctrl.OomAction(logger, ctrl.CgroupRoot, scoringExpr)
 		}
 	}
 }
@@ -177,13 +238,13 @@ func (*OOMController) getConfig(cfg *config.MachineConfig) (cel.Expression, cel.
 }
 
 // OomAction handles out of memory conditions by selecting and killing cgroups based on memory usage data.
-func (ctrl *OOMController) OomAction(logger *zap.Logger, root string, scoringExpr cel.Expression) {
+func (ctrl *OOMController) OomAction(logger *zap.Logger, root string, scoringExpr cel.Expression) (float64, []string) {
 	logger.Info("OOM controller triggered")
 
 	ranking := oom.RankCgroups(logger, root, scoringExpr)
 
 	if len(ranking) == 0 {
-		return
+		return 0, []string{}
 	}
 
 	var (
@@ -198,13 +259,15 @@ func (ctrl *OOMController) OomAction(logger *zap.Logger, root string, scoringExp
 		}
 	}
 
-	err := reapCg(logger, cgroupToKill.Path)
+	processes, err := reapCg(logger, cgroupToKill.Path)
 	if err != nil {
 		logger.Error("cannot reap cgroup", zap.String("cgroup", cgroupToKill.Path), zap.Error(err))
 	}
+
+	return maxScore, processes
 }
 
-func reapCg(logger *zap.Logger, cgroupPath string) error {
+func reapCg(logger *zap.Logger, cgroupPath string) ([]string, error) {
 	logger.Warn("Sending SIGKILL to cgroup", zap.String("cgroup", cgroupPath))
 
 	processes := oom.ListCgroupProcs(cgroupPath)
@@ -213,8 +276,17 @@ func reapCg(logger *zap.Logger, cgroupPath string) error {
 	// Open pidfd's of all the processes in cgroup to accelerate kernel
 	// garbage-collecting those processes via mrelease.
 	pidfds := []int{}
+	cmdlines := []string{}
 
 	for _, pid := range processes {
+		cmdBytes, err := os.ReadFile(filepath.Join("/proc", strconv.Itoa(pid), "cmdline"))
+		if err == nil {
+			cmdlines = append(
+				cmdlines,
+				string(bytes.ReplaceAll(bytes.TrimRight(cmdBytes, "\x00"), []byte{0}, []byte{' '})),
+			)
+		}
+
 		// pidfd is always opened with CLOEXEC:
 		// https://github.com/torvalds/linux/blob/bf40f4b87761e2ec16efc8e49b9ca0d81f4115d8/kernel/pid.c#L637
 		pidfd, err := unix.PidfdOpen(pid, 0)
@@ -232,7 +304,7 @@ func reapCg(logger *zap.Logger, cgroupPath string) error {
 	if err != nil {
 		logger.Error("failed to send SIGKILL", zap.String("cgroup", cgroupPath), zap.Error(err))
 
-		return err
+		return cmdlines, err
 	}
 
 	for _, pidfd := range pidfds {
@@ -245,5 +317,5 @@ func reapCg(logger *zap.Logger, cgroupPath string) error {
 		}
 	}
 
-	return nil
+	return cmdlines, nil
 }

@@ -42,6 +42,7 @@ func TestRegisterResource(t *testing.T) {
 		&runtime.MetaKey{},
 		&runtime.MetaLoaded{},
 		&runtime.MountStatus{},
+		&runtime.OOMAction{},
 		&runtime.PlatformMetadata{},
 		&runtime.SBOMItem{},
 		&runtime.SecurityState{},

@@ -444,7 +444,9 @@ func (ctrl *Controller) Run(ctx context.Context, drainer *runtime.Drainer) error
 		&runtimecontrollers.VersionController{},
 		&runtimecontrollers.WatchdogTimerConfigController{},
 		&runtimecontrollers.WatchdogTimerController{},
-		&runtimecontrollers.OOMController{},
+		&runtimecontrollers.OOMController{
+			V1Alpha1Mode: ctrl.v1alpha1Runtime.State().Platform().Mode(),
+		},
 		&secrets.APICertSANsController{},
 		&secrets.APIController{},
 		&secrets.EncryptionSaltController{},

@@ -85,14 +85,14 @@ func (OOMV1Alpha1) Doc() *encoder.Doc {
 				Name:        "triggerExpression",
 				Type:        "Expression",
 				Note:        "",
-				Description: "This expression defines when to trigger OOM action.\n\nThe expression must evaluate to a boolean value.\nIf the expression returns true, then OOM ranking and killing will be handled.",
+				Description: "This expression defines when to trigger OOM action.\n\nThe expression must evaluate to a boolean value.\nIf the expression returns true, then OOM ranking and killing will be handled.\n\nThis expression receives the following parameters:\n- memory_{some,full}_{avg10,avg60,avg300,total} - double, representing PSI values\n- time_since_trigger - duration since the last OOM handler trigger event",
 				Comments:    [3]string{"" /* encoder.HeadComment */, "This expression defines when to trigger OOM action." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
 			{
 				Name:        "cgroupRankingExpression",
 				Type:        "Expression",
 				Note:        "",
-				Description: "This expression defines how to rank cgroups for OOM handler.\n\nThe cgroup with the highest rank (score) will be evicted first.\nThe expression must evaluate to a double value.",
+				Description: "This expression defines how to rank cgroups for OOM handler.\n\nThe cgroup with the highest rank (score) will be evicted first.\nThe expression must evaluate to a double value.\n\nThis expression receives the following parameters:\n- memory_max - Optional<uint> - in bytes\n- memory_current - Optional<uint> - in bytes\n- memory_peak - Optional<uint> - in bytes\n- path - string, path to the cgroup\n- class - int. This represents cgroup QoS class, and matches one of the constants, which are also provided: Besteffort, Burstable, Guaranteed, Podruntime, System",
 				Comments:    [3]string{"" /* encoder.HeadComment */, "This expression defines how to rank cgroups for OOM handler." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
 			{

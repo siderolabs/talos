@@ -225,6 +225,7 @@ func NewState() (*State, error) {
 		&runtime.MetaKey{},
 		&runtime.MetaLoaded{},
 		&runtime.MountStatus{},
+		&runtime.OOMAction{},
 		&runtime.PlatformMetadata{},
 		&runtime.SBOMItem{},
 		&runtime.SecurityState{},
