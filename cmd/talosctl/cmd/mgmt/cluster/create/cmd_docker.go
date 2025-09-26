@@ -7,33 +7,18 @@ package create
 import (
 	"context"
 
-	"github.com/docker/cli/opts"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 
 	clustercmd "github.com/siderolabs/talos/cmd/talosctl/cmd/mgmt/cluster"
-	"github.com/siderolabs/talos/cmd/talosctl/pkg/mgmt/helpers"
+	"github.com/siderolabs/talos/cmd/talosctl/cmd/mgmt/cluster/create/clusterops"
 	"github.com/siderolabs/talos/pkg/cli"
-	"github.com/siderolabs/talos/pkg/images"
 	"github.com/siderolabs/talos/pkg/provision/providers"
 )
 
-type dockerOps struct {
-	hostIP      string
-	disableIPv6 bool
-	mountOpts   opts.MountOpt
-	ports       string
-	talosImage  string
-}
-
 func init() {
-	ops := &createOps{
-		common: getDefaultCommonOptions(),
-		docker: dockerOps{
-			hostIP:     "0.0.0.0",
-			talosImage: helpers.DefaultImage(images.DefaultTalosImageRepository),
-		},
-	}
+	dOps := clusterops.GetDocker()
+	cOps := clusterops.GetCommon()
 
 	const (
 		portsFlag             = "exposed-ports"
@@ -46,19 +31,19 @@ func init() {
 	getDockerFlags := func() *pflag.FlagSet {
 		docker := pflag.NewFlagSet("docker", pflag.PanicOnError)
 
-		docker.StringVarP(&ops.docker.ports, portsFlag, "p", ops.docker.ports,
+		docker.StringVarP(&dOps.Ports, portsFlag, "p", dOps.Ports,
 			"comma-separated list of ports/protocols to expose on init node. Ex -p <hostPort>:<containerPort>/<protocol (tcp or udp)>")
-		docker.StringVar(&ops.docker.hostIP, dockerHostIPFlag, ops.docker.hostIP, "Host IP to forward exposed ports to")
-		docker.BoolVar(&ops.docker.disableIPv6, dockerDisableIPv6Flag, ops.docker.disableIPv6, "skip enabling IPv6 in containers")
+		docker.StringVar(&dOps.HostIP, dockerHostIPFlag, dOps.HostIP, "Host IP to forward exposed ports to")
+		docker.BoolVar(&dOps.DisableIPv6, dockerDisableIPv6Flag, dOps.DisableIPv6, "skip enabling IPv6 in containers")
 		cli.Should(docker.MarkHidden(dockerDisableIPv6Flag))
-		docker.Var(&ops.docker.mountOpts, mountOptsFlag, "attach a mount to the container (docker --mount syntax)")
-		docker.StringVar(&ops.docker.talosImage, "image", ops.docker.talosImage, "the talos image to run")
+		docker.Var(&dOps.MountOpts, mountOptsFlag, "attach a mount to the container (docker --mount syntax)")
+		docker.StringVar(&dOps.TalosImage, "image", dOps.TalosImage, "the talos image to run")
 
 		return docker
 	}
 
-	commonFlags := getCommonUserFacingFlags(&ops.common)
-	commonFlags.StringVar(&ops.common.networkCIDR, subnetFlag, ops.common.networkCIDR, "Docker network subnet CIDR")
+	commonFlags := getCommonUserFacingFlags(&cOps)
+	commonFlags.StringVar(&cOps.NetworkCIDR, subnetFlag, cOps.NetworkCIDR, "Docker network subnet CIDR")
 
 	createDockerCmd := &cobra.Command{
 		Use:   "docker",
@@ -71,17 +56,17 @@ func init() {
 					return err
 				}
 
-				data, err := getDockerClusterRequest(ops.common, ops.docker, provisioner)
+				data, err := getDockerClusterRequest(cOps, dOps, provisioner)
 				if err != nil {
 					return err
 				}
 
-				cluster, err := provisioner.Create(ctx, data.clusterRequest, data.provisionOptions...)
+				cluster, err := provisioner.Create(ctx, data.ClusterRequest, data.ProvisionOptions...)
 				if err != nil {
 					return err
 				}
 
-				err = postCreate(ctx, ops.common, data.talosconfig, cluster, data.provisionOptions, data.clusterRequest)
+				err = postCreate(ctx, cOps, data.ConfigBundle.TalosCfg, cluster, data.ProvisionOptions, data.ClusterRequest)
 				if err != nil {
 					return err
 				}

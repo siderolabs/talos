@@ -8,12 +8,11 @@ package create
 import (
 	"fmt"
 	"path/filepath"
-	"time"
 
 	"github.com/spf13/pflag"
 
-	clustercmd "github.com/siderolabs/talos/cmd/talosctl/cmd/mgmt/cluster"
-	"github.com/siderolabs/talos/cmd/talosctl/pkg/mgmt/helpers"
+	"github.com/siderolabs/talos/cmd/talosctl/cmd/mgmt/cluster/create/clusterops"
+	"github.com/siderolabs/talos/cmd/talosctl/cmd/mgmt/cluster/create/flags"
 	"github.com/siderolabs/talos/pkg/bytesize"
 	"github.com/siderolabs/talos/pkg/cli"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
@@ -42,94 +41,25 @@ var (
 	disksFlagName = "disks"
 )
 
-// commonOps are the options that are not specific to a single provider.
-type commonOps struct {
-	// rootOps are the options from the root cluster command
-	rootOps                   *clustercmd.CmdOps
-	talosconfigDestination    string
-	registryMirrors           []string
-	registryInsecure          []string
-	kubernetesVersion         string
-	applyConfigEnabled        bool
-	configDebug               bool
-	networkCIDR               string
-	networkMTU                int
-	networkIPv4               bool
-	dnsDomain                 string
-	workers                   int
-	controlplanes             int
-	controlplaneResources     nodeResources
-	workerResources           nodeResources
-	clusterWait               bool
-	clusterWaitTimeout        time.Duration
-	forceInitNodeAsEndpoint   bool
-	forceEndpoint             string
-	controlPlanePort          int
-	withInitNode              bool
-	customCNIUrl              string
-	skipKubeconfig            bool
-	skipInjectingConfig       bool
-	talosVersion              string
-	enableKubeSpan            bool
-	enableClusterDiscovery    bool
-	configPatch               []string
-	configPatchControlPlane   []string
-	configPatchWorker         []string
-	kubePrismPort             int
-	skipK8sNodeReadinessCheck bool
-	withJSONLogs              bool
-	wireguardCIDR             string
-	withUUIDHostnames         bool
-}
-
-func getDefaultCommonOptions() commonOps {
-	memory2GB := bytesize.WithDefaultUnit("MiB")
-	cli.Should(memory2GB.Set("2.0GiB"))
-	defaultResources := nodeResources{
-		cpu:    "2.0",
-		memory: *memory2GB,
-	}
-
-	return commonOps{
-		controlplanes:         1,
-		controlplaneResources: defaultResources,
-		workers:               1,
-		workerResources:       defaultResources,
-
-		networkCIDR:            "10.5.0.0/24",
-		kubernetesVersion:      constants.DefaultKubernetesVersion,
-		networkMTU:             1500,
-		clusterWaitTimeout:     20 * time.Minute,
-		clusterWait:            true,
-		dnsDomain:              "cluster.local",
-		controlPlanePort:       constants.DefaultControlPlanePort,
-		rootOps:                &clustercmd.PersistentFlags,
-		networkIPv4:            true,
-		kubePrismPort:          constants.DefaultKubePrismPort,
-		enableClusterDiscovery: true,
-		talosVersion:           helpers.GetTag(),
-	}
-}
-
-func getCommonUserFacingFlags(pointer *commonOps) *pflag.FlagSet {
+func getCommonUserFacingFlags(pointer *clusterops.Common) *pflag.FlagSet {
 	common := pflag.NewFlagSet("common", pflag.PanicOnError)
 
-	addWorkersFlag(common, &pointer.workers)
-	addKubernetesVersionFlag(common, &pointer.kubernetesVersion)
-	addTalosconfigDestinationFlag(common, &pointer.talosconfigDestination, talosconfigDestinationFlagName)
-	addConfigPatchFlag(common, &pointer.configPatch, configPatchFlagName)
-	addConfigPatchControlPlaneFlag(common, &pointer.configPatchControlPlane, configPatchControlPlaneFlagName)
-	addConfigPatchWorkerFlag(common, &pointer.configPatchWorker, configPatchWorkerFlagName)
+	addWorkersFlag(common, &pointer.Workers)
+	addKubernetesVersionFlag(common, &pointer.KubernetesVersion)
+	addTalosconfigDestinationFlag(common, &pointer.TalosconfigDestination, talosconfigDestinationFlagName)
+	addConfigPatchFlag(common, &pointer.ConfigPatch, configPatchFlagName)
+	addConfigPatchControlPlaneFlag(common, &pointer.ConfigPatchControlPlane, configPatchControlPlaneFlagName)
+	addConfigPatchWorkerFlag(common, &pointer.ConfigPatchWorker, configPatchWorkerFlagName)
 
-	addControlplaneCpusFlag(common, &pointer.controlplaneResources.cpu, controlPlaneCpusFlagName)
-	addWorkersCpusFlag(common, &pointer.workerResources.cpu, workersCpusFlagName)
-	addControlPlaneMemoryFlag(common, &pointer.controlplaneResources.memory, controlPlaneMemoryFlagName)
-	addWorkersMemoryFlag(common, &pointer.workerResources.memory, workersMemoryFlagName)
+	addControlplaneCpusFlag(common, &pointer.ControlplaneResources.CPU, controlPlaneCpusFlagName)
+	addWorkersCpusFlag(common, &pointer.WorkerResources.CPU, workersCpusFlagName)
+	addControlPlaneMemoryFlag(common, &pointer.ControlplaneResources.Memory, controlPlaneMemoryFlagName)
+	addWorkersMemoryFlag(common, &pointer.WorkerResources.Memory, workersMemoryFlagName)
 
 	// The following flags are used in tests and development
-	addNetworkMTUFlag(common, &pointer.networkMTU)
+	addNetworkMTUFlag(common, &pointer.NetworkMTU)
 	cli.Should(common.MarkHidden(networkMTUFlagName))
-	addRegistryMirrorFlag(common, &pointer.registryMirrors)
+	addRegistryMirrorFlag(common, &pointer.RegistryMirrors)
 	cli.Should(common.MarkHidden(registryMirrorFlagName))
 
 	return common
@@ -201,7 +131,7 @@ func addTalosVersionFlag(flagset *pflag.FlagSet, bind *string, description strin
 
 // qemu flags
 
-func addDisksFlag(flagset *pflag.FlagSet, bind *[]string, defaultVal []string) {
-	flagset.StringSliceVar(bind, disksFlagName, defaultVal,
+func addDisksFlag(flagset *pflag.FlagSet, bind *flags.Disks) {
+	flagset.Var(bind, disksFlagName,
 		`list of disks to create in format "<driver1>:<size1>" (disks after the first one are added only to worker machines)`)
 }

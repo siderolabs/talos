@@ -8,31 +8,29 @@ import (
 	"context"
 	"fmt"
 	"net/url"
-	"slices"
 
-	"github.com/siderolabs/gen/xslices"
-
+	"github.com/siderolabs/talos/cmd/talosctl/cmd/mgmt/cluster/create/clusterops"
+	"github.com/siderolabs/talos/cmd/talosctl/cmd/mgmt/cluster/create/clusterops/configmaker"
 	"github.com/siderolabs/talos/pkg/cli"
 	"github.com/siderolabs/talos/pkg/machinery/config"
-	"github.com/siderolabs/talos/pkg/machinery/config/generate"
 	"github.com/siderolabs/talos/pkg/provision"
 )
 
 //nolint:gocyclo,cyclop
 func getQemuClusterRequest(
 	ctx context.Context,
-	cOps commonOps,
-	qOps qemuOps,
+	qOps clusterops.Qemu,
+	cOps clusterops.Common,
 	cqOps createQemuOps,
 	provisioner provision.Provisioner,
-) (clusterCreateRequestData, error) {
-	if cOps.talosVersion == "" || cOps.talosVersion[0] != 'v' {
-		return clusterCreateRequestData{}, fmt.Errorf("failed to parse talos version: version string must start with a 'v'")
+) (clusterops.ClusterConfigs, error) {
+	if cOps.TalosVersion == "" || cOps.TalosVersion[0] != 'v' {
+		return clusterops.ClusterConfigs{}, fmt.Errorf("failed to parse talos version: version string must start with a 'v'")
 	}
 
-	_, err := config.ParseContractFromVersion(cOps.talosVersion)
+	_, err := config.ParseContractFromVersion(cOps.TalosVersion)
 	if err != nil {
-		return clusterCreateRequestData{}, fmt.Errorf("failed to parse talos version: %s", err)
+		return clusterops.ClusterConfigs{}, fmt.Errorf("failed to parse talos version: %s", err)
 	}
 
 	if cqOps.schematicID == "" {
@@ -41,78 +39,25 @@ func getQemuClusterRequest(
 
 	factoryURL, err := url.Parse(cqOps.imageFactoryURL)
 	if err != nil {
-		return clusterCreateRequestData{}, fmt.Errorf("malformed Image Factory URL: %q: %w", cqOps.imageFactoryURL, err)
+		return clusterops.ClusterConfigs{}, fmt.Errorf("malformed Image Factory URL: %q: %w", cqOps.imageFactoryURL, err)
 	}
 
 	if factoryURL.Scheme == "" || factoryURL.Host == "" {
-		return clusterCreateRequestData{}, fmt.Errorf("image Factory URL must include scheme and host: %q", cqOps.imageFactoryURL)
+		return clusterops.ClusterConfigs{}, fmt.Errorf("image Factory URL must include scheme and host: %q", cqOps.imageFactoryURL)
 	}
 
-	qOps.nodeISOPath, err = url.JoinPath(factoryURL.String(), "image", cqOps.schematicID, cOps.talosVersion, "metal-"+qOps.targetArch+".iso")
+	qOps.NodeISOPath, err = url.JoinPath(factoryURL.String(), "image", cqOps.schematicID, cOps.TalosVersion, "metal-"+qOps.TargetArch+".iso")
 	cli.Should(err)
-	qOps.nodeInstallImage, err = url.JoinPath(factoryURL.Host, "metal-installer", cqOps.schematicID+":"+cOps.talosVersion)
+	qOps.NodeInstallImage, err = url.JoinPath(factoryURL.Host, "metal-installer", cqOps.schematicID+":"+cOps.TalosVersion)
 	cli.Should(err)
 
 	if err := downloadBootAssets(ctx, &qOps); err != nil {
-		return clusterCreateRequestData{}, err
+		return clusterops.ClusterConfigs{}, err
 	}
 
-	return createClusterRequest(createClusterRequestOps{
-		commonOps:   cOps,
-		provisioner: provisioner,
-		withExtraGenOpts: func(cr provision.ClusterRequest) []generate.Option {
-			genOptions := []generate.Option{
-				generate.WithInstallImage(qOps.nodeInstallImage),
-				generate.WithClusterDiscovery(cOps.enableClusterDiscovery),
-			}
-
-			endpointList := xslices.Map(cr.Nodes.ControlPlaneNodes(), func(n provision.NodeRequest) string { return n.IPs[0].String() })
-
-			genOptions = append(genOptions, generate.WithEndpointList(endpointList))
-
-			return genOptions
-		},
-		withExtraProvisionOpts: func(cr provision.ClusterRequest) []provision.Option {
-			return []provision.Option{
-				provision.WithUEFI(qOps.uefiEnabled),
-				provision.WithTargetArch(qOps.targetArch),
-				provision.WithSiderolinkAgent(qOps.withSiderolinkAgent.IsEnabled()),
-			}
-		},
-		modifyClusterRequest: func(cr provision.ClusterRequest) (provision.ClusterRequest, error) {
-			nameserverIPs, err := getNameserverIPs(qOps)
-			if err != nil {
-				return cr, err
-			}
-
-			cr.Network.Nameservers = nameserverIPs
-			cr.ISOPath = qOps.nodeISOPath
-
-			cr.Network.CNI = provision.CNIConfig{
-				BinPath:  qOps.cniBinPath,
-				ConfDir:  qOps.cniConfDir,
-				CacheDir: qOps.cniCacheDir,
-
-				BundleURL: qOps.cniBundleURL,
-			}
-
-			return cr, nil
-		},
-		modifyNodes: func(cr provision.ClusterRequest, cp, w []provision.NodeRequest) (controlplanes, workers []provision.NodeRequest, err error) {
-			primaryDisks, workerDisks, err := getDisks(qOps)
-			if err != nil {
-				return nil, nil, err
-			}
-
-			for i := range cp {
-				cp[i].Disks = primaryDisks
-			}
-
-			for i := range w {
-				w[i].Disks = slices.Concat(primaryDisks, workerDisks)
-			}
-
-			return cp, w, nil
-		},
+	return configmaker.GetQemuConfigs(configmaker.QemuOptions{
+		ExtraOps:    qOps,
+		CommonOps:   cOps,
+		Provisioner: provisioner,
 	})
 }
