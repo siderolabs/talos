@@ -3,10 +3,70 @@ title: "SecureBoot"
 description: "Booting Talos in SecureBoot mode on UEFI platforms."
 ---
 
-Talos now supports booting on UEFI systems in SecureBoot mode.
-When combined with TPM-based disk encryption, this provides [Trusted Boot](https://0pointer.net/blog/brave-new-trusted-boot-world.html) experience.
+Talos supports booting on UEFI systems in SecureBoot mode.
+When combined with TPM-based disk encryption, this provides a complete [Trusted Boot](https://0pointer.net/blog/brave-new-trusted-boot-world.html) experience where the entire boot chain is cryptographically verified.
+
+This means the disk will only unlock if SecureBoot remains enabled with the same key set when using the default PCR 7 binding. However, **PCR binding is fully configurable** via the `VolumeConfig` `tpm.pcrs` option - see the [TPM encryption options]({{< relref "../../../reference/configuration/block/volumeconfig#VolumeConfig.encryption.keys..tpm" >}}) for details.
+
+## **PCR Binding Options**
+
+- **Default**: PCR 7 (SecureBoot state) + PCR 11 signed policy (UKI measurements and boot phases)
+- **Configurable**: Any combination of PCRs can be specified
+- **No PCRs**: Can be disabled by passing an empty list, relying solely on PCR 11 signed policy
+- **Backward compatibility**: Existing installations continue to use their original PCR binding
+
+**Why Configurable PCRs?**
+
+- **Frequent Updates**: PCR 7 covers the SecureBoot policy, particularly the "dbx" denylist of revoked certificates
+- **Automatic Updates**: Tools like `fwupd` now automatically update the SecureBoot database, causing PCR 7 to change frequently
+- **Brittleness**: Literal PCR 7 policies break when firmware or SecureBoot databases are updated, even without policy changes
+
+Talos maintains PCR 7 binding by default for backward compatibility, but users can now choose configurations that better suit their update policies and security requirements.
+
+When the UKI image is generated, the UKI is measured and expected measurements are combined into TPM unlock policy and signed with the PCR signing key. This provides [Trusted Boot](https://0pointer.net/blog/brave-new-trusted-boot-world.html) experience.
 
 > Note: SecureBoot is not supported on x86 platforms in BIOS mode.
+
+## SecureBoot Flow
+
+The SecureBoot process follows a strict verification chain from UEFI firmware to the final operating system:
+
+```mermaid
+flowchart TD
+    UEFI[UEFI Firmware]
+    KEYS{SecureBoot Keys<br/>Enrolled?}
+    SETUP[Setup Mode<br/>Auto-enroll Keys]
+    SYSTEMD[systemd-boot<br/>Bootloader]
+    UKI[Unified Kernel Image<br/>UKI]
+    MEASURE[TPM PCR<br/>Measurements]
+    DISK{Encrypted<br/>Disk?}
+    UNSEAL[TPM Unseal<br/>Disk Key]
+    POLICY[Verify PCR Policy<br/>+ Signature]
+    TALOS[Talos Linux<br/>Operating System]
+    FAIL[Boot Failure]
+
+    UEFI --> KEYS
+    KEYS -->|No| SETUP
+    SETUP --> SYSTEMD
+    KEYS -->|Yes| SYSTEMD
+    SYSTEMD -->|Verify Signature| UKI
+    SYSTEMD -->|Invalid Signature| FAIL
+    UKI --> MEASURE
+    MEASURE --> DISK
+    DISK -->|Yes| POLICY
+    POLICY -->|Valid Policy<br/>+ PCR State| UNSEAL
+    POLICY -->|Invalid| FAIL
+    UNSEAL -->|Success| TALOS
+    UNSEAL -->|Failure| FAIL
+    DISK -->|No| TALOS
+
+    style UEFI fill:#e1f5fe
+    style UKI fill:#f3e5f5
+    style MEASURE fill:#fff3e0
+    style POLICY fill:#e8f5e8
+    style FAIL fill:#ffebee
+    style TALOS fill:#e0f2f1
+```
 
 The implementation is using [systemd-boot](https://www.freedesktop.org/wiki/Software/systemd/systemd-boot/) as a boot menu implementation, while the
 Talos kernel, initramfs and cmdline arguments are combined into the [Unified Kernel Image](https://uapi-group.org/specifications/specs/unified_kernel_image/) (UKI) format.
@@ -101,16 +161,161 @@ It is important to preserve the UKI signing key and the PCR signing key, otherwi
 
 When encrypting the disk partition for the first time, Talos Linux generates a random disk encryption key and seals (encrypts) it with the TPM device.
 The TPM unlock policy is configured to trust the expected policy signed by the PCR signing key.
-This way TPM unlocking doesn't depend on the exact [PCR measurements](https://uapi-group.org/specifications/specs/linux_tpm_pcr_registry/), but rather on the expected policy signed by the PCR signing key and the state of SecureBoot (PCR 7 measurement, including secureboot status and the list of enrolled keys).
+This way TPM unlocking doesn't depend on the exact [PCR measurements](https://uapi-group.org/specifications/specs/linux_tpm_pcr_registry/), but rather on the expected policy signed by the PCR signing key and the configured PCR states (by default includes PCR 7 for SecureBoot status and the list of enrolled keys, plus PCR 11 for boot integrity).
+
+### PCR Measurements in Detail
+
+The Unified Kernel Image (UKI) boot process involves several measurement stages that record cryptographic hashes into TPM Platform Configuration Registers (PCRs):
+
+#### systemd-stub UKI Measurements (PCR 11)
+
+According to the [UAPI Unified Kernel Image specification](https://uapi-group.org/specifications/specs/unified_kernel_image/) and [systemd-stub documentation](https://www.freedesktop.org/software/systemd/man/latest/systemd-stub.html), systemd-stub measures the following UKI sections into **PCR 11**:
+
+- **`.linux` section** - The Linux kernel binary (PE section containing the ELF kernel image, required)
+- **`.osrel` section** - OS release information (PE section with `/etc/os-release` contents)
+- **`.cmdline` section** - The kernel command line arguments (PE section with embedded cmdline)
+- **`.initrd` section** - The initial ramdisk image (PE section containing initramfs)
+- **`.ucode` section** - Microcode initrd (PE section with CPU microcode updates, uncompressed)
+- **`.splash` section** - Boot splash image (PE section with Windows BMP format image)
+- **`.dtb` section** - Device tree blob (PE section with compiled binary DeviceTree)
+- **`.dtbauto` sections** - Automatic DeviceTree selection (zero or more PE sections, first match used)
+- **`.efifw` sections** - Firmware images (zero or more PE sections for firmware blobs)
+- **`.hwids` sections** - Hardware ID matching (zero or more PE sections with SMBIOS-based hardware IDs)
+- **`.uname` section** - Kernel version information (PE section with `uname -r` output)
+- **`.sbat` section** - SBAT revocation metadata (PE section for Secure Boot Advanced Targeting)
+- **`.pcrpkey` section** - PCR signature public key (PE section with PEM format public key)
+
+**Note:** The `.pcrsig` section is **not measured** into any PCR, as it contains the signatures for the measurement results themselves.
+
+#### systemd-boot Measurements
+
+The [systemd-boot bootloader](https://www.freedesktop.org/software/systemd/man/latest/systemd-boot.html) can optionally measure loaded boot entries and configuration, though this is typically not used in Talos UKI scenarios since the UKI can be loaded directly.
+
+#### Talos Boot Phase Measurements (PCR 11)
+
+In addition to the UKI section measurements, Talos extends **PCR 11** with its own boot phases to track the operating system initialization:
+
+1. **`enter-initrd`** - Extended when Talos initrd starts
+2. **`leave-initrd`** - Extended just before switching to the main system (machined)
+3. **`enter-machined`** - Extended before starting the main Talos supervisor
+4. **`start-the-world`** - Extended **after disk decryption** and before starting all system services
+
+**Important:** The `start-the-world` phase is measured into PCR 11 *after* the encrypted disk has been unlocked. This ensures that user services and workloads cannot decrypt the disk themselves, as any attempt to access TPM-sealed keys will fail due to the changed PCR 11 value.
+
+#### TPM Unlock Policy
+
+The TPM sealed disk encryption key can only be unsealed when the system reaches the **`enter-machined`** phase. This is the critical security boundary - the disk can only be decrypted if:
+
+- The UKI sections (kernel, initrd, cmdline, etc.) match the expected measurements (PCR 11)
+- The boot reached the legitimate `enter-machined` phase (PCR 11)
+- The configured PCR states match (by default, includes PCR 7 for SecureBoot state)
+
+This ensures that disk decryption only occurs after the trusted boot chain has been verified, but before any potentially untrusted user workloads start.
+
+#### Configurable PCR Binding (Default: PCR 7)
+
+By default, new Talos installations and upgrades maintain binding to **PCR 7**, which includes:
+
+- SecureBoot enabled/disabled state
+- Enrolled SecureBoot keys (PK, KEK, db)
+- Any changes to the UEFI SecureBoot configuration
+
+This means the disk will only unlock if SecureBoot remains enabled with the same key set. However, this PCR 7 binding can be optionally disabled  via the `VolumeConfig` `tpm.pcrs` option - see the [TPM encryption options]({{< relref "../../../reference/configuration/block/volumeconfig#VolumeConfig.encryption.keys..tpm" >}}) for details.
 
 When the UKI image is generated, the UKI is measured and expected measurements are combined into TPM unlock policy and signed with the PCR signing key.
 During the boot process, `systemd-stub` component of the UKI performs measurements of the UKI sections into the TPM device.
 Talos Linux during the boot appends to the PCR register the measurements of the boot phases, and once the boot reaches the point of mounting the encrypted disk partition,
 the expected signed policy from the UKI is matched against measured values to unlock the TPM, and TPM unseals the disk encryption key which is then used to unlock the disk partition.
 
-During the upgrade, as long as the new UKI is contains PCR policy signed with the same PCR signing key, and SecureBoot state has not changed the disk partition will be unlocked successfully.
+## TPM PCR Measurement Chain
 
-Disk encryption is also tied to the state of PCR register 7, so that it unlocks only if SecureBoot is enabled and the set of enrolled keys hasn't changed.
+The Trusted Platform Module (TPM) maintains Platform Configuration Registers (PCRs) that record measurements of boot components:
+
+```mermaid
+flowchart TD
+    BIOS[UEFI Firmware<br/>PCR 0-6]
+    SB[SecureBoot State<br/>+ Enrolled Keys<br/><small>Configurable PCRs</small><br/><small>Default: PCR 7</small>]
+    STUB[systemd-stub]
+    LINUX[.linux section<br/>PCR 11]
+    OSREL[.osrel section<br/>PCR 11]
+    CMDLINE[.cmdline section<br/>PCR 11]
+    INITRD[.initrd section<br/>PCR 11]
+    UCODE[.ucode section<br/>PCR 11]
+    SPLASH[.splash section<br/>PCR 11]
+    DTB[.dtb section<br/>PCR 11]
+    DTBAUTO[.dtbauto sections<br/>PCR 11]
+    EFIFW[.efifw sections<br/>PCR 11]
+    HWIDS[.hwids sections<br/>PCR 11]
+    UNAME[.uname section<br/>PCR 11]
+    SBAT[.sbat section<br/>PCR 11]
+    PCRPKEY[.pcrpkey section<br/>PCR 11]
+    PHASE1[enter-initrd<br/>PCR 11]
+    PHASE2[leave-initrd<br/>PCR 11]
+    PHASE3[enter-machined<br/>PCR 11]
+    POLICY[Signed PCR Policy<br/>PCR 11 + Configurable PCRs<br/><small>Default: PCR 11 + PCR 7</small>]
+    MATCH{Policy Match<br/>at enter-machined?}
+    UNSEAL[Unseal Disk Key]
+    PHASE4[start-the-world<br/>PCR 11]
+    MOUNT[Mount Encrypted<br/>Partitions]
+    SERVICES[Start Services]
+    FAIL[Boot Failure]
+
+    BIOS --> SB
+    SB --> STUB
+    STUB --> LINUX
+    LINUX --> OSREL
+    OSREL --> CMDLINE
+    CMDLINE --> INITRD
+    INITRD --> UCODE
+    UCODE --> SPLASH
+    SPLASH --> DTB
+    DTB --> DTBAUTO
+    DTBAUTO --> EFIFW
+    EFIFW --> HWIDS
+    HWIDS --> UNAME
+    UNAME --> SBAT
+    SBAT --> PCRPKEY
+    PCRPKEY --> PHASE1
+    PHASE1 --> PHASE2
+    PHASE2 --> PHASE3
+    PHASE3 --> POLICY
+    POLICY --> MATCH
+    MATCH -->|Yes| UNSEAL
+    MATCH -->|No| FAIL
+    UNSEAL --> MOUNT
+    MOUNT --> PHASE4
+    PHASE4 --> SERVICES
+
+    style BIOS fill:#e3f2fd
+    style SB fill:#f1f8e9
+    style STUB fill:#fff8e1
+    style LINUX fill:#e1f5fe
+    style OSREL fill:#e1f5fe
+    style CMDLINE fill:#e1f5fe
+    style INITRD fill:#e1f5fe
+    style UCODE fill:#e1f5fe
+    style SPLASH fill:#e1f5fe
+    style DTB fill:#e1f5fe
+    style DTBAUTO fill:#e1f5fe
+    style EFIFW fill:#e1f5fe
+    style HWIDS fill:#e1f5fe
+    style UNAME fill:#e1f5fe
+    style SBAT fill:#e1f5fe
+    style PCRPKEY fill:#e1f5fe
+    style PHASE1 fill:#f3e5f5
+    style PHASE2 fill:#f3e5f5
+    style PHASE3 fill:#fce4ec
+    style PHASE4 fill:#f3e5f5
+    style POLICY fill:#fff3e0
+    style MATCH fill:#e8f5e8
+    style FAIL fill:#ffebee
+    style MOUNT fill:#e0f2f1
+    style SERVICES fill:#e0f2f1
+```
+
+During the upgrade, as long as the new UKI contains PCR policy signed with the same PCR signing key, and the configured PCR states have not changed, the disk partition will be unlocked successfully.
+
+By default, disk encryption is tied to the state of **PCR 7** (SecureBoot state) in addition to **PCR 11** (boot integrity), so that it unlocks only if both the boot chain is valid and SecureBoot is enabled with the expected key set. However, **the PCR binding is fully configurable**  via the `VolumeConfig` `tpm.pcrs` option - see the [TPM encryption options]({{< relref "../../../reference/configuration/block/volumeconfig#VolumeConfig.encryption.keys..tpm" >}}) for details.
 
 ## Other Boot Options
 
@@ -126,8 +331,8 @@ If kernel command line arguments need to be changed, the UKI image needs to be r
 
 Talos requires two set of keys to be used for the SecureBoot process:
 
-* SecureBoot key is used to sign the boot assets and it is enrolled into the UEFI firmware.
-* PCR Signing Key is used to sign the TPM policy, which is used to seal the disk encryption key.
+- SecureBoot key is used to sign the boot assets and it is enrolled into the UEFI firmware.
+- PCR Signing Key is used to sign the TPM policy, which is used to seal the disk encryption key.
 
 The same key might be used for both, but it is recommended to use separate keys for each purpose.
 
