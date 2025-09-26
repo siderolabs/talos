@@ -453,6 +453,7 @@ description: Talos gRPC API reference.
     - [MetaKeySpec](#talos.resource.definitions.runtime.MetaKeySpec)
     - [MetaLoadedSpec](#talos.resource.definitions.runtime.MetaLoadedSpec)
     - [MountStatusSpec](#talos.resource.definitions.runtime.MountStatusSpec)
+    - [OOMActionSpec](#talos.resource.definitions.runtime.OOMActionSpec)
     - [PlatformMetadataSpec](#talos.resource.definitions.runtime.PlatformMetadataSpec)
     - [PlatformMetadataSpec.TagsEntry](#talos.resource.definitions.runtime.PlatformMetadataSpec.TagsEntry)
     - [SBOMItemSpec](#talos.resource.definitions.runtime.SBOMItemSpec)
@@ -8055,6 +8056,23 @@ MountStatusSpec describes status of the defined sysctls.
 | options | [string](#string) | repeated |  |
 | encrypted | [bool](#bool) |  |  |
 | encryption_providers | [string](#string) | repeated |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.runtime.OOMActionSpec"></a>
+
+### OOMActionSpec
+OOMActionSpec describes the OOM action record resource properties.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| trigger_context | [string](#string) |  |  |
+| score | [double](#double) |  |  |
+| processes | [string](#string) | repeated |  |
 
 
 
