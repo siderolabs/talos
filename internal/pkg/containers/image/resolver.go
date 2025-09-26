@@ -60,6 +60,11 @@ func RegistryHosts(reg config.Registries) docker.RegistryHosts {
 				if err != nil {
 					return nil, fmt.Errorf("error preparing TLS config for %q: %w", u.Host, err)
 				}
+
+				// set up refreshing Root CAs if none were provided
+				if transport.TLSClientConfig.RootCAs == nil {
+					transport.TLSClientConfig.RootCAs = httpdefaults.RootCAs()
+				}
 			}
 
 			if u.Path == "" {
