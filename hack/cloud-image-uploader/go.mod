@@ -3,20 +3,20 @@ module github.com/siderolabs/cloud-image-uploader
 go 1.25.0
 
 require (
-	cloud.google.com/go/storage v1.56.1
-	github.com/aws/aws-sdk-go-v2 v1.38.3
-	github.com/aws/aws-sdk-go-v2/config v1.31.6
-	github.com/aws/aws-sdk-go-v2/feature/s3/manager v1.19.4
-	github.com/aws/aws-sdk-go-v2/service/ec2 v1.249.0
-	github.com/aws/aws-sdk-go-v2/service/s3 v1.87.3
+	cloud.google.com/go/storage v1.57.0
+	github.com/aws/aws-sdk-go-v2 v1.39.2
+	github.com/aws/aws-sdk-go-v2/config v1.31.11
+	github.com/aws/aws-sdk-go-v2/feature/s3/manager v1.19.9
+	github.com/aws/aws-sdk-go-v2/service/ec2 v1.254.1
+	github.com/aws/aws-sdk-go-v2/service/s3 v1.88.3
 	github.com/google/uuid v1.6.0
 	github.com/klauspost/compress v1.18.0
 	github.com/siderolabs/gen v0.8.5
 	github.com/siderolabs/go-pointer v1.0.1
 	github.com/siderolabs/go-retry v0.3.3
-	github.com/spf13/pflag v1.0.9
-	golang.org/x/sync v0.16.0
-	google.golang.org/api v0.248.0
+	github.com/spf13/pflag v1.0.10
+	golang.org/x/sync v0.17.0
+	google.golang.org/api v0.250.0
 )
 
 require (
