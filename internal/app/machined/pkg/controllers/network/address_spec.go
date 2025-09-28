@@ -20,9 +20,9 @@ import (
 	"github.com/mdlayher/arp"
 	"github.com/siderolabs/go-pointer"
 	"go.uber.org/zap"
-	"go4.org/netipx"
 	"golang.org/x/sys/unix"
 
+	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/network/internal/addressutil"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/network/watch"
 	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
 	"github.com/siderolabs/talos/pkg/machinery/resources/network"
@@ -240,7 +240,7 @@ func (ctrl *AddressSpecController) syncAddress(ctx context.Context, r controller
 			Attributes: &rtnetlink.AddressAttributes{
 				Address:   address.TypedSpec().Address.Addr().AsSlice(),
 				Local:     address.TypedSpec().Address.Addr().AsSlice(),
-				Broadcast: broadcastAddr(address.TypedSpec().Address),
+				Broadcast: addressutil.BroadcastAddr(address.TypedSpec().Address),
 				Flags:     uint32(address.TypedSpec().Flags),
 				Priority:  address.TypedSpec().Priority,
 			},
@@ -299,32 +299,4 @@ func (ctrl *AddressSpecController) gratuitousARP(logger *zap.Logger, linkIndex u
 	logger.Info("sent gratuitous ARP", zap.Stringer("address", ip), zap.String("link", iface.Name))
 
 	return nil
-}
-
-func broadcastAddr(addr netip.Prefix) net.IP {
-	if !addr.Addr().Is4() {
-		return nil
-	}
-
-	ipnet := netipx.PrefixIPNet(addr)
-
-	ip := ipnet.IP.To4()
-	if ip == nil {
-		return nil
-	}
-
-	mask := net.IP(ipnet.Mask).To4()
-
-	n := len(ip)
-	if n != len(mask) {
-		return nil
-	}
-
-	out := make(net.IP, n)
-
-	for i := range n {
-		out[i] = ip[i] | ^mask[i]
-	}
-
-	return out
 }
