@@ -5,7 +5,7 @@ description: "Recommendations for setting up a Talos Linux cluster in production
 ---
 
 This guide explains things to consider to create a production quality Talos Linux cluster for bare metal.
-Check out the [Reference Architecture documentation](https://www.siderolabs.com/resource-hub/resources/) for architectural diagrams and guidance on creating production-grade clusters in other environments.
+Check out the [Reference Architecture documentation](https://www.siderolabs.com/resources/) for architectural diagrams and guidance on creating production-grade clusters in other environments.
 
 This guide assumes that you’ve already created a development cluster and are familiar with the **Getting Started** documentation.
 If not, please refer to the [Getting Started]({{< relref "getting-started" >}}) guide for more information.

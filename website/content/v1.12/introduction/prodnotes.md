@@ -5,7 +5,7 @@ description: "Recommendations for setting up a Talos Linux cluster in production
 ---
 
 This guide explains things to consider to create a production quality Talos Linux cluster for bare metal.
-Check out the [Reference Architecture documentation](https://www.siderolabs.com/resource-hub/resources/) for architectural diagrams and guidance on creating production-grade clusters in other environments.
+Check out the [Reference Architecture documentation](https://www.siderolabs.com/resources/) for architectural diagrams and guidance on creating production-grade clusters in other environments.
 
 This guide assumes that you’ve already created a development cluster and are familiar with the **Getting Started** documentation.
 If not, please refer to the [Getting Started]({{< relref "getting-started" >}}) guide for more information.
@@ -70,7 +70,7 @@ You can include as many IP addresses as needed:
    If your control plane nodes IP addresses are `192.168.0.2`, `192.168.0.3`, `192.168.0.4`, your command would be:
 
     ```bash
-    CONTROL_PLANE_IP= ("192.168.0.2" "192.168.0.3" "192.168.0.4")
+    CONTROL_PLANE_IP=("192.168.0.2" "192.168.0.3" "192.168.0.4")
     ```
 
 1. If you have worker nodes, store their IP addresses in a Bash array.
