@@ -21,7 +21,6 @@ Each of these commands can operate in one of four modes:
 * apply change immediately (`--mode=no-reboot` flag): change is applied immediately without a reboot, fails if the change contains any fields that can not be updated without a reboot
 * apply change on next reboot (`--mode=staged`): change is staged to be applied after a reboot, but node is not rebooted
 * apply change with automatic revert (`--mode=try`): change is applied immediately (if not possible, returns an error), and reverts it automatically in 1 minute if no configuration update is applied
-* apply change in the interactive mode (`--mode=interactive`; only for `talosctl apply-config`): launches TUI based interactive installer
 
 > Note: applying change on next reboot (`--mode=staged`) doesn't modify current node configuration, so next call to
 > `talosctl edit machineconfig --mode=staged` will not see changes
@@ -79,12 +78,6 @@ Applying machine configuration immediately (without a reboot):
 
 ```bash
 talosctl -n IP apply machineconfig -f config.yaml --mode=no-reboot
-```
-
-Starting the interactive installer:
-
-```bash
-talosctl -n IP apply machineconfig --mode=interactive
 ```
 
 > Note: when a Talos node is running in the maintenance mode it's necessary to provide `--insecure (-i)` flag to connect to the API and apply the config.

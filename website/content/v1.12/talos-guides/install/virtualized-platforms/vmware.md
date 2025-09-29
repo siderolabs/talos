@@ -28,21 +28,20 @@ More information regarding virtual machine hardware versions can be found in the
 
 Using the VIP chosen in the prereq steps, we will now generate the base configuration files for the Talos machines.
 This can be done with the `talosctl gen config ...` command.
-Take note that we will also use a JSON6902 patch when creating the configs so that the control plane nodes get some special information about the VIP we chose earlier, as well as a daemonset to install vmware tools on talos nodes.
+Take note that we will also use a machine configuration patch when creating the configs so that the control plane nodes get some special information about the VIP we chose earlier, as well as a daemonset to install vmware tools on talos nodes.
 
 First, download `cp.patch.yaml` to your local machine and edit the VIP to match your chosen IP.
 You can do this by issuing: `curl -fsSLO https://raw.githubusercontent.com/siderolabs/talos/master/website/content/{{< version >}}/talos-guides/install/virtualized-platforms/vmware/cp.patch.yaml`.
 It's contents should look like the following:
 
 ```yaml
-- op: add
-  path: /machine/network
-  value:
+machine:
+  network:
     interfaces:
-      - interface: eth0
-        dhcp: true
-        vip:
-          ip: <VIP>
+    - interface: eth0
+      dhcp: true
+      vip:
+        ip: <VIP>
 ```
 
 With the patch in hand, generate machine configs with:

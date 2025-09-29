@@ -296,8 +296,6 @@ func (ctrl *MaintenanceServiceController) Run(ctx context.Context, r controller.
 
 			logger.Sugar().Info("upload configuration using talosctl:")
 			logger.Sugar().Infof("\ttalosctl apply-config --insecure --nodes %s --file <config.yaml>", firstIP)
-			logger.Sugar().Info("or apply configuration using talosctl interactive installer:")
-			logger.Sugar().Infof("\ttalosctl apply-config --insecure --nodes %s --mode=interactive", firstIP)
 			logger.Sugar().Info("optionally with node fingerprint check:")
 			logger.Sugar().Infof("\ttalosctl apply-config --insecure --nodes %s --cert-fingerprint '%s' --file <config.yaml>", firstIP, lastCertificateFingerprint)
 

@@ -7,19 +7,7 @@ Talos generates machine configuration for two types of machines: controlplane an
 Many configuration options can be adjusted using `talosctl gen config` but not all of them.
 Configuration patching allows modifying machine configuration to fit it for the cluster or a specific machine.
 
-## Configuration Patch Formats
-
-Talos supports two configuration patch formats:
-
-- strategic merge patches
-- RFC6902 (JSON patches)
-
-Strategic merge patches are the easiest to use, but JSON patches allow more precise configuration adjustments.
-
-> Note: Talos 1.5+ supports [multi-document machine configuration]({{< relref "../../reference/configuration" >}}).
-> JSON patches don't support multi-document machine configuration, while strategic merge patches do.
-
-### Strategic Merge patches
+## Strategic Merge Patches
 
 Strategic merge patches look like incomplete machine configuration files:
 
@@ -41,6 +29,8 @@ machine:
     hostname: worker1
 ```
 
+### Merging Rules
+
 In general, machine configuration contents are merged with the contents of the strategic merge patch, with strategic merge patch
 values overriding machine configuration values.
 There are some special rules:
@@ -52,6 +42,8 @@ There are some special rules:
   - `cluster.apiServer.auditPolicy` value is replaced on merge
   - `ExtensionServiceConfig.configFiles` section is merged matching on `mountPath` (replacing `content` if matches)
 
+### Multi-document Patches
+
 When patching a [multi-document machine configuration]({{< relref "../../reference/configuration" >}}), following rules apply:
 
 - for each document in the patch, the document is merged with the respective document in the machine configuration (matching by `kind`, `apiVersion` and `name` for named documents)
@@ -59,6 +51,8 @@ When patching a [multi-document machine configuration]({{< relref "../../referen
 
 The strategic merge patch itself might be a multi-document YAML, and each document will be applied as a patch to the base machine configuration.
 Keep in mind that you can't patch the same document multiple times with the same patch.
+
+### Deleting with Strategic Merge Patches
 
 You can also delete parts from the configuration using `$patch: delete` syntax similar to the
 [Kubernetes](https://github.com/kubernetes/community/blob/master/contributors/devel/sig-api-machinery/strategic-merge-patch.md#delete-directive)
@@ -110,29 +104,6 @@ $patch: delete
 
 This will remove the documents `SideroLinkConfig` and `ExtensionServiceConfig` with name `foo` from the configuration.
 
-### RFC6902 (JSON Patches)
-
-[JSON patches](https://jsonpatch.com/) can be written either in JSON or YAML format.
-A proper JSON patch requires an `op` field that depends on the machine configuration contents: whether the path already exists or not.
-
-For example, the strategic merge patch from the previous section can be written either as:
-
-```yaml
-- op: replace
-  path: /machine/network/hostname
-  value: worker1
-```
-
-or:
-
-```yaml
-- op: add
-  path: /machine/network/hostname
-  value: worker1
-```
-
-The correct `op` depends on whether the `/machine/network/hostname` section exists already in the machine config or not.
-
 ## Examples
 
 ### Machine Network
@@ -156,8 +127,7 @@ The goal is to add a virtual IP `192.168.10.50` to the `eth0` interface and add 
 <!-- markdownlint-disable MD032 -->
 <!-- markdownlint-disable MD025 -->
 
-{{< tabpane lang="yaml" right=true >}}
-{{< tab header="Strategic merge patch" >}}
+```yaml
 machine:
   network:
     interfaces:
@@ -166,19 +136,7 @@ machine:
           ip: 192.168.10.50
       - interface: eth1
         dhcp: true
-{{< /tab >}}
-{{< tab header="JSON patch" >}}
-- op: add
-  path: /machine/network/interfaces/0/vip
-  value:
-    ip: 192.168.10.50
-- op: add
-  path: /machine/network/interfaces/-
-  value:
-    interface: eth1
-    dhcp: true
-{{< /tab >}}
-{{< /tabpane >}}
+```
 
 Patched machine configuration:
 
@@ -212,8 +170,7 @@ cluster:
 
 The goal is to update pod and service subnets and disable default CNI (Flannel).
 
-{{< tabpane lang="yaml" right=true >}}
-{{< tab header="Strategic merge patch" >}}
+```yaml
 cluster:
   network:
     podSubnets:
@@ -222,22 +179,7 @@ cluster:
       - 192.0.0.0/12
     cni:
       name: none
-{{< /tab >}}
-{{< tab header="JSON patch" >}}
-- op: replace
-  path: /cluster/network/podSubnets
-  value:
-    - 192.168.0.0/16
-- op: replace
-  path: /cluster/network/serviceSubnets
-  value:
-    - 192.0.0.0/12
-- op: add
-  path: /cluster/network/cni
-  value:
-    name: none
-{{< /tab >}}
-{{< /tabpane >}}
+```
 
 Patched machine configuration:
 
@@ -265,22 +207,13 @@ machine:
 
 The goal is to set the `kubelet` node IP to come from the subnet `192.168.10.0/24`.
 
-{{< tabpane lang="yaml" right=true >}}
-{{< tab header="Strategic merge patch" >}}
+```yaml
 machine:
   kubelet:
     nodeIP:
       validSubnets:
         - 192.168.10.0/24
-{{< /tab >}}
-{{< tab header="JSON patch" >}}
-- op: add
-  path: /machine/kubelet/nodeIP
-  value:
-    validSubnets:
-      - 192.168.10.0/24
-{{< /tab >}}
-{{< /tabpane >}}
+```
 
 Patched machine configuration:
 
@@ -320,8 +253,7 @@ cluster:
 
 The goal is to add an exemption for the namespace `rook-ceph`.
 
-{{< tabpane lang="yaml" right=true >}}
-{{< tab header="Strategic merge patch" >}}
+```yaml
 cluster:
   apiServer:
     admissionControl:
@@ -330,13 +262,7 @@ cluster:
           exemptions:
             namespaces:
               - rook-ceph
-{{< /tab >}}
-{{< tab header="JSON patch" >}}
-- op: add
-  path: /cluster/apiServer/admissionControl/0/configuration/exemptions/namespaces/-
-  value: rook-ceph
-{{< /tab >}}
-{{< /tabpane >}}
+```
 
 Patched machine configuration:
 
