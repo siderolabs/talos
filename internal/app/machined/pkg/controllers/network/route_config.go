@@ -149,14 +149,14 @@ func (ctrl *RouteConfigController) apply(ctx context.Context, r controller.Runti
 
 func (ctrl *RouteConfigController) parseCmdline(logger *zap.Logger) (routes []network.RouteSpecSpec) {
 	if ctrl.Cmdline == nil {
-		return
+		return routes
 	}
 
 	settings, err := ParseCmdlineNetwork(ctrl.Cmdline, network.NewEmptyLinkResolver())
 	if err != nil {
 		logger.Info("ignoring error", zap.Error(err))
 
-		return
+		return routes
 	}
 
 	for idx, linkConfig := range settings.LinkConfigs {

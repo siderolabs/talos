@@ -46,7 +46,7 @@ func (j *jsonLinesSender) tryLock(ctx context.Context) (unlock func()) {
 		unlock = nil
 	}
 
-	return
+	return unlock
 }
 
 func (j *jsonLinesSender) marshalJSON(e *runtime.LogEvent) ([]byte, error) {

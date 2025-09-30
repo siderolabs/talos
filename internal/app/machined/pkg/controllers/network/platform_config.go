@@ -151,5 +151,5 @@ func (ctrl *PlatformConfigController) runWithPanicHandler(logger *zap.Logger, f 
 
 	err = f()
 
-	return
+	return err
 }

@@ -67,7 +67,7 @@ func (suite *NTPSuite) adjustSystemClock(val *unix.Timex) (status timex.State, e
 		suite.systemClock = suite.systemClock.Add(time.Duration(val.Time.Sec)*time.Second + time.Duration(val.Time.Usec)*time.Nanosecond)
 	}
 
-	return
+	return status, err
 }
 
 //nolint:gocyclo

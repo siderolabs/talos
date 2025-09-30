@@ -195,18 +195,18 @@ func (ctrl *ResolverConfigController) getDefault(cfg talosconfig.Config, hostnam
 
 func (ctrl *ResolverConfigController) parseCmdline(logger *zap.Logger) (spec network.ResolverSpecSpec) {
 	if ctrl.Cmdline == nil {
-		return
+		return spec
 	}
 
 	settings, err := ParseCmdlineNetwork(ctrl.Cmdline, network.NewEmptyLinkResolver())
 	if err != nil {
 		logger.Warn("ignoring error", zap.Error(err))
 
-		return
+		return spec
 	}
 
 	if len(settings.DNSAddresses) == 0 {
-		return
+		return spec
 	}
 
 	spec.DNSServers = settings.DNSAddresses

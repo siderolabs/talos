@@ -179,7 +179,7 @@ func gen(k, l int) (result []int) {
 		result = append(result, j)
 	}
 
-	return
+	return result
 }
 
 func TestEvents_WatchOptionsTailEvents(t *testing.T) {

@@ -15,6 +15,7 @@ import (
 
 	clustercmd "github.com/siderolabs/talos/cmd/talosctl/cmd/mgmt/cluster"
 	"github.com/siderolabs/talos/cmd/talosctl/cmd/mgmt/cluster/create/clusterops"
+	"github.com/siderolabs/talos/cmd/talosctl/cmd/mgmt/cluster/create/flags"
 	"github.com/siderolabs/talos/cmd/talosctl/pkg/mgmt/helpers"
 	"github.com/siderolabs/talos/pkg/cli"
 	"github.com/siderolabs/talos/pkg/images"
@@ -270,6 +271,8 @@ func getCreateCmd() *cobra.Command {
 
 					disks += fmt.Sprintf(",%s:%d", driver, legacyOps.extraDiskSize)
 				}
+
+				qOps.Disks = flags.Disks{}
 
 				if err := qOps.Disks.Set(disks); err != nil {
 					return err

@@ -183,14 +183,14 @@ func (a *ADV) ReadTag(t uint8) (val string, ok bool) {
 
 	val = string(b)
 
-	return
+	return val, ok
 }
 
 // ReadTagBytes to get tag value.
 func (a *ADV) ReadTagBytes(t uint8) (val []byte, ok bool) {
 	val, ok = a.Tags[Tag(t)]
 
-	return
+	return val, ok
 }
 
 // ListTags to get list of tags.
@@ -230,5 +230,5 @@ func (a *ADV) DeleteTag(t uint8) (ok bool) {
 
 	delete(a.Tags, Tag(t))
 
-	return
+	return ok
 }

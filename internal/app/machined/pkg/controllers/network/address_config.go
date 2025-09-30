@@ -175,14 +175,14 @@ func (ctrl *AddressConfigController) loopbackDefaults() []network.AddressSpecSpe
 
 func (ctrl *AddressConfigController) parseCmdline(logger *zap.Logger) (addresses []network.AddressSpecSpec) {
 	if ctrl.Cmdline == nil {
-		return
+		return addresses
 	}
 
 	settings, err := ParseCmdlineNetwork(ctrl.Cmdline, network.NewEmptyLinkResolver())
 	if err != nil {
 		logger.Info("ignoring cmdline parse failure", zap.Error(err))
 
-		return
+		return addresses
 	}
 
 	for _, linkConfig := range settings.LinkConfigs {

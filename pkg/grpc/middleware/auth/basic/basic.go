@@ -49,7 +49,7 @@ func NewConnection(address string, creds credentials.PerRPCCredentials, accepted
 
 	conn, err = grpc.NewClient(address, grpcOpts...)
 	if err != nil {
-		return
+		return conn, err
 	}
 
 	return conn, nil

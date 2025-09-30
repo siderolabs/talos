@@ -59,7 +59,7 @@ func (a ADV) ReadTag(t uint8) (val string, ok bool) {
 	b, ok = a.ReadTagBytes(t)
 	val = string(b)
 
-	return
+	return val, ok
 }
 
 // ReadTagBytes reads a tag in the ADV.

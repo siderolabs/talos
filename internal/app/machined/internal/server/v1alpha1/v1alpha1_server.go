@@ -1270,7 +1270,7 @@ func (s *Server) Logs(req *machine.LogsRequest, l machine.MachineService_LogsSer
 
 		logR, err = s.Controller.Runtime().Logging().ServiceLog(req.Id).Reader(options...)
 		if err != nil {
-			return
+			return err
 		}
 
 		//nolint:errcheck
@@ -1289,7 +1289,7 @@ func (s *Server) Logs(req *machine.LogsRequest, l machine.MachineService_LogsSer
 
 	for data := range chunk.Read() {
 		if err = l.Send(&common.Data{Bytes: data}); err != nil {
-			return
+			return err
 		}
 	}
 

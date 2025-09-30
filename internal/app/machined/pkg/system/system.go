@@ -244,7 +244,7 @@ func (s *singleton) Shutdown(ctx context.Context) {
 // Stop will initiate a shutdown of the specified service.
 func (s *singleton) Stop(ctx context.Context, serviceIDs ...string) (err error) {
 	if len(serviceIDs) == 0 {
-		return
+		return err
 	}
 
 	s.mu.Lock()
@@ -263,7 +263,7 @@ func (s *singleton) Stop(ctx context.Context, serviceIDs ...string) (err error) 
 // If reverse dependency is not stopped, this method might block waiting on it being stopped for up to 30 seconds.
 func (s *singleton) StopWithRevDepenencies(ctx context.Context, serviceIDs ...string) (err error) {
 	if len(serviceIDs) == 0 {
-		return
+		return err
 	}
 
 	s.mu.Lock()
@@ -394,7 +394,7 @@ func (s *singleton) List() (result []*ServiceRunner) {
 	//       but, we don't have dependencies yet, so sort by service id for now to get stable order
 	slices.SortFunc(result, func(a, b *ServiceRunner) int { return cmp.Compare(a.id, b.id) })
 
-	return
+	return result
 }
 
 // IsRunning checks service status (started/stopped).

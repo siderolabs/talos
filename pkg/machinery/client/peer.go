@@ -20,7 +20,7 @@ func RemotePeer(ctx context.Context) (peerHost string) {
 		peerHost = AddrFromPeer(remote)
 	}
 
-	return
+	return peerHost
 }
 
 // AddrFromPeer extracts peer address from grpc Peer.

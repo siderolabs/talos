@@ -299,7 +299,7 @@ func (c *Client) Restart(ctx context.Context, namespace string, driver common.Co
 		_, err = FilterMessages(resp, err)
 	}
 
-	return
+	return err
 }
 
 // Reset implements the proto.MachineServiceClient interface.
@@ -309,7 +309,7 @@ func (c *Client) Reset(ctx context.Context, graceful, reboot bool) (err error) {
 		_, err = FilterMessages(resp, err)
 	}
 
-	return
+	return err
 }
 
 // ResetGeneric implements the proto.MachineServiceClient interface.
@@ -366,7 +366,7 @@ func (c *Client) Rollback(ctx context.Context) (err error) {
 		_, err = FilterMessages(resp, err)
 	}
 
-	return
+	return err
 }
 
 // Bootstrap implements the proto.MachineServiceClient interface.
@@ -376,7 +376,7 @@ func (c *Client) Bootstrap(ctx context.Context, req *machineapi.BootstrapRequest
 		_, err = FilterMessages(resp, err)
 	}
 
-	return
+	return err
 }
 
 // ShutdownOption provides shutdown API options.
@@ -430,7 +430,7 @@ func (c *Client) Logs(ctx context.Context, namespace string, driver common.Conta
 		TailLines: tailLines,
 	})
 
-	return
+	return stream, err
 }
 
 // LogsContainers implements the proto.MachineServiceClient interface.

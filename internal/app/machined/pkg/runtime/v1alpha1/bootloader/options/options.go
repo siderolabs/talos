@@ -101,8 +101,8 @@ type ProbeOptions struct {
 	Logger            func(format string, v ...any)
 }
 
-// Log logs the message using the provided logger.
-func (options *ProbeOptions) Log(format string, v ...any) {
+// Logf logs the message using the provided logger.
+func (options *ProbeOptions) Logf(format string, v ...any) {
 	if options.Logger == nil {
 		return
 	}

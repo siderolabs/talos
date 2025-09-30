@@ -1,6 +1,6 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
 #
-# Generated on 2025-09-29T14:15:51Z by kres df5079a-dirty.
+# Generated on 2025-09-30T11:17:16Z by kres 301c24d.
 
 "on":
   workflow_dispatch:
@@ -71,6 +71,7 @@ jobs:
           make cloud-images
       - name: attach-images
         env:
+          GH_TOKEN: ${{ github.token }}
           RELEASE: ${{ github.event.inputs.release }}
         run: |
           gh release upload "${RELEASE}" \

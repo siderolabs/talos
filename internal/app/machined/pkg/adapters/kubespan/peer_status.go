@@ -125,7 +125,7 @@ func (a peerStatus) ShouldChangeEndpoint() bool {
 // If returned newEndpoint is zero value, no new endpoint is available.
 func (a peerStatus) PickNewEndpoint(endpoints []netip.AddrPort) (newEndpoint netip.AddrPort) {
 	if len(endpoints) == 0 {
-		return
+		return newEndpoint
 	}
 
 	if value.IsZero(a.PeerStatusSpec.LastUsedEndpoint) {
@@ -149,5 +149,5 @@ func (a peerStatus) PickNewEndpoint(endpoints []netip.AddrPort) (newEndpoint net
 		}
 	}
 
-	return
+	return newEndpoint
 }

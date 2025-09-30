@@ -109,6 +109,10 @@ func (m *Maker[T]) InitExtra() error {
 		return err
 	}
 
+	if err := m.extraOptionsProvider.AddExtraConfigBundleOpts(); err != nil {
+		return err
+	}
+
 	if err := m.extraOptionsProvider.ModifyClusterRequest(); err != nil {
 		return err
 	}
@@ -359,19 +363,19 @@ func (m *Maker[T]) initGenOps() error {
 	genOptions = append(genOptions, generate.WithVersionContract(m.VersionContract))
 
 	if m.Ops.ControlPlanePort != constants.DefaultControlPlanePort {
-		m.GenOps = slices.Concat(m.GenOps, []generate.Option{
+		genOptions = slices.Concat(genOptions, []generate.Option{
 			generate.WithLocalAPIServerPort(m.Ops.ControlPlanePort),
 		})
 	}
 
 	if m.Ops.KubePrismPort != constants.DefaultKubePrismPort {
-		m.GenOps = slices.Concat(m.GenOps, []generate.Option{
+		genOptions = slices.Concat(genOptions, []generate.Option{
 			generate.WithKubePrismPort(m.Ops.KubePrismPort),
 		})
 	}
 
 	if m.Ops.EnableKubeSpan {
-		m.GenOps = slices.Concat(m.GenOps,
+		genOptions = slices.Concat(genOptions,
 			[]generate.Option{generate.WithNetworkOptions(
 				v1alpha1.WithKubeSpan(),
 			)},

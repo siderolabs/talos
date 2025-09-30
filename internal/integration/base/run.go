@@ -165,7 +165,7 @@ func retryRunAndWait(t *testing.T, cmdFunc func() *exec.Cmd, retryer retry.Retry
 		return err
 	})
 
-	return
+	return stdoutBuf, stderrBuf, err
 }
 
 // run executes command, asserts on its exit status/output, and returns stdout.
@@ -246,5 +246,5 @@ func run(t *testing.T, cmdFunc func() *exec.Cmd, options ...RunOption) (stdout, 
 		assert.NoError(t, f(stderr), "stderr match: %q", stderr)
 	}
 
-	return
+	return stdout, stderr
 }

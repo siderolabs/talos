@@ -106,7 +106,7 @@ func parseLogLine(l []byte, now time.Time) *runtime.LogEvent {
 func parseJSONLogLine(l []byte) (msg string, m map[string]any) {
 	// the whole line is valid JSON
 	if err := json.Unmarshal(l, &m); err == nil {
-		return
+		return msg, m
 	}
 
 	// the line is a message followed by JSON
@@ -114,12 +114,12 @@ func parseJSONLogLine(l []byte) (msg string, m map[string]any) {
 		if err := json.Unmarshal(l[i:], &m); err == nil {
 			msg = string(bytes.TrimSpace(l[:i]))
 
-			return
+			return msg, m
 		}
 	}
 
 	// no JSON found
 	msg = string(l)
 
-	return
+	return msg, m
 }

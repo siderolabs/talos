@@ -160,7 +160,7 @@ func (ctrl *ExtraManifestController) processURL(ctx context.Context, r controlle
 
 	tmpDir, err = os.MkdirTemp("", "talos")
 	if err != nil {
-		return
+		return err
 	}
 
 	defer os.RemoveAll(tmpDir) //nolint:errcheck
@@ -200,7 +200,7 @@ func (ctrl *ExtraManifestController) processURL(ctx context.Context, r controlle
 	}); err != nil {
 		err = fmt.Errorf("error downloading %q: %w", manifest.URL, err)
 
-		return
+		return err
 	}
 
 	logger.Sugar().Infof("downloaded manifest %q", manifest.URL)
@@ -209,7 +209,7 @@ func (ctrl *ExtraManifestController) processURL(ctx context.Context, r controlle
 
 	contents, err = os.ReadFile(dst)
 	if err != nil {
-		return
+		return err
 	}
 
 	if err = safe.WriterModify(ctx, r, k8s.NewManifest(k8s.ControlPlaneNamespaceName, id),
@@ -218,7 +218,7 @@ func (ctrl *ExtraManifestController) processURL(ctx context.Context, r controlle
 		}); err != nil {
 		err = fmt.Errorf("error updating manifests: %w", err)
 
-		return
+		return err
 	}
 
 	return nil

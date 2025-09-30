@@ -16,7 +16,7 @@ require (
 	github.com/containerd/go-cni v1.1.13
 	github.com/cosi-project/runtime v1.11.0
 	github.com/dustin/go-humanize v1.0.1
-	github.com/emicklei/dot v1.9.0
+	github.com/emicklei/dot v1.9.1
 	github.com/evanphx/json-patch v5.9.11+incompatible
 	github.com/fatih/color v1.18.0
 	github.com/ghodss/yaml v1.0.0
@@ -29,18 +29,18 @@ require (
 	github.com/planetscale/vtprotobuf v0.6.1-0.20241121165744-79df5c4772f2
 	github.com/ryanuber/go-glob v1.0.0
 	github.com/santhosh-tekuri/jsonschema/v5 v5.3.1
-	github.com/siderolabs/crypto v0.6.3
+	github.com/siderolabs/crypto v0.6.4
 	github.com/siderolabs/gen v0.8.5
-	github.com/siderolabs/go-api-signature v0.3.7
+	github.com/siderolabs/go-api-signature v0.3.8
 	github.com/siderolabs/go-pointer v1.0.1
 	github.com/siderolabs/net v0.4.0
 	github.com/siderolabs/protoenc v0.2.3
 	github.com/stretchr/testify v1.11.1
-	golang.org/x/net v0.43.0
-	google.golang.org/genproto/googleapis/api v0.0.0-20250826171959-ef028d996bc1
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20250826171959-ef028d996bc1
-	google.golang.org/grpc v1.75.0
-	google.golang.org/protobuf v1.36.8
+	golang.org/x/net v0.44.0
+	google.golang.org/genproto/googleapis/api v0.0.0-20250929231259-57b25ae835d4
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20250929231259-57b25ae835d4
+	google.golang.org/grpc v1.75.1
+	google.golang.org/protobuf v1.36.9
 	gopkg.in/yaml.v3 v3.0.1
 )
 
@@ -73,11 +73,11 @@ require (
 	github.com/stoewer/go-strcase v1.3.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	go.uber.org/zap v1.27.0 // indirect
-	golang.org/x/crypto v0.41.0 // indirect
+	golang.org/x/crypto v0.42.0 // indirect
 	golang.org/x/exp v0.0.0-20250128182459-e0ece0dbea4c // indirect
-	golang.org/x/sync v0.16.0 // indirect
-	golang.org/x/sys v0.35.0 // indirect
-	golang.org/x/text v0.28.0 // indirect
+	golang.org/x/sync v0.17.0 // indirect
+	golang.org/x/sys v0.36.0 // indirect
+	golang.org/x/text v0.29.0 // indirect
 	golang.org/x/time v0.12.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 )

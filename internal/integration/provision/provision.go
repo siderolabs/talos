@@ -263,12 +263,12 @@ func (suite *BaseSuite) readVersion(nodeCtx context.Context, client *talosclient
 
 	v, err = client.Version(nodeCtx)
 	if err != nil {
-		return
+		return version, err
 	}
 
 	version = v.Messages[0].Version.Tag
 
-	return
+	return version, err
 }
 
 type upgradeOptions struct {

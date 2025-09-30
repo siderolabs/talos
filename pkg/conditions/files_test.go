@@ -33,7 +33,7 @@ func (suite *FilesSuite) createFile(name string) (path string) {
 
 	suite.Require().NoError(f.Close())
 
-	return
+	return path
 }
 
 func (suite *FilesSuite) TestString() {

@@ -131,7 +131,12 @@ func readConfigFromOvf(rpci *nanotoolbox.RPCI, key string) ([]byte, error) {
 }
 
 func initializeRPCI() (*nanotoolbox.RPCI, error) {
-	if !hypercall.IsVMWareVM() {
+	inVMWare, err := hypercall.IsVMWareVM()
+	if err != nil {
+		return nil, fmt.Errorf("could not determine if we are running in VMWare VM: %w", err)
+	}
+
+	if !inVMWare {
 		return nil, errors.New("this is not a VMWare VM")
 	}
 

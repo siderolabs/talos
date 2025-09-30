@@ -101,7 +101,7 @@ func (events *ServiceEvents) Push(event ServiceEvent) {
 // Get return a copy of event history, with most recent event being the last one.
 func (events *ServiceEvents) Get(count int) (result []ServiceEvent) {
 	if events.events == nil {
-		return
+		return result
 	}
 
 	if count > MaxEventsToKeep {
@@ -118,7 +118,7 @@ func (events *ServiceEvents) Get(count int) (result []ServiceEvent) {
 		count--
 	}
 
-	return
+	return result
 }
 
 // AsProto returns protobuf-ready serialized snapshot.

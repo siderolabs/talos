@@ -13,12 +13,12 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/ghodss/yaml"
 	"github.com/siderolabs/gen/xslices"
 	"github.com/siderolabs/go-blockdevice/v2/encryption"
 	"github.com/siderolabs/go-pointer"
 	"github.com/siderolabs/go-procfs/procfs"
 	sideronet "github.com/siderolabs/net"
+	"gopkg.in/yaml.v3"
 
 	"github.com/siderolabs/talos/cmd/talosctl/cmd/mgmt/cluster/create/clusterops"
 	"github.com/siderolabs/talos/cmd/talosctl/cmd/mgmt/cluster/create/clusterops/configmaker/internal/siderolinkbuilder"
@@ -115,23 +115,23 @@ func (m *Qemu) AddExtraGenOps() error {
 			CNIName: constants.CustomCNI,
 			CNIUrls: []string{m.Ops.CustomCNIUrl},
 		})})
+	}
 
-		if m.EOps.UseVIP {
-			m.GenOps = slices.Concat(m.GenOps,
-				[]generate.Option{generate.WithNetworkOptions(
-					v1alpha1.WithNetworkInterfaceVirtualIP(m.Provisioner.GetFirstInterface(), m.VIP.String()),
-				)},
-			)
-		}
+	if m.EOps.UseVIP {
+		m.GenOps = slices.Concat(m.GenOps,
+			[]generate.Option{generate.WithNetworkOptions(
+				v1alpha1.WithNetworkInterfaceVirtualIP(m.Provisioner.GetFirstInterface(), m.VIP.String()),
+			)},
+		)
+	}
 
-		if !m.EOps.BootloaderEnabled {
-			// disable kexec, as this would effectively use the bootloader
-			m.GenOps = slices.Concat(m.GenOps, []generate.Option{
-				generate.WithSysctls(map[string]string{
-					"kernel.kexec_load_disabled": "1",
-				}),
-			})
-		}
+	if !m.EOps.BootloaderEnabled {
+		// disable kexec, as this would effectively use the bootloader
+		m.GenOps = slices.Concat(m.GenOps, []generate.Option{
+			generate.WithSysctls(map[string]string{
+				"kernel.kexec_load_disabled": "1",
+			}),
+		})
 	}
 
 	switch {
@@ -168,7 +168,7 @@ func (m *Qemu) AddExtraProvisionOpts() error {
 	externalKubernetesEndpoint := m.Provisioner.GetExternalKubernetesControlPlaneEndpoint(m.ClusterRequest.Network, m.Ops.ControlPlanePort)
 
 	if m.EOps.UseVIP {
-		externalKubernetesEndpoint = "https://" + nethelpers.JoinHostPort(m.VIP.String(), m.Ops.Controlplanes)
+		externalKubernetesEndpoint = "https://" + nethelpers.JoinHostPort(m.VIP.String(), m.Ops.ControlPlanePort)
 	}
 
 	m.ProvisionOps = slices.Concat(m.ProvisionOps, []provision.Option{provision.WithKubernetesEndpoint(externalKubernetesEndpoint)})
@@ -199,7 +199,7 @@ func (m *Qemu) AddExtraConfigBundleOpts() error {
 			})
 	}
 
-	if err := m.addDiskEncriptionPatches(); err != nil {
+	if err := m.addDiskEncryptionPatches(); err != nil {
 		return err
 	}
 
@@ -318,7 +318,7 @@ func (m *Qemu) ModifyNodes() error {
 	return nil
 }
 
-func (m *Qemu) addDiskEncriptionPatches() error {
+func (m *Qemu) addDiskEncryptionPatches() error {
 	var diskEncryptionPatches []configpatcher.Patch
 
 	if m.EOps.EncryptStatePartition || m.EOps.EncryptEphemeralPartition {
@@ -329,7 +329,7 @@ func (m *Qemu) addDiskEncriptionPatches() error {
 
 		if !m.VersionContract.VolumeConfigEncryptionSupported() {
 			// legacy v1alpha1 flow to support booting old Talos versions
-			patch, err := m.getLegacyDiskEncriptionPatch(keys)
+			patch, err := m.getLegacyDiskEncryptionPatch(keys)
 			if err != nil {
 				return err
 			}
@@ -347,7 +347,7 @@ func (m *Qemu) addDiskEncriptionPatches() error {
 					continue
 				}
 
-				patch, err := m.getDiskEncriptionPatch(spec, keys)
+				patch, err := m.getDiskEncryptionPatch(spec, keys)
 				if err != nil {
 					return err
 				}
@@ -364,7 +364,7 @@ func (m *Qemu) addDiskEncriptionPatches() error {
 	return nil
 }
 
-func (*Qemu) getDiskEncriptionPatch(spec struct {
+func (*Qemu) getDiskEncryptionPatch(spec struct {
 	label   string
 	enabled bool
 }, keys []*v1alpha1.EncryptionKey,
@@ -392,7 +392,7 @@ func (*Qemu) getDiskEncriptionPatch(spec struct {
 	return patch, nil
 }
 
-func (m *Qemu) getLegacyDiskEncriptionPatch(keys []*v1alpha1.EncryptionKey) (configpatcher.Patch, error) {
+func (m *Qemu) getLegacyDiskEncryptionPatch(keys []*v1alpha1.EncryptionKey) (configpatcher.Patch, error) {
 	diskEncryptionConfig := &v1alpha1.SystemDiskEncryptionConfig{}
 
 	if m.EOps.EncryptStatePartition {
@@ -450,12 +450,19 @@ func (m *Qemu) initDisks() error {
 
 	m.ForEachNode(func(i int, node *provision.NodeRequest) {
 		node.Disks = slices.Concat(node.Disks, primaryDisks)
+	})
+
+	if err := m.initExtraDisks(); err != nil {
+		return err
+	}
+
+	m.ForEachNode(func(i int, node *provision.NodeRequest) {
 		if node.Type == machine.TypeWorker {
 			node.Disks = slices.Concat(node.Disks, workerExtraDisks)
 		}
 	})
 
-	return m.initExtraDisks()
+	return nil
 }
 
 //nolint:gocyclo

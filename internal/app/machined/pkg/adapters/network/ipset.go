@@ -35,5 +35,5 @@ func SplitIPSet(set *netipx.IPSet) (ipv4, ipv6 []netipx.IPRange) {
 		}
 	}
 
-	return
+	return ipv4, ipv6
 }

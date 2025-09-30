@@ -44,7 +44,7 @@ type Bootloader interface {
 //
 // Returns nil if it cannot detect any supported bootloader.
 func Probe(disk string, options options.ProbeOptions) (Bootloader, error) {
-	options.Log("probing bootloader on %q", disk)
+	options.Logf("probing bootloader on %q", disk)
 
 	grubBootloader, err := grub.Probe(disk, options)
 	if err != nil {
@@ -52,7 +52,7 @@ func Probe(disk string, options options.ProbeOptions) (Bootloader, error) {
 	}
 
 	if grubBootloader != nil {
-		options.Log("found GRUB bootloader on %q", disk)
+		options.Logf("found GRUB bootloader on %q", disk)
 
 		return grubBootloader, nil
 	}
@@ -63,7 +63,7 @@ func Probe(disk string, options options.ProbeOptions) (Bootloader, error) {
 	}
 
 	if sdbootBootloader != nil {
-		options.Log("found sd-boot bootloader on %q", disk)
+		options.Logf("found sd-boot bootloader on %q", disk)
 
 		return sdbootBootloader, nil
 	}

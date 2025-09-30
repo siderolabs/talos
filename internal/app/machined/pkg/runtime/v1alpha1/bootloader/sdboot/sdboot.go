@@ -77,7 +77,7 @@ func New() *Config {
 func ProbeWithCallback(disk string, options options.ProbeOptions, callback func(*Config) error) (*Config, error) {
 	// if not UEFI boot, nothing to do
 	if !IsUEFIBoot() {
-		options.Log("sd-boot: not booted using UEFI, skipping probing")
+		options.Logf("sd-boot: not booted using UEFI, skipping probing")
 
 		return nil, nil
 	}
@@ -116,7 +116,7 @@ func ProbeWithCallback(disk string, options options.ProbeOptions, callback func(
 				return fmt.Errorf("no UKI files found in %q", filepath.Join(constants.EFIMountPoint, "EFI", "Linux"))
 			}
 
-			options.Log("sd-boot: found UKI files: %v", xslices.Map(ukiFiles, filepath.Base))
+			options.Logf("sd-boot: found UKI files: %v", xslices.Map(ukiFiles, filepath.Base))
 
 			// If we booted of UKI/Kernel+Initramfs/ISO Talos installer will always be run which
 			// sets the `LoaderEntryDefault` to the UKI file name, so either for reboot with Kexec or upgrade
@@ -127,7 +127,7 @@ func ProbeWithCallback(disk string, options options.ProbeOptions, callback func(
 				return err
 			}
 
-			options.Log("sd-boot: LoaderEntryDefault: %s", bootEntry)
+			options.Logf("sd-boot: LoaderEntryDefault: %s", bootEntry)
 
 			if bootEntry == "" {
 				// If we booted of a Disk image, only `LoaderEntrySelected` will be set until we do an upgrade
@@ -146,11 +146,11 @@ func ProbeWithCallback(disk string, options options.ProbeOptions, callback func(
 				bootEntry = loaderEntrySelected
 			}
 
-			options.Log("sd-boot: found boot entry: %s", bootEntry)
+			options.Logf("sd-boot: found boot entry: %s", bootEntry)
 
 			for _, ukiFile := range ukiFiles {
 				if strings.EqualFold(filepath.Base(ukiFile), bootEntry) {
-					options.Log("sd-boot: default entry matched as %q", bootEntry)
+					options.Logf("sd-boot: default entry matched as %q", bootEntry)
 
 					sdbootConf = &Config{
 						Default: bootEntry,
@@ -162,7 +162,7 @@ func ProbeWithCallback(disk string, options options.ProbeOptions, callback func(
 				return errors.New("sd-boot: no valid sd-boot config found, cannot continue")
 			}
 
-			options.Log("sd-boot: using %s as default entry", sdbootConf.Default)
+			options.Logf("sd-boot: using %s as default entry", sdbootConf.Default)
 
 			if callback != nil {
 				return callback(sdbootConf)

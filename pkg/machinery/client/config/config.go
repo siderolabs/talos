@@ -146,12 +146,12 @@ func ReadFrom(r io.Reader) (c *Config, err error) {
 	c = &Config{}
 
 	if err = yaml.NewDecoder(r).Decode(c); err != nil {
-		return
+		return c, err
 	}
 
 	c.upgrade()
 
-	return
+	return c, err
 }
 
 // Save writes the config to disk.

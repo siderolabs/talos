@@ -168,18 +168,18 @@ func (ctrl *TimeServerConfigController) getDefault() (spec network.TimeServerSpe
 
 func (ctrl *TimeServerConfigController) parseCmdline(logger *zap.Logger) (spec network.TimeServerSpecSpec) {
 	if ctrl.Cmdline == nil {
-		return
+		return spec
 	}
 
 	settings, err := ParseCmdlineNetwork(ctrl.Cmdline, network.NewEmptyLinkResolver())
 	if err != nil {
 		logger.Warn("ignoring error", zap.Error(err))
 
-		return
+		return spec
 	}
 
 	if len(settings.NTPAddresses) == 0 {
-		return
+		return spec
 	}
 
 	spec.NTPServers = make([]string, len(settings.NTPAddresses))
@@ -194,7 +194,7 @@ func (ctrl *TimeServerConfigController) parseCmdline(logger *zap.Logger) (spec n
 
 func (ctrl *TimeServerConfigController) parseMachineConfiguration(cfgProvider talosconfig.Config) (spec network.TimeServerSpecSpec) {
 	if len(cfgProvider.Machine().Time().Servers()) == 0 {
-		return
+		return spec
 	}
 
 	spec.NTPServers = slices.Clone(cfgProvider.Machine().Time().Servers())

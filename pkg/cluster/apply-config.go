@@ -27,7 +27,7 @@ type ApplyConfigClient struct {
 // ApplyConfig on the node via the API using insecure mode.
 func (s *APIBootstrapper) ApplyConfig(ctx context.Context, nodes []provision.NodeRequest, sl provision.SiderolinkRequest, out io.Writer) error {
 	for _, node := range nodes {
-		configureNode := func() error {
+		configureNode := func(ctx context.Context) error {
 			ep := node.IPs[0].String()
 
 			if addr, ok := sl.GetAddr(node.UUID); ok {
@@ -57,7 +57,7 @@ func (s *APIBootstrapper) ApplyConfig(ctx context.Context, nodes []provision.Nod
 
 			return nil
 		}
-		if err := retry.Constant(2*time.Minute, retry.WithUnits(250*time.Millisecond), retry.WithJitter(50*time.Millisecond)).Retry(configureNode); err != nil {
+		if err := retry.Constant(2*time.Minute, retry.WithUnits(250*time.Millisecond), retry.WithJitter(50*time.Millisecond)).RetryWithContext(ctx, configureNode); err != nil {
 			return err
 		}
 	}

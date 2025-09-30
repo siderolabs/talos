@@ -304,7 +304,7 @@ func getOptions(t *testing.T, descriptor protoreflect.Descriptor) (deprecated bo
 		t.Fatalf("unhandled %T", opts)
 	}
 
-	return
+	return deprecated, version
 }
 
 func testDeprecated(t *testing.T, descriptor protoreflect.Descriptor, currentVersion *config.VersionContract) {

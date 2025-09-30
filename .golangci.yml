@@ -31,6 +31,7 @@ linters:
     - gochecknoglobals
     - gochecknoinits
     - gocognit
+    - godoclint
     - godox
     - gosec
     - inamedparam

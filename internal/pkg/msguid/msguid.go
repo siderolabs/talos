@@ -21,7 +21,7 @@ func From(u uuid.UUID) (o [16]byte) {
 		o[dest] = u[from]
 	}
 
-	return
+	return o
 }
 
 // To converts a mixed-endian-encoded UUID to its standard format.
@@ -30,5 +30,5 @@ func To(i [16]byte) (o uuid.UUID) {
 		o[dest] = i[from]
 	}
 
-	return
+	return o
 }

@@ -36,7 +36,7 @@ func FilterBySandbox(sandbox string, ifaces ...*types100.Interface) (in, out []*
 		}
 	}
 
-	return
+	return in, out
 }
 
 // IfacesWithName scans the provided list of ifaces and returns the ones with the provided name.

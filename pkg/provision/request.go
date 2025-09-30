@@ -105,7 +105,7 @@ func (reqs NodeRequests) FindInitNode() (req NodeRequest, err error) {
 			if found {
 				err = errors.New("duplicate init node in requests")
 
-				return
+				return req, err
 			}
 
 			req = reqs[i]
@@ -117,7 +117,7 @@ func (reqs NodeRequests) FindInitNode() (req NodeRequest, err error) {
 		err = errors.New("no init node found in requests")
 	}
 
-	return
+	return req, err
 }
 
 // ControlPlaneNodes returns subset of nodes which are Init/ControlPlane type.
@@ -128,7 +128,7 @@ func (reqs NodeRequests) ControlPlaneNodes() (nodes []NodeRequest) {
 		}
 	}
 
-	return
+	return nodes
 }
 
 // WorkerNodes returns subset of nodes which are Init/ControlPlane type.
@@ -139,7 +139,7 @@ func (reqs NodeRequests) WorkerNodes() (nodes []NodeRequest) {
 		}
 	}
 
-	return
+	return nodes
 }
 
 // PXENodes returns subset of nodes which are PXE booted.
@@ -150,7 +150,7 @@ func (reqs NodeRequests) PXENodes() (nodes []NodeRequest) {
 		}
 	}
 
-	return
+	return nodes
 }
 
 // Disk represents a disk size and name in NodeRequest.

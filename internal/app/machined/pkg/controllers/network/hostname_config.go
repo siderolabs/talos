@@ -186,7 +186,7 @@ func (ctrl *HostnameConfigController) getStableDefault(nodeID string) *network.H
 
 func (ctrl *HostnameConfigController) getDefault(defaultAddr *network.NodeAddress) (spec network.HostnameSpecSpec) {
 	if defaultAddr == nil || len(defaultAddr.TypedSpec().Addresses) != 1 {
-		return
+		return spec
 	}
 
 	spec.Hostname = fmt.Sprintf("talos-%s", strings.ReplaceAll(strings.ReplaceAll(defaultAddr.TypedSpec().Addresses[0].Addr().String(), ":", ""), ".", "-"))
@@ -197,18 +197,18 @@ func (ctrl *HostnameConfigController) getDefault(defaultAddr *network.NodeAddres
 
 func (ctrl *HostnameConfigController) parseCmdline(logger *zap.Logger) (spec network.HostnameSpecSpec) {
 	if ctrl.Cmdline == nil {
-		return
+		return spec
 	}
 
 	settings, err := ParseCmdlineNetwork(ctrl.Cmdline, network.NewEmptyLinkResolver())
 	if err != nil {
 		logger.Warn("ignoring error", zap.Error(err))
 
-		return
+		return spec
 	}
 
 	if settings.Hostname == "" {
-		return
+		return spec
 	}
 
 	if err = spec.ParseFQDN(settings.Hostname); err != nil {
@@ -230,7 +230,7 @@ func (ctrl *HostnameConfigController) parseMachineConfiguration(logger *zap.Logg
 	}
 
 	if hostname == "" {
-		return
+		return spec
 	}
 
 	if err := spec.ParseFQDN(hostname); err != nil {
