@@ -259,7 +259,7 @@ func (p *Point) Root() xfs.Root {
 // RemountReadOnly remounts the mount point as read-only.
 func (p *Point) RemountReadOnly() error {
 	if p.detached {
-		return syscall.EINVAL
+		return nil
 	}
 
 	return p.setattr(&unix.MountAttr{
