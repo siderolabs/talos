@@ -23,9 +23,9 @@ import (
 
 	"github.com/g0rbe/go-chattr"
 	"github.com/google/uuid"
-	"golang.org/x/sys/unix"
 	"golang.org/x/text/encoding/unicode"
 
+	"github.com/siderolabs/talos/internal/pkg/mount/v3"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
 
@@ -101,26 +101,35 @@ type ReadWriter interface {
 // FilesystemReaderWriter implements ReaderWriter using the efivars Linux filesystem.
 type FilesystemReaderWriter struct {
 	write bool
+
+	point *mount.Point
 }
 
 // NewFilesystemReaderWriter creates a new FilesystemReaderWriter.
 func NewFilesystemReaderWriter(write bool) (*FilesystemReaderWriter, error) {
-	if write {
-		if err := unix.Mount("efivarfs", constants.EFIVarsMountPoint, "efivarfs", unix.MS_REMOUNT, ""); err != nil {
-			return nil, err
-		}
+	fsReaderWriter := &FilesystemReaderWriter{
+		write: write,
 	}
 
-	return &FilesystemReaderWriter{
-		write: write,
-	}, nil
+	if write {
+		point, err := mount.NewManager(mount.WithTarget(constants.EFIVarsMountPoint),
+			mount.WithFsopen("efivarfs"),
+		).Mount()
+		if err != nil {
+			return nil, fmt.Errorf("remounting efivarfs read-write: %w", err)
+		}
+
+		fsReaderWriter.point = point
+	}
+
+	return fsReaderWriter, nil
 }
 
 // Close unmounts efivarfs if the FilesystemReaderWriter was created with write
 // access.
 func (rw *FilesystemReaderWriter) Close() error {
 	if rw.write {
-		return unix.Mount("efivarfs", constants.EFIVarsMountPoint, "efivarfs", unix.MS_REMOUNT|unix.MS_RDONLY, "")
+		return rw.point.Unmount(mount.UnmountOptions{})
 	}
 
 	return nil
