@@ -10,9 +10,9 @@ import (
 	"net/http/httptest"
 	"net/url"
 	"testing"
+	"testing/synctest"
 	"time"
 
-	"github.com/benbjohnson/clock"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap/zaptest"
@@ -22,8 +22,6 @@ import (
 )
 
 func TestProbeHTTP(t *testing.T) {
-	t.Parallel()
-
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 	}))
@@ -43,7 +41,7 @@ func TestProbeHTTP(t *testing.T) {
 		},
 	}
 
-	ctx, cancel := context.WithTimeout(t.Context(), 3*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	t.Cleanup(cancel)
 
 	notifyCh := make(chan probe.Notification)
@@ -80,73 +78,76 @@ func TestProbeHTTP(t *testing.T) {
 }
 
 func TestProbeConsecutiveFailures(t *testing.T) {
-	t.Parallel()
+	// Use synctest.Test to run the test in a controlled time bubble.
+	// This allows us to test time-dependent behavior without actual delays,
+	// making the test both faster and more deterministic.
+	synctest.Test(t, func(t *testing.T) {
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.WriteHeader(http.StatusOK)
+		}))
+		defer server.Close()
 
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusOK)
-	}))
-	t.Cleanup(server.Close)
+		u, err := url.Parse(server.URL)
+		require.NoError(t, err)
 
-	u, err := url.Parse(server.URL)
-	require.NoError(t, err)
-
-	mockClock := clock.NewMock()
-
-	p := probe.Runner{
-		ID: "consecutive-failures",
-		Spec: network.ProbeSpecSpec{
-			Interval:         10 * time.Millisecond,
-			FailureThreshold: 3,
-			TCP: network.TCPProbeSpec{
-				Endpoint: u.Host,
-				Timeout:  time.Second,
+		p := probe.Runner{
+			ID: "consecutive-failures",
+			Spec: network.ProbeSpecSpec{
+				Interval:         10 * time.Millisecond,
+				FailureThreshold: 3,
+				TCP: network.TCPProbeSpec{
+					Endpoint: u.Host,
+					Timeout:  time.Second,
+				},
 			},
-		},
-		Clock: mockClock,
-	}
-
-	ctx, cancel := context.WithTimeout(t.Context(), 3*time.Second)
-	t.Cleanup(cancel)
-
-	notifyCh := make(chan probe.Notification)
-
-	p.Start(ctx, notifyCh, zaptest.NewLogger(t))
-	t.Cleanup(p.Stop)
-
-	// first iteration should succeed
-	assert.Equal(t, probe.Notification{
-		ID: "consecutive-failures",
-		Status: network.ProbeStatusSpec{
-			Success: true,
-		},
-	}, <-notifyCh)
-
-	// stop the test server, probe should fail
-	server.Close()
-
-	for range p.Spec.FailureThreshold - 1 {
-		// probe should fail, but no notification should be sent yet (failure threshold not reached)
-		mockClock.Add(p.Spec.Interval)
-
-		select {
-		case ev := <-notifyCh:
-			require.Fail(t, "unexpected notification", "got: %v", ev)
-		case <-time.After(100 * time.Millisecond):
 		}
-	}
 
-	// advance clock to trigger another failure(s)
-	mockClock.Add(p.Spec.Interval)
+		ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+		defer cancel()
 
-	notify := <-notifyCh
-	assert.Equal(t, "consecutive-failures", notify.ID)
-	assert.False(t, notify.Status.Success)
-	assert.Contains(t, notify.Status.LastError, "connection refused")
+		notifyCh := make(chan probe.Notification)
 
-	// advance clock to trigger another failure(s)
-	mockClock.Add(p.Spec.Interval)
+		p.Start(ctx, notifyCh, zaptest.NewLogger(t))
+		defer p.Stop()
 
-	notify = <-notifyCh
-	assert.Equal(t, "consecutive-failures", notify.ID)
-	assert.False(t, notify.Status.Success)
+		// first iteration should succeed
+		assert.Equal(t, probe.Notification{
+			ID: "consecutive-failures",
+			Status: network.ProbeStatusSpec{
+				Success: true,
+			},
+		}, <-notifyCh)
+
+		// stop the test server, probe should fail
+		server.Close()
+
+		for range p.Spec.FailureThreshold - 1 {
+			// probe should fail, but no notification should be sent yet (failure threshold not reached)
+			// synctest.Wait() waits until all goroutines in the bubble are durably blocked,
+			// which happens when the ticker in the probe runner is waiting for the next interval
+			synctest.Wait()
+
+			select {
+			case ev := <-notifyCh:
+				require.Fail(t, "unexpected notification", "got: %v", ev)
+			default:
+				// Expected: no notification yet
+			}
+		}
+
+		// wait for next interval to trigger failure notification
+		synctest.Wait()
+
+		notify := <-notifyCh
+		assert.Equal(t, "consecutive-failures", notify.ID)
+		assert.False(t, notify.Status.Success)
+		assert.Contains(t, notify.Status.LastError, "connection refused")
+
+		// wait for next interval to trigger another failure notification
+		synctest.Wait()
+
+		notify = <-notifyCh
+		assert.Equal(t, "consecutive-failures", notify.ID)
+		assert.False(t, notify.Status.Success)
+	})
 }

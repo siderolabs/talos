@@ -10,7 +10,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/benbjohnson/clock"
 	containerd "github.com/containerd/containerd/v2/client"
 	"github.com/containerd/containerd/v2/core/images"
 	"github.com/containerd/containerd/v2/pkg/namespaces"
@@ -38,7 +37,6 @@ const ImageGCGracePeriod = 4 * ImageCleanupInterval
 // CRIImageGCController renders manifests based on templates and config/secrets.
 type CRIImageGCController struct {
 	ImageServiceProvider func() (ImageServiceProvider, error)
-	Clock                clock.Clock
 
 	imageFirstSeenUnreferenced map[string]time.Time
 }
@@ -114,10 +112,6 @@ func (ctrl *CRIImageGCController) Run(ctx context.Context, r controller.Runtime,
 		ctrl.ImageServiceProvider = defaultImageServiceProvider
 	}
 
-	if ctrl.Clock == nil {
-		ctrl.Clock = clock.New()
-	}
-
 	if ctrl.imageFirstSeenUnreferenced == nil {
 		ctrl.imageFirstSeenUnreferenced = map[string]time.Time{}
 	}
@@ -128,7 +122,7 @@ func (ctrl *CRIImageGCController) Run(ctx context.Context, r controller.Runtime,
 		imageServiceProvider ImageServiceProvider
 	)
 
-	ticker := ctrl.Clock.Ticker(ImageCleanupInterval)
+	ticker := time.NewTicker(ImageCleanupInterval)
 	defer ticker.Stop()
 
 	defer func() {
@@ -179,7 +173,7 @@ func (ctrl *CRIImageGCController) Run(ctx context.Context, r controller.Runtime,
 
 			kubeletSpec, err := safe.ReaderGet[*k8s.KubeletSpec](ctx, r, resource.NewMetadata(k8s.NamespaceName, k8s.KubeletSpecType, k8s.KubeletID, resource.VersionUndefined))
 			if err != nil && !state.IsNotFoundError(err) {
-				return fmt.Errorf("error getting etcd spec: %w", err)
+				return fmt.Errorf("error getting kubelet spec: %w", err)
 			}
 
 			if kubeletSpec != nil {
@@ -285,14 +279,14 @@ func (ctrl *CRIImageGCController) cleanup(ctx context.Context, logger *zap.Logge
 		}
 
 		if _, ok := ctrl.imageFirstSeenUnreferenced[image.Name]; !ok {
-			ctrl.imageFirstSeenUnreferenced[image.Name] = ctrl.Clock.Now()
+			ctrl.imageFirstSeenUnreferenced[image.Name] = time.Now()
 		}
 
 		// calculate image age two ways, and pick the minimum:
 		//  * as CRI reports it, which is the time image got pulled
 		//  * as we see it, this means the image won't be deleted until it reaches the age of ImageGCGracePeriod from the moment it became unreferenced
-		imageAgeCRI := ctrl.Clock.Since(image.CreatedAt)
-		imageAgeInternal := ctrl.Clock.Since(ctrl.imageFirstSeenUnreferenced[image.Name])
+		imageAgeCRI := time.Since(image.CreatedAt)
+		imageAgeInternal := time.Since(ctrl.imageFirstSeenUnreferenced[image.Name])
 
 		imageAge := min(imageAgeCRI, imageAgeInternal)
 

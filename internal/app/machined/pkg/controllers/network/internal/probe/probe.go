@@ -11,8 +11,8 @@ import (
 	"net"
 	"sync"
 	"syscall"
+	"time"
 
-	"github.com/benbjohnson/clock"
 	"github.com/siderolabs/gen/channel"
 	"go.uber.org/zap"
 
@@ -21,9 +21,8 @@ import (
 
 // Runner describes a state of running probe.
 type Runner struct {
-	ID    string
-	Spec  network.ProbeSpecSpec
-	Clock clock.Clock
+	ID   string
+	Spec network.ProbeSpecSpec
 
 	cancel context.CancelFunc
 	wg     sync.WaitGroup
@@ -61,11 +60,7 @@ func (runner *Runner) Stop() {
 func (runner *Runner) run(ctx context.Context, notifyCh chan<- Notification, logger *zap.Logger) {
 	logger = logger.With(zap.String("probe", runner.ID))
 
-	if runner.Clock == nil {
-		runner.Clock = clock.New()
-	}
-
-	ticker := runner.Clock.Ticker(runner.Spec.Interval)
+	ticker := time.NewTicker(runner.Spec.Interval)
 	defer ticker.Stop()
 
 	consecutiveFailures := 0
