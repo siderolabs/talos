@@ -5,6 +5,7 @@
 package httpdefaults
 
 import (
+	"crypto/tls"
 	"crypto/x509"
 	"io/fs"
 	"os"
@@ -53,4 +54,11 @@ func RootCAs() *x509.CertPool {
 	}
 
 	return cachedPool.Clone()
+}
+
+// RootCAsTLSConfig provides a TLS configuration with the root CAs.
+func RootCAsTLSConfig() *tls.Config {
+	return &tls.Config{
+		RootCAs: RootCAs(),
+	}
 }

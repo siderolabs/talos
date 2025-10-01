@@ -1,6 +1,6 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
 #
-# Generated on 2025-09-24T15:45:03Z by kres fdbc9fc.
+# Generated on 2025-10-01T14:57:23Z by kres bc281a9.
 
 "on":
   workflow_run:
@@ -16,6 +16,7 @@
       - integration-provision-0-cron
       - integration-provision-1-cron
       - integration-provision-2-cron
+      - integration-airgapped-cron
       - integration-misc-0-cron
       - integration-misc-1-cron
       - integration-misc-1-enforcing-cron

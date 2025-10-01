@@ -14,6 +14,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 
+	"github.com/siderolabs/talos/pkg/httpdefaults"
 	"github.com/siderolabs/talos/pkg/machinery/client/dialer"
 )
 
@@ -44,7 +45,7 @@ func NewConnection(address string, creds credentials.PerRPCCredentials, accepted
 		grpc.WithTransportCredentials(credentials.NewTLS(tlsConfig)),
 		grpc.WithPerRPCCredentials(creds),
 		grpc.WithSharedWriteBuffer(true),
-		grpc.WithContextDialer(dialer.DynamicProxyDialer),
+		grpc.WithContextDialer(dialer.DynamicProxyDialerWithTLSConfig(httpdefaults.RootCAsTLSConfig)),
 	}
 
 	conn, err = grpc.NewClient(address, grpcOpts...)

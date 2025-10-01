@@ -271,14 +271,32 @@ case "${WITH_ENFORCING:-false}" in
 esac
 
 case "${WITH_AIRGAPPED:-false}" in
-  false)
-    ;;
-  *)
+  http-proxy)
     "${TALOSCTL}" debug air-gapped --advertised-address 172.20.1.1 >/tmp/airgapped.log 2>&1 &
-     sleep 5 # wait for the air-gapped server to start
-     mv air-gapped-patch.yaml /tmp/air-gapped-patch.yaml
+    sleep 5 # wait for the air-gapped server to start
+    cat air-gapped-patch.yaml
+    mv air-gapped-patch.yaml /tmp/air-gapped-patch.yaml
 
     QEMU_FLAGS+=("--config-patch=@/tmp/air-gapped-patch.yaml")
+    ;;
+  secure-http-proxy)
+    "${TALOSCTL}" debug air-gapped --advertised-address 172.20.1.1 --use-secure-proxy >/tmp/airgapped-secure.log 2>&1 &
+    sleep 5 # wait for the air-gapped server to start
+    cat air-gapped-patch.yaml
+    mv air-gapped-patch.yaml /tmp/air-gapped-patch.yaml
+
+    QEMU_FLAGS+=("--config-patch=@/tmp/air-gapped-patch.yaml")
+    ;;
+  https-reverse-proxy)
+    "${TALOSCTL}" debug air-gapped --advertised-address 172.20.1.1 --inject-http-proxy=false --https-reverse-proxy-target=https://registry.dev.siderolabs.io >/tmp/airgapped-reverse-proxy.log 2>&1 &
+    sleep 5 # wait for the air-gapped server to start
+    cat air-gapped-patch.yaml
+    mv air-gapped-patch.yaml /tmp/air-gapped-patch.yaml
+
+    QEMU_FLAGS+=("--config-patch=@/tmp/air-gapped-patch.yaml")
+    QEMU_FLAGS+=("--config-patch=@hack/test/patches/proxied-registry.yaml")
+    ;;
+  false)
     ;;
 esac
 
@@ -311,6 +329,8 @@ function create_cluster {
 }
 
 function destroy_cluster() {
+  jobs -p | xargs -r kill
+
   "${TALOSCTL}" cluster destroy \
     --name "${CLUSTER_NAME}" \
     --provisioner "${PROVISIONER}" \

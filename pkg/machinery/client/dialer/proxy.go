@@ -7,6 +7,7 @@ package dialer
 import (
 	"bufio"
 	"context"
+	"crypto/tls"
 	"encoding/base64"
 	"fmt"
 	"io"
@@ -44,39 +45,57 @@ const grpcUA = "grpc-go/" + grpc.Version
 //
 // DynamicProxyDialer assumes that the address is using 'tcp' network.
 func DynamicProxyDialer(ctx context.Context, addr string) (net.Conn, error) {
-	newAddr := addr
+	return DynamicProxyDialerWithTLSConfig(func() *tls.Config { return &tls.Config{} })(ctx, addr)
+}
 
-	proxyURL, err := mapAddress(addr)
-	if err != nil {
-		return nil, err
-	}
+// DynamicProxyDialerWithTLSConfig is like DynamicProxyDialer but allows
+// specifying custom TLS config to be used when connecting to HTTPS proxy.
+func DynamicProxyDialerWithTLSConfig(tlsConfigFunc func() *tls.Config) func(ctx context.Context, addr string) (net.Conn, error) {
+	return func(ctx context.Context, addr string) (net.Conn, error) {
+		newAddr := addr
 
-	if proxyURL != nil {
-		newAddr = proxyURL.Host
-	}
-
-	conn, err := NetDialerWithTCPKeepalive().DialContext(ctx, "tcp", newAddr)
-	if err != nil {
-		return nil, err
-	}
-
-	if proxyURL == nil {
-		// proxy is disabled if proxyURL is nil.
-		return conn, err
-	}
-
-	// Support SOCKS5
-	if proxyURL.Scheme == "socks5" {
-		socks5Dialer, err := proxySocksFromURL(proxyURL)
+		proxyURL, err := mapAddress(addr)
 		if err != nil {
 			return nil, err
 		}
 
-		return socks5Dialer.Dial("tcp", addr)
-	}
+		if proxyURL != nil {
+			newAddr = proxyURL.Host
+		}
 
-	// Standard HTTP/HTTPS proxy
-	return doHTTPConnectHandshake(ctx, conn, addr, proxyURL, grpcUA)
+		var conn net.Conn
+
+		if proxyURL != nil && proxyURL.Scheme == "https" {
+			conn, err = (&tls.Dialer{
+				NetDialer: NetDialerWithTCPKeepalive(),
+				Config:    tlsConfigFunc(),
+			}).DialContext(ctx, "tcp", proxyURL.Host)
+		} else {
+			conn, err = NetDialerWithTCPKeepalive().DialContext(ctx, "tcp", newAddr)
+		}
+
+		if err != nil {
+			return nil, err
+		}
+
+		if proxyURL == nil {
+			// proxy is disabled if proxyURL is nil.
+			return conn, err
+		}
+
+		// Support SOCKS5
+		if proxyURL.Scheme == "socks5" {
+			socks5Dialer, err := proxySocksFromURL(proxyURL)
+			if err != nil {
+				return nil, err
+			}
+
+			return socks5Dialer.Dial("tcp", addr)
+		}
+
+		// Standard HTTP/HTTPS proxy
+		return doHTTPConnectHandshake(ctx, conn, addr, proxyURL, grpcUA)
+	}
 }
 
 func proxySocksFromURL(u *url.URL) (proxy.Dialer, error) {

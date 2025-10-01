@@ -235,6 +235,12 @@ func (ctrl *DiscoveryServiceController) Run(ctx context.Context, r controller.Ru
 				return fmt.Errorf("error initializing AES cipher: %w", err)
 			}
 
+			tlsConfigFunc := func() *tls.Config {
+				return &tls.Config{
+					RootCAs: httpdefaults.RootCAs(),
+				}
+			}
+
 			client, err = discoveryclient.NewClient(discoveryclient.Options{
 				Cipher:        cipherBlock,
 				Endpoint:      discoveryConfig.TypedSpec().ServiceEndpoint,
@@ -243,13 +249,9 @@ func (ctrl *DiscoveryServiceController) Run(ctx context.Context, r controller.Ru
 				TTL:           defaultDiscoveryTTL,
 				Insecure:      discoveryConfig.TypedSpec().ServiceEndpointInsecure,
 				ClientVersion: version.Tag,
-				TLSConfig: func() *tls.Config {
-					return &tls.Config{
-						RootCAs: httpdefaults.RootCAs(),
-					}
-				},
+				TLSConfig:     tlsConfigFunc,
 				DialOptions: []grpc.DialOption{
-					grpc.WithContextDialer(dialer.DynamicProxyDialer),
+					grpc.WithContextDialer(dialer.DynamicProxyDialerWithTLSConfig(tlsConfigFunc)),
 				},
 			})
 			if err != nil {
