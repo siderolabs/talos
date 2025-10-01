@@ -1,6 +1,6 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
 #
-# Generated on 2025-09-30T11:17:16Z by kres 301c24d.
+# Generated on 2025-10-01T15:07:27Z by kres bc281a9.
 
 "on":
   workflow_dispatch:
@@ -74,5 +74,5 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           RELEASE: ${{ github.event.inputs.release }}
         run: |
-          gh release upload "${RELEASE}" \
+          gh release upload "${RELEASE}" --clobber \
             _out/cloud-images.json

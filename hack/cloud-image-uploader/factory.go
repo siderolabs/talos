@@ -17,7 +17,7 @@ import (
 )
 
 var extensions = map[string]string{
-	"aws": ".raw.xz",
+	"aws": ".raw.zst",
 	"gcp": ".raw.tar.gz",
 }
 
@@ -50,7 +50,7 @@ func (f *FactoryDownloader) Download(ctx context.Context) error {
 func (f *FactoryDownloader) getArtifact(ctx context.Context, name string) (io.ReadCloser, error) {
 	url, err := url.JoinPath(
 		f.Options.FactoryHost,
-		"images",
+		"image",
 		f.Options.SchematicFor(f.Target),
 		f.Options.Tag,
 		name,
@@ -67,6 +67,10 @@ func (f *FactoryDownloader) getArtifact(ctx context.Context, name string) (io.Re
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("failed to download image from %q: %w", url, err)
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("unexpected status code %d when fetching %q", resp.StatusCode, url)
 	}
 
 	return resp.Body, nil

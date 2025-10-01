@@ -232,7 +232,7 @@ spec:
             RELEASE: ${{ github.event.inputs.release }}
             GH_TOKEN: ${{ github.token }}
           command: |-
-            gh release upload "${RELEASE}" \
+            gh release upload "${RELEASE}" --clobber \
               _out/cloud-images.json
     - name: base-unit-tests
       buildxOptions:
