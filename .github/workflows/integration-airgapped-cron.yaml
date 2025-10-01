@@ -1,6 +1,6 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
 #
-# Generated on 2025-10-01T14:57:23Z by kres bc281a9.
+# Generated on 2025-10-01T17:01:09Z by kres bc281a9.
 
 concurrency:
   group: ${{ github.head_ref || github.run_id }}
@@ -8,7 +8,7 @@ concurrency:
 "on":
   schedule:
     - cron: 30 5 * * *
-name: integration-misc-1-cron
+name: integration-airgapped-cron
 jobs:
   default:
     runs-on:
@@ -77,48 +77,37 @@ jobs:
         if: github.event_name == 'schedule'
         run: |
           make talosctl-cni-bundle
-      - name: e2e-no-cluster-discovery
+      - name: e2e-airgapped-http-proxy
         env:
-          GITHUB_STEP_NAME: ${{ github.job}}-e2e-no-cluster-discovery
+          GITHUB_STEP_NAME: ${{ github.job}}-e2e-http-proxy
           IMAGE_REGISTRY: registry.dev.siderolabs.io
           SHORT_INTEGRATION_TEST: "yes"
-          WITH_CLUSTER_DISCOVERY: "false"
+          WITH_AIRGAPPED: http-proxy
         run: |
           sudo -E make e2e-qemu
-      - name: e2e-kubespan
+      - name: e2e-airgapped-secure-proxy
         env:
-          GITHUB_STEP_NAME: ${{ github.job}}-e2e-kubespan
+          GITHUB_STEP_NAME: ${{ github.job}}-e2e-secure-proxy
           IMAGE_REGISTRY: registry.dev.siderolabs.io
           SHORT_INTEGRATION_TEST: "yes"
-          WITH_CLUSTER_DISCOVERY: "true"
-          WITH_KUBESPAN: "true"
+          WITH_AIRGAPPED: secure-http-proxy
         run: |
           sudo -E make e2e-qemu
-      - name: e2e-default-hostname
+      - name: e2e-airgapped-reverse-proxy
         env:
-          DISABLE_DHCP_HOSTNAME: "true"
-          GITHUB_STEP_NAME: ${{ github.job}}-e2e-default-hostname
+          GITHUB_STEP_NAME: ${{ github.job}}-e2e-reverse-proxy
           IMAGE_REGISTRY: registry.dev.siderolabs.io
           SHORT_INTEGRATION_TEST: "yes"
-          VIA_MAINTENANCE_MODE: "true"
-        run: |
-          sudo -E make e2e-qemu
-      - name: e2e-min-requirements
-        env:
-          GITHUB_STEP_NAME: ${{ github.job}}-e2e-min-requirements
-          IMAGE_REGISTRY: registry.dev.siderolabs.io
-          QEMU_MEMORY_CONTROLPLANES: "2048"
-          QEMU_MEMORY_WORKERS: "1024"
-          QEMU_SYSTEM_DISK_SIZE: "10240"
-          SHORT_INTEGRATION_TEST: "yes"
+          WITH_AIRGAPPED: https-reverse-proxy
         run: |
           sudo -E make e2e-qemu
       - name: save artifacts
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: talos-logs-integration-misc-1
+          name: talos-logs-integration-airgapped
           path: |-
             /tmp/logs-*.tar.gz
             /tmp/support-*.zip
+            /tmp/airgapped*.log
           retention-days: "5"

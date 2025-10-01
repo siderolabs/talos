@@ -5,27 +5,23 @@
 package debug
 
 import (
-	"bytes"
 	"context"
-	"crypto/ecdsa"
-	"crypto/elliptic"
-	"crypto/rand"
 	"crypto/tls"
-	"crypto/x509"
-	"crypto/x509/pkix"
+	stdx509 "crypto/x509"
 	"embed"
-	"encoding/pem"
 	"fmt"
 	"io"
 	"io/fs"
 	"log"
-	"math/big"
 	"net"
 	"net/http"
+	"net/http/httputil"
+	"net/url"
 	"os"
 	"strconv"
 	"time"
 
+	"github.com/siderolabs/crypto/x509"
 	"github.com/spf13/cobra"
 	"golang.org/x/sync/errgroup"
 
@@ -40,9 +36,14 @@ import (
 var httpFs embed.FS
 
 var airgappedFlags struct {
-	advertisedAddress net.IP
-	proxyPort         int
-	httpsPort         int
+	advertisedAddress       net.IP
+	proxyPort               int
+	httpsProxyPort          int
+	httpsPort               int
+	useSecureProxy          bool
+	injectHTTPProxy         bool
+	httpsReverseProxyPort   int
+	httpsReverseProxyTarget string
 }
 
 // airgappedCmd represents the `gen ca` command.
@@ -54,12 +55,12 @@ var airgappedCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return cli.WithContext(
 			context.Background(), func(ctx context.Context) error {
-				certPEM, keyPEM, err := generateSelfSignedCert()
+				caPEM, certPEM, keyPEM, err := generateSelfSignedCert()
 				if err != nil {
 					return nil
 				}
 
-				if err = generateConfigPatch(certPEM); err != nil {
+				if err = generateConfigPatch(caPEM); err != nil {
 					return err
 				}
 
@@ -67,6 +68,8 @@ var airgappedCmd = &cobra.Command{
 
 				eg.Go(func() error { return runHTTPServer(ctx, certPEM, keyPEM) })
 				eg.Go(func() error { return runHTTPProxy(ctx) })
+				eg.Go(func() error { return runHTTPSProxy(ctx, certPEM, keyPEM) })
+				eg.Go(func() error { return runHTTPSReverseProxy(ctx, certPEM, keyPEM) })
 
 				return eg.Wait()
 			},
@@ -76,18 +79,27 @@ var airgappedCmd = &cobra.Command{
 
 func generateConfigPatch(caPEM []byte) error {
 	patch1 := &v1alpha1.Config{
-		MachineConfig: &v1alpha1.MachineConfig{
-			MachineEnv: map[string]string{
-				"http_proxy":  fmt.Sprintf("http://%s", net.JoinHostPort(airgappedFlags.advertisedAddress.String(), strconv.Itoa(airgappedFlags.proxyPort))),
-				"https_proxy": fmt.Sprintf("http://%s", net.JoinHostPort(airgappedFlags.advertisedAddress.String(), strconv.Itoa(airgappedFlags.proxyPort))),
-				"no_proxy":    fmt.Sprintf("%s/24", airgappedFlags.advertisedAddress.String()),
-			},
-		},
 		ClusterConfig: &v1alpha1.ClusterConfig{
 			ExtraManifests: []string{
 				fmt.Sprintf("https://%s/debug.yaml", net.JoinHostPort(airgappedFlags.advertisedAddress.String(), strconv.Itoa(airgappedFlags.httpsPort))),
 			},
 		},
+	}
+
+	if airgappedFlags.injectHTTPProxy {
+		proxyURL := fmt.Sprintf("http://%s", net.JoinHostPort(airgappedFlags.advertisedAddress.String(), strconv.Itoa(airgappedFlags.proxyPort)))
+
+		if airgappedFlags.useSecureProxy {
+			proxyURL = fmt.Sprintf("https://%s", net.JoinHostPort(airgappedFlags.advertisedAddress.String(), strconv.Itoa(airgappedFlags.httpsProxyPort)))
+		}
+
+		patch1.MachineConfig = &v1alpha1.MachineConfig{
+			MachineEnv: map[string]string{
+				"http_proxy":  proxyURL,
+				"https_proxy": proxyURL,
+				"no_proxy":    fmt.Sprintf("%s/24", airgappedFlags.advertisedAddress.String()),
+			},
+		}
 	}
 
 	patch2 := security.NewTrustedRootsConfigV1Alpha1()
@@ -111,56 +123,23 @@ func generateConfigPatch(caPEM []byte) error {
 	return os.WriteFile(patchFile, patchBytes, 0o644)
 }
 
-func generateSelfSignedCert() ([]byte, []byte, error) {
-	priv, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
+func generateSelfSignedCert() ([]byte, []byte, []byte, error) {
+	ca, err := x509.NewSelfSignedCertificateAuthority(x509.ECDSA(true))
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, nil, err
 	}
 
-	template := x509.Certificate{
-		SerialNumber:       big.NewInt(1),
-		SignatureAlgorithm: x509.ECDSAWithSHA256,
-		Subject: pkix.Name{
-			Organization: []string{"Test Only"},
-		},
-		NotBefore: time.Now(),
-		NotAfter:  time.Now().Add(time.Hour * 24),
-
-		KeyUsage: x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature,
-		ExtKeyUsage: []x509.ExtKeyUsage{
-			x509.ExtKeyUsageServerAuth,
-			x509.ExtKeyUsageClientAuth,
-		},
-		BasicConstraintsValid: true,
-
-		IsCA: true,
-
-		IPAddresses: []net.IP{airgappedFlags.advertisedAddress},
-	}
-
-	derBytes, err := x509.CreateCertificate(rand.Reader, &template, &template, &priv.PublicKey, priv)
+	serverIdentity, err := x509.NewKeyPair(ca,
+		x509.Organization("test"),
+		x509.CommonName("server"),
+		x509.IPAddresses([]net.IP{airgappedFlags.advertisedAddress}),
+		x509.ExtKeyUsage([]stdx509.ExtKeyUsage{stdx509.ExtKeyUsageServerAuth}),
+	)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, nil, err
 	}
 
-	var crt bytes.Buffer
-
-	if err = pem.Encode(&crt, &pem.Block{Type: "CERTIFICATE", Bytes: derBytes}); err != nil {
-		return nil, nil, err
-	}
-
-	var key bytes.Buffer
-
-	keyBytes, err := x509.MarshalECPrivateKey(priv)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	if err = pem.Encode(&key, &pem.Block{Type: "EC PRIVATE KEY", Bytes: keyBytes}); err != nil {
-		return nil, nil, err
-	}
-
-	return crt.Bytes(), key.Bytes(), nil
+	return ca.CrtPEM, serverIdentity.CrtPEM, serverIdentity.KeyPEM, nil
 }
 
 func runHTTPServer(ctx context.Context, certPEM, keyPEM []byte) error {
@@ -219,7 +198,21 @@ func handleTunneling(ctx context.Context, w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	src := clientConn.(*net.TCPConn)
+	var src conn
+
+	if src, ok = clientConn.(conn); !ok {
+		if tlsConn, ok := clientConn.(*tls.Conn); ok {
+			src = &tlsConnWrapper{
+				Conn:           tlsConn,
+				closeReadWrite: tlsConn.NetConn().(*net.TCPConn),
+			}
+		} else {
+			log.Printf("HTTP CONNECT: tunneling to %s: failed: connection is not a net.Conn: %T", addr, clientConn)
+			http.Error(w, "Connection is not a net.Conn", http.StatusInternalServerError)
+
+			return
+		}
+	}
 
 	src.Write([]byte("HTTP/1.0 200 Connection established\r\n\r\n")) //nolint:errcheck
 
@@ -238,7 +231,29 @@ func handleTunneling(ctx context.Context, w http.ResponseWriter, r *http.Request
 	}
 }
 
-func transfer(destination *net.TCPConn, source *net.TCPConn, label string) error {
+type conn interface {
+	io.Reader
+	io.Writer
+	io.Closer
+	CloseRead() error
+	CloseWrite() error
+}
+
+type tlsConnWrapper struct {
+	net.Conn
+
+	closeReadWrite *net.TCPConn
+}
+
+func (t *tlsConnWrapper) CloseRead() error {
+	return t.closeReadWrite.CloseRead()
+}
+
+func (t *tlsConnWrapper) CloseWrite() error {
+	return t.closeReadWrite.CloseWrite()
+}
+
+func transfer(destination conn, source conn, label string) error {
 	defer destination.CloseWrite() //nolint:errcheck
 	defer source.CloseRead()       //nolint:errcheck
 
@@ -307,10 +322,82 @@ func runHTTPProxy(ctx context.Context) error {
 	return srv.Close()
 }
 
+func runHTTPSProxy(ctx context.Context, certPEM, keyPEM []byte) error {
+	certificate, err := tls.X509KeyPair(certPEM, keyPEM)
+	if err != nil {
+		return err
+	}
+
+	tlsConfig := &tls.Config{
+		Certificates: []tls.Certificate{certificate},
+	}
+
+	srv := &http.Server{
+		Addr: net.JoinHostPort("", strconv.Itoa(airgappedFlags.httpsProxyPort)),
+		Handler: loggingMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			if r.Method == http.MethodConnect {
+				handleTunneling(ctx, w, r)
+			} else {
+				handleHTTP(w, r)
+			}
+		})),
+		// Disable HTTP/2.
+		TLSNextProto: make(map[string]func(*http.Server, *tls.Conn, http.Handler)),
+		// Secure
+		TLSConfig: tlsConfig,
+	}
+
+	log.Printf("starting HTTPS proxy on %s", srv.Addr)
+
+	go srv.ListenAndServeTLS("", "") //nolint:errcheck
+
+	<-ctx.Done()
+
+	return srv.Close()
+}
+
+func runHTTPSReverseProxy(ctx context.Context, certPEM, keyPEM []byte) error {
+	certificate, err := tls.X509KeyPair(certPEM, keyPEM)
+	if err != nil {
+		return err
+	}
+
+	tlsConfig := &tls.Config{
+		Certificates: []tls.Certificate{certificate},
+	}
+
+	target, err := url.Parse(airgappedFlags.httpsReverseProxyTarget)
+	if err != nil {
+		return fmt.Errorf("error parsing reverse proxy target %q: %w", airgappedFlags.httpsReverseProxyTarget, err)
+	}
+
+	reverseProxy := httputil.NewSingleHostReverseProxy(target)
+
+	srv := &http.Server{
+		Addr:    net.JoinHostPort("", strconv.Itoa(airgappedFlags.httpsReverseProxyPort)),
+		Handler: loggingMiddleware(reverseProxy),
+		// Secure
+		TLSConfig: tlsConfig,
+	}
+
+	log.Printf("starting HTTPS reverse proxy on %s to %s", srv.Addr, target.String())
+
+	go srv.ListenAndServeTLS("", "") //nolint:errcheck
+
+	<-ctx.Done()
+
+	return srv.Close()
+}
+
 func init() {
 	airgappedCmd.Flags().IPVar(&airgappedFlags.advertisedAddress, "advertised-address", net.IPv4(10, 5, 0, 2), "The address to advertise to the cluster.")
 	airgappedCmd.Flags().IntVar(&airgappedFlags.httpsPort, "https-port", 8001, "The HTTPS server port.")
 	airgappedCmd.Flags().IntVar(&airgappedFlags.proxyPort, "proxy-port", 8002, "The HTTP proxy port.")
+	airgappedCmd.Flags().IntVar(&airgappedFlags.httpsProxyPort, "https-proxy-port", 8003, "The HTTPS proxy port.")
+	airgappedCmd.Flags().BoolVar(&airgappedFlags.useSecureProxy, "use-secure-proxy", false, "Whether to use HTTPS proxy.")
+	airgappedCmd.Flags().BoolVar(&airgappedFlags.injectHTTPProxy, "inject-http-proxy", true, "Whether to inject HTTP proxy configuration.")
+	airgappedCmd.Flags().IntVar(&airgappedFlags.httpsReverseProxyPort, "https-reverse-proxy-port", 8004, "The HTTPS reverse proxy port.")
+	airgappedCmd.Flags().StringVar(&airgappedFlags.httpsReverseProxyTarget, "https-reverse-proxy-target", "http://localhost/", "The HTTPS reverse proxy target (URL).")
 
 	Cmd.AddCommand(airgappedCmd)
 }

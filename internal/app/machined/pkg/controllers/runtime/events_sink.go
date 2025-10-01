@@ -22,6 +22,7 @@ import (
 
 	networkutils "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/network/utils"
 	machinedruntime "github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
+	"github.com/siderolabs/talos/pkg/httpdefaults"
 	"github.com/siderolabs/talos/pkg/machinery/client/dialer"
 	"github.com/siderolabs/talos/pkg/machinery/resources/network"
 	"github.com/siderolabs/talos/pkg/machinery/resources/runtime"
@@ -166,7 +167,7 @@ func (ctrl *EventsSinkController) Run(ctx context.Context, r controller.Runtime,
 				cfg.TypedSpec().Endpoint,
 				grpc.WithTransportCredentials(insecure.NewCredentials()),
 				grpc.WithSharedWriteBuffer(true),
-				grpc.WithContextDialer(dialer.DynamicProxyDialer),
+				grpc.WithContextDialer(dialer.DynamicProxyDialerWithTLSConfig(httpdefaults.RootCAsTLSConfig)),
 			)
 			if err != nil {
 				return fmt.Errorf("error establishing connection to event sink: %w", err)

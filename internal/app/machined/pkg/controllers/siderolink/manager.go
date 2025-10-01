@@ -353,7 +353,7 @@ func (ctrl *ManagerController) provision(ctx context.Context, r controller.Runti
 			cfg.TypedSpec().Host,
 			withTransportCredentials(cfg.TypedSpec().Insecure),
 			grpc.WithSharedWriteBuffer(true),
-			grpc.WithContextDialer(dialer.DynamicProxyDialer),
+			grpc.WithContextDialer(dialer.DynamicProxyDialerWithTLSConfig(httpdefaults.RootCAsTLSConfig)),
 		)
 		if connErr != nil {
 			return nil, fmt.Errorf("error dialing SideroLink endpoint %q: %w", cfg.TypedSpec().Host, connErr)
