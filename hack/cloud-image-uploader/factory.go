@@ -75,6 +75,11 @@ func (f *FactoryDownloader) getArtifact(ctx context.Context, name string) (io.Re
 func (f *FactoryDownloader) saveArtifact(name string, r io.Reader) error {
 	artifact := filepath.Join(f.Options.ArtifactsPath, name)
 
+	err := os.MkdirAll(f.Options.ArtifactsPath, 0o755)
+	if err != nil {
+		return fmt.Errorf("failed to create artifacts directory %q: %w", f.Options.ArtifactsPath, err)
+	}
+
 	of, err := os.OpenFile(artifact, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0o644)
 	if err != nil {
 		return fmt.Errorf("failed to create file %q: %w", artifact, err)
