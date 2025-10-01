@@ -23,10 +23,11 @@ import (
 
 	"github.com/g0rbe/go-chattr"
 	"github.com/google/uuid"
+	"golang.org/x/sys/unix"
 	"golang.org/x/text/encoding/unicode"
 
 	"github.com/siderolabs/talos/internal/pkg/mount/v3"
-	"github.com/siderolabs/talos/pkg/machinery/constants"
+	"github.com/siderolabs/talos/pkg/xfs"
 )
 
 const (
@@ -87,7 +88,7 @@ const (
 )
 
 func varPath(scope uuid.UUID, varName string) string {
-	return fmt.Sprintf("/sys/firmware/efi/efivars/%s-%s", varName, scope.String())
+	return fmt.Sprintf("%s-%s", varName, scope.String())
 }
 
 // ReadWriter is an interface for reading and writing EFI variables.
@@ -112,7 +113,9 @@ func NewFilesystemReaderWriter(write bool) (*FilesystemReaderWriter, error) {
 	}
 
 	if write {
-		point, err := mount.NewManager(mount.WithTarget(constants.EFIVarsMountPoint),
+		point, err := mount.NewManager(
+			mount.WithDetached(),
+			mount.WithMountAttributes(unix.MOUNT_ATTR_NOSUID|unix.MOUNT_ATTR_NOEXEC|unix.MOUNT_ATTR_NODEV|unix.MOUNT_ATTR_RELATIME),
 			mount.WithFsopen("efivarfs"),
 		).Mount()
 		if err != nil {
@@ -143,33 +146,29 @@ func (rw *FilesystemReaderWriter) Write(scope uuid.UUID, varName string, attrs A
 
 	// Ref: https://docs.kernel.org/filesystems/efivarfs.html
 	// Remove immutable attribute from the efivarfs file if it exists
-	if _, err := os.Stat(varPath(scope, varName)); err == nil {
-		f, err := os.Open(varPath(scope, varName))
-		if err != nil {
-			return fmt.Errorf("failed to open efivarfs file %q: %w", varPath(scope, varName), err)
-		}
 
-		defer f.Close() //nolint:errcheck
-
-		if err := chattr.UnsetAttr(f, chattr.FS_IMMUTABLE_FL); err != nil {
-			return fmt.Errorf("failed to clear immutable attribute from efivarfs file %q: %w", varPath(scope, varName), err)
-		}
-
-		defer chattr.SetAttr(f, chattr.FS_IMMUTABLE_FL) //nolint:errcheck
+	xfsFile, err := xfs.OpenFile(rw.point.Root(), varPath(scope, varName), os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0o644)
+	if err != nil && !errors.Is(err, fs.ErrNotExist) {
+		return fmt.Errorf("failed to open efivarfs file %q: %w", varPath(scope, varName), err)
 	}
+
+	defer xfsFile.Close() //nolint:errcheck
+
+	f, err := xfs.AsOSFile(xfsFile, varPath(scope, varName))
+	if err != nil {
+		return fmt.Errorf("failed to convert efivarfs file %q to os.File: %w", varPath(scope, varName), err)
+	}
+
+	defer f.Close() //nolint:errcheck
+
+	if err := chattr.UnsetAttr(xfsFile.(*os.File), chattr.FS_IMMUTABLE_FL); err != nil {
+		return fmt.Errorf("failed to clear immutable attribute from efivarfs file %q: %w", varPath(scope, varName), err)
+	}
+
+	defer chattr.SetAttr(f, chattr.FS_IMMUTABLE_FL) //nolint:errcheck
 
 	// Write attributes, see @linux//Documentation/filesystems:efivarfs.rst for format
-	f, err := os.OpenFile(varPath(scope, varName), os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0o644)
-	if err != nil {
-		e := err
-		// Unwrap PathError here as we wrap our own parameter message around it
-		var perr *fs.PathError
-		if errors.As(err, &perr) {
-			e = perr.Err
-		}
 
-		return fmt.Errorf("writing %q in scope %s: %w", varName, scope, e)
-	}
 	// Required by UEFI 2.10 Section 8.2.3:
 	// Runtime access to a data variable implies boot service access. Attributes
 	// that have EFI_VARIABLE_RUNTIME_ACCESS set must also have
@@ -183,8 +182,8 @@ func (rw *FilesystemReaderWriter) Write(scope uuid.UUID, varName string, attrs A
 	binary.LittleEndian.PutUint32(buf[:4], uint32(attrs))
 	copy(buf[4:], value)
 
-	_, err = f.Write(buf)
-	if err1 := f.Close(); err1 != nil && err == nil {
+	_, err = xfsFile.Write(buf)
+	if err1 := xfsFile.Close(); err1 != nil && err == nil {
 		err = err1
 	}
 
@@ -193,7 +192,7 @@ func (rw *FilesystemReaderWriter) Write(scope uuid.UUID, varName string, attrs A
 
 // Read reads the value of the named variable in the given scope.
 func (rw *FilesystemReaderWriter) Read(scope uuid.UUID, varName string) ([]byte, Attribute, error) {
-	val, err := os.ReadFile(varPath(scope, varName))
+	val, err := xfs.ReadFile(rw.point.Root(), varPath(scope, varName))
 	if err != nil {
 		e := err
 		// Unwrap PathError here as we wrap our own parameter message around it
