@@ -24,6 +24,7 @@ type Versions struct {
 	KubeScheduler         string
 
 	Installer string
+	Talos     string
 
 	Pause string
 }
@@ -47,6 +48,7 @@ func List(config config.Config) Versions {
 	images.KubeScheduler = config.Cluster().Scheduler().Image()
 
 	images.Installer = DefaultInstallerImage
+	images.Talos = DefaultTalosImage
 
 	images.Pause = DefaultSandboxImage
 

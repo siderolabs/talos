@@ -31,4 +31,7 @@ var (
 	// DefaultTalosImageRepository is the default container repository for
 	// the talos image.
 	DefaultTalosImageRepository = Registry + "/" + Username + "/" + "talos"
+
+	// DefaultTalosImage is the default talos image.
+	DefaultTalosImage = DefaultTalosImageRepository + ":" + version.Tag
 )

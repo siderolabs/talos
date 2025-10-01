@@ -1900,7 +1900,8 @@ talosctl image default [flags]
 ### Options
 
 ```
-  -h, --help   help for default
+  -h, --help                 help for default
+      --provisioner string   include provisioner specific images (default "installer")
 ```
 
 ### Options inherited from parent commands

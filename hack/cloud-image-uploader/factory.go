@@ -8,6 +8,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"net/url"
 	"os"
@@ -64,6 +65,8 @@ func (f *FactoryDownloader) getArtifact(ctx context.Context, name string) (io.Re
 		return nil, fmt.Errorf("failed to create request: %w", err)
 	}
 
+	log.Printf("requesting artifact: %s", url)
+
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("failed to download image from %q: %w", url, err)
@@ -89,6 +92,8 @@ func (f *FactoryDownloader) saveArtifact(name string, r io.Reader) error {
 		return fmt.Errorf("failed to create file %q: %w", artifact, err)
 	}
 	defer of.Close() //nolint:errcheck
+
+	log.Printf("saving artifact: %s", artifact)
 
 	_, err = io.Copy(of, r)
 	if err != nil {

@@ -18,6 +18,7 @@ import (
 
 	"github.com/dustin/go-humanize"
 	"github.com/spf13/cobra"
+	"github.com/spf13/pflag"
 
 	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/helpers"
 	"github.com/siderolabs/talos/pkg/imager/cache"
@@ -149,7 +150,15 @@ var imageDefaultCmd = &cobra.Command{
 		fmt.Printf("%s\n", images.KubeScheduler)
 		fmt.Printf("%s\n", images.KubeProxy)
 		fmt.Printf("%s\n", images.Kubelet)
-		fmt.Printf("%s\n", images.Installer)
+
+		if slices.Contains([]string{provisionerInstaller, provisionerAll}, imageDefaultCmdFlags.provisioner.String()) {
+			fmt.Printf("%s\n", images.Installer)
+		}
+
+		if slices.Contains([]string{provisionerDocker, provisionerAll}, imageDefaultCmdFlags.provisioner.String()) {
+			fmt.Printf("%s\n", images.Talos)
+		}
+
 		fmt.Printf("%s\n", images.Pause)
 
 		return nil
@@ -305,11 +314,25 @@ var imageCacheCreateCmdFlags struct {
 	force    bool
 }
 
+const (
+	provisionerDocker    = "docker"
+	provisionerInstaller = "installer"
+	provisionerAll       = "all"
+)
+
+var imageDefaultCmdFlags = struct {
+	provisioner pflag.Value
+}{
+	provisioner: helpers.StringChoice(provisionerInstaller, provisionerDocker, provisionerAll),
+}
+
 func init() {
 	imageCmd.PersistentFlags().StringVar(&imageCmdFlags.namespace, "namespace", "cri", "namespace to use: `system` (etcd and kubelet images) or `cri` for all Kubernetes workloads")
 	addCommand(imageCmd)
 
 	imageCmd.AddCommand(imageDefaultCmd)
+	imageDefaultCmd.PersistentFlags().Var(imageDefaultCmdFlags.provisioner, "provisioner", "include provisioner specific images")
+
 	imageCmd.AddCommand(imageListCmd)
 	imageCmd.AddCommand(imagePullCmd)
 	imageCmd.AddCommand(imageCacheCreateCmd)
