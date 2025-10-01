@@ -35,8 +35,6 @@ machine:
                 endpoints:
                     - https://ghcr.io.my-mirror.com
     features:
-        rbac: true
-        apidCheckExtKeyUsage: true
         diskQuotaSupport: true
         kubePrism:
             enabled: true

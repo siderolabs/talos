@@ -16,8 +16,6 @@ machine:
     install:
         wipe: false
     features:
-        rbac: true
-        apidCheckExtKeyUsage: true
         diskQuotaSupport: true
         kubePrism:
             enabled: true
@@ -53,7 +51,6 @@ cluster:
         image: registry.k8s.io/kube-apiserver:v1.28.0
         certSANs:
             - base
-        disablePodSecurityPolicy: true
         admissionControl:
             - name: PodSecurity
               configuration:

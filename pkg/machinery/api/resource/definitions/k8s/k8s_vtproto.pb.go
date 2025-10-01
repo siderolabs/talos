@@ -72,16 +72,6 @@ func (m *APIServerConfigSpec) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 		i--
 		dAtA[i] = 0x5a
 	}
-	if m.PodSecurityPolicyEnabled {
-		i--
-		if m.PodSecurityPolicyEnabled {
-			dAtA[i] = 1
-		} else {
-			dAtA[i] = 0
-		}
-		i--
-		dAtA[i] = 0x50
-	}
 	if len(m.EnvironmentVariables) > 0 {
 		for k := range m.EnvironmentVariables {
 			v := m.EnvironmentVariables[k]
@@ -2482,9 +2472,6 @@ func (m *APIServerConfigSpec) SizeVT() (n int) {
 			n += mapEntrySize + 1 + protohelpers.SizeOfVarint(uint64(mapEntrySize))
 		}
 	}
-	if m.PodSecurityPolicyEnabled {
-		n += 2
-	}
 	l = len(m.AdvertisedAddress)
 	if l > 0 {
 		n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
@@ -3863,26 +3850,6 @@ func (m *APIServerConfigSpec) UnmarshalVT(dAtA []byte) error {
 			}
 			m.EnvironmentVariables[mapkey] = mapvalue
 			iNdEx = postIndex
-		case 10:
-			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field PodSecurityPolicyEnabled", wireType)
-			}
-			var v int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return protohelpers.ErrIntOverflow
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				v |= int(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			m.PodSecurityPolicyEnabled = bool(v != 0)
 		case 11:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field AdvertisedAddress", wireType)

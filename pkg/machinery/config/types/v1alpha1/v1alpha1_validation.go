@@ -316,10 +316,6 @@ func (c *Config) Validate(mode validation.RuntimeMode, options ...validation.Opt
 	}
 
 	if c.Machine().Features().KubernetesTalosAPIAccess().Enabled() {
-		if !c.Machine().Features().RBACEnabled() {
-			result = multierror.Append(result, errors.New("feature API RBAC should be enabled when Kubernetes Talos API Access feature is enabled"))
-		}
-
 		if !c.Machine().Type().IsControlPlane() {
 			result = multierror.Append(result, errors.New("feature Kubernetes Talos API Access can only be enabled on control plane machines"))
 		}

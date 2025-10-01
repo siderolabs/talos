@@ -80,7 +80,6 @@ type APIServer interface {
 	ExtraArgs() map[string]string
 	ExtraVolumes() []VolumeMount
 	Env() Env
-	DisablePodSecurityPolicy() bool
 	AdmissionControl() []AdmissionPlugin
 	AuditPolicy() map[string]any
 	Resources() Resources

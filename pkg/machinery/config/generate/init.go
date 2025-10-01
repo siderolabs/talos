@@ -58,14 +58,16 @@ func (in *Input) init() ([]config.Document, error) {
 		MachineFeatures: &v1alpha1.FeaturesConfig{},
 	}
 
-	machine.MachineFeatures.RBAC = pointer.To(true)
-
 	if in.Options.VersionContract.StableHostnameEnabled() && !in.Options.VersionContract.MultidocNetworkConfigSupported() {
 		machine.MachineFeatures.StableHostname = pointer.To(true) //nolint:staticcheck // using legacy field for older Talos versions
 	}
 
-	if in.Options.VersionContract.ApidExtKeyUsageCheckEnabled() {
-		machine.MachineFeatures.ApidCheckExtKeyUsage = pointer.To(true)
+	if !in.Options.VersionContract.HideRBACAndKeyUsage() {
+		machine.MachineFeatures.RBAC = pointer.To(true)
+
+		if in.Options.VersionContract.ApidExtKeyUsageCheckEnabled() {
+			machine.MachineFeatures.ApidCheckExtKeyUsage = pointer.To(true)
+		}
 	}
 
 	if in.Options.VersionContract.DiskQuotaSupportEnabled() {
@@ -210,7 +212,9 @@ func (in *Input) init() ([]config.Document, error) {
 		}
 	}
 
-	cluster.APIServerConfig.DisablePodSecurityPolicyConfig = pointer.To(true)
+	if !in.Options.VersionContract.HideDisablePSP() {
+		cluster.APIServerConfig.DisablePodSecurityPolicyConfig = pointer.To(true)
+	}
 
 	if in.Options.VersionContract.SecretboxEncryptionSupported() {
 		cluster.ClusterSecretboxEncryptionSecret = in.Options.SecretsBundle.Secrets.SecretboxEncryptionSecret

@@ -1118,8 +1118,7 @@ type APIServerConfig struct {
 	//   description: |
 	//     Extra certificate subject alternative names for the API server's certificate.
 	CertSANs []string `yaml:"certSANs,omitempty"`
-	//   description: |
-	//     Disable PodSecurityPolicy in the API server and default manifests.
+	// docgen:nodoc
 	DisablePodSecurityPolicyConfig *bool `yaml:"disablePodSecurityPolicy,omitempty"`
 	//   description: |
 	//     Configure the API server admission plugins.
@@ -2199,8 +2198,7 @@ var _ config.Features = (*FeaturesConfig)(nil)
 
 // FeaturesConfig describes individual Talos features that can be switched on or off.
 type FeaturesConfig struct {
-	//   description: |
-	//     Enable role-based access control (RBAC).
+	// docgen:nodoc
 	RBAC *bool `yaml:"rbac,omitempty"`
 	// docgen:nodoc
 	//
@@ -2213,8 +2211,7 @@ type FeaturesConfig struct {
 	//   examples:
 	//     - value: kubernetesTalosAPIAccessConfigExample()
 	KubernetesTalosAPIAccessConfig *KubernetesTalosAPIAccessConfig `yaml:"kubernetesTalosAPIAccess,omitempty"`
-	//   description: |
-	//     Enable checks for extended key usage of client certificates in apid.
+	// docgen:nodoc
 	ApidCheckExtKeyUsage *bool `yaml:"apidCheckExtKeyUsage,omitempty"`
 	//   description: |
 	//     Enable XFS project quota support for EPHEMERAL partition and user disks.

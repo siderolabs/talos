@@ -162,14 +162,6 @@ func (o *APID) Runner(r runtime.Runtime) (runner.Runner, error) {
 		},
 	}
 
-	if r.Config().Machine().Features().RBACEnabled() {
-		args.ProcessArgs = append(args.ProcessArgs, "--enable-rbac")
-	}
-
-	if r.Config().Machine().Features().ApidCheckExtKeyUsageEnabled() {
-		args.ProcessArgs = append(args.ProcessArgs, "--enable-ext-key-usage-check")
-	}
-
 	// Set the mounts.
 	mounts := []specs.Mount{
 		{Type: "bind", Destination: "/etc/ssl", Source: "/etc/ssl", Options: []string{"bind", "ro"}},

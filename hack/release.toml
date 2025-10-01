@@ -83,6 +83,18 @@ This field can be set to enable WOL and specify the desired WOL modes.
 Talos Linux now supports [embedding the machine configuration](https://www.talos.dev/v1.12/talos-guides/configuration/acquire/) directly into the boot image.
 """
 
+    [notes.feature-lock]
+        title = "Feature Lock"
+        description = """\
+Talos now ignores the following machine configuration fields:
+
+- `machine.features.rbac` (locked to true)
+- `machine.features.apidCheckExtKeyUsage` (locked to true)
+- `cluster.apiServer.disablePodSecurityPolicy` (locked to false)
+
+These fields were removed from the default machine configuration schema in v1.12 and are now always set to the locked values above.
+"""
+
 [make_deps]
 
     [make_deps.tools]

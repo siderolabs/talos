@@ -257,7 +257,7 @@ func machineSysfsExample() map[string]string {
 
 func machineFeaturesExample() *FeaturesConfig {
 	return &FeaturesConfig{
-		RBAC: pointer.To(true),
+		DiskQuotaSupport: pointer.To(true),
 	}
 }
 

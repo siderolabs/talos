@@ -348,10 +348,6 @@ func (ctrl *ControlPlaneStaticPodController) manageAPIServer(ctx context.Context
 
 	enabledAdmissionPlugins := []string{"NodeRestriction"}
 
-	if cfg.PodSecurityPolicyEnabled {
-		enabledAdmissionPlugins = append(enabledAdmissionPlugins, "PodSecurityPolicy")
-	}
-
 	args := []string{
 		"/usr/local/bin/kube-apiserver",
 	}

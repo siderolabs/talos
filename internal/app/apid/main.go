@@ -65,9 +65,6 @@ func apidMain() error {
 
 	log.SetFlags(log.Lshortfile | log.Ldate | log.Lmicroseconds | log.Ltime)
 
-	rbacEnabled := flag.Bool("enable-rbac", false, "enable RBAC for Talos API")
-	extKeyUsageCheckEnabled := flag.Bool("enable-ext-key-usage-check", false, "enable check for client certificate ext key usage")
-
 	flag.Parse()
 
 	go runDebugServer(ctx)
@@ -95,9 +92,7 @@ func apidMain() error {
 		return fmt.Errorf("failed to create OS-level TLS configuration: %w", err)
 	}
 
-	if *extKeyUsageCheckEnabled {
-		serverTLSConfig.VerifyPeerCertificate = verifyExtKeyUsage
-	}
+	serverTLSConfig.VerifyPeerCertificate = verifyExtKeyUsage
 
 	clientTLSConfig, err := tlsConfig.ClientConfig()
 	if err != nil {
@@ -168,13 +163,8 @@ func apidMain() error {
 	}
 
 	networkServer := func() *grpc.Server {
-		mode := authz.Disabled
-		if *rbacEnabled {
-			mode = authz.Enabled
-		}
-
 		injector := &authz.Injector{
-			Mode: mode,
+			Mode: authz.Enabled,
 		}
 
 		if debug.Enabled {

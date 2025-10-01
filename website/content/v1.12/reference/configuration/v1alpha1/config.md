@@ -331,7 +331,7 @@ registries:
 {{< /highlight >}}</details> | |
 |`features` |<a href="#Config.machine.features">FeaturesConfig</a> |Features describe individual Talos features that can be switched on or off. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 features:
-    rbac: true # Enable role-based access control (RBAC).
+    diskQuotaSupport: true # Enable XFS project quota support for EPHEMERAL partition and user disks.
 
     # # Configure Talos API access from Kubernetes pods.
     # kubernetesTalosAPIAccess:
@@ -2135,7 +2135,7 @@ FeaturesConfig describes individual Talos features that can be switched on or of
 {{< highlight yaml >}}
 machine:
     features:
-        rbac: true # Enable role-based access control (RBAC).
+        diskQuotaSupport: true # Enable XFS project quota support for EPHEMERAL partition and user disks.
 
         # # Configure Talos API access from Kubernetes pods.
         # kubernetesTalosAPIAccess:
@@ -2151,7 +2151,6 @@ machine:
 
 | Field | Type | Description | Value(s) |
 |-------|------|-------------|----------|
-|`rbac` |bool |Enable role-based access control (RBAC).  | |
 |`kubernetesTalosAPIAccess` |<a href="#Config.machine.features.kubernetesTalosAPIAccess">KubernetesTalosAPIAccessConfig</a> |Configure Talos API access from Kubernetes pods.<br><br>This feature is disabled if the feature config is not specified. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 kubernetesTalosAPIAccess:
     enabled: true # Enable Talos API access from Kubernetes pods.
@@ -2162,7 +2161,6 @@ kubernetesTalosAPIAccess:
     allowedKubernetesNamespaces:
         - kube-system
 {{< /highlight >}}</details> | |
-|`apidCheckExtKeyUsage` |bool |Enable checks for extended key usage of client certificates in apid.  | |
 |`diskQuotaSupport` |bool |Enable XFS project quota support for EPHEMERAL partition and user disks.<br>Also enables kubelet tracking of ephemeral disk usage in the kubelet via quota.  | |
 |`kubePrism` |<a href="#Config.machine.features.kubePrism">KubePrism</a> |KubePrism - local proxy/load balancer on defined port that will distribute<br>requests to all API servers in the cluster.  | |
 |`hostDNS` |<a href="#Config.machine.features.hostDNS">HostDNSConfig</a> |Configures host DNS caching resolver.  | |
@@ -2917,7 +2915,6 @@ image: registry.k8s.io/kube-apiserver:v1.34.1
 |`extraVolumes` |<a href="#Config.cluster.apiServer.extraVolumes.">[]VolumeMountConfig</a> |Extra volumes to mount to the API server static pod.  | |
 |`env` |Env |The `env` field allows for the addition of environment variables for the control plane component.  | |
 |`certSANs` |[]string |Extra certificate subject alternative names for the API server's certificate.  | |
-|`disablePodSecurityPolicy` |bool |Disable PodSecurityPolicy in the API server and default manifests.  | |
 |`admissionControl` |<a href="#Config.cluster.apiServer.admissionControl.">[]AdmissionPluginConfig</a> |Configure the API server admission plugins. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 admissionControl:
     - name: PodSecurity # Name is the name of the admission controller.

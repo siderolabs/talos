@@ -34,7 +34,7 @@ func TestNew(t *testing.T) {
 	v1alpha1Cfg := &v1alpha1.Config{
 		MachineConfig: &v1alpha1.MachineConfig{
 			MachineFeatures: &v1alpha1.FeaturesConfig{
-				RBAC: pointer.To(true),
+				DiskQuotaSupport: pointer.To(true),
 			},
 		},
 		ClusterConfig: &v1alpha1.ClusterConfig{
@@ -63,7 +63,7 @@ func TestNew(t *testing.T) {
 
 	assert.False(t, cfg.Readonly())
 	assert.False(t, cfg.Debug())
-	assert.True(t, cfg.Machine().Features().RBACEnabled())
+	assert.True(t, cfg.Machine().Features().DiskQuotaSupportEnabled())
 	assert.Equal(t, "topsecret", cfg.Cluster().Secret())
 	assert.Equal(t, "https://siderolink.api/join?jointoken=secret&user=alice", cfg.SideroLink().APIUrl().String())
 	assert.Equal(t, "test-extension", cfg.ExtensionServiceConfigs()[0].Name())

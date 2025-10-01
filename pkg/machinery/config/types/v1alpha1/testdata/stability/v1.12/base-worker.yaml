@@ -16,8 +16,6 @@ machine:
     install:
         wipe: false
     features:
-        rbac: true
-        apidCheckExtKeyUsage: true
         diskQuotaSupport: true
         kubePrism:
             enabled: true

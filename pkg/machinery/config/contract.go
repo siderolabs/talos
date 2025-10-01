@@ -182,3 +182,13 @@ func (contract *VersionContract) VolumeConfigEncryptionSupported() bool {
 func (contract *VersionContract) MultidocNetworkConfigSupported() bool {
 	return contract.Greater(TalosVersion1_11)
 }
+
+// HideDisablePSP returns true if version of Talos should hide DisablePodSecurityPolicy field from the user.
+func (contract *VersionContract) HideDisablePSP() bool {
+	return contract.Greater(TalosVersion1_11)
+}
+
+// HideRBACAndKeyUsage returns true if version of Talos should hide RBAC and ApidCheckExtKeyUsage fields from the user.
+func (contract *VersionContract) HideRBACAndKeyUsage() bool {
+	return contract.Greater(TalosVersion1_11)
+}

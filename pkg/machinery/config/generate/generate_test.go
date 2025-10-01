@@ -100,7 +100,7 @@ func (suite *GenerateSuite) TestGenerateInitSuccess() {
 	cfg, err := suite.input.Config(machine.TypeInit)
 	suite.Require().NoError(err)
 
-	suite.True(cfg.Machine().Features().RBACEnabled())
+	suite.NotEmpty(cfg.Machine().Security().IssuingCA())
 }
 
 func (suite *GenerateSuite) TestGenerateControlPlaneSuccess() {
@@ -110,14 +110,14 @@ func (suite *GenerateSuite) TestGenerateControlPlaneSuccess() {
 	_, err = cfg.Validate(runtimeMode{false})
 	suite.Require().NoError(err)
 
-	suite.True(cfg.Machine().Features().RBACEnabled())
+	suite.NotEmpty(cfg.Machine().Security().IssuingCA())
 }
 
 func (suite *GenerateSuite) TestGenerateWorkerSuccess() {
 	cfg, err := suite.input.Config(machine.TypeWorker)
 	suite.Require().NoError(err)
 
-	suite.True(cfg.Machine().Features().RBACEnabled())
+	suite.NotEmpty(cfg.Machine().Security().IssuingCA())
 }
 
 func (suite *GenerateSuite) TestGenerateTalosconfigSuccess() {

@@ -189,18 +189,17 @@ func NewControlPlaneAPIServerController() *ControlPlaneAPIServerController {
 				}
 
 				*res.TypedSpec() = k8s.APIServerConfigSpec{
-					Image:                    cfgProvider.Cluster().APIServer().Image(),
-					CloudProvider:            cloudProvider,
-					ControlPlaneEndpoint:     cfgProvider.Cluster().Endpoint().String(),
-					EtcdServers:              []string{fmt.Sprintf("https://%s", nethelpers.JoinHostPort("localhost", constants.EtcdClientPort))},
-					LocalPort:                cfgProvider.Cluster().LocalAPIServerPort(),
-					ServiceCIDRs:             cfgProvider.Cluster().Network().ServiceCIDRs(),
-					ExtraArgs:                cfgProvider.Cluster().APIServer().ExtraArgs(),
-					ExtraVolumes:             convertVolumes(cfgProvider.Cluster().APIServer().ExtraVolumes()),
-					EnvironmentVariables:     cfgProvider.Cluster().APIServer().Env(),
-					PodSecurityPolicyEnabled: !cfgProvider.Cluster().APIServer().DisablePodSecurityPolicy(),
-					AdvertisedAddress:        advertisedAddress,
-					Resources:                convertResources(cfgProvider.Cluster().APIServer().Resources()),
+					Image:                cfgProvider.Cluster().APIServer().Image(),
+					CloudProvider:        cloudProvider,
+					ControlPlaneEndpoint: cfgProvider.Cluster().Endpoint().String(),
+					EtcdServers:          []string{fmt.Sprintf("https://%s", nethelpers.JoinHostPort("localhost", constants.EtcdClientPort))},
+					LocalPort:            cfgProvider.Cluster().LocalAPIServerPort(),
+					ServiceCIDRs:         cfgProvider.Cluster().Network().ServiceCIDRs(),
+					ExtraArgs:            cfgProvider.Cluster().APIServer().ExtraArgs(),
+					ExtraVolumes:         convertVolumes(cfgProvider.Cluster().APIServer().ExtraVolumes()),
+					EnvironmentVariables: cfgProvider.Cluster().APIServer().Env(),
+					AdvertisedAddress:    advertisedAddress,
+					Resources:            convertResources(cfgProvider.Cluster().APIServer().Resources()),
 				}
 
 				return nil
@@ -344,8 +343,6 @@ func NewControlPlaneBootstrapManifestsController() *ControlPlaneBootstrapManifes
 					FlannelExtraArgs:       cfgProvider.Cluster().Network().CNI().Flannel().ExtraArgs(),
 					FlannelKubeServiceHost: flannelKubeServiceHost,
 					FlannelKubeServicePort: flannelKubeServicePort,
-
-					PodSecurityPolicyEnabled: !cfgProvider.Cluster().APIServer().DisablePodSecurityPolicy(),
 
 					TalosAPIServiceEnabled: cfgProvider.Machine().Features().KubernetesTalosAPIAccess().Enabled(),
 				}

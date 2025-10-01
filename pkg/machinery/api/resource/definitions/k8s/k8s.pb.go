@@ -28,21 +28,20 @@ const (
 
 // APIServerConfigSpec is configuration for kube-apiserver.
 type APIServerConfigSpec struct {
-	state                    protoimpl.MessageState `protogen:"open.v1"`
-	Image                    string                 `protobuf:"bytes,1,opt,name=image,proto3" json:"image,omitempty"`
-	CloudProvider            string                 `protobuf:"bytes,2,opt,name=cloud_provider,json=cloudProvider,proto3" json:"cloud_provider,omitempty"`
-	ControlPlaneEndpoint     string                 `protobuf:"bytes,3,opt,name=control_plane_endpoint,json=controlPlaneEndpoint,proto3" json:"control_plane_endpoint,omitempty"`
-	EtcdServers              []string               `protobuf:"bytes,4,rep,name=etcd_servers,json=etcdServers,proto3" json:"etcd_servers,omitempty"`
-	LocalPort                int64                  `protobuf:"varint,5,opt,name=local_port,json=localPort,proto3" json:"local_port,omitempty"`
-	ServiceCidRs             []string               `protobuf:"bytes,6,rep,name=service_cid_rs,json=serviceCidRs,proto3" json:"service_cid_rs,omitempty"`
-	ExtraArgs                map[string]string      `protobuf:"bytes,7,rep,name=extra_args,json=extraArgs,proto3" json:"extra_args,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
-	ExtraVolumes             []*ExtraVolume         `protobuf:"bytes,8,rep,name=extra_volumes,json=extraVolumes,proto3" json:"extra_volumes,omitempty"`
-	EnvironmentVariables     map[string]string      `protobuf:"bytes,9,rep,name=environment_variables,json=environmentVariables,proto3" json:"environment_variables,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
-	PodSecurityPolicyEnabled bool                   `protobuf:"varint,10,opt,name=pod_security_policy_enabled,json=podSecurityPolicyEnabled,proto3" json:"pod_security_policy_enabled,omitempty"`
-	AdvertisedAddress        string                 `protobuf:"bytes,11,opt,name=advertised_address,json=advertisedAddress,proto3" json:"advertised_address,omitempty"`
-	Resources                *Resources             `protobuf:"bytes,12,opt,name=resources,proto3" json:"resources,omitempty"`
-	unknownFields            protoimpl.UnknownFields
-	sizeCache                protoimpl.SizeCache
+	state                protoimpl.MessageState `protogen:"open.v1"`
+	Image                string                 `protobuf:"bytes,1,opt,name=image,proto3" json:"image,omitempty"`
+	CloudProvider        string                 `protobuf:"bytes,2,opt,name=cloud_provider,json=cloudProvider,proto3" json:"cloud_provider,omitempty"`
+	ControlPlaneEndpoint string                 `protobuf:"bytes,3,opt,name=control_plane_endpoint,json=controlPlaneEndpoint,proto3" json:"control_plane_endpoint,omitempty"`
+	EtcdServers          []string               `protobuf:"bytes,4,rep,name=etcd_servers,json=etcdServers,proto3" json:"etcd_servers,omitempty"`
+	LocalPort            int64                  `protobuf:"varint,5,opt,name=local_port,json=localPort,proto3" json:"local_port,omitempty"`
+	ServiceCidRs         []string               `protobuf:"bytes,6,rep,name=service_cid_rs,json=serviceCidRs,proto3" json:"service_cid_rs,omitempty"`
+	ExtraArgs            map[string]string      `protobuf:"bytes,7,rep,name=extra_args,json=extraArgs,proto3" json:"extra_args,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	ExtraVolumes         []*ExtraVolume         `protobuf:"bytes,8,rep,name=extra_volumes,json=extraVolumes,proto3" json:"extra_volumes,omitempty"`
+	EnvironmentVariables map[string]string      `protobuf:"bytes,9,rep,name=environment_variables,json=environmentVariables,proto3" json:"environment_variables,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	AdvertisedAddress    string                 `protobuf:"bytes,11,opt,name=advertised_address,json=advertisedAddress,proto3" json:"advertised_address,omitempty"`
+	Resources            *Resources             `protobuf:"bytes,12,opt,name=resources,proto3" json:"resources,omitempty"`
+	unknownFields        protoimpl.UnknownFields
+	sizeCache            protoimpl.SizeCache
 }
 
 func (x *APIServerConfigSpec) Reset() {
@@ -136,13 +135,6 @@ func (x *APIServerConfigSpec) GetEnvironmentVariables() map[string]string {
 		return x.EnvironmentVariables
 	}
 	return nil
-}
-
-func (x *APIServerConfigSpec) GetPodSecurityPolicyEnabled() bool {
-	if x != nil {
-		return x.PodSecurityPolicyEnabled
-	}
-	return false
 }
 
 func (x *APIServerConfigSpec) GetAdvertisedAddress() string {
@@ -2309,7 +2301,7 @@ var File_resource_definitions_k8s_k8s_proto protoreflect.FileDescriptor
 
 const file_resource_definitions_k8s_k8s_proto_rawDesc = "" +
 	"\n" +
-	"\"resource/definitions/k8s/k8s.proto\x12\x1etalos.resource.definitions.k8s\x1a\x13common/common.proto\x1a\x1cgoogle/protobuf/struct.proto\x1a&resource/definitions/proto/proto.proto\"\xe8\x06\n" +
+	"\"resource/definitions/k8s/k8s.proto\x12\x1etalos.resource.definitions.k8s\x1a\x13common/common.proto\x1a\x1cgoogle/protobuf/struct.proto\x1a&resource/definitions/proto/proto.proto\"\xa9\x06\n" +
 	"\x13APIServerConfigSpec\x12\x14\n" +
 	"\x05image\x18\x01 \x01(\tR\x05image\x12%\n" +
 	"\x0ecloud_provider\x18\x02 \x01(\tR\rcloudProvider\x124\n" +
@@ -2321,9 +2313,7 @@ const file_resource_definitions_k8s_k8s_proto_rawDesc = "" +
 	"\n" +
 	"extra_args\x18\a \x03(\v2B.talos.resource.definitions.k8s.APIServerConfigSpec.ExtraArgsEntryR\textraArgs\x12P\n" +
 	"\rextra_volumes\x18\b \x03(\v2+.talos.resource.definitions.k8s.ExtraVolumeR\fextraVolumes\x12\x82\x01\n" +
-	"\x15environment_variables\x18\t \x03(\v2M.talos.resource.definitions.k8s.APIServerConfigSpec.EnvironmentVariablesEntryR\x14environmentVariables\x12=\n" +
-	"\x1bpod_security_policy_enabled\x18\n" +
-	" \x01(\bR\x18podSecurityPolicyEnabled\x12-\n" +
+	"\x15environment_variables\x18\t \x03(\v2M.talos.resource.definitions.k8s.APIServerConfigSpec.EnvironmentVariablesEntryR\x14environmentVariables\x12-\n" +
 	"\x12advertised_address\x18\v \x01(\tR\x11advertisedAddress\x12G\n" +
 	"\tresources\x18\f \x01(\v2).talos.resource.definitions.k8s.ResourcesR\tresources\x1a<\n" +
 	"\x0eExtraArgsEntry\x12\x10\n" +

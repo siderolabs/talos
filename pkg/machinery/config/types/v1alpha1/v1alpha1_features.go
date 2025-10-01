@@ -11,23 +11,9 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
 )
 
-// RBACEnabled implements config.Features interface.
-func (f *FeaturesConfig) RBACEnabled() bool {
-	if f.RBAC == nil {
-		return false // the current default value
-	}
-
-	return *f.RBAC
-}
-
 // KubernetesTalosAPIAccess implements config.Features interface.
 func (f *FeaturesConfig) KubernetesTalosAPIAccess() config.KubernetesTalosAPIAccess {
 	return f.KubernetesTalosAPIAccessConfig
-}
-
-// ApidCheckExtKeyUsageEnabled implements config.Features interface.
-func (f *FeaturesConfig) ApidCheckExtKeyUsageEnabled() bool {
-	return pointer.SafeDeref(f.ApidCheckExtKeyUsage)
 }
 
 // DiskQuotaSupportEnabled implements config.Features interface.

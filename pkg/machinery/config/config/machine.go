@@ -446,9 +446,7 @@ type SystemDiskEncryption interface {
 
 // Features describe individual Talos features that can be switched on or off.
 type Features interface {
-	RBACEnabled() bool
 	KubernetesTalosAPIAccess() KubernetesTalosAPIAccess
-	ApidCheckExtKeyUsageEnabled() bool
 	DiskQuotaSupportEnabled() bool
 	HostDNS() HostDNS
 	KubePrism() KubePrism

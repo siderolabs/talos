@@ -6804,7 +6804,6 @@ APIServerConfigSpec is configuration for kube-apiserver.
 | extra_args | [APIServerConfigSpec.ExtraArgsEntry](#talos.resource.definitions.k8s.APIServerConfigSpec.ExtraArgsEntry) | repeated |  |
 | extra_volumes | [ExtraVolume](#talos.resource.definitions.k8s.ExtraVolume) | repeated |  |
 | environment_variables | [APIServerConfigSpec.EnvironmentVariablesEntry](#talos.resource.definitions.k8s.APIServerConfigSpec.EnvironmentVariablesEntry) | repeated |  |
-| pod_security_policy_enabled | [bool](#bool) |  |  |
 | advertised_address | [string](#string) |  |  |
 | resources | [Resources](#talos.resource.definitions.k8s.Resources) |  |  |
 

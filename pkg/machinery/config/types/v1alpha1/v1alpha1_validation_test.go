@@ -1523,32 +1523,6 @@ func TestValidate(t *testing.T) {
 			expectedError: "1 error occurred:\n\t* [networking.os.device.deviceSelector]: config section should contain at least one field\n\n",
 		},
 		{
-			name: "TalosAPIAccessRBAC",
-			config: &v1alpha1.Config{
-				ConfigVersion: "v1alpha1",
-				MachineConfig: &v1alpha1.MachineConfig{
-					MachineType: "controlplane",
-					MachineCA: &x509.PEMEncodedCertificateAndKey{
-						Crt: []byte("foo"),
-						Key: []byte("bar"),
-					},
-					MachineFeatures: &v1alpha1.FeaturesConfig{
-						KubernetesTalosAPIAccessConfig: &v1alpha1.KubernetesTalosAPIAccessConfig{
-							AccessEnabled: pointer.To(true),
-						},
-					},
-				},
-				ClusterConfig: &v1alpha1.ClusterConfig{
-					ControlPlane: &v1alpha1.ControlPlaneConfig{
-						Endpoint: &v1alpha1.Endpoint{
-							endpointURL,
-						},
-					},
-				},
-			},
-			expectedError: "1 error occurred:\n\t* feature API RBAC should be enabled when Kubernetes Talos API Access feature is enabled\n\n",
-		},
-		{
 			name: "TalosAPIAccessWorker",
 			config: &v1alpha1.Config{
 				ConfigVersion: "v1alpha1",

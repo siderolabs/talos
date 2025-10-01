@@ -1776,13 +1776,6 @@
           "markdownDescription": "Extra certificate subject alternative names for the API server's certificate.",
           "x-intellij-html-description": "\u003cp\u003eExtra certificate subject alternative names for the API server\u0026rsquo;s certificate.\u003c/p\u003e\n"
         },
-        "disablePodSecurityPolicy": {
-          "type": "boolean",
-          "title": "disablePodSecurityPolicy",
-          "description": "Disable PodSecurityPolicy in the API server and default manifests.\n",
-          "markdownDescription": "Disable PodSecurityPolicy in the API server and default manifests.",
-          "x-intellij-html-description": "\u003cp\u003eDisable PodSecurityPolicy in the API server and default manifests.\u003c/p\u003e\n"
-        },
         "admissionControl": {
           "items": {
             "$ref": "#/$defs/v1alpha1.AdmissionPluginConfig"
@@ -3069,26 +3062,12 @@
     },
     "v1alpha1.FeaturesConfig": {
       "properties": {
-        "rbac": {
-          "type": "boolean",
-          "title": "rbac",
-          "description": "Enable role-based access control (RBAC).\n",
-          "markdownDescription": "Enable role-based access control (RBAC).",
-          "x-intellij-html-description": "\u003cp\u003eEnable role-based access control (RBAC).\u003c/p\u003e\n"
-        },
         "kubernetesTalosAPIAccess": {
           "$ref": "#/$defs/v1alpha1.KubernetesTalosAPIAccessConfig",
           "title": "kubernetesTalosAPIAccess",
           "description": "Configure Talos API access from Kubernetes pods.\n\nThis feature is disabled if the feature config is not specified.\n",
           "markdownDescription": "Configure Talos API access from Kubernetes pods.\n\nThis feature is disabled if the feature config is not specified.",
           "x-intellij-html-description": "\u003cp\u003eConfigure Talos API access from Kubernetes pods.\u003c/p\u003e\n\n\u003cp\u003eThis feature is disabled if the feature config is not specified.\u003c/p\u003e\n"
-        },
-        "apidCheckExtKeyUsage": {
-          "type": "boolean",
-          "title": "apidCheckExtKeyUsage",
-          "description": "Enable checks for extended key usage of client certificates in apid.\n",
-          "markdownDescription": "Enable checks for extended key usage of client certificates in apid.",
-          "x-intellij-html-description": "\u003cp\u003eEnable checks for extended key usage of client certificates in apid.\u003c/p\u003e\n"
         },
         "diskQuotaSupport": {
           "type": "boolean",

@@ -1376,13 +1376,7 @@ func (APIServerConfig) Doc() *encoder.Doc {
 				Description: "Extra certificate subject alternative names for the API server's certificate.",
 				Comments:    [3]string{"" /* encoder.HeadComment */, "Extra certificate subject alternative names for the API server's certificate." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
-			{
-				Name:        "disablePodSecurityPolicy",
-				Type:        "bool",
-				Note:        "",
-				Description: "Disable PodSecurityPolicy in the API server and default manifests.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Disable PodSecurityPolicy in the API server and default manifests." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
+			{},
 			{
 				Name:        "admissionControl",
 				Type:        "[]AdmissionPluginConfig",
@@ -3055,13 +3049,7 @@ func (FeaturesConfig) Doc() *encoder.Doc {
 			},
 		},
 		Fields: []encoder.Doc{
-			{
-				Name:        "rbac",
-				Type:        "bool",
-				Note:        "",
-				Description: "Enable role-based access control (RBAC).",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Enable role-based access control (RBAC)." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
+			{},
 			{},
 			{
 				Name:        "kubernetesTalosAPIAccess",
@@ -3070,13 +3058,7 @@ func (FeaturesConfig) Doc() *encoder.Doc {
 				Description: "Configure Talos API access from Kubernetes pods.\n\nThis feature is disabled if the feature config is not specified.",
 				Comments:    [3]string{"" /* encoder.HeadComment */, "Configure Talos API access from Kubernetes pods." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
-			{
-				Name:        "apidCheckExtKeyUsage",
-				Type:        "bool",
-				Note:        "",
-				Description: "Enable checks for extended key usage of client certificates in apid.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Enable checks for extended key usage of client certificates in apid." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
+			{},
 			{
 				Name:        "diskQuotaSupport",
 				Type:        "bool",

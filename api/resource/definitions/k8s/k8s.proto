@@ -20,7 +20,6 @@ message APIServerConfigSpec {
   map<string, string> extra_args = 7;
   repeated ExtraVolume extra_volumes = 8;
   map<string, string> environment_variables = 9;
-  bool pod_security_policy_enabled = 10;
   string advertised_address = 11;
   Resources resources = 12;
 }

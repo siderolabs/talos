@@ -9,7 +9,6 @@ import (
 	"strings"
 
 	"github.com/siderolabs/gen/xslices"
-	"github.com/siderolabs/go-pointer"
 
 	"github.com/siderolabs/talos/pkg/machinery/config/config"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
@@ -65,11 +64,6 @@ func (a *APIServerConfig) ExtraVolumes() []config.VolumeMount {
 // Env implements the config.APIServer interface.
 func (a *APIServerConfig) Env() Env {
 	return a.EnvConfig
-}
-
-// DisablePodSecurityPolicy implements the config.APIServer interface.
-func (a *APIServerConfig) DisablePodSecurityPolicy() bool {
-	return pointer.SafeDeref(a.DisablePodSecurityPolicyConfig)
 }
 
 // AdmissionControl implements the config.APIServer interface.
