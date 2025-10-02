@@ -495,6 +495,7 @@ func (ctrl *MountController) handleDiskMountOperation(
 
 		if mountRequest.TypedSpec().ReadOnly {
 			opts = append(opts, mount.WithReadOnly())
+			fsOpts = append(fsOpts, fsopen.WithBoolParameter("ro"))
 		}
 
 		if mountRequest.TypedSpec().Detached {

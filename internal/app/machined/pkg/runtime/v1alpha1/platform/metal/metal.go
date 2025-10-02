@@ -181,6 +181,7 @@ func readConfigFromISO(ctx context.Context, r state.State) ([]byte, error) {
 		mount.WithPrinter(log.Printf),
 		mount.WithFsopen(
 			volumeStatus.TypedSpec().Filesystem.String(),
+			fsopen.WithBoolParameter("ro"),
 			fsopen.WithSource(volumeStatus.TypedSpec().MountLocation),
 		),
 	)

@@ -51,6 +51,12 @@ type Options struct {
 
 // Mount the mount point.
 func (p *Point) Mount(opts Options) error {
+	defer p.Release(false) //nolint:errcheck
+
+	if p.detached {
+		return nil
+	}
+
 	if opts.SkipIfMounted {
 		isMounted, err := p.IsMounted()
 		if err != nil {
@@ -60,12 +66,6 @@ func (p *Point) Mount(opts Options) error {
 		if isMounted {
 			return nil
 		}
-	}
-
-	defer p.Release(false) //nolint:errcheck
-
-	if p.detached {
-		return nil
 	}
 
 	return p.retry(func() error {

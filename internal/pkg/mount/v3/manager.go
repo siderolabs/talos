@@ -85,11 +85,13 @@ func (m *Manager) Mount() (*Point, error) {
 		MountAttributes: m.mountattr,
 	}
 
-	if err := os.MkdirAll(m.target, 0o755); err != nil {
-		return nil, fmt.Errorf("failed to create mount target %s: %w", m.target, err)
-	}
+	if !m.detached {
+		if err := os.MkdirAll(m.target, 0o755); err != nil {
+			return nil, fmt.Errorf("failed to create mount target %s: %w", m.target, err)
+		}
 
-	printer("mounting %q to %q", m.point.Source(), m.target)
+		printer("mounting %q to %q", m.point.Source(), m.target)
+	}
 
 	if err := m.point.Mount(opts); err != nil {
 		return nil, fmt.Errorf("failed to mount: %w", err)
