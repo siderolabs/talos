@@ -455,7 +455,7 @@ const (
 	KubeletSystemReservedEphemeralStorage = "256Mi"
 
 	// DefaultEtcdVersion is the default target version of etcd.
-	// renovate: datasource=github-releases depName=etcd-io/etcd
+	// renovate: datasource=docker depName=registry.k8s.io/etcd
 	DefaultEtcdVersion = "v3.6.5"
 
 	// EtcdRootTalosKey is the root etcd key for Talos-specific storage.
@@ -471,7 +471,7 @@ const (
 	EtcdTalosServiceAccountCRDControllerMutex = EtcdRootTalosKey + ":serviceAccountCRDController"
 
 	// EtcdImage is the reposistory for the etcd image.
-	EtcdImage = "gcr.io/etcd-development/etcd"
+	EtcdImage = "registry.k8s.io/etcd"
 
 	// EtcdPKIPath is the path to the etcd PKI directory.
 	EtcdPKIPath = "/system/secrets/etcd"

@@ -95,6 +95,13 @@ Talos now ignores the following machine configuration fields:
 These fields were removed from the default machine configuration schema in v1.12 and are now always set to the locked values above.
 """
 
+    [notes.etcd]
+        title = "etcd"
+        description = """\
+etcd container image is now pulled from `registry.k8s.io/etcd` instead of `gcr.io/etcd-development/etcd`.
+"""
+
+
 [make_deps]
 
     [make_deps.tools]
