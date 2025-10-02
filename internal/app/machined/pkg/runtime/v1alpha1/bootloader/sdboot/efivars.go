@@ -147,6 +147,10 @@ func CreateBootEntry(rw efivarfs.ReadWriter, blkidInfo *blkid.Info, printf func(
 		}
 	}
 
+	// we sort the indexes to make sure we always keep the lowest index
+	// when removing duplicate Talos Linux UKI boot entries
+	slices.Sort(existingTalosBootEntryIndexes)
+
 	printf("Found existing Talos Linux UKI boot entries: %v", existingTalosBootEntryIndexes)
 
 	// Remove any existing Talos Linux UKI boot entries from the BootOrder.
@@ -217,18 +221,18 @@ func CreateBootEntry(rw efivarfs.ReadWriter, blkidInfo *blkid.Info, printf func(
 
 	printf("created Talos Linux UKI boot entry at index %d", nextMinimalIndex)
 
+	if len(bootOrder) > 0 && bootOrder[0] == uint16(nextMinimalIndex) && !slices.Contains(bootOrder[1:], uint16(nextMinimalIndex)) {
+		// Talos Linux UKI boot entry is already first in the BootOrder
+		printf("Talos Linux UKI boot entry at index %d is already first in BootOrder: %v", nextMinimalIndex, bootOrder)
+
+		return nil
+	}
+
 	// if we have the new Talos Linux UKI boot entry index in the boot order already, we need to remove it first
 	// to avoid having it twice in the boot order
 	bootOrderUnique = slices.DeleteFunc(bootOrderUnique, func(i uint16) bool {
 		return i == uint16(nextMinimalIndex)
 	})
-
-	if len(bootOrderUnique) > 0 && bootOrderUnique[0] == uint16(nextMinimalIndex) {
-		// Talos Linux UKI boot entry is already first in the BootOrder
-		printf("Talos Linux UKI boot entry at index %d is already first in BootOrder: %v", nextMinimalIndex, bootOrderUnique)
-
-		return nil
-	}
 
 	bootOrderUnique = slices.Insert(bootOrderUnique, 0, uint16(nextMinimalIndex))
 
