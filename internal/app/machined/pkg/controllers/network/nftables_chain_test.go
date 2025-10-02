@@ -189,7 +189,7 @@ func (s *NfTablesChainSuite) TestConntrackCounter() {
 		{
 			MatchConntrackState: &network.NfTablesConntrackStateMatch{
 				States: []nethelpers.ConntrackState{
-					nethelpers.ConntrackStateInvalid,
+					nethelpers.ConntrackStateEstablished, // this rule should never match, as previous rule matches it
 				},
 			},
 			AnonCounter: true,
@@ -203,7 +203,7 @@ func (s *NfTablesChainSuite) TestConntrackCounter() {
 	chain test1 {
 		type filter hook input priority security; policy accept;
 		ct state { 0x2000000, 0x4000000 } accept
-		ct state invalid counter packets 0 bytes 0 drop
+		ct state established counter packets 0 bytes 0 drop
 	}
 }`)
 }
