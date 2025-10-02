@@ -11,12 +11,8 @@ import (
 	"fmt"
 	"io/fs"
 	"log"
-	"os"
-	"path/filepath"
 	"time"
 
-	"github.com/cosi-project/runtime/pkg/resource"
-	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/siderolabs/gen/channel"
 	"github.com/siderolabs/go-pointer"
@@ -26,24 +22,18 @@ import (
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/errors"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/internal/blockutils"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/internal/netutils"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/metal/oauth2"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/metal/url"
-	"github.com/siderolabs/talos/internal/pkg/mount/v3"
 	"github.com/siderolabs/talos/pkg/download"
-	"github.com/siderolabs/talos/pkg/machinery/cel"
-	"github.com/siderolabs/talos/pkg/machinery/cel/celenv"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/imager/quirks"
 	"github.com/siderolabs/talos/pkg/machinery/meta"
 	"github.com/siderolabs/talos/pkg/machinery/resources/block"
 	"github.com/siderolabs/talos/pkg/machinery/resources/hardware"
 	runtimeres "github.com/siderolabs/talos/pkg/machinery/resources/runtime"
-	"github.com/siderolabs/talos/pkg/xfs/fsopen"
-)
-
-const (
-	mnt = "/mnt"
+	"github.com/siderolabs/talos/pkg/xfs"
 )
 
 // Metal is a discoverer for non-cloud environments.
@@ -131,81 +121,28 @@ func (m *Metal) Mode() runtime.Mode {
 	return runtime.ModeMetal
 }
 
-func metalISOMatch() cel.Expression {
-	return cel.MustExpression(cel.ParseBooleanExpression(
-		fmt.Sprintf("volume.label == '%s' || volume.partition_label == '%s'", constants.MetalConfigISOLabel, constants.MetalConfigISOLabel),
-		celenv.VolumeLocator(),
-	))
-}
-
 func readConfigFromISO(ctx context.Context, r state.State) ([]byte, error) {
-	volumeID := "platform/metal/config"
+	var b []byte
 
-	// create a volume which matches the expected filesystem label
-	vc := block.NewVolumeConfig(block.NamespaceName, volumeID)
-	vc.Metadata().Labels().Set(block.PlatformLabel, "")
-	vc.TypedSpec().Type = block.VolumeTypePartition
-	vc.TypedSpec().Locator = block.LocatorSpec{
-		Match: metalISOMatch(),
-	}
-	vc.TypedSpec().Mount = block.MountSpec{
-		TargetPath: mnt,
-	}
+	err := blockutils.ReadFromVolume(ctx, r, []string{constants.MetalConfigISOLabel}, func(root xfs.Root, volumeStatus *block.VolumeStatus) error {
+		var err error
 
-	if err := r.Create(ctx, vc); err != nil && !state.IsConflictError(err) {
-		return nil, fmt.Errorf("error creating user disk volume configuration: %w", err)
-	}
+		b, err = xfs.ReadFile(root, constants.ConfigFilename)
+		if err != nil {
+			return fmt.Errorf("read config: %w", err)
+		}
 
-	// wait for the volume to be either ready or missing (includes waiting for devices to be ready)
-	volumeStatus, err := safe.StateWatchFor[*block.VolumeStatus](ctx,
-		r,
-		block.NewVolumeStatus(vc.Metadata().Namespace(), vc.Metadata().ID()).Metadata(),
-		state.WithEventTypes(state.Created, state.Updated),
-		state.WithCondition(func(r resource.Resource) (bool, error) {
-			phase := r.(*block.VolumeStatus).TypedSpec().Phase
+		log.Printf("read machine config from volume: %s (filesystem %q, UUID %q, size %s)",
+			volumeStatus.TypedSpec().Location,
+			volumeStatus.TypedSpec().Filesystem,
+			volumeStatus.TypedSpec().UUID,
+			volumeStatus.TypedSpec().PrettySize,
+		)
 
-			return phase == block.VolumePhaseReady || phase == block.VolumePhaseMissing, nil
-		}),
-	)
-	if err != nil {
-		return nil, fmt.Errorf("failed to watch for volume status: %w", err)
-	}
+		return nil
+	})
 
-	if volumeStatus.TypedSpec().Phase == block.VolumePhaseMissing {
-		return nil, fmt.Errorf("failed to find volume with machine configuration %s", vc.TypedSpec().Locator.Match)
-	}
-
-	manager := mount.NewManager(
-		mount.WithTarget(volumeStatus.TypedSpec().MountSpec.TargetPath),
-		mount.WithReadOnly(),
-		mount.WithPrinter(log.Printf),
-		mount.WithFsopen(
-			volumeStatus.TypedSpec().Filesystem.String(),
-			fsopen.WithBoolParameter("ro"),
-			fsopen.WithSource(volumeStatus.TypedSpec().MountLocation),
-		),
-	)
-
-	// mount the volume, unmount when done
-	if _, err := manager.Mount(); err != nil {
-		return nil, fmt.Errorf("failed to mount volume: %w", err)
-	}
-
-	defer manager.Unmount() //nolint:errcheck
-
-	b, err := os.ReadFile(filepath.Join(mnt, constants.ConfigFilename))
-	if err != nil {
-		return nil, fmt.Errorf("read config: %w", err)
-	}
-
-	log.Printf("read machine config from volume: %s (filesystem %q, UUID %q, size %s)",
-		volumeStatus.TypedSpec().Location,
-		volumeStatus.TypedSpec().Filesystem,
-		volumeStatus.TypedSpec().UUID,
-		volumeStatus.TypedSpec().PrettySize,
-	)
-
-	return b, nil
+	return b, err
 }
 
 // KernelArgs implements the runtime.Platform interface.

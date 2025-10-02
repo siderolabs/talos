@@ -11,31 +11,30 @@ import (
 	"context"
 	stderrors "errors"
 	"fmt"
+	"io/fs"
 	"log"
 	"net"
 	"net/netip"
 	"net/url"
-	"os"
-	"path/filepath"
 	"slices"
 	"strings"
 
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/siderolabs/gen/maps"
-	"github.com/siderolabs/go-blockdevice/blockdevice/filesystem"
-	"github.com/siderolabs/go-blockdevice/blockdevice/probe"
-	"golang.org/x/sys/unix"
 	yaml "gopkg.in/yaml.v3"
 
 	networkadapter "github.com/siderolabs/talos/internal/app/machined/pkg/adapters/network"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/errors"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/internal/blockutils"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/internal/netutils"
 	"github.com/siderolabs/talos/internal/pkg/smbios"
 	"github.com/siderolabs/talos/pkg/download"
 	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
+	"github.com/siderolabs/talos/pkg/machinery/resources/block"
 	"github.com/siderolabs/talos/pkg/machinery/resources/network"
+	"github.com/siderolabs/talos/pkg/xfs"
 )
 
 const (
@@ -43,7 +42,6 @@ const (
 	configNetworkConfigPath = "network-config"
 	configMetaDataPath      = "meta-data"
 	configUserDataPath      = "user-data"
-	mnt                     = "/mnt"
 )
 
 // NetworkCloudInitConfig wraps nocloud network config to match cloud-init format.
@@ -183,63 +181,47 @@ func (n *Nocloud) configFromNetwork(ctx context.Context, metaBaseURL string, r s
 
 //nolint:gocyclo
 func (n *Nocloud) configFromCD(ctx context.Context, r state.State) (metaConfig []byte, networkConfig []byte, machineConfig []byte, err error) {
-	if err := netutils.WaitForDevicesReady(ctx, r); err != nil {
-		return nil, nil, nil, fmt.Errorf("failed to wait for devices: %w", err)
-	}
+	err = blockutils.ReadFromVolume(ctx, r,
+		[]string{strings.ToLower(configISOLabel), strings.ToUpper(configISOLabel)},
+		func(root xfs.Root, volumeStatus *block.VolumeStatus) error {
+			log.Printf("found config disk (cidata) at %s", volumeStatus.TypedSpec().Location)
 
-	var dev *probe.ProbedBlockDevice
+			log.Printf("fetching meta config from: cidata/%s", configMetaDataPath)
 
-	dev, err = probe.GetDevWithFileSystemLabel(strings.ToLower(configISOLabel))
+			metaConfig, err = xfs.ReadFile(root, configMetaDataPath)
+			if err != nil {
+				log.Printf("failed to read %s: %s", configMetaDataPath, err)
+
+				metaConfig = nil
+			}
+
+			log.Printf("fetching network config from: cidata/%s", configNetworkConfigPath)
+
+			networkConfig, err = xfs.ReadFile(root, configNetworkConfigPath)
+			if err != nil {
+				log.Printf("failed to read %s: %s", configNetworkConfigPath, err)
+
+				networkConfig = nil
+			}
+
+			log.Printf("fetching machine config from: cidata/%s", configUserDataPath)
+
+			machineConfig, err = xfs.ReadFile(root, configUserDataPath)
+			if err != nil {
+				log.Printf("failed to read %s: %s", configUserDataPath, err)
+
+				machineConfig = nil
+			}
+
+			return nil
+		},
+	)
 	if err != nil {
-		dev, err = probe.GetDevWithFileSystemLabel(strings.ToUpper(configISOLabel))
-		if err != nil {
+		if stderrors.Is(err, fs.ErrNotExist) {
 			return nil, nil, nil, errors.ErrNoConfigSource
 		}
-	}
 
-	//nolint:errcheck
-	defer dev.Close()
-
-	sb, err := filesystem.Probe(dev.Path)
-	if err != nil || sb == nil {
-		return nil, nil, nil, errors.ErrNoConfigSource
-	}
-
-	log.Printf("found config disk (cidata) at %s", dev.Path)
-
-	if err = unix.Mount(dev.Path, mnt, sb.Type(), unix.MS_RDONLY, ""); err != nil {
-		return nil, nil, nil, errors.ErrNoConfigSource
-	}
-
-	log.Printf("fetching meta config from: cidata/%s", configMetaDataPath)
-
-	metaConfig, err = os.ReadFile(filepath.Join(mnt, configMetaDataPath))
-	if err != nil {
-		log.Printf("failed to read %s: %s", configMetaDataPath, err)
-
-		metaConfig = nil
-	}
-
-	log.Printf("fetching network config from: cidata/%s", configNetworkConfigPath)
-
-	networkConfig, err = os.ReadFile(filepath.Join(mnt, configNetworkConfigPath))
-	if err != nil {
-		log.Printf("failed to read %s: %s", configNetworkConfigPath, err)
-
-		networkConfig = nil
-	}
-
-	log.Printf("fetching machine config from: cidata/%s", configUserDataPath)
-
-	machineConfig, err = os.ReadFile(filepath.Join(mnt, configUserDataPath))
-	if err != nil {
-		log.Printf("failed to read %s: %s", configUserDataPath, err)
-
-		machineConfig = nil
-	}
-
-	if err = unix.Unmount(mnt, 0); err != nil {
-		return nil, nil, nil, fmt.Errorf("failed to unmount: %w", err)
+		return nil, nil, nil, err
 	}
 
 	if machineConfig == nil {

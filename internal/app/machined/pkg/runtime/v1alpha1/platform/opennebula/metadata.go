@@ -9,63 +9,39 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"os"
-	"path/filepath"
 	"strings"
 
 	"github.com/cosi-project/runtime/pkg/state"
-	"github.com/siderolabs/go-blockdevice/blockdevice/filesystem"
-	"github.com/siderolabs/go-blockdevice/blockdevice/probe"
-	"golang.org/x/sys/unix"
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/errors"
-	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/internal/netutils"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/internal/blockutils"
+	"github.com/siderolabs/talos/pkg/machinery/resources/block"
+	"github.com/siderolabs/talos/pkg/xfs"
 )
 
 const (
 	configISOLabel = "context"
 	oneContextPath = "context.sh"
-	mnt            = "/mnt"
 )
 
 func (o *OpenNebula) contextFromCD(ctx context.Context, r state.State) (oneContext []byte, err error) {
-	if err := netutils.WaitForDevicesReady(ctx, r); err != nil {
-		return nil, fmt.Errorf("failed to wait for devices: %w", err)
-	}
+	err = blockutils.ReadFromVolume(ctx, r,
+		[]string{strings.ToLower(configISOLabel), strings.ToUpper(configISOLabel)},
+		func(root xfs.Root, volumeStatus *block.VolumeStatus) error {
+			log.Printf("found config disk (context) at %s", volumeStatus.TypedSpec().Location)
 
-	var dev *probe.ProbedBlockDevice
+			log.Printf("fetching context from: %s/", oneContextPath)
 
-	dev, err = probe.GetDevWithFileSystemLabel(strings.ToLower(configISOLabel))
+			oneContext, err = xfs.ReadFile(root, oneContextPath)
+			if err != nil {
+				return fmt.Errorf("read config: %w", err)
+			}
+
+			return nil
+		},
+	)
 	if err != nil {
-		dev, err = probe.GetDevWithFileSystemLabel(strings.ToUpper(configISOLabel))
-		if err != nil {
-			return nil, fmt.Errorf("failed to find %s iso: %w", configISOLabel, err)
-		}
-	}
-
-	//nolint:errcheck
-	defer dev.Close()
-
-	sb, err := filesystem.Probe(dev.Path)
-	if err != nil || sb == nil {
-		return nil, errors.ErrNoConfigSource
-	}
-
-	log.Printf("found config disk (context) at %s", dev.Path)
-
-	if err = unix.Mount(dev.Path, mnt, sb.Type(), unix.MS_RDONLY, ""); err != nil {
-		return nil, fmt.Errorf("failed to mount iso: %w", err)
-	}
-
-	log.Printf("fetching context from: %s/", oneContextPath)
-
-	oneContext, err = os.ReadFile(filepath.Join(mnt, oneContextPath))
-	if err != nil {
-		return nil, fmt.Errorf("read config: %s", err.Error())
-	}
-
-	if err = unix.Unmount(mnt, 0); err != nil {
-		return nil, fmt.Errorf("failed to unmount: %w", err)
+		return nil, err
 	}
 
 	if oneContext == nil {

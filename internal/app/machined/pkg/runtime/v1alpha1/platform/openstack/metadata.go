@@ -6,26 +6,21 @@ package openstack
 
 import (
 	"context"
-	"fmt"
+	stderrors "errors"
+	"io/fs"
 	"log"
 	"net/netip"
-	"os"
-	"path/filepath"
 
 	"github.com/cosi-project/runtime/pkg/state"
-	"github.com/siderolabs/go-blockdevice/blockdevice/filesystem"
-	"github.com/siderolabs/go-blockdevice/blockdevice/probe"
-	"golang.org/x/sys/unix"
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/errors"
-	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/internal/netutils"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/internal/blockutils"
 	"github.com/siderolabs/talos/pkg/download"
+	"github.com/siderolabs/talos/pkg/machinery/resources/block"
+	"github.com/siderolabs/talos/pkg/xfs"
 )
 
 const (
-	// mnt is folder to mount config drive.
-	mnt = "/mnt"
-
 	// config-drive configs path.
 	configISOLabel        = "config-2"
 	configMetadataPath    = "openstack/latest/meta_data.json"
@@ -112,67 +107,51 @@ func (o *OpenStack) configFromNetwork(ctx context.Context) (metaConfig []byte, n
 
 //nolint:gocyclo
 func (o *OpenStack) configFromCD(ctx context.Context, r state.State) (metaConfig []byte, networkConfig []byte, machineConfig []byte, err error) {
-	if err := netutils.WaitForDevicesReady(ctx, r); err != nil {
-		return nil, nil, nil, fmt.Errorf("failed to wait for devices: %w", err)
-	}
+	err = blockutils.ReadFromVolume(ctx, r, []string{configISOLabel}, func(root xfs.Root, volumeStatus *block.VolumeStatus) error {
+		log.Printf("found config disk (config-drive) at %s", volumeStatus.TypedSpec().Location)
 
-	var dev *probe.ProbedBlockDevice
+		log.Printf("fetching meta config from: config-drive/%s", configMetadataPath)
 
-	dev, err = probe.GetDevWithFileSystemLabel(configISOLabel)
+		metaConfig, err = xfs.ReadFile(root, configMetadataPath)
+		if err != nil {
+			log.Printf("failed to read %s", configMetadataPath)
+
+			metaConfig = nil
+		}
+
+		log.Printf("fetching network config from: config-drive/%s", configNetworkDataPath)
+
+		networkConfig, err = xfs.ReadFile(root, configNetworkDataPath)
+		if err != nil {
+			log.Printf("failed to read %s", configNetworkDataPath)
+
+			networkConfig = nil
+		}
+
+		log.Printf("fetching machine config from: config-drive/%s", configUserDataPath)
+
+		machineConfig, err = xfs.ReadFile(root, configUserDataPath)
+		if err != nil {
+			log.Printf("failed to read %s", configUserDataPath)
+
+			machineConfig = nil
+		}
+
+		return nil
+	})
 	if err != nil {
-		return nil, nil, nil, errors.ErrNoConfigSource
-	}
+		if stderrors.Is(err, fs.ErrNotExist) {
+			return nil, nil, nil, errors.ErrNoConfigSource
+		}
 
-	//nolint:errcheck
-	defer dev.Close()
-
-	sb, err := filesystem.Probe(dev.Path)
-	if err != nil || sb == nil {
-		return nil, nil, nil, errors.ErrNoConfigSource
-	}
-
-	log.Printf("found config disk (config-drive) at %s", dev.Path)
-
-	if err = unix.Mount(dev.Path, mnt, sb.Type(), unix.MS_RDONLY, ""); err != nil {
-		return nil, nil, nil, errors.ErrNoConfigSource
-	}
-
-	log.Printf("fetching meta config from: config-drive/%s", configMetadataPath)
-
-	metaConfig, err = os.ReadFile(filepath.Join(mnt, configMetadataPath))
-	if err != nil {
-		log.Printf("failed to read %s", configMetadataPath)
-
-		metaConfig = nil
-	}
-
-	log.Printf("fetching network config from: config-drive/%s", configNetworkDataPath)
-
-	networkConfig, err = os.ReadFile(filepath.Join(mnt, configNetworkDataPath))
-	if err != nil {
-		log.Printf("failed to read %s", configNetworkDataPath)
-
-		networkConfig = nil
-	}
-
-	log.Printf("fetching machine config from: config-drive/%s", configUserDataPath)
-
-	machineConfig, err = os.ReadFile(filepath.Join(mnt, configUserDataPath))
-	if err != nil {
-		log.Printf("failed to read %s", configUserDataPath)
-
-		machineConfig = nil
-	}
-
-	if err = unix.Unmount(mnt, 0); err != nil {
-		return nil, nil, nil, fmt.Errorf("failed to unmount: %w", err)
+		return nil, nil, nil, err
 	}
 
 	if machineConfig == nil {
-		return metaConfig, networkConfig, machineConfig, errors.ErrNoConfigSource
+		err = errors.ErrNoConfigSource
 	}
 
-	return metaConfig, networkConfig, machineConfig, nil
+	return metaConfig, networkConfig, machineConfig, err
 }
 
 func (o *OpenStack) instanceType(ctx context.Context) string {

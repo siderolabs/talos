@@ -54,6 +54,8 @@ func Format(ctx context.Context, logger *zap.Logger, volumeContext ManagerContex
 
 	switch {
 	case volumeContext.Cfg.TypedSpec().Provisioning.FilesystemSpec.Type == block.FilesystemTypeNone:
+		volumeContext.Status.Filesystem, _ = block.FilesystemTypeString(info.Name) //nolint:errcheck
+
 		// this is mountable
 		if volumeContext.Cfg.TypedSpec().Mount.TargetPath != "" {
 			switch info.Name {
@@ -65,10 +67,6 @@ func Format(ctx context.Context, logger *zap.Logger, volumeContext ManagerContex
 
 				return fmt.Errorf("volume is encrypted, but no encryption config provided")
 			}
-
-			volumeContext.Status.Filesystem, _ = block.FilesystemTypeString(info.Name) //nolint:errcheck
-		} else {
-			volumeContext.Status.Filesystem = block.FilesystemTypeNone
 		}
 
 		volumeContext.Status.Phase = block.VolumePhaseReady
