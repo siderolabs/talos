@@ -1,3 +1,4 @@
+kernel/arch/arm64/lib/xor-neon.ko
 kernel/crypto/async_tx/async_memcpy.ko
 kernel/crypto/async_tx/async_pq.ko
 kernel/crypto/async_tx/async_raid6_recov.ko
@@ -119,6 +120,7 @@ kernel/drivers/net/ethernet/intel/ixgbe/ixgbe.ko
 kernel/drivers/net/ethernet/intel/ixgbevf/ixgbevf.ko
 kernel/drivers/net/ethernet/intel/libeth/libeth.ko
 kernel/drivers/net/ethernet/intel/libie/libie.ko
+kernel/drivers/net/ethernet/intel/libie/libie_adminq.ko
 kernel/drivers/net/ethernet/marvell/sky2.ko
 kernel/drivers/net/ethernet/mellanox/mlx4/mlx4_core.ko
 kernel/drivers/net/ethernet/mellanox/mlx4/mlx4_en.ko
