@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"slices"
 
+	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 )
 
@@ -49,5 +50,18 @@ func StringChoice(defaultValue string, otherChoices ...string) pflag.Value {
 
 			return fmt.Errorf("must be one of %v", choices)
 		},
+	}
+}
+
+// ChainCobraPositionalArgs chains multiple cobra.PositionalArgs validators together.
+func ChainCobraPositionalArgs(validators ...cobra.PositionalArgs) cobra.PositionalArgs {
+	return func(cmd *cobra.Command, args []string) error {
+		for _, validator := range validators {
+			if err := validator(cmd, args); err != nil {
+				return err
+			}
+		}
+
+		return nil
 	}
 }

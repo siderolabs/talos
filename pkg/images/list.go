@@ -54,3 +54,31 @@ func List(config config.Config) Versions {
 
 	return images
 }
+
+// SourceBundle holds the core images (and their versions) that are used to build Talos.
+type SourceBundle struct {
+	Installer     string
+	InstallerBase string
+	Imager        string
+	Talos         string
+	TalosctlAll   string
+
+	Overlays   string
+	Extensions string
+}
+
+// ListSourcesFor returns source bundle for specific version.
+func ListSourcesFor(tag string) SourceBundle {
+	var bundle SourceBundle
+
+	bundle.Installer = DefaultInstallerImageRepository + ":" + tag
+	bundle.InstallerBase = DefaultInstallerBaseImageRepository + ":" + tag
+	bundle.Imager = DefaultImagerImageRepository + ":" + tag
+	bundle.Talos = DefaultTalosImageRepository + ":" + tag
+	bundle.TalosctlAll = DefaultTalosctlAllImageRepository + ":" + tag
+
+	bundle.Overlays = DefaultOverlaysManifestRepository + ":" + tag
+	bundle.Extensions = DefaultExtensionsManifestRepository + ":" + tag
+
+	return bundle
+}

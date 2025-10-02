@@ -30,8 +30,36 @@ var (
 
 	// DefaultTalosImageRepository is the default container repository for
 	// the talos image.
-	DefaultTalosImageRepository = Registry + "/" + Username + "/" + "talos"
+	DefaultTalosImageRepository = Registry + "/" + Username + "/talos"
 
 	// DefaultTalosImage is the default talos image.
 	DefaultTalosImage = DefaultTalosImageRepository + ":" + version.Tag
+
+	// DefaultInstallerBaseImageRepository is the default container repository for
+	// installer-base image.
+	DefaultInstallerBaseImageRepository = Registry + "/" + Username + "/installer-base"
+
+	// DefaultImagerImageRepository is the default container repository for
+	// imager image.
+	DefaultImagerImageRepository = Registry + "/" + Username + "/imager"
+
+	// DefaultTalosctlAllImageRepository is the default container repository for
+	// talosctl-all image.
+	DefaultTalosctlAllImageRepository = Registry + "/" + Username + "/talosctl-all"
+
+	// DefaultOverlaysManifestName is the default container manifest name for
+	// the overlays.
+	DefaultOverlaysManifestName = Username + "/overlays"
+
+	// DefaultOverlaysManifestRepository is the default container repository for
+	// overlays manifest.
+	DefaultOverlaysManifestRepository = Registry + "/" + DefaultOverlaysManifestName
+
+	// DefaultExtensionsManifestName is the default container manifest name for
+	// the extensions.
+	DefaultExtensionsManifestName = Username + "/extensions"
+
+	// DefaultExtensionsManifestRepository is the default container repository for
+	// extensions manifest.
+	DefaultExtensionsManifestRepository = Registry + "/" + DefaultExtensionsManifestName
 )

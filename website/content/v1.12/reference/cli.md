@@ -1980,6 +1980,36 @@ talosctl image pull <image> [flags]
 
 * [talosctl image](#talosctl-image)	 - Manage CRI container images
 
+## talosctl image source-bundle
+
+List the source images used for building Talos
+
+```
+talosctl image source-bundle <talos-version> [flags]
+```
+
+### Options
+
+```
+  -h, --help   help for source-bundle
+```
+
+### Options inherited from parent commands
+
+```
+      --cluster string             Cluster to connect to if a proxy endpoint is used.
+      --context string             Context to be used in command
+  -e, --endpoints strings          override default endpoints in Talos configuration
+      --namespace system           namespace to use: system (etcd and kubelet images) or `cri` for all Kubernetes workloads (default "cri")
+  -n, --nodes strings              target the specified nodes
+      --siderov1-keys-dir string   The path to the SideroV1 auth PGP keys directory. Defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'. Only valid for Contexts that use SideroV1 auth.
+      --talosconfig string         The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
+```
+
+### SEE ALSO
+
+* [talosctl image](#talosctl-image)	 - Manage CRI container images
+
 ## talosctl image
 
 Manage CRI container images
@@ -2004,6 +2034,7 @@ Manage CRI container images
 * [talosctl image default](#talosctl-image-default)	 - List the default images used by Talos
 * [talosctl image list](#talosctl-image-list)	 - List CRI images
 * [talosctl image pull](#talosctl-image-pull)	 - Pull an image into CRI
+* [talosctl image source-bundle](#talosctl-image-source-bundle)	 - List the source images used for building Talos
 
 ## talosctl inject serviceaccount
 

@@ -16,10 +16,12 @@ import (
 	"text/tabwriter"
 	"time"
 
+	"github.com/blang/semver/v4"
 	"github.com/dustin/go-humanize"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 
+	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/artifacts"
 	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/helpers"
 	"github.com/siderolabs/talos/pkg/imager/cache"
 	"github.com/siderolabs/talos/pkg/images"
@@ -29,6 +31,7 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/config/container"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
+	"github.com/siderolabs/talos/pkg/machinery/version"
 )
 
 type imageCmdFlagsType struct {
@@ -160,6 +163,83 @@ var imageDefaultCmd = &cobra.Command{
 		}
 
 		fmt.Printf("%s\n", images.Pause)
+
+		return nil
+	},
+}
+
+var minimumVersion = semver.MustParse("1.11.0-alpha.0")
+
+// imageSourceBundleCmd represents the image source-bundle command.
+var imageSourceBundleCmd = &cobra.Command{
+	Use:   "source-bundle <talos-version>",
+	Short: "List the source images used for building Talos",
+	Long:  ``,
+	Args: helpers.ChainCobraPositionalArgs(
+		cobra.ExactArgs(1),
+		func(cmd *cobra.Command, args []string) error {
+			maximumVersion, err := semver.ParseTolerant(version.Tag)
+			if err != nil {
+				panic(err) // panic, this should never happen
+			}
+
+			tag := args[0]
+
+			ver, err := semver.ParseTolerant(tag)
+			if err != nil {
+				return fmt.Errorf("invalid argument %q for %q: tag must be a valid semver", tag, cmd.CommandPath())
+			}
+
+			if !ver.GTE(minimumVersion) || !ver.LT(maximumVersion) {
+				return fmt.Errorf("invalid argument %q for %q: tag for the bundle must be within range \"v%s\" - \"v%s\"", tag, cmd.CommandPath(), minimumVersion, maximumVersion)
+			}
+
+			return nil
+		},
+	),
+	RunE: func(cmd *cobra.Command, args []string) error {
+		var (
+			tag        = args[0]
+			err        error
+			extensions []artifacts.ExtensionRef
+			overlays   []artifacts.OverlayRef
+		)
+
+		sources := images.ListSourcesFor(tag)
+
+		extensions, err = artifacts.FetchOfficialExtensions(tag)
+		if err != nil {
+			return fmt.Errorf("error fetching official extensions for %s: %w", tag, err)
+		}
+
+		overlays, err = artifacts.FetchOfficialOverlays(tag)
+		if err != nil {
+			return fmt.Errorf("error fetching official overlays for %s: %w", tag, err)
+		}
+
+		fmt.Printf("%s\n", sources.Installer)
+		fmt.Printf("%s\n", sources.InstallerBase)
+		fmt.Printf("%s\n", sources.Imager)
+		fmt.Printf("%s\n", sources.Talos)
+		fmt.Printf("%s\n", sources.TalosctlAll)
+		fmt.Printf("%s\n", sources.Overlays)
+		fmt.Printf("%s\n", sources.Extensions)
+
+		digestedReferences := []string{}
+
+		for _, overlay := range overlays {
+			digestedReferences = append(digestedReferences, fmt.Sprintf("%s@%s", overlay.TaggedReference.String(), overlay.Digest))
+		}
+
+		for _, extension := range extensions {
+			digestedReferences = append(digestedReferences, fmt.Sprintf("%s@%s", extension.TaggedReference.String(), extension.Digest))
+		}
+
+		slices.Sort(digestedReferences)
+
+		for _, ref := range slices.Compact(digestedReferences) {
+			fmt.Printf("%s\n", ref)
+		}
 
 		return nil
 	},
@@ -337,6 +417,7 @@ func init() {
 	imageCmd.AddCommand(imagePullCmd)
 	imageCmd.AddCommand(imageCacheCreateCmd)
 	imageCmd.AddCommand(imageIntegrationCmd)
+	imageCmd.AddCommand(imageSourceBundleCmd)
 
 	imageCacheCreateCmd.PersistentFlags().StringVar(&imageCacheCreateCmdFlags.imageCachePath, "image-cache-path", "", "directory to save the image cache in OCI format")
 	imageCacheCreateCmd.MarkPersistentFlagRequired("image-cache-path") //nolint:errcheck
