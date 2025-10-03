@@ -526,6 +526,8 @@ github.com/nberlee/go-netstat v0.1.2 h1:wgPV1YOUo+kDFypqiKgfxMtnSs1Wb42c7ahI4qyE
 github.com/nberlee/go-netstat v0.1.2/go.mod h1:GvDCRLsUKMRN1wULkt7tpnDmjSIE6YGf5zeVq+mBO64=
 github.com/nsf/termbox-go v0.0.0-20190121233118-02980233997d h1:x3S6kxmy49zXVVyhcnrFqxvNVCBPb2KZ9hV2RBdS840=
 github.com/nsf/termbox-go v0.0.0-20190121233118-02980233997d/go.mod h1:IuKpRQcYE1Tfu+oAQqaLisqDeXgjyyltCfsaoYN18NQ=
+github.com/olareg/olareg v0.1.2 h1:75G8X6E9FUlzL/CSjgFcYfMgNzlc7CxULpUUNsZBIvI=
+github.com/olareg/olareg v0.1.2/go.mod h1:TWs+N6pO1S4bdB6eerzUm/ITRQ6kw91mVf9ZYeGtw+Y=
 github.com/onsi/ginkgo/v2 v2.25.1 h1:Fwp6crTREKM+oA6Cz4MsO8RhKQzs2/gOIVOUscMAfZY=
 github.com/onsi/ginkgo/v2 v2.25.1/go.mod h1:ppTWQ1dh9KM/F1XgpeRqelR+zHVwV81DGRSDnFxK7Sk=
 github.com/onsi/gomega v1.38.1 h1:FaLA8GlcpXDwsb7m0h2A9ew2aTk3vnZMlzFgg5tz/pk=
