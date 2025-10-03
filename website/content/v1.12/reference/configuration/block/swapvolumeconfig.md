@@ -94,9 +94,9 @@ DiskSelector selects a disk for the volume.
 
 | Field | Type | Description | Value(s) |
 |-------|------|-------------|----------|
-|`match` |Expression |The Common Expression Language (CEL) expression to match the disk. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
+|`match` |Expression |The Common Expression Language (CEL) expression to match the disk. <details><summary>Show example(s)</summary>match disks with size between 120GB and 1TB:{{< highlight yaml >}}
 match: disk.size > 120u * GB && disk.size < 1u * TB
-{{< /highlight >}}{{< highlight yaml >}}
+{{< /highlight >}}match SATA disks that are not rotational and not system disks:{{< highlight yaml >}}
 match: disk.transport == "sata" && !disk.rotational && !system_disk
 {{< /highlight >}}</details> | |
 

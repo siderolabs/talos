@@ -468,15 +468,13 @@ func getProtoBasicName(typ string) string {
 	switch typ {
 	case "bool":
 		return "bool"
-	case "int8", "int16":
-		return "fixed32"
-	case "int32":
+	case "int8", "int16", "int32":
 		return "int32"
 	case "int64", "int":
 		return "int64"
-	case "byte", "uint8", "uint16":
+	case "byte":
 		return "fixed32"
-	case "uint32":
+	case "uint8", "uint16", "uint32":
 		return "uint32"
 	case "uint64", "uint":
 		return "uint64"

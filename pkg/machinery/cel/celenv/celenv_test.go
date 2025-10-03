@@ -121,3 +121,38 @@ func TestOOMTrigger(t *testing.T) {
 		})
 	}
 }
+
+func TestLinkLocator(t *testing.T) {
+	t.Parallel()
+
+	env := celenv.LinkLocator()
+
+	for _, test := range []struct {
+		name       string
+		expression string
+	}{
+		{
+			name:       "by driver",
+			expression: `link.driver == "i1000e"`,
+		},
+		{
+			name:       "by mac",
+			expression: `mac(link.hardware_addr) == "00:1a:2b:3c:4d:5e"`,
+		},
+		{
+			name:       "by mac partial",
+			expression: `glob(mac(link.hardware_addr), "00:1a:2b:*")`,
+		},
+		{
+			name:       "by altnames",
+			expression: `"enx728c41bfd443" in link.alt_names`,
+		},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+
+			_, err := cel.ParseBooleanExpression(test.expression, env)
+			require.NoError(t, err)
+		})
+	}
+}
