@@ -1870,7 +1870,46 @@ talosctl images default | talosctl images cache-create --image-cache-path=/tmp/t
       --image-layer-cache-path string   directory to save the image layer cache
       --images strings                  images to cache
       --insecure                        allow insecure registries
-      --platform string                 platform to use for the cache (default "linux/amd64")
+      --layout string                   Specifies the cache layout format: "oci" for an OCI image layout directory, or "flat" for a registry-like flat file structure (default "oci")
+      --platform strings                platform to use for the cache (default [linux/amd64])
+```
+
+### Options inherited from parent commands
+
+```
+      --cluster string             Cluster to connect to if a proxy endpoint is used.
+      --context string             Context to be used in command
+  -e, --endpoints strings          override default endpoints in Talos configuration
+      --namespace system           namespace to use: system (etcd and kubelet images) or `cri` for all Kubernetes workloads (default "cri")
+  -n, --nodes strings              target the specified nodes
+      --siderov1-keys-dir string   The path to the SideroV1 auth PGP keys directory. Defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'. Only valid for Contexts that use SideroV1 auth.
+      --talosconfig string         The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
+```
+
+### SEE ALSO
+
+* [talosctl image](#talosctl-image)	 - Manage CRI container images
+
+## talosctl image cache-serve
+
+Serve an OCI image cache directory over HTTP(S) as a container registry
+
+### Synopsis
+
+Serve an OCI image cache directory over HTTP(S) as a container registry
+
+```
+talosctl image cache-serve [flags]
+```
+
+### Options
+
+```
+      --address string            address to serve the registry on (default "127.0.0.1:3172")
+  -h, --help                      help for cache-serve
+      --image-cache-path string   directory to save the image cache in OCI format
+      --tls-cert-file string      TLS certificate file to use for serving
+      --tls-key-file string       TLS key file to use for serving
 ```
 
 ### Options inherited from parent commands
@@ -2031,6 +2070,7 @@ Manage CRI container images
 
 * [talosctl](#talosctl)	 - A CLI for out-of-band management of Kubernetes nodes created by Talos
 * [talosctl image cache-create](#talosctl-image-cache-create)	 - Create a cache of images in OCI format into a directory
+* [talosctl image cache-serve](#talosctl-image-cache-serve)	 - Serve an OCI image cache directory over HTTP(S) as a container registry
 * [talosctl image default](#talosctl-image-default)	 - List the default images used by Talos
 * [talosctl image list](#talosctl-image-list)	 - List CRI images
 * [talosctl image pull](#talosctl-image-pull)	 - Pull an image into CRI

@@ -103,6 +103,21 @@ These fields were removed from the default machine configuration schema in v1.12
 etcd container image is now pulled from `registry.k8s.io/etcd` instead of `gcr.io/etcd-development/etcd`.
 """
 
+    [notes.talosctl]
+        title = "talosctl image cache-serve"
+        description = """\
+`talosctl` includes new subcommand `image cache-serve`.
+It allows serving the created OCI image registry over HTTP/HTTPS.
+It is a read-only registry, meaning images cannot be pushed to it, but the backing storage can be updated by re-running the `cache-create` command;
+
+Additionally `talosctl image cache-create` has some changes:
+  * new flag `--layout`: `oci` (_default_), `flat`:
+    * `oci` preserves current behavior;
+    * `flat` does not repack artifact layer, but moves it to a destination directory, allowing it to be served by `talosctl image cache-serve`;
+  * changed flag `--platform`: now can accept multiple os/arch combinations:
+    * comma separated (`--platform=linux/amd64,linux/arm64`);
+    * multiple instances (`--platform=linux/amd64 --platform=linux/arm64`);
+"""
 
 [make_deps]
 

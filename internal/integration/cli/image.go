@@ -181,6 +181,34 @@ func (suite *ImageSuite) TestCacheCreate() {
 	assert.FileExistsf(suite.T(), cacheDir+"/index.json", "index.json should exist in the image cache directory")
 }
 
+// TestRegistryCreate verifies creating a registry cache.
+func (suite *ImageSuite) TestRegistryCreate() {
+	if testing.Short() {
+		suite.T().Skip("skipping in short mode")
+	}
+
+	stdOut, _ := suite.RunCLI([]string{"image", "source-bundle", "v1.11.2"})
+
+	imagesList := strings.Split(strings.Trim(stdOut, "\n"), "\n")
+
+	imagesArgs := xslices.Map(imagesList[:2], func(image string) string {
+		return "--images=" + image
+	})
+
+	storageDir := suite.T().TempDir()
+
+	args := []string{"image", "registry", "create", storageDir}
+
+	args = append(args, imagesArgs...)
+
+	suite.RunCLI(args, base.StdoutEmpty(), base.StderrNotEmpty())
+
+	assert.FileExistsf(suite.T(), storageDir+"pause/index.json", "pause/index.json should exist in the image cache directory")
+	assert.FileExistsf(suite.T(), storageDir+"pause/oci-layout", "pause/oci-layout should exist in the image cache directory")
+	assert.FileExistsf(suite.T(), storageDir+"siderolabs/kubelet/index.json", "siderolabs/kubelet/index.json should exist in the image cache directory")
+	assert.FileExistsf(suite.T(), storageDir+"siderolabs/kubelet/oci-layout", "siderolabs/kubelet/oci-layout should exist in the image cache directory")
+}
+
 func init() {
 	allSuites = append(allSuites, new(ImageSuite))
 }

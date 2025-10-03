@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"os/signal"
 	"slices"
 	"strings"
 	"text/tabwriter"
@@ -20,9 +21,11 @@ import (
 	"github.com/dustin/go-humanize"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
+	"go.uber.org/zap"
 
 	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/artifacts"
 	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/helpers"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/system/services/registry"
 	"github.com/siderolabs/talos/pkg/imager/cache"
 	"github.com/siderolabs/talos/pkg/images"
 	"github.com/siderolabs/talos/pkg/machinery/api/common"
@@ -168,14 +171,24 @@ var imageDefaultCmd = &cobra.Command{
 	},
 }
 
-var minimumVersion = semver.MustParse("1.11.0-alpha.0")
+const (
+	provisionerDocker    = "docker"
+	provisionerInstaller = "installer"
+	provisionerAll       = "all"
+)
+
+var imageDefaultCmdFlags = struct {
+	provisioner pflag.Value
+}{
+	provisioner: helpers.StringChoice(provisionerInstaller, provisionerDocker, provisionerAll),
+}
 
 // imageSourceBundleCmd represents the image source-bundle command.
 var imageSourceBundleCmd = &cobra.Command{
 	Use:   "source-bundle <talos-version>",
 	Short: "List the source images used for building Talos",
 	Long:  ``,
-	Args: helpers.ChainCobraPositionalArgs(
+	Args: cobra.MatchAll(
 		cobra.ExactArgs(1),
 		func(cmd *cobra.Command, args []string) error {
 			maximumVersion, err := semver.ParseTolerant(version.Tag)
@@ -244,6 +257,8 @@ var imageSourceBundleCmd = &cobra.Command{
 		return nil
 	},
 }
+
+var minimumVersion = semver.MustParse("1.11.0-alpha.0")
 
 // imageIntegrationCmd represents the integration image command.
 var imageIntegrationCmd = &cobra.Command{
@@ -374,6 +389,7 @@ talosctl images default | talosctl images cache-create --image-cache-path=/tmp/t
 			imageCacheCreateCmdFlags.insecure,
 			imageCacheCreateCmdFlags.imageLayerCachePath,
 			imageCacheCreateCmdFlags.imageCachePath,
+			imageCacheCreateCmdFlags.layout.String() == layoutFlat,
 		)
 		if err != nil {
 			return fmt.Errorf("error generating cache: %w", err)
@@ -383,27 +399,65 @@ talosctl images default | talosctl images cache-create --image-cache-path=/tmp/t
 	},
 }
 
-var imageCacheCreateCmdFlags struct {
+const (
+	layoutOCI  = "oci"
+	layoutFlat = "flat"
+)
+
+var imageCacheCreateCmdFlags = struct {
 	imageCachePath      string
 	imageLayerCachePath string
-	platform            string
+	layout              pflag.Value
+	platform            []string
 
 	images []string
 
 	insecure bool
 	force    bool
+}{
+	layout: helpers.StringChoice(layoutOCI, layoutFlat),
 }
 
-const (
-	provisionerDocker    = "docker"
-	provisionerInstaller = "installer"
-	provisionerAll       = "all"
-)
+// imageCacheServeCmd represents the image cache serve command.
+var imageCacheServeCmd = &cobra.Command{
+	Use:     "cache-serve",
+	Short:   "Serve an OCI image cache directory over HTTP(S) as a container registry",
+	Long:    `Serve an OCI image cache directory over HTTP(S) as a container registry`,
+	Example: ``,
+	Args:    cobra.NoArgs,
+	RunE: func(cmd *cobra.Command, args []string) error {
+		ctx, cancel := signal.NotifyContext(cmd.Context(), os.Interrupt)
+		defer cancel()
 
-var imageDefaultCmdFlags = struct {
-	provisioner pflag.Value
-}{
-	provisioner: helpers.StringChoice(provisionerInstaller, provisionerDocker, provisionerAll),
+		development, err := zap.NewDevelopment()
+		if err != nil {
+			return fmt.Errorf("failed to create development logger: %w", err)
+		}
+
+		it := func(yield func(string) bool) {
+			for _, root := range []string{imageCacheServeCmdFlags.imageCachePath} {
+				if !yield(root) {
+					return
+				}
+			}
+		}
+
+		return registry.NewService(registry.NewMultiPathFS(it), development).Run(
+			ctx,
+			registry.WithTLS(
+				imageCacheServeCmdFlags.tlsCertFile,
+				imageCacheServeCmdFlags.tlsKeyFile,
+			),
+			registry.WithAddress(imageCacheServeCmdFlags.address),
+		)
+	},
+}
+
+var imageCacheServeCmdFlags struct {
+	imageCachePath string
+	address        string
+	tlsCertFile    string
+	tlsKeyFile     string
 }
 
 func init() {
@@ -415,19 +469,28 @@ func init() {
 
 	imageCmd.AddCommand(imageListCmd)
 	imageCmd.AddCommand(imagePullCmd)
-	imageCmd.AddCommand(imageCacheCreateCmd)
-	imageCmd.AddCommand(imageIntegrationCmd)
 	imageCmd.AddCommand(imageSourceBundleCmd)
 
+	imageCmd.AddCommand(imageCacheCreateCmd)
 	imageCacheCreateCmd.PersistentFlags().StringVar(&imageCacheCreateCmdFlags.imageCachePath, "image-cache-path", "", "directory to save the image cache in OCI format")
 	imageCacheCreateCmd.MarkPersistentFlagRequired("image-cache-path") //nolint:errcheck
 	imageCacheCreateCmd.PersistentFlags().StringVar(&imageCacheCreateCmdFlags.imageLayerCachePath, "image-layer-cache-path", "", "directory to save the image layer cache")
-	imageCacheCreateCmd.PersistentFlags().StringVar(&imageCacheCreateCmdFlags.platform, "platform", "linux/amd64", "platform to use for the cache")
+	imageCacheCreateCmd.PersistentFlags().Var(imageCacheCreateCmdFlags.layout, "layout",
+		"Specifies the cache layout format: \"oci\" for an OCI image layout directory, or \"flat\" for a registry-like flat file structure")
+	imageCacheCreateCmd.PersistentFlags().StringSliceVar(&imageCacheCreateCmdFlags.platform, "platform", []string{"linux/amd64"}, "platform to use for the cache")
 	imageCacheCreateCmd.PersistentFlags().StringSliceVar(&imageCacheCreateCmdFlags.images, "images", nil, "images to cache")
 	imageCacheCreateCmd.MarkPersistentFlagRequired("images") //nolint:errcheck
 	imageCacheCreateCmd.PersistentFlags().BoolVar(&imageCacheCreateCmdFlags.insecure, "insecure", false, "allow insecure registries")
 	imageCacheCreateCmd.PersistentFlags().BoolVar(&imageCacheCreateCmdFlags.force, "force", false, "force overwrite of existing image cache")
 
+	imageCmd.AddCommand(imageCacheServeCmd)
+	imageCacheServeCmd.PersistentFlags().StringVar(&imageCacheServeCmdFlags.imageCachePath, "image-cache-path", "", "directory to save the image cache in OCI format")
+	imageCacheServeCmd.MarkPersistentFlagRequired("image-cache-path") //nolint:errcheck
+	imageCacheServeCmd.PersistentFlags().StringVar(&imageCacheServeCmdFlags.address, "address", constants.RegistrydListenAddress, "address to serve the registry on")
+	imageCacheServeCmd.PersistentFlags().StringVar(&imageCacheServeCmdFlags.tlsCertFile, "tls-cert-file", "", "TLS certificate file to use for serving")
+	imageCacheServeCmd.PersistentFlags().StringVar(&imageCacheServeCmdFlags.tlsKeyFile, "tls-key-file", "", "TLS key file to use for serving")
+
+	imageCmd.AddCommand(imageIntegrationCmd)
 	imageIntegrationCmd.PersistentFlags().StringVar(&imageIntegrationCmdFlags.installerTag, "installer-tag", "", "tag of the installer image to use")
 	imageIntegrationCmd.MarkPersistentFlagRequired("installer-tag") //nolint:errcheck
 	imageIntegrationCmd.PersistentFlags().StringVar(&imageIntegrationCmdFlags.registryAndUser, "registry-and-user", "", "registry and user to use for the images")

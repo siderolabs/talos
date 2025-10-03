@@ -15,9 +15,6 @@ import (
 
 func extractParams(req *http.Request) (params, error) {
 	registry := req.URL.Query().Get("ns")
-	if registry == "" {
-		return params{}, xerrors.NewTaggedf[badRequestTag]("missing ns")
-	}
 
 	value := req.PathValue("args")
 

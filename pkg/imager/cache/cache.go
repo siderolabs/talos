@@ -29,6 +29,7 @@ import (
 	"github.com/google/go-containerregistry/pkg/v1/mutate"
 	"github.com/google/go-containerregistry/pkg/v1/remote"
 	"github.com/google/go-containerregistry/pkg/v1/types"
+	"github.com/siderolabs/go-retry/retry"
 
 	"github.com/siderolabs/talos/pkg/imager/filemap"
 )
@@ -56,12 +57,7 @@ func rewriteRegistry(registryName, origRef string) string {
 // Generate generates a cache tarball from the given images.
 //
 //nolint:gocyclo,cyclop
-func Generate(images []string, platform string, insecure bool, imageLayerCachePath, dest string) error {
-	v1Platform, err := v1.ParsePlatform(platform)
-	if err != nil {
-		return fmt.Errorf("parsing platform: %w", err)
-	}
-
+func Generate(images []string, platforms []string, insecure bool, imageLayerCachePath, dest string, flat bool) error {
 	tmpDir, err := os.MkdirTemp("", "talos-image-cache-gen")
 	if err != nil {
 		return fmt.Errorf("creating temporary directory: %w", err)
@@ -74,141 +70,71 @@ func Generate(images []string, platform string, insecure bool, imageLayerCachePa
 	}
 
 	removeAll := sync.OnceValue(func() error { return os.RemoveAll(tmpDir) })
-
 	defer removeAll() //nolint:errcheck
 
-	if err := os.MkdirAll(filepath.Join(tmpDir, blobsDir), 0o755); err != nil {
-		return err
+	if len(platforms) < 1 {
+		return fmt.Errorf("must specify at least one platform")
 	}
 
-	var nameOptions []name.Option
+	for _, platform := range platforms {
+		v1Platform, err := v1.ParsePlatform(platform)
+		if err != nil {
+			return fmt.Errorf("parsing platform: %w", err)
+		}
 
-	craneOpts := []crane.Option{
-		crane.WithAuthFromKeychain(
-			authn.NewMultiKeychain(
+		if err := os.MkdirAll(filepath.Join(tmpDir, blobsDir), 0o755); err != nil {
+			return err
+		}
+
+		var nameOptions []name.Option
+
+		craneOpts := []crane.Option{
+			crane.WithAuthFromKeychain(
+				authn.NewMultiKeychain(
+					authn.DefaultKeychain,
+					github.Keychain,
+					google.Keychain,
+				),
+			),
+		}
+
+		remoteOpts := []remote.Option{
+			remote.WithAuthFromKeychain(authn.NewMultiKeychain(
 				authn.DefaultKeychain,
 				github.Keychain,
 				google.Keychain,
-			),
-		),
-	}
-
-	remoteOpts := []remote.Option{
-		remote.WithAuthFromKeychain(authn.NewMultiKeychain(
-			authn.DefaultKeychain,
-			github.Keychain,
-			google.Keychain,
-		)),
-		remote.WithPlatform(*v1Platform),
-	}
-
-	if insecure {
-		craneOpts = append(craneOpts, crane.Insecure)
-		nameOptions = append(nameOptions, name.Insecure)
-	}
-
-	for _, src := range images {
-		fmt.Fprintf(os.Stderr, "fetching image %q\n", src)
-
-		ref, err := name.ParseReference(src, nameOptions...)
-		if err != nil {
-			return fmt.Errorf("parsing reference %q: %w", src, err)
+			)),
+			remote.WithPlatform(*v1Platform),
 		}
 
-		referenceDir := filepath.Join(tmpDir, manifestsDir, rewriteRegistry(ref.Context().RegistryStr(), src), filepath.FromSlash(ref.Context().RepositoryStr()), "reference")
-		digestDir := filepath.Join(tmpDir, manifestsDir, rewriteRegistry(ref.Context().RegistryStr(), src), filepath.FromSlash(ref.Context().RepositoryStr()), "digest")
+		if insecure {
+			craneOpts = append(craneOpts, crane.Insecure)
+			nameOptions = append(nameOptions, name.Insecure)
+		}
 
-		// if the reference was parsed as a tag, use it
-		tag, ok := ref.(name.Tag)
+		for _, src := range images {
+			r := retry.Exponential(
+				30*time.Minute,
+				retry.WithUnits(time.Second),
+				retry.WithJitter(time.Second),
+				retry.WithErrorLogging(true),
+			)
 
-		if !ok {
-			if base, _, ok := strings.Cut(src, "@"); ok {
-				// if the reference was a digest, but contained a tag, re-parse it
-				tag, _ = name.NewTag(base, nameOptions...) //nolint:errcheck
+			err := r.Retry(func() error {
+				if err := processImage(src, tmpDir, imageLayerCachePath, nameOptions, craneOpts, remoteOpts); err != nil {
+					return retry.ExpectedError(err)
+				}
+
+				return nil
+			})
+			if err != nil {
+				return fmt.Errorf("failed to prcess image: %w", err)
 			}
 		}
+	}
 
-		if err = os.MkdirAll(referenceDir, 0o755); err != nil {
-			return err
-		}
-
-		if err = os.MkdirAll(digestDir, 0o755); err != nil {
-			return err
-		}
-
-		manifest, err := crane.Manifest(
-			ref.String(),
-			craneOpts...,
-		)
-		if err != nil {
-			return fmt.Errorf("fetching manifest %q: %w", ref.String(), err)
-		}
-
-		rmt, err := remote.Get(
-			ref,
-			remoteOpts...,
-		)
-		if err != nil {
-			return fmt.Errorf("fetching image %q: %w", ref.String(), err)
-		}
-
-		if tag.TagStr() != "" {
-			if err := os.WriteFile(filepath.Join(referenceDir, tag.TagStr()), manifest, 0o644); err != nil {
-				return err
-			}
-		}
-
-		if err := os.WriteFile(filepath.Join(digestDir, strings.ReplaceAll(rmt.Digest.String(), "sha256:", "sha256-")), manifest, 0o644); err != nil {
-			return err
-		}
-
-		img, err := rmt.Image()
-		if err != nil {
-			return fmt.Errorf("converting image to index: %w", err)
-		}
-
-		if imageLayerCachePath != "" {
-			img = cache.Image(img, cache.NewFilesystemCache(imageLayerCachePath))
-		}
-
-		layers, err := img.Layers()
-		if err != nil {
-			return fmt.Errorf("getting image layers: %w", err)
-		}
-
-		config, err := img.RawConfigFile()
-		if err != nil {
-			return fmt.Errorf("getting image config: %w", err)
-		}
-
-		platformManifest, err := img.RawManifest()
-		if err != nil {
-			return fmt.Errorf("getting image platform manifest: %w", err)
-		}
-
-		h := sha256.New()
-		if _, err := h.Write(platformManifest); err != nil {
-			return fmt.Errorf("platform manifest hash: %w", err)
-		}
-
-		if err := os.WriteFile(filepath.Join(digestDir, fmt.Sprintf("sha256-%x", h.Sum(nil))), platformManifest, 0o644); err != nil {
-			return err
-		}
-
-		configHash, err := img.ConfigName()
-		if err != nil {
-			return fmt.Errorf("getting image config hash: %w", err)
-		}
-
-		if err := os.WriteFile(filepath.Join(tmpDir, blobsDir, strings.ReplaceAll(configHash.String(), "sha256:", "sha256-")), config, 0o644); err != nil {
-			return err
-		}
-
-		for _, layer := range layers {
-			if err = processLayer(layer, tmpDir); err != nil {
-				return err
-			}
-		}
+	if flat {
+		return os.Rename(tmpDir, dest)
 	}
 
 	newImg := mutate.MediaType(empty.Image, types.OCIManifestSchema1)
@@ -240,11 +166,128 @@ func Generate(images []string, platform string, insecure bool, imageLayerCachePa
 		return fmt.Errorf("creating layout: %w", err)
 	}
 
-	if err := ociLayout.AppendImage(newImg, layout.WithPlatform(*v1Platform)); err != nil {
+	imagePlatform, err := v1.ParsePlatform(platforms[0])
+	if err != nil {
+		return fmt.Errorf("parsing platform: %w", err)
+	}
+
+	if err := ociLayout.AppendImage(newImg, layout.WithPlatform(*imagePlatform)); err != nil {
 		return fmt.Errorf("appending image: %w", err)
 	}
 
 	return removeAll()
+}
+
+//nolint:gocyclo,cyclop
+func processImage(
+	src, tmpDir, imageLayerCachePath string,
+	nameOptions []name.Option,
+	craneOpts []crane.Option,
+	remoteOpts []remote.Option,
+) error {
+	fmt.Fprintf(os.Stderr, "fetching image %q\n", src)
+
+	ref, err := name.ParseReference(src, nameOptions...)
+	if err != nil {
+		return fmt.Errorf("parsing reference %q: %w", src, err)
+	}
+
+	referenceDir := filepath.Join(tmpDir, manifestsDir, rewriteRegistry(ref.Context().RegistryStr(), src), filepath.FromSlash(ref.Context().RepositoryStr()), "reference")
+	digestDir := filepath.Join(tmpDir, manifestsDir, rewriteRegistry(ref.Context().RegistryStr(), src), filepath.FromSlash(ref.Context().RepositoryStr()), "digest")
+
+	// if the reference was parsed as a tag, use it
+	tag, ok := ref.(name.Tag)
+
+	if !ok {
+		if base, _, ok := strings.Cut(src, "@"); ok {
+			// if the reference was a digest, but contained a tag, re-parse it
+			tag, _ = name.NewTag(base, nameOptions...) //nolint:errcheck
+		}
+	}
+
+	if err = os.MkdirAll(referenceDir, 0o755); err != nil {
+		return err
+	}
+
+	if err = os.MkdirAll(digestDir, 0o755); err != nil {
+		return err
+	}
+
+	manifest, err := crane.Manifest(
+		ref.String(),
+		craneOpts...,
+	)
+	if err != nil {
+		return fmt.Errorf("fetching manifest %q: %w", ref.String(), err)
+	}
+
+	rmt, err := remote.Get(
+		ref,
+		remoteOpts...,
+	)
+	if err != nil {
+		return fmt.Errorf("fetching image %q: %w", ref.String(), err)
+	}
+
+	if tag.TagStr() != "" {
+		if err := os.WriteFile(filepath.Join(referenceDir, tag.TagStr()), manifest, 0o644); err != nil {
+			return err
+		}
+	}
+
+	if err := os.WriteFile(filepath.Join(digestDir, strings.ReplaceAll(rmt.Digest.String(), "sha256:", "sha256-")), manifest, 0o644); err != nil {
+		return err
+	}
+
+	img, err := rmt.Image()
+	if err != nil {
+		return fmt.Errorf("converting image to index: %w", err)
+	}
+
+	if imageLayerCachePath != "" {
+		img = cache.Image(img, cache.NewFilesystemCache(imageLayerCachePath))
+	}
+
+	layers, err := img.Layers()
+	if err != nil {
+		return fmt.Errorf("getting image layers: %w", err)
+	}
+
+	config, err := img.RawConfigFile()
+	if err != nil {
+		return fmt.Errorf("getting image config: %w", err)
+	}
+
+	platformManifest, err := img.RawManifest()
+	if err != nil {
+		return fmt.Errorf("getting image platform manifest: %w", err)
+	}
+
+	h := sha256.New()
+	if _, err := h.Write(platformManifest); err != nil {
+		return fmt.Errorf("platform manifest hash: %w", err)
+	}
+
+	if err := os.WriteFile(filepath.Join(digestDir, fmt.Sprintf("sha256-%x", h.Sum(nil))), platformManifest, 0o644); err != nil {
+		return err
+	}
+
+	configHash, err := img.ConfigName()
+	if err != nil {
+		return fmt.Errorf("getting image config hash: %w", err)
+	}
+
+	if err := os.WriteFile(filepath.Join(tmpDir, blobsDir, strings.ReplaceAll(configHash.String(), "sha256:", "sha256-")), config, 0o644); err != nil {
+		return err
+	}
+
+	for _, layer := range layers {
+		if err = processLayer(layer, tmpDir); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 func processLayer(layer v1.Layer, dstDir string) error {

@@ -44,8 +44,32 @@ type Service struct {
 	root   fs.StatFS
 }
 
+type config struct {
+	addr        string
+	tlsKeyPath  string
+	tlsCertPath string
+}
+
+// Option is a functional option for configuring the service.
+type Option func(*config)
+
+// WithTLS enables TLS with the given certificate and key paths.
+func WithTLS(certPath, keyPath string) Option {
+	return func(c *config) {
+		c.tlsCertPath = certPath
+		c.tlsKeyPath = keyPath
+	}
+}
+
+// WithAddress sets the address to listen on.
+func WithAddress(addr string) Option {
+	return func(c *config) {
+		c.addr = addr
+	}
+}
+
 // Run is an entrypoint to the API service.
-func (svc *Service) Run(ctx context.Context) error {
+func (svc *Service) Run(ctx context.Context, options ...Option) error {
 	mux := http.NewServeMux()
 
 	mux.HandleFunc("GET /v2/{args...}", svc.serveHTTP)
@@ -56,7 +80,15 @@ func (svc *Service) Run(ctx context.Context) error {
 		mux.HandleFunc("GET /"+p+"/{$}", giveOk)
 	}
 
-	server := http.Server{Addr: constants.RegistrydListenAddress, Handler: mux}
+	cfg := &config{
+		addr: constants.RegistrydListenAddress,
+	}
+
+	for _, option := range options {
+		option(cfg)
+	}
+
+	server := http.Server{Addr: cfg.addr, Handler: mux}
 	errCh := make(chan error, 1)
 
 	ctx, cancel := context.WithCancel(ctx)
@@ -73,9 +105,18 @@ func (svc *Service) Run(ctx context.Context) error {
 
 	svc.logger.Info("starting registry server", zap.String("addr", server.Addr))
 
-	err := server.ListenAndServe()
-	if errors.Is(err, http.ErrServerClosed) {
-		err = nil
+	var err error
+
+	if cfg.tlsCertPath != "" && cfg.tlsKeyPath != "" {
+		err = server.ListenAndServeTLS(cfg.tlsCertPath, cfg.tlsKeyPath)
+		if errors.Is(err, http.ErrServerClosed) {
+			err = nil
+		}
+	} else {
+		err = server.ListenAndServe()
+		if errors.Is(err, http.ErrServerClosed) {
+			err = nil
+		}
 	}
 
 	cancel()
@@ -94,6 +135,7 @@ func (svc *Service) serveHTTP(w http.ResponseWriter, req *http.Request) {
 	}
 }
 
+//nolint:gocyclo
 func (svc *Service) handler(w http.ResponseWriter, req *http.Request) error {
 	logger := svc.logger.With(
 		zap.String("method", req.Method),
@@ -113,6 +155,17 @@ func (svc *Service) handler(w http.ResponseWriter, req *http.Request) error {
 		zap.Bool("is_blob", p.isBlob),
 		zap.String("registry", p.registry),
 	)
+
+	if p.registry == "" {
+		p.registry, err = svc.tryFindRegistry(p)
+		if err != nil {
+			return err
+		}
+
+		if p.registry == "" {
+			return fmt.Errorf("failed to extract params: %w", xerrors.NewTaggedf[badRequestTag]("missing ns"))
+		}
+	}
 
 	ref, err := svc.resolveCanonicalRef(p)
 	if err != nil {
@@ -292,3 +345,29 @@ type (
 	badRequestTag    struct{}
 	internalErrorTag struct{}
 )
+
+func (svc *Service) tryFindRegistry(p params) (string, error) {
+	entries, err := fs.ReadDir(svc.root, "manifests")
+	if err != nil {
+		return "", xerrors.NewTaggedf[internalErrorTag]("failed to read manifests directory: %w", err)
+	}
+
+	for _, entry := range entries {
+		p.registry = entry.Name()
+
+		ref, err := reference.ParseDockerRef(p.String())
+		if err != nil {
+			return "", xerrors.NewTaggedf[badRequestTag]("failed to parse docker ref: %w", err)
+		}
+
+		namedTaggedName := handleRegistryWithPort(ref, p)
+
+		taggedFile := filepath.Join("manifests", namedTaggedName, "reference")
+
+		if _, err := fs.Stat(svc.root, taggedFile); err == nil {
+			return entry.Name(), nil
+		}
+	}
+
+	return "", nil
+}

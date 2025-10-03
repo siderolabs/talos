@@ -48,7 +48,7 @@ func TestRegistry(t *testing.T) {
 	platform, err := v1.ParsePlatform("linux/amd64")
 	assert.NoError(t, err)
 
-	assert.NoError(t, cache.Generate(images, platform.String(), false, "", cacheDir))
+	assert.NoError(t, cache.Generate(images, []string{platform.String()}, false, "", cacheDir, false))
 
 	l, err := layout.ImageIndexFromPath(cacheDir)
 	assert.NoError(t, err)
