@@ -570,7 +570,7 @@ func (suite *ApplyConfigSuite) TestApplyTry() {
 
 	suite.PatchMachineConfigWithModeSetter(nodeCtx, func(acr *machineapi.ApplyConfigurationRequest) {
 		acr.Mode = machineapi.ApplyConfigurationRequest_TRY
-		acr.TryModeTimeout = durationpb.New(time.Second * 1)
+		acr.TryModeTimeout = durationpb.New(time.Second * 10)
 	}, dummyCfg)
 
 	provider, err := suite.ReadConfigFromNode(nodeCtx)
