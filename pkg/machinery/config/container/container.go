@@ -307,6 +307,11 @@ func (container *Container) NetworkCommonLinkConfigs() []config.NetworkCommonLin
 	return findMatchingDocs[config.NetworkCommonLinkConfig](container.documents)
 }
 
+// NetworkLinkAliasConfigs implements config.Config interface.
+func (container *Container) NetworkLinkAliasConfigs() []config.NetworkLinkAliasConfig {
+	return findMatchingDocs[config.NetworkLinkAliasConfig](container.documents)
+}
+
 // RunDefaultDHCPOperators implements config.Config interface.
 //
 // The rules for this are:

@@ -6,6 +6,7 @@
 package celenv
 
 import (
+	"net"
 	"slices"
 	"sync"
 
@@ -16,6 +17,7 @@ import (
 	"github.com/siderolabs/gen/xslices"
 
 	"github.com/siderolabs/talos/pkg/machinery/api/resource/definitions/block"
+	"github.com/siderolabs/talos/pkg/machinery/api/resource/definitions/network"
 	"github.com/siderolabs/talos/pkg/machinery/resources/runtime"
 )
 
@@ -127,6 +129,39 @@ var OOMCgroupScoring = sync.OnceValue(func() *cel.Env {
 				celUnitMultipliersConstants(),
 			),
 			celCgroupClassConstants(),
+		)...,
+	)
+	if err != nil {
+		panic(err)
+	}
+
+	return env
+})
+
+// LinkLocator is a network link locator CEL environment.
+var LinkLocator = sync.OnceValue(func() *cel.Env {
+	var linkSpec network.LinkStatusSpec
+
+	env, err := cel.NewEnv(
+		slices.Concat(
+			[]cel.EnvOption{
+				cel.Types(&linkSpec),
+				cel.Variable("link", cel.ObjectType(string(linkSpec.ProtoReflect().Descriptor().FullName()))),
+				cel.Function("glob", // glob(pattern, string) -> bool
+					cel.Overload("glob_string_string", []*cel.Type{cel.StringType, cel.StringType}, cel.BoolType,
+						cel.BinaryBinding(func(arg1, arg2 ref.Val) ref.Val {
+							return types.Bool(glob.Glob(string(arg1.(types.String)), string(arg2.(types.String))))
+						}),
+					),
+				),
+				cel.Function("mac", // mac(bytes) -> string
+					cel.Overload("mac_bytes", []*cel.Type{cel.BytesType}, cel.StringType,
+						cel.UnaryBinding(func(arg ref.Val) ref.Val {
+							return types.String(net.HardwareAddr([]byte(arg.(types.Bytes))).String())
+						}),
+					),
+				),
+			},
 		)...,
 	)
 	if err != nil {

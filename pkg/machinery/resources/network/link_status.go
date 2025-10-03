@@ -119,6 +119,10 @@ func (LinkStatusExtension) ResourceDefinition() meta.ResourceDefinitionSpec {
 		DefaultNamespace: NamespaceName,
 		PrintColumns: []meta.PrintColumn{
 			{
+				Name:     "Alias",
+				JSONPath: `{.alias}`,
+			},
+			{
 				Name:     "Type",
 				JSONPath: `{.type}`,
 			},

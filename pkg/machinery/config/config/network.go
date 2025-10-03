@@ -9,6 +9,7 @@ import (
 
 	"github.com/siderolabs/gen/optional"
 
+	"github.com/siderolabs/talos/pkg/machinery/cel"
 	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
 )
 
@@ -151,4 +152,10 @@ type NetworkRouteConfig interface {
 	MTU() optional.Optional[uint32]
 	Metric() optional.Optional[uint32]
 	Table() optional.Optional[nethelpers.RoutingTable]
+}
+
+// NetworkLinkAliasConfig defines a network link alias configuration.
+type NetworkLinkAliasConfig interface {
+	NamedDocument
+	LinkSelector() cel.Expression
 }

@@ -19,7 +19,7 @@
                 {{- end -}}
             {{- end -}}
         {{- end }} |
-{{- fmtDesc .Field.Description }} {{ with .Field.Examples }}<details><summary>Show example(s)</summary>{{ range . }}{{ yaml .GetValue (printf ".%s" $.Field.Name) }}{{ end }}</details>{{ end }} |
+{{- fmtDesc .Field.Description }} {{ with .Field.Examples }}<details><summary>Show example(s)</summary>{{ range . }}{{ if .Name }}{{ .Name }}:{{ end }}{{ yaml .GetValue (printf ".%s" $.Field.Name) }}{{ end }}</details>{{ end }} |
 {{- range $value := .Field.Values }}`{{ $value }}`<br />{{ end }} |
 {{ else if .Field.Inline -}}
     {{- $struct := index .Types .Field.Type -}}

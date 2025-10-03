@@ -33,6 +33,7 @@ func TestRegisterResource(t *testing.T) {
 		&network.HostDNSConfig{},
 		&network.HostnameStatus{},
 		&network.HostnameSpec{},
+		&network.LinkAliasSpec{},
 		&network.LinkRefresh{},
 		&network.LinkStatus{},
 		&network.LinkSpec{},

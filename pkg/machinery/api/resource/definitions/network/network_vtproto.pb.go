@@ -5,7 +5,6 @@
 package network
 
 import (
-	binary "encoding/binary"
 	fmt "fmt"
 	io "io"
 
@@ -337,20 +336,18 @@ func (m *BondMasterSpec) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 		dAtA[i] = 0xc0
 	}
 	if m.AdUserPortKey != 0 {
-		i -= 4
-		binary.LittleEndian.PutUint32(dAtA[i:], uint32(m.AdUserPortKey))
+		i = protohelpers.EncodeVarint(dAtA, i, uint64(m.AdUserPortKey))
 		i--
 		dAtA[i] = 0x1
 		i--
-		dAtA[i] = 0xbd
+		dAtA[i] = 0xb8
 	}
 	if m.AdActorSysPrio != 0 {
-		i -= 4
-		binary.LittleEndian.PutUint32(dAtA[i:], uint32(m.AdActorSysPrio))
+		i = protohelpers.EncodeVarint(dAtA, i, uint64(m.AdActorSysPrio))
 		i--
 		dAtA[i] = 0x1
 		i--
-		dAtA[i] = 0xb5
+		dAtA[i] = 0xb0
 	}
 	if m.UseCarrier {
 		i--
@@ -365,28 +362,25 @@ func (m *BondMasterSpec) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 		dAtA[i] = 0xa8
 	}
 	if m.AllSlavesActive != 0 {
-		i -= 4
-		binary.LittleEndian.PutUint32(dAtA[i:], uint32(m.AllSlavesActive))
+		i = protohelpers.EncodeVarint(dAtA, i, uint64(m.AllSlavesActive))
 		i--
 		dAtA[i] = 0x1
 		i--
-		dAtA[i] = 0xa5
+		dAtA[i] = 0xa0
 	}
 	if m.TlbDynamicLb != 0 {
-		i -= 4
-		binary.LittleEndian.PutUint32(dAtA[i:], uint32(m.TlbDynamicLb))
+		i = protohelpers.EncodeVarint(dAtA, i, uint64(m.TlbDynamicLb))
 		i--
 		dAtA[i] = 0x1
 		i--
-		dAtA[i] = 0x9d
+		dAtA[i] = 0x98
 	}
 	if m.NumPeerNotif != 0 {
-		i -= 4
-		binary.LittleEndian.PutUint32(dAtA[i:], uint32(m.NumPeerNotif))
+		i = protohelpers.EncodeVarint(dAtA, i, uint64(m.NumPeerNotif))
 		i--
 		dAtA[i] = 0x1
 		i--
-		dAtA[i] = 0x95
+		dAtA[i] = 0x90
 	}
 	if m.PacketsPerSlave != 0 {
 		i = protohelpers.EncodeVarint(dAtA, i, uint64(m.PacketsPerSlave))
@@ -1668,6 +1662,46 @@ func (m *HostnameStatusSpec) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 	return len(dAtA) - i, nil
 }
 
+func (m *LinkAliasSpecSpec) MarshalVT() (dAtA []byte, err error) {
+	if m == nil {
+		return nil, nil
+	}
+	size := m.SizeVT()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBufferVT(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *LinkAliasSpecSpec) MarshalToVT(dAtA []byte) (int, error) {
+	size := m.SizeVT()
+	return m.MarshalToSizedBufferVT(dAtA[:size])
+}
+
+func (m *LinkAliasSpecSpec) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
+	if m == nil {
+		return 0, nil
+	}
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.unknownFields != nil {
+		i -= len(m.unknownFields)
+		copy(dAtA[i:], m.unknownFields)
+	}
+	if len(m.Alias) > 0 {
+		i -= len(m.Alias)
+		copy(dAtA[i:], m.Alias)
+		i = protohelpers.EncodeVarint(dAtA, i, uint64(len(m.Alias)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
 func (m *LinkRefreshSpec) MarshalVT() (dAtA []byte, err error) {
 	if m == nil {
 		return nil, nil
@@ -2339,10 +2373,9 @@ func (m *NfTablesClampMSS) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 		copy(dAtA[i:], m.unknownFields)
 	}
 	if m.Mtu != 0 {
-		i -= 4
-		binary.LittleEndian.PutUint32(dAtA[i:], uint32(m.Mtu))
+		i = protohelpers.EncodeVarint(dAtA, i, uint64(m.Mtu))
 		i--
-		dAtA[i] = 0xd
+		dAtA[i] = 0x8
 	}
 	return len(dAtA) - i, nil
 }
@@ -3326,16 +3359,14 @@ func (m *PortRange) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 		copy(dAtA[i:], m.unknownFields)
 	}
 	if m.Hi != 0 {
-		i -= 4
-		binary.LittleEndian.PutUint32(dAtA[i:], uint32(m.Hi))
+		i = protohelpers.EncodeVarint(dAtA, i, uint64(m.Hi))
 		i--
-		dAtA[i] = 0x15
+		dAtA[i] = 0x10
 	}
 	if m.Lo != 0 {
-		i -= 4
-		binary.LittleEndian.PutUint32(dAtA[i:], uint32(m.Lo))
+		i = protohelpers.EncodeVarint(dAtA, i, uint64(m.Lo))
 		i--
-		dAtA[i] = 0xd
+		dAtA[i] = 0x8
 	}
 	return len(dAtA) - i, nil
 }
@@ -4372,10 +4403,9 @@ func (m *VLANSpec) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 		dAtA[i] = 0x10
 	}
 	if m.Vid != 0 {
-		i -= 4
-		binary.LittleEndian.PutUint32(dAtA[i:], uint32(m.Vid))
+		i = protohelpers.EncodeVarint(dAtA, i, uint64(m.Vid))
 		i--
-		dAtA[i] = 0xd
+		dAtA[i] = 0x8
 	}
 	return len(dAtA) - i, nil
 }
@@ -4716,22 +4746,22 @@ func (m *BondMasterSpec) SizeVT() (n int) {
 		n += 2 + protohelpers.SizeOfVarint(uint64(m.PacketsPerSlave))
 	}
 	if m.NumPeerNotif != 0 {
-		n += 6
+		n += 2 + protohelpers.SizeOfVarint(uint64(m.NumPeerNotif))
 	}
 	if m.TlbDynamicLb != 0 {
-		n += 6
+		n += 2 + protohelpers.SizeOfVarint(uint64(m.TlbDynamicLb))
 	}
 	if m.AllSlavesActive != 0 {
-		n += 6
+		n += 2 + protohelpers.SizeOfVarint(uint64(m.AllSlavesActive))
 	}
 	if m.UseCarrier {
 		n += 3
 	}
 	if m.AdActorSysPrio != 0 {
-		n += 6
+		n += 2 + protohelpers.SizeOfVarint(uint64(m.AdActorSysPrio))
 	}
 	if m.AdUserPortKey != 0 {
-		n += 6
+		n += 2 + protohelpers.SizeOfVarint(uint64(m.AdUserPortKey))
 	}
 	if m.PeerNotifyDelay != 0 {
 		n += 2 + protohelpers.SizeOfVarint(uint64(m.PeerNotifyDelay))
@@ -5204,6 +5234,20 @@ func (m *HostnameStatusSpec) SizeVT() (n int) {
 	return n
 }
 
+func (m *LinkAliasSpecSpec) SizeVT() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.Alias)
+	if l > 0 {
+		n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
+	}
+	n += len(m.unknownFields)
+	return n
+}
+
 func (m *LinkRefreshSpec) SizeVT() (n int) {
 	if m == nil {
 		return 0
@@ -5484,7 +5528,7 @@ func (m *NfTablesClampMSS) SizeVT() (n int) {
 	var l int
 	_ = l
 	if m.Mtu != 0 {
-		n += 5
+		n += 1 + protohelpers.SizeOfVarint(uint64(m.Mtu))
 	}
 	n += len(m.unknownFields)
 	return n
@@ -5866,10 +5910,10 @@ func (m *PortRange) SizeVT() (n int) {
 	var l int
 	_ = l
 	if m.Lo != 0 {
-		n += 5
+		n += 1 + protohelpers.SizeOfVarint(uint64(m.Lo))
 	}
 	if m.Hi != 0 {
-		n += 5
+		n += 1 + protohelpers.SizeOfVarint(uint64(m.Hi))
 	}
 	n += len(m.unknownFields)
 	return n
@@ -6285,7 +6329,7 @@ func (m *VLANSpec) SizeVT() (n int) {
 	var l int
 	_ = l
 	if m.Vid != 0 {
-		n += 5
+		n += 1 + protohelpers.SizeOfVarint(uint64(m.Vid))
 	}
 	if m.Protocol != 0 {
 		n += 1 + protohelpers.SizeOfVarint(uint64(m.Protocol))
@@ -7355,35 +7399,62 @@ func (m *BondMasterSpec) UnmarshalVT(dAtA []byte) error {
 				}
 			}
 		case 18:
-			if wireType != 5 {
+			if wireType != 0 {
 				return fmt.Errorf("proto: wrong wireType = %d for field NumPeerNotif", wireType)
 			}
 			m.NumPeerNotif = 0
-			if (iNdEx + 4) > l {
-				return io.ErrUnexpectedEOF
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return protohelpers.ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.NumPeerNotif |= uint32(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
 			}
-			m.NumPeerNotif = uint32(binary.LittleEndian.Uint32(dAtA[iNdEx:]))
-			iNdEx += 4
 		case 19:
-			if wireType != 5 {
+			if wireType != 0 {
 				return fmt.Errorf("proto: wrong wireType = %d for field TlbDynamicLb", wireType)
 			}
 			m.TlbDynamicLb = 0
-			if (iNdEx + 4) > l {
-				return io.ErrUnexpectedEOF
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return protohelpers.ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.TlbDynamicLb |= uint32(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
 			}
-			m.TlbDynamicLb = uint32(binary.LittleEndian.Uint32(dAtA[iNdEx:]))
-			iNdEx += 4
 		case 20:
-			if wireType != 5 {
+			if wireType != 0 {
 				return fmt.Errorf("proto: wrong wireType = %d for field AllSlavesActive", wireType)
 			}
 			m.AllSlavesActive = 0
-			if (iNdEx + 4) > l {
-				return io.ErrUnexpectedEOF
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return protohelpers.ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.AllSlavesActive |= uint32(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
 			}
-			m.AllSlavesActive = uint32(binary.LittleEndian.Uint32(dAtA[iNdEx:]))
-			iNdEx += 4
 		case 21:
 			if wireType != 0 {
 				return fmt.Errorf("proto: wrong wireType = %d for field UseCarrier", wireType)
@@ -7405,25 +7476,43 @@ func (m *BondMasterSpec) UnmarshalVT(dAtA []byte) error {
 			}
 			m.UseCarrier = bool(v != 0)
 		case 22:
-			if wireType != 5 {
+			if wireType != 0 {
 				return fmt.Errorf("proto: wrong wireType = %d for field AdActorSysPrio", wireType)
 			}
 			m.AdActorSysPrio = 0
-			if (iNdEx + 4) > l {
-				return io.ErrUnexpectedEOF
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return protohelpers.ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.AdActorSysPrio |= uint32(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
 			}
-			m.AdActorSysPrio = uint32(binary.LittleEndian.Uint32(dAtA[iNdEx:]))
-			iNdEx += 4
 		case 23:
-			if wireType != 5 {
+			if wireType != 0 {
 				return fmt.Errorf("proto: wrong wireType = %d for field AdUserPortKey", wireType)
 			}
 			m.AdUserPortKey = 0
-			if (iNdEx + 4) > l {
-				return io.ErrUnexpectedEOF
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return protohelpers.ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.AdUserPortKey |= uint32(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
 			}
-			m.AdUserPortKey = uint32(binary.LittleEndian.Uint32(dAtA[iNdEx:]))
-			iNdEx += 4
 		case 24:
 			if wireType != 0 {
 				return fmt.Errorf("proto: wrong wireType = %d for field PeerNotifyDelay", wireType)
@@ -10384,6 +10473,89 @@ func (m *HostnameStatusSpec) UnmarshalVT(dAtA []byte) error {
 	}
 	return nil
 }
+func (m *LinkAliasSpecSpec) UnmarshalVT(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return protohelpers.ErrIntOverflow
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: LinkAliasSpecSpec: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: LinkAliasSpecSpec: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Alias", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return protohelpers.ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return protohelpers.ErrInvalidLength
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return protohelpers.ErrInvalidLength
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Alias = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := protohelpers.Skip(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return protohelpers.ErrInvalidLength
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.unknownFields = append(m.unknownFields, dAtA[iNdEx:iNdEx+skippy]...)
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
 func (m *LinkRefreshSpec) UnmarshalVT(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -12262,15 +12434,24 @@ func (m *NfTablesClampMSS) UnmarshalVT(dAtA []byte) error {
 		}
 		switch fieldNum {
 		case 1:
-			if wireType != 5 {
+			if wireType != 0 {
 				return fmt.Errorf("proto: wrong wireType = %d for field Mtu", wireType)
 			}
 			m.Mtu = 0
-			if (iNdEx + 4) > l {
-				return io.ErrUnexpectedEOF
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return protohelpers.ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.Mtu |= uint32(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
 			}
-			m.Mtu = uint32(binary.LittleEndian.Uint32(dAtA[iNdEx:]))
-			iNdEx += 4
 		default:
 			iNdEx = preIndex
 			skippy, err := protohelpers.Skip(dAtA[iNdEx:])
@@ -14531,25 +14712,43 @@ func (m *PortRange) UnmarshalVT(dAtA []byte) error {
 		}
 		switch fieldNum {
 		case 1:
-			if wireType != 5 {
+			if wireType != 0 {
 				return fmt.Errorf("proto: wrong wireType = %d for field Lo", wireType)
 			}
 			m.Lo = 0
-			if (iNdEx + 4) > l {
-				return io.ErrUnexpectedEOF
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return protohelpers.ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.Lo |= uint32(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
 			}
-			m.Lo = uint32(binary.LittleEndian.Uint32(dAtA[iNdEx:]))
-			iNdEx += 4
 		case 2:
-			if wireType != 5 {
+			if wireType != 0 {
 				return fmt.Errorf("proto: wrong wireType = %d for field Hi", wireType)
 			}
 			m.Hi = 0
-			if (iNdEx + 4) > l {
-				return io.ErrUnexpectedEOF
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return protohelpers.ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.Hi |= uint32(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
 			}
-			m.Hi = uint32(binary.LittleEndian.Uint32(dAtA[iNdEx:]))
-			iNdEx += 4
 		default:
 			iNdEx = preIndex
 			skippy, err := protohelpers.Skip(dAtA[iNdEx:])
@@ -16868,15 +17067,24 @@ func (m *VLANSpec) UnmarshalVT(dAtA []byte) error {
 		}
 		switch fieldNum {
 		case 1:
-			if wireType != 5 {
+			if wireType != 0 {
 				return fmt.Errorf("proto: wrong wireType = %d for field Vid", wireType)
 			}
 			m.Vid = 0
-			if (iNdEx + 4) > l {
-				return io.ErrUnexpectedEOF
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return protohelpers.ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.Vid |= uint32(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
 			}
-			m.Vid = uint32(binary.LittleEndian.Uint32(dAtA[iNdEx:]))
-			iNdEx += 4
 		case 2:
 			if wireType != 0 {
 				return fmt.Errorf("proto: wrong wireType = %d for field Protocol", wireType)
