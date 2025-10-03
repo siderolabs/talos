@@ -128,7 +128,7 @@ worker-node-1             running (libvirt)
 Find out the IP addresses assigned by the libvirt DHCP by running:
 
 ```bash
-virsh list | grep vagrant | awk '{print $2}' | xargs -t -L1 virsh domifaddr
+virsh -q list --state-running --name | xargs -r -n1 virsh domifaddr
 ```
 
 Output will look like the following:
