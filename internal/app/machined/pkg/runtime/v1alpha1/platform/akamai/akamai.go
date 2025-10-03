@@ -12,15 +12,19 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
 	akametadata "github.com/linode/go-metadata"
 	"github.com/siderolabs/go-procfs/procfs"
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/errors"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/internal/netutils"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/imager/quirks"
+	"github.com/siderolabs/talos/pkg/machinery/meta"
 	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
+	"github.com/siderolabs/talos/pkg/machinery/resources/hardware"
 	"github.com/siderolabs/talos/pkg/machinery/resources/network"
 	runtimeres "github.com/siderolabs/talos/pkg/machinery/resources/runtime"
 )
@@ -159,7 +163,11 @@ func (a *Akamai) Configuration(ctx context.Context, r state.State) ([]byte, erro
 		return nil, fmt.Errorf("get user data: %w", err)
 	}
 
-	return []byte(userData), err
+	if userData == "" {
+		return nil, errors.ErrNoConfigSource
+	}
+
+	return []byte(userData), nil
 }
 
 // Mode implements the platform.Platform interface.
@@ -176,7 +184,12 @@ func (a *Akamai) KernelArgs(string, quirks.Quirks) procfs.Parameters {
 }
 
 // NetworkConfiguration implements the runtime.Platform interface.
-func (a *Akamai) NetworkConfiguration(ctx context.Context, _ state.State, ch chan<- *runtime.PlatformNetworkConfig) error {
+func (a *Akamai) NetworkConfiguration(ctx context.Context, r state.State, ch chan<- *runtime.PlatformNetworkConfig) error {
+	// Wait for network to be ready before attempting metadata service calls
+	if err := netutils.Wait(ctx, r); err != nil {
+		return err
+	}
+
 	metadataClient, err := akametadata.NewClient(ctx)
 	if err != nil {
 		return fmt.Errorf("new metadata client: %w", err)
@@ -185,6 +198,12 @@ func (a *Akamai) NetworkConfiguration(ctx context.Context, _ state.State, ch cha
 	metadata, err := metadataClient.GetInstance(ctx)
 	if err != nil {
 		return fmt.Errorf("get instance data: %w", err)
+	}
+
+	// Check if SMBIOS UUID needs to be overridden and set UUID from Linode instance ID
+	// This is done here after network is ready and we have the instance metadata
+	if err := a.ensureValidUUID(ctx, r, metadata.ID); err != nil {
+		return fmt.Errorf("failed to ensure valid UUID: %w", err)
 	}
 
 	metadataNetworkConfig, err := metadataClient.GetNetwork(ctx)
@@ -204,4 +223,76 @@ func (a *Akamai) NetworkConfiguration(ctx context.Context, _ state.State, ch cha
 	}
 
 	return nil
+}
+
+// ensureValidUUID checks if SMBIOS UUID is valid and sets override if needed.
+func (a *Akamai) ensureValidUUID(ctx context.Context, r state.State, linodeID int) error {
+	// First, check if there's already a UUID override set
+	if uuidOverride, err := safe.ReaderGetByID[*runtimeres.MetaKey](ctx, r, runtimeres.MetaKeyTagToID(meta.UUIDOverride)); err == nil {
+		if uuidOverride.TypedSpec().Value != "" {
+			// UUID override already exists, don't modify it
+			return nil
+		}
+	}
+
+	// Check current SMBIOS UUID from SystemInformation
+	systemInfo, err := safe.ReaderGetByID[*hardware.SystemInformation](ctx, r, hardware.SystemInformationID)
+	if err != nil {
+		// SystemInformation might not be available yet during early boot
+		// In this case, we'll set the UUID override anyway as a precaution
+		if !state.IsNotFoundError(err) {
+			return fmt.Errorf("failed to get system information: %w", err)
+		}
+	}
+
+	var shouldOverride bool
+	var currentUUID string
+
+	if systemInfo != nil {
+		currentUUID = systemInfo.TypedSpec().UUID
+		shouldOverride = isInvalidUUID(currentUUID)
+	} else {
+		// SystemInformation not available yet, assume we need override
+		shouldOverride = true
+		currentUUID = "not-available-yet"
+	}
+
+	if shouldOverride && linodeID > 0 {
+		generatedUUID := generateLinodeUUID(linodeID)
+
+		uuidKey := runtimeres.NewMetaKey(runtimeres.NamespaceName, runtimeres.MetaKeyTagToID(meta.UUIDOverride))
+		uuidKey.TypedSpec().Value = generatedUUID
+
+		// Try to create the UUID override key
+		if err := r.Create(ctx, uuidKey); err != nil {
+			if !state.IsConflictError(err) {
+				return fmt.Errorf("failed to create UUID override for invalid SMBIOS UUID %q: %w", currentUUID, err)
+			}
+			// If it already exists (conflict), that's fine - it means UUID override is already set
+		}
+	}
+
+	return nil
+}
+
+// isInvalidUUID checks if a UUID is invalid (empty or all-zeros).
+func isInvalidUUID(uuid string) bool {
+	if uuid == "" {
+		return true
+	}
+
+	// Check for all-zeros UUID (the main issue on Linode VMs)
+	if uuid == "00000000-0000-0000-0000-000000000000" {
+		return true
+	}
+
+	return false
+}
+
+// generateLinodeUUID creates a UUID from Linode instance ID.
+func generateLinodeUUID(linodeID int) string {
+	// Create UUID format: 00000000-0000-0000-0000-{12-digit-linode-id}
+	// Pad the Linode ID to 12 digits with leading zeros
+	linodeIDStr := fmt.Sprintf("%012d", linodeID)
+	return fmt.Sprintf("00000000-0000-0000-0000-%s", linodeIDStr)
 }
