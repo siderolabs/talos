@@ -1980,6 +1980,113 @@ talosctl image pull <image> [flags]
 
 * [talosctl image](#talosctl-image)	 - Manage CRI container images
 
+## talosctl image registry create
+
+Create a local OCI from a list of images
+
+### Synopsis
+
+Create a local OCI from a list of images
+
+```
+talosctl image registry create <path> [flags]
+```
+
+### Examples
+
+```
+talosctl images registry create --images=ghcr.io/siderolabs/kubelet:v1.34.1 /tmp/registry
+
+Alternatively, stdin can be piped to the command:
+talosctl images source-bundle | talosctl images registry create /tmp/registry --images=-
+
+```
+
+### Options
+
+```
+      --debug            enable debug logging
+  -h, --help             help for create
+      --images strings   images to cache
+```
+
+### Options inherited from parent commands
+
+```
+      --cluster string             Cluster to connect to if a proxy endpoint is used.
+      --context string             Context to be used in command
+  -e, --endpoints strings          override default endpoints in Talos configuration
+      --namespace system           namespace to use: system (etcd and kubelet images) or `cri` for all Kubernetes workloads (default "cri")
+  -n, --nodes strings              target the specified nodes
+      --siderov1-keys-dir string   The path to the SideroV1 auth PGP keys directory. Defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'. Only valid for Contexts that use SideroV1 auth.
+      --talosconfig string         The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
+```
+
+### SEE ALSO
+
+* [talosctl image registry](#talosctl-image-registry)	 - Commands for working with a local image registry
+
+## talosctl image registry serve
+
+Serve images from a local storage
+
+```
+talosctl image registry serve <path> [flags]
+```
+
+### Options
+
+```
+      --addr string            address to serve the registry on (default ":5000")
+  -h, --help                   help for serve
+      --tls-cert-file string   path to TLS certificate file
+      --tls-key-file string    path to TLS key file
+```
+
+### Options inherited from parent commands
+
+```
+      --cluster string             Cluster to connect to if a proxy endpoint is used.
+      --context string             Context to be used in command
+  -e, --endpoints strings          override default endpoints in Talos configuration
+      --namespace system           namespace to use: system (etcd and kubelet images) or `cri` for all Kubernetes workloads (default "cri")
+  -n, --nodes strings              target the specified nodes
+      --siderov1-keys-dir string   The path to the SideroV1 auth PGP keys directory. Defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'. Only valid for Contexts that use SideroV1 auth.
+      --talosconfig string         The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
+```
+
+### SEE ALSO
+
+* [talosctl image registry](#talosctl-image-registry)	 - Commands for working with a local image registry
+
+## talosctl image registry
+
+Commands for working with a local image registry
+
+### Options
+
+```
+  -h, --help   help for registry
+```
+
+### Options inherited from parent commands
+
+```
+      --cluster string             Cluster to connect to if a proxy endpoint is used.
+      --context string             Context to be used in command
+  -e, --endpoints strings          override default endpoints in Talos configuration
+      --namespace system           namespace to use: system (etcd and kubelet images) or `cri` for all Kubernetes workloads (default "cri")
+  -n, --nodes strings              target the specified nodes
+      --siderov1-keys-dir string   The path to the SideroV1 auth PGP keys directory. Defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'. Only valid for Contexts that use SideroV1 auth.
+      --talosconfig string         The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
+```
+
+### SEE ALSO
+
+* [talosctl image](#talosctl-image)	 - Manage CRI container images
+* [talosctl image registry create](#talosctl-image-registry-create)	 - Create a local OCI from a list of images
+* [talosctl image registry serve](#talosctl-image-registry-serve)	 - Serve images from a local storage
+
 ## talosctl image source-bundle
 
 List the source images used for building Talos
@@ -2034,6 +2141,7 @@ Manage CRI container images
 * [talosctl image default](#talosctl-image-default)	 - List the default images used by Talos
 * [talosctl image list](#talosctl-image-list)	 - List CRI images
 * [talosctl image pull](#talosctl-image-pull)	 - Pull an image into CRI
+* [talosctl image registry](#talosctl-image-registry)	 - Commands for working with a local image registry
 * [talosctl image source-bundle](#talosctl-image-source-bundle)	 - List the source images used for building Talos
 
 ## talosctl inject serviceaccount

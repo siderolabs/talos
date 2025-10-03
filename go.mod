@@ -124,6 +124,7 @@ require (
 	github.com/mdp/qrterminal/v3 v3.2.1
 	github.com/miekg/dns v1.1.68
 	github.com/nberlee/go-netstat v0.1.2
+	github.com/olareg/olareg v0.1.2
 	github.com/opencontainers/go-digest v1.0.0
 	github.com/opencontainers/image-spec v1.1.1
 	github.com/opencontainers/runtime-spec v1.2.1
