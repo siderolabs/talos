@@ -182,6 +182,7 @@ func NewState() (*State, error) {
 		&network.HostDNSConfig{},
 		&network.HostnameStatus{},
 		&network.HostnameSpec{},
+		&network.LinkAliasSpec{},
 		&network.LinkRefresh{},
 		&network.LinkStatus{},
 		&network.LinkSpec{},

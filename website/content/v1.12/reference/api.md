@@ -485,6 +485,7 @@ description: Talos gRPC API reference.
     - [HostDNSConfigSpec](#talos.resource.definitions.network.HostDNSConfigSpec)
     - [HostnameSpecSpec](#talos.resource.definitions.network.HostnameSpecSpec)
     - [HostnameStatusSpec](#talos.resource.definitions.network.HostnameStatusSpec)
+    - [LinkAliasSpecSpec](#talos.resource.definitions.network.LinkAliasSpecSpec)
     - [LinkRefreshSpec](#talos.resource.definitions.network.LinkRefreshSpec)
     - [LinkSpecSpec](#talos.resource.definitions.network.LinkSpecSpec)
     - [LinkStatusSpec](#talos.resource.definitions.network.LinkStatusSpec)
@@ -8644,6 +8645,21 @@ HostnameStatusSpec describes node hostname.
 | ----- | ---- | ----- | ----------- |
 | hostname | [string](#string) |  |  |
 | domainname | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.network.LinkAliasSpecSpec"></a>
+
+### LinkAliasSpecSpec
+LinkAliasSpecSpec describes status of rendered secrets.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| alias | [string](#string) |  |  |
 
 
 

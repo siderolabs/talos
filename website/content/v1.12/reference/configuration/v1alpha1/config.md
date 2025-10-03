@@ -60,22 +60,22 @@ machine:
 | Field | Type | Description | Value(s) |
 |-------|------|-------------|----------|
 |`type` |string |Defines the role of the machine within the cluster.<br><br>**Control Plane**<br><br>Control Plane node type designates the node as a control plane member.<br>This means it will host etcd along with the Kubernetes controlplane components such as API Server, Controller Manager, Scheduler.<br><br>**Worker**<br><br>Worker node type designates the node as a worker node.<br>This means it will be an available compute node for scheduling workloads.<br><br>This node type was previously known as "join"; that value is still supported but deprecated.  |`controlplane`<br />`worker`<br /> |
-|`token` |string |The `token` is used by a machine to join the PKI of the cluster.<br>Using this token, a machine will create a certificate signing request (CSR), and request a certificate that will be used as its' identity. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
+|`token` |string |The `token` is used by a machine to join the PKI of the cluster.<br>Using this token, a machine will create a certificate signing request (CSR), and request a certificate that will be used as its' identity. <details><summary>Show example(s)</summary>example token:{{< highlight yaml >}}
 token: 328hom.uqjzh6jnn2eie9oi
 {{< /highlight >}}</details> | |
-|`ca` |PEMEncodedCertificateAndKey |The root certificate authority of the PKI.<br>It is composed of a base64 encoded `crt` and `key`. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
+|`ca` |PEMEncodedCertificateAndKey |The root certificate authority of the PKI.<br>It is composed of a base64 encoded `crt` and `key`. <details><summary>Show example(s)</summary>machine CA example:{{< highlight yaml >}}
 ca:
     crt: LS0tIEVYQU1QTEUgQ0VSVElGSUNBVEUgLS0t
     key: LS0tIEVYQU1QTEUgS0VZIC0tLQ==
 {{< /highlight >}}</details> | |
 |`acceptedCAs` |[]PEMEncodedCertificate |The certificates issued by certificate authorities are accepted in addition to issuing 'ca'.<br>It is composed of a base64 encoded `crt``.  | |
-|`certSANs` |[]string |Extra certificate subject alternative names for the machine's certificate.<br>By default, all non-loopback interface IPs are automatically added to the certificate's SANs. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
+|`certSANs` |[]string |Extra certificate subject alternative names for the machine's certificate.<br>By default, all non-loopback interface IPs are automatically added to the certificate's SANs. <details><summary>Show example(s)</summary>Uncomment this to enable SANs.:{{< highlight yaml >}}
 certSANs:
     - 10.0.0.10
     - 172.16.0.10
     - 192.168.0.10
 {{< /highlight >}}</details> | |
-|`controlPlane` |<a href="#Config.machine.controlPlane">MachineControlPlaneConfig</a> |Provides machine specific control plane configuration options. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
+|`controlPlane` |<a href="#Config.machine.controlPlane">MachineControlPlaneConfig</a> |Provides machine specific control plane configuration options. <details><summary>Show example(s)</summary>ControlPlane definition example.:{{< highlight yaml >}}
 controlPlane:
     # Controller manager machine specific configuration options.
     controllerManager:
@@ -84,7 +84,7 @@ controlPlane:
     scheduler:
         disabled: true # Disable kube-scheduler on the node.
 {{< /highlight >}}</details> | |
-|`kubelet` |<a href="#Config.machine.kubelet">KubeletConfig</a> |Used to provide additional options to the kubelet. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
+|`kubelet` |<a href="#Config.machine.kubelet">KubeletConfig</a> |Used to provide additional options to the kubelet. <details><summary>Show example(s)</summary>Kubelet definition example.:{{< highlight yaml >}}
 kubelet:
     image: ghcr.io/siderolabs/kubelet:v1.34.1 # The `image` field is an optional reference to an alternative kubelet image.
     # The `extraArgs` field is used to provide additional flags to the kubelet.
@@ -134,7 +134,7 @@ kubelet:
     #         - '!10.0.0.3/32'
     #         - fdc7::/16
 {{< /highlight >}}</details> | |
-|`pods` |[]Unstructured |Used to provide static pod definitions to be run by the kubelet directly bypassing the kube-apiserver.<br><br>Static pods can be used to run components which should be started before the Kubernetes control plane is up.<br>Talos doesn't validate the pod definition.<br>Updates to this field can be applied without a reboot.<br><br>See https://kubernetes.io/docs/tasks/configure-pod-container/static-pod/. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
+|`pods` |[]Unstructured |Used to provide static pod definitions to be run by the kubelet directly bypassing the kube-apiserver.<br><br>Static pods can be used to run components which should be started before the Kubernetes control plane is up.<br>Talos doesn't validate the pod definition.<br>Updates to this field can be applied without a reboot.<br><br>See https://kubernetes.io/docs/tasks/configure-pod-container/static-pod/. <details><summary>Show example(s)</summary>nginx static pod.:{{< highlight yaml >}}
 pods:
     - apiVersion: v1
       kind: pod
@@ -145,7 +145,7 @@ pods:
             - image: nginx
               name: nginx
 {{< /highlight >}}</details> | |
-|`network` |<a href="#Config.machine.network">NetworkConfig</a> |Provides machine specific network configuration options. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
+|`network` |<a href="#Config.machine.network">NetworkConfig</a> |Provides machine specific network configuration options. <details><summary>Show example(s)</summary>Network definition example.:{{< highlight yaml >}}
 network:
     # `interfaces` is used to define the network interface configuration.
     interfaces:
@@ -253,7 +253,7 @@ network:
     # kubespan:
     #     enabled: true # Enable the KubeSpan feature.
 {{< /highlight >}}</details> | |
-|`install` |<a href="#Config.machine.install">InstallConfig</a> |Used to provide instructions for installations.<br><br>Note that this configuration section gets silently ignored by Talos images that are considered pre-installed.<br>To make sure Talos installs according to the provided configuration, Talos should be booted with ISO or PXE-booted. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
+|`install` |<a href="#Config.machine.install">InstallConfig</a> |Used to provide instructions for installations.<br><br>Note that this configuration section gets silently ignored by Talos images that are considered pre-installed.<br>To make sure Talos installs according to the provided configuration, Talos should be booted with ISO or PXE-booted. <details><summary>Show example(s)</summary>MachineInstall config usage example.:{{< highlight yaml >}}
 install:
     disk: /dev/sda # The disk used for installations.
     # Allows for supplying extra kernel args via the bootloader.
@@ -269,14 +269,14 @@ install:
     #     model: WDC* # Disk model `/sys/block/<dev>/device/model`.
     #     busPath: /pci0000:00/0000:00:17.0/ata1/host0/target0:0:0/0:0:0:0 # Disk bus path.
 {{< /highlight >}}</details> | |
-|`files` |<a href="#Config.machine.files.">[]MachineFile</a> |Allows the addition of user specified files.<br>The value of `op` can be `create`, `overwrite`, or `append`.<br>In the case of `create`, `path` must not exist.<br>In the case of `overwrite`, and `append`, `path` must be a valid file.<br>If an `op` value of `append` is used, the existing file will be appended.<br>Note that the file contents are not required to be base64 encoded. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
+|`files` |<a href="#Config.machine.files.">[]MachineFile</a> |Allows the addition of user specified files.<br>The value of `op` can be `create`, `overwrite`, or `append`.<br>In the case of `create`, `path` must not exist.<br>In the case of `overwrite`, and `append`, `path` must be a valid file.<br>If an `op` value of `append` is used, the existing file will be appended.<br>Note that the file contents are not required to be base64 encoded. <details><summary>Show example(s)</summary>MachineFiles usage example.:{{< highlight yaml >}}
 files:
     - content: '...' # The contents of the file.
       permissions: 0o666 # The file's permissions in octal.
       path: /tmp/file.txt # The path of the file.
       op: append # The operation to use
 {{< /highlight >}}</details> | |
-|`env` |Env |The `env` field allows for the addition of environment variables.<br>All environment variables are set on PID 1 in addition to every service. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
+|`env` |Env |The `env` field allows for the addition of environment variables.<br>All environment variables are set on PID 1 in addition to every service. <details><summary>Show example(s)</summary>Environment variables definition examples.:{{< highlight yaml >}}
 env:
     GRPC_GO_LOG_SEVERITY_LEVEL: info
     GRPC_GO_LOG_VERBOSITY_LEVEL: "99"
@@ -289,7 +289,7 @@ env:
 env:
     https_proxy: http://DOMAIN\USERNAME:PASSWORD@SERVER:PORT/
 {{< /highlight >}}</details> |``GRPC_GO_LOG_VERBOSITY_LEVEL``<br />``GRPC_GO_LOG_SEVERITY_LEVEL``<br />``http_proxy``<br />``https_proxy``<br />``no_proxy``<br /> |
-|`time` |<a href="#Config.machine.time">TimeConfig</a> |Used to configure the machine's time settings. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
+|`time` |<a href="#Config.machine.time">TimeConfig</a> |Used to configure the machine's time settings. <details><summary>Show example(s)</summary>Example configuration for cloudflare ntp server.:{{< highlight yaml >}}
 time:
     disabled: false # Indicates if the time service is disabled for the machine.
     # description: |
@@ -297,13 +297,13 @@ time:
         - time.cloudflare.com
     bootTimeout: 2m0s # Specifies the timeout when the node time is considered to be in sync unlocking the boot sequence.
 {{< /highlight >}}</details> | |
-|`sysctls` |map[string]string |Used to configure the machine's sysctls. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
+|`sysctls` |map[string]string |Used to configure the machine's sysctls. <details><summary>Show example(s)</summary>MachineSysctls usage example.:{{< highlight yaml >}}
 sysctls:
     kernel.domainname: talos.dev
     net.ipv4.ip_forward: "0"
     net/ipv6/conf/eth0.100/disable_ipv6: "1"
 {{< /highlight >}}</details> | |
-|`sysfs` |map[string]string |Used to configure the machine's sysfs. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
+|`sysfs` |map[string]string |Used to configure the machine's sysfs. <details><summary>Show example(s)</summary>MachineSysfs usage example.:{{< highlight yaml >}}
 sysfs:
     devices.system.cpu.cpu0.cpufreq.scaling_governor: performance
 {{< /highlight >}}</details> | |
@@ -369,7 +369,7 @@ seccompProfiles:
       value:
         defaultAction: SCMP_ACT_LOG
 {{< /highlight >}}</details> | |
-|`baseRuntimeSpecOverrides` |Unstructured |Override (patch) settings in the default OCI runtime spec for CRI containers.<br><br>It can be used to set some default container settings which are not configurable in Kubernetes,<br>for example default ulimits.<br>Note: this change applies to all newly created containers, and it requires a reboot to take effect. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
+|`baseRuntimeSpecOverrides` |Unstructured |Override (patch) settings in the default OCI runtime spec for CRI containers.<br><br>It can be used to set some default container settings which are not configurable in Kubernetes,<br>for example default ulimits.<br>Note: this change applies to all newly created containers, and it requires a reboot to take effect. <details><summary>Show example(s)</summary>override default open file limit:{{< highlight yaml >}}
 baseRuntimeSpecOverrides:
     process:
         rlimits:
@@ -377,15 +377,15 @@ baseRuntimeSpecOverrides:
               soft: 1024
               type: RLIMIT_NOFILE
 {{< /highlight >}}</details> | |
-|`nodeLabels` |map[string]string |Configures the node labels for the machine.<br><br>Note: In the default Kubernetes configuration, worker nodes are restricted to set<br>labels with some prefixes (see [NodeRestriction](https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/#noderestriction) admission plugin). <details><summary>Show example(s)</summary>{{< highlight yaml >}}
+|`nodeLabels` |map[string]string |Configures the node labels for the machine.<br><br>Note: In the default Kubernetes configuration, worker nodes are restricted to set<br>labels with some prefixes (see [NodeRestriction](https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/#noderestriction) admission plugin). <details><summary>Show example(s)</summary>node labels example.:{{< highlight yaml >}}
 nodeLabels:
     exampleLabel: exampleLabelValue
 {{< /highlight >}}</details> | |
-|`nodeAnnotations` |map[string]string |Configures the node annotations for the machine. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
+|`nodeAnnotations` |map[string]string |Configures the node annotations for the machine. <details><summary>Show example(s)</summary>node annotations example.:{{< highlight yaml >}}
 nodeAnnotations:
     customer.io/rack: r13a25
 {{< /highlight >}}</details> | |
-|`nodeTaints` |map[string]string |Configures the node taints for the machine. Effect is optional.<br><br>Note: In the default Kubernetes configuration, worker nodes are not allowed to<br>modify the taints (see [NodeRestriction](https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/#noderestriction) admission plugin). <details><summary>Show example(s)</summary>{{< highlight yaml >}}
+|`nodeTaints` |map[string]string |Configures the node taints for the machine. Effect is optional.<br><br>Note: In the default Kubernetes configuration, worker nodes are not allowed to<br>modify the taints (see [NodeRestriction](https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/#noderestriction) admission plugin). <details><summary>Show example(s)</summary>node taints example.:{{< highlight yaml >}}
 nodeTaints:
     exampleTaint: exampleTaintValue:NoSchedule
 {{< /highlight >}}</details> | |
@@ -1013,10 +1013,10 @@ machine:
 |`interface` |string |The interface name.<br>Mutually exclusive with `deviceSelector`. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 interface: enp0s3
 {{< /highlight >}}</details> | |
-|`deviceSelector` |<a href="#Config.machine.network.interfaces..deviceSelector">NetworkDeviceSelector</a> |Picks a network device using the selector.<br>Mutually exclusive with `interface`.<br>Supports partial match using wildcard syntax. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
+|`deviceSelector` |<a href="#Config.machine.network.interfaces..deviceSelector">NetworkDeviceSelector</a> |Picks a network device using the selector.<br>Mutually exclusive with `interface`.<br>Supports partial match using wildcard syntax. <details><summary>Show example(s)</summary>select a device with bus prefix 00:*.:{{< highlight yaml >}}
 deviceSelector:
     busPath: 00:* # PCI, USB bus prefix, supports matching by wildcard.
-{{< /highlight >}}{{< highlight yaml >}}
+{{< /highlight >}}select a device with mac address matching `*:f0:ab` and `virtio` kernel driver.:{{< highlight yaml >}}
 deviceSelector:
     hardwareAddr: '*:f0:ab' # Device hardware (MAC) address, supports matching by wildcard.
     driver: virtio_net # Kernel driver, supports matching by wildcard.
@@ -1075,7 +1075,7 @@ dhcp: true
 dhcpOptions:
     routeMetric: 1024 # The priority of all routes received via DHCP.
 {{< /highlight >}}</details> | |
-|`wireguard` |<a href="#Config.machine.network.interfaces..wireguard">DeviceWireguardConfig</a> |Wireguard specific configuration.<br>Includes things like private key, listen port, peers. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
+|`wireguard` |<a href="#Config.machine.network.interfaces..wireguard">DeviceWireguardConfig</a> |Wireguard specific configuration.<br>Includes things like private key, listen port, peers. <details><summary>Show example(s)</summary>wireguard server example:{{< highlight yaml >}}
 wireguard:
     privateKey: ABCDEF... # Specifies a private key configuration (base64 encoded).
     listenPort: 51111 # Specifies a device's listening port.
@@ -1086,7 +1086,7 @@ wireguard:
           # AllowedIPs specifies a list of allowed IP addresses in CIDR notation for this peer.
           allowedIPs:
             - 192.168.1.0/24
-{{< /highlight >}}{{< highlight yaml >}}
+{{< /highlight >}}wireguard peer example:{{< highlight yaml >}}
 wireguard:
     privateKey: ABCDEF... # Specifies a private key configuration (base64 encoded).
     # Specifies a list of peer configurations to apply to a device.
@@ -1098,7 +1098,7 @@ wireguard:
           allowedIPs:
             - 192.168.1.0/24
 {{< /highlight >}}</details> | |
-|`vip` |<a href="#Config.machine.network.interfaces..vip">DeviceVIPConfig</a> |Virtual (shared) IP address configuration. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
+|`vip` |<a href="#Config.machine.network.interfaces..vip">DeviceVIPConfig</a> |Virtual (shared) IP address configuration. <details><summary>Show example(s)</summary>layer2 vip example:{{< highlight yaml >}}
 vip:
     ip: 172.16.199.55 # Specifies the IP address to be used.
 {{< /highlight >}}</details> | |
@@ -1216,7 +1216,7 @@ machine:
 | Field | Type | Description | Value(s) |
 |-------|------|-------------|----------|
 |`interfaces` |[]string |The interfaces that make up the bond.  | |
-|`deviceSelectors` |<a href="#Config.machine.network.interfaces..bond.deviceSelectors.">[]NetworkDeviceSelector</a> |Picks a network device using the selector.<br>Mutually exclusive with `interfaces`.<br>Supports partial match using wildcard syntax. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
+|`deviceSelectors` |<a href="#Config.machine.network.interfaces..bond.deviceSelectors.">[]NetworkDeviceSelector</a> |Picks a network device using the selector.<br>Mutually exclusive with `interfaces`.<br>Supports partial match using wildcard syntax. <details><summary>Show example(s)</summary>select a device with bus prefix 00:*, a device with mac address matching `*:f0:ab` and `virtio` kernel driver.:{{< highlight yaml >}}
 deviceSelectors:
     - busPath: 00:* # PCI, USB bus prefix, supports matching by wildcard.
     - hardwareAddr: '*:f0:ab' # Device hardware (MAC) address, supports matching by wildcard.
@@ -1726,7 +1726,7 @@ KubeSpanFilters struct describes KubeSpan advanced network addresses filtering.
 
 | Field | Type | Description | Value(s) |
 |-------|------|-------------|----------|
-|`endpoints` |[]string |Filter node addresses which will be advertised as KubeSpan endpoints for peer-to-peer Wireguard connections.<br><br>By default, all addresses are advertised, and KubeSpan cycles through all endpoints until it finds one that works.<br><br>Default value: no filtering. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
+|`endpoints` |[]string |Filter node addresses which will be advertised as KubeSpan endpoints for peer-to-peer Wireguard connections.<br><br>By default, all addresses are advertised, and KubeSpan cycles through all endpoints until it finds one that works.<br><br>Default value: no filtering. <details><summary>Show example(s)</summary>Exclude addresses in 192.168.0.0/16 subnet.:{{< highlight yaml >}}
 endpoints:
     - 0.0.0.0/0
     - '!192.168.0.0/16'
@@ -1818,11 +1818,11 @@ machine:
 
 | Field | Type | Description | Value(s) |
 |-------|------|-------------|----------|
-|`size` |InstallDiskSizeMatcher |Disk size. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
+|`size` |InstallDiskSizeMatcher |Disk size. <details><summary>Show example(s)</summary>Select a disk which size is equal to 4GB.:{{< highlight yaml >}}
 size: 4GB
-{{< /highlight >}}{{< highlight yaml >}}
+{{< /highlight >}}Select a disk which size is greater than 1TB.:{{< highlight yaml >}}
 size: '> 1TB'
-{{< /highlight >}}{{< highlight yaml >}}
+{{< /highlight >}}Select a disk which size is less or equal than 2TB.:{{< highlight yaml >}}
 size: <= 2TB
 {{< /highlight >}}</details> | |
 |`name` |string |Disk name `/sys/block/<dev>/device/name`.  | |
@@ -2469,13 +2469,13 @@ cluster:
 |-------|------|-------------|----------|
 |`id` |string |Globally unique identifier for this cluster (base64 encoded random 32 bytes).  | |
 |`secret` |string |Shared secret of cluster (base64 encoded random 32 bytes).<br>This secret is shared among cluster members but should never be sent over the network.  | |
-|`controlPlane` |<a href="#Config.cluster.controlPlane">ControlPlaneConfig</a> |Provides control plane specific configuration options. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
+|`controlPlane` |<a href="#Config.cluster.controlPlane">ControlPlaneConfig</a> |Provides control plane specific configuration options. <details><summary>Show example(s)</summary>Setting controlplane endpoint address to 1.2.3.4 and port to 443 example.:{{< highlight yaml >}}
 controlPlane:
     endpoint: https://1.2.3.4 # Endpoint is the canonical controlplane endpoint, which can be an IP address or a DNS hostname.
     localAPIServerPort: 443 # The port that the API server listens on internally.
 {{< /highlight >}}</details> | |
 |`clusterName` |string |Configures the cluster's name.  | |
-|`network` |<a href="#Config.cluster.network">ClusterNetworkConfig</a> |Provides cluster specific network configuration options. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
+|`network` |<a href="#Config.cluster.network">ClusterNetworkConfig</a> |Provides cluster specific network configuration options. <details><summary>Show example(s)</summary>Configuring with flannel CNI and setting up subnets.:{{< highlight yaml >}}
 network:
     # The CNI used.
     cni:
@@ -2488,27 +2488,27 @@ network:
     serviceSubnets:
         - 10.96.0.0/12
 {{< /highlight >}}</details> | |
-|`token` |string |The [bootstrap token](https://kubernetes.io/docs/reference/access-authn-authz/bootstrap-tokens/) used to join the cluster. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
+|`token` |string |The [bootstrap token](https://kubernetes.io/docs/reference/access-authn-authz/bootstrap-tokens/) used to join the cluster. <details><summary>Show example(s)</summary>Bootstrap token example (do not use in production!).:{{< highlight yaml >}}
 token: wlzjyw.bei2zfylhs2by0wd
 {{< /highlight >}}</details> | |
-|`aescbcEncryptionSecret` |string |A key used for the [encryption of secret data at rest](https://kubernetes.io/docs/tasks/administer-cluster/encrypt-data/).<br>Enables encryption with AESCBC. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
+|`aescbcEncryptionSecret` |string |A key used for the [encryption of secret data at rest](https://kubernetes.io/docs/tasks/administer-cluster/encrypt-data/).<br>Enables encryption with AESCBC. <details><summary>Show example(s)</summary>Decryption secret example (do not use in production!).:{{< highlight yaml >}}
 aescbcEncryptionSecret: z01mye6j16bspJYtTB/5SFX8j7Ph4JXxM2Xuu4vsBPM=
 {{< /highlight >}}</details> | |
-|`secretboxEncryptionSecret` |string |A key used for the [encryption of secret data at rest](https://kubernetes.io/docs/tasks/administer-cluster/encrypt-data/).<br>Enables encryption with secretbox.<br>Secretbox has precedence over AESCBC. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
+|`secretboxEncryptionSecret` |string |A key used for the [encryption of secret data at rest](https://kubernetes.io/docs/tasks/administer-cluster/encrypt-data/).<br>Enables encryption with secretbox.<br>Secretbox has precedence over AESCBC. <details><summary>Show example(s)</summary>Decryption secret example (do not use in production!).:{{< highlight yaml >}}
 secretboxEncryptionSecret: z01mye6j16bspJYtTB/5SFX8j7Ph4JXxM2Xuu4vsBPM=
 {{< /highlight >}}</details> | |
-|`ca` |PEMEncodedCertificateAndKey |The base64 encoded root certificate authority used by Kubernetes. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
+|`ca` |PEMEncodedCertificateAndKey |The base64 encoded root certificate authority used by Kubernetes. <details><summary>Show example(s)</summary>ClusterCA example.:{{< highlight yaml >}}
 ca:
     crt: LS0tIEVYQU1QTEUgQ0VSVElGSUNBVEUgLS0t
     key: LS0tIEVYQU1QTEUgS0VZIC0tLQ==
 {{< /highlight >}}</details> | |
 |`acceptedCAs` |[]PEMEncodedCertificate |The list of base64 encoded accepted certificate authorities used by Kubernetes.  | |
-|`aggregatorCA` |PEMEncodedCertificateAndKey |The base64 encoded aggregator certificate authority used by Kubernetes for front-proxy certificate generation.<br><br>This CA can be self-signed. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
+|`aggregatorCA` |PEMEncodedCertificateAndKey |The base64 encoded aggregator certificate authority used by Kubernetes for front-proxy certificate generation.<br><br>This CA can be self-signed. <details><summary>Show example(s)</summary>AggregatorCA example.:{{< highlight yaml >}}
 aggregatorCA:
     crt: LS0tIEVYQU1QTEUgQ0VSVElGSUNBVEUgLS0t
     key: LS0tIEVYQU1QTEUgS0VZIC0tLQ==
 {{< /highlight >}}</details> | |
-|`serviceAccount` |PEMEncodedKey |The base64 encoded private key for service account token generation. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
+|`serviceAccount` |PEMEncodedKey |The base64 encoded private key for service account token generation. <details><summary>Show example(s)</summary>AggregatorCA example.:{{< highlight yaml >}}
 serviceAccount:
     key: LS0tIEVYQU1QTEUgS0VZIC0tLQ==
 {{< /highlight >}}</details> | |
@@ -3046,12 +3046,12 @@ ResourcesConfig represents the pod resources.
 
 | Field | Type | Description | Value(s) |
 |-------|------|-------------|----------|
-|`requests` |Unstructured |Requests configures the reserved cpu/memory resources. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
+|`requests` |Unstructured |Requests configures the reserved cpu/memory resources. <details><summary>Show example(s)</summary>resources requests.:{{< highlight yaml >}}
 requests:
     cpu: 1
     memory: 1Gi
 {{< /highlight >}}</details> | |
-|`limits` |Unstructured |Limits configures the maximum cpu/memory resources a container can use. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
+|`limits` |Unstructured |Limits configures the maximum cpu/memory resources a container can use. <details><summary>Show example(s)</summary>resources requests.:{{< highlight yaml >}}
 limits:
     cpu: 2
     memory: 2500Mi
@@ -3173,12 +3173,12 @@ ResourcesConfig represents the pod resources.
 
 | Field | Type | Description | Value(s) |
 |-------|------|-------------|----------|
-|`requests` |Unstructured |Requests configures the reserved cpu/memory resources. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
+|`requests` |Unstructured |Requests configures the reserved cpu/memory resources. <details><summary>Show example(s)</summary>resources requests.:{{< highlight yaml >}}
 requests:
     cpu: 1
     memory: 1Gi
 {{< /highlight >}}</details> | |
-|`limits` |Unstructured |Limits configures the maximum cpu/memory resources a container can use. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
+|`limits` |Unstructured |Limits configures the maximum cpu/memory resources a container can use. <details><summary>Show example(s)</summary>resources requests.:{{< highlight yaml >}}
 limits:
     cpu: 2
     memory: 2500Mi
@@ -3290,12 +3290,12 @@ ResourcesConfig represents the pod resources.
 
 | Field | Type | Description | Value(s) |
 |-------|------|-------------|----------|
-|`requests` |Unstructured |Requests configures the reserved cpu/memory resources. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
+|`requests` |Unstructured |Requests configures the reserved cpu/memory resources. <details><summary>Show example(s)</summary>resources requests.:{{< highlight yaml >}}
 requests:
     cpu: 1
     memory: 1Gi
 {{< /highlight >}}</details> | |
-|`limits` |Unstructured |Limits configures the maximum cpu/memory resources a container can use. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
+|`limits` |Unstructured |Limits configures the maximum cpu/memory resources a container can use. <details><summary>Show example(s)</summary>resources requests.:{{< highlight yaml >}}
 limits:
     cpu: 2
     memory: 2500Mi

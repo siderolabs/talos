@@ -22,6 +22,8 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/siderolabs/talos/internal/integration/base"
+	"github.com/siderolabs/talos/pkg/machinery/cel"
+	"github.com/siderolabs/talos/pkg/machinery/cel/celenv"
 	"github.com/siderolabs/talos/pkg/machinery/client"
 	"github.com/siderolabs/talos/pkg/machinery/config/machine"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/network"
@@ -228,6 +230,59 @@ func (suite *NetworkConfigSuite) TestLinkConfig() {
 	suite.RemoveMachineConfigDocumentsByName(nodeCtx, network.LinkKind, linkName)
 
 	rtestutils.AssertNoResource[*networkres.AddressStatus](nodeCtx, suite.T(), suite.Client.COSI, addressID)
+}
+
+// TestLinkAliasConfig tests configuring physical link aliases.
+func (suite *NetworkConfigSuite) TestLinkAliasConfig() {
+	if suite.Cluster == nil || suite.Cluster.Provisioner() != base.ProvisionerQEMU {
+		suite.T().Skip("skipping if cluster is not qemu")
+	}
+
+	node := suite.RandomDiscoveredNodeInternalIP(machine.TypeWorker)
+	nodeCtx := client.WithNode(suite.ctx, node)
+
+	suite.T().Logf("testing on node %q", node)
+
+	// find the first physical link without an alias
+	links, err := safe.ReaderListAll[*networkres.LinkStatus](nodeCtx, suite.Client.COSI)
+	suite.Require().NoError(err)
+
+	var (
+		linkName      string
+		permanentAddr string
+	)
+
+	for link := range links.All() {
+		if link.TypedSpec().Physical() && link.TypedSpec().Alias == "" {
+			linkName = link.Metadata().ID()
+			permanentAddr = link.TypedSpec().PermanentAddr.String()
+
+			break
+		}
+	}
+
+	suite.Require().NotEmpty(linkName, "expected to find at least one physical link without an alias")
+
+	const aliasName = "test-alias"
+
+	cfg := network.NewLinkAliasConfigV1Alpha1(aliasName)
+	cfg.Selector.Match = cel.MustExpression(cel.ParseBooleanExpression("mac(link.permanent_addr) == '"+permanentAddr+"'", celenv.LinkLocator()))
+
+	suite.PatchMachineConfig(nodeCtx, cfg)
+
+	rtestutils.AssertResource(nodeCtx, suite.T(), suite.Client.COSI, linkName,
+		func(link *networkres.LinkStatus, asrt *assert.Assertions) {
+			asrt.Equal(aliasName, link.TypedSpec().Alias)
+		},
+	)
+
+	suite.RemoveMachineConfigDocumentsByName(nodeCtx, network.LinkAliasKind, aliasName)
+
+	rtestutils.AssertResource(nodeCtx, suite.T(), suite.Client.COSI, linkName,
+		func(link *networkres.LinkStatus, asrt *assert.Assertions) {
+			asrt.Empty(link.TypedSpec().Alias)
+		},
+	)
 }
 
 func init() {

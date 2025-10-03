@@ -1,0 +1,5 @@
+apiVersion: v1alpha1
+kind: LinkAliasConfig
+name: net0
+selector:
+    match: mac(link.permanent_addr) == "00:1a:2b:3c:4d:5e"

@@ -213,6 +213,11 @@ message HostnameStatusSpec {
   string domainname = 2;
 }
 
+// LinkAliasSpecSpec describes status of rendered secrets.
+message LinkAliasSpecSpec {
+  string alias = 1;
+}
+
 // LinkRefreshSpec describes status of rendered secrets.
 message LinkRefreshSpec {
   int64 generation = 1;

@@ -1200,6 +1200,50 @@
       ],
       "description": "KubeSpanEndpointsConfig is a config document to configure KubeSpan endpoints."
     },
+    "network.LinkAliasConfigV1Alpha1": {
+      "properties": {
+        "apiVersion": {
+          "enum": [
+            "v1alpha1"
+          ],
+          "title": "apiVersion",
+          "description": "apiVersion is the API version of the resource.\n",
+          "markdownDescription": "apiVersion is the API version of the resource.",
+          "x-intellij-html-description": "\u003cp\u003eapiVersion is the API version of the resource.\u003c/p\u003e\n"
+        },
+        "kind": {
+          "enum": [
+            "LinkAliasConfig"
+          ],
+          "title": "kind",
+          "description": "kind is the kind of the resource.\n",
+          "markdownDescription": "kind is the kind of the resource.",
+          "x-intellij-html-description": "\u003cp\u003ekind is the kind of the resource.\u003c/p\u003e\n"
+        },
+        "name": {
+          "type": "string",
+          "title": "name",
+          "description": "Alias for the link.\n\nDon’t use system interface names like “eth0”, “ens3”, “enp0s2”, etc. as those may conflict\nwith existing physical interfaces.\n",
+          "markdownDescription": "Alias for the link.\n\nDon't use system interface names like \"eth0\", \"ens3\", \"enp0s2\", etc. as those may conflict\nwith existing physical interfaces.",
+          "x-intellij-html-description": "\u003cp\u003eAlias for the link.\u003c/p\u003e\n\n\u003cp\u003eDon\u0026rsquo;t use system interface names like \u0026ldquo;eth0\u0026rdquo;, \u0026ldquo;ens3\u0026rdquo;, \u0026ldquo;enp0s2\u0026rdquo;, etc. as those may conflict\nwith existing physical interfaces.\u003c/p\u003e\n"
+        },
+        "selector": {
+          "$ref": "#/$defs/network.LinkSelector",
+          "title": "selector",
+          "description": "Selector to match the link to alias.\n\nSelector must match exactly one link, otherwise an error is returned.\nIf multiple selectors match the same link, the first one is used.\n",
+          "markdownDescription": "Selector to match the link to alias.\n\nSelector must match exactly one link, otherwise an error is returned.\nIf multiple selectors match the same link, the first one is used.",
+          "x-intellij-html-description": "\u003cp\u003eSelector to match the link to alias.\u003c/p\u003e\n\n\u003cp\u003eSelector must match exactly one link, otherwise an error is returned.\nIf multiple selectors match the same link, the first one is used.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "apiVersion",
+        "kind",
+        "name"
+      ],
+      "description": "LinkAliasConfig is a config document to alias (give a different name) to a physical link."
+    },
     "network.LinkConfigV1Alpha1": {
       "properties": {
         "apiVersion": {
@@ -1270,6 +1314,20 @@
         "name"
       ],
       "description": "LinkConfig is a config document to configure physical interfaces (network links)."
+    },
+    "network.LinkSelector": {
+      "properties": {
+        "match": {
+          "type": "string",
+          "title": "match",
+          "description": "The Common Expression Language (CEL) expression to match the link.\n",
+          "markdownDescription": "The Common Expression Language (CEL) expression to match the link.",
+          "x-intellij-html-description": "\u003cp\u003eThe Common Expression Language (CEL) expression to match the link.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "description": "LinkSelector selects a link to alias."
     },
     "network.RouteConfig": {
       "properties": {
@@ -4679,6 +4737,9 @@
     },
     {
       "$ref": "#/$defs/network.LinkConfigV1Alpha1"
+    },
+    {
+      "$ref": "#/$defs/network.LinkAliasConfigV1Alpha1"
     },
     {
       "$ref": "#/$defs/network.RuleConfigV1Alpha1"

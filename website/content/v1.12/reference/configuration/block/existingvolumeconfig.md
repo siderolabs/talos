@@ -61,9 +61,9 @@ VolumeSelector selects an existing volume.
 
 | Field | Type | Description | Value(s) |
 |-------|------|-------------|----------|
-|`match` |Expression |The Common Expression Language (CEL) expression to match the volume. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
+|`match` |Expression |The Common Expression Language (CEL) expression to match the volume. <details><summary>Show example(s)</summary>match volumes with partition label MY-DATA:{{< highlight yaml >}}
 match: volume.partition_label == "MY-DATA"
-{{< /highlight >}}{{< highlight yaml >}}
+{{< /highlight >}}match xfs volume on disk with serial 'SERIAL123':{{< highlight yaml >}}
 match: volume.name == "xfs" && disk.serial == "SERIAL123"
 {{< /highlight >}}</details> | |
 

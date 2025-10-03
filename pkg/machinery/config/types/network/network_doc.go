@@ -526,6 +526,70 @@ func (RouteConfig) Doc() *encoder.Doc {
 	return doc
 }
 
+func (LinkAliasConfigV1Alpha1) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "LinkAliasConfig",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "LinkAliasConfig is a config document to alias (give a different name) to a physical link." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "LinkAliasConfig is a config document to alias (give a different name) to a physical link.",
+		Fields: []encoder.Doc{
+			{
+				Type:   "Meta",
+				Inline: true,
+			},
+			{
+				Name:        "name",
+				Type:        "string",
+				Note:        "",
+				Description: "Alias for the link.\n\nDon't use system interface names like \"eth0\", \"ens3\", \"enp0s2\", etc. as those may conflict\nwith existing physical interfaces.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Alias for the link." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "selector",
+				Type:        "LinkSelector",
+				Note:        "",
+				Description: "Selector to match the link to alias.\n\nSelector must match exactly one link, otherwise an error is returned.\nIf multiple selectors match the same link, the first one is used.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Selector to match the link to alias." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
+
+	doc.AddExample("", exampleLinkAliasConfigV1Alpha1())
+
+	doc.Fields[1].AddExample("", "net0")
+	doc.Fields[1].AddExample("", "private")
+
+	return doc
+}
+
+func (LinkSelector) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "LinkSelector",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "LinkSelector selects a link to alias." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "LinkSelector selects a link to alias.",
+		AppearsIn: []encoder.Appearance{
+			{
+				TypeName:  "LinkAliasConfigV1Alpha1",
+				FieldName: "selector",
+			},
+		},
+		Fields: []encoder.Doc{
+			{
+				Name:        "match",
+				Type:        "Expression",
+				Note:        "",
+				Description: "The Common Expression Language (CEL) expression to match the link.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "The Common Expression Language (CEL) expression to match the link." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
+
+	doc.Fields[0].AddExample("match links with a specific MAC address", exampleLinkSelector1())
+	doc.Fields[0].AddExample("match links by MAC address prefix", exampleLinkSelector2())
+	doc.Fields[0].AddExample("match links by driver name", exampleLinkSelector3())
+
+	return doc
+}
+
 func (RuleConfigV1Alpha1) Doc() *encoder.Doc {
 	doc := &encoder.Doc{
 		Type:        "NetworkRuleConfig",
@@ -691,6 +755,8 @@ func GetFileDoc() *encoder.FileDoc {
 			CommonLinkConfig{}.Doc(),
 			AddressConfig{}.Doc(),
 			RouteConfig{}.Doc(),
+			LinkAliasConfigV1Alpha1{}.Doc(),
+			LinkSelector{}.Doc(),
 			RuleConfigV1Alpha1{}.Doc(),
 			RulePortSelector{}.Doc(),
 			IngressRule{}.Doc(),

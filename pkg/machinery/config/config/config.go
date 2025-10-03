@@ -22,6 +22,7 @@ type Config interface { //nolint:interfacebloat
 	NetworkStaticHostConfig() []NetworkStaticHostConfig
 	NetworkHostnameConfig() NetworkHostnameConfig
 	NetworkCommonLinkConfigs() []NetworkCommonLinkConfig
+	NetworkLinkAliasConfigs() []NetworkLinkAliasConfig
 
 	// - block devices/storage:
 	Volumes() VolumesConfig
