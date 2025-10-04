@@ -129,20 +129,21 @@ func downloadBootAssets(ctx context.Context, qOps *clusterops.Qemu) error {
 func postCreate(
 	ctx context.Context,
 	cOps clusterops.Common,
-	bundleTalosconfig *clientconfig.Config,
 	cluster provision.Cluster,
-	provisionOptions []provision.Option,
-	request provision.ClusterRequest,
+	clusterConfigs clusterops.ClusterConfigs,
 ) error {
+	bundleTalosconfig := clusterConfigs.ConfigBundle.TalosConfig()
+
 	if err := saveConfig(bundleTalosconfig, cOps.TalosconfigDestination); err != nil {
 		return err
 	}
 
-	clusterAccess := access.NewAdapter(cluster, provisionOptions...)
+	clusterAccess := access.NewAdapter(cluster, clusterConfigs.ProvisionOptions...)
 	defer clusterAccess.Close() //nolint:errcheck
 
 	if cOps.ApplyConfigEnabled {
-		err := clusterAccess.ApplyConfig(ctx, request.Nodes, request.SiderolinkRequest, os.Stdout)
+		fmt.Println("applying configuration to the cluster nodes")
+		err := clusterAccess.ApplyConfig(ctx, clusterConfigs.ClusterRequest.Nodes, clusterConfigs.ClusterRequest.SiderolinkRequest, os.Stdout)
 		if err != nil {
 			return err
 		}

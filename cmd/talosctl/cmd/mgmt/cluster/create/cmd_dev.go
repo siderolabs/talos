@@ -278,7 +278,7 @@ func getCreateCmd() *cobra.Command {
 					return err
 				}
 
-				return create(ctx, cOps, qOps)
+				return createDevCluster(ctx, cOps, qOps)
 			})
 		},
 	}
