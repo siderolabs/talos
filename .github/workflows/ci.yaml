@@ -69,7 +69,7 @@ jobs:
           endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
         timeout-minutes: 10
       - name: Download artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: talos-artifacts
           path: _out
@@ -133,7 +133,7 @@ jobs:
           endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
         timeout-minutes: 10
       - name: Download artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: talos-artifacts
           path: _out
@@ -263,7 +263,7 @@ jobs:
           retention-days: "5"
       - name: Retrieve PR labels
         id: retrieve-pr-labels
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           retries: "3"
           script: |
@@ -320,7 +320,7 @@ jobs:
         run: |
           git fetch --prune --unshallow
       - name: Download artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: talos-artifacts
           path: _out
@@ -389,7 +389,7 @@ jobs:
         run: |
           git fetch --prune --unshallow
       - name: Download artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: talos-artifacts
           path: _out
@@ -457,7 +457,7 @@ jobs:
         run: |
           git fetch --prune --unshallow
       - name: Download artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: talos-artifacts
           path: _out
@@ -601,7 +601,7 @@ jobs:
         timeout-minutes: 10
       - name: Download artifacts
         if: github.event_name != 'schedule'
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: talos-artifacts
           path: _out
@@ -717,7 +717,7 @@ jobs:
           sops -d .secrets.yaml | yq -e '.secrets | to_entries[] | .key + "=" + .value' >> "$GITHUB_ENV"
       - name: Download artifacts
         if: github.event_name != 'schedule'
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: talos-artifacts
           path: _out
@@ -853,7 +853,7 @@ jobs:
           sops -d .secrets.yaml | yq -e '.secrets | to_entries[] | .key + "=" + .value' >> "$GITHUB_ENV"
       - name: Download artifacts
         if: github.event_name != 'schedule'
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: talos-artifacts
           path: _out
@@ -1005,7 +1005,7 @@ jobs:
           sops -d .secrets.yaml | yq -e '.secrets | to_entries[] | .key + "=" + .value' >> "$GITHUB_ENV"
       - name: Download artifacts
         if: github.event_name != 'schedule'
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: talos-artifacts
           path: _out
@@ -1157,7 +1157,7 @@ jobs:
           sops -d .secrets.yaml | yq -e '.secrets | to_entries[] | .key + "=" + .value' >> "$GITHUB_ENV"
       - name: Download artifacts
         if: github.event_name != 'schedule'
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: talos-artifacts
           path: _out
@@ -1309,7 +1309,7 @@ jobs:
           sops -d .secrets.yaml | yq -e '.secrets | to_entries[] | .key + "=" + .value' >> "$GITHUB_ENV"
       - name: Download artifacts
         if: github.event_name != 'schedule'
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: talos-artifacts
           path: _out
@@ -1455,7 +1455,7 @@ jobs:
         timeout-minutes: 10
       - name: Download artifacts
         if: github.event_name != 'schedule'
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: talos-artifacts
           path: _out
@@ -1582,7 +1582,7 @@ jobs:
           sops -d .secrets.yaml | yq -e '.secrets | to_entries[] | .key + "=" + .value' >> "$GITHUB_ENV"
       - name: Download artifacts
         if: github.event_name != 'schedule'
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: talos-artifacts
           path: _out
@@ -1663,7 +1663,7 @@ jobs:
         timeout-minutes: 10
       - name: Download artifacts
         if: github.event_name != 'schedule'
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: talos-artifacts
           path: _out
@@ -1757,7 +1757,7 @@ jobs:
         timeout-minutes: 10
       - name: Download artifacts
         if: github.event_name != 'schedule'
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: talos-artifacts
           path: _out
@@ -1869,7 +1869,7 @@ jobs:
         timeout-minutes: 10
       - name: Download artifacts
         if: github.event_name != 'schedule'
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: talos-artifacts
           path: _out
@@ -1959,7 +1959,7 @@ jobs:
         timeout-minutes: 10
       - name: Download artifacts
         if: github.event_name != 'schedule'
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: talos-artifacts
           path: _out
@@ -2090,7 +2090,7 @@ jobs:
           sops -d .secrets.yaml | yq -e '.secrets | to_entries[] | .key + "=" + .value' >> "$GITHUB_ENV"
       - name: Download artifacts
         if: github.event_name != 'schedule'
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: talos-artifacts
           path: _out
@@ -2217,7 +2217,7 @@ jobs:
         timeout-minutes: 10
       - name: Download artifacts
         if: github.event_name != 'schedule'
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: talos-artifacts
           path: _out
@@ -2326,7 +2326,7 @@ jobs:
         timeout-minutes: 10
       - name: Download artifacts
         if: github.event_name != 'schedule'
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: talos-artifacts
           path: _out
@@ -2498,7 +2498,7 @@ jobs:
         timeout-minutes: 10
       - name: Download artifacts
         if: github.event_name != 'schedule'
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: talos-artifacts
           path: _out
@@ -2580,7 +2580,7 @@ jobs:
         timeout-minutes: 10
       - name: Download artifacts
         if: github.event_name != 'schedule'
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: talos-artifacts
           path: _out
@@ -2706,7 +2706,7 @@ jobs:
         timeout-minutes: 10
       - name: Download artifacts
         if: github.event_name != 'schedule'
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: talos-artifacts
           path: _out
@@ -2827,7 +2827,7 @@ jobs:
         timeout-minutes: 10
       - name: Download artifacts
         if: github.event_name != 'schedule'
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: talos-artifacts
           path: _out
@@ -2975,7 +2975,7 @@ jobs:
         timeout-minutes: 10
       - name: Download artifacts
         if: github.event_name != 'schedule'
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: talos-artifacts
           path: _out
@@ -3139,7 +3139,7 @@ jobs:
         timeout-minutes: 10
       - name: Download artifacts
         if: github.event_name != 'schedule'
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: talos-artifacts
           path: _out
@@ -3248,7 +3248,7 @@ jobs:
         timeout-minutes: 10
       - name: Download artifacts
         if: github.event_name != 'schedule'
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: talos-artifacts
           path: _out
@@ -3381,7 +3381,7 @@ jobs:
         timeout-minutes: 10
       - name: Download artifacts
         if: github.event_name != 'schedule'
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: talos-artifacts
           path: _out
@@ -3509,7 +3509,7 @@ jobs:
         timeout-minutes: 10
       - name: Download artifacts
         if: github.event_name != 'schedule'
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: talos-artifacts
           path: _out
@@ -3664,7 +3664,7 @@ jobs:
         timeout-minutes: 10
       - name: Download artifacts
         if: github.event_name != 'schedule'
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: talos-artifacts
           path: _out
@@ -3772,7 +3772,7 @@ jobs:
         timeout-minutes: 10
       - name: Download artifacts
         if: github.event_name != 'schedule'
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: talos-artifacts
           path: _out
@@ -3866,7 +3866,7 @@ jobs:
         timeout-minutes: 10
       - name: Download artifacts
         if: github.event_name != 'schedule'
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: talos-artifacts
           path: _out
@@ -3960,7 +3960,7 @@ jobs:
         timeout-minutes: 10
       - name: Download artifacts
         if: github.event_name != 'schedule'
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: talos-artifacts
           path: _out
@@ -4056,7 +4056,7 @@ jobs:
         timeout-minutes: 10
       - name: Download artifacts
         if: github.event_name != 'schedule'
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: talos-artifacts
           path: _out
@@ -4193,7 +4193,7 @@ jobs:
         timeout-minutes: 10
       - name: Download artifacts
         if: github.event_name != 'schedule'
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: talos-artifacts
           path: _out
@@ -4300,7 +4300,7 @@ jobs:
         timeout-minutes: 10
       - name: Download artifacts
         if: github.event_name != 'schedule'
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: talos-artifacts
           path: _out
@@ -4406,7 +4406,7 @@ jobs:
         timeout-minutes: 10
       - name: Download artifacts
         if: github.event_name != 'schedule'
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: talos-artifacts
           path: _out
@@ -4503,7 +4503,7 @@ jobs:
         timeout-minutes: 10
       - name: Download artifacts
         if: github.event_name != 'schedule'
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: talos-artifacts
           path: _out
@@ -4617,7 +4617,7 @@ jobs:
         timeout-minutes: 10
       - name: Download artifacts
         if: github.event_name != 'schedule'
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: talos-artifacts
           path: _out
@@ -4724,7 +4724,7 @@ jobs:
         timeout-minutes: 10
       - name: Download artifacts
         if: github.event_name != 'schedule'
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: talos-artifacts
           path: _out
@@ -4793,7 +4793,7 @@ jobs:
         timeout-minutes: 10
       - name: Download artifacts
         if: github.event_name != 'schedule'
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: talos-artifacts
           path: _out
@@ -4909,7 +4909,7 @@ jobs:
         timeout-minutes: 10
       - name: Download artifacts
         if: github.event_name != 'schedule'
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: talos-artifacts
           path: _out
