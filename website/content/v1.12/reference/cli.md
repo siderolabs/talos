@@ -182,6 +182,7 @@ talosctl cluster create qemu [flags]
       --kubernetes-version string                desired kubernetes version to run (default "1.34.1")
       --memory-controlplanes string(mb,gb)       the limit on memory usage for each control plane/VM (default 2.0GiB)
       --memory-workers string(mb,gb)             the limit on memory usage for each worker/VM (default 2.0GiB)
+      --presets strings                          list of presets to apply (use 'talosctl cluster create presets' to lists available presets) (default [iso])
       --schematic-id string                      image factory schematic id (defaults to an empty schematic)
       --talos-version string                     the desired talos version (default "latest")
       --talosconfig-destination string           The location to save the generated Talos configuration file to. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.

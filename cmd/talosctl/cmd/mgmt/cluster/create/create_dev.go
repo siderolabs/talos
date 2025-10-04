@@ -11,7 +11,6 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
-	"slices"
 	"strings"
 
 	"github.com/siderolabs/go-kubeconfig"
@@ -21,14 +20,12 @@ import (
 	"github.com/siderolabs/talos/cmd/talosctl/cmd/mgmt/cluster/create/clusterops"
 	"github.com/siderolabs/talos/cmd/talosctl/cmd/mgmt/cluster/create/clusterops/configmaker"
 	clientconfig "github.com/siderolabs/talos/pkg/machinery/client/config"
-	"github.com/siderolabs/talos/pkg/machinery/config/encoder"
-	"github.com/siderolabs/talos/pkg/machinery/config/machine"
 	"github.com/siderolabs/talos/pkg/provision/access"
 	"github.com/siderolabs/talos/pkg/provision/providers"
 )
 
 //nolint:gocyclo,cyclop
-func create(ctx context.Context, cOps clusterops.Common, qOps clusterops.Qemu) error {
+func createDevCluster(ctx context.Context, cOps clusterops.Common, qOps clusterops.Qemu) error {
 	if err := downloadBootAssets(ctx, &qOps); err != nil {
 		return err
 	}
@@ -52,16 +49,9 @@ func create(ctx context.Context, cOps clusterops.Common, qOps clusterops.Qemu) e
 		return err
 	}
 
-	if cOps.SkipInjectingConfig {
-		types := []machine.Type{machine.TypeControlPlane, machine.TypeWorker}
-
-		if cOps.WithInitNode {
-			types = slices.Insert(types, 0, machine.TypeInit)
-		}
-
-		if err = clusterConfigs.ConfigBundle.Write(".", encoder.CommentsAll, types...); err != nil {
-			return err
-		}
+	err = preCreate(cOps, clusterConfigs)
+	if err != nil {
+		return err
 	}
 
 	cluster, err := provisioner.Create(ctx, clusterConfigs.ClusterRequest, clusterConfigs.ProvisionOptions...)
@@ -85,7 +75,7 @@ func create(ctx context.Context, cOps clusterops.Common, qOps clusterops.Qemu) e
 	}
 
 	// Create and save the talosctl configuration file.
-	err = postCreate(ctx, cOps, clusterConfigs.ConfigBundle.TalosConfig(), cluster, clusterConfigs.ProvisionOptions, clusterConfigs.ClusterRequest)
+	err = postCreate(ctx, cOps, cluster, clusterConfigs)
 	if err != nil {
 		return err
 	}
