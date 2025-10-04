@@ -34,11 +34,11 @@ replace (
 
 replace (
 	// Changes from https://github.com/anchore/grype/pull/2798 for using VEX with SBOM
-	github.com/anchore/grype => github.com/dsseng/grype v0.96.1-0.20250718094733-2197792a3b26
+	github.com/anchore/grype => github.com/dsseng/grype v0.95.1-0.20250710124245-9b7e8e23d161
 	// Changes from https://github.com/anchore/syft/pull/3932 for deterministic SBOM
-	github.com/anchore/syft => github.com/dsseng/syft v1.26.2-0.20250703101014-f39c35d156d9
+	github.com/anchore/syft => github.com/dsseng/syft v1.28.0
 	// HACK: required by some dependency of syft, no longer available
-	github.com/garyburd/redigo => github.com/gomodule/redigo v0.0.0-20150301180006-535138d7bcd7
+	github.com/garyburd/redigo => github.com/gomodule/redigo v1.9.2
 )
 
 require (
@@ -398,7 +398,7 @@ require (
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pkg/profile v1.7.0 // indirect
 	github.com/pkg/xattr v0.4.9 // indirect
-	github.com/planetscale/vtprotobuf v0.6.1-0.20240319094008-0393e58bdf10 // indirect
+	github.com/planetscale/vtprotobuf v0.6.1-0.20250313105119-ba97887b0a25 // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/polyfloyd/go-errorlint v1.8.0 // indirect
 	github.com/prometheus/client_golang v1.19.1 // indirect
@@ -440,9 +440,9 @@ require (
 	github.com/siderolabs/deep-copy v0.5.8 // indirect
 	github.com/siderolabs/gen v0.8.5 // indirect
 	github.com/siderolabs/importvet v0.2.0 // indirect
-	github.com/siderolabs/talos/tools/docgen v0.0.0-20250930105318-33714b7158a0 // indirect
-	github.com/siderolabs/talos/tools/gotagsrewrite v0.0.0-20250930105318-33714b7158a0 // indirect
-	github.com/siderolabs/talos/tools/structprotogen v0.0.0-20250930105318-33714b7158a0 // indirect
+	github.com/siderolabs/talos/tools/docgen v0.0.0-20251003150035-ec3bd878f977 // indirect
+	github.com/siderolabs/talos/tools/gotagsrewrite v0.0.0-20251003150035-ec3bd878f977 // indirect
+	github.com/siderolabs/talos/tools/structprotogen v0.0.0-20251003150035-ec3bd878f977 // indirect
 	github.com/sirupsen/logrus v1.9.4-0.20230606125235-dd1b4c2e81af // indirect
 	github.com/sivchari/containedctx v1.0.3 // indirect
 	github.com/skeema/knownhosts v1.3.1 // indirect
@@ -540,7 +540,7 @@ require (
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20250908214217-97024824d090 // indirect
 	google.golang.org/grpc v1.75.0 // indirect
 	google.golang.org/grpc/cmd/protoc-gen-go-grpc v1.5.1 // indirect
-	google.golang.org/protobuf v1.36.9 // indirect
+	google.golang.org/protobuf v1.36.10 // indirect
 	gopkg.in/typ.v4 v4.4.0 // indirect
 	gopkg.in/warnings.v0 v0.1.2 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
