@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"path/filepath"
 
+	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 
 	"github.com/siderolabs/talos/cmd/talosctl/cmd/mgmt/cluster/create/clusterops"
@@ -38,7 +39,8 @@ var (
 	talosconfigDestinationFlagName  = "talosconfig-destination"
 
 	// Qemu flags.
-	disksFlagName = "disks"
+	disksFlagName           = "disks"
+	omniAPIEndpointFlagName = "omni-api-endpoint"
 )
 
 func getCommonUserFacingFlags(pointer *clusterops.Common) *pflag.FlagSet {
@@ -134,4 +136,12 @@ func addTalosVersionFlag(flagset *pflag.FlagSet, bind *string, description strin
 func addDisksFlag(flagset *pflag.FlagSet, bind *flags.Disks) {
 	flagset.Var(bind, disksFlagName,
 		`list of disks to create in format "<driver1>:<size1>" (disks after the first one are added only to worker machines)`)
+}
+
+func addOmniJoinTokenFlag(cmd *cobra.Command, bindAPIEndpoint *string, cfgPatchAllFlagName, cfgPatchWorkersFlagName, cfgPatchCPsFlagName string) {
+	cmd.Flags().StringVar(bindAPIEndpoint, omniAPIEndpointFlagName, *bindAPIEndpoint, "the Omni API endpoint (must include a scheme, a port and a join token)")
+
+	cmd.MarkFlagsMutuallyExclusive(omniAPIEndpointFlagName, cfgPatchAllFlagName)
+	cmd.MarkFlagsMutuallyExclusive(omniAPIEndpointFlagName, cfgPatchWorkersFlagName)
+	cmd.MarkFlagsMutuallyExclusive(omniAPIEndpointFlagName, cfgPatchCPsFlagName)
 }

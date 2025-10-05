@@ -56,17 +56,17 @@ func init() {
 					return err
 				}
 
-				data, err := getDockerClusterRequest(cOps, dOps, provisioner)
+				clusterConfigs, err := getDockerClusterRequest(cOps, dOps, provisioner)
 				if err != nil {
 					return err
 				}
 
-				cluster, err := provisioner.Create(ctx, data.ClusterRequest, data.ProvisionOptions...)
+				cluster, err := provisioner.Create(ctx, clusterConfigs.ClusterRequest, clusterConfigs.ProvisionOptions...)
 				if err != nil {
 					return err
 				}
 
-				err = postCreate(ctx, cOps, data.ConfigBundle.TalosCfg, cluster, data.ProvisionOptions, data.ClusterRequest)
+				err = postCreate(ctx, cOps, cluster, clusterConfigs)
 				if err != nil {
 					return err
 				}

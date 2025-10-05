@@ -11,6 +11,7 @@ import (
 	"net/netip"
 	"os"
 	"slices"
+	"strconv"
 	"strings"
 
 	"github.com/google/uuid"
@@ -23,8 +24,10 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/config"
 	"github.com/siderolabs/talos/pkg/machinery/config/bundle"
 	"github.com/siderolabs/talos/pkg/machinery/config/configpatcher"
+	"github.com/siderolabs/talos/pkg/machinery/config/container"
 	"github.com/siderolabs/talos/pkg/machinery/config/generate"
 	"github.com/siderolabs/talos/pkg/machinery/config/machine"
+	"github.com/siderolabs/talos/pkg/machinery/config/types/siderolink"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/provision"
@@ -67,6 +70,7 @@ type Maker[ExtraOps any] struct {
 	Cidrs             []netip.Prefix
 	InClusterEndpoint string
 	Endpoints         []string
+	WithOmni          bool
 
 	ProvisionOps    []provision.Option
 	GenOps          []generate.Option
@@ -101,15 +105,18 @@ func (m *Maker[T]) InitExtra() error {
 		return err
 	}
 
-	if err := m.extraOptionsProvider.AddExtraGenOps(); err != nil {
-		return err
+	// skip generating machine config if nodes are to be used with omni
+	if !m.WithOmni {
+		if err := m.extraOptionsProvider.AddExtraGenOps(); err != nil {
+			return err
+		}
+
+		if err := m.extraOptionsProvider.AddExtraConfigBundleOpts(); err != nil {
+			return err
+		}
 	}
 
 	if err := m.extraOptionsProvider.AddExtraProvisionOpts(); err != nil {
-		return err
-	}
-
-	if err := m.extraOptionsProvider.AddExtraConfigBundleOpts(); err != nil {
 		return err
 	}
 
@@ -125,7 +132,13 @@ func (m *Maker[T]) InitExtra() error {
 }
 
 // InitCommon initializes the common fields.
+//
+//nolint:gocyclo
 func (m *Maker[T]) InitCommon() error {
+	if m.Ops.OmniAPIEndpoint != "" {
+		m.WithOmni = true
+	}
+
 	if err := m.initVersionContract(); err != nil {
 		return err
 	}
@@ -152,15 +165,18 @@ func (m *Maker[T]) InitCommon() error {
 		return err
 	}
 
-	if err := m.initGenOps(); err != nil {
-		return err
+	// skip generating machine config if nodes are to be used with omni
+	if !m.WithOmni {
+		if err := m.initGenOps(); err != nil {
+			return err
+		}
+
+		if err := m.initConfigBundleOps(); err != nil {
+			return err
+		}
 	}
 
 	if err := m.initProvisionOps(); err != nil {
-		return err
-	}
-
-	if err := m.initConfigBundleOps(); err != nil {
 		return err
 	}
 
@@ -210,6 +226,53 @@ func (m *Maker[T]) initVersionContract() error {
 // GetClusterConfigs prepares and returns the cluster create request data. This method is ment to be called after the implemeting maker
 // logic has been run.
 func (m *Maker[T]) GetClusterConfigs() (clusterops.ClusterConfigs, error) {
+	var configBundle *bundle.Bundle
+
+	if !m.WithOmni {
+		cfgBundle, err := m.finalizeMachineConfigs()
+		if err != nil {
+			return clusterops.ClusterConfigs{}, err
+		}
+
+		configBundle = cfgBundle
+	} else {
+		err := m.applyOmniConfigs()
+		if err != nil {
+			return clusterops.ClusterConfigs{}, err
+		}
+	}
+
+	return clusterops.ClusterConfigs{
+		ClusterRequest:   m.ClusterRequest,
+		ProvisionOptions: m.ProvisionOps,
+		ConfigBundle:     configBundle,
+	}, nil
+}
+
+func (m *Maker[T]) applyOmniConfigs() error {
+	cfg := siderolink.NewConfigV1Alpha1()
+
+	parsedURL, err := ParseOmniAPIUrl(m.Ops.OmniAPIEndpoint)
+	if err != nil {
+		return fmt.Errorf("error parsing omni api url: %w", err)
+	}
+
+	cfg.APIUrlConfig.URL = parsedURL
+
+	ctr, err := container.New(cfg)
+	if err != nil {
+		return err
+	}
+
+	m.ForEachNode(func(i int, node *provision.NodeRequest) {
+		node.Config = ctr
+		node.Name = m.Ops.RootOps.ClusterName + "-machine-" + strconv.Itoa(i+1)
+	})
+
+	return nil
+}
+
+func (m *Maker[T]) finalizeMachineConfigs() (*bundle.Bundle, error) {
 	// These options needs to be generated after the implementing maker has made changes to the cluster request.
 	m.GenOps = slices.Concat(m.GenOps, m.Provisioner.GenOptions(m.ClusterRequest.Network, m.VersionContract))
 	m.GenOps = slices.Concat(m.GenOps, []generate.Option{generate.WithEndpointList(m.Endpoints)})
@@ -226,7 +289,7 @@ func (m *Maker[T]) GetClusterConfigs() (clusterops.ClusterConfigs, error) {
 
 	configBundle, err := bundle.NewBundle(m.ConfigBundleOps...)
 	if err != nil {
-		return clusterops.ClusterConfigs{}, err
+		return nil, err
 	}
 
 	if m.ClusterRequest.Nodes[0].Type == machine.TypeInit {
@@ -243,7 +306,7 @@ func (m *Maker[T]) GetClusterConfigs() (clusterops.ClusterConfigs, error) {
 	if m.Ops.WireguardCIDR != "" {
 		wireguardConfigBundle, err := helpers.NewWireguardConfigBundle(m.IPs[0], m.Ops.WireguardCIDR, 51111, m.Ops.Controlplanes)
 		if err != nil {
-			return clusterops.ClusterConfigs{}, err
+			return nil, err
 		}
 
 		for i := range m.ClusterRequest.Nodes {
@@ -251,7 +314,7 @@ func (m *Maker[T]) GetClusterConfigs() (clusterops.ClusterConfigs, error) {
 
 			patchedCfg, err := wireguardConfigBundle.PatchConfig(node.IPs[0], node.Config)
 			if err != nil {
-				return clusterops.ClusterConfigs{}, err
+				return nil, err
 			}
 
 			node.Config = patchedCfg
@@ -260,11 +323,7 @@ func (m *Maker[T]) GetClusterConfigs() (clusterops.ClusterConfigs, error) {
 
 	m.ProvisionOps = append(m.ProvisionOps, provision.WithTalosConfig(configBundle.TalosConfig()))
 
-	return clusterops.ClusterConfigs{
-		ClusterRequest:   m.ClusterRequest,
-		ProvisionOptions: m.ProvisionOps,
-		ConfigBundle:     configBundle,
-	}, nil
+	return configBundle, nil
 }
 
 // ForEachNode iterates over all nodes allowing modification of each node.

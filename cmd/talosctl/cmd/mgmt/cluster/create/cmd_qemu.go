@@ -10,21 +10,21 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 
-	clustercmd "github.com/siderolabs/talos/cmd/talosctl/cmd/mgmt/cluster"
+	"github.com/siderolabs/talos/cmd/talosctl/cmd/constants"
 	"github.com/siderolabs/talos/cmd/talosctl/cmd/mgmt/cluster/create/clusterops"
+	"github.com/siderolabs/talos/cmd/talosctl/cmd/mgmt/cluster/create/clusterops/configmaker/preset"
 	"github.com/siderolabs/talos/pkg/cli"
 	"github.com/siderolabs/talos/pkg/provision/providers"
 )
 
-const emptySchemanticID = "376567988ad370138ad8b2698212367b8edcb69b5fd68c80be1f2ec7d603b4ba"
-
-type createQemuOps struct {
+type presetOptions struct {
 	schematicID     string
 	imageFactoryURL string
+	presets         []string
 }
 
 func init() {
-	cqOps := createQemuOps{}
+	presetOptions := presetOptions{}
 	qOps := clusterops.GetQemu()
 	cOps := clusterops.GetCommon()
 	cOps.SkipInjectingConfig = true
@@ -39,15 +39,28 @@ func init() {
 		qemu := pflag.NewFlagSet("qemu", pflag.PanicOnError)
 
 		addDisksFlag(qemu, &qOps.Disks)
-		qemu.StringVar(&cqOps.schematicID, "schematic-id", "", "image factory schematic id (defaults to an empty schematic)")
-		qemu.StringVar(&cqOps.imageFactoryURL, "image-factory-url", "https://factory.talos.dev/", "image factory url")
+		qemu.StringVar(&presetOptions.schematicID, "schematic-id", "", "image factory schematic id (defaults to an empty schematic)")
+		qemu.StringVar(&presetOptions.imageFactoryURL, "image-factory-url", constants.ImageFactoryURL, "image factory url")
+		qemu.StringSliceVar(&presetOptions.presets, "presets", []string{preset.ISO{}.Name()}, "list of presets to apply")
 
 		return qemu
 	}
 
+	descriptionShort := "Create a local QEMU based Talos cluster"
+	descriptionLong := descriptionShort + "\n"
+
+	descriptionLong += "Available presets:\n"
+	for _, p := range preset.Presets {
+		descriptionLong += "  - " + p.Name() + ": " + p.Description() + "\n"
+	}
+
+	descriptionLong += "\n"
+	descriptionLong += "Note: exactly one of 'iso', 'iso-secureboot', 'pxe' or 'disk-image' presets must be specified.\n"
+
 	createQemuCmd := &cobra.Command{
 		Use:   providers.QemuProviderName,
-		Short: "Create a local QEMU based Talos cluster",
+		Short: descriptionShort,
+		Long:  descriptionLong,
 		Args:  cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return cli.WithContext(context.Background(), func(ctx context.Context) error {
@@ -56,28 +69,14 @@ func init() {
 					return err
 				}
 
-				data, err := getQemuClusterRequest(ctx, qOps, cOps, cqOps, provisioner)
-				if err != nil {
-					return err
-				}
-
-				cluster, err := provisioner.Create(ctx, data.ClusterRequest, data.ProvisionOptions...)
-				if err != nil {
-					return err
-				}
-
-				err = postCreate(ctx, cOps, data.ConfigBundle.TalosCfg, cluster, data.ProvisionOptions, data.ClusterRequest)
-				if err != nil {
-					return err
-				}
-
-				return clustercmd.ShowCluster(cluster)
+				return createQemuCluster(ctx, qOps, cOps, presetOptions, provisioner)
 			})
 		},
 	}
 
 	createQemuCmd.Flags().AddFlagSet(commonFlags)
 	createQemuCmd.Flags().AddFlagSet(getQemuFlags())
+	addOmniJoinTokenFlag(createQemuCmd, &cOps.OmniAPIEndpoint, configPatchFlagName, configPatchWorkerFlagName, configPatchControlPlaneFlagName)
 
 	createCmd.AddCommand(createQemuCmd)
 }
