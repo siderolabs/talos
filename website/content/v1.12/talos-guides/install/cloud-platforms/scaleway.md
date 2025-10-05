@@ -20,7 +20,7 @@ The process to run a Talos node in Scaleway is as follows:
 1. **Download the image disk** of the Talos version you wish to run:
 
    ```bash
-   wget "https://factory.talos.dev/image/376567988ad370138ad8b2698212367b8edcb69b5fd68c80be1f2ec7d603b4ba/v{{< release >}}/scaleway-amd64.raw.zst"
+   wget "https://factory.talos.dev/image/376567988ad370138ad8b2698212367b8edcb69b5fd68c80be1f2ec7d603b4ba/{{< release >}}/scaleway-amd64.raw.zst"
    ```
 
    > You can create your own brew on [Talos Factory](https://factory.talos.dev) if you need a custom image.
