@@ -79,6 +79,11 @@ type NodeSelectListener interface {
 	OnNodeSelect(node string)
 }
 
+// TickerListener is a listener which is notified on every tick.
+type TickerListener interface {
+	OnTick()
+}
+
 type screenConfig struct {
 	screenKey           string
 	screen              Screen
@@ -107,6 +112,7 @@ type Dashboard struct {
 	resourceDataListeners []ResourceDataListener
 	logDataListeners      []LogDataListener
 	nodeSelectListeners   []NodeSelectListener
+	tickerListeners       []TickerListener
 
 	app *tview.Application
 
@@ -228,6 +234,10 @@ func buildDashboard(ctx context.Context, cli *client.Client, opts ...Option) (*D
 	dashboard.nodeSelectListeners = []NodeSelectListener{
 		header,
 		dashboard.footer,
+	}
+
+	dashboard.tickerListeners = []TickerListener{
+		header,
 	}
 
 	for _, config := range dashboard.screenConfigs {
@@ -360,6 +370,8 @@ func Run(ctx context.Context, cli *client.Client, opts ...Option) (runErr error)
 }
 
 // startDataHandler starts the data and log update handler and returns a function to stop it.
+//
+//nolint:gocyclo
 func (d *Dashboard) startDataHandler(ctx context.Context) func() error {
 	var eg errgroup.Group
 
@@ -391,6 +403,9 @@ func (d *Dashboard) startDataHandler(ctx context.Context) func() error {
 
 		lastLogTime := time.Now()
 
+		ticker := time.NewTicker(500 * time.Millisecond)
+		defer ticker.Stop()
+
 		for {
 			select {
 			case <-ctx.Done():
@@ -416,6 +431,12 @@ func (d *Dashboard) startDataHandler(ctx context.Context) func() error {
 			case nodeResource := <-d.resourceDataSource.NodeResourceCh:
 				d.app.QueueUpdateDraw(func() {
 					d.processNodeResource(nodeResource)
+				})
+			case <-ticker.C:
+				d.app.QueueUpdateDraw(func() {
+					if !d.paused {
+						d.processTick()
+					}
 				})
 			}
 		}
@@ -467,6 +488,13 @@ func (d *Dashboard) processNodeResource(nodeResource resourcedata.Data) {
 func (d *Dashboard) processLog(node, logLine, logError string) {
 	for _, component := range d.logDataListeners {
 		component.OnLogDataChange(node, logLine, logError)
+	}
+}
+
+// processTick re-renders the components with ticker.
+func (d *Dashboard) processTick() {
+	for _, component := range d.tickerListeners {
+		component.OnTick()
 	}
 }
 

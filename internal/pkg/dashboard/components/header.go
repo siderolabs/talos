@@ -38,6 +38,7 @@ type Header struct {
 
 	selectedNode string
 	nodeMap      map[string]*headerData
+	spinnerPos   int
 }
 
 // NewHeader initializes Header.
@@ -90,6 +91,13 @@ func (widget *Header) OnAPIDataChange(node string, data *apidata.Data) {
 	}
 }
 
+// OnTick implements the TickerListener interface.
+func (widget *Header) OnTick() {
+	widget.spinnerPos++
+
+	widget.redraw()
+}
+
 func (widget *Header) humanizeCPUFrequency(mhz float64) string {
 	value := math.Round(mhz)
 	unit := "MHz"
@@ -103,11 +111,16 @@ func (widget *Header) humanizeCPUFrequency(mhz float64) string {
 	return fmt.Sprintf("%s%s", humanize.Ftoa(value), unit)
 }
 
+// Spinner is a set of characters compatible with Linux virtual console CP437.
+var spinner = []string{"\u2510", "\u2518", "\u2514", "\u250C"}
+
 func (widget *Header) redraw() {
 	data := widget.getOrCreateNodeData(widget.selectedNode)
+	spinnerPos := widget.spinnerPos % len(spinner)
 
 	text := fmt.Sprintf(
-		"[yellow::b]%s[-:-:-] (%s): uptime %s, %s, %s RAM, PROCS %s, CPU %s, RAM %s",
+		"[green]%s [yellow::b]%s[-:-:-] (%s): uptime %s, %s, %s RAM, PROCS %s, CPU %s, RAM %s",
+		spinner[spinnerPos],
 		data.hostname,
 		data.version,
 		data.uptime,
