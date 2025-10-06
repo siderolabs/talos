@@ -121,30 +121,6 @@ Version numbers for Talos, etcd, Kubernetes components, and add-ons change frequ
 
 See the [Reproducible Machine Configuration]({{< relref "../talos-guides/configuration/reproducible-machine-config.md" >}}) guide for full instructions on handling machine configurations after version bumps.
 
-#### Recommended Workflow
-
-Instead of storing full machine configs, keep only the following:
-
-* `secrets.yaml` (cluster secrets generated once at cluster creation)
-* Patch files (YAML/JSON patches that describe the differences you want from the defaults — e.g. custom networking, node labels, additional arguments)
-
-When you need machine configs:
-
-1. Generate fresh base machine configs with your `secrets.yaml`:
-
-   ```bash
-   talosctl gen config <cluster-name> <cluster-endpoint> \
-      --with-secrets secrets.yaml
-   ```
-
-1. [Apply your stored patches]({{< relref "../talos-guides/configuration/patching.md#configuration-patching-with-talosctl-cli" >}}) on top of the generated configs.
-
-1. Use the patched configs when creating or updating nodes.
-
-1. Discard the generated base configs.
-
-This workflow ensures that upgrades via `talosctl upgrade-k8s` do not create drift between the live and declared state, since version bumps are handled automatically in regenerated configs.
-
 ## Manual Kubernetes Upgrade
 
 Kubernetes can be upgraded manually by following the steps outlined below.

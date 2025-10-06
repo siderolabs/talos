@@ -125,6 +125,12 @@ cluster:
     enabled: true
 ```
 
+## Discovery Service Availability
+
+KubeSpan depends on the Discovery Service for peer discovery and key exchange. Once all nodes in a cluster have established their KubeSpan connections, the cluster can continue operating normally even if the Discovery Service becomes temporarily unavailable. When the cluster is already running and all peers are connected, node-to-node communication remains seamless because the existing WireGuard sessions persist, allowing operations to continue uninterrupted.
+
+However, if the Discovery Service is unavailable and you reboot a node or attempt to add new ones, those nodes will be unable to join or rejoin the mesh until the service becomes reachable again. This is because new key exchanges and peer discovery require an active connection to the Discovery Service.
+
 ## Configuration
 
 KubeSpan will automatically discover all cluster members, exchange Wireguard public keys and establish a full mesh network.
