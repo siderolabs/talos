@@ -14,6 +14,10 @@ Make sure to follow [installation](https://www.linode.com/docs/products/tools/cl
 
 [jq](https://stedolan.github.io/jq/) and [talosctl]({{< relref "../../../introduction/quickstart#talosctl" >}}) also needs to be installed
 
+> *Note*: By default, Akamai virtual machines are created with a boot configuration that results in kernel panic, so after each machine is created, kernel must be switched to "Direct Disk" (included in CLI commands below).
+>
+> Instructions to switch to "Direct Disk" manually via UI: [Linodes](https://cloud.linode.com/linodes) → [*Label*] → Configurations tab → Edit existing configuration → Boot Settings: Select a Kernel → set to "Direct Disk" (reboot is required).
+
 ### Upload image
 
 Download the Akamai image `akamai-amd64.raw.gz` from [Image Factory](https://factory.talos.dev/image/376567988ad370138ad8b2698212367b8edcb69b5fd68c80be1f2ec7d603b4ba/{{< release >}}/akamai-amd64.raw.gz).
@@ -60,14 +64,13 @@ export IMAGE_ID=$(linode-cli images list --label talos --format id --text --no-h
 export NODEBALANCER_ID=$(linode-cli nodebalancers list --label talos --format id --text --no-headers)
 export NODEBALANCER_CONFIG_ID=$(linode-cli nodebalancers configs-list ${NODEBALANCER_ID} --format id --text --no-headers)
 export REGION=us-ord
-export LINODE_TYPE=g6-standard-4
+export LINODE_TYPE=g6-standard-2
 export ROOT_PW=$(pwgen 16)
 
 for id in $(seq 3); do
   linode_label="talos-control-plane-${id}"
 
   # create linode
-
   linode-cli linodes create  \
     --no-defaults \
     --root_pass ${ROOT_PW} \
@@ -82,8 +85,8 @@ for id in $(seq 3); do
 
   # change kernel to "direct disk"
   linode_id=$(linode-cli linodes list --label ${linode_label} --format id --text --no-headers)
-  confiig_id=$(linode-cli linodes configs-list ${linode_id} --format id --text --no-headers)
-  linode-cli linodes config-update ${linode_id} ${confiig_id} --kernel "linode/direct-disk"
+  config_id=$(linode-cli linodes configs-list ${linode_id} --format id --text --no-headers)
+  linode-cli linodes config-update ${linode_id} ${config_id} --kernel "linode/direct-disk"
 
   # add machine to nodebalancer
   private_ip=$(linode-cli linodes list --label ${linode_label} --format ipv4 --json | jq -r ".[0].ipv4[1]")
@@ -100,10 +103,11 @@ Run the following to create a worker node:
 ```bash
 export IMAGE_ID=$(linode-cli images list --label talos --format id --text --no-headers)
 export REGION=us-ord
-export LINODE_TYPE=g6-standard-4
+export LINODE_TYPE=g6-standard-2
 export LINODE_LABEL="talos-worker-1"
 export ROOT_PW=$(pwgen 16)
 
+# create linode
 linode-cli linodes create  \
     --no-defaults \
     --root_pass ${ROOT_PW} \
@@ -116,6 +120,7 @@ linode-cli linodes create  \
     --group "talos-worker" \
     --metadata.user_data "$(base64 -i ./worker.yaml)"
 
+# change kernel to "direct disk"
 linode_id=$(linode-cli linodes list --label ${LINODE_LABEL} --format id --text --no-headers)
 config_id=$(linode-cli linodes configs-list ${linode_id} --format id --text --no-headers)
 linode-cli linodes config-update ${linode_id} ${config_id} --kernel "linode/direct-disk"
