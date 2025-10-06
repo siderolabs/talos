@@ -11,8 +11,8 @@ import (
 )
 
 // ResourceSpecToProto converts a resource spec to a proto message.
-func ResourceSpecToProto(i resource.Resource, o Message) error {
-	marshaled, err := protoenc.Marshal(i.Spec())
+func ResourceSpecToProto(i resource.Resource, o Message, opts ...protoenc.MarshalOption) error {
+	marshaled, err := protoenc.Marshal(i.Spec(), opts...)
 	if err != nil {
 		return err
 	}

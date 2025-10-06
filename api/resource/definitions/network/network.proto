@@ -56,12 +56,12 @@ message BondMasterSpec {
   uint32 min_links = 15;
   uint32 lp_interval = 16;
   uint32 packets_per_slave = 17;
-  fixed32 num_peer_notif = 18;
-  fixed32 tlb_dynamic_lb = 19;
-  fixed32 all_slaves_active = 20;
+  uint32 num_peer_notif = 18;
+  uint32 tlb_dynamic_lb = 19;
+  uint32 all_slaves_active = 20;
   bool use_carrier = 21;
-  fixed32 ad_actor_sys_prio = 22;
-  fixed32 ad_user_port_key = 23;
+  uint32 ad_actor_sys_prio = 22;
+  uint32 ad_user_port_key = 23;
   uint32 peer_notify_delay = 24;
 }
 
@@ -295,7 +295,7 @@ message NfTablesChainSpec {
 // - IPv4: MSS = MaxMTU - 40
 // - IPv6: MSS = MaxMTU - 60.
 message NfTablesClampMSS {
-  fixed32 mtu = 1;
+  uint32 mtu = 1;
 }
 
 // NfTablesConntrackStateMatch describes the match on the connection tracking state.
@@ -410,8 +410,8 @@ message PlatformConfigSpec {
 //
 // Range is [lo, hi].
 message PortRange {
-  fixed32 lo = 1;
-  fixed32 hi = 2;
+  uint32 lo = 1;
+  uint32 hi = 2;
 }
 
 // ProbeSpecSpec describes the Probe.
@@ -529,7 +529,7 @@ message VIPOperatorSpec {
 
 // VLANSpec describes VLAN settings if Kind == "vlan".
 message VLANSpec {
-  fixed32 vid = 1;
+  uint32 vid = 1;
   talos.resource.definitions.enums.NethelpersVLANProtocol protocol = 2;
 }
 

@@ -8293,12 +8293,12 @@ BondMasterSpec describes bond settings if Kind == "bond".
 | min_links | [uint32](#uint32) |  |  |
 | lp_interval | [uint32](#uint32) |  |  |
 | packets_per_slave | [uint32](#uint32) |  |  |
-| num_peer_notif | [fixed32](#fixed32) |  |  |
-| tlb_dynamic_lb | [fixed32](#fixed32) |  |  |
-| all_slaves_active | [fixed32](#fixed32) |  |  |
+| num_peer_notif | [uint32](#uint32) |  |  |
+| tlb_dynamic_lb | [uint32](#uint32) |  |  |
+| all_slaves_active | [uint32](#uint32) |  |  |
 | use_carrier | [bool](#bool) |  |  |
-| ad_actor_sys_prio | [fixed32](#fixed32) |  |  |
-| ad_user_port_key | [fixed32](#fixed32) |  |  |
+| ad_actor_sys_prio | [uint32](#uint32) |  |  |
+| ad_user_port_key | [uint32](#uint32) |  |  |
 | peer_notify_delay | [uint32](#uint32) |  |  |
 
 
@@ -8788,7 +8788,7 @@ MSS is limited by the `MaxMTU` so that:
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| mtu | [fixed32](#fixed32) |  |  |
+| mtu | [uint32](#uint32) |  |  |
 
 
 
@@ -9043,8 +9043,8 @@ Range is [lo, hi].
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| lo | [fixed32](#fixed32) |  |  |
-| hi | [fixed32](#fixed32) |  |  |
+| lo | [uint32](#uint32) |  |  |
+| hi | [uint32](#uint32) |  |  |
 
 
 
@@ -9312,7 +9312,7 @@ VLANSpec describes VLAN settings if Kind == "vlan".
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| vid | [fixed32](#fixed32) |  |  |
+| vid | [uint32](#uint32) |  |  |
 | protocol | [talos.resource.definitions.enums.NethelpersVLANProtocol](#talos.resource.definitions.enums.NethelpersVLANProtocol) |  |  |
 
 

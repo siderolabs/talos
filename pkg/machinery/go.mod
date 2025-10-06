@@ -34,13 +34,13 @@ require (
 	github.com/siderolabs/go-api-signature v0.3.8
 	github.com/siderolabs/go-pointer v1.0.1
 	github.com/siderolabs/net v0.4.0
-	github.com/siderolabs/protoenc v0.2.3
+	github.com/siderolabs/protoenc v0.2.4
 	github.com/stretchr/testify v1.11.1
 	golang.org/x/net v0.44.0
 	google.golang.org/genproto/googleapis/api v0.0.0-20250929231259-57b25ae835d4
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20250929231259-57b25ae835d4
 	google.golang.org/grpc v1.75.1
-	google.golang.org/protobuf v1.36.9
+	google.golang.org/protobuf v1.36.10
 	gopkg.in/yaml.v3 v3.0.1
 )
 

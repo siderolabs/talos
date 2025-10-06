@@ -465,18 +465,17 @@ func formatBasicTypeName(typPkg string, typ string) (importPath, fullName string
 
 //nolint:gocyclo
 func getProtoBasicName(typ string) string {
+	// Note: this should match: https://github.com/siderolabs/protoenc/blob/4b9363e618950aa6243872c640d89578c68fd1ed/marshal.go#L168-L204
+	//
+	// Note: protoenc marshals to protowire, not proto3, so for mapping see: https://protobuf.dev/programming-guides/encoding/#structure
 	switch typ {
 	case "bool":
 		return "bool"
-	case "int8", "int16":
-		return "fixed32"
-	case "int32":
+	case "int8", "int16", "int32":
 		return "int32"
 	case "int64", "int":
 		return "int64"
-	case "byte", "uint8", "uint16":
-		return "fixed32"
-	case "uint32":
+	case "byte", "uint8", "uint16", "uint32":
 		return "uint32"
 	case "uint64", "uint":
 		return "uint64"
