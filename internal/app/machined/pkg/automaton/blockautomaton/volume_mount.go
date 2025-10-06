@@ -109,6 +109,10 @@ func waitForMountStatus(ctx context.Context, r controller.ReaderWriter, logger *
 		return nil, xerrors.NewTaggedf[automaton.Continue]("waiting for mount status to be established")
 	}
 
+	if mountStatus.TypedSpec().ReadOnly && !mountContext.options.ReadOnly {
+		return nil, xerrors.NewTaggedf[automaton.Continue]("volume is mounted read-only, but read-write was requested")
+	}
+
 	if !mountStatus.Metadata().Finalizers().Has(mountContext.requester) {
 		if err = r.AddFinalizer(ctx, mountStatus.Metadata(), mountContext.requester); err != nil {
 			return nil, fmt.Errorf("error adding finalizer: %w", err)

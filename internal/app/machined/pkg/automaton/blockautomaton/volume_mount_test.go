@@ -121,3 +121,54 @@ func TestVolumeMounter(t *testing.T) {
 
 	assert.True(t, finished)
 }
+
+func TestVolumeMounterReadWrite(t *testing.T) {
+	t.Parallel()
+
+	logger := zaptest.NewLogger(t)
+	st := state.WrapCore(namespaced.NewState(inmem.Build))
+	ctx, cancel := context.WithTimeout(t.Context(), 10*time.Second)
+	t.Cleanup(cancel)
+
+	mountedCh := make(chan struct{})
+
+	volumeMounter := blockautomaton.NewVolumeMounter("rw", "volumeID", func(ctx context.Context, rw controller.ReaderWriter, l *zap.Logger, vms *block.VolumeMountStatus) error {
+		close(mountedCh)
+
+		return nil
+	})
+
+	const mountID = "rw-volumeID"
+
+	adapter := owned.New(st, "automaton")
+
+	// 1st run, should create the volume mount request
+	require.NoError(t, volumeMounter.Run(ctx, adapter, logger))
+
+	rtestutils.AssertResource(ctx, t, st, mountID, func(vmr *block.VolumeMountRequest, asrt *assert.Assertions) {
+		asrt.Equal("rw", vmr.TypedSpec().Requester)
+		asrt.Equal("volumeID", vmr.TypedSpec().VolumeID)
+		asrt.False(vmr.TypedSpec().ReadOnly)
+	})
+
+	require.NoError(t, st.AddFinalizer(ctx, block.NewVolumeMountRequest(block.NamespaceName, mountID).Metadata(), "test"))
+
+	vms := block.NewVolumeMountStatus(block.NamespaceName, mountID)
+	vms.TypedSpec().ReadOnly = true // volume is mounted read-only (from some other request)
+	require.NoError(t, st.Create(ctx, vms))
+
+	// no-op run, as the volume mount status is read-only
+	require.NoError(t, volumeMounter.Run(ctx, adapter, logger))
+
+	vms.TypedSpec().ReadOnly = false // volume is now mounted read-write
+	require.NoError(t, st.Update(ctx, vms))
+
+	// 2nd run, should put a finalizer on the volume mount status and call the callback 1st time, finishing the whole sequence
+	require.NoError(t, volumeMounter.Run(ctx, adapter, logger))
+
+	select {
+	case <-mountedCh:
+	case <-ctx.Done():
+		t.Fatal("timed out waiting for mount status callback")
+	}
+}
