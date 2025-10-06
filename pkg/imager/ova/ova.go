@@ -133,6 +133,7 @@ const ovfTpl = `<?xml version="1.0" encoding="UTF-8"?>
       <vmw:Config ovf:required="false" vmw:key="tools.toolsUpgradePolicy" vmw:value="manual"/>
       <vmw:Config ovf:required="false" vmw:key="powerOpInfo.suspendType" vmw:value="soft"/>
       <vmw:ExtraConfig ovf:required="false" vmw:key="nvram" vmw:value="talos.nvram"/>
+      <vmw:ExtraConfig ovf:required="false" vmw:key="disk.EnableUUID" vmw:value="true"/>
     </VirtualHardwareSection>
   </VirtualSystem>
 </Envelope>
