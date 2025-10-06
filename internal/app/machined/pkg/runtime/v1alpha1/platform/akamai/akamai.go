@@ -17,6 +17,7 @@ import (
 	"github.com/siderolabs/go-procfs/procfs"
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/errors"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/internal/netutils"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/imager/quirks"
@@ -159,7 +160,11 @@ func (a *Akamai) Configuration(ctx context.Context, r state.State) ([]byte, erro
 		return nil, fmt.Errorf("get user data: %w", err)
 	}
 
-	return []byte(userData), err
+	if userData == "" {
+		return nil, errors.ErrNoConfigSource
+	}
+
+	return []byte(userData), nil
 }
 
 // Mode implements the platform.Platform interface.
