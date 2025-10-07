@@ -2735,6 +2735,7 @@ spec:
           command: e2e-aws
           environment:
             EXTRA_TEST_ARGS: "-talos.extensions.nvidia -talos.verifyukibooted=false"
+            INTEGRATION_TEST_RUN: TestIntegration/api.ExtensionsSuiteNVIDIA
         - name: tf destroy
           command: e2e-cloud-tf
           conditions:
@@ -2832,6 +2833,7 @@ spec:
           command: e2e-aws
           environment:
             EXTRA_TEST_ARGS: "-talos.extensions.nvidia -talos.verifyukibooted=false"
+            INTEGRATION_TEST_RUN: TestIntegration/api.ExtensionsSuiteNVIDIA
         - name: tf destroy
           command: e2e-cloud-tf
           conditions:
@@ -2927,6 +2929,7 @@ spec:
           command: e2e-aws
           environment:
             EXTRA_TEST_ARGS: -talos.extensions.nvidia
+            INTEGRATION_TEST_RUN: TestIntegration/api.ExtensionsSuiteNVIDIA
         - name: tf destroy
           command: e2e-cloud-tf
           conditions:
@@ -3022,6 +3025,7 @@ spec:
           command: e2e-aws
           environment:
             EXTRA_TEST_ARGS: -talos.extensions.nvidia
+            INTEGRATION_TEST_RUN: TestIntegration/api.ExtensionsSuiteNVIDIA
         - name: tf destroy
           command: e2e-cloud-tf
           conditions:

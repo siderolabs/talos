@@ -1,6 +1,6 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
 #
-# Generated on 2025-09-19T11:03:20Z by kres 065ec4c.
+# Generated on 2025-10-07T13:32:17Z by kres 97ccf82.
 
 concurrency:
   group: ${{ github.head_ref || github.run_id }}
@@ -142,6 +142,7 @@ jobs:
       - name: e2e-aws-nvidia-nonfree-lts
         env:
           EXTRA_TEST_ARGS: -talos.extensions.nvidia
+          INTEGRATION_TEST_RUN: TestIntegration/api.ExtensionsSuiteNVIDIA
         run: |
           make e2e-aws
       - name: tf destroy

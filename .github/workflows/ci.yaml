@@ -1,6 +1,6 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
 #
-# Generated on 2025-10-01T17:01:09Z by kres bc281a9.
+# Generated on 2025-10-07T13:32:17Z by kres 97ccf82.
 
 concurrency:
   group: ${{ github.head_ref || github.run_id }}
@@ -936,6 +936,7 @@ jobs:
       - name: e2e-aws-nvidia-nonfree-lts
         env:
           EXTRA_TEST_ARGS: -talos.extensions.nvidia
+          INTEGRATION_TEST_RUN: TestIntegration/api.ExtensionsSuiteNVIDIA
         run: |
           make e2e-aws
       - name: tf destroy
@@ -1088,6 +1089,7 @@ jobs:
       - name: e2e-aws-nvidia-nonfree-production
         env:
           EXTRA_TEST_ARGS: -talos.extensions.nvidia
+          INTEGRATION_TEST_RUN: TestIntegration/api.ExtensionsSuiteNVIDIA
         run: |
           make e2e-aws
       - name: tf destroy
@@ -1240,6 +1242,7 @@ jobs:
       - name: e2e-aws-nvidia-oss-lts
         env:
           EXTRA_TEST_ARGS: -talos.extensions.nvidia -talos.verifyukibooted=false
+          INTEGRATION_TEST_RUN: TestIntegration/api.ExtensionsSuiteNVIDIA
         run: |
           make e2e-aws
       - name: tf destroy
@@ -1392,6 +1395,7 @@ jobs:
       - name: e2e-aws-nvidia-oss-production
         env:
           EXTRA_TEST_ARGS: -talos.extensions.nvidia -talos.verifyukibooted=false
+          INTEGRATION_TEST_RUN: TestIntegration/api.ExtensionsSuiteNVIDIA
         run: |
           make e2e-aws
       - name: tf destroy
@@ -5135,31 +5139,31 @@ jobs:
         uses: sigstore/cosign-installer@v3
       - name: Sign artifacts
         run: |
-          cosign sign-blob --output-signature _out/initramfs-amd64.xz.sig --yes _out/initramfs-amd64.xz
-          cosign sign-blob --output-signature _out/initramfs-arm64.xz.sig --yes _out/initramfs-arm64.xz
-          cosign sign-blob --output-signature _out/metal-amd64.iso.sig --yes _out/metal-amd64.iso
-          cosign sign-blob --output-signature _out/metal-arm64.iso.sig --yes _out/metal-arm64.iso
-          cosign sign-blob --output-signature _out/metal-amd64-uki.efi.sig --yes _out/metal-amd64-uki.efi
-          cosign sign-blob --output-signature _out/metal-arm64-uki.efi.sig --yes _out/metal-arm64-uki.efi
-          cosign sign-blob --output-signature _out/metal-amd64.raw.zst.sig --yes _out/metal-amd64.raw.zst
-          cosign sign-blob --output-signature _out/metal-arm64.raw.zst.sig --yes _out/metal-arm64.raw.zst
-          cosign sign-blob --output-signature _out/talos-arm64.spdx.json.sig --yes _out/talos-arm64.spdx.json
-          cosign sign-blob --output-signature _out/talos-amd64.spdx.json.sig --yes _out/talos-amd64.spdx.json
-          cosign sign-blob --output-signature _out/talos-container-arm64.spdx.json.sig --yes _out/talos-container-arm64.spdx.json
-          cosign sign-blob --output-signature _out/talos-container-amd64.spdx.json.sig --yes _out/talos-container-amd64.spdx.json
-          cosign sign-blob --output-signature _out/talosctl-cni-bundle-amd64.tar.gz.sig --yes _out/talosctl-cni-bundle-amd64.tar.gz
-          cosign sign-blob --output-signature _out/talosctl-cni-bundle-arm64.tar.gz.sig --yes _out/talosctl-cni-bundle-arm64.tar.gz
-          cosign sign-blob --output-signature _out/talosctl-darwin-amd64.sig --yes _out/talosctl-darwin-amd64
-          cosign sign-blob --output-signature _out/talosctl-darwin-arm64.sig --yes _out/talosctl-darwin-arm64
-          cosign sign-blob --output-signature _out/talosctl-freebsd-amd64.sig --yes _out/talosctl-freebsd-amd64
-          cosign sign-blob --output-signature _out/talosctl-freebsd-arm64.sig --yes _out/talosctl-freebsd-arm64
-          cosign sign-blob --output-signature _out/talosctl-linux-amd64.sig --yes _out/talosctl-linux-amd64
-          cosign sign-blob --output-signature _out/talosctl-linux-arm64.sig --yes _out/talosctl-linux-arm64
-          cosign sign-blob --output-signature _out/talosctl-linux-armv7.sig --yes _out/talosctl-linux-armv7
-          cosign sign-blob --output-signature _out/talosctl-windows-amd64.exe.sig --yes _out/talosctl-windows-amd64.exe
-          cosign sign-blob --output-signature _out/talosctl-windows-arm64.exe.sig --yes _out/talosctl-windows-arm64.exe
-          cosign sign-blob --output-signature _out/vmlinuz-amd64.sig --yes _out/vmlinuz-amd64
-          cosign sign-blob --output-signature _out/vmlinuz-arm64.sig --yes _out/vmlinuz-arm64
+          cosign sign-blob --bundle _out/initramfs-amd64.xz.bundle --yes _out/initramfs-amd64.xz
+          cosign sign-blob --bundle _out/initramfs-arm64.xz.bundle --yes _out/initramfs-arm64.xz
+          cosign sign-blob --bundle _out/metal-amd64.iso.bundle --yes _out/metal-amd64.iso
+          cosign sign-blob --bundle _out/metal-arm64.iso.bundle --yes _out/metal-arm64.iso
+          cosign sign-blob --bundle _out/metal-amd64-uki.efi.bundle --yes _out/metal-amd64-uki.efi
+          cosign sign-blob --bundle _out/metal-arm64-uki.efi.bundle --yes _out/metal-arm64-uki.efi
+          cosign sign-blob --bundle _out/metal-amd64.raw.zst.bundle --yes _out/metal-amd64.raw.zst
+          cosign sign-blob --bundle _out/metal-arm64.raw.zst.bundle --yes _out/metal-arm64.raw.zst
+          cosign sign-blob --bundle _out/talos-arm64.spdx.json.bundle --yes _out/talos-arm64.spdx.json
+          cosign sign-blob --bundle _out/talos-amd64.spdx.json.bundle --yes _out/talos-amd64.spdx.json
+          cosign sign-blob --bundle _out/talos-container-arm64.spdx.json.bundle --yes _out/talos-container-arm64.spdx.json
+          cosign sign-blob --bundle _out/talos-container-amd64.spdx.json.bundle --yes _out/talos-container-amd64.spdx.json
+          cosign sign-blob --bundle _out/talosctl-cni-bundle-amd64.tar.gz.bundle --yes _out/talosctl-cni-bundle-amd64.tar.gz
+          cosign sign-blob --bundle _out/talosctl-cni-bundle-arm64.tar.gz.bundle --yes _out/talosctl-cni-bundle-arm64.tar.gz
+          cosign sign-blob --bundle _out/talosctl-darwin-amd64.bundle --yes _out/talosctl-darwin-amd64
+          cosign sign-blob --bundle _out/talosctl-darwin-arm64.bundle --yes _out/talosctl-darwin-arm64
+          cosign sign-blob --bundle _out/talosctl-freebsd-amd64.bundle --yes _out/talosctl-freebsd-amd64
+          cosign sign-blob --bundle _out/talosctl-freebsd-arm64.bundle --yes _out/talosctl-freebsd-arm64
+          cosign sign-blob --bundle _out/talosctl-linux-amd64.bundle --yes _out/talosctl-linux-amd64
+          cosign sign-blob --bundle _out/talosctl-linux-arm64.bundle --yes _out/talosctl-linux-arm64
+          cosign sign-blob --bundle _out/talosctl-linux-armv7.bundle --yes _out/talosctl-linux-armv7
+          cosign sign-blob --bundle _out/talosctl-windows-amd64.exe.bundle --yes _out/talosctl-windows-amd64.exe
+          cosign sign-blob --bundle _out/talosctl-windows-arm64.exe.bundle --yes _out/talosctl-windows-arm64.exe
+          cosign sign-blob --bundle _out/vmlinuz-amd64.bundle --yes _out/vmlinuz-amd64
+          cosign sign-blob --bundle _out/vmlinuz-arm64.bundle --yes _out/vmlinuz-arm64
       - name: Generate Checksums
         run: |
           cd _out
@@ -5168,8 +5172,8 @@ jobs:
       - name: Sign checksums
         run: |
           cd _out
-          cosign sign-blob --output-signature sha256sum.txt.sig --yes sha256sum.txt
-          cosign sign-blob --output-signature sha512sum.txt.sig --yes sha512sum.txt
+          cosign sign-blob --bundle sha256sum.txt.bundle --yes sha256sum.txt
+          cosign sign-blob --bundle sha512sum.txt.bundle --yes sha512sum.txt
       - name: release
         uses: softprops/action-gh-release@v2
         with:
@@ -5202,4 +5206,4 @@ jobs:
             _out/vmlinuz-amd64
             _out/vmlinuz-arm64
             _out/sha*.txt
-            _out/*.sig
+            _out/*.bundle
