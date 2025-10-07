@@ -49,8 +49,6 @@ cluster:
         key: LS0tLS1CRUdJTiBFQyBQUklWQVRFIEtFWS0tLS0tCk1IY0NBUUVFSUlHVElBQjZZUzV0cFcrUnYxeDBPY09Jb1h0SXgzdGZteVFZNGxOWWRCbmpvQW9HQ0NxR1NNNDkKQXdFSG9VUURRZ0FFQ3drbVVTUmtrbnlOc0NjTFJNUTlmZWx6cFY0dDdIdlNRcnp6ZGRvK2pWYmlqd2kwVVE1YQp0VW8vZkxQbDlBckVNOHNRWTVOSlgraVdxYjFkQWFXa2VnPT0KLS0tLS1FTkQgRUMgUFJJVkFURSBLRVktLS0tLQo=
     apiServer:
         image: registry.k8s.io/kube-apiserver:v1.28.0
-        certSANs:
-            - base
         admissionControl:
             - name: PodSecurity
               configuration:

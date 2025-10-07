@@ -192,3 +192,8 @@ func (contract *VersionContract) HideDisablePSP() bool {
 func (contract *VersionContract) HideRBACAndKeyUsage() bool {
 	return contract.Greater(TalosVersion1_11)
 }
+
+// PopulateClusterSANsFromEndpoint returns true if version of Talos should populate cluster SANs from ControlPlaneEndpoint.
+func (contract *VersionContract) PopulateClusterSANsFromEndpoint() bool {
+	return !contract.Greater(TalosVersion1_11)
+}

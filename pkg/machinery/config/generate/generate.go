@@ -49,9 +49,11 @@ type Input struct {
 func (in *Input) GetAPIServerSANs() []string {
 	var list []string
 
-	endpointURL, err := url.Parse(in.ControlPlaneEndpoint)
-	if err == nil {
-		list = append(list, endpointURL.Hostname())
+	if in.Options.VersionContract.PopulateClusterSANsFromEndpoint() {
+		endpointURL, err := url.Parse(in.ControlPlaneEndpoint)
+		if err == nil {
+			list = append(list, endpointURL.Hostname())
+		}
 	}
 
 	list = append(list, in.AdditionalSubjectAltNames...)
