@@ -35,6 +35,8 @@ import (
 type networkConfig struct {
 	networkConfigBase
 
+	Airgapped bool
+
 	// TODO: rename field to cniNetworkConfig
 	CniNetworkConfig  *libcni.NetworkConfigList
 	CNI               provision.CNIConfig
@@ -51,6 +53,7 @@ func getLaunchNetworkConfig(state *vm.State, clusterReq provision.ClusterRequest
 		CniNetworkConfig:  state.VMCNIConfig,
 		CNI:               clusterReq.Network.CNI,
 		NoMasqueradeCIDRs: clusterReq.Network.NoMasqueradeCIDRs,
+		Airgapped:         clusterReq.Network.Airgapped,
 	}
 }
 

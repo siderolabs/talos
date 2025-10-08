@@ -98,6 +98,8 @@ func getCreateCmd() *cobra.Command {
 		withUUIDHostnamesFlag         = "with-uuid-hostnames"
 		withSiderolinkAgentFlag       = "with-siderolink"
 		configInjectionMethodFlag     = "config-injection-method"
+		airgappedFlag                 = "airgapped"
+		airgappedConnectedBridgesFlag = "airgapped-connected-bridges"
 
 		// The following flags are the gen options - the options that are only used in machine configuration (i.e., not during the qemu/docker provisioning).
 		// They are not applicable when no machine configuration is generated, hence mutually exclusive with the --input-dir flag.
@@ -131,6 +133,8 @@ func getCreateCmd() *cobra.Command {
 		packetReorderFlag,
 		packetCorruptFlag,
 		bandwidthFlag,
+		airgappedFlag,
+		airgappedConnectedBridgesFlag,
 
 		// The following might work but need testing first.
 		configInjectionMethodFlag,
@@ -239,6 +243,8 @@ func getCreateCmd() *cobra.Command {
 			"enables the use of siderolink agent as configuration apply mechanism. `true` or `wireguard` enables the agent, `tunnel` enables the agent with grpc tunneling")
 		qemu.StringVar(&qOps.ConfigInjectionMethod,
 			configInjectionMethodFlag, qOps.ConfigInjectionMethod, "a method to inject machine config: default is HTTP server, 'metal-iso' to mount an ISO")
+		qemu.BoolVar(&qOps.Airgapped, airgappedFlag, qOps.Airgapped, "limit VM network access to the provisioning network only")
+		qemu.StringArrayVar(&qOps.AirgappedConnectedBridges, airgappedConnectedBridgesFlag, qOps.AirgappedConnectedBridges, "list of additional bridges to connect to in airgapped mode")
 
 		return qemu
 	}

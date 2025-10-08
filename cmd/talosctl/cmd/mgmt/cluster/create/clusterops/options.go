@@ -139,6 +139,8 @@ type Qemu struct {
 	DebugShellEnabled         bool
 	WithIOMMU                 bool
 	ConfigInjectionMethod     string
+	Airgapped                 bool
+	AirgappedConnectedBridges []string
 }
 
 // GetCommon returns the default common options.
@@ -188,7 +190,8 @@ func GetQemu() Qemu {
 		CniCacheDir:       filepath.Join(clustercmd.DefaultCNIDir, "cache"),
 		CniBundleURL: fmt.Sprintf("https://github.com/%s/talos/releases/download/%s/talosctl-cni-bundle-%s.tar.gz",
 			images.Username, version.Trim(version.Tag), constants.ArchVariable),
-		Disks: disks,
+		Disks:                     disks,
+		AirgappedConnectedBridges: []string{"docker0"},
 	}
 }
 
