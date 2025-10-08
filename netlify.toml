@@ -9,3 +9,3543 @@ NODE_VERSION = "23.10"
 
 # must match the version in /website/go.mod
 GO_VERSION = "1.25.1"
+
+# ============================================================
+# Talos v1.11 → SideroLabs v1.11
+# Old base: https://www.talos.dev/v1.11
+# New base: https://docs.siderolabs.com/talos/v1.11
+# ============================================================
+
+[[redirects]]
+from = "/v1.11"
+to = "https://docs.siderolabs.com/talos/v1.11/overview/what-is-talos"
+status = 301
+force = true
+
+[[redirects]]
+from = "/v1.11/"
+to = "https://docs.siderolabs.com/talos/v1.11/overview/what-is-talos"
+status = 301
+force = true
+
+# ---------------------------
+# Overview
+# ---------------------------
+[[redirects]]
+from = "/v1.11/introduction/what-is-talos"
+to = "https://docs.siderolabs.com/talos/v1.11/overview/what-is-talos"
+status = 301
+force = true
+
+
+# ---------------------------
+# Getting Started
+# ---------------------------
+[[redirects]]
+from = "/v1.11/introduction/system-requirements"
+to = "https://docs.siderolabs.com/talos/v1.11/getting-started/system-requirements"
+status = 301
+force = true
+
+# talosctl moved from Learn More → Getting Started
+[[redirects]]
+from = "/v1.11/learn-more/talosctl"
+to = "https://docs.siderolabs.com/talos/v1.11/getting-started/talosctl"
+status = 301
+force = true
+
+[[redirects]]
+from = "/v1.11/introduction/quickstart"
+to = "https://docs.siderolabs.com/talos/v1.11/getting-started/quickstart"
+status = 301
+force = true
+
+[[redirects]]
+from = "/v1.11/introduction/getting-started"
+to = "https://docs.siderolabs.com/talos/v1.11/getting-started/getting-started"
+status = 301
+force = true
+
+[[redirects]]
+from = "/v1.11/introduction/prodnotes"
+to = "https://docs.siderolabs.com/talos/v1.11/getting-started/prodnotes"
+status = 301
+force = true
+
+[[redirects]]
+from = "/v1.11/introduction/deploy-first-workload"
+to = "https://docs.siderolabs.com/talos/v1.11/getting-started/deploy-first-workload"
+status = 301
+force = true
+
+[[redirects]]
+from = "/v1.11/introduction/what-is-new"
+to = "https://docs.siderolabs.com/talos/v1.11/getting-started/what's-new-in-talos"
+status = 301
+force = true
+
+[[redirects]]
+from = "/v1.11/introduction/support-matrix"
+to = "https://docs.siderolabs.com/talos/v1.11/getting-started/support-matrix"
+status = 301
+force = true
+
+
+# ---------------------------
+# Platform specific installation
+# ---------------------------
+# Bare Metal Platforms
+[[redirects]]
+from = "/v1.11/talos-guides/install/bare-metal-platforms/bootloader"
+to = "https://docs.siderolabs.com/talos/v1.11/platform-specific-installations/bare-metal-platforms/bootloader"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.11/talos-guides/install/bare-metal-platforms/equinix-metal"
+to = "https://docs.siderolabs.com/talos/v1.11/platform-specific-installations/bare-metal-platforms/equinix-metal"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.11/talos-guides/install/bare-metal-platforms/iso"
+to = "https://docs.siderolabs.com/talos/v1.11/platform-specific-installations/bare-metal-platforms/iso"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.11/talos-guides/install/bare-metal-platforms/matchbox"
+to = "https://docs.siderolabs.com/talos/v1.11/platform-specific-installations/bare-metal-platforms/matchbox"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.11/talos-guides/install/bare-metal-platforms/network-config"
+to = "https://docs.siderolabs.com/talos/v1.11/platform-specific-installations/bare-metal-platforms/network-config"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.11/talos-guides/install/bare-metal-platforms/pxe"
+to = "https://docs.siderolabs.com/talos/v1.11/platform-specific-installations/bare-metal-platforms/pxe"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.11/talos-guides/install/bare-metal-platforms/secureboot"
+to = "https://docs.siderolabs.com/talos/v1.11/platform-specific-installations/bare-metal-platforms/secureboot"
+status = 301
+force = true
+
+# Virtualized Platforms
+[[redirects]]
+from = "/v1.11/talos-guides/install/virtualized-platforms/hyper-v"
+to = "https://docs.siderolabs.com/talos/v1.11/platform-specific-installations/virtualized-platforms/hyper-v"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.11/talos-guides/install/virtualized-platforms/kvm"
+to = "https://docs.siderolabs.com/talos/v1.11/platform-specific-installations/virtualized-platforms/kvm"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.11/talos-guides/install/virtualized-platforms/opennebula"
+to = "https://docs.siderolabs.com/talos/v1.11/platform-specific-installations/virtualized-platforms/opennebula"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.11/talos-guides/install/virtualized-platforms/proxmox"
+to = "https://docs.siderolabs.com/talos/v1.11/platform-specific-installations/virtualized-platforms/proxmox"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.11/talos-guides/install/virtualized-platforms/vagrant-libvirt"
+to = "https://docs.siderolabs.com/talos/v1.11/platform-specific-installations/virtualized-platforms/vagrant-libvirt"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.11/talos-guides/install/virtualized-platforms/vmware"
+to = "https://docs.siderolabs.com/talos/v1.11/platform-specific-installations/virtualized-platforms/vmware"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.11/talos-guides/install/virtualized-platforms/xen"
+to = "https://docs.siderolabs.com/talos/v1.11/platform-specific-installations/virtualized-platforms/xen"
+status = 301
+force = true
+
+# Cloud Platforms
+[[redirects]]
+from = "/v1.11/talos-guides/install/cloud-platforms/akamai"
+to = "https://docs.siderolabs.com/talos/v1.11/platform-specific-installations/cloud-platforms/akamai"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.11/talos-guides/install/cloud-platforms/aws"
+to = "https://docs.siderolabs.com/talos/v1.11/platform-specific-installations/cloud-platforms/aws"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.11/talos-guides/install/cloud-platforms/azure"
+to = "https://docs.siderolabs.com/talos/v1.11/platform-specific-installations/cloud-platforms/azure"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.11/talos-guides/install/cloud-platforms/cloudstack"
+to = "https://docs.siderolabs.com/talos/v1.11/platform-specific-installations/cloud-platforms/cloudstack"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.11/talos-guides/install/cloud-platforms/digitalocean"
+to = "https://docs.siderolabs.com/talos/v1.11/platform-specific-installations/cloud-platforms/digitalocean"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.11/talos-guides/install/cloud-platforms/exoscale"
+to = "https://docs.siderolabs.com/talos/v1.11/platform-specific-installations/cloud-platforms/exoscale"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.11/talos-guides/install/cloud-platforms/gcp"
+to = "https://docs.siderolabs.com/talos/v1.11/platform-specific-installations/cloud-platforms/gcp"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.11/talos-guides/install/cloud-platforms/hetzner"
+to = "https://docs.siderolabs.com/talos/v1.11/platform-specific-installations/cloud-platforms/hetzner"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.11/talos-guides/install/cloud-platforms/kubernetes"
+to = "https://docs.siderolabs.com/talos/v1.11/platform-specific-installations/cloud-platforms/kubernetes"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.11/talos-guides/install/cloud-platforms/nocloud"
+to = "https://docs.siderolabs.com/talos/v1.11/platform-specific-installations/cloud-platforms/nocloud"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.11/talos-guides/install/cloud-platforms/openstack"
+to = "https://docs.siderolabs.com/talos/v1.11/platform-specific-installations/cloud-platforms/openstack"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.11/talos-guides/install/cloud-platforms/oracle"
+to = "https://docs.siderolabs.com/talos/v1.11/platform-specific-installations/cloud-platforms/oracle"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.11/talos-guides/install/cloud-platforms/scaleway"
+to = "https://docs.siderolabs.com/talos/v1.11/platform-specific-installations/cloud-platforms/scaleway"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.11/talos-guides/install/cloud-platforms/upcloud"
+to = "https://docs.siderolabs.com/talos/v1.11/platform-specific-installations/cloud-platforms/upcloud"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.11/talos-guides/install/cloud-platforms/vultr"
+to = "https://docs.siderolabs.com/talos/v1.11/platform-specific-installations/cloud-platforms/vultr"
+status = 301
+force = true
+
+# Local Platforms
+[[redirects]]
+from = "/v1.11/talos-guides/install/local-platforms/docker"
+to = "https://docs.siderolabs.com/talos/v1.11/platform-specific-installations/local-platforms/docker"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.11/talos-guides/install/local-platforms/qemu"
+to = "https://docs.siderolabs.com/talos/v1.11/platform-specific-installations/local-platforms/qemu"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.11/talos-guides/install/local-platforms/virtualbox"
+to = "https://docs.siderolabs.com/talos/v1.11/platform-specific-installations/local-platforms/virtualbox"
+status = 301
+force = true
+
+# Single Board Computers
+[[redirects]]
+from = "/v1.11/talos-guides/install/single-board-computers/bananapi_m64"
+to = "https://docs.siderolabs.com/talos/v1.11/platform-specific-installations/single-board-computers/bananapi_m64"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.11/talos-guides/install/single-board-computers/nanopi_r4s"
+to = "https://docs.siderolabs.com/talos/v1.11/platform-specific-installations/single-board-computers/nanopi_r4s"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.11/talos-guides/install/single-board-computers/jetson_nano"
+to = "https://docs.siderolabs.com/talos/v1.11/platform-specific-installations/single-board-computers/jetson_nano"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.11/talos-guides/install/single-board-computers/libretech_all_h3_cc_h5"
+to = "https://docs.siderolabs.com/talos/v1.11/platform-specific-installations/single-board-computers/libretech_all_h3_cc_h5"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.11/talos-guides/install/single-board-computers/orangepi_5"
+to = "https://docs.siderolabs.com/talos/v1.11/platform-specific-installations/single-board-computers/orangepi_5"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.11/talos-guides/install/single-board-computers/orangepi_r1_plus_lts"
+to = "https://docs.siderolabs.com/talos/v1.11/platform-specific-installations/single-board-computers/orangepi_r1_plus_lts"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.11/talos-guides/install/single-board-computers/pine64"
+to = "https://docs.siderolabs.com/talos/v1.11/platform-specific-installations/single-board-computers/pine64"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.11/talos-guides/install/single-board-computers/rock64"
+to = "https://docs.siderolabs.com/talos/v1.11/platform-specific-installations/single-board-computers/rock64"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.11/talos-guides/install/single-board-computers/rock4cplus"
+to = "https://docs.siderolabs.com/talos/v1.11/platform-specific-installations/single-board-computers/rock4cplus"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.11/talos-guides/install/single-board-computers/rock5b"
+to = "https://docs.siderolabs.com/talos/v1.11/platform-specific-installations/single-board-computers/rock5b"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.11/talos-guides/install/single-board-computers/rockpi_4"
+to = "https://docs.siderolabs.com/talos/v1.11/platform-specific-installations/single-board-computers/rockpi_4"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.11/talos-guides/install/single-board-computers/rockpi_4c"
+to = "https://docs.siderolabs.com/talos/v1.11/platform-specific-installations/single-board-computers/rockpi_4c"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.11/talos-guides/install/single-board-computers/rpi_generic"
+to = "https://docs.siderolabs.com/talos/v1.11/platform-specific-installations/single-board-computers/rpi_generic"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.11/talos-guides/install/single-board-computers/turing_rk1"
+to = "https://docs.siderolabs.com/talos/v1.11/platform-specific-installations/single-board-computers/turing_rk1"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.11/talos-guides/install/single-board-computers/unofficial"
+to = "https://docs.siderolabs.com/talos/v1.11/platform-specific-installations/single-board-computers/unofficial"
+status = 301
+force = true
+
+# Misc pages in Platform Installs
+[[redirects]]
+from = "/v1.11/talos-guides/install/boot-assets"
+to = "https://docs.siderolabs.com/talos/v1.11/platform-specific-installations/boot-assets"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.11/talos-guides/install/air-gapped"
+to = "https://docs.siderolabs.com/talos/v1.11/platform-specific-installations/air-gapped"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.11/talos-guides/install/omni"
+to = "https://docs.siderolabs.com/talos/v1.11/platform-specific-installations/omni"
+status = 301
+force = true
+
+
+# ---------------------------
+# Deploying and managing workloads
+# ---------------------------
+[[redirects]]
+from = "/v1.11/talos-guides/interactive-dashboard"
+to = "https://docs.siderolabs.com/talos/v1.11/deploy-and-manage-workloads/interactive-dashboard"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.11/talos-guides/howto/scaling-up"
+to = "https://docs.siderolabs.com/talos/v1.11/deploy-and-manage-workloads/scaling-up"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.11/talos-guides/howto/scaling-down"
+to = "https://docs.siderolabs.com/talos/v1.11/deploy-and-manage-workloads/scaling-down"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.11/talos-guides/howto/workers-on-controlplane"
+to = "https://docs.siderolabs.com/talos/v1.11/deploy-and-manage-workloads/workers-on-controlplane"
+status = 301
+force = true
+
+
+# ---------------------------
+# Networking
+# ---------------------------
+[[redirects]]
+from = "/v1.11/advanced/advanced-networking"
+to = "https://docs.siderolabs.com/talos/v1.11/networking/advanced-networking"
+status = 301
+force = true
+
+[[redirects]]
+from = "/v1.11/talos-guides/network/corporate-proxies"
+to = "https://docs.siderolabs.com/talos/v1.11/networking/corporate-proxies"
+status = 301
+force = true
+
+[[redirects]]
+from = "/v1.11/advanced/egress-domains"
+to = "https://docs.siderolabs.com/talos/v1.11/networking/egress-domains"
+status = 301
+force = true
+
+[[redirects]]
+from = "/v1.11/talos-guides/network/ethernet-config"
+to = "https://docs.siderolabs.com/talos/v1.11/networking/ethernet-config"
+status = 301
+force = true
+
+[[redirects]]
+from = "/v1.11/talos-guides/network/host-dns"
+to = "https://docs.siderolabs.com/talos/v1.11/networking/host-dns"
+status = 301
+force = true
+
+[[redirects]]
+from = "/v1.11/talos-guides/network/ingress-firewall"
+to = "https://docs.siderolabs.com/talos/v1.11/networking/ingress-firewall"
+status = 301
+force = true
+
+[[redirects]]
+from = "/v1.11/talos-guides/network/kubespan"
+to = "https://docs.siderolabs.com/talos/v1.11/networking/kubespan"
+status = 301
+force = true
+
+[[redirects]]
+from = "/v1.11/advanced/metal-network-configuration"
+to = "https://docs.siderolabs.com/talos/v1.11/networking/metal-network-configuration"
+status = 301
+force = true
+
+[[redirects]]
+from = "/v1.11/talos-guides/network/multihoming"
+to = "https://docs.siderolabs.com/talos/v1.11/networking/multihoming"
+status = 301
+force = true
+
+[[redirects]]
+from = "/v1.11/talos-guides/network/device-selector"
+to = "https://docs.siderolabs.com/talos/v1.11/networking/device-selector"
+status = 301
+force = true
+
+[[redirects]]
+from = "/v1.11/talos-guides/network/predictable-interface-names"
+to = "https://docs.siderolabs.com/talos/v1.11/networking/predictable-interface-names"
+status = 301
+force = true
+
+[[redirects]]
+from = "/v1.11/talos-guides/network/siderolink"
+to = "https://docs.siderolabs.com/talos/v1.11/networking/siderolink"
+status = 301
+force = true
+
+[[redirects]]
+from = "/v1.11/talos-guides/network/vip"
+to = "https://docs.siderolabs.com/talos/v1.11/networking/vip"
+status = 301
+force = true
+
+[[redirects]]
+from = "/v1.11/talos-guides/network/wireguard-network"
+to = "https://docs.siderolabs.com/talos/v1.11/networking/wireguard-network"
+status = 301
+force = true
+
+
+# ---------------------------
+# Security
+# ---------------------------
+[[redirects]]
+from = "/v1.11/advanced/ca-rotation"
+to = "https://docs.siderolabs.com/talos/v1.11/security/ca-rotation"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.11/talos-guides/configuration/cert-management"
+to = "https://docs.siderolabs.com/talos/v1.11/security/cert-management"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.11/talos-guides/configuration/certificate-authorities"
+to = "https://docs.siderolabs.com/talos/v1.11/security/certificate-authorities"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.11/advanced/machine-config-oauth"
+to = "https://docs.siderolabs.com/talos/v1.11/security/machine-config-oauth"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.11/talos-guides/configuration/rbac"
+to = "https://docs.siderolabs.com/talos/v1.11/security/rbac"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.11/advanced/selinux"
+to = "https://docs.siderolabs.com/talos/v1.11/security/selinux"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.11/advanced/verifying-images"
+to = "https://docs.siderolabs.com/talos/v1.11/security/verifying-images"
+status = 301
+force = true
+
+
+# ---------------------------
+# Build and extend Talos
+# ---------------------------
+# Custom Images & Development
+[[redirects]]
+from = "/v1.11/advanced/building-images"
+to = "https://docs.siderolabs.com/talos/v1.11/build-and-extend-talos/custom-images-and-development/building-images"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.11/advanced/customizing-the-kernel"
+to = "https://docs.siderolabs.com/talos/v1.11/build-and-extend-talos/custom-images-and-development/customizing-the-kernel"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.11/advanced/developing-talos"
+to = "https://docs.siderolabs.com/talos/v1.11/build-and-extend-talos/custom-images-and-development/developing-talos"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.11/advanced/extension-services"
+to = "https://docs.siderolabs.com/talos/v1.11/build-and-extend-talos/custom-images-and-development/extension-services"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.11/advanced/kernel-module"
+to = "https://docs.siderolabs.com/talos/v1.11/build-and-extend-talos/custom-images-and-development/kernel-module"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.11/advanced/oci-base-spec"
+to = "https://docs.siderolabs.com/talos/v1.11/build-and-extend-talos/custom-images-and-development/oci-base-spec"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.11/advanced/overlays"
+to = "https://docs.siderolabs.com/talos/v1.11/build-and-extend-talos/custom-images-and-development/overlays"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.11/talos-guides/configuration/system-extensions"
+to = "https://docs.siderolabs.com/talos/v1.11/build-and-extend-talos/custom-images-and-development/system-extensions"
+status = 301
+force = true
+
+# Cluster Operations & Maintenance
+[[redirects]]
+from = "/v1.11/advanced/disaster-recovery"
+to = "https://docs.siderolabs.com/talos/v1.11/build-and-extend-talos/cluster-operations-and-maintenance/disaster-recovery"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.11/advanced/cgroups-analysis"
+to = "https://docs.siderolabs.com/talos/v1.11/build-and-extend-talos/cluster-operations-and-maintenance/cgroups-analysis"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.11/advanced/etcd-maintenance"
+to = "https://docs.siderolabs.com/talos/v1.11/build-and-extend-talos/cluster-operations-and-maintenance/etcd-maintenance"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.11/advanced/watchdog"
+to = "https://docs.siderolabs.com/talos/v1.11/build-and-extend-talos/cluster-operations-and-maintenance/watchdog"
+status = 301
+force = true
+
+
+# ---------------------------
+# Configure your Talos cluster
+# ---------------------------
+# System Configuration
+[[redirects]]
+from = "/v1.11/talos-guides/configuration/patching"
+to = "https://docs.siderolabs.com/talos/v1.11/configure-your-talos-cluster/system-configuration/patching"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.11/talos-guides/configuration/editing-machine-configuration"
+to = "https://docs.siderolabs.com/talos/v1.11/configure-your-talos-cluster/system-configuration/editing-machine-configuration"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.11/talos-guides/configuration/performance-tuning"
+to = "https://docs.siderolabs.com/talos/v1.11/configure-your-talos-cluster/system-configuration/performance-tuning"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.11/talos-guides/configuration/time-sync"
+to = "https://docs.siderolabs.com/talos/v1.11/configure-your-talos-cluster/system-configuration/time-sync"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.11/talos-guides/configuration/discovery"
+to = "https://docs.siderolabs.com/talos/v1.11/configure-your-talos-cluster/system-configuration/discovery"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.11/talos-guides/configuration/reproducible-machine-config"
+to = "https://docs.siderolabs.com/talos/v1.11/configure-your-talos-cluster/system-configuration/reproducible-machine-configuration"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.11/talos-guides/configuration/insecure"
+to = "https://docs.siderolabs.com/talos/v1.11/configure-your-talos-cluster/system-configuration/insecure"
+status = 301
+force = true
+
+# Images & Container Runtime
+[[redirects]]
+from = "/v1.11/talos-guides/configuration/containerd"
+to = "https://docs.siderolabs.com/talos/v1.11/configure-your-talos-cluster/images-container-runtime/containerd"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.11/talos-guides/configuration/image-cache"
+to = "https://docs.siderolabs.com/talos/v1.11/configure-your-talos-cluster/images-container-runtime/image-cache"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.11/talos-guides/configuration/pull-through-cache"
+to = "https://docs.siderolabs.com/talos/v1.11/configure-your-talos-cluster/images-container-runtime/pull-through-cache"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.11/advanced/static-pods"
+to = "https://docs.siderolabs.com/talos/v1.11/configure-your-talos-cluster/images-container-runtime/static-pods"
+status = 301
+force = true
+
+# Storage & Disk Management
+[[redirects]]
+from = "/v1.11/talos-guides/configuration/disk-encryption"
+to = "https://docs.siderolabs.com/talos/v1.11/configure-your-talos-cluster/storage-and-disk-management/disk-encryption"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.11/talos-guides/configuration/disk-management/*"
+to = "https://docs.siderolabs.com/talos/v1.11/configure-your-talos-cluster/storage-and-disk-management/disk-management/:splat"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.11/talos-guides/configuration/swap"
+to = "https://docs.siderolabs.com/talos/v1.11/configure-your-talos-cluster/storage-and-disk-management/swap"
+status = 301
+force = true
+
+# Logging & Telemetry
+[[redirects]]
+from = "/v1.11/talos-guides/configuration/logging"
+to = "https://docs.siderolabs.com/talos/v1.11/configure-your-talos-cluster/logging-and-telemetry/logging"
+status = 301
+force = true
+
+# Hardware & Drivers
+[[redirects]]
+from = "/v1.11/talos-guides/configuration/nvidia-fabricmanager"
+to = "https://docs.siderolabs.com/talos/v1.11/configure-your-talos-cluster/hardware-and-drivers/nvidia-fabricmanager"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.11/talos-guides/configuration/nvidia-gpu"
+to = "https://docs.siderolabs.com/talos/v1.11/configure-your-talos-cluster/hardware-and-drivers/nvidia-gpu"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.11/talos-guides/configuration/nvidia-gpu-proprietary"
+to = "https://docs.siderolabs.com/talos/v1.11/configure-your-talos-cluster/hardware-and-drivers/nvidia-gpu-proprietary"
+status = 301
+force = true
+
+# Lifecycle Management
+[[redirects]]
+from = "/v1.11/upgrading-talos"
+to = "https://docs.siderolabs.com/talos/v1.11/configure-your-talos-cluster/lifecycle-management/upgrading-talos"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.11/resetting-a-machine"
+to = "https://docs.siderolabs.com/talos/v1.11/configure-your-talos-cluster/lifecycle-management/resetting-a-machine"
+status = 301
+force = true
+
+
+# ---------------------------
+# Advanced guides
+# ---------------------------
+[[redirects]]
+from = "/v1.11/advanced/install-kubevirt"
+to = "https://docs.siderolabs.com/talos/v1.11/advanced-guides/install-kubevirt"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.11/advanced/migrating-from-kubeadm"
+to = "https://docs.siderolabs.com/talos/v1.11/advanced-guides/migrating-from-kubeadm"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.11/advanced/sbom"
+to = "https://docs.siderolabs.com/talos/v1.11/advanced-guides/SBOM"
+status = 301
+force = true
+
+
+# ---------------------------
+# Reference
+# ---------------------------
+[[redirects]]
+from = "/v1.11/reference/v1alpha1/config"
+to = "https://docs.siderolabs.com/talos/v1.11/reference/v1alpha1/config"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.11/reference/kernel"
+to = "https://docs.siderolabs.com/talos/v1.11/reference/kernel"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.11/reference/cli"
+to = "https://docs.siderolabs.com/talos/v1.11/reference/cli"
+status = 301
+force = true
+
+# Reference sub-groups
+[[redirects]]
+from = "/v1.11/reference/extensions/extensionserviceconfig"
+to = "https://docs.siderolabs.com/talos/v1.11/reference/extensions/extensionserviceconfig"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.11/reference/hardware/pcidriverrebindconfig"
+to = "https://docs.siderolabs.com/talos/v1.11/reference/hardware/pcidriverrebindconfig"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.11/reference/security/trustedrootsconfig"
+to = "https://docs.siderolabs.com/talos/v1.11/reference/security/trustedrootsconfig"
+status = 301
+force = true
+
+# Reference: Block
+[[redirects]]
+from = "/v1.11/reference/configuration/block/existingvolumeconfig"
+to = "https://docs.siderolabs.com/talos/v1.11/reference/block/existingvolumeconfig"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.11/reference/configuration/block/rawvolumeconfig"
+to = "https://docs.siderolabs.com/talos/v1.11/reference/block/rawvolumeconfig"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.11/reference/configuration/block/swapvolumeconfig"
+to = "https://docs.siderolabs.com/talos/v1.11/reference/block/swapvolumeconfig"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.11/reference/configuration/block/uservolumeconfig"
+to = "https://docs.siderolabs.com/talos/v1.11/reference/block/uservolumeconfig"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.11/reference/configuration/block/volumeconfig"
+to = "https://docs.siderolabs.com/talos/v1.11/reference/block/volumeconfig"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.11/reference/configuration/block/zswapconfig"
+to = "https://docs.siderolabs.com/talos/v1.11/reference/block/zswapconfig"
+status = 301
+force = true
+
+# Reference: Network
+[[redirects]]
+from = "/v1.11/reference/configuration/network/ethernetconfig"
+to = "https://docs.siderolabs.com/talos/v1.11/reference/network/ethernetconfig"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.11/reference/configuration/network/kubespanendpointsconfig"
+to = "https://docs.siderolabs.com/talos/v1.11/reference/network/kubespanendpointsconfig"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.11/reference/configuration/network/networkdefaultactionconfig"
+to = "https://docs.siderolabs.com/talos/v1.11/reference/network/networkdefaultactionconfig"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.11/reference/configuration/network/networkruleconfig"
+to = "https://docs.siderolabs.com/talos/v1.11/reference/network/networkruleconfig"
+status = 301
+force = true
+
+# Reference: Runtime
+[[redirects]]
+from = "/v1.11/reference/configuration/runtime/eventsinkconfig"
+to = "https://docs.siderolabs.com/talos/v1.11/reference/runtime/eventsinkconfig"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.11/reference/configuration/runtime/kmsglogconfig"
+to = "https://docs.siderolabs.com/talos/v1.11/reference/runtime/kmsglogconfig"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.11/reference/configuration/runtime/watchdogtimerconfig"
+to = "https://docs.siderolabs.com/talos/v1.11/reference/runtime/watchdogtimerconfig"
+status = 301
+force = true
+
+
+# ---------------------------
+# Troubleshooting and support
+# ---------------------------
+[[redirects]]
+from = "/v1.11/introduction/troubleshooting"
+to = "https://docs.siderolabs.com/talos/v1.11/troubleshooting/troubleshooting"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.11/learn-more/faqs"
+to = "https://docs.siderolabs.com/talos/v1.11/troubleshooting/faqs"
+status = 301
+force = true
+
+
+# ---------------------------
+# Learn more
+# ---------------------------
+[[redirects]]
+from = "/v1.11/learn-more/architecture"
+to = "https://docs.siderolabs.com/talos/v1.11/learn-more/architecture"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.11/learn-more/components"
+to = "https://docs.siderolabs.com/talos/v1.11/learn-more/components"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.11/learn-more/control-plane"
+to = "https://docs.siderolabs.com/talos/v1.11/learn-more/control-plane"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.11/learn-more/controllers-resources"
+to = "https://docs.siderolabs.com/talos/v1.11/learn-more/controllers-resources"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.11/learn-more/image-factory"
+to = "https://docs.siderolabs.com/talos/v1.11/learn-more/image-factory"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.11/learn-more/knowledge-base"
+to = "https://docs.siderolabs.com/talos/v1.11/learn-more/knowledge-base"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.11/learn-more/kubespan"
+to = "https://docs.siderolabs.com/talos/v1.11/learn-more/kubespan"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.11/learn-more/networking-resources"
+to = "https://docs.siderolabs.com/talos/v1.11/learn-more/networking-resources"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.11/learn-more/philosophy"
+to = "https://docs.siderolabs.com/talos/v1.11/learn-more/philosophy"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.11/learn-more/process-capabilities"
+to = "https://docs.siderolabs.com/talos/v1.11/learn-more/process-capabilities"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.11/learn-more/talos-network-connectivity"
+to = "https://docs.siderolabs.com/talos/v1.11/learn-more/talos-network-connectivity"
+status = 301
+force = true
+
+# ---------------------------
+# Final catch-all
+# ---------------------------
+[[redirects]]
+from = "/v1.11/*"
+to = "https://docs.siderolabs.com/talos/v1.11/"
+status = 301
+force = true
+
+
+# ============================================================
+# Talos v1.10 → SideroLabs v1.10
+# Old base: https://www.talos.dev/v1.10
+# New base: https://docs.siderolabs.com/talos/v1.10
+# ============================================================
+
+[[redirects]]
+from = "/v1.10"
+to = "https://docs.siderolabs.com/talos/v1.10/overview/what-is-talos"
+status = 301
+force = true
+
+[[redirects]]
+from = "/v1.10/"
+to = "https://docs.siderolabs.com/talos/v1.10/overview/what-is-talos"
+status = 301
+
+# ---------------------------
+# Overview
+# ---------------------------
+[[redirects]]
+from = "/v1.10/introduction/what-is-talos"
+to = "https://docs.siderolabs.com/talos/v1.10/overview/what-is-talos"
+status = 301
+force = true
+
+
+# ---------------------------
+# Getting Started
+# ---------------------------
+[[redirects]]
+from = "/v1.10/introduction/system-requirements"
+to = "https://docs.siderolabs.com/talos/v1.10/getting-started/system-requirements"
+status = 301
+force = true
+
+[[redirects]]
+from = "/v1.10/learn-more/talosctl"
+to = "https://docs.siderolabs.com/talos/v1.10/getting-started/talosctl"
+status = 301
+force = true
+
+[[redirects]]
+from = "/v1.10/introduction/quickstart"
+to = "https://docs.siderolabs.com/talos/v1.10/getting-started/quickstart"
+status = 301
+force = true
+
+[[redirects]]
+from = "/v1.10/introduction/getting-started"
+to = "https://docs.siderolabs.com/talos/v1.10/getting-started/getting-started"
+status = 301
+force = true
+
+[[redirects]]
+from = "/v1.10/introduction/prodnotes"
+to = "https://docs.siderolabs.com/talos/v1.10/getting-started/prodnotes"
+status = 301
+force = true
+
+[[redirects]]
+from = "/v1.10/introduction/deploy-first-workload"
+to = "https://docs.siderolabs.com/talos/v1.10/getting-started/deploy-first-workload"
+status = 301
+force = true
+
+[[redirects]]
+from = "/v1.10/introduction/what-is-new"
+to = "https://docs.siderolabs.com/talos/v1.10/getting-started/what's-new-in-talos"
+status = 301
+force = true
+
+[[redirects]]
+from = "/v1.10/introduction/support-matrix"
+to = "https://docs.siderolabs.com/talos/v1.10/getting-started/support-matrix"
+status = 301
+force = true
+
+
+# ---------------------------
+# Platform specific installation
+# ---------------------------
+# Bare Metal Platforms
+[[redirects]]
+from = "/v1.10/talos-guides/install/bare-metal-platforms/bootloader"
+to = "https://docs.siderolabs.com/talos/v1.10/platform-specific-installations/bare-metal-platforms/bootloader"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.10/talos-guides/install/bare-metal-platforms/equinix-metal"
+to = "https://docs.siderolabs.com/talos/v1.10/platform-specific-installations/bare-metal-platforms/equinix-metal"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.10/talos-guides/install/bare-metal-platforms/iso"
+to = "https://docs.siderolabs.com/talos/v1.10/platform-specific-installations/bare-metal-platforms/iso"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.10/talos-guides/install/bare-metal-platforms/matchbox"
+to = "https://docs.siderolabs.com/talos/v1.10/platform-specific-installations/bare-metal-platforms/matchbox"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.10/talos-guides/install/bare-metal-platforms/network-config"
+to = "https://docs.siderolabs.com/talos/v1.10/platform-specific-installations/bare-metal-platforms/network-config"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.10/talos-guides/install/bare-metal-platforms/pxe"
+to = "https://docs.siderolabs.com/talos/v1.10/platform-specific-installations/bare-metal-platforms/pxe"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.10/talos-guides/install/bare-metal-platforms/secureboot"
+to = "https://docs.siderolabs.com/talos/v1.10/platform-specific-installations/bare-metal-platforms/secureboot"
+status = 301
+force = true
+
+# Virtualized Platforms
+[[redirects]]
+from = "/v1.10/talos-guides/install/virtualized-platforms/hyper-v"
+to = "https://docs.siderolabs.com/talos/v1.10/platform-specific-installations/virtualized-platforms/hyper-v"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.10/talos-guides/install/virtualized-platforms/kvm"
+to = "https://docs.siderolabs.com/talos/v1.10/platform-specific-installations/virtualized-platforms/kvm"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.10/talos-guides/install/virtualized-platforms/opennebula"
+to = "https://docs.siderolabs.com/talos/v1.10/platform-specific-installations/virtualized-platforms/opennebula"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.10/talos-guides/install/virtualized-platforms/proxmox"
+to = "https://docs.siderolabs.com/talos/v1.10/platform-specific-installations/virtualized-platforms/proxmox"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.10/talos-guides/install/virtualized-platforms/vagrant-libvirt"
+to = "https://docs.siderolabs.com/talos/v1.10/platform-specific-installations/virtualized-platforms/vagrant-libvirt"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.10/talos-guides/install/virtualized-platforms/vmware"
+to = "https://docs.siderolabs.com/talos/v1.10/platform-specific-installations/virtualized-platforms/vmware"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.10/talos-guides/install/virtualized-platforms/xen"
+to = "https://docs.siderolabs.com/talos/v1.10/platform-specific-installations/virtualized-platforms/xen"
+status = 301
+force = true
+
+# Cloud Platforms
+[[redirects]]
+from = "/v1.10/talos-guides/install/cloud-platforms/akamai"
+to = "https://docs.siderolabs.com/talos/v1.10/platform-specific-installations/cloud-platforms/akamai"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.10/talos-guides/install/cloud-platforms/aws"
+to = "https://docs.siderolabs.com/talos/v1.10/platform-specific-installations/cloud-platforms/aws"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.10/talos-guides/install/cloud-platforms/azure"
+to = "https://docs.siderolabs.com/talos/v1.10/platform-specific-installations/cloud-platforms/azure"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.10/talos-guides/install/cloud-platforms/cloudstack"
+to = "https://docs.siderolabs.com/talos/v1.10/platform-specific-installations/cloud-platforms/cloudstack"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.10/talos-guides/install/cloud-platforms/digitalocean"
+to = "https://docs.siderolabs.com/talos/v1.10/platform-specific-installations/cloud-platforms/digitalocean"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.10/talos-guides/install/cloud-platforms/exoscale"
+to = "https://docs.siderolabs.com/talos/v1.10/platform-specific-installations/cloud-platforms/exoscale"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.10/talos-guides/install/cloud-platforms/gcp"
+to = "https://docs.siderolabs.com/talos/v1.10/platform-specific-installations/cloud-platforms/gcp"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.10/talos-guides/install/cloud-platforms/hetzner"
+to = "https://docs.siderolabs.com/talos/v1.10/platform-specific-installations/cloud-platforms/hetzner"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.10/talos-guides/install/cloud-platforms/kubernetes"
+to = "https://docs.siderolabs.com/talos/v1.10/platform-specific-installations/cloud-platforms/kubernetes"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.10/talos-guides/install/cloud-platforms/nocloud"
+to = "https://docs.siderolabs.com/talos/v1.10/platform-specific-installations/cloud-platforms/nocloud"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.10/talos-guides/install/cloud-platforms/openstack"
+to = "https://docs.siderolabs.com/talos/v1.10/platform-specific-installations/cloud-platforms/openstack"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.10/talos-guides/install/cloud-platforms/oracle"
+to = "https://docs.siderolabs.com/talos/v1.10/platform-specific-installations/cloud-platforms/oracle"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.10/talos-guides/install/cloud-platforms/scaleway"
+to = "https://docs.siderolabs.com/talos/v1.10/platform-specific-installations/cloud-platforms/scaleway"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.10/talos-guides/install/cloud-platforms/upcloud"
+to = "https://docs.siderolabs.com/talos/v1.10/platform-specific-installations/cloud-platforms/upcloud"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.10/talos-guides/install/cloud-platforms/vultr"
+to = "https://docs.siderolabs.com/talos/v1.10/platform-specific-installations/cloud-platforms/vultr"
+status = 301
+force = true
+
+# Local Platforms
+[[redirects]]
+from = "/v1.10/talos-guides/install/local-platforms/docker"
+to = "https://docs.siderolabs.com/talos/v1.10/platform-specific-installations/local-platforms/docker"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.10/talos-guides/install/local-platforms/qemu"
+to = "https://docs.siderolabs.com/talos/v1.10/platform-specific-installations/local-platforms/qemu"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.10/talos-guides/install/local-platforms/virtualbox"
+to = "https://docs.siderolabs.com/talos/v1.10/platform-specific-installations/local-platforms/virtualbox"
+status = 301
+force = true
+
+# Single Board Computers
+[[redirects]]
+from = "/v1.10/talos-guides/install/single-board-computers/bananapi_m64"
+to = "https://docs.siderolabs.com/talos/v1.10/platform-specific-installations/single-board-computers/bananapi_m64"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.10/talos-guides/install/single-board-computers/nanopi_r4s"
+to = "https://docs.siderolabs.com/talos/v1.10/platform-specific-installations/single-board-computers/nanopi_r4s"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.10/talos-guides/install/single-board-computers/jetson_nano"
+to = "https://docs.siderolabs.com/talos/v1.10/platform-specific-installations/single-board-computers/jetson_nano"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.10/talos-guides/install/single-board-computers/libretech_all_h3_cc_h5"
+to = "https://docs.siderolabs.com/talos/v1.10/platform-specific-installations/single-board-computers/libretech_all_h3_cc_h5"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.10/talos-guides/install/single-board-computers/orangepi_5"
+to = "https://docs.siderolabs.com/talos/v1.10/platform-specific-installations/single-board-computers/orangepi_5"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.10/talos-guides/install/single-board-computers/orangepi_r1_plus_lts"
+to = "https://docs.siderolabs.com/talos/v1.10/platform-specific-installations/single-board-computers/orangepi_r1_plus_lts"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.10/talos-guides/install/single-board-computers/pine64"
+to = "https://docs.siderolabs.com/talos/v1.10/platform-specific-installations/single-board-computers/pine64"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.10/talos-guides/install/single-board-computers/rock64"
+to = "https://docs.siderolabs.com/talos/v1.10/platform-specific-installations/single-board-computers/rock64"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.10/talos-guides/install/single-board-computers/rock4cplus"
+to = "https://docs.siderolabs.com/talos/v1.10/platform-specific-installations/single-board-computers/rock4cplus"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.10/talos-guides/install/single-board-computers/rock5b"
+to = "https://docs.siderolabs.com/talos/v1.10/platform-specific-installations/single-board-computers/rock5b"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.10/talos-guides/install/single-board-computers/rockpi_4"
+to = "https://docs.siderolabs.com/talos/v1.10/platform-specific-installations/single-board-computers/rockpi_4"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.10/talos-guides/install/single-board-computers/rockpi_4c"
+to = "https://docs.siderolabs.com/talos/v1.10/platform-specific-installations/single-board-computers/rockpi_4c"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.10/talos-guides/install/single-board-computers/rpi_generic"
+to = "https://docs.siderolabs.com/talos/v1.10/platform-specific-installations/single-board-computers/rpi_generic"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.10/talos-guides/install/single-board-computers/turing_rk1"
+to = "https://docs.siderolabs.com/talos/v1.10/platform-specific-installations/single-board-computers/turing_rk1"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.10/talos-guides/install/single-board-computers/unofficial"
+to = "https://docs.siderolabs.com/talos/v1.10/platform-specific-installations/single-board-computers/unofficial"
+status = 301
+force = true
+
+# Misc pages in Platform Installs
+[[redirects]]
+from = "/v1.10/talos-guides/install/boot-assets"
+to = "https://docs.siderolabs.com/talos/v1.10/platform-specific-installations/boot-assets"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.10/talos-guides/install/air-gapped"
+to = "https://docs.siderolabs.com/talos/v1.10/platform-specific-installations/air-gapped"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.10/talos-guides/install/omni"
+to = "https://docs.siderolabs.com/talos/v1.10/platform-specific-installations/omni"
+status = 301
+force = true
+
+
+# ---------------------------
+# Deploying and managing workloads
+# ---------------------------
+[[redirects]]
+from = "/v1.10/interactive-dashboard"
+to = "https://docs.siderolabs.com/talos/v1.10/deploy-and-manage-workloads/interactive-dashboard"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.10/talos-guides/howto/scaling-up"
+to = "https://docs.siderolabs.com/talos/v1.10/deploy-and-manage-workloads/scaling-up"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.10/talos-guides/howto/scaling-down"
+to = "https://docs.siderolabs.com/talos/v1.10/deploy-and-manage-workloads/scaling-down"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.10/talos-guides/howto/workers-on-controlplane"
+to = "https://docs.siderolabs.com/talos/v1.10/deploy-and-manage-workloads/workers-on-controlplane"
+status = 301
+force = true
+
+
+# ---------------------------
+# Networking
+# ---------------------------
+[[redirects]]
+from = "/v1.10/advanced/advanced-networking"
+to = "https://docs.siderolabs.com/talos/v1.10/networking/advanced-networking"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.10/network/corporate-proxies"
+to = "https://docs.siderolabs.com/talos/v1.10/networking/corporate-proxies"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.10/advanced/egress-domains"
+to = "https://docs.siderolabs.com/talos/v1.10/networking/egress-domains"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.10/network/ethernet-config"
+to = "https://docs.siderolabs.com/talos/v1.10/networking/ethernet-config"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.10/network/host-dns"
+to = "https://docs.siderolabs.com/talos/v1.10/networking/host-dns"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.10/network/ingress-firewall"
+to = "https://docs.siderolabs.com/talos/v1.10/networking/ingress-firewall"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.10/network/kubespan"
+to = "https://docs.siderolabs.com/talos/v1.10/networking/kubespan"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.10/advanced/metal-network-configuration"
+to = "https://docs.siderolabs.com/talos/v1.10/networking/metal-network-configuration"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.10/network/multihoming"
+to = "https://docs.siderolabs.com/talos/v1.10/networking/multihoming"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.10/network/device-selector"
+to = "https://docs.siderolabs.com/talos/v1.10/networking/device-selector"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.10/network/predictable-interface-names"
+to = "https://docs.siderolabs.com/talos/v1.10/networking/predictable-interface-names"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.10/network/siderolink"
+to = "https://docs.siderolabs.com/talos/v1.10/networking/siderolink"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.10/network/vip"
+to = "https://docs.siderolabs.com/talos/v1.10/networking/vip"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.10/network/wireguard-network"
+to = "https://docs.siderolabs.com/talos/v1.10/networking/wireguard-network"
+status = 301
+force = true
+
+
+# ---------------------------
+# Security
+# ---------------------------
+[[redirects]]
+from = "/v1.10/advanced/ca-rotation"
+to = "https://docs.siderolabs.com/talos/v1.10/security/ca-rotation"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.10/talos-guides/howto/cert-management"
+to = "https://docs.siderolabs.com/talos/v1.10/security/cert-management"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.10/talos-guides/configuration/certificate-authorities"
+to = "https://docs.siderolabs.com/talos/v1.10/security/certificate-authorities"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.10/advanced/machine-config-oauth"
+to = "https://docs.siderolabs.com/talos/v1.10/security/machine-config-oauth"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.10/talos-guides/configuration/rbac"
+to = "https://docs.siderolabs.com/talos/v1.10/security/rbac"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.10/advanced/selinux"
+to = "https://docs.siderolabs.com/talos/v1.10/security/selinux"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.10/advanced/verifying-images"
+to = "https://docs.siderolabs.com/talos/v1.10/security/verifying-images"
+status = 301
+force = true
+
+
+# ---------------------------
+# Build and extend Talos
+# ---------------------------
+# Custom Images & Development
+[[redirects]]
+from = "/v1.10/advanced/building-images"
+to = "https://docs.siderolabs.com/talos/v1.10/build-and-extend-talos/custom-images-and-development/building-images"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.10/advanced/customizing-the-kernel"
+to = "https://docs.siderolabs.com/talos/v1.10/build-and-extend-talos/custom-images-and-development/customizing-the-kernel"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.10/advanced/developing-talos"
+to = "https://docs.siderolabs.com/talos/v1.10/build-and-extend-talos/custom-images-and-development/developing-talos"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.10/advanced/extension-services"
+to = "https://docs.siderolabs.com/talos/v1.10/build-and-extend-talos/custom-images-and-development/extension-services"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.10/advanced/kernel-module"
+to = "https://docs.siderolabs.com/talos/v1.10/build-and-extend-talos/custom-images-and-development/kernel-module"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.10/advanced/oci-base-spec"
+to = "https://docs.siderolabs.com/talos/v1.10/build-and-extend-talos/custom-images-and-development/oci-base-spec"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.10/advanced/overlays"
+to = "https://docs.siderolabs.com/talos/v1.10/build-and-extend-talos/custom-images-and-development/overlays"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.10/talos-guides/configuration/system-extensions"
+to = "https://docs.siderolabs.com/talos/v1.10/build-and-extend-talos/custom-images-and-development/system-extensions"
+status = 301
+force = true
+
+# Cluster Operations & Maintenance
+[[redirects]]
+from = "/v1.10/advanced/disaster-recovery"
+to = "https://docs.siderolabs.com/talos/v1.10/build-and-extend-talos/cluster-operations-and-maintenance/disaster-recovery"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.10/advanced/cgroups-analysis"
+to = "https://docs.siderolabs.com/talos/v1.10/build-and-extend-talos/cluster-operations-and-maintenance/cgroups-analysis"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.10/advanced/etcd-maintenance"
+to = "https://docs.siderolabs.com/talos/v1.10/build-and-extend-talos/cluster-operations-and-maintenance/etcd-maintenance"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.10/advanced/watchdog"
+to = "https://docs.siderolabs.com/talos/v1.10/build-and-extend-talos/cluster-operations-and-maintenance/watchdog"
+status = 301
+force = true
+
+
+# ---------------------------
+# Configure your Talos cluster
+# ---------------------------
+# System Configuration
+[[redirects]]
+from = "/v1.10/talos-guides/configuration/patching"
+to = "https://docs.siderolabs.com/talos/v1.10/configure-your-talos-cluster/system-configuration/patching"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.10/talos-guides/configuration/editing-machine-configuration"
+to = "https://docs.siderolabs.com/talos/v1.10/configure-your-talos-cluster/system-configuration/editing-machine-configuration"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.10/talos-guides/configuration/performance-tuning"
+to = "https://docs.siderolabs.com/talos/v1.10/configure-your-talos-cluster/system-configuration/performance-tuning"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.10/talos-guides/configuration/time-sync"
+to = "https://docs.siderolabs.com/talos/v1.10/configure-your-talos-cluster/system-configuration/time-sync"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.10/talos-guides/configuration/discovery"
+to = "https://docs.siderolabs.com/talos/v1.10/configure-your-talos-cluster/system-configuration/discovery"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.10/talos-guides/configuration/reproducible-machine-config"
+to = "https://docs.siderolabs.com/talos/v1.10/configure-your-talos-cluster/system-configuration/reproducible-machine-configuration"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.10/talos-guides/configuration/insecure"
+to = "https://docs.siderolabs.com/talos/v1.10/configure-your-talos-cluster/system-configuration/insecure"
+status = 301
+force = true
+
+# Images & Container Runtime
+[[redirects]]
+from = "/v1.10/talos-guides/configuration/containerd"
+to = "https://docs.siderolabs.com/talos/v1.10/configure-your-talos-cluster/images-container-runtime/containerd"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.10/talos-guides/configuration/image-cache"
+to = "https://docs.siderolabs.com/talos/v1.10/configure-your-talos-cluster/images-container-runtime/image-cache"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.10/talos-guides/configuration/pull-through-cache"
+to = "https://docs.siderolabs.com/talos/v1.10/configure-your-talos-cluster/images-container-runtime/pull-through-cache"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.10/advanced/static-pods"
+to = "https://docs.siderolabs.com/talos/v1.10/configure-your-talos-cluster/images-container-runtime/static-pods"
+status = 301
+force = true
+
+# Storage & Disk Management
+[[redirects]]
+from = "/v1.10/talos-guides/configuration/disk-encryption"
+to = "https://docs.siderolabs.com/talos/v1.10/configure-your-talos-cluster/storage-and-disk-management/disk-encryption"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.10/talos-guides/configuration/disk-management"
+to = "https://docs.siderolabs.com/talos/v1.10/configure-your-talos-cluster/storage-and-disk-management/disk-management"
+status = 301
+force = true
+
+# Logging & Telemetry
+[[redirects]]
+from = "/v1.10/talos-guides/configuration/logging"
+to = "https://docs.siderolabs.com/talos/v1.10/configure-your-talos-cluster/logging-and-telemetry/logging"
+status = 301
+force = true
+
+# Hardware & Drivers
+[[redirects]]
+from = "/v1.10/talos-guides/configuration/nvidia-fabricmanager"
+to = "https://docs.siderolabs.com/talos/v1.10/configure-your-talos-cluster/hardware-and-drivers/nvidia-fabricmanager"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.10/talos-guides/configuration/nvidia-gpu"
+to = "https://docs.siderolabs.com/talos/v1.10/configure-your-talos-cluster/hardware-and-drivers/nvidia-gpu"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.10/talos-guides/configuration/nvidia-gpu-proprietary"
+to = "https://docs.siderolabs.com/talos/v1.10/configure-your-talos-cluster/hardware-and-drivers/nvidia-gpu-proprietary"
+status = 301
+force = true
+
+# Lifecycle Management
+[[redirects]]
+from = "/v1.10/talos-guides/upgrading-talos"
+to = "https://docs.siderolabs.com/talos/v1.10/configure-your-talos-cluster/lifecycle-management/upgrading-talos"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.10/talos-guides/resetting-a-machine"
+to = "https://docs.siderolabs.com/talos/v1.10/configure-your-talos-cluster/lifecycle-management/resetting-a-machine"
+status = 301
+force = true
+
+
+# ---------------------------
+# Advanced guides
+# ---------------------------
+[[redirects]]
+from = "/v1.10/advanced/install-kubevirt"
+to = "https://docs.siderolabs.com/talos/v1.10/advanced-guides/install-kubevirt"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.10/advanced/migrating-from-kubeadm"
+to = "https://docs.siderolabs.com/talos/v1.10/advanced-guides/migrating-from-kubeadm"
+status = 301
+force = true
+
+
+# ---------------------------
+# Reference
+# ---------------------------
+[[redirects]]
+from = "/v1.10/reference/api"
+to = "https://docs.siderolabs.com/talos/v1.10/reference/api"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.10/reference/kernel"
+to = "https://docs.siderolabs.com/talos/v1.10/reference/kernel"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.10/reference/cli"
+to = "https://docs.siderolabs.com/talos/v1.10/reference/cli"
+status = 301
+force = true
+
+# Reference sub-groups
+[[redirects]]
+from = "/v1.10/reference/configuration/extensions/extensionserviceconfig"
+to = "https://docs.siderolabs.com/talos/v1.10/reference/extensions/extensionserviceconfig"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.10/reference/configuration/hardware/pcidriverrebindconfig"
+to = "https://docs.siderolabs.com/talos/v1.10/reference/hardware/pcidriverrebindconfig"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.10/reference/configuration/security/trustedrootsconfig"
+to = "https://docs.siderolabs.com/talos/v1.10/reference/security/trustedrootsconfig"
+status = 301
+force = true
+
+# Reference: Block
+[[redirects]]
+from = "/v1.10/reference/configuration/block/uservolumeconfig"
+to = "https://docs.siderolabs.com/talos/v1.10/reference/block/uservolumeconfig"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.10/reference/configuration/block/volumeconfig"
+to = "https://docs.siderolabs.com/talos/v1.10/reference/block/volumeconfig"
+status = 301
+force = true
+
+# Reference: Network
+[[redirects]]
+from = "/v1.10/reference/configuration/network/ethernetconfig"
+to = "https://docs.siderolabs.com/talos/v1.10/reference/network/ethernetconfig"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.10/reference/configuration/network/kubespanendpointsconfig"
+to = "https://docs.siderolabs.com/talos/v1.10/reference/network/kubespanendpointsconfig"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.10/reference/configuration/network/networkdefaultactionconfig"
+to = "https://docs.siderolabs.com/talos/v1.10/reference/network/networkdefaultactionconfig"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.10/reference/configuration/network/networkruleconfig"
+to = "https://docs.siderolabs.com/talos/v1.10/reference/network/networkruleconfig"
+status = 301
+force = true
+
+# Reference: Runtime
+[[redirects]]
+from = "/v1.10/reference/configuration/runtime/eventsinkconfig"
+to = "https://docs.siderolabs.com/talos/v1.10/reference/runtime/eventsinkconfig"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.10/reference/configuration/runtime/kmsglogconfig"
+to = "https://docs.siderolabs.com/talos/v1.10/reference/runtime/kmsglogconfig"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.10/reference/configuration/runtime/watchdogtimerconfig"
+to = "https://docs.siderolabs.com/talos/v1.10/reference/runtime/watchdogtimerconfig"
+status = 301
+force = true
+
+
+# ---------------------------
+# Troubleshooting and support
+# ---------------------------
+[[redirects]]
+from = "/v1.10/introduction/troubleshooting"
+to = "https://docs.siderolabs.com/talos/v1.10/troubleshooting/troubleshooting"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.10/learn-more/faqs"
+to = "https://docs.siderolabs.com/talos/v1.10/troubleshooting/faqs"
+status = 301
+force = true
+
+
+# ---------------------------
+# Learn more
+# ---------------------------
+[[redirects]]
+from = "/v1.10/learn-more/architecture"
+to = "https://docs.siderolabs.com/talos/v1.10/learn-more/architecture"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.10/learn-more/components"
+to = "https://docs.siderolabs.com/talos/v1.10/learn-more/components"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.10/learn-more/control-plane"
+to = "https://docs.siderolabs.com/talos/v1.10/learn-more/control-plane"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.10/learn-more/controllers-resources"
+to = "https://docs.siderolabs.com/talos/v1.10/learn-more/controllers-resources"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.10/learn-more/image-factory"
+to = "https://docs.siderolabs.com/talos/v1.10/learn-more/image-factory"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.10/learn-more/knowledge-base"
+to = "https://docs.siderolabs.com/talos/v1.10/learn-more/knowledge-base"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.10/learn-more/kubespan"
+to = "https://docs.siderolabs.com/talos/v1.10/learn-more/kubespan"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.10/learn-more/networking-resources"
+to = "https://docs.siderolabs.com/talos/v1.10/learn-more/networking-resources"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.10/learn-more/philosophy"
+to = "https://docs.siderolabs.com/talos/v1.10/learn-more/philosophy"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.10/learn-more/process-capabilities"
+to = "https://docs.siderolabs.com/talos/v1.10/learn-more/process-capabilities"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.10/learn-more/talos-network-connectivity"
+to = "https://docs.siderolabs.com/talos/v1.10/learn-more/talos-network-connectivity"
+status = 301
+force = true
+
+
+# ---------------------------
+# Folder-level helpers
+# ---------------------------
+[[redirects]]
+from = "/v1.10/network/*"
+to = "https://docs.siderolabs.com/talos/v1.10/networking/:splat"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.10/talos-guides/howto/*"
+to = "https://docs.siderolabs.com/talos/v1.10/deploy-and-manage-workloads/:splat"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.10/talos-guides/install/*"
+to = "https://docs.siderolabs.com/talos/v1.10/platform-specific-installations/:splat"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.10/learn-more/*"
+to = "https://docs.siderolabs.com/talos/v1.10/learn-more/:splat"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.10/reference/*"
+to = "https://docs.siderolabs.com/talos/v1.10/reference/:splat"
+status = 301
+force = true
+
+
+# ---------------------------
+# Final catch-all
+# ---------------------------
+[[redirects]]
+from = "/v1.10/*"
+to = "https://docs.siderolabs.com/talos/v1.10/"
+status = 301
+force = true
+
+
+# ===============================================================
+#  Talos v1.9 → SideroLabs v1.9 Redirects
+# Old base:   https://www.talos.dev/v1.9
+# New base:   https://docs.siderolabs.com/talos/v1.9
+# ===============================================================
+
+[[redirects]]
+from = "/v1.9"
+to = "https://docs.siderolabs.com/talos/v1.9/overview/what-is-talos"
+status = 301
+force = true
+
+[[redirects]]
+from = "/v1.9/"
+to = "https://docs.siderolabs.com/talos/v1.9/overview/what-is-talos"
+status = 301
+
+# ---------------------------------------------------------------
+# Overview
+# ---------------------------------------------------------------
+[[redirects]]
+from = "/v1.9/introduction/what-is-talos"
+to = "https://docs.siderolabs.com/talos/v1.9/overview/what-is-talos"
+status = 301
+force = true
+
+
+
+# ---------------------------------------------------------------
+# Getting Started
+# ---------------------------------------------------------------
+[[redirects]]
+from = "/v1.9/introduction/system-requirements"
+to = "https://docs.siderolabs.com/talos/v1.9/getting-started/system-requirements"
+status = 301
+force = true
+
+[[redirects]]
+from = "/v1.9/introduction/quickstart"
+to = "https://docs.siderolabs.com/talos/v1.9/getting-started/quickstart"
+status = 301
+force = true
+
+[[redirects]]
+from = "/v1.9/introduction/getting-started"
+to = "https://docs.siderolabs.com/talos/v1.9/getting-started/getting-started"
+status = 301
+force = true
+
+[[redirects]]
+from = "/v1.9/introduction/prodnotes"
+to = "https://docs.siderolabs.com/talos/v1.9/getting-started/prodnotes"
+status = 301
+force = true
+
+[[redirects]]
+from = "/v1.9/introduction/deploy-first-workload"
+to = "https://docs.siderolabs.com/talos/v1.9/getting-started/deploy-first-workload"
+status = 301
+force = true
+
+[[redirects]]
+from = "/v1.9/introduction/what-is-new"
+to = "https://docs.siderolabs.com/talos/v1.9/getting-started/what's-new-in-talos"
+status = 301
+force = true
+
+[[redirects]]
+from = "/v1.9/introduction/support-matrix"
+to = "https://docs.siderolabs.com/talos/v1.9/getting-started/support-matrix"
+status = 301
+force = true
+
+
+
+# ---------------------------------------------------------------
+# Platform Specific Installations
+# ---------------------------------------------------------------
+[[redirects]]
+from = "/v1.9/talos-guides/install/*"
+to = "https://docs.siderolabs.com/talos/v1.9/platform-specific-installations/:splat"
+status = 301
+force = true
+
+[[redirects]]
+from = "/v1.9/talos-guides/install/boot-assets"
+to = "https://docs.siderolabs.com/talos/v1.9/platform-specific-installations/boot-assets"
+status = 301
+force = true
+
+[[redirects]]
+from = "/v1.9/talos-guides/install/air-gapped"
+to = "https://docs.siderolabs.com/talos/v1.9/platform-specific-installations/air-gapped"
+status = 301
+force = true
+
+[[redirects]]
+from = "/v1.9/talos-guides/install/omni"
+to = "https://docs.siderolabs.com/talos/v1.9/platform-specific-installations/omni"
+status = 301
+force = true
+
+
+# ---------------------------------------------------------------
+# Deploying and Managing Workloads
+# ---------------------------------------------------------------
+[[redirects]]
+from = "/v1.9/interactive-dashboard"
+to = "https://docs.siderolabs.com/talos/v1.9/deploy-and-manage-workloads/interactive-dashboard"
+status = 301
+force = true
+
+[[redirects]]
+from = "/v1.9/talos-guides/howto/scaling-up"
+to = "https://docs.siderolabs.com/talos/v1.9/deploy-and-manage-workloads/scaling-up"
+status = 301
+force = true
+
+[[redirects]]
+from = "/v1.9/talos-guides/howto/scaling-down"
+to = "https://docs.siderolabs.com/talos/v1.9/deploy-and-manage-workloads/scaling-down"
+status = 301
+force = true
+
+[[redirects]]
+from = "/v1.9/talos-guides/howto/workers-on-controlplane"
+to = "https://docs.siderolabs.com/talos/v1.9/deploy-and-manage-workloads/workers-on-controlplane"
+status = 301
+force = true
+
+# ---------------------------------------------------------------
+#  Networking
+# ---------------------------------------------------------------
+[[redirects]]
+from = "/v1.9/talos-guides/network/*"
+to = "https://docs.siderolabs.com/talos/v1.9/networking/:splat"
+status = 301
+force = true
+
+[[redirects]]
+from = "/v1.9/advanced/advanced-networking"
+to = "https://docs.siderolabs.com/talos/v1.9/networking/advanced-networking"
+status = 301
+force = true
+
+[[redirects]]
+from = "/v1.9/advanced/metal-network-configuration"
+to = "https://docs.siderolabs.com/talos/v1.9/networking/metal-network-configuration"
+status = 301
+force = true
+
+[[redirects]]
+from = "/v1.9/advanced/egress-domains"
+to = "https://docs.siderolabs.com/talos/v1.9/networking/egress-domains"
+status = 301
+force = true
+
+
+
+# ---------------------------------------------------------------
+# Security
+# ---------------------------------------------------------------
+[[redirects]]
+from = "/v1.9/advanced/ca-rotation"
+to = "https://docs.siderolabs.com/talos/v1.9/security/ca-rotation"
+status = 301
+force = true
+
+[[redirects]]
+from = "/v1.9/talos-guides/configuration/certificate-authorities"
+to = "https://docs.siderolabs.com/talos/v1.9/security/certificate-authorities"
+status = 301
+force = true
+
+[[redirects]]
+from = "/v1.9/talos-guides/howto/cert-management"
+to = "https://docs.siderolabs.com/talos/v1.9/security/cert-management"
+status = 301
+force = true
+
+[[redirects]]
+from = "/v1.9/advanced/machine-config-oauth"
+to = "https://docs.siderolabs.com/talos/v1.9/security/machine-config-oauth"
+status = 301
+force = true
+
+[[redirects]]
+from = "/v1.9/talos-guides/configuration/rbac"
+to = "https://docs.siderolabs.com/talos/v1.9/security/rbac"
+status = 301
+force = true
+
+[[redirects]]
+from = "/v1.9/advanced/verifying-images"
+to = "https://docs.siderolabs.com/talos/v1.9/security/verifying-images"
+status = 301
+force = true
+
+
+
+# ---------------------------------------------------------------
+# Build and Extend Talos
+# ---------------------------------------------------------------
+[[redirects]]
+from = "/v1.9/advanced/building-images"
+to = "https://docs.siderolabs.com/talos/v1.9/build-and-extend-talos/custom-images-and-development/building-images"
+status = 301
+force = true
+
+[[redirects]]
+from = "/v1.9/advanced/customizing-the-kernel"
+to = "https://docs.siderolabs.com/talos/v1.9/build-and-extend-talos/custom-images-and-development/customizing-the-kernel"
+status = 301
+force = true
+
+[[redirects]]
+from = "/v1.9/advanced/developing-talos"
+to = "https://docs.siderolabs.com/talos/v1.9/build-and-extend-talos/custom-images-and-development/developing-talos"
+status = 301
+force = true
+
+[[redirects]]
+from = "/v1.9/advanced/extension-services"
+to = "https://docs.siderolabs.com/talos/v1.9/build-and-extend-talos/custom-images-and-development/extension-services"
+status = 301
+force = true
+
+[[redirects]]
+from = "/v1.9/advanced/kernel-module"
+to = "https://docs.siderolabs.com/talos/v1.9/build-and-extend-talos/custom-images-and-development/kernel-module"
+status = 301
+force = true
+
+[[redirects]]
+from = "/v1.9/advanced/oci-base-spec"
+to = "https://docs.siderolabs.com/talos/v1.9/build-and-extend-talos/custom-images-and-development/oci-base-spec"
+status = 301
+force = true
+
+[[redirects]]
+from = "/v1.9/advanced/overlays"
+to = "https://docs.siderolabs.com/talos/v1.9/build-and-extend-talos/custom-images-and-development/overlays"
+status = 301
+force = true
+
+[[redirects]]
+from = "/v1.9/advanced/proprietary-kernel-modules"
+to = "https://docs.siderolabs.com/talos/v1.9/build-and-extend-talos/custom-images-and-development/system-extensions"
+status = 301
+force = true
+
+[[redirects]]
+from = "/v1.9/advanced/cgroups-analysis"
+to = "https://docs.siderolabs.com/talos/v1.9/build-and-extend-talos/cluster-operations-and-maintenance/cgroups-analysis"
+status = 301
+force = true
+
+[[redirects]]
+from = "/v1.9/advanced/disaster-recovery"
+to = "https://docs.siderolabs.com/talos/v1.9/build-and-extend-talos/cluster-operations-and-maintenance/disaster-recovery"
+status = 301
+force = true
+
+[[redirects]]
+from = "/v1.9/advanced/etcd-maintenance"
+to = "https://docs.siderolabs.com/talos/v1.9/build-and-extend-talos/cluster-operations-and-maintenance/etcd-maintenance"
+status = 301
+force = true
+
+[[redirects]]
+from = "/v1.9/advanced/watchdog"
+to = "https://docs.siderolabs.com/talos/v1.9/build-and-extend-talos/cluster-operations-and-maintenance/watchdog"
+status = 301
+force = true
+
+
+
+# ---------------------------------------------------------------
+# Configure Your Talos Cluster
+# ---------------------------------------------------------------
+# System Configuration
+[[redirects]]
+from = "/v1.9/talos-guides/configuration/patching"
+to = "https://docs.siderolabs.com/talos/v1.9/configure-your-talos-cluster/system-configuration/patching"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.9/talos-guides/configuration/editing-machine-configuration"
+to = "https://docs.siderolabs.com/talos/v1.9/configure-your-talos-cluster/system-configuration/editing-machine-configuration"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.9/talos-guides/configuration/performance-tuning"
+to = "https://docs.siderolabs.com/talos/v1.9/configure-your-talos-cluster/system-configuration/performance-tuning"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.9/talos-guides/configuration/time-sync"
+to = "https://docs.siderolabs.com/talos/v1.9/configure-your-talos-cluster/system-configuration/time-sync"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.9/talos-guides/configuration/discovery"
+to = "https://docs.siderolabs.com/talos/v1.9/configure-your-talos-cluster/system-configuration/discovery"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.9/talos-guides/configuration/reproducible-machine-config"
+to = "https://docs.siderolabs.com/talos/v1.9/configure-your-talos-cluster/system-configuration/reproducible-machine-configuration"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.9/talos-guides/configuration/insecure"
+to = "https://docs.siderolabs.com/talos/v1.9/configure-your-talos-cluster/system-configuration/insecure"
+status = 301
+force = true
+
+# Images & Container Runtime
+[[redirects]]
+from = "/v1.9/talos-guides/configuration/containerd"
+to = "https://docs.siderolabs.com/talos/v1.9/configure-your-talos-cluster/images-container-runtime/containerd"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.9/talos-guides/configuration/image-cache"
+to = "https://docs.siderolabs.com/talos/v1.9/configure-your-talos-cluster/images-container-runtime/image-cache"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.9/talos-guides/configuration/pull-through-cache"
+to = "https://docs.siderolabs.com/talos/v1.9/configure-your-talos-cluster/images-container-runtime/pull-through-cache"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.9/advanced/static-pods"
+to = "https://docs.siderolabs.com/talos/v1.9/configure-your-talos-cluster/images-container-runtime/static-pods"
+status = 301
+force = true
+
+# Storage & Disk Management
+[[redirects]]
+from = "/v1.9/talos-guides/configuration/disk-encryption"
+to = "https://docs.siderolabs.com/talos/v1.9/configure-your-talos-cluster/storage-and-disk-management/disk-encryption"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.9/talos-guides/configuration/disk-management"
+to = "https://docs.siderolabs.com/talos/v1.9/configure-your-talos-cluster/storage-and-disk-management/disk-management"
+status = 301
+force = true
+
+# Logging & Telemetry
+[[redirects]]
+from = "/v1.9/talos-guides/configuration/logging"
+to = "https://docs.siderolabs.com/talos/v1.9/configure-your-talos-cluster/logging-and-telemetry/logging"
+status = 301
+force = true
+
+# Hardware & Drivers
+[[redirects]]
+from = "/v1.9/talos-guides/configuration/nvidia-fabricmanager"
+to = "https://docs.siderolabs.com/talos/v1.9/configure-your-talos-cluster/hardware-and-drivers/nvidia-fabricmanager"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.9/talos-guides/configuration/nvidia-gpu"
+to = "https://docs.siderolabs.com/talos/v1.9/configure-your-talos-cluster/hardware-and-drivers/nvidia-gpu"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.9/talos-guides/configuration/nvidia-gpu-proprietary"
+to = "https://docs.siderolabs.com/talos/v1.9/configure-your-talos-cluster/hardware-and-drivers/nvidia-gpu-proprietary"
+status = 301
+force = true
+
+# Lifecycle Management
+[[redirects]]
+from = "/v1.9/talos-guides/upgrading-talos"
+to = "https://docs.siderolabs.com/talos/v1.9/configure-your-talos-cluster/lifecycle-management/upgrading-talos"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.9/talos-guides/resetting-a-machine"
+to = "https://docs.siderolabs.com/talos/v1.9/configure-your-talos-cluster/lifecycle-management/resetting-a-machine"
+status = 301
+force = true
+
+# ---------------------------------------------------------------
+# Advanced Guides
+# ---------------------------------------------------------------
+[[redirects]]
+from = "/v1.9/advanced/install-kubevirt"
+to = "https://docs.siderolabs.com/talos/v1.9/advanced-guides/install-kubevirt"
+status = 301
+force = true
+
+[[redirects]]
+from = "/v1.9/advanced/migrating-from-kubeadm"
+to = "https://docs.siderolabs.com/talos/v1.9/advanced-guides/migrating-from-kubeadm"
+status = 301
+force = true
+
+
+
+# ---------------------------------------------------------------
+# Troubleshooting and Support
+# ---------------------------------------------------------------
+[[redirects]]
+from = "/v1.9/introduction/troubleshooting"
+to = "https://docs.siderolabs.com/talos/v1.9/troubleshooting/troubleshooting"
+status = 301
+force = true
+
+[[redirects]]
+from = "/v1.9/learn-more/faqs"
+to = "https://docs.siderolabs.com/talos/v1.9/troubleshooting/faqs"
+status = 301
+force = true
+
+
+
+# ---------------------------------------------------------------
+# Learn More
+# ---------------------------------------------------------------
+[[redirects]]
+from = "/v1.9/learn-more/*"
+to = "https://docs.siderolabs.com/talos/v1.9/learn-more/:splat"
+status = 301
+force = true
+
+
+
+# ---------------------------------------------------------------
+# Reference
+# ---------------------------------------------------------------
+[[redirects]]
+from = "/v1.9/reference/*"
+to = "https://docs.siderolabs.com/talos/v1.9/reference/:splat"
+status = 301
+force = true
+
+
+
+# ---------------------------------------------------------------
+# Catch-All Redirect
+# ---------------------------------------------------------------
+[[redirects]]
+from = "/v1.9/*"
+to = "https://docs.siderolabs.com/talos/v1.9/"
+status = 301
+force = true
+
+
+# ===============================================================
+# Talos v1.8 → SideroLabs v1.8 Redirects
+# Old base:   https://www.talos.dev/v1.8
+# New base:   https://docs.siderolabs.com/talos/v1.8
+# ===============================================================
+
+[[redirects]]
+from = "/v1.8"
+to = "https://docs.siderolabs.com/talos/v1.8/overview/what-is-talos"
+status = 301
+force = true
+
+[[redirects]]
+from = "/v1.8/"
+to = "https://docs.siderolabs.com/talos/v1.8/overview/what-is-talos"
+status = 301
+force = true
+
+# ---------------------------------------------------------------
+# Overview
+# ---------------------------------------------------------------
+[[redirects]]
+from = "/v1.8/introduction/what-is-talos"
+to = "https://docs.siderolabs.com/talos/v1.8/overview/what-is-talos"
+status = 301
+force = true
+
+
+
+# ---------------------------------------------------------------
+# Getting Started
+# ---------------------------------------------------------------
+[[redirects]]
+from = "/v1.8/introduction/system-requirements"
+to = "https://docs.siderolabs.com/talos/v1.8/getting-started/system-requirements"
+status = 301
+force = true
+
+[[redirects]]
+from = "/v1.8/introduction/quickstart"
+to = "https://docs.siderolabs.com/talos/v1.8/getting-started/quickstart"
+status = 301
+force = true
+
+[[redirects]]
+from = "/v1.8/introduction/getting-started"
+to = "https://docs.siderolabs.com/talos/v1.8/getting-started/getting-started"
+status = 301
+force = true
+
+[[redirects]]
+from = "/v1.8/introduction/prodnotes"
+to = "https://docs.siderolabs.com/talos/v1.8/getting-started/prodnotes"
+status = 301
+force = true
+
+[[redirects]]
+from = "/v1.8/introduction/what-is-new"
+to = "https://docs.siderolabs.com/talos/v1.8/getting-started/what's-new-in-talos"
+status = 301
+force = true
+
+[[redirects]]
+from = "/v1.8/introduction/support-matrix"
+to = "https://docs.siderolabs.com/talos/v1.8/getting-started/support-matrix"
+status = 301
+force = true
+
+[[redirects]]
+from = "/v1.8/talos-guides/talosctl"
+to = "https://docs.siderolabs.com/talos/v1.8/getting-started/talosctl"
+status = 301
+force = true
+
+
+
+# ---------------------------------------------------------------
+# Platform specific installation
+# ---------------------------------------------------------------
+[[redirects]]
+from = "/v1.8/talos-guides/install/*"
+to = "https://docs.siderolabs.com/talos/v1.8/platform-specific-installations/:splat"
+status = 301
+force = true
+
+[[redirects]]
+from = "/v1.8/talos-guides/install/boot-assets"
+to = "https://docs.siderolabs.com/talos/v1.8/platform-specific-installations/boot-assets"
+status = 301
+force = true
+
+[[redirects]]
+from = "/v1.8/talos-guides/install/air-gapped"
+to = "https://docs.siderolabs.com/talos/v1.8/platform-specific-installations/air-gapped"
+status = 301
+force = true
+
+[[redirects]]
+from = "/v1.8/talos-guides/install/omni"
+to = "https://docs.siderolabs.com/talos/v1.8/platform-specific-installations/omni"
+status = 301
+force = true
+
+# ---------------------------------------------------------------
+# Deploying and managing workloads
+# ---------------------------------------------------------------
+[[redirects]]
+from = "/v1.8/interactive-dashboard"
+to = "https://docs.siderolabs.com/talos/v1.8/deploy-and-manage-workloads/interactive-dashboard"
+status = 301
+force = true
+
+[[redirects]]
+from = "/v1.8/talos-guides/howto/scaling-up"
+to = "https://docs.siderolabs.com/talos/v1.8/deploy-and-manage-workloads/scaling-up"
+status = 301
+force = true
+
+[[redirects]]
+from = "/v1.8/talos-guides/howto/scaling-down"
+to = "https://docs.siderolabs.com/talos/v1.8/deploy-and-manage-workloads/scaling-down"
+status = 301
+force = true
+
+[[redirects]]
+from = "/v1.8/talos-guides/howto/workers-on-controlplane"
+to = "https://docs.siderolabs.com/talos/v1.8/deploy-and-manage-workloads/workers-on-controlplane"
+status = 301
+force = true
+
+
+# ---------------------------------------------------------------
+# Networking
+# ---------------------------------------------------------------
+# talos-guides/network → networking
+[[redirects]]
+from = "/v1.8/talos-guides/network/*"
+to = "https://docs.siderolabs.com/talos/v1.8/networking/:splat"
+status = 301
+force = true
+
+# Advanced networking topics that lived under /advanced
+[[redirects]]
+from = "/v1.8/advanced/advanced-networking"
+to = "https://docs.siderolabs.com/talos/v1.8/networking/advanced-networking"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.8/advanced/metal-network-configuration"
+to = "https://docs.siderolabs.com/talos/v1.8/networking/metal-network-configuration"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.8/advanced/egress-domains"
+to = "https://docs.siderolabs.com/talos/v1.8/networking/egress-domains"
+status = 301
+force = true
+
+
+
+# ---------------------------------------------------------------
+# Security
+# ---------------------------------------------------------------
+[[redirects]]
+from = "/v1.8/advanced/ca-rotation"
+to = "https://docs.siderolabs.com/talos/v1.8/security/ca-rotation"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.8/talos-guides/configuration/certificate-authorities"
+to = "https://docs.siderolabs.com/talos/v1.8/security/certificate-authorities"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.8/talos-guides/howto/cert-management"
+to = "https://docs.siderolabs.com/talos/v1.8/security/cert-management"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.8/advanced/machine-config-oauth"
+to = "https://docs.siderolabs.com/talos/v1.8/security/machine-config-oauth"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.8/talos-guides/configuration/rbac"
+to = "https://docs.siderolabs.com/talos/v1.8/security/rbac"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.8/advanced/verifying-images"
+to = "https://docs.siderolabs.com/talos/v1.8/security/verifying-images"
+status = 301
+force = true
+
+
+
+# ---------------------------------------------------------------
+# Build and extend Talos
+# ---------------------------------------------------------------
+# Custom Images & Development
+[[redirects]]
+from = "/v1.8/advanced/building-images"
+to = "https://docs.siderolabs.com/talos/v1.8/build-and-extend-talos/custom-images-and-development/building-images"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.8/advanced/customizing-the-kernel"
+to = "https://docs.siderolabs.com/talos/v1.8/build-and-extend-talos/custom-images-and-development/customizing-the-kernel"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.8/advanced/developing-talos"
+to = "https://docs.siderolabs.com/talos/v1.8/build-and-extend-talos/custom-images-and-development/developing-talos"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.8/advanced/extension-services"
+to = "https://docs.siderolabs.com/talos/v1.8/build-and-extend-talos/custom-images-and-development/extension-services"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.8/advanced/oci-base-spec"
+to = "https://docs.siderolabs.com/talos/v1.8/build-and-extend-talos/custom-images-and-development/oci-base-spec"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.8/advanced/overlays"
+to = "https://docs.siderolabs.com/talos/v1.8/build-and-extend-talos/custom-images-and-development/overlays"
+status = 301
+force = true
+# proprietary-kernel-modules → system-extensions
+[[redirects]]
+from = "/v1.8/advanced/proprietary-kernel-modules"
+to = "https://docs.siderolabs.com/talos/v1.8/build-and-extend-talos/custom-images-and-development/system-extensions"
+status = 301
+force = true
+
+# Cluster Operations & Maintenance
+[[redirects]]
+from = "/v1.8/advanced/disaster-recovery"
+to = "https://docs.siderolabs.com/talos/v1.8/build-and-extend-talos/cluster-operations-and-maintenance/disaster-recovery"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.8/advanced/etcd-maintenance"
+to = "https://docs.siderolabs.com/talos/v1.8/build-and-extend-talos/cluster-operations-and-maintenance/etcd-maintenance"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.8/advanced/watchdog"
+to = "https://docs.siderolabs.com/talos/v1.8/build-and-extend-talos/cluster-operations-and-maintenance/watchdog"
+status = 301
+force = true
+
+
+
+# ---------------------------------------------------------------
+# Configure your Talos cluster
+# ---------------------------------------------------------------
+# System Configuration
+[[redirects]]
+from = "/v1.8/talos-guides/configuration/patching"
+to = "https://docs.siderolabs.com/talos/v1.8/configure-your-talos-cluster/system-configuration/patching"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.8/talos-guides/configuration/editing-machine-configuration"
+to = "https://docs.siderolabs.com/talos/v1.8/configure-your-talos-cluster/system-configuration/editing-machine-configuration"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.8/talos-guides/configuration/performance-tuning"
+to = "https://docs.siderolabs.com/talos/v1.8/configure-your-talos-cluster/system-configuration/performance-tuning"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.8/talos-guides/configuration/time-sync"
+to = "https://docs.siderolabs.com/talos/v1.8/configure-your-talos-cluster/system-configuration/time-sync"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.8/talos-guides/configuration/discovery"
+to = "https://docs.siderolabs.com/talos/v1.8/configure-your-talos-cluster/system-configuration/discovery"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.8/talos-guides/configuration/reproducible-machine-config"
+to = "https://docs.siderolabs.com/talos/v1.8/configure-your-talos-cluster/system-configuration/reproducible-machine-configuration"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.8/talos-guides/configuration/insecure"
+to = "https://docs.siderolabs.com/talos/v1.8/configure-your-talos-cluster/system-configuration/insecure"
+status = 301
+force = true
+
+# Images & Container Runtime
+[[redirects]]
+from = "/v1.8/talos-guides/configuration/containerd"
+to = "https://docs.siderolabs.com/talos/v1.8/configure-your-talos-cluster/images-container-runtime/containerd"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.8/talos-guides/configuration/image-cache"
+to = "https://docs.siderolabs.com/talos/v1.8/configure-your-talos-cluster/images-container-runtime/image-cache"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.8/talos-guides/configuration/pull-through-cache"
+to = "https://docs.siderolabs.com/talos/v1.8/configure-your-talos-cluster/images-container-runtime/pull-through-cache"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.8/advanced/static-pods"
+to = "https://docs.siderolabs.com/talos/v1.8/configure-your-talos-cluster/images-container-runtime/static-pods"
+status = 301
+force = true
+
+# Storage & Disk Management
+[[redirects]]
+from = "/v1.8/talos-guides/configuration/disk-encryption"
+to = "https://docs.siderolabs.com/talos/v1.8/configure-your-talos-cluster/storage-and-disk-management/disk-encryption"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.8/talos-guides/configuration/disk-management"
+to = "https://docs.siderolabs.com/talos/v1.8/configure-your-talos-cluster/storage-and-disk-management/disk-management"
+status = 301
+force = true
+
+# Logging & Telemetry
+[[redirects]]
+from = "/v1.8/talos-guides/configuration/logging"
+to = "https://docs.siderolabs.com/talos/v1.8/configure-your-talos-cluster/logging-and-telemetry/logging"
+status = 301
+force = true
+
+# Hardware & Drivers
+[[redirects]]
+from = "/v1.8/talos-guides/configuration/nvidia-fabricmanager"
+to = "https://docs.siderolabs.com/talos/v1.8/configure-your-talos-cluster/hardware-and-drivers/nvidia-fabricmanager"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.8/talos-guides/configuration/nvidia-gpu"
+to = "https://docs.siderolabs.com/talos/v1.8/configure-your-talos-cluster/hardware-and-drivers/nvidia-gpu"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.8/talos-guides/configuration/nvidia-gpu-proprietary"
+to = "https://docs.siderolabs.com/talos/v1.8/configure-your-talos-cluster/hardware-and-drivers/nvidia-gpu-proprietary"
+status = 301
+force = true
+
+# Lifecycle Management
+[[redirects]]
+from = "/v1.8/talos-guides/upgrading-talos"
+to = "https://docs.siderolabs.com/talos/v1.8/configure-your-talos-cluster/lifecycle-management/upgrading-talos"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.8/talos-guides/resetting-a-machine"
+to = "https://docs.siderolabs.com/talos/v1.8/configure-your-talos-cluster/lifecycle-management/resetting-a-machine"
+status = 301
+force = true
+
+
+# ---------------------------------------------------------------
+# Advanced guides
+# ---------------------------------------------------------------
+[[redirects]]
+from = "/v1.8/advanced/install-kubevirt"
+to = "https://docs.siderolabs.com/talos/v1.8/advanced-guides/install-kubevirt"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.8/advanced/migrating-from-kubeadm"
+to = "https://docs.siderolabs.com/talos/v1.8/advanced-guides/migrating-from-kubeadm"
+status = 301
+force = true
+
+
+
+# ---------------------------------------------------------------
+# Troubleshooting and support
+# ---------------------------------------------------------------
+[[redirects]]
+from = "/v1.8/introduction/troubleshooting"
+to = "https://docs.siderolabs.com/talos/v1.8/troubleshooting/troubleshooting"
+status = 301
+force = true
+# FAQs lived under Learn More
+[[redirects]]
+from = "/v1.8/learn-more/faqs"
+to = "https://docs.siderolabs.com/talos/v1.8/troubleshooting/faqs"
+status = 301
+force = true
+
+
+
+# ---------------------------------------------------------------
+# Learn more
+# ---------------------------------------------------------------
+[[redirects]]
+from = "/v1.8/learn-more/*"
+to = "https://docs.siderolabs.com/talos/v1.8/learn-more/:splat"
+status = 301
+force = true
+
+
+
+# ---------------------------------------------------------------
+# Reference
+# ---------------------------------------------------------------
+[[redirects]]
+from = "/v1.8/reference/*"
+to = "https://docs.siderolabs.com/talos/v1.8/reference/:splat"
+status = 301
+force = true
+
+
+
+# ---------------------------------------------------------------
+# Catch-All Redirect
+# ---------------------------------------------------------------
+[[redirects]]
+from = "/v1.8/*"
+to = "https://docs.siderolabs.com/talos/v1.8/"
+status = 301
+force = true
+
+
+# ===============================================================
+# Talos v1.7 → SideroLabs v1.7 Redirects
+# Old base: https://www.talos.dev/v1.7
+# New base: https://docs.siderolabs.com/talos/v1.7
+# ===============================================================
+
+[[redirects]]
+from = "/v1.7"
+to = "https://docs.siderolabs.com/talos/v1.7/overview/what-is-talos"
+status = 301
+force = true
+
+[[redirects]]
+from = "/v1.7/"
+to = "https://docs.siderolabs.com/talos/v1.7/overview/what-is-talos"
+status = 301
+
+# ---------------------------------------------------------------
+# Overview
+# ---------------------------------------------------------------
+[[redirects]]
+from = "/v1.7/introduction/what-is-talos"
+to = "https://docs.siderolabs.com/talos/v1.7/overview/what-is-talos"
+status = 301
+force = true
+
+
+
+# ---------------------------------------------------------------
+# Getting Started
+# ---------------------------------------------------------------
+[[redirects]]
+from = "/v1.7/introduction/system-requirements"
+to = "https://docs.siderolabs.com/talos/v1.7/getting-started/system-requirements"
+status = 301
+force = true
+
+[[redirects]]
+from = "/v1.7/introduction/quickstart"
+to = "https://docs.siderolabs.com/talos/v1.7/getting-started/quickstart"
+status = 301
+force = true
+
+[[redirects]]
+from = "/v1.7/introduction/getting-started"
+to = "https://docs.siderolabs.com/talos/v1.7/getting-started/getting-started"
+status = 301
+force = true
+
+[[redirects]]
+from = "/v1.7/introduction/prodnotes"
+to = "https://docs.siderolabs.com/talos/v1.7/getting-started/prodnotes"
+status = 301
+force = true
+
+[[redirects]]
+from = "/v1.7/introduction/what-is-new"
+to = "https://docs.siderolabs.com/talos/v1.7/getting-started/what's-new-in-talos"
+status = 301
+force = true
+
+[[redirects]]
+from = "/v1.7/introduction/support-matrix"
+to = "https://docs.siderolabs.com/talos/v1.7/getting-started/support-matrix"
+status = 301
+force = true
+
+[[redirects]]
+from = "/v1.7/talos-guides/talosctl"
+to = "https://docs.siderolabs.com/talos/v1.7/getting-started/talosctl"
+status = 301
+force = true
+
+
+# ---------------------------------------------------------------
+# Platform Specific Installations
+# ---------------------------------------------------------------
+[[redirects]]
+from = "/v1.7/talos-guides/install/*"
+to = "https://docs.siderolabs.com/talos/v1.7/platform-specific-installations/:splat"
+status = 301
+force = true
+
+[[redirects]]
+from = "/v1.7/talos-guides/install/boot-assets"
+to = "https://docs.siderolabs.com/talos/v1.7/platform-specific-installations/boot-assets"
+status = 301
+force = true
+
+[[redirects]]
+from = "/v1.7/talos-guides/install/air-gapped"
+to = "https://docs.siderolabs.com/talos/v1.7/platform-specific-installations/air-gapped"
+status = 301
+force = true
+
+[[redirects]]
+from = "/v1.7/talos-guides/install/omni"
+to = "https://docs.siderolabs.com/talos/v1.7/platform-specific-installations/omni"
+status = 301
+force = true
+
+# ---------------------------------------------------------------
+# Deploying and Managing Workloads
+# ---------------------------------------------------------------
+[[redirects]]
+from = "/v1.7/interactive-dashboard"
+to = "https://docs.siderolabs.com/talos/v1.7/deploy-and-manage-workloads/interactive-dashboard"
+status = 301
+force = true
+
+[[redirects]]
+from = "/v1.7/talos-guides/howto/scaling-up"
+to = "https://docs.siderolabs.com/talos/v1.7/deploy-and-manage-workloads/scaling-up"
+status = 301
+force = true
+
+[[redirects]]
+from = "/v1.7/talos-guides/howto/scaling-down"
+to = "https://docs.siderolabs.com/talos/v1.7/deploy-and-manage-workloads/scaling-down"
+status = 301
+force = true
+
+[[redirects]]
+from = "/v1.7/talos-guides/howto/workers-on-controlplane"
+to = "https://docs.siderolabs.com/talos/v1.7/deploy-and-manage-workloads/workers-on-controlplane"
+status = 301
+force = true
+
+
+
+# ---------------------------------------------------------------
+# Networking
+# ---------------------------------------------------------------
+[[redirects]]
+from = "/v1.7/talos-guides/network/*"
+to = "https://docs.siderolabs.com/talos/v1.7/networking/:splat"
+status = 301
+force = true
+
+# Advanced networking topics that lived under /advanced
+[[redirects]]
+from = "/v1.7/advanced/advanced-networking"
+to = "https://docs.siderolabs.com/talos/v1.7/networking/advanced-networking"
+status = 301
+force = true
+
+[[redirects]]
+from = "/v1.7/advanced/metal-network-configuration"
+to = "https://docs.siderolabs.com/talos/v1.7/networking/metal-network-configuration"
+status = 301
+force = true
+
+[[redirects]]
+from = "/v1.7/advanced/egress-domains"
+to = "https://docs.siderolabs.com/talos/v1.7/networking/egress-domains"
+status = 301
+force = true
+
+
+# ---------------------------------------------------------------
+# Security
+# ---------------------------------------------------------------
+[[redirects]]
+from = "/v1.7/advanced/ca-rotation"
+to = "https://docs.siderolabs.com/talos/v1.7/security/ca-rotation"
+status = 301
+force = true
+
+[[redirects]]
+from = "/v1.7/talos-guides/configuration/rbac"
+to = "https://docs.siderolabs.com/talos/v1.7/security/rbac"
+status = 301
+force = true
+
+[[redirects]]
+from = "/v1.7/talos-guides/howto/cert-management"
+to = "https://docs.siderolabs.com/talos/v1.7/security/cert-management"
+status = 301
+force = true
+
+[[redirects]]
+from = "/v1.7/talos-guides/configuration/certificate-authorities"
+to = "https://docs.siderolabs.com/talos/v1.7/security/certificate-authorities"
+status = 301
+force = true
+
+[[redirects]]
+from = "/v1.7/advanced/machine-config-oauth"
+to = "https://docs.siderolabs.com/talos/v1.7/security/machine-config-oauth"
+status = 301
+force = true
+
+[[redirects]]
+from = "/v1.7/advanced/verifying-images"
+to = "https://docs.siderolabs.com/talos/v1.7/security/verifying-images"
+status = 301
+force = true
+
+
+
+# ---------------------------------------------------------------
+# Build and Extend Talos
+# ---------------------------------------------------------------
+# Custom Images & Development
+[[redirects]]
+from = "/v1.7/advanced/building-images"
+to = "https://docs.siderolabs.com/talos/v1.7/build-and-extend-talos/custom-images-and-development/building-images"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.7/advanced/customizing-the-kernel"
+to = "https://docs.siderolabs.com/talos/v1.7/build-and-extend-talos/custom-images-and-development/customizing-the-kernel"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.7/advanced/developing-talos"
+to = "https://docs.siderolabs.com/talos/v1.7/build-and-extend-talos/custom-images-and-development/developing-talos"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.7/advanced/extension-services"
+to = "https://docs.siderolabs.com/talos/v1.7/build-and-extend-talos/custom-images-and-development/extension-services"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.7/advanced/oci-base-spec"
+to = "https://docs.siderolabs.com/talos/v1.7/build-and-extend-talos/custom-images-and-development/oci-base-spec"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.7/advanced/overlays"
+to = "https://docs.siderolabs.com/talos/v1.7/build-and-extend-talos/custom-images-and-development/overlays"
+status = 301
+force = true
+# proprietary-kernel-modules → system-extensions
+[[redirects]]
+from = "/v1.7/advanced/proprietary-kernel-modules"
+to = "https://docs.siderolabs.com/talos/v1.7/build-and-extend-talos/custom-images-and-development/system-extensions"
+status = 301
+force = true
+
+# Cluster Operations & Maintenance
+[[redirects]]
+from = "/v1.7/advanced/disaster-recovery"
+to = "https://docs.siderolabs.com/talos/v1.7/build-and-extend-talos/cluster-operations-and-maintenance/disaster-recovery"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.7/advanced/etcd-maintenance"
+to = "https://docs.siderolabs.com/talos/v1.7/build-and-extend-talos/cluster-operations-and-maintenance/etcd-maintenance"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.7/advanced/watchdog"
+to = "https://docs.siderolabs.com/talos/v1.7/build-and-extend-talos/cluster-operations-and-maintenance/watchdog"
+status = 301
+force = true
+
+
+
+# ---------------------------------------------------------------
+# Configure your Talos cluster
+# ---------------------------------------------------------------
+# System Configuration
+[[redirects]]
+from = "/v1.7/talos-guides/configuration/patching"
+to = "https://docs.siderolabs.com/talos/v1.7/configure-your-talos-cluster/system-configuration/patching"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.7/talos-guides/configuration/editing-machine-configuration"
+to = "https://docs.siderolabs.com/talos/v1.7/configure-your-talos-cluster/system-configuration/editing-machine-configuration"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.7/talos-guides/configuration/performance-tuning"
+to = "https://docs.siderolabs.com/talos/v1.7/configure-your-talos-cluster/system-configuration/performance-tuning"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.7/talos-guides/configuration/time-sync"
+to = "https://docs.siderolabs.com/talos/v1.7/configure-your-talos-cluster/system-configuration/time-sync"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.7/talos-guides/configuration/discovery"
+to = "https://docs.siderolabs.com/talos/v1.7/configure-your-talos-cluster/system-configuration/discovery"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.7/talos-guides/configuration/reproducible-machine-config"
+to = "https://docs.siderolabs.com/talos/v1.7/configure-your-talos-cluster/system-configuration/reproducible-machine-configuration"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.7/talos-guides/configuration/insecure"
+to = "https://docs.siderolabs.com/talos/v1.7/configure-your-talos-cluster/system-configuration/insecure"
+status = 301
+force = true
+
+# Images & Container Runtime
+[[redirects]]
+from = "/v1.7/talos-guides/configuration/containerd"
+to = "https://docs.siderolabs.com/talos/v1.7/configure-your-talos-cluster/images-container-runtime/containerd"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.7/talos-guides/configuration/image-cache"
+to = "https://docs.siderolabs.com/talos/v1.7/configure-your-talos-cluster/images-container-runtime/image-cache"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.7/talos-guides/configuration/pull-through-cache"
+to = "https://docs.siderolabs.com/talos/v1.7/configure-your-talos-cluster/images-container-runtime/pull-through-cache"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.7/advanced/static-pods"
+to = "https://docs.siderolabs.com/talos/v1.7/configure-your-talos-cluster/images-container-runtime/static-pods"
+status = 301
+force = true
+
+# Storage & Disk Management
+[[redirects]]
+from = "/v1.7/talos-guides/configuration/disk-encryption"
+to = "https://docs.siderolabs.com/talos/v1.7/configure-your-talos-cluster/storage-and-disk-management/disk-encryption"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.7/talos-guides/configuration/disk-management"
+to = "https://docs.siderolabs.com/talos/v1.7/configure-your-talos-cluster/storage-and-disk-management/disk-management"
+status = 301
+force = true
+
+# Logging & Telemetry
+[[redirects]]
+from = "/v1.7å/talos-guides/configuration/logging"
+to = "https://docs.siderolabs.com/talos/v1.7å/configure-your-talos-cluster/logging-and-telemetry/logging"
+status = 301
+force = true
+
+# Hardware & Drivers
+[[redirects]]
+from = "/v1.7/talos-guides/configuration/nvidia-fabricmanager"
+to = "https://docs.siderolabs.com/talos/v1.7/configure-your-talos-cluster/hardware-and-drivers/nvidia-fabricmanager"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.7/talos-guides/configuration/nvidia-gpu"
+to = "https://docs.siderolabs.com/talos/v1.7/configure-your-talos-cluster/hardware-and-drivers/nvidia-gpu"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.7/talos-guides/configuration/nvidia-gpu-proprietary"
+to = "https://docs.siderolabs.com/talos/v1.7/configure-your-talos-cluster/hardware-and-drivers/nvidia-gpu-proprietary"
+status = 301
+force = true
+
+# Lifecycle Management
+[[redirects]]
+from = "/v1.7/talos-guides/upgrading-talos"
+to = "https://docs.siderolabs.com/talos/v1.7/configure-your-talos-cluster/lifecycle-management/upgrading-talos"
+status = 301
+force = true
+[[redirects]]
+from = "/v1.7/talos-guides/resetting-a-machine"
+to = "https://docs.siderolabs.com/talos/v1.7/configure-your-talos-cluster/lifecycle-management/resetting-a-machine"
+status = 301
+force = true
+
+
+# ---------------------------------------------------------------
+# Advanced Guides
+# ---------------------------------------------------------------
+[[redirects]]
+from = "/v1.7/advanced/install-kubevirt"
+to = "https://docs.siderolabs.com/talos/v1.8/advanced-guides/install-kubevirt"
+status = 301
+force = true
+
+[[redirects]]
+from = "/v1.7/advanced/migrating-from-kubeadm"
+to = "https://docs.siderolabs.com/talos/v1.8/advanced-guides/migrating-from-kubeadm"
+status = 301
+force = true
+
+
+
+# ---------------------------------------------------------------
+# Troubleshooting and Support
+# ---------------------------------------------------------------
+[[redirects]]
+from = "/v1.7/introduction/troubleshooting"
+to = "https://docs.siderolabs.com/talos/v1.7/troubleshooting/troubleshooting"
+status = 301
+force = true
+
+[[redirects]]
+from = "/v1.7/learn-more/faqs"
+to = "https://docs.siderolabs.com/talos/v1.7/troubleshooting/faqs"
+status = 301
+force = true
+
+
+
+# ---------------------------------------------------------------
+# Learn More
+# ---------------------------------------------------------------
+[[redirects]]
+from = "/v1.7/learn-more/*"
+to = "https://docs.siderolabs.com/talos/v1.7/learn-more/:splat"
+status = 301
+force = true
+
+
+
+# ---------------------------------------------------------------
+# Reference
+# ---------------------------------------------------------------
+[[redirects]]
+from = "/v1.7/reference/*"
+to = "https://docs.siderolabs.com/talos/v1.7/reference/:splat"
+status = 301
+force = true
+
+
+
+# ---------------------------------------------------------------
+# Catch-All Redirect
+# ---------------------------------------------------------------
+[[redirects]]
+from = "/v1.7/*"
+to = "https://docs.siderolabs.com/talos/v1.7/"
+status = 301
+force = true
+
+
+# ===============================================================
+# Talos v1.6 → SideroLabs v1.6 Redirects
+# Old base: https://www.talos.dev/v1.6
+# New base: https://docs.siderolabs.com/talos/v1.6
+# ===============================================================
+
+[[redirects]]
+from = "/v1.6"
+to = "https://docs.siderolabs.com/talos/v1.6/overview/what-is-talos"
+status = 301
+force = true
+
+[[redirects]]
+from = "/v1.6/"
+to = "https://docs.siderolabs.com/talos/v1.6/overview/what-is-talos"
+status = 301
+
+# ---------------------------------------------------------------
+# Overview
+# ---------------------------------------------------------------
+[[redirects]]
+from = "/v1.6/introduction/what-is-talos"
+to   = "https://docs.siderolabs.com/talos/v1.6/overview/what-is-talos"
+status = 301
+force  = true
+
+
+# ---------------------------------------------------------------
+# Getting Started
+# ---------------------------------------------------------------
+[[redirects]]
+from = "/v1.6/introduction/system-requirements"
+to = "https://docs.siderolabs.com/talos/v1.6/getting-started/system-requirements"
+status = 301
+force = true
+
+[[redirects]]
+from = "/v1.6/introduction/quickstart"
+to = "https://docs.siderolabs.com/talos/v1.6/getting-started/quickstart"
+status = 301
+force = true
+
+[[redirects]]
+from = "/v1.6/introduction/getting-started"
+to = "https://docs.siderolabs.com/talos/v1.6/getting-started/getting-started"
+status = 301
+force = true
+
+[[redirects]]
+from = "/v1.6/introduction/prodnotes"
+to = "https://docs.siderolabs.com/talos/v1.6/getting-started/prodnotes"
+status = 301
+force = true
+
+[[redirects]]
+from = "/v1.6/introduction/what-is-new"
+to = "https://docs.siderolabs.com/talos/v1.6/getting-started/what's-new-in-talos"
+status = 301
+force = true
+
+[[redirects]]
+from = "/v1.6/introduction/support-matrix"
+to = "https://docs.siderolabs.com/talos/v1.6/getting-started/support-matrix"
+status = 301
+force = true
+
+[[redirects]]
+from = "/v1.6/talos-guides/talosctl"
+to = "https://docs.siderolabs.com/talos/v1.6/getting-started/talosctl"
+status = 301
+force = true
+
+# ---------------------------------------------------------------
+#  Platform Specific Installations
+# ---------------------------------------------------------------
+[[redirects]]
+from = "/v1.6/talos-guides/install/*"
+to   = "https://docs.siderolabs.com/talos/v1.6/platform-specific-installations/:splat"
+status = 301
+force  = true
+
+[[redirects]]
+from = "/v1.6/talos-guides/install/boot-assets"
+to = "https://docs.siderolabs.com/talos/v1.6/platform-specific-installations/boot-assets"
+status = 301
+force = true
+
+[[redirects]]
+from = "/v1.6/talos-guides/install/air-gapped"
+to = "https://docs.siderolabs.com/talos/v1.6/platform-specific-installations/air-gapped"
+status = 301
+force = true
+
+[[redirects]]
+from = "/v1.6/talos-guides/install/omni"
+to = "https://docs.siderolabs.com/talos/v1.6/platform-specific-installations/omni"
+status = 301
+force = true
+
+
+# ---------------------------------------------------------------
+# ️ Deploying & Managing Workloads
+# ---------------------------------------------------------------
+[[redirects]]
+from = "/v1.6/interactive-dashboard"
+to = "https://docs.siderolabs.com/talos/v1.6/deploy-and-manage-workloads/interactive-dashboard"
+status = 301
+force = true
+
+[[redirects]]
+from = "/v1.6/talos-guides/howto/scaling-up"
+to = "https://docs.siderolabs.com/talos/v1.6/deploy-and-manage-workloads/scaling-up"
+status = 301
+force = true
+
+[[redirects]]
+from = "/v1.6/talos-guides/howto/scaling-down"
+to = "https://docs.siderolabs.com/talos/v1.6/deploy-and-manage-workloads/scaling-down"
+status = 301
+force = true
+
+[[redirects]]
+from = "/v1.6/talos-guides/howto/workers-on-controlplane"
+to = "https://docs.siderolabs.com/talos/v1.6/deploy-and-manage-workloads/workers-on-controlplane"
+status = 301
+force = true
+
+
+# ---------------------------------------------------------------
+#  Networking
+# ---------------------------------------------------------------
+[[redirects]]
+from = "/v1.6/talos-guides/network/*"
+to   = "https://docs.siderolabs.com/talos/v1.6/networking/:splat"
+status = 301
+force  = true
+[[redirects]]
+from = "/v1.6/advanced/advanced-networking"
+to   = "https://docs.siderolabs.com/talos/v1.6/networking/advanced-networking"
+status = 301
+force  = true
+[[redirects]]
+from = "/v1.6/advanced/metal-network-configuration"
+to   = "https://docs.siderolabs.com/talos/v1.6/networking/metal-network-configuration"
+status = 301
+force  = true
+
+
+# ---------------------------------------------------------------
+#  Security
+# ---------------------------------------------------------------
+[[redirects]]
+from = "/v1.6/advanced/ca-rotation"
+to   = "https://docs.siderolabs.com/talos/v1.6/security/ca-rotation"
+status = 301
+force  = true
+[[redirects]]
+from = "/v1.6/talos-guides/howto/cert-management"
+to   = "https://docs.siderolabs.com/talos/v1.6/security/cert-management"
+status = 301
+force  = true
+[[redirects]]
+from = "/v1.6/talos-guides/configuration/certificate-authorities"
+to   = "https://docs.siderolabs.com/talos/v1.6/security/certificate-authorities"
+status = 301
+force  = true
+[[redirects]]
+from = "/v1.6/advanced/machine-config-oauth"
+to   = "https://docs.siderolabs.com/talos/v1.6/security/machine-config-oauth"
+status = 301
+force  = true
+[[redirects]]
+from = "/v1.6/talos-guides/configuration/rbac"
+to   = "https://docs.siderolabs.com/talos/v1.6/security/rbac"
+status = 301
+force  = true
+[[redirects]]
+from = "/v1.6/advanced/verifying-images"
+to   = "https://docs.siderolabs.com/talos/v1.6/security/verifying-images"
+status = 301
+force  = true
+# Old 'managing-pki' consolidated under certificate authorities in new docs
+[[redirects]]
+from = "/v1.6/talos-guides/configuration/managing-pki"
+to   = "https://docs.siderolabs.com/talos/v1.6/security/certificate-authorities"
+status = 301
+force  = true
+
+
+# ---------------------------------------------------------------
+#  Build and Extend Talos
+# ---------------------------------------------------------------
+# Custom Images & Development
+[[redirects]]
+from = "/v1.6/advanced/building-images"
+to   = "https://docs.siderolabs.com/talos/v1.6/build-and-extend-talos/custom-images-and-development/building-images"
+status = 301
+force  = true
+[[redirects]]
+from = "/v1.6/advanced/customizing-the-kernel"
+to   = "https://docs.siderolabs.com/talos/v1.6/build-and-extend-talos/custom-images-and-development/customizing-the-kernel"
+status = 301
+force  = true
+[[redirects]]
+from = "/v1.6/advanced/developing-talos"
+to   = "https://docs.siderolabs.com/talos/v1.6/build-and-extend-talos/custom-images-and-development/developing-talos"
+status = 301
+force  = true
+[[redirects]]
+from = "/v1.6/advanced/extension-services"
+to   = "https://docs.siderolabs.com/talos/v1.6/build-and-extend-talos/custom-images-and-development/extension-services"
+status = 301
+force  = true
+[[redirects]]
+from = "/v1.6/advanced/kernel-module"
+to   = "https://docs.siderolabs.com/talos/v1.6/build-and-extend-talos/custom-images-and-development/kernel-module"
+status = 301
+force  = true
+[[redirects]]
+from = "/v1.6/advanced/proprietary-kernel-modules"
+to   = "https://docs.siderolabs.com/talos/v1.6/build-and-extend-talos/custom-images-and-development/proprietary-kernel-modules"
+status = 301
+force  = true
+[[redirects]]
+from = "/v1.6/advanced/oci-base-spec"
+to   = "https://docs.siderolabs.com/talos/v1.6/build-and-extend-talos/custom-images-and-development/oci-base-spec"
+status = 301
+force  = true
+[[redirects]]
+from = "/v1.6/advanced/overlays"
+to   = "https://docs.siderolabs.com/talos/v1.6/build-and-extend-talos/custom-images-and-development/overlays"
+status = 301
+force  = true
+
+# Cluster Operations & Maintenance
+[[redirects]]
+from = "/v1.6/advanced/cgroups-analysis"
+to   = "https://docs.siderolabs.com/talos/v1.6/build-and-extend-talos/cluster-operations-and-maintenance/cgroups-analysis"
+status = 301
+force  = true
+[[redirects]]
+from = "/v1.6/advanced/disaster-recovery"
+to   = "https://docs.siderolabs.com/talos/v1.6/build-and-extend-talos/cluster-operations-and-maintenance/disaster-recovery"
+status = 301
+force  = true
+[[redirects]]
+from = "/v1.6/advanced/etcd-maintenance"
+to   = "https://docs.siderolabs.com/talos/v1.6/build-and-extend-talos/cluster-operations-and-maintenance/etcd-maintenance"
+status = 301
+force  = true
+[[redirects]]
+from = "/v1.6/advanced/watchdog"
+to   = "https://docs.siderolabs.com/talos/v1.6/build-and-extend-talos/cluster-operations-and-maintenance/watchdog"
+status = 301
+force  = true
+
+
+# ---------------------------------------------------------------
+# ️ Configure Your Talos Cluster
+# ---------------------------------------------------------------
+# System Configuration
+[[redirects]]
+from = "/v1.6/talos-guides/configuration/patching"
+to = "https://docs.siderolabs.com/talos/v1.6/configure-your-talos-cluster/system-configuration/patching"
+status = 301
+force = true
+
+[[redirects]]
+from = "/v1.6/talos-guides/configuration/editing-machine-configuration"
+to = "https://docs.siderolabs.com/talos/v1.6/configure-your-talos-cluster/system-configuration/editing-machine-configuration"
+status = 301
+force = true
+
+[[redirects]]
+from = "/v1.6/talos-guides/configuration/performance-tuning"
+to = "https://docs.siderolabs.com/talos/v1.6/configure-your-talos-cluster/system-configuration/performance-tuning"
+status = 301
+force = true
+
+[[redirects]]
+from = "/v1.6/talos-guides/configuration/time-sync"
+to = "https://docs.siderolabs.com/talos/v1.6/configure-your-talos-cluster/system-configuration/time-sync"
+status = 301
+force = true
+
+[[redirects]]
+from = "/v1.6/talos-guides/configuration/discovery"
+to = "https://docs.siderolabs.com/talos/v1.6/configure-your-talos-cluster/system-configuration/discovery"
+status = 301
+force = true
+
+[[redirects]]
+from = "/v1.6/talos-guides/configuration/reproducible-machine-config"
+to = "https://docs.siderolabs.com/talos/v1.6/configure-your-talos-cluster/system-configuration/reproducible-machine-configuration"
+status = 301
+force = true
+
+[[redirects]]
+from = "/v1.6/talos-guides/configuration/insecure"
+to = "https://docs.siderolabs.com/talos/v1.6/configure-your-talos-cluster/system-configuration/insecure"
+status = 301
+force = true
+
+# Images & Container Runtime
+
+[[redirects]]
+from = "/v1.6/talos-guides/configuration/containerd"
+to = "https://docs.siderolabs.com/talos/v1.6/configure-your-talos-cluster/images-container-runtime/containerd"
+status = 301
+force = true
+
+[[redirects]]
+from = "/v1.6/talos-guides/configuration/image-cache"
+to = "https://docs.siderolabs.com/talos/v1.6/configure-your-talos-cluster/images-container-runtime/image-cache"
+status = 301
+force = true
+
+[[redirects]]
+from = "/v1.6/talos-guides/configuration/pull-through-cache"
+to = "https://docs.siderolabs.com/talos/v1.6/configure-your-talos-cluster/images-container-runtime/pull-through-cache"
+status = 301
+force = true
+
+[[redirects]]
+from = "/v1.6/advanced/static-pods"
+to = "https://docs.siderolabs.com/talos/v1.6/configure-your-talos-cluster/images-container-runtime/static-pods"
+status = 301
+force = true
+
+# Storage & Disk Management
+[[redirects]]
+from = "/v1.6/talos-guides/configuration/disk-encryption"
+to = "https://docs.siderolabs.com/talos/v1.6/configure-your-talos-cluster/storage-and-disk-management/disk-encryption"
+status = 301
+force = true
+
+[[redirects]]
+from = "/v1.6/talos-guides/configuration/disk-management"
+to = "https://docs.siderolabs.com/talos/v1.6/configure-your-talos-cluster/storage-and-disk-management/disk-management"
+status = 301
+force = true
+
+# Logging & Telemetry
+[[redirects]]
+from = "/v1.6/talos-guides/configuration/logging"
+to = "https://docs.siderolabs.com/talos/v1.6/configure-your-talos-cluster/logging-and-telemetry/logging"
+status = 301
+force = true
+
+# Hardware & Drivers
+[[redirects]]
+from = "/v1.6/talos-guides/configuration/nvidia-fabricmanager"
+to = "https://docs.siderolabs.com/talos/v1.6/configure-your-talos-cluster/hardware-and-drivers/nvidia-fabricmanager"
+status = 301
+force = true
+
+[[redirects]]
+from = "/v1.6/talos-guides/configuration/nvidia-gpu"
+to = "https://docs.siderolabs.com/talos/v1.6/configure-your-talos-cluster/hardware-and-drivers/nvidia-gpu"
+status = 301
+force = true
+
+[[redirects]]
+from = "/v1.6/talos-guides/configuration/nvidia-gpu-proprietary"
+to = "https://docs.siderolabs.com/talos/v1.6/configure-your-talos-cluster/hardware-and-drivers/nvidia-gpu-proprietary"
+status = 301
+force = true
+
+# Lifecycle Management
+[[redirects]]
+from = "/v1.6/talos-guides/upgrading-talos"
+to = "https://docs.siderolabs.com/talos/v1.6/configure-your-talos-cluster/lifecycle-management/upgrading-talos"
+status = 301
+force = true
+
+[[redirects]]
+from = "/v1.6/talos-guides/resetting-a-machine"
+to = "https://docs.siderolabs.com/talos/v1.6/configure-your-talos-cluster/lifecycle-management/resetting-a-machine"
+status = 301
+force = true
+
+# ---------------------------------------------------------------
+#  Advanced Guides
+# ---------------------------------------------------------------
+[[redirects]]
+from = "/v1.6/advanced/migrating-from-kubeadm"
+to   = "https://docs.siderolabs.com/talos/v1.6/advanced-guides/migrating-from-kubeadm"
+status = 301
+force  = true
+[[redirects]]
+from = "/v1.6/advanced/install-kubevirt"
+to   = "https://docs.siderolabs.com/talos/v1.6/advanced-guides/install-kubevirt"
+status = 301
+force  = true
+
+
+# ---------------------------------------------------------------
+#  Troubleshooting & Support
+# ---------------------------------------------------------------
+[[redirects]]
+from = "/v1.6/introduction/troubleshooting"
+to   = "https://docs.siderolabs.com/talos/v1.6/troubleshooting/troubleshooting"
+status = 301
+force  = true
+[[redirects]]
+from = "/v1.6/learn-more/faqs"
+to   = "https://docs.siderolabs.com/talos/v1.6/troubleshooting/faqs"
+status = 301
+force  = true
+
+
+# ---------------------------------------------------------------
+#  Learn More
+# ---------------------------------------------------------------
+[[redirects]]
+from = "/v1.6/learn-more/*"
+to   = "https://docs.siderolabs.com/talos/v1.6/learn-more/:splat"
+status = 301
+force  = true
+
+
+# ---------------------------------------------------------------
+#  Reference
+# ---------------------------------------------------------------
+[[redirects]]
+from = "/v1.6/reference/*"
+to   = "https://docs.siderolabs.com/talos/v1.6/reference/:splat"
+status = 301
+force  = true
+
+
+# ---------------------------------------------------------------
+#  Catch-All
+# ---------------------------------------------------------------
+[[redirects]]
+from = "/v1.6/*"
+to   = "https://docs.siderolabs.com/talos/v1.6/"
+status = 301
+force  = true
