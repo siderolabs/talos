@@ -271,7 +271,7 @@ You can override the Pod Security Admission configuration at the namespace level
 
 This is especially useful for applications like Prometheus node exporter or storage solutions that require more relaxed Pod Security Standards.
 
-Using the DaemonSet workload example, you can update the enforced policy to `privilege` for its namespace, which is the default namespace.
+Using the DaemonSet workload example, you can update the enforced policy to `privileged` for its namespace, which is the default namespace.
 
 ```bash
 kubectl label ns default pod-security.kubernetes.io/enforce=privileged
