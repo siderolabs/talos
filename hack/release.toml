@@ -103,6 +103,17 @@ These fields were removed from the default machine configuration schema in v1.12
 etcd container image is now pulled from `registry.k8s.io/etcd` instead of `gcr.io/etcd-development/etcd`.
 """
 
+    [notes.talosctl]
+        title = "talosctl image registry create|serve"
+        description = """\
+talosctl includes two new subcommands `image registry create` and `image registry serve`.
+
+`talosctl image registry create` allows creating a local OCI image registry containing Talos images for speeding up installations, upgrades,
+and deployments in air-gapped environments.
+
+`talosctl image registry serve` allows serving the created OCI image registry over HTTP.
+It is a read-only registry, meaning images cannot be pushed to it, but the backing storage can be updated by re-running the `create` command.
+"""
 
 [make_deps]
 

@@ -7,10 +7,15 @@ package talos
 import (
 	"bufio"
 	"context"
+	"crypto/tls"
 	"errors"
 	"fmt"
 	"io"
+	"log/slog"
+	"net"
+	"net/http"
 	"os"
+	"os/signal"
 	"slices"
 	"strings"
 	"text/tabwriter"
@@ -18,8 +23,15 @@ import (
 
 	"github.com/blang/semver/v4"
 	"github.com/dustin/go-humanize"
+	"github.com/google/go-containerregistry/pkg/crane"
+	"github.com/google/go-containerregistry/pkg/logs"
+	"github.com/google/go-containerregistry/pkg/v1/remote"
+	"github.com/olareg/olareg"
+	"github.com/olareg/olareg/config"
+	"github.com/siderolabs/go-pointer"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
+	"golang.org/x/sync/errgroup"
 
 	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/artifacts"
 	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/helpers"
@@ -168,14 +180,24 @@ var imageDefaultCmd = &cobra.Command{
 	},
 }
 
-var minimumVersion = semver.MustParse("1.11.0-alpha.0")
+const (
+	provisionerDocker    = "docker"
+	provisionerInstaller = "installer"
+	provisionerAll       = "all"
+)
+
+var imageDefaultCmdFlags = struct {
+	provisioner pflag.Value
+}{
+	provisioner: helpers.StringChoice(provisionerInstaller, provisionerDocker, provisionerAll),
+}
 
 // imageSourceBundleCmd represents the image source-bundle command.
 var imageSourceBundleCmd = &cobra.Command{
 	Use:   "source-bundle <talos-version>",
 	Short: "List the source images used for building Talos",
 	Long:  ``,
-	Args: helpers.ChainCobraPositionalArgs(
+	Args: cobra.MatchAll(
 		cobra.ExactArgs(1),
 		func(cmd *cobra.Command, args []string) error {
 			maximumVersion, err := semver.ParseTolerant(version.Tag)
@@ -244,6 +266,8 @@ var imageSourceBundleCmd = &cobra.Command{
 		return nil
 	},
 }
+
+var minimumVersion = semver.MustParse("1.11.0-alpha.0")
 
 // imageIntegrationCmd represents the integration image command.
 var imageIntegrationCmd = &cobra.Command{
@@ -394,16 +418,202 @@ var imageCacheCreateCmdFlags struct {
 	force    bool
 }
 
-const (
-	provisionerDocker    = "docker"
-	provisionerInstaller = "installer"
-	provisionerAll       = "all"
-)
+var imageRegistryCommand = &cobra.Command{
+	Use:   "registry",
+	Short: "Commands for working with a local image registry",
+	Long:  ``,
+	PersistentPreRun: func(cmd *cobra.Command, _ []string) {
+		logs.Progress.SetOutput(os.Stderr)
 
-var imageDefaultCmdFlags = struct {
-	provisioner pflag.Value
-}{
-	provisioner: helpers.StringChoice(provisionerInstaller, provisionerDocker, provisionerAll),
+		transport := remote.DefaultTransport.(*http.Transport).Clone()
+		transport.TLSClientConfig = &tls.Config{
+			InsecureSkipVerify: true, //nolint: gosec
+		}
+
+		options = append(options,
+			crane.WithJobs(0),
+			crane.Insecure,
+			crane.WithNondistributable(),
+			crane.WithTransport(transport),
+		)
+	},
+}
+
+var options []crane.Option
+
+var imageRegistryCreateCommand = &cobra.Command{
+	Use:   "create <path>",
+	Short: "Create a local OCI from a list of images",
+	Long:  `Create a local OCI from a list of images`,
+	Example: fmt.Sprintf(
+		`talosctl images registry create --images=ghcr.io/siderolabs/kubelet:v%s /tmp/registry
+
+Alternatively, stdin can be piped to the command:
+talosctl images source-bundle | talosctl images registry create /tmp/registry --images=-
+`,
+		constants.DefaultKubernetesVersion,
+	),
+	Args: cobra.ExactArgs(1),
+	RunE: func(cmd *cobra.Command, args []string) error {
+		var err error
+
+		storagePath := args[0]
+
+		lis, err := net.Listen("tcp", "127.0.0.1:0")
+		if err != nil {
+			return fmt.Errorf("error finding free port: %w", err)
+		}
+
+		addr := lis.Addr().String()
+
+		lis.Close() //nolint:errcheck
+
+		log := slog.New(slog.DiscardHandler)
+
+		if imageRegistryCreateCmdFlags.debug {
+			logs.Debug.SetOutput(os.Stderr)
+			log = slog.Default()
+		}
+
+		reg := olareg.New(config.Config{
+			HTTP: config.ConfigHTTP{
+				Addr: addr,
+			},
+			API: config.ConfigAPI{
+				PushEnabled:   pointer.To(true),
+				DeleteEnabled: pointer.To(false),
+				Blob: config.ConfigAPIBlob{
+					DeleteEnabled: pointer.To(false),
+				},
+			},
+			Storage: config.ConfigStorage{
+				StoreType: config.StoreDir,
+				RootDir:   storagePath,
+				ReadOnly:  pointer.To(false),
+				GC: config.ConfigGC{
+					Frequency: -1, // disabled
+				},
+			},
+			Log: log,
+		})
+
+		ctx, cancel := signal.NotifyContext(cmd.Context(), os.Interrupt)
+		defer cancel()
+
+		eg, ctx := errgroup.WithContext(ctx)
+
+		eg.Go(func() error {
+			slog.Info("starting registry", "path", storagePath)
+
+			return reg.Run(ctx)
+		})
+
+		eg.Go(func() error {
+			<-ctx.Done()
+
+			ctx2, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+			defer cancel()
+
+			return reg.Shutdown(ctx2)
+		})
+
+		eg.Go(func() error {
+			if imageRegistryCreateCmdFlags.images[0] == "-" {
+				var imagesListData strings.Builder
+
+				if _, err := io.Copy(&imagesListData, os.Stdin); err != nil {
+					return fmt.Errorf("error reading from stdin: %w", err)
+				}
+
+				imageRegistryCreateCmdFlags.images = strings.Split(strings.Trim(imagesListData.String(), "\n"), "\n")
+			}
+
+			slog.Info("starting image mirror", "images", len(imageRegistryCreateCmdFlags.images))
+
+			if err := artifacts.Mirror(ctx, options, imageRegistryCreateCmdFlags.images, addr); err != nil {
+				return fmt.Errorf("error copying images: %w", err)
+			}
+
+			cancel()
+
+			return nil
+		})
+
+		if err := eg.Wait(); err != nil {
+			return err
+		}
+
+		return nil
+	},
+}
+
+var imageRegistryCreateCmdFlags struct {
+	debug  bool
+	images []string
+}
+
+var imageRegistryServeCommand = &cobra.Command{
+	Use:   "serve <path>",
+	Short: "Serve images from a local storage",
+	Long:  ``,
+	Args:  cobra.ExactArgs(1),
+	RunE: func(cmd *cobra.Command, args []string) error {
+		storePath := args[0]
+
+		reg := olareg.New(config.Config{
+			HTTP: config.ConfigHTTP{
+				Addr:     imageRegistryServeCmdFlags.address,
+				CertFile: imageRegistryServeCmdFlags.tlsCertFile,
+				KeyFile:  imageRegistryServeCmdFlags.tlsKeyFile,
+			},
+			API: config.ConfigAPI{
+				PushEnabled:   pointer.To(false),
+				DeleteEnabled: pointer.To(false),
+				Blob: config.ConfigAPIBlob{
+					DeleteEnabled: pointer.To(false),
+				},
+			},
+			Storage: config.ConfigStorage{
+				StoreType: config.StoreDir,
+				RootDir:   storePath,
+				ReadOnly:  pointer.To(true),
+				GC: config.ConfigGC{
+					Frequency: -1, // disabled
+				},
+			},
+			Log: slog.Default(),
+		})
+
+		ctx, cancel := signal.NotifyContext(cmd.Context(), os.Interrupt)
+		defer cancel()
+
+		eg, ctx := errgroup.WithContext(ctx)
+
+		eg.Go(func() error {
+			slog.Info("Starting registry", "addr", imageRegistryServeCmdFlags.address, "path", storePath)
+
+			return reg.Run(ctx)
+		})
+
+		eg.Go(func() error {
+			<-ctx.Done()
+
+			slog.Info("Shutting down")
+
+			ctx2, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+			defer cancel()
+
+			return reg.Shutdown(ctx2)
+		})
+
+		return eg.Wait()
+	},
+}
+
+var imageRegistryServeCmdFlags struct {
+	address     string
+	tlsCertFile string
+	tlsKeyFile  string
 }
 
 func init() {
@@ -415,10 +625,9 @@ func init() {
 
 	imageCmd.AddCommand(imageListCmd)
 	imageCmd.AddCommand(imagePullCmd)
-	imageCmd.AddCommand(imageCacheCreateCmd)
-	imageCmd.AddCommand(imageIntegrationCmd)
 	imageCmd.AddCommand(imageSourceBundleCmd)
 
+	imageCmd.AddCommand(imageCacheCreateCmd)
 	imageCacheCreateCmd.PersistentFlags().StringVar(&imageCacheCreateCmdFlags.imageCachePath, "image-cache-path", "", "directory to save the image cache in OCI format")
 	imageCacheCreateCmd.MarkPersistentFlagRequired("image-cache-path") //nolint:errcheck
 	imageCacheCreateCmd.PersistentFlags().StringVar(&imageCacheCreateCmdFlags.imageLayerCachePath, "image-layer-cache-path", "", "directory to save the image layer cache")
@@ -428,8 +637,19 @@ func init() {
 	imageCacheCreateCmd.PersistentFlags().BoolVar(&imageCacheCreateCmdFlags.insecure, "insecure", false, "allow insecure registries")
 	imageCacheCreateCmd.PersistentFlags().BoolVar(&imageCacheCreateCmdFlags.force, "force", false, "force overwrite of existing image cache")
 
+	imageCmd.AddCommand(imageIntegrationCmd)
 	imageIntegrationCmd.PersistentFlags().StringVar(&imageIntegrationCmdFlags.installerTag, "installer-tag", "", "tag of the installer image to use")
 	imageIntegrationCmd.MarkPersistentFlagRequired("installer-tag") //nolint:errcheck
 	imageIntegrationCmd.PersistentFlags().StringVar(&imageIntegrationCmdFlags.registryAndUser, "registry-and-user", "", "registry and user to use for the images")
 	imageIntegrationCmd.MarkPersistentFlagRequired("registry-and-user") //nolint:errcheck
+
+	imageCmd.AddCommand(imageRegistryCommand)
+	imageRegistryCommand.AddCommand(imageRegistryCreateCommand)
+	imageRegistryCreateCommand.PersistentFlags().BoolVar(&imageRegistryCreateCmdFlags.debug, "debug", false, "enable debug logging")
+	imageRegistryCreateCommand.PersistentFlags().StringSliceVar(&imageRegistryCreateCmdFlags.images, "images", nil, "images to cache")
+	imageRegistryCreateCommand.MarkPersistentFlagRequired("images") //nolint:errcheck
+	imageRegistryCommand.AddCommand(imageRegistryServeCommand)
+	imageRegistryServeCommand.PersistentFlags().StringVar(&imageRegistryServeCmdFlags.address, "addr", ":5000", "address to serve the registry on")
+	imageRegistryServeCommand.PersistentFlags().StringVar(&imageRegistryServeCmdFlags.tlsCertFile, "tls-cert-file", "", "path to TLS certificate file")
+	imageRegistryServeCommand.PersistentFlags().StringVar(&imageRegistryServeCmdFlags.tlsKeyFile, "tls-key-file", "", "path to TLS key file")
 }
