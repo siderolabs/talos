@@ -6,9 +6,9 @@ require (
 	cloud.google.com/go/storage v1.57.0
 	github.com/aws/aws-sdk-go-v2 v1.39.2
 	github.com/aws/aws-sdk-go-v2/config v1.31.12
-	github.com/aws/aws-sdk-go-v2/feature/s3/manager v1.19.10
+	github.com/aws/aws-sdk-go-v2/feature/s3/manager v1.19.12
 	github.com/aws/aws-sdk-go-v2/service/ec2 v1.254.1
-	github.com/aws/aws-sdk-go-v2/service/s3 v1.88.3
+	github.com/aws/aws-sdk-go-v2/service/s3 v1.88.4
 	github.com/google/uuid v1.6.0
 	github.com/klauspost/compress v1.18.0
 	github.com/siderolabs/gen v0.8.5
@@ -16,7 +16,7 @@ require (
 	github.com/siderolabs/go-retry v0.3.3
 	github.com/spf13/pflag v1.0.10
 	golang.org/x/sync v0.17.0
-	google.golang.org/api v0.250.0
+	google.golang.org/api v0.252.0
 )
 
 require (
