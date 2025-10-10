@@ -87,6 +87,10 @@ type NetworkRequest struct {
 	PacketReorder float64
 	PacketCorrupt float64
 	Bandwidth     int
+
+	// Airgapped limits VM network access to the provisioning network only (qemu/linux).
+	Airgapped                 bool
+	AirgappedConnectedBridges []string
 }
 
 // NodeRequests is a list of NodeRequest.

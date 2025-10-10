@@ -252,6 +252,8 @@ func (m *Qemu) ModifyClusterRequest() error {
 	m.ClusterRequest.Network.PacketReorder = m.EOps.PacketReorder
 	m.ClusterRequest.Network.PacketCorrupt = m.EOps.PacketCorrupt
 	m.ClusterRequest.Network.Bandwidth = m.EOps.Bandwidth
+	m.ClusterRequest.Network.Airgapped = m.EOps.Airgapped
+	m.ClusterRequest.Network.AirgappedConnectedBridges = m.EOps.AirgappedConnectedBridges
 
 	m.ClusterRequest.KernelPath = m.EOps.NodeVmlinuzPath
 	m.ClusterRequest.InitramfsPath = m.EOps.NodeInitramfsPath

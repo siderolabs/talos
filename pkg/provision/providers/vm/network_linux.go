@@ -146,11 +146,112 @@ func (p *Provisioner) CreateNetwork(ctx context.Context, state *State, network p
 		return fmt.Errorf("error configuring DOCKER-USER chain: %w", err)
 	}
 
+	if network.Airgapped {
+		vmCidrs := xslices.Map(network.CIDRs, netip.Prefix.String)
+
+		if err = p.dropExternalEgressTraffic(state.BridgeName, vmCidrs, gatewayAddrs, network.AirgappedConnectedBridges); err != nil {
+			return nil
+		}
+	}
+
 	// configure bridge interface with network chaos if flag is set
 	if network.NetworkChaos {
 		if err = p.configureNetworkChaos(network, state, options); err != nil {
 			return err
 		}
+	}
+
+	return nil
+}
+
+// TODO: this does not work, VMs are still able to pull images, and access internet...
+func (p *Provisioner) dropExternalEgressTraffic(bridgeName string, vmCidrs, gatewayAddrs, extraBridges []string) error {
+	ipt, err := iptables.New()
+	if err != nil {
+		return fmt.Errorf("error initializing iptables: %w", err)
+	}
+
+	exists, err := ipt.ChainExists("filter", "CNI-ISOLATE")
+	if err != nil {
+		return fmt.Errorf("error checking chain existence for CNI-ISOLATE: %w", err)
+	}
+
+	if !exists {
+		if err := ipt.NewChain("filter", "CNI-ISOLATE"); err != nil {
+			return fmt.Errorf("error creating chain CNI-ISOLATE: %w", err)
+		}
+	}
+
+	if err := ipt.ClearChain("filter", "CNI-ISOLATE"); err != nil {
+		return fmt.Errorf("error clearing chain CNI-ISOLATE: %w", err)
+	}
+
+	for _, cidr := range vmCidrs {
+		for _, gw := range gatewayAddrs {
+			if err := ipt.AppendUnique("filter", "CNI-ISOLATE", "-o", bridgeName, "-m", "conntrack", "--ctstate", "RELATED,ESTABLISHED", "-j", "ACCEPT"); err != nil {
+				return fmt.Errorf("error inserting rule into CNI-ISOLATE chain: %w", err)
+			}
+
+			if err := ipt.AppendUnique("filter", "CNI-ISOLATE", "-s", gw, "-d", cidr, "-j", "ACCEPT"); err != nil {
+				return fmt.Errorf("error inserting rule into CNI-ISOLATE chain: %w", err)
+			}
+
+			if err := ipt.AppendUnique("filter", "CNI-ISOLATE", "-s", cidr, "-d", gw, "-j", "ACCEPT"); err != nil {
+				return fmt.Errorf("error inserting rule into CNI-ISOLATE chain: %w", err)
+			}
+
+			if err := ipt.AppendUnique("filter", "CNI-ISOLATE", "-i", bridgeName, "-o", bridgeName, "-j", "ACCEPT"); err != nil {
+				return fmt.Errorf("error inserting rule into CNI-ISOLATE chain: %w", err)
+			}
+		}
+
+		for _, eb := range extraBridges {
+			if err := ipt.AppendUnique("filter", "CNI-ISOLATE", "-i", eb, "-o", bridgeName, "-j", "ACCEPT"); err != nil {
+				return fmt.Errorf("error inserting rule into CNI-ISOLATE chain: %w", err)
+			}
+
+			if err := ipt.AppendUnique("filter", "CNI-ISOLATE", "-i", bridgeName, "-o", eb, "-j", "ACCEPT"); err != nil {
+				return fmt.Errorf("error inserting rule into CNI-ISOLATE chain: %w", err)
+			}
+		}
+
+		if err := ipt.AppendUnique("filter", "CNI-ISOLATE", "-s", cidr, "!", "-d", cidr, "-j", "DROP"); err != nil {
+			return fmt.Errorf("error inserting rule into CNI-ISOLATE chain: %w", err)
+		}
+	}
+
+	if err := ipt.AppendUnique("filter", "CNI-ADMIN", "-j", "CNI-ISOLATE"); err != nil {
+		return fmt.Errorf("error adding jump to CNI-ISOLATE in CNI-ADMIN chain: %w", err)
+	}
+
+	return nil
+}
+
+func (p *Provisioner) reenableExternalEgressTraffic() error {
+	ipt, err := iptables.New()
+	if err != nil {
+		return fmt.Errorf("error initializing iptables: %w", err)
+	}
+
+	chainExists, err := ipt.ChainExists("filter", "CNI-ISOLATE")
+	if err != nil {
+		return fmt.Errorf("error checking chain existence: %w", err)
+	}
+
+	if !chainExists {
+		return nil
+	}
+
+	if err = ipt.DeleteIfExists("filter", "CNI-ADMIN", "-j", "CNI-ISOLATE"); err != nil {
+		return fmt.Errorf("error removing jump from CNI-ADMIN to CNI-ISOLATE: %w", err)
+	}
+
+	if err := ipt.ClearChain("filter", "CNI-ISOLATE"); err != nil {
+		return fmt.Errorf("error clearing CNI-ISOLATE: %w", err)
+	}
+
+	if err := ipt.DeleteChain("filter", "CNI-ISOLATE"); err != nil {
+		return fmt.Errorf("error deleting CNI-ISOLATE: %w", err)
 	}
 
 	return nil
@@ -357,6 +458,10 @@ func (p *Provisioner) DestroyNetwork(state *State) error {
 
 	if err = p.dropBridgeTrafficRule(state.BridgeName); err != nil {
 		return fmt.Errorf("error dropping bridge traffic rule: %w", err)
+	}
+
+	if err = p.reenableExternalEgressTraffic(); err != nil {
+		return fmt.Errorf("error re-enabling external egress traffic: %w", err)
 	}
 
 	return nil
