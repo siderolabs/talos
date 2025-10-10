@@ -8136,6 +8136,7 @@ SecurityStateSpec describes the security state resource properties.
 | se_linux_state | [talos.resource.definitions.enums.RuntimeSELinuxState](#talos.resource.definitions.enums.RuntimeSELinuxState) |  |  |
 | booted_with_uki | [bool](#bool) |  |  |
 | fips_state | [talos.resource.definitions.enums.RuntimeFIPSState](#talos.resource.definitions.enums.RuntimeFIPSState) |  |  |
+| module_signature_enforced | [bool](#bool) |  |  |
 
 
 

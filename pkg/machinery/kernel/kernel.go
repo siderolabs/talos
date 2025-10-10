@@ -48,6 +48,10 @@ func DefaultArgs(quirks quirks.Quirks) []string {
 		result = append(result, constants.KernelParamSELinux+"=1")
 	}
 
+	if quirks.SupportsDisablingModuleSignatureVerification() {
+		result = append(result, constants.KernelParamEnforceModuleSigVerify+"=1") // see https://github.com/siderolabs/talos/issues/11989
+	}
+
 	return result
 }
 

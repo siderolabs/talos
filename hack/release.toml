@@ -119,6 +119,14 @@ Additionally `talosctl image cache-create` has some changes:
     * multiple instances (`--platform=linux/amd64 --platform=linux/arm64`);
 """
 
+    [notes.kernel-module]
+        title = "Kernel Module"
+        description = """\
+Talos now supports optionally disabling kernel module signature verification by setting `module.sig_enforce=0` kernel parameter.
+By default module signature verification is enabled (`module.sig_enforce=1`).
+When using Factory or Imager supply as `-module.sig_enfore module.sig_enforce=0` kernel parameters to disable module signature enforcement.
+"""
+
 [make_deps]
 
     [make_deps.tools]

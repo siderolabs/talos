@@ -58,6 +58,7 @@ type SecurityStateSpec struct {
 	SELinuxState             SELinuxState `yaml:"selinuxState,omitempty" protobuf:"4"`
 	FIPSState                FIPSState    `yaml:"fipsState,omitempty" protobuf:"6"`
 	BootedWithUKI            bool         `yaml:"bootedWithUKI,omitempty" protobuf:"5"`
+	ModuleSignatureEnforced  bool         `yaml:"moduleSignatureEnforced,omitempty" protobuf:"7"`
 }
 
 // NewSecurityStateSpec initializes a security state resource.
@@ -92,6 +93,10 @@ func (SecurityStateExtension) ResourceDefinition() meta.ResourceDefinitionSpec {
 			{
 				Name:     "SELinuxState",
 				JSONPath: `{.selinuxState}`,
+			},
+			{
+				Name:     "ModuleSignatureEnforced",
+				JSONPath: `{.moduleSignatureEnforced}`,
 			},
 		},
 	}
