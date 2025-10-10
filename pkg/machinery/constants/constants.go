@@ -159,6 +159,10 @@ const (
 	// This param is injected by Equinix Metal and depends on the device ID and datacenter.
 	KernelParamEquinixMetalEvents = "em.events_url"
 
+	// KernelParamEnforceModuleSigVerify is the kernel parameter name to specify module signature verification enforcement.
+	// see https://github.com/siderolabs/talos/issues/11989
+	KernelParamEnforceModuleSigVerify = "module.sig_enforce"
+
 	// NewRoot is the path where the switchroot target is mounted.
 	NewRoot = "/root"
 

@@ -90,6 +90,7 @@ func TestDefaultKernelArgs(t *testing.T) {
 				"nvme_core.io_timeout=4294967295",
 				"printk.devkmsg=on",
 				"selinux=1",
+				"module.sig_enforce=1",
 			},
 		},
 		{
