@@ -278,11 +278,10 @@ func getCreateCmd() *cobra.Command {
 					return err
 				}
 
-				return create(ctx, cOps, qOps)
+				return createDevCluster(ctx, cOps, qOps)
 			})
 		},
 	}
-
 	createCmd.Flags().IntVar(&legacyOps.clusterDiskSize, clusterDiskSizeFlag, 6*1024, "default limit on disk size in MB (each VM)")
 	createCmd.Flags().IntVar(&legacyOps.extraDisks, extraDisksFlag, 0, "number of extra disks to create for each worker VM")
 	createCmd.Flags().StringSliceVar(&legacyOps.extraDisksDrivers, "extra-disks-drivers", nil, "driver for each extra disk (virtio, ide, ahci, scsi, nvme, megaraid)")
@@ -293,6 +292,7 @@ func getCreateCmd() *cobra.Command {
 
 	createCmd.Flags().AddFlagSet(getCommonFlags())
 	createCmd.Flags().AddFlagSet(getQemuFlags())
+	addOmniJoinTokenFlag(createCmd, &cOps.OmniAPIEndpoint, configPatchFlag, configPatchWorkerFlag, configPatchControlPlaneFlag)
 
 	createCmd.MarkFlagsMutuallyExclusive(tpmEnabledFlag, tpm2EnabledFlag)
 

@@ -82,6 +82,7 @@ type Common struct {
 	WireguardCIDR             string
 	WithUUIDHostnames         bool
 	NetworkIPv6               bool
+	OmniAPIEndpoint           string
 }
 
 // Docker are options specific to docker provisioner.

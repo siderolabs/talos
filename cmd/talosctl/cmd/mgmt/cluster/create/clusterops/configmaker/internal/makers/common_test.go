@@ -119,6 +119,24 @@ func TestCommonMaker(t *testing.T) {
 
 	_, err = m.GetClusterConfigs()
 	assert.NoError(t, err)
+
+	m.Ops.OmniAPIEndpoint = "grpc://10.5.0.1:8090?jointoken=my-token"
+	err = m.Init()
+	assert.NoError(t, err)
+
+	clusterCfgs, err := m.GetClusterConfigs()
+	assert.NoError(t, err)
+
+	req := clusterCfgs.ClusterRequest
+	assert.Equal(t, "test-cluster-machine-1", req.Nodes[0].Name)
+	assert.Equal(t, "test-cluster-machine-2", req.Nodes[1].Name)
+
+	cfgBytes, err := req.Nodes[0].Config.Bytes()
+	assert.NoError(t, err)
+
+	assert.Contains(t, string(cfgBytes), "apiVersion: v1alpha1")
+	assert.Contains(t, string(cfgBytes), "kind: SideroLinkConfig")
+	assert.Contains(t, string(cfgBytes), "apiUrl: grpc://10.5.0.1:8090?jointoken=my-token")
 }
 
 func TestCommonMaker_MachineConfig(t *testing.T) {
