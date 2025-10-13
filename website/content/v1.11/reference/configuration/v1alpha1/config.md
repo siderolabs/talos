@@ -2673,7 +2673,7 @@ discovery:
 {{< /highlight >}}</details> | |
 |`etcd` |<a href="#Config.cluster.etcd">EtcdConfig</a> |Etcd specific configuration options. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 etcd:
-    image: gcr.io/etcd-development/etcd:v3.6.4 # The container image used to create the etcd service.
+    image: gcr.io/etcd-development/etcd:v3.6.5 # The container image used to create the etcd service.
     # The `ca` is the root certificate authority of the PKI.
     ca:
         crt: LS0tIEVYQU1QTEUgQ0VSVElGSUNBVEUgLS0t
@@ -2688,7 +2688,7 @@ etcd:
 {{< /highlight >}}</details> | |
 |`coreDNS` |<a href="#Config.cluster.coreDNS">CoreDNS</a> |Core DNS specific configuration options. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 coreDNS:
-    image: registry.k8s.io/coredns/coredns:v1.12.3 # The `image` field is an override to the default coredns image.
+    image: registry.k8s.io/coredns/coredns:v1.12.4 # The `image` field is an override to the default coredns image.
 {{< /highlight >}}</details> | |
 |`externalCloudProvider` |<a href="#Config.cluster.externalCloudProvider">ExternalCloudProviderConfig</a> |External cloud provider configuration. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 externalCloudProvider:
@@ -3458,7 +3458,7 @@ EtcdConfig represents the etcd configuration options.
 {{< highlight yaml >}}
 cluster:
     etcd:
-        image: gcr.io/etcd-development/etcd:v3.6.4 # The container image used to create the etcd service.
+        image: gcr.io/etcd-development/etcd:v3.6.5 # The container image used to create the etcd service.
         # The `ca` is the root certificate authority of the PKI.
         ca:
             crt: LS0tIEVYQU1QTEUgQ0VSVElGSUNBVEUgLS0t
@@ -3476,7 +3476,7 @@ cluster:
 | Field | Type | Description | Value(s) |
 |-------|------|-------------|----------|
 |`image` |string |The container image used to create the etcd service. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
-image: gcr.io/etcd-development/etcd:v3.6.4
+image: gcr.io/etcd-development/etcd:v3.6.5
 {{< /highlight >}}</details> | |
 |`ca` |PEMEncodedCertificateAndKey |The `ca` is the root certificate authority of the PKI.<br>It is composed of a base64 encoded `crt` and `key`. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 ca:
@@ -3504,7 +3504,7 @@ CoreDNS represents the CoreDNS config values.
 {{< highlight yaml >}}
 cluster:
     coreDNS:
-        image: registry.k8s.io/coredns/coredns:v1.12.3 # The `image` field is an override to the default coredns image.
+        image: registry.k8s.io/coredns/coredns:v1.12.4 # The `image` field is an override to the default coredns image.
 {{< /highlight >}}
 
 
