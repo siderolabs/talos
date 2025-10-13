@@ -1174,7 +1174,12 @@ const (
 	DashboardTTY = 2
 
 	// FlannelVersion is the version of flannel to use.
-	FlannelVersion = "v0.27.2"
+	//
+	// Note: while updating, make sure to copy flannel image from docker.io to ghcr.io:
+	//   crane cp docker.io/flannel/flannel:vX.Y.Z ghcr.io/siderolabs/flannel:vX.Y.Z
+	//
+	// renovate: datasource=github-releases depName=flannel-io/flannel
+	FlannelVersion = "v0.27.4"
 
 	// PlatformMetal is the name of the metal platform.
 	PlatformMetal = "metal"
