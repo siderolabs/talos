@@ -1087,7 +1087,7 @@ spec:
           environment:
             GITHUB_STEP_NAME: ${{ github.job}}-e2e-canal-reset
             INTEGRATION_TEST_RUN: TestIntegration/api.ResetSuite/TestResetWithSpec
-            CUSTOM_CNI_URL: https://raw.githubusercontent.com/projectcalico/calico/v3.25.0/manifests/canal.yaml
+            CUSTOM_CNI_URL: https://raw.githubusercontent.com/projectcalico/calico/v3.30.3/manifests/canal.yaml
             IMAGE_REGISTRY: registry.dev.siderolabs.io
         - name: e2e-controlplane-port
           command: e2e-qemu

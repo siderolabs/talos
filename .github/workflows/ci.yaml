@@ -1,6 +1,6 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
 #
-# Generated on 2025-10-07T13:32:17Z by kres 97ccf82.
+# Generated on 2025-10-15T17:53:19Z by kres 7a9d88c.
 
 concurrency:
   group: ${{ github.head_ref || github.run_id }}
@@ -2625,7 +2625,7 @@ jobs:
           sudo -E make e2e-qemu
       - name: e2e-canal-reset
         env:
-          CUSTOM_CNI_URL: https://raw.githubusercontent.com/projectcalico/calico/v3.25.0/manifests/canal.yaml
+          CUSTOM_CNI_URL: https://raw.githubusercontent.com/projectcalico/calico/v3.30.3/manifests/canal.yaml
           GITHUB_STEP_NAME: ${{ github.job}}-e2e-canal-reset
           IMAGE_REGISTRY: registry.dev.siderolabs.io
           INTEGRATION_TEST_RUN: TestIntegration/api.ResetSuite/TestResetWithSpec
