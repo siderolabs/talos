@@ -209,7 +209,7 @@ func getCreateCmd() *cobra.Command {
 		qemu.MarkHidden("with-debug-shell") //nolint:errcheck
 		qemu.StringSliceVar(&qOps.ExtraUEFISearchPaths, extraUEFISearchPathsFlag, qOps.ExtraUEFISearchPaths, "additional search paths for UEFI firmware (only applies when UEFI is enabled)")
 		qemu.StringSliceVar(&qOps.NetworkNoMasqueradeCIDRs, networkNoMasqueradeCIDRsFlag, qOps.NetworkNoMasqueradeCIDRs, "list of CIDRs to exclude from NAT")
-		qemu.StringSliceVar(&qOps.Nameservers, nameserversFlag, qOps.Nameservers, "list of nameservers to use")
+		qemu.StringSliceVar(&qOps.Nameservers, nameserversFlag, qOps.Nameservers, "nameservers to use (will also attempt to add resolvers from /etc/resolv.conf)")
 		qemu.UintVar(&qOps.DiskBlockSize, diskBlockSizeFlag, qOps.DiskBlockSize, "disk block size")
 		qemu.StringVar(&qOps.TargetArch, targetArchFlag, qOps.TargetArch, "cluster architecture")
 		qemu.StringSliceVar(&qOps.CniBinPath, cniBinPathFlag, qOps.CniBinPath, "search path for CNI binaries")
@@ -253,6 +253,10 @@ func getCreateCmd() *cobra.Command {
 			return cli.WithContext(context.Background(), func(ctx context.Context) error {
 				if err := validateQemuFlags(cmd.Flags(), unImplementedFlagsDarwin); err != nil {
 					return err
+				}
+
+				if nameServerFlag := cmd.Flag(nameserversFlag); nameServerFlag != nil && !nameServerFlag.Changed {
+					qOps.AddHostNameservers = true
 				}
 
 				disks := fmt.Sprintf("virtio:%d", legacyOps.clusterDiskSize)

@@ -5,11 +5,13 @@
 package makers
 
 import (
+	"bufio"
 	"context"
 	"errors"
 	"fmt"
 	"net/netip"
 	"net/url"
+	"os"
 	"slices"
 	"strings"
 
@@ -215,6 +217,13 @@ func (m *Qemu) ModifyClusterRequest() error {
 	nameserverIPs, err := getNameserverIPs(m.EOps.Nameservers)
 	if err != nil {
 		return err
+	}
+
+	if m.EOps.AddHostNameservers {
+		hostNameserverIPs, err := ParseHostDNSConfig("/etc/resolv.conf")
+		if err == nil {
+			nameserverIPs = append(hostNameserverIPs, nameserverIPs...)
+		}
 	}
 
 	noMasqueradeCIDRs := make([]netip.Prefix, 0, len(m.EOps.NetworkNoMasqueradeCIDRs))
@@ -665,4 +674,45 @@ func getNameserverIPs(nameservers []string) ([]netip.Addr, error) {
 	}
 
 	return nameserverIPs, nil
+}
+
+const resolvNameserverKey = "nameserver"
+
+// ParseHostDNSConfig parses the system's configured DNS resolvers.
+// It is adapted from the stdlib:
+// https://cs.opensource.google/go/go/+/refs/tags/go1.22.1:src/net/dnsconfig_unix.go;l=18
+func ParseHostDNSConfig(path string) ([]netip.Addr, error) { //nolint:gocyclo
+	var dnsServers []netip.Addr
+
+	file, err := os.Open(path)
+	if err != nil {
+		return nil, fmt.Errorf("read %s: %w", path, err)
+	}
+	defer file.Close() //nolint:errcheck
+
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		if len(dnsServers) > 2 { // small, but the standard limit
+			break
+		}
+
+		line := scanner.Text()
+		if len(line) > 0 && (line[0] == ';' || line[0] == '#') {
+			// comment
+			continue
+		}
+
+		fields := strings.Fields(line)
+		// len(fields) > 1 because we need a value too
+		if len(fields) > 1 && fields[0] == resolvNameserverKey {
+			// make sure server name is an IP address (otherwise we need DNS to
+			// look it up) and not a loopback address (like systemd-resolved,
+			// which will be unreachable from the VM)
+			if addr, err := netip.ParseAddr(fields[1]); err == nil && !addr.IsLoopback() {
+				dnsServers = append(dnsServers, addr)
+			}
+		}
+	}
+
+	return dnsServers, nil
 }

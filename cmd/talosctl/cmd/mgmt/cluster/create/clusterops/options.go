@@ -110,6 +110,7 @@ type Qemu struct {
 	ExtraUEFISearchPaths      []string
 	NetworkNoMasqueradeCIDRs  []string
 	Nameservers               []string
+	AddHostNameservers        bool
 	Disks                     flags.Disks
 	DiskBlockSize             uint
 	PreallocateDisks          bool
