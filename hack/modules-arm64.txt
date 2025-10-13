@@ -16,6 +16,7 @@ kernel/drivers/block/ublk_drv.ko
 kernel/drivers/crypto/tegra/tegra-se.ko
 kernel/drivers/gpu/drm/drm_buddy.ko
 kernel/drivers/gpu/drm/drm_exec.ko
+kernel/drivers/gpu/drm/drm_gpuvm.ko
 kernel/drivers/gpu/drm/drm_panel_backlight_quirks.ko
 kernel/drivers/gpu/drm/drm_suballoc_helper.ko
 kernel/drivers/gpu/drm/drm_ttm_helper.ko
