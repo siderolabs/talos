@@ -24,7 +24,7 @@ Benefits include:
 
 ## Documentation
 
-For instructions on deploying and managing Talos, see the [Documentation](https://www.talos.dev/docs/latest/).
+For instructions on deploying and managing Talos, see the [Documentation](https://docs.siderolabs.com/talos).
 
 ## Community
 
