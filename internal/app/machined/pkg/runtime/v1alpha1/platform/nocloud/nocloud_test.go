@@ -19,6 +19,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"gopkg.in/yaml.v3"
 
+	platformruntime "github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/nocloud"
 	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
 	"github.com/siderolabs/talos/pkg/machinery/resources/network"
@@ -257,7 +258,7 @@ func TestEmptyNetworkConfig(t *testing.T) {
 	require.NoError(t, err)
 	assert.False(t, needsReconcile)
 
-	assert.Equal(t, &network.PlatformConfigSpec{
+	assert.Equal(t, &platformruntime.PlatformNetworkConfig{
 		Metadata: &runtime.PlatformMetadataSpec{
 			Platform: "nocloud",
 		},
