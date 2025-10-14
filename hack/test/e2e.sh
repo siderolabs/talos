@@ -141,7 +141,25 @@ function dump_cluster_state {
   ${KUBECTL} get pods --all-namespaces -o wide
 }
 
+function build_image_cache {
+  "${TALOSCTL}" images default | \
+    "${TALOSCTL}" image cache-create --images=- --image-cache-path="${TMP}/image-cache" --layout=flat
+}
+
 function build_registry_mirrors {
+  if [[ "${WITH_AIRGAPPED:-false}" != "false" ]]; then
+    build_image_cache
+
+    REGISTRY_MIRROR_FLAGS=()
+
+    for registry in docker.io registry.k8s.io quay.io gcr.io ghcr.io; do
+      addr="172.20.2.1"
+      REGISTRY_MIRROR_FLAGS+=("--registry-mirror=${registry}=http://${addr}:5000")
+    done
+
+    return
+  fi
+
   if [[ "${REGISTRY_MIRROR_FLAGS:-yes}" == "no" ]]; then
     REGISTRY_MIRROR_FLAGS=()
 

@@ -210,6 +210,7 @@ talosctl cluster create [flags]
 ### Options
 
 ```
+      --airgapped                                limit VM network access to the provisioning network only
       --arch string                              cluster architecture (default "amd64")
       --bad-rtc                                  launch VM with bad RTC state
       --cidr string                              CIDR of the cluster network (IPv4, ULA network for IPv6 is derived in automated way) (default "10.5.0.0/24")
@@ -255,7 +256,7 @@ talosctl cluster create [flags]
       --memory string(mb,gb)                     the limit on memory usage for each control plane/VM (default 2.0GiB)
       --memory-workers string(mb,gb)             the limit on memory usage for each worker/VM (default 2.0GiB)
       --mtu int                                  MTU of the cluster network (default 1500)
-      --nameservers strings                      list of nameservers to use (default [8.8.8.8,1.1.1.1,2001:4860:4860::8888,2606:4700:4700::1111])
+      --nameservers strings                      list of nameservers to use, by default use embedded DNS forwarder
       --no-masquerade-cidrs strings              list of CIDRs to exclude from NAT
       --registry-insecure-skip-verify strings    list of registry hostnames to skip TLS verification for
       --registry-mirror strings                  list of registry mirrors to use in format: <registry host>=<mirror URL>

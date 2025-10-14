@@ -35,6 +35,8 @@ import (
 type networkConfig struct {
 	networkConfigBase
 
+	Airgapped bool
+
 	// TODO: rename field to cniNetworkConfig
 	CniNetworkConfig  *libcni.NetworkConfigList
 	CNI               provision.CNIConfig
@@ -51,6 +53,7 @@ func getLaunchNetworkConfig(state *vm.State, clusterReq provision.ClusterRequest
 		CniNetworkConfig:  state.VMCNIConfig,
 		CNI:               clusterReq.Network.CNI,
 		NoMasqueradeCIDRs: clusterReq.Network.NoMasqueradeCIDRs,
+		Airgapped:         clusterReq.Network.Airgapped,
 	}
 }
 
@@ -178,23 +181,25 @@ func withNetworkContext(ctx context.Context, config *LaunchConfig, f func(config
 				"that supports automatic VM network configuration such as tc-redirect-tap")
 	}
 
-	cniChain := utils.FormatChainName(config.Network.CniNetworkConfig.Name, containerID)
+	if !config.Network.Airgapped {
+		cniChain := utils.FormatChainName(config.Network.CniNetworkConfig.Name, containerID)
 
-	ipt, err := iptables.New()
-	if err != nil {
-		return fmt.Errorf("failed to initialize iptables: %w", err)
-	}
+		ipt, err := iptables.New()
+		if err != nil {
+			return fmt.Errorf("failed to initialize iptables: %w", err)
+		}
 
-	// don't masquerade traffic with "broadcast" destination from the VM
-	//
-	// no need to clean up the rule, as CNI drops the whole chain
-	if err = ipt.InsertUnique("nat", cniChain, 1, "--destination", "255.255.255.255/32", "-j", "ACCEPT"); err != nil {
-		return fmt.Errorf("failed to insert iptables rule to allow broadcast traffic: %w", err)
-	}
+		// don't masquerade traffic with "broadcast" destination from the VM
+		//
+		// no need to clean up the rule, as CNI drops the whole chain
+		if err = ipt.InsertUnique("nat", cniChain, 1, "--destination", "255.255.255.255/32", "-j", "ACCEPT"); err != nil {
+			return fmt.Errorf("failed to insert iptables rule to allow broadcast traffic: %w", err)
+		}
 
-	for _, cidr := range config.Network.NoMasqueradeCIDRs {
-		if err = ipt.InsertUnique("nat", cniChain, 1, "--destination", cidr.String(), "-j", "ACCEPT"); err != nil {
-			return fmt.Errorf("failed to insert iptables rule to allow non-masquerade traffic to cidr %q: %w", cidr.String(), err)
+		for _, cidr := range config.Network.NoMasqueradeCIDRs {
+			if err = ipt.InsertUnique("nat", cniChain, 1, "--destination", cidr.String(), "-j", "ACCEPT"); err != nil {
+				return fmt.Errorf("failed to insert iptables rule to allow non-masquerade traffic to cidr %q: %w", cidr.String(), err)
+			}
 		}
 	}
 
