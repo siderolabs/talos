@@ -336,7 +336,7 @@ func runHTTPSProxy(ctx context.Context, certPEM, keyPEM []byte) error {
 		Addr: net.JoinHostPort("", strconv.Itoa(airgappedFlags.httpsProxyPort)),
 		Handler: loggingMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			if r.Method == http.MethodConnect {
-				handleTunneling(ctx, w, r)
+				handleTunneling(w, r)
 			} else {
 				handleHTTP(w, r)
 			}
