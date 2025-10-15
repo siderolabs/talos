@@ -1,6 +1,6 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
 #
-# Generated on 2025-10-15T17:53:19Z by kres 7a9d88c.
+# Generated on 2025-10-16T09:22:23Z by kres 7a9d88c.
 
 concurrency:
   group: ${{ github.head_ref || github.run_id }}
@@ -5048,7 +5048,7 @@ jobs:
         run: |
           make push
       - name: push-latest
-        if: '!startsWith(github.ref, ''refs/tags/'')'
+        if: github.ref == 'refs/heads/main'
         env:
           PLATFORM: linux/amd64,linux/arm64
         run: |
