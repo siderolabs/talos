@@ -1,3 +1,77 @@
+## [Talos 1.11.3](https://github.com/siderolabs/talos/releases/tag/v1.11.3) (2025-10-15)
+
+Welcome to the v1.11.3 release of Talos!
+
+
+
+Please try out the release binaries and report any issues at
+https://github.com/siderolabs/talos/issues.
+
+### Component Updates
+
+runc: 1.3.2
+Kubernetes: 1.34.1
+Linux: 6.12.52
+linux-firmware: 20251011
+CoreDNS: 1.12.4
+etcd: 3.6.5
+Flannel: 0.27.4
+
+Talos is built with Go 1.24.9.
+
+
+### Contributors
+
+* Noel Georgi
+* Andrey Smirnov
+* Chris Sanders
+* Grzegorz Rozniecki
+
+### Changes
+<details><summary>10 commits</summary>
+<p>
+
+* [`560241c00`](https://github.com/siderolabs/talos/commit/560241c00e0e9fdcd3ad614a28183f83407c07e5) fix: make Akamai platform usable
+* [`1b23cad61`](https://github.com/siderolabs/talos/commit/1b23cad61cafcfa9130ef216e85df07716ca8a8a) fix: cherry-pick of commit `0fbb0b0` from #11959
+* [`876719a92`](https://github.com/siderolabs/talos/commit/876719a92d4e4dfe8dfdd4d81c0671cf40e7bd45) fix: cherry-pick of commit `cd9fb27` from #11943
+* [`9a30ab6f5`](https://github.com/siderolabs/talos/commit/9a30ab6f5cd418636258cc2812aecfe3e7bf9ee5) feat: bump go, kernel and runc
+* [`0fbb0b028`](https://github.com/siderolabs/talos/commit/0fbb0b0280c1f8a4da954237e765c7682cea4402) fix: provide nocloud metadata with missing network config
+* [`0dad32819`](https://github.com/siderolabs/talos/commit/0dad328195190b579ac33a6ce10c38847889469a) feat: update Flannel to v0.27.4
+* [`49182b386`](https://github.com/siderolabs/talos/commit/49182b386b983814c6356dc21acd05a9a210bca3) fix: support secure HTTP proxy with gRPC dial
+* [`a460f5726`](https://github.com/siderolabs/talos/commit/a460f572693726b5b13528759afd6c9a2f57f3fd) feat: update etcd 3.6.5, CoreDNS 1.12.4
+* [`48ee8581b`](https://github.com/siderolabs/talos/commit/48ee8581bc5b0808bf70e7cdcdb38e5cf73695de) fix: don't set broadcast for /31 and /32 addresses
+* [`7668c52dd`](https://github.com/siderolabs/talos/commit/7668c52dd4126e0637d42dbf54b005e170051c91) fix: provide refreshing CA pool (resolvers)
+</p>
+</details>
+
+### Changes from siderolabs/pkgs
+<details><summary>5 commits</summary>
+<p>
+
+* [`c316374`](https://github.com/siderolabs/pkgs/commit/c316374783d6d527ac4b958405b4e4e40927392b) feat: bump go to 1.24.9
+* [`769a799`](https://github.com/siderolabs/pkgs/commit/769a799d9a7a9f246405872d39c70597b349d079) feat: update linux-firmware to 20251011
+* [`99ddfd5`](https://github.com/siderolabs/pkgs/commit/99ddfd56472d176f00e2856642e5c8e9d8734828) feat: update runc to 1.3.2
+* [`4fecfeb`](https://github.com/siderolabs/pkgs/commit/4fecfeb508fb7e13a6455a2c99816f9f7d9e8b52) feat: bump kernel to 6.12.52
+* [`934783f`](https://github.com/siderolabs/pkgs/commit/934783fe46b058a87e4b8508a179189ac3e72e7e) feat: bump go
+</p>
+</details>
+
+### Changes from siderolabs/tools
+<details><summary>2 commits</summary>
+<p>
+
+* [`05ee846`](https://github.com/siderolabs/tools/commit/05ee84625f275c57d13b7fcf25cd18a9f17b379a) feat: bump go
+* [`efbbe9d`](https://github.com/siderolabs/tools/commit/efbbe9d7cbd8dd5d428dfdcad7f674d0d57176ff) feat: bump go
+</p>
+</details>
+
+### Dependency Changes
+
+* **github.com/siderolabs/pkgs**   v1.11.0-21-gf95c679 -> v1.11.0-26-gc316374
+* **github.com/siderolabs/tools**  v1.11.0-2-g8556c73 -> v1.11.0-4-g05ee846
+
+Previous release can be found at [v1.11.2](https://github.com/siderolabs/talos/releases/tag/v1.11.2)
+
 ## [Talos 1.11.2](https://github.com/siderolabs/talos/releases/tag/v1.11.2) (2025-09-25)
 
 Welcome to the v1.11.2 release of Talos!
