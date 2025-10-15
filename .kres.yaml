@@ -157,7 +157,7 @@ spec:
           environment:
             PLATFORM: linux/amd64,linux/arm64
           conditions:
-            - not-on-tag
+            - only-on-main-branch
     - name: tag
       sops: true
       buildxOptions:
