@@ -24,6 +24,8 @@ To trigger a Kubernetes upgrade, issue a command specifiying the version of Kube
 
 `talosctl --nodes <controlplane node> upgrade-k8s --to {{< k8s_release >}}`
 
+You can specify the existing version of the cluster to just apply configuration changes without upgrading.
+
 Note that the `--nodes` parameter specifies the control plane node to send the API call to, but all members of the cluster will be upgraded.
 
 To check what will be upgraded you can run `talosctl upgrade-k8s` with the `--dry-run` flag:
