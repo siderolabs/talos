@@ -17,6 +17,8 @@ func ReadCgroupfsProperty(node *Node, cgroupPath, property string) error {
 		return fmt.Errorf("error opening cgroupfs file %w", err)
 	}
 
+	defer f.Close() //nolint:errcheck
+
 	err = node.Parse(property, f)
 	if err != nil {
 		return fmt.Errorf("error parsing cgroupfs file %w", err)
