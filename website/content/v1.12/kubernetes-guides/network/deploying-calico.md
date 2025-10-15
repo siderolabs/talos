@@ -39,14 +39,48 @@ kubectl create -f https://docs.tigera.io/calico/latest/manifests/tigera-operator
 
 ### Configuring Calico Networking
 
-Calico has a pluggable dataplane architecture that lets you choose the networking technology based on your use case. You can configure the dataplane by setting the `linuxDataplane` key in the installation manifest.
+Calico has a pluggable dataplane architecture that lets you choose the networking technology based on your use case. Networking technology is the backend that allows your nodes to move a packet from a source or destination to your Kubernetes resources.
 
 > **Note** If you like to learn more about the available Calico configurations [checkout this document](https://docs.tigera.io/calico/latest/reference/installation/api).
 
 {{< tabpane text=true >}}
+{{% tab header="NFTables" %}}
+
+> **Note**:  Calico also supports iptables backend, if you wish to run Calico in iptables mode change `linuxdataplane` value to `Iptables`.
+
+Use the following command to run Calico with NFTables backend.
+
+```bash
+kubectl create -f -<<EOF
+# This section includes base Calico installation configuration.
+apiVersion: operator.tigera.io/v1
+kind: Installation
+metadata:
+  name: default
+spec:
+  calicoNetwork:
+    bgp: Disabled
+    linuxDataplane: Nftables
+    ipPools:
+    - name: default-ipv4-ippool
+      blockSize: 26
+      cidr: 10.244.0.0/16
+      encapsulation: VXLAN
+      natOutgoing: Enabled
+      nodeSelector: all()
+  kubeletVolumePluginPath: None
+---
+apiVersion: operator.tigera.io/v1
+kind: APIServer
+metadata:
+  name: default
+EOF
+```
+
+{{% /tab %}}
 {{% tab header="eBPF" %}}
 
-By default, Calico uses the `/var` directory to mount cgroups. However, since this path is not writable in Talos, you need to change it to `/sys/fs/cgroup`.
+By default, Calico uses the `/var` directory to mount cgroups. However, since this path is not writable in Talos Linux, you need to change it to `/sys/fs/cgroup`.
 
 Use the following command to update the cgroup mount path:
 
@@ -61,28 +95,21 @@ spec:
 EOF
 ```
 
-> **Note** If you’d like to learn more about the available Calico configurations, [checkout this document](https://docs.tigera.io/calico/latest/reference/installation/api).
-
 In eBPF mode, Calico completely replaces the need for kube-proxy by programming all networking logic via eBPF programs. Before disabling kube-proxy, however, you need to ensure that Calico components can reach the API server. This can be done by creating a `kubernetes-services-endpoint` ConfigMap.
 
-Store the following YAML template in a file (e.g., `endpoint.yaml`), and replace <API server host> and <API server port> with your Kubernetes API server host and port.
-If [KubePrism]({{< relref "../configuration/kubeprism" >}}) is enabled (which is the default), use `localhost` as the API server host and `7445` as the port.
+> **Note**: In this part we assume you are using [KubePrism]({{< relref "../configuration/kubeprism" >}}) (which is enabled by the default).
 
-```yaml
+```bash
+kubectl create -f -<<EOF
 kind: ConfigMap
 apiVersion: v1
 metadata:
   name: kubernetes-services-endpoint
   namespace: tigera-operator
 data:
-  KUBERNETES_SERVICE_HOST: '<API server host>'
-  KUBERNETES_SERVICE_PORT: '<API server port>'
-```
-
-After editing the file, apply it using:
-
-```bash
-kubectl create -f endpoint.yaml
+  KUBERNETES_SERVICE_HOST: 'localhost'
+  KUBERNETES_SERVICE_PORT: '7445'
+EOF
 ```
 
 You can now safely disable `kube-proxy` by using the following command:
@@ -104,49 +131,14 @@ spec:
   calicoNetwork:
     bgp: Disabled
     linuxDataplane: BPF
-  cni:
-    ipam:
-      type: HostLocal
-    type: Calico
+    ipPools:
+    - name: default-ipv4-ippool
+      blockSize: 26
+      cidr: 10.244.0.0/16
+      encapsulation: VXLAN
+      natOutgoing: Enabled
+      nodeSelector: all()
   kubeletVolumePluginPath: None
----
-# Kubectl integration for Calico unique resources.
-apiVersion: operator.tigera.io/v1
-kind: APIServer
-metadata:
-  name: default
-spec: {}
-EOF
-```
-
-{{% /tab %}}
-{{% tab header="NFTables" %}}
-
-Use the following command to run Calico with NFTables backend.
-
-```bash
-kubectl create -f -<<EOF
-# This section includes base Calico installation configuration.
-apiVersion: operator.tigera.io/v1
-kind: Installation
-metadata:
-  name: default
-spec:
-  calicoNetwork:
-    bgp: Disabled
-    linuxDataplane: Nftables
-  cni:
-    ipam:
-      type: HostLocal
-    type: Calico
-  kubeletVolumePluginPath: None
----
-# Kubectl integration for Calico unique resources.
-apiVersion: operator.tigera.io/v1
-kind: APIServer
-metadata:
-  name: default
-spec: {}
 EOF
 ```
 
