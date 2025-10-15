@@ -79,7 +79,7 @@ To see a live demo of this section, see the video below:
 #### Prep Nodes
 
 Either during initial cluster creation or on running worker nodes, several machine config values should be edited.
-(This information is gathered from the Mayastor [documentation](https://mayastor.gitbook.io/introduction/quickstart/preparing-the-cluster).)
+(This information is gathered from the Mayastor [documentation](https://openebs.io/docs/Solutioning/openebs-on-kubernetes-platforms/talos).)
 We need to set the `vm.nr_hugepages` sysctl and add `openebs.io/engine=mayastor` labels to the nodes which are meant to be storage nodes.
 This can be done with `talosctl patch machineconfig` or via config patches during `talosctl gen config`.
 
@@ -96,6 +96,16 @@ First create a config patch file named `mayastor-patch.yaml` with the following 
   path: /machine/nodeLabels
   value:
     openebs.io/engine: mayastor
+- op: add
+  path: /machine/kubelet/extraMounts
+  value:
+    - destination: /var/local
+      type: bind
+      source: /var/lib/local
+      options:
+        - bind
+        - rshared
+        - rw
 ```
 
 Using gen config
@@ -118,7 +128,11 @@ talosctl -n <node ip> service kubelet restart
 
 #### Deploy Mayastor
 
-Continue setting up [Mayastor](https://mayastor.gitbook.io/introduction/quickstart/deploy-mayastor) using the official documentation.
+Continue setting up [Mayastor](https://openebs.io/docs/quickstart-guide/installation) using the official documentation.
+
+> Note: The Mayastor helm chart uses an init container that checks for the `nvme_tcp` module.
+> It does not mount `/sys` and will not be able to find it.
+> Easiest solution is to disable the init container.
 
 ### Piraeus / LINSTOR
 
