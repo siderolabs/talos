@@ -91,8 +91,6 @@ PKG_ZSTD ?= $(PKGS_PREFIX)/zstd:$(PKGS)
 GO_VERSION ?= 1.25
 # renovate: datasource=npm depName=markdownlint-cli
 MARKDOWNLINTCLI_VERSION ?= 0.45.0
-# renovate: datasource=docker versioning=docker depName=hugomods/hugo
-HUGO_VERSION ?= dart-sass-0.150.1
 OPERATING_SYSTEM := $(shell uname -s | tr "[:upper:]" "[:lower:]")
 ARCH := $(shell uname -m | sed 's/x86_64/amd64/' | sed 's/aarch64/arm64/')
 TALOSCTL_DEFAULT_TARGET := talosctl-$(OPERATING_SYSTEM)
@@ -343,19 +341,7 @@ generate: ## Generates code from protobuf service definitions and machinery conf
 
 .PHONY: docs
 docs: ## Generates the documentation for machine config, and talosctl.
-	@rm -rf docs/configuration/*
-	@rm -rf docs/talosctl/*
 	@$(MAKE) local-$@ DEST=./ PLATFORM=linux/amd64
-
-.PHONY: docs-preview
-docs-preview: ## Starts a local preview of the documentation using Hugo in docker
-	@docker run --rm --interactive --tty \
-	--volume $(PWD):/src \
-	--volume $(HOME)/.cache/hugo_cache:/tmp/hugo_cache \
-	--workdir /src/website \
-	--publish 1313:1313 \
-	hugomods/hugo:$(HUGO_VERSION) \
-	server
 
 # Local Artifacts
 

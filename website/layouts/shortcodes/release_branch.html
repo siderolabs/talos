@@ -1,3 +1,0 @@
-{{ $raw_version := replace .Page.FirstSection.Params.lastRelease "v" "" -}}
-{{- $major_minor := split $raw_version "." | first 2  -}}
-release-{{- delimit $major_minor "." -}}
