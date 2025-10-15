@@ -174,13 +174,7 @@ DEV        MODEL   SERIAL   TYPE   UUID   WWID   MODALIAS                    NAM
 
 Pick an endpoint IP in the `vagrant-libvirt` subnet but not used by any nodes, for example `192.168.121.100`.
 
-Generate a machine configuration:
-
-```bash
-talosctl gen config my-cluster https://192.168.121.100:6443 --install-disk /dev/vda
-```
-
-Edit `controlplane.yaml` to add the virtual IP you picked to a network interface under `.machine.network.interfaces`, for example:
+Create a patch.yaml file with the following contents and add the virtual IP you picked to a network interface under `.machine.network.interfaces`:
 
 ```yaml
 machine:
@@ -191,6 +185,12 @@ machine:
         dhcp: true
         vip:
           ip: 192.168.121.100
+```
+
+Generate a machine configuration:
+
+```bash
+talosctl gen config my-cluster https://192.168.121.100:6443 --install-disk /dev/vda --config-patch-control-plane @patch.yaml
 ```
 
 Apply the configuration to the initial control plane node:
