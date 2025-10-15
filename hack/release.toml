@@ -127,6 +127,16 @@ By default module signature verification is enabled (`module.sig_enforce=1`).
 When using Factory or Imager supply as `-module.sig_enfore module.sig_enforce=0` kernel parameters to disable module signature enforcement.
 """
 
+    [notes.grub]
+        title = "GRUB"
+        description = """\
+Talos Linux introduces new machine configuration option `.machine.install.grubUseUKICmdline` to control whether GRUB should use the kernel command line 
+provided by the boot assets (UKI) or to use the command line constructed by Talos itself (legacy behavior).
+
+This option defaults to `true` for new installations, which means that GRUB will use the command line from the UKI, making it easier to customize kernel parameters via boot asset generation.
+For existing installations upgrading to v1.12, this option will default to `false` to preserve the legacy behavior.
+"""
+
 [make_deps]
 
     [make_deps.tools]

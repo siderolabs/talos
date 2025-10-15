@@ -211,7 +211,7 @@ func (m *Maker[T]) initVersionContract() error {
 // logic has been run.
 func (m *Maker[T]) GetClusterConfigs() (clusterops.ClusterConfigs, error) {
 	// These options needs to be generated after the implementing maker has made changes to the cluster request.
-	m.GenOps = slices.Concat(m.GenOps, m.Provisioner.GenOptions(m.ClusterRequest.Network))
+	m.GenOps = slices.Concat(m.GenOps, m.Provisioner.GenOptions(m.ClusterRequest.Network, m.VersionContract))
 	m.GenOps = slices.Concat(m.GenOps, []generate.Option{generate.WithEndpointList(m.Endpoints)})
 
 	m.ConfigBundleOps = append(m.ConfigBundleOps,

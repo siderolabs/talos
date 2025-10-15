@@ -70,6 +70,7 @@ func TestContractCurrent(t *testing.T) {
 	assert.True(t, contract.HideDisablePSP())
 	assert.True(t, contract.HideRBACAndKeyUsage())
 	assert.False(t, contract.PopulateClusterSANsFromEndpoint())
+	assert.True(t, contract.GrubUseUKICmdlineDefault())
 }
 
 func TestContract1_12(t *testing.T) {
@@ -98,6 +99,7 @@ func TestContract1_12(t *testing.T) {
 	assert.True(t, contract.HideDisablePSP())
 	assert.True(t, contract.HideRBACAndKeyUsage())
 	assert.False(t, contract.PopulateClusterSANsFromEndpoint())
+	assert.True(t, contract.GrubUseUKICmdlineDefault())
 }
 
 func TestContract1_11(t *testing.T) {
@@ -126,6 +128,7 @@ func TestContract1_11(t *testing.T) {
 	assert.False(t, contract.HideDisablePSP())
 	assert.False(t, contract.HideRBACAndKeyUsage())
 	assert.True(t, contract.PopulateClusterSANsFromEndpoint())
+	assert.False(t, contract.GrubUseUKICmdlineDefault())
 }
 
 func TestContract1_10(t *testing.T) {
@@ -154,6 +157,7 @@ func TestContract1_10(t *testing.T) {
 	assert.False(t, contract.HideDisablePSP())
 	assert.False(t, contract.HideRBACAndKeyUsage())
 	assert.True(t, contract.PopulateClusterSANsFromEndpoint())
+	assert.False(t, contract.GrubUseUKICmdlineDefault())
 }
 
 func TestContract1_9(t *testing.T) {
@@ -182,6 +186,7 @@ func TestContract1_9(t *testing.T) {
 	assert.False(t, contract.HideDisablePSP())
 	assert.False(t, contract.HideRBACAndKeyUsage())
 	assert.True(t, contract.PopulateClusterSANsFromEndpoint())
+	assert.False(t, contract.GrubUseUKICmdlineDefault())
 }
 
 func TestContract1_8(t *testing.T) {
@@ -210,6 +215,7 @@ func TestContract1_8(t *testing.T) {
 	assert.False(t, contract.HideDisablePSP())
 	assert.False(t, contract.HideRBACAndKeyUsage())
 	assert.True(t, contract.PopulateClusterSANsFromEndpoint())
+	assert.False(t, contract.GrubUseUKICmdlineDefault())
 }
 
 func TestContract1_7(t *testing.T) {
@@ -238,6 +244,7 @@ func TestContract1_7(t *testing.T) {
 	assert.False(t, contract.HideDisablePSP())
 	assert.False(t, contract.HideRBACAndKeyUsage())
 	assert.True(t, contract.PopulateClusterSANsFromEndpoint())
+	assert.False(t, contract.GrubUseUKICmdlineDefault())
 }
 
 func TestContract1_6(t *testing.T) {
@@ -266,6 +273,7 @@ func TestContract1_6(t *testing.T) {
 	assert.False(t, contract.HideDisablePSP())
 	assert.False(t, contract.HideRBACAndKeyUsage())
 	assert.True(t, contract.PopulateClusterSANsFromEndpoint())
+	assert.False(t, contract.GrubUseUKICmdlineDefault())
 }
 
 func TestContract1_5(t *testing.T) {
@@ -294,6 +302,7 @@ func TestContract1_5(t *testing.T) {
 	assert.False(t, contract.HideDisablePSP())
 	assert.False(t, contract.HideRBACAndKeyUsage())
 	assert.True(t, contract.PopulateClusterSANsFromEndpoint())
+	assert.False(t, contract.GrubUseUKICmdlineDefault())
 }
 
 func TestContract1_4(t *testing.T) {
@@ -322,6 +331,7 @@ func TestContract1_4(t *testing.T) {
 	assert.False(t, contract.HideDisablePSP())
 	assert.False(t, contract.HideRBACAndKeyUsage())
 	assert.True(t, contract.PopulateClusterSANsFromEndpoint())
+	assert.False(t, contract.GrubUseUKICmdlineDefault())
 }
 
 func TestContract1_3(t *testing.T) {
@@ -350,6 +360,7 @@ func TestContract1_3(t *testing.T) {
 	assert.False(t, contract.HideDisablePSP())
 	assert.False(t, contract.HideRBACAndKeyUsage())
 	assert.True(t, contract.PopulateClusterSANsFromEndpoint())
+	assert.False(t, contract.GrubUseUKICmdlineDefault())
 }
 
 func TestContract1_2(t *testing.T) {
@@ -378,6 +389,7 @@ func TestContract1_2(t *testing.T) {
 	assert.False(t, contract.HideDisablePSP())
 	assert.False(t, contract.HideRBACAndKeyUsage())
 	assert.True(t, contract.PopulateClusterSANsFromEndpoint())
+	assert.False(t, contract.GrubUseUKICmdlineDefault())
 }
 
 func TestContract1_1(t *testing.T) {
@@ -406,6 +418,7 @@ func TestContract1_1(t *testing.T) {
 	assert.False(t, contract.HideDisablePSP())
 	assert.False(t, contract.HideRBACAndKeyUsage())
 	assert.True(t, contract.PopulateClusterSANsFromEndpoint())
+	assert.False(t, contract.GrubUseUKICmdlineDefault())
 }
 
 func TestContract1_0(t *testing.T) {
@@ -434,4 +447,5 @@ func TestContract1_0(t *testing.T) {
 	assert.False(t, contract.HideDisablePSP())
 	assert.False(t, contract.HideRBACAndKeyUsage())
 	assert.True(t, contract.PopulateClusterSANsFromEndpoint())
+	assert.False(t, contract.GrubUseUKICmdlineDefault())
 }

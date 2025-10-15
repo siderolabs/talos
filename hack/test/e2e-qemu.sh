@@ -207,17 +207,10 @@ case "${WITH_APPARMOR_LSM_ENABLED:-false}" in
   false)
     ;;
   *)
-    cat <<EOF > "${TMP}/kernel-security.patch"
-machine:
-  install:
-    extraKernelArgs:
-      - -selinux
-      - lsm=lockdown,capability,yama,apparmor,bpf
-      - apparmor=1
-EOF
+    # build disk image with specific kernel args to enable AppArmor LSM
+    make image-metal PLATFORM=linux/amd64 IMAGER_ARGS="--extra-kernel-arg -selinux --extra-kernel-arg lsm=lockdown,capability,yama,apparmor,bpf --extra-kernel-arg apparmor=1"
 
-    QEMU_FLAGS+=("--config-patch=@${TMP}/kernel-security.patch")
-    QEMU_FLAGS+=("--extra-boot-kernel-args=-selinux")
+    QEMU_FLAGS+=("--disk-image-path=_out/metal-amd64.raw.zst" "--skip-injecting-config" "--with-apply-config")
     ;;
 esac
 

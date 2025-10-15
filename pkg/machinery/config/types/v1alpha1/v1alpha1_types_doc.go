@@ -1004,13 +1004,7 @@ func (InstallConfig) Doc() *encoder.Doc {
 				Description: "Look up disk using disk attributes like model, size, serial and others.\nAlways has priority over `disk`.",
 				Comments:    [3]string{"" /* encoder.HeadComment */, "Look up disk using disk attributes like model, size, serial and others." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
-			{
-				Name:        "extraKernelArgs",
-				Type:        "[]string",
-				Note:        "",
-				Description: "Allows for supplying extra kernel args via the bootloader.\nExisting kernel args can be removed by prefixing the argument with a `-`.\nFor example `-console` removes all `console=<value>` arguments, whereas `-console=tty0` removes the `console=tty0` default argument.\nIf Talos is using systemd-boot as a bootloader (default for UEFI) this setting will be ignored.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Allows for supplying extra kernel args via the bootloader." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
+			{},
 			{
 				Name:        "image",
 				Type:        "string",
@@ -1040,6 +1034,13 @@ func (InstallConfig) Doc() *encoder.Doc {
 				Description: "Indicates if MBR partition should be marked as bootable (active).\nShould be enabled only for the systems with legacy BIOS that doesn't support GPT partitioning scheme.",
 				Comments:    [3]string{"" /* encoder.HeadComment */, "Indicates if MBR partition should be marked as bootable (active)." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
+			{
+				Name:        "grubUseUKICmdline",
+				Type:        "bool",
+				Note:        "",
+				Description: "Indicates if legacy GRUB bootloader should use kernel cmdline from the UKI instead of building it on the host.\nThis changes the way cmdline is managed with GRUB bootloader to be more consistent with UKI/systemd-boot.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Indicates if legacy GRUB bootloader should use kernel cmdline from the UKI instead of building it on the host." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
 		},
 	}
 
@@ -1048,7 +1049,6 @@ func (InstallConfig) Doc() *encoder.Doc {
 	doc.Fields[0].AddExample("", "/dev/sda")
 	doc.Fields[0].AddExample("", "/dev/nvme0")
 	doc.Fields[1].AddExample("", machineInstallDiskSelectorExample())
-	doc.Fields[2].AddExample("", []string{"talos.platform=metal", "reboot=k"})
 	doc.Fields[3].AddExample("", "ghcr.io/siderolabs/installer:latest")
 
 	return doc

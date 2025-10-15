@@ -53,6 +53,7 @@ type Options struct {
 	Force               bool
 	Zero                bool
 	LegacyBIOSSupport   bool
+	GrubUseUKICmdline   bool
 	MetaValues          MetaValues
 	OverlayInstaller    overlay.Installer[overlay.ExtraOptions]
 	OverlayName         string
@@ -118,6 +119,7 @@ func Install(ctx context.Context, p runtime.Platform, mode Mode, opts *Options) 
 		opts.ExtraOptions = extraOptions
 	}
 
+	// NOTE: this is legacy code which is only used when running in GRUB mode with GrubUseUKICmdline set to false.
 	cmdline := procfs.NewCmdline("")
 	cmdline.Append(constants.KernelParamPlatform, p.Name())
 
@@ -347,15 +349,16 @@ func (i *Installer) Install(ctx context.Context, mode Mode) (err error) {
 
 	// Install the bootloader.
 	bootInstallResult, err := bootlder.Install(bootloaderoptions.InstallOptions{
-		BootDisk:    i.options.Disk,
-		Arch:        i.options.Arch,
-		Cmdline:     i.cmdline.String(),
-		Version:     i.options.Version,
-		ImageMode:   mode.IsImage(),
-		MountPrefix: i.options.MountPrefix,
-		BootAssets:  i.options.BootAssets,
-		Printf:      i.options.Printf,
-		BlkidInfo:   info,
+		BootDisk:          i.options.Disk,
+		Arch:              i.options.Arch,
+		Cmdline:           i.cmdline.String(),
+		GrubUseUKICmdline: i.options.GrubUseUKICmdline,
+		Version:           i.options.Version,
+		ImageMode:         mode.IsImage(),
+		MountPrefix:       i.options.MountPrefix,
+		BootAssets:        i.options.BootAssets,
+		Printf:            i.options.Printf,
+		BlkidInfo:         info,
 
 		ExtraInstallStep: func() error {
 			if i.options.Board != constants.BoardNone {

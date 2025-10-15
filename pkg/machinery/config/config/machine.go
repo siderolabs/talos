@@ -100,6 +100,7 @@ type Install interface {
 	ExtraKernelArgs() []string
 	Zero() bool
 	LegacyBIOSSupport() bool
+	GrubUseUKICmdline() bool
 }
 
 // Extension defines the system extension.

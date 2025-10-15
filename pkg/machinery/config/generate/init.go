@@ -58,6 +58,10 @@ func (in *Input) init() ([]config.Document, error) {
 		MachineFeatures: &v1alpha1.FeaturesConfig{},
 	}
 
+	if in.Options.VersionContract.GrubUseUKICmdlineDefault() {
+		machine.MachineInstall.InstallGrubUseUKICmdline = pointer.To(true)
+	}
+
 	if in.Options.VersionContract.StableHostnameEnabled() && !in.Options.VersionContract.MultidocNetworkConfigSupported() {
 		machine.MachineFeatures.StableHostname = pointer.To(true) //nolint:staticcheck // using legacy field for older Talos versions
 	}

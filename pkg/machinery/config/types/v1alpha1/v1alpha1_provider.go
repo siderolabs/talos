@@ -1431,6 +1431,11 @@ func (i *InstallConfig) LegacyBIOSSupport() bool {
 	return pointer.SafeDeref(i.InstallLegacyBIOSSupport)
 }
 
+// GrubUseUKICmdline implements the config.Provider interface.
+func (i *InstallConfig) GrubUseUKICmdline() bool {
+	return pointer.SafeDeref(i.InstallGrubUseUKICmdline)
+}
+
 // Image implements the config.Provider interface.
 func (i InstallExtensionConfig) Image() string {
 	return i.ExtensionImage

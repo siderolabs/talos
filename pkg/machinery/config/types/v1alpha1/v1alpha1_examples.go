@@ -167,10 +167,10 @@ func machineNetworkConfigExample() *NetworkConfig {
 
 func machineInstallExample() *InstallConfig {
 	return &InstallConfig{
-		InstallDisk:            "/dev/sda",
-		InstallExtraKernelArgs: []string{"console=ttyS1", "panic=10"},
-		InstallImage:           "ghcr.io/siderolabs/installer:latest",
-		InstallWipe:            pointer.To(false),
+		InstallDisk:              "/dev/sda",
+		InstallImage:             "ghcr.io/siderolabs/installer:latest",
+		InstallWipe:              pointer.To(false),
+		InstallGrubUseUKICmdline: pointer.To(true),
 	}
 }
 

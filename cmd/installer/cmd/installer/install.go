@@ -32,6 +32,7 @@ func init() {
 	rootCmd.AddCommand(installCmd)
 }
 
+//nolint:gocyclo
 func runInstallCmd(ctx context.Context) (err error) {
 	log.Printf("running Talos installer %s", version.NewVersion().Tag)
 
@@ -50,6 +51,9 @@ func runInstallCmd(ctx context.Context) (err error) {
 	if err != nil {
 		if errors.Is(err, configloader.ErrNoConfig) {
 			log.Printf("machine configuration missing, skipping validation")
+
+			// machine configuration can be only missing while running an upgrade in maintenance mode, assume that we should follow GrubUseUKICmdline
+			options.GrubUseUKICmdline = true
 		} else {
 			return fmt.Errorf("error loading machine configuration: %w", err)
 		}
@@ -71,6 +75,10 @@ func runInstallCmd(ctx context.Context) (err error) {
 
 		if config.Machine() != nil && config.Machine().Install().LegacyBIOSSupport() {
 			options.LegacyBIOSSupport = true
+		}
+
+		if config.Machine() != nil && config.Machine().Install().GrubUseUKICmdline() {
+			options.GrubUseUKICmdline = true
 		}
 	}
 

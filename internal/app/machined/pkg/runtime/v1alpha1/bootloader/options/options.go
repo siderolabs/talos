@@ -19,8 +19,10 @@ type InstallOptions struct {
 	BootDisk string
 	// Target architecture.
 	Arch string
-	// Kernel command line (grub only).
+	// Kernel command line (grub only, and only if GrubUseUKICmdline is false).
 	Cmdline string
+	// Whether to use the UKI cmdline instead of building it on the host (grub only).
+	GrubUseUKICmdline bool
 	// Talos version.
 	Version string
 

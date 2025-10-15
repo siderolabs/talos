@@ -27,6 +27,7 @@ machine:
             - foo=bar
             - bar=baz
         wipe: false
+        grubUseUKICmdline: true
     sysctls:
         foo: bar
     registries:

@@ -7,6 +7,7 @@ package dual
 
 import (
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"strings"
@@ -135,7 +136,18 @@ func (c *Config) installGrub(opts options.InstallOptions) error {
 		return err
 	}
 
-	if err := grubConfig.Put(grubConfig.Default, opts.Cmdline, opts.Version); err != nil {
+	cmdline := opts.Cmdline
+
+	if opts.GrubUseUKICmdline {
+		cmdlineBytes, err := io.ReadAll(assetInfo.Cmdline)
+		if err != nil {
+			return fmt.Errorf("failed to read cmdline from UKI: %w", err)
+		}
+
+		cmdline = string(cmdlineBytes)
+	}
+
+	if err := grubConfig.Put(grubConfig.Default, cmdline, opts.Version); err != nil {
 		return err
 	}
 

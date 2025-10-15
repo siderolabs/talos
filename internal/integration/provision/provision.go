@@ -497,7 +497,10 @@ func (suite *BaseSuite) setupCluster(options clusterOptions) {
 
 	suite.controlPlaneEndpoint = suite.provisioner.GetExternalKubernetesControlPlaneEndpoint(request.Network, constants.DefaultControlPlanePort)
 
-	genOptions := suite.provisioner.GenOptions(request.Network)
+	versionContract, err := config.ParseContractFromVersion(options.SourceVersion)
+	suite.Require().NoError(err)
+
+	genOptions := suite.provisioner.GenOptions(request.Network, versionContract)
 
 	for _, registryMirror := range DefaultSettings.RegistryMirrors {
 		parts := strings.Split(registryMirror, "=")
@@ -523,9 +526,6 @@ func (suite *BaseSuite) setupCluster(options clusterOptions) {
 	}
 
 	var extraPatches []configpatcher.Patch
-
-	versionContract, err := config.ParseContractFromVersion(options.SourceVersion)
-	suite.Require().NoError(err)
 
 	if options.WithEncryption {
 		if versionContract.VolumeConfigEncryptionSupported() {

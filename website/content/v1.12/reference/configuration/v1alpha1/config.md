@@ -42,12 +42,9 @@ machine:
     # InstallConfig represents the installation options for preparing a node.
     install:
         disk: /dev/sda # The disk used for installations.
-        # Allows for supplying extra kernel args via the bootloader.
-        extraKernelArgs:
-            - console=ttyS1
-            - panic=10
         image: ghcr.io/siderolabs/installer:latest # Allows for supplying the image used to perform the installation.
         wipe: false # Indicates if the installation disk should be wiped at installation time.
+        grubUseUKICmdline: true # Indicates if legacy GRUB bootloader should use kernel cmdline from the UKI instead of building it on the host.
 
         # # Look up disk using disk attributes like model, size, serial and others.
         # diskSelector:
@@ -256,12 +253,9 @@ network:
 |`install` |<a href="#Config.machine.install">InstallConfig</a> |Used to provide instructions for installations.<br><br>Note that this configuration section gets silently ignored by Talos images that are considered pre-installed.<br>To make sure Talos installs according to the provided configuration, Talos should be booted with ISO or PXE-booted. <details><summary>Show example(s)</summary>MachineInstall config usage example.:{{< highlight yaml >}}
 install:
     disk: /dev/sda # The disk used for installations.
-    # Allows for supplying extra kernel args via the bootloader.
-    extraKernelArgs:
-        - console=ttyS1
-        - panic=10
     image: ghcr.io/siderolabs/installer:latest # Allows for supplying the image used to perform the installation.
     wipe: false # Indicates if the installation disk should be wiped at installation time.
+    grubUseUKICmdline: true # Indicates if legacy GRUB bootloader should use kernel cmdline from the UKI instead of building it on the host.
 
     # # Look up disk using disk attributes like model, size, serial and others.
     # diskSelector:
@@ -1752,12 +1746,9 @@ InstallConfig represents the installation options for preparing a node.
 machine:
     install:
         disk: /dev/sda # The disk used for installations.
-        # Allows for supplying extra kernel args via the bootloader.
-        extraKernelArgs:
-            - console=ttyS1
-            - panic=10
         image: ghcr.io/siderolabs/installer:latest # Allows for supplying the image used to perform the installation.
         wipe: false # Indicates if the installation disk should be wiped at installation time.
+        grubUseUKICmdline: true # Indicates if legacy GRUB bootloader should use kernel cmdline from the UKI instead of building it on the host.
 
         # # Look up disk using disk attributes like model, size, serial and others.
         # diskSelector:
@@ -1783,16 +1774,12 @@ diskSelector:
     # busPath: /pci0000:00/0000:00:17.0/ata1/host0/target0:0:0/0:0:0:0
     # busPath: /pci0000:00/*
 {{< /highlight >}}</details> | |
-|`extraKernelArgs` |[]string |Allows for supplying extra kernel args via the bootloader.<br>Existing kernel args can be removed by prefixing the argument with a `-`.<br>For example `-console` removes all `console=<value>` arguments, whereas `-console=tty0` removes the `console=tty0` default argument.<br>If Talos is using systemd-boot as a bootloader (default for UEFI) this setting will be ignored. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
-extraKernelArgs:
-    - talos.platform=metal
-    - reboot=k
-{{< /highlight >}}</details> | |
 |`image` |string |Allows for supplying the image used to perform the installation.<br>Image reference for each Talos release can be found on<br>[GitHub releases page](https://github.com/siderolabs/talos/releases). <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 image: ghcr.io/siderolabs/installer:latest
 {{< /highlight >}}</details> | |
 |`wipe` |bool |Indicates if the installation disk should be wiped at installation time.<br>Defaults to `true`.  |`true`<br />`yes`<br />`false`<br />`no`<br /> |
 |`legacyBIOSSupport` |bool |Indicates if MBR partition should be marked as bootable (active).<br>Should be enabled only for the systems with legacy BIOS that doesn't support GPT partitioning scheme.  | |
+|`grubUseUKICmdline` |bool |Indicates if legacy GRUB bootloader should use kernel cmdline from the UKI instead of building it on the host.<br>This changes the way cmdline is managed with GRUB bootloader to be more consistent with UKI/systemd-boot.  | |
 
 
 

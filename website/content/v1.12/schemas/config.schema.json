@@ -3242,16 +3242,6 @@
           "markdownDescription": "Look up disk using disk attributes like model, size, serial and others.\nAlways has priority over `disk`.",
           "x-intellij-html-description": "\u003cp\u003eLook up disk using disk attributes like model, size, serial and others.\nAlways has priority over \u003ccode\u003edisk\u003c/code\u003e.\u003c/p\u003e\n"
         },
-        "extraKernelArgs": {
-          "items": {
-            "type": "string"
-          },
-          "type": "array",
-          "title": "extraKernelArgs",
-          "description": "Allows for supplying extra kernel args via the bootloader.\nExisting kernel args can be removed by prefixing the argument with a -.\nFor example -console removes all console=\u0026lt;value\u0026gt; arguments, whereas -console=tty0 removes the console=tty0 default argument.\nIf Talos is using systemd-boot as a bootloader (default for UEFI) this setting will be ignored.\n",
-          "markdownDescription": "Allows for supplying extra kernel args via the bootloader.\nExisting kernel args can be removed by prefixing the argument with a `-`.\nFor example `-console` removes all `console=\u003cvalue\u003e` arguments, whereas `-console=tty0` removes the `console=tty0` default argument.\nIf Talos is using systemd-boot as a bootloader (default for UEFI) this setting will be ignored.",
-          "x-intellij-html-description": "\u003cp\u003eAllows for supplying extra kernel args via the bootloader.\nExisting kernel args can be removed by prefixing the argument with a \u003ccode\u003e-\u003c/code\u003e.\nFor example \u003ccode\u003e-console\u003c/code\u003e removes all \u003ccode\u003econsole=\u0026lt;value\u0026gt;\u003c/code\u003e arguments, whereas \u003ccode\u003e-console=tty0\u003c/code\u003e removes the \u003ccode\u003econsole=tty0\u003c/code\u003e default argument.\nIf Talos is using systemd-boot as a bootloader (default for UEFI) this setting will be ignored.\u003c/p\u003e\n"
-        },
         "image": {
           "type": "string",
           "title": "image",
@@ -3272,6 +3262,13 @@
           "description": "Indicates if MBR partition should be marked as bootable (active).\nShould be enabled only for the systems with legacy BIOS that doesn’t support GPT partitioning scheme.\n",
           "markdownDescription": "Indicates if MBR partition should be marked as bootable (active).\nShould be enabled only for the systems with legacy BIOS that doesn't support GPT partitioning scheme.",
           "x-intellij-html-description": "\u003cp\u003eIndicates if MBR partition should be marked as bootable (active).\nShould be enabled only for the systems with legacy BIOS that doesn\u0026rsquo;t support GPT partitioning scheme.\u003c/p\u003e\n"
+        },
+        "grubUseUKICmdline": {
+          "type": "boolean",
+          "title": "grubUseUKICmdline",
+          "description": "Indicates if legacy GRUB bootloader should use kernel cmdline from the UKI instead of building it on the host.\nThis changes the way cmdline is managed with GRUB bootloader to be more consistent with UKI/systemd-boot.\n",
+          "markdownDescription": "Indicates if legacy GRUB bootloader should use kernel cmdline from the UKI instead of building it on the host.\nThis changes the way cmdline is managed with GRUB bootloader to be more consistent with UKI/systemd-boot.",
+          "x-intellij-html-description": "\u003cp\u003eIndicates if legacy GRUB bootloader should use kernel cmdline from the UKI instead of building it on the host.\nThis changes the way cmdline is managed with GRUB bootloader to be more consistent with UKI/systemd-boot.\u003c/p\u003e\n"
         }
       },
       "additionalProperties": false,

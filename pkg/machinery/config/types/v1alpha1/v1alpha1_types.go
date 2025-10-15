@@ -801,13 +801,9 @@ type InstallConfig struct {
 	//   examples:
 	//     - value: machineInstallDiskSelectorExample()
 	InstallDiskSelector *InstallDiskSelector `yaml:"diskSelector,omitempty"`
-	//   description: |
-	//     Allows for supplying extra kernel args via the bootloader.
-	//     Existing kernel args can be removed by prefixing the argument with a `-`.
-	//     For example `-console` removes all `console=<value>` arguments, whereas `-console=tty0` removes the `console=tty0` default argument.
-	//     If Talos is using systemd-boot as a bootloader (default for UEFI) this setting will be ignored.
-	//   examples:
-	//     - value: '[]string{"talos.platform=metal", "reboot=k"}'
+	// docgen:nodoc
+	//
+	// Deprecated: Use Image Factory/imager instead to build a proper installer.
 	InstallExtraKernelArgs []string `yaml:"extraKernelArgs,omitempty"`
 	//   description: |
 	//     Allows for supplying the image used to perform the installation.
@@ -837,6 +833,10 @@ type InstallConfig struct {
 	//     Indicates if MBR partition should be marked as bootable (active).
 	//     Should be enabled only for the systems with legacy BIOS that doesn't support GPT partitioning scheme.
 	InstallLegacyBIOSSupport *bool `yaml:"legacyBIOSSupport,omitempty"`
+	//   description: |
+	//     Indicates if legacy GRUB bootloader should use kernel cmdline from the UKI instead of building it on the host.
+	//     This changes the way cmdline is managed with GRUB bootloader to be more consistent with UKI/systemd-boot.
+	InstallGrubUseUKICmdline *bool `yaml:"grubUseUKICmdline,omitempty"`
 }
 
 // InstallDiskSizeMatcher disk size condition parser.

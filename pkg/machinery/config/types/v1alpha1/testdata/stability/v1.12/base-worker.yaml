@@ -15,6 +15,7 @@ machine:
     network: {}
     install:
         wipe: false
+        grubUseUKICmdline: true
     features:
         diskQuotaSupport: true
         kubePrism:

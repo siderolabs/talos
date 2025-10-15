@@ -6,6 +6,7 @@ package grub
 
 import (
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -17,6 +18,7 @@ import (
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/mount"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/options"
 	"github.com/siderolabs/talos/internal/pkg/partition"
+	"github.com/siderolabs/talos/internal/pkg/smbios"
 	"github.com/siderolabs/talos/internal/pkg/uki"
 	"github.com/siderolabs/talos/pkg/imager/utils"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
@@ -94,6 +96,8 @@ func (c *Config) install(opts options.InstallOptions) (*options.InstallResult, e
 		return nil, err
 	}
 
+	cmdline := opts.Cmdline
+
 	// if we have a kernel path, assume that the kernel and initramfs are available
 	if _, err := os.Stat(opts.BootAssets.KernelPath); err == nil {
 		if err := utils.CopyFiles(
@@ -108,6 +112,10 @@ func (c *Config) install(opts options.InstallOptions) (*options.InstallResult, e
 			),
 		); err != nil {
 			return nil, err
+		}
+
+		if opts.GrubUseUKICmdline {
+			return nil, fmt.Errorf("cannot use UKI cmdline when boot assets are not UKI")
 		}
 	} else {
 		// if the kernel path does not exist, assume that the kernel and initramfs are in the UKI
@@ -135,9 +143,24 @@ func (c *Config) install(opts options.InstallOptions) (*options.InstallResult, e
 		); err != nil {
 			return nil, err
 		}
+
+		if opts.GrubUseUKICmdline {
+			cmdlineBytes, err := io.ReadAll(assetInfo.Cmdline)
+			if err != nil {
+				return nil, fmt.Errorf("failed to read cmdline from UKI: %w", err)
+			}
+
+			cmdline = string(cmdlineBytes)
+
+			if extraCmdline, err := smbios.ReadOEMVariable(constants.SDStubCmdlineExtraOEMVar); err == nil {
+				for _, extra := range extraCmdline {
+					cmdline += " " + extra
+				}
+			}
+		}
 	}
 
-	if err := c.Put(c.Default, opts.Cmdline, opts.Version); err != nil {
+	if err := c.Put(c.Default, cmdline, opts.Version); err != nil {
 		return nil, err
 	}
 

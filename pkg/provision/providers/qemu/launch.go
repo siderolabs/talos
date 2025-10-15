@@ -21,6 +21,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/siderolabs/go-blockdevice/v2/blkid"
 
+	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/provision/providers/vm"
 )
 
@@ -314,7 +315,7 @@ func launchVM(config *LaunchConfig) error {
 	}
 
 	args = append(args,
-		"-smbios", fmt.Sprintf("type=11,value=io.systemd.stub.kernel-cmdline-extra=%s", config.sdStubExtraCmdline),
+		"-smbios", fmt.Sprintf("type=11,value=%s=%s", constants.SDStubCmdlineExtraOEMVar, config.sdStubExtraCmdline),
 	)
 
 	if config.BadRTC {

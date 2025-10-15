@@ -7,6 +7,7 @@ package qemu
 import (
 	"context"
 
+	"github.com/siderolabs/talos/pkg/machinery/config"
 	"github.com/siderolabs/talos/pkg/machinery/config/generate"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
 	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
@@ -35,7 +36,7 @@ func (p *provisioner) Close() error {
 }
 
 // GenOptions provides a list of additional config generate options.
-func (p *provisioner) GenOptions(networkReq provision.NetworkRequest) []generate.Option {
+func (p *provisioner) GenOptions(networkReq provision.NetworkRequest, contract *config.VersionContract) []generate.Option {
 	hasIPv4 := false
 	hasIPv6 := false
 
@@ -51,23 +52,30 @@ func (p *provisioner) GenOptions(networkReq provision.NetworkRequest) []generate
 		NetworkDeviceKernelDriver: "virtio_net",
 	})
 
-	return []generate.Option{
+	opts := []generate.Option{
 		generate.WithInstallDisk("/dev/vda"),
-		generate.WithInstallExtraKernelArgs([]string{
-			"console=ttyS0", // TODO: should depend on arch
-			// reboot configuration
-			"reboot=k",
-			"panic=1",
-			"talos.shutdown=halt",
-			// Talos-specific
-			"talos.platform=metal",
-		}),
 		generate.WithNetworkOptions(
 			v1alpha1.WithNetworkInterfaceDHCP(virtioSelector, true),
 			v1alpha1.WithNetworkInterfaceDHCPv4(virtioSelector, hasIPv4),
 			v1alpha1.WithNetworkInterfaceDHCPv6(virtioSelector, hasIPv6),
 		),
 	}
+
+	if !contract.GrubUseUKICmdlineDefault() {
+		opts = append(opts,
+			generate.WithInstallExtraKernelArgs([]string{
+				"console=ttyS0", // TODO: should depend on arch
+				// reboot configuration
+				"reboot=k",
+				"panic=1",
+				"talos.shutdown=halt",
+				// Talos-specific
+				"talos.platform=metal",
+			}),
+		)
+	}
+
+	return opts
 }
 
 // GetInClusterKubernetesControlPlaneEndpoint returns the Kubernetes control plane endpoint.

@@ -30,7 +30,7 @@ import (
 	"github.com/siderolabs/talos/internal/pkg/efivarfs"
 	mountv3 "github.com/siderolabs/talos/internal/pkg/mount/v3"
 	"github.com/siderolabs/talos/internal/pkg/partition"
-	smbiosinternal "github.com/siderolabs/talos/internal/pkg/smbios"
+	"github.com/siderolabs/talos/internal/pkg/smbios"
 	"github.com/siderolabs/talos/internal/pkg/uki"
 	"github.com/siderolabs/talos/pkg/imager/utils"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
@@ -252,20 +252,9 @@ func (c *Config) KexecLoad(r runtime.Runtime, disk string) error {
 		}
 
 		if !efi.GetSecureBoot() {
-			smbiosInfo, err := smbiosinternal.GetSMBIOSInfo()
-			if err == nil {
-				for _, structure := range smbiosInfo.Structures {
-					if structure.Header.Type != 11 {
-						continue
-					}
-
-					const kernelCmdlineExtra = "io.systemd.stub.kernel-cmdline-extra="
-
-					for _, s := range structure.Strings {
-						if strings.HasPrefix(s, kernelCmdlineExtra) {
-							cmdline.WriteString(" " + s[len(kernelCmdlineExtra):])
-						}
-					}
+			if extraCmdline, err := smbios.ReadOEMVariable(constants.SDStubCmdlineExtraOEMVar); err == nil {
+				for _, s := range extraCmdline {
+					cmdline.WriteString(" " + s)
 				}
 			}
 		}

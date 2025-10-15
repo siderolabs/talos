@@ -197,3 +197,8 @@ func (contract *VersionContract) HideRBACAndKeyUsage() bool {
 func (contract *VersionContract) PopulateClusterSANsFromEndpoint() bool {
 	return !contract.Greater(TalosVersion1_11)
 }
+
+// GrubUseUKICmdlineDefault returns true if version of Talos should use UKI cmdline by default.
+func (contract *VersionContract) GrubUseUKICmdlineDefault() bool {
+	return contract.Greater(TalosVersion1_11)
+}

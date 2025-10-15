@@ -1317,6 +1317,9 @@ const (
 	DefaultOOMCgroupRankingExpression = `memory_max.hasValue() ? 0.0 :
 		{Besteffort: 1.0, Burstable: 0.5, Guaranteed: 0.0, Podruntime: 0.0, System: 0.0}[class] *
 		   double(memory_current.orValue(0u)) / double(memory_peak.orValue(0u) - memory_current.orValue(0u))`
+
+	// SDStubCmdlineExtraOEMVar is the name of the SMBIOS OEM variable that can be used to pass extra kernel command line parameters to systemd-stub.
+	SDStubCmdlineExtraOEMVar = "io.systemd.stub.kernel-cmdline-extra"
 )
 
 // See https://linux.die.net/man/3/klogctl

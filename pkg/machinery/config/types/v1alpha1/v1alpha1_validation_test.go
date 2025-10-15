@@ -281,6 +281,32 @@ func TestValidate(t *testing.T) {
 			},
 		},
 		{
+			name: "MachineInstallExtraArgsAndGrubUseUKICmdline",
+			config: &v1alpha1.Config{
+				ConfigVersion: "v1alpha1",
+				MachineConfig: &v1alpha1.MachineConfig{
+					MachineType: "worker",
+					MachineCA: &x509.PEMEncodedCertificateAndKey{
+						Crt: []byte("foo"),
+					},
+					MachineInstall: &v1alpha1.InstallConfig{
+						InstallDisk:              "/dev/vda",
+						InstallExtraKernelArgs:   []string{"foo=bar"},
+						InstallGrubUseUKICmdline: pointer.To(true),
+					},
+				},
+				ClusterConfig: &v1alpha1.ClusterConfig{
+					ControlPlane: &v1alpha1.ControlPlaneConfig{
+						Endpoint: &v1alpha1.Endpoint{
+							endpointURL,
+						},
+					},
+				},
+			},
+			requiresInstall: true,
+			expectedError:   "1 error occurred:\n\t* install.extraKernelArgs and install.grubUseUKICmdline can't be used together\n\n",
+		},
+		{
 			name: "ExternalCloudProviderEnabled",
 			config: &v1alpha1.Config{
 				ConfigVersion: "v1alpha1",
