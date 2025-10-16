@@ -9,11 +9,8 @@ import (
 	"errors"
 	"fmt"
 	"io/fs"
-	"os"
 	"path/filepath"
 	"strings"
-	"syscall"
-	"time"
 
 	"github.com/containerd/containerd/v2/core/content"
 	"github.com/containerd/errdefs"
@@ -106,11 +103,3 @@ func (s *singleFileStore) blobPath(dgst digest.Digest) (string, error) {
 }
 
 var errUnimplemented = errors.New("unimplemented")
-
-func getATime(fi os.FileInfo) time.Time {
-	if st, ok := fi.Sys().(*syscall.Stat_t); ok {
-		return time.Unix(st.Atim.Unix())
-	}
-
-	return fi.ModTime()
-}
