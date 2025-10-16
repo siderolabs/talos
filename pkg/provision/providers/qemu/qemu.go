@@ -7,8 +7,15 @@ package qemu
 import (
 	"context"
 
+	"github.com/siderolabs/talos/pkg/machinery/cel"
+	"github.com/siderolabs/talos/pkg/machinery/cel/celenv"
 	"github.com/siderolabs/talos/pkg/machinery/config"
+	"github.com/siderolabs/talos/pkg/machinery/config/bundle"
+	configconfig "github.com/siderolabs/talos/pkg/machinery/config/config"
+	"github.com/siderolabs/talos/pkg/machinery/config/configpatcher"
+	"github.com/siderolabs/talos/pkg/machinery/config/container"
 	"github.com/siderolabs/talos/pkg/machinery/config/generate"
+	networkcfg "github.com/siderolabs/talos/pkg/machinery/config/types/network"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
 	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
 	"github.com/siderolabs/talos/pkg/provision"
@@ -36,7 +43,7 @@ func (p *provisioner) Close() error {
 }
 
 // GenOptions provides a list of additional config generate options.
-func (p *provisioner) GenOptions(networkReq provision.NetworkRequest, contract *config.VersionContract) []generate.Option {
+func (p *provisioner) GenOptions(networkReq provision.NetworkRequest, contract *config.VersionContract) ([]generate.Option, []bundle.Option) {
 	hasIPv4 := false
 	hasIPv6 := false
 
@@ -48,21 +55,52 @@ func (p *provisioner) GenOptions(networkReq provision.NetworkRequest, contract *
 		}
 	}
 
-	virtioSelector := v1alpha1.IfaceBySelector(v1alpha1.NetworkDeviceSelector{
-		NetworkDeviceKernelDriver: "virtio_net",
-	})
-
-	opts := []generate.Option{
+	genOpts := []generate.Option{
 		generate.WithInstallDisk("/dev/vda"),
-		generate.WithNetworkOptions(
-			v1alpha1.WithNetworkInterfaceDHCP(virtioSelector, true),
-			v1alpha1.WithNetworkInterfaceDHCPv4(virtioSelector, hasIPv4),
-			v1alpha1.WithNetworkInterfaceDHCPv6(virtioSelector, hasIPv6),
-		),
+	}
+
+	var bundleOpts []bundle.Option
+
+	if contract.MultidocNetworkConfigSupported() {
+		aliasConfig := networkcfg.NewLinkAliasConfigV1Alpha1("net0")
+		aliasConfig.Selector = networkcfg.LinkSelector{
+			Match: cel.MustExpression(cel.ParseBooleanExpression(`link.driver == "virtio_net"`, celenv.LinkLocator())),
+		}
+
+		documents := []configconfig.Document{aliasConfig}
+
+		if hasIPv4 {
+			dhcp4Config := networkcfg.NewDHCPv4ConfigV1Alpha1("net0")
+			documents = append(documents, dhcp4Config)
+		} else if hasIPv6 {
+			dhcp6Config := networkcfg.NewDHCPv6ConfigV1Alpha1("net0")
+			documents = append(documents, dhcp6Config)
+		}
+
+		ctr, err := container.New(documents...)
+		if err != nil {
+			panic(err)
+		}
+
+		bundleOpts = append(bundleOpts,
+			bundle.WithPatch([]configpatcher.Patch{configpatcher.NewStrategicMergePatch(ctr)}),
+		)
+	} else {
+		virtioSelector := v1alpha1.IfaceBySelector(v1alpha1.NetworkDeviceSelector{
+			NetworkDeviceKernelDriver: "virtio_net",
+		})
+
+		genOpts = append(genOpts,
+			generate.WithNetworkOptions(
+				v1alpha1.WithNetworkInterfaceDHCP(virtioSelector, true),
+				v1alpha1.WithNetworkInterfaceDHCPv4(virtioSelector, hasIPv4),
+				v1alpha1.WithNetworkInterfaceDHCPv6(virtioSelector, hasIPv6),
+			),
+		)
 	}
 
 	if !contract.GrubUseUKICmdlineDefault() {
-		opts = append(opts,
+		genOpts = append(genOpts,
 			generate.WithInstallExtraKernelArgs([]string{
 				"console=ttyS0", // TODO: should depend on arch
 				// reboot configuration
@@ -75,7 +113,7 @@ func (p *provisioner) GenOptions(networkReq provision.NetworkRequest, contract *
 		)
 	}
 
-	return opts
+	return genOpts, bundleOpts
 }
 
 // GetInClusterKubernetesControlPlaneEndpoint returns the Kubernetes control plane endpoint.

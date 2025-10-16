@@ -400,7 +400,7 @@ func (ctrl *OperatorSpecController) newOperator(logger *zap.Logger, spec *networ
 	case network.OperatorDHCP6:
 		logger = logger.With(zap.String("operator", "dhcp6"))
 
-		return operator.NewDHCP6(logger, spec.LinkName, spec.DHCP6)
+		return operator.NewDHCP6(logger, spec.LinkName, spec.DHCP6, ctrl.State)
 	case network.OperatorVIP:
 		logger = logger.With(zap.String("operator", "vip"))
 

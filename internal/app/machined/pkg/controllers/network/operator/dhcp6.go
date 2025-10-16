@@ -6,7 +6,6 @@ package operator
 
 import (
 	"context"
-	"encoding/hex"
 	"errors"
 	"fmt"
 	"net"
@@ -15,6 +14,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/insomniacslk/dhcp/dhcpv6"
 	"github.com/insomniacslk/dhcp/dhcpv6/nclient6"
 	"github.com/jsimonetti/rtnetlink/v2"
@@ -31,9 +31,10 @@ import (
 // DHCP6 implements the DHCPv6 network operator.
 type DHCP6 struct {
 	logger *zap.Logger
+	state  state.State
 
 	linkName            string
-	duid                []byte
+	clientIdentifier    network.ClientIdentifierSpec
 	skipHostnameRequest bool
 
 	mu          sync.Mutex
@@ -44,13 +45,12 @@ type DHCP6 struct {
 }
 
 // NewDHCP6 creates DHCPv6 operator.
-func NewDHCP6(logger *zap.Logger, linkName string, config network.DHCP6OperatorSpec) *DHCP6 {
-	duidBin, _ := hex.DecodeString(config.DUID) //nolint:errcheck
-
+func NewDHCP6(logger *zap.Logger, linkName string, config network.DHCP6OperatorSpec, state state.State) *DHCP6 {
 	return &DHCP6{
 		logger:              logger,
+		state:               state,
 		linkName:            linkName,
-		duid:                duidBin,
+		clientIdentifier:    config.ClientIdentifier,
 		skipHostnameRequest: config.SkipHostnameRequest,
 	}
 }
@@ -232,14 +232,12 @@ func (d *DHCP6) renew(ctx context.Context) (time.Duration, error) {
 
 	var modifiers []dhcpv6.Modifier
 
-	if len(d.duid) > 0 {
-		duid, derr := dhcpv6.DUIDFromBytes(d.duid)
-		if derr != nil {
-			d.logger.Error("failed to parse DUID, ignored", zap.String("link", d.linkName))
-		} else {
-			modifiers = []dhcpv6.Modifier{dhcpv6.WithClientID(duid)}
-		}
+	clientIdentifierModifiers, err := GetDHCPv6ClientIdentifier(ctx, d.state, d.logger, d.linkName, d.clientIdentifier)
+	if err != nil {
+		return 0, fmt.Errorf("error getting DHCPv6 client identifier: %w", err)
 	}
+
+	modifiers = append(modifiers, clientIdentifierModifiers...)
 
 	reply, err := cli.RapidSolicit(ctx, modifiers...)
 	if err != nil {

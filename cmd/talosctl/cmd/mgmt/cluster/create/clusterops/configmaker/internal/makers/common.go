@@ -274,7 +274,9 @@ func (m *Maker[T]) applyOmniConfigs() error {
 
 func (m *Maker[T]) finalizeMachineConfigs() (*bundle.Bundle, error) {
 	// These options needs to be generated after the implementing maker has made changes to the cluster request.
-	m.GenOps = slices.Concat(m.GenOps, m.Provisioner.GenOptions(m.ClusterRequest.Network, m.VersionContract))
+	provisionGenOps, provisionBundleOps := m.Provisioner.GenOptions(m.ClusterRequest.Network, m.VersionContract)
+	m.GenOps = slices.Concat(m.GenOps, provisionGenOps)
+	m.ConfigBundleOps = slices.Concat(m.ConfigBundleOps, provisionBundleOps)
 	m.GenOps = slices.Concat(m.GenOps, []generate.Option{generate.WithEndpointList(m.Endpoints)})
 
 	m.ConfigBundleOps = append(m.ConfigBundleOps,

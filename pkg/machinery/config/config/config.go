@@ -23,6 +23,9 @@ type Config interface { //nolint:interfacebloat
 	NetworkHostnameConfig() NetworkHostnameConfig
 	NetworkCommonLinkConfigs() []NetworkCommonLinkConfig
 	NetworkLinkAliasConfigs() []NetworkLinkAliasConfig
+	NetworkDHCPConfigs() []NetworkDHCPConfig
+	NetworkDHCPv4Configs() []NetworkDHCPv4Config
+	NetworkDHCPv6Configs() []NetworkDHCPv6Config
 
 	// - block devices/storage:
 	Volumes() VolumesConfig

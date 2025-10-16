@@ -14,6 +14,7 @@ import (
 	"github.com/docker/docker/client"
 
 	"github.com/siderolabs/talos/pkg/machinery/config"
+	"github.com/siderolabs/talos/pkg/machinery/config/bundle"
 	"github.com/siderolabs/talos/pkg/machinery/config/generate"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
 	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
@@ -86,13 +87,13 @@ func (p *provisioner) Close() error {
 }
 
 // GenOptions provides a list of additional config generate options.
-func (p *provisioner) GenOptions(networkReq provision.NetworkRequest, _ *config.VersionContract) []generate.Option {
+func (p *provisioner) GenOptions(networkReq provision.NetworkRequest, _ *config.VersionContract) ([]generate.Option, []bundle.Option) {
 	return []generate.Option{
 		generate.WithNetworkOptions(
 			v1alpha1.WithNetworkInterfaceIgnore(v1alpha1.IfaceByName("eth0")),
 		),
 		generate.WithHostDNSForwardKubeDNSToHost(true),
-	}
+	}, nil
 }
 
 // GetInClusterKubernetesControlPlaneEndpoint returns the Kubernetes control plane endpoint.

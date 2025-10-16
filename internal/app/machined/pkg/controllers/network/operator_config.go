@@ -6,6 +6,7 @@ package network
 
 import (
 	"context"
+	"encoding/hex"
 	"fmt"
 
 	"github.com/cosi-project/runtime/pkg/controller"
@@ -179,13 +180,21 @@ func (ctrl *OperatorConfigController) Run(ctx context.Context, r controller.Runt
 						routeMetric = network.DefaultRouteMetric
 					}
 
+					clientIdentifier := network.ClientIdentifierSpec{}
+					if duid := device.DHCPOptions().DUIDv6(); len(duid) > 0 {
+						clientIdentifier = network.ClientIdentifierSpec{
+							ClientIdentifier: nethelpers.ClientIdentifierDUID,
+							DUIDRawHex:       duid,
+						}
+					}
+
 					specs = append(specs, network.OperatorSpecSpec{
 						Operator:  network.OperatorDHCP6,
 						LinkName:  linkNameResolver.Resolve(device.Interface()),
 						RequireUp: true,
 						DHCP6: network.DHCP6OperatorSpec{
-							RouteMetric: routeMetric,
-							DUID:        device.DHCPOptions().DUIDv6(),
+							RouteMetric:      routeMetric,
+							ClientIdentifier: clientIdentifier,
 						},
 						ConfigLayer: network.ConfigMachineConfiguration,
 					})
@@ -215,18 +224,63 @@ func (ctrl *OperatorConfigController) Run(ctx context.Context, r controller.Runt
 							routeMetric = network.DefaultRouteMetric
 						}
 
+						clientIdentifier := network.ClientIdentifierSpec{}
+						if duid := vlan.DHCPOptions().DUIDv6(); len(duid) > 0 {
+							clientIdentifier = network.ClientIdentifierSpec{
+								ClientIdentifier: nethelpers.ClientIdentifierDUID,
+								DUIDRawHex:       duid,
+							}
+						}
+
 						specs = append(specs, network.OperatorSpecSpec{
 							Operator:  network.OperatorDHCP6,
 							LinkName:  nethelpers.VLANLinkName(device.Interface(), vlan.ID()),
 							RequireUp: true,
 							DHCP6: network.DHCP6OperatorSpec{
-								RouteMetric: routeMetric,
-								DUID:        vlan.DHCPOptions().DUIDv6(),
+								RouteMetric:      routeMetric,
+								ClientIdentifier: clientIdentifier,
 							},
 							ConfigLayer: network.ConfigMachineConfiguration,
 						})
 					}
 				}
+			}
+		}
+
+		// operator configs from machine config (new-style)
+		if cfg != nil {
+			for _, dhcp4 := range cfg.Config().NetworkDHCPv4Configs() {
+				specs = append(specs, network.OperatorSpecSpec{
+					Operator:  network.OperatorDHCP4,
+					LinkName:  linkNameResolver.Resolve(dhcp4.Name()),
+					RequireUp: true,
+					DHCP4: network.DHCP4OperatorSpec{
+						RouteMetric:         dhcp4.RouteMetric().ValueOr(network.DefaultRouteMetric),
+						SkipHostnameRequest: dhcp4.IgnoreHostname().ValueOrZero(),
+						ClientIdentifier: network.ClientIdentifierSpec{
+							ClientIdentifier: dhcp4.ClientIdentifier(),
+							DUIDRawHex:       hex.EncodeToString(dhcp4.DUIDRaw().ValueOrZero()),
+						},
+					},
+					ConfigLayer: network.ConfigMachineConfiguration,
+				})
+			}
+
+			for _, dhcp6 := range cfg.Config().NetworkDHCPv6Configs() {
+				specs = append(specs, network.OperatorSpecSpec{
+					Operator:  network.OperatorDHCP6,
+					LinkName:  linkNameResolver.Resolve(dhcp6.Name()),
+					RequireUp: true,
+					DHCP6: network.DHCP6OperatorSpec{
+						RouteMetric:         dhcp6.RouteMetric().ValueOr(network.DefaultRouteMetric),
+						SkipHostnameRequest: dhcp6.IgnoreHostname().ValueOrZero(),
+						ClientIdentifier: network.ClientIdentifierSpec{
+							ClientIdentifier: dhcp6.ClientIdentifier(),
+							DUIDRawHex:       hex.EncodeToString(dhcp6.DUIDRaw().ValueOrZero()),
+						},
+					},
+					ConfigLayer: network.ConfigMachineConfiguration,
+				})
 			}
 		}
 

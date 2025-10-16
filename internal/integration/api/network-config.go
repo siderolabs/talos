@@ -261,28 +261,42 @@ func (suite *NetworkConfigSuite) TestLinkAliasConfig() {
 		}
 	}
 
-	suite.Require().NotEmpty(linkName, "expected to find at least one physical link without an alias")
+	if linkName != "" {
+		// we have unaliased physical link to test with, try aliasing it
+		const aliasName = "test-alias"
 
-	const aliasName = "test-alias"
+		cfg := network.NewLinkAliasConfigV1Alpha1(aliasName)
+		cfg.Selector.Match = cel.MustExpression(cel.ParseBooleanExpression("mac(link.permanent_addr) == '"+permanentAddr+"'", celenv.LinkLocator()))
 
-	cfg := network.NewLinkAliasConfigV1Alpha1(aliasName)
-	cfg.Selector.Match = cel.MustExpression(cel.ParseBooleanExpression("mac(link.permanent_addr) == '"+permanentAddr+"'", celenv.LinkLocator()))
+		suite.PatchMachineConfig(nodeCtx, cfg)
 
-	suite.PatchMachineConfig(nodeCtx, cfg)
+		rtestutils.AssertResource(nodeCtx, suite.T(), suite.Client.COSI, linkName,
+			func(link *networkres.LinkStatus, asrt *assert.Assertions) {
+				asrt.Equal(aliasName, link.TypedSpec().Alias)
+			},
+		)
 
-	rtestutils.AssertResource(nodeCtx, suite.T(), suite.Client.COSI, linkName,
-		func(link *networkres.LinkStatus, asrt *assert.Assertions) {
-			asrt.Equal(aliasName, link.TypedSpec().Alias)
-		},
-	)
+		suite.RemoveMachineConfigDocumentsByName(nodeCtx, network.LinkAliasKind, aliasName)
 
-	suite.RemoveMachineConfigDocumentsByName(nodeCtx, network.LinkAliasKind, aliasName)
+		rtestutils.AssertResource(nodeCtx, suite.T(), suite.Client.COSI, linkName,
+			func(link *networkres.LinkStatus, asrt *assert.Assertions) {
+				asrt.Empty(link.TypedSpec().Alias)
+			},
+		)
+	} else {
+		suite.T().Log("all physical links are already aliased, verifying existing aliases")
 
-	rtestutils.AssertResource(nodeCtx, suite.T(), suite.Client.COSI, linkName,
-		func(link *networkres.LinkStatus, asrt *assert.Assertions) {
-			asrt.Empty(link.TypedSpec().Alias)
-		},
-	)
+		// no unaliased physical links, verify that alias worked properly
+		for link := range links.All() {
+			if link.TypedSpec().Physical() && link.TypedSpec().Alias != "" {
+				rtestutils.AssertResource(nodeCtx, suite.T(), suite.Client.COSI, link.Metadata().ID(),
+					func(linkAlias *networkres.LinkAliasSpec, asrt *assert.Assertions) {
+						asrt.Equal(link.TypedSpec().Alias, linkAlias.TypedSpec().Alias)
+					},
+				)
+			}
+		}
+	}
 }
 
 func init() {

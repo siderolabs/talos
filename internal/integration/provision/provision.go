@@ -500,7 +500,7 @@ func (suite *BaseSuite) setupCluster(options clusterOptions) {
 	versionContract, err := config.ParseContractFromVersion(options.SourceVersion)
 	suite.Require().NoError(err)
 
-	genOptions := suite.provisioner.GenOptions(request.Network, versionContract)
+	genOptions, bundleOptions := suite.provisioner.GenOptions(request.Network, versionContract)
 
 	for _, registryMirror := range DefaultSettings.RegistryMirrors {
 		parts := strings.Split(registryMirror, "=")
@@ -595,21 +595,25 @@ func (suite *BaseSuite) setupCluster(options clusterOptions) {
 	}
 
 	suite.configBundle, err = bundle.NewBundle(
-		bundle.WithInputOptions(
-			&bundle.InputOptions{
-				ClusterName: options.ClusterName,
-				Endpoint:    suite.controlPlaneEndpoint,
-				KubeVersion: options.SourceK8sVersion,
-				GenOptions: append(
-					genOptions,
-					generate.WithEndpointList(controlplaneEndpoints),
-					generate.WithInstallImage(options.SourceInstallerImage),
-					generate.WithDNSDomain("cluster.local"),
-					generate.WithVersionContract(versionContract),
-				),
-			},
-		),
-		bundle.WithPatch(extraPatches),
+		append([]bundle.Option{
+			bundle.WithInputOptions(
+				&bundle.InputOptions{
+					ClusterName: options.ClusterName,
+					Endpoint:    suite.controlPlaneEndpoint,
+					KubeVersion: options.SourceK8sVersion,
+					GenOptions: append(
+						genOptions,
+						generate.WithEndpointList(controlplaneEndpoints),
+						generate.WithInstallImage(options.SourceInstallerImage),
+						generate.WithDNSDomain("cluster.local"),
+						generate.WithVersionContract(versionContract),
+					),
+				},
+			),
+			bundle.WithPatch(extraPatches),
+		},
+			bundleOptions...,
+		)...,
 	)
 	suite.Require().NoError(err)
 

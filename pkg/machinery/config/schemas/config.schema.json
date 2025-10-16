@@ -789,6 +789,146 @@
       "type": "object",
       "description": "CommonLinkConfig is common configuration for network links, and logical links."
     },
+    "network.DHCPv4ConfigV1Alpha1": {
+      "properties": {
+        "apiVersion": {
+          "enum": [
+            "v1alpha1"
+          ],
+          "title": "apiVersion",
+          "description": "apiVersion is the API version of the resource.\n",
+          "markdownDescription": "apiVersion is the API version of the resource.",
+          "x-intellij-html-description": "\u003cp\u003eapiVersion is the API version of the resource.\u003c/p\u003e\n"
+        },
+        "kind": {
+          "enum": [
+            "DHCPv4Config"
+          ],
+          "title": "kind",
+          "description": "kind is the kind of the resource.\n",
+          "markdownDescription": "kind is the kind of the resource.",
+          "x-intellij-html-description": "\u003cp\u003ekind is the kind of the resource.\u003c/p\u003e\n"
+        },
+        "name": {
+          "type": "string",
+          "title": "name",
+          "description": "Name of the link (interface).\n",
+          "markdownDescription": "Name of the link (interface).",
+          "x-intellij-html-description": "\u003cp\u003eName of the link (interface).\u003c/p\u003e\n"
+        },
+        "routeMetric": {
+          "type": "integer",
+          "title": "routeMetric",
+          "description": "An optional metric for the routes received from the DHCP server.\n\nLower values indicate higher priority.\nDefault value is 1024.\n",
+          "markdownDescription": "An optional metric for the routes received from the DHCP server.\n\nLower values indicate higher priority.\nDefault value is 1024.",
+          "x-intellij-html-description": "\u003cp\u003eAn optional metric for the routes received from the DHCP server.\u003c/p\u003e\n\n\u003cp\u003eLower values indicate higher priority.\nDefault value is 1024.\u003c/p\u003e\n"
+        },
+        "ignoreHostname": {
+          "type": "boolean",
+          "title": "ignoreHostname",
+          "description": "Ignore hostname received from the DHCP server.\n",
+          "markdownDescription": "Ignore hostname received from the DHCP server.",
+          "x-intellij-html-description": "\u003cp\u003eIgnore hostname received from the DHCP server.\u003c/p\u003e\n"
+        },
+        "clientIdentifier": {
+          "enum": [
+            "none",
+            "mac",
+            "duid"
+          ],
+          "title": "clientIdentifier",
+          "description": "Client identifier to use when communicating with DHCP servers.\n\nDefaults to ‘mac’ if not set.\n",
+          "markdownDescription": "Client identifier to use when communicating with DHCP servers.\n\nDefaults to 'mac' if not set.",
+          "x-intellij-html-description": "\u003cp\u003eClient identifier to use when communicating with DHCP servers.\u003c/p\u003e\n\n\u003cp\u003eDefaults to \u0026lsquo;mac\u0026rsquo; if not set.\u003c/p\u003e\n"
+        },
+        "duidRaw": {
+          "type": "string",
+          "pattern": "^([0-9a-fA-F]{2}(:[0-9a-fA-F]{2})+)$",
+          "title": "duidRaw",
+          "description": "Raw value of the DUID to use as client identifier.\n\nThis field is only used if ‘clientIdentifier’ is set to ‘duid’.\n",
+          "markdownDescription": "Raw value of the DUID to use as client identifier.\n\nThis field is only used if 'clientIdentifier' is set to 'duid'.",
+          "x-intellij-html-description": "\u003cp\u003eRaw value of the DUID to use as client identifier.\u003c/p\u003e\n\n\u003cp\u003eThis field is only used if \u0026lsquo;clientIdentifier\u0026rsquo; is set to \u0026lsquo;duid\u0026rsquo;.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "apiVersion",
+        "kind",
+        "name"
+      ],
+      "description": "DHCPv4Config is a config document to configure DHCPv4 on a network link."
+    },
+    "network.DHCPv6ConfigV1Alpha1": {
+      "properties": {
+        "apiVersion": {
+          "enum": [
+            "v1alpha1"
+          ],
+          "title": "apiVersion",
+          "description": "apiVersion is the API version of the resource.\n",
+          "markdownDescription": "apiVersion is the API version of the resource.",
+          "x-intellij-html-description": "\u003cp\u003eapiVersion is the API version of the resource.\u003c/p\u003e\n"
+        },
+        "kind": {
+          "enum": [
+            "DHCPv6Config"
+          ],
+          "title": "kind",
+          "description": "kind is the kind of the resource.\n",
+          "markdownDescription": "kind is the kind of the resource.",
+          "x-intellij-html-description": "\u003cp\u003ekind is the kind of the resource.\u003c/p\u003e\n"
+        },
+        "name": {
+          "type": "string",
+          "title": "name",
+          "description": "Name of the link (interface).\n",
+          "markdownDescription": "Name of the link (interface).",
+          "x-intellij-html-description": "\u003cp\u003eName of the link (interface).\u003c/p\u003e\n"
+        },
+        "routeMetric": {
+          "type": "integer",
+          "title": "routeMetric",
+          "description": "An optional metric for the routes received from the DHCP server.\n\nLower values indicate higher priority.\nDefault value is 1024.\n",
+          "markdownDescription": "An optional metric for the routes received from the DHCP server.\n\nLower values indicate higher priority.\nDefault value is 1024.",
+          "x-intellij-html-description": "\u003cp\u003eAn optional metric for the routes received from the DHCP server.\u003c/p\u003e\n\n\u003cp\u003eLower values indicate higher priority.\nDefault value is 1024.\u003c/p\u003e\n"
+        },
+        "ignoreHostname": {
+          "type": "boolean",
+          "title": "ignoreHostname",
+          "description": "Ignore hostname received from the DHCP server.\n",
+          "markdownDescription": "Ignore hostname received from the DHCP server.",
+          "x-intellij-html-description": "\u003cp\u003eIgnore hostname received from the DHCP server.\u003c/p\u003e\n"
+        },
+        "clientIdentifier": {
+          "enum": [
+            "none",
+            "mac",
+            "duid"
+          ],
+          "title": "clientIdentifier",
+          "description": "Client identifier to use when communicating with DHCP servers.\n\nDefaults to ‘mac’ if not set.\n",
+          "markdownDescription": "Client identifier to use when communicating with DHCP servers.\n\nDefaults to 'mac' if not set.",
+          "x-intellij-html-description": "\u003cp\u003eClient identifier to use when communicating with DHCP servers.\u003c/p\u003e\n\n\u003cp\u003eDefaults to \u0026lsquo;mac\u0026rsquo; if not set.\u003c/p\u003e\n"
+        },
+        "duidRaw": {
+          "type": "string",
+          "pattern": "^([0-9a-fA-F]{2}(:[0-9a-fA-F]{2})+)$",
+          "title": "duidRaw",
+          "description": "Raw value of the DUID to use as client identifier.\n\nThis field is only used if ‘clientIdentifier’ is set to ‘duid’.\n",
+          "markdownDescription": "Raw value of the DUID to use as client identifier.\n\nThis field is only used if 'clientIdentifier' is set to 'duid'.",
+          "x-intellij-html-description": "\u003cp\u003eRaw value of the DUID to use as client identifier.\u003c/p\u003e\n\n\u003cp\u003eThis field is only used if \u0026lsquo;clientIdentifier\u0026rsquo; is set to \u0026lsquo;duid\u0026rsquo;.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "apiVersion",
+        "kind",
+        "name"
+      ],
+      "description": "DHCPv6Config is a config document to configure DHCPv6 on a network link."
+    },
     "network.DefaultActionConfigV1Alpha1": {
       "properties": {
         "apiVersion": {
@@ -4719,6 +4859,12 @@
     },
     {
       "$ref": "#/$defs/network.DefaultActionConfigV1Alpha1"
+    },
+    {
+      "$ref": "#/$defs/network.DHCPv4ConfigV1Alpha1"
+    },
+    {
+      "$ref": "#/$defs/network.DHCPv6ConfigV1Alpha1"
     },
     {
       "$ref": "#/$defs/network.DummyLinkConfigV1Alpha1"

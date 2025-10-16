@@ -159,3 +159,31 @@ type NetworkLinkAliasConfig interface {
 	NamedDocument
 	LinkSelector() cel.Expression
 }
+
+// NetworkDHCPConfig defines a DHCP configuration for a network link.
+type NetworkDHCPConfig interface {
+	NamedDocument
+	NetworkDHCPConfig()
+}
+
+// NetworkDHCPv4Config defines a DHCPv4 configuration for a network link.
+type NetworkDHCPv4Config interface {
+	NamedDocument
+	NetworkDHCPConfig
+	NetworkDHCPv4Config() // signal method
+	RouteMetric() optional.Optional[uint32]
+	IgnoreHostname() optional.Optional[bool]
+	ClientIdentifier() nethelpers.ClientIdentifier
+	DUIDRaw() optional.Optional[nethelpers.HardwareAddr]
+}
+
+// NetworkDHCPv6Config defines a DHCPv6 configuration for a network link.
+type NetworkDHCPv6Config interface {
+	NamedDocument
+	NetworkDHCPConfig
+	NetworkDHCPv6Config() // signal method
+	RouteMetric() optional.Optional[uint32]
+	IgnoreHostname() optional.Optional[bool]
+	ClientIdentifier() nethelpers.ClientIdentifier
+	DUIDRaw() optional.Optional[nethelpers.HardwareAddr]
+}

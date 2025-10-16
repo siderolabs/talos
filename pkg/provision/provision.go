@@ -9,6 +9,7 @@ import (
 	"context"
 
 	"github.com/siderolabs/talos/pkg/machinery/config"
+	"github.com/siderolabs/talos/pkg/machinery/config/bundle"
 	"github.com/siderolabs/talos/pkg/machinery/config/generate"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
 )
@@ -20,7 +21,7 @@ type Provisioner interface {
 
 	Reflect(ctx context.Context, clusterName, stateDirectory string) (Cluster, error)
 
-	GenOptions(NetworkRequest, *config.VersionContract) []generate.Option
+	GenOptions(NetworkRequest, *config.VersionContract) ([]generate.Option, []bundle.Option)
 
 	GetInClusterKubernetesControlPlaneEndpoint(req NetworkRequest, controlPlanePort int) string
 	GetExternalKubernetesControlPlaneEndpoint(req NetworkRequest, controlPlanePort int) string

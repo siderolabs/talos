@@ -12,6 +12,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/resource/protobuf"
 	"github.com/cosi-project/runtime/pkg/resource/typed"
 
+	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
 	"github.com/siderolabs/talos/pkg/machinery/proto"
 )
 
@@ -44,21 +45,30 @@ func (spec OperatorSpecSpec) Equal(other OperatorSpecSpec) bool {
 	return spec == other
 }
 
+// ClientIdentifierSpec is a shared DHCP4/DHCP6 client identifier spec.
+//
+//gotagsrewrite:gen
+type ClientIdentifierSpec struct {
+	ClientIdentifier nethelpers.ClientIdentifier `yaml:"clientIdentifier" protobuf:"1"`
+	DUIDRawHex       string                      `yaml:"duidRawHex,omitempty" protobuf:"2"`
+}
+
 // DHCP4OperatorSpec describes DHCP4 operator options.
 //
 //gotagsrewrite:gen
 type DHCP4OperatorSpec struct {
-	RouteMetric         uint32 `yaml:"routeMetric" protobuf:"1"`
-	SkipHostnameRequest bool   `yaml:"skipHostnameRequest,omitempty" protobuf:"2"`
+	RouteMetric         uint32               `yaml:"routeMetric" protobuf:"1"`
+	SkipHostnameRequest bool                 `yaml:"skipHostnameRequest,omitempty" protobuf:"2"`
+	ClientIdentifier    ClientIdentifierSpec `yaml:"clientIdentifier,omitempty" protobuf:"3"`
 }
 
 // DHCP6OperatorSpec describes DHCP6 operator options.
 //
 //gotagsrewrite:gen
 type DHCP6OperatorSpec struct {
-	DUID                string `yaml:"DUID,omitempty" protobuf:"1"`
-	RouteMetric         uint32 `yaml:"routeMetric" protobuf:"2"`
-	SkipHostnameRequest bool   `yaml:"skipHostnameRequest,omitempty" protobuf:"3"`
+	RouteMetric         uint32               `yaml:"routeMetric" protobuf:"2"`
+	SkipHostnameRequest bool                 `yaml:"skipHostnameRequest,omitempty" protobuf:"3"`
+	ClientIdentifier    ClientIdentifierSpec `yaml:"clientIdentifier,omitempty" protobuf:"4"`
 }
 
 // VIPOperatorSpec describes virtual IP operator options.

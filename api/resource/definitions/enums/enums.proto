@@ -118,6 +118,13 @@ enum NethelpersBondXmitHashPolicy {
   BOND_XMIT_POLICY_ENCAP34 = 4;
 }
 
+// NethelpersClientIdentifier is a DHCP client identifier.
+enum NethelpersClientIdentifier {
+  CLIENT_IDENTIFIER_NONE = 0;
+  CLIENT_IDENTIFIER_MAC = 1;
+  CLIENT_IDENTIFIER_DUID = 2;
+}
+
 // NethelpersConntrackState is a conntrack state.
 enum NethelpersConntrackState {
   NETHELPERS_CONNTRACKSTATE_UNSPECIFIED = 0;

@@ -312,13 +312,29 @@ func (container *Container) NetworkLinkAliasConfigs() []config.NetworkLinkAliasC
 	return findMatchingDocs[config.NetworkLinkAliasConfig](container.documents)
 }
 
+// NetworkDHCPConfigs implements config.Config interface.
+func (container *Container) NetworkDHCPConfigs() []config.NetworkDHCPConfig {
+	return findMatchingDocs[config.NetworkDHCPConfig](container.documents)
+}
+
+// NetworkDHCPv4Configs implements config.Config interface.
+func (container *Container) NetworkDHCPv4Configs() []config.NetworkDHCPv4Config {
+	return findMatchingDocs[config.NetworkDHCPv4Config](container.documents)
+}
+
+// NetworkDHCPv6Configs implements config.Config interface.
+func (container *Container) NetworkDHCPv6Configs() []config.NetworkDHCPv6Config {
+	return findMatchingDocs[config.NetworkDHCPv6Config](container.documents)
+}
+
 // RunDefaultDHCPOperators implements config.Config interface.
 //
 // The rules for this are:
 //   - if there is a single new-style network config document for links,
 //     we immediately stop running default DHCP operators (as user is taking full control)
 func (container *Container) RunDefaultDHCPOperators() bool {
-	return len(findMatchingDocs[config.NetworkCommonLinkConfig](container.documents)) == 0
+	return len(findMatchingDocs[config.NetworkCommonLinkConfig](container.documents)) == 0 &&
+		len(findMatchingDocs[config.NetworkDHCPConfig](container.documents)) == 0
 }
 
 // OOMConfig implements config.Config interface.

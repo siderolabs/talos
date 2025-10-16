@@ -42,6 +42,128 @@ func (DefaultActionConfigV1Alpha1) Doc() *encoder.Doc {
 	return doc
 }
 
+func (DHCPv4ConfigV1Alpha1) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "DHCPv4Config",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "DHCPv4Config is a config document to configure DHCPv4 on a network link." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "DHCPv4Config is a config document to configure DHCPv4 on a network link.",
+		Fields: []encoder.Doc{
+			{
+				Type:   "Meta",
+				Inline: true,
+			},
+			{
+				Name:        "name",
+				Type:        "string",
+				Note:        "",
+				Description: "Name of the link (interface).",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Name of the link (interface)." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "routeMetric",
+				Type:        "uint32",
+				Note:        "",
+				Description: "An optional metric for the routes received from the DHCP server.\n\nLower values indicate higher priority.\nDefault value is 1024.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "An optional metric for the routes received from the DHCP server." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "ignoreHostname",
+				Type:        "bool",
+				Note:        "",
+				Description: "Ignore hostname received from the DHCP server.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Ignore hostname received from the DHCP server." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "clientIdentifier",
+				Type:        "ClientIdentifier",
+				Note:        "",
+				Description: "Client identifier to use when communicating with DHCP servers.\n\nDefaults to 'mac' if not set.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Client identifier to use when communicating with DHCP servers." /* encoder.LineComment */, "" /* encoder.FootComment */},
+				Values: []string{
+					"none",
+					"mac",
+					"duid",
+				},
+			},
+			{
+				Name:        "duidRaw",
+				Type:        "HardwareAddr",
+				Note:        "",
+				Description: "Raw value of the DUID to use as client identifier.\n\nThis field is only used if 'clientIdentifier' is set to 'duid'.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Raw value of the DUID to use as client identifier." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
+
+	doc.AddExample("", exampleDHCPv4ConfigV1Alpha1())
+
+	doc.Fields[1].AddExample("", "enp0s2")
+	doc.Fields[5].AddExample("", "00:01:00:01:23:45:67:89:ab:cd:ef:01:23:45")
+
+	return doc
+}
+
+func (DHCPv6ConfigV1Alpha1) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "DHCPv6Config",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "DHCPv6Config is a config document to configure DHCPv6 on a network link." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "DHCPv6Config is a config document to configure DHCPv6 on a network link.",
+		Fields: []encoder.Doc{
+			{
+				Type:   "Meta",
+				Inline: true,
+			},
+			{
+				Name:        "name",
+				Type:        "string",
+				Note:        "",
+				Description: "Name of the link (interface).",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Name of the link (interface)." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "routeMetric",
+				Type:        "uint32",
+				Note:        "",
+				Description: "An optional metric for the routes received from the DHCP server.\n\nLower values indicate higher priority.\nDefault value is 1024.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "An optional metric for the routes received from the DHCP server." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "ignoreHostname",
+				Type:        "bool",
+				Note:        "",
+				Description: "Ignore hostname received from the DHCP server.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Ignore hostname received from the DHCP server." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "clientIdentifier",
+				Type:        "ClientIdentifier",
+				Note:        "",
+				Description: "Client identifier to use when communicating with DHCP servers.\n\nDefaults to 'mac' if not set.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Client identifier to use when communicating with DHCP servers." /* encoder.LineComment */, "" /* encoder.FootComment */},
+				Values: []string{
+					"none",
+					"mac",
+					"duid",
+				},
+			},
+			{
+				Name:        "duidRaw",
+				Type:        "HardwareAddr",
+				Note:        "",
+				Description: "Raw value of the DUID to use as client identifier.\n\nThis field is only used if 'clientIdentifier' is set to 'duid'.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Raw value of the DUID to use as client identifier." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
+
+	doc.AddExample("", exampleDHCPv6ConfigV1Alpha1())
+
+	doc.Fields[1].AddExample("", "enp0s2")
+	doc.Fields[5].AddExample("", "00:01:00:01:23:45:67:89:ab:cd:ef:01:23:45")
+
+	return doc
+}
+
 func (DummyLinkConfigV1Alpha1) Doc() *encoder.Doc {
 	doc := &encoder.Doc{
 		Type:        "DummyLinkConfig",
@@ -745,6 +867,8 @@ func GetFileDoc() *encoder.FileDoc {
 		Description: "Package network provides network machine configuration documents.\n",
 		Structs: []*encoder.Doc{
 			DefaultActionConfigV1Alpha1{}.Doc(),
+			DHCPv4ConfigV1Alpha1{}.Doc(),
+			DHCPv6ConfigV1Alpha1{}.Doc(),
 			DummyLinkConfigV1Alpha1{}.Doc(),
 			EthernetConfigV1Alpha1{}.Doc(),
 			EthernetRingsConfig{}.Doc(),

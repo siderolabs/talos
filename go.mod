@@ -23,10 +23,6 @@ replace (
 	gopkg.in/yaml.v3 => github.com/unix4ever/yaml v0.0.0-20220527175918-f17b0f05cf2c
 )
 
-// fd-leak related replacements: https://github.com/siderolabs/talos/issues/9412
-// https://github.com/insomniacslk/dhcp/pull/550
-replace github.com/insomniacslk/dhcp => github.com/smira/dhcp v0.0.0-20250407153013-99942baa5d59
-
 // deadcode elimination fix replacement: https://github.com/siderolabs/talos/issues/11296
 // upstream PR: https://github.com/containerd/containerd/pull/12175
 // this a fork with containerd 2.1 branch + the commit from the PR above
@@ -106,7 +102,7 @@ require (
 	github.com/hashicorp/go-getter/v2 v2.2.3
 	github.com/hashicorp/go-multierror v1.1.1
 	github.com/hetznercloud/hcloud-go/v2 v2.25.1
-	github.com/insomniacslk/dhcp v0.0.0-20250109001534-8abf58130905
+	github.com/insomniacslk/dhcp v0.0.0-20251007151141-da879a2c3546
 	github.com/jeromer/syslogparser v1.1.0
 	github.com/jsimonetti/rtnetlink/v2 v2.0.5
 	github.com/jxskiss/base62 v1.1.0

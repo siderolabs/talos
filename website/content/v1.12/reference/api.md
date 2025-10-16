@@ -267,6 +267,7 @@ description: Talos gRPC API reference.
     - [NethelpersAutoHostnameKind](#talos.resource.definitions.enums.NethelpersAutoHostnameKind)
     - [NethelpersBondMode](#talos.resource.definitions.enums.NethelpersBondMode)
     - [NethelpersBondXmitHashPolicy](#talos.resource.definitions.enums.NethelpersBondXmitHashPolicy)
+    - [NethelpersClientIdentifier](#talos.resource.definitions.enums.NethelpersClientIdentifier)
     - [NethelpersConntrackState](#talos.resource.definitions.enums.NethelpersConntrackState)
     - [NethelpersDuplex](#talos.resource.definitions.enums.NethelpersDuplex)
     - [NethelpersFailOverMAC](#talos.resource.definitions.enums.NethelpersFailOverMAC)
@@ -471,6 +472,7 @@ description: Talos gRPC API reference.
     - [BridgeMasterSpec](#talos.resource.definitions.network.BridgeMasterSpec)
     - [BridgeSlave](#talos.resource.definitions.network.BridgeSlave)
     - [BridgeVLANSpec](#talos.resource.definitions.network.BridgeVLANSpec)
+    - [ClientIdentifierSpec](#talos.resource.definitions.network.ClientIdentifierSpec)
     - [DHCP4OperatorSpec](#talos.resource.definitions.network.DHCP4OperatorSpec)
     - [DHCP6OperatorSpec](#talos.resource.definitions.network.DHCP6OperatorSpec)
     - [DNSResolveCacheSpec](#talos.resource.definitions.network.DNSResolveCacheSpec)
@@ -4714,6 +4716,19 @@ NethelpersBondXmitHashPolicy is a bond hash policy.
 
 
 
+<a name="talos.resource.definitions.enums.NethelpersClientIdentifier"></a>
+
+### NethelpersClientIdentifier
+NethelpersClientIdentifier is a DHCP client identifier.
+
+| Name | Number | Description |
+| ---- | ------ | ----------- |
+| CLIENT_IDENTIFIER_NONE | 0 |  |
+| CLIENT_IDENTIFIER_MAC | 1 |  |
+| CLIENT_IDENTIFIER_DUID | 2 |  |
+
+
+
 <a name="talos.resource.definitions.enums.NethelpersConntrackState"></a>
 
 ### NethelpersConntrackState
@@ -8388,6 +8403,22 @@ BridgeVLANSpec describes VLAN settings of a bridge.
 
 
 
+<a name="talos.resource.definitions.network.ClientIdentifierSpec"></a>
+
+### ClientIdentifierSpec
+ClientIdentifierSpec is a shared DHCP4/DHCP6 client identifier spec.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| client_identifier | [talos.resource.definitions.enums.NethelpersClientIdentifier](#talos.resource.definitions.enums.NethelpersClientIdentifier) |  |  |
+| duid_raw_hex | [string](#string) |  |  |
+
+
+
+
+
+
 <a name="talos.resource.definitions.network.DHCP4OperatorSpec"></a>
 
 ### DHCP4OperatorSpec
@@ -8398,6 +8429,7 @@ DHCP4OperatorSpec describes DHCP4 operator options.
 | ----- | ---- | ----- | ----------- |
 | route_metric | [uint32](#uint32) |  |  |
 | skip_hostname_request | [bool](#bool) |  |  |
+| client_identifier | [ClientIdentifierSpec](#talos.resource.definitions.network.ClientIdentifierSpec) |  |  |
 
 
 
@@ -8412,9 +8444,9 @@ DHCP6OperatorSpec describes DHCP6 operator options.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| duid | [string](#string) |  |  |
 | route_metric | [uint32](#uint32) |  |  |
 | skip_hostname_request | [bool](#bool) |  |  |
+| client_identifier | [ClientIdentifierSpec](#talos.resource.definitions.network.ClientIdentifierSpec) |  |  |
 
 
 

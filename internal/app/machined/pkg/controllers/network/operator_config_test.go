@@ -381,6 +381,68 @@ func (suite *OperatorConfigSuite) TestMachineConfigurationDHCP6() {
 	)
 }
 
+func (suite *OperatorConfigSuite) TestMachineConfigurationNewStyle() {
+	suite.Require().NoError(suite.Runtime().RegisterController(&netctrl.OperatorConfigController{}))
+
+	dhcp1 := networkcfg.NewDHCPv4ConfigV1Alpha1("eth0")
+	dhcp1.ConfigRouteMetric = 256
+	dhcp1.ConfigIgnoreHostname = pointer.To(true)
+
+	dhcp2 := networkcfg.NewDHCPv6ConfigV1Alpha1("eth0")
+	dhcp2.ConfigRouteMetric = 512
+	dhcp2.ConfigClientIdentifier = pointer.To(nethelpers.ClientIdentifierDUID)
+	dhcp2.ConfigDUIDRaw = nethelpers.HardwareAddr{0x00, 0x01, 0x00, 0x01, 0x23, 0x45, 0x67, 0x89, 0xAB, 0xCD, 0xEF, 0x01}
+
+	dhcp3 := networkcfg.NewDHCPv4ConfigV1Alpha1("eth23")
+
+	dhcp4 := networkcfg.NewDHCPv4ConfigV1Alpha1("eth4")
+
+	ctr, err := container.New(dhcp1, dhcp2, dhcp3, dhcp4)
+	suite.Require().NoError(err)
+
+	cfg := config.NewMachineConfig(ctr)
+	suite.Create(cfg)
+
+	suite.assertOperators(
+		[]string{
+			"configuration/dhcp4/eth0",
+			"configuration/dhcp4/eth23",
+			"configuration/dhcp4/eth4",
+			"configuration/dhcp6/eth0",
+		}, func(r *network.OperatorSpec, asrt *assert.Assertions) {
+			asrt.True(r.TypedSpec().RequireUp)
+
+			switch r.Metadata().ID() {
+			case "configuration/dhcp4/eth0":
+				asrt.Equal(network.OperatorDHCP4, r.TypedSpec().Operator)
+				asrt.Equal("eth0", r.TypedSpec().LinkName)
+				asrt.EqualValues(256, r.TypedSpec().DHCP4.RouteMetric)
+				asrt.True(r.TypedSpec().DHCP4.SkipHostnameRequest)
+				asrt.Equal(nethelpers.ClientIdentifierMAC, r.TypedSpec().DHCP4.ClientIdentifier.ClientIdentifier)
+			case "configuration/dhcp4/eth23":
+				asrt.Equal(network.OperatorDHCP4, r.TypedSpec().Operator)
+				asrt.Equal("eth23", r.TypedSpec().LinkName)
+				asrt.EqualValues(network.DefaultRouteMetric, r.TypedSpec().DHCP4.RouteMetric)
+				asrt.False(r.TypedSpec().DHCP4.SkipHostnameRequest)
+				asrt.Equal(nethelpers.ClientIdentifierMAC, r.TypedSpec().DHCP4.ClientIdentifier.ClientIdentifier)
+			case "configuration/dhcp4/eth2":
+				asrt.Equal(network.OperatorDHCP4, r.TypedSpec().Operator)
+				asrt.Equal("eth2", r.TypedSpec().LinkName)
+				asrt.EqualValues(network.DefaultRouteMetric, r.TypedSpec().DHCP4.RouteMetric)
+				asrt.False(r.TypedSpec().DHCP4.SkipHostnameRequest)
+				asrt.Equal(nethelpers.ClientIdentifierMAC, r.TypedSpec().DHCP4.ClientIdentifier.ClientIdentifier)
+			case "configuration/dhcp6/eth0":
+				asrt.Equal(network.OperatorDHCP6, r.TypedSpec().Operator)
+				asrt.Equal("eth0", r.TypedSpec().LinkName)
+				asrt.EqualValues(512, r.TypedSpec().DHCP6.RouteMetric)
+				asrt.False(r.TypedSpec().DHCP6.SkipHostnameRequest)
+				asrt.Equal(nethelpers.ClientIdentifierDUID, r.TypedSpec().DHCP6.ClientIdentifier.ClientIdentifier)
+				asrt.NotEmpty(r.TypedSpec().DHCP6.ClientIdentifier.DUIDRawHex)
+			}
+		},
+	)
+}
+
 func (suite *OperatorConfigSuite) TestMachineConfigurationWithAliases() {
 	suite.Require().NoError(
 		suite.Runtime().RegisterController(

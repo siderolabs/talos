@@ -407,6 +407,7 @@ func (ctrl *LinkConfigController) processDevicesConfiguration(
 	}
 }
 
+//nolint:gocyclo
 func (ctrl *LinkConfigController) processLinkConfigs(logger *zap.Logger, linkMap map[string]*network.LinkSpecSpec, cfg *config.MachineConfig, linkNameResolver *network.LinkResolver) {
 	if cfg == nil {
 		return
@@ -444,6 +445,20 @@ func (ctrl *LinkConfigController) processLinkConfigs(logger *zap.Logger, linkMap
 			dummyLink(linkMap[linkName])
 		default:
 			logger.Error("unknown link config type", zap.String("linkName", linkName), zap.String("type", fmt.Sprintf("%T", specificLinkConfig)))
+		}
+	}
+
+	// if we have DHCP config, bring up the link implicitly if it hasn't been configured yet
+	for _, dhcpConfig := range cfg.Config().NetworkDHCPConfigs() {
+		linkName := dhcpConfig.Name()
+		linkName = linkNameResolver.Resolve(linkName)
+
+		if _, exists := linkMap[linkName]; !exists {
+			linkMap[linkName] = &network.LinkSpecSpec{
+				Name:        linkName,
+				Up:          true,
+				ConfigLayer: network.ConfigMachineConfiguration,
+			}
 		}
 	}
 }

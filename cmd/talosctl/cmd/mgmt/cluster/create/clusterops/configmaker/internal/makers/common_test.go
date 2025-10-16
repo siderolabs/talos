@@ -14,6 +14,7 @@ import (
 	"github.com/siderolabs/talos/cmd/talosctl/cmd/mgmt/cluster/create/clusterops"
 	"github.com/siderolabs/talos/cmd/talosctl/cmd/mgmt/cluster/create/clusterops/configmaker/internal/makers"
 	"github.com/siderolabs/talos/pkg/machinery/config"
+	"github.com/siderolabs/talos/pkg/machinery/config/bundle"
 	"github.com/siderolabs/talos/pkg/machinery/config/encoder"
 	"github.com/siderolabs/talos/pkg/machinery/config/generate"
 	"github.com/siderolabs/talos/pkg/machinery/config/generate/secrets"
@@ -24,8 +25,8 @@ type testProvisioner struct {
 	provision.Provisioner
 }
 
-func (p testProvisioner) GenOptions(r provision.NetworkRequest, _ *config.VersionContract) []generate.Option {
-	return []generate.Option{func(o *generate.Options) error { return nil }}
+func (p testProvisioner) GenOptions(r provision.NetworkRequest, _ *config.VersionContract) ([]generate.Option, []bundle.Option) {
+	return []generate.Option{func(o *generate.Options) error { return nil }}, nil
 }
 
 func (p testProvisioner) GetTalosAPIEndpoints(provision.NetworkRequest) []string {
