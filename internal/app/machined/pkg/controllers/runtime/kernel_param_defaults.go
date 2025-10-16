@@ -7,6 +7,7 @@ package runtime
 import (
 	"context"
 	"errors"
+	"fmt"
 	"os"
 
 	"github.com/cosi-project/runtime/pkg/controller"
@@ -15,6 +16,7 @@ import (
 
 	v1alpha1runtime "github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
 	"github.com/siderolabs/talos/pkg/kernel/kspp"
+	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/kernel"
 	"github.com/siderolabs/talos/pkg/machinery/resources/runtime"
 )
@@ -87,6 +89,14 @@ func (ctrl *KernelParamDefaultsController) getKernelParams() []*kernel.Param {
 			Value: "1",
 		},
 	}
+
+	// block apid and trustd from the ephemeral port range
+	res = append(res, []*kernel.Param{
+		{
+			Key:   "proc.sys.net.ipv4.ip_local_reserved_ports",
+			Value: fmt.Sprintf("%d,%d", constants.ApidPort, constants.TrustdPort),
+		},
+	}...)
 
 	if ctrl.V1Alpha1Mode != v1alpha1runtime.ModeContainer {
 		res = append(res, []*kernel.Param{

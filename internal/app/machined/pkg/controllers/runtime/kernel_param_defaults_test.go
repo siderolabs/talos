@@ -48,6 +48,10 @@ func getParams(mode runtime.Mode) []*kernel.Param {
 			Key:   "proc.sys.vm.overcommit_memory",
 			Value: "1",
 		},
+		{
+			Key:   "proc.sys.net.ipv4.ip_local_reserved_ports",
+			Value: "50000,50001",
+		},
 	}
 
 	if mode != runtime.ModeContainer {
