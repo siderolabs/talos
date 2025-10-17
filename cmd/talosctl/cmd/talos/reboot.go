@@ -39,6 +39,8 @@ var rebootCmd = &cobra.Command{
 		// skips kexec and reboots with power cycle
 		case "powercycle":
 			opts = append(opts, client.WithPowerCycle)
+		case "force":
+			opts = append(opts, client.WithForce)
 		case "default":
 		default:
 			return fmt.Errorf("invalid reboot mode: %q", rebootCmdFlags.mode)
@@ -85,7 +87,7 @@ func rebootGetActorID(opts ...client.RebootMode) func(ctx context.Context, c *cl
 }
 
 func init() {
-	rebootCmd.Flags().StringVarP(&rebootCmdFlags.mode, "mode", "m", "default", "select the reboot mode: \"default\", \"powercycle\" (skips kexec)")
+	rebootCmd.Flags().StringVarP(&rebootCmdFlags.mode, "mode", "m", "default", "select the reboot mode: \"default\", \"powercycle\" (skips kexec), \"force\" (skips graceful teardown)")
 	rebootCmdFlags.addTrackActionFlags(rebootCmd)
 	addCommand(rebootCmd)
 }

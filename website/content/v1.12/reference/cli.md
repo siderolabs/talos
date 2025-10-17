@@ -2721,7 +2721,7 @@ talosctl reboot [flags]
       --debug                      debug operation from kernel logs. --wait is set to true when this flag is set
   -e, --endpoints strings          override default endpoints in Talos configuration
   -h, --help                       help for reboot
-  -m, --mode string                select the reboot mode: "default", "powercycle" (skips kexec) (default "default")
+  -m, --mode string                select the reboot mode: "default", "powercycle" (skips kexec), "force" (skips graceful teardown) (default "default")
   -n, --nodes strings              target the specified nodes
       --siderov1-keys-dir string   The path to the SideroV1 auth PGP keys directory. Defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'. Only valid for Contexts that use SideroV1 auth.
       --talosconfig string         The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.

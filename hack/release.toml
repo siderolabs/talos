@@ -121,6 +121,15 @@ Additionally `talosctl image cache-create` has some changes:
     * multiple instances (`--platform=linux/amd64 --platform=linux/arm64`);
 """
 
+   [notes.force-reboot]
+        title = "Talos force reboot"
+        description = """\
+Talos now supports a "force" reboot mode, which allows skipping the graceful userland termination.
+It can be used in situations where a userland service (e.g. the kubelet) gets stuck during graceful shutdown, causing the regular reboot flow to fail.
+
+In addition, `talosctl` was updated to support this feature via `talosctl reboot --mode force`.
+"""
+
     [notes.kernel-module]
         title = "Kernel Module"
         description = """\

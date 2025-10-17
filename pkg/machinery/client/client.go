@@ -337,6 +337,11 @@ func WithPowerCycle(req *machineapi.RebootRequest) {
 	req.Mode = machineapi.RebootRequest_POWERCYCLE
 }
 
+// WithForce option runs the Reboot fun in force mode.
+func WithForce(req *machineapi.RebootRequest) {
+	req.Mode = machineapi.RebootRequest_FORCE
+}
+
 // Reboot implements the proto.MachineServiceClient interface.
 func (c *Client) Reboot(ctx context.Context, opts ...RebootMode) error {
 	_, err := c.RebootWithResponse(ctx, opts...)
