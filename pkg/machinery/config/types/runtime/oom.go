@@ -57,6 +57,10 @@ type OOMV1Alpha1 struct {
 	//
 	//     The expression must evaluate to a boolean value.
 	//     If the expression returns true, then OOM ranking and killing will be handled.
+	//
+	//     This expression receives the following parameters:
+	//     - memory_{some,full}_{avg10,avg60,avg300,total} - double, representing PSI values
+	//     - time_since_trigger - duration since the last OOM handler trigger event
 	//   schema:
 	//     type: string
 	OOMTriggerExpression cel.Expression `yaml:"triggerExpression,omitempty"`
@@ -65,6 +69,13 @@ type OOMV1Alpha1 struct {
 	//
 	//     The cgroup with the highest rank (score) will be evicted first.
 	//     The expression must evaluate to a double value.
+	//
+	//     This expression receives the following parameters:
+	//     - memory_max - Optional<uint> - in bytes
+	//     - memory_current - Optional<uint> - in bytes
+	//     - memory_peak - Optional<uint> - in bytes
+	//     - path - string, path to the cgroup
+	//     - class - int. This represents cgroup QoS class, and matches one of the constants, which are also provided: Besteffort, Burstable, Guaranteed, Podruntime, System
 	//   schema:
 	//     type: string
 	OOMCgroupRankingExpression cel.Expression `yaml:"cgroupRankingExpression,omitempty"`

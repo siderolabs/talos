@@ -123,6 +123,13 @@ message MountStatusSpec {
   repeated string encryption_providers = 6;
 }
 
+// OOMActionSpec describes the OOM action record resource properties.
+message OOMActionSpec {
+  string trigger_context = 1;
+  double score = 2;
+  repeated string processes = 3;
+}
+
 // PlatformMetadataSpec describes platform metadata properties.
 message PlatformMetadataSpec {
   string platform = 1;

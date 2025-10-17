@@ -1,0 +1,32 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: stress-mem
+  namespace: default
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: stress-mem
+  template:
+    metadata:
+      labels:
+        app: stress-mem
+    spec:
+      containers:
+        - name: stress-mem
+          image: ghcr.io/siderolabs/stress-ng:v1
+          command:
+            - /usr/bin/stress-ng
+            - --vm
+            - "1"
+            - --vm-bytes
+            - 100M
+            - --vm-hang
+            - "0"
+            - --vm-keep
+            - --page-in
+            - --cpu
+            - "1"
+            - -l
+            - "0"

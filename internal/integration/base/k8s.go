@@ -25,6 +25,7 @@ import (
 	"github.com/siderolabs/gen/xslices"
 	"github.com/siderolabs/go-pointer"
 	"github.com/siderolabs/go-retry/retry"
+	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	eventsv1 "k8s.io/api/events/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -508,6 +509,41 @@ func (k8sSuite *K8sSuite) WaitForPodToBeRunning(ctx context.Context, timeout tim
 			}
 
 			if pod.Name == podName && pod.Status.Phase == corev1.PodRunning {
+				return nil
+			}
+		}
+	}
+}
+
+// WaitForDeploymentAvailable waits for the deployment with the given namespace and name to be running with the requested replicas.
+func (k8sSuite *K8sSuite) WaitForDeploymentAvailable(ctx context.Context, timeout time.Duration, namespace, deplName string, replicas int32) error {
+	ctx, cancel := context.WithTimeout(ctx, timeout)
+	defer cancel()
+
+	watcher, err := k8sSuite.Clientset.AppsV1().Deployments(namespace).Watch(ctx, metav1.ListOptions{
+		FieldSelector: fields.OneTermEqualSelector("metadata.name", deplName).String(),
+	})
+	if err != nil {
+		return err
+	}
+
+	defer watcher.Stop()
+
+	for {
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		case event := <-watcher.ResultChan():
+			if event.Type == watch.Error {
+				return fmt.Errorf("error watching deployment: %v", event.Object)
+			}
+
+			deployment, ok := event.Object.(*appsv1.Deployment)
+			if !ok {
+				continue
+			}
+
+			if deployment.Name == deplName && deployment.Status.AvailableReplicas == replicas {
 				return nil
 			}
 		}
