@@ -35,6 +35,7 @@ type DHCP4 struct {
 
 	linkName            string
 	routeMetric         uint32
+	clientIdentifier    nethelpers.ClientIdentifier
 	skipHostnameRequest bool
 	requestMTU          bool
 
@@ -57,6 +58,7 @@ func NewDHCP4(logger *zap.Logger, linkName string, config network.DHCP4OperatorS
 		linkName:            linkName,
 		routeMetric:         config.RouteMetric,
 		skipHostnameRequest: config.SkipHostnameRequest,
+		clientIdentifier:    nethelpers.ClientIdentifierMAC, // [TODO]: should be configurable
 		// <3 azure
 		// When including dhcp.OptionInterfaceMTU we don't get a dhcp offer back on azure.
 		// So we'll need to explicitly exclude adding this option for azure.
@@ -522,7 +524,7 @@ func (d *DHCP4) requestRenew(ctx context.Context, hostname network.HostnameStatu
 		opts = append(opts, dhcpv4.OptionHostName, dhcpv4.OptionDomainName)
 	}
 
-	mods := []dhcpv4.Modifier{dhcpv4.WithRequestedOptions(opts...), WithNumSecunds(secs)}
+	mods := []dhcpv4.Modifier{dhcpv4.WithRequestedOptions(opts...), WithNumSeconds(secs)}
 
 	if !sendHostnameRequest {
 		// If the node has a hostname, always send it to the DHCP
@@ -534,6 +536,15 @@ func (d *DHCP4) requestRenew(ctx context.Context, hostname network.HostnameStatu
 		if len(hostname.Domainname) > 0 {
 			mods = append(mods, dhcpv4.WithOption(dhcpv4.OptDomainName(hostname.Domainname)))
 		}
+	}
+
+	clientIdentifier, err := GetClientIdentifier(ctx, d.state, d.linkName, d.clientIdentifier)
+	if err != nil {
+		return 0, fmt.Errorf("failed to get client identifier: %w", err)
+	}
+
+	if len(clientIdentifier) > 0 {
+		mods = append(mods, dhcpv4.WithOption(dhcpv4.OptClientIdentifier(clientIdentifier)))
 	}
 
 	client, err := d.newClient()
@@ -594,8 +605,8 @@ func collapseSummary(summary string) string {
 	return strings.Join(lines, ", ")
 }
 
-// WithNumSecunds sets the secs field of a DHCPv4 packet.
-func WithNumSecunds(secs uint16) dhcpv4.Modifier {
+// WithNumSeconds sets the secs field of a DHCPv4 packet.
+func WithNumSeconds(secs uint16) dhcpv4.Modifier {
 	return func(d *dhcpv4.DHCPv4) {
 		d.NumSeconds = secs
 	}

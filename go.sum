@@ -371,6 +371,8 @@ github.com/hugelgupf/vmtest v0.0.0-20240307030256-5d9f3d34a58d h1:nP8SfQJqruIVSW
 github.com/hugelgupf/vmtest v0.0.0-20240307030256-5d9f3d34a58d/go.mod h1:B63hDJMhTupLWCHwopAyEo7wRFowx9kOc8m8j1sfOqE=
 github.com/inconshreveable/mousetrap v1.1.0 h1:wN+x4NVGpMsO7ErUn/mUI3vEoE6Jt13X2s0bqwp9tc8=
 github.com/inconshreveable/mousetrap v1.1.0/go.mod h1:vpF70FUmC8bwa3OWnCshd2FqLfsEA9PFc4w1p2J65bw=
+github.com/insomniacslk/dhcp v0.0.0-20251007151141-da879a2c3546 h1:zj09ZbgBgcPaft1b/RftIAT+ALx85M2yzJyOvliRbGQ=
+github.com/insomniacslk/dhcp v0.0.0-20251007151141-da879a2c3546/go.mod h1:qfvBmyDNp+/liLEYWRvqny/PEz9hGe2Dz833eXILSmo=
 github.com/jarcoal/httpmock v1.4.0 h1:BvhqnH0JAYbNudL2GMJKgOHe2CtKlzJ/5rWKyp+hc2k=
 github.com/jarcoal/httpmock v1.4.0/go.mod h1:ftW1xULwo+j0R0JJkJIIi7UKigZUXCLLanykgjwBXL0=
 github.com/jeromer/syslogparser v1.1.0 h1:HES0EviO9iPvCu56LjVFVhbM3o0BckDlIbQfkkaRJAw=
@@ -667,8 +669,6 @@ github.com/sirupsen/logrus v1.9.3 h1:dueUQJ1C2q9oE3F7wvmSGAaVtTmUizReu6fjN8uqzbQ
 github.com/sirupsen/logrus v1.9.3/go.mod h1:naHLuLoDiP4jHNo9R0sCBMtWGeIprob74mVsIT4qYEQ=
 github.com/smira/containerd/v2 v2.0.0-20250806103510-dcf2fc86e156 h1:vxHt7VLqjFtY3c80Al/RTPAxxu7XVQuTeTNkRZb2AOQ=
 github.com/smira/containerd/v2 v2.0.0-20250806103510-dcf2fc86e156/go.mod h1:8C5QV9djwsYDNhxfTCFjWtTBZrqjditQ4/ghHSYjnHM=
-github.com/smira/dhcp v0.0.0-20250407153013-99942baa5d59 h1:lBQLOP8ZZI6mbePwGX/bqXi3srwhYB/zcwqrnX+JJIc=
-github.com/smira/dhcp v0.0.0-20250407153013-99942baa5d59/go.mod h1:VvGYjkZoJyKqlmT1yzakUs4mfKMNB0XdODP0+rdml6k=
 github.com/smira/kobject v0.0.0-20240304111826-49c8d4613389 h1:f/5NRv5IGZxbjBhc5MnlbNmyuXBPxvekhBAUzyKWyLY=
 github.com/smira/kobject v0.0.0-20240304111826-49c8d4613389/go.mod h1:+SexPO1ZvdbbWUdUnyXEWv3+4NwHZjKhxOmQqHY4Pqc=
 github.com/soheilhy/cmux v0.1.5 h1:jjzc5WVemNEDTLwv9tlmemhC73tI08BNOIGwBOo10Js=
