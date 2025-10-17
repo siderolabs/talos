@@ -37,8 +37,8 @@ func (suite *SecuritySuite) SetupTest() {
 	// make sure API calls have timeout
 	suite.ctx, suite.ctxCancel = context.WithTimeout(context.Background(), 1*time.Minute)
 
-	if suite.Cluster == nil || suite.Cluster.Provisioner() != base.ProvisionerQEMU {
-		suite.T().Skip("skipping Security test since provisioner is not qemu")
+	if suite.Cluster != nil && suite.Cluster.Provisioner() == base.ProvisionerDocker {
+		suite.T().Skip("skipping Security test since provisioner is not docker")
 	}
 }
 
