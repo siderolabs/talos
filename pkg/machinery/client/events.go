@@ -239,6 +239,7 @@ func UnmarshalEvent(event *machineapi.Event) (*Event, error) {
 		&machineapi.ConfigValidationErrorEvent{},
 		&machineapi.AddressEvent{},
 		&machineapi.MachineStatusEvent{},
+		&machineapi.RestartEvent{},
 	} {
 		if typeURL == "talos/runtime/"+string(eventType.ProtoReflect().Descriptor().FullName()) {
 			msg = eventType
@@ -248,6 +249,7 @@ func UnmarshalEvent(event *machineapi.Event) (*Event, error) {
 	}
 
 	if msg == nil {
+		log.Printf("event not supported: %s", typeURL)
 		// We haven't implemented the handling of this event yet.
 		return nil, ErrEventNotSupported
 	}

@@ -10,12 +10,14 @@ import (
 	"context"
 	"fmt"
 	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
 
 	"github.com/siderolabs/go-retry/retry"
 
 	"github.com/siderolabs/talos/internal/integration/base"
+	machineapi "github.com/siderolabs/talos/pkg/machinery/api/machine"
 	"github.com/siderolabs/talos/pkg/machinery/client"
 	"github.com/siderolabs/talos/pkg/machinery/config/machine"
 )
@@ -69,6 +71,71 @@ func (suite *RebootSuite) TestRebootNodeByNode() {
 			suite.CleanupFailedPods,
 		)
 	}
+}
+
+// TestForcedReboot force-reboots cluster node by node,
+// ensuring that the 'cleanup' phase/'stopAllPods' task doesn't run.
+func (suite *RebootSuite) TestForcedReboot() { //nolint:gocyclo
+	if !suite.Capabilities().SupportsReboot {
+		suite.T().Skip("cluster doesn't support reboots")
+	}
+
+	nodes := suite.DiscoverNodeInternalIPs(suite.ctx)
+	suite.Require().NotEmpty(nodes)
+
+	for _, node := range nodes {
+		suite.T().Log("force rebooting node", node)
+
+		nodeCtx := client.WithNode(suite.ctx, node)
+
+		var (
+			sawStopAllPods  atomic.Bool
+			sawCleanupPhase atomic.Bool
+		)
+
+		// watch events so we can verify graceful teardown did not happen
+		watchCtx, watchCancel := context.WithCancel(nodeCtx)
+		eventsCh := make(chan client.EventResult)
+		suite.Require().NoError(suite.Client.EventsWatchV2(watchCtx, eventsCh))
+
+		go func() {
+			for {
+				select {
+				case <-watchCtx.Done():
+					return
+				case ev := <-eventsCh:
+					if ev.Error != nil {
+						continue
+					}
+
+					switch msg := ev.Event.Payload.(type) {
+					case *machineapi.TaskEvent:
+						if msg.GetTask() == "stopAllPods" {
+							sawStopAllPods.Store(true)
+						}
+					case *machineapi.PhaseEvent:
+						if msg.GetPhase() == "cleanup" {
+							sawCleanupPhase.Store(true)
+						}
+					}
+				}
+			}
+		}()
+
+		suite.AssertRebooted(
+			suite.ctx, node, func(nodeCtx context.Context) error {
+				return base.IgnoreGRPCUnavailable(suite.Client.Reboot(nodeCtx, client.WithForce))
+			}, 10*time.Minute,
+			suite.CleanupFailedPods,
+		)
+
+		watchCancel()
+
+		suite.Require().Falsef(sawCleanupPhase.Load(), "cleanup phase must not run during forced reboot")
+		suite.Require().Falsef(sawStopAllPods.Load(), "stopAllPods task must not run during forced reboot")
+	}
+
+	suite.WaitForBootDone(suite.ctx)
 }
 
 // TestRebootMultiple reboots a node, issues consequent reboots

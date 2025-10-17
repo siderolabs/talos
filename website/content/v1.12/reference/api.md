@@ -4250,6 +4250,7 @@ File type.
 | ---- | ------ | ----------- |
 | DEFAULT | 0 |  |
 | POWERCYCLE | 1 |  |
+| FORCE | 2 |  |
 
 
 

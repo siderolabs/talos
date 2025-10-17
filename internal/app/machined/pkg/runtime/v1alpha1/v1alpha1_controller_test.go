@@ -44,7 +44,7 @@ func (m *mockSequencer) Install(r runtime.Runtime) []runtime.Phase {
 	return m.phases[runtime.SequenceInstall]
 }
 
-func (m *mockSequencer) Reboot(r runtime.Runtime) []runtime.Phase {
+func (m *mockSequencer) Reboot(r runtime.Runtime, _ *machine.RebootRequest) []runtime.Phase {
 	return m.phases[runtime.SequenceReboot]
 }
 

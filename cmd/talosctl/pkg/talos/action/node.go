@@ -286,6 +286,10 @@ func (a *nodeTracker) handleEvent(event client.Event) error {
 			Status:  reporter.StatusRunning,
 		})
 
+		if msg.GetSequence() == "reboot" {
+			return retry.ExpectedErrorf("reboot sequence completed")
+		}
+
 		if errStr != "" {
 			return fmt.Errorf("sequence error: %s", msg.GetError().GetMessage())
 		}
