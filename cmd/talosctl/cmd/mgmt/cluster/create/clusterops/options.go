@@ -139,6 +139,7 @@ type Qemu struct {
 	DebugShellEnabled         bool
 	WithIOMMU                 bool
 	ConfigInjectionMethod     string
+	Airgapped                 bool
 }
 
 // GetCommon returns the default common options.
@@ -180,7 +181,7 @@ func GetQemu() Qemu {
 		PreallocateDisks:  false,
 		BootloaderEnabled: true,
 		UefiEnabled:       true,
-		Nameservers:       []string{"8.8.8.8", "1.1.1.1", "2001:4860:4860::8888", "2606:4700:4700::1111"},
+		Nameservers:       []string{},
 		DiskBlockSize:     512,
 		TargetArch:        runtime.GOARCH,
 		CniBinPath:        []string{filepath.Join(clustercmd.DefaultCNIDir, "bin")},
