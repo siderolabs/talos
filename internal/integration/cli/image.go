@@ -156,8 +156,8 @@ func (suite *ImageSuite) TestPull() {
 	)
 }
 
-// TestCacheCreate verifies creating a cache tarball.
-func (suite *ImageSuite) TestCacheCreate() {
+// TestCacheCreateOCI verifies creating a cache tarball.
+func (suite *ImageSuite) TestCacheCreateOCI() {
 	if testing.Short() {
 		suite.T().Skip("skipping in short mode")
 	}
@@ -172,7 +172,7 @@ func (suite *ImageSuite) TestCacheCreate() {
 
 	cacheDir := suite.T().TempDir()
 
-	args := []string{"image", "cache-create", "--image-cache-path", cacheDir, "--force"}
+	args := []string{"image", "cache-create", "--image-cache-path", cacheDir, "--force", "--layout", "oci"}
 
 	args = append(args, imagesArgs...)
 
@@ -181,13 +181,13 @@ func (suite *ImageSuite) TestCacheCreate() {
 	assert.FileExistsf(suite.T(), cacheDir+"/index.json", "index.json should exist in the image cache directory")
 }
 
-// TestRegistryCreate verifies creating a registry cache.
-func (suite *ImageSuite) TestRegistryCreate() {
+// TestCacheCreateFlat verifies creating a cache directory.
+func (suite *ImageSuite) TestCacheCreateFlat() {
 	if testing.Short() {
 		suite.T().Skip("skipping in short mode")
 	}
 
-	stdOut, _ := suite.RunCLI([]string{"image", "source-bundle", "v1.11.2"})
+	stdOut, _ := suite.RunCLI([]string{"image", "default"})
 
 	imagesList := strings.Split(strings.Trim(stdOut, "\n"), "\n")
 
@@ -195,18 +195,16 @@ func (suite *ImageSuite) TestRegistryCreate() {
 		return "--images=" + image
 	})
 
-	storageDir := suite.T().TempDir()
+	cacheDir := suite.T().TempDir()
 
-	args := []string{"image", "registry", "create", storageDir}
+	args := []string{"image", "cache-create", "--image-cache-path", cacheDir, "--force", "--layout", "flat"}
 
 	args = append(args, imagesArgs...)
 
 	suite.RunCLI(args, base.StdoutEmpty(), base.StderrNotEmpty())
 
-	assert.FileExistsf(suite.T(), storageDir+"pause/index.json", "pause/index.json should exist in the image cache directory")
-	assert.FileExistsf(suite.T(), storageDir+"pause/oci-layout", "pause/oci-layout should exist in the image cache directory")
-	assert.FileExistsf(suite.T(), storageDir+"siderolabs/kubelet/index.json", "siderolabs/kubelet/index.json should exist in the image cache directory")
-	assert.FileExistsf(suite.T(), storageDir+"siderolabs/kubelet/oci-layout", "siderolabs/kubelet/oci-layout should exist in the image cache directory")
+	assert.DirExistsf(suite.T(), cacheDir+"/blob", "blob directory should exist in the image cache directory")
+	assert.DirExistsf(suite.T(), cacheDir+"/manifests", "manifests directory should exist in the image cache directory")
 }
 
 func init() {
