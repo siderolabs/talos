@@ -162,6 +162,19 @@ talosctl cluster create docker [flags]
 
 Create a local QEMU based Talos cluster
 
+### Synopsis
+
+Create a local QEMU based Talos cluster
+Available presets:
+  - iso: Configure Talos to boot from an ISO from the Image Factory.
+  - iso-secureboot: Configure Talos for Secureboot via ISO. Only available on Linux hosts.
+  - pxe: Configure Talos to boot via PXE from the Image Factory.
+  - disk-image: Configure Talos to boot from a disk image from the Image Factory.
+  - maintenance: Skip applying machine configuration and leave the machines in maintenance mode. The machine configuration files are written to the working directory.
+
+Note: exactly one of 'iso', 'iso-secureboot', 'pxe' or 'disk-image' presets must be specified.
+
+
 ```
 talosctl cluster create qemu [flags]
 ```
@@ -182,6 +195,8 @@ talosctl cluster create qemu [flags]
       --kubernetes-version string                desired kubernetes version to run (default "1.34.1")
       --memory-controlplanes string(mb,gb)       the limit on memory usage for each control plane/VM (default 2.0GiB)
       --memory-workers string(mb,gb)             the limit on memory usage for each worker/VM (default 2.0GiB)
+      --omni-api-endpoint string                 the Omni API endpoint (must include a scheme, a port and a join token)
+      --presets strings                          list of presets to apply (default [iso])
       --schematic-id string                      image factory schematic id (defaults to an empty schematic)
       --talos-version string                     the desired talos version (default "latest")
       --talosconfig-destination string           The location to save the generated Talos configuration file to. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
@@ -257,6 +272,7 @@ talosctl cluster create [flags]
       --mtu int                                  MTU of the cluster network (default 1500)
       --nameservers strings                      list of nameservers to use (default [8.8.8.8,1.1.1.1,2001:4860:4860::8888,2606:4700:4700::1111])
       --no-masquerade-cidrs strings              list of CIDRs to exclude from NAT
+      --omni-api-endpoint string                 the Omni API endpoint (must include a scheme, a port and a join token)
       --registry-insecure-skip-verify strings    list of registry hostnames to skip TLS verification for
       --registry-mirror strings                  list of registry mirrors to use in format: <registry host>=<mirror URL>
       --skip-injecting-config                    skip injecting config from embedded metadata server, write config files to current directory

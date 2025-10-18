@@ -99,11 +99,28 @@ func (m *Qemu) InitExtra() error {
 		m.SideroLinkBuilder = slb
 	}
 
+	m.initEndpoints()
+
 	if m.Ops.WithJSONLogs {
 		m.initJSONLogs()
 	}
 
 	return nil
+}
+
+func (m *Qemu) initEndpoints() {
+	switch {
+	case m.Ops.ForceEndpoint != "":
+		// using non-default endpoints, provision additional cert SANs and fix endpoint list
+		m.Endpoints = []string{m.Ops.ForceEndpoint}
+	case m.Ops.ForceInitNodeAsEndpoint:
+		m.Endpoints = []string{m.IPs[0][0].String()}
+	case m.Endpoints == nil:
+		// use control plane nodes as endpoints, client-side load-balancing
+		for i := range m.Ops.Controlplanes {
+			m.Endpoints = slices.Concat(m.Endpoints, []string{m.IPs[0][i].String()})
+		}
+	}
 }
 
 // AddExtraGenOps implements ExtraOptionsProvider.
@@ -134,18 +151,8 @@ func (m *Qemu) AddExtraGenOps() error {
 		})
 	}
 
-	switch {
-	case m.Ops.ForceEndpoint != "":
-		// using non-default endpoints, provision additional cert SANs and fix endpoint list
-		m.Endpoints = []string{m.Ops.ForceEndpoint}
+	if m.Ops.ForceEndpoint != "" {
 		m.GenOps = slices.Concat(m.GenOps, []generate.Option{generate.WithAdditionalSubjectAltNames(m.Endpoints)})
-	case m.Ops.ForceInitNodeAsEndpoint:
-		m.Endpoints = []string{m.IPs[0][0].String()}
-	case m.Endpoints == nil:
-		// use control plane nodes as endpoints, client-side load-balancing
-		for i := range m.Ops.Controlplanes {
-			m.Endpoints = slices.Concat(m.Endpoints, []string{m.IPs[0][i].String()})
-		}
 	}
 
 	return nil

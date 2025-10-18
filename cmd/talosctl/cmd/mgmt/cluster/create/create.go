@@ -129,33 +129,37 @@ func downloadBootAssets(ctx context.Context, qOps *clusterops.Qemu) error {
 func postCreate(
 	ctx context.Context,
 	cOps clusterops.Common,
-	bundleTalosconfig *clientconfig.Config,
 	cluster provision.Cluster,
-	provisionOptions []provision.Option,
-	request provision.ClusterRequest,
+	clusterConfigs clusterops.ClusterConfigs,
 ) error {
-	if err := saveConfig(bundleTalosconfig, cOps.TalosconfigDestination); err != nil {
-		return err
+	if clusterConfigs.ConfigBundle != nil {
+		bundleTalosconfig := clusterConfigs.ConfigBundle.TalosConfig()
+
+		if err := saveConfig(bundleTalosconfig, cOps.TalosconfigDestination); err != nil {
+			return err
+		}
 	}
 
-	clusterAccess := access.NewAdapter(cluster, provisionOptions...)
+	clusterAccess := access.NewAdapter(cluster, clusterConfigs.ProvisionOptions...)
 	defer clusterAccess.Close() //nolint:errcheck
 
 	if cOps.ApplyConfigEnabled {
-		err := clusterAccess.ApplyConfig(ctx, request.Nodes, request.SiderolinkRequest, os.Stdout)
+		fmt.Println("applying configuration to the cluster nodes")
+
+		err := clusterAccess.ApplyConfig(ctx, clusterConfigs.ClusterRequest.Nodes, clusterConfigs.ClusterRequest.SiderolinkRequest, os.Stdout)
 		if err != nil {
 			return err
 		}
+	}
+
+	if cOps.OmniAPIEndpoint != "" || (cOps.SkipInjectingConfig && !cOps.ApplyConfigEnabled) {
+		return nil
 	}
 
 	return bootstrapCluster(ctx, clusterAccess, cOps)
 }
 
 func bootstrapCluster(ctx context.Context, clusterAccess *access.Adapter, cOps clusterops.Common) error {
-	if cOps.SkipInjectingConfig && !cOps.ApplyConfigEnabled {
-		return nil
-	}
-
 	if !cOps.WithInitNode {
 		if err := clusterAccess.Bootstrap(ctx, os.Stdout); err != nil {
 			return fmt.Errorf("bootstrap error: %w", err)

@@ -7,57 +7,156 @@ package create
 import (
 	"context"
 	"fmt"
+	"net/netip"
 	"net/url"
+	"os"
+	"path/filepath"
+	"slices"
 
+	"github.com/siderolabs/talos/cmd/talosctl/cmd/constants"
+	clustercmd "github.com/siderolabs/talos/cmd/talosctl/cmd/mgmt/cluster"
 	"github.com/siderolabs/talos/cmd/talosctl/cmd/mgmt/cluster/create/clusterops"
 	"github.com/siderolabs/talos/cmd/talosctl/cmd/mgmt/cluster/create/clusterops/configmaker"
-	"github.com/siderolabs/talos/pkg/cli"
+	"github.com/siderolabs/talos/cmd/talosctl/cmd/mgmt/cluster/create/clusterops/configmaker/preset"
 	"github.com/siderolabs/talos/pkg/machinery/config"
+	"github.com/siderolabs/talos/pkg/machinery/config/encoder"
+	"github.com/siderolabs/talos/pkg/machinery/config/machine"
 	"github.com/siderolabs/talos/pkg/provision"
 )
 
 //nolint:gocyclo,cyclop
-func getQemuClusterRequest(
+func createQemuCluster(
 	ctx context.Context,
 	qOps clusterops.Qemu,
 	cOps clusterops.Common,
-	cqOps createQemuOps,
+	presetOptions presetOptions,
 	provisioner provision.Provisioner,
-) (clusterops.ClusterConfigs, error) {
+) error {
 	if cOps.TalosVersion == "" || cOps.TalosVersion[0] != 'v' {
-		return clusterops.ClusterConfigs{}, fmt.Errorf("failed to parse talos version: version string must start with a 'v'")
+		return fmt.Errorf("failed to parse talos version: version string must start with a 'v'")
 	}
 
 	_, err := config.ParseContractFromVersion(cOps.TalosVersion)
 	if err != nil {
-		return clusterops.ClusterConfigs{}, fmt.Errorf("failed to parse talos version: %s", err)
+		return fmt.Errorf("failed to parse talos version: %s", err)
 	}
 
-	if cqOps.schematicID == "" {
-		cqOps.schematicID = emptySchemanticID
+	if presetOptions.schematicID == "" {
+		presetOptions.schematicID = constants.ImageFactoryEmptySchematicID
 	}
 
-	factoryURL, err := url.Parse(cqOps.imageFactoryURL)
+	factoryURL, err := url.Parse(presetOptions.imageFactoryURL)
 	if err != nil {
-		return clusterops.ClusterConfigs{}, fmt.Errorf("malformed Image Factory URL: %q: %w", cqOps.imageFactoryURL, err)
+		return fmt.Errorf("malformed Image Factory URL: %q: %w", presetOptions.imageFactoryURL, err)
 	}
 
 	if factoryURL.Scheme == "" || factoryURL.Host == "" {
-		return clusterops.ClusterConfigs{}, fmt.Errorf("image Factory URL must include scheme and host: %q", cqOps.imageFactoryURL)
+		return fmt.Errorf("image Factory URL must include scheme and host: %q", presetOptions.imageFactoryURL)
 	}
 
-	qOps.NodeISOPath, err = url.JoinPath(factoryURL.String(), "image", cqOps.schematicID, cOps.TalosVersion, "metal-"+qOps.TargetArch+".iso")
-	cli.Should(err)
-	qOps.NodeInstallImage, err = url.JoinPath(factoryURL.Host, "metal-installer", cqOps.schematicID+":"+cOps.TalosVersion)
-	cli.Should(err)
+	if slices.Contains(presetOptions.presets, preset.Maintenance{}.Name()) && cOps.OmniAPIEndpoint != "" {
+		fmt.Println("omni-api-endpoint specified along with the 'maintenance' preset")
+		fmt.Println("machine configuration containing 'SideroLinkConfig' will be written to the working path but will not be applied to the nodes")
+	}
+
+	err = preset.Apply(
+		preset.Options{
+			SchematicID:     presetOptions.schematicID,
+			ImageFactoryURL: factoryURL,
+		}, &cOps, &qOps, presetOptions.presets)
+	if err != nil {
+		return err
+	}
 
 	if err := downloadBootAssets(ctx, &qOps); err != nil {
-		return clusterops.ClusterConfigs{}, err
+		return err
 	}
 
-	return configmaker.GetQemuConfigs(configmaker.QemuOptions{
+	clusterConfigs, err := configmaker.GetQemuConfigs(configmaker.QemuOptions{
 		ExtraOps:    qOps,
 		CommonOps:   cOps,
 		Provisioner: provisioner,
 	})
+	if err != nil {
+		return err
+	}
+
+	err = preCreate(cOps, clusterConfigs)
+	if err != nil {
+		return err
+	}
+
+	cluster, err := provisioner.Create(ctx, clusterConfigs.ClusterRequest, clusterConfigs.ProvisionOptions...)
+	if err != nil {
+		return err
+	}
+
+	err = postCreate(ctx, cOps, cluster, clusterConfigs)
+	if err != nil {
+		return err
+	}
+
+	return clustercmd.ShowCluster(cluster)
+}
+
+func preCreate(cOps clusterops.Common, clusterConfigs clusterops.ClusterConfigs) error {
+	if cOps.OmniAPIEndpoint != "" {
+		err := checkLoopbackOmniURL(cOps, clusterConfigs)
+		if err != nil {
+			return err
+		}
+	}
+
+	// write machine config
+	if cOps.SkipInjectingConfig {
+		if clusterConfigs.ConfigBundle != nil {
+			types := []machine.Type{machine.TypeControlPlane, machine.TypeWorker}
+
+			if cOps.WithInitNode {
+				types = slices.Insert(types, 0, machine.TypeInit)
+			}
+
+			if err := clusterConfigs.ConfigBundle.Write(".", encoder.CommentsAll, types...); err != nil {
+				return err
+			}
+		}
+
+		// no configbundle, just write the machine config as-is
+		cfgBytes, err := clusterConfigs.ClusterRequest.Nodes[0].Config.Bytes()
+		if err != nil {
+			return err
+		}
+
+		fullFilePath := filepath.Join(".", "machineconfig.yaml")
+		if err = os.WriteFile(fullFilePath, cfgBytes, 0o644); err != nil {
+			return err
+		}
+
+		fmt.Fprintf(os.Stderr, "created %s\n", fullFilePath)
+	}
+
+	return nil
+}
+
+func checkLoopbackOmniURL(cOps clusterops.Common, clusterConfigs clusterops.ClusterConfigs) error {
+	parsedURL, err := url.Parse(cOps.OmniAPIEndpoint)
+	if err != nil {
+		return err
+	}
+
+	host := parsedURL.Hostname()
+
+	ip, err := netip.ParseAddr(host)
+	if err != nil {
+		return err
+	}
+
+	gwIP := clusterConfigs.ClusterRequest.Network.GatewayAddrs[0]
+
+	if ip.IsLoopback() && ip != gwIP {
+		fmt.Fprintf(os.Stderr, "WARNING: the Omni API url is pointing to a local address %q which is different from the cluster gateway address %q\n", ip.String(), gwIP.String())
+		fmt.Fprintln(os.Stderr, "the nodes will not be able to reach the Omni API server unless Omni is running in the same virtual network")
+	}
+
+	return nil
 }
