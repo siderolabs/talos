@@ -1,4 +1,4 @@
-# syntax = docker/dockerfile-upstream:1.17.1-labs
+# syntax = docker/dockerfile-upstream:1.19.0-labs
 
 # Meta args applied to stage base names.
 
