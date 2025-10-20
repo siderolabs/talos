@@ -32,6 +32,7 @@ GENERATE_VEX_PREFIX ?= ghcr.io/siderolabs/generate-vex
 GENERATE_VEX ?= latest
 
 KRES_IMAGE ?= ghcr.io/siderolabs/kres:latest
+IMAGE_SIGNER_IMAGE ?= ghcr.io/siderolabs/image-signer:latest
 CONFORMANCE_IMAGE ?= ghcr.io/siderolabs/conform:latest
 
 PKG_APPARMOR ?= $(PKGS_PREFIX)/apparmor:$(PKGS)
@@ -719,11 +720,7 @@ image-list: ## Prints a list of all images built by this Makefile with digests.
 
 .PHONY: sign-images
 sign-images: ## Run cosign to sign all images built by this Makefile.
-	@for image in $(shell $(MAKE) --quiet image-list REGISTRY_AND_USERNAME=$(REGISTRY_AND_USERNAME) IMAGE_TAG_IN=$(IMAGE_TAG_IN)); do \
-		echo '==>' $$image; \
-		cosign verify $$image --certificate-identity-regexp '@siderolabs\.com$$' --certificate-oidc-issuer https://accounts.google.com || \
-			cosign sign --yes $$image; \
-	done
+	@docker run --pull=always --rm --net=host $(IMAGE_SIGNER_IMAGE) sign $(shell $(MAKE) --quiet image-list REGISTRY_AND_USERNAME=$(REGISTRY_AND_USERNAME) IMAGE_TAG_IN=$(IMAGE_TAG_IN))
 
 .PHONY: reproducibility-test
 reproducibility-test: $(ARTIFACTS)
