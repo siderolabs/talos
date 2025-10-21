@@ -1086,7 +1086,7 @@ COPY --link --from=pkg-qemu-tools / /
 COPY --link --from=pkg-squashfs-tools / /
 COPY --link --from=pkg-tar / /
 COPY --link --exclude=**/*.a --exclude=*.a --from=pkg-util-linux /usr/lib/libblkid.* /usr/lib/
-COPY --link --exclude=**/*.a --exclude=*.a --from=pkg-util-linux-amd64 /usr/lib/libuuid.* /usr/lib/
+COPY --link --exclude=**/*.a --exclude=*.a --from=pkg-util-linux /usr/lib/libuuid.* /usr/lib/
 COPY --link --exclude=**/*.a --exclude=**/*.la  --exclude=usr/include --exclude=usr/lib/pkgconfig --from=pkg-xz / /
 COPY --link --exclude=**/*.a --exclude=**/*.la  --exclude=usr/include --exclude=usr/lib/pkgconfig --from=pkg-zlib / /
 COPY --link --exclude=**/*.a --exclude=**/*.la  --exclude=usr/include --exclude=usr/lib/pkgconfig --from=pkg-zstd / /
