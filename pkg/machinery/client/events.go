@@ -20,8 +20,15 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/proto"
 )
 
-// ErrEventNotSupported is returned from the event decoder when we encounter an unknown event.
-var ErrEventNotSupported = errors.New("event is not supported")
+// EventNotSupportedError is returned from the event decoder when we encounter an unknown event.
+type EventNotSupportedError struct {
+	TypeURL string
+}
+
+// Error implements the error interface.
+func (e EventNotSupportedError) Error() string {
+	return fmt.Sprintf("event is not supported: %s", e.TypeURL)
+}
 
 // EventsOptionFunc defines the options for the Events API.
 type EventsOptionFunc func(opts *machineapi.EventsRequest)
@@ -250,7 +257,9 @@ func UnmarshalEvent(event *machineapi.Event) (*Event, error) {
 
 	if msg == nil {
 		// We haven't implemented the handling of this event yet.
-		return nil, ErrEventNotSupported
+		return nil, EventNotSupportedError{
+			TypeURL: typeURL,
+		}
 	}
 
 	if err := proto.Unmarshal(event.GetData().GetValue(), msg); err != nil {
