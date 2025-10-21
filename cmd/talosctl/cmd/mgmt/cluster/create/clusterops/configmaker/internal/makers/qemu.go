@@ -219,7 +219,7 @@ func (m *Qemu) AddExtraConfigBundleOpts() error {
 
 // ModifyClusterRequest implements ExtraOptionsProvider.
 func (m *Qemu) ModifyClusterRequest() error {
-	nameserverIPs, err := getNameserverIPs(m.EOps.Nameservers)
+	nameserverIPs, err := getNameserverIPs(m.EOps.Nameservers, m.GatewayIPs)
 	if err != nil {
 		return err
 	}
@@ -259,6 +259,11 @@ func (m *Qemu) ModifyClusterRequest() error {
 	m.ClusterRequest.Network.PacketReorder = m.EOps.PacketReorder
 	m.ClusterRequest.Network.PacketCorrupt = m.EOps.PacketCorrupt
 	m.ClusterRequest.Network.Bandwidth = m.EOps.Bandwidth
+	m.ClusterRequest.Network.Airgapped = m.EOps.Airgapped
+	m.ClusterRequest.Network.ImageCachePath = m.EOps.ImageCachePath
+	m.ClusterRequest.Network.ImageCacheTLSCertFile = m.EOps.ImageCacheTLSCertFile
+	m.ClusterRequest.Network.ImageCacheTLSKeyFile = m.EOps.ImageCacheTLSKeyFile
+	m.ClusterRequest.Network.ImageCachePort = m.EOps.ImageCachePort
 
 	m.ClusterRequest.KernelPath = m.EOps.NodeVmlinuzPath
 	m.ClusterRequest.InitramfsPath = m.EOps.NodeInitramfsPath
@@ -659,8 +664,12 @@ func (m *Qemu) initJSONLogs() {
 	m.ConfigBundleOps = slices.Concat(m.ConfigBundleOps, []bundle.Option{bundle.WithPatch([]configpatcher.Patch{configpatcher.NewStrategicMergePatch(cfg)})})
 }
 
-func getNameserverIPs(nameservers []string) ([]netip.Addr, error) {
+func getNameserverIPs(nameservers []string, gatewayIPs []netip.Addr) ([]netip.Addr, error) {
 	nameserverIPs := make([]netip.Addr, len(nameservers))
+
+	if len(nameservers) == 0 {
+		return gatewayIPs, nil
+	}
 
 	for i := range nameserverIPs {
 		ip, err := netip.ParseAddr(nameservers[i])

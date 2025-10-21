@@ -7,7 +7,6 @@ package debug
 import (
 	"context"
 	"crypto/tls"
-	stdx509 "crypto/x509"
 	"embed"
 	"fmt"
 	"io"
@@ -21,10 +20,10 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/siderolabs/crypto/x509"
 	"github.com/spf13/cobra"
 	"golang.org/x/sync/errgroup"
 
+	"github.com/siderolabs/talos/cmd/talosctl/pkg/mgmt/helpers"
 	"github.com/siderolabs/talos/pkg/cli"
 	"github.com/siderolabs/talos/pkg/machinery/config/container"
 	"github.com/siderolabs/talos/pkg/machinery/config/encoder"
@@ -55,7 +54,7 @@ var airgappedCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return cli.WithContext(
 			context.Background(), func(ctx context.Context) error {
-				caPEM, certPEM, keyPEM, err := generateSelfSignedCert()
+				caPEM, certPEM, keyPEM, err := helpers.GenerateSelfSignedCert([]net.IP{airgappedFlags.advertisedAddress})
 				if err != nil {
 					return nil
 				}
@@ -121,25 +120,6 @@ func generateConfigPatch(caPEM []byte) error {
 	log.Printf("writing config patch to %s", patchFile)
 
 	return os.WriteFile(patchFile, patchBytes, 0o644)
-}
-
-func generateSelfSignedCert() ([]byte, []byte, []byte, error) {
-	ca, err := x509.NewSelfSignedCertificateAuthority(x509.ECDSA(true))
-	if err != nil {
-		return nil, nil, nil, err
-	}
-
-	serverIdentity, err := x509.NewKeyPair(ca,
-		x509.Organization("test"),
-		x509.CommonName("server"),
-		x509.IPAddresses([]net.IP{airgappedFlags.advertisedAddress}),
-		x509.ExtKeyUsage([]stdx509.ExtKeyUsage{stdx509.ExtKeyUsageServerAuth}),
-	)
-	if err != nil {
-		return nil, nil, nil, err
-	}
-
-	return ca.CrtPEM, serverIdentity.CrtPEM, serverIdentity.KeyPEM, nil
 }
 
 func runHTTPServer(ctx context.Context, certPEM, keyPEM []byte) error {

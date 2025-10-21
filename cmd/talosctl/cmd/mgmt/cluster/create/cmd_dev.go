@@ -98,6 +98,11 @@ func getCreateCmd() *cobra.Command {
 		withUUIDHostnamesFlag         = "with-uuid-hostnames"
 		withSiderolinkAgentFlag       = "with-siderolink"
 		configInjectionMethodFlag     = "config-injection-method"
+		airgappedFlag                 = "airgapped"
+		imageCachePathFlag            = "image-cache-path"
+		imageCacheTLSCertFileFlag     = "image-cache-tls-cert-file"
+		imageCacheTLSKeyFileFlag      = "image-cache-tls-key-file"
+		imageCachePortFlag            = "image-cache-port"
 
 		// The following flags are the gen options - the options that are only used in machine configuration (i.e., not during the qemu/docker provisioning).
 		// They are not applicable when no machine configuration is generated, hence mutually exclusive with the --input-dir flag.
@@ -131,6 +136,7 @@ func getCreateCmd() *cobra.Command {
 		packetReorderFlag,
 		packetCorruptFlag,
 		bandwidthFlag,
+		airgappedFlag,
 
 		// The following might work but need testing first.
 		configInjectionMethodFlag,
@@ -209,7 +215,7 @@ func getCreateCmd() *cobra.Command {
 		qemu.MarkHidden("with-debug-shell") //nolint:errcheck
 		qemu.StringSliceVar(&qOps.ExtraUEFISearchPaths, extraUEFISearchPathsFlag, qOps.ExtraUEFISearchPaths, "additional search paths for UEFI firmware (only applies when UEFI is enabled)")
 		qemu.StringSliceVar(&qOps.NetworkNoMasqueradeCIDRs, networkNoMasqueradeCIDRsFlag, qOps.NetworkNoMasqueradeCIDRs, "list of CIDRs to exclude from NAT")
-		qemu.StringSliceVar(&qOps.Nameservers, nameserversFlag, qOps.Nameservers, "list of nameservers to use")
+		qemu.StringSliceVar(&qOps.Nameservers, nameserversFlag, qOps.Nameservers, "list of nameservers to use, by default use embedded DNS forwarder")
 		qemu.UintVar(&qOps.DiskBlockSize, diskBlockSizeFlag, qOps.DiskBlockSize, "disk block size")
 		qemu.StringVar(&qOps.TargetArch, targetArchFlag, qOps.TargetArch, "cluster architecture")
 		qemu.StringSliceVar(&qOps.CniBinPath, cniBinPathFlag, qOps.CniBinPath, "search path for CNI binaries")
@@ -239,6 +245,11 @@ func getCreateCmd() *cobra.Command {
 			"enables the use of siderolink agent as configuration apply mechanism. `true` or `wireguard` enables the agent, `tunnel` enables the agent with grpc tunneling")
 		qemu.StringVar(&qOps.ConfigInjectionMethod,
 			configInjectionMethodFlag, qOps.ConfigInjectionMethod, "a method to inject machine config: default is HTTP server, 'metal-iso' to mount an ISO")
+		qemu.BoolVar(&qOps.Airgapped, airgappedFlag, qOps.Airgapped, "limit VM network access to the provisioning network only")
+		qemu.StringVar(&qOps.ImageCachePath, imageCachePathFlag, qOps.ImageCachePath, "path to image cache")
+		qemu.StringVar(&qOps.ImageCacheTLSCertFile, imageCacheTLSCertFileFlag, qOps.ImageCacheTLSCertFile, "path to image cache TLS cert")
+		qemu.StringVar(&qOps.ImageCacheTLSKeyFile, imageCacheTLSKeyFileFlag, qOps.ImageCacheTLSKeyFile, "path to image cache TLS key")
+		qemu.Uint16Var(&qOps.ImageCachePort, imageCachePortFlag, qOps.ImageCachePort, "port on which to serve image cache")
 
 		return qemu
 	}

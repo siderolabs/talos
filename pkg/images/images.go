@@ -28,9 +28,13 @@ var (
 	// DefaultInstallerImage is the default installer image.
 	DefaultInstallerImage = DefaultInstallerImageRepository + ":" + version.Tag
 
+	// DefaultTalosImageName is the default container image name for
+	// the talos image.
+	DefaultTalosImageName = Username + "/talos"
+
 	// DefaultTalosImageRepository is the default container repository for
 	// the talos image.
-	DefaultTalosImageRepository = Registry + "/" + Username + "/talos"
+	DefaultTalosImageRepository = Registry + "/" + DefaultTalosImageName
 
 	// DefaultTalosImage is the default talos image.
 	DefaultTalosImage = DefaultTalosImageRepository + ":" + version.Tag

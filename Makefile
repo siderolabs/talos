@@ -482,10 +482,15 @@ uki-certs: talosctl ## Generate test certificates for SecureBoot/PCR Signing
 	@$(TALOSCTL_EXECUTABLE) gen secureboot pcr
 	@$(TALOSCTL_EXECUTABLE) gen secureboot database
 
-.PHONY: cache-create
-cache-create: installer imager ## Generate image cache.
+.PHONY: integration-images-list
+integration-images-list: ## Generate list of integration images.
 	@docker run --entrypoint /usr/local/bin/e2e.test registry.k8s.io/conformance:$(KUBECTL_VERSION) --list-images | \
-		$(TALOSCTL_EXECUTABLE) images integration --installer-tag=$(IMAGE_TAG_IN) --registry-and-user=$(REGISTRY_AND_USERNAME) | \
+		$(TALOSCTL_EXECUTABLE) images integration --installer-tag=$(IMAGE_TAG_IN) --registry-and-user=$(REGISTRY_AND_USERNAME) \
+		> $(ARTIFACTS)/integration-images.txt
+
+.PHONY: cache-create
+cache-create: installer imager integration-images-list ## Generate image cache.
+	@cat $(ARTIFACTS)/integration-images.txt | \
 		$(TALOSCTL_EXECUTABLE) images cache-create --image-cache-path=/tmp/cache.tar --images=- --force
 	@crane push /tmp/cache.tar $(REGISTRY_AND_USERNAME)/image-cache:$(IMAGE_TAG_OUT)
 	@$(MAKE) image-iso IMAGER_ARGS="--image-cache=$(REGISTRY_AND_USERNAME)/image-cache:$(IMAGE_TAG_OUT) --extra-kernel-arg='console=ttyS0'"

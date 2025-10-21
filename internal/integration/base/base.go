@@ -60,6 +60,8 @@ type TalosSuite struct {
 	CSITestName string
 	// CSITestTimeout is the timeout for the CSI test
 	CSITestTimeout string
+	// Airgapped marks that cluster has no access to external networks
+	Airgapped bool
 
 	discoveredNodes cluster.Info
 }

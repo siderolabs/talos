@@ -1,6 +1,6 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
 #
-# Generated on 2025-10-01T17:01:09Z by kres bc281a9.
+# Generated on 2025-10-22T12:39:45Z by kres 46e133d.
 
 concurrency:
   group: ${{ github.head_ref || github.run_id }}
@@ -77,6 +77,20 @@ jobs:
         if: github.event_name == 'schedule'
         run: |
           make talosctl-cni-bundle
+      - name: integration-images-list
+        env:
+          IMAGE_REGISTRY: registry.dev.siderolabs.io
+        run: |
+          make integration-images-list
+      - name: e2e-airgapped-no-proxy
+        env:
+          GITHUB_STEP_NAME: ${{ github.job}}-e2e-no-proxy
+          IMAGE_REGISTRY: registry.dev.siderolabs.io
+          SHORT_INTEGRATION_TEST: "yes"
+          WITH_AIRGAPPED: no-proxy
+          WITH_CLUSTER_DISCOVERY: "false"
+        run: |
+          sudo -E make e2e-qemu
       - name: e2e-airgapped-http-proxy
         env:
           GITHUB_STEP_NAME: ${{ github.job}}-e2e-http-proxy

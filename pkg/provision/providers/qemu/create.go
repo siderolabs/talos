@@ -70,6 +70,20 @@ func (p *provisioner) Create(ctx context.Context, request provision.ClusterReque
 		return nil, fmt.Errorf("error creating loadbalancer: %w", err)
 	}
 
+	fmt.Fprintln(options.LogWriter, "creating dnsd")
+
+	if err = p.CreateDNSd(state, request); err != nil {
+		return nil, fmt.Errorf("error creating dnsd: %w", err)
+	}
+
+	if request.Network.ImageCachePath != "" {
+		fmt.Fprintln(options.LogWriter, "creating image cache")
+
+		if err = p.CreateImageCache(state, request); err != nil {
+			return nil, fmt.Errorf("error creating image cache: %w", err)
+		}
+	}
+
 	if options.KMSEndpoint != "" {
 		fmt.Fprintln(options.LogWriter, "creating KMS server")
 

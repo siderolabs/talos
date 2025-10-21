@@ -10,6 +10,8 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log"
+	"net"
 	"os"
 	"os/signal"
 	"slices"
@@ -23,6 +25,7 @@ import (
 	"github.com/spf13/pflag"
 	"go.uber.org/zap"
 
+	mgmthelpers "github.com/siderolabs/talos/cmd/talosctl/pkg/mgmt/helpers"
 	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/artifacts"
 	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/helpers"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system/services/registry"
@@ -32,6 +35,8 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/api/machine"
 	"github.com/siderolabs/talos/pkg/machinery/client"
 	"github.com/siderolabs/talos/pkg/machinery/config/container"
+	"github.com/siderolabs/talos/pkg/machinery/config/encoder"
+	"github.com/siderolabs/talos/pkg/machinery/config/types/security"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/version"
@@ -306,8 +311,11 @@ var imageIntegrationCmd = &cobra.Command{
 			"registry.k8s.io/conformance:v" + constants.DefaultKubernetesVersion,
 			"docker.io/library/alpine:latest",
 			"ghcr.io/siderolabs/talosctl:latest",
+			"registry.k8s.io/kube-apiserver:v1.27.0",
 			imageIntegrationCmdFlags.registryAndUser + "/installer:" +
 				imageIntegrationCmdFlags.installerTag,
+			imageIntegrationCmdFlags.registryAndUser + "/talos:" +
+				imageIntegrationCmdFlags.talosTag,
 		}
 
 		sc := bufio.NewScanner(os.Stdin)
@@ -341,6 +349,7 @@ var imageIntegrationCmd = &cobra.Command{
 
 var imageIntegrationCmdFlags struct {
 	installerTag    string
+	talosTag        string
 	registryAndUser string
 }
 
@@ -460,6 +469,68 @@ var imageCacheServeCmdFlags struct {
 	tlsKeyFile     string
 }
 
+// imageCacheCertGenCmd represents the image cache tls certificate generation command.
+var imageCacheCertGenCmd = &cobra.Command{
+	Use:     "cache-cert-gen",
+	Short:   "Generate TLS certificates and CA patch required for securing image cache to Talos communication",
+	Long:    `Generate TLS certificates and CA patch required for securing image cache to Talos communication`,
+	Example: ``,
+	Args:    cobra.NoArgs,
+	RunE: func(cmd *cobra.Command, args []string) error {
+		caPEM, certPEM, keyPEM, err := mgmthelpers.GenerateSelfSignedCert(imageCacheCertGenCmdFlags.advertisedAddress)
+		if err != nil {
+			return nil
+		}
+
+		if err = generateConfigPatch(caPEM); err != nil {
+			return err
+		}
+
+		if err := os.WriteFile(imageCacheCertGenCmdFlags.tlsCaFile, caPEM, 0o644); err != nil {
+			return err
+		}
+
+		if err := os.WriteFile(imageCacheCertGenCmdFlags.tlsCertFile, certPEM, 0o644); err != nil {
+			return err
+		}
+
+		if err := os.WriteFile(imageCacheCertGenCmdFlags.tlsKeyFile, keyPEM, 0o600); err != nil {
+			return err
+		}
+
+		return nil
+	},
+}
+
+func generateConfigPatch(caPEM []byte) error {
+	patch := security.NewTrustedRootsConfigV1Alpha1()
+	patch.MetaName = "image-cache-ca"
+	patch.Certificates = string(caPEM)
+
+	ctr, err := container.New(patch)
+	if err != nil {
+		return err
+	}
+
+	patchBytes, err := ctr.EncodeBytes(encoder.WithComments(encoder.CommentsDisabled))
+	if err != nil {
+		return err
+	}
+
+	const patchFile = "image-cache-patch.yaml"
+
+	log.Printf("writing config patch to %s", patchFile)
+
+	return os.WriteFile(patchFile, patchBytes, 0o644)
+}
+
+var imageCacheCertGenCmdFlags struct {
+	advertisedAddress []net.IP
+	tlsCaFile         string
+	tlsCertFile       string
+	tlsKeyFile        string
+}
+
 func init() {
 	imageCmd.PersistentFlags().StringVar(&imageCmdFlags.namespace, "namespace", "cri", "namespace to use: `system` (etcd and kubelet images) or `cri` for all Kubernetes workloads")
 	addCommand(imageCmd)
@@ -490,9 +561,17 @@ func init() {
 	imageCacheServeCmd.PersistentFlags().StringVar(&imageCacheServeCmdFlags.tlsCertFile, "tls-cert-file", "", "TLS certificate file to use for serving")
 	imageCacheServeCmd.PersistentFlags().StringVar(&imageCacheServeCmdFlags.tlsKeyFile, "tls-key-file", "", "TLS key file to use for serving")
 
+	imageCmd.AddCommand(imageCacheCertGenCmd)
+	imageCacheCertGenCmd.PersistentFlags().StringVar(&imageCacheCertGenCmdFlags.tlsCaFile, "tls-ca-file", "ca.crt", "TLS certificate authority file")
+	imageCacheCertGenCmd.PersistentFlags().StringVar(&imageCacheCertGenCmdFlags.tlsCertFile, "tls-cert-file", "tls.crt", "TLS certificate file to use for serving")
+	imageCacheCertGenCmd.PersistentFlags().StringVar(&imageCacheCertGenCmdFlags.tlsKeyFile, "tls-key-file", "tls.key", "TLS key file to use for serving")
+	imageCacheCertGenCmd.PersistentFlags().IPSliceVar(&imageCacheCertGenCmdFlags.advertisedAddress, "advertised-address", []net.IP{}, "The address to advertise to the cluster.")
+	imageIntegrationCmd.MarkPersistentFlagRequired("advertised-address") //nolint:errcheck
+
 	imageCmd.AddCommand(imageIntegrationCmd)
 	imageIntegrationCmd.PersistentFlags().StringVar(&imageIntegrationCmdFlags.installerTag, "installer-tag", "", "tag of the installer image to use")
 	imageIntegrationCmd.MarkPersistentFlagRequired("installer-tag") //nolint:errcheck
+	imageIntegrationCmd.PersistentFlags().StringVar(&imageIntegrationCmdFlags.talosTag, "talos-tag", version.Tag, "tag of the installer image to use")
 	imageIntegrationCmd.PersistentFlags().StringVar(&imageIntegrationCmdFlags.registryAndUser, "registry-and-user", "", "registry and user to use for the images")
 	imageIntegrationCmd.MarkPersistentFlagRequired("registry-and-user") //nolint:errcheck
 }

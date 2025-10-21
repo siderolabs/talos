@@ -225,6 +225,7 @@ talosctl cluster create [flags]
 ### Options
 
 ```
+      --airgapped                                limit VM network access to the provisioning network only
       --arch string                              cluster architecture (default "amd64")
       --bad-rtc                                  launch VM with bad RTC state
       --cidr string                              CIDR of the cluster network (IPv4, ULA network for IPv6 is derived in automated way) (default "10.5.0.0/24")
@@ -258,6 +259,10 @@ talosctl cluster create [flags]
       --extra-disks-size int                     default limit on disk size in MB (each VM) (default 5120)
       --extra-uefi-search-paths strings          additional search paths for UEFI firmware (only applies when UEFI is enabled)
   -h, --help                                     help for create
+      --image-cache-path string                  path to image cache
+      --image-cache-port uint16                  port on which to serve image cache (default 5000)
+      --image-cache-tls-cert-file string         path to image cache TLS cert
+      --image-cache-tls-key-file string          path to image cache TLS key
       --init-node-as-endpoint                    use init node as endpoint instead of any load balancer endpoint
       --initrd-path string                       initramfs image to use (default "_out/initramfs-${ARCH}.xz")
       --install-image string                     the installer image to use (default "ghcr.io/siderolabs/installer:latest")
@@ -270,7 +275,7 @@ talosctl cluster create [flags]
       --memory string(mb,gb)                     the limit on memory usage for each control plane/VM (default 2.0GiB)
       --memory-workers string(mb,gb)             the limit on memory usage for each worker/VM (default 2.0GiB)
       --mtu int                                  MTU of the cluster network (default 1500)
-      --nameservers strings                      list of nameservers to use (default [8.8.8.8,1.1.1.1,2001:4860:4860::8888,2606:4700:4700::1111])
+      --nameservers strings                      list of nameservers to use, by default use embedded DNS forwarder
       --no-masquerade-cidrs strings              list of CIDRs to exclude from NAT
       --omni-api-endpoint string                 the Omni API endpoint (must include a scheme, a port and a join token)
       --registry-insecure-skip-verify strings    list of registry hostnames to skip TLS verification for
@@ -1855,6 +1860,44 @@ talosctl health [flags]
 
 * [talosctl](#talosctl)	 - A CLI for out-of-band management of Kubernetes nodes created by Talos
 
+## talosctl image cache-cert-gen
+
+Generate TLS certificates and CA patch required for securing image cache to Talos communication
+
+### Synopsis
+
+Generate TLS certificates and CA patch required for securing image cache to Talos communication
+
+```
+talosctl image cache-cert-gen [flags]
+```
+
+### Options
+
+```
+      --advertised-address ipSlice   The address to advertise to the cluster. (default [])
+  -h, --help                         help for cache-cert-gen
+      --tls-ca-file string           TLS certificate authority file (default "ca.crt")
+      --tls-cert-file string         TLS certificate file to use for serving (default "tls.crt")
+      --tls-key-file string          TLS key file to use for serving (default "tls.key")
+```
+
+### Options inherited from parent commands
+
+```
+      --cluster string             Cluster to connect to if a proxy endpoint is used.
+      --context string             Context to be used in command
+  -e, --endpoints strings          override default endpoints in Talos configuration
+      --namespace system           namespace to use: system (etcd and kubelet images) or `cri` for all Kubernetes workloads (default "cri")
+  -n, --nodes strings              target the specified nodes
+      --siderov1-keys-dir string   The path to the SideroV1 auth PGP keys directory. Defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'. Only valid for Contexts that use SideroV1 auth.
+      --talosconfig string         The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
+```
+
+### SEE ALSO
+
+* [talosctl image](#talosctl-image)	 - Manage CRI container images
+
 ## talosctl image cache-create
 
 Create a cache of images in OCI format into a directory
@@ -2085,6 +2128,7 @@ Manage CRI container images
 ### SEE ALSO
 
 * [talosctl](#talosctl)	 - A CLI for out-of-band management of Kubernetes nodes created by Talos
+* [talosctl image cache-cert-gen](#talosctl-image-cache-cert-gen)	 - Generate TLS certificates and CA patch required for securing image cache to Talos communication
 * [talosctl image cache-create](#talosctl-image-cache-create)	 - Create a cache of images in OCI format into a directory
 * [talosctl image cache-serve](#talosctl-image-cache-serve)	 - Serve an OCI image cache directory over HTTP(S) as a container registry
 * [talosctl image default](#talosctl-image-default)	 - List the default images used by Talos

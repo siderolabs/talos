@@ -223,7 +223,7 @@ func (svc *Service) handler(w http.ResponseWriter, req *http.Request) error {
 func (svc *Service) resolveCanonicalRef(p params) (reference.Canonical, error) {
 	ref, err := reference.ParseDockerRef(p.String())
 	if err != nil {
-		return nil, xerrors.NewTaggedf[badRequestTag]("failed to parse docker ref: %w", err)
+		return nil, xerrors.NewTaggedf[badRequestTag]("failed to parse docker ref %q: %w", p.String(), err)
 	}
 
 	cRef, ok := ref.(reference.Canonical)
@@ -279,6 +279,15 @@ func handleRegistryWithPort(namedTagged reference.Named, p params) string {
 	}
 
 	return namedTaggedName
+}
+
+func createRegistryWithPort(s string) string {
+	parts := strings.SplitN(s, "_", 3)
+	if len(parts) < 3 {
+		return s
+	}
+
+	return parts[0] + ":" + parts[1] + parts[2]
 }
 
 func hashFile(f string, where fs.FS) (_ []byte, returnErr error) {
@@ -353,11 +362,11 @@ func (svc *Service) tryFindRegistry(p params) (string, error) {
 	}
 
 	for _, entry := range entries {
-		p.registry = entry.Name()
+		p.registry = createRegistryWithPort(entry.Name())
 
 		ref, err := reference.ParseDockerRef(p.String())
 		if err != nil {
-			return "", xerrors.NewTaggedf[badRequestTag]("failed to parse docker ref: %w", err)
+			return "", xerrors.NewTaggedf[badRequestTag]("failed to parse docker ref %q: %w", p.String(), err)
 		}
 
 		namedTaggedName := handleRegistryWithPort(ref, p)
@@ -365,7 +374,7 @@ func (svc *Service) tryFindRegistry(p params) (string, error) {
 		taggedFile := filepath.Join("manifests", namedTaggedName, "reference")
 
 		if _, err := fs.Stat(svc.root, taggedFile); err == nil {
-			return entry.Name(), nil
+			return p.registry, nil
 		}
 	}
 

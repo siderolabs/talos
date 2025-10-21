@@ -140,6 +140,11 @@ type Qemu struct {
 	DebugShellEnabled         bool
 	WithIOMMU                 bool
 	ConfigInjectionMethod     string
+	Airgapped                 bool
+	ImageCachePath            string
+	ImageCacheTLSCertFile     string
+	ImageCacheTLSKeyFile      string
+	ImageCachePort            uint16
 }
 
 // GetCommon returns the default common options.
@@ -181,7 +186,7 @@ func GetQemu() Qemu {
 		PreallocateDisks:  false,
 		BootloaderEnabled: true,
 		UefiEnabled:       true,
-		Nameservers:       []string{"8.8.8.8", "1.1.1.1", "2001:4860:4860::8888", "2606:4700:4700::1111"},
+		Nameservers:       []string{},
 		DiskBlockSize:     512,
 		TargetArch:        runtime.GOARCH,
 		CniBinPath:        []string{filepath.Join(clustercmd.DefaultCNIDir, "bin")},
@@ -189,7 +194,8 @@ func GetQemu() Qemu {
 		CniCacheDir:       filepath.Join(clustercmd.DefaultCNIDir, "cache"),
 		CniBundleURL: fmt.Sprintf("https://github.com/%s/talos/releases/download/%s/talosctl-cni-bundle-%s.tar.gz",
 			images.Username, version.Trim(version.Tag), constants.ArchVariable),
-		Disks: disks,
+		Disks:          disks,
+		ImageCachePort: 5000,
 	}
 }
 

@@ -40,6 +40,7 @@ var (
 	extensionsQEMU   bool
 	extensionsNvidia bool
 	verifyUKIBooted  bool
+	airgapped        bool
 
 	talosConfig       string
 	endpoint          string
@@ -116,6 +117,7 @@ func TestIntegration(t *testing.T) {
 				TalosImage:       talosImage,
 				CSITestName:      csiTestName,
 				CSITestTimeout:   csiTestTimeout,
+				Airgapped:        airgapped,
 			})
 		}
 
@@ -175,6 +177,7 @@ func init() {
 	flag.StringVar(&talosImage, "talos.image", images.DefaultTalosImageRepository, "The default 'talos' container image")
 	flag.StringVar(&csiTestName, "talos.csi", "", "CSI test to run")
 	flag.StringVar(&csiTestTimeout, "talos.csi.timeout", "15m", "CSI test timeout")
+	flag.BoolVar(&airgapped, "talos.airgapped", false, "Marker to skip tests that should not be run on airgapped talos cluster")
 
 	flag.StringVar(&provision_test.DefaultSettings.CIDR, "talos.provision.cidr", provision_test.DefaultSettings.CIDR, "CIDR to use to provision clusters (provision tests only)")
 	flag.Var(&provision_test.DefaultSettings.RegistryMirrors, "talos.provision.registry-mirror", "registry mirrors to use (provision tests only)")

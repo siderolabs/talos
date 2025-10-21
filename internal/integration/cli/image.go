@@ -134,7 +134,7 @@ func (suite *ImageSuite) TestList() {
 
 // TestPull verifies pulling images to the CRI.
 func (suite *ImageSuite) TestPull() {
-	const image = "registry.k8s.io/kube-apiserver:v1.27.0"
+	const image = "registry.k8s.io/kube-apiserver:v1.27.0" // sync this to e2e.sh `build_image_cache`
 
 	node := suite.RandomDiscoveredNodeInternalIP()
 

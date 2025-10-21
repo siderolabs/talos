@@ -52,10 +52,12 @@ func (p *Provisioner) CreateNetwork(ctx context.Context, state *State, network p
 		NetworkName   string
 		InterfaceName string
 		MTU           string
+		IPMasquerade  bool
 	}{
 		NetworkName:   network.Name,
 		InterfaceName: state.BridgeName,
 		MTU:           strconv.Itoa(network.MTU),
+		IPMasquerade:  !network.Airgapped,
 	})
 	if err != nil {
 		return fmt.Errorf("error templating bridge CNI config: %w", err)
@@ -124,10 +126,12 @@ func (p *Provisioner) CreateNetwork(ctx context.Context, state *State, network p
 		NetworkName   string
 		InterfaceName string
 		MTU           string
+		IPMasquerade  bool
 	}{
 		NetworkName:   network.Name,
 		InterfaceName: state.BridgeName,
 		MTU:           strconv.Itoa(network.MTU),
+		IPMasquerade:  !network.Airgapped,
 	})
 	if err != nil {
 		return fmt.Errorf("error templating VM CNI config: %w", err)
@@ -368,7 +372,7 @@ const bridgeTemplate = `
 	"cniVersion": "0.4.0",
 	"type": "bridge",
 	"bridge": "{{ .InterfaceName }}",
-	"ipMasq": true,
+	"ipMasq": {{ .IPMasquerade }},
 	"isGateway": true,
 	"isDefaultGateway": true,
 	"ipam": {
@@ -386,7 +390,7 @@ const networkTemplate = `
 		{
 			"type": "bridge",
 			"bridge": "{{ .InterfaceName }}",
-			"ipMasq": true,
+			"ipMasq": {{ .IPMasquerade }},
 			"isGateway": true,
 			"isDefaultGateway": true,
 			"ipam": {

@@ -54,6 +54,14 @@ function run_talos_integration_test {
       ;;
   esac
 
+  case "${WITH_AIRGAPPED:-false}" in
+    no-proxy)
+      TEST_AIRGAPPED=("-talos.airgapped")
+      ;;
+    *)
+      ;;
+  esac
+
   case "${INTEGRATION_TEST_RUN:-no}" in
     no)
       ;;
@@ -74,7 +82,8 @@ function run_talos_integration_test {
     -talos.image "${REGISTRY}/siderolabs/talos" \
     ${EXTRA_TEST_ARGS:-} \
     "${TEST_RUN[@]}" \
-    "${TEST_SHORT[@]}"
+    "${TEST_SHORT[@]}" \
+    "${TEST_AIRGAPPED[@]}"
 }
 
 function run_talos_integration_test_docker {
@@ -141,7 +150,33 @@ function dump_cluster_state {
   ${KUBECTL} get pods --all-namespaces -o wide
 }
 
+function build_image_cache {
+  cat _out/integration-images.txt | "${TALOSCTL}" image cache-create --images=- --image-cache-path="${TMP}/image-cache" --layout=flat
+
+  "${TALOSCTL}" image cache-cert-gen \
+    --tls-ca-file="${TMP}/image-cache-ca.crt" \
+    --tls-cert-file="${TMP}/image-cache-tls.crt" \
+    --tls-key-file="${TMP}/image-cache-tls.key" \
+    --advertised-address="172.20.1.1"
+
+  cat image-cache-patch.yaml
+  mv image-cache-patch.yaml "${TMP}/image-cache-patch.yaml"
+}
+
 function build_registry_mirrors {
+  if [[ "${WITH_AIRGAPPED:-false}" == "no-proxy" ]]; then
+    build_image_cache
+
+    REGISTRY_MIRROR_FLAGS=()
+
+    for registry in docker.io registry.k8s.io quay.io gcr.io ghcr.io; do
+      addr="172.20.1.1"
+      REGISTRY_MIRROR_FLAGS+=("--registry-mirror=${registry}=https://${addr}:5000")
+    done
+
+    return
+  fi
+
   if [[ "${REGISTRY_MIRROR_FLAGS:-yes}" == "no" ]]; then
     REGISTRY_MIRROR_FLAGS=()
 

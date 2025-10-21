@@ -101,6 +101,10 @@ file locks                      (-x) unlimited
 
 // TestDNSResolver verifies that external DNS resolving works from a pod.
 func (suite *CommonSuite) TestDNSResolver() {
+	if suite.Airgapped {
+		suite.T().Skip("skipping test in airgapped mode")
+	}
+
 	if suite.Cluster != nil {
 		// cluster should be healthy for kube-dns resolving to work
 		suite.AssertClusterHealthy(suite.ctx)

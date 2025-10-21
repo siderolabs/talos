@@ -71,6 +71,18 @@ func (p *provisioner) Destroy(ctx context.Context, cluster provision.Cluster, op
 		return fmt.Errorf("error stopping dhcpd: %w", err)
 	}
 
+	fmt.Fprintln(options.LogWriter, "removing image cache")
+
+	if err = p.DestroyImageCache(state); err != nil {
+		return fmt.Errorf("error stopping image cache: %w", err)
+	}
+
+	fmt.Fprintln(options.LogWriter, "removing dnsd")
+
+	if err := p.DestroyDNSd(state); err != nil {
+		return fmt.Errorf("error stopping dnsd: %w", err)
+	}
+
 	fmt.Fprintln(options.LogWriter, "removing load balancer")
 
 	if err := p.DestroyLoadBalancer(state); err != nil {

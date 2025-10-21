@@ -264,30 +264,39 @@ case "${WITH_ENFORCING:-false}" in
 esac
 
 case "${WITH_AIRGAPPED:-false}" in
+  no-proxy)
+    INSTALLER_IMAGE="${INSTALLER_IMAGE/registry.dev.siderolabs.io/172.20.1.1:5000}"
+
+    QEMU_FLAGS+=("--config-patch=@hack/test/patches/airgapped-timesync.yaml")
+    QEMU_FLAGS+=("--config-patch=@${TMP}/image-cache-patch.yaml")
+    QEMU_FLAGS+=("--airgapped")
+    QEMU_FLAGS+=("--image-cache-path=${TMP}/image-cache")
+    QEMU_FLAGS+=("--image-cache-tls-cert-file=${TMP}/image-cache-tls.crt")
+    QEMU_FLAGS+=("--image-cache-tls-key-file=${TMP}/image-cache-tls.key")
+    ;;
   http-proxy)
-    "${TALOSCTL}" debug air-gapped --advertised-address 172.20.1.1 >/tmp/airgapped.log 2>&1 &
+    "${TALOSCTL}" debug air-gapped --advertised-address 172.20.1.1 > /tmp/airgapped.log 2>&1 &
     sleep 5 # wait for the air-gapped server to start
     cat air-gapped-patch.yaml
-    mv air-gapped-patch.yaml /tmp/air-gapped-patch.yaml
+    mv air-gapped-patch.yaml "${TMP}/air-gapped-patch.yaml"
 
-    QEMU_FLAGS+=("--config-patch=@/tmp/air-gapped-patch.yaml")
+    QEMU_FLAGS+=("--config-patch=@${TMP}/air-gapped-patch.yaml")
     ;;
   secure-http-proxy)
-    "${TALOSCTL}" debug air-gapped --advertised-address 172.20.1.1 --use-secure-proxy >/tmp/airgapped-secure.log 2>&1 &
+    "${TALOSCTL}" debug air-gapped --advertised-address 172.20.1.1 --use-secure-proxy > /tmp/airgapped-secure.log 2>&1 &
     sleep 5 # wait for the air-gapped server to start
     cat air-gapped-patch.yaml
-    mv air-gapped-patch.yaml /tmp/air-gapped-patch.yaml
+    mv air-gapped-patch.yaml "${TMP}/air-gapped-patch.yaml"
 
-    QEMU_FLAGS+=("--config-patch=@/tmp/air-gapped-patch.yaml")
+    QEMU_FLAGS+=("--config-patch=@${TMP}/air-gapped-patch.yaml")
     ;;
   https-reverse-proxy)
-    "${TALOSCTL}" debug air-gapped --advertised-address 172.20.1.1 --inject-http-proxy=false --https-reverse-proxy-target=https://registry.dev.siderolabs.io >/tmp/airgapped-reverse-proxy.log 2>&1 &
+    "${TALOSCTL}" debug air-gapped --advertised-address 172.20.1.1 --inject-http-proxy=false --https-reverse-proxy-target=https://registry.dev.siderolabs.io > /tmp/airgapped-reverse-proxy.log 2>&1 &
     sleep 5 # wait for the air-gapped server to start
     cat air-gapped-patch.yaml
-    mv air-gapped-patch.yaml /tmp/air-gapped-patch.yaml
+    mv air-gapped-patch.yaml "${TMP}/air-gapped-patch.yaml"
 
-    QEMU_FLAGS+=("--config-patch=@/tmp/air-gapped-patch.yaml")
-    QEMU_FLAGS+=("--config-patch=@hack/test/patches/proxied-registry.yaml")
+    QEMU_FLAGS+=("--config-patch=@${TMP}/air-gapped-patch.yaml")
     ;;
   false)
     ;;

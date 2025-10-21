@@ -8,6 +8,7 @@ package cache
 import (
 	"cmp"
 	"crypto/sha256"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -122,7 +123,13 @@ func Generate(images []string, platforms []string, insecure bool, imageLayerCach
 
 			err := r.Retry(func() error {
 				if err := processImage(src, tmpDir, imageLayerCachePath, nameOptions, craneOpts, remoteOpts); err != nil {
-					return retry.ExpectedError(err)
+					switch {
+					case errors.Is(err, new(name.ErrBadName)):
+						return err
+
+					default:
+						return retry.ExpectedError(err)
+					}
 				}
 
 				return nil

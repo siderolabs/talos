@@ -998,6 +998,19 @@ spec:
         - name: talosctl-cni-bundle
           conditions:
             - only-on-schedule
+        - name: integration-images-list
+          command: integration-images-list
+          environment:
+            IMAGE_REGISTRY: registry.dev.siderolabs.io
+        - name: e2e-airgapped-no-proxy
+          command: e2e-qemu
+          withSudo: true
+          environment:
+            GITHUB_STEP_NAME: ${{ github.job}}-e2e-no-proxy
+            SHORT_INTEGRATION_TEST: yes
+            WITH_AIRGAPPED: no-proxy
+            WITH_CLUSTER_DISCOVERY: "false"
+            IMAGE_REGISTRY: registry.dev.siderolabs.io
         - name: e2e-airgapped-http-proxy
           command: e2e-qemu
           withSudo: true
