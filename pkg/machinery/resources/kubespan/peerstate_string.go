@@ -18,8 +18,9 @@ const _PeerState_name = "unknownupdown"
 var _PeerState_index = [...]uint8{0, 7, 9, 13}
 
 func (i PeerState) String() string {
-	if i < 0 || i >= PeerState(len(_PeerState_index)-1) {
+	idx := int(i) - 0
+	if i < 0 || idx >= len(_PeerState_index)-1 {
 		return "PeerState(" + strconv.FormatInt(int64(i), 10) + ")"
 	}
-	return _PeerState_name[_PeerState_index[i]:_PeerState_index[i+1]]
+	return _PeerState_name[_PeerState_index[idx]:_PeerState_index[idx+1]]
 }

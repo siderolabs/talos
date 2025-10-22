@@ -14,7 +14,7 @@ require (
 	github.com/siderolabs/gen v0.8.5
 	github.com/wk8/go-ordered-map/v2 v2.1.8
 	gopkg.in/yaml.v3 v3.0.1
-	mvdan.cc/gofumpt v0.9.1
+	mvdan.cc/gofumpt v0.9.2
 )
 
 require (
@@ -24,6 +24,6 @@ require (
 	github.com/google/go-cmp v0.7.0 // indirect
 	github.com/gorilla/css v1.0.1 // indirect
 	github.com/mailru/easyjson v0.7.7 // indirect
-	golang.org/x/net v0.43.0 // indirect
-	golang.org/x/tools v0.36.0 // indirect
+	golang.org/x/net v0.46.0 // indirect
+	golang.org/x/tools v0.38.0 // indirect
 )
