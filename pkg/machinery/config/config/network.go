@@ -187,3 +187,25 @@ type NetworkDHCPv6Config interface {
 	ClientIdentifier() nethelpers.ClientIdentifier
 	DUIDRaw() optional.Optional[nethelpers.HardwareAddr]
 }
+
+// NetworkVirtualIPConfig defines a common virtual IP configuration.
+//
+//nolint:iface
+type NetworkVirtualIPConfig interface {
+	NamedDocument
+	Link() string
+	VIP() netip.Addr
+}
+
+// NetworkLayer2VIPConfig defines a Layer 2 VIP configuration.
+//
+//nolint:iface
+type NetworkLayer2VIPConfig interface {
+	NetworkVirtualIPConfig
+}
+
+// NetworkHCloudVIPConfig defines a Hetzner Cloud VIP configuration.
+type NetworkHCloudVIPConfig interface {
+	NetworkVirtualIPConfig
+	HCloudAPIToken() string
+}

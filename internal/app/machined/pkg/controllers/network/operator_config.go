@@ -323,6 +323,9 @@ func (ctrl *OperatorConfigController) Run(ctx context.Context, r controller.Runt
 								RequireUp: true,
 								DHCP4: network.DHCP4OperatorSpec{
 									RouteMetric: network.DefaultRouteMetric,
+									ClientIdentifier: network.ClientIdentifierSpec{
+										ClientIdentifier: nethelpers.ClientIdentifierMAC,
+									},
 								},
 								ConfigLayer: network.ConfigDefault,
 							})
@@ -353,7 +356,7 @@ func (ctrl *OperatorConfigController) Run(ctx context.Context, r controller.Runt
 //nolint:dupl
 func (ctrl *OperatorConfigController) apply(ctx context.Context, r controller.Runtime, specs []network.OperatorSpecSpec) error {
 	for _, spec := range specs {
-		id := network.LayeredID(spec.ConfigLayer, network.OperatorID(spec.Operator, spec.LinkName))
+		id := network.LayeredID(spec.ConfigLayer, network.OperatorID(spec))
 
 		if err := safe.WriterModify(
 			ctx,

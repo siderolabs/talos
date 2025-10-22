@@ -18,6 +18,7 @@ import (
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/ctest"
 	netctrl "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/network"
 	"github.com/siderolabs/talos/pkg/machinery/config/container"
+	networkcfg "github.com/siderolabs/talos/pkg/machinery/config/types/network"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
 	"github.com/siderolabs/talos/pkg/machinery/resources/config"
 	"github.com/siderolabs/talos/pkg/machinery/resources/network"
@@ -34,7 +35,7 @@ func (suite *OperatorVIPConfigSuite) assertOperators(
 	ctest.AssertResources(suite, requiredIDs, check, rtestutils.WithNamespace(network.ConfigNamespaceName))
 }
 
-func (suite *OperatorVIPConfigSuite) TestMachineConfigurationVIP() {
+func (suite *OperatorVIPConfigSuite) TestMachineConfigurationLegacyVIP() {
 	for _, link := range []struct {
 		name    string
 		aliases []string
@@ -115,30 +116,85 @@ func (suite *OperatorVIPConfigSuite) TestMachineConfigurationVIP() {
 
 	suite.assertOperators(
 		[]string{
-			"configuration/vip/eth1",
-			"configuration/vip/eth2",
-			"configuration/vip/eth3.26",
-			"configuration/vip/eth5",
+			"configuration/vip/eth1/2.3.4.5",
+			"configuration/vip/eth2/fd7a:115c:a1e0:ab12:4843:cd96:6277:2302",
+			"configuration/vip/eth3.26/5.5.4.4",
+			"configuration/vip/eth5/2.3.4.5",
 		}, func(r *network.OperatorSpec, asrt *assert.Assertions) {
 			asrt.Equal(network.OperatorVIP, r.TypedSpec().Operator)
 			asrt.True(r.TypedSpec().RequireUp)
 
 			switch r.Metadata().ID() {
-			case "configuration/vip/eth1":
+			case "configuration/vip/eth1/2.3.4.5":
 				asrt.Equal("eth1", r.TypedSpec().LinkName)
 				asrt.EqualValues(netip.MustParseAddr("2.3.4.5"), r.TypedSpec().VIP.IP)
-			case "configuration/vip/eth5":
+			case "configuration/vip/eth5/2.3.4.5":
 				asrt.Equal("eth5", r.TypedSpec().LinkName)
 				asrt.EqualValues(netip.MustParseAddr("2.3.4.5"), r.TypedSpec().VIP.IP)
-			case "configuration/vip/eth2":
+			case "configuration/vip/eth2/fd7a:115c:a1e0:ab12:4843:cd96:6277:2302":
 				asrt.Equal("eth2", r.TypedSpec().LinkName)
 				asrt.EqualValues(
 					netip.MustParseAddr("fd7a:115c:a1e0:ab12:4843:cd96:6277:2302"),
 					r.TypedSpec().VIP.IP,
 				)
-			case "configuration/vip/eth3.26":
+			case "configuration/vip/eth3.26/5.5.4.4":
 				asrt.Equal("eth3.26", r.TypedSpec().LinkName)
 				asrt.EqualValues(netip.MustParseAddr("5.5.4.4"), r.TypedSpec().VIP.IP)
+			}
+		},
+	)
+}
+
+func (suite *OperatorVIPConfigSuite) TestMachineConfigurationVIP() {
+	for _, link := range []struct {
+		name    string
+		aliases []string
+	}{
+		{
+			name:    "eth5",
+			aliases: []string{"enxa"},
+		},
+		{
+			name:    "eth6",
+			aliases: []string{"enxb"},
+		},
+	} {
+		status := network.NewLinkStatus(network.NamespaceName, link.name)
+		status.TypedSpec().AltNames = link.aliases
+
+		suite.Create(status)
+	}
+
+	vip1 := networkcfg.NewLayer2VIPConfigV1Alpha1("2.3.4.5")
+	vip1.LinkName = "eth1"
+
+	vip2 := networkcfg.NewLayer2VIPConfigV1Alpha1("fd7a:115c:a1e0:ab12:4843:cd96:6277:2302")
+	vip2.LinkName = "enxa"
+
+	ctr, err := container.New(vip1, vip2)
+	suite.Require().NoError(err)
+
+	cfg := config.NewMachineConfig(ctr)
+	suite.Create(cfg)
+
+	suite.assertOperators(
+		[]string{
+			"configuration/vip/eth1/2.3.4.5",
+			"configuration/vip/eth5/fd7a:115c:a1e0:ab12:4843:cd96:6277:2302",
+		}, func(r *network.OperatorSpec, asrt *assert.Assertions) {
+			asrt.Equal(network.OperatorVIP, r.TypedSpec().Operator)
+			asrt.True(r.TypedSpec().RequireUp)
+
+			switch r.Metadata().ID() {
+			case "configuration/vip/eth1/2.3.4.5":
+				asrt.Equal("eth1", r.TypedSpec().LinkName)
+				asrt.EqualValues(netip.MustParseAddr("2.3.4.5"), r.TypedSpec().VIP.IP)
+			case "configuration/vip/eth5/fd7a:115c:a1e0:ab12:4843:cd96:6277:2302":
+				asrt.Equal("eth5", r.TypedSpec().LinkName)
+				asrt.EqualValues(
+					netip.MustParseAddr("fd7a:115c:a1e0:ab12:4843:cd96:6277:2302"),
+					r.TypedSpec().VIP.IP,
+				)
 			}
 		},
 	)

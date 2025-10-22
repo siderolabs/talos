@@ -32,6 +32,7 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/config/generate"
 	"github.com/siderolabs/talos/pkg/machinery/config/machine"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/block"
+	networkcfg "github.com/siderolabs/talos/pkg/machinery/config/types/network"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/imager/quirks"
@@ -135,11 +136,25 @@ func (m *Qemu) AddExtraGenOps() error {
 	}
 
 	if m.EOps.UseVIP {
-		m.GenOps = slices.Concat(m.GenOps,
-			[]generate.Option{generate.WithNetworkOptions(
-				v1alpha1.WithNetworkInterfaceVirtualIP(m.Provisioner.GetFirstInterface(), m.VIP.String()),
-			)},
-		)
+		if m.VersionContract.MultidocNetworkConfigSupported() {
+			vipCfg := networkcfg.NewLayer2VIPConfigV1Alpha1(m.VIP.String())
+			vipCfg.LinkName = m.Provisioner.GetFirstInterfaceName()
+
+			ctr, err := container.New(vipCfg)
+			if err != nil {
+				return err
+			}
+
+			m.ConfigBundleOps = append(m.ConfigBundleOps,
+				bundle.WithPatchControlPlane([]configpatcher.Patch{configpatcher.NewStrategicMergePatch(ctr)}),
+			)
+		} else {
+			m.GenOps = slices.Concat(m.GenOps,
+				[]generate.Option{generate.WithNetworkOptions(
+					v1alpha1.WithNetworkInterfaceVirtualIP(m.Provisioner.GetFirstInterface(), m.VIP.String()),
+				)},
+			)
+		}
 	}
 
 	if !m.EOps.BootloaderEnabled {

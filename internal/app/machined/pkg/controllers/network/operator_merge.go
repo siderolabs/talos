@@ -25,7 +25,7 @@ func NewOperatorMergeController() controller.Controller {
 			operators := map[string]*network.OperatorSpecSpec{}
 
 			for operator := range list.All() {
-				id := network.OperatorID(operator.TypedSpec().Operator, operator.TypedSpec().LinkName)
+				id := network.OperatorID(*operator.TypedSpec())
 
 				existing, ok := operators[id]
 				if ok && existing.ConfigLayer > operator.TypedSpec().ConfigLayer {

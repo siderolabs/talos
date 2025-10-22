@@ -390,7 +390,7 @@ message NodeAddressSpec {
   talos.resource.definitions.enums.NethelpersAddressSortAlgorithm sort_algorithm = 2;
 }
 
-// OperatorSpecSpec describes DNS resolvers.
+// OperatorSpecSpec describes operator specification.
 message OperatorSpecSpec {
   talos.resource.definitions.enums.NetworkOperator operator = 1;
   string link_name = 2;

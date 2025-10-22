@@ -402,6 +402,48 @@ func (EthernetChannelsConfig) Doc() *encoder.Doc {
 	return doc
 }
 
+func (HCloudVIPConfigV1Alpha1) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "HCloudVIPConfig",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "HCloudVIPConfig is a config document to configure virtual IP using Hetzner Cloud APIs for announcement." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "HCloudVIPConfig is a config document to configure virtual IP using Hetzner Cloud APIs for announcement.\nVirtual IP configuration should be used only on controlplane nodes to provide virtual IP for Kubernetes API server.\nAny other use cases are not supported and may lead to unexpected behavior.\nVirtual IP will be announced from only one node at a time using Hetzner Cloud APIs.\n",
+		Fields: []encoder.Doc{
+			{
+				Type:   "Meta",
+				Inline: true,
+			},
+			{
+				Name:        "name",
+				Type:        "string",
+				Note:        "",
+				Description: "IP address to be advertised as a Layer 2 VIP.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "IP address to be advertised as a Layer 2 VIP." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "link",
+				Type:        "string",
+				Note:        "",
+				Description: "Name of the link to assign the VIP to.\n\nSelector must match exactly one link, otherwise an error is returned.\nIf multiple selectors match the same link, the first one is used.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Name of the link to assign the VIP to." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "apiToken",
+				Type:        "string",
+				Note:        "",
+				Description: "Specifies the Hetzner Cloud API Token.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Specifies the Hetzner Cloud API Token." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
+
+	doc.AddExample("", exampleHCloudVIPConfigV1Alpha1())
+
+	doc.Fields[1].AddExample("", "192.168.100.1")
+	doc.Fields[1].AddExample("", "fd00::1")
+
+	return doc
+}
+
 func (HostnameConfigV1Alpha1) Doc() *encoder.Doc {
 	doc := &encoder.Doc{
 		Type:        "HostnameConfig",
@@ -464,6 +506,41 @@ func (KubespanEndpointsConfigV1Alpha1) Doc() *encoder.Doc {
 	}
 
 	doc.AddExample("", exampleKubespanEndpointsV1Alpha1())
+
+	return doc
+}
+
+func (Layer2VIPConfigV1Alpha1) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "Layer2VIPConfig",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "Layer2VIPConfig is a config document to configure virtual IP using Layer 2 (Ethernet) advertisement." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "Layer2VIPConfig is a config document to configure virtual IP using Layer 2 (Ethernet) advertisement.\nVirtual IP configuration should be used only on controlplane nodes to provide virtual IP for Kubernetes API server.\nAny other use cases are not supported and may lead to unexpected behavior.\nVirtual IP will be announced from only one node at a time using gratuitous ARP announcements for IPv4.\n",
+		Fields: []encoder.Doc{
+			{
+				Type:   "Meta",
+				Inline: true,
+			},
+			{
+				Name:        "name",
+				Type:        "string",
+				Note:        "",
+				Description: "IP address to be advertised as a Layer 2 VIP.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "IP address to be advertised as a Layer 2 VIP." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "link",
+				Type:        "string",
+				Note:        "",
+				Description: "Name of the link to assign the VIP to.\n\nSelector must match exactly one link, otherwise an error is returned.\nIf multiple selectors match the same link, the first one is used.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Name of the link to assign the VIP to." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
+
+	doc.AddExample("", exampleLayer2VIPConfigV1Alpha1())
+
+	doc.Fields[1].AddExample("", "192.168.100.1")
+	doc.Fields[1].AddExample("", "fd00::1")
 
 	return doc
 }
@@ -873,8 +950,10 @@ func GetFileDoc() *encoder.FileDoc {
 			EthernetConfigV1Alpha1{}.Doc(),
 			EthernetRingsConfig{}.Doc(),
 			EthernetChannelsConfig{}.Doc(),
+			HCloudVIPConfigV1Alpha1{}.Doc(),
 			HostnameConfigV1Alpha1{}.Doc(),
 			KubespanEndpointsConfigV1Alpha1{}.Doc(),
+			Layer2VIPConfigV1Alpha1{}.Doc(),
 			LinkConfigV1Alpha1{}.Doc(),
 			CommonLinkConfig{}.Doc(),
 			AddressConfig{}.Doc(),

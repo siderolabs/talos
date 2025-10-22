@@ -327,6 +327,11 @@ func (container *Container) NetworkDHCPv6Configs() []config.NetworkDHCPv6Config 
 	return findMatchingDocs[config.NetworkDHCPv6Config](container.documents)
 }
 
+// NetworkVirtualIPConfigs implements config.Config interface.
+func (container *Container) NetworkVirtualIPConfigs() []config.NetworkVirtualIPConfig {
+	return findMatchingDocs[config.NetworkVirtualIPConfig](container.documents)
+}
+
 // RunDefaultDHCPOperators implements config.Config interface.
 //
 // The rules for this are:

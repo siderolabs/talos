@@ -9056,7 +9056,7 @@ NodeAddressSpec describes a set of node addresses.
 <a name="talos.resource.definitions.network.OperatorSpecSpec"></a>
 
 ### OperatorSpecSpec
-OperatorSpecSpec describes DNS resolvers.
+OperatorSpecSpec describes operator specification.
 
 
 | Field | Type | Label | Description |

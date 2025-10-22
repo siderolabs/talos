@@ -15,6 +15,8 @@ import (
 )
 
 // Provisioner is an interface each provisioner should implement.
+//
+//nolint:interfacebloat
 type Provisioner interface {
 	Create(context.Context, ClusterRequest, ...Option) (Cluster, error)
 	Destroy(context.Context, Cluster, ...Option) error
@@ -28,6 +30,7 @@ type Provisioner interface {
 	GetTalosAPIEndpoints(NetworkRequest) []string
 
 	GetFirstInterface() v1alpha1.IfaceSelector
+	GetFirstInterfaceName() string
 
 	Close() error
 

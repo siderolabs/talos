@@ -14,13 +14,14 @@ import (
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/hashicorp/go-multierror"
-	"github.com/siderolabs/gen/xslices"
+	"github.com/siderolabs/gen/optional"
 	"github.com/siderolabs/go-procfs/procfs"
 	"go.uber.org/zap"
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/network/operator/vip"
 	talosconfig "github.com/siderolabs/talos/pkg/machinery/config/config"
 	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
+	"github.com/siderolabs/talos/pkg/machinery/resources/config"
 	"github.com/siderolabs/talos/pkg/machinery/resources/network"
 )
 
@@ -47,6 +48,12 @@ func (ctrl *OperatorVIPConfigController) Inputs() []controller.Input {
 			Type:      network.LinkStatusType,
 			Kind:      controller.InputWeak,
 		},
+		{
+			Namespace: config.NamespaceName,
+			Type:      config.MachineConfigType,
+			ID:        optional.Some(config.ActiveID),
+			Kind:      controller.InputWeak,
+		},
 	}
 }
 
@@ -71,18 +78,15 @@ func (ctrl *OperatorVIPConfigController) Run(ctx context.Context, r controller.R
 		case <-r.EventCh():
 		}
 
-		touchedIDs := make(map[resource.ID]struct{})
-
-		items, err := r.List(ctx, resource.NewMetadata(network.NamespaceName, network.DeviceConfigSpecType, "", resource.VersionUndefined))
+		devices, err := safe.ReaderListAll[*network.DeviceConfigSpec](ctx, r)
 		if err != nil {
-			if !state.IsNotFoundError(err) {
-				return fmt.Errorf("error getting config: %w", err)
-			}
+			return fmt.Errorf("error listing device config specs: %w", err)
 		}
 
-		devices := xslices.Map(items.Items, func(item resource.Resource) talosconfig.Device {
-			return item.(*network.DeviceConfigSpec).TypedSpec().Device
-		})
+		cfg, err := safe.ReaderGetByID[*config.MachineConfig](ctx, r, config.ActiveID)
+		if err != nil && !state.IsNotFoundError(err) {
+			return fmt.Errorf("error getting machine config: %w", err)
+		}
 
 		linkStatuses, err := safe.ReaderListAll[*network.LinkStatus](ctx, r)
 		if err != nil {
@@ -111,66 +115,53 @@ func (ctrl *OperatorVIPConfigController) Run(ctx context.Context, r controller.R
 			specErrors *multierror.Error
 		)
 
-		// operators from the config
-		if len(devices) > 0 {
-			for _, device := range devices {
-				if device.Ignore() {
-					ignoredInterfaces[linkNameResolver.Resolve(device.Interface())] = struct{}{}
-				}
+		// operators from the legacy config
+		for dev := range devices.All() {
+			device := dev.TypedSpec().Device
 
-				if _, ignore := ignoredInterfaces[linkNameResolver.Resolve(device.Interface())]; ignore {
-					continue
-				}
+			if device.Ignore() {
+				ignoredInterfaces[linkNameResolver.Resolve(device.Interface())] = struct{}{}
+			}
 
-				if device.VIPConfig() != nil {
-					if spec, specErr := handleVIP(ctx, device.VIPConfig(), linkNameResolver.Resolve(device.Interface()), logger); specErr != nil {
+			if _, ignore := ignoredInterfaces[linkNameResolver.Resolve(device.Interface())]; ignore {
+				continue
+			}
+
+			if device.VIPConfig() != nil {
+				if spec, specErr := ctrl.handleVIPLegacy(ctx, device.VIPConfig(), linkNameResolver.Resolve(device.Interface()), logger); specErr != nil {
+					specErrors = multierror.Append(specErrors, specErr)
+				} else {
+					specs = append(specs, spec)
+				}
+			}
+
+			for _, vlan := range device.Vlans() {
+				if vlan.VIPConfig() != nil {
+					linkName := nethelpers.VLANLinkName(device.Interface(), vlan.ID())
+					if spec, specErr := ctrl.handleVIPLegacy(ctx, vlan.VIPConfig(), linkName, logger); specErr != nil {
 						specErrors = multierror.Append(specErrors, specErr)
 					} else {
 						specs = append(specs, spec)
 					}
 				}
+			}
+		}
 
-				for _, vlan := range device.Vlans() {
-					if vlan.VIPConfig() != nil {
-						linkName := nethelpers.VLANLinkName(device.Interface(), vlan.ID())
-						if spec, specErr := handleVIP(ctx, vlan.VIPConfig(), linkName, logger); specErr != nil {
-							specErrors = multierror.Append(specErrors, specErr)
-						} else {
-							specs = append(specs, spec)
-						}
-					}
+		// new-style config operators
+		if cfg != nil {
+			for _, doc := range cfg.Config().NetworkVirtualIPConfigs() {
+				if spec, specErr := ctrl.handleVIPConfigDoc(ctx, doc, linkNameResolver.Resolve(doc.Link()), logger); specErr != nil {
+					specErrors = multierror.Append(specErrors, specErr)
+				} else {
+					specs = append(specs, spec)
 				}
 			}
 		}
 
-		var ids []string
+		r.StartTrackingOutputs()
 
-		ids, err = ctrl.apply(ctx, r, specs)
-		if err != nil {
+		if err := ctrl.apply(ctx, r, specs); err != nil {
 			return fmt.Errorf("error applying operator specs: %w", err)
-		}
-
-		for _, id := range ids {
-			touchedIDs[id] = struct{}{}
-		}
-
-		// list specs for cleanup
-		list, err := r.List(ctx, resource.NewMetadata(network.ConfigNamespaceName, network.OperatorSpecType, "", resource.VersionUndefined))
-		if err != nil {
-			return fmt.Errorf("error listing resources: %w", err)
-		}
-
-		for _, res := range list.Items {
-			if res.Metadata().Owner() != ctrl.Name() {
-				// skip specs created by other controllers
-				continue
-			}
-
-			if _, ok := touchedIDs[res.Metadata().ID()]; !ok {
-				if err = r.Destroy(ctx, res.Metadata()); err != nil {
-					return fmt.Errorf("error cleaning up routes: %w", err)
-				}
-			}
 		}
 
 		// last, check if some specs failed to build; fail last so that other operator specs are applied successfully
@@ -178,16 +169,16 @@ func (ctrl *OperatorVIPConfigController) Run(ctx context.Context, r controller.R
 			return err
 		}
 
-		r.ResetRestartBackoff()
+		if err = r.CleanupOutputs(ctx, resource.NewMetadata(network.ConfigNamespaceName, network.OperatorSpecType, "", resource.VersionUndefined)); err != nil {
+			return fmt.Errorf("error cleaning up operator specs: %w", err)
+		}
 	}
 }
 
 //nolint:dupl
-func (ctrl *OperatorVIPConfigController) apply(ctx context.Context, r controller.Runtime, specs []network.OperatorSpecSpec) ([]resource.ID, error) {
-	ids := make([]string, 0, len(specs))
-
+func (ctrl *OperatorVIPConfigController) apply(ctx context.Context, r controller.Runtime, specs []network.OperatorSpecSpec) error {
 	for _, spec := range specs {
-		id := network.LayeredID(spec.ConfigLayer, network.OperatorID(spec.Operator, spec.LinkName))
+		id := network.LayeredID(spec.ConfigLayer, network.OperatorID(spec))
 
 		if err := safe.WriterModify(
 			ctx,
@@ -199,19 +190,17 @@ func (ctrl *OperatorVIPConfigController) apply(ctx context.Context, r controller
 				return nil
 			},
 		); err != nil {
-			return ids, err
+			return err
 		}
-
-		ids = append(ids, id)
 	}
 
-	return ids, nil
+	return nil
 }
 
-func handleVIP(ctx context.Context, vlanConfig talosconfig.VIPConfig, deviceName string, logger *zap.Logger) (network.OperatorSpecSpec, error) {
+func (ctrl *OperatorVIPConfigController) handleVIPLegacy(ctx context.Context, vipConfig talosconfig.VIPConfig, deviceName string, logger *zap.Logger) (network.OperatorSpecSpec, error) {
 	var sharedIP netip.Addr
 
-	sharedIP, err := netip.ParseAddr(vlanConfig.IP())
+	sharedIP, err := netip.ParseAddr(vipConfig.IP())
 	if err != nil {
 		logger.Warn("ignoring vip parse failure", zap.Error(err), zap.String("link", deviceName))
 
@@ -231,23 +220,50 @@ func handleVIP(ctx context.Context, vlanConfig talosconfig.VIPConfig, deviceName
 
 	switch {
 	// Equinix Metal VIP
-	case vlanConfig.EquinixMetal() != nil:
+	case vipConfig.EquinixMetal() != nil:
 		spec.VIP.GratuitousARP = false
-		spec.VIP.EquinixMetal.APIToken = vlanConfig.EquinixMetal().APIToken()
+		spec.VIP.EquinixMetal.APIToken = vipConfig.EquinixMetal().APIToken()
 
 		if err = vip.GetProjectAndDeviceIDs(ctx, &spec.VIP.EquinixMetal); err != nil {
 			return network.OperatorSpecSpec{}, err
 		}
 	// Hetzner Cloud VIP
-	case vlanConfig.HCloud() != nil:
+	case vipConfig.HCloud() != nil:
 		spec.VIP.GratuitousARP = false
-		spec.VIP.HCloud.APIToken = vlanConfig.HCloud().APIToken()
+		spec.VIP.HCloud.APIToken = vipConfig.HCloud().APIToken()
 
 		if err = vip.GetNetworkAndDeviceIDs(ctx, &spec.VIP.HCloud, sharedIP, logger); err != nil {
 			return network.OperatorSpecSpec{}, err
 		}
 	// Regular layer 2 VIP
 	default:
+	}
+
+	return spec, nil
+}
+
+func (ctrl *OperatorVIPConfigController) handleVIPConfigDoc(ctx context.Context, cfg talosconfig.NetworkVirtualIPConfig, deviceName string, logger *zap.Logger) (network.OperatorSpecSpec, error) {
+	spec := network.OperatorSpecSpec{
+		Operator:  network.OperatorVIP,
+		LinkName:  deviceName,
+		RequireUp: true,
+		VIP: network.VIPOperatorSpec{
+			IP:            cfg.VIP(),
+			GratuitousARP: true,
+		},
+		ConfigLayer: network.ConfigMachineConfiguration,
+	}
+
+	switch v := cfg.(type) {
+	case talosconfig.NetworkHCloudVIPConfig:
+		spec.VIP.GratuitousARP = false
+		spec.VIP.HCloud.APIToken = v.HCloudAPIToken()
+
+		if err := vip.GetNetworkAndDeviceIDs(ctx, &spec.VIP.HCloud, cfg.VIP(), logger); err != nil {
+			return network.OperatorSpecSpec{}, err
+		}
+	default:
+		// nothing to do
 	}
 
 	return spec, nil

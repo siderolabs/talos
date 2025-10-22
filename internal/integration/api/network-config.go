@@ -299,6 +299,53 @@ func (suite *NetworkConfigSuite) TestLinkAliasConfig() {
 	}
 }
 
+// TestVirtualIPConfig tests configuring virtual IPs.
+func (suite *NetworkConfigSuite) TestVirtualIPConfig() {
+	if suite.Cluster == nil || suite.Cluster.Provisioner() != base.ProvisionerQEMU {
+		suite.T().Skip("skipping if cluster is not qemu")
+	}
+
+	node := suite.RandomDiscoveredNodeInternalIP(machine.TypeControlPlane)
+	nodeCtx := client.WithNode(suite.ctx, node)
+
+	suite.T().Logf("testing on node %q", node)
+
+	// find the first physical link
+	links, err := safe.ReaderListAll[*networkres.LinkStatus](nodeCtx, suite.Client.COSI)
+	suite.Require().NoError(err)
+
+	var linkName string
+
+	for link := range links.All() {
+		if link.TypedSpec().Physical() {
+			linkName = link.Metadata().ID()
+
+			break
+		}
+	}
+
+	suite.Require().NotEmpty(linkName, "expected to find at least one physical link")
+
+	virtualIP := "fd13:1234::34"
+
+	cfg := network.NewLayer2VIPConfigV1Alpha1(virtualIP)
+	cfg.LinkName = linkName
+
+	addressID := linkName + "/" + virtualIP + "/128"
+
+	suite.PatchMachineConfig(nodeCtx, cfg)
+
+	rtestutils.AssertResource(nodeCtx, suite.T(), suite.Client.COSI, addressID,
+		func(addr *networkres.AddressStatus, asrt *assert.Assertions) {
+			asrt.Equal(linkName, addr.TypedSpec().LinkName)
+		},
+	)
+
+	suite.RemoveMachineConfigDocumentsByName(nodeCtx, network.Layer2VIPKind, virtualIP)
+
+	rtestutils.AssertNoResource[*networkres.AddressStatus](nodeCtx, suite.T(), suite.Client.COSI, addressID)
+}
+
 func init() {
 	allSuites = append(allSuites, new(NetworkConfigSuite))
 }

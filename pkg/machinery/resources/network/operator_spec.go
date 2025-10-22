@@ -19,10 +19,10 @@ import (
 // OperatorSpecType is type of OperatorSpec resource.
 const OperatorSpecType = resource.Type("OperatorSpecs.net.talos.dev")
 
-// OperatorSpec resource holds DNS resolver info.
+// OperatorSpec resource holds operator specification.
 type OperatorSpec = typed.Resource[OperatorSpecSpec, OperatorSpecExtension]
 
-// OperatorSpecSpec describes DNS resolvers.
+// OperatorSpecSpec describes operator specification.
 //
 //gotagsrewrite:gen
 type OperatorSpecSpec struct {

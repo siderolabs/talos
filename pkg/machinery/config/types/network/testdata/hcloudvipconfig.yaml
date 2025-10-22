@@ -1,0 +1,5 @@
+apiVersion: v1alpha1
+kind: HCloudVIPConfig
+name: 1.2.3.4
+link: net33
+apiToken: s3cr3t-t0k3n

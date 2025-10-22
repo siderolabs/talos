@@ -56,8 +56,17 @@ func RouteID(table nethelpers.RoutingTable, family nethelpers.Family, destinatio
 }
 
 // OperatorID builds ID (primary key) for the operators.
-func OperatorID(operator Operator, linkName string) string {
-	return fmt.Sprintf("%s/%s", operator, linkName)
+func OperatorID(spec OperatorSpecSpec) string {
+	switch spec.Operator {
+	case OperatorVIP:
+		return fmt.Sprintf("%s/%s/%s", spec.Operator, spec.LinkName, spec.VIP.IP.String())
+	case OperatorDHCP4:
+		fallthrough
+	case OperatorDHCP6:
+		fallthrough
+	default:
+		return fmt.Sprintf("%s/%s", spec.Operator, spec.LinkName)
+	}
 }
 
 // LayeredID builds configuration for the entity at some layer.

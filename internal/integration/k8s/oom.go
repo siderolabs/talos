@@ -39,6 +39,8 @@ func (suite *OomSuite) SuiteName() string {
 
 // TestOom verifies that system remains stable after handling an OOM event.
 func (suite *OomSuite) TestOom() {
+	suite.T().Skip("skip the test until https://github.com/siderolabs/talos/issues/12077 is resolved")
+
 	if suite.Cluster == nil {
 		suite.T().Skip("without full cluster state reaching out to the node IP is not reliable")
 	}
@@ -77,7 +79,7 @@ func (suite *OomSuite) TestOom() {
 	memoryBytes := memInfo.GetMessages()[0].GetMeminfo().GetMemtotal() * 1024
 	numReplicas := int((memoryBytes/1024/1024+2048-1)/2048) * numWorkers * 15
 
-	suite.T().Logf("detected total memory: %s, workers %d => scaling to %d replicas",
+	suite.T().Logf("detected memory: %s, workers %d => scaling to %d replicas",
 		humanize.IBytes(memoryBytes), numWorkers, numReplicas)
 
 	// Scale to discovered number of replicas

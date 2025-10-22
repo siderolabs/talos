@@ -3197,7 +3197,7 @@ func (x *NodeAddressSpec) GetSortAlgorithm() enums.NethelpersAddressSortAlgorith
 	return enums.NethelpersAddressSortAlgorithm(0)
 }
 
-// OperatorSpecSpec describes DNS resolvers.
+// OperatorSpecSpec describes operator specification.
 type OperatorSpecSpec struct {
 	state         protoimpl.MessageState   `protogen:"open.v1"`
 	Operator      enums.NetworkOperator    `protobuf:"varint,1,opt,name=operator,proto3,enum=talos.resource.definitions.enums.NetworkOperator" json:"operator,omitempty"`

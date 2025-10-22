@@ -87,13 +87,24 @@ func (p *provisioner) Close() error {
 }
 
 // GenOptions provides a list of additional config generate options.
-func (p *provisioner) GenOptions(networkReq provision.NetworkRequest, _ *config.VersionContract) ([]generate.Option, []bundle.Option) {
-	return []generate.Option{
-		generate.WithNetworkOptions(
-			v1alpha1.WithNetworkInterfaceIgnore(v1alpha1.IfaceByName("eth0")),
-		),
-		generate.WithHostDNSForwardKubeDNSToHost(true),
-	}, nil
+func (p *provisioner) GenOptions(networkReq provision.NetworkRequest, contract *config.VersionContract) ([]generate.Option, []bundle.Option) {
+	var genOptions []generate.Option
+
+	if contract.HostDNSEnabled() {
+		genOptions = append(genOptions,
+			generate.WithHostDNSForwardKubeDNSToHost(true),
+		)
+	}
+
+	if !contract.MultidocNetworkConfigSupported() {
+		genOptions = append(genOptions,
+			generate.WithNetworkOptions(
+				v1alpha1.WithNetworkInterfaceIgnore(v1alpha1.IfaceByName("eth0")),
+			),
+		)
+	}
+
+	return genOptions, nil
 }
 
 // GetInClusterKubernetesControlPlaneEndpoint returns the Kubernetes control plane endpoint.
@@ -121,5 +132,10 @@ func (p *provisioner) UserDiskName(index int) string {
 
 // GetFirstInterface returns first network interface name.
 func (p *provisioner) GetFirstInterface() v1alpha1.IfaceSelector {
-	return v1alpha1.IfaceByName("eth0")
+	return v1alpha1.IfaceByName(p.GetFirstInterfaceName())
+}
+
+// GetFirstInterfaceName returns first network interface name as string.
+func (p *provisioner) GetFirstInterfaceName() string {
+	return "eth0"
 }

@@ -304,7 +304,7 @@ func (ctrl *PlatformConfigApplyController) apply(ctx context.Context, r controll
 			idBuilder: func(spec any) (resource.ID, error) {
 				operatorSpec := spec.(network.OperatorSpecSpec) //nolint:forcetypeassert
 
-				return network.LayeredID(network.ConfigPlatform, network.OperatorID(operatorSpec.Operator, operatorSpec.LinkName)), nil
+				return network.LayeredID(network.ConfigPlatform, network.OperatorID(operatorSpec)), nil
 			},
 			resourceBuilder: func(id string) resource.Resource {
 				return network.NewOperatorSpec(network.ConfigNamespaceName, id)

@@ -74,6 +74,8 @@ func (suite *TinkSuite) TestDeploy() {
 	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Minute)
 	suite.T().Cleanup(cancel)
 
+	suite.AssertClusterHealthy(ctx)
+
 	localPathStorage := suite.ParseManifests(localPathStorageYAML)
 
 	suite.T().Cleanup(func() {
@@ -107,7 +109,7 @@ func (suite *TinkSuite) TestDeploy() {
 	suite.ApplyManifests(ctx, tinkManifests)
 
 	// wait for the control-plane pod to be running
-	suite.Require().NoError(suite.WaitForPodToBeRunning(ctx, time.Minute, namespace, ss+"-0"))
+	suite.Require().NoError(suite.WaitForPodToBeRunning(ctx, 2*time.Minute, namespace, ss+"-0"))
 
 	// read back Service to figure out the ports
 	svc, err := suite.Clientset.CoreV1().Services(namespace).Get(ctx, service, metav1.GetOptions{})

@@ -140,3 +140,8 @@ func (p *provisioner) GetFirstInterface() v1alpha1.IfaceSelector {
 		NetworkDeviceKernelDriver: "virtio_net",
 	})
 }
+
+// GetFirstInterfaceName return the first network interface name.
+func (p *provisioner) GetFirstInterfaceName() string {
+	return "net0" // real interface will be aliased to net0
+}
