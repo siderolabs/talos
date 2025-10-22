@@ -12,7 +12,6 @@ import (
 	"os/exec"
 
 	"github.com/siderolabs/talos/pkg/provision"
-	"github.com/siderolabs/talos/pkg/provision/providers/vm"
 )
 
 type networkConfig struct {
@@ -21,7 +20,7 @@ type networkConfig struct {
 	EndAddr   netip.Addr
 }
 
-func getLaunchNetworkConfig(state *vm.State, clusterReq provision.ClusterRequest, nodeReq provision.NodeRequest) networkConfig {
+func getLaunchNetworkConfig(state *provision.State, clusterReq provision.ClusterRequest, nodeReq provision.NodeRequest) networkConfig {
 	// This ip will be assigned to the bridge
 	// The following ips will be assigned to the vms
 	startAddr := clusterReq.Nodes[0].IPs[0].Prev()

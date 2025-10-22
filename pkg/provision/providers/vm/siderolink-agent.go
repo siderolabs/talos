@@ -23,7 +23,7 @@ const (
 )
 
 // CreateSiderolinkAgent creates siderlink agent.
-func (p *Provisioner) CreateSiderolinkAgent(state *State, clusterReq provision.ClusterRequest) error {
+func (p *Provisioner) CreateSiderolinkAgent(state *provision.State, clusterReq provision.ClusterRequest) error {
 	pidPath := state.GetRelativePath(siderolinkAgentPid)
 
 	logFile, err := os.OpenFile(state.GetRelativePath(siderolinkAgentLog), os.O_APPEND|os.O_CREATE|os.O_RDWR, 0o666)
@@ -80,7 +80,7 @@ func (p *Provisioner) CreateSiderolinkAgent(state *State, clusterReq provision.C
 }
 
 // DestroySiderolinkAgent destroys siderolink agent.
-func (p *Provisioner) DestroySiderolinkAgent(state *State) error {
+func (p *Provisioner) DestroySiderolinkAgent(state *provision.State) error {
 	pidPath := state.GetRelativePath(siderolinkAgentPid)
 
 	if _, err := os.Stat(pidPath); errors.Is(err, os.ErrNotExist) {

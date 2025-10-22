@@ -29,7 +29,6 @@ import (
 
 	"github.com/siderolabs/talos/pkg/provision"
 	"github.com/siderolabs/talos/pkg/provision/internal/cniutils"
-	"github.com/siderolabs/talos/pkg/provision/providers/vm"
 )
 
 type networkConfig struct {
@@ -47,7 +46,7 @@ type networkConfig struct {
 	ns      ns.NetNS
 }
 
-func getLaunchNetworkConfig(state *vm.State, clusterReq provision.ClusterRequest, nodeReq provision.NodeRequest) networkConfig {
+func getLaunchNetworkConfig(state *provision.State, clusterReq provision.ClusterRequest, nodeReq provision.NodeRequest) networkConfig {
 	return networkConfig{
 		networkConfigBase: getLaunchNetworkConfigBase(state, clusterReq, nodeReq),
 		CniNetworkConfig:  state.VMCNIConfig,

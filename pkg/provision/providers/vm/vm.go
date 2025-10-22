@@ -5,8 +5,6 @@
 // Package vm implements common methods for VM provisioners.
 package vm
 
-const stateFileName = "state.yaml"
-
 // Provisioner base for VM provisioners.
 type Provisioner struct {
 	// Name actual provisioner type.

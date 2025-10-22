@@ -118,108 +118,12 @@ talosctl cgroups [flags]
 
 * [talosctl](#talosctl)	 - A CLI for out-of-band management of Kubernetes nodes created by Talos
 
-## talosctl cluster create docker
-
-Create a local Docker based kubernetes cluster
-
-```
-talosctl cluster create docker [flags]
-```
-
-### Options
-
-```
-      --config-patch stringArray                 patch generated machineconfigs (applied to all node types), use @file to read a patch from file
-      --config-patch-controlplanes stringArray   patch generated machineconfigs (applied to 'controlplane' type)
-      --config-patch-workers stringArray         patch generated machineconfigs (applied to 'worker' type)
-      --cpus-controlplanes string                the share of CPUs as fraction for each control plane/VM (default "2.0")
-      --cpus-workers string                      the share of CPUs as fraction for each worker/VM (default "2.0")
-  -p, --exposed-ports string                     comma-separated list of ports/protocols to expose on init node. Ex -p <hostPort>:<containerPort>/<protocol (tcp or udp)>
-  -h, --help                                     help for docker
-      --host-ip string                           Host IP to forward exposed ports to (default "0.0.0.0")
-      --image string                             the talos image to run (default "ghcr.io/siderolabs/talos:latest")
-      --kubernetes-version string                desired kubernetes version to run (default "1.34.1")
-      --memory-controlplanes string(mb,gb)       the limit on memory usage for each control plane/VM (default 2.0GiB)
-      --memory-workers string(mb,gb)             the limit on memory usage for each worker/VM (default 2.0GiB)
-      --mount mount                              attach a mount to the container (docker --mount syntax)
-      --subnet string                            Docker network subnet CIDR (default "10.5.0.0/24")
-      --talosconfig-destination string           The location to save the generated Talos configuration file to. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
-      --workers int                              the number of workers to create (default 1)
-```
-
-### Options inherited from parent commands
-
-```
-      --name string    the name of the cluster (default "talos-default")
-      --state string   directory path to store cluster state (default "/home/user/.talos/clusters")
-```
-
-### SEE ALSO
-
-* [talosctl cluster create](#talosctl-cluster-create)	 - Creates a local qemu based cluster for Talos development
-
-## talosctl cluster create qemu
-
-Create a local QEMU based Talos cluster
-
-### Synopsis
-
-Create a local QEMU based Talos cluster
-Available presets:
-  - iso: Configure Talos to boot from an ISO from the Image Factory.
-  - iso-secureboot: Configure Talos for Secureboot via ISO. Only available on Linux hosts.
-  - pxe: Configure Talos to boot via PXE from the Image Factory.
-  - disk-image: Configure Talos to boot from a disk image from the Image Factory.
-  - maintenance: Skip applying machine configuration and leave the machines in maintenance mode. The machine configuration files are written to the working directory.
-
-Note: exactly one of 'iso', 'iso-secureboot', 'pxe' or 'disk-image' presets must be specified.
-
-
-```
-talosctl cluster create qemu [flags]
-```
-
-### Options
-
-```
-      --cidr string                              CIDR of the cluster network (default "10.5.0.0/24")
-      --config-patch stringArray                 patch generated machineconfigs (applied to all node types), use @file to read a patch from file
-      --config-patch-controlplanes stringArray   patch generated machineconfigs (applied to 'controlplane' type)
-      --config-patch-workers stringArray         patch generated machineconfigs (applied to 'worker' type)
-      --controlplanes int                        the number of controlplanes to create (default 1)
-      --cpus-controlplanes string                the share of CPUs as fraction for each control plane/VM (default "2.0")
-      --cpus-workers string                      the share of CPUs as fraction for each worker/VM (default "2.0")
-      --disks disks                              list of disks to create in format "<driver1>:<size1>" (disks after the first one are added only to worker machines) (default virtio:10GiB,virtio:6GiB)
-  -h, --help                                     help for qemu
-      --image-factory-url string                 image factory url (default "https://factory.talos.dev/")
-      --kubernetes-version string                desired kubernetes version to run (default "1.34.1")
-      --memory-controlplanes string(mb,gb)       the limit on memory usage for each control plane/VM (default 2.0GiB)
-      --memory-workers string(mb,gb)             the limit on memory usage for each worker/VM (default 2.0GiB)
-      --omni-api-endpoint string                 the Omni API endpoint (must include a scheme, a port and a join token)
-      --presets strings                          list of presets to apply (default [iso])
-      --schematic-id string                      image factory schematic id (defaults to an empty schematic)
-      --talos-version string                     the desired talos version (default "latest")
-      --talosconfig-destination string           The location to save the generated Talos configuration file to. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
-      --workers int                              the number of workers to create (default 1)
-```
-
-### Options inherited from parent commands
-
-```
-      --name string    the name of the cluster (default "talos-default")
-      --state string   directory path to store cluster state (default "/home/user/.talos/clusters")
-```
-
-### SEE ALSO
-
-* [talosctl cluster create](#talosctl-cluster-create)	 - Creates a local qemu based cluster for Talos development
-
-## talosctl cluster create
+## talosctl cluster create dev
 
 Creates a local qemu based cluster for Talos development
 
 ```
-talosctl cluster create [flags]
+talosctl cluster create dev [flags]
 ```
 
 ### Options
@@ -258,7 +162,7 @@ talosctl cluster create [flags]
       --extra-disks-drivers strings              driver for each extra disk (virtio, ide, ahci, scsi, nvme, megaraid)
       --extra-disks-size int                     default limit on disk size in MB (each VM) (default 5120)
       --extra-uefi-search-paths strings          additional search paths for UEFI firmware (only applies when UEFI is enabled)
-  -h, --help                                     help for create
+  -h, --help                                     help for dev
       --image-cache-path string                  path to image cache
       --image-cache-port uint16                  port on which to serve image cache (default 5000)
       --image-cache-tls-cert-file string         path to image cache TLS cert
@@ -326,13 +230,103 @@ talosctl cluster create [flags]
 
 ### SEE ALSO
 
-* [talosctl cluster](#talosctl-cluster)	 - A collection of commands for managing local docker-based or QEMU-based clusters
-* [talosctl cluster create docker](#talosctl-cluster-create-docker)	 - Create a local Docker based kubernetes cluster
-* [talosctl cluster create qemu](#talosctl-cluster-create-qemu)	 - Create a local QEMU based Talos cluster
+* [talosctl cluster create](#talosctl-cluster-create)	 - Creates a local qemu based cluster for Talos development
+
+## talosctl cluster create docker
+
+Create a local Docker based kubernetes cluster
+
+```
+talosctl cluster create docker [flags]
+```
+
+### Options
+
+```
+      --config-patch stringArray                 patch generated machineconfigs (applied to all node types), use @file to read a patch from file
+      --config-patch-controlplanes stringArray   patch generated machineconfigs (applied to 'controlplane' type)
+      --config-patch-workers stringArray         patch generated machineconfigs (applied to 'worker' type)
+      --cpus-controlplanes string                the share of CPUs as fraction for each control plane/VM (default "2.0")
+      --cpus-workers string                      the share of CPUs as fraction for each worker/VM (default "2.0")
+  -p, --exposed-ports string                     comma-separated list of ports/protocols to expose on init node. Ex -p <hostPort>:<containerPort>/<protocol (tcp or udp)>
+  -h, --help                                     help for docker
+      --host-ip string                           Host IP to forward exposed ports to (default "0.0.0.0")
+      --image string                             the talos image to run (default "ghcr.io/siderolabs/talos:latest")
+      --kubernetes-version string                desired kubernetes version to run (default "1.34.1")
+      --memory-controlplanes string(mb,gb)       the limit on memory usage for each control plane/VM (default 2.0GiB)
+      --memory-workers string(mb,gb)             the limit on memory usage for each worker/VM (default 2.0GiB)
+      --mount mount                              attach a mount to the container (docker --mount syntax)
+      --subnet string                            Docker network subnet CIDR (default "10.5.0.0/24")
+      --talosconfig-destination string           The location to save the generated Talos configuration file to. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
+      --workers int                              the number of workers to create (default 1)
+```
+
+### Options inherited from parent commands
+
+```
+      --name string    the name of the cluster (default "talos-default")
+      --state string   directory path to store cluster state (default "/home/user/.talos/clusters")
+```
+
+### SEE ALSO
+
+* [talosctl cluster create](#talosctl-cluster-create)	 - Creates a local qemu based cluster for Talos development
+
+## talosctl cluster create qemu
+
+Create a local QEMU based Talos cluster
+Available presets:
+  - iso: Configure Talos to boot from an ISO from the Image Factory.
+  - iso-secureboot: Configure Talos for Secureboot via ISO. Only available on Linux hosts.
+  - pxe: Configure Talos to boot via PXE from the Image Factory.
+  - disk-image: Configure Talos to boot from a disk image from the Image Factory.
+  - maintenance: Skip applying machine configuration and leave the machines in maintenance mode. The machine configuration files are written to the working directory.
+
+Note: exactly one of 'iso', 'iso-secureboot', 'pxe' or 'disk-image' presets must be specified.
+
+
+```
+talosctl cluster create qemu [flags]
+```
+
+### Options
+
+```
+      --cidr string                              CIDR of the cluster network (default "10.5.0.0/24")
+      --config-patch stringArray                 patch generated machineconfigs (applied to all node types), use @file to read a patch from file
+      --config-patch-controlplanes stringArray   patch generated machineconfigs (applied to 'controlplane' type)
+      --config-patch-workers stringArray         patch generated machineconfigs (applied to 'worker' type)
+      --controlplanes int                        the number of controlplanes to create (default 1)
+      --cpus-controlplanes string                the share of CPUs as fraction for each control plane/VM (default "2.0")
+      --cpus-workers string                      the share of CPUs as fraction for each worker/VM (default "2.0")
+      --disks disks                              list of disks to create in format "<driver1>:<size1>" (disks after the first one are added only to worker machines) (default virtio:10GiB,virtio:6GiB)
+  -h, --help                                     help for qemu
+      --image-factory-url string                 image factory url (default "https://factory.talos.dev/")
+      --kubernetes-version string                desired kubernetes version to run (default "1.34.1")
+      --memory-controlplanes string(mb,gb)       the limit on memory usage for each control plane/VM (default 2.0GiB)
+      --memory-workers string(mb,gb)             the limit on memory usage for each worker/VM (default 2.0GiB)
+      --omni-api-endpoint string                 the Omni API endpoint (must include a scheme, a port and a join token)
+      --presets strings                          list of presets to apply (default [iso])
+      --schematic-id string                      image factory schematic id (defaults to an empty schematic)
+      --talos-version string                     the desired talos version (default "latest")
+      --talosconfig-destination string           The location to save the generated Talos configuration file to. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
+      --workers int                              the number of workers to create (default 1)
+```
+
+### Options inherited from parent commands
+
+```
+      --name string    the name of the cluster (default "talos-default")
+      --state string   directory path to store cluster state (default "/home/user/.talos/clusters")
+```
+
+### SEE ALSO
+
+* [talosctl cluster create](#talosctl-cluster-create)	 - Creates a local qemu based cluster for Talos development
 
 ## talosctl cluster destroy
 
-Destroys a local docker-based or firecracker-based kubernetes cluster
+Destroys a local Talos kubernetes cluster
 
 ```
 talosctl cluster destroy [flags]
@@ -343,7 +337,6 @@ talosctl cluster destroy [flags]
 ```
   -f, --force                                   force deletion of cluster directory if there were errors
   -h, --help                                    help for destroy
-      --provisioner string                      Talos cluster provisioner to use (default "docker")
       --save-cluster-logs-archive-path string   save cluster logs archive to the specified file on destroy
       --save-support-archive-path string        save support archive to the specified file on destroy
 ```
@@ -400,8 +393,7 @@ A collection of commands for managing local docker-based or QEMU-based clusters
 ### SEE ALSO
 
 * [talosctl](#talosctl)	 - A CLI for out-of-band management of Kubernetes nodes created by Talos
-* [talosctl cluster create](#talosctl-cluster-create)	 - Creates a local qemu based cluster for Talos development
-* [talosctl cluster destroy](#talosctl-cluster-destroy)	 - Destroys a local docker-based or firecracker-based kubernetes cluster
+* [talosctl cluster destroy](#talosctl-cluster-destroy)	 - Destroys a local Talos kubernetes cluster
 * [talosctl cluster show](#talosctl-cluster-show)	 - Shows info about a local provisioned kubernetes cluster
 
 ## talosctl completion

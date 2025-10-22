@@ -29,10 +29,13 @@ type legacyOps struct {
 	extraDisksDrivers []string
 }
 
-var createCmd = getCreateCmd()
+var (
+	createCmd    = getCreateCmd("create", true)
+	createDevCmd = getCreateCmd("dev", false)
+)
 
 //nolint:gocyclo
-func getCreateCmd() *cobra.Command {
+func getCreateCmd(cmdName string, hidden bool) *cobra.Command {
 	const (
 		networkIPv4Flag               = "ipv4"
 		networkIPv6Flag               = "ipv6"
@@ -256,12 +259,16 @@ func getCreateCmd() *cobra.Command {
 
 	// createCmd is the developer oriented create command.
 	createCmd := &cobra.Command{
-		Use:    "create",
-		Hidden: false, // todo: hide once user-facing commands are implemented
+		Use:    cmdName,
+		Hidden: hidden,
 		Short:  "Creates a local qemu based cluster for Talos development",
 		Args:   cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return cli.WithContext(context.Background(), func(ctx context.Context) error {
+				if cmdName == "create" {
+					cli.Warning("the developer oriented 'cluster create' command has been moved to 'cluster create dev'")
+				}
+
 				if err := validateQemuFlags(cmd.Flags(), unImplementedFlagsDarwin); err != nil {
 					return err
 				}
@@ -299,7 +306,7 @@ func getCreateCmd() *cobra.Command {
 	createCmd.Flags().IntVar(&legacyOps.extraDiskSize, extraDiskSizeFlag, 5*1024, "default limit on disk size in MB (each VM)")
 
 	clustercmd.AddProvisionerFlag(createCmd)
-	cli.Should(createCmd.Flags().MarkHidden(clustercmd.ProvisionerFlag))
+	cli.Should(createCmd.Flags().MarkHidden(clustercmd.ProvisionerFlagName))
 
 	createCmd.Flags().AddFlagSet(getCommonFlags())
 	createCmd.Flags().AddFlagSet(getQemuFlags())
@@ -313,6 +320,7 @@ func getCreateCmd() *cobra.Command {
 }
 
 func init() {
+	createCmd.AddCommand(createDevCmd)
 	clustercmd.Cmd.AddCommand(createCmd)
 }
 

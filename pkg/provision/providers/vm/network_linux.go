@@ -39,7 +39,7 @@ import (
 // different bridge interfaces.
 //
 //nolint:gocyclo
-func (p *Provisioner) CreateNetwork(ctx context.Context, state *State, network provision.NetworkRequest, options provision.Options) error {
+func (p *Provisioner) CreateNetwork(ctx context.Context, state *provision.State, network provision.NetworkRequest, options provision.Options) error {
 	networkNameHash := sha256.Sum256([]byte(network.Name))
 	state.BridgeName = fmt.Sprintf("%s%s", "talos", hex.EncodeToString(networkNameHash[:])[:8])
 
@@ -237,7 +237,7 @@ func getTicksInUsec() (float64, error) {
 }
 
 //nolint:gocyclo
-func (p *Provisioner) configureNetworkChaos(network provision.NetworkRequest, state *State, options provision.Options) error {
+func (p *Provisioner) configureNetworkChaos(network provision.NetworkRequest, state *provision.State, options provision.Options) error {
 	if (network.Bandwidth != 0) && (network.Latency != 0 || network.Jitter != 0 || network.PacketLoss != 0 || network.PacketReorder != 0 || network.PacketCorrupt != 0) {
 		return errors.New("bandwidth and other chaos options cannot be used together")
 	}
@@ -344,7 +344,7 @@ func (p *Provisioner) configureNetworkChaos(network provision.NetworkRequest, st
 }
 
 // DestroyNetwork destroy bridge interface by name to clean up.
-func (p *Provisioner) DestroyNetwork(state *State) error {
+func (p *Provisioner) DestroyNetwork(state *provision.State) error {
 	iface, err := net.InterfaceByName(state.BridgeName)
 	if err != nil {
 		return fmt.Errorf("error looking up bridge interface %q: %w", state.BridgeName, err)

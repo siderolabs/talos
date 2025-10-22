@@ -109,31 +109,37 @@ func preCreate(cOps clusterops.Common, clusterConfigs clusterops.ClusterConfigs)
 
 	// write machine config
 	if cOps.SkipInjectingConfig {
-		if clusterConfigs.ConfigBundle != nil {
-			types := []machine.Type{machine.TypeControlPlane, machine.TypeWorker}
-
-			if cOps.WithInitNode {
-				types = slices.Insert(types, 0, machine.TypeInit)
-			}
-
-			if err := clusterConfigs.ConfigBundle.Write(".", encoder.CommentsAll, types...); err != nil {
-				return err
-			}
-		}
-
-		// no configbundle, just write the machine config as-is
-		cfgBytes, err := clusterConfigs.ClusterRequest.Nodes[0].Config.Bytes()
-		if err != nil {
+		if err := writeMachineconfig(clusterConfigs, cOps); err != nil {
 			return err
 		}
-
-		fullFilePath := filepath.Join(".", "machineconfig.yaml")
-		if err = os.WriteFile(fullFilePath, cfgBytes, 0o644); err != nil {
-			return err
-		}
-
-		fmt.Fprintf(os.Stderr, "created %s\n", fullFilePath)
 	}
+
+	return nil
+}
+
+func writeMachineconfig(clusterConfigs clusterops.ClusterConfigs, cOps clusterops.Common) error {
+	if clusterConfigs.ConfigBundle != nil {
+		types := []machine.Type{machine.TypeControlPlane, machine.TypeWorker}
+
+		if cOps.WithInitNode {
+			types = slices.Insert(types, 0, machine.TypeInit)
+		}
+
+		return clusterConfigs.ConfigBundle.Write(".", encoder.CommentsAll, types...)
+	}
+
+	// no configbundle, just write the machine config as-is
+	cfgBytes, err := clusterConfigs.ClusterRequest.Nodes[0].Config.Bytes()
+	if err != nil {
+		return err
+	}
+
+	fullFilePath := filepath.Join(".", "machineconfig.yaml")
+	if err = os.WriteFile(fullFilePath, cfgBytes, 0o644); err != nil {
+		return err
+	}
+
+	fmt.Fprintf(os.Stderr, "created %s\n", fullFilePath)
 
 	return nil
 }

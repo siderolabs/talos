@@ -11,11 +11,11 @@ import (
 	"io/fs"
 	"os"
 
-	"github.com/siderolabs/talos/pkg/provision/providers/vm"
+	"github.com/siderolabs/talos/pkg/provision"
 )
 
 //nolint:gocyclo
-func (p *provisioner) createPFlashImages(state *vm.State, nodeName string, pflashSpec []PFlash) ([]string, error) {
+func (p *provisioner) createPFlashImages(state *provision.State, nodeName string, pflashSpec []PFlash) ([]string, error) {
 	var images []string
 
 	for i, pflash := range pflashSpec {

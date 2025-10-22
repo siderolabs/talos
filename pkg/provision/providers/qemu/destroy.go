@@ -11,7 +11,6 @@ import (
 
 	cl "github.com/siderolabs/talos/pkg/cluster"
 	"github.com/siderolabs/talos/pkg/provision"
-	"github.com/siderolabs/talos/pkg/provision/providers/vm"
 )
 
 // Destroy Talos cluster as set of qemu VMs.
@@ -60,7 +59,7 @@ func (p *provisioner) Destroy(ctx context.Context, cluster provision.Cluster, op
 		return err
 	}
 
-	state, ok := cluster.(*vm.State)
+	state, ok := cluster.(*provision.State)
 	if !ok {
 		return fmt.Errorf("error inspecting QEMU state, %#+v", cluster)
 	}

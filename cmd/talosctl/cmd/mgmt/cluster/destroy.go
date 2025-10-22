@@ -6,6 +6,7 @@ package cluster
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/spf13/cobra"
 
@@ -23,8 +24,7 @@ var destroyCmdFlags struct {
 // destroyCmd represents the cluster destroy command.
 var destroyCmd = &cobra.Command{
 	Use:   "destroy",
-	Short: "Destroys a local docker-based or firecracker-based kubernetes cluster",
-	Long:  ``,
+	Short: "Destroys a local Talos kubernetes cluster",
 	Args:  cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return cli.WithContext(context.Background(), destroy)
@@ -32,7 +32,12 @@ var destroyCmd = &cobra.Command{
 }
 
 func destroy(ctx context.Context) error {
-	provisioner, err := providers.Factory(ctx, provisionerName)
+	state, err := provision.ReadState(ctx, PersistentFlags.ClusterName, PersistentFlags.StateDir)
+	if err != nil {
+		return fmt.Errorf("failed to read cluster state: %w", err)
+	}
+
+	provisioner, err := providers.Factory(ctx, state.ProvisionerName)
 	if err != nil {
 		return err
 	}
@@ -58,6 +63,7 @@ func init() {
 	destroyCmd.PersistentFlags().StringVarP(&destroyCmdFlags.saveSupportArchivePath, "save-support-archive-path", "", "", "save support archive to the specified file on destroy")
 	destroyCmd.PersistentFlags().StringVarP(&destroyCmdFlags.saveClusterLogsArchivePath, "save-cluster-logs-archive-path", "", "", "save cluster logs archive to the specified file on destroy")
 	AddProvisionerFlag(destroyCmd)
+	cli.Should(destroyCmd.Flags().MarkDeprecated(ProvisionerFlagName, "the provisioner is inferred automatically"))
 
 	Cmd.AddCommand(destroyCmd)
 }

@@ -15,7 +15,7 @@ import (
 	"github.com/siderolabs/talos/pkg/provision/providers/vm"
 )
 
-func (p *provisioner) createVirtualTPMState(state *vm.State, nodeName string, tpm2Enabled bool) (tpmConfig, error) {
+func (p *provisioner) createVirtualTPMState(state *provision.State, nodeName string, tpm2Enabled bool) (tpmConfig, error) {
 	tpmStateDir := state.GetRelativePath(fmt.Sprintf("%s-tpm", nodeName))
 
 	if err := os.MkdirAll(tpmStateDir, 0o755); err != nil {

@@ -23,7 +23,7 @@ const (
 )
 
 // CreateKMS creates KMS server.
-func (p *Provisioner) CreateKMS(state *State, clusterReq provision.ClusterRequest, options provision.Options) error {
+func (p *Provisioner) CreateKMS(state *provision.State, clusterReq provision.ClusterRequest, options provision.Options) error {
 	pidPath := state.GetRelativePath(kmsPid)
 
 	logFile, err := os.OpenFile(state.GetRelativePath(kmsLog), os.O_APPEND|os.O_CREATE|os.O_RDWR, 0o666)
@@ -63,7 +63,7 @@ func (p *Provisioner) CreateKMS(state *State, clusterReq provision.ClusterReques
 }
 
 // DestroyKMS destroys KMS server.
-func (p *Provisioner) DestroyKMS(state *State) error {
+func (p *Provisioner) DestroyKMS(state *provision.State) error {
 	pidPath := state.GetRelativePath(kmsPid)
 
 	return StopProcessByPidfile(pidPath)
