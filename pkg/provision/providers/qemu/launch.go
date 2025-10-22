@@ -276,7 +276,7 @@ func launchVM(config *LaunchConfig) error {
 		args = append(args,
 			"-device", "intel-iommu,intremap=on,device-iotlb=on",
 			"-device", "ioh3420,id=pcie.1,chassis=1",
-			"-device", "virtio-net-pci,bus=pcie.1,netdev=net1,disable-legacy=on,disable-modern=off,iommu_platform=on,ats=on",
+			"-device", "e1000,bus=pcie.1,netdev=net1",
 			"-netdev", "tap,id=net1,vhostforce=on,script=no,downscript=no",
 		)
 	}

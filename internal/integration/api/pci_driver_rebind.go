@@ -95,15 +95,15 @@ func (suite *PCIDriverRebindSuite) TestIOMMURebind() {
 		pci, ok := item.(*hardware.PCIDevice)
 		suite.Require().True(ok, "expected PCI device, got %T", item)
 
-		if pci.TypedSpec().Product == "Virtio 1.0 network device" {
+		if pci.TypedSpec().Product == "82540EM Gigabit Ethernet Controller" {
 			pciDeviceID = pci.Metadata().ID()
 
 			break
 		}
 	}
 
-	// validate that the driver is bound to virtio-pci initially
-	suite.validateDriver(nodeCtx, pciDeviceID, "virtio-pci")
+	// validate that the driver is bound to e1000 initially
+	suite.validateDriver(nodeCtx, pciDeviceID, "e1000")
 
 	cfgDocument := hardwareconfigtype.NewPCIDriverRebindConfigV1Alpha1()
 	cfgDocument.MetaName = pciDeviceID
@@ -141,7 +141,7 @@ func (suite *PCIDriverRebindSuite) TestIOMMURebind() {
 	// after applying the patch the device should be bound to vfio-pci
 	suite.validateDriver(nodeCtx, pciDeviceID, "vfio-pci")
 
-	cfgDocument.PCITargetDriver = "virtio-pci"
+	cfgDocument.PCITargetDriver = "e1000"
 
 	suite.PatchMachineConfig(nodeCtx, cfgDocument)
 
@@ -149,7 +149,7 @@ func (suite *PCIDriverRebindSuite) TestIOMMURebind() {
 	suite.Require().NoError(err)
 
 	// verify that an update to the target driver takes effect
-	suite.validateDriver(nodeCtx, pciDeviceID, "virtio-pci")
+	suite.validateDriver(nodeCtx, pciDeviceID, "e1000")
 
 	// switch back to vfio-pci
 	cfgDocument.PCITargetDriver = "vfio-pci"
@@ -169,7 +169,7 @@ func (suite *PCIDriverRebindSuite) TestIOMMURebind() {
 	suite.Require().NoError(err)
 
 	// verify that the device is back to original host driver
-	suite.validateDriver(nodeCtx, pciDeviceID, "virtio-pci")
+	suite.validateDriver(nodeCtx, pciDeviceID, "e1000")
 }
 
 func (suite *PCIDriverRebindSuite) validateDriver(nodeCtx context.Context, pciDeviceID, driver string) {
