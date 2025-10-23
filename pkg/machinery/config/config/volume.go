@@ -85,6 +85,7 @@ func (emptyVolumeConfig) MaxSize() optional.Optional[uint64] {
 type UserVolumeConfig interface {
 	NamedDocument
 	UserVolumeConfigSignal()
+	Type() optional.Optional[block.VolumeType]
 	Provisioning() VolumeProvisioningConfig
 	Filesystem() FilesystemConfig
 	Encryption() EncryptionConfig

@@ -294,6 +294,8 @@ func (ctrl *MountController) handleMountOperation(
 	switch volumeStatus.TypedSpec().Type {
 	case block.VolumeTypeDirectory:
 		return ctrl.handleDirectoryMountOperation(rootPath, mountTarget, volumeStatus)
+	case block.VolumeTypeBind:
+		return ctrl.handleBindMountOperation(logger, rootPath, mountTarget, mountRequest, volumeStatus)
 	case block.VolumeTypeOverlay:
 		return ctrl.handleOverlayMountOperation(logger, filepath.Join(rootPath, mountTarget), mountRequest, volumeStatus)
 	case block.VolumeTypeSymlink:
@@ -565,6 +567,82 @@ func (ctrl *MountController) handleDiskMountOperation(
 	return nil
 }
 
+// TODO: @shanduur - fix this.
+func (ctrl *MountController) handleBindMountOperation(
+	logger *zap.Logger,
+	rootPath string,
+	target string,
+	mountRequest *block.MountRequest,
+	volumeStatus *block.VolumeStatus,
+) error {
+	_, ok := ctrl.activeMounts[mountRequest.Metadata().ID()]
+
+	// mount hasn't been done yet
+	if !ok {
+		// TODO:
+		// - create source directory in /var/mnt/<meta-id>
+		// - bind mount it over itslef as read/write
+		mountTarget := filepath.Join(rootPath, target)
+
+		if err := os.Mkdir(mountTarget, volumeStatus.TypedSpec().MountSpec.FileMode); err != nil {
+			if !os.IsExist(err) {
+				return fmt.Errorf("failed to create target path: %w", err)
+			}
+
+			st, err := os.Stat(mountTarget)
+			if err != nil {
+				return fmt.Errorf("failed to stat target path: %w", err)
+			}
+
+			if !st.IsDir() {
+				return fmt.Errorf("target path %q is not a directory", mountTarget)
+			}
+		}
+
+		var opts []mount.ManagerOption
+
+		opts = append(opts,
+			mount.WithSelinuxLabel(volumeStatus.TypedSpec().MountSpec.SelinuxLabel),
+		)
+
+		manager := mount.NewManager(slices.Concat(
+			[]mount.ManagerOption{
+				mount.WithTarget(mountTarget),
+				mount.WithOpentree(mountTarget),
+				mount.WithPrinter(logger.Sugar().Infof),
+			},
+			opts,
+		)...)
+
+		mountpoint, err := manager.Mount()
+		if err != nil {
+			return fmt.Errorf("failed to mount %q: %w", mountRequest.Metadata().ID(), err)
+		}
+
+		if !mountRequest.TypedSpec().ReadOnly && !mountRequest.TypedSpec().Detached {
+			if err = ctrl.updateTargetSettings(mountTarget, volumeStatus.TypedSpec().MountSpec); err != nil {
+				manager.Unmount() //nolint:errcheck
+
+				return fmt.Errorf("failed to update target settings %q: %w", mountRequest.Metadata().ID(), err)
+			}
+		}
+
+		logger.Info("bind mount",
+			zap.String("volume", volumeStatus.Metadata().ID()),
+			zap.String("source", mountTarget),
+			zap.String("target", mountTarget),
+		)
+
+		ctrl.activeMounts[mountRequest.Metadata().ID()] = &mountContext{
+			point:     mountpoint,
+			readOnly:  mountRequest.TypedSpec().ReadOnly,
+			unmounter: manager.Unmount,
+		}
+	}
+
+	return nil
+}
+
 func (ctrl *MountController) handleOverlayMountOperation(
 	logger *zap.Logger,
 	mountTarget string,
@@ -646,6 +724,8 @@ func (ctrl *MountController) handleUnmountOperation(
 	switch volumeStatus.TypedSpec().Type {
 	case block.VolumeTypeDirectory:
 		return nil
+	case block.VolumeTypeBind:
+		return ctrl.handleBindUnmountOperation(logger, mountRequest, volumeStatus)
 	case block.VolumeTypeTmpfs:
 		return fmt.Errorf("not implemented yet")
 	case block.VolumeTypeDisk, block.VolumeTypePartition, block.VolumeTypeOverlay:
@@ -673,6 +753,37 @@ func (ctrl *MountController) handleDiskUnmountOperation(
 
 	if err := mountCtx.unmounter(); err != nil {
 		return fmt.Errorf("failed to unmount %q: %w", mountRequest.Metadata().ID(), err)
+	}
+
+	delete(ctrl.activeMounts, mountRequest.Metadata().ID())
+
+	logger.Info("volume unmount",
+		zap.String("volume", mountRequest.Metadata().ID()),
+		zap.String("source", mountCtx.point.Source()),
+		zap.String("target", mountCtx.point.Target()),
+		zap.String("filesystem", mountCtx.point.FSType()),
+	)
+
+	return nil
+}
+
+// TODO: @shanduur - fix this.
+func (ctrl *MountController) handleBindUnmountOperation(
+	logger *zap.Logger,
+	mountRequest *block.MountRequest,
+	_ *block.VolumeStatus,
+) error {
+	mountCtx, ok := ctrl.activeMounts[mountRequest.Metadata().ID()]
+	if !ok {
+		return nil
+	}
+
+	if err := mountCtx.unmounter(); err != nil { // TODO: filter out error is not mounted
+		return fmt.Errorf("failed to unmount %q: %w", mountRequest.Metadata().ID(), err)
+	}
+
+	if err := os.RemoveAll(mountCtx.point.Source()); err != nil {
+		return fmt.Errorf("failed to remove bind source of %q: %w", mountRequest.Metadata().ID(), err)
 	}
 
 	delete(ctrl.activeMounts, mountRequest.Metadata().ID())

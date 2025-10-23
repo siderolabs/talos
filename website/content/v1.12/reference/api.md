@@ -4539,6 +4539,7 @@ BlockVolumeType describes volume type.
 | VOLUME_TYPE_DIRECTORY | 3 |  |
 | VOLUME_TYPE_SYMLINK | 4 |  |
 | VOLUME_TYPE_OVERLAY | 5 |  |
+| VOLUME_TYPE_BIND | 6 |  |
 
 
 
