@@ -5545,6 +5545,7 @@ DiscoveredVolumeSpec is the spec for DiscoveredVolumes resource.
 | dev_path | [string](#string) |  |  |
 | parent_dev_path | [string](#string) |  |  |
 | pretty_size | [string](#string) |  |  |
+| offset | [uint64](#uint64) |  |  |
 
 
 

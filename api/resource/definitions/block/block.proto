@@ -42,6 +42,7 @@ message DiscoveredVolumeSpec {
   string dev_path = 17;
   string parent_dev_path = 18;
   string pretty_size = 19;
+  uint64 offset = 20;
 }
 
 // DiscoveryRefreshRequestSpec is the spec for DiscoveryRefreshRequest.

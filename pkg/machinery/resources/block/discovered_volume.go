@@ -30,6 +30,9 @@ type DiscoveredVolumeSpec struct {
 	Parent        string `yaml:"parent,omitempty" protobuf:"16"`
 	ParentDevPath string `yaml:"parent_dev_path,omitempty" protobuf:"18"`
 
+	// Offset of the partition/volume inside Parent device (in bytes).
+	Offset uint64 `yaml:"offset" protobuf:"20"`
+
 	// Overall size of the probed device (in bytes).
 	Size       uint64 `yaml:"size" protobuf:"1"`
 	PrettySize string `yaml:"pretty_size" protobuf:"19"`

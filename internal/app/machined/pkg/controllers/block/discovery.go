@@ -215,6 +215,7 @@ func (ctrl *DiscoveryController) rescan(ctx context.Context, r controller.Runtim
 				dv.TypedSpec().ParentDevPath = filepath.Join("/dev", device.TypedSpec().Parent)
 			}
 
+			dv.TypedSpec().Offset = 0
 			dv.TypedSpec().SetSize(info.Size)
 			dv.TypedSpec().SectorSize = info.SectorSize
 			dv.TypedSpec().IOSize = info.IOSize
@@ -238,6 +239,7 @@ func (ctrl *DiscoveryController) rescan(ctx context.Context, r controller.Runtim
 				dv.TypedSpec().Parent = id
 				dv.TypedSpec().ParentDevPath = filepath.Join("/dev", id)
 
+				dv.TypedSpec().Offset = nested.PartitionOffset
 				dv.TypedSpec().SetSize(nested.PartitionSize)
 
 				dv.TypedSpec().SectorSize = info.SectorSize

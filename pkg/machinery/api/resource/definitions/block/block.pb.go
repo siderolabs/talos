@@ -156,6 +156,7 @@ type DiscoveredVolumeSpec struct {
 	DevPath             string                 `protobuf:"bytes,17,opt,name=dev_path,json=devPath,proto3" json:"dev_path,omitempty"`
 	ParentDevPath       string                 `protobuf:"bytes,18,opt,name=parent_dev_path,json=parentDevPath,proto3" json:"parent_dev_path,omitempty"`
 	PrettySize          string                 `protobuf:"bytes,19,opt,name=pretty_size,json=prettySize,proto3" json:"pretty_size,omitempty"`
+	Offset              uint64                 `protobuf:"varint,20,opt,name=offset,proto3" json:"offset,omitempty"`
 	unknownFields       protoimpl.UnknownFields
 	sizeCache           protoimpl.SizeCache
 }
@@ -321,6 +322,13 @@ func (x *DiscoveredVolumeSpec) GetPrettySize() string {
 		return x.PrettySize
 	}
 	return ""
+}
+
+func (x *DiscoveredVolumeSpec) GetOffset() uint64 {
+	if x != nil {
+		return x.Offset
+	}
+	return 0
 }
 
 // DiscoveryRefreshRequestSpec is the spec for DiscoveryRefreshRequest.
@@ -2293,7 +2301,7 @@ const file_resource_definitions_block_block_proto_rawDesc = "" +
 	"\vdevice_path\x18\a \x01(\tR\n" +
 	"devicePath\x12\x16\n" +
 	"\x06parent\x18\b \x01(\tR\x06parent\x12 \n" +
-	"\vsecondaries\x18\t \x03(\tR\vsecondaries\"\xe7\x04\n" +
+	"\vsecondaries\x18\t \x03(\tR\vsecondaries\"\xff\x04\n" +
 	"\x14DiscoveredVolumeSpec\x12\x12\n" +
 	"\x04size\x18\x01 \x01(\x04R\x04size\x12\x1f\n" +
 	"\vsector_size\x18\x02 \x01(\x04R\n" +
@@ -2319,7 +2327,8 @@ const file_resource_definitions_block_block_proto_rawDesc = "" +
 	"\bdev_path\x18\x11 \x01(\tR\adevPath\x12&\n" +
 	"\x0fparent_dev_path\x18\x12 \x01(\tR\rparentDevPath\x12\x1f\n" +
 	"\vpretty_size\x18\x13 \x01(\tR\n" +
-	"prettySize\"7\n" +
+	"prettySize\x12\x16\n" +
+	"\x06offset\x18\x14 \x01(\x04R\x06offset\"7\n" +
 	"\x1bDiscoveryRefreshRequestSpec\x12\x18\n" +
 	"\arequest\x18\x01 \x01(\x03R\arequest\"6\n" +
 	"\x1aDiscoveryRefreshStatusSpec\x12\x18\n" +
