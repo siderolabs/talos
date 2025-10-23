@@ -20,29 +20,6 @@ import (
 	"github.com/siderolabs/talos/pkg/makefs"
 )
 
-// UEFIOptions describe the input for the CreateUEFI function.
-type UEFIOptions struct {
-	UKIPath    string
-	SDBootPath string
-
-	// A value in loader.conf secure-boot-enroll: off, manual, if-safe, force.
-	SDBootSecureBootEnrollKeys string
-
-	// UKISigningCertDer is the DER encoded UKI signing certificate.
-	UKISigningCertDerPath string
-
-	// optional, for auto-enrolling secureboot keys
-	PlatformKeyPath    string
-	KeyExchangeKeyPath string
-	SignatureKeyPath   string
-
-	Arch    string
-	Version string
-
-	ScratchDir string
-	OutPath    string
-}
-
 const (
 	// mib is the size of a megabyte.
 	mib = 1024 * 1024

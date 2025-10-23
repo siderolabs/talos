@@ -83,14 +83,14 @@ func NewAuto() Bootloader {
 // New returns a new bootloader based on the secureboot flag and architecture.
 func New(bootloader, talosVersion, arch string) (Bootloader, error) {
 	switch bootloader {
-	case profile.DiskImageBootloaderGrub.String():
+	case profile.BootLoaderKindGrub.String():
 		g := grub.NewConfig()
 		g.AddResetOption = quirks.New(talosVersion).SupportsResetGRUBOption()
 
 		return g, nil
-	case profile.DiskImageBootloaderSDBoot.String():
+	case profile.BootLoaderKindSDBoot.String():
 		return sdboot.New(), nil
-	case profile.DiskImageBootloaderDualBoot.String():
+	case profile.BootLoaderKindDualBoot.String():
 		return dual.New(), nil
 	default:
 		return nil, fmt.Errorf("unsupported bootloader %q", bootloader)

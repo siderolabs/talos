@@ -23,4 +23,5 @@ output:
   kind: iso
   isoOptions:
     sdBootEnrollKeys: if-safe
+    bootloader: sd-boot
   outFormat: raw

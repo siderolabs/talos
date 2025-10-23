@@ -104,7 +104,7 @@ func (*Sequencer) Initialize(r runtime.Runtime) []runtime.Phase {
 					return false
 				}
 
-				return r.State().Machine().Installed() && val == profile.DiskImageBootloaderDualBoot.String()
+				return r.State().Machine().Installed() && val == profile.BootLoaderKindDualBoot.String()
 			},
 			"cleanupBootloader",
 			CleanupBootloader,

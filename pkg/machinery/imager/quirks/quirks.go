@@ -298,3 +298,15 @@ func (q Quirks) SupportsDisablingModuleSignatureVerification() bool {
 
 	return q.v.GTE(minTalosVersionDisableModSigVerify)
 }
+
+var minTalosVersionISOSupportsSettingBootloader = semver.MustParse("1.12.0")
+
+// ISOSupportsSettingBootloader returns true if the Talos version supports setting bootloader for ISO output.
+func (q Quirks) ISOSupportsSettingBootloader() bool {
+	// if the version doesn't parse, we assume it's latest Talos
+	if q.v == nil {
+		return true
+	}
+
+	return q.v.GTE(minTalosVersionISOSupportsSettingBootloader)
+}

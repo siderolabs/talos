@@ -43,7 +43,7 @@ type ImageOptions struct {
 	DiskFormatOptions string `yaml:"diskFormatOptions,omitempty"`
 	// Bootloader is the bootloader to use for the disk image.
 	// If not set, it defaults to dual-boot.
-	Bootloader DiskImageBootloader `yaml:"bootloader"`
+	Bootloader BootloaderKind `yaml:"bootloader,omitempty"`
 }
 
 // ISOOptions describes options for the 'iso' output.
@@ -52,6 +52,9 @@ type ISOOptions struct {
 	//
 	// If not set, it defaults to if-safe.
 	SDBootEnrollKeys SDBootEnrollKeys `yaml:"sdBootEnrollKeys"`
+	// Bootloader is the bootloader to use for the iso image.
+	// If not set, it defaults to dual-boot.
+	Bootloader BootloaderKind `yaml:"bootloader,omitempty"`
 }
 
 // OutputKind is output specification.
@@ -105,53 +108,73 @@ const (
 	SDBootEnrollKeysOff                            // off
 )
 
-// DiskImageBootloader is a bootloader for the disk image.
-type DiskImageBootloader int
+// BootloaderKind is a bootloader for the disk image.
+type BootloaderKind int
 
 const (
-	// DiskImageBootloaderDualBoot is the dual-boot bootloader
+	// BootLoaderKindNone is the zero value.
+	BootLoaderKindNone BootloaderKind = iota // none
+	// BootLoaderKindDualBoot is the dual-boot bootloader.
 	// using sd-boot for UEFI and GRUB for BIOS.
-	DiskImageBootloaderDualBoot DiskImageBootloader = iota // dual-boot
-	// DiskImageBootloaderSDBoot is the sd-boot bootloader.
-	DiskImageBootloaderSDBoot // sd-boot
-	// DiskImageBootloaderGrub is the GRUB bootloader.
-	DiskImageBootloaderGrub // grub
+	BootLoaderKindDualBoot // dual-boot
+	// BootLoaderKindSDBoot is the sd-boot bootloader.
+	BootLoaderKindSDBoot // sd-boot
+	// BootLoaderKindGrub is the GRUB bootloader.
+	BootLoaderKindGrub // grub
 )
 
 // FillDefaults fills default values for the output.
 func (o *Output) FillDefaults(arch, version string, secureboot bool) {
-	if o.Kind == OutKindImage {
+	switch o.Kind { //nolint:exhaustive
+	case OutKindImage:
 		if o.ImageOptions == nil {
 			o.ImageOptions = &ImageOptions{}
 		}
 
-		useSDBoot := quirks.New(version).UseSDBootForUEFI()
-
-		switch {
-		case o.ImageOptions.Bootloader != DiskImageBootloaderDualBoot:
-			// allow user to override bootloader
-		case secureboot:
-			// secureboot is always using sd-boot
-			o.ImageOptions.Bootloader = DiskImageBootloaderSDBoot
-		case arch == "arm64" && useSDBoot:
-			// arm64 always uses sd-boot for Talos >= 1.10
-			o.ImageOptions.Bootloader = DiskImageBootloaderSDBoot
-		case !useSDBoot:
-			// legacy versions of Talos use GRUB for BIOS/UEFI
-			o.ImageOptions.Bootloader = DiskImageBootloaderGrub
-		default:
-			// Default to dual-boot.
-			o.ImageOptions.Bootloader = DiskImageBootloaderDualBoot
-		}
+		o.ImageOptions.Bootloader = o.selectBootloader(o.ImageOptions.Bootloader, arch, version, secureboot)
 
 		ps := quirks.New(version).PartitionSizes()
 
 		// bump default image size for expanded boot
 		o.ImageOptions.DiskSize += int64(ps.GrubBootSize()) - 1000*1024*1024 // 1000 MiB
 
-		if o.ImageOptions.Bootloader == DiskImageBootloaderDualBoot {
+		if o.ImageOptions.Bootloader == BootLoaderKindDualBoot {
 			// add extra space for BIOS and BOOT partitions
 			o.ImageOptions.DiskSize += int64(ps.GrubBIOSSize()) + int64(ps.GrubBootSize())
 		}
+
+	case OutKindISO:
+		if !quirks.New(version).ISOSupportsSettingBootloader() {
+			return
+		}
+
+		if o.ISOOptions == nil {
+			o.ISOOptions = &ISOOptions{}
+		}
+
+		o.ISOOptions.Bootloader = o.selectBootloader(o.ISOOptions.Bootloader, arch, version, secureboot)
+	}
+}
+
+func (o *Output) selectBootloader(current BootloaderKind, arch, version string, secureboot bool) BootloaderKind {
+	useSDBoot := quirks.New(version).UseSDBootForUEFI()
+
+	switch {
+	case secureboot:
+		// secureboot is always using sd-boot
+		return BootLoaderKindSDBoot
+	case arch == "arm64" && useSDBoot:
+		// arm64 always uses sd-boot for Talos >= 1.10
+		return BootLoaderKindSDBoot
+	case !useSDBoot:
+		// legacy versions of Talos use GRUB for BIOS/UEFI
+		return BootLoaderKindGrub
+	default:
+		// Default to dual-boot if not overridden.
+		if current == BootLoaderKindNone {
+			return BootLoaderKindDualBoot
+		}
+
+		return current
 	}
 }

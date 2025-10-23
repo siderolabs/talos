@@ -15,4 +15,7 @@ input:
     imageRef: ghcr.io/siderolabs/installer-base:1.12.0
 output:
   kind: iso
+  isoOptions:
+    sdBootEnrollKeys: if-safe
+    bootloader: dual-boot
   outFormat: raw

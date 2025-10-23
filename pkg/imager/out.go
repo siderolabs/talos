@@ -188,6 +188,43 @@ func (i *Imager) outISO(ctx context.Context, path string, report *reporter.Repor
 		if err != nil {
 			return err
 		}
+	case quirks.New(i.prof.Version).ISOSupportsSettingBootloader():
+		options := iso.Options{
+			KernelPath:    i.prof.Input.Kernel.Path,
+			InitramfsPath: i.initramfsPath,
+			Cmdline:       i.cmdline,
+
+			UKIPath:    i.ukiPath,
+			SDBootPath: i.sdBootPath,
+
+			SDBootSecureBootEnrollKeys: "off",
+
+			Arch:    i.prof.Arch,
+			Version: i.prof.Version,
+
+			ScratchDir: scratchSpace,
+			OutPath:    path,
+		}
+
+		switch i.prof.Output.ISOOptions.Bootloader {
+		case profile.BootLoaderKindDualBoot:
+			generator, err = options.CreateHybrid(printf)
+			if err != nil {
+				return err
+			}
+		case profile.BootLoaderKindSDBoot:
+			generator, err = options.CreateUEFI(printf)
+			if err != nil {
+				return err
+			}
+		case profile.BootLoaderKindGrub:
+			generator, err = options.CreateGRUB(printf)
+			if err != nil {
+				return err
+			}
+		case profile.BootLoaderKindNone:
+			return fmt.Errorf("cannot create ISO with no bootloader")
+		}
 	case quirks.New(i.prof.Version).UseSDBootForUEFI():
 		options := iso.Options{
 			KernelPath:    i.prof.Input.Kernel.Path,
@@ -324,10 +361,10 @@ func (i *Imager) buildImage(ctx context.Context, path string, printf func(string
 
 	if i.prof.Arch == "amd64" && !i.prof.SecureBootEnabled() && quirks.New(i.prof.Version).UseSDBootForUEFI() {
 		// allow overriding the bootloader if provided
-		if i.prof.Output.ImageOptions.Bootloader == profile.DiskImageBootloaderDualBoot {
+		if i.prof.Output.ImageOptions.Bootloader == profile.BootLoaderKindDualBoot {
 			metaContents = append(metaContents, meta.Value{
 				Key:   meta.DiskImageBootloader,
-				Value: profile.DiskImageBootloaderDualBoot.String(),
+				Value: profile.BootLoaderKindDualBoot.String(),
 			})
 		}
 	}
