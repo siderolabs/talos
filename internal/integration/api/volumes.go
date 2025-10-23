@@ -468,8 +468,8 @@ func (suite *VolumesSuite) TestVolumesStatus() {
 	}
 }
 
-// TestUserVolumes performs a series of operations on user volumes: creating, destroying, verifying, etc.
-func (suite *VolumesSuite) TestUserVolumes() {
+// TestUserVolumesPartition performs a series of operations on user volumes (partition type): creating, destroying, verifying, etc.
+func (suite *VolumesSuite) TestUserVolumesPartition() {
 	if testing.Short() {
 		suite.T().Skip("skipping test in short mode.")
 	}
@@ -648,6 +648,113 @@ func (suite *VolumesSuite) TestUserVolumes() {
 		func(dv *block.DiscoveredVolume, asrt *assert.Assertions) {
 			asrt.Empty(dv.TypedSpec().Name, "expected discovered volume %s to be wiped", dv.Metadata().ID())
 		})
+}
+
+// TestUserVolumesBind performs a series of operations on user volumes (bind type): creating, destroying, verifying, etc.
+func (suite *VolumesSuite) TestUserVolumesBind() {
+	if testing.Short() {
+		suite.T().Skip("skipping test in short mode.")
+	}
+
+	if suite.Cluster == nil || suite.Cluster.Provisioner() != base.ProvisionerQEMU {
+		suite.T().Skip("skipping test for non-qemu provisioner")
+	}
+
+	node := suite.RandomDiscoveredNodeInternalIP(machine.TypeWorker)
+
+	k8sNode, err := suite.GetK8sNodeByInternalIP(suite.ctx, node)
+	suite.Require().NoError(err)
+
+	nodeName := k8sNode.Name
+
+	ctx := client.WithNode(suite.ctx, node)
+
+	volumeName := fmt.Sprintf("%04x", rand.Int31()) + "-"
+
+	const numVolumes = 3
+
+	volumeIDs := make([]string, numVolumes)
+
+	for i := range numVolumes {
+		volumeIDs[i] = volumeName + strconv.Itoa(i)
+	}
+
+	userVolumeIDs := xslices.Map(volumeIDs, func(volumeID string) string { return constants.UserVolumePrefix + volumeID })
+
+	configDocs := xslices.Map(volumeIDs, func(volumeID string) any {
+		doc := blockcfg.NewUserVolumeConfigV1Alpha1()
+		doc.MetaName = volumeID
+		doc.VolumeType = pointer.To(block.VolumeTypeDirectory)
+
+		return doc
+	})
+
+	// create user volumes
+	suite.PatchMachineConfig(ctx, configDocs...)
+
+	rtestutils.AssertResources(ctx, suite.T(), suite.Client.COSI, userVolumeIDs,
+		func(vs *block.VolumeStatus, asrt *assert.Assertions) {
+			asrt.Equal(block.VolumePhaseReady, vs.TypedSpec().Phase)
+		},
+	)
+
+	// check that the volumes are mounted
+	rtestutils.AssertResources(ctx, suite.T(), suite.Client.COSI, userVolumeIDs,
+		func(vs *block.MountStatus, _ *assert.Assertions) {})
+
+	// create a pod using user volumes
+	podDef, err := suite.NewPod("user-volume-test")
+	suite.Require().NoError(err)
+
+	// using subdirectory here to test that the hostPath mount is properly propagated into the kubelet
+	podDef = podDef.WithNodeName(nodeName).
+		WithNamespace("kube-system").
+		WithHostVolumeMount(filepath.Join(constants.UserVolumeMountPoint, volumeIDs[0], "data"), "/mnt/data")
+
+	suite.Require().NoError(podDef.Create(suite.ctx, 1*time.Minute))
+
+	_, _, err = podDef.Exec(suite.ctx, "mkdir -p /mnt/data/test")
+	suite.Require().NoError(err)
+
+	suite.Require().NoError(podDef.Delete(suite.ctx))
+
+	// verify that directory exists
+	expectedPath := filepath.Join(constants.UserVolumeMountPoint, volumeIDs[0], "data", "test")
+
+	stream, err := suite.Client.LS(ctx, &machineapi.ListRequest{
+		Root:  expectedPath,
+		Types: []machineapi.ListRequest_Type{machineapi.ListRequest_DIRECTORY},
+	})
+
+	suite.Require().NoError(err)
+
+	suite.Require().NoError(helpers.ReadGRPCStream(stream, func(info *machineapi.FileInfo, _ string, _ bool) error {
+		suite.T().Logf("found %s on node %s", info.Name, node)
+		suite.Require().Equal(expectedPath, info.Name, "expected %s to exist", expectedPath)
+
+		return nil
+	}))
+
+	// now, remove one of the volumes and re-create the volume
+	suite.RemoveMachineConfigDocumentsByName(ctx, blockcfg.UserVolumeConfigKind, volumeIDs[0])
+
+	rtestutils.AssertNoResource[*block.VolumeStatus](ctx, suite.T(), suite.Client.COSI, userVolumeIDs[0])
+
+	// re-create the volume
+	suite.PatchMachineConfig(ctx, configDocs[0])
+
+	rtestutils.AssertResources(ctx, suite.T(), suite.Client.COSI, userVolumeIDs,
+		func(vs *block.VolumeStatus, asrt *assert.Assertions) {
+			asrt.Equal(block.VolumePhaseReady, vs.TypedSpec().Phase)
+		},
+	)
+
+	// clean up
+	suite.RemoveMachineConfigDocumentsByName(ctx, blockcfg.UserVolumeConfigKind, volumeIDs...)
+
+	for _, userVolumeID := range userVolumeIDs {
+		rtestutils.AssertNoResource[*block.VolumeStatus](ctx, suite.T(), suite.Client.COSI, userVolumeID)
+	}
 }
 
 // TestRawVolumes performs a series of operations on raw volumes: creating, destroying, etc.

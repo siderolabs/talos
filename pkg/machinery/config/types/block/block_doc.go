@@ -500,6 +500,17 @@ func (UserVolumeConfigV1Alpha1) Doc() *encoder.Doc {
 				Comments:    [3]string{"" /* encoder.HeadComment */, "Name of the volume." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
 			{
+				Name:        "volumeType",
+				Type:        "VolumeType",
+				Note:        "",
+				Description: "Volume type.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Volume type." /* encoder.LineComment */, "" /* encoder.FootComment */},
+				Values: []string{
+					"partition",
+					"directory",
+				},
+			},
+			{
 				Name:        "provisioning",
 				Type:        "ProvisioningSpec",
 				Note:        "",
@@ -523,7 +534,9 @@ func (UserVolumeConfigV1Alpha1) Doc() *encoder.Doc {
 		},
 	}
 
-	doc.AddExample("", exampleUserVolumeConfigV1Alpha1())
+	doc.AddExample("", exampleUserVolumeConfigV1Alpha1Directory())
+
+	doc.AddExample("", exampleUserVolumeConfigV1Alpha1Partition())
 
 	return doc
 }

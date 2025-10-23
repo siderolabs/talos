@@ -122,6 +122,10 @@ func (o VolumeConfigSpec) DeepCopy() VolumeConfigSpec {
 		cp.Encryption.PerfOptions = make([]string, len(o.Encryption.PerfOptions))
 		copy(cp.Encryption.PerfOptions, o.Encryption.PerfOptions)
 	}
+	if o.Mount.BindTarget != nil {
+		cp.Mount.BindTarget = new(string)
+		*cp.Mount.BindTarget = *o.Mount.BindTarget
+	}
 	return cp
 }
 
@@ -165,6 +169,10 @@ func (o VolumeStatusSpec) DeepCopy() VolumeStatusSpec {
 	if o.TPMEncryptionOptions.PubKeyPCRs != nil {
 		cp.TPMEncryptionOptions.PubKeyPCRs = make([]int, len(o.TPMEncryptionOptions.PubKeyPCRs))
 		copy(cp.TPMEncryptionOptions.PubKeyPCRs, o.TPMEncryptionOptions.PubKeyPCRs)
+	}
+	if o.MountSpec.BindTarget != nil {
+		cp.MountSpec.BindTarget = new(string)
+		*cp.MountSpec.BindTarget = *o.MountSpec.BindTarget
 	}
 	return cp
 }

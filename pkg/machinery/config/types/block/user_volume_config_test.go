@@ -303,6 +303,83 @@ func TestUserVolumeConfigValidate(t *testing.T) {
 			expectedErrors: "project quota support is only available for xfs filesystem",
 		},
 		{
+			name: "provisioning spec for directory",
+
+			cfg: func(t *testing.T) *block.UserVolumeConfigV1Alpha1 {
+				c := block.NewUserVolumeConfigV1Alpha1()
+				c.MetaName = constants.EphemeralPartitionLabel
+				c.VolumeType = pointer.To(blockres.VolumeTypeDirectory)
+
+				require.NoError(t, c.ProvisioningSpec.DiskSelectorSpec.Match.UnmarshalText([]byte(`system_disk`)))
+				c.ProvisioningSpec.ProvisioningMinSize = block.MustByteSize("10GiB")
+
+				return c
+			},
+
+			expectedErrors: "provisioning spec is invalid for volumeType directory",
+		},
+		{
+			name: "encryption spec for directory",
+
+			cfg: func(t *testing.T) *block.UserVolumeConfigV1Alpha1 {
+				c := block.NewUserVolumeConfigV1Alpha1()
+				c.MetaName = constants.EphemeralPartitionLabel
+				c.VolumeType = pointer.To(blockres.VolumeTypeDirectory)
+
+				c.EncryptionSpec.EncryptionProvider = blockres.EncryptionProviderLUKS2
+				c.EncryptionSpec.EncryptionCipher = "aes-xts-plain64"
+				c.EncryptionSpec.EncryptionKeys = []block.EncryptionKey{
+					{
+						KeySlot: 0,
+						KeyTPM:  &block.EncryptionKeyTPM{},
+					},
+				}
+
+				return c
+			},
+
+			expectedErrors: "encryption spec is invalid for volumeType directory",
+		},
+		{
+			name: "filesystem spec for directory",
+
+			cfg: func(t *testing.T) *block.UserVolumeConfigV1Alpha1 {
+				c := block.NewUserVolumeConfigV1Alpha1()
+				c.MetaName = constants.EphemeralPartitionLabel
+				c.VolumeType = pointer.To(blockres.VolumeTypeDirectory)
+
+				c.FilesystemSpec.FilesystemType = blockres.FilesystemTypeVFAT
+
+				return c
+			},
+
+			expectedErrors: "filesystem spec is invalid for volumeType directory",
+		},
+		{
+			name: "invalid volumeType",
+
+			cfg: func(t *testing.T) *block.UserVolumeConfigV1Alpha1 {
+				c := block.NewUserVolumeConfigV1Alpha1()
+				c.MetaName = constants.EphemeralPartitionLabel
+				c.VolumeType = pointer.To(blockres.VolumeTypeTmpfs)
+
+				require.NoError(t, c.ProvisioningSpec.DiskSelectorSpec.Match.UnmarshalText([]byte(`system_disk`)))
+				c.ProvisioningSpec.ProvisioningMinSize = block.MustByteSize("10GiB")
+				c.EncryptionSpec.EncryptionProvider = blockres.EncryptionProviderLUKS2
+				c.EncryptionSpec.EncryptionCipher = "aes-xts-plain64"
+				c.EncryptionSpec.EncryptionKeys = []block.EncryptionKey{
+					{
+						KeySlot: 0,
+						KeyTPM:  &block.EncryptionKeyTPM{},
+					},
+				}
+
+				return c
+			},
+
+			expectedErrors: "unsupported volume type \"tmpfs\"",
+		},
+		{
 			name: "valid",
 
 			cfg: func(t *testing.T) *block.UserVolumeConfigV1Alpha1 {
@@ -313,6 +390,33 @@ func TestUserVolumeConfigValidate(t *testing.T) {
 				c.ProvisioningSpec.ProvisioningMaxSize = block.MustByteSize("2.5TiB")
 				c.ProvisioningSpec.ProvisioningMinSize = block.MustByteSize("10GiB")
 				c.FilesystemSpec.FilesystemType = blockres.FilesystemTypeEXT4
+
+				return c
+			},
+		},
+		{
+			name: "valid partition",
+
+			cfg: func(t *testing.T) *block.UserVolumeConfigV1Alpha1 {
+				c := block.NewUserVolumeConfigV1Alpha1()
+				c.MetaName = constants.EphemeralPartitionLabel
+				c.VolumeType = pointer.To(blockres.VolumeTypePartition)
+
+				require.NoError(t, c.ProvisioningSpec.DiskSelectorSpec.Match.UnmarshalText([]byte(`disk.size > 120u * GiB`)))
+				c.ProvisioningSpec.ProvisioningMaxSize = block.MustByteSize("2.5TiB")
+				c.ProvisioningSpec.ProvisioningMinSize = block.MustByteSize("10GiB")
+				c.FilesystemSpec.FilesystemType = blockres.FilesystemTypeEXT4
+
+				return c
+			},
+		},
+		{
+			name: "valid directory",
+
+			cfg: func(t *testing.T) *block.UserVolumeConfigV1Alpha1 {
+				c := block.NewUserVolumeConfigV1Alpha1()
+				c.MetaName = constants.EphemeralPartitionLabel
+				c.VolumeType = pointer.To(blockres.VolumeTypeDirectory)
 
 				return c
 			},

@@ -449,6 +449,16 @@
           "markdownDescription": "Name of the volume.\n\nName might be between 1 and 34 characters long and can only contain:\nlowercase and uppercase ASCII letters, digits, and hyphens.",
           "x-intellij-html-description": "\u003cp\u003eName of the volume.\u003c/p\u003e\n\n\u003cp\u003eName might be between 1 and 34 characters long and can only contain:\nlowercase and uppercase ASCII letters, digits, and hyphens.\u003c/p\u003e\n"
         },
+        "volumeType": {
+          "enum": [
+            "partition",
+            "directory"
+          ],
+          "title": "volumeType",
+          "description": "Volume type.\n",
+          "markdownDescription": "Volume type.",
+          "x-intellij-html-description": "\u003cp\u003eVolume type.\u003c/p\u003e\n"
+        },
         "provisioning": {
           "$ref": "#/$defs/block.ProvisioningSpec",
           "title": "provisioning",

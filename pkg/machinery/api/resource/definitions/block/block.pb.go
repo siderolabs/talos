@@ -1027,6 +1027,7 @@ type MountSpec struct {
 	Uid                 int64                  `protobuf:"varint,6,opt,name=uid,proto3" json:"uid,omitempty"`
 	Gid                 int64                  `protobuf:"varint,7,opt,name=gid,proto3" json:"gid,omitempty"`
 	RecursiveRelabel    bool                   `protobuf:"varint,8,opt,name=recursive_relabel,json=recursiveRelabel,proto3" json:"recursive_relabel,omitempty"`
+	BindTarget          string                 `protobuf:"bytes,9,opt,name=bind_target,json=bindTarget,proto3" json:"bind_target,omitempty"`
 	unknownFields       protoimpl.UnknownFields
 	sizeCache           protoimpl.SizeCache
 }
@@ -1115,6 +1116,13 @@ func (x *MountSpec) GetRecursiveRelabel() bool {
 		return x.RecursiveRelabel
 	}
 	return false
+}
+
+func (x *MountSpec) GetBindTarget() string {
+	if x != nil {
+		return x.BindTarget
+	}
+	return ""
 }
 
 // MountStatusSpec is the spec for MountStatus.
@@ -2390,7 +2398,7 @@ const file_resource_definitions_block_block_proto_rawDesc = "" +
 	"requesters\x12$\n" +
 	"\x0erequester_i_ds\x18\x04 \x03(\tR\frequesterIDs\x12\x1b\n" +
 	"\tread_only\x18\x05 \x01(\bR\breadOnly\x12\x1a\n" +
-	"\bdetached\x18\x06 \x01(\bR\bdetached\"\x90\x02\n" +
+	"\bdetached\x18\x06 \x01(\bR\bdetached\"\xb1\x02\n" +
 	"\tMountSpec\x12\x1f\n" +
 	"\vtarget_path\x18\x01 \x01(\tR\n" +
 	"targetPath\x12#\n" +
@@ -2400,7 +2408,9 @@ const file_resource_definitions_block_block_proto_rawDesc = "" +
 	"\tfile_mode\x18\x05 \x01(\rR\bfileMode\x12\x10\n" +
 	"\x03uid\x18\x06 \x01(\x03R\x03uid\x12\x10\n" +
 	"\x03gid\x18\a \x01(\x03R\x03gid\x12+\n" +
-	"\x11recursive_relabel\x18\b \x01(\bR\x10recursiveRelabel\"\xbd\x03\n" +
+	"\x11recursive_relabel\x18\b \x01(\bR\x10recursiveRelabel\x12\x1f\n" +
+	"\vbind_target\x18\t \x01(\tR\n" +
+	"bindTarget\"\xbd\x03\n" +
 	"\x0fMountStatusSpec\x12F\n" +
 	"\x04spec\x18\x01 \x01(\v22.talos.resource.definitions.block.MountRequestSpecR\x04spec\x12\x16\n" +
 	"\x06target\x18\x02 \x01(\tR\x06target\x12\x16\n" +

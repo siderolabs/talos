@@ -30,7 +30,7 @@ func LocateAndProvision(ctx context.Context, logger *zap.Logger, volumeContext M
 
 	switch volumeType {
 	case block.VolumeTypeTmpfs, block.VolumeTypeDirectory, block.VolumeTypeSymlink, block.VolumeTypeOverlay:
-		// tmpfs, directory, symlink and overlays volumes are always ready
+		// volume types above are always ready
 		volumeContext.Status.Phase = block.VolumePhaseReady
 
 		return nil

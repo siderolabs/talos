@@ -83,6 +83,11 @@ func exampleEncryptionSpec() *EncryptionSpec {
 	}
 }
 
+// IsZero checks if the encryption spec is zero.
+func (s EncryptionSpec) IsZero() bool {
+	return s.EncryptionProvider == block.EncryptionProviderNone && len(s.EncryptionKeys) == 0
+}
+
 // EncryptionKey represents configuration for disk encryption key.
 type EncryptionKey struct {
 	//   description: >
@@ -159,7 +164,7 @@ func exampleKMSKey() *EncryptionKeyKMS {
 //
 //nolint:gocyclo
 func (s EncryptionSpec) Validate() ([]string, error) {
-	if s.EncryptionProvider == block.EncryptionProviderNone && len(s.EncryptionKeys) == 0 {
+	if s.IsZero() {
 		return nil, nil
 	}
 

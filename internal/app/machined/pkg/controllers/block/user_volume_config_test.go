@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/cosi-project/runtime/pkg/resource"
+	"github.com/siderolabs/go-pointer"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 
@@ -64,12 +65,16 @@ func (suite *UserVolumeConfigSuite) TestReconcileUserVolumesSwapVolumes() {
 		},
 	}
 
+	uv3 := blockcfg.NewUserVolumeConfigV1Alpha1()
+	uv3.MetaName = "data3"
+	uv3.VolumeType = pointer.To(block.VolumeTypeDirectory)
+
 	sv1 := blockcfg.NewSwapVolumeConfigV1Alpha1()
 	sv1.MetaName = "swap"
 	suite.Require().NoError(sv1.ProvisioningSpec.DiskSelectorSpec.Match.UnmarshalText([]byte(`disk.transport == "nvme"`)))
 	sv1.ProvisioningSpec.ProvisioningMaxSize = blockcfg.MustByteSize("2GiB")
 
-	ctr, err := container.New(uv1, uv2, sv1)
+	ctr, err := container.New(uv1, uv2, uv3, sv1)
 	suite.Require().NoError(err)
 
 	cfg := config.NewMachineConfig(ctr)
@@ -78,20 +83,28 @@ func (suite *UserVolumeConfigSuite) TestReconcileUserVolumesSwapVolumes() {
 	userVolumes := []string{
 		constants.UserVolumePrefix + "data1",
 		constants.UserVolumePrefix + "data2",
+		constants.UserVolumePrefix + "data3",
 	}
 
 	ctest.AssertResources(suite, userVolumes, func(vc *block.VolumeConfig, asrt *assert.Assertions) {
 		asrt.Contains(vc.Metadata().Labels().Raw(), block.UserVolumeLabel)
 
-		asrt.Equal(block.VolumeTypePartition, vc.TypedSpec().Type)
-		asrt.Contains(userVolumes, vc.TypedSpec().Provisioning.PartitionSpec.Label)
+		switch vc.Metadata().ID() {
+		case userVolumes[0], userVolumes[1]:
+			asrt.Equal(block.VolumeTypePartition, vc.TypedSpec().Type)
 
-		locator, err := vc.TypedSpec().Locator.Match.MarshalText()
-		asrt.NoError(err)
+			asrt.Contains(userVolumes, vc.TypedSpec().Provisioning.PartitionSpec.Label)
 
-		asrt.Contains(string(locator), vc.TypedSpec().Provisioning.PartitionSpec.Label)
+			locator, err := vc.TypedSpec().Locator.Match.MarshalText()
+			asrt.NoError(err)
 
-		asrt.Contains([]string{"data1", "data2"}, vc.TypedSpec().Mount.TargetPath)
+			asrt.Contains(string(locator), vc.TypedSpec().Provisioning.PartitionSpec.Label)
+
+		case userVolumes[2]:
+			asrt.Equal(block.VolumeTypeDirectory, vc.TypedSpec().Type)
+		}
+
+		asrt.Contains([]string{"data1", "data2", "data3"}, vc.TypedSpec().Mount.TargetPath)
 		asrt.Equal(constants.UserVolumeMountPoint, vc.TypedSpec().Mount.ParentID)
 
 		switch vc.Metadata().ID() {
@@ -138,39 +151,34 @@ func (suite *UserVolumeConfigSuite) TestReconcileUserVolumesSwapVolumes() {
 	newCfg.Metadata().SetVersion(cfg.Metadata().Version())
 	suite.Update(newCfg)
 
-	// controller should tear down removed volumes
+	// controller should tear down removed resources
 	ctest.AssertResources(suite, userVolumes, func(vc *block.VolumeConfig, asrt *assert.Assertions) {
-		if vc.Metadata().ID() == userVolumes[0] {
-			asrt.Equal(resource.PhaseTearingDown, vc.Metadata().Phase())
-		} else {
+		if vc.Metadata().ID() == userVolumes[1] {
 			asrt.Equal(resource.PhaseRunning, vc.Metadata().Phase())
-		}
-	})
-
-	// controller should tear down removed volume resources
-	ctest.AssertResources(suite, userVolumes, func(vc *block.VolumeConfig, asrt *assert.Assertions) {
-		if vc.Metadata().ID() == userVolumes[0] {
-			asrt.Equal(resource.PhaseTearingDown, vc.Metadata().Phase())
 		} else {
-			asrt.Equal(resource.PhaseRunning, vc.Metadata().Phase())
+			asrt.Equal(resource.PhaseTearingDown, vc.Metadata().Phase())
 		}
 	})
 
 	ctest.AssertResources(suite, userVolumes, func(vmr *block.VolumeMountRequest, asrt *assert.Assertions) {
-		if vmr.Metadata().ID() == userVolumes[0] {
-			asrt.Equal(resource.PhaseTearingDown, vmr.Metadata().Phase())
-		} else {
+		if vmr.Metadata().ID() == userVolumes[1] {
 			asrt.Equal(resource.PhaseRunning, vmr.Metadata().Phase())
+		} else {
+			asrt.Equal(resource.PhaseTearingDown, vmr.Metadata().Phase())
 		}
 	})
 
 	// remove finalizers
 	suite.RemoveFinalizer(block.NewVolumeConfig(block.NamespaceName, userVolumes[0]).Metadata(), "test")
 	suite.RemoveFinalizer(block.NewVolumeMountRequest(block.NamespaceName, userVolumes[0]).Metadata(), "test")
+	suite.RemoveFinalizer(block.NewVolumeConfig(block.NamespaceName, userVolumes[2]).Metadata(), "test")
+	suite.RemoveFinalizer(block.NewVolumeMountRequest(block.NamespaceName, userVolumes[2]).Metadata(), "test")
 
 	// now the resources should be removed
 	ctest.AssertNoResource[*block.VolumeConfig](suite, userVolumes[0])
 	ctest.AssertNoResource[*block.VolumeMountRequest](suite, userVolumes[0])
+	ctest.AssertNoResource[*block.VolumeConfig](suite, userVolumes[2])
+	ctest.AssertNoResource[*block.VolumeMountRequest](suite, userVolumes[2])
 }
 
 func (suite *UserVolumeConfigSuite) TestReconcileRawVolumes() {

@@ -130,11 +130,27 @@ When using Factory or Imager supply as `-module.sig_enfore module.sig_enforce=0`
     [notes.grub]
         title = "GRUB"
         description = """\
-Talos Linux introduces new machine configuration option `.machine.install.grubUseUKICmdline` to control whether GRUB should use the kernel command line 
+Talos Linux introduces new machine configuration option `.machine.install.grubUseUKICmdline` to control whether GRUB should use the kernel command line
 provided by the boot assets (UKI) or to use the command line constructed by Talos itself (legacy behavior).
 
 This option defaults to `true` for new installations, which means that GRUB will use the command line from the UKI, making it easier to customize kernel parameters via boot asset generation.
 For existing installations upgrading to v1.12, this option will default to `false` to preserve the legacy behavior.
+"""
+
+    [notes.directory-user-volumes]
+        title = "New User Volume type - bind"
+        description = """\
+New field in UserVolumeConfig - `volumeType` that defaults to `partition`, but can be set to `directory`.
+When set to `directory`, provisioning and filesystem operations are skipped and a directory is created under `/var/mnt/<name>`.
+
+The `directory` type enables lightweight storage volumes backed by a host directory, instead of requiring a full block device partition.
+
+When `volumeType = "directory"`:
+- A directory is created at `/var/mnt/<metadata.name>`;
+- `provisioning`, `filesystem` and `encryption` are prohibited.
+
+Note: this mode does not provide filesystem-level isolation and inherits the EPHEMERAL partition capacity limits.
+It should not be used for workloads requiring predictable storage quotas.
 """
 
 [make_deps]

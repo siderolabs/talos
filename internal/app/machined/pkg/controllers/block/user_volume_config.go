@@ -16,6 +16,7 @@ import (
 	"github.com/siderolabs/gen/optional"
 	"github.com/siderolabs/gen/xerrors"
 	"github.com/siderolabs/gen/xslices"
+	"github.com/siderolabs/go-pointer"
 	"go.uber.org/zap"
 
 	"github.com/siderolabs/talos/internal/pkg/partition"
@@ -302,6 +303,26 @@ func (ctrl *UserVolumeConfigController) handleUserVolumeConfig(
 	v *block.VolumeConfig,
 	volumeID string,
 ) error {
+	switch userVolumeConfig.Type().ValueOr(block.VolumeTypePartition) {
+	case block.VolumeTypePartition:
+		return ctrl.handlePartitionUserVolumeConfig(userVolumeConfig, v, volumeID)
+
+	case block.VolumeTypeDirectory:
+		return ctrl.handleDirectoryUserVolumeConfig(userVolumeConfig, v)
+
+	case block.VolumeTypeDisk, block.VolumeTypeTmpfs, block.VolumeTypeSymlink, block.VolumeTypeOverlay:
+		fallthrough
+
+	default:
+		return fmt.Errorf("unsupported volume type %q", userVolumeConfig.Type().ValueOr(block.VolumeTypePartition).String())
+	}
+}
+
+func (ctrl *UserVolumeConfigController) handlePartitionUserVolumeConfig(
+	userVolumeConfig configconfig.UserVolumeConfig,
+	v *block.VolumeConfig,
+	volumeID string,
+) error {
 	diskSelector, ok := userVolumeConfig.Provisioning().DiskSelector().Get()
 	if !ok {
 		// this shouldn't happen due to validation
@@ -338,6 +359,24 @@ func (ctrl *UserVolumeConfigController) handleUserVolumeConfig(
 
 	if err := convertEncryptionConfiguration(userVolumeConfig.Encryption(), v.TypedSpec()); err != nil {
 		return fmt.Errorf("error apply encryption configuration: %w", err)
+	}
+
+	return nil
+}
+
+func (ctrl *UserVolumeConfigController) handleDirectoryUserVolumeConfig(
+	userVolumeConfig configconfig.UserVolumeConfig,
+	v *block.VolumeConfig,
+) error {
+	v.TypedSpec().Type = block.VolumeTypeDirectory
+	v.TypedSpec().Mount = block.MountSpec{
+		TargetPath:   userVolumeConfig.Name(),
+		ParentID:     constants.UserVolumeMountPoint,
+		SelinuxLabel: constants.EphemeralSelinuxLabel,
+		FileMode:     0o755,
+		UID:          0,
+		GID:          0,
+		BindTarget:   pointer.To(userVolumeConfig.Name()),
 	}
 
 	return nil

@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/siderolabs/gen/optional"
 	"github.com/siderolabs/go-pointer"
 
 	"github.com/siderolabs/talos/pkg/machinery/cel"
@@ -47,6 +48,9 @@ var (
 
 const maxUserVolumeNameLength = constants.PartitionLabelLength - len(constants.UserVolumePrefix)
 
+// VolumeType is an alias for block.VolumeType.
+type VolumeType = block.VolumeType
+
 // UserVolumeConfigV1Alpha1 is a user volume configuration document.
 //
 //	description: |
@@ -54,7 +58,8 @@ const maxUserVolumeNameLength = constants.PartitionLabelLength - len(constants.U
 //	  and mounted under `/var/mnt/<name>`.
 //	  The partition label is automatically generated as `u-<name>`.
 //	examples:
-//	  - value: exampleUserVolumeConfigV1Alpha1()
+//	  - value: exampleUserVolumeConfigV1Alpha1Directory()
+//	  - value: exampleUserVolumeConfigV1Alpha1Partition()
 //	alias: UserVolumeConfig
 //	schemaRoot: true
 //	schemaMeta: v1alpha1/UserVolumeConfig
@@ -67,6 +72,14 @@ type UserVolumeConfigV1Alpha1 struct {
 	//     Name might be between 1 and 34 characters long and can only contain:
 	//     lowercase and uppercase ASCII letters, digits, and hyphens.
 	MetaName string `yaml:"name"`
+	//   description: |
+	//     Volume type.
+	//   values:
+	//     - partition
+	//     - directory
+	//  schema:
+	//    type: string
+	VolumeType *VolumeType `yaml:"volumeType,omitempty"`
 	//   description: |
 	//     The provisioning describes how the volume is provisioned.
 	ProvisioningSpec ProvisioningSpec `yaml:"provisioning,omitempty"`
@@ -88,9 +101,12 @@ func NewUserVolumeConfigV1Alpha1() *UserVolumeConfigV1Alpha1 {
 	}
 }
 
-func exampleUserVolumeConfigV1Alpha1() *UserVolumeConfigV1Alpha1 {
+const userVolumeName = "local-data"
+
+func exampleUserVolumeConfigV1Alpha1Partition() *UserVolumeConfigV1Alpha1 {
 	cfg := NewUserVolumeConfigV1Alpha1()
-	cfg.MetaName = "local-data"
+	cfg.MetaName = userVolumeName
+	cfg.VolumeType = pointer.To(block.VolumeTypePartition)
 	cfg.ProvisioningSpec = ProvisioningSpec{
 		DiskSelectorSpec: DiskSelector{
 			Match: cel.MustExpression(cel.ParseBooleanExpression(`disk.transport == "nvme"`, celenv.DiskLocator())),
@@ -119,6 +135,14 @@ func exampleUserVolumeConfigV1Alpha1() *UserVolumeConfigV1Alpha1 {
 	return cfg
 }
 
+func exampleUserVolumeConfigV1Alpha1Directory() *UserVolumeConfigV1Alpha1 {
+	cfg := NewUserVolumeConfigV1Alpha1()
+	cfg.MetaName = userVolumeName
+	cfg.VolumeType = pointer.To(block.VolumeTypeDirectory)
+
+	return cfg
+}
+
 // Name implements config.NamedDocument interface.
 func (s *UserVolumeConfigV1Alpha1) Name() string {
 	return s.MetaName
@@ -136,7 +160,7 @@ func (s *UserVolumeConfigV1Alpha1) ConflictsWithKinds() []string {
 
 // Validate implements config.Validator interface.
 //
-//nolint:gocyclo
+//nolint:gocyclo,cyclop
 func (s *UserVolumeConfigV1Alpha1) Validate(validation.RuntimeMode, ...validation.Option) ([]string, error) {
 	var (
 		warnings         []string
@@ -168,24 +192,60 @@ func (s *UserVolumeConfigV1Alpha1) Validate(validation.RuntimeMode, ...validatio
 		validationErrors = errors.Join(validationErrors, errors.New("name can only contain lowercase and uppercase ASCII letters, digits, and hyphens"))
 	}
 
-	extraWarnings, extraErrors := s.ProvisioningSpec.Validate(true)
+	vtype := block.VolumeTypePartition
+	if s.VolumeType != nil {
+		vtype = *s.VolumeType
+	}
 
-	warnings = append(warnings, extraWarnings...)
-	validationErrors = errors.Join(validationErrors, extraErrors)
+	switch vtype {
+	case block.VolumeTypePartition:
+		extraWarnings, extraErrors := s.ProvisioningSpec.Validate(true)
 
-	extraWarnings, extraErrors = s.FilesystemSpec.Validate()
-	warnings = append(warnings, extraWarnings...)
-	validationErrors = errors.Join(validationErrors, extraErrors)
+		warnings = append(warnings, extraWarnings...)
+		validationErrors = errors.Join(validationErrors, extraErrors)
 
-	extraWarnings, extraErrors = s.EncryptionSpec.Validate()
-	warnings = append(warnings, extraWarnings...)
-	validationErrors = errors.Join(validationErrors, extraErrors)
+		extraWarnings, extraErrors = s.FilesystemSpec.Validate()
+		warnings = append(warnings, extraWarnings...)
+		validationErrors = errors.Join(validationErrors, extraErrors)
+
+		extraWarnings, extraErrors = s.EncryptionSpec.Validate()
+		warnings = append(warnings, extraWarnings...)
+		validationErrors = errors.Join(validationErrors, extraErrors)
+
+	case block.VolumeTypeDirectory:
+		if !s.ProvisioningSpec.IsZero() {
+			validationErrors = errors.Join(validationErrors, errors.New("provisioning spec is invalid for volumeType directory"))
+		}
+
+		if !s.EncryptionSpec.IsZero() {
+			validationErrors = errors.Join(validationErrors, errors.New("encryption spec is invalid for volumeType directory"))
+		}
+
+		if !s.FilesystemSpec.IsZero() {
+			validationErrors = errors.Join(validationErrors, errors.New("filesystem spec is invalid for volumeType directory"))
+		}
+
+	case block.VolumeTypeDisk, block.VolumeTypeTmpfs, block.VolumeTypeSymlink, block.VolumeTypeOverlay:
+		fallthrough
+
+	default:
+		validationErrors = errors.Join(validationErrors, fmt.Errorf("unsupported volume type %q", vtype))
+	}
 
 	return warnings, validationErrors
 }
 
 // UserVolumeConfigSignal is a signal for user volume config.
 func (s *UserVolumeConfigV1Alpha1) UserVolumeConfigSignal() {}
+
+// Type implements config.UserVolumeConfig interface.
+func (s *UserVolumeConfigV1Alpha1) Type() optional.Optional[VolumeType] {
+	if s.VolumeType == nil {
+		return optional.None[VolumeType]()
+	}
+
+	return optional.Some(*s.VolumeType)
+}
 
 // Provisioning implements config.UserVolumeConfig interface.
 func (s *UserVolumeConfigV1Alpha1) Provisioning() config.VolumeProvisioningConfig {
@@ -219,6 +279,11 @@ type FilesystemSpec struct {
 	//
 	//     Note: changing this value might require a full remount of the filesystem.
 	ProjectQuotaSupportConfig *bool `yaml:"projectQuotaSupport,omitempty"`
+}
+
+// IsZero checks if the filesystem spec is zero.
+func (s FilesystemSpec) IsZero() bool {
+	return s.FilesystemType == block.FilesystemTypeNone && s.ProjectQuotaSupportConfig == nil
 }
 
 // Type implements config.FilesystemConfig interface.

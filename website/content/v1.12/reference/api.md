@@ -5738,6 +5738,7 @@ MountSpec is the spec for volume mount.
 | uid | [int64](#int64) |  |  |
 | gid | [int64](#int64) |  |  |
 | recursive_relabel | [bool](#bool) |  |  |
+| bind_target | [string](#string) |  |  |
 
 
 

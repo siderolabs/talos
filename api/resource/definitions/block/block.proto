@@ -135,6 +135,7 @@ message MountSpec {
   int64 uid = 6;
   int64 gid = 7;
   bool recursive_relabel = 8;
+  string bind_target = 9;
 }
 
 // MountStatusSpec is the spec for MountStatus.
