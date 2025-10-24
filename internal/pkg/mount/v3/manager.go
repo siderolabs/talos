@@ -13,6 +13,7 @@ import (
 
 	"github.com/siderolabs/talos/pkg/xfs"
 	"github.com/siderolabs/talos/pkg/xfs/fsopen"
+	"github.com/siderolabs/talos/pkg/xfs/opentree"
 )
 
 // Manager is the filesystem manager for mounting and unmounting filesystems.
@@ -187,6 +188,15 @@ func WithFsopen(fstype string, opts ...fsopen.Option) ManagerOption {
 	return ManagerOption{
 		set: func(m *Manager) {
 			m.fs = fsopen.New(fstype, opts...)
+		},
+	}
+}
+
+// WithOpentree sets the opentree opener with the given type and options.
+func WithOpentree(path string) ManagerOption {
+	return ManagerOption{
+		set: func(m *Manager) {
+			m.fs = opentree.NewFromPath(path)
 		},
 	}
 }

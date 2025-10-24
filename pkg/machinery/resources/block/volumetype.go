@@ -17,4 +17,5 @@ const (
 	VolumeTypeDirectory                   // directory
 	VolumeTypeSymlink                     // symlink
 	VolumeTypeOverlay                     // overlay
+	VolumeTypeBind                        // bind
 )

@@ -302,6 +302,26 @@ func (ctrl *UserVolumeConfigController) handleUserVolumeConfig(
 	v *block.VolumeConfig,
 	volumeID string,
 ) error {
+	switch userVolumeConfig.Type().ValueOr(block.VolumeTypePartition) {
+	case block.VolumeTypePartition:
+		return ctrl.handlePartitionUserVolumeConfig(userVolumeConfig, v, volumeID)
+
+	case block.VolumeTypeBind:
+		return ctrl.handleBindUserVolumeConfig(userVolumeConfig, v)
+
+	case block.VolumeTypeDisk, block.VolumeTypeTmpfs, block.VolumeTypeSymlink, block.VolumeTypeOverlay, block.VolumeTypeDirectory:
+		fallthrough
+
+	default:
+		return fmt.Errorf("unsupported volume type %q", userVolumeConfig.Type().ValueOr(block.VolumeTypePartition).String())
+	}
+}
+
+func (ctrl *UserVolumeConfigController) handlePartitionUserVolumeConfig(
+	userVolumeConfig configconfig.UserVolumeConfig,
+	v *block.VolumeConfig,
+	volumeID string,
+) error {
 	diskSelector, ok := userVolumeConfig.Provisioning().DiskSelector().Get()
 	if !ok {
 		// this shouldn't happen due to validation
@@ -338,6 +358,23 @@ func (ctrl *UserVolumeConfigController) handleUserVolumeConfig(
 
 	if err := convertEncryptionConfiguration(userVolumeConfig.Encryption(), v.TypedSpec()); err != nil {
 		return fmt.Errorf("error apply encryption configuration: %w", err)
+	}
+
+	return nil
+}
+
+func (ctrl *UserVolumeConfigController) handleBindUserVolumeConfig(
+	userVolumeConfig configconfig.UserVolumeConfig,
+	v *block.VolumeConfig,
+) error {
+	v.TypedSpec().Type = block.VolumeTypeBind
+	v.TypedSpec().Mount = block.MountSpec{
+		TargetPath:   userVolumeConfig.Name(),
+		ParentID:     constants.UserVolumeMountPoint,
+		SelinuxLabel: constants.EphemeralSelinuxLabel,
+		FileMode:     0o755,
+		UID:          0,
+		GID:          0,
 	}
 
 	return nil
