@@ -36,11 +36,11 @@ replace (
 
 replace (
 	// Changes from https://github.com/anchore/grype/pull/2798 for using VEX with SBOM
-	github.com/anchore/grype => github.com/dsseng/grype v0.96.1-0.20250718094733-2197792a3b26
+	github.com/anchore/grype => github.com/dsseng/grype 9b7e8e23d161
 	// Changes from https://github.com/anchore/syft/pull/3932 for deterministic SBOM
-	github.com/anchore/syft => github.com/dsseng/syft v1.26.2-0.20250703101014-f39c35d156d9
+	github.com/anchore/syft => github.com/dsseng/syft v1.28.0
 	// HACK: required by some dependency of syft, no longer available
-	github.com/garyburd/redigo => github.com/gomodule/redigo v0.0.0-20150301180006-535138d7bcd7
+	github.com/garyburd/redigo => github.com/gomodule/redigo v1.9.3
 )
 
 require (
@@ -128,10 +128,10 @@ require (
 	github.com/anchore/go-struct-converter v0.0.0-20221118182256-c68fdcfa2092 // indirect
 	github.com/anchore/go-sync v0.0.0-20250326131806-4eda43a485b6 // indirect
 	github.com/anchore/go-version v1.2.2-0.20210903204242-51efa5b487c4 // indirect
-	github.com/anchore/grype v0.101.1 // indirect
+	github.com/anchore/grype v0.102.0 // indirect
 	github.com/anchore/packageurl-go v0.1.1-0.20250220190351-d62adb6e1115 // indirect
 	github.com/anchore/stereoscope v0.1.6 // indirect
-	github.com/anchore/syft v1.34.2 // indirect
+	github.com/anchore/syft v1.36.0 // indirect
 	github.com/andybalholm/brotli v1.1.2-0.20250424173009-453214e765f3 // indirect
 	github.com/antlr4-go/antlr/v4 v4.13.1 // indirect
 	github.com/aokoli/goutils v1.0.1 // indirect
@@ -403,7 +403,7 @@ require (
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pkg/profile v1.7.0 // indirect
 	github.com/pkg/xattr v0.4.9 // indirect
-	github.com/planetscale/vtprotobuf v0.6.1-0.20240319094008-0393e58bdf10 // indirect
+	github.com/planetscale/vtprotobuf ba97887b0a25 // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/polyfloyd/go-errorlint v1.8.0 // indirect
 	github.com/prometheus/client_golang v1.19.1 // indirect
@@ -445,9 +445,9 @@ require (
 	github.com/siderolabs/deep-copy v0.5.8 // indirect
 	github.com/siderolabs/gen v0.8.5 // indirect
 	github.com/siderolabs/importvet v0.2.0 // indirect
-	github.com/siderolabs/talos/tools/docgen v0.0.0-20251021165158-6c98f4cdb049 // indirect
-	github.com/siderolabs/talos/tools/gotagsrewrite v0.0.0-20251021165158-6c98f4cdb049 // indirect
-	github.com/siderolabs/talos/tools/structprotogen v0.0.0-20251021165158-6c98f4cdb049 // indirect
+	github.com/siderolabs/talos/tools/docgen 43b1d7537507 // indirect
+	github.com/siderolabs/talos/tools/gotagsrewrite 43b1d7537507 // indirect
+	github.com/siderolabs/talos/tools/structprotogen 43b1d7537507 // indirect
 	github.com/sirupsen/logrus v1.9.4-0.20230606125235-dd1b4c2e81af // indirect
 	github.com/sivchari/containedctx v1.0.3 // indirect
 	github.com/skeema/knownhosts v1.3.1 // indirect
