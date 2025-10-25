@@ -233,18 +233,22 @@ func (*Sequencer) Boot(r runtime.Runtime) []runtime.Phase {
 }
 
 // Reboot is the reboot sequence.
-func (*Sequencer) Reboot(r runtime.Runtime) []runtime.Phase {
-	phases := PhaseList{}.Append(
-		"cleanup",
-		StopAllPods,
-	).Append(
-		"dbus",
-		StopDBus,
-	).
-		AppendList(stopAllPhaselist(r, true)).
-		Append("reboot", Reboot)
+func (*Sequencer) Reboot(r runtime.Runtime, in *machineapi.RebootRequest) []runtime.Phase {
+	if in.GetMode() == machineapi.RebootRequest_FORCE {
+		return PhaseList{}.
+			Append("reboot", Reboot)
+	}
 
-	return phases
+	return PhaseList{}.
+		Append(
+			"cleanup",
+			StopAllPods,
+		).
+		Append(
+			"dbus",
+			StopDBus,
+		).
+		AppendList(stopAllPhaselist(r, true))
 }
 
 // Reset is the reset sequence.
