@@ -30,28 +30,29 @@ type LaunchConfig struct {
 	StatePath string
 
 	// VM options
-	DiskPaths         []string
-	DiskDrivers       []string
-	DiskBlockSizes    []uint
-	VCPUCount         int64
-	MemSize           int64
-	KernelImagePath   string
-	InitrdPath        string
-	ISOPath           string
-	USBPath           string
-	UKIPath           string
-	ExtraISOPath      string
-	PFlashImages      []string
-	KernelArgs        string
-	MonitorPath       string
-	DefaultBootOrder  string
-	BootloaderEnabled bool
-	TPMConfig         tpmConfig
-	NodeUUID          uuid.UUID
-	BadRTC            bool
-	ArchitectureData  Arch
-	WithDebugShell    bool
-	IOMMUEnabled      bool
+	DiskPaths                 []string
+	DiskDrivers               []string
+	DiskBlockSizes            []uint
+	VCPUCount                 int64
+	MemSize                   int64
+	KernelImagePath           string
+	InitrdPath                string
+	ISOPath                   string
+	USBPath                   string
+	UKIPath                   string
+	ExtraISOPath              string
+	PFlashImages              []string
+	KernelArgs                string
+	MonitorPath               string
+	DefaultBootOrder          string
+	BootloaderEnabled         bool
+	TPMConfig                 tpmConfig
+	NodeUUID                  uuid.UUID
+	BadRTC                    bool
+	ArchitectureData          Arch
+	WithDebugShell            bool
+	IOMMUEnabled              bool
+	SkipInjectingExtraCmdline bool
 
 	// Talos config
 	Config string
@@ -314,9 +315,11 @@ func launchVM(config *LaunchConfig) error {
 		}
 	}
 
-	args = append(args,
-		"-smbios", fmt.Sprintf("type=11,value=%s=%s", constants.SDStubCmdlineExtraOEMVar, config.sdStubExtraCmdline),
-	)
+	if !config.SkipInjectingExtraCmdline {
+		args = append(args,
+			"-smbios", fmt.Sprintf("type=11,value=%s=%s", constants.SDStubCmdlineExtraOEMVar, config.sdStubExtraCmdline),
+		)
+	}
 
 	if config.BadRTC {
 		args = append(args,

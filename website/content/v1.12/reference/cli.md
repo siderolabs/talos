@@ -185,6 +185,7 @@ talosctl cluster create dev [flags]
       --registry-insecure-skip-verify strings    list of registry hostnames to skip TLS verification for
       --registry-mirror strings                  list of registry mirrors to use in format: <registry host>=<mirror URL>
       --skip-injecting-config                    skip injecting config from embedded metadata server, write config files to current directory
+      --skip-injecting-extra-cmdline             skip injecting extra kernel cmdline parameters via EFI vars through bootloader
       --skip-k8s-node-readiness-check            skip k8s node readiness checks
       --skip-kubeconfig                          skip merging kubeconfig from the created cluster
       --talos-version string                     the desired Talos version to generate config for (default "latest")

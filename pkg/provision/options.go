@@ -196,6 +196,15 @@ func WithSiderolinkAgent(v bool) Option {
 	}
 }
 
+// WithSkipInjectingExtraCmdline prevents injecting extra kernel args into EFI vars.
+func WithSkipInjectingExtraCmdline(v bool) Option {
+	return func(o *Options) error {
+		o.SkipInjectingExtraCmdline = v
+
+		return nil
+	}
+}
+
 // Options describes Provisioner parameters.
 type Options struct {
 	LogWriter          io.Writer
@@ -206,6 +215,9 @@ type Options struct {
 
 	// Enable bootloader by booting from disk image after install.
 	BootloaderEnabled bool
+
+	// SkipInjectingExtraCmdline prevents injecting extra kernel args, e.g., console=ttyS0, into the EFI vars. Only applies when UEFI is enabled.
+	SkipInjectingExtraCmdline bool
 
 	// Enable UEFI (for amd64), arm64 can only boot UEFI
 	UEFIEnabled bool
