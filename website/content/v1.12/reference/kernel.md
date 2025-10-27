@@ -257,6 +257,28 @@ Kernel logs will be sent to the currently active console and the dashboard will 
 
 It is set to be `1` by default on SBCs.
 
+#### `talos.dashboard.console`
+
+By default, the Talos dashboard runs on `/dev/tty2` with automatic TTY switching.
+You can specify a custom console device for the dashboard using this parameter.
+
+For example, to run the dashboard on a serial console:
+
+```text
+talos.dashboard.console=ttyS0
+```
+
+When this parameter is specified:
+
+* The dashboard will run on `/dev/ttyS0`
+* TTY switching will be disabled (no automatic switching between tty1 and tty2)
+* The console name must start with "tty"
+
+This is useful for headless servers or systems where you want the dashboard accessible through a serial console connection.
+
+> Note: If Talos dashboard is set to use ttyS0, make sure that Linux kernel command line doesn't include
+> `console=ttyS0` or similar, as it will conflict with the dashboard output.
+
 #### `talos.environment`
 
 Each value of the argument sets a default environment variable.
