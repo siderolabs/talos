@@ -18,8 +18,9 @@ preface = """
     [notes.updates]
         title = "Component Updates"
         description = """\
-Linux: 6.17.5
 Kubernetes: 1.34.1
+Linux: 6.17.4
+Kubernetes: 1.35.0-alpha.2
 CNI Plugins: 1.8.0
 cryptsetup: 2.8.1
 LVM2: 2_03_34
