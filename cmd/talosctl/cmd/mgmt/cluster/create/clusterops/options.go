@@ -105,7 +105,6 @@ type Qemu struct {
 	NodeDiskImagePath         string
 	NodeIPXEBootScript        string
 	BootloaderEnabled         bool
-	SkipInjectingExtraCmdline bool
 	UefiEnabled               bool
 	Tpm1_2Enabled             bool
 	Tpm2Enabled               bool

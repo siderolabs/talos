@@ -47,7 +47,6 @@ func getCreateCmd(cmdName string, hidden bool) *cobra.Command {
 		diskBlockSizeFlag             = "disk-block-size"
 		useVIPFlag                    = "use-vip"
 		bootloaderEnabledFlag         = "with-bootloader"
-		skipInjectingExtraCmdlineFlag = "skip-injecting-extra-cmdline"
 		controlPlanePortFlag          = "control-plane-port"
 		firewallFlag                  = "with-firewall"
 		tpmEnabledFlag                = "with-tpm1_2"
@@ -211,8 +210,6 @@ func getCreateCmd(cmdName string, hidden bool) *cobra.Command {
 		qemu.StringVar(&qOps.NodeDiskImagePath, nodeDiskImagePathFlag, qOps.NodeDiskImagePath, "disk image to use")
 		qemu.StringVar(&qOps.NodeIPXEBootScript, nodeIPXEBootScriptFlag, qOps.NodeIPXEBootScript, "iPXE boot script (URL) to use")
 		qemu.BoolVar(&qOps.BootloaderEnabled, bootloaderEnabledFlag, qOps.BootloaderEnabled, "enable bootloader to load kernel and initramfs from disk image after install")
-		qemu.BoolVar(&qOps.SkipInjectingExtraCmdline, skipInjectingExtraCmdlineFlag, qOps.SkipInjectingExtraCmdline,
-			"skip injecting extra kernel cmdline parameters via EFI vars through bootloader")
 		qemu.BoolVar(&qOps.UefiEnabled, uefiEnabledFlag, qOps.UefiEnabled, "enable UEFI on x86_64 architecture")
 		qemu.BoolVar(&qOps.Tpm1_2Enabled, tpmEnabledFlag, qOps.Tpm1_2Enabled, "enable TPM 1.2 emulation support using swtpm")
 		qemu.BoolVar(&qOps.Tpm2Enabled, tpm2EnabledFlag, qOps.Tpm2Enabled, "enable TPM 2.0 emulation support using swtpm")
