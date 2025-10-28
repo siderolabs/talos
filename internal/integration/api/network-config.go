@@ -622,8 +622,11 @@ func (suite *NetworkConfigSuite) TestWireguardConfig() {
 		func(link *networkres.LinkStatus, asrt *assert.Assertions) {
 			asrt.Equal("wireguard", link.TypedSpec().Kind)
 			asrt.Equal(wg.WireguardListenPort, link.TypedSpec().Wireguard.ListenPort)
-			asrt.Len(link.TypedSpec().Wireguard.Peers, 1)
-			asrt.Equal(peerKey.PublicKey().String(), link.TypedSpec().Wireguard.Peers[0].PublicKey)
+
+			if asrt.Len(link.TypedSpec().Wireguard.Peers, 1) {
+				asrt.Equal(peerKey.PublicKey().String(), link.TypedSpec().Wireguard.Peers[0].PublicKey)
+			}
+
 			asrt.Equal(privateKey.PublicKey().String(), link.TypedSpec().Wireguard.PublicKey)
 		},
 	)

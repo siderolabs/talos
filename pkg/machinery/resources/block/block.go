@@ -32,6 +32,9 @@ const UserDiskLabel = "talos.dev/user-disk"
 // UserVolumeLabel is the label for user volumes.
 const UserVolumeLabel = "talos.dev/user-volume"
 
+// SystemVolumeLabel is the label for system volumes.
+const SystemVolumeLabel = "talos.dev/system-volume"
+
 // RawVolumeLabel is the label for raw volumes.
 const RawVolumeLabel = "talos.dev/raw-volume"
 

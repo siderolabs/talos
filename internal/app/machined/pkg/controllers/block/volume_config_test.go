@@ -155,6 +155,11 @@ func (suite *VolumeConfigSuite) TestReconcileDefaults() {
 
 		asrt.Equal(constants.EphemeralMountPoint, r.TypedSpec().Mount.TargetPath)
 	})
+	ctest.AssertResource(suite, "/var/run", func(r *block.VolumeConfig, asrt *assert.Assertions) {
+		asrt.Equal(r.TypedSpec().Type, block.VolumeTypeSymlink)
+		asrt.Equal(r.TypedSpec().Symlink.SymlinkTargetPath, "/run")
+		asrt.Equal(r.TypedSpec().Mount.TargetPath, "/var/run")
+	})
 
 	ctest.AssertResources(suite, []resource.ID{
 		"/var/log",
@@ -329,4 +334,212 @@ func (suite *VolumeConfigSuite) TestReconcileExtraEPHEMERALConfig() {
 
 		asrt.Equal(block.EncryptionProviderLUKS2, r.TypedSpec().Encryption.Provider)
 	})
+}
+
+func (suite *VolumeConfigSuite) TestReconcileUserRawVolumes() {
+	rv1 := blockcfg.NewRawVolumeConfigV1Alpha1()
+	rv1.MetaName = "data1"
+	suite.Require().NoError(rv1.ProvisioningSpec.DiskSelectorSpec.Match.UnmarshalText([]byte(`system_disk`)))
+	rv1.ProvisioningSpec.ProvisioningMinSize = blockcfg.MustByteSize("10GiB")
+	rv1.ProvisioningSpec.ProvisioningMaxSize = blockcfg.MustByteSize("100GiB")
+
+	rv2 := blockcfg.NewRawVolumeConfigV1Alpha1()
+	rv2.MetaName = "data2"
+	suite.Require().NoError(rv2.ProvisioningSpec.DiskSelectorSpec.Match.UnmarshalText([]byte(`!system_disk`)))
+	rv2.ProvisioningSpec.ProvisioningMaxSize = blockcfg.MustByteSize("1TiB")
+	rv2.EncryptionSpec = blockcfg.EncryptionSpec{
+		EncryptionProvider: block.EncryptionProviderLUKS2,
+		EncryptionKeys: []blockcfg.EncryptionKey{
+			{
+				KeySlot: 0,
+				KeyTPM:  &blockcfg.EncryptionKeyTPM{},
+			},
+			{
+				KeySlot:   1,
+				KeyStatic: &blockcfg.EncryptionKeyStatic{KeyData: "secret"},
+			},
+		},
+	}
+
+	ctr, err := container.New(rv1, rv2)
+	suite.Require().NoError(err)
+
+	cfg := config.NewMachineConfig(ctr)
+	suite.Create(cfg)
+
+	rawVolumes := []string{
+		constants.RawVolumePrefix + "data1",
+		constants.RawVolumePrefix + "data2",
+	}
+
+	ctest.AssertResources(suite, rawVolumes, func(vc *block.VolumeConfig, asrt *assert.Assertions) {
+		asrt.Contains(vc.Metadata().Labels().Raw(), block.RawVolumeLabel)
+
+		asrt.Equal(block.VolumeTypePartition, vc.TypedSpec().Type)
+		asrt.Contains(rawVolumes, vc.TypedSpec().Provisioning.PartitionSpec.Label)
+
+		locator, err := vc.TypedSpec().Locator.Match.MarshalText()
+		asrt.NoError(err)
+
+		asrt.Contains(string(locator), vc.TypedSpec().Provisioning.PartitionSpec.Label)
+		asrt.Equal(block.FilesystemTypeNone, vc.TypedSpec().Provisioning.FilesystemSpec.Type)
+
+		asrt.Empty(vc.TypedSpec().Mount)
+	})
+
+	for _, volumeID := range rawVolumes {
+		ctest.AssertNoResource[*block.VolumeMountRequest](suite, volumeID)
+	}
+
+	// drop the first volume
+	ctr, err = container.New(rv2)
+	suite.Require().NoError(err)
+
+	newCfg := config.NewMachineConfig(ctr)
+	newCfg.Metadata().SetVersion(cfg.Metadata().Version())
+	suite.Update(newCfg)
+
+	// now the resources should be removed
+	ctest.AssertNoResource[*block.VolumeConfig](suite, rawVolumes[0])
+}
+
+func (suite *VolumeConfigSuite) TestReconcileUserSwapVolumes() {
+	uv1 := blockcfg.NewUserVolumeConfigV1Alpha1()
+	uv1.MetaName = "data1"
+	suite.Require().NoError(uv1.ProvisioningSpec.DiskSelectorSpec.Match.UnmarshalText([]byte(`system_disk`)))
+	uv1.ProvisioningSpec.ProvisioningMinSize = blockcfg.MustByteSize("10GiB")
+	uv1.ProvisioningSpec.ProvisioningMaxSize = blockcfg.MustByteSize("100GiB")
+	uv1.FilesystemSpec.FilesystemType = block.FilesystemTypeXFS
+
+	uv2 := blockcfg.NewUserVolumeConfigV1Alpha1()
+	uv2.MetaName = "data2"
+	suite.Require().NoError(uv2.ProvisioningSpec.DiskSelectorSpec.Match.UnmarshalText([]byte(`!system_disk`)))
+	uv2.ProvisioningSpec.ProvisioningMaxSize = blockcfg.MustByteSize("1TiB")
+	uv2.EncryptionSpec = blockcfg.EncryptionSpec{
+		EncryptionProvider: block.EncryptionProviderLUKS2,
+		EncryptionKeys: []blockcfg.EncryptionKey{
+			{
+				KeySlot: 0,
+				KeyTPM:  &blockcfg.EncryptionKeyTPM{},
+			},
+			{
+				KeySlot:   1,
+				KeyStatic: &blockcfg.EncryptionKeyStatic{KeyData: "secret"},
+			},
+		},
+	}
+
+	uv3 := blockcfg.NewUserVolumeConfigV1Alpha1()
+	uv3.MetaName = "data3"
+	uv3.VolumeType = pointer.To(block.VolumeTypeDirectory)
+
+	sv1 := blockcfg.NewSwapVolumeConfigV1Alpha1()
+	sv1.MetaName = "swap"
+	suite.Require().NoError(sv1.ProvisioningSpec.DiskSelectorSpec.Match.UnmarshalText([]byte(`disk.transport == "nvme"`)))
+	sv1.ProvisioningSpec.ProvisioningMaxSize = blockcfg.MustByteSize("2GiB")
+
+	ctr, err := container.New(uv1, uv2, uv3, sv1)
+	suite.Require().NoError(err)
+
+	cfg := config.NewMachineConfig(ctr)
+	suite.Create(cfg)
+
+	userVolumes := []string{
+		constants.UserVolumePrefix + "data1",
+		constants.UserVolumePrefix + "data2",
+		constants.UserVolumePrefix + "data3",
+	}
+
+	ctest.AssertResources(suite, userVolumes, func(vc *block.VolumeConfig, asrt *assert.Assertions) {
+		asrt.Contains(vc.Metadata().Labels().Raw(), block.UserVolumeLabel)
+
+		switch vc.Metadata().ID() {
+		case userVolumes[0], userVolumes[1]:
+			asrt.Equal(block.VolumeTypePartition, vc.TypedSpec().Type)
+
+			asrt.Contains(userVolumes, vc.TypedSpec().Provisioning.PartitionSpec.Label)
+
+			locator, err := vc.TypedSpec().Locator.Match.MarshalText()
+			asrt.NoError(err)
+
+			asrt.Contains(string(locator), vc.TypedSpec().Provisioning.PartitionSpec.Label)
+		case userVolumes[2]:
+			asrt.Equal(block.VolumeTypeDirectory, vc.TypedSpec().Type)
+		}
+
+		asrt.Contains([]string{"data1", "data2", "data3"}, vc.TypedSpec().Mount.TargetPath)
+		asrt.Equal(constants.UserVolumeMountPoint, vc.TypedSpec().Mount.ParentID)
+
+		switch vc.Metadata().ID() {
+		case userVolumes[0]:
+			asrt.EqualValues(10*1024*1024*1024, vc.TypedSpec().Provisioning.PartitionSpec.MinSize)
+		case userVolumes[1]:
+			asrt.EqualValues(100*1024*1024, vc.TypedSpec().Provisioning.PartitionSpec.MinSize)
+		}
+	})
+
+	ctest.AssertResources(suite, userVolumes, func(vmr *block.VolumeMountRequest, asrt *assert.Assertions) {
+		asrt.Contains(vmr.Metadata().Labels().Raw(), block.UserVolumeLabel)
+	})
+
+	swapVolumes := []string{
+		constants.SwapVolumePrefix + "swap",
+	}
+
+	ctest.AssertResources(suite, swapVolumes, func(vc *block.VolumeConfig, asrt *assert.Assertions) {
+		asrt.Contains(vc.Metadata().Labels().Raw(), block.SwapVolumeLabel)
+
+		asrt.Equal(block.VolumeTypePartition, vc.TypedSpec().Type)
+		asrt.Contains(swapVolumes, vc.TypedSpec().Provisioning.PartitionSpec.Label)
+
+		locator, err := vc.TypedSpec().Locator.Match.MarshalText()
+		asrt.NoError(err)
+
+		asrt.Contains(string(locator), vc.TypedSpec().Provisioning.PartitionSpec.Label)
+
+		asrt.Equal(block.FilesystemTypeSwap, vc.TypedSpec().Provisioning.FilesystemSpec.Type)
+	})
+
+	// simulate other controllers working - add finalizers for volume config & mount request
+	for _, volumeID := range userVolumes {
+		suite.AddFinalizer(block.NewVolumeConfig(block.NamespaceName, volumeID).Metadata(), "test")
+		suite.AddFinalizer(block.NewVolumeMountRequest(block.NamespaceName, volumeID).Metadata(), "test")
+	}
+
+	// drop the first volume
+	ctr, err = container.New(uv2)
+	suite.Require().NoError(err)
+
+	newCfg := config.NewMachineConfig(ctr)
+	newCfg.Metadata().SetVersion(cfg.Metadata().Version())
+	suite.Update(newCfg)
+
+	// controller should tear down removed resources
+	ctest.AssertResources(suite, userVolumes, func(vc *block.VolumeConfig, asrt *assert.Assertions) {
+		if vc.Metadata().ID() == userVolumes[1] {
+			asrt.Equal(resource.PhaseRunning, vc.Metadata().Phase())
+		} else {
+			asrt.Equal(resource.PhaseTearingDown, vc.Metadata().Phase())
+		}
+	})
+
+	ctest.AssertResources(suite, userVolumes, func(vmr *block.VolumeMountRequest, asrt *assert.Assertions) {
+		if vmr.Metadata().ID() == userVolumes[1] {
+			asrt.Equal(resource.PhaseRunning, vmr.Metadata().Phase())
+		} else {
+			asrt.Equal(resource.PhaseTearingDown, vmr.Metadata().Phase())
+		}
+	})
+
+	// remove finalizers
+	suite.RemoveFinalizer(block.NewVolumeConfig(block.NamespaceName, userVolumes[0]).Metadata(), "test")
+	suite.RemoveFinalizer(block.NewVolumeMountRequest(block.NamespaceName, userVolumes[0]).Metadata(), "test")
+	suite.RemoveFinalizer(block.NewVolumeConfig(block.NamespaceName, userVolumes[2]).Metadata(), "test")
+	suite.RemoveFinalizer(block.NewVolumeMountRequest(block.NamespaceName, userVolumes[2]).Metadata(), "test")
+
+	// now the resources should be removed
+	ctest.AssertNoResource[*block.VolumeConfig](suite, userVolumes[0])
+	ctest.AssertNoResource[*block.VolumeMountRequest](suite, userVolumes[0])
+	ctest.AssertNoResource[*block.VolumeConfig](suite, userVolumes[2])
+	ctest.AssertNoResource[*block.VolumeMountRequest](suite, userVolumes[2])
 }

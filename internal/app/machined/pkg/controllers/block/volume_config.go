@@ -5,26 +5,23 @@
 package block
 
 import (
-	"bytes"
 	"context"
-	"errors"
 	"fmt"
-	"os"
-	"path/filepath"
 
 	"github.com/cosi-project/runtime/pkg/controller"
+	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/siderolabs/gen/optional"
+	"github.com/siderolabs/gen/xerrors"
+	"github.com/siderolabs/gen/xslices"
 	"go.uber.org/zap"
 
 	machinedruntime "github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
-	"github.com/siderolabs/talos/internal/pkg/partition"
 	"github.com/siderolabs/talos/pkg/machinery/cel"
 	"github.com/siderolabs/talos/pkg/machinery/cel/celenv"
-	cfg "github.com/siderolabs/talos/pkg/machinery/config/config"
+	configconfig "github.com/siderolabs/talos/pkg/machinery/config/config"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
-	"github.com/siderolabs/talos/pkg/machinery/imager/quirks"
 	"github.com/siderolabs/talos/pkg/machinery/meta"
 	"github.com/siderolabs/talos/pkg/machinery/resources/block"
 	"github.com/siderolabs/talos/pkg/machinery/resources/config"
@@ -64,6 +61,16 @@ func (ctrl *VolumeConfigController) Inputs() []controller.Input {
 			ID:        optional.Some(runtime.MetaKeyTagToID(meta.StateEncryptionConfig)),
 			Kind:      controller.InputWeak,
 		},
+		{
+			Namespace: block.NamespaceName,
+			Type:      block.VolumeMountRequestType,
+			Kind:      controller.InputDestroyReady,
+		},
+		{
+			Namespace: block.NamespaceName,
+			Type:      block.VolumeConfigType,
+			Kind:      controller.InputDestroyReady,
+		},
 	}
 }
 
@@ -72,6 +79,10 @@ func (ctrl *VolumeConfigController) Outputs() []controller.Output {
 	return []controller.Output{
 		{
 			Type: block.VolumeConfigType,
+			Kind: controller.OutputShared,
+		},
+		{
+			Type: block.VolumeMountRequestType,
 			Kind: controller.OutputShared,
 		},
 	}
@@ -93,7 +104,7 @@ func systemDiskMatch() cel.Expression {
 	return cel.MustExpression(cel.ParseBooleanExpression("system_disk", celenv.DiskLocator()))
 }
 
-func convertEncryptionConfiguration(in cfg.EncryptionConfig, out *block.VolumeConfigSpec) error {
+func convertEncryptionConfiguration(in configconfig.EncryptionConfig, out *block.VolumeConfigSpec) error {
 	if in == nil {
 		out.Encryption = block.EncryptionSpec{}
 
@@ -135,9 +146,7 @@ func convertEncryptionConfiguration(in cfg.EncryptionConfig, out *block.VolumeCo
 }
 
 // Run implements controller.Controller interface.
-//
-//nolint:gocyclo
-func (ctrl *VolumeConfigController) Run(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
+func (ctrl *VolumeConfigController) Run(ctx context.Context, r controller.Runtime, logger *zap.Logger) error { //nolint:gocyclo
 	for {
 		select {
 		case <-r.EventCh():
@@ -145,471 +154,186 @@ func (ctrl *VolumeConfigController) Run(ctx context.Context, r controller.Runtim
 			return nil
 		}
 
-		// load config if present
-		cfg, err := safe.ReaderGetByID[*config.MachineConfig](ctx, r, config.ActiveID)
-		if err != nil && !state.IsNotFoundError(err) {
-			return fmt.Errorf("error fetching machine configuration")
-		}
-
-		// load STATE encryption meta key
-		encryptionMeta, err := safe.ReaderGetByID[*runtime.MetaKey](ctx, r, runtime.MetaKeyTagToID(meta.StateEncryptionConfig))
-		if err != nil && !state.IsNotFoundError(err) {
-			return fmt.Errorf("error fetching state encryption meta key")
-		}
-
-		r.StartTrackingOutputs()
-
-		// META volume discovery, always created unconditionally
-		// META volume is created by the installer, and never by Talos running on the machine
-		if err = safe.WriterModify(ctx, r,
-			block.NewVolumeConfig(block.NamespaceName, constants.MetaPartitionLabel),
-			func(vc *block.VolumeConfig) error {
-				vc.TypedSpec().Type = block.VolumeTypePartition
-				vc.TypedSpec().Locator = block.LocatorSpec{
-					Match: metaMatch(),
-				}
-
-				return nil
-			},
-		); err != nil {
-			return fmt.Errorf("error creating meta volume configuration: %w", err)
-		}
-
-		// if config is present (v1apha1 part of now)
-		// [TODO]: support custom configuration later
-		configurationPresent := cfg != nil && cfg.Config().Machine() != nil
-
-		// STATE configuration should be always created, but it depends on the configuration presence
-		if configurationPresent {
-			err = safe.WriterModify(ctx, r,
-				block.NewVolumeConfig(block.NamespaceName, constants.StatePartitionLabel),
-				ctrl.manageStateConfigPresent(ctx, logger, cfg.Config()),
-			)
-		} else {
-			err = safe.WriterModify(ctx, r,
-				block.NewVolumeConfig(block.NamespaceName, constants.StatePartitionLabel),
-				ctrl.manageStateNoConfig(encryptionMeta),
-			)
-		}
-
+		machineCfg, encryptionMeta, err := ctrl.loadConfiguration(ctx, r)
 		if err != nil {
-			return fmt.Errorf("error creating state volume configuration: %w", err)
+			return err
 		}
 
-		if configurationPresent {
-			if err = safe.WriterModify(ctx, r,
-				block.NewVolumeConfig(block.NamespaceName, constants.EphemeralPartitionLabel),
-				ctrl.manageEphemeral(cfg.Config()),
-			); err != nil {
-				return fmt.Errorf("error creating ephemeral volume configuration: %w", err)
-			}
-
-			if err = ctrl.manageStandardVolumes(ctx, r); err != nil {
-				return fmt.Errorf("error creating standard volume configuration: %w", err)
-			}
-
-			if err = ctrl.manageOverlayVolumes(ctx, r); err != nil {
-				return fmt.Errorf("error creating overlay volume configuration: %w", err)
-			}
+		var cfg configconfig.Config
+		if machineCfg != nil {
+			cfg = machineCfg.Config()
 		}
 
-		// [TODO]: this would fail as it doesn't handle finalizers properly
-		if err = safe.CleanupOutputs[*block.VolumeConfig](ctx, r); err != nil {
-			return fmt.Errorf("error cleaning up volume configuration: %w", err)
-		}
-	}
-}
+		transformers := append(ctrl.getSystemVolumeTransformers(ctx, encryptionMeta, logger), userVolumeTransformers...)
 
-func (ctrl *VolumeConfigController) manageEphemeralInContainer(vc *block.VolumeConfig) error {
-	vc.TypedSpec().Type = block.VolumeTypeDirectory
-	vc.TypedSpec().Mount = block.MountSpec{
-		TargetPath:   constants.EphemeralMountPoint,
-		SelinuxLabel: constants.EphemeralSelinuxLabel,
-		FileMode:     0o755,
-		UID:          0,
-		GID:          0,
-	}
+		var resources []volumeResource
 
-	return nil
-}
-
-func (ctrl *VolumeConfigController) manageEphemeral(config cfg.Config) func(vc *block.VolumeConfig) error {
-	if ctrl.V1Alpha1Mode.InContainer() {
-		return ctrl.manageEphemeralInContainer
-	}
-
-	return func(vc *block.VolumeConfig) error {
-		extraVolumeConfig, _ := config.Volumes().ByName(constants.EphemeralPartitionLabel)
-
-		vc.TypedSpec().Type = block.VolumeTypePartition
-
-		vc.TypedSpec().Provisioning = block.ProvisioningSpec{
-			Wave: block.WaveSystemDisk,
-			DiskSelector: block.DiskSelector{
-				Match: extraVolumeConfig.Provisioning().DiskSelector().ValueOr(systemDiskMatch()),
-			},
-			PartitionSpec: block.PartitionSpec{
-				MinSize:  extraVolumeConfig.Provisioning().MinSize().ValueOr(quirks.New("").PartitionSizes().EphemeralMinSize()),
-				MaxSize:  extraVolumeConfig.Provisioning().MaxSize().ValueOr(0),
-				Grow:     extraVolumeConfig.Provisioning().Grow().ValueOr(true),
-				Label:    constants.EphemeralPartitionLabel,
-				TypeUUID: partition.LinuxFilesystemData,
-			},
-			FilesystemSpec: block.FilesystemSpec{
-				Type:  block.FilesystemTypeXFS,
-				Label: constants.EphemeralPartitionLabel,
-			},
-		}
-
-		vc.TypedSpec().Mount = block.MountSpec{
-			TargetPath:          constants.EphemeralMountPoint,
-			SelinuxLabel:        constants.EphemeralSelinuxLabel,
-			FileMode:            0o755,
-			UID:                 0,
-			GID:                 0,
-			ProjectQuotaSupport: config.Machine().Features().DiskQuotaSupportEnabled(),
-		}
-
-		vc.TypedSpec().Locator = block.LocatorSpec{
-			Match: labelVolumeMatch(constants.EphemeralPartitionLabel),
-		}
-
-		encryptionConfig := extraVolumeConfig.Encryption()
-		if encryptionConfig == nil {
-			// fall back to v1alpha1 encryption config
-			encryptionConfig = config.Machine().SystemDiskEncryption().Get(constants.EphemeralPartitionLabel)
-		}
-
-		if err := convertEncryptionConfiguration(
-			encryptionConfig,
-			vc.TypedSpec(),
-		); err != nil {
-			return fmt.Errorf("error converting encryption for %s: %w", constants.EphemeralPartitionLabel, err)
-		}
-
-		return nil
-	}
-}
-
-func (ctrl *VolumeConfigController) manageStateInContainer(vc *block.VolumeConfig) error {
-	vc.TypedSpec().Type = block.VolumeTypeDirectory
-	vc.TypedSpec().Mount = block.MountSpec{
-		TargetPath:   constants.StateMountPoint,
-		SelinuxLabel: constants.StateSelinuxLabel,
-		FileMode:     0o700,
-		UID:          0,
-		GID:          0,
-	}
-
-	return nil
-}
-
-func (ctrl *VolumeConfigController) manageStateConfigPresent(ctx context.Context, logger *zap.Logger, config cfg.Config) func(vc *block.VolumeConfig) error {
-	if ctrl.V1Alpha1Mode.InContainer() {
-		return ctrl.manageStateInContainer
-	}
-
-	return func(vc *block.VolumeConfig) error {
-		vc.TypedSpec().Type = block.VolumeTypePartition
-		vc.TypedSpec().Mount = block.MountSpec{
-			TargetPath:   constants.StateMountPoint,
-			SelinuxLabel: constants.StateSelinuxLabel,
-			FileMode:     0o700,
-			UID:          0,
-			GID:          0,
-		}
-
-		vc.TypedSpec().Provisioning = block.ProvisioningSpec{
-			Wave: block.WaveSystemDisk,
-			DiskSelector: block.DiskSelector{
-				Match: systemDiskMatch(),
-			},
-			PartitionSpec: block.PartitionSpec{
-				MinSize:  quirks.New("").PartitionSizes().StateSize(),
-				MaxSize:  quirks.New("").PartitionSizes().StateSize(),
-				Label:    constants.StatePartitionLabel,
-				TypeUUID: partition.LinuxFilesystemData,
-			},
-			FilesystemSpec: block.FilesystemSpec{
-				Type:  block.FilesystemTypeXFS,
-				Label: constants.StatePartitionLabel,
-			},
-		}
-
-		vc.TypedSpec().Locator = block.LocatorSpec{
-			Match: labelVolumeMatch(constants.StatePartitionLabel),
-		}
-
-		extraVolumeConfig, _ := config.Volumes().ByName(constants.StatePartitionLabel)
-
-		encryptionConfig := extraVolumeConfig.Encryption()
-		if encryptionConfig == nil {
-			// fall back to v1alpha1 encryption config
-			encryptionConfig = config.Machine().SystemDiskEncryption().Get(constants.StatePartitionLabel)
-		}
-
-		if err := convertEncryptionConfiguration(
-			encryptionConfig,
-			vc.TypedSpec(),
-		); err != nil {
-			return fmt.Errorf("error converting encryption for %s: %w", constants.StatePartitionLabel, err)
-		}
-
-		metaEncryptionConfig, err := MarshalEncryptionMeta(encryptionConfig)
-		if err != nil {
-			return fmt.Errorf("error marshaling encryption config for %s: %w", constants.StatePartitionLabel, err)
-		}
-
-		previous, ok := ctrl.MetaProvider.Meta().ReadTagBytes(meta.StateEncryptionConfig)
-		if ok && bytes.Equal(previous, metaEncryptionConfig) {
-			return nil
-		}
-
-		ok, err = ctrl.MetaProvider.Meta().SetTagBytes(ctx, meta.StateEncryptionConfig, metaEncryptionConfig)
-		if err != nil {
-			return fmt.Errorf("error setting meta tag %q: %w", meta.StateEncryptionConfig, err)
-		}
-
-		if !ok {
-			return errors.New("failed to save state encryption config to meta")
-		}
-
-		if err = ctrl.MetaProvider.Meta().Flush(); err != nil {
-			return fmt.Errorf("error flushing meta: %w", err)
-		}
-
-		logger.Info("saved state encryption config to META")
-
-		return nil
-	}
-}
-
-func (ctrl *VolumeConfigController) manageStateNoConfig(encryptionMeta *runtime.MetaKey) func(vc *block.VolumeConfig) error {
-	if ctrl.V1Alpha1Mode.InContainer() {
-		return ctrl.manageStateInContainer
-	}
-
-	return func(vc *block.VolumeConfig) error {
-		vc.TypedSpec().Type = block.VolumeTypePartition
-		vc.TypedSpec().Mount = block.MountSpec{
-			TargetPath:   constants.StateMountPoint,
-			SelinuxLabel: constants.StateSelinuxLabel,
-			FileMode:     0o700,
-			UID:          0,
-			GID:          0,
-		}
-
-		match := labelVolumeMatchAndNonEmpty(constants.StatePartitionLabel)
-		if ctrl.V1Alpha1Mode.IsAgent() { // mark as missing
-			match = noMatch
-		}
-
-		// check here - make match false
-		vc.TypedSpec().Locator = block.LocatorSpec{
-			Match: match,
-		}
-
-		if encryptionMeta != nil {
-			encryptionFromMeta, err := UnmarshalEncryptionMeta([]byte(encryptionMeta.TypedSpec().Value))
+		for _, transformer := range transformers {
+			r, err := transformer(cfg)
 			if err != nil {
 				return err
 			}
 
-			if err := convertEncryptionConfiguration(
-				encryptionFromMeta,
-				vc.TypedSpec(),
-			); err != nil {
-				return fmt.Errorf("error converting encryption for %s: %w", constants.StatePartitionLabel, err)
-			}
-		} else {
-			vc.TypedSpec().Encryption = block.EncryptionSpec{}
+			resources = append(resources, r...)
 		}
 
-		return nil
+		volumeConfigsByID, volumeMountRequestsByID, err := ctrl.getExistingVolumes(ctx, r)
+		if err != nil {
+			return fmt.Errorf("error getting existing user volumes: %w", err)
+		}
+
+		for _, resource := range resources {
+			if err := ctrl.createVolume(ctx, r, resource, volumeConfigsByID, volumeMountRequestsByID); err != nil {
+				return fmt.Errorf("error creating volumes: %w", err)
+			}
+		}
+
+		if err := ctrl.cleanupUnusedVolumes(ctx, r, volumeConfigsByID, volumeMountRequestsByID, logger); err != nil {
+			return fmt.Errorf("error cleaning up unused volumes: %w", err)
+		}
 	}
 }
 
-func (ctrl *VolumeConfigController) manageStandardVolumes(ctx context.Context, r controller.Runtime) error {
-	if err := safe.WriterModify(ctx, r,
-		block.NewVolumeConfig(block.NamespaceName, "/var/run"),
-		func(vc *block.VolumeConfig) error {
-			vc.TypedSpec().Type = block.VolumeTypeSymlink
-			vc.TypedSpec().Symlink = block.SymlinkProvisioningSpec{
-				SymlinkTargetPath: "/run",
-				Force:             true,
-			}
-			vc.TypedSpec().Mount = block.MountSpec{
-				TargetPath: "/var/run",
-			}
-
-			return nil
-		},
-	); err != nil {
-		return fmt.Errorf("error creating symlink volume configuration for /var/run: %w", err)
+func (ctrl *VolumeConfigController) loadConfiguration(ctx context.Context, r controller.Runtime) (*config.MachineConfig, *runtime.MetaKey, error) {
+	// load config if present
+	machineCfg, err := safe.ReaderGetByID[*config.MachineConfig](ctx, r, config.ActiveID)
+	if err != nil && !state.IsNotFoundError(err) {
+		return nil, nil, fmt.Errorf("error fetching machine configuration: %w", err)
 	}
 
-	parentIDs := map[string]string{
-		"/var":     constants.EphemeralPartitionLabel,
-		"/var/run": "/var/run",
+	// load STATE encryption meta key
+	encryptionMeta, err := safe.ReaderGetByID[*runtime.MetaKey](ctx, r, runtime.MetaKeyTagToID(meta.StateEncryptionConfig))
+	if err != nil && !state.IsNotFoundError(err) {
+		return nil, nil, fmt.Errorf("error fetching state encryption meta key: %w", err)
 	}
 
-	for _, volume := range []struct {
-		ID           string
-		Path         string
-		Mode         os.FileMode
-		UID          int
-		GID          int
-		Recursive    bool
-		SELinuxLabel string
-	}{
-		// /var/log
-		{
-			Path:         "/var/log",
-			Mode:         0o755,
-			SELinuxLabel: "system_u:object_r:var_log_t:s0",
-		},
-		{
-			Path:         "/var/log/audit",
-			Mode:         0o700,
-			SELinuxLabel: "system_u:object_r:audit_log_t:s0",
-		},
-		{
-			Path:         constants.KubernetesAuditLogDir,
-			Mode:         0o700,
-			UID:          constants.KubernetesAPIServerRunUser,
-			GID:          constants.KubernetesAPIServerRunGroup,
-			Recursive:    true,
-			SELinuxLabel: "system_u:object_r:kube_log_t:s0",
-		},
-		{
-			Path:         "/var/log/containers",
-			Mode:         0o755,
-			SELinuxLabel: "system_u:object_r:containers_log_t:s0",
-		},
-		{
-			Path:         "/var/log/pods",
-			Mode:         0o755,
-			SELinuxLabel: "system_u:object_r:pods_log_t:s0",
-		},
-		// /var/lib
-		{
-			Path:         "/var/lib",
-			Mode:         0o700,
-			SELinuxLabel: constants.EphemeralSelinuxLabel,
-		},
-		{
-			ID:           constants.EtcdDataVolumeID,
-			Path:         constants.EtcdDataPath,
-			SELinuxLabel: constants.EtcdDataSELinuxLabel,
-			Mode:         0o700,
-			UID:          constants.EtcdUserID,
-			GID:          constants.EtcdUserID,
-			Recursive:    true,
-		},
-		{
-			Path:         "/var/lib/containerd",
-			Mode:         0o000,
-			SELinuxLabel: "system_u:object_r:containerd_state_t:s0",
-		},
-		{
-			Path:         "/var/lib/kubelet",
-			Mode:         0o700,
-			SELinuxLabel: "system_u:object_r:kubelet_state_t:s0",
-		},
-		{
-			Path:         "/var/lib/cni",
-			Mode:         0o700,
-			Recursive:    true,
-			SELinuxLabel: "system_u:object_r:cni_state_t:s0",
-		},
-		{
-			Path:         "/var/lib/kubelet/seccomp",
-			Mode:         0o700,
-			SELinuxLabel: "system_u:object_r:seccomp_profile_t:s0",
-		},
-		{
-			Path:         constants.SeccompProfilesDirectory,
-			Mode:         0o700,
-			Recursive:    true,
-			SELinuxLabel: "system_u:object_r:seccomp_profile_t:s0",
-		},
-		// /var/mnt
-		{
-			Path:         constants.UserVolumeMountPoint,
-			Mode:         0o755,
-			SELinuxLabel: constants.EphemeralSelinuxLabel,
-		},
-		// /var/run
-		{
-			Path:         "/var/run/lock",
-			Mode:         0o755,
-			SELinuxLabel: "system_u:object_r:var_lock_t:s0",
-		},
-	} {
-		parentDir := filepath.Dir(volume.Path)
-		targetDir := filepath.Base(volume.Path)
+	return machineCfg, encryptionMeta, nil
+}
 
-		parentID, ok := parentIDs[parentDir]
-		if !ok {
-			return fmt.Errorf("unknown parent directory volume %q for %q", parentDir, volume.Path)
+type volumeConfigTransformer func(c configconfig.Config) ([]volumeResource, error)
+
+type volumeResource struct {
+	VolumeID           string
+	Label              string
+	TransformFunc      func(vc *block.VolumeConfig) error
+	MountTransformFunc func(m *block.VolumeMountRequest) error
+}
+
+func (ctrl *VolumeConfigController) createVolume(
+	ctx context.Context, r controller.ReaderWriter, rsrc volumeResource,
+	volumeConfigsByID map[string]*block.VolumeConfig,
+	volumeMountRequestsByID map[string]*block.VolumeMountRequest,
+) error {
+	volumeConfig := volumeConfigsByID[rsrc.VolumeID]
+	volumeMountRequest := volumeMountRequestsByID[rsrc.VolumeID]
+
+	tearingDown := (volumeConfig != nil && volumeConfig.Metadata().Phase() == resource.PhaseTearingDown) ||
+		(volumeMountRequest != nil && volumeMountRequest.Metadata().Phase() == resource.PhaseTearingDown)
+
+	// if the volume is being torn down, do the tear down (in the next loop)
+	if tearingDown {
+		return nil
+	}
+
+	delete(volumeConfigsByID, rsrc.VolumeID)
+	delete(volumeMountRequestsByID, rsrc.VolumeID)
+
+	if err := safe.WriterModify(ctx, r, block.NewVolumeConfig(block.NamespaceName, rsrc.VolumeID), func(vc *block.VolumeConfig) error {
+		if rsrc.Label != "" {
+			vc.Metadata().Labels().Set(rsrc.Label, "")
 		}
 
-		volumeID := volume.Path
+		return rsrc.TransformFunc(vc)
+	}); err != nil {
+		return fmt.Errorf("error creating volume %s: %w", rsrc.VolumeID, err)
+	}
 
-		if volume.ID != "" {
-			volumeID = volume.ID
+	if rsrc.MountTransformFunc != nil {
+		if err := safe.WriterModify(ctx, r, block.NewVolumeMountRequest(block.NamespaceName, rsrc.VolumeID), func(v *block.VolumeMountRequest) error {
+			v.Metadata().Labels().Set(block.UserVolumeLabel, "")
+			v.TypedSpec().Requester = ctrl.Name()
+			v.TypedSpec().VolumeID = rsrc.VolumeID
+
+			return rsrc.MountTransformFunc(v)
+		}); err != nil && !xerrors.TagIs[skipUserVolumeMountRequest](err) {
+			return fmt.Errorf("error creating volume mount request: %w", err)
 		}
-
-		if err := safe.WriterModify(ctx, r,
-			block.NewVolumeConfig(block.NamespaceName, volumeID),
-			func(vc *block.VolumeConfig) error {
-				vc.TypedSpec().Type = block.VolumeTypeDirectory
-
-				vc.TypedSpec().Mount = block.MountSpec{
-					TargetPath:       targetDir,
-					ParentID:         parentID,
-					SelinuxLabel:     volume.SELinuxLabel,
-					FileMode:         volume.Mode,
-					UID:              volume.UID,
-					GID:              volume.GID,
-					RecursiveRelabel: volume.Recursive,
-				}
-
-				return nil
-			},
-		); err != nil {
-			return fmt.Errorf("error creating volume configuration for %q: %w", volume.Path, err)
-		}
-
-		parentIDs[volume.Path] = volumeID
 	}
 
 	return nil
 }
 
-func (ctrl *VolumeConfigController) manageOverlayVolumes(ctx context.Context, r controller.Runtime) error {
-	if ctrl.V1Alpha1Mode.InContainer() {
-		return nil
+// getExistingVolumes retrieves existing volume configurations and mount requests.
+func (ctrl *VolumeConfigController) getExistingVolumes(ctx context.Context, r controller.Runtime) (map[string]*block.VolumeConfig, map[string]*block.VolumeMountRequest, error) {
+	labelQuery := []state.ListOption{
+		state.WithLabelQuery(resource.LabelExists(block.SystemVolumeLabel)),
+		state.WithLabelQuery(resource.LabelExists(block.UserVolumeLabel)),
+		state.WithLabelQuery(resource.LabelExists(block.RawVolumeLabel)),
+		state.WithLabelQuery(resource.LabelExists(block.ExistingVolumeLabel)),
+		state.WithLabelQuery(resource.LabelExists(block.SwapVolumeLabel)),
 	}
 
-	for _, overlay := range constants.Overlays {
-		if err := safe.WriterModify(ctx, r,
-			block.NewVolumeConfig(block.NamespaceName, overlay.Path),
-			func(vc *block.VolumeConfig) error {
-				vc.TypedSpec().Type = block.VolumeTypeOverlay
-				vc.TypedSpec().ParentID = constants.EphemeralPartitionLabel
-				vc.TypedSpec().Mount = block.MountSpec{
-					TargetPath:   overlay.Path,
-					SelinuxLabel: overlay.Label,
-					FileMode:     0o755,
-					UID:          0,
-					GID:          0,
-				}
+	volumeConfigs, err := safe.ReaderListAll[*block.VolumeConfig](ctx, r, labelQuery...)
+	if err != nil {
+		return nil, nil, fmt.Errorf("error fetching volume configs: %w", err)
+	}
 
-				return nil
-			},
-		); err != nil {
-			return fmt.Errorf("error creating volume configuration for %q: %w", overlay.Path, err)
+	volumeMountRequests, err := safe.ReaderListAll[*block.VolumeMountRequest](ctx, r, labelQuery...)
+	if err != nil {
+		return nil, nil, fmt.Errorf("error fetching volume mount requests: %w", err)
+	}
+
+	volumeConfigsByID := xslices.ToMap(
+		safe.ToSlice(volumeConfigs, identity),
+		func(v *block.VolumeConfig) (resource.ID, *block.VolumeConfig) {
+			return v.Metadata().ID(), v
+		},
+	)
+
+	volumeMountRequestsByID := xslices.ToMap(
+		safe.ToSlice(volumeMountRequests, identity),
+		func(v *block.VolumeMountRequest) (resource.ID, *block.VolumeMountRequest) {
+			return v.Metadata().ID(), v
+		},
+	)
+
+	return volumeConfigsByID, volumeMountRequestsByID, nil
+}
+
+// cleanupUnusedVolumes removes volumes that are no longer needed.
+func (ctrl *VolumeConfigController) cleanupUnusedVolumes(
+	ctx context.Context,
+	r controller.Runtime,
+	volumeConfigsByID map[string]*block.VolumeConfig,
+	volumeMountRequestsByID map[string]*block.VolumeMountRequest,
+	l *zap.Logger,
+) error {
+	l.Info("cleaning up unused volumes")
+	// Clean up unused volume configs
+	for _, volumeConfig := range volumeConfigsByID {
+		okToDestroy, err := r.Teardown(ctx, volumeConfig.Metadata())
+		if err != nil {
+			return fmt.Errorf("error tearing down volume config %q: %w", volumeConfig.Metadata().ID(), err)
+		}
+
+		if okToDestroy {
+			if err = r.Destroy(ctx, volumeConfig.Metadata()); err != nil {
+				return fmt.Errorf("error destroying volume config %q: %w", volumeConfig.Metadata().ID(), err)
+			}
+		}
+	}
+
+	// Clean up unused volume mount requests
+	for _, volumeMountRequest := range volumeMountRequestsByID {
+		okToDestroy, err := r.Teardown(ctx, volumeMountRequest.Metadata())
+		if err != nil {
+			return fmt.Errorf("error tearing down volume mount request %q: %w", volumeMountRequest.Metadata().ID(), err)
+		}
+
+		if okToDestroy {
+			if err = r.Destroy(ctx, volumeMountRequest.Metadata()); err != nil {
+				return fmt.Errorf("error destroying volume mount request %q: %w", volumeMountRequest.Metadata().ID(), err)
+			}
 		}
 	}
 

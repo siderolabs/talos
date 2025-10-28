@@ -1155,6 +1155,7 @@ func (suite *VolumesSuite) TestSwapOnOff() {
 
 	rtestutils.AssertNoResource[*block.VolumeStatus](ctx, suite.T(), suite.Client.COSI, swapVolumeID)
 	rtestutils.AssertNoResource[*block.SwapStatus](ctx, suite.T(), suite.Client.COSI, volumeStatus.TypedSpec().MountLocation)
+	rtestutils.AssertNoResource[*block.VolumeConfig](ctx, suite.T(), suite.Client.COSI, swapVolumeID)
 
 	suite.Require().NoError(suite.Client.BlockDeviceWipe(ctx, &storage.BlockDeviceWipeRequest{
 		Devices: []*storage.BlockDeviceWipeDescriptor{
