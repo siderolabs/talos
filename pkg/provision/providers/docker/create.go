@@ -7,6 +7,7 @@ package docker
 import (
 	"context"
 	"fmt"
+	"os"
 	"path/filepath"
 
 	"github.com/siderolabs/talos/pkg/machinery/constants"
@@ -29,9 +30,8 @@ func (p *provisioner) Create(ctx context.Context, request provision.ClusterReque
 
 	fmt.Fprintf(options.LogWriter, "creating state directory in %q\n", statePath)
 
-	state, err := provision.NewState(statePath, "docker", request.Name)
-	if err != nil {
-		return nil, fmt.Errorf("failed to initialize provisioner state: %w", err)
+	if err := os.MkdirAll(statePath, 0o755); err != nil {
+		return nil, fmt.Errorf("unable to create state directory: %w", err)
 	}
 
 	if err = p.ensureImageExists(ctx, request.Image, &options); err != nil {
@@ -62,24 +62,19 @@ func (p *provisioner) Create(ctx context.Context, request provision.ClusterReque
 
 	nodeInfo = append(nodeInfo, workerNodeInfo...)
 
-	state.ClusterInfo = provision.ClusterInfo{
-		ClusterName: request.Name,
-		Network: provision.NetworkInfo{
-			Name:         request.Network.Name,
-			CIDRs:        request.Network.CIDRs[:1],
-			GatewayAddrs: request.Network.GatewayAddrs[:1],
-			MTU:          request.Network.MTU,
-		},
-		Nodes:              nodeInfo,
-		KubernetesEndpoint: p.GetExternalKubernetesControlPlaneEndpoint(request.Network, constants.DefaultControlPlanePort),
-	}
-	if err := state.Save(); err != nil {
-		return nil, err
-	}
-
 	res := &result{
-		clusterInfo: state.ClusterInfo,
-		statePath:   statePath,
+		clusterInfo: provision.ClusterInfo{
+			ClusterName: request.Name,
+			Network: provision.NetworkInfo{
+				Name:         request.Network.Name,
+				CIDRs:        request.Network.CIDRs[:1],
+				GatewayAddrs: request.Network.GatewayAddrs[:1],
+				MTU:          request.Network.MTU,
+			},
+			Nodes:              nodeInfo,
+			KubernetesEndpoint: p.GetExternalKubernetesControlPlaneEndpoint(request.Network, constants.DefaultControlPlanePort),
+		},
+		statePath: statePath,
 	}
 
 	return res, nil

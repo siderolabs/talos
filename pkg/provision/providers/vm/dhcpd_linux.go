@@ -11,6 +11,6 @@ import (
 )
 
 // CreateDHCPd creates a DHCP server.
-func (p *Provisioner) CreateDHCPd(ctx context.Context, state *provision.State, clusterReq provision.ClusterRequest) error {
+func (p *Provisioner) CreateDHCPd(ctx context.Context, state *State, clusterReq provision.ClusterRequest) error {
 	return p.startDHCPd(state, clusterReq)
 }

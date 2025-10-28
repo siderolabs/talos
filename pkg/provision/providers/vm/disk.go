@@ -24,7 +24,7 @@ func (p *Provisioner) UserDiskName(index int) string {
 }
 
 // CreateDisks creates empty disk files for each disk.
-func (p *Provisioner) CreateDisks(state *provision.State, nodeReq provision.NodeRequest) (diskPaths []string, err error) {
+func (p *Provisioner) CreateDisks(state *State, nodeReq provision.NodeRequest) (diskPaths []string, err error) {
 	const QEMUAlignment = 4 * 1024 * 1024 // 4 MiB, required by QEMU
 
 	diskPaths = make([]string, len(nodeReq.Disks))

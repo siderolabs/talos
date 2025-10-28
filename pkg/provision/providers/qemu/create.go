@@ -11,6 +11,7 @@ import (
 
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/provision"
+	"github.com/siderolabs/talos/pkg/provision/providers/vm"
 )
 
 // Create Talos cluster as a set of qemu VMs.
@@ -38,7 +39,7 @@ func (p *provisioner) Create(ctx context.Context, request provision.ClusterReque
 
 	fmt.Fprintf(options.LogWriter, "creating state directory in %q\n", statePath)
 
-	state, err := provision.NewState(
+	state, err := vm.NewState(
 		statePath,
 		p.Name,
 		request.Name,

@@ -23,7 +23,7 @@ const (
 )
 
 // CreateLoadBalancer creates load balancer.
-func (p *Provisioner) CreateLoadBalancer(state *provision.State, clusterReq provision.ClusterRequest) error {
+func (p *Provisioner) CreateLoadBalancer(state *State, clusterReq provision.ClusterRequest) error {
 	pidPath := state.GetRelativePath(lbPid)
 
 	logFile, err := os.OpenFile(state.GetRelativePath(lbLog), os.O_APPEND|os.O_CREATE|os.O_RDWR, 0o666)
@@ -65,7 +65,7 @@ func (p *Provisioner) CreateLoadBalancer(state *provision.State, clusterReq prov
 }
 
 // DestroyLoadBalancer destroys load balancer.
-func (p *Provisioner) DestroyLoadBalancer(state *provision.State) error {
+func (p *Provisioner) DestroyLoadBalancer(state *State) error {
 	pidPath := state.GetRelativePath(lbPid)
 
 	return StopProcessByPidfile(pidPath)

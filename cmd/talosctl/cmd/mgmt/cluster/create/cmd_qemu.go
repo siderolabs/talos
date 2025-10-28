@@ -46,19 +46,21 @@ func init() {
 		return qemu
 	}
 
-	cmdDescription := "Create a local QEMU based Talos cluster\n"
+	descriptionShort := "Create a local QEMU based Talos cluster"
+	descriptionLong := descriptionShort + "\n"
 
-	cmdDescription += "Available presets:\n"
+	descriptionLong += "Available presets:\n"
 	for _, p := range preset.Presets {
-		cmdDescription += "  - " + p.Name() + ": " + p.Description() + "\n"
+		descriptionLong += "  - " + p.Name() + ": " + p.Description() + "\n"
 	}
 
-	cmdDescription += "\n"
-	cmdDescription += "Note: exactly one of 'iso', 'iso-secureboot', 'pxe' or 'disk-image' presets must be specified.\n"
+	descriptionLong += "\n"
+	descriptionLong += "Note: exactly one of 'iso', 'iso-secureboot', 'pxe' or 'disk-image' presets must be specified.\n"
 
 	createQemuCmd := &cobra.Command{
 		Use:   providers.QemuProviderName,
-		Short: cmdDescription,
+		Short: descriptionShort,
+		Long:  descriptionLong,
 		Args:  cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return cli.WithContext(context.Background(), func(ctx context.Context) error {

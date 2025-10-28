@@ -22,7 +22,7 @@ import (
 // It waits for the interface to appear, shut's down the apple bootp DHCPd server created by qemu by default,
 // starts the talos DHCP server and then starts the apple bootp server again, which is configured such
 // that it detects existing dhcp servers on interfaces and doesn't interfare with them.
-func (p *Provisioner) CreateDHCPd(ctx context.Context, state *provision.State, clusterReq provision.ClusterRequest) error {
+func (p *Provisioner) CreateDHCPd(ctx context.Context, state *State, clusterReq provision.ClusterRequest) error {
 	err := waitForInterface(ctx, state.BridgeName)
 	if err != nil {
 		return err
@@ -75,7 +75,7 @@ func waitForInterface(ctx context.Context, interfaceName string) error {
 	})
 }
 
-func waitForDHCPServerUp(ctx context.Context, state *provision.State) error {
+func waitForDHCPServerUp(ctx context.Context, state *State) error {
 	return retry.Constant(1*time.Minute, retry.WithUnits(100*time.Millisecond)).RetryWithContext(ctx, func(_ context.Context) error {
 		logFileData, err := os.ReadFile(state.GetRelativePath(dhcpLog))
 		if err != nil {

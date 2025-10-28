@@ -15,8 +15,8 @@ import (
 )
 
 const (
-	// ProvisionerFlagName is the flag with which the provisioner is configured.
-	ProvisionerFlagName = "provisioner"
+	// ProvisionerFlag is the flag with which the provisioner is configured.
+	ProvisionerFlag = "provisioner"
 )
 
 // Cmd represents the cluster command.
@@ -56,5 +56,5 @@ func init() {
 
 // AddProvisionerFlag adds the provisioner flag to a command.
 func AddProvisionerFlag(cmd *cobra.Command) {
-	cmd.Flags().StringVar(&provisionerName, ProvisionerFlagName, providers.DockerProviderName, "Talos cluster provisioner to use")
+	cmd.Flags().StringVar(&provisionerName, ProvisionerFlag, providers.DockerProviderName, "Talos cluster provisioner to use")
 }

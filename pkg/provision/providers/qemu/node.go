@@ -29,10 +29,11 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/kernel"
 	"github.com/siderolabs/talos/pkg/provision"
+	"github.com/siderolabs/talos/pkg/provision/providers/vm"
 )
 
 //nolint:gocyclo,cyclop
-func (p *provisioner) createNode(ctx context.Context, state *provision.State, clusterReq provision.ClusterRequest, nodeReq provision.NodeRequest, opts *provision.Options) (provision.NodeInfo, error) {
+func (p *provisioner) createNode(ctx context.Context, state *vm.State, clusterReq provision.ClusterRequest, nodeReq provision.NodeRequest, opts *provision.Options) (provision.NodeInfo, error) {
 	arch := Arch(opts.TargetArch)
 	pidPath := state.GetRelativePath(fmt.Sprintf("%s.pid", nodeReq.Name))
 
@@ -270,13 +271,7 @@ func (p *provisioner) createNode(ctx context.Context, state *provision.State, cl
 	return nodeInfo, nil
 }
 
-func (p *provisioner) createNodes(
-	ctx context.Context,
-	state *provision.State,
-	clusterReq provision.ClusterRequest,
-	nodeReqs []provision.NodeRequest,
-	opts *provision.Options,
-) ([]provision.NodeInfo, error) {
+func (p *provisioner) createNodes(ctx context.Context, state *vm.State, clusterReq provision.ClusterRequest, nodeReqs []provision.NodeRequest, opts *provision.Options) ([]provision.NodeInfo, error) {
 	errCh := make(chan error)
 	nodeCh := make(chan provision.NodeInfo, len(nodeReqs))
 
@@ -351,7 +346,7 @@ func (p *provisioner) handleOptionalZSTDDiskImage(provisionerDisk, diskImagePath
 	return err
 }
 
-func (p *provisioner) createMetalConfigISO(state *provision.State, nodeName, config string) (string, error) {
+func (p *provisioner) createMetalConfigISO(state *vm.State, nodeName, config string) (string, error) {
 	isoPath := state.GetRelativePath(nodeName + "-metal-config.iso")
 
 	tmpDir, err := os.MkdirTemp("", "talos-metal-config-iso")
@@ -373,7 +368,7 @@ func (p *provisioner) createMetalConfigISO(state *provision.State, nodeName, con
 	return isoPath, nil
 }
 
-func getLaunchNetworkConfigBase(state *provision.State, clusterReq provision.ClusterRequest, nodeReq provision.NodeRequest) networkConfigBase {
+func getLaunchNetworkConfigBase(state *vm.State, clusterReq provision.ClusterRequest, nodeReq provision.NodeRequest) networkConfigBase {
 	return networkConfigBase{
 		BridgeName:   state.BridgeName,
 		CIDRs:        clusterReq.Network.CIDRs,

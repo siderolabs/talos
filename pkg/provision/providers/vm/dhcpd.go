@@ -276,7 +276,7 @@ const (
 )
 
 // startDHCPd starts the DHCPd server.
-func (p *Provisioner) startDHCPd(state *provision.State, clusterReq provision.ClusterRequest) error {
+func (p *Provisioner) startDHCPd(state *State, clusterReq provision.ClusterRequest) error {
 	pidPath := state.GetRelativePath(dhcpPid)
 
 	logFile, err := os.OpenFile(state.GetRelativePath(dhcpLog), os.O_APPEND|os.O_CREATE|os.O_RDWR, 0o666)
@@ -320,7 +320,7 @@ func (p *Provisioner) startDHCPd(state *provision.State, clusterReq provision.Cl
 }
 
 // DestroyDHCPd destoys load balancer.
-func (p *Provisioner) DestroyDHCPd(state *provision.State) error {
+func (p *Provisioner) DestroyDHCPd(state *State) error {
 	pidPath := state.GetRelativePath(dhcpPid)
 
 	return StopProcessByPidfile(pidPath)

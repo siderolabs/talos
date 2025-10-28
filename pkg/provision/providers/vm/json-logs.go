@@ -22,7 +22,7 @@ const (
 )
 
 // CreateJSONLogs creates JSON logs server.
-func (p *Provisioner) CreateJSONLogs(state *provision.State, clusterReq provision.ClusterRequest, options provision.Options) error {
+func (p *Provisioner) CreateJSONLogs(state *State, clusterReq provision.ClusterRequest, options provision.Options) error {
 	pidPath := state.GetRelativePath(jsonLogsPid)
 
 	logFile, err := os.OpenFile(state.GetRelativePath(jsonLogsLog), os.O_APPEND|os.O_CREATE|os.O_RDWR, 0o666)
@@ -61,7 +61,7 @@ func (p *Provisioner) CreateJSONLogs(state *provision.State, clusterReq provisio
 }
 
 // DestroyJSONLogs destroys JSON logs server.
-func (p *Provisioner) DestroyJSONLogs(state *provision.State) error {
+func (p *Provisioner) DestroyJSONLogs(state *State) error {
 	pidPath := state.GetRelativePath(jsonLogsPid)
 
 	return StopProcessByPidfile(pidPath)

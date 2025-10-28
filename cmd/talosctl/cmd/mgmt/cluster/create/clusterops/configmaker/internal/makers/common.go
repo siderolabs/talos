@@ -9,7 +9,6 @@ import (
 	"fmt"
 	"math/big"
 	"net/netip"
-	"net/url"
 	"os"
 	"slices"
 	"strconv"
@@ -22,7 +21,6 @@ import (
 
 	"github.com/siderolabs/talos/cmd/talosctl/cmd/mgmt/cluster/create/clusterops"
 	"github.com/siderolabs/talos/cmd/talosctl/pkg/mgmt/helpers"
-	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
 	"github.com/siderolabs/talos/pkg/machinery/config"
 	"github.com/siderolabs/talos/pkg/machinery/config/bundle"
 	"github.com/siderolabs/talos/pkg/machinery/config/configpatcher"
@@ -254,22 +252,12 @@ func (m *Maker[T]) GetClusterConfigs() (clusterops.ClusterConfigs, error) {
 func (m *Maker[T]) applyOmniConfigs() error {
 	cfg := siderolink.NewConfigV1Alpha1()
 
-	parsedURL, err := url.Parse(m.Ops.OmniAPIEndpoint)
+	parsedURL, err := ParseOmniAPIUrl(m.Ops.OmniAPIEndpoint)
 	if err != nil {
 		return fmt.Errorf("error parsing omni api url: %w", err)
 	}
 
 	cfg.APIUrlConfig.URL = parsedURL
-
-	mode, err := runtime.ParseMode(runtime.ModeMetal.String())
-	if err != nil {
-		return err
-	}
-
-	_, err = cfg.Validate(mode)
-	if err != nil {
-		return err
-	}
 
 	ctr, err := container.New(cfg)
 	if err != nil {
