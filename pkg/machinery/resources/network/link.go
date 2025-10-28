@@ -110,6 +110,11 @@ func (vlan VLANSpec) MTU() uint32 {
 	return 0
 }
 
+// Mode returns the protocol (mode) for type VLANSpec.
+func (vlan VLANSpec) Mode() nethelpers.VLANProtocol {
+	return vlan.Protocol
+}
+
 // Equal checks two WireguardPeer structs for equality.
 //
 // `spec` is considered to be the result of getting current Wireguard configuration,

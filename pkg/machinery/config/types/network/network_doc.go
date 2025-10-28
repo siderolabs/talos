@@ -591,6 +591,10 @@ func (CommonLinkConfig) Doc() *encoder.Doc {
 				TypeName:  "LinkConfigV1Alpha1",
 				FieldName: "",
 			},
+			{
+				TypeName:  "VLANConfigV1Alpha1",
+				FieldName: "",
+			},
 		},
 		Fields: []encoder.Doc{
 			{
@@ -937,6 +941,65 @@ func (StaticHostConfigV1Alpha1) Doc() *encoder.Doc {
 	return doc
 }
 
+func (VLANConfigV1Alpha1) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "VLANConfig",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "VLANConfig is a config document to create a VLAN (virtual LAN) over a parent link." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "VLANConfig is a config document to create a VLAN (virtual LAN) over a parent link.",
+		Fields: []encoder.Doc{
+			{
+				Type:   "Meta",
+				Inline: true,
+			},
+			{
+				Name:        "name",
+				Type:        "string",
+				Note:        "",
+				Description: "Name of the VLAN link (interface) to be created.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Name of the VLAN link (interface) to be created." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "vlanID",
+				Type:        "uint16",
+				Note:        "",
+				Description: "VLAN ID to be used for the VLAN link.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "VLAN ID to be used for the VLAN link." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "vlanMode",
+				Type:        "VLANProtocol",
+				Note:        "",
+				Description: "Set the VLAN mode to use.\nIf not set, defaults to '802.1q'.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Set the VLAN mode to use." /* encoder.LineComment */, "" /* encoder.FootComment */},
+				Values: []string{
+					"802.1q",
+					"802.1ad",
+				},
+			},
+			{
+				Name:        "parent",
+				Type:        "string",
+				Note:        "",
+				Description: "Name of the parent link (interface) on which the VLAN link will be created.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Name of the parent link (interface) on which the VLAN link will be created." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Type:   "CommonLinkConfig",
+				Inline: true,
+			},
+		},
+	}
+
+	doc.AddExample("", exampleVLANConfigV1Alpha1())
+
+	doc.Fields[1].AddExample("", "enp0s3.34")
+	doc.Fields[2].AddExample("", 34)
+	doc.Fields[3].AddExample("", "802.1q")
+	doc.Fields[4].AddExample("", "enp0s3")
+
+	return doc
+}
+
 // GetFileDoc returns documentation for the file network_doc.go.
 func GetFileDoc() *encoder.FileDoc {
 	return &encoder.FileDoc{
@@ -964,6 +1027,7 @@ func GetFileDoc() *encoder.FileDoc {
 			RulePortSelector{}.Doc(),
 			IngressRule{}.Doc(),
 			StaticHostConfigV1Alpha1{}.Doc(),
+			VLANConfigV1Alpha1{}.Doc(),
 		},
 	}
 }

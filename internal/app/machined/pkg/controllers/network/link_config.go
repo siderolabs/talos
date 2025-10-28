@@ -443,6 +443,8 @@ func (ctrl *LinkConfigController) processLinkConfigs(logger *zap.Logger, linkMap
 			// nothing specific for physical links
 		case talosconfig.NetworkDummyLinkConfig:
 			dummyLink(linkMap[linkName])
+		case talosconfig.NetworkVLANConfig:
+			vlanLink(linkMap[linkName], linkName, specificLinkConfig.ParentLink(), networkVLANConfigToVlaner{specificLinkConfig})
 		default:
 			logger.Error("unknown link config type", zap.String("linkName", linkName), zap.String("type", fmt.Sprintf("%T", specificLinkConfig)))
 		}
@@ -465,20 +467,37 @@ func (ctrl *LinkConfigController) processLinkConfigs(logger *zap.Logger, linkMap
 
 type vlaner interface {
 	ID() uint16
-	MTU() uint32
+	Mode() nethelpers.VLANProtocol
+}
+
+type networkVLANConfigToVlaner struct {
+	talosconfig.NetworkVLANConfig
+}
+
+func (v networkVLANConfigToVlaner) ID() uint16 {
+	return v.VLANID()
+}
+
+func (v networkVLANConfigToVlaner) Mode() nethelpers.VLANProtocol {
+	return v.VLANMode().ValueOr(nethelpers.VLANProtocol8021Q)
 }
 
 func vlanLink(link *network.LinkSpecSpec, vlanName, linkName string, vlan vlaner) {
 	link.Name = vlanName
 	link.Logical = true
 	link.Up = true
-	link.MTU = vlan.MTU()
+
+	// only legacy config specifies MTUs on VLANs this way
+	if mtuConfig, ok := vlan.(interface{ MTU() uint32 }); ok {
+		link.MTU = mtuConfig.MTU()
+	}
+
 	link.Kind = network.LinkKindVLAN
 	link.Type = nethelpers.LinkEther
 	link.ParentName = linkName
 	link.VLAN = network.VLANSpec{
 		VID:      vlan.ID(),
-		Protocol: nethelpers.VLANProtocol8021Q,
+		Protocol: vlan.Mode(),
 	}
 }
 

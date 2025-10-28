@@ -26,6 +26,7 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/config/config"
 	"github.com/siderolabs/talos/pkg/machinery/config/machine"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
+	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
 	"github.com/siderolabs/talos/pkg/machinery/resources/block"
 )
 
@@ -1171,6 +1172,11 @@ func (v *Vlan) DHCPOptions() config.DHCPOptions {
 // ID implements the MachineNetwork interface.
 func (v *Vlan) ID() uint16 {
 	return v.VlanID
+}
+
+// Mode implements the MachineNetwork interface.
+func (v *Vlan) Mode() nethelpers.VLANProtocol {
+	return nethelpers.VLANProtocol8021Q
 }
 
 // Enabled implements KubeSpan interface.

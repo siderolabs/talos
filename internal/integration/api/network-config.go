@@ -301,8 +301,6 @@ func (suite *NetworkConfigSuite) TestLinkAliasConfig() {
 
 // TestVirtualIPConfig tests configuring virtual IPs.
 func (suite *NetworkConfigSuite) TestVirtualIPConfig() {
-	suite.T().Skip("[TODO]: this test causes kube-apiserver to restart causing random failure")
-
 	if suite.Cluster == nil || suite.Cluster.Provisioner() != base.ProvisionerQEMU {
 		suite.T().Skip("skipping if cluster is not qemu")
 	}
@@ -328,12 +326,13 @@ func (suite *NetworkConfigSuite) TestVirtualIPConfig() {
 
 	suite.Require().NotEmpty(linkName, "expected to find at least one physical link")
 
-	virtualIP := "fd13:1234::34"
+	// using link-local address to avoid kube-apiserver picking it up
+	virtualIP := "169.254.100.100"
 
 	cfg := network.NewLayer2VIPConfigV1Alpha1(virtualIP)
 	cfg.LinkName = linkName
 
-	addressID := linkName + "/" + virtualIP + "/128"
+	addressID := linkName + "/" + virtualIP + "/32"
 
 	suite.PatchMachineConfig(nodeCtx, cfg)
 
@@ -346,6 +345,88 @@ func (suite *NetworkConfigSuite) TestVirtualIPConfig() {
 	suite.RemoveMachineConfigDocumentsByName(nodeCtx, network.Layer2VIPKind, virtualIP)
 
 	rtestutils.AssertNoResource[*networkres.AddressStatus](nodeCtx, suite.T(), suite.Client.COSI, addressID)
+}
+
+// TestVLANConfig tests creation of VLAN interfaces.
+func (suite *NetworkConfigSuite) TestVLANConfig() {
+	if suite.Cluster == nil {
+		suite.T().Skip("skipping if cluster is not qemu/docker")
+	}
+
+	node := suite.RandomDiscoveredNodeInternalIP(machine.TypeWorker)
+	nodeCtx := client.WithNode(suite.ctx, node)
+
+	suite.T().Logf("testing on node %q", node)
+
+	dummyName := fmt.Sprintf("dummy%d", rand.IntN(10000))
+
+	dummy := network.NewDummyLinkConfigV1Alpha1(dummyName)
+	dummy.LinkUp = pointer.To(true)
+	dummy.LinkMTU = 9000
+
+	vlanName := dummyName + ".v"
+
+	vlan := network.NewVLANConfigV1Alpha1(vlanName)
+	vlan.VLANIDConfig = 100
+	vlan.LinkMTU = 2000
+	vlan.ParentLinkConfig = dummyName
+	vlan.LinkAddresses = []network.AddressConfig{
+		{
+			AddressAddress:  netip.MustParsePrefix("fd13:1234::1/64"),
+			AddressPriority: pointer.To[uint32](100),
+		},
+	}
+	vlan.LinkRoutes = []network.RouteConfig{
+		{
+			RouteDestination: network.Prefix{Prefix: netip.MustParsePrefix("fd13:1235::/64")},
+			RouteGateway:     network.Addr{Addr: netip.MustParseAddr("fd13:1234::ffff")},
+		},
+	}
+
+	addressID := vlanName + "/fd13:1234::1/64"
+	routeID := vlanName + "/inet6/fd13:1234::ffff/fd13:1235::/64/1024"
+	addressRouteID := vlanName + "/inet6//fd13:1234::/64/100"
+
+	suite.PatchMachineConfig(nodeCtx, dummy, vlan)
+
+	rtestutils.AssertResource(nodeCtx, suite.T(), suite.Client.COSI, dummyName,
+		func(link *networkres.LinkStatus, asrt *assert.Assertions) {
+			asrt.Equal("dummy", link.TypedSpec().Kind)
+			asrt.Equal(dummy.LinkMTU, link.TypedSpec().MTU)
+		},
+	)
+
+	rtestutils.AssertResource(nodeCtx, suite.T(), suite.Client.COSI, vlanName,
+		func(link *networkres.LinkStatus, asrt *assert.Assertions) {
+			asrt.Equal("vlan", link.TypedSpec().Kind)
+			asrt.Equal(vlan.LinkMTU, link.TypedSpec().MTU)
+			asrt.NotZero(link.TypedSpec().LinkIndex)
+			asrt.Equal(vlan.VLANIDConfig, link.TypedSpec().VLAN.VID)
+			asrt.Equal(nethelpers.VLANProtocol8021Q, link.TypedSpec().VLAN.Protocol)
+		},
+	)
+
+	rtestutils.AssertResource(nodeCtx, suite.T(), suite.Client.COSI, addressID,
+		func(addr *networkres.AddressStatus, asrt *assert.Assertions) {
+			asrt.Equal(vlanName, addr.TypedSpec().LinkName)
+		},
+	)
+
+	rtestutils.AssertResources(nodeCtx, suite.T(), suite.Client.COSI,
+		[]resource.ID{routeID, addressRouteID},
+		func(route *networkres.RouteStatus, asrt *assert.Assertions) {
+			asrt.Equal(vlanName, route.TypedSpec().OutLinkName)
+		},
+	)
+
+	suite.RemoveMachineConfigDocumentsByName(nodeCtx, network.VLANKind, vlanName)
+	suite.RemoveMachineConfigDocumentsByName(nodeCtx, network.DummyLinkKind, dummyName)
+
+	rtestutils.AssertNoResource[*networkres.LinkStatus](nodeCtx, suite.T(), suite.Client.COSI, dummyName)
+	rtestutils.AssertNoResource[*networkres.LinkStatus](nodeCtx, suite.T(), suite.Client.COSI, vlanName)
+	rtestutils.AssertNoResource[*networkres.AddressStatus](nodeCtx, suite.T(), suite.Client.COSI, addressID)
+	rtestutils.AssertNoResource[*networkres.RouteStatus](nodeCtx, suite.T(), suite.Client.COSI, addressRouteID)
+	rtestutils.AssertNoResource[*networkres.RouteStatus](nodeCtx, suite.T(), suite.Client.COSI, routeID)
 }
 
 func init() {

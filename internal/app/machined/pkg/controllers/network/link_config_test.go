@@ -2,7 +2,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-//nolint:goconst
+//nolint:goconst,dupl
 package network_test
 
 import (
@@ -469,7 +469,14 @@ func (suite *LinkConfigSuite) TestMachineConfigurationNewStyle() {
 	dc1.HardwareAddressConfig = nethelpers.HardwareAddr{0x02, 0x42, 0xac, 0x11, 0x00, 0x02}
 	dc1.LinkUp = pointer.To(true)
 
-	ctr, err := container.New(dc1, lc1)
+	vl1 := networkcfg.NewVLANConfigV1Alpha1("dummy1.100")
+	vl1.VLANIDConfig = 100
+	vl1.ParentLinkConfig = "dummy1"
+	vl1.VLANModeConfig = pointer.To(nethelpers.VLANProtocol8021AD)
+	vl1.LinkMTU = 200
+	vl1.LinkUp = pointer.To(true)
+
+	ctr, err := container.New(dc1, lc1, vl1)
 	suite.Require().NoError(err)
 
 	cfg := config.NewMachineConfig(ctr)
@@ -494,6 +501,7 @@ func (suite *LinkConfigSuite) TestMachineConfigurationNewStyle() {
 		[]string{
 			"configuration/eth0",
 			"configuration/dummy1",
+			"configuration/dummy1.100",
 		}, func(r *network.LinkSpec, asrt *assert.Assertions) {
 			asrt.Equal(network.ConfigMachineConfiguration, r.TypedSpec().ConfigLayer)
 
@@ -507,6 +515,15 @@ func (suite *LinkConfigSuite) TestMachineConfigurationNewStyle() {
 				asrt.True(r.TypedSpec().Logical)
 				asrt.Equal(nethelpers.LinkEther, r.TypedSpec().Type)
 				asrt.Equal("dummy", r.TypedSpec().Kind)
+			case "dummy1.100":
+				asrt.True(r.TypedSpec().Up)
+				asrt.True(r.TypedSpec().Logical)
+				asrt.Equal(nethelpers.LinkEther, r.TypedSpec().Type)
+				asrt.Equal(network.LinkKindVLAN, r.TypedSpec().Kind)
+				asrt.Equal("dummy1", r.TypedSpec().ParentName)
+				asrt.Equal(nethelpers.VLANProtocol8021AD, r.TypedSpec().VLAN.Protocol)
+				asrt.EqualValues(100, r.TypedSpec().VLAN.VID)
+				asrt.EqualValues(200, r.TypedSpec().MTU)
 			}
 		},
 	)

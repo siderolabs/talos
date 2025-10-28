@@ -284,6 +284,7 @@ type Vlan interface {
 	DHCP() bool
 	ID() uint16
 	MTU() uint32
+	Mode() nethelpers.VLANProtocol
 	VIPConfig() VIPConfig
 	DHCPOptions() DHCPOptions
 }

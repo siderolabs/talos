@@ -209,3 +209,13 @@ type NetworkHCloudVIPConfig interface {
 	NetworkVirtualIPConfig
 	HCloudAPIToken() string
 }
+
+// NetworkVLANConfig defines a VLAN link configuration.
+type NetworkVLANConfig interface {
+	NamedDocument
+	NetworkCommonLinkConfig
+	VLANConfig()
+	VLANID() uint16
+	ParentLink() string
+	VLANMode() optional.Optional[nethelpers.VLANProtocol]
+}

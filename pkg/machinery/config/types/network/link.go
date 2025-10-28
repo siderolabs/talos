@@ -40,6 +40,7 @@ func conflictingLinkKinds(selfKind string) []string {
 	return xslices.Filter([]string{
 		DummyLinkKind,
 		LinkKind,
+		VLANKind,
 	}, func(kind string) bool {
 		return kind != selfKind
 	})
