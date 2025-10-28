@@ -305,27 +305,34 @@ func (suite *VolumesSuite) TestLVMActivation() {
 	suite.T().Logf("verifying LVM activation %s/%s", node, nodeName)
 
 	suite.Require().Eventually(func() bool {
-		return suite.lvmVolumeExists(node)
+		return suite.lvmVolumeExists(node, []string{"lv0", "lv1"})
 	}, 5*time.Second, 1*time.Second, "LVM volume group was not activated after reboot")
 }
 
-func (suite *VolumesSuite) lvmVolumeExists(node string) bool {
+func (suite *VolumesSuite) lvmVolumeExists(node string, expectedVolumes []string) bool {
 	ctx := client.WithNode(suite.ctx, node)
 
 	disks, err := safe.StateListAll[*block.Disk](ctx, suite.Client.COSI)
 	suite.Require().NoError(err)
 
-	var lvmVolumeCount int
+	foundVolumes := xslices.ToSet(expectedVolumes)
 
+	// device-mapper volumes will have udevd-created symlinks which contain volume name
 	for disk := range disks.All() {
 		if strings.HasPrefix(disk.TypedSpec().DevPath, "/dev/dm") {
-			lvmVolumeCount++
+			for _, volumeName := range expectedVolumes {
+				for _, symlink := range disk.TypedSpec().Symlinks {
+					if strings.Contains(symlink, volumeName) {
+						foundVolumes[volumeName] = struct{}{}
+
+						suite.T().Logf("found LVM volume %s as disk %s with symlink %s", volumeName, disk.Metadata().ID(), symlink)
+					}
+				}
+			}
 		}
 	}
 
-	// we test with creating a volume group with two logical volumes
-	// one mirrored and one not, so we expect to see at least 6 volumes
-	return lvmVolumeCount >= 6
+	return len(foundVolumes) == len(expectedVolumes)
 }
 
 // TestSymlinks that Talos can update disk symlinks on the fly.
