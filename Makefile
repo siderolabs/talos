@@ -32,8 +32,8 @@ GENERATE_VEX_PREFIX ?= ghcr.io/siderolabs/generate-vex
 GENERATE_VEX ?= latest
 
 KRES_IMAGE ?= ghcr.io/siderolabs/kres:latest
-IMAGE_SIGNER_IMAGE ?= ghcr.io/siderolabs/image-signer:latest
 CONFORMANCE_IMAGE ?= ghcr.io/siderolabs/conform:latest
+IMAGE_SIGNER_RELEASE ?= v0.1.1
 
 PKG_APPARMOR ?= $(PKGS_PREFIX)/apparmor:$(PKGS)
 PKG_CA_CERTIFICATES ?= $(PKGS_PREFIX)/ca-certificates:$(PKGS)
@@ -666,9 +666,14 @@ clean: ## Cleans up all artifacts.
 image-list: ## Prints a list of all images built by this Makefile with digests.
 	@echo -n installer installer-base talos imager talosctl talosctl-all | xargs -d ' ' -I{} sh -c 'echo $(REGISTRY_AND_USERNAME)/{}:$(IMAGE_TAG_IN)' | xargs -I{} sh -c 'echo {}@$$(crane digest {})'
 
+$(ARTIFACTS)/image-signer: $(ARTIFACTS) ## Downloads image-signer binary
+	@curl -sSL https://github.com/siderolabs/go-tools/releases/download/$(IMAGE_SIGNER_RELEASE)/image-signer-$(OPERATING_SYSTEM)-$(ARCH) -o $(ARTIFACTS)/image-signer
+	@chmod +x $(ARTIFACTS)/image-signer
+
+
 .PHONY: sign-images
-sign-images: ## Run cosign to sign all images built by this Makefile.
-	@docker run --pull=always --rm --net=host $(IMAGE_SIGNER_IMAGE) sign $(shell $(MAKE) --quiet image-list REGISTRY_AND_USERNAME=$(REGISTRY_AND_USERNAME) IMAGE_TAG_IN=$(IMAGE_TAG_IN))
+sign-images: $(ARTIFACTS)/image-signer ## Run cosign to sign all images built by this Makefile.
+	@$(ARTIFACTS)/image-signer sign $(shell $(MAKE) --quiet image-list REGISTRY_AND_USERNAME=$(REGISTRY_AND_USERNAME) IMAGE_TAG_IN=$(IMAGE_TAG_IN))
 
 .PHONY: reproducibility-test
 reproducibility-test: $(ARTIFACTS)
