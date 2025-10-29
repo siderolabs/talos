@@ -671,6 +671,8 @@ github.com/siderolabs/siderolink v0.3.15 h1:WSsgKQGJY/ObIKjTcYYGEaGfRMyox+r/Ft+9
 github.com/siderolabs/siderolink v0.3.15/go.mod h1:iWdlsHji90zotgDg4+a2zJL2ZMNJckQ8/VwqR39ThBM=
 github.com/siderolabs/tcpproxy v0.1.0 h1:IbkS9vRhjMOscc1US3M5P1RnsGKFgB6U5IzUk+4WkKA=
 github.com/siderolabs/tcpproxy v0.1.0/go.mod h1:onn6CPPj/w1UNqQ0U97oRPF0CqbrgEApYCw4P9IiCW8=
+github.com/siderolabs/wgctrl-go v0.0.0-20251029173431-c4fd5f6a4e72 h1:Boabco/vhoFVTUlPcLr4B27NnYUq1QMZVgMtPvyaDzk=
+github.com/siderolabs/wgctrl-go v0.0.0-20251029173431-c4fd5f6a4e72/go.mod h1:T97yPqesLiNrOYxkwmhMI0ZIlJDm+p0PMR8eRVeR5tQ=
 github.com/sirupsen/logrus v1.9.3 h1:dueUQJ1C2q9oE3F7wvmSGAaVtTmUizReu6fjN8uqzbQ=
 github.com/sirupsen/logrus v1.9.3/go.mod h1:naHLuLoDiP4jHNo9R0sCBMtWGeIprob74mVsIT4qYEQ=
 github.com/smira/containerd/v2 v2.0.0-20250806103510-dcf2fc86e156 h1:vxHt7VLqjFtY3c80Al/RTPAxxu7XVQuTeTNkRZb2AOQ=
@@ -993,8 +995,6 @@ golang.zx2c4.com/wintun v0.0.0-20230126152724-0fa3db229ce2 h1:B82qJJgjvYKsXS9jeu
 golang.zx2c4.com/wintun v0.0.0-20230126152724-0fa3db229ce2/go.mod h1:deeaetjYA+DHMHg+sMSMI58GrEteJUUzzw7en6TJQcI=
 golang.zx2c4.com/wireguard v0.0.0-20231211153847-12269c276173 h1:/jFs0duh4rdb8uIfPMv78iAJGcPKDeqAFnaLBropIC4=
 golang.zx2c4.com/wireguard v0.0.0-20231211153847-12269c276173/go.mod h1:tkCQ4FQXmpAgYVh++1cq16/dH4QJtmvpRv19DWGAHSA=
-golang.zx2c4.com/wireguard/wgctrl v0.0.0-20241231184526-a9ab2273dd10 h1:3GDAcqdIg1ozBNLgPy4SLT84nfcBjr6rhGtXYtrkWLU=
-golang.zx2c4.com/wireguard/wgctrl v0.0.0-20241231184526-a9ab2273dd10/go.mod h1:T97yPqesLiNrOYxkwmhMI0ZIlJDm+p0PMR8eRVeR5tQ=
 gonum.org/v1/gonum v0.16.0 h1:5+ul4Swaf3ESvrOnidPp4GZbzf0mxVQpDCYUQE7OJfk=
 gonum.org/v1/gonum v0.16.0/go.mod h1:fef3am4MQ93R2HHpKnLk4/Tbh/s0+wqD5nfa6Pnwy4E=
 google.golang.org/api v0.54.0/go.mod h1:7C4bFFOvVDGXjfDTAsgGwDgAxRDeQ4X8NvUedIt6z3k=
