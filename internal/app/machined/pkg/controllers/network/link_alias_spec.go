@@ -107,8 +107,6 @@ func (ctrl *LinkAliasSpecController) Run(ctx context.Context, r controller.Runti
 				continue
 			}
 
-			logger.Debug("checking link for alias", zap.String("link", link.Attributes.Name), zap.Any("link", link))
-
 			if link.Attributes.Info != nil || nethelpers.LinkType(link.Type) != nethelpers.LinkEther {
 				// skip non-physical links
 				continue
