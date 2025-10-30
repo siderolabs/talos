@@ -6,6 +6,7 @@ kernel/crypto/async_tx/async_tx.ko
 kernel/crypto/async_tx/async_xor.ko
 kernel/crypto/hkdf.ko
 kernel/crypto/xor.ko
+kernel/drivers/acpi/video.ko
 kernel/drivers/ata/ahci.ko
 kernel/drivers/ata/pata_amd.ko
 kernel/drivers/ata/pata_marvell.ko
