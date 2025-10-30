@@ -16,6 +16,7 @@ import (
 	"github.com/siderolabs/gen/maps"
 	"github.com/siderolabs/gen/optional"
 	"github.com/siderolabs/gen/pair/ordered"
+	"github.com/siderolabs/gen/xslices"
 	"github.com/siderolabs/go-procfs/procfs"
 	"go.uber.org/zap"
 
@@ -349,7 +350,7 @@ func (ctrl *LinkConfigController) processDevicesConfiguration(
 		}
 
 		if device.Bond() != nil {
-			if err := SetBondMaster(linkMap[deviceInterface], device.Bond()); err != nil {
+			if err := SetBondMasterLegacy(linkMap[deviceInterface], device.Bond()); err != nil {
 				logger.Error("error parsing bond config", zap.Error(err))
 			}
 		}
@@ -444,7 +445,24 @@ func (ctrl *LinkConfigController) processLinkConfigs(logger *zap.Logger, linkMap
 		case talosconfig.NetworkDummyLinkConfig:
 			dummyLink(linkMap[linkName])
 		case talosconfig.NetworkVLANConfig:
-			vlanLink(linkMap[linkName], linkName, specificLinkConfig.ParentLink(), networkVLANConfigToVlaner{specificLinkConfig})
+			parentLink := linkNameResolver.Resolve(specificLinkConfig.ParentLink())
+			vlanLink(linkMap[linkName], linkName, parentLink, networkVLANConfigToVlaner{specificLinkConfig})
+		case talosconfig.NetworkBondConfig:
+			SendBondMaster(linkMap[linkName], specificLinkConfig)
+
+			bondedLinks := xslices.Map(specificLinkConfig.Links(), linkNameResolver.Resolve)
+
+			for idx, slaveLinkName := range bondedLinks {
+				if _, exists := linkMap[slaveLinkName]; !exists {
+					linkMap[slaveLinkName] = &network.LinkSpecSpec{
+						Name:        slaveLinkName,
+						Up:          true,
+						ConfigLayer: network.ConfigMachineConfiguration,
+					}
+				}
+
+				SetBondSlave(linkMap[slaveLinkName], ordered.MakePair(linkName, idx))
+			}
 		default:
 			logger.Error("unknown link config type", zap.String("linkName", linkName), zap.String("type", fmt.Sprintf("%T", specificLinkConfig)))
 		}

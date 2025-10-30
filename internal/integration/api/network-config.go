@@ -12,12 +12,14 @@ import (
 	"fmt"
 	"math/rand/v2"
 	"net/netip"
+	"strconv"
 	"strings"
 	"time"
 
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/rtestutils"
 	"github.com/cosi-project/runtime/pkg/safe"
+	"github.com/siderolabs/gen/xslices"
 	"github.com/siderolabs/go-pointer"
 	"github.com/stretchr/testify/assert"
 
@@ -424,6 +426,101 @@ func (suite *NetworkConfigSuite) TestVLANConfig() {
 
 	rtestutils.AssertNoResource[*networkres.LinkStatus](nodeCtx, suite.T(), suite.Client.COSI, dummyName)
 	rtestutils.AssertNoResource[*networkres.LinkStatus](nodeCtx, suite.T(), suite.Client.COSI, vlanName)
+	rtestutils.AssertNoResource[*networkres.AddressStatus](nodeCtx, suite.T(), suite.Client.COSI, addressID)
+	rtestutils.AssertNoResource[*networkres.RouteStatus](nodeCtx, suite.T(), suite.Client.COSI, addressRouteID)
+	rtestutils.AssertNoResource[*networkres.RouteStatus](nodeCtx, suite.T(), suite.Client.COSI, routeID)
+}
+
+// TestBondConfig tests creation of bond interfaces.
+func (suite *NetworkConfigSuite) TestBondConfig() {
+	if suite.Cluster == nil {
+		suite.T().Skip("skipping if cluster is not qemu/docker")
+	}
+
+	node := suite.RandomDiscoveredNodeInternalIP(machine.TypeWorker)
+	nodeCtx := client.WithNode(suite.ctx, node)
+
+	suite.T().Logf("testing on node %q", node)
+
+	dummyNames := xslices.Map([]int{0, 1}, func(int) string {
+		return fmt.Sprintf("dummy%d", rand.IntN(10000))
+	})
+
+	dummyConfigs := xslices.Map(dummyNames, func(name string) any {
+		return network.NewDummyLinkConfigV1Alpha1(name)
+	})
+
+	bondName := "agg." + strconv.Itoa(rand.IntN(10000))
+
+	bond := network.NewBondConfigV1Alpha1(bondName)
+	bond.BondLinks = dummyNames
+	bond.BondMode = pointer.To(nethelpers.BondMode8023AD)
+	bond.BondMIIMon = pointer.To(uint32(100))
+	bond.BondUpDelay = pointer.To(uint32(200))
+	bond.BondDownDelay = pointer.To(uint32(300))
+	bond.BondLACPRate = pointer.To(nethelpers.LACPRateSlow)
+	bond.BondADActorSysPrio = pointer.To(uint16(65535))
+	bond.BondResendIGMP = pointer.To(uint32(1))
+	bond.BondPacketsPerSlave = pointer.To(uint32(1))
+	bond.HardwareAddressConfig = nethelpers.HardwareAddr{0x02, 0x00, 0x00, 0x00, byte(rand.IntN(256)), byte(rand.IntN(256))}
+	bond.LinkUp = pointer.To(true)
+	bond.LinkMTU = 2000
+	bond.LinkAddresses = []network.AddressConfig{
+		{
+			AddressAddress:  netip.MustParsePrefix("fd13:1235::1/64"),
+			AddressPriority: pointer.To[uint32](100),
+		},
+	}
+	bond.LinkRoutes = []network.RouteConfig{
+		{
+			RouteDestination: network.Prefix{Prefix: netip.MustParsePrefix("fd13:1236::/64")},
+			RouteGateway:     network.Addr{Addr: netip.MustParseAddr("fd13:1235::ffff")},
+		},
+	}
+
+	addressID := bondName + "/fd13:1235::1/64"
+	routeID := bondName + "/inet6/fd13:1235::ffff/fd13:1236::/64/1024"
+	addressRouteID := bondName + "/inet6//fd13:1235::/64/100"
+
+	suite.PatchMachineConfig(nodeCtx, append(dummyConfigs, bond)...)
+
+	rtestutils.AssertResources(nodeCtx, suite.T(), suite.Client.COSI, dummyNames,
+		func(link *networkres.LinkStatus, asrt *assert.Assertions) {
+			asrt.Equal("dummy", link.TypedSpec().Kind)
+			asrt.NotZero(link.TypedSpec().MasterIndex)
+		},
+	)
+
+	rtestutils.AssertResource(nodeCtx, suite.T(), suite.Client.COSI, bondName,
+		func(link *networkres.LinkStatus, asrt *assert.Assertions) {
+			asrt.Equal("bond", link.TypedSpec().Kind)
+			asrt.Equal(bond.LinkMTU, link.TypedSpec().MTU)
+			asrt.Equal(nethelpers.BondMode8023AD, link.TypedSpec().BondMaster.Mode)
+			asrt.Equal(bond.HardwareAddressConfig, link.TypedSpec().HardwareAddr)
+		},
+	)
+
+	rtestutils.AssertResource(nodeCtx, suite.T(), suite.Client.COSI, addressID,
+		func(addr *networkres.AddressStatus, asrt *assert.Assertions) {
+			asrt.Equal(bondName, addr.TypedSpec().LinkName)
+		},
+	)
+
+	rtestutils.AssertResources(nodeCtx, suite.T(), suite.Client.COSI,
+		[]resource.ID{routeID, addressRouteID},
+		func(route *networkres.RouteStatus, asrt *assert.Assertions) {
+			asrt.Equal(bondName, route.TypedSpec().OutLinkName)
+		},
+	)
+
+	suite.RemoveMachineConfigDocumentsByName(nodeCtx, network.BondKind, bondName)
+	suite.RemoveMachineConfigDocumentsByName(nodeCtx, network.DummyLinkKind, dummyNames...)
+
+	for _, dummyName := range dummyNames {
+		rtestutils.AssertNoResource[*networkres.LinkStatus](nodeCtx, suite.T(), suite.Client.COSI, dummyName)
+	}
+
+	rtestutils.AssertNoResource[*networkres.LinkStatus](nodeCtx, suite.T(), suite.Client.COSI, bondName)
 	rtestutils.AssertNoResource[*networkres.AddressStatus](nodeCtx, suite.T(), suite.Client.COSI, addressID)
 	rtestutils.AssertNoResource[*networkres.RouteStatus](nodeCtx, suite.T(), suite.Client.COSI, addressRouteID)
 	rtestutils.AssertNoResource[*networkres.RouteStatus](nodeCtx, suite.T(), suite.Client.COSI, routeID)

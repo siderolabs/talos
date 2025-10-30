@@ -259,6 +259,7 @@ description: Talos gRPC API reference.
     - [CriImageCacheStatus](#talos.resource.definitions.enums.CriImageCacheStatus)
     - [KubespanPeerState](#talos.resource.definitions.enums.KubespanPeerState)
     - [MachineType](#talos.resource.definitions.enums.MachineType)
+    - [NethelpersADLACPActive](#talos.resource.definitions.enums.NethelpersADLACPActive)
     - [NethelpersADSelect](#talos.resource.definitions.enums.NethelpersADSelect)
     - [NethelpersARPAllTargets](#talos.resource.definitions.enums.NethelpersARPAllTargets)
     - [NethelpersARPValidate](#talos.resource.definitions.enums.NethelpersARPValidate)
@@ -4597,6 +4598,18 @@ MachineType represents a machine type.
 
 
 
+<a name="talos.resource.definitions.enums.NethelpersADLACPActive"></a>
+
+### NethelpersADLACPActive
+NethelpersADLACPActive is ADLACPActive.
+
+| Name | Number | Description |
+| ---- | ------ | ----------- |
+| ADLACP_ACTIVE_OFF | 0 |  |
+| ADLACP_ACTIVE_ON | 1 |  |
+
+
+
 <a name="talos.resource.definitions.enums.NethelpersADSelect"></a>
 
 ### NethelpersADSelect
@@ -4633,6 +4646,9 @@ NethelpersARPValidate is an ARP Validation mode.
 | ARP_VALIDATE_ACTIVE | 1 |  |
 | ARP_VALIDATE_BACKUP | 2 |  |
 | ARP_VALIDATE_ALL | 3 |  |
+| ARP_VALIDATE_FILTER | 4 |  |
+| ARP_VALIDATE_FILTER_ACTIVE | 5 |  |
+| ARP_VALIDATE_FILTER_BACKUP | 6 |  |
 
 
 
@@ -8337,6 +8353,10 @@ BondMasterSpec describes bond settings if Kind == "bond".
 | ad_actor_sys_prio | [uint32](#uint32) |  |  |
 | ad_user_port_key | [uint32](#uint32) |  |  |
 | peer_notify_delay | [uint32](#uint32) |  |  |
+| arpip_targets | [common.NetIP](#common.NetIP) | repeated |  |
+| nsip6_targets | [common.NetIP](#common.NetIP) | repeated |  |
+| adlacp_active | [talos.resource.definitions.enums.NethelpersADLACPActive](#talos.resource.definitions.enums.NethelpersADLACPActive) |  |  |
+| missed_max | [uint32](#uint32) |  |  |
 
 
 

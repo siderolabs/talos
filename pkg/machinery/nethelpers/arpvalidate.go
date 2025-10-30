@@ -13,10 +13,13 @@ type ARPValidate uint32
 //
 //structprotogen:gen_enum
 const (
-	ARPValidateNone   ARPValidate = iota // none
-	ARPValidateActive                    // active
-	ARPValidateBackup                    // backup
-	ARPValidateAll                       // all
+	ARPValidateNone         ARPValidate = iota // none
+	ARPValidateActive                          // active
+	ARPValidateBackup                          // backup
+	ARPValidateAll                             // all
+	ARPValidateFilter                          // filter
+	ARPValidateFilterActive                    // filter-active
+	ARPValidateFilterBackup                    // filter-backup
 )
 
 // ARPValidateByName parses ARPValidate.
@@ -30,6 +33,12 @@ func ARPValidateByName(a string) (ARPValidate, error) {
 		return ARPValidateBackup, nil
 	case "all":
 		return ARPValidateAll, nil
+	case "filter":
+		return ARPValidateFilter, nil
+	case "filter-active":
+		return ARPValidateFilterActive, nil
+	case "filter-backup":
+		return ARPValidateFilterBackup, nil
 	default:
 		return 0, fmt.Errorf("invalid arp_validate mode %v", a)
 	}

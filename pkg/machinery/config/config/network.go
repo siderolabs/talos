@@ -219,3 +219,41 @@ type NetworkVLANConfig interface {
 	ParentLink() string
 	VLANMode() optional.Optional[nethelpers.VLANProtocol]
 }
+
+// NetworkBondConfig defines a bond link configuration.
+//
+//nolint:interfacebloat
+type NetworkBondConfig interface {
+	NamedDocument
+	NetworkCommonLinkConfig
+	NetworkHardwareAddressConfig
+	BondConfig()
+	Links() []string
+	Mode() nethelpers.BondMode
+	MIIMon() optional.Optional[uint32]
+	UpDelay() optional.Optional[uint32]
+	DownDelay() optional.Optional[uint32]
+	UseCarrier() optional.Optional[bool]
+	XmitHashPolicy() optional.Optional[nethelpers.BondXmitHashPolicy]
+	ARPInterval() optional.Optional[uint32]
+	ARPIPTargets() []netip.Addr
+	NSIP6Targets() []netip.Addr
+	ARPValidate() optional.Optional[nethelpers.ARPValidate]
+	ARPAllTargets() optional.Optional[nethelpers.ARPAllTargets]
+	LACPRate() optional.Optional[nethelpers.LACPRate]
+	FailOverMAC() optional.Optional[nethelpers.FailOverMAC]
+	ADSelect() optional.Optional[nethelpers.ADSelect]
+	ADActorSysPrio() optional.Optional[uint16]
+	ADUserPortKey() optional.Optional[uint16]
+	ADLACPActive() optional.Optional[nethelpers.ADLACPActive]
+	PrimaryReselect() optional.Optional[nethelpers.PrimaryReselect]
+	ResendIGMP() optional.Optional[uint32]
+	MinLinks() optional.Optional[uint32]
+	LPInterval() optional.Optional[uint32]
+	PacketsPerSlave() optional.Optional[uint32]
+	NumPeerNotif() optional.Optional[uint8]
+	TLBDynamicLB() optional.Optional[uint8]
+	AllSlavesActive() optional.Optional[uint8]
+	PeerNotifyDelay() optional.Optional[uint32]
+	MissedMax() optional.Optional[uint8]
+}

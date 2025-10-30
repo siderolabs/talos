@@ -476,7 +476,15 @@ func (suite *LinkConfigSuite) TestMachineConfigurationNewStyle() {
 	vl1.LinkMTU = 200
 	vl1.LinkUp = pointer.To(true)
 
-	ctr, err := container.New(dc1, lc1, vl1)
+	dc2 := networkcfg.NewDummyLinkConfigV1Alpha1("dummy2")
+	dc3 := networkcfg.NewDummyLinkConfigV1Alpha1("dummy3")
+
+	bc1 := networkcfg.NewBondConfigV1Alpha1("bond357")
+	bc1.BondMode = pointer.To(nethelpers.BondModeActiveBackup)
+	bc1.BondLinks = []string{"dummy2", "dummy3"}
+	bc1.BondUpDelay = pointer.To(uint32(200))
+
+	ctr, err := container.New(dc1, lc1, vl1, dc2, dc3, bc1)
 	suite.Require().NoError(err)
 
 	cfg := config.NewMachineConfig(ctr)
@@ -501,7 +509,10 @@ func (suite *LinkConfigSuite) TestMachineConfigurationNewStyle() {
 		[]string{
 			"configuration/eth0",
 			"configuration/dummy1",
+			"configuration/dummy2",
+			"configuration/dummy3",
 			"configuration/dummy1.100",
+			"configuration/bond357",
 		}, func(r *network.LinkSpec, asrt *assert.Assertions) {
 			asrt.Equal(network.ConfigMachineConfiguration, r.TypedSpec().ConfigLayer)
 
@@ -510,11 +521,15 @@ func (suite *LinkConfigSuite) TestMachineConfigurationNewStyle() {
 				asrt.True(r.TypedSpec().Up)
 				asrt.False(r.TypedSpec().Logical)
 				asrt.EqualValues(9001, r.TypedSpec().MTU)
-			case "dummy1":
+			case "dummy1", "dummy2", "dummy3":
 				asrt.True(r.TypedSpec().Up)
 				asrt.True(r.TypedSpec().Logical)
 				asrt.Equal(nethelpers.LinkEther, r.TypedSpec().Type)
 				asrt.Equal("dummy", r.TypedSpec().Kind)
+
+				if r.TypedSpec().Name == "dummy2" || r.TypedSpec().Name == "dummy3" {
+					asrt.Equal("bond357", r.TypedSpec().BondSlave.MasterName)
+				}
 			case "dummy1.100":
 				asrt.True(r.TypedSpec().Up)
 				asrt.True(r.TypedSpec().Logical)
@@ -524,6 +539,13 @@ func (suite *LinkConfigSuite) TestMachineConfigurationNewStyle() {
 				asrt.Equal(nethelpers.VLANProtocol8021AD, r.TypedSpec().VLAN.Protocol)
 				asrt.EqualValues(100, r.TypedSpec().VLAN.VID)
 				asrt.EqualValues(200, r.TypedSpec().MTU)
+			case "bond357":
+				asrt.True(r.TypedSpec().Up)
+				asrt.True(r.TypedSpec().Logical)
+				asrt.Equal(nethelpers.LinkEther, r.TypedSpec().Type)
+				asrt.Equal(network.LinkKindBond, r.TypedSpec().Kind)
+				asrt.Equal(nethelpers.BondModeActiveBackup, r.TypedSpec().BondMaster.Mode)
+				asrt.EqualValues(200, r.TypedSpec().BondMaster.UpDelay)
 			}
 		},
 	)

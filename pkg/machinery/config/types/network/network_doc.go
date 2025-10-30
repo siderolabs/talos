@@ -13,6 +13,313 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
 )
 
+func (BondConfigV1Alpha1) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "BondConfig",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "BondConfig is a config document to create a bond (link aggregation) over a set of links." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "BondConfig is a config document to create a bond (link aggregation) over a set of links.",
+		Fields: []encoder.Doc{
+			{
+				Type:   "Meta",
+				Inline: true,
+			},
+			{
+				Name:        "name",
+				Type:        "string",
+				Note:        "",
+				Description: "Name of the bond link (interface) to be created.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Name of the bond link (interface) to be created." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "hardwareAddr",
+				Type:        "HardwareAddr",
+				Note:        "",
+				Description: "Override the hardware (MAC) address of the link.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Override the hardware (MAC) address of the link." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "links",
+				Type:        "[]string",
+				Note:        "",
+				Description: "Names of the links (interfaces) on which the bond will be created.\nLink aliases can be used here as well.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Names of the links (interfaces) on which the bond will be created." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "bondMode",
+				Type:        "BondMode",
+				Note:        "",
+				Description: "Bond mode.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Bond mode." /* encoder.LineComment */, "" /* encoder.FootComment */},
+				Values: []string{
+					"balance-rr",
+					"active-backup",
+					"balance-xor",
+					"broadcast",
+					"802.3ad",
+					"balance-tlb",
+					"balance-alb",
+				},
+			},
+			{
+				Name:        "miimon",
+				Type:        "uint32",
+				Note:        "",
+				Description: "Link monitoring frequency in milliseconds.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Link monitoring frequency in milliseconds." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "updelay",
+				Type:        "uint32",
+				Note:        "",
+				Description: "The time, in milliseconds, to wait before enabling a slave after a link recovery has been detected.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "The time, in milliseconds, to wait before enabling a slave after a link recovery has been detected." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "downdelay",
+				Type:        "uint32",
+				Note:        "",
+				Description: "The time, in milliseconds, to wait before disabling a slave after a link failure has been detected.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "The time, in milliseconds, to wait before disabling a slave after a link failure has been detected." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "useCarrier",
+				Type:        "bool",
+				Note:        "",
+				Description: "Specifies whether or not miimon should use MII or ETHTOOL.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Specifies whether or not miimon should use MII or ETHTOOL." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "xmitHashPolicy",
+				Type:        "BondXmitHashPolicy",
+				Note:        "",
+				Description: "Selects the transmit hash policy to use for slave selection.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Selects the transmit hash policy to use for slave selection." /* encoder.LineComment */, "" /* encoder.FootComment */},
+				Values: []string{
+					"layer2",
+					"layer3+4",
+					"layer2+3",
+					"encap2+3",
+					"encap3+4",
+				},
+			},
+			{
+				Name:        "arpInterval",
+				Type:        "uint32",
+				Note:        "",
+				Description: "ARP link monitoring frequency in milliseconds.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "ARP link monitoring frequency in milliseconds." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "arpIpTargets",
+				Type:        "[]Addr",
+				Note:        "",
+				Description: "The list of IPv4 addresses to use for ARP link monitoring when arpInterval is set.\nMaximum of 16 targets are supported.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "The list of IPv4 addresses to use for ARP link monitoring when arpInterval is set." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "nsIp6Targets",
+				Type:        "[]Addr",
+				Note:        "",
+				Description: "The list of IPv6 addresses to use for NS link monitoring when arpInterval is set.\nMaximum of 16 targets are supported.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "The list of IPv6 addresses to use for NS link monitoring when arpInterval is set." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "arpValidate",
+				Type:        "ARPValidate",
+				Note:        "",
+				Description: "Specifies whether or not ARP probes and replies should be validated.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Specifies whether or not ARP probes and replies should be validated." /* encoder.LineComment */, "" /* encoder.FootComment */},
+				Values: []string{
+					"none",
+					"active",
+					"backup",
+					"all",
+					"filter",
+					"filter-active",
+					"filter-backup",
+				},
+			},
+			{
+				Name:        "arpAllTargets",
+				Type:        "ARPAllTargets",
+				Note:        "",
+				Description: "Specifies whether ARP probes should be sent to any or all targets.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Specifies whether ARP probes should be sent to any or all targets." /* encoder.LineComment */, "" /* encoder.FootComment */},
+				Values: []string{
+					"any",
+					"all",
+				},
+			},
+			{
+				Name:        "lacpRate",
+				Type:        "LACPRate",
+				Note:        "",
+				Description: "LACPDU frames periodic transmission rate.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "LACPDU frames periodic transmission rate." /* encoder.LineComment */, "" /* encoder.FootComment */},
+				Values: []string{
+					"slow",
+					"fast",
+				},
+			},
+			{
+				Name:        "failOverMac",
+				Type:        "FailOverMAC",
+				Note:        "",
+				Description: "Specifies whether active-backup mode should set all slaves to the same MAC address\nat enslavement, when enabled, or perform special handling.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Specifies whether active-backup mode should set all slaves to the same MAC address" /* encoder.LineComment */, "" /* encoder.FootComment */},
+				Values: []string{
+					"none",
+					"active",
+					"follow",
+				},
+			},
+			{
+				Name:        "adSelect",
+				Type:        "ADSelect",
+				Note:        "",
+				Description: "Aggregate selection policy for 802.3ad.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Aggregate selection policy for 802.3ad." /* encoder.LineComment */, "" /* encoder.FootComment */},
+				Values: []string{
+					"stable",
+					"bandwidth",
+					"count",
+				},
+			},
+			{
+				Name:        "adActorSysPrio",
+				Type:        "uint16",
+				Note:        "",
+				Description: "Actor system priority for 802.3ad.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Actor system priority for 802.3ad." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "adUserPortKey",
+				Type:        "uint16",
+				Note:        "",
+				Description: "User port key (upper 10 bits) for 802.3ad.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "User port key (upper 10 bits) for 802.3ad." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "adLACPActive",
+				Type:        "ADLACPActive",
+				Note:        "",
+				Description: "Whether to send LACPDU frames periodically.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Whether to send LACPDU frames periodically." /* encoder.LineComment */, "" /* encoder.FootComment */},
+				Values: []string{
+					"on",
+					"off",
+				},
+			},
+			{
+				Name:        "primaryReselect",
+				Type:        "PrimaryReselect",
+				Note:        "",
+				Description: "Policy under which the primary slave should be reselected.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Policy under which the primary slave should be reselected." /* encoder.LineComment */, "" /* encoder.FootComment */},
+				Values: []string{
+					"always",
+					"better",
+					"failure",
+				},
+			},
+			{
+				Name:        "resendIGMP",
+				Type:        "uint32",
+				Note:        "",
+				Description: "The number of times IGMP packets should be resent.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "The number of times IGMP packets should be resent." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "minLinks",
+				Type:        "uint32",
+				Note:        "",
+				Description: "The minimum number of active links required for the bond to be considered active.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "The minimum number of active links required for the bond to be considered active." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "lpInterval",
+				Type:        "uint32",
+				Note:        "",
+				Description: "The number of seconds between instances where the bonding driver sends learning packets to each slave's peer switch.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "The number of seconds between instances where the bonding driver sends learning packets to each slave's peer switch." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "packetsPerSlave",
+				Type:        "uint32",
+				Note:        "",
+				Description: "The number of packets to transmit through a slave before moving to the next one.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "The number of packets to transmit through a slave before moving to the next one." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "numPeerNotif",
+				Type:        "uint8",
+				Note:        "",
+				Description: "The number of peer notifications (gratuitous ARPs and unsolicited IPv6 Neighbor Advertisements)\nto be issued after a failover event.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "The number of peer notifications (gratuitous ARPs and unsolicited IPv6 Neighbor Advertisements)" /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "tlbLogicalLb",
+				Type:        "uint8",
+				Note:        "",
+				Description: "Whether dynamic shuffling of flows is enabled in tlb or alb mode.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Whether dynamic shuffling of flows is enabled in tlb or alb mode." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "allSlavesActive",
+				Type:        "uint8",
+				Note:        "",
+				Description: "Whether duplicate frames (received on inactive ports) should be dropped (0) or delivered (1).",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Whether duplicate frames (received on inactive ports) should be dropped (0) or delivered (1)." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "peerNotifDelay",
+				Type:        "uint32",
+				Note:        "",
+				Description: "The delay, in milliseconds, between each peer notification.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "The delay, in milliseconds, between each peer notification." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "missedMax",
+				Type:        "uint8",
+				Note:        "",
+				Description: "The number of arpInterval monitor checks that must fail in order for an interface to be marked down by the ARP monitor.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "The number of arpInterval monitor checks that must fail in order for an interface to be marked down by the ARP monitor." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Type:   "CommonLinkConfig",
+				Inline: true,
+			},
+		},
+	}
+
+	doc.AddExample("", exampleBondConfigV1Alpha1())
+
+	doc.Fields[1].AddExample("", "bond.ext")
+	doc.Fields[2].AddExample("", nethelpers.HardwareAddr{0x2e, 0x3c, 0x4d, 0x5e, 0x6f, 0x70})
+	doc.Fields[3].AddExample("", []string{"enp0s3", "enp0s8"})
+	doc.Fields[4].AddExample("", "802.3ad")
+	doc.Fields[5].AddExample("", 200)
+	doc.Fields[6].AddExample("", 300)
+	doc.Fields[7].AddExample("", 100)
+	doc.Fields[9].AddExample("", "layer2")
+	doc.Fields[10].AddExample("", 1000)
+	doc.Fields[11].AddExample("", []netip.Addr{netip.MustParseAddr("10.15.0.1")})
+	doc.Fields[12].AddExample("", []netip.Addr{netip.MustParseAddr("fd00::1")})
+	doc.Fields[13].AddExample("", "active")
+	doc.Fields[14].AddExample("", "all")
+	doc.Fields[15].AddExample("", "fast")
+	doc.Fields[16].AddExample("", "active")
+	doc.Fields[17].AddExample("", "stable")
+	doc.Fields[18].AddExample("", 65535)
+	doc.Fields[19].AddExample("", 0)
+	doc.Fields[20].AddExample("", "on")
+	doc.Fields[21].AddExample("", "always")
+	doc.Fields[27].AddExample("", 1)
+	doc.Fields[28].AddExample("", 0)
+
+	return doc
+}
+
 func (DefaultActionConfigV1Alpha1) Doc() *encoder.Doc {
 	doc := &encoder.Doc{
 		Type:        "NetworkDefaultActionConfig",
@@ -584,6 +891,10 @@ func (CommonLinkConfig) Doc() *encoder.Doc {
 		Description: "CommonLinkConfig is common configuration for network links, and logical links.",
 		AppearsIn: []encoder.Appearance{
 			{
+				TypeName:  "BondConfigV1Alpha1",
+				FieldName: "",
+			},
+			{
 				TypeName:  "DummyLinkConfigV1Alpha1",
 				FieldName: "",
 			},
@@ -980,7 +1291,7 @@ func (VLANConfigV1Alpha1) Doc() *encoder.Doc {
 				Name:        "parent",
 				Type:        "string",
 				Note:        "",
-				Description: "Name of the parent link (interface) on which the VLAN link will be created.",
+				Description: "Name of the parent link (interface) on which the VLAN link will be created.\nLink aliases can be used here as well.",
 				Comments:    [3]string{"" /* encoder.HeadComment */, "Name of the parent link (interface) on which the VLAN link will be created." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
 			{
@@ -1006,6 +1317,7 @@ func GetFileDoc() *encoder.FileDoc {
 		Name:        "network",
 		Description: "Package network provides network machine configuration documents.\n",
 		Structs: []*encoder.Doc{
+			BondConfigV1Alpha1{}.Doc(),
 			DefaultActionConfigV1Alpha1{}.Doc(),
 			DHCPv4ConfigV1Alpha1{}.Doc(),
 			DHCPv6ConfigV1Alpha1{}.Doc(),

@@ -43,7 +43,7 @@ vlanID: 34
 |`vlanMode` |VLANProtocol |Set the VLAN mode to use.<br>If not set, defaults to '802.1q'. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 vlanMode: 802.1q
 {{< /highlight >}}</details> |`802.1q`<br />`802.1ad`<br /> |
-|`parent` |string |Name of the parent link (interface) on which the VLAN link will be created. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
+|`parent` |string |Name of the parent link (interface) on which the VLAN link will be created.<br>Link aliases can be used here as well. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 parent: enp0s3
 {{< /highlight >}}</details> | |
 |`up` |bool |Bring the link up or down.<br><br>If not specified, the link will be brought up.  | |

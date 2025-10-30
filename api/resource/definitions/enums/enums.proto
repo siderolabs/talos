@@ -70,6 +70,12 @@ enum NethelpersAddressSortAlgorithm {
   ADDRESS_SORT_ALGORITHM_V2 = 1;
 }
 
+// NethelpersADLACPActive is ADLACPActive.
+enum NethelpersADLACPActive {
+  ADLACP_ACTIVE_OFF = 0;
+  ADLACP_ACTIVE_ON = 1;
+}
+
 // NethelpersADSelect is ADSelect.
 enum NethelpersADSelect {
   AD_SELECT_STABLE = 0;
@@ -89,6 +95,9 @@ enum NethelpersARPValidate {
   ARP_VALIDATE_ACTIVE = 1;
   ARP_VALIDATE_BACKUP = 2;
   ARP_VALIDATE_ALL = 3;
+  ARP_VALIDATE_FILTER = 4;
+  ARP_VALIDATE_FILTER_ACTIVE = 5;
+  ARP_VALIDATE_FILTER_BACKUP = 6;
 }
 
 // NethelpersAutoHostnameKind is a kind of automatically generated hostname.

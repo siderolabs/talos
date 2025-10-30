@@ -9,6 +9,7 @@ import (
 	"net"
 
 	"github.com/siderolabs/gen/pair/ordered"
+	"github.com/siderolabs/go-pointer"
 
 	networkadapter "github.com/siderolabs/talos/internal/app/machined/pkg/adapters/network"
 	talosconfig "github.com/siderolabs/talos/pkg/machinery/config/config"
@@ -24,10 +25,46 @@ func SetBondSlave(link *network.LinkSpecSpec, bond ordered.Pair[string, int]) {
 	}
 }
 
-// SetBondMaster sets the bond master spec.
+// SendBondMaster sets the bond master spec.
+func SendBondMaster(link *network.LinkSpecSpec, bond talosconfig.NetworkBondConfig) {
+	link.Logical = true
+	link.Kind = network.LinkKindBond
+	link.Type = nethelpers.LinkEther
+	link.BondMaster.Mode = bond.Mode()
+	link.BondMaster.MIIMon = bond.MIIMon().ValueOrZero()
+	link.BondMaster.UpDelay = bond.UpDelay().ValueOrZero()
+	link.BondMaster.DownDelay = bond.DownDelay().ValueOrZero()
+	link.BondMaster.UseCarrier = bond.UseCarrier().ValueOrZero()
+	link.BondMaster.HashPolicy = bond.XmitHashPolicy().ValueOrZero()
+	link.BondMaster.ARPInterval = bond.ARPInterval().ValueOrZero()
+	link.BondMaster.ARPIPTargets = bond.ARPIPTargets()
+	link.BondMaster.NSIP6Targets = bond.NSIP6Targets()
+	link.BondMaster.ARPValidate = bond.ARPValidate().ValueOrZero()
+	link.BondMaster.ARPAllTargets = bond.ARPAllTargets().ValueOrZero()
+	link.BondMaster.LACPRate = bond.LACPRate().ValueOrZero()
+	link.BondMaster.FailOverMac = bond.FailOverMAC().ValueOrZero()
+	link.BondMaster.ADSelect = bond.ADSelect().ValueOrZero()
+	link.BondMaster.ADActorSysPrio = bond.ADActorSysPrio().ValueOrZero()
+	link.BondMaster.ADUserPortKey = bond.ADUserPortKey().ValueOrZero()
+	link.BondMaster.ADLACPActive = bond.ADLACPActive().ValueOrZero()
+	link.BondMaster.PrimaryReselect = bond.PrimaryReselect().ValueOrZero()
+	link.BondMaster.ResendIGMP = bond.ResendIGMP().ValueOrZero()
+	link.BondMaster.MinLinks = bond.MinLinks().ValueOrZero()
+	link.BondMaster.LPInterval = bond.LPInterval().ValueOrZero()
+	link.BondMaster.PacketsPerSlave = bond.PacketsPerSlave().ValueOrZero()
+	link.BondMaster.NumPeerNotif = bond.NumPeerNotif().ValueOrZero()
+	link.BondMaster.TLBDynamicLB = bond.TLBDynamicLB().ValueOrZero()
+	link.BondMaster.AllSlavesActive = bond.AllSlavesActive().ValueOrZero()
+	link.BondMaster.PeerNotifyDelay = bond.PeerNotifyDelay().ValueOrZero()
+	link.BondMaster.MissedMax = bond.MissedMax().ValueOrZero()
+
+	networkadapter.BondMasterSpec(&link.BondMaster).FillDefaults()
+}
+
+// SetBondMasterLegacy sets the bond master spec.
 //
 //nolint:gocyclo
-func SetBondMaster(link *network.LinkSpecSpec, bond talosconfig.Bond) error {
+func SetBondMasterLegacy(link *network.LinkSpecSpec, bond talosconfig.Bond) error {
 	link.Logical = true
 	link.Kind = network.LinkKindBond
 	link.Type = nethelpers.LinkEther
@@ -91,7 +128,7 @@ func SetBondMaster(link *network.LinkSpecSpec, bond talosconfig.Bond) error {
 		LACPRate:        lacpRate,
 		ARPValidate:     arpValidate,
 		ARPAllTargets:   arpAllTargets,
-		PrimaryIndex:    primary,
+		PrimaryIndex:    pointer.To(primary),
 		PrimaryReselect: primaryReselect,
 		FailOverMac:     failOverMAC,
 		ADSelect:        adSelect,

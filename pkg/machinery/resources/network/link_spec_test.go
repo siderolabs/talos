@@ -2,6 +2,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+//nolint:dupl
 package network_test
 
 import (
@@ -9,6 +10,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/siderolabs/go-pointer"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.yaml.in/yaml/v4"
@@ -40,7 +42,7 @@ func TestLinkSpecMarshalYAML(t *testing.T) {
 			LACPRate:        nethelpers.LACPRateFast,
 			ARPValidate:     nethelpers.ARPValidateAll,
 			ARPAllTargets:   nethelpers.ARPAllTargetsAny,
-			PrimaryIndex:    3,
+			PrimaryIndex:    pointer.To[uint32](3),
 			PrimaryReselect: nethelpers.PrimaryReselectBetter,
 			FailOverMac:     nethelpers.FailOverMACFollow,
 			ADSelect:        nethelpers.ADSelectCount,

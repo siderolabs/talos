@@ -393,7 +393,12 @@ func (ctrl *LinkSpecController) syncLink(ctx context.Context, r controller.Runti
 				return fmt.Errorf("error parsing bond attributes for %q: %w", link.TypedSpec().Name, err)
 			}
 
-			if existingBond != link.TypedSpec().BondMaster {
+			// primaryIndex might be reported from the kernel, but if it's nil in the spec, we should treat it as equal
+			if existingBond.PrimaryIndex != nil && link.TypedSpec().BondMaster.PrimaryIndex == nil {
+				existingBond.PrimaryIndex = nil
+			}
+
+			if !existingBond.Equal(&link.TypedSpec().BondMaster) {
 				logger.Debug("updating bond settings",
 					zap.String("old", fmt.Sprintf("%+v", existingBond)),
 					zap.String("new", fmt.Sprintf("%+v", link.TypedSpec().BondMaster)),

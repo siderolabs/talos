@@ -1,0 +1,18 @@
+apiVersion: v1alpha1
+kind: BondConfig
+name: agg.0
+links:
+    - eth0
+    - eth1
+bondMode: 802.3ad
+miimon: 100
+updelay: 200
+downdelay: 200
+xmitHashPolicy: layer3+4
+lacpRate: slow
+adActorSysPrio: 65535
+resendIGMP: 1
+packetsPerSlave: 1
+up: true
+addresses:
+    - address: 1.2.3.4/24
