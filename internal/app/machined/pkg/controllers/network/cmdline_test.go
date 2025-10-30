@@ -13,6 +13,7 @@ import (
 	"slices"
 	"testing"
 
+	"github.com/siderolabs/go-pointer"
 	"github.com/siderolabs/go-procfs/procfs"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -57,6 +58,9 @@ func TestCmdlineParse(t *testing.T) {
 					NumPeerNotif:    1,
 					TLBDynamicLB:    1,
 					UseCarrier:      true,
+					PrimaryIndex:    pointer.To[uint32](0),
+					ADLACPActive:    nethelpers.ADLACPActiveOn,
+					MissedMax:       2,
 				},
 			},
 			{
@@ -404,6 +408,8 @@ func TestCmdlineParse(t *testing.T) {
 							NumPeerNotif:    1,
 							TLBDynamicLB:    1,
 							UseCarrier:      true,
+							PrimaryIndex:    pointer.To[uint32](0),
+							MissedMax:       2,
 						},
 					},
 					{

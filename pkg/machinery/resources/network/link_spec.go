@@ -96,9 +96,12 @@ func (spec *LinkSpecSpec) Merge(other *LinkSpecSpec) error {
 	updateIfNotZero(&spec.ParentName, other.ParentName)
 	updateIfNotZero(&spec.BondSlave, other.BondSlave)
 	updateIfNotZero(&spec.VLAN, other.VLAN)
-	updateIfNotZero(&spec.BondMaster, other.BondMaster)
 	updateIfNotZero(&spec.BridgeMaster, other.BridgeMaster)
 	updateIfNotZero(&spec.BridgeSlave, other.BridgeSlave)
+
+	if !other.BondMaster.IsZero() {
+		spec.BondMaster = other.BondMaster.DeepCopy()
+	}
 
 	if other.HardwareAddress != nil {
 		spec.HardwareAddress = slices.Clone(other.HardwareAddress)

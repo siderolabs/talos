@@ -80,6 +80,7 @@ type VLANConfigV1Alpha1 struct {
 	VLANModeConfig *nethelpers.VLANProtocol `yaml:"vlanMode,omitempty"`
 	//   description: |
 	//     Name of the parent link (interface) on which the VLAN link will be created.
+	//     Link aliases can be used here as well.
 	//
 	//   examples:
 	//    - value: >

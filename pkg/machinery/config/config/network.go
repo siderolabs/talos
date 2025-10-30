@@ -219,3 +219,10 @@ type NetworkVLANConfig interface {
 	ParentLink() string
 	VLANMode() optional.Optional[nethelpers.VLANProtocol]
 }
+
+// NetworkBondConfig defines a bond link configuration.
+type NetworkBondConfig interface {
+	NamedDocument
+	NetworkCommonLinkConfig
+	BondConfig()
+}

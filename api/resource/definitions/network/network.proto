@@ -63,6 +63,10 @@ message BondMasterSpec {
   uint32 ad_actor_sys_prio = 22;
   uint32 ad_user_port_key = 23;
   uint32 peer_notify_delay = 24;
+  repeated common.NetIP arpip_targets = 25;
+  repeated common.NetIP nsip6_targets = 26;
+  talos.resource.definitions.enums.NethelpersADLACPActive adlacp_active = 27;
+  uint32 missed_max = 28;
 }
 
 // BondSlave contains a bond's master name and slave index.
