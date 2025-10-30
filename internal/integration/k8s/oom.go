@@ -39,14 +39,16 @@ func (suite *OomSuite) SuiteName() string {
 
 // TestOom verifies that system remains stable after handling an OOM event.
 func (suite *OomSuite) TestOom() {
-	suite.T().Skip("skip the test until https://github.com/siderolabs/talos/issues/12077 is resolved")
-
 	if suite.Cluster == nil {
 		suite.T().Skip("without full cluster state reaching out to the node IP is not reliable")
 	}
 
 	if testing.Short() {
 		suite.T().Skip("skipping in short mode")
+	}
+
+	if suite.Race {
+		suite.T().Skip("skipping as OOM tests are incompatible with race detector")
 	}
 
 	if suite.Cluster.Provisioner() != base.ProvisionerQEMU {
@@ -77,7 +79,7 @@ func (suite *OomSuite) TestOom() {
 	suite.Require().NoError(err)
 
 	memoryBytes := memInfo.GetMessages()[0].GetMeminfo().GetMemtotal() * 1024
-	numReplicas := int((memoryBytes/1024/1024+2048-1)/2048) * numWorkers * 15
+	numReplicas := int((memoryBytes/1024/1024+2048-1)/2048) * numWorkers * 25
 
 	suite.T().Logf("detected memory: %s, workers %d => scaling to %d replicas",
 		humanize.IBytes(memoryBytes), numWorkers, numReplicas)
@@ -86,11 +88,15 @@ func (suite *OomSuite) TestOom() {
 	suite.PatchK8sObject(ctx, "default", "apps", "Deployment", "v1", "stress-mem", patchToReplicas(suite.T(), numReplicas))
 
 	// Expect at least one OOM kill of stress-ng within 15 seconds
-	suite.Assert().True(suite.waitForOOMKilled(ctx, 15*time.Second, 2*time.Minute, "stress-ng"))
+	suite.Assert().True(suite.waitForOOMKilled(ctx, 15*time.Second, 2*time.Minute, "stress-ng", 1))
 
 	// Scale to 1, wait for deployment to scale down, proving system is operational
 	suite.PatchK8sObject(ctx, "default", "apps", "Deployment", "v1", "stress-mem", patchToReplicas(suite.T(), 1))
 	suite.Require().NoError(suite.WaitForDeploymentAvailable(ctx, time.Minute, "default", "stress-mem", 1))
+
+	// Monitor OOM kills for 15 seconds and make sure no kills other than stress-ng happen
+	// Allow 0 as well: ideally that'd be the case, but fail on anything not containing stress-ng
+	suite.Assert().True(suite.waitForOOMKilled(ctx, 15*time.Second, 2*time.Minute, "stress-ng", 0))
 
 	suite.APISuite.AssertClusterHealthy(ctx)
 }
@@ -111,7 +117,7 @@ func patchToReplicas(t *testing.T, replicas int) []byte {
 // Waits for a period of time and return returns whether or not OOM events containing a specified process have been observed.
 //
 //nolint:gocyclo
-func (suite *OomSuite) waitForOOMKilled(ctx context.Context, timeToObserve, timeout time.Duration, substr string) bool {
+func (suite *OomSuite) waitForOOMKilled(ctx context.Context, timeToObserve, timeout time.Duration, substr string, n int) bool {
 	startTime := time.Now()
 
 	watchCh := make(chan state.Event)
@@ -135,9 +141,9 @@ func (suite *OomSuite) waitForOOMKilled(ctx context.Context, timeToObserve, time
 		case <-timeoutCh:
 			suite.T().Logf("observed %d OOM events containing process substring %q", numOOMObserved, substr)
 
-			return numOOMObserved > 0
+			return numOOMObserved >= n
 		case <-timeToObserveCh:
-			if numOOMObserved > 0 {
+			if numOOMObserved >= n {
 				// if we already observed some OOM events, consider it a success
 				suite.T().Logf("observed %d OOM events containing process substring %q", numOOMObserved, substr)
 
@@ -150,10 +156,19 @@ func (suite *OomSuite) waitForOOMKilled(ctx context.Context, timeToObserve, time
 
 			res := ev.Resource.(*runtime.OOMAction).TypedSpec()
 
+			found := false
+
 			for _, proc := range res.Processes {
 				if strings.Contains(proc, substr) {
+					found = true
 					numOOMObserved++
 				}
+			}
+
+			if !found {
+				suite.T().Logf("observed an OOM event not containing process substring %q: %q (%q containing)", substr, res.Processes, numOOMObserved)
+
+				return false
 			}
 		}
 	}
