@@ -168,7 +168,17 @@ It should not be used for workloads requiring predictable storage quotas.
         title = "CRI Registry Configuration"
         description = """\
 The CRI registry configuration in v1apha1 legacy machine configuration under `.machine.registries` is now deprecated, but still supported for backwards compatibility.
-New configuration documents `RegistryMirrorConfig`, `RegistryAuthConfig` and `RegistryTLSConfig`  should be used instead.
+New configuration documents `RegistryMirrorConfig`, `RegistryAuthConfig` and `RegistryTLSConfig` should be used instead.
+"""
+
+    [notes.disk-user-volumes]
+        title = "New User Volume type - disk"
+        description = """\
+`volumeType` in UserVolumeConfig can be set to `disk`.
+When set to `disk`, a full block device is used for the volume.
+
+When `volumeType = "disk"`:
+- Size specific settings are not allowed in the provisioning block (`minSize`, `maxSize`, `grow`).
 """
 
 [make_deps]

@@ -8,6 +8,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/google/cel-go/cel"
 	"github.com/siderolabs/gen/value"
 	"github.com/siderolabs/gen/xerrors"
 	"github.com/siderolabs/go-blockdevice/v2/partitioning"
@@ -44,8 +45,18 @@ func LocateAndProvision(ctx context.Context, logger *zap.Logger, volumeContext M
 
 	// attempt to discover the volume
 	for _, dv := range volumeContext.DiscoveredVolumes {
-		matchContext := map[string]any{
-			"volume": dv,
+		var locator *cel.Env
+
+		matchContext := map[string]any{}
+
+		switch volumeType { //nolint:exhaustive // we do not need to repeat exhaustive check here
+		case block.VolumeTypeDisk:
+			locator = celenv.DiskLocator()
+
+		case block.VolumeTypePartition:
+			locator = celenv.VolumeLocator()
+
+			matchContext["volume"] = dv
 		}
 
 		// add disk to the context, so we can use it in CEL expressions
@@ -63,7 +74,7 @@ func LocateAndProvision(ctx context.Context, logger *zap.Logger, volumeContext M
 			}
 		}
 
-		matches, err := volumeContext.Cfg.TypedSpec().Locator.Match.EvalBool(celenv.VolumeLocator(), matchContext)
+		matches, err := volumeContext.Cfg.TypedSpec().Locator.Match.EvalBool(locator, matchContext)
 		if err != nil {
 			return fmt.Errorf("error evaluating volume locator: %w", err)
 		}
@@ -125,6 +136,10 @@ func LocateAndProvision(ctx context.Context, logger *zap.Logger, volumeContext M
 
 	if len(matchedDisks) == 0 {
 		return fmt.Errorf("no disks matched selector for volume")
+	}
+
+	if volumeType == block.VolumeTypeDisk && len(matchedDisks) > 1 {
+		return fmt.Errorf("multiple disks matched selector for disk volume; matched disks: %v", matchedDisks)
 	}
 
 	logger.Debug("matched disks", zap.Strings("disks", matchedDisks))

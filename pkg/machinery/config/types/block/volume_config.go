@@ -190,7 +190,7 @@ func (s *VolumeConfigV1Alpha1) Validate(validation.RuntimeMode, ...validation.Op
 		}
 	}
 
-	extraWarnings, extraErrors := s.ProvisioningSpec.Validate(false)
+	extraWarnings, extraErrors := s.ProvisioningSpec.Validate(false, true)
 	warnings = append(warnings, extraWarnings...)
 	validationErrors = errors.Join(validationErrors, extraErrors)
 
@@ -216,7 +216,9 @@ func (s *VolumeConfigV1Alpha1) Encryption() config.EncryptionConfig {
 }
 
 // Validate the provisioning spec.
-func (s ProvisioningSpec) Validate(required bool) ([]string, error) {
+//
+//nolint:gocyclo
+func (s ProvisioningSpec) Validate(required bool, sizeSupported bool) ([]string, error) {
 	var validationErrors error
 
 	if !s.DiskSelectorSpec.Match.IsZero() {
@@ -227,12 +229,18 @@ func (s ProvisioningSpec) Validate(required bool) ([]string, error) {
 		validationErrors = errors.Join(validationErrors, errors.New("disk selector is required"))
 	}
 
-	if !s.ProvisioningMinSize.IsZero() && !s.ProvisioningMaxSize.IsZero() {
-		if s.ProvisioningMinSize.Value() > s.ProvisioningMaxSize.Value() {
-			validationErrors = errors.Join(validationErrors, errors.New("min size is greater than max size"))
+	if sizeSupported {
+		if !s.ProvisioningMinSize.IsZero() && !s.ProvisioningMaxSize.IsZero() {
+			if s.ProvisioningMinSize.Value() > s.ProvisioningMaxSize.Value() {
+				validationErrors = errors.Join(validationErrors, errors.New("min size is greater than max size"))
+			}
+		} else if required && s.ProvisioningMinSize.IsZero() && s.ProvisioningMaxSize.IsZero() {
+			validationErrors = errors.Join(validationErrors, errors.New("min size or max size is required"))
 		}
-	} else if required && s.ProvisioningMinSize.IsZero() && s.ProvisioningMaxSize.IsZero() {
-		validationErrors = errors.Join(validationErrors, errors.New("min size or max size is required"))
+	} else {
+		if !s.ProvisioningMinSize.IsZero() || !s.ProvisioningMaxSize.IsZero() || s.Grow().IsPresent() {
+			validationErrors = errors.Join(validationErrors, errors.New("min size, max size and grow are not supported"))
+		}
 	}
 
 	return nil, validationErrors

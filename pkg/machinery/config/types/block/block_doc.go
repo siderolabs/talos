@@ -506,8 +506,9 @@ func (UserVolumeConfigV1Alpha1) Doc() *encoder.Doc {
 				Description: "Volume type.",
 				Comments:    [3]string{"" /* encoder.HeadComment */, "Volume type." /* encoder.LineComment */, "" /* encoder.FootComment */},
 				Values: []string{
-					"partition",
 					"directory",
+					"disk",
+					"partition",
 				},
 			},
 			{
@@ -535,6 +536,8 @@ func (UserVolumeConfigV1Alpha1) Doc() *encoder.Doc {
 	}
 
 	doc.AddExample("", exampleUserVolumeConfigV1Alpha1Directory())
+
+	doc.AddExample("", exampleUserVolumeConfigV1Alpha1Disk())
 
 	doc.AddExample("", exampleUserVolumeConfigV1Alpha1Partition())
 

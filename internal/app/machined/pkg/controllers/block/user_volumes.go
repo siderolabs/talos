@@ -46,6 +46,48 @@ var (
 			}
 
 			switch userVolumeConfig.Type().ValueOr(block.VolumeTypePartition) {
+			case block.VolumeTypeDirectory:
+				userVolumeResource.TransformFunc = newVolumeConfigBuilder().
+					WithType(block.VolumeTypeDirectory).
+					WithMount(block.MountSpec{
+						TargetPath:   userVolumeConfig.Name(),
+						ParentID:     constants.UserVolumeMountPoint,
+						SelinuxLabel: constants.EphemeralSelinuxLabel,
+						FileMode:     0o755,
+						UID:          0,
+						GID:          0,
+						BindTarget:   pointer.To(userVolumeConfig.Name()),
+					}).
+					WriterFunc()
+
+			case block.VolumeTypeDisk:
+				userVolumeResource.TransformFunc = newVolumeConfigBuilder().
+					WithType(block.VolumeTypeDisk).
+					WithLocator(userVolumeConfig.Provisioning().DiskSelector().ValueOr(noMatch)).
+					WithProvisioning(block.ProvisioningSpec{
+						Wave: block.WaveUserVolumes,
+						DiskSelector: block.DiskSelector{
+							Match: userVolumeConfig.Provisioning().DiskSelector().ValueOr(noMatch),
+						},
+						PartitionSpec: block.PartitionSpec{
+							TypeUUID: partition.LinuxFilesystemData,
+						},
+						FilesystemSpec: block.FilesystemSpec{
+							Type: userVolumeConfig.Filesystem().Type(),
+						},
+					}).
+					WithMount(block.MountSpec{
+						TargetPath:          userVolumeConfig.Name(),
+						ParentID:            constants.UserVolumeMountPoint,
+						SelinuxLabel:        constants.EphemeralSelinuxLabel,
+						FileMode:            0o755,
+						UID:                 0,
+						GID:                 0,
+						ProjectQuotaSupport: userVolumeConfig.Filesystem().ProjectQuotaSupport(),
+					}).
+					WithConvertEncryptionConfiguration(userVolumeConfig.Encryption()).
+					WriterFunc()
+
 			case block.VolumeTypePartition:
 				userVolumeResource.TransformFunc = newVolumeConfigBuilder().
 					WithType(block.VolumeTypePartition).
@@ -77,20 +119,8 @@ var (
 					}).
 					WithConvertEncryptionConfiguration(userVolumeConfig.Encryption()).
 					WriterFunc()
-			case block.VolumeTypeDirectory:
-				userVolumeResource.TransformFunc = newVolumeConfigBuilder().
-					WithType(block.VolumeTypeDirectory).
-					WithMount(block.MountSpec{
-						TargetPath:   userVolumeConfig.Name(),
-						ParentID:     constants.UserVolumeMountPoint,
-						SelinuxLabel: constants.EphemeralSelinuxLabel,
-						FileMode:     0o755,
-						UID:          0,
-						GID:          0,
-						BindTarget:   pointer.To(userVolumeConfig.Name()),
-					}).
-					WriterFunc()
-			case block.VolumeTypeDisk, block.VolumeTypeTmpfs, block.VolumeTypeSymlink, block.VolumeTypeOverlay:
+
+			case block.VolumeTypeTmpfs, block.VolumeTypeSymlink, block.VolumeTypeOverlay:
 				fallthrough
 
 			default:

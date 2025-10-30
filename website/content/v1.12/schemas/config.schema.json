@@ -451,8 +451,9 @@
         },
         "volumeType": {
           "enum": [
-            "partition",
-            "directory"
+            "directory",
+            "disk",
+            "partition"
           ],
           "title": "volumeType",
           "description": "Volume type.\n",
