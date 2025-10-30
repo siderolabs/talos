@@ -92,6 +92,9 @@ type PartitionSpec struct {
 	// Partition maximum size in bytes, if not set, grows to the maximum size.
 	MaxSize uint64 `yaml:"maxSize,omitempty" protobuf:"2"`
 
+	// Partition maximum size (relative), if not set, grows to the maximum size.
+	RelativeMaxSize uint64 `yaml:"relativeMaxSize" protobuf:"6"`
+
 	// Grow the partition automatically to the maximum size.
 	Grow bool `yaml:"grow" protobuf:"3"`
 
@@ -100,6 +103,15 @@ type PartitionSpec struct {
 
 	// Partition type UUID.
 	TypeUUID string `yaml:"typeUUID,omitempty" protobuf:"5"`
+}
+
+// ResolveMaxSize resolves the maximum size of the partition.
+func (ps *PartitionSpec) ResolveMaxSize(available uint64) uint64 {
+	if ps.RelativeMaxSize != 0 {
+		return available * ps.RelativeMaxSize / 100
+	}
+
+	return ps.MaxSize
 }
 
 // LocatorSpec is the spec for volume locator.

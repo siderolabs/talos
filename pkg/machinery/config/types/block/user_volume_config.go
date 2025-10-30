@@ -113,7 +113,7 @@ func exampleUserVolumeConfigV1Alpha1Partition() *UserVolumeConfigV1Alpha1 {
 		DiskSelectorSpec: DiskSelector{
 			Match: cel.MustExpression(cel.ParseBooleanExpression(`disk.transport == "nvme"`, celenv.DiskLocator())),
 		},
-		ProvisioningMaxSize: MustByteSize("50GiB"),
+		ProvisioningMaxSize: MustSize("50GiB"),
 	}
 	cfg.FilesystemSpec = FilesystemSpec{
 		FilesystemType: block.FilesystemTypeXFS,

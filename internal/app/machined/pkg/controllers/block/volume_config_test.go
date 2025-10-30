@@ -301,7 +301,7 @@ func (suite *VolumeConfigSuite) TestReconcileExtraEPHEMERALConfig() {
 					Match: cel.MustExpression(cel.ParseBooleanExpression(`disk.transport == "nvme"`, celenv.DiskLocator())),
 				},
 				ProvisioningGrow:    pointer.To(false),
-				ProvisioningMaxSize: blockcfg.MustByteSize("2.5TiB"),
+				ProvisioningMaxSize: blockcfg.MustSize("2.5TiB"),
 			},
 			EncryptionSpec: blockcfg.EncryptionSpec{
 				EncryptionProvider: block.EncryptionProviderLUKS2,
@@ -341,12 +341,12 @@ func (suite *VolumeConfigSuite) TestReconcileUserRawVolumes() {
 	rv1.MetaName = "data1"
 	suite.Require().NoError(rv1.ProvisioningSpec.DiskSelectorSpec.Match.UnmarshalText([]byte(`system_disk`)))
 	rv1.ProvisioningSpec.ProvisioningMinSize = blockcfg.MustByteSize("10GiB")
-	rv1.ProvisioningSpec.ProvisioningMaxSize = blockcfg.MustByteSize("100GiB")
+	rv1.ProvisioningSpec.ProvisioningMaxSize = blockcfg.MustSize("100GiB")
 
 	rv2 := blockcfg.NewRawVolumeConfigV1Alpha1()
 	rv2.MetaName = "data2"
 	suite.Require().NoError(rv2.ProvisioningSpec.DiskSelectorSpec.Match.UnmarshalText([]byte(`!system_disk`)))
-	rv2.ProvisioningSpec.ProvisioningMaxSize = blockcfg.MustByteSize("1TiB")
+	rv2.ProvisioningSpec.ProvisioningMaxSize = blockcfg.MustSize("1TiB")
 	rv2.EncryptionSpec = blockcfg.EncryptionSpec{
 		EncryptionProvider: block.EncryptionProviderLUKS2,
 		EncryptionKeys: []blockcfg.EncryptionKey{
@@ -415,14 +415,14 @@ func (suite *VolumeConfigSuite) TestReconcileUserSwapVolumes() {
 	uvPart1.MetaName = userVolumeNames[0]
 	suite.Require().NoError(uvPart1.ProvisioningSpec.DiskSelectorSpec.Match.UnmarshalText([]byte(`system_disk`)))
 	uvPart1.ProvisioningSpec.ProvisioningMinSize = blockcfg.MustByteSize("10GiB")
-	uvPart1.ProvisioningSpec.ProvisioningMaxSize = blockcfg.MustByteSize("100GiB")
+	uvPart1.ProvisioningSpec.ProvisioningMaxSize = blockcfg.MustSize("100GiB")
 	uvPart1.FilesystemSpec.FilesystemType = block.FilesystemTypeXFS
 
 	uvPart2 := blockcfg.NewUserVolumeConfigV1Alpha1()
 	uvPart2.MetaName = userVolumeNames[1]
 	uvPart2.VolumeType = pointer.To(block.VolumeTypePartition)
 	suite.Require().NoError(uvPart2.ProvisioningSpec.DiskSelectorSpec.Match.UnmarshalText([]byte(`!system_disk`)))
-	uvPart2.ProvisioningSpec.ProvisioningMaxSize = blockcfg.MustByteSize("1TiB")
+	uvPart2.ProvisioningSpec.ProvisioningMaxSize = blockcfg.MustSize("1TiB")
 	uvPart2.EncryptionSpec = blockcfg.EncryptionSpec{
 		EncryptionProvider: block.EncryptionProviderLUKS2,
 		EncryptionKeys: []blockcfg.EncryptionKey{
@@ -461,7 +461,7 @@ func (suite *VolumeConfigSuite) TestReconcileUserSwapVolumes() {
 	sv1 := blockcfg.NewSwapVolumeConfigV1Alpha1()
 	sv1.MetaName = "swap"
 	suite.Require().NoError(sv1.ProvisioningSpec.DiskSelectorSpec.Match.UnmarshalText([]byte(`disk.transport == "nvme"`)))
-	sv1.ProvisioningSpec.ProvisioningMaxSize = blockcfg.MustByteSize("2GiB")
+	sv1.ProvisioningSpec.ProvisioningMaxSize = blockcfg.MustSize("2GiB")
 
 	ctr, err := container.New(uvPart1, uvPart2, uvDir1, uvDisk1, sv1)
 	suite.Require().NoError(err)

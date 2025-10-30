@@ -90,7 +90,7 @@ func exampleSwapVolumeConfigV1Alpha1() *SwapVolumeConfigV1Alpha1 {
 			Match: cel.MustExpression(cel.ParseBooleanExpression(`disk.transport == "nvme"`, celenv.DiskLocator())),
 		},
 		ProvisioningMinSize: MustByteSize("3GiB"),
-		ProvisioningMaxSize: MustByteSize("4GiB"),
+		ProvisioningMaxSize: MustSize("4GiB"),
 	}
 	cfg.EncryptionSpec = EncryptionSpec{
 		EncryptionProvider: block.EncryptionProviderLUKS2,

@@ -666,9 +666,9 @@ func (ProvisioningSpec) Doc() *encoder.Doc {
 			},
 			{
 				Name:        "maxSize",
-				Type:        "ByteSize",
+				Type:        "Size",
 				Note:        "",
-				Description: "The maximum size of the volume, if not specified the volume can grow to the size of the\ndisk.\n\nSize is specified in bytes, but can be expressed in human readable format, e.g. 100MB.",
+				Description: "The maximum size of the volume, if not specified the volume can grow to the size of the\ndisk.\n\nSize is specified in bytes or in percents. It can be expressed in human readable format, e.g. 100MB.",
 				Comments:    [3]string{"" /* encoder.HeadComment */, "The maximum size of the volume, if not specified the volume can grow to the size of the" /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
 		},
@@ -676,6 +676,7 @@ func (ProvisioningSpec) Doc() *encoder.Doc {
 
 	doc.Fields[2].AddExample("", "2.5GiB")
 	doc.Fields[3].AddExample("", "50GiB")
+	doc.Fields[3].AddExample("", "80%")
 
 	return doc
 }

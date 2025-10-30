@@ -81,8 +81,10 @@ ProvisioningSpec describes how the volume is provisioned.
 |`minSize` |ByteSize |The minimum size of the volume.<br><br>Size is specified in bytes, but can be expressed in human readable format, e.g. 100MB. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 minSize: 2.5GiB
 {{< /highlight >}}</details> | |
-|`maxSize` |ByteSize |The maximum size of the volume, if not specified the volume can grow to the size of the<br>disk.<br><br>Size is specified in bytes, but can be expressed in human readable format, e.g. 100MB. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
+|`maxSize` |Size |The maximum size of the volume, if not specified the volume can grow to the size of the<br>disk.<br><br>Size is specified in bytes or in percents. It can be expressed in human readable format, e.g. 100MB. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 maxSize: 50GiB
+{{< /highlight >}}{{< highlight yaml >}}
+maxSize: 80%
 {{< /highlight >}}</details> | |
 
 

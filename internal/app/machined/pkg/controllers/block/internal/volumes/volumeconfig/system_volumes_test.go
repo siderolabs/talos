@@ -422,7 +422,7 @@ func TestEphemeralVolumeTransformerWithExtraConfig(t *testing.T) {
 	ephemeralConfig := blockcfg.NewVolumeConfigV1Alpha1()
 	ephemeralConfig.MetaName = constants.EphemeralPartitionLabel
 	ephemeralConfig.ProvisioningSpec.ProvisioningMinSize = blockcfg.MustByteSize("10GiB")
-	ephemeralConfig.ProvisioningSpec.ProvisioningMaxSize = blockcfg.MustByteSize("100GiB")
+	ephemeralConfig.ProvisioningSpec.ProvisioningMaxSize = blockcfg.MustSize("100GiB")
 
 	cfg, err := container.New(
 		baseCfg.DeepCopy(),

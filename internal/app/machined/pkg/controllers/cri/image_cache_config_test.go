@@ -240,7 +240,7 @@ func (suite *ImageCacheConfigSuite) TestReconcileWithImageCacheVolume() {
 
 	volumeConfig := blockcfg.NewVolumeConfigV1Alpha1()
 	volumeConfig.MetaName = constants.ImageCachePartitionLabel
-	volumeConfig.ProvisioningSpec.ProvisioningMaxSize = blockcfg.MustByteSize("10GiB")
+	volumeConfig.ProvisioningSpec.ProvisioningMaxSize = blockcfg.MustSize("10GiB")
 
 	container, err := container.New(v1alpha1Cfg, volumeConfig)
 	suite.Require().NoError(err)
