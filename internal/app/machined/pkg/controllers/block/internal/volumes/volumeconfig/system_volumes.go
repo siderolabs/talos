@@ -113,11 +113,12 @@ func GetEphemeralVolumeTransformer(inContainer bool) volumeConfigTransformer {
 							Match: extraVolumeConfig.Provisioning().DiskSelector().ValueOr(systemDiskMatch()),
 						},
 						PartitionSpec: block.PartitionSpec{
-							MinSize:  extraVolumeConfig.Provisioning().MinSize().ValueOr(quirks.New("").PartitionSizes().EphemeralMinSize()),
-							MaxSize:  extraVolumeConfig.Provisioning().MaxSize().ValueOr(0),
-							Grow:     extraVolumeConfig.Provisioning().Grow().ValueOr(true),
-							Label:    constants.EphemeralPartitionLabel,
-							TypeUUID: partition.LinuxFilesystemData,
+							MinSize:         extraVolumeConfig.Provisioning().MinSize().ValueOr(quirks.New("").PartitionSizes().EphemeralMinSize()),
+							MaxSize:         extraVolumeConfig.Provisioning().MaxSize().ValueOrZero(),
+							RelativeMaxSize: extraVolumeConfig.Provisioning().RelativeMaxSize().ValueOrZero(),
+							Grow:            extraVolumeConfig.Provisioning().Grow().ValueOr(true),
+							Label:           constants.EphemeralPartitionLabel,
+							TypeUUID:        partition.LinuxFilesystemData,
 						},
 						FilesystemSpec: block.FilesystemSpec{
 							Type:  block.FilesystemTypeXFS,

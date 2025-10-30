@@ -313,9 +313,9 @@
         "maxSize": {
           "type": "string",
           "title": "maxSize",
-          "description": "The maximum size of the volume, if not specified the volume can grow to the size of the\ndisk.\n\nSize is specified in bytes, but can be expressed in human readable format, e.g. 100MB.\n",
-          "markdownDescription": "The maximum size of the volume, if not specified the volume can grow to the size of the\ndisk.\n\nSize is specified in bytes, but can be expressed in human readable format, e.g. 100MB.",
-          "x-intellij-html-description": "\u003cp\u003eThe maximum size of the volume, if not specified the volume can grow to the size of the\ndisk.\u003c/p\u003e\n\n\u003cp\u003eSize is specified in bytes, but can be expressed in human readable format, e.g. 100MB.\u003c/p\u003e\n"
+          "description": "The maximum size of the volume, if not specified the volume can grow to the size of the\ndisk.\n\nSize is specified in bytes or in percents. It can be expressed in human readable format, e.g. 100MB.\n",
+          "markdownDescription": "The maximum size of the volume, if not specified the volume can grow to the size of the\ndisk.\n\nSize is specified in bytes or in percents. It can be expressed in human readable format, e.g. 100MB.",
+          "x-intellij-html-description": "\u003cp\u003eThe maximum size of the volume, if not specified the volume can grow to the size of the\ndisk.\u003c/p\u003e\n\n\u003cp\u003eSize is specified in bytes or in percents. It can be expressed in human readable format, e.g. 100MB.\u003c/p\u003e\n"
         }
       },
       "additionalProperties": false,

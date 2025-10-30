@@ -93,13 +93,15 @@ type ProvisioningSpec struct {
 	//    The maximum size of the volume, if not specified the volume can grow to the size of the
 	//    disk.
 	//
-	//    Size is specified in bytes, but can be expressed in human readable format, e.g. 100MB.
+	//    Size is specified in bytes or in percents. It can be expressed in human readable format, e.g. 100MB.
 	//  examples:
 	//    - value: >
 	//        "50GiB"
+	//    - value: >
+	//        "80%"
 	//  schema:
 	//    type: string
-	ProvisioningMaxSize ByteSize `yaml:"maxSize,omitempty"`
+	ProvisioningMaxSize Size `yaml:"maxSize,omitempty"`
 }
 
 // DiskSelector selects a disk for the volume.
@@ -135,7 +137,7 @@ func exampleVolumeConfigEphemeralV1Alpha1() *VolumeConfigV1Alpha1 {
 		DiskSelectorSpec: DiskSelector{
 			Match: cel.MustExpression(cel.ParseBooleanExpression(`disk.transport == "nvme"`, celenv.DiskLocator())),
 		},
-		ProvisioningMaxSize: MustByteSize("50GiB"),
+		ProvisioningMaxSize: MustSize("50GiB"),
 	}
 
 	return cfg
@@ -230,7 +232,7 @@ func (s ProvisioningSpec) Validate(required bool, sizeSupported bool) ([]string,
 	}
 
 	if sizeSupported {
-		if !s.ProvisioningMinSize.IsZero() && !s.ProvisioningMaxSize.IsZero() {
+		if !s.ProvisioningMinSize.IsZero() && !s.ProvisioningMaxSize.IsZero() && !s.ProvisioningMaxSize.IsRelative() {
 			if s.ProvisioningMinSize.Value() > s.ProvisioningMaxSize.Value() {
 				validationErrors = errors.Join(validationErrors, errors.New("min size is greater than max size"))
 			}
@@ -305,4 +307,18 @@ func (s ProvisioningSpec) MaxSize() optional.Optional[uint64] {
 	}
 
 	return optional.Some(s.ProvisioningMaxSize.Value())
+}
+
+// RelativeMaxSize implements config.VolumeProvisioningConfig interface.
+func (s ProvisioningSpec) RelativeMaxSize() optional.Optional[uint64] {
+	if s.ProvisioningMaxSize.IsZero() {
+		return optional.None[uint64]()
+	}
+
+	val, ok := s.ProvisioningMaxSize.RelativeValue()
+	if !ok {
+		return optional.None[uint64]()
+	}
+
+	return optional.Some(val)
 }

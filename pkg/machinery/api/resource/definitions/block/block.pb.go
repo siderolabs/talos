@@ -1236,14 +1236,15 @@ func (x *MountStatusSpec) GetDetached() bool {
 
 // PartitionSpec is the spec for volume partitioning.
 type PartitionSpec struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	MinSize       uint64                 `protobuf:"varint,1,opt,name=min_size,json=minSize,proto3" json:"min_size,omitempty"`
-	MaxSize       uint64                 `protobuf:"varint,2,opt,name=max_size,json=maxSize,proto3" json:"max_size,omitempty"`
-	Grow          bool                   `protobuf:"varint,3,opt,name=grow,proto3" json:"grow,omitempty"`
-	Label         string                 `protobuf:"bytes,4,opt,name=label,proto3" json:"label,omitempty"`
-	TypeUuid      string                 `protobuf:"bytes,5,opt,name=type_uuid,json=typeUuid,proto3" json:"type_uuid,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state           protoimpl.MessageState `protogen:"open.v1"`
+	MinSize         uint64                 `protobuf:"varint,1,opt,name=min_size,json=minSize,proto3" json:"min_size,omitempty"`
+	MaxSize         uint64                 `protobuf:"varint,2,opt,name=max_size,json=maxSize,proto3" json:"max_size,omitempty"`
+	Grow            bool                   `protobuf:"varint,3,opt,name=grow,proto3" json:"grow,omitempty"`
+	Label           string                 `protobuf:"bytes,4,opt,name=label,proto3" json:"label,omitempty"`
+	TypeUuid        string                 `protobuf:"bytes,5,opt,name=type_uuid,json=typeUuid,proto3" json:"type_uuid,omitempty"`
+	RelativeMaxSize uint64                 `protobuf:"varint,6,opt,name=relative_max_size,json=relativeMaxSize,proto3" json:"relative_max_size,omitempty"`
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
 }
 
 func (x *PartitionSpec) Reset() {
@@ -1309,6 +1310,13 @@ func (x *PartitionSpec) GetTypeUuid() string {
 		return x.TypeUuid
 	}
 	return ""
+}
+
+func (x *PartitionSpec) GetRelativeMaxSize() uint64 {
+	if x != nil {
+		return x.RelativeMaxSize
+	}
+	return 0
 }
 
 // ProvisioningSpec is the spec for volume provisioning.
@@ -2431,13 +2439,14 @@ const file_resource_definitions_block_block_proto_rawDesc = "" +
 	"\tread_only\x18\x05 \x01(\bR\breadOnly\x122\n" +
 	"\x15project_quota_support\x18\x06 \x01(\bR\x13projectQuotaSupport\x12n\n" +
 	"\x13encryption_provider\x18\a \x01(\x0e2=.talos.resource.definitions.enums.BlockEncryptionProviderTypeR\x12encryptionProvider\x12\x1a\n" +
-	"\bdetached\x18\b \x01(\bR\bdetached\"\x8c\x01\n" +
+	"\bdetached\x18\b \x01(\bR\bdetached\"\xb8\x01\n" +
 	"\rPartitionSpec\x12\x19\n" +
 	"\bmin_size\x18\x01 \x01(\x04R\aminSize\x12\x19\n" +
 	"\bmax_size\x18\x02 \x01(\x04R\amaxSize\x12\x12\n" +
 	"\x04grow\x18\x03 \x01(\bR\x04grow\x12\x14\n" +
 	"\x05label\x18\x04 \x01(\tR\x05label\x12\x1b\n" +
-	"\ttype_uuid\x18\x05 \x01(\tR\btypeUuid\"\xae\x02\n" +
+	"\ttype_uuid\x18\x05 \x01(\tR\btypeUuid\x12*\n" +
+	"\x11relative_max_size\x18\x06 \x01(\x04R\x0frelativeMaxSize\"\xae\x02\n" +
 	"\x10ProvisioningSpec\x12S\n" +
 	"\rdisk_selector\x18\x01 \x01(\v2..talos.resource.definitions.block.DiskSelectorR\fdiskSelector\x12V\n" +
 	"\x0epartition_spec\x18\x02 \x01(\v2/.talos.resource.definitions.block.PartitionSpecR\rpartitionSpec\x12\x12\n" +

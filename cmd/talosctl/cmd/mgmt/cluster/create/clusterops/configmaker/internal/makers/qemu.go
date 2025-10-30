@@ -536,7 +536,7 @@ func (m *Qemu) initExtraDisks() error {
 					Match: cel.MustExpression(cel.ParseBooleanExpression(fmt.Sprintf("'%s' in disk.symlinks", m.Provisioner.UserDiskName(diskID+1)), celenv.DiskLocator())),
 				},
 				ProvisioningMinSize: block.MustByteSize(volumeSize),
-				ProvisioningMaxSize: block.MustByteSize(volumeSize),
+				ProvisioningMaxSize: block.MustSize(volumeSize),
 			}
 			userVolume.EncryptionSpec = encryptionSpec
 

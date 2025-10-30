@@ -29,19 +29,6 @@ type ByteSize struct {
 	raw   []byte
 }
 
-// MustByteSize returns a new ByteSize with the given value.
-//
-// It panics if the value is invalid.
-func MustByteSize(value string) ByteSize {
-	var bs ByteSize
-
-	if err := bs.UnmarshalText([]byte(value)); err != nil {
-		panic(err)
-	}
-
-	return bs
-}
-
 // Value returns the value.
 func (bs ByteSize) Value() uint64 {
 	return pointer.SafeDeref(bs.value)

@@ -512,17 +512,29 @@ func (suite *VolumesSuite) TestUserVolumesPartition() {
 
 	userVolumeIDs := xslices.Map(volumeIDs, func(volumeID string) string { return constants.UserVolumePrefix + volumeID })
 
-	configDocs := xslices.Map(volumeIDs, func(volumeID string) any {
+	configDocs := xslices.Map(volumeIDs[:1], func(volumeID string) any {
 		doc := blockcfg.NewUserVolumeConfigV1Alpha1()
 		doc.MetaName = volumeID
 		doc.ProvisioningSpec.DiskSelectorSpec.Match = cel.MustExpression(
 			cel.ParseBooleanExpression(fmt.Sprintf("'%s' in disk.symlinks", disk.TypedSpec().Symlinks[0]), celenv.DiskLocator()),
 		)
 		doc.ProvisioningSpec.ProvisioningMinSize = blockcfg.MustByteSize("100MiB")
-		doc.ProvisioningSpec.ProvisioningMaxSize = blockcfg.MustByteSize("1GiB")
+		doc.ProvisioningSpec.ProvisioningMaxSize = blockcfg.MustSize("1GiB")
 
 		return doc
 	})
+
+	configDocs = append(configDocs, xslices.Map(volumeIDs[1:], func(volumeID string) any {
+		doc := blockcfg.NewUserVolumeConfigV1Alpha1()
+		doc.MetaName = volumeID
+		doc.ProvisioningSpec.DiskSelectorSpec.Match = cel.MustExpression(
+			cel.ParseBooleanExpression(fmt.Sprintf("'%s' in disk.symlinks", disk.TypedSpec().Symlinks[0]), celenv.DiskLocator()),
+		)
+		doc.ProvisioningSpec.ProvisioningMinSize = blockcfg.MustByteSize("100MiB")
+		doc.ProvisioningSpec.ProvisioningMaxSize = blockcfg.MustSize("20%")
+
+		return doc
+	})...)
 
 	// create user volumes
 	suite.PatchMachineConfig(ctx, configDocs...)
@@ -979,7 +991,7 @@ func (suite *VolumesSuite) TestRawVolumes() {
 			cel.ParseBooleanExpression(fmt.Sprintf("'%s' in disk.symlinks", disk.TypedSpec().Symlinks[0]), celenv.DiskLocator()),
 		)
 		doc.ProvisioningSpec.ProvisioningMinSize = blockcfg.MustByteSize("100MiB")
-		doc.ProvisioningSpec.ProvisioningMaxSize = blockcfg.MustByteSize("500MiB")
+		doc.ProvisioningSpec.ProvisioningMaxSize = blockcfg.MustSize("500MiB")
 
 		return doc
 	})
@@ -1104,7 +1116,7 @@ func (suite *VolumesSuite) TestExistingVolumes() {
 		cel.ParseBooleanExpression(fmt.Sprintf("'%s' in disk.symlinks", disk.TypedSpec().Symlinks[0]), celenv.DiskLocator()),
 	)
 	userVolumeDoc.ProvisioningSpec.ProvisioningMinSize = blockcfg.MustByteSize("100MiB")
-	userVolumeDoc.ProvisioningSpec.ProvisioningMaxSize = blockcfg.MustByteSize("1GiB")
+	userVolumeDoc.ProvisioningSpec.ProvisioningMaxSize = blockcfg.MustSize("1GiB")
 
 	// create user volumes
 	suite.PatchMachineConfig(ctx, userVolumeDoc)
@@ -1299,7 +1311,7 @@ func (suite *VolumesSuite) TestSwapOnOff() {
 		},
 	}
 	doc.ProvisioningSpec.ProvisioningMinSize = blockcfg.MustByteSize("100MiB")
-	doc.ProvisioningSpec.ProvisioningMaxSize = blockcfg.MustByteSize("500MiB")
+	doc.ProvisioningSpec.ProvisioningMaxSize = blockcfg.MustSize("500MiB")
 
 	// create user volumes
 	suite.PatchMachineConfig(ctx, doc)

@@ -5798,6 +5798,7 @@ PartitionSpec is the spec for volume partitioning.
 | grow | [bool](#bool) |  |  |
 | label | [string](#string) |  |  |
 | type_uuid | [string](#string) |  |  |
+| relative_max_size | [uint64](#uint64) |  |  |
 
 
 

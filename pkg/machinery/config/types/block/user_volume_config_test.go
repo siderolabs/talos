@@ -40,7 +40,7 @@ func TestUserVolumeConfigMarshalUnmarshal(t *testing.T) {
 
 				require.NoError(t, c.ProvisioningSpec.DiskSelectorSpec.Match.UnmarshalText([]byte(`disk.transport == "nvme" && !system_disk`)))
 				c.ProvisioningSpec.ProvisioningMinSize = block.MustByteSize("10GiB")
-				c.ProvisioningSpec.ProvisioningMaxSize = block.MustByteSize("100GiB")
+				c.ProvisioningSpec.ProvisioningMaxSize = block.MustSize("100GiB")
 				c.FilesystemSpec.FilesystemType = blockres.FilesystemTypeXFS
 
 				return c
@@ -195,7 +195,7 @@ func TestUserVolumeConfigValidate(t *testing.T) {
 				c.MetaName = constants.EphemeralPartitionLabel
 
 				c.ProvisioningSpec.ProvisioningMinSize = block.MustByteSize("2.5TiB")
-				c.ProvisioningSpec.ProvisioningMaxSize = block.MustByteSize("10GiB")
+				c.ProvisioningSpec.ProvisioningMaxSize = block.MustSize("10GiB")
 
 				return c
 			},
@@ -210,7 +210,7 @@ func TestUserVolumeConfigValidate(t *testing.T) {
 				c.MetaName = constants.EphemeralPartitionLabel
 
 				require.NoError(t, c.ProvisioningSpec.DiskSelectorSpec.Match.UnmarshalText([]byte(`disk.size > 120u * GiB`)))
-				c.ProvisioningSpec.ProvisioningMaxSize = block.MustByteSize("2.5TiB")
+				c.ProvisioningSpec.ProvisioningMaxSize = block.MustSize("2.5TiB")
 				c.ProvisioningSpec.ProvisioningMinSize = block.MustByteSize("10GiB")
 				c.FilesystemSpec.FilesystemType = blockres.FilesystemTypeISO9660
 
@@ -349,7 +349,7 @@ func TestUserVolumeConfigValidate(t *testing.T) {
 				c.VolumeType = pointer.To(blockres.VolumeTypeDisk)
 
 				require.NoError(t, c.ProvisioningSpec.DiskSelectorSpec.Match.UnmarshalText([]byte(`disk.size > 120u * GiB`)))
-				c.ProvisioningSpec.ProvisioningMaxSize = block.MustByteSize("2.5TiB")
+				c.ProvisioningSpec.ProvisioningMaxSize = block.MustSize("2.5TiB")
 				c.ProvisioningSpec.ProvisioningMinSize = block.MustByteSize("10GiB")
 				c.FilesystemSpec.FilesystemType = blockres.FilesystemTypeEXT4
 
@@ -405,7 +405,7 @@ func TestUserVolumeConfigValidate(t *testing.T) {
 				c.MetaName = constants.EphemeralPartitionLabel
 
 				require.NoError(t, c.ProvisioningSpec.DiskSelectorSpec.Match.UnmarshalText([]byte(`disk.size > 120u * GiB`)))
-				c.ProvisioningSpec.ProvisioningMaxSize = block.MustByteSize("2.5TiB")
+				c.ProvisioningSpec.ProvisioningMaxSize = block.MustSize("2.5TiB")
 				c.ProvisioningSpec.ProvisioningMinSize = block.MustByteSize("10GiB")
 				c.FilesystemSpec.FilesystemType = blockres.FilesystemTypeEXT4
 
@@ -421,7 +421,7 @@ func TestUserVolumeConfigValidate(t *testing.T) {
 				c.VolumeType = pointer.To(blockres.VolumeTypePartition)
 
 				require.NoError(t, c.ProvisioningSpec.DiskSelectorSpec.Match.UnmarshalText([]byte(`disk.size > 120u * GiB`)))
-				c.ProvisioningSpec.ProvisioningMaxSize = block.MustByteSize("2.5TiB")
+				c.ProvisioningSpec.ProvisioningMaxSize = block.MustSize("2.5TiB")
 				c.ProvisioningSpec.ProvisioningMinSize = block.MustByteSize("10GiB")
 				c.FilesystemSpec.FilesystemType = blockres.FilesystemTypeEXT4
 

@@ -39,7 +39,7 @@ func TestSwapVolumeConfigMarshalUnmarshal(t *testing.T) {
 
 				require.NoError(t, c.ProvisioningSpec.DiskSelectorSpec.Match.UnmarshalText([]byte(`disk.transport == "nvme" && !system_disk`)))
 				c.ProvisioningSpec.ProvisioningMinSize = block.MustByteSize("10GiB")
-				c.ProvisioningSpec.ProvisioningMaxSize = block.MustByteSize("100GiB")
+				c.ProvisioningSpec.ProvisioningMaxSize = block.MustSize("100GiB")
 
 				return c
 			},
@@ -178,7 +178,7 @@ func TestSwapVolumeConfigValidate(t *testing.T) {
 				c.MetaName = constants.EphemeralPartitionLabel
 
 				c.ProvisioningSpec.ProvisioningMinSize = block.MustByteSize("2.5TiB")
-				c.ProvisioningSpec.ProvisioningMaxSize = block.MustByteSize("10GiB")
+				c.ProvisioningSpec.ProvisioningMaxSize = block.MustSize("10GiB")
 
 				return c
 			},
@@ -259,7 +259,7 @@ func TestSwapVolumeConfigValidate(t *testing.T) {
 				c.MetaName = constants.EphemeralPartitionLabel
 
 				require.NoError(t, c.ProvisioningSpec.DiskSelectorSpec.Match.UnmarshalText([]byte(`disk.size > 120u * GiB`)))
-				c.ProvisioningSpec.ProvisioningMaxSize = block.MustByteSize("2.5TiB")
+				c.ProvisioningSpec.ProvisioningMaxSize = block.MustSize("2.5TiB")
 				c.ProvisioningSpec.ProvisioningMinSize = block.MustByteSize("10GiB")
 
 				return c

@@ -158,6 +158,7 @@ message PartitionSpec {
   bool grow = 3;
   string label = 4;
   string type_uuid = 5;
+  uint64 relative_max_size = 6;
 }
 
 // ProvisioningSpec is the spec for volume provisioning.
