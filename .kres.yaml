@@ -2059,6 +2059,7 @@ spec:
             WITH_CONFIG_PATCH_WORKER: "@hack/test/patches/ephemeral-nvme.yaml:@hack/test/patches/dm-raid-module.yaml"
             QEMU_MEMORY_CONTROLPLANES: 4096 # race-enabled Talos consumes lots of RAM
             QEMU_MEMORY_WORKERS: 4096
+            EXTRA_TEST_ARGS: "-talos.race"
             TAG_SUFFIX: -race
             IMAGE_REGISTRY: registry.dev.siderolabs.io
         - name: save-talos-logs

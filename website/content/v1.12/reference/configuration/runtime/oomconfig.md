@@ -16,7 +16,7 @@ title: OOMConfig
 {{< highlight yaml >}}
 apiVersion: v1alpha1
 kind: OOMConfig
-triggerExpression: memory_full_avg10 > 12.0 && time_since_trigger > duration("500ms") # This expression defines when to trigger OOM action.
+triggerExpression: memory_full_avg10 > 12.0 && d_memory_full_avg10 > 0.0 && time_since_trigger > duration("500ms") # This expression defines when to trigger OOM action.
 cgroupRankingExpression: 'memory_max.hasValue() ? 0.0 : ({Besteffort: 1.0, Burstable: 0.5, Guaranteed: 0.0, Podruntime: 0.0, System: 0.0}[class] * double(memory_current.orValue(0u)) / double(memory_peak.orValue(0u) - memory_current.orValue(0u)))' # This expression defines how to rank cgroups for OOM handler.
 sampleInterval: 100ms # How often should the trigger expression be evaluated.
 {{< /highlight >}}

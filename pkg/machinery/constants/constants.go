@@ -1314,7 +1314,7 @@ const (
 	ContainerMarkerFilePath = "/usr/etc/in-container"
 
 	// DefaultOOMTriggerExpression is the default CEL expression used to determine whether to trigger OOM.
-	DefaultOOMTriggerExpression = `memory_full_avg10 > 12.0 && time_since_trigger > duration("500ms")`
+	DefaultOOMTriggerExpression = `memory_full_avg10 > 12.0 && d_memory_full_avg10 > 0.0 && time_since_trigger > duration("500ms")`
 
 	// DefaultOOMCgroupRankingExpression is the default CEL expression used to rank cgroups for OOM killer.
 	DefaultOOMCgroupRankingExpression = `memory_max.hasValue() ? 0.0 :

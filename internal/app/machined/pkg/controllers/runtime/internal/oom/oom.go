@@ -10,6 +10,7 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/google/cel-go/common/types"
 	"go.uber.org/zap"
@@ -56,12 +57,7 @@ func (cgroup *RankedCgroup) CalculateScore(expr *cel.Expression) (float64, error
 
 // EvaluateTrigger is a method obtaining data and evaluating the trigger expression.
 // When the result is true, designated OOM action is to be executed.
-func EvaluateTrigger(triggerExpr cel.Expression, evalContext map[string]any, cgroup string) (bool, error) {
-	err := PopulatePsiToCtx(cgroup, evalContext)
-	if err != nil {
-		return false, fmt.Errorf("cannot populate PSI context: %w", err)
-	}
-
+func EvaluateTrigger(triggerExpr cel.Expression, evalContext map[string]any) (bool, error) {
 	trigger, err := triggerExpr.EvalBool(celenv.OOMTrigger(), evalContext)
 	if err != nil {
 		return false, fmt.Errorf("cannot evaluate expression: %w", err)
@@ -71,7 +67,7 @@ func EvaluateTrigger(triggerExpr cel.Expression, evalContext map[string]any, cgr
 }
 
 // PopulatePsiToCtx populates the context with PSI data from a cgroup.
-func PopulatePsiToCtx(cgroup string, evalContext map[string]any) error {
+func PopulatePsiToCtx(cgroup string, evalContext map[string]any, psi map[string]float64, sampleInterval time.Duration) error {
 	node, err := cgroups.GetCgroupProperty(cgroup, "memory.pressure")
 	if err != nil {
 		return fmt.Errorf("cannot read memory pressure: %w", err)
@@ -93,7 +89,15 @@ func PopulatePsiToCtx(cgroup string, evalContext map[string]any) error {
 				return fmt.Errorf("PSI is not defined")
 			}
 
+			diff := 0.
+
+			if oldValue, ok := psi["memory_"+psiType+"_"+span]; ok {
+				diff = (value.Float64() - oldValue) / sampleInterval.Seconds()
+			}
+
+			evalContext["d_memory_"+psiType+"_"+span] = diff
 			evalContext["memory_"+psiType+"_"+span] = value.Float64()
+			psi["memory_"+psiType+"_"+span] = value.Float64()
 		}
 	}
 

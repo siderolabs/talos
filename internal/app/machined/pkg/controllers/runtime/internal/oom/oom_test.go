@@ -125,14 +125,22 @@ func TestPopulatePsiToCtx(t *testing.T) {
 			dir:       "./testdata/trigger-false",
 			expectErr: "",
 			expect: map[string]any{
-				"memory_full_avg10":  2.4,
-				"memory_full_avg300": 1.71,
-				"memory_full_avg60":  5.16,
-				"memory_full_total":  1.0654831e+07,
-				"memory_some_avg10":  2.82,
-				"memory_some_avg300": 1.97,
-				"memory_some_avg60":  5.95,
-				"memory_some_total":  1.217234e+07,
+				"memory_full_avg10":    2.4,
+				"memory_full_avg300":   1.71,
+				"memory_full_avg60":    5.16,
+				"memory_full_total":    1.0654831e+07,
+				"memory_some_avg10":    2.82,
+				"memory_some_avg300":   1.97,
+				"memory_some_avg60":    5.95,
+				"memory_some_total":    1.217234e+07,
+				"d_memory_full_avg10":  0.0,
+				"d_memory_full_avg300": 0.0,
+				"d_memory_full_avg60":  0.0,
+				"d_memory_full_total":  0.0,
+				"d_memory_some_avg10":  0.0,
+				"d_memory_some_avg300": 0.0,
+				"d_memory_some_avg60":  0.0,
+				"d_memory_some_total":  0.0,
 			},
 		},
 		{
@@ -140,14 +148,22 @@ func TestPopulatePsiToCtx(t *testing.T) {
 			dir:       "./testdata/trigger-true",
 			expectErr: "",
 			expect: map[string]any{
-				"memory_full_avg10":  14.54,
-				"memory_full_avg60":  6.97,
-				"memory_full_avg300": 1.82,
-				"memory_full_total":  1.0654831e+07,
-				"memory_some_avg10":  17.06,
-				"memory_some_avg60":  8.04,
-				"memory_some_avg300": 2.1,
-				"memory_some_total":  1.217234e+07,
+				"memory_full_avg10":    14.54,
+				"memory_full_avg60":    6.97,
+				"memory_full_avg300":   1.82,
+				"memory_full_total":    1.0654831e+07,
+				"memory_some_avg10":    17.06,
+				"memory_some_avg60":    8.04,
+				"memory_some_avg300":   2.1,
+				"memory_some_total":    1.217234e+07,
+				"d_memory_full_avg10":  0.0,
+				"d_memory_full_avg300": 0.0,
+				"d_memory_full_avg60":  0.0,
+				"d_memory_full_total":  0.0,
+				"d_memory_some_avg10":  0.0,
+				"d_memory_some_avg300": 0.0,
+				"d_memory_some_avg60":  0.0,
+				"d_memory_some_total":  0.0,
 			},
 		},
 	} {
@@ -156,7 +172,7 @@ func TestPopulatePsiToCtx(t *testing.T) {
 
 			ctx := map[string]any{}
 
-			err := oom.PopulatePsiToCtx(test.dir, ctx)
+			err := oom.PopulatePsiToCtx(test.dir, ctx, make(map[string]float64), 0)
 
 			if test.expectErr == "" {
 				require.NoError(t, err)
@@ -192,7 +208,7 @@ func TestEvaluateTrigger(t *testing.T) {
 			},
 			triggerExpr: triggerExpr1,
 			expect:      false,
-			expectErr:   "cannot populate PSI context: cannot read memory pressure: error opening cgroupfs file open testdata/empty/memory.pressure: no such file or directory",
+			expectErr:   "cannot read memory pressure: error opening cgroupfs file open testdata/empty/memory.pressure: no such file or directory",
 		},
 		{
 			name: "cgroup-false",
@@ -241,11 +257,24 @@ func TestEvaluateTrigger(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
 
-			trigger, err := oom.EvaluateTrigger(test.triggerExpr, test.ctx, test.dir)
-
-			assert.Equal(t, test.expect, trigger)
+			err := oom.PopulatePsiToCtx(test.dir, test.ctx, map[string]float64{
+				"memory_full_avg10":  0,
+				"memory_full_avg300": 0,
+				"memory_full_avg60":  0,
+				"memory_full_total":  0,
+				"memory_some_avg10":  0,
+				"memory_some_avg300": 0,
+				"memory_some_avg60":  0,
+				"memory_some_total":  0,
+			}, 0)
 
 			if test.expectErr == "" {
+				require.NoError(t, err)
+
+				trigger, err := oom.EvaluateTrigger(test.triggerExpr, test.ctx)
+
+				assert.Equal(t, test.expect, trigger)
+
 				require.NoError(t, err)
 			} else {
 				assert.ErrorContains(t, err, test.expectErr)

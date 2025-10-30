@@ -62,6 +62,8 @@ type TalosSuite struct {
 	CSITestTimeout string
 	// Airgapped marks that cluster has no access to external networks
 	Airgapped bool
+	// Race informs test suites about race detector being enabled (e.g. for skipping incompatible tests)
+	Race bool
 
 	discoveredNodes cluster.Info
 }
