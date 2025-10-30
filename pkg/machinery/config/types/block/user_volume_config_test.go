@@ -341,6 +341,24 @@ func TestUserVolumeConfigValidate(t *testing.T) {
 			expectedErrors: "encryption spec is invalid for volumeType directory",
 		},
 		{
+			name: "size for disk",
+
+			cfg: func(t *testing.T) *block.UserVolumeConfigV1Alpha1 {
+				c := block.NewUserVolumeConfigV1Alpha1()
+				c.MetaName = constants.EphemeralPartitionLabel
+				c.VolumeType = pointer.To(blockres.VolumeTypeDisk)
+
+				require.NoError(t, c.ProvisioningSpec.DiskSelectorSpec.Match.UnmarshalText([]byte(`disk.size > 120u * GiB`)))
+				c.ProvisioningSpec.ProvisioningMaxSize = block.MustByteSize("2.5TiB")
+				c.ProvisioningSpec.ProvisioningMinSize = block.MustByteSize("10GiB")
+				c.FilesystemSpec.FilesystemType = blockres.FilesystemTypeEXT4
+
+				return c
+			},
+
+			expectedErrors: "min size, max size and grow are not supported",
+		},
+		{
 			name: "filesystem spec for directory",
 
 			cfg: func(t *testing.T) *block.UserVolumeConfigV1Alpha1 {
@@ -417,6 +435,20 @@ func TestUserVolumeConfigValidate(t *testing.T) {
 				c := block.NewUserVolumeConfigV1Alpha1()
 				c.MetaName = constants.EphemeralPartitionLabel
 				c.VolumeType = pointer.To(blockres.VolumeTypeDirectory)
+
+				return c
+			},
+		},
+		{
+			name: "valid disk",
+
+			cfg: func(t *testing.T) *block.UserVolumeConfigV1Alpha1 {
+				c := block.NewUserVolumeConfigV1Alpha1()
+				c.MetaName = constants.EphemeralPartitionLabel
+				c.VolumeType = pointer.To(blockres.VolumeTypeDisk)
+
+				require.NoError(t, c.ProvisioningSpec.DiskSelectorSpec.Match.UnmarshalText([]byte(`disk.size > 120u * GiB`)))
+				c.FilesystemSpec.FilesystemType = blockres.FilesystemTypeEXT4
 
 				return c
 			},

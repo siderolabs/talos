@@ -59,6 +59,7 @@ type VolumeType = block.VolumeType
 //	  The partition label is automatically generated as `u-<name>`.
 //	examples:
 //	  - value: exampleUserVolumeConfigV1Alpha1Directory()
+//	  - value: exampleUserVolumeConfigV1Alpha1Disk()
 //	  - value: exampleUserVolumeConfigV1Alpha1Partition()
 //	alias: UserVolumeConfig
 //	schemaRoot: true
@@ -75,8 +76,9 @@ type UserVolumeConfigV1Alpha1 struct {
 	//   description: |
 	//     Volume type.
 	//   values:
-	//     - partition
 	//     - directory
+	//     - disk
+	//     - partition
 	//  schema:
 	//    type: string
 	VolumeType *VolumeType `yaml:"volumeType,omitempty"`
@@ -143,6 +145,37 @@ func exampleUserVolumeConfigV1Alpha1Directory() *UserVolumeConfigV1Alpha1 {
 	return cfg
 }
 
+func exampleUserVolumeConfigV1Alpha1Disk() *UserVolumeConfigV1Alpha1 {
+	cfg := NewUserVolumeConfigV1Alpha1()
+	cfg.MetaName = userVolumeName
+	cfg.VolumeType = pointer.To(block.VolumeTypeDisk)
+	cfg.ProvisioningSpec = ProvisioningSpec{
+		DiskSelectorSpec: DiskSelector{
+			Match: cel.MustExpression(cel.ParseBooleanExpression(`disk.transport == "nvme"`, celenv.DiskLocator())),
+		},
+	}
+	cfg.FilesystemSpec = FilesystemSpec{
+		FilesystemType: block.FilesystemTypeXFS,
+	}
+	cfg.EncryptionSpec = EncryptionSpec{
+		EncryptionProvider: block.EncryptionProviderLUKS2,
+		EncryptionKeys: []EncryptionKey{
+			{
+				KeySlot: 0,
+				KeyTPM:  &EncryptionKeyTPM{},
+			},
+			{
+				KeySlot: 1,
+				KeyStatic: &EncryptionKeyStatic{
+					KeyData: "topsecret",
+				},
+			},
+		},
+	}
+
+	return cfg
+}
+
 // Name implements config.NamedDocument interface.
 func (s *UserVolumeConfigV1Alpha1) Name() string {
 	return s.MetaName
@@ -198,20 +231,6 @@ func (s *UserVolumeConfigV1Alpha1) Validate(validation.RuntimeMode, ...validatio
 	}
 
 	switch vtype {
-	case block.VolumeTypePartition:
-		extraWarnings, extraErrors := s.ProvisioningSpec.Validate(true)
-
-		warnings = append(warnings, extraWarnings...)
-		validationErrors = errors.Join(validationErrors, extraErrors)
-
-		extraWarnings, extraErrors = s.FilesystemSpec.Validate()
-		warnings = append(warnings, extraWarnings...)
-		validationErrors = errors.Join(validationErrors, extraErrors)
-
-		extraWarnings, extraErrors = s.EncryptionSpec.Validate()
-		warnings = append(warnings, extraWarnings...)
-		validationErrors = errors.Join(validationErrors, extraErrors)
-
 	case block.VolumeTypeDirectory:
 		if !s.ProvisioningSpec.IsZero() {
 			validationErrors = errors.Join(validationErrors, errors.New("provisioning spec is invalid for volumeType directory"))
@@ -225,7 +244,35 @@ func (s *UserVolumeConfigV1Alpha1) Validate(validation.RuntimeMode, ...validatio
 			validationErrors = errors.Join(validationErrors, errors.New("filesystem spec is invalid for volumeType directory"))
 		}
 
-	case block.VolumeTypeDisk, block.VolumeTypeTmpfs, block.VolumeTypeSymlink, block.VolumeTypeOverlay:
+	case block.VolumeTypeDisk:
+		extraWarnings, extraErrors := s.ProvisioningSpec.Validate(true, false)
+
+		warnings = append(warnings, extraWarnings...)
+		validationErrors = errors.Join(validationErrors, extraErrors)
+
+		extraWarnings, extraErrors = s.FilesystemSpec.Validate()
+		warnings = append(warnings, extraWarnings...)
+		validationErrors = errors.Join(validationErrors, extraErrors)
+
+		extraWarnings, extraErrors = s.EncryptionSpec.Validate()
+		warnings = append(warnings, extraWarnings...)
+		validationErrors = errors.Join(validationErrors, extraErrors)
+
+	case block.VolumeTypePartition:
+		extraWarnings, extraErrors := s.ProvisioningSpec.Validate(true, true)
+
+		warnings = append(warnings, extraWarnings...)
+		validationErrors = errors.Join(validationErrors, extraErrors)
+
+		extraWarnings, extraErrors = s.FilesystemSpec.Validate()
+		warnings = append(warnings, extraWarnings...)
+		validationErrors = errors.Join(validationErrors, extraErrors)
+
+		extraWarnings, extraErrors = s.EncryptionSpec.Validate()
+		warnings = append(warnings, extraWarnings...)
+		validationErrors = errors.Join(validationErrors, extraErrors)
+
+	case block.VolumeTypeTmpfs, block.VolumeTypeSymlink, block.VolumeTypeOverlay:
 		fallthrough
 
 	default:
