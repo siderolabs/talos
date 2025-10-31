@@ -115,26 +115,28 @@ func (manager *CircularBufferLoggingManager) getSenders() []runtime.LogSender {
 	}
 }
 
-func (manager *CircularBufferLoggingManager) getBuffer(id string, create bool) (*circular.Buffer, error) {
+func (manager *CircularBufferLoggingManager) getBuffer(id string, create bool) (*circular.Buffer, bool, error) {
 	buf, ok := manager.buffers.Load(id)
-	if !ok {
-		if !create {
-			return nil, nil
-		}
-
-		b, err := circular.NewBuffer(
-			circular.WithInitialCapacity(InitialCapacity),
-			circular.WithMaxCapacity(ChunkCapacity),
-			circular.WithNumCompressedChunks(NumCompressedChunks, manager.compressor),
-			circular.WithSafetyGap(SafetyGap))
-		if err != nil {
-			return nil, err // only configuration issue might raise error
-		}
-
-		buf, _ = manager.buffers.LoadOrStore(id, b)
+	if ok {
+		return buf.(*circular.Buffer), false, nil
 	}
 
-	return buf.(*circular.Buffer), nil
+	if !create {
+		return nil, false, nil
+	}
+
+	b, err := circular.NewBuffer(
+		circular.WithInitialCapacity(InitialCapacity),
+		circular.WithMaxCapacity(ChunkCapacity),
+		circular.WithNumCompressedChunks(NumCompressedChunks, manager.compressor),
+		circular.WithSafetyGap(SafetyGap))
+	if err != nil {
+		return nil, false, err // only configuration issue might raise error
+	}
+
+	buf, _ = manager.buffers.LoadOrStore(id, b)
+
+	return buf.(*circular.Buffer), true, nil
 }
 
 // RegisteredLogs implements runtime.LoggingManager interface.
@@ -169,24 +171,29 @@ func (nopCloser) Close() error {
 // Writer implements runtime.LogHandler interface.
 func (handler *circularHandler) Writer() (io.WriteCloser, error) {
 	if handler.buf == nil {
-		var err error
+		var (
+			created bool
+			err     error
+		)
 
-		handler.buf, err = handler.manager.getBuffer(handler.id, true)
+		handler.buf, created, err = handler.manager.getBuffer(handler.id, true)
 		if err != nil {
 			return nil, err
 		}
 
-		go func() {
-			defer func() {
-				if r := recover(); r != nil {
-					handler.manager.fallbackLogger.Printf("log sender panic: %v", r)
+		if created {
+			go func() {
+				defer func() {
+					if r := recover(); r != nil {
+						handler.manager.fallbackLogger.Printf("log sender panic: %v", r)
+					}
+				}()
+
+				if err := handler.runSenders(); err != nil {
+					handler.manager.fallbackLogger.Printf("log senders stopped: %s", err)
 				}
 			}()
-
-			if err := handler.runSenders(); err != nil {
-				handler.manager.fallbackLogger.Printf("log senders stopped: %s", err)
-			}
-		}()
+		}
 	}
 
 	switch handler.id {
@@ -202,7 +209,7 @@ func (handler *circularHandler) Reader(opts ...runtime.LogOption) (io.ReadCloser
 	if handler.buf == nil {
 		var err error
 
-		handler.buf, err = handler.manager.getBuffer(handler.id, false)
+		handler.buf, _, err = handler.manager.getBuffer(handler.id, false)
 		if err != nil {
 			return nil, err
 		}
