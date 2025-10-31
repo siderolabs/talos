@@ -12,12 +12,16 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"path/filepath"
 	"strings"
 	"time"
+
+	"google.golang.org/grpc/codes"
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/logging"
 	"github.com/siderolabs/talos/internal/integration/base"
 	"github.com/siderolabs/talos/pkg/machinery/api/common"
+	machineapi "github.com/siderolabs/talos/pkg/machinery/api/machine"
 	"github.com/siderolabs/talos/pkg/machinery/client"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
@@ -310,6 +314,47 @@ DrainLoop:
 	case err = <-errCh:
 		suite.Require().NoError(err)
 	default:
+	}
+}
+
+// TestPersistent confirms there are persistent logs stored in /var/log.
+func (suite *LogsSuite) TestPersistent() {
+	node := suite.RandomDiscoveredNodeInternalIP()
+	ctx := client.WithNode(suite.ctx, node)
+
+	stream, err := suite.Client.MachineClient.List(ctx, &machineapi.ListRequest{Root: constants.LogMountPoint})
+	suite.Require().NoError(err)
+
+	sizes := map[string]int64{}
+
+	for {
+		var info *machineapi.FileInfo
+
+		info, err = stream.Recv()
+		if err != nil {
+			if err == io.EOF || client.StatusCode(err) == codes.Canceled {
+				break
+			}
+
+			suite.Require().NoError(err)
+		}
+
+		sizes[filepath.Base(info.Name)] = info.Size
+	}
+
+	for _, name := range []string{
+		"machined.log",
+		"controller-runtime.log",
+		"kubelet.log",
+	} {
+		suite.Assert().Contains(sizes, name)
+
+		rotatedSize, rotated := sizes[name+".1"]
+		suite.Assert().Truef(
+			sizes[name] > 1000 || (rotated && rotatedSize > 10000),
+			"Expected either more than 1000 bytes in the log file or a rotated file for %s",
+			name,
+		)
 	}
 }
 

@@ -213,6 +213,13 @@ You can still expand the list of supported cipher suites via the `cluster.apiSer
 The kernel log (dmesg) is now also available as the service log named `kernel` (`talosctl logs kernel`).
 """
 
+    [notes.persistent-logs]
+        title = "Persistent logs"
+        description = """\
+Talos now stores system component logs in /var/log, featuring automatic log rotation and keeping two most
+recent log files. This change allows collecting logs from Talos like on any other Linux system.
+"""
+
 [make_deps]
 
     [make_deps.tools]
