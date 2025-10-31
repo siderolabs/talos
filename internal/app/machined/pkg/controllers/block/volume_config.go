@@ -464,7 +464,7 @@ func (ctrl *VolumeConfigController) manageStandardVolumes(ctx context.Context, r
 	}{
 		// /var/log
 		{
-			Path:         "/var/log",
+			Path:         constants.LogMountPoint,
 			Mode:         0o755,
 			SELinuxLabel: "system_u:object_r:var_log_t:s0",
 		},
