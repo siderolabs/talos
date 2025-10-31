@@ -41,6 +41,7 @@ var (
 	extensionsNvidia bool
 	verifyUKIBooted  bool
 	airgapped        bool
+	race             bool
 
 	talosConfig       string
 	endpoint          string
@@ -118,6 +119,7 @@ func TestIntegration(t *testing.T) {
 				CSITestName:      csiTestName,
 				CSITestTimeout:   csiTestTimeout,
 				Airgapped:        airgapped,
+				Race:             race,
 			})
 		}
 
@@ -151,6 +153,7 @@ func init() {
 	flag.BoolVar(&selinuxEnforcing, "talos.enforcing", false, "enable tests for SELinux enforcing mode")
 	flag.BoolVar(&extensionsQEMU, "talos.extensions.qemu", false, "enable tests for qemu extensions")
 	flag.BoolVar(&extensionsNvidia, "talos.extensions.nvidia", false, "enable tests for nvidia extensions")
+	flag.BoolVar(&race, "talos.race", false, "skip tests that are incompatible with race detector")
 	flag.BoolVar(&verifyUKIBooted, "talos.verifyukibooted", true, "enable tests for verifying that Talos was booted using a UKI")
 
 	flag.StringVar(
