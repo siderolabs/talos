@@ -9,6 +9,7 @@ import (
 	"net"
 
 	"github.com/siderolabs/gen/pair/ordered"
+	"github.com/siderolabs/go-pointer"
 
 	networkadapter "github.com/siderolabs/talos/internal/app/machined/pkg/adapters/network"
 	talosconfig "github.com/siderolabs/talos/pkg/machinery/config/config"
@@ -91,7 +92,7 @@ func SetBondMaster(link *network.LinkSpecSpec, bond talosconfig.Bond) error {
 		LACPRate:        lacpRate,
 		ARPValidate:     arpValidate,
 		ARPAllTargets:   arpAllTargets,
-		PrimaryIndex:    primary,
+		PrimaryIndex:    pointer.To(primary),
 		PrimaryReselect: primaryReselect,
 		FailOverMac:     failOverMAC,
 		ADSelect:        adSelect,

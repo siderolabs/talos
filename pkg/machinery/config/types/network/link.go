@@ -38,6 +38,7 @@ func init() {
 
 func conflictingLinkKinds(selfKind string) []string {
 	return xslices.Filter([]string{
+		BondKind,
 		DummyLinkKind,
 		LinkKind,
 		VLANKind,

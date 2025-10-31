@@ -5,7 +5,11 @@
 package network
 
 import (
+	"fmt"
+	"net/netip"
+
 	"github.com/mdlayher/netlink"
+	"github.com/siderolabs/go-pointer"
 	"golang.org/x/sys/unix"
 
 	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
@@ -26,6 +30,8 @@ type bondMaster struct {
 }
 
 // FillDefaults fills zero values with proper default values.
+//
+//nolint:gocyclo
 func (a bondMaster) FillDefaults() {
 	bond := a.BondMasterSpec
 
@@ -49,14 +55,22 @@ func (a bondMaster) FillDefaults() {
 		bond.TLBDynamicLB = 1
 	}
 
-	if bond.Mode == nethelpers.BondMode8023AD {
+	if bond.Mode == nethelpers.BondMode8023AD && bond.ADActorSysPrio == 0 {
 		bond.ADActorSysPrio = 65535
+	}
+
+	if bond.MissedMax == 0 {
+		bond.MissedMax = 2
+	}
+
+	if bond.Mode != nethelpers.BondMode8023AD {
+		bond.ADLACPActive = nethelpers.ADLACPActiveOn
 	}
 }
 
 // Encode the BondMasterSpec into netlink attributes.
 //
-//nolint:gocyclo
+//nolint:gocyclo,cyclop
 func (a bondMaster) Encode() ([]byte, error) {
 	bond := a.BondMasterSpec
 
@@ -67,6 +81,7 @@ func (a bondMaster) Encode() ([]byte, error) {
 
 	if bond.Mode == nethelpers.BondMode8023AD {
 		encoder.Uint8(unix.IFLA_BOND_AD_LACP_RATE, uint8(bond.LACPRate))
+		encoder.Uint8(unix.IFLA_BOND_AD_LACP_ACTIVE, uint8(bond.ADLACPActive))
 	}
 
 	if bond.Mode != nethelpers.BondMode8023AD && bond.Mode != nethelpers.BondModeALB && bond.Mode != nethelpers.BondModeTLB {
@@ -76,7 +91,9 @@ func (a bondMaster) Encode() ([]byte, error) {
 	encoder.Uint32(unix.IFLA_BOND_ARP_ALL_TARGETS, uint32(bond.ARPAllTargets))
 
 	if bond.Mode == nethelpers.BondModeActiveBackup || bond.Mode == nethelpers.BondModeALB || bond.Mode == nethelpers.BondModeTLB {
-		encoder.Uint32(unix.IFLA_BOND_PRIMARY, bond.PrimaryIndex)
+		if bond.PrimaryIndex != nil {
+			encoder.Uint32(unix.IFLA_BOND_PRIMARY, *bond.PrimaryIndex)
+		}
 	}
 
 	encoder.Uint8(unix.IFLA_BOND_PRIMARY_RESELECT, uint8(bond.PrimaryReselect))
@@ -91,6 +108,32 @@ func (a bondMaster) Encode() ([]byte, error) {
 
 	if bond.Mode != nethelpers.BondMode8023AD && bond.Mode != nethelpers.BondModeALB && bond.Mode != nethelpers.BondModeTLB {
 		encoder.Uint32(unix.IFLA_BOND_ARP_INTERVAL, bond.ARPInterval)
+
+		encoder.Nested(unix.IFLA_BOND_ARP_IP_TARGET, func(nae *netlink.AttributeEncoder) error {
+			for i, addr := range bond.ARPIPTargets {
+				if !addr.Is4() {
+					return fmt.Errorf("%s is not IPV4 address", addr)
+				}
+
+				ip := addr.As4()
+				nae.Bytes(uint16(i), ip[:])
+			}
+
+			return nil
+		})
+
+		encoder.Nested(unix.IFLA_BOND_NS_IP6_TARGET, func(nae *netlink.AttributeEncoder) error {
+			for i, addr := range bond.NSIP6Targets {
+				if !addr.Is6() {
+					return fmt.Errorf("%s is not IPV6 address", addr)
+				}
+
+				ip := addr.As16()
+				nae.Bytes(uint16(i), ip[:])
+			}
+
+			return nil
+		})
 	}
 
 	encoder.Uint32(unix.IFLA_BOND_RESEND_IGMP, bond.ResendIGMP)
@@ -126,6 +169,10 @@ func (a bondMaster) Encode() ([]byte, error) {
 		encoder.Uint32(unix.IFLA_BOND_PEER_NOTIF_DELAY, bond.PeerNotifyDelay)
 	}
 
+	if bond.MissedMax != 0 {
+		encoder.Uint8(unix.IFLA_BOND_MISSED_MAX, bond.MissedMax)
+	}
+
 	return encoder.Encode()
 }
 
@@ -153,7 +200,7 @@ func (a bondMaster) Decode(data []byte) error {
 		case unix.IFLA_BOND_ARP_ALL_TARGETS:
 			bond.ARPAllTargets = nethelpers.ARPAllTargets(decoder.Uint32())
 		case unix.IFLA_BOND_PRIMARY:
-			bond.PrimaryIndex = decoder.Uint32()
+			bond.PrimaryIndex = pointer.To(decoder.Uint32())
 		case unix.IFLA_BOND_PRIMARY_RESELECT:
 			bond.PrimaryReselect = nethelpers.PrimaryReselect(decoder.Uint8())
 		case unix.IFLA_BOND_FAIL_OVER_MAC:
@@ -168,6 +215,34 @@ func (a bondMaster) Decode(data []byte) error {
 			bond.DownDelay = decoder.Uint32()
 		case unix.IFLA_BOND_ARP_INTERVAL:
 			bond.ARPInterval = decoder.Uint32()
+		case unix.IFLA_BOND_ARP_IP_TARGET:
+			decoder.Nested(func(nad *netlink.AttributeDecoder) error {
+				for nad.Next() {
+					addr, ok := netip.AddrFromSlice(nad.Bytes())
+
+					if ok {
+						bond.ARPIPTargets = append(bond.ARPIPTargets, addr)
+					} else {
+						return fmt.Errorf("invalid ARP IP target")
+					}
+				}
+
+				return nil
+			})
+		case unix.IFLA_BOND_NS_IP6_TARGET:
+			decoder.Nested(func(nad *netlink.AttributeDecoder) error {
+				for nad.Next() {
+					addr, ok := netip.AddrFromSlice(nad.Bytes())
+
+					if ok {
+						bond.NSIP6Targets = append(bond.NSIP6Targets, addr)
+					} else {
+						return fmt.Errorf("invalid NS IP6 target")
+					}
+				}
+
+				return nil
+			})
 		case unix.IFLA_BOND_RESEND_IGMP:
 			bond.ResendIGMP = decoder.Uint32()
 		case unix.IFLA_BOND_MIN_LINKS:
@@ -190,6 +265,10 @@ func (a bondMaster) Decode(data []byte) error {
 			bond.ADUserPortKey = decoder.Uint16()
 		case unix.IFLA_BOND_PEER_NOTIF_DELAY:
 			bond.PeerNotifyDelay = decoder.Uint32()
+		case unix.IFLA_BOND_AD_LACP_ACTIVE:
+			bond.ADLACPActive = nethelpers.ADLACPActive(decoder.Uint8())
+		case unix.IFLA_BOND_MISSED_MAX:
+			bond.MissedMax = decoder.Uint8()
 		}
 	}
 
