@@ -48,6 +48,9 @@ func (manager *FileLoggingManager) SetSenders([]runtime.LogSender) []runtime.Log
 	return nil
 }
 
+// SetLineWriter implements runtime.LoggingManager interface (by doing nothing).
+func (manager *FileLoggingManager) SetLineWriter(runtime.LogWriter) {}
+
 // RegisteredLogs implements runtime.LoggingManager interface.
 func (manager *FileLoggingManager) RegisteredLogs() []string {
 	var result []string

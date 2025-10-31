@@ -162,7 +162,7 @@ func (suite *VolumeConfigSuite) TestReconcileDefaults() {
 	})
 
 	ctest.AssertResources(suite, []resource.ID{
-		"/var/log",
+		constants.LogMountPoint,
 		"/var/log/audit",
 		"/var/log/containers",
 		"/var/log/pods",
