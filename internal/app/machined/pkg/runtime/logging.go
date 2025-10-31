@@ -24,6 +24,11 @@ type LoggingManager interface {
 	// SetSenders should be thread-safe.
 	SetSenders(senders []LogSender) []LogSender
 
+	// SetLineWriter sets a writer that will receive raw log lines.
+	//
+	// SetLineWriter can be only singularly called, subsequent calls override previous writer.
+	SetLineWriter(w LogWriter)
+
 	// RegisteredLogs returns a list of registered logs containers.
 	RegisteredLogs() []string
 }
@@ -87,4 +92,12 @@ type LogSender interface {
 	//
 	// Close should be thread-safe.
 	Close(ctx context.Context) error
+}
+
+// LogWriter provider common interface for text-based log writers.
+type LogWriter interface {
+	// WriteLog writes a single log line.
+	//
+	// WriteLog should be thread-safe.
+	WriteLog(id string, line []byte) error
 }
