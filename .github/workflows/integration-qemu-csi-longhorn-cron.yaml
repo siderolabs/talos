@@ -53,7 +53,7 @@ jobs:
         timeout-minutes: 10
       - name: Download artifacts
         if: github.event_name != 'schedule'
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v6
         with:
           name: talos-artifacts
           path: _out
@@ -123,7 +123,7 @@ jobs:
         run: |
           sudo -E make e2e-qemu
       - name: save artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: fio-integration-qemu-csi-longhorn
           path: |
@@ -131,7 +131,7 @@ jobs:
           retention-days: "180"
       - name: save artifacts
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: talos-logs-integration-qemu-csi-longhorn
           path: |-
