@@ -304,13 +304,16 @@ func (ctrl *UserVolumeConfigController) handleUserVolumeConfig(
 	volumeID string,
 ) error {
 	switch userVolumeConfig.Type().ValueOr(block.VolumeTypePartition) {
-	case block.VolumeTypePartition:
-		return ctrl.handlePartitionUserVolumeConfig(userVolumeConfig, v, volumeID)
-
 	case block.VolumeTypeDirectory:
 		return ctrl.handleDirectoryUserVolumeConfig(userVolumeConfig, v)
 
-	case block.VolumeTypeDisk, block.VolumeTypeTmpfs, block.VolumeTypeSymlink, block.VolumeTypeOverlay:
+	case block.VolumeTypeDisk:
+		return ctrl.handleDiskUserVolumeConfig(userVolumeConfig, v, volumeID)
+
+	case block.VolumeTypePartition:
+		return ctrl.handlePartitionUserVolumeConfig(userVolumeConfig, v, volumeID)
+
+	case block.VolumeTypeTmpfs, block.VolumeTypeSymlink, block.VolumeTypeOverlay:
 		fallthrough
 
 	default:
@@ -340,6 +343,49 @@ func (ctrl *UserVolumeConfigController) handlePartitionUserVolumeConfig(
 			MinSize:  cmp.Or(userVolumeConfig.Provisioning().MinSize().ValueOrZero(), MinUserVolumeSize),
 			MaxSize:  userVolumeConfig.Provisioning().MaxSize().ValueOrZero(),
 			Grow:     userVolumeConfig.Provisioning().Grow().ValueOrZero(),
+			Label:    volumeID,
+			TypeUUID: partition.LinuxFilesystemData,
+		},
+		FilesystemSpec: block.FilesystemSpec{
+			Type: userVolumeConfig.Filesystem().Type(),
+		},
+	}
+	v.TypedSpec().Mount = block.MountSpec{
+		TargetPath:          userVolumeConfig.Name(),
+		ParentID:            constants.UserVolumeMountPoint,
+		SelinuxLabel:        constants.EphemeralSelinuxLabel,
+		FileMode:            0o755,
+		UID:                 0,
+		GID:                 0,
+		ProjectQuotaSupport: userVolumeConfig.Filesystem().ProjectQuotaSupport(),
+	}
+
+	if err := convertEncryptionConfiguration(userVolumeConfig.Encryption(), v.TypedSpec()); err != nil {
+		return fmt.Errorf("error apply encryption configuration: %w", err)
+	}
+
+	return nil
+}
+
+func (ctrl *UserVolumeConfigController) handleDiskUserVolumeConfig(
+	userVolumeConfig configconfig.UserVolumeConfig,
+	v *block.VolumeConfig,
+	volumeID string,
+) error {
+	diskSelector, ok := userVolumeConfig.Provisioning().DiskSelector().Get()
+	if !ok {
+		// this shouldn't happen due to validation
+		return fmt.Errorf("disk selector not found for volume %q", volumeID)
+	}
+
+	v.TypedSpec().Type = block.VolumeTypeDisk
+	v.TypedSpec().Locator.Match = labelVolumeMatch(volumeID)
+	v.TypedSpec().Provisioning = block.ProvisioningSpec{
+		Wave: block.WaveUserVolumes,
+		DiskSelector: block.DiskSelector{
+			Match: diskSelector,
+		},
+		PartitionSpec: block.PartitionSpec{
 			Label:    volumeID,
 			TypeUUID: partition.LinuxFilesystemData,
 		},

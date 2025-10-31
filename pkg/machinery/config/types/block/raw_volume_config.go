@@ -140,7 +140,7 @@ func (s *RawVolumeConfigV1Alpha1) Validate(validation.RuntimeMode, ...validation
 		validationErrors = errors.Join(validationErrors, errors.New("name can only contain lowercase and uppercase ASCII letters, digits, and hyphens"))
 	}
 
-	extraWarnings, extraErrors := s.ProvisioningSpec.Validate(true)
+	extraWarnings, extraErrors := s.ProvisioningSpec.Validate(true, true)
 
 	warnings = append(warnings, extraWarnings...)
 	validationErrors = errors.Join(validationErrors, extraErrors)

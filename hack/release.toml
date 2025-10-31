@@ -153,6 +153,16 @@ Note: this mode does not provide filesystem-level isolation and inherits the EPH
 It should not be used for workloads requiring predictable storage quotas.
 """
 
+    [notes.disk-user-volumes]
+        title = "New User Volume type - disk"
+        description = """\
+`volumeType` in UserVolumeConfig can be set to `disk`.
+When set to `disk`, a full block device is used for the volume.
+
+When `volumeType = "disk"`:
+- Size specific settings are not allowed in the provisioning block (`minSize`, `maxSize`, `grow`).
+"""
+
 [make_deps]
 
     [make_deps.tools]

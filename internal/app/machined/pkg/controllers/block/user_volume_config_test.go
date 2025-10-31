@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/cosi-project/runtime/pkg/resource"
+	"github.com/siderolabs/gen/xslices"
 	"github.com/siderolabs/go-pointer"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
@@ -40,18 +41,26 @@ func TestUserVolumeConfigSuite(t *testing.T) {
 }
 
 func (suite *UserVolumeConfigSuite) TestReconcileUserVolumesSwapVolumes() {
-	uv1 := blockcfg.NewUserVolumeConfigV1Alpha1()
-	uv1.MetaName = "data1"
-	suite.Require().NoError(uv1.ProvisioningSpec.DiskSelectorSpec.Match.UnmarshalText([]byte(`system_disk`)))
-	uv1.ProvisioningSpec.ProvisioningMinSize = blockcfg.MustByteSize("10GiB")
-	uv1.ProvisioningSpec.ProvisioningMaxSize = blockcfg.MustByteSize("100GiB")
-	uv1.FilesystemSpec.FilesystemType = block.FilesystemTypeXFS
+	userVolumeNames := []string{
+		"data-part1",
+		"data-part2",
+		"data-dir1",
+		"data-disk1",
+	}
 
-	uv2 := blockcfg.NewUserVolumeConfigV1Alpha1()
-	uv2.MetaName = "data2"
-	suite.Require().NoError(uv2.ProvisioningSpec.DiskSelectorSpec.Match.UnmarshalText([]byte(`!system_disk`)))
-	uv2.ProvisioningSpec.ProvisioningMaxSize = blockcfg.MustByteSize("1TiB")
-	uv2.EncryptionSpec = blockcfg.EncryptionSpec{
+	uvPart1 := blockcfg.NewUserVolumeConfigV1Alpha1()
+	uvPart1.MetaName = userVolumeNames[0]
+	suite.Require().NoError(uvPart1.ProvisioningSpec.DiskSelectorSpec.Match.UnmarshalText([]byte(`system_disk`)))
+	uvPart1.ProvisioningSpec.ProvisioningMinSize = blockcfg.MustByteSize("10GiB")
+	uvPart1.ProvisioningSpec.ProvisioningMaxSize = blockcfg.MustByteSize("100GiB")
+	uvPart1.FilesystemSpec.FilesystemType = block.FilesystemTypeXFS
+
+	uvPart2 := blockcfg.NewUserVolumeConfigV1Alpha1()
+	uvPart2.MetaName = userVolumeNames[1]
+	uvPart2.VolumeType = pointer.To(block.VolumeTypePartition)
+	suite.Require().NoError(uvPart2.ProvisioningSpec.DiskSelectorSpec.Match.UnmarshalText([]byte(`!system_disk`)))
+	uvPart2.ProvisioningSpec.ProvisioningMaxSize = blockcfg.MustByteSize("1TiB")
+	uvPart2.EncryptionSpec = blockcfg.EncryptionSpec{
 		EncryptionProvider: block.EncryptionProviderLUKS2,
 		EncryptionKeys: []blockcfg.EncryptionKey{
 			{
@@ -65,32 +74,45 @@ func (suite *UserVolumeConfigSuite) TestReconcileUserVolumesSwapVolumes() {
 		},
 	}
 
-	uv3 := blockcfg.NewUserVolumeConfigV1Alpha1()
-	uv3.MetaName = "data3"
-	uv3.VolumeType = pointer.To(block.VolumeTypeDirectory)
+	uvDir1 := blockcfg.NewUserVolumeConfigV1Alpha1()
+	uvDir1.MetaName = userVolumeNames[2]
+	uvDir1.VolumeType = pointer.To(block.VolumeTypeDirectory)
+
+	uvDisk1 := blockcfg.NewUserVolumeConfigV1Alpha1()
+	uvDisk1.MetaName = userVolumeNames[3]
+	suite.Require().NoError(uvDisk1.ProvisioningSpec.DiskSelectorSpec.Match.UnmarshalText([]byte(`!system_disk`)))
+	uvDisk1.EncryptionSpec = blockcfg.EncryptionSpec{
+		EncryptionProvider: block.EncryptionProviderLUKS2,
+		EncryptionKeys: []blockcfg.EncryptionKey{
+			{
+				KeySlot: 0,
+				KeyTPM:  &blockcfg.EncryptionKeyTPM{},
+			},
+			{
+				KeySlot:   1,
+				KeyStatic: &blockcfg.EncryptionKeyStatic{KeyData: "secret"},
+			},
+		},
+	}
 
 	sv1 := blockcfg.NewSwapVolumeConfigV1Alpha1()
 	sv1.MetaName = "swap"
 	suite.Require().NoError(sv1.ProvisioningSpec.DiskSelectorSpec.Match.UnmarshalText([]byte(`disk.transport == "nvme"`)))
 	sv1.ProvisioningSpec.ProvisioningMaxSize = blockcfg.MustByteSize("2GiB")
 
-	ctr, err := container.New(uv1, uv2, uv3, sv1)
+	ctr, err := container.New(uvPart1, uvPart2, uvDir1, uvDisk1, sv1)
 	suite.Require().NoError(err)
 
 	cfg := config.NewMachineConfig(ctr)
 	suite.Create(cfg)
 
-	userVolumes := []string{
-		constants.UserVolumePrefix + "data1",
-		constants.UserVolumePrefix + "data2",
-		constants.UserVolumePrefix + "data3",
-	}
+	userVolumes := xslices.Map(userVolumeNames, func(in string) string { return constants.UserVolumePrefix + in })
 
-	ctest.AssertResources(suite, userVolumes, func(vc *block.VolumeConfig, asrt *assert.Assertions) {
+	ctest.AssertResources(suite, userVolumeNames, func(vc *block.VolumeConfig, asrt *assert.Assertions) {
 		asrt.Contains(vc.Metadata().Labels().Raw(), block.UserVolumeLabel)
 
 		switch vc.Metadata().ID() {
-		case userVolumes[0], userVolumes[1]:
+		case userVolumes[0], userVolumes[1], userVolumes[3]:
 			asrt.Equal(block.VolumeTypePartition, vc.TypedSpec().Type)
 
 			asrt.Contains(userVolumes, vc.TypedSpec().Provisioning.PartitionSpec.Label)
@@ -104,7 +126,7 @@ func (suite *UserVolumeConfigSuite) TestReconcileUserVolumesSwapVolumes() {
 			asrt.Equal(block.VolumeTypeDirectory, vc.TypedSpec().Type)
 		}
 
-		asrt.Contains([]string{"data1", "data2", "data3"}, vc.TypedSpec().Mount.TargetPath)
+		asrt.Contains(userVolumeNames, vc.TypedSpec().Mount.TargetPath)
 		asrt.Equal(constants.UserVolumeMountPoint, vc.TypedSpec().Mount.ParentID)
 
 		switch vc.Metadata().ID() {
@@ -143,8 +165,8 @@ func (suite *UserVolumeConfigSuite) TestReconcileUserVolumesSwapVolumes() {
 		suite.AddFinalizer(block.NewVolumeMountRequest(block.NamespaceName, volumeID).Metadata(), "test")
 	}
 
-	// drop the first volume
-	ctr, err = container.New(uv2)
+	// keep only the first volume
+	ctr, err = container.New(uvPart1)
 	suite.Require().NoError(err)
 
 	newCfg := config.NewMachineConfig(ctr)
@@ -153,7 +175,7 @@ func (suite *UserVolumeConfigSuite) TestReconcileUserVolumesSwapVolumes() {
 
 	// controller should tear down removed resources
 	ctest.AssertResources(suite, userVolumes, func(vc *block.VolumeConfig, asrt *assert.Assertions) {
-		if vc.Metadata().ID() == userVolumes[1] {
+		if vc.Metadata().ID() == userVolumes[0] {
 			asrt.Equal(resource.PhaseRunning, vc.Metadata().Phase())
 		} else {
 			asrt.Equal(resource.PhaseTearingDown, vc.Metadata().Phase())
@@ -161,7 +183,7 @@ func (suite *UserVolumeConfigSuite) TestReconcileUserVolumesSwapVolumes() {
 	})
 
 	ctest.AssertResources(suite, userVolumes, func(vmr *block.VolumeMountRequest, asrt *assert.Assertions) {
-		if vmr.Metadata().ID() == userVolumes[1] {
+		if vmr.Metadata().ID() == userVolumes[0] {
 			asrt.Equal(resource.PhaseRunning, vmr.Metadata().Phase())
 		} else {
 			asrt.Equal(resource.PhaseTearingDown, vmr.Metadata().Phase())
@@ -169,16 +191,16 @@ func (suite *UserVolumeConfigSuite) TestReconcileUserVolumesSwapVolumes() {
 	})
 
 	// remove finalizers
-	suite.RemoveFinalizer(block.NewVolumeConfig(block.NamespaceName, userVolumes[0]).Metadata(), "test")
-	suite.RemoveFinalizer(block.NewVolumeMountRequest(block.NamespaceName, userVolumes[0]).Metadata(), "test")
-	suite.RemoveFinalizer(block.NewVolumeConfig(block.NamespaceName, userVolumes[2]).Metadata(), "test")
-	suite.RemoveFinalizer(block.NewVolumeMountRequest(block.NamespaceName, userVolumes[2]).Metadata(), "test")
+	for _, userVolume := range userVolumes[1:] {
+		suite.RemoveFinalizer(block.NewVolumeConfig(block.NamespaceName, userVolume).Metadata(), "test")
+		suite.RemoveFinalizer(block.NewVolumeMountRequest(block.NamespaceName, userVolume).Metadata(), "test")
+	}
 
 	// now the resources should be removed
-	ctest.AssertNoResource[*block.VolumeConfig](suite, userVolumes[0])
-	ctest.AssertNoResource[*block.VolumeMountRequest](suite, userVolumes[0])
-	ctest.AssertNoResource[*block.VolumeConfig](suite, userVolumes[2])
-	ctest.AssertNoResource[*block.VolumeMountRequest](suite, userVolumes[2])
+	for _, userVolume := range userVolumes[1:] {
+		ctest.AssertNoResource[*block.VolumeConfig](suite, userVolume)
+		ctest.AssertNoResource[*block.VolumeMountRequest](suite, userVolume)
+	}
 }
 
 func (suite *UserVolumeConfigSuite) TestReconcileRawVolumes() {

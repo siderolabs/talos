@@ -52,6 +52,58 @@ volumeType: directory # Volume type.
 apiVersion: v1alpha1
 kind: UserVolumeConfig
 name: local-data # Name of the volume.
+volumeType: disk # Volume type.
+# The provisioning describes how the volume is provisioned.
+provisioning:
+    # The disk selector expression.
+    diskSelector:
+        match: disk.transport == "nvme" # The Common Expression Language (CEL) expression to match the disk.
+
+    # # The minimum size of the volume.
+    # minSize: 2.5GiB
+
+    # # The maximum size of the volume, if not specified the volume can grow to the size of the
+    # maxSize: 50GiB
+# The filesystem describes how the volume is formatted.
+filesystem:
+    type: xfs # Filesystem type. Default is `xfs`.
+# The encryption describes how the volume is encrypted.
+encryption:
+    provider: luks2 # Encryption provider to use for the encryption.
+    # Defines the encryption keys generation and storage method.
+    keys:
+        - slot: 0 # Key slot number for LUKS2 encryption.
+          # Enable TPM based disk encryption.
+          tpm: {}
+
+          # # KMS managed encryption key.
+          # kms:
+          #     endpoint: https://192.168.88.21:4443 # KMS endpoint to Seal/Unseal the key.
+        - slot: 1 # Key slot number for LUKS2 encryption.
+          # Key which value is stored in the configuration file.
+          static:
+            passphrase: topsecret # Defines the static passphrase value.
+
+          # # KMS managed encryption key.
+          # kms:
+          #     endpoint: https://192.168.88.21:4443 # KMS endpoint to Seal/Unseal the key.
+
+    # # Cipher to use for the encryption. Depends on the encryption provider.
+    # cipher: aes-xts-plain64
+
+    # # Defines the encryption sector size.
+    # blockSize: 4096
+
+    # # Additional --perf parameters for the LUKS2 encryption.
+    # options:
+    #     - no_read_workqueue
+    #     - no_write_workqueue
+{{< /highlight >}}
+
+{{< highlight yaml >}}
+apiVersion: v1alpha1
+kind: UserVolumeConfig
+name: local-data # Name of the volume.
 volumeType: partition # Volume type.
 # The provisioning describes how the volume is provisioned.
 provisioning:
@@ -102,7 +154,7 @@ encryption:
 | Field | Type | Description | Value(s) |
 |-------|------|-------------|----------|
 |`name` |string |Name of the volume.<br><br>Name might be between 1 and 34 characters long and can only contain:<br>lowercase and uppercase ASCII letters, digits, and hyphens.  | |
-|`volumeType` |VolumeType |Volume type.  |`partition`<br />`directory`<br /> |
+|`volumeType` |VolumeType |Volume type.  |`directory`<br />`disk`<br />`partition`<br /> |
 |`provisioning` |<a href="#UserVolumeConfig.provisioning">ProvisioningSpec</a> |The provisioning describes how the volume is provisioned.  | |
 |`filesystem` |<a href="#UserVolumeConfig.filesystem">FilesystemSpec</a> |The filesystem describes how the volume is formatted.  | |
 |`encryption` |<a href="#UserVolumeConfig.encryption">EncryptionSpec</a> |The encryption describes how the volume is encrypted.  | |
