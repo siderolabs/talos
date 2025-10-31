@@ -110,7 +110,7 @@ func (k *Kubelet) Volumes(runtime.Runtime) []string {
 	return []string{
 		"/var/lib",
 		"/var/lib/kubelet",
-		"/var/log",
+		constants.LogMountPoint,
 		"/var/log/audit",
 		"/var/log/containers",
 		"/var/log/pods",

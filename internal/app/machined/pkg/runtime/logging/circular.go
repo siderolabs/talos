@@ -50,6 +50,8 @@ type CircularBufferLoggingManager struct {
 	sendersRW      sync.RWMutex
 	senders        []runtime.LogSender
 	sendersChanged chan struct{}
+
+	lineWriter chan runtime.LogWriter
 }
 
 // NewCircularBufferLoggingManager initializes new CircularBufferLoggingManager.
@@ -67,6 +69,7 @@ func NewCircularBufferLoggingManager(fallbackLogger *log.Logger) *CircularBuffer
 		fallbackLogger: fallbackLogger,
 		sendersChanged: make(chan struct{}),
 		compressor:     compressor,
+		lineWriter:     make(chan runtime.LogWriter, 1),
 	}
 }
 
@@ -97,6 +100,17 @@ func (manager *CircularBufferLoggingManager) SetSenders(senders []runtime.LogSen
 	close(prevChanged)
 
 	return prevSenders
+}
+
+// SetLineWriter implements runtime.LoggingManager interface.
+func (manager *CircularBufferLoggingManager) SetLineWriter(w runtime.LogWriter) {
+	select {
+	case manager.lineWriter <- w:
+	default:
+		<-manager.lineWriter
+
+		manager.lineWriter <- w
+	}
 }
 
 // getSenders waits for senders to be set and returns them.
@@ -192,6 +206,18 @@ func (handler *circularHandler) Writer() (io.WriteCloser, error) {
 
 				if err := handler.runSenders(); err != nil {
 					handler.manager.fallbackLogger.Printf("log senders stopped: %s", err)
+				}
+			}()
+
+			go func() {
+				defer func() {
+					if r := recover(); r != nil {
+						handler.manager.fallbackLogger.Printf("log writer panic: %v", r)
+					}
+				}()
+
+				if err := handler.runLineWriter(); err != nil {
+					handler.manager.fallbackLogger.Printf("log writer stopped: %s", err)
 				}
 			}()
 		}
@@ -322,6 +348,32 @@ func (handler *circularHandler) resend(e *runtime.LogEvent) {
 
 		time.Sleep(time.Second)
 	}
+}
+
+func (handler *circularHandler) runLineWriter() error {
+	r, err := handler.Reader(runtime.WithFollow())
+	if err != nil {
+		return err
+	}
+	defer r.Close() //nolint:errcheck
+
+	w := <-handler.manager.lineWriter
+	select {
+	case handler.manager.lineWriter <- w:
+	default:
+	}
+
+	scanner := bufio.NewScanner(r)
+	for scanner.Scan() {
+		l := scanner.Bytes()
+
+		err = w.WriteLog(handler.id, l)
+		if err != nil {
+			return fmt.Errorf("line writer: %w", err)
+		}
+	}
+
+	return fmt.Errorf("scanner: %w", scanner.Err())
 }
 
 // timeStampWriter is a writer that adds a timestamp to each line.

@@ -1278,6 +1278,9 @@ const (
 	// UserVolumeMountPoint is the path to the volume mount point for the user volumes.
 	UserVolumeMountPoint = "/var/mnt"
 
+	// LogMountPoint is the path to the logs mount point, and ID of the logs volume.
+	LogMountPoint = "/var/log"
+
 	// UserVolumePrefix is the prefix for the user volumes.
 	UserVolumePrefix = "u-"
 
@@ -1326,6 +1329,12 @@ const (
 
 	// SDStubCmdlineExtraOEMVar is the name of the SMBIOS OEM variable that can be used to pass extra kernel command line parameters to systemd-stub.
 	SDStubCmdlineExtraOEMVar = "io.systemd.stub.kernel-cmdline-extra"
+
+	// LogRotateThreshold is the size (in bytes), upon exceeding which the log file should be rotated.
+	LogRotateThreshold = 5 * 1024 * 1024
+
+	// LogFlushPeriod is the period for flushing in-memory log buffers to the filesystem.
+	LogFlushPeriod = 15 * time.Second
 )
 
 // See https://linux.die.net/man/3/klogctl

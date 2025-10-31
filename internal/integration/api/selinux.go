@@ -111,7 +111,7 @@ func (suite *SELinuxSuite) TestFileMountLabels() {
 		"/var/lib/cni":                  "system_u:object_r:cni_state_t:s0",
 		"/var/lib/kubelet":              "system_u:object_r:kubelet_state_t:s0",
 		"/var/lib/kubelet/seccomp":      "system_u:object_r:seccomp_profile_t:s0",
-		"/var/log":                      "system_u:object_r:var_log_t:s0",
+		constants.LogMountPoint:         "system_u:object_r:var_log_t:s0",
 		"/var/log/audit":                "system_u:object_r:audit_log_t:s0",
 		constants.KubernetesAuditLogDir: "system_u:object_r:kube_log_t:s0",
 		"/var/log/containers":           "system_u:object_r:containers_log_t:s0",
