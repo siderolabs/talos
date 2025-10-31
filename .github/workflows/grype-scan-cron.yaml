@@ -61,7 +61,7 @@ jobs:
           make target-grype-validate
       - name: save artifacts
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: talos-grype-scan-result
           path: |
