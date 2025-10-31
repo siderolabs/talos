@@ -381,7 +381,14 @@ func (c *Controller) phases(seq runtime.Sequence, data any) ([]runtime.Phase, er
 
 		phases = c.s.Shutdown(c.r, in)
 	case runtime.SequenceReboot:
-		phases = c.s.Reboot(c.r)
+		var in *machine.RebootRequest
+		if req, ok := data.(*machine.RebootRequest); ok {
+			in = req
+		} else {
+			log.Printf("warning: API reboot missing reboot request")
+		}
+
+		phases = c.s.Reboot(c.r, in)
 	case runtime.SequenceUpgrade:
 		in, ok := data.(*machine.UpgradeRequest)
 		if !ok {

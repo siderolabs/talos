@@ -88,6 +88,7 @@ type RebootRequest_Mode int32
 const (
 	RebootRequest_DEFAULT    RebootRequest_Mode = 0
 	RebootRequest_POWERCYCLE RebootRequest_Mode = 1
+	RebootRequest_FORCE      RebootRequest_Mode = 2
 )
 
 // Enum value maps for RebootRequest_Mode.
@@ -95,10 +96,12 @@ var (
 	RebootRequest_Mode_name = map[int32]string{
 		0: "DEFAULT",
 		1: "POWERCYCLE",
+		2: "FORCE",
 	}
 	RebootRequest_Mode_value = map[string]int32{
 		"DEFAULT":    0,
 		"POWERCYCLE": 1,
+		"FORCE":      2,
 	}
 )
 
@@ -11823,13 +11826,14 @@ const file_machine_machine_proto_rawDesc = "" +
 	"\x04mode\x18\x03 \x01(\x0e2'.machine.ApplyConfigurationRequest.ModeR\x04mode\x12!\n" +
 	"\fmode_details\x18\x04 \x01(\tR\vmodeDetails\"U\n" +
 	"\x1aApplyConfigurationResponse\x127\n" +
-	"\bmessages\x18\x01 \x03(\v2\x1b.machine.ApplyConfigurationR\bmessages\"e\n" +
+	"\bmessages\x18\x01 \x03(\v2\x1b.machine.ApplyConfigurationR\bmessages\"p\n" +
 	"\rRebootRequest\x12/\n" +
-	"\x04mode\x18\x01 \x01(\x0e2\x1b.machine.RebootRequest.ModeR\x04mode\"#\n" +
+	"\x04mode\x18\x01 \x01(\x0e2\x1b.machine.RebootRequest.ModeR\x04mode\".\n" +
 	"\x04Mode\x12\v\n" +
 	"\aDEFAULT\x10\x00\x12\x0e\n" +
 	"\n" +
-	"POWERCYCLE\x10\x01\"Q\n" +
+	"POWERCYCLE\x10\x01\x12\t\n" +
+	"\x05FORCE\x10\x02\"Q\n" +
 	"\x06Reboot\x12,\n" +
 	"\bmetadata\x18\x01 \x01(\v2\x10.common.MetadataR\bmetadata\x12\x19\n" +
 	"\bactor_id\x18\x02 \x01(\tR\aactorId\"=\n" +
