@@ -69,7 +69,7 @@ func addCommand(cmd *cobra.Command) {
 	cmd.PersistentFlags().StringSliceVarP(&GlobalArgs.Nodes, "nodes", "n", []string{}, "target the specified nodes")
 	cmd.PersistentFlags().StringSliceVarP(&GlobalArgs.Endpoints, "endpoints", "e", []string{}, "override default endpoints in Talos configuration")
 	cli.Should(cmd.RegisterFlagCompletionFunc("nodes", CompleteNodes))
-	cmd.PersistentFlags().StringVar(&GlobalArgs.Cluster, "cluster", "", "Cluster to connect to if a proxy endpoint is used.")
+	cmd.PersistentFlags().StringVarP(&GlobalArgs.Cluster, "cluster", "c", "", "Cluster to connect to if a proxy endpoint is used.")
 	cmd.PersistentFlags().StringVar(&GlobalArgs.CmdContext, "context", "", "Context to be used in command")
 	cmd.PersistentFlags().StringVar(
 		&GlobalArgs.SideroV1KeysDir,

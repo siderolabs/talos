@@ -17,7 +17,7 @@ talosctl apply-config [flags]
 
 ```
       --cert-fingerprint strings                                 list of server certificate fingeprints to accept (defaults to no check)
-      --cluster string                                           Cluster to connect to if a proxy endpoint is used.
+  -c, --cluster string                                           Cluster to connect to if a proxy endpoint is used.
   -p, --config-patch stringArray                                 the list of config patches to apply to the local config file before sending it to the node
       --context string                                           Context to be used in command
       --dry-run                                                  check how the config change will be applied in dry-run mode
@@ -58,7 +58,7 @@ talosctl bootstrap [flags]
 ### Options
 
 ```
-      --cluster string             Cluster to connect to if a proxy endpoint is used.
+  -c, --cluster string             Cluster to connect to if a proxy endpoint is used.
       --context string             Context to be used in command
   -e, --endpoints strings          override default endpoints in Talos configuration
   -h, --help                       help for bootstrap
@@ -102,7 +102,7 @@ talosctl cgroups [flags]
 ### Options
 
 ```
-      --cluster string             Cluster to connect to if a proxy endpoint is used.
+  -c, --cluster string             Cluster to connect to if a proxy endpoint is used.
       --context string             Context to be used in command
   -e, --endpoints strings          override default endpoints in Talos configuration
   -h, --help                       help for cgroups
@@ -478,7 +478,7 @@ talosctl config add <context> [flags]
 ### Options inherited from parent commands
 
 ```
-      --cluster string             Cluster to connect to if a proxy endpoint is used.
+  -c, --cluster string             Cluster to connect to if a proxy endpoint is used.
       --context string             Context to be used in command
   -e, --endpoints strings          override default endpoints in Talos configuration
   -n, --nodes strings              target the specified nodes
@@ -507,7 +507,7 @@ talosctl config context <context> [flags]
 ### Options inherited from parent commands
 
 ```
-      --cluster string             Cluster to connect to if a proxy endpoint is used.
+  -c, --cluster string             Cluster to connect to if a proxy endpoint is used.
       --context string             Context to be used in command
   -e, --endpoints strings          override default endpoints in Talos configuration
   -n, --nodes strings              target the specified nodes
@@ -536,7 +536,7 @@ talosctl config contexts [flags]
 ### Options inherited from parent commands
 
 ```
-      --cluster string             Cluster to connect to if a proxy endpoint is used.
+  -c, --cluster string             Cluster to connect to if a proxy endpoint is used.
       --context string             Context to be used in command
   -e, --endpoints strings          override default endpoints in Talos configuration
   -n, --nodes strings              target the specified nodes
@@ -565,7 +565,7 @@ talosctl config endpoint <endpoint>... [flags]
 ### Options inherited from parent commands
 
 ```
-      --cluster string             Cluster to connect to if a proxy endpoint is used.
+  -c, --cluster string             Cluster to connect to if a proxy endpoint is used.
       --context string             Context to be used in command
   -e, --endpoints strings          override default endpoints in Talos configuration
   -n, --nodes strings              target the specified nodes
@@ -595,7 +595,7 @@ talosctl config info [flags]
 ### Options inherited from parent commands
 
 ```
-      --cluster string             Cluster to connect to if a proxy endpoint is used.
+  -c, --cluster string             Cluster to connect to if a proxy endpoint is used.
       --context string             Context to be used in command
   -e, --endpoints strings          override default endpoints in Talos configuration
   -n, --nodes strings              target the specified nodes
@@ -628,7 +628,7 @@ talosctl config merge <from> [flags]
 ### Options inherited from parent commands
 
 ```
-      --cluster string             Cluster to connect to if a proxy endpoint is used.
+  -c, --cluster string             Cluster to connect to if a proxy endpoint is used.
       --context string             Context to be used in command
   -e, --endpoints strings          override default endpoints in Talos configuration
   -n, --nodes strings              target the specified nodes
@@ -659,7 +659,7 @@ talosctl config new [<path>] [flags]
 ### Options inherited from parent commands
 
 ```
-      --cluster string             Cluster to connect to if a proxy endpoint is used.
+  -c, --cluster string             Cluster to connect to if a proxy endpoint is used.
       --context string             Context to be used in command
   -e, --endpoints strings          override default endpoints in Talos configuration
   -n, --nodes strings              target the specified nodes
@@ -688,7 +688,7 @@ talosctl config node <endpoint>... [flags]
 ### Options inherited from parent commands
 
 ```
-      --cluster string             Cluster to connect to if a proxy endpoint is used.
+  -c, --cluster string             Cluster to connect to if a proxy endpoint is used.
       --context string             Context to be used in command
   -e, --endpoints strings          override default endpoints in Talos configuration
   -n, --nodes strings              target the specified nodes
@@ -719,7 +719,7 @@ talosctl config remove <context> [flags]
 ### Options inherited from parent commands
 
 ```
-      --cluster string             Cluster to connect to if a proxy endpoint is used.
+  -c, --cluster string             Cluster to connect to if a proxy endpoint is used.
       --context string             Context to be used in command
   -e, --endpoints strings          override default endpoints in Talos configuration
   -n, --nodes strings              target the specified nodes
@@ -738,7 +738,7 @@ Manage the client configuration file (talosconfig)
 ### Options
 
 ```
-      --cluster string             Cluster to connect to if a proxy endpoint is used.
+  -c, --cluster string             Cluster to connect to if a proxy endpoint is used.
       --context string             Context to be used in command
   -e, --endpoints strings          override default endpoints in Talos configuration
   -h, --help                       help for config
@@ -778,7 +778,7 @@ talosctl conformance kubernetes [flags]
 ### Options inherited from parent commands
 
 ```
-      --cluster string             Cluster to connect to if a proxy endpoint is used.
+  -c, --cluster string             Cluster to connect to if a proxy endpoint is used.
       --context string             Context to be used in command
   -e, --endpoints strings          override default endpoints in Talos configuration
   -n, --nodes strings              target the specified nodes
@@ -797,7 +797,7 @@ Run conformance tests
 ### Options
 
 ```
-      --cluster string             Cluster to connect to if a proxy endpoint is used.
+  -c, --cluster string             Cluster to connect to if a proxy endpoint is used.
       --context string             Context to be used in command
   -e, --endpoints strings          override default endpoints in Talos configuration
   -h, --help                       help for conformance
@@ -822,7 +822,7 @@ talosctl containers [flags]
 ### Options
 
 ```
-      --cluster string             Cluster to connect to if a proxy endpoint is used.
+  -c, --cluster string             Cluster to connect to if a proxy endpoint is used.
       --context string             Context to be used in command
   -e, --endpoints strings          override default endpoints in Talos configuration
   -h, --help                       help for containers
@@ -858,7 +858,7 @@ talosctl copy <src-path> -|<local-path> [flags]
 ### Options
 
 ```
-      --cluster string             Cluster to connect to if a proxy endpoint is used.
+  -c, --cluster string             Cluster to connect to if a proxy endpoint is used.
       --context string             Context to be used in command
   -e, --endpoints strings          override default endpoints in Talos configuration
   -h, --help                       help for copy
@@ -898,7 +898,7 @@ talosctl dashboard [flags]
 ### Options
 
 ```
-      --cluster string             Cluster to connect to if a proxy endpoint is used.
+  -c, --cluster string             Cluster to connect to if a proxy endpoint is used.
       --context string             Context to be used in command
   -e, --endpoints strings          override default endpoints in Talos configuration
   -h, --help                       help for dashboard
@@ -923,7 +923,7 @@ talosctl dmesg [flags]
 ### Options
 
 ```
-      --cluster string             Cluster to connect to if a proxy endpoint is used.
+  -c, --cluster string             Cluster to connect to if a proxy endpoint is used.
       --context string             Context to be used in command
   -e, --endpoints strings          override default endpoints in Talos configuration
   -f, --follow                     specify if the kernel log should be streamed
@@ -958,7 +958,7 @@ talosctl edit <type> [<id>] [flags]
 ### Options
 
 ```
-      --cluster string                              Cluster to connect to if a proxy endpoint is used.
+  -c, --cluster string                              Cluster to connect to if a proxy endpoint is used.
       --context string                              Context to be used in command
       --dry-run                                     do not apply the change after editing and print the change summary instead
   -e, --endpoints strings                           override default endpoints in Talos configuration
@@ -992,7 +992,7 @@ talosctl etcd alarm disarm [flags]
 ### Options inherited from parent commands
 
 ```
-      --cluster string             Cluster to connect to if a proxy endpoint is used.
+  -c, --cluster string             Cluster to connect to if a proxy endpoint is used.
       --context string             Context to be used in command
   -e, --endpoints strings          override default endpoints in Talos configuration
   -n, --nodes strings              target the specified nodes
@@ -1021,7 +1021,7 @@ talosctl etcd alarm list [flags]
 ### Options inherited from parent commands
 
 ```
-      --cluster string             Cluster to connect to if a proxy endpoint is used.
+  -c, --cluster string             Cluster to connect to if a proxy endpoint is used.
       --context string             Context to be used in command
   -e, --endpoints strings          override default endpoints in Talos configuration
   -n, --nodes strings              target the specified nodes
@@ -1046,7 +1046,7 @@ Manage etcd alarms
 ### Options inherited from parent commands
 
 ```
-      --cluster string             Cluster to connect to if a proxy endpoint is used.
+  -c, --cluster string             Cluster to connect to if a proxy endpoint is used.
       --context string             Context to be used in command
   -e, --endpoints strings          override default endpoints in Talos configuration
   -n, --nodes strings              target the specified nodes
@@ -1082,7 +1082,7 @@ talosctl etcd defrag [flags]
 ### Options inherited from parent commands
 
 ```
-      --cluster string             Cluster to connect to if a proxy endpoint is used.
+  -c, --cluster string             Cluster to connect to if a proxy endpoint is used.
       --context string             Context to be used in command
   -e, --endpoints strings          override default endpoints in Talos configuration
   -n, --nodes strings              target the specified nodes
@@ -1111,7 +1111,7 @@ talosctl etcd downgrade cancel [flags]
 ### Options inherited from parent commands
 
 ```
-      --cluster string             Cluster to connect to if a proxy endpoint is used.
+  -c, --cluster string             Cluster to connect to if a proxy endpoint is used.
       --context string             Context to be used in command
   -e, --endpoints strings          override default endpoints in Talos configuration
   -n, --nodes strings              target the specified nodes
@@ -1140,7 +1140,7 @@ talosctl etcd downgrade enable <version> [flags]
 ### Options inherited from parent commands
 
 ```
-      --cluster string             Cluster to connect to if a proxy endpoint is used.
+  -c, --cluster string             Cluster to connect to if a proxy endpoint is used.
       --context string             Context to be used in command
   -e, --endpoints strings          override default endpoints in Talos configuration
   -n, --nodes strings              target the specified nodes
@@ -1169,7 +1169,7 @@ talosctl etcd downgrade validate <version> [flags]
 ### Options inherited from parent commands
 
 ```
-      --cluster string             Cluster to connect to if a proxy endpoint is used.
+  -c, --cluster string             Cluster to connect to if a proxy endpoint is used.
       --context string             Context to be used in command
   -e, --endpoints strings          override default endpoints in Talos configuration
   -n, --nodes strings              target the specified nodes
@@ -1194,7 +1194,7 @@ Manage etcd storage system downgrades
 ### Options inherited from parent commands
 
 ```
-      --cluster string             Cluster to connect to if a proxy endpoint is used.
+  -c, --cluster string             Cluster to connect to if a proxy endpoint is used.
       --context string             Context to be used in command
   -e, --endpoints strings          override default endpoints in Talos configuration
   -n, --nodes strings              target the specified nodes
@@ -1226,7 +1226,7 @@ talosctl etcd forfeit-leadership [flags]
 ### Options inherited from parent commands
 
 ```
-      --cluster string             Cluster to connect to if a proxy endpoint is used.
+  -c, --cluster string             Cluster to connect to if a proxy endpoint is used.
       --context string             Context to be used in command
   -e, --endpoints strings          override default endpoints in Talos configuration
   -n, --nodes strings              target the specified nodes
@@ -1255,7 +1255,7 @@ talosctl etcd leave [flags]
 ### Options inherited from parent commands
 
 ```
-      --cluster string             Cluster to connect to if a proxy endpoint is used.
+  -c, --cluster string             Cluster to connect to if a proxy endpoint is used.
       --context string             Context to be used in command
   -e, --endpoints strings          override default endpoints in Talos configuration
   -n, --nodes strings              target the specified nodes
@@ -1284,7 +1284,7 @@ talosctl etcd members [flags]
 ### Options inherited from parent commands
 
 ```
-      --cluster string             Cluster to connect to if a proxy endpoint is used.
+  -c, --cluster string             Cluster to connect to if a proxy endpoint is used.
       --context string             Context to be used in command
   -e, --endpoints strings          override default endpoints in Talos configuration
   -n, --nodes strings              target the specified nodes
@@ -1319,7 +1319,7 @@ talosctl etcd remove-member <member ID> [flags]
 ### Options inherited from parent commands
 
 ```
-      --cluster string             Cluster to connect to if a proxy endpoint is used.
+  -c, --cluster string             Cluster to connect to if a proxy endpoint is used.
       --context string             Context to be used in command
   -e, --endpoints strings          override default endpoints in Talos configuration
   -n, --nodes strings              target the specified nodes
@@ -1348,7 +1348,7 @@ talosctl etcd snapshot <path> [flags]
 ### Options inherited from parent commands
 
 ```
-      --cluster string             Cluster to connect to if a proxy endpoint is used.
+  -c, --cluster string             Cluster to connect to if a proxy endpoint is used.
       --context string             Context to be used in command
   -e, --endpoints strings          override default endpoints in Talos configuration
   -n, --nodes strings              target the specified nodes
@@ -1381,7 +1381,7 @@ talosctl etcd status [flags]
 ### Options inherited from parent commands
 
 ```
-      --cluster string             Cluster to connect to if a proxy endpoint is used.
+  -c, --cluster string             Cluster to connect to if a proxy endpoint is used.
       --context string             Context to be used in command
   -e, --endpoints strings          override default endpoints in Talos configuration
   -n, --nodes strings              target the specified nodes
@@ -1400,7 +1400,7 @@ Manage etcd
 ### Options
 
 ```
-      --cluster string             Cluster to connect to if a proxy endpoint is used.
+  -c, --cluster string             Cluster to connect to if a proxy endpoint is used.
       --context string             Context to be used in command
   -e, --endpoints strings          override default endpoints in Talos configuration
   -h, --help                       help for etcd
@@ -1434,7 +1434,7 @@ talosctl events [flags]
 
 ```
       --actor-id string            filter events by the specified actor ID (default is no filter)
-      --cluster string             Cluster to connect to if a proxy endpoint is used.
+  -c, --cluster string             Cluster to connect to if a proxy endpoint is used.
       --context string             Context to be used in command
       --duration duration          show events for the past duration interval (one second resolution, default is to show no history)
   -e, --endpoints strings          override default endpoints in Talos configuration
@@ -1805,7 +1805,7 @@ talosctl get <type> [<id>] [flags]
 ### Options
 
 ```
-      --cluster string             Cluster to connect to if a proxy endpoint is used.
+  -c, --cluster string             Cluster to connect to if a proxy endpoint is used.
       --context string             Context to be used in command
   -e, --endpoints strings          override default endpoints in Talos configuration
   -h, --help                       help for get
@@ -1833,7 +1833,7 @@ talosctl health [flags]
 ### Options
 
 ```
-      --cluster string                Cluster to connect to if a proxy endpoint is used.
+  -c, --cluster string                Cluster to connect to if a proxy endpoint is used.
       --context string                Context to be used in command
       --control-plane-nodes strings   specify IPs of control plane nodes
   -e, --endpoints strings             override default endpoints in Talos configuration
@@ -1878,7 +1878,7 @@ talosctl image cache-cert-gen [flags]
 ### Options inherited from parent commands
 
 ```
-      --cluster string             Cluster to connect to if a proxy endpoint is used.
+  -c, --cluster string             Cluster to connect to if a proxy endpoint is used.
       --context string             Context to be used in command
   -e, --endpoints strings          override default endpoints in Talos configuration
       --namespace system           namespace to use: system (etcd and kubelet images) or `cri` for all Kubernetes workloads (default "cri")
@@ -1929,7 +1929,7 @@ talosctl images default | talosctl images cache-create --image-cache-path=/tmp/t
 ### Options inherited from parent commands
 
 ```
-      --cluster string             Cluster to connect to if a proxy endpoint is used.
+  -c, --cluster string             Cluster to connect to if a proxy endpoint is used.
       --context string             Context to be used in command
   -e, --endpoints strings          override default endpoints in Talos configuration
       --namespace system           namespace to use: system (etcd and kubelet images) or `cri` for all Kubernetes workloads (default "cri")
@@ -1967,7 +1967,7 @@ talosctl image cache-serve [flags]
 ### Options inherited from parent commands
 
 ```
-      --cluster string             Cluster to connect to if a proxy endpoint is used.
+  -c, --cluster string             Cluster to connect to if a proxy endpoint is used.
       --context string             Context to be used in command
   -e, --endpoints strings          override default endpoints in Talos configuration
       --namespace system           namespace to use: system (etcd and kubelet images) or `cri` for all Kubernetes workloads (default "cri")
@@ -1998,7 +1998,7 @@ talosctl image default [flags]
 ### Options inherited from parent commands
 
 ```
-      --cluster string             Cluster to connect to if a proxy endpoint is used.
+  -c, --cluster string             Cluster to connect to if a proxy endpoint is used.
       --context string             Context to be used in command
   -e, --endpoints strings          override default endpoints in Talos configuration
       --namespace system           namespace to use: system (etcd and kubelet images) or `cri` for all Kubernetes workloads (default "cri")
@@ -2028,7 +2028,7 @@ talosctl image list [flags]
 ### Options inherited from parent commands
 
 ```
-      --cluster string             Cluster to connect to if a proxy endpoint is used.
+  -c, --cluster string             Cluster to connect to if a proxy endpoint is used.
       --context string             Context to be used in command
   -e, --endpoints strings          override default endpoints in Talos configuration
       --namespace system           namespace to use: system (etcd and kubelet images) or `cri` for all Kubernetes workloads (default "cri")
@@ -2058,7 +2058,7 @@ talosctl image pull <image> [flags]
 ### Options inherited from parent commands
 
 ```
-      --cluster string             Cluster to connect to if a proxy endpoint is used.
+  -c, --cluster string             Cluster to connect to if a proxy endpoint is used.
       --context string             Context to be used in command
   -e, --endpoints strings          override default endpoints in Talos configuration
       --namespace system           namespace to use: system (etcd and kubelet images) or `cri` for all Kubernetes workloads (default "cri")
@@ -2088,7 +2088,7 @@ talosctl image source-bundle <talos-version> [flags]
 ### Options inherited from parent commands
 
 ```
-      --cluster string             Cluster to connect to if a proxy endpoint is used.
+  -c, --cluster string             Cluster to connect to if a proxy endpoint is used.
       --context string             Context to be used in command
   -e, --endpoints strings          override default endpoints in Talos configuration
       --namespace system           namespace to use: system (etcd and kubelet images) or `cri` for all Kubernetes workloads (default "cri")
@@ -2108,7 +2108,7 @@ Manage CRI container images
 ### Options
 
 ```
-      --cluster string             Cluster to connect to if a proxy endpoint is used.
+  -c, --cluster string             Cluster to connect to if a proxy endpoint is used.
       --context string             Context to be used in command
   -e, --endpoints strings          override default endpoints in Talos configuration
   -h, --help                       help for image
@@ -2202,7 +2202,7 @@ talosctl inspect dependencies [flags]
 ### Options inherited from parent commands
 
 ```
-      --cluster string             Cluster to connect to if a proxy endpoint is used.
+  -c, --cluster string             Cluster to connect to if a proxy endpoint is used.
       --context string             Context to be used in command
   -e, --endpoints strings          override default endpoints in Talos configuration
   -n, --nodes strings              target the specified nodes
@@ -2221,7 +2221,7 @@ Inspect internals of Talos
 ### Options
 
 ```
-      --cluster string             Cluster to connect to if a proxy endpoint is used.
+  -c, --cluster string             Cluster to connect to if a proxy endpoint is used.
       --context string             Context to be used in command
   -e, --endpoints strings          override default endpoints in Talos configuration
   -h, --help                       help for inspect
@@ -2254,7 +2254,7 @@ talosctl kubeconfig [local-path] [flags]
 ### Options
 
 ```
-      --cluster string              Cluster to connect to if a proxy endpoint is used.
+  -c, --cluster string              Cluster to connect to if a proxy endpoint is used.
       --context string              Context to be used in command
   -e, --endpoints strings           override default endpoints in Talos configuration
   -f, --force                       Force overwrite of kubeconfig if already present, force overwrite on kubeconfig merge
@@ -2281,7 +2281,7 @@ talosctl list [path] [flags]
 ### Options
 
 ```
-      --cluster string             Cluster to connect to if a proxy endpoint is used.
+  -c, --cluster string             Cluster to connect to if a proxy endpoint is used.
       --context string             Context to be used in command
   -d, --depth int32                maximum recursion depth (default 1)
   -e, --endpoints strings          override default endpoints in Talos configuration
@@ -2313,7 +2313,7 @@ talosctl logs <service name> [flags]
 ### Options
 
 ```
-      --cluster string             Cluster to connect to if a proxy endpoint is used.
+  -c, --cluster string             Cluster to connect to if a proxy endpoint is used.
       --context string             Context to be used in command
   -e, --endpoints strings          override default endpoints in Talos configuration
   -f, --follow                     specify if the logs should be streamed
@@ -2401,7 +2401,7 @@ talosctl memory [flags]
 ### Options
 
 ```
-      --cluster string             Cluster to connect to if a proxy endpoint is used.
+  -c, --cluster string             Cluster to connect to if a proxy endpoint is used.
       --context string             Context to be used in command
   -e, --endpoints strings          override default endpoints in Talos configuration
   -h, --help                       help for memory
@@ -2432,7 +2432,7 @@ talosctl meta delete key [flags]
 ### Options inherited from parent commands
 
 ```
-      --cluster string             Cluster to connect to if a proxy endpoint is used.
+  -c, --cluster string             Cluster to connect to if a proxy endpoint is used.
       --context string             Context to be used in command
   -e, --endpoints strings          override default endpoints in Talos configuration
   -i, --insecure                   write|delete meta using the insecure (encrypted with no auth) maintenance service
@@ -2462,7 +2462,7 @@ talosctl meta write key value [flags]
 ### Options inherited from parent commands
 
 ```
-      --cluster string             Cluster to connect to if a proxy endpoint is used.
+  -c, --cluster string             Cluster to connect to if a proxy endpoint is used.
       --context string             Context to be used in command
   -e, --endpoints strings          override default endpoints in Talos configuration
   -i, --insecure                   write|delete meta using the insecure (encrypted with no auth) maintenance service
@@ -2482,7 +2482,7 @@ Write and delete keys in the META partition
 ### Options
 
 ```
-      --cluster string             Cluster to connect to if a proxy endpoint is used.
+  -c, --cluster string             Cluster to connect to if a proxy endpoint is used.
       --context string             Context to be used in command
   -e, --endpoints strings          override default endpoints in Talos configuration
   -h, --help                       help for meta
@@ -2509,7 +2509,7 @@ talosctl mounts [flags]
 ### Options
 
 ```
-      --cluster string             Cluster to connect to if a proxy endpoint is used.
+  -c, --cluster string             Cluster to connect to if a proxy endpoint is used.
       --context string             Context to be used in command
   -e, --endpoints strings          override default endpoints in Talos configuration
   -h, --help                       help for mounts
@@ -2543,7 +2543,7 @@ talosctl netstat [flags]
 
 ```
   -a, --all                        display all sockets states (default: connected)
-      --cluster string             Cluster to connect to if a proxy endpoint is used.
+  -c, --cluster string             Cluster to connect to if a proxy endpoint is used.
       --context string             Context to be used in command
   -e, --endpoints strings          override default endpoints in Talos configuration
   -x, --extend                     show detailed socket information
@@ -2579,7 +2579,7 @@ talosctl patch <type> [<id>] [flags]
 ### Options
 
 ```
-      --cluster string                              Cluster to connect to if a proxy endpoint is used.
+  -c, --cluster string                              Cluster to connect to if a proxy endpoint is used.
       --context string                              Context to be used in command
       --dry-run                                     print the change summary and patch preview without applying the changes
   -e, --endpoints strings                           override default endpoints in Talos configuration
@@ -2638,7 +2638,7 @@ talosctl pcap [flags]
 
 ```
       --bpf-filter string          bpf filter to apply, tcpdump -dd format
-      --cluster string             Cluster to connect to if a proxy endpoint is used.
+  -c, --cluster string             Cluster to connect to if a proxy endpoint is used.
       --context string             Context to be used in command
       --duration duration          duration of the capture
   -e, --endpoints strings          override default endpoints in Talos configuration
@@ -2666,7 +2666,7 @@ talosctl processes [flags]
 ### Options
 
 ```
-      --cluster string             Cluster to connect to if a proxy endpoint is used.
+  -c, --cluster string             Cluster to connect to if a proxy endpoint is used.
       --context string             Context to be used in command
   -e, --endpoints strings          override default endpoints in Talos configuration
   -h, --help                       help for processes
@@ -2692,7 +2692,7 @@ talosctl read <path> [flags]
 ### Options
 
 ```
-      --cluster string             Cluster to connect to if a proxy endpoint is used.
+  -c, --cluster string             Cluster to connect to if a proxy endpoint is used.
       --context string             Context to be used in command
   -e, --endpoints strings          override default endpoints in Talos configuration
   -h, --help                       help for read
@@ -2716,7 +2716,7 @@ talosctl reboot [flags]
 ### Options
 
 ```
-      --cluster string             Cluster to connect to if a proxy endpoint is used.
+  -c, --cluster string             Cluster to connect to if a proxy endpoint is used.
       --context string             Context to be used in command
       --debug                      debug operation from kernel logs. --wait is set to true when this flag is set
   -e, --endpoints strings          override default endpoints in Talos configuration
@@ -2744,7 +2744,7 @@ talosctl reset [flags]
 ### Options
 
 ```
-      --cluster string                           Cluster to connect to if a proxy endpoint is used.
+  -c, --cluster string                           Cluster to connect to if a proxy endpoint is used.
       --context string                           Context to be used in command
       --debug                                    debug operation from kernel logs. --wait is set to true when this flag is set
   -e, --endpoints strings                        override default endpoints in Talos configuration
@@ -2777,7 +2777,7 @@ talosctl restart <id> [flags]
 ### Options
 
 ```
-      --cluster string             Cluster to connect to if a proxy endpoint is used.
+  -c, --cluster string             Cluster to connect to if a proxy endpoint is used.
       --context string             Context to be used in command
   -e, --endpoints strings          override default endpoints in Talos configuration
   -h, --help                       help for restart
@@ -2802,7 +2802,7 @@ talosctl rollback [flags]
 ### Options
 
 ```
-      --cluster string             Cluster to connect to if a proxy endpoint is used.
+  -c, --cluster string             Cluster to connect to if a proxy endpoint is used.
       --context string             Context to be used in command
   -e, --endpoints strings          override default endpoints in Talos configuration
   -h, --help                       help for rollback
@@ -2835,7 +2835,7 @@ talosctl rotate-ca [flags]
 ### Options
 
 ```
-      --cluster string                Cluster to connect to if a proxy endpoint is used.
+  -c, --cluster string                Cluster to connect to if a proxy endpoint is used.
       --context string                Context to be used in command
       --control-plane-nodes strings   specify IPs of control plane nodes
       --dry-run                       dry-run mode (no changes to the cluster) (default true)
@@ -2875,7 +2875,7 @@ talosctl service [<id> [start|stop|restart|status]] [flags]
 ### Options
 
 ```
-      --cluster string             Cluster to connect to if a proxy endpoint is used.
+  -c, --cluster string             Cluster to connect to if a proxy endpoint is used.
       --context string             Context to be used in command
   -e, --endpoints strings          override default endpoints in Talos configuration
   -h, --help                       help for service
@@ -2899,7 +2899,7 @@ talosctl shutdown [flags]
 ### Options
 
 ```
-      --cluster string             Cluster to connect to if a proxy endpoint is used.
+  -c, --cluster string             Cluster to connect to if a proxy endpoint is used.
       --context string             Context to be used in command
       --debug                      debug operation from kernel logs. --wait is set to true when this flag is set
   -e, --endpoints strings          override default endpoints in Talos configuration
@@ -2927,7 +2927,7 @@ talosctl stats [flags]
 ### Options
 
 ```
-      --cluster string             Cluster to connect to if a proxy endpoint is used.
+  -c, --cluster string             Cluster to connect to if a proxy endpoint is used.
       --context string             Context to be used in command
   -e, --endpoints strings          override default endpoints in Talos configuration
   -h, --help                       help for stats
@@ -2974,7 +2974,7 @@ talosctl support [flags]
 ### Options
 
 ```
-      --cluster string             Cluster to connect to if a proxy endpoint is used.
+  -c, --cluster string             Cluster to connect to if a proxy endpoint is used.
       --context string             Context to be used in command
   -e, --endpoints strings          override default endpoints in Talos configuration
   -h, --help                       help for support
@@ -3001,8 +3001,8 @@ talosctl time [--check server] [flags]
 ### Options
 
 ```
-  -c, --check string               checks server time against specified ntp server
-      --cluster string             Cluster to connect to if a proxy endpoint is used.
+      --check string               checks server time against specified ntp server
+  -c, --cluster string             Cluster to connect to if a proxy endpoint is used.
       --context string             Context to be used in command
   -e, --endpoints strings          override default endpoints in Talos configuration
   -h, --help                       help for time
@@ -3026,7 +3026,7 @@ talosctl upgrade [flags]
 ### Options
 
 ```
-      --cluster string             Cluster to connect to if a proxy endpoint is used.
+  -c, --cluster string             Cluster to connect to if a proxy endpoint is used.
       --context string             Context to be used in command
       --debug                      debug operation from kernel logs. --wait is set to true when this flag is set
   -e, --endpoints strings          override default endpoints in Talos configuration
@@ -3063,7 +3063,7 @@ talosctl upgrade-k8s [flags]
 
 ```
       --apiserver-image string            kube-apiserver image to use (default "registry.k8s.io/kube-apiserver")
-      --cluster string                    Cluster to connect to if a proxy endpoint is used.
+  -c, --cluster string                    Cluster to connect to if a proxy endpoint is used.
       --context string                    Context to be used in command
       --controller-manager-image string   kube-controller-manager image to use (default "registry.k8s.io/kube-controller-manager")
       --dry-run                           skip the actual upgrade and show the upgrade plan instead
@@ -3100,7 +3100,7 @@ talosctl usage [path1] [path2] ... [pathN] [flags]
 
 ```
   -a, --all                        write counts for all files, not just directories
-      --cluster string             Cluster to connect to if a proxy endpoint is used.
+  -c, --cluster string             Cluster to connect to if a proxy endpoint is used.
       --context string             Context to be used in command
   -d, --depth int32                maximum recursion depth
   -e, --endpoints strings          override default endpoints in Talos configuration
@@ -3149,7 +3149,7 @@ talosctl version [flags]
 
 ```
       --client                     Print client version only
-      --cluster string             Cluster to connect to if a proxy endpoint is used.
+  -c, --cluster string             Cluster to connect to if a proxy endpoint is used.
       --context string             Context to be used in command
   -e, --endpoints strings          override default endpoints in Talos configuration
   -h, --help                       help for version
@@ -3190,7 +3190,7 @@ talosctl wipe disk <device names>... [flags]
 ### Options inherited from parent commands
 
 ```
-      --cluster string             Cluster to connect to if a proxy endpoint is used.
+  -c, --cluster string             Cluster to connect to if a proxy endpoint is used.
       --context string             Context to be used in command
   -e, --endpoints strings          override default endpoints in Talos configuration
   -n, --nodes strings              target the specified nodes
@@ -3209,7 +3209,7 @@ Wipe block device or volumes
 ### Options
 
 ```
-      --cluster string             Cluster to connect to if a proxy endpoint is used.
+  -c, --cluster string             Cluster to connect to if a proxy endpoint is used.
       --context string             Context to be used in command
   -e, --endpoints strings          override default endpoints in Talos configuration
   -h, --help                       help for wipe

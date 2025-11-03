@@ -235,7 +235,7 @@ func init() {
 	logsCmd.Flags().BoolVarP(&follow, "follow", "f", false, "specify if the logs should be streamed")
 	logsCmd.Flags().Int32VarP(&tailLines, "tail", "", -1, "lines of log file to display (default is to show from the beginning)")
 
-	logsCmd.Flags().BoolP("use-cri", "c", false, "use the CRI driver")
+	logsCmd.Flags().Bool("use-cri", false, "use the CRI driver")
 	logsCmd.Flags().MarkHidden("use-cri") //nolint:errcheck
 
 	addCommand(logsCmd)

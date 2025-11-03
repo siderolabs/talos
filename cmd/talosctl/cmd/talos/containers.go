@@ -93,7 +93,7 @@ func containerRender(remotePeer *peer.Peer, resp *machineapi.ContainersResponse)
 func init() {
 	containersCmd.Flags().BoolVarP(&kubernetesFlag, "kubernetes", "k", false, "use the k8s.io containerd namespace")
 
-	containersCmd.Flags().BoolP("use-cri", "c", false, "use the CRI driver")
+	containersCmd.Flags().Bool("use-cri", false, "use the CRI driver")
 	containersCmd.Flags().MarkHidden("use-cri") //nolint:errcheck
 
 	addCommand(containersCmd)

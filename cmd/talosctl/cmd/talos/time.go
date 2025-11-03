@@ -86,6 +86,6 @@ var timeCmd = &cobra.Command{
 }
 
 func init() {
-	timeCmd.Flags().StringVarP(&timeCmdFlags.ntpServer, "check", "c", "", "checks server time against specified ntp server")
+	timeCmd.Flags().StringVar(&timeCmdFlags.ntpServer, "check", "", "checks server time against specified ntp server")
 	addCommand(timeCmd)
 }
