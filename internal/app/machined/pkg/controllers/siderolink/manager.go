@@ -349,6 +349,10 @@ func (ctrl *ManagerController) provision(ctx context.Context, r controller.Runti
 	nodeUUID := sysInfo.TypedSpec().UUID
 
 	provision := func() (*pb.ProvisionResponse, error) {
+		// set a timeout for the provisioning call
+		ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
+		defer cancel()
+
 		conn, connErr := grpc.NewClient(
 			cfg.TypedSpec().Host,
 			withTransportCredentials(cfg.TypedSpec().Insecure),
