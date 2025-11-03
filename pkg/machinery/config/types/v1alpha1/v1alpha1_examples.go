@@ -11,7 +11,7 @@ import (
 
 	"github.com/siderolabs/crypto/x509"
 	"github.com/siderolabs/go-pointer"
-	"gopkg.in/yaml.v3"
+	"go.yaml.in/yaml/v4"
 
 	"github.com/siderolabs/talos/pkg/machinery/config/machine"
 	"github.com/siderolabs/talos/pkg/machinery/constants"

@@ -12,7 +12,7 @@ import (
 
 	"github.com/dustin/go-humanize"
 	"github.com/siderolabs/go-pointer"
-	"gopkg.in/yaml.v3"
+	"go.yaml.in/yaml/v4"
 )
 
 // Check interfaces.

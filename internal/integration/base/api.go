@@ -24,9 +24,9 @@ import (
 	"github.com/siderolabs/gen/xslices"
 	"github.com/siderolabs/go-retry/retry"
 	"github.com/stretchr/testify/suite"
+	"go.yaml.in/yaml/v4"
 	"google.golang.org/grpc/backoff"
 	"google.golang.org/grpc/codes"
-	"gopkg.in/yaml.v3"
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
 	"github.com/siderolabs/talos/pkg/cluster"

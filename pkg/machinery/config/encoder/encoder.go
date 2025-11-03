@@ -11,7 +11,7 @@ import (
 	"slices"
 	"strings"
 
-	yaml "gopkg.in/yaml.v3"
+	yaml "go.yaml.in/yaml/v4"
 )
 
 // Encoder implements config encoder.

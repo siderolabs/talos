@@ -24,8 +24,8 @@ import (
 	"github.com/ryanuber/go-glob"
 	"github.com/siderolabs/gen/maps"
 	"github.com/spf13/cobra"
+	"go.yaml.in/yaml/v4"
 	"google.golang.org/protobuf/types/known/durationpb"
-	"gopkg.in/yaml.v3"
 
 	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/helpers"
 	machineapi "github.com/siderolabs/talos/pkg/machinery/api/machine"

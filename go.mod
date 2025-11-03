@@ -20,10 +20,6 @@ replace (
 
 	// fork to add Talos-specific userspace socket location: https://github.com/siderolabs/talos/issues/8514
 	golang.zx2c4.com/wireguard/wgctrl => github.com/siderolabs/wgctrl-go v0.0.0-20251029173431-c4fd5f6a4e72
-
-	// forked go-yaml that introduces RawYAML interface, which can be used to populate YAML fields using bytes
-	// which are then encoded as a valid YAML blocks with proper indentiation
-	gopkg.in/yaml.v3 => github.com/unix4ever/yaml v0.0.0-20220527175918-f17b0f05cf2c
 )
 
 // deadcode elimination fix replacement: https://github.com/siderolabs/talos/issues/11296
@@ -71,7 +67,7 @@ require (
 	github.com/containernetworking/plugins v1.8.0
 	github.com/coredns/coredns v1.12.3
 	github.com/coreos/go-iptables v0.8.0
-	github.com/cosi-project/runtime v1.11.0
+	github.com/cosi-project/runtime v1.12.0
 	github.com/detailyang/go-fallocate v0.0.0-20180908115635-432fa640bd2e
 	github.com/distribution/reference v0.6.0
 	github.com/docker/cli v28.5.1+incompatible
@@ -109,7 +105,7 @@ require (
 	github.com/jeromer/syslogparser v1.1.0
 	github.com/jsimonetti/rtnetlink/v2 v2.0.5
 	github.com/jxskiss/base62 v1.1.0
-	github.com/klauspost/compress v1.18.0
+	github.com/klauspost/compress v1.18.1
 	github.com/klauspost/cpuid/v2 v2.3.0
 	github.com/linode/go-metadata v0.2.2
 	github.com/martinlindhe/base36 v1.1.1
@@ -141,7 +137,7 @@ require (
 	github.com/siderolabs/crypto v0.6.4
 	github.com/siderolabs/discovery-api v0.1.6
 	github.com/siderolabs/discovery-client v0.1.13
-	github.com/siderolabs/gen v0.8.5
+	github.com/siderolabs/gen v0.8.6
 	github.com/siderolabs/go-api-signature v0.3.9
 	github.com/siderolabs/go-blockdevice/v2 v2.0.19
 	github.com/siderolabs/go-circular v0.2.3
@@ -158,7 +154,7 @@ require (
 	github.com/siderolabs/go-retry v0.3.3
 	github.com/siderolabs/go-smbios v0.3.3
 	github.com/siderolabs/go-tail v0.1.1
-	github.com/siderolabs/go-talos-support v0.1.2
+	github.com/siderolabs/go-talos-support v0.1.4
 	github.com/siderolabs/grpc-proxy v0.5.1
 	github.com/siderolabs/kms-client v0.1.0
 	github.com/siderolabs/net v0.4.0
@@ -179,6 +175,7 @@ require (
 	go.etcd.io/etcd/etcdutl/v3 v3.6.5
 	go.uber.org/goleak v1.3.0
 	go.uber.org/zap v1.27.0
+	go.yaml.in/yaml/v4 v4.0.0-rc.2
 	go4.org/netipx v0.0.0-20231129151722-fdeea329fbba
 	golang.org/x/net v0.46.0
 	golang.org/x/oauth2 v0.32.0
@@ -191,7 +188,6 @@ require (
 	google.golang.org/grpc v1.76.0
 	google.golang.org/protobuf v1.36.10
 	gopkg.in/typ.v4 v4.4.0
-	gopkg.in/yaml.v3 v3.0.1
 	k8s.io/klog/v2 v2.130.1
 	k8s.io/utils v0.0.0-20251002143259-bc988d571ff4
 	kernel.org/pub/linux/libs/security/libcap/cap v1.2.76
@@ -269,7 +265,7 @@ require (
 	github.com/gorilla/websocket v1.5.4-0.20250319132907-e064f32e3674 // indirect
 	github.com/gosuri/uilive v0.0.4 // indirect
 	github.com/gregjones/httpcache v0.0.0-20190611155906-901d90724c79 // indirect
-	github.com/grpc-ecosystem/grpc-gateway/v2 v2.27.2 // indirect
+	github.com/grpc-ecosystem/grpc-gateway/v2 v2.27.3 // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/hashicorp/go-safetemp v1.0.0 // indirect
 	github.com/hashicorp/go-version v1.7.0 // indirect
@@ -359,6 +355,7 @@ require (
 	gopkg.in/evanphx/json-patch.v4 v4.13.0 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
+	gopkg.in/yaml.v3 v3.0.1 // indirect
 	gotest.tools/v3 v3.4.0 // indirect
 	k8s.io/cli-runtime v0.35.0-alpha.2 // indirect
 	k8s.io/kube-openapi v0.0.0-20250910181357-589584f1c912 // indirect

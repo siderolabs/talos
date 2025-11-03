@@ -16,7 +16,7 @@ import (
 	"strings"
 	"text/template"
 
-	yaml "gopkg.in/yaml.v3"
+	yaml "go.yaml.in/yaml/v4"
 )
 
 //go:embed "markdown.tmpl"

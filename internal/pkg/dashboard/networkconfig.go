@@ -14,7 +14,7 @@ import (
 	"github.com/rivo/tview"
 	"github.com/siderolabs/gen/maps"
 	"github.com/siderolabs/go-pointer"
-	"gopkg.in/yaml.v3"
+	"go.yaml.in/yaml/v4"
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
 	"github.com/siderolabs/talos/internal/pkg/dashboard/resourcedata"

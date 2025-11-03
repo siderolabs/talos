@@ -14,8 +14,8 @@ import (
 	"github.com/google/cel-go/common/types"
 	"github.com/siderolabs/go-pointer"
 	"github.com/siderolabs/protoenc"
+	"go.yaml.in/yaml/v4"
 	exprpb "google.golang.org/genproto/googleapis/api/expr/v1alpha1"
-	"gopkg.in/yaml.v3"
 
 	"github.com/siderolabs/talos/pkg/machinery/proto"
 )

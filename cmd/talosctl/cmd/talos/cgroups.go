@@ -18,7 +18,7 @@ import (
 
 	"github.com/siderolabs/gen/xslices"
 	"github.com/spf13/cobra"
-	"gopkg.in/yaml.v3"
+	"go.yaml.in/yaml/v4"
 
 	"github.com/siderolabs/talos/cmd/talosctl/cmd/talos/cgroupsprinter"
 	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/helpers"

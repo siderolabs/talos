@@ -13,7 +13,7 @@ import (
 	"path/filepath"
 
 	"github.com/containernetworking/cni/libcni"
-	yaml "gopkg.in/yaml.v3"
+	yaml "go.yaml.in/yaml/v4"
 )
 
 // StateFileName is the name of the yaml state file.

@@ -12,7 +12,7 @@ import (
 
 	jsonpatch "github.com/evanphx/json-patch"
 	ghodssyaml "github.com/ghodss/yaml"
-	"gopkg.in/yaml.v3"
+	"go.yaml.in/yaml/v4"
 )
 
 // JSON6902 is responsible for applying a JSON 6902 patch to the bootstrap data.

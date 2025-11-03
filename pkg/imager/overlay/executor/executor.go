@@ -12,7 +12,7 @@ import (
 	"io"
 	"os/exec"
 
-	"gopkg.in/yaml.v3"
+	"go.yaml.in/yaml/v4"
 
 	"github.com/siderolabs/talos/pkg/machinery/overlay"
 )

@@ -10,7 +10,7 @@ import (
 	"errors"
 	"io"
 
-	"gopkg.in/yaml.v3"
+	"go.yaml.in/yaml/v4"
 )
 
 // Comments strips comments from a YAML file.

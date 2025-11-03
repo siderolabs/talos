@@ -12,8 +12,8 @@ import (
 	"regexp"
 	"strings"
 
+	"go.yaml.in/yaml/v4"
 	"google.golang.org/protobuf/encoding/protojson"
-	"gopkg.in/yaml.v3"
 
 	"github.com/siderolabs/talos/internal/integration/base"
 	machineapi "github.com/siderolabs/talos/pkg/machinery/api/machine"

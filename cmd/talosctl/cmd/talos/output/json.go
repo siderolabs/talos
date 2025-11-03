@@ -12,7 +12,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/meta"
 	"github.com/cosi-project/runtime/pkg/state"
-	yaml "gopkg.in/yaml.v3"
+	yaml "go.yaml.in/yaml/v4"
 
 	"github.com/siderolabs/talos/pkg/machinery/resources/config"
 )
@@ -39,7 +39,11 @@ func (j *JSON) WriteHeader(definition *meta.ResourceDefinition, withEvents bool)
 
 // prepareEncodableData prepares the data of a resource to be encoded as JSON and populates it with some extra information.
 func (j *JSON) prepareEncodableData(node string, r resource.Resource, event state.EventType) (map[string]any, error) {
-	if r.Metadata().Type() == config.MachineConfigType {
+	if r.Metadata().Type() == config.MachineConfigType && r.Metadata().Annotations().Empty() {
+		// use a temporary wrapper to adjust YAML marshaling
+		// for backwards compatibility with versions of Talos
+		// which incorrectly marshal MachineConfig spec as YAML document
+		// directly
 		r = &mcYamlRepr{r}
 	}
 

@@ -17,7 +17,7 @@ import (
 	"github.com/google/go-containerregistry/pkg/name"
 	"github.com/siderolabs/gen/xslices"
 	"github.com/spf13/cobra"
-	"gopkg.in/yaml.v3"
+	"go.yaml.in/yaml/v4"
 
 	"github.com/siderolabs/talos/cmd/installer/pkg/install"
 	"github.com/siderolabs/talos/pkg/archiver"

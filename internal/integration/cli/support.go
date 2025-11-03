@@ -62,7 +62,6 @@ func (suite *SupportSuite) TestSupport() {
 		"service-logs/kubelet.log",
 		"service-logs/kubelet.state",
 		"resources/kernelparamstatuses.runtime.talos.dev.yaml",
-		"kubernetes-logs/kube-system/kube-apiserver.log",
 		"controller-runtime.log",
 		"mounts",
 		"processes",
@@ -71,6 +70,24 @@ func (suite *SupportSuite) TestSupport() {
 	} {
 		n := fmt.Sprintf("%s/%s", node, name)
 		suite.Require().Contains(files, n, "File %s doesn't exist in the support bundle", n)
+	}
+
+	for _, name := range []string{
+		"kubernetes-logs/kube-system/kube-apiserver-",
+	} {
+		n := fmt.Sprintf("%s/%s", node, name)
+
+		found := false
+
+		for fileName := range files {
+			if strings.HasPrefix(fileName, n) {
+				found = true
+
+				break
+			}
+		}
+
+		suite.Require().True(found, "File with prefix %s doesn't exist in the support bundle", n)
 	}
 
 	for _, name := range []string{

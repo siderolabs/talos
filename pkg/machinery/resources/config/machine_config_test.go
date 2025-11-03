@@ -5,6 +5,7 @@
 package config_test
 
 import (
+	_ "embed"
 	"regexp"
 	"testing"
 	"time"
@@ -13,7 +14,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/resource/protobuf"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"gopkg.in/yaml.v3"
+	"go.yaml.in/yaml/v4"
 
 	"github.com/siderolabs/talos/pkg/machinery/config/configloader"
 	"github.com/siderolabs/talos/pkg/machinery/resources/config"
@@ -25,6 +26,9 @@ debug: false
 machine:
   type: controlplane
 `
+
+//go:embed testdata/machineconfig.yaml
+var machineConfigYAML string
 
 func TestMachineConfigMarshal(t *testing.T) {
 	cfg, err := configloader.NewFromBytes([]byte(sampleConfig))
@@ -38,11 +42,10 @@ func TestMachineConfigMarshal(t *testing.T) {
 	enc, err := yaml.Marshal(m)
 	require.NoError(t, err)
 
-	enc = regexp.MustCompile("(created|updated): [0-9-:TZ+]+").ReplaceAll(enc, nil)
+	enc = regexp.MustCompile("(created|updated): [0-9-:TZ+]+").ReplaceAll(enc, []byte("$1: <redacted>"))
 
 	assert.Equal(t,
-		"metadata:\n    namespace: config\n    type: MachineConfigs.config.talos.dev\n    id: v1alpha1\n    version: undefined\n    owner:\n    phase: running\n    \n    \n"+
-			"spec:\n    version: v1alpha1\n    persist: true # foo\n    debug: false\n    machine:\n      type: controlplane\n",
+		machineConfigYAML,
 		string(enc))
 }
 

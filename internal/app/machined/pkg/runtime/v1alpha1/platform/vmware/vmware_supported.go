@@ -20,7 +20,7 @@ import (
 	"github.com/equinix-ms/go-vmw-guestrpc/pkg/hypercall"
 	"github.com/equinix-ms/go-vmw-guestrpc/pkg/nanotoolbox"
 	"github.com/siderolabs/go-procfs/procfs"
-	yaml "gopkg.in/yaml.v3"
+	yaml "go.yaml.in/yaml/v4"
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
 	platformerrors "github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/errors"

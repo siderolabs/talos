@@ -17,7 +17,7 @@ import (
 	"github.com/siderolabs/gen/xtesting/must"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"gopkg.in/yaml.v3"
+	"go.yaml.in/yaml/v4"
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/nocloud"
 	"github.com/siderolabs/talos/pkg/machinery/nethelpers"

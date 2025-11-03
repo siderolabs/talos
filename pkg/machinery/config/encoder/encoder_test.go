@@ -9,7 +9,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/suite"
-	yaml "gopkg.in/yaml.v3"
+	yaml "go.yaml.in/yaml/v4"
 
 	"github.com/siderolabs/talos/pkg/machinery/config/encoder"
 )

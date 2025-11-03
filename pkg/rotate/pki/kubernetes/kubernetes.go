@@ -16,7 +16,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/siderolabs/crypto/x509"
 	"github.com/siderolabs/go-retry/retry"
-	"gopkg.in/yaml.v3"
+	"go.yaml.in/yaml/v4"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 

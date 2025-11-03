@@ -14,8 +14,8 @@ import (
 
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/spf13/cobra"
+	"go.yaml.in/yaml/v4"
 	"google.golang.org/protobuf/types/known/durationpb"
-	"gopkg.in/yaml.v3"
 
 	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/helpers"
 	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/yamlstrip"
@@ -36,6 +36,25 @@ var patchCmdFlags struct {
 	configTryTimeout time.Duration
 }
 
+func extractMachineConfigBody(mc resource.Resource) ([]byte, error) {
+	if mc.Metadata().Annotations().Empty() {
+		return yaml.Marshal(mc.Spec())
+	}
+
+	spec, err := yaml.Marshal(mc.Spec())
+	if err != nil {
+		return nil, err
+	}
+
+	var bodyStr string
+
+	if err = yaml.Unmarshal(spec, &bodyStr); err != nil {
+		return nil, err
+	}
+
+	return []byte(bodyStr), nil
+}
+
 func patchFn(c *client.Client, patches []configpatcher.Patch) func(context.Context, string, resource.Resource, error) error {
 	return func(ctx context.Context, node string, mc resource.Resource, callError error) error {
 		if callError != nil {
@@ -50,7 +69,7 @@ func patchFn(c *client.Client, patches []configpatcher.Patch) func(context.Conte
 			return nil
 		}
 
-		body, err := yaml.Marshal(mc.Spec())
+		body, err := extractMachineConfigBody(mc)
 		if err != nil {
 			return err
 		}

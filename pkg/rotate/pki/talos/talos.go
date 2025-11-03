@@ -16,8 +16,8 @@ import (
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/siderolabs/crypto/x509"
 	"github.com/siderolabs/go-retry/retry"
+	"go.yaml.in/yaml/v4"
 	"google.golang.org/grpc/codes"
-	"gopkg.in/yaml.v3"
 
 	"github.com/siderolabs/talos/pkg/cluster"
 	machineapi "github.com/siderolabs/talos/pkg/machinery/api/machine"

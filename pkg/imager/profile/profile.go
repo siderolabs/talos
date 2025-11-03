@@ -11,7 +11,7 @@ import (
 	"io"
 
 	"github.com/siderolabs/go-pointer"
-	"gopkg.in/yaml.v3"
+	"go.yaml.in/yaml/v4"
 
 	"github.com/siderolabs/talos/pkg/machinery/imager/quirks"
 	"github.com/siderolabs/talos/pkg/machinery/overlay"

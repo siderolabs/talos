@@ -26,8 +26,8 @@ import (
 	"github.com/google/go-containerregistry/pkg/v1/types"
 	"github.com/siderolabs/go-pointer"
 	"github.com/siderolabs/go-procfs/procfs"
+	"go.yaml.in/yaml/v4"
 	"golang.org/x/sys/unix"
-	"gopkg.in/yaml.v3"
 
 	"github.com/siderolabs/talos/cmd/installer/pkg/install"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/options"

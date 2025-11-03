@@ -40,9 +40,16 @@ type v1alpha1Spec struct {
 	cfg config.Provider
 }
 
-// MarshalYAMLBytes implements RawYAML interface.
-func (s *v1alpha1Spec) MarshalYAMLBytes() ([]byte, error) {
-	return s.cfg.Bytes()
+// MarshalYAML implements yaml.Marshaler interface.
+//
+// Machine configuration in the spec is presented as raw YAML string.
+func (s *v1alpha1Spec) MarshalYAML() (any, error) {
+	b, err := s.cfg.Bytes()
+	if err != nil {
+		return nil, err
+	}
+
+	return string(b), nil
 }
 
 // NewMachineConfig initializes a V1Alpha1 resource.
@@ -58,6 +65,10 @@ func NewMachineConfigWithID(spec config.Provider, id resource.ID) *MachineConfig
 			cfg: spec,
 		},
 	}
+
+	// set the annotation to mark that the spec is marshaled as YAML string properly
+	// the actual annotation value does not matter, as the key right now
+	r.Metadata().Annotations().Set("talos.dev/yaml-spec", "1")
 
 	return r
 }

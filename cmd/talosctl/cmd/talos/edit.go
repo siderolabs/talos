@@ -19,7 +19,6 @@ import (
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/spf13/cobra"
 	"google.golang.org/protobuf/types/known/durationpb"
-	"gopkg.in/yaml.v3"
 	"k8s.io/kubectl/pkg/cmd/util/editor"
 	"k8s.io/kubectl/pkg/cmd/util/editor/crlf"
 
@@ -66,7 +65,7 @@ func editFn(c *client.Client) func(context.Context, string, resource.Resource, e
 			return nil
 		}
 
-		body, err := yaml.Marshal(mc.Spec())
+		body, err := extractMachineConfigBody(mc)
 		if err != nil {
 			return err
 		}

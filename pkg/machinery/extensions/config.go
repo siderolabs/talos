@@ -7,7 +7,7 @@ package extensions
 import (
 	"os"
 
-	"gopkg.in/yaml.v3"
+	"go.yaml.in/yaml/v4"
 )
 
 //go:generate go tool github.com/siderolabs/deep-copy -type Layer -header-file ../../../hack/boilerplate.txt -o deep_copy.generated.go .

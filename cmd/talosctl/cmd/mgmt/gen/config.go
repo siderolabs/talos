@@ -17,7 +17,7 @@ import (
 	"github.com/siderolabs/gen/xslices"
 	sideronet "github.com/siderolabs/net"
 	"github.com/spf13/cobra"
-	"gopkg.in/yaml.v3"
+	"go.yaml.in/yaml/v4"
 
 	"github.com/siderolabs/talos/cmd/talosctl/pkg/mgmt/helpers"
 	"github.com/siderolabs/talos/pkg/images"

@@ -14,7 +14,7 @@ import (
 	"time"
 
 	"github.com/blang/semver/v4"
-	yaml "gopkg.in/yaml.v3"
+	yaml "go.yaml.in/yaml/v4"
 	"sigs.k8s.io/hydrophone/pkg/common"
 	"sigs.k8s.io/hydrophone/pkg/conformance"
 	"sigs.k8s.io/hydrophone/pkg/conformance/client"
