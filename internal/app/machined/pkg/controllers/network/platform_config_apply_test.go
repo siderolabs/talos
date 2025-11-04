@@ -17,6 +17,7 @@ import (
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/ctest"
 	netctrl "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/network"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/metal"
 	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
 	"github.com/siderolabs/talos/pkg/machinery/resources/network"
 	runtimeres "github.com/siderolabs/talos/pkg/machinery/resources/runtime"
@@ -297,6 +298,13 @@ func (suite *PlatformConfigApplySuite) TestMetadata() {
 		})
 }
 
+func (suite *PlatformConfigApplySuite) TestNoPlatformConfig() {
+	ctest.AssertResource(suite, runtimeres.PlatformMetadataID,
+		func(r *runtimeres.PlatformMetadata, asrt *assert.Assertions) {
+			asrt.Equal("metal", r.TypedSpec().Platform)
+		})
+}
+
 func TestPlatformConfigApplySuite(t *testing.T) {
 	t.Parallel()
 
@@ -306,7 +314,9 @@ func TestPlatformConfigApplySuite(t *testing.T) {
 			AfterSetup: func(suite *ctest.DefaultSuite) {
 				suite.Require().NoError(
 					suite.Runtime().RegisterController(
-						&netctrl.PlatformConfigApplyController{},
+						&netctrl.PlatformConfigApplyController{
+							V1alpha1Platform: &metal.Metal{},
+						},
 					))
 			},
 		},

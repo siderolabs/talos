@@ -14,6 +14,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/safe"
 	"go.uber.org/zap"
 
+	v1alpha1runtime "github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
 	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
 	"github.com/siderolabs/talos/pkg/machinery/resources/network"
 	runtimeres "github.com/siderolabs/talos/pkg/machinery/resources/runtime"
@@ -23,7 +24,9 @@ import (
 const externalLink = "external"
 
 // PlatformConfigApplyController applies active (or cached) platform network config to the network stack.
-type PlatformConfigApplyController struct{}
+type PlatformConfigApplyController struct {
+	V1alpha1Platform v1alpha1runtime.Platform
+}
 
 // Name implements controller.Controller interface.
 func (ctrl *PlatformConfigApplyController) Name() string {
@@ -117,9 +120,13 @@ func (ctrl *PlatformConfigApplyController) Run(ctx context.Context, r controller
 			}
 		}
 
-		// if we don't have any config yet, wait...
+		// if we don't have any config yet, populate a minimal one
+		// to ensure that platform name is populated in the resource
 		if platformConfig == nil {
-			continue
+			platformConfig = network.NewPlatformConfig(network.NamespaceName, network.PlatformConfigActiveID)
+			platformConfig.TypedSpec().Metadata = &runtimeres.PlatformMetadataSpec{
+				Platform: ctrl.V1alpha1Platform.Name(),
+			}
 		}
 
 		if err := ctrl.apply(ctx, r, platformConfig); err != nil {

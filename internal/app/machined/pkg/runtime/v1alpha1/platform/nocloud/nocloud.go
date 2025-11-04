@@ -61,19 +61,17 @@ func (n *Nocloud) ParseMetadata(ctx context.Context, unmarshalledNetworkConfig *
 		err            error
 	)
 
-	if unmarshalledNetworkConfig != nil {
-		switch unmarshalledNetworkConfig.Version {
-		case 1:
-			if needsReconcile, err = n.applyNetworkConfigV1(ctx, unmarshalledNetworkConfig, st, networkConfig); err != nil {
-				return nil, false, err
-			}
-		case 2:
-			if needsReconcile, err = n.applyNetworkConfigV2(ctx, unmarshalledNetworkConfig, st, networkConfig); err != nil {
-				return nil, false, err
-			}
-		default:
-			return nil, false, fmt.Errorf("network-config metadata version=%d is not supported", unmarshalledNetworkConfig.Version)
+	switch unmarshalledNetworkConfig.Version {
+	case 1:
+		if needsReconcile, err = n.applyNetworkConfigV1(ctx, unmarshalledNetworkConfig, st, networkConfig); err != nil {
+			return nil, false, err
 		}
+	case 2:
+		if needsReconcile, err = n.applyNetworkConfigV2(ctx, unmarshalledNetworkConfig, st, networkConfig); err != nil {
+			return nil, false, err
+		}
+	default:
+		return nil, false, fmt.Errorf("network-config metadata version=%d is not supported", unmarshalledNetworkConfig.Version)
 	}
 
 	networkConfig.Metadata = &runtimeres.PlatformMetadataSpec{
@@ -143,13 +141,14 @@ func (n *Nocloud) NetworkConfiguration(ctx context.Context, st state.State, ch c
 		return err
 	}
 
-	var unmarshalledNetworkConfig *NetworkConfig
+	if metadataNetworkConfigDl == nil {
+		// no data, use cached network configuration if available
+		return nil
+	}
 
-	if metadataNetworkConfigDl != nil {
-		unmarshalledNetworkConfig, err = DecodeNetworkConfig(metadataNetworkConfigDl)
-		if err != nil {
-			return err
-		}
+	unmarshalledNetworkConfig, err := DecodeNetworkConfig(metadataNetworkConfigDl)
+	if err != nil {
+		return err
 	}
 
 	// do a loop to retry network config remap in case of missing links

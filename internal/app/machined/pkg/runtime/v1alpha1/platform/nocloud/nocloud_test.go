@@ -243,23 +243,3 @@ https://metadataserver3/userdata
 		})
 	}
 }
-
-func TestEmptyNetworkConfig(t *testing.T) {
-	t.Parallel()
-
-	n := &nocloud.Nocloud{}
-
-	st := state.WrapCore(namespaced.NewState(inmem.Build))
-
-	var md nocloud.MetadataConfig
-
-	networkConfig, needsReconcile, err := n.ParseMetadata(t.Context(), nil, st, &md)
-	require.NoError(t, err)
-	assert.False(t, needsReconcile)
-
-	assert.Equal(t, &network.PlatformConfigSpec{
-		Metadata: &runtime.PlatformMetadataSpec{
-			Platform: "nocloud",
-		},
-	}, networkConfig)
-}
