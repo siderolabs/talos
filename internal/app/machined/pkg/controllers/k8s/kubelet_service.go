@@ -28,6 +28,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/serializer/json"
 	"k8s.io/client-go/tools/clientcmd"
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
+	kubeletv1config "k8s.io/kubelet/config/v1"
 	kubeletconfig "k8s.io/kubelet/config/v1beta1"
 
 	runtimetalos "github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
@@ -368,7 +369,7 @@ func (ctrl *KubeletServiceController) writeKubeletCredentialProviderConfig(cfgSp
 		return os.RemoveAll(constants.KubeletCredentialProviderConfig)
 	}
 
-	var kubeletCredentialProviderConfig kubeletconfig.CredentialProviderConfig
+	var kubeletCredentialProviderConfig kubeletv1config.CredentialProviderConfig
 
 	if err := runtime.DefaultUnstructuredConverter.FromUnstructured(cfgSpec.CredentialProviderConfig, &kubeletCredentialProviderConfig); err != nil {
 		return fmt.Errorf("error converting kubelet credentialprovider configuration from unstructured: %w", err)
