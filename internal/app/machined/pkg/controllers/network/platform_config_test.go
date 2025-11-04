@@ -417,6 +417,24 @@ func (suite *PlatformConfigSuite) TestLoadConfig() {
 	}, rtestutils.WithNamespace(network.ConfigNamespaceName))
 }
 
+func (suite *PlatformConfigSuite) TestNoNetworkConfig() {
+	suite.Require().NoError(
+		suite.Runtime().RegisterController(
+			&netctrl.PlatformConfigController{
+				V1alpha1Platform: &platformMock{
+					noData: true,
+				},
+				PlatformState: suite.State(),
+			},
+		),
+	)
+
+	ctest.AssertResource(suite, runtimeres.PlatformMetadataID,
+		func(r *runtimeres.PlatformMetadata, asrt *assert.Assertions) {
+			asrt.Equal("mock", r.TypedSpec().Platform)
+		})
+}
+
 func TestPlatformConfigSuite(t *testing.T) {
 	t.Parallel()
 

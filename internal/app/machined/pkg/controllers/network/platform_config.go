@@ -176,10 +176,8 @@ func (ctrl *PlatformConfigController) Run(ctx context.Context, r controller.Runt
 			ctrl.networkConfigToPersist = networkConfig
 		}
 
-		if ctrl.activeNetworkConfig != nil {
-			if err := ctrl.apply(ctx, r); err != nil {
-				return err
-			}
+		if err := ctrl.apply(ctx, r); err != nil {
+			return err
 		}
 
 		// we either need to save new network config, or we don't have any and we need to load cached config
@@ -256,6 +254,14 @@ func (ctrl *PlatformConfigController) loadStore() func(
 //nolint:dupl,gocyclo
 func (ctrl *PlatformConfigController) apply(ctx context.Context, r controller.Runtime) error {
 	networkConfig := ctrl.activeNetworkConfig
+
+	if networkConfig == nil {
+		networkConfig = &v1alpha1runtime.PlatformNetworkConfig{
+			Metadata: &runtimeres.PlatformMetadataSpec{
+				Platform: ctrl.V1alpha1Platform.Name(),
+			},
+		}
+	}
 
 	metadataLength := 0
 
