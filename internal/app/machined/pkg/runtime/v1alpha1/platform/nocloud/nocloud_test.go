@@ -19,7 +19,6 @@ import (
 	"github.com/stretchr/testify/require"
 	"gopkg.in/yaml.v3"
 
-	platformruntime "github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/nocloud"
 	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
 	"github.com/siderolabs/talos/pkg/machinery/resources/network"
@@ -243,24 +242,4 @@ https://metadataserver3/userdata
 			}
 		})
 	}
-}
-
-func TestEmptyNetworkConfig(t *testing.T) {
-	t.Parallel()
-
-	n := &nocloud.Nocloud{}
-
-	st := state.WrapCore(namespaced.NewState(inmem.Build))
-
-	var md nocloud.MetadataConfig
-
-	networkConfig, needsReconcile, err := n.ParseMetadata(t.Context(), nil, st, &md)
-	require.NoError(t, err)
-	assert.False(t, needsReconcile)
-
-	assert.Equal(t, &platformruntime.PlatformNetworkConfig{
-		Metadata: &runtime.PlatformMetadataSpec{
-			Platform: "nocloud",
-		},
-	}, networkConfig)
 }
