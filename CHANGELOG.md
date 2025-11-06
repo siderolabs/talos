@@ -1,3 +1,63 @@
+## [Talos 1.11.4](https://github.com/siderolabs/talos/releases/tag/v1.11.4) (2025-11-06)
+
+Welcome to the v1.11.4 release of Talos!
+
+
+
+Please try out the release binaries and report any issues at
+https://github.com/siderolabs/talos/issues.
+
+### Component Updates
+
+runc: 1.3.3
+Linux: 6.12.57
+linux-firmware: 20251021
+
+Talos is built with Go 1.24.9.
+
+
+### Contributors
+
+* Andrey Smirnov
+* Noel Georgi
+* Mateusz Urbanek
+* Justin Garrison
+* Laura Brehm
+
+### Changes
+<details><summary>12 commits</summary>
+<p>
+
+* [`9c27f9e62`](https://github.com/siderolabs/talos/commit/9c27f9e62097db284961aa7014e0bef14401f97f) fix: race between VolumeConfigController and UserVolumeConfigController
+* [`ac27129b1`](https://github.com/siderolabs/talos/commit/ac27129b19485142eb76a04eee4b372d1cabcdaf) fix: provide minimal platform metadata always
+* [`19463323e`](https://github.com/siderolabs/talos/commit/19463323eb77b3b0ea51df2793853723185fbbbc) fix: image-signer commands
+* [`62aa09644`](https://github.com/siderolabs/talos/commit/62aa09644196ae6a551168530f42884bc78e00f2) chore: update dependencies
+* [`075f9ef22`](https://github.com/siderolabs/talos/commit/075f9ef22ffb61710165456313c4173d9765641d) fix: userspace wireguard handling
+* [`35b97016c`](https://github.com/siderolabs/talos/commit/35b97016c02b08163bc230e1728e35e61e11418d) fix: log duplication on log senders
+* [`d00754e35`](https://github.com/siderolabs/talos/commit/d00754e35b365ac45c40f62af45a74f38e5ccfd6) fix: add video kernel module to arm
+* [`89bca7590`](https://github.com/siderolabs/talos/commit/89bca759000c11fa7c59e0c9045816c20858067b) fix: set a timeout for SideroLink provision API call
+* [`23b21eb90`](https://github.com/siderolabs/talos/commit/23b21eb90b05d8ebb4adc71fb4a269c1b4049d8a) fix: imager build on arm64
+* [`2a4f1771c`](https://github.com/siderolabs/talos/commit/2a4f1771c632476b1a6569e29bb1043c480ea349) feat: use image signer
+* [`e043e1bc0`](https://github.com/siderolabs/talos/commit/e043e1bc004ed80a93809937096b5e5c59909704) chore: push `latest` tag only on main
+* [`8edddafcd`](https://github.com/siderolabs/talos/commit/8edddafcd97b868df1c8e78cecf1eae70f0eaf83) fix: reserve the apid and trustd ports from the ephemeral port range
+</p>
+</details>
+
+### Changes from siderolabs/pkgs
+<details><summary>2 commits</summary>
+<p>
+
+* [`81fd82c`](https://github.com/siderolabs/pkgs/commit/81fd82c8b7bcfccc7b8c337699150e52e7c880ea) chore: update dependencies
+* [`b98d490`](https://github.com/siderolabs/pkgs/commit/b98d4908f6024ef771ae18dea46ec62871bfe787) feat: update linux-firmware
+</p>
+</details>
+
+### Dependency Changes
+
+* **github.com/siderolabs/pkgs**  v1.11.0-26-gc316374 -> v1.11.0-28-g81fd82c
+
+Previous release can be found at [v1.11.3](https://github.com/siderolabs/talos/releases/tag/v1.11.3)
+
 ## [Talos 1.11.3](https://github.com/siderolabs/talos/releases/tag/v1.11.3) (2025-10-15)
 
 Welcome to the v1.11.3 release of Talos!
