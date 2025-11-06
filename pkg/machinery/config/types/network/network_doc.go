@@ -320,6 +320,121 @@ func (BondConfigV1Alpha1) Doc() *encoder.Doc {
 	return doc
 }
 
+func (BridgeConfigV1Alpha1) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "BridgeConfig",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "BridgeConfig is a config document to create a Bridge (link aggregation) over a set of links." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "BridgeConfig is a config document to create a Bridge (link aggregation) over a set of links.",
+		Fields: []encoder.Doc{
+			{
+				Type:   "Meta",
+				Inline: true,
+			},
+			{
+				Name:        "name",
+				Type:        "string",
+				Note:        "",
+				Description: "Name of the bridge link (interface) to be created.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Name of the bridge link (interface) to be created." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "hardwareAddr",
+				Type:        "HardwareAddr",
+				Note:        "",
+				Description: "Override the hardware (MAC) address of the link.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Override the hardware (MAC) address of the link." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "links",
+				Type:        "[]string",
+				Note:        "",
+				Description: "Names of the links (interfaces) to be aggregated.\nLink aliases can be used here as well.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Names of the links (interfaces) to be aggregated." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "stp",
+				Type:        "BridgeSTPConfig",
+				Note:        "",
+				Description: "Bridge STP (Spanning Tree Protocol) configuration.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Bridge STP (Spanning Tree Protocol) configuration." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "vlan",
+				Type:        "BridgeVLANConfig",
+				Note:        "",
+				Description: "Bridge VLAN configuration.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Bridge VLAN configuration." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Type:   "CommonLinkConfig",
+				Inline: true,
+			},
+		},
+	}
+
+	doc.AddExample("", exampleBridgeConfigV1Alpha1())
+
+	doc.Fields[1].AddExample("", "Bridge.ext")
+	doc.Fields[2].AddExample("", nethelpers.HardwareAddr{0x2e, 0x3c, 0x4d, 0x5e, 0x6f, 0x70})
+	doc.Fields[3].AddExample("", []string{"enp1s3", "enp1s2"})
+
+	return doc
+}
+
+func (BridgeSTPConfig) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "BridgeSTPConfig",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "BridgeSTPConfig is a bridge STP (Spanning Tree Protocol) configuration." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "BridgeSTPConfig is a bridge STP (Spanning Tree Protocol) configuration.",
+		AppearsIn: []encoder.Appearance{
+			{
+				TypeName:  "BridgeConfigV1Alpha1",
+				FieldName: "stp",
+			},
+		},
+		Fields: []encoder.Doc{
+			{
+				Name:        "enabled",
+				Type:        "bool",
+				Note:        "",
+				Description: "Enable or disable STP on the bridge.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Enable or disable STP on the bridge." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
+
+	doc.Fields[0].AddExample("", true)
+
+	return doc
+}
+
+func (BridgeVLANConfig) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "BridgeVLANConfig",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "BridgeVLANConfig is a bridge VLAN configuration." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "BridgeVLANConfig is a bridge VLAN configuration.",
+		AppearsIn: []encoder.Appearance{
+			{
+				TypeName:  "BridgeConfigV1Alpha1",
+				FieldName: "vlan",
+			},
+		},
+		Fields: []encoder.Doc{
+			{
+				Name:        "filtering",
+				Type:        "bool",
+				Note:        "",
+				Description: "Enable or disable VLAN filtering on the bridge.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Enable or disable VLAN filtering on the bridge." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
+
+	doc.Fields[0].AddExample("", true)
+
+	return doc
+}
+
 func (DefaultActionConfigV1Alpha1) Doc() *encoder.Doc {
 	doc := &encoder.Doc{
 		Type:        "NetworkDefaultActionConfig",
@@ -895,6 +1010,10 @@ func (CommonLinkConfig) Doc() *encoder.Doc {
 				FieldName: "",
 			},
 			{
+				TypeName:  "BridgeConfigV1Alpha1",
+				FieldName: "",
+			},
+			{
 				TypeName:  "DummyLinkConfigV1Alpha1",
 				FieldName: "",
 			},
@@ -1318,6 +1437,9 @@ func GetFileDoc() *encoder.FileDoc {
 		Description: "Package network provides network machine configuration documents.\n",
 		Structs: []*encoder.Doc{
 			BondConfigV1Alpha1{}.Doc(),
+			BridgeConfigV1Alpha1{}.Doc(),
+			BridgeSTPConfig{}.Doc(),
+			BridgeVLANConfig{}.Doc(),
 			DefaultActionConfigV1Alpha1{}.Doc(),
 			DHCPv4ConfigV1Alpha1{}.Doc(),
 			DHCPv6ConfigV1Alpha1{}.Doc(),

@@ -257,3 +257,24 @@ type NetworkBondConfig interface {
 	PeerNotifyDelay() optional.Optional[uint32]
 	MissedMax() optional.Optional[uint8]
 }
+
+// NetworkBridgeConfig defines a bridge link configuration.
+type NetworkBridgeConfig interface {
+	NamedDocument
+	NetworkCommonLinkConfig
+	NetworkHardwareAddressConfig
+	BridgeConfig()
+	Links() []string
+	STP() BridgeSTPConfig
+	VLAN() BridgeVLANConfig
+}
+
+// BridgeSTPConfig is a bridge STP (Spanning Tree Protocol) configuration.
+type BridgeSTPConfig interface {
+	Enabled() optional.Optional[bool]
+}
+
+// BridgeVLANConfig is a bridge VLAN configuration.
+type BridgeVLANConfig interface {
+	FilteringEnabled() optional.Optional[bool]
+}

@@ -494,6 +494,7 @@ func (suite *NetworkConfigSuite) TestBondConfig() {
 	rtestutils.AssertResource(nodeCtx, suite.T(), suite.Client.COSI, bondName,
 		func(link *networkres.LinkStatus, asrt *assert.Assertions) {
 			asrt.Equal("bond", link.TypedSpec().Kind)
+			asrt.Equal(nethelpers.OperStateUp, link.TypedSpec().OperationalState)
 			asrt.Equal(bond.LinkMTU, link.TypedSpec().MTU)
 			asrt.Equal(nethelpers.BondMode8023AD, link.TypedSpec().BondMaster.Mode)
 			asrt.Equal(bond.HardwareAddressConfig, link.TypedSpec().HardwareAddr)
@@ -524,6 +525,60 @@ func (suite *NetworkConfigSuite) TestBondConfig() {
 	rtestutils.AssertNoResource[*networkres.AddressStatus](nodeCtx, suite.T(), suite.Client.COSI, addressID)
 	rtestutils.AssertNoResource[*networkres.RouteStatus](nodeCtx, suite.T(), suite.Client.COSI, addressRouteID)
 	rtestutils.AssertNoResource[*networkres.RouteStatus](nodeCtx, suite.T(), suite.Client.COSI, routeID)
+}
+
+// TestBridgeConfig tests creation of bridge interfaces.
+func (suite *NetworkConfigSuite) TestBridgeConfig() {
+	if suite.Cluster == nil {
+		suite.T().Skip("skipping if cluster is not qemu/docker")
+	}
+
+	node := suite.RandomDiscoveredNodeInternalIP(machine.TypeWorker)
+	nodeCtx := client.WithNode(suite.ctx, node)
+
+	suite.T().Logf("testing on node %q", node)
+
+	dummyNames := xslices.Map([]int{0, 1}, func(int) string {
+		return fmt.Sprintf("dummy%d", rand.IntN(10000))
+	})
+
+	dummyConfigs := xslices.Map(dummyNames, func(name string) any {
+		return network.NewDummyLinkConfigV1Alpha1(name)
+	})
+
+	bridgeName := "bridge." + strconv.Itoa(rand.IntN(10000))
+
+	bridge := network.NewBridgeConfigV1Alpha1(bridgeName)
+	bridge.BridgeLinks = dummyNames
+	bridge.BridgeSTP.BridgeSTPEnabled = pointer.To(true)
+	bridge.HardwareAddressConfig = nethelpers.HardwareAddr{0x02, 0x00, 0x00, 0x00, byte(rand.IntN(256)), byte(rand.IntN(256))}
+	bridge.LinkUp = pointer.To(true)
+
+	suite.PatchMachineConfig(nodeCtx, append(dummyConfigs, bridge)...)
+
+	rtestutils.AssertResources(nodeCtx, suite.T(), suite.Client.COSI, dummyNames,
+		func(link *networkres.LinkStatus, asrt *assert.Assertions) {
+			asrt.Equal("dummy", link.TypedSpec().Kind)
+			asrt.NotZero(link.TypedSpec().MasterIndex)
+		},
+	)
+
+	rtestutils.AssertResource(nodeCtx, suite.T(), suite.Client.COSI, bridgeName,
+		func(link *networkres.LinkStatus, asrt *assert.Assertions) {
+			asrt.Equal("bridge", link.TypedSpec().Kind)
+			asrt.Equal(pointer.SafeDeref(bridge.BridgeSTP.BridgeSTPEnabled), link.TypedSpec().BridgeMaster.STP.Enabled)
+			asrt.Equal(bridge.HardwareAddressConfig, link.TypedSpec().HardwareAddr)
+		},
+	)
+
+	suite.RemoveMachineConfigDocumentsByName(nodeCtx, network.BridgeKind, bridgeName)
+	suite.RemoveMachineConfigDocumentsByName(nodeCtx, network.DummyLinkKind, dummyNames...)
+
+	for _, dummyName := range dummyNames {
+		rtestutils.AssertNoResource[*networkres.LinkStatus](nodeCtx, suite.T(), suite.Client.COSI, dummyName)
+	}
+
+	rtestutils.AssertNoResource[*networkres.LinkStatus](nodeCtx, suite.T(), suite.Client.COSI, bridgeName)
 }
 
 func init() {

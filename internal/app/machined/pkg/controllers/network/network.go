@@ -160,8 +160,8 @@ func SetBridgeSlave(link *network.LinkSpecSpec, bridge string) {
 	}
 }
 
-// SetBridgeMaster sets the bridge master spec.
-func SetBridgeMaster(link *network.LinkSpecSpec, bridge talosconfig.Bridge) error {
+// SetBridgeMasterLegacy sets the bridge master spec.
+func SetBridgeMasterLegacy(link *network.LinkSpecSpec, bridge talosconfig.Bridge) error {
 	link.Logical = true
 	link.Kind = network.LinkKindBridge
 	link.Type = nethelpers.LinkEther
@@ -178,4 +178,20 @@ func SetBridgeMaster(link *network.LinkSpecSpec, bridge talosconfig.Bridge) erro
 	}
 
 	return nil
+}
+
+// SetBridgeMaster sets the bridge master spec.
+func SetBridgeMaster(link *network.LinkSpecSpec, bridge talosconfig.NetworkBridgeConfig) {
+	link.Logical = true
+	link.Kind = network.LinkKindBridge
+	link.Type = nethelpers.LinkEther
+
+	link.BridgeMaster = network.BridgeMasterSpec{
+		STP: network.STPSpec{
+			Enabled: bridge.STP().Enabled().ValueOrZero(),
+		},
+		VLAN: network.BridgeVLANSpec{
+			FilteringEnabled: bridge.VLAN().FilteringEnabled().ValueOrZero(),
+		},
+	}
 }

@@ -356,7 +356,7 @@ func (ctrl *LinkConfigController) processDevicesConfiguration(
 		}
 
 		if device.Bridge() != nil {
-			if err := SetBridgeMaster(linkMap[deviceInterface], device.Bridge()); err != nil {
+			if err := SetBridgeMasterLegacy(linkMap[deviceInterface], device.Bridge()); err != nil {
 				logger.Error("error parsing bridge config", zap.Error(err))
 			}
 		}
@@ -462,6 +462,22 @@ func (ctrl *LinkConfigController) processLinkConfigs(logger *zap.Logger, linkMap
 				}
 
 				SetBondSlave(linkMap[slaveLinkName], ordered.MakePair(linkName, idx))
+			}
+		case talosconfig.NetworkBridgeConfig:
+			SetBridgeMaster(linkMap[linkName], specificLinkConfig)
+
+			bridgedLinks := xslices.Map(specificLinkConfig.Links(), linkNameResolver.Resolve)
+
+			for _, slaveLinkName := range bridgedLinks {
+				if _, exists := linkMap[slaveLinkName]; !exists {
+					linkMap[slaveLinkName] = &network.LinkSpecSpec{
+						Name:        slaveLinkName,
+						Up:          true,
+						ConfigLayer: network.ConfigMachineConfiguration,
+					}
+				}
+
+				SetBridgeSlave(linkMap[slaveLinkName], linkName)
 			}
 		default:
 			logger.Error("unknown link config type", zap.String("linkName", linkName), zap.String("type", fmt.Sprintf("%T", specificLinkConfig)))

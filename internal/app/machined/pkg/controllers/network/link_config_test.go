@@ -484,7 +484,12 @@ func (suite *LinkConfigSuite) TestMachineConfigurationNewStyle() {
 	bc1.BondLinks = []string{"dummy2", "dummy3"}
 	bc1.BondUpDelay = pointer.To(uint32(200))
 
-	ctr, err := container.New(dc1, lc1, vl1, dc2, dc3, bc1)
+	br1 := networkcfg.NewBridgeConfigV1Alpha1("br0")
+	br1.BridgeLinks = []string{"enp0s2", "eth1"}
+	br1.BridgeSTP.BridgeSTPEnabled = pointer.To(true)
+	br1.BridgeVLAN.BridgeVLANFiltering = pointer.To(true)
+
+	ctr, err := container.New(dc1, lc1, vl1, dc2, dc3, bc1, br1)
 	suite.Require().NoError(err)
 
 	cfg := config.NewMachineConfig(ctr)
@@ -513,6 +518,7 @@ func (suite *LinkConfigSuite) TestMachineConfigurationNewStyle() {
 			"configuration/dummy3",
 			"configuration/dummy1.100",
 			"configuration/bond357",
+			"configuration/br0",
 		}, func(r *network.LinkSpec, asrt *assert.Assertions) {
 			asrt.Equal(network.ConfigMachineConfiguration, r.TypedSpec().ConfigLayer)
 
@@ -521,6 +527,10 @@ func (suite *LinkConfigSuite) TestMachineConfigurationNewStyle() {
 				asrt.True(r.TypedSpec().Up)
 				asrt.False(r.TypedSpec().Logical)
 				asrt.EqualValues(9001, r.TypedSpec().MTU)
+				asrt.Equal("br0", r.TypedSpec().BridgeSlave.MasterName)
+			case "eth1":
+				asrt.True(r.TypedSpec().Up)
+				asrt.Equal("br0", r.TypedSpec().BridgeSlave.MasterName)
 			case "dummy1", "dummy2", "dummy3":
 				asrt.True(r.TypedSpec().Up)
 				asrt.True(r.TypedSpec().Logical)
@@ -546,6 +556,13 @@ func (suite *LinkConfigSuite) TestMachineConfigurationNewStyle() {
 				asrt.Equal(network.LinkKindBond, r.TypedSpec().Kind)
 				asrt.Equal(nethelpers.BondModeActiveBackup, r.TypedSpec().BondMaster.Mode)
 				asrt.EqualValues(200, r.TypedSpec().BondMaster.UpDelay)
+			case "br0":
+				asrt.True(r.TypedSpec().Up)
+				asrt.True(r.TypedSpec().Logical)
+				asrt.Equal(nethelpers.LinkEther, r.TypedSpec().Type)
+				asrt.Equal(network.LinkKindBridge, r.TypedSpec().Kind)
+				asrt.True(r.TypedSpec().BridgeMaster.STP.Enabled)
+				asrt.True(r.TypedSpec().BridgeMaster.VLAN.FilteringEnabled)
 			}
 		},
 	)
