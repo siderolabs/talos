@@ -167,7 +167,7 @@ talosctl cluster create [flags]
       --arch string                              (qemu) cluster architecture (default "amd64")
       --bad-rtc                                  (qemu) launch VM with bad RTC state
       --cni-bin-path strings                     (qemu) search path for CNI binaries (default [/home/user/.talos/cni/bin])
-      --cni-bundle-url string                    (qemu) URL to download CNI bundle from (default "https://github.com/siderolabs/talos/releases/download/v1.11.4/talosctl-cni-bundle-${ARCH}.tar.gz")
+      --cni-bundle-url string                    (qemu) URL to download CNI bundle from (default "https://github.com/siderolabs/talos/releases/download/v1.11.5/talosctl-cni-bundle-${ARCH}.tar.gz")
       --cni-cache-dir string                     (qemu) CNI cache directory path (default "/home/user/.talos/cni/cache")
       --cni-conf-dir string                      (qemu) CNI config directory path (default "/home/user/.talos/cni/conf.d")
       --config-injection-method string           (qemu) a method to inject machine config: default is HTTP server, 'metal-iso' to mount an ISO
@@ -2831,7 +2831,7 @@ talosctl upgrade [flags]
   -e, --endpoints strings          override default endpoints in Talos configuration
   -f, --force                      force the upgrade (skip checks on etcd health and members, might lead to data loss)
   -h, --help                       help for upgrade
-  -i, --image string               the container image to use for performing the install (default "ghcr.io/siderolabs/installer:v1.11.4")
+  -i, --image string               the container image to use for performing the install (default "ghcr.io/siderolabs/installer:v1.11.5")
       --insecure                   upgrade using the insecure (encrypted with no auth) maintenance service
   -n, --nodes strings              target the specified nodes
   -m, --reboot-mode string         select the reboot mode during upgrade. Mode "powercycle" bypasses kexec. Valid values are: ["default" "powercycle"]. (default "default")

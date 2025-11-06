@@ -1,3 +1,45 @@
+## [Talos 1.11.5](https://github.com/siderolabs/talos/releases/tag/v1.11.5) (2025-11-06)
+
+Welcome to the v1.11.5 release of Talos!
+
+
+
+Please try out the release binaries and report any issues at
+https://github.com/siderolabs/talos/issues.
+
+### Component Updates
+
+containerd: 2.1.5
+
+Talos is built with Go 1.24.9.
+
+
+### Contributors
+
+* Andrey Smirnov
+
+### Changes
+<details><summary>1 commit</summary>
+<p>
+
+* [`3945c6c8f`](https://github.com/siderolabs/talos/commit/3945c6c8f029b20edcb3de0bf0a5e4c78023a403) feat: update containerd to 2.1.5
+</p>
+</details>
+
+### Changes from siderolabs/pkgs
+<details><summary>1 commit</summary>
+<p>
+
+* [`aee690b`](https://github.com/siderolabs/pkgs/commit/aee690b2e5f23010a4ac99016cedc9211601810f) feat: update containerd to 2.1.5
+</p>
+</details>
+
+### Dependency Changes
+
+* **github.com/siderolabs/pkgs**  v1.11.0-28-g81fd82c -> v1.11.0-29-gaee690b
+
+Previous release can be found at [v1.11.4](https://github.com/siderolabs/talos/releases/tag/v1.11.4)
+
 ## [Talos 1.11.4](https://github.com/siderolabs/talos/releases/tag/v1.11.4) (2025-11-06)
 
 Welcome to the v1.11.4 release of Talos!
