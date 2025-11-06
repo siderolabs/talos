@@ -194,7 +194,7 @@ func (ctrl *MountController) Run(ctx context.Context, r controller.Runtime, logg
 					}
 				}
 
-				if mountHasParent && !mountParentStatus.Metadata().Finalizers().Has(parentFinalizerName) {
+				if mountHasParent && !mountParentStatus.Metadata().Finalizers().Has(parentFinalizerName) && mountParentStatus.Metadata().Phase() == resource.PhaseRunning {
 					if err = r.AddFinalizer(ctx, mountParentStatus.Metadata(), parentFinalizerName); err != nil {
 						return fmt.Errorf("failed to add finalizer to parent mount status %q: %w", mountParentStatus.Metadata().ID(), err)
 					}
