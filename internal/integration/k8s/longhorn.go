@@ -11,7 +11,6 @@ import (
 	"context"
 	_ "embed"
 	"strings"
-	"testing"
 	"text/template"
 	"time"
 
@@ -51,8 +50,6 @@ func (suite *LongHornSuite) SuiteName() string {
 
 // TestDeploy tests deploying Longhorn and running a simple test.
 func (suite *LongHornSuite) TestDeploy() {
-	suite.T().Parallel()
-
 	if suite.Cluster == nil {
 		suite.T().Skip("without full cluster state reaching out to the node IP is not reliable")
 	}
@@ -105,21 +102,15 @@ func (suite *LongHornSuite) TestDeploy() {
 		suite.PatchK8sObject(ctx, "longhorn-system", "longhorn.io", "Node", "v1beta2", k8sNode.Name, longhornNodeDiskPatch)
 	}
 
-	suite.T().Run("fio", func(t *testing.T) {
-		t.Parallel()
-
+	suite.Run("fio", func() {
 		suite.Require().NoError(suite.RunFIOTest(ctx, "longhorn", "10G"))
 	})
 
-	suite.T().Run("fio-v2", func(t *testing.T) {
-		t.Parallel()
-
+	suite.Run("fio-v2", func() {
 		suite.Require().NoError(suite.RunFIOTest(ctx, "longhorn-v2", "10G"))
 	})
 
-	suite.T().Run("iscsi", func(t *testing.T) {
-		t.Parallel()
-
+	suite.Run("iscsi", func() {
 		suite.testDeployISCSI(ctx)
 	})
 }
