@@ -29,17 +29,17 @@ replace github.com/containerd/containerd/v2 => github.com/smira/containerd/v2 v2
 
 // Kubernetes dependencies sharing the same version.
 require (
-	k8s.io/api v0.35.0-alpha.2
-	k8s.io/apiextensions-apiserver v0.35.0-alpha.2
-	k8s.io/apimachinery v0.35.0-alpha.2
-	k8s.io/apiserver v0.35.0-alpha.2
-	k8s.io/client-go v0.35.0-alpha.2
-	k8s.io/component-base v0.35.0-alpha.2
-	k8s.io/cri-api v0.35.0-alpha.2
-	k8s.io/kube-scheduler v0.35.0-alpha.2
-	k8s.io/kubectl v0.35.0-alpha.2
-	k8s.io/kubelet v0.35.0-alpha.2
-	k8s.io/pod-security-admission v0.35.0-alpha.2
+	k8s.io/api v0.35.0-alpha.3
+	k8s.io/apiextensions-apiserver v0.35.0-alpha.3
+	k8s.io/apimachinery v0.35.0-alpha.3
+	k8s.io/apiserver v0.35.0-alpha.3
+	k8s.io/client-go v0.35.0-alpha.3
+	k8s.io/component-base v0.35.0-alpha.3
+	k8s.io/cri-api v0.35.0-alpha.3
+	k8s.io/kube-scheduler v0.35.0-alpha.3
+	k8s.io/kubectl v0.35.0-alpha.3
+	k8s.io/kubelet v0.35.0-alpha.3
+	k8s.io/pod-security-admission v0.35.0-alpha.3
 )
 
 require (
@@ -342,7 +342,7 @@ require (
 	go.opentelemetry.io/otel/metric v1.37.0 // indirect
 	go.opentelemetry.io/otel/trace v1.37.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
-	go.yaml.in/yaml/v2 v2.4.2 // indirect
+	go.yaml.in/yaml/v2 v2.4.3 // indirect
 	go.yaml.in/yaml/v3 v3.0.4 // indirect
 	golang.org/x/crypto v0.43.0 // indirect
 	golang.org/x/exp v0.0.0-20250506013437-ce4c2cf36ca6 // indirect
@@ -357,7 +357,7 @@ require (
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	gotest.tools/v3 v3.4.0 // indirect
-	k8s.io/cli-runtime v0.35.0-alpha.2 // indirect
+	k8s.io/cli-runtime v0.35.0-alpha.3 // indirect
 	k8s.io/kube-openapi v0.0.0-20250910181357-589584f1c912 // indirect
 	kernel.org/pub/linux/libs/security/libcap/psx v1.2.76 // indirect
 	rsc.io/qr v0.2.0 // indirect

@@ -166,7 +166,7 @@ func (suite *OperatorVIPConfigSuite) TestMachineConfigurationVIP() {
 	}
 
 	vip1 := networkcfg.NewLayer2VIPConfigV1Alpha1("2.3.4.5")
-	vip1.LinkName = "eth1"
+	vip1.LinkName = "eth33"
 
 	vip2 := networkcfg.NewLayer2VIPConfigV1Alpha1("fd7a:115c:a1e0:ab12:4843:cd96:6277:2302")
 	vip2.LinkName = "enxa"
@@ -179,15 +179,15 @@ func (suite *OperatorVIPConfigSuite) TestMachineConfigurationVIP() {
 
 	suite.assertOperators(
 		[]string{
-			"configuration/vip/eth1/2.3.4.5",
+			"configuration/vip/eth33/2.3.4.5",
 			"configuration/vip/eth5/fd7a:115c:a1e0:ab12:4843:cd96:6277:2302",
 		}, func(r *network.OperatorSpec, asrt *assert.Assertions) {
 			asrt.Equal(network.OperatorVIP, r.TypedSpec().Operator)
 			asrt.True(r.TypedSpec().RequireUp)
 
 			switch r.Metadata().ID() {
-			case "configuration/vip/eth1/2.3.4.5":
-				asrt.Equal("eth1", r.TypedSpec().LinkName)
+			case "configuration/vip/eth33/2.3.4.5":
+				asrt.Equal("eth33", r.TypedSpec().LinkName)
 				asrt.EqualValues(netip.MustParseAddr("2.3.4.5"), r.TypedSpec().VIP.IP)
 			case "configuration/vip/eth5/fd7a:115c:a1e0:ab12:4843:cd96:6277:2302":
 				asrt.Equal("eth5", r.TypedSpec().LinkName)
