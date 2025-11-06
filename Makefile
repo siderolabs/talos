@@ -27,7 +27,7 @@ EMBED_TARGET ?= embed
 TOOLS_PREFIX ?= ghcr.io/siderolabs/tools
 TOOLS ?= v1.11.0-4-g05ee846
 PKGS_PREFIX ?= ghcr.io/siderolabs
-PKGS ?= v1.11.0-28-g81fd82c
+PKGS ?= v1.11.0-29-gaee690b
 GENERATE_VEX_PREFIX ?= ghcr.io/siderolabs/generate-vex
 GENERATE_VEX ?= latest
 
