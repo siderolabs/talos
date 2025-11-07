@@ -15,6 +15,7 @@ import (
 	"github.com/containerd/containerd/v2/core/images"
 	"github.com/containerd/errdefs"
 	"github.com/containerd/log"
+	"github.com/containerd/platforms"
 	"github.com/distribution/reference"
 	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
 	"github.com/siderolabs/go-retry/retry"
@@ -122,6 +123,7 @@ func Pull(ctx context.Context, registryBuilder RegistriesBuilder, client *contai
 			containerd.WithPullUnpack,
 			containerd.WithResolver(resolver),
 			containerd.WithChildLabelMap(images.ChildGCLabelsFilterLayers),
+			containerd.WithPlatformMatcher(platforms.OnlyStrict(platforms.DefaultSpec())),
 		); err != nil {
 			err = fmt.Errorf("failed to pull image %q: %w", ref, err)
 			if errors.Is(err, errdefs.ErrNotFound) {
