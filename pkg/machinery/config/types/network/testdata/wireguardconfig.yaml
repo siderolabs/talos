@@ -1,0 +1,16 @@
+apiVersion: v1alpha1
+kind: WireguardConfig
+name: wg.int
+privateKey: GA1E1VB+g41Dl0+UH2TMW9C5953y+moVg6JIIqkJbmw=
+listenPort: 5042
+firewallMark: 176
+peers:
+    - publicKey: 735jkJdcVDninU5PzLJ/S+bfN6Q3QOk6svWrVLMJQAk=
+      allowedIPs:
+        - 192.168.1.0/24
+    - publicKey: uvdlJNva1X8/OCOZM+0gGT4Yu9x20odd3AWbbQUF7nM=
+      presharedKey: 6j4UMxwszrHVZZUjY8/SFsZMjgaHkxV7yp9Tz05btho=
+      endpoint: 10.3.4.3:2222
+up: true
+addresses:
+    - address: 192.168.1.100/32

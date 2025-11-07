@@ -254,27 +254,27 @@ func configureAdapter(installer *Installer, opts *machineapi.GenerateConfigurati
 				items := []*components.Item{
 					components.NewItem(
 						"Use DHCP",
-						describe[v1alpha1.Device]("dhcp", true),
+						"Indicates if DHCP should be used to configure the interface.",
 						&adapterSettings.Dhcp,
 					),
 					components.NewItem(
 						"Ignore",
-						describe[v1alpha1.Device]("ignore", true),
+						"Indicates if the interface should be ignored (skips configuration).",
 						&adapterSettings.Ignore,
 					),
 					components.NewItem(
 						"CIDR",
-						describe[v1alpha1.Device]("cidr", true),
+						"Assigns static IP addresses to the interface.",
 						&adapterSettings.Cidr,
 					),
 					components.NewItem(
 						"MTU",
-						describe[v1alpha1.Device]("mtu", true),
+						"Maximum Transmission Unit for the interface.",
 						&adapterSettings.Mtu,
 					),
 					components.NewItem(
 						"Route Metric",
-						describe[v1alpha1.Device]("dhcpOptions", true),
+						"Sets the priority of all routes assigned to this interface.",
 						&adapterSettings.DhcpOptions.RouteMetric,
 					),
 				}

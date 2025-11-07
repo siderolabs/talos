@@ -3,6 +3,8 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 // Package configuration implements configuration generation.
+//
+//nolint:staticcheck // this whole package is planned to be deprecated
 package configuration
 
 import (

@@ -7,22 +7,28 @@ package helpers
 import (
 	"fmt"
 	"net/netip"
-	"strings"
 	"time"
 
+	"github.com/siderolabs/gen/xslices"
+	"github.com/siderolabs/go-pointer"
 	sideronet "github.com/siderolabs/net"
 	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
 
-	"github.com/siderolabs/talos/pkg/machinery/config"
+	"github.com/siderolabs/talos/pkg/machinery/config/configpatcher"
 	"github.com/siderolabs/talos/pkg/machinery/config/container"
-	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
+	"github.com/siderolabs/talos/pkg/machinery/config/types/network"
 )
 
 // NewWireguardConfigBundle creates a new Wireguard config bundle.
-func NewWireguardConfigBundle(ips []netip.Addr, wireguardCidr string, listenPort, mastersCount int) (*WireguardConfigBundle, error) {
-	configs := map[string]*v1alpha1.Device{}
+func NewWireguardConfigBundle(ips []netip.Addr, wireguardCidr string, listenPort, controlplanesCount int) (*WireguardConfigBundle, error) {
+	configs := map[netip.Addr]*network.WireguardConfigV1Alpha1{}
 	keys := make([]wgtypes.Key, len(ips))
-	peers := make([]*v1alpha1.DeviceWireguardPeer, len(ips))
+	peers := make([]network.WireguardPeer, len(ips))
+
+	wgCidr, err := netip.ParsePrefix(wireguardCidr)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse wireguard cidr %s: %w", wireguardCidr, err)
+	}
 
 	for i, ip := range ips {
 		key, err := wgtypes.GeneratePrivateKey()
@@ -30,61 +36,53 @@ func NewWireguardConfigBundle(ips []netip.Addr, wireguardCidr string, listenPort
 			return nil, err
 		}
 
+		wgAddr, err := sideronet.NthIPInNetwork(wgCidr, i+2)
+		if err != nil {
+			return nil, err
+		}
+
 		keys[i] = key
 
-		peers[i] = &v1alpha1.DeviceWireguardPeer{
-			WireguardAllowedIPs: []string{
-				wireguardCidr,
+		peers[i] = network.WireguardPeer{
+			WireguardAllowedIPs: []network.Prefix{
+				{
+					Prefix: netip.PrefixFrom(wgAddr, wgAddr.BitLen()),
+				},
 			},
 			WireguardPublicKey:                   key.PublicKey().String(),
 			WireguardPersistentKeepaliveInterval: time.Second * 5,
 		}
 
-		if i < mastersCount {
-			peers[i].WireguardEndpoint = fmt.Sprintf("%s:%d", ip.String(), listenPort)
+		if i < controlplanesCount {
+			peers[i].WireguardEndpoint = network.AddrPort{AddrPort: netip.AddrPortFrom(ip, uint16(listenPort))}
 		}
 	}
 
-	parts := strings.Split(wireguardCidr, "/")
-	networkNumber := parts[1]
-
-	network, err := netip.ParsePrefix(wireguardCidr)
-	if err != nil {
-		return nil, err
-	}
-
 	for i, nodeIP := range ips {
-		wgIP, err := sideronet.NthIPInNetwork(network, i+2)
+		wgAddr, err := sideronet.NthIPInNetwork(wgCidr, i+2)
 		if err != nil {
 			return nil, err
 		}
 
-		config := &v1alpha1.DeviceWireguardConfig{}
+		config := network.NewWireguardConfigV1Alpha1("wg0")
 
-		var currentPeers []*v1alpha1.DeviceWireguardPeer
-
-		// add all peers except self
-		for _, peer := range peers {
-			if peer.PublicKey() != keys[i].PublicKey().String() {
-				currentPeers = append(currentPeers, peer)
-			}
-		}
-
-		config.WireguardPeers = currentPeers
+		config.WireguardPeers = xslices.Filter(peers, func(p network.WireguardPeer) bool {
+			return p.WireguardPublicKey != keys[i].PublicKey().String()
+		})
 		config.WireguardPrivateKey = keys[i].String()
-
-		device := &v1alpha1.Device{
-			DeviceInterface:       "wg0",
-			DeviceAddresses:       []string{fmt.Sprintf("%s/%s", wgIP.String(), networkNumber)},
-			DeviceWireguardConfig: config,
-			DeviceMTU:             1500,
+		config.LinkAddresses = []network.AddressConfig{
+			{
+				AddressAddress: netip.PrefixFrom(wgAddr, wgCidr.Bits()),
+			},
 		}
+		config.LinkUp = pointer.To(true)
+		config.LinkMTU = 1500
 
-		if i < mastersCount {
+		if i < controlplanesCount {
 			config.WireguardListenPort = listenPort
 		}
 
-		configs[nodeIP.String()] = device
+		configs[nodeIP] = config
 	}
 
 	return &WireguardConfigBundle{
@@ -94,25 +92,20 @@ func NewWireguardConfigBundle(ips []netip.Addr, wireguardCidr string, listenPort
 
 // WireguardConfigBundle allows assembling wireguard network configuration with first controlplane being listen node.
 type WireguardConfigBundle struct {
-	configs map[string]*v1alpha1.Device
+	configs map[netip.Addr]*network.WireguardConfigV1Alpha1
 }
 
-// PatchConfig generates config patch for a node and patches the configuration data.
-func (w *WireguardConfigBundle) PatchConfig(ip fmt.Stringer, cfg config.Provider) (config.Provider, error) {
-	config := cfg.RawV1Alpha1().DeepCopy()
-
-	if config.MachineConfig.MachineNetwork == nil {
-		config.MachineConfig.MachineNetwork = &v1alpha1.NetworkConfig{
-			NetworkInterfaces: []*v1alpha1.Device{},
-		}
-	}
-
-	device, ok := w.configs[ip.String()]
+// PatchNode generates config patch for a node.
+func (w *WireguardConfigBundle) PatchNode(ip netip.Addr) (configpatcher.Patch, error) {
+	cfg, ok := w.configs[ip]
 	if !ok {
-		return nil, fmt.Errorf("failed to get wireguard config for node %s", ip.String())
+		return nil, fmt.Errorf("no wireguard config for ip %s", ip.String())
 	}
 
-	config.MachineConfig.MachineNetwork.NetworkInterfaces = append(config.MachineConfig.MachineNetwork.NetworkInterfaces, device)
+	ctr, err := container.New(cfg)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create wireguard config container: %w", err)
+	}
 
-	return container.New(config)
+	return configpatcher.NewStrategicMergePatch(ctr), nil
 }

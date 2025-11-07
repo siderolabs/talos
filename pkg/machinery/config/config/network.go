@@ -6,6 +6,7 @@ package config
 
 import (
 	"net/netip"
+	"time"
 
 	"github.com/siderolabs/gen/optional"
 
@@ -277,4 +278,24 @@ type BridgeSTPConfig interface {
 // BridgeVLANConfig is a bridge VLAN configuration.
 type BridgeVLANConfig interface {
 	FilteringEnabled() optional.Optional[bool]
+}
+
+// NetworkWireguardConfig defines a Wireguard link configuration.
+type NetworkWireguardConfig interface {
+	NamedDocument
+	NetworkCommonLinkConfig
+	WireguardConfig()
+	PrivateKey() string
+	ListenPort() optional.Optional[int]
+	FirewallMark() optional.Optional[int]
+	Peers() []NetworkWireguardPeerConfig
+}
+
+// NetworkWireguardPeerConfig defines a Wireguard peer configuration.
+type NetworkWireguardPeerConfig interface {
+	PublicKey() string
+	PresharedKey() optional.Optional[string]
+	Endpoint() optional.Optional[string]
+	AllowedIPs() []netip.Prefix
+	PersistentKeepalive() optional.Optional[time.Duration]
 }

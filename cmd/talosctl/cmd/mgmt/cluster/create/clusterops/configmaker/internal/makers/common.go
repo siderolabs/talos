@@ -326,12 +326,20 @@ func (m *Maker[T]) finalizeMachineConfigs() (*bundle.Bundle, error) {
 		for i := range m.ClusterRequest.Nodes {
 			node := &m.ClusterRequest.Nodes[i]
 
-			patchedCfg, err := wireguardConfigBundle.PatchConfig(node.IPs[0], node.Config)
+			patch, err := wireguardConfigBundle.PatchNode(node.IPs[0])
 			if err != nil {
 				return nil, err
 			}
 
-			node.Config = patchedCfg
+			out, err := configpatcher.Apply(configpatcher.WithConfig(node.Config), []configpatcher.Patch{patch})
+			if err != nil {
+				return nil, err
+			}
+
+			node.Config, err = out.Config()
+			if err != nil {
+				return nil, err
+			}
 		}
 	}
 

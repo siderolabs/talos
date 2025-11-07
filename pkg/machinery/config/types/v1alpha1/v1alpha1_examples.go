@@ -146,20 +146,6 @@ func kubeletImageExample() string {
 
 func machineNetworkConfigExample() *NetworkConfig {
 	return &NetworkConfig{
-		NetworkInterfaces: []*Device{
-			{
-				DeviceInterface: "enp0s1",
-				DeviceAddresses: []string{"192.168.2.0/24"},
-				DeviceMTU:       1500,
-				DeviceRoutes: []*Route{
-					{
-						RouteNetwork: "0.0.0.0/0",
-						RouteGateway: "192.168.2.1",
-						RouteMetric:  1024,
-					},
-				},
-			},
-		},
 		NameServers: []string{"9.8.7.6", "8.7.6.5"},
 		Searches:    []string{"example.org", "example.com"},
 	}
@@ -458,82 +444,6 @@ func kubeletExtraMountsExample() []ExtraMount {
 	}
 }
 
-func networkConfigRoutesExample() []*Route {
-	return []*Route{
-		{
-			RouteNetwork: "0.0.0.0/0",
-			RouteGateway: "10.5.0.1",
-		},
-		{
-			RouteNetwork: "10.2.0.0/16",
-			RouteGateway: "10.2.0.1",
-		},
-	}
-}
-
-func networkConfigBondExample() *Bond {
-	return &Bond{
-		BondMode:       "802.3ad",
-		BondLACPRate:   "fast",
-		BondInterfaces: []string{"enp2s0", "enp2s1"},
-	}
-}
-
-func networkConfigBridgeExample() *Bridge {
-	return &Bridge{
-		BridgedInterfaces: []string{"enxda4042ca9a51", "enxae2a6774c259"},
-		BridgeSTP: &STP{
-			STPEnabled: pointer.To(true),
-		},
-	}
-}
-
-func networkConfigDynamicBridgePortsExample() *BridgePort {
-	return &BridgePort{
-		BridgePortMaster: "br0",
-	}
-}
-
-func networkConfigDHCPOptionsExample() *DHCPOptions {
-	return &DHCPOptions{
-		DHCPRouteMetric: 1024,
-	}
-}
-
-func networkConfigVIPLayer2Example() *DeviceVIPConfig {
-	return &DeviceVIPConfig{
-		SharedIP: "172.16.199.55",
-	}
-}
-
-func networkConfigWireguardHostExample() *DeviceWireguardConfig {
-	return &DeviceWireguardConfig{
-		WireguardPrivateKey: "ABCDEF...",
-		WireguardListenPort: 51111,
-		WireguardPeers: []*DeviceWireguardPeer{
-			{
-				WireguardPublicKey:  "ABCDEF...",
-				WireguardEndpoint:   "192.168.1.3",
-				WireguardAllowedIPs: []string{"192.168.1.0/24"},
-			},
-		},
-	}
-}
-
-func networkConfigWireguardPeerExample() *DeviceWireguardConfig {
-	return &DeviceWireguardConfig{
-		WireguardPrivateKey: "ABCDEF...",
-		WireguardPeers: []*DeviceWireguardPeer{
-			{
-				WireguardPublicKey:                   "ABCDEF...",
-				WireguardEndpoint:                    "192.168.1.2:51822",
-				WireguardPersistentKeepaliveInterval: time.Second * 10,
-				WireguardAllowedIPs:                  []string{"192.168.1.0/24"},
-			},
-		},
-	}
-}
-
 func clusterCustomCNIExample() *CNIConfig {
 	return &CNIConfig{
 		CNIName: constants.CustomCNI,
@@ -560,18 +470,6 @@ metadata:
 func networkKubeSpanExample() *NetworkKubeSpan {
 	return &NetworkKubeSpan{
 		KubeSpanEnabled: pointer.To(true),
-	}
-}
-
-func networkDeviceSelectorExamples() []NetworkDeviceSelector {
-	return []NetworkDeviceSelector{
-		{
-			NetworkDeviceBus: "00:*",
-		},
-		{
-			NetworkDeviceHardwareAddress: "*:f0:ab",
-			NetworkDeviceKernelDriver:    "virtio_net",
-		},
 	}
 }
 

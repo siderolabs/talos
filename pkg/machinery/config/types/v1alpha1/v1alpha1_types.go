@@ -696,12 +696,9 @@ type NetworkConfig struct {
 	//
 	// Deprecated: use `HostnameConfig` instead.
 	NetworkHostname string `yaml:"hostname,omitempty"`
-	//   description: |
-	//     `interfaces` is used to define the network interface configuration.
-	//     By default all network interfaces will attempt a DHCP discovery.
-	//     This can be further tuned through this configuration parameter.
-	//   examples:
-	//     - value: machineNetworkConfigExample().NetworkInterfaces
+	// docgen:nodoc
+	//
+	// Deprecated: use multi-doc network config.
 	NetworkInterfaces NetworkDeviceList `yaml:"interfaces,omitempty"`
 	//   description: |
 	//     Used to statically set the nameservers for the machine.
@@ -737,7 +734,7 @@ type NetworkConfig struct {
 
 // NetworkDeviceList is a list of *Device structures with overridden merge process.
 //
-//docgen:alias
+// docgen:nodoc
 type NetworkDeviceList []*Device
 
 // Merge the network interface configuration intelligently.
@@ -1714,6 +1711,8 @@ type ExtraHost struct {
 }
 
 // Device represents a network interface.
+//
+// docgen:nodoc
 type Device struct {
 	//   description: |
 	//     The interface name.
@@ -1806,6 +1805,8 @@ type Device struct {
 }
 
 // DHCPOptions contains options for configuring the DHCP settings for a given interface.
+//
+// docgen:nodoc
 type DHCPOptions struct {
 	//   description: The priority of all routes received via DHCP.
 	DHCPRouteMetric uint32 `yaml:"routeMetric"`
@@ -1818,6 +1819,8 @@ type DHCPOptions struct {
 }
 
 // DeviceWireguardConfig contains settings for configuring Wireguard network interface.
+//
+// docgen:nodoc
 type DeviceWireguardConfig struct {
 	//   description: |
 	//     Specifies a private key configuration (base64 encoded).
@@ -1832,6 +1835,8 @@ type DeviceWireguardConfig struct {
 }
 
 // DeviceWireguardPeer a WireGuard device peer configuration.
+//
+// docgen:nodoc
 type DeviceWireguardPeer struct {
 	//   description: |
 	//     Specifies the public key of this peer.
@@ -1851,6 +1856,8 @@ type DeviceWireguardPeer struct {
 }
 
 // DeviceVIPConfig contains settings for configuring a Virtual Shared IP on an interface.
+//
+// docgen:nodoc
 type DeviceVIPConfig struct {
 	// description: Specifies the IP address to be used.
 	SharedIP string `yaml:"ip,omitempty"`
@@ -1861,18 +1868,24 @@ type DeviceVIPConfig struct {
 }
 
 // VIPEquinixMetalConfig contains settings for Equinix Metal VIP management.
+//
+// docgen:nodoc
 type VIPEquinixMetalConfig struct {
 	// description: Specifies the Equinix Metal API Token.
 	EquinixMetalAPIToken string `yaml:"apiToken"`
 }
 
 // VIPHCloudConfig contains settings for Hetzner Cloud VIP management.
+//
+// docgen:nodoc
 type VIPHCloudConfig struct {
 	// description: Specifies the Hetzner Cloud API Token.
 	HCloudAPIToken string `yaml:"apiToken"`
 }
 
 // Bond contains the various options for configuring a bonded interface.
+//
+// docgen:nodoc
 type Bond struct {
 	//   description: The interfaces that make up the bond.
 	BondInterfaces []string `yaml:"interfaces"`
@@ -1993,18 +2006,24 @@ type Bond struct {
 }
 
 // STP contains the various options for configuring the STP properties of a bridge interface.
+//
+// docgen:nodoc
 type STP struct {
 	//   description: Whether Spanning Tree Protocol (STP) is enabled.
 	STPEnabled *bool `yaml:"enabled,omitempty"`
 }
 
 // BridgeVLAN contains the various options for configuring the VLAN properties of a bridge interface.
+//
+// docgen:nodoc
 type BridgeVLAN struct {
 	//   description: Whether VLAN filtering is enabled.
 	BridgeVLANFiltering *bool `yaml:"vlanFiltering,omitempty"`
 }
 
 // Bridge contains the various options for configuring a bridge interface.
+//
+// docgen:nodoc
 type Bridge struct {
 	//   description: The interfaces that make up the bridge.
 	BridgedInterfaces []string `yaml:"interfaces"`
@@ -2019,6 +2038,8 @@ type Bridge struct {
 }
 
 // BridgePort contains settings for assigning a link to a bridge interface.
+//
+// docgen:nodoc
 type BridgePort struct {
 	//   description: The name of the bridge master interface
 	BridgePortMaster string `yaml:"master,omitempty"`
@@ -2026,7 +2047,7 @@ type BridgePort struct {
 
 // VlanList is a list of *Vlan structures with overridden merge process.
 //
-//docgen:alias
+// docgen:nodoc
 type VlanList []*Vlan
 
 // Merge the network interface configuration intelligently.
@@ -2066,6 +2087,8 @@ func (vlans *VlanList) mergeVlan(vlan *Vlan) error {
 }
 
 // Vlan represents vlan settings for a device.
+//
+// docgen:nodoc
 type Vlan struct {
 	//   description: The addresses in CIDR notation or as plain IPs to use.
 	VlanAddresses []string `yaml:"addresses,omitempty"`
@@ -2088,6 +2111,8 @@ type Vlan struct {
 }
 
 // Route represents a network route.
+//
+// docgen:nodoc
 type Route struct {
 	//   description: The route's network (destination).
 	RouteNetwork string `yaml:"network"`
@@ -2394,6 +2419,8 @@ type KubeSpanFilters struct {
 }
 
 // NetworkDeviceSelector struct describes network device selector.
+//
+// docgen:nodoc
 type NetworkDeviceSelector struct {
 	// description: PCI, USB bus prefix, supports matching by wildcard.
 	NetworkDeviceBus string `yaml:"busPath,omitempty"`

@@ -22,6 +22,7 @@ import (
 	"github.com/siderolabs/gen/xslices"
 	"github.com/siderolabs/go-pointer"
 	"github.com/stretchr/testify/assert"
+	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
 
 	"github.com/siderolabs/talos/internal/integration/base"
 	"github.com/siderolabs/talos/pkg/machinery/cel"
@@ -579,6 +580,57 @@ func (suite *NetworkConfigSuite) TestBridgeConfig() {
 	}
 
 	rtestutils.AssertNoResource[*networkres.LinkStatus](nodeCtx, suite.T(), suite.Client.COSI, bridgeName)
+}
+
+// TestWireguardConfig tests creation of Wireguard interfaces.
+func (suite *NetworkConfigSuite) TestWireguardConfig() {
+	if suite.Cluster == nil {
+		suite.T().Skip("skipping if cluster is not qemu/docker")
+	}
+
+	node := suite.RandomDiscoveredNodeInternalIP(machine.TypeWorker)
+	nodeCtx := client.WithNode(suite.ctx, node)
+
+	suite.T().Logf("testing on node %q", node)
+
+	wgName := "wg." + strconv.Itoa(rand.IntN(10000))
+
+	privateKey, err := wgtypes.GeneratePrivateKey()
+	suite.Require().NoError(err)
+
+	peerKey, err := wgtypes.GeneratePrivateKey()
+	suite.Require().NoError(err)
+
+	wg := network.NewWireguardConfigV1Alpha1(wgName)
+	wg.WireguardPrivateKey = privateKey.String()
+	wg.WireguardListenPort = 3042
+	wg.WireguardPeers = []network.WireguardPeer{
+		{
+			WireguardPublicKey: peerKey.PublicKey().String(),
+			WireguardAllowedIPs: []network.Prefix{
+				{
+					Prefix: netip.MustParsePrefix("192.168.2.0/24"),
+				},
+			},
+		},
+	}
+	wg.LinkUp = pointer.To(true)
+
+	suite.PatchMachineConfig(nodeCtx, wg)
+
+	rtestutils.AssertResource(nodeCtx, suite.T(), suite.Client.COSI, wgName,
+		func(link *networkres.LinkStatus, asrt *assert.Assertions) {
+			asrt.Equal("wireguard", link.TypedSpec().Kind)
+			asrt.Equal(wg.WireguardListenPort, link.TypedSpec().Wireguard.ListenPort)
+			asrt.Len(link.TypedSpec().Wireguard.Peers, 1)
+			asrt.Equal(peerKey.PublicKey().String(), link.TypedSpec().Wireguard.Peers[0].PublicKey)
+			asrt.Equal(privateKey.PublicKey().String(), link.TypedSpec().Wireguard.PublicKey)
+		},
+	)
+
+	suite.RemoveMachineConfigDocumentsByName(nodeCtx, network.WireguardKind, wgName)
+
+	rtestutils.AssertNoResource[*networkres.LinkStatus](nodeCtx, suite.T(), suite.Client.COSI, wgName)
 }
 
 func init() {

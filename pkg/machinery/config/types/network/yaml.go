@@ -33,3 +33,17 @@ type Addr struct {
 func (n Addr) IsZero() bool {
 	return n.Addr == netip.Addr{}
 }
+
+// AddrPort is a wrapper for netip.AddrPort.
+//
+// It implements IsZero() so that yaml.Marshal correctly skips empty values.
+//
+//docgen:nodoc
+type AddrPort struct {
+	netip.AddrPort
+}
+
+// IsZero implements yaml.IsZeroer interface.
+func (n AddrPort) IsZero() bool {
+	return n.AddrPort == netip.AddrPort{}
+}

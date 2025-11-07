@@ -362,7 +362,7 @@ func (ctrl *LinkConfigController) processDevicesConfiguration(
 		}
 
 		if device.WireguardConfig() != nil {
-			if err := wireguardLink(linkMap[deviceInterface], device.WireguardConfig()); err != nil {
+			if err := wireguardLinkLegacy(linkMap[deviceInterface], device.WireguardConfig()); err != nil {
 				logger.Error("error parsing wireguard config", zap.Error(err))
 			}
 		}
@@ -479,6 +479,8 @@ func (ctrl *LinkConfigController) processLinkConfigs(logger *zap.Logger, linkMap
 
 				SetBridgeSlave(linkMap[slaveLinkName], linkName)
 			}
+		case talosconfig.NetworkWireguardConfig:
+			wireguardLink(linkMap[linkName], specificLinkConfig)
 		default:
 			logger.Error("unknown link config type", zap.String("linkName", linkName), zap.String("type", fmt.Sprintf("%T", specificLinkConfig)))
 		}
@@ -535,7 +537,7 @@ func vlanLink(link *network.LinkSpecSpec, vlanName, linkName string, vlan vlaner
 	}
 }
 
-func wireguardLink(link *network.LinkSpecSpec, config talosconfig.WireguardConfig) error {
+func wireguardLinkLegacy(link *network.LinkSpecSpec, config talosconfig.WireguardConfig) error {
 	link.Logical = true
 	link.Kind = network.LinkKindWireguard
 	link.Type = nethelpers.LinkNone
@@ -566,6 +568,27 @@ func wireguardLink(link *network.LinkSpecSpec, config talosconfig.WireguardConfi
 	}
 
 	return nil
+}
+
+func wireguardLink(link *network.LinkSpecSpec, config talosconfig.NetworkWireguardConfig) {
+	link.Logical = true
+	link.Kind = network.LinkKindWireguard
+	link.Type = nethelpers.LinkNone
+	link.Wireguard = network.WireguardSpec{
+		PrivateKey:   config.PrivateKey(),
+		ListenPort:   config.ListenPort().ValueOr(0),
+		FirewallMark: config.FirewallMark().ValueOr(0),
+	}
+
+	for _, peer := range config.Peers() {
+		link.Wireguard.Peers = append(link.Wireguard.Peers, network.WireguardPeer{
+			PublicKey:                   peer.PublicKey(),
+			PresharedKey:                peer.PresharedKey().ValueOr(""),
+			Endpoint:                    peer.Endpoint().ValueOr(""),
+			PersistentKeepaliveInterval: peer.PersistentKeepalive().ValueOr(0),
+			AllowedIPs:                  peer.AllowedIPs(),
+		})
+	}
 }
 
 func dummyLink(link *network.LinkSpecSpec) {

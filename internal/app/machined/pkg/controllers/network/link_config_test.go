@@ -16,12 +16,14 @@ import (
 	"github.com/siderolabs/go-procfs/procfs"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
+	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/ctest"
 	netctrl "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/network"
 	"github.com/siderolabs/talos/pkg/machinery/config/container"
 	networkcfg "github.com/siderolabs/talos/pkg/machinery/config/types/network"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
+	"github.com/siderolabs/talos/pkg/machinery/fipsmode"
 	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
 	"github.com/siderolabs/talos/pkg/machinery/resources/config"
 	"github.com/siderolabs/talos/pkg/machinery/resources/network"
@@ -564,6 +566,71 @@ func (suite *LinkConfigSuite) TestMachineConfigurationNewStyle() {
 				asrt.True(r.TypedSpec().BridgeMaster.STP.Enabled)
 				asrt.True(r.TypedSpec().BridgeMaster.VLAN.FilteringEnabled)
 			}
+		},
+	)
+}
+
+func (suite *LinkConfigSuite) TestMachineConfigurationNewStyleNotFIPS() {
+	if fipsmode.Strict() {
+		suite.T().Skip("skipping test in strict FIPS mode")
+	}
+
+	suite.Require().NoError(suite.Runtime().RegisterController(&netctrl.LinkConfigController{}))
+
+	privKey, err := wgtypes.GeneratePrivateKey()
+	suite.Require().NoError(err)
+
+	pskKey, err := wgtypes.GenerateKey()
+	suite.Require().NoError(err)
+
+	peerKey, err := wgtypes.GenerateKey()
+	suite.Require().NoError(err)
+
+	wc1 := networkcfg.NewWireguardConfigV1Alpha1("wg0")
+	wc1.LinkUp = pointer.To(true)
+	wc1.WireguardPrivateKey = privKey.String()
+	wc1.WireguardListenPort = 12345
+	wc1.WireguardPeers = []networkcfg.WireguardPeer{
+		{
+			WireguardPublicKey:    peerKey.PublicKey().String(),
+			WireguardPresharedKey: pskKey.String(),
+			WireguardAllowedIPs:   []networkcfg.Prefix{{Prefix: netip.MustParsePrefix("10.0.0.0/24")}},
+		},
+	}
+
+	ctr, err := container.New(wc1)
+	suite.Require().NoError(err)
+
+	cfg := config.NewMachineConfig(ctr)
+	suite.Create(cfg)
+
+	suite.assertLinks(
+		[]string{
+			"configuration/wg0",
+		}, func(r *network.LinkSpec, asrt *assert.Assertions) {
+			asrt.Equal(network.ConfigMachineConfiguration, r.TypedSpec().ConfigLayer)
+
+			asrt.True(r.TypedSpec().Up)
+			asrt.True(r.TypedSpec().Logical)
+			asrt.Equal(nethelpers.LinkNone, r.TypedSpec().Type)
+			asrt.Equal(network.LinkKindWireguard, r.TypedSpec().Kind)
+			asrt.Equal(
+				network.WireguardSpec{
+					PrivateKey:   privKey.String(),
+					ListenPort:   12345,
+					FirewallMark: 0,
+					Peers: []network.WireguardPeer{
+						{
+							PublicKey:    peerKey.PublicKey().String(),
+							PresharedKey: pskKey.String(),
+							AllowedIPs: []netip.Prefix{
+								netip.MustParsePrefix("10.0.0.0/24"),
+							},
+						},
+					},
+				},
+				r.TypedSpec().Wireguard,
+			)
 		},
 	)
 }
