@@ -157,6 +157,11 @@ func (o *Output) FillDefaults(arch, version string, secureboot bool) {
 }
 
 func (o *Output) selectBootloader(current BootloaderKind, arch, version string, secureboot bool) BootloaderKind {
+	// If already set, return the current value, secureboot shouldn't allow changing it.
+	if current != BootLoaderKindNone && !secureboot {
+		return current
+	}
+
 	useSDBoot := quirks.New(version).UseSDBootForUEFI()
 
 	switch {
@@ -171,10 +176,6 @@ func (o *Output) selectBootloader(current BootloaderKind, arch, version string, 
 		return BootLoaderKindGrub
 	default:
 		// Default to dual-boot if not overridden.
-		if current == BootLoaderKindNone {
-			return BootLoaderKindDualBoot
-		}
-
-		return current
+		return BootLoaderKindDualBoot
 	}
 }

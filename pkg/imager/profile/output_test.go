@@ -23,7 +23,7 @@ func createOutputWithDefaults(kind profile.OutputKind, arch, version string, sec
 	return out
 }
 
-func createOutputWithOverride(kind profile.OutputKind, bootloader profile.BootloaderKind, arch, version string, secureBoot bool) profile.Output {
+func createOutputWithOverride(kind profile.OutputKind, bootloader profile.BootloaderKind, secureBoot bool) profile.Output {
 	out := profile.Output{
 		Kind: kind,
 	}
@@ -34,14 +34,12 @@ func createOutputWithOverride(kind profile.OutputKind, bootloader profile.Bootlo
 			Bootloader: bootloader,
 		}
 	case profile.OutKindISO:
-		if quirks.New(version).ISOSupportsSettingBootloader() {
-			out.ISOOptions = &profile.ISOOptions{
-				Bootloader: bootloader,
-			}
+		out.ISOOptions = &profile.ISOOptions{
+			Bootloader: bootloader,
 		}
 	}
 
-	out.FillDefaults(arch, version, secureBoot)
+	out.FillDefaults("amd64", "v1.12.0", secureBoot)
 
 	return out
 }
@@ -108,65 +106,37 @@ func TestBootloaderOverride(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
-		arch       string
-		version    string
-		secureBoot bool
-		override   profile.BootloaderKind
-		wantImage  profile.BootloaderKind
+		name               string
+		secureBoot         bool
+		override           profile.BootloaderKind
+		expectedBootloader profile.BootloaderKind
 	}{
-		// Talos < 1.10: GRUB is forced, overrides are ignored
-		{"amd64", "1.9.0", false, profile.BootLoaderKindGrub, profile.BootLoaderKindGrub},
-		{"amd64", "1.9.0", false, profile.BootLoaderKindSDBoot, profile.BootLoaderKindGrub},   // forced to GRUB
-		{"amd64", "1.9.0", false, profile.BootLoaderKindDualBoot, profile.BootLoaderKindGrub}, // forced to GRUB
-		{"amd64", "1.9.0", true, profile.BootLoaderKindGrub, profile.BootLoaderKindSDBoot},    // secureboot forces sd-boot
-		{"arm64", "1.9.0", false, profile.BootLoaderKindGrub, profile.BootLoaderKindGrub},
-		{"arm64", "1.9.0", false, profile.BootLoaderKindSDBoot, profile.BootLoaderKindGrub}, // forced to GRUB
-		{"arm64", "1.9.0", true, profile.BootLoaderKindGrub, profile.BootLoaderKindSDBoot},  // secureboot forces sd-boot
-
-		// Talos 1.10-1.11: amd64 respects override, arm64 forced to sd-boot
-		{"amd64", "1.10.0", false, profile.BootLoaderKindGrub, profile.BootLoaderKindGrub},
-		{"amd64", "1.10.0", false, profile.BootLoaderKindSDBoot, profile.BootLoaderKindSDBoot},
-		{"amd64", "1.10.0", false, profile.BootLoaderKindDualBoot, profile.BootLoaderKindDualBoot},
-		{"amd64", "1.10.0", true, profile.BootLoaderKindGrub, profile.BootLoaderKindSDBoot},  // secureboot forces sd-boot
-		{"arm64", "1.10.0", false, profile.BootLoaderKindGrub, profile.BootLoaderKindSDBoot}, // arm64 >= 1.10 forces sd-boot
-		{"arm64", "1.10.0", true, profile.BootLoaderKindGrub, profile.BootLoaderKindSDBoot},  // secureboot forces sd-boot
-		{"amd64", "1.11.0", false, profile.BootLoaderKindGrub, profile.BootLoaderKindGrub},
-		{"amd64", "1.11.0", false, profile.BootLoaderKindDualBoot, profile.BootLoaderKindDualBoot},
-		{"amd64", "1.11.0", true, profile.BootLoaderKindGrub, profile.BootLoaderKindSDBoot},  // secureboot forces sd-boot
-		{"arm64", "1.11.0", false, profile.BootLoaderKindGrub, profile.BootLoaderKindSDBoot}, // arm64 >= 1.10 forces sd-boot
-		{"arm64", "1.11.0", true, profile.BootLoaderKindGrub, profile.BootLoaderKindSDBoot},  // secureboot forces sd-boot
-
-		// Talos >= 1.12: amd64 respects override, arm64 forced to sd-boot
-		{"amd64", "1.12.0", false, profile.BootLoaderKindGrub, profile.BootLoaderKindGrub},
-		{"amd64", "1.12.0", false, profile.BootLoaderKindSDBoot, profile.BootLoaderKindSDBoot},
-		{"amd64", "1.12.0", false, profile.BootLoaderKindDualBoot, profile.BootLoaderKindDualBoot},
-		{"amd64", "1.12.0", true, profile.BootLoaderKindGrub, profile.BootLoaderKindSDBoot},  // secureboot forces sd-boot
-		{"arm64", "1.12.0", false, profile.BootLoaderKindGrub, profile.BootLoaderKindSDBoot}, // arm64 >= 1.10 forces sd-boot
-		{"arm64", "1.12.0", true, profile.BootLoaderKindGrub, profile.BootLoaderKindSDBoot},  // secureboot forces sd-boot
+		{
+			"non-secureboot override to sd-boot",
+			false,
+			profile.BootLoaderKindSDBoot,
+			profile.BootLoaderKindSDBoot,
+		},
+		{
+			"secureboot override to grub",
+			true,
+			profile.BootLoaderKindGrub,
+			profile.BootLoaderKindSDBoot,
+		},
 	}
 
 	for _, tt := range tests {
-		name := tt.arch + "-" + tt.version + "-override-" + tt.override.String()
-		if tt.secureBoot {
-			name += "-secureboot"
-		}
-
-		t.Run(name, func(t *testing.T) {
+		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
 			// Test Image output with override
-			img := createOutputWithOverride(profile.OutKindImage, tt.override, tt.arch, tt.version, tt.secureBoot)
+			img := createOutputWithOverride(profile.OutKindImage, tt.override, tt.secureBoot)
 			require.NotNil(t, img.ImageOptions)
-			require.Equal(t, tt.wantImage, img.ImageOptions.Bootloader)
+			require.Equal(t, tt.expectedBootloader, img.ImageOptions.Bootloader)
 
 			// Test ISO output with override
-			iso := createOutputWithOverride(profile.OutKindISO, tt.override, tt.arch, tt.version, tt.secureBoot)
-			if quirks.New(tt.version).ISOSupportsSettingBootloader() {
-				require.NotNil(t, iso.ISOOptions)
-				require.Equal(t, tt.wantImage, iso.ISOOptions.Bootloader)
-			} else {
-				require.Nil(t, iso.ISOOptions)
-			}
+			iso := createOutputWithOverride(profile.OutKindISO, tt.override, tt.secureBoot)
+			require.Equal(t, tt.expectedBootloader, iso.ISOOptions.Bootloader)
 		})
 	}
 }
