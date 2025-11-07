@@ -13,8 +13,10 @@ var AllowedPaths = []string{
 	"/usr/lib/firmware",
 	"/usr/lib/modules",
 	// The glibc loader is required by glibc dynamic binaries.
-	// It will be accessible via /lib64/ld-linux-x86-64.so.2.
+	// It will be accessible via /lib64/ld-linux-x86-64.so.2 on x86_64
+	// and /lib/ld-linux-aarch64.so.1 on aarch64.
 	"/usr/lib/ld-linux-x86-64.so.2",
+	"/usr/lib/ld-linux-aarch64.so.1",
 	// /sbin/ldconfig is required by the nvidia container toolkit.
 	"/usr/bin/ldconfig",
 	"/usr/lib/udev/rules.d",
