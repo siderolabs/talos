@@ -2,7 +2,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-package block_test
+package volumes_test
 
 import (
 	"testing"
@@ -10,7 +10,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/block"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/block/internal/volumes"
 	"github.com/siderolabs/talos/pkg/machinery/config/config"
 	blockcfg "github.com/siderolabs/talos/pkg/machinery/config/types/block"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
@@ -83,12 +83,12 @@ const (
 func TestMarshalEncryptionMeta(t *testing.T) {
 	t.Parallel()
 
-	data, err := block.MarshalEncryptionMeta(legacyEncryptionConfig())
+	data, err := volumes.MarshalEncryptionMeta(legacyEncryptionConfig())
 	require.NoError(t, err)
 
 	assert.Equal(t, legacyMarshalled, string(data))
 
-	data, err = block.MarshalEncryptionMeta(modernEncryptionConfig())
+	data, err = volumes.MarshalEncryptionMeta(modernEncryptionConfig())
 	require.NoError(t, err)
 
 	assert.Equal(t, modernMarshalled, string(data))
@@ -97,12 +97,12 @@ func TestMarshalEncryptionMeta(t *testing.T) {
 func TestUnmarshalEncryptionMeta(t *testing.T) {
 	t.Parallel()
 
-	cfg, err := block.UnmarshalEncryptionMeta([]byte(legacyMarshalled))
+	cfg, err := volumes.UnmarshalEncryptionMeta([]byte(legacyMarshalled))
 	require.NoError(t, err)
 
 	assertEqualEncryptionConfigs(t, cfg, legacyEncryptionConfig())
 
-	cfg, err = block.UnmarshalEncryptionMeta([]byte(modernMarshalled))
+	cfg, err = volumes.UnmarshalEncryptionMeta([]byte(modernMarshalled))
 	require.NoError(t, err)
 
 	assertEqualEncryptionConfigs(t, cfg, modernEncryptionConfig())

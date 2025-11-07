@@ -2,34 +2,35 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-package block
+//nolint:revive
+package volumeconfig
 
 import (
-	"bytes"
 	"context"
-	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
 
-	"go.uber.org/zap"
-
+	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/block/internal/volumes"
 	"github.com/siderolabs/talos/internal/pkg/partition"
 	configconfig "github.com/siderolabs/talos/pkg/machinery/config/config"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/imager/quirks"
-	"github.com/siderolabs/talos/pkg/machinery/meta"
 	"github.com/siderolabs/talos/pkg/machinery/resources/block"
 	"github.com/siderolabs/talos/pkg/machinery/resources/runtime"
 )
 
-func (ctrl *VolumeConfigController) getSystemVolumeTransformers(ctx context.Context, encryptionMeta *runtime.MetaKey, l *zap.Logger) []volumeConfigTransformer { //nolint:gocyclo
-	metaVolumeTransformer := func(_ configconfig.Config) ([]volumeResource, error) {
-		return []volumeResource{
+// GetSystemVolumeTransformers returns the transformers for system volumes.
+func GetSystemVolumeTransformers(ctx context.Context,
+	encryptionMeta *runtime.MetaKey,
+	inContainer, isAgent bool,
+) []volumeConfigTransformer { //nolint:gocyclo
+	metaVolumeTransformer := func(_ configconfig.Config) ([]VolumeResource, error) {
+		return []VolumeResource{
 			{
 				VolumeID: constants.MetaPartitionLabel,
 				Label:    block.SystemVolumeLabel,
-				TransformFunc: newVolumeConfigBuilder().
+				TransformFunc: NewBuilder().
 					WithType(block.VolumeTypePartition).
 					WithLocator(metaMatch()).
 					WriterFunc(),
@@ -37,11 +38,22 @@ func (ctrl *VolumeConfigController) getSystemVolumeTransformers(ctx context.Cont
 		}, nil
 	}
 
-	stateVolumeTransformer := func(cfg configconfig.Config) ([]volumeResource, error) {
+	return []volumeConfigTransformer{
+		metaVolumeTransformer,
+		GetStateVolumeTransformer(encryptionMeta, inContainer, isAgent),
+		GetEphemeralVolumeTransformer(inContainer),
+		StandardDirectoryVolumesTransformer,
+		GetOverlayVolumesTransformer(inContainer),
+	}
+}
+
+// GetStateVolumeTransformer returns the transformer for the STATE volume.
+func GetStateVolumeTransformer(encryptionMeta *runtime.MetaKey, inContainer, isAgent bool) volumeConfigTransformer {
+	return func(cfg configconfig.Config) ([]VolumeResource, error) {
 		var volumeConfigurator func(vc *block.VolumeConfig) error
 
-		if ctrl.V1Alpha1Mode.InContainer() {
-			volumeConfigurator = newVolumeConfigBuilder().
+		if inContainer {
+			volumeConfigurator = NewBuilder().
 				WithType(block.VolumeTypeDirectory).
 				WithMount(block.MountSpec{
 					TargetPath:   constants.StateMountPoint,
@@ -53,13 +65,13 @@ func (ctrl *VolumeConfigController) getSystemVolumeTransformers(ctx context.Cont
 		} else {
 			// STATE configuration should be always created, but it depends on the configuration presence
 			if cfg != nil && cfg.Machine() != nil {
-				volumeConfigurator = ctrl.manageStateConfigPresent(ctx, l, cfg)
+				volumeConfigurator = manageStateConfigPresent(cfg)
 			} else {
-				volumeConfigurator = ctrl.manageStateNoConfig(encryptionMeta)
+				volumeConfigurator = manageStateNoConfig(encryptionMeta, isAgent)
 			}
 		}
 
-		return []volumeResource{
+		return []VolumeResource{
 			{
 				VolumeID:      constants.StatePartitionLabel,
 				Label:         block.SystemVolumeLabel,
@@ -67,8 +79,11 @@ func (ctrl *VolumeConfigController) getSystemVolumeTransformers(ctx context.Cont
 			},
 		}, nil
 	}
+}
 
-	ephemeralVolumeTransformer := func(cfg configconfig.Config) ([]volumeResource, error) {
+// GetEphemeralVolumeTransformer returns the transformer for the EPHEMERAL volume.
+func GetEphemeralVolumeTransformer(inContainer bool) volumeConfigTransformer {
+	return func(cfg configconfig.Config) ([]VolumeResource, error) {
 		// skip if no config
 		if cfg == nil || cfg.Machine() == nil {
 			return nil, nil
@@ -76,8 +91,8 @@ func (ctrl *VolumeConfigController) getSystemVolumeTransformers(ctx context.Cont
 
 		var volumeConfigurator func(*block.VolumeConfig) error
 
-		if ctrl.V1Alpha1Mode.InContainer() {
-			volumeConfigurator = newVolumeConfigBuilder().
+		if inContainer {
+			volumeConfigurator = NewBuilder().
 				WithType(block.VolumeTypeDirectory).
 				WithMount(block.MountSpec{
 					TargetPath:   constants.EphemeralMountPoint,
@@ -90,7 +105,7 @@ func (ctrl *VolumeConfigController) getSystemVolumeTransformers(ctx context.Cont
 			volumeConfigurator = func(vc *block.VolumeConfig) error {
 				extraVolumeConfig, _ := cfg.Volumes().ByName(constants.EphemeralPartitionLabel)
 
-				return newVolumeConfigBuilder().
+				return NewBuilder().
 					WithType(block.VolumeTypePartition).
 					WithProvisioning(block.ProvisioningSpec{
 						Wave: block.WaveSystemDisk,
@@ -125,7 +140,7 @@ func (ctrl *VolumeConfigController) getSystemVolumeTransformers(ctx context.Cont
 							encryptionConfig = cfg.Machine().SystemDiskEncryption().Get(constants.EphemeralPartitionLabel)
 						}
 
-						if err := convertEncryptionConfiguration(
+						if err := volumes.ConvertEncryptionConfiguration(
 							encryptionConfig,
 							vc.TypedSpec(),
 						); err != nil {
@@ -138,90 +153,28 @@ func (ctrl *VolumeConfigController) getSystemVolumeTransformers(ctx context.Cont
 			}
 		}
 
-		return []volumeResource{{
+		return []VolumeResource{{
 			VolumeID:      constants.EphemeralPartitionLabel,
 			Label:         block.SystemVolumeLabel,
 			TransformFunc: volumeConfigurator,
 		}}, nil
 	}
+}
 
-	standardDirectoryVolumesTransformer := func(cfg configconfig.Config) ([]volumeResource, error) {
-		// skip if no config
-		if cfg == nil || cfg.Machine() == nil {
-			return nil, nil
-		}
-
-		resources := []volumeResource{
-			// /var/run symlink
-			{
-				VolumeID: "/var/run",
-				Label:    block.SystemVolumeLabel,
-				TransformFunc: newVolumeConfigBuilder().
-					WithType(block.VolumeTypeSymlink).
-					WithSymlink(block.SymlinkProvisioningSpec{
-						SymlinkTargetPath: "/run",
-						Force:             true,
-					}).
-					WithMount(block.MountSpec{
-						TargetPath: "/var/run",
-					}).
-					WriterFunc(),
-			},
-		}
-
-		parentIDs := map[string]string{
-			"/var":     constants.EphemeralPartitionLabel,
-			"/var/run": "/var/run",
-		}
-
-		for _, volume := range standardVolumeDefinitions {
-			parentDir := filepath.Dir(volume.Path)
-			targetDir := filepath.Base(volume.Path)
-
-			parentID, ok := parentIDs[parentDir]
-			if !ok {
-				return nil, fmt.Errorf("unknown parent directory volume %q for %q", parentDir, volume.Path)
-			}
-
-			volumeID := volume.Path
-			if volume.ID != "" {
-				volumeID = volume.ID
-			}
-
-			resources = append(resources, volumeResource{
-				VolumeID: volumeID,
-				Label:    block.SystemVolumeLabel,
-				TransformFunc: newVolumeConfigBuilder().
-					WithType(block.VolumeTypeDirectory).
-					WithMount(block.MountSpec{
-						TargetPath:       targetDir,
-						ParentID:         parentID,
-						SelinuxLabel:     volume.SELinuxLabel,
-						FileMode:         volume.Mode,
-						UID:              volume.UID,
-						GID:              volume.GID,
-						RecursiveRelabel: volume.Recursive,
-					}).WriterFunc(),
-			})
-
-			parentIDs[volume.Path] = volumeID
-		}
-
-		return resources, nil
-	}
-
-	overlayVolumesTransformer := func(cfg configconfig.Config) ([]volumeResource, error) {
+// GetOverlayVolumesTransformer returns the transformer for overlay volumes.
+func GetOverlayVolumesTransformer(inContainer bool) func(configconfig.Config) ([]VolumeResource, error) {
+	return func(cfg configconfig.Config) ([]VolumeResource, error) {
 		// skip if no config or in container
-		if cfg == nil || cfg.Machine() == nil || ctrl.V1Alpha1Mode.InContainer() {
+		if cfg == nil || cfg.Machine() == nil || inContainer {
 			return nil, nil
 		}
 
-		var resources []volumeResource
+		var resources []VolumeResource
 		for _, overlay := range constants.Overlays {
-			resources = append(resources, volumeResource{
+			resources = append(resources, VolumeResource{
 				VolumeID: overlay.Path,
 				Label:    block.SystemVolumeLabel,
-				TransformFunc: newVolumeConfigBuilder().
+				TransformFunc: NewBuilder().
 					WithType(block.VolumeTypeOverlay).
 					WithParentID(constants.EphemeralPartitionLabel).
 					WithMount(block.MountSpec{
@@ -236,23 +189,15 @@ func (ctrl *VolumeConfigController) getSystemVolumeTransformers(ctx context.Cont
 
 		return resources, nil
 	}
-
-	return []volumeConfigTransformer{
-		metaVolumeTransformer,
-		stateVolumeTransformer,
-		ephemeralVolumeTransformer,
-		standardDirectoryVolumesTransformer,
-		overlayVolumesTransformer,
-	}
 }
 
-func (ctrl *VolumeConfigController) manageStateNoConfig(encryptionMeta *runtime.MetaKey) func(vc *block.VolumeConfig) error {
+func manageStateNoConfig(encryptionMeta *runtime.MetaKey, isAgent bool) func(vc *block.VolumeConfig) error {
 	match := labelVolumeMatchAndNonEmpty(constants.StatePartitionLabel)
-	if ctrl.V1Alpha1Mode.IsAgent() { // mark as missing
+	if isAgent { // mark as missing
 		match = noMatch
 	}
 
-	return newVolumeConfigBuilder().
+	return NewBuilder().
 		WithType(block.VolumeTypePartition).
 		WithMount(block.MountSpec{
 			TargetPath:   constants.StateMountPoint,
@@ -263,12 +208,12 @@ func (ctrl *VolumeConfigController) manageStateNoConfig(encryptionMeta *runtime.
 		}).WithLocator(match).
 		WithFunc(func(spec *block.VolumeConfigSpec) error {
 			if encryptionMeta != nil {
-				encryptionFromMeta, err := UnmarshalEncryptionMeta([]byte(encryptionMeta.TypedSpec().Value))
+				encryptionFromMeta, err := volumes.UnmarshalEncryptionMeta([]byte(encryptionMeta.TypedSpec().Value))
 				if err != nil {
 					return err
 				}
 
-				if err := convertEncryptionConfiguration(
+				if err := volumes.ConvertEncryptionConfiguration(
 					encryptionFromMeta,
 					spec,
 				); err != nil {
@@ -283,11 +228,17 @@ func (ctrl *VolumeConfigController) manageStateNoConfig(encryptionMeta *runtime.
 		WriterFunc()
 }
 
-func (ctrl *VolumeConfigController) manageStateConfigPresent(ctx context.Context, l *zap.Logger, cfg configconfig.Config) func(vc *block.VolumeConfig) error {
+func manageStateConfigPresent(cfg configconfig.Config) func(vc *block.VolumeConfig) error {
 	return func(vc *block.VolumeConfig) error {
 		extraVolumeConfig, _ := cfg.Volumes().ByName(constants.StatePartitionLabel)
 
-		return newVolumeConfigBuilder().
+		encryptionConfig := extraVolumeConfig.Encryption()
+		if encryptionConfig == nil {
+			// fall back to v1alpha1 encryption config
+			encryptionConfig = cfg.Machine().SystemDiskEncryption().Get(constants.StatePartitionLabel)
+		}
+
+		return NewBuilder().
 			WithType(block.VolumeTypePartition).
 			WithMount(block.MountSpec{
 				TargetPath:   constants.StateMountPoint,
@@ -313,47 +264,7 @@ func (ctrl *VolumeConfigController) manageStateConfigPresent(ctx context.Context
 				},
 			}).
 			WithLocator(labelVolumeMatch(constants.StatePartitionLabel)).
-			WithFunc(func(spec *block.VolumeConfigSpec) error {
-				encryptionConfig := extraVolumeConfig.Encryption()
-				if encryptionConfig == nil {
-					// fall back to v1alpha1 encryption config
-					encryptionConfig = cfg.Machine().SystemDiskEncryption().Get(constants.StatePartitionLabel)
-				}
-
-				if err := convertEncryptionConfiguration(
-					encryptionConfig,
-					vc.TypedSpec(),
-				); err != nil {
-					return fmt.Errorf("error converting encryption for %s: %w", constants.StatePartitionLabel, err)
-				}
-
-				metaEncryptionConfig, err := MarshalEncryptionMeta(encryptionConfig)
-				if err != nil {
-					return fmt.Errorf("error marshaling encryption config for %s: %w", constants.StatePartitionLabel, err)
-				}
-
-				previous, ok := ctrl.MetaProvider.Meta().ReadTagBytes(meta.StateEncryptionConfig)
-				if ok && bytes.Equal(previous, metaEncryptionConfig) {
-					return nil
-				}
-
-				ok, err = ctrl.MetaProvider.Meta().SetTagBytes(ctx, meta.StateEncryptionConfig, metaEncryptionConfig)
-				if err != nil {
-					return fmt.Errorf("error setting meta tag %q: %w", meta.StateEncryptionConfig, err)
-				}
-
-				if !ok {
-					return errors.New("failed to save state encryption config to meta")
-				}
-
-				if err = ctrl.MetaProvider.Meta().Flush(); err != nil {
-					return fmt.Errorf("error flushing meta: %w", err)
-				}
-
-				l.Info("saved state encryption config to META")
-
-				return nil
-			}).
+			WithConvertEncryptionConfiguration(encryptionConfig).
 			Apply(vc.TypedSpec())
 	}
 }
@@ -450,4 +361,71 @@ var standardVolumeDefinitions = []struct {
 		Mode:         0o755,
 		SELinuxLabel: "system_u:object_r:var_lock_t:s0",
 	},
+}
+
+// StandardDirectoryVolumesTransformer is the transformer for standard directory volumes,
+// including the /var/run symlink.
+func StandardDirectoryVolumesTransformer(cfg configconfig.Config) ([]VolumeResource, error) {
+	// skip if no config
+	if cfg == nil || cfg.Machine() == nil {
+		return nil, nil
+	}
+
+	resources := []VolumeResource{
+		// /var/run symlink
+		{
+			VolumeID: "/var/run",
+			Label:    block.SystemVolumeLabel,
+			TransformFunc: NewBuilder().
+				WithType(block.VolumeTypeSymlink).
+				WithSymlink(block.SymlinkProvisioningSpec{
+					SymlinkTargetPath: "/run",
+					Force:             true,
+				}).
+				WithMount(block.MountSpec{
+					TargetPath: "/var/run",
+				}).
+				WriterFunc(),
+		},
+	}
+
+	parentIDs := map[string]string{
+		"/var":     constants.EphemeralPartitionLabel,
+		"/var/run": "/var/run",
+	}
+
+	for _, volume := range standardVolumeDefinitions {
+		parentDir := filepath.Dir(volume.Path)
+		targetDir := filepath.Base(volume.Path)
+
+		parentID, ok := parentIDs[parentDir]
+		if !ok {
+			return nil, fmt.Errorf("unknown parent directory volume %q for %q", parentDir, volume.Path)
+		}
+
+		volumeID := volume.Path
+		if volume.ID != "" {
+			volumeID = volume.ID
+		}
+
+		resources = append(resources, VolumeResource{
+			VolumeID: volumeID,
+			Label:    block.SystemVolumeLabel,
+			TransformFunc: NewBuilder().
+				WithType(block.VolumeTypeDirectory).
+				WithMount(block.MountSpec{
+					TargetPath:       targetDir,
+					ParentID:         parentID,
+					SelinuxLabel:     volume.SELinuxLabel,
+					FileMode:         volume.Mode,
+					UID:              volume.UID,
+					GID:              volume.GID,
+					RecursiveRelabel: volume.Recursive,
+				}).WriterFunc(),
+		})
+
+		parentIDs[volume.Path] = volumeID
+	}
+
+	return resources, nil
 }

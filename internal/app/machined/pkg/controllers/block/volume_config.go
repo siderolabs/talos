@@ -5,7 +5,9 @@
 package block
 
 import (
+	"bytes"
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/cosi-project/runtime/pkg/controller"
@@ -17,9 +19,9 @@ import (
 	"github.com/siderolabs/gen/xslices"
 	"go.uber.org/zap"
 
+	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/block/internal/volumes"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/block/internal/volumes/volumeconfig"
 	machinedruntime "github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
-	"github.com/siderolabs/talos/pkg/machinery/cel"
-	"github.com/siderolabs/talos/pkg/machinery/cel/celenv"
 	configconfig "github.com/siderolabs/talos/pkg/machinery/config/config"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/meta"
@@ -28,17 +30,10 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/resources/runtime"
 )
 
-var noMatch = cel.MustExpression(cel.ParseBooleanExpression("false", celenv.Empty()))
-
-// MetaProvider wraps acquiring meta.
-type MetaProvider interface {
-	Meta() machinedruntime.Meta
-}
-
 // VolumeConfigController provides volume configuration based on Talos defaults and machine configuration.
 type VolumeConfigController struct {
 	V1Alpha1Mode machinedruntime.Mode
-	MetaProvider MetaProvider
+	MetaProvider volumeconfig.MetaProvider
 }
 
 // Name implements controller.Controller interface.
@@ -88,63 +83,6 @@ func (ctrl *VolumeConfigController) Outputs() []controller.Output {
 	}
 }
 
-func labelVolumeMatch(label string) cel.Expression {
-	return cel.MustExpression(cel.ParseBooleanExpression(fmt.Sprintf("volume.partition_label == '%s'", label), celenv.VolumeLocator()))
-}
-
-func labelVolumeMatchAndNonEmpty(label string) cel.Expression {
-	return cel.MustExpression(cel.ParseBooleanExpression(fmt.Sprintf("volume.partition_label == '%s' && volume.name != ''", label), celenv.VolumeLocator()))
-}
-
-func metaMatch() cel.Expression {
-	return cel.MustExpression(cel.ParseBooleanExpression(fmt.Sprintf("volume.partition_label == '%s' && volume.name in ['', 'talosmeta'] && volume.size == 1048576u", constants.MetaPartitionLabel), celenv.VolumeLocator())) //nolint:lll
-}
-
-func systemDiskMatch() cel.Expression {
-	return cel.MustExpression(cel.ParseBooleanExpression("system_disk", celenv.DiskLocator()))
-}
-
-func convertEncryptionConfiguration(in configconfig.EncryptionConfig, out *block.VolumeConfigSpec) error {
-	if in == nil {
-		out.Encryption = block.EncryptionSpec{}
-
-		return nil
-	}
-
-	out.Encryption.Provider = in.Provider()
-	out.Encryption.Cipher = in.Cipher()
-	out.Encryption.KeySize = in.KeySize()
-	out.Encryption.BlockSize = in.BlockSize()
-	out.Encryption.PerfOptions = in.Options()
-
-	out.Encryption.Keys = make([]block.EncryptionKey, len(in.Keys()))
-
-	for i, key := range in.Keys() {
-		out.Encryption.Keys[i].Slot = key.Slot()
-		out.Encryption.Keys[i].LockToSTATE = key.LockToSTATE()
-
-		switch {
-		case key.Static() != nil:
-			out.Encryption.Keys[i].Type = block.EncryptionKeyStatic
-			out.Encryption.Keys[i].StaticPassphrase = key.Static().Key()
-		case key.NodeID() != nil:
-			out.Encryption.Keys[i].Type = block.EncryptionKeyNodeID
-		case key.KMS() != nil:
-			out.Encryption.Keys[i].Type = block.EncryptionKeyKMS
-			out.Encryption.Keys[i].KMSEndpoint = key.KMS().Endpoint()
-		case key.TPM() != nil:
-			out.Encryption.Keys[i].Type = block.EncryptionKeyTPM
-			out.Encryption.Keys[i].TPMCheckSecurebootStatusOnEnroll = key.TPM().CheckSecurebootOnEnroll()
-			out.Encryption.Keys[i].TPMPCRs = key.TPM().PCRs()
-			out.Encryption.Keys[i].TPMPubKeyPCRs = key.TPM().PubKeyPCRs()
-		default:
-			return fmt.Errorf("unsupported encryption key type: slot %d", key.Slot())
-		}
-	}
-
-	return nil
-}
-
 // Run implements controller.Controller interface.
 func (ctrl *VolumeConfigController) Run(ctx context.Context, r controller.Runtime, logger *zap.Logger) error { //nolint:gocyclo
 	for {
@@ -164,9 +102,14 @@ func (ctrl *VolumeConfigController) Run(ctx context.Context, r controller.Runtim
 			cfg = machineCfg.Config()
 		}
 
-		transformers := append(ctrl.getSystemVolumeTransformers(ctx, encryptionMeta, logger), userVolumeTransformers...)
+		if err := ctrl.setupStateEncryption(ctx, logger, cfg); err != nil {
+			return err
+		}
 
-		var resources []volumeResource
+		transformers := append(volumeconfig.GetSystemVolumeTransformers(ctx, encryptionMeta,
+			ctrl.V1Alpha1Mode.InContainer(), ctrl.V1Alpha1Mode.IsAgent()), volumeconfig.UserVolumeTransformers...)
+
+		var resources []volumeconfig.VolumeResource
 
 		for _, transformer := range transformers {
 			r, err := transformer(cfg)
@@ -194,6 +137,47 @@ func (ctrl *VolumeConfigController) Run(ctx context.Context, r controller.Runtim
 	}
 }
 
+func (ctrl *VolumeConfigController) setupStateEncryption(ctx context.Context, l *zap.Logger, cfg configconfig.Config) error { //nolint:gocyclo
+	if cfg == nil || cfg.Machine() == nil || ctrl.V1Alpha1Mode.InContainer() {
+		return nil
+	}
+
+	extraVolumeConfig, _ := cfg.Volumes().ByName(constants.StatePartitionLabel)
+
+	encryptionConfig := extraVolumeConfig.Encryption()
+	if encryptionConfig == nil {
+		// fall back to v1alpha1 encryption config
+		encryptionConfig = cfg.Machine().SystemDiskEncryption().Get(constants.StatePartitionLabel)
+	}
+
+	metaEncryptionConfig, err := volumes.MarshalEncryptionMeta(encryptionConfig)
+	if err != nil {
+		return fmt.Errorf("error marshaling encryption config for %s: %w", constants.StatePartitionLabel, err)
+	}
+
+	previous, ok := ctrl.MetaProvider.Meta().ReadTagBytes(meta.StateEncryptionConfig)
+	if ok && bytes.Equal(previous, metaEncryptionConfig) {
+		return nil
+	}
+
+	ok, err = ctrl.MetaProvider.Meta().SetTagBytes(ctx, meta.StateEncryptionConfig, metaEncryptionConfig)
+	if err != nil {
+		return fmt.Errorf("error setting meta tag %q: %w", meta.StateEncryptionConfig, err)
+	}
+
+	if !ok {
+		return errors.New("failed to save state encryption config to meta")
+	}
+
+	if err = ctrl.MetaProvider.Meta().Flush(); err != nil {
+		return fmt.Errorf("error flushing meta: %w", err)
+	}
+
+	l.Info("saved state encryption config to META")
+
+	return nil
+}
+
 func (ctrl *VolumeConfigController) loadConfiguration(ctx context.Context, r controller.Runtime) (*config.MachineConfig, *runtime.MetaKey, error) {
 	// load config if present
 	machineCfg, err := safe.ReaderGetByID[*config.MachineConfig](ctx, r, config.ActiveID)
@@ -210,17 +194,8 @@ func (ctrl *VolumeConfigController) loadConfiguration(ctx context.Context, r con
 	return machineCfg, encryptionMeta, nil
 }
 
-type volumeConfigTransformer func(c configconfig.Config) ([]volumeResource, error)
-
-type volumeResource struct {
-	VolumeID           string
-	Label              string
-	TransformFunc      func(vc *block.VolumeConfig) error
-	MountTransformFunc func(m *block.VolumeMountRequest) error
-}
-
 func (ctrl *VolumeConfigController) createVolume(
-	ctx context.Context, r controller.ReaderWriter, rsrc volumeResource,
+	ctx context.Context, r controller.ReaderWriter, rsrc volumeconfig.VolumeResource,
 	volumeConfigsByID map[string]*block.VolumeConfig,
 	volumeMountRequestsByID map[string]*block.VolumeMountRequest,
 ) error {
@@ -255,7 +230,7 @@ func (ctrl *VolumeConfigController) createVolume(
 			v.TypedSpec().VolumeID = rsrc.VolumeID
 
 			return rsrc.MountTransformFunc(v)
-		}); err != nil && !xerrors.TagIs[skipUserVolumeMountRequest](err) {
+		}); err != nil && !xerrors.TagIs[volumeconfig.SkipUserVolumeMountRequest](err) {
 			return fmt.Errorf("error creating volume mount request: %w", err)
 		}
 	}
