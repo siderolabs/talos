@@ -78,6 +78,12 @@ func writeSecretsBundleToFile(bundle *secrets.Bundle) error {
 		return err
 	}
 
+	if genSecretsCmdFlags.outputFile == stdoutOutput {
+		_, err = os.Stdout.Write(bundleBytes)
+
+		return err
+	}
+
 	if err = validateFileExists(genSecretsCmdFlags.outputFile); err != nil {
 		return err
 	}
@@ -86,7 +92,7 @@ func writeSecretsBundleToFile(bundle *secrets.Bundle) error {
 }
 
 func init() {
-	genSecretsCmd.Flags().StringVarP(&genSecretsCmdFlags.outputFile, "output-file", "o", "secrets.yaml", "path of the output file")
+	genSecretsCmd.Flags().StringVarP(&genSecretsCmdFlags.outputFile, "output-file", "o", "secrets.yaml", `path of the output file, or "-" for stdout`)
 	genSecretsCmd.Flags().StringVar(&genSecretsCmdFlags.talosVersion, "talos-version", "", "the desired Talos version to generate secrets bundle for (backwards compatibility, e.g. v0.8)")
 	genSecretsCmd.Flags().StringVar(&genSecretsCmdFlags.fromControlplaneConfig, "from-controlplane-config", "", "use the provided controlplane Talos machine configuration as input")
 	genSecretsCmd.Flags().StringVarP(&genSecretsCmdFlags.fromKubernetesPki, "from-kubernetes-pki", "p", "", "use a Kubernetes PKI directory (e.g. /etc/kubernetes/pki) as input")
