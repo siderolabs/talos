@@ -14,6 +14,7 @@ import (
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/dual"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/extlinux"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/grub"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/options"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/sdboot"
@@ -92,6 +93,8 @@ func New(bootloader, talosVersion, arch string) (Bootloader, error) {
 		return sdboot.New(), nil
 	case profile.BootLoaderKindDualBoot.String():
 		return dual.New(), nil
+	case "extlinux":
+		return &extlinux.Config{}, nil
 	default:
 		return nil, fmt.Errorf("unsupported bootloader %q", bootloader)
 	}

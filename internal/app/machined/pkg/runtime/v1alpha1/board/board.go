@@ -15,6 +15,7 @@ import (
 	nanopir4s "github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/board/nanopi_r4s"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/board/pine64"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/board/rock64"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/board/rock5"
 	rockpi4 "github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/board/rockpi4"
 	rockpi4c "github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/board/rockpi4c"
 	rpigeneric "github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/board/rpi_generic"
@@ -44,6 +45,10 @@ func newBoard(board string) (b runtime.Board, err error) {
 		b = &rockpi4.Rockpi4{}
 	case constants.BoardRockpi4c:
 		b = &rockpi4c.Rockpi4c{}
+	case constants.BoardRock5B:
+		b = &rock5.Rock5B{}
+	case constants.BoardRock5T:
+		b = &rock5.Rock5T{}
 	case constants.BoardJetsonNano:
 		b = &jetsonnano.JetsonNano{}
 	case constants.BoardNanoPiR4S:

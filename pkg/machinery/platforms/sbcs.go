@@ -216,6 +216,28 @@ func SBCs() []SBC {
 			Documentation: "/talos-guides/install/single-board-computers/rockpi_4c/",
 		},
 		{
+			Name: "rock5b",
+
+			BoardName: "rock5b",
+
+			OverlayName:  "rock5b",
+			OverlayImage: "siderolabs/sbc-rockchip",
+
+			Label:         "Radxa ROCK 5 Model B",
+			Documentation: "/talos-guides/install/single-board-computers/rock5b/",
+		},
+		{
+			Name: "rock5t",
+
+			BoardName: "rock5t",
+
+			OverlayName:  "rock5t",
+			OverlayImage: "siderolabs/sbc-rockchip",
+
+			Label:         "Radxa ROCK 5 Model T",
+			Documentation: "/talos-guides/install/single-board-computers/rock5t/",
+		},
+		{
 			Name: "helios64",
 
 			OverlayName:  "helios64",
