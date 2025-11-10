@@ -177,7 +177,7 @@ func (r *Runtime) CanApplyImmediate(cfg config.Provider) error {
 		newConfig.MachineConfig.MachineControlPlane = currentConfig.MachineConfig.MachineControlPlane
 		newConfig.MachineConfig.MachineKubelet = currentConfig.MachineConfig.MachineKubelet
 		newConfig.MachineConfig.MachineKernel = currentConfig.MachineConfig.MachineKernel
-		newConfig.MachineConfig.MachineRegistries = currentConfig.MachineConfig.MachineRegistries
+		newConfig.MachineConfig.MachineRegistries = currentConfig.MachineConfig.MachineRegistries //nolint:staticcheck // backwards compatibility
 		newConfig.MachineConfig.MachinePods = currentConfig.MachineConfig.MachinePods
 		newConfig.MachineConfig.MachineSeccompProfiles = currentConfig.MachineConfig.MachineSeccompProfiles
 		newConfig.MachineConfig.MachineNodeAnnotations = currentConfig.MachineConfig.MachineNodeAnnotations

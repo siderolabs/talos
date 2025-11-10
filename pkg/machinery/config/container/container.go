@@ -352,6 +352,69 @@ func (container *Container) OOMConfig() config.OOMConfig {
 	return matching[0]
 }
 
+// RegistryMirrorConfigs implements config.Config interface.
+func (container *Container) RegistryMirrorConfigs() map[string]config.RegistryMirrorConfig {
+	var cfg map[string]config.RegistryMirrorConfig
+
+	if container.v1alpha1Config != nil {
+		cfg = container.v1alpha1Config.RegistryMirrorConfigs()
+	}
+
+	docs := findMatchingDocs[config.RegistryMirrorConfigDocument](container.documents)
+
+	if cfg == nil {
+		cfg = make(map[string]config.RegistryMirrorConfig, len(docs))
+	}
+
+	for _, doc := range docs {
+		cfg[doc.Name()] = doc
+	}
+
+	return cfg
+}
+
+// RegistryAuthConfigs implements config.Config interface.
+func (container *Container) RegistryAuthConfigs() map[string]config.RegistryAuthConfig {
+	var cfg map[string]config.RegistryAuthConfig
+
+	if container.v1alpha1Config != nil {
+		cfg = container.v1alpha1Config.RegistryAuthConfigs()
+	}
+
+	docs := findMatchingDocs[config.RegistryAuthConfigDocument](container.documents)
+
+	if cfg == nil {
+		cfg = make(map[string]config.RegistryAuthConfig, len(docs))
+	}
+
+	for _, doc := range docs {
+		cfg[doc.Name()] = doc
+	}
+
+	return cfg
+}
+
+// RegistryTLSConfigs implements config.Config interface.
+func (container *Container) RegistryTLSConfigs() map[string]config.RegistryTLSConfig {
+	var cfg map[string]config.RegistryTLSConfig
+
+	if container.v1alpha1Config != nil {
+		cfg = container.v1alpha1Config.RegistryTLSConfigs()
+	}
+
+	docs := findMatchingDocs[config.RegistryTLSConfigDocument](container.documents)
+
+	if cfg == nil {
+		cfg = make(map[string]config.RegistryTLSConfig, len(docs))
+	}
+
+	for _, doc := range docs {
+		cfg[doc.Name()] = doc
+	}
+
+	return cfg
+}
+
 // Bytes returns source YAML representation (if available) or does default encoding.
 func (container *Container) Bytes() ([]byte, error) {
 	if !container.readonly {

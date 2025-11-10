@@ -17,7 +17,7 @@ import (
 	"github.com/pelletier/go-toml/v2"
 	"github.com/siderolabs/gen/optional"
 
-	"github.com/siderolabs/talos/pkg/machinery/config/config"
+	"github.com/siderolabs/talos/pkg/machinery/resources/cri"
 )
 
 // HostsConfig describes layout of registry configuration in "hosts" format.
@@ -44,59 +44,57 @@ type HostsFile struct {
 // GenerateHosts generates a structure describing contents of the containerd hosts configuration.
 //
 //nolint:gocyclo
-func GenerateHosts(cfg config.Registries, basePath string) (*HostsConfig, error) {
+func GenerateHosts(cfg cri.Registries, basePath string) (*HostsConfig, error) {
 	config := &HostsConfig{
 		Directories: map[string]*HostsDirectory{},
 	}
 
 	configureEndpoint := func(host string, directoryName string, hostToml *HostToml, directory *HostsDirectory) {
-		endpointConfig, ok := cfg.Config()[host]
+		tlsConfig, ok := cfg.TLSs()[host]
 		if !ok {
 			return
 		}
 
-		if endpointConfig.TLS() != nil {
-			if endpointConfig.TLS().InsecureSkipVerify() {
-				hostToml.SkipVerify = true
-			}
+		if tlsConfig.InsecureSkipVerify() {
+			hostToml.SkipVerify = true
+		}
 
-			if endpointConfig.TLS().CA() != nil {
-				relPath := fmt.Sprintf("%s-ca.crt", host)
+		if tlsConfig.CA() != nil {
+			relPath := fmt.Sprintf("%s-ca.crt", host)
 
-				directory.Files = append(directory.Files,
-					&HostsFile{
-						Name:     relPath,
-						Contents: endpointConfig.TLS().CA(),
-						Mode:     0o600,
-					},
-				)
+			directory.Files = append(directory.Files,
+				&HostsFile{
+					Name:     relPath,
+					Contents: tlsConfig.CA(),
+					Mode:     0o600,
+				},
+			)
 
-				hostToml.CACert = filepath.Join(basePath, directoryName, relPath)
-			}
+			hostToml.CACert = filepath.Join(basePath, directoryName, relPath)
+		}
 
-			if endpointConfig.TLS().ClientIdentity() != nil {
-				relPathCrt := fmt.Sprintf("%s-client.crt", host)
-				relPathKey := fmt.Sprintf("%s-client.key", host)
+		if tlsConfig.ClientIdentity() != nil {
+			relPathCrt := fmt.Sprintf("%s-client.crt", host)
+			relPathKey := fmt.Sprintf("%s-client.key", host)
 
-				directory.Files = append(directory.Files,
-					&HostsFile{
-						Name:     relPathCrt,
-						Contents: endpointConfig.TLS().ClientIdentity().Crt,
-						Mode:     0o600,
-					},
-					&HostsFile{
-						Name:     relPathKey,
-						Contents: endpointConfig.TLS().ClientIdentity().Key,
-						Mode:     0o600,
-					},
-				)
+			directory.Files = append(directory.Files,
+				&HostsFile{
+					Name:     relPathCrt,
+					Contents: tlsConfig.ClientIdentity().Crt,
+					Mode:     0o600,
+				},
+				&HostsFile{
+					Name:     relPathKey,
+					Contents: tlsConfig.ClientIdentity().Key,
+					Mode:     0o600,
+				},
+			)
 
-				hostToml.Client = [][2]string{
-					{
-						filepath.Join(basePath, directoryName, relPathCrt),
-						filepath.Join(basePath, directoryName, relPathKey),
-					},
-				}
+			hostToml.Client = [][2]string{
+				{
+					filepath.Join(basePath, directoryName, relPathCrt),
+					filepath.Join(basePath, directoryName, relPathKey),
+				},
 			}
 		}
 	}
@@ -149,7 +147,7 @@ func GenerateHosts(cfg config.Registries, basePath string) (*HostsConfig, error)
 	}
 
 	// process TLS config for non-mirrored endpoints (even if they were already processed)
-	for hostname, registryConfig := range cfg.Config() {
+	for hostname, tlsConfig := range cfg.TLSs() {
 		directoryName := hostDirectory(hostname)
 
 		if _, ok := config.Directories[directoryName]; ok {
@@ -157,7 +155,7 @@ func GenerateHosts(cfg config.Registries, basePath string) (*HostsConfig, error)
 			continue
 		}
 
-		if registryConfig.TLS() == nil || (registryConfig.TLS().CA() == nil && registryConfig.TLS().ClientIdentity() == nil && !registryConfig.TLS().InsecureSkipVerify()) {
+		if tlsConfig == nil || (tlsConfig.CA() == nil && tlsConfig.ClientIdentity() == nil && !tlsConfig.InsecureSkipVerify()) {
 			// skip, no specific config
 			continue
 		}

@@ -164,6 +164,13 @@ Note: this mode does not provide filesystem-level isolation and inherits the EPH
 It should not be used for workloads requiring predictable storage quotas.
 """
 
+    [notes.registry-configuration]
+        title = "CRI Registry Configuration"
+        description = """\
+The CRI registry configuration in v1apha1 legacy machine configuration under `.machine.registries` is now deprecated, but still supported for backwards compatibility.
+New configuration documents `RegistryMirrorConfig`, `RegistryAuthConfig` and `RegistryTLSConfig`  should be used instead.
+"""
+
 [make_deps]
 
     [make_deps.tools]

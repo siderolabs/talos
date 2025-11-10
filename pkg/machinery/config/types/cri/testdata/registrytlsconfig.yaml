@@ -1,0 +1,17 @@
+apiVersion: v1alpha1
+kind: RegistryTLSConfig
+name: my-tls-registry.io
+clientIdentity:
+    cert: |-
+        -----BEGIN CERTIFICATE-----
+        MIID...IDAQAB
+        -----END CERTIFICATE-----
+    key: |-
+        -----BEGIN PRIVATE KEY-----
+        MIIE...AB
+        -----END PRIVATE KEY-----
+ca: |-
+    -----BEGIN CERTIFICATE-----
+    MIID...IDAQAB
+    -----END CERTIFICATE-----
+insecureSkipVerify: true

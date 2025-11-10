@@ -20,6 +20,7 @@ import (
 
 	"github.com/siderolabs/talos/pkg/machinery/config/encoder"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/block"
+	"github.com/siderolabs/talos/pkg/machinery/config/types/cri"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/hardware"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/network"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/runtime"
@@ -139,6 +140,10 @@ var docsCmd = &cobra.Command{
 				{
 					name:    "hardware",
 					fileDoc: hardware.GetFileDoc(),
+				},
+				{
+					name:    "cri",
+					fileDoc: cri.GetFileDoc(),
 				},
 			} {
 				path := filepath.Join(dir, pkg.name)

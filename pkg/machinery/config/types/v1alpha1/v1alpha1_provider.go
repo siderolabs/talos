@@ -5,8 +5,6 @@
 package v1alpha1
 
 import (
-	"crypto/tls"
-	stdx509 "crypto/x509"
 	"fmt"
 	"os"
 	"slices"
@@ -318,11 +316,6 @@ func (m *MachineConfig) CertSANs() []string {
 	return m.MachineCertSANs
 }
 
-// Registries implements the config.Provider interface.
-func (m *MachineConfig) Registries() config.Registries {
-	return &m.MachineRegistries
-}
-
 // SystemDiskEncryption implements the config.Provider interface.
 func (m *MachineConfig) SystemDiskEncryption() config.SystemDiskEncryption {
 	if m.MachineSystemDiskEncryption == nil {
@@ -472,6 +465,59 @@ func (k *KubeletNodeIPConfig) ValidSubnets() []string {
 	return k.KubeletNodeIPValidSubnets
 }
 
+// RegistryMirrorConfigs returns a map of registry mirror configurations.
+func (c *Config) RegistryMirrorConfigs() map[string]config.RegistryMirrorConfig {
+	if c == nil || c.MachineConfig == nil {
+		return nil
+	}
+
+	result := make(map[string]config.RegistryMirrorConfig, len(c.MachineConfig.MachineRegistries.RegistryMirrors))
+
+	for k, v := range c.MachineConfig.MachineRegistries.RegistryMirrors {
+		result[k] = v
+	}
+
+	return result
+}
+
+// RegistryAuthConfigs returns a map of registry authentication configurations.
+func (c *Config) RegistryAuthConfigs() map[string]config.RegistryAuthConfig {
+	if c == nil || c.MachineConfig == nil {
+		return nil
+	}
+
+	result := make(map[string]config.RegistryAuthConfig, len(c.MachineConfig.MachineRegistries.RegistryConfig))
+
+	for k, v := range c.MachineConfig.MachineRegistries.RegistryConfig {
+		if v.RegistryAuth == nil {
+			continue
+		}
+
+		result[k] = v.RegistryAuth
+	}
+
+	return result
+}
+
+// RegistryTLSConfigs returns a map of registry TLS configurations.
+func (c *Config) RegistryTLSConfigs() map[string]config.RegistryTLSConfig {
+	if c == nil || c.MachineConfig == nil {
+		return nil
+	}
+
+	result := make(map[string]config.RegistryTLSConfig, len(c.MachineConfig.MachineRegistries.RegistryConfig))
+
+	for k, v := range c.MachineConfig.MachineRegistries.RegistryConfig {
+		if v.RegistryTLS == nil {
+			continue
+		}
+
+		result[k] = v.RegistryTLS
+	}
+
+	return result
+}
+
 type registryEndpointWrapper struct {
 	endpoint     string
 	overridePath bool
@@ -494,35 +540,6 @@ func (r *RegistriesConfig) Mirrors() map[string]config.RegistryMirrorConfig {
 	}
 
 	return mirrors
-}
-
-// Config implements the Registries interface.
-func (r *RegistriesConfig) Config() map[string]config.RegistryConfig {
-	registries := make(map[string]config.RegistryConfig, len(r.RegistryConfig))
-
-	for k, v := range r.RegistryConfig {
-		registries[k] = v
-	}
-
-	return registries
-}
-
-// TLS implements the Registries interface.
-func (r *RegistryConfig) TLS() config.RegistryTLSConfig {
-	if r.RegistryTLS == nil {
-		return nil
-	}
-
-	return r.RegistryTLS
-}
-
-// Auth implements the Registries interface.
-func (r *RegistryConfig) Auth() config.RegistryAuthConfig {
-	if r.RegistryAuth == nil {
-		return nil
-	}
-
-	return r.RegistryAuth
 }
 
 // Username implements the Registries interface.
@@ -558,31 +575,6 @@ func (r *RegistryTLSConfig) CA() []byte {
 // InsecureSkipVerify implements the Registries interface.
 func (r *RegistryTLSConfig) InsecureSkipVerify() bool {
 	return pointer.SafeDeref(r.TLSInsecureSkipVerify)
-}
-
-// GetTLSConfig prepares TLS configuration for connection.
-func (r *RegistryTLSConfig) GetTLSConfig() (*tls.Config, error) {
-	tlsConfig := &tls.Config{}
-
-	if r.TLSClientIdentity != nil {
-		cert, err := tls.X509KeyPair(r.TLSClientIdentity.Crt, r.TLSClientIdentity.Key)
-		if err != nil {
-			return nil, fmt.Errorf("error parsing client identity: %w", err)
-		}
-
-		tlsConfig.Certificates = []tls.Certificate{cert}
-	}
-
-	if r.CA() != nil {
-		tlsConfig.RootCAs = stdx509.NewCertPool()
-		tlsConfig.RootCAs.AppendCertsFromPEM(r.TLSCA)
-	}
-
-	if r.InsecureSkipVerify() {
-		tlsConfig.InsecureSkipVerify = true
-	}
-
-	return tlsConfig, nil
 }
 
 // DisableSearchDomain implements the config.Provider interface.

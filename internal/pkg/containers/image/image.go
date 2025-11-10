@@ -21,7 +21,7 @@ import (
 	"github.com/siderolabs/go-retry/retry"
 	"github.com/sirupsen/logrus"
 
-	"github.com/siderolabs/talos/pkg/machinery/config/config"
+	"github.com/siderolabs/talos/pkg/machinery/resources/cri"
 )
 
 // Image pull retry settings.
@@ -62,7 +62,7 @@ func WithMaxNotFoundRetries(maxRetries int) PullOption {
 }
 
 // RegistriesBuilder is a function that returns registries configuration.
-type RegistriesBuilder = func(context.Context) (config.Registries, error)
+type RegistriesBuilder = func(context.Context) (cri.Registries, error)
 
 // Pull is a convenience function that wraps the containerd image pull func with
 // retry functionality.

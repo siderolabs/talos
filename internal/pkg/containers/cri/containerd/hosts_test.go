@@ -9,42 +9,42 @@ import (
 	"testing"
 
 	"github.com/siderolabs/crypto/x509"
-	"github.com/siderolabs/go-pointer"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/siderolabs/talos/internal/pkg/containers/cri/containerd"
-	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
+	"github.com/siderolabs/talos/pkg/machinery/resources/cri"
 )
 
 func TestGenerateHostsWithTLS(t *testing.T) {
 	cfg := &mockConfig{
-		mirrors: map[string]*v1alpha1.RegistryMirrorConfig{
+		mirrors: map[string]*cri.RegistryMirrorConfig{
 			"docker.io": {
-				MirrorEndpoints: []string{"https://registry-1.docker.io", "https://registry-2.docker.io"},
+				MirrorEndpoints: []cri.RegistryEndpointConfig{
+					{EndpointEndpoint: "https://registry-1.docker.io"},
+					{EndpointEndpoint: "https://registry-2.docker.io"},
+				},
 			},
 		},
-		config: map[string]*v1alpha1.RegistryConfig{
+		auths: map[string]*cri.RegistryAuthConfig{
 			"some.host:123": {
-				RegistryAuth: &v1alpha1.RegistryAuthConfig{
-					RegistryUsername:      "root",
-					RegistryPassword:      "secret",
-					RegistryAuth:          "auth",
-					RegistryIdentityToken: "token",
-				},
-				RegistryTLS: &v1alpha1.RegistryTLSConfig{
-					TLSInsecureSkipVerify: pointer.To(true),
-					TLSCA:                 []byte("cacert"),
-					TLSClientIdentity: &x509.PEMEncodedCertificateAndKey{
-						Crt: []byte("clientcert"),
-						Key: []byte("clientkey"),
-					},
+				RegistryUsername:      "root",
+				RegistryPassword:      "secret",
+				RegistryAuth:          "auth",
+				RegistryIdentityToken: "token",
+			},
+		},
+		tlses: map[string]*cri.RegistryTLSConfig{
+			"some.host:123": {
+				TLSInsecureSkipVerify: true,
+				TLSCA:                 []byte("cacert"),
+				TLSClientIdentity: &x509.PEMEncodedCertificateAndKey{
+					Crt: []byte("clientcert"),
+					Key: []byte("clientkey"),
 				},
 			},
 			"registry-2.docker.io": {
-				RegistryTLS: &v1alpha1.RegistryTLSConfig{
-					TLSInsecureSkipVerify: pointer.To(true),
-				},
+				TLSInsecureSkipVerify: true,
 			},
 		},
 	}
@@ -102,22 +102,25 @@ func TestGenerateHostsWithTLS(t *testing.T) {
 
 func TestGenerateHostsWithoutTLS(t *testing.T) {
 	cfg := &mockConfig{
-		mirrors: map[string]*v1alpha1.RegistryMirrorConfig{
+		mirrors: map[string]*cri.RegistryMirrorConfig{
 			"docker.io": {
-				MirrorEndpoints: []string{"https://registry-1.docker.io", "https://registry-2.docker.io"},
+				MirrorEndpoints: []cri.RegistryEndpointConfig{
+					{EndpointEndpoint: "https://registry-1.docker.io"},
+					{EndpointEndpoint: "https://registry-2.docker.io"},
+				},
 			},
 			"*": {
-				MirrorEndpoints: []string{"https://my-registry"},
+				MirrorEndpoints: []cri.RegistryEndpointConfig{
+					{EndpointEndpoint: "https://my-registry"},
+				},
 			},
 		},
-		config: map[string]*v1alpha1.RegistryConfig{
+		auths: map[string]*cri.RegistryAuthConfig{
 			"some.host:123": {
-				RegistryAuth: &v1alpha1.RegistryAuthConfig{
-					RegistryUsername:      "root",
-					RegistryPassword:      "secret",
-					RegistryAuth:          "auth",
-					RegistryIdentityToken: "token",
-				},
+				RegistryUsername:      "root",
+				RegistryPassword:      "secret",
+				RegistryAuth:          "auth",
+				RegistryIdentityToken: "token",
 			},
 		},
 	}
@@ -151,12 +154,10 @@ func TestGenerateHostsWithoutTLS(t *testing.T) {
 
 func TestGenerateHostsTLSWildcardWrong(t *testing.T) {
 	cfg := &mockConfig{
-		mirrors: map[string]*v1alpha1.RegistryMirrorConfig{},
-		config: map[string]*v1alpha1.RegistryConfig{
+		mirrors: map[string]*cri.RegistryMirrorConfig{},
+		tlses: map[string]*cri.RegistryTLSConfig{
 			"*": {
-				RegistryTLS: &v1alpha1.RegistryTLSConfig{
-					TLSCA: []byte("allcert"),
-				},
+				TLSCA: []byte("allcert"),
 			},
 		},
 	}
@@ -167,16 +168,17 @@ func TestGenerateHostsTLSWildcardWrong(t *testing.T) {
 
 func TestGenerateHostsTLSWildcard(t *testing.T) {
 	cfg := &mockConfig{
-		mirrors: map[string]*v1alpha1.RegistryMirrorConfig{
+		mirrors: map[string]*cri.RegistryMirrorConfig{
 			"*": {
-				MirrorEndpoints: []string{"https://my-registry1", "https://my-registry2"},
+				MirrorEndpoints: []cri.RegistryEndpointConfig{
+					{EndpointEndpoint: "https://my-registry1"},
+					{EndpointEndpoint: "https://my-registry2"},
+				},
 			},
 		},
-		config: map[string]*v1alpha1.RegistryConfig{
+		tlses: map[string]*cri.RegistryTLSConfig{
 			"my-registry1": {
-				RegistryTLS: &v1alpha1.RegistryTLSConfig{
-					TLSCA: []byte("allcert"),
-				},
+				TLSCA: []byte("allcert"),
 			},
 		},
 	}
@@ -220,27 +222,35 @@ func TestGenerateHostsTLSWildcard(t *testing.T) {
 
 func TestGenerateHostsWithHarbor(t *testing.T) {
 	cfg := &mockConfig{
-		mirrors: map[string]*v1alpha1.RegistryMirrorConfig{
+		mirrors: map[string]*cri.RegistryMirrorConfig{
 			"docker.io": {
-				MirrorEndpoints:    []string{"https://harbor/v2/mirrors/proxy.docker.io"},
-				MirrorOverridePath: pointer.To(true),
+				MirrorEndpoints: []cri.RegistryEndpointConfig{
+					{
+						EndpointEndpoint:     "https://harbor/v2/mirrors/proxy.docker.io",
+						EndpointOverridePath: true,
+					},
+				},
 			},
 			"ghcr.io": {
-				MirrorEndpoints:    []string{"https://harbor/v2/mirrors/proxy.ghcr.io"},
-				MirrorOverridePath: pointer.To(true),
+				MirrorEndpoints: []cri.RegistryEndpointConfig{
+					{
+						EndpointEndpoint:     "https://harbor/v2/mirrors/proxy.ghcr.io",
+						EndpointOverridePath: true,
+					},
+				},
 			},
 		},
-		config: map[string]*v1alpha1.RegistryConfig{
+		auths: map[string]*cri.RegistryAuthConfig{
 			"harbor": {
-				RegistryAuth: &v1alpha1.RegistryAuthConfig{
-					RegistryUsername:      "root",
-					RegistryPassword:      "secret",
-					RegistryAuth:          "auth",
-					RegistryIdentityToken: "token",
-				},
-				RegistryTLS: &v1alpha1.RegistryTLSConfig{
-					TLSInsecureSkipVerify: pointer.To(true),
-				},
+				RegistryUsername:      "root",
+				RegistryPassword:      "secret",
+				RegistryAuth:          "auth",
+				RegistryIdentityToken: "token",
+			},
+		},
+		tlses: map[string]*cri.RegistryTLSConfig{
+			"harbor": {
+				TLSInsecureSkipVerify: true,
 			},
 		},
 	}
@@ -288,15 +298,19 @@ func TestGenerateHostsWithHarbor(t *testing.T) {
 
 func TestGenerateHostsSkipFallback(t *testing.T) {
 	cfg := &mockConfig{
-		mirrors: map[string]*v1alpha1.RegistryMirrorConfig{
+		mirrors: map[string]*cri.RegistryMirrorConfig{
 			"docker.io": {
-				MirrorEndpoints:    []string{"https://harbor/v2/mirrors/proxy.docker.io", "http://127.0.0.1:5001/v2/"},
-				MirrorOverridePath: pointer.To(true),
-				MirrorSkipFallback: pointer.To(true),
+				MirrorEndpoints: []cri.RegistryEndpointConfig{
+					{EndpointEndpoint: "https://harbor/v2/mirrors/proxy.docker.io", EndpointOverridePath: true},
+					{EndpointEndpoint: "http://127.0.0.1:5001/v2/", EndpointOverridePath: true},
+				},
+				MirrorSkipFallback: true,
 			},
 			"ghcr.io": {
-				MirrorEndpoints:    []string{"http://127.0.0.1:5002"},
-				MirrorSkipFallback: pointer.To(true),
+				MirrorEndpoints: []cri.RegistryEndpointConfig{
+					{EndpointEndpoint: "http://127.0.0.1:5002"},
+				},
+				MirrorSkipFallback: true,
 			},
 		},
 	}

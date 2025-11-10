@@ -9,20 +9,20 @@ import (
 	"testing"
 
 	"github.com/siderolabs/crypto/x509"
-	"github.com/siderolabs/go-pointer"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/siderolabs/talos/internal/pkg/containers/cri/containerd"
 	"github.com/siderolabs/talos/pkg/machinery/config/config"
-	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
+	"github.com/siderolabs/talos/pkg/machinery/resources/cri"
 )
 
 //go:embed testdata/cri.toml
 var expectedCRIConfig string
 
 type mockConfig struct {
-	mirrors map[string]*v1alpha1.RegistryMirrorConfig
-	config  map[string]*v1alpha1.RegistryConfig
+	mirrors map[string]*cri.RegistryMirrorConfig
+	auths   map[string]*cri.RegistryAuthConfig
+	tlses   map[string]*cri.RegistryTLSConfig
 }
 
 // Mirrors implements the Registries interface.
@@ -36,15 +36,26 @@ func (c *mockConfig) Mirrors() map[string]config.RegistryMirrorConfig {
 	return mirrors
 }
 
-// Config implements the Registries interface.
-func (c *mockConfig) Config() map[string]config.RegistryConfig {
-	registries := make(map[string]config.RegistryConfig, len(c.config))
+// Auths implements the Registries interface.
+func (c *mockConfig) Auths() map[string]config.RegistryAuthConfig {
+	auths := make(map[string]config.RegistryAuthConfig, len(c.auths))
 
-	for k, v := range c.config {
-		registries[k] = v
+	for k, v := range c.auths {
+		auths[k] = v
 	}
 
-	return registries
+	return auths
+}
+
+// TLSs implements the Registries interface.
+func (c *mockConfig) TLSs() map[string]cri.RegistryTLSConfigExtended {
+	tlses := make(map[string]cri.RegistryTLSConfigExtended, len(c.tlses))
+
+	for k, v := range c.tlses {
+		tlses[k] = v
+	}
+
+	return tlses
 }
 
 type ConfigSuite struct {
@@ -53,32 +64,33 @@ type ConfigSuite struct {
 
 func (suite *ConfigSuite) TestGenerateRegistriesConfig() {
 	cfg := &mockConfig{
-		mirrors: map[string]*v1alpha1.RegistryMirrorConfig{
+		mirrors: map[string]*cri.RegistryMirrorConfig{
 			"docker.io": {
-				MirrorEndpoints: []string{"https://registry-1.docker.io", "https://registry-2.docker.io"},
+				MirrorEndpoints: []cri.RegistryEndpointConfig{
+					{EndpointEndpoint: "https://registry-1.docker.io"},
+					{EndpointEndpoint: "https://registry-2.docker.io"},
+				},
 			},
 		},
-		config: map[string]*v1alpha1.RegistryConfig{
+		auths: map[string]*cri.RegistryAuthConfig{
 			"some.host:123": {
-				RegistryAuth: &v1alpha1.RegistryAuthConfig{
-					RegistryUsername:      "root",
-					RegistryPassword:      "secret",
-					RegistryAuth:          "auth",
-					RegistryIdentityToken: "token",
-				},
-				RegistryTLS: &v1alpha1.RegistryTLSConfig{
-					TLSInsecureSkipVerify: pointer.To(true),
-					TLSCA:                 []byte("cacert"),
-					TLSClientIdentity: &x509.PEMEncodedCertificateAndKey{
-						Crt: []byte("clientcert"),
-						Key: []byte("clientkey"),
-					},
-				},
+				RegistryUsername:      "root",
+				RegistryPassword:      "secret",
+				RegistryAuth:          "auth",
+				RegistryIdentityToken: "token",
 			},
 			"docker.io": {
-				RegistryAuth: &v1alpha1.RegistryAuthConfig{
-					RegistryUsername: "root",
-					RegistryPassword: "topsecret",
+				RegistryUsername: "root",
+				RegistryPassword: "topsecret",
+			},
+		},
+		tlses: map[string]*cri.RegistryTLSConfig{
+			"some.host:123": {
+				TLSInsecureSkipVerify: true,
+				TLSCA:                 []byte("cacert"),
+				TLSClientIdentity: &x509.PEMEncodedCertificateAndKey{
+					Crt: []byte("clientcert"),
+					Key: []byte("clientkey"),
 				},
 			},
 		},

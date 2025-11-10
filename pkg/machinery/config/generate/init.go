@@ -49,10 +49,6 @@ func (in *Input) init() ([]config.Document, error) {
 			InstallWipe:            pointer.To(false),
 			InstallExtraKernelArgs: in.Options.InstallExtraKernelArgs,
 		},
-		MachineRegistries: v1alpha1.RegistriesConfig{
-			RegistryMirrors: in.Options.RegistryMirrors,
-			RegistryConfig:  in.Options.RegistryConfig,
-		},
 		MachineDisks:    in.Options.MachineDisks,
 		MachineSysctls:  in.Options.Sysctls,
 		MachineFeatures: &v1alpha1.FeaturesConfig{},
@@ -226,25 +222,17 @@ func (in *Input) init() ([]config.Document, error) {
 		cluster.ClusterAESCBCEncryptionSecret = in.Options.SecretsBundle.Secrets.AESCBCEncryptionSecret
 	}
 
-	if machine.MachineRegistries.RegistryMirrors == nil {
-		machine.MachineRegistries.RegistryMirrors = map[string]*v1alpha1.RegistryMirrorConfig{}
-	}
-
-	if in.Options.VersionContract.KubernetesAlternateImageRegistries() {
-		if _, ok := machine.MachineRegistries.RegistryMirrors["k8s.gcr.io"]; !ok {
-			machine.MachineRegistries.RegistryMirrors["k8s.gcr.io"] = &v1alpha1.RegistryMirrorConfig{
-				MirrorEndpoints: []string{
-					"https://registry.k8s.io",
-					"https://k8s.gcr.io",
-				},
-			}
-		}
-	}
-
 	v1alpha1Config.MachineConfig = machine
 	v1alpha1Config.ClusterConfig = cluster
 
 	documents := []config.Document{v1alpha1Config}
+
+	registryConfigs, err := in.generateRegistryConfigs(machine)
+	if err != nil {
+		return nil, fmt.Errorf("failed to generate registry configs: %w", err)
+	}
+
+	documents = append(documents, registryConfigs...)
 
 	if in.Options.VersionContract.MultidocNetworkConfigSupported() {
 		hostnameConfig := network.NewHostnameConfigV1Alpha1()

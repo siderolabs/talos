@@ -237,21 +237,9 @@ type MachineConfig struct {
 	//     - name: MachineSysfs usage example.
 	//       value: machineSysfsExample()
 	MachineSysfs map[string]string `yaml:"sysfs,omitempty"`
-	//   description: |
-	//     Used to configure the machine's container image registry mirrors.
+	// docgen:nodoc
 	//
-	//     Automatically generates matching CRI configuration for registry mirrors.
-	//
-	//     The `mirrors` section allows to redirect requests for images to a non-default registry,
-	//     which might be a local registry or a caching mirror.
-	//
-	//     The `config` section provides a way to authenticate to the registry with TLS client
-	//     identity, provide registry CA, or authentication information.
-	//     Authentication information has same meaning with the corresponding field in [`.docker/config.json`](https://docs.docker.com/engine/api/v1.41/#section/Authentication).
-	//
-	//     See also matching configuration for [CRI containerd plugin](https://github.com/containerd/cri/blob/master/docs/registry.md).
-	//   examples:
-	//     - value: machineConfigRegistriesExample()
+	// Deprecated: Use `Registry*Config` instead.
 	MachineRegistries RegistriesConfig `yaml:"registries,omitempty"`
 	// docgen:nodoc
 	//
@@ -968,6 +956,8 @@ type TimeConfig struct {
 }
 
 // RegistriesConfig represents the image pull options.
+//
+// docgen:nodoc
 type RegistriesConfig struct {
 	//   description: |
 	//     Specifies mirror configuration for each registry host namespace.
@@ -981,8 +971,6 @@ type RegistriesConfig struct {
 	//
 	//     Registry name is the first segment of image identifier, with 'docker.io'
 	//     being default one.
-	//   examples:
-	//     - value: machineConfigRegistryMirrorsExample()
 	RegistryMirrors map[string]*RegistryMirrorConfig `yaml:"mirrors,omitempty"`
 	//   description: |
 	//     Specifies TLS & auth configuration for HTTPS image registries.
@@ -994,8 +982,6 @@ type RegistriesConfig struct {
 	//
 	//     TLS configuration can be skipped if registry has trusted
 	//     server certificate.
-	//   examples:
-	//     - value: machineConfigRegistryConfigExample()
 	RegistryConfig map[string]*RegistryConfig `yaml:"config,omitempty"`
 }
 
@@ -2127,6 +2113,8 @@ type Route struct {
 }
 
 // RegistryMirrorConfig represents mirror configuration for a registry.
+//
+// docgen:nodoc
 type RegistryMirrorConfig struct {
 	//   description: |
 	//     List of endpoints (URLs) for registry mirrors to use.
@@ -2145,6 +2133,8 @@ type RegistryMirrorConfig struct {
 }
 
 // RegistryConfig specifies auth & TLS config per registry.
+//
+// docgen:nodoc
 type RegistryConfig struct {
 	//   description: |
 	//     The TLS configuration for the registry.
@@ -2161,6 +2151,8 @@ type RegistryConfig struct {
 }
 
 // RegistryAuthConfig specifies authentication configuration for a registry.
+//
+// docgen:nodoc
 type RegistryAuthConfig struct {
 	//   description: |
 	//     Optional registry authentication.
@@ -2181,6 +2173,8 @@ type RegistryAuthConfig struct {
 }
 
 // RegistryTLSConfig specifies TLS config for HTTPS registries.
+//
+// docgen:nodoc
 type RegistryTLSConfig struct {
 	//   description: |
 	//     Enable mutual TLS authentication with the registry.

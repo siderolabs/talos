@@ -13,10 +13,9 @@ import (
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/siderolabs/gen/optional"
 	"github.com/siderolabs/gen/xslices"
-	"github.com/siderolabs/go-pointer"
 	"go.uber.org/zap"
 
-	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
+	config2 "github.com/siderolabs/talos/pkg/machinery/config/config"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/resources/config"
 	"github.com/siderolabs/talos/pkg/machinery/resources/cri"
@@ -83,30 +82,40 @@ func (ctrl *RegistriesConfigController) Run(ctx context.Context, r controller.Ru
 		if err := safe.WriterModify(ctx, r, cri.NewRegistriesConfig(), func(res *cri.RegistriesConfig) error {
 			spec := res.TypedSpec()
 
-			spec.RegistryConfig = clearInit(spec.RegistryConfig)
+			spec.RegistryAuths = clearInit(spec.RegistryAuths)
 			spec.RegistryMirrors = clearInit(spec.RegistryMirrors)
+			spec.RegistryTLSs = clearInit(spec.RegistryTLSs)
 
-			if cfg != nil && cfg.Config().Machine() != nil {
-				// This is breaking our interface abstraction, but we need to get the underlying types for protobuf
-				// encoding to work correctly.
-				mr := cfg.Provider().RawV1Alpha1().MachineConfig.MachineRegistries
-
-				for k, v := range mr.RegistryConfig {
-					spec.RegistryConfig[k] = makeRegistryConfig(v)
-				}
-
-				for k, v := range mr.RegistryMirrors {
+			if cfg != nil {
+				for k, v := range cfg.Config().RegistryMirrorConfigs() {
 					spec.RegistryMirrors[k] = &cri.RegistryMirrorConfig{
 						MirrorEndpoints: xslices.Map(
-							v.MirrorEndpoints,
-							func(endpoint string) cri.RegistryEndpointConfig {
+							v.Endpoints(),
+							func(endpoint config2.RegistryEndpointConfig) cri.RegistryEndpointConfig {
 								return cri.RegistryEndpointConfig{
-									EndpointEndpoint:     endpoint,
-									EndpointOverridePath: pointer.SafeDeref(v.MirrorOverridePath),
+									EndpointEndpoint:     endpoint.Endpoint(),
+									EndpointOverridePath: endpoint.OverridePath(),
 								}
 							},
 						),
-						MirrorSkipFallback: v.MirrorSkipFallback,
+						MirrorSkipFallback: v.SkipFallback(),
+					}
+				}
+
+				for k, v := range cfg.Config().RegistryAuthConfigs() {
+					spec.RegistryAuths[k] = &cri.RegistryAuthConfig{
+						RegistryUsername:      v.Username(),
+						RegistryPassword:      v.Password(),
+						RegistryAuth:          v.Auth(),
+						RegistryIdentityToken: v.IdentityToken(),
+					}
+				}
+
+				for k, v := range cfg.Config().RegistryTLSConfigs() {
+					spec.RegistryTLSs[k] = &cri.RegistryTLSConfig{
+						TLSCA:                 v.CA(),
+						TLSInsecureSkipVerify: v.InsecureSkipVerify(),
+						TLSClientIdentity:     v.ClientIdentity(),
 					}
 				}
 			}
@@ -145,27 +154,4 @@ func clearInit[M ~map[K]V, K comparable, V any](m M) M {
 	clear(m)
 
 	return m
-}
-
-func makeRegistryConfig(cfg *v1alpha1.RegistryConfig) *cri.RegistryConfig {
-	result := &cri.RegistryConfig{}
-
-	if rtls := cfg.RegistryTLS; rtls != nil {
-		result.RegistryTLS = &cri.RegistryTLSConfig{
-			TLSClientIdentity:     rtls.TLSClientIdentity,
-			TLSCA:                 rtls.TLSCA,
-			TLSInsecureSkipVerify: rtls.TLSInsecureSkipVerify,
-		}
-	}
-
-	if rauth := cfg.RegistryAuth; rauth != nil {
-		result.RegistryAuth = &cri.RegistryAuthConfig{
-			RegistryUsername:      rauth.RegistryUsername,
-			RegistryPassword:      rauth.RegistryPassword,
-			RegistryAuth:          rauth.RegistryAuth,
-			RegistryIdentityToken: rauth.RegistryIdentityToken,
-		}
-	}
-
-	return result
 }

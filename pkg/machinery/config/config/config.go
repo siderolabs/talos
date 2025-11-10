@@ -36,6 +36,11 @@ type Config interface { //nolint:interfacebloat
 	SwapVolumeConfigs() []SwapVolumeConfig
 	ZswapConfig() ZswapConfig
 
+	// - cri:
+	RegistryMirrorConfigs() map[string]RegistryMirrorConfig
+	RegistryAuthConfigs() map[string]RegistryAuthConfig
+	RegistryTLSConfigs() map[string]RegistryTLSConfig
+
 	// - misc:
 	ExtensionServiceConfigs() []ExtensionServiceConfig
 	Runtime() RuntimeConfig

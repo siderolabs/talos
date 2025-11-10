@@ -337,10 +337,10 @@ description: Talos gRPC API reference.
 - [resource/definitions/cri/cri.proto](#resource/definitions/cri/cri.proto)
     - [ImageCacheConfigSpec](#talos.resource.definitions.cri.ImageCacheConfigSpec)
     - [RegistriesConfigSpec](#talos.resource.definitions.cri.RegistriesConfigSpec)
-    - [RegistriesConfigSpec.RegistryConfigEntry](#talos.resource.definitions.cri.RegistriesConfigSpec.RegistryConfigEntry)
+    - [RegistriesConfigSpec.RegistryAuthsEntry](#talos.resource.definitions.cri.RegistriesConfigSpec.RegistryAuthsEntry)
     - [RegistriesConfigSpec.RegistryMirrorsEntry](#talos.resource.definitions.cri.RegistriesConfigSpec.RegistryMirrorsEntry)
+    - [RegistriesConfigSpec.RegistryTlSsEntry](#talos.resource.definitions.cri.RegistriesConfigSpec.RegistryTlSsEntry)
     - [RegistryAuthConfig](#talos.resource.definitions.cri.RegistryAuthConfig)
-    - [RegistryConfig](#talos.resource.definitions.cri.RegistryConfig)
     - [RegistryEndpointConfig](#talos.resource.definitions.cri.RegistryEndpointConfig)
     - [RegistryMirrorConfig](#talos.resource.definitions.cri.RegistryMirrorConfig)
     - [RegistryTLSConfig](#talos.resource.definitions.cri.RegistryTLSConfig)
@@ -6227,23 +6227,24 @@ RegistriesConfigSpec describes status of rendered secrets.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | registry_mirrors | [RegistriesConfigSpec.RegistryMirrorsEntry](#talos.resource.definitions.cri.RegistriesConfigSpec.RegistryMirrorsEntry) | repeated |  |
-| registry_config | [RegistriesConfigSpec.RegistryConfigEntry](#talos.resource.definitions.cri.RegistriesConfigSpec.RegistryConfigEntry) | repeated |  |
+| registry_auths | [RegistriesConfigSpec.RegistryAuthsEntry](#talos.resource.definitions.cri.RegistriesConfigSpec.RegistryAuthsEntry) | repeated |  |
+| registry_tl_ss | [RegistriesConfigSpec.RegistryTlSsEntry](#talos.resource.definitions.cri.RegistriesConfigSpec.RegistryTlSsEntry) | repeated |  |
 
 
 
 
 
 
-<a name="talos.resource.definitions.cri.RegistriesConfigSpec.RegistryConfigEntry"></a>
+<a name="talos.resource.definitions.cri.RegistriesConfigSpec.RegistryAuthsEntry"></a>
 
-### RegistriesConfigSpec.RegistryConfigEntry
+### RegistriesConfigSpec.RegistryAuthsEntry
 
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | key | [string](#string) |  |  |
-| value | [RegistryConfig](#talos.resource.definitions.cri.RegistryConfig) |  |  |
+| value | [RegistryAuthConfig](#talos.resource.definitions.cri.RegistryAuthConfig) |  |  |
 
 
 
@@ -6266,6 +6267,22 @@ RegistriesConfigSpec describes status of rendered secrets.
 
 
 
+<a name="talos.resource.definitions.cri.RegistriesConfigSpec.RegistryTlSsEntry"></a>
+
+### RegistriesConfigSpec.RegistryTlSsEntry
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| key | [string](#string) |  |  |
+| value | [RegistryTLSConfig](#talos.resource.definitions.cri.RegistryTLSConfig) |  |  |
+
+
+
+
+
+
 <a name="talos.resource.definitions.cri.RegistryAuthConfig"></a>
 
 ### RegistryAuthConfig
@@ -6278,22 +6295,6 @@ RegistryAuthConfig specifies authentication configuration for a registry.
 | registry_password | [string](#string) |  |  |
 | registry_auth | [string](#string) |  |  |
 | registry_identity_token | [string](#string) |  |  |
-
-
-
-
-
-
-<a name="talos.resource.definitions.cri.RegistryConfig"></a>
-
-### RegistryConfig
-RegistryConfig specifies auth & TLS config per registry.
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| registry_tls | [RegistryTLSConfig](#talos.resource.definitions.cri.RegistryTLSConfig) |  |  |
-| registry_auth | [RegistryAuthConfig](#talos.resource.definitions.cri.RegistryAuthConfig) |  |  |
 
 
 

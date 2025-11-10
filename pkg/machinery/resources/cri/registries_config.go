@@ -5,13 +5,16 @@
 package cri
 
 import (
+	"crypto/tls"
+	stdx509 "crypto/x509"
+	"fmt"
+
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/meta"
 	"github.com/cosi-project/runtime/pkg/resource/protobuf"
 	"github.com/cosi-project/runtime/pkg/resource/typed"
 	"github.com/siderolabs/crypto/x509"
 	"github.com/siderolabs/gen/xslices"
-	"github.com/siderolabs/go-pointer"
 
 	config2 "github.com/siderolabs/talos/pkg/machinery/config/config"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
@@ -32,7 +35,8 @@ type RegistriesConfig = typed.Resource[RegistriesConfigSpec, RegistriesConfigExt
 //gotagsrewrite:gen
 type RegistriesConfigSpec struct {
 	RegistryMirrors map[string]*RegistryMirrorConfig `yaml:"mirrors,omitempty" protobuf:"1"`
-	RegistryConfig  map[string]*RegistryConfig       `yaml:"config,omitempty" protobuf:"2"`
+	RegistryAuths   map[string]*RegistryAuthConfig   `yaml:"auths,omitempty" protobuf:"2"`
+	RegistryTLSs    map[string]*RegistryTLSConfig    `yaml:"tls,omitempty" protobuf:"3"`
 }
 
 // Mirrors implements the Registries interface.
@@ -46,15 +50,26 @@ func (r RegistriesConfigSpec) Mirrors() map[string]config2.RegistryMirrorConfig 
 	return mirrors
 }
 
-// Config implements the Registries interface.
-func (r RegistriesConfigSpec) Config() map[string]config2.RegistryConfig {
-	registries := make(map[string]config2.RegistryConfig, len(r.RegistryConfig))
+// Auths implements the Registries interface.
+func (r RegistriesConfigSpec) Auths() map[string]config2.RegistryAuthConfig {
+	auths := make(map[string]config2.RegistryAuthConfig, len(r.RegistryAuths))
 
-	for k, v := range r.RegistryConfig {
-		registries[k] = v
+	for k, v := range r.RegistryAuths {
+		auths[k] = v
 	}
 
-	return registries
+	return auths
+}
+
+// TLSs implements the Registries interface.
+func (r RegistriesConfigSpec) TLSs() map[string]RegistryTLSConfigExtended {
+	tlss := make(map[string]RegistryTLSConfigExtended, len(r.RegistryTLSs))
+
+	for k, v := range r.RegistryTLSs {
+		tlss[k] = v
+	}
+
+	return tlss
 }
 
 // RegistryMirrorConfig represents mirror configuration for a registry.
@@ -62,12 +77,12 @@ func (r RegistriesConfigSpec) Config() map[string]config2.RegistryConfig {
 //gotagsrewrite:gen
 type RegistryMirrorConfig struct {
 	MirrorEndpoints    []RegistryEndpointConfig `yaml:"endpoints" protobuf:"1"`
-	MirrorSkipFallback *bool                    `yaml:"skipFallback,omitempty" protobuf:"3"`
+	MirrorSkipFallback bool                     `yaml:"skipFallback,omitempty" protobuf:"3"`
 }
 
 // SkipFallback implements the Registries interface.
 func (r *RegistryMirrorConfig) SkipFallback() bool {
-	return pointer.SafeDeref(r.MirrorSkipFallback)
+	return r.MirrorSkipFallback
 }
 
 // Endpoints implements the Registries interface.
@@ -95,32 +110,6 @@ func (r RegistryEndpointConfig) OverridePath() bool {
 	return r.EndpointOverridePath
 }
 
-// RegistryConfig specifies auth & TLS config per registry.
-//
-//gotagsrewrite:gen
-type RegistryConfig struct {
-	RegistryTLS  *RegistryTLSConfig  `yaml:"tls,omitempty" protobuf:"1"`
-	RegistryAuth *RegistryAuthConfig `yaml:"auth,omitempty" protobuf:"2"`
-}
-
-// TLS implements the Registries interface.
-func (c *RegistryConfig) TLS() config2.RegistryTLSConfig {
-	if c.RegistryTLS == nil {
-		return nil
-	}
-
-	return (*v1alpha1.RegistryTLSConfig)(c.RegistryTLS)
-}
-
-// Auth implements the Registries interface.
-func (c *RegistryConfig) Auth() config2.RegistryAuthConfig {
-	if c.RegistryAuth == nil {
-		return nil
-	}
-
-	return (*v1alpha1.RegistryAuthConfig)(c.RegistryAuth)
-}
-
 // RegistryAuthConfig specifies authentication configuration for a registry.
 //
 //gotagsrewrite:gen
@@ -131,13 +120,73 @@ type RegistryAuthConfig struct {
 	RegistryIdentityToken string `yaml:"identityToken,omitempty" protobuf:"4"`
 }
 
+// Username implements the Registries interface.
+func (r *RegistryAuthConfig) Username() string {
+	return r.RegistryUsername
+}
+
+// Password implements the Registries interface.
+func (r *RegistryAuthConfig) Password() string {
+	return r.RegistryPassword
+}
+
+// Auth implements the Registries interface.
+func (r *RegistryAuthConfig) Auth() string {
+	return r.RegistryAuth
+}
+
+// IdentityToken implements the Registries interface.
+func (r *RegistryAuthConfig) IdentityToken() string {
+	return r.RegistryIdentityToken
+}
+
 // RegistryTLSConfig specifies TLS config for HTTPS registries.
 //
 //gotagsrewrite:gen
 type RegistryTLSConfig struct {
 	TLSClientIdentity     *x509.PEMEncodedCertificateAndKey `yaml:"clientIdentity,omitempty" protobuf:"1"`
 	TLSCA                 v1alpha1.Base64Bytes              `yaml:"ca,omitempty" protobuf:"2"`
-	TLSInsecureSkipVerify *bool                             `yaml:"insecureSkipVerify,omitempty" protobuf:"3"`
+	TLSInsecureSkipVerify bool                              `yaml:"insecureSkipVerify,omitempty" protobuf:"3"`
+}
+
+// ClientIdentity implements the Registries interface.
+func (r *RegistryTLSConfig) ClientIdentity() *x509.PEMEncodedCertificateAndKey {
+	return r.TLSClientIdentity
+}
+
+// CA implements the Registries interface.
+func (r *RegistryTLSConfig) CA() []byte {
+	return r.TLSCA
+}
+
+// InsecureSkipVerify implements the Registries interface.
+func (r *RegistryTLSConfig) InsecureSkipVerify() bool {
+	return r.TLSInsecureSkipVerify
+}
+
+// GetTLSConfig prepares TLS configuration for connection.
+func (r *RegistryTLSConfig) GetTLSConfig() (*tls.Config, error) {
+	tlsConfig := &tls.Config{}
+
+	if r.TLSClientIdentity != nil {
+		cert, err := tls.X509KeyPair(r.TLSClientIdentity.Crt, r.TLSClientIdentity.Key)
+		if err != nil {
+			return nil, fmt.Errorf("error parsing client identity: %w", err)
+		}
+
+		tlsConfig.Certificates = []tls.Certificate{cert}
+	}
+
+	if r.CA() != nil {
+		tlsConfig.RootCAs = stdx509.NewCertPool()
+		tlsConfig.RootCAs.AppendCertsFromPEM(r.TLSCA)
+	}
+
+	if r.InsecureSkipVerify() {
+		tlsConfig.InsecureSkipVerify = true
+	}
+
+	return tlsConfig, nil
 }
 
 // NewRegistriesConfig initializes a RegistriesConfig resource.

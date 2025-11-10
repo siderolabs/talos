@@ -20,39 +20,34 @@ func (o RegistriesConfigSpec) DeepCopy() RegistriesConfigSpec {
 					cp_RegistryMirrors_v2.MirrorEndpoints = make([]RegistryEndpointConfig, len(v2.MirrorEndpoints))
 					copy(cp_RegistryMirrors_v2.MirrorEndpoints, v2.MirrorEndpoints)
 				}
-				if v2.MirrorSkipFallback != nil {
-					cp_RegistryMirrors_v2.MirrorSkipFallback = new(bool)
-					*cp_RegistryMirrors_v2.MirrorSkipFallback = *v2.MirrorSkipFallback
-				}
 			}
 			cp.RegistryMirrors[k2] = cp_RegistryMirrors_v2
 		}
 	}
-	if o.RegistryConfig != nil {
-		cp.RegistryConfig = make(map[string]*RegistryConfig, len(o.RegistryConfig))
-		for k2, v2 := range o.RegistryConfig {
-			var cp_RegistryConfig_v2 *RegistryConfig
+	if o.RegistryAuths != nil {
+		cp.RegistryAuths = make(map[string]*RegistryAuthConfig, len(o.RegistryAuths))
+		for k2, v2 := range o.RegistryAuths {
+			var cp_RegistryAuths_v2 *RegistryAuthConfig
 			if v2 != nil {
-				cp_RegistryConfig_v2 = new(RegistryConfig)
-				*cp_RegistryConfig_v2 = *v2
-				if v2.RegistryTLS != nil {
-					cp_RegistryConfig_v2.RegistryTLS = new(RegistryTLSConfig)
-					*cp_RegistryConfig_v2.RegistryTLS = *v2.RegistryTLS
-					if v2.RegistryTLS.TLSClientIdentity != nil {
-						cp_RegistryConfig_v2.RegistryTLS.TLSClientIdentity = v2.RegistryTLS.TLSClientIdentity.DeepCopy()
-					}
-					cp_RegistryConfig_v2.RegistryTLS.TLSCA = v2.RegistryTLS.TLSCA.DeepCopy()
-					if v2.RegistryTLS.TLSInsecureSkipVerify != nil {
-						cp_RegistryConfig_v2.RegistryTLS.TLSInsecureSkipVerify = new(bool)
-						*cp_RegistryConfig_v2.RegistryTLS.TLSInsecureSkipVerify = *v2.RegistryTLS.TLSInsecureSkipVerify
-					}
-				}
-				if v2.RegistryAuth != nil {
-					cp_RegistryConfig_v2.RegistryAuth = new(RegistryAuthConfig)
-					*cp_RegistryConfig_v2.RegistryAuth = *v2.RegistryAuth
-				}
+				cp_RegistryAuths_v2 = new(RegistryAuthConfig)
+				*cp_RegistryAuths_v2 = *v2
 			}
-			cp.RegistryConfig[k2] = cp_RegistryConfig_v2
+			cp.RegistryAuths[k2] = cp_RegistryAuths_v2
+		}
+	}
+	if o.RegistryTLSs != nil {
+		cp.RegistryTLSs = make(map[string]*RegistryTLSConfig, len(o.RegistryTLSs))
+		for k2, v2 := range o.RegistryTLSs {
+			var cp_RegistryTLSs_v2 *RegistryTLSConfig
+			if v2 != nil {
+				cp_RegistryTLSs_v2 = new(RegistryTLSConfig)
+				*cp_RegistryTLSs_v2 = *v2
+				if v2.TLSClientIdentity != nil {
+					cp_RegistryTLSs_v2.TLSClientIdentity = v2.TLSClientIdentity.DeepCopy()
+				}
+				cp_RegistryTLSs_v2.TLSCA = v2.TLSCA.DeepCopy()
+			}
+			cp.RegistryTLSs[k2] = cp_RegistryTLSs_v2
 		}
 	}
 	return cp

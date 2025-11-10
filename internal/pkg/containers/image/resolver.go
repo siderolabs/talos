@@ -19,10 +19,11 @@ import (
 
 	"github.com/siderolabs/talos/pkg/httpdefaults"
 	"github.com/siderolabs/talos/pkg/machinery/config/config"
+	"github.com/siderolabs/talos/pkg/machinery/resources/cri"
 )
 
 // NewResolver builds registry resolver based on Talos configuration.
-func NewResolver(reg config.Registries) remotes.Resolver {
+func NewResolver(reg cri.Registries) remotes.Resolver {
 	return docker.NewResolver(docker.ResolverOptions{
 		Hosts: RegistryHosts(reg),
 	})
@@ -31,7 +32,7 @@ func NewResolver(reg config.Registries) remotes.Resolver {
 // RegistryHosts returns host configuration per registry.
 //
 //nolint:gocyclo
-func RegistryHosts(reg config.Registries) docker.RegistryHosts {
+func RegistryHosts(reg cri.Registries) docker.RegistryHosts {
 	return func(host string) ([]docker.RegistryHost, error) {
 		var registries []docker.RegistryHost
 
@@ -49,14 +50,15 @@ func RegistryHosts(reg config.Registries) docker.RegistryHosts {
 			transport := newTransport()
 			client := &http.Client{Transport: transport}
 
-			registryConfig := reg.Config()[u.Host]
+			registryTLSConfig := reg.TLSs()[u.Host]
+			registryAuthConfig := reg.Auths()[u.Host]
 
-			if u.Scheme != "https" && registryConfig != nil && registryConfig.TLS() != nil {
+			if u.Scheme != "https" && registryTLSConfig != nil {
 				return nil, fmt.Errorf("TLS config specified for non-HTTPS registry: %q", u.Host)
 			}
 
-			if registryConfig != nil && registryConfig.TLS() != nil {
-				transport.TLSClientConfig, err = registryConfig.TLS().GetTLSConfig()
+			if registryTLSConfig != nil {
+				transport.TLSClientConfig, err = registryTLSConfig.GetTLSConfig()
 				if err != nil {
 					return nil, fmt.Errorf("error preparing TLS config for %q: %w", u.Host, err)
 				}
@@ -86,11 +88,11 @@ func RegistryHosts(reg config.Registries) docker.RegistryHosts {
 				Authorizer: docker.NewDockerAuthorizer(
 					docker.WithAuthClient(client),
 					docker.WithAuthCreds(func(host string) (string, string, error) {
-						if registryConfig == nil {
+						if registryAuthConfig == nil {
 							return "", "", nil
 						}
 
-						return PrepareAuth(registryConfig.Auth(), uu.Host, host)
+						return PrepareAuth(registryAuthConfig, uu.Host, host)
 					})),
 				Host:         uu.Host,
 				Scheme:       uu.Scheme,
@@ -130,7 +132,7 @@ func RegistryEndpointEntriesFromConfig(host string, reg config.RegistryMirrorCon
 }
 
 // RegistryEndpoints returns registry endpoints per host using reg.
-func RegistryEndpoints(reg config.Registries, host string) (endpoints []EndpointEntry, err error) {
+func RegistryEndpoints(reg cri.Registries, host string) (endpoints []EndpointEntry, err error) {
 	// direct hit by host
 	if hostConfig, ok := reg.Mirrors()[host]; ok {
 		return RegistryEndpointEntriesFromConfig(host, hostConfig)

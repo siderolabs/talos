@@ -49,64 +49,6 @@ func machineConfigExample() any {
 	}
 }
 
-func machineConfigRegistriesExample() *RegistriesConfig {
-	return &RegistriesConfig{
-		RegistryMirrors: map[string]*RegistryMirrorConfig{
-			"docker.io": {
-				MirrorEndpoints: []string{"https://registry.local"},
-			},
-		},
-		RegistryConfig: map[string]*RegistryConfig{
-			"registry.local": {
-				RegistryTLS: &RegistryTLSConfig{
-					TLSClientIdentity: pemEncodedCertificateExample(),
-				},
-				RegistryAuth: &RegistryAuthConfig{
-					RegistryUsername: "username",
-					RegistryPassword: "password",
-				},
-			},
-		},
-	}
-}
-
-func machineConfigRegistryMirrorsExample() map[string]*RegistryMirrorConfig {
-	return map[string]*RegistryMirrorConfig{
-		"ghcr.io": {
-			MirrorEndpoints: []string{"https://registry.insecure", "https://ghcr.io/v2/"},
-		},
-	}
-}
-
-func machineConfigRegistryConfigExample() map[string]*RegistryConfig {
-	return map[string]*RegistryConfig{
-		"registry.insecure": {
-			RegistryTLS: &RegistryTLSConfig{
-				TLSInsecureSkipVerify: pointer.To(true),
-			},
-		},
-	}
-}
-
-func machineConfigRegistryTLSConfigExample1() *RegistryTLSConfig {
-	return &RegistryTLSConfig{
-		TLSClientIdentity: pemEncodedCertificateExample(),
-	}
-}
-
-func machineConfigRegistryTLSConfigExample2() *RegistryTLSConfig {
-	return &RegistryTLSConfig{
-		TLSInsecureSkipVerify: pointer.To(true),
-	}
-}
-
-func machineConfigRegistryAuthConfigExample() *RegistryAuthConfig {
-	return &RegistryAuthConfig{
-		RegistryUsername: "username",
-		RegistryPassword: "password",
-	}
-}
-
 func pemEncodedCertificateExample() *x509.PEMEncodedCertificateAndKey {
 	return &x509.PEMEncodedCertificateAndKey{
 		Crt: []byte("--- EXAMPLE CERTIFICATE ---"),

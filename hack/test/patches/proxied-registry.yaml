@@ -1,7 +1,6 @@
-machine:
-  registries:
-    mirrors:
-      registry.dev.siderolabs.io:
-        skipFallback: true
-        endpoints:
-        - https://172.20.1.1:8004
+apiVersion: v1alpha1
+kind: RegistryMirrorConfig
+name: registry.dev.siderolabs.io
+skipFallback: true
+endpoints:
+  - url: https://172.20.1.1:8004

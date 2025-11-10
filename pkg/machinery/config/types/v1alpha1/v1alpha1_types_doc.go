@@ -194,13 +194,7 @@ func (MachineConfig) Doc() *encoder.Doc {
 				Description: "Used to configure the machine's sysfs.",
 				Comments:    [3]string{"" /* encoder.HeadComment */, "Used to configure the machine's sysfs." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
-			{
-				Name:        "registries",
-				Type:        "RegistriesConfig",
-				Note:        "",
-				Description: "Used to configure the machine's container image registry mirrors.\n\nAutomatically generates matching CRI configuration for registry mirrors.\n\nThe `mirrors` section allows to redirect requests for images to a non-default registry,\nwhich might be a local registry or a caching mirror.\n\nThe `config` section provides a way to authenticate to the registry with TLS client\nidentity, provide registry CA, or authentication information.\nAuthentication information has same meaning with the corresponding field in [`.docker/config.json`](https://docs.docker.com/engine/api/v1.41/#section/Authentication).\n\nSee also matching configuration for [CRI containerd plugin](https://github.com/containerd/cri/blob/master/docs/registry.md).",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Used to configure the machine's container image registry mirrors." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
+			{},
 			{},
 			{
 				Name:        "features",
@@ -285,7 +279,6 @@ func (MachineConfig) Doc() *encoder.Doc {
 	doc.Fields[13].AddExample("Example configuration for cloudflare ntp server.", machineTimeExample())
 	doc.Fields[14].AddExample("MachineSysctls usage example.", machineSysctlsExample())
 	doc.Fields[15].AddExample("MachineSysfs usage example.", machineSysfsExample())
-	doc.Fields[16].AddExample("", machineConfigRegistriesExample())
 	doc.Fields[18].AddExample("", machineFeaturesExample())
 	doc.Fields[19].AddExample("", machineUdevExample())
 	doc.Fields[20].AddExample("", machineLoggingExample())
@@ -1183,43 +1176,6 @@ func (TimeConfig) Doc() *encoder.Doc {
 	return doc
 }
 
-func (RegistriesConfig) Doc() *encoder.Doc {
-	doc := &encoder.Doc{
-		Type:        "RegistriesConfig",
-		Comments:    [3]string{"" /* encoder.HeadComment */, "RegistriesConfig represents the image pull options." /* encoder.LineComment */, "" /* encoder.FootComment */},
-		Description: "RegistriesConfig represents the image pull options.",
-		AppearsIn: []encoder.Appearance{
-			{
-				TypeName:  "MachineConfig",
-				FieldName: "registries",
-			},
-		},
-		Fields: []encoder.Doc{
-			{
-				Name:        "mirrors",
-				Type:        "map[string]RegistryMirrorConfig",
-				Note:        "",
-				Description: "Specifies mirror configuration for each registry host namespace.\nThis setting allows to configure local pull-through caching registires,\nair-gapped installations, etc.\n\nFor example, when pulling an image with the reference `example.com:123/image:v1`,\nthe `example.com:123` key will be used to lookup the mirror configuration.\n\nOptionally the `*` key can be used to configure a fallback mirror.\n\nRegistry name is the first segment of image identifier, with 'docker.io'\nbeing default one.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Specifies mirror configuration for each registry host namespace." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-			{
-				Name:        "config",
-				Type:        "map[string]RegistryConfig",
-				Note:        "",
-				Description: "Specifies TLS & auth configuration for HTTPS image registries.\nMutual TLS can be enabled with 'clientIdentity' option.\n\nThe full hostname and port (if not using a default port 443)\nshould be used as the key.\nThe fallback key `*` can't be used for TLS configuration.\n\nTLS configuration can be skipped if registry has trusted\nserver certificate.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Specifies TLS & auth configuration for HTTPS image registries." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-		},
-	}
-
-	doc.AddExample("", machineConfigRegistriesExample())
-
-	doc.Fields[0].AddExample("", machineConfigRegistryMirrorsExample())
-	doc.Fields[1].AddExample("", machineConfigRegistryConfigExample())
-
-	return doc
-}
-
 func (CoreDNS) Doc() *encoder.Doc {
 	doc := &encoder.Doc{
 		Type:        "CoreDNS",
@@ -2012,178 +1968,6 @@ func (MachineFile) Doc() *encoder.Doc {
 	return doc
 }
 
-func (RegistryMirrorConfig) Doc() *encoder.Doc {
-	doc := &encoder.Doc{
-		Type:        "RegistryMirrorConfig",
-		Comments:    [3]string{"" /* encoder.HeadComment */, "RegistryMirrorConfig represents mirror configuration for a registry." /* encoder.LineComment */, "" /* encoder.FootComment */},
-		Description: "RegistryMirrorConfig represents mirror configuration for a registry.",
-		AppearsIn: []encoder.Appearance{
-			{
-				TypeName:  "RegistriesConfig",
-				FieldName: "mirrors",
-			},
-		},
-		Fields: []encoder.Doc{
-			{
-				Name:        "endpoints",
-				Type:        "[]string",
-				Note:        "",
-				Description: "List of endpoints (URLs) for registry mirrors to use.\nEndpoint configures HTTP/HTTPS access mode, host name,\nport and path (if path is not set, it defaults to `/v2`).",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "List of endpoints (URLs) for registry mirrors to use." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-			{
-				Name:        "overridePath",
-				Type:        "bool",
-				Note:        "",
-				Description: "Use the exact path specified for the endpoint (don't append /v2/).\nThis setting is often required for setting up multiple mirrors\non a single instance of a registry.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Use the exact path specified for the endpoint (don't append /v2/)." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-			{
-				Name:        "skipFallback",
-				Type:        "bool",
-				Note:        "",
-				Description: "Skip fallback to the upstream endpoint, for example the mirror configuration\nfor `docker.io` will not fallback to `registry-1.docker.io`.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Skip fallback to the upstream endpoint, for example the mirror configuration" /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-		},
-	}
-
-	doc.AddExample("", machineConfigRegistryMirrorsExample())
-
-	return doc
-}
-
-func (RegistryConfig) Doc() *encoder.Doc {
-	doc := &encoder.Doc{
-		Type:        "RegistryConfig",
-		Comments:    [3]string{"" /* encoder.HeadComment */, "RegistryConfig specifies auth & TLS config per registry." /* encoder.LineComment */, "" /* encoder.FootComment */},
-		Description: "RegistryConfig specifies auth & TLS config per registry.",
-		AppearsIn: []encoder.Appearance{
-			{
-				TypeName:  "RegistriesConfig",
-				FieldName: "config",
-			},
-		},
-		Fields: []encoder.Doc{
-			{
-				Name:        "tls",
-				Type:        "RegistryTLSConfig",
-				Note:        "",
-				Description: "The TLS configuration for the registry.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "The TLS configuration for the registry." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-			{
-				Name:        "auth",
-				Type:        "RegistryAuthConfig",
-				Note:        "",
-				Description: "The auth configuration for this registry.\nNote: changes to the registry auth will not be picked up by the CRI containerd plugin without a reboot.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "The auth configuration for this registry." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-		},
-	}
-
-	doc.AddExample("", machineConfigRegistryConfigExample())
-
-	doc.Fields[0].AddExample("", machineConfigRegistryTLSConfigExample1())
-	doc.Fields[0].AddExample("", machineConfigRegistryTLSConfigExample2())
-	doc.Fields[1].AddExample("", machineConfigRegistryAuthConfigExample())
-
-	return doc
-}
-
-func (RegistryAuthConfig) Doc() *encoder.Doc {
-	doc := &encoder.Doc{
-		Type:        "RegistryAuthConfig",
-		Comments:    [3]string{"" /* encoder.HeadComment */, "RegistryAuthConfig specifies authentication configuration for a registry." /* encoder.LineComment */, "" /* encoder.FootComment */},
-		Description: "RegistryAuthConfig specifies authentication configuration for a registry.",
-		AppearsIn: []encoder.Appearance{
-			{
-				TypeName:  "RegistryConfig",
-				FieldName: "auth",
-			},
-		},
-		Fields: []encoder.Doc{
-			{
-				Name:        "username",
-				Type:        "string",
-				Note:        "",
-				Description: "Optional registry authentication.\nThe meaning of each field is the same with the corresponding field in [`.docker/config.json`](https://docs.docker.com/engine/api/v1.41/#section/Authentication).",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Optional registry authentication." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-			{
-				Name:        "password",
-				Type:        "string",
-				Note:        "",
-				Description: "Optional registry authentication.\nThe meaning of each field is the same with the corresponding field in [`.docker/config.json`](https://docs.docker.com/engine/api/v1.41/#section/Authentication).",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Optional registry authentication." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-			{
-				Name:        "auth",
-				Type:        "string",
-				Note:        "",
-				Description: "Optional registry authentication.\nThe meaning of each field is the same with the corresponding field in [`.docker/config.json`](https://docs.docker.com/engine/api/v1.41/#section/Authentication).",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Optional registry authentication." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-			{
-				Name:        "identityToken",
-				Type:        "string",
-				Note:        "",
-				Description: "Optional registry authentication.\nThe meaning of each field is the same with the corresponding field in [`.docker/config.json`](https://docs.docker.com/engine/api/v1.41/#section/Authentication).",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Optional registry authentication." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-		},
-	}
-
-	doc.AddExample("", machineConfigRegistryAuthConfigExample())
-
-	return doc
-}
-
-func (RegistryTLSConfig) Doc() *encoder.Doc {
-	doc := &encoder.Doc{
-		Type:        "RegistryTLSConfig",
-		Comments:    [3]string{"" /* encoder.HeadComment */, "RegistryTLSConfig specifies TLS config for HTTPS registries." /* encoder.LineComment */, "" /* encoder.FootComment */},
-		Description: "RegistryTLSConfig specifies TLS config for HTTPS registries.",
-		AppearsIn: []encoder.Appearance{
-			{
-				TypeName:  "RegistryConfig",
-				FieldName: "tls",
-			},
-		},
-		Fields: []encoder.Doc{
-			{
-				Name:        "clientIdentity",
-				Type:        "PEMEncodedCertificateAndKey",
-				Note:        "",
-				Description: "Enable mutual TLS authentication with the registry.\nClient certificate and key should be base64-encoded.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Enable mutual TLS authentication with the registry." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-			{
-				Name:        "ca",
-				Type:        "Base64Bytes",
-				Note:        "",
-				Description: "CA registry certificate to add the list of trusted certificates.\nCertificate should be base64-encoded.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "CA registry certificate to add the list of trusted certificates." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-			{
-				Name:        "insecureSkipVerify",
-				Type:        "bool",
-				Note:        "",
-				Description: "Skip TLS server certificate verification (not recommended).",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Skip TLS server certificate verification (not recommended)." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-		},
-	}
-
-	doc.AddExample("", machineConfigRegistryTLSConfigExample1())
-
-	doc.AddExample("", machineConfigRegistryTLSConfigExample2())
-
-	doc.Fields[0].AddExample("", pemEncodedCertificateExample())
-
-	return doc
-}
-
 func (FeaturesConfig) Doc() *encoder.Doc {
 	doc := &encoder.Doc{
 		Type:        "FeaturesConfig",
@@ -2869,7 +2653,6 @@ func GetFileDoc() *encoder.FileDoc {
 			InstallConfig{}.Doc(),
 			InstallDiskSelector{}.Doc(),
 			TimeConfig{}.Doc(),
-			RegistriesConfig{}.Doc(),
 			CoreDNS{}.Doc(),
 			Endpoint{}.Doc(),
 			ControlPlaneConfig{}.Doc(),
@@ -2887,10 +2670,6 @@ func GetFileDoc() *encoder.FileDoc {
 			AdminKubeconfigConfig{}.Doc(),
 			ResourcesConfig{}.Doc(),
 			MachineFile{}.Doc(),
-			RegistryMirrorConfig{}.Doc(),
-			RegistryConfig{}.Doc(),
-			RegistryAuthConfig{}.Doc(),
-			RegistryTLSConfig{}.Doc(),
 			FeaturesConfig{}.Doc(),
 			KubePrism{}.Doc(),
 			ImageCacheConfig{}.Doc(),

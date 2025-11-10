@@ -6,21 +6,20 @@ package image_test
 
 import (
 	"context"
-	"errors"
 	"net/http"
 	"testing"
 
-	"github.com/siderolabs/go-pointer"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/siderolabs/talos/internal/pkg/containers/image"
 	"github.com/siderolabs/talos/pkg/machinery/config/config"
-	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
+	"github.com/siderolabs/talos/pkg/machinery/resources/cri"
 )
 
 type mockConfig struct {
-	mirrors map[string]*v1alpha1.RegistryMirrorConfig
-	config  map[string]*v1alpha1.RegistryConfig
+	mirrors map[string]*cri.RegistryMirrorConfig
+	auths   map[string]*cri.RegistryAuthConfig
+	tlses   map[string]*cri.RegistryTLSConfig
 }
 
 func (c *mockConfig) Mirrors() map[string]config.RegistryMirrorConfig {
@@ -33,18 +32,24 @@ func (c *mockConfig) Mirrors() map[string]config.RegistryMirrorConfig {
 	return mirrors
 }
 
-func (c *mockConfig) Config() map[string]config.RegistryConfig {
-	registries := make(map[string]config.RegistryConfig, len(c.config))
+func (c *mockConfig) Auths() map[string]config.RegistryAuthConfig {
+	auths := make(map[string]config.RegistryAuthConfig, len(c.auths))
 
-	for k, v := range c.config {
+	for k, v := range c.auths {
+		auths[k] = v
+	}
+
+	return auths
+}
+
+func (c *mockConfig) TLSs() map[string]cri.RegistryTLSConfigExtended {
+	registries := make(map[string]cri.RegistryTLSConfigExtended, len(c.tlses))
+
+	for k, v := range c.tlses {
 		registries[k] = v
 	}
 
 	return registries
-}
-
-func (c *mockConfig) ExtraFiles() ([]config.File, error) {
-	return nil, errors.New("not implemented")
 }
 
 type ResolverSuite struct {
@@ -89,10 +94,13 @@ func (suite *ResolverSuite) TestRegistryEndpoints() {
 		{
 			name: "config with mirror and no fallback",
 			config: &mockConfig{
-				mirrors: map[string]*v1alpha1.RegistryMirrorConfig{
+				mirrors: map[string]*cri.RegistryMirrorConfig{
 					"docker.io": {
-						MirrorEndpoints:    []string{"http://127.0.0.1:5000", "https://some.host"},
-						MirrorSkipFallback: pointer.To(true),
+						MirrorEndpoints: []cri.RegistryEndpointConfig{
+							{EndpointEndpoint: "http://127.0.0.1:5000"},
+							{EndpointEndpoint: "https://some.host"},
+						},
+						MirrorSkipFallback: true,
 					},
 				},
 			},
@@ -122,9 +130,12 @@ func (suite *ResolverSuite) TestRegistryEndpoints() {
 		{
 			name: "config with mirror and fallback",
 			config: &mockConfig{
-				mirrors: map[string]*v1alpha1.RegistryMirrorConfig{
+				mirrors: map[string]*cri.RegistryMirrorConfig{
 					"ghcr.io": {
-						MirrorEndpoints: []string{"http://127.0.0.1:5000", "https://some.host"},
+						MirrorEndpoints: []cri.RegistryEndpointConfig{
+							{EndpointEndpoint: "http://127.0.0.1:5000"},
+							{EndpointEndpoint: "https://some.host"},
+						},
 					},
 				},
 			},
@@ -157,14 +168,19 @@ func (suite *ResolverSuite) TestRegistryEndpoints() {
 		{
 			name: "config with catch-all and no fallback",
 			config: &mockConfig{
-				mirrors: map[string]*v1alpha1.RegistryMirrorConfig{
+				mirrors: map[string]*cri.RegistryMirrorConfig{
 					"docker.io": {
-						MirrorEndpoints:    []string{"http://127.0.0.1:5000", "https://some.host"},
-						MirrorSkipFallback: pointer.To(true),
+						MirrorEndpoints: []cri.RegistryEndpointConfig{
+							{EndpointEndpoint: "http://127.0.0.1:5000"},
+							{EndpointEndpoint: "https://some.host"},
+						},
+						MirrorSkipFallback: true,
 					},
 					"*": {
-						MirrorEndpoints:    []string{"http://127.0.0.1:5001"},
-						MirrorSkipFallback: pointer.To(true),
+						MirrorEndpoints: []cri.RegistryEndpointConfig{
+							{EndpointEndpoint: "http://127.0.0.1:5001"},
+						},
+						MirrorSkipFallback: true,
 					},
 				},
 			},
@@ -194,9 +210,11 @@ func (suite *ResolverSuite) TestRegistryEndpoints() {
 		{
 			name: "config with catch-all and fallback",
 			config: &mockConfig{
-				mirrors: map[string]*v1alpha1.RegistryMirrorConfig{
+				mirrors: map[string]*cri.RegistryMirrorConfig{
 					"*": {
-						MirrorEndpoints: []string{"http://127.0.0.1:5001"},
+						MirrorEndpoints: []cri.RegistryEndpointConfig{
+							{EndpointEndpoint: "http://127.0.0.1:5001"},
+						},
 					},
 				},
 			},
@@ -229,15 +247,23 @@ func (suite *ResolverSuite) TestRegistryEndpoints() {
 		{
 			name: "config with override path",
 			config: &mockConfig{
-				mirrors: map[string]*v1alpha1.RegistryMirrorConfig{
+				mirrors: map[string]*cri.RegistryMirrorConfig{
 					"docker.io": {
-						MirrorEndpoints:    []string{"https://harbor/v2/registry.docker.io"},
-						MirrorOverridePath: pointer.To(true),
-						MirrorSkipFallback: pointer.To(true),
+						MirrorEndpoints: []cri.RegistryEndpointConfig{
+							{
+								EndpointEndpoint:     "https://harbor/v2/registry.docker.io",
+								EndpointOverridePath: true,
+							},
+						},
+						MirrorSkipFallback: true,
 					},
 					"ghcr.io": {
-						MirrorEndpoints:    []string{"https://harbor/v2/registry.ghcr.io"},
-						MirrorOverridePath: pointer.To(true),
+						MirrorEndpoints: []cri.RegistryEndpointConfig{
+							{
+								EndpointEndpoint:     "https://harbor/v2/registry.ghcr.io",
+								EndpointOverridePath: true,
+							},
+						},
 					},
 				},
 			},
@@ -294,7 +320,7 @@ func (suite *ResolverSuite) TestPrepareAuth() {
 	suite.Assert().Equal("", user)
 	suite.Assert().Equal("", pass)
 
-	user, pass, err = image.PrepareAuth(&v1alpha1.RegistryAuthConfig{
+	user, pass, err = image.PrepareAuth(&cri.RegistryAuthConfig{
 		RegistryUsername: "root",
 		RegistryPassword: "secret",
 	}, "docker.io", "not.docker.io")
@@ -302,7 +328,7 @@ func (suite *ResolverSuite) TestPrepareAuth() {
 	suite.Assert().Equal("", user)
 	suite.Assert().Equal("", pass)
 
-	user, pass, err = image.PrepareAuth(&v1alpha1.RegistryAuthConfig{
+	user, pass, err = image.PrepareAuth(&cri.RegistryAuthConfig{
 		RegistryUsername: "root",
 		RegistryPassword: "secret",
 	}, "docker.io", "docker.io")
@@ -310,21 +336,21 @@ func (suite *ResolverSuite) TestPrepareAuth() {
 	suite.Assert().Equal("root", user)
 	suite.Assert().Equal("secret", pass)
 
-	user, pass, err = image.PrepareAuth(&v1alpha1.RegistryAuthConfig{
+	user, pass, err = image.PrepareAuth(&cri.RegistryAuthConfig{
 		RegistryIdentityToken: "xyz",
 	}, "docker.io", "docker.io")
 	suite.Assert().NoError(err)
 	suite.Assert().Equal("", user)
 	suite.Assert().Equal("xyz", pass)
 
-	user, pass, err = image.PrepareAuth(&v1alpha1.RegistryAuthConfig{
+	user, pass, err = image.PrepareAuth(&cri.RegistryAuthConfig{
 		RegistryAuth: "dXNlcjE6c2VjcmV0MQ==",
 	}, "docker.io", "docker.io")
 	suite.Assert().NoError(err)
 	suite.Assert().Equal("user1", user)
 	suite.Assert().Equal("secret1", pass)
 
-	_, _, err = image.PrepareAuth(&v1alpha1.RegistryAuthConfig{}, "docker.io", "docker.io")
+	_, _, err = image.PrepareAuth(&cri.RegistryAuthConfig{}, "docker.io", "docker.io")
 	suite.Assert().EqualError(err, "invalid auth config for \"docker.io\"")
 }
 
@@ -338,15 +364,22 @@ func (suite *ResolverSuite) TestRegistryHosts() {
 	suite.Assert().Nil(registryHosts[0].Client.Transport.(*http.Transport).TLSClientConfig.Certificates)
 
 	cfg := &mockConfig{
-		mirrors: map[string]*v1alpha1.RegistryMirrorConfig{
+		mirrors: map[string]*cri.RegistryMirrorConfig{
 			"docker.io": {
-				MirrorEndpoints:    []string{"http://127.0.0.1:5000/docker.io", "https://some.host"},
-				MirrorSkipFallback: pointer.To(true),
+				MirrorEndpoints: []cri.RegistryEndpointConfig{
+					{EndpointEndpoint: "http://127.0.0.1:5000/docker.io"},
+					{EndpointEndpoint: "https://some.host"},
+				},
+				MirrorSkipFallback: true,
 			},
 			"ghcr.io": {
-				MirrorEndpoints:    []string{"https://harbor/v2/registry.ghcr.io"},
-				MirrorOverridePath: pointer.To(true),
-				MirrorSkipFallback: pointer.To(true),
+				MirrorEndpoints: []cri.RegistryEndpointConfig{
+					{
+						EndpointEndpoint:     "https://harbor/v2/registry.ghcr.io",
+						EndpointOverridePath: true,
+					},
+				},
+				MirrorSkipFallback: true,
 			},
 		},
 	}
@@ -371,22 +404,21 @@ func (suite *ResolverSuite) TestRegistryHosts() {
 	suite.Assert().Equal("/v2/registry.ghcr.io", registryHosts[0].Path)
 
 	cfg = &mockConfig{
-		mirrors: map[string]*v1alpha1.RegistryMirrorConfig{
+		mirrors: map[string]*cri.RegistryMirrorConfig{
 			"docker.io": {
-				MirrorEndpoints:    []string{"https://some.host:123"},
-				MirrorSkipFallback: pointer.To(true),
+				MirrorEndpoints:    []cri.RegistryEndpointConfig{{EndpointEndpoint: "https://some.host:123"}},
+				MirrorSkipFallback: true,
 			},
 		},
-		config: map[string]*v1alpha1.RegistryConfig{
+		auths: map[string]*cri.RegistryAuthConfig{
 			"some.host:123": {
-				RegistryTLS: &v1alpha1.RegistryTLSConfig{
-					TLSCA: []byte(caCertMock),
-					// ClientIdentity: &x509.PEMEncodedCertificateAndKey{},
-				},
-				RegistryAuth: &v1alpha1.RegistryAuthConfig{
-					RegistryUsername: "root",
-					RegistryPassword: "secret",
-				},
+				RegistryUsername: "root",
+				RegistryPassword: "secret",
+			},
+		},
+		tlses: map[string]*cri.RegistryTLSConfig{
+			"some.host:123": {
+				TLSCA: []byte(caCertMock),
 			},
 		},
 	}

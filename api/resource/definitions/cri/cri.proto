@@ -19,7 +19,8 @@ message ImageCacheConfigSpec {
 // RegistriesConfigSpec describes status of rendered secrets.
 message RegistriesConfigSpec {
   map<string, RegistryMirrorConfig> registry_mirrors = 1;
-  map<string, RegistryConfig> registry_config = 2;
+  map<string, RegistryAuthConfig> registry_auths = 2;
+  map<string, RegistryTLSConfig> registry_tl_ss = 3;
 }
 
 // RegistryAuthConfig specifies authentication configuration for a registry.
@@ -28,12 +29,6 @@ message RegistryAuthConfig {
   string registry_password = 2;
   string registry_auth = 3;
   string registry_identity_token = 4;
-}
-
-// RegistryConfig specifies auth & TLS config per registry.
-message RegistryConfig {
-  RegistryTLSConfig registry_tls = 1;
-  RegistryAuthConfig registry_auth = 2;
 }
 
 // RegistryEndpointConfig represents a single registry endpoint.

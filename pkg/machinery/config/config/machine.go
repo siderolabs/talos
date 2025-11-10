@@ -5,7 +5,6 @@
 package config
 
 import (
-	"crypto/tls"
 	"net/url"
 	"os"
 	"time"
@@ -37,7 +36,6 @@ type MachineConfig interface {
 	Kubelet() Kubelet
 	Sysctls() map[string]string
 	Sysfs() map[string]string
-	Registries() Registries
 	SystemDiskEncryption() SystemDiskEncryption
 	Features() Features
 	Udev() UdevConfig
@@ -352,48 +350,6 @@ type Kubelet interface {
 // KubeletNodeIP defines the way node IPs are selected for the kubelet.
 type KubeletNodeIP interface {
 	ValidSubnets() []string
-}
-
-// Registries defines the configuration for image fetching.
-type Registries interface {
-	// Mirror config by registry host (first part of image reference).
-	Mirrors() map[string]RegistryMirrorConfig
-	// Registry config (auth, TLS) by hostname.
-	Config() map[string]RegistryConfig
-}
-
-// RegistryMirrorConfig represents mirror configuration for a registry.
-type RegistryMirrorConfig interface {
-	Endpoints() []RegistryEndpointConfig
-	SkipFallback() bool
-}
-
-// RegistryEndpointConfig represents a single registry endpoint.
-type RegistryEndpointConfig interface {
-	Endpoint() string
-	OverridePath() bool
-}
-
-// RegistryConfig specifies auth & TLS config per registry.
-type RegistryConfig interface {
-	TLS() RegistryTLSConfig
-	Auth() RegistryAuthConfig
-}
-
-// RegistryAuthConfig specifies authentication configuration for a registry.
-type RegistryAuthConfig interface {
-	Username() string
-	Password() string
-	Auth() string
-	IdentityToken() string
-}
-
-// RegistryTLSConfig specifies TLS config for HTTPS registries.
-type RegistryTLSConfig interface {
-	ClientIdentity() *x509.PEMEncodedCertificateAndKey
-	CA() []byte
-	InsecureSkipVerify() bool
-	GetTLSConfig() (*tls.Config, error)
 }
 
 // EncryptionKey defines settings for the partition encryption key handling.

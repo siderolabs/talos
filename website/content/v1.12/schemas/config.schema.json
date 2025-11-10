@@ -610,6 +610,217 @@
       ],
       "description": "ZswapConfig is a zswap (compressed memory) configuration document.\\nWhen zswap is enabled, Linux kernel compresses pages that would otherwise be swapped out to disk.\\nThe compressed pages are stored in a memory pool, which is used to avoid writing to disk\\nwhen the system is under memory pressure.\\n"
     },
+    "cri.RegistryAuthConfigV1Alpha1": {
+      "properties": {
+        "apiVersion": {
+          "enum": [
+            "v1alpha1"
+          ],
+          "title": "apiVersion",
+          "description": "apiVersion is the API version of the resource.\n",
+          "markdownDescription": "apiVersion is the API version of the resource.",
+          "x-intellij-html-description": "\u003cp\u003eapiVersion is the API version of the resource.\u003c/p\u003e\n"
+        },
+        "kind": {
+          "enum": [
+            "RegistryAuthConfig"
+          ],
+          "title": "kind",
+          "description": "kind is the kind of the resource.\n",
+          "markdownDescription": "kind is the kind of the resource.",
+          "x-intellij-html-description": "\u003cp\u003ekind is the kind of the resource.\u003c/p\u003e\n"
+        },
+        "name": {
+          "type": "string",
+          "title": "name",
+          "description": "Registry endpoint to apply the authentication configuration to.\n\nRegistry endpoint is the hostname part of the endpoint URL,\ne.g. ‘my-mirror.local:5000’ for ‘https://my-mirror.local:5000/v2/’.\n\nThe authentication configuration will apply to all image pulls for this\nregistry endpoint, by Talos or any Kubernetes workloads.\n",
+          "markdownDescription": "Registry endpoint to apply the authentication configuration to.\n\nRegistry endpoint is the hostname part of the endpoint URL,\ne.g. 'my-mirror.local:5000' for 'https://my-mirror.local:5000/v2/'.\n\nThe authentication configuration will apply to all image pulls for this\nregistry endpoint, by Talos or any Kubernetes workloads.",
+          "x-intellij-html-description": "\u003cp\u003eRegistry endpoint to apply the authentication configuration to.\u003c/p\u003e\n\n\u003cp\u003eRegistry endpoint is the hostname part of the endpoint URL,\ne.g. \u0026lsquo;my-mirror.local:5000\u0026rsquo; for \u0026lsquo;\u003ca href=\"https://my-mirror.local:5000/v2/'\" target=\"_blank\"\u003ehttps://my-mirror.local:5000/v2/\u0026rsquo;\u003c/a\u003e.\u003c/p\u003e\n\n\u003cp\u003eThe authentication configuration will apply to all image pulls for this\nregistry endpoint, by Talos or any Kubernetes workloads.\u003c/p\u003e\n"
+        },
+        "username": {
+          "type": "string",
+          "title": "username",
+          "description": "Username/password authentication.\n",
+          "markdownDescription": "Username/password authentication.",
+          "x-intellij-html-description": "\u003cp\u003eUsername/password authentication.\u003c/p\u003e\n"
+        },
+        "password": {
+          "type": "string",
+          "title": "password",
+          "description": "Username/password authentication.\n",
+          "markdownDescription": "Username/password authentication.",
+          "x-intellij-html-description": "\u003cp\u003eUsername/password authentication.\u003c/p\u003e\n"
+        },
+        "auth": {
+          "type": "string",
+          "title": "auth",
+          "description": "Raw authentication string.\n",
+          "markdownDescription": "Raw authentication string.",
+          "x-intellij-html-description": "\u003cp\u003eRaw authentication string.\u003c/p\u003e\n"
+        },
+        "identityToken": {
+          "type": "string",
+          "title": "identityToken",
+          "description": "Identity token authentication.\n",
+          "markdownDescription": "Identity token authentication.",
+          "x-intellij-html-description": "\u003cp\u003eIdentity token authentication.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "apiVersion",
+        "kind",
+        "name"
+      ],
+      "description": "RegistryAuthConfig configures authentication for a registry endpoint."
+    },
+    "cri.RegistryEndpoint": {
+      "properties": {
+        "url": {
+          "type": "string",
+          "pattern": "^(http|https)://",
+          "title": "url",
+          "description": "The URL of the registry mirror endpoint.\n",
+          "markdownDescription": "The URL of the registry mirror endpoint.",
+          "x-intellij-html-description": "\u003cp\u003eThe URL of the registry mirror endpoint.\u003c/p\u003e\n"
+        },
+        "overridePath": {
+          "type": "boolean",
+          "title": "overridePath",
+          "description": "Use endpoint path as supplied, without adding /v2/ suffix.\n",
+          "markdownDescription": "Use endpoint path as supplied, without adding `/v2/` suffix.",
+          "x-intellij-html-description": "\u003cp\u003eUse endpoint path as supplied, without adding \u003ccode\u003e/v2/\u003c/code\u003e suffix.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "url"
+      ],
+      "description": "RegistryEndpoint defines a registry mirror endpoint."
+    },
+    "cri.RegistryMirrorConfigV1Alpha1": {
+      "properties": {
+        "apiVersion": {
+          "enum": [
+            "v1alpha1"
+          ],
+          "title": "apiVersion",
+          "description": "apiVersion is the API version of the resource.\n",
+          "markdownDescription": "apiVersion is the API version of the resource.",
+          "x-intellij-html-description": "\u003cp\u003eapiVersion is the API version of the resource.\u003c/p\u003e\n"
+        },
+        "kind": {
+          "enum": [
+            "RegistryMirrorConfig"
+          ],
+          "title": "kind",
+          "description": "kind is the kind of the resource.\n",
+          "markdownDescription": "kind is the kind of the resource.",
+          "x-intellij-html-description": "\u003cp\u003ekind is the kind of the resource.\u003c/p\u003e\n"
+        },
+        "name": {
+          "type": "string",
+          "title": "name",
+          "description": "Registry name to apply the mirror configuration to.\n\nRegistry name is the first segment of image identifier, with ‘docker.io’\nbeing default one.\n\nA special name ‘*’ can be used to define mirror configuration\nthat applies to all registries.\n",
+          "markdownDescription": "Registry name to apply the mirror configuration to.\n\nRegistry name is the first segment of image identifier, with 'docker.io'\nbeing default one.\n\nA special name '*' can be used to define mirror configuration\nthat applies to all registries.",
+          "x-intellij-html-description": "\u003cp\u003eRegistry name to apply the mirror configuration to.\u003c/p\u003e\n\n\u003cp\u003eRegistry name is the first segment of image identifier, with \u0026lsquo;docker.io\u0026rsquo;\nbeing default one.\u003c/p\u003e\n\n\u003cp\u003eA special name \u0026lsquo;*\u0026rsquo; can be used to define mirror configuration\nthat applies to all registries.\u003c/p\u003e\n"
+        },
+        "endpoints": {
+          "items": {
+            "$ref": "#/$defs/cri.RegistryEndpoint"
+          },
+          "type": "array",
+          "title": "endpoints",
+          "description": "List of mirror endpoints for the registry.\nMirrors will be used in the order they are specified,\nfalling back to the default registry is skipFallback is not set to true.\n",
+          "markdownDescription": "List of mirror endpoints for the registry.\nMirrors will be used in the order they are specified,\nfalling back to the default registry is `skipFallback` is not set to true.",
+          "x-intellij-html-description": "\u003cp\u003eList of mirror endpoints for the registry.\nMirrors will be used in the order they are specified,\nfalling back to the default registry is \u003ccode\u003eskipFallback\u003c/code\u003e is not set to true.\u003c/p\u003e\n"
+        },
+        "skipFallback": {
+          "type": "boolean",
+          "title": "skipFallback",
+          "description": "Skip fallback to the original registry if none of the mirrors are available\nor contain the requested image.\n",
+          "markdownDescription": "Skip fallback to the original registry if none of the mirrors are available\nor contain the requested image.",
+          "x-intellij-html-description": "\u003cp\u003eSkip fallback to the original registry if none of the mirrors are available\nor contain the requested image.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "apiVersion",
+        "kind",
+        "name"
+      ],
+      "description": "RegistryMirrorConfig configures an image registry mirror."
+    },
+    "cri.RegistryTLSConfigV1Alpha1": {
+      "properties": {
+        "apiVersion": {
+          "enum": [
+            "v1alpha1"
+          ],
+          "title": "apiVersion",
+          "description": "apiVersion is the API version of the resource.\n",
+          "markdownDescription": "apiVersion is the API version of the resource.",
+          "x-intellij-html-description": "\u003cp\u003eapiVersion is the API version of the resource.\u003c/p\u003e\n"
+        },
+        "kind": {
+          "enum": [
+            "RegistryTLSConfig"
+          ],
+          "title": "kind",
+          "description": "kind is the kind of the resource.\n",
+          "markdownDescription": "kind is the kind of the resource.",
+          "x-intellij-html-description": "\u003cp\u003ekind is the kind of the resource.\u003c/p\u003e\n"
+        },
+        "name": {
+          "type": "string",
+          "title": "name",
+          "description": "Registry endpoint to apply the TLS configuration to.\n\nRegistry endpoint is the hostname part of the endpoint URL,\ne.g. ‘my-mirror.local:5000’ for ‘https://my-mirror.local:5000/v2/’.\n\nThe TLS configuration makes sense only for HTTPS endpoints.\nThe TLS configuration will apply to all image pulls for this\nregistry endpoint, by Talos or any Kubernetes workloads.\n",
+          "markdownDescription": "Registry endpoint to apply the TLS configuration to.\n\nRegistry endpoint is the hostname part of the endpoint URL,\ne.g. 'my-mirror.local:5000' for 'https://my-mirror.local:5000/v2/'.\n\nThe TLS configuration makes sense only for HTTPS endpoints.\nThe TLS configuration will apply to all image pulls for this\nregistry endpoint, by Talos or any Kubernetes workloads.",
+          "x-intellij-html-description": "\u003cp\u003eRegistry endpoint to apply the TLS configuration to.\u003c/p\u003e\n\n\u003cp\u003eRegistry endpoint is the hostname part of the endpoint URL,\ne.g. \u0026lsquo;my-mirror.local:5000\u0026rsquo; for \u0026lsquo;\u003ca href=\"https://my-mirror.local:5000/v2/'\" target=\"_blank\"\u003ehttps://my-mirror.local:5000/v2/\u0026rsquo;\u003c/a\u003e.\u003c/p\u003e\n\n\u003cp\u003eThe TLS configuration makes sense only for HTTPS endpoints.\nThe TLS configuration will apply to all image pulls for this\nregistry endpoint, by Talos or any Kubernetes workloads.\u003c/p\u003e\n"
+        },
+        "clientIdentity": {
+          "properties": {
+            "crt": {
+              "type": "string"
+            },
+            "key": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false,
+          "type": "object",
+          "title": "clientIdentity",
+          "description": "Enable mutual TLS authentication with the registry.\nClient certificate and key should be PEM-encoded.\n",
+          "markdownDescription": "Enable mutual TLS authentication with the registry.\nClient certificate and key should be PEM-encoded.",
+          "x-intellij-html-description": "\u003cp\u003eEnable mutual TLS authentication with the registry.\nClient certificate and key should be PEM-encoded.\u003c/p\u003e\n"
+        },
+        "ca": {
+          "type": "string",
+          "title": "ca",
+          "description": "CA registry certificate to add the list of trusted certificates.\nCertificate should be PEM-encoded.\n",
+          "markdownDescription": "CA registry certificate to add the list of trusted certificates.\nCertificate should be PEM-encoded.",
+          "x-intellij-html-description": "\u003cp\u003eCA registry certificate to add the list of trusted certificates.\nCertificate should be PEM-encoded.\u003c/p\u003e\n"
+        },
+        "insecureSkipVerify": {
+          "type": "boolean",
+          "title": "insecureSkipVerify",
+          "description": "Skip TLS server certificate verification (not recommended).\n",
+          "markdownDescription": "Skip TLS server certificate verification (not recommended).",
+          "x-intellij-html-description": "\u003cp\u003eSkip TLS server certificate verification (not recommended).\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "apiVersion",
+        "kind",
+        "name"
+      ],
+      "description": "RegistryTLSConfig configures TLS for a registry endpoint."
+    },
     "extensions.ConfigFile": {
       "properties": {
         "content": {
@@ -4231,13 +4442,6 @@
           "markdownDescription": "Used to configure the machine's sysfs.",
           "x-intellij-html-description": "\u003cp\u003eUsed to configure the machine\u0026rsquo;s sysfs.\u003c/p\u003e\n"
         },
-        "registries": {
-          "$ref": "#/$defs/v1alpha1.RegistriesConfig",
-          "title": "registries",
-          "description": "Used to configure the machine’s container image registry mirrors.\n\nAutomatically generates matching CRI configuration for registry mirrors.\n\nThe mirrors section allows to redirect requests for images to a non-default registry,\nwhich might be a local registry or a caching mirror.\n\nThe config section provides a way to authenticate to the registry with TLS client\nidentity, provide registry CA, or authentication information.\nAuthentication information has same meaning with the corresponding field in .docker/config.json.\n\nSee also matching configuration for CRI containerd plugin.\n",
-          "markdownDescription": "Used to configure the machine's container image registry mirrors.\n\nAutomatically generates matching CRI configuration for registry mirrors.\n\nThe `mirrors` section allows to redirect requests for images to a non-default registry,\nwhich might be a local registry or a caching mirror.\n\nThe `config` section provides a way to authenticate to the registry with TLS client\nidentity, provide registry CA, or authentication information.\nAuthentication information has same meaning with the corresponding field in [`.docker/config.json`](https://docs.docker.com/engine/api/v1.41/#section/Authentication).\n\nSee also matching configuration for [CRI containerd plugin](https://github.com/containerd/cri/blob/master/docs/registry.md).",
-          "x-intellij-html-description": "\u003cp\u003eUsed to configure the machine\u0026rsquo;s container image registry mirrors.\u003c/p\u003e\n\n\u003cp\u003eAutomatically generates matching CRI configuration for registry mirrors.\u003c/p\u003e\n\n\u003cp\u003eThe \u003ccode\u003emirrors\u003c/code\u003e section allows to redirect requests for images to a non-default registry,\nwhich might be a local registry or a caching mirror.\u003c/p\u003e\n\n\u003cp\u003eThe \u003ccode\u003econfig\u003c/code\u003e section provides a way to authenticate to the registry with TLS client\nidentity, provide registry CA, or authentication information.\nAuthentication information has same meaning with the corresponding field in \u003ca href=\"https://docs.docker.com/engine/api/v1.41/#section/Authentication\" target=\"_blank\"\u003e\u003ccode\u003e.docker/config.json\u003c/code\u003e\u003c/a\u003e.\u003c/p\u003e\n\n\u003cp\u003eSee also matching configuration for \u003ca href=\"https://github.com/containerd/cri/blob/master/docs/registry.md\" target=\"_blank\"\u003eCRI containerd plugin\u003c/a\u003e.\u003c/p\u003e\n"
-        },
         "features": {
           "$ref": "#/$defs/v1alpha1.FeaturesConfig",
           "title": "features",
@@ -4563,93 +4767,6 @@
       "type": "object",
       "description": "ProxyConfig represents the kube proxy configuration options."
     },
-    "v1alpha1.RegistriesConfig": {
-      "properties": {
-        "mirrors": {
-          "patternProperties": {
-            ".*": {
-              "$ref": "#/$defs/v1alpha1.RegistryMirrorConfig"
-            }
-          },
-          "type": "object",
-          "title": "mirrors",
-          "description": "Specifies mirror configuration for each registry host namespace.\nThis setting allows to configure local pull-through caching registires,\nair-gapped installations, etc.\n\nFor example, when pulling an image with the reference example.com:123/image:v1,\nthe example.com:123 key will be used to lookup the mirror configuration.\n\nOptionally the * key can be used to configure a fallback mirror.\n\nRegistry name is the first segment of image identifier, with ‘docker.io’\nbeing default one.\n",
-          "markdownDescription": "Specifies mirror configuration for each registry host namespace.\nThis setting allows to configure local pull-through caching registires,\nair-gapped installations, etc.\n\nFor example, when pulling an image with the reference `example.com:123/image:v1`,\nthe `example.com:123` key will be used to lookup the mirror configuration.\n\nOptionally the `*` key can be used to configure a fallback mirror.\n\nRegistry name is the first segment of image identifier, with 'docker.io'\nbeing default one.",
-          "x-intellij-html-description": "\u003cp\u003eSpecifies mirror configuration for each registry host namespace.\nThis setting allows to configure local pull-through caching registires,\nair-gapped installations, etc.\u003c/p\u003e\n\n\u003cp\u003eFor example, when pulling an image with the reference \u003ccode\u003eexample.com:123/image:v1\u003c/code\u003e,\nthe \u003ccode\u003eexample.com:123\u003c/code\u003e key will be used to lookup the mirror configuration.\u003c/p\u003e\n\n\u003cp\u003eOptionally the \u003ccode\u003e*\u003c/code\u003e key can be used to configure a fallback mirror.\u003c/p\u003e\n\n\u003cp\u003eRegistry name is the first segment of image identifier, with \u0026lsquo;docker.io\u0026rsquo;\nbeing default one.\u003c/p\u003e\n"
-        },
-        "config": {
-          "patternProperties": {
-            ".*": {
-              "$ref": "#/$defs/v1alpha1.RegistryConfig"
-            }
-          },
-          "type": "object",
-          "title": "config",
-          "description": "Specifies TLS \u0026amp; auth configuration for HTTPS image registries.\nMutual TLS can be enabled with ‘clientIdentity’ option.\n\nThe full hostname and port (if not using a default port 443)\nshould be used as the key.\nThe fallback key * can’t be used for TLS configuration.\n\nTLS configuration can be skipped if registry has trusted\nserver certificate.\n",
-          "markdownDescription": "Specifies TLS \u0026 auth configuration for HTTPS image registries.\nMutual TLS can be enabled with 'clientIdentity' option.\n\nThe full hostname and port (if not using a default port 443)\nshould be used as the key.\nThe fallback key `*` can't be used for TLS configuration.\n\nTLS configuration can be skipped if registry has trusted\nserver certificate.",
-          "x-intellij-html-description": "\u003cp\u003eSpecifies TLS \u0026amp; auth configuration for HTTPS image registries.\nMutual TLS can be enabled with \u0026lsquo;clientIdentity\u0026rsquo; option.\u003c/p\u003e\n\n\u003cp\u003eThe full hostname and port (if not using a default port 443)\nshould be used as the key.\nThe fallback key \u003ccode\u003e*\u003c/code\u003e can\u0026rsquo;t be used for TLS configuration.\u003c/p\u003e\n\n\u003cp\u003eTLS configuration can be skipped if registry has trusted\nserver certificate.\u003c/p\u003e\n"
-        }
-      },
-      "additionalProperties": false,
-      "type": "object",
-      "description": "RegistriesConfig represents the image pull options."
-    },
-    "v1alpha1.RegistryAuthConfig": {
-      "properties": {
-        "username": {
-          "type": "string",
-          "title": "username",
-          "description": "Optional registry authentication.\nThe meaning of each field is the same with the corresponding field in .docker/config.json.\n",
-          "markdownDescription": "Optional registry authentication.\nThe meaning of each field is the same with the corresponding field in [`.docker/config.json`](https://docs.docker.com/engine/api/v1.41/#section/Authentication).",
-          "x-intellij-html-description": "\u003cp\u003eOptional registry authentication.\nThe meaning of each field is the same with the corresponding field in \u003ca href=\"https://docs.docker.com/engine/api/v1.41/#section/Authentication\" target=\"_blank\"\u003e\u003ccode\u003e.docker/config.json\u003c/code\u003e\u003c/a\u003e.\u003c/p\u003e\n"
-        },
-        "password": {
-          "type": "string",
-          "title": "password",
-          "description": "Optional registry authentication.\nThe meaning of each field is the same with the corresponding field in .docker/config.json.\n",
-          "markdownDescription": "Optional registry authentication.\nThe meaning of each field is the same with the corresponding field in [`.docker/config.json`](https://docs.docker.com/engine/api/v1.41/#section/Authentication).",
-          "x-intellij-html-description": "\u003cp\u003eOptional registry authentication.\nThe meaning of each field is the same with the corresponding field in \u003ca href=\"https://docs.docker.com/engine/api/v1.41/#section/Authentication\" target=\"_blank\"\u003e\u003ccode\u003e.docker/config.json\u003c/code\u003e\u003c/a\u003e.\u003c/p\u003e\n"
-        },
-        "auth": {
-          "type": "string",
-          "title": "auth",
-          "description": "Optional registry authentication.\nThe meaning of each field is the same with the corresponding field in .docker/config.json.\n",
-          "markdownDescription": "Optional registry authentication.\nThe meaning of each field is the same with the corresponding field in [`.docker/config.json`](https://docs.docker.com/engine/api/v1.41/#section/Authentication).",
-          "x-intellij-html-description": "\u003cp\u003eOptional registry authentication.\nThe meaning of each field is the same with the corresponding field in \u003ca href=\"https://docs.docker.com/engine/api/v1.41/#section/Authentication\" target=\"_blank\"\u003e\u003ccode\u003e.docker/config.json\u003c/code\u003e\u003c/a\u003e.\u003c/p\u003e\n"
-        },
-        "identityToken": {
-          "type": "string",
-          "title": "identityToken",
-          "description": "Optional registry authentication.\nThe meaning of each field is the same with the corresponding field in .docker/config.json.\n",
-          "markdownDescription": "Optional registry authentication.\nThe meaning of each field is the same with the corresponding field in [`.docker/config.json`](https://docs.docker.com/engine/api/v1.41/#section/Authentication).",
-          "x-intellij-html-description": "\u003cp\u003eOptional registry authentication.\nThe meaning of each field is the same with the corresponding field in \u003ca href=\"https://docs.docker.com/engine/api/v1.41/#section/Authentication\" target=\"_blank\"\u003e\u003ccode\u003e.docker/config.json\u003c/code\u003e\u003c/a\u003e.\u003c/p\u003e\n"
-        }
-      },
-      "additionalProperties": false,
-      "type": "object",
-      "description": "RegistryAuthConfig specifies authentication configuration for a registry."
-    },
-    "v1alpha1.RegistryConfig": {
-      "properties": {
-        "tls": {
-          "$ref": "#/$defs/v1alpha1.RegistryTLSConfig",
-          "title": "tls",
-          "description": "The TLS configuration for the registry.\n",
-          "markdownDescription": "The TLS configuration for the registry.",
-          "x-intellij-html-description": "\u003cp\u003eThe TLS configuration for the registry.\u003c/p\u003e\n"
-        },
-        "auth": {
-          "$ref": "#/$defs/v1alpha1.RegistryAuthConfig",
-          "title": "auth",
-          "description": "The auth configuration for this registry.\nNote: changes to the registry auth will not be picked up by the CRI containerd plugin without a reboot.\n",
-          "markdownDescription": "The auth configuration for this registry.\nNote: changes to the registry auth will not be picked up by the CRI containerd plugin without a reboot.",
-          "x-intellij-html-description": "\u003cp\u003eThe auth configuration for this registry.\nNote: changes to the registry auth will not be picked up by the CRI containerd plugin without a reboot.\u003c/p\u003e\n"
-        }
-      },
-      "additionalProperties": false,
-      "type": "object",
-      "description": "RegistryConfig specifies auth \u0026 TLS config per registry."
-    },
     "v1alpha1.RegistryKubernetesConfig": {
       "properties": {
         "disabled": {
@@ -4663,37 +4780,6 @@
       "additionalProperties": false,
       "type": "object",
       "description": "RegistryKubernetesConfig struct configures Kubernetes discovery registry."
-    },
-    "v1alpha1.RegistryMirrorConfig": {
-      "properties": {
-        "endpoints": {
-          "items": {
-            "type": "string"
-          },
-          "type": "array",
-          "title": "endpoints",
-          "description": "List of endpoints (URLs) for registry mirrors to use.\nEndpoint configures HTTP/HTTPS access mode, host name,\nport and path (if path is not set, it defaults to /v2).\n",
-          "markdownDescription": "List of endpoints (URLs) for registry mirrors to use.\nEndpoint configures HTTP/HTTPS access mode, host name,\nport and path (if path is not set, it defaults to `/v2`).",
-          "x-intellij-html-description": "\u003cp\u003eList of endpoints (URLs) for registry mirrors to use.\nEndpoint configures HTTP/HTTPS access mode, host name,\nport and path (if path is not set, it defaults to \u003ccode\u003e/v2\u003c/code\u003e).\u003c/p\u003e\n"
-        },
-        "overridePath": {
-          "type": "boolean",
-          "title": "overridePath",
-          "description": "Use the exact path specified for the endpoint (don’t append /v2/).\nThis setting is often required for setting up multiple mirrors\non a single instance of a registry.\n",
-          "markdownDescription": "Use the exact path specified for the endpoint (don't append /v2/).\nThis setting is often required for setting up multiple mirrors\non a single instance of a registry.",
-          "x-intellij-html-description": "\u003cp\u003eUse the exact path specified for the endpoint (don\u0026rsquo;t append /v2/).\nThis setting is often required for setting up multiple mirrors\non a single instance of a registry.\u003c/p\u003e\n"
-        },
-        "skipFallback": {
-          "type": "boolean",
-          "title": "skipFallback",
-          "description": "Skip fallback to the upstream endpoint, for example the mirror configuration\nfor docker.io will not fallback to registry-1.docker.io.\n",
-          "markdownDescription": "Skip fallback to the upstream endpoint, for example the mirror configuration\nfor `docker.io` will not fallback to `registry-1.docker.io`.",
-          "x-intellij-html-description": "\u003cp\u003eSkip fallback to the upstream endpoint, for example the mirror configuration\nfor \u003ccode\u003edocker.io\u003c/code\u003e will not fallback to \u003ccode\u003eregistry-1.docker.io\u003c/code\u003e.\u003c/p\u003e\n"
-        }
-      },
-      "additionalProperties": false,
-      "type": "object",
-      "description": "RegistryMirrorConfig represents mirror configuration for a registry."
     },
     "v1alpha1.RegistryServiceConfig": {
       "properties": {
@@ -4715,43 +4801,6 @@
       "additionalProperties": false,
       "type": "object",
       "description": "RegistryServiceConfig struct configures Kubernetes discovery registry."
-    },
-    "v1alpha1.RegistryTLSConfig": {
-      "properties": {
-        "clientIdentity": {
-          "properties": {
-            "crt": {
-              "type": "string"
-            },
-            "key": {
-              "type": "string"
-            }
-          },
-          "additionalProperties": false,
-          "type": "object",
-          "title": "clientIdentity",
-          "description": "Enable mutual TLS authentication with the registry.\nClient certificate and key should be base64-encoded.\n",
-          "markdownDescription": "Enable mutual TLS authentication with the registry.\nClient certificate and key should be base64-encoded.",
-          "x-intellij-html-description": "\u003cp\u003eEnable mutual TLS authentication with the registry.\nClient certificate and key should be base64-encoded.\u003c/p\u003e\n"
-        },
-        "ca": {
-          "type": "string",
-          "title": "ca",
-          "description": "CA registry certificate to add the list of trusted certificates.\nCertificate should be base64-encoded.\n",
-          "markdownDescription": "CA registry certificate to add the list of trusted certificates.\nCertificate should be base64-encoded.",
-          "x-intellij-html-description": "\u003cp\u003eCA registry certificate to add the list of trusted certificates.\nCertificate should be base64-encoded.\u003c/p\u003e\n"
-        },
-        "insecureSkipVerify": {
-          "type": "boolean",
-          "title": "insecureSkipVerify",
-          "description": "Skip TLS server certificate verification (not recommended).\n",
-          "markdownDescription": "Skip TLS server certificate verification (not recommended).",
-          "x-intellij-html-description": "\u003cp\u003eSkip TLS server certificate verification (not recommended).\u003c/p\u003e\n"
-        }
-      },
-      "additionalProperties": false,
-      "type": "object",
-      "description": "RegistryTLSConfig specifies TLS config for HTTPS registries."
     },
     "v1alpha1.ResourcesConfig": {
       "properties": {
@@ -4932,6 +4981,15 @@
     },
     {
       "$ref": "#/$defs/block.ZswapConfigV1Alpha1"
+    },
+    {
+      "$ref": "#/$defs/cri.RegistryAuthConfigV1Alpha1"
+    },
+    {
+      "$ref": "#/$defs/cri.RegistryMirrorConfigV1Alpha1"
+    },
+    {
+      "$ref": "#/$defs/cri.RegistryTLSConfigV1Alpha1"
     },
     {
       "$ref": "#/$defs/extensions.ServiceConfigV1Alpha1"

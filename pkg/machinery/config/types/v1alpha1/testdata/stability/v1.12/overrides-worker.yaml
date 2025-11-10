@@ -30,11 +30,6 @@ machine:
         grubUseUKICmdline: true
     sysctls:
         foo: bar
-    registries:
-        mirrors:
-            ghcr.io:
-                endpoints:
-                    - https://ghcr.io.my-mirror.com
     features:
         diskQuotaSupport: true
         kubePrism:
@@ -69,6 +64,12 @@ cluster:
             kubernetes:
                 disabled: true
             service: {}
+---
+apiVersion: v1alpha1
+kind: RegistryMirrorConfig
+name: ghcr.io
+endpoints:
+    - url: https://ghcr.io.my-mirror.com
 ---
 apiVersion: v1alpha1
 kind: HostnameConfig

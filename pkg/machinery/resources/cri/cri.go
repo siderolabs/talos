@@ -7,13 +7,14 @@ package cri
 
 import (
 	"context"
+	"crypto/tls"
 	"fmt"
 
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
 
-	"github.com/siderolabs/talos/pkg/machinery/config/config"
+	config2 "github.com/siderolabs/talos/pkg/machinery/config/config"
 )
 
 //go:generate go tool github.com/siderolabs/deep-copy -type RegistriesConfigSpec -type ImageCacheConfigSpec -type SeccompProfileSpec -header-file ../../../../hack/boilerplate.txt -o deep_copy.generated.go .
@@ -23,9 +24,22 @@ import (
 // NamespaceName contains resources related to stats.
 const NamespaceName resource.Namespace = "cri"
 
+// RegistryTLSConfigExtended is an extended registry TLS config.
+type RegistryTLSConfigExtended interface {
+	config2.RegistryTLSConfig
+	GetTLSConfig() (*tls.Config, error)
+}
+
+// Registries is the interface for accessing container registries configuration.
+type Registries interface {
+	Mirrors() map[string]config2.RegistryMirrorConfig
+	Auths() map[string]config2.RegistryAuthConfig
+	TLSs() map[string]RegistryTLSConfigExtended
+}
+
 // RegistryBuilder implements image.RegistriesBuilder.
-func RegistryBuilder(st state.State) func(ctx context.Context) (config.Registries, error) {
-	return func(ctx context.Context) (config.Registries, error) {
+func RegistryBuilder(st state.State) func(ctx context.Context) (Registries, error) {
+	return func(ctx context.Context) (Registries, error) {
 		regs, err := safe.StateWatchFor[*RegistriesConfig](ctx, st, NewRegistriesConfig().Metadata(), state.WithEventTypes(state.Created, state.Updated))
 		if err != nil {
 			return nil, err

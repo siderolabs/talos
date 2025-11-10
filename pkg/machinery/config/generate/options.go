@@ -95,11 +95,11 @@ func WithNetworkOptions(opts ...v1alpha1.NetworkConfigOption) Option {
 // WithRegistryMirror configures registry mirror endpoint(s).
 func WithRegistryMirror(host string, endpoints ...string) Option {
 	return func(o *Options) error {
-		if o.RegistryMirrors == nil {
-			o.RegistryMirrors = make(map[string]*v1alpha1.RegistryMirrorConfig)
+		if o.RegistryEndpoints == nil {
+			o.RegistryEndpoints = make(map[string][]string)
 		}
 
-		o.RegistryMirrors[host] = &v1alpha1.RegistryMirrorConfig{MirrorEndpoints: endpoints}
+		o.RegistryEndpoints[host] = append(o.RegistryEndpoints[host], endpoints...)
 
 		return nil
 	}
@@ -108,19 +108,11 @@ func WithRegistryMirror(host string, endpoints ...string) Option {
 // WithRegistryCACert specifies the certificate of the certificate authority which signed certificate of the registry.
 func WithRegistryCACert(host, cacert string) Option {
 	return func(o *Options) error {
-		if o.RegistryConfig == nil {
-			o.RegistryConfig = make(map[string]*v1alpha1.RegistryConfig)
+		if o.RegistryCACerts == nil {
+			o.RegistryCACerts = make(map[string]string)
 		}
 
-		if _, ok := o.RegistryConfig[host]; !ok {
-			o.RegistryConfig[host] = &v1alpha1.RegistryConfig{}
-		}
-
-		if o.RegistryConfig[host].RegistryTLS == nil {
-			o.RegistryConfig[host].RegistryTLS = &v1alpha1.RegistryTLSConfig{}
-		}
-
-		o.RegistryConfig[host].RegistryTLS.TLSCA = v1alpha1.Base64Bytes(cacert)
+		o.RegistryCACerts[host] = cacert
 
 		return nil
 	}
@@ -129,19 +121,11 @@ func WithRegistryCACert(host, cacert string) Option {
 // WithRegistryInsecureSkipVerify marks registry host to skip TLS verification.
 func WithRegistryInsecureSkipVerify(host string) Option {
 	return func(o *Options) error {
-		if o.RegistryConfig == nil {
-			o.RegistryConfig = make(map[string]*v1alpha1.RegistryConfig)
+		if o.RegistryInsecure == nil {
+			o.RegistryInsecure = make(map[string]bool)
 		}
 
-		if _, ok := o.RegistryConfig[host]; !ok {
-			o.RegistryConfig[host] = &v1alpha1.RegistryConfig{}
-		}
-
-		if o.RegistryConfig[host].RegistryTLS == nil {
-			o.RegistryConfig[host].RegistryTLS = &v1alpha1.RegistryTLSConfig{}
-		}
-
-		o.RegistryConfig[host].RegistryTLS.TLSInsecureSkipVerify = pointer.To(true)
+		o.RegistryInsecure[host] = true
 
 		return nil
 	}
@@ -289,8 +273,9 @@ type Options struct {
 	Sysctls map[string]string
 
 	// Machine registries.
-	RegistryMirrors map[string]*v1alpha1.RegistryMirrorConfig
-	RegistryConfig  map[string]*v1alpha1.RegistryConfig
+	RegistryEndpoints map[string][]string
+	RegistryCACerts   map[string]string
+	RegistryInsecure  map[string]bool
 
 	// Cluster settings.
 	DNSDomain                      string

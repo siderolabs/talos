@@ -5,9 +5,12 @@
 package cri_test
 
 import (
+	"net/url"
 	"testing"
 	"time"
 
+	"github.com/siderolabs/crypto/x509"
+	"github.com/siderolabs/gen/ensure"
 	"github.com/siderolabs/go-pointer"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
@@ -15,6 +18,8 @@ import (
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/cri"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/ctest"
 	"github.com/siderolabs/talos/pkg/machinery/config/container"
+	criconfig "github.com/siderolabs/talos/pkg/machinery/config/types/cri"
+	"github.com/siderolabs/talos/pkg/machinery/config/types/meta"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/resources/config"
@@ -132,18 +137,18 @@ func (suite *ConfigSuite) TestRegistryAuth() {
 		)
 
 		a.Equal(
-			map[string]*crires.RegistryConfig{
+			map[string]*crires.RegistryAuthConfig{
 				"docker.io": {
-					RegistryAuth: &crires.RegistryAuthConfig{
-						RegistryUsername:      "example",
-						RegistryPassword:      "pass",
-						RegistryAuth:          "someauth",
-						RegistryIdentityToken: "token",
-					},
+					RegistryUsername:      "example",
+					RegistryPassword:      "pass",
+					RegistryAuth:          "someauth",
+					RegistryIdentityToken: "token",
 				},
 			},
-			spec.RegistryConfig,
+			spec.RegistryAuths,
 		)
+
+		a.Empty(spec.RegistryTLSs)
 	})
 
 	ic := crires.NewImageCacheConfig()
@@ -169,18 +174,18 @@ func (suite *ConfigSuite) TestRegistryAuth() {
 		)
 
 		a.Equal(
-			map[string]*crires.RegistryConfig{
+			map[string]*crires.RegistryAuthConfig{
 				"docker.io": {
-					RegistryAuth: &crires.RegistryAuthConfig{
-						RegistryUsername:      "example",
-						RegistryPassword:      "pass",
-						RegistryAuth:          "someauth",
-						RegistryIdentityToken: "token",
-					},
+					RegistryUsername:      "example",
+					RegistryPassword:      "pass",
+					RegistryAuth:          "someauth",
+					RegistryIdentityToken: "token",
 				},
 			},
-			spec.RegistryConfig,
+			spec.RegistryAuths,
 		)
+
+		a.Empty(spec.RegistryTLSs)
 	})
 }
 
@@ -216,15 +221,15 @@ func (suite *ConfigSuite) TestRegistryTLS() {
 			spec.RegistryMirrors,
 		)
 
+		a.Empty(spec.RegistryAuths)
+
 		a.Equal(
-			map[string]*crires.RegistryConfig{
+			map[string]*crires.RegistryTLSConfig{
 				"docker.io": {
-					RegistryTLS: &crires.RegistryTLSConfig{
-						TLSInsecureSkipVerify: pointer.To(true),
-					},
+					TLSInsecureSkipVerify: true,
 				},
 			},
-			spec.RegistryConfig,
+			spec.RegistryTLSs,
 		)
 	})
 
@@ -250,15 +255,15 @@ func (suite *ConfigSuite) TestRegistryTLS() {
 			spec.RegistryMirrors,
 		)
 
+		a.Empty(spec.RegistryAuths)
+
 		a.Equal(
-			map[string]*crires.RegistryConfig{
+			map[string]*crires.RegistryTLSConfig{
 				"docker.io": {
-					RegistryTLS: &crires.RegistryTLSConfig{
-						TLSInsecureSkipVerify: pointer.To(true),
-					},
+					TLSInsecureSkipVerify: true,
 				},
 			},
-			spec.RegistryConfig,
+			spec.RegistryTLSs,
 		)
 	})
 }
@@ -290,6 +295,83 @@ func (suite *ConfigSuite) TestRegistryNoConfig() {
 
 		a.Empty(
 			spec.RegistryMirrors,
+		)
+	})
+}
+
+func (suite *ConfigSuite) TestRegistryNewStyle() {
+	mr1 := criconfig.NewRegistryMirrorConfigV1Alpha1("docker.io")
+	mr1.RegistryEndpoints = []criconfig.RegistryEndpoint{
+		{
+			EndpointURL:          meta.URL{URL: ensure.Value(url.Parse("https://mirror1.io"))},
+			EndpointOverridePath: pointer.To(true),
+		},
+		{
+			EndpointURL: meta.URL{URL: ensure.Value(url.Parse("https://mirror2.io"))},
+		},
+	}
+
+	ar1 := criconfig.NewRegistryAuthConfigV1Alpha1("registry-1.docker.io")
+	ar1.RegistryUsername = "docker-example"
+	ar1.RegistryPassword = "docker-pass"
+
+	tr1 := criconfig.NewRegistryTLSConfigV1Alpha1("private-registry:3000")
+	tr1.TLSInsecureSkipVerify = pointer.To(true)
+	tr1.TLSClientIdentity = &meta.CertificateAndKey{
+		Cert: "-----BEGIN CERTIFICATE-----\nMIID...IDAQAB\n-----END CERTIFICATE-----",
+		Key:  "-----BEGIN PRIVATE KEY-----\nMIIE...AB\n-----END PRIVATE KEY-----",
+	}
+	tr1.TLSCA = "-----BEGIN CERTIFICATE-----\nMIID...IDAQAB\n-----END CERTIFICATE-----"
+
+	ctr, err := container.New(mr1, ar1, tr1)
+	suite.Require().NoError(err)
+
+	cfg := config.NewMachineConfig(ctr)
+
+	suite.Require().NoError(suite.State().Create(suite.Ctx(), cfg))
+
+	ctest.AssertResource(suite, crires.RegistriesConfigID, func(r *crires.RegistriesConfig, a *assert.Assertions) {
+		spec := r.TypedSpec()
+
+		a.Equal(
+			map[string]*crires.RegistryMirrorConfig{
+				"docker.io": {
+					MirrorEndpoints: []crires.RegistryEndpointConfig{
+						{
+							EndpointEndpoint:     "https://mirror1.io",
+							EndpointOverridePath: true,
+						},
+						{
+							EndpointEndpoint: "https://mirror2.io",
+						},
+					},
+				},
+			},
+			spec.RegistryMirrors,
+		)
+
+		a.Equal(
+			map[string]*crires.RegistryAuthConfig{
+				"registry-1.docker.io": {
+					RegistryUsername: "docker-example",
+					RegistryPassword: "docker-pass",
+				},
+			},
+			spec.RegistryAuths,
+		)
+
+		a.Equal(
+			map[string]*crires.RegistryTLSConfig{
+				"private-registry:3000": {
+					TLSInsecureSkipVerify: true,
+					TLSClientIdentity: &x509.PEMEncodedCertificateAndKey{
+						Crt: []byte("-----BEGIN CERTIFICATE-----\nMIID...IDAQAB\n-----END CERTIFICATE-----"),
+						Key: []byte("-----BEGIN PRIVATE KEY-----\nMIIE...AB\n-----END PRIVATE KEY-----"),
+					},
+					TLSCA: []byte("-----BEGIN CERTIFICATE-----\nMIID...IDAQAB\n-----END CERTIFICATE-----"),
+				},
+			},
+			spec.RegistryTLSs,
 		)
 	})
 }
