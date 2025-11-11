@@ -12688,7 +12688,7 @@ const file_machine_machine_proto_rawDesc = "" +
 	"\tImagePull\x12,\n" +
 	"\bmetadata\x18\x01 \x01(\v2\x10.common.MetadataR\bmetadata\"C\n" +
 	"\x11ImagePullResponse\x12.\n" +
-	"\bmessages\x18\x01 \x03(\v2\x12.machine.ImagePullR\bmessages2\xad\x1e\n" +
+	"\bmessages\x18\x01 \x03(\v2\x12.machine.ImagePullR\bmessages2\xbb\x1e\n" +
 	"\x0eMachineService\x12]\n" +
 	"\x12ApplyConfiguration\x12\".machine.ApplyConfigurationRequest\x1a#.machine.ApplyConfigurationResponse\x12B\n" +
 	"\tBootstrap\x12\x19.machine.BootstrapRequest\x1a\x1a.machine.BootstrapResponse\x12E\n" +
@@ -12713,8 +12713,8 @@ const file_machine_machine_proto_rawDesc = "" +
 	"EtcdStatus\x12\x16.google.protobuf.Empty\x1a\x1b.machine.EtcdStatusResponse\x12f\n" +
 	"\x15EtcdDowngradeValidate\x12%.machine.EtcdDowngradeValidateRequest\x1a&.machine.EtcdDowngradeValidateResponse\x12`\n" +
 	"\x13EtcdDowngradeEnable\x12#.machine.EtcdDowngradeEnableRequest\x1a$.machine.EtcdDowngradeEnableResponse\x12S\n" +
-	"\x13EtcdDowngradeCancel\x12\x16.google.protobuf.Empty\x1a$.machine.EtcdDowngradeCancelResponse\x12f\n" +
-	"\x15GenerateConfiguration\x12%.machine.GenerateConfigurationRequest\x1a&.machine.GenerateConfigurationResponse\x12=\n" +
+	"\x13EtcdDowngradeCancel\x12\x16.google.protobuf.Empty\x1a$.machine.EtcdDowngradeCancelResponse\x12t\n" +
+	"\x15GenerateConfiguration\x12%.machine.GenerateConfigurationRequest\x1a&.machine.GenerateConfigurationResponse\"\f\xea\xbb-\x05v1.13\x88\x02\x01\x12=\n" +
 	"\bHostname\x12\x16.google.protobuf.Empty\x1a\x19.machine.HostnameResponse\x124\n" +
 	"\n" +
 	"Kubeconfig\x12\x16.google.protobuf.Empty\x1a\f.common.Data0\x01\x121\n" +

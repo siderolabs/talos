@@ -64,7 +64,10 @@ service MachineService {
   // EtcdDowngradeCancel cancels etcd cluster downgrade that is in progress.
   // This method is available only on control plane nodes (which run etcd).
   rpc EtcdDowngradeCancel(google.protobuf.Empty) returns (EtcdDowngradeCancelResponse);
-  rpc GenerateConfiguration(GenerateConfigurationRequest) returns (GenerateConfigurationResponse);
+  rpc GenerateConfiguration(GenerateConfigurationRequest) returns (GenerateConfigurationResponse) {
+    option (common.remove_deprecated_method) = "v1.13";
+    option deprecated = true;
+  }
   rpc Hostname(google.protobuf.Empty) returns (HostnameResponse);
   rpc Kubeconfig(google.protobuf.Empty) returns (stream common.Data);
   rpc List(ListRequest) returns (stream FileInfo);

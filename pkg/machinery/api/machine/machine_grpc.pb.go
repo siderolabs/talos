@@ -137,6 +137,7 @@ type MachineServiceClient interface {
 	// EtcdDowngradeCancel cancels etcd cluster downgrade that is in progress.
 	// This method is available only on control plane nodes (which run etcd).
 	EtcdDowngradeCancel(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*EtcdDowngradeCancelResponse, error)
+	// Deprecated: Do not use.
 	GenerateConfiguration(ctx context.Context, in *GenerateConfigurationRequest, opts ...grpc.CallOption) (*GenerateConfigurationResponse, error)
 	Hostname(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*HostnameResponse, error)
 	Kubeconfig(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (grpc.ServerStreamingClient[common.Data], error)
@@ -446,6 +447,7 @@ func (c *machineServiceClient) EtcdDowngradeCancel(ctx context.Context, in *empt
 	return out, nil
 }
 
+// Deprecated: Do not use.
 func (c *machineServiceClient) GenerateConfiguration(ctx context.Context, in *GenerateConfigurationRequest, opts ...grpc.CallOption) (*GenerateConfigurationResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(GenerateConfigurationResponse)
@@ -896,6 +898,7 @@ type MachineServiceServer interface {
 	// EtcdDowngradeCancel cancels etcd cluster downgrade that is in progress.
 	// This method is available only on control plane nodes (which run etcd).
 	EtcdDowngradeCancel(context.Context, *emptypb.Empty) (*EtcdDowngradeCancelResponse, error)
+	// Deprecated: Do not use.
 	GenerateConfiguration(context.Context, *GenerateConfigurationRequest) (*GenerateConfigurationResponse, error)
 	Hostname(context.Context, *emptypb.Empty) (*HostnameResponse, error)
 	Kubeconfig(*emptypb.Empty, grpc.ServerStreamingServer[common.Data]) error

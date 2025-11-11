@@ -90,7 +90,7 @@ var applyConfigCmd = &cobra.Command{
 					return err
 				}
 			}
-		} else if applyConfigCmdFlags.Mode.Mode != helpers.InteractiveMode {
+		} else if applyConfigCmdFlags.Mode.Mode != helpers.InteractiveMode { //nolint:staticcheck
 			return errors.New("no filename supplied for configuration")
 		}
 
@@ -103,7 +103,7 @@ var applyConfigCmd = &cobra.Command{
 		}
 
 		return withClient(func(ctx context.Context, c *client.Client) error {
-			if applyConfigCmdFlags.Mode.Mode == helpers.InteractiveMode {
+			if applyConfigCmdFlags.Mode.Mode == helpers.InteractiveMode { //nolint:staticcheck
 				install := installer.NewInstaller()
 				node := GlobalArgs.Nodes[0]
 

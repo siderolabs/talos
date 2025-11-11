@@ -11,6 +11,7 @@ import (
 	"strings"
 
 	"github.com/siderolabs/gen/maps"
+	"github.com/siderolabs/gen/xslices"
 	"github.com/spf13/cobra"
 
 	"github.com/siderolabs/talos/pkg/cli"
@@ -19,6 +20,9 @@ import (
 
 // InteractiveMode fake mode value for the interactive config mode.
 // Should be never passed to the API.
+//
+// Deprecated: Interactive configuration mode will be removed and
+// should no longer be used.
 const InteractiveMode machine.ApplyConfigurationRequest_Mode = -1
 
 // Mode apply, patch, edit config update mode.
@@ -62,6 +66,9 @@ func (m *Mode) Set(value string) error {
 func (m *Mode) Type() string {
 	options := maps.Keys(m.options)
 	slices.Sort(options)
+	options = xslices.Filter(options, func(opt string) bool {
+		return opt != modeInteractive
+	})
 
 	return strings.Join(options, ", ")
 }

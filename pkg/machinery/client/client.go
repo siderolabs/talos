@@ -249,7 +249,7 @@ func (c *Client) ApplyConfiguration(ctx context.Context, req *machineapi.ApplyCo
 
 // GenerateConfiguration implements proto.MachineServiceClient interface.
 func (c *Client) GenerateConfiguration(ctx context.Context, req *machineapi.GenerateConfigurationRequest, callOptions ...grpc.CallOption) (resp *machineapi.GenerateConfigurationResponse, err error) {
-	resp, err = c.MachineClient.GenerateConfiguration(ctx, req, callOptions...)
+	resp, err = c.MachineClient.GenerateConfiguration(ctx, req, callOptions...) //nolint:staticcheck
 
 	return FilterMessages(resp, err)
 }
