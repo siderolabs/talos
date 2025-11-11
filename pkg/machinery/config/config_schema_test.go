@@ -64,7 +64,7 @@ func TestSchemaValidation(t *testing.T) {
 		{
 			name: "v1alpha1_invalid-duration",
 			config: newV1Alpha1Config(t, nil, func(rawConfig map[string]any) {
-				setNestedField(t, rawConfig, "100y", "machine", "time", "bootTimeout")
+				setNestedField(t, rawConfig, "100y", "cluster", "adminKubeconfig", "certLifetime")
 			}),
 			expectedErrorContains: `does not match pattern`,
 		},

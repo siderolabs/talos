@@ -1227,6 +1227,99 @@ func (LinkSelector) Doc() *encoder.Doc {
 	return doc
 }
 
+func (ResolverConfigV1Alpha1) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "ResolverConfig",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "ResolverConfig is a config document to configure DNS resolving." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "ResolverConfig is a config document to configure DNS resolving.",
+		Fields: []encoder.Doc{
+			{
+				Type:   "Meta",
+				Inline: true,
+			},
+			{
+				Name:        "nameservers",
+				Type:        "[]NameserverConfig",
+				Note:        "",
+				Description: "A list of nameservers (DNS servers) to use for resolving domain names.\n\nNameservers are used to resolve domain names on the host, and they are also\npropagated to Kubernetes DNS (CoreDNS) for use by pods running on the cluster.\n\nThis overrides any nameservers obtained via DHCP or platform configuration.\nDefault configuration is to use 1.1.1.1 and 8.8.8.8 as nameservers.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "A list of nameservers (DNS servers) to use for resolving domain names." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "searchDomains",
+				Type:        "SearchDomainsConfig",
+				Note:        "",
+				Description: "Configuration for search domains (in /etc/resolv.conf).\n\nThe default is to derive search domains from the hostname FQDN.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Configuration for search domains (in /etc/resolv.conf)." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
+
+	doc.AddExample("", exampleResolverConfigV1Alpha1())
+
+	doc.AddExample("", exampleResolverConfigV1Alpha2())
+
+	return doc
+}
+
+func (NameserverConfig) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "NameserverConfig",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "NameserverConfig represents a single nameserver configuration." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "NameserverConfig represents a single nameserver configuration.",
+		AppearsIn: []encoder.Appearance{
+			{
+				TypeName:  "ResolverConfigV1Alpha1",
+				FieldName: "nameservers",
+			},
+		},
+		Fields: []encoder.Doc{
+			{
+				Name:        "address",
+				Type:        "Addr",
+				Note:        "",
+				Description: "The IP address of the nameserver.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "The IP address of the nameserver." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
+
+	doc.Fields[0].AddExample("", Addr{netip.MustParseAddr("10.0.0.1")})
+
+	return doc
+}
+
+func (SearchDomainsConfig) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "SearchDomainsConfig",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "SearchDomainsConfig represents search domains configuration." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "SearchDomainsConfig represents search domains configuration.",
+		AppearsIn: []encoder.Appearance{
+			{
+				TypeName:  "ResolverConfigV1Alpha1",
+				FieldName: "searchDomains",
+			},
+		},
+		Fields: []encoder.Doc{
+			{
+				Name:        "domains",
+				Type:        "[]string",
+				Note:        "",
+				Description: "A list of search domains to be used for DNS resolution.\n\nSearch domains are appended to unqualified domain names during DNS resolution.\nFor example, if \"example.com\" is a search domain and a user tries to resolve\n\"host\", the system will attempt to resolve \"host.example.com\".\n\nThis overrides any search domains obtained via DHCP or platform configuration.\nThe default configuration derives the search domain from the hostname FQDN.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "A list of search domains to be used for DNS resolution." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "disableDefault",
+				Type:        "bool",
+				Note:        "",
+				Description: "Disable default search domain configuration from hostname FQDN.\n\nWhen set to true, the system will not derive search domains from the hostname FQDN.\nThis allows for a custom configuration of search domains without any defaults.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Disable default search domain configuration from hostname FQDN." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
+
+	return doc
+}
+
 func (RuleConfigV1Alpha1) Doc() *encoder.Doc {
 	doc := &encoder.Doc{
 		Type:        "NetworkRuleConfig",
@@ -1371,6 +1464,104 @@ func (StaticHostConfigV1Alpha1) Doc() *encoder.Doc {
 	}
 
 	doc.AddExample("", exampleStaticHostConfigV1Alpha1())
+
+	return doc
+}
+
+func (TimeSyncConfigV1Alpha1) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "TimeSyncConfig",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "TimeSyncConfig is a config document to configure time synchronization (NTP)." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "TimeSyncConfig is a config document to configure time synchronization (NTP).",
+		Fields: []encoder.Doc{
+			{
+				Type:   "Meta",
+				Inline: true,
+			},
+			{
+				Name:        "enabled",
+				Type:        "bool",
+				Note:        "",
+				Description: "Indicates if the time synchronization is enabled for the machine.\nDefaults to `true`.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Indicates if the time synchronization is enabled for the machine." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "bootTimeout",
+				Type:        "Duration",
+				Note:        "",
+				Description: "Specifies the timeout when the node time is considered to be in sync unlocking the boot sequence.\nNTP sync will be still running in the background.\nDefaults to \"infinity\" (waiting forever for time sync)",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Specifies the timeout when the node time is considered to be in sync unlocking the boot sequence." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "ntp",
+				Type:        "NTPConfig",
+				Note:        "",
+				Description: "Specifies NTP configuration to sync the time over network.\nMutually exclusive with PTP configuration.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Specifies NTP configuration to sync the time over network." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "ptp",
+				Type:        "PTPConfig",
+				Note:        "",
+				Description: "Specific PTP (Precision Time Protocol) configuration to sync the time over PTP devices.\nMutually exclusive with NTP configuration.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Specific PTP (Precision Time Protocol) configuration to sync the time over PTP devices." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
+
+	doc.AddExample("", exampleTimeSyncConfigV1Alpha1())
+
+	doc.AddExample("", exampleTimeSyncConfigV1Alpha2())
+
+	return doc
+}
+
+func (NTPConfig) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "NTPConfig",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "NTPConfig represents a NTP server configuration." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "NTPConfig represents a NTP server configuration.",
+		AppearsIn: []encoder.Appearance{
+			{
+				TypeName:  "TimeSyncConfigV1Alpha1",
+				FieldName: "ntp",
+			},
+		},
+		Fields: []encoder.Doc{
+			{
+				Name:        "servers",
+				Type:        "[]string",
+				Note:        "",
+				Description: "Specifies time (NTP) servers to use for setting the system time.\nDefaults to `time.cloudflare.com`.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Specifies time (NTP) servers to use for setting the system time." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
+
+	return doc
+}
+
+func (PTPConfig) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "PTPConfig",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "PTPConfig represents a PTP (Precision Time Protocol) configuration." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "PTPConfig represents a PTP (Precision Time Protocol) configuration.",
+		AppearsIn: []encoder.Appearance{
+			{
+				TypeName:  "TimeSyncConfigV1Alpha1",
+				FieldName: "ptp",
+			},
+		},
+		Fields: []encoder.Doc{
+			{
+				Name:        "devices",
+				Type:        "[]string",
+				Note:        "",
+				Description: "description: |\n    A list of PTP devices to sync with (e.g. provided by the hypervisor).\n\n    A PTP device is typically represented as a character device file in the /dev directory,\n   such as /dev/ptp0 or /dev/ptp_kvm. These devices are used to synchronize the system time\n    with an external time source that supports the Precision Time Protocol.\n",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "description: |" /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
 
 	return doc
 }
@@ -1573,10 +1764,16 @@ func GetFileDoc() *encoder.FileDoc {
 			RouteConfig{}.Doc(),
 			LinkAliasConfigV1Alpha1{}.Doc(),
 			LinkSelector{}.Doc(),
+			ResolverConfigV1Alpha1{}.Doc(),
+			NameserverConfig{}.Doc(),
+			SearchDomainsConfig{}.Doc(),
 			RuleConfigV1Alpha1{}.Doc(),
 			RulePortSelector{}.Doc(),
 			IngressRule{}.Doc(),
 			StaticHostConfigV1Alpha1{}.Doc(),
+			TimeSyncConfigV1Alpha1{}.Doc(),
+			NTPConfig{}.Doc(),
+			PTPConfig{}.Doc(),
 			VLANConfigV1Alpha1{}.Doc(),
 			WireguardConfigV1Alpha1{}.Doc(),
 			WireguardPeer{}.Doc(),

@@ -219,11 +219,9 @@ type MachineConfig struct {
 	//       ".*":
 	//         type: string
 	MachineEnv Env `yaml:"env,omitempty"`
-	//   description: |
-	//     Used to configure the machine's time settings.
-	//   examples:
-	//     - name: Example configuration for cloudflare ntp server.
-	//       value: machineTimeExample()
+	// docgen:nodoc
+	//
+	// Deprecated: Use 'TimeSyncConfig' instead.
 	MachineTime *TimeConfig `yaml:"time,omitempty"`
 	//   description: |
 	//     Used to configure the machine's sysctls.
@@ -688,16 +686,13 @@ type NetworkConfig struct {
 	//
 	// Deprecated: use multi-doc network config.
 	NetworkInterfaces NetworkDeviceList `yaml:"interfaces,omitempty"`
-	//   description: |
-	//     Used to statically set the nameservers for the machine.
-	//     Defaults to `1.1.1.1` and `8.8.8.8`
-	//   examples:
-	//     - value: '[]string{"8.8.8.8", "1.1.1.1"}'
+	// docgen:nodoc
+	//
+	// Deprecated: Use `ResolverConfig` instead.
 	NameServers []string `yaml:"nameservers,omitempty"`
-	//   description: |
-	//     Used to statically set arbitrary search domains.
-	//   examples:
-	//     - value: '[]string{"example.org", "example.com"}'
+	// docgen:nodoc
+	//
+	// Deprecated: Use `ResolverConfig` instead.
 	Searches []string `yaml:"searchDomains,omitempty"`
 	// docgen:nodoc
 	//
@@ -708,15 +703,9 @@ type NetworkConfig struct {
 	//   examples:
 	//     - value: networkKubeSpanExample()
 	NetworkKubeSpan *NetworkKubeSpan `yaml:"kubespan,omitempty"`
-	//   description: |
-	//     Disable generating a default search domain in /etc/resolv.conf
-	//     based on the machine hostname.
-	//     Defaults to `false`.
-	//   values:
-	//     - true
-	//     - yes
-	//     - false
-	//     - no
+	// docgen:nodoc
+	//
+	// Deprecated: Use `ResolverConfig` instead.
 	NetworkDisableSearchDomain *bool `yaml:"disableSearchDomain,omitempty"`
 }
 
@@ -933,6 +922,8 @@ type InstallExtensionConfig struct {
 }
 
 // TimeConfig represents the options for configuring time on a machine.
+//
+//docgen:nodoc
 type TimeConfig struct {
 	//   description: |
 	//     Indicates if the time service is disabled for the machine.

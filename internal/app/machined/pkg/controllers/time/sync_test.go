@@ -367,7 +367,7 @@ func (suite *SyncSuite) TestReconcileSyncChangeConfig() {
 	)
 
 	ctest.UpdateWithConflicts(suite, cfg, func(r *config.MachineConfig) error {
-		r.Container().RawV1Alpha1().MachineConfig.MachineTime = &v1alpha1.TimeConfig{
+		r.Container().RawV1Alpha1().MachineConfig.MachineTime = &v1alpha1.TimeConfig{ //nolint:staticcheck
 			TimeDisabled: pointer.To(true),
 		}
 

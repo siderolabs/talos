@@ -27,7 +27,6 @@ type MachineConfig interface {
 	Security() Security
 	Network() MachineNetwork
 	Disks() []Disk
-	Time() Time
 	Env() Env
 	Files() ([]File, error)
 	Type() machine.Type
@@ -143,11 +142,8 @@ type MachineScheduler interface {
 //
 // This is a legacy interface which is going to be decomposed and removed in the future.
 type MachineNetwork interface {
-	Resolvers() []string
-	SearchDomains() []string
 	Devices() []Device
 	KubeSpan() KubeSpan
-	DisableSearchDomain() bool
 }
 
 // Device represents a network interface.
@@ -319,14 +315,6 @@ type NetworkDeviceSelector interface {
 	PCIID() string
 	KernelDriver() string
 	Physical() *bool
-}
-
-// Time defines the requirements for a config that pertains to time related
-// options.
-type Time interface {
-	Disabled() bool
-	Servers() []string
-	BootTimeout() time.Duration
 }
 
 // Kubelet defines the requirements for a config that pertains to kubelet

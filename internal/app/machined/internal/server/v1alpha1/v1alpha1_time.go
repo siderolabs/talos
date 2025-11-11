@@ -39,7 +39,11 @@ func (r *TimeServer) Register(s *grpc.Server) {
 
 // Time issues a query to the configured ntp server and displays the results.
 func (r *TimeServer) Time(ctx context.Context, in *emptypb.Empty) (reply *timeapi.TimeResponse, err error) {
-	timeServers := r.ConfigProvider.Config().Machine().Time().Servers()
+	var timeServers []string
+
+	if cfg := r.ConfigProvider.Config().NetworkTimeSyncConfig(); cfg != nil {
+		timeServers = cfg.Servers()
+	}
 
 	if len(timeServers) == 0 {
 		timeServers = []string{constants.DefaultNTPServer}

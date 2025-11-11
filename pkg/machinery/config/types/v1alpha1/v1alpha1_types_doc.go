@@ -173,13 +173,7 @@ func (MachineConfig) Doc() *encoder.Doc {
 					"`no_proxy`",
 				},
 			},
-			{
-				Name:        "time",
-				Type:        "TimeConfig",
-				Note:        "",
-				Description: "Used to configure the machine's time settings.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Used to configure the machine's time settings." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
+			{},
 			{
 				Name:        "sysctls",
 				Type:        "map[string]string",
@@ -276,7 +270,6 @@ func (MachineConfig) Doc() *encoder.Doc {
 	doc.Fields[12].AddExample("Environment variables definition examples.", machineEnvExamples0())
 	doc.Fields[12].AddExample("", machineEnvExamples1())
 	doc.Fields[12].AddExample("", machineEnvExamples2())
-	doc.Fields[13].AddExample("Example configuration for cloudflare ntp server.", machineTimeExample())
 	doc.Fields[14].AddExample("MachineSysctls usage example.", machineSysctlsExample())
 	doc.Fields[15].AddExample("MachineSysfs usage example.", machineSysfsExample())
 	doc.Fields[18].AddExample("", machineFeaturesExample())
@@ -917,20 +910,8 @@ func (NetworkConfig) Doc() *encoder.Doc {
 		Fields: []encoder.Doc{
 			{},
 			{},
-			{
-				Name:        "nameservers",
-				Type:        "[]string",
-				Note:        "",
-				Description: "Used to statically set the nameservers for the machine.\nDefaults to `1.1.1.1` and `8.8.8.8`",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Used to statically set the nameservers for the machine." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-			{
-				Name:        "searchDomains",
-				Type:        "[]string",
-				Note:        "",
-				Description: "Used to statically set arbitrary search domains.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Used to statically set arbitrary search domains." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
+			{},
+			{},
 			{},
 			{
 				Name:        "kubespan",
@@ -939,26 +920,12 @@ func (NetworkConfig) Doc() *encoder.Doc {
 				Description: "Configures KubeSpan feature.",
 				Comments:    [3]string{"" /* encoder.HeadComment */, "Configures KubeSpan feature." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
-			{
-				Name:        "disableSearchDomain",
-				Type:        "bool",
-				Note:        "",
-				Description: "Disable generating a default search domain in /etc/resolv.conf\nbased on the machine hostname.\nDefaults to `false`.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Disable generating a default search domain in /etc/resolv.conf" /* encoder.LineComment */, "" /* encoder.FootComment */},
-				Values: []string{
-					"true",
-					"yes",
-					"false",
-					"no",
-				},
-			},
+			{},
 		},
 	}
 
 	doc.AddExample("Network definition example.", machineNetworkConfigExample())
 
-	doc.Fields[2].AddExample("", []string{"8.8.8.8", "1.1.1.1"})
-	doc.Fields[3].AddExample("", []string{"example.org", "example.com"})
 	doc.Fields[5].AddExample("", networkKubeSpanExample())
 
 	return doc
@@ -1131,47 +1098,6 @@ func (InstallDiskSelector) Doc() *encoder.Doc {
 	doc.Fields[0].AddExample("Select a disk which size is less or equal than 2TB.", machineInstallDiskSizeMatcherExamples2())
 	doc.Fields[8].AddExample("", "/pci0000:00/0000:00:17.0/ata1/host0/target0:0:0/0:0:0:0")
 	doc.Fields[8].AddExample("", "/pci0000:00/*")
-
-	return doc
-}
-
-func (TimeConfig) Doc() *encoder.Doc {
-	doc := &encoder.Doc{
-		Type:        "TimeConfig",
-		Comments:    [3]string{"" /* encoder.HeadComment */, "TimeConfig represents the options for configuring time on a machine." /* encoder.LineComment */, "" /* encoder.FootComment */},
-		Description: "TimeConfig represents the options for configuring time on a machine.",
-		AppearsIn: []encoder.Appearance{
-			{
-				TypeName:  "MachineConfig",
-				FieldName: "time",
-			},
-		},
-		Fields: []encoder.Doc{
-			{
-				Name:        "disabled",
-				Type:        "bool",
-				Note:        "",
-				Description: "Indicates if the time service is disabled for the machine.\nDefaults to `false`.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Indicates if the time service is disabled for the machine." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-			{
-				Name:        "servers",
-				Type:        "[]string",
-				Note:        "",
-				Description: "description: |\n    Specifies time (NTP) servers to use for setting the system time.\n    Defaults to `time.cloudflare.com`.\n\n   Talos can also sync to the PTP time source (e.g provided by the hypervisor),\n    provide the path to the PTP device as \"/dev/ptp0\" or \"/dev/ptp_kvm\".\n",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "description: |" /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-			{
-				Name:        "bootTimeout",
-				Type:        "Duration",
-				Note:        "",
-				Description: "Specifies the timeout when the node time is considered to be in sync unlocking the boot sequence.\nNTP sync will be still running in the background.\nDefaults to \"infinity\" (waiting forever for time sync)",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Specifies the timeout when the node time is considered to be in sync unlocking the boot sequence." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-		},
-	}
-
-	doc.AddExample("Example configuration for cloudflare ntp server.", machineTimeExample())
 
 	return doc
 }
@@ -2652,7 +2578,6 @@ func GetFileDoc() *encoder.FileDoc {
 			NetworkConfig{}.Doc(),
 			InstallConfig{}.Doc(),
 			InstallDiskSelector{}.Doc(),
-			TimeConfig{}.Doc(),
 			CoreDNS{}.Doc(),
 			Endpoint{}.Doc(),
 			ControlPlaneConfig{}.Doc(),

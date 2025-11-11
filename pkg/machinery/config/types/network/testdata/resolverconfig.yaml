@@ -1,0 +1,10 @@
+apiVersion: v1alpha1
+kind: ResolverConfig
+nameservers:
+    - address: 10.0.0.1
+    - address: 2001:4860:4860::8888
+searchDomains:
+    domains:
+        - example.org
+        - example.com
+    disableDefault: false

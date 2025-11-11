@@ -167,7 +167,7 @@ func (r *Runtime) CanApplyImmediate(cfg config.Provider) error {
 	if newConfig.MachineConfig != nil && currentConfig.MachineConfig != nil {
 		newConfig.MachineConfig.MachineCA = currentConfig.MachineConfig.MachineCA
 		newConfig.MachineConfig.MachineAcceptedCAs = currentConfig.MachineConfig.MachineAcceptedCAs
-		newConfig.MachineConfig.MachineTime = currentConfig.MachineConfig.MachineTime
+		newConfig.MachineConfig.MachineTime = currentConfig.MachineConfig.MachineTime //nolint:staticcheck
 		newConfig.MachineConfig.MachineCertSANs = currentConfig.MachineConfig.MachineCertSANs
 		newConfig.MachineConfig.MachineInstall = currentConfig.MachineConfig.MachineInstall
 		newConfig.MachineConfig.MachineNetwork = currentConfig.MachineConfig.MachineNetwork

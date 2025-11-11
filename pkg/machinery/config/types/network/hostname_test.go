@@ -154,7 +154,7 @@ func TestHostnameConfigValidate(t *testing.T) {
 	}
 }
 
-func TestV1Alpha1Validate(t *testing.T) {
+func TestHostnameV1Alpha1Validate(t *testing.T) {
 	t.Parallel()
 
 	for _, test := range []struct {

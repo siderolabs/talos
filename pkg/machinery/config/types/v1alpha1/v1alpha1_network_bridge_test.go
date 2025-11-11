@@ -5,7 +5,9 @@
 package v1alpha1_test
 
 import (
+	"net/netip"
 	"testing"
+	"time"
 
 	"github.com/siderolabs/go-pointer"
 	"github.com/stretchr/testify/assert"
@@ -235,6 +237,243 @@ func TestHostnameBridging(t *testing.T) {
 
 			assert.Equal(t, test.expectedHostname, hostnameConfig.Hostname())
 			assert.Equal(t, test.expectedAutoHostname, hostnameConfig.AutoHostname())
+		})
+	}
+}
+
+func TestResolverBridging(t *testing.T) {
+	t.Parallel()
+
+	for _, test := range []struct {
+		name string
+
+		cfg func(*testing.T) config.Config
+
+		expectedNameservers   []netip.Addr
+		expectedSearchDomains []string
+		expectedDisableSearch bool
+	}{
+		{
+			name: "v1alpha1 only",
+
+			cfg: func(*testing.T) config.Config {
+				return container.NewV1Alpha1(&v1alpha1.Config{
+					MachineConfig: &v1alpha1.MachineConfig{
+						MachineNetwork: &v1alpha1.NetworkConfig{
+							NameServers:                []string{"2.2.2.2", "3.3.3.3"},
+							Searches:                   []string{"universe.com", "galaxy.org"},
+							NetworkDisableSearchDomain: pointer.To(true),
+						},
+					},
+				})
+			},
+
+			expectedNameservers:   []netip.Addr{netip.MustParseAddr("2.2.2.2"), netip.MustParseAddr("3.3.3.3")},
+			expectedSearchDomains: []string{"universe.com", "galaxy.org"},
+			expectedDisableSearch: true,
+		},
+		{
+			name: "v1alpha1 empty",
+
+			cfg: func(*testing.T) config.Config {
+				return container.NewV1Alpha1(&v1alpha1.Config{
+					MachineConfig: &v1alpha1.MachineConfig{},
+				})
+			},
+
+			expectedNameservers:   nil,
+			expectedSearchDomains: nil,
+			expectedDisableSearch: false,
+		},
+		{
+			name: "new style only",
+
+			cfg: func(*testing.T) config.Config {
+				rc := network.NewResolverConfigV1Alpha1()
+				rc.ResolverNameservers = []network.NameserverConfig{
+					{
+						Address: network.Addr{Addr: netip.MustParseAddr("2.2.2.2")},
+					},
+					{
+						Address: network.Addr{Addr: netip.MustParseAddr("3.3.3.3")},
+					},
+				}
+				rc.ResolverSearchDomains = network.SearchDomainsConfig{
+					SearchDomains:        []string{"universe.com", "galaxy.org"},
+					SearchDisableDefault: pointer.To(true),
+				}
+
+				c, err := container.New(
+					rc,
+				)
+				require.NoError(t, err)
+
+				return c
+			},
+
+			expectedNameservers:   []netip.Addr{netip.MustParseAddr("2.2.2.2"), netip.MustParseAddr("3.3.3.3")},
+			expectedSearchDomains: []string{"universe.com", "galaxy.org"},
+			expectedDisableSearch: true,
+		},
+		{
+			name: "mixed",
+
+			cfg: func(*testing.T) config.Config {
+				rc := network.NewResolverConfigV1Alpha1()
+				rc.ResolverNameservers = []network.NameserverConfig{
+					{
+						Address: network.Addr{Addr: netip.MustParseAddr("2.2.2.2")},
+					},
+					{
+						Address: network.Addr{Addr: netip.MustParseAddr("3.3.3.3")},
+					},
+				}
+
+				c, err := container.New(
+					rc,
+					&v1alpha1.Config{
+						MachineConfig: &v1alpha1.MachineConfig{
+							MachineNetwork: &v1alpha1.NetworkConfig{},
+						},
+					},
+				)
+				require.NoError(t, err)
+
+				return c
+			},
+
+			expectedNameservers:   []netip.Addr{netip.MustParseAddr("2.2.2.2"), netip.MustParseAddr("3.3.3.3")},
+			expectedSearchDomains: nil,
+			expectedDisableSearch: false,
+		},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+
+			cfg := test.cfg(t)
+
+			resolverConfig := cfg.NetworkResolverConfig()
+
+			require.NotNil(t, resolverConfig)
+
+			assert.Equal(t, test.expectedNameservers, resolverConfig.Resolvers())
+			assert.Equal(t, test.expectedSearchDomains, resolverConfig.SearchDomains())
+			assert.Equal(t, test.expectedDisableSearch, resolverConfig.DisableSearchDomain())
+		})
+	}
+}
+
+func TestTimeSyncBridging(t *testing.T) {
+	t.Parallel()
+
+	for _, test := range []struct {
+		name string
+
+		cfg func(*testing.T) config.Config
+
+		expectedNil         bool
+		expectedDisabled    bool
+		expectedTimeservers []string
+		expectedBootTimeout time.Duration
+	}{
+		{
+			name: "v1alpha1 only",
+
+			cfg: func(*testing.T) config.Config {
+				return container.NewV1Alpha1(&v1alpha1.Config{
+					MachineConfig: &v1alpha1.MachineConfig{
+						MachineTime: &v1alpha1.TimeConfig{
+							TimeDisabled:    pointer.To(true),
+							TimeServers:     []string{"time1.example.com", "time2.example.com"},
+							TimeBootTimeout: 30 * time.Second,
+						},
+					},
+				})
+			},
+
+			expectedDisabled:    true,
+			expectedTimeservers: []string{"time1.example.com", "time2.example.com"},
+			expectedBootTimeout: 30 * time.Second,
+		},
+		{
+			name: "v1alpha1 empty",
+
+			cfg: func(*testing.T) config.Config {
+				return container.NewV1Alpha1(&v1alpha1.Config{
+					MachineConfig: &v1alpha1.MachineConfig{},
+				})
+			},
+
+			expectedNil: true,
+		},
+		{
+			name: "new style only",
+
+			cfg: func(*testing.T) config.Config {
+				tsc := network.NewTimeSyncConfigV1Alpha1()
+				tsc.TimeBootTimeout = 10 * time.Second
+				tsc.TimeNTP = &network.NTPConfig{
+					Servers: []string{"time1.example.com", "time2.example.com"},
+				}
+
+				c, err := container.New(
+					tsc,
+				)
+				require.NoError(t, err)
+
+				return c
+			},
+
+			expectedDisabled:    false,
+			expectedTimeservers: []string{"time1.example.com", "time2.example.com"},
+			expectedBootTimeout: 10 * time.Second,
+		},
+		{
+			name: "mixed",
+
+			cfg: func(*testing.T) config.Config {
+				tsc := network.NewTimeSyncConfigV1Alpha1()
+				tsc.TimeBootTimeout = 10 * time.Second
+				tsc.TimeNTP = &network.NTPConfig{
+					Servers: []string{"time1.example.com", "time2.example.com"},
+				}
+
+				c, err := container.New(
+					tsc,
+					&v1alpha1.Config{
+						MachineConfig: &v1alpha1.MachineConfig{
+							MachineNetwork: &v1alpha1.NetworkConfig{},
+						},
+					},
+				)
+				require.NoError(t, err)
+
+				return c
+			},
+
+			expectedDisabled:    false,
+			expectedTimeservers: []string{"time1.example.com", "time2.example.com"},
+			expectedBootTimeout: 10 * time.Second,
+		},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+
+			cfg := test.cfg(t)
+
+			timesyncConfig := cfg.NetworkTimeSyncConfig()
+
+			if test.expectedNil {
+				require.Nil(t, timesyncConfig)
+
+				return
+			}
+
+			require.NotNil(t, timesyncConfig)
+
+			assert.Equal(t, test.expectedTimeservers, timesyncConfig.Servers())
+			assert.Equal(t, test.expectedDisabled, timesyncConfig.Disabled())
+			assert.Equal(t, test.expectedBootTimeout, timesyncConfig.BootTimeout())
 		})
 	}
 }

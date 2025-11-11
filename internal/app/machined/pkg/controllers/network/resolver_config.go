@@ -82,7 +82,7 @@ func (ctrl *ResolverConfigController) Run(ctx context.Context, r controller.Runt
 			if !state.IsNotFoundError(err) {
 				return fmt.Errorf("error getting config: %w", err)
 			}
-		} else if cfg.Config().Machine() != nil {
+		} else {
 			cfgProvider = cfg.Config()
 		}
 
@@ -111,7 +111,7 @@ func (ctrl *ResolverConfigController) Run(ctx context.Context, r controller.Runt
 
 		// parse machine configuration for specs
 		if cfgProvider != nil {
-			if configServers, ok := ctrl.parseMachineConfiguration(logger, cfgProvider); ok {
+			if configServers, ok := ctrl.parseMachineConfiguration(cfgProvider); ok {
 				specs = append(specs, configServers)
 			}
 		}
@@ -181,8 +181,8 @@ func (ctrl *ResolverConfigController) getDefault(cfg talosconfig.Config, hostnam
 	spec.ConfigLayer = network.ConfigDefault
 
 	if cfg == nil ||
-		cfg.Machine() == nil ||
-		cfg.Machine().Network().DisableSearchDomain() ||
+		cfg.NetworkResolverConfig() == nil ||
+		cfg.NetworkResolverConfig().DisableSearchDomain() ||
 		hostnameStatus == nil ||
 		hostnameStatus.Domainname == "" {
 		return spec
@@ -215,27 +215,21 @@ func (ctrl *ResolverConfigController) parseCmdline(logger *zap.Logger) (spec net
 	return spec
 }
 
-func (ctrl *ResolverConfigController) parseMachineConfiguration(logger *zap.Logger, cfgProvider talosconfig.Config) (network.ResolverSpecSpec, bool) {
+func (ctrl *ResolverConfigController) parseMachineConfiguration(cfgProvider talosconfig.Config) (network.ResolverSpecSpec, bool) {
 	var spec network.ResolverSpecSpec
 
-	resolvers := cfgProvider.Machine().Network().Resolvers()
-	searchDomains := cfgProvider.Machine().Network().SearchDomains()
+	if cfgProvider.NetworkResolverConfig() == nil {
+		return spec, false
+	}
+
+	resolvers := cfgProvider.NetworkResolverConfig().Resolvers()
+	searchDomains := cfgProvider.NetworkResolverConfig().SearchDomains()
 
 	if len(resolvers) == 0 && len(searchDomains) == 0 {
 		return spec, false
 	}
 
-	for _, resolver := range resolvers {
-		server, err := netip.ParseAddr(resolver)
-		if err != nil {
-			logger.Warn("failed to parse DNS server", zap.String("server", resolver), zap.Error(err))
-
-			continue
-		}
-
-		spec.DNSServers = append(spec.DNSServers, server)
-	}
-
+	spec.DNSServers = slices.Clone(resolvers)
 	spec.SearchDomains = slices.Clone(searchDomains)
 	spec.ConfigLayer = network.ConfigMachineConfiguration
 

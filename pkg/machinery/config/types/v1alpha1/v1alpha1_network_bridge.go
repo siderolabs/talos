@@ -5,6 +5,8 @@
 package v1alpha1
 
 import (
+	"net/netip"
+
 	"github.com/siderolabs/go-pointer"
 
 	"github.com/siderolabs/talos/pkg/machinery/config/config"
@@ -43,4 +45,48 @@ func (c *Config) AutoHostname() nethelpers.AutoHostnameKind {
 	}
 
 	return nethelpers.AutoHostnameKindAddr
+}
+
+// Resolvers implements config.NetworkResolverConfig interface.
+func (c *Config) Resolvers() []netip.Addr {
+	if c.MachineConfig == nil || c.MachineConfig.MachineNetwork == nil {
+		return nil
+	}
+
+	var result []netip.Addr
+
+	for _, r := range c.MachineConfig.MachineNetwork.NameServers {
+		if addr, err := netip.ParseAddr(r); err == nil {
+			result = append(result, addr)
+		}
+	}
+
+	return result
+}
+
+// SearchDomains implements config.NetworkResolverConfig interface.
+func (c *Config) SearchDomains() []string {
+	if c.MachineConfig == nil || c.MachineConfig.MachineNetwork == nil {
+		return nil
+	}
+
+	return c.MachineConfig.MachineNetwork.Searches
+}
+
+// DisableSearchDomain implements config.NetworkResolverConfig interface.
+func (c *Config) DisableSearchDomain() bool {
+	if c.MachineConfig == nil || c.MachineConfig.MachineNetwork == nil {
+		return false
+	}
+
+	return pointer.SafeDeref(c.MachineConfig.MachineNetwork.NetworkDisableSearchDomain)
+}
+
+// NetworkTimeSyncConfig implements config.NetworkTimeSyncConfig interface.
+func (c *Config) NetworkTimeSyncConfig() config.NetworkTimeSyncConfig {
+	if c.MachineConfig == nil || c.MachineConfig.MachineTime == nil {
+		return nil
+	}
+
+	return c.MachineConfig.MachineTime
 }

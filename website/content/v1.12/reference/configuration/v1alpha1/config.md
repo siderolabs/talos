@@ -144,11 +144,9 @@ pods:
 {{< /highlight >}}</details> | |
 |`network` |<a href="#Config.machine.network">NetworkConfig</a> |Provides machine specific network configuration options. <details><summary>Show example(s)</summary>Network definition example.:{{< highlight yaml >}}
 network:
-    # Used to statically set the nameservers for the machine.
     nameservers:
         - 9.8.7.6
         - 8.7.6.5
-    # Used to statically set arbitrary search domains.
     searchDomains:
         - example.org
         - example.com
@@ -190,14 +188,6 @@ env:
 env:
     https_proxy: http://DOMAIN\USERNAME:PASSWORD@SERVER:PORT/
 {{< /highlight >}}</details> |``GRPC_GO_LOG_VERBOSITY_LEVEL``<br />``GRPC_GO_LOG_SEVERITY_LEVEL``<br />``http_proxy``<br />``https_proxy``<br />``no_proxy``<br /> |
-|`time` |<a href="#Config.machine.time">TimeConfig</a> |Used to configure the machine's time settings. <details><summary>Show example(s)</summary>Example configuration for cloudflare ntp server.:{{< highlight yaml >}}
-time:
-    disabled: false # Indicates if the time service is disabled for the machine.
-    # description: |
-    servers:
-        - time.cloudflare.com
-    bootTimeout: 2m0s # Specifies the timeout when the node time is considered to be in sync unlocking the boot sequence.
-{{< /highlight >}}</details> | |
 |`sysctls` |map[string]string |Used to configure the machine's sysctls. <details><summary>Show example(s)</summary>MachineSysctls usage example.:{{< highlight yaml >}}
 sysctls:
     kernel.domainname: talos.dev
@@ -560,11 +550,9 @@ NetworkConfig represents the machine's networking config values.
 {{< highlight yaml >}}
 machine:
     network:
-        # Used to statically set the nameservers for the machine.
         nameservers:
             - 9.8.7.6
             - 8.7.6.5
-        # Used to statically set arbitrary search domains.
         searchDomains:
             - example.org
             - example.com
@@ -577,21 +565,10 @@ machine:
 
 | Field | Type | Description | Value(s) |
 |-------|------|-------------|----------|
-|`nameservers` |[]string |Used to statically set the nameservers for the machine.<br>Defaults to `1.1.1.1` and `8.8.8.8` <details><summary>Show example(s)</summary>{{< highlight yaml >}}
-nameservers:
-    - 8.8.8.8
-    - 1.1.1.1
-{{< /highlight >}}</details> | |
-|`searchDomains` |[]string |Used to statically set arbitrary search domains. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
-searchDomains:
-    - example.org
-    - example.com
-{{< /highlight >}}</details> | |
 |`kubespan` |<a href="#Config.machine.network.kubespan">NetworkKubeSpan</a> |Configures KubeSpan feature. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 kubespan:
     enabled: true # Enable the KubeSpan feature.
 {{< /highlight >}}</details> | |
-|`disableSearchDomain` |bool |Disable generating a default search domain in /etc/resolv.conf<br>based on the machine hostname.<br>Defaults to `false`.  |`true`<br />`yes`<br />`false`<br />`no`<br /> |
 
 
 
@@ -765,34 +742,6 @@ machine:
 |`permissions` |FileMode |The file's permissions in octal.  | |
 |`path` |string |The path of the file.  | |
 |`op` |string |The operation to use  |`create`<br />`append`<br />`overwrite`<br /> |
-
-
-
-
-
-
-### time {#Config.machine.time}
-
-TimeConfig represents the options for configuring time on a machine.
-
-
-
-{{< highlight yaml >}}
-machine:
-    time:
-        disabled: false # Indicates if the time service is disabled for the machine.
-        # description: |
-        servers:
-            - time.cloudflare.com
-        bootTimeout: 2m0s # Specifies the timeout when the node time is considered to be in sync unlocking the boot sequence.
-{{< /highlight >}}
-
-
-| Field | Type | Description | Value(s) |
-|-------|------|-------------|----------|
-|`disabled` |bool |Indicates if the time service is disabled for the machine.<br>Defaults to `false`.  | |
-|`servers` |[]string |description: |<br>    Specifies time (NTP) servers to use for setting the system time.<br>    Defaults to `time.cloudflare.com`.<br><br>   Talos can also sync to the PTP time source (e.g provided by the hypervisor),<br>    provide the path to the PTP device as "/dev/ptp0" or "/dev/ptp_kvm".<br>  | |
-|`bootTimeout` |Duration |Specifies the timeout when the node time is considered to be in sync unlocking the boot sequence.<br>NTP sync will be still running in the background.<br>Defaults to "infinity" (waiting forever for time sync)  | |
 
 
 

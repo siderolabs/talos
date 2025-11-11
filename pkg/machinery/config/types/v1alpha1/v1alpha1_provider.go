@@ -196,15 +196,6 @@ func (m *MachineConfig) Network() config.MachineNetwork {
 	return m.MachineNetwork
 }
 
-// Time implements the config.Provider interface.
-func (m *MachineConfig) Time() config.Time {
-	if m.MachineTime == nil {
-		return &TimeConfig{}
-	}
-
-	return m.MachineTime
-}
-
 // Controlplane implements the config.Provider interface.
 func (m *MachineConfig) Controlplane() config.MachineControlPlane {
 	if m.MachineControlPlane == nil {
@@ -577,11 +568,6 @@ func (r *RegistryTLSConfig) InsecureSkipVerify() bool {
 	return pointer.SafeDeref(r.TLSInsecureSkipVerify)
 }
 
-// DisableSearchDomain implements the config.Provider interface.
-func (n *NetworkConfig) DisableSearchDomain() bool {
-	return pointer.SafeDeref(n.NetworkDisableSearchDomain)
-}
-
 // Devices implements the config.Provider interface.
 func (n *NetworkConfig) Devices() []config.Device {
 	return xslices.Map(n.NetworkInterfaces, func(d *Device) config.Device { return d })
@@ -602,16 +588,6 @@ func (n *NetworkConfig) getDevice(iface IfaceSelector) *Device {
 	n.NetworkInterfaces = append(n.NetworkInterfaces, dev)
 
 	return dev
-}
-
-// Resolvers implements the config.Provider interface.
-func (n *NetworkConfig) Resolvers() []string {
-	return n.NameServers
-}
-
-// SearchDomains implements the config.Provider interface.
-func (n *NetworkConfig) SearchDomains() []string {
-	return n.Searches
 }
 
 // ExtraHosts implements the config.Provider interface.

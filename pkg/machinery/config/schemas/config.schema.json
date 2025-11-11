@@ -2249,6 +2249,101 @@
       "type": "object",
       "description": "LinkSelector selects a link to alias."
     },
+    "network.NTPConfig": {
+      "properties": {
+        "servers": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "title": "servers",
+          "description": "Specifies time (NTP) servers to use for setting the system time.\nDefaults to time.cloudflare.com.\n",
+          "markdownDescription": "Specifies time (NTP) servers to use for setting the system time.\nDefaults to `time.cloudflare.com`.",
+          "x-intellij-html-description": "\u003cp\u003eSpecifies time (NTP) servers to use for setting the system time.\nDefaults to \u003ccode\u003etime.cloudflare.com\u003c/code\u003e.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "description": "NTPConfig represents a NTP server configuration."
+    },
+    "network.NameserverConfig": {
+      "properties": {
+        "address": {
+          "type": "string",
+          "pattern": "^[0-9a-f.:]+$",
+          "title": "address",
+          "description": "The IP address of the nameserver.\n",
+          "markdownDescription": "The IP address of the nameserver.",
+          "x-intellij-html-description": "\u003cp\u003eThe IP address of the nameserver.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "description": "NameserverConfig represents a single nameserver configuration."
+    },
+    "network.PTPConfig": {
+      "properties": {
+        "devices": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "title": "devices",
+          "description": "description: |\n    A list of PTP devices to sync with (e.g. provided by the hypervisor).\n\nA PTP device is typically represented as a character device file in the /dev directory,\n\n\nsuch as /dev/ptp0 or /dev/ptp_kvm. These devices are used to synchronize the system time\n    with an external time source that supports the Precision Time Protocol.\n",
+          "markdownDescription": "description: |\n    A list of PTP devices to sync with (e.g. provided by the hypervisor).\n\n    A PTP device is typically represented as a character device file in the /dev directory,\n   such as /dev/ptp0 or /dev/ptp_kvm. These devices are used to synchronize the system time\n    with an external time source that supports the Precision Time Protocol.",
+          "x-intellij-html-description": "\u003cp\u003edescription: |\n    A list of PTP devices to sync with (e.g. provided by the hypervisor).\u003c/p\u003e\n\n\u003cpre\u003e\u003ccode\u003eA PTP device is typically represented as a character device file in the /dev directory,\n\u003c/code\u003e\u003c/pre\u003e\n\n\u003cp\u003esuch as /dev/ptp0 or /dev/ptp_kvm. These devices are used to synchronize the system time\n    with an external time source that supports the Precision Time Protocol.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "description": "PTPConfig represents a PTP (Precision Time Protocol) configuration."
+    },
+    "network.ResolverConfigV1Alpha1": {
+      "properties": {
+        "apiVersion": {
+          "enum": [
+            "v1alpha1"
+          ],
+          "title": "apiVersion",
+          "description": "apiVersion is the API version of the resource.\n",
+          "markdownDescription": "apiVersion is the API version of the resource.",
+          "x-intellij-html-description": "\u003cp\u003eapiVersion is the API version of the resource.\u003c/p\u003e\n"
+        },
+        "kind": {
+          "enum": [
+            "ResolverConfig"
+          ],
+          "title": "kind",
+          "description": "kind is the kind of the resource.\n",
+          "markdownDescription": "kind is the kind of the resource.",
+          "x-intellij-html-description": "\u003cp\u003ekind is the kind of the resource.\u003c/p\u003e\n"
+        },
+        "nameservers": {
+          "items": {
+            "$ref": "#/$defs/network.NameserverConfig"
+          },
+          "type": "array",
+          "title": "nameservers",
+          "description": "A list of nameservers (DNS servers) to use for resolving domain names.\n\nNameservers are used to resolve domain names on the host, and they are also\npropagated to Kubernetes DNS (CoreDNS) for use by pods running on the cluster.\n\nThis overrides any nameservers obtained via DHCP or platform configuration.\nDefault configuration is to use 1.1.1.1 and 8.8.8.8 as nameservers.\n",
+          "markdownDescription": "A list of nameservers (DNS servers) to use for resolving domain names.\n\nNameservers are used to resolve domain names on the host, and they are also\npropagated to Kubernetes DNS (CoreDNS) for use by pods running on the cluster.\n\nThis overrides any nameservers obtained via DHCP or platform configuration.\nDefault configuration is to use 1.1.1.1 and 8.8.8.8 as nameservers.",
+          "x-intellij-html-description": "\u003cp\u003eA list of nameservers (DNS servers) to use for resolving domain names.\u003c/p\u003e\n\n\u003cp\u003eNameservers are used to resolve domain names on the host, and they are also\npropagated to Kubernetes DNS (CoreDNS) for use by pods running on the cluster.\u003c/p\u003e\n\n\u003cp\u003eThis overrides any nameservers obtained via DHCP or platform configuration.\nDefault configuration is to use 1.1.1.1 and 8.8.8.8 as nameservers.\u003c/p\u003e\n"
+        },
+        "searchDomains": {
+          "$ref": "#/$defs/network.SearchDomainsConfig",
+          "title": "searchDomains",
+          "description": "Configuration for search domains (in /etc/resolv.conf).\n\nThe default is to derive search domains from the hostname FQDN.\n",
+          "markdownDescription": "Configuration for search domains (in /etc/resolv.conf).\n\nThe default is to derive search domains from the hostname FQDN.",
+          "x-intellij-html-description": "\u003cp\u003eConfiguration for search domains (in /etc/resolv.conf).\u003c/p\u003e\n\n\u003cp\u003eThe default is to derive search domains from the hostname FQDN.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "apiVersion",
+        "kind"
+      ],
+      "description": "ResolverConfig is a config document to configure DNS resolving."
+    },
     "network.RouteConfig": {
       "properties": {
         "destination": {
@@ -2391,6 +2486,30 @@
       "type": "object",
       "description": "RulePortSelector is a port selector for the network rule."
     },
+    "network.SearchDomainsConfig": {
+      "properties": {
+        "domains": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "title": "domains",
+          "description": "A list of search domains to be used for DNS resolution.\n\nSearch domains are appended to unqualified domain names during DNS resolution.\nFor example, if “example.com” is a search domain and a user tries to resolve\n“host”, the system will attempt to resolve “host.example.com”.\n\nThis overrides any search domains obtained via DHCP or platform configuration.\nThe default configuration derives the search domain from the hostname FQDN.\n",
+          "markdownDescription": "A list of search domains to be used for DNS resolution.\n\nSearch domains are appended to unqualified domain names during DNS resolution.\nFor example, if \"example.com\" is a search domain and a user tries to resolve\n\"host\", the system will attempt to resolve \"host.example.com\".\n\nThis overrides any search domains obtained via DHCP or platform configuration.\nThe default configuration derives the search domain from the hostname FQDN.",
+          "x-intellij-html-description": "\u003cp\u003eA list of search domains to be used for DNS resolution.\u003c/p\u003e\n\n\u003cp\u003eSearch domains are appended to unqualified domain names during DNS resolution.\nFor example, if \u0026ldquo;example.com\u0026rdquo; is a search domain and a user tries to resolve\n\u0026ldquo;host\u0026rdquo;, the system will attempt to resolve \u0026ldquo;host.example.com\u0026rdquo;.\u003c/p\u003e\n\n\u003cp\u003eThis overrides any search domains obtained via DHCP or platform configuration.\nThe default configuration derives the search domain from the hostname FQDN.\u003c/p\u003e\n"
+        },
+        "disableDefault": {
+          "type": "boolean",
+          "title": "disableDefault",
+          "description": "Disable default search domain configuration from hostname FQDN.\n\nWhen set to true, the system will not derive search domains from the hostname FQDN.\nThis allows for a custom configuration of search domains without any defaults.\n",
+          "markdownDescription": "Disable default search domain configuration from hostname FQDN.\n\nWhen set to true, the system will not derive search domains from the hostname FQDN.\nThis allows for a custom configuration of search domains without any defaults.",
+          "x-intellij-html-description": "\u003cp\u003eDisable default search domain configuration from hostname FQDN.\u003c/p\u003e\n\n\u003cp\u003eWhen set to true, the system will not derive search domains from the hostname FQDN.\nThis allows for a custom configuration of search domains without any defaults.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "description": "SearchDomainsConfig represents search domains configuration."
+    },
     "network.StaticHostConfigV1Alpha1": {
       "properties": {
         "apiVersion": {
@@ -2437,6 +2556,64 @@
         "name"
       ],
       "description": "StaticHostConfig is a config document to set /etc/hosts entries."
+    },
+    "network.TimeSyncConfigV1Alpha1": {
+      "properties": {
+        "apiVersion": {
+          "enum": [
+            "v1alpha1"
+          ],
+          "title": "apiVersion",
+          "description": "apiVersion is the API version of the resource.\n",
+          "markdownDescription": "apiVersion is the API version of the resource.",
+          "x-intellij-html-description": "\u003cp\u003eapiVersion is the API version of the resource.\u003c/p\u003e\n"
+        },
+        "kind": {
+          "enum": [
+            "TimeSyncConfig"
+          ],
+          "title": "kind",
+          "description": "kind is the kind of the resource.\n",
+          "markdownDescription": "kind is the kind of the resource.",
+          "x-intellij-html-description": "\u003cp\u003ekind is the kind of the resource.\u003c/p\u003e\n"
+        },
+        "enabled": {
+          "type": "boolean",
+          "title": "enabled",
+          "description": "Indicates if the time synchronization is enabled for the machine.\nDefaults to true.\n",
+          "markdownDescription": "Indicates if the time synchronization is enabled for the machine.\nDefaults to `true`.",
+          "x-intellij-html-description": "\u003cp\u003eIndicates if the time synchronization is enabled for the machine.\nDefaults to \u003ccode\u003etrue\u003c/code\u003e.\u003c/p\u003e\n"
+        },
+        "bootTimeout": {
+          "type": "string",
+          "pattern": "^[-+]?(((\\d+(\\.\\d*)?|\\d*(\\.\\d+)+)([nuµm]?s|m|h))|0)+$",
+          "title": "bootTimeout",
+          "description": "Specifies the timeout when the node time is considered to be in sync unlocking the boot sequence.\nNTP sync will be still running in the background.\nDefaults to “infinity” (waiting forever for time sync)\n",
+          "markdownDescription": "Specifies the timeout when the node time is considered to be in sync unlocking the boot sequence.\nNTP sync will be still running in the background.\nDefaults to \"infinity\" (waiting forever for time sync)",
+          "x-intellij-html-description": "\u003cp\u003eSpecifies the timeout when the node time is considered to be in sync unlocking the boot sequence.\nNTP sync will be still running in the background.\nDefaults to \u0026ldquo;infinity\u0026rdquo; (waiting forever for time sync)\u003c/p\u003e\n"
+        },
+        "ntp": {
+          "$ref": "#/$defs/network.NTPConfig",
+          "title": "ntp",
+          "description": "Specifies NTP configuration to sync the time over network.\nMutually exclusive with PTP configuration.\n",
+          "markdownDescription": "Specifies NTP configuration to sync the time over network.\nMutually exclusive with PTP configuration.",
+          "x-intellij-html-description": "\u003cp\u003eSpecifies NTP configuration to sync the time over network.\nMutually exclusive with PTP configuration.\u003c/p\u003e\n"
+        },
+        "ptp": {
+          "$ref": "#/$defs/network.PTPConfig",
+          "title": "ptp",
+          "description": "Specific PTP (Precision Time Protocol) configuration to sync the time over PTP devices.\nMutually exclusive with NTP configuration.\n",
+          "markdownDescription": "Specific PTP (Precision Time Protocol) configuration to sync the time over PTP devices.\nMutually exclusive with NTP configuration.",
+          "x-intellij-html-description": "\u003cp\u003eSpecific PTP (Precision Time Protocol) configuration to sync the time over PTP devices.\nMutually exclusive with NTP configuration.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "apiVersion",
+        "kind"
+      ],
+      "description": "TimeSyncConfig is a config document to configure time synchronization (NTP)."
     },
     "network.VLANConfigV1Alpha1": {
       "properties": {
@@ -4412,13 +4589,6 @@
           "markdownDescription": "The `env` field allows for the addition of environment variables.\nAll environment variables are set on PID 1 in addition to every service.",
           "x-intellij-html-description": "\u003cp\u003eThe \u003ccode\u003eenv\u003c/code\u003e field allows for the addition of environment variables.\nAll environment variables are set on PID 1 in addition to every service.\u003c/p\u003e\n"
         },
-        "time": {
-          "$ref": "#/$defs/v1alpha1.TimeConfig",
-          "title": "time",
-          "description": "Used to configure the machine’s time settings.\n",
-          "markdownDescription": "Used to configure the machine's time settings.",
-          "x-intellij-html-description": "\u003cp\u003eUsed to configure the machine\u0026rsquo;s time settings.\u003c/p\u003e\n"
-        },
         "sysctls": {
           "patternProperties": {
             ".*": {
@@ -4640,39 +4810,12 @@
     },
     "v1alpha1.NetworkConfig": {
       "properties": {
-        "nameservers": {
-          "items": {
-            "type": "string"
-          },
-          "type": "array",
-          "title": "nameservers",
-          "description": "Used to statically set the nameservers for the machine.\nDefaults to 1.1.1.1 and 8.8.8.8\n",
-          "markdownDescription": "Used to statically set the nameservers for the machine.\nDefaults to `1.1.1.1` and `8.8.8.8`",
-          "x-intellij-html-description": "\u003cp\u003eUsed to statically set the nameservers for the machine.\nDefaults to \u003ccode\u003e1.1.1.1\u003c/code\u003e and \u003ccode\u003e8.8.8.8\u003c/code\u003e\u003c/p\u003e\n"
-        },
-        "searchDomains": {
-          "items": {
-            "type": "string"
-          },
-          "type": "array",
-          "title": "searchDomains",
-          "description": "Used to statically set arbitrary search domains.\n",
-          "markdownDescription": "Used to statically set arbitrary search domains.",
-          "x-intellij-html-description": "\u003cp\u003eUsed to statically set arbitrary search domains.\u003c/p\u003e\n"
-        },
         "kubespan": {
           "$ref": "#/$defs/v1alpha1.NetworkKubeSpan",
           "title": "kubespan",
           "description": "Configures KubeSpan feature.\n",
           "markdownDescription": "Configures KubeSpan feature.",
           "x-intellij-html-description": "\u003cp\u003eConfigures KubeSpan feature.\u003c/p\u003e\n"
-        },
-        "disableSearchDomain": {
-          "type": "boolean",
-          "title": "disableSearchDomain",
-          "description": "Disable generating a default search domain in /etc/resolv.conf\nbased on the machine hostname.\nDefaults to false.\n",
-          "markdownDescription": "Disable generating a default search domain in /etc/resolv.conf\nbased on the machine hostname.\nDefaults to `false`.",
-          "x-intellij-html-description": "\u003cp\u003eDisable generating a default search domain in /etc/resolv.conf\nbased on the machine hostname.\nDefaults to \u003ccode\u003efalse\u003c/code\u003e.\u003c/p\u003e\n"
         }
       },
       "additionalProperties": false,
@@ -4886,38 +5029,6 @@
       "type": "object",
       "description": "SchedulerConfig represents the kube scheduler configuration options."
     },
-    "v1alpha1.TimeConfig": {
-      "properties": {
-        "disabled": {
-          "type": "boolean",
-          "title": "disabled",
-          "description": "Indicates if the time service is disabled for the machine.\nDefaults to false.\n",
-          "markdownDescription": "Indicates if the time service is disabled for the machine.\nDefaults to `false`.",
-          "x-intellij-html-description": "\u003cp\u003eIndicates if the time service is disabled for the machine.\nDefaults to \u003ccode\u003efalse\u003c/code\u003e.\u003c/p\u003e\n"
-        },
-        "servers": {
-          "items": {
-            "type": "string"
-          },
-          "type": "array",
-          "title": "servers",
-          "description": "description: |\n    Specifies time (NTP) servers to use for setting the system time.\n    Defaults to time.cloudflare.com.\n\nTalos can also sync to the PTP time source (e.g provided by the hypervisor),\n    provide the path to the PTP device as “/dev/ptp0” or “/dev/ptp_kvm”.\n",
-          "markdownDescription": "description: |\n    Specifies time (NTP) servers to use for setting the system time.\n    Defaults to `time.cloudflare.com`.\n\n   Talos can also sync to the PTP time source (e.g provided by the hypervisor),\n    provide the path to the PTP device as \"/dev/ptp0\" or \"/dev/ptp_kvm\".",
-          "x-intellij-html-description": "\u003cp\u003edescription: |\n    Specifies time (NTP) servers to use for setting the system time.\n    Defaults to \u003ccode\u003etime.cloudflare.com\u003c/code\u003e.\u003c/p\u003e\n\n\u003cp\u003eTalos can also sync to the PTP time source (e.g provided by the hypervisor),\n    provide the path to the PTP device as \u0026ldquo;/dev/ptp0\u0026rdquo; or \u0026ldquo;/dev/ptp_kvm\u0026rdquo;.\u003c/p\u003e\n"
-        },
-        "bootTimeout": {
-          "type": "string",
-          "pattern": "^[-+]?(((\\d+(\\.\\d*)?|\\d*(\\.\\d+)+)([nuµm]?s|m|h))|0)+$",
-          "title": "bootTimeout",
-          "description": "Specifies the timeout when the node time is considered to be in sync unlocking the boot sequence.\nNTP sync will be still running in the background.\nDefaults to “infinity” (waiting forever for time sync)\n",
-          "markdownDescription": "Specifies the timeout when the node time is considered to be in sync unlocking the boot sequence.\nNTP sync will be still running in the background.\nDefaults to \"infinity\" (waiting forever for time sync)",
-          "x-intellij-html-description": "\u003cp\u003eSpecifies the timeout when the node time is considered to be in sync unlocking the boot sequence.\nNTP sync will be still running in the background.\nDefaults to \u0026ldquo;infinity\u0026rdquo; (waiting forever for time sync)\u003c/p\u003e\n"
-        }
-      },
-      "additionalProperties": false,
-      "type": "object",
-      "description": "TimeConfig represents the options for configuring time on a machine."
-    },
     "v1alpha1.UdevConfig": {
       "properties": {
         "rules": {
@@ -5038,10 +5149,16 @@
       "$ref": "#/$defs/network.LinkAliasConfigV1Alpha1"
     },
     {
+      "$ref": "#/$defs/network.ResolverConfigV1Alpha1"
+    },
+    {
       "$ref": "#/$defs/network.RuleConfigV1Alpha1"
     },
     {
       "$ref": "#/$defs/network.StaticHostConfigV1Alpha1"
+    },
+    {
+      "$ref": "#/$defs/network.TimeSyncConfigV1Alpha1"
     },
     {
       "$ref": "#/$defs/network.VLANConfigV1Alpha1"

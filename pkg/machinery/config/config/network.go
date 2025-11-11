@@ -112,6 +112,21 @@ type NetworkHostnameConfig interface {
 	AutoHostname() nethelpers.AutoHostnameKind
 }
 
+// NetworkResolverConfig defines a resolver configuration.
+type NetworkResolverConfig interface {
+	Resolvers() []netip.Addr
+	SearchDomains() []string
+	DisableSearchDomain() bool
+}
+
+// NetworkTimeSyncConfig defines the requirements for a config that pertains to time related
+// options.
+type NetworkTimeSyncConfig interface {
+	Disabled() bool
+	Servers() []string
+	BootTimeout() time.Duration
+}
+
 // NetworkPhysicalLinkConfig defines a physical network link configuration.
 type NetworkPhysicalLinkConfig interface {
 	PhysicalLinkConfig()

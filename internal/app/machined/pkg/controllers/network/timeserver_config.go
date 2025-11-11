@@ -75,7 +75,7 @@ func (ctrl *TimeServerConfigController) Run(ctx context.Context, r controller.Ru
 			if !state.IsNotFoundError(err) {
 				return fmt.Errorf("error getting config: %w", err)
 			}
-		} else if cfg.Config().Machine() != nil {
+		} else {
 			cfgProvider = cfg.Config()
 		}
 
@@ -193,11 +193,11 @@ func (ctrl *TimeServerConfigController) parseCmdline(logger *zap.Logger) (spec n
 }
 
 func (ctrl *TimeServerConfigController) parseMachineConfiguration(cfgProvider talosconfig.Config) (spec network.TimeServerSpecSpec) {
-	if len(cfgProvider.Machine().Time().Servers()) == 0 {
+	if cfgProvider.NetworkTimeSyncConfig() == nil {
 		return spec
 	}
 
-	spec.NTPServers = slices.Clone(cfgProvider.Machine().Time().Servers())
+	spec.NTPServers = slices.Clone(cfgProvider.NetworkTimeSyncConfig().Servers())
 	spec.ConfigLayer = network.ConfigMachineConfiguration
 
 	return spec

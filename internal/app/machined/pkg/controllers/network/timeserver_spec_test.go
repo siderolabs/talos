@@ -6,83 +6,20 @@
 package network_test
 
 import (
-	"context"
-	"slices"
-	"sync"
 	"testing"
 	"time"
 
-	"github.com/cosi-project/runtime/pkg/controller/runtime"
-	"github.com/cosi-project/runtime/pkg/resource"
-	"github.com/cosi-project/runtime/pkg/state"
-	"github.com/cosi-project/runtime/pkg/state/impl/inmem"
-	"github.com/cosi-project/runtime/pkg/state/impl/namespaced"
-	"github.com/siderolabs/go-retry/retry"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
-	"go.uber.org/zap/zaptest"
 
+	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/ctest"
 	netctrl "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/network"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/resources/network"
 )
 
 type TimeServerSpecSuite struct {
-	suite.Suite
-
-	state state.State
-
-	runtime *runtime.Runtime
-	wg      sync.WaitGroup
-
-	ctx       context.Context //nolint:containedctx
-	ctxCancel context.CancelFunc
-}
-
-func (suite *TimeServerSpecSuite) SetupTest() {
-	suite.ctx, suite.ctxCancel = context.WithTimeout(context.Background(), 3*time.Minute)
-
-	suite.state = state.WrapCore(namespaced.NewState(inmem.Build))
-
-	var err error
-
-	suite.runtime, err = runtime.NewRuntime(suite.state, zaptest.NewLogger(suite.T()))
-	suite.Require().NoError(err)
-
-	suite.Require().NoError(suite.runtime.RegisterController(&netctrl.TimeServerSpecController{}))
-
-	suite.startRuntime()
-}
-
-func (suite *TimeServerSpecSuite) startRuntime() {
-	suite.wg.Add(1)
-
-	go func() {
-		defer suite.wg.Done()
-
-		suite.Assert().NoError(suite.runtime.Run(suite.ctx))
-	}()
-}
-
-func (suite *TimeServerSpecSuite) assertStatus(id string, servers ...string) error {
-	r, err := suite.state.Get(
-		suite.ctx,
-		resource.NewMetadata(network.NamespaceName, network.TimeServerStatusType, id, resource.VersionUndefined),
-	)
-	if err != nil {
-		if state.IsNotFoundError(err) {
-			return retry.ExpectedError(err)
-		}
-
-		return err
-	}
-
-	status := r.(*network.TimeServerStatus) //nolint:forcetypeassert
-
-	if !slices.Equal(status.TypedSpec().NTPServers, servers) {
-		return retry.ExpectedErrorf("server list mismatch: %q != %q", status.TypedSpec().NTPServers, servers)
-	}
-
-	return nil
+	ctest.DefaultSuite
 }
 
 func (suite *TimeServerSpecSuite) TestSpec() {
@@ -92,27 +29,26 @@ func (suite *TimeServerSpecSuite) TestSpec() {
 		ConfigLayer: network.ConfigDefault,
 	}
 
-	for _, res := range []resource.Resource{spec} {
-		suite.Require().NoError(suite.state.Create(suite.ctx, res), "%v", res.Spec())
-	}
+	suite.Create(spec)
 
-	suite.Assert().NoError(
-		retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-			func() error {
-				return suite.assertStatus("timeservers", constants.DefaultNTPServer)
-			},
-		),
+	ctest.AssertResource(
+		suite,
+		"timeservers",
+		func(status *network.TimeServerStatus, asrt *assert.Assertions) {
+			asrt.Equal([]string{constants.DefaultNTPServer}, status.TypedSpec().NTPServers)
+		},
 	)
 }
 
-func (suite *TimeServerSpecSuite) TearDownTest() {
-	suite.T().Log("tear down")
-
-	suite.ctxCancel()
-
-	suite.wg.Wait()
-}
-
 func TestTimeServerSpecSuite(t *testing.T) {
-	suite.Run(t, new(TimeServerSpecSuite))
+	t.Parallel()
+
+	suite.Run(t, &TimeServerSpecSuite{
+		DefaultSuite: ctest.DefaultSuite{
+			Timeout: 5 * time.Second,
+			AfterSetup: func(suite *ctest.DefaultSuite) {
+				suite.Require().NoError(suite.Runtime().RegisterController(&netctrl.TimeServerSpecController{}))
+			},
+		},
+	})
 }

@@ -302,6 +302,38 @@ func (container *Container) NetworkHostnameConfig() config.NetworkHostnameConfig
 	return nil
 }
 
+// NetworkResolverConfig implements config.Config interface.
+func (container *Container) NetworkResolverConfig() config.NetworkResolverConfig {
+	// first check if we have a dedicated document
+	matching := findMatchingDocs[config.NetworkResolverConfig](container.documents)
+	if len(matching) > 0 {
+		return matching[0]
+	}
+
+	// fallback to v1alpha1
+	if container.v1alpha1Config != nil {
+		return container.v1alpha1Config
+	}
+
+	return nil
+}
+
+// NetworkTimeSyncConfig implements config.Config interface.
+func (container *Container) NetworkTimeSyncConfig() config.NetworkTimeSyncConfig {
+	// first check if we have a dedicated document
+	matching := findMatchingDocs[config.NetworkTimeSyncConfig](container.documents)
+	if len(matching) > 0 {
+		return matching[0]
+	}
+
+	// fallback to v1alpha1
+	if container.v1alpha1Config != nil {
+		return container.v1alpha1Config.NetworkTimeSyncConfig()
+	}
+
+	return nil
+}
+
 // NetworkCommonLinkConfigs implements config.Config interface.
 func (container *Container) NetworkCommonLinkConfigs() []config.NetworkCommonLinkConfig {
 	return findMatchingDocs[config.NetworkCommonLinkConfig](container.documents)

@@ -189,6 +189,13 @@ Talos 1.11 made a fix to create UEFI boot entry and set the boot order as first 
 To avoid further issues, Talos will now only create the UEFI boot entry if it does not exist, but will not modify the boot order.
 """
 
+    [notes.network-configuration]
+        title = "Network Configuration"
+        description = """\
+The network configuration under `.machine.network` (with the exception of KubeSpan) has been deprecated, but it is still supported for backwards compatibility.
+New configuration documents were created to replace it, they will be documented in the future.
+"""
+
 [make_deps]
 
     [make_deps.tools]

@@ -5,29 +5,21 @@
 package network_test
 
 import (
-	"context"
 	"net/netip"
 	"net/url"
-	"sync"
 	"testing"
 	"time"
 
-	"github.com/cosi-project/runtime/pkg/controller/runtime"
-	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/rtestutils"
-	"github.com/cosi-project/runtime/pkg/state"
-	"github.com/cosi-project/runtime/pkg/state/impl/inmem"
-	"github.com/cosi-project/runtime/pkg/state/impl/namespaced"
 	"github.com/siderolabs/go-pointer"
 	"github.com/siderolabs/go-procfs/procfs"
-	"github.com/siderolabs/go-retry/retry"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
-	"go.uber.org/zap/zaptest"
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/ctest"
 	netctrl "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/network"
 	"github.com/siderolabs/talos/pkg/machinery/config/container"
+	networkcfg "github.com/siderolabs/talos/pkg/machinery/config/types/network"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/resources/config"
@@ -35,70 +27,14 @@ import (
 )
 
 type ResolverConfigSuite struct {
-	suite.Suite
-
-	state state.State
-
-	runtime *runtime.Runtime
-	wg      sync.WaitGroup
-
-	ctx       context.Context //nolint:containedctx
-	ctxCancel context.CancelFunc
-}
-
-func (suite *ResolverConfigSuite) State() state.State { return suite.state }
-
-func (suite *ResolverConfigSuite) Ctx() context.Context { return suite.ctx }
-
-func (suite *ResolverConfigSuite) SetupTest() {
-	suite.ctx, suite.ctxCancel = context.WithTimeout(context.Background(), 3*time.Minute)
-
-	suite.state = state.WrapCore(namespaced.NewState(inmem.Build))
-
-	var err error
-
-	suite.runtime, err = runtime.NewRuntime(suite.state, zaptest.NewLogger(suite.T()))
-	suite.Require().NoError(err)
-}
-
-func (suite *ResolverConfigSuite) startRuntime() {
-	suite.wg.Add(1)
-
-	go func() {
-		defer suite.wg.Done()
-
-		suite.Assert().NoError(suite.runtime.Run(suite.ctx))
-	}()
-}
-
-func (suite *ResolverConfigSuite) assertResolvers(requiredIDs []string, check func(*network.ResolverSpec, *assert.Assertions)) {
-	assertResources(suite.ctx, suite.T(), suite.state, requiredIDs, check, rtestutils.WithNamespace(network.ConfigNamespaceName))
-}
-
-func (suite *ResolverConfigSuite) assertNoResolver(id string) error {
-	resources, err := suite.state.List(
-		suite.ctx,
-		resource.NewMetadata(network.ConfigNamespaceName, network.ResolverSpecType, "", resource.VersionUndefined),
-	)
-	if err != nil {
-		return err
-	}
-
-	for _, res := range resources.Items {
-		if res.Metadata().ID() == id {
-			return retry.ExpectedErrorf("spec %q is still there", id)
-		}
-	}
-
-	return nil
+	ctest.DefaultSuite
 }
 
 func (suite *ResolverConfigSuite) TestDefaults() {
-	suite.Require().NoError(suite.runtime.RegisterController(&netctrl.ResolverConfigController{}))
+	suite.Require().NoError(suite.Runtime().RegisterController(&netctrl.ResolverConfigController{}))
 
-	suite.startRuntime()
-
-	suite.assertResolvers(
+	ctest.AssertResources(
+		suite,
 		[]string{
 			"default/resolvers",
 		}, func(r *network.ResolverSpec, asrt *assert.Assertions) {
@@ -111,16 +47,17 @@ func (suite *ResolverConfigSuite) TestDefaults() {
 			asrt.Empty(r.TypedSpec().SearchDomains)
 			asrt.Equal(network.ConfigDefault, r.TypedSpec().ConfigLayer)
 		},
+		rtestutils.WithNamespace(network.ConfigNamespaceName),
 	)
 }
 
 func (suite *ResolverConfigSuite) TestWithHostnameStatus() {
-	suite.Require().NoError(suite.runtime.RegisterController(&netctrl.ResolverConfigController{}))
+	suite.Require().NoError(suite.Runtime().RegisterController(&netctrl.ResolverConfigController{}))
 
 	hostnameStatus := network.NewHostnameStatus(network.NamespaceName, network.HostnameID)
 	hostnameStatus.TypedSpec().Hostname = "irrelevant"
 	hostnameStatus.TypedSpec().Domainname = "example.org"
-	suite.Require().NoError(suite.state.Create(suite.ctx, hostnameStatus))
+	suite.Create(hostnameStatus)
 
 	u, err := url.Parse("https://foo:6443")
 	suite.Require().NoError(err)
@@ -143,11 +80,10 @@ func (suite *ResolverConfigSuite) TestWithHostnameStatus() {
 		),
 	)
 
-	suite.Require().NoError(suite.state.Create(suite.ctx, cfg))
+	suite.Create(cfg)
 
-	suite.startRuntime()
-
-	suite.assertResolvers(
+	ctest.AssertResources(
+		suite,
 		[]string{
 			"default/resolvers",
 		}, func(r *network.ResolverSpec, asrt *assert.Assertions) {
@@ -160,48 +96,52 @@ func (suite *ResolverConfigSuite) TestWithHostnameStatus() {
 			asrt.Equal([]string{"example.org"}, r.TypedSpec().SearchDomains)
 			asrt.Equal(network.ConfigDefault, r.TypedSpec().ConfigLayer)
 		},
+		rtestutils.WithNamespace(network.ConfigNamespaceName),
 	)
 
 	// make domain name empty
 	hostnameStatus.TypedSpec().Domainname = ""
-	suite.Require().NoError(suite.state.Update(suite.ctx, hostnameStatus))
+	suite.Update(hostnameStatus)
 
-	suite.assertResolvers(
+	ctest.AssertResources(
+		suite,
 		[]string{
 			"default/resolvers",
 		}, func(r *network.ResolverSpec, asrt *assert.Assertions) {
 			asrt.Empty(r.TypedSpec().SearchDomains)
 		},
+		rtestutils.WithNamespace(network.ConfigNamespaceName),
 	)
 
 	// bring back domain name, but disable via machine config
 	hostnameStatus.TypedSpec().Domainname = "example.org"
-	suite.Require().NoError(suite.state.Update(suite.ctx, hostnameStatus))
+	suite.Update(hostnameStatus)
 
-	cfg.Container().RawV1Alpha1().MachineConfig.MachineNetwork.NetworkDisableSearchDomain = pointer.To(true)
-	suite.Require().NoError(suite.state.Update(suite.ctx, cfg))
+	cfg.Container().RawV1Alpha1().MachineConfig.MachineNetwork.NetworkDisableSearchDomain = pointer.To(true) //nolint:staticcheck
+	suite.Update(cfg)
 
-	suite.assertResolvers(
+	ctest.AssertResources(
+		suite,
 		[]string{
 			"default/resolvers",
 		}, func(r *network.ResolverSpec, asrt *assert.Assertions) {
 			asrt.Empty(r.TypedSpec().SearchDomains)
 		},
+		rtestutils.WithNamespace(network.ConfigNamespaceName),
 	)
 }
 
 func (suite *ResolverConfigSuite) TestCmdline() {
 	suite.Require().NoError(
-		suite.runtime.RegisterController(
+		suite.Runtime().RegisterController(
 			&netctrl.ResolverConfigController{
 				Cmdline: procfs.NewCmdline("ip=172.20.0.2:172.21.0.1:172.20.0.1:255.255.255.0:master1:eth1::10.0.0.1:10.0.0.2:10.0.0.1"),
 			},
 		),
 	)
 
-	suite.startRuntime()
-
-	suite.assertResolvers(
+	ctest.AssertResources(
+		suite,
 		[]string{
 			"cmdline/resolvers",
 		}, func(r *network.ResolverSpec, asrt *assert.Assertions) {
@@ -213,13 +153,12 @@ func (suite *ResolverConfigSuite) TestCmdline() {
 			)
 			asrt.Empty(r.TypedSpec().SearchDomains)
 		},
+		rtestutils.WithNamespace(network.ConfigNamespaceName),
 	)
 }
 
-func (suite *ResolverConfigSuite) TestMachineConfiguration() {
-	suite.Require().NoError(suite.runtime.RegisterController(&netctrl.ResolverConfigController{}))
-
-	suite.startRuntime()
+func (suite *ResolverConfigSuite) TestMachineConfigurationLegacy() {
+	suite.Require().NoError(suite.Runtime().RegisterController(&netctrl.ResolverConfigController{}))
 
 	u, err := url.Parse("https://foo:6443")
 	suite.Require().NoError(err)
@@ -245,9 +184,10 @@ func (suite *ResolverConfigSuite) TestMachineConfiguration() {
 		),
 	)
 
-	suite.Require().NoError(suite.state.Create(suite.ctx, cfg))
+	suite.Create(cfg)
 
-	suite.assertResolvers(
+	ctest.AssertResources(
+		suite,
 		[]string{
 			"configuration/resolvers",
 		}, func(r *network.ResolverSpec, asrt *assert.Assertions) {
@@ -263,32 +203,72 @@ func (suite *ResolverConfigSuite) TestMachineConfiguration() {
 				r.TypedSpec().SearchDomains,
 			)
 		},
+		rtestutils.WithNamespace(network.ConfigNamespaceName),
 	)
 
 	ctest.UpdateWithConflicts(suite, cfg, func(r *config.MachineConfig) error {
-		r.Container().RawV1Alpha1().MachineConfig.MachineNetwork.NameServers = nil
-		r.Container().RawV1Alpha1().MachineConfig.MachineNetwork.Searches = nil
+		r.Container().RawV1Alpha1().MachineConfig.MachineNetwork.NameServers = nil //nolint:staticcheck
+		r.Container().RawV1Alpha1().MachineConfig.MachineNetwork.Searches = nil    //nolint:staticcheck
 
 		return nil
 	})
 
-	suite.Assert().NoError(
-		retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-			func() error {
-				return suite.assertNoResolver("configuration/resolvers")
-			},
-		),
-	)
+	ctest.AssertNoResource[*network.ResolverSpec](suite, "configuration/resolvers", rtestutils.WithNamespace(network.ConfigNamespaceName))
 }
 
-func (suite *ResolverConfigSuite) TearDownTest() {
-	suite.T().Log("tear down")
+func (suite *ResolverConfigSuite) TestMachineConfigurationNewStyle() {
+	suite.Require().NoError(suite.Runtime().RegisterController(&netctrl.ResolverConfigController{}))
 
-	suite.ctxCancel()
+	rc := networkcfg.NewResolverConfigV1Alpha1()
+	rc.ResolverNameservers = []networkcfg.NameserverConfig{
+		{
+			Address: networkcfg.Addr{Addr: netip.MustParseAddr("2.2.2.2")},
+		},
+		{
+			Address: networkcfg.Addr{Addr: netip.MustParseAddr("3.3.3.3")},
+		},
+	}
+	rc.ResolverSearchDomains = networkcfg.SearchDomainsConfig{
+		SearchDomains: []string{"example.com", "example.org"},
+	}
 
-	suite.wg.Wait()
+	ctr, err := container.New(rc)
+	suite.Require().NoError(err)
+
+	cfg := config.NewMachineConfig(ctr)
+	suite.Create(cfg)
+
+	ctest.AssertResources(
+		suite,
+		[]string{
+			"configuration/resolvers",
+		}, func(r *network.ResolverSpec, asrt *assert.Assertions) {
+			asrt.Equal(
+				[]netip.Addr{
+					netip.MustParseAddr("2.2.2.2"),
+					netip.MustParseAddr("3.3.3.3"),
+				}, r.TypedSpec().DNSServers,
+			)
+
+			asrt.Equal(
+				[]string{"example.com", "example.org"},
+				r.TypedSpec().SearchDomains,
+			)
+		},
+		rtestutils.WithNamespace(network.ConfigNamespaceName),
+	)
+
+	suite.Destroy(cfg)
+
+	ctest.AssertNoResource[*network.ResolverSpec](suite, "configuration/resolvers", rtestutils.WithNamespace(network.ConfigNamespaceName))
 }
 
 func TestResolverConfigSuite(t *testing.T) {
-	suite.Run(t, new(ResolverConfigSuite))
+	t.Parallel()
+
+	suite.Run(t, &ResolverConfigSuite{
+		DefaultSuite: ctest.DefaultSuite{
+			Timeout: 10 * time.Second,
+		},
+	})
 }

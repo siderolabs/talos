@@ -21,6 +21,8 @@ type Config interface { //nolint:interfacebloat
 	RunDefaultDHCPOperators() bool
 	NetworkStaticHostConfig() []NetworkStaticHostConfig
 	NetworkHostnameConfig() NetworkHostnameConfig
+	NetworkResolverConfig() NetworkResolverConfig
+	NetworkTimeSyncConfig() NetworkTimeSyncConfig
 	NetworkCommonLinkConfigs() []NetworkCommonLinkConfig
 	NetworkLinkAliasConfigs() []NetworkLinkAliasConfig
 	NetworkDHCPConfigs() []NetworkDHCPConfig

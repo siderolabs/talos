@@ -171,12 +171,12 @@ func (ctrl *SyncController) Run(ctx context.Context, r controller.Runtime, logge
 			syncDisabled = true
 		}
 
-		if cfg != nil && cfg.Config().Machine() != nil {
-			if cfg.Config().Machine().Time().Disabled() {
+		if cfg != nil && cfg.Config().NetworkTimeSyncConfig() != nil {
+			if cfg.Config().NetworkTimeSyncConfig().Disabled() {
 				syncDisabled = true
 			}
 
-			syncTimeout = cfg.Config().Machine().Time().BootTimeout()
+			syncTimeout = cfg.Config().NetworkTimeSyncConfig().BootTimeout()
 		}
 
 		if !timeSynced {

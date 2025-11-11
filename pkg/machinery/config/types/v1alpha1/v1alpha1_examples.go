@@ -161,14 +161,6 @@ func machineEnvExamples2() Env {
 	}
 }
 
-func machineTimeExample() *TimeConfig {
-	return &TimeConfig{
-		TimeDisabled:    pointer.To(false),
-		TimeServers:     []string{"time.cloudflare.com"},
-		TimeBootTimeout: 2 * time.Minute,
-	}
-}
-
 func machineSysctlsExample() map[string]string {
 	return map[string]string{
 		"kernel.domainname":                   "talos.dev",
