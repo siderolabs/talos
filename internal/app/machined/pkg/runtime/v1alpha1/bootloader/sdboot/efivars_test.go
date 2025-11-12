@@ -73,16 +73,12 @@ func TestSetBootEntry(t *testing.T) {
 		name         string
 		efivarfsMock *efivarfs.Mock
 
-		expectedMessageContains string
-		expectedBootOrder       efivarfs.BootOrder
-		expectedEntries         map[int]string
+		expectedEntries map[int]string
 	}{
 		{
 			name:         "empty efivarfs", // both BootOrder and BootEntries are initially empty
 			efivarfsMock: &efivarfs.Mock{},
 
-			expectedMessageContains: "setting Talos Linux UKI boot entry at index 0 as first in BootOrder: [0]",
-			expectedBootOrder:       efivarfs.BootOrder{0},
 			expectedEntries: map[int]string{
 				0: sdboot.TalosBootEntryDescription,
 			},
@@ -100,8 +96,6 @@ func TestSetBootEntry(t *testing.T) {
 				},
 			},
 
-			expectedMessageContains: "setting Talos Linux UKI boot entry at index 1 as first in BootOrder: [1]",
-			expectedBootOrder:       efivarfs.BootOrder{1},
 			expectedEntries: map[int]string{
 				0: "Default Boot Entry",
 				1: sdboot.TalosBootEntryDescription,
@@ -120,8 +114,6 @@ func TestSetBootEntry(t *testing.T) {
 				},
 			},
 
-			expectedMessageContains: "Talos Linux UKI boot entry at index 0 is already first in BootOrder: [0]",
-			expectedBootOrder:       efivarfs.BootOrder{0},
 			expectedEntries: map[int]string{
 				0: sdboot.TalosBootEntryDescription,
 			},
@@ -143,8 +135,6 @@ func TestSetBootEntry(t *testing.T) {
 				},
 			},
 
-			expectedMessageContains: "setting Talos Linux UKI boot entry at index 1 as first in BootOrder: [1 0]",
-			expectedBootOrder:       efivarfs.BootOrder{1, 0},
 			expectedEntries: map[int]string{
 				0: "Default Boot Entry",
 				1: sdboot.TalosBootEntryDescription,
@@ -167,8 +157,6 @@ func TestSetBootEntry(t *testing.T) {
 				},
 			},
 
-			expectedMessageContains: "Talos Linux UKI boot entry at index 1 is already first in BootOrder: [1]",
-			expectedBootOrder:       efivarfs.BootOrder{1},
 			expectedEntries: map[int]string{
 				0: "Default Boot Entry",
 				1: sdboot.TalosBootEntryDescription,
@@ -195,8 +183,6 @@ func TestSetBootEntry(t *testing.T) {
 				},
 			},
 
-			expectedMessageContains: "Talos Linux UKI boot entry at index 1 is already first in BootOrder: [1 0 3 2]",
-			expectedBootOrder:       efivarfs.BootOrder{1, 0, 3, 2},
 			expectedEntries: map[int]string{
 				0: "Default Boot Entry",
 				1: sdboot.TalosBootEntryDescription,
@@ -224,8 +210,6 @@ func TestSetBootEntry(t *testing.T) {
 				},
 			},
 
-			expectedMessageContains: "setting Talos Linux UKI boot entry at index 1 as first in BootOrder: [1 5 0 3 2]",
-			expectedBootOrder:       efivarfs.BootOrder{1, 5, 0, 3, 2},
 			expectedEntries: map[int]string{
 				0: "Default Boot Entry",
 				1: sdboot.TalosBootEntryDescription,
@@ -245,8 +229,6 @@ func TestSetBootEntry(t *testing.T) {
 				},
 			},
 
-			expectedMessageContains: "setting Talos Linux UKI boot entry at index 0 as first in BootOrder: [0 1 3 2]",
-			expectedBootOrder:       efivarfs.BootOrder{0, 1, 3, 2},
 			expectedEntries: map[int]string{
 				0: sdboot.TalosBootEntryDescription,
 			},
@@ -276,8 +258,6 @@ func TestSetBootEntry(t *testing.T) {
 				},
 			},
 
-			expectedMessageContains: "Removing existing Talos Linux UKI boot entry at index 2",
-			expectedBootOrder:       efivarfs.BootOrder{1},
 			expectedEntries: map[int]string{
 				0: "Default Boot Entry",
 				1: sdboot.TalosBootEntryDescription,
@@ -308,8 +288,6 @@ func TestSetBootEntry(t *testing.T) {
 				},
 			},
 
-			expectedMessageContains: "Removing existing Talos Linux UKI boot entry at index 2",
-			expectedBootOrder:       efivarfs.BootOrder{1, 0},
 			expectedEntries: map[int]string{
 				0: "Default Boot Entry",
 				1: sdboot.TalosBootEntryDescription,
@@ -344,8 +322,6 @@ func TestSetBootEntry(t *testing.T) {
 				},
 			},
 
-			expectedMessageContains: "setting Talos Linux UKI boot entry at index 2 as first in BootOrder: [2 1 0 3]",
-			expectedBootOrder:       efivarfs.BootOrder{2, 1, 0, 3},
 			expectedEntries: map[int]string{
 				0:  "Default Boot Entry",
 				1:  "Default Boot Entry",
@@ -365,13 +341,6 @@ func TestSetBootEntry(t *testing.T) {
 			logger := &mockLogger{}
 
 			require.NoError(t, sdboot.CreateBootEntry(testData.efivarfsMock, blkidInfo, logger.Printf, "test-entry"))
-
-			bootOrder, err := efivarfs.GetBootOrder(testData.efivarfsMock)
-			require.NoError(t, err)
-
-			require.Contains(t, logger.String(), testData.expectedMessageContains, "expected log message not found")
-
-			require.Equal(t, testData.expectedBootOrder, bootOrder, "BootOrder does not match expected value")
 
 			bootEntries, err := efivarfs.ListBootEntries(testData.efivarfsMock)
 			require.NoError(t, err)

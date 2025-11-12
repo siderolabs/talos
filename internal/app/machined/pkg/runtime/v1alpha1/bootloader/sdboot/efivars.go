@@ -158,18 +158,6 @@ func CreateBootEntry(rw efivarfs.ReadWriter, blkidInfo *blkid.Info, printf func(
 	// but UEFI firmware settings can set a different boot order on boot, which lead to multiple Talos Linux UKI entries in the boot order,
 	// causing some UEFI firmwares to fail to boot at all.
 	// See https://github.com/siderolabs/talos/issues/11829
-	//
-	// So we remove any existing Talos Linux UKI entries from the boot order
-	// making sure the BootOrder only contains non Talos entries.
-	bootOrderUnique := efivarfs.UniqueBootOrder(bootOrder)
-
-	for _, idx := range existingTalosBootEntryIndexes {
-		bootOrderUnique = slices.DeleteFunc(bootOrderUnique, func(i uint16) bool {
-			return i == uint16(idx)
-		})
-	}
-
-	printf("Updated BootOrder without Talos entries: %v", bootOrderUnique)
 
 	// find the next minimal available index for the new Talos Linux UKI boot entry
 	nextMinimalIndex := -1
@@ -220,27 +208,6 @@ func CreateBootEntry(rw efivarfs.ReadWriter, blkidInfo *blkid.Info, printf func(
 	}
 
 	printf("created Talos Linux UKI boot entry at index %d", nextMinimalIndex)
-
-	if len(bootOrder) > 0 && bootOrder[0] == uint16(nextMinimalIndex) && !slices.Contains(bootOrder[1:], uint16(nextMinimalIndex)) {
-		// Talos Linux UKI boot entry is already first in the BootOrder
-		printf("Talos Linux UKI boot entry at index %d is already first in BootOrder: %v", nextMinimalIndex, bootOrder)
-
-		return nil
-	}
-
-	// if we have the new Talos Linux UKI boot entry index in the boot order already, we need to remove it first
-	// to avoid having it twice in the boot order
-	bootOrderUnique = slices.DeleteFunc(bootOrderUnique, func(i uint16) bool {
-		return i == uint16(nextMinimalIndex)
-	})
-
-	bootOrderUnique = slices.Insert(bootOrderUnique, 0, uint16(nextMinimalIndex))
-
-	printf("setting Talos Linux UKI boot entry at index %d as first in BootOrder: %v", nextMinimalIndex, bootOrderUnique)
-
-	if err := efivarfs.SetBootOrder(rw, bootOrderUnique); err != nil {
-		return fmt.Errorf("failed to set BootOrder: %w", err)
-	}
 
 	return nil
 }
