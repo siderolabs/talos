@@ -112,5 +112,10 @@ func GetKernelParams() []*kernel.Param {
 			Key:   "proc.sys.net.core.bpf_jit_harden",
 			Value: "2",
 		},
+		{
+			// Disable dangerous userfaultfd usage.
+			Key:   "proc.sys.vm.unprivileged_userfaultfd",
+			Value: "0",
+		},
 	}
 }
