@@ -17,7 +17,6 @@ import (
 	"log"
 	"os"
 	"path/filepath"
-	"slices"
 	"strconv"
 	"strings"
 	"syscall"
@@ -1246,31 +1245,36 @@ type SystemDiskTargets interface {
 }
 
 // ResetSystemDiskSpec represents the task to reset the system disk by spec.
-func ResetSystemDiskSpec(_ runtime.Sequence, data any) (runtime.TaskExecutionFunc, string) {
-	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
+func ResetSystemDiskSpec(_ runtime.Sequence, data any) (runtime.TaskExecutionFunc, string) { //nolint:gocyclo
+	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) error {
 		in, ok := data.(SystemDiskTargets)
 		if !ok {
 			return errors.New("unexpected runtime data")
 		}
 
+		var (
+			metaWiped, stateWiped bool
+			wipeErrors            *multierror.Error
+		)
+
 		for _, target := range in.GetSystemDiskTargets() {
-			if err = target.Wipe(ctx, logger.Printf); err != nil {
-				return fmt.Errorf("failed wiping partition %s: %w", target, err)
+			if err := target.Wipe(ctx, logger.Printf); err != nil {
+				wipeErrors = multierror.Append(wipeErrors,
+					fmt.Errorf("failed wiping partition %s: %w", target, err))
+
+				continue
+			}
+
+			switch target.GetLabel() {
+			case constants.MetaPartitionLabel:
+				metaWiped = true
+			case constants.StatePartitionLabel:
+				stateWiped = true
 			}
 		}
 
-		stateWiped := slices.ContainsFunc(in.GetSystemDiskTargets(), func(t runtime.PartitionTarget) bool {
-			return t.GetLabel() == constants.StatePartitionLabel
-		})
-
-		metaWiped := slices.ContainsFunc(in.GetSystemDiskTargets(), func(t runtime.PartitionTarget) bool {
-			return t.GetLabel() == constants.MetaPartitionLabel
-		})
-
 		if stateWiped && !metaWiped {
-			var removed bool
-
-			removed, err = r.State().Machine().Meta().DeleteTag(ctx, metamachinery.StateEncryptionConfig)
+			removed, err := r.State().Machine().Meta().DeleteTag(ctx, metamachinery.StateEncryptionConfig)
 			if err != nil {
 				return fmt.Errorf("failed to remove state encryption META config tag: %w", err)
 			}
@@ -1282,6 +1286,10 @@ func ResetSystemDiskSpec(_ runtime.Sequence, data any) (runtime.TaskExecutionFun
 
 				logger.Printf("reset the state encryption META config tag")
 			}
+		}
+
+		if err := wipeErrors.ErrorOrNil(); err != nil {
+			return err
 		}
 
 		logger.Printf("successfully reset system disk by the spec")
