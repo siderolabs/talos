@@ -24,6 +24,14 @@ runc: 1.3.4
 Talos is built with Go 1.24.11.
 """
 
+    [notes.uefi-boot]
+        title = "UEFI Boot"
+        description = """\
+When using UEFI boot with systemd-boot as bootloader (on new installs of Talos from 1.10+ onwards), Talos will now not touch the UEFI boot order.
+Talos 1.11 made a fix to create UEFI boot entry and set the boot order as first entry, but this behavior caused issues on some systems.
+To avoid further issues, Talos will now only create the UEFI boot entry if it does not exist, but will not modify the boot order.
+"""
+
 [make_deps]
 
     [make_deps.tools]
