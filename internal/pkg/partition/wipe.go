@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/siderolabs/go-blockdevice/v2/block"
+	"github.com/siderolabs/go-blockdevice/v2/partitioning/gpt"
 
 	blockres "github.com/siderolabs/talos/pkg/machinery/resources/block"
 )
@@ -19,6 +20,8 @@ type VolumeWipeTarget struct {
 	label string
 
 	parentDevName, devName string
+
+	partitionIndex int // partitionIndex is 1-based, but decrement before using
 }
 
 // VolumeWipeTargetFromVolumeStatus creates a new VolumeWipeTarget from a VolumeStatus.
@@ -30,9 +33,10 @@ func VolumeWipeTargetFromVolumeStatus(vs *blockres.VolumeStatus) *VolumeWipeTarg
 	}
 
 	return &VolumeWipeTarget{
-		label:         vs.Metadata().ID(),
-		parentDevName: parentDevName,
-		devName:       vs.TypedSpec().Location,
+		label:          vs.Metadata().ID(),
+		parentDevName:  parentDevName,
+		devName:        vs.TypedSpec().Location,
+		partitionIndex: vs.TypedSpec().PartitionIndex,
 	}
 }
 
@@ -45,9 +49,10 @@ func VolumeWipeTargetFromDiscoveredVolume(dv *blockres.DiscoveredVolume) *Volume
 	}
 
 	return &VolumeWipeTarget{
-		label:         dv.TypedSpec().PartitionLabel,
-		parentDevName: parentDevName,
-		devName:       dv.TypedSpec().DevPath,
+		label:          dv.TypedSpec().PartitionLabel,
+		parentDevName:  parentDevName,
+		devName:        dv.TypedSpec().DevPath,
+		partitionIndex: int(dv.TypedSpec().PartitionIndex),
 	}
 }
 
@@ -62,8 +67,9 @@ func (v *VolumeWipeTarget) String() string {
 }
 
 // Wipe implements runtime.PartitionTarget.
+// Asides from wiping the device, Wipe() also drops the partition.
 func (v *VolumeWipeTarget) Wipe(ctx context.Context, log func(string, ...any)) error {
-	parentBd, err := block.NewFromPath(v.parentDevName)
+	parentBd, err := block.NewFromPath(v.parentDevName, block.OpenForWrite())
 	if err != nil {
 		return fmt.Errorf("error opening block device %q: %w", v.parentDevName, err)
 	}
@@ -76,6 +82,22 @@ func (v *VolumeWipeTarget) Wipe(ctx context.Context, log func(string, ...any)) e
 
 	defer parentBd.Unlock() //nolint:errcheck
 
+	if err := v.wipeWithParentLocked(log); err != nil {
+		return fmt.Errorf("error wiping device %q: %w", v.devName, err)
+	}
+
+	if parentBd == nil || v.partitionIndex == 0 {
+		return fmt.Errorf("missing parent block device or partition index")
+	}
+
+	if err := v.dropWithParentLocked(parentBd, log); err != nil {
+		return fmt.Errorf("error dropping partition: %w", err)
+	}
+
+	return nil
+}
+
+func (v *VolumeWipeTarget) wipeWithParentLocked(log func(string, ...any)) error {
 	bd, err := block.NewFromPath(v.devName, block.OpenForWrite())
 	if err != nil {
 		return fmt.Errorf("error opening block device %q: %w", v.devName, err)
@@ -83,7 +105,31 @@ func (v *VolumeWipeTarget) Wipe(ctx context.Context, log func(string, ...any)) e
 
 	defer bd.Close() //nolint:errcheck
 
-	log("wiping the volume %q (%s)", v.GetLabel(), v.devName)
+	log("wiping volume %q (%s)", v.GetLabel(), v.devName)
 
 	return bd.FastWipe()
+}
+
+func (v *VolumeWipeTarget) dropWithParentLocked(parentBd *block.Device, log func(string, ...any)) error {
+	log("dropping partition %d from device %q", v.partitionIndex, v.parentDevName)
+
+	gptdev, err := gpt.DeviceFromBlockDevice(parentBd)
+	if err != nil {
+		return fmt.Errorf("failed to get GPT device: %w", err)
+	}
+
+	pt, err := gpt.Read(gptdev)
+	if err != nil {
+		return fmt.Errorf("failed to read GPT table: %w", err)
+	}
+
+	if err = pt.DeletePartition(v.partitionIndex - 1); err != nil {
+		return fmt.Errorf("failed to delete partition: %w", err)
+	}
+
+	if err = pt.Write(); err != nil {
+		return fmt.Errorf("failed to write GPT table: %w", err)
+	}
+
+	return nil
 }
