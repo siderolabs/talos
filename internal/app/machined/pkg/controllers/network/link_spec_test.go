@@ -74,7 +74,7 @@ func (suite *LinkSpecSuite) TestDummy() {
 		suite.Create(res)
 	}
 
-	newHardwareAddr := net.HardwareAddr{0x2e, 0x3c, 0x4d, 0x5e, 0x6f, 0x70}
+	newHardwareAddr := net.HardwareAddr{0x02, 0x00, 0x00, 0x00, byte(rand.IntN(256)), byte(rand.IntN(256))}
 
 	ctest.AssertResource(suite, dummyInterface, func(r *network.LinkStatus, asrt *assert.Assertions) {
 		asrt.Equal("dummy", r.TypedSpec().Kind)
@@ -102,7 +102,7 @@ func (suite *LinkSpecSuite) TestDummy() {
 func (suite *LinkSpecSuite) TestDummyWithMAC() {
 	dummyInterface := suite.uniqueDummyInterface()
 
-	newHardwareAddr := net.HardwareAddr{0x2e, 0x3c, 0x4d, 0x5e, 0x6f, 0x70}
+	newHardwareAddr := net.HardwareAddr{0x02, 0x00, 0x00, 0x00, byte(rand.IntN(256)), byte(rand.IntN(256))}
 
 	dummy := network.NewLinkSpec(network.NamespaceName, dummyInterface)
 	*dummy.TypedSpec() = network.LinkSpecSpec{
