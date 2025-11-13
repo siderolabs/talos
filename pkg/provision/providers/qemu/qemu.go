@@ -55,6 +55,10 @@ func (p *provisioner) GenOptions(networkReq provision.NetworkRequest, contract *
 		}
 	}
 
+	// For Proxmox-specific provisioning guidance and troubleshooting
+	// (VLANs, DHCP timing, bridge state, serial console), see the Proxmox doc page.
+	// https://docs.siderolabs.com/talos/v1.11/platform-specific-installations/virtualized-platforms/proxmox
+
 	genOpts := []generate.Option{
 		generate.WithInstallDisk("/dev/vda"),
 	}

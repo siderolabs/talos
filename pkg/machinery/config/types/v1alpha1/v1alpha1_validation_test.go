@@ -304,7 +304,63 @@ func TestValidate(t *testing.T) {
 				},
 			},
 			requiresInstall: true,
-			expectedError:   "1 error occurred:\n\t* install.extraKernelArgs and install.grubUseUKICmdline can't be used together\n\n",
+			expectedWarnings: []string{
+				"install.extraKernelArgs is ignored when using UKI (install.grubUseUKICmdline=true) – use Image Factory/imager profile customization instead",
+			},
+		},
+		{
+			name: "UKI disabled allows extraKernelArgs without warnings",
+			config: &v1alpha1.Config{
+				ConfigVersion: "v1alpha1",
+				MachineConfig: &v1alpha1.MachineConfig{
+					MachineType: "worker",
+					MachineCA: &x509.PEMEncodedCertificateAndKey{
+						Crt: []byte("foo"),
+					},
+					MachineInstall: &v1alpha1.InstallConfig{
+						InstallDisk:            "/dev/vda",
+						InstallExtraKernelArgs: []string{"foo=bar"},
+						// InstallGrubUseUKICmdline defaults to false
+					},
+				},
+				ClusterConfig: &v1alpha1.ClusterConfig{
+					ControlPlane: &v1alpha1.ControlPlaneConfig{
+						Endpoint: &v1alpha1.Endpoint{
+							endpointURL,
+						},
+					},
+				},
+			},
+			requiresInstall: true,
+			expectedError:   "",
+			expectedWarnings: nil,
+		},
+		{
+			name: "UKI enabled with no extraKernelArgs yields no warnings",
+			config: &v1alpha1.Config{
+				ConfigVersion: "v1alpha1",
+				MachineConfig: &v1alpha1.MachineConfig{
+					MachineType: "worker",
+					MachineCA: &x509.PEMEncodedCertificateAndKey{
+						Crt: []byte("foo"),
+					},
+					MachineInstall: &v1alpha1.InstallConfig{
+						InstallDisk: "/dev/vda",
+						// InstallExtraKernelArgs: nil (empty slice)
+						InstallGrubUseUKICmdline: pointer.To(true),
+					},
+				},
+				ClusterConfig: &v1alpha1.ClusterConfig{
+					ControlPlane: &v1alpha1.ControlPlaneConfig{
+						Endpoint: &v1alpha1.Endpoint{
+							endpointURL,
+						},
+					},
+				},
+			},
+			requiresInstall: true,
+			expectedError:   "",
+			expectedWarnings: nil,
 		},
 		{
 			name: "ExternalCloudProviderEnabled",

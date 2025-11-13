@@ -111,7 +111,7 @@ func (c *Config) Validate(mode validation.RuntimeMode, options ...validation.Opt
 			}
 
 			if len(c.MachineConfig.MachineInstall.InstallExtraKernelArgs) > 0 && c.MachineConfig.MachineInstall.GrubUseUKICmdline() {
-				result = multierror.Append(result, errors.New("install.extraKernelArgs and install.grubUseUKICmdline can't be used together"))
+				warnings = append(warnings, "install.extraKernelArgs is ignored when using UKI (install.grubUseUKICmdline=true) – use Image Factory/imager profile customization instead")
 			}
 		}
 	}
