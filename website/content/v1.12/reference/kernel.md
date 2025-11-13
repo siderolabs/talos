@@ -159,7 +159,7 @@ The difference between the two is the order of configuration loading:
 
 For both arguments, the machine configuration should be `zstd` compressed and base64-encoded to be passed as a kernel parameter.
 
-> Note: The kernel command line has a limited size (4096 bytes), so this method is only suitable for small configuration documents.
+> Note: The kernel command line has a limited size (~2000 bytes), so this method is only suitable for small configuration documents.
 
 One such example is to provide [a custom CA certificate]({{<  relref "../talos-guides/configuration/certificate-authorities" >}}) via `TrustedRootsConfig` in the machine configuration:
 
