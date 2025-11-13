@@ -9,7 +9,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"sync/atomic"
+	"sync"
 
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
@@ -26,8 +26,10 @@ import (
 type LogPersistenceController struct {
 	V1Alpha1Logging runtime.LoggingManager
 
-	// dummy implementation
-	canLog atomic.Bool
+	// RLocked by the log writers, Locked by volume handlers
+	canLog     sync.RWMutex
+	filesMutex sync.Mutex
+	files      map[string]*os.File
 }
 
 // Name implements controller.Controller interface.
@@ -62,38 +64,63 @@ func (ctrl *LogPersistenceController) Outputs() []controller.Output {
 }
 
 func (ctrl *LogPersistenceController) WriteLog(id string, line []byte) error {
-	if !ctrl.canLog.Load() {
-		// logging is not enabled, drop the log line
-		return nil
+	var err error
+
+	ctrl.canLog.RLock()
+	defer ctrl.canLog.RUnlock()
+
+	f, ok := ctrl.files[id]
+	if !ok {
+		fmt.Println("LOGGING open", id)
+		f, err = os.OpenFile(filepath.Join(constants.LogMountPoint, id+".log"), os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o644)
+		if err != nil {
+			fmt.Println("LOGGING open err", err)
+			return fmt.Errorf("error opening log file for %q: %w", id, err)
+		}
+
+		fmt.Println("LOGGING map lock", id)
+		ctrl.filesMutex.Lock()
+		ctrl.files[id] = f
+		fmt.Println("LOGGING map unlock", id)
+		ctrl.filesMutex.Unlock()
 	}
 
-	f, err := os.OpenFile(filepath.Join(constants.LogMountPoint, id+".log"), os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o644)
-	if err != nil {
-		return fmt.Errorf("error opening log file for %q: %w", id, err)
-	}
-
+	// fmt.Println("LOGGING write", id)
 	if _, err = f.Write(append(line, '\n')); err != nil {
-		f.Close()
+		fmt.Println("LOGGING err", err)
 
 		return fmt.Errorf("error writing log line for %q: %w", id, err)
-	}
-
-	if err = f.Close(); err != nil {
-		return fmt.Errorf("error closing log file for %q: %w", id, err)
 	}
 
 	return nil
 }
 
 func (ctrl *LogPersistenceController) startLogging() {
-	// [TODO]: here we can start logging activities
-	ctrl.canLog.Store(true)
+	// here we can start logging activities
+	fmt.Println("LOGGING ctrl.canLog.Unlock")
+	ctrl.canLog.Unlock()
 }
 
-func (ctrl *LogPersistenceController) stopLogging() {
-	// [TODO]: here we should stop all logging activities, close files, flush buffers, etc.
+func (ctrl *LogPersistenceController) stopLogging() error {
+	// Stop all logging activities, close files
 	// after this call we should not hold /var/log
-	ctrl.canLog.Store(false)
+	fmt.Println("LOGGING stop", &ctrl.canLog)
+	ctrl.canLog.Lock()
+	fmt.Println("LOGGING stop, canLog locked")
+	ctrl.filesMutex.Lock()
+	fmt.Println("LOGGING stop, filesMutex locked")
+	defer ctrl.filesMutex.Unlock()
+
+	for id := range ctrl.files {
+		fmt.Println("LOGGING close", id)
+		if err := ctrl.files[id].Close(); err != nil {
+			fmt.Println("LOGGING close err", err)
+			return fmt.Errorf("error closing log file for %q: %w", id, err)
+		}
+		delete(ctrl.files, id)
+	}
+
+	return nil
 }
 
 // Run implements controller.Controller interface.
@@ -101,6 +128,11 @@ func (ctrl *LogPersistenceController) stopLogging() {
 //nolint:gocyclo
 func (ctrl *LogPersistenceController) Run(ctx context.Context, r controller.Runtime, _ *zap.Logger) error {
 	ctrl.V1Alpha1Logging.SetLineWriter(ctrl)
+
+	ctrl.files = make(map[string]*os.File)
+	// Block writes until /var/log is ready
+	ctrl.canLog.Lock()
+	fmt.Println("LOGGING ctrl.canLog.Lock")
 
 	for {
 		select {
@@ -146,7 +178,9 @@ func (ctrl *LogPersistenceController) Run(ctx context.Context, r controller.Runt
 			}
 		case resource.PhaseTearingDown:
 			if vms.Metadata().Finalizers().Has(ctrl.Name()) {
-				ctrl.stopLogging()
+				if err = ctrl.stopLogging(); err != nil {
+					return fmt.Errorf("error stopping persistent logging: %w", err)
+				}
 
 				if err = r.RemoveFinalizer(ctx, vms.Metadata(), ctrl.Name()); err != nil {
 					return fmt.Errorf("error removing finalizer from volume mount status for log volume: %w", err)
