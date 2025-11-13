@@ -5713,6 +5713,7 @@ LocatorSpec is the spec for volume locator.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | match | [google.api.expr.v1alpha1.CheckedExpr](#google.api.expr.v1alpha1.CheckedExpr) |  |  |
+| disk_match | [google.api.expr.v1alpha1.CheckedExpr](#google.api.expr.v1alpha1.CheckedExpr) |  |  |
 
 
 

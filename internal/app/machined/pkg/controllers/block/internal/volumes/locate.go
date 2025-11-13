@@ -14,6 +14,7 @@ import (
 	"github.com/siderolabs/go-blockdevice/v2/partitioning"
 	"go.uber.org/zap"
 
+	taloscel "github.com/siderolabs/talos/pkg/machinery/cel"
 	"github.com/siderolabs/talos/pkg/machinery/cel/celenv"
 	"github.com/siderolabs/talos/pkg/machinery/resources/block"
 )
@@ -45,18 +46,23 @@ func LocateAndProvision(ctx context.Context, logger *zap.Logger, volumeContext M
 
 	// attempt to discover the volume
 	for _, dv := range volumeContext.DiscoveredVolumes {
-		var locator *cel.Env
+		var (
+			locatorEnv   *cel.Env
+			locatorMatch taloscel.Expression
+		)
 
 		matchContext := map[string]any{}
 
-		switch volumeType { //nolint:exhaustive // we do not need to repeat exhaustive check here
-		case block.VolumeTypeDisk:
-			locator = celenv.DiskLocator()
-
-		case block.VolumeTypePartition:
-			locator = celenv.VolumeLocator()
-
+		switch {
+		case !volumeContext.Cfg.TypedSpec().Locator.Match.IsZero():
+			locatorEnv = celenv.VolumeLocator()
 			matchContext["volume"] = dv
+			locatorMatch = volumeContext.Cfg.TypedSpec().Locator.Match
+		case !volumeContext.Cfg.TypedSpec().Locator.DiskMatch.IsZero():
+			locatorEnv = celenv.DiskLocator()
+			locatorMatch = volumeContext.Cfg.TypedSpec().Locator.DiskMatch
+		default:
+			return fmt.Errorf("no locator expression set for volume")
 		}
 
 		// add disk to the context, so we can use it in CEL expressions
@@ -74,7 +80,7 @@ func LocateAndProvision(ctx context.Context, logger *zap.Logger, volumeContext M
 			}
 		}
 
-		matches, err := volumeContext.Cfg.TypedSpec().Locator.Match.EvalBool(locator, matchContext)
+		matches, err := locatorMatch.EvalBool(locatorEnv, matchContext)
 		if err != nil {
 			return fmt.Errorf("error evaluating volume locator: %w", err)
 		}

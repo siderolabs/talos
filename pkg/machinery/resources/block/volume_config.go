@@ -106,7 +106,10 @@ type PartitionSpec struct {
 //
 //gotagsrewrite:gen
 type LocatorSpec struct {
+	// Match is a volume locator match expression.
 	Match cel.Expression `yaml:"match,omitempty" protobuf:"1"`
+	// DiskMatch is a disk locator match expression.
+	DiskMatch cel.Expression `yaml:"diskMatch,omitempty" protobuf:"2"`
 }
 
 // FilesystemSpec is the spec for volume filesystem.

@@ -890,6 +890,7 @@ func (x *FilesystemSpec) GetLabel() string {
 type LocatorSpec struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Match         *v1alpha1.CheckedExpr  `protobuf:"bytes,1,opt,name=match,proto3" json:"match,omitempty"`
+	DiskMatch     *v1alpha1.CheckedExpr  `protobuf:"bytes,2,opt,name=disk_match,json=diskMatch,proto3" json:"disk_match,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -927,6 +928,13 @@ func (*LocatorSpec) Descriptor() ([]byte, []int) {
 func (x *LocatorSpec) GetMatch() *v1alpha1.CheckedExpr {
 	if x != nil {
 		return x.Match
+	}
+	return nil
+}
+
+func (x *LocatorSpec) GetDiskMatch() *v1alpha1.CheckedExpr {
+	if x != nil {
+		return x.DiskMatch
 	}
 	return nil
 }
@@ -2387,9 +2395,11 @@ const file_resource_definitions_block_block_proto_rawDesc = "" +
 	"\fperf_options\x18\x06 \x03(\tR\vperfOptions\"q\n" +
 	"\x0eFilesystemSpec\x12I\n" +
 	"\x04type\x18\x01 \x01(\x0e25.talos.resource.definitions.enums.BlockFilesystemTypeR\x04type\x12\x14\n" +
-	"\x05label\x18\x02 \x01(\tR\x05label\"J\n" +
+	"\x05label\x18\x02 \x01(\tR\x05label\"\x90\x01\n" +
 	"\vLocatorSpec\x12;\n" +
-	"\x05match\x18\x01 \x01(\v2%.google.api.expr.v1alpha1.CheckedExprR\x05match\"\xd6\x01\n" +
+	"\x05match\x18\x01 \x01(\v2%.google.api.expr.v1alpha1.CheckedExprR\x05match\x12D\n" +
+	"\n" +
+	"disk_match\x18\x02 \x01(\v2%.google.api.expr.v1alpha1.CheckedExprR\tdiskMatch\"\xd6\x01\n" +
 	"\x10MountRequestSpec\x12\x1b\n" +
 	"\tvolume_id\x18\x01 \x01(\tR\bvolumeId\x12&\n" +
 	"\x0fparent_mount_id\x18\x02 \x01(\tR\rparentMountId\x12\x1e\n" +
@@ -2578,31 +2588,32 @@ var file_resource_definitions_block_block_proto_depIdxs = []int32{
 	6,  // 3: talos.resource.definitions.block.EncryptionSpec.keys:type_name -> talos.resource.definitions.block.EncryptionKey
 	29, // 4: talos.resource.definitions.block.FilesystemSpec.type:type_name -> talos.resource.definitions.enums.BlockFilesystemType
 	26, // 5: talos.resource.definitions.block.LocatorSpec.match:type_name -> google.api.expr.v1alpha1.CheckedExpr
-	10, // 6: talos.resource.definitions.block.MountStatusSpec.spec:type_name -> talos.resource.definitions.block.MountRequestSpec
-	29, // 7: talos.resource.definitions.block.MountStatusSpec.filesystem:type_name -> talos.resource.definitions.enums.BlockFilesystemType
-	28, // 8: talos.resource.definitions.block.MountStatusSpec.encryption_provider:type_name -> talos.resource.definitions.enums.BlockEncryptionProviderType
-	4,  // 9: talos.resource.definitions.block.ProvisioningSpec.disk_selector:type_name -> talos.resource.definitions.block.DiskSelector
-	13, // 10: talos.resource.definitions.block.ProvisioningSpec.partition_spec:type_name -> talos.resource.definitions.block.PartitionSpec
-	8,  // 11: talos.resource.definitions.block.ProvisioningSpec.filesystem_spec:type_name -> talos.resource.definitions.block.FilesystemSpec
-	30, // 12: talos.resource.definitions.block.VolumeConfigSpec.type:type_name -> talos.resource.definitions.enums.BlockVolumeType
-	14, // 13: talos.resource.definitions.block.VolumeConfigSpec.provisioning:type_name -> talos.resource.definitions.block.ProvisioningSpec
-	9,  // 14: talos.resource.definitions.block.VolumeConfigSpec.locator:type_name -> talos.resource.definitions.block.LocatorSpec
-	11, // 15: talos.resource.definitions.block.VolumeConfigSpec.mount:type_name -> talos.resource.definitions.block.MountSpec
-	7,  // 16: talos.resource.definitions.block.VolumeConfigSpec.encryption:type_name -> talos.resource.definitions.block.EncryptionSpec
-	16, // 17: talos.resource.definitions.block.VolumeConfigSpec.symlink:type_name -> talos.resource.definitions.block.SymlinkProvisioningSpec
-	31, // 18: talos.resource.definitions.block.VolumeStatusSpec.phase:type_name -> talos.resource.definitions.enums.BlockVolumePhase
-	31, // 19: talos.resource.definitions.block.VolumeStatusSpec.pre_fail_phase:type_name -> talos.resource.definitions.enums.BlockVolumePhase
-	29, // 20: talos.resource.definitions.block.VolumeStatusSpec.filesystem:type_name -> talos.resource.definitions.enums.BlockFilesystemType
-	28, // 21: talos.resource.definitions.block.VolumeStatusSpec.encryption_provider:type_name -> talos.resource.definitions.enums.BlockEncryptionProviderType
-	11, // 22: talos.resource.definitions.block.VolumeStatusSpec.mount_spec:type_name -> talos.resource.definitions.block.MountSpec
-	30, // 23: talos.resource.definitions.block.VolumeStatusSpec.type:type_name -> talos.resource.definitions.enums.BlockVolumeType
-	16, // 24: talos.resource.definitions.block.VolumeStatusSpec.symlink_spec:type_name -> talos.resource.definitions.block.SymlinkProvisioningSpec
-	19, // 25: talos.resource.definitions.block.VolumeStatusSpec.tpm_encryption_options:type_name -> talos.resource.definitions.block.TPMEncryptionOptionsInfo
-	26, // [26:26] is the sub-list for method output_type
-	26, // [26:26] is the sub-list for method input_type
-	26, // [26:26] is the sub-list for extension type_name
-	26, // [26:26] is the sub-list for extension extendee
-	0,  // [0:26] is the sub-list for field type_name
+	26, // 6: talos.resource.definitions.block.LocatorSpec.disk_match:type_name -> google.api.expr.v1alpha1.CheckedExpr
+	10, // 7: talos.resource.definitions.block.MountStatusSpec.spec:type_name -> talos.resource.definitions.block.MountRequestSpec
+	29, // 8: talos.resource.definitions.block.MountStatusSpec.filesystem:type_name -> talos.resource.definitions.enums.BlockFilesystemType
+	28, // 9: talos.resource.definitions.block.MountStatusSpec.encryption_provider:type_name -> talos.resource.definitions.enums.BlockEncryptionProviderType
+	4,  // 10: talos.resource.definitions.block.ProvisioningSpec.disk_selector:type_name -> talos.resource.definitions.block.DiskSelector
+	13, // 11: talos.resource.definitions.block.ProvisioningSpec.partition_spec:type_name -> talos.resource.definitions.block.PartitionSpec
+	8,  // 12: talos.resource.definitions.block.ProvisioningSpec.filesystem_spec:type_name -> talos.resource.definitions.block.FilesystemSpec
+	30, // 13: talos.resource.definitions.block.VolumeConfigSpec.type:type_name -> talos.resource.definitions.enums.BlockVolumeType
+	14, // 14: talos.resource.definitions.block.VolumeConfigSpec.provisioning:type_name -> talos.resource.definitions.block.ProvisioningSpec
+	9,  // 15: talos.resource.definitions.block.VolumeConfigSpec.locator:type_name -> talos.resource.definitions.block.LocatorSpec
+	11, // 16: talos.resource.definitions.block.VolumeConfigSpec.mount:type_name -> talos.resource.definitions.block.MountSpec
+	7,  // 17: talos.resource.definitions.block.VolumeConfigSpec.encryption:type_name -> talos.resource.definitions.block.EncryptionSpec
+	16, // 18: talos.resource.definitions.block.VolumeConfigSpec.symlink:type_name -> talos.resource.definitions.block.SymlinkProvisioningSpec
+	31, // 19: talos.resource.definitions.block.VolumeStatusSpec.phase:type_name -> talos.resource.definitions.enums.BlockVolumePhase
+	31, // 20: talos.resource.definitions.block.VolumeStatusSpec.pre_fail_phase:type_name -> talos.resource.definitions.enums.BlockVolumePhase
+	29, // 21: talos.resource.definitions.block.VolumeStatusSpec.filesystem:type_name -> talos.resource.definitions.enums.BlockFilesystemType
+	28, // 22: talos.resource.definitions.block.VolumeStatusSpec.encryption_provider:type_name -> talos.resource.definitions.enums.BlockEncryptionProviderType
+	11, // 23: talos.resource.definitions.block.VolumeStatusSpec.mount_spec:type_name -> talos.resource.definitions.block.MountSpec
+	30, // 24: talos.resource.definitions.block.VolumeStatusSpec.type:type_name -> talos.resource.definitions.enums.BlockVolumeType
+	16, // 25: talos.resource.definitions.block.VolumeStatusSpec.symlink_spec:type_name -> talos.resource.definitions.block.SymlinkProvisioningSpec
+	19, // 26: talos.resource.definitions.block.VolumeStatusSpec.tpm_encryption_options:type_name -> talos.resource.definitions.block.TPMEncryptionOptionsInfo
+	27, // [27:27] is the sub-list for method output_type
+	27, // [27:27] is the sub-list for method input_type
+	27, // [27:27] is the sub-list for extension type_name
+	27, // [27:27] is the sub-list for extension extendee
+	0,  // [0:27] is the sub-list for field type_name
 }
 
 func init() { file_resource_definitions_block_block_proto_init() }

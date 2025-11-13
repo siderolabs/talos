@@ -44,10 +44,21 @@ func (b *Builder) WithType(volumeType block.VolumeType) *Builder {
 	return b
 }
 
-// WithLocator sets VolumeConfigSpec.Locator.
+// WithLocator sets VolumeConfigSpec.Locator.Match.
 func (b *Builder) WithLocator(match cel.Expression) *Builder {
 	b.opts = append(b.opts, func(spec *block.VolumeConfigSpec) error {
 		spec.Locator = block.LocatorSpec{Match: match}
+
+		return nil
+	})
+
+	return b
+}
+
+// WithDiskLocator sets VolumeConfigSpec.Locator.DiskMatch.
+func (b *Builder) WithDiskLocator(diskMatch cel.Expression) *Builder {
+	b.opts = append(b.opts, func(spec *block.VolumeConfigSpec) error {
+		spec.Locator = block.LocatorSpec{DiskMatch: diskMatch}
 
 		return nil
 	})

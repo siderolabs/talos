@@ -113,6 +113,7 @@ message FilesystemSpec {
 // LocatorSpec is the spec for volume locator.
 message LocatorSpec {
   google.api.expr.v1alpha1.CheckedExpr match = 1;
+  google.api.expr.v1alpha1.CheckedExpr disk_match = 2;
 }
 
 // MountRequestSpec is the spec for MountRequest.

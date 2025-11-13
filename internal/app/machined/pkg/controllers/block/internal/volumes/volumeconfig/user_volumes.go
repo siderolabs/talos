@@ -65,7 +65,7 @@ func UserVolumeTransformer(c configconfig.Config) ([]VolumeResource, error) {
 		case block.VolumeTypeDisk:
 			userVolumeResource.TransformFunc = NewBuilder().
 				WithType(block.VolumeTypeDisk).
-				WithLocator(userVolumeConfig.Provisioning().DiskSelector().ValueOr(noMatch)).
+				WithDiskLocator(userVolumeConfig.Provisioning().DiskSelector().ValueOr(noMatch)).
 				WithProvisioning(block.ProvisioningSpec{
 					Wave: block.WaveUserVolumes,
 					DiskSelector: block.DiskSelector{
