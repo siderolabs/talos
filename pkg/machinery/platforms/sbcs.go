@@ -268,5 +268,55 @@ func SBCs() []SBC {
 
 			MinVersion: semver.MustParse("1.10.0-beta.0"),
 		},
+		{
+			Name: "odroid-m1",
+
+			OverlayName:  "odroid-m1",
+			OverlayImage: "siderolabs/sbc-rockchip",
+
+			Label: "Odroid M1",
+
+			MinVersion: semver.MustParse("1.12.0-beta.0"),
+		},
+		{
+			Name: "radxa-zero-3e",
+
+			OverlayName:  "radxa-zero-3e",
+			OverlayImage: "siderolabs/sbc-rockchip",
+
+			Label: "Radxa Zero 3E",
+
+			MinVersion: semver.MustParse("1.12.0-beta.0"),
+		},
+		{
+			Name: "rock3b",
+
+			OverlayName:  "rock3b",
+			OverlayImage: "siderolabs/sbc-rockchip",
+
+			Label: "Rock 3B",
+
+			MinVersion: semver.MustParse("1.12.0-beta.0"),
+		},
+		{
+			Name: "orangepi-5-max",
+
+			OverlayName:  "orangepi-5-max",
+			OverlayImage: "siderolabs/sbc-rockchip",
+
+			Label: "Orange Pi 5 Max",
+
+			MinVersion: semver.MustParse("1.12.0-beta.0"),
+		},
+		{
+			Name: "rock5t",
+
+			OverlayName:  "rock5t",
+			OverlayImage: "siderolabs/sbc-rockchip",
+
+			Label: "Rock 5T",
+
+			MinVersion: semver.MustParse("1.12.0-beta.0"),
+		},
 	}
 }
