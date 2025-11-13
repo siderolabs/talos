@@ -40,7 +40,7 @@ func ParseDisksFlag(disks []string) ([]DiskRequest, error) {
 		}
 
 		result = append(result, DiskRequest{
-			Driver: parts[0],
+			Driver: strings.TrimSpace(parts[0]),
 			Size:   *size,
 		})
 	}

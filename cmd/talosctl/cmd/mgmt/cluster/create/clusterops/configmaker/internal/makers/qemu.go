@@ -76,6 +76,9 @@ func NewQemu(ops MakerOptions[clusterops.Qemu]) (Qemu, error) {
 
 // InitExtra implements ExtraOptionsProvider.
 func (m *Qemu) InitExtra() error {
+	if err := m.validateQEMUConfig(); err != nil {
+		return err
+	}
 	if m.EOps.UseVIP {
 		vip, err := sideronet.NthIPInNetwork(m.Cidrs[0], vipOffset)
 		if err != nil {
@@ -104,6 +107,21 @@ func (m *Qemu) InitExtra() error {
 
 	if m.Ops.WithJSONLogs {
 		m.initJSONLogs()
+	}
+
+	return nil
+}
+
+// validateQEMUConfig validates QEMU-specific configuration to prevent common footguns.
+func (m *Qemu) validateQEMUConfig() error {
+	// Validate disk configurations that could cause issues
+	for _, disk := range m.EOps.Disks.Requests() {
+		// Check for configurations that would result in virtio-scsi-single
+		// This is a common footgun that causes Talos bootstrap to hang
+		driver := strings.ToLower(strings.TrimSpace(disk.Driver))
+		if driver == "virtio-scsi-single" {
+			return fmt.Errorf("virtio-scsi-single disk controller detected: this controller causes Talos bootstrap to hang. Please use 'VirtIO SCSI' instead of 'VirtIO SCSI Single' (see https://github.com/siderolabs/talos/issues/11173)")
+		}
 	}
 
 	return nil
