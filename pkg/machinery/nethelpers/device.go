@@ -61,7 +61,7 @@ func GetDeviceInfo(deviceName string) (*DeviceInfo, error) {
 
 	device := &DeviceInfo{}
 
-	for _, line := range strings.Split(ueventContents, "\n") {
+	for line := range strings.SplitSeq(ueventContents, "\n") {
 		key, value, found := strings.Cut(line, "=")
 		if !found {
 			continue

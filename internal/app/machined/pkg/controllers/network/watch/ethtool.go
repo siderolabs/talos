@@ -52,11 +52,7 @@ func NewEthtool(trigger Trigger) (Watcher, error) {
 		return nil, fmt.Errorf("error joing multicast group for ethtool: %w", err)
 	}
 
-	watcher.wg.Add(1)
-
-	go func() {
-		defer watcher.wg.Done()
-
+	watcher.wg.Go(func() {
 		for {
 			_, _, watchErr := watcher.conn.Receive()
 			if watchErr != nil {
@@ -65,7 +61,7 @@ func NewEthtool(trigger Trigger) (Watcher, error) {
 
 			trigger.QueueReconcile()
 		}
-	}()
+	})
 
 	return watcher, nil
 }

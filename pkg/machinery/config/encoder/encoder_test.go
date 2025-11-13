@@ -532,15 +532,11 @@ func (suite *EncoderSuite) TestConcurrent() {
 	var wg sync.WaitGroup
 
 	for range 10 {
-		wg.Add(1)
-
-		go func() {
-			defer wg.Done()
-
+		wg.Go(func() {
 			encoder := encoder.NewEncoder(value)
 			_, err := encoder.Encode()
 			suite.Assert().NoError(err)
-		}()
+		})
 	}
 
 	wg.Wait()

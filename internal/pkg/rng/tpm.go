@@ -64,10 +64,7 @@ func TPMSeed() error {
 	start := time.Now()
 
 	for remaining > 0 {
-		chunk := 32 // default to small chunk (size of AES key)
-		if remaining < chunk {
-			chunk = remaining
-		}
+		chunk := min(remaining, 32) // default to small chunk (size of AES key)
 
 		cmd := tpm2.GetRandom{
 			BytesRequested: uint16(chunk),

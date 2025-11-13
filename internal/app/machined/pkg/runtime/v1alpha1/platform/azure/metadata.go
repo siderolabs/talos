@@ -48,7 +48,7 @@ type ComputeMetadata struct {
 	OSType      string `json:"osType,omitempty"`
 	OSProfile   struct {
 		ComputerName string `json:"computerName,omitempty"`
-	} `json:"osProfile,omitempty"`
+	} `json:"osProfile"`
 	Location               string `json:"location,omitempty"`
 	FaultDomain            string `json:"platformFaultDomain,omitempty"`
 	PlatformSubFaultDomain string `json:"platformSubFaultDomain,omitempty"`

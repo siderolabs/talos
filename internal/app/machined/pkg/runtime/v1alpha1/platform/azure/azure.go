@@ -58,7 +58,7 @@ type LoadBalancerMetadata struct {
 			FrontendIPAddress string `json:"frontendIpAddress,omitempty"`
 			PrivateIPAddress  string `json:"privateIpAddress,omitempty"`
 		} `json:"publicIpAddresses,omitempty"`
-	} `json:"loadbalancer,omitempty"`
+	} `json:"loadbalancer"`
 }
 
 // Azure is the concrete type that implements the platform.Platform interface.

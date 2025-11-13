@@ -156,7 +156,7 @@ func ipPortsToString(in []netip.AddrPort) string {
 func parseIPs(in string) []netip.Addr {
 	var result []netip.Addr
 
-	for _, item := range strings.Split(in, ",") {
+	for item := range strings.SplitSeq(in, ",") {
 		if ip, err := netip.ParseAddr(item); err == nil {
 			result = append(result, ip)
 		}
@@ -168,7 +168,7 @@ func parseIPs(in string) []netip.Addr {
 func parseIPPrefixes(in string) []netip.Prefix {
 	var result []netip.Prefix
 
-	for _, item := range strings.Split(in, ",") {
+	for item := range strings.SplitSeq(in, ",") {
 		if ip, err := netip.ParsePrefix(item); err == nil {
 			result = append(result, ip)
 		}
@@ -180,7 +180,7 @@ func parseIPPrefixes(in string) []netip.Prefix {
 func parseIPPorts(in string) []netip.AddrPort {
 	var result []netip.AddrPort
 
-	for _, item := range strings.Split(in, ",") {
+	for item := range strings.SplitSeq(in, ",") {
 		if ip, err := netip.ParseAddrPort(item); err == nil {
 			result = append(result, ip)
 		}

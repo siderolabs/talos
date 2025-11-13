@@ -196,13 +196,9 @@ func (suite *NTPSuite) TestSync() {
 
 	var wg sync.WaitGroup
 
-	wg.Add(1)
-
-	go func() {
-		defer wg.Done()
-
+	wg.Go(func() {
 		syncer.Run(ctx)
-	}()
+	})
 
 	select {
 	case <-syncer.Synced():
@@ -231,13 +227,9 @@ func (suite *NTPSuite) TestSyncContinuous() {
 
 	var wg sync.WaitGroup
 
-	wg.Add(1)
-
-	go func() {
-		defer wg.Done()
-
+	wg.Go(func() {
 		syncer.Run(ctx)
-	}()
+	})
 
 	select {
 	case <-syncer.Synced():
@@ -280,13 +272,9 @@ func (suite *NTPSuite) TestSyncKissOfDeath() {
 
 	var wg sync.WaitGroup
 
-	wg.Add(1)
-
-	go func() {
-		defer wg.Done()
-
+	wg.Go(func() {
 		syncer.Run(ctx)
-	}()
+	})
 
 	select {
 	case <-syncer.Synced():
@@ -334,13 +322,9 @@ func (suite *NTPSuite) TestSyncWithSpikes() {
 
 	var wg sync.WaitGroup
 
-	wg.Add(1)
-
-	go func() {
-		defer wg.Done()
-
+	wg.Go(func() {
 		syncer.Run(ctx)
-	}()
+	})
 
 	select {
 	case <-syncer.Synced():
@@ -383,13 +367,9 @@ func (suite *NTPSuite) TestSyncChangeTimeservers() {
 
 	var wg sync.WaitGroup
 
-	wg.Add(1)
-
-	go func() {
-		defer wg.Done()
-
+	wg.Go(func() {
 		syncer.Run(ctx)
-	}()
+	})
 
 	select {
 	case <-syncer.Synced():
@@ -426,13 +406,9 @@ func (suite *NTPSuite) TestSyncIterateTimeservers() {
 
 	var wg sync.WaitGroup
 
-	wg.Add(1)
-
-	go func() {
-		defer wg.Done()
-
+	wg.Go(func() {
 		syncer.Run(ctx)
-	}()
+	})
 
 	select {
 	case <-syncer.Synced():
@@ -476,13 +452,9 @@ func (suite *NTPSuite) TestSyncEpochChange() {
 
 	var wg sync.WaitGroup
 
-	wg.Add(1)
-
-	go func() {
-		defer wg.Done()
-
+	wg.Go(func() {
 		syncer.Run(ctx)
-	}()
+	})
 
 	select {
 	case <-syncer.Synced():
@@ -519,13 +491,9 @@ func (suite *NTPSuite) TestSyncSwitchTimeservers() {
 
 	var wg sync.WaitGroup
 
-	wg.Add(1)
-
-	go func() {
-		defer wg.Done()
-
+	wg.Go(func() {
 		syncer.Run(ctx)
-	}()
+	})
 
 	select {
 	case <-syncer.Synced():

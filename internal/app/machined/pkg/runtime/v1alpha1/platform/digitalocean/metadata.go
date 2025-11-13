@@ -32,7 +32,7 @@ type MetadataConfig struct {
 
 	DNS struct {
 		Nameservers []string `json:"nameservers,omitempty"`
-	} `json:"dns,omitempty"`
+	} `json:"dns"`
 	Interfaces map[string][]struct {
 		MACAddress string `json:"mac,omitempty"`
 		Type       string `json:"type,omitempty"`

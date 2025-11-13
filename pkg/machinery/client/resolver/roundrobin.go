@@ -68,9 +68,9 @@ func EnsureEndpointsHavePorts(endpoints []string, defaultPort int) []string {
 func (r *roundRobinResolver) start() error {
 	var addrs []resolver.Address //nolint:prealloc
 
-	endpoints := strings.Split(r.target.Endpoint(), ",")
+	endpoints := strings.SplitSeq(r.target.Endpoint(), ",")
 
-	for _, addr := range endpoints {
+	for addr := range endpoints {
 		serverName := addr
 
 		host, _, err := net.SplitHostPort(serverName)

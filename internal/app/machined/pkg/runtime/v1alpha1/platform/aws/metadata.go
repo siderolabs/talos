@@ -100,7 +100,7 @@ func (a *AWS) getMetadata(ctx context.Context) (*MetadataConfig, error) {
 	if tags, err := getMetadataKey("tags/instance"); err == nil {
 		metadata.Tags = make(map[string]string)
 
-		for _, key := range strings.Fields(tags) {
+		for key := range strings.FieldsSeq(tags) {
 			if value, err := getMetadataKey("tags/instance/" + key); err == nil {
 				metadata.Tags[key] = value
 			}

@@ -7,6 +7,7 @@ package configdiff
 import (
 	"bytes"
 	"fmt"
+	"maps"
 	"reflect"
 
 	"go.yaml.in/yaml/v4"
@@ -272,9 +273,7 @@ func createMergePatch(original, modified unstructured, documentID *documentid.Do
 
 	// Finally, merge meta into mergePatch
 	if len(mergePatch) > 0 && len(meta) > 0 {
-		for key, metaV := range meta {
-			mergePatch[key] = metaV
-		}
+		maps.Copy(mergePatch, meta)
 	}
 
 	return mergePatch, nil

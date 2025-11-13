@@ -84,15 +84,7 @@ func (spec *CertSANSpec) Append(sans ...string) {
 // AppendIPs skipping duplicates.
 func (spec *CertSANSpec) AppendIPs(ips ...netip.Addr) {
 	for _, ip := range ips {
-		found := false
-
-		for _, addr := range spec.IPs {
-			if addr == ip {
-				found = true
-
-				break
-			}
-		}
+		found := slices.Contains(spec.IPs, ip)
 
 		if !found {
 			spec.IPs = append(spec.IPs, ip)
@@ -103,15 +95,7 @@ func (spec *CertSANSpec) AppendIPs(ips ...netip.Addr) {
 // AppendDNSNames skipping duplicates.
 func (spec *CertSANSpec) AppendDNSNames(dnsNames ...string) {
 	for _, dnsName := range dnsNames {
-		found := false
-
-		for _, name := range spec.DNSNames {
-			if name == dnsName {
-				found = true
-
-				break
-			}
-		}
+		found := slices.Contains(spec.DNSNames, dnsName)
 
 		if !found {
 			spec.DNSNames = append(spec.DNSNames, dnsName)

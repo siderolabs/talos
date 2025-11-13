@@ -31,7 +31,7 @@ func RouteFlagsString(s string) (RouteFlags, error) {
 		return flags, nil
 	}
 
-	for _, p := range strings.Split(s, ",") {
+	for p := range strings.SplitSeq(s, ",") {
 		flag, err := RouteFlagString(p)
 		if err != nil {
 			return flags, err

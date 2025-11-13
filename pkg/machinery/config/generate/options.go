@@ -5,6 +5,8 @@
 package generate
 
 import (
+	"maps"
+
 	"github.com/siderolabs/gen/optional"
 	"github.com/siderolabs/go-pointer"
 
@@ -221,9 +223,7 @@ func WithSysctls(params map[string]string) Option {
 			o.Sysctls = make(map[string]string)
 		}
 
-		for k, v := range params {
-			o.Sysctls[k] = v
-		}
+		maps.Copy(o.Sysctls, params)
 
 		return nil
 	}

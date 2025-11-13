@@ -328,11 +328,7 @@ func (svcrunner *ServiceRunner) run(ctx context.Context, runnr runner.Runner) er
 		var healthWg sync.WaitGroup
 		defer healthWg.Wait()
 
-		healthWg.Add(1)
-
-		go func() {
-			defer healthWg.Done()
-
+		healthWg.Go(func() {
 			//nolint:errcheck
 			health.Run(
 				ctx,
@@ -340,18 +336,14 @@ func (svcrunner *ServiceRunner) run(ctx context.Context, runnr runner.Runner) er
 				&svcrunner.healthState,
 				healthSvc.HealthFunc(svcrunner.runtime),
 			)
-		}()
+		})
 
 		notifyCh := make(chan health.StateChange, 2)
 
 		svcrunner.healthState.Subscribe(notifyCh)
 		defer svcrunner.healthState.Unsubscribe(notifyCh)
 
-		healthWg.Add(1)
-
-		go func() {
-			defer healthWg.Done()
-
+		healthWg.Go(func() {
 			for {
 				select {
 				case <-ctx.Done():
@@ -360,7 +352,7 @@ func (svcrunner *ServiceRunner) run(ctx context.Context, runnr runner.Runner) er
 					svcrunner.healthUpdate(ctx, change)
 				}
 			}
-		}()
+		})
 	}
 
 	select {

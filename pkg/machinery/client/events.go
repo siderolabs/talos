@@ -105,13 +105,9 @@ func (c *Client) EventsWatch(ctx context.Context, watchFunc func(<-chan Event), 
 	ch := make(chan Event)
 	defer close(ch)
 
-	wg.Add(1)
-
-	go func() {
-		defer wg.Done()
-
+	wg.Go(func() {
 		watchFunc(ch)
-	}()
+	})
 
 	for {
 		event, err := stream.Recv()

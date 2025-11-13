@@ -12,6 +12,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"maps"
 	"sync"
 	"time"
 
@@ -269,9 +270,7 @@ func (handler *circularHandler) runSenders() error {
 		if e.Fields == nil {
 			e.Fields = handler.fields
 		} else {
-			for k, v := range handler.fields {
-				e.Fields[k] = v
-			}
+			maps.Copy(e.Fields, handler.fields)
 		}
 
 		handler.resend(e)

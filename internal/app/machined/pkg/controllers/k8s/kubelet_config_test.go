@@ -59,13 +59,9 @@ func (suite *KubeletConfigSuite) SetupTest() {
 }
 
 func (suite *KubeletConfigSuite) startRuntime() {
-	suite.wg.Add(1)
-
-	go func() {
-		defer suite.wg.Done()
-
+	suite.wg.Go(func() {
 		suite.Assert().NoError(suite.runtime.Run(suite.ctx))
-	}()
+	})
 }
 
 func (suite *KubeletConfigSuite) createStaticPodServerStatus() {

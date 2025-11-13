@@ -369,7 +369,7 @@ func BenchmarkDecoderV1Alpha1Config(b *testing.B) {
 	contents, err := os.ReadFile("testdata/controlplane.yaml")
 	require.NoError(b, err)
 
-	for range b.N {
+	for b.Loop() {
 		d := decoder.NewDecoder()
 		_, err = d.Decode(bytes.NewReader(contents), false)
 

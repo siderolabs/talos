@@ -114,13 +114,9 @@ func (suite *ProcessSuite) TestRunRestartFailed() {
 
 	var wg sync.WaitGroup
 
-	wg.Add(1)
-
-	go func() {
-		defer wg.Done()
-
+	wg.Go(func() {
 		suite.Assert().NoError(r.Run(MockEventSink(suite.T())))
-	}()
+	})
 
 	fetchLog := func() []byte {
 		logFile, err := os.Open(filepath.Join(suite.tmpDir, "restarter.log"))

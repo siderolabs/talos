@@ -29,13 +29,13 @@ const (
 //
 //nolint:gocyclo
 func PrintNode(name string, w io.Writer, schema *Schema, node, parent *cgroups.Node, level int, levelsEnded []int, lastNode, treeRoot bool) error {
-	var prefix string
+	var prefix strings.Builder
 
 	for i := range level {
 		if slices.Index(levelsEnded, i) != -1 {
-			prefix += strings.Repeat(" ", indentSize+1)
+			prefix.WriteString(strings.Repeat(" ", indentSize+1))
 		} else {
-			prefix += string(edgeTypeLink) + strings.Repeat(" ", indentSize)
+			prefix.WriteString(string(edgeTypeLink) + strings.Repeat(" ", indentSize))
 		}
 	}
 
@@ -62,7 +62,7 @@ func PrintNode(name string, w io.Writer, schema *Schema, node, parent *cgroups.N
 		return err
 	}
 
-	_, err = fmt.Fprintf(w, "%s%s%s\t%s\n", prefix, edge, name, rowData)
+	_, err = fmt.Fprintf(w, "%s%s%s\t%s\n", prefix.String(), edge, name, rowData)
 	if err != nil {
 		return err
 	}

@@ -7,6 +7,7 @@ package k8s
 import (
 	"context"
 	"fmt"
+	"maps"
 
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/safe"
@@ -77,9 +78,7 @@ func (ctrl *NodeLabelSpecController) Run(ctx context.Context, r controller.Runti
 		nodeLabels := map[string]string{}
 
 		if cfg != nil && cfg.Config().Machine() != nil {
-			for k, v := range cfg.Config().Machine().NodeLabels() {
-				nodeLabels[k] = v
-			}
+			maps.Copy(nodeLabels, cfg.Config().Machine().NodeLabels())
 
 			if cfg.Config().Machine().Type().IsControlPlane() {
 				nodeLabels[constants.LabelNodeRoleControlPlane] = ""

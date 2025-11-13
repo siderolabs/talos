@@ -10,8 +10,7 @@ import (
 	"io"
 
 	"github.com/distribution/reference"
-	"github.com/docker/docker/api/types/filters"
-	"github.com/docker/docker/api/types/image"
+	"github.com/moby/moby/client"
 
 	"github.com/siderolabs/talos/pkg/provision"
 )
@@ -35,20 +34,20 @@ func (p *provisioner) ensureImageExists(ctx context.Context, containerImage stri
 		tag = tagged.Tag()
 	}
 
-	filters := filters.NewArgs()
+	filters := client.Filters{}
 	filters.Add("reference", familiarName+":"+tag)
 
-	images, err := p.client.ImageList(ctx, image.ListOptions{Filters: filters})
+	images, err := p.client.ImageList(ctx, client.ImageListOptions{Filters: filters})
 	if err != nil {
 		return err
 	}
 
-	if len(images) == 0 {
+	if len(images.Items) == 0 {
 		fmt.Fprintln(options.LogWriter, "downloading", containerImage)
 
 		var reader io.ReadCloser
 
-		if reader, err = p.client.ImagePull(ctx, containerImage, image.PullOptions{}); err != nil {
+		if reader, err = p.client.ImagePull(ctx, containerImage, client.ImagePullOptions{}); err != nil {
 			return err
 		}
 

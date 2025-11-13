@@ -12,7 +12,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/docker/docker/api/types/container"
+	"github.com/moby/moby/client"
 
 	cl "github.com/siderolabs/talos/pkg/cluster"
 	"github.com/siderolabs/talos/pkg/provision"
@@ -91,7 +91,7 @@ func (p *provisioner) saveContainerLogs(ctx context.Context, cluster provision.C
 	for _, ctr := range containers {
 		name := ctr.Names[0][1:]
 
-		logs, err := p.client.ContainerLogs(ctx, ctr.ID, container.LogsOptions{
+		logs, err := p.client.ContainerLogs(ctx, ctr.ID, client.ContainerLogsOptions{
 			ShowStdout: true,
 			ShowStderr: true,
 			Tail:       "1000",

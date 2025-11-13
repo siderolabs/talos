@@ -8,6 +8,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"slices"
 	"time"
 
 	"github.com/siderolabs/go-retry/retry"
@@ -138,13 +139,7 @@ func (c *Client) StopAndRemovePodSandboxes(ctx context.Context, stopAction StopA
 }
 
 func contains(mode runtimeapi.NamespaceMode, modes []runtimeapi.NamespaceMode) bool {
-	for _, m := range modes {
-		if mode == m {
-			return true
-		}
-	}
-
-	return false
+	return slices.Contains(modes, mode)
 }
 
 //nolint:gocyclo

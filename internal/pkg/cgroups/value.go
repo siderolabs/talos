@@ -254,7 +254,7 @@ func ParseNestedKeyedValues(r io.Reader) (NestedKeyed, error) {
 
 		flatMap := FlatMap{}
 
-		for _, pair := range strings.Fields(values) {
+		for pair := range strings.FieldsSeq(values) {
 			subKey, value, ok := strings.Cut(pair, "=")
 			if !ok {
 				return nil, errors.New("invalid format")

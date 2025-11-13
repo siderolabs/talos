@@ -27,7 +27,7 @@ func (flags LinkFlags) String() string {
 func LinkFlagsString(s string) (LinkFlags, error) {
 	flags := LinkFlags(0)
 
-	for _, p := range strings.Split(s, ",") {
+	for p := range strings.SplitSeq(s, ",") {
 		flag, err := LinkFlagString(p)
 		if err != nil {
 			return flags, err

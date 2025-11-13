@@ -107,14 +107,12 @@ func (suite *CRISuite) SetupSuite() {
 		runner.WithCgroupPath(suite.tmpDir),
 	)
 	suite.Require().NoError(suite.containerdRunner.Open())
-	suite.containerdWg.Add(1)
 
-	go func() {
-		defer suite.containerdWg.Done()
+	suite.containerdWg.Go(func() {
 		defer suite.containerdRunner.Close() //nolint:errcheck
 
 		suite.containerdRunner.Run(MockEventSink(suite.T())) //nolint:errcheck
-	}()
+	})
 
 	suite.client, err = cri.NewClient("unix:"+suite.containerdAddress, 30*time.Second)
 	suite.Require().NoError(err)

@@ -339,6 +339,7 @@ func main() {
 
 	// Initialize the process reaper.
 	reaper.Run()
+
 	defer reaper.Shutdown()
 
 	handle(ctx, run())

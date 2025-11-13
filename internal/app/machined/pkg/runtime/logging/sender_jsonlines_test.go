@@ -144,21 +144,13 @@ func TestSenderJSONLines(t *testing.T) { //nolint:tparallel
 
 	var wg sync.WaitGroup
 
-	wg.Add(1)
-
-	go func() {
-		defer wg.Done()
-
+	wg.Go(func() {
 		udpHandler(ctx, t, lisUDP, sendCh)
-	}()
+	})
 
-	wg.Add(1)
-
-	go func() {
-		defer wg.Done()
-
+	wg.Go(func() {
 		tcpHandler(ctx, t, lisTCP, sendCh)
-	}()
+	})
 
 	t.Cleanup(wg.Wait)
 

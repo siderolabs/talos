@@ -17,7 +17,7 @@ require (
 	github.com/google/cel-go v0.26.1
 	github.com/hashicorp/go-multierror v1.1.1
 	github.com/hexops/gotextdiff v1.0.3
-	github.com/jsimonetti/rtnetlink/v2 v2.0.5
+	github.com/jsimonetti/rtnetlink/v2 v2.1.0
 	github.com/mdlayher/ethtool v0.4.0
 	github.com/opencontainers/runtime-spec v1.2.1
 	github.com/planetscale/vtprotobuf v0.6.1-0.20241121165744-79df5c4772f2
@@ -25,15 +25,15 @@ require (
 	github.com/santhosh-tekuri/jsonschema/v5 v5.3.1
 	github.com/siderolabs/crypto v0.6.4
 	github.com/siderolabs/gen v0.8.6
-	github.com/siderolabs/go-api-signature v0.3.9
+	github.com/siderolabs/go-api-signature v0.3.12
 	github.com/siderolabs/go-pointer v1.0.1
 	github.com/siderolabs/net v0.4.0
 	github.com/siderolabs/protoenc v0.2.4
 	github.com/stretchr/testify v1.11.1
-	go.yaml.in/yaml/v4 v4.0.0-rc.2
-	golang.org/x/net v0.46.0
-	google.golang.org/genproto/googleapis/api v0.0.0-20251020155222-88f65dc88635
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20251020155222-88f65dc88635
+	go.yaml.in/yaml/v4 v4.0.0-rc.3
+	golang.org/x/net v0.47.0
+	google.golang.org/genproto/googleapis/api v0.0.0-20251111163417-95abcf5c77ba
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20251111163417-95abcf5c77ba
 	google.golang.org/grpc v1.76.0
 	google.golang.org/protobuf v1.36.10
 )
@@ -57,7 +57,7 @@ require (
 	github.com/mattn/go-colorable v0.1.14 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/mdlayher/genetlink v1.3.2 // indirect
-	github.com/mdlayher/netlink v1.7.2 // indirect
+	github.com/mdlayher/netlink v1.8.0 // indirect
 	github.com/mdlayher/socket v0.5.1 // indirect
 	github.com/petermattis/goid v0.0.0-20240813172612-4fcff4a6cae7 // indirect
 	github.com/pkg/browser v0.0.0-20240102092130-5ac0b6a4141c // indirect
@@ -67,11 +67,11 @@ require (
 	github.com/stoewer/go-strcase v1.3.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	go.uber.org/zap v1.27.0 // indirect
-	golang.org/x/crypto v0.43.0 // indirect
+	golang.org/x/crypto v0.44.0 // indirect
 	golang.org/x/exp v0.0.0-20250128182459-e0ece0dbea4c // indirect
-	golang.org/x/sync v0.17.0 // indirect
-	golang.org/x/sys v0.37.0 // indirect
-	golang.org/x/text v0.30.0 // indirect
+	golang.org/x/sync v0.18.0 // indirect
+	golang.org/x/sys v0.38.0 // indirect
+	golang.org/x/text v0.31.0 // indirect
 	golang.org/x/time v0.14.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect

@@ -6,6 +6,7 @@ package cluster
 
 import (
 	"net/netip"
+	"slices"
 
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/meta"
@@ -97,15 +98,7 @@ type ControlPlane struct {
 //nolint:gocyclo
 func (spec *AffiliateSpec) Merge(other *AffiliateSpec) {
 	for _, addr := range other.Addresses {
-		found := false
-
-		for _, specAddr := range spec.Addresses {
-			if addr == specAddr {
-				found = true
-
-				break
-			}
-		}
+		found := slices.Contains(spec.Addresses, addr)
 
 		if !found {
 			spec.Addresses = append(spec.Addresses, addr)
@@ -137,15 +130,7 @@ func (spec *AffiliateSpec) Merge(other *AffiliateSpec) {
 	}
 
 	for _, addr := range other.KubeSpan.AdditionalAddresses {
-		found := false
-
-		for _, specAddr := range spec.KubeSpan.AdditionalAddresses {
-			if addr == specAddr {
-				found = true
-
-				break
-			}
-		}
+		found := slices.Contains(spec.KubeSpan.AdditionalAddresses, addr)
 
 		if !found {
 			spec.KubeSpan.AdditionalAddresses = append(spec.KubeSpan.AdditionalAddresses, addr)
@@ -153,15 +138,7 @@ func (spec *AffiliateSpec) Merge(other *AffiliateSpec) {
 	}
 
 	for _, addr := range other.KubeSpan.Endpoints {
-		found := false
-
-		for _, specAddr := range spec.KubeSpan.Endpoints {
-			if addr == specAddr {
-				found = true
-
-				break
-			}
-		}
+		found := slices.Contains(spec.KubeSpan.Endpoints, addr)
 
 		if !found {
 			spec.KubeSpan.Endpoints = append(spec.KubeSpan.Endpoints, addr)

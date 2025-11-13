@@ -99,7 +99,7 @@ func WriteVariable(name, value string) error {
 // The entry will point to the SystemdBoot PE binary located at the specified install disk path.
 //
 //nolint:gocyclo,cyclop
-func CreateBootEntry(rw efivarfs.ReadWriter, blkidInfo *blkid.Info, printf func(format string, args ...interface{}), sdBootFilePath string) error {
+func CreateBootEntry(rw efivarfs.ReadWriter, blkidInfo *blkid.Info, printf func(format string, args ...any), sdBootFilePath string) error {
 	efiPartInfo := xslices.Filter(blkidInfo.Parts, func(part blkid.NestedProbeResult) bool {
 		return part.PartitionLabel != nil && *part.PartitionLabel == constants.EFIPartitionLabel
 	})

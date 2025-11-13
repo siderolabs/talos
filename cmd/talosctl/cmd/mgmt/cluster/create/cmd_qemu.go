@@ -6,6 +6,7 @@ package create
 
 import (
 	"context"
+	"strings"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
@@ -46,19 +47,21 @@ func init() {
 		return qemu
 	}
 
-	cmdDescription := "Create a local QEMU based Talos cluster\n"
+	var cmdDescription strings.Builder
+	cmdDescription.WriteString("Create a local QEMU based Talos cluster\n")
 
-	cmdDescription += "Available presets:\n"
+	cmdDescription.WriteString("Available presets:\n")
+
 	for _, p := range preset.Presets {
-		cmdDescription += "  - " + p.Name() + ": " + p.Description() + "\n"
+		cmdDescription.WriteString("  - " + p.Name() + ": " + p.Description() + "\n")
 	}
 
-	cmdDescription += "\n"
-	cmdDescription += "Note: exactly one of 'iso', 'iso-secureboot', 'pxe' or 'disk-image' presets must be specified.\n"
+	cmdDescription.WriteString("\n")
+	cmdDescription.WriteString("Note: exactly one of 'iso', 'iso-secureboot', 'pxe' or 'disk-image' presets must be specified.\n")
 
 	createQemuCmd := &cobra.Command{
 		Use:   providers.QemuProviderName,
-		Short: cmdDescription,
+		Short: cmdDescription.String(),
 		Args:  cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return cli.WithContext(context.Background(), func(ctx context.Context) error {

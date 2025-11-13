@@ -38,7 +38,7 @@ func (suite *MountsSuite) TestUserDisksMounted() {
 		suite.T().Skip("USER_DISKS_MOUNTS is not set")
 	}
 
-	for _, path := range strings.Split(paths, ",") {
+	for path := range strings.SplitSeq(paths, ",") {
 		suite.RunCLI([]string{"mounts", "--nodes", suite.RandomDiscoveredNodeInternalIP()},
 			base.StdoutShouldMatch(regexp.MustCompile(path)))
 	}

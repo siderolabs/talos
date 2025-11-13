@@ -120,14 +120,12 @@ func (suite *ContainerdSuite) SetupSuite() {
 		runner.WithCgroupPath(suite.tmpDir),
 	)
 	suite.Require().NoError(suite.containerdRunner.Open())
-	suite.containerdWg.Add(1)
 
-	go func() {
-		defer suite.containerdWg.Done()
+	suite.containerdWg.Go(func() {
 		defer suite.containerdRunner.Close() //nolint:errcheck
 
 		suite.containerdRunner.Run(MockEventSink) //nolint:errcheck
-	}()
+	})
 
 	suite.client, err = containerd.New(suite.containerdAddress)
 	suite.Require().NoError(err)

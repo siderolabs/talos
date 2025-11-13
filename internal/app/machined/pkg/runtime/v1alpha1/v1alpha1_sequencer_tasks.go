@@ -1209,7 +1209,7 @@ func parseTargets(ctx context.Context, r runtime.Runtime, wipeStr string) (Syste
 		return targets{}, err
 	}
 
-	for _, label := range strings.Split(after, ",") {
+	for label := range strings.SplitSeq(after, ",") {
 		found := false
 
 		for discoveredVolume := range discoveredVolumes.All() {

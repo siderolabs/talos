@@ -7,6 +7,7 @@ package k8s
 import (
 	"context"
 	"fmt"
+	"maps"
 
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/safe"
@@ -76,9 +77,7 @@ func (ctrl *NodeAnnotationSpecController) Run(ctx context.Context, r controller.
 		nodeAnnotations := map[string]string{}
 
 		if cfg != nil && cfg.Config().Machine() != nil {
-			for k, v := range cfg.Config().Machine().NodeAnnotations() {
-				nodeAnnotations[k] = v
-			}
+			maps.Copy(nodeAnnotations, cfg.Config().Machine().NodeAnnotations())
 		}
 
 		if err = extensionsToNodeKV(

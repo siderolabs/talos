@@ -22,7 +22,7 @@ type Tree struct {
 func (t *Tree) Find(directoryPath string) *Node {
 	node := t.Root
 
-	for _, component := range strings.Split(directoryPath, "/") {
+	for component := range strings.SplitSeq(directoryPath, "/") {
 		if component == "." || component == "" {
 			return node
 		}

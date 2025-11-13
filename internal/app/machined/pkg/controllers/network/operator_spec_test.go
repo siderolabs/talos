@@ -8,6 +8,7 @@ import (
 	"context"
 	"fmt"
 	"net/netip"
+	"slices"
 	"sync"
 	"testing"
 	"time"
@@ -151,15 +152,7 @@ func (suite *OperatorSpecSuite) assertRunning(runningIDs []string, assertFunc fu
 	}
 
 	for id := range runningOperators {
-		found := false
-
-		for _, expectedID := range runningIDs {
-			if expectedID == id {
-				found = true
-
-				break
-			}
-		}
+		found := slices.Contains(runningIDs, id)
 
 		if !found {
 			return retry.ExpectedErrorf("operator %s should not be running", id)

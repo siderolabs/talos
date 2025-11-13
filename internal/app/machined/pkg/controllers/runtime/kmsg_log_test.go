@@ -92,21 +92,13 @@ func (suite *KmsgLogDeliverySuite) SetupTest() {
 
 	suite.srv2 = logreceiver.NewServer(logger, suite.listener2, suite.handler2.HandleLog)
 
-	suite.wg.Add(1)
-
-	go func() {
-		defer suite.wg.Done()
-
+	suite.wg.Go(func() {
 		suite.srv1.Serve() //nolint:errcheck
-	}()
+	})
 
-	suite.wg.Add(1)
-
-	go func() {
-		defer suite.wg.Done()
-
+	suite.wg.Go(func() {
 		suite.srv2.Serve() //nolint:errcheck
-	}()
+	})
 
 	suite.drainer = talosruntime.NewDrainer()
 
@@ -125,13 +117,9 @@ func (suite *KmsgLogDeliverySuite) SetupTest() {
 }
 
 func (suite *KmsgLogDeliverySuite) startRuntime() {
-	suite.wg.Add(1)
-
-	go func() {
-		defer suite.wg.Done()
-
+	suite.wg.Go(func() {
 		suite.Assert().NoError(suite.runtime.Run(suite.ctx))
-	}()
+	})
 }
 
 func (suite *KmsgLogDeliverySuite) TestDeliverySingleDestination() {

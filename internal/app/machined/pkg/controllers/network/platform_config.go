@@ -68,15 +68,11 @@ func (ctrl *PlatformConfigController) Run(ctx context.Context, r controller.Runt
 
 	var platformWg sync.WaitGroup
 
-	platformWg.Add(1)
-
-	go func() {
-		defer platformWg.Done()
-
+	platformWg.Go(func() {
 		ctrl.runWithRestarts(platformCtx, logger, func() error {
 			return ctrl.V1alpha1Platform.NetworkConfiguration(platformCtx, ctrl.PlatformState, platformCh)
 		})
-	}()
+	})
 
 	defer platformWg.Wait()
 

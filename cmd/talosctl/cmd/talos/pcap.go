@@ -174,7 +174,7 @@ func parseBPFInstructions(in string) ([]*machine.BPFInstruction, error) {
 
 	var result []*machine.BPFInstruction //nolint:prealloc
 
-	for _, line := range strings.Split(in, "\n") {
+	for line := range strings.SplitSeq(in, "\n") {
 		if line == "" {
 			continue
 		}

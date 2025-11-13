@@ -142,7 +142,7 @@ func Install(ctx context.Context, p runtime.Platform, mode Mode, opts *Options) 
 
 		var b runtime.Board
 
-		b, err := board.NewBoard(opts.Board)
+		b, err := board.NewBoard(opts.Board) //nolint:staticcheck
 		if err != nil {
 			return err
 		}
@@ -364,7 +364,7 @@ func (i *Installer) Install(ctx context.Context, mode Mode) (err error) {
 			if i.options.Board != constants.BoardNone {
 				var b runtime.Board
 
-				b, err = board.NewBoard(i.options.Board)
+				b, err = board.NewBoard(i.options.Board) //nolint:staticcheck
 				if err != nil {
 					return err
 				}
@@ -454,7 +454,7 @@ func (i *Installer) createPartitions(ctx context.Context, gptdev gpt.Device, mod
 	if i.options.Board != constants.BoardNone && !quirks.New(i.options.Version).SupportsOverlay() {
 		var b runtime.Board
 
-		b, err := board.NewBoard(i.options.Board)
+		b, err := board.NewBoard(i.options.Board) //nolint:staticcheck
 		if err != nil {
 			return nil, err
 		}

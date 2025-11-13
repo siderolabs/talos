@@ -10,8 +10,8 @@ import (
 	"slices"
 	"time"
 
-	mounttypes "github.com/docker/docker/api/types/mount"
 	"github.com/google/uuid"
+	mounttypes "github.com/moby/moby/api/types/mount"
 	"github.com/siderolabs/go-procfs/procfs"
 
 	"github.com/siderolabs/talos/pkg/machinery/config"

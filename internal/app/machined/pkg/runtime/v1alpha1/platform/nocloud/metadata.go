@@ -243,8 +243,7 @@ func (n *Nocloud) acquireConfig(ctx context.Context, r state.State) (metadataNet
 		networkSource                     bool
 	)
 
-	options := strings.Split(s.SystemInformation.SerialNumber, ";")
-	for _, option := range options {
+	for option := range strings.SplitSeq(s.SystemInformation.SerialNumber, ";") {
 		parts := strings.SplitN(option, "=", 2)
 		if len(parts) == 2 {
 			switch parts[0] {

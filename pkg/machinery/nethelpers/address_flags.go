@@ -27,7 +27,7 @@ func (flags AddressFlags) String() string {
 func AddressFlagsString(s string) (AddressFlags, error) {
 	flags := AddressFlags(0)
 
-	for _, p := range strings.Split(s, ",") {
+	for p := range strings.SplitSeq(s, ",") {
 		flag, err := AddressFlagString(p)
 		if err != nil {
 			return flags, err

@@ -34,8 +34,7 @@ type duInfo struct {
 func splitLine(line string) []string {
 	var columns []string
 
-	parts := strings.Split(line, " ")
-	for _, part := range parts {
+	for part := range strings.SplitSeq(line, " ") {
 		if part != "" {
 			columns = append(columns, strings.TrimSpace(part))
 		}

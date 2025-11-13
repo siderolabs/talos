@@ -11,7 +11,7 @@ import (
 	"net"
 	"strconv"
 
-	"github.com/docker/docker/client"
+	"github.com/moby/moby/client"
 
 	"github.com/siderolabs/talos/pkg/machinery/config"
 	"github.com/siderolabs/talos/pkg/machinery/config/bundle"
@@ -59,7 +59,7 @@ func NewProvisioner(ctx context.Context) (provision.Provisioner, error) {
 
 	var err error
 
-	p.client, err = client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
+	p.client, err = client.New(client.FromEnv, client.WithAPIVersionNegotiation())
 	if err != nil {
 		return nil, err
 	}

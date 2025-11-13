@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"runtime"
 	"slices"
+	"strings"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
@@ -276,7 +277,8 @@ func getCreateCmd(cmdName string, hidden bool) *cobra.Command {
 					return err
 				}
 
-				disks := fmt.Sprintf("virtio:%d", legacyOps.clusterDiskSize)
+				var disks strings.Builder
+				disks.WriteString(fmt.Sprintf("virtio:%d", legacyOps.clusterDiskSize))
 
 				for i := range legacyOps.extraDisks {
 					driver := "ide"
@@ -290,12 +292,12 @@ func getCreateCmd(cmdName string, hidden bool) *cobra.Command {
 						driver = legacyOps.extraDisksDrivers[i]
 					}
 
-					disks += fmt.Sprintf(",%s:%d", driver, legacyOps.extraDiskSize)
+					disks.WriteString(fmt.Sprintf(",%s:%d", driver, legacyOps.extraDiskSize))
 				}
 
 				qOps.Disks = flags.Disks{}
 
-				if err := qOps.Disks.Set(disks); err != nil {
+				if err := qOps.Disks.Set(disks.String()); err != nil {
 					return err
 				}
 

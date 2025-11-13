@@ -374,9 +374,7 @@ func ParseCmdlineNetwork(cmdline *procfs.Cmdline, linkNameResolver *network.Link
 func parseBondOptions(options string) (v1alpha1.Bond, error) {
 	var bond v1alpha1.Bond
 
-	bondOptions := strings.Split(options, ",")
-
-	for _, opt := range bondOptions {
+	for opt := range strings.SplitSeq(options, ",") {
 		optionPair := strings.Split(opt, "=")
 
 		switch optionPair[0] {

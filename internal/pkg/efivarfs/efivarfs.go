@@ -70,6 +70,7 @@ const (
 	AttrHardwareErrorRecord
 	// AttrAuthenticatedWriteAccess is the attribute for variables that require
 	// authenticated access to write.
+	//
 	// Deprecated: should not be used for new variables.
 	AttrAuthenticatedWriteAccess
 	// AttrTimeBasedAuthenticatedWriteAccess is the attribute for variables

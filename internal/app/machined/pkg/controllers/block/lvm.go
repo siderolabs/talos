@@ -204,7 +204,7 @@ func (ctrl *LVMActivationController) checkVGNeedsActivation(ctx context.Context,
 	}
 
 	// parse the key-value pairs from the udev output
-	for _, line := range strings.Split(stdOut, "\n") {
+	for line := range strings.SplitSeq(stdOut, "\n") {
 		key, value, ok := strings.Cut(line, "=")
 		if !ok {
 			continue

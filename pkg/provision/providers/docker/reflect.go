@@ -11,6 +11,8 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/moby/moby/client"
+
 	"github.com/siderolabs/talos/pkg/machinery/config/machine"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/provision"
@@ -34,22 +36,11 @@ func (p *provisioner) Reflect(ctx context.Context, clusterName, stateDirectory s
 	if len(networks) > 0 {
 		network := networks[0]
 
-		var cidr netip.Prefix
-
-		cidr, err = netip.ParsePrefix(network.IPAM.Config[0].Subnet)
-		if err != nil {
-			return nil, err
-		}
+		cidr := network.IPAM.Config[0].Subnet
 
 		res.clusterInfo.Network.Name = network.Name
 		res.clusterInfo.Network.CIDRs = []netip.Prefix{cidr}
-		res.clusterInfo.Network.GatewayAddrs = []netip.Addr{}
-
-		var addr netip.Addr
-
-		if addr, err = netip.ParseAddr(network.IPAM.Config[0].Gateway); err == nil {
-			res.clusterInfo.Network.GatewayAddrs = append(res.clusterInfo.Network.GatewayAddrs, addr)
-		}
+		res.clusterInfo.Network.GatewayAddrs = []netip.Addr{network.IPAM.Config[0].Gateway}
 
 		mtuStr, ok := network.Options["com.docker.network.driver.mtu"]
 		if !ok {
@@ -76,7 +67,7 @@ func (p *provisioner) Reflect(ctx context.Context, clusterName, stateDirectory s
 			return nil, err
 		}
 
-		container, err := p.client.ContainerInspect(ctx, node.ID)
+		container, err := p.client.ContainerInspect(ctx, node.ID, client.ContainerInspectOptions{})
 		if err != nil {
 			return nil, err
 		}
@@ -85,20 +76,15 @@ func (p *provisioner) Reflect(ctx context.Context, clusterName, stateDirectory s
 
 		if network, ok := node.NetworkSettings.Networks[res.clusterInfo.Network.Name]; ok {
 			ip := network.IPAddress
-			if ip == "" && network.IPAMConfig != nil {
+			if ip.IsUnspecified() && network.IPAMConfig != nil {
 				ip = network.IPAMConfig.IPv4Address
 			}
 
-			addr, err := netip.ParseAddr(ip)
-			if err != nil {
-				return nil, err
-			}
-
-			ips = append(ips, addr)
+			ips = append(ips, ip)
 		}
 
-		for port, portBinding := range container.HostConfig.PortBindings {
-			if port.Int() == constants.DefaultControlPlanePort {
+		for port, portBinding := range container.Container.HostConfig.PortBindings {
+			if port.Num() == constants.DefaultControlPlanePort {
 				for _, binding := range portBinding {
 					mappedKubernetesPort = binding.HostPort
 				}
@@ -113,8 +99,8 @@ func (p *provisioner) Reflect(ctx context.Context, clusterName, stateDirectory s
 
 				IPs: ips,
 
-				NanoCPUs: container.HostConfig.Resources.NanoCPUs,
-				Memory:   container.HostConfig.Resources.Memory,
+				NanoCPUs: container.Container.HostConfig.Resources.NanoCPUs,
+				Memory:   container.Container.HostConfig.Resources.Memory,
 			})
 	}
 

@@ -128,12 +128,12 @@ func runAndWait(t *testing.T, cmd *exec.Cmd) (stdoutBuf, stderrBuf *bytes.Buffer
 
 	// filter environment variables
 	for _, keyvalue := range os.Environ() {
-		index := strings.Index(keyvalue, "=")
-		if index < 0 {
+		name, _, ok := strings.Cut(keyvalue, "=")
+		if !ok {
 			continue
 		}
 
-		switch strings.ToUpper(keyvalue[:index]) {
+		switch strings.ToUpper(name) {
 		case "PATH":
 			fallthrough
 		case "HOME":

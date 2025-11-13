@@ -37,7 +37,7 @@ type merger interface {
 
 var (
 	zeroValue  reflect.Value
-	mergerType = reflect.TypeOf((*merger)(nil)).Elem()
+	mergerType = reflect.TypeFor[merger]()
 )
 
 //nolint:gocyclo,cyclop
@@ -155,7 +155,7 @@ func merge(vl, vr reflect.Value, replace, overwrite bool) error {
 			var replace bool
 
 			structTag := tl.Field(i).Tag.Get("merge")
-			for _, value := range strings.Split(structTag, ",") {
+			for value := range strings.SplitSeq(structTag, ",") {
 				if value == "replace" {
 					replace = true
 				}

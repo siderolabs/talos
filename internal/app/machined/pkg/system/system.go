@@ -10,6 +10,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	stdmaps "maps"
 	"slices"
 	"strings"
 	"sync"
@@ -282,9 +283,7 @@ func (s *singleton) stopServices(ctx context.Context, services []string, waitFor
 	servicesToStop := map[string]*ServiceRunner{}
 
 	if services == nil {
-		for name, svcrunner := range s.state {
-			servicesToStop[name] = svcrunner
-		}
+		stdmaps.Copy(servicesToStop, s.state)
 	} else {
 		for _, name := range services {
 			if _, ok := s.state[name]; !ok {

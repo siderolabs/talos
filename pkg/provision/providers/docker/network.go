@@ -9,9 +9,9 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/docker/docker/api/types/filters"
-	"github.com/docker/docker/api/types/network"
 	"github.com/hashicorp/go-multierror"
+	"github.com/moby/moby/api/types/network"
+	"github.com/moby/moby/client"
 
 	"github.com/siderolabs/talos/pkg/provision"
 )
@@ -26,7 +26,7 @@ func (p *provisioner) createNetwork(ctx context.Context, req provision.NetworkRe
 
 	// If named net already exists, see if we can reuse it
 	if len(existingNet) > 0 {
-		if existingNet[0].IPAM.Config[0].Subnet != req.CIDRs[0].String() {
+		if existingNet[0].IPAM.Config[0].Subnet != req.CIDRs[0] {
 			return fmt.Errorf("existing network has differing cidr: %s vs %s", existingNet[0].IPAM.Config[0].Subnet, req.CIDRs[0].String())
 		}
 		// CIDRs match, we'll reuse
@@ -34,7 +34,7 @@ func (p *provisioner) createNetwork(ctx context.Context, req provision.NetworkRe
 	}
 
 	// Create new net
-	options := network.CreateOptions{
+	options := client.NetworkCreateOptions{
 		Labels: map[string]string{
 			"talos.owned":        "true",
 			"talos.cluster.name": req.Name,
@@ -42,7 +42,7 @@ func (p *provisioner) createNetwork(ctx context.Context, req provision.NetworkRe
 		IPAM: &network.IPAM{
 			Config: []network.IPAMConfig{
 				{
-					Subnet: req.CIDRs[0].String(),
+					Subnet: req.CIDRs[0],
 				},
 			},
 		},
@@ -56,16 +56,21 @@ func (p *provisioner) createNetwork(ctx context.Context, req provision.NetworkRe
 	return err
 }
 
-func (p *provisioner) listNetworks(ctx context.Context, name string) ([]network.Inspect, error) {
-	filters := filters.NewArgs()
+func (p *provisioner) listNetworks(ctx context.Context, name string) ([]network.Summary, error) {
+	filters := client.Filters{}
 	filters.Add("label", "talos.owned=true")
 	filters.Add("label", "talos.cluster.name="+name)
 
-	options := network.ListOptions{
+	options := client.NetworkListOptions{
 		Filters: filters,
 	}
 
-	return p.client.NetworkList(ctx, options)
+	result, err := p.client.NetworkList(ctx, options)
+	if err != nil {
+		return nil, err
+	}
+
+	return result.Items, nil
 }
 
 func (p *provisioner) destroyNetwork(ctx context.Context, name string) error {
@@ -77,7 +82,7 @@ func (p *provisioner) destroyNetwork(ctx context.Context, name string) error {
 	var result *multierror.Error
 
 	for _, network := range networks {
-		if err := p.client.NetworkRemove(ctx, network.ID); err != nil {
+		if _, err := p.client.NetworkRemove(ctx, network.ID, client.NetworkRemoveOptions{}); err != nil {
 			result = multierror.Append(result, err)
 		}
 	}

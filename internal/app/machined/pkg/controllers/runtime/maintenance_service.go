@@ -253,14 +253,10 @@ func (ctrl *MaintenanceServiceController) Run(ctx context.Context, r controller.
 				factory.WithStreamInterceptor(injector.StreamInterceptor()),
 			)
 
-			serverWg.Add(1)
-
-			go func() {
-				defer serverWg.Done()
-
+			serverWg.Go(func() {
 				//nolint:errcheck
 				server.Serve(listener)
-			}()
+			})
 		}
 
 		// print additional information for the user on important state changes

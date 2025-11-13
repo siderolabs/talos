@@ -222,13 +222,9 @@ func (ctrl *SyncController) Run(ctx context.Context, r controller.Runtime, logge
 
 			syncCtx, syncCtxCancel = context.WithCancel(ctx) //nolint:govet,fatcontext
 
-			syncWg.Add(1)
-
-			go func() {
-				defer syncWg.Done()
-
+			syncWg.Go(func() {
 				syncer.Run(syncCtx)
-			}()
+			})
 		}
 
 		if syncer != nil {

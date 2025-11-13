@@ -66,7 +66,7 @@ func (a Args) Merge(args Args, setters ...MergeOption) error {
 
 			values = values[:i]
 
-			for _, v := range strings.Split(val, ",") {
+			for v := range strings.SplitSeq(val, ",") {
 				v = strings.TrimSpace(v)
 				if _, defined := definedValues[v]; !defined {
 					values = append(values, v)

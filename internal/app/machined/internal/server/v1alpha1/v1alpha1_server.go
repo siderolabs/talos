@@ -1640,7 +1640,7 @@ func (s *Server) Dmesg(req *machine.DmesgRequest, srv machine.MachineService_Dme
 			} else {
 				msg := packet.Message
 				err = srv.Send(&common.Data{
-					Bytes: []byte(fmt.Sprintf("%s: %7s: [%s]: %s", msg.Facility, msg.Priority, msg.Timestamp.Format(time.RFC3339Nano), msg.Message)),
+					Bytes: fmt.Appendf(nil, "%s: %7s: [%s]: %s", msg.Facility, msg.Priority, msg.Timestamp.Format(time.RFC3339Nano), msg.Message),
 				})
 			}
 

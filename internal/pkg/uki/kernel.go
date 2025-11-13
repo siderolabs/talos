@@ -57,7 +57,7 @@ func DiscoverKernelVersion(kernelPath string) (string, error) {
 		return "", err
 	}
 
-	idx := bytes.IndexByte(version, 0)
+	idx := bytes.IndexByte(version, 0) //nolint:modernize // this way is better
 	if idx == -1 {
 		return "", errors.New("invalid kernel version")
 	}

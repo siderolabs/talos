@@ -7,6 +7,7 @@ package url
 import (
 	"net/url"
 	"regexp"
+	"slices"
 	"strings"
 	"sync"
 
@@ -76,10 +77,8 @@ func (v *Variable) Matches(query url.Values) bool {
 			}
 		}
 
-		for _, value := range values {
-			if v.r.MatchString(value) {
-				return true
-			}
+		if slices.ContainsFunc(values, v.r.MatchString) {
+			return true
 		}
 	}
 

@@ -193,8 +193,7 @@ func (item *Item) createFormItems() ([]tview.Primitive, error) {
 	res = append(res, formItem)
 
 	if item.description != "" && addDescription {
-		parts := strings.Split(item.description, "\n")
-		for _, part := range parts {
+		for part := range strings.SplitSeq(item.description, "\n") {
 			desc := NewFormLabel(part)
 			res = append(res, desc)
 		}

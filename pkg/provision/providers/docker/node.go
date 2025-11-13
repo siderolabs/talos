@@ -14,12 +14,11 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/docker/docker/api/types/container"
-	"github.com/docker/docker/api/types/filters"
-	"github.com/docker/docker/api/types/mount"
-	"github.com/docker/docker/api/types/network"
-	"github.com/docker/go-connections/nat"
 	"github.com/hashicorp/go-multierror"
+	"github.com/moby/moby/api/types/container"
+	"github.com/moby/moby/api/types/mount"
+	"github.com/moby/moby/api/types/network"
+	"github.com/moby/moby/client"
 	"github.com/siderolabs/gen/xslices"
 
 	"github.com/siderolabs/talos/pkg/machinery/config/machine"
@@ -28,8 +27,8 @@ import (
 )
 
 type portMap struct {
-	exposedPorts nat.PortSet
-	portBindings nat.PortMap
+	exposedPorts network.PortSet
+	portBindings network.PortMap
 }
 
 func (p *provisioner) createNodes(
@@ -191,23 +190,28 @@ func (p *provisioner) createNode(ctx context.Context, clusterReq provision.Clust
 	}
 
 	if nodeReq.IPs != nil {
-		networkConfig.EndpointsConfig[clusterReq.Network.Name].IPAMConfig = &network.EndpointIPAMConfig{IPv4Address: nodeReq.IPs[0].String()}
+		networkConfig.EndpointsConfig[clusterReq.Network.Name].IPAMConfig = &network.EndpointIPAMConfig{IPv4Address: nodeReq.IPs[0]}
 	}
 
 	// Create the container.
-	resp, err := p.client.ContainerCreate(ctx, containerConfig, hostConfig, networkConfig, nil, nodeReq.Name)
+	resp, err := p.client.ContainerCreate(ctx, client.ContainerCreateOptions{
+		Config:           containerConfig,
+		HostConfig:       hostConfig,
+		NetworkingConfig: networkConfig,
+		Name:             nodeReq.Name,
+	})
 	if err != nil {
 		return provision.NodeInfo{}, err
 	}
 
 	// Start the container.
-	err = p.client.ContainerStart(ctx, resp.ID, container.StartOptions{})
+	_, err = p.client.ContainerStart(ctx, resp.ID, client.ContainerStartOptions{})
 	if err != nil {
 		return provision.NodeInfo{}, err
 	}
 
 	// Inspect the container.
-	info, err := p.client.ContainerInspect(ctx, resp.ID)
+	info, err := p.client.ContainerInspect(ctx, resp.ID, client.ContainerInspectOptions{})
 	if err != nil {
 		return provision.NodeInfo{}, err
 	}
@@ -215,22 +219,19 @@ func (p *provisioner) createNode(ctx context.Context, clusterReq provision.Clust
 	// Get the container's IP address.
 	var addr netip.Addr
 
-	if network, ok := info.NetworkSettings.Networks[clusterReq.Network.Name]; ok {
+	if network, ok := info.Container.NetworkSettings.Networks[clusterReq.Network.Name]; ok {
 		ip := network.IPAddress
 
-		if ip == "" && network.IPAMConfig != nil {
+		if ip.IsUnspecified() && network.IPAMConfig != nil {
 			ip = network.IPAMConfig.IPv4Address
 		}
 
-		addr, err = netip.ParseAddr(ip)
-		if err != nil {
-			return provision.NodeInfo{}, err
-		}
+		addr = ip
 	}
 
 	nodeInfo := provision.NodeInfo{
-		ID:   info.ID,
-		Name: info.Name,
+		ID:   info.Container.ID,
+		Name: info.Container.Name,
 		Type: nodeReq.Type,
 
 		NanoCPUs: nodeReq.NanoCPUs,
@@ -243,11 +244,16 @@ func (p *provisioner) createNode(ctx context.Context, clusterReq provision.Clust
 }
 
 func (p *provisioner) listNodes(ctx context.Context, clusterName string) ([]container.Summary, error) {
-	filters := filters.NewArgs()
+	filters := client.Filters{}
 	filters.Add("label", "talos.owned=true")
 	filters.Add("label", "talos.cluster.name="+clusterName)
 
-	return p.client.ContainerList(ctx, container.ListOptions{All: true, Filters: filters})
+	summary, err := p.client.ContainerList(ctx, client.ContainerListOptions{All: true, Filters: filters})
+	if err != nil {
+		return nil, err
+	}
+
+	return summary.Items, nil
 }
 
 func (p *provisioner) destroyNodes(ctx context.Context, clusterName string, options *provision.Options) error {
@@ -262,7 +268,9 @@ func (p *provisioner) destroyNodes(ctx context.Context, clusterName string, opti
 		go func(ctr container.Summary) {
 			fmt.Fprintln(options.LogWriter, "destroying node", ctr.Names[0][1:])
 
-			errCh <- p.client.ContainerRemove(ctx, ctr.ID, container.RemoveOptions{RemoveVolumes: true, Force: true})
+			_, err := p.client.ContainerRemove(ctx, ctr.ID, client.ContainerRemoveOptions{RemoveVolumes: true, Force: true})
+
+			errCh <- err
 		}(ctr)
 	}
 
@@ -276,8 +284,8 @@ func (p *provisioner) destroyNodes(ctx context.Context, clusterName string, opti
 }
 
 func genPortMap(portList []string, defaultHostIP string) (portMap, error) {
-	portSetRet := nat.PortSet{}
-	portMapRet := nat.PortMap{}
+	portSetRet := network.PortSet{}
+	portMapRet := network.PortMap{}
 
 	for _, port := range portList {
 		portsAndHost, protocol, ok := strings.Cut(port, "/")
@@ -301,15 +309,20 @@ func genPortMap(portList []string, defaultHostIP string) (portMap, error) {
 			return portMap{}, errors.New("incorrect format for exposed ports")
 		}
 
-		natPort, err := nat.NewPort(protocol, containerPort)
+		natPort, err := network.ParsePort(containerPort + "/" + protocol)
 		if err != nil {
 			return portMap{}, err
 		}
 
+		hostAddr, err := netip.ParseAddr(hostIP)
+		if err != nil {
+			return portMap{}, fmt.Errorf("invalid host IP address '%s': %w", hostIP, err)
+		}
+
 		portSetRet[natPort] = struct{}{}
-		portMapRet[natPort] = []nat.PortBinding{
+		portMapRet[natPort] = []network.PortBinding{
 			{
-				HostIP:   hostIP,
+				HostIP:   hostAddr,
 				HostPort: hostPort,
 			},
 		}

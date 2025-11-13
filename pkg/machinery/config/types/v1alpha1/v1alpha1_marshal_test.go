@@ -123,7 +123,7 @@ func TestDiskSizeMatcherUnmarshal(t *testing.T) {
 			match:     false,
 		},
 	} {
-		err := yaml.Unmarshal([]byte(fmt.Sprintf("m: '%s'\n", test.condition)), &obj)
+		err := yaml.Unmarshal(fmt.Appendf(nil, "m: '%s'\n", test.condition), &obj)
 		if test.err {
 			require.Error(t, err)
 		} else {

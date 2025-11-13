@@ -11,6 +11,7 @@ import (
 	"encoding/base64"
 	"fmt"
 	"io"
+	"maps"
 	"math/rand/v2"
 	"net"
 	"net/http"
@@ -81,9 +82,7 @@ func WithHeaders(headers map[string]string) Option {
 			d.Headers = map[string]string{}
 		}
 
-		for k, v := range headers {
-			d.Headers[k] = v
-		}
+		maps.Copy(d.Headers, headers)
 	}
 }
 

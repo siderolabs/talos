@@ -89,7 +89,7 @@ func readUevent(path string) (map[string]string, error) {
 
 	result := map[string]string{}
 
-	for _, kv := range bytes.Split(content, []byte("\n")) {
+	for kv := range bytes.SplitSeq(content, []byte("\n")) {
 		key, value, ok := bytes.Cut(kv, []byte("="))
 		if !ok {
 			continue

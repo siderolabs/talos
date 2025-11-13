@@ -171,7 +171,7 @@ func (suite *LongHornSuite) testDeployISCSI(ctx context.Context) {
 
 	var endpointData string
 
-	if status, ok := unstructured.Object["status"].(map[string]interface{}); ok {
+	if status, ok := unstructured.Object["status"].(map[string]any); ok {
 		endpointData, ok = status["endpoint"].(string)
 		if !ok {
 			suite.T().Fatalf("failed to get LongHorn Engine endpoint")

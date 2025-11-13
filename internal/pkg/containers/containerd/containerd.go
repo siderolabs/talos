@@ -271,7 +271,7 @@ func (i *inspector) Container(id string) (*ctrs.Container, error) {
 	)
 
 	// if id looks like k8s one, ns/pod:container, parse it and build query
-	slashIdx := strings.Index(id, "/")
+	slashIdx := strings.Index(id, "/") //nolint:modernize
 	if slashIdx > 0 {
 		name := ""
 		namespace, pod := id[:slashIdx], id[slashIdx+1:]

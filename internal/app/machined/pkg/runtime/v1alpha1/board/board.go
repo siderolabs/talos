@@ -22,6 +22,7 @@ import (
 )
 
 // NewBoard initializes and returns a runtime.Board.
+//
 // Deprecated: Not supported anymore, use overlays instead.
 func NewBoard(board string) (b runtime.Board, err error) {
 	return newBoard(board)

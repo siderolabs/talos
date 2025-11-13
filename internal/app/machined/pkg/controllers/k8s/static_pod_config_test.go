@@ -56,13 +56,9 @@ func (suite *StaticPodConfigSuite) SetupTest() {
 }
 
 func (suite *StaticPodConfigSuite) startRuntime() {
-	suite.wg.Add(1)
-
-	go func() {
-		defer suite.wg.Done()
-
+	suite.wg.Go(func() {
 		suite.Assert().NoError(suite.runtime.Run(suite.ctx))
-	}()
+	})
 }
 
 func (suite *StaticPodConfigSuite) assertResource(

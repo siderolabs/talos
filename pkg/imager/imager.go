@@ -370,7 +370,7 @@ func (i *Imager) buildCmdline(ctx context.Context) error {
 	if i.prof.Board != "" && !q.SupportsOverlay() {
 		var b talosruntime.Board
 
-		b, err = board.NewBoard(i.prof.Board)
+		b, err = board.NewBoard(i.prof.Board) //nolint:staticcheck
 		if err != nil {
 			return err
 		}

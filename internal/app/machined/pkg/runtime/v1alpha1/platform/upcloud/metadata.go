@@ -45,7 +45,7 @@ type MetadataConfig struct {
 			NetworkID   string `json:"network_id,omitempty"`
 		} `json:"interfaces,omitempty"`
 		DNS []string `json:"dns,omitempty"`
-	} `json:"network,omitempty"`
+	} `json:"network"`
 }
 
 func (u *UpCloud) getMetadata(ctx context.Context) (*MetadataConfig, error) {

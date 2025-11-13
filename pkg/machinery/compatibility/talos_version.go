@@ -6,6 +6,7 @@ package compatibility
 
 import (
 	"fmt"
+	"slices"
 
 	"github.com/blang/semver/v4"
 	"github.com/siderolabs/gen/pair/ordered"
@@ -128,10 +129,8 @@ func (v *TalosVersion) UpgradeableFrom(host *TalosVersion) error {
 		return fmt.Errorf("host version %s is too new to downgrade to Talos %s", host.version.String(), v.version.String())
 	}
 
-	for _, denied := range deniedHostUpgradeVersions {
-		if host.version.EQ(denied) {
-			return fmt.Errorf("host version %s is denied for upgrade to Talos %s", host.version.String(), v.version.String())
-		}
+	if slices.ContainsFunc(deniedHostUpgradeVersions, host.version.EQ) {
+		return fmt.Errorf("host version %s is denied for upgrade to Talos %s", host.version.String(), v.version.String())
 	}
 
 	return nil

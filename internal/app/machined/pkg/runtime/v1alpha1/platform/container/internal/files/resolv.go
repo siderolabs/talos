@@ -23,7 +23,7 @@ func ReadResolvConf(path string) (network.ResolverSpecSpec, error) {
 		return resolverSpec, err
 	}
 
-	for _, line := range bytes.Split(resolvers, []byte("\n")) {
+	for line := range bytes.SplitSeq(resolvers, []byte("\n")) {
 		line = bytes.TrimSpace(line)
 		line, _, _ = bytes.Cut(line, []byte("#"))
 

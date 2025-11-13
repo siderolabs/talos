@@ -55,14 +55,10 @@ func (suite *APIDFactorySuite) TestGetConcurrent() {
 	backendCh := make(chan proxy.Backend, 10)
 
 	for range 10 {
-		wg.Add(1)
-
-		go func() {
-			defer wg.Done()
-
+		wg.Go(func() {
 			b, _ := suite.f.Get("10.0.0.1") //nolint:errcheck
 			backendCh <- b
-		}()
+		})
 	}
 
 	wg.Wait()

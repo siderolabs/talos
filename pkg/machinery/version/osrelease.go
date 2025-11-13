@@ -29,5 +29,5 @@ func OSRelease() ([]byte, error) {
 
 // OSReleaseFor returns the contents of /etc/os-release for a given name and version.
 func OSReleaseFor(name, version string) ([]byte, error) {
-	return []byte(fmt.Sprintf(constants.OSReleaseTemplate, name, strings.ToLower(name), version)), nil
+	return fmt.Appendf(nil, constants.OSReleaseTemplate, name, strings.ToLower(name), version), nil
 }

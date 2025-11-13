@@ -68,10 +68,7 @@ func (w *Watcher) Close() error {
 func (w *Watcher) Run(logger *zap.Logger) <-chan *Event {
 	ch := make(chan *kobject.Event, 128)
 
-	w.wg.Add(1)
-
-	go func() {
-		defer w.wg.Done()
+	w.wg.Go(func() {
 		defer close(ch)
 
 		for {
@@ -86,7 +83,7 @@ func (w *Watcher) Run(logger *zap.Logger) <-chan *Event {
 
 			ch <- ev
 		}
-	}()
+	})
 
 	return ch
 }

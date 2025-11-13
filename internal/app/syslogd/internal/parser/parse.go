@@ -62,7 +62,7 @@ func Parse(b []byte) (string, error) {
 }
 
 func rfc3164ContainsTagHostname(buf []byte) (bool, bool) {
-	indx := bytes.Index(buf, []byte(`]:`))
+	indx := bytes.Index(buf, []byte(`]:`)) //nolint:modernize
 	if indx == -1 {
 		return false, false
 	}

@@ -708,7 +708,7 @@ func (k8sSuite *K8sSuite) WaitForResource(ctx context.Context, namespace, group,
 		}
 
 		switch parseResults[0][0].Interface().(type) {
-		case map[string]interface{}, []interface{}:
+		case map[string]any, []any:
 			return false, fmt.Errorf("jsonpath leads to a nested object or list which is not supported")
 		}
 
