@@ -12,7 +12,6 @@ policies:
           gitHubOrganization: siderolabs
       spellcheck:
         locale: US
-      maximumOfOneCommit: true
       header:
         length: 89
         imperative: true
