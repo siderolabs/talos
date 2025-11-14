@@ -463,7 +463,7 @@ const (
 
 	// DefaultEtcdVersion is the default target version of etcd.
 	// renovate: datasource=docker depName=registry.k8s.io/etcd
-	DefaultEtcdVersion = "v3.6.5"
+	DefaultEtcdVersion = "v3.6.6"
 
 	// EtcdRootTalosKey is the root etcd key for Talos-specific storage.
 	EtcdRootTalosKey = "talos:v1"
