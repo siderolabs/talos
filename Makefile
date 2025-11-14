@@ -391,6 +391,12 @@ talosctl-linux-amd64:
 talosctl-linux-arm64:
 	@$(MAKE) local-talosctl-linux-arm64 DEST=$(ARTIFACTS) PUSH=false
 
+talosctl-linux-armv7:
+	@$(MAKE) local-talosctl-linux-armv7 DEST=$(ARTIFACTS) PUSH=false
+
+talosctl-linux-riscv64:
+	@$(MAKE) local-talosctl-linux-riscv64 DEST=$(ARTIFACTS) PUSH=false
+
 talosctl-darwin-amd64:
 	@$(MAKE) local-talosctl-darwin-amd64 DEST=$(ARTIFACTS) PUSH=false
 
