@@ -555,7 +555,7 @@ func init() {
 	imageCacheCreateCmd.PersistentFlags().BoolVar(&imageCacheCreateCmdFlags.force, "force", false, "force overwrite of existing image cache")
 
 	imageCmd.AddCommand(imageCacheServeCmd)
-	imageCacheServeCmd.PersistentFlags().StringVar(&imageCacheServeCmdFlags.imageCachePath, "image-cache-path", "", "directory to save the image cache in OCI format")
+	imageCacheServeCmd.PersistentFlags().StringVar(&imageCacheServeCmdFlags.imageCachePath, "image-cache-path", "", "directory to save the image cache in flat format")
 	imageCacheServeCmd.MarkPersistentFlagRequired("image-cache-path") //nolint:errcheck
 	imageCacheServeCmd.PersistentFlags().StringVar(&imageCacheServeCmdFlags.address, "address", constants.RegistrydListenAddress, "address to serve the registry on")
 	imageCacheServeCmd.PersistentFlags().StringVar(&imageCacheServeCmdFlags.tlsCertFile, "tls-cert-file", "", "TLS certificate file to use for serving")

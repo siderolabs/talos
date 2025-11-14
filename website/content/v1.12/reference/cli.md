@@ -1959,7 +1959,7 @@ talosctl image cache-serve [flags]
 ```
       --address string            address to serve the registry on (default "127.0.0.1:3172")
   -h, --help                      help for cache-serve
-      --image-cache-path string   directory to save the image cache in OCI format
+      --image-cache-path string   directory to save the image cache in flat format
       --tls-cert-file string      TLS certificate file to use for serving
       --tls-key-file string       TLS key file to use for serving
 ```
