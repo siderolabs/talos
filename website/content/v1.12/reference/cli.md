@@ -432,11 +432,11 @@ talosctl completion SHELL [flags]
 ## Load the talosctl completion code for bash into the current shell
 	source <(talosctl completion bash)
 ## Write bash completion code to a file and source if from .bash_profile
-	talosctl completion bash > ~/.talos/completion.bash.inc
-	printf "
+	talosctl completion bash > "${TALOS_HOME:-$HOME/.talos}/completion.bash.inc"
+	printf '
 		# talosctl shell completion
-		source '$HOME/.talos/completion.bash.inc'
-		" >> $HOME/.bash_profile
+		source "${TALOS_HOME:-$HOME/.talos}/completion.bash.inc"
+		' >> $HOME/.bash_profile
 	source $HOME/.bash_profile
 # Load the talosctl completion code for fish[1] into the current shell
 	talosctl completion fish | source

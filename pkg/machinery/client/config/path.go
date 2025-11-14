@@ -20,8 +20,12 @@ type Path struct {
 	WriteAllowed bool
 }
 
-// GetTalosDirectory returns path to Talos directory (~/.talos).
+// GetTalosDirectory returns path to Talos directory ($TALOS_HOME or ~/.talos).
 func GetTalosDirectory() (string, error) {
+	if path, ok := os.LookupEnv(constants.TalosHomeEnvVar); ok && filepath.IsAbs(path) {
+		return path, nil
+	}
+
 	home, err := os.UserHomeDir()
 	if err != nil {
 		return "", err
