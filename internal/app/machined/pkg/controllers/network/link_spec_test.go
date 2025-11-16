@@ -22,6 +22,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
+	"golang.org/x/sys/unix"
 	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
 
 	networkadapter "github.com/siderolabs/talos/internal/app/machined/pkg/adapters/network"
@@ -92,6 +93,35 @@ func (suite *LinkSpecSuite) TestDummy() {
 
 	ctest.AssertResource(suite, dummyInterface, func(r *network.LinkStatus, asrt *assert.Assertions) {
 		asrt.Equal(newHardwareAddr, net.HardwareAddr(r.TypedSpec().HardwareAddr))
+	})
+
+	// check default multicast behavior (disabled on dummy interfaces)
+	ctest.AssertResource(suite, dummyInterface, func(r *network.LinkStatus, asrt *assert.Assertions) {
+		asrt.Equal(r.TypedSpec().Flags&unix.IFF_MULTICAST == unix.IFF_MULTICAST, false)
+	})
+
+	// attempt to change multicast flag
+	ctest.UpdateWithConflicts(suite, dummy, func(r *network.LinkSpec) error {
+		r.TypedSpec().Multicast = new(bool)
+		*r.TypedSpec().Multicast = true
+
+		return nil
+	})
+
+	ctest.AssertResource(suite, dummyInterface, func(r *network.LinkStatus, asrt *assert.Assertions) {
+		asrt.Equal(r.TypedSpec().Flags&unix.IFF_MULTICAST == unix.IFF_MULTICAST, true)
+	})
+
+	// attempt to disable multicast
+	ctest.UpdateWithConflicts(suite, dummy, func(r *network.LinkSpec) error {
+		r.TypedSpec().Multicast = new(bool)
+		*r.TypedSpec().Multicast = false
+
+		return nil
+	})
+
+	ctest.AssertResource(suite, dummyInterface, func(r *network.LinkStatus, asrt *assert.Assertions) {
+		asrt.Equal(r.TypedSpec().Flags&unix.IFF_MULTICAST == unix.IFF_MULTICAST, false)
 	})
 
 	suite.Require().NoError(suite.State().TeardownAndDestroy(suite.Ctx(), dummy.Metadata()))
