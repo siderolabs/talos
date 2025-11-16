@@ -64,6 +64,9 @@ type LinkSpecSpec struct {
 
 	// Configuration layer.
 	ConfigLayer ConfigLayer `yaml:"layer" protobuf:"14"`
+
+	// Multicast indicates whether the multicast flag should be set on the interface to the value.
+	Multicast *bool `yaml:"multicast,omitempty" protobuf:"16"`
 }
 
 // BondSlave contains a bond's master name and slave index.

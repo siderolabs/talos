@@ -1957,6 +1957,7 @@ type LinkSpecSpec struct {
 	Wireguard       *WireguardSpec           `protobuf:"bytes,13,opt,name=wireguard,proto3" json:"wireguard,omitempty"`
 	ConfigLayer     enums.NetworkConfigLayer `protobuf:"varint,14,opt,name=config_layer,json=configLayer,proto3,enum=talos.resource.definitions.enums.NetworkConfigLayer" json:"config_layer,omitempty"`
 	HardwareAddress []byte                   `protobuf:"bytes,15,opt,name=hardware_address,json=hardwareAddress,proto3" json:"hardware_address,omitempty"`
+	Multicast       bool                     `protobuf:"varint,16,opt,name=multicast,proto3" json:"multicast,omitempty"`
 	unknownFields   protoimpl.UnknownFields
 	sizeCache       protoimpl.SizeCache
 }
@@ -2094,6 +2095,13 @@ func (x *LinkSpecSpec) GetHardwareAddress() []byte {
 		return x.HardwareAddress
 	}
 	return nil
+}
+
+func (x *LinkSpecSpec) GetMulticast() bool {
+	if x != nil {
+		return x.Multicast
+	}
+	return false
 }
 
 // LinkStatusSpec describes status of rendered secrets.
@@ -4864,7 +4872,7 @@ const file_resource_definitions_network_network_proto_rawDesc = "" +
 	"\x0fLinkRefreshSpec\x12\x1e\n" +
 	"\n" +
 	"generation\x18\x01 \x01(\x03R\n" +
-	"generation\"\xc6\x06\n" +
+	"generation\"\xe4\x06\n" +
 	"\fLinkSpecSpec\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12\x18\n" +
 	"\alogical\x18\x02 \x01(\bR\alogical\x12\x0e\n" +
@@ -4884,7 +4892,8 @@ const file_resource_definitions_network_network_proto_rawDesc = "" +
 	"\rbridge_master\x18\f \x01(\v24.talos.resource.definitions.network.BridgeMasterSpecR\fbridgeMaster\x12O\n" +
 	"\twireguard\x18\r \x01(\v21.talos.resource.definitions.network.WireguardSpecR\twireguard\x12W\n" +
 	"\fconfig_layer\x18\x0e \x01(\x0e24.talos.resource.definitions.enums.NetworkConfigLayerR\vconfigLayer\x12)\n" +
-	"\x10hardware_address\x18\x0f \x01(\fR\x0fhardwareAddress\"\xe1\n" +
+	"\x10hardware_address\x18\x0f \x01(\fR\x0fhardwareAddress\x12\x1c\n" +
+	"\tmulticast\x18\x10 \x01(\bR\tmulticast\"\xe1\n" +
 	"\n" +
 	"\x0eLinkStatusSpec\x12\x14\n" +
 	"\x05index\x18\x01 \x01(\rR\x05index\x12H\n" +

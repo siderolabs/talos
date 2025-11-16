@@ -308,6 +308,10 @@ func (o LinkSpecSpec) DeepCopy() LinkSpecSpec {
 			}
 		}
 	}
+	if o.Multicast != nil {
+		cp.Multicast = new(bool)
+		*cp.Multicast = *o.Multicast
+	}
 	return cp
 }
 
