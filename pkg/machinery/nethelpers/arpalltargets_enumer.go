@@ -1445,7 +1445,7 @@ func _LinkFlagNoOp() {
 	_ = x[LinkAllMulti-(512)]
 	_ = x[LinkMaster-(1024)]
 	_ = x[LinkSlave-(2048)]
-	_ = x[LinkMulticase-(4096)]
+	_ = x[LinkMulticast-(4096)]
 	_ = x[LinkPortsel-(8192)]
 	_ = x[LinKAutoMedia-(16384)]
 	_ = x[LinkDynamic-(32768)]
@@ -1454,7 +1454,7 @@ func _LinkFlagNoOp() {
 	_ = x[LinkEcho-(262144)]
 }
 
-var _LinkFlagValues = []LinkFlag{LinkUp, LinkBroadcast, LinkDebug, LinkLoopback, LinkPointToPoint, LinkNoTrailers, LinkRunning, LinkNoArp, LinkPromisc, LinkAllMulti, LinkMaster, LinkSlave, LinkMulticase, LinkPortsel, LinKAutoMedia, LinkDynamic, LinkLowerUp, LinkDormant, LinkEcho}
+var _LinkFlagValues = []LinkFlag{LinkUp, LinkBroadcast, LinkDebug, LinkLoopback, LinkPointToPoint, LinkNoTrailers, LinkRunning, LinkNoArp, LinkPromisc, LinkAllMulti, LinkMaster, LinkSlave, LinkMulticast, LinkPortsel, LinKAutoMedia, LinkDynamic, LinkLowerUp, LinkDormant, LinkEcho}
 
 var _LinkFlagNameToValueMap = map[string]LinkFlag{
 	_LinkFlagName[0:2]:          LinkUp,
@@ -1481,8 +1481,8 @@ var _LinkFlagNameToValueMap = map[string]LinkFlag{
 	_LinkFlagLowerName[73:79]:   LinkMaster,
 	_LinkFlagName[79:84]:        LinkSlave,
 	_LinkFlagLowerName[79:84]:   LinkSlave,
-	_LinkFlagName[84:93]:        LinkMulticase,
-	_LinkFlagLowerName[84:93]:   LinkMulticase,
+	_LinkFlagName[84:93]:        LinkMulticast,
+	_LinkFlagLowerName[84:93]:   LinkMulticast,
 	_LinkFlagName[93:100]:       LinkPortsel,
 	_LinkFlagLowerName[93:100]:  LinkPortsel,
 	_LinkFlagName[100:109]:      LinKAutoMedia,

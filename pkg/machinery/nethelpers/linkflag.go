@@ -70,7 +70,7 @@ const (
 	LinkAllMulti                          // ALLMULTI
 	LinkMaster                            // MASTER
 	LinkSlave                             // SLAVE
-	LinkMulticase                         // MULTICAST
+	LinkMulticast                         // MULTICAST
 	LinkPortsel                           // PORTSEL
 	LinKAutoMedia                         // AUTOMEDIA
 	LinkDynamic                           // DYNAMIC

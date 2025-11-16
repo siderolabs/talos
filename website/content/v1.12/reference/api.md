@@ -8781,6 +8781,7 @@ LinkSpecSpec describes spec for the link.
 | wireguard | [WireguardSpec](#talos.resource.definitions.network.WireguardSpec) |  |  |
 | config_layer | [talos.resource.definitions.enums.NetworkConfigLayer](#talos.resource.definitions.enums.NetworkConfigLayer) |  |  |
 | hardware_address | [bytes](#bytes) |  |  |
+| multicast | [bool](#bool) |  |  |
 
 
 
