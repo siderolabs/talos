@@ -634,6 +634,27 @@ func (ctrl *LinkSpecController) syncLink(ctx context.Context, r controller.Runti
 			logger.Info("changed hardware address for the link", zap.String("hwaddr", net.HardwareAddr(link.TypedSpec().HardwareAddress).String()))
 		}
 
+		// sync multicast flag if it's set in the spec
+		if link.TypedSpec().Multicast != nil && ((existing.Flags&unix.IFF_MULTICAST == unix.IFF_MULTICAST) != *link.TypedSpec().Multicast) {
+			flags := uint32(0)
+
+			if *link.TypedSpec().Multicast {
+				flags = unix.IFF_MULTICAST
+			}
+
+			if err := conn.Link.Set(&rtnetlink.LinkMessage{
+				Family: existing.Family,
+				Type:   existing.Type,
+				Index:  existing.Index,
+				Flags:  flags,
+				Change: unix.IFF_MULTICAST,
+			}); err != nil {
+				return fmt.Errorf("error changing multicast flag for %q: %w", link.TypedSpec().Name, err)
+			}
+
+			logger.Info("changed multicast flag for the link", zap.Bool("multicast", *link.TypedSpec().Multicast))
+		}
+
 		// sync master index (for links which are bridge or bond slaves)
 		var masterIndex uint32
 
