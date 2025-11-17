@@ -131,7 +131,7 @@ func (ctrl *VolumeConfigController) Run(ctx context.Context, r controller.Runtim
 			}
 		}
 
-		if err := ctrl.cleanupUnusedVolumes(ctx, r, volumeConfigsByID, volumeMountRequestsByID, logger); err != nil {
+		if err := ctrl.cleanupUnusedVolumes(ctx, r, volumeConfigsByID, volumeMountRequestsByID); err != nil {
 			return fmt.Errorf("error cleaning up unused volumes: %w", err)
 		}
 	}
@@ -281,10 +281,7 @@ func (ctrl *VolumeConfigController) cleanupUnusedVolumes(
 	r controller.Runtime,
 	volumeConfigsByID map[string]*block.VolumeConfig,
 	volumeMountRequestsByID map[string]*block.VolumeMountRequest,
-	l *zap.Logger,
 ) error {
-	l.Info("cleaning up unused volumes")
-	// Clean up unused volume configs
 	for _, volumeConfig := range volumeConfigsByID {
 		okToDestroy, err := r.Teardown(ctx, volumeConfig.Metadata())
 		if err != nil {
