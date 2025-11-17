@@ -27,7 +27,7 @@ import "google/rpc/status.proto";
 
 // The state of an evaluation.
 //
-// Can represent an inital, partial, or completed state of evaluation.
+// Can represent an initial, partial, or completed state of evaluation.
 message EvalState {
   // A single evalution result.
   message Result {

@@ -4306,7 +4306,7 @@ func (x *ReadRequest) GetPath() string {
 	return ""
 }
 
-// LogsContainer desribes all avalaible registered log containers.
+// LogsContainer describes all available registered log containers.
 type LogsContainer struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Metadata      *common.Metadata       `protobuf:"bytes,1,opt,name=metadata,proto3" json:"metadata,omitempty"`

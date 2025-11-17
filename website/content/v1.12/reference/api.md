@@ -2616,7 +2616,7 @@ ListRequest describes a request to list the contents of a directory.
 <a name="machine.LogsContainer"></a>
 
 ### LogsContainer
-LogsContainer desribes all avalaible registered log containers.
+LogsContainer describes all available registered log containers.
 
 
 | Field | Type | Label | Description |

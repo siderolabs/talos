@@ -95,7 +95,7 @@ message MapValue {
   }
   // The set of map entries.
   //
-  // CEL has fewer restrictions on keys, so a protobuf map represenation
+  // CEL has fewer restrictions on keys, so a protobuf map representation
   // cannot be used.
   repeated Entry entries = 1;
 }
