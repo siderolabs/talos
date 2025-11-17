@@ -10,6 +10,7 @@ import (
 	"os"
 	"path/filepath"
 	"sync"
+	"time"
 
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
@@ -63,6 +64,10 @@ func (ctrl *LogPersistenceController) Outputs() []controller.Output {
 	}
 }
 
+func (ctrl *LogPersistenceController) filenameForId(id string) string {
+	return filepath.Join(constants.LogMountPoint, id+".log")
+}
+
 func (ctrl *LogPersistenceController) WriteLog(id string, line []byte) error {
 	var err error
 
@@ -71,24 +76,17 @@ func (ctrl *LogPersistenceController) WriteLog(id string, line []byte) error {
 
 	f, ok := ctrl.files[id]
 	if !ok {
-		fmt.Println("LOGGING open", id)
-		f, err = os.OpenFile(filepath.Join(constants.LogMountPoint, id+".log"), os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o644)
+		f, err = os.OpenFile(ctrl.filenameForId(id), os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o644)
 		if err != nil {
-			fmt.Println("LOGGING open err", err)
 			return fmt.Errorf("error opening log file for %q: %w", id, err)
 		}
 
-		fmt.Println("LOGGING map lock", id)
 		ctrl.filesMutex.Lock()
 		ctrl.files[id] = f
-		fmt.Println("LOGGING map unlock", id)
 		ctrl.filesMutex.Unlock()
 	}
 
-	// fmt.Println("LOGGING write", id)
 	if _, err = f.Write(append(line, '\n')); err != nil {
-		fmt.Println("LOGGING err", err)
-
 		return fmt.Errorf("error writing log line for %q: %w", id, err)
 	}
 
@@ -97,27 +95,47 @@ func (ctrl *LogPersistenceController) WriteLog(id string, line []byte) error {
 
 func (ctrl *LogPersistenceController) startLogging() {
 	// here we can start logging activities
-	fmt.Println("LOGGING ctrl.canLog.Unlock")
 	ctrl.canLog.Unlock()
 }
 
 func (ctrl *LogPersistenceController) stopLogging() error {
 	// Stop all logging activities, close files
 	// after this call we should not hold /var/log
-	fmt.Println("LOGGING stop", &ctrl.canLog)
 	ctrl.canLog.Lock()
-	fmt.Println("LOGGING stop, canLog locked")
 	ctrl.filesMutex.Lock()
-	fmt.Println("LOGGING stop, filesMutex locked")
 	defer ctrl.filesMutex.Unlock()
 
 	for id := range ctrl.files {
-		fmt.Println("LOGGING close", id)
 		if err := ctrl.files[id].Close(); err != nil {
-			fmt.Println("LOGGING close err", err)
 			return fmt.Errorf("error closing log file for %q: %w", id, err)
 		}
 		delete(ctrl.files, id)
+	}
+
+	return nil
+}
+
+func (ctrl *LogPersistenceController) rotate(id string) error {
+	ctrl.canLog.Lock()
+	defer ctrl.canLog.Unlock()
+	ctrl.filesMutex.Lock()
+	defer ctrl.filesMutex.Unlock()
+
+	_, ok := ctrl.files[id]
+	if !ok {
+		return nil
+	}
+
+	if err := ctrl.files[id].Close(); err != nil {
+		return fmt.Errorf("error closing log file for %q: %w", id, err)
+	}
+
+	delete(ctrl.files, id)
+
+	filename := ctrl.filenameForId(id)
+	err := os.Rename(filename, filename+".1")
+	if err != nil {
+		return fmt.Errorf("rename: %w", err)
 	}
 
 	return nil
@@ -132,12 +150,28 @@ func (ctrl *LogPersistenceController) Run(ctx context.Context, r controller.Runt
 	ctrl.files = make(map[string]*os.File)
 	// Block writes until /var/log is ready
 	ctrl.canLog.Lock()
-	fmt.Println("LOGGING ctrl.canLog.Lock")
+
+	ticker := time.NewTicker(5 * time.Second)
+	tickerC := ticker.C
 
 	for {
 		select {
 		case <-ctx.Done():
 			return nil
+		case <-tickerC:
+			for id := range ctrl.files {
+				st, err := os.Stat(ctrl.filenameForId(id))
+				if err != nil {
+					return fmt.Errorf("error stat logfile %s: %w", id, err)
+				}
+				if st.Size() >= 512*1024 {
+					fmt.Println("LOGGING rotating", id)
+					err = ctrl.rotate(id)
+					if err != nil {
+						return fmt.Errorf("error rotating logfile %s: %w", id, err)
+					}
+				}
+			}
 		case <-r.EventCh():
 		}
 
