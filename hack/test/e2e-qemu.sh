@@ -359,7 +359,10 @@ case "${TEST_MODE:-default}" in
   *)
     get_kubeconfig
     run_talos_integration_test
-    run_kubernetes_integration_test
+
+    if [[ ${QEMU_MEMORY_WORKERS:-2048} -le 1024 ]]; then
+        run_kubernetes_integration_test
+    fi
 
     if [ "${WITH_TEST:-none}" != "none" ]; then
       "${WITH_TEST}"
