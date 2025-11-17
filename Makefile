@@ -25,9 +25,9 @@ DEBUG_TOOLS_SOURCE := scratch
 EMBED_TARGET ?= embed
 
 TOOLS_PREFIX ?= ghcr.io/siderolabs/tools
-TOOLS ?= v1.10.0-6-g306d9d9
+TOOLS ?= v1.10.0-7-g39357c8
 PKGS_PREFIX ?= ghcr.io/siderolabs
-PKGS ?= v1.10.0-34-g88700c7
+PKGS ?= v1.10.0-37-g71b336d
 
 KRES_IMAGE ?= ghcr.io/siderolabs/kres:latest
 CONFORMANCE_IMAGE ?= ghcr.io/siderolabs/conform:latest
@@ -125,7 +125,7 @@ INTEGRATION_TEST := integration-test
 INTEGRATION_TEST_DEFAULT_TARGET := $(INTEGRATION_TEST)-$(OPERATING_SYSTEM)
 INTEGRATION_TEST_PROVISION_DEFAULT_TARGET := integration-test-provision-$(OPERATING_SYSTEM)
 # renovate: datasource=github-releases depName=kubernetes/kubernetes
-KUBECTL_VERSION ?= v1.33.4
+KUBECTL_VERSION ?= v1.33.6
 # renovate: datasource=github-releases depName=kastenhq/kubestr
 KUBESTR_VERSION ?= v0.4.48
 # renovate: datasource=github-releases depName=helm/helm
@@ -183,7 +183,7 @@ GO_BUILDFLAGS += -tags "$(GO_BUILDTAGS)"
 , := ,
 space := $(subst ,, )
 BUILD := docker buildx build
-PLATFORM ?= linux/amd64
+PLATFORM ?= linux/$(ARCH)
 PROGRESS ?= auto
 PUSH ?= false
 COMMON_ARGS := --file=Dockerfile
@@ -369,13 +369,13 @@ hack-test-%: ## Runs the specified script in ./hack/test with well known environ
 
 .PHONY: generate
 generate: ## Generates code from protobuf service definitions and machinery config.
-	@$(MAKE) local-$@ DEST=./ PLATFORM=$(OPERATING_SYSTEM)/$(ARCH) EMBED_TARGET=embed-abbrev
+	@$(MAKE) local-$@ DEST=./ PLATFORM=linux/$(ARCH) EMBED_TARGET=embed-abbrev
 
 .PHONY: docs
 docs: ## Generates the documentation for machine config, and talosctl.
 	@rm -rf docs/configuration/*
 	@rm -rf docs/talosctl/*
-	@$(MAKE) local-$@ DEST=./ PLATFORM=$(OPERATING_SYSTEM)/$(ARCH)
+	@$(MAKE) local-$@ DEST=./ PLATFORM=linux/$(ARCH)
 
 .PHONY: docs-preview
 docs-preview: ## Starts a local preview of the documentation using Hugo in docker
