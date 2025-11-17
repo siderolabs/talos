@@ -46,6 +46,7 @@ func TestLinkConfigMarshalStability(t *testing.T) {
 			RouteGateway: network.Addr{netip.MustParseAddr("fe80::1")},
 		},
 	}
+	cfg.LinkMulticast = pointer.To(true)
 
 	marshaled, err := encoder.NewEncoder(cfg, encoder.WithComments(encoder.CommentsDisabled)).Encode()
 	require.NoError(t, err)
@@ -91,6 +92,7 @@ func TestLinkConfigUnmarshal(t *testing.T) {
 					RouteGateway: network.Addr{netip.MustParseAddr("fe80::1")},
 				},
 			},
+			LinkMulticast: pointer.To(true),
 		},
 	}, docs[0])
 }

@@ -152,6 +152,7 @@ type NetworkCommonLinkConfig interface {
 	MTU() optional.Optional[uint32]
 	Addresses() []NetworkAddressConfig
 	Routes() []NetworkRouteConfig
+	Multicast() optional.Optional[bool]
 }
 
 // NetworkAddressConfig defines a network address configuration.

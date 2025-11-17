@@ -408,7 +408,7 @@ func (ctrl *LinkConfigController) processDevicesConfiguration(
 	}
 }
 
-//nolint:gocyclo
+//nolint:gocyclo,cyclop
 func (ctrl *LinkConfigController) processLinkConfigs(logger *zap.Logger, linkMap map[string]*network.LinkSpecSpec, cfg *config.MachineConfig, linkNameResolver *network.LinkResolver) {
 	if cfg == nil {
 		return
@@ -437,6 +437,11 @@ func (ctrl *LinkConfigController) processLinkConfigs(logger *zap.Logger, linkMap
 			}
 		} else {
 			linkMap[linkName].HardwareAddress = nil
+		}
+
+		if multicast, ok := linkConfig.Multicast().Get(); ok {
+			linkMap[linkName].Multicast = new(bool)
+			*linkMap[linkName].Multicast = multicast
 		}
 
 		switch specificLinkConfig := linkConfig.(type) {

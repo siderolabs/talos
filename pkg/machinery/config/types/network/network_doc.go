@@ -1059,6 +1059,13 @@ func (CommonLinkConfig) Doc() *encoder.Doc {
 				Description: "Configure routes to be statically created via the link.",
 				Comments:    [3]string{"" /* encoder.HeadComment */, "Configure routes to be statically created via the link." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
+			{
+				Name:        "multicast",
+				Type:        "bool",
+				Note:        "",
+				Description: "Set the multicast capability of the link.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Set the multicast capability of the link." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
 		},
 	}
 

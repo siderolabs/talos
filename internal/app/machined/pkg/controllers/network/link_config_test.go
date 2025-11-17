@@ -256,6 +256,8 @@ func (suite *LinkConfigSuite) TestMachineConfiguration() {
 				} else {
 					asrt.EqualValues(9001, r.TypedSpec().MTU)
 				}
+
+				asrt.Nil(r.TypedSpec().Multicast)
 			case "eth0.24", "eth0.48":
 				asrt.True(r.TypedSpec().Up)
 				asrt.True(r.TypedSpec().Logical)
@@ -775,6 +777,37 @@ func (suite *LinkConfigSuite) TestNoDefaultUp() {
 			"default/eth3",
 			"default/eth4",
 			"default/eth5",
+		},
+	)
+}
+
+func (suite *LinkConfigSuite) TestMulticast() {
+	suite.Require().NoError(suite.Runtime().RegisterController(&netctrl.LinkConfigController{}))
+
+	lc1 := networkcfg.NewLinkConfigV1Alpha1("enp1s1")
+	lc1.LinkMulticast = pointer.To(false)
+	lc2 := networkcfg.NewLinkConfigV1Alpha1("enp1s2")
+	lc2.LinkMulticast = pointer.To(true)
+
+	ctr, err := container.New(lc1, lc2)
+	suite.Require().NoError(err)
+
+	cfg := config.NewMachineConfig(ctr)
+	suite.Create(cfg)
+
+	suite.assertLinks(
+		[]string{
+			"configuration/enp1s1",
+			"configuration/enp1s2",
+		}, func(r *network.LinkSpec, asrt *assert.Assertions) {
+			asrt.Equal(network.ConfigMachineConfiguration, r.TypedSpec().ConfigLayer)
+
+			switch r.TypedSpec().Name {
+			case "enp1s1":
+				asrt.False(*r.TypedSpec().Multicast)
+			case "enp1s2":
+				asrt.True(*r.TypedSpec().Multicast)
+			}
 		},
 	)
 }
