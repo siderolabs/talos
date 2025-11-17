@@ -1,23 +1,22 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
 #
-# Generated on 2025-06-11T09:49:20Z by kres 5128bc1.
+# Generated on 2025-11-17T16:36:13Z by kres e1d6dac.
 
-name: integration-qemu-enforcing-cron
 concurrency:
   group: ${{ github.head_ref || github.run_id }}
   cancel-in-progress: true
 "on":
   schedule:
     - cron: 30 3 * * *
+name: integration-qemu-enforcing-cron
 jobs:
   default:
     runs-on:
-      - self-hosted
-      - talos
+      group: large
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@v1.3.1
+        uses: kenchan0130/actions-system-info@v1.4.0
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -41,7 +40,7 @@ jobs:
           done
         continue-on-error: true
       - name: checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
       - name: Unshallow
         run: |
           git fetch --prune --unshallow
