@@ -50,6 +50,7 @@ parent: enp0s3
 |`mtu` |uint32 |Configure LinkMTU (Maximum Transmission Unit) for the link.<br><br>If not specified, the system default LinkMTU will be used (usually 1500).  | |
 |`addresses` |<a href="#VLANConfig.addresses.">[]AddressConfig</a> |Configure addresses to be statically assigned to the link.  | |
 |`routes` |<a href="#VLANConfig.routes.">[]RouteConfig</a> |Configure routes to be statically created via the link.  | |
+|`multicast` |bool |Set the multicast capability of the link.  | |
 
 
 

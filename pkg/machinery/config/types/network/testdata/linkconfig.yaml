@@ -11,3 +11,4 @@ routes:
     - destination: 10.3.5.0/24
       gateway: 10.3.5.1
     - gateway: fe80::1
+multicast: true

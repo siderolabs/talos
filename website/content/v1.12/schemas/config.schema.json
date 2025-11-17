@@ -1288,6 +1288,13 @@
           "description": "Configure routes to be statically created via the link.\n",
           "markdownDescription": "Configure routes to be statically created via the link.",
           "x-intellij-html-description": "\u003cp\u003eConfigure routes to be statically created via the link.\u003c/p\u003e\n"
+        },
+        "multicast": {
+          "type": "boolean",
+          "title": "multicast",
+          "description": "Set the multicast capability of the link.\n",
+          "markdownDescription": "Set the multicast capability of the link.",
+          "x-intellij-html-description": "\u003cp\u003eSet the multicast capability of the link.\u003c/p\u003e\n"
         }
       },
       "additionalProperties": false,
@@ -1393,6 +1400,13 @@
           "description": "Configure routes to be statically created via the link.\n",
           "markdownDescription": "Configure routes to be statically created via the link.",
           "x-intellij-html-description": "\u003cp\u003eConfigure routes to be statically created via the link.\u003c/p\u003e\n"
+        },
+        "multicast": {
+          "type": "boolean",
+          "title": "multicast",
+          "description": "Set the multicast capability of the link.\n",
+          "markdownDescription": "Set the multicast capability of the link.",
+          "x-intellij-html-description": "\u003cp\u003eSet the multicast capability of the link.\u003c/p\u003e\n"
         }
       },
       "additionalProperties": false,
@@ -1468,6 +1482,13 @@
           "description": "Configure routes to be statically created via the link.\n",
           "markdownDescription": "Configure routes to be statically created via the link.",
           "x-intellij-html-description": "\u003cp\u003eConfigure routes to be statically created via the link.\u003c/p\u003e\n"
+        },
+        "multicast": {
+          "type": "boolean",
+          "title": "multicast",
+          "description": "Set the multicast capability of the link.\n",
+          "markdownDescription": "Set the multicast capability of the link.",
+          "x-intellij-html-description": "\u003cp\u003eSet the multicast capability of the link.\u003c/p\u003e\n"
         }
       },
       "additionalProperties": false,
@@ -1721,6 +1742,13 @@
           "description": "Configure routes to be statically created via the link.\n",
           "markdownDescription": "Configure routes to be statically created via the link.",
           "x-intellij-html-description": "\u003cp\u003eConfigure routes to be statically created via the link.\u003c/p\u003e\n"
+        },
+        "multicast": {
+          "type": "boolean",
+          "title": "multicast",
+          "description": "Set the multicast capability of the link.\n",
+          "markdownDescription": "Set the multicast capability of the link.",
+          "x-intellij-html-description": "\u003cp\u003eSet the multicast capability of the link.\u003c/p\u003e\n"
         }
       },
       "additionalProperties": false,
@@ -2224,6 +2252,13 @@
           "description": "Configure routes to be statically created via the link.\n",
           "markdownDescription": "Configure routes to be statically created via the link.",
           "x-intellij-html-description": "\u003cp\u003eConfigure routes to be statically created via the link.\u003c/p\u003e\n"
+        },
+        "multicast": {
+          "type": "boolean",
+          "title": "multicast",
+          "description": "Set the multicast capability of the link.\n",
+          "markdownDescription": "Set the multicast capability of the link.",
+          "x-intellij-html-description": "\u003cp\u003eSet the multicast capability of the link.\u003c/p\u003e\n"
         }
       },
       "additionalProperties": false,
@@ -2699,6 +2734,13 @@
           "description": "Configure routes to be statically created via the link.\n",
           "markdownDescription": "Configure routes to be statically created via the link.",
           "x-intellij-html-description": "\u003cp\u003eConfigure routes to be statically created via the link.\u003c/p\u003e\n"
+        },
+        "multicast": {
+          "type": "boolean",
+          "title": "multicast",
+          "description": "Set the multicast capability of the link.\n",
+          "markdownDescription": "Set the multicast capability of the link.",
+          "x-intellij-html-description": "\u003cp\u003eSet the multicast capability of the link.\u003c/p\u003e\n"
         }
       },
       "additionalProperties": false,
@@ -2803,6 +2845,13 @@
           "description": "Configure routes to be statically created via the link.\n",
           "markdownDescription": "Configure routes to be statically created via the link.",
           "x-intellij-html-description": "\u003cp\u003eConfigure routes to be statically created via the link.\u003c/p\u003e\n"
+        },
+        "multicast": {
+          "type": "boolean",
+          "title": "multicast",
+          "description": "Set the multicast capability of the link.\n",
+          "markdownDescription": "Set the multicast capability of the link.",
+          "x-intellij-html-description": "\u003cp\u003eSet the multicast capability of the link.\u003c/p\u003e\n"
         }
       },
       "additionalProperties": false,

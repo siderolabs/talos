@@ -99,6 +99,9 @@ type CommonLinkConfig struct {
 	//   description: |
 	//     Configure routes to be statically created via the link.
 	LinkRoutes []RouteConfig `yaml:"routes,omitempty"`
+	//   description: |
+	//     Set the multicast capability of the link.
+	LinkMulticast *bool `yaml:"multicast,omitempty"`
 }
 
 // AddressConfig represents a network address configuration.
@@ -305,6 +308,15 @@ func (s *CommonLinkConfig) Routes() []config.NetworkRouteConfig {
 	return xslices.Map(s.LinkRoutes, func(r RouteConfig) config.NetworkRouteConfig {
 		return r
 	})
+}
+
+// Multicast implements NetworkCommonLinkConfig interface.
+func (s *CommonLinkConfig) Multicast() optional.Optional[bool] {
+	if s.LinkMulticast == nil {
+		return optional.None[bool]()
+	}
+
+	return optional.Some(*s.LinkMulticast)
 }
 
 // Address implements NetworkAddressConfig interface.

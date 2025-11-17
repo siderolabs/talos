@@ -149,6 +149,10 @@ func (o *BondConfigV1Alpha1) DeepCopy() *BondConfigV1Alpha1 {
 		cp.CommonLinkConfig.LinkRoutes = make([]RouteConfig, len(o.CommonLinkConfig.LinkRoutes))
 		copy(cp.CommonLinkConfig.LinkRoutes, o.CommonLinkConfig.LinkRoutes)
 	}
+	if o.CommonLinkConfig.LinkMulticast != nil {
+		cp.CommonLinkConfig.LinkMulticast = new(bool)
+		*cp.CommonLinkConfig.LinkMulticast = *o.CommonLinkConfig.LinkMulticast
+	}
 	return &cp
 }
 
@@ -188,6 +192,10 @@ func (o *BridgeConfigV1Alpha1) DeepCopy() *BridgeConfigV1Alpha1 {
 	if o.CommonLinkConfig.LinkRoutes != nil {
 		cp.CommonLinkConfig.LinkRoutes = make([]RouteConfig, len(o.CommonLinkConfig.LinkRoutes))
 		copy(cp.CommonLinkConfig.LinkRoutes, o.CommonLinkConfig.LinkRoutes)
+	}
+	if o.CommonLinkConfig.LinkMulticast != nil {
+		cp.CommonLinkConfig.LinkMulticast = new(bool)
+		*cp.CommonLinkConfig.LinkMulticast = *o.CommonLinkConfig.LinkMulticast
 	}
 	return &cp
 }
@@ -258,6 +266,10 @@ func (o *DummyLinkConfigV1Alpha1) DeepCopy() *DummyLinkConfigV1Alpha1 {
 	if o.CommonLinkConfig.LinkRoutes != nil {
 		cp.CommonLinkConfig.LinkRoutes = make([]RouteConfig, len(o.CommonLinkConfig.LinkRoutes))
 		copy(cp.CommonLinkConfig.LinkRoutes, o.CommonLinkConfig.LinkRoutes)
+	}
+	if o.CommonLinkConfig.LinkMulticast != nil {
+		cp.CommonLinkConfig.LinkMulticast = new(bool)
+		*cp.CommonLinkConfig.LinkMulticast = *o.CommonLinkConfig.LinkMulticast
 	}
 	return &cp
 }
@@ -395,6 +407,10 @@ func (o *LinkConfigV1Alpha1) DeepCopy() *LinkConfigV1Alpha1 {
 		cp.CommonLinkConfig.LinkRoutes = make([]RouteConfig, len(o.CommonLinkConfig.LinkRoutes))
 		copy(cp.CommonLinkConfig.LinkRoutes, o.CommonLinkConfig.LinkRoutes)
 	}
+	if o.CommonLinkConfig.LinkMulticast != nil {
+		cp.CommonLinkConfig.LinkMulticast = new(bool)
+		*cp.CommonLinkConfig.LinkMulticast = *o.CommonLinkConfig.LinkMulticast
+	}
 	return &cp
 }
 
@@ -497,6 +513,10 @@ func (o *VLANConfigV1Alpha1) DeepCopy() *VLANConfigV1Alpha1 {
 		cp.CommonLinkConfig.LinkRoutes = make([]RouteConfig, len(o.CommonLinkConfig.LinkRoutes))
 		copy(cp.CommonLinkConfig.LinkRoutes, o.CommonLinkConfig.LinkRoutes)
 	}
+	if o.CommonLinkConfig.LinkMulticast != nil {
+		cp.CommonLinkConfig.LinkMulticast = new(bool)
+		*cp.CommonLinkConfig.LinkMulticast = *o.CommonLinkConfig.LinkMulticast
+	}
 	return &cp
 }
 
@@ -530,6 +550,10 @@ func (o *WireguardConfigV1Alpha1) DeepCopy() *WireguardConfigV1Alpha1 {
 	if o.CommonLinkConfig.LinkRoutes != nil {
 		cp.CommonLinkConfig.LinkRoutes = make([]RouteConfig, len(o.CommonLinkConfig.LinkRoutes))
 		copy(cp.CommonLinkConfig.LinkRoutes, o.CommonLinkConfig.LinkRoutes)
+	}
+	if o.CommonLinkConfig.LinkMulticast != nil {
+		cp.CommonLinkConfig.LinkMulticast = new(bool)
+		*cp.CommonLinkConfig.LinkMulticast = *o.CommonLinkConfig.LinkMulticast
 	}
 	return &cp
 }
