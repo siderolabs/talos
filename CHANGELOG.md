@@ -1,3 +1,79 @@
+## [Talos 1.10.8](https://github.com/siderolabs/talos/releases/tag/v1.10.8) (2025-11-18)
+
+Welcome to the v1.10.8 release of Talos!
+
+
+
+Please try out the release binaries and report any issues at
+https://github.com/siderolabs/talos/issues.
+
+### Component Updates
+
+Linux: 6.12.58
+Kubernetes: 1.33.6
+Runc: v1.2.8
+Containerd: v2.0.7
+
+Talos is built with Go 1.24.10.
+
+
+### Contributors
+
+* Noel Georgi
+* Andrey Smirnov
+* Markus Freitag
+
+### Changes
+<details><summary>6 commits</summary>
+<p>
+
+* [`a1ad6108b`](https://github.com/siderolabs/talos/commit/a1ad6108b373edd5263e92ce064ea162af038a05) feat: bump linux, kubernetes, runc and containerd
+* [`288af9eb5`](https://github.com/siderolabs/talos/commit/288af9eb51dd2520d29a8a5f5a254a414cd62f1c) chore: rekres and manual cherry-pick of `77d8cc7c589a190c8cb86e6e1684233129b648a1`
+* [`50fed880f`](https://github.com/siderolabs/talos/commit/50fed880f7826c2655a8c77e32ffcc77002f6e4a) fix: reserve the apid and trustd ports from the ephemeral port range
+* [`8a2aaad36`](https://github.com/siderolabs/talos/commit/8a2aaad36daf0412d555c1a84bf8817b00509c85) fix: bump trustd memory limit
+* [`cf91423af`](https://github.com/siderolabs/talos/commit/cf91423af6915a7c891260d2b2d2589bb4c746c3) fix: trim zero bytes in the DHCP host & domain response
+* [`b5424e4c8`](https://github.com/siderolabs/talos/commit/b5424e4c8b1bb49b5f1556542b7e923e2357980f) fix: correctly handle status-code 204
+</p>
+</details>
+
+### Changes from siderolabs/pkgs
+<details><summary>3 commits</summary>
+<p>
+
+* [`71b336d`](https://github.com/siderolabs/pkgs/commit/71b336d7799d1838169468ed3288ac8a8df5ef37) fix: enable memcg v1
+* [`14ee6ad`](https://github.com/siderolabs/pkgs/commit/14ee6ad507066aa74d390c90e1c838d48ed2a28e) feat: bump linux-firmware
+* [`457015d`](https://github.com/siderolabs/pkgs/commit/457015d5bc9b26fb70102d0227e13d4d094b8996) feat: backports for 1.10
+</p>
+</details>
+
+### Changes from siderolabs/tools
+<details><summary>1 commit</summary>
+<p>
+
+* [`39357c8`](https://github.com/siderolabs/tools/commit/39357c8ce3497de181c825307c687dba7e94225e) feat: backports for 1.10
+</p>
+</details>
+
+### Dependency Changes
+
+* **github.com/containerd/containerd/v2**  v2.0.5 -> v2.0.7
+* **github.com/siderolabs/pkgs**           v1.10.0-34-g88700c7 -> v1.10.0-37-g71b336d
+* **github.com/siderolabs/tools**          v1.10.0-6-g306d9d9 -> v1.10.0-7-g39357c8
+* **github.com/ulikunitz/xz**              v0.5.12 -> v0.5.15
+* **golang.org/x/net**                     v0.41.0 -> v0.42.0
+* **golang.org/x/term**                    v0.32.0 -> v0.33.0
+* **golang.org/x/time**                    v0.11.0 -> v0.12.0
+* **k8s.io/api**                           v0.33.4 -> v0.33.6
+* **k8s.io/apiserver**                     v0.33.4 -> v0.33.6
+* **k8s.io/client-go**                     v0.33.4 -> v0.33.6
+* **k8s.io/component-base**                v0.33.4 -> v0.33.6
+* **k8s.io/kube-scheduler**                v0.33.4 -> v0.33.6
+* **k8s.io/kubectl**                       v0.33.4 -> v0.33.6
+* **k8s.io/kubelet**                       v0.33.4 -> v0.33.6
+* **k8s.io/pod-security-admission**        v0.33.4 -> v0.33.6
+
+Previous release can be found at [v1.10.7](https://github.com/siderolabs/talos/releases/tag/v1.10.7)
+
 ## [Talos 1.10.7](https://github.com/siderolabs/talos/releases/tag/v1.10.7) (2025-08-26)
 
 Welcome to the v1.10.7 release of Talos!
