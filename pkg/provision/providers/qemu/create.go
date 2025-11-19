@@ -75,6 +75,27 @@ func (p *provisioner) Create(ctx context.Context, request provision.ClusterReque
 		return nil, fmt.Errorf("error creating dnsd: %w", err)
 	}
 
+	fmt.Fprintln(options.LogWriter, "creating nfsd")
+
+	if err = p.CreateNFSd(state, request); err != nil {
+		return nil, fmt.Errorf("error creating nfsd: %w", err)
+	}
+
+	if false {
+		virtiofsdBin, err := p.FindVirtiofsd()
+		if err != nil {
+			return nil, fmt.Errorf("virtiofsd lookup: %w", err)
+		}
+
+		if virtiofsdBin != "" {
+			fmt.Fprintln(options.LogWriter, "creating virtiofsd")
+
+			if err = p.CreateVirtiofsd(state, request, virtiofsdBin); err != nil {
+				return nil, fmt.Errorf("error creating virtiofsd: %w", err)
+			}
+		}
+	}
+
 	if request.Network.ImageCachePath != "" {
 		fmt.Fprintln(options.LogWriter, "creating image cache")
 
