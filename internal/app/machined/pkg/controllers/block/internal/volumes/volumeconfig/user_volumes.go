@@ -28,6 +28,7 @@ var UserVolumeTransformers = []volumeConfigTransformer{
 	UserVolumeTransformer,
 	RawVolumeTransformer,
 	ExistingVolumeTransformer,
+	ExternalVolumeTransformer,
 	SwapVolumeTransformer,
 }
 
@@ -123,7 +124,7 @@ func UserVolumeTransformer(c configconfig.Config) ([]VolumeResource, error) {
 				WithConvertEncryptionConfiguration(userVolumeConfig.Encryption()).
 				WriterFunc()
 
-		case block.VolumeTypeTmpfs, block.VolumeTypeSymlink, block.VolumeTypeOverlay:
+		case block.VolumeTypeTmpfs, block.VolumeTypeSymlink, block.VolumeTypeOverlay, block.VolumeTypeExternal:
 			fallthrough
 
 		default:
@@ -210,6 +211,68 @@ func ExistingVolumeTransformer(c configconfig.Config) ([]VolumeResource, error) 
 	return resources, nil
 }
 
+// ExternalVolumeTransformer is the transformer for external user volume configs.
+func ExternalVolumeTransformer(c configconfig.Config) ([]VolumeResource, error) {
+	if c == nil {
+		return nil, nil
+	}
+
+	resources := make([]VolumeResource, 0, len(c.ExternalVolumeConfigs()))
+
+	for _, externalVolumeConfig := range c.ExternalVolumeConfigs() {
+		volumeID := constants.ExternalVolumePrefix + externalVolumeConfig.Name()
+
+		resources = append(resources, VolumeResource{
+			VolumeID: volumeID,
+			Label:    block.ExternalVolumeLabel,
+			TransformFunc: NewBuilder().
+				WithType(block.VolumeTypeExternal).
+				WithProvisioning(block.ProvisioningSpec{
+					Wave: block.WaveUserVolumes,
+					DiskSelector: block.DiskSelector{
+						External: externalVolumeConfig.Mount().Source(),
+					},
+					FilesystemSpec: block.FilesystemSpec{
+						Type: externalVolumeConfig.Type(),
+					},
+				}).
+				WithMount(block.MountSpec{
+					TargetPath:   externalVolumeConfig.Name(),
+					ParentID:     constants.UserVolumeMountPoint,
+					SelinuxLabel: constants.EphemeralSelinuxLabel,
+					FileMode:     0o755,
+					UID:          0,
+					GID:          0,
+					Parameters:   externalVolumeParameters(externalVolumeConfig),
+				}).
+				WriterFunc(),
+			MountTransformFunc: HandleExternalVolumeMountRequest(externalVolumeConfig),
+		})
+	}
+
+	return resources, nil
+}
+
+func externalVolumeParameters(ext configconfig.ExternalVolumeConfig) []block.ParameterSpec {
+	switch ext.Type() {
+	case block.FilesystemTypeNFS:
+		if ext.Mount().NFS().IsPresent() {
+			return ext.Mount().NFS().ValueOrZero().Parameters()
+		}
+
+	case block.FilesystemTypeVirtiofs:
+		// nothing to do
+
+	case block.FilesystemTypeNone, block.FilesystemTypeXFS, block.FilesystemTypeVFAT, block.FilesystemTypeEXT4, block.FilesystemTypeISO9660, block.FilesystemTypeSwap:
+		fallthrough
+
+	default:
+		return nil
+	}
+
+	return nil
+}
+
 // SwapVolumeTransformer is the transformer for swap volume configs.
 func SwapVolumeTransformer(c configconfig.Config) ([]VolumeResource, error) {
 	if c == nil {
@@ -256,6 +319,15 @@ func SwapVolumeTransformer(c configconfig.Config) ([]VolumeResource, error) {
 func HandleExistingVolumeMountRequest(existingVolumeConfig configconfig.ExistingVolumeConfig) func(m *block.VolumeMountRequest) error {
 	return func(m *block.VolumeMountRequest) error {
 		m.TypedSpec().ReadOnly = existingVolumeConfig.Mount().ReadOnly()
+
+		return nil
+	}
+}
+
+// HandleExternalVolumeMountRequest returns a MountTransformFunc for external volumes.
+func HandleExternalVolumeMountRequest(externalVolumeConfig configconfig.ExternalVolumeConfig) func(m *block.VolumeMountRequest) error {
+	return func(m *block.VolumeMountRequest) error {
+		m.TypedSpec().ReadOnly = externalVolumeConfig.Mount().ReadOnly()
 
 		return nil
 	}

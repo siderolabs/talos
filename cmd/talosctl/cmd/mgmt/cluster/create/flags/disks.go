@@ -7,6 +7,7 @@ package flags
 import (
 	"errors"
 	"fmt"
+	"slices"
 	"strings"
 
 	"github.com/siderolabs/talos/pkg/bytesize"
@@ -16,7 +17,15 @@ import (
 type DiskRequest struct {
 	Driver string
 	Size   bytesize.ByteSize
+	Tag    string
+	Serial string
 }
+
+// Drivers that support tag option.
+var tagDrivers = []string{"virtiofs"}
+
+// Drivers that support serial option.
+var serialDrivers = []string{"virtio"}
 
 // ParseDisksFlag parses the disks flag into a slice of DiskRequests.
 func ParseDisksFlag(disks []string) ([]DiskRequest, error) {
@@ -27,8 +36,8 @@ func ParseDisksFlag(disks []string) ([]DiskRequest, error) {
 	}
 
 	for _, d := range disks {
-		parts := strings.SplitN(d, ":", 2)
-		if len(parts) != 2 {
+		parts := strings.Split(d, ":")
+		if len(parts) < 2 {
 			return nil, fmt.Errorf("invalid disk format: %q", d)
 		}
 
@@ -39,13 +48,49 @@ func ParseDisksFlag(disks []string) ([]DiskRequest, error) {
 			return nil, fmt.Errorf("invalid size in disk spec: %q", d)
 		}
 
-		result = append(result, DiskRequest{
+		req := DiskRequest{
 			Driver: parts[0],
 			Size:   *size,
-		})
+		}
+
+		if len(parts) > 2 {
+			for _, part := range parts[2:] {
+				if err := parseKVParams(&req, part); err != nil {
+					return nil, fmt.Errorf("%w: %q", err, d)
+				}
+			}
+		}
+
+		result = append(result, req)
 	}
 
 	return result, nil
+}
+
+func parseKVParams(req *DiskRequest, part string) error {
+	kv := strings.SplitN(part, "=", 2)
+	if len(kv) != 2 {
+		return fmt.Errorf("invalid disk option in spec: %q", part)
+	}
+
+	switch kv[0] {
+	case "tag":
+		if !slices.Contains(tagDrivers, req.Driver) {
+			return fmt.Errorf("tag option is only supported for %v drivers in spec", tagDrivers)
+		}
+
+		req.Tag = kv[1]
+	case "serial":
+		if !slices.Contains(serialDrivers, req.Driver) {
+			return fmt.Errorf("serial option is only supported for %v drivers in spec", serialDrivers)
+		}
+
+		req.Serial = kv[1]
+	default:
+		return fmt.Errorf("unknown disk option %q in spec", kv[0])
+	}
+
+	return nil
 }
 
 // Disks implements pflag.Value for accumulating multiple DiskRequest entries.
@@ -63,7 +108,23 @@ func (f *Disks) String() string {
 
 	parts := make([]string, 0, len(f.requests))
 	for _, r := range f.requests {
-		parts = append(parts, fmt.Sprintf("%s:%s", r.Driver, r.Size.String()))
+		sb := strings.Builder{}
+
+		sb.WriteString(r.Driver)
+		sb.WriteString(":")
+		sb.WriteString(r.Size.String())
+
+		if r.Tag != "" {
+			sb.WriteString(":tag=")
+			sb.WriteString(r.Tag)
+		}
+
+		if r.Serial != "" {
+			sb.WriteString(":serial=")
+			sb.WriteString(r.Serial)
+		}
+
+		parts = append(parts, sb.String())
 	}
 
 	return strings.Join(parts, ",")

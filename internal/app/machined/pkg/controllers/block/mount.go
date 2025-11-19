@@ -21,6 +21,7 @@ import (
 	"github.com/siderolabs/gen/xslices"
 	"github.com/siderolabs/go-blockdevice/v2/swap"
 	"go.uber.org/zap"
+	"golang.org/x/sys/unix"
 
 	"github.com/siderolabs/talos/internal/pkg/mount/v3"
 	"github.com/siderolabs/talos/internal/pkg/selinux"
@@ -294,18 +295,26 @@ func (ctrl *MountController) handleMountOperation(
 	switch volumeStatus.TypedSpec().Type {
 	case block.VolumeTypeDirectory:
 		return ctrl.handleDirectoryMountOperation(logger, rootPath, mountTarget, mountRequest, volumeStatus)
+
 	case block.VolumeTypeOverlay:
 		return ctrl.handleOverlayMountOperation(logger, filepath.Join(rootPath, mountTarget), mountRequest, volumeStatus)
+
 	case block.VolumeTypeSymlink:
 		return ctrl.handleSymlinkMountOperation(logger, rootPath, mountTarget, mountRequest, volumeStatus)
+
 	case block.VolumeTypeTmpfs:
 		return fmt.Errorf("not implemented yet")
+
+	case block.VolumeTypeExternal:
+		return ctrl.handleDiskMountOperation(logger, mountSource, filepath.Join(rootPath, mountTarget), mountFilesystem, mountRequest, volumeStatus)
+
 	case block.VolumeTypeDisk, block.VolumeTypePartition:
 		if mountFilesystem == block.FilesystemTypeSwap {
 			return ctrl.handleSwapMountOperation(logger, mountSource, mountRequest, volumeStatus)
 		}
 
 		return ctrl.handleDiskMountOperation(logger, mountSource, filepath.Join(rootPath, mountTarget), mountFilesystem, mountRequest, volumeStatus)
+
 	default:
 		return fmt.Errorf("unsupported volume type %q", volumeStatus.TypedSpec().Type)
 	}
@@ -546,7 +555,7 @@ func (ctrl *MountController) updateTargetSettings(
 		err = selinux.SetLabel(targetPath, mountSpec.SelinuxLabel)
 	}
 
-	if err != nil {
+	if err != nil && !errors.Is(err, unix.ENOTSUP) {
 		return fmt.Errorf("error setting label on %q: %w", currentLabel, err)
 	}
 
@@ -563,6 +572,8 @@ func (ctrl *MountController) handleDiskMountOperation(
 ) error {
 	mountCtx, ok := ctrl.activeMounts[mountRequest.Metadata().ID()]
 
+	logger = logger.With(zap.String("mount_request.id", mountRequest.Metadata().ID()))
+
 	// mount hasn't been done yet
 	if !ok {
 		var (
@@ -574,6 +585,29 @@ func (ctrl *MountController) handleDiskMountOperation(
 			fsopen.WithSource(mountSource),
 			fsopen.WithProjectQuota(volumeStatus.TypedSpec().MountSpec.ProjectQuotaSupport),
 		)
+
+		for _, param := range volumeStatus.TypedSpec().MountSpec.Parameters {
+			switch param.Type {
+			case block.FSParameterTypeBinaryValue:
+				if param.Binary == nil {
+					logger.Warn("skipping nil binary parameter", zap.String("parameter", param.Name))
+
+					continue
+				}
+
+				fsOpts = append(fsOpts, fsopen.WithBinaryParameters(param.Name, param.Binary))
+			case block.FSParameterTypeStringValue:
+				if param.String == nil {
+					logger.Warn("skipping nil string parameter", zap.String("parameter", param.Name))
+
+					continue
+				}
+
+				fsOpts = append(fsOpts, fsopen.WithStringParameter(param.Name, *param.String))
+			case block.FSParameterTypeBooleanValue:
+				fsOpts = append(fsOpts, fsopen.WithBoolParameter(param.Name))
+			}
+		}
 
 		opts = append(opts,
 			mount.WithSelinuxLabel(volumeStatus.TypedSpec().MountSpec.SelinuxLabel),
@@ -732,16 +766,23 @@ func (ctrl *MountController) handleUnmountOperation(
 	switch volumeStatus.TypedSpec().Type {
 	case block.VolumeTypeDirectory:
 		return ctrl.handleDirectoryUnmountOperation(logger, mountRequest, volumeStatus)
+
 	case block.VolumeTypeTmpfs:
 		return fmt.Errorf("not implemented yet")
+
+	case block.VolumeTypeExternal:
+		return ctrl.handleDiskUnmountOperation(logger, mountRequest, volumeStatus)
+
 	case block.VolumeTypeDisk, block.VolumeTypePartition, block.VolumeTypeOverlay:
 		if volumeStatus.TypedSpec().Filesystem == block.FilesystemTypeSwap {
 			return ctrl.handleSwapUmountOperation(logger, mountRequest, volumeStatus)
 		}
 
 		return ctrl.handleDiskUnmountOperation(logger, mountRequest, volumeStatus)
+
 	case block.VolumeTypeSymlink:
 		return ctrl.handleSymlinkUmountOperation(mountRequest)
+
 	default:
 		return fmt.Errorf("unsupported volume type %q", volumeStatus.TypedSpec().Type)
 	}

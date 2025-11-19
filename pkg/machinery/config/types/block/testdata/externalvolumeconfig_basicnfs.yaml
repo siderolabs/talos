@@ -1,0 +1,10 @@
+apiVersion: v1alpha1
+kind: ExternalVolumeConfig
+name: my-nfs-volume
+filesystemType: nfs
+mount:
+    source: server.example.com:/data
+    nfs:
+        vers: "4.0"
+        proto: tcp
+        acl: false
