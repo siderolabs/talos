@@ -12,7 +12,7 @@ import (
 )
 
 // GenerateSelfSignedCert generates self-signed certificate.
-func GenerateSelfSignedCert(sanIPs []net.IP) ([]byte, []byte, []byte, error) {
+func GenerateSelfSignedCert(sanIPs []net.IP, sanNames []string) ([]byte, []byte, []byte, error) {
 	ca, err := x509.NewSelfSignedCertificateAuthority(x509.ECDSA(true))
 	if err != nil {
 		return nil, nil, nil, err
@@ -22,6 +22,7 @@ func GenerateSelfSignedCert(sanIPs []net.IP) ([]byte, []byte, []byte, error) {
 		x509.Organization("test"),
 		x509.CommonName("server"),
 		x509.IPAddresses(sanIPs),
+		x509.DNSNames(sanNames),
 		x509.ExtKeyUsage([]stdx509.ExtKeyUsage{stdx509.ExtKeyUsageServerAuth}),
 	)
 	if err != nil {

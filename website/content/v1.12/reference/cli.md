@@ -1868,7 +1868,8 @@ talosctl image cache-cert-gen [flags]
 ### Options
 
 ```
-      --advertised-address ipSlice   The address to advertise to the cluster. (default [])
+      --advertised-address ipSlice   The addresses to advertise. (default [])
+      --advertised-name strings      The DNS names to advertise.
   -h, --help                         help for cache-cert-gen
       --tls-ca-file string           TLS certificate authority file (default "ca.crt")
       --tls-cert-file string         TLS certificate file to use for serving (default "tls.crt")

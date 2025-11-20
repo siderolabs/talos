@@ -54,7 +54,7 @@ var airgappedCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return cli.WithContext(
 			context.Background(), func(ctx context.Context) error {
-				caPEM, certPEM, keyPEM, err := helpers.GenerateSelfSignedCert([]net.IP{airgappedFlags.advertisedAddress})
+				caPEM, certPEM, keyPEM, err := helpers.GenerateSelfSignedCert([]net.IP{airgappedFlags.advertisedAddress}, nil)
 				if err != nil {
 					return nil
 				}

@@ -477,7 +477,10 @@ var imageCacheCertGenCmd = &cobra.Command{
 	Example: ``,
 	Args:    cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		caPEM, certPEM, keyPEM, err := mgmthelpers.GenerateSelfSignedCert(imageCacheCertGenCmdFlags.advertisedAddress)
+		caPEM, certPEM, keyPEM, err := mgmthelpers.GenerateSelfSignedCert(
+			imageCacheCertGenCmdFlags.advertisedAddresses,
+			imageCacheCertGenCmdFlags.advertisedNames,
+		)
 		if err != nil {
 			return nil
 		}
@@ -525,10 +528,11 @@ func generateConfigPatch(caPEM []byte) error {
 }
 
 var imageCacheCertGenCmdFlags struct {
-	advertisedAddress []net.IP
-	tlsCaFile         string
-	tlsCertFile       string
-	tlsKeyFile        string
+	advertisedAddresses []net.IP
+	advertisedNames     []string
+	tlsCaFile           string
+	tlsCertFile         string
+	tlsKeyFile          string
 }
 
 func init() {
@@ -565,7 +569,8 @@ func init() {
 	imageCacheCertGenCmd.PersistentFlags().StringVar(&imageCacheCertGenCmdFlags.tlsCaFile, "tls-ca-file", "ca.crt", "TLS certificate authority file")
 	imageCacheCertGenCmd.PersistentFlags().StringVar(&imageCacheCertGenCmdFlags.tlsCertFile, "tls-cert-file", "tls.crt", "TLS certificate file to use for serving")
 	imageCacheCertGenCmd.PersistentFlags().StringVar(&imageCacheCertGenCmdFlags.tlsKeyFile, "tls-key-file", "tls.key", "TLS key file to use for serving")
-	imageCacheCertGenCmd.PersistentFlags().IPSliceVar(&imageCacheCertGenCmdFlags.advertisedAddress, "advertised-address", []net.IP{}, "The address to advertise to the cluster.")
+	imageCacheCertGenCmd.PersistentFlags().IPSliceVar(&imageCacheCertGenCmdFlags.advertisedAddresses, "advertised-address", []net.IP{}, "The addresses to advertise.")
+	imageCacheCertGenCmd.PersistentFlags().StringSliceVar(&imageCacheCertGenCmdFlags.advertisedNames, "advertised-name", []string{}, "The DNS names to advertise.")
 	imageIntegrationCmd.MarkPersistentFlagRequired("advertised-address") //nolint:errcheck
 
 	imageCmd.AddCommand(imageIntegrationCmd)
