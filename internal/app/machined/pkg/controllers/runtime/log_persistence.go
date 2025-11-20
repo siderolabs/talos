@@ -68,22 +68,36 @@ func (ctrl *LogPersistenceController) filenameForId(id string) string {
 	return filepath.Join(constants.LogMountPoint, id+".log")
 }
 
+func (ctrl *LogPersistenceController) getLogFile(id string, overwrite bool) (*os.File, error) {
+	var err error
+
+	f, ok := ctrl.files[id]
+
+	if ok && !overwrite {
+		return f, nil
+	}
+
+	f, err = os.OpenFile(ctrl.filenameForId(id), os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o644)
+	if err != nil {
+		return nil, fmt.Errorf("error opening log file for %q: %w", id, err)
+	}
+
+	ctrl.filesMutex.Lock()
+	ctrl.files[id] = f
+	ctrl.filesMutex.Unlock()
+
+	return f, nil
+}
+
 func (ctrl *LogPersistenceController) WriteLog(id string, line []byte) error {
 	var err error
 
 	ctrl.canLog.RLock()
 	defer ctrl.canLog.RUnlock()
 
-	f, ok := ctrl.files[id]
-	if !ok {
-		f, err = os.OpenFile(ctrl.filenameForId(id), os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o644)
-		if err != nil {
-			return fmt.Errorf("error opening log file for %q: %w", id, err)
-		}
-
-		ctrl.filesMutex.Lock()
-		ctrl.files[id] = f
-		ctrl.filesMutex.Unlock()
+	f, err := ctrl.getLogFile(id, false)
+	if err != nil {
+		return err
 	}
 
 	if _, err = f.Write(append(line, '\n')); err != nil {
@@ -118,8 +132,6 @@ func (ctrl *LogPersistenceController) stopLogging() error {
 func (ctrl *LogPersistenceController) rotate(id string) error {
 	ctrl.canLog.Lock()
 	defer ctrl.canLog.Unlock()
-	ctrl.filesMutex.Lock()
-	defer ctrl.filesMutex.Unlock()
 
 	_, ok := ctrl.files[id]
 	if !ok {
@@ -130,12 +142,15 @@ func (ctrl *LogPersistenceController) rotate(id string) error {
 		return fmt.Errorf("error closing log file for %q: %w", id, err)
 	}
 
-	delete(ctrl.files, id)
-
 	filename := ctrl.filenameForId(id)
 	err := os.Rename(filename, filename+".1")
 	if err != nil {
 		return fmt.Errorf("rename: %w", err)
+	}
+
+	_, err = ctrl.getLogFile(id, true)
+	if err != nil {
+		return fmt.Errorf("create: %w", err)
 	}
 
 	return nil
@@ -165,7 +180,6 @@ func (ctrl *LogPersistenceController) Run(ctx context.Context, r controller.Runt
 					return fmt.Errorf("error stat logfile %s: %w", id, err)
 				}
 				if st.Size() >= 512*1024 {
-					fmt.Println("LOGGING rotating", id)
 					err = ctrl.rotate(id)
 					if err != nil {
 						return fmt.Errorf("error rotating logfile %s: %w", id, err)
