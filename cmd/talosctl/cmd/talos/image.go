@@ -12,6 +12,7 @@ import (
 	"io"
 	"log"
 	"net"
+	"net/url"
 	"os"
 	"os/signal"
 	"slices"
@@ -21,6 +22,7 @@ import (
 
 	"github.com/blang/semver/v4"
 	"github.com/dustin/go-humanize"
+	"github.com/siderolabs/gen/ensure"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 	"go.uber.org/zap"
@@ -34,8 +36,11 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/api/common"
 	"github.com/siderolabs/talos/pkg/machinery/api/machine"
 	"github.com/siderolabs/talos/pkg/machinery/client"
+	"github.com/siderolabs/talos/pkg/machinery/config/config"
 	"github.com/siderolabs/talos/pkg/machinery/config/container"
 	"github.com/siderolabs/talos/pkg/machinery/config/encoder"
+	"github.com/siderolabs/talos/pkg/machinery/config/types/cri"
+	"github.com/siderolabs/talos/pkg/machinery/config/types/meta"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/security"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
@@ -443,6 +448,14 @@ var imageCacheServeCmd = &cobra.Command{
 			return fmt.Errorf("failed to create development logger: %w", err)
 		}
 
+		if err = generateMirrorsConfigPatch(
+			imageCacheServeCmdFlags.address,
+			imageCacheServeCmdFlags.mirrors,
+			imageCacheServeCmdFlags.tlsCertFile != "" && imageCacheServeCmdFlags.tlsKeyFile != "",
+		); err != nil {
+			development.Error("failed to generate Talos config patch for registry mirrors", zap.Error(err))
+		}
+
 		it := func(yield func(string) bool) {
 			for _, root := range []string{imageCacheServeCmdFlags.imageCachePath} {
 				if !yield(root) {
@@ -462,9 +475,88 @@ var imageCacheServeCmd = &cobra.Command{
 	},
 }
 
+//nolint:gocyclo
+func generateMirrorsConfigPatch(addr string, mirrors []string, secure bool) error {
+	addresses := []string{}
+
+	host, port, err := net.SplitHostPort(addr)
+	if err != nil {
+		return err
+	}
+
+	if host == "" || host == "0.0.0.0" || host == "[::]" {
+		// list all IPs for the host
+		ips, err := net.InterfaceAddrs()
+		if err != nil {
+			return err
+		}
+
+		for _, addr := range ips {
+			if ipnet, ok := addr.(*net.IPNet); ok {
+				if ipnet.IP.IsLoopback() {
+					continue
+				}
+
+				addresses = append(addresses, net.JoinHostPort(ipnet.IP.String(), port))
+			}
+
+			if ipa, ok := addr.(*net.IPAddr); ok {
+				if ipa.IP.IsLoopback() {
+					continue
+				}
+
+				addresses = append(addresses, net.JoinHostPort(ipa.IP.String(), port))
+			}
+		}
+	} else {
+		addresses = []string{net.JoinHostPort(host, port)}
+	}
+
+	if port == "0" {
+		return nil // we do not generate patch for dynamic ports
+	}
+
+	patches := make([]config.Document, 0, len(mirrors))
+
+	prefix := "http://"
+	if secure {
+		prefix = "https://"
+	}
+
+	for _, mirror := range mirrors {
+		patch := cri.NewRegistryMirrorConfigV1Alpha1(mirror)
+		patch.RegistryEndpoints = []cri.RegistryEndpoint{}
+
+		for _, endpoint := range addresses {
+			patch.RegistryEndpoints = append(patch.RegistryEndpoints, cri.RegistryEndpoint{
+				EndpointURL: meta.URL{URL: ensure.Value(url.Parse(prefix + endpoint))},
+			})
+		}
+
+		patches = append(patches, patch)
+	}
+
+	ctr, err := container.New(patches...)
+	if err != nil {
+		return err
+	}
+
+	patchBytes, err := ctr.EncodeBytes(encoder.WithComments(encoder.CommentsDisabled))
+	if err != nil {
+		return err
+	}
+
+	const patchFile = "image-cache-mirrors-patch.yaml"
+
+	log.Printf("writing config patch to %s", patchFile)
+
+	return os.WriteFile(patchFile, patchBytes, 0o644)
+}
+
 var imageCacheServeCmdFlags struct {
 	imageCachePath string
 	address        string
+	mirrors        []string
 	tlsCertFile    string
 	tlsKeyFile     string
 }
@@ -485,7 +577,7 @@ var imageCacheCertGenCmd = &cobra.Command{
 			return nil
 		}
 
-		if err = generateConfigPatch(caPEM); err != nil {
+		if err = generateCAConfigPatch(caPEM); err != nil {
 			return err
 		}
 
@@ -505,7 +597,7 @@ var imageCacheCertGenCmd = &cobra.Command{
 	},
 }
 
-func generateConfigPatch(caPEM []byte) error {
+func generateCAConfigPatch(caPEM []byte) error {
 	patch := security.NewTrustedRootsConfigV1Alpha1()
 	patch.MetaName = "image-cache-ca"
 	patch.Certificates = string(caPEM)
@@ -562,6 +654,8 @@ func init() {
 	imageCacheServeCmd.PersistentFlags().StringVar(&imageCacheServeCmdFlags.imageCachePath, "image-cache-path", "", "directory to save the image cache in flat format")
 	imageCacheServeCmd.MarkPersistentFlagRequired("image-cache-path") //nolint:errcheck
 	imageCacheServeCmd.PersistentFlags().StringVar(&imageCacheServeCmdFlags.address, "address", constants.RegistrydListenAddress, "address to serve the registry on")
+	imageCacheServeCmd.PersistentFlags().StringSliceVar(&imageCacheServeCmdFlags.mirrors, "mirror", []string{"docker.io", "ghcr.io", "registry.k8s.io"},
+		"list of registry mirrors to add to the Talos config patch")
 	imageCacheServeCmd.PersistentFlags().StringVar(&imageCacheServeCmdFlags.tlsCertFile, "tls-cert-file", "", "TLS certificate file to use for serving")
 	imageCacheServeCmd.PersistentFlags().StringVar(&imageCacheServeCmdFlags.tlsKeyFile, "tls-key-file", "", "TLS key file to use for serving")
 
