@@ -108,6 +108,7 @@ func (manager *CircularBufferLoggingManager) SetLineWriter(w runtime.LogWriter) 
 	case manager.lineWriter <- w:
 	default:
 		<-manager.lineWriter
+
 		manager.lineWriter <- w
 	}
 }

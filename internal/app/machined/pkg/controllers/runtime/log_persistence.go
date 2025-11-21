@@ -64,7 +64,7 @@ func (ctrl *LogPersistenceController) Outputs() []controller.Output {
 	}
 }
 
-func (ctrl *LogPersistenceController) filenameForId(id string) string {
+func (ctrl *LogPersistenceController) filenameForID(id string) string {
 	return filepath.Join(constants.LogMountPoint, id+".log")
 }
 
@@ -77,7 +77,7 @@ func (ctrl *LogPersistenceController) getLogFile(id string, overwrite bool) (*os
 		return f, nil
 	}
 
-	f, err = os.OpenFile(ctrl.filenameForId(id), os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o644)
+	f, err = os.OpenFile(ctrl.filenameForID(id), os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o644)
 	if err != nil {
 		return nil, fmt.Errorf("error opening log file for %q: %w", id, err)
 	}
@@ -89,6 +89,7 @@ func (ctrl *LogPersistenceController) getLogFile(id string, overwrite bool) (*os
 	return f, nil
 }
 
+// WriteLog writes a single log line into the corresponding file.
 func (ctrl *LogPersistenceController) WriteLog(id string, line []byte) error {
 	var err error
 
@@ -116,6 +117,7 @@ func (ctrl *LogPersistenceController) stopLogging() error {
 	// Stop all logging activities, close files
 	// after this call we should not hold /var/log
 	ctrl.canLog.Lock()
+
 	ctrl.filesMutex.Lock()
 	defer ctrl.filesMutex.Unlock()
 
@@ -123,6 +125,7 @@ func (ctrl *LogPersistenceController) stopLogging() error {
 		if err := ctrl.files[id].Close(); err != nil {
 			return fmt.Errorf("error closing log file for %q: %w", id, err)
 		}
+
 		delete(ctrl.files, id)
 	}
 
@@ -142,15 +145,16 @@ func (ctrl *LogPersistenceController) rotate(id string) error {
 		return fmt.Errorf("error closing log file for %q: %w", id, err)
 	}
 
-	filename := ctrl.filenameForId(id)
+	filename := ctrl.filenameForID(id)
+
 	err := os.Rename(filename, filename+".1")
 	if err != nil {
-		return fmt.Errorf("rename: %w", err)
+		return fmt.Errorf("error renaming log file for %q: %w", id, err)
 	}
 
 	_, err = ctrl.getLogFile(id, true)
 	if err != nil {
-		return fmt.Errorf("create: %w", err)
+		return fmt.Errorf("error creating log file for %q: %w", id, err)
 	}
 
 	return nil
@@ -175,10 +179,11 @@ func (ctrl *LogPersistenceController) Run(ctx context.Context, r controller.Runt
 			return nil
 		case <-tickerC:
 			for id := range ctrl.files {
-				st, err := os.Stat(ctrl.filenameForId(id))
+				st, err := os.Stat(ctrl.filenameForID(id))
 				if err != nil {
 					return fmt.Errorf("error stat logfile %s: %w", id, err)
 				}
+
 				if st.Size() >= 512*1024 {
 					err = ctrl.rotate(id)
 					if err != nil {

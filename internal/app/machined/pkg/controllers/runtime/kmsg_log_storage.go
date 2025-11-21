@@ -122,8 +122,10 @@ func (ctrl *KmsgLogStorageController) deliverLogs(ctx context.Context, r control
 			return fmt.Errorf("error receiving kernel logs: %w", msg.Err)
 		}
 
-		ctrl.logWriter.Write([]byte(
+		if _, err := ctrl.logWriter.Write([]byte(
 			msg.Message.Timestamp.String() + ": " + msg.Message.Facility.String() + ": " + msg.Message.Message,
-		))
+		)); err != nil {
+			return err
+		}
 	}
 }
