@@ -11,10 +11,12 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"strings"
 	"sync"
+	"syscall"
 	"time"
 
 	"github.com/dustin/go-humanize"
@@ -141,7 +143,7 @@ func Generate(images []string, platforms []string, insecure bool, imageLayerCach
 	}
 
 	if flat {
-		return os.Rename(tmpDir, dest)
+		return move(tmpDir, dest)
 	}
 
 	newImg := mutate.MediaType(empty.Image, types.OCIManifestSchema1)
@@ -183,6 +185,79 @@ func Generate(images []string, platforms []string, insecure bool, imageLayerCach
 	}
 
 	return removeAll()
+}
+
+func move(src, dest string) error {
+	if err := os.Rename(src, dest); err == nil {
+		return nil
+	} else if !errors.Is(err, syscall.EXDEV) {
+		// not a cross-device error - return it
+		return err
+	}
+
+	// cross-device: must copy+remove
+	info, err := os.Stat(src)
+	if err != nil {
+		return err
+	}
+
+	if info.IsDir() {
+		if err := copyDir(src, dest); err != nil {
+			return err
+		}
+	} else {
+		if err := copyFile(src, dest, info.Mode()); err != nil {
+			return err
+		}
+	}
+
+	return os.RemoveAll(src)
+}
+
+func copyFile(src, dest string, perm fs.FileMode) error {
+	in, err := os.Open(src)
+	if err != nil {
+		return err
+	}
+	defer in.Close() //nolint:errcheck
+
+	// Ensure destination directory exists
+	if err := os.MkdirAll(filepath.Dir(dest), 0o755); err != nil {
+		return err
+	}
+
+	out, err := os.OpenFile(dest, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, perm)
+	if err != nil {
+		return err
+	}
+	defer out.Close() //nolint:errcheck
+
+	if _, err = io.Copy(out, in); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func copyDir(src, dest string) error {
+	return filepath.Walk(src, func(path string, info fs.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+
+		rel, err := filepath.Rel(src, path)
+		if err != nil {
+			return err
+		}
+
+		target := filepath.Join(dest, rel)
+
+		if info.IsDir() {
+			return os.MkdirAll(target, info.Mode())
+		}
+
+		return copyFile(path, target, info.Mode())
+	})
 }
 
 //nolint:gocyclo,cyclop
