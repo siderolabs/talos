@@ -13,13 +13,17 @@ import (
 
 // GenerateSelfSignedCert generates self-signed certificate.
 func GenerateSelfSignedCert(sanIPs []net.IP, sanNames []string) ([]byte, []byte, []byte, error) {
-	ca, err := x509.NewSelfSignedCertificateAuthority(x509.ECDSA(true))
+	ca, err := x509.NewSelfSignedCertificateAuthority(
+		x509.ECDSA(true),
+		x509.Organization("talos.dev"),
+		x509.CommonName("talos.dev Root CA"),
+	)
 	if err != nil {
 		return nil, nil, nil, err
 	}
 
 	serverIdentity, err := x509.NewKeyPair(ca,
-		x509.Organization("test"),
+		x509.Organization("talos.dev"),
 		x509.CommonName("server"),
 		x509.IPAddresses(sanIPs),
 		x509.DNSNames(sanNames),
