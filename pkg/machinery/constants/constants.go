@@ -1278,6 +1278,9 @@ const (
 	// UserVolumeMountPoint is the path to the volume mount point for the user volumes.
 	UserVolumeMountPoint = "/var/mnt"
 
+	// LogMountPoint is the path to the logs mount point, and ID of the logs volume.
+	LogMountPoint = "/var/log"
+
 	// UserVolumePrefix is the prefix for the user volumes.
 	UserVolumePrefix = "u-"
 

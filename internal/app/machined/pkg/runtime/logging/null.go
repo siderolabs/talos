@@ -29,6 +29,9 @@ func (*NullLoggingManager) SetSenders([]runtime.LogSender) []runtime.LogSender {
 	return nil
 }
 
+// SetLineWriter implements runtime.LoggingManager interface (by doing nothing).
+func (*NullLoggingManager) SetLineWriter(runtime.LogWriter) {}
+
 // RegisteredLogs implements runtime.LoggingManager interface (by doing nothing).
 func (*NullLoggingManager) RegisteredLogs() []string {
 	return nil
