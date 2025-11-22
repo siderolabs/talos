@@ -253,6 +253,7 @@ description: Talos gRPC API reference.
     - [BlockEncryptionKeyType](#talos.resource.definitions.enums.BlockEncryptionKeyType)
     - [BlockEncryptionProviderType](#talos.resource.definitions.enums.BlockEncryptionProviderType)
     - [BlockFilesystemType](#talos.resource.definitions.enums.BlockFilesystemType)
+    - [BlockNFSVersionType](#talos.resource.definitions.enums.BlockNFSVersionType)
     - [BlockVolumePhase](#talos.resource.definitions.enums.BlockVolumePhase)
     - [BlockVolumeType](#talos.resource.definitions.enums.BlockVolumeType)
     - [CriImageCacheCopyStatus](#talos.resource.definitions.enums.CriImageCacheCopyStatus)
@@ -4507,6 +4508,23 @@ BlockFilesystemType describes filesystem type.
 | FILESYSTEM_TYPE_EXT4 | 3 |  |
 | FILESYSTEM_TYPE_ISO9660 | 4 |  |
 | FILESYSTEM_TYPE_SWAP | 5 |  |
+| FILESYSTEM_TYPE_NFS | 6 |  |
+| FILESYSTEM_TYPE_VIRTIOFS | 7 |  |
+
+
+
+<a name="talos.resource.definitions.enums.BlockNFSVersionType"></a>
+
+### BlockNFSVersionType
+BlockNFSVersionType describes NFS version type.
+
+| Name | Number | Description |
+| ---- | ------ | ----------- |
+| NFS_VERSION_TYPE4_2 | 0 |  |
+| NFS_VERSION_TYPE4_1 | 1 |  |
+| NFS_VERSION_TYPE4 | 2 |  |
+| NFS_VERSION_TYPE3 | 3 |  |
+| NFS_VERSION_TYPE2 | 4 |  |
 
 
 
@@ -4541,6 +4559,7 @@ BlockVolumeType describes volume type.
 | VOLUME_TYPE_DIRECTORY | 3 |  |
 | VOLUME_TYPE_SYMLINK | 4 |  |
 | VOLUME_TYPE_OVERLAY | 5 |  |
+| VOLUME_TYPE_EXTERNAL | 6 |  |
 
 
 

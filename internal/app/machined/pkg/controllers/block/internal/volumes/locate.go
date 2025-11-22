@@ -31,7 +31,7 @@ func LocateAndProvision(ctx context.Context, logger *zap.Logger, volumeContext M
 	volumeType := volumeContext.Cfg.TypedSpec().Type
 
 	switch volumeType {
-	case block.VolumeTypeTmpfs, block.VolumeTypeDirectory, block.VolumeTypeSymlink, block.VolumeTypeOverlay:
+	case block.VolumeTypeTmpfs, block.VolumeTypeDirectory, block.VolumeTypeSymlink, block.VolumeTypeOverlay, block.VolumeTypeExternal:
 		// volume types above are always ready
 		volumeContext.Status.Phase = block.VolumePhaseReady
 

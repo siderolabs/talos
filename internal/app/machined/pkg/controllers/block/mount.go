@@ -300,7 +300,7 @@ func (ctrl *MountController) handleMountOperation(
 		return ctrl.handleSymlinkMountOperation(logger, rootPath, mountTarget, mountRequest, volumeStatus)
 	case block.VolumeTypeTmpfs:
 		return fmt.Errorf("not implemented yet")
-	case block.VolumeTypeDisk, block.VolumeTypePartition:
+	case block.VolumeTypeDisk, block.VolumeTypePartition, block.VolumeTypeExternal: // TODO(shanduur)
 		if mountFilesystem == block.FilesystemTypeSwap {
 			return ctrl.handleSwapMountOperation(logger, mountSource, mountRequest, volumeStatus)
 		}
@@ -734,7 +734,7 @@ func (ctrl *MountController) handleUnmountOperation(
 		return ctrl.handleDirectoryUnmountOperation(logger, mountRequest, volumeStatus)
 	case block.VolumeTypeTmpfs:
 		return fmt.Errorf("not implemented yet")
-	case block.VolumeTypeDisk, block.VolumeTypePartition, block.VolumeTypeOverlay:
+	case block.VolumeTypeDisk, block.VolumeTypePartition, block.VolumeTypeOverlay, block.VolumeTypeExternal: // TODO(shanduur)
 		if volumeStatus.TypedSpec().Filesystem == block.FilesystemTypeSwap {
 			return ctrl.handleSwapUmountOperation(logger, mountRequest, volumeStatus)
 		}

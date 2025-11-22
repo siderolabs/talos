@@ -404,6 +404,122 @@ func (MountSpec) Doc() *encoder.Doc {
 	return doc
 }
 
+func (ExternalVolumeConfigV1Alpha1) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "ExternalVolumeConfig",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "ExternalVolumeConfig is a external disk mount configuration document." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "ExternalVolumeConfig is a external disk mount configuration document.\nExternal volumes allow to mount volumes that were created outside of Talos,\nover the network or API. Volume will be mounted under `/var/mnt/<name>`.\nThe external volume config name should not conflict with user volume names.\n",
+		Fields: []encoder.Doc{
+			{
+				Type:   "Meta",
+				Inline: true,
+			},
+			{
+				Name:        "name",
+				Type:        "string",
+				Note:        "",
+				Description: "Name of the mount.\n\nName might be between 1 and 34 characters long and can only contain:\nlowercase and uppercase ASCII letters, digits, and hyphens.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Name of the mount." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "filesystemType",
+				Type:        "FilesystemType",
+				Note:        "",
+				Description: "Filesystem type.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Filesystem type." /* encoder.LineComment */, "" /* encoder.FootComment */},
+				Values: []string{
+					"virtiofs",
+					"nfs",
+				},
+			},
+			{
+				Name:        "mount",
+				Type:        "ExternalMountSpec",
+				Note:        "",
+				Description: "The mount describes additional mount options.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "The mount describes additional mount options." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
+
+	doc.AddExample("", exampleExternalVolumeConfigV1Alpha1Virtiofs())
+
+	doc.AddExample("", exampleExternalVolumeConfigV1Alpha1NFS())
+
+	return doc
+}
+
+func (ExternalMountSpec) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "ExternalMountSpec",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "ExternalMountSpec describes how the external volume is mounted." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "ExternalMountSpec describes how the external volume is mounted.",
+		AppearsIn: []encoder.Appearance{
+			{
+				TypeName:  "ExternalVolumeConfigV1Alpha1",
+				FieldName: "mount",
+			},
+		},
+		Fields: []encoder.Doc{
+			{
+				Name:        "readOnly",
+				Type:        "bool",
+				Note:        "",
+				Description: "Mount the volume read-only.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Mount the volume read-only." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "source",
+				Type:        "string",
+				Note:        "",
+				Description: "Source of the volume.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Source of the volume." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "nfs",
+				Type:        "NFSMountSpec",
+				Note:        "",
+				Description: "NFS mount options.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "NFS mount options." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
+
+	return doc
+}
+
+func (NFSMountSpec) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "NFSMountSpec",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "NFSMountSpec describes NFS mount options." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "NFSMountSpec describes NFS mount options.",
+		AppearsIn: []encoder.Appearance{
+			{
+				TypeName:  "ExternalMountSpec",
+				FieldName: "nfs",
+			},
+		},
+		Fields: []encoder.Doc{
+			{
+				Name:        "version",
+				Type:        "NFSVersionType",
+				Note:        "",
+				Description: "NFS version to use.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "NFS version to use." /* encoder.LineComment */, "" /* encoder.FootComment */},
+				Values: []string{
+					"4.2",
+					"4.1",
+					"4",
+					"3",
+					"2",
+				},
+			},
+		},
+	}
+
+	return doc
+}
+
 func (RawVolumeConfigV1Alpha1) Doc() *encoder.Doc {
 	doc := &encoder.Doc{
 		Type:        "RawVolumeConfig",
@@ -758,6 +874,9 @@ func GetFileDoc() *encoder.FileDoc {
 			VolumeDiscoverySpec{}.Doc(),
 			VolumeSelector{}.Doc(),
 			MountSpec{}.Doc(),
+			ExternalVolumeConfigV1Alpha1{}.Doc(),
+			ExternalMountSpec{}.Doc(),
+			NFSMountSpec{}.Doc(),
 			RawVolumeConfigV1Alpha1{}.Doc(),
 			SwapVolumeConfigV1Alpha1{}.Doc(),
 			UserVolumeConfigV1Alpha1{}.Doc(),
