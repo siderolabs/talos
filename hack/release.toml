@@ -196,6 +196,15 @@ The network configuration under `.machine.network` (with the exception of KubeSp
 New configuration documents were created to replace it, they will be documented in the future.
 """
 
+    [notes.apiserver-cipher-suites]
+        title = "API Server Cipher Suites"
+        description = """\
+The Kubernetes API server in Talos has been updated to use a more secure set of TLS cipher suites by default.
+This is in line with a set of best practices documented in CIS 1.12 benchmark.
+
+You can still expand the list of supported cipher suites via the `cluster.apiServer.extraArgs."tls-cipher-suites"` machine configuration field if needed.
+"""
+
 [make_deps]
 
     [make_deps.tools]
