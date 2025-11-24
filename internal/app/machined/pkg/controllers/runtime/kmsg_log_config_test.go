@@ -41,7 +41,7 @@ func (suite *KmsgLogConfigSuite) TestKmsgLogConfigNone() {
 
 func (suite *KmsgLogConfigSuite) TestKmsgLogConfigMachineConfig() {
 	cmdline := procfs.NewCmdline("")
-	cmdline.Append(constants.KernelParamLoggingKernel, "https://10.0.0.1:3333/logs")
+	cmdline.Append(constants.KernelParamLoggingKernel, "https://10.0.0.1:3333/logs?extraField=value1&otherExtraField=value2")
 
 	suite.Require().NoError(suite.Runtime().RegisterController(&runtimectrls.KmsgLogConfigController{
 		Cmdline: cmdline,
@@ -50,14 +50,14 @@ func (suite *KmsgLogConfigSuite) TestKmsgLogConfigMachineConfig() {
 	kmsgLogConfig1 := &runtimecfg.KmsgLogV1Alpha1{
 		MetaName: "1",
 		KmsgLogURL: meta.URL{
-			URL: must(url.Parse("https://10.0.0.2:4444/logs")),
+			URL: must(url.Parse("https://10.0.0.2:4444/logs?extraField=value1&otherExtraField=value2")),
 		},
 	}
 
 	kmsgLogConfig2 := &runtimecfg.KmsgLogV1Alpha1{
 		MetaName: "2",
 		KmsgLogURL: meta.URL{
-			URL: must(url.Parse("https://10.0.0.1:3333/logs")),
+			URL: must(url.Parse("https://10.0.0.1:3333/logs?extraField=value1&otherExtraField=value2")),
 		},
 	}
 
@@ -70,8 +70,8 @@ func (suite *KmsgLogConfigSuite) TestKmsgLogConfigMachineConfig() {
 		func(cfg *runtime.KmsgLogConfig, asrt *assert.Assertions) {
 			asrt.Equal(
 				[]string{
-					"https://10.0.0.1:3333/logs",
-					"https://10.0.0.2:4444/logs",
+					"https://10.0.0.1:3333/logs?extraField=value1&otherExtraField=value2",
+					"https://10.0.0.2:4444/logs?extraField=value1&otherExtraField=value2",
 				},
 				xslices.Map(cfg.TypedSpec().Destinations, func(u *url.URL) string { return u.String() }),
 			)
@@ -80,7 +80,7 @@ func (suite *KmsgLogConfigSuite) TestKmsgLogConfigMachineConfig() {
 
 func (suite *KmsgLogConfigSuite) TestKmsgLogConfigCmdline() {
 	cmdline := procfs.NewCmdline("")
-	cmdline.Append(constants.KernelParamLoggingKernel, "https://10.0.0.1:3333/logs")
+	cmdline.Append(constants.KernelParamLoggingKernel, "https://10.0.0.1:3333/logs?extraField=value1&otherExtraField=value2")
 
 	suite.Require().NoError(suite.Runtime().RegisterController(&runtimectrls.KmsgLogConfigController{
 		Cmdline: cmdline,
@@ -89,7 +89,7 @@ func (suite *KmsgLogConfigSuite) TestKmsgLogConfigCmdline() {
 	rtestutils.AssertResources[*runtime.KmsgLogConfig](suite.Ctx(), suite.T(), suite.State(), []resource.ID{runtime.KmsgLogConfigID},
 		func(cfg *runtime.KmsgLogConfig, asrt *assert.Assertions) {
 			asrt.Equal(
-				[]string{"https://10.0.0.1:3333/logs"},
+				[]string{"https://10.0.0.1:3333/logs?extraField=value1&otherExtraField=value2"},
 				xslices.Map(cfg.TypedSpec().Destinations, func(u *url.URL) string { return u.String() }),
 			)
 		})

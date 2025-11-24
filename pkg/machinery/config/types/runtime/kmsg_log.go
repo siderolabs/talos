@@ -57,9 +57,10 @@ type KmsgLogV1Alpha1 struct {
 	//     The scheme must be tcp:// or udp://.
 	//     The path must be empty.
 	//     The port is required.
+	//	   The queries arguments can be set to pass optional extra tags.
 	//   examples:
 	//     - value: >
-	//        "udp://10.3.7.3:2810"
+	//        "udp://10.3.7.3:2810?extraField=value1&otherExtraField=value2"
 	//   schema:
 	//     type: string
 	//     pattern: "^(tcp|udp)://"
@@ -79,7 +80,7 @@ func NewKmsgLogV1Alpha1() *KmsgLogV1Alpha1 {
 func exampleKmsgLogV1Alpha1() *KmsgLogV1Alpha1 {
 	cfg := NewKmsgLogV1Alpha1()
 	cfg.MetaName = "remote-log"
-	cfg.KmsgLogURL.URL = ensure.Value(url.Parse("tcp://192.168.3.7:3478/"))
+	cfg.KmsgLogURL.URL = ensure.Value(url.Parse("tcp://192.168.3.7:3478/?extraField=value1&otherExtraField=value2"))
 
 	return cfg
 }

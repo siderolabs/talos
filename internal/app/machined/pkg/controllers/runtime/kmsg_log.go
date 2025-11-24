@@ -113,7 +113,8 @@ func (ctrl *KmsgLogDeliveryController) Run(ctx context.Context, r controller.Run
 }
 
 type logConfig struct {
-	endpoint *url.URL
+	endpoint  *url.URL
+	extraTags map[string]string
 }
 
 func (c logConfig) Format() string {
@@ -125,7 +126,7 @@ func (c logConfig) Endpoint() *url.URL {
 }
 
 func (c logConfig) ExtraTags() map[string]string {
-	return nil
+	return c.extraTags
 }
 
 //nolint:gocyclo
@@ -136,7 +137,12 @@ func (ctrl *KmsgLogDeliveryController) deliverLogs(ctx context.Context, r contro
 
 	// initialize all log senders
 	destLogConfigs := xslices.Map(destURLs, func(u *url.URL) config.LoggingDestination {
-		return logConfig{endpoint: u}
+		extraTags := map[string]string{}
+		for key, values := range u.Query() {
+			extraTags[key] = values[0]
+		}
+
+		return logConfig{endpoint: u, extraTags: extraTags}
 	})
 	senders := xslices.Map(destLogConfigs, logging.NewJSONLines)
 
