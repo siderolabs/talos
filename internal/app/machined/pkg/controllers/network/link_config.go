@@ -17,6 +17,7 @@ import (
 	"github.com/siderolabs/gen/optional"
 	"github.com/siderolabs/gen/pair/ordered"
 	"github.com/siderolabs/gen/xslices"
+	"github.com/siderolabs/go-pointer"
 	"github.com/siderolabs/go-procfs/procfs"
 	"go.uber.org/zap"
 
@@ -440,8 +441,7 @@ func (ctrl *LinkConfigController) processLinkConfigs(logger *zap.Logger, linkMap
 		}
 
 		if multicast, ok := linkConfig.Multicast().Get(); ok {
-			linkMap[linkName].Multicast = new(bool)
-			*linkMap[linkName].Multicast = multicast
+			linkMap[linkName].Multicast = pointer.To(multicast)
 		}
 
 		switch specificLinkConfig := linkConfig.(type) {
