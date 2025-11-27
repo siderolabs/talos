@@ -8,6 +8,7 @@ import (
 	"net"
 	"net/netip"
 	"slices"
+	"strings"
 
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/meta"
@@ -95,9 +96,12 @@ func (spec *CertSANSpec) AppendIPs(ips ...netip.Addr) {
 // AppendDNSNames skipping duplicates.
 func (spec *CertSANSpec) AppendDNSNames(dnsNames ...string) {
 	for _, dnsName := range dnsNames {
+		// remove trailing dot from the DNS name, as it shouldn't be stored in the cert SANs
+		dnsName = strings.TrimRight(dnsName, ".")
+
 		found := slices.Contains(spec.DNSNames, dnsName)
 
-		if !found {
+		if !found && dnsName != "" {
 			spec.DNSNames = append(spec.DNSNames, dnsName)
 		}
 	}
