@@ -659,7 +659,6 @@ func (suite *LinkSpecSuite) TestWireguard() {
 		Logical: true,
 		Wireguard: network.WireguardSpec{
 			PrivateKey:   priv.String(),
-			ListenPort:   30000,
 			FirewallMark: 1,
 			Peers: []network.WireguardPeer{
 				{
