@@ -940,19 +940,19 @@ talosctl dmesg [flags]
 
 ## talosctl edit
 
-Edit a resource from the default editor.
+Edit Talos node machine configuration with the default editor.
 
 ### Synopsis
 
-The edit command allows you to directly edit any API resource
-you can retrieve via the command line tools.
+The edit command allows you to directly edit the machine configuration
+of a Talos node using your preferred text editor.
 
 It will open the editor defined by your TALOS_EDITOR,
 or EDITOR environment variables, or fall back to 'vi' for Linux
 or 'notepad' for Windows.
 
 ```
-talosctl edit <type> [<id>] [flags]
+talosctl edit machineconfig [flags]
 ```
 
 ### Options
@@ -2572,10 +2572,10 @@ talosctl netstat [flags]
 
 ## talosctl patch
 
-Update field(s) of a resource using a JSON patch.
+Patch machine configuration of a Talos node with a local patch.
 
 ```
-talosctl patch <type> [<id>] [flags]
+talosctl patch machineconfig [flags]
 ```
 
 ### Options
@@ -3248,7 +3248,7 @@ A CLI for out-of-band management of Kubernetes nodes created by Talos
 * [talosctl copy](#talosctl-copy)	 - Copy data out from the node
 * [talosctl dashboard](#talosctl-dashboard)	 - Cluster dashboard with node overview, logs and real-time metrics
 * [talosctl dmesg](#talosctl-dmesg)	 - Retrieve kernel logs
-* [talosctl edit](#talosctl-edit)	 - Edit a resource from the default editor.
+* [talosctl edit](#talosctl-edit)	 - Edit Talos node machine configuration with the default editor.
 * [talosctl etcd](#talosctl-etcd)	 - Manage etcd
 * [talosctl events](#talosctl-events)	 - Stream runtime events
 * [talosctl gen](#talosctl-gen)	 - Generate CAs, certificates, and private keys
@@ -3265,7 +3265,7 @@ A CLI for out-of-band management of Kubernetes nodes created by Talos
 * [talosctl meta](#talosctl-meta)	 - Write and delete keys in the META partition
 * [talosctl mounts](#talosctl-mounts)	 - List mounts
 * [talosctl netstat](#talosctl-netstat)	 - Show network connections and sockets
-* [talosctl patch](#talosctl-patch)	 - Update field(s) of a resource using a JSON patch.
+* [talosctl patch](#talosctl-patch)	 - Patch machine configuration of a Talos node with a local patch.
 * [talosctl pcap](#talosctl-pcap)	 - Capture the network packets from the node.
 * [talosctl processes](#talosctl-processes)	 - List running processes
 * [talosctl read](#talosctl-read)	 - Read a file on the machine

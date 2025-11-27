@@ -71,6 +71,10 @@ func LoadPatch(in []byte) (Patch, error) {
 }
 
 // LoadPatches loads the JSON patch either from value literal or from a file if the patch starts with '@'.
+//
+// It also tries to guess if the filename was given without '@' prefix.
+//
+//nolint:gocyclo
 func LoadPatches(in []string) ([]Patch, error) {
 	var result []Patch
 
@@ -81,14 +85,24 @@ func LoadPatches(in []string) ([]Patch, error) {
 			err      error
 		)
 
-		if strings.HasPrefix(patchString, "@") {
+		switch {
+		case strings.HasPrefix(patchString, "@"):
 			filename := patchString[1:]
 
 			contents, err = os.ReadFile(filename)
 			if err != nil {
 				return result, err
 			}
-		} else {
+		case !strings.ContainsAny(patchString, "\n ") &&
+			!strings.HasPrefix(patchString, "[") &&
+			!strings.HasPrefix(patchString, "{"):
+			// any valid patch supplied inline should contain either '\n' or space, or start with '[' or '{'
+			// so if none of this is true, assume it's a filename, but without '@' prefix
+			contents, err = os.ReadFile(patchString)
+			if err != nil {
+				return result, err
+			}
+		default:
 			contents = []byte(patchString)
 		}
 
