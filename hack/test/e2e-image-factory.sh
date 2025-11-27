@@ -59,6 +59,7 @@ function create_cluster {
     --cpus-controlplanes="${QEMU_CPUS:-2}" \
     --cpus-workers="${QEMU_CPUS_WORKERS:-2}" \
     --cidr=172.20.1.0/24 \
+    --image-factory-url="${FACTORY_SCHEME}://${FACTORY_HOSTNAME}/" \
     --talos-version="${FACTORY_VERSION}" \
     --schematic-id="${FACTORY_SCHEMATIC}" \
     "${REGISTRY_MIRROR_FLAGS[@]}" \
