@@ -41,7 +41,7 @@ func TestCalculateScore(t *testing.T) {
 				MemoryPeak:    cgroups.Value{Val: 50, IsSet: true},
 				MemoryMax:     cgroups.Value{IsSet: true, IsMax: true},
 			},
-			expect: 2.625,
+			expect: 21,
 		},
 	} {
 		t.Run(test.name, func(t *testing.T) {
@@ -79,14 +79,14 @@ func TestRankCgroups(t *testing.T) {
 					MemoryCurrent: cgroups.Value{Val: 222593024, IsSet: true},
 					MemoryPeak:    cgroups.Value{Val: 371011584, IsSet: true},
 					MemoryMax:     cgroups.Value{IsMax: true, IsSet: true},
-				}: 1.499765420173865,
+				}: 2.22593024e+08,
 				{
 					Class:         runtime.QoSCgroupClassBurstable,
 					Path:          "testdata/rank1/kubepods/burstable/podABC",
 					MemoryCurrent: cgroups.Value{Val: 42, IsSet: true},
 					MemoryPeak:    cgroups.Value{Val: 50, IsSet: true},
 					MemoryMax:     cgroups.Value{IsSet: true, IsMax: true},
-				}: 2.625,
+				}: 21,
 			},
 		},
 	} {
