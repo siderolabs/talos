@@ -1,6 +1,6 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
 #
-# Generated on 2025-10-23T15:10:44Z by kres 46e133d.
+# Generated on 2025-11-27T15:52:53Z by kres e1d6dac.
 
 concurrency:
   group: ${{ github.head_ref || github.run_id }}
@@ -99,7 +99,7 @@ jobs:
           make iscsi-tools util-linux-tools extensions-metadata -C _out/extensions
       - name: installer extensions
         env:
-          EXTENSIONS_FILTER_COMMAND: grep -E 'iscsi-tools|util-linux-tools'
+          EXTENSIONS_FILTER_COMMAND: grep -E 'iscsi-tools|util-linux-tools|trident-iscsi-tools'
           IMAGE_REGISTRY: registry.dev.siderolabs.io
         run: |
           make installer-with-extensions
