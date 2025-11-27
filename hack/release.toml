@@ -205,6 +205,12 @@ This is in line with a set of best practices documented in CIS 1.12 benchmark.
 You can still expand the list of supported cipher suites via the `cluster.apiServer.extraArgs."tls-cipher-suites"` machine configuration field if needed.
 """
 
+    [notes.kernel-log]
+        title = "Kernel Log"
+        description = """\
+The kernel log (dmesg) is now also available as the service log named `kernel` (`talosctl logs kernel`).
+"""
+
 [make_deps]
 
     [make_deps.tools]

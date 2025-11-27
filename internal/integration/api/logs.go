@@ -10,9 +10,12 @@ import (
 	"bufio"
 	"bytes"
 	"context"
+	"fmt"
 	"io"
+	"strings"
 	"time"
 
+	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/logging"
 	"github.com/siderolabs/talos/internal/integration/base"
 	"github.com/siderolabs/talos/pkg/machinery/api/common"
 	"github.com/siderolabs/talos/pkg/machinery/client"
@@ -106,6 +109,46 @@ func (suite *LogsSuite) TestAuditdLogs() {
 
 	// auditd logs shouldn't be empty
 	suite.Require().Greater(n, int64(1024))
+}
+
+// TestKernelLogs verifies that kernel logs are present and valid.
+func (suite *LogsSuite) TestKernelLogs() {
+	if suite.Cluster == nil || suite.Cluster.Provisioner() != base.ProvisionerQEMU {
+		suite.T().Skip("skip kernel logs test for non-QEMU clusters")
+	}
+
+	logsStream, err := suite.Client.Logs(
+		suite.nodeCtx,
+		constants.SystemContainerdNamespace,
+		common.ContainerDriver_CONTAINERD,
+		"kernel",
+		false,
+		-1,
+	)
+	suite.Require().NoError(err)
+
+	logReader, err := client.ReadStream(logsStream)
+	suite.Require().NoError(err)
+
+	var buf bytes.Buffer
+
+	n, err := io.Copy(&buf, logReader)
+	suite.Require().NoError(err)
+
+	// kernel logs shouldn't be empty
+	suite.Require().Greater(n, int64(1024))
+
+	version := strings.Contains(buf.String(), fmt.Sprintf("Linux version %s", constants.DefaultKernelVersion))
+	overflow := n >= logging.DesiredCapacity/2
+
+	if !version && overflow {
+		suite.T().Skip("skipping the test as kernel log buffer might have overflowed")
+	}
+
+	suite.Require().Truef(
+		version,
+		"did not find kernel version (%s) in the log buffer", constants.DefaultKernelVersion,
+	)
 }
 
 // TestTail verifies that log tail might be requested.

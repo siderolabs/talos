@@ -423,6 +423,10 @@ func (ctrl *Controller) Run(ctx context.Context, drainer *runtime.Drainer) error
 		&runtimecontrollers.KmsgLogDeliveryController{
 			Drainer: drainer,
 		},
+		&runtimecontrollers.KmsgLogStorageController{
+			V1Alpha1Logging: ctrl.v1alpha1Runtime.Logging(),
+			V1Alpha1Mode:    ctrl.v1alpha1Runtime.State().Platform().Mode(),
+		},
 		&runtimecontrollers.LoadedKernelModuleController{
 			V1Alpha1Mode: ctrl.v1alpha1Runtime.State().Platform().Mode(),
 		},
