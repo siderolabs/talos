@@ -112,3 +112,16 @@ func TestLoadMixedPatches(t *testing.T) {
 	assert.Implements(t, (*configpatcher.StrategicMergePatch)(nil), patchList[1])
 	assert.IsType(t, jsonpatch.Patch{}, patchList[2])
 }
+
+func TestLoadStraightFilename(t *testing.T) {
+	patchList, err := configpatcher.LoadPatches([]string{
+		"testdata/strategic.yaml",
+		`[{"op":"replace","path":"/some","value": []}]`,
+	})
+	require.NoError(t, err)
+
+	require.Len(t, patchList, 2)
+
+	assert.Implements(t, (*configpatcher.StrategicMergePatch)(nil), patchList[0])
+	assert.IsType(t, jsonpatch.Patch{}, patchList[1])
+}

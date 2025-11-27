@@ -178,11 +178,11 @@ func addEditingComment(in string) string {
 
 // editCmd represents the edit command.
 var editCmd = &cobra.Command{
-	Use:   "edit <type> [<id>]",
-	Short: "Edit a resource from the default editor.",
+	Use:   "edit machineconfig",
+	Short: "Edit Talos node machine configuration with the default editor.",
 	Args:  cobra.RangeArgs(1, 2),
-	Long: `The edit command allows you to directly edit any API resource
-you can retrieve via the command line tools.
+	Long: `The edit command allows you to directly edit the machine configuration
+of a Talos node using your preferred text editor.
 
 It will open the editor defined by your TALOS_EDITOR,
 or EDITOR environment variables, or fall back to 'vi' for Linux
