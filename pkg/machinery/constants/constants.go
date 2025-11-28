@@ -561,10 +561,10 @@ const (
 	TrustdUserID = 51
 
 	// DefaultContainerdVersion is the default container runtime version.
-	DefaultContainerdVersion = "2.1.5"
+	DefaultContainerdVersion = "2.2.0"
 
 	// RuncVersion is the runc version.
-	RuncVersion = "1.3.3"
+	RuncVersion = "1.3.4"
 
 	// SystemContainerdNamespace is the Containerd namespace for Talos services.
 	SystemContainerdNamespace = "system"
