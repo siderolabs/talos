@@ -37,3 +37,15 @@ func WithNode(ctx context.Context, node string) context.Context {
 
 	return metadata.NewOutgoingContext(ctx, md)
 }
+
+// ClearNodeMetadata removes any node/nodeS metadata from the context.
+func ClearNodeMetadata(ctx context.Context) context.Context {
+	md, _ := metadata.FromOutgoingContext(ctx)
+
+	// overwrite any previous nodes in the context metadata with new value
+	md = md.Copy()
+	md.Delete("nodes")
+	md.Delete("node")
+
+	return metadata.NewOutgoingContext(ctx, md)
+}
