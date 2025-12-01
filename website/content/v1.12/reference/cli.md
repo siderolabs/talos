@@ -1982,18 +1982,18 @@ talosctl image cache-serve [flags]
 
 * [talosctl image](#talosctl-image)	 - Manage CRI container images
 
-## talosctl image default
+## talosctl image k8s-bundle
 
-List the default images used by Talos
+List the default Kubernetes images used by Talos
 
 ```
-talosctl image default [flags]
+talosctl image k8s-bundle [flags]
 ```
 
 ### Options
 
 ```
-  -h, --help                 help for default
+  -h, --help                 help for k8s-bundle
       --provisioner string   include provisioner specific images (default "installer")
 ```
 
@@ -2073,18 +2073,18 @@ talosctl image pull <image> [flags]
 
 * [talosctl image](#talosctl-image)	 - Manage CRI container images
 
-## talosctl image source-bundle
+## talosctl image talos-bundle
 
-List the source images used for building Talos
+List the default system images and extensions used for Talos
 
 ```
-talosctl image source-bundle <talos-version> [flags]
+talosctl image talos-bundle [talos-version] [flags]
 ```
 
 ### Options
 
 ```
-  -h, --help   help for source-bundle
+  -h, --help   help for talos-bundle
 ```
 
 ### Options inherited from parent commands
@@ -2126,10 +2126,10 @@ Manage CRI container images
 * [talosctl image cache-cert-gen](#talosctl-image-cache-cert-gen)	 - Generate TLS certificates and CA patch required for securing image cache to Talos communication
 * [talosctl image cache-create](#talosctl-image-cache-create)	 - Create a cache of images in OCI format into a directory
 * [talosctl image cache-serve](#talosctl-image-cache-serve)	 - Serve an OCI image cache directory over HTTP(S) as a container registry
-* [talosctl image default](#talosctl-image-default)	 - List the default images used by Talos
+* [talosctl image k8s-bundle](#talosctl-image-k8s-bundle)	 - List the default Kubernetes images used by Talos
 * [talosctl image list](#talosctl-image-list)	 - List CRI images
 * [talosctl image pull](#talosctl-image-pull)	 - Pull an image into CRI
-* [talosctl image source-bundle](#talosctl-image-source-bundle)	 - List the source images used for building Talos
+* [talosctl image talos-bundle](#talosctl-image-talos-bundle)	 - List the default system images and extensions used for Talos
 
 ## talosctl inject serviceaccount
 
