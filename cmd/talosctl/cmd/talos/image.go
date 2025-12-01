@@ -138,11 +138,12 @@ var imagePullCmd = &cobra.Command{
 	},
 }
 
-// imageDefaultCmd represents the image default command.
+// imageDefaultCmd represents the image k8s-bundle command.
 var imageDefaultCmd = &cobra.Command{
-	Use:   "default",
-	Short: "List the default images used by Talos",
-	Long:  ``,
+	Use:     "k8s-bundle",
+	Aliases: []string{"default"},
+	Short:   "List the default Kubernetes images used by Talos",
+	Long:    ``,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		images := images.List(container.NewV1Alpha1(&v1alpha1.Config{
 			MachineConfig: &v1alpha1.MachineConfig{
@@ -166,15 +167,6 @@ var imageDefaultCmd = &cobra.Command{
 		fmt.Printf("%s\n", images.KubeScheduler)
 		fmt.Printf("%s\n", images.KubeProxy)
 		fmt.Printf("%s\n", images.Kubelet)
-
-		if slices.Contains([]string{provisionerInstaller, provisionerAll}, imageDefaultCmdFlags.provisioner.String()) {
-			fmt.Printf("%s\n", images.Installer)
-		}
-
-		if slices.Contains([]string{provisionerDocker, provisionerAll}, imageDefaultCmdFlags.provisioner.String()) {
-			fmt.Printf("%s\n", images.Talos)
-		}
-
 		fmt.Printf("%s\n", images.Pause)
 
 		return nil
@@ -193,17 +185,22 @@ var imageDefaultCmdFlags = struct {
 	provisioner: helpers.StringChoice(provisionerInstaller, provisionerDocker, provisionerAll),
 }
 
-// imageSourceBundleCmd represents the image source-bundle command.
+// imageSourceBundleCmd represents the image talos-bundle command.
 var imageSourceBundleCmd = &cobra.Command{
-	Use:   "source-bundle <talos-version>",
-	Short: "List the source images used for building Talos",
+	Use:   "talos-bundle [talos-version]",
+	Short: "List the default system images and extensions used for Talos",
 	Long:  ``,
 	Args: cobra.MatchAll(
-		cobra.ExactArgs(1),
+		cobra.RangeArgs(0, 1),
 		func(cmd *cobra.Command, args []string) error {
 			maximumVersion, err := semver.ParseTolerant(version.Tag)
 			if err != nil {
 				panic(err) // panic, this should never happen
+			}
+
+			// If no version specified, use current version
+			if len(args) == 0 {
+				return nil
 			}
 
 			tag := args[0]
@@ -222,11 +219,18 @@ var imageSourceBundleCmd = &cobra.Command{
 	),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		var (
-			tag        = args[0]
+			tag        string
 			err        error
 			extensions []artifacts.ExtensionRef
 			overlays   []artifacts.OverlayRef
 		)
+
+		// Default to current version if not specified
+		if len(args) == 0 {
+			tag = version.Tag
+		} else {
+			tag = args[0]
+		}
 
 		sources := images.ListSourcesFor(tag)
 

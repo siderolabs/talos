@@ -30,14 +30,14 @@ func (suite *ImageSuite) SuiteName() string {
 
 // TestDefault verifies default Talos list of images.
 func (suite *ImageSuite) TestDefault() {
-	suite.RunCLI([]string{"image", "default"},
+	suite.RunCLI([]string{"image", "k8s-bundle"},
 		base.StdoutShouldMatch(regexp.MustCompile(regexp.QuoteMeta("registry.k8s.io/kube-apiserver"))),
 	)
 }
 
-// TestSourceBundle verifies source-bundle Talos list of images.
+// TestSourceBundle verifies talos-bundle Talos list of images.
 func (suite *ImageSuite) TestSourceBundle() {
-	suite.RunCLI([]string{"image", "source-bundle", "v1.11.2"},
+	suite.RunCLI([]string{"image", "talos-bundle", "v1.11.2"},
 		base.StdoutShouldMatch(regexp.MustCompile(regexp.QuoteMeta(`ghcr.io/siderolabs/installer:v1.11.2
 ghcr.io/siderolabs/installer-base:v1.11.2
 ghcr.io/siderolabs/imager:v1.11.2
@@ -162,7 +162,7 @@ func (suite *ImageSuite) TestCacheCreateOCI() {
 		suite.T().Skip("skipping in short mode")
 	}
 
-	stdOut, _ := suite.RunCLI([]string{"image", "default"})
+	stdOut, _ := suite.RunCLI([]string{"image", "k8s-bundle"})
 
 	imagesList := strings.Split(strings.Trim(stdOut, "\n"), "\n")
 
@@ -187,7 +187,7 @@ func (suite *ImageSuite) TestCacheCreateFlat() {
 		suite.T().Skip("skipping in short mode")
 	}
 
-	stdOut, _ := suite.RunCLI([]string{"image", "default"})
+	stdOut, _ := suite.RunCLI([]string{"image", "k8s-bundle"})
 
 	imagesList := strings.Split(strings.Trim(stdOut, "\n"), "\n")
 
