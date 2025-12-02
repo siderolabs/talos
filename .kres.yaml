@@ -2196,7 +2196,7 @@ spec:
         - name: installer extensions
           command: installer-with-extensions
           environment:
-            EXTENSIONS_FILTER_COMMAND: "grep -E 'iscsi-tools|util-linux-tools|trident-iscsi-tools'"
+            EXTENSIONS_FILTER_COMMAND: "grep -E '/iscsi-tools|util-linux-tools'"
             IMAGE_REGISTRY: registry.dev.siderolabs.io
         - name: kubelet-fat-patch
         - name: e2e-qemu-csi-longhorn
