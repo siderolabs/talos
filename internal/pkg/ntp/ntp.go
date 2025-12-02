@@ -278,6 +278,8 @@ func (syncer *Syncer) query(ctx context.Context) (lastSyncServer string, measure
 			case <-ctx.Done():
 				return lastSyncServer, measurement, ctx.Err()
 			case <-syncer.restartSyncCh:
+				syncer.restartSync() // re-queue restart for outer loop
+
 				return lastSyncServer, measurement, nil
 			default:
 			}
@@ -310,7 +312,7 @@ func (syncer *Syncer) resolveServers(ctx context.Context) ([]string, error) {
 		if IsPTPDevice(server) {
 			serverList = append(serverList, server)
 		} else {
-			ips, err := (&net.Resolver{}).LookupIPAddr(ctx, server)
+			ips, err := syncer.lookupIPAddrWithTimeout(ctx, server, 5*time.Second)
 			if err != nil {
 				syncer.logger.Error(fmt.Sprintf("failed looking up %q, ignored", server), zap.Error(err))
 			}
@@ -328,6 +330,13 @@ func (syncer *Syncer) resolveServers(ctx context.Context) ([]string, error) {
 	}
 
 	return serverList, nil
+}
+
+func (syncer *Syncer) lookupIPAddrWithTimeout(ctx context.Context, host string, timeout time.Duration) ([]net.IPAddr, error) {
+	ctx, cancel := context.WithTimeout(ctx, timeout)
+	defer cancel()
+
+	return (&net.Resolver{}).LookupIPAddr(ctx, host)
 }
 
 func (syncer *Syncer) queryServer(server string) (*Measurement, error) {
