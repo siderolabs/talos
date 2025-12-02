@@ -142,24 +142,24 @@ func (k *Kubelet) Runner(r runtime.Runtime) (runner.Runner, error) {
 
 	// Set the required kubelet mounts.
 	mounts := []specs.Mount{
-		{Type: "bind", Destination: "/dev", Source: "/dev", Options: []string{"rbind", "rshared", "rw"}},
+		{Type: "bind", Destination: "/dev", Source: "/dev", Options: []string{"bind", "rw"}},
 		{Type: "sysfs", Destination: "/sys", Source: "/sys", Options: []string{"bind", "ro"}},
-		{Type: "bind", Destination: constants.CgroupMountPath, Source: constants.CgroupMountPath, Options: []string{"rbind", "rshared", "rw"}},
+		{Type: "bind", Destination: constants.CgroupMountPath, Source: constants.CgroupMountPath, Options: []string{"bind", "rw"}},
 		{Type: "bind", Destination: "/lib/modules", Source: "/usr/lib/modules", Options: []string{"bind", "ro"}},
-		{Type: "bind", Destination: "/etc/kubernetes", Source: "/etc/kubernetes", Options: []string{"bind", "rshared", "rw"}},
+		{Type: "bind", Destination: "/etc/kubernetes", Source: "/etc/kubernetes", Options: []string{"bind", "rw"}},
 		{Type: "bind", Destination: constants.KubeletCredentialProviderBinDir, Source: constants.KubeletCredentialProviderBinDir, Options: []string{"bind", "ro"}},
 		{Type: "bind", Destination: "/etc/nfsmount.conf", Source: "/etc/nfsmount.conf", Options: []string{"bind", "ro"}},
 		{Type: "bind", Destination: "/etc/machine-id", Source: "/etc/machine-id", Options: []string{"bind", "ro"}},
 		{Type: "bind", Destination: "/etc/os-release", Source: "/etc/os-release", Options: []string{"bind", "ro"}},
 		{Type: "bind", Destination: constants.PodResolvConfPath, Source: constants.PodResolvConfPath, Options: []string{"bind", "ro"}},
-		{Type: "bind", Destination: "/etc/cni", Source: "/etc/cni", Options: []string{"rbind", "rshared", "rw"}},
-		{Type: "bind", Destination: "/usr/libexec/kubernetes", Source: "/usr/libexec/kubernetes", Options: []string{"rbind", "rshared", "rw"}},
-		{Type: "bind", Destination: "/var/run", Source: "/run", Options: []string{"rbind", "rshared", "rw"}},
-		{Type: "bind", Destination: "/var/lib/containerd", Source: "/var/lib/containerd", Options: []string{"rbind", "rshared", "rw"}},
-		{Type: "bind", Destination: "/var/lib/kubelet", Source: "/var/lib/kubelet", Options: []string{"rbind", "rshared", "rw"}},
-		{Type: "bind", Destination: "/var/log/containers", Source: "/var/log/containers", Options: []string{"rbind", "rshared", "rw"}},
-		{Type: "bind", Destination: "/var/log/pods", Source: "/var/log/pods", Options: []string{"rbind", "rshared", "rw"}},
-		{Type: "bind", Destination: constants.UserVolumeMountPoint, Source: constants.UserVolumeMountPoint, Options: []string{"rbind", "rshared", "ro"}},
+		{Type: "bind", Destination: "/etc/cni", Source: "/etc/cni", Options: []string{"bind", "ro"}},
+		{Type: "bind", Destination: "/usr/libexec/kubernetes", Source: "/usr/libexec/kubernetes", Options: []string{"bind", "rw"}},
+		{Type: "bind", Destination: "/var/run", Source: "/run", Options: []string{"bind", "rw"}},
+		{Type: "bind", Destination: "/var/lib/containerd", Source: "/var/lib/containerd", Options: []string{"rbind", "rw"}},
+		{Type: "bind", Destination: "/var/lib/kubelet", Source: "/var/lib/kubelet", Options: []string{"bind", "rw"}},
+		{Type: "bind", Destination: "/var/log/containers", Source: "/var/log/containers", Options: []string{"bind", "rw"}},
+		{Type: "bind", Destination: "/var/log/pods", Source: "/var/log/pods", Options: []string{"bind", "rw"}},
+		{Type: "bind", Destination: constants.UserVolumeMountPoint, Source: constants.UserVolumeMountPoint, Options: []string{"rbind", "ro"}},
 	}
 
 	if _, err := os.Stat("/sys/kernel/security"); err == nil {
