@@ -130,19 +130,11 @@ func (r *rotator) rotate(ctx context.Context) error {
 		return err
 	}
 
-	if err := r.verifyDirectConnectivity(ctx, r.intermediateTalosconfig, "new client cert, but old server CA"); err != nil {
-		return err
-	}
-
 	if err := r.swapCAs(ctx); err != nil {
 		return err
 	}
 
 	if err := r.verifyConnectivity(ctx, r.newClient, "new PKI"); err != nil {
-		return err
-	}
-
-	if err := r.verifyDirectConnectivity(ctx, r.newTalosconfig, "new PKI"); err != nil {
 		return err
 	}
 
@@ -293,57 +285,6 @@ func (r *rotator) verifyConnectivity(ctx context.Context, c *client.Client, labe
 			return nil
 		}); err != nil {
 			return fmt.Errorf("error calling version API on node %s: %w", node.InternalIP, err)
-		}
-
-		r.opts.Printf("  - %s: OK (version %s)\n", node.InternalIP, resp.Messages[0].Version.GetTag())
-	}
-
-	return nil
-}
-
-func (r *rotator) verifyDirectConnectivity(ctx context.Context, cfg *clientconfig.Config, label string) error {
-	r.opts.Printf("> Verifying direct connectivity with %s:\n", label)
-
-	for _, node := range r.opts.ClusterInfo.Nodes() {
-		if r.opts.DryRun {
-			r.opts.Printf("  - %s: OK (dry-run)\n", node.InternalIP)
-
-			continue
-		}
-
-		var resp *machineapi.VersionResponse
-
-		if err := func() error {
-			c, err := client.New(ctx,
-				client.WithConfig(cfg),
-				client.WithEndpoints(node.InternalIP.String()),
-			)
-			if err != nil {
-				return fmt.Errorf("error creating client for node %s: %w", node.InternalIP, err)
-			}
-
-			defer c.Close() //nolint:errcheck
-
-			if err := retry.Constant(10*time.Second, retry.WithUnits(100*time.Millisecond), retry.WithErrorLogging(true)).RetryWithContext(ctx, func(ctx context.Context) error {
-				var respErr error
-
-				resp, respErr = c.Version(client.ClearNodeMetadata(ctx))
-				if respErr != nil {
-					if client.StatusCode(respErr) == codes.Unavailable {
-						return retry.ExpectedError(respErr)
-					}
-
-					return respErr
-				}
-
-				return nil
-			}); err != nil {
-				return fmt.Errorf("error calling version API on node %s: %w", node.InternalIP, err)
-			}
-
-			return nil
-		}(); err != nil {
-			return err
 		}
 
 		r.opts.Printf("  - %s: OK (version %s)\n", node.InternalIP, resp.Messages[0].Version.GetTag())
