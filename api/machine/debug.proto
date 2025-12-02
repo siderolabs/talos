@@ -1,0 +1,52 @@
+syntax = "proto3";
+
+package machine;
+
+option go_package = "github.com/siderolabs/talos/pkg/machinery/api/machine";
+option java_package = "dev.talos.api.machine";
+
+import "common/common.proto";
+
+// DebugService provides debugging and inspection capabilities for a Talos node.
+service DebugService {
+  // ContainerRun runs a debug container, attaches to it, and streams I/O.
+  rpc ContainerRun(stream DebugContainerRunRequest) returns (stream DebugContainerRunResponse);
+}
+
+message DebugContainerRunRequest {
+  oneof request {
+    // 1. send the container spec
+    DebugContainerRunRequestSpec spec = 1;
+    // 2. send either of the three below to interact with the running container
+    bytes stdin_data = 2;
+    int32 signal = 3;
+    DebugContainerTerminalResize term_resize = 4;
+  }
+}
+
+message DebugContainerRunRequestSpec {
+  common.ContainerdInstance containerd = 1;
+  string image_name = 2;
+  repeated string args = 3;
+  map<string, string> env = 4;
+
+  enum Profile {
+    PROFILE_UNSPECIFIED = 0;
+    PROFILE_PRIVILEGED = 1;
+  }
+
+  Profile profile = 5;
+  bool tty = 6;
+}
+
+message DebugContainerTerminalResize {
+  int32 width = 1;
+  int32 height = 2;
+}
+
+message DebugContainerRunResponse {
+  oneof resp {
+    bytes stdout_data = 2;
+    int32 exit_code = 3;
+  }
+}

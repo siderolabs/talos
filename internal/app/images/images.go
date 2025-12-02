@@ -10,10 +10,9 @@ import (
 	"errors"
 	"io"
 
+	"github.com/containerd/containerd/errdefs"
 	containerdapi "github.com/containerd/containerd/v2/client"
 	"github.com/containerd/containerd/v2/core/images"
-	"github.com/containerd/containerd/v2/pkg/namespaces"
-	"github.com/containerd/errdefs"
 	"github.com/containerd/platforms"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -22,12 +21,11 @@ import (
 	"google.golang.org/protobuf/types/known/emptypb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
+	"github.com/siderolabs/talos/internal/app/internal/ctrhelper"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
 	"github.com/siderolabs/talos/internal/pkg/containers/image"
 	"github.com/siderolabs/talos/internal/pkg/containers/image/progress"
-	"github.com/siderolabs/talos/pkg/machinery/api/common"
 	"github.com/siderolabs/talos/pkg/machinery/api/machine"
-	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/resources/cri"
 )
 
@@ -45,47 +43,9 @@ func NewService(controller runtime.Controller) *Service {
 	}
 }
 
-func containerdInstanceHelper(ctx context.Context, req *common.ContainerdInstance) (context.Context, *containerdapi.Client, error) {
-	var (
-		containerdAddress   string
-		containerdNamespace string
-	)
-
-	switch req.GetDriver() {
-	case common.ContainerDriver_CONTAINERD:
-		containerdAddress = constants.SystemContainerdAddress
-	case common.ContainerDriver_CRI:
-		containerdAddress = constants.CRIContainerdAddress
-	default:
-		return nil, nil, status.Errorf(codes.InvalidArgument, "invalid containerd driver %s", req.GetDriver())
-	}
-
-	switch req.GetNamespace() {
-	case common.ContainerdNamespace_NS_CRI:
-		containerdNamespace = constants.K8sContainerdNamespace
-	case common.ContainerdNamespace_NS_SYSTEM:
-		containerdNamespace = constants.SystemContainerdNamespace
-	case common.ContainerdNamespace_NS_UNKNOWN:
-		fallthrough
-	default:
-		return nil, nil, status.Errorf(codes.InvalidArgument, "invalid containerd namespace %s", req.GetNamespace())
-	}
-
-	if req.GetDriver() == common.ContainerDriver_CONTAINERD && req.GetNamespace() == common.ContainerdNamespace_NS_CRI {
-		return nil, nil, status.Errorf(codes.InvalidArgument, "cannot use CRI namespace with containerd driver")
-	}
-
-	client, err := containerdapi.New(containerdAddress)
-	if err != nil {
-		return ctx, nil, status.Errorf(codes.Unavailable, "error connecting to containerd: %s", err)
-	}
-
-	return namespaces.WithNamespace(ctx, containerdNamespace), client, nil
-}
-
 // List images in the containerd.
 func (svc *Service) List(req *machine.ImageServiceListRequest, srv grpc.ServerStreamingServer[machine.ImageServiceListResponse]) error {
-	ctx, client, err := containerdInstanceHelper(srv.Context(), req.GetContainerd())
+	ctx, _, client, err := ctrhelper.ContainerdInstanceHelper(srv.Context(), req.GetContainerd())
 	if err != nil {
 		return err
 	}
@@ -120,7 +80,7 @@ func (svc *Service) List(req *machine.ImageServiceListRequest, srv grpc.ServerSt
 
 // Pull an image into the containerd.
 func (svc *Service) Pull(req *machine.ImageServicePullRequest, srv grpc.ServerStreamingServer[machine.ImageServicePullResponse]) error {
-	ctx, client, err := containerdInstanceHelper(srv.Context(), req.GetContainerd())
+	ctx, _, client, err := ctrhelper.ContainerdInstanceHelper(srv.Context(), req.GetContainerd())
 	if err != nil {
 		return err
 	}
@@ -179,7 +139,7 @@ func (svc *Service) Import(srv grpc.ClientStreamingServer[machine.ImageServiceIm
 		return status.Errorf(codes.InvalidArgument, "containerd instance is required")
 	}
 
-	ctx, client, err := containerdInstanceHelper(srv.Context(), req)
+	ctx, _, client, err := ctrhelper.ContainerdInstanceHelper(srv.Context(), req)
 	if err != nil {
 		return err
 	}
@@ -263,7 +223,7 @@ func (svc *Service) Import(srv grpc.ClientStreamingServer[machine.ImageServiceIm
 
 // Remove an image from the containerd.
 func (svc *Service) Remove(ctx context.Context, req *machine.ImageServiceRemoveRequest) (*emptypb.Empty, error) {
-	ctx, client, err := containerdInstanceHelper(ctx, req.GetContainerd())
+	ctx, _, client, err := ctrhelper.ContainerdInstanceHelper(ctx, req.GetContainerd())
 	if err != nil {
 		return nil, err
 	}

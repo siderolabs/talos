@@ -106,6 +106,8 @@ func getCgroupV2Resources(name string) *cgroup2.Resources {
 				Weight: pointer.To[uint64](MillicoresToCPUWeight(MilliCores(constants.CgroupSystemMillicores))),
 			},
 		}
+	case constants.CgroupSystemDebug:
+		return &cgroup2.Resources{} // no limits for debug cgroup
 	case constants.CgroupSystemRuntime:
 		return &cgroup2.Resources{
 			Memory: &cgroup2.Memory{

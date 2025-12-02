@@ -66,7 +66,7 @@ func (suite *ListSuite) TestDepth() {
 		{separators: 0, flags: []string{"--depth=1"}},
 		{separators: 1, flags: []string{"--depth=2"}},
 		{separators: 2, flags: []string{"--depth=3"}},
-		{separators: maxSeps, flags: []string{"--recurse=true"}},
+		{separators: -maxSeps, flags: []string{"--recurse=true"}}, // negative means "at least"
 	} {
 		cmdFn := suite.MakeCMDFn(slices.Insert(test.flags, 0, "list", "--nodes", node, "/system"))
 
@@ -91,7 +91,7 @@ func runAndCheck(t *testing.T, expectedSeparators int, cmdFn func() *exec.Cmd, f
 	for _, line := range lines[2:] {
 		actualSeparators := strings.Count(strings.Fields(line)[1], string(os.PathSeparator))
 
-		if !assert.LessOrEqual(
+		if expectedSeparators >= 0 && !assert.LessOrEqual(
 			t,
 			actualSeparators,
 			expectedSeparators,
@@ -105,14 +105,25 @@ func runAndCheck(t *testing.T, expectedSeparators int, cmdFn func() *exec.Cmd, f
 		maxActualSeparators = max(maxActualSeparators, actualSeparators)
 	}
 
-	assert.Equal(
-		t,
-		expectedSeparators,
-		maxActualSeparators,
-		"not enough separators, \nflags: %s\nlines:\n%s",
-		strings.Join(flags, " "),
-		stdout,
-	)
+	if expectedSeparators < 0 {
+		assert.LessOrEqual(
+			t,
+			-expectedSeparators,
+			maxActualSeparators,
+			"not enough separators, \nflags: %s\nlines:\n%s",
+			strings.Join(flags, " "),
+			stdout,
+		)
+	} else {
+		assert.Equal(
+			t,
+			expectedSeparators,
+			maxActualSeparators,
+			"not enough separators, \nflags: %s\nlines:\n%s",
+			strings.Join(flags, " "),
+			stdout,
+		)
+	}
 }
 
 func init() {

@@ -51,6 +51,7 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/emptypb"
 
+	"github.com/siderolabs/talos/internal/app/debug"
 	"github.com/siderolabs/talos/internal/app/images"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader"
@@ -150,6 +151,7 @@ func (s *Server) Register(obj *grpc.Server) {
 
 	machine.RegisterMachineServiceServer(obj, s)
 	machine.RegisterImageServiceServer(obj, images.NewService(s.Controller))
+	machine.RegisterDebugServiceServer(obj, &debug.Service{})
 	cluster.RegisterClusterServiceServer(obj, s)
 	cosiv1alpha1.RegisterStateServer(obj, server.NewState(resourceState))
 	inspect.RegisterInspectServiceServer(obj, &InspectServer{server: s})

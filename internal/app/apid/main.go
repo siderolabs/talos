@@ -129,6 +129,7 @@ func apidMain() error {
 		"/machine.MachineService/ImageList",
 		"/machine.MachineService/Kubeconfig",
 		"/machine.MachineService/List",
+		"/machine.MachineService/DebugContainer",
 		"/machine.MachineService/Logs",
 		"/machine.MachineService/PacketCapture",
 		"/machine.MachineService/Read",

@@ -169,6 +169,22 @@ The TCPProbeConfig configuration document allows to configure TCP probes for net
 This allows to define a custom connectivity condition.
 """
 
+    [notes.images]
+        title = "Image APIs Updated"
+        description = """\
+Talos Linux provides new APIs to manage container images on the node: listing, pulling, importing and removing images.
+The new pull APIs provides pull progress notifications.
+
+The CLI commands `talosctl image pull`, `talosctl image list` and `talosctl image remove` have been updated to interact with the new APIs.
+"""
+
+    [notes.debug]
+        title = "talosctl debug"
+        description = """\
+Talos Linux now provides a way to run and attach to the privileged debug container with a user-provided container image.
+The debug container might be used for troubleshooting and debugging purposes.
+"""
+
 [make_deps]
 
     [make_deps.tools]

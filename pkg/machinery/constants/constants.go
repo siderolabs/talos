@@ -758,6 +758,9 @@ const (
 	// CgroupSystemRuntimeMillicores is the CPU weight for the system containerd process.
 	CgroupSystemRuntimeMillicores = 500
 
+	// CgroupSystemDebug is the cgroup name for debug processes.
+	CgroupSystemDebug = CgroupSystem + "/debug"
+
 	// SelinuxLabelMachined is the SELinux label for machined.
 	SelinuxLabelMachined = "system_u:system_r:init_t:s0"
 

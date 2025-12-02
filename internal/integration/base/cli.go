@@ -146,7 +146,7 @@ func RunCLI(t *testing.T, f func() *exec.Cmd, options ...RunOption) (stdout, std
 // RunAndWaitForMatch retries command until output matches.
 func (cliSuite *CLISuite) RunAndWaitForMatch(args []string, regex *regexp.Regexp, duration time.Duration, options ...retry.Option) {
 	cliSuite.Assert().NoError(retry.Constant(duration, options...).Retry(func() error {
-		stdout, _, err := runAndWait(cliSuite.Suite.T(), cliSuite.MakeCMDFn(args)())
+		stdout, _, err := runAndWait(cliSuite.Suite.T(), cliSuite.MakeCMDFn(args)(), nil)
 		if err != nil {
 			return err
 		}

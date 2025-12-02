@@ -80,7 +80,12 @@ func (flags imageCmdFlagsType) containerdInstance() (*common.ContainerdInstance,
 		}, nil
 	case "system":
 		return &common.ContainerdInstance{
-			Driver:    common.ContainerDriver_CRI, // backwards compatibility
+			Driver:    common.ContainerDriver_CRI,
+			Namespace: common.ContainerdNamespace_NS_SYSTEM,
+		}, nil
+	case "inmem":
+		return &common.ContainerdInstance{
+			Driver:    common.ContainerDriver_CONTAINERD,
 			Namespace: common.ContainerdNamespace_NS_SYSTEM,
 		}, nil
 	default:
@@ -214,73 +219,87 @@ var imagePullCmd = &cobra.Command{
 // imagePull pulls an image using modern API and showing progress.
 func imagePull(imageRef string) error {
 	return WithClientAndNodes(func(ctx context.Context, c *client.Client, nodes []string) error {
-		ctx, cancel := context.WithCancel(ctx)
-		defer cancel()
+		rep := reporter.New()
 
 		containerdInstance, err := imageCmdFlags.containerdInstance()
 		if err != nil {
 			return err
 		}
 
-		responseChan := multiplex.Streaming(ctx, nodes,
-			func(ctx context.Context) (grpc.ServerStreamingClient[machine.ImageServicePullResponse], error) {
-				return c.ImageClient.Pull(ctx, &machine.ImageServicePullRequest{
-					Containerd: containerdInstance,
-					ImageRef:   imageRef,
-				})
-			},
-		)
+		_, err = imagePullInternal(ctx, c, containerdInstance, nodes, imageRef, rep)
 
-		rep := reporter.New()
-		finishedPulls := map[string]string{}
+		return err
+	})
+}
 
-		var (
-			w    pull.ProgressWriter
-			errs error
-		)
+func imagePullInternal(
+	ctx context.Context,
+	c *client.Client,
+	containerdInstance *common.ContainerdInstance,
+	nodes []string,
+	imageRef string,
+	rep *reporter.Reporter,
+) (map[string]string, error) {
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
 
-		for resp := range responseChan {
-			if resp.Err != nil {
-				if status.Code(resp.Err) == codes.Unimplemented {
-					// fallback to legacy API for older Talos
-					return imagePullLegacy(imageRef)
-				}
+	responseChan := multiplex.Streaming(ctx, nodes,
+		func(ctx context.Context) (grpc.ServerStreamingClient[machine.ImageServicePullResponse], error) {
+			return c.ImageClient.Pull(ctx, &machine.ImageServicePullRequest{
+				Containerd: containerdInstance,
+				ImageRef:   imageRef,
+			})
+		},
+	)
 
-				errs = errors.Join(errs, fmt.Errorf("error from node %s: %w", resp.Node, resp.Err))
+	finishedPulls := map[string]string{}
 
+	var (
+		w    pull.ProgressWriter
+		errs error
+	)
+
+	for resp := range responseChan {
+		if resp.Err != nil {
+			if status.Code(resp.Err) == codes.Unimplemented {
+				// fallback to legacy API for older Talos
+				return nil, imagePullLegacy(imageRef)
+			}
+
+			errs = errors.Join(errs, fmt.Errorf("error from node %s: %w", resp.Node, resp.Err))
+
+			continue
+		}
+
+		switch payload := resp.Payload.Response.(type) {
+		case *machine.ImageServicePullResponse_PullProgress:
+			if !rep.IsColorized() {
+				// don't show progress if not colorized/terminal
 				continue
 			}
 
-			switch payload := resp.Payload.Response.(type) {
-			case *machine.ImageServicePullResponse_PullProgress:
-				if !rep.IsColorized() {
-					// don't show progress if not colorized/terminal
-					continue
-				}
+			w.UpdateJob(resp.Node, payload.PullProgress.GetLayerId(), payload.PullProgress.GetProgress())
 
-				w.UpdateJob(resp.Node, payload.PullProgress.GetLayerId(), payload.PullProgress.GetProgress())
+			w.PrintLayerProgress(rep)
+		case *machine.ImageServicePullResponse_Name:
+			finishedPulls[resp.Node] = payload.Name
+		}
+	}
 
-				w.PrintLayerProgress(rep)
-			case *machine.ImageServicePullResponse_Name:
-				finishedPulls[resp.Node] = payload.Name
-			}
+	if len(finishedPulls) > 0 {
+		var sb strings.Builder
+
+		for node, imageName := range finishedPulls {
+			fmt.Fprintf(&sb, "%s: pulled image %s\n", node, imageName)
 		}
 
-		if len(finishedPulls) > 0 {
-			var sb strings.Builder
+		rep.Report(reporter.Update{
+			Message: sb.String(),
+			Status:  reporter.StatusSucceeded,
+		})
+	}
 
-			for node, imageName := range finishedPulls {
-				fmt.Fprintf(&sb, "%s: pulled image %s\n", node, imageName)
-			}
-
-			rep.Report(reporter.Update{
-				Message: sb.String(),
-				Status:  reporter.StatusSucceeded,
-			})
-		}
-
-		return errs
-	})
+	return finishedPulls, errs
 }
 
 // imagePullLegacy pulls an image using the legacy ImagePull API.
@@ -300,6 +319,95 @@ func imagePullLegacy(imageRef string) error {
 
 		return nil
 	})
+}
+
+// imageImportInternal imports an image from a tarball.
+//
+// Note: this is not exposed as a command, but used in talosctl debug flow.
+//
+//nolint:gocyclo
+func imageImportInternal(
+	ctx context.Context,
+	c *client.Client,
+	containerdInstance *common.ContainerdInstance,
+	node string,
+	imageTarballPath string,
+	rep *reporter.Reporter,
+) (string, error) {
+	in, err := os.Open(imageTarballPath)
+	if err != nil {
+		return "", fmt.Errorf("failed to open image tarball: %w", err)
+	}
+
+	defer in.Close() //nolint:errcheck
+
+	ctx = client.WithNode(ctx, node)
+
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
+
+	rcv, err := c.ImageClient.Import(ctx)
+	if err != nil {
+		return "", err
+	}
+
+	if err = rcv.Send(&machine.ImageServiceImportRequest{
+		Request: &machine.ImageServiceImportRequest_Containerd{
+			Containerd: containerdInstance,
+		},
+	}); err != nil {
+		return "", err
+	}
+
+	const chunkSize = 32 * 1024
+
+	buf := make([]byte, chunkSize)
+
+	var bytesImported uint64
+
+	for {
+		n, err := in.Read(buf)
+		if err != nil {
+			if err == io.EOF {
+				break
+			}
+
+			return "", fmt.Errorf("error reading image tarball: %w", err)
+		}
+
+		if n > 0 {
+			if err = rcv.Send(&machine.ImageServiceImportRequest{
+				Request: &machine.ImageServiceImportRequest_ImageChunk{
+					ImageChunk: &common.Data{
+						Bytes: buf[:n],
+					},
+				},
+			}); err != nil {
+				return "", fmt.Errorf("error sending image chunk: %w", err)
+			}
+		}
+
+		bytesImported += uint64(n)
+
+		if rep.IsColorized() {
+			rep.Report(reporter.Update{
+				Message: fmt.Sprintf("%s: %s imported", node, humanize.IBytes(bytesImported)),
+				Status:  reporter.StatusRunning,
+			})
+		}
+	}
+
+	resp, err := rcv.CloseAndRecv()
+	if err != nil {
+		return "", fmt.Errorf("error closing send stream: %w", err)
+	}
+
+	rep.Report(reporter.Update{
+		Message: fmt.Sprintf("%s: image imported %s from %s", node, resp.GetName(), imageTarballPath),
+		Status:  reporter.StatusSucceeded,
+	})
+
+	return resp.GetName(), nil
 }
 
 // imageRemoveCmd represents the image remove command.
@@ -559,6 +667,7 @@ var imageIntegrationCmd = &cobra.Command{
 			"ghcr.io/siderolabs/talosctl:latest",
 			"registry.k8s.io/kube-apiserver:v1.27.0",
 			"registry.k8s.io/kube-apiserver:v1.27.1",
+			"docker.io/library/alpine:3.23",
 			imageIntegrationCmdFlags.registryAndUser + "/installer:" +
 				imageIntegrationCmdFlags.installerTag,
 			imageIntegrationCmdFlags.registryAndUser + "/talos:" +
@@ -870,7 +979,9 @@ var imageCacheCertGenCmdFlags struct {
 }
 
 func init() {
-	imageCmd.PersistentFlags().StringVar(&imageCmdFlags.namespace, "namespace", "cri", "namespace to use: `system` (etcd and kubelet images) or `cri` for all Kubernetes workloads")
+	imageCmd.PersistentFlags().StringVar(&imageCmdFlags.namespace, "namespace", "cri",
+		"namespace to use: `system` (etcd and kubelet images) or `cri` for all Kubernetes workloads, `inmem` for in-memory containerd instance",
+	)
 	addCommand(imageCmd)
 
 	imageCmd.AddCommand(imageListCmd)

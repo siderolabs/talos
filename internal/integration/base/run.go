@@ -9,6 +9,7 @@ package base
 import (
 	"bytes"
 	"errors"
+	"io"
 	"os"
 	"os/exec"
 	"regexp"
@@ -28,6 +29,7 @@ type MatchFunc func(output string) error
 
 type runOptions struct {
 	retryer               retry.Retryer
+	stdin                 io.Reader
 	shouldFail            bool
 	stdoutEmpty           bool
 	stderrNotEmpty        bool
@@ -43,6 +45,13 @@ type runOptions struct {
 func WithRetry(retryer retry.Retryer) RunOption {
 	return func(opts *runOptions) {
 		opts.retryer = retryer
+	}
+}
+
+// WithStdin sets stdin for the command.
+func WithStdin(r io.Reader) RunOption {
+	return func(opts *runOptions) {
+		opts.stdin = r
 	}
 }
 
@@ -118,10 +127,10 @@ func StderrMatchFunc(f MatchFunc) RunOption {
 // runAndWait launches the command and waits for completion.
 //
 // runAndWait doesn't do any assertions on result.
-func runAndWait(t *testing.T, cmd *exec.Cmd) (stdoutBuf, stderrBuf *bytes.Buffer, err error) {
+func runAndWait(t *testing.T, cmd *exec.Cmd, stdin io.Reader) (stdoutBuf, stderrBuf *bytes.Buffer, err error) {
 	var stdout, stderr bytes.Buffer
 
-	cmd.Stdin = nil
+	cmd.Stdin = stdin
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
 	cmd.Env = []string{}
@@ -153,9 +162,9 @@ func runAndWait(t *testing.T, cmd *exec.Cmd) (stdoutBuf, stderrBuf *bytes.Buffer
 }
 
 // retryRunAndWait retries runAndWait if the command fails to run.
-func retryRunAndWait(t *testing.T, cmdFunc func() *exec.Cmd, retryer retry.Retryer) (stdoutBuf, stderrBuf *bytes.Buffer, err error) {
+func retryRunAndWait(t *testing.T, cmdFunc func() *exec.Cmd, retryer retry.Retryer, stdin io.Reader) (stdoutBuf, stderrBuf *bytes.Buffer, err error) {
 	err = retryer.Retry(func() error {
-		stdoutBuf, stderrBuf, err = runAndWait(t, cmdFunc())
+		stdoutBuf, stderrBuf, err = runAndWait(t, cmdFunc(), stdin)
 
 		var exitError *exec.ExitError
 		if errors.As(err, &exitError) {
@@ -184,9 +193,9 @@ func run(t *testing.T, cmdFunc func() *exec.Cmd, options ...RunOption) (stdout, 
 	)
 
 	if opts.retryer != nil {
-		stdoutBuf, stderrBuf, err = retryRunAndWait(t, cmdFunc, opts.retryer)
+		stdoutBuf, stderrBuf, err = retryRunAndWait(t, cmdFunc, opts.retryer, opts.stdin)
 	} else {
-		stdoutBuf, stderrBuf, err = runAndWait(t, cmdFunc())
+		stdoutBuf, stderrBuf, err = runAndWait(t, cmdFunc(), opts.stdin)
 	}
 
 	if err != nil {

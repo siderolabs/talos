@@ -43,6 +43,17 @@ description: Talos gRPC API reference.
   
     - [InspectService](#inspect.InspectService)
   
+- [machine/debug.proto](#machine/debug.proto)
+    - [DebugContainerRunRequest](#machine.DebugContainerRunRequest)
+    - [DebugContainerRunRequestSpec](#machine.DebugContainerRunRequestSpec)
+    - [DebugContainerRunRequestSpec.EnvEntry](#machine.DebugContainerRunRequestSpec.EnvEntry)
+    - [DebugContainerRunResponse](#machine.DebugContainerRunResponse)
+    - [DebugContainerTerminalResize](#machine.DebugContainerTerminalResize)
+  
+    - [DebugContainerRunRequestSpec.Profile](#machine.DebugContainerRunRequestSpec.Profile)
+  
+    - [DebugService](#machine.DebugService)
+  
 - [machine/image.proto](#machine/image.proto)
     - [ImageServiceImportRequest](#machine.ImageServiceImportRequest)
     - [ImageServiceImportResponse](#machine.ImageServiceImportResponse)
@@ -1061,6 +1072,130 @@ InspectService provides auxiliary API to inspect OS internals.
 | Method Name | Request Type | Response Type | Description |
 | ----------- | ------------ | ------------- | ------------|
 | ControllerRuntimeDependencies | [.google.protobuf.Empty](#google.protobuf.Empty) | [ControllerRuntimeDependenciesResponse](#inspect.ControllerRuntimeDependenciesResponse) |  |
+
+ <!-- end services -->
+
+
+
+<a name="machine/debug.proto"></a>
+<p align="right"><a href="#top">Top</a></p>
+
+## machine/debug.proto
+
+
+
+<a name="machine.DebugContainerRunRequest"></a>
+
+### DebugContainerRunRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| spec | [DebugContainerRunRequestSpec](#machine.DebugContainerRunRequestSpec) |  | 1. send the container spec |
+| stdin_data | [bytes](#bytes) |  | 2. send either of the three below to interact with the running container |
+| signal | [int32](#int32) |  |  |
+| term_resize | [DebugContainerTerminalResize](#machine.DebugContainerTerminalResize) |  |  |
+
+
+
+
+
+
+<a name="machine.DebugContainerRunRequestSpec"></a>
+
+### DebugContainerRunRequestSpec
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| containerd | [common.ContainerdInstance](#common.ContainerdInstance) |  |  |
+| image_name | [string](#string) |  |  |
+| args | [string](#string) | repeated |  |
+| env | [DebugContainerRunRequestSpec.EnvEntry](#machine.DebugContainerRunRequestSpec.EnvEntry) | repeated |  |
+| profile | [DebugContainerRunRequestSpec.Profile](#machine.DebugContainerRunRequestSpec.Profile) |  |  |
+| tty | [bool](#bool) |  |  |
+
+
+
+
+
+
+<a name="machine.DebugContainerRunRequestSpec.EnvEntry"></a>
+
+### DebugContainerRunRequestSpec.EnvEntry
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| key | [string](#string) |  |  |
+| value | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="machine.DebugContainerRunResponse"></a>
+
+### DebugContainerRunResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| stdout_data | [bytes](#bytes) |  |  |
+| exit_code | [int32](#int32) |  |  |
+
+
+
+
+
+
+<a name="machine.DebugContainerTerminalResize"></a>
+
+### DebugContainerTerminalResize
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| width | [int32](#int32) |  |  |
+| height | [int32](#int32) |  |  |
+
+
+
+
+
+ <!-- end messages -->
+
+
+<a name="machine.DebugContainerRunRequestSpec.Profile"></a>
+
+### DebugContainerRunRequestSpec.Profile
+
+
+| Name | Number | Description |
+| ---- | ------ | ----------- |
+| PROFILE_UNSPECIFIED | 0 |  |
+| PROFILE_PRIVILEGED | 1 |  |
+
+
+ <!-- end enums -->
+
+ <!-- end HasExtensions -->
+
+
+<a name="machine.DebugService"></a>
+
+### DebugService
+DebugService provides debugging and inspection capabilities for a Talos node.
+
+| Method Name | Request Type | Response Type | Description |
+| ----------- | ------------ | ------------- | ------------|
+| ContainerRun | [DebugContainerRunRequest](#machine.DebugContainerRunRequest) stream | [DebugContainerRunResponse](#machine.DebugContainerRunResponse) stream | ContainerRun runs a debug container, attaches to it, and streams I/O. |
 
  <!-- end services -->
 

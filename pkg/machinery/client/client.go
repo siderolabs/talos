@@ -45,6 +45,7 @@ type Client struct {
 	StorageClient storageapi.StorageServiceClient
 	InspectClient inspectapi.InspectServiceClient
 	ImageClient   machineapi.ImageServiceClient
+	DebugClient   machineapi.DebugServiceClient
 
 	COSI state.State
 
@@ -171,6 +172,7 @@ func New(_ context.Context, opts ...OptionFunc) (c *Client, err error) {
 	c.StorageClient = storageapi.NewStorageServiceClient(c.conn)
 	c.InspectClient = inspectapi.NewInspectServiceClient(c.conn)
 	c.ImageClient = machineapi.NewImageServiceClient(c.conn)
+	c.DebugClient = machineapi.NewDebugServiceClient(c.conn)
 
 	c.Inspect = &InspectClient{c.InspectClient}
 	c.COSI = state.WrapCore(client.NewAdapter(cosiv1alpha1.NewStateClient(c.conn)))

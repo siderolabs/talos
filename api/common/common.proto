@@ -97,9 +97,9 @@ enum ContainerdNamespace {
 
 message ContainerdInstance {
   // Containerd instance to use.
-  common.ContainerDriver driver = 1;
+  ContainerDriver driver = 1;
   // Containerd namespace to use.
-  common.ContainerdNamespace namespace = 2;
+  ContainerdNamespace namespace = 2;
 }
 
 message URL {
