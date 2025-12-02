@@ -410,6 +410,7 @@ func TestCmdlineParse(t *testing.T) {
 							UseCarrier:      true,
 							PrimaryIndex:    pointer.To[uint32](0),
 							MissedMax:       2,
+							ADLACPActive:    nethelpers.ADLACPActiveOn,
 						},
 					},
 					{

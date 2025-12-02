@@ -458,6 +458,7 @@ func (suite *LinkConfigSuite) TestMachineConfigurationWithAliases() {
 				asrt.Equal(network.LinkKindBond, r.TypedSpec().Kind)
 				asrt.Equal(nethelpers.BondModeXOR, r.TypedSpec().BondMaster.Mode)
 				asrt.True(r.TypedSpec().BondMaster.UseCarrier)
+				asrt.Equal(nethelpers.ADLACPActiveOn, r.TypedSpec().BondMaster.ADLACPActive)
 			}
 		},
 	)
@@ -560,6 +561,7 @@ func (suite *LinkConfigSuite) TestMachineConfigurationNewStyle() {
 				asrt.Equal(network.LinkKindBond, r.TypedSpec().Kind)
 				asrt.Equal(nethelpers.BondModeActiveBackup, r.TypedSpec().BondMaster.Mode)
 				asrt.EqualValues(200, r.TypedSpec().BondMaster.UpDelay)
+				asrt.Equal(nethelpers.ADLACPActiveOn, r.TypedSpec().BondMaster.ADLACPActive)
 			case "br0":
 				asrt.True(r.TypedSpec().Up)
 				asrt.True(r.TypedSpec().Logical)

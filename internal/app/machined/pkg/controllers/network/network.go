@@ -46,7 +46,7 @@ func SendBondMaster(link *network.LinkSpecSpec, bond talosconfig.NetworkBondConf
 	link.BondMaster.ADSelect = bond.ADSelect().ValueOrZero()
 	link.BondMaster.ADActorSysPrio = bond.ADActorSysPrio().ValueOrZero()
 	link.BondMaster.ADUserPortKey = bond.ADUserPortKey().ValueOrZero()
-	link.BondMaster.ADLACPActive = bond.ADLACPActive().ValueOrZero()
+	link.BondMaster.ADLACPActive = bond.ADLACPActive().ValueOr(nethelpers.ADLACPActiveOn)
 	link.BondMaster.PrimaryReselect = bond.PrimaryReselect().ValueOrZero()
 	link.BondMaster.ResendIGMP = bond.ResendIGMP().ValueOrZero()
 	link.BondMaster.MinLinks = bond.MinLinks().ValueOrZero()
@@ -147,6 +147,7 @@ func SetBondMasterLegacy(link *network.LinkSpecSpec, bond talosconfig.Bond) erro
 		ADActorSysPrio:  bond.ADActorSysPrio(),
 		ADUserPortKey:   bond.ADUserPortKey(),
 		PeerNotifyDelay: bond.PeerNotifyDelay(),
+		ADLACPActive:    nethelpers.ADLACPActiveOn,
 	}
 	networkadapter.BondMasterSpec(&link.BondMaster).FillDefaults()
 
