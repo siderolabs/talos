@@ -103,6 +103,8 @@ service MachineService {
   rpc ImageList(ImageListRequest) returns (stream ImageListResponse);
   // ImagePull pulls an image into the CRI.
   rpc ImagePull(ImagePullRequest) returns (ImagePullResponse);
+  // DebugContainer imports a container image from an OCI archive and runs it in the system containerd namespace for debugging purposes.
+  rpc DebugContainer(stream DebugContainerRequest) returns (stream DebugContainerResponse);
 }
 
 // rpc applyConfiguration
@@ -1401,4 +1403,41 @@ message ImagePull {
 
 message ImagePullResponse {
   repeated ImagePull messages = 1;
+}
+
+message DebugContainerRequest {
+  oneof request {
+    DebugContainerSpec spec = 1;
+    common.Data image_chunk = 2;
+    bytes stdin_data = 3;
+    int32 signal = 4;
+    DebugContainerTerminalResize term_resize = 5;
+  }
+}
+
+message DebugContainerSpec {
+  string image_ref = 1;
+  repeated string args = 2;
+  map<string, string> env = 3;
+}
+
+message DebugContainerTerminalResize {
+  int32 width = 1;
+  int32 height = 2;
+}
+
+message DebugContainerResponse {
+  oneof resp {
+    string container_id = 1;
+    bytes stdout_data = 2;
+    int32 exit_code = 3;
+    DebugContainerPullProgress pull_progress = 4;
+  }
+}
+
+message DebugContainerPullProgress {
+  string id = 1;
+  string message = 2;
+  int64 current = 3;
+  int64 total = 4;
 }
