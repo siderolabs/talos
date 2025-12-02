@@ -36,6 +36,7 @@ import (
 	machineapi "github.com/siderolabs/talos/pkg/machinery/api/machine"
 	"github.com/siderolabs/talos/pkg/machinery/config"
 	"github.com/siderolabs/talos/pkg/machinery/config/configloader"
+	"github.com/siderolabs/talos/pkg/machinery/config/configpatcher"
 	"github.com/siderolabs/talos/pkg/machinery/config/container"
 	"github.com/siderolabs/talos/pkg/machinery/config/generate"
 	"github.com/siderolabs/talos/pkg/machinery/config/machine"
@@ -454,6 +455,48 @@ func (suite *AcquireSuite) TestFromPlatformFailure() {
 
 	suite.Assert().Equal(&machineapi.ConfigLoadErrorEvent{
 		Error: "error acquiring via platform mock: mock error",
+	}, suite.eventPublisher.getEvents()[0])
+}
+
+func (suite *AcquireSuite) TestFromPlatformNotValid() {
+	suite.noStateVolume()
+
+	patchCfg, err := configloader.NewFromBytes([]byte(`{"machine": {"nodeLabels": {"/1": "2"}}}`))
+	suite.Require().NoError(err)
+
+	out, err := configpatcher.Apply(configpatcher.WithBytes(suite.completeMachineConfig), []configpatcher.Patch{
+		configpatcher.NewStrategicMergePatch(patchCfg),
+	})
+	suite.Require().NoError(err)
+
+	outCfg, err := out.Bytes()
+	suite.Require().NoError(err)
+
+	suite.platformConfig.configuration = outCfg
+	suite.platformConfig.err = nil
+
+	suite.triggerAcquire()
+
+	suite.AssertWithin(time.Second, 10*time.Millisecond, func() error {
+		if len(suite.platformEvent.getEvents()) == 0 || len(suite.eventPublisher.getEvents()) == 0 {
+			return retry.ExpectedErrorf("no events received")
+		}
+
+		return nil
+	})
+
+	ev := suite.platformEvent.getEvents()[0]
+	suite.Assert().Equal(platform.EventTypeFailure, ev.Type)
+	suite.Assert().Equal("Error loading and validating Talos machine config.", ev.Message)
+	suite.Assert().Equal(
+		"failed to validate config acquired via platform mock: 1 error occurred:\n"+
+			"\t* v1alpha1.Config: 1 error occurred:\n\t* invalid machine node labels: 1 error occurred:\n\t* prefix cannot be empty: \"/1\"\n\n\n\n\n\n",
+		ev.Error.Error(),
+	)
+
+	suite.Assert().Equal(&machineapi.ConfigLoadErrorEvent{
+		Error: "failed to validate config acquired via platform mock: 1 error occurred:" +
+			"\n\t* v1alpha1.Config: 1 error occurred:\n\t* invalid machine node labels: 1 error occurred:\n\t* prefix cannot be empty: \"/1\"\n\n\n\n\n\n",
 	}, suite.eventPublisher.getEvents()[0])
 }
 
