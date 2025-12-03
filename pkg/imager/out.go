@@ -370,7 +370,7 @@ func (i *Imager) buildImage(ctx context.Context, path string, printf func(string
 	}
 
 	opts := &install.Options{
-		Disk:       loDevice.Path(),
+		DiskPath:   loDevice.Path(),
 		Platform:   i.prof.Platform,
 		Arch:       i.prof.Arch,
 		Board:      i.prof.Board,
