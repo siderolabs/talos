@@ -32,7 +32,14 @@ Flannel CNI plugin: v1.8.0-flannel2
 runc: 1.3.3
 containerd: 2.1.5
 
+<<<<<<< HEAD
 Talos is built with Go 1.25.4.
+=======
+> For Talos 1.13 only:
+> containerd: 2.2.0
+
+Talos is built with Go 1.25.5.
+>>>>>>> dd6c1089c (feat: update Linux to 6.18.0)
 """
 
     [notes.luks2]

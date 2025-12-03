@@ -126,8 +126,10 @@ kernel/drivers/net/ethernet/intel/igbvf/igbvf.ko
 kernel/drivers/net/ethernet/intel/igc/igc.ko
 kernel/drivers/net/ethernet/intel/ixgbe/ixgbe.ko
 kernel/drivers/net/ethernet/intel/ixgbevf/ixgbevf.ko
+kernel/drivers/net/ethernet/intel/libeth/libeth_xdp.ko
 kernel/drivers/net/ethernet/intel/libeth/libeth.ko
 kernel/drivers/net/ethernet/intel/libie/libie_adminq.ko
+kernel/drivers/net/ethernet/intel/libie/libie_fwlog.ko
 kernel/drivers/net/ethernet/intel/libie/libie.ko
 kernel/drivers/net/ethernet/marvell/sky2.ko
 kernel/drivers/net/ethernet/mellanox/mlx4/mlx4_core.ko

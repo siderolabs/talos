@@ -34,7 +34,7 @@ func SendBondMaster(link *network.LinkSpecSpec, bond talosconfig.NetworkBondConf
 	link.BondMaster.MIIMon = bond.MIIMon().ValueOrZero()
 	link.BondMaster.UpDelay = bond.UpDelay().ValueOrZero()
 	link.BondMaster.DownDelay = bond.DownDelay().ValueOrZero()
-	link.BondMaster.UseCarrier = bond.UseCarrier().ValueOrZero()
+	link.BondMaster.UseCarrier = true // Linux 6.18 locks this value to true
 	link.BondMaster.HashPolicy = bond.XmitHashPolicy().ValueOrZero()
 	link.BondMaster.ARPInterval = bond.ARPInterval().ValueOrZero()
 	link.BondMaster.ARPIPTargets = bond.ARPIPTargets()
@@ -143,7 +143,7 @@ func SetBondMasterLegacy(link *network.LinkSpecSpec, bond talosconfig.Bond) erro
 		NumPeerNotif:    bond.NumPeerNotif(),
 		TLBDynamicLB:    bond.TLBDynamicLB(),
 		AllSlavesActive: bond.AllSlavesActive(),
-		UseCarrier:      bond.UseCarrier(),
+		UseCarrier:      true, // Linux 6.18 locks this value to true
 		ADActorSysPrio:  bond.ADActorSysPrio(),
 		ADUserPortKey:   bond.ADUserPortKey(),
 		PeerNotifyDelay: bond.PeerNotifyDelay(),
