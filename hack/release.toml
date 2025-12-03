@@ -18,7 +18,7 @@ preface = """
     [notes.updates]
         title = "Component Updates"
         description = """\
-Linux: 6.17.9
+Linux: 6.18.0
 Kubernetes: 1.35.0-beta.0
 CNI Plugins: 1.8.0
 cryptsetup: 2.8.1
@@ -34,7 +34,7 @@ containerd: 2.1.5
 > For Talos 1.13 only:
 > containerd: 2.2.0
 
-Talos is built with Go 1.25.4.
+Talos is built with Go 1.25.5.
 """
 
     [notes.luks2]
