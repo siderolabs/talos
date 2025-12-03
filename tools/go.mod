@@ -36,9 +36,9 @@ replace (
 
 replace (
 	// Changes from https://github.com/anchore/grype/pull/2798 for using VEX with SBOM
-	github.com/anchore/grype => github.com/dsseng/grype v0.96.1-0.20251110164253-c75bac6b74ba
+	github.com/anchore/grype => github.com/dsseng/grype 9b7e8e23d161
 	// Changes from https://github.com/anchore/syft/pull/3932 for deterministic SBOM
-	github.com/anchore/syft => github.com/dsseng/syft v1.28.1-0.20251110165056-be9d22809c28
+	github.com/anchore/syft => github.com/dsseng/syft 31c1be6d4d3b
 )
 
 require (
@@ -129,10 +129,10 @@ require (
 	github.com/anchore/go-struct-converter v0.0.0-20250211213226-cce56d595160 // indirect
 	github.com/anchore/go-sync v0.0.0-20250714163430-add63db73ad1 // indirect
 	github.com/anchore/go-version v1.2.2-0.20210903204242-51efa5b487c4 // indirect
-	github.com/anchore/grype v0.103.0 // indirect
+	github.com/anchore/grype v0.104.1 // indirect
 	github.com/anchore/packageurl-go v0.1.1-0.20250220190351-d62adb6e1115 // indirect
 	github.com/anchore/stereoscope v0.1.12 // indirect
-	github.com/anchore/syft v1.37.0 // indirect
+	github.com/anchore/syft v1.38.0 // indirect
 	github.com/andybalholm/brotli v1.2.0 // indirect
 	github.com/antlr4-go/antlr/v4 v4.13.1 // indirect
 	github.com/aokoli/goutils v1.0.1 // indirect
@@ -179,7 +179,7 @@ require (
 	github.com/bombsimon/wsl/v5 v5.3.0 // indirect
 	github.com/breml/bidichk v0.3.3 // indirect
 	github.com/breml/errchkjson v0.4.1 // indirect
-	github.com/bufbuild/buf v1.59.0 // indirect
+	github.com/bufbuild/buf v1.61.0 // indirect
 	github.com/bufbuild/protocompile v0.14.2-0.20251017200126-6da99d83224e // indirect
 	github.com/bufbuild/protoplugin v0.0.0-20250218205857-750e09ce93e1 // indirect
 	github.com/buger/jsonparser v1.1.1 // indirect
@@ -285,7 +285,7 @@ require (
 	github.com/golangci/dupl v0.0.0-20250308024227-f665c8d69b32 // indirect
 	github.com/golangci/go-printf-func-name v0.1.1 // indirect
 	github.com/golangci/gofmt v0.0.0-20250106114630-d62b90e6713d // indirect
-	github.com/golangci/golangci-lint/v2 v2.6.1 // indirect
+	github.com/golangci/golangci-lint/v2 v2.6.2 // indirect
 	github.com/golangci/golines v0.0.0-20250217134842-442fd0091d95 // indirect
 	github.com/golangci/misspell v0.7.0 // indirect
 	github.com/golangci/plugin-module-register v0.1.2 // indirect
@@ -421,7 +421,7 @@ require (
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pkg/profile v1.7.0 // indirect
 	github.com/pkg/xattr v0.4.12 // indirect
-	github.com/planetscale/vtprotobuf v0.6.1-0.20240319094008-0393e58bdf10 // indirect
+	github.com/planetscale/vtprotobuf ba97887b0a25 // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/polyfloyd/go-errorlint v1.8.0 // indirect
 	github.com/prometheus/client_golang v1.20.5 // indirect
@@ -463,9 +463,9 @@ require (
 	github.com/siderolabs/deep-copy v0.5.8 // indirect
 	github.com/siderolabs/gen v0.8.6 // indirect
 	github.com/siderolabs/importvet v0.2.0 // indirect
-	github.com/siderolabs/talos/tools/docgen v0.0.0-20251112150910-859194e67800 // indirect
-	github.com/siderolabs/talos/tools/gotagsrewrite v0.0.0-20251112150910-859194e67800 // indirect
-	github.com/siderolabs/talos/tools/structprotogen v0.0.0-20251112150910-859194e67800 // indirect
+	github.com/siderolabs/talos/tools/docgen d4309d7b1aec // indirect
+	github.com/siderolabs/talos/tools/gotagsrewrite d4309d7b1aec // indirect
+	github.com/siderolabs/talos/tools/structprotogen d4309d7b1aec // indirect
 	github.com/sirupsen/logrus v1.9.4-0.20230606125235-dd1b4c2e81af // indirect
 	github.com/sivchari/containedctx v1.0.3 // indirect
 	github.com/skeema/knownhosts v1.3.1 // indirect
@@ -566,7 +566,7 @@ require (
 	google.golang.org/genproto/googleapis/api v0.0.0-20251007200510-49b9836ed3ff // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20251007200510-49b9836ed3ff // indirect
 	google.golang.org/grpc v1.75.0 // indirect
-	google.golang.org/grpc/cmd/protoc-gen-go-grpc v1.5.1 // indirect
+	google.golang.org/grpc/cmd/protoc-gen-go-grpc v1.6.0 // indirect
 	google.golang.org/protobuf v1.36.10 // indirect
 	gopkg.in/typ.v4 v4.4.0 // indirect
 	gopkg.in/warnings.v0 v0.1.2 // indirect
