@@ -21,7 +21,7 @@ import (
 	orderedmap "github.com/wk8/go-ordered-map/v2"
 )
 
-const ConfigSchemaURLFormat = "https://talos.dev/%s/schemas/%s"
+const ConfigSchemaURLFormat = "https://raw.githubusercontent.com/siderolabs/talos/%s/pkg/machinery/config/schemas/%s"
 
 // SchemaWrapper wraps jsonschema.Schema to provide correct YAML unmarshalling using its internal JSON marshaller.
 type SchemaWrapper struct {

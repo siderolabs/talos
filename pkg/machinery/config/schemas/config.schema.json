@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://talos.dev/v1.12/schemas/config.schema.json",
+  "$id": "https://raw.githubusercontent.com/siderolabs/talos/v1.12/pkg/machinery/config/schemas/config.schema.json",
   "$defs": {
     "block.DiskSelector": {
       "properties": {
