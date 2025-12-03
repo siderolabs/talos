@@ -45,6 +45,10 @@ func Ext4(partname string, setters ...Option) error {
 		}
 	}
 
+	if opts.SourceDirectory != "" {
+		args = append(args, "-d", opts.SourceDirectory)
+	}
+
 	args = append(args, partname)
 
 	_, err := cmd.Run("mkfs.ext4", args...)

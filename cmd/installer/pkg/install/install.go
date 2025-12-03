@@ -28,7 +28,6 @@ import (
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/board"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader"
 	bootloaderoptions "github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/options"
-	"github.com/siderolabs/talos/internal/pkg/cache"
 	"github.com/siderolabs/talos/internal/pkg/meta"
 	"github.com/siderolabs/talos/internal/pkg/partition"
 	"github.com/siderolabs/talos/pkg/imager/overlay/executor"
@@ -367,18 +366,6 @@ func (i *Installer) Install(ctx context.Context, mode Mode) (err error) {
 		return fmt.Errorf("failed to create partitions: %w", err)
 	}
 
-	if i.options.ImageCachePath != "" {
-		cacheInstallOptions := cache.InstallOptions{
-			CacheDisk: i.options.DiskPath,
-			CachePath: i.options.ImageCachePath,
-			BlkidInfo: info,
-		}
-
-		if err = cacheInstallOptions.Install(); err != nil {
-			return fmt.Errorf("failed to install image cache: %w", err)
-		}
-	}
-
 	// Install the bootloader.
 	bootInstallResult, err := bootlder.Install(bootloaderoptions.InstallOptions{
 		BootDisk:          i.options.DiskPath,
@@ -578,9 +565,10 @@ func (i *Installer) createPartitions(ctx context.Context, mode Mode, hostTalosVe
 	}
 
 	if i.options.ImageCachePath != "" {
-		partitions = append(partitions,
-			partition.NewPartitionOptions(constants.ImageCachePartitionLabel, false, quirk),
-		)
+		partitionOptions := partition.NewPartitionOptions(constants.ImageCachePartitionLabel, false, quirk)
+		partitionOptions.SourceDirectory = i.options.ImageCachePath
+
+		partitions = append(partitions, partitionOptions)
 	}
 
 	for _, p := range partitions {

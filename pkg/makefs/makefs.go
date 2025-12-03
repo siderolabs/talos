@@ -12,6 +12,7 @@ type Option func(*Options)
 type Options struct {
 	Label               string
 	ConfigFile          string
+	SourceDirectory     string
 	Force               bool
 	Reproducible        bool
 	UnsupportedFSOption bool
@@ -50,6 +51,13 @@ func WithUnsupportedFSOption(unsupported bool) Option {
 func WithConfigFile(configFile string) Option {
 	return func(o *Options) {
 		o.ConfigFile = configFile
+	}
+}
+
+// WithSourceDirectory sets the source directory for populating the filesystem.
+func WithSourceDirectory(sourceDir string) Option {
+	return func(o *Options) {
+		o.SourceDirectory = sourceDir
 	}
 }
 
