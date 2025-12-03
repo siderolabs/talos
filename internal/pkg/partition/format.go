@@ -18,6 +18,7 @@ import (
 // FormatOptions contains format parameters.
 type FormatOptions struct {
 	Label               string
+	SourceDirectory     string
 	FileSystemType      FileSystemType
 	Force               bool
 	UnsupportedFSOption bool
@@ -34,6 +35,10 @@ func Format(devname string, t *FormatOptions, talosVersion string, printf func(s
 
 	if t.UnsupportedFSOption {
 		opts = append(opts, makefs.WithUnsupportedFSOption(t.UnsupportedFSOption))
+	}
+
+	if t.SourceDirectory != "" {
+		opts = append(opts, makefs.WithSourceDirectory(t.SourceDirectory))
 	}
 
 	printf("formatting the partition %q as %q with label %q\n", devname, t.FileSystemType, t.Label)
