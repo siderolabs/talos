@@ -59,7 +59,7 @@ var (
 
 func init() {
 	rootCmd.PersistentFlags().StringVar(&options.ConfigSource, "config", "", "The value of "+constants.KernelParamConfig)
-	rootCmd.PersistentFlags().StringVar(&options.Disk, "disk", "", "The path to the disk to install to")
+	rootCmd.PersistentFlags().StringVar(&options.DiskPath, "disk", "", "The path to the disk to install to")
 	rootCmd.PersistentFlags().StringVar(&options.Platform, "platform", "", "The value of "+constants.KernelParamPlatform)
 	rootCmd.PersistentFlags().StringVar(&options.Arch, "arch", runtime.GOARCH, "The target architecture")
 	rootCmd.PersistentFlags().StringVar(&dummy, "board", constants.BoardNone, "Deprecated: no op")
