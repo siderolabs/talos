@@ -139,6 +139,7 @@ func MetalPlatform() Platform {
 			BootMethodDiskImage,
 			BootMethodPXE,
 		},
+		SecureBootSupported: true,
 	}
 }
 
