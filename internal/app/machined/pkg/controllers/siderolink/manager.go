@@ -159,6 +159,10 @@ func (ctrl *ManagerController) Run(ctx context.Context, r controller.Runtime, lo
 				continue
 			}
 		case <-r.EventCh():
+			// if the SideroLink configuration changed (either config itself, or machine UUID or Unique Token),
+			// clear any previous provision data we had so that Talos doesn't cycle through endpoints from
+			// stale provisioning data until it reaches out to SideroLink Provision API again
+			ctrl.pd = provisionData{}
 		}
 
 		if ctrl.pd.IsEmpty() {
