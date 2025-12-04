@@ -374,8 +374,8 @@ func (suite *SELinuxSuite) TestNoPtrace() {
 	suite.Require().Error(err)
 	suite.Assert().ErrorContains(err, "command terminated with exit code 1")
 	// strace first tests ptrace against itself, which we also deny currently
-	suite.Assert().Contains(stderr, "strace: test_ptrace_get_syscall_info: PTRACE_TRACEME: Permission denied")
-	suite.Assert().Contains(stderr, "strace: attach: ptrace(PTRACE_ATTACH, 1): Permission denied")
+	suite.Assert().Contains(stderr, "strace: do_test_ptrace_get_syscall_info: PTRACE_TRACEME: Permission denied")
+	suite.Assert().Contains(stderr, "strace: attach: ptrace(PTRACE_SEIZE, 1): Permission denied")
 	suite.Assert().NotContains(stderr, "attached")
 }
 
