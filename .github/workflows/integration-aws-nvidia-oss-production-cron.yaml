@@ -1,6 +1,6 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
 #
-# Generated on 2025-12-02T12:49:13Z by kres 571923f.
+# Generated on 2025-12-05T17:16:49Z by kres 9fb16fe.
 
 concurrency:
   group: ${{ github.head_ref || github.run_id }}
@@ -40,7 +40,7 @@ jobs:
           done
         continue-on-error: true
       - name: checkout
-        uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # version: v6.0.0
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # version: v6.0.1
       - name: Unshallow
         run: |
           git fetch --prune --unshallow
@@ -100,11 +100,11 @@ jobs:
         run: |
           make image-aws
       - name: checkout extensions
-        uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # version: v6.0.0
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # version: v6.0.1
         with:
           path: _out/extensions
-          ref: main
-          repository: siderolabs/extensions
+          ref: test-clang-kernel
+          repository: dsseng/talos-extensions
       - name: set variables
         run: |
           cat _out/talos-metadata >> "$GITHUB_ENV"
@@ -114,7 +114,7 @@ jobs:
           PUSH: "true"
           REGISTRY: registry.dev.siderolabs.io
         run: |
-          make nvidia-container-toolkit-production nvidia-open-gpu-kernel-modules-production zfs extensions-metadata -C _out/extensions
+          make nvidia-container-toolkit-production nvidia-open-gpu-kernel-modules-production extensions-metadata -C _out/extensions
       - name: e2e-aws-prepare
         env:
           E2E_AWS_TARGET: nvidia-oss-production
@@ -123,7 +123,7 @@ jobs:
         run: |
           make e2e-aws-prepare
       - name: checkout contrib
-        uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # version: v6.0.0
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # version: v6.0.1
         with:
           path: _out/contrib
           ref: main
