@@ -77,7 +77,10 @@ func runInstallCmd(ctx context.Context) (err error) {
 			options.LegacyBIOSSupport = true
 		}
 
-		if config.Machine() != nil && config.Machine().Install().GrubUseUKICmdline() {
+		// if we don't have v1alpha1 config (we are in maintenance mode),
+		// or if we have v1alpha1 config, and GrubUseUKICmdline is set to true,
+		// then we should set the option to true
+		if config.Machine() == nil || config.Machine().Install().GrubUseUKICmdline() {
 			options.GrubUseUKICmdline = true
 		}
 	}
