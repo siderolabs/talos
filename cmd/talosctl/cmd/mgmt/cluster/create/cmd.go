@@ -139,7 +139,8 @@ func addDisksFlag(flagset *pflag.FlagSet, bind *flags.Disks) {
 }
 
 func addOmniJoinTokenFlag(cmd *cobra.Command, bindAPIEndpoint *string, cfgPatchAllFlagName, cfgPatchWorkersFlagName, cfgPatchCPsFlagName string) {
-	cmd.Flags().StringVar(bindAPIEndpoint, omniAPIEndpointFlagName, *bindAPIEndpoint, "the Omni API endpoint (must include a scheme, a port and a join token)")
+	cmd.Flags().StringVar(bindAPIEndpoint, omniAPIEndpointFlagName, *bindAPIEndpoint,
+		"the Omni API endpoint (must include a scheme, a hostname and a join token, e.g. 'https://siderolink.omni.example?jointoken=foobar')")
 
 	cmd.MarkFlagsMutuallyExclusive(omniAPIEndpointFlagName, cfgPatchAllFlagName)
 	cmd.MarkFlagsMutuallyExclusive(omniAPIEndpointFlagName, cfgPatchWorkersFlagName)
