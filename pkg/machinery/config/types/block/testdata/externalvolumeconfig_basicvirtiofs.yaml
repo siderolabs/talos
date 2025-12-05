@@ -1,0 +1,6 @@
+apiVersion: v1alpha1
+kind: ExternalVolumeConfig
+name: my-virtiofs-volume
+filesystemType: virtiofs
+mount:
+    source: Data

@@ -315,6 +315,8 @@ function create_cluster {
     --extra-disks="${QEMU_EXTRA_DISKS:-0}" \
     --extra-disks-size="${QEMU_EXTRA_DISKS_SIZE:-6144}" \
     --extra-disks-drivers="${QEMU_EXTRA_DISKS_DRIVERS:-}" \
+    --extra-disks-serials="${QEMU_EXTRA_DISKS_SERIALS:-}" \
+    --extra-disks-tags="${QEMU_EXTRA_DISKS_TAGS:-}" \
     --mtu=1430 \
     --memory="${QEMU_MEMORY_CONTROLPLANES:-2048}" \
     --memory-workers="${QEMU_MEMORY_WORKERS:-2048}" \

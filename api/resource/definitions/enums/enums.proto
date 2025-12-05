@@ -705,6 +705,34 @@ enum BlockFilesystemType {
   FILESYSTEM_TYPE_EXT4 = 3;
   FILESYSTEM_TYPE_ISO9660 = 4;
   FILESYSTEM_TYPE_SWAP = 5;
+  FILESYSTEM_TYPE_NFS = 6;
+  FILESYSTEM_TYPE_VIRTIOFS = 7;
+}
+
+// BlockFSParameterType describes Filesystem Parameter type.
+enum BlockFSParameterType {
+  FS_PARAMETER_TYPE_STRING_VALUE = 0;
+  FS_PARAMETER_TYPE_BOOLEAN_VALUE = 1;
+  FS_PARAMETER_TYPE_BINARY_VALUE = 2;
+}
+
+// BlockNFSVersionType describes NFS version type.
+enum BlockNFSVersionType {
+  NFS_VERSION_TYPE4_2 = 0;
+  NFS_VERSION_TYPE4_1 = 1;
+  NFS_VERSION_TYPE4 = 2;
+  NFS_VERSION_TYPE3 = 3;
+  NFS_VERSION_TYPE2 = 4;
+}
+
+// BlockNFSProtocolType describes NFS protocol type.
+enum BlockNFSProtocolType {
+  NFS_PROTOCOL_TYPE_TCP = 0;
+  NFS_PROTOCOL_TYPE_TCP6 = 1;
+  NFS_PROTOCOL_TYPE_UDP = 2;
+  NFS_PROTOCOL_TYPE_UDP6 = 3;
+  NFS_PROTOCOL_TYPE_RDMA = 4;
+  NFS_PROTOCOL_TYPE_RDMA6 = 5;
 }
 
 // BlockVolumePhase describes volume phase.
@@ -727,6 +755,7 @@ enum BlockVolumeType {
   VOLUME_TYPE_DIRECTORY = 3;
   VOLUME_TYPE_SYMLINK = 4;
   VOLUME_TYPE_OVERLAY = 5;
+  VOLUME_TYPE_EXTERNAL = 6;
 }
 
 // CriImageCacheStatus describes image cache status type.
