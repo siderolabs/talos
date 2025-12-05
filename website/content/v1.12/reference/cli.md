@@ -181,7 +181,7 @@ talosctl cluster create dev [flags]
       --mtu int                                  MTU of the cluster network (default 1500)
       --nameservers strings                      list of nameservers to use, by default use embedded DNS forwarder
       --no-masquerade-cidrs strings              list of CIDRs to exclude from NAT
-      --omni-api-endpoint string                 the Omni API endpoint (must include a scheme, a port and a join token)
+      --omni-api-endpoint string                 the Omni API endpoint (must include a scheme, a hostname and a join token, e.g. 'https://siderolink.omni.example?jointoken=foobar')
       --registry-insecure-skip-verify strings    list of registry hostnames to skip TLS verification for
       --registry-mirror strings                  list of registry mirrors to use in format: <registry host>=<mirror URL>
       --skip-injecting-config                    skip injecting config from embedded metadata server, write config files to current directory
@@ -306,7 +306,7 @@ talosctl cluster create qemu [flags]
       --kubernetes-version string                desired kubernetes version to run (default "1.35.0-rc.0")
       --memory-controlplanes string(mb,gb)       the limit on memory usage for each control plane/VM (default 2.0GiB)
       --memory-workers string(mb,gb)             the limit on memory usage for each worker/VM (default 2.0GiB)
-      --omni-api-endpoint string                 the Omni API endpoint (must include a scheme, a port and a join token)
+      --omni-api-endpoint string                 the Omni API endpoint (must include a scheme, a hostname and a join token, e.g. 'https://siderolink.omni.example?jointoken=foobar')
       --presets strings                          list of presets to apply (default [iso])
       --schematic-id string                      image factory schematic id (defaults to an empty schematic)
       --talos-version string                     the desired talos version (default "latest")
