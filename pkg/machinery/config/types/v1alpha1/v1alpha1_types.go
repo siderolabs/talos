@@ -171,9 +171,6 @@ type MachineConfig struct {
 	MachinePods []Unstructured `yaml:"pods,omitempty"`
 	//   description: |
 	//     Provides machine specific network configuration options.
-	//   examples:
-	//     - name: Network definition example.
-	//       value: machineNetworkConfigExample()
 	MachineNetwork *NetworkConfig `yaml:"network,omitempty"`
 	// docgen:nodoc
 	//
