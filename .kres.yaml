@@ -2711,16 +2711,16 @@ spec:
             IMAGE_REGISTRY: registry.dev.siderolabs.io
         - name: checkout extensions
           checkoutStep:
-            repository: siderolabs/extensions
-            ref: main
+            repository: dsseng/talos-extensions
+            ref: test-clang-kernel
             path: _out/extensions
         - name: set variables
           nonMakeStep: true
           command: cat _out/talos-metadata >> "$GITHUB_ENV"
         - name: build extensions
-          # zfs is only added since it uses libtirpc from musl and nvidia needs libtirpc from glibc
-          # this verifies that both libtirpc can co-exist together
-          command: nvidia-container-toolkit-lts nvidia-open-gpu-kernel-modules-lts zfs extensions-metadata
+          # !!!zfs is only added since it uses libtirpc from musl and nvidia needs libtirpc from glibc
+          # !!!this verifies that both libtirpc can co-exist together
+          command: nvidia-container-toolkit-lts nvidia-open-gpu-kernel-modules-lts extensions-metadata
           arguments:
             - -C
             - _out/extensions
@@ -2809,16 +2809,16 @@ spec:
             IMAGE_REGISTRY: registry.dev.siderolabs.io
         - name: checkout extensions
           checkoutStep:
-            repository: siderolabs/extensions
-            ref: main
+            repository: dsseng/talos-extensions
+            ref: test-clang-kernel
             path: _out/extensions
         - name: set variables
           nonMakeStep: true
           command: cat _out/talos-metadata >> "$GITHUB_ENV"
         - name: build extensions
-          # zfs is only added since it uses libtirpc from musl and nvidia needs libtirpc from glibc
-          # this verifies that both libtirpc can co-exist together
-          command: nvidia-container-toolkit-production nvidia-open-gpu-kernel-modules-production zfs extensions-metadata
+          # !!!zfs is only added since it uses libtirpc from musl and nvidia needs libtirpc from glibc
+          # !!!this verifies that both libtirpc can co-exist together
+          command: nvidia-container-toolkit-production nvidia-open-gpu-kernel-modules-production extensions-metadata
           arguments:
             - -C
             - _out/extensions
@@ -2907,8 +2907,8 @@ spec:
             IMAGE_REGISTRY: registry.dev.siderolabs.io
         - name: checkout extensions
           checkoutStep:
-            repository: siderolabs/extensions
-            ref: main
+            repository: dsseng/talos-extensions
+            ref: test-clang-kernel
             path: _out/extensions
         - name: set variables
           nonMakeStep: true
@@ -3003,8 +3003,8 @@ spec:
             IMAGE_REGISTRY: registry.dev.siderolabs.io
         - name: checkout extensions
           checkoutStep:
-            repository: siderolabs/extensions
-            ref: main
+            repository: dsseng/talos-extensions
+            ref: test-clang-kernel
             path: _out/extensions
         - name: set variables
           nonMakeStep: true
