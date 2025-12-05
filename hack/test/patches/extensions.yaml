@@ -58,3 +58,14 @@ configFiles:
       unconfigure lldp capabilities-advertisements
       configure system description "Talos Node"
     mountPath: /usr/local/etc/lldpd/lldpd.conf
+---
+apiVersion: v1alpha1
+kind: ExtensionServiceConfig
+name: bird2
+configFiles:
+  - mountPath: /usr/local/etc/bird.conf
+    content: |
+      # This is just a minimal NOOP config!
+      log stderr all;
+      router id 6.6.6.6;
+      protocol device {}
