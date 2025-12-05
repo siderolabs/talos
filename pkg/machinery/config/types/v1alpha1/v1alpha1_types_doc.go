@@ -264,7 +264,6 @@ func (MachineConfig) Doc() *encoder.Doc {
 	doc.Fields[5].AddExample("ControlPlane definition example.", machineControlplaneExample())
 	doc.Fields[6].AddExample("Kubelet definition example.", machineKubeletExample())
 	doc.Fields[7].AddExample("nginx static pod.", machinePodsExample())
-	doc.Fields[8].AddExample("Network definition example.", machineNetworkConfigExample())
 	doc.Fields[10].AddExample("MachineInstall config usage example.", machineInstallExample())
 	doc.Fields[11].AddExample("MachineFiles usage example.", machineFilesExample())
 	doc.Fields[12].AddExample("Environment variables definition examples.", machineEnvExamples0())
@@ -923,8 +922,6 @@ func (NetworkConfig) Doc() *encoder.Doc {
 			{},
 		},
 	}
-
-	doc.AddExample("Network definition example.", machineNetworkConfigExample())
 
 	doc.Fields[5].AddExample("", networkKubeSpanExample())
 

@@ -86,13 +86,6 @@ func kubeletImageExample() string {
 	return (&KubeletConfig{}).Image()
 }
 
-func machineNetworkConfigExample() *NetworkConfig {
-	return &NetworkConfig{
-		NameServers: []string{"9.8.7.6", "8.7.6.5"},
-		Searches:    []string{"example.org", "example.com"},
-	}
-}
-
 func machineInstallExample() *InstallConfig {
 	return &InstallConfig{
 		InstallDisk:              "/dev/sda",

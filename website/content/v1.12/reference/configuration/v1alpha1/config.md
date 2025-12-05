@@ -142,19 +142,7 @@ pods:
             - image: nginx
               name: nginx
 {{< /highlight >}}</details> | |
-|`network` |<a href="#Config.machine.network">NetworkConfig</a> |Provides machine specific network configuration options. <details><summary>Show example(s)</summary>Network definition example.:{{< highlight yaml >}}
-network:
-    nameservers:
-        - 9.8.7.6
-        - 8.7.6.5
-    searchDomains:
-        - example.org
-        - example.com
-
-    # # Configures KubeSpan feature.
-    # kubespan:
-    #     enabled: true # Enable the KubeSpan feature.
-{{< /highlight >}}</details> | |
+|`network` |<a href="#Config.machine.network">NetworkConfig</a> |Provides machine specific network configuration options.  | |
 |`install` |<a href="#Config.machine.install">InstallConfig</a> |Used to provide instructions for installations.<br><br>Note that this configuration section gets silently ignored by Talos images that are considered pre-installed.<br>To make sure Talos installs according to the provided configuration, Talos should be booted with ISO or PXE-booted. <details><summary>Show example(s)</summary>MachineInstall config usage example.:{{< highlight yaml >}}
 install:
     disk: /dev/sda # The disk used for installations.
@@ -546,21 +534,6 @@ machine:
 NetworkConfig represents the machine's networking config values.
 
 
-
-{{< highlight yaml >}}
-machine:
-    network:
-        nameservers:
-            - 9.8.7.6
-            - 8.7.6.5
-        searchDomains:
-            - example.org
-            - example.com
-
-        # # Configures KubeSpan feature.
-        # kubespan:
-        #     enabled: true # Enable the KubeSpan feature.
-{{< /highlight >}}
 
 
 | Field | Type | Description | Value(s) |
