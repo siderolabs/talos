@@ -160,6 +160,10 @@ func (ctrl *ManifestApplyController) Run(ctx context.Context, r controller.Runti
 			}
 
 			if err = etcd.WithLock(ctx, constants.EtcdTalosManifestApplyMutex, logger, func() error {
+				// 1. load the inventory
+				// 2. call apply
+				// 3. save the inventory, even if apply returned an error
+
 				return ctrl.apply(ctx, logger, mapper, dyn, manifests)
 			}); err != nil {
 				return err
@@ -263,9 +267,13 @@ func (ctrl *ManifestApplyController) apply(ctx context.Context, logger *zap.Logg
 			dr = dyn.Resource(mapping.Resource)
 		}
 
+		// check if the resource is already in the inventory, if so, skip applying it
+
 		_, err = dr.Get(ctx, obj.GetName(), metav1.GetOptions{})
 		if err == nil {
 			// already exists
+
+			// backfill the inventory if the resource is missing (to migrate to inventory-based apply)
 			continue
 		}
 
@@ -273,7 +281,7 @@ func (ctrl *ManifestApplyController) apply(ctx context.Context, logger *zap.Logg
 			return fmt.Errorf("error checking resource existence: %w", err)
 		}
 
-		_, err = dr.Create(ctx, obj, metav1.CreateOptions{
+		_, err = dr.Apply(ctx, obj.GetName(), obj, metav1.ApplyOptions{
 			FieldManager: "talos",
 		})
 		if err != nil {
@@ -293,6 +301,8 @@ func (ctrl *ManifestApplyController) apply(ctx context.Context, logger *zap.Logg
 			}
 		} else {
 			logger.Sugar().Infof("created %s", objName)
+
+			// add to the inventory
 		}
 	}
 
