@@ -13,7 +13,7 @@
 ---
 
 **Talos** is a modern OS for running Kubernetes: secure, immutable, and minimal.
-Talos is fully open source, production-ready, and supported by the people at [Sidero Labs](https://www.SideroLabs.com/)
+Talos is fully open source, production-ready, and supported by the people at [Sidero Labs](https://www.SideroLabs.com/).
 All system management is done via an API - there is no shell or interactive console.
 Benefits include:
 
@@ -60,8 +60,5 @@ See [Contributing](CONTRIBUTING.md) for our guidelines.
   <img alt="GitHub" src="https://img.shields.io/github/license/siderolabs/talos?style=flat-square">
 </a>
 
-Some software we distribute is under the General Public License family
-of licenses or other licenses that require we provide you with the
-source code.
-If you would like a copy of the source code for this
-software, please contact us via email: info at SideroLabs.com.
+Some software we distribute is under the General Public License family of licenses or other licenses that require we provide you with the source code.
+If you would like a copy of the source code for this software, please contact us via email: info at SideroLabs.com.
