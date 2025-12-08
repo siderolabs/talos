@@ -101,7 +101,7 @@ Talos now ignores the following machine configuration fields:
 
 - `machine.features.rbac` (locked to true)
 - `machine.features.apidCheckExtKeyUsage` (locked to true)
-- `cluster.apiServer.disablePodSecurityPolicy` (locked to false)
+- `cluster.apiServer.disablePodSecurityPolicy` (locked to true)
 
 These fields were removed from the default machine configuration schema in v1.12 and are now always set to the locked values above.
 """
@@ -200,7 +200,7 @@ To avoid further issues, Talos will now only create the UEFI boot entry if it do
         title = "Network Configuration"
         description = """\
 The network configuration under `.machine.network` (with the exception of KubeSpan) has been deprecated, but it is still supported for backwards compatibility.
-New configuration documents were created to replace it, they will be documented in the future.
+See [documentation](https://docs.siderolabs.com/talos/v1.12/networking/configuration/overview) for more information.
 """
 
     [notes.apiserver-cipher-suites]
