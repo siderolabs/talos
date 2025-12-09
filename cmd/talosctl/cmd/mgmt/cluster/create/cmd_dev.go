@@ -28,6 +28,8 @@ type legacyOps struct {
 	extraDisks        int
 	extraDiskSize     int
 	extraDisksDrivers []string
+	extraDisksTags    []string
+	extraDisksSerials []string
 }
 
 var (
@@ -84,6 +86,8 @@ func getCreateCmd(cmdName string, hidden bool) *cobra.Command {
 		extraUEFISearchPathsFlag      = "extra-uefi-search-paths"
 		extraDisksFlag                = "extra-disks"
 		extraDisksDriversFlag         = "extra-disks-drivers"
+		extraDisksTagsFlag            = "extra-disks-tags"
+		extraDisksSerialsFlag         = "extra-disks-serials"
 		extraDiskSizeFlag             = "extra-disks-size"
 		targetArchFlag                = "arch"
 		cniBinPathFlag                = "cni-bin-path"
@@ -282,6 +286,8 @@ func getCreateCmd(cmdName string, hidden bool) *cobra.Command {
 
 				for i := range legacyOps.extraDisks {
 					driver := "ide"
+					tag := ""
+					serial := ""
 
 					// ide driver is not supported on arm64
 					if qOps.TargetArch == "arm64" {
@@ -292,7 +298,19 @@ func getCreateCmd(cmdName string, hidden bool) *cobra.Command {
 						driver = legacyOps.extraDisksDrivers[i]
 					}
 
-					disks.WriteString(fmt.Sprintf(",%s:%d", driver, legacyOps.extraDiskSize))
+					if i < len(legacyOps.extraDisksTags) {
+						if legacyOps.extraDisksTags[i] != "" {
+							tag = fmt.Sprintf(":tag=%s", legacyOps.extraDisksTags[i])
+						}
+					}
+
+					if i < len(legacyOps.extraDisksSerials) {
+						if legacyOps.extraDisksSerials[i] != "" {
+							serial = fmt.Sprintf(":serial=%s", legacyOps.extraDisksSerials[i])
+						}
+					}
+
+					disks.WriteString(fmt.Sprintf(",%s:%d%s%s", driver, legacyOps.extraDiskSize, tag, serial))
 				}
 
 				qOps.Disks = flags.Disks{}
@@ -307,7 +325,9 @@ func getCreateCmd(cmdName string, hidden bool) *cobra.Command {
 	}
 	createCmd.Flags().IntVar(&legacyOps.clusterDiskSize, clusterDiskSizeFlag, 6*1024, "default limit on disk size in MB (each VM)")
 	createCmd.Flags().IntVar(&legacyOps.extraDisks, extraDisksFlag, 0, "number of extra disks to create for each worker VM")
-	createCmd.Flags().StringSliceVar(&legacyOps.extraDisksDrivers, "extra-disks-drivers", nil, "driver for each extra disk (virtio, ide, ahci, scsi, nvme, megaraid)")
+	createCmd.Flags().StringSliceVar(&legacyOps.extraDisksDrivers, extraDisksDriversFlag, nil, "driver for each extra disk (virtio, ide, ahci, scsi, nvme, megaraid)")
+	createCmd.Flags().StringSliceVar(&legacyOps.extraDisksTags, extraDisksTagsFlag, nil, "tags for each extra disk (only used by virtiofs)")
+	createCmd.Flags().StringSliceVar(&legacyOps.extraDisksSerials, extraDisksSerialsFlag, nil, "serials for each extra disk")
 	createCmd.Flags().IntVar(&legacyOps.extraDiskSize, extraDiskSizeFlag, 5*1024, "default limit on disk size in MB (each VM)")
 
 	clustercmd.AddProvisionerFlag(createCmd)

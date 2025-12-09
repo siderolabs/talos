@@ -1,6 +1,6 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
 #
-# Generated on 2025-12-11T16:40:05Z by kres 4b09af7.
+# Generated on 2025-12-15T09:30:42Z by kres 4b09af7.
 
 concurrency:
   group: ${{ github.head_ref || github.run_id }}
@@ -91,9 +91,10 @@ jobs:
           EXTRA_TEST_ARGS: -talos.race
           GITHUB_STEP_NAME: ${{ github.job}}-e2e-qemu-race
           IMAGE_REGISTRY: registry.dev.siderolabs.io
-          QEMU_EXTRA_DISKS: "3"
-          QEMU_EXTRA_DISKS_DRIVERS: ide,nvme
+          QEMU_EXTRA_DISKS: "4"
+          QEMU_EXTRA_DISKS_DRIVERS: virtiofs,ide,nvme
           QEMU_EXTRA_DISKS_SIZE: "10240"
+          QEMU_EXTRA_DISKS_TAGS: disk0
           QEMU_MEMORY_CONTROLPLANES: "4096"
           QEMU_MEMORY_WORKERS: "4096"
           TAG_SUFFIX: -race

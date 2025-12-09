@@ -14,6 +14,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime"
 	"strconv"
 	"strings"
 	"time"
@@ -32,9 +33,12 @@ type LaunchConfig struct {
 	// VM options
 	DiskPaths                 []string
 	DiskDrivers               []string
+	DiskTags                  []string
+	DiskSerials               []string
 	DiskBlockSizes            []uint
 	VCPUCount                 int64
 	MemSize                   int64
+	MemShmPath                string
 	KernelImagePath           string
 	InitrdPath                string
 	ISOPath                   string
@@ -145,22 +149,34 @@ func launchVM(config *LaunchConfig) error {
 	}
 
 	var (
-		scsiAttached, ahciAttached, nvmeAttached, megaraidAttached bool
-		ahciBus                                                    int
+		scsiAttached, ahciAttached, nvmeAttached, megaraidAttached, virtiofsAttached bool
+		ahciBus                                                                      int
 	)
 
 	for i, disk := range config.DiskPaths {
 		driver := config.DiskDrivers[i]
 		blockSize := config.DiskBlockSizes[i]
 
+		tag := config.DiskTags[i]
+		if tag == "" {
+			tag = fmt.Sprintf("disk%d", i)
+		}
+
+		serial := ""
+		if config.DiskSerials[i] != "" {
+			serial = ",serial=" + config.DiskSerials[i]
+		}
+
 		switch driver {
 		case "virtio":
 			args = append(args,
 				"-drive", fmt.Sprintf("id=virtio%d,format=raw,if=none,file=%s,cache=none", i, disk),
-				"-device", fmt.Sprintf("virtio-blk-pci,drive=virtio%d,logical_block_size=%d,physical_block_size=%d", i, blockSize, blockSize),
+				"-device", fmt.Sprintf("virtio-blk-pci,drive=virtio%d,logical_block_size=%d,physical_block_size=%d%s", i, blockSize, blockSize, serial),
 			)
+
 		case "ide":
 			args = append(args, "-drive", fmt.Sprintf("format=raw,if=ide,file=%s,cache=none", disk))
+
 		case "ahci":
 			if !ahciAttached {
 				args = append(args, "-device", "ahci,id=ahci0")
@@ -173,6 +189,7 @@ func launchVM(config *LaunchConfig) error {
 			)
 
 			ahciBus++
+
 		case "scsi":
 			if !scsiAttached {
 				args = append(args, "-device", "virtio-scsi-pci,id=scsi0")
@@ -183,6 +200,7 @@ func launchVM(config *LaunchConfig) error {
 				"-drive", fmt.Sprintf("id=scsi%d,format=raw,if=none,file=%s,discard=unmap,aio=native,cache=none", i, disk),
 				"-device", fmt.Sprintf("scsi-hd,drive=scsi%d,bus=scsi0.0,logical_block_size=%d,physical_block_size=%d", i, blockSize, blockSize),
 			)
+
 		case "nvme":
 			if !nvmeAttached {
 				// [TODO]: once Talos is fixed, use multipath NVME: https://qemu-project.gitlab.io/qemu/system/devices/nvme.html
@@ -196,6 +214,7 @@ func launchVM(config *LaunchConfig) error {
 				"-drive", fmt.Sprintf("id=nvme%d,format=raw,if=none,file=%s,discard=unmap,aio=native,cache=none", i, disk),
 				"-device", fmt.Sprintf("nvme-ns,drive=nvme%d,logical_block_size=%d,physical_block_size=%d", i, blockSize, blockSize),
 			)
+
 		case "megaraid":
 			if !megaraidAttached {
 				args = append(args,
@@ -208,6 +227,26 @@ func launchVM(config *LaunchConfig) error {
 				"-drive", fmt.Sprintf("id=scsi%d,format=raw,if=none,file=%s,discard=unmap,aio=native,cache=none", i, disk),
 				"-device", fmt.Sprintf("scsi-hd,drive=scsi%d,bus=scsi1.0,channel=0,scsi-id=%d,lun=0,logical_block_size=%d,physical_block_size=%d", i, i, blockSize, blockSize),
 			)
+
+		case "virtiofs":
+			if runtime.GOOS != "linux" {
+				return fmt.Errorf("virtiofs driver is only supported on linux hosts")
+			}
+
+			if !virtiofsAttached {
+				args = append(args,
+					"-object", fmt.Sprintf("memory-backend-file,id=mem,size=%sM,mem-path=%s,share=on", strconv.FormatInt(config.MemSize, 10), config.MemShmPath),
+					"-numa", "node,memdev=mem",
+				)
+
+				virtiofsAttached = true
+			}
+
+			args = append(args,
+				"-chardev", fmt.Sprintf("socket,id=char%d,path=%s", i, disk),
+				"-device", fmt.Sprintf("vhost-user-fs-pci,queue-size=1024,chardev=char%d,tag=%s", i, tag),
+			)
+
 		default:
 			return fmt.Errorf("unsupported disk driver %q", driver)
 		}

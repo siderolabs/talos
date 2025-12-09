@@ -160,7 +160,9 @@ talosctl cluster create dev [flags]
       --extra-boot-kernel-args string            add extra kernel args to the initial boot from vmlinuz and initramfs
       --extra-disks int                          number of extra disks to create for each worker VM
       --extra-disks-drivers strings              driver for each extra disk (virtio, ide, ahci, scsi, nvme, megaraid)
+      --extra-disks-serials strings              serials for each extra disk
       --extra-disks-size int                     default limit on disk size in MB (each VM) (default 5120)
+      --extra-disks-tags strings                 tags for each extra disk (only used by virtiofs)
       --extra-uefi-search-paths strings          additional search paths for UEFI firmware (only applies when UEFI is enabled)
   -h, --help                                     help for dev
       --image-cache-path string                  path to image cache

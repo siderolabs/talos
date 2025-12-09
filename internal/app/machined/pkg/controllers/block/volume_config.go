@@ -245,6 +245,7 @@ func (ctrl *VolumeConfigController) getExistingVolumes(ctx context.Context, r co
 		state.WithLabelQuery(resource.LabelExists(block.UserVolumeLabel)),
 		state.WithLabelQuery(resource.LabelExists(block.RawVolumeLabel)),
 		state.WithLabelQuery(resource.LabelExists(block.ExistingVolumeLabel)),
+		state.WithLabelQuery(resource.LabelExists(block.ExternalVolumeLabel)),
 		state.WithLabelQuery(resource.LabelExists(block.SwapVolumeLabel)),
 	}
 

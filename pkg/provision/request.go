@@ -168,10 +168,14 @@ type Disk struct {
 	SkipPreallocate bool
 	// Driver for the disk.
 	//
-	// Supported types: "virtio", "ide", "ahci", "scsi", "nvme", "megaraid".
+	// Supported types: "virtio", "ide", "ahci", "scsi", "nvme", "megaraid", "virtiofs" (special).
 	Driver string
 	// Block size for the disk, defaults to 512 if not set.
 	BlockSize uint
+	// Serial number for the disk.
+	Serial string
+	// Tag for the disk, only used for Virtiofs disks.
+	Tag string
 }
 
 // ConfigInjectionMethod describes how to inject configuration into the node.

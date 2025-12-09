@@ -133,3 +133,12 @@ func (s *State) Save() error {
 func (s *State) GetRelativePath(path string) string {
 	return filepath.Join(s.statePath, path)
 }
+
+// GetShmPath get shm path.
+func (s *State) GetShmPath(path string) string {
+	if s.isDevShmAvailable() {
+		return filepath.Join("/dev/shm", path)
+	}
+
+	return filepath.Join("/tmp", path)
+}

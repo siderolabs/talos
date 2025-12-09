@@ -1284,6 +1284,9 @@ const (
 	// UserVolumePrefix is the prefix for the user volumes.
 	UserVolumePrefix = "u-"
 
+	// ExternalVolumePrefix is the prefix for the user volumes.
+	ExternalVolumePrefix = "x-"
+
 	// RawVolumePrefix is the prefix for the raw volumes.
 	RawVolumePrefix = "r-"
 

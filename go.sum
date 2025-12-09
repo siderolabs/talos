@@ -671,6 +671,8 @@ github.com/siderolabs/wgctrl-go v0.0.0-20251029173431-c4fd5f6a4e72 h1:Boabco/vho
 github.com/siderolabs/wgctrl-go v0.0.0-20251029173431-c4fd5f6a4e72/go.mod h1:T97yPqesLiNrOYxkwmhMI0ZIlJDm+p0PMR8eRVeR5tQ=
 github.com/sirupsen/logrus v1.9.3 h1:dueUQJ1C2q9oE3F7wvmSGAaVtTmUizReu6fjN8uqzbQ=
 github.com/sirupsen/logrus v1.9.3/go.mod h1:naHLuLoDiP4jHNo9R0sCBMtWGeIprob74mVsIT4qYEQ=
+github.com/smallfz/libnfs-go v0.0.7 h1:7uS1ADMrJqihbQEtXfo8865+gEMl7bHKsDAY7ialKws=
+github.com/smallfz/libnfs-go v0.0.7/go.mod h1:OtfrJ0akgDga0KIhtub2YJoDMnzHBntTAVwXdfNZZTU=
 github.com/smira/containerd/v2 v2.0.0-20251113120816-51ecd22de074 h1:05WpndnxEUV9TYnXWlR93QaeWHRk5+9cHeMmjGAK2CY=
 github.com/smira/containerd/v2 v2.0.0-20251113120816-51ecd22de074/go.mod h1:8C5QV9djwsYDNhxfTCFjWtTBZrqjditQ4/ghHSYjnHM=
 github.com/smira/kobject v0.0.0-20240304111826-49c8d4613389 h1:f/5NRv5IGZxbjBhc5MnlbNmyuXBPxvekhBAUzyKWyLY=

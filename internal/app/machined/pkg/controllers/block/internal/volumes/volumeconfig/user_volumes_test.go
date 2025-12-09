@@ -25,6 +25,7 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/resources/block"
 )
 
+//nolint:dupl
 func TestUserVolumeTransformer(t *testing.T) {
 	t.Parallel()
 
@@ -199,6 +200,7 @@ func TestUserVolumeTransformer(t *testing.T) {
 	}
 }
 
+//nolint:dupl
 func TestRawVolumeTransformer(t *testing.T) {
 	t.Parallel()
 
@@ -241,6 +243,7 @@ func TestRawVolumeTransformer(t *testing.T) {
 	})
 }
 
+//nolint:dupl
 func TestExistingVolumeTransformer(t *testing.T) {
 	t.Parallel()
 
@@ -344,6 +347,124 @@ func TestExistingVolumeTransformer(t *testing.T) {
 	}
 }
 
+//nolint:dupl
+func TestExternalVolumeTransformer(t *testing.T) {
+	t.Parallel()
+
+	for _, tc := range []struct {
+		name      string
+		cfg       []*blockcfg.ExternalVolumeConfigV1Alpha1
+		checkFunc func(t *testing.T, resources []volumeconfig.VolumeResource)
+	}{
+		{
+			name: "no config",
+			checkFunc: func(t *testing.T, resources []volumeconfig.VolumeResource) {
+				require.Len(t, resources, 0)
+			},
+		},
+		{
+			name: "external volume RW",
+			cfg: []*blockcfg.ExternalVolumeConfigV1Alpha1{
+				{
+					Meta: meta.Meta{
+						MetaKind:       blockcfg.ExternalVolumeConfigKind,
+						MetaAPIVersion: "v1alpha1",
+					},
+					MetaName:       "external-data",
+					FilesystemType: block.FilesystemTypeVirtiofs,
+					MountSpec: blockcfg.ExternalMountSpec{
+						MountReadOnly: pointer.To(false),
+						MountVirtiofs: &blockcfg.VirtiofsMountSpec{
+							VirtiofsTag: "data",
+						},
+					},
+				},
+			},
+			checkFunc: func(t *testing.T, resources []volumeconfig.VolumeResource) {
+				require.Len(t, resources, 1)
+
+				assert.Equal(t, block.ExternalVolumeLabel, resources[0].Label)
+				assert.Equal(t, constants.ExternalVolumePrefix+"external-data", resources[0].VolumeID)
+
+				testTransformFunc(t, resources[0].TransformFunc, func(t *testing.T, vc *block.VolumeConfig, err error) {
+					require.NoError(t, err)
+
+					assert.Equal(t, block.VolumeTypeExternal, vc.TypedSpec().Type)
+
+					assert.Equal(t, "external-data", vc.TypedSpec().Mount.TargetPath)
+					assert.Equal(t, constants.UserVolumeMountPoint, vc.TypedSpec().Mount.ParentID)
+					assert.Equal(t, fs.FileMode(0o755), vc.TypedSpec().Mount.FileMode)
+					assert.Equal(t, "data", vc.TypedSpec().Provisioning.DiskSelector.External)
+				})
+
+				testMountTransformFunc(t, resources[0].MountTransformFunc, func(t *testing.T, m *block.VolumeMountRequest, err error) {
+					require.NoError(t, err)
+
+					assert.False(t, m.TypedSpec().ReadOnly, "expected read-write mount")
+				})
+			},
+		},
+		{
+			name: "external volume RW",
+			cfg: []*blockcfg.ExternalVolumeConfigV1Alpha1{
+				{
+					Meta: meta.Meta{
+						MetaKind:       blockcfg.ExternalVolumeConfigKind,
+						MetaAPIVersion: "v1alpha1",
+					},
+					MetaName:       "external-data",
+					FilesystemType: block.FilesystemTypeVirtiofs,
+					MountSpec: blockcfg.ExternalMountSpec{
+						MountReadOnly: pointer.To(true),
+						MountVirtiofs: &blockcfg.VirtiofsMountSpec{
+							VirtiofsTag: "data",
+						},
+					},
+				},
+			},
+			checkFunc: func(t *testing.T, resources []volumeconfig.VolumeResource) {
+				require.Len(t, resources, 1)
+
+				assert.Equal(t, block.ExternalVolumeLabel, resources[0].Label)
+				assert.Equal(t, constants.ExternalVolumePrefix+"external-data", resources[0].VolumeID)
+
+				testTransformFunc(t, resources[0].TransformFunc, func(t *testing.T, vc *block.VolumeConfig, err error) {
+					require.NoError(t, err)
+
+					assert.Equal(t, block.VolumeTypeExternal, vc.TypedSpec().Type)
+
+					assert.Equal(t, "external-data", vc.TypedSpec().Mount.TargetPath)
+					assert.Equal(t, constants.UserVolumeMountPoint, vc.TypedSpec().Mount.ParentID)
+					assert.Equal(t, fs.FileMode(0o755), vc.TypedSpec().Mount.FileMode)
+					assert.Equal(t, "data", vc.TypedSpec().Provisioning.DiskSelector.External)
+				})
+
+				testMountTransformFunc(t, resources[0].MountTransformFunc, func(t *testing.T, m *block.VolumeMountRequest, err error) {
+					require.NoError(t, err)
+
+					assert.True(t, m.TypedSpec().ReadOnly, "expected read-write mount")
+				})
+			},
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			mergedCfg, err := container.New(xslices.Map(tc.cfg,
+				func(cfg *blockcfg.ExternalVolumeConfigV1Alpha1) configconfig.Document {
+					return cfg
+				})...)
+			require.NoError(t, err)
+
+			resources, err := volumeconfig.ExternalVolumeTransformer(mergedCfg)
+			require.NoError(t, err)
+
+			tc.checkFunc(t, resources)
+		})
+	}
+}
+
+//nolint:dupl
 func TestSwapVolumeTransformer(t *testing.T) {
 	t.Parallel()
 

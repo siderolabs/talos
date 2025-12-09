@@ -465,6 +465,7 @@ func (m *Qemu) initDisks() error {
 			SkipPreallocate: !m.EOps.PreallocateDisks,
 			Driver:          m.EOps.Disks.Requests()[0].Driver,
 			BlockSize:       m.EOps.DiskBlockSize,
+			Serial:          m.EOps.Disks.Requests()[0].Serial,
 		},
 	}
 	// get worker extra disks
@@ -474,6 +475,8 @@ func (m *Qemu) initDisks() error {
 			SkipPreallocate: !m.EOps.PreallocateDisks,
 			Driver:          d.Driver,
 			BlockSize:       m.EOps.DiskBlockSize,
+			Tag:             d.Tag,
+			Serial:          d.Serial,
 		})
 	}
 

@@ -408,9 +408,10 @@ spec:
           withSudo: true
           environment:
             IMAGE_REGISTRY: registry.dev.siderolabs.io
-            QEMU_EXTRA_DISKS: "3"
+            QEMU_EXTRA_DISKS: "4"
             QEMU_EXTRA_DISKS_SIZE: "10240"
-            QEMU_EXTRA_DISKS_DRIVERS: "ide,nvme"
+            QEMU_EXTRA_DISKS_DRIVERS: "virtiofs,ide,nvme"
+            QEMU_EXTRA_DISKS_TAGS: "disk0"
             WITH_CONFIG_PATCH_WORKER: "@hack/test/patches/ephemeral-nvme.yaml:@hack/test/patches/dm-raid-module.yaml"
             WITH_USER_DISK: "true"
             USER_DISKS_MOUNTS: "/var/mnt/extra,/var/mnt/p1,/var/mnt/p2"
@@ -476,9 +477,10 @@ spec:
             TAG_SUFFIX_IN: -enforcing
             EXTRA_TEST_ARGS: -talos.enforcing
             IMAGE_REGISTRY: registry.dev.siderolabs.io
-            QEMU_EXTRA_DISKS: "3"
+            QEMU_EXTRA_DISKS: "4"
             QEMU_EXTRA_DISKS_SIZE: "10240"
-            QEMU_EXTRA_DISKS_DRIVERS: "ide,nvme"
+            QEMU_EXTRA_DISKS_DRIVERS: "virtiofs,ide,nvme"
+            QEMU_EXTRA_DISKS_TAGS: "disk0"
             WITH_CONFIG_PATCH_WORKER: "@hack/test/patches/ephemeral-nvme.yaml:@hack/test/patches/dm-raid-module.yaml"
             WITH_USER_DISK: "true"
             WITH_ENFORCING: true
@@ -2000,9 +2002,10 @@ spec:
             WITH_VIRTUAL_IP: true
             WITH_KUBESPAN: true
             IMAGE_REGISTRY: registry.dev.siderolabs.io
-            QEMU_EXTRA_DISKS: "3"
+            QEMU_EXTRA_DISKS: "4"
             QEMU_EXTRA_DISKS_SIZE: "10240"
-            QEMU_EXTRA_DISKS_DRIVERS: "ide,nvme"
+            QEMU_EXTRA_DISKS_DRIVERS: "virtiofs,ide,nvme"
+            QEMU_EXTRA_DISKS_TAGS: "disk0"
             WITH_CONFIG_PATCH_WORKER: "@hack/test/patches/ephemeral-nvme.yaml:@hack/test/patches/dm-raid-module.yaml"
         - name: save-talos-logs
           conditions:
@@ -2060,9 +2063,10 @@ spec:
           withSudo: true
           environment:
             GITHUB_STEP_NAME: ${{ github.job}}-e2e-qemu-race
-            QEMU_EXTRA_DISKS: "3"
+            QEMU_EXTRA_DISKS: "4"
             QEMU_EXTRA_DISKS_SIZE: "10240"
-            QEMU_EXTRA_DISKS_DRIVERS: "ide,nvme"
+            QEMU_EXTRA_DISKS_DRIVERS: "virtiofs,ide,nvme"
+            QEMU_EXTRA_DISKS_TAGS: "disk0"
             WITH_CONFIG_PATCH_WORKER: "@hack/test/patches/ephemeral-nvme.yaml:@hack/test/patches/dm-raid-module.yaml"
             QEMU_MEMORY_CONTROLPLANES: 4096 # race-enabled Talos consumes lots of RAM
             QEMU_MEMORY_WORKERS: 4096

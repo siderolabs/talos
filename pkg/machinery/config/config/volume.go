@@ -116,6 +116,14 @@ type ExistingVolumeConfig interface {
 	Mount() VolumeMountConfig
 }
 
+// ExternalVolumeConfig defines the interface to access external volume configuration.
+type ExternalVolumeConfig interface {
+	NamedDocument
+	ExternalVolumeConfigSignal()
+	Type() block.FilesystemType
+	Mount() ExternalMountConfig
+}
+
 // VolumeDiscoveryConfig defines the interface to discover volumes.
 type VolumeDiscoveryConfig interface {
 	VolumeSelector() cel.Expression
@@ -124,6 +132,18 @@ type VolumeDiscoveryConfig interface {
 // VolumeMountConfig defines the interface to access volume mount configuration.
 type VolumeMountConfig interface {
 	ReadOnly() bool
+}
+
+// ExternalMountConfig defines the interface to access volume mount configuration.
+type ExternalMountConfig interface {
+	ReadOnly() bool
+	Virtiofs() optional.Optional[ExternalMountConfigSpec]
+}
+
+// ExternalMountConfigSpec defines the interface to access external mount configuration spec.
+type ExternalMountConfigSpec interface {
+	Source() string
+	Parameters() ([]block.ParameterSpec, error)
 }
 
 // FilesystemConfig defines the interface to access filesystem configuration.

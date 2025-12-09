@@ -11,6 +11,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/resource/meta"
 	"github.com/cosi-project/runtime/pkg/resource/protobuf"
 	"github.com/cosi-project/runtime/pkg/resource/typed"
+	"github.com/siderolabs/go-pointer"
 
 	"github.com/siderolabs/talos/pkg/machinery/cel"
 	"github.com/siderolabs/talos/pkg/machinery/proto"
@@ -79,7 +80,8 @@ type ProvisioningSpec struct {
 //
 //gotagsrewrite:gen
 type DiskSelector struct {
-	Match cel.Expression `yaml:"match,omitempty" protobuf:"1"`
+	Match    cel.Expression `yaml:"match,omitempty" protobuf:"1"`
+	External string         `yaml:"external,omitempty" protobuf:"2"`
 }
 
 // PartitionSpec is the spec for volume partitioning.
@@ -168,6 +170,46 @@ type EncryptionKey struct {
 	TPMPubKeyPCRs []int `yaml:"pubKeyPcrs,omitempty" protobuf:"8"`
 }
 
+// ParameterSpec is a mount parameter.
+//
+//gotagsrewrite:gen
+type ParameterSpec struct {
+	// Type of the parameter.
+	Type FSParameterType `yaml:"type" protobuf:"1"`
+	// Name of the parameter.
+	Name string `yaml:"name" protobuf:"2"`
+	// String value of the parameter.
+	String *string `yaml:"string,omitempty" protobuf:"3"`
+	// Binary value of the parameter.
+	Binary []byte `yaml:"binary,omitempty" protobuf:"5"`
+}
+
+// NewBooleanParameter creates a new boolean parameter.
+func NewBooleanParameter(name string) ParameterSpec {
+	return ParameterSpec{
+		Type: FSParameterTypeBooleanValue,
+		Name: name,
+	}
+}
+
+// NewBinaryParameter creates a new binary parameter.
+func NewBinaryParameter(name string, value []byte) ParameterSpec {
+	return ParameterSpec{
+		Type:   FSParameterTypeBinaryValue,
+		Name:   name,
+		Binary: value,
+	}
+}
+
+// NewStringParameter creates a new string parameter.
+func NewStringParameter(name, value string) ParameterSpec {
+	return ParameterSpec{
+		Type:   FSParameterTypeStringValue,
+		Name:   name,
+		String: pointer.To(value),
+	}
+}
+
 // MountSpec is the spec for volume mount.
 //
 //gotagsrewrite:gen
@@ -190,6 +232,8 @@ type MountSpec struct {
 	RecursiveRelabel bool `yaml:"recursiveRelabel,omitempty" protobuf:"8"`
 	// BindTarget is an optional path on the host to bind-mount the volume onto.
 	BindTarget *string `yaml:"bindTarget,omitempty" protobuf:"9"`
+	// Parameters are additional filesystem mount options used when mounting the volume.
+	Parameters []ParameterSpec `yaml:"parameters,omitempty" protobuf:"10"`
 }
 
 // SymlinkProvisioningSpec is the spec for volume symlink.

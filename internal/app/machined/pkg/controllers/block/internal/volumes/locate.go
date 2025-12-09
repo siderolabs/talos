@@ -36,6 +36,14 @@ func LocateAndProvision(ctx context.Context, logger *zap.Logger, volumeContext M
 		volumeContext.Status.Phase = block.VolumePhaseReady
 
 		return nil
+	case block.VolumeTypeExternal:
+		// volume types above are always ready, but need some additional parameters set
+		volumeContext.Status.Phase = block.VolumePhaseReady
+		volumeContext.Status.Filesystem = volumeContext.Cfg.TypedSpec().Provisioning.FilesystemSpec.Type
+		volumeContext.Status.Location = volumeContext.Cfg.TypedSpec().Provisioning.DiskSelector.External
+		volumeContext.Status.MountLocation = volumeContext.Cfg.TypedSpec().Provisioning.DiskSelector.External
+
+		return nil
 	case block.VolumeTypeDisk, block.VolumeTypePartition:
 	}
 

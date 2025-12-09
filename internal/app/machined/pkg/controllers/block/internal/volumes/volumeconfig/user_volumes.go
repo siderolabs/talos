@@ -6,6 +6,7 @@ package volumeconfig
 
 import (
 	"cmp"
+	"errors"
 	"fmt"
 
 	"github.com/siderolabs/gen/xerrors"
@@ -28,6 +29,7 @@ var UserVolumeTransformers = []volumeConfigTransformer{
 	UserVolumeTransformer,
 	RawVolumeTransformer,
 	ExistingVolumeTransformer,
+	ExternalVolumeTransformer,
 	SwapVolumeTransformer,
 }
 
@@ -123,7 +125,7 @@ func UserVolumeTransformer(c configconfig.Config) ([]VolumeResource, error) {
 				WithConvertEncryptionConfiguration(userVolumeConfig.Encryption()).
 				WriterFunc()
 
-		case block.VolumeTypeTmpfs, block.VolumeTypeSymlink, block.VolumeTypeOverlay:
+		case block.VolumeTypeTmpfs, block.VolumeTypeSymlink, block.VolumeTypeOverlay, block.VolumeTypeExternal:
 			fallthrough
 
 		default:
@@ -210,6 +212,87 @@ func ExistingVolumeTransformer(c configconfig.Config) ([]VolumeResource, error) 
 	return resources, nil
 }
 
+// ExternalVolumeTransformer is the transformer for external user volume configs.
+func ExternalVolumeTransformer(c configconfig.Config) ([]VolumeResource, error) {
+	if c == nil {
+		return nil, nil
+	}
+
+	resources := make([]VolumeResource, 0, len(c.ExternalVolumeConfigs()))
+
+	for _, externalVolumeConfig := range c.ExternalVolumeConfigs() {
+		volumeID := constants.ExternalVolumePrefix + externalVolumeConfig.Name()
+
+		params, err := externalVolumeParameters(externalVolumeConfig)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get external volume parameters for volume %q: %w", externalVolumeConfig.Name(), err)
+		}
+
+		resources = append(resources, VolumeResource{
+			VolumeID: volumeID,
+			Label:    block.ExternalVolumeLabel,
+			TransformFunc: NewBuilder().
+				WithType(block.VolumeTypeExternal).
+				WithProvisioning(block.ProvisioningSpec{
+					Wave: block.WaveUserVolumes,
+					DiskSelector: block.DiskSelector{
+						External: externalVolumeSource(externalVolumeConfig),
+					},
+					FilesystemSpec: block.FilesystemSpec{
+						Type: externalVolumeConfig.Type(),
+					},
+				}).
+				WithMount(block.MountSpec{
+					TargetPath:   externalVolumeConfig.Name(),
+					ParentID:     constants.UserVolumeMountPoint,
+					SelinuxLabel: constants.EphemeralSelinuxLabel,
+					FileMode:     0o755,
+					UID:          0,
+					GID:          0,
+					Parameters:   params,
+				}).
+				WriterFunc(),
+			MountTransformFunc: HandleExternalVolumeMountRequest(externalVolumeConfig),
+		})
+	}
+
+	return resources, nil
+}
+
+func externalVolumeSource(ext configconfig.ExternalVolumeConfig) string {
+	switch ext.Type() {
+	case block.FilesystemTypeVirtiofs:
+		if ext.Mount().Virtiofs().IsPresent() {
+			return ext.Mount().Virtiofs().ValueOrZero().Source()
+		}
+
+	case block.FilesystemTypeNone, block.FilesystemTypeXFS, block.FilesystemTypeVFAT, block.FilesystemTypeEXT4, block.FilesystemTypeISO9660, block.FilesystemTypeSwap:
+		fallthrough
+
+	default:
+		return ""
+	}
+
+	return ""
+}
+
+func externalVolumeParameters(ext configconfig.ExternalVolumeConfig) ([]block.ParameterSpec, error) {
+	switch ext.Type() {
+	case block.FilesystemTypeVirtiofs:
+		if ext.Mount().Virtiofs().IsPresent() {
+			return ext.Mount().Virtiofs().ValueOrZero().Parameters()
+		}
+
+		return nil, errors.New("virtiofs mount specification is required for Virtiofs external volume")
+
+	case block.FilesystemTypeNone, block.FilesystemTypeXFS, block.FilesystemTypeVFAT, block.FilesystemTypeEXT4, block.FilesystemTypeISO9660, block.FilesystemTypeSwap:
+		fallthrough
+
+	default:
+		return nil, fmt.Errorf("unsupported external volume type %q", ext.Type().String())
+	}
+}
+
 // SwapVolumeTransformer is the transformer for swap volume configs.
 func SwapVolumeTransformer(c configconfig.Config) ([]VolumeResource, error) {
 	if c == nil {
@@ -256,6 +339,15 @@ func SwapVolumeTransformer(c configconfig.Config) ([]VolumeResource, error) {
 func HandleExistingVolumeMountRequest(existingVolumeConfig configconfig.ExistingVolumeConfig) func(m *block.VolumeMountRequest) error {
 	return func(m *block.VolumeMountRequest) error {
 		m.TypedSpec().ReadOnly = existingVolumeConfig.Mount().ReadOnly()
+
+		return nil
+	}
+}
+
+// HandleExternalVolumeMountRequest returns a MountTransformFunc for external volumes.
+func HandleExternalVolumeMountRequest(externalVolumeConfig configconfig.ExternalVolumeConfig) func(m *block.VolumeMountRequest) error {
+	return func(m *block.VolumeMountRequest) error {
+		m.TypedSpec().ReadOnly = externalVolumeConfig.Mount().ReadOnly()
 
 		return nil
 	}

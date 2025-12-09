@@ -1,6 +1,6 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
 #
-# Generated on 2025-12-11T16:40:05Z by kres 4b09af7.
+# Generated on 2025-12-15T09:30:42Z by kres 4b09af7.
 
 concurrency:
   group: ${{ github.head_ref || github.run_id }}
@@ -96,9 +96,10 @@ jobs:
         env:
           EXTRA_TEST_ARGS: -talos.enforcing
           IMAGE_REGISTRY: registry.dev.siderolabs.io
-          QEMU_EXTRA_DISKS: "3"
-          QEMU_EXTRA_DISKS_DRIVERS: ide,nvme
+          QEMU_EXTRA_DISKS: "4"
+          QEMU_EXTRA_DISKS_DRIVERS: virtiofs,ide,nvme
           QEMU_EXTRA_DISKS_SIZE: "10240"
+          QEMU_EXTRA_DISKS_TAGS: disk0
           TAG_SUFFIX_IN: -enforcing
           USER_DISKS_MOUNTS: /var/mnt/extra,/var/mnt/p1,/var/mnt/p2
           WITH_CONFIG_PATCH_WORKER: '@hack/test/patches/ephemeral-nvme.yaml:@hack/test/patches/dm-raid-module.yaml'

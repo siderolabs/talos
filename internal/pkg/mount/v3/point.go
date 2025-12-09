@@ -50,6 +50,8 @@ type Options struct {
 }
 
 // Mount the mount point.
+//
+//nolint:gocyclo
 func (p *Point) Mount(opts Options) error {
 	defer p.Release(false) //nolint:errcheck
 
@@ -85,7 +87,11 @@ func (p *Point) Mount(opts Options) error {
 			}
 		}
 
-		return selinux.SetLabel(p.target, p.selinuxLabel)
+		if err := selinux.SetLabel(p.target, p.selinuxLabel); err != nil && !errors.Is(err, unix.ENOTSUP) {
+			return fmt.Errorf("error setting selinux label on %q: %w", p.target, err)
+		}
+
+		return nil
 	}, false)
 }
 
