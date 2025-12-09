@@ -75,6 +75,23 @@ func (p *provisioner) Create(ctx context.Context, request provision.ClusterReque
 		return nil, fmt.Errorf("error creating dnsd: %w", err)
 	}
 
+	if hasVirtiofsDisk(request.Nodes.WorkerNodes()) {
+		virtiofsdBin, err := p.FindVirtiofsd()
+		if err != nil {
+			return nil, fmt.Errorf("virtiofsd lookup: %w", err)
+		}
+
+		if virtiofsdBin != "" {
+			fmt.Fprintln(options.LogWriter, "creating virtiofsd using", virtiofsdBin)
+
+			if err = p.CreateVirtiofsd(state, request, virtiofsdBin); err != nil {
+				return nil, fmt.Errorf("error creating virtiofsd: %w", err)
+			}
+		} else {
+			fmt.Fprintln(options.LogWriter, "virtiofsd not found, skipping")
+		}
+	}
+
 	if request.Network.ImageCachePath != "" {
 		fmt.Fprintln(options.LogWriter, "creating image cache")
 
@@ -155,10 +172,21 @@ func (p *provisioner) Create(ctx context.Context, request provision.ClusterReque
 		KubernetesEndpoint: p.GetExternalKubernetesControlPlaneEndpoint(request.Network, lbPort),
 	}
 
-	err = state.Save()
-	if err != nil {
+	if err := state.Save(); err != nil {
 		return nil, err
 	}
 
 	return state, nil
+}
+
+func hasVirtiofsDisk(nodes []provision.NodeRequest) bool {
+	for _, node := range nodes {
+		for _, disk := range node.Disks {
+			if disk.Driver == "virtiofs" {
+				return true
+			}
+		}
+	}
+
+	return false
 }

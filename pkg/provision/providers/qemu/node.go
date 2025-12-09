@@ -26,6 +26,7 @@ import (
 	"github.com/siderolabs/go-cmd/pkg/cmd"
 	"github.com/siderolabs/go-procfs/procfs"
 
+	"github.com/siderolabs/talos/pkg/machinery/config/machine"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/kernel"
 	"github.com/siderolabs/talos/pkg/provision"
@@ -160,11 +161,18 @@ func (p *provisioner) createNode(ctx context.Context, state *provision.State, cl
 		DiskDrivers: xslices.Map(nodeReq.Disks, func(disk *provision.Disk) string {
 			return disk.Driver
 		}),
+		DiskTags: xslices.Map(nodeReq.Disks, func(disk *provision.Disk) string {
+			return disk.Tag
+		}),
+		DiskSerials: xslices.Map(nodeReq.Disks, func(disk *provision.Disk) string {
+			return disk.Serial
+		}),
 		DiskBlockSizes: xslices.Map(nodeReq.Disks, func(disk *provision.Disk) uint {
 			return disk.BlockSize
 		}),
 		VCPUCount:                 vcpuCount,
 		MemSize:                   memSize,
+		MemShmPath:                state.GetShmPath(fmt.Sprintf("shm-%s", nodeReq.Name)), // this is used only when attaching virtiofs disks
 		KernelArgs:                cmdline.String(),
 		ExtraISOPath:              extraISOPath,
 		PFlashImages:              pflashImages,
@@ -311,6 +319,22 @@ func (p *provisioner) createNodes(
 func (p *provisioner) populateSystemDisk(disks []string, clusterReq provision.ClusterRequest) error {
 	if len(disks) > 0 && clusterReq.DiskImagePath != "" {
 		if err := p.handleOptionalZSTDDiskImage(disks[0], clusterReq.DiskImagePath); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (p *provisioner) destroySHMFiles(state *provision.State) error {
+	for _, node := range state.Info().Nodes {
+		if node.Type != machine.TypeWorker {
+			continue
+		}
+
+		shmFilePath := state.GetShmPath(fmt.Sprintf("shm-%s", node.Name))
+
+		if err := os.RemoveAll(shmFilePath); err != nil && !os.IsNotExist(err) {
 			return err
 		}
 	}

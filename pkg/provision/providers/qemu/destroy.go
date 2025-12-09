@@ -15,7 +15,7 @@ import (
 
 // Destroy Talos cluster as set of qemu VMs.
 //
-//nolint:gocyclo
+//nolint:gocyclo,cyclop
 func (p *provisioner) Destroy(ctx context.Context, cluster provision.Cluster, opts ...provision.Option) error {
 	options := provision.DefaultOptions()
 
@@ -64,6 +64,10 @@ func (p *provisioner) Destroy(ctx context.Context, cluster provision.Cluster, op
 		return fmt.Errorf("error inspecting QEMU state, %#+v", cluster)
 	}
 
+	if err := p.destroySHMFiles(state); err != nil {
+		return err
+	}
+
 	fmt.Fprintln(options.LogWriter, "removing dhcpd")
 
 	if err := p.DestroyDHCPd(state); err != nil {
@@ -74,6 +78,12 @@ func (p *provisioner) Destroy(ctx context.Context, cluster provision.Cluster, op
 
 	if err = p.DestroyImageCache(state); err != nil {
 		return fmt.Errorf("error stopping image cache: %w", err)
+	}
+
+	fmt.Fprintln(options.LogWriter, "removing virtiofsd")
+
+	if err := p.DestroyVirtiofsd(state); err != nil {
+		return fmt.Errorf("error stopping virtiofsd: %w", err)
 	}
 
 	fmt.Fprintln(options.LogWriter, "removing dnsd")

@@ -1223,6 +1223,102 @@ func (suite *VolumesSuite) TestExistingVolumes() {
 		})
 }
 
+// TestExternalVolumesVirtiofs performs a series of operations on external virtiofs volumes: mount/unmount, etc.
+func (suite *VolumesSuite) TestExternalVolumesVirtiofs() {
+	if testing.Short() {
+		suite.T().Skip("skipping test in short mode.")
+	}
+
+	if suite.Cluster == nil || suite.Cluster.Provisioner() != base.ProvisionerQEMU {
+		suite.T().Skip("skipping test for non-qemu provisioner")
+	}
+
+	node := suite.RandomDiscoveredNodeInternalIP(machine.TypeWorker)
+
+	k8sNode, err := suite.GetK8sNodeByInternalIP(suite.ctx, node)
+	suite.Require().NoError(err)
+
+	nodeName := k8sNode.Name
+
+	ctx := client.WithNode(suite.ctx, node)
+
+	volumeID := fmt.Sprintf("%04x", rand.Int31())
+	externalVolumeID := constants.ExternalVolumePrefix + volumeID
+
+	// create the volume as an external volume
+	externalVolumeDoc := blockcfg.NewExternalVolumeConfigV1Alpha1()
+	externalVolumeDoc.MetaName = volumeID
+	externalVolumeDoc.FilesystemType = block.FilesystemTypeVirtiofs
+	externalVolumeDoc.MountSpec = blockcfg.ExternalMountSpec{
+		MountVirtiofs: &blockcfg.VirtiofsMountSpec{
+			VirtiofsTag: "disk0",
+		},
+	}
+
+	// create external volume
+	suite.PatchMachineConfig(ctx, externalVolumeDoc)
+
+	// wait for the external volume to be discovered
+	rtestutils.AssertResources(ctx, suite.T(), suite.Client.COSI, []resource.ID{externalVolumeID},
+		func(vs *block.VolumeStatus, asrt *assert.Assertions) {
+			asrt.Equalf(block.VolumePhaseReady, vs.TypedSpec().Phase, "Expected %q, but got %q (%s)", block.VolumePhaseReady, vs.TypedSpec().Phase, vs.Metadata().ID())
+		},
+	)
+
+	// check that the volume is mounted
+	rtestutils.AssertResources(ctx, suite.T(), suite.Client.COSI, []resource.ID{externalVolumeID},
+		func(vs *block.MountStatus, asrt *assert.Assertions) {
+			asrt.False(vs.TypedSpec().ReadOnly)
+		})
+
+	// create a pod using external volumes
+	podDef, err := suite.NewPod("external-volume-virtiofs-test")
+	suite.Require().NoError(err)
+
+	// using subdirectory here to test that the hostPath mount is properly propagated into the kubelet
+	podDef = podDef.WithNodeName(nodeName).
+		WithNamespace("kube-system").
+		WithHostVolumeMount(filepath.Join(constants.UserVolumeMountPoint, volumeID, "data"), "/mnt/data")
+
+	suite.Require().NoError(podDef.Create(suite.ctx, 1*time.Minute))
+
+	_, _, err = podDef.Exec(suite.ctx, "mkdir -p /mnt/data/test")
+	suite.Require().NoError(err)
+
+	suite.Require().NoError(podDef.Delete(suite.ctx))
+
+	// verify that directory exists
+	expectedPath := filepath.Join(constants.UserVolumeMountPoint, volumeID, "data", "test")
+
+	stream, err := suite.Client.LS(ctx, &machineapi.ListRequest{
+		Root:  expectedPath,
+		Types: []machineapi.ListRequest_Type{machineapi.ListRequest_DIRECTORY},
+	})
+
+	suite.Require().NoError(err)
+
+	suite.Require().NoError(helpers.ReadGRPCStream(stream, func(info *machineapi.FileInfo, _ string, _ bool) error {
+		suite.T().Logf("found %s on node %s", info.Name, node)
+		suite.Require().Equal(expectedPath, info.Name, "expected %s to exist", expectedPath)
+
+		return nil
+	}))
+
+	// now, re-mount the external volume as read-only
+	externalVolumeDoc.MountSpec.MountReadOnly = pointer.To(true)
+	suite.PatchMachineConfig(ctx, externalVolumeDoc)
+
+	rtestutils.AssertResources(ctx, suite.T(), suite.Client.COSI, []resource.ID{externalVolumeID},
+		func(vs *block.MountStatus, asrt *assert.Assertions) {
+			asrt.True(vs.TypedSpec().ReadOnly)
+		})
+
+	// clean up
+	suite.RemoveMachineConfigDocumentsByName(ctx, blockcfg.ExternalVolumeConfigKind, volumeID)
+
+	rtestutils.AssertNoResource[*block.VolumeStatus](ctx, suite.T(), suite.Client.COSI, externalVolumeID)
+}
+
 // TestSwapStatus verifies that all swap volumes are successfully enabled.
 func (suite *VolumesSuite) TestSwapStatus() {
 	for _, node := range suite.DiscoverNodeInternalIPs(suite.ctx) {

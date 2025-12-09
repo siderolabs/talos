@@ -407,6 +407,8 @@ func formatTypeName(fieldTypePkg string, fieldType string, declPkg string) (stri
 		return "resource/definitions/cri/registry.proto", "talos.resource.definitions.cri.RegistryTLSConfig"
 	case typeData{"github.com/siderolabs/talos/pkg/machinery/resources/runtime", "PlatformMetadataSpec"}:
 		return "resource/definitions/runtime/runtime.proto", "talos.resource.definitions.runtime.PlatformMetadataSpec"
+	case typeData{"github.com/siderolabs/talos/pkg/machinery/resources/block", "ParameterSpec"}:
+		return "resource/definitions/block/block.proto", "talos.resource.definitions.block.ParameterSpec"
 	default:
 		return "", ""
 	}

@@ -58,6 +58,7 @@ message DiscoveryRefreshStatusSpec {
 // DiskSelector selects a disk for the volume.
 message DiskSelector {
   google.api.expr.v1alpha1.CheckedExpr match = 1;
+  string external = 2;
 }
 
 // DiskSpec is the spec for Disks status.
@@ -137,6 +138,7 @@ message MountSpec {
   int64 gid = 7;
   bool recursive_relabel = 8;
   string bind_target = 9;
+  repeated ParameterSpec parameters = 10;
 }
 
 // MountStatusSpec is the spec for MountStatus.
@@ -149,6 +151,14 @@ message MountStatusSpec {
   bool project_quota_support = 6;
   talos.resource.definitions.enums.BlockEncryptionProviderType encryption_provider = 7;
   bool detached = 8;
+}
+
+// ParameterSpec is a mount parameter.
+message ParameterSpec {
+  talos.resource.definitions.enums.BlockFSParameterType type = 1;
+  string name = 2;
+  string string = 3;
+  bytes binary = 5;
 }
 
 // PartitionSpec is the spec for volume partitioning.
