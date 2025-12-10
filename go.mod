@@ -64,7 +64,7 @@ require (
 	github.com/containerd/platforms v1.0.0-rc.1
 	github.com/containerd/typeurl/v2 v2.2.3
 	github.com/containernetworking/cni v1.3.0
-	github.com/containernetworking/plugins v1.8.0
+	github.com/containernetworking/plugins v1.9.0
 	github.com/coredns/coredns v1.12.3
 	github.com/coreos/go-iptables v0.8.0
 	github.com/cosi-project/runtime v1.12.0
