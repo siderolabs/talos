@@ -20,7 +20,7 @@ preface = """
         description = """\
 Linux: 6.18.0
 Kubernetes: 1.35.0-rc.0
-CNI Plugins: 1.8.0
+CNI Plugins: 1.9.0
 cryptsetup: 2.8.1
 LVM2: 2_03_37
 systemd-udevd: 257.8
