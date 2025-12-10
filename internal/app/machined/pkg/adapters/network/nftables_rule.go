@@ -582,9 +582,9 @@ func (a nftablesRule) Compile() (*NfTablesCompiled, error) {
 
 		switch family { //nolint:exhaustive
 		case nftables.TableFamilyIPv4:
-			mss = mtu - 40 // TCP + IPv4 overhead
+			mss = mtu - (IPv4HeaderLen + TCPHeaderLen + TCPOptionsLen) // TCP + IPv4 overhead
 		case nftables.TableFamilyIPv6:
-			mss = mtu - 60 // TCP + IPv6 overhead
+			mss = mtu - (IPv6HeaderLen + TCPHeaderLen + TCPOptionsLen) // TCP + IPv6 overhead
 		default:
 			panic("unexpected IP family")
 		}
