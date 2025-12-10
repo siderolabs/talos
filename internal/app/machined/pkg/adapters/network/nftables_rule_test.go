@@ -375,15 +375,20 @@ func TestNfTablesRuleCompile(t *testing.T) { //nolint:tparallel
 				},
 			},
 		},
-		{
-			name: "clamp MSS",
+		{ //nolint:dupl
+			name: "clamp MSS v4",
 			spec: networkres.NfTablesRule{
+				MatchDestinationAddress: &networkres.NfTablesAddressMatch{
+					IncludeSubnets: []netip.Prefix{
+						netip.MustParsePrefix("0.0.0.0/0"),
+					},
+				},
 				ClampMSS: &networkres.NfTablesClampMSS{
 					MTU: 1280,
 				},
 			},
 			expectedRules: [][]expr.Any{
-				{ //nolint:dupl
+				{
 					&expr.Meta{Key: expr.MetaKeyNFPROTO, Register: 1},
 					&expr.Cmp{
 						Op:       expr.CmpOpEq,
@@ -441,7 +446,22 @@ func TestNfTablesRuleCompile(t *testing.T) { //nolint:tparallel
 						Op:             expr.ExthdrOpTcpopt,
 					},
 				},
-				{ //nolint:dupl
+			},
+		},
+		{ //nolint:dupl
+			name: "clamp MSS v6",
+			spec: networkres.NfTablesRule{
+				MatchDestinationAddress: &networkres.NfTablesAddressMatch{
+					IncludeSubnets: []netip.Prefix{
+						netip.MustParsePrefix("::/0"),
+					},
+				},
+				ClampMSS: &networkres.NfTablesClampMSS{
+					MTU: 1280,
+				},
+			},
+			expectedRules: [][]expr.Any{
+				{
 					&expr.Meta{Key: expr.MetaKeyNFPROTO, Register: 1},
 					&expr.Cmp{
 						Op:       expr.CmpOpEq,

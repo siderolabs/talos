@@ -353,6 +353,9 @@ func (s *NfTablesChainSuite) TestClampMSS() {
 	chain.TypedSpec().Policy = nethelpers.VerdictAccept
 	chain.TypedSpec().Rules = []network.NfTablesRule{
 		{
+			MatchDestinationAddress: &network.NfTablesAddressMatch{
+				Invert: true, // match all addresses
+			},
 			ClampMSS: &network.NfTablesClampMSS{
 				MTU: constants.KubeSpanLinkMTU,
 			},

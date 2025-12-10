@@ -655,8 +655,13 @@ func (a nftablesRule) Compile() (*NfTablesCompiled, error) {
 	}
 
 	if a.NfTablesRule.ClampMSS != nil {
-		rule4 = append(rule4, clampMSS(nftables.TableFamilyIPv4, a.NfTablesRule.ClampMSS.MTU)...)
-		rule6 = append(rule6, clampMSS(nftables.TableFamilyIPv6, a.NfTablesRule.ClampMSS.MTU)...)
+		if rule4 != nil {
+			rule4 = append(rule4, clampMSS(nftables.TableFamilyIPv4, a.NfTablesRule.ClampMSS.MTU)...)
+		}
+
+		if rule6 != nil {
+			rule6 = append(rule6, clampMSS(nftables.TableFamilyIPv6, a.NfTablesRule.ClampMSS.MTU)...)
+		}
 	}
 
 	if a.NfTablesRule.SetMark != nil {

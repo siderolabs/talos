@@ -316,8 +316,9 @@ func (ctrl *ManagerController) Run(ctx context.Context, r controller.Runtime, lo
 			})
 		}
 
-		// build full allowedIPs set
-		var allowedIPsBuilder netipx.IPSetBuilder
+		// build a full set of routed over KubeSpan IPs,
+		// note this doesn't include KubeSpan ULA addresses
+		var routedIPsBuilder netipx.IPSetBuilder
 
 		for pubKey, peerSpec := range peerSpecs {
 			// list of statuses and specs should be in sync at this point
@@ -327,12 +328,14 @@ func (ctrl *ManagerController) Run(ctx context.Context, r controller.Runtime, lo
 			// or if the peer connection state is up.
 			if cfgSpec.ForceRouting || peerStatus.State == kubespan.PeerStateUp {
 				for _, prefix := range peerSpec.AllowedIPs {
-					allowedIPsBuilder.AddPrefix(prefix)
+					if !network.IsULA(prefix.Addr(), network.ULAKubeSpan) {
+						routedIPsBuilder.AddPrefix(prefix)
+					}
 				}
 			}
 		}
 
-		allowedIPsSet, err := allowedIPsBuilder.IPSet()
+		routedIPsSet, err := routedIPsBuilder.IPSet()
 		if err != nil {
 			return fmt.Errorf("failed building allowed IPs set: %w", err)
 		}
@@ -380,7 +383,7 @@ func (ctrl *ManagerController) Run(ctx context.Context, r controller.Runtime, lo
 					},
 					{
 						MatchDestinationAddress: &network.NfTablesAddressMatch{
-							IncludeSubnets: allowedIPsSet.Prefixes(),
+							IncludeSubnets: routedIPsSet.Prefixes(),
 						},
 						SetMark: &network.NfTablesMark{
 							Mask: ^uint32(constants.KubeSpanDefaultFirewallMask),
@@ -425,7 +428,7 @@ func (ctrl *ManagerController) Run(ctx context.Context, r controller.Runtime, lo
 					},
 					{
 						MatchDestinationAddress: &network.NfTablesAddressMatch{
-							IncludeSubnets: allowedIPsSet.Prefixes(),
+							IncludeSubnets: routedIPsSet.Prefixes(),
 						},
 						ClampMSS: &network.NfTablesClampMSS{
 							MTU: uint16(mtu),
@@ -433,7 +436,7 @@ func (ctrl *ManagerController) Run(ctx context.Context, r controller.Runtime, lo
 					},
 					{
 						MatchDestinationAddress: &network.NfTablesAddressMatch{
-							IncludeSubnets: allowedIPsSet.Prefixes(),
+							IncludeSubnets: routedIPsSet.Prefixes(),
 						},
 						SetMark: &network.NfTablesMark{
 							Mask: ^uint32(constants.KubeSpanDefaultFirewallMask),
