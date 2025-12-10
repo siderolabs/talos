@@ -6,6 +6,7 @@ package makefs_test
 
 import (
 	"bytes"
+	"crypto/sha256"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -116,4 +117,56 @@ realtime =none                   extsz=4096   blocks=0, rtextents=0
 			assert.Equal(t, test.expected, actual)
 		})
 	}
+}
+
+func TestXFSReproducibility(t *testing.T) {
+	t.Setenv("SOURCE_DATE_EPOCH", "1732109929")
+	t.Setenv("DETERMINISTIC_SEED", "1")
+	t.Setenv("PATH", "/usr/bin:/bin:/usr/sbin:/sbin")
+
+	tmpDir := t.TempDir()
+
+	tempFile := filepath.Join(tmpDir, "reproducible-xfs.img")
+
+	if _, err := os.Create(tempFile); err != nil {
+		t.Fatalf("failed to create file: %v", err)
+	}
+
+	if err := os.Truncate(tempFile, 512*1024*1024); err != nil {
+		t.Fatalf("failed to create file: %v", err)
+	}
+
+	if err := makefs.XFS(tempFile,
+		makefs.WithReproducible(true),
+		makefs.WithLabel("TESTLABEL"),
+	); err != nil {
+		t.Fatalf("failed to create xfs filesystem: %v", err)
+	}
+
+	// get the file sha256 checksum
+	fileData, err := os.ReadFile(tempFile)
+	if err != nil {
+		t.Fatalf("failed to read file: %v", err)
+	}
+
+	sum1 := sha256.Sum256(fileData)
+
+	// create the filesystem again
+	if err := makefs.XFS(tempFile,
+		makefs.WithReproducible(true),
+		makefs.WithForce(true),
+		makefs.WithLabel("TESTLABEL"),
+	); err != nil {
+		t.Fatalf("failed to create xfs filesystem: %v", err)
+	}
+
+	// get the file sha256 checksum
+	fileData, err = os.ReadFile(tempFile)
+	if err != nil {
+		t.Fatalf("failed to read file: %v", err)
+	}
+
+	sum2 := sha256.Sum256(fileData)
+
+	assert.Equal(t, sum1, sum2)
 }

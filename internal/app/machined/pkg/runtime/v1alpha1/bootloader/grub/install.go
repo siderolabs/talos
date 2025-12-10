@@ -10,11 +10,13 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"slices"
 	"strings"
 
 	"github.com/siderolabs/go-blockdevice/v2/blkid"
 	"github.com/siderolabs/go-cmd/pkg/cmd"
 
+	bootloaderutils "github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/efiutils"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/mount"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/options"
 	"github.com/siderolabs/talos/internal/pkg/partition"
@@ -31,8 +33,6 @@ const (
 
 // Install validates the grub configuration and writes it to the disk.
 func (c *Config) Install(opts options.InstallOptions) (*options.InstallResult, error) {
-	var installResult *options.InstallResult
-
 	mountSpecs := []mount.Spec{
 		{
 			PartitionLabel: constants.BootPartitionLabel,
@@ -46,6 +46,8 @@ func (c *Config) Install(opts options.InstallOptions) (*options.InstallResult, e
 		FilesystemType: partition.FilesystemTypeVFAT,
 		MountTarget:    filepath.Join(opts.MountPrefix, constants.EFIMountPoint),
 	}
+
+	var efiFound bool
 
 	// check if the EFI partition is present
 	if err := mount.PartitionOp(
@@ -61,10 +63,10 @@ func (c *Config) Install(opts options.InstallOptions) (*options.InstallResult, e
 		nil,
 		opts.BlkidInfo,
 	); err == nil {
-		c.installEFI = true
+		efiFound = true
 	}
 
-	if c.installEFI {
+	if efiFound {
 		mountSpecs = append(mountSpecs, efiMountSpec)
 	}
 
@@ -72,11 +74,17 @@ func (c *Config) Install(opts options.InstallOptions) (*options.InstallResult, e
 		opts.BootDisk,
 		mountSpecs,
 		func() error {
-			var installErr error
+			if err := c.runGrubInstall(opts, efiFound); err != nil {
+				return err
+			}
 
-			installResult, installErr = c.install(opts)
+			if opts.ExtraInstallStep != nil {
+				if err := opts.ExtraInstallStep(); err != nil {
+					return err
+				}
+			}
 
-			return installErr
+			return nil
 		},
 		[]blkid.ProbeOption{
 			// installation happens with locked blockdevice
@@ -87,15 +95,127 @@ func (c *Config) Install(opts options.InstallOptions) (*options.InstallResult, e
 		opts.BlkidInfo,
 	)
 
-	return installResult, err
+	return &options.InstallResult{
+		PreviousLabel: string(c.Fallback),
+	}, err
 }
 
-//nolint:gocyclo,cyclop
-func (c *Config) install(opts options.InstallOptions) (*options.InstallResult, error) {
-	if err := c.flip(); err != nil {
-		return nil, err
+func (c *Config) generateGrubImage(opts options.InstallOptions, efiAssetsPath string) error {
+	var copyInstructions []utils.CopyInstruction
+
+	grubSourceDirectory := "/usr/lib/grub"
+
+	grubModules := []string{
+		"part_gpt",
+		"ext2",
+		"fat",
+		"xfs",
+		"normal",
+		"configfile",
+		"linux",
+		"boot",
+		"search",
+		"search_fs_uuid",
+		"search_fs_file",
+		"ls",
+		"cat",
+		"echo",
+		"test",
+		"help",
+		"reboot",
+		"halt",
+		"all_video",
 	}
 
+	if opts.Arch == "amd64" {
+		grub32Modules := []string{
+			"biosdisk",
+			"part_msdos",
+		}
+
+		args := []string{
+			"--format",
+			"i386-pc",
+			"--output",
+			filepath.Join(opts.MountPrefix, "core.img"),
+			"--prefix",
+			"(hd0,gpt3)/grub",
+		}
+
+		args = append(args, slices.Concat(grubModules, grub32Modules)...)
+
+		if _, err := cmd.Run(
+			"grub-mkimage",
+			args...,
+		); err != nil {
+			return fmt.Errorf("failed to generate grub core image: %w", err)
+		}
+
+		copyInstructions = append(copyInstructions, utils.SourceDestination(
+			filepath.Join(grubSourceDirectory, "i386-pc", "boot.img"),
+			filepath.Join(opts.MountPrefix, "boot.img"),
+		))
+	}
+
+	grubEFIPath := filepath.Join(opts.MountPrefix, "grub-efi.img")
+
+	var (
+		platform string
+		prefix   string
+	)
+
+	switch opts.Arch {
+	case "amd64":
+		platform = "x86_64-efi"
+		prefix = "(hd0,gpt3)/grub" // EFI, BIOS, BOOT
+	case "arm64":
+		platform = "arm64-efi"
+		prefix = "(hd0,gpt2)/grub" // EFI, BOOT
+	default:
+		return fmt.Errorf("unsupported architecture for grub image: %s", opts.Arch)
+	}
+
+	args := []string{
+		"--format",
+		platform,
+		"--output",
+		grubEFIPath,
+		"--prefix",
+		prefix,
+		"--compression",
+		"xz",
+	}
+	args = append(args, grubModules...)
+
+	if _, err := cmd.Run(
+		"grub-mkimage",
+		args...,
+	); err != nil {
+		return fmt.Errorf("failed to generate grub efi image: %w", err)
+	}
+
+	efiFile, err := bootloaderutils.Name(opts.Arch)
+	if err != nil {
+		return err
+	}
+
+	copyInstructions = append(copyInstructions, utils.SourceDestination(
+		grubEFIPath,
+		filepath.Join(opts.MountPrefix, efiAssetsPath, efiFile),
+	))
+
+	if err := utils.CopyFiles(
+		opts.Printf,
+		copyInstructions...,
+	); err != nil {
+		return fmt.Errorf("failed to copy grub generated img files: %w", err)
+	}
+
+	return nil
+}
+
+//nolint:gocyclo
+func (c *Config) generateAssets(opts options.InstallOptions, efiAssetsPath string) error {
 	cmdline := opts.Cmdline
 
 	// if we have a kernel path, assume that the kernel and initramfs are available
@@ -111,17 +231,17 @@ func (c *Config) install(opts options.InstallOptions) (*options.InstallResult, e
 				filepath.Join(opts.MountPrefix, constants.BootMountPoint, string(c.Default), constants.InitramfsAsset),
 			),
 		); err != nil {
-			return nil, err
+			return err
 		}
 
 		if opts.GrubUseUKICmdline {
-			return nil, fmt.Errorf("cannot use UKI cmdline when boot assets are not UKI")
+			return fmt.Errorf("cannot use UKI cmdline when boot assets are not UKI")
 		}
 	} else {
 		// if the kernel path does not exist, assume that the kernel and initramfs are in the UKI
 		assetInfo, err := uki.Extract(opts.BootAssets.UKIPath)
 		if err != nil {
-			return nil, err
+			return err
 		}
 
 		defer func() {
@@ -141,13 +261,13 @@ func (c *Config) install(opts options.InstallOptions) (*options.InstallResult, e
 				filepath.Join(opts.MountPrefix, constants.BootMountPoint, string(c.Default), constants.InitramfsAsset),
 			),
 		); err != nil {
-			return nil, err
+			return err
 		}
 
 		if opts.GrubUseUKICmdline {
 			cmdlineBytes, err := io.ReadAll(assetInfo.Cmdline)
 			if err != nil {
-				return nil, fmt.Errorf("failed to read cmdline from UKI: %w", err)
+				return fmt.Errorf("failed to read cmdline from UKI: %w", err)
 			}
 
 			cmdline = string(cmdlineBytes)
@@ -161,18 +281,27 @@ func (c *Config) install(opts options.InstallOptions) (*options.InstallResult, e
 	}
 
 	if err := c.Put(c.Default, cmdline, opts.Version); err != nil {
-		return nil, err
+		return err
 	}
 
 	if err := c.Write(filepath.Join(opts.MountPrefix, ConfigPath), opts.Printf); err != nil {
-		return nil, err
+		return err
 	}
 
+	if opts.ImageMode {
+		return c.generateGrubImage(opts, efiAssetsPath)
+	}
+
+	return nil
+}
+
+//nolint:gocyclo
+func (c *Config) runGrubInstall(opts options.InstallOptions, efiMode bool) error {
 	var platforms []string
 
 	switch opts.Arch {
 	case amd64:
-		if c.installEFI {
+		if efiMode {
 			platforms = append(platforms, "x86_64-efi")
 		}
 
@@ -181,7 +310,7 @@ func (c *Config) install(opts options.InstallOptions) (*options.InstallResult, e
 		platforms = []string{"arm64-efi"}
 	}
 
-	if runtime.GOARCH == amd64 && opts.Arch == amd64 && !opts.ImageMode {
+	if runtime.GOARCH == amd64 && opts.Arch == amd64 {
 		// let grub choose the platform automatically if not building an image
 		platforms = []string{""}
 	}
@@ -192,7 +321,7 @@ func (c *Config) install(opts options.InstallOptions) (*options.InstallResult, e
 			"--removable",
 		}
 
-		if c.installEFI {
+		if efiMode {
 			args = append(args, "--efi-directory="+filepath.Join(opts.MountPrefix, constants.EFIMountPoint))
 		}
 
@@ -209,17 +338,9 @@ func (c *Config) install(opts options.InstallOptions) (*options.InstallResult, e
 		opts.Printf("executing: grub-install %s", strings.Join(args, " "))
 
 		if _, err := cmd.Run("grub-install", args...); err != nil {
-			return nil, fmt.Errorf("failed to install grub: %w", err)
+			return fmt.Errorf("failed to install grub: %w", err)
 		}
 	}
 
-	if opts.ExtraInstallStep != nil {
-		if err := opts.ExtraInstallStep(); err != nil {
-			return nil, err
-		}
-	}
-
-	return &options.InstallResult{
-		PreviousLabel: string(c.Fallback),
-	}, nil
+	return nil
 }

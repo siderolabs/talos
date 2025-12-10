@@ -22,16 +22,72 @@ type FormatOptions struct {
 	FileSystemType      FileSystemType
 	Force               bool
 	UnsupportedFSOption bool
+	Reproducible        bool
+}
+
+// FormatOption to control options.
+type FormatOption func(*FormatOptions)
+
+// WithSourceDirectory sets the source directory for populating the filesystem.
+func WithSourceDirectory(dir string) FormatOption {
+	return func(o *FormatOptions) {
+		o.SourceDirectory = dir
+	}
+}
+
+// WithUnsupportedFSOption sets the unsupported filesystem option.
+func WithUnsupportedFSOption() FormatOption {
+	return func(o *FormatOptions) {
+		o.UnsupportedFSOption = true
+	}
+}
+
+// WithForce sets the force option.
+func WithForce() FormatOption {
+	return func(o *FormatOptions) {
+		o.Force = true
+	}
+}
+
+// WithLabel sets the label for the filesystem.
+func WithLabel(label string) FormatOption {
+	return func(o *FormatOptions) {
+		o.Label = label
+	}
+}
+
+// WithFileSystemType sets the filesystem type.
+func WithFileSystemType(fsType FileSystemType) FormatOption {
+	return func(o *FormatOptions) {
+		o.FileSystemType = fsType
+	}
+}
+
+// WithReproducible sets the reproducible option.
+func WithReproducible() FormatOption {
+	return func(o *FormatOptions) {
+		o.Reproducible = true
+	}
 }
 
 // NewFormatOptions creates a new format options.
-func NewFormatOptions(label string) *FormatOptions {
-	return systemPartitionsFormatOptions(label)
+func NewFormatOptions(opts ...FormatOption) *FormatOptions {
+	o := &FormatOptions{}
+
+	for _, opt := range opts {
+		opt(o)
+	}
+
+	return systemPartitionsFormatOptions(*o)
 }
 
 // Format zeroes the device and formats it using filesystem type provided.
 func Format(devname string, t *FormatOptions, talosVersion string, printf func(string, ...any)) error {
-	opts := []makefs.Option{makefs.WithForce(t.Force), makefs.WithLabel(t.Label)}
+	opts := []makefs.Option{
+		makefs.WithForce(t.Force),
+		makefs.WithLabel(t.Label),
+		makefs.WithPrintf(printf),
+	}
 
 	if t.UnsupportedFSOption {
 		opts = append(opts, makefs.WithUnsupportedFSOption(t.UnsupportedFSOption))
@@ -39,6 +95,10 @@ func Format(devname string, t *FormatOptions, talosVersion string, printf func(s
 
 	if t.SourceDirectory != "" {
 		opts = append(opts, makefs.WithSourceDirectory(t.SourceDirectory))
+	}
+
+	if t.Reproducible {
+		opts = append(opts, makefs.WithReproducible(true))
 	}
 
 	printf("formatting the partition %q as %q with label %q\n", devname, t.FileSystemType, t.Label)
@@ -73,13 +133,16 @@ func zeroPartition(devname string) (err error) {
 	return part.FastWipe()
 }
 
-func systemPartitionsFormatOptions(label string) *FormatOptions {
-	switch label {
+// systemPartitionsFormatOptions returns format options for system partitions.
+func systemPartitionsFormatOptions(opts FormatOptions) *FormatOptions {
+	switch opts.Label {
 	case constants.EFIPartitionLabel:
 		return &FormatOptions{
-			Label:          constants.EFIPartitionLabel,
-			FileSystemType: FilesystemTypeVFAT,
-			Force:          true,
+			Label:           constants.EFIPartitionLabel,
+			SourceDirectory: opts.SourceDirectory,
+			Reproducible:    opts.Reproducible,
+			FileSystemType:  FilesystemTypeVFAT,
+			Force:           true,
 		}
 	case constants.BIOSGrubPartitionLabel:
 		return &FormatOptions{
@@ -89,9 +152,11 @@ func systemPartitionsFormatOptions(label string) *FormatOptions {
 		}
 	case constants.BootPartitionLabel:
 		return &FormatOptions{
-			Label:          constants.BootPartitionLabel,
-			FileSystemType: FilesystemTypeXFS,
-			Force:          true,
+			Label:           constants.BootPartitionLabel,
+			SourceDirectory: opts.SourceDirectory,
+			Reproducible:    opts.Reproducible,
+			FileSystemType:  FilesystemTypeXFS,
+			Force:           true,
 		}
 	case constants.MetaPartitionLabel:
 		return &FormatOptions{
@@ -111,8 +176,10 @@ func systemPartitionsFormatOptions(label string) *FormatOptions {
 		}
 	case constants.ImageCachePartitionLabel:
 		return &FormatOptions{
-			Label:          constants.ImageCachePartitionLabel,
-			FileSystemType: FileSystemTypeExt4,
+			Label:           constants.ImageCachePartitionLabel,
+			SourceDirectory: opts.SourceDirectory,
+			FileSystemType:  FileSystemTypeExt4,
+			Reproducible:    opts.Reproducible,
 		}
 	default:
 		return nil

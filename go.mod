@@ -69,6 +69,7 @@ require (
 	github.com/coreos/go-iptables v0.8.0
 	github.com/cosi-project/runtime v1.13.0
 	github.com/detailyang/go-fallocate v0.0.0-20180908115635-432fa640bd2e
+	github.com/diskfs/go-diskfs v1.7.1-0.20251223133332-fc569a00ea19
 	github.com/distribution/reference v0.6.0
 	github.com/docker/cli v29.1.3+incompatible
 	github.com/dustin/go-humanize v1.0.1
@@ -161,8 +162,8 @@ require (
 	github.com/siderolabs/proto-codec v0.1.3
 	github.com/siderolabs/siderolink v0.3.15
 	github.com/siderolabs/talos/pkg/machinery v1.12.0-alpha.2
-	github.com/sirupsen/logrus v1.9.3
-	github.com/spf13/cobra v1.10.2
+	github.com/sirupsen/logrus v1.9.4-0.20230606125235-dd1b4c2e81af
+	github.com/spf13/cobra v1.10.1
 	github.com/spf13/pflag v1.0.10
 	github.com/stretchr/testify v1.11.1
 	github.com/thejerf/suture/v4 v4.0.6
@@ -208,6 +209,7 @@ require (
 	github.com/ProtonMail/go-mime v0.0.0-20230322103455-7d82a3887f2f // indirect
 	github.com/ProtonMail/gopenpgp/v2 v2.9.0 // indirect
 	github.com/adrg/xdg v0.5.3 // indirect
+	github.com/anchore/go-lzo v0.1.0 // indirect
 	github.com/antlr4-go/antlr/v4 v4.13.1 // indirect
 	github.com/apparentlymart/go-cidr v1.1.0 // indirect
 	github.com/armon/circbuf v0.0.0-20190214190532-5111143e8da2 // indirect
@@ -240,10 +242,12 @@ require (
 	github.com/cpuguy83/go-md2man/v2 v2.0.7 // indirect
 	github.com/cyphar/filepath-securejoin v0.6.0 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
+	github.com/djherbis/times v1.6.0 // indirect
 	github.com/docker/distribution v2.8.3+incompatible // indirect
 	github.com/docker/docker-credential-helpers v0.9.3 // indirect
 	github.com/docker/go-connections v0.6.0 // indirect
 	github.com/docker/go-units v0.5.0 // indirect
+	github.com/elliotwutingfeng/asciiset v0.0.0-20230602022725-51bbb787efab // indirect
 	github.com/emicklei/dot v1.10.0 // indirect
 	github.com/emicklei/go-restful/v3 v3.13.0 // indirect
 	github.com/evanphx/json-patch v5.9.11+incompatible // indirect

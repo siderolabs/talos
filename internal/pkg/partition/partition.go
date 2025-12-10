@@ -27,17 +27,17 @@ type Options struct {
 // NewPartitionOptions returns a new PartitionOptions.
 //
 //nolint:gocyclo
-func NewPartitionOptions(label string, uki bool, quirk quirks.Quirks) Options {
-	formatOptions := NewFormatOptions(label)
+func NewPartitionOptions(uki bool, quirk quirks.Quirks, formatOpts ...FormatOption) Options {
+	formatOptions := NewFormatOptions(formatOpts...)
 	if formatOptions == nil {
-		panic(fmt.Sprintf("unknown format options for label %q", label))
+		panic("empty format options, expected at least label")
 	}
 
-	switch label {
+	switch formatOptions.Label {
 	case constants.EFIPartitionLabel:
 		partitionOptions := Options{
 			FormatOptions:  *formatOptions,
-			PartitionLabel: label,
+			PartitionLabel: formatOptions.Label,
 			PartitionType:  EFISystemPartition,
 			Size:           quirk.PartitionSizes().GrubEFISize(),
 		}
@@ -54,7 +54,7 @@ func NewPartitionOptions(label string, uki bool, quirk quirks.Quirks) Options {
 
 		return Options{
 			FormatOptions:  *formatOptions,
-			PartitionLabel: label,
+			PartitionLabel: formatOptions.Label,
 			PartitionType:  BIOSBootPartition,
 			Size:           quirk.PartitionSizes().GrubBIOSSize(),
 			PartitionOpts:  []gpt.PartitionOption{gpt.WithLegacyBIOSBootableAttribute(true)},
@@ -66,39 +66,39 @@ func NewPartitionOptions(label string, uki bool, quirk quirks.Quirks) Options {
 
 		return Options{
 			FormatOptions:  *formatOptions,
-			PartitionLabel: label,
+			PartitionLabel: formatOptions.Label,
 			PartitionType:  LinuxFilesystemData,
 			Size:           quirk.PartitionSizes().GrubBootSize(),
 		}
 	case constants.MetaPartitionLabel:
 		return Options{
 			FormatOptions:  *formatOptions,
-			PartitionLabel: label,
+			PartitionLabel: formatOptions.Label,
 			PartitionType:  LinuxFilesystemData,
 			Size:           quirk.PartitionSizes().METASize(),
 		}
 	case constants.StatePartitionLabel:
 		return Options{
 			FormatOptions:  *formatOptions,
-			PartitionLabel: label,
+			PartitionLabel: formatOptions.Label,
 			PartitionType:  LinuxFilesystemData,
 			Size:           quirk.PartitionSizes().StateSize(),
 		}
 	case constants.EphemeralPartitionLabel:
 		return Options{
 			FormatOptions:  *formatOptions,
-			PartitionLabel: label,
+			PartitionLabel: formatOptions.Label,
 			PartitionType:  LinuxFilesystemData,
 			Size:           0,
 		}
 	case constants.ImageCachePartitionLabel:
 		return Options{
 			FormatOptions:  *formatOptions,
-			PartitionLabel: label,
+			PartitionLabel: formatOptions.Label,
 			PartitionType:  LinuxFilesystemData,
 			Size:           0,
 		}
 	default:
-		panic(fmt.Sprintf("unknown partition label %q", label))
+		panic(fmt.Sprintf("unknown partition label %q", formatOptions.Label))
 	}
 }

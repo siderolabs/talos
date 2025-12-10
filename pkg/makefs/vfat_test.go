@@ -6,6 +6,7 @@ package makefs_test
 
 import (
 	"os"
+	"os/exec"
 	"path/filepath"
 	"testing"
 
@@ -16,6 +17,11 @@ import (
 )
 
 func TestVFATWithSourceDirectory(t *testing.T) {
+	_, err := exec.LookPath("mcopy")
+	if err != nil {
+		t.Skip("mcopy not found in PATH, skipping test")
+	}
+
 	tempDir := t.TempDir()
 
 	// Create source directory structure

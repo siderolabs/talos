@@ -10,7 +10,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/fs"
 	"log"
 	"os"
 	"path/filepath"
@@ -25,6 +24,7 @@ import (
 	"golang.org/x/sys/unix"
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
+	bootloaderutils "github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/efiutils"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/kexec"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/mount"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/options"
@@ -274,15 +274,54 @@ func (c *Config) KexecLoad(r runtime.Runtime, disk string) error {
 	return err
 }
 
-// RequiredPartitions returns the list of partitions required by the bootloader.
-func (c *Config) RequiredPartitions(quirk quirks.Quirks) []partition.Options {
-	return []partition.Options{
-		partition.NewPartitionOptions(constants.EFIPartitionLabel, true, quirk),
+// GenerateAssets generates the sd-boot bootloader assets and returns the partition options with source directory set.
+func (c *Config) GenerateAssets(efiAssetsPath string, opts options.InstallOptions) ([]partition.Options, error) {
+	ukiFileName, err := generateNextUKIName(opts.Version, nil)
+	if err != nil {
+		return nil, err
 	}
+
+	if err := c.generateAssets(opts, efiAssetsPath, ukiFileName); err != nil {
+		return nil, err
+	}
+
+	quirk := quirks.New(opts.Version)
+
+	partitionOptions := []partition.Options{
+		partition.NewPartitionOptions(
+			true,
+			quirk,
+			partition.WithLabel(constants.EFIPartitionLabel),
+			partition.WithSourceDirectory(filepath.Join(opts.MountPrefix, efiAssetsPath)),
+		),
+	}
+
+	if opts.ImageMode {
+		partitionOptions = xslices.Map(partitionOptions, func(o partition.Options) partition.Options {
+			o.Reproducible = true
+
+			return o
+		})
+	}
+
+	return partitionOptions, nil
 }
 
 // Install the bootloader.
+// here we don't need to mount anything since we just need to write the EFI variables
+// since the partitions are already pre-populated.
 func (c *Config) Install(opts options.InstallOptions) (*options.InstallResult, error) {
+	ukiFileName, err := generateNextUKIName(opts.Version, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return c.setup(opts, ukiFileName)
+}
+
+// Upgrade the bootloader.
+// On upgrade we mount the EFI partition, cleanup old UKIs, copy the new UKI and sd-boot.efi, and update the EFI variables.
+func (c *Config) Upgrade(opts options.InstallOptions) (*options.InstallResult, error) {
 	var installResult *options.InstallResult
 
 	err := mount.PartitionOp(
@@ -295,11 +334,46 @@ func (c *Config) Install(opts options.InstallOptions) (*options.InstallResult, e
 			},
 		},
 		func() error {
-			var installErr error
+			// list existing UKIs, and clean up all but the current one (used to boot)
+			files, err := filepath.Glob(filepath.Join(opts.MountPrefix, constants.EFIMountPoint, "EFI", "Linux", "Talos-*.efi"))
+			if err != nil {
+				return err
+			}
 
-			installResult, installErr = c.install(opts)
+			opts.Printf("sd-boot: found existing UKIs during upgrade: %v", xslices.Map(files, filepath.Base))
 
-			return installErr
+			ukiPath, err := generateNextUKIName(opts.Version, files)
+			if err != nil {
+				return fmt.Errorf("failed to generate next UKI name: %w", err)
+			}
+
+			for _, file := range files {
+				if strings.EqualFold(filepath.Base(file), c.Default) {
+					if !strings.EqualFold(c.Default, ukiPath) {
+						// set fallback to the current default unless it matches the new install
+						c.Fallback = c.Default
+					}
+
+					continue
+				}
+
+				opts.Printf("removing old UKI: %s", file)
+
+				if err = os.Remove(file); err != nil {
+					return err
+				}
+			}
+
+			if err := c.generateAssets(opts, constants.EFIMountPoint, ukiPath); err != nil {
+				return err
+			}
+
+			installResult, err = c.setup(opts, ukiPath)
+			if err != nil {
+				return err
+			}
+
+			return nil
 		},
 		[]blkid.ProbeOption{
 			// installation happens with locked blockdevice
@@ -313,118 +387,44 @@ func (c *Config) Install(opts options.InstallOptions) (*options.InstallResult, e
 	return installResult, err
 }
 
-func sdBootFilePath(arch string) (string, error) {
-	basePath := filepath.Join("EFI", "boot")
-
-	switch arch {
-	case "amd64":
-		return filepath.Join(basePath, "BOOTX64.efi"), nil
-	case "arm64":
-		return filepath.Join(basePath, "BOOTAA64.efi"), nil
-	default:
-		return "", fmt.Errorf("unsupported architecture: %s", arch)
-	}
-}
-
 // Install the bootloader.
 //
 // Assumes that EFI partition is already mounted.
 // Writes down the UKI and updates the EFI variables.
 //
 //nolint:gocyclo,cyclop
-func (c *Config) install(opts options.InstallOptions) (*options.InstallResult, error) {
-	if _, err := os.Stat(filepath.Join(opts.MountPrefix, constants.EFIMountPoint, "loader", "loader.conf")); err != nil {
-		if !errors.Is(err, fs.ErrNotExist) {
-			return nil, err
-		}
+func (c *Config) setup(opts options.InstallOptions, ukiFileName string) (*options.InstallResult, error) {
+	opts.Printf("updating EFI variables")
 
-		if err := os.MkdirAll(filepath.Join(opts.MountPrefix, constants.EFIMountPoint, "loader"), 0o755); err != nil {
-			return nil, err
-		}
-
-		if err := os.WriteFile(filepath.Join(opts.MountPrefix, constants.EFIMountPoint, "loader", "loader.conf"), LoaderConfBytes, 0o644); err != nil {
-			return nil, err
-		}
-	}
-
-	// list existing UKIs, and clean up all but the current one (used to boot)
-	files, err := filepath.Glob(filepath.Join(opts.MountPrefix, constants.EFIMountPoint, "EFI", "Linux", "Talos-*.efi"))
-	if err != nil {
+	// set the new entry as a default one
+	if err := WriteVariable(LoaderEntryDefaultName, ukiFileName); err != nil {
 		return nil, err
 	}
 
-	opts.Printf("sd-boot: found existing UKIs during install: %v", xslices.Map(files, filepath.Base))
+	// set default 5 second boot timeout
+	if err := WriteVariable(LoaderConfigTimeoutName, "5"); err != nil {
+		return nil, err
+	}
 
-	ukiPath, err := generateNextUKIName(opts.Version, files)
+	efiRW, err := efivarfs.NewFilesystemReaderWriter(true)
 	if err != nil {
-		return nil, fmt.Errorf("failed to generate next UKI name: %w", err)
+		return nil, fmt.Errorf("failed to create efivarfs reader/writer: %w", err)
 	}
 
-	for _, file := range files {
-		if strings.EqualFold(filepath.Base(file), c.Default) {
-			if !strings.EqualFold(c.Default, ukiPath) {
-				// set fallback to the current default unless it matches the new install
-				c.Fallback = c.Default
-			}
+	defer efiRW.Close() //nolint:errcheck
 
-			continue
-		}
-
-		opts.Printf("removing old UKI: %s", file)
-
-		if err = os.Remove(file); err != nil {
-			return nil, err
-		}
+	blkidInfo, err := blkid.ProbePath(opts.BootDisk, blkid.WithSkipLocking(true))
+	if err != nil {
+		return nil, fmt.Errorf("failed to probe block device %s: %w", opts.BootDisk, err)
 	}
 
-	sdbootFilename, err := sdBootFilePath(opts.Arch)
+	sdbootFilename, err := bootloaderutils.Name(opts.Arch)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get sd-boot file path: %w", err)
 	}
 
-	if err := utils.CopyFiles(
-		opts.Printf,
-		utils.SourceDestination(
-			opts.BootAssets.UKIPath,
-			filepath.Join(opts.MountPrefix, constants.EFIMountPoint, "EFI", "Linux", ukiPath),
-		),
-		utils.SourceDestination(
-			opts.BootAssets.SDBootPath,
-			filepath.Join(opts.MountPrefix, constants.EFIMountPoint, sdbootFilename),
-		),
-	); err != nil {
-		return nil, err
-	}
-
-	// don't update EFI variables if we're installing to a loop device
-	if !opts.ImageMode {
-		opts.Printf("updating EFI variables")
-
-		// set the new entry as a default one
-		if err := WriteVariable(LoaderEntryDefaultName, ukiPath); err != nil {
-			return nil, err
-		}
-
-		// set default 5 second boot timeout
-		if err := WriteVariable(LoaderConfigTimeoutName, "5"); err != nil {
-			return nil, err
-		}
-
-		efiRW, err := efivarfs.NewFilesystemReaderWriter(true)
-		if err != nil {
-			return nil, fmt.Errorf("failed to create efivarfs reader/writer: %w", err)
-		}
-
-		defer efiRW.Close() //nolint:errcheck
-
-		blkidInfo, err := blkid.ProbePath(opts.BootDisk, blkid.WithSkipLocking(true))
-		if err != nil {
-			return nil, fmt.Errorf("failed to probe block device %s: %w", opts.BootDisk, err)
-		}
-
-		if err := CreateBootEntry(efiRW, blkidInfo, opts.Printf, sdbootFilename); err != nil {
-			return nil, fmt.Errorf("failed to create boot entry: %w", err)
-		}
+	if err := CreateBootEntry(efiRW, blkidInfo, opts.Printf, sdbootFilename); err != nil {
+		return nil, fmt.Errorf("failed to create boot entry: %w", err)
 	}
 
 	if opts.ExtraInstallStep != nil {
@@ -436,6 +436,37 @@ func (c *Config) install(opts options.InstallOptions) (*options.InstallResult, e
 	return &options.InstallResult{
 		PreviousLabel: c.Fallback,
 	}, nil
+}
+
+func (c *Config) generateAssets(opts options.InstallOptions, efiAssetsPath string, ukiFileName string) error {
+	if err := os.MkdirAll(filepath.Join(opts.MountPrefix, efiAssetsPath, "loader"), 0o755); err != nil {
+		return err
+	}
+
+	if err := os.WriteFile(filepath.Join(opts.MountPrefix, efiAssetsPath, "loader", "loader.conf"), LoaderConfBytes, 0o644); err != nil {
+		return err
+	}
+
+	sdbootFilename, err := bootloaderutils.Name(opts.Arch)
+	if err != nil {
+		return fmt.Errorf("failed to get sd-boot file path: %w", err)
+	}
+
+	if err := utils.CopyFiles(
+		opts.Printf,
+		utils.SourceDestination(
+			opts.BootAssets.UKIPath,
+			filepath.Join(opts.MountPrefix, efiAssetsPath, "EFI", "Linux", ukiFileName),
+		),
+		utils.SourceDestination(
+			opts.BootAssets.SDBootPath,
+			filepath.Join(opts.MountPrefix, efiAssetsPath, sdbootFilename),
+		),
+	); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // generateNextUKIName generates the next UKI name based on the version and existing files.

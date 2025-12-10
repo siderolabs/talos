@@ -7,17 +7,14 @@ package imager
 import (
 	"context"
 	"encoding/pem"
-	"errors"
 	"fmt"
-	"log"
-	randv2 "math/rand/v2"
 	"os"
 	"path/filepath"
 	"slices"
 	"strings"
 	"time"
 
-	"github.com/freddierice/go-losetup/v2"
+	"github.com/dustin/go-humanize"
 	"github.com/google/go-containerregistry/pkg/name"
 	v1 "github.com/google/go-containerregistry/pkg/v1"
 	"github.com/google/go-containerregistry/pkg/v1/empty"
@@ -27,7 +24,6 @@ import (
 	"github.com/siderolabs/go-pointer"
 	"github.com/siderolabs/go-procfs/procfs"
 	"go.yaml.in/yaml/v4"
-	"golang.org/x/sys/unix"
 
 	"github.com/siderolabs/talos/cmd/installer/pkg/install"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/options"
@@ -312,46 +308,7 @@ func (i *Imager) outImage(ctx context.Context, path string, report *reporter.Rep
 
 //nolint:gocyclo
 func (i *Imager) buildImage(ctx context.Context, path string, printf func(string, ...any)) error {
-	if err := utils.CreateRawDisk(printf, path, i.prof.Output.ImageOptions.DiskSize); err != nil {
-		return err
-	}
-
-	printf("attaching loopback device")
-
-	var (
-		loDevice           losetup.Device
-		err                error
-		zeroContainerAsset profile.ContainerAsset
-	)
-
-	for range 10 {
-		loDevice, err = losetup.Attach(path, 0, false)
-		if err != nil {
-			if errors.Is(err, unix.EBUSY) {
-				spraySleep := max(randv2.ExpFloat64(), 2.0)
-
-				printf("retrying after %v seconds", spraySleep)
-
-				time.Sleep(time.Duration(spraySleep * float64(time.Second)))
-
-				continue
-			}
-
-			return fmt.Errorf("failed to attach loopback device: %w", err)
-		}
-
-		printf("attached loopback device: %s", loDevice.Path())
-
-		break
-	}
-
-	defer func() {
-		printf("detaching loopback device %s", loDevice.Path())
-
-		if e := loDevice.Detach(); e != nil {
-			log.Println(e)
-		}
-	}()
+	var zeroContainerAsset profile.ContainerAsset
 
 	cmdline := procfs.NewCmdline(i.cmdline)
 
@@ -370,7 +327,7 @@ func (i *Imager) buildImage(ctx context.Context, path string, printf func(string
 	}
 
 	opts := &install.Options{
-		DiskPath:   loDevice.Path(),
+		DiskPath:   path,
 		Platform:   i.prof.Platform,
 		Arch:       i.prof.Arch,
 		Board:      i.prof.Board,
@@ -414,6 +371,29 @@ func (i *Imager) buildImage(ctx context.Context, path string, printf func(string
 		}
 
 		opts.ImageCachePath = imageCacheDir
+
+		imageCacheSize, err := calculateDirectorySizeWithOverhead(imageCacheDir, 20)
+		if err != nil {
+			return fmt.Errorf("failed to calculate image cache size: %w", err)
+		}
+
+		// Align to a 1MiB boundary so both 512 and 4K sector sizes are covered.
+		// miBMinusOne is a bit mask with all low bits set for a 1MiB boundary
+		// (for 1MiB this is 0xFFFFF). Adding this mask and then clearing those
+		// low bits with &^ effectively rounds imageCacheSize up to the next
+		// multiple of 1MiB, while leaving already aligned sizes unchanged.
+		miBMinusOne := int64(1024*1024) - 1
+		imageCacheSize = (imageCacheSize + miBMinusOne) &^ miBMinusOne
+
+		opts.ImageCacheSize = imageCacheSize
+
+		printf("updating image size to accommodate image cache: +%s", humanize.Bytes(uint64(imageCacheSize)))
+
+		i.prof.Output.ImageOptions.DiskSize += imageCacheSize
+	}
+
+	if err := utils.CreateRawDisk(printf, path, i.prof.Output.ImageOptions.DiskSize); err != nil {
+		return err
 	}
 
 	installer, err := install.NewInstaller(ctx, cmdline, install.ModeImage, opts)
@@ -426,6 +406,30 @@ func (i *Imager) buildImage(ctx context.Context, path string, printf func(string
 	}
 
 	return nil
+}
+
+func calculateDirectorySizeWithOverhead(dir string, overheadPercentage int) (int64, error) {
+	var totalSize int64
+
+	err := filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+
+		if !info.IsDir() {
+			totalSize += info.Size()
+		}
+
+		return nil
+	})
+	if err != nil {
+		return 0, err
+	}
+
+	overhead := (totalSize * int64(overheadPercentage)) / 100
+	totalSize += overhead
+
+	return totalSize, nil
 }
 
 //nolint:gocyclo,cyclop

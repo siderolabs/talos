@@ -7,22 +7,16 @@ package dual
 
 import (
 	"fmt"
-	"io"
 	"os"
 	"path/filepath"
-	"strings"
 
-	"github.com/siderolabs/go-blockdevice/v2/blkid"
-	"github.com/siderolabs/go-cmd/pkg/cmd"
+	"github.com/siderolabs/gen/xslices"
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/grub"
-	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/mount"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/options"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/sdboot"
 	"github.com/siderolabs/talos/internal/pkg/partition"
-	"github.com/siderolabs/talos/internal/pkg/uki"
-	"github.com/siderolabs/talos/pkg/imager/utils"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/imager/quirks"
 )
@@ -30,7 +24,7 @@ import (
 // Config describes a dual-boot bootloader.
 // this is a dummy implementation of the bootloader interface
 // allowing to install GRUB for BIOS and sd-boot for UEFI
-// so we only care about `RequiredPartitions()` and `Install()`.
+// so we only care about `GenerateAssets()`.
 type Config struct{}
 
 // New creates a new bootloader.
@@ -38,177 +32,71 @@ func New() *Config {
 	return &Config{}
 }
 
-// Install installs the bootloader.
-func (c *Config) Install(opts options.InstallOptions) (*options.InstallResult, error) {
-	if !opts.ImageMode {
-		return nil, fmt.Errorf("dual-boot bootloader is only supported in image mode")
+// GenerateAssets generates the dual-boot bootloader assets and returns the partition options with source directory set.
+func (c *Config) GenerateAssets(efiAssetsPath string, opts options.InstallOptions) ([]partition.Options, error) {
+	if opts.Arch == "arm64" {
+		return nil, fmt.Errorf("dual-boot bootloader is not supported on arm64 architecture, either GRUB or sd-boot must be used")
 	}
 
-	var installResult *options.InstallResult
+	// here we'll use the grub and sd-boot GenerateAssets logic
+	// and remove the grub `EFI` directory after we're done
+	if _, err := grub.NewConfig().GenerateAssets(efiAssetsPath, opts); err != nil {
+		return nil, fmt.Errorf("failed to install GRUB bootloader: %w", err)
+	}
 
-	err := mount.PartitionOp(
-		opts.BootDisk,
-		[]mount.Spec{
-			{
-				PartitionLabel: constants.BootPartitionLabel,
-				FilesystemType: partition.FilesystemTypeXFS,
-				MountTarget:    filepath.Join(opts.MountPrefix, constants.BootMountPoint),
-			},
-			{
-				PartitionLabel: constants.EFIPartitionLabel,
-				FilesystemType: partition.FilesystemTypeVFAT,
-				MountTarget:    filepath.Join(opts.MountPrefix, constants.EFIMountPoint),
-			},
-		},
-		func() error {
-			if err := c.installGrub(opts); err != nil {
-				return err
-			}
+	if err := os.RemoveAll(filepath.Join(opts.MountPrefix, efiAssetsPath)); err != nil {
+		return nil, fmt.Errorf("failed to cleanup GRUB EFI assets directory: %w", err)
+	}
 
-			if err := c.installSDBoot(opts); err != nil {
-				return err
-			}
+	if _, err := sdboot.New().GenerateAssets(efiAssetsPath, opts); err != nil {
+		return nil, fmt.Errorf("failed to generate sd-boot assets: %w", err)
+	}
 
-			if opts.ExtraInstallStep != nil {
-				if err := opts.ExtraInstallStep(); err != nil {
-					return err
-				}
-			}
+	quirk := quirks.New(opts.Version)
 
-			return nil
-		},
-		[]blkid.ProbeOption{
-			// installation happens with locked blockdevice
-			blkid.WithSkipLocking(true),
-		},
-		nil,
-		nil,
-		opts.BlkidInfo,
-	)
+	partitionOptions := []partition.Options{
+		partition.NewPartitionOptions(
+			true,
+			quirk,
+			partition.WithLabel(constants.EFIPartitionLabel),
+			partition.WithSourceDirectory(filepath.Join(opts.MountPrefix, efiAssetsPath)),
+		),
+		partition.NewPartitionOptions(false, quirk, partition.WithLabel(constants.BIOSGrubPartitionLabel)),
+		partition.NewPartitionOptions(
+			false,
+			quirk,
+			partition.WithLabel(constants.BootPartitionLabel),
+			partition.WithSourceDirectory(filepath.Join(opts.MountPrefix, constants.BootMountPoint)),
+		),
+	}
 
-	return installResult, err
+	if opts.ImageMode {
+		partitionOptions = xslices.Map(partitionOptions, func(o partition.Options) partition.Options {
+			o.Reproducible = true
+
+			return o
+		})
+	}
+
+	return partitionOptions, nil
+}
+
+// Install installs the bootloader.
+func (c *Config) Install(opts options.InstallOptions) (*options.InstallResult, error) {
+	return nil, fmt.Errorf("dual-boot bootloader is only supported in image mode, installation is not implemented")
+}
+
+// Upgrade is not implemented since dual-boot is only supported in image mode.
+func (c *Config) Upgrade(opts options.InstallOptions) (*options.InstallResult, error) {
+	return nil, fmt.Errorf("dual-boot bootloader is only supported in image mode, upgrade is not implemented")
 }
 
 // Revert is not implemented.
 func (c *Config) Revert(disk string) error {
-	return fmt.Errorf("not implemented")
-}
-
-// RequiredPartitions returns the list of partitions required by the bootloader.
-func (c *Config) RequiredPartitions(quirk quirks.Quirks) []partition.Options {
-	return []partition.Options{
-		partition.NewPartitionOptions(constants.EFIPartitionLabel, true, quirk),
-		partition.NewPartitionOptions(constants.BIOSGrubPartitionLabel, false, quirk),
-		partition.NewPartitionOptions(constants.BootPartitionLabel, false, quirk),
-	}
+	return fmt.Errorf("dual-boot bootloader is only supported in image mode, revert is not implemented")
 }
 
 // KexecLoad is not implemented.
 func (c *Config) KexecLoad(r runtime.Runtime, disk string) error {
-	return fmt.Errorf("not implemented")
-}
-
-func (c *Config) installGrub(opts options.InstallOptions) error {
-	assetInfo, err := uki.Extract(opts.BootAssets.UKIPath)
-	if err != nil {
-		return err
-	}
-
-	defer func() {
-		if assetInfo.Closer != nil {
-			assetInfo.Close() //nolint:errcheck
-		}
-	}()
-
-	grubConfig := grub.NewConfig()
-
-	if err := utils.CopyReader(
-		opts.Printf,
-		utils.ReaderDestination(
-			assetInfo.Kernel,
-			filepath.Join(opts.MountPrefix, constants.BootMountPoint, string(grubConfig.Default), constants.KernelAsset),
-		),
-		utils.ReaderDestination(
-			assetInfo.Initrd,
-			filepath.Join(opts.MountPrefix, constants.BootMountPoint, string(grubConfig.Default), constants.InitramfsAsset),
-		),
-	); err != nil {
-		return err
-	}
-
-	cmdline := opts.Cmdline
-
-	if opts.GrubUseUKICmdline {
-		cmdlineBytes, err := io.ReadAll(assetInfo.Cmdline)
-		if err != nil {
-			return fmt.Errorf("failed to read cmdline from UKI: %w", err)
-		}
-
-		cmdline = string(cmdlineBytes)
-	}
-
-	if err := grubConfig.Put(grubConfig.Default, cmdline, opts.Version); err != nil {
-		return err
-	}
-
-	if err := grubConfig.Write(filepath.Join(opts.MountPrefix, grub.ConfigPath), opts.Printf); err != nil {
-		return err
-	}
-
-	args := []string{
-		"--boot-directory=" + filepath.Join(opts.MountPrefix, constants.BootMountPoint),
-		"--removable",
-		"--no-nvram",
-		"--target=i386-pc",
-	}
-
-	args = append(args, opts.BootDisk)
-
-	opts.Printf("executing: grub-install %s", strings.Join(args, " "))
-
-	if _, err := cmd.Run("grub-install", args...); err != nil {
-		return fmt.Errorf("failed to install grub: %w", err)
-	}
-
-	return nil
-}
-
-func (c *Config) installSDBoot(opts options.InstallOptions) error {
-	var sdbootFilename string
-
-	switch opts.Arch {
-	case "amd64":
-		sdbootFilename = "BOOTX64.efi"
-	case "arm64":
-		sdbootFilename = "BOOTAA64.efi"
-	default:
-		return fmt.Errorf("unsupported architecture: %s", opts.Arch)
-	}
-
-	// writing UKI by version-based filename here
-	ukiPath := fmt.Sprintf("%s-%s.efi", "Talos", opts.Version)
-
-	if err := utils.CopyFiles(
-		opts.Printf,
-		utils.SourceDestination(
-			opts.BootAssets.UKIPath,
-			filepath.Join(opts.MountPrefix, constants.EFIMountPoint, "EFI", "Linux", ukiPath),
-		),
-		utils.SourceDestination(
-			opts.BootAssets.SDBootPath,
-			filepath.Join(opts.MountPrefix, constants.EFIMountPoint, "EFI", "boot", sdbootFilename),
-		),
-	); err != nil {
-		return err
-	}
-
-	if err := os.MkdirAll(filepath.Join(opts.MountPrefix, constants.EFIMountPoint, "loader"), 0o755); err != nil {
-		return err
-	}
-
-	if err := os.WriteFile(filepath.Join(opts.MountPrefix, constants.EFIMountPoint, "loader", "loader.conf"), sdboot.LoaderConfBytes, 0o644); err != nil {
-		return err
-	}
-
-	return nil
+	return fmt.Errorf("dual-boot bootloader is only supported in image mode, kexec load is not implemented")
 }

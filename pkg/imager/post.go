@@ -10,9 +10,12 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strconv"
+	"time"
 
 	"github.com/siderolabs/go-cmd/pkg/cmd"
 
+	"github.com/siderolabs/talos/pkg/imager/utils"
 	"github.com/siderolabs/talos/pkg/reporter"
 )
 
@@ -34,7 +37,30 @@ func (i *Imager) postProcessTar(ctx context.Context, filename string, report *re
 		return "", err
 	}
 
-	cmd1 := exec.CommandContext(ctx, "tar", "-cvf", "-", "-C", dir, "--sparse", src)
+	timestamp, ok, err := utils.SourceDateEpoch()
+	if err != nil {
+		return "", fmt.Errorf("failed to get SOURCE_DATE_EPOCH: %w", err)
+	}
+
+	if !ok {
+		timestamp = time.Now().Unix()
+	}
+
+	cmd1 := exec.CommandContext(
+		ctx,
+		"tar",
+		"-cvf",
+		"-",
+		"-C",
+		dir,
+		"--sparse",
+		"--sort=name",
+		"--owner=0",
+		"--group=0",
+		"--numeric-owner",
+		"--mtime=@"+strconv.FormatInt(timestamp, 10),
+		src,
+	)
 
 	cmd1.Stdout = pipeW
 	cmd1.Stderr = os.Stderr
@@ -54,7 +80,7 @@ func (i *Imager) postProcessTar(ctx context.Context, filename string, report *re
 
 	defer destination.Close() //nolint:errcheck
 
-	cmd2 := exec.CommandContext(ctx, "pigz", "-6", "-f", "-")
+	cmd2 := exec.CommandContext(ctx, "pigz", "-6", "-f", "--no-time", "-")
 	cmd2.Stdin = pipeR
 	cmd2.Stdout = destination
 	cmd2.Stderr = os.Stderr
@@ -99,7 +125,7 @@ func (i *Imager) postProcessTar(ctx context.Context, filename string, report *re
 func (i *Imager) postProcessGz(filename string, report *reporter.Reporter) (string, error) {
 	report.Report(reporter.Update{Message: "compressing .gz", Status: reporter.StatusRunning})
 
-	if _, err := cmd.Run("pigz", "-6", "-f", filename); err != nil {
+	if _, err := cmd.Run("pigz", "-6", "--no-time", "-f", filename); err != nil {
 		return "", err
 	}
 

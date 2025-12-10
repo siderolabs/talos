@@ -23,7 +23,6 @@ import (
 	"golang.org/x/sys/unix"
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader"
-	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/grub"
 	"github.com/siderolabs/talos/internal/pkg/partition"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/imager/quirks"
@@ -112,10 +111,15 @@ func TestCleanup(t *testing.T) {
 	pt, err := gpt.New(gptDev, gpt.WithMarkPMBRBootable())
 	assert.NoError(t, err)
 
-	// we use grub since it includes the EFI partition in the required partitions
-	partitions := grub.NewConfig().RequiredPartitions(quirks.New(""))
+	quirk := quirks.New("")
 
-	partitions = append(partitions, partition.NewPartitionOptions(constants.MetaPartitionLabel, false, quirks.New("")))
+	partitions := []partition.Options{
+		partition.NewPartitionOptions(false, quirk, partition.WithLabel(constants.EFIPartitionLabel)),
+		partition.NewPartitionOptions(false, quirk, partition.WithLabel(constants.BIOSGrubPartitionLabel)),
+		partition.NewPartitionOptions(false, quirk, partition.WithLabel(constants.BootPartitionLabel)),
+	}
+
+	partitions = append(partitions, partition.NewPartitionOptions(false, quirks.New(""), partition.WithLabel(constants.MetaPartitionLabel)))
 
 	for _, p := range partitions {
 		size := p.Size

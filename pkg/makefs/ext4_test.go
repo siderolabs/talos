@@ -17,7 +17,6 @@ import (
 
 // TestExt4Reproducibility tests that the ext4 filesystem is reproducible.
 func TestExt4Reproducibility(t *testing.T) {
-	t.Setenv("SOURCE_DATE_EPOCH", "1732109929")
 	t.Setenv("PATH", "/usr/bin:/bin:/usr/sbin:/sbin")
 
 	tmpDir := t.TempDir()
@@ -32,7 +31,10 @@ func TestExt4Reproducibility(t *testing.T) {
 		t.Fatalf("failed to create file: %v", err)
 	}
 
-	if err := makefs.Ext4(tempFile, makefs.WithReproducible(true)); err != nil {
+	if err := makefs.Ext4(tempFile,
+		makefs.WithReproducible(true),
+		makefs.WithLabel("TESTLABEL"),
+	); err != nil {
 		t.Fatalf("failed to create ext4 filesystem: %v", err)
 	}
 
@@ -45,7 +47,10 @@ func TestExt4Reproducibility(t *testing.T) {
 	sum1 := sha256.Sum256(fileData)
 
 	// create the filesystem again
-	if err := makefs.Ext4(tempFile, makefs.WithReproducible(true), makefs.WithForce(true)); err != nil {
+	if err := makefs.Ext4(tempFile,
+		makefs.WithReproducible(true),
+		makefs.WithLabel("TESTLABEL"),
+		makefs.WithForce(true)); err != nil {
 		t.Fatalf("failed to create ext4 filesystem: %v", err)
 	}
 

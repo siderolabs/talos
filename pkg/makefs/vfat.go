@@ -9,6 +9,9 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/diskfs/go-diskfs"
+	"github.com/diskfs/go-diskfs/backend/file"
+	"github.com/diskfs/go-diskfs/filesystem"
 	"github.com/siderolabs/go-cmd/pkg/cmd"
 )
 
@@ -48,33 +51,79 @@ func VFAT(partname string, setters ...Option) error {
 	return nil
 }
 
-// populateVFAT copies files from sourceDir to the VFAT filesystem using mcopy.
+// populateVFAT populates a VFAT filesystem on the given partition with the
+// contents of sourceDir.
+//
+//nolint:gocyclo
 func populateVFAT(partname, sourceDir string) error {
-	entries, err := os.ReadDir(sourceDir)
+	bk, err := file.OpenFromPath(partname, false)
 	if err != nil {
-		return fmt.Errorf("failed to read source directory: %w", err)
+		return fmt.Errorf("failed to open partition %q: %w", partname, err)
 	}
 
-	// Build mcopy arguments
-	args := []string{
-		"-s", // recursive
-		"-p", // preserve attributes
-		"-Q", // quit on error
-		"-m", // preserve modification time
+	defer bk.Close() //nolint:errcheck
+
+	diskInfo, err := diskfs.OpenBackend(bk, diskfs.WithOpenMode(diskfs.ReadWrite))
+	if err != nil {
+		return fmt.Errorf("failed to open disk backend for partition %q: %w", partname, err)
 	}
 
-	args = append(args, "-i", partname)
+	defer diskInfo.Close() //nolint:errcheck
 
-	// Add all entries from source directory
-	for _, entry := range entries {
-		args = append(args, filepath.Join(sourceDir, entry.Name()))
+	dfs, err := diskInfo.GetFilesystem(0)
+	if err != nil {
+		return fmt.Errorf("failed to get filesystem for partition %q: %w", partname, err)
 	}
 
-	// Destination is the root of the VFAT filesystem
-	args = append(args, "::")
+	defer dfs.Close() //nolint:errcheck
 
-	if _, err := cmd.Run("mcopy", args...); err != nil {
+	if err := filepath.Walk(sourceDir, func(path string, info os.FileInfo, walkErr error) error {
+		if walkErr != nil {
+			return fmt.Errorf("error walking through source directory %q: %w", sourceDir, walkErr)
+		}
+
+		relPath, err := filepath.Rel(sourceDir, path)
+		if err != nil {
+			return fmt.Errorf("failed to get relative path for %q: %w", path, err)
+		}
+
+		fsPath := filepath.Join("/", relPath)
+
+		if info.IsDir() {
+			if relPath == "." {
+				return nil
+			}
+
+			if err := dfs.Mkdir(fsPath); err != nil {
+				return fmt.Errorf("failed to create directory %q in VFAT filesystem: %w", relPath, err)
+			}
+
+			return nil
+		}
+
+		return createFATFile(path, fsPath, dfs)
+	}); err != nil {
 		return err
+	}
+
+	return nil
+}
+
+func createFATFile(srcPath, destPath string, dfs filesystem.FileSystem) error {
+	srcFile, err := os.ReadFile(srcPath)
+	if err != nil {
+		return fmt.Errorf("failed to open source file %q: %w", srcPath, err)
+	}
+
+	destFile, err := dfs.OpenFile(destPath, os.O_CREATE|os.O_RDWR)
+	if err != nil {
+		return fmt.Errorf("failed to open destination file %q in FAT filesystem: %w", destPath, err)
+	}
+
+	defer destFile.Close() //nolint:errcheck
+
+	if _, err := destFile.Write(srcFile); err != nil {
+		return fmt.Errorf("failed to write to destination file %q in FAT filesystem: %w", destPath, err)
 	}
 
 	return nil

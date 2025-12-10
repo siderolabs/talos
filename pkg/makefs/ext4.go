@@ -5,13 +5,10 @@
 package makefs
 
 import (
-	"crypto/sha256"
+	"errors"
 	"fmt"
 
-	"github.com/google/uuid"
 	"github.com/siderolabs/go-cmd/pkg/cmd"
-
-	"github.com/siderolabs/talos/pkg/imager/utils"
 )
 
 const (
@@ -21,6 +18,10 @@ const (
 
 // Ext4 creates a ext4 filesystem on the specified partition.
 func Ext4(partname string, setters ...Option) error {
+	if partname == "" {
+		return errors.New("missing path to disk")
+	}
+
 	opts := NewDefaultOptions(setters...)
 
 	var args []string
@@ -34,15 +35,14 @@ func Ext4(partname string, setters ...Option) error {
 	}
 
 	if opts.Reproducible {
-		if epoch, ok, err := utils.SourceDateEpoch(); err != nil {
-			return err
-		} else if ok {
-			// ref: https://gitlab.archlinux.org/archlinux/archiso/-/merge_requests/202/diffs
-			detUUID := uuid.NewHash(sha256.New(), uuid.MustParse("93a870ff-8565-4cf3-a67b-f47299271a96"), fmt.Appendf(nil, "%d ext4 hash seed", epoch), 5)
-
-			args = append(args, "-U", detUUID.String())
-			args = append(args, "-E", fmt.Sprintf("hash_seed=%s", detUUID.String()))
+		if opts.Label == "" {
+			return errors.New("label must be set for reproducible ext4 filesystem")
 		}
+
+		partitionGUID := GUIDFromLabel(opts.Label)
+
+		args = append(args, "-U", partitionGUID.String())
+		args = append(args, "-E", fmt.Sprintf("hash_seed=%s", partitionGUID.String()))
 	}
 
 	if opts.SourceDirectory != "" {
@@ -50,6 +50,8 @@ func Ext4(partname string, setters ...Option) error {
 	}
 
 	args = append(args, partname)
+
+	opts.Printf("creating ext4 filesystem on %s with args: %v", partname, args)
 
 	_, err := cmd.Run("mkfs.ext4", args...)
 

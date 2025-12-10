@@ -65,10 +65,22 @@ func XFS(partname string, setters ...Option) error {
 	}
 
 	if opts.SourceDirectory != "" {
-		args = append(args, "-p", opts.SourceDirectory)
+		args = append(args, "-p", fmt.Sprintf("file=%s", opts.SourceDirectory))
+	}
+
+	if opts.Reproducible {
+		if opts.Label == "" {
+			return errors.New("label must be set for reproducible XFS filesystem")
+		}
+
+		partitionGUID := GUIDFromLabel(opts.Label)
+
+		args = append(args, "-m", fmt.Sprintf("uuid=%s", partitionGUID.String()))
 	}
 
 	args = append(args, partname)
+
+	opts.Printf("creating xfs filesystem on %s with args: %v", partname, args)
 
 	_, err := cmd.Run("mkfs.xfs", args...)
 

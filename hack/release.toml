@@ -55,6 +55,22 @@ If the kernel parameter is removed, default behavior is restored, allowing acces
 Talos now ships with `igzip` (amd64) and `pigz` (arm64) to speed up container image decompression.
 """
 
+    [notes.imager]
+        title = "Talos Imager Enhancements"
+        description = """\
+Talos imager now supports running rootless. `--privileged` and `-v /dev:/dev` are no longer required.
+"""
+
+    [notes.reproducible_images]
+        title = "Reproducible Disk Images"
+        description = """\
+Talos disk images are now reproducible. Building the same version of Talos multiple times will yield
+identical disk images.
+
+Note: VHD and VMDK (Azure and VMware) images are not currently reproducible due to limitations in the underlying image creation tools.
+Users verifying reproducible images should use raw images, verify checksums, and convert them to VHD/VMDK as needed.
+"""
+
 [make_deps]
 
     [make_deps.tools]

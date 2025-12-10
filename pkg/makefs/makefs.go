@@ -5,6 +5,12 @@
 // Package makefs provides function to format and grow filesystems.
 package makefs
 
+import (
+	"crypto/sha256"
+
+	"github.com/google/uuid"
+)
+
 // Option to control makefs settings.
 type Option func(*Options)
 
@@ -16,6 +22,8 @@ type Options struct {
 	Force               bool
 	Reproducible        bool
 	UnsupportedFSOption bool
+
+	Printf func(string, ...any)
 }
 
 // WithLabel sets the label for the filesystem to be created.
@@ -61,6 +69,13 @@ func WithSourceDirectory(sourceDir string) Option {
 	}
 }
 
+// WithPrintf sets the printf function for logging.
+func WithPrintf(printf func(string, ...any)) Option {
+	return func(o *Options) {
+		o.Printf = printf
+	}
+}
+
 // NewDefaultOptions builds options with specified setters applied.
 func NewDefaultOptions(setters ...Option) Options {
 	var opt Options
@@ -69,5 +84,16 @@ func NewDefaultOptions(setters ...Option) Options {
 		o(&opt)
 	}
 
+	if opt.Printf == nil {
+		opt.Printf = func(string, ...any) {}
+	}
+
 	return opt
+}
+
+// GUIDFromLabel generates a deterministic partition GUID from a label by
+// creating a version 8 UUID derived from a SHA-256 hash of the label bytes.
+func GUIDFromLabel(label string) uuid.UUID {
+	// version 8 UUID since we're doing custom hashing
+	return uuid.NewHash(sha256.New(), uuid.Nil, []byte(label), 8)
 }

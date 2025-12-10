@@ -424,18 +424,31 @@ talosctl: talosctl-$(OPERATING_SYSTEM)-$(ARCH)
 sbom:
 	@$(MAKE) local-sbom DEST=$(ARTIFACTS)
 
-image-%: ## Builds the specified image. Valid options are aws, azure, digital-ocean, gcp, and vmware (e.g. image-aws)
+image-%: ## Builds the specified image. Valid options are aws, azure, digital-ocean, gcp, and vmware etc (e.g. image-aws)
 	@docker pull $(REGISTRY_AND_USERNAME)/imager:$(IMAGE_TAG_IN)
 	@for platform in $(subst $(,),$(space),$(PLATFORM)); do \
 		arch=$$(basename "$${platform}") && \
-		docker run --rm -t -e GITHUB_TOKEN -v /dev:/dev -v $(PWD)/$(ARTIFACTS):/secureboot:ro -v $(PWD)/$(ARTIFACTS):/out -e SOURCE_DATE_EPOCH=$(SOURCE_DATE_EPOCH) --network=host --privileged $(REGISTRY_AND_USERNAME)/imager:$(IMAGE_TAG_IN) $* --arch $$arch --base-installer-image $(REGISTRY_AND_USERNAME)/installer-base:$(IMAGE_TAG_IN) $(IMAGER_ARGS) ; \
+		docker run --rm -t \
+			--network=host \
+			-v $(PWD)/$(ARTIFACTS):/secureboot:ro \
+			-v $(PWD)/$(ARTIFACTS):/out \
+			-e GITHUB_TOKEN \
+			-e SOURCE_DATE_EPOCH=$(SOURCE_DATE_EPOCH) \
+			-e DETERMINISTIC_SEED=1 \
+			$(REGISTRY_AND_USERNAME)/imager:$(IMAGE_TAG_IN) $* \
+			--arch $$arch \
+			--base-installer-image $(REGISTRY_AND_USERNAME)/installer-base:$(IMAGE_TAG_IN) \
+			$(IMAGER_ARGS) ; \
 	done
 
 .PHONY: images-essential
 images-essential: image-metal image-metal-uki installer secureboot-installer ## Builds only essential images used in the CI.
 
+# Defines all known images (AWS, Azure, DigitalOcean, Exoscale, Cloudstack, GCP, HCloud, Metal, NoCloud, OpenNebula, OpenStack, Oracle, Scaleway, UpCloud, Vultr and VMware).
+IMAGES := image-akamai image-aws image-azure image-digital-ocean image-exoscale image-cloudstack image-gcp image-hcloud image-iso image-metal image-metal-uki image-nocloud image-opennebula image-openstack image-oracle image-scaleway image-upcloud image-vmware image-vultr
+
 .PHONY: images
-images: image-akamai image-aws image-azure image-digital-ocean image-exoscale image-cloudstack image-gcp image-hcloud image-iso image-metal image-metal-uki image-nocloud image-opennebula image-openstack image-oracle image-scaleway image-upcloud image-vmware image-vultr ## Builds all known images (AWS, Azure, DigitalOcean, Exoscale, Cloudstack, GCP, HCloud, Metal, NoCloud, OpenNebula, OpenStack, Oracle, Scaleway, UpCloud, Vultr and VMware).
+images: $(IMAGES)
 
 .PHONY: iso
 iso: image-iso ## Builds the ISO and outputs it to the artifact directory.
@@ -457,6 +470,7 @@ installer: ## Builds the installer and outputs it to the artifact directory.
 		rm -f $(ARTIFACTS)/installer-$${arch}.tar ; \
 	done; \
 	crane index append -t "${REGISTRY_AND_USERNAME}/installer:${IMAGE_TAG_OUT}" $${crane_args}
+	@echo "${REGISTRY_AND_USERNAME}/installer:${IMAGE_TAG_OUT}" > $(ARTIFACTS)/installer_image
 
 
 .PHONY: secureboot-installer
@@ -714,6 +728,15 @@ reproducibility-test-iso: $(ARTIFACTS)
 	@$(MAKE) iso
 	@diffoscope $(ARTIFACTS)/metal-amd64.iso.orig $(ARTIFACTS)/metal-amd64.iso
 	@rm -rf $(ARTIFACTS)/metal-amd64.iso.orig
+
+reproducibility-test-images: $(ARTIFACTS)
+	@rm -rf $(ARTIFACTS)/images-orig $(ARTIFACTS)/images-new
+	@$(MAKE) $(filter-out image-azure image-vmware,$(IMAGES)) ARTIFACTS=$(ARTIFACTS)/images-orig
+	@$(MAKE) $(filter-out image-azure image-vmware,$(IMAGES)) ARTIFACTS=$(ARTIFACTS)/images-new
+	@touch -ch -t $$(date -d @$(SOURCE_DATE_EPOCH) +%Y%m%d0000) $(ARTIFACTS)/images-orig $(ARTIFACTS)/images-new
+	@find $(ARTIFACTS)/images-orig $(ARTIFACTS)/images-new -type f -exec touch -ch -t $$(date -d @$(SOURCE_DATE_EPOCH) +%Y%m%d0000) {} +
+	@diffoscope $(ARTIFACTS)/images-orig $(ARTIFACTS)/images-new
+	@rm -rf $(ARTIFACTS)/images-orig $(ARTIFACTS)/images-new
 
 .PHONY: ci-temp-release-tag
 ci-temp-release-tag: ## Generates a temporary release tag for CI run.

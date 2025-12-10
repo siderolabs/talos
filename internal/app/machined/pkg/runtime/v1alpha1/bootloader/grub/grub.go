@@ -13,6 +13,8 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/siderolabs/gen/xslices"
+
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/kexec"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/options"
@@ -28,8 +30,6 @@ type Config struct {
 	Fallback       BootLabel
 	Entries        map[BootLabel]MenuEntry
 	AddResetOption bool
-
-	installEFI bool
 }
 
 // MenuEntry represents a grub menu entry in the grub config file.
@@ -93,13 +93,51 @@ func (c *Config) KexecLoad(r runtime.Runtime, disk string) error {
 	return err
 }
 
-// RequiredPartitions returns the list of partitions required by the bootloader.
-func (c *Config) RequiredPartitions(quirk quirks.Quirks) []partition.Options {
-	return []partition.Options{
-		partition.NewPartitionOptions(constants.EFIPartitionLabel, false, quirk),
-		partition.NewPartitionOptions(constants.BIOSGrubPartitionLabel, false, quirk),
-		partition.NewPartitionOptions(constants.BootPartitionLabel, false, quirk),
+// GenerateAssets generates the bootloader assets and returns partition options to create the bootloader partitions.
+func (c *Config) GenerateAssets(efiAssetsPath string, opts options.InstallOptions) ([]partition.Options, error) {
+	if err := c.generateAssets(opts, efiAssetsPath); err != nil {
+		return nil, err
 	}
+
+	quirk := quirks.New(opts.Version)
+
+	efiFormatOptions := []partition.FormatOption{
+		partition.WithLabel(constants.EFIPartitionLabel),
+	}
+
+	if opts.ImageMode {
+		// in bios install mode grub generated assets only contains the grub config file and kernel and initramfs
+		// so we don't need to set the source directory for the EFI partition
+		efiFormatOptions = append(
+			efiFormatOptions,
+			partition.WithSourceDirectory(filepath.Join(opts.MountPrefix, efiAssetsPath)),
+		)
+	}
+
+	partitionOptions := []partition.Options{
+		partition.NewPartitionOptions(
+			false,
+			quirk,
+			efiFormatOptions...,
+		),
+		partition.NewPartitionOptions(false, quirk, partition.WithLabel(constants.BIOSGrubPartitionLabel)),
+		partition.NewPartitionOptions(
+			false,
+			quirk,
+			partition.WithLabel(constants.BootPartitionLabel),
+			partition.WithSourceDirectory(filepath.Join(opts.MountPrefix, constants.BootMountPoint)),
+		),
+	}
+
+	if opts.ImageMode {
+		partitionOptions = xslices.Map(partitionOptions, func(o partition.Options) partition.Options {
+			o.Reproducible = true
+
+			return o
+		})
+	}
+
+	return partitionOptions, nil
 }
 
 // Put puts a new menu entry to the grub config (nothing is written to disk).
