@@ -15,6 +15,8 @@ replace (
 	// see https://github.com/mdlayher/kobject/pull/5
 	github.com/mdlayher/kobject => github.com/smira/kobject v0.0.0-20240304111826-49c8d4613389
 
+	github.com/siderolabs/go-blockdevice/v2 => github.com/frezbo/go-blockdevice/v2 v2.0.0-20251213155249-ff1b375b9031
+
 	// Use nested module.
 	github.com/siderolabs/talos/pkg/machinery => ./pkg/machinery
 
