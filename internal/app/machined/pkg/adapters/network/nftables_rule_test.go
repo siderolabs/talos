@@ -427,11 +427,11 @@ func TestNfTablesRuleCompile(t *testing.T) { //nolint:tparallel
 					&expr.Cmp{
 						Op:       expr.CmpOpGt,
 						Register: 1,
-						Data:     []byte{0x04, 0xd8},
+						Data:     []byte{0x04, 0xcc},
 					},
 					&expr.Immediate{
 						Register: 1,
-						Data:     []byte{0x04, 0xd8},
+						Data:     []byte{0x04, 0xcc},
 					},
 					&expr.Exthdr{
 						SourceRegister: 1,
@@ -485,11 +485,11 @@ func TestNfTablesRuleCompile(t *testing.T) { //nolint:tparallel
 					&expr.Cmp{
 						Op:       expr.CmpOpGt,
 						Register: 1,
-						Data:     []byte{0x04, 0xc4},
+						Data:     []byte{0x04, 0xb8},
 					},
 					&expr.Immediate{
 						Register: 1,
-						Data:     []byte{0x04, 0xc4},
+						Data:     []byte{0x04, 0xb8},
 					},
 					&expr.Exthdr{
 						SourceRegister: 1,
