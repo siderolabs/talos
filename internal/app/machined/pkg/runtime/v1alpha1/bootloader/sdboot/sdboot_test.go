@@ -13,6 +13,8 @@ import (
 )
 
 func TestGenerateNextUKIFileName(t *testing.T) {
+	t.Parallel()
+
 	for _, testData := range []struct {
 		name string
 
@@ -80,23 +82,86 @@ func TestGenerateNextUKIFileName(t *testing.T) {
 			expectedFileName: "Talos-1.10.0~2.efi",
 		},
 		{
-			name:             "foo",
+			name:             "dirty_version_initial",
 			version:          "v1.11.0-alpha.3-40-ge4c24983e-dirty",
 			existingFiles:    []string{"Talos-v1.11.0-alpha.3-40-ge4c24983e-dirty.efi"},
 			expectedFileName: "Talos-v1.11.0-alpha.3-40-ge4c24983e-dirty~1.efi",
 		},
 		{
-			name:             "fobaro",
+			name:             "dirty_suffixed_version",
 			version:          "v1.11.0-alpha.3-40-ge4c24983e-dirty",
 			existingFiles:    []string{"Talos-v1.11.0-alpha.3-40-ge4c24983e-dirty~1.efi", "Talos-v1.11.0-alpha.3-40-ge4c24983e-dirty.efi"},
 			expectedFileName: "Talos-v1.11.0-alpha.3-40-ge4c24983e-dirty~2.efi",
 		},
 	} {
 		t.Run(testData.name, func(t *testing.T) {
+			t.Parallel()
+
 			ukiPath, err := sdboot.GenerateNextUKIName(testData.version, testData.existingFiles)
 			require.NoError(t, err)
 
 			require.Equal(t, testData.expectedFileName, ukiPath)
 		})
+	}
+}
+
+func TestFindMatchingUKIFile(t *testing.T) {
+	t.Parallel()
+
+	existingFiles := []string{
+		"/EFI/boot/Linux/Talos-1.10.0.efi",
+		"/EFI/boot/Linux/Talos-1.10.0~1.efi",
+		"/EFI/boot/Linux/talos-1.11.0.efi",
+		"/EFI/boot/Linux/Talos-v1.11.0-alpha.3-40-ge4c24983e-dirty.efi",
+		"/EFI/boot/Linux/Talos-v1.11.0-alpha.3-40-ge4c24983e-dirty~1.efi",
+	}
+
+	tests := []struct {
+		existingFiles  []string
+		entry          string
+		expectedFile   string
+		expectingFound bool
+	}{
+		{
+			existingFiles:  existingFiles,
+			entry:          "Talos-1.10.0.efi",
+			expectedFile:   "Talos-1.10.0.efi",
+			expectingFound: true,
+		},
+		{
+			existingFiles:  existingFiles,
+			entry:          "Talos-1.11.0.efi",
+			expectedFile:   "Talos-1.11.0.efi",
+			expectingFound: true,
+		},
+		{
+			existingFiles:  existingFiles,
+			entry:          "Talos-1.12.0.efi",
+			expectedFile:   "",
+			expectingFound: false,
+		},
+		{
+			existingFiles:  existingFiles,
+			entry:          "Talos-v1.11.0-alpha.3-40-ge4c24983e-dirty.efi",
+			expectedFile:   "Talos-v1.11.0-alpha.3-40-ge4c24983e-dirty.efi",
+			expectingFound: true,
+		},
+		{
+			entry:          "Talos-v1.11.0.efi",
+			expectedFile:   "",
+			expectingFound: false,
+		},
+		{
+			entry:          "",
+			expectedFile:   "",
+			expectingFound: false,
+		},
+	}
+
+	for _, test := range tests {
+		foundFile, found := sdboot.FindMatchingUKIFile(test.existingFiles, test.entry)
+
+		require.Equal(t, test.expectingFound, found)
+		require.Equal(t, test.expectedFile, foundFile)
 	}
 }

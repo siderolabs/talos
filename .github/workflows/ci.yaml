@@ -1,6 +1,6 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
 #
-# Generated on 2025-12-15T14:23:39Z by kres 4b09af7.
+# Generated on 2025-12-15T14:45:49Z by kres 4b09af7.
 
 concurrency:
   group: ${{ github.head_ref || github.run_id }}
@@ -3800,6 +3800,14 @@ jobs:
         if: github.event_name == 'schedule'
         run: |
           make talosctl-cni-bundle
+      - name: installer
+        env:
+          IMAGE_REGISTRY: registry.dev.siderolabs.io
+          IMAGER_ARGS: --extra-kernel-arg=talos.extra_cmdline=extra-super-cmdline
+          PLATFORM: linux/amd64,linux/arm64
+          TAG_SUFFIX_OUT: -extra-cmdline
+        run: |
+          make installer
       - name: provision-tests-prepare
         run: |
           make provision-tests-prepare

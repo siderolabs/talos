@@ -883,6 +883,12 @@ spec:
         - name: talosctl-cni-bundle
           conditions:
             - only-on-schedule
+        - name: installer
+          environment:
+            PLATFORM: linux/amd64,linux/arm64
+            IMAGE_REGISTRY: registry.dev.siderolabs.io
+            IMAGER_ARGS: "--extra-kernel-arg=talos.extra_cmdline=extra-super-cmdline"
+            TAG_SUFFIX_OUT: -extra-cmdline
         - name: provision-tests-prepare
         - name: provision-tests-track-2
           withSudo: true
