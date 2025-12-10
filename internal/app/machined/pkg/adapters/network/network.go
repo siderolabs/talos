@@ -4,3 +4,11 @@
 
 // Package network implements adapters wrapping resources/network to provide additional functionality.
 package network
+
+// MSS calculation constants.
+const (
+	IPv4HeaderLen = 20 // IPv4 fixed header length
+	IPv6HeaderLen = 40 // IPv6 fixed header length
+	TCPHeaderLen  = 20 // fixed TCP header length, without options
+	TCPOptionsLen = 12 // assuming typical options like SACK, timestamps, etc. used by default in Linux
+)

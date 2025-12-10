@@ -365,14 +365,14 @@ func (s *NfTablesChainSuite) TestClampMSS() {
 	s.checkNftOutput(`table inet talos-test {
 	chain test1 {
 		type filter hook input priority filter; policy accept;
-		meta nfproto ipv4 tcp flags syn / syn,rst tcp option maxseg size > 1380 tcp option maxseg size set 1380
-		meta nfproto ipv6 tcp flags syn / syn,rst tcp option maxseg size > 1360 tcp option maxseg size set 1360
+		meta nfproto ipv4 tcp flags syn / syn,rst tcp option maxseg size > 1368 tcp option maxseg size set 1368
+		meta nfproto ipv6 tcp flags syn / syn,rst tcp option maxseg size > 1348 tcp option maxseg size set 1348
 	}
 }`, `table inet talos-test {
 	chain test1 {
 		type filter hook input priority filter; policy accept;
-		meta nfproto ipv4 tcp flags & (syn | rst) == syn tcp option maxseg size > 1380 tcp option maxseg size set 1380
-		meta nfproto ipv6 tcp flags & (syn | rst) == syn tcp option maxseg size > 1360 tcp option maxseg size set 1360
+		meta nfproto ipv4 tcp flags & (syn | rst) == syn tcp option maxseg size > 1368 tcp option maxseg size set 1368
+		meta nfproto ipv6 tcp flags & (syn | rst) == syn tcp option maxseg size > 1348 tcp option maxseg size set 1348
 	}
 }`)
 }
