@@ -18,6 +18,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/siderolabs/gen/xslices"
 	"github.com/siderolabs/go-blockdevice/v2/encryption"
 	"github.com/siderolabs/go-kubernetes/kubernetes/upgrade"
@@ -49,6 +50,7 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	blockres "github.com/siderolabs/talos/pkg/machinery/resources/block"
+	"github.com/siderolabs/talos/pkg/machinery/resources/runtime"
 	"github.com/siderolabs/talos/pkg/machinery/version"
 	"github.com/siderolabs/talos/pkg/provision"
 	"github.com/siderolabs/talos/pkg/provision/access"
@@ -255,6 +257,17 @@ func (suite *BaseSuite) assertSameVersionCluster(client *talosclient.Client, exp
 	}
 }
 
+func (suite *BaseSuite) assertCmdlineContains(client *talosclient.Client, node string, expectedCmdlineContains string) {
+	ctx := talosclient.WithNode(suite.ctx, node)
+
+	cmdline, err := safe.ReaderGetByID[*runtime.KernelCmdline](ctx, client.COSI, runtime.KernelCmdlineID)
+	suite.Require().NoError(err)
+
+	suite.Assert().NotEmpty(cmdline, "expected cmdline to be not empty")
+
+	suite.Assert().Contains(cmdline.TypedSpec().Cmdline, expectedCmdlineContains, "expected cmdline to contain %q", expectedCmdlineContains)
+}
+
 func (suite *BaseSuite) readVersion(nodeCtx context.Context, client *talosclient.Client) (
 	version string,
 	err error,
@@ -430,6 +443,7 @@ type clusterOptions struct {
 	SourceKernelPath     string
 	SourceInitramfsPath  string
 	SourceDiskImagePath  string
+	SourceISOPath        string
 	SourceInstallerImage string
 	SourceVersion        string
 	SourceK8sVersion     string
@@ -488,9 +502,12 @@ func (suite *BaseSuite) setupCluster(options clusterOptions) {
 		StateDirectory: suite.stateDir,
 	}
 
-	if options.SourceDiskImagePath != "" {
+	switch {
+	case options.SourceISOPath != "":
+		request.ISOPath = options.SourceISOPath
+	case options.SourceDiskImagePath != "":
 		request.DiskImagePath = options.SourceDiskImagePath
-	} else {
+	default:
 		request.KernelPath = options.SourceKernelPath
 		request.InitramfsPath = options.SourceInitramfsPath
 	}
