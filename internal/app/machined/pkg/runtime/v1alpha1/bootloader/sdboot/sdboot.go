@@ -14,6 +14,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -118,8 +119,6 @@ func ProbeWithCallback(disk string, options options.ProbeOptions, callback func(
 
 			options.Logf("sd-boot: found UKI files: %v", xslices.Map(ukiFiles, filepath.Base))
 
-			var bootEntry string
-
 			// If we booted of UKI/Kernel+Initramfs/ISO Talos installer will always be run which
 			// sets the `LoaderEntryDefault` to the UKI file name, so either for reboot with Kexec or upgrade
 			// we will always have the UKI file name in the `LoaderEntryDefault`
@@ -146,26 +145,18 @@ func ProbeWithCallback(disk string, options options.ProbeOptions, callback func(
 				return errors.New("sd-boot: no LoaderEntryDefault or LoaderEntrySelected found, cannot continue")
 			}
 
-			for _, ukiFile := range ukiFiles {
-				if loaderEntryDefault != "" && strings.EqualFold(filepath.Base(ukiFile), loaderEntryDefault) {
-					options.Logf("sd-boot: default entry matched as %q", loaderEntryDefault)
+			var (
+				bootEntry   string
+				bootEntryOk bool
+			)
 
-					bootEntry = loaderEntryDefault
-
-					break
+			// first try to find the default entry, then the selected one
+			bootEntry, bootEntryOk = findMatchingUKIFile(ukiFiles, loaderEntryDefault)
+			if !bootEntryOk {
+				bootEntry, bootEntryOk = findMatchingUKIFile(ukiFiles, loaderEntrySelected)
+				if !bootEntryOk {
+					return errors.New("sd-boot: no valid boot entry found matching LoaderEntryDefault or LoaderEntrySelected")
 				}
-
-				if loaderEntrySelected != "" && strings.EqualFold(filepath.Base(ukiFile), loaderEntrySelected) {
-					options.Logf("sd-boot: selected entry matched as %q", loaderEntrySelected)
-
-					bootEntry = loaderEntrySelected
-
-					break
-				}
-			}
-
-			if bootEntry == "" {
-				return errors.New("sd-boot: no valid boot entry found matching LoaderEntryDefault or LoaderEntrySelected")
 			}
 
 			options.Logf("sd-boot: found boot entry: %s", bootEntry)
@@ -364,7 +355,7 @@ func (c *Config) install(opts options.InstallOptions) (*options.InstallResult, e
 
 	opts.Printf("sd-boot: found existing UKIs during install: %v", xslices.Map(files, filepath.Base))
 
-	ukiPath, err := GenerateNextUKIName(opts.Version, files)
+	ukiPath, err := generateNextUKIName(opts.Version, files)
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate next UKI name: %w", err)
 	}
@@ -447,9 +438,9 @@ func (c *Config) install(opts options.InstallOptions) (*options.InstallResult, e
 	}, nil
 }
 
-// GenerateNextUKIName generates the next UKI name based on the version and existing files.
+// generateNextUKIName generates the next UKI name based on the version and existing files.
 // It checks for existing files and increments the index if necessary.
-func GenerateNextUKIName(version string, existingFiles []string) (string, error) {
+func generateNextUKIName(version string, existingFiles []string) (string, error) {
 	maxIndex := -1
 
 	for _, file := range existingFiles {
@@ -528,4 +519,14 @@ func (c *Config) revert() error {
 	}
 
 	return errors.New("previous UKI not found")
+}
+
+func findMatchingUKIFile(ukiFiles []string, entry string) (string, bool) {
+	if slices.ContainsFunc(ukiFiles, func(file string) bool {
+		return strings.EqualFold(filepath.Base(file), entry)
+	}) {
+		return entry, true
+	}
+
+	return "", false
 }

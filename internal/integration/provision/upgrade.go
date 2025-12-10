@@ -23,13 +23,15 @@ type upgradeSpec struct {
 	SourceKernelPath     string
 	SourceInitramfsPath  string
 	SourceDiskImagePath  string
+	SourceISOPath        string
 	SourceInstallerImage string
 	SourceVersion        string
 	SourceK8sVersion     string
 
-	TargetInstallerImage string
-	TargetVersion        string
-	TargetK8sVersion     string
+	TargetInstallerImage  string
+	TargetVersion         string
+	TargetK8sVersion      string
+	TargetCmdlineContains string
 
 	SkipKubeletUpgrade bool
 
@@ -193,6 +195,37 @@ func upgradeStableToCurrentPreserveStage() upgradeSpec {
 	}
 }
 
+func upgradeCurrentToCurrentNewCmdline() upgradeSpec {
+	installerImage := fmt.Sprintf(
+		"%s/%s:%s",
+		DefaultSettings.TargetInstallImageRegistry,
+		images.DefaultInstallerImageName,
+		DefaultSettings.CurrentVersion,
+	)
+
+	targetInstallerImage := installerImage + "-extra-cmdline"
+
+	return upgradeSpec{
+		ShortName: fmt.Sprintf("%s-same-ver-extra-cmdline", DefaultSettings.CurrentVersion),
+
+		SourceISOPath:        helpers.ArtifactPath("metal-amd64.iso"),
+		SourceInstallerImage: installerImage,
+		SourceVersion:        DefaultSettings.CurrentVersion,
+		SourceK8sVersion:     currentK8sVersion,
+
+		TargetInstallerImage: targetInstallerImage,
+		TargetVersion:        DefaultSettings.CurrentVersion,
+		TargetK8sVersion:     currentK8sVersion,
+
+		ControlplaneNodes: 1,
+		WorkerNodes:       0,
+
+		TargetCmdlineContains: "talos.extra_cmdline=extra-super-cmdline",
+
+		WithApplyConfig: true,
+	}
+}
+
 // UpgradeSuite ...
 type UpgradeSuite struct {
 	BaseSuite
@@ -234,6 +267,7 @@ func (suite *UpgradeSuite) TestRolling() {
 		SourceKernelPath:     suite.spec.SourceKernelPath,
 		SourceInitramfsPath:  suite.spec.SourceInitramfsPath,
 		SourceDiskImagePath:  suite.spec.SourceDiskImagePath,
+		SourceISOPath:        suite.spec.SourceISOPath,
 		SourceInstallerImage: suite.spec.SourceInstallerImage,
 		SourceVersion:        suite.spec.SourceVersion,
 		SourceK8sVersion:     suite.spec.SourceK8sVersion,
@@ -275,6 +309,12 @@ func (suite *UpgradeSuite) TestRolling() {
 	// upgrade Kubernetes if required
 	suite.upgradeKubernetes(suite.spec.SourceK8sVersion, suite.spec.TargetK8sVersion, suite.spec.SkipKubeletUpgrade)
 
+	if suite.spec.TargetCmdlineContains != "" {
+		for _, node := range suite.Cluster.Info().Nodes {
+			suite.assertCmdlineContains(client, node.IPs[0].String(), suite.spec.TargetCmdlineContains)
+		}
+	}
+
 	// run e2e test
 	suite.runE2E(suite.spec.TargetK8sVersion)
 }
@@ -296,5 +336,6 @@ func init() {
 		&UpgradeSuite{specGen: upgradeCurrentToCurrent, track: 2},
 		&UpgradeSuite{specGen: upgradeCurrentToCurrentBios, track: 0},
 		&UpgradeSuite{specGen: upgradeStableToCurrentPreserveStage, track: 1},
+		&UpgradeSuite{specGen: upgradeCurrentToCurrentNewCmdline, track: 2},
 	)
 }
