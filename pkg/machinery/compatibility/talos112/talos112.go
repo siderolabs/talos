@@ -9,7 +9,7 @@ import (
 	"github.com/blang/semver/v4"
 )
 
-// MajorMinor is the major.minor version of Talos 1.11.
+// MajorMinor is the major.minor version of Talos 1.12.
 var MajorMinor = [2]uint64{1, 12}
 
 // MinimumHostUpgradeVersion is the minimum version of Talos that can be upgraded to 1.12.

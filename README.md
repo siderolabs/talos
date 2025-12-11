@@ -57,7 +57,7 @@ See [Contributing](CONTRIBUTING.md) for our guidelines.
 ## License
 
 <a href="https://github.com/siderolabs/talos/blob/master/LICENSE">
-  <img alt="GitHub" src="https://img.shields.io/github/license/siderolabs/talos?style=flat-square">
+  <img alt="GitHub" src="https://img.shields.io/github/license/siderolabs/talos">
 </a>
 
 Some software we distribute is under the General Public License family of licenses or other licenses that require we provide you with the source code.
