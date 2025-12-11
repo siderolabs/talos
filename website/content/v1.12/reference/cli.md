@@ -179,7 +179,7 @@ talosctl cluster create dev [flags]
       --memory string(mb,gb)                     the limit on memory usage for each control plane/VM (default 2.0GiB)
       --memory-workers string(mb,gb)             the limit on memory usage for each worker/VM (default 2.0GiB)
       --mtu int                                  MTU of the cluster network (default 1500)
-      --nameservers strings                      list of nameservers to use, by default use embedded DNS forwarder
+      --nameservers strings                      list of nameservers to use
       --no-masquerade-cidrs strings              list of CIDRs to exclude from NAT
       --omni-api-endpoint string                 the Omni API endpoint (must include a scheme, a hostname and a join token, e.g. 'https://siderolink.omni.example?jointoken=foobar')
       --registry-insecure-skip-verify strings    list of registry hostnames to skip TLS verification for

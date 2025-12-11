@@ -222,7 +222,7 @@ func getCreateCmd(cmdName string, hidden bool) *cobra.Command {
 		qemu.MarkHidden("with-debug-shell") //nolint:errcheck
 		qemu.StringSliceVar(&qOps.ExtraUEFISearchPaths, extraUEFISearchPathsFlag, qOps.ExtraUEFISearchPaths, "additional search paths for UEFI firmware (only applies when UEFI is enabled)")
 		qemu.StringSliceVar(&qOps.NetworkNoMasqueradeCIDRs, networkNoMasqueradeCIDRsFlag, qOps.NetworkNoMasqueradeCIDRs, "list of CIDRs to exclude from NAT")
-		qemu.StringSliceVar(&qOps.Nameservers, nameserversFlag, qOps.Nameservers, "list of nameservers to use, by default use embedded DNS forwarder")
+		qemu.StringSliceVar(&qOps.Nameservers, nameserversFlag, qOps.Nameservers, "list of nameservers to use")
 		qemu.UintVar(&qOps.DiskBlockSize, diskBlockSizeFlag, qOps.DiskBlockSize, "disk block size")
 		qemu.StringVar(&qOps.TargetArch, targetArchFlag, qOps.TargetArch, "cluster architecture")
 		qemu.StringSliceVar(&qOps.CniBinPath, cniBinPathFlag, qOps.CniBinPath, "search path for CNI binaries")
