@@ -614,7 +614,7 @@ func create(ctx context.Context, ops createOps) error {
 			)
 		}
 
-		if !qOps.bootloaderEnabled {
+		if !qOps.bootloaderEnabled || qOps.targetArch == "arm64" {
 			// disable kexec, as this would effectively use the bootloader
 			genOptions = append(genOptions,
 				generate.WithSysctls(map[string]string{
