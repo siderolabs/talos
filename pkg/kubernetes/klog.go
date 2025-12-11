@@ -13,6 +13,7 @@ import (
 func init() {
 	// Kubernetes client likes to do calls to `klog` in random places which are not configurable.
 	// For Talos this means those logs are going to the console which doesn't look good.
+	klog.EnableContextualLogging(false)
 	klog.SetOutput(io.Discard)
 	klog.LogToStderr(false)
 }
