@@ -285,7 +285,8 @@ func CloudPlatforms() []Platform {
 			BootMethods: []BootMethod{
 				BootMethodDiskImage,
 			},
-			MinVersion: semver.MustParse("1.8.0-alpha.2"),
+			SecureBootSupported: true,
+			MinVersion:          semver.MustParse("1.8.0-alpha.2"),
 		},
 		{
 			Name: "hcloud",
