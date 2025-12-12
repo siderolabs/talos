@@ -252,6 +252,7 @@ description: Talos gRPC API reference.
 - [resource/definitions/enums/enums.proto](#resource/definitions/enums/enums.proto)
     - [BlockEncryptionKeyType](#talos.resource.definitions.enums.BlockEncryptionKeyType)
     - [BlockEncryptionProviderType](#talos.resource.definitions.enums.BlockEncryptionProviderType)
+    - [BlockFSParameterType](#talos.resource.definitions.enums.BlockFSParameterType)
     - [BlockFilesystemType](#talos.resource.definitions.enums.BlockFilesystemType)
     - [BlockVolumePhase](#talos.resource.definitions.enums.BlockVolumePhase)
     - [BlockVolumeType](#talos.resource.definitions.enums.BlockVolumeType)
@@ -311,6 +312,7 @@ description: Talos gRPC API reference.
     - [MountRequestSpec](#talos.resource.definitions.block.MountRequestSpec)
     - [MountSpec](#talos.resource.definitions.block.MountSpec)
     - [MountStatusSpec](#talos.resource.definitions.block.MountStatusSpec)
+    - [ParameterSpec](#talos.resource.definitions.block.ParameterSpec)
     - [PartitionSpec](#talos.resource.definitions.block.PartitionSpec)
     - [ProvisioningSpec](#talos.resource.definitions.block.ProvisioningSpec)
     - [SwapStatusSpec](#talos.resource.definitions.block.SwapStatusSpec)
@@ -4494,6 +4496,19 @@ BlockEncryptionProviderType describes encryption provider type.
 
 
 
+<a name="talos.resource.definitions.enums.BlockFSParameterType"></a>
+
+### BlockFSParameterType
+BlockFSParameterType describes Filesystem Parameter type.
+
+| Name | Number | Description |
+| ---- | ------ | ----------- |
+| FS_PARAMETER_TYPE_STRING_VALUE | 0 |  |
+| FS_PARAMETER_TYPE_BOOLEAN_VALUE | 1 |  |
+| FS_PARAMETER_TYPE_BINARY_VALUE | 2 |  |
+
+
+
 <a name="talos.resource.definitions.enums.BlockFilesystemType"></a>
 
 ### BlockFilesystemType
@@ -4507,6 +4522,7 @@ BlockFilesystemType describes filesystem type.
 | FILESYSTEM_TYPE_EXT4 | 3 |  |
 | FILESYSTEM_TYPE_ISO9660 | 4 |  |
 | FILESYSTEM_TYPE_SWAP | 5 |  |
+| FILESYSTEM_TYPE_VIRTIOFS | 6 |  |
 
 
 
@@ -4541,6 +4557,7 @@ BlockVolumeType describes volume type.
 | VOLUME_TYPE_DIRECTORY | 3 |  |
 | VOLUME_TYPE_SYMLINK | 4 |  |
 | VOLUME_TYPE_OVERLAY | 5 |  |
+| VOLUME_TYPE_EXTERNAL | 6 |  |
 
 
 
@@ -5608,6 +5625,7 @@ DiskSelector selects a disk for the volume.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | match | [google.api.expr.v1alpha1.CheckedExpr](#google.api.expr.v1alpha1.CheckedExpr) |  |  |
+| external | [string](#string) |  |  |
 
 
 
@@ -5757,6 +5775,7 @@ MountSpec is the spec for volume mount.
 | gid | [int64](#int64) |  |  |
 | recursive_relabel | [bool](#bool) |  |  |
 | bind_target | [string](#string) |  |  |
+| parameters | [ParameterSpec](#talos.resource.definitions.block.ParameterSpec) | repeated |  |
 
 
 
@@ -5779,6 +5798,24 @@ MountStatusSpec is the spec for MountStatus.
 | project_quota_support | [bool](#bool) |  |  |
 | encryption_provider | [talos.resource.definitions.enums.BlockEncryptionProviderType](#talos.resource.definitions.enums.BlockEncryptionProviderType) |  |  |
 | detached | [bool](#bool) |  |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.block.ParameterSpec"></a>
+
+### ParameterSpec
+ParameterSpec is a mount parameter.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| type | [talos.resource.definitions.enums.BlockFSParameterType](#talos.resource.definitions.enums.BlockFSParameterType) |  |  |
+| name | [string](#string) |  |  |
+| string | [string](#string) |  |  |
+| binary | [bytes](#bytes) |  |  |
 
 
 

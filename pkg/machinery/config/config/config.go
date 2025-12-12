@@ -35,6 +35,7 @@ type Config interface { //nolint:interfacebloat
 	UserVolumeConfigs() []UserVolumeConfig
 	RawVolumeConfigs() []RawVolumeConfig
 	ExistingVolumeConfigs() []ExistingVolumeConfig
+	ExternalVolumeConfigs() []ExternalVolumeConfig
 	SwapVolumeConfigs() []SwapVolumeConfig
 	ZswapConfig() ZswapConfig
 

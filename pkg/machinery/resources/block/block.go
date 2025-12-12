@@ -19,9 +19,9 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/resources/v1alpha1"
 )
 
-//go:generate go tool github.com/siderolabs/deep-copy -type DeviceSpec -type DiscoveredVolumeSpec -type DiscoveryRefreshRequestSpec -type DiscoveryRefreshStatusSpec  -type DiskSpec -type MountRequestSpec -type MountStatusSpec -type SwapStatusSpec -type SymlinkSpec -type SystemDiskSpec -type UserDiskConfigStatusSpec -type VolumeConfigSpec -type VolumeLifecycleSpec -type VolumeMountRequestSpec -type VolumeMountStatusSpec -type VolumeStatusSpec -type ZswapStatusSpec -header-file ../../../../hack/boilerplate.txt -o deep_copy.generated.go .
+//go:generate go tool github.com/siderolabs/deep-copy -type DeviceSpec -type DiscoveredVolumeSpec -type DiscoveryRefreshRequestSpec -type DiscoveryRefreshStatusSpec -type DiskSpec -type MountRequestSpec -type MountStatusSpec -type ParameterSpec -type SwapStatusSpec -type SymlinkSpec -type SystemDiskSpec -type UserDiskConfigStatusSpec -type VolumeConfigSpec -type VolumeLifecycleSpec -type VolumeMountRequestSpec -type VolumeMountStatusSpec -type VolumeStatusSpec -type ZswapStatusSpec -header-file ../../../../hack/boilerplate.txt -o deep_copy.generated.go .
 
-//go:generate go tool github.com/dmarkham/enumer -type=VolumeType,VolumePhase,FilesystemType,EncryptionKeyType,EncryptionProviderType  -linecomment -text
+//go:generate go tool github.com/dmarkham/enumer -type=VolumeType,VolumePhase,FilesystemType,EncryptionKeyType,EncryptionProviderType,FSParameterType -linecomment -text
 
 // NamespaceName contains configuration resources.
 const NamespaceName resource.Namespace = v1alpha1.NamespaceName
@@ -40,6 +40,9 @@ const RawVolumeLabel = "talos.dev/raw-volume"
 
 // ExistingVolumeLabel is the label for existing volumes.
 const ExistingVolumeLabel = "talos.dev/existing-volume"
+
+// ExternalVolumeLabel is the label for external volumes.
+const ExternalVolumeLabel = "talos.dev/external-volume"
 
 // SwapVolumeLabel is the label for swap volumes.
 const SwapVolumeLabel = "talos.dev/swap-volume"
