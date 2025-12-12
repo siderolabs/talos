@@ -17,6 +17,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	goruntime "runtime"
 	"strconv"
 	"strings"
 	"syscall"
@@ -1646,6 +1647,15 @@ func KexecPrepare(_ runtime.Sequence, data any) (runtime.TaskExecutionFunc, stri
 
 		if efi.GetSecureBoot() {
 			log.Print("kexec skipped as secure boot is enabled")
+
+			return nil
+		}
+
+		if goruntime.GOARCH == "arm64" {
+			// see https://lkml.org/lkml/2025/11/27/178
+			// [TODO]: remove this once the kernel issue is resolved
+			// see also https://github.com/siderolabs/talos/pull/12396
+			log.Print("kexec skipped as kexec has issues on arm64")
 
 			return nil
 		}
