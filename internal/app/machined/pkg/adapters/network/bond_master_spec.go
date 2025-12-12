@@ -35,6 +35,8 @@ type bondMaster struct {
 func (a bondMaster) FillDefaults() {
 	bond := a.BondMasterSpec
 
+	bond.UseCarrier = true // Linux 6.18 locks this value to true
+
 	if bond.ResendIGMP == 0 {
 		bond.ResendIGMP = 1
 	}
@@ -59,8 +61,10 @@ func (a bondMaster) FillDefaults() {
 		bond.ADActorSysPrio = 65535
 	}
 
-	if bond.MissedMax == 0 {
-		bond.MissedMax = 2
+	if bond.Mode != nethelpers.BondMode8023AD && bond.Mode != nethelpers.BondModeALB && bond.Mode != nethelpers.BondModeTLB {
+		if bond.MissedMax == 0 {
+			bond.MissedMax = 2
+		}
 	}
 
 	if bond.Mode != nethelpers.BondMode8023AD {

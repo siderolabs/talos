@@ -68,8 +68,9 @@ links:
         packetsPerSlave: 1
         numPeerNotif: 1
         tlbLogicalLb: 1
+        useCarrier: true
         adActorSysPrio: 65535
-        missedMax: 2
+        adLacpActive: "on"
       layer: platform
     - name: aggi
       logical: true
@@ -93,8 +94,9 @@ links:
         packetsPerSlave: 1
         numPeerNotif: 1
         tlbLogicalLb: 1
+        useCarrier: true
         adActorSysPrio: 65535
-        missedMax: 2
+        adLacpActive: "on"
       layer: platform
 routes:
     - family: inet4

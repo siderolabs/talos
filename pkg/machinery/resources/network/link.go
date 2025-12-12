@@ -219,8 +219,10 @@ func (spec *BondMasterSpec) Equal(other *BondMasterSpec) bool {
 		return false
 	}
 
-	if spec.MissedMax != other.MissedMax {
-		return false
+	if spec.Mode != nethelpers.BondMode8023AD && spec.Mode != nethelpers.BondModeALB && spec.Mode != nethelpers.BondModeTLB {
+		if spec.MissedMax != other.MissedMax {
+			return false
+		}
 	}
 
 	return true

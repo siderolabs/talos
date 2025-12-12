@@ -464,6 +464,10 @@ func (n *Nocloud) applyNetworkConfigV1(ctx context.Context, config *NetworkConfi
 				},
 			}
 
+			if mode == nethelpers.BondMode8023AD {
+				bondLink.BondMaster.ADLACPActive = nethelpers.ADLACPActiveOn
+			}
+
 			if ntwrk.MTU != 0 {
 				bondLink.MTU = ntwrk.MTU
 			}
@@ -868,6 +872,10 @@ func (n *Nocloud) applyNetworkConfigV2(ctx context.Context, config *NetworkConfi
 				DownDelay:  bond.Params.DownDelay,
 				LACPRate:   lacpRate,
 			},
+		}
+
+		if mode == nethelpers.BondMode8023AD {
+			bondLink.BondMaster.ADLACPActive = nethelpers.ADLACPActiveOn
 		}
 
 		networkadapter.BondMasterSpec(&bondLink.BondMaster).FillDefaults()
