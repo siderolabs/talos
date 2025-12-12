@@ -224,6 +224,10 @@ func (p *EquinixMetal) ParseMetadata(ctx context.Context, equinixMetadata *Metad
 			},
 		}
 
+		if bondMode == nethelpers.BondMode8023AD {
+			bondLink.BondMaster.ADLACPActive = nethelpers.ADLACPActiveOn
+		}
+
 		networkadapter.BondMasterSpec(&bondLink.BondMaster).FillDefaults()
 
 		networkConfig.Links = append(networkConfig.Links, bondLink)
