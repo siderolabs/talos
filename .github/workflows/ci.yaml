@@ -33,7 +33,7 @@ jobs:
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@59699597e84e80085a750998045983daa49274c4 # version: v1.4.0
+        uses: kenchan0130/actions-system-info@d961a4a68368ff3bf21f8a6c59e7a92056c66a07 # version: v1.4.0
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -63,13 +63,13 @@ jobs:
           git fetch --prune --unshallow
       - name: Set up Docker Buildx
         id: setup-buildx
-        uses: docker/setup-buildx-action@e468171a9de216ec08956ac3ada2f0791b6bd435 # version: v3.11.1
+        uses: docker/setup-buildx-action@65d18f8f8a05aab1b2d761032bec9cd5578caadb # version: v3.11.1
         with:
           driver: remote
           endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
         timeout-minutes: 10
       - name: Download artifacts
-        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # version: v6.0.0
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # version: v6.0.0
         with:
           name: talos-artifacts
           path: _out
@@ -97,7 +97,7 @@ jobs:
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@59699597e84e80085a750998045983daa49274c4 # version: v1.4.0
+        uses: kenchan0130/actions-system-info@d961a4a68368ff3bf21f8a6c59e7a92056c66a07 # version: v1.4.0
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -127,13 +127,13 @@ jobs:
           git fetch --prune --unshallow
       - name: Set up Docker Buildx
         id: setup-buildx
-        uses: docker/setup-buildx-action@e468171a9de216ec08956ac3ada2f0791b6bd435 # version: v3.11.1
+        uses: docker/setup-buildx-action@65d18f8f8a05aab1b2d761032bec9cd5578caadb # version: v3.11.1
         with:
           driver: remote
           endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
         timeout-minutes: 10
       - name: Download artifacts
-        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # version: v6.0.0
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # version: v6.0.0
         with:
           name: talos-artifacts
           path: _out
@@ -153,7 +153,7 @@ jobs:
         run: |
           make unit-tests-race
       - name: coverage
-        uses: codecov/codecov-action@5a1091511ad55cbe89839c7260b706298ca349f7 # version: v5.5.1
+        uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de # version: v5.5.1
         with:
           files: _out/coverage.txt
           token: ${{ secrets.CODECOV_TOKEN }}
@@ -173,7 +173,7 @@ jobs:
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@59699597e84e80085a750998045983daa49274c4 # version: v1.4.0
+        uses: kenchan0130/actions-system-info@d961a4a68368ff3bf21f8a6c59e7a92056c66a07 # version: v1.4.0
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -203,7 +203,7 @@ jobs:
           git fetch --prune --unshallow
       - name: Set up Docker Buildx
         id: setup-buildx
-        uses: docker/setup-buildx-action@e468171a9de216ec08956ac3ada2f0791b6bd435 # version: v3.11.1
+        uses: docker/setup-buildx-action@65d18f8f8a05aab1b2d761032bec9cd5578caadb # version: v3.11.1
         with:
           driver: remote
           endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
@@ -255,7 +255,7 @@ jobs:
         run: |
           find _out -type f -executable > _out/executable-artifacts
       - name: save artifacts
-        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # version: v5.0.0
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # version: v5.0.0
         with:
           name: talos-artifacts
           path: |
@@ -291,7 +291,7 @@ jobs:
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@59699597e84e80085a750998045983daa49274c4 # version: v1.4.0
+        uses: kenchan0130/actions-system-info@d961a4a68368ff3bf21f8a6c59e7a92056c66a07 # version: v1.4.0
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -320,7 +320,7 @@ jobs:
         run: |
           git fetch --prune --unshallow
       - name: Download artifacts
-        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # version: v6.0.0
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # version: v6.0.0
         with:
           name: talos-artifacts
           path: _out
@@ -338,7 +338,7 @@ jobs:
           make e2e-docker
       - name: save artifacts
         if: always()
-        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # version: v5.0.0
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # version: v5.0.0
         with:
           name: talos-logs-e2e-docker-short
           path: |-
@@ -360,7 +360,7 @@ jobs:
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@59699597e84e80085a750998045983daa49274c4 # version: v1.4.0
+        uses: kenchan0130/actions-system-info@d961a4a68368ff3bf21f8a6c59e7a92056c66a07 # version: v1.4.0
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -389,7 +389,7 @@ jobs:
         run: |
           git fetch --prune --unshallow
       - name: Download artifacts
-        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # version: v6.0.0
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # version: v6.0.0
         with:
           name: talos-artifacts
           path: _out
@@ -406,7 +406,7 @@ jobs:
           sudo -E make e2e-iso
       - name: save artifacts
         if: always()
-        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # version: v5.0.0
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # version: v5.0.0
         with:
           name: talos-logs-e2e-iso
           path: |-
@@ -428,7 +428,7 @@ jobs:
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@59699597e84e80085a750998045983daa49274c4 # version: v1.4.0
+        uses: kenchan0130/actions-system-info@d961a4a68368ff3bf21f8a6c59e7a92056c66a07 # version: v1.4.0
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -457,7 +457,7 @@ jobs:
         run: |
           git fetch --prune --unshallow
       - name: Download artifacts
-        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # version: v6.0.0
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # version: v6.0.0
         with:
           name: talos-artifacts
           path: _out
@@ -476,7 +476,7 @@ jobs:
           sudo -E make e2e-qemu
       - name: save artifacts
         if: always()
-        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # version: v5.0.0
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # version: v5.0.0
         with:
           name: talos-logs-e2e-qemu-short
           path: |-
@@ -498,7 +498,7 @@ jobs:
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@59699597e84e80085a750998045983daa49274c4 # version: v1.4.0
+        uses: kenchan0130/actions-system-info@d961a4a68368ff3bf21f8a6c59e7a92056c66a07 # version: v1.4.0
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -528,7 +528,7 @@ jobs:
           git fetch --prune --unshallow
       - name: Set up Docker Buildx
         id: setup-buildx
-        uses: docker/setup-buildx-action@e468171a9de216ec08956ac3ada2f0791b6bd435 # version: v3.11.1
+        uses: docker/setup-buildx-action@65d18f8f8a05aab1b2d761032bec9cd5578caadb # version: v3.11.1
         with:
           driver: remote
           endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
@@ -543,7 +543,7 @@ jobs:
           make target-grype-validate
       - name: save artifacts
         if: always()
-        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # version: v5.0.0
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # version: v5.0.0
         with:
           name: talos-grype-scan-result
           path: |
@@ -564,7 +564,7 @@ jobs:
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@59699597e84e80085a750998045983daa49274c4 # version: v1.4.0
+        uses: kenchan0130/actions-system-info@d961a4a68368ff3bf21f8a6c59e7a92056c66a07 # version: v1.4.0
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -594,14 +594,14 @@ jobs:
           git fetch --prune --unshallow
       - name: Set up Docker Buildx
         id: setup-buildx
-        uses: docker/setup-buildx-action@e468171a9de216ec08956ac3ada2f0791b6bd435 # version: v3.11.1
+        uses: docker/setup-buildx-action@65d18f8f8a05aab1b2d761032bec9cd5578caadb # version: v3.11.1
         with:
           driver: remote
           endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
         timeout-minutes: 10
       - name: Download artifacts
         if: github.event_name != 'schedule'
-        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # version: v6.0.0
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # version: v6.0.0
         with:
           name: talos-artifacts
           path: _out
@@ -665,7 +665,7 @@ jobs:
           sudo -E make e2e-qemu
       - name: save artifacts
         if: always()
-        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # version: v5.0.0
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # version: v5.0.0
         with:
           name: talos-logs-integration-airgapped
           path: |-
@@ -688,7 +688,7 @@ jobs:
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@59699597e84e80085a750998045983daa49274c4 # version: v1.4.0
+        uses: kenchan0130/actions-system-info@d961a4a68368ff3bf21f8a6c59e7a92056c66a07 # version: v1.4.0
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -718,7 +718,7 @@ jobs:
           git fetch --prune --unshallow
       - name: Set up Docker Buildx
         id: setup-buildx
-        uses: docker/setup-buildx-action@e468171a9de216ec08956ac3ada2f0791b6bd435 # version: v3.11.1
+        uses: docker/setup-buildx-action@65d18f8f8a05aab1b2d761032bec9cd5578caadb # version: v3.11.1
         with:
           driver: remote
           endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
@@ -731,7 +731,7 @@ jobs:
           sops -d .secrets.yaml | yq -e '.secrets | to_entries[] | .key + "=" + .value' >> "$GITHUB_ENV"
       - name: Download artifacts
         if: github.event_name != 'schedule'
-        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # version: v6.0.0
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # version: v6.0.0
         with:
           name: talos-artifacts
           path: _out
@@ -787,7 +787,7 @@ jobs:
           ref: main
           repository: siderolabs/contrib
       - name: setup tf
-        uses: hashicorp/setup-terraform@b9cd54a3c349d3f38e8881555d616ced269862dd # version: v3.1.2
+        uses: hashicorp/setup-terraform@071811a16241b026a69d0c8823fc3d7c54385db5 # version: v3.1.2
         with:
           terraform_wrapper: "false"
       - name: tf apply
@@ -824,7 +824,7 @@ jobs:
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@59699597e84e80085a750998045983daa49274c4 # version: v1.4.0
+        uses: kenchan0130/actions-system-info@d961a4a68368ff3bf21f8a6c59e7a92056c66a07 # version: v1.4.0
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -854,7 +854,7 @@ jobs:
           git fetch --prune --unshallow
       - name: Set up Docker Buildx
         id: setup-buildx
-        uses: docker/setup-buildx-action@e468171a9de216ec08956ac3ada2f0791b6bd435 # version: v3.11.1
+        uses: docker/setup-buildx-action@65d18f8f8a05aab1b2d761032bec9cd5578caadb # version: v3.11.1
         with:
           driver: remote
           endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
@@ -867,7 +867,7 @@ jobs:
           sops -d .secrets.yaml | yq -e '.secrets | to_entries[] | .key + "=" + .value' >> "$GITHUB_ENV"
       - name: Download artifacts
         if: github.event_name != 'schedule'
-        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # version: v6.0.0
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # version: v6.0.0
         with:
           name: talos-artifacts
           path: _out
@@ -937,7 +937,7 @@ jobs:
           ref: main
           repository: siderolabs/contrib
       - name: setup tf
-        uses: hashicorp/setup-terraform@b9cd54a3c349d3f38e8881555d616ced269862dd # version: v3.1.2
+        uses: hashicorp/setup-terraform@071811a16241b026a69d0c8823fc3d7c54385db5 # version: v3.1.2
         with:
           terraform_wrapper: "false"
       - name: tf apply
@@ -977,7 +977,7 @@ jobs:
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@59699597e84e80085a750998045983daa49274c4 # version: v1.4.0
+        uses: kenchan0130/actions-system-info@d961a4a68368ff3bf21f8a6c59e7a92056c66a07 # version: v1.4.0
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -1007,7 +1007,7 @@ jobs:
           git fetch --prune --unshallow
       - name: Set up Docker Buildx
         id: setup-buildx
-        uses: docker/setup-buildx-action@e468171a9de216ec08956ac3ada2f0791b6bd435 # version: v3.11.1
+        uses: docker/setup-buildx-action@65d18f8f8a05aab1b2d761032bec9cd5578caadb # version: v3.11.1
         with:
           driver: remote
           endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
@@ -1020,7 +1020,7 @@ jobs:
           sops -d .secrets.yaml | yq -e '.secrets | to_entries[] | .key + "=" + .value' >> "$GITHUB_ENV"
       - name: Download artifacts
         if: github.event_name != 'schedule'
-        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # version: v6.0.0
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # version: v6.0.0
         with:
           name: talos-artifacts
           path: _out
@@ -1090,7 +1090,7 @@ jobs:
           ref: main
           repository: siderolabs/contrib
       - name: setup tf
-        uses: hashicorp/setup-terraform@b9cd54a3c349d3f38e8881555d616ced269862dd # version: v3.1.2
+        uses: hashicorp/setup-terraform@071811a16241b026a69d0c8823fc3d7c54385db5 # version: v3.1.2
         with:
           terraform_wrapper: "false"
       - name: tf apply
@@ -1130,7 +1130,7 @@ jobs:
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@59699597e84e80085a750998045983daa49274c4 # version: v1.4.0
+        uses: kenchan0130/actions-system-info@d961a4a68368ff3bf21f8a6c59e7a92056c66a07 # version: v1.4.0
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -1160,7 +1160,7 @@ jobs:
           git fetch --prune --unshallow
       - name: Set up Docker Buildx
         id: setup-buildx
-        uses: docker/setup-buildx-action@e468171a9de216ec08956ac3ada2f0791b6bd435 # version: v3.11.1
+        uses: docker/setup-buildx-action@65d18f8f8a05aab1b2d761032bec9cd5578caadb # version: v3.11.1
         with:
           driver: remote
           endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
@@ -1173,7 +1173,7 @@ jobs:
           sops -d .secrets.yaml | yq -e '.secrets | to_entries[] | .key + "=" + .value' >> "$GITHUB_ENV"
       - name: Download artifacts
         if: github.event_name != 'schedule'
-        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # version: v6.0.0
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # version: v6.0.0
         with:
           name: talos-artifacts
           path: _out
@@ -1243,7 +1243,7 @@ jobs:
           ref: main
           repository: siderolabs/contrib
       - name: setup tf
-        uses: hashicorp/setup-terraform@b9cd54a3c349d3f38e8881555d616ced269862dd # version: v3.1.2
+        uses: hashicorp/setup-terraform@071811a16241b026a69d0c8823fc3d7c54385db5 # version: v3.1.2
         with:
           terraform_wrapper: "false"
       - name: tf apply
@@ -1283,7 +1283,7 @@ jobs:
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@59699597e84e80085a750998045983daa49274c4 # version: v1.4.0
+        uses: kenchan0130/actions-system-info@d961a4a68368ff3bf21f8a6c59e7a92056c66a07 # version: v1.4.0
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -1313,7 +1313,7 @@ jobs:
           git fetch --prune --unshallow
       - name: Set up Docker Buildx
         id: setup-buildx
-        uses: docker/setup-buildx-action@e468171a9de216ec08956ac3ada2f0791b6bd435 # version: v3.11.1
+        uses: docker/setup-buildx-action@65d18f8f8a05aab1b2d761032bec9cd5578caadb # version: v3.11.1
         with:
           driver: remote
           endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
@@ -1326,7 +1326,7 @@ jobs:
           sops -d .secrets.yaml | yq -e '.secrets | to_entries[] | .key + "=" + .value' >> "$GITHUB_ENV"
       - name: Download artifacts
         if: github.event_name != 'schedule'
-        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # version: v6.0.0
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # version: v6.0.0
         with:
           name: talos-artifacts
           path: _out
@@ -1396,7 +1396,7 @@ jobs:
           ref: main
           repository: siderolabs/contrib
       - name: setup tf
-        uses: hashicorp/setup-terraform@b9cd54a3c349d3f38e8881555d616ced269862dd # version: v3.1.2
+        uses: hashicorp/setup-terraform@071811a16241b026a69d0c8823fc3d7c54385db5 # version: v3.1.2
         with:
           terraform_wrapper: "false"
       - name: tf apply
@@ -1436,7 +1436,7 @@ jobs:
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@59699597e84e80085a750998045983daa49274c4 # version: v1.4.0
+        uses: kenchan0130/actions-system-info@d961a4a68368ff3bf21f8a6c59e7a92056c66a07 # version: v1.4.0
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -1466,14 +1466,14 @@ jobs:
           git fetch --prune --unshallow
       - name: Set up Docker Buildx
         id: setup-buildx
-        uses: docker/setup-buildx-action@e468171a9de216ec08956ac3ada2f0791b6bd435 # version: v3.11.1
+        uses: docker/setup-buildx-action@65d18f8f8a05aab1b2d761032bec9cd5578caadb # version: v3.11.1
         with:
           driver: remote
           endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
         timeout-minutes: 10
       - name: Download artifacts
         if: github.event_name != 'schedule'
-        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # version: v6.0.0
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # version: v6.0.0
         with:
           name: talos-artifacts
           path: _out
@@ -1535,7 +1535,7 @@ jobs:
           sudo -E make e2e-qemu
       - name: save artifacts
         if: always()
-        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # version: v5.0.0
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # version: v5.0.0
         with:
           name: talos-logs-integration-cilium
           path: |-
@@ -1557,7 +1557,7 @@ jobs:
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@59699597e84e80085a750998045983daa49274c4 # version: v1.4.0
+        uses: kenchan0130/actions-system-info@d961a4a68368ff3bf21f8a6c59e7a92056c66a07 # version: v1.4.0
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -1587,7 +1587,7 @@ jobs:
           git fetch --prune --unshallow
       - name: Set up Docker Buildx
         id: setup-buildx
-        uses: docker/setup-buildx-action@e468171a9de216ec08956ac3ada2f0791b6bd435 # version: v3.11.1
+        uses: docker/setup-buildx-action@65d18f8f8a05aab1b2d761032bec9cd5578caadb # version: v3.11.1
         with:
           driver: remote
           endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
@@ -1600,7 +1600,7 @@ jobs:
           sops -d .secrets.yaml | yq -e '.secrets | to_entries[] | .key + "=" + .value' >> "$GITHUB_ENV"
       - name: Download artifacts
         if: github.event_name != 'schedule'
-        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # version: v6.0.0
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # version: v6.0.0
         with:
           name: talos-artifacts
           path: _out
@@ -1644,7 +1644,7 @@ jobs:
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@59699597e84e80085a750998045983daa49274c4 # version: v1.4.0
+        uses: kenchan0130/actions-system-info@d961a4a68368ff3bf21f8a6c59e7a92056c66a07 # version: v1.4.0
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -1674,14 +1674,14 @@ jobs:
           git fetch --prune --unshallow
       - name: Set up Docker Buildx
         id: setup-buildx
-        uses: docker/setup-buildx-action@e468171a9de216ec08956ac3ada2f0791b6bd435 # version: v3.11.1
+        uses: docker/setup-buildx-action@65d18f8f8a05aab1b2d761032bec9cd5578caadb # version: v3.11.1
         with:
           driver: remote
           endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
         timeout-minutes: 10
       - name: Download artifacts
         if: github.event_name != 'schedule'
-        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # version: v6.0.0
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # version: v6.0.0
         with:
           name: talos-artifacts
           path: _out
@@ -1716,7 +1716,7 @@ jobs:
           sudo -E make e2e-qemu
       - name: save artifacts
         if: always()
-        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # version: v5.0.0
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # version: v5.0.0
         with:
           name: talos-logs-integration-conformance
           path: |-
@@ -1738,7 +1738,7 @@ jobs:
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@59699597e84e80085a750998045983daa49274c4 # version: v1.4.0
+        uses: kenchan0130/actions-system-info@d961a4a68368ff3bf21f8a6c59e7a92056c66a07 # version: v1.4.0
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -1768,14 +1768,14 @@ jobs:
           git fetch --prune --unshallow
       - name: Set up Docker Buildx
         id: setup-buildx
-        uses: docker/setup-buildx-action@e468171a9de216ec08956ac3ada2f0791b6bd435 # version: v3.11.1
+        uses: docker/setup-buildx-action@65d18f8f8a05aab1b2d761032bec9cd5578caadb # version: v3.11.1
         with:
           driver: remote
           endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
         timeout-minutes: 10
       - name: Download artifacts
         if: github.event_name != 'schedule'
-        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # version: v6.0.0
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # version: v6.0.0
         with:
           name: talos-artifacts
           path: _out
@@ -1828,7 +1828,7 @@ jobs:
           sudo -E make e2e-qemu
       - name: save artifacts
         if: always()
-        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # version: v5.0.0
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # version: v5.0.0
         with:
           name: talos-logs-integration-conformance-enforcing
           path: |-
@@ -1850,7 +1850,7 @@ jobs:
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@59699597e84e80085a750998045983daa49274c4 # version: v1.4.0
+        uses: kenchan0130/actions-system-info@d961a4a68368ff3bf21f8a6c59e7a92056c66a07 # version: v1.4.0
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -1880,14 +1880,14 @@ jobs:
           git fetch --prune --unshallow
       - name: Set up Docker Buildx
         id: setup-buildx
-        uses: docker/setup-buildx-action@e468171a9de216ec08956ac3ada2f0791b6bd435 # version: v3.11.1
+        uses: docker/setup-buildx-action@65d18f8f8a05aab1b2d761032bec9cd5578caadb # version: v3.11.1
         with:
           driver: remote
           endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
         timeout-minutes: 10
       - name: Download artifacts
         if: github.event_name != 'schedule'
-        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # version: v6.0.0
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # version: v6.0.0
         with:
           name: talos-artifacts
           path: _out
@@ -1918,7 +1918,7 @@ jobs:
           sudo -E make e2e-embedded
       - name: save artifacts
         if: always()
-        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # version: v5.0.0
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # version: v5.0.0
         with:
           name: talos-logs-integration-embedded
           path: |-
@@ -1940,7 +1940,7 @@ jobs:
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@59699597e84e80085a750998045983daa49274c4 # version: v1.4.0
+        uses: kenchan0130/actions-system-info@d961a4a68368ff3bf21f8a6c59e7a92056c66a07 # version: v1.4.0
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -1970,14 +1970,14 @@ jobs:
           git fetch --prune --unshallow
       - name: Set up Docker Buildx
         id: setup-buildx
-        uses: docker/setup-buildx-action@e468171a9de216ec08956ac3ada2f0791b6bd435 # version: v3.11.1
+        uses: docker/setup-buildx-action@65d18f8f8a05aab1b2d761032bec9cd5578caadb # version: v3.11.1
         with:
           driver: remote
           endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
         timeout-minutes: 10
       - name: Download artifacts
         if: github.event_name != 'schedule'
-        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # version: v6.0.0
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # version: v6.0.0
         with:
           name: talos-artifacts
           path: _out
@@ -2043,7 +2043,7 @@ jobs:
           sudo -E make e2e-qemu
       - name: save artifacts
         if: always()
-        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # version: v5.0.0
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # version: v5.0.0
         with:
           name: talos-logs-integration-extensions
           path: |-
@@ -2065,7 +2065,7 @@ jobs:
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@59699597e84e80085a750998045983daa49274c4 # version: v1.4.0
+        uses: kenchan0130/actions-system-info@d961a4a68368ff3bf21f8a6c59e7a92056c66a07 # version: v1.4.0
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -2095,7 +2095,7 @@ jobs:
           git fetch --prune --unshallow
       - name: Set up Docker Buildx
         id: setup-buildx
-        uses: docker/setup-buildx-action@e468171a9de216ec08956ac3ada2f0791b6bd435 # version: v3.11.1
+        uses: docker/setup-buildx-action@65d18f8f8a05aab1b2d761032bec9cd5578caadb # version: v3.11.1
         with:
           driver: remote
           endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
@@ -2108,7 +2108,7 @@ jobs:
           sops -d .secrets.yaml | yq -e '.secrets | to_entries[] | .key + "=" + .value' >> "$GITHUB_ENV"
       - name: Download artifacts
         if: github.event_name != 'schedule'
-        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # version: v6.0.0
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # version: v6.0.0
         with:
           name: talos-artifacts
           path: _out
@@ -2161,7 +2161,7 @@ jobs:
           ref: main
           repository: siderolabs/contrib
       - name: setup tf
-        uses: hashicorp/setup-terraform@b9cd54a3c349d3f38e8881555d616ced269862dd # version: v3.1.2
+        uses: hashicorp/setup-terraform@071811a16241b026a69d0c8823fc3d7c54385db5 # version: v3.1.2
         with:
           terraform_wrapper: "false"
       - name: tf apply
@@ -2198,7 +2198,7 @@ jobs:
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@59699597e84e80085a750998045983daa49274c4 # version: v1.4.0
+        uses: kenchan0130/actions-system-info@d961a4a68368ff3bf21f8a6c59e7a92056c66a07 # version: v1.4.0
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -2228,14 +2228,14 @@ jobs:
           git fetch --prune --unshallow
       - name: Set up Docker Buildx
         id: setup-buildx
-        uses: docker/setup-buildx-action@e468171a9de216ec08956ac3ada2f0791b6bd435 # version: v3.11.1
+        uses: docker/setup-buildx-action@65d18f8f8a05aab1b2d761032bec9cd5578caadb # version: v3.11.1
         with:
           driver: remote
           endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
         timeout-minutes: 10
       - name: Download artifacts
         if: github.event_name != 'schedule'
-        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # version: v6.0.0
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # version: v6.0.0
         with:
           name: talos-artifacts
           path: _out
@@ -2285,7 +2285,7 @@ jobs:
           sudo -E make e2e-qemu
       - name: save artifacts
         if: always()
-        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # version: v5.0.0
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # version: v5.0.0
         with:
           name: talos-logs-integration-image-cache
           path: |-
@@ -2307,7 +2307,7 @@ jobs:
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@59699597e84e80085a750998045983daa49274c4 # version: v1.4.0
+        uses: kenchan0130/actions-system-info@d961a4a68368ff3bf21f8a6c59e7a92056c66a07 # version: v1.4.0
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -2337,14 +2337,14 @@ jobs:
           git fetch --prune --unshallow
       - name: Set up Docker Buildx
         id: setup-buildx
-        uses: docker/setup-buildx-action@e468171a9de216ec08956ac3ada2f0791b6bd435 # version: v3.11.1
+        uses: docker/setup-buildx-action@65d18f8f8a05aab1b2d761032bec9cd5578caadb # version: v3.11.1
         with:
           driver: remote
           endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
         timeout-minutes: 10
       - name: Download artifacts
         if: github.event_name != 'schedule'
-        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # version: v6.0.0
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # version: v6.0.0
         with:
           name: talos-artifacts
           path: _out
@@ -2457,7 +2457,7 @@ jobs:
           sudo -E make e2e-image-factory
       - name: save artifacts
         if: always()
-        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # version: v5.0.0
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # version: v5.0.0
         with:
           name: talos-logs-integration-image-factory
           path: |-
@@ -2479,7 +2479,7 @@ jobs:
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@59699597e84e80085a750998045983daa49274c4 # version: v1.4.0
+        uses: kenchan0130/actions-system-info@d961a4a68368ff3bf21f8a6c59e7a92056c66a07 # version: v1.4.0
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -2509,14 +2509,14 @@ jobs:
           git fetch --prune --unshallow
       - name: Set up Docker Buildx
         id: setup-buildx
-        uses: docker/setup-buildx-action@e468171a9de216ec08956ac3ada2f0791b6bd435 # version: v3.11.1
+        uses: docker/setup-buildx-action@65d18f8f8a05aab1b2d761032bec9cd5578caadb # version: v3.11.1
         with:
           driver: remote
           endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
         timeout-minutes: 10
       - name: Download artifacts
         if: github.event_name != 'schedule'
-        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # version: v6.0.0
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # version: v6.0.0
         with:
           name: talos-artifacts
           path: _out
@@ -2561,7 +2561,7 @@ jobs:
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@59699597e84e80085a750998045983daa49274c4 # version: v1.4.0
+        uses: kenchan0130/actions-system-info@d961a4a68368ff3bf21f8a6c59e7a92056c66a07 # version: v1.4.0
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -2591,14 +2591,14 @@ jobs:
           git fetch --prune --unshallow
       - name: Set up Docker Buildx
         id: setup-buildx
-        uses: docker/setup-buildx-action@e468171a9de216ec08956ac3ada2f0791b6bd435 # version: v3.11.1
+        uses: docker/setup-buildx-action@65d18f8f8a05aab1b2d761032bec9cd5578caadb # version: v3.11.1
         with:
           driver: remote
           endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
         timeout-minutes: 10
       - name: Download artifacts
         if: github.event_name != 'schedule'
-        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # version: v6.0.0
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # version: v6.0.0
         with:
           name: talos-artifacts
           path: _out
@@ -2665,7 +2665,7 @@ jobs:
           sudo -E make e2e-qemu
       - name: save artifacts
         if: always()
-        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # version: v5.0.0
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # version: v5.0.0
         with:
           name: talos-logs-integration-misc-0
           path: |-
@@ -2687,7 +2687,7 @@ jobs:
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@59699597e84e80085a750998045983daa49274c4 # version: v1.4.0
+        uses: kenchan0130/actions-system-info@d961a4a68368ff3bf21f8a6c59e7a92056c66a07 # version: v1.4.0
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -2717,14 +2717,14 @@ jobs:
           git fetch --prune --unshallow
       - name: Set up Docker Buildx
         id: setup-buildx
-        uses: docker/setup-buildx-action@e468171a9de216ec08956ac3ada2f0791b6bd435 # version: v3.11.1
+        uses: docker/setup-buildx-action@65d18f8f8a05aab1b2d761032bec9cd5578caadb # version: v3.11.1
         with:
           driver: remote
           endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
         timeout-minutes: 10
       - name: Download artifacts
         if: github.event_name != 'schedule'
-        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # version: v6.0.0
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # version: v6.0.0
         with:
           name: talos-artifacts
           path: _out
@@ -2786,7 +2786,7 @@ jobs:
           sudo -E make e2e-qemu
       - name: save artifacts
         if: always()
-        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # version: v5.0.0
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # version: v5.0.0
         with:
           name: talos-logs-integration-misc-1
           path: |-
@@ -2808,7 +2808,7 @@ jobs:
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@59699597e84e80085a750998045983daa49274c4 # version: v1.4.0
+        uses: kenchan0130/actions-system-info@d961a4a68368ff3bf21f8a6c59e7a92056c66a07 # version: v1.4.0
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -2838,14 +2838,14 @@ jobs:
           git fetch --prune --unshallow
       - name: Set up Docker Buildx
         id: setup-buildx
-        uses: docker/setup-buildx-action@e468171a9de216ec08956ac3ada2f0791b6bd435 # version: v3.11.1
+        uses: docker/setup-buildx-action@65d18f8f8a05aab1b2d761032bec9cd5578caadb # version: v3.11.1
         with:
           driver: remote
           endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
         timeout-minutes: 10
       - name: Download artifacts
         if: github.event_name != 'schedule'
-        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # version: v6.0.0
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # version: v6.0.0
         with:
           name: talos-artifacts
           path: _out
@@ -2934,7 +2934,7 @@ jobs:
           sudo -E make e2e-qemu
       - name: save artifacts
         if: always()
-        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # version: v5.0.0
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # version: v5.0.0
         with:
           name: talos-logs-integration-misc-1-enforcing
           path: |-
@@ -2956,7 +2956,7 @@ jobs:
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@59699597e84e80085a750998045983daa49274c4 # version: v1.4.0
+        uses: kenchan0130/actions-system-info@d961a4a68368ff3bf21f8a6c59e7a92056c66a07 # version: v1.4.0
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -2986,14 +2986,14 @@ jobs:
           git fetch --prune --unshallow
       - name: Set up Docker Buildx
         id: setup-buildx
-        uses: docker/setup-buildx-action@e468171a9de216ec08956ac3ada2f0791b6bd435 # version: v3.11.1
+        uses: docker/setup-buildx-action@65d18f8f8a05aab1b2d761032bec9cd5578caadb # version: v3.11.1
         with:
           driver: remote
           endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
         timeout-minutes: 10
       - name: Download artifacts
         if: github.event_name != 'schedule'
-        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # version: v6.0.0
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # version: v6.0.0
         with:
           name: talos-artifacts
           path: _out
@@ -3098,7 +3098,7 @@ jobs:
           sudo -E make e2e-qemu
       - name: save artifacts
         if: always()
-        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # version: v5.0.0
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # version: v5.0.0
         with:
           name: talos-logs-integration-misc-2
           path: |-
@@ -3120,7 +3120,7 @@ jobs:
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@59699597e84e80085a750998045983daa49274c4 # version: v1.4.0
+        uses: kenchan0130/actions-system-info@d961a4a68368ff3bf21f8a6c59e7a92056c66a07 # version: v1.4.0
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -3150,14 +3150,14 @@ jobs:
           git fetch --prune --unshallow
       - name: Set up Docker Buildx
         id: setup-buildx
-        uses: docker/setup-buildx-action@e468171a9de216ec08956ac3ada2f0791b6bd435 # version: v3.11.1
+        uses: docker/setup-buildx-action@65d18f8f8a05aab1b2d761032bec9cd5578caadb # version: v3.11.1
         with:
           driver: remote
           endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
         timeout-minutes: 10
       - name: Download artifacts
         if: github.event_name != 'schedule'
-        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # version: v6.0.0
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # version: v6.0.0
         with:
           name: talos-artifacts
           path: _out
@@ -3207,7 +3207,7 @@ jobs:
           sudo -E make e2e-qemu
       - name: save artifacts
         if: always()
-        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # version: v5.0.0
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # version: v5.0.0
         with:
           name: talos-logs-integration-misc-3
           path: |-
@@ -3229,7 +3229,7 @@ jobs:
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@59699597e84e80085a750998045983daa49274c4 # version: v1.4.0
+        uses: kenchan0130/actions-system-info@d961a4a68368ff3bf21f8a6c59e7a92056c66a07 # version: v1.4.0
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -3259,14 +3259,14 @@ jobs:
           git fetch --prune --unshallow
       - name: Set up Docker Buildx
         id: setup-buildx
-        uses: docker/setup-buildx-action@e468171a9de216ec08956ac3ada2f0791b6bd435 # version: v3.11.1
+        uses: docker/setup-buildx-action@65d18f8f8a05aab1b2d761032bec9cd5578caadb # version: v3.11.1
         with:
           driver: remote
           endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
         timeout-minutes: 10
       - name: Download artifacts
         if: github.event_name != 'schedule'
-        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # version: v6.0.0
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # version: v6.0.0
         with:
           name: talos-artifacts
           path: _out
@@ -3340,7 +3340,7 @@ jobs:
           sudo -E make e2e-qemu
       - name: save artifacts
         if: always()
-        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # version: v5.0.0
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # version: v5.0.0
         with:
           name: talos-logs-integration-misc-3-enforcing
           path: |-
@@ -3362,7 +3362,7 @@ jobs:
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@59699597e84e80085a750998045983daa49274c4 # version: v1.4.0
+        uses: kenchan0130/actions-system-info@d961a4a68368ff3bf21f8a6c59e7a92056c66a07 # version: v1.4.0
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -3392,14 +3392,14 @@ jobs:
           git fetch --prune --unshallow
       - name: Set up Docker Buildx
         id: setup-buildx
-        uses: docker/setup-buildx-action@e468171a9de216ec08956ac3ada2f0791b6bd435 # version: v3.11.1
+        uses: docker/setup-buildx-action@65d18f8f8a05aab1b2d761032bec9cd5578caadb # version: v3.11.1
         with:
           driver: remote
           endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
         timeout-minutes: 10
       - name: Download artifacts
         if: github.event_name != 'schedule'
-        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # version: v6.0.0
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # version: v6.0.0
         with:
           name: talos-artifacts
           path: _out
@@ -3468,7 +3468,7 @@ jobs:
           sudo -E make e2e-qemu
       - name: save artifacts
         if: always()
-        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # version: v5.0.0
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # version: v5.0.0
         with:
           name: talos-logs-integration-misc-4
           path: |-
@@ -3490,7 +3490,7 @@ jobs:
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@59699597e84e80085a750998045983daa49274c4 # version: v1.4.0
+        uses: kenchan0130/actions-system-info@d961a4a68368ff3bf21f8a6c59e7a92056c66a07 # version: v1.4.0
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -3520,14 +3520,14 @@ jobs:
           git fetch --prune --unshallow
       - name: Set up Docker Buildx
         id: setup-buildx
-        uses: docker/setup-buildx-action@e468171a9de216ec08956ac3ada2f0791b6bd435 # version: v3.11.1
+        uses: docker/setup-buildx-action@65d18f8f8a05aab1b2d761032bec9cd5578caadb # version: v3.11.1
         with:
           driver: remote
           endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
         timeout-minutes: 10
       - name: Download artifacts
         if: github.event_name != 'schedule'
-        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # version: v6.0.0
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # version: v6.0.0
         with:
           name: talos-artifacts
           path: _out
@@ -3623,7 +3623,7 @@ jobs:
           sudo -E make e2e-qemu
       - name: save artifacts
         if: always()
-        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # version: v5.0.0
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # version: v5.0.0
         with:
           name: talos-logs-integration-misc-4-enforcing
           path: |-
@@ -3645,7 +3645,7 @@ jobs:
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@59699597e84e80085a750998045983daa49274c4 # version: v1.4.0
+        uses: kenchan0130/actions-system-info@d961a4a68368ff3bf21f8a6c59e7a92056c66a07 # version: v1.4.0
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -3675,14 +3675,14 @@ jobs:
           git fetch --prune --unshallow
       - name: Set up Docker Buildx
         id: setup-buildx
-        uses: docker/setup-buildx-action@e468171a9de216ec08956ac3ada2f0791b6bd435 # version: v3.11.1
+        uses: docker/setup-buildx-action@65d18f8f8a05aab1b2d761032bec9cd5578caadb # version: v3.11.1
         with:
           driver: remote
           endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
         timeout-minutes: 10
       - name: Download artifacts
         if: github.event_name != 'schedule'
-        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # version: v6.0.0
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # version: v6.0.0
         with:
           name: talos-artifacts
           path: _out
@@ -3731,7 +3731,7 @@ jobs:
           sudo -E make provision-tests-track-0
       - name: save artifacts
         if: always()
-        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # version: v5.0.0
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # version: v5.0.0
         with:
           name: talos-logs-integration-provision-0
           path: |-
@@ -3753,7 +3753,7 @@ jobs:
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@59699597e84e80085a750998045983daa49274c4 # version: v1.4.0
+        uses: kenchan0130/actions-system-info@d961a4a68368ff3bf21f8a6c59e7a92056c66a07 # version: v1.4.0
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -3783,14 +3783,14 @@ jobs:
           git fetch --prune --unshallow
       - name: Set up Docker Buildx
         id: setup-buildx
-        uses: docker/setup-buildx-action@e468171a9de216ec08956ac3ada2f0791b6bd435 # version: v3.11.1
+        uses: docker/setup-buildx-action@65d18f8f8a05aab1b2d761032bec9cd5578caadb # version: v3.11.1
         with:
           driver: remote
           endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
         timeout-minutes: 10
       - name: Download artifacts
         if: github.event_name != 'schedule'
-        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # version: v6.0.0
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # version: v6.0.0
         with:
           name: talos-artifacts
           path: _out
@@ -3825,7 +3825,7 @@ jobs:
           sudo -E make provision-tests-track-1
       - name: save artifacts
         if: always()
-        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # version: v5.0.0
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # version: v5.0.0
         with:
           name: talos-logs-integration-provision-1
           path: |-
@@ -3847,7 +3847,7 @@ jobs:
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@59699597e84e80085a750998045983daa49274c4 # version: v1.4.0
+        uses: kenchan0130/actions-system-info@d961a4a68368ff3bf21f8a6c59e7a92056c66a07 # version: v1.4.0
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -3877,14 +3877,14 @@ jobs:
           git fetch --prune --unshallow
       - name: Set up Docker Buildx
         id: setup-buildx
-        uses: docker/setup-buildx-action@e468171a9de216ec08956ac3ada2f0791b6bd435 # version: v3.11.1
+        uses: docker/setup-buildx-action@65d18f8f8a05aab1b2d761032bec9cd5578caadb # version: v3.11.1
         with:
           driver: remote
           endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
         timeout-minutes: 10
       - name: Download artifacts
         if: github.event_name != 'schedule'
-        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # version: v6.0.0
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # version: v6.0.0
         with:
           name: talos-artifacts
           path: _out
@@ -3927,7 +3927,7 @@ jobs:
           sudo -E make provision-tests-track-2
       - name: save artifacts
         if: always()
-        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # version: v5.0.0
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # version: v5.0.0
         with:
           name: talos-logs-integration-provision-2
           path: |-
@@ -3949,7 +3949,7 @@ jobs:
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@59699597e84e80085a750998045983daa49274c4 # version: v1.4.0
+        uses: kenchan0130/actions-system-info@d961a4a68368ff3bf21f8a6c59e7a92056c66a07 # version: v1.4.0
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -3979,14 +3979,14 @@ jobs:
           git fetch --prune --unshallow
       - name: Set up Docker Buildx
         id: setup-buildx
-        uses: docker/setup-buildx-action@e468171a9de216ec08956ac3ada2f0791b6bd435 # version: v3.11.1
+        uses: docker/setup-buildx-action@65d18f8f8a05aab1b2d761032bec9cd5578caadb # version: v3.11.1
         with:
           driver: remote
           endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
         timeout-minutes: 10
       - name: Download artifacts
         if: github.event_name != 'schedule'
-        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # version: v6.0.0
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # version: v6.0.0
         with:
           name: talos-artifacts
           path: _out
@@ -4023,7 +4023,7 @@ jobs:
           sudo -E make e2e-qemu
       - name: save artifacts
         if: always()
-        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # version: v5.0.0
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # version: v5.0.0
         with:
           name: talos-logs-integration-qemu
           path: |-
@@ -4045,7 +4045,7 @@ jobs:
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@59699597e84e80085a750998045983daa49274c4 # version: v1.4.0
+        uses: kenchan0130/actions-system-info@d961a4a68368ff3bf21f8a6c59e7a92056c66a07 # version: v1.4.0
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -4075,14 +4075,14 @@ jobs:
           git fetch --prune --unshallow
       - name: Set up Docker Buildx
         id: setup-buildx
-        uses: docker/setup-buildx-action@e468171a9de216ec08956ac3ada2f0791b6bd435 # version: v3.11.1
+        uses: docker/setup-buildx-action@65d18f8f8a05aab1b2d761032bec9cd5578caadb # version: v3.11.1
         with:
           driver: remote
           endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
         timeout-minutes: 10
       - name: Download artifacts
         if: github.event_name != 'schedule'
-        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # version: v6.0.0
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # version: v6.0.0
         with:
           name: talos-artifacts
           path: _out
@@ -4152,7 +4152,7 @@ jobs:
         run: |
           sudo -E make e2e-qemu
       - name: save artifacts
-        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # version: v5.0.0
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # version: v5.0.0
         with:
           name: fio-integration-qemu-csi-longhorn
           path: |
@@ -4160,7 +4160,7 @@ jobs:
           retention-days: "180"
       - name: save artifacts
         if: always()
-        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # version: v5.0.0
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # version: v5.0.0
         with:
           name: talos-logs-integration-qemu-csi-longhorn
           path: |-
@@ -4182,7 +4182,7 @@ jobs:
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@59699597e84e80085a750998045983daa49274c4 # version: v1.4.0
+        uses: kenchan0130/actions-system-info@d961a4a68368ff3bf21f8a6c59e7a92056c66a07 # version: v1.4.0
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -4212,14 +4212,14 @@ jobs:
           git fetch --prune --unshallow
       - name: Set up Docker Buildx
         id: setup-buildx
-        uses: docker/setup-buildx-action@e468171a9de216ec08956ac3ada2f0791b6bd435 # version: v3.11.1
+        uses: docker/setup-buildx-action@65d18f8f8a05aab1b2d761032bec9cd5578caadb # version: v3.11.1
         with:
           driver: remote
           endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
         timeout-minutes: 10
       - name: Download artifacts
         if: github.event_name != 'schedule'
-        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # version: v6.0.0
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # version: v6.0.0
         with:
           name: talos-artifacts
           path: _out
@@ -4259,7 +4259,7 @@ jobs:
         run: |
           sudo -E make e2e-qemu
       - name: save artifacts
-        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # version: v5.0.0
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # version: v5.0.0
         with:
           name: fio-integration-qemu-csi-openebs
           path: |
@@ -4267,7 +4267,7 @@ jobs:
           retention-days: "180"
       - name: save artifacts
         if: always()
-        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # version: v5.0.0
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # version: v5.0.0
         with:
           name: talos-logs-integration-qemu-csi-openebs
           path: |-
@@ -4289,7 +4289,7 @@ jobs:
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@59699597e84e80085a750998045983daa49274c4 # version: v1.4.0
+        uses: kenchan0130/actions-system-info@d961a4a68368ff3bf21f8a6c59e7a92056c66a07 # version: v1.4.0
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -4319,14 +4319,14 @@ jobs:
           git fetch --prune --unshallow
       - name: Set up Docker Buildx
         id: setup-buildx
-        uses: docker/setup-buildx-action@e468171a9de216ec08956ac3ada2f0791b6bd435 # version: v3.11.1
+        uses: docker/setup-buildx-action@65d18f8f8a05aab1b2d761032bec9cd5578caadb # version: v3.11.1
         with:
           driver: remote
           endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
         timeout-minutes: 10
       - name: Download artifacts
         if: github.event_name != 'schedule'
-        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # version: v6.0.0
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # version: v6.0.0
         with:
           name: talos-artifacts
           path: _out
@@ -4365,7 +4365,7 @@ jobs:
         run: |
           sudo -E make e2e-qemu
       - name: save artifacts
-        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # version: v5.0.0
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # version: v5.0.0
         with:
           name: fio-integration-qemu-csi-rook-ceph
           path: |
@@ -4373,7 +4373,7 @@ jobs:
           retention-days: "180"
       - name: save artifacts
         if: always()
-        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # version: v5.0.0
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # version: v5.0.0
         with:
           name: talos-logs-integration-qemu-csi-rook-ceph
           path: |-
@@ -4395,7 +4395,7 @@ jobs:
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@59699597e84e80085a750998045983daa49274c4 # version: v1.4.0
+        uses: kenchan0130/actions-system-info@d961a4a68368ff3bf21f8a6c59e7a92056c66a07 # version: v1.4.0
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -4425,14 +4425,14 @@ jobs:
           git fetch --prune --unshallow
       - name: Set up Docker Buildx
         id: setup-buildx
-        uses: docker/setup-buildx-action@e468171a9de216ec08956ac3ada2f0791b6bd435 # version: v3.11.1
+        uses: docker/setup-buildx-action@65d18f8f8a05aab1b2d761032bec9cd5578caadb # version: v3.11.1
         with:
           driver: remote
           endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
         timeout-minutes: 10
       - name: Download artifacts
         if: github.event_name != 'schedule'
-        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # version: v6.0.0
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # version: v6.0.0
         with:
           name: talos-artifacts
           path: _out
@@ -4470,7 +4470,7 @@ jobs:
           sudo -E make e2e-qemu
       - name: save artifacts
         if: always()
-        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # version: v5.0.0
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # version: v5.0.0
         with:
           name: talos-logs-integration-qemu-encrypted-vip
           path: |-
@@ -4492,7 +4492,7 @@ jobs:
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@59699597e84e80085a750998045983daa49274c4 # version: v1.4.0
+        uses: kenchan0130/actions-system-info@d961a4a68368ff3bf21f8a6c59e7a92056c66a07 # version: v1.4.0
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -4522,14 +4522,14 @@ jobs:
           git fetch --prune --unshallow
       - name: Set up Docker Buildx
         id: setup-buildx
-        uses: docker/setup-buildx-action@e468171a9de216ec08956ac3ada2f0791b6bd435 # version: v3.11.1
+        uses: docker/setup-buildx-action@65d18f8f8a05aab1b2d761032bec9cd5578caadb # version: v3.11.1
         with:
           driver: remote
           endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
         timeout-minutes: 10
       - name: Download artifacts
         if: github.event_name != 'schedule'
-        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # version: v6.0.0
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # version: v6.0.0
         with:
           name: talos-artifacts
           path: _out
@@ -4584,7 +4584,7 @@ jobs:
           sudo -E make e2e-qemu
       - name: save artifacts
         if: always()
-        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # version: v5.0.0
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # version: v5.0.0
         with:
           name: talos-logs-integration-qemu-enforcing
           path: |-
@@ -4606,7 +4606,7 @@ jobs:
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@59699597e84e80085a750998045983daa49274c4 # version: v1.4.0
+        uses: kenchan0130/actions-system-info@d961a4a68368ff3bf21f8a6c59e7a92056c66a07 # version: v1.4.0
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -4636,14 +4636,14 @@ jobs:
           git fetch --prune --unshallow
       - name: Set up Docker Buildx
         id: setup-buildx
-        uses: docker/setup-buildx-action@e468171a9de216ec08956ac3ada2f0791b6bd435 # version: v3.11.1
+        uses: docker/setup-buildx-action@65d18f8f8a05aab1b2d761032bec9cd5578caadb # version: v3.11.1
         with:
           driver: remote
           endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
         timeout-minutes: 10
       - name: Download artifacts
         if: github.event_name != 'schedule'
-        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # version: v6.0.0
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # version: v6.0.0
         with:
           name: talos-artifacts
           path: _out
@@ -4692,7 +4692,7 @@ jobs:
           sudo -E make e2e-qemu
       - name: save artifacts
         if: always()
-        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # version: v5.0.0
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # version: v5.0.0
         with:
           name: talos-logs-integration-qemu-race
           path: |-
@@ -4714,7 +4714,7 @@ jobs:
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@59699597e84e80085a750998045983daa49274c4 # version: v1.4.0
+        uses: kenchan0130/actions-system-info@d961a4a68368ff3bf21f8a6c59e7a92056c66a07 # version: v1.4.0
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -4744,14 +4744,14 @@ jobs:
           git fetch --prune --unshallow
       - name: Set up Docker Buildx
         id: setup-buildx
-        uses: docker/setup-buildx-action@e468171a9de216ec08956ac3ada2f0791b6bd435 # version: v3.11.1
+        uses: docker/setup-buildx-action@65d18f8f8a05aab1b2d761032bec9cd5578caadb # version: v3.11.1
         with:
           driver: remote
           endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
         timeout-minutes: 10
       - name: Download artifacts
         if: github.event_name != 'schedule'
-        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # version: v6.0.0
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # version: v6.0.0
         with:
           name: talos-artifacts
           path: _out
@@ -4783,7 +4783,7 @@ jobs:
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@59699597e84e80085a750998045983daa49274c4 # version: v1.4.0
+        uses: kenchan0130/actions-system-info@d961a4a68368ff3bf21f8a6c59e7a92056c66a07 # version: v1.4.0
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -4813,14 +4813,14 @@ jobs:
           git fetch --prune --unshallow
       - name: Set up Docker Buildx
         id: setup-buildx
-        uses: docker/setup-buildx-action@e468171a9de216ec08956ac3ada2f0791b6bd435 # version: v3.11.1
+        uses: docker/setup-buildx-action@65d18f8f8a05aab1b2d761032bec9cd5578caadb # version: v3.11.1
         with:
           driver: remote
           endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
         timeout-minutes: 10
       - name: Download artifacts
         if: github.event_name != 'schedule'
-        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # version: v6.0.0
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # version: v6.0.0
         with:
           name: talos-artifacts
           path: _out
@@ -4877,7 +4877,7 @@ jobs:
           sudo -E make e2e-qemu
       - name: save artifacts
         if: always()
-        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # version: v5.0.0
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # version: v5.0.0
         with:
           name: talos-logs-integration-trusted-boot
           path: |-
@@ -4899,7 +4899,7 @@ jobs:
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@59699597e84e80085a750998045983daa49274c4 # version: v1.4.0
+        uses: kenchan0130/actions-system-info@d961a4a68368ff3bf21f8a6c59e7a92056c66a07 # version: v1.4.0
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -4929,14 +4929,14 @@ jobs:
           git fetch --prune --unshallow
       - name: Set up Docker Buildx
         id: setup-buildx
-        uses: docker/setup-buildx-action@e468171a9de216ec08956ac3ada2f0791b6bd435 # version: v3.11.1
+        uses: docker/setup-buildx-action@65d18f8f8a05aab1b2d761032bec9cd5578caadb # version: v3.11.1
         with:
           driver: remote
           endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
         timeout-minutes: 10
       - name: Download artifacts
         if: github.event_name != 'schedule'
-        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # version: v6.0.0
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # version: v6.0.0
         with:
           name: talos-artifacts
           path: _out
@@ -4996,7 +4996,7 @@ jobs:
           sudo -E make e2e-qemu
       - name: save artifacts
         if: always()
-        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # version: v5.0.0
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # version: v5.0.0
         with:
           name: talos-logs-integration-trusted-boot-enforcing
           path: |-
@@ -5016,7 +5016,7 @@ jobs:
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@59699597e84e80085a750998045983daa49274c4 # version: v1.4.0
+        uses: kenchan0130/actions-system-info@d961a4a68368ff3bf21f8a6c59e7a92056c66a07 # version: v1.4.0
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -5046,7 +5046,7 @@ jobs:
           git fetch --prune --unshallow
       - name: Set up Docker Buildx
         id: setup-buildx
-        uses: docker/setup-buildx-action@e468171a9de216ec08956ac3ada2f0791b6bd435 # version: v3.11.1
+        uses: docker/setup-buildx-action@65d18f8f8a05aab1b2d761032bec9cd5578caadb # version: v3.11.1
         with:
           driver: remote
           endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
@@ -5060,7 +5060,7 @@ jobs:
         run: |
           make release-notes
       - name: login-to-registry
-        uses: docker/login-action@5e57cd118135c172c3672efd75eb46360885c0ef # version: v3.6.0
+        uses: docker/login-action@28fdb31ff34708d19615a74d67103ddc2ea9725c # version: v3.6.0
         with:
           password: ${{ secrets.GITHUB_TOKEN }}
           registry: ghcr.io
@@ -5090,7 +5090,7 @@ jobs:
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@59699597e84e80085a750998045983daa49274c4 # version: v1.4.0
+        uses: kenchan0130/actions-system-info@d961a4a68368ff3bf21f8a6c59e7a92056c66a07 # version: v1.4.0
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -5120,7 +5120,7 @@ jobs:
           git fetch --prune --unshallow
       - name: Set up Docker Buildx
         id: setup-buildx
-        uses: docker/setup-buildx-action@e468171a9de216ec08956ac3ada2f0791b6bd435 # version: v3.11.1
+        uses: docker/setup-buildx-action@65d18f8f8a05aab1b2d761032bec9cd5578caadb # version: v3.11.1
         with:
           driver: remote
           endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
@@ -5143,7 +5143,7 @@ jobs:
         run: |
           make sbom
       - name: login-to-registry
-        uses: docker/login-action@5e57cd118135c172c3672efd75eb46360885c0ef # version: v3.6.0
+        uses: docker/login-action@28fdb31ff34708d19615a74d67103ddc2ea9725c # version: v3.6.0
         with:
           password: ${{ secrets.GITHUB_TOKEN }}
           registry: ghcr.io
@@ -5159,7 +5159,7 @@ jobs:
         run: |
           make images
       - name: Install Cosign
-        uses: sigstore/cosign-installer@faadad0cce49287aee09b3a48701e75088a2c6ad # version: v4.0.0
+        uses: sigstore/cosign-installer@29bcfa8619aeb12eaac78d31157172c86183b05c # version: v4.0.0
       - name: Sign artifacts
         run: |
           cosign sign-blob --bundle _out/initramfs-amd64.xz.bundle --yes _out/initramfs-amd64.xz
@@ -5199,7 +5199,7 @@ jobs:
           cosign sign-blob --bundle sha256sum.txt.bundle --yes sha256sum.txt
           cosign sign-blob --bundle sha512sum.txt.bundle --yes sha512sum.txt
       - name: release
-        uses: softprops/action-gh-release@a06a81a03ee405af7f2048a818ed3f03bbf83c7b # version: v2.5.0
+        uses: softprops/action-gh-release@60cfd9a691d814dcf0d094598101c5cb61cd1646 # version: v2.5.0
         with:
           body_path: _out/RELEASE_NOTES.md
           draft: "true"
