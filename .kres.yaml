@@ -1849,6 +1849,8 @@ spec:
         - name: build extensions
           command: all extensions-metadata
           arguments:
+            - PKGS_PREFIX=ghcr.io/dsseng
+            - PKGS=v1.13.0-alpha.0-18-ge03c17a
             - -C
             - _out/extensions
           environment:
@@ -2193,6 +2195,8 @@ spec:
         - name: build extensions
           command: iscsi-tools util-linux-tools extensions-metadata
           arguments:
+            - PKGS_PREFIX=ghcr.io/dsseng
+            - PKGS=v1.13.0-alpha.0-18-ge03c17a
             - -C
             - _out/extensions
           environment:
@@ -2728,6 +2732,8 @@ spec:
           # this verifies that both libtirpc can co-exist together
           command: nvidia-container-toolkit-lts nvidia-open-gpu-kernel-modules-lts zfs extensions-metadata
           arguments:
+            - PKGS_PREFIX=ghcr.io/dsseng
+            - PKGS=v1.13.0-alpha.0-18-ge03c17a
             - -C
             - _out/extensions
           environment:
@@ -2826,6 +2832,8 @@ spec:
           # this verifies that both libtirpc can co-exist together
           command: nvidia-container-toolkit-production nvidia-open-gpu-kernel-modules-production zfs extensions-metadata
           arguments:
+            - PKGS_PREFIX=ghcr.io/dsseng
+            - PKGS=v1.13.0-alpha.0-18-ge03c17a
             - -C
             - _out/extensions
           environment:
@@ -2922,6 +2930,8 @@ spec:
         - name: build extensions
           command: nvidia-container-toolkit-lts nonfree-kmod-nvidia-lts extensions-metadata
           arguments:
+            - PKGS_PREFIX=ghcr.io/dsseng
+            - PKGS=v1.13.0-alpha.0-18-ge03c17a
             - -C
             - _out/extensions
           environment:
@@ -3018,6 +3028,8 @@ spec:
         - name: build extensions
           command: nvidia-container-toolkit-production nonfree-kmod-nvidia-production extensions-metadata
           arguments:
+            - PKGS_PREFIX=ghcr.io/dsseng
+            - PKGS=v1.13.0-alpha.0-18-ge03c17a
             - -C
             - _out/extensions
           environment:
