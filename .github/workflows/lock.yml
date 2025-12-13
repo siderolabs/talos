@@ -14,7 +14,7 @@ jobs:
       - ubuntu-latest
     steps:
       - name: Lock old issues
-        uses: dessant/lock-threads@1bf7ec25051fe7c00bdd17e6a7cf3d7bfb7dc771 # version: v5.0.1
+        uses: dessant/lock-threads@7266a7ce5c1df01b1c6db85bf8cd86c737dadbe7 # version: v5.0.1
         with:
           issue-inactive-days: "60"
           log-output: "true"
