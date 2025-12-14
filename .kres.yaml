@@ -2733,7 +2733,7 @@ spec:
           command: nvidia-container-toolkit-lts nvidia-open-gpu-kernel-modules-lts zfs extensions-metadata
           arguments:
             - PKGS_PREFIX=ghcr.io/dsseng
-            - PKGS=v1.13.0-alpha.0-18-ge03c17a
+            - PKGS=v1.13.0-alpha.0-19-gf2ee614-dirty
             - -C
             - _out/extensions
           environment:
