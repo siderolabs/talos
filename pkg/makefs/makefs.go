@@ -12,9 +12,12 @@ type Option func(*Options)
 type Options struct {
 	Label               string
 	ConfigFile          string
+	SourceDirectory     string
 	Force               bool
 	Reproducible        bool
 	UnsupportedFSOption bool
+
+	Printf func(string, ...any)
 }
 
 // WithLabel sets the label for the filesystem to be created.
@@ -53,12 +56,30 @@ func WithConfigFile(configFile string) Option {
 	}
 }
 
+// WithSourceDirectory sets the source directory for populating the filesystem.
+func WithSourceDirectory(sourceDir string) Option {
+	return func(o *Options) {
+		o.SourceDirectory = sourceDir
+	}
+}
+
+// WithPrintf sets the printf function for logging.
+func WithPrintf(printf func(string, ...any)) Option {
+	return func(o *Options) {
+		o.Printf = printf
+	}
+}
+
 // NewDefaultOptions builds options with specified setters applied.
 func NewDefaultOptions(setters ...Option) Options {
 	var opt Options
 
 	for _, o := range setters {
 		o(&opt)
+	}
+
+	if opt.Printf == nil {
+		opt.Printf = func(string, ...any) {}
 	}
 
 	return opt

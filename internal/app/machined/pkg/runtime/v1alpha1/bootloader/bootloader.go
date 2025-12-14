@@ -25,16 +25,19 @@ import (
 
 // Bootloader describes a bootloader.
 type Bootloader interface {
+	GenerateAssets(efiAssetsPath string, opts options.InstallOptions) ([]partition.Options, error)
 	// Install the bootloader.
 	//
 	// Install mounts the partitions as required.
 	Install(options options.InstallOptions) (*options.InstallResult, error)
+	// Upgrade upgrades the bootloader installation.
+	//
+	// Upgrade mounts the partitions as required.
+	Upgrade(options options.InstallOptions) (*options.InstallResult, error)
 	// Revert reverts the bootloader entry to the previous state.
 	//
 	// Revert mounts the partitions as required.
 	Revert(disk string) error
-	// RequiredPartitions returns the required partitions for the bootloader.
-	RequiredPartitions(quirk quirks.Quirks) []partition.Options
 
 	// KexecLoad does a kexec_file_load using the current entry of the bootloader.
 	KexecLoad(r runtime.Runtime, disk string) error

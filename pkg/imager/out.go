@@ -7,17 +7,13 @@ package imager
 import (
 	"context"
 	"encoding/pem"
-	"errors"
 	"fmt"
-	"log"
-	randv2 "math/rand/v2"
 	"os"
 	"path/filepath"
 	"slices"
 	"strings"
 	"time"
 
-	"github.com/freddierice/go-losetup/v2"
 	"github.com/google/go-containerregistry/pkg/name"
 	v1 "github.com/google/go-containerregistry/pkg/v1"
 	"github.com/google/go-containerregistry/pkg/v1/empty"
@@ -27,7 +23,6 @@ import (
 	"github.com/siderolabs/go-pointer"
 	"github.com/siderolabs/go-procfs/procfs"
 	"go.yaml.in/yaml/v4"
-	"golang.org/x/sys/unix"
 
 	"github.com/siderolabs/talos/cmd/installer/pkg/install"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/options"
@@ -316,42 +311,7 @@ func (i *Imager) buildImage(ctx context.Context, path string, printf func(string
 		return err
 	}
 
-	printf("attaching loopback device")
-
-	var (
-		loDevice           losetup.Device
-		err                error
-		zeroContainerAsset profile.ContainerAsset
-	)
-
-	for range 10 {
-		loDevice, err = losetup.Attach(path, 0, false)
-		if err != nil {
-			if errors.Is(err, unix.EBUSY) {
-				spraySleep := max(randv2.ExpFloat64(), 2.0)
-
-				printf("retrying after %v seconds", spraySleep)
-
-				time.Sleep(time.Duration(spraySleep * float64(time.Second)))
-
-				continue
-			}
-
-			return fmt.Errorf("failed to attach loopback device: %w", err)
-		}
-
-		printf("attached loopback device: %s", loDevice.Path())
-
-		break
-	}
-
-	defer func() {
-		printf("detaching loopback device %s", loDevice.Path())
-
-		if e := loDevice.Detach(); e != nil {
-			log.Println(e)
-		}
-	}()
+	var zeroContainerAsset profile.ContainerAsset
 
 	cmdline := procfs.NewCmdline(i.cmdline)
 
@@ -370,7 +330,7 @@ func (i *Imager) buildImage(ctx context.Context, path string, printf func(string
 	}
 
 	opts := &install.Options{
-		Disk:       loDevice.Path(),
+		DiskPath:   path,
 		Platform:   i.prof.Platform,
 		Arch:       i.prof.Arch,
 		Board:      i.prof.Board,

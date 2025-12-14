@@ -10,12 +10,14 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"log"
 	"os"
 	"path/filepath"
 	"slices"
 
 	"github.com/google/uuid"
+	"github.com/siderolabs/gen/xslices"
 	"github.com/siderolabs/go-blockdevice/v2/blkid"
 	"github.com/siderolabs/go-blockdevice/v2/block"
 	"github.com/siderolabs/go-blockdevice/v2/partitioning"
@@ -28,10 +30,10 @@ import (
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/board"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader"
 	bootloaderoptions "github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/options"
-	"github.com/siderolabs/talos/internal/pkg/cache"
 	"github.com/siderolabs/talos/internal/pkg/meta"
 	"github.com/siderolabs/talos/internal/pkg/partition"
 	"github.com/siderolabs/talos/pkg/imager/overlay/executor"
+	"github.com/siderolabs/talos/pkg/imager/utils"
 	"github.com/siderolabs/talos/pkg/machinery/compatibility"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/imager/quirks"
@@ -43,8 +45,9 @@ import (
 
 // Options represents the set of options available for an install.
 type Options struct {
-	ConfigSource        string
-	Disk                string
+	ConfigSource string
+	// Can be an actual disk path or a file representing a disk image.
+	DiskPath            string
 	Platform            string
 	Arch                string
 	Board               string
@@ -230,6 +233,104 @@ func NewInstaller(ctx context.Context, cmdline *procfs.Cmdline, mode Mode, opts 
 	return i, nil
 }
 
+// detectBootloader detects the bootloader to use based on the mode.
+func (i *Installer) detectBootloader(mode Mode) (bootloader.Bootloader, error) {
+	switch mode {
+	case ModeInstall:
+		return bootloader.NewAuto(), nil
+	case ModeUpgrade:
+		return bootloader.Probe(i.options.DiskPath, bootloaderoptions.ProbeOptions{
+			// the disk is already locked
+			BlockProbeOptions: []blkid.ProbeOption{
+				blkid.WithSkipLocking(true),
+			},
+			Logger: log.Printf,
+		})
+	case ModeImage:
+		return bootloader.New(i.options.DiskImageBootloader, i.options.Version, i.options.Arch)
+	default:
+		return nil, fmt.Errorf("unknown image mode: %d", mode)
+	}
+}
+
+// diskOperations performs any disk operations required before installation.
+//
+//nolint:gocyclo
+func (i *Installer) diskOperations(mode Mode) error {
+	switch mode {
+	case ModeInstall:
+		bd, info, err := i.blockDeviceData()
+		if err != nil {
+			return fmt.Errorf("failed to access blockdevice %s: %w", i.options.DiskPath, err)
+		}
+
+		defer bd.Close()  //nolint:errcheck
+		defer bd.Unlock() //nolint:errcheck
+
+		if !i.options.Zero && !i.options.Force {
+			// verify that the disk is either empty or has an empty GPT partition table, otherwise fail the install
+			switch {
+			case info.Name == "":
+				// empty, ok
+			case info.Name == typeGPT && len(info.Parts) == 0:
+				// GPT, no partitions, ok
+			default:
+				return fmt.Errorf("disk %s is not empty, skipping install, detected %q", i.options.DiskPath, info.Name)
+			}
+		} else {
+			// zero the disk
+			if err = bd.FastWipe(); err != nil {
+				return fmt.Errorf("failed to zero blockdevice %s: %w", i.options.DiskPath, err)
+			}
+		}
+
+		return nil
+	case ModeUpgrade:
+		// if running in upgrade mode, verify that install disk has correct GPT partition table and expected partitions
+		bd, info, err := i.blockDeviceData()
+		if err != nil {
+			return fmt.Errorf("failed to access blockdevice %s: %w", i.options.DiskPath, err)
+		}
+
+		defer bd.Close()  //nolint:errcheck
+		defer bd.Unlock() //nolint:errcheck
+
+		// on upgrade, we don't touch the disk partitions, but we need to verify that the disk has the expected GPT partition table
+		if info.Name != typeGPT {
+			return fmt.Errorf("disk %s has an unexpected format %q", i.options.DiskPath, info.Name)
+		}
+
+		return nil
+	case ModeImage:
+		// no disk operations required for image creation
+		return nil
+	default:
+		return fmt.Errorf("unknown image mode: %d", mode)
+	}
+}
+
+// blockDeviceData opens and locks the block device and probes it.
+// the caller is responsible for unlocking and closing the block device.
+func (i *Installer) blockDeviceData() (*block.Device, *blkid.Info, error) {
+	// open and lock the blockdevice for the installation disk for the whole duration of the installer
+	bd, err := block.NewFromPath(i.options.DiskPath, block.OpenForWrite())
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to open blockdevice %s: %w", i.options.DiskPath, err)
+	}
+
+	if err = bd.Lock(true); err != nil {
+		return nil, nil, fmt.Errorf("failed to lock blockdevice %s: %w", i.options.DiskPath, err)
+	}
+
+	// probe the disk anyways
+	info, err := blkid.Probe(bd.File(), blkid.WithSkipLocking(true))
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to probe blockdevice %s: %w", i.options.DiskPath, err)
+	}
+
+	return bd, info, nil
+}
+
 // Install fetches the necessary data locations and copies or extracts
 // to the target locations.
 //
@@ -249,122 +350,193 @@ func (i *Installer) Install(ctx context.Context, mode Mode) (err error) {
 		return err
 	}
 
-	// open and lock the blockdevice for the installation disk for the whole duration of the installer
-	bd, err := block.NewFromPath(i.options.Disk, block.OpenForWrite())
+	bootlder, err := i.detectBootloader(mode)
 	if err != nil {
-		return fmt.Errorf("failed to open blockdevice %s: %w", i.options.Disk, err)
+		return fmt.Errorf("failed to detect bootloader: %w", err)
 	}
 
-	defer bd.Close() //nolint:errcheck
-
-	if err = bd.Lock(true); err != nil {
-		return fmt.Errorf("failed to lock blockdevice %s: %w", i.options.Disk, err)
-	}
-
-	defer bd.Unlock() //nolint:errcheck
-
-	var bootlder bootloader.Bootloader
-
-	// if running in install/image mode, just create new GPT partition table
-	// if running in upgrade mode, verify that install disk has correct GPT partition table and expected partitions
-
-	// probe the disk anyways
-	info, err := blkid.Probe(bd.File(), blkid.WithSkipLocking(true))
+	bootPartitions, err := i.getBootPartitions(ctx, mode, bootlder)
 	if err != nil {
-		return fmt.Errorf("failed to probe blockdevice %s: %w", i.options.Disk, err)
+		return fmt.Errorf("failed to get bootloader partitions: %w", err)
 	}
 
-	gptdev, err := gpt.DeviceFromBlockDevice(bd)
+	if err = i.diskOperations(mode); err != nil {
+		return fmt.Errorf("failed to perform disk operations: %w", err)
+	}
+
+	// create partitions and re-probe the device
+	partitionOptions, err := i.createPartitions(ctx, mode, hostTalosVersion, bootPartitions)
 	if err != nil {
-		return fmt.Errorf("error getting GPT device: %w", err)
+		return fmt.Errorf("failed to create partitions: %w", err)
 	}
 
+	if err := i.formatPartitions(mode, partitionOptions); err != nil {
+		return fmt.Errorf("failed to format partitions: %w", err)
+	}
+
+	info, err := i.probe()
+	if err != nil {
+		return fmt.Errorf("failed to re-probe partitions: %w", err)
+	}
+
+	bootInstallResult, err := i.installBootloader(ctx, mode, bootlder, info)
+	if err != nil {
+		return fmt.Errorf("failed to install bootloader: %w", err)
+	}
+
+	if err = i.handleMeta(ctx, mode, bootInstallResult.PreviousLabel, info); err != nil {
+		return fmt.Errorf("failed to handle META partition: %w", err)
+	}
+
+	return nil
+}
+
+//nolint:gocyclo,cyclop
+func (i *Installer) handleMeta(ctx context.Context, mode Mode, previousLabel string, info *blkid.Info) error {
 	switch mode {
+	case ModeInstall, ModeUpgrade:
+		var metaPartitionName string
+
+		for _, partition := range info.Parts {
+			if pointer.SafeDeref(partition.PartitionLabel) == constants.MetaPartitionLabel {
+				metaPartitionName = partitioning.DevName(i.options.DiskPath, partition.PartitionIndex)
+
+				break
+			}
+		}
+
+		if metaPartitionName == "" {
+			return errors.New("failed to detect META partition")
+		}
+
+		metaState, err := meta.New(ctx, nil, meta.WithPrinter(i.options.Printf), meta.WithFixedPath(metaPartitionName))
+		if err != nil {
+			return fmt.Errorf("failed to open META: %w", err)
+		}
+
+		if mode == ModeUpgrade {
+			if ok, err := metaState.SetTag(ctx, metaconsts.Upgrade, previousLabel); !ok || err != nil {
+				return fmt.Errorf("failed to set upgrade tag: %q", previousLabel)
+			}
+		}
+
+		for _, v := range i.options.MetaValues.values {
+			if ok, err := metaState.SetTag(ctx, v.Key, v.Value); !ok || err != nil {
+				return fmt.Errorf("failed to set meta tag: %q -> %q", v.Key, v.Value)
+			}
+		}
+
+		if err := metaState.Flush(); err != nil {
+			return fmt.Errorf("failed to flush META: %w", err)
+		}
+
+		return nil
 	case ModeImage:
-		// on image creation, we don't care about disk contents
-		bootlder, err = bootloader.New(i.options.DiskImageBootloader, i.options.Version, i.options.Arch)
+		if i.options.MetaValues.values == nil {
+			return nil
+		}
+
+		f, err := os.OpenFile(i.options.DiskPath, os.O_RDWR, 0)
 		if err != nil {
-			return fmt.Errorf("failed to create bootloader: %w", err)
-		}
-	case ModeInstall:
-		if !i.options.Zero && !i.options.Force {
-			// verify that the disk is either empty or has an empty GPT partition table, otherwise fail the install
-			switch {
-			case info.Name == "":
-				// empty, ok
-			case info.Name == typeGPT && len(info.Parts) == 0:
-				// GPT, no partitions, ok
-			default:
-				return fmt.Errorf("disk %s is not empty, skipping install, detected %q", i.options.Disk, info.Name)
-			}
-		} else {
-			// zero the disk
-			if err = bd.FastWipe(); err != nil {
-				return fmt.Errorf("failed to zero blockdevice %s: %w", i.options.Disk, err)
-			}
+			return fmt.Errorf("failed to open image file %s: %w", i.options.DiskPath, err)
 		}
 
-		// on install, automatically detect the bootloader
-		bootlder = bootloader.NewAuto()
-	case ModeUpgrade:
-		// on upgrade, we don't touch the disk partitions, but we need to verify that the disk has the expected GPT partition table
-		if info.Name != typeGPT {
-			return fmt.Errorf("disk %s has an unexpected format %q", i.options.Disk, info.Name)
-		}
-	}
+		defer f.Close() //nolint:errcheck
 
-	if mode == ModeImage || mode == ModeInstall {
-		// create partitions and re-probe the device
-		info, err = i.createPartitions(ctx, gptdev, mode, hostTalosVersion, bootlder)
+		gptdev, err := gpt.DeviceFromFile(f)
 		if err != nil {
-			return fmt.Errorf("failed to create partitions: %w", err)
+			return fmt.Errorf("failed to initialize GPT device from image file %s: %w", i.options.DiskPath, err)
 		}
 
-		if i.options.ImageCachePath != "" {
-			cacheInstallOptions := cache.InstallOptions{
-				CacheDisk: i.options.Disk,
-				CachePath: i.options.ImageCachePath,
-				BlkidInfo: info,
-			}
-
-			if err = cacheInstallOptions.Install(); err != nil {
-				return fmt.Errorf("failed to install image cache: %w", err)
-			}
+		pt, err := gpt.Read(gptdev)
+		if err != nil {
+			return fmt.Errorf("failed to read GPT from image file %s: %w", i.options.DiskPath, err)
 		}
-	}
 
-	if mode == ModeUpgrade {
-		// on upgrade, probe the bootloader
-		bootlder, err = bootloader.Probe(i.options.Disk, bootloaderoptions.ProbeOptions{
-			// the disk is already locked
-			BlockProbeOptions: []blkid.ProbeOption{
-				blkid.WithSkipLocking(true),
-			},
-			Logger: log.Printf,
+		metaPartitionInfo := xslices.Filter(info.Parts, func(pr blkid.NestedProbeResult) bool {
+			return pointer.SafeDeref(pr.PartitionLabel) == constants.MetaPartitionLabel
 		})
-		if err != nil {
-			return fmt.Errorf("failed to probe bootloader on upgrade: %w", err)
-		}
-	}
 
-	// Install the bootloader.
-	bootInstallResult, err := bootlder.Install(bootloaderoptions.InstallOptions{
-		BootDisk:          i.options.Disk,
+		if len(metaPartitionInfo) == 0 {
+			return errors.New("failed to detect META partition")
+		}
+
+		metaPartitionIndex := int(metaPartitionInfo[0].PartitionIndex) - 1
+
+		metaFile, err := os.Create(filepath.Join(i.options.MountPrefix, "meta.img"))
+		if err != nil {
+			return fmt.Errorf("failed to create meta image file: %w", err)
+		}
+
+		defer metaFile.Close() //nolint:errcheck
+
+		pr, err := pt.PartitionReader(metaPartitionIndex)
+		if err != nil {
+			return fmt.Errorf("failed to get partition reader for META partition: %w", err)
+		}
+
+		size, err := io.Copy(metaFile, pr)
+		if err != nil {
+			return fmt.Errorf("failed to copy META partition data: %w", err)
+		}
+
+		metaState, err := meta.New(ctx, nil, meta.WithPrinter(i.options.Printf), meta.WithFixedPath(metaFile.Name()))
+		if err != nil {
+			return fmt.Errorf("failed to open META: %w", err)
+		}
+
+		for _, v := range i.options.MetaValues.values {
+			if ok, err := metaState.SetTag(ctx, v.Key, v.Value); !ok || err != nil {
+				return fmt.Errorf("failed to set meta tag: %q -> %q", v.Key, v.Value)
+			}
+		}
+
+		if err := metaState.Flush(); err != nil {
+			return fmt.Errorf("failed to flush META: %w", err)
+		}
+
+		// write back the modified META partition into the image file
+		if _, err := metaFile.Seek(0, io.SeekStart); err != nil {
+			return fmt.Errorf("failed to seek to beginning of META image file: %w", err)
+		}
+
+		pw, pSize, err := pt.PartitionWriter(metaPartitionIndex)
+		if err != nil {
+			return fmt.Errorf("failed to get partition writer for META partition: %w", err)
+		}
+
+		if size != int64(pSize) {
+			return fmt.Errorf("META partition size mismatch: image size %d, partition size %d", size, pSize)
+		}
+
+		if _, err := io.Copy(pw, metaFile); err != nil {
+			return fmt.Errorf("failed to write back META partition data: %w", err)
+		}
+
+		return gptdev.Sync()
+	default:
+		return fmt.Errorf("unknown image mode: %d", mode)
+	}
+}
+
+func (i *Installer) generateBootloaderOptions(ctx context.Context, mode Mode, info *blkid.Info) bootloaderoptions.InstallOptions {
+	return bootloaderoptions.InstallOptions{
+		BootDisk:          i.options.DiskPath,
 		Arch:              i.options.Arch,
 		Cmdline:           i.cmdline.String(),
 		GrubUseUKICmdline: i.options.GrubUseUKICmdline,
 		Version:           i.options.Version,
 		ImageMode:         mode.IsImage(),
-		MountPrefix:       i.options.MountPrefix,
 		BootAssets:        i.options.BootAssets,
 		Printf:            i.options.Printf,
+		MountPrefix:       i.options.MountPrefix,
 		BlkidInfo:         info,
 
 		ExtraInstallStep: func() error {
 			if i.options.Board != constants.BoardNone {
 				var b runtime.Board
 
-				b, err = board.NewBoard(i.options.Board) //nolint:staticcheck
+				b, err := board.NewBoard(i.options.Board) //nolint:staticcheck
 				if err != nil {
 					return err
 				}
@@ -372,7 +544,7 @@ func (i *Installer) Install(ctx context.Context, mode Mode) (err error) {
 				i.options.Printf("installing U-Boot for %q", b.Name())
 
 				if err = b.Install(runtime.BoardInstallOptions{
-					InstallDisk:     i.options.Disk,
+					InstallDisk:     i.options.DiskPath,
 					MountPrefix:     i.options.MountPrefix,
 					UBootPath:       i.options.BootAssets.UBootPath,
 					DTBPath:         i.options.BootAssets.DTBPath,
@@ -386,8 +558,8 @@ func (i *Installer) Install(ctx context.Context, mode Mode) (err error) {
 			if i.options.OverlayInstaller != nil {
 				i.options.Printf("running overlay installer %q", i.options.OverlayName)
 
-				if err = i.options.OverlayInstaller.Install(ctx, overlay.InstallOptions[overlay.ExtraOptions]{
-					InstallDisk:   i.options.Disk,
+				if err := i.options.OverlayInstaller.Install(ctx, overlay.InstallOptions[overlay.ExtraOptions]{
+					InstallDisk:   i.options.DiskPath,
 					MountPrefix:   i.options.MountPrefix,
 					ArtifactsPath: filepath.Join(i.options.OverlayExtractedDir, constants.ImagerOverlayArtifactsPath),
 					ExtraOptions:  i.options.ExtraOptions,
@@ -398,127 +570,80 @@ func (i *Installer) Install(ctx context.Context, mode Mode) (err error) {
 
 			return nil
 		},
-	})
-	if err != nil {
-		return fmt.Errorf("failed to install bootloader: %w", err)
+	}
+}
+
+func (i *Installer) getBootPartitions(ctx context.Context, mode Mode, bootlder bootloader.Bootloader) ([]partition.Options, error) {
+	if mode == ModeUpgrade {
+		return nil, nil // no need to generate boot partitions on upgrade
 	}
 
-	if mode == ModeUpgrade || len(i.options.MetaValues.values) > 0 {
-		var (
-			metaState         *meta.Meta
-			metaPartitionName string
-		)
+	bootloaderOptions := i.generateBootloaderOptions(ctx, mode, nil)
 
-		for _, partition := range info.Parts {
-			if pointer.SafeDeref(partition.PartitionLabel) == constants.MetaPartitionLabel {
-				metaPartitionName = partitioning.DevName(i.options.Disk, partition.PartitionIndex)
+	return bootlder.GenerateAssets("EFI", bootloaderOptions)
+}
 
-				break
-			}
-		}
+func (i *Installer) installBootloader(ctx context.Context, mode Mode, bootlder bootloader.Bootloader, info *blkid.Info) (*bootloaderoptions.InstallResult, error) {
+	installOptions := i.generateBootloaderOptions(ctx, mode, info)
 
-		if metaPartitionName == "" {
-			return errors.New("failed to detect META partition")
-		}
-
-		if metaState, err = meta.New(ctx, nil, meta.WithPrinter(i.options.Printf), meta.WithFixedPath(metaPartitionName)); err != nil {
-			return fmt.Errorf("failed to open META: %w", err)
-		}
-
-		var ok bool
-
-		if mode == ModeUpgrade {
-			if ok, err = metaState.SetTag(ctx, metaconsts.Upgrade, bootInstallResult.PreviousLabel); !ok || err != nil {
-				return fmt.Errorf("failed to set upgrade tag: %q", bootInstallResult.PreviousLabel)
-			}
-		}
-
-		for _, v := range i.options.MetaValues.values {
-			if ok, err = metaState.SetTag(ctx, v.Key, v.Value); !ok || err != nil {
-				return fmt.Errorf("failed to set meta tag: %q -> %q", v.Key, v.Value)
-			}
-		}
-
-		if err = metaState.Flush(); err != nil {
-			return fmt.Errorf("failed to flush META: %w", err)
-		}
+	switch mode {
+	case ModeInstall:
+		return bootlder.Install(installOptions)
+	case ModeUpgrade:
+		return bootlder.Upgrade(installOptions)
+	case ModeImage:
+		return &bootloaderoptions.InstallResult{}, nil // bootloader already installed in image mode during partition creation
+	default:
+		return nil, fmt.Errorf("unknown image mode: %d", mode)
 	}
-
-	return nil
 }
 
 //nolint:gocyclo,cyclop
-func (i *Installer) createPartitions(ctx context.Context, gptdev gpt.Device, mode Mode, hostTalosVersion *compatibility.TalosVersion, bootlder bootloader.Bootloader) (*blkid.Info, error) {
-	var partitionOptions *runtime.PartitionOptions
+func (i *Installer) createPartitions(ctx context.Context, mode Mode, hostTalosVersion *compatibility.TalosVersion, bootPartitions []partition.Options) ([]partition.Options, error) {
+	var gptdev gpt.Device
 
-	if i.options.Board != constants.BoardNone && !quirks.New(i.options.Version).SupportsOverlay() {
-		var b runtime.Board
-
-		b, err := board.NewBoard(i.options.Board) //nolint:staticcheck
+	switch mode {
+	case ModeInstall:
+		// we should only open the blockdevice and not lock it here, since that would prevent kernel from populating
+		// device nodes until the lock is released, in reality this seems to take a while preventing formating partitions
+		// to sometimes failed with /dev/sdXn device nodes not found errors.
+		bd, err := block.NewFromPath(i.options.DiskPath, block.OpenForWrite())
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("failed to open blockdevice %s: %w", i.options.DiskPath, err)
 		}
 
-		partitionOptions = b.PartitionOptions()
-	}
+		defer bd.Close() //nolint:errcheck
 
-	if i.options.OverlayInstaller != nil {
-		overlayOpts, getOptsErr := i.options.OverlayInstaller.GetOptions(ctx, i.options.ExtraOptions)
-		if getOptsErr != nil {
-			return nil, fmt.Errorf("failed to get overlay installer options: %w", getOptsErr)
+		gptdev, err = gpt.DeviceFromBlockDevice(bd)
+		if err != nil {
+			return nil, fmt.Errorf("failed to initialize GPT device from blockdevice %s: %w", i.options.DiskPath, err)
+		}
+	case ModeUpgrade:
+		return nil, nil // no partitioning on upgrade
+	case ModeImage:
+		f, err := os.OpenFile(i.options.DiskPath, os.O_RDWR, 0)
+		if err != nil {
+			return nil, fmt.Errorf("failed to open image file %s: %w", i.options.DiskPath, err)
 		}
 
-		if overlayOpts.PartitionOptions.Offset != 0 {
-			partitionOptions = &runtime.PartitionOptions{
-				PartitionsOffset: overlayOpts.PartitionOptions.Offset,
-			}
+		defer f.Close() //nolint:errcheck
+
+		gptdev, err = gpt.DeviceFromFile(f)
+		if err != nil {
+			return nil, fmt.Errorf("failed to initialize GPT device from image file %s: %w", i.options.DiskPath, err)
 		}
+	default:
+		return nil, fmt.Errorf("unknown image mode: %d", mode)
 	}
 
-	var gptOptions []gpt.Option
-
-	if partitionOptions != nil && partitionOptions.PartitionsOffset != 0 {
-		gptOptions = append(gptOptions, gpt.WithSkipLBAs(uint(partitionOptions.PartitionsOffset)))
-	}
-
-	if i.options.LegacyBIOSSupport {
-		gptOptions = append(gptOptions, gpt.WithMarkPMBRBootable())
+	partitions, gptOptions, err := i.getPartitionOptions(ctx, mode, hostTalosVersion, bootPartitions)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get partition options: %w", err)
 	}
 
 	pt, err := gpt.New(gptdev, gptOptions...)
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize GPT: %w", err)
-	}
-
-	quirk := quirks.New(i.options.Version)
-
-	// boot partitions
-	partitions := bootlder.RequiredPartitions(quirk)
-
-	// META partition
-	partitions = append(partitions,
-		partition.NewPartitionOptions(constants.MetaPartitionLabel, false, quirk),
-	)
-
-	legacyImage := mode == ModeImage && !quirks.New(i.options.Version).SkipDataPartitions()
-
-	// compatibility when installing on Talos < 1.8
-	if legacyImage || (hostTalosVersion != nil && hostTalosVersion.PrecreateStatePartition()) {
-		partitions = append(partitions,
-			partition.NewPartitionOptions(constants.StatePartitionLabel, false, quirk),
-		)
-	}
-
-	if legacyImage {
-		partitions = append(partitions,
-			partition.NewPartitionOptions(constants.EphemeralPartitionLabel, false, quirk),
-		)
-	}
-
-	if i.options.ImageCachePath != "" {
-		partitions = append(partitions,
-			partition.NewPartitionOptions(constants.ImageCachePartitionLabel, false, quirk),
-		)
 	}
 
 	for _, p := range partitions {
@@ -542,34 +667,240 @@ func (i *Installer) createPartitions(ctx context.Context, gptdev gpt.Device, mod
 		return nil, fmt.Errorf("failed to write GPT: %w", err)
 	}
 
-	// now format all partitions
-	for idx, p := range partitions {
-		devName := partitioning.DevName(i.options.Disk, uint(idx+1))
-
-		if err = partition.Format(devName, &p.FormatOptions, i.options.Version, i.options.Printf); err != nil {
-			return nil, fmt.Errorf("failed to format partition %s: %w", devName, err)
-		}
+	if err := gptdev.Sync(); err != nil {
+		return nil, fmt.Errorf("failed to sync GPT device: %w", err)
 	}
 
-	info, err := blkid.ProbePath(i.options.Disk, blkid.WithSkipLocking(true))
+	return partitions, nil
+}
+
+// formatPartitions formats the created partitions populating them with filesystems and data as required.
+//
+//nolint:gocyclo,cyclop
+func (i *Installer) formatPartitions(mode Mode, parts []partition.Options) error {
+	switch mode {
+	case ModeInstall:
+		// format also populates partitions, so we need to make sure source directories are set
+		for idx, p := range parts {
+			devName := partitioning.DevName(i.options.DiskPath, uint(idx+1))
+
+			if p.FileSystemType != partition.FilesystemTypeNone && p.FileSystemType != partition.FilesystemTypeZeroes && p.SourceDirectory == "" {
+				return fmt.Errorf("missing source directory for partition %s", p.Label)
+			}
+
+			if err := partition.Format(devName, &p.FormatOptions, i.options.Version, i.options.Printf); err != nil {
+				return fmt.Errorf("failed to format partition %s: %w", devName, err)
+			}
+		}
+
+		return nil
+	case ModeUpgrade:
+		// no formatting on upgrade
+		return nil
+	case ModeImage:
+		// format also populates partitions, so we need to make sure source directories are set
+		f, err := os.OpenFile(i.options.DiskPath, os.O_RDWR, 0)
+		if err != nil {
+			return fmt.Errorf("failed to open image file %s: %w", i.options.DiskPath, err)
+		}
+
+		defer f.Close() //nolint:errcheck
+
+		gptdev, err := gpt.DeviceFromFile(f)
+		if err != nil {
+			return fmt.Errorf("failed to initialize GPT device from image file %s: %w", i.options.DiskPath, err)
+		}
+
+		pt, err := gpt.Read(gptdev)
+		if err != nil {
+			return fmt.Errorf("failed to initialize GPT: %w", err)
+		}
+
+		for idx, p := range parts {
+			partitionImageFile := filepath.Join(i.options.MountPrefix, p.Label+".img")
+
+			if err := utils.CreateRawDisk(i.options.Printf, partitionImageFile, int64(p.Size)); err != nil {
+				return fmt.Errorf("failed to create raw disk for partition %s: %w", p.Label, err)
+			}
+
+			if p.Label == constants.BIOSGrubPartitionLabel && i.options.Arch == "amd64" && i.options.DiskImageBootloader == "grub" {
+				coreImgData, err := os.ReadFile(filepath.Join(i.options.MountPrefix, "core.img"))
+				if err != nil {
+					return fmt.Errorf("failed to read core.img: %w", err)
+				}
+
+				if len(coreImgData) > int(p.Size) {
+					return fmt.Errorf("core.img size (%d bytes) exceeds BIOS partition size (%d bytes)", len(coreImgData), p.Size)
+				}
+
+				f, err := os.OpenFile(partitionImageFile, os.O_WRONLY, 0)
+				if err != nil {
+					return fmt.Errorf("failed to open BIOS partition image %s for write: %w", partitionImageFile, err)
+				}
+
+				defer f.Close() //nolint:errcheck
+
+				if _, err := f.WriteAt(coreImgData, 0); err != nil {
+					return fmt.Errorf("failed to embed core.img into BIOS partition image: %w", err)
+				}
+
+				i.options.Printf("embedded GRUB core.img into BIOS partition image (%d bytes)", len(coreImgData))
+			}
+
+			if p.FileSystemType != partition.FilesystemTypeNone && p.FileSystemType != partition.FilesystemTypeZeroes && p.SourceDirectory == "" {
+				return fmt.Errorf("missing source directory for partition %s", p.Label)
+			}
+
+			if p.FileSystemType != partition.FilesystemTypeZeroes {
+				if err := partition.Format(partitionImageFile, &p.FormatOptions, i.options.Version, i.options.Printf); err != nil {
+					return fmt.Errorf("failed to format partition %s: %w", partitionImageFile, err)
+				}
+			}
+
+			partitionData, err := os.Open(partitionImageFile)
+			if err != nil {
+				return fmt.Errorf("failed to open partition image file %s: %w", partitionImageFile, err)
+			}
+
+			defer partitionData.Close() //nolint:errcheck
+
+			w, size, err := pt.PartitionWriter(idx)
+			if err != nil {
+				return fmt.Errorf("failed to get partition writer for partition %s: %w", p.Label, err)
+			}
+
+			if size != int(p.Size) {
+				return fmt.Errorf("partition size mismatch for partition %s: expected %d, got %d", p.Label, p.Size, size)
+			}
+
+			written, err := io.Copy(w, partitionData)
+			if err != nil {
+				return fmt.Errorf("failed to copy partition data for partition %s: %w", p.Label, err)
+			}
+
+			if written != int64(size) {
+				return fmt.Errorf("partition data size mismatch for partition %s: expected %d, got %d", p.Label, size, written)
+			}
+
+			i.options.Printf("updated partition %s with %d bytes of data", p.Label, written)
+		}
+
+		if i.options.Arch == "amd64" && i.options.DiskImageBootloader == "grub" {
+			bootImg, err := os.Open(filepath.Join(i.options.MountPrefix, "boot.img"))
+			if err != nil {
+				return fmt.Errorf("failed to open boot.img for MBR write: %w", err)
+			}
+
+			defer bootImg.Close() //nolint:errcheck
+
+			mbr := make([]byte, 446)
+
+			if _, err := bootImg.ReadAt(mbr, 0); err != nil {
+				return fmt.Errorf("failed to read MBR from boot.img: %w", err)
+			}
+
+			written, err := gptdev.WriteAt(mbr, 0)
+			if err != nil {
+				return fmt.Errorf("failed to write MBR to image file %s: %w", i.options.DiskPath, err)
+			}
+
+			if written != len(mbr) {
+				return fmt.Errorf("failed to write full MBR to image file %s: wrote %d bytes, expected %d bytes", i.options.DiskPath, written, len(mbr))
+			}
+
+			i.options.Printf("wrote GRUB MBR to image file %s", i.options.DiskPath)
+		}
+
+		return gptdev.Sync()
+	default:
+		return fmt.Errorf("unknown image mode: %d", mode)
+	}
+}
+
+func (i *Installer) probe() (*blkid.Info, error) {
+	info, err := blkid.ProbePath(i.options.DiskPath, blkid.WithSkipLocking(true))
 	if err != nil {
-		return nil, fmt.Errorf("failed to probe blockdevice %s: %w", i.options.Disk, err)
-	}
-
-	if len(info.Parts) != len(partitions) {
-		return nil, fmt.Errorf("expected %d partitions, got %d", len(partitions), len(info.Parts))
-	}
-
-	// this is weird, but sometimes blkid doesn't return the filesystem type for freshly formatted partitions
-	for idx, p := range partitions {
-		if p.FormatOptions.FileSystemType == partition.FilesystemTypeNone || p.FormatOptions.FileSystemType == partition.FilesystemTypeZeroes {
-			continue
-		}
-
-		info.Parts[idx].Name = p.FormatOptions.FileSystemType
+		return nil, fmt.Errorf("failed to probe blockdevice %s: %w", i.options.DiskPath, err)
 	}
 
 	return info, nil
+}
+
+//nolint:gocyclo
+func (i *Installer) getPartitionOptions(ctx context.Context, mode Mode, hostTalosVersion *compatibility.TalosVersion, bootPartitions []partition.Options) ([]partition.Options, []gpt.Option, error) {
+	var partitionOptions *runtime.PartitionOptions
+
+	if i.options.Board != constants.BoardNone && !quirks.New(i.options.Version).SupportsOverlay() {
+		var b runtime.Board
+
+		b, err := board.NewBoard(i.options.Board) //nolint:staticcheck
+		if err != nil {
+			return nil, nil, err
+		}
+
+		partitionOptions = b.PartitionOptions()
+	}
+
+	if i.options.OverlayInstaller != nil {
+		overlayOpts, getOptsErr := i.options.OverlayInstaller.GetOptions(ctx, i.options.ExtraOptions)
+		if getOptsErr != nil {
+			return nil, nil, fmt.Errorf("failed to get overlay installer options: %w", getOptsErr)
+		}
+
+		if overlayOpts.PartitionOptions.Offset != 0 {
+			partitionOptions = &runtime.PartitionOptions{
+				PartitionsOffset: overlayOpts.PartitionOptions.Offset,
+			}
+		}
+	}
+
+	var gptOptions []gpt.Option
+
+	if partitionOptions != nil && partitionOptions.PartitionsOffset != 0 {
+		gptOptions = append(gptOptions, gpt.WithSkipLBAs(uint(partitionOptions.PartitionsOffset)))
+	}
+
+	if i.options.LegacyBIOSSupport {
+		gptOptions = append(gptOptions, gpt.WithMarkPMBRBootable())
+	}
+
+	quirk := quirks.New(i.options.Version)
+
+	// boot partitions
+	partitions := slices.Clone(bootPartitions)
+
+	// META partition
+	partitions = append(partitions,
+		partition.NewPartitionOptions(false, quirk, partition.WithLabel(constants.MetaPartitionLabel)),
+	)
+
+	legacyImage := mode == ModeImage && !quirks.New(i.options.Version).SkipDataPartitions()
+
+	// compatibility when installing on Talos < 1.8
+	if legacyImage || (hostTalosVersion != nil && hostTalosVersion.PrecreateStatePartition()) {
+		partitions = append(partitions,
+			partition.NewPartitionOptions(false, quirk, partition.WithLabel(constants.StatePartitionLabel)),
+		)
+	}
+
+	if legacyImage {
+		partitions = append(partitions,
+			partition.NewPartitionOptions(false, quirk, partition.WithLabel(constants.EphemeralPartitionLabel)),
+		)
+	}
+
+	if i.options.ImageCachePath != "" {
+		partitions = append(partitions,
+			partition.NewPartitionOptions(
+				false,
+				quirk,
+				partition.WithLabel(constants.ImageCachePartitionLabel),
+				partition.WithSourceDirectory(i.options.ImageCachePath),
+			),
+		)
+	}
+
+	return partitions, gptOptions, nil
 }
 
 func (i *Installer) runPreflightChecks(mode Mode) error {
