@@ -2730,7 +2730,7 @@ spec:
         - name: build extensions
           # zfs is only added since it uses libtirpc from musl and nvidia needs libtirpc from glibc
           # this verifies that both libtirpc can co-exist together
-          command: nvidia-container-toolkit-lts nvidia-open-gpu-kernel-modules-lts zfs extensions-metadata
+          command: nvidia-container-toolkit-lts nvidia-open-gpu-kernel-modules-lts extensions-metadata
           arguments:
             - PKGS_PREFIX=ghcr.io/dsseng
             - PKGS=v1.13.0-alpha.0-19-gf2ee614-dirty
