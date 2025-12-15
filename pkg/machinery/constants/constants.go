@@ -1145,6 +1145,15 @@ const (
 	// KubernetesTalosProvider is the name of the Talos provider as a Kubernetes label.
 	KubernetesTalosProvider = "talos.dev"
 
+	// KubernetesInventoryNamespace is the namespace where Talos inventory objects are stored.
+	KubernetesInventoryNamespace = "kube-system"
+
+	// KubernetesBootstrapManifestsInventoryName is the name of the Talos bootstrap manifests inventory object.
+	KubernetesBootstrapManifestsInventoryName = "talos-bootstrap-manifests-inventory"
+
+	// KubernetesFieldManagerName is the field manager name used by Talos when applying manifests.
+	KubernetesFieldManagerName = "talos"
+
 	// ServiceAccountResourceGroup is the group name of the Talos service account CRD.
 	ServiceAccountResourceGroup = "talos.dev"
 

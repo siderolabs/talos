@@ -139,3 +139,9 @@ func (v *TalosVersion) UpgradeableFrom(host *TalosVersion) error {
 
 	return nil
 }
+
+// SupportsSSAManifestSync returns true if the Talos version supports server side apply manifest sync.
+func (v *TalosVersion) SupportsSSAManifestSync() bool {
+	// supported from Talos 1.13+
+	return v.majorMinor[0] > talos113.MajorMinor[0] || (v.majorMinor[0] == talos113.MajorMinor[0] && v.majorMinor[1] >= talos113.MajorMinor[1])
+}

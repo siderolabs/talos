@@ -211,6 +211,10 @@ func (k8sSuite *K8sSuite) EnsureResourceIsDeleted(
 			return nil
 		}
 
+		if err == nil {
+			return retry.ExpectedErrorf("resource %s %s/%s still exists", gvr, ns, name)
+		}
+
 		return err
 	})
 }

@@ -509,6 +509,8 @@ func TestTalosUpgradeCompatibilityUnsupported(t *testing.T) {
 }
 
 func TestDisablePredictableNetworkInterfaces(t *testing.T) {
+	t.Parallel()
+
 	for _, tt := range []struct {
 		host     string
 		expected bool
@@ -535,12 +537,51 @@ func TestDisablePredictableNetworkInterfaces(t *testing.T) {
 		},
 	} {
 		t.Run(tt.host, func(t *testing.T) {
+			t.Parallel()
+
 			host, err := compatibility.ParseTalosVersion(&machine.VersionInfo{
 				Tag: tt.host,
 			})
 			require.NoError(t, err)
 
 			require.Equal(t, tt.expected, host.DisablePredictableNetworkInterfaces())
+		})
+	}
+}
+
+func TestSupportsSSAManifestSync(t *testing.T) {
+	t.Parallel()
+
+	for _, tt := range []struct {
+		version  string
+		expected bool
+	}{
+		{
+			version:  "1.12.0",
+			expected: false,
+		},
+		{
+			version:  "1.13.0",
+			expected: true,
+		},
+		{
+			version:  "1.14.0",
+			expected: true,
+		},
+		{
+			version:  "2.0.0",
+			expected: true,
+		},
+	} {
+		t.Run(tt.version, func(t *testing.T) {
+			t.Parallel()
+
+			v, err := compatibility.ParseTalosVersion(&machine.VersionInfo{
+				Tag: tt.version,
+			})
+			require.NoError(t, err)
+
+			require.Equal(t, tt.expected, v.SupportsSSAManifestSync())
 		})
 	}
 }

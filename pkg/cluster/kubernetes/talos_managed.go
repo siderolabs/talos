@@ -122,7 +122,8 @@ func Upgrade(ctx context.Context, cluster UpgradeProvider, options UpgradeOption
 		return err
 	}
 
-	if err = VerifyVersionCompatibility(ctx, talosClient, slices.Concat(options.controlPlaneNodes, options.workerNodes), options.Path.ToVersion(), options.Log); err != nil {
+	minTalosVersion, err := VerifyVersionCompatibility(ctx, talosClient, slices.Concat(options.controlPlaneNodes, options.workerNodes), options.Path.ToVersion(), options.Log)
+	if err != nil {
 		return err
 	}
 
@@ -157,12 +158,9 @@ func Upgrade(ctx context.Context, cluster UpgradeProvider, options UpgradeOption
 		}
 	}
 
-	objects, err := getManifests(ctx, cluster)
-	if err != nil {
-		return err
-	}
+	useSSA := minTalosVersion.SupportsSSAManifestSync()
 
-	return syncManifests(ctx, objects, cluster, options)
+	return PerformManifestsSync(ctx, cluster, useSSA, options)
 }
 
 func prePullImages(ctx context.Context, talosClient *client.Client, options UpgradeOptions) error {
@@ -457,6 +455,26 @@ func upgradeStaticPodPatcher(options UpgradeOptions, service string, configResou
 	}
 }
 
+// PerformManifestsSync performs manifests sync from Talos manifest list to Kubernetes.
+func PerformManifestsSync(
+	ctx context.Context,
+	cluster UpgradeProvider,
+	useSSA bool,
+	options UpgradeOptions,
+) error {
+	objects, err := getManifests(ctx, cluster)
+	if err != nil {
+		return err
+	}
+
+	// Use server-side apply for Talos versions >= v1.13.0
+	if useSSA {
+		return syncManifestsSSA(ctx, objects, cluster, options)
+	}
+
+	return syncManifests(ctx, objects, cluster, options)
+}
+
 func getManifests(ctx context.Context, cluster UpgradeProvider) ([]*unstructured.Unstructured, error) {
 	talosclient, err := cluster.Client()
 	if err != nil {
@@ -473,6 +491,8 @@ func getManifests(ctx context.Context, cluster UpgradeProvider) ([]*unstructured
 	return manifests.GetBootstrapManifests(ctx, talosclient.COSI, nil)
 }
 
+// syncManifests is the legacy non SSA manifests sync function.
+// It should be removed once Talos v1.12 is no longer supported.
 func syncManifests(ctx context.Context, objects []*unstructured.Unstructured, cluster UpgradeProvider, options UpgradeOptions) error {
 	config, err := cluster.K8sRestConfig(ctx)
 	if err != nil {
@@ -480,6 +500,50 @@ func syncManifests(ctx context.Context, objects []*unstructured.Unstructured, cl
 	}
 
 	return manifests.SyncWithLog(ctx, objects, config, options.DryRun, options.Log)
+}
+
+func syncManifestsSSA(ctx context.Context, objects []*unstructured.Unstructured, cluster UpgradeProvider, options UpgradeOptions) error {
+	config, err := cluster.K8sRestConfig(ctx)
+	if err != nil {
+		return err
+	}
+
+	options.Log("comparing with live objects")
+
+	result, err := manifests.DiffSSA(ctx, objects, config,
+		constants.KubernetesFieldManagerName,
+		constants.KubernetesInventoryNamespace,
+		constants.KubernetesBootstrapManifestsInventoryName)
+	if err != nil {
+		return err
+	}
+
+	if len(result) == 0 {
+		options.Log("< no changes detected")
+	}
+
+	for _, r := range result {
+		objPath := fmt.Sprintf("%s %s/%s", r.Object.GroupVersionKind().Kind, r.Object.GetNamespace(), r.Object.GetName())
+		if r.Object.GetNamespace() == "" {
+			objPath = fmt.Sprintf("%s %s", r.Object.GroupVersionKind().Kind, r.Object.GetName())
+		}
+
+		options.Log("< %s %s", r.Action, objPath)
+		options.Log("%s", r.Diff)
+	}
+
+	options.Log("applying manifests")
+
+	return manifests.SyncWithLogSSA(
+		ctx,
+		objects,
+		config,
+		options.DryRun,
+		constants.KubernetesFieldManagerName,
+		constants.KubernetesInventoryNamespace,
+		constants.KubernetesBootstrapManifestsInventoryName,
+		options.Log,
+	)
 }
 
 //nolint:gocyclo

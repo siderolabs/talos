@@ -7,6 +7,7 @@ package k8s
 import (
 	"cmp"
 	"context"
+	"errors"
 	"fmt"
 	"slices"
 	"sort"
@@ -18,6 +19,7 @@ import (
 	"github.com/hashicorp/go-multierror"
 	"github.com/siderolabs/gen/optional"
 	"github.com/siderolabs/gen/xslices"
+	gokube "github.com/siderolabs/go-kubernetes/kubernetes/manifests"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 	corev1 "k8s.io/api/core/v1"
@@ -26,13 +28,18 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/discovery"
-	memory "k8s.io/client-go/discovery/cached"
+	"k8s.io/client-go/discovery/cached/memory"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/restmapper"
 	"k8s.io/client-go/tools/clientcmd"
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
+	"k8s.io/kubectl/pkg/cmd/util"
+	"sigs.k8s.io/cli-utils/pkg/apis/actuation"
+	"sigs.k8s.io/cli-utils/pkg/inventory"
+	"sigs.k8s.io/cli-utils/pkg/object"
 
 	k8sadapter "github.com/siderolabs/talos/internal/app/machined/pkg/adapters/k8s"
 	"github.com/siderolabs/talos/internal/pkg/etcd"
@@ -132,7 +139,6 @@ func (ctrl *ManifestApplyController) Run(ctx context.Context, r controller.Runti
 		if len(manifests.Items) > 0 {
 			var (
 				kubeconfig *rest.Config
-				dc         *discovery.DiscoveryClient
 				dyn        dynamic.Interface
 			)
 
@@ -147,10 +153,12 @@ func (ctrl *ManifestApplyController) Run(ctx context.Context, r controller.Runti
 				Deduplicate: true,
 			})
 
-			dc, err = discovery.NewDiscoveryClientForConfig(kubeconfig)
+			discoveryClient, err := discovery.NewDiscoveryClientForConfig(kubeconfig)
 			if err != nil {
 				return fmt.Errorf("error building discovery client: %w", err)
 			}
+
+			dc := memory.NewMemCacheClient(discoveryClient)
 
 			mapper := restmapper.NewDeferredDiscoveryRESTMapper(memory.NewMemCacheClient(dc))
 
@@ -160,7 +168,20 @@ func (ctrl *ManifestApplyController) Run(ctx context.Context, r controller.Runti
 			}
 
 			if err = etcd.WithLock(ctx, constants.EtcdTalosManifestApplyMutex, logger, func() error {
-				return ctrl.apply(ctx, logger, mapper, dyn, manifests)
+				inventoryClient, inv, err := getInventory(ctx, kubeconfig, mapper, dc)
+				if err != nil {
+					return err
+				}
+
+				applyErr := ctrl.apply(ctx, logger, mapper, dyn, manifests, inv)
+
+				// update inventory even if the apply process failed half way through
+				err = inventoryClient.CreateOrUpdate(ctx, inv, inventory.UpdateOptions{})
+				if err != nil {
+					err = fmt.Errorf("updating inventory failed: %w", err)
+				}
+
+				return errors.Join(applyErr, err)
 			}); err != nil {
 				return err
 			}
@@ -183,7 +204,14 @@ func (ctrl *ManifestApplyController) Run(ctx context.Context, r controller.Runti
 }
 
 //nolint:gocyclo,cyclop
-func (ctrl *ManifestApplyController) apply(ctx context.Context, logger *zap.Logger, mapper *restmapper.DeferredDiscoveryRESTMapper, dyn dynamic.Interface, manifests resource.List) error {
+func (ctrl *ManifestApplyController) apply(
+	ctx context.Context,
+	logger *zap.Logger,
+	mapper *restmapper.DeferredDiscoveryRESTMapper,
+	dyn dynamic.Interface,
+	manifests resource.List,
+	inv inventory.Inventory,
+) error {
 	// flatten list of objects to be applied
 	objects := xslices.FlatMap(manifests.Items, func(m resource.Resource) []*unstructured.Unstructured {
 		return k8sadapter.Manifest(m.(*k8s.Manifest)).Objects()
@@ -227,6 +255,13 @@ func (ctrl *ManifestApplyController) apply(ctx context.Context, logger *zap.Logg
 	var multiErr *multierror.Error
 
 	for _, obj := range objects {
+		objMeta := object.UnstructuredToObjMetadata(obj)
+
+		// check if the resource is already in the inventory, if so, skip applying it
+		if inv.GetObjectRefs().Contains(objMeta) {
+			continue
+		}
+
 		gvk := obj.GroupVersionKind()
 		objName := fmt.Sprintf("%s/%s/%s/%s", gvk.Group, gvk.Version, gvk.Kind, obj.GetName())
 
@@ -265,7 +300,10 @@ func (ctrl *ManifestApplyController) apply(ctx context.Context, logger *zap.Logg
 
 		_, err = dr.Get(ctx, obj.GetName(), metav1.GetOptions{})
 		if err == nil {
-			// already exists
+			// already exists,
+			// backfill the inventory if the resource is missing (to migrate to inventory-based apply)
+			inventoryAdd(inv, objMeta, obj, actuation.ActuationSucceeded)
+
 			continue
 		}
 
@@ -273,13 +311,11 @@ func (ctrl *ManifestApplyController) apply(ctx context.Context, logger *zap.Logg
 			return fmt.Errorf("error checking resource existence: %w", err)
 		}
 
-		_, err = dr.Create(ctx, obj, metav1.CreateOptions{
-			FieldManager: "talos",
+		_, err = dr.Apply(ctx, obj.GetName(), obj, metav1.ApplyOptions{
+			FieldManager: constants.KubernetesFieldManagerName,
 		})
 		if err != nil {
 			switch {
-			case apierrors.IsAlreadyExists(err):
-				// later on we might want to do something here, e.g. do server-side apply, for now do nothing
 			case apierrors.IsMethodNotSupported(err):
 				fallthrough
 			case apierrors.IsBadRequest(err):
@@ -293,10 +329,63 @@ func (ctrl *ManifestApplyController) apply(ctx context.Context, logger *zap.Logg
 			}
 		} else {
 			logger.Sugar().Infof("created %s", objName)
+
+			inventoryAdd(inv, objMeta, obj, actuation.ActuationSucceeded)
 		}
 	}
 
 	return multiErr.ErrorOrNil()
+}
+
+func getInventory(
+	ctx context.Context,
+	kubeconfig *rest.Config,
+	mapper *restmapper.DeferredDiscoveryRESTMapper,
+	dc discovery.CachedDiscoveryInterface,
+) (inventory.Client, inventory.Inventory, error) {
+	clientGetter := gokube.K8sRESTClientGetter{
+		RestConfig:      kubeconfig,
+		Mapper:          mapper,
+		DiscoveryClient: dc,
+	}
+
+	factory := util.NewFactory(clientGetter)
+
+	inventoryClient, err := inventory.ConfigMapClientFactory{StatusEnabled: true}.NewClient(factory)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	inventoryInfo := inventory.NewSingleObjectInfo(inventory.ID(
+		constants.KubernetesBootstrapManifestsInventoryName),
+		types.NamespacedName{
+			Namespace: constants.KubernetesInventoryNamespace,
+			Name:      constants.KubernetesBootstrapManifestsInventoryName,
+		})
+
+	err = gokube.AssureInventory(ctx, inventoryClient, inventoryInfo)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	inv, err := inventoryClient.Get(ctx, inventoryInfo, inventory.GetOptions{})
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return inventoryClient, inv, err
+}
+
+func inventoryAdd(inv inventory.Inventory, objMeta object.ObjMetadata, obj *unstructured.Unstructured, actuationStatus actuation.ActuationStatus) {
+	inv.SetObjectRefs(slices.Concat(inv.GetObjectRefs(), object.ObjMetadataSet{objMeta}))
+	inv.SetObjectStatuses(slices.Concat(inv.GetObjectStatuses(), object.ObjectStatusSet{actuation.ObjectStatus{
+		ObjectReference: inventory.ObjectReferenceFromObjMetadata(objMeta),
+		Strategy:        actuation.ActuationStrategyApply,
+		Actuation:       actuationStatus,
+		Reconcile:       actuation.ReconcileUnknown,
+		UID:             obj.GetUID(),
+		Generation:      obj.GetGeneration(),
+	}}))
 }
 
 func isNamespace(gvk schema.GroupVersionKind) bool {

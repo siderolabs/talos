@@ -88,6 +88,14 @@ The related `GenerateConfiguration` API method has also been removed.
 Users are encouraged to use other installation methods, such as using pre-generated configuration files, or using Omni.
 """
 
+    [notes.k8s_ssa]
+        title = "Kubernetes server-side apply"
+        description = """\
+Talos now uses inventory backed server-side apply when applying bootsrap manifests (including `extraManifests` and `inlineManifests`).
+Purging of unneeded manifests is automatically performed.
+The switch and inventory backfill is automatic and no action is needed from the user.
+"""
+
 [make_deps]
 
     [make_deps.tools]
