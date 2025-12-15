@@ -27,7 +27,7 @@ EMBED_TARGET ?= embed
 TOOLS_PREFIX ?= ghcr.io/siderolabs/tools
 TOOLS ?= v1.13.0-alpha.0-1-ge283ec8
 PKGS_PREFIX ?= ghcr.io/siderolabs
-PKGS ?= v1.13.0-alpha.0-9-gb961ff8
+PKGS ?= v1.13.0-alpha.0-10-g47abca0
 GENERATE_VEX_PREFIX ?= ghcr.io/siderolabs/generate-vex
 GENERATE_VEX ?= latest
 
@@ -58,6 +58,7 @@ PKG_LIBCAP ?= $(PKGS_PREFIX)/libcap:$(PKGS)
 PKG_LIBINIH ?= $(PKGS_PREFIX)/libinih:$(PKGS)
 PKG_LIBISOBURN ?= $(PKGS_PREFIX)/libisoburn:$(PKGS)
 PKG_LIBISOFS ?= $(PKGS_PREFIX)/libisofs:$(PKGS)
+PKG_LIBJANSSON ?= $(PKGS_PREFIX)/libjansson:$(PKGS)
 PKG_LIBJSON_C ?= $(PKGS_PREFIX)/libjson-c:$(PKGS)
 PKG_LIBLZMA ?= $(PKGS_PREFIX)/liblzma:$(PKGS)
 PKG_LIBMNL ?= $(PKGS_PREFIX)/libmnl:$(PKGS)
@@ -208,6 +209,7 @@ COMMON_ARGS += --build-arg=PKG_LIBCAP=$(PKG_LIBCAP)
 COMMON_ARGS += --build-arg=PKG_LIBINIH=$(PKG_LIBINIH)
 COMMON_ARGS += --build-arg=PKG_LIBISOBURN=$(PKG_LIBISOBURN)
 COMMON_ARGS += --build-arg=PKG_LIBISOFS=$(PKG_LIBISOFS)
+COMMON_ARGS += --build-arg=PKG_LIBJANSSON=$(PKG_LIBJANSSON)
 COMMON_ARGS += --build-arg=PKG_LIBJSON_C=$(PKG_LIBJSON_C)
 COMMON_ARGS += --build-arg=PKG_LIBLZMA=$(PKG_LIBLZMA)
 COMMON_ARGS += --build-arg=PKG_LIBMNL=$(PKG_LIBMNL)

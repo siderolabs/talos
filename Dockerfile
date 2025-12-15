@@ -36,6 +36,7 @@ ARG PKG_LIBCAP=scratch
 ARG PKG_LIBINIH=scratch
 ARG PKG_LIBISOBURN=scratch
 ARG PKG_LIBISOFS=scratch
+ARG PKG_LIBJANSSON=scratch
 ARG PKG_LIBJSON_C=scratch
 ARG PKG_LIBLZMA=scratch
 ARG PKG_LIBMNL=scratch
@@ -115,6 +116,9 @@ FROM --platform=arm64 ${PKG_LIBATTR} AS pkg-libattr-arm64
 
 FROM --platform=amd64 ${PKG_LIBINIH} AS pkg-libinih-amd64
 FROM --platform=arm64 ${PKG_LIBINIH} AS pkg-libinih-arm64
+
+FROM --platform=amd64 ${PKG_LIBJANSSON} AS pkg-libjansson-amd64
+FROM --platform=arm64 ${PKG_LIBJANSSON} AS pkg-libjansson-arm64
 
 FROM --platform=amd64 ${PKG_LIBJSON_C} AS pkg-libjson-c-amd64
 FROM --platform=arm64 ${PKG_LIBJSON_C} AS pkg-libjson-c-arm64
@@ -698,6 +702,7 @@ COPY --link --exclude=usr/share --from=pkg-iptables-amd64 / /rootfs
 COPY --link --from=pkg-iptables-amd64 /usr/share/spdx/iptables.spdx.json /rootfs/usr/share/spdx/iptables.spdx.json
 COPY --link --from=pkg-libattr-amd64 / /rootfs
 COPY --link --from=pkg-libinih-amd64 / /rootfs
+COPY --link --exclude=usr/include --from=pkg-libjansson-amd64 / /rootfs
 COPY --link --from=pkg-libjson-c-amd64 / /rootfs
 COPY --link --from=pkg-libmnl-amd64 / /rootfs
 COPY --link --from=pkg-libnftnl-amd64 / /rootfs
@@ -780,6 +785,7 @@ COPY --link --exclude=usr/share --from=pkg-iptables-arm64 / /rootfs
 COPY --link --from=pkg-iptables-arm64 /usr/share/spdx/iptables.spdx.json /rootfs/usr/share/spdx/iptables.spdx.json
 COPY --link --from=pkg-libattr-arm64 / /rootfs
 COPY --link --from=pkg-libinih-arm64 / /rootfs
+COPY --link --exclude=usr/include --from=pkg-libjansson-arm64 / /rootfs
 COPY --link --from=pkg-libjson-c-arm64 / /rootfs
 COPY --link --from=pkg-libmnl-arm64 / /rootfs
 COPY --link --from=pkg-libnftnl-arm64 / /rootfs
