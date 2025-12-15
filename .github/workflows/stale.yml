@@ -1,6 +1,6 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
 #
-# Generated on 2025-11-05T12:54:07Z by kres cd5a938.
+# Generated on 2025-12-15T14:23:39Z by kres 4b09af7.
 
 "on":
   schedule:
@@ -15,7 +15,7 @@ jobs:
       - ubuntu-latest
     steps:
       - name: Close stale issues and PRs
-        uses: actions/stale@v10.1.0
+        uses: actions/stale@997185467fa4f803885201cee163a9f38240193d # version: v10.1.1
         with:
           close-issue-message: This issue was closed because it has been stalled for 7 days with no activity.
           days-before-issue-close: "5"
