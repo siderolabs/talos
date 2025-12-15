@@ -27,7 +27,7 @@ function get_ami_id() {
 function cloud_image_upload_with_extensions() {
   case "${1}" in
     nvidia-oss-lts)
-      EXTENSIONS=$(jq -R < "${EXTENSIONS_METADATA_FILE}" | jq -rs 'map(select(. | (contains("nvidia-open-gpu-kernel-modules-lts") or contains("nvidia-container-toolkit-lts") or contains("zfs")) and (contains("nvidia-fabricmanager") or contains("nonfree-kmod-nvidia") | not))) | .[] |= "--system-extension-image=" + . | join(" ")')
+      EXTENSIONS=$(jq -R < "${EXTENSIONS_METADATA_FILE}" | jq -rs 'map(select(. | (contains("nvidia-open-gpu-kernel-modules-lts") or contains("nvidia-container-toolkit-lts")) and (contains("nvidia-fabricmanager") or contains("nonfree-kmod-nvidia") | not))) | .[] |= "--system-extension-image=" + . | join(" ")')
       ;;
     nvidia-oss-production)
       EXTENSIONS=$(jq -R < "${EXTENSIONS_METADATA_FILE}" | jq -rs 'map(select(. | (contains("nvidia-open-gpu-kernel-modules-production") or contains("nvidia-container-toolkit-production") or contains("zfs")) and (contains("nvidia-fabricmanager") or contains("nonfree-kmod-nvidia") | not))) | .[] |= "--system-extension-image=" + . | join(" ")')

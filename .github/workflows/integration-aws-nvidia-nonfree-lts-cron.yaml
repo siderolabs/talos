@@ -1,6 +1,6 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
 #
-# Generated on 2025-12-11T16:40:05Z by kres 4b09af7.
+# Generated on 2025-12-13T19:54:56Z by kres 4b09af7.
 
 concurrency:
   group: ${{ github.head_ref || github.run_id }}
@@ -114,7 +114,7 @@ jobs:
           PUSH: "true"
           REGISTRY: registry.dev.siderolabs.io
         run: |
-          make nvidia-container-toolkit-lts nonfree-kmod-nvidia-lts extensions-metadata -C _out/extensions
+          make nvidia-container-toolkit-lts nonfree-kmod-nvidia-lts extensions-metadata PKGS_PREFIX=ghcr.io/dsseng PKGS=v1.13.0-alpha.0-18-ge03c17a -C _out/extensions
       - name: e2e-aws-prepare
         env:
           E2E_AWS_TARGET: nvidia-nonfree-lts
