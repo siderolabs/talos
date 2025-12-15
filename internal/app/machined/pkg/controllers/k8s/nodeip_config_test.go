@@ -6,23 +6,17 @@
 package k8s_test
 
 import (
-	"context"
 	"net/url"
-	"sync"
 	"testing"
 	"time"
 
-	"github.com/cosi-project/runtime/pkg/controller/runtime"
-	"github.com/cosi-project/runtime/pkg/resource"
-	"github.com/cosi-project/runtime/pkg/state"
-	"github.com/cosi-project/runtime/pkg/state/impl/inmem"
-	"github.com/cosi-project/runtime/pkg/state/impl/namespaced"
-	"github.com/siderolabs/go-retry/retry"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
-	"go.uber.org/zap/zaptest"
 
+	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/ctest"
 	k8sctrl "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/k8s"
 	"github.com/siderolabs/talos/pkg/machinery/config/container"
+	"github.com/siderolabs/talos/pkg/machinery/config/types/network"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/resources/config"
@@ -30,36 +24,7 @@ import (
 )
 
 type NodeIPConfigSuite struct {
-	suite.Suite
-
-	state state.State
-
-	runtime *runtime.Runtime
-	wg      sync.WaitGroup
-
-	ctx       context.Context //nolint:containedctx
-	ctxCancel context.CancelFunc
-}
-
-func (suite *NodeIPConfigSuite) SetupTest() {
-	suite.ctx, suite.ctxCancel = context.WithTimeout(context.Background(), 3*time.Minute)
-
-	suite.state = state.WrapCore(namespaced.NewState(inmem.Build))
-
-	var err error
-
-	suite.runtime, err = runtime.NewRuntime(suite.state, zaptest.NewLogger(suite.T()))
-	suite.Require().NoError(err)
-
-	suite.Require().NoError(suite.runtime.RegisterController(k8sctrl.NewNodeIPConfigController()))
-
-	suite.startRuntime()
-}
-
-func (suite *NodeIPConfigSuite) startRuntime() {
-	suite.wg.Go(func() {
-		suite.Assert().NoError(suite.runtime.Run(suite.ctx))
-	})
+	ctest.DefaultSuite
 }
 
 func (suite *NodeIPConfigSuite) TestReconcileWithSubnets() {
@@ -109,40 +74,58 @@ func (suite *NodeIPConfigSuite) TestReconcileWithSubnets() {
 		),
 	)
 
-	suite.Require().NoError(suite.state.Create(suite.ctx, cfg))
+	suite.Create(cfg)
 
-	suite.Assert().NoError(
-		retry.Constant(10*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-			func() error {
-				NodeIPConfig, err := suite.state.Get(
-					suite.ctx,
-					resource.NewMetadata(
-						k8s.NamespaceName,
-						k8s.NodeIPConfigType,
-						k8s.KubeletID,
-						resource.VersionUndefined,
-					),
-				)
-				if err != nil {
-					if state.IsNotFoundError(err) {
-						return retry.ExpectedError(err)
-					}
+	ctest.AssertResource(suite, k8s.KubeletID, func(cfg *k8s.NodeIPConfig, asrt *assert.Assertions) {
+		spec := cfg.TypedSpec()
 
-					return err
-				}
+		asrt.Equal([]string{"10.0.0.0/24"}, spec.ValidSubnets)
+		asrt.Equal(
+			[]string{"10.244.0.0/16", "10.96.0.0/12", "1.2.3.4", "5.6.7.8"},
+			spec.ExcludeSubnets,
+		)
+	})
+}
 
-				spec := NodeIPConfig.(*k8s.NodeIPConfig).TypedSpec()
+func (suite *NodeIPConfigSuite) TestReconcileWithNewVIPs() {
+	u, err := url.Parse("https://foo:6443")
+	suite.Require().NoError(err)
 
-				suite.Assert().Equal([]string{"10.0.0.0/24"}, spec.ValidSubnets)
-				suite.Assert().Equal(
-					[]string{"10.244.0.0/16", "10.96.0.0/12", "1.2.3.4", "5.6.7.8"},
-					spec.ExcludeSubnets,
-				)
-
-				return nil
+	cfgV1Alpha1 := &v1alpha1.Config{
+		ConfigVersion: "v1alpha1",
+		MachineConfig: &v1alpha1.MachineConfig{},
+		ClusterConfig: &v1alpha1.ClusterConfig{
+			ControlPlane: &v1alpha1.ControlPlaneConfig{
+				Endpoint: &v1alpha1.Endpoint{
+					URL: u,
+				},
 			},
-		),
-	)
+			ClusterNetwork: &v1alpha1.ClusterNetworkConfig{
+				ServiceSubnet: []string{constants.DefaultIPv4ServiceNet},
+				PodSubnet:     []string{constants.DefaultIPv4PodNet},
+			},
+		},
+	}
+
+	cfgVIP := network.NewLayer2VIPConfigV1Alpha1("5.6.7.8")
+	cfgVIP.LinkName = "eth0"
+
+	ctr, err := container.New(cfgV1Alpha1, cfgVIP)
+	suite.Require().NoError(err)
+
+	cfg := config.NewMachineConfig(ctr)
+
+	suite.Create(cfg)
+
+	ctest.AssertResource(suite, k8s.KubeletID, func(cfg *k8s.NodeIPConfig, asrt *assert.Assertions) {
+		spec := cfg.TypedSpec()
+
+		asrt.Equal([]string{"0.0.0.0/0"}, spec.ValidSubnets)
+		asrt.Equal(
+			[]string{"10.244.0.0/16", "10.96.0.0/12", "5.6.7.8"},
+			spec.ExcludeSubnets,
+		)
+	})
 }
 
 func (suite *NodeIPConfigSuite) TestReconcileDefaults() {
@@ -169,52 +152,28 @@ func (suite *NodeIPConfigSuite) TestReconcileDefaults() {
 		),
 	)
 
-	suite.Require().NoError(suite.state.Create(suite.ctx, cfg))
+	suite.Create(cfg)
 
-	suite.Assert().NoError(
-		retry.Constant(10*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-			func() error {
-				NodeIPConfig, err := suite.state.Get(
-					suite.ctx,
-					resource.NewMetadata(
-						k8s.NamespaceName,
-						k8s.NodeIPConfigType,
-						k8s.KubeletID,
-						resource.VersionUndefined,
-					),
-				)
-				if err != nil {
-					if state.IsNotFoundError(err) {
-						return retry.ExpectedError(err)
-					}
+	ctest.AssertResource(suite, k8s.KubeletID, func(cfg *k8s.NodeIPConfig, asrt *assert.Assertions) {
+		spec := cfg.TypedSpec()
 
-					return err
-				}
-
-				spec := NodeIPConfig.(*k8s.NodeIPConfig).TypedSpec()
-
-				suite.Assert().Equal([]string{"0.0.0.0/0", "::/0"}, spec.ValidSubnets)
-				suite.Assert().Equal(
-					[]string{"10.244.0.0/16", "fc00:db8:10::/56", "10.96.0.0/12", "fc00:db8:20::/112"},
-					spec.ExcludeSubnets,
-				)
-
-				return nil
-			},
-		),
-	)
-}
-
-func (suite *NodeIPConfigSuite) TearDownTest() {
-	suite.T().Log("tear down")
-
-	suite.ctxCancel()
-
-	suite.wg.Wait()
+		asrt.Equal([]string{"0.0.0.0/0", "::/0"}, spec.ValidSubnets)
+		asrt.Equal(
+			[]string{"10.244.0.0/16", "fc00:db8:10::/56", "10.96.0.0/12", "fc00:db8:20::/112"},
+			spec.ExcludeSubnets,
+		)
+	})
 }
 
 func TestNodeIPConfigSuite(t *testing.T) {
 	t.Parallel()
 
-	suite.Run(t, new(NodeIPConfigSuite))
+	suite.Run(t, &NodeIPConfigSuite{
+		DefaultSuite: ctest.DefaultSuite{
+			Timeout: 10 * time.Second,
+			AfterSetup: func(suite *ctest.DefaultSuite) {
+				suite.Require().NoError(suite.Runtime().RegisterController(k8sctrl.NewNodeIPConfigController()))
+			},
+		},
+	})
 }
