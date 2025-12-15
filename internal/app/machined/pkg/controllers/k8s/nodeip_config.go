@@ -22,6 +22,8 @@ import (
 type NodeIPConfigController = transform.Controller[*config.MachineConfig, *k8s.NodeIPConfig]
 
 // NewNodeIPConfigController instanciates the controller.
+//
+//nolint:gocyclo
 func NewNodeIPConfigController() *NodeIPConfigController {
 	return transform.NewController(
 		transform.Settings[*config.MachineConfig, *k8s.NodeIPConfig]{
@@ -75,6 +77,10 @@ func NewNodeIPConfigController() *NodeIPConfigController {
 							spec.ExcludeSubnets = append(spec.ExcludeSubnets, vlan.VIPConfig().IP())
 						}
 					}
+				}
+
+				for _, doc := range cfgProvider.NetworkVirtualIPConfigs() {
+					spec.ExcludeSubnets = append(spec.ExcludeSubnets, doc.VIP().String())
 				}
 
 				return nil

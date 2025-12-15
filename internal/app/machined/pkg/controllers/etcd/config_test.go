@@ -5,6 +5,7 @@
 package etcd_test
 
 import (
+	"slices"
 	"testing"
 	"time"
 
@@ -15,7 +16,9 @@ import (
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/ctest"
 	etcdctrl "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/etcd"
+	configconfig "github.com/siderolabs/talos/pkg/machinery/config/config"
 	"github.com/siderolabs/talos/pkg/machinery/config/container"
+	"github.com/siderolabs/talos/pkg/machinery/config/types/network"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
 	"github.com/siderolabs/talos/pkg/machinery/resources/config"
 	"github.com/siderolabs/talos/pkg/machinery/resources/etcd"
@@ -43,6 +46,7 @@ func (suite *ConfigSuite) TestReconcile() {
 		etcdConfig     *v1alpha1.EtcdConfig
 		networkConfig  v1alpha1.NetworkDeviceList
 		expectedConfig etcd.ConfigSpec
+		extraConfig    func(*testing.T) []configconfig.Document
 	}{
 		{
 			name: "default config",
@@ -102,7 +106,7 @@ func (suite *ConfigSuite) TestReconcile() {
 			},
 		},
 		{
-			name: "default with vip",
+			name: "default with legacy vip",
 			etcdConfig: &v1alpha1.EtcdConfig{
 				ContainerImage: "foo/bar:v1.0.0",
 			},
@@ -123,7 +127,26 @@ func (suite *ConfigSuite) TestReconcile() {
 			},
 		},
 		{
-			name: "advertised with vip",
+			name: "default with new vip",
+			etcdConfig: &v1alpha1.EtcdConfig{
+				ContainerImage: "foo/bar:v1.0.0",
+			},
+			extraConfig: func(*testing.T) []configconfig.Document {
+				vipCfg := network.NewLayer2VIPConfigV1Alpha1("10.0.0.4")
+				vipCfg.LinkName = "eth0"
+
+				return []configconfig.Document{vipCfg}
+			},
+			expectedConfig: etcd.ConfigSpec{
+				Image:                   "foo/bar:v1.0.0",
+				ExtraArgs:               map[string]string{},
+				AdvertiseValidSubnets:   nil,
+				AdvertiseExcludeSubnets: []string{"10.0.0.4"},
+				ListenValidSubnets:      nil,
+			},
+		},
+		{
+			name: "advertised with legacy vip",
 			etcdConfig: &v1alpha1.EtcdConfig{
 				ContainerImage:        "foo/bar:v1.0.0",
 				EtcdAdvertisedSubnets: []string{"10.0.0.0/8", "192.168.0.0/24"},
@@ -144,9 +167,29 @@ func (suite *ConfigSuite) TestReconcile() {
 				ListenValidSubnets:      []string{"10.0.0.0/8", "192.168.0.0/24"},
 			},
 		},
+		{
+			name: "advertised with new vip",
+			etcdConfig: &v1alpha1.EtcdConfig{
+				ContainerImage:        "foo/bar:v1.0.0",
+				EtcdAdvertisedSubnets: []string{"10.0.0.0/8", "192.168.0.0/24"},
+			},
+			extraConfig: func(*testing.T) []configconfig.Document {
+				vipCfg := network.NewLayer2VIPConfigV1Alpha1("10.0.0.4")
+				vipCfg.LinkName = "eth0"
+
+				return []configconfig.Document{vipCfg}
+			},
+			expectedConfig: etcd.ConfigSpec{
+				Image:                   "foo/bar:v1.0.0",
+				ExtraArgs:               map[string]string{},
+				AdvertiseValidSubnets:   []string{"10.0.0.0/8", "192.168.0.0/24"},
+				AdvertiseExcludeSubnets: []string{"10.0.0.4"},
+				ListenValidSubnets:      []string{"10.0.0.0/8", "192.168.0.0/24"},
+			},
+		},
 	} {
 		suite.Run(tt.name, func() {
-			cfg := container.NewV1Alpha1(&v1alpha1.Config{
+			cfgV1Alpha1 := &v1alpha1.Config{
 				ClusterConfig: &v1alpha1.ClusterConfig{
 					EtcdConfig: tt.etcdConfig,
 				},
@@ -156,9 +199,18 @@ func (suite *ConfigSuite) TestReconcile() {
 						NetworkInterfaces: tt.networkConfig,
 					},
 				},
-			})
+			}
 
-			machineConfig := config.NewMachineConfig(cfg)
+			documents := []configconfig.Document{cfgV1Alpha1}
+
+			if tt.extraConfig != nil {
+				documents = slices.Concat(documents, tt.extraConfig(suite.T()))
+			}
+
+			ctr, err := container.New(documents...)
+			suite.Require().NoError(err)
+
+			machineConfig := config.NewMachineConfig(ctr)
 			suite.Require().NoError(suite.State().Create(suite.Ctx(), machineConfig))
 
 			suite.AssertWithin(3*time.Second, 100*time.Millisecond, ctest.WrapRetry(func(assert *assert.Assertions, require *require.Assertions) {

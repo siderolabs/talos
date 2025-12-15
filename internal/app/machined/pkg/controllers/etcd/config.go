@@ -59,6 +59,10 @@ func NewConfigController() *ConfigController {
 					}
 				}
 
+				for _, doc := range machineConfig.Config().NetworkVirtualIPConfigs() {
+					cfg.TypedSpec().AdvertiseExcludeSubnets = append(cfg.TypedSpec().AdvertiseExcludeSubnets, doc.VIP().String())
+				}
+
 				cfg.TypedSpec().Image = machineConfig.Config().Cluster().Etcd().Image()
 				cfg.TypedSpec().ExtraArgs = machineConfig.Config().Cluster().Etcd().ExtraArgs()
 
