@@ -175,6 +175,8 @@ kernel/drivers/platform/x86/intel/pmc/intel_pmc_ssram_telemetry.ko
 kernel/drivers/platform/x86/intel/pmt/pmt_class.ko
 kernel/drivers/platform/x86/intel/pmt/pmt_discovery.ko
 kernel/drivers/platform/x86/intel/pmt/pmt_telemetry.ko
+kernel/drivers/powercap/intel_rapl_common.ko
+kernel/drivers/powercap/intel_rapl_msr.ko
 kernel/drivers/scsi/aacraid/aacraid.ko
 kernel/drivers/scsi/fcoe/libfcoe.ko
 kernel/drivers/scsi/fnic/fnic.ko
