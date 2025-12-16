@@ -8,13 +8,13 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"slices"
 	"strings"
 
 	"github.com/spf13/cobra"
 
 	"github.com/siderolabs/talos/cmd/talosctl/cmd/common"
 	"github.com/siderolabs/talos/cmd/talosctl/cmd/mgmt"
+	"github.com/siderolabs/talos/cmd/talosctl/cmd/mgmt/cluster"
 	_ "github.com/siderolabs/talos/cmd/talosctl/cmd/mgmt/cluster/create" // import to get the command registered via the init() function.
 	"github.com/siderolabs/talos/cmd/talosctl/cmd/talos"
 )
@@ -49,7 +49,27 @@ func Execute() error {
 }
 
 func init() {
-	for _, cmd := range slices.Concat(talos.Commands, mgmt.Commands) {
+	const (
+		talosGroup   = "talos"
+		mgmtGroup    = "mgmt"
+		clusterGroup = "cluster"
+	)
+
+	rootCmd.AddGroup(&cobra.Group{ID: talosGroup, Title: "Manage running Talos clusters:"})
+	rootCmd.AddGroup(&cobra.Group{ID: mgmtGroup, Title: "Commands to generate and manage machine configuration offline:"})
+	rootCmd.AddGroup(&cobra.Group{ID: clusterGroup, Title: "Local Talos cluster commands:"})
+
+	for _, cmd := range mgmt.Commands {
+		cmd.GroupID = mgmtGroup
+		if cmd == cluster.Cmd {
+			cmd.GroupID = clusterGroup
+		}
+
+		rootCmd.AddCommand(cmd)
+	}
+
+	for _, cmd := range talos.Commands {
+		cmd.GroupID = talosGroup
 		rootCmd.AddCommand(cmd)
 	}
 }
