@@ -5,11 +5,9 @@
 package qemu
 
 import (
-	"errors"
 	"fmt"
 	"os/exec"
 	"path/filepath"
-	"runtime"
 	"slices"
 )
 
@@ -25,13 +23,7 @@ const (
 // Valid returns an error if the architecture is not supported.
 func (arch Arch) Valid() error {
 	switch arch {
-	case ArchArm64:
-		return nil
-	case ArchAmd64:
-		if runtime.GOOS == "darwin" {
-			return errors.New("only arm emulation is supported on darwin")
-		}
-
+	case ArchArm64, ArchAmd64:
 		return nil
 	default:
 		return fmt.Errorf("unsupported arch: %q", arch)
@@ -140,7 +132,8 @@ func (arch Arch) PFlash(uefiEnabled bool, extraUEFISearchPaths []string) []PFlas
 			"/usr/share/ovmf",
 			"/usr/share/OVMF",
 			"/usr/share/qemu",
-			"/usr/share/ovmf/x64", // Arch Linux
+			"/usr/share/ovmf/x64",      // Arch Linux
+			"/opt/homebrew/share/qemu", // Darwin
 		}
 
 		// Secure boot enabled firmware files
@@ -149,7 +142,7 @@ func (arch Arch) PFlash(uefiEnabled bool, extraUEFISearchPaths []string) []PFlas
 			"OVMF_CODE.secboot.4m.fd", // Arch Linux
 			"OVMF_CODE.secboot.fd",
 			"OVMF.secboot.fd",
-			"edk2-x86_64-secure-code.fd", // Alpine Linux
+			"edk2-x86_64-secure-code.fd", // Alpine Linux, Darwin
 			"ovmf-x86_64-ms-4m-code.bin",
 		}
 
@@ -159,6 +152,7 @@ func (arch Arch) PFlash(uefiEnabled bool, extraUEFISearchPaths []string) []PFlas
 			"OVMF_CODE.4m.fd", // Arch Linux
 			"OVMF_CODE.fd",
 			"OVMF.fd",
+			"edk2-x86_64-code.fd", // Darwin
 			"ovmf-x86_64-4m-code.bin",
 		}
 
@@ -167,6 +161,7 @@ func (arch Arch) PFlash(uefiEnabled bool, extraUEFISearchPaths []string) []PFlas
 			"OVMF_VARS_4M.fd",
 			"OVMF_VARS.4m.fd", // Arch Linux
 			"OVMF_VARS.fd",
+			"edk2-i386-vars.fd", // Darwin
 			"ovmf-x86_64-4m-vars.bin",
 		}
 
