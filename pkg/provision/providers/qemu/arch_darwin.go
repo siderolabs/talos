@@ -4,8 +4,11 @@
 
 package qemu
 
+import "runtime"
+
 const accelerator = "hvf"
 
 func (arch Arch) acceleratorAvailable() bool {
-	return true
+	// hvf only supports emulating native architectures
+	return string(arch) == runtime.GOARCH
 }
