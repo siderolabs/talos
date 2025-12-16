@@ -48,7 +48,7 @@ func init() {
 	}
 
 	var cmdDescription strings.Builder
-	cmdDescription.WriteString("Create a local QEMU based Talos cluster\n")
+	cmdDescription.WriteString("Create a local QEMU based Talos cluster.\n\n")
 
 	cmdDescription.WriteString("Available presets:\n")
 
@@ -61,7 +61,8 @@ func init() {
 
 	createQemuCmd := &cobra.Command{
 		Use:   providers.QemuProviderName,
-		Short: cmdDescription.String(),
+		Short: "Create a local QEMU based Talos cluster.",
+		Long:  cmdDescription.String(),
 		Args:  cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return cli.WithContext(context.Background(), func(ctx context.Context) error {

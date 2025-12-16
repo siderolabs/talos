@@ -263,10 +263,9 @@ func getCreateCmd(cmdName string, hidden bool) *cobra.Command {
 
 	// createCmd is the developer oriented create command.
 	createCmd := &cobra.Command{
-		Use:    cmdName,
-		Hidden: hidden,
-		Short:  "Creates a local qemu based cluster for Talos development",
-		Args:   cobra.NoArgs,
+		Use:   cmdName,
+		Short: "Creates a local QEMU-based cluster for Talos development.",
+		Args:  cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return cli.WithContext(context.Background(), func(ctx context.Context) error {
 				if cmdName == "create" {
@@ -320,6 +319,15 @@ func getCreateCmd(cmdName string, hidden bool) *cobra.Command {
 	createCmd.MarkFlagsMutuallyExclusive(tpmEnabledFlag, tpm2EnabledFlag)
 
 	hideUnimplementedQemuFlags(createCmd, unImplementedFlagsDarwin)
+
+	if hidden {
+		createCmd.Flags().VisitAll(func(f *pflag.Flag) {
+			f.Hidden = true
+		})
+
+		createCmd.Short = "Create a local Talos cluster."
+		createCmd.DisableFlagsInUseLine = true
+	}
 
 	return createCmd
 }
