@@ -10,13 +10,17 @@ import (
 	"bytes"
 	"context"
 	_ "embed"
+	"path/filepath"
 	"text/template"
 	"time"
 
+	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/siderolabs/gen/xslices"
 
 	"github.com/siderolabs/talos/internal/integration/base"
+	"github.com/siderolabs/talos/pkg/machinery/client"
 	"github.com/siderolabs/talos/pkg/machinery/config/machine"
+	"github.com/siderolabs/talos/pkg/machinery/resources/block"
 )
 
 //go:embed testdata/openebs-values.yaml
@@ -81,6 +85,13 @@ func (suite *OpenEBSSuite) TestDeploy() {
 		k8sNode, err := suite.GetK8sNodeByInternalIP(ctx, node)
 		suite.Require().NoError(err)
 
+		diskResource, err := safe.ReaderGetByID[*block.Disk](client.WithNode(ctx, node), suite.Client.COSI, filepath.Base(disk))
+		suite.Require().NoError(err)
+
+		suite.Require().Greater(len(diskResource.TypedSpec().Symlinks), 1, "disk symlinks should not be empty")
+
+		diskSymlink := diskResource.TypedSpec().Symlinks[1]
+
 		tmpl, err := template.New(node).Parse(openEBSDiskPoolTemplate)
 		suite.Require().NoError(err)
 
@@ -91,7 +102,7 @@ func (suite *OpenEBSSuite) TestDeploy() {
 			Disk string
 		}{
 			Node: k8sNode.Name,
-			Disk: disk,
+			Disk: diskSymlink,
 		}))
 
 		diskPoolUnstructured := suite.ParseManifests(result.Bytes())

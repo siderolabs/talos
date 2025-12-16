@@ -1,6 +1,6 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
 #
-# Generated on 2025-12-15T14:45:49Z by kres 4b09af7.
+# Generated on 2025-12-16T10:54:07Z by kres 4b09af7.
 
 concurrency:
   group: ${{ github.head_ref || github.run_id }}
@@ -4143,7 +4143,7 @@ jobs:
           QEMU_CPUS_WORKERS: "4"
           QEMU_EXTRA_DISKS: "1"
           QEMU_EXTRA_DISKS_SIZE: "12288"
-          QEMU_MEMORY_WORKERS: "4096"
+          QEMU_MEMORY_WORKERS: "8192"
           QEMU_WORKERS: "3"
           SHORT_INTEGRATION_TEST: "yes"
           WITH_CONFIG_PATCH_CONTROLPLANE: '@hack/test/patches/openebs-cp.yaml'
