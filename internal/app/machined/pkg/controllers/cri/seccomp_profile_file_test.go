@@ -6,13 +6,12 @@ package cri_test
 
 import (
 	"encoding/json"
-	"errors"
 	"os"
 	"testing"
 	"time"
 
 	"github.com/cosi-project/runtime/pkg/resource"
-	"github.com/siderolabs/go-retry/retry"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/cri"
@@ -24,7 +23,7 @@ import (
 func (suite *CRISeccompProfileFileSuite) TestReconcileSeccompProfileFile() {
 	// need to mock mountStatus so that the controller moves ahead with the actual code
 	mountStatus := runtimeres.NewMountStatus(runtimeres.NamespaceName, "EPHEMERAL")
-	suite.Require().NoError(suite.State().Create(suite.Ctx(), mountStatus))
+	suite.Create(mountStatus)
 
 	for _, tt := range []struct {
 		seccompProfileName  string
@@ -46,67 +45,55 @@ func (suite *CRISeccompProfileFileSuite) TestReconcileSeccompProfileFile() {
 		seccompProfiles := criseccompresource.NewSeccompProfile(tt.seccompProfileName)
 		seccompProfiles.TypedSpec().Name = tt.seccompProfileName
 		seccompProfiles.TypedSpec().Value = tt.seccompProfileValue
-		suite.Require().NoError(suite.State().Create(suite.Ctx(), seccompProfiles))
+		suite.Create(seccompProfiles)
 
-		suite.AssertWithin(1*time.Second, 100*time.Millisecond, func() error {
-			if _, err := os.Stat(suite.seccompProfilesDirectory + "/" + tt.seccompProfileName); err != nil {
-				if errors.Is(err, os.ErrNotExist) {
-					return retry.ExpectedError(err)
-				}
+		suite.EventuallyWithT(func(collect *assert.CollectT) {
+			asrt := assert.New(collect)
 
-				return err
+			if !asrt.FileExists(suite.seccompProfilesDirectory + "/" + tt.seccompProfileName) {
+				return
 			}
 
 			seccompProfileContent, err := os.ReadFile(suite.seccompProfilesDirectory + "/" + tt.seccompProfileName)
-			suite.Assert().NoError(err)
+			asrt.NoError(err)
 
 			expectedSeccompProfileContent, err := json.Marshal(tt.seccompProfileValue)
-			suite.Assert().NoError(err)
+			asrt.NoError(err)
 
-			suite.Assert().Equal(seccompProfileContent, expectedSeccompProfileContent)
-
-			return nil
-		})
+			asrt.Equal(seccompProfileContent, expectedSeccompProfileContent)
+		}, time.Second, 100*time.Millisecond)
 	}
 
 	// create a directory and file manually in the seccomp profile directory
 	// ensure that the controller deletes the manually created directory/file
 	// also ensure that an update doesn't update existing files timestamp
-	suite.Assert().NoError(os.Mkdir(suite.seccompProfilesDirectory+"/test", 0o755))
-	suite.Assert().NoError(os.WriteFile(suite.seccompProfilesDirectory+"/test.json", []byte("{}"), 0o644))
+	suite.Require().NoError(os.Mkdir(suite.seccompProfilesDirectory+"/test", 0o755))
+	suite.Require().NoError(os.WriteFile(suite.seccompProfilesDirectory+"/test.json", []byte("{}"), 0o644))
 
 	auditJSONSeccompProfile, err := os.Stat(suite.seccompProfilesDirectory + "/audit.json")
-	suite.Assert().NoError(err)
+	suite.Require().NoError(err)
 
 	// delete deny.json resource
-	suite.Assert().NoError(suite.State().Destroy(suite.Ctx(), resource.NewMetadata(criseccompresource.NamespaceName, criseccompresource.SeccompProfileType, "deny.json", resource.VersionUndefined)))
+	suite.Require().NoError(suite.State().Destroy(suite.Ctx(), resource.NewMetadata(criseccompresource.NamespaceName, criseccompresource.SeccompProfileType, "deny.json", resource.VersionUndefined)))
 
-	suite.AssertWithin(1*time.Second, 100*time.Millisecond, func() error {
+	suite.EventuallyWithT(func(collect *assert.CollectT) {
+		asrt := assert.New(collect)
+
 		auditJSONSeccompProfileAfterUpdate, err := os.Stat(suite.seccompProfilesDirectory + "/audit.json")
-		if err != nil {
-			if errors.Is(err, os.ErrNotExist) {
-				return retry.ExpectedError(err)
-			}
-
-			return err
+		if !asrt.NoError(err) {
+			return
 		}
 
-		suite.Eventually(func() bool {
-			return suite.NoFileExists(suite.seccompProfilesDirectory + "/deny.json")
-		}, 1*time.Second, 100*time.Millisecond)
+		asrt.Equal(auditJSONSeccompProfile.ModTime(), auditJSONSeccompProfileAfterUpdate.ModTime())
+	}, 1*time.Second, 100*time.Millisecond)
 
-		suite.Eventually(func() bool {
-			return suite.NoFileExists(suite.seccompProfilesDirectory + "/test.json")
-		}, 1*time.Second, 100*time.Millisecond)
+	suite.EventuallyWithT(func(collect *assert.CollectT) {
+		asrt := assert.New(collect)
 
-		suite.Eventually(func() bool {
-			return suite.NoDirExists(suite.seccompProfilesDirectory + "/test")
-		}, 1*time.Second, 100*time.Millisecond)
-
-		suite.Assert().Equal(auditJSONSeccompProfile.ModTime(), auditJSONSeccompProfileAfterUpdate.ModTime())
-
-		return nil
-	})
+		asrt.NoFileExists(suite.seccompProfilesDirectory + "/deny.json")
+		asrt.NoFileExists(suite.seccompProfilesDirectory + "/test.json")
+		asrt.NoDirExists(suite.seccompProfilesDirectory + "/test")
+	}, 1*time.Second, 100*time.Millisecond)
 }
 
 func TestSeccompProfileFileSuite(t *testing.T) {
