@@ -1,3 +1,91 @@
+## [Talos 1.11.6](https://github.com/siderolabs/talos/releases/tag/v1.11.6) (2025-12-16)
+
+Welcome to the v1.11.6 release of Talos!
+
+
+
+Please try out the release binaries and report any issues at
+https://github.com/siderolabs/talos/issues.
+
+### UEFI Boot
+
+When using UEFI boot with systemd-boot as bootloader (on new installs of Talos from 1.10+ onwards), Talos will now not touch the UEFI boot order.
+Talos 1.11 made a fix to create UEFI boot entry and set the boot order as first entry, but this behavior caused issues on some systems.
+To avoid further issues, Talos will now only create the UEFI boot entry if it does not exist, but will not modify the boot order.
+
+
+### Component Updates
+
+Linux: 6.12.62
+runc: 1.3.4
+
+Talos is built with Go 1.24.11.
+
+
+### Contributors
+
+* Andrey Smirnov
+* Noel Georgi
+* Dmitrii Sharshakov
+
+### Changes
+<details><summary>14 commits</summary>
+<p>
+
+* [`f91cefd32`](https://github.com/siderolabs/talos/commit/f91cefd323aebee3072e05da4ae8fb298928ec2c) test: bump memory for OpenEBS test
+* [`dcbbe2ca0`](https://github.com/siderolabs/talos/commit/dcbbe2ca0b25230326acacc69e2841f35f18832f) test: backport test fixes for CRI seccomp profile
+* [`428b5921e`](https://github.com/siderolabs/talos/commit/428b5921e4bf4b69d170bb9dc9f62cc6b75c8f1a) fix: disable kexec on arm64
+* [`c36ffc626`](https://github.com/siderolabs/talos/commit/c36ffc626aab34256a79e8be2910cac118012df6) fix: disable kexec in talosctl cluster create on arm64
+* [`0a90bf640`](https://github.com/siderolabs/talos/commit/0a90bf640eb53687a98061db1bca757597f6003e) fix: selection of boot entry
+* [`afc08b34e`](https://github.com/siderolabs/talos/commit/afc08b34e6fac0b614abc478799ee9740db0fffb) fix: update KubeSpan MSS clamping
+* [`aedddccef`](https://github.com/siderolabs/talos/commit/aedddccefce1d07351c94d0883845ff028fa91b4) fix: adapt SELinuxSuite.TestNoPtrace to new strace version
+* [`004213799`](https://github.com/siderolabs/talos/commit/0042137997908c6d66b8ad369ceb5c0ee13d8c70) fix: clear provisioning data on SideroLink config change
+* [`e7e354162`](https://github.com/siderolabs/talos/commit/e7e354162c572b89835bbfc6690791e75b8ffcab) fix: selection of boot entry
+* [`b5244f901`](https://github.com/siderolabs/talos/commit/b5244f9014273ff6522e91540ebaddb90a73410e) fix: remove CoreDNS cpu limit
+* [`42897dee5`](https://github.com/siderolabs/talos/commit/42897dee5bcff592d857e62041c53d5c9e19724a) fix: uefi bootorder setting
+* [`bde8be2c8`](https://github.com/siderolabs/talos/commit/bde8be2c822958766765772185ab534f1f79dd43) fix: uefi boot order setting
+* [`7e99ced96`](https://github.com/siderolabs/talos/commit/7e99ced964c94d6955a973ea976bfee350428de0) fix: stop attaching to tearing down mount parents
+* [`ff8b73b9f`](https://github.com/siderolabs/talos/commit/ff8b73b9fc723ab9de1c428322d9e369fd4dd4a0) feat: update tools and pkgs
+</p>
+</details>
+
+### Changes from siderolabs/pkgs
+<details><summary>7 commits</summary>
+<p>
+
+* [`49ee0fe`](https://github.com/siderolabs/pkgs/commit/49ee0fe369de56c4d996fcb9fdf62e3dae74cdcd) feat: update Linux to 6.12.62
+* [`6b4375a`](https://github.com/siderolabs/pkgs/commit/6b4375a1d49630d2aae652aacab19bede2bd24e6) feat: update ZFS to 2.3.5
+* [`bde7611`](https://github.com/siderolabs/pkgs/commit/bde761182901cb224f112de8d677d39e279e9015) feat: update runc to v1.3.4
+* [`80c85fe`](https://github.com/siderolabs/pkgs/commit/80c85feb3b54f3ed63937f2667bd21c9cacb1429) feat: update Linux firmware to 20251125
+* [`5faab65`](https://github.com/siderolabs/pkgs/commit/5faab65bbdb74ff7b4786ded3e7cce193bdb17a0) feat: update DRBD to 9.2.16
+* [`8fdd59b`](https://github.com/siderolabs/pkgs/commit/8fdd59bf1a5badb91b07694cc0f6002c1575d5ac) feat: update CNI to 1.9.0
+* [`b458aab`](https://github.com/siderolabs/pkgs/commit/b458aab6448b246a0c67375e9d8c8e6eefa1b52b) feat: update Go to 1.24.11
+</p>
+</details>
+
+### Changes from siderolabs/tools
+<details><summary>1 commit</summary>
+<p>
+
+* [`7f05320`](https://github.com/siderolabs/tools/commit/7f053202d77fc0e5dd83e1dc12182d8addc84b17) feat: update Go to 1.24.11
+</p>
+</details>
+
+### Dependency Changes
+
+* **github.com/containernetworking/plugins**  v1.7.1 -> v1.9.0
+* **github.com/safchain/ethtool**             v0.6.1 -> v0.6.2
+* **github.com/siderolabs/pkgs**              v1.11.0-29-gaee690b -> v1.11.0-36-g49ee0fe
+* **github.com/siderolabs/tools**             v1.11.0-4-g05ee846 -> v1.11.0-5-g7f05320
+* **github.com/stretchr/testify**             v1.10.0 -> v1.11.1
+* **golang.org/x/net**                        v0.43.0 -> v0.47.0
+* **golang.org/x/sync**                       v0.16.0 -> v0.19.0
+* **golang.org/x/sys**                        v0.35.0 -> v0.39.0
+* **golang.org/x/term**                       v0.34.0 -> v0.38.0
+* **golang.org/x/text**                       v0.28.0 -> v0.32.0
+
+Previous release can be found at [v1.11.5](https://github.com/siderolabs/talos/releases/tag/v1.11.5)
+
 ## [Talos 1.11.5](https://github.com/siderolabs/talos/releases/tag/v1.11.5) (2025-11-06)
 
 Welcome to the v1.11.5 release of Talos!
