@@ -7,35 +7,23 @@ package system
 import (
 	"context"
 	"fmt"
-	"strconv"
+	"slices"
+	"strings"
+	"sync"
 
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/state"
+	"github.com/siderolabs/gen/xslices"
 
 	"github.com/siderolabs/talos/pkg/conditions"
 	"github.com/siderolabs/talos/pkg/machinery/resources/block"
 )
 
-func (svcrunner *ServiceRunner) createVolumeMountRequest(ctx context.Context, volumeID string, generation int64) (string, error) {
-	st := svcrunner.runtime.State().V1Alpha2().Resources()
-	requester := "service/" + svcrunner.id
-	requestID := requester + "-" + volumeID + "-" + strconv.FormatInt(generation, 10)
-
-	mountRequest := block.NewVolumeMountRequest(block.NamespaceName, requestID)
-	mountRequest.TypedSpec().Requester = requester
-	mountRequest.TypedSpec().VolumeID = volumeID
-
-	if err := st.Create(ctx, mountRequest); err != nil {
-		if !state.IsConflictError(err) {
-			return "", fmt.Errorf("failed to create mount request: %w", err)
-		}
-	}
-
-	return requestID, nil
-}
-
 func (svcrunner *ServiceRunner) deleteVolumeMountRequest(ctx context.Context, requests []volumeRequest) error {
 	st := svcrunner.runtime.State().V1Alpha2().Resources()
+
+	requests = slices.Clone(requests)
+	slices.Reverse(requests)
 
 	for _, request := range requests {
 		if err := st.RemoveFinalizer(ctx, block.NewVolumeMountStatus(block.NamespaceName, request.requestID).Metadata(), "service"); err != nil {
@@ -61,37 +49,68 @@ func (svcrunner *ServiceRunner) deleteVolumeMountRequest(ctx context.Context, re
 	return nil
 }
 
-type volumeMountedCondition struct {
+type volumesMountedCondition struct {
 	st       state.State
-	id       string
-	volumeID string
+	requests []volumeRequest
+
+	mu              sync.Mutex
+	pendingRequests []volumeRequest
 }
 
-func (cond *volumeMountedCondition) Wait(ctx context.Context) error {
+func (cond *volumesMountedCondition) Wait(ctx context.Context) error {
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
-	_, err := cond.st.WatchFor(ctx,
-		block.NewVolumeMountStatus(block.NamespaceName, cond.id).Metadata(),
-		state.WithEventTypes(state.Created, state.Updated),
-		state.WithPhases(resource.PhaseRunning),
-	)
-	if err != nil {
-		return err
+	// we mount all requests sequentially one by one
+	for idx := range cond.requests {
+		req := cond.requests[idx]
+
+		// create volume mount request
+		mountRequest := block.NewVolumeMountRequest(block.NamespaceName, req.requestID)
+		mountRequest.TypedSpec().Requester = req.requester
+		mountRequest.TypedSpec().VolumeID = req.volumeID
+
+		if err := cond.st.Create(ctx, mountRequest); err != nil {
+			if !state.IsConflictError(err) {
+				return fmt.Errorf("failed to create mount request: %w", err)
+			}
+		}
+
+		// wait for the mount status
+		_, err := cond.st.WatchFor(ctx,
+			block.NewVolumeMountStatus(block.NamespaceName, req.requestID).Metadata(),
+			state.WithEventTypes(state.Created, state.Updated),
+			state.WithPhases(resource.PhaseRunning),
+		)
+		if err != nil {
+			return err
+		}
+
+		if err = cond.st.AddFinalizer(ctx, block.NewVolumeMountStatus(block.NamespaceName, req.requestID).Metadata(), "service"); err != nil {
+			return err
+		}
+
+		cond.mu.Lock()
+		cond.pendingRequests = slices.Clone(cond.requests[idx+1:])
+		cond.mu.Unlock()
 	}
 
-	return cond.st.AddFinalizer(ctx, block.NewVolumeMountStatus(block.NamespaceName, cond.id).Metadata(), "service")
+	return nil
 }
 
-func (cond *volumeMountedCondition) String() string {
-	return fmt.Sprintf("volume %q to be mounted", cond.volumeID)
+func (cond *volumesMountedCondition) String() string {
+	cond.mu.Lock()
+	pendingVolumeIDs := xslices.Map(cond.pendingRequests, func(r volumeRequest) string { return r.volumeID })
+	cond.mu.Unlock()
+
+	return fmt.Sprintf("volumes %s to be mounted", strings.Join(pendingVolumeIDs, ", "))
 }
 
-// WaitForVolumeToBeMounted is a service condition that will wait for the volume to be mounted.
-func WaitForVolumeToBeMounted(st state.State, requestID, volumeID string) conditions.Condition {
-	return &volumeMountedCondition{
-		st:       st,
-		id:       requestID,
-		volumeID: volumeID,
+// WaitForVolumesToBeMounted is a service condition that will wait for the volumes to be mounted.
+func WaitForVolumesToBeMounted(st state.State, requests []volumeRequest) conditions.Condition {
+	return &volumesMountedCondition{
+		st:              st,
+		requests:        requests,
+		pendingRequests: slices.Clone(requests),
 	}
 }
