@@ -310,3 +310,15 @@ func (q Quirks) ISOSupportsSettingBootloader() bool {
 
 	return q.v.GTE(minTalosVersionISOSupportsSettingBootloader)
 }
+
+var minTalosVersionProcMemOverrideNever = semver.MustParse("1.13.0")
+
+// ProcMemOverrideNever returns true if the Talos version should enforce 'proc_mem.force_override=never'.
+func (q Quirks) ProcMemOverrideNever() bool {
+	// if the version doesn't parse, we assume it's latest Talos
+	if q.v == nil {
+		return true
+	}
+
+	return q.v.GTE(minTalosVersionProcMemOverrideNever)
+}

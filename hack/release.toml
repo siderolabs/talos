@@ -35,6 +35,14 @@ These virtiofs external volumes are not supported when SELinux is running
 in enforcing mode.
 """
 
+    [notes.procpidmem]
+        title = "/proc/PID/mem Access Hardening"
+        description = """\
+A new kernel parameter `proc_mem.force_override=never` has been introduced by default to enhance system security
+by preventing unwanted writes to protected process memory via `/proc/PID/mem`.
+If the kernel parameter is removed, default behavior is restored, allowing access only if the process is traced.
+"""
+
 [make_deps]
 
     [make_deps.tools]

@@ -52,6 +52,10 @@ func DefaultArgs(quirks quirks.Quirks) []string {
 		result = append(result, constants.KernelParamEnforceModuleSigVerify+"=1") // see https://github.com/siderolabs/talos/issues/11989
 	}
 
+	if quirks.ProcMemOverrideNever() {
+		result = append(result, "proc_mem.force_override=never")
+	}
+
 	return result
 }
 

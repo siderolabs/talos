@@ -91,6 +91,7 @@ func TestDefaultKernelArgs(t *testing.T) {
 				"printk.devkmsg=on",
 				"selinux=1",
 				"module.sig_enforce=1",
+				"proc_mem.force_override=never",
 			},
 		},
 		{
@@ -108,6 +109,39 @@ func TestDefaultKernelArgs(t *testing.T) {
 				"ima_template=ima-ng",
 				"ima_appraise=fix",
 				"ima_hash=sha512",
+			},
+		},
+		{
+			name: "v1.12",
+
+			quirks: quirks.New("v1.12.0"),
+
+			expected: []string{
+				"init_on_alloc=1",
+				"slab_nomerge=",
+				"pti=on",
+				"consoleblank=0",
+				"nvme_core.io_timeout=4294967295",
+				"printk.devkmsg=on",
+				"selinux=1",
+				"module.sig_enforce=1",
+			},
+		},
+		{
+			name: "v1.13",
+
+			quirks: quirks.New("v1.13.0"),
+
+			expected: []string{
+				"init_on_alloc=1",
+				"slab_nomerge=",
+				"pti=on",
+				"consoleblank=0",
+				"nvme_core.io_timeout=4294967295",
+				"printk.devkmsg=on",
+				"selinux=1",
+				"module.sig_enforce=1",
+				"proc_mem.force_override=never",
 			},
 		},
 	} {
