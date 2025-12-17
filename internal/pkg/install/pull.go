@@ -16,6 +16,7 @@ import (
 	"github.com/containerd/errdefs"
 
 	"github.com/siderolabs/talos/internal/pkg/containers/image"
+	"github.com/siderolabs/talos/internal/pkg/selinux"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
 
@@ -65,6 +66,10 @@ func PullAndValidateInstallerImage(ctx context.Context, registryBuilder image.Re
 	specOpts := []oci.SpecOpts{
 		oci.WithImageConfig(img),
 		oci.WithProcessArgs(args...),
+	}
+
+	if selinux.IsEnabled() {
+		specOpts = append(specOpts, oci.WithSelinuxLabel(constants.SelinuxLabelInstaller))
 	}
 
 	containerOpts := []containerd.NewContainerOpts{

@@ -23,6 +23,7 @@ import (
 	"github.com/siderolabs/go-blockdevice/v2/encryption"
 	"github.com/siderolabs/go-kubernetes/kubernetes/upgrade"
 	"github.com/siderolabs/go-pointer"
+	"github.com/siderolabs/go-procfs/procfs"
 	"github.com/siderolabs/go-retry/retry"
 	sideronet "github.com/siderolabs/net"
 	"github.com/stretchr/testify/suite"
@@ -440,6 +441,8 @@ type clusterOptions struct {
 	ControlplaneNodes int
 	WorkerNodes       int
 
+	InjectExtraKernelArgs *procfs.Cmdline
+
 	SourceKernelPath     string
 	SourceInitramfsPath  string
 	SourceDiskImagePath  string
@@ -648,7 +651,8 @@ func (suite *BaseSuite) setupCluster(options clusterOptions) {
 						Size: DefaultSettings.DiskGB * 1024 * 1024 * 1024,
 					},
 				},
-				Config: suite.configBundle.ControlPlane(),
+				Config:           suite.configBundle.ControlPlane(),
+				SDStubKernelArgs: options.InjectExtraKernelArgs,
 			},
 		)
 	}
@@ -667,7 +671,8 @@ func (suite *BaseSuite) setupCluster(options clusterOptions) {
 						Size: DefaultSettings.DiskGB * 1024 * 1024 * 1024,
 					},
 				},
-				Config: suite.configBundle.Worker(),
+				Config:           suite.configBundle.Worker(),
+				SDStubKernelArgs: options.InjectExtraKernelArgs,
 			},
 		)
 	}
