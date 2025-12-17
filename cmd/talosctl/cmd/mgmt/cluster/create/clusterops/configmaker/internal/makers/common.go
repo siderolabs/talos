@@ -261,12 +261,7 @@ func (m *Maker[T]) applyOmniConfigs() error {
 
 	cfg.APIUrlConfig.URL = parsedURL
 
-	mode, err := runtime.ParseMode(runtime.ModeMetal.String())
-	if err != nil {
-		return err
-	}
-
-	_, err = cfg.Validate(mode)
+	_, err = cfg.Validate(runtime.ModeMetal)
 	if err != nil {
 		return err
 	}
