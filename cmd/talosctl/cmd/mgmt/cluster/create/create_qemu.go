@@ -7,7 +7,6 @@ package create
 import (
 	"context"
 	"fmt"
-	"net/netip"
 	"net/url"
 	"os"
 	"path/filepath"
@@ -100,13 +99,6 @@ func createQemuCluster(
 }
 
 func preCreate(cOps clusterops.Common, clusterConfigs clusterops.ClusterConfigs) error {
-	if cOps.OmniAPIEndpoint != "" {
-		err := checkLoopbackOmniURL(cOps, clusterConfigs)
-		if err != nil {
-			return err
-		}
-	}
-
 	// write machine config
 	if cOps.SkipInjectingConfig {
 		if err := writeMachineconfig(clusterConfigs, cOps); err != nil {
@@ -140,29 +132,6 @@ func writeMachineconfig(clusterConfigs clusterops.ClusterConfigs, cOps clusterop
 	}
 
 	fmt.Fprintf(os.Stderr, "created %s\n", fullFilePath)
-
-	return nil
-}
-
-func checkLoopbackOmniURL(cOps clusterops.Common, clusterConfigs clusterops.ClusterConfigs) error {
-	parsedURL, err := url.Parse(cOps.OmniAPIEndpoint)
-	if err != nil {
-		return err
-	}
-
-	host := parsedURL.Hostname()
-
-	ip, err := netip.ParseAddr(host)
-	if err != nil {
-		return err
-	}
-
-	gwIP := clusterConfigs.ClusterRequest.Network.GatewayAddrs[0]
-
-	if ip.IsLoopback() && ip != gwIP {
-		fmt.Fprintf(os.Stderr, "WARNING: the Omni API url is pointing to a local address %q which is different from the cluster gateway address %q\n", ip.String(), gwIP.String())
-		fmt.Fprintln(os.Stderr, "the nodes will not be able to reach the Omni API server unless Omni is running in the same virtual network")
-	}
 
 	return nil
 }
