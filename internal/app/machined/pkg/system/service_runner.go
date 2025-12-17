@@ -11,7 +11,6 @@ import (
 	"log"
 	"slices"
 	"sync"
-	"sync/atomic"
 	"time"
 
 	"github.com/siderolabs/gen/xslices"
@@ -34,11 +33,10 @@ var WaitConditionCheckInterval = time.Second
 type ServiceRunner struct {
 	mu sync.Mutex
 
-	runtime    runtime.Runtime
-	service    Service
-	id         string
-	instance   *singleton
-	generation atomic.Int64
+	runtime  runtime.Runtime
+	service  Service
+	id       string
+	instance *singleton
 
 	state  events.ServiceState
 	events events.ServiceEvents
@@ -189,6 +187,7 @@ var ErrSkip = errors.New("service skipped")
 type volumeRequest struct {
 	volumeID  string
 	requestID string
+	requester string
 }
 
 // Run initializes the service and runs it.
@@ -201,8 +200,6 @@ type volumeRequest struct {
 func (svcrunner *ServiceRunner) Run(notifyChannels ...chan<- struct{}) error {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-
-	generation := svcrunner.generation.Add(1)
 
 	go func() {
 		select {
@@ -233,20 +230,13 @@ func (svcrunner *ServiceRunner) Run(notifyChannels ...chan<- struct{}) error {
 		volumeRequests := make([]volumeRequest, 0, len(volumeIDs))
 
 		for _, volumeID := range volumeIDs {
-			requestID, err := svcrunner.createVolumeMountRequest(ctx, volumeID, generation)
-			if err != nil {
-				return err
-			}
+			requester := "service/" + svcrunner.id
+			requestID := requester + "-" + volumeID
 
-			volumeRequests = append(volumeRequests, volumeRequest{volumeID: volumeID, requestID: requestID})
+			volumeRequests = append(volumeRequests, volumeRequest{volumeID: volumeID, requestID: requestID, requester: requester})
 		}
 
-		// the condition will wait for volume mount statuses, and put a finalizer on it
-		volumeConditions := xslices.Map(volumeRequests, func(request volumeRequest) conditions.Condition {
-			return WaitForVolumeToBeMounted(svcrunner.runtime.State().V1Alpha2().Resources(), request.requestID, request.volumeID)
-		})
-
-		condition = conditions.WaitForAll(conditions.WaitForAll(volumeConditions...), condition)
+		condition = conditions.WaitForAll(WaitForVolumesToBeMounted(svcrunner.runtime.State().V1Alpha2().Resources(), volumeRequests), condition)
 
 		// cleanup volume mounts
 		defer func() {
