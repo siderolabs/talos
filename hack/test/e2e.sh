@@ -70,6 +70,10 @@ function run_talos_integration_test {
       ;;
   esac
 
+  if [ -n "${QEMU_EXTRA_DISKS_TAGS:-}" ]; then
+      TEST_VIRTIOFSD=("-talos.virtiofsd")
+  fi
+
   "${INTEGRATION_TEST}" \
     -test.v \
     -talos.failfast \
@@ -83,7 +87,8 @@ function run_talos_integration_test {
     ${EXTRA_TEST_ARGS:-} \
     "${TEST_RUN[@]}" \
     "${TEST_SHORT[@]}" \
-    "${TEST_AIRGAPPED[@]}"
+    "${TEST_AIRGAPPED[@]}" \
+    "${TEST_VIRTIOFSD[@]}"
 }
 
 function run_talos_integration_test_docker {

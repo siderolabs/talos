@@ -24,6 +24,17 @@ containerd: 2.2.0
 Talos is built with Go 1.25.5.
 """
 
+    [notes.external_volumes]
+        title = "External Volumes"
+        description = """\
+Talos now supports virtiofs-based external volumes via the new
+[ExternalVolumeConfig](https://www.talos.dev/v1.13/reference/configuration/block/externalvolumeconfig/)
+document.
+
+These virtiofs external volumes are not supported when SELinux is running
+in enforcing mode.
+"""
+
 [make_deps]
 
     [make_deps.tools]

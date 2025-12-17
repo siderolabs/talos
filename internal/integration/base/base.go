@@ -62,6 +62,8 @@ type TalosSuite struct {
 	CSITestTimeout string
 	// Airgapped marks that cluster has no access to external networks
 	Airgapped bool
+	// Virtiofsd marks that cluster has virtiofs volumes (virtiofsd is running for workers)
+	Virtiofsd bool
 	// Race informs test suites about race detector being enabled (e.g. for skipping incompatible tests)
 	Race bool
 

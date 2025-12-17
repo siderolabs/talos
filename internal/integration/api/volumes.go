@@ -1233,6 +1233,10 @@ func (suite *VolumesSuite) TestExternalVolumesVirtiofs() {
 		suite.T().Skip("skipping test for non-qemu provisioner")
 	}
 
+	if !suite.Virtiofsd {
+		suite.T().Skip("skipping test without virtiofsd running")
+	}
+
 	node := suite.RandomDiscoveredNodeInternalIP(machine.TypeWorker)
 
 	k8sNode, err := suite.GetK8sNodeByInternalIP(suite.ctx, node)
