@@ -222,6 +222,11 @@ type NodeRequest struct {
 	// This doesn't apply to boots from ISO or from the disk image.
 	ExtraKernelArgs *procfs.Cmdline
 
+	// SDStubKernelArgs passes additional kernel args via the systemd-stub.
+	//
+	// This applies to boots from ISO and from the disk image.
+	SDStubKernelArgs *procfs.Cmdline
+
 	// UUID allows to specify the UUID of the node (VMs only).
 	//
 	// If not specified, a random UUID will be generated.

@@ -10,15 +10,23 @@ import (
 	"fmt"
 	"path/filepath"
 
+	"github.com/cosi-project/runtime/pkg/resource/rtestutils"
+	"github.com/siderolabs/go-procfs/procfs"
+	"github.com/stretchr/testify/assert"
+
 	"github.com/siderolabs/talos/cmd/talosctl/pkg/mgmt/helpers"
 	"github.com/siderolabs/talos/pkg/images"
+	talosclient "github.com/siderolabs/talos/pkg/machinery/client"
 	"github.com/siderolabs/talos/pkg/machinery/config/machine"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
+	"github.com/siderolabs/talos/pkg/machinery/resources/runtime"
 )
 
 //nolint:maligned
 type upgradeSpec struct {
 	ShortName string
+
+	InjectExtraKernelArgs *procfs.Cmdline
 
 	SourceKernelPath     string
 	SourceInitramfsPath  string
@@ -42,6 +50,7 @@ type upgradeSpec struct {
 	WithEncryption  bool
 	WithBios        bool
 	WithApplyConfig bool
+	WithEnforcing   bool
 }
 
 const (
@@ -226,6 +235,38 @@ func upgradeCurrentToCurrentNewCmdline() upgradeSpec {
 	}
 }
 
+func upgradeCurrentToCurrentEnforcing() upgradeSpec {
+	installerImage := fmt.Sprintf(
+		"%s/%s:%s",
+		DefaultSettings.TargetInstallImageRegistry,
+		images.DefaultInstallerImageName,
+		DefaultSettings.CurrentVersion,
+	)
+
+	return upgradeSpec{
+		ShortName: fmt.Sprintf("%s-same-ver-enforcing", DefaultSettings.CurrentVersion),
+
+		InjectExtraKernelArgs: procfs.NewCmdline("enforcing=1"),
+
+		SourceISOPath:        helpers.ArtifactPath("metal-amd64.iso"),
+		SourceInstallerImage: installerImage,
+		SourceVersion:        DefaultSettings.CurrentVersion,
+		SourceK8sVersion:     currentK8sVersion,
+
+		TargetInstallerImage: installerImage,
+		TargetVersion:        DefaultSettings.CurrentVersion,
+		TargetK8sVersion:     currentK8sVersion,
+
+		ControlplaneNodes: 1,
+		WorkerNodes:       0,
+
+		TargetCmdlineContains: "enforcing=1",
+
+		WithApplyConfig: true,
+		WithEnforcing:   true,
+	}
+}
+
 // UpgradeSuite ...
 type UpgradeSuite struct {
 	BaseSuite
@@ -264,6 +305,8 @@ func (suite *UpgradeSuite) TestRolling() {
 		ControlplaneNodes: suite.spec.ControlplaneNodes,
 		WorkerNodes:       suite.spec.WorkerNodes,
 
+		InjectExtraKernelArgs: suite.spec.InjectExtraKernelArgs,
+
 		SourceKernelPath:     suite.spec.SourceKernelPath,
 		SourceInitramfsPath:  suite.spec.SourceInitramfsPath,
 		SourceDiskImagePath:  suite.spec.SourceDiskImagePath,
@@ -282,6 +325,18 @@ func (suite *UpgradeSuite) TestRolling() {
 
 	// verify initial cluster version
 	suite.assertSameVersionCluster(client, suite.spec.SourceVersion)
+
+	// verify enforcing state
+	for _, node := range suite.Cluster.Info().Nodes {
+		rtestutils.AssertResource(
+			talosclient.WithNode(suite.ctx, node.IPs[0].String()),
+			suite.T(), client.COSI,
+			runtime.SecurityStateID,
+			func(r *runtime.SecurityState, asrt *assert.Assertions) {
+				asrt.Equal(suite.spec.WithEnforcing, r.TypedSpec().SELinuxState == runtime.SELinuxStateEnforcing)
+			},
+		)
+	}
 
 	options := upgradeOptions{
 		TargetInstallerImage: suite.spec.TargetInstallerImage,
@@ -305,6 +360,18 @@ func (suite *UpgradeSuite) TestRolling() {
 
 	// verify final cluster version
 	suite.assertSameVersionCluster(client, suite.spec.TargetVersion)
+
+	// verify enforcing state
+	for _, node := range suite.Cluster.Info().Nodes {
+		rtestutils.AssertResource(
+			talosclient.WithNode(suite.ctx, node.IPs[0].String()),
+			suite.T(), client.COSI,
+			runtime.SecurityStateID,
+			func(r *runtime.SecurityState, asrt *assert.Assertions) {
+				asrt.Equal(suite.spec.WithEnforcing, r.TypedSpec().SELinuxState == runtime.SELinuxStateEnforcing)
+			},
+		)
+	}
 
 	// upgrade Kubernetes if required
 	suite.upgradeKubernetes(suite.spec.SourceK8sVersion, suite.spec.TargetK8sVersion, suite.spec.SkipKubeletUpgrade)
@@ -337,5 +404,6 @@ func init() {
 		&UpgradeSuite{specGen: upgradeCurrentToCurrentBios, track: 0},
 		&UpgradeSuite{specGen: upgradeStableToCurrentPreserveStage, track: 1},
 		&UpgradeSuite{specGen: upgradeCurrentToCurrentNewCmdline, track: 2},
+		&UpgradeSuite{specGen: upgradeCurrentToCurrentEnforcing, track: 1},
 	)
 }

@@ -229,6 +229,10 @@ func (p *provisioner) createNode(ctx context.Context, state *provision.State, cl
 		launchConfig.Network.Hostname = nodeReq.Name
 	}
 
+	if nodeReq.SDStubKernelArgs != nil {
+		launchConfig.SDStubKernelArgs = nodeReq.SDStubKernelArgs.String()
+	}
+
 	if !nodeReq.PXEBooted && launchConfig.IPXEBootFileName == "" {
 		launchConfig.KernelImagePath = strings.ReplaceAll(clusterReq.KernelPath, constants.ArchVariable, opts.TargetArch)
 		launchConfig.InitrdPath = strings.ReplaceAll(clusterReq.InitramfsPath, constants.ArchVariable, opts.TargetArch)

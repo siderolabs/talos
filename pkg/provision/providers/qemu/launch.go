@@ -47,6 +47,7 @@ type LaunchConfig struct {
 	ExtraISOPath              string
 	PFlashImages              []string
 	KernelArgs                string
+	SDStubKernelArgs          string
 	MonitorPath               string
 	DefaultBootOrder          string
 	BootloaderEnabled         bool
@@ -496,6 +497,10 @@ func patchKernelArgs(config *LaunchConfig, httpServerAddr net.Addr) error {
 	}
 
 	config.sdStubExtraCmdline = "console=ttyS0"
+
+	if config.SDStubKernelArgs != "" {
+		config.sdStubExtraCmdline += " " + config.SDStubKernelArgs
+	}
 
 	if strings.Contains(config.KernelArgs, "{TALOS_CONFIG_URL}") {
 		config.KernelArgs = strings.ReplaceAll(config.KernelArgs, "{TALOS_CONFIG_URL}", fmt.Sprintf("http://%s/config.yaml", configServerAddr))
