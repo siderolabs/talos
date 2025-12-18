@@ -59,7 +59,7 @@ func NewProvisioner(ctx context.Context) (provision.Provisioner, error) {
 
 	var err error
 
-	p.client, err = client.New(client.FromEnv, client.WithAPIVersionNegotiation())
+	p.client, err = client.New(client.FromEnv)
 	if err != nil {
 		return nil, err
 	}

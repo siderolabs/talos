@@ -346,6 +346,22 @@ linters:
         path: config/types/v1alpha1/machine
         text: should have a package comment
       - linters:
+          - revive
+        path: internal/integration/api
+        text: avoid meaningless package names
+      - linters:
+          - revive
+        path: internal/app/machined/pkg/runtime/v1alpha1/platform/errors
+        text: avoid package names that conflict with Go standard library package names
+      - linters:
+          - revive
+        path: internal/app/machined/pkg/controllers/time
+        text: avoid package names that conflict with Go standard library package names
+      - linters:
+          - revive
+        path: pkg/machinery/resources/time
+        text: avoid package names that conflict with Go standard library package names
+      - linters:
           - dupl
         path: config/types/v1alpha1
       - linters:
