@@ -115,10 +115,6 @@ func (spec *BondMasterSpec) Equal(other *BondMasterSpec) bool {
 		return false
 	}
 
-	if (spec.PrimaryIndex == nil) != (other.PrimaryIndex == nil) {
-		return false
-	}
-
 	if spec.PrimaryIndex != nil && other.PrimaryIndex != nil && *spec.PrimaryIndex != *other.PrimaryIndex {
 		return false
 	}
