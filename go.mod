@@ -29,17 +29,17 @@ replace github.com/containerd/containerd/v2 => github.com/smira/containerd/v2 v2
 
 // Kubernetes dependencies sharing the same version.
 require (
-	k8s.io/api v0.35.0-rc.1
-	k8s.io/apiextensions-apiserver v0.35.0-rc.1
-	k8s.io/apimachinery v0.35.0-rc.1
-	k8s.io/apiserver v0.35.0-rc.1
-	k8s.io/client-go v0.35.0-rc.1
-	k8s.io/component-base v0.35.0-rc.1
-	k8s.io/cri-api v0.35.0-rc.1
-	k8s.io/kube-scheduler v0.35.0-rc.1
-	k8s.io/kubectl v0.35.0-rc.1
-	k8s.io/kubelet v0.35.0-rc.1
-	k8s.io/pod-security-admission v0.35.0-rc.1
+	k8s.io/api v0.35.0
+	k8s.io/apiextensions-apiserver v0.35.0
+	k8s.io/apimachinery v0.35.0
+	k8s.io/apiserver v0.35.0
+	k8s.io/client-go v0.35.0
+	k8s.io/component-base v0.35.0
+	k8s.io/cri-api v0.35.0
+	k8s.io/kube-scheduler v0.35.0
+	k8s.io/kubectl v0.35.0
+	k8s.io/kubelet v0.35.0
+	k8s.io/pod-security-admission v0.35.0
 )
 
 require (
@@ -162,7 +162,6 @@ require (
 	github.com/siderolabs/siderolink v0.3.15
 	github.com/siderolabs/talos/pkg/machinery v1.12.0-alpha.2
 	github.com/sirupsen/logrus v1.9.3
-	github.com/smallfz/libnfs-go v0.0.7
 	github.com/spf13/cobra v1.10.1
 	github.com/spf13/pflag v1.0.10
 	github.com/stretchr/testify v1.11.1
@@ -360,7 +359,7 @@ require (
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
-	k8s.io/cli-runtime v0.35.0-rc.1 // indirect
+	k8s.io/cli-runtime v0.35.0 // indirect
 	k8s.io/kube-openapi v0.0.0-20250910181357-589584f1c912 // indirect
 	kernel.org/pub/linux/libs/security/libcap/psx v1.2.77 // indirect
 	rsc.io/qr v0.2.0 // indirect
