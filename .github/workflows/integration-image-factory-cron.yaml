@@ -1,6 +1,6 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
 #
-# Generated on 2025-12-11T16:40:05Z by kres 4b09af7.
+# Generated on 2025-12-19T14:39:26Z by kres 26be706.
 
 concurrency:
   group: ${{ github.head_ref || github.run_id }}
@@ -53,7 +53,7 @@ jobs:
         timeout-minutes: 10
       - name: Download artifacts
         if: github.event_name != 'schedule'
-        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # version: v6.0.0
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # version: v7.0.0
         with:
           name: talos-artifacts
           path: _out
@@ -166,7 +166,7 @@ jobs:
           sudo -E make e2e-image-factory
       - name: save artifacts
         if: always()
-        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # version: v5.0.0
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # version: v6.0.0
         with:
           name: talos-logs-integration-image-factory
           path: |-

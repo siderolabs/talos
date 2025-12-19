@@ -1,6 +1,6 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
 #
-# Generated on 2025-12-12T03:51:14Z by kres 4b09af7.
+# Generated on 2025-12-19T14:39:26Z by kres 26be706.
 
 concurrency:
   group: ${{ github.head_ref || github.run_id }}
@@ -69,7 +69,7 @@ jobs:
           endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
         timeout-minutes: 10
       - name: Download artifacts
-        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # version: v6.0.0
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # version: v7.0.0
         with:
           name: talos-artifacts
           path: _out
@@ -133,7 +133,7 @@ jobs:
           endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
         timeout-minutes: 10
       - name: Download artifacts
-        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # version: v6.0.0
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # version: v7.0.0
         with:
           name: talos-artifacts
           path: _out
@@ -153,7 +153,7 @@ jobs:
         run: |
           make unit-tests-race
       - name: coverage
-        uses: codecov/codecov-action@5a1091511ad55cbe89839c7260b706298ca349f7 # version: v5.5.1
+        uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de # version: v5.5.2
         with:
           files: _out/coverage.txt
           token: ${{ secrets.CODECOV_TOKEN }}
@@ -255,7 +255,7 @@ jobs:
         run: |
           find _out -type f -executable > _out/executable-artifacts
       - name: save artifacts
-        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # version: v5.0.0
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # version: v6.0.0
         with:
           name: talos-artifacts
           path: |
@@ -320,7 +320,7 @@ jobs:
         run: |
           git fetch --prune --unshallow
       - name: Download artifacts
-        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # version: v6.0.0
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # version: v7.0.0
         with:
           name: talos-artifacts
           path: _out
@@ -338,7 +338,7 @@ jobs:
           make e2e-docker
       - name: save artifacts
         if: always()
-        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # version: v5.0.0
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # version: v6.0.0
         with:
           name: talos-logs-e2e-docker-short
           path: |-
@@ -389,7 +389,7 @@ jobs:
         run: |
           git fetch --prune --unshallow
       - name: Download artifacts
-        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # version: v6.0.0
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # version: v7.0.0
         with:
           name: talos-artifacts
           path: _out
@@ -406,7 +406,7 @@ jobs:
           sudo -E make e2e-iso
       - name: save artifacts
         if: always()
-        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # version: v5.0.0
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # version: v6.0.0
         with:
           name: talos-logs-e2e-iso
           path: |-
@@ -457,7 +457,7 @@ jobs:
         run: |
           git fetch --prune --unshallow
       - name: Download artifacts
-        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # version: v6.0.0
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # version: v7.0.0
         with:
           name: talos-artifacts
           path: _out
@@ -476,7 +476,7 @@ jobs:
           sudo -E make e2e-qemu
       - name: save artifacts
         if: always()
-        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # version: v5.0.0
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # version: v6.0.0
         with:
           name: talos-logs-e2e-qemu-short
           path: |-
@@ -543,7 +543,7 @@ jobs:
           make target-grype-validate
       - name: save artifacts
         if: always()
-        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # version: v5.0.0
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # version: v6.0.0
         with:
           name: talos-grype-scan-result
           path: |
@@ -601,7 +601,7 @@ jobs:
         timeout-minutes: 10
       - name: Download artifacts
         if: github.event_name != 'schedule'
-        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # version: v6.0.0
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # version: v7.0.0
         with:
           name: talos-artifacts
           path: _out
@@ -665,7 +665,7 @@ jobs:
           sudo -E make e2e-qemu
       - name: save artifacts
         if: always()
-        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # version: v5.0.0
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # version: v6.0.0
         with:
           name: talos-logs-integration-airgapped
           path: |-
@@ -731,7 +731,7 @@ jobs:
           sops -d .secrets.yaml | yq -e '.secrets | to_entries[] | .key + "=" + .value' >> "$GITHUB_ENV"
       - name: Download artifacts
         if: github.event_name != 'schedule'
-        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # version: v6.0.0
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # version: v7.0.0
         with:
           name: talos-artifacts
           path: _out
@@ -867,7 +867,7 @@ jobs:
           sops -d .secrets.yaml | yq -e '.secrets | to_entries[] | .key + "=" + .value' >> "$GITHUB_ENV"
       - name: Download artifacts
         if: github.event_name != 'schedule'
-        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # version: v6.0.0
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # version: v7.0.0
         with:
           name: talos-artifacts
           path: _out
@@ -1020,7 +1020,7 @@ jobs:
           sops -d .secrets.yaml | yq -e '.secrets | to_entries[] | .key + "=" + .value' >> "$GITHUB_ENV"
       - name: Download artifacts
         if: github.event_name != 'schedule'
-        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # version: v6.0.0
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # version: v7.0.0
         with:
           name: talos-artifacts
           path: _out
@@ -1173,7 +1173,7 @@ jobs:
           sops -d .secrets.yaml | yq -e '.secrets | to_entries[] | .key + "=" + .value' >> "$GITHUB_ENV"
       - name: Download artifacts
         if: github.event_name != 'schedule'
-        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # version: v6.0.0
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # version: v7.0.0
         with:
           name: talos-artifacts
           path: _out
@@ -1326,7 +1326,7 @@ jobs:
           sops -d .secrets.yaml | yq -e '.secrets | to_entries[] | .key + "=" + .value' >> "$GITHUB_ENV"
       - name: Download artifacts
         if: github.event_name != 'schedule'
-        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # version: v6.0.0
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # version: v7.0.0
         with:
           name: talos-artifacts
           path: _out
@@ -1473,7 +1473,7 @@ jobs:
         timeout-minutes: 10
       - name: Download artifacts
         if: github.event_name != 'schedule'
-        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # version: v6.0.0
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # version: v7.0.0
         with:
           name: talos-artifacts
           path: _out
@@ -1535,7 +1535,7 @@ jobs:
           sudo -E make e2e-qemu
       - name: save artifacts
         if: always()
-        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # version: v5.0.0
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # version: v6.0.0
         with:
           name: talos-logs-integration-cilium
           path: |-
@@ -1600,7 +1600,7 @@ jobs:
           sops -d .secrets.yaml | yq -e '.secrets | to_entries[] | .key + "=" + .value' >> "$GITHUB_ENV"
       - name: Download artifacts
         if: github.event_name != 'schedule'
-        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # version: v6.0.0
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # version: v7.0.0
         with:
           name: talos-artifacts
           path: _out
@@ -1681,7 +1681,7 @@ jobs:
         timeout-minutes: 10
       - name: Download artifacts
         if: github.event_name != 'schedule'
-        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # version: v6.0.0
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # version: v7.0.0
         with:
           name: talos-artifacts
           path: _out
@@ -1716,7 +1716,7 @@ jobs:
           sudo -E make e2e-qemu
       - name: save artifacts
         if: always()
-        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # version: v5.0.0
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # version: v6.0.0
         with:
           name: talos-logs-integration-conformance
           path: |-
@@ -1775,7 +1775,7 @@ jobs:
         timeout-minutes: 10
       - name: Download artifacts
         if: github.event_name != 'schedule'
-        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # version: v6.0.0
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # version: v7.0.0
         with:
           name: talos-artifacts
           path: _out
@@ -1828,7 +1828,7 @@ jobs:
           sudo -E make e2e-qemu
       - name: save artifacts
         if: always()
-        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # version: v5.0.0
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # version: v6.0.0
         with:
           name: talos-logs-integration-conformance-enforcing
           path: |-
@@ -1887,7 +1887,7 @@ jobs:
         timeout-minutes: 10
       - name: Download artifacts
         if: github.event_name != 'schedule'
-        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # version: v6.0.0
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # version: v7.0.0
         with:
           name: talos-artifacts
           path: _out
@@ -1918,7 +1918,7 @@ jobs:
           sudo -E make e2e-embedded
       - name: save artifacts
         if: always()
-        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # version: v5.0.0
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # version: v6.0.0
         with:
           name: talos-logs-integration-embedded
           path: |-
@@ -1977,7 +1977,7 @@ jobs:
         timeout-minutes: 10
       - name: Download artifacts
         if: github.event_name != 'schedule'
-        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # version: v6.0.0
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # version: v7.0.0
         with:
           name: talos-artifacts
           path: _out
@@ -2043,7 +2043,7 @@ jobs:
           sudo -E make e2e-qemu
       - name: save artifacts
         if: always()
-        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # version: v5.0.0
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # version: v6.0.0
         with:
           name: talos-logs-integration-extensions
           path: |-
@@ -2108,7 +2108,7 @@ jobs:
           sops -d .secrets.yaml | yq -e '.secrets | to_entries[] | .key + "=" + .value' >> "$GITHUB_ENV"
       - name: Download artifacts
         if: github.event_name != 'schedule'
-        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # version: v6.0.0
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # version: v7.0.0
         with:
           name: talos-artifacts
           path: _out
@@ -2235,7 +2235,7 @@ jobs:
         timeout-minutes: 10
       - name: Download artifacts
         if: github.event_name != 'schedule'
-        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # version: v6.0.0
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # version: v7.0.0
         with:
           name: talos-artifacts
           path: _out
@@ -2285,7 +2285,7 @@ jobs:
           sudo -E make e2e-qemu
       - name: save artifacts
         if: always()
-        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # version: v5.0.0
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # version: v6.0.0
         with:
           name: talos-logs-integration-image-cache
           path: |-
@@ -2344,7 +2344,7 @@ jobs:
         timeout-minutes: 10
       - name: Download artifacts
         if: github.event_name != 'schedule'
-        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # version: v6.0.0
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # version: v7.0.0
         with:
           name: talos-artifacts
           path: _out
@@ -2457,7 +2457,7 @@ jobs:
           sudo -E make e2e-image-factory
       - name: save artifacts
         if: always()
-        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # version: v5.0.0
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # version: v6.0.0
         with:
           name: talos-logs-integration-image-factory
           path: |-
@@ -2516,7 +2516,7 @@ jobs:
         timeout-minutes: 10
       - name: Download artifacts
         if: github.event_name != 'schedule'
-        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # version: v6.0.0
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # version: v7.0.0
         with:
           name: talos-artifacts
           path: _out
@@ -2598,7 +2598,7 @@ jobs:
         timeout-minutes: 10
       - name: Download artifacts
         if: github.event_name != 'schedule'
-        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # version: v6.0.0
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # version: v7.0.0
         with:
           name: talos-artifacts
           path: _out
@@ -2665,7 +2665,7 @@ jobs:
           sudo -E make e2e-qemu
       - name: save artifacts
         if: always()
-        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # version: v5.0.0
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # version: v6.0.0
         with:
           name: talos-logs-integration-misc-0
           path: |-
@@ -2724,7 +2724,7 @@ jobs:
         timeout-minutes: 10
       - name: Download artifacts
         if: github.event_name != 'schedule'
-        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # version: v6.0.0
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # version: v7.0.0
         with:
           name: talos-artifacts
           path: _out
@@ -2786,7 +2786,7 @@ jobs:
           sudo -E make e2e-qemu
       - name: save artifacts
         if: always()
-        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # version: v5.0.0
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # version: v6.0.0
         with:
           name: talos-logs-integration-misc-1
           path: |-
@@ -2845,7 +2845,7 @@ jobs:
         timeout-minutes: 10
       - name: Download artifacts
         if: github.event_name != 'schedule'
-        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # version: v6.0.0
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # version: v7.0.0
         with:
           name: talos-artifacts
           path: _out
@@ -2934,7 +2934,7 @@ jobs:
           sudo -E make e2e-qemu
       - name: save artifacts
         if: always()
-        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # version: v5.0.0
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # version: v6.0.0
         with:
           name: talos-logs-integration-misc-1-enforcing
           path: |-
@@ -2993,7 +2993,7 @@ jobs:
         timeout-minutes: 10
       - name: Download artifacts
         if: github.event_name != 'schedule'
-        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # version: v6.0.0
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # version: v7.0.0
         with:
           name: talos-artifacts
           path: _out
@@ -3098,7 +3098,7 @@ jobs:
           sudo -E make e2e-qemu
       - name: save artifacts
         if: always()
-        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # version: v5.0.0
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # version: v6.0.0
         with:
           name: talos-logs-integration-misc-2
           path: |-
@@ -3157,7 +3157,7 @@ jobs:
         timeout-minutes: 10
       - name: Download artifacts
         if: github.event_name != 'schedule'
-        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # version: v6.0.0
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # version: v7.0.0
         with:
           name: talos-artifacts
           path: _out
@@ -3207,7 +3207,7 @@ jobs:
           sudo -E make e2e-qemu
       - name: save artifacts
         if: always()
-        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # version: v5.0.0
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # version: v6.0.0
         with:
           name: talos-logs-integration-misc-3
           path: |-
@@ -3266,7 +3266,7 @@ jobs:
         timeout-minutes: 10
       - name: Download artifacts
         if: github.event_name != 'schedule'
-        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # version: v6.0.0
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # version: v7.0.0
         with:
           name: talos-artifacts
           path: _out
@@ -3340,7 +3340,7 @@ jobs:
           sudo -E make e2e-qemu
       - name: save artifacts
         if: always()
-        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # version: v5.0.0
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # version: v6.0.0
         with:
           name: talos-logs-integration-misc-3-enforcing
           path: |-
@@ -3399,7 +3399,7 @@ jobs:
         timeout-minutes: 10
       - name: Download artifacts
         if: github.event_name != 'schedule'
-        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # version: v6.0.0
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # version: v7.0.0
         with:
           name: talos-artifacts
           path: _out
@@ -3468,7 +3468,7 @@ jobs:
           sudo -E make e2e-qemu
       - name: save artifacts
         if: always()
-        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # version: v5.0.0
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # version: v6.0.0
         with:
           name: talos-logs-integration-misc-4
           path: |-
@@ -3527,7 +3527,7 @@ jobs:
         timeout-minutes: 10
       - name: Download artifacts
         if: github.event_name != 'schedule'
-        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # version: v6.0.0
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # version: v7.0.0
         with:
           name: talos-artifacts
           path: _out
@@ -3623,7 +3623,7 @@ jobs:
           sudo -E make e2e-qemu
       - name: save artifacts
         if: always()
-        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # version: v5.0.0
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # version: v6.0.0
         with:
           name: talos-logs-integration-misc-4-enforcing
           path: |-
@@ -3682,7 +3682,7 @@ jobs:
         timeout-minutes: 10
       - name: Download artifacts
         if: github.event_name != 'schedule'
-        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # version: v6.0.0
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # version: v7.0.0
         with:
           name: talos-artifacts
           path: _out
@@ -3731,7 +3731,7 @@ jobs:
           sudo -E make provision-tests-track-0
       - name: save artifacts
         if: always()
-        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # version: v5.0.0
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # version: v6.0.0
         with:
           name: talos-logs-integration-provision-0
           path: |-
@@ -3790,7 +3790,7 @@ jobs:
         timeout-minutes: 10
       - name: Download artifacts
         if: github.event_name != 'schedule'
-        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # version: v6.0.0
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # version: v7.0.0
         with:
           name: talos-artifacts
           path: _out
@@ -3825,7 +3825,7 @@ jobs:
           sudo -E make provision-tests-track-1
       - name: save artifacts
         if: always()
-        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # version: v5.0.0
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # version: v6.0.0
         with:
           name: talos-logs-integration-provision-1
           path: |-
@@ -3884,7 +3884,7 @@ jobs:
         timeout-minutes: 10
       - name: Download artifacts
         if: github.event_name != 'schedule'
-        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # version: v6.0.0
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # version: v7.0.0
         with:
           name: talos-artifacts
           path: _out
@@ -3927,7 +3927,7 @@ jobs:
           sudo -E make provision-tests-track-2
       - name: save artifacts
         if: always()
-        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # version: v5.0.0
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # version: v6.0.0
         with:
           name: talos-logs-integration-provision-2
           path: |-
@@ -3986,7 +3986,7 @@ jobs:
         timeout-minutes: 10
       - name: Download artifacts
         if: github.event_name != 'schedule'
-        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # version: v6.0.0
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # version: v7.0.0
         with:
           name: talos-artifacts
           path: _out
@@ -4023,7 +4023,7 @@ jobs:
           sudo -E make e2e-qemu
       - name: save artifacts
         if: always()
-        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # version: v5.0.0
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # version: v6.0.0
         with:
           name: talos-logs-integration-qemu
           path: |-
@@ -4082,7 +4082,7 @@ jobs:
         timeout-minutes: 10
       - name: Download artifacts
         if: github.event_name != 'schedule'
-        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # version: v6.0.0
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # version: v7.0.0
         with:
           name: talos-artifacts
           path: _out
@@ -4152,7 +4152,7 @@ jobs:
         run: |
           sudo -E make e2e-qemu
       - name: save artifacts
-        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # version: v5.0.0
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # version: v6.0.0
         with:
           name: fio-integration-qemu-csi-longhorn
           path: |
@@ -4160,7 +4160,7 @@ jobs:
           retention-days: "180"
       - name: save artifacts
         if: always()
-        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # version: v5.0.0
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # version: v6.0.0
         with:
           name: talos-logs-integration-qemu-csi-longhorn
           path: |-
@@ -4219,7 +4219,7 @@ jobs:
         timeout-minutes: 10
       - name: Download artifacts
         if: github.event_name != 'schedule'
-        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # version: v6.0.0
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # version: v7.0.0
         with:
           name: talos-artifacts
           path: _out
@@ -4259,7 +4259,7 @@ jobs:
         run: |
           sudo -E make e2e-qemu
       - name: save artifacts
-        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # version: v5.0.0
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # version: v6.0.0
         with:
           name: fio-integration-qemu-csi-openebs
           path: |
@@ -4267,7 +4267,7 @@ jobs:
           retention-days: "180"
       - name: save artifacts
         if: always()
-        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # version: v5.0.0
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # version: v6.0.0
         with:
           name: talos-logs-integration-qemu-csi-openebs
           path: |-
@@ -4326,7 +4326,7 @@ jobs:
         timeout-minutes: 10
       - name: Download artifacts
         if: github.event_name != 'schedule'
-        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # version: v6.0.0
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # version: v7.0.0
         with:
           name: talos-artifacts
           path: _out
@@ -4365,7 +4365,7 @@ jobs:
         run: |
           sudo -E make e2e-qemu
       - name: save artifacts
-        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # version: v5.0.0
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # version: v6.0.0
         with:
           name: fio-integration-qemu-csi-rook-ceph
           path: |
@@ -4373,7 +4373,7 @@ jobs:
           retention-days: "180"
       - name: save artifacts
         if: always()
-        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # version: v5.0.0
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # version: v6.0.0
         with:
           name: talos-logs-integration-qemu-csi-rook-ceph
           path: |-
@@ -4432,7 +4432,7 @@ jobs:
         timeout-minutes: 10
       - name: Download artifacts
         if: github.event_name != 'schedule'
-        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # version: v6.0.0
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # version: v7.0.0
         with:
           name: talos-artifacts
           path: _out
@@ -4470,7 +4470,7 @@ jobs:
           sudo -E make e2e-qemu
       - name: save artifacts
         if: always()
-        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # version: v5.0.0
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # version: v6.0.0
         with:
           name: talos-logs-integration-qemu-encrypted-vip
           path: |-
@@ -4529,7 +4529,7 @@ jobs:
         timeout-minutes: 10
       - name: Download artifacts
         if: github.event_name != 'schedule'
-        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # version: v6.0.0
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # version: v7.0.0
         with:
           name: talos-artifacts
           path: _out
@@ -4584,7 +4584,7 @@ jobs:
           sudo -E make e2e-qemu
       - name: save artifacts
         if: always()
-        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # version: v5.0.0
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # version: v6.0.0
         with:
           name: talos-logs-integration-qemu-enforcing
           path: |-
@@ -4643,7 +4643,7 @@ jobs:
         timeout-minutes: 10
       - name: Download artifacts
         if: github.event_name != 'schedule'
-        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # version: v6.0.0
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # version: v7.0.0
         with:
           name: talos-artifacts
           path: _out
@@ -4692,7 +4692,7 @@ jobs:
           sudo -E make e2e-qemu
       - name: save artifacts
         if: always()
-        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # version: v5.0.0
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # version: v6.0.0
         with:
           name: talos-logs-integration-qemu-race
           path: |-
@@ -4751,7 +4751,7 @@ jobs:
         timeout-minutes: 10
       - name: Download artifacts
         if: github.event_name != 'schedule'
-        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # version: v6.0.0
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # version: v7.0.0
         with:
           name: talos-artifacts
           path: _out
@@ -4820,7 +4820,7 @@ jobs:
         timeout-minutes: 10
       - name: Download artifacts
         if: github.event_name != 'schedule'
-        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # version: v6.0.0
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # version: v7.0.0
         with:
           name: talos-artifacts
           path: _out
@@ -4877,7 +4877,7 @@ jobs:
           sudo -E make e2e-qemu
       - name: save artifacts
         if: always()
-        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # version: v5.0.0
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # version: v6.0.0
         with:
           name: talos-logs-integration-trusted-boot
           path: |-
@@ -4936,7 +4936,7 @@ jobs:
         timeout-minutes: 10
       - name: Download artifacts
         if: github.event_name != 'schedule'
-        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # version: v6.0.0
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # version: v7.0.0
         with:
           name: talos-artifacts
           path: _out
@@ -4996,7 +4996,7 @@ jobs:
           sudo -E make e2e-qemu
       - name: save artifacts
         if: always()
-        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # version: v5.0.0
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # version: v6.0.0
         with:
           name: talos-logs-integration-trusted-boot-enforcing
           path: |-
