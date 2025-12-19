@@ -144,7 +144,29 @@ func importImageStream(ctx context.Context,
 	client *containerdapi.Client,
 	srv machine.MachineService_DebugContainerServer,
 ) (containerdapi.Image, error) {
-	images, err := client.Import(ctx, &imageChunkReaderWrapper{srv: srv})
+	r, w := io.Pipe()
+
+	go func() {
+		for {
+			msg, err := srv.Recv()
+			if err != nil {
+				log.Printf("import image: receive error: %s", err.Error())
+
+				return
+			}
+
+			chunk := msg.GetImageChunk()
+			if chunk == nil || len(chunk.GetBytes()) == 0 {
+				return
+			}
+
+			if _, err := w.Write(chunk.GetBytes()); err != nil {
+				log.Printf("import image: write error: %s", err.Error())
+			}
+		}
+	}()
+
+	images, err := client.Import(ctx, r)
 	if err != nil {
 		return nil, fmt.Errorf("failed to import image: %v", err)
 	}
@@ -314,70 +336,6 @@ func runAndAttachContainer(
 	}
 
 	grpcStreamer.stream(statusC, task)
-
-	return nil
-}
-
-// TODO: I think it makes more sense to have the API be
-// split into two separate calls - one for creating the
-// debug container (with the spec, still a streaming RPC
-// that stays open while the container is running), and
-// another one for bidirectional stdin/out streaming.
-
-// imageChunkReaderWrapper is a plain io.Reader wrapper
-// around the gRPC stream that we can pass to containerd.
-//
-// Since we don't control the size of the incoming chunks,
-// (or the `Read()`s), we hold onto the last received chunk
-// in case len(chunk) > read size.
-//
-// TODO(laurazard): this could:
-//   - be faster, if we just loaded the entire image into
-//     memory instead of reading from the client piecemeal
-//   - be simpler, by just passing a buffer into containerd
-//     and `io.Copy`ing into it.
-type imageChunkReaderWrapper struct {
-	srv machine.MachineService_DebugContainerServer
-
-	// buffered image chunk data - size of incoming chunks may
-	// be larger than reads, and we don't want to lose data in
-	// between reads.
-	currentChunk []byte
-	// Read position in currentChunk
-	offset int
-}
-
-func (i *imageChunkReaderWrapper) Read(b []byte) (int, error) {
-	return i.readImageChunk(b)
-}
-
-func (i *imageChunkReaderWrapper) readImageChunk(b []byte) (int, error) {
-	if len(i.currentChunk)-i.offset == 0 {
-		err := i.loadNewChunk()
-		if err != nil {
-			return 0, err
-		}
-	}
-
-	n := copy(b, i.currentChunk[i.offset:])
-	i.offset += n
-
-	return n, nil
-}
-
-func (i *imageChunkReaderWrapper) loadNewChunk() error {
-	msg, err := i.srv.Recv()
-	if err != nil {
-		return err
-	}
-
-	chunk := msg.GetImageChunk()
-	if chunk == nil || len(chunk.GetBytes()) == 0 {
-		return io.EOF
-	}
-
-	i.currentChunk = chunk.GetBytes()
-	i.offset = 0
 
 	return nil
 }
