@@ -357,6 +357,18 @@ func sendImage(ctx context.Context, stream machine.MachineService_DebugContainer
 		Status:  reporter.StatusSucceeded,
 	})
 
+	req := &machine.DebugContainerRequest{
+		Request: &machine.DebugContainerRequest_ImageChunk{
+			ImageChunk: &common.Data{
+				Bytes: []byte{},
+			},
+		},
+	}
+
+	if err := stream.Send(req); err != nil {
+		return fmt.Errorf("failed to send image chunk: %w", err)
+	}
+
 	return nil
 }
 
