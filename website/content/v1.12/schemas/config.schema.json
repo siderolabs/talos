@@ -2273,7 +2273,16 @@
     "network.LinkSelector": {
       "properties": {
         "match": {
-          "type": "string",
+          "oneOf": [
+            {
+              "type": "string"
+            },
+            {
+              "enum": [
+                true
+              ]
+            }
+          ],
           "title": "match",
           "description": "The Common Expression Language (CEL) expression to match the link.\n",
           "markdownDescription": "The Common Expression Language (CEL) expression to match the link.",
