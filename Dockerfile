@@ -25,6 +25,7 @@ ARG PKG_FHS=scratch
 ARG PKG_FLANNEL_CNI=scratch
 ARG PKG_GLIB=scratch
 ARG PKG_GRUB=scratch
+ARG PKG_IGZIP=scratch
 ARG PKG_IPTABLES=scratch
 ARG PKG_IPXE=scratch
 ARG PKG_KERNEL=scratch
@@ -185,6 +186,14 @@ FROM ${PKG_KERNEL} AS pkg-kernel
 FROM --platform=amd64 ${PKG_KERNEL} AS pkg-kernel-amd64
 FROM --platform=arm64 ${PKG_KERNEL} AS pkg-kernel-arm64
 
+FROM ${PKG_PIGZ} AS pkg-pigz
+FROM --platform=arm64 ${PKG_PIGZ} AS pkg-pigz-arm64
+
+FROM ${PKG_ZLIB} AS pkg-zlib
+FROM --platform=arm64 ${PKG_ZLIB} AS pkg-zlib-arm64
+
+FROM --platform=amd64 ${PKG_IGZIP} AS pkg-igzip-amd64
+
 FROM ${PKG_CPIO} AS pkg-cpio
 FROM ${PKG_DOSFSTOOLS} AS pkg-dosfstools
 FROM ${PKG_E2FSPROGS} AS pkg-e2fsprogs
@@ -202,13 +211,11 @@ FROM ${PKG_MUSL} AS pkg-musl
 FROM ${PKG_OPENSSL} AS pkg-openssl
 FROM ${PKG_OPEN_VMDK} AS pkg-open-vmdk
 FROM ${PKG_PCRE2} AS pkg-pcre2
-FROM ${PKG_PIGZ} AS pkg-pigz
 FROM ${PKG_QEMU_TOOLS} AS pkg-qemu-tools
 FROM ${PKG_SQUASHFS_TOOLS} AS pkg-squashfs-tools
 FROM ${PKG_TAR} AS pkg-tar
 FROM ${PKG_XFSPROGS} AS pkg-xfsprogs
 FROM ${PKG_XZ} AS pkg-xz
-FROM ${PKG_ZLIB} AS pkg-zlib
 FROM ${PKG_ZSTD} AS pkg-zstd
 
 FROM --platform=amd64 ${TOOLS_PREFIX}:${TOOLS} AS tools-amd64
@@ -710,6 +717,8 @@ COPY --link --from=pkg-libpopt-amd64 / /rootfs
 COPY --link --from=pkg-liburcu-amd64 / /rootfs
 COPY --link --from=pkg-libsepol-amd64 / /rootfs
 COPY --link --from=pkg-libselinux-amd64 / /rootfs
+# NOTE: amd64 ships igzip, but arm64 ships pigz (see https://github.com/siderolabs/extensions/discussions/931)
+COPY --link --exclude=usr/lib/pkgconfig --exclude=usr/include --from=pkg-igzip-amd64 / /rootfs
 COPY --link --from=pkg-pcre2-amd64 / /rootfs
 COPY --link --from=pkg-openssl-amd64 / /rootfs
 COPY --link --from=pkg-lvm2-amd64 / /rootfs
@@ -801,6 +810,9 @@ COPY --link --from=pkg-musl-arm64 / /rootfs
 COPY --link --from=pkg-nftables-arm64 / /rootfs
 COPY --link --from=pkg-runc-arm64 / /rootfs
 COPY --link --from=pkg-xfsprogs-arm64 / /rootfs
+# NOTE: amd64 ships igzip, but arm64 ships pigz (see https://github.com/siderolabs/extensions/discussions/931)
+COPY --link --from=pkg-zlib-arm64 / /rootfs
+COPY --link --from=pkg-pigz-arm64 / /rootfs
 COPY --link --from=pkg-util-linux-arm64 /usr/lib/libblkid.* /rootfs/usr/lib/
 COPY --link --from=pkg-util-linux-arm64 /usr/lib/libuuid.* /rootfs/usr/lib/
 COPY --link --from=pkg-util-linux-arm64 /usr/lib/libmount.* /rootfs/usr/lib/

@@ -25,9 +25,9 @@ DEBUG_TOOLS_SOURCE := scratch
 EMBED_TARGET ?= embed
 
 TOOLS_PREFIX ?= ghcr.io/siderolabs/tools
-TOOLS ?= v1.13.0-alpha.0-4-gb67c1a1
+TOOLS ?= v1.13.0-alpha.0-6-g896f8b9
 PKGS_PREFIX ?= ghcr.io/siderolabs
-PKGS ?= v1.13.0-alpha.0-19-ge8e61ce
+PKGS ?= v1.13.0-alpha.0-21-g59241bd
 GENERATE_VEX_PREFIX ?= ghcr.io/siderolabs/generate-vex
 GENERATE_VEX ?= latest
 
@@ -47,6 +47,7 @@ PKG_FHS ?= $(PKGS_PREFIX)/fhs:$(PKGS)
 PKG_FLANNEL_CNI ?= $(PKGS_PREFIX)/flannel-cni:$(PKGS)
 PKG_GLIB ?= $(PKGS_PREFIX)/glib:$(PKGS)
 PKG_GRUB ?= $(PKGS_PREFIX)/grub:$(PKGS)
+PKG_IGZIP ?= $(PKGS_PREFIX)/igzip:$(PKGS)
 PKG_IPTABLES ?= $(PKGS_PREFIX)/iptables:$(PKGS)
 PKG_IPXE ?= $(PKGS_PREFIX)/ipxe:$(PKGS)
 PKG_KERNEL ?= $(PKGS_PREFIX)/kernel:$(PKGS)
@@ -198,6 +199,7 @@ COMMON_ARGS += --build-arg=PKG_FHS=$(PKG_FHS)
 COMMON_ARGS += --build-arg=PKG_FLANNEL_CNI=$(PKG_FLANNEL_CNI)
 COMMON_ARGS += --build-arg=PKG_GLIB=$(PKG_GLIB)
 COMMON_ARGS += --build-arg=PKG_GRUB=$(PKG_GRUB)
+COMMON_ARGS += --build-arg=PKG_IGZIP=$(PKG_IGZIP)
 COMMON_ARGS += --build-arg=PKG_IPTABLES=$(PKG_IPTABLES)
 COMMON_ARGS += --build-arg=PKG_IPXE=$(PKG_IPXE)
 COMMON_ARGS += --build-arg=PKG_KERNEL=$(PKG_KERNEL)

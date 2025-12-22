@@ -49,6 +49,12 @@ by preventing unwanted writes to protected process memory via `/proc/PID/mem`.
 If the kernel parameter is removed, default behavior is restored, allowing access only if the process is traced.
 """
 
+    [notes.pigz]
+        title = "Container Image Decompression"
+        description = """\
+Talos now ships with `igzip` (amd64) and `pigz` (arm64) to speed up container image decompression.
+"""
+
 [make_deps]
 
     [make_deps.tools]
