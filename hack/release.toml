@@ -9,7 +9,7 @@ ignore_deps = ["github.com/coredns/coredns"]
 # previous release
 previous = "v1.11.0"
 
-pre_release = true
+pre_release = false
 
 preface = """
 """
@@ -33,6 +33,12 @@ containerd: 2.1.6
 zfs: 2.4.0
 
 Talos is built with Go 1.25.5.
+"""
+
+    [notes.aaawhatsnew]
+        title = "What's New"
+        description = """\
+See also [What's new in Talos v1.12.0](https://docs.siderolabs.com/talos/v1.12/getting-started/what's-new-in-talos) in the documentation for a summary of the most notable changes in this release.
 """
 
     [notes.luks2]
