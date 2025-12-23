@@ -1,6 +1,6 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
 #
-# Generated on 2025-11-17T16:36:13Z by kres e1d6dac.
+# Generated on 2025-12-23T10:44:32Z by kres 26be706.
 
 concurrency:
   group: ${{ github.head_ref || github.run_id }}
@@ -16,7 +16,7 @@ jobs:
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@v1.4.0
+        uses: kenchan0130/actions-system-info@59699597e84e80085a750998045983daa49274c4 # version: v1.4.0
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -40,20 +40,20 @@ jobs:
           done
         continue-on-error: true
       - name: checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # version: v6.0.1
       - name: Unshallow
         run: |
           git fetch --prune --unshallow
       - name: Set up Docker Buildx
         id: setup-buildx
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@e468171a9de216ec08956ac3ada2f0791b6bd435 # version: v3.11.1
         with:
           driver: remote
           endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
         timeout-minutes: 10
       - name: Download artifacts
         if: github.event_name != 'schedule'
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # version: v7.0.0
         with:
           name: talos-artifacts
           path: _out
@@ -158,7 +158,7 @@ jobs:
           sudo -E make e2e-qemu
       - name: save artifacts
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # version: v6.0.0
         with:
           name: talos-logs-integration-misc-2
           path: |-
