@@ -11,11 +11,13 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/blang/semver/v4"
 	"github.com/siderolabs/gen/xslices"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/siderolabs/talos/internal/integration/base"
 	"github.com/siderolabs/talos/pkg/machinery/config/machine"
+	"github.com/siderolabs/talos/pkg/machinery/version"
 )
 
 // ImageSuite verifies the image command.
@@ -35,10 +37,20 @@ func (suite *ImageSuite) TestDefault() {
 	)
 }
 
+var versionRe = regexp.MustCompile(`^[v]?(\d+\.\d+\.\d+(?:-(?:alpha|beta|rc)\.\d+)?)`)
+
+func normalizeTag(tag string) string {
+	m := versionRe.FindStringSubmatch(tag)
+	if len(m) == 0 {
+		return tag
+	}
+
+	return m[1]
+}
+
 // TestSourceBundle verifies talos-bundle Talos list of images.
 func (suite *ImageSuite) TestSourceBundle() {
-	suite.RunCLI([]string{"image", "talos-bundle", "v1.11.2"},
-		base.StdoutShouldMatch(regexp.MustCompile(regexp.QuoteMeta(`ghcr.io/siderolabs/installer:v1.11.2
+	out := `ghcr.io/siderolabs/installer:v1.11.2
 ghcr.io/siderolabs/installer-base:v1.11.2
 ghcr.io/siderolabs/imager:v1.11.2
 ghcr.io/siderolabs/talos:v1.11.2
@@ -115,7 +127,32 @@ ghcr.io/siderolabs/xdma-driver:aefa9a1-v1.11.2@sha256:b65cb2033d46a7c88d317cb29a
 ghcr.io/siderolabs/xen-guest-agent:0.4.0-g5c274e6@sha256:91e08d9ae45e325bf20da77f251e265d0e72cb38751a6dcee930bf21c9adacc1
 ghcr.io/siderolabs/youki:0.5.5@sha256:562ceabb69570203024dbb9b8673ba485af1ffdd082210656573e22557235372
 ghcr.io/siderolabs/zerotier:1.16.0@sha256:9444baa3acdc665dba56ed16c8a983c81c3f37fc73877be8fd882f9cf8c9fa5a
-ghcr.io/siderolabs/zfs:2.3.3-v1.11.2@sha256:73782571f334b18995ddf324d24b86ea9a11aa37661a468b4e077da63e0d9714`))),
+ghcr.io/siderolabs/zfs:2.3.3-v1.11.2@sha256:73782571f334b18995ddf324d24b86ea9a11aa37661a468b4e077da63e0d9714`
+
+	suite.RunCLI([]string{"image", "talos-bundle", "v1.11.2"},
+		base.StdoutShouldMatch(regexp.MustCompile(regexp.QuoteMeta(out))),
+	)
+
+	tag, err := semver.ParseTolerant(normalizeTag(version.Tag))
+	assert.NoError(suite.T(), err)
+
+	suite.T().Log(normalizeTag(version.Tag))
+	suite.T().Log(version.Tag)
+
+	suite.RunCLI([]string{"image", "talos-bundle", "v" + tag.String()},
+		base.StdoutShouldMatch(regexp.MustCompile(regexp.QuoteMeta("ghcr.io/siderolabs/talos:v"+tag.String()))),
+	)
+
+	suite.RunCLI([]string{"image", "talos-bundle", tag.String()},
+		base.StdoutEmpty(),
+		base.ShouldFail(),
+	)
+
+	tag.Patch = 0
+	assert.NoError(suite.T(), tag.IncrementMinor())
+	suite.RunCLI([]string{"image", "talos-bundle", "v" + tag.FinalizeVersion()},
+		base.StdoutEmpty(),
+		base.ShouldFail(),
 	)
 }
 
