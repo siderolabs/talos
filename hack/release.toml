@@ -21,8 +21,19 @@ preface = """
         description = """\
 Linux: 6.12.63
 runc: 1.2.9
+etcd: 3.5.26
 
 Talos is built with Go 1.24.11.
+"""
+
+    [notes.etcd]
+        title = "etcd Zombine Members"
+        description = """\
+See [this blog post](https://etcd.io/blog/2025/zombie_members_upgrade/) for more details.
+
+This release includes an update to etcd v3.5.26 to ensure that upgrades to Talos v1.11 and later (which default to etcd v3.6) will not be blocked by the presence of zombine members in the etcd cluster.
+
+Please note that etcd version can also be configured via the machine configuration with any version of Talos Linux.
 """
 
 [make_deps]
