@@ -1,3 +1,86 @@
+## [Talos 1.10.9](https://github.com/siderolabs/talos/releases/tag/v1.10.9) (2025-12-23)
+
+Welcome to the v1.10.9 release of Talos!
+
+
+
+Please try out the release binaries and report any issues at
+https://github.com/siderolabs/talos/issues.
+
+### etcd Zombine Members
+
+See [this blog post](https://etcd.io/blog/2025/zombie_members_upgrade/) for more details.
+
+This release includes an update to etcd v3.5.26 to ensure that upgrades to Talos v1.11 and later (which default to etcd v3.6) will not be blocked by the presence of zombine members in the etcd cluster.
+
+Please note that etcd version can also be configured via the machine configuration with any version of Talos Linux.
+
+
+### Component Updates
+
+Linux: 6.12.63
+runc: 1.2.9
+etcd: 3.5.26
+
+Talos is built with Go 1.24.11.
+
+
+### Contributors
+
+* Andrey Smirnov
+* Dmitrii Sharshakov
+
+### Changes
+<details><summary>8 commits</summary>
+<p>
+
+* [`4c4c8551f`](https://github.com/siderolabs/talos/commit/4c4c8551f99bac6f8039d50f8c79e27fc782ca35) test: bump memory for OpenEBS test
+* [`51c680ae2`](https://github.com/siderolabs/talos/commit/51c680ae2aaef19c3e6e6e685d6ec3100f826ab5) test: backport test fixes for CRI seccomp profile
+* [`0f42034b0`](https://github.com/siderolabs/talos/commit/0f42034b0806f2ef2ff55a3936eb80a32f9b47d2) fix: adapt SELinuxSuite.TestNoPtrace to new strace version
+* [`a705f8e8c`](https://github.com/siderolabs/talos/commit/a705f8e8c520264889ad6ec36fb219e15fa034ab) fix: clear provisioning data on SideroLink config change
+* [`92c42efc7`](https://github.com/siderolabs/talos/commit/92c42efc745ac7d03973b0dac47b107b7d78d7e9) chore: update Go modules
+* [`b7c49777f`](https://github.com/siderolabs/talos/commit/b7c49777fe645b85ce9ec72c93922d2b154512f7) fix: disable kexec on arm64
+* [`45ed535c7`](https://github.com/siderolabs/talos/commit/45ed535c739327c40981144a5032929ba2776d75) feat: update default etcd to 3.5.26
+* [`74ba66803`](https://github.com/siderolabs/talos/commit/74ba668039decfb04abcac008a0ea140de0564e6) feat: update pkgs and tools
+</p>
+</details>
+
+### Changes from siderolabs/pkgs
+<details><summary>1 commit</summary>
+<p>
+
+* [`3f85dc8`](https://github.com/siderolabs/pkgs/commit/3f85dc8bd7a7646ecc286869fe23fc3a2964a6ed) feat: update Go to 1.24.11, other updates
+</p>
+</details>
+
+### Changes from siderolabs/tools
+<details><summary>1 commit</summary>
+<p>
+
+* [`11b0a3d`](https://github.com/siderolabs/tools/commit/11b0a3ddf7c0f8f69ac0a6c8605d9421d8e667fb) feat: update Go to 1.24.11
+</p>
+</details>
+
+### Dependency Changes
+
+* **github.com/containernetworking/plugins**  v1.6.2 -> v1.9.0
+* **github.com/safchain/ethtool**             v0.5.10 -> v0.6.2
+* **github.com/siderolabs/pkgs**              v1.10.0-37-g71b336d -> v1.10.0-38-g3f85dc8
+* **github.com/siderolabs/tools**             v1.10.0-7-g39357c8 -> v1.10.0-8-g11b0a3d
+* **github.com/stretchr/testify**             v1.10.0 -> v1.11.1
+* **go.etcd.io/etcd/api/v3**                  v3.5.21 -> v3.5.26
+* **go.etcd.io/etcd/client/pkg/v3**           v3.5.21 -> v3.5.26
+* **go.etcd.io/etcd/client/v3**               v3.5.21 -> v3.5.26
+* **go.etcd.io/etcd/etcdutl/v3**              v3.5.21 -> v3.5.26
+* **golang.org/x/net**                        v0.42.0 -> v0.47.0
+* **golang.org/x/sync**                       v0.16.0 -> v0.18.0
+* **golang.org/x/sys**                        v0.34.0 -> v0.38.0
+* **golang.org/x/term**                       v0.33.0 -> v0.37.0
+* **golang.org/x/text**                       v0.27.0 -> v0.31.0
+* **google.golang.org/protobuf**              v1.36.6 -> v1.36.7
+
+Previous release can be found at [v1.10.8](https://github.com/siderolabs/talos/releases/tag/v1.10.8)
+
 ## [Talos 1.10.8](https://github.com/siderolabs/talos/releases/tag/v1.10.8) (2025-11-18)
 
 Welcome to the v1.10.8 release of Talos!
