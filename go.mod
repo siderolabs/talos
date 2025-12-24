@@ -104,7 +104,7 @@ require (
 	github.com/jeromer/syslogparser v1.1.0
 	github.com/jsimonetti/rtnetlink/v2 v2.1.0
 	github.com/jxskiss/base62 v1.1.0
-	github.com/klauspost/compress v1.18.1
+	github.com/klauspost/compress v1.18.2
 	github.com/klauspost/cpuid/v2 v2.3.0
 	github.com/linode/go-metadata v0.2.3
 	github.com/martinlindhe/base36 v1.1.1
@@ -140,7 +140,7 @@ require (
 	github.com/siderolabs/discovery-client v0.1.13
 	github.com/siderolabs/gen v0.8.6
 	github.com/siderolabs/go-api-signature v0.3.12
-	github.com/siderolabs/go-blockdevice/v2 v2.0.21
+	github.com/siderolabs/go-blockdevice/v2 v2.0.22
 	github.com/siderolabs/go-circular v0.2.3
 	github.com/siderolabs/go-cmd v0.1.3
 	github.com/siderolabs/go-copy v0.1.0
