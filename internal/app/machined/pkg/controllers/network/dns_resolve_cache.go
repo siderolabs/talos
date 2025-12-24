@@ -120,6 +120,7 @@ func (ctrl *DNSResolveCacheController) run(ctx context.Context, r controller.Run
 	forwardKubeDNSToHost := cfg.TypedSpec().ServiceHostDNSAddress.IsValid()
 
 	for runCfg, runErr := range ctrl.manager.RunAll(pairs, forwardKubeDNSToHost) {
+		ctrl.Logger.Debug("dns runner result", zap.Any("config", runCfg), zap.Error(runErr))
 		switch {
 		case runErr != nil && (runCfg.Network == "tcp6" || runCfg.Network == "udp6"):
 			// Ignore ipv6 errors
