@@ -71,6 +71,12 @@ Note: VHD and VMDK (Azure and VMware) images are not currently reproducible due 
 Users verifying reproducible images should use raw images, verify checksums, and convert them to VHD/VMDK as needed.
 """
 
+    [notes.vm]
+        title = "VM Hot-Add Support"
+        description = """\
+Talos now includes udev rules to support hot-adding of CPUs in virtualized environments.
+"""
+
 [make_deps]
 
     [make_deps.tools]
