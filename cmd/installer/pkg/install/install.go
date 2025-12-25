@@ -547,14 +547,14 @@ func (i *Installer) getBootPartitions(ctx context.Context, mode Mode, bootloader
 	return bootloader.GenerateAssets("/efi", bootloaderOptions)
 }
 
-func (i *Installer) installBootloader(ctx context.Context, mode Mode, bootlder bootloaderpkg.Bootloader, info *blkid.Info) (*bootloaderoptions.InstallResult, error) {
+func (i *Installer) installBootloader(ctx context.Context, mode Mode, bootloader bootloaderpkg.Bootloader, info *blkid.Info) (*bootloaderoptions.InstallResult, error) {
 	installOptions := i.generateBootloaderOptions(ctx, mode, info)
 
 	switch mode {
 	case ModeInstall:
-		return bootlder.Install(installOptions)
+		return bootloader.Install(installOptions)
 	case ModeUpgrade:
-		return bootlder.Upgrade(installOptions)
+		return bootloader.Upgrade(installOptions)
 	case ModeImage:
 		return &bootloaderoptions.InstallResult{}, nil // bootloader already installed in image mode during partition creation
 	default:
@@ -687,30 +687,30 @@ func (i *Installer) formatPartitions(mode Mode, parts []partition.Options) error
 
 //nolint:gocyclo
 func (i *Installer) handlePartitionDataPopulation(idx int, p partition.Options, pt *gpt.Table) error {
+	// skip data population for partitions without filesystem ie. partition.FilesystemTypeNone
+	// or zeroed partitions ie. partition.FilesystemTypeZeroes
+	if p.FileSystemType == partition.FilesystemTypeNone || p.FileSystemType == partition.FilesystemTypeZeroes {
+		// no data population required
+		return nil
+	}
+
 	partitionImageFile := filepath.Join(i.options.MountPrefix, p.Label+".img")
 
 	if err := utils.CreateRawDisk(i.options.Printf, partitionImageFile, int64(p.Size)); err != nil {
 		return fmt.Errorf("failed to create raw disk for partition %s: %w", p.Label, err)
 	}
 
-	// skip data population for partitions without filesystem ie. partition.FilesystemTypeNone
-	// or zeroed partitions ie. partition.FilesystemTypeZeroes
-	if p.FileSystemType != partition.FilesystemTypeNone && p.FileSystemType != partition.FilesystemTypeZeroes {
-		if p.SourceDirectory == "" {
-			return fmt.Errorf("missing source directory for partition %s", p.Label)
-		}
-
-		// this ensures that the images are reproducible
-		if err := utils.TouchFiles(i.options.Printf, p.SourceDirectory); err != nil {
-			return fmt.Errorf("failed to touch files in source directory %s for partition %s: %w", p.SourceDirectory, p.Label, err)
-		}
+	if p.SourceDirectory == "" {
+		return fmt.Errorf("missing source directory for partition %s", p.Label)
 	}
 
-	// we don't need to zero the partition image here, as CreateRawDisk already does that
-	if p.FileSystemType != partition.FilesystemTypeZeroes {
-		if err := partition.Format(partitionImageFile, &p.FormatOptions, i.options.Version, i.options.Printf); err != nil {
-			return fmt.Errorf("failed to format partition %s: %w", partitionImageFile, err)
-		}
+	// this ensures that the images are reproducible
+	if err := utils.TouchFiles(i.options.Printf, p.SourceDirectory); err != nil {
+		return fmt.Errorf("failed to touch files in source directory %s for partition %s: %w", p.SourceDirectory, p.Label, err)
+	}
+
+	if err := partition.Format(partitionImageFile, &p.FormatOptions, i.options.Version, i.options.Printf); err != nil {
+		return fmt.Errorf("failed to format partition %s: %w", partitionImageFile, err)
 	}
 
 	partitionData, err := os.Open(partitionImageFile)
