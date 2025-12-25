@@ -139,6 +139,10 @@ ghcr.io/siderolabs/zfs:2.3.3-v1.11.2@sha256:73782571f334b18995ddf324d24b86ea9a11
 	suite.T().Log(normalizeTag(version.Tag))
 	suite.T().Log(version.Tag)
 
+	if strings.TrimLeft(version.Tag, "v") == normalizeTag(version.Tag) {
+		suite.T().Skip("skipping the test for the exact version tag")
+	}
+
 	suite.RunCLI([]string{"image", "talos-bundle", "v" + tag.String()},
 		base.StdoutShouldMatch(regexp.MustCompile(regexp.QuoteMeta("ghcr.io/siderolabs/talos:v"+tag.String()))),
 	)
