@@ -33,22 +33,22 @@ func New() *Config {
 }
 
 // GenerateAssets generates the dual-boot bootloader assets and returns the partition options with source directory set.
-func (c *Config) GenerateAssets(efiAssetsPath string, opts options.InstallOptions) ([]partition.Options, error) {
+func (c *Config) GenerateAssets(opts options.InstallOptions) ([]partition.Options, error) {
 	if opts.Arch == "arm64" {
 		return nil, fmt.Errorf("dual-boot bootloader is not supported on arm64 architecture, either GRUB or sd-boot must be used")
 	}
 
 	// here we'll use the grub and sd-boot GenerateAssets logic
 	// and remove the grub `EFI` directory after we're done
-	if _, err := grub.NewConfig().GenerateAssets(efiAssetsPath, opts); err != nil {
+	if _, err := grub.NewConfig().GenerateAssets(opts); err != nil {
 		return nil, fmt.Errorf("failed to install GRUB bootloader: %w", err)
 	}
 
-	if err := os.RemoveAll(filepath.Join(opts.MountPrefix, efiAssetsPath)); err != nil {
+	if err := os.RemoveAll(filepath.Join(opts.MountPrefix, constants.EFIMountPoint)); err != nil {
 		return nil, fmt.Errorf("failed to cleanup GRUB EFI assets directory: %w", err)
 	}
 
-	if _, err := sdboot.New().GenerateAssets(efiAssetsPath, opts); err != nil {
+	if _, err := sdboot.New().GenerateAssets(opts); err != nil {
 		return nil, fmt.Errorf("failed to generate sd-boot assets: %w", err)
 	}
 
@@ -59,7 +59,7 @@ func (c *Config) GenerateAssets(efiAssetsPath string, opts options.InstallOption
 			true,
 			quirk,
 			partition.WithLabel(constants.EFIPartitionLabel),
-			partition.WithSourceDirectory(filepath.Join(opts.MountPrefix, efiAssetsPath)),
+			partition.WithSourceDirectory(filepath.Join(opts.MountPrefix, "EFI")),
 		),
 		partition.NewPartitionOptions(false, quirk, partition.WithLabel(constants.BIOSGrubPartitionLabel)),
 		partition.NewPartitionOptions(

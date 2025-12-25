@@ -94,7 +94,7 @@ func (c *Config) Install(opts options.InstallOptions) (*options.InstallResult, e
 	}, err
 }
 
-func (c *Config) generateGrubImage(opts options.InstallOptions, efiAssetsPath string) error {
+func (c *Config) generateGrubImage(opts options.InstallOptions) error {
 	var copyInstructions []utils.CopyInstruction
 
 	grubSourceDirectory := "/usr/lib/grub"
@@ -195,7 +195,7 @@ func (c *Config) generateGrubImage(opts options.InstallOptions, efiAssetsPath st
 
 	copyInstructions = append(copyInstructions, utils.SourceDestination(
 		grubEFIPath,
-		filepath.Join(opts.MountPrefix, efiAssetsPath, efiFile),
+		filepath.Join(opts.MountPrefix, constants.EFIMountPoint, efiFile),
 	))
 
 	if err := utils.CopyFiles(
@@ -209,7 +209,7 @@ func (c *Config) generateGrubImage(opts options.InstallOptions, efiAssetsPath st
 }
 
 //nolint:gocyclo
-func (c *Config) generateAssets(opts options.InstallOptions, efiAssetsPath string) error {
+func (c *Config) generateAssets(opts options.InstallOptions) error {
 	cmdline := opts.Cmdline
 
 	// if we have a kernel path, assume that the kernel and initramfs are available
@@ -283,7 +283,7 @@ func (c *Config) generateAssets(opts options.InstallOptions, efiAssetsPath strin
 	}
 
 	if opts.ImageMode {
-		return c.generateGrubImage(opts, efiAssetsPath)
+		return c.generateGrubImage(opts)
 	}
 
 	return nil

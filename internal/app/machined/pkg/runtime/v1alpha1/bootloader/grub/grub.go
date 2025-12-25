@@ -94,8 +94,8 @@ func (c *Config) KexecLoad(r runtime.Runtime, disk string) error {
 }
 
 // GenerateAssets generates the bootloader assets and returns partition options to create the bootloader partitions.
-func (c *Config) GenerateAssets(efiAssetsPath string, opts options.InstallOptions) ([]partition.Options, error) {
-	if err := c.generateAssets(opts, efiAssetsPath); err != nil {
+func (c *Config) GenerateAssets(opts options.InstallOptions) ([]partition.Options, error) {
+	if err := c.generateAssets(opts); err != nil {
 		return nil, err
 	}
 
@@ -110,7 +110,7 @@ func (c *Config) GenerateAssets(efiAssetsPath string, opts options.InstallOption
 		// so we don't need to set the source directory for the EFI partition
 		efiFormatOptions = append(
 			efiFormatOptions,
-			partition.WithSourceDirectory(filepath.Join(opts.MountPrefix, efiAssetsPath)),
+			partition.WithSourceDirectory(filepath.Join(opts.MountPrefix, "EFI")),
 		)
 	}
 

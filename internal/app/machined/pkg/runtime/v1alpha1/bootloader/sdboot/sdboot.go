@@ -275,13 +275,13 @@ func (c *Config) KexecLoad(r runtime.Runtime, disk string) error {
 }
 
 // GenerateAssets generates the sd-boot bootloader assets and returns the partition options with source directory set.
-func (c *Config) GenerateAssets(efiAssetsPath string, opts options.InstallOptions) ([]partition.Options, error) {
+func (c *Config) GenerateAssets(opts options.InstallOptions) ([]partition.Options, error) {
 	ukiFileName, err := generateNextUKIName(opts.Version, nil)
 	if err != nil {
 		return nil, err
 	}
 
-	if err := c.generateAssets(opts, efiAssetsPath, ukiFileName); err != nil {
+	if err := c.generateAssets(opts, ukiFileName); err != nil {
 		return nil, err
 	}
 
@@ -292,7 +292,7 @@ func (c *Config) GenerateAssets(efiAssetsPath string, opts options.InstallOption
 			true,
 			quirk,
 			partition.WithLabel(constants.EFIPartitionLabel),
-			partition.WithSourceDirectory(filepath.Join(opts.MountPrefix, efiAssetsPath)),
+			partition.WithSourceDirectory(filepath.Join(opts.MountPrefix, "EFI")),
 		),
 	}
 
@@ -364,7 +364,7 @@ func (c *Config) Upgrade(opts options.InstallOptions) (*options.InstallResult, e
 				}
 			}
 
-			if err := c.generateAssets(opts, constants.EFIMountPoint, ukiPath); err != nil {
+			if err := c.generateAssets(opts, ukiPath); err != nil {
 				return err
 			}
 
@@ -438,12 +438,12 @@ func (c *Config) setup(opts options.InstallOptions, ukiFileName string) (*option
 	}, nil
 }
 
-func (c *Config) generateAssets(opts options.InstallOptions, efiAssetsPath string, ukiFileName string) error {
-	if err := os.MkdirAll(filepath.Join(opts.MountPrefix, efiAssetsPath, "loader"), 0o755); err != nil {
+func (c *Config) generateAssets(opts options.InstallOptions, ukiFileName string) error {
+	if err := os.MkdirAll(filepath.Join(opts.MountPrefix, constants.EFIMountPoint, "loader"), 0o755); err != nil {
 		return err
 	}
 
-	if err := os.WriteFile(filepath.Join(opts.MountPrefix, efiAssetsPath, "loader", "loader.conf"), LoaderConfBytes, 0o644); err != nil {
+	if err := os.WriteFile(filepath.Join(opts.MountPrefix, constants.EFIMountPoint, "loader", "loader.conf"), LoaderConfBytes, 0o644); err != nil {
 		return err
 	}
 
@@ -456,11 +456,11 @@ func (c *Config) generateAssets(opts options.InstallOptions, efiAssetsPath strin
 		opts.Printf,
 		utils.SourceDestination(
 			opts.BootAssets.UKIPath,
-			filepath.Join(opts.MountPrefix, efiAssetsPath, "EFI", "Linux", ukiFileName),
+			filepath.Join(opts.MountPrefix, constants.EFIMountPoint, "EFI", "Linux", ukiFileName),
 		),
 		utils.SourceDestination(
 			opts.BootAssets.SDBootPath,
-			filepath.Join(opts.MountPrefix, efiAssetsPath, sdbootFilename),
+			filepath.Join(opts.MountPrefix, constants.EFIMountPoint, sdbootFilename),
 		),
 	); err != nil {
 		return err

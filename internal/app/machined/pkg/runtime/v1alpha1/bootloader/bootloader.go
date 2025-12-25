@@ -25,7 +25,7 @@ import (
 
 // Bootloader describes a bootloader.
 type Bootloader interface {
-	GenerateAssets(efiAssetsPath string, opts options.InstallOptions) ([]partition.Options, error)
+	GenerateAssets(options options.InstallOptions) ([]partition.Options, error)
 	// Install the bootloader.
 	//
 	// Install mounts the partitions as required.
