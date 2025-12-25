@@ -1,6 +1,6 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
 #
-# Generated on 2025-11-13T15:58:14Z by kres e1d6dac.
+# Generated on 2025-12-25T11:36:39Z by kres 26be706.
 
 policies:
   - type: commit
@@ -39,7 +39,7 @@ policies:
           - kernel
           - security
           - ci
-          - ^v1.12
+          - ^v1.13
   - type: license
     spec:
       skipPaths:

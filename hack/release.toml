@@ -7,7 +7,7 @@ match_deps = "^github.com/((talos-systems|siderolabs)/[a-zA-Z0-9-]+)$"
 ignore_deps = ["github.com/coredns/coredns"]
 
 # previous release
-previous = "v1.11.0"
+previous = "v1.12.0"
 
 pre_release = true
 
