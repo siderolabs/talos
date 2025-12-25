@@ -14,7 +14,7 @@ import (
 )
 
 // CreateRawDisk creates a raw disk image of the specified size.
-func CreateRawDisk(printf func(string, ...any), path string, diskSize int64) error {
+func CreateRawDisk(printf func(string, ...any), path string, diskSize int64, allocate bool) error {
 	printf("creating raw disk of size %s", humanize.Bytes(uint64(diskSize)))
 
 	f, err := os.Create(path)
@@ -28,8 +28,10 @@ func CreateRawDisk(printf func(string, ...any), path string, diskSize int64) err
 		return fmt.Errorf("failed to create raw disk: %w", err)
 	}
 
-	if err = syscall.Fallocate(int(f.Fd()), 0, 0, diskSize); err != nil {
-		fmt.Fprintf(os.Stderr, "WARNING: failed to preallocate disk space for %q (size %d): %s", path, diskSize, err)
+	if allocate {
+		if err = syscall.Fallocate(int(f.Fd()), 0, 0, diskSize); err != nil {
+			fmt.Fprintf(os.Stderr, "WARNING: failed to preallocate disk space for %q (size %d): %s", path, diskSize, err)
+		}
 	}
 
 	return f.Close()

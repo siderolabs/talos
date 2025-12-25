@@ -455,7 +455,7 @@ func (i *Installer) handleMeta(ctx context.Context, mode Mode, previousLabel str
 
 		metaFilePath := filepath.Join(i.options.MountPrefix, "meta.img")
 
-		if err := utils.CreateRawDisk(i.options.Printf, metaFilePath, int64(metaPartitionInfo[0].PartitionSize)); err != nil {
+		if err := utils.CreateRawDisk(i.options.Printf, metaFilePath, int64(metaPartitionInfo[0].PartitionSize), true); err != nil {
 			return fmt.Errorf("failed to create meta image file: %w", err)
 		}
 
@@ -707,7 +707,7 @@ func (i *Installer) handlePartitionDataPopulation(idx int, p partition.Options, 
 
 	partitionImageFile := filepath.Join(i.options.MountPrefix, p.Label+".img")
 
-	if err := utils.CreateRawDisk(i.options.Printf, partitionImageFile, int64(p.Size)); err != nil {
+	if err := utils.CreateRawDisk(i.options.Printf, partitionImageFile, int64(p.Size), true); err != nil {
 		return fmt.Errorf("failed to create raw disk for partition %s: %w", p.Label, err)
 	}
 
@@ -798,7 +798,7 @@ func (i *Installer) handleGrubBlocklist(gptdev gpt.Device, pt *gpt.Table, partit
 
 	partitionImageFile := filepath.Join(i.options.MountPrefix, biosPartitionInfo[0].Label+".img")
 
-	if err := utils.CreateRawDisk(i.options.Printf, partitionImageFile, int64(biosPartitionInfo[0].Size)); err != nil {
+	if err := utils.CreateRawDisk(i.options.Printf, partitionImageFile, int64(biosPartitionInfo[0].Size), true); err != nil {
 		return fmt.Errorf("failed to create raw disk for partition %s: %w", biosPartitionInfo[0].Label, err)
 	}
 

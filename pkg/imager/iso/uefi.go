@@ -57,7 +57,7 @@ func (options Options) CreateUEFI(printf func(string, ...any)) (Generator, error
 		isoSize += (st.Size() + mib - 1) / mib * mib
 	}
 
-	if err := utils.CreateRawDisk(printf, efiBootImg, isoSize); err != nil {
+	if err := utils.CreateRawDisk(printf, efiBootImg, isoSize, true); err != nil {
 		return nil, err
 	}
 

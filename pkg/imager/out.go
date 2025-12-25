@@ -387,7 +387,7 @@ func (i *Imager) buildImage(ctx context.Context, path string, printf func(string
 		i.prof.Output.ImageOptions.DiskSize += imageCacheSize
 	}
 
-	if err := utils.CreateRawDisk(printf, path, i.prof.Output.ImageOptions.DiskSize); err != nil {
+	if err := utils.CreateRawDisk(printf, path, i.prof.Output.ImageOptions.DiskSize, false); err != nil {
 		return err
 	}
 
