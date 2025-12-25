@@ -78,12 +78,6 @@ func (c *Config) Install(opts options.InstallOptions) (*options.InstallResult, e
 				return err
 			}
 
-			if opts.ExtraInstallStep != nil {
-				if err := opts.ExtraInstallStep(); err != nil {
-					return err
-				}
-			}
-
 			return nil
 		},
 		[]blkid.ProbeOption{

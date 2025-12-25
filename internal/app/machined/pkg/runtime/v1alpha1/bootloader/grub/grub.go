@@ -137,6 +137,12 @@ func (c *Config) GenerateAssets(efiAssetsPath string, opts options.InstallOption
 		})
 	}
 
+	if opts.ExtraInstallStep != nil {
+		if err := opts.ExtraInstallStep(); err != nil {
+			return nil, err
+		}
+	}
+
 	return partitionOptions, nil
 }
 
