@@ -11,19 +11,11 @@ import (
 	"strings"
 
 	"github.com/siderolabs/gen/maps"
-	"github.com/siderolabs/gen/xslices"
 	"github.com/spf13/cobra"
 
 	"github.com/siderolabs/talos/pkg/cli"
 	"github.com/siderolabs/talos/pkg/machinery/api/machine"
 )
-
-// InteractiveMode fake mode value for the interactive config mode.
-// Should be never passed to the API.
-//
-// Deprecated: Interactive configuration mode will be removed and
-// should no longer be used.
-const InteractiveMode machine.ApplyConfigurationRequest_Mode = -1
 
 // Mode apply, patch, edit config update mode.
 type Mode struct {
@@ -43,8 +35,6 @@ func (m Mode) String() string {
 		return modeReboot
 	case machine.ApplyConfigurationRequest_STAGED:
 		return modeStaged
-	case InteractiveMode:
-		return modeInteractive
 	default:
 		return modeAuto
 	}
@@ -66,20 +56,16 @@ func (m *Mode) Set(value string) error {
 func (m *Mode) Type() string {
 	options := maps.Keys(m.options)
 	slices.Sort(options)
-	options = xslices.Filter(options, func(opt string) bool {
-		return opt != modeInteractive
-	})
 
 	return strings.Join(options, ", ")
 }
 
 const (
-	modeAuto        = "auto"
-	modeNoReboot    = "no-reboot"
-	modeReboot      = "reboot"
-	modeStaged      = "staged"
-	modeInteractive = "interactive"
-	modeTry         = "try"
+	modeAuto     = "auto"
+	modeNoReboot = "no-reboot"
+	modeReboot   = "reboot"
+	modeStaged   = "staged"
+	modeTry      = "try"
 )
 
 // AddModeFlags adds deprecated flags to the command and registers mode flag with it's parser.
@@ -90,10 +76,6 @@ func AddModeFlags(mode *Mode, command *cobra.Command) {
 		modeReboot:   machine.ApplyConfigurationRequest_REBOOT,
 		modeStaged:   machine.ApplyConfigurationRequest_STAGED,
 		modeTry:      machine.ApplyConfigurationRequest_TRY,
-	}
-
-	if command.Use == "apply-config" {
-		modes[modeInteractive] = InteractiveMode
 	}
 
 	mode.Mode = machine.ApplyConfigurationRequest_AUTO

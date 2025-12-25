@@ -247,13 +247,6 @@ func (c *Client) ApplyConfiguration(ctx context.Context, req *machineapi.ApplyCo
 	return FilterMessages(resp, err)
 }
 
-// GenerateConfiguration implements proto.MachineServiceClient interface.
-func (c *Client) GenerateConfiguration(ctx context.Context, req *machineapi.GenerateConfigurationRequest, callOptions ...grpc.CallOption) (resp *machineapi.GenerateConfigurationResponse, err error) {
-	resp, err = c.MachineClient.GenerateConfiguration(ctx, req, callOptions...) //nolint:staticcheck
-
-	return FilterMessages(resp, err)
-}
-
 // Disks returns the list of block devices.
 func (c *Client) Disks(ctx context.Context, callOptions ...grpc.CallOption) (resp *storageapi.DisksResponse, err error) {
 	resp, err = c.StorageClient.Disks(ctx, &emptypb.Empty{}, callOptions...)

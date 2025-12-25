@@ -64,10 +64,6 @@ service MachineService {
   // EtcdDowngradeCancel cancels etcd cluster downgrade that is in progress.
   // This method is available only on control plane nodes (which run etcd).
   rpc EtcdDowngradeCancel(google.protobuf.Empty) returns (EtcdDowngradeCancelResponse);
-  rpc GenerateConfiguration(GenerateConfigurationRequest) returns (GenerateConfigurationResponse) {
-    option (common.remove_deprecated_method) = "v1.13";
-    option deprecated = true;
-  }
   rpc Hostname(google.protobuf.Empty) returns (HostnameResponse);
   rpc Kubeconfig(google.protobuf.Empty) returns (stream common.Data);
   rpc List(ListRequest) returns (stream FileInfo);
@@ -1226,26 +1222,6 @@ message ClusterConfig {
   ControlPlaneConfig control_plane = 2;
   ClusterNetworkConfig cluster_network = 3;
   bool allow_scheduling_on_control_planes = 4;
-}
-
-// GenerateConfigurationRequest describes a request to generate a new configuration
-// on a node.
-message GenerateConfigurationRequest {
-  string config_version = 1;
-  ClusterConfig cluster_config = 2;
-  MachineConfig machine_config = 3;
-  google.protobuf.Timestamp override_time = 4;
-}
-
-// GenerateConfiguration describes the response to a generate configuration request.
-message GenerateConfiguration {
-  common.Metadata metadata = 1;
-  repeated bytes data = 2;
-  bytes talosconfig = 3;
-}
-
-message GenerateConfigurationResponse {
-  repeated GenerateConfiguration messages = 1;
 }
 
 message GenerateClientConfigurationRequest {

@@ -123,9 +123,6 @@ description: Talos gRPC API reference.
     - [GenerateClientConfiguration](#machine.GenerateClientConfiguration)
     - [GenerateClientConfigurationRequest](#machine.GenerateClientConfigurationRequest)
     - [GenerateClientConfigurationResponse](#machine.GenerateClientConfigurationResponse)
-    - [GenerateConfiguration](#machine.GenerateConfiguration)
-    - [GenerateConfigurationRequest](#machine.GenerateConfigurationRequest)
-    - [GenerateConfigurationResponse](#machine.GenerateConfigurationResponse)
     - [Hostname](#machine.Hostname)
     - [HostnameResponse](#machine.HostnameResponse)
     - [ImageListRequest](#machine.ImageListRequest)
@@ -2385,57 +2382,6 @@ FileInfo describes a file or directory's information
 
 
 
-<a name="machine.GenerateConfiguration"></a>
-
-### GenerateConfiguration
-GenerateConfiguration describes the response to a generate configuration request.
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| metadata | [common.Metadata](#common.Metadata) |  |  |
-| data | [bytes](#bytes) | repeated |  |
-| talosconfig | [bytes](#bytes) |  |  |
-
-
-
-
-
-
-<a name="machine.GenerateConfigurationRequest"></a>
-
-### GenerateConfigurationRequest
-GenerateConfigurationRequest describes a request to generate a new configuration
-on a node.
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| config_version | [string](#string) |  |  |
-| cluster_config | [ClusterConfig](#machine.ClusterConfig) |  |  |
-| machine_config | [MachineConfig](#machine.MachineConfig) |  |  |
-| override_time | [google.protobuf.Timestamp](#google.protobuf.Timestamp) |  |  |
-
-
-
-
-
-
-<a name="machine.GenerateConfigurationResponse"></a>
-
-### GenerateConfigurationResponse
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| messages | [GenerateConfiguration](#machine.GenerateConfiguration) | repeated |  |
-
-
-
-
-
-
 <a name="machine.Hostname"></a>
 
 ### Hostname
@@ -4361,7 +4307,6 @@ The machine service definition.
 | EtcdDowngradeValidate | [EtcdDowngradeValidateRequest](#machine.EtcdDowngradeValidateRequest) | [EtcdDowngradeValidateResponse](#machine.EtcdDowngradeValidateResponse) | EtcdDowngradeValidate validates etcd cluster for downgrade to a specific version. This method is available only on control plane nodes (which run etcd). |
 | EtcdDowngradeEnable | [EtcdDowngradeEnableRequest](#machine.EtcdDowngradeEnableRequest) | [EtcdDowngradeEnableResponse](#machine.EtcdDowngradeEnableResponse) | EtcdDowngradeEnable enables etcd cluster downgrade to a specific version. This method is available only on control plane nodes (which run etcd). |
 | EtcdDowngradeCancel | [.google.protobuf.Empty](#google.protobuf.Empty) | [EtcdDowngradeCancelResponse](#machine.EtcdDowngradeCancelResponse) | EtcdDowngradeCancel cancels etcd cluster downgrade that is in progress. This method is available only on control plane nodes (which run etcd). |
-| GenerateConfiguration | [GenerateConfigurationRequest](#machine.GenerateConfigurationRequest) | [GenerateConfigurationResponse](#machine.GenerateConfigurationResponse) |  |
 | Hostname | [.google.protobuf.Empty](#google.protobuf.Empty) | [HostnameResponse](#machine.HostnameResponse) |  |
 | Kubeconfig | [.google.protobuf.Empty](#google.protobuf.Empty) | [.common.Data](#common.Data) stream |  |
 | List | [ListRequest](#machine.ListRequest) | [FileInfo](#machine.FileInfo) stream |  |

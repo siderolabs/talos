@@ -57,7 +57,6 @@ import (
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system"
 	"github.com/siderolabs/talos/internal/app/resources"
 	storaged "github.com/siderolabs/talos/internal/app/storaged"
-	"github.com/siderolabs/talos/internal/pkg/configuration"
 	"github.com/siderolabs/talos/internal/pkg/containers"
 	taloscontainerd "github.com/siderolabs/talos/internal/pkg/containers/containerd"
 	"github.com/siderolabs/talos/internal/pkg/containers/cri"
@@ -328,15 +327,6 @@ func generateDiff(r runtime.Runtime, provider config.Provider) (string, error) {
 	}
 
 	return "Config diff:\n\n" + documentsDiff, nil
-}
-
-// GenerateConfiguration implements the machine.MachineServer interface.
-func (s *Server) GenerateConfiguration(ctx context.Context, in *machine.GenerateConfigurationRequest) (reply *machine.GenerateConfigurationResponse, err error) {
-	if s.Controller.Runtime().Config().Machine().Type() == machinetype.TypeWorker {
-		return nil, errors.New("config can't be generated on worker nodes")
-	}
-
-	return configuration.Generate(ctx, s.Controller.Runtime().State().V1Alpha2().Resources(), in)
 }
 
 // Reboot implements the machine.MachineServer interface.

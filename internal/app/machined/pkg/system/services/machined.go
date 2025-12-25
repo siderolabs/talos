@@ -62,7 +62,6 @@ var rules = map[string]role.Set{
 	"/machine.MachineService/EtcdDowngradeValidate":       role.MakeSet(role.Admin),
 	"/machine.MachineService/Events":                      role.MakeSet(role.Admin, role.Operator, role.Reader),
 	"/machine.MachineService/GenerateClientConfiguration": role.MakeSet(role.Admin),
-	"/machine.MachineService/GenerateConfiguration":       role.MakeSet(role.Admin),
 	"/machine.MachineService/Hostname":                    role.MakeSet(role.Admin, role.Operator, role.Reader),
 	"/machine.MachineService/ImageList":                   role.MakeSet(role.Admin, role.Operator, role.Reader),
 	"/machine.MachineService/ImagePull":                   role.MakeSet(role.Admin, role.Operator),

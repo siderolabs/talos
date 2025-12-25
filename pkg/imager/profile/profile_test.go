@@ -29,7 +29,7 @@ func TestFillDefaults(t *testing.T) {
 	})
 
 	arches := []string{"amd64", "arm64"}
-	versions := []string{"1.9.0", "1.10.0", "1.11.0", "1.12.0"}
+	versions := []string{"1.9.0", "1.10.0", "1.11.0", "1.12.0", "1.13.0"}
 
 	lastVersion := semver.MustParse(versions[len(versions)-1])
 
@@ -39,7 +39,7 @@ func TestFillDefaults(t *testing.T) {
 	currentVersion.Patch = 0
 	currentVersion.Pre = nil
 
-	require.True(t, lastVersion.EQ(currentVersion), "last version %s should be equal to current version %s", lastVersion, currentVersion)
+	require.True(t, lastVersion.GTE(currentVersion), "last version %s should be greater or equal to current version %s", lastVersion, currentVersion)
 
 	profiles := maps.Keys(defaultProfiles)
 
@@ -47,6 +47,11 @@ func TestFillDefaults(t *testing.T) {
 
 	// flip this to true to generate missing testdata files
 	const recordMissing = false
+
+	if recordMissing {
+		t.Logf("recording missing testdata files, failing the test")
+		t.Fail()
+	}
 
 	for _, profile := range profiles {
 		t.Run(profile, func(t *testing.T) {

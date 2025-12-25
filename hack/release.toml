@@ -79,6 +79,15 @@ Users verifying reproducible images should use raw images, verify checksums, and
 Talos now includes udev rules to support hot-adding of CPUs in virtualized environments.
 """
 
+    [notest.interactive-installer]
+        title = "Interactive Installer Removal"
+        description = """\
+The interactive installer mode has been removed from `talosctl apply-config` (`--mode=interactive`).
+It has been deprecated since Talos v1.12.0, and now fully removed.
+The related `GenerateConfiguration` API method has also been removed.
+Users are encouraged to use other installation methods, such as using pre-generated configuration files, or using Omni.
+"""
+
 [make_deps]
 
     [make_deps.tools]

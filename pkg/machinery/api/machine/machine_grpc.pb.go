@@ -45,7 +45,6 @@ const (
 	MachineService_EtcdDowngradeValidate_FullMethodName       = "/machine.MachineService/EtcdDowngradeValidate"
 	MachineService_EtcdDowngradeEnable_FullMethodName         = "/machine.MachineService/EtcdDowngradeEnable"
 	MachineService_EtcdDowngradeCancel_FullMethodName         = "/machine.MachineService/EtcdDowngradeCancel"
-	MachineService_GenerateConfiguration_FullMethodName       = "/machine.MachineService/GenerateConfiguration"
 	MachineService_Hostname_FullMethodName                    = "/machine.MachineService/Hostname"
 	MachineService_Kubeconfig_FullMethodName                  = "/machine.MachineService/Kubeconfig"
 	MachineService_List_FullMethodName                        = "/machine.MachineService/List"
@@ -137,8 +136,6 @@ type MachineServiceClient interface {
 	// EtcdDowngradeCancel cancels etcd cluster downgrade that is in progress.
 	// This method is available only on control plane nodes (which run etcd).
 	EtcdDowngradeCancel(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*EtcdDowngradeCancelResponse, error)
-	// Deprecated: Do not use.
-	GenerateConfiguration(ctx context.Context, in *GenerateConfigurationRequest, opts ...grpc.CallOption) (*GenerateConfigurationResponse, error)
 	Hostname(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*HostnameResponse, error)
 	Kubeconfig(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (grpc.ServerStreamingClient[common.Data], error)
 	List(ctx context.Context, in *ListRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[FileInfo], error)
@@ -441,17 +438,6 @@ func (c *machineServiceClient) EtcdDowngradeCancel(ctx context.Context, in *empt
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(EtcdDowngradeCancelResponse)
 	err := c.cc.Invoke(ctx, MachineService_EtcdDowngradeCancel_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-// Deprecated: Do not use.
-func (c *machineServiceClient) GenerateConfiguration(ctx context.Context, in *GenerateConfigurationRequest, opts ...grpc.CallOption) (*GenerateConfigurationResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(GenerateConfigurationResponse)
-	err := c.cc.Invoke(ctx, MachineService_GenerateConfiguration_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -898,8 +884,6 @@ type MachineServiceServer interface {
 	// EtcdDowngradeCancel cancels etcd cluster downgrade that is in progress.
 	// This method is available only on control plane nodes (which run etcd).
 	EtcdDowngradeCancel(context.Context, *emptypb.Empty) (*EtcdDowngradeCancelResponse, error)
-	// Deprecated: Do not use.
-	GenerateConfiguration(context.Context, *GenerateConfigurationRequest) (*GenerateConfigurationResponse, error)
 	Hostname(context.Context, *emptypb.Empty) (*HostnameResponse, error)
 	Kubeconfig(*emptypb.Empty, grpc.ServerStreamingServer[common.Data]) error
 	List(*ListRequest, grpc.ServerStreamingServer[FileInfo]) error
@@ -1014,9 +998,6 @@ func (UnimplementedMachineServiceServer) EtcdDowngradeEnable(context.Context, *E
 }
 func (UnimplementedMachineServiceServer) EtcdDowngradeCancel(context.Context, *emptypb.Empty) (*EtcdDowngradeCancelResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method EtcdDowngradeCancel not implemented")
-}
-func (UnimplementedMachineServiceServer) GenerateConfiguration(context.Context, *GenerateConfigurationRequest) (*GenerateConfigurationResponse, error) {
-	return nil, status.Error(codes.Unimplemented, "method GenerateConfiguration not implemented")
 }
 func (UnimplementedMachineServiceServer) Hostname(context.Context, *emptypb.Empty) (*HostnameResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method Hostname not implemented")
@@ -1488,24 +1469,6 @@ func _MachineService_EtcdDowngradeCancel_Handler(srv interface{}, ctx context.Co
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(MachineServiceServer).EtcdDowngradeCancel(ctx, req.(*emptypb.Empty))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _MachineService_GenerateConfiguration_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GenerateConfigurationRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(MachineServiceServer).GenerateConfiguration(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: MachineService_GenerateConfiguration_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(MachineServiceServer).GenerateConfiguration(ctx, req.(*GenerateConfigurationRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -2111,10 +2074,6 @@ var MachineService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "EtcdDowngradeCancel",
 			Handler:    _MachineService_EtcdDowngradeCancel_Handler,
-		},
-		{
-			MethodName: "GenerateConfiguration",
-			Handler:    _MachineService_GenerateConfiguration_Handler,
 		},
 		{
 			MethodName: "Hostname",

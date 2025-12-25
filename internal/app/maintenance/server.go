@@ -26,13 +26,11 @@ import (
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
 	"github.com/siderolabs/talos/internal/app/resources"
 	storaged "github.com/siderolabs/talos/internal/app/storaged"
-	"github.com/siderolabs/talos/internal/pkg/configuration"
 	"github.com/siderolabs/talos/pkg/grpc/middleware/authz"
 	"github.com/siderolabs/talos/pkg/machinery/api/machine"
 	"github.com/siderolabs/talos/pkg/machinery/api/storage"
 	"github.com/siderolabs/talos/pkg/machinery/config"
 	"github.com/siderolabs/talos/pkg/machinery/config/configloader"
-	v1alpha1machine "github.com/siderolabs/talos/pkg/machinery/config/machine"
 	blockres "github.com/siderolabs/talos/pkg/machinery/resources/block"
 	"github.com/siderolabs/talos/pkg/machinery/role"
 	"github.com/siderolabs/talos/pkg/machinery/version"
@@ -131,25 +129,6 @@ Node is running in maintenance mode and does not have a config yet.`
 	s.cfgCh <- cfgProvider
 
 	return reply, nil
-}
-
-// GenerateConfiguration implements the [machine.MachineServiceServer] interface.
-func (s *Server) GenerateConfiguration(ctx context.Context, in *machine.GenerateConfigurationRequest) (*machine.GenerateConfigurationResponse, error) {
-	if s.mode.IsAgent() {
-		return nil, status.Error(codes.Unimplemented, "API is not implemented in agent mode")
-	}
-
-	if in.MachineConfig == nil {
-		return nil, errors.New("invalid generate request")
-	}
-
-	machineType := v1alpha1machine.Type(in.MachineConfig.Type)
-
-	if machineType == v1alpha1machine.TypeWorker {
-		return nil, errors.New("join config can't be generated in the maintenance mode")
-	}
-
-	return configuration.Generate(ctx, s.controller.Runtime().State().V1Alpha2().Resources(), in)
 }
 
 // GenerateClientConfiguration implements the [machine.MachineServiceServer] interface.

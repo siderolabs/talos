@@ -16,7 +16,6 @@ import (
 	"google.golang.org/protobuf/types/known/durationpb"
 
 	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/helpers"
-	"github.com/siderolabs/talos/internal/pkg/tui/installer"
 	machineapi "github.com/siderolabs/talos/pkg/machinery/api/machine"
 	"github.com/siderolabs/talos/pkg/machinery/client"
 	"github.com/siderolabs/talos/pkg/machinery/config/configpatcher"
@@ -59,39 +58,39 @@ var applyConfigCmd = &cobra.Command{
 			}
 		}
 
-		if applyConfigCmdFlags.filename != "" {
-			cfgBytes, err = os.ReadFile(applyConfigCmdFlags.filename)
-			if err != nil {
-				return fmt.Errorf("failed to read configuration from %q: %w", applyConfigCmdFlags.filename, err)
-			}
-
-			if len(cfgBytes) < 1 {
-				return errors.New("no configuration data read")
-			}
-
-			if len(applyConfigCmdFlags.patches) != 0 {
-				var (
-					cfg     configpatcher.Input
-					patches []configpatcher.Patch
-				)
-
-				patches, err = configpatcher.LoadPatches(applyConfigCmdFlags.patches)
-				if err != nil {
-					return err
-				}
-
-				cfg, err = configpatcher.Apply(configpatcher.WithBytes(cfgBytes), patches)
-				if err != nil {
-					return err
-				}
-
-				cfgBytes, err = cfg.Bytes()
-				if err != nil {
-					return err
-				}
-			}
-		} else if applyConfigCmdFlags.Mode.Mode != helpers.InteractiveMode { //nolint:staticcheck
+		if applyConfigCmdFlags.filename == "" {
 			return errors.New("no filename supplied for configuration")
+		}
+
+		cfgBytes, err = os.ReadFile(applyConfigCmdFlags.filename)
+		if err != nil {
+			return fmt.Errorf("failed to read configuration from %q: %w", applyConfigCmdFlags.filename, err)
+		}
+
+		if len(cfgBytes) < 1 {
+			return errors.New("no configuration data read")
+		}
+
+		if len(applyConfigCmdFlags.patches) != 0 {
+			var (
+				cfg     configpatcher.Input
+				patches []configpatcher.Patch
+			)
+
+			patches, err = configpatcher.LoadPatches(applyConfigCmdFlags.patches)
+			if err != nil {
+				return err
+			}
+
+			cfg, err = configpatcher.Apply(configpatcher.WithBytes(cfgBytes), patches)
+			if err != nil {
+				return err
+			}
+
+			cfgBytes, err = cfg.Bytes()
+			if err != nil {
+				return err
+			}
 		}
 
 		withClient := func(f func(context.Context, *client.Client) error) error {
@@ -103,44 +102,6 @@ var applyConfigCmd = &cobra.Command{
 		}
 
 		return withClient(func(ctx context.Context, c *client.Client) error {
-			if applyConfigCmdFlags.Mode.Mode == helpers.InteractiveMode { //nolint:staticcheck
-				install := installer.NewInstaller()
-				node := GlobalArgs.Nodes[0]
-
-				if len(GlobalArgs.Endpoints) > 0 {
-					return WithClientNoNodes(func(bootstrapCtx context.Context, bootstrapClient *client.Client) error {
-						opts := []installer.Option{
-							installer.WithBootstrapNode(bootstrapCtx, bootstrapClient, GlobalArgs.Endpoints[0]),
-							installer.WithDryRun(applyConfigCmdFlags.dryRun),
-						}
-
-						conn, err := installer.NewConnection(
-							ctx,
-							c,
-							node,
-							opts...,
-						)
-						if err != nil {
-							return err
-						}
-
-						return install.Run(conn)
-					})
-				}
-
-				conn, err := installer.NewConnection(
-					ctx,
-					c,
-					node,
-					installer.WithDryRun(applyConfigCmdFlags.dryRun),
-				)
-				if err != nil {
-					return err
-				}
-
-				return install.Run(conn)
-			}
-
 			resp, err := c.ApplyConfiguration(ctx, &machineapi.ApplyConfigurationRequest{
 				Data:           cfgBytes,
 				Mode:           applyConfigCmdFlags.Mode.Mode,
