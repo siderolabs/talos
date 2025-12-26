@@ -1,6 +1,6 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
 #
-# Generated on 2025-12-18T09:21:29Z by kres 26be706.
+# Generated on 2025-12-26T07:10:19Z by kres 26be706.
 
 concurrency:
   group: ${{ github.head_ref || github.run_id }}
@@ -83,37 +83,49 @@ jobs:
         if: github.event_name == 'schedule'
         run: |
           make talosctl-cni-bundle
-      - name: factory-1.10-iso
+      - name: factory-1.11-iso
         env:
           FACTORY_BOOT_METHOD: iso
           FACTORY_SCHEMATIC: 376567988ad370138ad8b2698212367b8edcb69b5fd68c80be1f2ec7d603b4ba
           FACTORY_UPGRADE: "true"
           FACTORY_UPGRADE_SCHEMATIC: cf9b7aab9ed7c365d5384509b4d31c02fdaa06d2b3ac6cc0bc806f28130eff1f
-          FACTORY_UPGRADE_VERSION: v1.10.4
-          FACTORY_VERSION: v1.10.3
-          GITHUB_STEP_NAME: ${{ github.job}}-factory-1.10-iso
-          KUBERNETES_VERSION: 1.33.2
+          FACTORY_UPGRADE_VERSION: v1.11.6
+          FACTORY_VERSION: v1.11.5
+          GITHUB_STEP_NAME: ${{ github.job}}-factory-1.11-iso
+          KUBERNETES_VERSION: 1.34.3
         run: |
           sudo -E make e2e-image-factory
-      - name: factory-1.10-image
+      - name: factory-1.11-image
         env:
           FACTORY_BOOT_METHOD: disk-image
           FACTORY_SCHEMATIC: 376567988ad370138ad8b2698212367b8edcb69b5fd68c80be1f2ec7d603b4ba
           FACTORY_UPGRADE: "true"
           FACTORY_UPGRADE_SCHEMATIC: cf9b7aab9ed7c365d5384509b4d31c02fdaa06d2b3ac6cc0bc806f28130eff1f
-          FACTORY_UPGRADE_VERSION: v1.10.4
-          FACTORY_VERSION: v1.10.3
-          GITHUB_STEP_NAME: ${{ github.job}}-factory-1.10-image
-          KUBERNETES_VERSION: 1.33.2
+          FACTORY_UPGRADE_VERSION: v1.11.6
+          FACTORY_VERSION: v1.11.5
+          GITHUB_STEP_NAME: ${{ github.job}}-factory-1.11-image
+          KUBERNETES_VERSION: 1.34.3
         run: |
           sudo -E make e2e-image-factory
-      - name: factory-1.10-pxe
+      - name: factory-1.11-pxe
         env:
           FACTORY_BOOT_METHOD: ipxe
           FACTORY_SCHEMATIC: 376567988ad370138ad8b2698212367b8edcb69b5fd68c80be1f2ec7d603b4ba
-          FACTORY_VERSION: v1.10.4
-          GITHUB_STEP_NAME: ${{ github.job}}-factory-1.10-pxe
-          KUBERNETES_VERSION: 1.33.2
+          FACTORY_VERSION: v1.11.6
+          GITHUB_STEP_NAME: ${{ github.job}}-factory-1.11-pxe
+          KUBERNETES_VERSION: 1.34.3
+        run: |
+          sudo -E make e2e-image-factory
+      - name: factory-1.11-secureboot
+        env:
+          FACTORY_BOOT_METHOD: secureboot-iso
+          FACTORY_SCHEMATIC: cf9b7aab9ed7c365d5384509b4d31c02fdaa06d2b3ac6cc0bc806f28130eff1f
+          FACTORY_UPGRADE: "true"
+          FACTORY_UPGRADE_SCHEMATIC: 376567988ad370138ad8b2698212367b8edcb69b5fd68c80be1f2ec7d603b4ba
+          FACTORY_UPGRADE_VERSION: v1.11.6
+          FACTORY_VERSION: v1.11.5
+          GITHUB_STEP_NAME: ${{ github.job}}-factory-1.11-secureboot
+          KUBERNETES_VERSION: 1.34.3
         run: |
           sudo -E make e2e-image-factory
       - name: factory-1.10-secureboot
@@ -122,22 +134,22 @@ jobs:
           FACTORY_SCHEMATIC: cf9b7aab9ed7c365d5384509b4d31c02fdaa06d2b3ac6cc0bc806f28130eff1f
           FACTORY_UPGRADE: "true"
           FACTORY_UPGRADE_SCHEMATIC: 376567988ad370138ad8b2698212367b8edcb69b5fd68c80be1f2ec7d603b4ba
-          FACTORY_UPGRADE_VERSION: v1.10.4
-          FACTORY_VERSION: v1.10.3
+          FACTORY_UPGRADE_VERSION: v1.10.9
+          FACTORY_VERSION: v1.10.8
           GITHUB_STEP_NAME: ${{ github.job}}-factory-1.10-secureboot
-          KUBERNETES_VERSION: 1.33.2
+          KUBERNETES_VERSION: 1.33.7
         run: |
           sudo -E make e2e-image-factory
-      - name: factory-1.9-secureboot
+      - name: factory-1.10-iso
         env:
-          FACTORY_BOOT_METHOD: secureboot-iso
-          FACTORY_SCHEMATIC: cf9b7aab9ed7c365d5384509b4d31c02fdaa06d2b3ac6cc0bc806f28130eff1f
+          FACTORY_BOOT_METHOD: iso
+          FACTORY_SCHEMATIC: 376567988ad370138ad8b2698212367b8edcb69b5fd68c80be1f2ec7d603b4ba
           FACTORY_UPGRADE: "true"
-          FACTORY_UPGRADE_SCHEMATIC: 376567988ad370138ad8b2698212367b8edcb69b5fd68c80be1f2ec7d603b4ba
-          FACTORY_UPGRADE_VERSION: v1.9.6
-          FACTORY_VERSION: v1.9.5
-          GITHUB_STEP_NAME: ${{ github.job}}-factory-1.9-secureboot
-          KUBERNETES_VERSION: 1.32.6
+          FACTORY_UPGRADE_SCHEMATIC: cf9b7aab9ed7c365d5384509b4d31c02fdaa06d2b3ac6cc0bc806f28130eff1f
+          FACTORY_UPGRADE_VERSION: v1.10.9
+          FACTORY_VERSION: v1.10.8
+          GITHUB_STEP_NAME: ${{ github.job}}-factory-1.10-iso
+          KUBERNETES_VERSION: 1.33.7
         run: |
           sudo -E make e2e-image-factory
       - name: factory-1.9-iso
@@ -149,19 +161,7 @@ jobs:
           FACTORY_UPGRADE_VERSION: v1.9.6
           FACTORY_VERSION: v1.9.5
           GITHUB_STEP_NAME: ${{ github.job}}-factory-1.9-iso
-          KUBERNETES_VERSION: 1.32.6
-        run: |
-          sudo -E make e2e-image-factory
-      - name: factory-1.8-iso
-        env:
-          FACTORY_BOOT_METHOD: iso
-          FACTORY_SCHEMATIC: 376567988ad370138ad8b2698212367b8edcb69b5fd68c80be1f2ec7d603b4ba
-          FACTORY_UPGRADE: "true"
-          FACTORY_UPGRADE_SCHEMATIC: cf9b7aab9ed7c365d5384509b4d31c02fdaa06d2b3ac6cc0bc806f28130eff1f
-          FACTORY_UPGRADE_VERSION: v1.8.4
-          FACTORY_VERSION: v1.8.3
-          GITHUB_STEP_NAME: ${{ github.job}}-factory-1.8-iso
-          KUBERNETES_VERSION: 1.31.10
+          KUBERNETES_VERSION: 1.32.11
         run: |
           sudo -E make e2e-image-factory
       - name: save artifacts
