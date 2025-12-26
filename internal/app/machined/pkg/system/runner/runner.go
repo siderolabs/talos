@@ -6,18 +6,15 @@
 package runner
 
 import (
-	"context"
 	"fmt"
 	"io"
 	"time"
 
 	containerd "github.com/containerd/containerd/v2/client"
-	ocicontainers "github.com/containerd/containerd/v2/core/containers"
 	"github.com/containerd/containerd/v2/pkg/oci"
 	"github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/siderolabs/gen/maps"
 	"github.com/siderolabs/gen/optional"
-	"github.com/siderolabs/go-pointer"
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/logging"
@@ -242,23 +239,6 @@ func WithCtty(ctty int) Option {
 func WithUID(uid uint32) Option {
 	return func(args *Options) {
 		args.UID = uid
-	}
-}
-
-// WithMemoryReservation sets the memory reservation limit as on OCI spec.
-func WithMemoryReservation(limit uint64) oci.SpecOpts {
-	return func(_ context.Context, _ oci.Client, _ *ocicontainers.Container, s *oci.Spec) error {
-		if s.Linux.Resources == nil {
-			s.Linux.Resources = &specs.LinuxResources{}
-		}
-
-		if s.Linux.Resources.Memory == nil {
-			s.Linux.Resources.Memory = &specs.LinuxMemory{}
-		}
-
-		s.Linux.Resources.Memory.Reservation = pointer.To(int64(limit))
-
-		return nil
 	}
 }
 
