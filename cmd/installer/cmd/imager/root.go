@@ -31,7 +31,6 @@ import (
 var cmdFlags struct {
 	Platform string
 	Arch     string
-	Board    string
 	// Insecure can be set to true to force pull from insecure registry.
 	Insecure              bool
 	ExtraKernelArgs       []string
@@ -77,7 +76,6 @@ var rootCmd = &cobra.Command{
 				prof = profile.Profile{
 					BaseProfileName: baseProfile,
 					Arch:            cmdFlags.Arch,
-					Board:           cmdFlags.Board,
 					Platform:        cmdFlags.Platform,
 					Customization: profile.CustomizationProfile{
 						ExtraKernelArgs: cmdFlags.ExtraKernelArgs,
@@ -236,7 +234,6 @@ func init() {
 	rootCmd.PersistentFlags().StringVar(&cmdFlags.Arch, "arch", runtime.GOARCH, "The target architecture")
 	rootCmd.PersistentFlags().StringVar(&cmdFlags.BaseInstallerImage, "base-installer-image", "", "Base installer image to use")
 	rootCmd.PersistentFlags().StringVar(&cmdFlags.ImageCache, "image-cache", "", "Image cache container image or oci path")
-	rootCmd.PersistentFlags().StringVar(&cmdFlags.Board, "board", "", "The value of "+constants.KernelParamBoard)
 	rootCmd.PersistentFlags().BoolVar(&cmdFlags.Insecure, "insecure", false, "Pull assets from insecure registry")
 	rootCmd.PersistentFlags().StringArrayVar(&cmdFlags.ExtraKernelArgs, "extra-kernel-arg", []string{}, "Extra argument to pass to the kernel")
 	rootCmd.PersistentFlags().Var(&cmdFlags.MetaValues, "meta", "A key/value pair for META")
@@ -248,9 +245,6 @@ func init() {
 	rootCmd.PersistentFlags().StringVar(&cmdFlags.OverlayImage, "overlay-image", "", "The image reference to the overlay")
 	rootCmd.PersistentFlags().StringArrayVar(&cmdFlags.OverlayOptions, "overlay-option", []string{}, "Extra options to pass to the overlay")
 	rootCmd.PersistentFlags().StringVar(&cmdFlags.EmbeddedConfigPath, "embedded-config-path", "", "Path to a file containing the machine configuration to embed into the image")
-	rootCmd.MarkFlagsMutuallyExclusive("board", "overlay-name")
-	rootCmd.MarkFlagsMutuallyExclusive("board", "overlay-image")
-	rootCmd.MarkFlagsMutuallyExclusive("board", "overlay-option")
 	rootCmd.PersistentFlags().BoolVar(
 		&cmdFlags.SecurebootIncludeWellKnownCerts, "secureboot-include-well-known-certs", false, "Include well-known (Microsoft) UEFI certificates when generating a secure boot database")
 }

@@ -31,14 +31,6 @@ func TestSBC(t *testing.T) {
 
 			expectedDiskImagePath: "metal-arm64.raw.xz",
 		},
-		{
-			name: "bananapi_m64",
-
-			sbc:          platforms.SBCs()[0],
-			talosVersion: "1.4.0",
-
-			expectedDiskImagePath: "metal-rpi_generic-arm64.raw.xz",
-		},
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()

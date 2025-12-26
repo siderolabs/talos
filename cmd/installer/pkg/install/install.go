@@ -27,7 +27,6 @@ import (
 	"go.yaml.in/yaml/v4"
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
-	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/board"
 	bootloaderpkg "github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/grub"
 	bootloaderoptions "github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/options"
@@ -53,7 +52,6 @@ type Options struct {
 	DiskPath            string
 	Platform            string
 	Arch                string
-	Board               string
 	ExtraKernelArgs     []string
 	Upgrade             bool
 	Force               bool
@@ -104,13 +102,7 @@ const diskImageLabel = "talos-image-disk"
 //
 //nolint:gocyclo
 func Install(ctx context.Context, p runtime.Platform, mode Mode, opts *Options) error {
-	overlayPresent := overlayPresent()
-
-	if b := getBoard(); b != constants.BoardNone && !overlayPresent {
-		return fmt.Errorf("using standard installer image is not supported for board: %s, use an installer with overlay", b)
-	}
-
-	if overlayPresent {
+	if overlayPresent() {
 		extraOptionsBytes, err := os.ReadFile(constants.ImagerOverlayExtraOptionsPath)
 		if err != nil {
 			return err
@@ -142,24 +134,6 @@ func Install(ctx context.Context, p runtime.Platform, mode Mode, opts *Options) 
 	// first defaults, then extra kernel args to allow extra kernel args to override defaults
 	if err := cmdline.AppendAll(kernel.DefaultArgs(quirks.Quirks{})); err != nil {
 		return err
-	}
-
-	if opts.Board != constants.BoardNone {
-		// board 'rpi_4' was removed in Talos 1.5 in favor of `rpi_generic`
-		if opts.Board == "rpi_4" {
-			opts.Board = constants.BoardRPiGeneric
-		}
-
-		var b runtime.Board
-
-		b, err := board.NewBoard(opts.Board) //nolint:staticcheck
-		if err != nil {
-			return err
-		}
-
-		cmdline.Append(constants.KernelParamBoard, b.Name())
-
-		cmdline.SetAll(b.KernelArgs().Strings())
 	}
 
 	if opts.OverlayInstaller != nil {
@@ -545,28 +519,6 @@ func (i *Installer) generateBootloaderOptions(ctx context.Context, mode Mode, in
 		BlkidInfo:         info,
 
 		ExtraInstallStep: func() error {
-			if i.options.Board != constants.BoardNone {
-				var b runtime.Board
-
-				b, err := board.NewBoard(i.options.Board) //nolint:staticcheck
-				if err != nil {
-					return err
-				}
-
-				i.options.Printf("installing U-Boot for %q", b.Name())
-
-				if err = b.Install(runtime.BoardInstallOptions{
-					InstallDisk:     i.options.DiskPath,
-					MountPrefix:     i.options.MountPrefix,
-					UBootPath:       i.options.BootAssets.UBootPath,
-					DTBPath:         i.options.BootAssets.DTBPath,
-					RPiFirmwarePath: i.options.BootAssets.RPiFirmwarePath,
-					Printf:          i.options.Printf,
-				}); err != nil {
-					return fmt.Errorf("failed to install for board %s: %w", b.Name(), err)
-				}
-			}
-
 			if i.options.OverlayInstaller != nil {
 				i.options.Printf("running overlay installer %q", i.options.OverlayName)
 
@@ -919,18 +871,7 @@ func (i *Installer) handleGrubBlocklist(gptdev gpt.Device, pt *gpt.Table, partit
 //
 //nolint:gocyclo
 func (i *Installer) getPartitionOptions(ctx context.Context, mode Mode, hostTalosVersion *compatibility.TalosVersion, bootPartitions []partition.Options) ([]partition.Options, []gpt.Option, error) {
-	var partitionOptions *runtime.PartitionOptions
-
-	if i.options.Board != constants.BoardNone && !quirks.New(i.options.Version).SupportsOverlay() {
-		var b runtime.Board
-
-		b, err := board.NewBoard(i.options.Board) //nolint:staticcheck
-		if err != nil {
-			return nil, nil, err
-		}
-
-		partitionOptions = b.PartitionOptions()
-	}
+	var partitionOffset uint64
 
 	if i.options.OverlayInstaller != nil {
 		overlayOpts, getOptsErr := i.options.OverlayInstaller.GetOptions(ctx, i.options.ExtraOptions)
@@ -939,16 +880,14 @@ func (i *Installer) getPartitionOptions(ctx context.Context, mode Mode, hostTalo
 		}
 
 		if overlayOpts.PartitionOptions.Offset != 0 {
-			partitionOptions = &runtime.PartitionOptions{
-				PartitionsOffset: overlayOpts.PartitionOptions.Offset,
-			}
+			partitionOffset = overlayOpts.PartitionOptions.Offset
 		}
 	}
 
 	var gptOptions []gpt.Option
 
-	if partitionOptions != nil && partitionOptions.PartitionsOffset != 0 {
-		gptOptions = append(gptOptions, gpt.WithSkipLBAs(uint(partitionOptions.PartitionsOffset)))
+	if partitionOffset != 0 {
+		gptOptions = append(gptOptions, gpt.WithSkipLBAs(uint(partitionOffset)))
 	}
 
 	if i.options.LegacyBIOSSupport {
@@ -1044,18 +983,4 @@ func overlayPresent() bool {
 	_, err := os.Stat(constants.ImagerOverlayInstallerDefaultPath)
 
 	return err == nil
-}
-
-func getBoard() string {
-	cmdline := procfs.ProcCmdline()
-	if cmdline == nil {
-		return constants.BoardNone
-	}
-
-	board := cmdline.Get(constants.KernelParamBoard)
-	if board == nil {
-		return constants.BoardNone
-	}
-
-	return *board.First()
 }

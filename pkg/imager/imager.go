@@ -17,8 +17,6 @@ import (
 	"github.com/siderolabs/go-procfs/procfs"
 	"go.yaml.in/yaml/v4"
 
-	talosruntime "github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
-	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/board"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/platform"
 	"github.com/siderolabs/talos/internal/pkg/uki"
 	"github.com/siderolabs/talos/pkg/imager/extensions"
@@ -364,19 +362,6 @@ func (i *Imager) buildCmdline(ctx context.Context) error {
 
 	if q.SupportsHaltIfInstalled() && i.prof.Output.Kind == profile.OutKindISO {
 		cmdline.Append(constants.KernelParamHaltIfInstalled, "1")
-	}
-
-	// board kernel args
-	if i.prof.Board != "" && !q.SupportsOverlay() {
-		var b talosruntime.Board
-
-		b, err = board.NewBoard(i.prof.Board) //nolint:staticcheck
-		if err != nil {
-			return err
-		}
-
-		cmdline.Append(constants.KernelParamBoard, b.Name())
-		cmdline.SetAll(b.KernelArgs().Strings())
 	}
 
 	// overlay kernel args

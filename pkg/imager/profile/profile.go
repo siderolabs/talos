@@ -29,8 +29,6 @@ type Profile struct {
 	Arch string `yaml:"arch"`
 	// Platform name of the image: qemu, aws, gcp, etc.
 	Platform string `yaml:"platform"`
-	// Board name of the image: rpi4, etc. (only for metal image and arm64).
-	Board string `yaml:"board,omitempty"`
 	// SecureBoot enables SecureBoot (only for UEFI build).
 	SecureBoot *bool `yaml:"secureboot"`
 	// Version is Talos version.
@@ -71,16 +69,6 @@ func (p *Profile) Validate() error {
 
 	if p.Platform == "" {
 		return errors.New("platform is required")
-	}
-
-	if p.Board != "" {
-		if p.Overlay != nil {
-			return errors.New("overlay is not supported with board options")
-		}
-
-		if p.Arch != arm64 || p.Platform != "metal" {
-			return errors.New("board is only supported for metal arm64")
-		}
 	}
 
 	if p.SecureBootEnabled() && !quirks.New(p.Version).SupportsUKI() {
@@ -139,10 +127,6 @@ func (p *Profile) Validate() error {
 //nolint:gocyclo
 func (p *Profile) OutputPath() string {
 	path := p.Platform
-
-	if p.Board != "" {
-		path += "-" + p.Board
-	}
 
 	path += "-" + p.Arch
 

@@ -58,10 +58,6 @@ const (
 	// platform.
 	KernelParamPlatform = "talos.platform"
 
-	// KernelParamBoard is the kernel parameter name for specifying the
-	// SBC.
-	KernelParamBoard = "talos.board"
-
 	// KernelParamEventsSink is the kernel parameter name for specifying the
 	// events sink server.
 	KernelParamEventsSink = "talos.events.sink"
@@ -104,36 +100,6 @@ const (
 
 	// KernelParamSELinuxEnforcing is the kernel parameter name to control SELinux enforcement mode.
 	KernelParamSELinuxEnforcing = "enforcing"
-
-	// BoardNone indicates that the install is not for a specific board.
-	BoardNone = "none"
-
-	// BoardLibretechAllH3CCH5 is the  name of the Libre Computer board ALL-H3-CC.
-	BoardLibretechAllH3CCH5 = "libretech_all_h3_cc_h5"
-
-	// BoardRPiGeneric is the  name of the Raspberry Pi Compute Module 4.
-	BoardRPiGeneric = "rpi_generic"
-
-	// BoardBananaPiM64 is the  name of the Banana Pi M64.
-	BoardBananaPiM64 = "bananapi_m64"
-
-	// BoardPine64 is the  name of the Pine64.
-	BoardPine64 = "pine64"
-
-	// BoardJetsonNano is the name of the Jetson Nano.
-	BoardJetsonNano = "jetson_nano"
-
-	// BoardRock64 is the  name of the Rock64.
-	BoardRock64 = "rock64"
-
-	// BoardRockpi4 is the name of the Radxa Rock pi 4 revisions A and B.
-	BoardRockpi4 = "rockpi_4"
-
-	// BoardRockpi4c is the name of the Radxa Rock pi 4 revision C.
-	BoardRockpi4c = "rockpi_4c"
-
-	// BoardNanoPiR4S is the name of the Friendlyelec Nano Pi R4S.
-	BoardNanoPiR4S = "nanopi_r4s"
 
 	// KernelParamHostname is the kernel parameter name for specifying the
 	// hostname.

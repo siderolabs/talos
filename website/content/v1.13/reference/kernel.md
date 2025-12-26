@@ -192,17 +192,6 @@ Valid options are:
 * `vmware`
 * `vultr`
 
-#### `talos.board`
-
-The board name, if Talos is being used on an ARM64 SBC.
-
-Supported boards are:
-
-* `bananapi_m64`: Banana Pi M64
-* `libretech_all_h3_cc_h5`: Libre Computer ALL-H3-CC
-* `rock64`: Pine64 Rock64
-* ...
-
 #### `talos.hostname`
 
 The hostname to be used.

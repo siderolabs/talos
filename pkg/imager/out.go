@@ -330,7 +330,6 @@ func (i *Imager) buildImage(ctx context.Context, path string, printf func(string
 		DiskPath:   path,
 		Platform:   i.prof.Platform,
 		Arch:       i.prof.Arch,
-		Board:      i.prof.Board,
 		MetaValues: install.FromMeta(metaContents),
 
 		ImageSecureboot:     i.prof.SecureBootEnabled(),
@@ -353,10 +352,6 @@ func (i *Imager) buildImage(ctx context.Context, path string, printf func(string
 		opts.OverlayInstaller = i.overlayInstaller
 		opts.ExtraOptions = i.prof.Overlay.ExtraOptions
 		opts.OverlayExtractedDir = i.tempDir
-	}
-
-	if opts.Board == "" {
-		opts.Board = constants.BoardNone
 	}
 
 	if i.prof.Input.ImageCache != zeroContainerAsset {

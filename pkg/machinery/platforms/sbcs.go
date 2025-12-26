@@ -6,16 +6,11 @@ package platforms
 
 import (
 	"github.com/blang/semver/v4"
-
-	"github.com/siderolabs/talos/pkg/machinery/imager/quirks"
 )
 
 // SBC describes a Single Board Computer configuration.
 type SBC struct {
 	Name string
-
-	// For Talos < 1.7.
-	BoardName string
 
 	// For Talos 1.7+
 	OverlayName  string
@@ -29,11 +24,7 @@ type SBC struct {
 
 // DiskImagePath returns the path to the disk image for the SBC.
 func (s SBC) DiskImagePath(talosVersion string) string {
-	if quirks.New(talosVersion).SupportsOverlay() {
-		return "metal-arm64.raw.xz"
-	}
-
-	return "metal-" + s.BoardName + "-arm64.raw.xz"
+	return "metal-arm64.raw.xz"
 }
 
 // SBCs returns a list of supported Single Board Computers.
@@ -41,8 +32,6 @@ func SBCs() []SBC {
 	return []SBC{
 		{
 			Name: "rpi_generic",
-
-			BoardName: "rpi_generic",
 
 			OverlayName:  "rpi_generic",
 			OverlayImage: "siderolabs/sbc-raspberrypi",
@@ -63,8 +52,6 @@ func SBCs() []SBC {
 		{
 			Name: "bananapi_m64",
 
-			BoardName: "bananapi_m64",
-
 			OverlayName:  "bananapi_m64",
 			OverlayImage: "siderolabs/sbc-allwinner",
 
@@ -73,8 +60,6 @@ func SBCs() []SBC {
 		},
 		{
 			Name: "nanopi_r4s",
-
-			BoardName: "rockpi_4",
 
 			OverlayName:  "nanopi-r4s",
 			OverlayImage: "siderolabs/sbc-rockchip",
@@ -97,8 +82,6 @@ func SBCs() []SBC {
 		{
 			Name: "jetson_nano",
 
-			BoardName: "jetson_nano",
-
 			OverlayName:  "jetson_nano",
 			OverlayImage: "siderolabs/sbc-jetson",
 
@@ -107,8 +90,6 @@ func SBCs() []SBC {
 		},
 		{
 			Name: "libretech_all_h3_cc_h5",
-
-			BoardName: "libretech_all_h3_cc_h5",
 
 			OverlayName:  "libretech_all_h3_cc_h5",
 			OverlayImage: "siderolabs/sbc-allwinner",
@@ -130,8 +111,6 @@ func SBCs() []SBC {
 		{
 			Name: "pine64",
 
-			BoardName: "pine64",
-
 			OverlayName:  "pine64",
 			OverlayImage: "siderolabs/sbc-allwinner",
 
@@ -140,8 +119,6 @@ func SBCs() []SBC {
 		},
 		{
 			Name: "rock64",
-
-			BoardName: "rock64",
 
 			OverlayName:  "rock64",
 			OverlayImage: "siderolabs/sbc-rockchip",
@@ -196,8 +173,6 @@ func SBCs() []SBC {
 		{
 			Name: "rockpi_4",
 
-			BoardName: "rockpi_4",
-
 			OverlayName:  "rockpi4",
 			OverlayImage: "siderolabs/sbc-rockchip",
 
@@ -206,8 +181,6 @@ func SBCs() []SBC {
 		},
 		{
 			Name: "rockpi_4c",
-
-			BoardName: "rockpi_4c",
 
 			OverlayName:  "rockpi4c",
 			OverlayImage: "siderolabs/sbc-rockchip",

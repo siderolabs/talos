@@ -23,11 +23,6 @@ import (
 func TestFillDefaults(t *testing.T) {
 	t.Parallel()
 
-	// we can ignore profile that are legacy Boards
-	defaultProfiles := maps.Filter(profile.Default, func(k string, v profile.Profile) bool {
-		return v.Board == ""
-	})
-
 	arches := []string{"amd64", "arm64"}
 	versions := []string{"1.9.0", "1.10.0", "1.11.0", "1.12.0", "1.13.0"}
 
@@ -41,7 +36,7 @@ func TestFillDefaults(t *testing.T) {
 
 	require.True(t, lastVersion.GTE(currentVersion), "last version %s should be greater or equal to current version %s", lastVersion, currentVersion)
 
-	profiles := maps.Keys(defaultProfiles)
+	profiles := maps.Keys(profile.Default)
 
 	sort.Strings(profiles)
 
@@ -53,13 +48,13 @@ func TestFillDefaults(t *testing.T) {
 		t.Fail()
 	}
 
-	for _, profile := range profiles {
-		t.Run(profile, func(t *testing.T) {
+	for _, prof := range profiles {
+		t.Run(prof, func(t *testing.T) {
 			t.Parallel()
 
 			var secureBoot bool
 
-			if strings.HasPrefix(profile, "secureboot") {
+			if strings.HasPrefix(prof, "secureboot") {
 				secureBoot = true
 			}
 
@@ -71,7 +66,7 @@ func TestFillDefaults(t *testing.T) {
 						t.Run(version, func(t *testing.T) {
 							t.Parallel()
 
-							p := defaultProfiles[profile].DeepCopy()
+							p := profile.Default[prof].DeepCopy()
 
 							p.Arch = arch
 							p.Version = version
@@ -85,13 +80,13 @@ func TestFillDefaults(t *testing.T) {
 
 							require.NoError(t, p.Dump(&profileData))
 
-							expectedData, err := os.ReadFile("testdata/" + profile + "-" + arch + "-" + version + ".yaml")
+							expectedData, err := os.ReadFile("testdata/" + prof + "-" + arch + "-" + version + ".yaml")
 							if errors.Is(err, fs.ErrNotExist) && recordMissing {
-								require.NoError(t, os.WriteFile("testdata/"+profile+"-"+arch+"-"+version+".yaml", []byte(profileData.String()), 0o644))
+								require.NoError(t, os.WriteFile("testdata/"+prof+"-"+arch+"-"+version+".yaml", []byte(profileData.String()), 0o644))
 							} else {
 								require.NoError(t, err)
 
-								require.Equal(t, string(expectedData), profileData.String(), "profile: %s, platform: %s, version: %s", profile, arch, version)
+								require.Equal(t, string(expectedData), profileData.String(), "profile: %s, platform: %s, version: %s", prof, arch, version)
 							}
 						})
 					}
