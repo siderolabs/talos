@@ -47,12 +47,6 @@ type Input struct {
 	SDStub FileAsset `yaml:"sdStub,omitempty"`
 	// SDBoot is a sd-boot file (only for SecureBoot).
 	SDBoot FileAsset `yaml:"sdBoot,omitempty"`
-	// DTB is a path to the device tree blobs (arm64 only).
-	DTB FileAsset `yaml:"dtb,omitempty"`
-	// UBoot is a path to the u-boot binary (arm64 only).
-	UBoot FileAsset `yaml:"uBoot,omitempty"`
-	// RPiFirmware is a path to the Raspberry Pi firmware (arm64 only).
-	RPiFirmware FileAsset `yaml:"rpiFirmware,omitempty"`
 	// Base installer image to mutate.
 	BaseInstaller ContainerAsset `yaml:"baseInstaller,omitempty"`
 	// ImageCache is an image cache to inject into the asset.
@@ -189,20 +183,6 @@ func (i *Input) FillDefaults(arch, version string, secureboot bool) {
 
 	if i.Initramfs == zeroFileAsset {
 		i.Initramfs.Path = fmt.Sprintf(constants.InitramfsAssetPath, arch)
-	}
-
-	if arch == arm64 && !quirks.New(version).SupportsOverlay() {
-		if i.DTB == zeroFileAsset {
-			i.DTB.Path = fmt.Sprintf(constants.DTBAssetPath, arch)
-		}
-
-		if i.UBoot == zeroFileAsset {
-			i.UBoot.Path = fmt.Sprintf(constants.UBootAssetPath, arch)
-		}
-
-		if i.RPiFirmware == zeroFileAsset {
-			i.RPiFirmware.Path = fmt.Sprintf(constants.RPiFirmwareAssetPath, arch)
-		}
 	}
 
 	if i.BaseInstaller == zeroContainerAsset {

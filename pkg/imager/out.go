@@ -336,13 +336,10 @@ func (i *Imager) buildImage(ctx context.Context, path string, printf func(string
 		DiskImageBootloader: i.prof.Output.ImageOptions.Bootloader.String(),
 		Version:             i.prof.Version,
 		BootAssets: options.BootAssets{
-			KernelPath:      i.prof.Input.Kernel.Path,
-			InitramfsPath:   i.initramfsPath,
-			UKIPath:         i.ukiPath,
-			SDBootPath:      i.sdBootPath,
-			DTBPath:         i.prof.Input.DTB.Path,
-			UBootPath:       i.prof.Input.UBoot.Path,
-			RPiFirmwarePath: i.prof.Input.RPiFirmware.Path,
+			KernelPath:    i.prof.Input.Kernel.Path,
+			InitramfsPath: i.initramfsPath,
+			UKIPath:       i.ukiPath,
+			SDBootPath:    i.sdBootPath,
 		},
 		MountPrefix: scratchSpace,
 		Printf:      printf,
@@ -517,39 +514,6 @@ func (i *Imager) outInstaller(ctx context.Context, path string, report *reporter
 				SourcePath: i.initramfsPath,
 			},
 		)
-	}
-
-	if !quirks.SupportsOverlay() {
-		for _, extraArtifact := range []struct {
-			sourcePath string
-			imagePath  string
-		}{
-			{
-				sourcePath: i.prof.Input.DTB.Path,
-				imagePath:  strings.TrimLeft(fmt.Sprintf(constants.DTBAssetPath, i.prof.Arch), "/"),
-			},
-			{
-				sourcePath: i.prof.Input.UBoot.Path,
-				imagePath:  strings.TrimLeft(fmt.Sprintf(constants.UBootAssetPath, i.prof.Arch), "/"),
-			},
-			{
-				sourcePath: i.prof.Input.RPiFirmware.Path,
-				imagePath:  strings.TrimLeft(fmt.Sprintf(constants.RPiFirmwareAssetPath, i.prof.Arch), "/"),
-			},
-		} {
-			if extraArtifact.sourcePath == "" {
-				continue
-			}
-
-			var extraFiles []filemap.File
-
-			extraFiles, err = filemap.Walk(extraArtifact.sourcePath, extraArtifact.imagePath)
-			if err != nil {
-				return fmt.Errorf("failed to walk extra artifact %s: %w", extraArtifact.sourcePath, err)
-			}
-
-			artifacts = append(artifacts, extraFiles...)
-		}
 	}
 
 	artifactsLayer, err := filemap.Layer(artifacts)

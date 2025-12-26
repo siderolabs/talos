@@ -640,15 +640,6 @@ const (
 	// SDBootAssetPath is the path to the SDBoot in the installer.
 	SDBootAssetPath = "/usr/install/%s/" + SDBootAsset
 
-	// DTBAssetPath is the path to the device tree blobs in the installer.
-	DTBAssetPath = "/usr/install/%s/dtb"
-
-	// UBootAssetPath is the path to the u-boot in the installer.
-	UBootAssetPath = "/usr/install/%s/u-boot"
-
-	// RPiFirmwareAssetPath is the path to the raspberrypi firmware in the installer.
-	RPiFirmwareAssetPath = "/usr/install/%s/raspberrypi-firmware"
-
 	// ImagerOverlayBasePath is the base path for the imager overlay.
 	ImagerOverlayBasePath = "/overlay"
 	// ImagerOverlayArtifactsPath is the path to the artifacts in the imager overlay.
