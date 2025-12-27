@@ -695,10 +695,9 @@ type NetworkConfig struct {
 	//
 	// Deprecated: Use `StatisHostConfig` instead.
 	ExtraHostEntries []*ExtraHost `yaml:"extraHostEntries,omitempty"`
-	//   description: |
-	//     Configures KubeSpan feature.
-	//   examples:
-	//     - value: networkKubeSpanExample()
+	// docgen:nodoc
+	//
+	// Deprecated: Use `KubeSpanConfig` document instead.
 	NetworkKubeSpan *NetworkKubeSpan `yaml:"kubespan,omitempty"`
 	// docgen:nodoc
 	//
@@ -2350,6 +2349,8 @@ type ClusterInlineManifest struct {
 }
 
 // NetworkKubeSpan struct describes KubeSpan configuration.
+//
+// Deprecated: Use KubeSpanConfig document instead.
 type NetworkKubeSpan struct {
 	// description: |
 	//   Enable the KubeSpan feature.

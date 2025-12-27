@@ -907,23 +907,9 @@ func (NetworkConfig) Doc() *encoder.Doc {
 			},
 		},
 		Fields: []encoder.Doc{
-			{},
-			{},
-			{},
-			{},
-			{},
-			{
-				Name:        "kubespan",
-				Type:        "NetworkKubeSpan",
-				Note:        "",
-				Description: "Configures KubeSpan feature.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Configures KubeSpan feature." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-			{},
+			{}, {}, {}, {}, {}, {}, {},
 		},
 	}
-
-	doc.Fields[5].AddExample("", networkKubeSpanExample())
 
 	return doc
 }
@@ -2188,12 +2174,6 @@ func (NetworkKubeSpan) Doc() *encoder.Doc {
 		Type:        "NetworkKubeSpan",
 		Comments:    [3]string{"" /* encoder.HeadComment */, "NetworkKubeSpan struct describes KubeSpan configuration." /* encoder.LineComment */, "" /* encoder.FootComment */},
 		Description: "NetworkKubeSpan struct describes KubeSpan configuration.",
-		AppearsIn: []encoder.Appearance{
-			{
-				TypeName:  "NetworkConfig",
-				FieldName: "kubespan",
-			},
-		},
 		Fields: []encoder.Doc{
 			{
 				Name:        "enabled",
@@ -2239,8 +2219,6 @@ func (NetworkKubeSpan) Doc() *encoder.Doc {
 			},
 		},
 	}
-
-	doc.AddExample("", networkKubeSpanExample())
 
 	return doc
 }
