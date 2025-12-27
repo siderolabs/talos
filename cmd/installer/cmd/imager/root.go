@@ -59,6 +59,16 @@ var rootCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return cli.WithContext(context.Background(), func(ctx context.Context) error {
 			report := reporter.New()
+
+			if os.Getuid() != 0 {
+				report.Report(reporter.Update{
+					Message: "imager is not running as root, re-execing with a usernamespace...",
+					Status:  reporter.StatusRunning,
+				})
+
+				return cli.ReExecWithUserNamespace(cmd.Context())
+			}
+
 			report.Report(reporter.Update{
 				Message: "assembling the finalized profile...",
 				Status:  reporter.StatusRunning,
