@@ -60,7 +60,7 @@ jobs:
         run: |
           echo pull_request_number=$(gh pr view -R ${{ github.repository }} ${{ github.event.workflow_run.head_repository.owner.login }}:${{ github.event.workflow_run.head_branch }} --json number --jq .number) >> $GITHUB_OUTPUT
       - name: Slack Notify
-        uses: slackapi/slack-github-action@91efab103c0de0a537f72a35f6b8cda0ee76bf0a # version: v2.1.1
+        uses: slackapi/slack-github-action@5ae53f9ab3a0882dc89dbfe38e3ae46fd88ea91a # version: v2.1.1
         with:
           method: chat.postMessage
           payload: |
