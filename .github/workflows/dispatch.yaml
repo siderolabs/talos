@@ -28,7 +28,7 @@ jobs:
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@59699597e84e80085a750998045983daa49274c4 # version: v1.4.0
+        uses: kenchan0130/actions-system-info@11675272041e5d0a8b124bd27922b44d8716d048 # version: v1.4.0
         continue-on-error: true
       - name: print-system-info
         run: |
