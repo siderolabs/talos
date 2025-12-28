@@ -174,7 +174,11 @@ func (container *Container) Machine() config.MachineConfig {
 		return nil
 	}
 
-	return container.v1alpha1Config.Machine()
+	// Wrap the machine config to override Network().KubeSpan() with multi-doc aggregation
+	return &machineConfigWrapper{
+		MachineConfig: container.v1alpha1Config.Machine(),
+		container:     container,
+	}
 }
 
 // Cluster implements config.Config interface.
@@ -184,6 +188,48 @@ func (container *Container) Cluster() config.ClusterConfig {
 	}
 
 	return container.v1alpha1Config.Cluster()
+}
+
+// machineConfigWrapper wraps MachineConfig to override Network().KubeSpan() with multi-doc aggregation.
+type machineConfigWrapper struct {
+	config.MachineConfig
+	container *Container
+}
+
+// Network overrides MachineConfig.Network() to provide multi-doc KubeSpan aggregation.
+func (m *machineConfigWrapper) Network() config.MachineNetwork {
+	if m.MachineConfig == nil {
+		return nil
+	}
+
+	return &networkConfigWrapper{
+		MachineNetwork: m.MachineConfig.Network(),
+		container:      m.container,
+	}
+}
+
+// networkConfigWrapper wraps MachineNetwork to override KubeSpan() with multi-doc aggregation.
+type networkConfigWrapper struct {
+	config.MachineNetwork
+	container *Container
+}
+
+// KubeSpan overrides MachineNetwork.KubeSpan() to aggregate multi-doc and v1alpha1 configs.
+// Priority: new multi-doc KubeSpanConfig documents take precedence over old v1alpha1 path.
+func (n *networkConfigWrapper) KubeSpan() config.KubeSpan {
+	// Check for new multi-doc KubeSpanConfig documents
+	multiDocConfigs := findMatchingDocs[config.KubeSpan](n.container.documents)
+	if len(multiDocConfigs) > 0 {
+		// Return the first multi-doc config found (only one should exist)
+		return multiDocConfigs[0]
+	}
+
+	// Fall back to old v1alpha1 path
+	if n.MachineNetwork != nil {
+		return n.MachineNetwork.KubeSpan()
+	}
+
+	return nil
 }
 
 func findMatchingDocs[T any](documents []config.Document) []T {
