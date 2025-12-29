@@ -138,55 +138,63 @@ var imagePullCmd = &cobra.Command{
 	},
 }
 
-// imageDefaultCmd represents the image k8s-bundle command.
-var imageDefaultCmd = &cobra.Command{
+var imageK8sBundleCmdFlags = struct {
+	k8sVersion     pflag.Value
+	flannelVersion pflag.Value
+	corednsVersion pflag.Value
+	etcdVersion    pflag.Value
+}{
+	k8sVersion:     helpers.Semver(constants.DefaultKubernetesVersion),
+	flannelVersion: helpers.Semver(constants.FlannelVersion),
+	corednsVersion: helpers.Semver(constants.DefaultCoreDNSVersion),
+	etcdVersion:    helpers.Semver(constants.DefaultEtcdVersion),
+}
+
+// imageK8sBundleCmd represents the image k8s-bundle command.
+var imageK8sBundleCmd = &cobra.Command{
 	Use:     "k8s-bundle",
 	Aliases: []string{"default"},
 	Short:   "List the default Kubernetes images used by Talos",
 	Long:    ``,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		images := images.List(container.NewV1Alpha1(&v1alpha1.Config{
-			MachineConfig: &v1alpha1.MachineConfig{
-				MachineKubelet: &v1alpha1.KubeletConfig{},
+		images := images.ListWithOptions(container.NewV1Alpha1(
+			&v1alpha1.Config{
+				MachineConfig: &v1alpha1.MachineConfig{
+					MachineKubelet: &v1alpha1.KubeletConfig{},
+				},
+				ClusterConfig: &v1alpha1.ClusterConfig{
+					EtcdConfig:              &v1alpha1.EtcdConfig{},
+					APIServerConfig:         &v1alpha1.APIServerConfig{},
+					ControllerManagerConfig: &v1alpha1.ControllerManagerConfig{},
+					SchedulerConfig:         &v1alpha1.SchedulerConfig{},
+					CoreDNSConfig:           &v1alpha1.CoreDNS{},
+					ProxyConfig:             &v1alpha1.ProxyConfig{},
+				},
+			}),
+			images.VersionsListOptions{
+				KubernetesVersion: imageK8sBundleCmdFlags.k8sVersion.String(),
+				EtcdVersion:       imageK8sBundleCmdFlags.etcdVersion.String(),
+				FlannelVersion:    imageK8sBundleCmdFlags.flannelVersion.String(),
+				CoreDNSVersion:    imageK8sBundleCmdFlags.corednsVersion.String(),
 			},
-			ClusterConfig: &v1alpha1.ClusterConfig{
-				EtcdConfig:              &v1alpha1.EtcdConfig{},
-				APIServerConfig:         &v1alpha1.APIServerConfig{},
-				ControllerManagerConfig: &v1alpha1.ControllerManagerConfig{},
-				SchedulerConfig:         &v1alpha1.SchedulerConfig{},
-				CoreDNSConfig:           &v1alpha1.CoreDNS{},
-				ProxyConfig:             &v1alpha1.ProxyConfig{},
-			},
-		}))
+		)
 
 		fmt.Printf("%s\n", images.Flannel)
 		fmt.Printf("%s\n", images.CoreDNS)
 		fmt.Printf("%s\n", images.Etcd)
+		fmt.Printf("%s\n", images.Pause)
 		fmt.Printf("%s\n", images.KubeAPIServer)
 		fmt.Printf("%s\n", images.KubeControllerManager)
 		fmt.Printf("%s\n", images.KubeScheduler)
 		fmt.Printf("%s\n", images.KubeProxy)
 		fmt.Printf("%s\n", images.Kubelet)
-		fmt.Printf("%s\n", images.Pause)
 
 		return nil
 	},
 }
 
-const (
-	provisionerDocker    = "docker"
-	provisionerInstaller = "installer"
-	provisionerAll       = "all"
-)
-
-var imageDefaultCmdFlags = struct {
-	provisioner pflag.Value
-}{
-	provisioner: helpers.StringChoice(provisionerInstaller, provisionerDocker, provisionerAll),
-}
-
-// imageSourceBundleCmd represents the image talos-bundle command.
-var imageSourceBundleCmd = &cobra.Command{
+// imageTalosBundleCmd represents the image talos-bundle command.
+var imageTalosBundleCmd = &cobra.Command{
 	Use:   "talos-bundle [talos-version]",
 	Short: "List the default system images and extensions used for Talos",
 	Long:  ``,
@@ -320,15 +328,15 @@ var imageIntegrationCmd = &cobra.Command{
 		}))
 
 		imageNames := []string{
-			imgs.Flannel,
-			imgs.CoreDNS,
-			imgs.Etcd,
-			imgs.KubeAPIServer,
-			imgs.KubeControllerManager,
-			imgs.KubeScheduler,
-			imgs.KubeProxy,
-			imgs.Kubelet,
-			imgs.Pause,
+			imgs.Flannel.String(),
+			imgs.CoreDNS.String(),
+			imgs.Etcd.String(),
+			imgs.KubeAPIServer.String(),
+			imgs.KubeControllerManager.String(),
+			imgs.KubeScheduler.String(),
+			imgs.KubeProxy.String(),
+			imgs.Kubelet.String(),
+			imgs.Pause.String(),
 			"registry.k8s.io/conformance:v" + constants.DefaultKubernetesVersion,
 			"docker.io/library/alpine:latest",
 			"ghcr.io/siderolabs/talosctl:latest",
@@ -647,12 +655,15 @@ func init() {
 	imageCmd.PersistentFlags().StringVar(&imageCmdFlags.namespace, "namespace", "cri", "namespace to use: `system` (etcd and kubelet images) or `cri` for all Kubernetes workloads")
 	addCommand(imageCmd)
 
-	imageCmd.AddCommand(imageDefaultCmd)
-	imageDefaultCmd.PersistentFlags().Var(imageDefaultCmdFlags.provisioner, "provisioner", "include provisioner specific images")
-
 	imageCmd.AddCommand(imageListCmd)
 	imageCmd.AddCommand(imagePullCmd)
-	imageCmd.AddCommand(imageSourceBundleCmd)
+	imageCmd.AddCommand(imageTalosBundleCmd)
+
+	imageCmd.AddCommand(imageK8sBundleCmd)
+	imageK8sBundleCmd.PersistentFlags().Var(imageK8sBundleCmdFlags.k8sVersion, "k8s-version", "Kubernetes semantic version")
+	imageK8sBundleCmd.PersistentFlags().Var(imageK8sBundleCmdFlags.etcdVersion, "etcd-version", "ETCD semantic version")
+	imageK8sBundleCmd.PersistentFlags().Var(imageK8sBundleCmdFlags.flannelVersion, "flannel-version", "Flannel CNI semantic version")
+	imageK8sBundleCmd.PersistentFlags().Var(imageK8sBundleCmdFlags.corednsVersion, "coredns-version", "CoreDNS semantic version")
 
 	imageCmd.AddCommand(imageCacheCreateCmd)
 	imageCacheCreateCmd.PersistentFlags().StringVar(&imageCacheCreateCmdFlags.imageCachePath, "image-cache-path", "", "directory to save the image cache in OCI format")
