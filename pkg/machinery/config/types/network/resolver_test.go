@@ -96,7 +96,7 @@ func TestResolverV1Alpha1Validate(t *testing.T) {
 			name: "v1alpha1 nameservers set",
 			v1alpha1Cfg: &v1alpha1.Config{
 				MachineConfig: &v1alpha1.MachineConfig{
-					MachineNetwork: &v1alpha1.NetworkConfig{
+					MachineNetwork: &v1alpha1.NetworkConfig{ //nolint:staticcheck // legacy config
 						NameServers: []string{"1.1.1.1"},
 					},
 				},
@@ -109,7 +109,7 @@ func TestResolverV1Alpha1Validate(t *testing.T) {
 			name: "v1alpha1 search domains set",
 			v1alpha1Cfg: &v1alpha1.Config{
 				MachineConfig: &v1alpha1.MachineConfig{
-					MachineNetwork: &v1alpha1.NetworkConfig{
+					MachineNetwork: &v1alpha1.NetworkConfig{ //nolint:staticcheck // legacy config
 						Searches: []string{"cluster.org"},
 					},
 				},
@@ -122,7 +122,7 @@ func TestResolverV1Alpha1Validate(t *testing.T) {
 			name: "v1alpha1 disable search domains set",
 			v1alpha1Cfg: &v1alpha1.Config{
 				MachineConfig: &v1alpha1.MachineConfig{
-					MachineNetwork: &v1alpha1.NetworkConfig{
+					MachineNetwork: &v1alpha1.NetworkConfig{ //nolint:staticcheck // legacy config
 						NetworkDisableSearchDomain: pointer.To(true),
 					},
 				},

@@ -90,3 +90,12 @@ func (c *Config) NetworkTimeSyncConfig() config.NetworkTimeSyncConfig {
 
 	return c.MachineConfig.MachineTime
 }
+
+// NetworkKubeSpanConfig implements the config.NetworkKubeSpanConfig interface.
+func (c *Config) NetworkKubeSpanConfig() config.NetworkKubeSpanConfig {
+	if c.MachineConfig == nil || c.MachineConfig.MachineNetwork == nil || c.MachineConfig.MachineNetwork.NetworkKubeSpan == nil {
+		return nil
+	}
+
+	return c.MachineConfig.MachineNetwork.NetworkKubeSpan
+}

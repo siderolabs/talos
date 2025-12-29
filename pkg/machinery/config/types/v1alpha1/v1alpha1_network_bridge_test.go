@@ -477,3 +477,83 @@ func TestTimeSyncBridging(t *testing.T) {
 		})
 	}
 }
+
+func TestKubeSpanBridging(t *testing.T) {
+	t.Parallel()
+
+	for _, test := range []struct {
+		name string
+
+		cfg func(*testing.T) config.Config
+
+		expectedKubeSpanExists  bool
+		expectedKubeSpanEnabled bool
+	}{
+		{
+			name: "v1alpha1 only",
+
+			cfg: func(*testing.T) config.Config {
+				return container.NewV1Alpha1(&v1alpha1.Config{
+					MachineConfig: &v1alpha1.MachineConfig{
+						MachineNetwork: &v1alpha1.NetworkConfig{
+							NetworkKubeSpan: &v1alpha1.NetworkKubeSpan{
+								KubeSpanEnabled: pointer.To(true),
+							},
+						},
+					},
+				})
+			},
+
+			expectedKubeSpanExists:  true,
+			expectedKubeSpanEnabled: true,
+		},
+		{
+			name: "v1alpha1 empty",
+
+			cfg: func(*testing.T) config.Config {
+				return container.NewV1Alpha1(&v1alpha1.Config{
+					MachineConfig: &v1alpha1.MachineConfig{},
+				})
+			},
+
+			expectedKubeSpanExists:  false,
+			expectedKubeSpanEnabled: false,
+		},
+		{
+			name: "new style only",
+
+			cfg: func(*testing.T) config.Config {
+				kc := network.NewKubeSpanV1Alpha1()
+				kc.ConfigEnabled = pointer.To(true)
+
+				c, err := container.New(
+					kc,
+				)
+				require.NoError(t, err)
+
+				return c
+			},
+
+			expectedKubeSpanExists:  true,
+			expectedKubeSpanEnabled: true,
+		},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+
+			cfg := test.cfg(t)
+
+			kubespanConfig := cfg.NetworkKubeSpanConfig()
+
+			if !test.expectedKubeSpanExists {
+				require.Nil(t, kubespanConfig)
+
+				return
+			}
+
+			require.NotNil(t, kubespanConfig)
+
+			assert.Equal(t, test.expectedKubeSpanEnabled, kubespanConfig.Enabled())
+		})
+	}
+}

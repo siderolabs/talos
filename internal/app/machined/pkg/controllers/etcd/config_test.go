@@ -195,7 +195,7 @@ func (suite *ConfigSuite) TestReconcile() {
 				},
 				MachineConfig: &v1alpha1.MachineConfig{
 					MachineType: "controlplane",
-					MachineNetwork: &v1alpha1.NetworkConfig{
+					MachineNetwork: &v1alpha1.NetworkConfig{ //nolint:staticcheck // legacy config
 						NetworkInterfaces: tt.networkConfig,
 					},
 				},

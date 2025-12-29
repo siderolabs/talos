@@ -13,10 +13,8 @@ import (
 
 	"github.com/siderolabs/talos/pkg/machinery/config/config"
 	"github.com/siderolabs/talos/pkg/machinery/config/machine"
-	"github.com/siderolabs/talos/pkg/machinery/config/types/network"
 	v1alpha1 "github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
-	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
 )
 
 //nolint:gocyclo,cyclop
@@ -27,14 +25,6 @@ func (in *Input) worker() ([]config.Document, error) {
 		ConfigPersist: pointer.To(true),
 	}
 
-	networkConfig := &v1alpha1.NetworkConfig{}
-
-	for _, opt := range in.Options.NetworkConfigOptions {
-		if err := opt(machine.TypeWorker, networkConfig); err != nil {
-			return nil, err
-		}
-	}
-
 	machine := &v1alpha1.MachineConfig{
 		MachineType:     machine.TypeWorker.String(),
 		MachineToken:    in.Options.SecretsBundle.TrustdInfo.Token,
@@ -42,8 +32,7 @@ func (in *Input) worker() ([]config.Document, error) {
 		MachineKubelet: &v1alpha1.KubeletConfig{
 			KubeletImage: emptyIf(fmt.Sprintf("%s:v%s", constants.KubeletImage, in.KubernetesVersion), in.KubernetesVersion),
 		},
-		MachineNetwork: networkConfig,
-		MachineCA:      &x509.PEMEncodedCertificateAndKey{Crt: in.Options.SecretsBundle.Certs.OS.Crt},
+		MachineCA: &x509.PEMEncodedCertificateAndKey{Crt: in.Options.SecretsBundle.Certs.OS.Crt},
 		MachineInstall: &v1alpha1.InstallConfig{
 			InstallDisk:            in.Options.InstallDisk,
 			InstallImage:           in.Options.InstallImage,
@@ -57,10 +46,6 @@ func (in *Input) worker() ([]config.Document, error) {
 
 	if in.Options.VersionContract.GrubUseUKICmdlineDefault() {
 		machine.MachineInstall.InstallGrubUseUKICmdline = pointer.To(true)
-	}
-
-	if in.Options.VersionContract.StableHostnameEnabled() && !in.Options.VersionContract.MultidocNetworkConfigSupported() {
-		machine.MachineFeatures.StableHostname = pointer.To(true) //nolint:staticcheck // using legacy field for older Talos versions
 	}
 
 	if !in.Options.VersionContract.HideRBACAndKeyUsage() {
@@ -159,19 +144,19 @@ func (in *Input) worker() ([]config.Document, error) {
 
 	documents := []config.Document{v1alpha1Config}
 
-	registryConfigs, err := in.generateRegistryConfigs(machine)
+	extraDocuments, err := in.generateRegistryConfigs(machine)
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate registry configs: %w", err)
 	}
 
-	documents = append(documents, registryConfigs...)
+	documents = append(documents, extraDocuments...)
 
-	if in.Options.VersionContract.MultidocNetworkConfigSupported() {
-		hostnameConfig := network.NewHostnameConfigV1Alpha1()
-		hostnameConfig.ConfigAuto = pointer.To(nethelpers.AutoHostnameKindStable)
-
-		documents = append(documents, hostnameConfig)
+	extraDocuments, err = in.generateNetworkConfigs(machine)
+	if err != nil {
+		return nil, fmt.Errorf("failed to generate network configs: %w", err)
 	}
+
+	documents = append(documents, extraDocuments...)
 
 	return documents, nil
 }

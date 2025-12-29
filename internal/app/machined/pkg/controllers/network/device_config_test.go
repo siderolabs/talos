@@ -34,7 +34,7 @@ func (suite *DeviceConfigSpecSuite) TestDeviceConfigs() {
 	cfgProvider := container.NewV1Alpha1(&v1alpha1.Config{
 		ConfigVersion: "v1alpha1",
 		MachineConfig: &v1alpha1.MachineConfig{
-			MachineNetwork: &v1alpha1.NetworkConfig{
+			MachineNetwork: &v1alpha1.NetworkConfig{ //nolint:staticcheck // legacy controller
 				NetworkInterfaces: []*v1alpha1.Device{
 					{
 						DeviceInterface: "eth0",
@@ -80,7 +80,7 @@ func (suite *DeviceConfigSpecSuite) TestSelectors() {
 	cfgProvider := container.NewV1Alpha1(&v1alpha1.Config{
 		ConfigVersion: "v1alpha1",
 		MachineConfig: &v1alpha1.MachineConfig{
-			MachineNetwork: &v1alpha1.NetworkConfig{
+			MachineNetwork: &v1alpha1.NetworkConfig{ //nolint:staticcheck // legacy controller
 				NetworkInterfaces: []*v1alpha1.Device{
 					// device selector selecing a single interface
 					{
@@ -164,7 +164,7 @@ func (suite *DeviceConfigSpecSuite) TestBondSelectors() {
 	cfgProvider := container.NewV1Alpha1(&v1alpha1.Config{
 		ConfigVersion: "v1alpha1",
 		MachineConfig: &v1alpha1.MachineConfig{
-			MachineNetwork: &v1alpha1.NetworkConfig{
+			MachineNetwork: &v1alpha1.NetworkConfig{ //nolint:staticcheck // legacy controller
 				NetworkInterfaces: []*v1alpha1.Device{
 					{
 						DeviceInterface: "bond0",

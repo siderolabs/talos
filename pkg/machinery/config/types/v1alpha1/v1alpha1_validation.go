@@ -215,8 +215,8 @@ func (c *Config) Validate(mode validation.RuntimeMode, options ...validation.Opt
 			result = multierror.Append(result, err)
 		}
 
-		if c.Machine().Network().KubeSpan().Enabled() {
-			if c.Machine().Network().KubeSpan().MTU() < constants.KubeSpanLinkMinimumMTU {
+		if kcfg := c.NetworkKubeSpanConfig(); kcfg != nil && kcfg.Enabled() {
+			if kcfg.MTU() < constants.KubeSpanLinkMinimumMTU {
 				result = multierror.Append(result, fmt.Errorf("kubespan link MTU must be at least %d", constants.KubeSpanLinkMinimumMTU))
 			}
 		}
@@ -264,7 +264,7 @@ func (c *Config) Validate(mode validation.RuntimeMode, options ...validation.Opt
 		}
 	}
 
-	if c.Machine().Network().KubeSpan().Enabled() {
+	if kcfg := c.NetworkKubeSpanConfig(); kcfg != nil && kcfg.Enabled() {
 		if !c.Cluster().Discovery().Enabled() {
 			result = multierror.Append(result, errors.New(".cluster.discovery should be enabled when .machine.network.kubespan is enabled"))
 		}
@@ -277,7 +277,7 @@ func (c *Config) Validate(mode validation.RuntimeMode, options ...validation.Opt
 			result = multierror.Append(result, errors.New(".cluster.secret should be set when .machine.network.kubespan is enabled"))
 		}
 
-		for _, cidr := range c.Machine().Network().KubeSpan().Filters().Endpoints() {
+		for _, cidr := range kcfg.Filters().Endpoints() {
 			cidr = strings.TrimPrefix(cidr, "!")
 
 			if _, err := sideronet.ParseSubnetOrAddress(cidr); err != nil {

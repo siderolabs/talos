@@ -172,6 +172,8 @@ func WithNetworkInterfaceVirtualIP(iface IfaceSelector, cidr string) NetworkConf
 }
 
 // WithKubeSpan configures a KubeSpan interface.
+//
+// Deprecated: use generate.WithKubeSpanEnabled option instead.
 func WithKubeSpan() NetworkConfigOption {
 	return func(_ machine.Type, cfg *NetworkConfig) error {
 		if cfg.NetworkKubeSpan == nil {

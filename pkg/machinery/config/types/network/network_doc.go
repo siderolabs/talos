@@ -907,6 +907,93 @@ func (HostnameConfigV1Alpha1) Doc() *encoder.Doc {
 	return doc
 }
 
+func (KubeSpanConfigV1Alpha1) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "KubeSpanConfig",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "KubeSpanConfig is a config document to configure KubeSpan." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "KubeSpanConfig is a config document to configure KubeSpan.",
+		Fields: []encoder.Doc{
+			{
+				Type:   "Meta",
+				Inline: true,
+			},
+			{
+				Name:        "enabled",
+				Type:        "bool",
+				Note:        "",
+				Description: "Enable the KubeSpan feature.\nCluster discovery should be enabled with cluster.discovery.enabled for KubeSpan to be enabled.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Enable the KubeSpan feature." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "advertiseKubernetesNetworks",
+				Type:        "bool",
+				Note:        "",
+				Description: "Control whether Kubernetes pod CIDRs are announced over KubeSpan from the node.\nIf disabled, CNI handles pod-to-pod traffic encapsulation.\nIf enabled, KubeSpan takes over pod-to-pod traffic directly.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Control whether Kubernetes pod CIDRs are announced over KubeSpan from the node." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "allowDownPeerBypass",
+				Type:        "bool",
+				Note:        "",
+				Description: "Skip sending traffic via KubeSpan if the peer connection state is not up.\nThis provides configurable choice between connectivity and security.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Skip sending traffic via KubeSpan if the peer connection state is not up." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "harvestExtraEndpoints",
+				Type:        "bool",
+				Note:        "",
+				Description: "KubeSpan can collect and publish extra endpoints for each member of the cluster\nbased on Wireguard endpoint information for each peer.\nDisabled by default. Do not enable with high peer counts (>50).",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "KubeSpan can collect and publish extra endpoints for each member of the cluster" /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "mtu",
+				Type:        "uint32",
+				Note:        "",
+				Description: "KubeSpan link MTU size.\nDefault value is 1420.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "KubeSpan link MTU size." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "filters",
+				Type:        "KubeSpanFiltersConfig",
+				Note:        "",
+				Description: "KubeSpan advanced filtering of network addresses.\nSettings are optional and apply only to this node.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "KubeSpan advanced filtering of network addresses." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
+
+	doc.AddExample("", exampleKubeSpanV1Alpha1())
+
+	return doc
+}
+
+func (KubeSpanFiltersConfig) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "KubeSpanFiltersConfig",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "KubeSpanFiltersConfig configures KubeSpan endpoint filters." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "KubeSpanFiltersConfig configures KubeSpan endpoint filters.",
+		AppearsIn: []encoder.Appearance{
+			{
+				TypeName:  "KubeSpanConfigV1Alpha1",
+				FieldName: "filters",
+			},
+		},
+		Fields: []encoder.Doc{
+			{
+				Name:        "endpoints",
+				Type:        "[]string",
+				Note:        "",
+				Description: "Filter node addresses which will be advertised as KubeSpan endpoints for peer-to-peer Wireguard connections.\n\nBy default, all addresses are advertised, and KubeSpan cycles through all endpoints until it finds one that works.\n\nDefault value: no filtering.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Filter node addresses which will be advertised as KubeSpan endpoints for peer-to-peer Wireguard connections." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
+
+	doc.Fields[0].AddExample("Exclude addresses in 192.168.0.0/16 subnet.", []string{"0.0.0.0/0", "!192.168.0.0/16", "::/0"})
+
+	return doc
+}
+
 func (KubespanEndpointsConfigV1Alpha1) Doc() *encoder.Doc {
 	doc := &encoder.Doc{
 		Type:        "KubeSpanEndpointsConfig",
@@ -1763,6 +1850,8 @@ func GetFileDoc() *encoder.FileDoc {
 			EthernetChannelsConfig{}.Doc(),
 			HCloudVIPConfigV1Alpha1{}.Doc(),
 			HostnameConfigV1Alpha1{}.Doc(),
+			KubeSpanConfigV1Alpha1{}.Doc(),
+			KubeSpanFiltersConfig{}.Doc(),
 			KubespanEndpointsConfigV1Alpha1{}.Doc(),
 			Layer2VIPConfigV1Alpha1{}.Doc(),
 			LinkConfigV1Alpha1{}.Doc(),

@@ -344,6 +344,22 @@ func (container *Container) NetworkTimeSyncConfig() config.NetworkTimeSyncConfig
 	return nil
 }
 
+// NetworkKubeSpanConfig implements config.Config interface.
+func (container *Container) NetworkKubeSpanConfig() config.NetworkKubeSpanConfig {
+	// first check if we have a dedicated document
+	matching := findMatchingDocs[config.NetworkKubeSpanConfig](container.documents)
+	if len(matching) > 0 {
+		return matching[0]
+	}
+
+	// fallback to v1alpha1
+	if container.v1alpha1Config != nil {
+		return container.v1alpha1Config.NetworkKubeSpanConfig()
+	}
+
+	return nil
+}
+
 // NetworkCommonLinkConfigs implements config.Config interface.
 func (container *Container) NetworkCommonLinkConfigs() []config.NetworkCommonLinkConfig {
 	return findMatchingDocs[config.NetworkCommonLinkConfig](container.documents)

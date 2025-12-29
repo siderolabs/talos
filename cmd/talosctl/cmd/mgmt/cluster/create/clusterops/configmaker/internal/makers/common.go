@@ -30,7 +30,6 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/config/generate"
 	"github.com/siderolabs/talos/pkg/machinery/config/machine"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/siderolink"
-	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/provision"
 )
@@ -452,9 +451,9 @@ func (m *Maker[T]) initGenOps() error {
 
 	if m.Ops.EnableKubeSpan {
 		genOptions = slices.Concat(genOptions,
-			[]generate.Option{generate.WithNetworkOptions(
-				v1alpha1.WithKubeSpan(),
-			)},
+			[]generate.Option{
+				generate.WithKubeSpanEnabled(m.Ops.EnableKubeSpan),
+			},
 		)
 	}
 

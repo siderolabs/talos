@@ -71,6 +71,37 @@ func TestContractCurrent(t *testing.T) {
 	assert.True(t, contract.HideRBACAndKeyUsage())
 	assert.False(t, contract.PopulateClusterSANsFromEndpoint())
 	assert.True(t, contract.GrubUseUKICmdlineDefault())
+	assert.True(t, contract.KubeSpanMultidocConfig())
+}
+
+func TestContract1_13(t *testing.T) {
+	contract := config.TalosVersion1_13
+
+	assert.True(t, contract.PodSecurityAdmissionEnabled())
+	assert.True(t, contract.StableHostnameEnabled())
+	assert.True(t, contract.KubeletDefaultRuntimeSeccompProfileEnabled())
+	assert.False(t, contract.KubernetesAlternateImageRegistries())
+	assert.True(t, contract.KubernetesAllowSchedulingOnControlPlanes())
+	assert.True(t, contract.KubernetesDiscoveryBackendDisabled())
+	assert.True(t, contract.ApidExtKeyUsageCheckEnabled())
+	assert.True(t, contract.APIServerAuditPolicySupported())
+	assert.True(t, contract.KubeletManifestsDirectoryDisabled())
+	assert.True(t, contract.SecretboxEncryptionSupported())
+	assert.True(t, contract.DiskQuotaSupportEnabled())
+	assert.True(t, contract.KubePrismEnabled())
+	assert.True(t, contract.HostDNSEnabled())
+	assert.True(t, contract.UseRSAServiceAccountKey())
+	assert.True(t, contract.ClusterNameForWorkers())
+	assert.True(t, contract.HostDNSForwardKubeDNSToHost())
+	assert.True(t, contract.AddExcludeFromExternalLoadBalancer())
+	assert.True(t, contract.SecureBootEnrollEnforcementSupported())
+	assert.True(t, contract.VolumeConfigEncryptionSupported())
+	assert.True(t, contract.MultidocNetworkConfigSupported())
+	assert.True(t, contract.HideDisablePSP())
+	assert.True(t, contract.HideRBACAndKeyUsage())
+	assert.False(t, contract.PopulateClusterSANsFromEndpoint())
+	assert.True(t, contract.GrubUseUKICmdlineDefault())
+	assert.True(t, contract.KubeSpanMultidocConfig())
 }
 
 func TestContract1_12(t *testing.T) {
@@ -100,6 +131,7 @@ func TestContract1_12(t *testing.T) {
 	assert.True(t, contract.HideRBACAndKeyUsage())
 	assert.False(t, contract.PopulateClusterSANsFromEndpoint())
 	assert.True(t, contract.GrubUseUKICmdlineDefault())
+	assert.False(t, contract.KubeSpanMultidocConfig())
 }
 
 func TestContract1_11(t *testing.T) {
@@ -129,6 +161,7 @@ func TestContract1_11(t *testing.T) {
 	assert.False(t, contract.HideRBACAndKeyUsage())
 	assert.True(t, contract.PopulateClusterSANsFromEndpoint())
 	assert.False(t, contract.GrubUseUKICmdlineDefault())
+	assert.False(t, contract.KubeSpanMultidocConfig())
 }
 
 func TestContract1_10(t *testing.T) {
@@ -158,6 +191,7 @@ func TestContract1_10(t *testing.T) {
 	assert.False(t, contract.HideRBACAndKeyUsage())
 	assert.True(t, contract.PopulateClusterSANsFromEndpoint())
 	assert.False(t, contract.GrubUseUKICmdlineDefault())
+	assert.False(t, contract.KubeSpanMultidocConfig())
 }
 
 func TestContract1_9(t *testing.T) {
@@ -187,6 +221,7 @@ func TestContract1_9(t *testing.T) {
 	assert.False(t, contract.HideRBACAndKeyUsage())
 	assert.True(t, contract.PopulateClusterSANsFromEndpoint())
 	assert.False(t, contract.GrubUseUKICmdlineDefault())
+	assert.False(t, contract.KubeSpanMultidocConfig())
 }
 
 func TestContract1_8(t *testing.T) {
@@ -216,6 +251,7 @@ func TestContract1_8(t *testing.T) {
 	assert.False(t, contract.HideRBACAndKeyUsage())
 	assert.True(t, contract.PopulateClusterSANsFromEndpoint())
 	assert.False(t, contract.GrubUseUKICmdlineDefault())
+	assert.False(t, contract.KubeSpanMultidocConfig())
 }
 
 func TestContract1_7(t *testing.T) {
@@ -245,6 +281,7 @@ func TestContract1_7(t *testing.T) {
 	assert.False(t, contract.HideRBACAndKeyUsage())
 	assert.True(t, contract.PopulateClusterSANsFromEndpoint())
 	assert.False(t, contract.GrubUseUKICmdlineDefault())
+	assert.False(t, contract.KubeSpanMultidocConfig())
 }
 
 func TestContract1_6(t *testing.T) {
@@ -274,6 +311,7 @@ func TestContract1_6(t *testing.T) {
 	assert.False(t, contract.HideRBACAndKeyUsage())
 	assert.True(t, contract.PopulateClusterSANsFromEndpoint())
 	assert.False(t, contract.GrubUseUKICmdlineDefault())
+	assert.False(t, contract.KubeSpanMultidocConfig())
 }
 
 func TestContract1_5(t *testing.T) {
@@ -303,6 +341,7 @@ func TestContract1_5(t *testing.T) {
 	assert.False(t, contract.HideRBACAndKeyUsage())
 	assert.True(t, contract.PopulateClusterSANsFromEndpoint())
 	assert.False(t, contract.GrubUseUKICmdlineDefault())
+	assert.False(t, contract.KubeSpanMultidocConfig())
 }
 
 func TestContract1_4(t *testing.T) {
@@ -332,6 +371,7 @@ func TestContract1_4(t *testing.T) {
 	assert.False(t, contract.HideRBACAndKeyUsage())
 	assert.True(t, contract.PopulateClusterSANsFromEndpoint())
 	assert.False(t, contract.GrubUseUKICmdlineDefault())
+	assert.False(t, contract.KubeSpanMultidocConfig())
 }
 
 func TestContract1_3(t *testing.T) {
@@ -361,6 +401,7 @@ func TestContract1_3(t *testing.T) {
 	assert.False(t, contract.HideRBACAndKeyUsage())
 	assert.True(t, contract.PopulateClusterSANsFromEndpoint())
 	assert.False(t, contract.GrubUseUKICmdlineDefault())
+	assert.False(t, contract.KubeSpanMultidocConfig())
 }
 
 func TestContract1_2(t *testing.T) {
@@ -390,6 +431,7 @@ func TestContract1_2(t *testing.T) {
 	assert.False(t, contract.HideRBACAndKeyUsage())
 	assert.True(t, contract.PopulateClusterSANsFromEndpoint())
 	assert.False(t, contract.GrubUseUKICmdlineDefault())
+	assert.False(t, contract.KubeSpanMultidocConfig())
 }
 
 func TestContract1_1(t *testing.T) {
@@ -419,6 +461,7 @@ func TestContract1_1(t *testing.T) {
 	assert.False(t, contract.HideRBACAndKeyUsage())
 	assert.True(t, contract.PopulateClusterSANsFromEndpoint())
 	assert.False(t, contract.GrubUseUKICmdlineDefault())
+	assert.False(t, contract.KubeSpanMultidocConfig())
 }
 
 func TestContract1_0(t *testing.T) {
@@ -448,4 +491,5 @@ func TestContract1_0(t *testing.T) {
 	assert.False(t, contract.HideRBACAndKeyUsage())
 	assert.True(t, contract.PopulateClusterSANsFromEndpoint())
 	assert.False(t, contract.GrubUseUKICmdlineDefault())
+	assert.False(t, contract.KubeSpanMultidocConfig())
 }

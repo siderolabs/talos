@@ -170,7 +170,7 @@ func (r *Runtime) CanApplyImmediate(cfg config.Provider) error {
 		newConfig.MachineConfig.MachineTime = currentConfig.MachineConfig.MachineTime //nolint:staticcheck
 		newConfig.MachineConfig.MachineCertSANs = currentConfig.MachineConfig.MachineCertSANs
 		newConfig.MachineConfig.MachineInstall = currentConfig.MachineConfig.MachineInstall
-		newConfig.MachineConfig.MachineNetwork = currentConfig.MachineConfig.MachineNetwork
+		newConfig.MachineConfig.MachineNetwork = currentConfig.MachineConfig.MachineNetwork //nolint:staticcheck
 		newConfig.MachineConfig.MachineSysfs = currentConfig.MachineConfig.MachineSysfs
 		newConfig.MachineConfig.MachineSysctls = currentConfig.MachineConfig.MachineSysctls
 		newConfig.MachineConfig.MachineLogging = currentConfig.MachineConfig.MachineLogging

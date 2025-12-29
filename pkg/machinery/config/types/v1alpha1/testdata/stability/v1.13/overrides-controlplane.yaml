@@ -20,7 +20,6 @@ machine:
                 - rshared
         defaultRuntimeSeccompProfileEnabled: true
         disableManifestsDirectory: true
-    network: {}
     install:
         disk: /dev/vda
         extraKernelArgs:

@@ -120,6 +120,15 @@ Multiple values for the same environment variable will replace previous values, 
 To remove an environment variable, remove it from the `EnvironmentConfig` document and restart the node.
 """
 
+    [notes.kubespan]
+        title = "KubeSpan Configuration"
+        description = """\
+A new `KubeSpanConfig` document has been introduced to configure KubeSpan settings.
+It replaces and deprecates the previous method of configuring KubeSpan via the `.machine.network.kubespan` field.
+
+The old configuration field will continue to work for backward compatibility.
+"""
+
 [make_deps]
 
     [make_deps.tools]

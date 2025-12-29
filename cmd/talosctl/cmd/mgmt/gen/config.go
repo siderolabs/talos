@@ -28,7 +28,6 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/config/generate"
 	"github.com/siderolabs/talos/pkg/machinery/config/generate/secrets"
 	"github.com/siderolabs/talos/pkg/machinery/config/machine"
-	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
 
@@ -204,11 +203,10 @@ func writeConfig(args []string) error {
 		genOptions = append(genOptions, generate.WithVersionContract(versionContract))
 	}
 
+	// Add KubeSpan configuration based on version
 	if genConfigCmdFlags.withKubeSpan {
 		genOptions = append(genOptions,
-			generate.WithNetworkOptions(
-				v1alpha1.WithKubeSpan(),
-			),
+			generate.WithKubeSpanEnabled(genConfigCmdFlags.withKubeSpan),
 		)
 	}
 

@@ -67,7 +67,7 @@ func (suite *ResolverConfigSuite) TestWithHostnameStatus() {
 			&v1alpha1.Config{
 				ConfigVersion: "v1alpha1",
 				MachineConfig: &v1alpha1.MachineConfig{
-					MachineNetwork: &v1alpha1.NetworkConfig{},
+					MachineNetwork: &v1alpha1.NetworkConfig{}, //nolint:staticcheck // legacy config
 				},
 				ClusterConfig: &v1alpha1.ClusterConfig{
 					ControlPlane: &v1alpha1.ControlPlaneConfig{
@@ -168,7 +168,7 @@ func (suite *ResolverConfigSuite) TestMachineConfigurationLegacy() {
 			&v1alpha1.Config{
 				ConfigVersion: "v1alpha1",
 				MachineConfig: &v1alpha1.MachineConfig{
-					MachineNetwork: &v1alpha1.NetworkConfig{
+					MachineNetwork: &v1alpha1.NetworkConfig{ //nolint:staticcheck // legacy config
 						NameServers: []string{"2.2.2.2", "3.3.3.3"},
 						Searches:    []string{"example.com", "example.org"},
 					},

@@ -203,3 +203,8 @@ func (contract *VersionContract) PopulateClusterSANsFromEndpoint() bool {
 func (contract *VersionContract) GrubUseUKICmdlineDefault() bool {
 	return contract.Greater(TalosVersion1_11)
 }
+
+// KubeSpanMultidocConfig returns true if version of Talos should use KubeSpan multi-doc config.
+func (contract *VersionContract) KubeSpanMultidocConfig() bool {
+	return contract.Greater(TalosVersion1_12)
+}

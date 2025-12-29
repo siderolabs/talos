@@ -10,10 +10,11 @@ import (
 	"time"
 
 	"github.com/cosi-project/runtime/pkg/resource"
-	"github.com/siderolabs/go-retry/retry"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 
 	clusteradapter "github.com/siderolabs/talos/internal/app/machined/pkg/adapters/cluster"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/ctest"
 	kubespanctrl "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/kubespan"
 	"github.com/siderolabs/talos/pkg/machinery/config/machine"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
@@ -25,7 +26,7 @@ import (
 )
 
 type PeerSpecSuite struct {
-	KubeSpanSuite
+	ctest.DefaultSuite
 
 	statePath string
 }
@@ -33,22 +34,16 @@ type PeerSpecSuite struct {
 func (suite *PeerSpecSuite) TestReconcile() {
 	suite.statePath = suite.T().TempDir()
 
-	suite.Require().NoError(suite.runtime.RegisterController(&kubespanctrl.PeerSpecController{}))
-
-	suite.startRuntime()
-
 	stateMount := runtimeres.NewMountStatus(v1alpha1.NamespaceName, constants.StatePartitionLabel)
-
-	suite.Assert().NoError(suite.state.Create(suite.ctx, stateMount))
+	suite.Create(stateMount)
 
 	cfg := kubespan.NewConfig(config.NamespaceName, kubespan.ConfigID)
 	cfg.TypedSpec().Enabled = true
-
-	suite.Require().NoError(suite.state.Create(suite.ctx, cfg))
+	suite.Create(cfg)
 
 	nodeIdentity := cluster.NewIdentity(cluster.NamespaceName, cluster.LocalIdentity)
 	suite.Require().NoError(clusteradapter.IdentitySpec(nodeIdentity.TypedSpec()).Generate())
-	suite.Require().NoError(suite.state.Create(suite.ctx, nodeIdentity))
+	suite.Create(nodeIdentity)
 
 	affiliate1 := cluster.NewAffiliate(cluster.NamespaceName, "7x1SuC8Ege5BGXdAfTEff5iQnlWZLfv9h1LGMxA2pYkC")
 	*affiliate1.TypedSpec() = cluster.AffiliateSpec{
@@ -103,86 +98,64 @@ func (suite *PeerSpecSuite) TestReconcile() {
 	}
 
 	for _, r := range []resource.Resource{affiliate1, affiliate2, affiliate3, affiliate4} {
-		suite.Require().NoError(suite.state.Create(suite.ctx, r))
+		suite.Create(r)
 	}
 
 	// affiliate2 shouldn't be rendered as a peer, as it doesn't have kubespan data
-	suite.Assert().NoError(retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-		suite.assertResourceIDs(resource.NewMetadata(kubespan.NamespaceName, kubespan.PeerSpecType, "", resource.VersionUndefined),
-			[]resource.ID{
-				affiliate1.TypedSpec().KubeSpan.PublicKey,
-				affiliate3.TypedSpec().KubeSpan.PublicKey,
-			},
-		),
-	))
+	ctest.AssertResources(suite,
+		[]resource.ID{
+			affiliate1.TypedSpec().KubeSpan.PublicKey,
+			affiliate3.TypedSpec().KubeSpan.PublicKey,
+		},
+		func(*kubespan.PeerSpec, *assert.Assertions) {},
+	)
+	ctest.AssertNoResource[*kubespan.PeerSpec](suite, affiliate2.TypedSpec().KubeSpan.PublicKey)
 
-	suite.Assert().NoError(retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-		suite.assertResource(
-			resource.NewMetadata(kubespan.NamespaceName, kubespan.PeerSpecType, affiliate1.TypedSpec().KubeSpan.PublicKey, resource.VersionUndefined),
-			func(res resource.Resource) error {
-				spec := res.(*kubespan.PeerSpec).TypedSpec()
+	ctest.AssertResource(suite,
+		affiliate1.TypedSpec().KubeSpan.PublicKey,
+		func(res *kubespan.PeerSpec, asrt *assert.Assertions) {
+			spec := res.TypedSpec()
 
-				suite.Assert().Equal("fd50:8d60:4238:6302:f857:23ff:fe21:d1e0", spec.Address.String())
-				suite.Assert().Equal("[10.244.3.0/24 192.168.3.4/32 fd50:8d60:4238:6302:f857:23ff:fe21:d1e0/128]", fmt.Sprintf("%v", spec.AllowedIPs))
-				suite.Assert().Equal([]netip.AddrPort{netip.MustParseAddrPort("10.0.0.2:51820"), netip.MustParseAddrPort("192.168.3.4:51820")}, spec.Endpoints)
-				suite.Assert().Equal("bar", spec.Label)
+			asrt.Equal("fd50:8d60:4238:6302:f857:23ff:fe21:d1e0", spec.Address.String())
+			asrt.Equal("[10.244.3.0/24 192.168.3.4/32 fd50:8d60:4238:6302:f857:23ff:fe21:d1e0/128]", fmt.Sprintf("%v", spec.AllowedIPs))
+			asrt.Equal([]netip.AddrPort{netip.MustParseAddrPort("10.0.0.2:51820"), netip.MustParseAddrPort("192.168.3.4:51820")}, spec.Endpoints)
+			asrt.Equal("bar", spec.Label)
+		},
+	)
 
-				return nil
-			},
-		),
-	))
+	ctest.AssertResource(suite,
+		affiliate3.TypedSpec().KubeSpan.PublicKey,
+		func(res *kubespan.PeerSpec, asrt *assert.Assertions) {
+			spec := res.TypedSpec()
 
-	suite.Assert().NoError(retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-		suite.assertResource(
-			resource.NewMetadata(kubespan.NamespaceName, kubespan.PeerSpecType, affiliate3.TypedSpec().KubeSpan.PublicKey, resource.VersionUndefined),
-			func(res resource.Resource) error {
-				spec := res.(*kubespan.PeerSpec).TypedSpec()
-
-				suite.Assert().Equal("fdc8:8aee:4e2d:1202:f073:9cff:fe6c:4d67", spec.Address.String())
-				suite.Assert().Equal("[10.244.4.0/24 192.168.3.6/32 fdc8:8aee:4e2d:1202:f073:9cff:fe6c:4d67/128]", fmt.Sprintf("%v", spec.AllowedIPs))
-				suite.Assert().Equal([]netip.AddrPort{netip.MustParseAddrPort("192.168.3.6:51820")}, spec.Endpoints)
-				suite.Assert().Equal("worker-2", spec.Label)
-
-				return nil
-			},
-		),
-	))
+			asrt.Equal("fdc8:8aee:4e2d:1202:f073:9cff:fe6c:4d67", spec.Address.String())
+			asrt.Equal("[10.244.4.0/24 192.168.3.6/32 fdc8:8aee:4e2d:1202:f073:9cff:fe6c:4d67/128]", fmt.Sprintf("%v", spec.AllowedIPs))
+			asrt.Equal([]netip.AddrPort{netip.MustParseAddrPort("192.168.3.6:51820")}, spec.Endpoints)
+			asrt.Equal("worker-2", spec.Label)
+		},
+	)
 
 	// disabling kubespan should remove all peers
 	cfg.TypedSpec().Enabled = false
-	suite.Require().NoError(suite.state.Update(suite.ctx, cfg))
+	suite.Update(cfg)
 
-	suite.Assert().NoError(retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-		suite.assertNoResource(
-			resource.NewMetadata(kubespan.NamespaceName, kubespan.PeerSpecType, affiliate1.TypedSpec().KubeSpan.PublicKey, resource.VersionUndefined),
-		),
-	))
-	suite.Assert().NoError(retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-		suite.assertNoResource(
-			resource.NewMetadata(kubespan.NamespaceName, kubespan.PeerSpecType, affiliate3.TypedSpec().KubeSpan.PublicKey, resource.VersionUndefined),
-		),
-	))
+	ctest.AssertNoResource[*kubespan.PeerSpec](suite, affiliate1.TypedSpec().KubeSpan.PublicKey)
+	ctest.AssertNoResource[*kubespan.PeerSpec](suite, affiliate2.TypedSpec().KubeSpan.PublicKey)
 }
 
 func (suite *PeerSpecSuite) TestIPOverlap() {
 	suite.statePath = suite.T().TempDir()
 
-	suite.Require().NoError(suite.runtime.RegisterController(&kubespanctrl.PeerSpecController{}))
-
-	suite.startRuntime()
-
 	stateMount := runtimeres.NewMountStatus(v1alpha1.NamespaceName, constants.StatePartitionLabel)
-
-	suite.Assert().NoError(suite.state.Create(suite.ctx, stateMount))
+	suite.Create(stateMount)
 
 	cfg := kubespan.NewConfig(config.NamespaceName, kubespan.ConfigID)
 	cfg.TypedSpec().Enabled = true
-
-	suite.Require().NoError(suite.state.Create(suite.ctx, cfg))
+	suite.Create(cfg)
 
 	nodeIdentity := cluster.NewIdentity(cluster.NamespaceName, cluster.LocalIdentity)
 	suite.Require().NoError(clusteradapter.IdentitySpec(nodeIdentity.TypedSpec()).Generate())
-	suite.Require().NoError(suite.state.Create(suite.ctx, nodeIdentity))
+	suite.Create(nodeIdentity)
 
 	affiliate1 := cluster.NewAffiliate(cluster.NamespaceName, "7x1SuC8Ege5BGXdAfTEff5iQnlWZLfv9h1LGMxA2pYkC")
 	*affiliate1.TypedSpec() = cluster.AffiliateSpec{
@@ -212,46 +185,38 @@ func (suite *PeerSpecSuite) TestIPOverlap() {
 	}
 
 	for _, r := range []resource.Resource{affiliate1, affiliate2} {
-		suite.Require().NoError(suite.state.Create(suite.ctx, r))
+		suite.Create(r)
 	}
 
 	// affiliate2 should be rendered as a peer, but with reduced address as its AdditionalAddresses overlap with affiliate1 addresses
-	suite.Assert().NoError(retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-		suite.assertResourceIDs(resource.NewMetadata(kubespan.NamespaceName, kubespan.PeerSpecType, "", resource.VersionUndefined),
-			[]resource.ID{
-				affiliate1.TypedSpec().KubeSpan.PublicKey,
-				affiliate2.TypedSpec().KubeSpan.PublicKey,
-			},
-		),
-	))
+	ctest.AssertResource(suite,
+		affiliate1.TypedSpec().KubeSpan.PublicKey,
+		func(res *kubespan.PeerSpec, asrt *assert.Assertions) {
+			spec := res.TypedSpec()
 
-	suite.Assert().NoError(retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-		suite.assertResource(resource.NewMetadata(kubespan.NamespaceName, kubespan.PeerSpecType, affiliate1.TypedSpec().KubeSpan.PublicKey, resource.VersionUndefined),
-			func(res resource.Resource) error {
-				spec := res.(*kubespan.PeerSpec).TypedSpec()
+			asrt.Equal(`["10.244.3.0/24" "fd50:8d60:4238:6302:f857:23ff:fe21:d1e0/128"]`, fmt.Sprintf("%q", spec.AllowedIPs))
+		},
+	)
 
-				suite.Assert().Equal(`["10.244.3.0/24" "fd50:8d60:4238:6302:f857:23ff:fe21:d1e0/128"]`, fmt.Sprintf("%q", spec.AllowedIPs))
+	ctest.AssertResource(suite,
+		affiliate2.TypedSpec().KubeSpan.PublicKey,
+		func(res *kubespan.PeerSpec, asrt *assert.Assertions) {
+			spec := res.TypedSpec()
 
-				return nil
-			},
-		),
-	))
-
-	suite.Assert().NoError(retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-		suite.assertResource(resource.NewMetadata(kubespan.NamespaceName, kubespan.PeerSpecType, affiliate2.TypedSpec().KubeSpan.PublicKey, resource.VersionUndefined),
-			func(res resource.Resource) error {
-				spec := res.(*kubespan.PeerSpec).TypedSpec()
-
-				suite.Assert().Equal(`["10.244.2.0/24" "192.168.3.0/24" "fd50:8d60:4238:6302:f857:23ff:fe21:d1e1/128"]`, fmt.Sprintf("%q", spec.AllowedIPs))
-
-				return nil
-			},
-		),
-	))
+			asrt.Equal(`["10.244.2.0/24" "192.168.3.0/24" "fd50:8d60:4238:6302:f857:23ff:fe21:d1e1/128"]`, fmt.Sprintf("%q", spec.AllowedIPs))
+		},
+	)
 }
 
 func TestPeerSpecSuite(t *testing.T) {
 	t.Parallel()
 
-	suite.Run(t, new(PeerSpecSuite))
+	suite.Run(t, &PeerSpecSuite{
+		DefaultSuite: ctest.DefaultSuite{
+			Timeout: 5 * time.Second,
+			AfterSetup: func(suite *ctest.DefaultSuite) {
+				suite.Require().NoError(suite.Runtime().RegisterController(&kubespanctrl.PeerSpecController{}))
+			},
+		},
+	})
 }

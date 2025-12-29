@@ -137,13 +137,7 @@ func (MachineConfig) Doc() *encoder.Doc {
 				Description: "Used to provide static pod definitions to be run by the kubelet directly bypassing the kube-apiserver.\n\nStatic pods can be used to run components which should be started before the Kubernetes control plane is up.\nTalos doesn't validate the pod definition.\nUpdates to this field can be applied without a reboot.\n\nSee https://kubernetes.io/docs/tasks/configure-pod-container/static-pod/.",
 				Comments:    [3]string{"" /* encoder.HeadComment */, "Used to provide static pod definitions to be run by the kubelet directly bypassing the kube-apiserver." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
-			{
-				Name:        "network",
-				Type:        "NetworkConfig",
-				Note:        "",
-				Description: "Provides machine specific network configuration options.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Provides machine specific network configuration options." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
+			{},
 			{},
 			{
 				Name:        "install",
@@ -875,39 +869,6 @@ func (KubeletNodeIPConfig) Doc() *encoder.Doc {
 	}
 
 	doc.AddExample("", kubeletNodeIPExample())
-
-	return doc
-}
-
-func (NetworkConfig) Doc() *encoder.Doc {
-	doc := &encoder.Doc{
-		Type:        "NetworkConfig",
-		Comments:    [3]string{"" /* encoder.HeadComment */, "NetworkConfig represents the machine's networking config values." /* encoder.LineComment */, "" /* encoder.FootComment */},
-		Description: "NetworkConfig represents the machine's networking config values.",
-		AppearsIn: []encoder.Appearance{
-			{
-				TypeName:  "MachineConfig",
-				FieldName: "network",
-			},
-		},
-		Fields: []encoder.Doc{
-			{},
-			{},
-			{},
-			{},
-			{},
-			{
-				Name:        "kubespan",
-				Type:        "NetworkKubeSpan",
-				Note:        "",
-				Description: "Configures KubeSpan feature.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Configures KubeSpan feature." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-			{},
-		},
-	}
-
-	doc.Fields[5].AddExample("", networkKubeSpanExample())
 
 	return doc
 }
@@ -2167,95 +2128,6 @@ func (ClusterInlineManifest) Doc() *encoder.Doc {
 	return doc
 }
 
-func (NetworkKubeSpan) Doc() *encoder.Doc {
-	doc := &encoder.Doc{
-		Type:        "NetworkKubeSpan",
-		Comments:    [3]string{"" /* encoder.HeadComment */, "NetworkKubeSpan struct describes KubeSpan configuration." /* encoder.LineComment */, "" /* encoder.FootComment */},
-		Description: "NetworkKubeSpan struct describes KubeSpan configuration.",
-		AppearsIn: []encoder.Appearance{
-			{
-				TypeName:  "NetworkConfig",
-				FieldName: "kubespan",
-			},
-		},
-		Fields: []encoder.Doc{
-			{
-				Name:        "enabled",
-				Type:        "bool",
-				Note:        "",
-				Description: "Enable the KubeSpan feature.\nCluster discovery should be enabled with .cluster.discovery.enabled for KubeSpan to be enabled.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Enable the KubeSpan feature." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-			{
-				Name:        "advertiseKubernetesNetworks",
-				Type:        "bool",
-				Note:        "",
-				Description: "Control whether Kubernetes pod CIDRs are announced over KubeSpan from the node.\nIf disabled, CNI handles encapsulating pod-to-pod traffic into some node-to-node tunnel,\nand KubeSpan handles the node-to-node traffic.\nIf enabled, KubeSpan will take over pod-to-pod traffic and send it over KubeSpan directly.\nWhen enabled, KubeSpan should have a way to detect complete pod CIDRs of the node which\nis not always the case with CNIs not relying on Kubernetes for IPAM.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Control whether Kubernetes pod CIDRs are announced over KubeSpan from the node." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-			{
-				Name:        "allowDownPeerBypass",
-				Type:        "bool",
-				Note:        "",
-				Description: "Skip sending traffic via KubeSpan if the peer connection state is not up.\nThis provides configurable choice between connectivity and security: either traffic is always\nforced to go via KubeSpan (even if Wireguard peer connection is not up), or traffic can go directly\nto the peer if Wireguard connection can't be established.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Skip sending traffic via KubeSpan if the peer connection state is not up." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-			{
-				Name:        "harvestExtraEndpoints",
-				Type:        "bool",
-				Note:        "",
-				Description: "KubeSpan can collect and publish extra endpoints for each member of the cluster\nbased on Wireguard endpoint information for each peer.\nThis feature is disabled by default, don't enable it\nwith high number of peers (>50) in the KubeSpan network (performance issues).",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "KubeSpan can collect and publish extra endpoints for each member of the cluster" /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-			{
-				Name:        "mtu",
-				Type:        "uint32",
-				Note:        "",
-				Description: "KubeSpan link MTU size.\nDefault value is 1420.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "KubeSpan link MTU size." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-			{
-				Name:        "filters",
-				Type:        "KubeSpanFilters",
-				Note:        "",
-				Description: "KubeSpan advanced filtering of network addresses .\n\nSettings in this section are optional, and settings apply only to the node.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "KubeSpan advanced filtering of network addresses ." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-		},
-	}
-
-	doc.AddExample("", networkKubeSpanExample())
-
-	return doc
-}
-
-func (KubeSpanFilters) Doc() *encoder.Doc {
-	doc := &encoder.Doc{
-		Type:        "KubeSpanFilters",
-		Comments:    [3]string{"" /* encoder.HeadComment */, "KubeSpanFilters struct describes KubeSpan advanced network addresses filtering." /* encoder.LineComment */, "" /* encoder.FootComment */},
-		Description: "KubeSpanFilters struct describes KubeSpan advanced network addresses filtering.",
-		AppearsIn: []encoder.Appearance{
-			{
-				TypeName:  "NetworkKubeSpan",
-				FieldName: "filters",
-			},
-		},
-		Fields: []encoder.Doc{
-			{
-				Name:        "endpoints",
-				Type:        "[]string",
-				Note:        "",
-				Description: "Filter node addresses which will be advertised as KubeSpan endpoints for peer-to-peer Wireguard connections.\n\nBy default, all addresses are advertised, and KubeSpan cycles through all endpoints until it finds one that works.\n\nDefault value: no filtering.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Filter node addresses which will be advertised as KubeSpan endpoints for peer-to-peer Wireguard connections." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-		},
-	}
-
-	doc.Fields[0].AddExample("Exclude addresses in 192.168.0.0/16 subnet.", []string{"0.0.0.0/0", "!192.168.0.0/16", "::/0"})
-
-	return doc
-}
-
 func (ClusterDiscoveryConfig) Doc() *encoder.Doc {
 	doc := &encoder.Doc{
 		Type:        "ClusterDiscoveryConfig",
@@ -2556,7 +2428,6 @@ func GetFileDoc() *encoder.FileDoc {
 			MachineSchedulerConfig{}.Doc(),
 			KubeletConfig{}.Doc(),
 			KubeletNodeIPConfig{}.Doc(),
-			NetworkConfig{}.Doc(),
 			InstallConfig{}.Doc(),
 			InstallDiskSelector{}.Doc(),
 			CoreDNS{}.Doc(),
@@ -2583,8 +2454,6 @@ func GetFileDoc() *encoder.FileDoc {
 			HostDNSConfig{}.Doc(),
 			VolumeMountConfig{}.Doc(),
 			ClusterInlineManifest{}.Doc(),
-			NetworkKubeSpan{}.Doc(),
-			KubeSpanFilters{}.Doc(),
 			ClusterDiscoveryConfig{}.Doc(),
 			DiscoveryRegistriesConfig{}.Doc(),
 			RegistryKubernetesConfig{}.Doc(),

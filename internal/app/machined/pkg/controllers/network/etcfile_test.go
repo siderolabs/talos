@@ -30,6 +30,7 @@ import (
 	v1alpha1runtime "github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
 	"github.com/siderolabs/talos/internal/pkg/mount/v3"
 	"github.com/siderolabs/talos/pkg/machinery/config/container"
+	networkcfg "github.com/siderolabs/talos/pkg/machinery/config/types/network"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
 	"github.com/siderolabs/talos/pkg/machinery/resources/config"
 	"github.com/siderolabs/talos/pkg/machinery/resources/files"
@@ -101,7 +102,7 @@ func (suite *EtcFileConfigSuite) SetupTest() {
 			&v1alpha1.Config{
 				ConfigVersion: "v1alpha1",
 				MachineConfig: &v1alpha1.MachineConfig{
-					MachineNetwork: &v1alpha1.NetworkConfig{
+					MachineNetwork: &v1alpha1.NetworkConfig{ //nolint:staticcheck // legacy config
 						ExtraHostEntries: []*v1alpha1.ExtraHost{
 							{
 								HostIP:      "10.0.0.1",
@@ -261,19 +262,40 @@ func (suite *EtcFileConfigSuite) TestNoExtraHosts() {
 	)
 }
 
-func (suite *EtcFileConfigSuite) TestNoSearchDomain() {
+func (suite *EtcFileConfigSuite) TestNoSearchDomainLegacy() {
 	cfg := config.NewMachineConfig(
 		container.NewV1Alpha1(
 			&v1alpha1.Config{
 				ConfigVersion: "v1alpha1",
 				MachineConfig: &v1alpha1.MachineConfig{
-					MachineNetwork: &v1alpha1.NetworkConfig{
+					MachineNetwork: &v1alpha1.NetworkConfig{ //nolint:staticcheck // legacy config
 						NetworkDisableSearchDomain: pointer.To(true),
 					},
 				},
 			},
 		),
 	)
+	suite.testFiles(
+		[]resource.Resource{cfg, suite.defaultAddress, suite.hostnameStatus, suite.resolverStatus, suite.hostDNSConfig},
+		etcFileContents{
+			hosts:            "127.0.0.1   localhost\n33.11.22.44 foo.example.com foo\n::1         localhost ip6-localhost ip6-loopback\nff02::1     ip6-allnodes\nff02::2     ip6-allrouters\n",
+			resolvConf:       "nameserver 127.0.0.53\n",
+			resolvGlobalConf: "nameserver 169.254.116.108\n",
+		},
+	)
+}
+
+func (suite *EtcFileConfigSuite) TestNoSearchDomainNewStyle() {
+	hc := networkcfg.NewResolverConfigV1Alpha1()
+	hc.ResolverSearchDomains = networkcfg.SearchDomainsConfig{
+		SearchDisableDefault: pointer.To(true),
+	}
+
+	ctr, err := container.New(hc)
+	suite.Require().NoError(err)
+
+	cfg := config.NewMachineConfig(ctr)
+
 	suite.testFiles(
 		[]resource.Resource{cfg, suite.defaultAddress, suite.hostnameStatus, suite.resolverStatus, suite.hostDNSConfig},
 		etcFileContents{

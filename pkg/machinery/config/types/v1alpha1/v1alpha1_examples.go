@@ -373,12 +373,6 @@ metadata:
 	}
 }
 
-func networkKubeSpanExample() *NetworkKubeSpan {
-	return &NetworkKubeSpan{
-		KubeSpanEnabled: pointer.To(true),
-	}
-}
-
 func clusterDiscoveryExample() ClusterDiscoveryConfig {
 	return ClusterDiscoveryConfig{
 		DiscoveryEnabled: pointer.To(true),

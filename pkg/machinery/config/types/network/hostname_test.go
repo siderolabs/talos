@@ -173,7 +173,7 @@ func TestHostnameV1Alpha1Validate(t *testing.T) {
 			name: "v1alpha1 static hostname set",
 			v1alpha1Cfg: &v1alpha1.Config{
 				MachineConfig: &v1alpha1.MachineConfig{
-					MachineNetwork: &v1alpha1.NetworkConfig{
+					MachineNetwork: &v1alpha1.NetworkConfig{ //nolint:staticcheck // legacy config
 						NetworkHostname: "foo",
 					},
 				},

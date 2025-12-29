@@ -2153,6 +2153,94 @@
       "type": "object",
       "description": "IngressRule is a ingress rule."
     },
+    "network.KubeSpanConfigV1Alpha1": {
+      "properties": {
+        "apiVersion": {
+          "enum": [
+            "v1alpha1"
+          ],
+          "title": "apiVersion",
+          "description": "apiVersion is the API version of the resource.\n",
+          "markdownDescription": "apiVersion is the API version of the resource.",
+          "x-intellij-html-description": "\u003cp\u003eapiVersion is the API version of the resource.\u003c/p\u003e\n"
+        },
+        "kind": {
+          "enum": [
+            "KubeSpanConfig"
+          ],
+          "title": "kind",
+          "description": "kind is the kind of the resource.\n",
+          "markdownDescription": "kind is the kind of the resource.",
+          "x-intellij-html-description": "\u003cp\u003ekind is the kind of the resource.\u003c/p\u003e\n"
+        },
+        "enabled": {
+          "type": "boolean",
+          "title": "enabled",
+          "description": "Enable the KubeSpan feature.\nCluster discovery should be enabled with cluster.discovery.enabled for KubeSpan to be enabled.\n",
+          "markdownDescription": "Enable the KubeSpan feature.\nCluster discovery should be enabled with cluster.discovery.enabled for KubeSpan to be enabled.",
+          "x-intellij-html-description": "\u003cp\u003eEnable the KubeSpan feature.\nCluster discovery should be enabled with cluster.discovery.enabled for KubeSpan to be enabled.\u003c/p\u003e\n"
+        },
+        "advertiseKubernetesNetworks": {
+          "type": "boolean",
+          "title": "advertiseKubernetesNetworks",
+          "description": "Control whether Kubernetes pod CIDRs are announced over KubeSpan from the node.\nIf disabled, CNI handles pod-to-pod traffic encapsulation.\nIf enabled, KubeSpan takes over pod-to-pod traffic directly.\n",
+          "markdownDescription": "Control whether Kubernetes pod CIDRs are announced over KubeSpan from the node.\nIf disabled, CNI handles pod-to-pod traffic encapsulation.\nIf enabled, KubeSpan takes over pod-to-pod traffic directly.",
+          "x-intellij-html-description": "\u003cp\u003eControl whether Kubernetes pod CIDRs are announced over KubeSpan from the node.\nIf disabled, CNI handles pod-to-pod traffic encapsulation.\nIf enabled, KubeSpan takes over pod-to-pod traffic directly.\u003c/p\u003e\n"
+        },
+        "allowDownPeerBypass": {
+          "type": "boolean",
+          "title": "allowDownPeerBypass",
+          "description": "Skip sending traffic via KubeSpan if the peer connection state is not up.\nThis provides configurable choice between connectivity and security.\n",
+          "markdownDescription": "Skip sending traffic via KubeSpan if the peer connection state is not up.\nThis provides configurable choice between connectivity and security.",
+          "x-intellij-html-description": "\u003cp\u003eSkip sending traffic via KubeSpan if the peer connection state is not up.\nThis provides configurable choice between connectivity and security.\u003c/p\u003e\n"
+        },
+        "harvestExtraEndpoints": {
+          "type": "boolean",
+          "title": "harvestExtraEndpoints",
+          "description": "KubeSpan can collect and publish extra endpoints for each member of the cluster\nbased on Wireguard endpoint information for each peer.\nDisabled by default. Do not enable with high peer counts (\u0026gt;50).\n",
+          "markdownDescription": "KubeSpan can collect and publish extra endpoints for each member of the cluster\nbased on Wireguard endpoint information for each peer.\nDisabled by default. Do not enable with high peer counts (\u003e50).",
+          "x-intellij-html-description": "\u003cp\u003eKubeSpan can collect and publish extra endpoints for each member of the cluster\nbased on Wireguard endpoint information for each peer.\nDisabled by default. Do not enable with high peer counts (\u0026gt;50).\u003c/p\u003e\n"
+        },
+        "mtu": {
+          "type": "integer",
+          "title": "mtu",
+          "description": "KubeSpan link MTU size.\nDefault value is 1420.\n",
+          "markdownDescription": "KubeSpan link MTU size.\nDefault value is 1420.",
+          "x-intellij-html-description": "\u003cp\u003eKubeSpan link MTU size.\nDefault value is 1420.\u003c/p\u003e\n"
+        },
+        "filters": {
+          "$ref": "#/$defs/network.KubeSpanFiltersConfig",
+          "title": "filters",
+          "description": "KubeSpan advanced filtering of network addresses.\nSettings are optional and apply only to this node.\n",
+          "markdownDescription": "KubeSpan advanced filtering of network addresses.\nSettings are optional and apply only to this node.",
+          "x-intellij-html-description": "\u003cp\u003eKubeSpan advanced filtering of network addresses.\nSettings are optional and apply only to this node.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "apiVersion",
+        "kind"
+      ],
+      "description": "KubeSpanConfig is a config document to configure KubeSpan."
+    },
+    "network.KubeSpanFiltersConfig": {
+      "properties": {
+        "endpoints": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "title": "endpoints",
+          "description": "Filter node addresses which will be advertised as KubeSpan endpoints for peer-to-peer Wireguard connections.\n\nBy default, all addresses are advertised, and KubeSpan cycles through all endpoints until it finds one that works.\n\nDefault value: no filtering.\n",
+          "markdownDescription": "Filter node addresses which will be advertised as KubeSpan endpoints for peer-to-peer Wireguard connections.\n\nBy default, all addresses are advertised, and KubeSpan cycles through all endpoints until it finds one that works.\n\nDefault value: no filtering.",
+          "x-intellij-html-description": "\u003cp\u003eFilter node addresses which will be advertised as KubeSpan endpoints for peer-to-peer Wireguard connections.\u003c/p\u003e\n\n\u003cp\u003eBy default, all addresses are advertised, and KubeSpan cycles through all endpoints until it finds one that works.\u003c/p\u003e\n\n\u003cp\u003eDefault value: no filtering.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "description": "KubeSpanFiltersConfig configures KubeSpan endpoint filters."
+    },
     "network.KubespanEndpointsConfigV1Alpha1": {
       "properties": {
         "apiVersion": {
@@ -4406,23 +4494,6 @@
       "type": "object",
       "description": "KubePrism describes the configuration for the KubePrism load balancer."
     },
-    "v1alpha1.KubeSpanFilters": {
-      "properties": {
-        "endpoints": {
-          "items": {
-            "type": "string"
-          },
-          "type": "array",
-          "title": "endpoints",
-          "description": "Filter node addresses which will be advertised as KubeSpan endpoints for peer-to-peer Wireguard connections.\n\nBy default, all addresses are advertised, and KubeSpan cycles through all endpoints until it finds one that works.\n\nDefault value: no filtering.\n",
-          "markdownDescription": "Filter node addresses which will be advertised as KubeSpan endpoints for peer-to-peer Wireguard connections.\n\nBy default, all addresses are advertised, and KubeSpan cycles through all endpoints until it finds one that works.\n\nDefault value: no filtering.",
-          "x-intellij-html-description": "\u003cp\u003eFilter node addresses which will be advertised as KubeSpan endpoints for peer-to-peer Wireguard connections.\u003c/p\u003e\n\n\u003cp\u003eBy default, all addresses are advertised, and KubeSpan cycles through all endpoints until it finds one that works.\u003c/p\u003e\n\n\u003cp\u003eDefault value: no filtering.\u003c/p\u003e\n"
-        }
-      },
-      "additionalProperties": false,
-      "type": "object",
-      "description": "KubeSpanFilters struct describes KubeSpan advanced network addresses filtering."
-    },
     "v1alpha1.KubeletConfig": {
       "properties": {
         "image": {
@@ -4731,13 +4802,6 @@
           "markdownDescription": "Used to provide static pod definitions to be run by the kubelet directly bypassing the kube-apiserver.\n\nStatic pods can be used to run components which should be started before the Kubernetes control plane is up.\nTalos doesn't validate the pod definition.\nUpdates to this field can be applied without a reboot.\n\nSee https://kubernetes.io/docs/tasks/configure-pod-container/static-pod/.",
           "x-intellij-html-description": "\u003cp\u003eUsed to provide static pod definitions to be run by the kubelet directly bypassing the kube-apiserver.\u003c/p\u003e\n\n\u003cp\u003eStatic pods can be used to run components which should be started before the Kubernetes control plane is up.\nTalos doesn\u0026rsquo;t validate the pod definition.\nUpdates to this field can be applied without a reboot.\u003c/p\u003e\n\n\u003cp\u003eSee \u003ca href=\"https://kubernetes.io/docs/tasks/configure-pod-container/static-pod/\" target=\"_blank\"\u003ehttps://kubernetes.io/docs/tasks/configure-pod-container/static-pod/\u003c/a\u003e.\u003c/p\u003e\n"
         },
-        "network": {
-          "$ref": "#/$defs/v1alpha1.NetworkConfig",
-          "title": "network",
-          "description": "Provides machine specific network configuration options.\n",
-          "markdownDescription": "Provides machine specific network configuration options.",
-          "x-intellij-html-description": "\u003cp\u003eProvides machine specific network configuration options.\u003c/p\u003e\n"
-        },
         "install": {
           "$ref": "#/$defs/v1alpha1.InstallConfig",
           "title": "install",
@@ -4973,69 +5037,6 @@
       "additionalProperties": false,
       "type": "object",
       "description": "MachineSeccompProfile defines seccomp profiles for the machine."
-    },
-    "v1alpha1.NetworkConfig": {
-      "properties": {
-        "kubespan": {
-          "$ref": "#/$defs/v1alpha1.NetworkKubeSpan",
-          "title": "kubespan",
-          "description": "Configures KubeSpan feature.\n",
-          "markdownDescription": "Configures KubeSpan feature.",
-          "x-intellij-html-description": "\u003cp\u003eConfigures KubeSpan feature.\u003c/p\u003e\n"
-        }
-      },
-      "additionalProperties": false,
-      "type": "object",
-      "description": "NetworkConfig represents the machine's networking config values."
-    },
-    "v1alpha1.NetworkKubeSpan": {
-      "properties": {
-        "enabled": {
-          "type": "boolean",
-          "title": "enabled",
-          "description": "Enable the KubeSpan feature.\nCluster discovery should be enabled with .cluster.discovery.enabled for KubeSpan to be enabled.\n",
-          "markdownDescription": "Enable the KubeSpan feature.\nCluster discovery should be enabled with .cluster.discovery.enabled for KubeSpan to be enabled.",
-          "x-intellij-html-description": "\u003cp\u003eEnable the KubeSpan feature.\nCluster discovery should be enabled with .cluster.discovery.enabled for KubeSpan to be enabled.\u003c/p\u003e\n"
-        },
-        "advertiseKubernetesNetworks": {
-          "type": "boolean",
-          "title": "advertiseKubernetesNetworks",
-          "description": "Control whether Kubernetes pod CIDRs are announced over KubeSpan from the node.\nIf disabled, CNI handles encapsulating pod-to-pod traffic into some node-to-node tunnel,\nand KubeSpan handles the node-to-node traffic.\nIf enabled, KubeSpan will take over pod-to-pod traffic and send it over KubeSpan directly.\nWhen enabled, KubeSpan should have a way to detect complete pod CIDRs of the node which\nis not always the case with CNIs not relying on Kubernetes for IPAM.\n",
-          "markdownDescription": "Control whether Kubernetes pod CIDRs are announced over KubeSpan from the node.\nIf disabled, CNI handles encapsulating pod-to-pod traffic into some node-to-node tunnel,\nand KubeSpan handles the node-to-node traffic.\nIf enabled, KubeSpan will take over pod-to-pod traffic and send it over KubeSpan directly.\nWhen enabled, KubeSpan should have a way to detect complete pod CIDRs of the node which\nis not always the case with CNIs not relying on Kubernetes for IPAM.",
-          "x-intellij-html-description": "\u003cp\u003eControl whether Kubernetes pod CIDRs are announced over KubeSpan from the node.\nIf disabled, CNI handles encapsulating pod-to-pod traffic into some node-to-node tunnel,\nand KubeSpan handles the node-to-node traffic.\nIf enabled, KubeSpan will take over pod-to-pod traffic and send it over KubeSpan directly.\nWhen enabled, KubeSpan should have a way to detect complete pod CIDRs of the node which\nis not always the case with CNIs not relying on Kubernetes for IPAM.\u003c/p\u003e\n"
-        },
-        "allowDownPeerBypass": {
-          "type": "boolean",
-          "title": "allowDownPeerBypass",
-          "description": "Skip sending traffic via KubeSpan if the peer connection state is not up.\nThis provides configurable choice between connectivity and security: either traffic is always\nforced to go via KubeSpan (even if Wireguard peer connection is not up), or traffic can go directly\nto the peer if Wireguard connection can’t be established.\n",
-          "markdownDescription": "Skip sending traffic via KubeSpan if the peer connection state is not up.\nThis provides configurable choice between connectivity and security: either traffic is always\nforced to go via KubeSpan (even if Wireguard peer connection is not up), or traffic can go directly\nto the peer if Wireguard connection can't be established.",
-          "x-intellij-html-description": "\u003cp\u003eSkip sending traffic via KubeSpan if the peer connection state is not up.\nThis provides configurable choice between connectivity and security: either traffic is always\nforced to go via KubeSpan (even if Wireguard peer connection is not up), or traffic can go directly\nto the peer if Wireguard connection can\u0026rsquo;t be established.\u003c/p\u003e\n"
-        },
-        "harvestExtraEndpoints": {
-          "type": "boolean",
-          "title": "harvestExtraEndpoints",
-          "description": "KubeSpan can collect and publish extra endpoints for each member of the cluster\nbased on Wireguard endpoint information for each peer.\nThis feature is disabled by default, don’t enable it\nwith high number of peers (\u0026gt;50) in the KubeSpan network (performance issues).\n",
-          "markdownDescription": "KubeSpan can collect and publish extra endpoints for each member of the cluster\nbased on Wireguard endpoint information for each peer.\nThis feature is disabled by default, don't enable it\nwith high number of peers (\u003e50) in the KubeSpan network (performance issues).",
-          "x-intellij-html-description": "\u003cp\u003eKubeSpan can collect and publish extra endpoints for each member of the cluster\nbased on Wireguard endpoint information for each peer.\nThis feature is disabled by default, don\u0026rsquo;t enable it\nwith high number of peers (\u0026gt;50) in the KubeSpan network (performance issues).\u003c/p\u003e\n"
-        },
-        "mtu": {
-          "type": "integer",
-          "title": "mtu",
-          "description": "KubeSpan link MTU size.\nDefault value is 1420.\n",
-          "markdownDescription": "KubeSpan link MTU size.\nDefault value is 1420.",
-          "x-intellij-html-description": "\u003cp\u003eKubeSpan link MTU size.\nDefault value is 1420.\u003c/p\u003e\n"
-        },
-        "filters": {
-          "$ref": "#/$defs/v1alpha1.KubeSpanFilters",
-          "title": "filters",
-          "description": "KubeSpan advanced filtering of network addresses .\n\nSettings in this section are optional, and settings apply only to the node.\n",
-          "markdownDescription": "KubeSpan advanced filtering of network addresses .\n\nSettings in this section are optional, and settings apply only to the node.",
-          "x-intellij-html-description": "\u003cp\u003eKubeSpan advanced filtering of network addresses .\u003c/p\u003e\n\n\u003cp\u003eSettings in this section are optional, and settings apply only to the node.\u003c/p\u003e\n"
-        }
-      },
-      "additionalProperties": false,
-      "type": "object",
-      "description": "NetworkKubeSpan struct describes KubeSpan configuration."
     },
     "v1alpha1.ProxyConfig": {
       "properties": {
@@ -5304,6 +5305,9 @@
     },
     {
       "$ref": "#/$defs/network.HostnameConfigV1Alpha1"
+    },
+    {
+      "$ref": "#/$defs/network.KubeSpanConfigV1Alpha1"
     },
     {
       "$ref": "#/$defs/network.KubespanEndpointsConfigV1Alpha1"

@@ -8,10 +8,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cosi-project/runtime/pkg/resource"
-	"github.com/siderolabs/go-retry/retry"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 
+	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/ctest"
 	kubespanctrl "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/kubespan"
 	"github.com/siderolabs/talos/pkg/machinery/config/machine"
 	"github.com/siderolabs/talos/pkg/machinery/resources/cluster"
@@ -20,17 +20,13 @@ import (
 )
 
 type EndpointSuite struct {
-	KubeSpanSuite
+	ctest.DefaultSuite
 }
 
 func (suite *EndpointSuite) TestReconcile() {
-	suite.Require().NoError(suite.runtime.RegisterController(&kubespanctrl.EndpointController{}))
-
-	suite.startRuntime()
-
 	cfg := kubespan.NewConfig(config.NamespaceName, kubespan.ConfigID)
 	cfg.TypedSpec().HarvestExtraEndpoints = true
-	suite.Require().NoError(suite.state.Create(suite.ctx, cfg))
+	suite.Create(cfg)
 
 	// create some affiliates and peer statuses
 	affiliate1 := cluster.NewAffiliate(cluster.NamespaceName, "7x1SuC8Ege5BGXdAfTEff5iQnlWZLfv9h1LGMxA2pYkC")
@@ -59,8 +55,8 @@ func (suite *EndpointSuite) TestReconcile() {
 		},
 	}
 
-	suite.Require().NoError(suite.state.Create(suite.ctx, affiliate1))
-	suite.Require().NoError(suite.state.Create(suite.ctx, affiliate2))
+	suite.Create(affiliate1)
+	suite.Create(affiliate2)
 
 	peerStatus1 := kubespan.NewPeerStatus(kubespan.NamespaceName, affiliate1.TypedSpec().KubeSpan.PublicKey)
 	*peerStatus1.TypedSpec() = kubespan.PeerStatusSpec{
@@ -80,57 +76,36 @@ func (suite *EndpointSuite) TestReconcile() {
 		State:    kubespan.PeerStateUp,
 	}
 
-	suite.Require().NoError(suite.state.Create(suite.ctx, peerStatus1))
-	suite.Require().NoError(suite.state.Create(suite.ctx, peerStatus2))
-	suite.Require().NoError(suite.state.Create(suite.ctx, peerStatus3))
+	suite.Create(peerStatus1)
+	suite.Create(peerStatus2)
+	suite.Create(peerStatus3)
 
 	// peer1 is up and has matching affiliate
-	suite.Assert().NoError(retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-		suite.assertResource(
-			resource.NewMetadata(
-				kubespan.NamespaceName,
-				kubespan.EndpointType,
-				peerStatus1.Metadata().ID(),
-				resource.VersionUndefined,
-			),
-			func(res resource.Resource) error {
-				spec := res.(*kubespan.Endpoint).TypedSpec()
+	ctest.AssertResource(suite, peerStatus1.Metadata().ID(),
+		func(res *kubespan.Endpoint, asrt *assert.Assertions) {
+			spec := res.TypedSpec()
 
-				suite.Assert().Equal(peerStatus1.TypedSpec().Endpoint, spec.Endpoint)
-				suite.Assert().Equal(affiliate1.TypedSpec().NodeID, spec.AffiliateID)
-
-				return nil
-			},
-		),
-	))
+			asrt.Equal(peerStatus1.TypedSpec().Endpoint, spec.Endpoint)
+			asrt.Equal(affiliate1.TypedSpec().NodeID, spec.AffiliateID)
+		},
+	)
 
 	// peer2 is not up, it shouldn't be published as an endpoint
-	suite.Assert().NoError(retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-		suite.assertNoResource(
-			resource.NewMetadata(
-				kubespan.NamespaceName,
-				kubespan.EndpointType,
-				peerStatus2.Metadata().ID(),
-				resource.VersionUndefined,
-			),
-		),
-	))
+	ctest.AssertNoResource[*kubespan.Endpoint](suite, peerStatus2.Metadata().ID())
 
 	// peer3 is up, but has not matching affiliate
-	suite.Assert().NoError(retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-		suite.assertNoResource(
-			resource.NewMetadata(
-				kubespan.NamespaceName,
-				kubespan.EndpointType,
-				peerStatus3.Metadata().ID(),
-				resource.VersionUndefined,
-			),
-		),
-	))
+	ctest.AssertNoResource[*kubespan.Endpoint](suite, peerStatus3.Metadata().ID())
 }
 
 func TestEndpointSuite(t *testing.T) {
 	t.Parallel()
 
-	suite.Run(t, new(EndpointSuite))
+	suite.Run(t, &EndpointSuite{
+		DefaultSuite: ctest.DefaultSuite{
+			Timeout: 5 * time.Second,
+			AfterSetup: func(suite *ctest.DefaultSuite) {
+				suite.Require().NoError(suite.Runtime().RegisterController(&kubespanctrl.EndpointController{}))
+			},
+		},
+	})
 }

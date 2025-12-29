@@ -63,7 +63,7 @@ func (suite *OperatorVIPConfigSuite) TestMachineConfigurationLegacyVIP() {
 			&v1alpha1.Config{
 				ConfigVersion: "v1alpha1",
 				MachineConfig: &v1alpha1.MachineConfig{
-					MachineNetwork: &v1alpha1.NetworkConfig{
+					MachineNetwork: &v1alpha1.NetworkConfig{ //nolint:staticcheck // legacy config
 						NetworkInterfaces: []*v1alpha1.Device{
 							{
 								DeviceInterface: "eth1",

@@ -257,7 +257,7 @@ func (suite *DiscoverySuite) TestKubeSpanPeers() {
 	provider, err := suite.ReadConfigFromNode(nodeCtx)
 	suite.Require().NoError(err)
 
-	if !provider.Machine().Network().KubeSpan().Enabled() {
+	if kubeSpan := provider.NetworkKubeSpanConfig(); kubeSpan == nil || !kubeSpan.Enabled() {
 		suite.T().Skip("KubeSpan is disabled")
 	}
 
@@ -293,7 +293,7 @@ func (suite *DiscoverySuite) TestKubeSpanExtraEndpoints() {
 	provider, err := suite.ReadConfigFromNode(nodeCtx)
 	suite.Require().NoError(err)
 
-	if !provider.Machine().Network().KubeSpan().Enabled() {
+	if kubeSpan := provider.NetworkKubeSpanConfig(); kubeSpan == nil || !kubeSpan.Enabled() {
 		suite.T().Skip("KubeSpan is disabled")
 	}
 

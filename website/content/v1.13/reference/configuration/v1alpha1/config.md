@@ -142,7 +142,6 @@ pods:
             - image: nginx
               name: nginx
 {{< /highlight >}}</details> | |
-|`network` |<a href="#Config.machine.network">NetworkConfig</a> |Provides machine specific network configuration options.  | |
 |`install` |<a href="#Config.machine.install">InstallConfig</a> |Used to provide instructions for installations.<br><br>Note that this configuration section gets silently ignored by Talos images that are considered pre-installed.<br>To make sure Talos installs according to the provided configuration, Talos should be booted with ISO or PXE-booted. <details><summary>Show example(s)</summary>MachineInstall config usage example.:{{< highlight yaml >}}
 install:
     disk: /dev/sda # The disk used for installations.
@@ -508,74 +507,6 @@ machine:
 | Field | Type | Description | Value(s) |
 |-------|------|-------------|----------|
 |`validSubnets` |[]string |The `validSubnets` field configures the networks to pick kubelet node IP from.<br>For dual stack configuration, there should be two subnets: one for IPv4, another for IPv6.<br>IPs can be excluded from the list by using negative match with `!`, e.g `!10.0.0.0/8`.<br>Negative subnet matches should be specified last to filter out IPs picked by positive matches.<br>If not specified, node IP is picked based on cluster podCIDRs: IPv4/IPv6 address or both.  | |
-
-
-
-
-
-
-
-
-### network {#Config.machine.network}
-
-NetworkConfig represents the machine's networking config values.
-
-
-
-
-| Field | Type | Description | Value(s) |
-|-------|------|-------------|----------|
-|`kubespan` |<a href="#Config.machine.network.kubespan">NetworkKubeSpan</a> |Configures KubeSpan feature. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
-kubespan:
-    enabled: true # Enable the KubeSpan feature.
-{{< /highlight >}}</details> | |
-
-
-
-
-#### kubespan {#Config.machine.network.kubespan}
-
-NetworkKubeSpan struct describes KubeSpan configuration.
-
-
-
-{{< highlight yaml >}}
-machine:
-    network:
-        kubespan:
-            enabled: true # Enable the KubeSpan feature.
-{{< /highlight >}}
-
-
-| Field | Type | Description | Value(s) |
-|-------|------|-------------|----------|
-|`enabled` |bool |Enable the KubeSpan feature.<br>Cluster discovery should be enabled with .cluster.discovery.enabled for KubeSpan to be enabled.  | |
-|`advertiseKubernetesNetworks` |bool |Control whether Kubernetes pod CIDRs are announced over KubeSpan from the node.<br>If disabled, CNI handles encapsulating pod-to-pod traffic into some node-to-node tunnel,<br>and KubeSpan handles the node-to-node traffic.<br>If enabled, KubeSpan will take over pod-to-pod traffic and send it over KubeSpan directly.<br>When enabled, KubeSpan should have a way to detect complete pod CIDRs of the node which<br>is not always the case with CNIs not relying on Kubernetes for IPAM.  | |
-|`allowDownPeerBypass` |bool |Skip sending traffic via KubeSpan if the peer connection state is not up.<br>This provides configurable choice between connectivity and security: either traffic is always<br>forced to go via KubeSpan (even if Wireguard peer connection is not up), or traffic can go directly<br>to the peer if Wireguard connection can't be established.  | |
-|`harvestExtraEndpoints` |bool |KubeSpan can collect and publish extra endpoints for each member of the cluster<br>based on Wireguard endpoint information for each peer.<br>This feature is disabled by default, don't enable it<br>with high number of peers (>50) in the KubeSpan network (performance issues).  | |
-|`mtu` |uint32 |KubeSpan link MTU size.<br>Default value is 1420.  | |
-|`filters` |<a href="#Config.machine.network.kubespan.filters">KubeSpanFilters</a> |KubeSpan advanced filtering of network addresses .<br><br>Settings in this section are optional, and settings apply only to the node.  | |
-
-
-
-
-##### filters {#Config.machine.network.kubespan.filters}
-
-KubeSpanFilters struct describes KubeSpan advanced network addresses filtering.
-
-
-
-
-| Field | Type | Description | Value(s) |
-|-------|------|-------------|----------|
-|`endpoints` |[]string |Filter node addresses which will be advertised as KubeSpan endpoints for peer-to-peer Wireguard connections.<br><br>By default, all addresses are advertised, and KubeSpan cycles through all endpoints until it finds one that works.<br><br>Default value: no filtering. <details><summary>Show example(s)</summary>Exclude addresses in 192.168.0.0/16 subnet.:{{< highlight yaml >}}
-endpoints:
-    - 0.0.0.0/0
-    - '!192.168.0.0/16'
-    - ::/0
-{{< /highlight >}}</details> | |
-
-
 
 
 

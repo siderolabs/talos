@@ -595,15 +595,6 @@ func (n *NetworkConfig) ExtraHosts() []config.NetworkStaticHostConfig {
 	return xslices.Map(n.ExtraHostEntries, func(e *ExtraHost) config.NetworkStaticHostConfig { return e })
 }
 
-// KubeSpan implements the config.Provider interface.
-func (n *NetworkConfig) KubeSpan() config.KubeSpan {
-	if n.NetworkKubeSpan == nil {
-		return &NetworkKubeSpan{}
-	}
-
-	return n.NetworkKubeSpan
-}
-
 // IP implements the MachineNetwork interface.
 func (e *ExtraHost) IP() string {
 	return e.HostIP
@@ -1177,8 +1168,8 @@ func (k *NetworkKubeSpan) MTU() uint32 {
 	return mtu
 }
 
-// Filters implements the KubeSpan interface.
-func (k *NetworkKubeSpan) Filters() config.KubeSpanFilters {
+// Filters implements the NetworkKubeSpanConfig interface.
+func (k *NetworkKubeSpan) Filters() config.NetworkKubeSpanFilters {
 	if k.KubeSpanFilters == nil {
 		return &KubeSpanFilters{}
 	}

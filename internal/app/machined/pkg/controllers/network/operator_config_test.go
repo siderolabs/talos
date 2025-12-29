@@ -204,7 +204,7 @@ func (suite *OperatorConfigSuite) TestMachineConfigurationDHCP4() {
 			&v1alpha1.Config{
 				ConfigVersion: "v1alpha1",
 				MachineConfig: &v1alpha1.MachineConfig{
-					MachineNetwork: &v1alpha1.NetworkConfig{
+					MachineNetwork: &v1alpha1.NetworkConfig{ //nolint:staticcheck // legacy config
 						NetworkInterfaces: []*v1alpha1.Device{
 							{
 								DeviceInterface: "eth0",
@@ -315,7 +315,7 @@ func (suite *OperatorConfigSuite) TestMachineConfigurationDHCP6() {
 			&v1alpha1.Config{
 				ConfigVersion: "v1alpha1",
 				MachineConfig: &v1alpha1.MachineConfig{
-					MachineNetwork: &v1alpha1.NetworkConfig{
+					MachineNetwork: &v1alpha1.NetworkConfig{ //nolint:staticcheck // legacy config
 						NetworkInterfaces: []*v1alpha1.Device{
 							{
 								DeviceInterface: "eth1",
@@ -497,7 +497,7 @@ func (suite *OperatorConfigSuite) TestMachineConfigurationWithAliases() {
 			&v1alpha1.Config{
 				ConfigVersion: "v1alpha1",
 				MachineConfig: &v1alpha1.MachineConfig{
-					MachineNetwork: &v1alpha1.NetworkConfig{
+					MachineNetwork: &v1alpha1.NetworkConfig{ //nolint:staticcheck // legacy config
 						NetworkInterfaces: []*v1alpha1.Device{
 							{
 								DeviceInterface: "enx0123",

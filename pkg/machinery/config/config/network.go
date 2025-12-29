@@ -315,3 +315,18 @@ type NetworkWireguardPeerConfig interface {
 	AllowedIPs() []netip.Prefix
 	PersistentKeepalive() optional.Optional[time.Duration]
 }
+
+// NetworkKubeSpanConfig configures KubeSpan feature.
+type NetworkKubeSpanConfig interface {
+	Enabled() bool
+	ForceRouting() bool
+	AdvertiseKubernetesNetworks() bool
+	HarvestExtraEndpoints() bool
+	MTU() uint32
+	Filters() NetworkKubeSpanFilters
+}
+
+// NetworkKubeSpanFilters configures KubeSpan filters.
+type NetworkKubeSpanFilters interface {
+	Endpoints() []string
+}
